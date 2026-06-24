@@ -253,7 +253,14 @@ func Test_marks_k_cmd()
   call setline(1, ['foo', 'bar', 'baz', 'qux'])
   1,3kr
   call assert_equal([0, 3, 1, 0], getpos("'r"))
+  " whitespace before mark
+  4k f
+  call assert_equal([0, 4, 1, 0], getpos("'f"))
+  :2     k	 g
+  call assert_equal([0, 2, 1, 0], getpos("'g"))
   bw!
+  call assert_fails(':kz7', 'E488: Trailing characters: z7')
+  call assert_fails(':execute ":k^"', 'E191: Argument must be a letter or forward/backward quote')
 endfunc
 
 " Test for file marks (A-Z)
@@ -321,5 +328,26 @@ func Test_jump_mark_autocmd()
   bwipe!
 endfunc
 
+func Test_mark_formatprg_on_empty()
+  new
+  if has('win32')
+    setl formatprg=more
+  else
+    setl formatprg=cat
+  endif
+  call assert_equal([0, 0], [line("'["), col("'[")])
+  call assert_equal([0, 0], [line("']"), col("']")])
+  let v:errmsg = ''
+  try
+    norm! gqG
+  catch
+    call assert_report('gqG on empty buffer should not fail: ' .. v:exception)
+  endtry
+  call assert_true(empty(v:errmsg))
+  " col() is 1-based, so 1 == first column (:marks shows it as 0)
+  call assert_equal([1, 1], [line("'["), col("'[")])
+  call assert_equal([1, 1], [line("']"), col("']")])
+  bwipe!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

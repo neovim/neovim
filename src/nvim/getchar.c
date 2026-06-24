@@ -63,6 +63,7 @@
 #include "nvim/os/os_defs.h"
 #include "nvim/plines.h"
 #include "nvim/pos_defs.h"
+#include "nvim/register.h"
 #include "nvim/state.h"
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"
@@ -661,6 +662,10 @@ void stuffRedoReadbuff(const char *s)
 
 void stuffReadbuffLen(const char *s, ptrdiff_t len)
 {
+  if (add_last_insert == 1) {  // Only add if this is the first call, for
+                               // recursive calls, ignore.
+    ga_concat_len(&last_insert_ga, s, (size_t)len);
+  }
   add_buff(&readbuf1, s, len);
 }
 
@@ -2104,6 +2109,7 @@ static int put_string_in_typebuf(int offset, int slen, uint8_t *string, int new_
 
 /// Check if the bytes at the start of the typeahead buffer are a character used
 /// in Insert mode completion.  This includes the form with a CTRL modifier.
+/// During completion started by complete() keys are mapped as usual.
 static bool at_ins_compl_key(void)
 {
   uint8_t *p = typebuf.tb_buf + typebuf.tb_off;
@@ -2112,8 +2118,9 @@ static bool at_ins_compl_key(void)
   if (typebuf.tb_len > 3 && c == K_SPECIAL && p[1] == KS_MODIFIER && (p[2] & MOD_MASK_CTRL)) {
     c = p[3] & 0x1f;
   }
-  return (ctrl_x_mode_not_default() && vim_is_ctrl_x_key(c))
-         || (compl_status_local() && (c == Ctrl_N || c == Ctrl_P));
+  return !ctrl_x_mode_eval()
+         && ((ctrl_x_mode_not_default() && vim_is_ctrl_x_key(c))
+             || (compl_status_local() && (c == Ctrl_N || c == Ctrl_P)));
 }
 
 /// Check if typebuf.tb_buf[] contains a modifier plus key that can be changed
@@ -2175,6 +2182,62 @@ static int check_simplify_modifier(int max_offset)
   return 0;
 }
 
+/// Returns the next character from a NUL-terminated UTF-8-encoded escaped-K_SPECIAL string.
+///
+/// Combining characters are treated as separate code points.
+///
+/// @param[inout] itp   Pointer to the input string pointer. The string pointer will be advanced to
+///                     the next character.
+/// @param        nomap If non-zero, then multi-byte characters are not decoded and the function
+///                     always returns the next byte from the string.
+/// @return             Unicode code point or 0, if at the end.
+///                     - Returns 0 when NUL is in the middle of a multi-byte sequence. This allows
+///                       calling code to request more data.
+///                     - If decoding of a multi-byte character fails, returns the first byte of
+///                       the encoded character.
+static int char_iter(const uint8_t **itp, int nomap)
+{
+  const uint8_t *it = *itp;
+  int c = *it;
+  if (c == NUL) {
+    return 0;
+  }
+
+  if (nomap == 0) {
+    int mblen = MB_BYTE2LEN(c);
+    if (mblen > 1) {
+      uint8_t buf[MB_MAXBYTES + 1];
+      buf[0] = (uint8_t)c;
+      int i = 1;
+
+      do {
+        buf[i] = *++it;
+        if (buf[i] == K_SPECIAL) {
+          // Follows vgetc()'s logic: Must be a K_SPECIAL - KS_SPECIAL - KE_FILLER sequence, which
+          // represents a K_SPECIAL (0x80). Skip KS_SPECIAL and KE_FILLER.
+          if (*++it == NUL || *++it == NUL) {
+            break;
+          }
+        }
+      } while (buf[i] != NUL && ++i < mblen);
+
+      if (i != mblen) {
+        *itp = it;
+        return 0;
+      }
+
+      c = utf_ptr2char((const char *)buf);
+      if (c == buf[0]) {
+        // Invalid UTF-8 sequence
+        it = *itp;
+      }
+    }
+  }
+
+  *itp = ++it;
+  return c;
+}
+
 /// Handle mappings in the typeahead buffer.
 /// - When something was mapped, return map_result_retry for recursive mappings.
 /// - When nothing mapped and typeahead has a character: return map_result_get.
@@ -2187,6 +2250,7 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
   mapblock_T *mp2;
   mapblock_T *mp_match;
   int mp_match_len = 0;
+  int tb_match_len = 0;
   int max_mlen = 0;
   int keylen = *keylenp;
   int local_State = get_real_state();
@@ -2211,27 +2275,48 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
   // - waiting for "hit return to continue" and CR or SPACE typed
   // - waiting for a char with --more--
   // - in Ctrl-X mode, and we get a valid char for that mode
-  int tb_c1 = typebuf.tb_buf[typebuf.tb_off];
+  // - in Ctrl-X mode (not started by complete()), and we get a valid char for that mode
+  int tb_b1 = typebuf.tb_buf[typebuf.tb_off];
   if (no_mapping == 0
-      && (no_zero_mapping == 0 || tb_c1 != '0')
+      && (no_zero_mapping == 0 || tb_b1 != '0')
       && (typebuf.tb_maplen == 0 || is_plug_map
           || (!(typebuf.tb_noremap[typebuf.tb_off] & (RM_NONE|RM_ABBR))))
       && !(p_paste && (State & (MODE_INSERT | MODE_CMDLINE)))
-      && !(State == MODE_HITRETURN && (tb_c1 == CAR || tb_c1 == ' '))
+      && !(State == MODE_HITRETURN && (tb_b1 == CAR || tb_b1 == ' '))
       && State != MODE_ASKMORE
       && !at_ins_compl_key()) {
-    int mlen;
     int nolmaplen;
-    if (tb_c1 == K_SPECIAL) {
+    int tb_c1 = tb_b1;
+    const uint8_t *tb_iter = typebuf.tb_buf + typebuf.tb_off;
+
+    if (tb_b1 == K_SPECIAL) {
       nolmaplen = 2;
+      tb_iter += 1;
     } else {
+      tb_c1 = char_iter(&tb_iter, 0);
+      if (tb_c1 == 0) {
+        if (*timedout) {
+          *keylenp = 0;
+          return map_result_get;
+        }
+        *keylenp = KEYLEN_PART_KEY;
+        return map_result_nomatch;
+      }
+
+      int orig_tb_c1 = tb_c1;
       LANGMAP_ADJUST(tb_c1, ((State & (MODE_CMDLINE | MODE_INSERT)) == 0
                              && get_real_state() != MODE_SELECT));
+      if (orig_tb_c1 != tb_c1) {
+        // Mapped by 'langmap', update the first byte
+        char cbuf[6];
+        utf_char2bytes(tb_c1, cbuf);
+        tb_b1 = (uint8_t)cbuf[0];
+      }
       nolmaplen = 0;
     }
     // First try buffer-local mappings.
-    mp = get_buf_maphash_list(local_State, tb_c1);
-    mp2 = get_maphash_list(local_State, tb_c1);
+    mp = get_buf_maphash_list(local_State, tb_b1);
+    mp2 = get_maphash_list(local_State, tb_b1);
     if (mp == NULL) {
       // There are no buffer-local mappings.
       mp = mp2;
@@ -2244,17 +2329,27 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
     // and "aaa" can both be mapped.
     mp_match = NULL;
     mp_match_len = 0;
+    tb_match_len = 0;
     for (; mp != NULL; mp->m_next == NULL ? (mp = mp2, mp2 = NULL) : (mp = mp->m_next)) {
       // Only consider an entry if the first character matches and it is
       // for the current state.
       // Skip ":lmap" mappings if keys were mapped.
-      if ((uint8_t)mp->m_keys[0] == tb_c1 && (mp->m_mode & local_State)
+      const uint8_t *key_iter = (const uint8_t *)mp->m_keys;
+
+      if (char_iter(&key_iter, 0) == tb_c1 && (mp->m_mode & local_State)
           && ((mp->m_mode & MODE_LANGMAP) == 0 || typebuf.tb_maplen == 0)) {
         int nomap = nolmaplen;
         int modifiers = 0;
+        int c2;
+        const uint8_t *tmp_tb_iter = tb_iter;
+        // Match length in key buffer
+        int mlen = (int)(key_iter - (const uint8_t *)mp->m_keys);
+        // Match length in typeahead buffer
+        int tb_mlen = (int)(tmp_tb_iter - typebuf.tb_buf) - typebuf.tb_off;
+
         // find the match length of this mapping
-        for (mlen = 1; mlen < typebuf.tb_len; mlen++) {
-          int c2 = typebuf.tb_buf[typebuf.tb_off + mlen];
+        while ((c2 = char_iter(&tmp_tb_iter, nomap)) != 0) {
+          int tb_nomap = nomap;
           if (nomap > 0) {
             if (nomap == 2 && c2 == KS_MODIFIER) {
               modifiers = 1;
@@ -2274,19 +2369,14 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
             }
             modifiers = 0;
           }
-          if ((uint8_t)mp->m_keys[mlen] != c2) {
+
+          int key_char = char_iter(&key_iter, tb_nomap);
+          if (key_char != c2) {
             break;
           }
-        }
 
-        // Don't allow mapping the first byte(s) of a multi-byte char.
-        // Happens when mapping <M-a> and then changing 'encoding'.
-        // Beware that 0x80 is escaped.
-        const char *p1 = mp->m_keys;
-        const char *p2 = mb_unescape(&p1);
-
-        if (p2 != NULL && MB_BYTE2LEN(tb_c1) > utfc_ptr2len(p2)) {
-          mlen = 0;
+          mlen = (int)(key_iter - (const uint8_t *)mp->m_keys);
+          tb_mlen = (int)(tmp_tb_iter - typebuf.tb_buf) - typebuf.tb_off;
         }
 
         // Check an entry whether it matches.
@@ -2330,6 +2420,7 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
             // found a longer match
             mp_match = mp;
             mp_match_len = keylen;
+            tb_match_len = tb_mlen;
           }
         } else {
           // No match; may have to check for termcode at next character.
@@ -2341,7 +2432,7 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
     // If no partly match found, use the longest full match.
     if (keylen != KEYLEN_PART_MAP && mp_match != NULL) {
       mp = mp_match;
-      keylen = mp_match_len;
+      keylen = tb_match_len;
     }
   }
 
@@ -2350,7 +2441,7 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
     // matches at least what the matching mapping matched:
     // Try to include the modifier into the key when mapping is allowed.
     if (no_mapping == 0 || allow_keys != 0) {
-      if (tb_c1 == K_SPECIAL
+      if (tb_b1 == K_SPECIAL
           && (typebuf.tb_len < 2
               || (typebuf.tb_buf[typebuf.tb_off + 1] == KS_MODIFIER && typebuf.tb_len < 4))) {
         // Incomplete modifier sequence: cannot decide whether to simplify yet.
@@ -2386,7 +2477,7 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
     } else {
       assert(mp != NULL);
       // When a matching mapping was found use that one.
-      keylen = mp_match_len;
+      keylen = tb_match_len;
     }
   }
 

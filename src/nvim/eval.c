@@ -212,9 +212,7 @@ void eval_clear(void)
 {
   evalvars_clear();
   free_scriptnames();  // must come after evalvars_clear().
-# ifdef HAVE_WORKING_LIBINTL
   free_locales();
-# endif
 
   // autoloaded script names
   free_autoload_scriptnames();
@@ -6162,6 +6160,8 @@ void ex_echo(exarg_T *eap)
     if (!eap->skip) {
       if (atstart) {
         atstart = false;
+        msg_ext_set_append(eap->cmdidx == CMD_echon);
+        msg_ext_no_fast();
         msg_ext_set_kind("echo");
         // Call msg_start() after eval1(), evaluating the expression
         // may cause a message to appear.
@@ -6178,7 +6178,6 @@ void ex_echo(exarg_T *eap)
         msg_puts_hl(" ", echo_hl_id, false);
       }
       char *tofree = encode_tv2echo(&rettv, NULL);
-      msg_ext_append = eap->cmdidx == CMD_echon;
       msg_multiline(cstr_as_string(tofree), echo_hl_id, true, false, &need_clear);
       xfree(tofree);
     }
@@ -6187,6 +6186,7 @@ void ex_echo(exarg_T *eap)
   }
   eap->nextcmd = check_nextcmd(arg);
   clear_evalarg(&evalarg, eap);
+  msg_ext_set_append(false);
 
   if (eap->skip) {
     emsg_skip--;
@@ -6262,11 +6262,13 @@ void ex_execute(exarg_T *eap)
 
   if (ret != FAIL && ga.ga_data != NULL) {
     if (eap->cmdidx == CMD_echomsg) {
+      msg_ext_no_fast();
       msg_ext_set_kind("echomsg");
       msg(ga.ga_data, echo_hl_id);
     } else if (eap->cmdidx == CMD_echoerr) {
       // We don't want to abort following commands, restore did_emsg.
       int save_did_emsg = did_emsg;
+      msg_ext_no_fast();
       emsg_multiline(ga.ga_data, "echoerr", HLF_E, true);
       if (!force_abort) {
         did_emsg = save_did_emsg;
@@ -6687,6 +6689,40 @@ char *prompt_get_input(buf_T *buf)
   return full_text;
 }
 
+/// Trim lines above the prompt to enforce 'scrollback' limit
+void prompt_trim_scrollback(buf_T *buf)
+{
+  if (buf->b_p_scbk <= 0) {
+    return;
+  }
+
+  linenr_T prompt_line = buf->b_prompt_start.mark.lnum;
+  linenr_T above_prompt = prompt_line - 1;
+  if (above_prompt <= (linenr_T)buf->b_p_scbk) {
+    return;
+  }
+
+  linenr_T to_delete = above_prompt - (linenr_T)buf->b_p_scbk;
+  for (linenr_T i = 0; i < to_delete; i++) {
+    ml_delete_buf(buf, 1, false);
+  }
+  mark_adjust_buf(buf, 1, to_delete, MAXLNUM, -to_delete, true,
+                  kMarkAdjustNormal, kExtmarkUndo);
+  deleted_lines_buf(buf, 1, to_delete);
+
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp->w_buffer == buf) {
+      wp->w_cursor.lnum = wp->w_cursor.lnum <= to_delete
+                          ? 1
+                          : wp->w_cursor.lnum - to_delete;
+      if (wp->w_cursor.lnum > wp->w_buffer->b_ml.ml_line_count) {
+        wp->w_cursor.lnum = wp->w_buffer->b_ml.ml_line_count;
+      }
+    }
+  }
+  check_cursor_col(curwin);
+}
+
 /// Invokes the user-defined callback defined for the current prompt-buffer.
 void prompt_invoke_callback(void)
 {
@@ -6727,6 +6763,8 @@ theend:
 
   curbuf->b_prompt_start.mark.lnum = curbuf->b_ml.ml_line_count;
   curbuf->b_prompt_append_new_line = true;
+
+  prompt_trim_scrollback(curbuf);
 }
 
 /// @return  true when the interrupt callback was invoked.

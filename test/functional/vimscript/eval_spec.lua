@@ -93,7 +93,7 @@ describe('backtick expansion', function()
   end)
 
   it('with shell=fish', function()
-    t.skip(fn.executable('fish') == 0, 'missing "fish" command')
+    t.skip(fn.executable('fish') == 0, 'N/A: missing "fish" command')
 
     command('set shell=fish')
     command(':silent args `echo ***2`')

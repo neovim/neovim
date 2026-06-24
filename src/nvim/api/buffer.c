@@ -278,6 +278,7 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
 
   // return sentinel value if the buffer isn't loaded
   if (b->b_ml.ml_mfp == NULL) {
+    init_line_array(lstate, &rv, 0, arena);
     return rv;
   }
 
@@ -289,12 +290,7 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
     return rv;
   });
 
-  if (start >= end) {
-    // Return 0-length array
-    return rv;
-  }
-
-  size_t size = (size_t)(end - start);
+  size_t size = end >= start ? (size_t)(end - start) : 0;
 
   init_line_array(lstate, &rv, size, arena);
 
@@ -438,6 +434,13 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buf, Integer start, Integer 
     linenr_T adjust = end > start ? MAXLNUM : 0;
     mark_adjust_buf(b, (linenr_T)start, (linenr_T)(end - 1), adjust, (linenr_T)extra,
                     true, kMarkAdjustApi, kExtmarkNOOP);
+
+    if (VIsual_active && b == curbuf && VIsual.lnum >= (linenr_T)start) {
+      if (VIsual.lnum >= (linenr_T)end) {
+        VIsual.lnum += (linenr_T)extra;
+      }
+      check_visual_pos();
+    }
 
     extmark_splice(b, (int)start - 1, 0, (int)(end - start), 0,
                    deleted_bytes, (int)new_len, 0, inserted_bytes,
@@ -666,6 +669,12 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buf, Integer start_row, Integ
     mark_adjust_buf(b, (linenr_T)start_row, (linenr_T)end_row - 1, adjust, (linenr_T)extra,
                     true, kMarkAdjustApi, kExtmarkNOOP);
 
+    if (VIsual_active && b == curbuf && VIsual_mode != Ctrl_V) {
+      fix_pos_col(b, &VIsual, (linenr_T)start_row, (colnr_T)start_col, (linenr_T)end_row,
+                  (colnr_T)end_col, (linenr_T)new_len, (colnr_T)last_item.size, 1);
+      check_visual_pos();
+    }
+
     extmark_splice(b, (int)start_row - 1, (colnr_T)start_col,
                    (int)(end_row - start_row), col_extent, old_byte,
                    (int)new_len - 1, (colnr_T)last_item.size, new_byte,
@@ -720,6 +729,7 @@ ArrayOf(String) nvim_buf_get_text(uint64_t channel_id, Buffer buf,
 
   // return sentinel value if the buffer isn't loaded
   if (b->b_ml.ml_mfp == NULL) {
+    init_line_array(lstate, &rv, 0, arena);
     return rv;
   }
 
@@ -965,17 +975,19 @@ void nvim_buf_set_name(Buffer buf, String name, Error *err)
     const bool is_curbuf = b == curbuf;
     const int save_acd = p_acd;
     if (!is_curbuf) {
-      // Temporarily disable 'autochdir' when setting file name for another buffer.
+      // Don't update 'title' and 'autochdir' when setting file name for another buffer.
+      RedrawingDisabled++;
       p_acd = false;
     }
 
     // Using aucmd_*: autocommands will be executed by rename_buffer
-    aco_save_T aco;
+    aco_save_T aco = { 0 };
     aucmd_prepbuf(&aco, b);
     ren_ret = rename_buffer(name.data);
     aucmd_restbuf(&aco);
 
     if (!is_curbuf) {
+      RedrawingDisabled--;
       p_acd = save_acd;
     }
   });
@@ -1181,7 +1193,8 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buf, String name, Arena *arena, Err
   return rv;
 }
 
-/// Call a function with buffer as temporary current buffer.
+/// Calls function `fn` in the context of buffer `buf` and returns its result (may be multiple
+/// values).
 ///
 /// This temporarily switches current buffer to `buf`.
 /// If the current window already shows `buf`, the window is not switched.
@@ -1193,12 +1206,11 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buf, String name, Arena *arena, Err
 /// This is useful e.g. to call Vimscript functions that only work with the
 /// current buffer/window currently, like `jobstart(…, {'term': v:true})`.
 ///
-/// @param buf     Buffer id, or 0 for current buffer
-/// @param fun        Function to call inside the buffer (currently Lua callable
-///                   only)
-/// @param[out] err   Error details, if any
-/// @return           Return value of function.
-Object nvim_buf_call(Buffer buf, LuaRef fun, Error *err)
+/// @param buf  Buffer id, or 0 for current buffer.
+/// @param fn   Lua function to call inside the buffer.
+/// @param err  Error details, if any.
+/// @return     Value(s) returned by `fn()`.
+Object nvim_buf_call(Buffer buf, LuaRef fn, lua_State *lstate, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_LUA_ONLY
 {
@@ -1207,18 +1219,17 @@ Object nvim_buf_call(Buffer buf, LuaRef fun, Error *err)
     return NIL;
   }
 
-  Object res = OBJECT_INIT;
   TRY_WRAP(err, {
-    aco_save_T aco;
+    aco_save_T aco = { 0 };
     aucmd_prepbuf(&aco, b);
 
     Array args = ARRAY_DICT_INIT;
-    res = nlua_call_ref(fun, NULL, args, kRetLuaref, NULL, err);
+    nlua_call_ref(fn, NULL, args, kRetMultiStack, NULL, err);
 
     aucmd_restbuf(&aco);
   });
 
-  return res;
+  return NIL;  // kRetMultiStack: values are already on the lua stack
 }
 
 /// @nodoc
@@ -1277,6 +1288,83 @@ static void fix_cursor(win_T *win, linenr_T lo, linenr_T hi, linenr_T extra)
   }
 }
 
+/// Adjust pos's col/lnum after text replacement between
+/// (start_row, start_col) and (end_row, end_col).
+static void fix_pos_col(buf_T *buf, pos_T *pos, linenr_T start_row, colnr_T start_col,
+                        linenr_T end_row, colnr_T end_col, linenr_T new_rows,
+                        colnr_T new_cols_at_end_row, colnr_T mode_col_adj)
+{
+  if (pos->lnum < start_row) {
+    return;
+  }
+
+  linenr_T old_rows = end_row - start_row + 1;
+  linenr_T lnum_shift = new_rows - old_rows;
+
+  if (pos->lnum > end_row) {
+    pos->lnum += lnum_shift;
+    return;
+  }
+
+  colnr_T end_row_change_start = new_rows == 1 ? start_col : 0;
+  colnr_T end_row_change_end = end_row_change_start + new_cols_at_end_row;
+
+  // check if pos is after replaced range or not
+  if (pos->lnum == end_row && pos->col + mode_col_adj > end_col) {
+    // if pos is after replaced range, it's shifted
+    // to keep its position the same, relative to end_col
+    pos->lnum += lnum_shift;
+    pos->col += end_row_change_end - end_col;
+    return;
+  }
+
+  // if pos is inside replaced range
+  // and the new range got smaller,
+  // it's shifted to keep it inside the new range
+  //
+  // if pos is before range or range did not
+  // get smaller, position is not changed
+
+  colnr_T old_coladd = pos->coladd;
+
+  // it's easier to work with a single value here.
+  // col and coladd are fixed by a later call
+  // to check_cursor_col when necessary
+  pos->col += pos->coladd;
+  pos->coladd = 0;
+
+  linenr_T new_end_row = start_row + new_rows - 1;
+
+  // make sure pos row is in the new row range
+  if (pos->lnum > new_end_row) {
+    pos->lnum = new_end_row;
+
+    // don't simply move pos up, but to the end
+    // of new_end_row, if it's not at or after
+    // it already (in case virtualedit is active)
+    // column might be additionally adjusted below
+    // to keep it inside col range if needed
+    colnr_T len = ml_get_buf_len(buf, new_end_row);
+    if (pos->col < len) {
+      pos->col = len;
+    }
+  }
+
+  // if pos is at the last row and
+  // it wasn't after eol before, move it exactly
+  // to end_row_change_end
+  if (pos->lnum == new_end_row
+      && pos->col > end_row_change_end && old_coladd == 0) {
+    pos->col = end_row_change_end;
+
+    // make sure pos is inside range, not after it,
+    // except when doing so would move it before new range
+    if (pos->col - mode_col_adj >= end_row_change_start) {
+      pos->col -= mode_col_adj;
+    }
+  }
+}
+
 /// Fix cursor position after replacing text
 /// between (start_row, start_col) and (end_row, end_col).
 ///
@@ -1284,66 +1372,10 @@ static void fix_cursor(win_T *win, linenr_T lo, linenr_T hi, linenr_T extra)
 static void fix_cursor_cols(win_T *win, linenr_T start_row, colnr_T start_col, linenr_T end_row,
                             colnr_T end_col, linenr_T new_rows, colnr_T new_cols_at_end_row)
 {
-  colnr_T mode_col_adj = win == curwin && (State & MODE_INSERT) ? 0 : 1;
-
-  colnr_T end_row_change_start = new_rows == 1 ? start_col : 0;
-  colnr_T end_row_change_end = end_row_change_start + new_cols_at_end_row;
-
-  // check if cursor is after replaced range or not
-  if (win->w_cursor.lnum == end_row && win->w_cursor.col + mode_col_adj > end_col) {
-    // if cursor is after replaced range, it's shifted
-    // to keep it's position the same, relative to end_col
-
-    linenr_T old_rows = end_row - start_row + 1;
-    win->w_cursor.lnum += new_rows - old_rows;
-    win->w_cursor.col += end_row_change_end - end_col;
-  } else {
-    // if cursor is inside replaced range
-    // and the new range got smaller,
-    // it's shifted to keep it inside the new range
-    //
-    // if cursor is before range or range did not
-    // got smaller, position is not changed
-
-    colnr_T old_coladd = win->w_cursor.coladd;
-
-    // it's easier to work with a single value here.
-    // col and coladd are fixed by a later call
-    // to check_cursor_col when necessary
-    win->w_cursor.col += win->w_cursor.coladd;
-    win->w_cursor.coladd = 0;
-
-    linenr_T new_end_row = start_row + new_rows - 1;
-
-    // make sure cursor row is in the new row range
-    if (win->w_cursor.lnum > new_end_row) {
-      win->w_cursor.lnum = new_end_row;
-
-      // don't simply move cursor up, but to the end
-      // of new_end_row, if it's not at or after
-      // it already (in case virtualedit is active)
-      // column might be additionally adjusted below
-      // to keep it inside col range if needed
-      colnr_T len = ml_get_buf_len(win->w_buffer, new_end_row);
-      if (win->w_cursor.col < len) {
-        win->w_cursor.col = len;
-      }
-    }
-
-    // if cursor is at the last row and
-    // it wasn't after eol before, move it exactly
-    // to end_row_change_end
-    if (win->w_cursor.lnum == new_end_row
-        && win->w_cursor.col > end_row_change_end && old_coladd == 0) {
-      win->w_cursor.col = end_row_change_end;
-
-      // make sure cursor is inside range, not after it,
-      // except when doing so would move it before new range
-      if (win->w_cursor.col - mode_col_adj >= end_row_change_start) {
-        win->w_cursor.col -= mode_col_adj;
-      }
-    }
-  }
+  colnr_T mode_col_adj = (win == curwin && (State & MODE_INSERT)) ? 0 : 1;
+  fix_pos_col(win->w_buffer, &win->w_cursor,
+              start_row, start_col, end_row, end_col,
+              new_rows, new_cols_at_end_row, mode_col_adj);
 
   check_cursor_col(win);
   changed_cline_bef_curs(win);

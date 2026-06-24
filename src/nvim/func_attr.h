@@ -228,6 +228,11 @@
 # define FUNC_API_SINCE(X)
 /// API function deprecated since the given API level.
 # define FUNC_API_DEPRECATED_SINCE(X)
+
+# define FUNC_API_REMOTE_IMPL
+# define FUNC_API_CLIENT_IMPL
+# define FUNC_API_CLIENT_IGNORE
+# define FUNC_API_COMPOSITOR_IMPL
 #endif
 
 #ifdef DEFINE_FUNC_ATTRIBUTES

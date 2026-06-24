@@ -215,6 +215,9 @@ func Test_lcd_win_execute()
 endfunc
 
 func Test_cd_from_non_existing_dir()
+  if has('sun')
+    throw 'Skipped: Solaris does not allow deleting the current working directory'
+  endif
   CheckNotMSWindows
 
   let saveddir = getcwd()
@@ -267,7 +270,7 @@ func Test_cd_completion()
         let dir = d
         " Yay! We found a suitable dir!
         break
-      catch /:E472:/
+      catch /:\(E472\|E344\):/
         " Just skip directories where "cd" fails
         continue
       finally

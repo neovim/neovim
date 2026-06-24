@@ -1,4 +1,5 @@
 local api = vim.api
+local nvim_on = require('vim._core.util').nvim_on
 
 -- TODO(lewis6991): deprecate some top level functions in favour of the submodule version
 -- e.g. vim.diagnostic.get_namespace() -> vim.diagnostic.namespace.get()
@@ -51,8 +52,9 @@ local M = vim._defer_require('vim.diagnostic', {
 
 --- [diagnostic-structure]()
 ---
---- Diagnostics use the same indexing as the rest of the Nvim API (i.e. 0-based
---- rows and columns). |api-indexing|
+--- Diagnostics use |api-indexing| (i.e. 0-based rows and columns). See also |vim.pos| and
+--- |vim.range| to convert positions from other systems.
+---
 --- @class vim.Diagnostic : vim.Diagnostic.Set
 --- @field bufnr integer Buffer number
 --- @field end_lnum integer The final line of the diagnostic (0-indexed)
@@ -219,8 +221,8 @@ local M = vim._defer_require('vim.diagnostic', {
 ---
 --- Show or hide diagnostics based on the current cursor line.  If `true`, only diagnostics on the
 --- current cursor line are shown.  If `false`, all diagnostics are shown except on the current
---- cursor line.  If `nil`, all diagnostics are shown.
---- (default `nil`)
+--- cursor line.  If `nil`, all diagnostics are shown. Updated on |CursorHold|, see 'updatetime'.
+--- (default: `nil`)
 --- @field current_line? boolean
 ---
 --- Include the diagnostic source in virtual text. Use `'if_many'` to only
@@ -274,7 +276,7 @@ local M = vim._defer_require('vim.diagnostic', {
 --- severity |diagnostic-severity|
 --- @field severity? vim.diagnostic.SeverityFilter
 ---
---- Only show diagnostics for the current line.
+--- Only show diagnostics for the current line. Updated on |CursorHold|, see 'updatetime'.
 --- (default: `false`)
 --- @field current_line? boolean
 ---
@@ -282,6 +284,10 @@ local M = vim._defer_require('vim.diagnostic', {
 --- If the return value is nil, the diagnostic is not displayed by the handler.
 --- Else the output text is used to display the diagnostic.
 --- @field format? fun(diagnostic:vim.Diagnostic): string?
+---
+--- See `virt_lines_overflow` in |nvim_buf_set_extmark()|.
+--- (default: `auto`)
+--- @field overflow? 'trunc'|'scroll'|'wrap'|'auto'
 
 --- @class vim.diagnostic.Opts.Signs
 ---
@@ -567,7 +573,7 @@ end
 --- Limit diagnostics to one or more namespaces.
 --- @field namespace? integer[]|integer
 ---
---- Limit diagnostics to those spanning the specified line number.
+--- Limit diagnostics to those spanning the specified line number (0-indexed, see |diagnostic-structure|).
 --- @field lnum? integer
 ---
 --- See |diagnostic-severity|.
@@ -1122,8 +1128,8 @@ function M.status(buf)
   if type(format) == 'function' then
     result_str = format(counts)
   else
-    local signs = M._config.get_resolved_options(vim.diagnostic.config(), nil, buf).signs.text
-      or default_status_signs
+    local resolved_signs = M._config.get_resolved_options(vim.diagnostic.config(), nil, buf).signs
+    local signs = (type(resolved_signs) == 'table' and resolved_signs.text) or default_status_signs
     result_str = vim
       .iter(pairs(counts))
       :map(function(level, value)
@@ -1139,14 +1145,12 @@ function M.status(buf)
   return result_str
 end
 
-api.nvim_create_autocmd('DiagnosticChanged', {
-  group = api.nvim_create_augroup('nvim.diagnostic.status', {}),
-  callback = function(ev)
-    if api.nvim_buf_is_loaded(ev.buf) then
-      api.nvim__redraw({ buf = ev.buf, statusline = true })
-    end
-  end,
+nvim_on('DiagnosticChanged', api.nvim_create_augroup('nvim.diagnostic.status', {}), {
   desc = 'diagnostics component for the statusline',
-})
+}, function(ev)
+  if vim.fn.win_gettype(vim.fn.bufwinid(ev.buf)) == '' then
+    api.nvim__redraw({ buf = ev.buf, statusline = true })
+  end
+end)
 
 return M

@@ -1,4 +1,5 @@
 local api = vim.api
+local nvim_on = require('vim._core.util').nvim_on
 
 local severity_module = require('vim.diagnostic._severity')
 
@@ -14,13 +15,9 @@ setmetatable(diagnostic_cache, {
   --- @param bufnr integer
   __index = function(t, bufnr)
     assert(bufnr > 0, 'Invalid buffer number')
-    api.nvim_create_autocmd('BufWipeout', {
-      group = group,
-      buf = bufnr,
-      callback = function()
-        rawset(t, bufnr, nil)
-      end,
-    })
+    nvim_on('BufWipeout', group, { buf = bufnr }, function()
+      rawset(t, bufnr, nil)
+    end)
     t[bufnr] = {}
     return t[bufnr]
   end,
@@ -50,13 +47,12 @@ local function once_buf_loaded(bufnr, fn)
   if api.nvim_buf_is_loaded(bufnr) then
     fn()
   else
-    return api.nvim_create_autocmd('BufRead', {
+    return nvim_on('BufRead', nil, {
       buf = bufnr,
       once = true,
-      callback = function()
-        fn()
-      end,
-    })
+    }, function()
+      fn()
+    end)
   end
 end
 

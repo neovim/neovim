@@ -45,9 +45,9 @@ hashpipe:write([[
 #include "nvim/quickfix.h"
 #include "nvim/runtime.h"
 #include "nvim/search.h"
+#include "nvim/sign.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"
-#include "nvim/sign.h"
 #include "nvim/testing.h"
 #include "nvim/undo.h"
 

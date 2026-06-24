@@ -20,7 +20,9 @@
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
+#include "nvim/indent.h"
 #include "nvim/marktree.h"
+#include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
 #include "nvim/move.h"
@@ -30,13 +32,13 @@
 
 #include "decoration.c.generated.h"
 
-uint32_t decor_freelist = UINT32_MAX;
+static uint32_t decor_freelist = UINT32_MAX;
 
 // Decorations might be requested to be deleted in a callback in the middle of redrawing.
 // In this case, there might still be live references to the memory allocated for the decoration.
 // Keep a "to free" list which can be safely processed when redrawing is done.
-DecorVirtText *to_free_virt = NULL;
-uint32_t to_free_sh = UINT32_MAX;
+static DecorVirtText *to_free_virt = NULL;
+static uint32_t to_free_sh = UINT32_MAX;
 
 /// Add highlighting to a buffer, bounded by two cursor positions,
 /// with an offset.
@@ -651,7 +653,7 @@ void decor_range_add_sh(DecorState *state, int start_row, int start_col, int end
     decor_range_insert(state, &range);
   }
 
-  if (sh->flags & (kSHUIWatched)) {
+  if (sh->flags & kSHUIWatched) {
     range.kind = kDecorKindUIWatched;
     range.data.ui.ns_id = ns;
     range.data.ui.mark_id = mark_id;
@@ -898,7 +900,7 @@ bool decor_conceal_line(win_T *wp, int row, bool check_cursor)
     if (mark.pos.row > row) {
       break;
     }
-    if (mt_conceal_lines(mark) && ns_in_win(pair.start.ns, wp)) {
+    if (mt_conceal_lines(mark) && ns_in_win(mark.ns, wp)) {
       return true;
     }
     marktree_itr_next_filter(wp->w_buffer->b_marktree, itr, row + 1, 0, conceal_filter);
@@ -1122,7 +1124,66 @@ bool decor_redraw_eol(win_T *wp, DecorState *state, int *eol_attr, int eol_col)
 
 static const uint32_t lines_filter[kMTMetaCount] = {[kMTMetaLines] = kMTFilterSelect };
 
+static inline bool decor_virt_line_wrap(win_T *wp, VirtLineOverflow overflow)
+{
+  return overflow == kVLOverflowWrap || (overflow == kVLOverflowAuto && wp->w_p_wrap);
+}
+
+/// Counts the number of rows occupied by a virtual line. When skip_cells is non-NULL, sets it to
+/// the cell offset where target_row begins.
+///
+/// @param target_row Row relative to the virtual line that skip_cells is computed for.
+/// @param skip_cells Cell offset for the target_row. Pass NULL when only the row count is needed.
+///
+/// @return Number of rows occupied by the virtual line.
+int decor_virt_line_rows(win_T *wp, const struct virt_line *vl, int target_row, int *skip_cells)
+{
+  if (skip_cells != NULL) {
+    *skip_cells = 0;
+  }
+  if (!decor_virt_line_wrap(wp, vl->overflow)) {
+    return 1;
+  }
+  int row_width = wp->w_view_width - ((vl->flags & kVLLeftcol) ? 0 : win_col_off(wp));
+  if (row_width <= 0) {
+    return 1;
+  }
+  VirtText vt = vl->line;
+  buf_T *buf = wp->w_buffer;
+  int vcol = 0;
+  int row_cells = 0;
+  int row = 0;
+  for (int i = 0; i < (int)kv_size(vt); i++) {
+    const char *virt_str = kv_A(vt, i).text;
+    if (virt_str == NULL) {
+      continue;
+    }
+    while (*virt_str != NUL) {
+      int bytes_to_next_char = utfc_ptr2len(virt_str);
+      // Need to compute cell width due to TAB & double width cell chars
+      int cells = (*virt_str == TAB)
+                  ? tabstop_padding(vcol, buf->b_p_ts, buf->b_p_vts_array)
+                  : utf_ptr2cells(virt_str);
+      virt_str += bytes_to_next_char;
+      // Wrap before total row cell length would exceed the window size
+      // to protect against double width cell chars being split at the boundary
+      if (row_cells + cells > row_width) {
+        row++;
+        if (skip_cells != NULL && row == target_row) {
+          *skip_cells = vcol;
+        }
+        row_cells = 0;
+      }
+      row_cells += cells;
+      vcol += cells;
+    }
+  }
+
+  return row + 1;
+}
+
 /// @param apply_folds Only count virtual lines that are not in folds.
+/// @return Number of rows occupied by the virtual lines.
 int decor_virt_lines(win_T *wp, int start_row, int end_row, int *num_below, VirtLines *lines,
                      bool apply_folds)
 {
@@ -1141,25 +1202,40 @@ int decor_virt_lines(win_T *wp, int start_row, int end_row, int *num_below, Virt
 
   assert(start_row >= 0);
 
-  int virt_lines = 0;
+  int n_virt_lines = 0;
   while (true) {
     MTKey mark = marktree_itr_current(itr);
     DecorVirtText *vt = mt_decor_virt(mark);
     if (!mt_invalid(mark) && ns_in_win(mark.ns, wp)) {
       while (vt) {
-        if (vt->flags & kVTIsLines) {
+        VirtLines virt_lines = vt->data.virt_lines;
+        if ((vt->flags & kVTIsLines) && kv_size(virt_lines) > 0) {
           bool above = vt->flags & kVTLinesAbove;
           int mrow = mark.pos.row;
           int draw_row = mrow + (above ? 0 : 1);
           if (draw_row >= start_row && draw_row < end_row
               && (!apply_folds || !(hasFolding(wp, mrow + 1, NULL, NULL)
                                     || decor_conceal_line(wp, mrow, false)))) {
-            virt_lines += (int)kv_size(vt->data.virt_lines);
-            if (lines) {
-              kv_splice(*lines, vt->data.virt_lines);
+            // All virtual lines from the same extmark have the same overflow flag.
+            if (decor_virt_line_wrap(wp, kv_A(virt_lines, 0).overflow)) {
+              // Iterates over each virtual line summing number of rows.
+              // Rows belonging to previous line are accumulated in num_below.
+              for (int i = 0; i < (int)kv_size(virt_lines); i++) {
+                int rows = decor_virt_line_rows(wp, &kv_A(virt_lines, i), 0, NULL);
+                n_virt_lines += rows;
+                if (num_below && !above) {
+                  (*num_below) += rows;
+                }
+              }
+            } else {
+              // If virtual lines don't wrap there is no need to iterate over them.
+              n_virt_lines += (int)kv_size(virt_lines);
+              if (num_below && !above) {
+                (*num_below) += (int)kv_size(virt_lines);
+              }
             }
-            if (num_below && !above) {
-              (*num_below) += (int)kv_size(vt->data.virt_lines);
+            if (lines) {
+              kv_splice(*lines, virt_lines);
             }
           }
         }
@@ -1172,7 +1248,7 @@ int decor_virt_lines(win_T *wp, int start_row, int end_row, int *num_below, Virt
     }
   }
 
-  return virt_lines;
+  return n_virt_lines;
 }
 
 /// This assumes maximum one entry of each kind, which will not always be the case.
@@ -1200,7 +1276,7 @@ void decor_to_dict_legacy(Dict *dict, DecorInline decor, bool hl_name, Arena *ar
     uint32_t idx = decor.data.ext.sh_idx;
     while (idx != DECOR_ID_INVALID) {
       DecorSignHighlight *sh = &kv_A(decor_items, idx);
-      if (sh->flags & (kSHIsSign)) {
+      if (sh->flags & kSHIsSign) {
         sh_sign = *sh;
       } else {
         sh_hl = *sh;
@@ -1262,16 +1338,27 @@ void decor_to_dict_legacy(Dict *dict, DecorInline decor, bool hl_name, Arena *ar
   if (virt_lines) {
     Array all_chunks = arena_array(arena, kv_size(virt_lines->data.virt_lines));
     int virt_lines_flags = 0;
+    VirtLineOverflow virt_lines_overflow = kVLOverflowTrunc;
     for (size_t i = 0; i < kv_size(virt_lines->data.virt_lines); i++) {
       virt_lines_flags = kv_A(virt_lines->data.virt_lines, i).flags;
+      virt_lines_overflow = kv_A(virt_lines->data.virt_lines, i).overflow;
       Array chunks = virt_text_to_array(kv_A(virt_lines->data.virt_lines, i).line, hl_name, arena);
       ADD(all_chunks, ARRAY_OBJ(chunks));
     }
     PUT_C(*dict, "virt_lines", ARRAY_OBJ(all_chunks));
     PUT_C(*dict, "virt_lines_above", BOOLEAN_OBJ(virt_lines->flags & kVTLinesAbove));
     PUT_C(*dict, "virt_lines_leftcol", BOOLEAN_OBJ(virt_lines_flags & kVLLeftcol));
-    PUT_C(*dict, "virt_lines_overflow",
-          CSTR_AS_OBJ(virt_lines_flags & kVLScroll ? "scroll" : "trunc"));
+
+    char *overflow = "trunc";
+    if (virt_lines_overflow == kVLOverflowScroll) {
+      overflow = "scroll";
+    } else if (virt_lines_overflow == kVLOverflowWrap) {
+      overflow = "wrap";
+    } else if (virt_lines_overflow == kVLOverflowAuto) {
+      overflow = "auto";
+    }
+
+    PUT_C(*dict, "virt_lines_overflow", CSTR_AS_OBJ(overflow));
     priority = virt_lines->priority;
   }
 

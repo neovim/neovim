@@ -5,10 +5,7 @@
 " Contributors:      Riley Bruins <ribru17@gmail.com> ('commentstring')
 "                    @Konfekt
 "                    @tpope (s:Help())
-" Last Change:       2025 Aug 07
-" 2025 Aug 16 by Vim Project set com depending on Vim9 or legacy script
-" 2026 Jan 26 by Vim Project set path to common Vim directories #19219
-" 2026 Feb 03 by Vim Project update s:Help to improve detecting functions #19320
+" Last Change:       2026 May 31
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -163,15 +160,17 @@ if exists("loaded_matchit")
   \ '\<aug\%[roup]\s\+\%(END\>\)\@!\S:\<aug\%[roup]\s\+END\>,' ..
   \ '\<class\>:\<endclass\>,' ..
   \ '\<interface\>:\<endinterface\>,' ..
-  \ '\<enum\>:\<endenum\>'
+  \ '\<enum\>:\<endenum\>,' ..
+  "\ :let-heredoc
+  \ '\%(=<<\s\+\%(\%(trim\s\+eval\|eval\s\+trim\|trim\|eval\)\s\+\)\=\)\@16<=\(\l\@!\S\+\):\%(^\s*\)\@<=\1$'
 
   " Ignore syntax region commands and settings, any 'en*' would clobber
   " if-endif.
   " - set spl=de,en
   " - au! FileType javascript syntax region foldBraces start=/{/ end=/}/ …
-  " Also ignore here-doc and dictionary keys (vimVar).
+  " Also ignore heredoc content and dictionary keys (vimVar).
   let b:match_skip = 'synIDattr(synID(line("."), col("."), 1), "name")
-                    \ =~? "comment\\|string\\|vimSynReg\\|vimSet\\|vimLetHereDoc\\|vimVar"'
+                    \ =~? "comment\\|string\\|vimSynReg\\|vimSet\\|vimLetHeredoc$\\|vimVar"'
 endif
 
 let &cpo = s:cpo_save

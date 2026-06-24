@@ -7,11 +7,41 @@ source term_util.vim
 
 func Test_abbreviation()
   new
-  " abbreviation with 0x80 should work
+
+  " abbreviation with 0x80 (full-id)
   inoreab чкпр   vim
   call feedkeys("Goчкпр \<Esc>", "xt")
   call assert_equal('vim ', getline('$'))
   iunab чкпр
+
+  " abbreviation with 0x80 (non-id)
+  inoreab abc⁀ abc^
+  inoreab ⁀ ^
+  call feedkeys("Goabc⁀ def⁀ ⁀ \<Esc>", "xt")
+  call assert_equal('abc^ def⁀ ^ ', getline('$'))
+  iunab abc⁀
+  iunab ⁀
+
+  " abbreviation with 0x9b (non-id)
+  inoreab abc； abc;
+  inoreab ； ;
+  call feedkeys("Goabc； def； ； \<Esc>", "xt")
+  call assert_equal('abc; def； ; ', getline('$'))
+  iunab abc；
+  iunab ；
+
+  " abbreviation with composing chars (end-id)
+  inoreab ..ã a^~
+  inoreab ..β̃ β^~
+  inoreab ..π̃ π^~
+  inoreab ..Λ̃ Λ^~
+  call feedkeys("Go..ã ..β̃ ..π̃ ..Λ̃ \<Esc>", "xt")
+  call assert_equal('a^~ β^~ π^~ Λ^~ ', getline('$'))
+  iunab ..ã
+  iunab ..β̃
+  iunab ..π̃
+  iunab ..Λ̃
+
   bwipe!
 endfunc
 

@@ -53,7 +53,7 @@ if(ENABLE_UNIBILIUM)
 endif()
 
 if(ENABLE_WASMTIME)
-  find_package(Wasmtime 36.0.6 EXACT REQUIRED)
+  find_package(Wasmtime 36.0 EXACT REQUIRED)
   target_link_libraries(main_lib INTERFACE wasmtime)
   target_compile_definitions(nvim_bin PRIVATE HAVE_WASMTIME)
 endif()

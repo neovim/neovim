@@ -326,6 +326,9 @@ typedef struct {
   linenr_T b_sst_check_lnum;
   disptick_T b_sst_lasttick;    // last display tick
 
+  // Cache for in_id_list(); see idl_cache_T in syntax.c.
+  void *b_idlist_cache;
+
   // for spell checking
   garray_T b_langp;           // list of pointers to slang_T, see spell.c
   bool b_spell_ismw[256];     // flags: is midword char
@@ -1251,6 +1254,8 @@ struct window_S {
   // This is related to positions in the window, not in the display or
   // buffer, thus w_wrow is relative to w_winrow.
   int w_wrow, w_wcol;               // cursor position in window
+  int w_wcol_conceal_off;           // screen cells concealed before w_wcol on
+                                    // the cursor's screen line, set by win_line()
 
   linenr_T w_botline;               // number of the line below the bottom of
                                     // the window
@@ -1389,6 +1394,6 @@ struct window_S {
   size_t w_status_click_defs_size;              // Size of the w_status_click_defs array
   StlClickDefinition *w_winbar_click_defs;      // Window bar click definitions
   size_t w_winbar_click_defs_size;              // Size of the w_winbar_click_defs array
-  StlClickDefinition *w_statuscol_click_defs;   // Status column click definitions
-  size_t w_statuscol_click_defs_size;           // Size of the w_statuscol_click_defs array
+  // Map of statuscolumn click definitions, indexed by v:lnum and v:virtnum.
+  Map(int, StcClicks) w_statuscol_click_defs[1];
 };

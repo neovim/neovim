@@ -105,7 +105,7 @@ describe('shell command :!', function()
   end)
 
   it('handles control codes', function()
-    skip(is_os('win'), 'missing printf')
+    skip(is_os('win'), 'N/A: missing printf')
     local screen = Screen.new(50, 4)
     -- Print TAB chars. #2958
     feed([[:!printf '1\t2\t3'<CR>]])

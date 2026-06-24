@@ -48,16 +48,6 @@ Copyright: Copyright (C) 2005-2015 Charles E Campbell	 *zip-copyright*
    If this variable exists and is true, the file window will not be
    automatically maximized when opened.
 
-							*g:zip_shq*
-   Different operating systems may use one or more shells to execute
-   commands.  Zip will try to guess the correct quoting mechanism to
-   allow spaces and whatnot in filenames; however, if it is incorrectly
-   guessing the quote to use for your setup, you may use >
-	g:zip_shq
-<   which by default is a single quote under Unix (') and a double quote
-   under Windows (").  If you'd rather have no quotes, simply set
-   g:zip_shq to the empty string (let g:zip_shq= "") in your <.vimrc>.
-
 							*g:zip_unzipcmd*
    Use this option to specify the program which does the duty of "unzip".
    It's used during browsing. By default: >
@@ -114,9 +104,9 @@ Copyright: Copyright (C) 2005-2015 Charles E Campbell	 *zip-copyright*
    should be treated as zip files.
 
    Alternatively, one may change *g:zipPlugin_ext* in one's .vimrc.
-   Currently (as of October 2025) it holds: >
+   Currently (as of May 2026) it holds: >
 
-        let g:zipPlugin_ext='*.aar,*.apk,*.celzip,*.crtx,*.docm,*.docx,
+        let g:zipPlugin_ext='*.aar,*.apk,*.cbz,*.celzip,*.crtx,*.docm,*.docx,
        \ *.dotm,*.dotx,*.ear,*.epub,*.gcsx,*.glox,*.gqsx,*.ja,*.jar,*.kmz,
        \ *.odb,*.odc,*.odf,*.odg,*.odi,*.odm,*.odp,*.ods,*.odt,*.otc,*.otf,
        \ *.otg,*.oth,*.oti,*.otp,*.ots,*.ott,*.oxt,*.pkpass,*.potm,*.potx,

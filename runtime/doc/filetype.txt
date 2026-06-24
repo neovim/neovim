@@ -137,6 +137,7 @@ variables can be used to overrule the filetype used for certain extensions:
 
 	file name	variable ~
 	`*.app`		g:filetype_app
+	`*.as`		g:filetype_as
 	`*.asa`		g:filetype_asa		|ft-aspperl-syntax|
 						|ft-aspvbs-syntax|
 	`*.asm`		g:asmsyntax		|ft-asm-syntax|
@@ -158,6 +159,7 @@ variables can be used to overrule the filetype used for certain extensions:
 	`*.int`		g:filetype_int
 	`*.lsl`		g:filetype_lsl
 	`*.m`		g:filetype_m		|ft-mathematica-syntax|
+	`*.mm`		g:filetype_mm
 	`*.mac`		g:filetype_mac
 	`*[mM]makefile,*.mk,*.mak,[mM]akefile*`
 			g:make_flavor		|ft-make-syntax|
@@ -175,6 +177,7 @@ variables can be used to overrule the filetype used for certain extensions:
 	`*.sys`		g:filetype_sys
 	`*.sh`		g:bash_is_sh		|ft-sh-syntax|
 	`*.tex`		g:tex_flavor		|ft-tex-plugin|
+	`*.tf`		g:filetype_tf
 	`*.typ`		g:filetype_typ
 	`*.v`		g:filetype_v
 	`*.w`		g:filetype_w		|ft-cweb-syntax|
@@ -444,6 +447,61 @@ Support for features specific to GNU Awk, like @include, can be enabled by
 setting: >
 	:let g:awk_is_gawk = 1
 
+BEANCOUNT						*ft-beancount-plugin*
+
+Beancount omni-completion |compl-omni| is provided by beancountcomplete.vim,
+if enabled with g:beancount_completion_enable.
+
+To enable completion of account names, set: >
+	let g:beancount_completion_enable = 1
+<
+Note: Enabling this may cause beancount to load additional plugin files.  Only
+enable for code you trust.
+
+Variables:
+g:beancount_account_completion
+			Specify the completion pattern format for the account
+			name.  Can be either "default" or "chunks".
+			Default value: "default"
+
+g:beancount_completion_enable
+			Enable omni-completion |compl-omni| for accounts.
+			Default value: 0
+
+g:beancount_detailed_first
+			If non-zero, accounts higher down the hierarchy will
+			be listed first as completions.
+			Default value: 0
+
+g:beancount_separator_col
+			The column that the decimal separator is aligned to.
+			Default value: 50
+
+b:beancount_root
+			Set the root Beancount file.  This is used to gather
+			values for the completion.
+			If not set (default), the current file will be used.
+
+
+Commands:
+:AlignCommodity		Adds spaces between an account and commodity so that
+			the decimal points of the commodities all occur in the
+			column given by g:beancount_separator_col.  If an
+			amount has no decimal point, the imaginary decimal
+			point to the right of the least significant digit will
+			align.
+
+			The command acts on a range, with the default being
+			the current line.  If the cursor happens to be inside
+			that range and to the right of the account name, the
+			cursor will be pushed to the right the appropriate
+			amount, so that it remains on the same character.
+
+			The script assumes the use of spaces for alignment.
+			It does not understand tabs.
+
+:GetContext		Uses bean-doctor context to display the context of the
+			current line.
 
 CHANGELOG						*ft-changelog-plugin*
 
@@ -781,6 +839,12 @@ For example, to use Lua 5.1, set the variables like this: >
 	let g:lua_version = 5
 	let g:lua_subversion = 1
 <
+LUAU					*ft-luau-plugin* *g:luau_folding*
+
+You can enable folding of Luau block constructs using |fold-expr| by: >
+
+	let g:luau_folding = 1
+<
 MAIL							*ft-mail-plugin*
 
 Options:
@@ -909,6 +973,20 @@ By default the following options are set, in accordance with PEP8: >
 To disable this behavior, set the following variable in your vimrc: >
 
 	let g:python_recommended_style = 0
+<
+Python omni-completion |compl-omni| is provided by python3complete.vim (or
+pythoncomplete.vim) for Nvim with the |python3| provider.
+By default it does not inspect the import / from statements found in the
+buffer. This means completion of names defined in the buffer itself (classes,
+functions, variables) works, but completion of members of imported modules is
+not offered.
+
+To enable completion of imported module members, set: >
+	let g:pythoncomplete_allow_import = 1
+<
+WARNING: enabling this causes omni-completion to execute the import statements
+found in the buffer through Python's import machinery, which runs the imported
+modules' top-level code. Only enable this for code you trust.
 
 POWERSHELL
 

@@ -57,9 +57,10 @@ typedef enum {
   kOptScopeGlobal = 0,  ///< Request global option value
   kOptScopeWin,      ///< Request window-local option value
   kOptScopeBuf,      ///< Request buffer-local option value
+  kOptScopeTab,      ///< Request tabpage-local option value
 } OptScope;
 /// Always update this whenever a new option scope is added.
-#define kOptScopeSize (kOptScopeBuf + 1)
+#define kOptScopeSize (kOptScopeTab + 1)
 typedef uint8_t OptScopeFlags;
 
 typedef union {

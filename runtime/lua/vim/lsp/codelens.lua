@@ -188,6 +188,14 @@ function Provider:automatic_request()
   end, 200)
 end
 
+---@package
+---@param client_id integer
+---@param on_response function
+function Provider:refresh(client_id, on_response)
+  self:reset_timer()
+  self:request(client_id, on_response)
+end
+
 ---@private
 ---@param client vim.lsp.Client
 ---@param unresolved_lens lsp.CodeLens
@@ -490,7 +498,7 @@ function M.run(opts)
 
   local winid = api.nvim_get_current_win()
   local bufnr = api.nvim_win_get_buf(winid)
-  local pos = vim.pos.cursor(bufnr, api.nvim_win_get_cursor(winid))
+  local pos = vim.pos.cursor(winid)
   local params = {
     textDocument = vim.lsp.util.make_text_document_params(bufnr),
   }
@@ -511,15 +519,12 @@ function M.on_refresh(err, _, ctx)
   for bufnr, provider in pairs(Provider.active) do
     for client_id in pairs(provider.client_state) do
       if client_id == ctx.client_id then
-        -- Do nothing if a request is already scheduled.
-        if not provider.timer then
-          provider:request(client_id, function()
-            if api.nvim_buf_is_valid(bufnr) then
-              tableclear(provider.row_version)
-              vim.api.nvim__redraw({ buf = bufnr, valid = true, flush = false })
-            end
-          end)
-        end
+        provider:refresh(client_id, function()
+          if api.nvim_buf_is_valid(bufnr) then
+            tableclear(provider.row_version)
+            vim.api.nvim__redraw({ buf = bufnr, valid = true, flush = false })
+          end
+        end)
       end
     end
   end

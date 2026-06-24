@@ -21,11 +21,10 @@ end
 --- @param condition boolean
 --- @param value any
 --- @param context any
---- @param fallback string
-local function assert_value(condition, value, context, fallback)
+--- @param message string
+local function assert_value(condition, value, context, message)
   if not condition then
-    local message = context ~= nil and tostring(context) or fallback
-    error(message, 0)
+    error((context ~= nil and tostring(context) .. ': ' or '') .. message, 0)
   end
   return value
 end

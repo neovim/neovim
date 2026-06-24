@@ -945,7 +945,7 @@ static void shada_read(FileDescriptor *const sd_reader, const int flags)
   ShadaEntry cur_entry;
   Set(ptr_t) cl_bufs = SET_INIT;
   PMap(cstr_t) fname_bufs = MAP_INIT;
-  Set(cstr_t) oldfiles_set = SET_INIT;
+  Set(path_t) oldfiles_set = SET_INIT;
   if (get_old_files && (oldfiles_list == NULL || force)) {
     oldfiles_list = tv_list_alloc(kListLenUnknown);
     set_vim_var_list(VV_OLDFILES, oldfiles_list);
@@ -1154,7 +1154,7 @@ static void shada_read(FileDescriptor *const sd_reader, const int flags)
       break;
     case kSDItemChange:
     case kSDItemLocalMark: {
-      if (get_old_files && !set_has(cstr_t, &oldfiles_set, cur_entry.data.filemark.fname)) {
+      if (get_old_files && !set_has(path_t, &oldfiles_set, cur_entry.data.filemark.fname)) {
         char *fname = cur_entry.data.filemark.fname;
         if (want_marks) {
           // Do not bother with allocating memory for the string if already
@@ -1162,7 +1162,7 @@ static void shada_read(FileDescriptor *const sd_reader, const int flags)
           // want_marks is set because this way it may be used for a mark.
           fname = xstrdup(fname);
         }
-        set_put(cstr_t, &oldfiles_set, fname);
+        set_put(path_t, &oldfiles_set, fname);
         tv_list_append_allocated_string(oldfiles_list, fname);
         if (!want_marks) {
           // Avoid free because this string was already used.
@@ -1180,7 +1180,7 @@ static void shada_read(FileDescriptor *const sd_reader, const int flags)
       }
       const fmark_T fm = (fmark_T) {
         .mark = cur_entry.data.filemark.mark,
-        .fnum = 0,
+        .fnum = buf->b_fnum,
         .timestamp = cur_entry.timestamp,
         .view = INIT_FMARKV,
         .additional_data = cur_entry.additional_data,
@@ -1255,7 +1255,7 @@ shada_read_main_cycle_end:
     xfree((char *)key);
   })
   map_destroy(cstr_t, &fname_bufs);
-  set_destroy(cstr_t, &oldfiles_set);
+  set_destroy(path_t, &oldfiles_set);
 }
 
 /// Default shada file location: cached path
@@ -3538,8 +3538,7 @@ static bool shada_removable(const char *name)
   for (char *p = p_shada; *p;) {
     copy_option_part(&p, part, ARRAY_SIZE(part), ", ");
     if (part[0] == 'r') {
-      home_replace(NULL, part + 1, NameBuff, MAXPATHL, true);
-      size_t n = strlen(NameBuff);
+      size_t n = home_replace(NULL, part + 1, NameBuff, MAXPATHL, true);
       if (mb_strnicmp(NameBuff, new_name, n) == 0) {
         retval = true;
         break;

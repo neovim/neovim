@@ -17,7 +17,7 @@ do
   local reason = missing_provider('perl')
   if reason then
     pending(
-      string.format('Missing perl host, or perl version is too old (%s)', reason),
+      string.format('N/A: Missing perl host, or perl version is too old (%s)', reason),
       function() end
     )
     return

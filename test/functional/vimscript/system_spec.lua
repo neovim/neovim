@@ -567,6 +567,25 @@ end)
 describe('shell :!', function()
   before_each(clear)
 
+  it('preserves newlines (including CR) in binary-mode buffer #39424', function()
+    local fname = 'Xbinaryfile'
+    finally(function()
+      os.remove(fname)
+    end)
+
+    t.write_file(fname, '\r\n', true)
+    command('edit ++bin ' .. fname)
+    command('%!cat')
+    command('w')
+    eq('\r\n', t.read_file(fname))
+
+    t.write_file(fname, '\r', true)
+    command('edit ++bin ' .. fname)
+    command('%!cat')
+    command('w')
+    eq('\r', t.read_file(fname))
+  end)
+
   it(':{range}! works when the first char is NUL #34163', function()
     api.nvim_buf_set_lines(0, 0, -1, true, { '\0hello', 'hello' })
     command('%!cat')

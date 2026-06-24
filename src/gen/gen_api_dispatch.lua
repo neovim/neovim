@@ -708,6 +708,9 @@ output:write('\n')
 --- @type {binding: string, api:string}[]
 local lua_c_functions = {}
 
+--- Functions which use kRetMultiStack.
+local lua_retstack = { nvim_buf_call = true, nvim_win_call = true }
+
 --- Generates C code to bridge RPC API <=> Lua.
 ---
 --- Inspect the result here:
@@ -844,6 +847,9 @@ local function process_function(fn)
   end
 
   write_shifted_output('    ENTER_LUA_ACTIVE_STATE(lstate);\n')
+  if fn.has_lua_imp and not lua_retstack[fn.name] then
+    write_shifted_output('    const int pretop = lua_gettop(lstate); (void)pretop;\n')
+  end
   local free_at_exit_code = ''
   for i = 1, #free_code do
     local rev_i = #free_code - i + 1
@@ -882,16 +888,14 @@ exit_0:
     local ret_type = real_type(fn.return_type)
     local ret_mode = (ret_type == 'Object') and '&' or ''
     if fn.has_lua_imp then
-      -- only push onto the Lua stack if we haven't already
-      write_shifted_output(
-        [[
-    if (lua_gettop(lstate) == 0) {
-      nlua_push_%s(lstate, %sret, kNluaPushSpecial | kNluaPushFreeRefs);
-    }
-      ]],
-        return_type,
-        ret_mode
-      )
+      -- Most has_lua_imp functions are expected to produce a single retval (e.g.
+      -- nvim_buf_get_lines, but not kRetMultiStack callers such as nvim_buf_call). #39851
+      if not lua_retstack[fn.name] then
+        write_shifted_output(
+          '    assert((ERROR_SET(&err) || lua_gettop(lstate) == pretop + 1) && "has_lua_imp function must push exactly one return value");\n'
+        )
+      end
+      write_shifted_output('    (void)ret;\n')
     elseif ret_type:match('^KeyDict_') then
       write_shifted_output('    nlua_push_keydict(lstate, &ret, %s_table);\n', return_type:sub(9))
     else
@@ -911,11 +915,12 @@ exit_0:
   %s
   %s
   %s
-    return 1;
+    return %s;
     ]],
       free_retval,
       free_at_exit_code,
-      err_throw_code
+      err_throw_code,
+      (fn.has_lua_imp and 'lua_gettop(lstate)' or '1')
     )
   else
     write_shifted_output(

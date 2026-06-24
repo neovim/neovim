@@ -681,79 +681,6 @@ describe('vim.lsp.util', function()
     end)
   end)
 
-  describe('lsp.util.jump_to_location', function()
-    local target_bufnr --- @type integer
-
-    before_each(function()
-      target_bufnr = exec_lua(function()
-        local bufnr = vim.uri_to_bufnr('file:///fake/uri')
-        local lines = { '1st line of text', 'å å ɧ 汉语 ↥ 🤦 🦄' }
-        vim.api.nvim_buf_set_lines(bufnr, 0, 1, false, lines)
-        return bufnr
-      end)
-    end)
-
-    local location = function(start_line, start_char, end_line, end_char)
-      return {
-        uri = 'file:///fake/uri',
-        range = {
-          start = { line = start_line, character = start_char },
-          ['end'] = { line = end_line, character = end_char },
-        },
-      }
-    end
-
-    local jump = function(msg)
-      eq(true, exec_lua('return vim.lsp.util.jump_to_location(...)', msg, 'utf-16'))
-      eq(target_bufnr, fn.bufnr('%'))
-      return {
-        line = fn.line('.'),
-        col = fn.col('.'),
-      }
-    end
-
-    it('jumps to a Location', function()
-      local pos = jump(location(0, 9, 0, 9))
-      eq(1, pos.line)
-      eq(10, pos.col)
-    end)
-
-    it('jumps to a LocationLink', function()
-      local pos = jump({
-        targetUri = 'file:///fake/uri',
-        targetSelectionRange = {
-          start = { line = 0, character = 4 },
-          ['end'] = { line = 0, character = 4 },
-        },
-        targetRange = {
-          start = { line = 1, character = 5 },
-          ['end'] = { line = 1, character = 5 },
-        },
-      })
-      eq(1, pos.line)
-      eq(5, pos.col)
-    end)
-
-    it('jumps to the correct multibyte column', function()
-      local pos = jump(location(1, 2, 1, 2))
-      eq(2, pos.line)
-      eq(4, pos.col)
-      eq('å', fn.expand('<cword>'))
-    end)
-
-    it('adds current position to jumplist before jumping', function()
-      api.nvim_win_set_buf(0, target_bufnr)
-      local mark = api.nvim_buf_get_mark(target_bufnr, "'")
-      eq({ 1, 0 }, mark)
-
-      api.nvim_win_set_cursor(0, { 2, 3 })
-      jump(location(0, 9, 0, 9))
-
-      mark = api.nvim_buf_get_mark(target_bufnr, "'")
-      eq({ 2, 3 }, mark)
-    end)
-  end)
-
   describe('lsp.util.show_document', function()
     local target_bufnr --- @type integer
     local target_bufnr2 --- @type integer
@@ -816,6 +743,29 @@ describe('vim.lsp.util', function()
       eq('i', api.nvim_get_mode().mode)
     end)
 
+    it('jumps to a LocationLink', function()
+      local pos = show_document({
+        targetUri = 'file:///fake/uri',
+        targetSelectionRange = {
+          start = { line = 0, character = 4 },
+          ['end'] = { line = 0, character = 4 },
+        },
+        targetRange = {
+          start = { line = 1, character = 5 },
+          ['end'] = { line = 1, character = 5 },
+        },
+      }, true, true)
+      eq(1, pos.line)
+      eq(5, pos.col)
+    end)
+
+    it('jumps to the correct multibyte column', function()
+      local pos = show_document(location(1, 2, 1, 2), true, true)
+      eq(2, pos.line)
+      eq(4, pos.col)
+      eq('å', fn.expand('<cword>'))
+    end)
+
     it('jumps to a Location if focus is true via handler', function()
       exec_lua(create_server_definition)
       local result = exec_lua(function()
@@ -847,6 +797,18 @@ describe('vim.lsp.util', function()
       local pos = show_document(location(0, 9, 0, 9), nil, true)
       eq(1, pos.line)
       eq(10, pos.col)
+    end)
+
+    it('adds current position to jumplist before jumping', function()
+      api.nvim_win_set_buf(0, target_bufnr)
+      local mark = api.nvim_buf_get_mark(target_bufnr, "'")
+      eq({ 1, 0 }, mark)
+
+      api.nvim_win_set_cursor(0, { 2, 3 })
+      show_document(location(0, 9, 0, 9), true, true)
+
+      mark = api.nvim_buf_get_mark(target_bufnr, "'")
+      eq({ 2, 3 }, mark)
     end)
 
     it('does not add current position to jumplist if not focus', function()
@@ -1040,18 +1002,6 @@ describe('vim.lsp.util', function()
               { title = { { 'A very ', 'Normal' }, { 'long title', 'Normal' } } }
             ),
           }
-        end)
-      )
-    end)
-  end)
-
-  describe('lsp.util.trim.trim_empty_lines', function()
-    it('properly trims empty lines', function()
-      eq(
-        { { 'foo', 'bar' } },
-        exec_lua(function()
-          --- @diagnostic disable-next-line:deprecated
-          return vim.lsp.util.trim_empty_lines({ { 'foo', 'bar' }, nil })
         end)
       )
     end)

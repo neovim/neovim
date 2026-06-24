@@ -67,9 +67,9 @@ enum {
 static garray_T highlight_ga = GA_EMPTY_INIT_VALUE;
 
 // arena for object with same lifetime as highlight_ga (aka hl_table)
-Arena highlight_arena = ARENA_EMPTY;
+static Arena highlight_arena = ARENA_EMPTY;
 
-Map(cstr_t, int) highlight_unames = MAP_INIT;
+static Map(cstr_t, int) highlight_unames = MAP_INIT;
 
 /// The "term", "cterm" and "gui" arguments can be any combination of the
 /// following names, separated by commas (but no spaces!).
@@ -218,6 +218,7 @@ static const char *highlight_init_both[] = {
   "default link Debug          Special",
   // Used by HLF_8 (very common). None of the HLF_* things use the other Special* groups.
   "default link SpecialKey     Special",
+  "default link Dimmed         Comment",
   "default link Ignore         Normal",
 
   // Built-in LSP
@@ -988,6 +989,15 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
     g->sg_blend = -1;
   }
 
+  // Persist the font name so set_hl_attr() can rebuild it after a table reset.
+  // attrs.font already encodes update-inheritance and an explicit "NONE".
+  if (attrs.font >= 0) {
+    xfree(g->sg_font);
+    g->sg_font = xstrdup(hl_get_font(attrs.font));
+  } else if (HAS_KEY(dict, highlight, font) || !update) {
+    XFREE_CLEAR(g->sg_font);
+  }
+
   g->sg_script_ctx = current_sctx;
   g->sg_script_ctx.sc_lnum += SOURCING_LNUM;
   nlua_set_sctx(&g->sg_script_ctx);
@@ -1532,6 +1542,9 @@ void do_highlight(const char *line, const bool forceit, const bool init)
 #ifdef EXITFREE
 void free_highlight(void)
 {
+  for (int i = 0; i < highlight_ga.ga_len; i++) {
+    xfree(hl_table[i].sg_font);
+  }
   ga_clear(&highlight_ga);
   map_destroy(cstr_t, &highlight_unames);
   arena_mem_free(arena_finish(&highlight_arena));

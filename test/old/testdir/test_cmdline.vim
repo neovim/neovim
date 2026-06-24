@@ -1657,7 +1657,7 @@ func Test_lnum_and_pattern_as_range()
   2/foo/yank
   call assert_equal("foo 3\n", @")
   call assert_equal(1, line('.'))
-  close!
+  bw!
 endfunc
 
 " Tests for getcmdline(), getcmdpos() and getcmdtype()
@@ -2226,7 +2226,7 @@ func Test_cmdline_ctrl_g()
   " 'insertmode'
   " call feedkeys(":set im\<cr>\<C-L>:\<C-\>\<C-G>12\<C-L>:set noim\<cr>", 'xt')
   " call assert_equal('ab12xyc', getline(1))
-  close!
+  bw!
 endfunc
 
 " Test for 'wildmode'
@@ -3585,6 +3585,10 @@ func Test_completion_filetypecmd()
   call assert_equal('"filetype off on', @:)
   call feedkeys(":filetype indent of\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"filetype indent off', @:)
+  call feedkeys(":filetype plugin\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"filetype plugin', @:)
+  call feedkeys(":filetype plugin indent\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"filetype plugin indent', @:)
   set wildoptions&
 endfunc
 
@@ -4032,6 +4036,27 @@ func Test_fuzzy_completion_cmd_k()
   call assert_equal('"KillKillKill', @:)
   delcom KillKillKill
   set wildoptions&
+endfunc
+
+" Issue #20241: with 'ignorecase', a lowercase "k"-prefixed input should
+" still complete a user command starting with "K".
+func Test_cmdline_complete_user_cmd_k_with_ignorecase()
+  command! Kz echo "hello"
+  command! Gz echo "here"
+
+  set noignorecase
+  call assert_equal([], getcompletion('kz', 'cmdline'))
+  call assert_equal([], getcompletion('gz', 'cmdline'))
+  call assert_equal(['Kz'], getcompletion('Kz', 'cmdline'))
+  call assert_equal(['Gz'], getcompletion('Gz', 'cmdline'))
+
+  set ignorecase
+  call assert_equal(['Kz'], getcompletion('kz', 'cmdline'))
+  call assert_equal(['Gz'], getcompletion('gz', 'cmdline'))
+
+  set ignorecase&
+  delcommand Kz
+  delcommand Gz
 endfunc
 
 " Test for fuzzy completion for user defined custom completion function
@@ -4630,8 +4655,8 @@ func Test_customlist_dict_completion_info_popup()
   let lines =<< trim END
     func DictComp(A, L, P)
       return [
-            \ {'word': 'apple',  'kind': 'f', 'menu': 'fruit',     'info': 'A red fruit'},
-            \ {'word': 'banana', 'kind': 'f', 'menu': 'fruit',     'info': 'A yellow fruit'},
+            \ {'word': 'apple',  'kind': 'f', 'menu': 'fruit',     'info': 'A red fruit',    'abbr': '🍎'},
+            \ {'word': 'banana', 'kind': 'f', 'menu': 'fruit',     'info': 'A yellow fruit', 'abbr': '🍌'},
             \ {'word': 'carrot', 'kind': 'v', 'menu': 'vegetable', 'info': 'An orange vegetable'},
             \ 'plain',
             \ ]
@@ -4685,6 +4710,84 @@ func Test_customlist_dict_completion_info_popup()
   call term_sendkeys(buf, "\<C-U>sign un\<C-X>\<C-V>")
   call VerifyScreenDump(buf, 'Test_customlist_info_popup_11', {})
 
+  call StopVimInTerminal(buf)
+endfunc
+
+" Test that the mouse scroll wheel scrolls the info popup of the command line
+" completion popup menu when the mouse pointer is on top of it.
+func Test_wildmenu_pum_info_mouse_scroll()
+  CheckScreendump
+  CheckFeature quickfix
+
+  let lines =<< trim END
+    func DictComp(A, L, P)
+      let info = join(map(range(1, 30), '"info line " .. v:val'), "\n")
+      return [
+            \ {'word': 'apple',  'kind': 'f', 'menu': 'fruit', 'info': info},
+            \ {'word': 'banana', 'kind': 'f', 'menu': 'fruit', 'info': info},
+            \ ]
+    endfunc
+    command -nargs=1 -complete=customlist,DictComp DictCmd echo <q-args>
+    set wildmenu wildoptions=pum completeopt=menu,popup mouse=a
+
+    " Put the mouse on top of the info popup and turn the scroll wheel.
+    func ScrollInfo(keys)
+      let pos = popup_getpos(popup_findinfo())
+      call test_setmouse(pos.line + 1, pos.col + 1)
+      call feedkeys(a:keys, 'nt')
+    endfunc
+    cnoremap <F6> <Cmd>call ScrollInfo(repeat("\<ScrollWheelDown>", 3))<CR>
+    cnoremap <F7> <Cmd>call ScrollInfo(repeat("\<ScrollWheelUp>", 2))<CR>
+  END
+  call writefile(lines, 'XtestWildmenuMouseScroll', 'D')
+  let buf = RunVimInTerminal('-S XtestWildmenuMouseScroll', #{rows: 12})
+
+  " The info popup is shown next to the completion popup menu.
+  call term_sendkeys(buf, ":DictCmd \<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_info_mouse_scroll_1', {})
+
+  " Scrolling down with the wheel scrolls the info popup without closing the
+  " completion popup menu.
+  call term_sendkeys(buf, "\<F6>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_info_mouse_scroll_2', {})
+
+  " Scrolling back up scrolls the info popup up again.
+  call term_sendkeys(buf, "\<F7>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_info_mouse_scroll_3', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+endfunc
+
+func Test_cmdline_complete_findfunc_dict()
+  CheckScreendump
+
+  let lines =<< trim END
+    set wildmenu wildoptions=pum completeopt=menu,popup
+    func FindComplete(cmdarg, cmdcomplete)
+      return [
+            \ 'Xplain',
+            \ {'word': 'Xfile1', 'kind': 'F', 'menu': 'file', 'info': '1st file'},
+            \ {'word': 'Xfile2', 'kind': 'F', 'menu': 'file', 'info': '2nd file'},
+            \ {'word': 'Xdir1',  'kind': 'D', 'menu': 'dir',  'info': '1st dir'},
+            \ {'word': 'Xdir2',  'kind': 'D', 'menu': 'dir',  'info': '2nd dir'},
+            \ ]
+    endfunc
+    set findfunc=FindComplete
+  END
+  call writefile(lines, 'XTest_compl_findfunc_dict', 'D')
+  let rows = 12
+  let buf = RunVimInTerminal('-S XTest_compl_findfunc_dict', {'rows': rows})
+
+  call term_sendkeys(buf, ":find \<Tab>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':find Xplain') + 1)], g:test_timeout, ((rows - 5), '^\~\s\+Xplain\s\+$'))
+  call VerifyScreenDump(buf, 'Test_compl_findfunc_dict_01', {})
+
+  call term_sendkeys(buf, "\<PageDown>")
+  call WaitForTermCurPosAndLinesToMatch(buf, [rows, (strlen(':find Xdir1') + 1)], g:test_timeout, ((rows - 2), '1st dir'))
+  call VerifyScreenDump(buf, 'Test_compl_findfunc_dict_02', {})
+
+  call term_sendkeys(buf, "\<Esc>")
   call StopVimInTerminal(buf)
 endfunc
 

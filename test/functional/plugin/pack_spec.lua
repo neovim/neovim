@@ -857,7 +857,7 @@ describe('vim.pack', function()
     end)
 
     it('can install from the Internet', function()
-      t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
+      t.skip(skip_integ, 'NVIM_TEST_INTEG not set (network integration test)')
       vim_pack_add({ 'https://github.com/neovim/nvim-lspconfig' })
       eq(true, exec_lua('return pcall(require, "lspconfig")'))
     end)
@@ -1592,10 +1592,10 @@ describe('vim.pack', function()
 
         local ref_lockfile = get_lock_tbl() --- @type vim.pack.Lock
 
-        local function assert_action(pos, action_titles, select_idx)
+        local function assert_action(pos, action_titles, select_idx, should_preserve_lines)
           api.nvim_win_set_cursor(0, pos)
 
-          local lines = api.nvim_buf_get_lines(0, 0, -1, false)
+          local buf_lines = api.nvim_buf_get_lines(0, 0, -1, false)
           n.exec_lua(function()
             _G.select_items = nil
             _G.select_idx = select_idx
@@ -1607,33 +1607,35 @@ describe('vim.pack', function()
           eq(titles, action_titles)
 
           -- If no action is asked (like via cancel), should not delete lines
-          if select_idx <= 0 then
-            eq(lines, api.nvim_buf_get_lines(0, 0, -1, false))
+          if select_idx <= 0 or should_preserve_lines then
+            eq(buf_lines, api.nvim_buf_get_lines(0, 0, -1, false))
           end
         end
 
         -- - Should not include "namespace" header as "plugin at cursor"
         assert_action({ 1, 1 }, {}, 0)
         assert_action({ 2, 0 }, {}, 0)
-        -- - No actions for `defbranch` since it is active and has no updates
-        assert_action({ 3, 1 }, {}, 0)
-        assert_action({ 7, 0 }, {}, 0)
+        -- - "Delete" action should be present for active plugins
+        local defbranch_actions = { 'Delete `defbranch`' }
+        assert_action({ 3, 1 }, defbranch_actions, 0)
+        assert_action({ 7, 0 }, defbranch_actions, 0)
         -- - Should not include separator blank line as "plugin at cursor"
         assert_action({ 8, 0 }, {}, 0)
         assert_action({ 9, 0 }, {}, 0)
         assert_action({ 10, 0 }, {}, 0)
         -- - Should suggest updating related actions if updates available
-        local fetch_actions = { 'Update `fetch`', 'Skip updating `fetch`' }
+        local fetch_actions = { 'Update `fetch`', 'Skip updating `fetch`', 'Delete `fetch`' }
         assert_action({ 11, 0 }, fetch_actions, 0)
         assert_action({ 14, 0 }, fetch_actions, 0)
         assert_action({ 20, 0 }, fetch_actions, 0)
         assert_action({ 21, 0 }, {}, 0)
         assert_action({ 22, 0 }, {}, 0)
         assert_action({ 23, 0 }, {}, 0)
-        -- - Only deletion should be available for not active plugins
-        assert_action({ 24, 0 }, { 'Delete `semver`' }, 0)
-        assert_action({ 28, 0 }, { 'Delete `semver`' }, 0)
-        assert_action({ 31, 0 }, { 'Delete `semver`' }, 0)
+        -- - "Delete" action should be present for not active plugin
+        local semver_actions = { 'Delete `semver`' }
+        assert_action({ 24, 0 }, semver_actions, 0)
+        assert_action({ 28, 0 }, semver_actions, 0)
+        assert_action({ 31, 0 }, semver_actions, 0)
 
         -- - Should correctly perform action and remove plugin's lines
         local function line_match(lnum, pattern)
@@ -1641,7 +1643,7 @@ describe('vim.pack', function()
         end
 
         -- - Delete not active plugin. Should remove from disk and update lockfile.
-        assert_action({ 24, 0 }, { 'Delete `semver`' }, 1)
+        assert_action({ 24, 0 }, semver_actions, 1)
         eq(false, pack_exists('semver'))
         line_match(22, '^# Same')
         eq(22, api.nvim_buf_line_count(0))
@@ -1655,6 +1657,27 @@ describe('vim.pack', function()
         line_match(9, '^# Update')
         line_match(10, '^$')
         line_match(11, '^# Same')
+
+        -- - Delete active plugin. Should ask for confirmation before force deleting
+        --   with possibility to not confirm.
+        mock_confirm(2) -- No
+        assert_action({ 3, 0 }, defbranch_actions, 1, true)
+        eq(true, pack_exists('defbranch'))
+        eq(ref_lockfile, get_lock_tbl())
+        local confirm_msg = 'Plugin `defbranch` is active.'
+          .. ' Make sure its `vim.pack.add` call is removed from config.'
+        local ref_confirm_log = { { confirm_msg, 'Delete? &Yes\n&No', 1, 'Question' } }
+        eq(ref_confirm_log, exec_lua('return _G.confirm_log'))
+
+        mock_confirm(1) -- Yes
+        assert_action({ 3, 0 }, defbranch_actions, 1)
+        eq(false, pack_exists('defbranch'))
+        ref_lockfile.plugins.defbranch = nil
+        eq(ref_lockfile, get_lock_tbl())
+        eq(5, api.nvim_buf_line_count(0))
+        line_match(1, '^# Error')
+        line_match(3, '^# Update')
+        line_match(5, '^# Same')
 
         -- - Update plugin. Should not re-fetch new data and update lockfile.
         n.exec('quit')
@@ -2037,12 +2060,12 @@ describe('vim.pack', function()
 
       assert('Plugin `ccc` is not installed', { 'ccc', 'basic', 'aaa' })
 
-      -- Empty list is allowed with warning
+      -- Empty list is allowed
       n.exec('messages clear')
       exec_lua(function()
         vim.pack.update({})
       end)
-      eq('vim.pack: Nothing to update', n.exec_capture('messages'))
+      eq('', n.exec_capture('messages'))
     end)
   end)
 
@@ -2050,11 +2073,14 @@ describe('vim.pack', function()
     local function make_basic_data(active, info)
       local spec = { name = 'basic', src = repos_src.basic, version = 'feat-branch' }
       local path = pack_get_plug_path('basic')
-      local rev = git_get_hash('feat-branch', 'basic')
-      local res = { active = active, path = path, spec = spec, rev = rev }
+      local res = { active = active, path = path, spec = spec }
       if info then
         res.branches = { 'main', 'feat-branch' }
+        res.rev = git_get_hash('feat-branch', 'basic')
+        res.rev_to = res.rev
         res.tags = { 'some-tag' }
+      else
+        res.rev = get_lock_tbl().plugins.basic.rev
       end
       return res
     end
@@ -2062,11 +2088,14 @@ describe('vim.pack', function()
     local function make_defbranch_data(active, info)
       local spec = { name = 'defbranch', src = repos_src.defbranch }
       local path = pack_get_plug_path('defbranch')
-      local rev = git_get_hash('dev', 'defbranch')
-      local res = { active = active, path = path, spec = spec, rev = rev }
+      local res = { active = active, path = path, spec = spec }
       if info then
         res.branches = { 'dev', 'main' }
+        res.rev = git_get_hash('dev', 'defbranch')
+        res.rev_to = res.rev
         res.tags = {}
+      else
+        res.rev = get_lock_tbl().plugins.defbranch.rev
       end
       return res
     end
@@ -2075,11 +2104,14 @@ describe('vim.pack', function()
       local spec =
         { name = 'plugindirs', src = repos_src.plugindirs, version = vim.version.range('*') }
       local path = pack_get_plug_path('plugindirs')
-      local rev = git_get_hash('v0.0.1', 'plugindirs')
-      local res = { active = active, path = path, spec = spec, rev = rev }
+      local res = { active = active, path = path, spec = spec }
       if info then
         res.branches = { 'main' }
+        res.rev = git_get_hash('v0.0.1', 'plugindirs')
+        res.rev_to = res.rev
         res.tags = { 'v0.0.1' }
+      else
+        res.rev = get_lock_tbl().plugins.plugindirs.rev
       end
       return res
     end
@@ -2101,8 +2133,15 @@ describe('vim.pack', function()
       -- Should preserve order in which plugins were `vim.pack.add()`ed
       eq({ defbranch_data, basic_data, plugindirs_data }, exec_lua('return vim.pack.get()'))
 
-      -- Should also list non-active plugins
+      -- Should also list non-active plugins and use proper source for `rev`
+      local lock_tbl = get_lock_tbl()
+      lock_tbl.plugins.defbranch.rev = 'aaa'
+      lock_tbl.plugins.basic.rev = 'bbb'
+      lock_tbl.plugins.plugindirs.rev = 'ccc'
+      local lockfile_text = vim.json.encode(lock_tbl, { indent = '  ', sort_keys = true })
+      fn.writefile(vim.split(lockfile_text, '\n'), get_lock_path())
       n.clear()
+
       vim_pack_add({ repos_src.defbranch })
       defbranch_data = make_defbranch_data(true, true)
       basic_data = make_basic_data(false, true)
@@ -2132,6 +2171,75 @@ describe('vim.pack', function()
       eq({ defbranch_data }, exec_lua('return vim.pack.get({ "defbranch" }, { info = false })'))
     end)
 
+    it('reports potential revision after update', function()
+      -- Install and set up different version without running `vim.pack.update()`
+      vim_pack_add({ repos_src.defbranch, { src = repos_src.basic, version = 'feat-branch' } })
+      pack_assert_content('defbranch', 'return "defbranch dev"')
+      pack_assert_content('basic', 'return "basic feat-branch"')
+
+      n.clear()
+      vim_pack_add({ { src = repos_src.defbranch, version = 'main' }, repos_src.basic })
+      n.clear()
+
+      -- Should report correct `rev_to` with active and not active plugins
+      vim_pack_add({ { src = repos_src.defbranch, version = 'main' } })
+      local defbranch_data = make_defbranch_data(true, true)
+      defbranch_data.spec.version = 'main'
+      defbranch_data.rev_to = git_get_hash('main', 'defbranch')
+      local basic_data = make_basic_data(false, true)
+      basic_data.spec.version = nil
+      basic_data.rev_to = git_get_hash('main', 'basic')
+
+      eq({ defbranch_data, basic_data }, exec_lua('return vim.pack.get()'))
+    end)
+
+    describe('opts.offline', function()
+      after_each(function()
+        n.rmdir(repo_get_path('fetch'))
+      end)
+
+      it('can fetch new updates', function()
+        -- Create a dedicated clean repo for which "push changes" will be mocked
+        init_test_repo('fetch')
+
+        repo_write_file('fetch', 'lua/fetch.lua', 'return "fetch init"')
+        git_add_commit('Initial commit', 'fetch')
+
+        local fetch_head = git_get_hash('HEAD', 'fetch')
+
+        -- Install initial versions of tested plugins
+        vim_pack_add({ repos_src.fetch })
+
+        -- Mock remote repo update
+        -- - Force push
+        repo_write_file('fetch', 'lua/fetch.lua', 'return "fetch new"')
+        git_cmd({ 'add', '*' }, 'fetch')
+        git_cmd({ 'commit', '--amend', '-m', 'Second commit' }, 'fetch')
+        local fetch_new = git_get_hash('HEAD', 'fetch')
+        t.neq(fetch_head, fetch_new)
+
+        -- Should not fetch new data with `offline=true` (default)
+        -- or if `info=false`
+        local spec = { name = 'fetch', src = repos_src.fetch }
+        local path = pack_get_plug_path('fetch')
+        local fetch_data = { active = true, path = path, spec = spec }
+        fetch_data.branches = { 'main' }
+        fetch_data.tags = {}
+        fetch_data.rev = fetch_head
+        fetch_data.rev_to = fetch_head
+
+        exec_lua('vim.pack.get(nil, { info = false, offline = false })')
+        eq({ fetch_data }, exec_lua('return vim.pack.get()'))
+
+        -- Should fetch new data with `offline=false`
+        fetch_data.rev_to = fetch_new
+        eq({ fetch_data }, exec_lua('return vim.pack.get(nil, { offline = false })'))
+
+        -- Should keep using already fetched data with `offline=true`
+        eq({ fetch_data }, exec_lua('return vim.pack.get(nil, {})'))
+      end)
+    end)
+
     it('respects `data` field', function()
       vim_pack_add({
         { src = repos_src.basic, version = 'feat-branch', data = { test = 'value' } },
@@ -2159,9 +2267,9 @@ describe('vim.pack', function()
 
       -- Should not include removed plugins immediately after they are removed,
       -- while still returning list without holes
-      exec_lua('vim.pack.del({ "defbranch" }, { force = true })')
       local defbranch_data = make_defbranch_data(true, true)
       local basic_data = make_basic_data(true, true)
+      exec_lua('vim.pack.del({ "defbranch" }, { force = true })')
       eq({ { defbranch_data, basic_data }, { basic_data } }, exec_lua('return _G.get_log'))
     end)
 
@@ -2221,8 +2329,15 @@ describe('vim.pack', function()
 
       assert_on_disk({ basic = false, defbranch = true, plugindirs = false })
 
-      local msg = "vim.pack: Removed plugin 'basic'\nvim.pack: Removed plugin 'plugindirs'"
+      local msg = 'vim.pack: Removed plugins: basic, plugindirs'
       eq(msg, n.exec_capture('messages'))
+
+      -- `:packdel` should output E5810 instead of the normal error
+      eq(
+        'Vim(packdel):E5810: Some plugins are active and were not deleted: defbranch',
+        pcall_err(n.command, 'packdel defbranch')
+      )
+      assert_on_disk({ defbranch = true })
 
       -- Should trigger relevant events in order as specified in `vim.pack.add()`
       local log = exec_lua('return _G.event_log')
@@ -2242,7 +2357,7 @@ describe('vim.pack', function()
 
       assert_on_disk({ basic = false, defbranch = false, plugindirs = false })
 
-      eq("vim.pack: Removed plugin 'defbranch'", n.exec_capture('messages'))
+      eq('vim.pack: Removed plugin: defbranch', n.exec_capture('messages'))
 
       log = exec_lua('return _G.event_log')
       find_event = make_find_packchanged(log)
@@ -2303,12 +2418,12 @@ describe('vim.pack', function()
       assert('Plugin `ccc` is not installed', { 'ccc', 'basic', 'aaa' })
       eq(true, pack_exists('basic'))
 
-      -- Empty list is allowed with warning
+      -- Empty list is allowed
       n.exec('messages clear')
       exec_lua(function()
         vim.pack.del({})
       end)
-      eq('vim.pack: Nothing to remove', n.exec_capture('messages'))
+      eq('', n.exec_capture('messages'))
     end)
   end)
 end)

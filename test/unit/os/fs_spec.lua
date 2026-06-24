@@ -1108,26 +1108,5 @@ describe('fs.c', function()
         assert.is_false((fs.os_fileid_equal(file_id_1, file_id_2)))
       end)
     end)
-
-    describe('os_fileid_equal_fileinfo', function()
-      itp('returns true if file_id and FileInfo represent the same file', function()
-        local file_id = file_id_new()
-        local info = file_info_new()
-        local path = 'unit-test-directory/test.file'
-        assert.is_true((fs.os_fileid(path, file_id)))
-        assert.is_true((fs.os_fileinfo(path, info)))
-        assert.is_true((fs.os_fileid_equal_fileinfo(file_id, info)))
-      end)
-
-      itp('returns false if file_id and FileInfo represent different files', function()
-        local file_id = file_id_new()
-        local info = file_info_new()
-        local path_1 = 'unit-test-directory/test.file'
-        local path_2 = 'unit-test-directory/test_2.file'
-        assert.is_true((fs.os_fileid(path_1, file_id)))
-        assert.is_true((fs.os_fileinfo(path_2, info)))
-        assert.is_false((fs.os_fileid_equal_fileinfo(file_id, info)))
-      end)
-    end)
   end)
 end)

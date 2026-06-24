@@ -107,12 +107,14 @@ if prepend_argv then
 end
 
 local session --- @type test.Session?
+local sessions = {} --- @type table<test.Session, true>
+local sigpipe_handler --- @type uv.uv_signal_t?
 local loop_running --- @type boolean?
 local last_error --- @type string?
 local method_error --- @type string?
 
 if not is_os('win') then
-  local sigpipe_handler = assert(uv.new_signal())
+  sigpipe_handler = assert(uv.new_signal())
   uv.signal_start(sigpipe_handler, 'sigpipe', function()
     print('warning: got SIGPIPE signal. Likely related to a crash in nvim')
   end)
@@ -346,6 +348,7 @@ function M.expect_exit(fn_or_timeout, ...)
       end, fn_or_timeout, ...)
     )
   end
+  M.check_close()
 end
 
 --- Executes a Vimscript function via Lua.
@@ -447,8 +450,21 @@ function M.check_close(noblock)
     return
   end
 
-  session:close(nil, noblock)
+  local s = session
+  s:close(nil, noblock)
+  sessions[s] = nil
   session = nil
+end
+
+local function close_extra_sessions(test_id, noblock)
+  for s in pairs(sessions) do
+    if s ~= session and (test_id == nil or (s.data and s.data.test_id == test_id)) then
+      if not s.closed then
+        s:close(nil, noblock)
+      end
+      sessions[s] = nil
+    end
+  end
 end
 
 -- Creates a new Session connected by domain socket (named pipe) or TCP.
@@ -456,7 +472,10 @@ function M.connect(file_or_address)
   local addr, port = string.match(file_or_address, '(.*):(%d+)')
   local stream = (addr and port) and SocketStream.connect(addr, port)
     or SocketStream.open(file_or_address)
-  return Session.new(stream)
+  local s = Session.new(stream)
+  s.data = { test_id = _G._nvim_test_id }
+  sessions[s] = true
+  return s
 end
 
 --- Starts a new, global Nvim session and clears the current one.
@@ -499,8 +518,10 @@ local n_processes = 0
 function M.new_session(keep, ...)
   local test_id = _G._nvim_test_id
   if not keep and session ~= nil then
+    local s = session
     -- Don't block for the previous session's exit if it's from a different test.
-    session:close(nil, session.data and session.data.test_id ~= test_id)
+    s:close(nil, s.data and s.data.test_id ~= test_id)
+    sessions[s] = nil
     session = nil
   end
 
@@ -524,6 +545,7 @@ function M.new_session(keep, ...)
   n_processes = n_processes + 1
 
   local new_session = Session.new(proc)
+  sessions[new_session] = true
   -- Make it possible to check whether two sessions are from the same test.
   new_session.data = { test_id = test_id }
   return new_session
@@ -531,6 +553,10 @@ end
 
 harness.on_suite_end(function()
   M.check_close(true)
+  -- Some tests create extra sessions without replacing the global one.
+  -- Close any that individual tests did not clean up before the runner exits.
+  close_extra_sessions(nil, true)
+
   local timed_out = false
   local timer = assert(vim.uv.new_timer())
   timer:start(10000, 0, function()
@@ -540,6 +566,14 @@ harness.on_suite_end(function()
     uv.run('once')
   end
   timer:close()
+  if sigpipe_handler and not sigpipe_handler:is_closing() then
+    sigpipe_handler:close()
+  end
+  -- Drain close callbacks queued by explicit Session/ProcStream cleanup before
+  -- Nvim checks the runner loop for active handles.
+  for _ = 1, 10 do
+    uv.run('nowait')
+  end
   if timed_out then
     print(('warning: %d dangling Nvim processes'):format(n_processes))
     io.stdout:flush()
@@ -1049,6 +1083,7 @@ return function()
 
   if after_each then
     after_each(function()
+      close_extra_sessions(_G._nvim_test_id, true)
       if not vim.endswith(_G._nvim_test_id, 'x') then
         -- Use a different test ID for skipped tests as well as Nvim instances spawned
         -- between this after_each() and the next before_each() (e.g. in setup()).

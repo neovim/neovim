@@ -14,10 +14,6 @@ describe('example', function()
   before_each(function()
     clear()
     screen = Screen.new(20, 5)
-    screen:set_default_attr_ids({
-      [0] = { bold = true, foreground = Screen.colors.Blue },
-      [1] = { bold = true, foreground = Screen.colors.Brown },
-    })
   end)
 
   it('screen test', function()
@@ -31,8 +27,7 @@ describe('example', function()
     screen:expect([[
       line1               |
       line^2               |
-      {0:~                   }|
-      {0:~                   }|
+      {1:~                   }|*2
                           |
     ]])
   end)

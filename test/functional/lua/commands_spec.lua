@@ -72,8 +72,22 @@ describe(':lua', function()
     eq({ '' }, api.nvim_buf_get_lines(0, 0, 100, false))
   end)
 
-  it('works with NULL errors', function()
-    eq([=[Vim(lua):E5108: Lua: [NULL]]=], pcall_err(command, 'lua error(nil)'))
+  it('works with nil errors', function()
+    eq([=[Vim(lua):E5108: Lua: nil]=], pcall_err(command, 'lua error(nil)'))
+  end)
+
+  it('works with errors with __tostring failure', function()
+    eq(
+      [=[Vim(lua):E5108: Lua: [UNPRINTABLE ERROR]]=],
+      pcall_err(command, 'lua error(setmetatable({}, {__tostring=error}))')
+    )
+  end)
+
+  it('works with printable errors', function()
+    eq([=[Vim(lua):E5108: Lua: false]=], pcall_err(command, 'lua error(false)'))
+    -- numbers get the location prefixed because numbers are almost strings (know the workplace rules)
+    eq([=[Vim(lua):E5108: Lua: [string ":lua"]:0: 39]=], pcall_err(command, 'lua error(39)'))
+    matches([=[Vim%(lua%):E5108: Lua: table: 0x%x+]=], pcall_err(command, 'lua error({})'))
   end)
 
   it('accepts embedded NLs without heredoc', function()
@@ -280,8 +294,8 @@ describe(':luado command', function()
     )
   end)
 
-  it('works with NULL errors', function()
-    eq([=[Vim(luado):E5111: Lua: [NULL]]=], pcall_err(command, 'luado error(nil)'))
+  it('works with nil errors', function()
+    eq([=[Vim(luado):E5111: Lua: nil]=], pcall_err(command, 'luado error(nil)'))
   end)
 
   it('fails in sandbox when needed', function()
@@ -342,8 +356,8 @@ describe(':luafile', function()
     )
   end)
 
-  it('works with NULL errors', function()
+  it('works with nil errors', function()
     write_file(fname, 'error(nil)')
-    eq([=[Vim(luafile):E5113: Lua chunk: [NULL]]=], pcall_err(command, 'luafile ' .. fname))
+    eq([=[Vim(luafile):E5113: Lua chunk: nil]=], pcall_err(command, 'luafile ' .. fname))
   end)
 end)

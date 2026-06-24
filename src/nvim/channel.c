@@ -558,9 +558,9 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output, const char **err
     os_set_cloexec(stdout_dup_fd);
     // :restart spawns a replacement server that must not borrow the parent
     // Nvim process console, because that parent process will soon exit.
-    const bool restart_alloc_console = os_env_exists("__NVIM_RESTART_ALLOC_CONSOLE", true);
+    const bool restart_alloc_console = os_env_exists(ENV_RESTART_ALLOC_CONSOLE, true);
     if (restart_alloc_console) {
-      os_unsetenv("__NVIM_RESTART_ALLOC_CONSOLE");
+      os_unsetenv(ENV_RESTART_ALLOC_CONSOLE);
     }
     if (!GetConsoleWindow()) {
       // Borrow the parent's console so CONOUT$ resolves to the real terminal,
@@ -804,9 +804,9 @@ static void channel_proc_exit_cb(Proc *proc, int status, void *data)
   // - EOF not received in receive_msgpack, then doesn't call chan_close_on_err().
   // - proc_close_handles not tickled by ui_client.c's LOOP_PROCESS_EVENTS?
   if (!exiting && ui_client_channel_id == chan->id) {
-    // Need to call ui_client_attach_to_restarted_server() here as well, as sometimes
-    // rpc_close_event() hasn't been called yet (also see comments above).
-    ui_client_attach_to_restarted_server();
+    // rpc_close_event() could handle this in principle also for processes, but
+    // sometimes it gets called later than this, and we do care about the exit status
+    ui_client_attach_to_restarted_server(proc->status != 0);
     if (ui_client_channel_id == chan->id) {
       // If the current embedded server has exited and no new server is started,
       // the client should exit with the same status.

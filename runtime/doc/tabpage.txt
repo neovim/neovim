@@ -37,10 +37,10 @@ Each tabpage has an unique identifier which will not change, even after
 rearranging tabs. |nvim_get_current_tabpage()| returns the tab-id and
 |nvim_list_tabpages()| lists tab-ids in the order they're displayed.
 							*tabpage-number*
-Tabpages are also numbered from left to right starting at 1: this is the tab
-"number" returned by |tabpagenr()|, not the tab-id. The tab number may change
-when tabs are opened, closed, or rearranged.  |nvim_tabpage_get_number()|
-converts a tab-id to a tab number.
+Tabpages are numbered from left to right starting at 1: this tab "number" is
+returned by |tabpagenr()|. Unlike the tab-id, the tab number may change when
+tabs are opened, closed, or rearranged.  |nvim_tabpage_get_number()| converts
+a tab-id to a tab number.
 
 
 ==============================================================================

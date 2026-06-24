@@ -11,6 +11,7 @@ for k, v in pairs({
   loader = true,
   func = true,
   F = true,
+  log = true,
   lsp = true,
   hl = true,
   diagnostic = true,
@@ -67,6 +68,15 @@ vim._extra = {
 --- vim.defer_fn(function() vim.g.timer_result = true end, 100)
 --- if vim.wait(10000, function() return vim.g.timer_result end) then
 ---   print('Only waiting a little bit of time!')
+--- end
+---
+--- -- Yield via vim.wait() to allow CTRL-C to interrupt Lua code.
+--- while true do
+---   -- ...work...
+---   local _, code = vim.wait(0, nil, 0)
+---   if code == -2 then -- CTRL-C.
+---     break
+---   end
 --- end
 --- ```
 ---
@@ -155,34 +165,28 @@ function vim.wait(time, callback, interval, fast_only)
     local poll_timeout = -1
     if has_deadline then
       local remaining_ms = time - (vim.uv.hrtime() - start) / 1e6
-      if remaining_ms <= 0 then
-        cleanup()
-        return false, -1
-      end
-
-      -- loop_poll() takes an integer timeout, so cap each individual poll
-      -- while still honoring larger overall waits.
-      poll_timeout = math.min(math.ceil(remaining_ms), vim._maxint)
+      -- loop_poll() takes an integer timeout, so cap each individual poll while still honoring
+      -- larger overall waits. Always poll at least once, so vim.wait(0) still pumps the event loop
+      -- (lets user code "yield" to CTRL-C).
+      poll_timeout = math.max(0, math.min(math.ceil(remaining_ms), vim._maxint))
     end
 
     -- The dummy timer wakes `vim._core.loop_poll()` on interval boundaries. Without it,
     -- polling would only resume for unrelated events or the final timeout.
     vim._core.loop_poll(poll_timeout, fast_only)
+
+    -- Check deadline AFTER polling (mirrors LOOP_PROCESS_EVENTS_UNTIL behavior).
+    -- `got_int` may have been set during poll; let check_interrupt() catch it.
+    if has_deadline and time - (vim.uv.hrtime() - start) / 1e6 <= 0 then
+      if vim._core.check_interrupt() then
+        cleanup()
+        return false, -2
+      end
+      cleanup()
+      return false, -1
+    end
   end
 end
-
---- @nodoc
-vim.log = {
-  --- @enum vim.log.levels
-  levels = {
-    TRACE = 0,
-    DEBUG = 1,
-    INFO = 2,
-    WARN = 3,
-    ERROR = 4,
-    OFF = 5,
-  },
-}
 
 local utfs = {
   ['utf-8'] = true,

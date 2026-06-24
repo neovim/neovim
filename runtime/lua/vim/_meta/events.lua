@@ -50,10 +50,15 @@ error('Cannot require a meta file')
 --- @field status? string
 --- @field title? string
 
+--- @class vim.event.tabmoved.data
+--- @field tabnr_old integer
+--- @field tabnr_new integer
+
 --- @class vim.event.termrequest.data
 --- @field sequence string
 --- @field terminator string
 --- @field cursor integer[]
 
 --- @class vim.event.termresponse.data
+--- @field chan integer
 --- @field sequence string

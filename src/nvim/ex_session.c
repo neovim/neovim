@@ -993,6 +993,8 @@ void ex_mkrc(exarg_T *eap)
       flagp = &ssop_flags;
     }
 
+    apply_autocmds(EVENT_SESSIONWRITEPRE, NULL, NULL, false, curbuf);
+
     // Write the version command for :mkvimrc
     if (eap->cmdidx == CMD_mkvimrc) {
       put_line(fd, "version 6.0");

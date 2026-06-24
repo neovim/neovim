@@ -247,14 +247,6 @@ argument.
                 Disables |shada| unless |-i| was given.
                 Disables swapfile (like |-n|).
 
-                                                        *-ll*
--ll {script} [args]
-                Executes a Lua script, similarly to |-l|, but the editor is not
-                initialized. This gives a Lua environment similar to a worker
-                thread. See |lua-loop-threading|.
-
-                Unlike `-l` no prior arguments are allowed.
-
                                                         *-b*
 -b              Binary mode.  File I/O will only recognize <NL> to separate
                 lines.  The 'expandtab' option will be reset.  The 'textwidth'
@@ -434,7 +426,7 @@ Initialization                                  *initialization* *startup*
 At startup, Nvim checks environment variables and files and sets values
 accordingly, proceeding as follows:
 
-1. Set |v:starttime|.
+1. Set |v:starttime| and |v:startreason|.
 
 2. Set the 'shell' option.                      *SHELL* *COMSPEC*
    The environment variable SHELL, if it exists, is used to set the 'shell'
@@ -620,7 +612,7 @@ setting can affect the entire editor in ways that are not initially obvious.
 
 To find the cause of a problem in your config, you must "bisect" it:
 1. Remove or disable half of your |config|.
-2. Restart Nvim.
+2. Restart Nvim (|:restart|).
 3. If the problem still occurs, goto 1.
 4. If the problem is gone, restore half of the removed lines.
 5. Continue narrowing your config in this way, until you find the setting or

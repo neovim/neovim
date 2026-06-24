@@ -87,9 +87,7 @@ if(NOT WIN32)
 endif()
 
 execute_process(
-  # Note: because of "-ll" (low-level interpreter mode), some modules like
-  # _core/editor.lua are not loaded.
-  COMMAND ${NVIM_PRG} -ll ${ROOT_DIR}/test/runner.lua -v
+  COMMAND ${NVIM_PRG} -l ${ROOT_DIR}/test/runner.lua -v
     --summary-file=${TEST_SUMMARY_FILE}
     --helper=${TEST_DIR}/${TEST_TYPE}/preload.lua
     --lpath=${BUILD_DIR}/?.lua

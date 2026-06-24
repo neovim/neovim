@@ -7,6 +7,7 @@
 "   2024 May 04 by Vim Project fix digit separator in octals and floats
 "   2026 Jan 06 by Vim Project orphaning announcement
 "   2026 Jan 08 by Vim Project highlight capital letter prefixes for numbers
+"   2026 May 29 by Vim Project add C++23 stdfloat types (#16498)
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -104,6 +105,20 @@ if !exists("cpp_no_cpp20")
   syn keyword cppModule		import module export
 endif
 
+" C++ 23 extensions
+if !exists("cpp_no_cpp23")
+  syn keyword cppType		float16_t float32_t float64_t float128_t bfloat16_t
+endif
+
+" C++ 26 extensions
+if !exists("cpp_no_cpp26")
+  " attribute [[ ... ]] with optional value expr, eg [[=foo{1}]]
+  syn region cppAttribute	matchgroup=cppAttributeBracket start="\w\@1<!\[\[" end="\]\]" contains=TOP,@Spell
+  syn match cppReflect		"\^\^"
+  syn match cppSpliceBracket	"\[:\|:\]"
+  syn keyword cppStatement	contract_assert
+endif
+
 " The minimum and maximum operators in GNU C++
 syn match cppMinMax "[<>]?"
 
@@ -128,6 +143,9 @@ hi def link cppString		String
 hi def link cppNumber		Number
 hi def link cppFloat		Number
 hi def link cppModule		Include
+hi def link cppAttributeBracket	Special
+hi def link cppReflect		Operator
+hi def link cppSpliceBracket	Special
 
 let b:current_syntax = "cpp"
 

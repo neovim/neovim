@@ -248,13 +248,12 @@ describe('swapfile detection', function()
     write_file(
       testfile,
       [[
-vim.o.foldmethod = 'expr'
-vim.o.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
-vim.defer_fn(function()
-  vim.api.nvim__redraw({ valid = false })
-end, 500)
-pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')
-    ]]
+        vim.o.foldmethod = 'expr'
+        vim.o.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+        vim.defer_fn(function()
+          vim.api.nvim__redraw({ valid = false })
+        end, 500)
+        pcall(vim.cmd.edit, 'Xtest_swapredraw.lua')]]
     )
     exec(init)
     command('edit! ' .. testfile)
@@ -727,5 +726,50 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
     end)
     api.nvim_chan_send(chan, 'q')
     expect_exitcode(1)
+  end)
+end)
+
+describe('swapfile', function()
+  it('when using device path #31606', function()
+    t.skip(not is_os('win'), 'N/A: Windows feature')
+    local cwd = vim.fs.normalize(vim.uv.cwd())
+    local drive, path = cwd:sub(1, 1), cwd:sub(3)
+    local swapdir = ('%s/Xtest_swap_dir'):format(cwd)
+    local dos_path = ('%s/file.txt'):format(cwd)
+    local device_quest_path = ('//?/%s'):format(dos_path)
+    clear({
+      args = {
+        '--embed',
+        '--headless',
+        '--cmd',
+        ('set directory=%s//'):format(swapdir),
+        '--',
+        device_quest_path,
+      },
+      merge = false,
+    })
+    local escaped_name = ('%s/%s.swp'):format(swapdir, dos_path:gsub('[:/]', '%%'))
+    eq(escaped_name, fn.swapname('%'))
+
+    command('bw!')
+    api.nvim_buf_set_name(0, dos_path)
+    eq(escaped_name, fn.swapname('%'))
+
+    command('bw!')
+    local device_dot_path = ('//./%s'):format(dos_path)
+    api.nvim_buf_set_name(0, device_dot_path)
+    eq(escaped_name, fn.swapname('%'))
+
+    command('bw!')
+    local device_unc_path = ('//?/UNC/localhost/%s$%s/file.txt'):format(drive, path)
+    api.nvim_buf_set_name(0, device_unc_path)
+    eq(('%s/%%%s.swp'):format(swapdir, device_unc_path:sub(8):gsub('/', '%%')), fn.swapname('%'))
+
+    command('bw!')
+    -- Volume GUID form, like \\?\Volume{d4857377-2ac4-45d8-a4cb-9b2e447fd02e}\
+    local guid = vim.fs.normalize(vim.trim(vim.fn.system(('mountvol %s: /L'):format(drive))))
+    local device_guid_path = ('%s%s/file.txt'):format(guid, path:sub(2))
+    api.nvim_buf_set_name(0, device_guid_path)
+    eq(escaped_name, fn.swapname('%'))
   end)
 end)

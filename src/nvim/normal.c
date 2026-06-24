@@ -47,6 +47,7 @@
 #include "nvim/help.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
+#include "nvim/indent_c.h"
 #include "nvim/keycodes.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mapping.h"
@@ -1819,6 +1820,7 @@ void clearop(oparg_T *oap)
   oap->regname = 0;
   oap->motion_force = NUL;
   oap->use_reg_one = false;
+  oap->restore_cursor = false;
   motion_force = NUL;
 }
 
@@ -4355,6 +4357,23 @@ static void nv_brackets(cmdarg_T *cap)
   }
 }
 
+/// Return true when 'comments' defines a C-style line ("//") or block comment.
+/// This is when "%" should skip matching parens in comments, like the "="
+/// operator does.
+static bool buf_has_cstyle_comments(void)
+{
+  char part_buf[COM_MAX_LEN];  // buffer for one 'comments' part
+
+  for (char *list = curbuf->b_p_com; *list;) {
+    (void)copy_option_part(&list, part_buf, COM_MAX_LEN, ",");
+    char *string = vim_strchr(part_buf, ':');  // flags and comment leader
+    if (string != NULL && string[1] == '/' && (string[2] == '/' || string[2] == '*')) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /// Handle Normal mode "%" command.
 static void nv_percent(cmdarg_T *cap)
 {
@@ -4383,10 +4402,21 @@ static void nv_percent(cmdarg_T *cap)
       beginline(BL_SOL | BL_FIX);
     }
   } else {  // "%" : go to matching paren
+    int flags = 0;
+    // Skip matching parens inside C-style comments, like the "=" operator
+    // does, but not when "%" is in 'cpoptions' (Vi-compatible) or the
+    // cursor sits in a line comment (so a match there can still be found).
+    if (vim_strchr(p_cpo, CPO_MATCH) == NULL && buf_has_cstyle_comments()) {
+      int comment_col = check_linecomment(get_cursor_line_ptr());
+      if (comment_col == MAXCOL || curwin->w_cursor.col < (colnr_T)comment_col) {
+        flags = FM_SKIPCOMM;
+      }
+    }
+
     pos_T *pos;
     cap->oap->motion_type = kMTCharWise;
     cap->oap->use_reg_one = true;
-    if ((pos = findmatch(cap->oap, NUL)) == NULL) {
+    if ((pos = findmatchlimit(cap->oap, NUL, flags, 0)) == NULL) {
       clearopbeep(cap->oap);
     } else {
       setpcmark();
@@ -6355,6 +6385,9 @@ static void nv_object(cmdarg_T *cap)
     break;
   case 'p':       // "ap" = a paragraph
     flag = current_par(cap->oap, cap->count1, include, 'p');
+    break;
+  case 'l':       // "il" = inner line, "al" = all lines
+    flag = current_line(cap->oap, include);
     break;
   case 's':       // "as" = a sentence
     flag = current_sent(cap->oap, cap->count1, include);

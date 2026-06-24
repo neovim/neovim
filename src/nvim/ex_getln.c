@@ -1451,7 +1451,9 @@ static int command_line_execute(VimState *state, int key)
                        && s->c != Ctrl_L);
   end_wildmenu = end_wildmenu && (!cmdline_pum_active()
                                   || (s->c != K_PAGEDOWN && s->c != K_PAGEUP
-                                      && s->c != K_KPAGEDOWN && s->c != K_KPAGEUP));
+                                      && s->c != K_KPAGEDOWN && s->c != K_KPAGEUP
+                                      && s->c != K_MOUSEDOWN && s->c != K_MOUSEUP
+                                      && s->c != K_MOUSELEFT && s->c != K_MOUSERIGHT));
 
   // free expanded names when finished walking through matches
   if (end_wildmenu) {
@@ -2210,11 +2212,21 @@ static int command_line_handle_key(CommandLineState *s)
     command_line_left_right_mouse(s);
     return command_line_not_changed(s);
 
-  // Mouse scroll wheel: ignored here
+  // Mouse scroll wheel: scroll the completion info popup when the mouse
+  // is on top of it, otherwise ignored here.
   case K_MOUSEDOWN:
   case K_MOUSEUP:
   case K_MOUSELEFT:
   case K_MOUSERIGHT:
+    if (cmdline_pum_active()) {
+      cmdline_mousescroll(s->c == K_MOUSEDOWN
+                          ? MSCR_DOWN
+                          : (s->c == K_MOUSEUP
+                             ? MSCR_UP
+                             : s->c == K_MOUSELEFT ? MSCR_LEFT : MSCR_RIGHT));
+    }
+    return command_line_not_changed(s);
+
   // Alternate buttons ignored here
   case K_X1MOUSE:
   case K_X1DRAG:
@@ -2493,7 +2505,7 @@ static buf_T *cmdpreview_open_buf(void)
   }
 
   // Rename preview buffer.
-  aco_save_T aco;
+  aco_save_T aco = { 0 };
   aucmd_prepbuf(&aco, cmdpreview_buf);
   int retv = rename_buffer("[Preview]");
   aucmd_restbuf(&aco);
@@ -2687,7 +2699,7 @@ static void cmdpreview_restore_state(CpInfo *cpinfo)
            uhp != NULL;
            uhp = uhp->uh_next.ptr, ++count) {}
 
-      aco_save_T aco;
+      aco_save_T aco = { 0 };
       aucmd_prepbuf(&aco, buf);
       // Ensure all the entries will be undone
       if (curbuf->b_u_synced == false) {
@@ -3661,8 +3673,8 @@ static void ui_ext_cmdline_show(CmdlineInfo *line)
   char charbuf[2] = { (char)line->cmdfirstc, 0 };
   ui_call_cmdline_show(content, line->cmdpos,
                        cstr_as_string(charbuf),
-                       cstr_as_string((line->cmdprompt)),
-                       line->cmdindent, line->level, line->hl_id);
+                       cstr_as_string(line->cmdprompt),
+                       line->cmdindent, line->level, line->cmdprompt ? line->hl_id : -1);
   if (line->special_char) {
     charbuf[0] = line->special_char;
     ui_call_cmdline_special_char(cstr_as_string(charbuf),
@@ -4091,7 +4103,7 @@ void redrawcmd(void)
   // Typing ':' at the more prompt may set skip_redraw.  We don't want this
   // in cmdline mode.
   skip_redraw = false;
-
+  cmdline_was_last_drawn = true;
   redrawing_cmdline = false;
 }
 
@@ -4180,7 +4192,10 @@ char *vim_strsave_fnameescape(const char *const fname, const int what)
 {
 #ifdef BACKSLASH_IN_FILENAME
 # define PATH_ESC_CHARS " \t\n*?[{`%#'\"|!<"
-# define BUFFER_ESC_CHARS (" \t\n*?[`%#'\"|!<")
+// '%' and '#' are not escaped for ":buffer": it has no EX_XFILE, so they are
+// not expanded, and escaping them as "\%"/"\#" breaks buffer name matching
+// when '%'/'#' is in 'isfname' (backslash treated as a path separator).
+# define BUFFER_ESC_CHARS (" \t\n*?[`'\"|!<")
   char buf[sizeof(PATH_ESC_CHARS)];
   int j = 0;
 

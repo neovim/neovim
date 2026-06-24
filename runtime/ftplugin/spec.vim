@@ -6,6 +6,7 @@
 "  Update by Zdenek Dohnal, 2022 May 17
 "  2024 Sep 10 by Vim Project: add epoch support for spec changelog, #15537
 "  2024 Oct 07 by Vim Project: add comment support, #15817
+"  2026 May 25 by Vim Project: drop the python GetRelVer() func
 
 if exists("b:did_ftplugin")
 	finish
@@ -27,33 +28,7 @@ if !exists("no_plugin_maps") && !exists("no_spec_maps")
 endif
 
 if !hasmapto("call <SID>SpecChangelog(\"\")<CR>")
-       noremap <buffer> <unique> <script> <Plug>SpecChangelog :call <SID>SpecChangelog("")<CR>
-endif
-
-if !exists("*s:GetRelVer")
-	function! s:GetRelVer()
-		if has('python')
-python << PYEND
-import sys, datetime, shutil, tempfile
-import vim
-
-try:
-    import rpm
-except ImportError:
-    pass
-else:
-    specfile = vim.current.buffer.name
-    if specfile:
-        rpm.delMacro("dist")
-        spec = rpm.spec(specfile)
-        headers = spec.sourceHeader
-        version = headers["Version"]
-        release = headers["Release"]
-        vim.command("let ver = '" + version + "'")
-        vim.command("let rel = '" + release + "'")
-PYEND
-		endif
-	endfunction
+	noremap <buffer> <unique> <script> <Plug>SpecChangelog :call <SID>SpecChangelog("")<CR>
 endif
 
 if !exists("*s:SpecChangelog")
@@ -111,8 +86,6 @@ if !exists("*s:SpecChangelog")
 		else
 			let include_release_info = 0
 		endif
-
-		call s:GetRelVer()
 
 		if chgline == -1
 			let option = confirm("Can't find %changelog. Create one? ","&End of file\n&Here\n&Cancel",3)

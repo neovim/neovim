@@ -311,7 +311,8 @@ end
 --- @class vim.tbl_contains.Opts
 --- @inlinedoc
 ---
---- `value` is a function reference to be checked (default false)
+--- `value` is a function reference to be checked
+--- (default: false)
 --- @field predicate? boolean
 
 --- Checks if a table contains a given value, specified either directly or via
@@ -660,8 +661,8 @@ end
 ---
 ---@param behavior 'error'|'keep'|'force'|fun(key:any, prev_value:any?, value:any): any Decides what to do if a key is found in more than one map:
 ---      - "error": raise an error
----      - "keep":  use value from the leftmost map
 ---      - "force": use value from the rightmost map
+---      - "keep":  use value from the leftmost map
 ---      - If a function, it receives the current key, the previous value in the currently merged table (if present), the current value and should
 ---        return the value for the given key in the merged table.
 ---@param ... table Two or more tables
@@ -693,8 +694,8 @@ end
 ---@generic T2: table
 ---@param behavior 'error'|'keep'|'force'|fun(key:any, prev_value:any?, value:any): any Decides what to do if a key is found in more than one map:
 ---      - "error": raise an error
----      - "keep":  use value from the leftmost map
 ---      - "force": use value from the rightmost map
+---      - "keep":  use value from the leftmost map
 ---      - If a function, it receives the current key, the previous value in the currently merged table (if present), the current value and should
 ---        return the value for the given key in the merged table.
 ---@param ... T2 Two or more tables
@@ -760,36 +761,6 @@ end
 ---@return boolean `true` if values are equals, else `false`
 function vim.deep_equal(a, b)
   return deep_equal(a, b)
-end
-
---- Add the reverse lookup values to an existing table.
---- For example:
---- `tbl_add_reverse_lookup { A = 1 } == { [1] = 'A', A = 1 }`
----
---- Note that this *modifies* the input.
----@deprecated
----@param o table Table to add the reverse to
----@return table o
-function vim.tbl_add_reverse_lookup(o)
-  vim.deprecate('vim.tbl_add_reverse_lookup', nil, '0.12')
-
-  --- @cast o table<any,any>
-  --- @type any[]
-  local keys = vim.tbl_keys(o)
-  for _, k in ipairs(keys) do
-    local v = o[k]
-    if o[v] then
-      error(
-        string.format(
-          'The reverse lookup found an existing value for %q while processing key %q',
-          tostring(v),
-          tostring(k)
-        )
-      )
-    end
-    o[v] = k
-  end
-  return o
 end
 
 --- Gets a (nested) value from table `o` given by a sequence of keys `...`, or `nil` if not found.
@@ -946,12 +917,6 @@ function vim.isarray(t)
     end
     return getmetatable(t) ~= vim._empty_dict_mt
   end
-end
-
---- @deprecated
-function vim.tbl_islist(t)
-  vim.deprecate('vim.tbl_islist', 'vim.islist', '0.12')
-  return vim.islist(t)
 end
 
 --- Tests if `t` is a "list": a table indexed _only_ by contiguous integers starting from 1 (what
@@ -1259,27 +1224,13 @@ do
   ---       end
   ---     ```
   ---
-  --- 2. `vim.validate(spec)` (deprecated)
-  ---     where `spec` is of type
+  --- 2. `vim.validate(spec)` (DEPRECATED) where `spec` is of type
   ---    `table<string,[value:any, validator: vim.validate.Validator, optional_or_msg? : boolean|string]>)`
   ---
   ---     Validates a argument specification.
   ---     Specs are evaluated in alphanumeric order, until the first failure.
   ---
-  ---     Example:
-  ---
-  ---     ```lua
-  ---       function user.new(name, age, hobbies)
-  ---         vim.validate{
-  ---           name={name, 'string'},
-  ---           age={age, 'number'},
-  ---           hobbies={hobbies, 'table'},
-  ---         }
-  ---         -- ...
-  ---       end
-  ---     ```
-  ---
-  --- Examples with explicit argument values (can be run directly):
+  --- Examples:
   ---
   --- ```lua
   --- vim.validate('arg1', {'foo'}, 'table')
@@ -1292,15 +1243,11 @@ do
   ---
   --- vim.validate('arg1', 3, function(a) return (a % 2) == 0 end, 'even number')
   ---    --> error('arg1: expected even number, got 3')
-  --- ```
   ---
-  --- If multiple types are valid they can be given as a list.
-  ---
-  --- ```lua
+  --- -- If multiple types are valid they can be given as a list:
   --- vim.validate('arg1', {'foo'}, {'table', 'string'})
   --- vim.validate('arg2', 'foo', {'table', 'string'})
   --- -- NOP (success)
-  ---
   --- vim.validate('arg1', 1, {'string', 'table'})
   --- -- error('arg1: expected string|table, got number')
   --- ```
@@ -1316,7 +1263,7 @@ do
   ---     `'thread'`, `'userdata'`.
   ---   - (`fun(val:any): boolean, string?`) A function that returns a boolean and an optional
   ---     string message.
-  --- @param optional? boolean Parameter is optional (may be omitted or nil)
+  --- @param optional? boolean (default: false) Parameter is optional (may be omitted or nil)
   --- @param message? string message when validation fails
   --- @overload fun(name: string, val: any, validator: vim.validate.Validator, message: string)
   --- @overload fun(spec: table<string,[any, vim.validate.Validator, boolean|string]>)

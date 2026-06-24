@@ -160,6 +160,7 @@ error('Cannot require a meta file')
 --- @field default? true
 --- @field fg? integer
 --- @field fg_indexed? boolean
+--- @field font? string
 --- @field link? string
 --- @field sp? integer
 
@@ -200,7 +201,7 @@ error('Cannot require a meta file')
 --- @class vim.api.keyset.get_option_info
 --- @field name string
 --- @field shortname string
---- @field scope 'buf'|'win'|'global'
+--- @field scope 'buf'|'win'|'global'|'tab'
 --- @field global_local boolean
 --- @field commalist boolean
 --- @field flaglist boolean

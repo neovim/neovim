@@ -663,8 +663,17 @@ wingotofile:
       if (wp == NULL && win_split(0, 0) == OK) {
         RESET_BINDING(curwin);
         if (do_ecmd(0, ptr, NULL, NULL, ECMD_LASTL, ECMD_HIDE, NULL) == FAIL) {
+          // Note: if do_ecmd() is aborted resulting in got_int being true, win_close()
+          // unconditionally fails. In such case, the window split for do_ecmd() is
+          // left unclosed, i.e. the current window is just duplicated. To avoid this,
+          // save and load got_int value before and after closing the window.
+          const bool old_got_int = got_int;
+          got_int = false;
+
           // Failed to open the file, close the window opened for it.
           win_close(curwin, false, false);
+          got_int = got_int || old_got_int;
+
           goto_tabpage_win(oldtab, oldwin);
         } else {
           wp = curwin;
@@ -4337,6 +4346,10 @@ void unuse_tabpage(tabpage_T *tp)
   tp->tp_firstwin = firstwin;
   tp->tp_lastwin = lastwin;
   tp->tp_curwin = curwin;
+  // Set this tab's stored cmdheight so use_tabpage() can restore it later.
+  // command_height() and win_new_screen_rows() also keep tp_ch_used in sync for the current tab
+  // between tab switches; this catches the no-display switch_win() path which bypasses them.
+  tp->tp_ch_used = p_ch;
 }
 
 // When switching tabpage, handle other side-effects in command_height(), but
@@ -4352,6 +4365,9 @@ void use_tabpage(tabpage_T *tp)
   firstwin = curtab->tp_firstwin;
   lastwin = curtab->tp_lastwin;
   curwin = curtab->tp_curwin;
+  // Restore this tab's cmdheight. Layout adjustment (OptionSet, frame resize) is the caller's
+  // responsibility, see enter_tabpage().
+  p_ch = curtab->tp_ch_used;
 }
 
 // Allocate the first window and put an empty buffer in it.
@@ -4378,6 +4394,7 @@ void win_alloc_aucmd_win(int idx)
   fconfig.height = 5;
   fconfig.focusable = false;
   fconfig.mouse = false;
+  fconfig.hide = true;
   aucmd_win[idx].auc_win = win_new_float(NULL, true, fconfig, &err);
   aucmd_win[idx].auc_win->w_buffer->b_nwindows--;
   RESET_BINDING(aucmd_win[idx].auc_win);
@@ -4789,20 +4806,21 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, bool trigger_enter_a
   int old_off = tp->tp_firstwin->w_winrow;
   win_T *next_prevwin = tp->tp_prevwin;
   tabpage_T *old_curtab = curtab;
+  OptInt prev_p_ch = p_ch;
 
   use_tabpage(tp);
 
-  if (old_curtab != curtab) {
+  if (old_curtab != curtab && p_ch != prev_p_ch) {
     tabpage_check_windows(old_curtab);
-    if (p_ch != curtab->tp_ch_used) {
-      // Use the stored value of p_ch, so that it can be different for each tab page.
-      // Handle other side-effects but avoid setting frame sizes, which are still correct.
-      OptInt new_ch = curtab->tp_ch_used;
-      curtab->tp_ch_used = p_ch;
-      command_frame_height = false;
-      set_option_value(kOptCmdheight, NUMBER_OPTVAL(new_ch), 0);
-      command_frame_height = true;
-    }
+    // use_tabpage() loaded a different cmdheight for the new tab. Fire OptionSet and adjust
+    // the cmdline row without touching frame sizes (the new tab's frames are already correct).
+    OptInt new_ch = p_ch;
+    p_ch = prev_p_ch;
+    command_frame_height = false;
+    set_option_value(kOptCmdheight, NUMBER_OPTVAL(new_ch), 0);
+    command_frame_height = true;
+  } else if (old_curtab != curtab) {
+    tabpage_check_windows(old_curtab);
   }
 
   // We would like doing the TabEnter event first, but we don't have a
@@ -5005,6 +5023,7 @@ void tabpage_move(int nr)
     return;
   }
 
+  int old_nr = tabpage_index(curtab);
   tabpage_T *tp_dst = tp;
 
   // Remove the current tab page from the list of tab pages.
@@ -5035,6 +5054,15 @@ void tabpage_move(int nr)
 
   // Need to redraw the tabline.  Tab page contents doesn't change.
   redraw_tabline = true;
+
+  if (has_event(EVENT_TABMOVED)) {
+    char prev_idx[NUMBUFLEN];
+    vim_snprintf(prev_idx, NUMBUFLEN, "%i", old_nr);
+    MAXSIZE_TEMP_DICT(data, 2);
+    PUT_C(data, "tabnr_old", INTEGER_OBJ(old_nr));
+    PUT_C(data, "tabnr_new", INTEGER_OBJ(tabpage_index(curtab)));
+    aucmd_defer(EVENT_TABMOVED, prev_idx, NULL, AUGROUP_ALL, curbuf, NULL, &DICT_OBJ(data));
+  }
 }
 
 /// Go to another window.
@@ -5605,8 +5633,16 @@ void win_free(win_T *wp, tabpage_T *tp)
   stl_clear_click_defs(wp->w_winbar_click_defs, wp->w_winbar_click_defs_size);
   xfree(wp->w_winbar_click_defs);
 
-  stl_clear_click_defs(wp->w_statuscol_click_defs, wp->w_statuscol_click_defs_size);
-  xfree(wp->w_statuscol_click_defs);
+  StcClicks lnum_click_defs;
+  map_foreach_value(wp->w_statuscol_click_defs, lnum_click_defs, {
+    for (uint32_t i = 0; i < lnum_click_defs.set.h.n_keys; i++) {
+      StcClick row_click_defs = lnum_click_defs.values[i];
+      stl_clear_click_defs(row_click_defs.def, row_click_defs.size);
+      xfree(row_click_defs.def);
+    }
+    map_destroy(int, &lnum_click_defs);
+  })
+  map_destroy(int, wp->w_statuscol_click_defs);
 
   // Remove the window from the b_wininfo lists, it may happen that the
   // freed memory is re-used for another window.
@@ -6084,7 +6120,7 @@ void may_trigger_win_scrolled_resized(void)
   }
 
   // If both are to be triggered do WinResized first.
-  if (trigger_resize) {
+  if (trigger_resize && windows_list != NULL) {
     save_v_event_T save_v_event;
     dict_T *v_event = get_v_event(&save_v_event);
 
@@ -6096,7 +6132,7 @@ void may_trigger_win_scrolled_resized(void)
     restore_v_event(v_event, &save_v_event);
   }
 
-  if (trigger_scroll) {
+  if (trigger_scroll && scroll_dict != NULL) {
     save_v_event_T save_v_event;
     dict_T *v_event = get_v_event(&save_v_event);
 
@@ -7081,6 +7117,11 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
   }
 
   wp->w_redr_status = true;
+
+  // Must keep grid dimensions updated during redraw.
+  if (updating_screen) {
+    win_grid_alloc(wp);
+  }
 }
 
 /// Set the width of a window.

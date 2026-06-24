@@ -48,7 +48,7 @@ typedef struct {
   Array virt_lines;
   Boolean virt_lines_above;
   Boolean virt_lines_leftcol;
-  Enum("trunc", "scroll") virt_lines_overflow;
+  Enum("trunc", "scroll", "wrap", "auto") virt_lines_overflow;
   Boolean strict;
   String sign_text;
   HLGroupID sign_hl_group;
@@ -168,6 +168,7 @@ typedef struct {
   String scope;
   Window win;
   Buffer buf;
+  Tabpage tab;
   String filetype;
 } Dict(option);
 

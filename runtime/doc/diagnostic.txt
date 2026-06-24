@@ -442,8 +442,8 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
 
                                                         *diagnostic-structure*
 
-    Diagnostics use the same indexing as the rest of the Nvim API (i.e.
-    0-based rows and columns). |api-indexing|
+    Diagnostics use |api-indexing| (i.e. 0-based rows and columns). See also
+    |vim.pos| and |vim.range| to convert positions from other systems.
 
     Fields: ~
       • {bufnr}       (`integer`) Buffer number
@@ -484,7 +484,8 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                       enabled or disabled. If nil, enablement is ignored. See
                       |vim.diagnostic.enable()|
       • {lnum}?       (`integer`) Limit diagnostics to those spanning the
-                      specified line number.
+                      specified line number (0-indexed, see
+                      |diagnostic-structure|).
       • {namespace}?  (`integer[]|integer`) Limit diagnostics to one or more
                       namespaces.
       • {severity}?   (`vim.diagnostic.SeverityFilter`) See
@@ -711,12 +712,16 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
 
     Fields: ~
       • {current_line}?  (`boolean`, default: `false`) Only show diagnostics
-                         for the current line.
+                         for the current line. Updated on |CursorHold|, see
+                         'updatetime'.
       • {format}?        (`fun(diagnostic:vim.Diagnostic): string?`) A
                          function that takes a diagnostic as input and returns
                          a string or nil. If the return value is nil, the
                          diagnostic is not displayed by the handler. Else the
                          output text is used to display the diagnostic.
+      • {overflow}?      (`'trunc'|'scroll'|'wrap'|'auto'`, default: `auto`)
+                         See `virt_lines_overflow` in
+                         |nvim_buf_set_extmark()|.
       • {severity}?      (`vim.diagnostic.SeverityFilter`) Only show virtual
                          lines for diagnostics matching the given severity
                          |diagnostic-severity|
@@ -724,12 +729,13 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
 *vim.diagnostic.Opts.VirtualText*
 
     Fields: ~
-      • {current_line}?       (`boolean`) Show or hide diagnostics based on
-                              the current cursor line. If `true`, only
-                              diagnostics on the current cursor line are
-                              shown. If `false`, all diagnostics are shown
-                              except on the current cursor line. If `nil`, all
-                              diagnostics are shown. (default `nil`)
+      • {current_line}?       (`boolean`, default: `nil`) Show or hide
+                              diagnostics based on the current cursor line. If
+                              `true`, only diagnostics on the current cursor
+                              line are shown. If `false`, all diagnostics are
+                              shown except on the current cursor line. If
+                              `nil`, all diagnostics are shown. Updated on
+                              |CursorHold|, see 'updatetime'.
       • {format}?             (`fun(diagnostic:vim.Diagnostic): string?`) If
                               not nil, the return value is the text used to
                               display the diagnostic. Example: >lua

@@ -357,18 +357,18 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 ///
 /// @param[in]  expr  Expression to parse. Always treated as a single line.
 /// @param[in]  flags Flags:
-///                    - "m" if multiple expressions in a row are allowed (only
-///                      the first one will be parsed),
 ///                    - "E" if EOC tokens are not allowed (determines whether
 ///                      they will stop parsing process or be recognized as an
 ///                      operator/space, though also yielding an error).
 ///                    - "l" when needing to start parsing with lvalues for
 ///                      ":let" or ":for".
-///                    Common flag sets:
-///                    - "m" to parse like for `":echo"`.
-///                    - "E" to parse like for `"<C-r>="`.
-///                    - empty string for ":call".
-///                    - "lm" to parse for ":let".
+///                    - "m" if multiple expressions in a row are allowed (only
+///                      the first one will be parsed),
+///                    - Common flag sets:
+///                      - "E" to parse like for `"<C-r>="`.
+///                      - "lm" to parse for ":let".
+///                      - "m" to parse like for `":echo"`.
+///                      - empty string for ":call".
 /// @param[in]  hl  If true, return value will also include "highlight"
 ///                        key containing array of 4-tuples (arrays) (Integer,
 ///                        Integer, Integer, String), where first three numbers

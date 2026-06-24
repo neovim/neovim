@@ -25,11 +25,6 @@ function M.filter(filter, msg)
   return match == filter.force
 end
 
---- @param msg string
-local function echo_err(msg)
-  api.nvim_echo({ { msg } }, true, { err = true })
-end
-
 --- @return string[]
 local function get_client_names()
   return vim
@@ -68,7 +63,7 @@ local function checked_enable(names, enable)
     if name:find('*') == nil and vim.lsp.config[name] ~= nil then
       vim.lsp.enable(name, enable)
     else
-      echo_err(N_('E5801: No client config named: %s'):format(name))
+      util.echo_err(N_('E5801: No client config named: %s'):format(name))
     end
   end
 end
@@ -86,9 +81,9 @@ local function ex_lsp_enable(config_names)
     end
     if #config_names == 0 then
       if filetype == '' then
-        echo_err(N_('E5802: Current buffer has no filetype'))
+        util.echo_err(N_('E5802: Current buffer has no filetype'))
       else
-        echo_err(N_('E5803: No configs for filetype: %s'):format(filetype))
+        util.echo_err(N_('E5803: No configs for filetype: %s'):format(filetype))
       end
       return
     end
@@ -111,7 +106,7 @@ local function ex_lsp_disable(config_names)
       end)
       :totable()
     if #config_names == 0 then
-      echo_err(N_('E5804: No configs with clients attached to current buffer'))
+      util.echo_err(N_('E5804: No configs with clients attached to current buffer'))
       return
     end
   end
@@ -126,7 +121,7 @@ local function get_clients_from_names(client_names)
   if #client_names == 0 then
     local clients = vim.lsp.get_clients { bufnr = api.nvim_get_current_buf() }
     if #clients == 0 then
-      echo_err(N_('E5805: No clients attached to current buffer'))
+      util.echo_err(N_('E5805: No clients attached to current buffer'))
     end
     return clients
   else
@@ -135,7 +130,7 @@ local function get_clients_from_names(client_names)
       :map(function(name)
         local clients = vim.lsp.get_clients { name = name }
         if #clients == 0 then
-          echo_err(N_('E5806: No active clients matching name: %s'):format(name))
+          util.echo_err(N_('E5806: No active clients matching name: %s'):format(name))
         end
         return clients
       end)
@@ -176,7 +171,7 @@ local available_subcmds = vim.tbl_keys(actions)
 function M.ex_lsp(eap)
   local subcmd = eap.fargs[1]
   if not vim.list_contains(available_subcmds, subcmd) then
-    echo_err(N_('E5800: Invalid :lsp subcommand: %s'):format(subcmd))
+    util.echo_err(N_('E5800: Invalid :lsp subcommand: %s'):format(subcmd))
     return
   end
 
@@ -186,7 +181,7 @@ end
 --- Completion logic for `:lsp` command
 --- @param line string content of the current command line
 --- @return string[] list of completions
-function M.lsp_complete(line)
+function M.lsp_complete(_, line)
   local split = vim.split(line, '%s+')
   if #split == 2 then
     return available_subcmds
@@ -222,7 +217,7 @@ function M.ex_log(eap)
       path = fs.joinpath(log_dir, filename .. '.log')
     end
     if not vim.uv.fs_stat(path) then
-      echo_err(N_('E5200: No such log file: %s'):format(path))
+      util.echo_err(N_('E5200: No such log file: %s'):format(path))
       return
     end
     util.wrapped_edit(path, eap.smods)
@@ -231,7 +226,7 @@ function M.ex_log(eap)
 end
 
 --- Completion logic for `:log` command
---- @return string[] list of completions
+--- @return string[] completions
 function M.log_complete()
   local names = { 'nvim' } --- @type string[]
   for file, type in vim.fs.dir(log_dir, { depth = math.huge }) do
@@ -311,6 +306,98 @@ function M.ex_oldfiles(eap)
     return
   end
   api.nvim_echo(lines, false, {})
+end
+
+--- Verify that all plugins in a list are installed.
+--- @param names string[]
+--- @return boolean success
+local function verify_plugin_list(names)
+  local not_found = {} --- @type string[]
+  local installed_plugin_names = vim.pack._get_names()
+  for _, name in ipairs(names) do
+    if not vim.list_contains(installed_plugin_names, name) then
+      not_found[#not_found + 1] = name
+    end
+  end
+  if #not_found ~= 0 then
+    util.echo_err(N_('E5807: Plugin not installed: %s'):format(table.concat(not_found, ', ')))
+    return false
+  end
+  return true
+end
+
+--- @param eap vim._core.ExCmdArgs
+function M.ex_packupdate(eap)
+  local offline = false
+  local target = nil --- @type string?
+  local plugins = {} --- @type string[]
+  for _, arg in ipairs(eap.fargs) do
+    if not vim.startswith(arg, '++') then
+      plugins[#plugins + 1] = arg
+    elseif arg == '++offline' then
+      offline = true
+    elseif arg == '++lockfile' then
+      target = 'lockfile'
+    else
+      util.echo_err(N_('E474: Invalid argument'))
+      return
+    end
+  end
+  if verify_plugin_list(plugins) then
+    vim.pack.update(
+      #plugins ~= 0 and plugins or nil,
+      { force = eap.bang, offline = offline, target = target, _ex = true }
+    )
+  end
+end
+
+--- @param pattern string
+--- @return string[] completions
+function M.packupdate_complete(pattern)
+  if vim.startswith(pattern, '++') then
+    return { '++lockfile', '++offline' }
+  end
+  return vim.pack._get_names()
+end
+
+--- @param eap vim._core.ExCmdArgs
+function M.ex_packdel(eap)
+  local all = false
+  local plugins = {} --- @type string[]
+  for _, arg in ipairs(eap.fargs) do
+    if not vim.startswith(arg, '++') then
+      plugins[#plugins + 1] = arg
+    elseif arg == '++all' then
+      all = true
+    else
+      util.echo_err(N_('E474: Invalid argument'))
+      return
+    end
+  end
+  if all then
+    if #plugins ~= 0 then
+      util.echo_err(N_('E5811: Cannot specify plugin names when using ++all'))
+      return
+    end
+    plugins = vim.pack._get_names(not eap.bang)
+  end
+  if all or verify_plugin_list(plugins) then
+    vim.pack.del(plugins, { force = eap.bang, _ex = true })
+  end
+end
+
+--- @param pattern string
+--- @param line string content of the current command line
+--- @return string[] completions
+function M.packdel_complete(pattern, line)
+  local cmd = api.nvim_parse_cmd(line, {})
+  if #cmd.args == 1 and vim.startswith(pattern, '++') then
+    return { '++all' }
+  end
+  if vim.list_contains(cmd.args, '++all') then
+    return {}
+  end
+  return vim.pack._get_names(not cmd.bang)
 end
 
 return M

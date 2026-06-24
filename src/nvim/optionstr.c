@@ -1714,6 +1714,36 @@ const char *did_set_shada(optset_T *args)
   return NULL;
 }
 
+/// Validate 'shellpipe'/'shellredir' option.
+const char *did_set_shellpipe_redir(optset_T *args)
+{
+  bool seen = false;
+
+  for (char *p = args->os_newval.string.data; *p != NUL; p++) {
+    if (*p != '%') {
+      continue;
+    }
+    if (p[1] == NUL) {
+      return e_invalid_format_string_single_percent_s;
+    }
+    if (p[1] == '%') {
+      p++;    // skip second %
+      continue;
+    }
+
+    if (p[1] == 's') {
+      if (seen) {
+        return e_invalid_format_string_single_percent_s;
+      }
+      seen = true;
+      p++;    // consume 's'
+      continue;
+    }
+    return e_invalid_format_string_single_percent_s;
+  }
+  return NULL;
+}
+
 /// The 'shortmess' option is changed.
 const char *did_set_shortmess(optset_T *args)
 {
@@ -2276,12 +2306,15 @@ static const struct chars_tab lcs_tab[] = {
 
 #undef CHARSTAB_ENTRY
 
-static char *field_value_err(char *errbuf, size_t errbuflen, const char *fmt, const char *field)
+static char *field_value_err(char *errbuf, size_t errbuflen, const char *fmt, ...)
 {
   if (errbuf == NULL) {
     return "";
   }
-  vim_snprintf(errbuf, errbuflen, _(fmt), field);
+  va_list arglist;
+  va_start(arglist, fmt);
+  vim_vsnprintf(errbuf, errbuflen, _(fmt), arglist);
+  va_end(arglist);
   return errbuf;
 }
 

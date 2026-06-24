@@ -1737,7 +1737,7 @@ char *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldinfo
       Object obj = eval_foldtext(wp);
       if (obj.type == kObjectTypeArray) {
         Error err = ERROR_INIT;
-        *vt = parse_virt_text(obj.data.array, &err, NULL);
+        *vt = parse_virt_text(obj.data.array, &err, NULL, false);
         if (!ERROR_SET(&err)) {
           *buf = NUL;
           text = buf;

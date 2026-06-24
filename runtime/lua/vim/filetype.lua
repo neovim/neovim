@@ -275,7 +275,7 @@ local extension = {
   astro = 'astro',
   asy = 'asy',
   atl = 'atlas',
-  as = 'atlas',
+  as = detect.as,
   zed = 'authzed',
   ahk = 'autohotkey',
   au3 = 'autoit',
@@ -730,6 +730,7 @@ local extension = {
   JUST = 'just',
   kl = 'karel',
   KL = 'karel',
+  pg = 'kawasaki_as',
   kdl = 'kdl',
   kerml = 'kerml',
   kv = 'kivy',
@@ -1190,6 +1191,7 @@ local extension = {
   sdl = 'sdl',
   sed = 'sed',
   sexp = 'sexplib',
+  sgf = 'sgf',
   bash = detect.bash,
   bats = detect.bash,
   cygport = detect.bash,
@@ -1350,6 +1352,7 @@ local extension = {
   tiltfile = 'tiltfile',
   tla = 'tla',
   tli = 'tli',
+  tolk = 'tolk',
   toml = 'toml',
   tpp = 'tpp',
   treetop = 'treetop',
@@ -1455,6 +1458,7 @@ local extension = {
   xlc = 'xml',
   xba = 'xml',
   slnx = 'xml',
+  reanim = 'xml',
   xpm = detect_line1('XPM2', 'xpm2', 'xpm'),
   xpm2 = 'xpm2',
   xqy = 'xquery',
@@ -1473,6 +1477,7 @@ local extension = {
   yaml = 'yaml',
   eyaml = 'yaml',
   mplstyle = 'yaml',
+  ksy = 'yaml',
   kyaml = 'yaml',
   kyml = 'yaml',
   grc = detect_line1('<%?xml', 'xml', 'yaml'),
@@ -2160,6 +2165,9 @@ local pattern = {
     ['/etc/serial%.conf$'] = 'setserial',
     ['/etc/udev/cdsymlinks%.conf$'] = 'sh',
     ['/etc/profile$'] = detect.sh,
+    ['^/etc/X11/xinit/xinitrc$'] = 'sh',
+    ['^/etc/X11/xinit/xinitrc%.d/'] = 'sh',
+    ['^/etc/X11/xinit/xserverrc$'] = 'sh',
     ['/etc/slp%.conf$'] = 'slpconf',
     ['/etc/slp%.reg$'] = 'slpreg',
     ['/etc/slp%.spi$'] = 'slpspi',
@@ -2523,6 +2531,8 @@ local pattern = {
     ['/%.icewm/menu$'] = 'icemenu',
     ['/%.libao$'] = 'libao',
     ['/%.pinforc$'] = 'pinfo',
+    ['^${HOME}/%.xinitrc$'] = 'sh',
+    ['^${HOME}/%.xserverrc$'] = 'sh',
     ['/%.cargo/credentials$'] = 'toml',
     ['/%.init/.*%.override$'] = 'upstart',
     ['/%.kube/kuberc$'] = 'yaml',
@@ -3228,16 +3238,17 @@ function M.match(args)
   if name then
     name = normalize_path(name)
 
-    local path = vim.fs.abspath(name)
-    do -- First check for the simple case where the full path exists as a key
+    local ok_abspath, path = pcall(vim.fs.abspath, name)
+    if ok_abspath then -- First check for the simple case where the full path exists as a key
       local ft, on_detect = dispatch(filename[path], path, bufnr)
       if ft then
         return ft, on_detect
       end
+    else
+      path = name
     end
 
     local tail = vim.fs.basename(name)
-
     do -- Next check against just the file name
       local ft, on_detect = dispatch(filename[tail], path, bufnr)
       if ft then

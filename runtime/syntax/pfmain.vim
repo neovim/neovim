@@ -3,6 +3,7 @@
 " Maintainer:	KELEMEN Peter <Peter dot Kelemen at cern dot ch>
 " Last Updates:	Anton Shestakov, Hong Xu
 " Last Change:	2015 Feb 10
+" 2026 Jun 13 by Vim project: add smtp_destination_rate_delay #20505
 " Version:	0.40
 " URL:		http://cern.ch/fuji/vim/syntax/pfmain.vim
 " Comment:	Based on Postfix 2.12/3.0 postconf.5.html.
@@ -497,6 +498,7 @@ syntax keyword pfmainConf smtp_defer_if_no_mx_address_found
 syntax keyword pfmainConf smtp_delivery_status_filter
 syntax keyword pfmainConf smtp_destination_concurrency_limit
 syntax keyword pfmainConf smtp_destination_recipient_limit
+syntax keyword pfmainConf smtp_destination_rate_delay
 syntax keyword pfmainConf smtp_discard_ehlo_keyword_address_maps
 syntax keyword pfmainConf smtp_discard_ehlo_keywords
 syntax keyword pfmainConf smtp_dns_reply_filter
@@ -1290,6 +1292,7 @@ syntax match pfmainRef "$\<smtp_defer_if_no_mx_address_found\>"
 syntax match pfmainRef "$\<smtp_delivery_status_filter\>"
 syntax match pfmainRef "$\<smtp_destination_concurrency_limit\>"
 syntax match pfmainRef "$\<smtp_destination_recipient_limit\>"
+syntax match pfmainRef "$\<smtp_destination_rate_delay\>"
 syntax match pfmainRef "$\<smtp_discard_ehlo_keyword_address_maps\>"
 syntax match pfmainRef "$\<smtp_discard_ehlo_keywords\>"
 syntax match pfmainRef "$\<smtp_dns_reply_filter\>"

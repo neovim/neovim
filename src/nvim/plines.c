@@ -732,17 +732,7 @@ bool win_may_fill(win_T *wp)
 /// @return Number of filler lines above lnum
 int win_get_fill(win_T *wp, linenr_T lnum)
 {
-  int virt_lines = decor_virt_lines(wp, lnum - 1, lnum, NULL, NULL, true);
-
-  // be quick when there are no filler lines
-  if (diffopt_filler()) {
-    int n = diff_check_fill(wp, lnum);
-
-    if (n > 0) {
-      return virt_lines + n;
-    }
-  }
-  return virt_lines;
+  return decor_virt_lines(wp, lnum - 1, lnum, NULL, NULL, true) + diff_check_fill(wp, lnum);
 }
 
 /// Return the number of window lines occupied by buffer line "lnum".

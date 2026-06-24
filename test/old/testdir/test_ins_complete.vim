@@ -960,7 +960,7 @@ func Test_pum_stopped_by_timer()
     endfunc
   END
 
-  call writefile(lines, 'Xpumscript')
+  call writefile(lines, 'Xpumscript', 'D')
   let buf = RunVimInTerminal('-S Xpumscript', #{rows: 12})
   call term_sendkeys(buf, ":call StartCompl()\<CR>")
   call TermWait(buf, 200)
@@ -968,7 +968,104 @@ func Test_pum_stopped_by_timer()
   call VerifyScreenDump(buf, 'Test_pum_stopped_by_timer', {})
 
   call StopVimInTerminal(buf)
-  call delete('Xpumscript')
+endfunc
+
+" The completion popup menu must line up with the start of the completed text
+" on screen, also when there is concealed text before it on the line.
+func Test_pum_position_with_concealed_text()
+  CheckScreendump
+
+  let lines =<< trim END
+    call setline(1, ['CONCEALED foobar', 'CONCEALED foo'])
+    syntax match Hidden /CONCEALED / conceal
+    setlocal conceallevel=3 concealcursor=nvic
+    set completeopt=menu,menuone
+  END
+
+  call writefile(lines, 'Xpumconceal', 'D')
+  let buf = RunVimInTerminal('-S Xpumconceal', #{rows: 10})
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "2GA")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "\<C-X>\<C-N>")
+  call VerifyScreenDump(buf, 'Test_pum_position_with_concealed_text', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+endfunc
+
+" Same alignment when the concealed text comes from a match and is shown as a
+" replacement character with 'conceallevel' 2.
+func Test_pum_position_with_concealed_match()
+  CheckScreendump
+
+  let lines =<< trim END
+    call setline(1, ['XXX foobar', 'XXX foo'])
+    call matchadd('Conceal', 'XXX ', 10, -1, {'conceal': '+'})
+    setlocal conceallevel=2 concealcursor=nvic
+    set completeopt=menu,menuone
+  END
+
+  call writefile(lines, 'Xpumconcealmatch', 'D')
+  let buf = RunVimInTerminal('-S Xpumconcealmatch', #{rows: 10})
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "2GA")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "\<C-X>\<C-N>")
+  call VerifyScreenDump(buf, 'Test_pum_position_with_concealed_match', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+endfunc
+
+" The menu lines up with the visible text in a 'rightleft' window too, where
+" the cursor screen column is mirrored.
+func Test_pum_position_with_concealed_rl()
+  CheckScreendump
+  CheckFeature rightleft
+
+  let lines =<< trim END
+    set rightleft
+    call setline(1, ['CONCEALED foobar', 'CONCEALED foo'])
+    syntax match Hidden /CONCEALED / conceal
+    setlocal conceallevel=3 concealcursor=nvic
+    set completeopt=menu,menuone
+  END
+
+  call writefile(lines, 'Xpumconcealrl', 'D')
+  let buf = RunVimInTerminal('-S Xpumconcealrl', #{rows: 10})
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "2GA")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "\<C-X>\<C-N>")
+  call VerifyScreenDump(buf, 'Test_pum_position_with_concealed_rl', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+endfunc
+
+" The recorded offset is per screen line, so the menu also lines up when the
+" concealed text and the completion are on a wrapped continuation line.
+func Test_pum_position_with_concealed_wrap()
+  CheckScreendump
+
+  let lines =<< trim END
+    call setline(1, ['foobar', 'aaaaaaaaaaaaaaaaaaaa CONCEALED foo'])
+    syntax match Hidden /CONCEALED / conceal
+    setlocal conceallevel=3 concealcursor=nvic
+    set completeopt=menu,menuone
+  END
+
+  call writefile(lines, 'Xpumconcealwrap', 'D')
+  let buf = RunVimInTerminal('-S Xpumconcealwrap', #{rows: 10, cols: 20})
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "2GA")
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "\<C-X>\<C-N>")
+  call VerifyScreenDump(buf, 'Test_pum_position_with_concealed_wrap', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
 endfunc
 
 func Test_complete_stopinsert_startinsert()
@@ -3804,10 +3901,16 @@ func Test_complete_opt_fuzzy()
   call feedkeys("Goa\<C-P>\<C-Y>\<Esc>", 'tx')
   call assert_equal('aaaa', getline('.'))
 
+  %d
+  set autoindent
+  set completeopt=menuone,fuzzy
+  call feedkeys("A\<TAB>hello world\<CR>word is on fire\<CR>w\<C-X>\<C-L>\<C-Y>", 'tx')
+  call assert_equal("\thello world", getline('.'))
+
   " clean up
   set omnifunc=
   bw!
-  set complete& completeopt&
+  set complete& completeopt& autoindent&
   autocmd! AAAAA_Group
   augroup! AAAAA_Group
   delfunc OnPumChange
@@ -6433,6 +6536,92 @@ func Test_completion_with_mapped_ctrl_r()
   call assert_equal('AABBCCDDEE', getline('.'))
 
   let @a = ''
+  bwipe!
+endfunc
+
+" Keys are mapped during completion started by complete(), but not in other
+" CTRL-X modes.
+func Test_mapped_ctrl_n_during_complete_function()
+  new
+  inoremap <buffer> <F2> <Cmd>call complete(1, ['foo', 'foobar'])<CR>
+  inoremap <buffer> <F3> <Cmd>let b:info =
+        \ [getline('.'), complete_info(['selected']).selected]<CR>
+
+  " During completion started by complete() the <C-N> mapping applies:
+  " <Down> moves the selection without inserting it.
+  inoremap <buffer> <expr> <C-N> complete_info().mode ==# 'eval' ? '<Down>' : '<C-N>'
+  call feedkeys("i\<F2>\<*C-N>\<F3>\<C-Y>\<Esc>", 'tx')
+  call assert_equal(['foo', 1], b:info)
+  call assert_equal('foobar', getline(1))
+
+  " In other CTRL-X modes the mapping is ignored: the builtin <C-N> selects
+  " and inserts the next match.
+  %delete _
+  call setline(1, ['foo', 'foobar', ''])
+  inoremap <buffer> <expr> <C-N> pumvisible() ? '<Down>' : '<C-N>'
+  call feedkeys("3GAf\<C-X>\<C-N>\<C-N>\<F3>\<C-Y>\<Esc>", 'tx')
+  call assert_equal(['foobar', 1], b:info)
+
+  bwipe!
+endfunc
+
+func Test_smartcase_longest()
+  func! GetMatches()
+    let info = complete_info(["matches"])
+    return map(copy(info.matches), {_, v -> v.word})
+  endfunc
+
+  func! TestInner(key)
+    let pr = "\<c-r>=string(GetMatches())\<cr>"
+    let words = ["InputEvent", "inputmap", "INPUT_MAP"]
+
+    new
+    set completeopt=menuone,noselect,longest ignorecase smartcase
+
+    " Lowercase 'inp' all three (case-insensitive).
+    call setline(1, words)
+    exe $"normal! ggOinp{a:key}{pr}"
+    let line = getline(1)
+    call assert_match('\c^input', line, 'inp prefix, key=' .. strtrans(a:key))
+    call assert_equal("['InputEvent', 'inputmap', 'INPUT_MAP']",
+          \ substitute(line, '\c^input', '', ''),
+          \ 'inp matches, key=' .. strtrans(a:key))
+
+    " Uppercase 'I' excludes lowercase 'inputmap'
+    %d
+    call setline(1, words)
+    exe $"normal! ggOI{a:key}{pr}"
+    let line = getline(1)
+    call assert_match('\c^input', line, 'I prefix, key=' .. strtrans(a:key))
+    call assert_equal("['InputEvent', 'INPUT_MAP']",
+          \ substitute(line, '\c^input', '', ''),
+          \ 'I matches, key=' .. strtrans(a:key))
+
+    set ignorecase& smartcase& completeopt&
+    bw!
+  endfunc
+
+  call TestInner("\<c-n>")
+  call TestInner("\<c-p>")
+  call TestInner("\<c-x>\<c-n>")
+  call TestInner("\<c-x>\<c-p>")
+  delfunc GetMatches
+  delfunc TestInner
+endfunc
+
+" Check that calling complete() while filtering Ctrl-N completion doesn't
+" break dot-repeat.
+func Test_call_complete_while_filtering()
+  new
+  setlocal complete=. completeopt=menuone,noselect
+  inoremap <buffer> <F2> <Cmd>call complete(3, ['obar', 'obaz'])<CR>
+  call setline(1, ['foobar', 'foobaz'])
+
+  call feedkeys("Gofo\<C-N>ob\<F2>cd\<Esc>", 'tx')
+  call assert_equal(['foobar', 'foobaz', 'foobcd'], getline(1, '$'))
+  normal! .
+  call assert_equal(['foobar', 'foobaz', 'foobcd', 'foobcd'], getline(1, '$'))
+
   bwipe!
 endfunc
 

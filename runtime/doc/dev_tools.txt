@@ -403,7 +403,7 @@ Then, in another terminal:
 USING LLDB TO STEP THROUGH UNIT TESTS
 
 >
-    lldb build/bin/nvim -- -ll test/runner.lua --lpath=./build/?.lua test/unit/
+    lldb build/bin/nvim -- -l test/runner.lua --lpath=./build/?.lua test/unit/
 <
 USING GDB
 
@@ -530,6 +530,15 @@ Logs will be written to `${HOME}/logs/*san.PID` then.
 
 For more information: https://github.com/google/sanitizers/wiki/SanitizerCommonFlags
 
-
+If you run nvim in the builtin TUI, it can be asked to load the crash log
+after a crash as a quickfix list in a restarted nvim instance.
+Put this in init.lua (adjust quickfix commands to taste):
+>lua
+    if vim.env.ASAN_OPTIONS ~= nil then
+      local log_name = vim.env.HOME.."/logs/asan."..vim.uv.getpid()
+      local args = {"--embed", "-n", "+set efm=%+A%*[^/]%f:%l:%c", "+silent cfile "..log_name, "+silent cfirst", "+silent copen"}
+      vim.api.nvim__set_restart_on_crash("nvim", args)
+    end
+<
 
  vim:tw=78:ts=8:sw=4:et:ft=help:norl:

@@ -167,6 +167,12 @@ function vim.api.nvim__screenshot(path) end
 
 --- WARNING: This feature is experimental/unstable.
 ---
+--- @param progpath string
+--- @param argv any[]
+function vim.api.nvim__set_restart_on_crash(progpath, argv) end
+
+--- WARNING: This feature is experimental/unstable.
+---
 --- Gets internal stats.
 ---
 --- @return table<string,any> # Map of various internal stats.
@@ -259,7 +265,8 @@ function vim.api.nvim_buf_add_highlight(buffer, ns_id, hl_group, line, col_start
 --- otherwise True.
 function vim.api.nvim_buf_attach(buf, send_buffer, opts) end
 
---- Call a function with buffer as temporary current buffer.
+--- Calls function `fn` in the context of buffer `buf` and returns its result (may be multiple
+--- values).
 ---
 --- This temporarily switches current buffer to `buf`.
 --- If the current window already shows `buf`, the window is not switched.
@@ -271,11 +278,10 @@ function vim.api.nvim_buf_attach(buf, send_buffer, opts) end
 --- This is useful e.g. to call Vimscript functions that only work with the
 --- current buffer/window currently, like `jobstart(…, {'term': v:true})`.
 ---
---- @param buf integer Buffer id, or 0 for current buffer
---- @param fun function Function to call inside the buffer (currently Lua callable
---- only)
---- @return any # Return value of function.
-function vim.api.nvim_buf_call(buf, fun) end
+--- @param buf integer Buffer id, or 0 for current buffer.
+--- @param fn function Lua function to call inside the buffer.
+--- @return any # Value(s) returned by `fn()`.
+function vim.api.nvim_buf_call(buf, fn) end
 
 --- @deprecated
 --- @param buffer integer
@@ -594,134 +600,95 @@ function vim.api.nvim_buf_line_count(buf) end
 --- @param ns_id integer Namespace id from `nvim_create_namespace()`
 --- @param line integer Line where to place the mark, 0-based. `api-indexing`
 --- @param col integer Column where to place the mark, 0-based. `api-indexing`
---- @param opts vim.api.keyset.set_extmark Optional parameters.
---- - conceal: either a boolean or a string.
----     - when a string is given, it should be either empty or a single
----       character. Enable concealing similar to `:syn-conceal`.
----       When a character is supplied it is used as `:syn-cchar`.
----       "hl_group" is used as highlight for the cchar if provided,
----       otherwise it defaults to `hl-Conceal`.
----     - when a boolean is given, true is equivalent to "" and false
----       overrides any existing conceal to remove it.
---- - conceal_lines: string which should be empty. When
----     provided, lines in the range are not drawn at all
----     (according to 'conceallevel'); the next unconcealed line
----     is drawn instead.
---- - cursorline_hl_group: highlight group used for the sign
----     column text when the cursor is on the same line as the
----     mark and 'cursorline' is enabled.
---- - end_col : ending col of the mark, 0-based exclusive, or -1 to extend the range to end of line (if strict=false).
---- - end_right_gravity : boolean that indicates the direction
----     the extmark end position (if it exists) will be shifted
----     in when new text is inserted (true for right, false
----     for left). Defaults to false.
---- - end_row : ending line of the mark, 0-based inclusive.
---- - ephemeral : for use with `nvim_set_decoration_provider()`
----     callbacks. The mark will only be used for the current
----     redraw cycle, and not be permanently stored in the buffer.
---- - hl_eol : when true, for a multiline highlight covering the
----            EOL of a line, continue the highlight for the rest
----            of the screen line (just like for diff and
----            cursorline highlight).
---- - hl_group : highlight group used for the text range. This and below
----     highlight groups can be supplied either as a string or as an integer,
----     the latter of which can be obtained using `nvim_get_hl_id_by_name()`.
----
----     Multiple highlight groups can be stacked by passing an array (highest
----     priority last).
---- - hl_mode : control how highlights are combined with the
----             highlights of the text. Currently only affects
----             virt_text highlights, but might affect `hl_group`
----             in later versions.
----   - "replace": only show the virt_text color. This is the default.
----   - "combine": combine with background text color.
----   - "blend": blend with background text color.
----              Not supported for "inline" virt_text.
----
---- - id : id of the extmark to edit.
---- - invalidate : boolean that indicates whether to hide the
----     extmark if the entirety of its range is deleted. For
----     hidden marks, an "invalid" key is added to the "details"
----     array of `nvim_buf_get_extmarks()` and family. If
----     "undo_restore" is false, the extmark is deleted instead.
---- - line_hl_group: highlight group used for the whole line.
---- - number_hl_group: highlight group used for the number column.
---- - priority: a priority value for the highlight group, sign
----     attribute or virtual text. For virtual text, item with
----     highest priority is drawn last. For example treesitter
----     highlighting uses a value of 100.
---- - right_gravity : boolean that indicates the direction
----     the extmark will be shifted in when new text is inserted
----     (true for right, false for left). Defaults to true.
---- - sign_hl_group: highlight group used for the sign column text.
---- - sign_text: string of length 1-2 used to display in the
----     sign column.
---- - spell: boolean indicating that spell checking should be
----     performed within this extmark
---- - strict: boolean that indicates extmark should not be placed
----     if the line or column value is past the end of the
----     buffer or end of the line respectively. Defaults to true.
---- - ui_watched: boolean that indicates the mark should be drawn
----     by a UI. When set, the UI will receive win_extmark events.
----     Note: the mark is positioned by virt_text attributes. Can be
----     used together with virt_text.
---- - undo_restore : Restore the exact position of the mark
----     if text around the mark was deleted and then restored by undo.
----     Defaults to true.
---- - url: A URL to associate with this extmark. In the TUI, the OSC 8 control
+--- @param opts vim.api.keyset.set_extmark Optional parameters:
+--- - conceal: (boolean|string)
+---     - string: Single char or empty string, enables conceal similar to `:syn-conceal`.
+---       Non-empty char is used as `:syn-cchar`. Highlighted with "hl_group" if
+---       defined, else defaults to `hl-Conceal`.
+---     - boolean: true is equivalent to "", false removes any existing conceal.
+--- - conceal_lines: (string) Line-level conceal. When set to an empty string (other
+---   values reserved for future use), the lines in the extmark range are not drawn;
+---   the next non-concealed line is drawn in their place. Requires 'conceallevel' >=
+---   2; subject to 'concealcursor' on the cursor line.
+--- - cursorline_hl_group: Highlight group used for the 'signcolumn' text when the
+---   cursor is on the same line as the mark and 'cursorline' is enabled.
+--- - end_col: End-column of the mark, 0-based exclusive, or -1 to extend the range to
+---   end of line (if strict=false).
+--- - end_right_gravity: (boolean, default: false) Indicates which direction the extmark
+---   end-position (if any) will be shifted when new text is inserted (true=right, false=left).
+--- - end_row: End-line of the mark, 0-based inclusive.
+--- - ephemeral: For use with `nvim_set_decoration_provider()` callbacks. The mark
+---   will only be used for the current redraw cycle, and not stored in the buffer.
+--- - hl_eol: When true, for a multiline highlight covering the EOL of a line,
+---   continue the highlight for the rest of the screen line (just like for diff and
+---   cursorline highlight).
+--- - hl_group: Highlight group for the text range. This and below highlight groups
+---   can be given as a string or as an integer (`nvim_get_hl_id_by_name()`). Multiple
+---   highlight groups can be stacked by passing an array (highest-priority last).
+--- - hl_mode: Controls how highlights are combined with the highlights of the text.
+---   Only affects virt_text highlights, but might affect `hl_group` in the future.
+---   - "replace": Only show the virt_text color. This is the default.
+---   - "combine": Combine with background text color.
+---   - "blend": Blend with background text color. Not supported for "inline" virt_text.
+--- - id: Update this extmark instead of creating a new one.
+--- - invalidate: (boolean) Indicates whether to hide the extmark if the entirety of
+---   its range is deleted. For hidden marks, an "invalid" key is added to the
+---   "details" array of `nvim_buf_get_extmarks()` and family. If "undo_restore" is
+---   false, the extmark is deleted instead.
+--- - line_hl_group: Highlight group used for the whole line.
+--- - number_hl_group: Highlight group used for the number column.
+--- - priority: Priority of the highlight group, sign attribute or virtual text. For
+---   virtual text, the highest-priority item is drawn last. For example treesitter
+---   highlighting uses a value of 100.
+--- - right_gravity: (boolean, default: true) Indicates which direction the extmark
+---   will be shifted when new text is inserted (true=right, false=left).
+--- - sign_hl_group: Highlight group for `sign_text`.
+--- - sign_text: (string, length 1-2) Displayed in 'signcolumn'.
+--- - spell: (boolean) Indicates that spell checking should be performed within this
+---   extmark.
+--- - strict: (boolean, default: true) Indicates extmark should not be placed if the
+---   line or column value is past end-of-buffer or end-of-line respectively.
+--- - ui_watched: (boolean) Indicates the mark should be drawn by a UI; activates
+---   `win_extmark` [ui-multigrid] events. Note: the mark is positioned by virt_text
+---   attributes. Can be used with virt_text.
+--- - undo_restore: (default: true) Restore the exact position of the mark if text
+---   around the mark was deleted and then restored by undo.
+--- - url: URL stored on this extmark. In the TUI, the OSC 8 control
 ---     sequence is used to generate a clickable hyperlink to this URL.
---- - virt_lines : virtual lines to add next to this mark
----     This should be an array over lines, where each line in
----     turn is an array over `[text, highlight]` tuples. In
----     general, buffer and window options do not affect the
----     display of the text. In particular 'wrap'
----     and 'linebreak' options do not take effect, so
----     the number of extra screen lines will always match
----     the size of the array. However the 'tabstop' buffer
----     option is still used for hard tabs. By default lines are
----     placed below the buffer line containing the mark.
----
---- - virt_lines_above: place virtual lines above instead.
---- - virt_lines_leftcol: Place virtual lines in the leftmost
----                       column of the window, bypassing
----                       sign and number columns.
---- - virt_lines_overflow: controls how to handle virtual lines wider
----     than the window. Currently takes the one of the following values:
----   - "trunc": truncate virtual lines on the right (default).
----   - "scroll": virtual lines can scroll horizontally with 'nowrap',
----      otherwise the same as "trunc".
---- - virt_text : [](virtual-text) to link to this mark.
----     A list of `[text, highlight]` tuples, each representing a
----     text chunk with specified highlight. `highlight` element
----     can either be a single highlight group, or an array of
----     multiple highlight groups that will be stacked
----     (highest priority last).
---- - virt_text_hide : hide the virtual text when the background
----                    text is selected or hidden because of
----                    scrolling with 'nowrap' or 'smoothscroll'.
----                    Currently only affects "overlay" virt_text.
---- - virt_text_pos : position of virtual text. Possible values:
----   - "eol": right after eol character (default).
----   - "eol_right_align": display right aligned in the window
----                        unless the virtual text is longer than
----                        the space available. If the virtual
----                        text is too long, it is truncated to
----                        fit in the window after the EOL
----                        character. If the line is wrapped, the
----                        virtual text is shown after the end of
----                        the line rather than the previous
----                        screen line.
----   - "overlay": display over the specified column, without
----                shifting the underlying text.
----   - "right_align": display right aligned in the window.
----   - "inline": display at the specified column, and
----               shift the buffer text to the right as needed.
---- - virt_text_repeat_linebreak : repeat the virtual text on
----                                wrapped lines.
---- - virt_text_win_col : position the virtual text at a fixed
----                       window column (starting from the first
----                       text column of the screen line) instead
----                       of "virt_text_pos".
+--- - virt_lines: List of virtual lines to place next to the mark, where each line is
+---   a list of `[text_chunk, hl]` tuples. Buffer and window options do not affect the
+---   display of the text, except 'tabstop' is used for hard tabs. The 'wrap' and
+---   'linebreak' options do not take effect, so the number of extra screen lines will
+---   match the list-size (but see `virt_lines_overflow`). By default lines are placed
+---   below the marked line.
+--- - virt_lines_above: Place virtual lines above instead.
+--- - virt_lines_leftcol: Place virtual lines in the leftmost column of the window,
+---   bypassing sign and number columns.
+--- - virt_lines_overflow: Controls display of virtual lines exceeding the viewport:
+---   - "auto": Decided by the 'wrap' option.
+---   - "scroll": Scroll horizontally with 'nowrap', otherwise the same as "trunc".
+---   - "trunc": Truncate on the right (default).
+---   - "wrap": Always wrap (regardless of the 'wrap' option).
+--- - virt_text: [](virtual-text) stored and displayed by this mark. List of `[text, hl]`
+---   tuples, each representing a text chunk with a highlight `hl` which may be
+---   a single highlight group or a list of stacked highlight groups (highest-priority
+---   last).
+--- - virt_text_hide: Hide the virtual text when the background text is selected or
+---   hidden because of scrolling with 'nowrap' or 'smoothscroll'. Currently only
+---   affects "overlay" virt_text.
+--- - virt_text_pos: Position of virtual text:
+---   - "eol": Right after EOL character (default).
+---   - "eol_right_align": Display right-aligned in the window unless the virtual text
+---     is longer than the space available. If the virtual text is too long, it is
+---     truncated to fit in the window after the EOL character. If the line is
+---     wrapped, the virtual text is shown after the end of the line rather than the
+---     previous screen line.
+---   - "overlay": Display over the specified column, without shifting the underlying text.
+---   - "right_align": Display right-aligned in the window.
+---   - "inline": Display at the specified column, and right-shift the buffer text as needed.
+--- - virt_text_repeat_linebreak: Repeat the virtual text on wrapped lines.
+--- - virt_text_win_col: Position the virtual text at a fixed window column (starting
+---   from the first text column of the screen line) instead of "virt_text_pos".
 --- @return integer # Id of the created/updated extmark
 function vim.api.nvim_buf_set_extmark(buf, ns_id, line, col, opts) end
 
@@ -882,7 +849,7 @@ function vim.api.nvim_clear_autocmds(opts) end
 --- Executes an Ex command `cmd`, specified as a Dict with the same structure as returned by
 --- `nvim_parse_cmd()`.
 ---
---- Use `magic={…=false}` to disable special chars:
+--- Use `magic={…=false}` to disable special chars (see also `open-file`):
 --- ```lua
 --- vim.api.nvim_cmd({
 ---     cmd = 'edit',
@@ -982,13 +949,13 @@ function vim.api.nvim_create_augroup(name, opts) end
 --- - callback (`function|string?`) Lua function (or Vimscript function name, if string)
 ---   called when the event(s) is triggered. Lua callback can return `lua-truthy` to delete
 ---   the autocommand. Callback receives one argument, a table with keys: [event-args]()
----     - id: (`number`) Autocommand id
----     - event: (`vim.api.keyset.events`) Name of the triggered event `autocmd-events`
----     - group: (`number?`) Group id, if any
----     - file: (`string`) [<afile>] (not expanded to a full path)
----     - match: (`string`) [<amatch>] (expanded to a full path)
 ---     - buf: (`number`) [<abuf>]
 ---     - data: (`any`) Arbitrary data passed from [nvim_exec_autocmds()] [event-data]()
+---     - event: (`vim.api.keyset.events`) Name of the triggered event `autocmd-events`
+---     - file: (`string`) [<afile>] (not expanded to a full path)
+---     - group: (`number?`) Group id, if any
+---     - id: (`number`) Autocommand id
+---     - match: (`string`) [<amatch>] (expanded to a full path)
 --- - command (string?) Vim command executed on event. Not allowed with {callback}.
 --- - desc (`string?`) Description (for documentation and troubleshooting).
 --- - group (`string|integer?`) Group name or id to match against.
@@ -1033,35 +1000,33 @@ function vim.api.nvim_create_namespace(name) end
 --- Hello world!
 --- ```
 ---
---- @param name string Name of the new user command. Must begin with an uppercase letter.
---- @param cmd string|fun(args: vim.api.keyset.create_user_command.command_args) Replacement command to execute when this user command is executed. When called
---- from Lua, the command can also be a Lua function. The function is called with a
---- single table argument that contains the following keys:
---- - args: (string) The args passed to the command, if any [<args>]
---- - bang: (boolean) "true" if the command was executed with a ! modifier [<bang>]
---- - count: (number) Any count supplied [<count>]
---- - fargs: (table) The args split by unescaped whitespace (when more than one
---- argument is allowed), if any [<f-args>]
---- - line1: (number) The starting line of the command range [<line1>]
---- - line2: (number) The final line of the command range [<line2>]
---- - mods: (string) Command modifiers, if any [<mods>]
---- - name: (string) Command name
---- - nargs: (string) Number of arguments allowed for the command
---- - range: (number) The number of items in the command range: 0, 1, or 2 [<range>]
---- - reg: (string) The optional register, if specified [<reg>]
---- - smods: (table) Command modifiers in a structured format. Has the same
---- structure as the "mods" key of `nvim_parse_cmd()`.
---- @param opts vim.api.keyset.user_command Optional flags
+--- @param name string Command name. First char must be uppercase.
+--- @param cmd string|fun(args: vim.api.keyset.create_user_command.command_args) Command or Lua function, executed when the command is invoked. Lua function
+--- receives a table with keys:
+--- - args: (string) Args passed to the command, if any. [<args>]
+--- - bang: (boolean) true if the command was executed with "!". [<bang>]
+--- - count: (number) Count, if any. [<count>]
+--- - fargs: (table) Args split by unescaped whitespace (when more than one arg is
+---   allowed), if any. [<f-args>]
+--- - line1: (number) Start of the command range. [<line1>]
+--- - line2: (number) End of the command range. [<line2>]
+--- - mods: (string) Command modifiers (unstructured string), if any. [<mods>]
+--- - name: (string) Command name.
+--- - nargs: (string) Number of arguments allowed by the command. `:command-nargs`
+--- - range: (number) Number of items in the command range: 0, 1, or 2. [<range>]
+--- - reg: (string) Register name, if any. [<reg>]
+--- - smods: (table) Command modifiers (structured), same as "mods" in `nvim_parse_cmd()`.
+--- @param opts vim.api.keyset.user_command Optional flags:
+--- - `addr` `:command-addr`
+--- - `complete` `:command-complete` command or function `:command-completion-customlist`.
+--- - `count` `:command-count`
 --- - `desc` (string) Command description.
---- - `force` (boolean, default true) Override any previous definition.
---- - `complete` `:command-complete` command or function like `:command-completion-customlist`.
---- - `nargs` Number of arguments allowed for the command `:command-nargs`
---- - `preview` (function) Preview handler for 'inccommand' `:command-preview`
---- - `range` see `:command-range`
---- - `count` see `:command-count`
---- - `addr` see `:command-addr`
---- - Set boolean `command-attributes` such as `:command-bang` or `:command-bar` to
----   true (but not `:command-buffer`, use `nvim_buf_create_user_command()` instead).
+--- - `force` (boolean, default true) Override the existing definition, if any.
+--- - `nargs` Number of arguments allowed by the command. `:command-nargs`
+--- - `preview` (function) Preview handler for 'inccommand'. `:command-preview`
+--- - `range` `:command-range`
+--- - boolean `command-attributes` such as `:command-bang` or `:command-bar` (but
+---   not `:command-buffer`, use `nvim_buf_create_user_command()` instead).
 function vim.api.nvim_create_user_command(name, cmd, opts) end
 
 --- Delete an autocommand group by id.
@@ -1227,15 +1192,16 @@ function vim.api.nvim_exec(src, output) end
 --- - output: (string|nil) Output if `opts.output` is true.
 function vim.api.nvim_exec2(src, opts) end
 
---- Executes handlers for {event} that match the corresponding {opts} query. `autocmd-execute`
+--- Executes {event} handlers matching the {opts} query, in the context of {buf} (if given). `autocmd-execute`
+---
 --- @see `:help :doautocmd`
 --- @param event vim.api.keyset.events|vim.api.keyset.events[] Event(s) to execute.
 --- @param opts vim.api.keyset.exec_autocmds Optional filters:
---- - buf (`integer?`) Buffer id `autocmd-buflocal`. Not allowed with {pattern}.
+--- - buf (`integer?`) Buffer where the event is applied. `autocmd-buflocal` Not allowed with {pattern}.
 --- - data (`any`): Arbitrary data passed to the callback. See `nvim_create_autocmd()`.
 --- - group (`string|integer?`) Group name or id to match against. `autocmd-groups`.
 --- - modeline (`boolean?`, default: true) Process the modeline after the autocommands
----   [<nomodeline>].
+---   [<nomodeline>]. Ignored if `buf` is given.
 --- - pattern (`string|array?`, default: current file name) `autocmd-pattern`. Not allowed with {buf}.
 function vim.api.nvim_exec_autocmds(event, opts) end
 
@@ -1512,7 +1478,7 @@ function vim.api.nvim_get_option_info(name) end
 --- - last_set_linenr: line number where option was set
 --- - last_set_chan: Channel where option was set (0 for local)
 ---
---- - scope: one of "global", "win", or "buf"
+--- - scope: one of "global", "win", "buf", or "tab"
 --- - global_local: whether win or buf option has a global value
 ---
 --- - commalist: List of comma separated values
@@ -1548,6 +1514,8 @@ function vim.api.nvim_get_option_info2(name, opts) end
 ---   autocommands for the corresponding filetype.
 --- - scope: One of "global" or "local". Analogous to
 --- `:setglobal` and `:setlocal`, respectively.
+--- - tab: `tab-ID` for tab-local options. Currently only
+---   supports "cmdheight". Tabpage `0` means the current tabpage.
 --- - win: `window-ID`. Used for getting window local options.
 --- @return any # Option value
 function vim.api.nvim_get_option_value(name, opts) end
@@ -1715,12 +1683,14 @@ function vim.api.nvim_open_tabpage(buf, enter, config) end
 --- will be echoed directly by the terminal. This is useful to display
 --- ANSI terminal sequences returned as part of an RPC message, or similar.
 ---
---- Note: to directly initiate the terminal using the right size, display the
---- buffer in a configured window before calling this. For instance, for a
---- floating display, first create an empty buffer using `nvim_create_buf()`,
---- then display it using `nvim_open_win()`, and then  call this function.
---- Then `nvim_chan_send()` can be called immediately to process sequences
---- in a virtual terminal having the intended size.
+--- Note: `:ls` reports the buffer as "R" (running) until the channel is closed. `chanclose()`
+---
+--- Note: To initialize the terminal size, display the buffer in a window first. E.g. for a floating display,
+--- 1. Create an empty buffer using `nvim_create_buf()`.
+--- 2. Display it with `nvim_open_win()`.
+--- 3. Call nvim_open_term().
+--- 4. Then calling `nvim_chan_send()` will process sequences in a virtual terminal with the
+---    intended size (defined by the window width/height).
 ---
 --- Example: this `TermHl` command can be used to display and highlight raw ANSI termcodes, so you
 --- can use Nvim as a "scrollback pager" (for terminals like kitty): [ansi-colorize]()
@@ -1732,8 +1702,8 @@ function vim.api.nvim_open_tabpage(buf, enter, config) end
 --- end, { desc = 'Highlights ANSI termcodes in curbuf' })
 --- ```
 ---
---- @param buf integer Buffer to use. Buffer contents (if any) will be written
---- to the PTY.
+--- @param buf integer Buffer which displays the PTY output. The initial buffer contents (if any) will be
+--- written to the PTY.
 --- @param opts vim.api.keyset.open_term Optional parameters.
 --- - force_crlf: (boolean, default true) Convert "\n" to "\r\n".
 --- - on_input: Lua callback for input sent, i e keypresses in terminal
@@ -1845,8 +1815,7 @@ function vim.api.nvim_open_term(buf, opts) end
 ---     Value can be one of "left", "center", or "right".
 ---     Default is `"left"`.
 --- - height: Window height (in character cells). Minimum of 1.
---- - hide: If true the floating window will be hidden and the cursor will be invisible when
----         focused on it.
+--- - hide: Hides the floating window. `window-hidden`
 --- - mouse: Specify how this window interacts with mouse events.
 ---     Defaults to `focusable` value.
 ---     - If false, mouse events pass through this window.
@@ -1965,18 +1934,18 @@ function vim.api.nvim_parse_cmd(str, opts) end
 ---
 --- @param expr string Expression to parse. Always treated as a single line.
 --- @param flags string Flags:
---- - "m" if multiple expressions in a row are allowed (only
----   the first one will be parsed),
 --- - "E" if EOC tokens are not allowed (determines whether
 ---   they will stop parsing process or be recognized as an
 ---   operator/space, though also yielding an error).
 --- - "l" when needing to start parsing with lvalues for
 ---   ":let" or ":for".
---- Common flag sets:
---- - "m" to parse like for `":echo"`.
---- - "E" to parse like for `"<C-r>="`.
---- - empty string for ":call".
---- - "lm" to parse for ":let".
+--- - "m" if multiple expressions in a row are allowed (only
+---   the first one will be parsed),
+--- - Common flag sets:
+---   - "E" to parse like for `"<C-r>="`.
+---   - "lm" to parse for ":let".
+---   - "m" to parse like for `":echo"`.
+---   - empty string for ":call".
 --- @param hl boolean If true, return value will also include "highlight"
 --- key containing array of 4-tuples (arrays) (Integer,
 --- Integer, Integer, String), where first three numbers
@@ -2170,6 +2139,8 @@ function vim.api.nvim_set_current_win(win) end
 ---
 --- Note: It is not allowed to remove or update extmarks in `on_line` or `on_range` callbacks.
 ---
+--- Note: Callbacks will not run for `window-hidden`, as they are not redrawn.
+---
 --- @param ns_id integer Namespace id from `nvim_create_namespace()`
 --- @param opts vim.api.keyset.set_decoration_provider Table of callbacks:
 --- - on_buf: called for each buffer being redrawn (once per edit,
@@ -2305,9 +2276,9 @@ function vim.api.nvim_set_hl_ns_fast(ns_id) end
 --- @param rhs string Right-hand-side `{rhs}` of the mapping.
 --- @param opts vim.api.keyset.keymap Optional parameters map: Accepts all `:map-arguments` as keys except [<buffer>],
 --- values are booleans (default false). Also:
---- - "noremap" disables `recursive_mapping`, like `:noremap`
---- - "desc" human-readable description.
 --- - "callback" Lua function called in place of {rhs}.
+--- - "desc" human-readable description.
+--- - "noremap" disables `recursive_mapping`, like `:noremap`
 --- - "replace_keycodes" (boolean) When "expr" is true, replace keycodes in the
 ---   resulting string (see `nvim_replace_termcodes()`). Returning nil from the Lua
 ---   "callback" is equivalent to returning an empty string.
@@ -2330,6 +2301,9 @@ function vim.api.nvim_set_option(name, value) end
 --- - buf: Buffer number. Used for setting buffer local option.
 --- - scope: One of "global" or "local". Analogous to
 --- `:setglobal` and `:setlocal`, respectively.
+--- - tab: `tab-ID` for tab-local options (currently only 'cmdheight'). Tabpage 0
+---   means the current tabpage. If a non-current tab is given, the value will take
+---   effect when it is switched-to.
 --- - win: `window-ID`. Used for setting window local option.
 function vim.api.nvim_set_option_value(name, value, opts) end
 
@@ -2411,16 +2385,16 @@ function vim.api.nvim_tabpage_set_win(tabpage, win) end
 --- @param content string Content to write to the TTY
 function vim.api.nvim_ui_send(content) end
 
---- Calls a function with window as temporary current window.
+--- Calls function `fn` in the context of window `win` and returns its result (may be multiple
+--- values).
 ---
 ---
 --- @see `:help win_execute()`
 --- @see vim.api.nvim_buf_call
---- @param win integer `window-ID`, or 0 for current window
---- @param fun function Function to call inside the window (currently Lua callable
---- only)
---- @return any # Return value of function.
-function vim.api.nvim_win_call(win, fun) end
+--- @param win integer `window-ID`, or 0 for current window.
+--- @param fn function Lua function to call inside the window.
+--- @return any # Value(s) returned by `fn()`.
+function vim.api.nvim_win_call(win, fn) end
 
 --- Closes the window (like `:close` with a `window-ID`).
 ---
@@ -2504,12 +2478,10 @@ function vim.api.nvim_win_get_var(win, name) end
 --- @return integer # Width as a count of columns
 function vim.api.nvim_win_get_width(win) end
 
---- Closes the window and hide the buffer it contains (like `:hide` with a
---- `window-ID`).
+--- Closes the window and hides the buffer it contains (like `:hide` with a `window-ID`; unrelated
+--- to the `hide` flag of `nvim_open_win()`, `nvim_win_get_config()`).
 ---
---- Like `:hide` the buffer becomes hidden unless another window is editing it,
---- or 'bufhidden' is `unload`, `delete` or `wipe` as opposed to `:close` or
---- `nvim_win_close()`, which will close the buffer.
+--- Compare `:close` and `nvim_win_close()`, which close the buffer instead of hiding it.
 ---
 --- @param win integer `window-ID`, or 0 for current window
 function vim.api.nvim_win_hide(win) end

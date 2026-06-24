@@ -1,4 +1,5 @@
 local api = vim.api
+local util = require('vim.pos._util')
 
 local M = {}
 
@@ -25,52 +26,8 @@ local M = {}
 
 ---@alias Range Range2|Range4|Range6
 
----@param a_row integer
----@param a_col integer
----@param b_row integer
----@param b_col integer
----@return integer
---- 1: a > b
---- 0: a == b
---- -1: a < b
-local function cmp_pos(a_row, a_col, b_row, b_col)
-  if a_row == b_row then
-    if a_col > b_col then
-      return 1
-    elseif a_col < b_col then
-      return -1
-    else
-      return 0
-    end
-  elseif a_row > b_row then
-    return 1
-  end
-
-  return -1
-end
-
-M.cmp_pos = {
-  lt = function(...)
-    return cmp_pos(...) == -1
-  end,
-  le = function(...)
-    return cmp_pos(...) ~= 1
-  end,
-  gt = function(...)
-    return cmp_pos(...) == 1
-  end,
-  ge = function(...)
-    return cmp_pos(...) ~= -1
-  end,
-  eq = function(...)
-    return cmp_pos(...) == 0
-  end,
-  ne = function(...)
-    return cmp_pos(...) ~= 0
-  end,
-}
-
-setmetatable(M.cmp_pos, { __call = cmp_pos })
+-- TODO(ofseed): directly use `cmp_pos` from `util` and replace all exported usages.
+M.cmp_pos = util.cmp_pos
 
 ---Check if a variable is a valid range object
 ---@param r any

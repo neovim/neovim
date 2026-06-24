@@ -667,6 +667,14 @@ vim.v.shell_error = ...
 --- @type table[]
 vim.v.stacktrace = ...
 
+--- The reason Nvim started. Possible values:
+---   - "normal"    normal startup.
+---   - "restart"   started by `:restart` or `ZR`.
+---
+--- Read-only.
+--- @type string
+vim.v.startreason = ...
+
 --- Timestamp (nanoseconds since UNIX epoch) when the Nvim process
 --- started.
 ---
@@ -804,6 +812,15 @@ vim.v.throwpoint = ...
 --- `expr7` when used with numeric operators).  Read-only.
 --- @type boolean
 vim.v['true'] = ...
+
+--- Timestamp (nanoseconds since UNIX epoch) indicating the most
+--- recent user activity, i.e. when a key is received from a UI
+--- (TUI input or `nvim_input()`).
+---
+--- Initialized to 0 (no user activity since startup).
+--- Read-only.
+--- @type integer
+vim.v.useractive = ...
 
 --- Value of the current item of a `List` or `Dictionary`.  Only
 --- valid while evaluating the expression used with `map()` and

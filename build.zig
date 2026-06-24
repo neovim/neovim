@@ -12,9 +12,9 @@ const version = struct {
     const patch = 0;
     const prerelease = "-dev";
 
-    const api_level = 14;
+    const api_level = 15;
     const api_level_compat = 0;
-    const api_prerelease = false;
+    const api_prerelease = true;
 };
 
 pub const SystemIntegrationOptions = packed struct {
@@ -39,6 +39,12 @@ pub fn lazyArtifact(d: *std.Build.Dependency, name: []const u8) ?*std.Build.Step
     return found;
 }
 
+fn addEmscriptenIncludes(emscripten_include: ?std.Build.LazyPath, artifact: *std.Build.Step.Compile) void {
+    if (emscripten_include) |inc| {
+        artifact.root_module.addSystemIncludePath(inc);
+    }
+}
+
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -50,10 +56,32 @@ pub fn build(b: *std.Build) !void {
     const is_linux = (os_tag == .linux);
     const is_darwin = os_tag.isDarwin();
     const modern_unix = is_darwin or os_tag.isBSD() or is_linux;
+    const is_wasm = t.cpu.arch == .wasm32;
 
-    const cross_compiling = b.option(bool, "cross", "cross compile") orelse false;
-    // TODO(bfredl): option to set nlua0 target explicitly when cross compiling?
-    const target_host = if (cross_compiling) b.graph.host else target;
+    const h = b.graph.host.result;
+    const host = b.option([]const u8, "host", "target for host ") orelse
+        if (target.query.isNative() or h.cpu.arch == t.cpu.arch and h.os.tag == t.os.tag) "" else "native";
+    const cross_compiling = host.len > 0;
+    const target_host = if (cross_compiling) b.resolveTargetQuery(try std.Build.parseTargetQuery(.{ .arch_os_abi = host })) else target;
+
+    const emscripten_sysroot = b.option([]const u8, "emscripten-sysroot", "path to emscripten sysroot");
+    const emscripten_include = if (emscripten_sysroot) |s|
+        std.Build.LazyPath{ .cwd_relative = b.pathJoin(&.{ s, "include" }) }
+    else
+        null;
+
+    const emscripten_libc_path: ?std.Build.LazyPath = if (is_wasm) blk: {
+        if (emscripten_sysroot) |s| {
+            const libc_txt = b.fmt(
+                "include_dir={s}/include\nsys_include_dir={s}/include\ncrt_dir={s}/lib/wasm32-emscripten\nmsvc_lib_dir=\nkernel32_lib_dir=\ngcc_dir=\n",
+                .{ s, s, s },
+            );
+            const wf = b.addWriteFiles();
+            break :blk wf.add("emscripten-libc.txt", libc_txt);
+        }
+        break :blk null;
+    } else null;
+
     // without cross_compiling we like to reuse libluv etc at the same optimize level
     const optimize_host = if (cross_compiling) .ReleaseSafe else optimize;
 
@@ -62,7 +90,7 @@ pub fn build(b: *std.Build) !void {
     // puc lua 5.1 is not ReleaseSafe "safe"
     const optimize_lua = if (optimize == .Debug or optimize == .ReleaseSafe) .ReleaseSmall else optimize;
 
-    const use_luajit = b.option(bool, "luajit", "use luajit") orelse true;
+    const use_luajit = b.option(bool, "luajit", "use luajit") orelse !is_wasm;
     const lualib_name = if (use_luajit) "luajit" else "lua5.1";
     const host_use_luajit = if (cross_compiling) false else use_luajit;
     const E = enum { luajit, lua51 };
@@ -98,6 +126,8 @@ pub fn build(b: *std.Build) !void {
         // this is currently not necessary, as ziglua currently doesn't use lazy dependencies
         // to circumvent ziglua.artifact() failing in a bad way.
         lua = lazyArtifact(ziglua, "lua") orelse return;
+        addEmscriptenIncludes(emscripten_include, lua.?);
+
         if (cross_compiling) {
             _ = lazyArtifact(ziglua_host, "lua") orelse return;
         }
@@ -108,7 +138,13 @@ pub fn build(b: *std.Build) !void {
         const optimize_uv = if (optimize == .Debug and target.result.os.tag == .windows) .ReleaseSafe else optimize;
         if (b.lazyDependency("libuv", .{ .target = target, .optimize = optimize_uv })) |dep| {
             libuv = dep.artifact("uv");
+
+            if (emscripten_libc_path) |lp| libuv.?.setLibCFile(lp);
+            addEmscriptenIncludes(emscripten_include, libuv.?);
+
             libluv = try build_lua.build_libluv(b, target, optimize, lua, libuv.?, use_luajit);
+
+            if (libluv) |luv| addEmscriptenIncludes(emscripten_include, luv);
 
             libluv_host = if (cross_compiling) libluv_host: {
                 const libuv_dep_host = b.lazyDependency("libuv", .{
@@ -139,6 +175,7 @@ pub fn build(b: *std.Build) !void {
         .target = target,
         .optimize = optimize,
     });
+
     const unibilium = if (use_unibilium and !sys_opts.unibilium) b.lazyDependency("unibilium", .{
         .target = target,
         .optimize = optimize,
@@ -151,9 +188,17 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize_ts,
     });
 
+    if (utf8proc) |dep|
+        addEmscriptenIncludes(emscripten_include, dep.artifact("utf8proc"));
+
+    if (unibilium) |dep|
+        addEmscriptenIncludes(emscripten_include, dep.artifact("unibilium"));
+
+    if (treesitter) |dep|
+        addEmscriptenIncludes(emscripten_include, dep.artifact("tree-sitter"));
+
     const nlua0 = try build_lua.build_nlua0(
         b,
-        io,
         target_host,
         optimize_host,
         host_use_luajit,
@@ -239,13 +284,12 @@ pub fn build(b: *std.Build) !void {
 
     const version_lua = gen_config.add("nvim_version.lua", lua_version_info(b));
 
-    var config_str = b.fmt("zig build -Doptimize={s}", .{@tagName(optimize)});
+    // Note: these represent the actually resolved target and host platforms, which are often
+    // more verbose than what needs to be passed in (often -Dhost=native is auto-decteted)
+    // TODO(bfredl): we could include stuff like specific cpu features and os version but eh
+    var config_str = b.fmt("zig build -Doptimize={s} -Dtarget={s}", .{ @tagName(optimize), try t.linuxTriple(b.graph.arena) });
     if (cross_compiling) {
-        config_str = b.fmt("{s} -Dcross -Dtarget={s} (host: {s})", .{
-            config_str,
-            try t.linuxTriple(b.allocator),
-            try b.graph.host.result.linuxTriple(b.allocator),
-        });
+        config_str = b.fmt("{s} -Dhost={s}", .{ config_str, try target_host.result.linuxTriple(b.graph.arena) });
     }
 
     const versiondef_step = b.addConfigHeader(.{
@@ -309,17 +353,19 @@ pub fn build(b: *std.Build) !void {
         .VTERM_TEST_FILE = "test/vterm_test_output", // TODO(bfredl): revisit when porting libvterm tests
     });
 
-    const system_install_path = b.option([]const u8, "install-path", "Install path (for packagers)");
-    const install_path = system_install_path orelse b.install_path;
-    const lib_dir = if (system_install_path) |path| b.fmt("{s}/lib", .{path}) else b.lib_dir;
     _ = gen_config.addCopyFile(sysconfig_step.getOutputFile(), "auto/config.h"); // run_preprocessor() workaronnd
+    //
+    const system_install_path = b.option([]const u8, "install-path", "Install path (for packagers)");
+    const vim_dir, const lib_dir = if (system_install_path) |path| confinstall: {
+        const good_path = try replace_backslashes(b, path);
+        break :confinstall .{ b.fmt("{s}/share/nvim", .{good_path}), b.fmt("{s}/lib/nvim", .{good_path}) };
+    } else .{ "", "" };
 
     _ = gen_config.add("auto/pathdef.h", b.fmt(
-        \\char *default_vim_dir = "{s}/share/nvim";
+        \\char *default_vim_dir = "{s}";
         \\char *default_vimruntime_dir = "";
-        \\char *default_lib_dir = "{s}/nvim";
-        // b.lib_dir is typically b.install_path + "/lib" but may be overridden
-    , .{ try replace_backslashes(b, install_path), try replace_backslashes(b, lib_dir) }));
+        \\char *default_lib_dir = "{s}";
+    , .{ vim_dir, lib_dir }));
 
     const opt_version_string = b.option(
         []const u8,
@@ -412,17 +458,17 @@ pub fn build(b: *std.Build) !void {
 
     const gen_headers, const funcs_data = try gen.nvim_gen_sources(
         b,
-        io,
         nlua0,
         &nvim_sources,
         &nvim_headers,
         &api_headers,
         versiondef_git,
         version_lua,
+        !cross_compiling,
     );
 
     const test_config_step = b.addWriteFiles();
-    _ = test_config_step.add("test/cmakeconfig/paths.lua", try test_config(b, io));
+    _ = test_config_step.add("test/cmakeconfig/paths.lua", try test_config(b));
 
     const test_gen_step = b.step("gen_headers", "debug: output generated headers");
     const config_install = b.addInstallDirectory(.{
@@ -442,8 +488,16 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
         .link_libc = true,
     });
-    const nvim_exe = b.addExecutable(.{ .name = "nvim", .root_module = nvim_mod });
+
+    const nvim_exe = if (is_wasm) b.addLibrary(.{
+        .linkage = .static,
+        .name = "nvim",
+        .root_module = nvim_mod,
+    }) else b.addExecutable(.{ .name = "nvim", .root_module = nvim_mod });
     nvim_exe.rdynamic = true; // -E
+    if (emscripten_libc_path) |lp| nvim_exe.setLibCFile(lp);
+    if (is_wasm) nvim_exe.entry = .disabled;
+    if (is_wasm) nvim_exe.linker_allow_shlib_undefined = true;
 
     if (sys_opts.lua) {
         nvim_exe.root_module.linkSystemLibrary(lualib_name, .{});
@@ -481,7 +535,7 @@ pub fn build(b: *std.Build) !void {
     nvim_mod.addIncludePath(b.path("src"));
     nvim_mod.addIncludePath(gen_config.getDirectory());
     nvim_mod.addIncludePath(gen_headers.getDirectory());
-    try build_lua.add_lua_modules(b, io, t, nvim_mod, lpeg, use_luajit, false, sys_opts);
+    try build_lua.add_lua_modules(b, t, nvim_mod, lpeg, use_luajit, false, sys_opts);
 
     var unit_test_sources = try std.ArrayList([]u8).initCapacity(b.allocator, 10);
     if (support_unittests) {
@@ -496,11 +550,15 @@ pub fn build(b: *std.Build) !void {
         }
     }
 
-    const src_paths = try b.allocator.alloc([]u8, nvim_sources.items.len + unit_test_sources.items.len);
-    for (nvim_sources.items, 0..) |s, i| {
-        src_paths[i] = b.fmt("src/nvim/{s}", .{s.name});
+    var filtered_sources = try std.ArrayList([]u8).initCapacity(b.allocator, nvim_sources.items.len);
+    for (nvim_sources.items) |s| {
+        // wasm_stubs.c defines libuv symbols & excludes it when real libuv is linked
+        if (!is_wasm and std.mem.eql(u8, s.name, "wasm_stubs.c")) continue;
+        try filtered_sources.append(b.allocator, b.fmt("src/nvim/{s}", .{s.name}));
     }
-    @memcpy(src_paths[nvim_sources.items.len..], unit_test_sources.items);
+    const src_paths = try b.allocator.alloc([]u8, filtered_sources.items.len + unit_test_sources.items.len);
+    @memcpy(src_paths[0..filtered_sources.items.len], filtered_sources.items);
+    @memcpy(src_paths[filtered_sources.items.len..], unit_test_sources.items);
 
     const flags = [_][]const u8{
         "-std=gnu99",
@@ -532,15 +590,46 @@ pub fn build(b: *std.Build) !void {
     }
 
     const nvim_exe_step = b.step("nvim_bin", "only the binary (not a fully working install!)");
-    const nvim_exe_install = b.addInstallArtifact(nvim_exe, .{});
+    const nvim_exe_install = b.addInstallArtifact(nvim_exe, .{ .dest_dir = if (is_wasm) .{ .override = .{ .custom = "wasm" } } else .default });
 
-    nvim_exe_step.dependOn(&nvim_exe_install.step);
+    if (is_wasm) {
+        const s = emscripten_sysroot orelse @panic("-Demscripten-sysroot required for wasm target");
+        const emcc = b.addSystemCommand(&.{"emcc"});
+        emcc.step.dependOn(&nvim_exe.step);
+
+        emcc.addArg("-Wl,--whole-archive");
+        emcc.addFileArg(nvim_exe.getEmittedBin());
+        if (lua) |l| emcc.addFileArg(l.getEmittedBin());
+        if (libuv) |uv| emcc.addFileArg(uv.getEmittedBin());
+        if (libluv) |luv| emcc.addFileArg(luv.getEmittedBin());
+        if (utf8proc) |dep| emcc.addFileArg(dep.artifact("utf8proc").getEmittedBin());
+        if (unibilium) |dep| emcc.addFileArg(dep.artifact("unibilium").getEmittedBin());
+        if (treesitter) |dep| emcc.addFileArg(dep.artifact("tree-sitter").getEmittedBin());
+        emcc.addArg("-Wl,--no-whole-archive");
+
+        emcc.addArgs(&.{
+            b.fmt("--sysroot={s}", .{s}),
+            "-sALLOW_MEMORY_GROWTH=1",
+            "-sEXPORT_ALL=1",
+            "-sINITIAL_MEMORY=67108864",
+            "-sFORCE_FILESYSTEM=1",
+            "-sERROR_ON_UNDEFINED_SYMBOLS=0",
+            "--no-entry",
+            "-Wl,--export-all",
+            "-Wl,--no-gc-sections",
+        });
+        emcc.addArg("-o");
+        const nvim_js = emcc.addOutputFileArg("nvim.js");
+        nvim_exe_step.dependOn(&b.addInstallFileWithDir(nvim_js, .bin, "nvim.js").step);
+        nvim_exe_step.dependOn(&b.addInstallFileWithDir(nvim_js.dirname().path(b, "nvim.wasm"), .bin, "nvim.wasm").step);
+    } else {
+        nvim_exe_step.dependOn(&nvim_exe_install.step);
+    }
 
     const gen_runtime = try runtime.nvim_gen_runtime(b, nlua0, funcs_data);
 
     const test_deps = b.step("test_deps", "test prerequisites");
-    test_deps.dependOn(&nvim_exe_install.step);
-    // running tests doesn't require copying the static runtime, only the generated stuff
+    if (!is_wasm) test_deps.dependOn(&nvim_exe_install.step); // running tests doesn't require copying the static runtime, only the generated stuff
     const test_runtime_install = b.addInstallDirectory(.{
         .source_dir = gen_runtime.getDirectory(),
         .install_dir = .prefix,
@@ -551,7 +640,7 @@ pub fn build(b: *std.Build) !void {
     const nvim_dev = b.step("nvim_dev", "build the editor for development");
     b.default_step = nvim_dev;
 
-    nvim_dev.dependOn(&nvim_exe_install.step);
+    if (!is_wasm) nvim_dev.dependOn(&nvim_exe_install.step);
     nvim_dev.dependOn(&test_runtime_install.step);
 
     // run from dev environment
@@ -568,7 +657,7 @@ pub fn build(b: *std.Build) !void {
 
     // installation
     const install = b.getInstallStep();
-    install.dependOn(&nvim_exe_install.step);
+    if (!is_wasm) install.dependOn(&nvim_exe_install.step);
     b.installDirectory(.{
         .source_dir = b.path("runtime/"),
         .install_dir = .prefix,
@@ -740,9 +829,9 @@ fn replace_backslashes(b: *std.Build, input: []const u8) ![]const u8 {
         input;
 }
 
-pub fn test_config(b: *std.Build, io: std.Io) ![]u8 {
+pub fn test_config(b: *std.Build) ![]u8 {
     var buf: [std.fs.max_path_bytes]u8 = std.mem.zeroes([std.fs.max_path_bytes]u8);
-    _ = try b.build_root.handle.realPath(io, &buf);
+    _ = try b.build_root.handle.realPath(b.graph.io, &buf);
     const src_path = std.mem.span(@as([*:0]u8, @ptrCast(&buf)));
 
     // we don't use test/cmakeconfig/paths.lua.in because it contains cmake specific logic
@@ -754,7 +843,7 @@ pub fn test_config(b: *std.Build, io: std.Io) ![]u8 {
         \\M.is_asan = "$ENABLE_ASAN_UBSAN" == "ON"
         \\M.is_zig_build = true
         \\M.vterm_test_file = "test/vterm_test_output"
-        \\M.test_build_dir = "{[bin_dir]s}" -- bull
+        \\M.test_build_dir = _G.nvim_build_dir -- command line arg
         \\M.test_source_path = "{[src_path]s}"
         \\M.test_lua_prg = ""
         \\M.test_luajit_prg = ""
@@ -762,7 +851,7 @@ pub fn test_config(b: *std.Build, io: std.Io) ![]u8 {
         \\M.include_paths = _G.c_include_path or {{}}
         \\
         \\return M
-    , .{ .bin_dir = try replace_backslashes(b, b.install_path), .src_path = try replace_backslashes(b, src_path) });
+    , .{ .src_path = try replace_backslashes(b, src_path) });
 }
 
 fn appendSystemIncludePath(

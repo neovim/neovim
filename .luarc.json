@@ -9,6 +9,7 @@
       "build",
       "test"
     ],
+    "preloadFileSize": 1000,
     "checkThirdParty": "Disable"
   },
   "diagnostics": {

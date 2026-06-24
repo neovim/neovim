@@ -139,6 +139,9 @@ gN			Like |gn| but searches backward, like with `N`.
 			environment variable or the -display argument).  Only
 			when 'mouse' option contains 'n' or 'a'.
 
+<A-LeftMouse>		Starts or extends the Visual area blockwise, see
+			|<A-LeftMouse>|.
+
 If Visual mode is not active and the "v", "V" or CTRL-V is preceded with a
 count, the size of the previously highlighted area is used for a start.  You
 can then move the end of the highlighted area and give an operator.  The type
@@ -228,6 +231,8 @@ The objects that can be used are:
 	is	inner sentence					|v_is|
 	ap	a paragraph (with white space)			|v_ap|
 	ip	inner paragraph					|v_ip|
+	al	all lines					|v_al|
+	il	inner line					|v_il|
 	ab	a () block (with parentheses)			|v_ab|
 	ib	inner () block					|v_ib|
 	aB	a {} block (with braces)			|v_aB|

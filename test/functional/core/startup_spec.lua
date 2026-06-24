@@ -157,14 +157,6 @@ describe('startup', function()
     end)
 
     it('os.exit() sets Nvim exitcode', function()
-      -- tricky: LeakSanitizer triggers on os.exit() and disrupts the return value, disable it
-      exec_lua [[
-        local asan_options = os.getenv('ASAN_OPTIONS') or ''
-        if asan_options ~= '' then
-          asan_options = asan_options .. ':'
-        end
-        vim.uv.os_setenv('ASAN_OPTIONS', asan_options .. ':detect_leaks=0')
-      ]]
       -- nvim -l foo.lua -arg1 -- a b c
       assert_l_out(
         [[
@@ -177,6 +169,38 @@ describe('startup', function()
         { '-arg1', '--exitcode', '73', '--arg2' }
       )
       eq(73, eval('v:shell_error'))
+    end)
+
+    it('os.exit() runs Nvim teardown', function()
+      local exit_file = t.tmpname(false)
+      finally(function()
+        os.remove(exit_file)
+      end)
+
+      fn.system(
+        {
+          nvim_prog,
+          '-u',
+          'NONE',
+          '-i',
+          'NONE',
+          '--cmd',
+          'set shada=',
+          '-l',
+          '-',
+        },
+        ([[
+        vim.api.nvim_create_autocmd('VimLeave', {
+          callback = function()
+            vim.fn.writefile({ tostring(vim.v.exiting) }, %s)
+          end,
+        })
+        os.exit(73)
+      ]]):format(vim.inspect(exit_file))
+      )
+
+      eq(73, eval('v:shell_error'))
+      eq('73\n', read_file(exit_file))
     end)
 
     it('Lua-error sets Nvim exitcode', function()
@@ -300,13 +324,10 @@ describe('startup', function()
         os.remove('Xtest_shada')
       end)
 
-      assert_l_out(
-        'updatecount=0 shadafile=NONE loadplugins=false scripts=1\n',
-        nil,
-        nil,
-        '-',
-        script
-      )
+      assert_l_out(function(out)
+        -- Accept scripts=2 for PUC Lua where `vim._core.util` is sourced from disk instead of a preload blob.
+        return matches('updatecount=0 shadafile=NONE loadplugins=false scripts=[12]\n', out)
+      end, nil, nil, '-', script)
 
       -- User can override.
       assert_l_out(
@@ -1793,6 +1814,18 @@ describe('runtime:', function()
     command('let g:aseq = ""')
     command('edit FTDETECT')
     eq('SsABab', eval('g:aseq'))
+  end)
+
+  it('no crash for recursive search_path build #39815', function()
+    clear()
+    local screen = Screen.new()
+    fn.jobstart({
+      nvim_prog,
+      '--clean',
+      '+lua require("vim._core.ui2").enable()',
+      '+set rtp+=$FOO | set syntax',
+    }, { term = true, env = { VIMRUNTIME = os.getenv('VIMRUNTIME') } })
+    screen:expect({ any = 'syntax', none = 'Process exited 1' })
   end)
 end)
 

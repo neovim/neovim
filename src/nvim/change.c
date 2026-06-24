@@ -2182,7 +2182,7 @@ int get_last_leader_offset(char *line, char **flags)
         // beginning the com_leader.
         for (int off = (len2 > i ? i : len2); off > 0 && off + len1 > len2;) {
           off--;
-          if (!strncmp(string + off, com_leader, (size_t)(len2 - off))) {
+          if (strncmp(string + off, com_leader, (size_t)(len2 - off)) == 0) {
             lower_check_bound = MIN(lower_check_bound, i - off);
           }
         }

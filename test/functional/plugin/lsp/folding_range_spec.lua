@@ -125,12 +125,6 @@ static int foldLevel(linenr_T lnum)
     local screen
     before_each(function()
       screen = Screen.new(80, 45)
-      screen:set_default_attr_ids({
-        [1] = { background = Screen.colors.Grey, foreground = Screen.colors.DarkBlue },
-        [2] = { bold = true, foreground = Screen.colors.Blue1 },
-        [3] = { bold = true, reverse = true },
-        [4] = { reverse = true },
-      })
       command([[set foldexpr=v:lua.vim.lsp.foldexpr()]])
       command([[split]])
     end)
@@ -192,51 +186,51 @@ static int foldLevel(linenr_T lnum)
     it('updates folds in all windows', function()
       screen:expect({
         grid = [[
-{1:-}// foldLevel() {{{2                                                            |
-{1:│}/// @return  fold level at line number "lnum" in the current window.           |
-{1: }static int foldLevel(linenr_T lnum)                                            |
-{1:-}{                                                                              |
-{1:-}  // While updating the folds lines between invalid_top and invalid_bot have   |
-{1:2}  // an undefined fold level.  Otherwise update the folds first.               |
-{1:-}  if (invalid_top == 0) {                                                      |
-{1:2}    checkupdate(curwin);                                                       |
-{1:-}  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {                        |
-{1:2}    return prev_lnum_lvl;                                                      |
-{1:-}  } else if (lnum >= invalid_top && lnum <= invalid_bot) {                     |
-{1:2}    return -1;                                                                 |
-{1:│}  }                                                                            |
-{1:│}                                                                               |
-{1:│}  // Return quickly when there is no folding at all in this window.            |
-{1:-}  if (!hasAnyFolding(curwin)) {                                                |
-{1:2}    return 0;                                                                  |
-{1:│}  }                                                                            |
-{1:│}                                                                               |
-{1:│}  return foldLevelWin(curwin, lnum);                                           |
-{1: }^}                                                                              |
-{3:[No Name] [+]                                                                   }|
-{1:-}// foldLevel() {{{2                                                            |
-{1:│}/// @return  fold level at line number "lnum" in the current window.           |
-{1: }static int foldLevel(linenr_T lnum)                                            |
-{1:-}{                                                                              |
-{1:-}  // While updating the folds lines between invalid_top and invalid_bot have   |
-{1:2}  // an undefined fold level.  Otherwise update the folds first.               |
-{1:-}  if (invalid_top == 0) {                                                      |
-{1:2}    checkupdate(curwin);                                                       |
-{1:-}  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {                        |
-{1:2}    return prev_lnum_lvl;                                                      |
-{1:-}  } else if (lnum >= invalid_top && lnum <= invalid_bot) {                     |
-{1:2}    return -1;                                                                 |
-{1:│}  }                                                                            |
-{1:│}                                                                               |
-{1:│}  // Return quickly when there is no folding at all in this window.            |
-{1:-}  if (!hasAnyFolding(curwin)) {                                                |
-{1:2}    return 0;                                                                  |
-{1:│}  }                                                                            |
-{1:│}                                                                               |
-{1:│}  return foldLevelWin(curwin, lnum);                                           |
-{1: }}                                                                              |
-{4:[No Name] [+]                                                                   }|
-                                                                                |
+  {7:-}// foldLevel() {{{2                                                            |
+  {7:│}/// @return  fold level at line number "lnum" in the current window.           |
+  {7: }static int foldLevel(linenr_T lnum)                                            |
+  {7:-}{                                                                              |
+  {7:-}  // While updating the folds lines between invalid_top and invalid_bot have   |
+  {7:2}  // an undefined fold level.  Otherwise update the folds first.               |
+  {7:-}  if (invalid_top == 0) {                                                      |
+  {7:2}    checkupdate(curwin);                                                       |
+  {7:-}  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {                        |
+  {7:2}    return prev_lnum_lvl;                                                      |
+  {7:-}  } else if (lnum >= invalid_top && lnum <= invalid_bot) {                     |
+  {7:2}    return -1;                                                                 |
+  {7:│}  }                                                                            |
+  {7:│}                                                                               |
+  {7:│}  // Return quickly when there is no folding at all in this window.            |
+  {7:-}  if (!hasAnyFolding(curwin)) {                                                |
+  {7:2}    return 0;                                                                  |
+  {7:│}  }                                                                            |
+  {7:│}                                                                               |
+  {7:│}  return foldLevelWin(curwin, lnum);                                           |
+  {7: }^}                                                                              |
+  {3:[No Name] [+]                                                                   }|
+  {7:-}// foldLevel() {{{2                                                            |
+  {7:│}/// @return  fold level at line number "lnum" in the current window.           |
+  {7: }static int foldLevel(linenr_T lnum)                                            |
+  {7:-}{                                                                              |
+  {7:-}  // While updating the folds lines between invalid_top and invalid_bot have   |
+  {7:2}  // an undefined fold level.  Otherwise update the folds first.               |
+  {7:-}  if (invalid_top == 0) {                                                      |
+  {7:2}    checkupdate(curwin);                                                       |
+  {7:-}  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {                        |
+  {7:2}    return prev_lnum_lvl;                                                      |
+  {7:-}  } else if (lnum >= invalid_top && lnum <= invalid_bot) {                     |
+  {7:2}    return -1;                                                                 |
+  {7:│}  }                                                                            |
+  {7:│}                                                                               |
+  {7:│}  // Return quickly when there is no folding at all in this window.            |
+  {7:-}  if (!hasAnyFolding(curwin)) {                                                |
+  {7:2}    return 0;                                                                  |
+  {7:│}  }                                                                            |
+  {7:│}                                                                               |
+  {7:│}  return foldLevelWin(curwin, lnum);                                           |
+  {7: }}                                                                              |
+  {2:[No Name] [+]                                                                   }|
+                                                                                  |
   ]],
       })
     end)
@@ -246,51 +240,51 @@ static int foldLevel(linenr_T lnum)
       feed('<C-w><C-w>zx')
       screen:expect({
         grid = [[
-{1: }// foldLevel() {{{2                                                            |
-{1: }/// @return  fold level at line number "lnum" in the current window.           |
-{1: }static int foldLevel(linenr_T lnum)                                            |
-{1: }{                                                                              |
-{1: }  // While updating the folds lines between invalid_top and invalid_bot have   |
-{1: }  // an undefined fold level.  Otherwise update the folds first.               |
-{1: }  if (invalid_top == 0) {                                                      |
-{1: }    checkupdate(curwin);                                                       |
-{1: }  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {                        |
-{1: }    return prev_lnum_lvl;                                                      |
-{1: }  } else if (lnum >= invalid_top && lnum <= invalid_bot) {                     |
-{1: }    return -1;                                                                 |
-{1: }  }                                                                            |
-{1: }                                                                               |
-{1: }  // Return quickly when there is no folding at all in this window.            |
-{1: }  if (!hasAnyFolding(curwin)) {                                                |
-{1: }    return 0;                                                                  |
-{1: }  }                                                                            |
-{1: }                                                                               |
-{1: }  return foldLevelWin(curwin, lnum);                                           |
-{1: }}                                                                              |
-{4:[No Name] [+]                                                                   }|
-{1:-}// foldLevel() {{{2                                                            |
-{1:│}/// @return  fold level at line number "lnum" in the current window.           |
-{1: }static int foldLevel(linenr_T lnum)                                            |
-{1:-}{                                                                              |
-{1:-}  // While updating the folds lines between invalid_top and invalid_bot have   |
-{1:2}  // an undefined fold level.  Otherwise update the folds first.               |
-{1:-}  if (invalid_top == 0) {                                                      |
-{1:2}    checkupdate(curwin);                                                       |
-{1:-}  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {                        |
-{1:2}    return prev_lnum_lvl;                                                      |
-{1:-}  } else if (lnum >= invalid_top && lnum <= invalid_bot) {                     |
-{1:2}    return -1;                                                                 |
-{1:│}  }                                                                            |
-{1:│}                                                                               |
-{1:│}  // Return quickly when there is no folding at all in this window.            |
-{1:-}  if (!hasAnyFolding(curwin)) {                                                |
-{1:2}    return 0;                                                                  |
-{1:│}  }                                                                            |
-{1:│}                                                                               |
-{1:│}  return foldLevelWin(curwin, lnum);                                           |
-{1: }^}                                                                              |
-{3:[No Name] [+]                                                                   }|
-                                                                                |
+  {7: }// foldLevel() {{{2                                                            |
+  {7: }/// @return  fold level at line number "lnum" in the current window.           |
+  {7: }static int foldLevel(linenr_T lnum)                                            |
+  {7: }{                                                                              |
+  {7: }  // While updating the folds lines between invalid_top and invalid_bot have   |
+  {7: }  // an undefined fold level.  Otherwise update the folds first.               |
+  {7: }  if (invalid_top == 0) {                                                      |
+  {7: }    checkupdate(curwin);                                                       |
+  {7: }  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {                        |
+  {7: }    return prev_lnum_lvl;                                                      |
+  {7: }  } else if (lnum >= invalid_top && lnum <= invalid_bot) {                     |
+  {7: }    return -1;                                                                 |
+  {7: }  }                                                                            |
+  {7: }                                                                               |
+  {7: }  // Return quickly when there is no folding at all in this window.            |
+  {7: }  if (!hasAnyFolding(curwin)) {                                                |
+  {7: }    return 0;                                                                  |
+  {7: }  }                                                                            |
+  {7: }                                                                               |
+  {7: }  return foldLevelWin(curwin, lnum);                                           |
+  {7: }}                                                                              |
+  {2:[No Name] [+]                                                                   }|
+  {7:-}// foldLevel() {{{2                                                            |
+  {7:│}/// @return  fold level at line number "lnum" in the current window.           |
+  {7: }static int foldLevel(linenr_T lnum)                                            |
+  {7:-}{                                                                              |
+  {7:-}  // While updating the folds lines between invalid_top and invalid_bot have   |
+  {7:2}  // an undefined fold level.  Otherwise update the folds first.               |
+  {7:-}  if (invalid_top == 0) {                                                      |
+  {7:2}    checkupdate(curwin);                                                       |
+  {7:-}  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {                        |
+  {7:2}    return prev_lnum_lvl;                                                      |
+  {7:-}  } else if (lnum >= invalid_top && lnum <= invalid_bot) {                     |
+  {7:2}    return -1;                                                                 |
+  {7:│}  }                                                                            |
+  {7:│}                                                                               |
+  {7:│}  // Return quickly when there is no folding at all in this window.            |
+  {7:-}  if (!hasAnyFolding(curwin)) {                                                |
+  {7:2}    return 0;                                                                  |
+  {7:│}  }                                                                            |
+  {7:│}                                                                               |
+  {7:│}  return foldLevelWin(curwin, lnum);                                           |
+  {7: }^}                                                                              |
+  {3:[No Name] [+]                                                                   }|
+                                                                                  |
   ]],
       })
     end)
@@ -299,49 +293,49 @@ static int foldLevel(linenr_T lnum)
       command('1,2d')
       screen:expect({
         grid = [[
-{1: }^static int foldLevel(linenr_T lnum)                                            |
-{1:-}{                                                                              |
-{1:-}  // While updating the folds lines between invalid_top and invalid_bot have   |
-{1:2}  // an undefined fold level.  Otherwise update the folds first.               |
-{1:-}  if (invalid_top == 0) {                                                      |
-{1:2}    checkupdate(curwin);                                                       |
-{1:-}  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {                        |
-{1:2}    return prev_lnum_lvl;                                                      |
-{1:-}  } else if (lnum >= invalid_top && lnum <= invalid_bot) {                     |
-{1:2}    return -1;                                                                 |
-{1:│}  }                                                                            |
-{1:│}                                                                               |
-{1:│}  // Return quickly when there is no folding at all in this window.            |
-{1:-}  if (!hasAnyFolding(curwin)) {                                                |
-{1:2}    return 0;                                                                  |
-{1:│}  }                                                                            |
-{1:│}                                                                               |
-{1:│}  return foldLevelWin(curwin, lnum);                                           |
-{1: }}                                                                              |
-{2:~                                                                               }|*2
-{3:[No Name] [+]                                                                   }|
-{1: }static int foldLevel(linenr_T lnum)                                            |
-{1:-}{                                                                              |
-{1:-}  // While updating the folds lines between invalid_top and invalid_bot have   |
-{1:2}  // an undefined fold level.  Otherwise update the folds first.               |
-{1:-}  if (invalid_top == 0) {                                                      |
-{1:2}    checkupdate(curwin);                                                       |
-{1:-}  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {                        |
-{1:2}    return prev_lnum_lvl;                                                      |
-{1:-}  } else if (lnum >= invalid_top && lnum <= invalid_bot) {                     |
-{1:2}    return -1;                                                                 |
-{1:│}  }                                                                            |
-{1:│}                                                                               |
-{1:│}  // Return quickly when there is no folding at all in this window.            |
-{1:-}  if (!hasAnyFolding(curwin)) {                                                |
-{1:2}    return 0;                                                                  |
-{1:│}  }                                                                            |
-{1:│}                                                                               |
-{1:│}  return foldLevelWin(curwin, lnum);                                           |
-{1: }}                                                                              |
-{2:~                                                                               }|*2
-{4:[No Name] [+]                                                                   }|
-                                                                                |
+  {7: }^static int foldLevel(linenr_T lnum)                                            |
+  {7:-}{                                                                              |
+  {7:-}  // While updating the folds lines between invalid_top and invalid_bot have   |
+  {7:2}  // an undefined fold level.  Otherwise update the folds first.               |
+  {7:-}  if (invalid_top == 0) {                                                      |
+  {7:2}    checkupdate(curwin);                                                       |
+  {7:-}  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {                        |
+  {7:2}    return prev_lnum_lvl;                                                      |
+  {7:-}  } else if (lnum >= invalid_top && lnum <= invalid_bot) {                     |
+  {7:2}    return -1;                                                                 |
+  {7:│}  }                                                                            |
+  {7:│}                                                                               |
+  {7:│}  // Return quickly when there is no folding at all in this window.            |
+  {7:-}  if (!hasAnyFolding(curwin)) {                                                |
+  {7:2}    return 0;                                                                  |
+  {7:│}  }                                                                            |
+  {7:│}                                                                               |
+  {7:│}  return foldLevelWin(curwin, lnum);                                           |
+  {7: }}                                                                              |
+  {1:~                                                                               }|*2
+  {3:[No Name] [+]                                                                   }|
+  {7: }static int foldLevel(linenr_T lnum)                                            |
+  {7:-}{                                                                              |
+  {7:-}  // While updating the folds lines between invalid_top and invalid_bot have   |
+  {7:2}  // an undefined fold level.  Otherwise update the folds first.               |
+  {7:-}  if (invalid_top == 0) {                                                      |
+  {7:2}    checkupdate(curwin);                                                       |
+  {7:-}  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {                        |
+  {7:2}    return prev_lnum_lvl;                                                      |
+  {7:-}  } else if (lnum >= invalid_top && lnum <= invalid_bot) {                     |
+  {7:2}    return -1;                                                                 |
+  {7:│}  }                                                                            |
+  {7:│}                                                                               |
+  {7:│}  // Return quickly when there is no folding at all in this window.            |
+  {7:-}  if (!hasAnyFolding(curwin)) {                                                |
+  {7:2}    return 0;                                                                  |
+  {7:│}  }                                                                            |
+  {7:│}                                                                               |
+  {7:│}  return foldLevelWin(curwin, lnum);                                           |
+  {7: }}                                                                              |
+  {1:~                                                                               }|*2
+  {2:[No Name] [+]                                                                   }|
+                                                                                  |
 ]],
       })
     end)
@@ -352,51 +346,51 @@ static int foldLevel(linenr_T lnum)
       end)
       screen:expect({
         grid = [[
-{1: }// foldLevel() {{{2                                                            |
-{1: }/// @return  fold level at line number "lnum" in the current window.           |
-{1: }static int foldLevel(linenr_T lnum)                                            |
-{1: }{                                                                              |
-{1: }  // While updating the folds lines between invalid_top and invalid_bot have   |
-{1: }  // an undefined fold level.  Otherwise update the folds first.               |
-{1: }  if (invalid_top == 0) {                                                      |
-{1: }    checkupdate(curwin);                                                       |
-{1: }  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {                        |
-{1: }    return prev_lnum_lvl;                                                      |
-{1: }  } else if (lnum >= invalid_top && lnum <= invalid_bot) {                     |
-{1: }    return -1;                                                                 |
-{1: }  }                                                                            |
-{1: }                                                                               |
-{1: }  // Return quickly when there is no folding at all in this window.            |
-{1: }  if (!hasAnyFolding(curwin)) {                                                |
-{1: }    return 0;                                                                  |
-{1: }  }                                                                            |
-{1: }                                                                               |
-{1: }  return foldLevelWin(curwin, lnum);                                           |
-{1: }^}                                                                              |
-{3:[No Name] [+]                                                                   }|
-{1: }// foldLevel() {{{2                                                            |
-{1: }/// @return  fold level at line number "lnum" in the current window.           |
-{1: }static int foldLevel(linenr_T lnum)                                            |
-{1: }{                                                                              |
-{1: }  // While updating the folds lines between invalid_top and invalid_bot have   |
-{1: }  // an undefined fold level.  Otherwise update the folds first.               |
-{1: }  if (invalid_top == 0) {                                                      |
-{1: }    checkupdate(curwin);                                                       |
-{1: }  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {                        |
-{1: }    return prev_lnum_lvl;                                                      |
-{1: }  } else if (lnum >= invalid_top && lnum <= invalid_bot) {                     |
-{1: }    return -1;                                                                 |
-{1: }  }                                                                            |
-{1: }                                                                               |
-{1: }  // Return quickly when there is no folding at all in this window.            |
-{1: }  if (!hasAnyFolding(curwin)) {                                                |
-{1: }    return 0;                                                                  |
-{1: }  }                                                                            |
-{1: }                                                                               |
-{1: }  return foldLevelWin(curwin, lnum);                                           |
-{1: }}                                                                              |
-{4:[No Name] [+]                                                                   }|
-                                                                                |
+  {7: }// foldLevel() {{{2                                                            |
+  {7: }/// @return  fold level at line number "lnum" in the current window.           |
+  {7: }static int foldLevel(linenr_T lnum)                                            |
+  {7: }{                                                                              |
+  {7: }  // While updating the folds lines between invalid_top and invalid_bot have   |
+  {7: }  // an undefined fold level.  Otherwise update the folds first.               |
+  {7: }  if (invalid_top == 0) {                                                      |
+  {7: }    checkupdate(curwin);                                                       |
+  {7: }  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {                        |
+  {7: }    return prev_lnum_lvl;                                                      |
+  {7: }  } else if (lnum >= invalid_top && lnum <= invalid_bot) {                     |
+  {7: }    return -1;                                                                 |
+  {7: }  }                                                                            |
+  {7: }                                                                               |
+  {7: }  // Return quickly when there is no folding at all in this window.            |
+  {7: }  if (!hasAnyFolding(curwin)) {                                                |
+  {7: }    return 0;                                                                  |
+  {7: }  }                                                                            |
+  {7: }                                                                               |
+  {7: }  return foldLevelWin(curwin, lnum);                                           |
+  {7: }^}                                                                              |
+  {3:[No Name] [+]                                                                   }|
+  {7: }// foldLevel() {{{2                                                            |
+  {7: }/// @return  fold level at line number "lnum" in the current window.           |
+  {7: }static int foldLevel(linenr_T lnum)                                            |
+  {7: }{                                                                              |
+  {7: }  // While updating the folds lines between invalid_top and invalid_bot have   |
+  {7: }  // an undefined fold level.  Otherwise update the folds first.               |
+  {7: }  if (invalid_top == 0) {                                                      |
+  {7: }    checkupdate(curwin);                                                       |
+  {7: }  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {                        |
+  {7: }    return prev_lnum_lvl;                                                      |
+  {7: }  } else if (lnum >= invalid_top && lnum <= invalid_bot) {                     |
+  {7: }    return -1;                                                                 |
+  {7: }  }                                                                            |
+  {7: }                                                                               |
+  {7: }  // Return quickly when there is no folding at all in this window.            |
+  {7: }  if (!hasAnyFolding(curwin)) {                                                |
+  {7: }    return 0;                                                                  |
+  {7: }  }                                                                            |
+  {7: }                                                                               |
+  {7: }  return foldLevelWin(curwin, lnum);                                           |
+  {7: }}                                                                              |
+  {2:[No Name] [+]                                                                   }|
+                                                                                  |
   ]],
       })
     end)
@@ -408,51 +402,51 @@ static int foldLevel(linenr_T lnum)
       end)
       screen:expect({
         grid = [[
-{1:-}// foldLevel() {{{2                                                            |
-{1:│}/// @return  fold level at line number "lnum" in the current window.           |
-{1: }static int foldLevel(linenr_T lnum)                                            |
-{1:-}{                                                                              |
-{1:-}  // While updating the folds lines between invalid_top and invalid_bot have   |
-{1:2}  // an undefined fold level.  Otherwise update the folds first.               |
-{1:-}  if (invalid_top == 0) {                                                      |
-{1:2}    checkupdate(curwin);                                                       |
-{1:-}  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {                        |
-{1:2}    return prev_lnum_lvl;                                                      |
-{1:-}  } else if (lnum >= invalid_top && lnum <= invalid_bot) {                     |
-{1:2}    return -1;                                                                 |
-{1:│}  }                                                                            |
-{1:│}                                                                               |
-{1:│}  // Return quickly when there is no folding at all in this window.            |
-{1:-}  if (!hasAnyFolding(curwin)) {                                                |
-{1:2}    return 0;                                                                  |
-{1:│}  }                                                                            |
-{1:│}                                                                               |
-{1:│}  return foldLevelWin(curwin, lnum);                                           |
-{1: }^}                                                                              |
-{3:[No Name] [+]                                                                   }|
-{1:-}// foldLevel() {{{2                                                            |
-{1:│}/// @return  fold level at line number "lnum" in the current window.           |
-{1: }static int foldLevel(linenr_T lnum)                                            |
-{1:-}{                                                                              |
-{1:-}  // While updating the folds lines between invalid_top and invalid_bot have   |
-{1:2}  // an undefined fold level.  Otherwise update the folds first.               |
-{1:-}  if (invalid_top == 0) {                                                      |
-{1:2}    checkupdate(curwin);                                                       |
-{1:-}  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {                        |
-{1:2}    return prev_lnum_lvl;                                                      |
-{1:-}  } else if (lnum >= invalid_top && lnum <= invalid_bot) {                     |
-{1:2}    return -1;                                                                 |
-{1:│}  }                                                                            |
-{1:│}                                                                               |
-{1:│}  // Return quickly when there is no folding at all in this window.            |
-{1:-}  if (!hasAnyFolding(curwin)) {                                                |
-{1:2}    return 0;                                                                  |
-{1:│}  }                                                                            |
-{1:│}                                                                               |
-{1:│}  return foldLevelWin(curwin, lnum);                                           |
-{1: }}                                                                              |
-{4:[No Name] [+]                                                                   }|
-                                                                                |
+  {7:-}// foldLevel() {{{2                                                            |
+  {7:│}/// @return  fold level at line number "lnum" in the current window.           |
+  {7: }static int foldLevel(linenr_T lnum)                                            |
+  {7:-}{                                                                              |
+  {7:-}  // While updating the folds lines between invalid_top and invalid_bot have   |
+  {7:2}  // an undefined fold level.  Otherwise update the folds first.               |
+  {7:-}  if (invalid_top == 0) {                                                      |
+  {7:2}    checkupdate(curwin);                                                       |
+  {7:-}  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {                        |
+  {7:2}    return prev_lnum_lvl;                                                      |
+  {7:-}  } else if (lnum >= invalid_top && lnum <= invalid_bot) {                     |
+  {7:2}    return -1;                                                                 |
+  {7:│}  }                                                                            |
+  {7:│}                                                                               |
+  {7:│}  // Return quickly when there is no folding at all in this window.            |
+  {7:-}  if (!hasAnyFolding(curwin)) {                                                |
+  {7:2}    return 0;                                                                  |
+  {7:│}  }                                                                            |
+  {7:│}                                                                               |
+  {7:│}  return foldLevelWin(curwin, lnum);                                           |
+  {7: }^}                                                                              |
+  {3:[No Name] [+]                                                                   }|
+  {7:-}// foldLevel() {{{2                                                            |
+  {7:│}/// @return  fold level at line number "lnum" in the current window.           |
+  {7: }static int foldLevel(linenr_T lnum)                                            |
+  {7:-}{                                                                              |
+  {7:-}  // While updating the folds lines between invalid_top and invalid_bot have   |
+  {7:2}  // an undefined fold level.  Otherwise update the folds first.               |
+  {7:-}  if (invalid_top == 0) {                                                      |
+  {7:2}    checkupdate(curwin);                                                       |
+  {7:-}  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {                        |
+  {7:2}    return prev_lnum_lvl;                                                      |
+  {7:-}  } else if (lnum >= invalid_top && lnum <= invalid_bot) {                     |
+  {7:2}    return -1;                                                                 |
+  {7:│}  }                                                                            |
+  {7:│}                                                                               |
+  {7:│}  // Return quickly when there is no folding at all in this window.            |
+  {7:-}  if (!hasAnyFolding(curwin)) {                                                |
+  {7:2}    return 0;                                                                  |
+  {7:│}  }                                                                            |
+  {7:│}                                                                               |
+  {7:│}  return foldLevelWin(curwin, lnum);                                           |
+  {7: }}                                                                              |
+  {2:[No Name] [+]                                                                   }|
+                                                                                  |
   ]],
       })
     end)
@@ -463,13 +457,6 @@ static int foldLevel(linenr_T lnum)
     local screen
     before_each(function()
       screen = Screen.new(80, 23)
-      screen:set_default_attr_ids({
-        [1] = { background = Screen.colors.Grey, foreground = Screen.colors.DarkBlue },
-        [2] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey },
-        [3] = { bold = true, foreground = Screen.colors.Blue1 },
-        [4] = { bold = true, reverse = true },
-        [5] = { reverse = true },
-      })
       command(
         [[set foldexpr=v:lua.vim.lsp.foldexpr() foldtext=v:lua.vim.lsp.foldtext() foldlevel=1]]
       )
@@ -478,24 +465,24 @@ static int foldLevel(linenr_T lnum)
     it('shows the first folded line if `collapsedText` does not exist', function()
       screen:expect({
         grid = [[
-{1:-}// foldLevel() {{{2                                                            |
-{1:│}/// @return  fold level at line number "lnum" in the current window.           |
-{1: }static int foldLevel(linenr_T lnum)                                            |
-{1:-}{                                                                              |
-{1:+}{2:  // While updating the folds lines between invalid_top and invalid_bot have···}|
-{1:+}{2:  if (invalid_top == 0) {······················································}|
-{1:+}{2:  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {························}|
-{1:+}{2:  } else if (lnum >= invalid_top && lnum <= invalid_bot) {·····················}|
-{1:│}  }                                                                            |
-{1:│}                                                                               |
-{1:│}  // Return quickly when there is no folding at all in this window.            |
-{1:+}{2:  if (!hasAnyFolding(curwin)) {················································}|
-{1:│}  }                                                                            |
-{1:│}                                                                               |
-{1:│}  return foldLevelWin(curwin, lnum);                                           |
-{1: }^}                                                                              |
-{3:~                                                                               }|*6
-                                                                                |
+  {7:-}// foldLevel() {{{2                                                            |
+  {7:│}/// @return  fold level at line number "lnum" in the current window.           |
+  {7: }static int foldLevel(linenr_T lnum)                                            |
+  {7:-}{                                                                              |
+  {7:+}{13:  // While updating the folds lines between invalid_top and invalid_bot have···}|
+  {7:+}{13:  if (invalid_top == 0) {······················································}|
+  {7:+}{13:  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {························}|
+  {7:+}{13:  } else if (lnum >= invalid_top && lnum <= invalid_bot) {·····················}|
+  {7:│}  }                                                                            |
+  {7:│}                                                                               |
+  {7:│}  // Return quickly when there is no folding at all in this window.            |
+  {7:+}{13:  if (!hasAnyFolding(curwin)) {················································}|
+  {7:│}  }                                                                            |
+  {7:│}                                                                               |
+  {7:│}  return foldLevelWin(curwin, lnum);                                           |
+  {7: }^}                                                                              |
+  {1:~                                                                               }|*6
+                                                                                  |
   ]],
       })
     end)
@@ -529,13 +516,6 @@ static int foldLevel(linenr_T lnum)
     local screen
     before_each(function()
       screen = Screen.new(80, 23)
-      screen:set_default_attr_ids({
-        [1] = { background = Screen.colors.Grey, foreground = Screen.colors.DarkBlue },
-        [2] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey },
-        [3] = { bold = true, foreground = Screen.colors.Blue1 },
-        [4] = { bold = true, reverse = true },
-        [5] = { reverse = true },
-      })
       command([[set foldexpr=v:lua.vim.lsp.foldexpr()]])
     end)
 
@@ -545,27 +525,27 @@ static int foldLevel(linenr_T lnum)
       end)
       screen:expect({
         grid = [[
-{1:+}{2:+--  2 lines: foldLevel()······················································}|
-{1: }static int foldLevel(linenr_T lnum)                                            |
-{1:-}{                                                                              |
-{1:+}{2:+---  2 lines: While updating the folds lines between invalid_top and invalid_b}|
-{1:-}  if (invalid_top == 0) {                                                      |
-{1:2}    checkupdate(curwin);                                                       |
-{1:-}  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {                        |
-{1:2}    return prev_lnum_lvl;                                                      |
-{1:-}  } else if (lnum >= invalid_top && lnum <= invalid_bot) {                     |
-{1:2}    return -1;                                                                 |
-{1:│}  }                                                                            |
-{1:│}                                                                               |
-{1:│}  // Return quickly when there is no folding at all in this window.            |
-{1:-}  if (!hasAnyFolding(curwin)) {                                                |
-{1:2}    return 0;                                                                  |
-{1:│}  }                                                                            |
-{1:│}                                                                               |
-{1:│}  return foldLevelWin(curwin, lnum);                                           |
-{1: }^}                                                                              |
-{3:~                                                                               }|*3
-                                                                                |
+  {7:+}{13:+--  2 lines: foldLevel()······················································}|
+  {7: }static int foldLevel(linenr_T lnum)                                            |
+  {7:-}{                                                                              |
+  {7:+}{13:+---  2 lines: While updating the folds lines between invalid_top and invalid_b}|
+  {7:-}  if (invalid_top == 0) {                                                      |
+  {7:2}    checkupdate(curwin);                                                       |
+  {7:-}  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {                        |
+  {7:2}    return prev_lnum_lvl;                                                      |
+  {7:-}  } else if (lnum >= invalid_top && lnum <= invalid_bot) {                     |
+  {7:2}    return -1;                                                                 |
+  {7:│}  }                                                                            |
+  {7:│}                                                                               |
+  {7:│}  // Return quickly when there is no folding at all in this window.            |
+  {7:-}  if (!hasAnyFolding(curwin)) {                                                |
+  {7:2}    return 0;                                                                  |
+  {7:│}  }                                                                            |
+  {7:│}                                                                               |
+  {7:│}  return foldLevelWin(curwin, lnum);                                           |
+  {7: }^}                                                                              |
+  {1:~                                                                               }|*3
+                                                                                  |
   ]],
       })
     end)
@@ -576,37 +556,37 @@ static int foldLevel(linenr_T lnum)
       end)
       screen:expect({
         grid = [[
-{1:-}// foldLevel() {{{2                                                            |
-{1:│}/// @return  fold level at line number "lnum" in the current window.           |
-{1: }static int foldLevel(linenr_T lnum)                                            |
-{1:+}{2:+-- 17 lines: {································································}|
-{1: }^}                                                                              |
-{3:~                                                                               }|*17
-                                                                                |
+  {7:-}// foldLevel() {{{2                                                            |
+  {7:│}/// @return  fold level at line number "lnum" in the current window.           |
+  {7: }static int foldLevel(linenr_T lnum)                                            |
+  {7:+}{13:+-- 17 lines: {································································}|
+  {7: }^}                                                                              |
+  {1:~                                                                               }|*17
+                                                                                  |
   ]],
       })
       command('4foldopen')
       screen:expect({
         grid = [[
-{1:-}// foldLevel() {{{2                                                            |
-{1:│}/// @return  fold level at line number "lnum" in the current window.           |
-{1: }static int foldLevel(linenr_T lnum)                                            |
-{1:-}{                                                                              |
-{1:-}  // While updating the folds lines between invalid_top and invalid_bot have   |
-{1:2}  // an undefined fold level.  Otherwise update the folds first.               |
-{1:+}{2:+---  2 lines: if (invalid_top == 0) {·········································}|
-{1:+}{2:+---  2 lines: } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {···········}|
-{1:+}{2:+---  2 lines: } else if (lnum >= invalid_top && lnum <= invalid_bot) {········}|
-{1:│}  }                                                                            |
-{1:│}                                                                               |
-{1:│}  // Return quickly when there is no folding at all in this window.            |
-{1:+}{2:+---  2 lines: if (!hasAnyFolding(curwin)) {···································}|
-{1:│}  }                                                                            |
-{1:│}                                                                               |
-{1:│}  return foldLevelWin(curwin, lnum);                                           |
-{1: }^}                                                                              |
-{3:~                                                                               }|*5
-                                                                                |
+  {7:-}// foldLevel() {{{2                                                            |
+  {7:│}/// @return  fold level at line number "lnum" in the current window.           |
+  {7: }static int foldLevel(linenr_T lnum)                                            |
+  {7:-}{                                                                              |
+  {7:-}  // While updating the folds lines between invalid_top and invalid_bot have   |
+  {7:2}  // an undefined fold level.  Otherwise update the folds first.               |
+  {7:+}{13:+---  2 lines: if (invalid_top == 0) {·········································}|
+  {7:+}{13:+---  2 lines: } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {···········}|
+  {7:+}{13:+---  2 lines: } else if (lnum >= invalid_top && lnum <= invalid_bot) {········}|
+  {7:│}  }                                                                            |
+  {7:│}                                                                               |
+  {7:│}  // Return quickly when there is no folding at all in this window.            |
+  {7:+}{13:+---  2 lines: if (!hasAnyFolding(curwin)) {···································}|
+  {7:│}  }                                                                            |
+  {7:│}                                                                               |
+  {7:│}  return foldLevelWin(curwin, lnum);                                           |
+  {7: }^}                                                                              |
+  {1:~                                                                               }|*5
+                                                                                  |
   ]],
       })
     end)
@@ -618,27 +598,27 @@ static int foldLevel(linenr_T lnum)
       end)
       screen:expect({
         grid = [[
-{1:+}{2:+--  2 lines: foldLevel()······················································}|
-{1: }static int foldLevel(linenr_T lnum)                                            |
-{1:-}{                                                                              |
-{1:+}{2:+---  2 lines: While updating the folds lines between invalid_top and invalid_b}|
-{1:-}  if (invalid_top == 0) {                                                      |
-{1:2}    checkupdate(curwin);                                                       |
-{1:-}  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {                        |
-{1:2}    return prev_lnum_lvl;                                                      |
-{1:-}  } else if (lnum >= invalid_top && lnum <= invalid_bot) {                     |
-{1:2}    return -1;                                                                 |
-{1:│}  }                                                                            |
-{1:│}                                                                               |
-{1:│}  // Return quickly when there is no folding at all in this window.            |
-{1:-}  if (!hasAnyFolding(curwin)) {                                                |
-{1:2}    return 0;                                                                  |
-{1:│}  }                                                                            |
-{1:│}                                                                               |
-{1:│}  return foldLevelWin(curwin, lnum);                                           |
-{1: }^}                                                                              |
-{3:~                                                                               }|*3
-                                                                                |
+  {7:+}{13:+--  2 lines: foldLevel()······················································}|
+  {7: }static int foldLevel(linenr_T lnum)                                            |
+  {7:-}{                                                                              |
+  {7:+}{13:+---  2 lines: While updating the folds lines between invalid_top and invalid_b}|
+  {7:-}  if (invalid_top == 0) {                                                      |
+  {7:2}    checkupdate(curwin);                                                       |
+  {7:-}  } else if (lnum == prev_lnum && prev_lnum_lvl >= 0) {                        |
+  {7:2}    return prev_lnum_lvl;                                                      |
+  {7:-}  } else if (lnum >= invalid_top && lnum <= invalid_bot) {                     |
+  {7:2}    return -1;                                                                 |
+  {7:│}  }                                                                            |
+  {7:│}                                                                               |
+  {7:│}  // Return quickly when there is no folding at all in this window.            |
+  {7:-}  if (!hasAnyFolding(curwin)) {                                                |
+  {7:2}    return 0;                                                                  |
+  {7:│}  }                                                                            |
+  {7:│}                                                                               |
+  {7:│}  return foldLevelWin(curwin, lnum);                                           |
+  {7: }^}                                                                              |
+  {1:~                                                                               }|*3
+                                                                                  |
   ]],
       })
     end)

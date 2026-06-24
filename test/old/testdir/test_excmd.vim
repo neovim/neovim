@@ -7,11 +7,24 @@ source screendump.vim
 
 func Test_ex_delete()
   new
+
   call setline(1, ['a', 'b', 'c'])
   2
   " :dl is :delete with the "l" flag, not :dlist
   .dl
   call assert_equal(['a', 'c'], getline(1, 2))
+  %delete _
+
+  " :delete # used to clobber "0
+  call setreg('#', '')
+  call setreg('0', '')
+  call setline(1, ['a', 'b', 'c'])
+  call assert_fails("1delete #", 'E488:')
+  call assert_equal(['a', 'b', 'c'], getline(1, '$'))
+  call assert_equal('', getreg('#'))
+  call assert_equal('', getreg('0'))
+
+  bw!
 endfunc
 
 func Test_range_error()
@@ -697,6 +710,13 @@ func Sandbox_tests()
   if has('unix')
     call assert_fails('cd `pwd`', 'E48:')
   endif
+  "call assert_fails("call echoraw('test')", 'E48:')
+  "call assert_fails("echoconsole 'test'", 'E48:')
+  call assert_fails("call readfile('Xsomefile')", 'E48:')
+  call assert_fails("call readblob('Xsomefile')", 'E48:')
+  call assert_fails("call readdir('.')", 'E48:')
+  "call assert_fails("call readdirex('.')", 'E48:')
+  call assert_fails("call chdir('.')", 'E48:')
   " some options cannot be changed in a sandbox
   call assert_fails('set exrc', 'E48:')
   call assert_fails('set cdpath', 'E48:')

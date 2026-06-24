@@ -574,16 +574,12 @@ local function make_type_hierarchy_handler()
     local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
     local items = {}
     for _, type_hierarchy_item in pairs(result) do
-      local col = util._get_line_byte_from_position(
-        ctx.bufnr,
-        type_hierarchy_item.range.start,
-        client.offset_encoding
-      )
+      local pos = vim.pos.lsp(ctx.bufnr, type_hierarchy_item.range.start, client.offset_encoding)
       table.insert(items, {
         filename = assert(vim.uri_to_fname(type_hierarchy_item.uri)),
         text = format_item(type_hierarchy_item),
-        lnum = type_hierarchy_item.range.start.line + 1,
-        col = col + 1,
+        lnum = pos.row + 1,
+        col = pos.col + 1,
       })
     end
     vim.fn.setqflist({}, ' ', { title = 'LSP type hierarchy', items = items })

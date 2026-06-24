@@ -1,5 +1,6 @@
 local util = require('vim.lsp.util')
 local log = require('vim.lsp.log')
+local nvim_on = require('vim._core.util').nvim_on
 local api = vim.api
 local M = {}
 
@@ -100,12 +101,9 @@ local function refresh(bufnr, client_id)
   do
     client:request('textDocument/inlayHint', {
       textDocument = util.make_text_document_params(bufnr),
-      range = util._make_line_range_params(
-        bufnr,
-        0,
-        api.nvim_buf_line_count(bufnr) - 1,
-        client.offset_encoding
-      ),
+      range = vim
+        .range(bufnr, 0, 0, api.nvim_buf_line_count(bufnr), 0)
+        :to_lsp(client.offset_encoding),
     }, nil, bufnr)
   end
 end
@@ -266,55 +264,46 @@ local function _enable(bufnr)
   refresh(bufnr)
 end
 
-api.nvim_create_autocmd('LspNotify', {
-  callback = function(ev)
-    ---@type integer
-    local bufnr = ev.buf
+nvim_on('LspNotify', augroup, function(ev)
+  ---@type integer
+  local bufnr = ev.buf
 
-    if ev.data.method ~= 'textDocument/didChange' and ev.data.method ~= 'textDocument/didOpen' then
-      return
-    end
-    if bufstates[bufnr].enabled then
-      refresh(bufnr, ev.data.client_id)
-    end
-  end,
-  group = augroup,
-})
-api.nvim_create_autocmd('LspAttach', {
-  callback = function(ev)
-    ---@type integer
-    local bufnr = ev.buf
+  if ev.data.method ~= 'textDocument/didChange' and ev.data.method ~= 'textDocument/didOpen' then
+    return
+  end
+  if bufstates[bufnr].enabled then
+    refresh(bufnr, ev.data.client_id)
+  end
+end)
+nvim_on('LspAttach', augroup, function(ev)
+  ---@type integer
+  local bufnr = ev.buf
 
-    api.nvim_buf_attach(bufnr, false, {
-      on_reload = function(_, cb_bufnr)
-        clear(cb_bufnr)
-        if bufstates[cb_bufnr] and bufstates[cb_bufnr].enabled then
-          bufstates[cb_bufnr].applied = {}
-          refresh(cb_bufnr)
-        end
-      end,
-      on_detach = function(_, cb_bufnr)
-        _disable(cb_bufnr)
-        bufstates[cb_bufnr] = nil
-      end,
-    })
-  end,
-  group = augroup,
-})
-api.nvim_create_autocmd('LspDetach', {
-  callback = function(ev)
-    ---@type integer
-    local bufnr = ev.buf
-    local clients = vim.lsp.get_clients({ bufnr = bufnr, method = 'textDocument/inlayHint' })
+  api.nvim_buf_attach(bufnr, false, {
+    on_reload = function(_, cb_bufnr)
+      clear(cb_bufnr)
+      if bufstates[cb_bufnr] and bufstates[cb_bufnr].enabled then
+        bufstates[cb_bufnr].applied = {}
+        refresh(cb_bufnr)
+      end
+    end,
+    on_detach = function(_, cb_bufnr)
+      _disable(cb_bufnr)
+      bufstates[cb_bufnr] = nil
+    end,
+  })
+end)
+nvim_on('LspDetach', augroup, function(ev)
+  ---@type integer
+  local bufnr = ev.buf
+  local clients = vim.lsp.get_clients({ bufnr = bufnr, method = 'textDocument/inlayHint' })
 
-    if not vim.iter(clients):any(function(c)
-      return c.id ~= ev.data.client_id
-    end) then
-      _disable(bufnr)
-    end
-  end,
-  group = augroup,
-})
+  if not vim.iter(clients):any(function(c)
+    return c.id ~= ev.data.client_id
+  end) then
+    _disable(bufnr)
+  end
+end)
 api.nvim_set_decoration_provider(namespace, {
   on_win = function(_, _, bufnr, topline, botline)
     ---@type vim.lsp.inlay_hint.bufstate

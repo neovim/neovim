@@ -906,6 +906,7 @@ Union(Integer, String) nvim_echo(ArrayOf(Tuple(String, *HLGroupID)) chunks, Bool
     msg_didany = true;
     msg_no_more = true;
   }
+  msg_ext_no_fast();
   id = msg_multihl(opts->id, hl_msg, kind, history, opts->err, &msg_data, &needs_clear);
   if (opts->_truncate) {
     msg_no_more = false;
@@ -1119,12 +1120,14 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 /// will be echoed directly by the terminal. This is useful to display
 /// ANSI terminal sequences returned as part of an RPC message, or similar.
 ///
-/// Note: to directly initiate the terminal using the right size, display the
-/// buffer in a configured window before calling this. For instance, for a
-/// floating display, first create an empty buffer using |nvim_create_buf()|,
-/// then display it using |nvim_open_win()|, and then  call this function.
-/// Then |nvim_chan_send()| can be called immediately to process sequences
-/// in a virtual terminal having the intended size.
+/// Note: |:ls| reports the buffer as "R" (running) until the channel is closed. |chanclose()|
+///
+/// Note: To initialize the terminal size, display the buffer in a window first. E.g. for a floating display,
+/// 1. Create an empty buffer using |nvim_create_buf()|.
+/// 2. Display it with |nvim_open_win()|.
+/// 3. Call nvim_open_term().
+/// 4. Then calling |nvim_chan_send()| will process sequences in a virtual terminal with the
+///    intended size (defined by the window width/height).
 ///
 /// Example: this `TermHl` command can be used to display and highlight raw ANSI termcodes, so you
 /// can use Nvim as a "scrollback pager" (for terminals like kitty): [ansi-colorize]()
@@ -1136,8 +1139,8 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 /// end, { desc = 'Highlights ANSI termcodes in curbuf' })
 /// ```
 ///
-/// @param buf Buffer to use. Buffer contents (if any) will be written
-///               to the PTY.
+/// @param buf Buffer which displays the PTY output. The initial buffer contents (if any) will be
+///            written to the PTY.
 /// @param opts   Optional parameters.
 ///          - force_crlf: (boolean, default true) Convert "\n" to "\r\n".
 ///          - on_input: Lua callback for input sent, i e keypresses in terminal
@@ -1461,7 +1464,7 @@ void nvim_put(ArrayOf(String) lines, String type, Boolean after, Boolean follow,
   TRY_WRAP(err, {
     bool VIsual_was_active = VIsual_active;
     msg_silent++;  // Avoid "N more lines" message.
-    do_put(0, reg, after ? FORWARD : BACKWARD, 1, follow ? PUT_CURSEND : 0);
+    do_put('_', reg, after ? FORWARD : BACKWARD, 1, follow ? PUT_CURSEND : 0);
     msg_silent--;
     VIsual_active = VIsual_was_active;
   });
@@ -1630,9 +1633,9 @@ ArrayOf(DictAs(get_keymap)) nvim_get_keymap(String mode, Arena *arena)
 /// @param  rhs   Right-hand-side |{rhs}| of the mapping.
 /// @param  opts  Optional parameters map: Accepts all |:map-arguments| as keys except [<buffer>],
 ///               values are booleans (default false). Also:
-///               - "noremap" disables |recursive_mapping|, like |:noremap|
-///               - "desc" human-readable description.
 ///               - "callback" Lua function called in place of {rhs}.
+///               - "desc" human-readable description.
+///               - "noremap" disables |recursive_mapping|, like |:noremap|
 ///               - "replace_keycodes" (boolean) When "expr" is true, replace keycodes in the
 ///                 resulting string (see |nvim_replace_termcodes()|). Returning nil from the Lua
 ///                 "callback" is equivalent to returning an empty string.
@@ -1685,22 +1688,22 @@ ArrayOf(Object, 2) nvim_get_api_info(uint64_t channel_id, Arena *arena)
 /// @param name Client short-name. Sets the `client.name` field of |nvim_get_chan_info()|.
 /// @param version  Dict describing the version, with these
 ///     (optional) keys:
+///     - "commit" hash or similar identifier of commit
 ///     - "major" major version (defaults to 0 if not set, for no release yet)
 ///     - "minor" minor version
 ///     - "patch" patch number
 ///     - "prerelease" string describing a prerelease, like "dev" or "beta1"
-///     - "commit" hash or similar identifier of commit
 /// @param type Must be one of the following values. Client libraries should
 ///     default to "remote" unless overridden by the user.
-///     - "remote" remote client connected "Nvim flavored" MessagePack-RPC (responses
-///                must be in reverse order of requests). |msgpack-rpc|
-///     - "msgpack-rpc" remote client connected to Nvim via fully MessagePack-RPC
-///                     compliant protocol.
-///     - "ui" gui frontend
 ///     - "embedder" application using Nvim as a component (for example,
 ///                  IDE/editor implementing a vim mode).
 ///     - "host" plugin host, typically started by nvim
+///     - "msgpack-rpc" remote client connected to Nvim via fully MessagePack-RPC
+///                     compliant protocol.
 ///     - "plugin" single plugin, started by nvim
+///     - "remote" remote client connected "Nvim flavored" MessagePack-RPC (responses
+///                must be in reverse order of requests). |msgpack-rpc|
+///     - "ui" gui frontend
 /// @param methods Builtin methods in the client. For a host, this does not
 ///     include plugin methods which will be discovered later.
 ///     The key should be the method name, the values are dicts with
@@ -1715,11 +1718,11 @@ ArrayOf(Object, 2) nvim_get_api_info(uint64_t channel_id, Arena *arena)
 ///
 /// @param attributes Arbitrary string:string map of informal client properties.
 ///     Suggested keys:
-///     - "pid":     Process id.
-///     - "website": Client homepage URL (e.g. GitHub repository)
 ///     - "license": License description ("Apache 2", "GPLv3", "MIT", …)
 ///     - "logo":    URI or path to image, preferably small logo or icon.
 ///                  .png or .svg format is preferred.
+///     - "pid":     Process id.
+///     - "website": Client homepage URL (e.g. GitHub repository)
 ///
 /// @param[out] err Error details, if any
 void nvim_set_client_info(uint64_t channel_id, String name, Dict version, String type, Dict methods,
@@ -2573,4 +2576,9 @@ void nvim__redraw(Dict(redraw) *opts, Error *err)
 
   RedrawingDisabled = save_rd;
   p_lz = save_lz;
+}
+
+void nvim__set_restart_on_crash(String progpath, Array argv)
+{
+  ui_call__set_restart_on_crash_exit(progpath, argv);
 }

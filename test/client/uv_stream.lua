@@ -5,6 +5,18 @@
 
 local uv = vim.uv
 
+local function close_handle(handle)
+  if handle and not handle:is_closing() then
+    handle:close()
+  end
+end
+
+local function read_stop(handle)
+  if handle and not handle:is_closing() then
+    handle:read_stop()
+  end
+end
+
 --- @class test.Stream
 --- @field write fun(self, data: string|string[])
 --- @field read_start fun(self, cb: fun(chunk: string))
@@ -44,12 +56,12 @@ function StdioStream:read_start(cb)
 end
 
 function StdioStream:read_stop()
-  self._in:read_stop()
+  read_stop(self._in)
 end
 
 function StdioStream:close()
-  self._in:close()
-  self._out:close()
+  close_handle(self._in)
+  close_handle(self._out)
 end
 
 --- Stream over a named pipe or TCP socket.
@@ -74,6 +86,7 @@ function SocketStream.open(file)
   -- so wait for the connect callback to be called.
   uv.run()
   if self._stream_error then
+    close_handle(socket)
     error(self._stream_error)
   end
   return self
@@ -120,13 +133,11 @@ function SocketStream:read_stop()
   if self._stream_error then
     error(self._stream_error)
   end
-  uv.read_stop(self._socket)
+  read_stop(self._socket)
 end
 
 function SocketStream:close()
-  if not self._socket:is_closing() then
-    uv.close(self._socket)
-  end
+  close_handle(self._socket)
 end
 
 --- Stream over child process stdio.
@@ -199,6 +210,8 @@ function ProcStream.spawn(argv, env, io_extra, on_exit, forward_stderr)
     self.signal = signal
     -- "Abort" exit may not set status; force to nonzero in that case.
     self.status = (0 ~= (status or 0) or 0 == (signal or 0)) and status or (128 + (signal or 0))
+    close_handle(self._child_stdin)
+    close_handle(self._proc)
     if self._on_exit then
       self._on_exit(self._closed)
     end
@@ -230,6 +243,8 @@ function ProcStream:on_read(stream, cb, err, chunk)
   else
     -- stderr_eof/stdout_eof
     self[stream .. '_eof'] = true ---@type boolean
+    -- EOF is the stream's lifecycle end even if the caller never closes it.
+    close_handle(stream == 'stdout' and self._child_stdout or self._child_stderr)
   end
 
   -- Handler provided by the caller.
@@ -255,8 +270,8 @@ function ProcStream:read_start(on_stdout, on_stderr)
 end
 
 function ProcStream:read_stop()
-  self._child_stdout:read_stop()
-  self._child_stderr:read_stop()
+  read_stop(self._child_stdout)
+  read_stop(self._child_stderr)
 end
 
 function ProcStream:close(signal, noblock)
@@ -265,10 +280,10 @@ function ProcStream:close(signal, noblock)
   end
   self._closed = uv.now()
   self:read_stop()
-  self._child_stdin:close()
-  self._child_stdout:close()
-  self._child_stderr:close()
-  if type(signal) == 'string' then
+  close_handle(self._child_stdin)
+  close_handle(self._child_stdout)
+  close_handle(self._child_stderr)
+  if type(signal) == 'string' and self._proc and not self._proc:is_closing() then
     self._proc:kill('sig' .. signal)
   end
   if not noblock then

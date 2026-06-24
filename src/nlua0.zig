@@ -39,7 +39,7 @@ fn init_lua() !*Lua {
     lua.call(.{ .results = 1 });
     lua.setField(-2, "iter");
 
-    _ = try lua.getGlobal("package");
+    _ = lua.getGlobal("package");
     _ = lua.getField(-1, "preload");
     try lua.loadBuffer(hashy, "hashy.lua"); // [package, preload, hashy]
     lua.setField(-2, "gen.hashy");
@@ -90,11 +90,11 @@ pub fn main(init: std.process.Init) !void {
         if (i == 0) {
             firstarg = try lua.toString(-1); // preserved on lua heap..
         }
-        lua.rawSetIndex(-2, @intCast(i));
+        lua.setIndexRaw(-2, @intCast(i));
     }
     lua.setGlobal("arg");
 
-    _ = try lua.getGlobal("debug");
+    _ = lua.getGlobal("debug");
     _ = lua.getField(-1, "traceback");
     try lua.loadFile(firstarg);
     lua.protectedCall(.{ .msg_handler = -2 }) catch |e| {

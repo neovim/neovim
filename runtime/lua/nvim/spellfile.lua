@@ -20,15 +20,15 @@ local M = {}
 ---
 --- The base URL from where the spellfiles are downloaded. Uses `g:spellfile_URL`
 --- if it's set, otherwise https://ftp.nluug.nl/pub/vim/runtime/spell.
---- @field url string
+--- @field url? string
 ---
 --- Number of milliseconds after which the [vim.net.request()] times out.
 --- (default: 15000)
---- @field timeout_ms integer
+--- @field timeout_ms? integer
 ---
 --- Whether to ask user to confirm download.
 --- (default: `true`)
---- @field confirm boolean
+--- @field confirm? boolean
 
 --- @type nvim.spellfile.Opts
 local config = {
@@ -281,7 +281,7 @@ function M.get(lang)
       info.lang,
       info.encoding
     )
-    vim.ui.input({ prompt = prompt }, function(input)
+    vim.ui.input({ prompt = prompt, scope = 'editor' }, function(input)
       -- properly clear the message window
       vim.api.nvim_echo({ { ' ' } }, false, { kind = 'empty' })
       if not input or input:lower() ~= 'y' then

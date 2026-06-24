@@ -850,7 +850,8 @@ char *vim_strsave_escape_ks(char *p)
 
 /// Remove escaping from K_SPECIAL characters.  Reverse of
 /// vim_strsave_escape_ks().  Works in-place.
-void vim_unescape_ks(char *p)
+/// Returns the number of bytes in the unescaped string.
+size_t vim_unescape_ks(char *p)
 {
   uint8_t *s = (uint8_t *)p;
   uint8_t *d = (uint8_t *)p;
@@ -864,4 +865,5 @@ void vim_unescape_ks(char *p)
     }
   }
   *d = NUL;
+  return (size_t)((char *)d - p);
 }

@@ -8,6 +8,7 @@ local protocol = lsp.protocol
 local util = lsp.util
 
 local api = vim.api
+local nvim_on = require('vim._core.util').nvim_on
 
 local M = {}
 
@@ -318,37 +319,6 @@ function M.on_diagnostic(error, result, ctx)
   end
 end
 
---- Get the diagnostics by line
----
---- Marked private as this is used internally by the LSP subsystem, but
---- most users should instead prefer |vim.diagnostic.get()|.
----
----@param bufnr integer|nil The buffer number
----@param line_nr integer|nil The line number
----@param opts {severity?:lsp.DiagnosticSeverity}?
----         - severity: (lsp.DiagnosticSeverity)
----             - Only return diagnostics with this severity.
----@param client_id integer|nil the client id
----@return table Table with map of line number to list of diagnostics.
----              Structured: { [1] = {...}, [5] = {.... } }
----@private
-function M.get_line_diagnostics(bufnr, line_nr, opts, client_id)
-  vim.deprecate('vim.lsp.diagnostic.get_line_diagnostics', 'vim.diagnostic.get', '0.12')
-  local diag_opts = {} --- @type vim.diagnostic.GetOpts
-
-  if opts and opts.severity then
-    diag_opts.severity = severity_lsp_to_vim(opts.severity)
-  end
-
-  if client_id then
-    diag_opts.namespace = M.get_namespace(client_id)
-  end
-
-  diag_opts.lnum = line_nr or (api.nvim_win_get_cursor(0)[1] - 1)
-
-  return M.from(vim.diagnostic.get(bufnr, diag_opts))
-end
-
 --- Clear diagnostics from pull based clients
 local function clear(bufnr)
   for _, namespace in pairs(client_pull_namespaces) do
@@ -447,22 +417,18 @@ function M._enable(bufnr)
     bufstates[bufnr] = { pull_kind = 'document', client_result_id = {} }
   end
 
-  api.nvim_create_autocmd('LspNotify', {
-    buf = bufnr,
-    callback = function(opts)
-      if
-        opts.data.method ~= 'textDocument/didChange'
-        and opts.data.method ~= 'textDocument/didOpen'
-      then
-        return
-      end
-      if bufstates[bufnr] and bufstates[bufnr].pull_kind == 'document' then
-        local client_id = opts.data.client_id --- @type integer?
-        M._refresh(bufnr, client_id, true)
-      end
-    end,
-    group = augroup,
-  })
+  nvim_on('LspNotify', augroup, { buf = bufnr }, function(opts)
+    if
+      opts.data.method ~= 'textDocument/didChange'
+      and opts.data.method ~= 'textDocument/didOpen'
+    then
+      return
+    end
+    if bufstates[bufnr] and bufstates[bufnr].pull_kind == 'document' then
+      local client_id = opts.data.client_id --- @type integer?
+      M._refresh(bufnr, client_id, true)
+    end
+  end)
 
   api.nvim_buf_attach(bufnr, false, {
     on_reload = function()
@@ -475,21 +441,15 @@ function M._enable(bufnr)
     end,
   })
 
-  api.nvim_create_autocmd('LspDetach', {
-    buf = bufnr,
-    callback = function(ev)
-      local clients = lsp.get_clients({ bufnr = bufnr, method = 'textDocument/diagnostic' })
+  nvim_on('LspDetach', augroup, { buf = bufnr }, function(ev)
+    local clients = lsp.get_clients({ bufnr = bufnr, method = 'textDocument/diagnostic' })
 
-      if
-        not vim.iter(clients):any(function(c)
-          return c.id ~= ev.data.client_id
-        end)
-      then
-        disable(bufnr)
-      end
-    end,
-    group = augroup,
-  })
+    if not vim.iter(clients):any(function(c)
+      return c.id ~= ev.data.client_id
+    end) then
+      disable(bufnr)
+    end
+  end)
 end
 
 --- Returns the result IDs from the reports provided by the given client.

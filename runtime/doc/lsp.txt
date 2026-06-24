@@ -29,28 +29,25 @@ Follow these steps to get LSP features:
    https://microsoft.github.io/language-server-protocol/implementors/servers/
 2. Define a new config |lsp-new-config| (or install https://github.com/neovim/nvim-lspconfig).
    Example: >lua
-     vim.lsp.config['lua_ls'] = {
+     vim.lsp.config['emmylua_ls'] = {
        -- Command and arguments to start the server.
-       cmd = { 'lua-language-server' },
+       cmd = { 'emmylua_ls' },
        -- Filetypes to automatically attach to.
        filetypes = { 'lua' },
-       -- Sets the "workspace" to the directory where any of these files is found.
-       -- Files that share a root directory will reuse the LSP server connection.
+       -- Sets the workspace "root" to the directory where any of these files is found.
+       -- Files sharing a root will reuse the LSP client/connection.
        -- Nested lists indicate equal priority, see |vim.lsp.Config|.
-       root_markers = { { '.luarc.json', '.luarc.jsonc' }, '.git' },
-       -- Specific settings to send to the server. The schema is server-defined.
-       -- Example: https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json
+       root_markers = { { '.emmyrc.json', '.luarc.json' }, '.git' },
+       -- Server-specific settings. https://github.com/EmmyLuaLs/emmylua-analyzer-rust/blob/main/docs/config/emmyrc_json_EN.md
        settings = {
-         Lua = {
-           runtime = {
-             version = 'LuaJIT',
-           }
+         runtime = {
+           version = 'LuaJIT',
          }
        }
      }
 3. Use |vim.lsp.enable()| to enable the config.
    Example: >lua
-     vim.lsp.enable('lua_ls')
+     vim.lsp.enable('emmylua_ls')
 4. Open a code file matching one of the `filetypes` specified in the config.
    Note: Depending on the LSP server, you may need to ensure your project has
    a |lsp-root_markers| file so the workspace can be recognized.
@@ -1109,8 +1106,8 @@ config({name}, {cfg})                                       *vim.lsp.config()*
       filetypes = { 'c', 'cpp' },
     }
 <
-    • Get the resolved configuration for "lua_ls": >lua
-      local cfg = vim.lsp.config.lua_ls
+    • Get the resolved configuration for "emmylua_ls": >lua
+      local cfg = vim.lsp.config.emmylua_ls
 <
 
     Attributes: ~
@@ -1137,13 +1134,13 @@ enable({name}, {enable})                                    *vim.lsp.enable()*
 
     Examples: >lua
         vim.lsp.enable('clangd')
-        vim.lsp.enable({'lua_ls', 'pyright'})
+        vim.lsp.enable({'emmylua_ls', 'pyright'})
 <
 
     Example: To dynamically decide whether LSP is activated, define a
     |lsp-root_dir()| function which calls `on_dir()` only when you want that
     config to activate: >lua
-        vim.lsp.config('lua_ls', {
+        vim.lsp.config('emmylua_ls', {
           root_dir = function(bufnr, on_dir)
             if vim.fs.ext(vim.fn.bufname(bufnr)) ~= 'txt' then
               on_dir(vim.fn.getcwd())
@@ -1445,8 +1442,31 @@ the current buffer.
                         vim.lsp.buf.references(nil, { on_list = on_list })
 <
 
+                    The list can be transformed before it is shown. For
+                    example, to remove duplicate locations returned by
+                    multiple clients: >lua
+                        local function on_list(what)
+                          vim.list.unique(what.items, function(item)
+                            return ('%s\0%d\0%d\0%d\0%d'):format(
+                              item.filename or '',
+                              item.lnum or 0,
+                              item.col or 0,
+                              item.end_lnum or 0,
+                              item.end_col or 0
+                            )
+                          end)
+                          vim.fn.setqflist({}, ' ', what)
+                          vim.cmd('botright copen')
+                        end
+
+                        vim.lsp.buf.definition({ on_list = on_list })
+                        vim.lsp.buf.references(nil, { on_list = on_list })
+<
+
                     See |setqflist-what| for the structure of the `what`
                     parameter.
+      • {pos}       (`vim.Pos`, default: cursor position) Position on a buffer
+                    to request.
 
 *vim.lsp.buf.hover.Opts*
     Extends: |vim.lsp.util.open_floating_preview.Opts|
@@ -1705,7 +1725,7 @@ workspace_diagnostics({opts})            *vim.lsp.buf.workspace_diagnostics()*
                   clients.
 
     See also: ~
-      • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_dagnostics
+      • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_diagnostic
 
 workspace_symbol({query}, {opts})             *vim.lsp.buf.workspace_symbol()*
     Lists all symbols in the current workspace in the quickfix window.
@@ -1760,7 +1780,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
       • {is_stopped}            (`fun(self: vim.lsp.Client): boolean`) See
                                 |Client:is_stopped()|.
       • {name}                  (`string`) See |vim.lsp.ClientConfig|.
-      • {notify}                (`fun(self: vim.lsp.Client, method: string, params: table?): boolean`)
+      • {notify}                (`fun(self: vim.lsp.Client, method: string, params: table?, bufnr: integer?): boolean`)
                                 See |Client:notify()|.
       • {offset_encoding}       (`'utf-8'|'utf-16'|'utf-32'`) See
                                 |vim.lsp.ClientConfig|.
@@ -1995,12 +2015,13 @@ Client:is_stopped()                                      *Client:is_stopped()*
         (`boolean`) true if client is stopped or in the process of being
         stopped; false otherwise
 
-Client:notify({method}, {params})                            *Client:notify()*
+Client:notify({method}, {params}, {bufnr})                   *Client:notify()*
     Sends a notification to an LSP server.
 
     Parameters: ~
       • {method}  (`string`) LSP method name.
       • {params}  (`table?`) LSP request params.
+      • {bufnr}   (`integer?`) Buffer associated with notification.
 
     Return: ~
         (`boolean`) status indicating if the notification was successful. If
@@ -2074,10 +2095,10 @@ Client:stop({force})                                           *Client:stop()*
     Parameters: ~
       • {force}  (`integer|boolean?`) (default: `self.exit_timeout`) Decides
                  whether to force-stop the server.
+                 • `false`: Do not force-stop after "shutdown" request.
                  • `nil`: Defaults to `exit_timeout` from
                    |vim.lsp.ClientConfig|.
                  • `true`: Force-stop after "shutdown" request.
-                 • `false`: Do not force-stop after "shutdown" request.
                  • number: Wait up to `force` milliseconds before force-stop.
 
 Client:supports_method({method}, {bufnr})           *Client:supports_method()*
@@ -2205,9 +2226,15 @@ enable({enable}, {client_id}, {bufnr}, {opts})
 
     Examples: |lsp-attach| |lsp-completion|
 
-    Note: the behavior of `autotrigger=true` is controlled by the LSP
-    `triggerCharacters` field. You can override it on LspAttach, see
-    |lsp-autocompletion|.
+    Note: ~
+      • |vim.lsp.omnifunc()| (|i_CTRL-X_CTRL-O|) queries every client that
+        advertises completion, including clients that were disabled by
+        `enable(false)`. To suppress completions for a client, clear its
+        capability on |LspAttach|:
+        `client.server_capabilities.completionProvider = nil`.
+      • Behavior of `autotrigger=true` is controlled by the LSP
+        `triggerCharacters` field. You can override it on LspAttach, see
+        |lsp-autocompletion|.
 
     Parameters: ~
       • {enable}     (`boolean`) True to enable, false to disable
@@ -2226,9 +2253,7 @@ get({opts})                                         *vim.lsp.completion.get()*
     Triggers LSP completion once in the current buffer, if LSP completion is
     enabled (see |lsp-attach| |lsp-completion|).
 
-    Used by the default LSP |omnicompletion| provider |vim.lsp.omnifunc()|,
-    thus |i_CTRL-X_CTRL-O| invokes this in LSP-enabled buffers. Use CTRL-Y to
-    select an item from the completion menu. |complete_CTRL-Y|
+    Use CTRL-Y to select an item from the completion menu. |complete_CTRL-Y|
 
     To invoke manually with CTRL-space, use this mapping: >lua
         -- Use CTRL-space to trigger LSP completion.
@@ -2430,7 +2455,6 @@ To try it out, here is a quickstart example using Copilot:       *lsp-copilot*
 1. Install Copilot: >sh
     npm install --global @github/copilot-language-server
 <
-
 2. Define a config, (or copy `lsp/copilot.lua` from
    https://github.com/neovim/nvim-lspconfig): >lua
     vim.lsp.config('copilot', {
@@ -2443,18 +2467,14 @@ To try it out, here is a quickstart example using Copilot:       *lsp-copilot*
         },
    })
 <
-
 3. Activate the config: >lua
     vim.lsp.enable('copilot')
 <
-
 4. Sign in to Copilot, or use the `:LspCopilotSignIn` command from
    https://github.com/neovim/nvim-lspconfig
-
 5. Enable inline completion: >lua
     vim.lsp.inline_completion.enable()
 <
-
 6. Set a keymap for `vim.lsp.inline_completion.get()` and invoke the keymap.
 
 
@@ -2550,8 +2570,8 @@ https://microsoft.github.io/language-server-protocol/specification/#textDocument
 
 
 enable({enable}, {filter})             *vim.lsp.linked_editing_range.enable()*
-    Enable or disable a linked editing session globally or for a specific
-    client. The following is a practical usage example: >lua
+    Enable or disable a linked editing session for the {filter}ed scope. The
+    following is a practical usage example: >lua
         vim.lsp.start({
           name = 'html',
           cmd = '…',
@@ -2563,8 +2583,11 @@ enable({enable}, {filter})             *vim.lsp.linked_editing_range.enable()*
 
     Parameters: ~
       • {enable}  (`boolean?`) `true` or `nil` to enable, `false` to disable.
-      • {filter}  (`table?`) Optional filters |kwargs|:
-                  • {client_id} (`integer?`) Client ID, or `nil` for all.
+      • {filter}  (`table?`) Optional filters |kwargs|,
+                  • {bufnr}? (`integer`, default: all) Buffer number, or 0 for
+                    current buffer, or nil for all.
+                  • {client_id}? (`integer`, default: all) Client ID, or nil
+                    for all.
 
 
 ==============================================================================
@@ -2892,7 +2915,7 @@ apply_text_document_edit({text_document_edit}, {index}, {position_encoding},
       • {text_document_edit}  (`lsp.TextDocumentEdit`)
       • {index}               (`integer?`) Optional index of the edit, if from
                               a list of edits (or nil, if not from a list)
-      • {position_encoding}   (`'utf-8'|'utf-16'|'utf-32'?`)
+      • {position_encoding}   (`'utf-8'|'utf-16'|'utf-32'`)
       • {change_annotations}  (`table<string, lsp.ChangeAnnotation>?`)
 
     See also: ~
@@ -2941,21 +2964,6 @@ buf_highlight_references({bufnr}, {references}, {position_encoding})
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specification/#textDocumentContentChangeEvent
-
-                                             *vim.lsp.util.character_offset()*
-character_offset({buf}, {row}, {col}, {offset_encoding})
-    Returns the UTF-32 and UTF-16 offsets for a position in a certain buffer.
-
-    Parameters: ~
-      • {buf}              (`integer`) buffer number (0 for current)
-      • {row}              (`integer`) 0-indexed line
-      • {col}              (`integer`) 0-indexed byte offset in line
-      • {offset_encoding}  (`'utf-8'|'utf-16'|'utf-32'?`) defaults to
-                           `offset_encoding` of first client of `buf`
-
-    Return: ~
-        (`integer`) `offset_encoding` index of the character in line {row}
-        column {col} in buffer {buf}
 
                               *vim.lsp.util.convert_input_to_markdown_lines()*
 convert_input_to_markdown_lines({input}, {contents})
@@ -3024,8 +3032,7 @@ locations_to_items({locations}, {position_encoding})
 
     Parameters: ~
       • {locations}          (`lsp.Location[]|lsp.LocationLink[]`)
-      • {position_encoding}  (`'utf-8'|'utf-16'|'utf-32'?`) default to first
-                             client of buffer
+      • {position_encoding}  (`'utf-8'|'utf-16'|'utf-32'`)
 
     Return: ~
         (`vim.quickfix.entry[]`) See |setqflist()| for the format
@@ -3191,7 +3198,7 @@ show_document({location}, {position_encoding}, {opts})
 
     Parameters: ~
       • {location}           (`lsp.Location|lsp.LocationLink`)
-      • {position_encoding}  (`'utf-8'|'utf-16'|'utf-32'?`)
+      • {position_encoding}  (`'utf-8'|'utf-16'|'utf-32'`)
       • {opts}               (`table?`) A table with the following fields:
                              • {focus}? (`boolean`) Whether to focus/jump to
                                location if possible. (defaults: true)
@@ -3210,8 +3217,7 @@ symbols_to_items({symbols}, {bufnr}, {position_encoding})
                              list of symbols
       • {bufnr}              (`integer?`) buffer handle or 0 for current,
                              defaults to current
-      • {position_encoding}  (`'utf-8'|'utf-16'|'utf-32'?`) default to first
-                             client of buffer
+      • {position_encoding}  (`'utf-8'|'utf-16'|'utf-32'`)
 
     Return: ~
         (`vim.quickfix.entry[]`) See |setqflist()| for the format

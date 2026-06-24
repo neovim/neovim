@@ -335,22 +335,22 @@ func Test_findfunc()
 
   set findfunc=FindFuncBasic
   find Xfindfunc3
-  call assert_match('Xfindfunc3.c', @%)
+  call assert_match('Xfindfunc3\.c', @%)
   bw!
   2find Xfind
-  call assert_match('Xfindfunc2.c', @%)
+  call assert_match('Xfindfunc2\.c', @%)
   bw!
   call assert_fails('4find Xfind', 'E347: No more file "Xfind" found in path')
   call assert_fails('find foobar', 'E345: Can''t find file "foobar" in path')
 
   sfind Xfindfunc2.c
-  call assert_match('Xfindfunc2.c', @%)
+  call assert_match('Xfindfunc2\.c', @%)
   call assert_equal(2, winnr('$'))
   %bw!
   call assert_fails('sfind foobar', 'E345: Can''t find file "foobar" in path')
 
   tabfind Xfindfunc3.c
-  call assert_match('Xfindfunc3.c', @%)
+  call assert_match('Xfindfunc3\.c', @%)
   call assert_equal(2, tabpagenr())
   %bw!
   call assert_fails('tabfind foobar', 'E345: Can''t find file "foobar" in path')
@@ -358,11 +358,43 @@ func Test_findfunc()
   " Test garbage collection
   call test_garbagecollect_now()
   find Xfindfunc2
-  call assert_match('Xfindfunc2.c', @%)
+  call assert_match('Xfindfunc2\.c', @%)
   bw!
   delfunc FindFuncBasic
   call test_garbagecollect_now()
   call assert_fails('find Xfindfunc2', 'E117: Unknown function: FindFuncBasic')
+
+  " 'findfunc' with dicts in the returned list
+  func FindFuncDict(pat, cmdcomplete)
+    return [
+          \ #{word: 'Xfindfunc1.c', abbr: 'Xff1.c'},
+          \ #{word: 'Xfindfunc2.c'},
+          \ 'Xfindfunc3.c',
+          "\ invalid values
+          \ #{abbr: 'XXX'},
+          \ v:_null_dict,
+          \ v:_null_string,
+          \ ]
+  endfunc
+
+  set findfunc=FindFuncDict
+  find Xfind
+  call assert_match('Xfindfunc1\.c', @%)
+  bw!
+  2find Xfind
+  call assert_match('Xfindfunc2\.c', @%)
+  bw!
+  3find Xfind
+  call assert_match('Xfindfunc3\.c', @%)
+  bw!
+  " These invalid values should not crash
+  4find Xfind
+  5find Xfind
+  6find Xfind
+  call assert_fails('7find Xfind', 'E347: No more file "Xfind" found in path')
+  call assert_equal('', @%)
+  %bw!
+  delfunc FindFuncDict
 
   " Buffer-local option
   func GlobalFindFunc(pat, cmdcomplete)

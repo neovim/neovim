@@ -315,6 +315,10 @@ function Screen:attach(session)
 end
 
 function Screen:detach()
+  if self._stdout and not self._stdout:is_closing() then
+    self._stdout:close()
+  end
+  self._stdout = nil
   self.uimeths.detach()
   self._session = nil
 end
@@ -1386,7 +1390,7 @@ function Screen:_handle_cmdline_show(content, pos, firstc, prompt, indent, level
   if firstc == '' then
     firstc = nil
   end
-  if prompt == '' then
+  if hl_id == -1 then
     prompt = nil
   end
   if indent == 0 then

@@ -78,6 +78,7 @@ local iter = require('vim.iter')
 vim.iter = iter
 vim.keymap = require('vim.keymap')
 vim.loader = require('vim.loader')
+vim.log = require('vim.log')
 vim.lsp = require('vim.lsp')
 vim.net = require('vim.net')
 vim.pack = require('vim.pack')

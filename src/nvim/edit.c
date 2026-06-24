@@ -1424,7 +1424,7 @@ void ins_redraw(bool ready)
   if (ready && has_event(EVENT_TEXTCHANGEDI)
       && curbuf->b_last_changedtick_i != buf_get_changedtick(curbuf)
       && !pum_visible()) {
-    aco_save_T aco;
+    aco_save_T aco = { 0 };
     varnumber_T tick = buf_get_changedtick(curbuf);
 
     // save and restore curwin and curbuf, in case the autocmd changes them
@@ -1444,7 +1444,7 @@ void ins_redraw(bool ready)
   if (ready && has_event(EVENT_TEXTCHANGEDP)
       && curbuf->b_last_changedtick_pum != buf_get_changedtick(curbuf)
       && pum_visible()) {
-    aco_save_T aco;
+    aco_save_T aco = { 0 };
     varnumber_T tick = buf_get_changedtick(curbuf);
 
     // save and restore curwin and curbuf, in case the autocmd changes them
@@ -2202,11 +2202,15 @@ int stop_arrow(void)
     new_insert_skip = 2;
   } else if (ins_need_undo) {
     if (u_save_cursor() == OK) {
-      // A command or event may have moved the cursor or edited the
-      // buffer. Update Insstart so that later edits can properly decide
-      // whether an extra undo entry is needed.
-      Insstart = curwin->w_cursor;
-      Insstart_textlen = (colnr_T)linetabsize_str(get_cursor_line_ptr());
+      // A command or event may have moved the cursor before the next
+      // edit. Pull Insstart back only when the cursor moved above it,
+      // so that later edits can properly decide whether an extra undo
+      // entry is needed. Advancing Insstart would mis-place '[ after a
+      // register paste.
+      if (lt(curwin->w_cursor, Insstart)) {
+        Insstart = curwin->w_cursor;
+        Insstart_textlen = (colnr_T)linetabsize_str(get_cursor_line_ptr());
+      }
       ins_need_undo = false;
     }
   }
@@ -2295,33 +2299,48 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
 
       curwin->w_cursor = *end_insert_pos;
       check_cursor_col(curwin);        // make sure it is not past the line
-      while (true) {
-        if (gchar_cursor() == NUL && curwin->w_cursor.col > 0) {
-          curwin->w_cursor.col--;
-        }
-        cc = gchar_cursor();
-        if (!ascii_iswhite(cc)) {
-          break;
-        }
-        if (del_char(true) == FAIL) {
-          break;            // should not happen
-        }
-      }
-      if (curwin->w_cursor.lnum != tpos.lnum) {
-        curwin->w_cursor = tpos;
-      } else if (curwin->w_cursor.col < prev_col) {
-        // reset tpos, could have been invalidated in the loop above
-        tpos = curwin->w_cursor;
-        tpos.col++;
-        if (cc != NUL && gchar_pos(&tpos) == NUL) {
-          curwin->w_cursor.col++;         // put cursor back on the NUL
-        }
+
+      // Where the loop would actually start (back up if NUL).
+      colnr_T strip_col = curwin->w_cursor.col;
+      if (gchar_cursor() == NUL && strip_col > 0) {
+        strip_col--;
       }
 
-      // <C-S-Right> may have started Visual mode, adjust the position for
-      // deleted characters.
-      if (VIsual_active) {
-        check_visual_pos();
+      // Don't strip if non-whitespace follows: setline() from a <Cmd>
+      // mapping or CursorHoldI autocmd may have inserted content.
+      if (*skipwhite(get_cursor_line_ptr() + strip_col) == NUL) {
+        curwin->w_cursor.col = strip_col;
+        while (true) {
+          if (gchar_cursor() == NUL && curwin->w_cursor.col > 0) {
+            curwin->w_cursor.col--;
+          }
+          cc = gchar_cursor();
+          if (!ascii_iswhite(cc)) {
+            break;
+          }
+          if (del_char(true) == FAIL) {
+            break;            // should not happen
+          }
+        }
+        if (curwin->w_cursor.lnum != tpos.lnum) {
+          curwin->w_cursor = tpos;
+        } else if (curwin->w_cursor.col < prev_col) {
+          // reset tpos, could have been invalidated in the loop above
+          tpos = curwin->w_cursor;
+          tpos.col++;
+          if (cc != NUL && gchar_pos(&tpos) == NUL) {
+            curwin->w_cursor.col++;         // put cursor back on the NUL
+          }
+        }
+
+        // <C-S-Right> may have started Visual mode, adjust the position for
+        // deleted characters.
+        if (VIsual_active) {
+          check_visual_pos();
+        }
+      } else {
+        // Non-whitespace follows, keep original cursor.
+        curwin->w_cursor = tpos;
       }
     }
   }
@@ -4046,7 +4065,7 @@ static bool ins_tab(void)
       // Skip over the spaces we need.
       cstype = init_charsize_arg(&csarg, curwin, 0, ptr);
       while (vcol < want_vcol && *ptr == ' ') {
-        vcol += win_charsize(cstype, vcol, ptr, (uint8_t)(' '), &csarg).width;
+        vcol += win_charsize(cstype, vcol, ptr, ' ', &csarg).width;
         ptr++;
         repl_off++;
       }

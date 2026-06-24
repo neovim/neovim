@@ -382,7 +382,7 @@ General requirements (see [#1469](https://github.com/neovim/neovim/issues/1469#i
 - Clang or GCC version 4.9+
 - CMake version 3.16+, built with TLS/SSL support
   - Optional: Get the latest CMake from https://cmake.org/download/
-    - Provides a shell script which works on most Linux systems. After running it, ensure the resulting `cmake` binary is in your $PATH so the the Nvim build will find it.
+    - Provides a shell script which works on most Linux systems. After running it, ensure the resulting `cmake` binary is in your $PATH so the Nvim build will find it.
 
 Platform-specific requirements are listed below.
 
@@ -555,15 +555,18 @@ Note that the C++ compiler is explicitly set so that it can be found when the de
 ## Building with zig
 
 ### Prerequisites
- - zig 0.15.2
+
+- zig 0.16.x
 
 ### Instructions
- - Build the editor: `zig build`, run it with `./zig-out/bin/nvim`
- - Complete installation with runtime: `zig build install --prefix ~/.local`
- - Tests:
-   + `zig build functionaltest` to run all functionaltests
-   + `zig build functionaltest -- test/functional/autocmd/bufenter_spec.lua` to run the tests in one file
-   + `zig build unittest` to run all unittests
+
+- Build the editor: `zig build`, run it with `./zig-out/bin/nvim`
+- Complete installation with runtime: `zig build install --prefix ~/.local`
+- Tests:
+  - `zig build functionaltest` to run all functionaltests
+  - `zig build functionaltest -- test/functional/autocmd/bufenter_spec.lua` to run the tests in one file
+  - `zig build unittest` to run all unittests
+  - `zig build oldtest` to run all oldtests
 
 #### Using system dependencies
 
@@ -575,8 +578,18 @@ See the `prepare` function of [this `PKGBUILD`](https://git.sr.ht/~chinmay/nvim_
 
 ## Cross-compiling
 
-Cross-compilation is not supported, but we collect notes here for reference (improvements welcome).
+Cross-compilation is not fully supported, but we collect notes here for reference (improvements welcome).
 Also relevant for webassembly (WASM) build.
 
-- Set `NVIM_HOST_PRG` so that the docs and tags generation works without
+- cmake: Set `NVIM_HOST_PRG` so that the docs and tags generation works without
   depending on the target binary.
+- zig build: cross-compilation is often enabled by just setting -Dtarget, e.g. from a linux host:
+  ```
+   zig build -Dtarget=aarch64-macos
+  ```
+  will automatically compile a host lua for use during build. The
+  "-Dhost={target_string}" option can be used to override the platform for
+  running binaries during compile-time. use "-Dhost=native" to force
+  cross-compiling or "-Dhost=" (empty string) to assume that target binaries
+  can run on the host during the build process (e.g. if target is x86 on a
+  x86_64 system, or if emulation set up with binfmt or similar)

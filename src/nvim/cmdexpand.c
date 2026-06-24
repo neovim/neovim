@@ -385,8 +385,9 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
 }
 
 /// Create completion popup menu with items from "matches".
-static void cmdline_pum_create(CmdlineInfo *ccline, expand_T *xp, char **matches, int numMatches,
-                               bool showtail, bool cmdline_unchanged)
+static void cmdline_pum_create(const CmdlineInfo *ccline, expand_T *xp, char **matches,
+                               int numMatches, bool showtail, bool cmdline_unchanged)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   assert(numMatches >= 0);
   // Add all the completion matches
@@ -1334,6 +1335,8 @@ char *addstar(char *fname, size_t len, int context)
         || context == EXPAND_CHECKHEALTH
         || context == EXPAND_LSP
         || context == EXPAND_LOG
+        || context == EXPAND_PACKDEL
+        || context == EXPAND_PACKUPDATE
         || context == EXPAND_LUA) {
       retval = xstrnsave(fname, len);
     } else {
@@ -1510,11 +1513,12 @@ static const char *set_cmd_index(const char *cmd, exarg_T *eap, expand_T *xp, in
   // Isolate the command and search for it in the command table.
   // Exceptions:
   // - the 'k' command can directly be followed by any character, but do
-  // accept "keepmarks", "keepalt" and "keepjumps". As fuzzy matching can
-  // find matches anywhere in the command name, do this only for command
-  // expansion based on regular expression and not for fuzzy matching.
+  // accept "keepmarks", "keepalt" and "keepjumps". Bypass also when
+  // 'ignorecase' is set so a lowercase ":kz" still completes a user
+  // command like :Kz, and for fuzzy matching as that can find
+  // matches anywhere in the command name.
   // - the 's' command can be followed directly by 'c', 'g', 'i', 'I' or 'r'
-  if (!fuzzy && (*cmd == 'k' && cmd[1] != 'e')) {
+  if (!fuzzy && !p_ic && (*cmd == 'k' && cmd[1] != 'e')) {
     eap->cmdidx = CMD_k;
     p = cmd + 1;
   } else {
@@ -1953,12 +1957,12 @@ static const char *set_context_in_filetype_cmd(expand_T *xp, const char *arg)
   int val = 0;
 
   while (true) {
-    if (strncmp(p, "plugin", 6) == 0) {
+    if (strncmp(p, "plugin", 6) == 0 && ascii_iswhite(p[6])) {
       val |= EXPAND_FILETYPECMD_PLUGIN;
       p = skipwhite(p + 6);
       continue;
     }
-    if (strncmp(p, "indent", 6) == 0) {
+    if (strncmp(p, "indent", 6) == 0 && ascii_iswhite(p[6])) {
       val |= EXPAND_FILETYPECMD_INDENT;
       p = skipwhite(p + 6);
       continue;
@@ -2356,6 +2360,14 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
     xp->xp_context = EXPAND_LSP;
     break;
 
+  case CMD_packdel:
+    xp->xp_context = EXPAND_PACKDEL;
+    break;
+
+  case CMD_packupdate:
+    xp->xp_context = EXPAND_PACKUPDATE;
+    break;
+
   case CMD_retab:
     xp->xp_context = EXPAND_RETAB;
     xp->xp_pattern = (char *)arg;
@@ -2735,7 +2747,7 @@ static int expand_files_and_dirs(expand_T *xp, char *pat, char ***matches, int *
 
   int ret = FAIL;
   if (xp->xp_context == EXPAND_FINDFUNC) {
-    ret = expand_findfunc(pat, matches, numMatches);
+    ret = expand_findfunc(xp, pat, matches, numMatches);
   } else {
     if (xp->xp_context == EXPAND_FILES) {
       flags |= EW_FILE;
@@ -2906,9 +2918,10 @@ static char *get_arg1_from_lua(char *lua, expand_T *xp, int idx)
       || last_gen != get_cmdline_last_prompt_id()) {
     xfree(last_xp_line);
     last_xp_line = xstrdup(xp->xp_line);
-    MAXSIZE_TEMP_ARRAY(args, 1);
+    MAXSIZE_TEMP_ARRAY(args, 2);
     Error err = ERROR_INIT;
 
+    ADD_C(args, CSTR_AS_OBJ(xp->xp_pattern));
     ADD_C(args, CSTR_AS_OBJ(xp->xp_line));
     // Build the current command line as a Lua string argument
     Object res = nlua_exec(cstr_as_string(lua), NULL, args, kRetObject, NULL, &err);
@@ -2943,6 +2956,26 @@ static char *get_log_arg(expand_T *xp, int idx)
 static char *get_lsp_arg(expand_T *xp, int idx)
 {
   return get_arg1_from_lua("return require'vim._core.ex_cmd'.lsp_complete(...)", xp, idx);
+}
+
+/// Completion for |:packdel| command.
+///
+/// Given to ExpandGeneric() to obtain `:packdel` completion.
+/// @param[in] xp  Expandy thing.
+/// @param[in] idx  Index of the item.
+static char *get_packdel_arg(expand_T *xp, int idx)
+{
+  return get_arg1_from_lua("return require'vim._core.ex_cmd'.packdel_complete(...)", xp, idx);
+}
+
+/// Completion for |:packupdate| command.
+///
+/// Given to ExpandGeneric() to obtain `:packupdate` completion.
+/// @param[in] xp  Expandy thing.
+/// @param[in] idx  Index of the item.
+static char *get_packupdate_arg(expand_T *xp, int idx)
+{
+  return get_arg1_from_lua("return require'vim._core.ex_cmd'.packupdate_complete(...)", xp, idx);
 }
 
 /// Do the expansion based on xp->xp_context and "rmp".
@@ -2989,6 +3022,8 @@ static int ExpandOther(char *pat, expand_T *xp, regmatch_T *rmp, char ***matches
     { EXPAND_CHECKHEALTH, get_healthcheck_names, true, false },
     { EXPAND_LOG, get_log_arg, true, false },
     { EXPAND_LSP, get_lsp_arg, true, false },
+    { EXPAND_PACKDEL, get_packdel_arg, true, false },
+    { EXPAND_PACKUPDATE, get_packupdate_arg, true, false },
   };
   int ret = FAIL;
 
@@ -3560,7 +3595,7 @@ static int ExpandUserDefined(const char *const pat, expand_T *xp, regmatch_T *re
   return OK;
 }
 
-static void process_user_list(list_T *retlist, char ***matches, int *numMatches, expand_T *xp)
+void expand_process_user_list(list_T *retlist, char ***matches, int *numMatches, expand_T *xp)
 {
   garray_T ga;
   garray_T ga_abbr;
@@ -3575,20 +3610,20 @@ static void process_user_list(list_T *retlist, char ***matches, int *numMatches,
   ga_init(&ga_info, sizeof(char *), 3);
   // Loop over the items in the list.
   TV_LIST_ITER_CONST(retlist, li, {
+    const typval_T *tv = TV_LIST_ITEM_TV(li);
     char *p = NULL;
     char *abbr = NULL;
     char *kind = NULL;
     char *menu = NULL;
     char *info = NULL;
 
-    if (TV_LIST_ITEM_TV(li)->v_type == VAR_STRING) {
-      if (TV_LIST_ITEM_TV(li)->vval.v_string == NULL) {
-        continue;  // Skip empty strings
+    if (tv->v_type == VAR_STRING) {
+      if (tv->vval.v_string == NULL) {
+        continue;  // Skip NULL strings
       }
-      p = xstrdup(TV_LIST_ITEM_TV(li)->vval.v_string);
-    } else if (TV_LIST_ITEM_TV(li)->v_type == VAR_DICT
-               && TV_LIST_ITEM_TV(li)->vval.v_dict != NULL) {
-      dict_T *d = TV_LIST_ITEM_TV(li)->vval.v_dict;
+      p = xstrdup(tv->vval.v_string);
+    } else if (tv->v_type == VAR_DICT && tv->vval.v_dict != NULL) {
+      dict_T *d = tv->vval.v_dict;
       char *word = tv_dict_get_string(d, "word", false);
 
       if (word == NULL) {
@@ -3612,7 +3647,6 @@ static void process_user_list(list_T *retlist, char ***matches, int *numMatches,
     GA_APPEND(char *, &ga_menu, menu);
     GA_APPEND(char *, &ga_info, info);
   });
-  tv_list_unref(retlist);
 
   *matches = ga.ga_data;
   *numMatches = ga.ga_len;
@@ -3652,7 +3686,8 @@ static int ExpandUserList(expand_T *xp, char ***matches, int *numMatches)
     return FAIL;
   }
 
-  process_user_list(retlist, matches, numMatches, xp);
+  expand_process_user_list(retlist, matches, numMatches, xp);
+  tv_list_unref(retlist);
   return OK;
 }
 
@@ -3667,7 +3702,8 @@ static int ExpandUserLua(expand_T *xp, int *numMatches, char ***matches)
 
   list_T *const retlist = rettv.vval.v_list;
 
-  process_user_list(retlist, matches, numMatches, xp);
+  expand_process_user_list(retlist, matches, numMatches, xp);
+  tv_list_unref(retlist);
   return OK;
 }
 
@@ -4362,8 +4398,8 @@ static int expand_pattern_in_buf(char *pat, Direction dir, char ***matches, int 
     }
 
     // Extract the matching text prepended to completed word
-    if (!copy_substring_from_pos(&cur_match_pos, &end_match_pos, &full_match,
-                                 &word_end_pos)) {
+    if (copy_substring_from_pos(&cur_match_pos, &end_match_pos, &full_match,
+                                &word_end_pos) == FAIL) {
       break;
     }
 

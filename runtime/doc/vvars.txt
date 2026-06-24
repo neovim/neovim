@@ -633,6 +633,14 @@ v:stacktrace
 		stack trace.  See also |v:exception|, |v:throwpoint|, and
 		|throw-variables|.
 
+				*v:startreason* *startreason-variable*
+v:startreason
+		The reason Nvim started. Possible values:
+		  - "normal"    normal startup.
+		  - "restart"   started by |:restart| or |ZR|.
+
+		Read-only.
+
 				*v:starttime* *starttime-variable*
 v:starttime
 		Timestamp (nanoseconds since UNIX epoch) when the Nvim process
@@ -753,6 +761,15 @@ v:true
 		as a String (e.g. in |expr5| with string concatenation
 		operator) and to one when used as a Number (e.g. in |expr5| or
 		|expr7| when used with numeric operators).  Read-only.
+
+				*v:useractive* *useractive-variable*
+v:useractive
+		Timestamp (nanoseconds since UNIX epoch) indicating the most
+		recent user activity, i.e. when a key is received from a UI
+		(TUI input or |nvim_input()|).
+
+		Initialized to 0 (no user activity since startup).
+		Read-only.
 
 						*v:val* *val-variable*
 v:val

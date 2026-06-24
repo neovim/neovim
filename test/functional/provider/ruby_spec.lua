@@ -25,7 +25,7 @@ do
       matches(expected, pcall_err(command, 'ruby puts "foo"'))
       matches(expected, pcall_err(command, 'rubyfile foo'))
     end)
-    pending(string.format('Missing neovim RubyGem (%s)', reason), function() end)
+    pending(string.format('N/A: Missing neovim RubyGem (%s)', reason), function() end)
     return
   end
 end

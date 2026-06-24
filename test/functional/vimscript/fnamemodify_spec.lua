@@ -109,6 +109,42 @@ describe('fnamemodify()', function()
     eq('.', fnamemodify('hello.txt', ':h'))
 
     eq_slashconvert('path/to', fnamemodify('path/to/hello.txt', ':h'))
+
+    if is_os('win') then
+      -- Current Windows behavior for slash-style UNC paths, such as "//foo/C$/".
+      eq('/', fnamemodify('/', ':h'))
+      eq('/', fnamemodify('/foo', ':h'))
+      eq('//', fnamemodify('//', ':h'))
+      eq('//', fnamemodify('//foo', ':h'))
+      eq('//foo', fnamemodify('//foo/bar', ':h'))
+      eq('//foo', fnamemodify('//foo///bar', ':h'))
+      eq('//foo', fnamemodify('//foo/C$', ':h'))
+      eq('//foo/C$', fnamemodify('//foo/C$/', ':h'))
+      eq('//foo/C$', fnamemodify('//foo/C$/bar', ':h'))
+      eq('///', fnamemodify('///', ':h'))
+      eq('////', fnamemodify('////', ':h'))
+      eq('///', fnamemodify('///foo', ':h'))
+      eq('///foo', fnamemodify('///foo/bar', ':h'))
+      eq('///foo', fnamemodify('///foo////bar', ':h'))
+    else
+      -- POSIX roots.
+      eq('/', fnamemodify('/', ':h'))
+      eq('/', fnamemodify('/foo', ':h'))
+
+      -- POSIX permits special handling for exactly two leading slashes.
+      eq('//', fnamemodify('//', ':h'))
+      eq('//', fnamemodify('//foo', ':h'))
+      eq('//foo', fnamemodify('//foo/bar', ':h'))
+      eq('//foo', fnamemodify('//foo///bar', ':h'))
+
+      -- More than two leading slashes are ordinary absolute paths.
+      eq('/', fnamemodify('///', ':h'))
+      eq('/', fnamemodify('////', ':h'))
+      eq('/', fnamemodify('///foo', ':h'))
+      eq('/foo', fnamemodify('///foo/bar', ':h'))
+      eq('/foo', fnamemodify('///foo////bar', ':h'))
+      eq('/foo', fnamemodify('////foo/bar', ':h'))
+    end
   end)
 
   it('handles :t', function()

@@ -14,6 +14,7 @@ describe('cmdline2', function()
     screen:add_extra_attr_ids({
       [100] = { foreground = Screen.colors.Magenta1, bold = true },
       [101] = { background = Screen.colors.Yellow, foreground = Screen.colors.Grey0 },
+      [102] = { background = Screen.colors.Cyan1, foreground = Screen.colors.SlateBlue },
     })
     exec_lua(function()
       require('vim._core.ui2').enable({})
@@ -142,6 +143,15 @@ describe('cmdline2', function()
     screen:expect([[
                                                            |
       {1:~                                                    }|*12
+      ^                                                     |
+    ]])
+    -- Message moved to dialog with empty prompt
+    feed("<CR>:echo 'foo' | call input('')<CR>")
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*10
+      {3:                                                     }|
+      foo                                                  |
       ^                                                     |
     ]])
   end)
@@ -273,6 +283,28 @@ describe('cmdline2', function()
       {3:                                                     }|
       Switching to backtracking RE engine for pattern: .\{ |*2
       {16::}%{15:s}{16:/.\{//}^ }                                          |
+    ]])
+  end)
+
+  it('matchparen highlights', function()
+    exec('source $VIMRUNTIME/plugin/matchparen.lua')
+    feed(':call foo(bar())')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*12
+      {16::}{15:call} {25:foo}{102:(}{25:bar}{16:()}{102:)}^                                     |
+    ]])
+    feed('<Left>')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*12
+      {16::}{15:call} {25:foo}{16:(}{25:bar}{102:()}{16:^)}                                     |
+    ]])
+    feed('<Right><BS><BS>')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*12
+      {16::}{15:call} {25:foo}{16:(}{25:bar}{16:(}^                                       |
     ]])
   end)
 end)

@@ -11,12 +11,15 @@ paste.vim	common code for mswin.vim and menu.vim
 spellfile.vim	downloading of a missing spell file
 
 Omni completion files:
+adacomplete.vim		Ada
+beancount.vim		Beancount
 ccomplete.vim		C
 csscomplete.vim		HTML / CSS
 htmlcomplete.vim	HTML
-javascriptcomplete.vim  Javascript
+javascriptcomplete.vim	Javascript
 phpcomplete.vim		PHP
 pythoncomplete.vim	Python
+python3complete.vim	Python
 rubycomplete.vim	Ruby
 syntaxcomplete.vim	from syntax highlighting
 xmlcomplete.vim		XML (uses files in the xml directory)

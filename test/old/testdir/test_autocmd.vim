@@ -3126,7 +3126,40 @@ func Test_autocmd_once()
   close
 
   call assert_fails('au WinNew * ++once ++once echo bad', 'E983:')
+  call assert_false(exists('#WinNew'))
 endfunc
+
+func Test_autocmd_dup_arg()
+	" Duplicate ++once / ++nested, or the legacy "nested" used twice, must
+	" error out *and* not create the autocommand.  Using an environment
+	" variable in the pattern also exercises the error-exit path that frees
+	" the expanded pattern (checked by the address/leak sanitizers).
+	augroup XdupTest
+		au!
+	augroup END
+	let $XAUTODIR = 'Xfoo'
+
+	" New behavior: duplicate ++once now aborts, the autocmd is not added
+	call assert_fails('au XdupTest WinNew $XAUTODIR/* ++once ++once echo bad', 'E983:')
+	call assert_false(exists('#XdupTest#WinNew'))
+
+	call assert_fails('au XdupTest WinNew $XAUTODIR/* ++nested ++nested echo bad', 'E983:')
+	call assert_false(exists('#XdupTest#WinNew'))
+
+	call assert_fails('au XdupTest WinNew $XAUTODIR/* nested nested echo bad', 'E983:')
+	call assert_false(exists('#XdupTest#WinNew'))
+
+	" "nested" without "++" is rejected in Vim9 script (also frees the pattern)
+	"call assert_fails('vim9cmd au XdupTest WinNew $XAUTODIR/* nested echo bad', 'E1078:')
+	call assert_false(exists('#XdupTest#WinNew'))
+
+	augroup XdupTest
+	au!
+	augroup END
+	augroup! XdupTest
+	let $XAUTODIR = ''
+endfunc
+
 
 func Test_autocmd_bufreadpre()
   new
@@ -5328,6 +5361,164 @@ func Test_SwapExists_b_nwindows()
   endif
 
   %bw!
+endfunc
+
+func Test_TextPutX()
+  enew!
+
+  let g:pre_event = []
+  let g:post_event = []
+  au TextPutPre * let g:pre_event = copy(v:event)
+  au TextPutPost * let g:post_event = copy(v:event)
+
+  call setreg('a', ['foo'], 'v')
+  norm "ap
+  call assert_equal(
+        \ #{regcontents: ['foo'], regname: 'a', operator: 'p',
+        \ visual: v:false, regtype: 'v'},
+        \ g:pre_event)
+  call assert_equal(g:pre_event, g:post_event)
+
+  call setreg('', ['hello'], 'V')
+  norm P
+  call assert_equal(
+        \ #{regcontents: ['hello'], regname: '',  operator: 'P',
+        \ visual: v:false, regtype: 'V'},
+        \ g:pre_event)
+  call assert_equal(g:pre_event, g:post_event)
+
+  call setreg('', ['maybe', 'true'], 'V')
+  norm Vp
+  call assert_equal(
+        \ #{regcontents: ['maybe', 'true'], regname: '',  operator: 'P',
+        \ regtype: 'V', visual: v:true},
+        \ g:pre_event)
+  call assert_equal(g:pre_event, g:post_event)
+  call assert_equal({}, v:event)
+
+  call feedkeys("iinserted text\<CR>below\<Esc>", 'x')
+  norm ".p
+  call assert_equal(
+        \ #{regcontents: ["inserted text\nbelow"], regname: '.',
+        \ operator: 'p', regtype: 'v', visual: v:false},
+        \ g:pre_event)
+  call assert_equal(g:pre_event, g:post_event)
+
+  call feedkeys("\"=201\<CR>p", 'x')
+  call assert_equal(
+        \ #{regcontents: ["201"], regname: '=',
+        \ operator: 'p', regtype: 'v', visual: v:false},
+        \ g:pre_event)
+  call assert_equal(g:pre_event, g:post_event)
+
+  vsplit some.txt
+  wincmd l
+  norm "#p
+  call assert_equal(
+        \ #{regcontents: ["some.txt"], regname: '#',
+        \ operator: 'p', regtype: 'v', visual: v:false},
+        \ g:pre_event)
+  call assert_equal(g:pre_event, g:post_event)
+  wincmd h
+  bw!
+
+  if has('clipboard_working')
+    let @+ = 'clipboard'
+
+    norm "+p
+    call assert_equal(
+          \ #{regcontents: ["clipboard"], regname: '+',
+          \ operator: 'p', regtype: 'v', visual: v:false},
+          \ g:pre_event)
+    call assert_equal(g:pre_event, g:post_event)
+  endif
+
+  %delete " Clear buffer
+
+  au! TextPutPre
+  au! TextPutPost
+  let g:pre_event = []
+  let g:post_event = []
+
+  au TextPutPre * call setreg(v:event['regname'],
+        \ getreg('', 0, v:true) + ['!']) " Unnamed register should be same as regname
+
+  call setreg('', ['hello', 'world'])
+  norm p
+  call assert_equal(['', 'hello', 'world', '!'], getline(1, '$'))
+
+  au! TextPutPre
+
+  " Test that special registers cannot be modified
+  %delete
+  au TextPutPre * call setreg('=', '"modified"') | let g:pre_event = copy(v:event)
+
+  " Set up the expression register to evaluate to a known value.
+  call feedkeys("\"=\"original\"\<CR>p", 'x')
+
+  " The original value is what got put, not the modified one.
+  call assert_equal(['original'], getline(1, '$'))
+
+  " v:event still reports the original value.
+  call assert_equal(['original'], g:pre_event['regcontents'])
+
+  au! TextPutPre
+  let g:pre_event = []
+
+  for round in range(2)
+    " Recursive ". register calls have the same contents for post and pre.
+    au TextPutPre * put . | let g:pre_event = copy(v:event)
+    au TextPutPost * let g:post_event = copy(v:event)
+
+    call feedkeys("iinserted\<Esc>", 'x')
+    norm! ".p
+
+    call assert_equal(
+          \ #{regcontents: ["inserted"], regname: '.',
+          \ operator: 'p', regtype: 'v', visual: v:false},
+          \ g:pre_event)
+    call assert_equal(g:pre_event, g:post_event)
+
+    au! TextPutPre
+    au! TextPutPost
+
+    " Pasting ". register without TextPutPre/TextPutPost autocommands should
+    " not interfere with these autocommands in the next round.
+    norm! ".p
+  endfor
+
+  unlet g:post_event
+  unlet g:pre_event
+  bwipe!
+endfunc
+
+" Test that attempting to put text in normal mode terminal buffer does not
+" result in a crash. This only happens when terminal is only window in tabpage
+" it seems.
+func Test_TextPutPost_term_norm()
+  CheckFeature terminal
+
+  tabnew
+  term ++curwin
+
+  let bnr = bufnr('$')
+  call WaitForAssert({-> assert_equal('running', term_getstatus(bnr))})
+
+  call feedkeys("\<C-\>\<C-N>", 'xt')
+  call WaitForAssert({-> assert_equal('running,normal', term_getstatus(bnr))})
+
+  let err = 0
+
+  try
+    call feedkeys("p", 'xt')
+  catch /^Vim\%((\S\+)\)\=:E21:/
+    let err = 1
+  endtry
+
+  call assert_true(err)
+
+  unlet err
+  bwipe!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

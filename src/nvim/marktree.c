@@ -1617,7 +1617,7 @@ bool marktree_itr_next_filter(MarkTree *b, MarkTreeIter *itr, int stop_row, int 
   return marktree_itr_check_filter(b, itr, stop_row, stop_col, meta_filter);
 }
 
-const uint32_t meta_map[kMTMetaCount] = {
+static const uint32_t meta_map[kMTMetaCount] = {
   MT_FLAG_DECOR_VIRT_TEXT_INLINE,
   MT_FLAG_DECOR_VIRT_LINES,
   MT_FLAG_DECOR_SIGNHL,

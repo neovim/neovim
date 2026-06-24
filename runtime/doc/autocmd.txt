@@ -1057,6 +1057,10 @@ SessionLoadPre			Before loading the session file created using
 SessionLoadPost			After loading the session file created using
 				the |:mksession| command.
 
+							*SessionWritePre*
+SessionWritePre			Before writing the session file created using
+				the |:mksession| command.
+
 							*SessionWritePost*
 SessionWritePost		After writing a session file by calling
 				the |:mksession| command.
@@ -1151,7 +1155,7 @@ TabClosed			After closing a tabpage. <afile> expands to
 				the closing |tabpage-number|.
 
 							*TabClosedPre*
-TabClosedPre			Before closing a tabpage.  The current tabpage
+TabClosedPre			Before closing a tabpage. The current tabpage
 				(|tabpagenr()|) is the one being closed. The
 				window layout is locked, thus opening and
 				closing of windows is prohibited.
@@ -1164,6 +1168,15 @@ TabEnter			Just after entering a |tabpage|.
 							*TabLeave*
 TabLeave			Just before leaving a |tabpage|.
 				After WinLeave.
+
+							*TabMoved*
+TabMoved			After a |tabpage| is moved (by |:tabmove| or
+				mouse drag). <amatch> expands to the old
+				|tabpage-number| before the move.
+
+				The |event-data| has these keys (type: `vim.event.tabmoved.data`)
+				- tabnr_old: |tabpage-number| before the move.
+				- tabnr_new: |tabpage-number| after the move.
 
 							*TabNew*
 TabNew				When creating a new |tabpage|.
@@ -1214,6 +1227,7 @@ TermResponse			When Nvim receives a DA1, OSC, DCS, or APC response from
 				the host terminal. Sets |v:termresponse|.
 
 				The |event-data| has these keys (type: `vim.event.termresponse.data`):
+				- chan: the source channel id
 				- sequence: the received sequence
 
 				This is triggered even when inside an
@@ -1265,6 +1279,46 @@ TextChangedP			After a change was made to the text in the
 TextChangedT			After a change was made to the text in the
 				current buffer in |Terminal-mode|.  Otherwise
 				the same as TextChanged.
+
+							*TextPutPost*
+TextPutPost			After text has been put in the current buffer.
+				The following values in |v:event| are mostly
+				the same as |TextYankPost|:
+				   operator	The operation performed,
+						either 'p' or 'P'.
+				   regcontents	Text that was put. For
+						|quote_=|, this is the result
+						of the expression.
+				   regname	Name of the register or empty
+						string for the unnamed
+						register.  For |nvim_put()|
+						this is set to '_'.
+				   regtype	Type of the register, see
+						|getregtype()|.
+				   visual	True if the operation is
+						performed in |Visual| mode.
+				Not triggered when |quote_| is used nor when
+				called recursively.
+				It is not allowed to change the buffer text,
+				see |textlock|.
+				Note that for the |quote_.| register, since
+				the last inserted text is buffered into the
+				input buffer (buffer isn't modified directly),
+				this autocommand is called directly after
+				|TextPutPre|.
+
+							*TextPutPre*
+TextPutPre			Before text has been put in the current buffer.
+				Same values as |TextPutPost| in |v:event|.  It
+				is valid to call |setreg()| in this
+				autocommand, allowing you to process and
+				modify the text in "regcontents" before it is
+				put.  However this does not apply to |quote_#|,
+				|quote_=|, |quote_%|, |quote_:|, |quote_/| or |quote_.|.
+				Not triggered when |quote_| is used nor when
+				called recursively.
+				It is not allowed to change the buffer text,
+				see |textlock|.
 
 							*TextYankPost*
 TextYankPost			Just after a |yank| or |deleting| command, but not

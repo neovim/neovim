@@ -542,6 +542,11 @@ then Vim will try to guess.
 			avoid running out of memory compression will be done
 			now and then.  This can be tuned with the 'mkspellmem'
 			option.
+								*E1578*
+			There is a limit on how many postponed prefix and
+			compound flags can be stored for one word.  Reduce the
+			number of affix/compound flags on a word in the .dic
+			file that exceeds it.
 
 			After the spell file was written and it was being used
 			in a buffer it will be reloaded automatically.

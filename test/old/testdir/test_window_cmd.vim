@@ -114,7 +114,39 @@ func Test_window_cmd_wincmd_gf()
   call assert_notequal(fname, bufname("%"))
   new | only!
 
+  au! test_window_cmd_wincmd_gf
   augroup! test_window_cmd_wincmd_gf
+  delfunc s:swap_exists
+  bw!
+endfunc
+
+func Test_abort_in_wincmd_f()
+  let fname = 'test_f.txt'
+  let swp_fname = $'.{fname}.swp'
+  call writefile([], fname, 'D')
+  call writefile([], swp_fname, 'D')
+  " Remove the catch-all that runtest.vim adds
+  au! SwapExists
+  augroup test_window_cmd_wincmd_f
+    autocmd!
+    " (A)bort
+    autocmd SwapExists test_f.txt let v:swapchoice = 'a'
+  augroup END
+
+  call setline(1, fname)
+  call assert_equal(1, winnr('$'))
+  try
+    wincmd f
+  catch /^Vim:Interrupt$/
+    " expected interrupt by abort
+  endtry
+  call assert_equal(1, winnr('$'))
+  new | only!
+
+  " See :h W19 for the background of this au!. Ideally other tests
+  " should also follow this.
+  au! test_window_cmd_wincmd_f
+  augroup! test_window_cmd_wincmd_f
   bw!
 endfunc
 

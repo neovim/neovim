@@ -11,6 +11,10 @@
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/eval.h"
+#include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
+#include "nvim/eval_defs.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/event/rstream.h"
@@ -275,6 +279,10 @@ void input_enqueue_raw(const char *data, size_t size)
 size_t input_enqueue(uint64_t chan_id, String keys)
 {
   current_ui = chan_id;
+
+  if (keys.size > 0) {
+    set_vim_var_nr(VV_USERACTIVE, (varnumber_T)os_realtime());
+  }
 
   const char *ptr = keys.data;
   const char *end = ptr + keys.size;

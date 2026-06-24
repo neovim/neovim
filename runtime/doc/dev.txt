@@ -275,7 +275,8 @@ Docstring format:
                       - {somefield}? (integer) Documentation
                         for some field
 <
-- Files declared as `@meta` are only used for typing and documentation (similar to "*.d.ts" typescript files).
+- Files declared as `@meta` are only used for typing and documentation
+  (similar to "*.d.ts" typescript files).
 
 Example: the help for |vim.paste()| is generated from a docstring decorating
 vim.paste in runtime/lua/vim/_core/editor.lua like this: >
@@ -315,10 +316,11 @@ have help tags. It runs in CI, but you can also run it locally: >
 <
 
 ------------------------------------------------------------------------------
-Stdlib design                                                        *dev-lua*
+Stdlib                                                               *dev-lua*
 
-See also |dev-naming|.
+GUIDANCE
 
+- Lua names generally should conform to |dev-naming|.
 - Keep the core Lua modules |lua-stdlib| simple. Avoid elaborate OOP or
   pseudo-OOP designs. Plugin authors just want functions to call, not a big,
   fancy inheritance hierarchy.
@@ -337,7 +339,8 @@ See also |dev-naming|.
   - Mimic the pairs() or ipairs() interface if the function is intended for
     use in a |for-in| loop.
 
-                                                          *dev-error-patterns*
+ERRORS                                                    *dev-error-patterns*
+
 To communicate failure to a consumer, choose from these patterns (in order of
 preference):
 1. `retval, errmsg`
@@ -359,9 +362,37 @@ preference):
   - High-level / application-level messages. End-user invokes these directly.
 
 
-INTERFACE CONVENTIONS                                           *dev-patterns*
+------------------------------------------------------------------------------
+API                                                                  *dev-api*
 
-Where applicable, these patterns apply to _both_ Lua and the API:
+Where applicable, this section applies to both Lua stdlib and RPC API.
+
+GUIDANCE
+
+- When adding an API, check the following:
+  - What precedents did you draw from? How does your solution compare to them?
+  - Does your new API allow future expansion? How? Or why not?
+  - Is the new API similar to existing APIs? Do we need to deprecate the old ones?
+  - Did you cross-reference related concepts in the docs?
+- Avoid "mutually exclusive" parameters (via constraints or limitations, if
+  necessary). For example nvim_create_autocmd() has mutually exclusive
+  "callback" and "command" args; but the "command" arg could be eliminated by
+  simply not supporting Vimscript function names, and treating a string
+  "callback" arg as an Ex command (which can call Vimscript functions). The
+  "buffer" arg could also be eliminated by treating a number "pattern" as
+  a buffer number.
+- Avoid functions that depend on cursor position, current buffer, etc. Instead
+  the function should take a position parameter, buffer parameter, etc.
+
+WHERE THINGS GO
+
+- API (libnvim/RPC): exposes low-level internals, or fundamental things (such
+  as `nvim_exec_lua()`) needed by clients or C consumers.
+- Lua stdlib = high-level functionality that builds on top of the API.
+
+See also |dev-layout|.
+
+API PATTERNS                                                *dev-api-patterns*
 
 - When accepting a buffer id, etc., 0 means "current buffer", nil means "all
   buffers".  Likewise for window id, tabpage id, etc.
@@ -375,11 +406,9 @@ Where applicable, these patterns apply to _both_ Lua and the API:
     `function(<args>, cb(<ret)>))` => `function(<args>) -> <ret>`.
   - Example: >lua
     -- ✅ OK:
-    filter(…, opts, function() … end)
+    filter(…, opts, fn)
     -- ❌ NO:
-    filter(function() … end, …, opts)
-    -- ❌ NO:
-    filter(…, function() … end, opts)
+    filter(…, fn, opts)
 - Expose a `config(opts)` function if the module accepts user configuration.
   If `opts` is omitted (or `nil`) it returns the current configuration.
   - Example: See |vim.diagnostic.config()|.
@@ -406,32 +435,7 @@ Where applicable, these patterns apply to _both_ Lua and the API:
 <
 
 ------------------------------------------------------------------------------
-API design                                                           *dev-api*
-
-See also |dev-naming|.
-
-- When adding an API, check the following:
-  - What precedents did you draw from? How does your solution compare to them?
-  - Does your new API allow future expansion? How? Or why not?
-  - Is the new API similar to existing APIs? Do we need to deprecate the old ones?
-  - Did you cross-reference related concepts in the docs?
-- Avoid "mutually exclusive" parameters--via constraints or limitations, if
-  necessary. For example nvim_create_autocmd() has mutually exclusive
-  "callback" and "command" args; but the "command" arg could be eliminated by
-  simply not supporting Vimscript function names, and treating a string
-  "callback" arg as an Ex command (which can call Vimscript functions). The
-  "buffer" arg could also be eliminated by treating a number "pattern" as
-  a buffer number.
-- Avoid functions that depend on cursor position, current buffer, etc. Instead
-  the function should take a position parameter, buffer parameter, etc.
-
-WHERE THINGS GO
-
-- API (libnvim/RPC): exposes low-level internals, or fundamental things (such
-  as `nvim_exec_lua()`) needed by clients or C consumers.
-- Lua stdlib = high-level functionality that builds on top of the API.
-
-NAMING GUIDELINES                                                 *dev-naming*
+NAMING                                                            *dev-naming*
 
 Naming is exceedingly important: the name of a thing is the primary interface
 for uses it, discusses it, searches for it, shares it... Consistent
@@ -456,6 +460,7 @@ Use existing common {verb} names (actions) if possible:
                     user-initiated and without error. (Compare "abort", which
                     cancels and signals error/failure.)
     - clear:        Clears state but does not destroy the container
+    - close:        Releases/destroys a resource.
     - create:       Creates a new (non-trivial) thing (TODO: rename to "def"?)
     - del:          Deletes a thing (or group of things)
     - detach:       Dispose attached listener (TODO: rename to "un"?)
@@ -484,6 +489,7 @@ Use existing common {verb} names (actions) if possible:
 
 Do NOT use these deprecated verbs:
     - contains:     Prefer "has".
+    - destroy:      Prefer "close".
     - disable:      Prefer `enable(enable: boolean)`.
     - exit:         Prefer "cancel" (or "stop" if appropriate).
     - is_disabled:  Prefer `!is_enabled()`.
@@ -511,6 +517,23 @@ Do NOT use these deprecated nouns:
     - command       Use "cmd" instead
     - window        Use "win" instead
 
+                                                        *continuation*
+A "continuation" is implemented as a callback function that returns the result
+of an async function and is called exactly once. Often accepts `err` as the
+first parameter, to avoid erroring on the main thread. Example: >
+    foo(…, callback: fun(err, …))
+Use the name `callback` only for a continuation. All other callbacks and event
+handlers should be named with the `on_…` convention. |dev-name-events|
+
+                                                        *dev-namespace-name*
+Use namespace names like `nvim.foo.bar`: >
+    vim.api.nvim_create_namespace('nvim.lsp.codelens')
+<
+
+                                                        *dev-augroup-name*
+Use autocommand group names like `nvim.foo.bar`: >
+    vim.api.nvim_create_augroup('nvim.treesitter.dev')
+<
                                                         *dev-name-events*
 Use the "on_" prefix to name event-handling callbacks and also the interface for
 "registering" such handlers (on_key). The dual nature is acceptable to avoid
@@ -519,21 +542,12 @@ a confused collection of naming conventions for these related concepts.
 Editor |events| (autocommands) are historically named like: >
     {Noun}{Event}
 
-Use this format to name API (RPC) events: >
-    nvim_{noun}_{event-name}_event
-
-Example: >
-    nvim_buf_changedtick_event
+RPC API events use this format: >
+    nvim_{noun}_{event}_event (example: nvim_buf_changedtick_event)
 <
-                                                        *continuation*
-A "continuation" is implemented as a callback function that returns the result
-of an async function and is called exactly once. Often accepts `err` as the
-first parameter, to avoid erroring on the main thread. Example: >
-    foo(…, callback: fun(err, …))
-Use the name `callback` only for a continuation. All other callbacks and event
-handlers should be named with the |dev-name-events| "on_…" convention.
 
-                                                        *dev-api-name*
+RPC API NAMING                                          *dev-api-name*
+
 Use this format to name new RPC |API| functions: >
     nvim_{topic}_{verb}_{arbitrary-qualifiers}
 
@@ -552,19 +566,8 @@ be a parameter (typically manifest as mutually-exclusive buf/win/… flags like
 - Example: `nvim_buf_del_mark` acts on a `Buffer` object (the first parameter)
   and uses the "del" {verb}.
 
-                                                        *dev-namespace-name*
-Use namespace names like `nvim.foo.bar`: >
-    vim.api.nvim_create_namespace('nvim.lsp.codelens')
-<
-
-                                                        *dev-augroup-name*
-Use autocommand group names like `nvim.foo.bar`: >
-    vim.api.nvim_create_augroup('nvim.treesitter.dev')
-<
-
-INTERFACE PATTERNS                                      *dev-api-patterns*
-
-Prefer adding a single `nvim_{topic}_{verb}_…` interface for a given topic.
+The RPC API doesn't have "modules" so its functions are grouped by a naming
+convention. Prefer the `nvim_{topic}_{verb}_…` convention where possible.
 
 Example: >
 
@@ -614,6 +617,34 @@ recommended (compare these 12(!) functions to the above 3 functions): >
     nvim_win_get_ns(…)
     nvim_tabpage_get_ns(…)
 
+
+------------------------------------------------------------------------------
+Interface patterns                                    *dev-interface-patterns*
+
+EX COMMANDS                                                        *dev-excmd*
+
+Prefer "flat" Ex commands (`:foobar`) instead of "subcommands" (`:foo bar`).
+except when the benefits below outweigh the costs.
+
+Pros of subcommands:
+- Useful when subcommands are discovered _at runtime_ (e.g. `:checkhealth foo`).
+  Plugins can extend the dispatcher by injecting subcommands.
+- `:Foo<tab>` completes only the `Foo` subcommands, whereas completing
+  a flat name matches every command sharing the prefix (e.g. `:FooBar` and
+  `:FootballBar`).
+- Completion can vary dynamically: e.g. `:lsp <tab>` can hide `stop` if no
+  client is running. (But this can be an antifeature, because it makes the
+  behavior less predictable.)
+
+Cons of subcommands:
+- Less harmonious with fuzzy pickers. Pickers can easily list `:foobar`,
+  whereas enumerating subcommands requires special logic. And in a picker,
+  `:foo bar` is often two "steps".
+- Adds a step when tab-completing.
+- Awkward to support `[!]`, ranges, `[count]`, etc., per-subcommand.
+- Implementation cost: a dispatcher with custom completion.
+
+
 ------------------------------------------------------------------------------
 API client                                                    *dev-api-client*
 
@@ -656,7 +687,7 @@ Examples of API-client package names:
 - ❌ NO: python-client
 - ❌ NO: neovim_
 
-API CLIENT IMPLEMENTATION GUIDELINES
+API CLIENT IMPLEMENTATION
 
 - Separate the transport layer from the rest of the library. |rpc-connecting|
 - Use a MessagePack library that implements at least version 5 of the
@@ -680,7 +711,7 @@ API CLIENT IMPLEMENTATION GUIDELINES
 
 
 ------------------------------------------------------------------------------
-EXTERNAL UI                                                           *dev-ui*
+External UI                                                           *dev-ui*
 
 External UIs should be aware of the |api-contract|. In particular, future
 versions of Nvim may add new items to existing events. The API is strongly

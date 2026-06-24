@@ -132,9 +132,9 @@ void filemess(buf_T *buf, char *name, char *s)
   msg_scrolled_ign = true;
   // may truncate the message to avoid a hit-return prompt
   if (*s == NUL) {
-    // Append the filename to the message ID.
+    // Append the filename (without trailing char) to the message ID.
     char msg_id[IOSIZE + 14] = "nvim.bufwrite ";
-    strncat(msg_id + 14, IObuff, strlen(IObuff) - 1);
+    xstrlcat(msg_id, IObuff, 14 + strlen(IObuff));
     msg_progress(IObuff, msg_id, "running", 0, false, true);
   } else {
     msg_outtrans(msg_may_trunc(false, IObuff), 0, false);
@@ -2154,19 +2154,20 @@ int set_rw_fname(char *fname, char *sfname)
 /// Replaces home directory at the start with `~`.
 ///
 /// @param[out]  ret_buf  Buffer to save results to.
-/// @param[in]  buf_len  ret_buf length.
+/// @param[in]  bufsize  ret_buf size.
 /// @param[in]  buf  buf_T file name is coming from.
 /// @param[in]  fname  File name to write.
-void add_quoted_fname(char *const ret_buf, const size_t buf_len, const buf_T *const buf,
+void add_quoted_fname(char *const ret_buf, const size_t bufsize, const buf_T *const buf,
                       const char *fname)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   if (fname == NULL) {
     fname = "-stdin-";
   }
-  ret_buf[0] = '"';
-  home_replace(buf, fname, ret_buf + 1, buf_len - 4, true);
-  xstrlcat(ret_buf, "\" ", buf_len);
+  size_t len = 0;
+  ret_buf[len++] = '"';
+  len += home_replace(buf, fname, ret_buf + len, bufsize - 4, true);
+  xstrlcpy(ret_buf + len, "\" ", bufsize - len);
 }
 
 /// Append message for text mode to IObuff.
@@ -3138,7 +3139,7 @@ void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
   buf_T *savebuf;
   bufref_T bufref;
   int saved = OK;
-  aco_save_T aco;
+  aco_save_T aco = { 0 };
   int flags = READ_NEW;
 
   // Set curwin/curbuf for "buf" and save some things.
@@ -3299,7 +3300,7 @@ void forward_slash(char *fname)
 /// Path to Nvim's own temp dir. Ends in a slash.
 static char *vim_tempdir = NULL;
 #ifdef HAVE_DIRFD_AND_FLOCK
-DIR *vim_tempdir_dp = NULL;  ///< File descriptor of temp dir
+static DIR *vim_tempdir_dp = NULL;  ///< File descriptor of temp dir
 #endif
 
 /// Creates a directory for private use by this instance of Nvim, trying each of
@@ -3567,7 +3568,14 @@ static bool vim_settempdir(char *tempdir)
     return false;
   }
 
-  vim_FullName(tempdir, buf, MAXPATHL, false);
+  vim_FullName(tempdir, buf, MAXPATHL,
+#ifdef MSWIN
+               true
+#else
+               false
+#endif
+               );
+
   size_t buflen = strlen(buf);
   if (!after_pathsep(buf, buf + buflen)) {
     strcpy(buf + buflen, PATHSEPSTR);  // NOLINT(runtime/printf)

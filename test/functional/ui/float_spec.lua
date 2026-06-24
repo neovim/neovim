@@ -205,6 +205,13 @@ describe('float window', function()
       "Conflict: 'bufpos' not allowed with non-float window",
       pcall_err(api.nvim_win_set_config, winid, { split = 'right', bufpos = { 0, 0 } })
     )
+
+    -- Reconfiguring split
+    local not_allowed = { hide = true, zindex = 1, title = '', footer = '', border = 'single' }
+    for k, v in pairs(not_allowed) do
+      local err = ("Conflict: '%s' not allowed with non-float window"):format(k)
+      eq(err, pcall_err(api.nvim_win_set_config, winid, { [k] = v }))
+    end
   end)
 
   it('win_execute() should work', function()
@@ -761,10 +768,10 @@ describe('float window', function()
           eq(old_win, eval('g:win_enter'))
           eq(old_win, curwin())
         end)
-        -- TODO: this case is too hard to deal with
-        pending('if called from floating window with another buffer', function()
+        it('if called from floating window with another buffer', function()
           api.nvim_set_current_win(other_buf_float)
           api.nvim_buf_delete(old_buf, { force = true })
+          eq(other_buf_float, curwin())
         end)
       end)
       describe('creates an empty buffer when there is only one listed buffer', function()
@@ -777,13 +784,11 @@ describe('float window', function()
           command('set nobuflisted')
           api.nvim_set_current_win(old_win)
         end)
-        after_each(function()
-          expect('')
-          eq(2, #api.nvim_list_wins())
-        end)
         it('if called from non-floating window', function()
           api.nvim_buf_delete(old_buf, { force = true })
           eq(old_win, curwin())
+          expect('')
+          eq(2, #api.nvim_list_wins())
         end)
         it('if called from floating window with the same buffer', function()
           api.nvim_set_current_win(same_buf_float)
@@ -793,12 +798,35 @@ describe('float window', function()
           eq(same_buf_float, eval('g:win_leave'))
           eq(old_win, eval('g:win_enter'))
           eq(old_win, curwin())
+          expect('')
+          eq(2, #api.nvim_list_wins())
         end)
-        -- TODO: this case is too hard to deal with
-        pending('if called from floating window with an unlisted buffer', function()
+        it('if called from floating window with an unlisted buffer', function()
           api.nvim_set_current_win(unlisted_buf_float)
           api.nvim_buf_delete(old_buf, { force = true })
+          eq(unlisted_buf_float, curwin())
+          expect('unlisted')
+          eq('', fn.bufname(api.nvim_win_get_buf(old_win)))
+          eq(false, api.nvim_buf_is_valid(old_buf))
+          eq(2, #api.nvim_list_wins())
         end)
+      end)
+      it('keeps focus in the floating window #39800', function()
+        api.nvim_open_win(old_buf, false, float_opts)
+        local other_float = api.nvim_open_win(api.nvim_create_buf(true, false), true, float_opts)
+        api.nvim_buf_delete(old_buf, { force = true })
+        eq(other_float, curwin())
+      end)
+
+      it('does not trigger BufEnter for deleted buffer #39800', function()
+        api.nvim_open_win(old_buf, false, float_opts)
+        api.nvim_open_win(api.nvim_create_buf(true, false), true, float_opts)
+        command('let g:abufs = []')
+        command('autocmd BufEnter * call add(g:abufs, +expand("<abuf>"))')
+        api.nvim_buf_delete(old_buf, { force = true })
+        for _, b in ipairs(eval('g:abufs')) do
+          neq(old_buf, b)
+        end
       end)
     end)
     describe('with splits, deleting the last listed buffer creates an empty buffer', function()
@@ -963,8 +991,7 @@ describe('float window', function()
           api.nvim_set_current_win(same_buf_float)
           api.nvim_buf_delete(old_buf, { force = false })
         end)
-        -- TODO: this case is too hard to deal with
-        pending('if called from floating window with another buffer', function()
+        it('if called from floating window with another buffer', function()
           api.nvim_set_current_win(other_buf_float)
           api.nvim_buf_delete(old_buf, { force = false })
         end)
@@ -3035,6 +3062,45 @@ describe('float window', function()
       end
       eq({ { '🦄', '' }, { 'BB', { 'B0', 'B1', '' } } }, api.nvim_win_get_config(win).title)
       eq({ { '🦄', '' }, { 'BB', { 'B0', 'B1', '' } } }, api.nvim_win_get_config(win).footer)
+
+      api.nvim_win_set_config(win, { border = 'single', title = 'a\tb', footer = 'A\tB' })
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*6
+            [3:----------------------------------------]|
+          ## grid 2
+            ^                                        |
+            {0:~                                       }|*5
+          ## grid 3
+                                                    |
+          ## grid 4
+            {5:┌}{11:a^Ib}{5:─────┐}|
+            {5:│}{1: halloj! }{5:│}|
+            {5:│}{1: BORDAA  }{5:│}|
+            {5:└}{11:A^IB}{5:─────┘}|
+          ]],
+          float_pos = { [4] = { 1001, 'NW', 1, 2, 5, true, 50, 1, 2, 5 } },
+          win_viewport = {
+            [2] = { win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
+            [4] = { win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0 },
+          },
+        })
+      else
+        screen:expect([[
+          ^                                        |
+          {0:~                                       }|
+          {0:~    }{5:┌}{11:a^Ib}{5:─────┐}{0:                        }|
+          {0:~    }{5:│}{1: halloj! }{5:│}{0:                        }|
+          {0:~    }{5:│}{1: BORDAA  }{5:│}{0:                        }|
+          {0:~    }{5:└}{11:A^IB}{5:─────┘}{0:                        }|
+                                                  |
+        ]])
+      end
+
+      api.nvim_win_set_config(win, { title = { { 'a\tb' } }, footer = { { 'A\tB' } } })
+      screen:expect_unchanged()
 
       -- making it a split should not leak memory
       api.nvim_win_set_config(win, { vertical = true })
@@ -8933,6 +8999,8 @@ describe('float window', function()
         [32] = { foreground = Screen.colors.Blue1, blend = 100, bold = true },
         [33] = { foreground = Screen.colors.Gray0, underline = true },
         [34] = { underline = true },
+        [35] = { foreground = Screen.colors.Black, underline = true, special = Screen.colors.Red },
+        [36] = { special = Screen.colors.Red, underline = true },
       })
       insert([[
         Lorem ipsum dolor sit amet, consectetur
@@ -9292,12 +9360,12 @@ describe('float window', function()
         ]])
       end
 
-      -- winblend highlight with underline (but without guisp) in a floatwin. #14453
-      command('fclose | hi TestUnderLine gui=underline')
+      -- winblend underline: without guisp follows the fg (#14453), with guisp keeps its sp (#34614).
+      command('fclose | hi TestUnderLine gui=underline | hi TestUnderLineSp gui=underline guisp=Red')
       api.nvim_buf_add_highlight(curbufnr, -1, 'TestUnderLine', 3, 0, -1)
-      api.nvim_buf_add_highlight(curbufnr, -1, 'TestUnderLine', 4, 0, -1)
-      api.nvim_buf_set_lines(buf, 0, -1, false, {})
-      api.nvim_open_win(buf, false, { relative = 'win', row = 0, col = 0, width = 50, height = 1 })
+      api.nvim_buf_add_highlight(curbufnr, -1, 'TestUnderLineSp', 4, 0, -1)
+      api.nvim_buf_set_lines(buf, 0, -1, false, { '', '' })
+      api.nvim_open_win(buf, false, { relative = 'win', row = 0, col = 0, width = 50, height = 2 })
       if multigrid then
         screen:expect({
           grid = [[
@@ -9306,7 +9374,7 @@ describe('float window', function()
             [3:--------------------------------------------------]|
           ## grid 2
             {34:Ut enim ad minim veniam, quis nostrud}             |
-            {34:exercitation ullamco laboris nisi ut aliquip ex}   |
+            {36:exercitation ullamco laboris nisi ut aliquip ex}   |
             ea commodo consequat. Duis aute irure dolor in    |
             reprehenderit in voluptate velit esse cillum      |
             dolore eu fugiat nulla pariatur. Excepteur sint   |
@@ -9316,13 +9384,13 @@ describe('float window', function()
           ## grid 3
                                                               |
           ## grid 5
-            {17:                                                  }|
+            {17:                                                  }|*2
           ]],
           win_pos = { [2] = { height = 8, startcol = 0, startrow = 0, width = 50, win = 1000 } },
           float_pos = { [5] = { 1002, 'NW', 2, 0, 0, true, 50, 1, 0, 0 } },
           win_viewport = {
             [2] = { win = 1000, topline = 3, botline = 11, curline = 9, curcol = 0, linecount = 11, sum_scroll_delta = 3 },
-            [5] = { win = 1002, topline = 0, botline = 1, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0 },
+            [5] = { win = 1002, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0 },
           },
           win_viewport_margins = {
             [2] = { bottom = 0, left = 0, right = 0, top = 0, win = 1000 },
@@ -9332,7 +9400,7 @@ describe('float window', function()
       else
         screen:expect([[
           {33:Ut enim ad minim veniam, quis nostrud}{26:             }|
-          {34:exercitation ullamco laboris nisi ut aliquip ex}   |
+          {35:exercitation ullamco laboris nisi ut aliquip ex}{26:   }|
           ea commodo consequat. Duis aute irure dolor in    |
           reprehenderit in voluptate velit esse cillum      |
           dolore eu fugiat nulla pariatur. Excepteur sint   |
@@ -11412,8 +11480,18 @@ describe('float window', function()
       winid = api.nvim_open_win(buf, false, config)
       eq('●', api.nvim_win_get_config(winid).border[1])
 
+      -- Single-space border char.
+      command([[lua vim.opt.winborder=",,, ,,,, "]])
+      winid = api.nvim_open_win(buf, false, config)
+      eq({ '', '', '', ' ', '', '', '', ' ' }, api.nvim_win_get_config(winid).border)
+
+      -- Trailing comma hides the last side
+      command([[set winborder=+,-,+,\|,+,-,+,]])
+      winid = api.nvim_open_win(buf, false, config)
+      eq({ '+', '-', '+', '|', '+', '-', '+', '' }, api.nvim_win_get_config(winid).border)
+      command('fclose!')
+
       eq('Vim(set):E474: Invalid argument: winborder=,,', pcall_err(command, 'set winborder=,,'))
-      eq('Vim(set):E474: Invalid argument: winborder=+,-,+,|,+,-,+,', pcall_err(command, [[set winborder=+,-,+,\|,+,-,+,]]))
       eq('Vim(set):E474: Invalid argument: winborder=custom', pcall_err(command, 'set winborder=custom'))
     end)
 

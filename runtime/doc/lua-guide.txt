@@ -19,11 +19,11 @@ This is not a comprehensive encyclopedia of all available features. Think of
 it as a survival kit: the bare minimum needed to comfortably get started on
 using Lua in Nvim.
 
-See |lua-plugin| for guidance on developing Lua plugins.
-See |luaref| and |lua-concepts| for details on the Lua programming language.
+- See |lua-plugin| for guidance on developing Lua plugins.
+- See |luaref| and |lua-concepts| for details on the Lua programming language.
 
 ------------------------------------------------------------------------------
-Some words on the API                                            *lua-guide-api*
+About the API                                                  *lua-guide-api*
 
 The purpose of this guide is to introduce the different ways of interacting
 with Nvim through Lua (the "API"). This API consists of three different
@@ -87,6 +87,22 @@ Finally, you can include Lua code in a Vimscript file by putting it inside a
       end
     EOF
 <
+                                                       *lua-guide-interrupt*
+Lua cannot normally be interrupted by |CTRL-C| (Lua does not implicitly
+"yield" to Nvim). To allow the user to interrupt potentially slow loops,
+periodically call |vim.wait()|. Passing `interval=0` skips the dummy timer
+setup, minimizing per-call overhead in a tight loop: >lua
+
+    while true do
+      -- ...work...
+      local _, code = vim.wait(0, nil, 0)
+      if code == -2 then -- CTRL-C.
+        break
+      end
+    end
+<
+See also: https://github.com/neovim/neovim/issues/6800
+
 ------------------------------------------------------------------------------
 Using Lua files on startup                                    *lua-guide-config*
 
@@ -540,7 +556,7 @@ This means that if your callback itself takes an (even optional) argument, you
 must wrap it in `function() end` to avoid an error:
 >lua
     vim.api.nvim_create_autocmd('TextYankPost', {
-      callback = function() vim.hl.on_yank() end
+      callback = function() vim.hl.hl_op() end
     })
 <
 (Since unused arguments can be omitted in Lua function definitions, this is
@@ -564,7 +580,7 @@ Instead of using a pattern, you can create a buffer-local autocommand (see
 Similarly to mappings, you can (and should) add a description using `desc`:
 >lua
     vim.api.nvim_create_autocmd('TextYankPost', {
-      callback = function() vim.hl.on_yank() end,
+      callback = function() vim.hl.hl_op() end,
       desc = "Briefly highlight yanked text"
     })
 <

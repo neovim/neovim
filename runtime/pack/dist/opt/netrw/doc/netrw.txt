@@ -1046,7 +1046,7 @@ QUICK REFERENCE: MAPS				*netrw-browse-maps* {{{2
 	   C	Setting the editing window                           |netrw-C|
 	   d	Make a directory                                     |netrw-d|
 	   D	Attempt to remove the file(s)/directory(ies)         |netrw-D|
-	   gb	Go to previous bookmarked directory                  |netrw-gb|
+	   gb	Go to bookmark                                       |netrw-gb|
 	   gd	Force treatment as directory                         |netrw-gd|
 	   gf	Force treatment as file                              |netrw-gf|
 	   gh	Quick hide/unhide of dot-files                       |netrw-gh|
@@ -1055,11 +1055,12 @@ QUICK REFERENCE: MAPS				*netrw-browse-maps* {{{2
 	   i	Cycle between thin, long, wide, and tree listings    |netrw-i|
 	   I	Toggle the displaying of the banner                  |netrw-I|
 	   mb	Bookmark current directory                           |netrw-mb|
+	   mB	Delete bookmark                                      |netrw-mB|
 	   mc	Copy marked files to marked-file target directory    |netrw-mc|
 	   md	Apply diff to marked files (up to 3)                 |netrw-md|
 	   me	Place marked files on arg list and edit them         |netrw-me|
 	   mf	Mark a file                                          |netrw-mf|
-	   mF	Unmark files                                         |netrw-mF|
+	   mF	Unmark buffer-local files                            |netrw-mF|
 	   mg	Apply vimgrep to marked files                        |netrw-mg|
 	   mh	Toggle marked file suffices' presence on hiding list |netrw-mh|
 	   mm	Move marked files to marked-file target directory    |netrw-mm|
@@ -1141,6 +1142,8 @@ One may easily "bookmark" the currently browsed directory by using >
 
 	mb
 <
+Note: Bookmarked paths are normalized and stored as absolute paths.
+
 								*.netrwbook*
 Bookmarks are retained in between sessions of vim in a file called .netrwbook
 as a |List|, which is typically stored in the first directory on the user's
@@ -1362,13 +1365,16 @@ Currently, this only works for local files.
 Associated setting variables: |g:netrw_chgperm|
 
 
-CHANGING TO A BOOKMARKED DIRECTORY			*netrw-gb*  {{{2
+CHANGING TO A BOOKMARKED PATH			*netrw-gb*  {{{2
 
-To change directory back to a bookmarked directory, use
+To change to a bookmarked path, use >
 
-	{cnt}gb
+	[{cnt}]gb
 
 Any count may be used to reference any of the bookmarks.
+If {cnt} is omitted, it shows a list of the current bookmarks
+and prompts for a bookmark number to go to.
+
 Note that |netrw-qb| shows both bookmarks and history; to go
 to a location stored in the history see |netrw-u| and |netrw-U|.
 
@@ -1431,10 +1437,13 @@ DELETING BOOKMARKS					*netrw-mB* {{{2
 
 To delete a bookmark, use >
 
-	{cnt}mB
+	[{cnt}]mB
 
 If there are marked files, then mB will remove them from the
 bookmark list.
+If no files are marked and {cnt} is omitted, it shows a list
+of the current bookmarks and prompts for a bookmark number
+to delete.
 
 Alternatively, one may use :NetrwMB! (see |netrw-:NetrwMB|). >
 
@@ -2274,9 +2283,10 @@ Set the marked file copy/move-to target (see |netrw-mc| and |netrw-mm|):
     displayed directory is used for the copy/move-to target.
 
   * Also, if the cursor is in the banner, then the netrw window's currently
-    displayed directory is used for the copy/move-to target.
-    Unless the target already is the current directory.  In which case,
-    typing "mf" clears the target.
+    displayed directory is used for the copy/move-to target - unless that
+    directory is already the target, in which case typing "mt" again clears
+    it.  Repeating "mt" in the banner thus toggles the current directory as
+    the target.
 
   * However, if the cursor is atop a directory name, then that directory is
     used for the copy/move-to target

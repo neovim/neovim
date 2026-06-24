@@ -465,6 +465,14 @@ int update_screen(void)
     return FAIL;
   }
 
+  // Restore actual curwin before redrawing.
+  win_T *save_curwin = autocmd_save_curwin ? win_find_by_handle(autocmd_save_curwin) : NULL;
+  win_T *restore_curwin = save_curwin != NULL ? curwin : NULL;
+  if (save_curwin != NULL) {
+    curwin = save_curwin;
+    curbuf = curwin->w_buffer;
+  }
+
   int type = must_redraw;
 
   // must_redraw is reset here, so that when we run into some weird
@@ -624,6 +632,9 @@ int update_screen(void)
   }
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp->w_config.hide && wp->w_grid_alloc.chars) {
+      continue;  // Skip hidden windows unless not allocated yet.
+    }
     // Correct stored syntax highlighting info for changes in each displayed
     // buffer.  Each buffer must only be done once.
     update_window_hl(wp, type >= UPD_NOT_VALID || hl_changed);
@@ -648,6 +659,14 @@ int update_screen(void)
   screen_search_hl.rm.regprog = NULL;
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp->w_config.hide && wp->w_grid_alloc.chars) {
+      if (wp == curwin && global_stl_height() > 0) {
+        win_redr_status(wp);
+      }
+      wp->w_redr_type = 0;
+      continue;  // Skip hidden windows unless not allocated yet.
+    }
+
     if (wp->w_redr_type == UPD_CLEAR && wp->w_floating && wp->w_grid_alloc.chars) {
       grid_invalidate(&wp->w_grid_alloc);
       wp->w_redr_type = UPD_NOT_VALID;
@@ -729,6 +748,13 @@ int update_screen(void)
   if (!ui_has(kUICmdline)) {
     cmdline_was_last_drawn = false;
   }
+
+  // Restore temporary autocmd curwin.
+  if (restore_curwin != NULL) {
+    curwin = restore_curwin;
+    curbuf = curwin->w_buffer;
+  }
+
   return OK;
 }
 

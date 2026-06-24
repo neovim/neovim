@@ -231,23 +231,42 @@ describe('server', function()
       by_addr[entry.addr] = entry
     end
 
-    -- own server: own=true, pid matches
+    -- own server: own=true, pid matches, active present
     local own_entry = by_addr[own_addr]
     eq(true, own_entry ~= nil)
     eq(true, own_entry.own)
     eq(self_pid, own_entry.pid)
+    eq('number', type(own_entry.active))
+    eq(eval('v:useractive'), own_entry.active)
 
-    -- peer server: own=false, pid is from peer process
+    -- peer server: own=false, pid + active from peer process
     local peer_entry = by_addr[peer_addr]
     eq(true, peer_entry ~= nil)
     eq(false, peer_entry.own)
     eq('number', type(peer_entry.pid))
+    eq('number', type(peer_entry.active))
     n.set_session(client)
     local peer_pid = fn.getpid()
+    local peer_active = eval('v:useractive')
     n.set_session(current_server)
     eq(peer_pid, peer_entry.pid)
+    eq(peer_active, peer_entry.active)
 
     client:close()
+  end)
+
+  it('v:useractive advances on UI input', function()
+    clear()
+    local before = eval('v:useractive')
+    eq('number', type(before))
+    n.feed('ix<Esc>')
+    local after = eval('v:useractive')
+    eq(true, after > before)
+  end)
+
+  it('v:useractive is read-only', function()
+    clear()
+    matches('E46:', pcall_err(n.command, 'let v:useractive = 0'))
   end)
 
   it('removes stale socket files automatically #36581', function()
@@ -395,7 +414,15 @@ it(':restart works in headless server (no UI)', function()
     n.set_session(nil)
   end)
 
-  fn.jobstart({ n.nvim_prog, '--clean', '--headless', '--listen', server_pipe })
+  fn.jobstart({
+    n.nvim_prog,
+    '--clean',
+    '--headless',
+    '--listen',
+    server_pipe,
+    '--cmd',
+    'let g:early_startreason = v:startreason',
+  })
   t.retry(nil, nil, function()
     neq(nil, vim.uv.fs_stat(server_pipe))
   end)
@@ -404,6 +431,8 @@ it(':restart works in headless server (no UI)', function()
   n.expect_exit(n.command, 'restart')
   n.set_session(n.connect(server_pipe))
   eq(1, api.nvim_get_vvar('vim_did_enter'))
+  eq('restart', api.nvim_get_vvar('startreason'))
+  eq('restart', n.eval('g:early_startreason'))
 
   -- TODO: [command] is currently not executed without UI
   -- n.expect_exit(n.command, 'restart lua _G.new_server = 1')

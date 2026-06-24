@@ -669,13 +669,12 @@ static void set_b0_fname(ZeroBlock *b0p, buf_T *buf)
     // editing the same file on different machines over a network.
     // First replace home dir path with "~/" with home_replace().
     // Then insert the user name to get "~user/".
-    home_replace(NULL, buf->b_ffname, b0p->b0_fname,
-                 B0_FNAME_SIZE_CRYPT, true);
+    size_t flen = home_replace(NULL, buf->b_ffname, b0p->b0_fname,
+                               B0_FNAME_SIZE_CRYPT, true);
     if (b0p->b0_fname[0] == '~') {
       // If there is no user name or it is too long, don't use "~/"
       int retval = os_get_username(uname, B0_UNAME_SIZE);
       size_t ulen = strlen(uname);
-      size_t flen = strlen(b0p->b0_fname);
       if (retval == FAIL || ulen + flen > B0_FNAME_SIZE_CRYPT - 1) {
         xstrlcpy(b0p->b0_fname, buf->b_ffname, B0_FNAME_SIZE_CRYPT);
       } else {
@@ -1123,6 +1122,12 @@ void ml_recover(bool checkext)
             dp->db_txt_end = page_count * mfp->mf_page_size;
           }
 
+          if (dp->db_txt_start < HEADER_SIZE || dp->db_txt_start > dp->db_txt_end) {
+            ml_append(lnum++, _("??? block header corrupted"), 0, true);
+            error++;
+            has_error = true;
+            dp->db_txt_start = dp->db_txt_end;
+          }
           // Make sure there is a NUL at the end of the block so we
           // don't go over the end when copying text.
           *((char *)dp + dp->db_txt_end - 1) = NUL;
@@ -1420,11 +1425,22 @@ char *make_percent_swname(char *dir, char *dir_end, const char *name)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   String fixed_fname;
-  fixed_fname.data = fix_fname(name != NULL ? name : "");
-  if (fixed_fname.data == NULL) {
+  char *fname = fix_fname(name != NULL ? name : "");
+  if (fname == NULL) {
     return NULL;
   }
 
+  FileInfo file_info;
+  if (!os_fileinfo2(fname, &file_info)) {
+    xfree(fname);
+    return NULL;
+  }
+  fixed_fname.data = fname + file_info.root_off;
+  if (file_info.type == kPathDeviceUNC) {
+    assert(file_info.root_off >= 2);
+    fixed_fname.data -= 2;
+    fixed_fname.data[0] = '/';  // Fixup //?/UNC/server/ path: "C/server/..." -> "//server/..."
+  }
   char *p;
   for (p = fixed_fname.data; *p != NUL; MB_PTR_ADV(p)) {
     if (vim_ispathsep(*p)) {
@@ -1437,7 +1453,7 @@ char *make_percent_swname(char *dir, char *dir_end, const char *name)
   p = &dir_end[-1];
   *p = NUL;
   String d = concat_fnames(cbuf_as_string(dir, (size_t)(p - dir)), fixed_fname, true);
-  xfree(fixed_fname.data);
+  xfree(fname);
 
   return d.data;
 }
@@ -2320,7 +2336,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line_arg, colnr_T len_
       if (total_moved) {
         memmove(&pp_new->pb_pointer[0],
                 &pp->pb_pointer[pb_idx + 1],
-                (size_t)(total_moved) * sizeof(PointerEntry));
+                (size_t)total_moved * sizeof(PointerEntry));
         pp_new->pb_count = (uint16_t)total_moved;
         pp->pb_count = (uint16_t)(pp->pb_count - (total_moved - 1));
         pp->pb_pointer[pb_idx + 1].pe_bnum = bnum_right;
@@ -3049,7 +3065,7 @@ static bhdr_T *ml_find_line(buf_T *buf, linenr_T lnum, int action)
       return hp;
     }
 
-    PointerBlock *pp = (PointerBlock *)(dp);                // must be pointer block
+    PointerBlock *pp = (PointerBlock *)dp;                // must be pointer block
     if (pp->pb_id != PTR_ID) {
       iemsg(_(e_pointer_block_id_wrong));
       goto error_block;
