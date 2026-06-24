@@ -898,6 +898,57 @@ do
     return nil, nil, nil
   end
 
+  --- Classify an OSC 11 terminal background response as 'dark' or 'light'.
+  --- @param resp string
+  --- @return string?
+  local function detect_bg(resp)
+    local r, g, b = parseosc11(resp)
+    if not r or not g or not b then
+      return nil
+    end
+
+    local rr = parsecolor(r)
+    local gg = parsecolor(g)
+    local bb = parsecolor(b)
+    if not rr or not gg or not bb then
+      return nil
+    end
+
+    local luminance = (0.299 * rr) + (0.587 * gg) + (0.114 * bb)
+    return luminance < 0.5 and 'dark' or 'light'
+  end
+
+  --- @type table<integer, integer>
+  local bg_metadata_handlers = {}
+
+  --- @param chan integer
+  local function clear_bg_metadata_handler(chan)
+    local id = bg_metadata_handlers[chan]
+    if id then
+      pcall(vim.api.nvim_del_autocmd, id)
+      bg_metadata_handlers[chan] = nil
+    end
+  end
+
+  --- @param chan integer?
+  local function track_bg_metadata(chan)
+    if not chan then
+      return
+    end
+
+    clear_bg_metadata_handler(chan)
+    bg_metadata_handlers[chan] = vim.tty.request('', { timeout = 0, chan = chan }, function(resp)
+      local bg = detect_bg(resp)
+      if bg then
+        pcall(vim.api.nvim__ui_set_detected_background, chan, bg)
+      end
+    end)
+  end
+
+  nvim_on('UILeave', group, {}, function(ev)
+    clear_bg_metadata_handler(ev.data.chan)
+  end)
+
   --- Guess value of 'background' based on terminal color.
   ---
   --- We write Operating System Command (OSC) 11 to the terminal to request the
@@ -926,6 +977,7 @@ do
     -- Re-create (clear) the handler's augroup on each call so only the
     -- most-recently-attached TUI's handler remains.
     local bg_group = vim.api.nvim_create_augroup('nvim.tty.background', {})
+    track_bg_metadata(chan)
 
     -- Send OSC 11 query. In the startup (sync) path also send a DSR probe: if
     -- the DSR response comes first, the terminal most likely doesn't support the
@@ -952,23 +1004,16 @@ do
           return
         end
 
+        local bg = detect_bg(resp)
+
         -- Never override an explicit user value: stop once the user pins it.
         if bg_user_set() then
           return true
         end
 
-        local r, g, b = parseosc11(resp)
-        if r and g and b then
-          local rr = parsecolor(r)
-          local gg = parsecolor(g)
-          local bb = parsecolor(b)
-
-          if rr and gg and bb then
-            local luminance = (0.299 * rr) + (0.587 * gg) + (0.114 * bb)
-            local bg = luminance < 0.5 and 'dark' or 'light'
-            -- Use :noautocmd to suppress OptionSet event; OSC11 response may arrive after VimEnter.
-            vim.cmd('noautocmd set background=' .. bg)
-          end
+        if bg then
+          -- Use :noautocmd to suppress OptionSet event; OSC11 response may arrive after VimEnter.
+          vim.cmd('noautocmd set background=' .. bg)
         end
       end
     )
