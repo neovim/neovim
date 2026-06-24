@@ -4479,7 +4479,7 @@ describe('TUI bg color', function()
     eq({ true, 'light' }, {
       session:request(
         'nvim_exec_lua',
-        'local ui = vim.api.nvim_list_uis()[1]; return vim.api.nvim__ui_get_detected_background(ui.chan)',
+        'return vim.api.nvim_list_uis()[1].detected_background',
         {}
       ),
     })
@@ -4498,7 +4498,7 @@ describe('TUI bg color', function()
       eq({ true, 'light' }, {
         session:request(
           'nvim_exec_lua',
-          'local ui = vim.api.nvim_list_uis()[1]; return vim.api.nvim__ui_get_detected_background(ui.chan)',
+          'return vim.api.nvim_list_uis()[1].detected_background',
           {}
         ),
       })
@@ -4510,7 +4510,7 @@ describe('TUI bg color', function()
       eq({ true, 'dark' }, {
         session:request(
           'nvim_exec_lua',
-          'local ui = vim.api.nvim_list_uis()[1]; return vim.api.nvim__ui_get_detected_background(ui.chan)',
+          'return vim.api.nvim_list_uis()[1].detected_background',
           {}
         ),
       })

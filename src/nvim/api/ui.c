@@ -433,48 +433,6 @@ void nvim_ui_try_resize_grid(uint64_t channel_id, Integer grid, Integer width, I
   }
 }
 
-void nvim__ui_set_detected_background(Integer chan, String background, Error *err)
-{
-  VALIDATE_INT((chan >= 0), "chan", chan, {
-    return;
-  });
-
-  RemoteUI *ui = get_ui_or_err((uint64_t)chan, err);
-  if (!ui) {
-    return;
-  }
-
-  if (background.size == 0) {
-    ui->detected_background = kUIBackgroundUnknown;
-  } else if (background.size == 4 && memcmp(background.data, "dark", 4) == 0) {
-    ui->detected_background = kUIBackgroundDark;
-  } else if (background.size == 5 && memcmp(background.data, "light", 5) == 0) {
-    ui->detected_background = kUIBackgroundLight;
-  } else {
-    api_set_error(err, kErrorTypeValidation,
-                  "Invalid background: expected 'dark', 'light', or empty string");
-  }
-}
-
-String nvim__ui_get_detected_background(Integer chan, Arena *arena, Error *err)
-{
-  VALIDATE_INT((chan >= 0), "chan", chan, {
-    return (String)STRING_INIT;
-  });
-
-  RemoteUI *ui = get_ui_or_err((uint64_t)chan, err);
-  if (!ui) {
-    return (String)STRING_INIT;
-  }
-
-  if (ui->detected_background == kUIBackgroundDark) {
-    return CSTR_TO_ARENA_STR(arena, "dark");
-  } else if (ui->detected_background == kUIBackgroundLight) {
-    return CSTR_TO_ARENA_STR(arena, "light");
-  }
-  return (String)STRING_INIT;
-}
-
 /// Tells Nvim the number of elements displaying in the popupmenu, to decide
 /// [<PageUp>] and [<PageDown>] movement.
 ///

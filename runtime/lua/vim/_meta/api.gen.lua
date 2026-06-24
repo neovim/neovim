@@ -180,18 +180,6 @@ function vim.api.nvim__stats() end
 
 --- WARNING: This feature is experimental/unstable.
 ---
---- @param chan integer
---- @return string
-function vim.api.nvim__ui_get_detected_background(chan) end
-
---- WARNING: This feature is experimental/unstable.
----
---- @param chan integer
---- @param background string
-function vim.api.nvim__ui_set_detected_background(chan, background) end
-
---- WARNING: This feature is experimental/unstable.
----
 --- @param str string
 --- @return any
 function vim.api.nvim__unpack(str) end
@@ -1655,6 +1643,8 @@ function vim.api.nvim_list_tabpages() end
 --- - "height"  Requested height of the UI
 --- - "width"   Requested width of the UI
 --- - "rgb"     true if the UI uses RGB colors (false implies |cterm-colors|)
+--- - "detected_background" Terminal background detected from OSC 11: "dark",
+---   "light", or ""
 --- - "ext_..." Requested UI extensions, see |ui-option|
 --- - "chan"    |channel-id| of remote UI
 function vim.api.nvim_list_uis() end

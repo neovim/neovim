@@ -321,8 +321,12 @@ describe('UI event channels', function()
     session3:notify('nvim_ui_term_event', 'termresponse', '\027]11;rgb:0000/0000/0000')
 
     t.retry(nil, 1000, function()
-      eq('light', api.nvim__ui_get_detected_background(chan2.id))
-      eq('dark', api.nvim__ui_get_detected_background(chan3.id))
+      local seen = {}
+      for _, ui in ipairs(api.nvim_list_uis()) do
+        seen[ui.chan] = ui.detected_background
+      end
+      eq('light', seen[chan2.id])
+      eq('dark', seen[chan3.id])
     end)
   end)
 end)

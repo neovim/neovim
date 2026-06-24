@@ -3468,6 +3468,7 @@ describe('API', function()
       local expected = {
         {
           chan = 1,
+          detected_background = '',
           ext_cmdline = false,
           ext_hlstate = false,
           ext_linegrid = screen._options.ext_linegrid or false,
@@ -3502,16 +3503,15 @@ describe('API', function()
 
     it('tracks detected background metadata', function()
       local screen = Screen.new(20, 4)
-      local chan = api.nvim_list_uis()[1].chan
 
-      api.nvim__ui_set_detected_background(chan, 'dark')
-      eq('dark', api.nvim__ui_get_detected_background(chan))
+      api.nvim_ui_term_event('termresponse', '\027]11;rgb:0000/0000/0000')
+      eq('dark', api.nvim_list_uis()[1].detected_background)
 
-      api.nvim__ui_set_detected_background(chan, 'light')
-      eq('light', api.nvim__ui_get_detected_background(chan))
+      api.nvim_ui_term_event('termresponse', '\027]11;rgb:ffff/ffff/ffff')
+      eq('light', api.nvim_list_uis()[1].detected_background)
 
-      api.nvim__ui_set_detected_background(chan, '')
-      eq('', api.nvim__ui_get_detected_background(chan))
+      api.nvim_ui_term_event('termresponse', 'invalid')
+      eq('light', api.nvim_list_uis()[1].detected_background)
 
       screen:detach()
     end)
