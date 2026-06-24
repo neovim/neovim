@@ -3764,7 +3764,7 @@ nvim_ui_pum_set_bounds({width}, {height}, {row}, {col})
       • {width}   (`number`) Popupmenu width.
       • {height}  (`number`) Popupmenu height.
       • {row}     (`number`) Popupmenu row.
-      • {col}     (`number`) Popupmenu height.
+      • {col}     (`number`) Popupmenu column.
 
 nvim_ui_pum_set_height({height})                    *nvim_ui_pum_set_height()*
     Tells Nvim the number of elements displaying in the popupmenu, to decide
@@ -3837,6 +3837,26 @@ nvim_ui_try_resize_grid({grid}, {width}, {height})
       • {grid}    (`integer`) The handle of the grid to be changed.
       • {width}   (`integer`) The new requested width.
       • {height}  (`integer`) The new requested height.
+
+                                          *nvim__ui_get_detected_background()*
+nvim__ui_get_detected_background({chan})
+    WARNING: This feature is experimental/unstable.
+
+
+    Parameters: ~
+      • {chan}  (`integer`)
+
+    Return: ~
+        (`string`)
+
+                                          *nvim__ui_set_detected_background()*
+nvim__ui_set_detected_background({chan}, {background})
+    WARNING: This feature is experimental/unstable.
+
+
+    Parameters: ~
+      • {chan}        (`integer`)
+      • {background}  (`string`)
 
 
 ==============================================================================
