@@ -366,12 +366,13 @@ unsigned trans_special(const char **const srcp, const size_t src_len, char *cons
   FUNC_ATTR_NONNULL_ARG(1, 3) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int modifiers = 0;
-  int key = find_special_key(srcp, src_len, &modifiers, flags, did_simplify);
+  int shiftchar = 0;
+  int key = find_special_key(srcp, src_len, &modifiers, flags, did_simplify, &shiftchar);
   if (key == 0) {
     return 0;
   }
 
-  return special_to_buf(key, modifiers, escape_ks, dst);
+  return special_to_buf(key, modifiers, escape_ks, dst, shiftchar);
 }
 
 /// Put the character sequence for "key" with "modifiers" into "dst" and return
@@ -379,7 +380,7 @@ unsigned trans_special(const char **const srcp, const size_t src_len, char *cons
 /// When "escape_ks" is true escape K_SPECIAL bytes in the character.
 /// The sequence is not NUL terminated.
 /// This is how characters in a string are encoded.
-unsigned special_to_buf(int key, int modifiers, bool escape_ks, char *dst)
+unsigned special_to_buf(int key, int modifiers, bool escape_ks, char *dst, int shiftchar)
 {
   unsigned dlen = 0;
 
@@ -388,6 +389,13 @@ unsigned special_to_buf(int key, int modifiers, bool escape_ks, char *dst)
     dst[dlen++] = (char)(uint8_t)K_SPECIAL;
     dst[dlen++] = (char)(uint8_t)KS_MODIFIER;
     dst[dlen++] = (char)(uint8_t)modifiers;
+  }
+
+  if (shiftchar) {
+    dst[dlen++] = (char)(uint8_t)K_SPECIAL;
+    dst[dlen++] = (char)(uint8_t)KS_SHIFTCHAR;
+    dst[dlen++] = (char)(uint8_t)utf_char2len(shiftchar);
+    dlen += (unsigned)utf_char2bytes(shiftchar, &dst[dlen]);
   }
 
   if (IS_SPECIAL(key)) {
@@ -415,7 +423,7 @@ unsigned special_to_buf(int key, int modifiers, bool escape_ks, char *dst)
 ///
 /// @return Key and modifiers or 0 if there is no match.
 int find_special_key(const char **const srcp, const size_t src_len, int *const modp,
-                     const int flags, bool *const did_simplify)
+                     const int flags, bool *const did_simplify, int *shiftchar)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   const char *bp;
@@ -434,6 +442,16 @@ int find_special_key(const char **const srcp, const size_t src_len, int *const m
   }
   if (src[1] == '*') {  // <*xxx>: do not simplify
     src++;
+  }
+
+  if (src + 2 <= end && src[1] == '&') {
+    l = utfc_ptr2len_len(src + 2, (int)(end - src) - 1);
+    if (l && src + 2 + l - 1 + 1 <= end && src[l + 2] == '-') {
+      if (shiftchar) {
+        *shiftchar = utf_ptr2char(src + 2);
+      }
+      src += l + 2;
+    }
   }
 
   // Find end of modifier list

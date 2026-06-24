@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "nvim/ascii_defs.h"
+#include "nvim/globals.h"
 #include "nvim/tui/termkey/termkey.h"
 #include "nvim/vterm/keyboard.h"
 #include "nvim/vterm/vterm.h"
@@ -42,7 +43,11 @@ void vterm_keyboard_unichar(VTerm *vt, uint32_t c, VTermModifier mod)
       mod |= VTERM_MOD_SHIFT;
     }
 
-    vterm_push_output_sprintf_ctrl(vt, C1_CSI, "%d;%du", c, mod + 1);
+    if (active_shiftchar) {
+      vterm_push_output_sprintf_ctrl(vt, C1_CSI, "%d:%d;%du", c, active_shiftchar, mod + 1);
+    } else {
+      vterm_push_output_sprintf_ctrl(vt, C1_CSI, "%d;%du", c, mod + 1);
+    }
     return;
   }
 
@@ -79,6 +84,10 @@ void vterm_keyboard_unichar(VTerm *vt, uint32_t c, VTermModifier mod)
       }
       break;
     }
+  }
+
+  if (active_shiftchar) {
+    c = (uint32_t)active_shiftchar;
   }
 
   vterm_push_output_sprintf(vt, "%s%c", mod & VTERM_MOD_ALT ? ESC_S : "", c);
