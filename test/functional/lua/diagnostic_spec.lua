@@ -3657,6 +3657,22 @@ describe('vim.diagnostic', function()
       )
     end)
 
+    it('errors when LSP relatedInformation is null', function()
+      matches(
+        'server response has invalid %(null%) relatedInformation',
+        pcall_err(
+          exec_lua,
+          [[
+          local diagnostic = _G.make_warning('Some warning', 1, 1, 1, 3)
+          diagnostic.user_data = { lsp = { relatedInformation = vim.NIL } }
+          vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
+          vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, { diagnostic })
+          vim.diagnostic.open_float({ header = false, scope = 'buffer' })
+        ]]
+        )
+      )
+    end)
+
     it('works with the old signature', function()
       eq(
         { '1. Syntax error' },
