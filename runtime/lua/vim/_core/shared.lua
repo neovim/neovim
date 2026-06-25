@@ -1122,7 +1122,7 @@ do
   local function is_valid(param_name, val, validator, message, allow_alias, optional)
     local type_mismatch_msg = '%s: expected %s, got %s'
     local show_nil_in_err_msg = optional == true
-      and val ~= nil
+      and validator ~= 'nil'
       and not (type(validator) == 'table' and vim.tbl_contains(validator, 'nil'))
     if show_nil_in_err_msg then
       type_mismatch_msg = '%s: expected %s|nil, got %s'

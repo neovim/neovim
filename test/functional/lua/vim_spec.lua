@@ -1647,6 +1647,10 @@ describe('lua stdlib', function()
       'arg1: expected string|nil, got number',
       pcall_err(exec_lua, "vim.validate('arg1', 123, {'string', 'nil'}, true)")
     )
+    matches(
+      'arg1: expected nil, got number',
+      pcall_err(exec_lua, "vim.validate('arg1', 123, 'nil', true)")
+    )
   end)
 
   it('vim.validate (spec form)', function()
