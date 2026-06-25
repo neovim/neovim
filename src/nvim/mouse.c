@@ -543,7 +543,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
       }
 
       // click in a tab selects that tab page
-      if (is_click && cmdwin_type == 0 && mouse_col < Columns) {
+      if (is_click && mouse_col < Columns) {
         int tabnr = tab_page_click_defs[mouse_col].tabnr;
         in_tab_line = true;
 
@@ -1415,18 +1415,10 @@ retnomove:
                 && !sep_line_offset
                 && (wp->w_p_rl
                     ? col < wp->w_view_width - fdc
-                    : col >= fdc + (wp != cmdwin_win ? 0 : 1))
+                    : col >= fdc)
                 && (flags & MOUSE_MAY_STOP_VIS)))) {
       end_visual_mode();
       redraw_curbuf_later(UPD_INVERTED);  // delete the inversion
-    }
-    if (cmdwin_type != 0 && wp != cmdwin_win) {
-      // A click outside the command-line window: Use modeless
-      // selection if possible.  Allow dragging the status lines.
-      sep_line_offset = 0;
-      row = 0;
-      col += wp->w_wincol;
-      wp = cmdwin_win;
     }
     // Only change window focus when not clicking on or dragging the
     // status line.  Do change focus when releasing the mouse button

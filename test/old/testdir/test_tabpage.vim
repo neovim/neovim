@@ -711,6 +711,7 @@ endfunc
 
 " Test for closing the tab page from a command window
 func Test_tabpage_close_cmdwin()
+  throw 'Skipped: Nvim supports cmdwin freedom #40312'
   tabnew
   call feedkeys("q/:tabclose\<CR>\<Esc>", 'xt')
   call assert_equal(2, tabpagenr('$'))

@@ -684,7 +684,7 @@ int main(int argc, char **argv)
   ILOG("starting main loop");
 
   // Main loop: never returns.
-  normal_enter(false, false);
+  normal_enter(false);
 
 #if defined(MSWIN) && !defined(MAKE_LIB)
   xfree(argv);

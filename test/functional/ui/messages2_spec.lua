@@ -205,45 +205,55 @@ describe('messages2', function()
     ]])
     feed(':<C-F>')
     screen:expect([[
-      foo                                                  |*5
-      {1::}echo "foo" | echo "bar\nbaz\n"->repeat(&lines)      |
-      {1::}^                                                    |
+      x                                                    |
+      {1:~                                                    }|*3
+      ─────────────────────────────────────────────────────|
+      {1:: }echo "foo" | echo "bar\nbaz\n"->repeat(&lines)     |
+      {1:: }^                                                   |
       {1:~                                                    }|*5
       {3:[Command Line]                     2,0-1          All}|
                                                            |
     ]])
     command('wincmd +')
     screen:expect([[
-      foo                                                  |*4
-      {1::}echo "foo" | echo "bar\nbaz\n"->repeat(&lines)      |
-      {1::}^                                                    |
+      x                                                    |
+      {1:~                                                    }|*2
+      ─────────────────────────────────────────────────────|
+      {1:: }echo "foo" | echo "bar\nbaz\n"->repeat(&lines)     |
+      {1:: }^                                                   |
       {1:~                                                    }|*6
       {3:[Command Line]                     2,0-1          All}|
                                                            |
     ]])
     command('echo "foo"')
     screen:expect([[
-      foo                                                  |*4
-      {1::}echo "foo" | echo "bar\nbaz\n"->repeat(&lines)      |
-      {1::}^                                                    |
+      x                                                    |
+      {1:~                                                    }|*2
+      ─────────────────────────────────────────────────────|
+      {1:: }echo "foo" | echo "bar\nbaz\n"->repeat(&lines)     |
+      {1:: }^                                                   |
       {1:~                                                    }|*6
       {3:[Command Line]                     2,0-1          All}|
       foo                                                  |
     ]])
+    -- <C-C> closes the cmdwin and drops back into pre-filled cmdline. The pager remains visible.
     feed('<C-C>')
     screen:expect([[
-      foo                                                  |*12
+      x                                                    |
+      {1:~                                                    }|*11
       {3:[Pager]                            1,1            Top}|
       {16::}^                                                    |
     ]])
-    -- Can enter pager from cmdwin.
-    feed('<Esc>qq:')
+    feed('<Esc><Esc>')
+    -- Can enter pager from cmdwin (use cmdwin.open() since "q" is consumed by the pager on_key
+    -- callback before nv_record can read it).
+    exec_lua([[require('vim._core.cmdwin').open(':')]])
     screen:expect([[
       x                                                    |
       {1:~                                                    }|*3
       ─────────────────────────────────────────────────────|
-      {1::}echo "foo" | echo "bar\nbaz\n"->repeat(&lines)      |
-      {1::}^                                                    |
+      {1:: }echo "foo" | echo "bar\nbaz\n"->repeat(&lines)     |
+      {1:: }^                                                   |
       {1:~                                                    }|*5
       {3:[Command Line]                     2,0-1          All}|
                                                            |
@@ -251,9 +261,10 @@ describe('messages2', function()
     feed(':messages<CR>')
     screen:expect([[
       ^foo                                                  |
-      foo                                                  |*11
+      foo                                                  |*4
+      {1:~                                                    }|*7
       {3:[Pager]                            1,1            Top}|
-                                                           |
+      {16::}{15:messages}                                            |
     ]])
     -- Cmdwin is restored after pager is closed.
     feed('q')
@@ -261,12 +272,12 @@ describe('messages2', function()
       x                                                    |
       {1:~                                                    }|*3
       ─────────────────────────────────────────────────────|
-      {1::}echo "foo" | echo "bar\nbaz\n"->repeat(&lines)      |
-      {1::}messages                                            |
-      {1::}^                                                    |
+      {1:: }echo "foo" | echo "bar\nbaz\n"->repeat(&lines)     |
+      {1:: }messages                                           |
+      {1:: }^                                                   |
       {1:~                                                    }|*4
       {3:[Command Line]                     3,0-1          All}|
-                                                           |
+      {16::}{15:messages}                                            |
     ]])
     -- Configured maximum height.
     command('quit | lua require("vim._core.ui2").enable({msg = {pager = {height = 2 } } })')
@@ -278,7 +289,7 @@ describe('messages2', function()
       ^foo                                                  |
       foo                                                  |
       {3:[Pager]                            1,1            Top}|
-                                                           |
+      {16::}{15:messages}                                            |
     ]])
   end)
 

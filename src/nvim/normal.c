@@ -49,6 +49,7 @@
 #include "nvim/highlight_defs.h"
 #include "nvim/indent_c.h"
 #include "nvim/keycodes.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mapping.h"
 #include "nvim/mark.h"
@@ -100,7 +101,6 @@ typedef struct {
   bool need_flushbuf;
   bool set_prevcount;
   bool previous_got_int;             // `got_int` was true
-  bool cmdwin;                       // command-line window normal mode
   bool noexmode;                     // true if the normal mode was pushed from
                                      // ex mode (:global or :visual for example)
   bool toplevel;                     // top-level normal mode
@@ -505,21 +505,19 @@ bool op_pending(void)
 /// Normal state entry point. This is called on:
 ///
 /// - Startup, In this case the function never returns.
-/// - The command-line window is opened (`q:`). Returns when `cmdwin_result` != 0.
 /// - The :visual command is called from :global in ex mode, `:global/PAT/visual`
 ///   for example. Returns when re-entering ex mode (because ex mode recursion is
 ///   not allowed)
 ///
 /// This used to be called main_loop() on main.c
-void normal_enter(bool cmdwin, bool noexmode)
+void normal_enter(bool noexmode)
 {
   NormalState state;
   normal_state_init(&state);
   oparg_T *prev_oap = current_oap;
   current_oap = &state.oa;
-  state.cmdwin = cmdwin;
   state.noexmode = noexmode;
-  state.toplevel = (!cmdwin || cmdwin_result == 0) && !noexmode;
+  state.toplevel = !noexmode;
   state_enter(&state.state);
   current_oap = prev_oap;
 }
@@ -1479,7 +1477,7 @@ static int normal_check(VimState *state)
   // Dict internally somewhere.
   // "may_garbage_collect" is reset in vgetc() which is invoked through
   // do_exmode() and normal_cmd().
-  may_garbage_collect = !s->cmdwin && !s->noexmode;
+  may_garbage_collect = !s->noexmode;
 
   // Update w_curswant if w_set_curswant has been set.
   // Postponed until here to avoid computing w_virtcol too often.
@@ -1491,11 +1489,6 @@ static int normal_check(VimState *state)
     }
     do_exmode();
     return -1;
-  }
-
-  if (s->cmdwin && cmdwin_result != 0) {
-    // command-line window and cmdwin_result is set
-    return 0;
   }
 
   normal_prepare(s);
@@ -3870,11 +3863,8 @@ static void nv_down(cmdarg_T *cap)
     // Quickfix window only: view the result under the cursor.
     qf_view_result(false);
   } else {
-    // In the cmdline window a <CR> executes the command.
-    if (cmdwin_type != 0 && cap->cmdchar == CAR) {
-      cmdwin_result = CAR;
-    } else if (bt_prompt(curbuf) && cap->cmdchar == CAR
-               && curwin->w_cursor.lnum == curbuf->b_ml.ml_line_count) {
+    if (bt_prompt(curbuf) && cap->cmdchar == CAR
+        && curwin->w_cursor.lnum == curbuf->b_ml.ml_line_count) {
       // In a prompt buffer a <CR> in the last line invokes the callback.
       prompt_invoke_callback();
       if (restart_edit == 0) {
@@ -6167,9 +6157,6 @@ static void nv_normal(cmdarg_T *cap)
       clear_cmdline = true;                     // unshow mode later
     }
     restart_edit = 0;
-    if (cmdwin_type != 0) {
-      cmdwin_result = Ctrl_C;
-    }
     if (VIsual_active) {
       end_visual_mode();                // stop Visual
       redraw_curbuf_later(UPD_INVERTED);
@@ -6189,7 +6176,7 @@ static void nv_esc(cmdarg_T *cap)
                     && cap->oap->regname == 0);
 
   if (cap->arg) {               // true for CTRL-C
-    if (restart_edit == 0 && cmdwin_type == 0 && !VIsual_active && no_reason) {
+    if (restart_edit == 0 && !bt_cmdwin(curbuf) && !VIsual_active && no_reason) {
       if (anyBufIsChanged()) {
         msg(_("Type  :qa!  and press <Enter> to abandon all changes"
               " and exit Nvim"), 0);
@@ -6203,18 +6190,6 @@ static void nv_esc(cmdarg_T *cap)
     }
 
     restart_edit = 0;
-
-    if (cmdwin_type != 0) {
-      cmdwin_result = K_IGNORE;
-      got_int = false;          // don't stop executing autocommands et al.
-      return;
-    }
-  } else if (cmdwin_type != 0 && ex_normal_busy && typebuf_was_empty) {
-    // When :normal runs out of characters while in the command line window
-    // vgetorpeek() will repeatedly return ESC.  Exit the cmdline window to
-    // break the loop.
-    cmdwin_result = K_IGNORE;
-    return;
   }
 
   if (VIsual_active) {
@@ -6412,7 +6387,7 @@ static void nv_object(cmdarg_T *cap)
 }
 
 /// "q" command: Start/stop recording.
-/// "q:", "q/", "q?": edit command-line in command-line window.
+/// "q:", "q/", "q?": cmdwin.
 static void nv_record(cmdarg_T *cap)
 {
   if (cap->oap->op_type == OP_FORMAT) {
@@ -6428,12 +6403,16 @@ static void nv_record(cmdarg_T *cap)
   }
 
   if (cap->nchar == ':' || cap->nchar == '/' || cap->nchar == '?') {
-    if (cmdwin_type != 0) {
+    if (cmdwin_buf != NULL) {
       emsg(_(e_cmdline_window_already_open));
       return;
     }
-    stuffcharReadbuff(cap->nchar);
-    stuffcharReadbuff(K_CMDWIN);
+    char fc[2] = { (char)cap->nchar, 0 };
+    typval_T tv_args[] = {
+      { .v_type = VAR_STRING, .vval.v_string = fc },
+      { .v_type = VAR_UNKNOWN },
+    };
+    nlua_call_vimfn("vim._core.cmdwin", "open", tv_args, NULL);
   } else {
     // (stop) recording into a named register, unless executing a
     // register.

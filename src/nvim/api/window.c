@@ -54,7 +54,7 @@ Buffer nvim_win_get_buf(Window win, Error *err)
 /// @param[out] err Error details, if any
 void nvim_win_set_buf(Window win, Buffer buf, Error *err)
   FUNC_API_SINCE(5)
-  FUNC_API_TEXTLOCK_ALLOW_CMDWIN
+  FUNC_API_TEXTLOCK
 {
   win_T *w = find_window_by_handle(win, err);
   buf_T *b = find_buffer_by_handle(buf, err);
@@ -62,10 +62,8 @@ void nvim_win_set_buf(Window win, Buffer buf, Error *err)
     return;
   }
 
-  if (w == cmdwin_win || w == cmdwin_old_curwin || b == cmdwin_buf) {
-    api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
-    return;
-  }
+  // 'winfixbuf' on the cmdwin window prevents replacing its buffer; no
+  // separate cmdwin guard needed.
   win_set_buf(w, b, err);
 }
 
@@ -352,10 +350,10 @@ Boolean nvim_win_is_valid(Window win)
 /// @param[out] err Error details, if any
 void nvim_win_hide(Window win, Error *err)
   FUNC_API_SINCE(7)
-  FUNC_API_TEXTLOCK_ALLOW_CMDWIN
+  FUNC_API_TEXTLOCK
 {
   win_T *w = find_window_by_handle(win, err);
-  if (!w || !can_close_in_cmdwin(w, err)) {
+  if (!w) {
     return;
   }
 
@@ -381,10 +379,10 @@ void nvim_win_hide(Window win, Error *err)
 /// @param[out] err Error details, if any
 void nvim_win_close(Window win, Boolean force, Error *err)
   FUNC_API_SINCE(6)
-  FUNC_API_TEXTLOCK_ALLOW_CMDWIN
+  FUNC_API_TEXTLOCK
 {
   win_T *w = find_window_by_handle(win, err);
-  if (!w || !can_close_in_cmdwin(w, err)) {
+  if (!w) {
     return;
   }
 

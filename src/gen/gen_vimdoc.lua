@@ -981,8 +981,7 @@ local function render_fun(fun, classes, cfg)
     table.insert(ret, '\n    Attributes: ~\n')
     for _, attr in ipairs(fun.attrs) do
       local attr_str = ({
-        textlock = 'not allowed when |textlock| is active or in the |cmdwin|',
-        textlock_allow_cmdwin = 'not allowed when |textlock| is active',
+        textlock = 'not allowed when |textlock| is active',
         fast = '|api-fast|',
         remote_only = '|RPC| only',
         lua_only = 'Lua |vim.api| only',

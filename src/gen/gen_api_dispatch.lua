@@ -567,11 +567,6 @@ for i = 1, #functions do
       output:write('\n    api_set_error(error, kErrorTypeException, "%s", get_text_locked_msg());')
       output:write('\n    goto cleanup;')
       output:write('\n  }\n')
-    elseif fn.textlock_allow_cmdwin then
-      output:write('\n  if (textlock != 0 || expr_map_locked()) {')
-      output:write('\n    api_set_error(error, kErrorTypeException, "%s", e_textlock);')
-      output:write('\n    goto cleanup;')
-      output:write('\n  }\n')
     end
 
     -- function call
@@ -756,13 +751,6 @@ local function process_function(fn)
     write_shifted_output([[
     if (text_locked()) {
       api_set_error(&err, kErrorTypeException, "%%s", get_text_locked_msg());
-      goto exit_0;
-    }
-    ]])
-  elseif fn.textlock_allow_cmdwin then
-    write_shifted_output([[
-    if (textlock != 0 || expr_map_locked()) {
-      api_set_error(&err, kErrorTypeException, "%%s", e_textlock);
       goto exit_0;
     }
     ]])

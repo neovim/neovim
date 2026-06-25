@@ -1046,8 +1046,9 @@ describe('completion', function()
       screen:expect([[
                                                                     |
         {2:[No Name]                                                   }|
-        {1::}foo faa fee f^                                              |
-        {1:~                                                           }|*3
+        {1:: }                                                          |
+        {1:: }foo faa fee f^                                             |
+        {1:~                                                           }|*2
         {3:[Command Line]                                              }|
         {5:-- INSERT --}                                                |
       ]])
@@ -1055,20 +1056,19 @@ describe('completion', function()
       screen:expect([[
                                                                     |
         {2:[No Name]                                                   }|
-        {1::}foo faa fee foo^                                            |
-        {1:~           }{12: foo            }{1:                                }|
-        {1:~           }{4: faa            }{1:                                }|
-        {1:~           }{4: fee            }{1:                                }|
-        {3:[Command Line]                                              }|
+        {1:: }                                                          |
+        {1:: }foo faa fee foo^                                           |
+        {1:~            }{12: foo            }{1:                               }|
+        {1:~            }{4: faa            }{1:                               }|
+        {3:[Command Line}{4: fee            }{3:                               }|
         {5:-- Keyword Local completion (^N^P) }{6:match 1 of 3}             |
       ]])
       feed('<c-c>')
+      -- Non-blocking cmdwin (#40312): <C-C> closes the cmdwin and drops back
+      -- into ":" cmdline mode pre-filled with the line under the cursor.
       screen:expect([[
                                                                     |
-        {2:[No Name]                                                   }|
-        {1::}foo faa fee foo                                            |
-        {1:~                                                           }|*3
-        {3:[Command Line]                                              }|
+        {1:~                                                           }|*6
         :foo faa fee foo^                                            |
       ]])
     end)

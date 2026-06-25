@@ -4528,17 +4528,12 @@ describe('builtin popupmenu', function()
           :sign definex^                   |
         ]])
 
-        -- When the popup is open, entering the cmdline window should close the popup
+        -- When the popup is open, entering cmdwin should close the popup.
         feed('<C-U>sign <Tab><C-F>')
-        screen:expect([[
-                                          |
-          {2:[No Name]                       }|
-          {1::}sign define                    |
-          {1::}sign defin^e                    |
-          {1:~                               }|*4
-          {3:[Command Line]                  }|
-          :sign define                    |
-        ]])
+        t.retry(nil, 2000, function()
+          eq(':', n.fn.getcmdwintype())
+        end)
+        eq(0, n.fn.pumvisible())
         feed(':q<CR>')
 
         -- After the last popup menu item, <C-N> should show the original string

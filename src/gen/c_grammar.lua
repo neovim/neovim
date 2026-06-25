@@ -26,7 +26,6 @@
 --- @field noexport true?
 --- @field remote_only true?
 --- @field lua_only true?
---- @field textlock_allow_cmdwin true?
 --- @field textlock true?
 --- @field remote_impl true?
 --- @field compositor_impl true?
@@ -198,7 +197,6 @@ local fattr = (
   + attr('FUNC_API_NOEXPORT', 'noexport')
   + attr('FUNC_API_REMOTE_ONLY', 'remote_only')
   + attr('FUNC_API_LUA_ONLY', 'lua_only')
-  + attr('FUNC_API_TEXTLOCK_ALLOW_CMDWIN', 'textlock_allow_cmdwin')
   + attr('FUNC_API_TEXTLOCK', 'textlock')
   + attr('FUNC_API_REMOTE_IMPL', 'remote_impl')
   + attr('FUNC_API_COMPOSITOR_IMPL', 'compositor_impl')
