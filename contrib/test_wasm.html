@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>nvim.wasm test</title>
+</head>
+<body style="font-family: monospace; white-space: pre-wrap">
+<h3>nvim.wasm load test</h3>
+
+<script src="../zig-out/bin/nvim.js"></script>
+
+<script>
+function log(msg) {
+  document.body.append(msg + "\n");
+}
+
+function makeArgv(Module, args) {
+  const ptrs = [];
+
+  for (const s of args) {
+    const len = Module.lengthBytesUTF8(s) + 1;
+    const p = Module._malloc(len);
+    Module.stringToUTF8(s, p, len);
+    ptrs.push(p);
+  }
+
+  const argv = Module._malloc((ptrs.length + 1) * 4);
+
+  for (let i = 0; i < ptrs.length; i++) {
+    Module.setValue(argv + i * 4, ptrs[i], '*');
+  }
+
+  Module.setValue(argv + ptrs.length * 4, 0, '*');
+
+  return { argc: ptrs.length, argv };
+}
+
+createNvim({
+  noInitialRun: true,
+
+  print: (t) => log("[stdout] " + t),
+  printErr: (t) => log("[stderr] " + t),
+
+  preRun: [(m) => {
+    m.ENV.TERM = "dumb";
+    m.ENV.HOME = "/home/user";
+    m.ENV.VIMRUNTIME = "/runtime";
+  }],
+})
+.then((m) => {
+  log("module loaded");
+
+  const args = makeArgv(m, [
+    "nvim",
+    "--version"
+  ]);
+
+  const ret = m._nvim_main(args.argc, args.argv);
+
+  log("_nvim_main returned: " + ret);
+})
+.catch((e) => {
+  log("module init failed: " + e);
+});
+</script>
+
+</body>
+</html>

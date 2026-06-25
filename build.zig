@@ -552,8 +552,6 @@ pub fn build(b: *std.Build) !void {
 
     var filtered_sources = try std.ArrayList([]u8).initCapacity(b.allocator, nvim_sources.items.len);
     for (nvim_sources.items) |s| {
-        // wasm_stubs.c defines libuv symbols & excludes it when real libuv is linked
-        if (!is_wasm and std.mem.eql(u8, s.name, "wasm_stubs.c")) continue;
         try filtered_sources.append(b.allocator, b.fmt("src/nvim/{s}", .{s.name}));
     }
     const src_paths = try b.allocator.alloc([]u8, filtered_sources.items.len + unit_test_sources.items.len);
@@ -571,6 +569,7 @@ pub fn build(b: *std.Build) !void {
         if (is_windows) "-DUTF8PROC_STATIC" else "",
         if (use_unibilium) "-DHAVE_UNIBILIUM" else "",
         if (is_wasm) "-flto" else "",
+        if (is_wasm) "-DMAKE_LIB" else "",
     };
     nvim_mod.addCSourceFiles(.{ .files = src_paths, .flags = &flags });
 
@@ -585,6 +584,12 @@ pub fn build(b: *std.Build) !void {
         "src/cjson/fpconv.c",
         "src/cjson/strbuf.c",
     }, .flags = &flags });
+
+    if (is_wasm) {
+        nvim_mod.addCSourceFiles(.{ .files = &.{
+            "src/wasm_stubs.c",
+        }, .flags = &flags });
+    }
 
     if (is_windows) {
         nvim_mod.addWin32ResourceFile(.{ .file = b.path("src/nvim/os/nvim.rc") });
@@ -612,8 +617,9 @@ pub fn build(b: *std.Build) !void {
             b.fmt("--sysroot={s}", .{s}),
             "-sALLOW_MEMORY_GROWTH=1",
             "--profiling-funcs",
-            "-sEXPORTED_FUNCTIONS=_main,_malloc,_free",
-            "-sEXPORTED_RUNTIME_METHODS=stringToUTF8,lengthBytesUTF8,setValue,getValue,UTF8ToString,callMain,ENV,FS,HEAPU8",
+            "-sEXPORTED_FUNCTIONS=_nvim_main,_malloc,_free",
+            "-Wno-undefined",
+            "-sEXPORTED_RUNTIME_METHODS=stringToUTF8,lengthBytesUTF8,setValue,getValue,UTF8ToString,ENV,FS,HEAPU8",
             "-sSTACK_SIZE=8388608",
             "-sINITIAL_MEMORY=268435456",
             "-sMAXIMUM_MEMORY=2147483648",
@@ -624,7 +630,6 @@ pub fn build(b: *std.Build) !void {
             "-sINVOKE_RUN=0",
             "-sMODULARIZE=1",
             "-sEXPORT_NAME=createNvim",
-            "-Wl,--unresolved-symbols=ignore-all",
             "--no-entry",
             "-fexceptions",
             "-flto",
