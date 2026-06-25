@@ -260,17 +260,23 @@ describe('UI event channels', function()
 
     request('nvim_ui_term_event', 'termresponse', 'main')
     session2:request('nvim_ui_term_event', 'termresponse', 'other')
+    request('nvim_ui_term_event', 'termresponse', '\027]11;rgb:0000/0000/0000')
 
     eq({
       { sequence = 'main', chan = main_chan },
       { sequence = 'other', chan = chan2.id },
+      {
+        sequence = '\027]11;rgb:0000/0000/0000',
+        chan = main_chan,
+        detected_background = 'dark',
+      },
     }, exec_lua('return _G.responses'))
 
     exec_lua(
       [[
       _G.filtered = {}
-      vim.tty.request('', { timeout = 0, chan = ... }, function(resp)
-        table.insert(_G.filtered, resp)
+      vim.tty.request('', { timeout = 0, chan = ... }, function(resp, data)
+        table.insert(_G.filtered, { resp, data.detected_background })
         return true
       end)
     ]],
@@ -278,8 +284,11 @@ describe('UI event channels', function()
     )
 
     request('nvim_ui_term_event', 'termresponse', 'ignored')
-    session2:request('nvim_ui_term_event', 'termresponse', 'accepted')
-    eq({ 'accepted' }, exec_lua('return _G.filtered'))
+    session2:request('nvim_ui_term_event', 'termresponse', '\027]11;rgb:ffff/ffff/ffff')
+    eq(
+      { { '\027]11;rgb:ffff/ffff/ffff', 'light' } },
+      exec_lua('return _G.filtered')
+    )
 
     session2:close()
   end)
