@@ -24,111 +24,38 @@ Table of contents: |usr_toc.txt|
 ==============================================================================
 *22.1*	The file browser
 
-Vim has a plugin that makes it possible to edit a directory.  Try this: >
+Nvim can edit a directory.  Try this: >
 
 	:edit .
 
-Through the magic of autocommands and Vim scripts, the window will be filled
-with the contents of the directory.  It looks like this (slightly cleaned up
-so that it fits within 78 chars): >
+The window will be filled with a directory listing.  It looks like this: >
 
-  " ==========================================================================
-  " Netrw Directory Listing                                       (netrw v184)
-  "   /path/to/vim/runtime/doc
-  "   Sorted by      name
-  "   Sort sequence: [\/]$,*,\(\.bak\|\~\|\.o\|\.h\|\.info\|\.swp\)[*@]\=$
-  "   Quick Help: <F1>:help -:go up dir D:delete R:rename s:sort-by x:special
-  " ==========================================================================
-  ../
-  ./
   check/
-  Makefile
-  autocmd.txt
+  autoload.txt
   change.txt
   eval.txt
   filetype.txt
-  help.txt.info
+  help.txt
 <
 
-You can see these items:
-
-1. The name of the browsing tool and its version number
-2. The name of the browsing directory
-3. The method of sorting (may be by name, time, or size)
-4. How names are to be sorted (directories first, then by extension, etc.)
-5. How to get help (the <F1> key), and an abridged list of available commands
-6. A listing of files, including "../" (it will list the parent directory).
-
-If you have syntax highlighting enabled, the different parts are highlighted
-so as to make it easier to spot them.
+Directories end in "/".
 
 You can use Normal mode Vim commands to move around in the text.  For example,
 move the cursor atop a file and press <Enter>; you will then be editing that
-file.  To go back to the browser use ":edit ." again, or use ":Explore".
-CTRL-O also works.
+file.  To go back to the listing use ":edit ." again.  CTRL-O also works.
 
 Try using <Enter> while the cursor is atop a directory name.  The result is
 that the file browser moves into that directory and displays the items found
-there.  Pressing <Enter> on the first directory "../" moves you one level
-higher.  Pressing "-" does the same thing, without the need to move to the
-"../" item first.
+there.  Pressing "-" moves you one level higher, to the parent directory.  "R"
+reloads the listing.
 
-You can press <F1> to get help on the things you can do in the netrw file
-browser.  This is what you get:
->
- QUICK HELP						netrw-quickhelp
-                       (Use ctrl-] to select a topic)
-	Intro to Browsing...............................netrw-intro-browse
-	  Quick Reference: Maps.........................netrw-quickmap
-	  Quick Reference: Commands.....................netrw-browse-cmds
-<
-The <F1> key thus brings you to a netrw directory browsing contents help page.
-It's a regular help page; use the usual |CTRL-]| to jump to tagged help items
-and |CTRL-O| to jump back.  So, if you CTRL-] on |netrw-quickmap| you will
-jump to this:
->
-				netrw-quickmap  netrw-quickmaps
- QUICK REFERENCE: MAPS				netrw-browse-maps
+The directory listing opened by ":edit ." is a viewer, not a file manager.  For
+netrw's browser, file operations, and remote directories, use ":Explore": >
 
-	  ---			-----------------			----
-	  Map			Quick Explanation			Link
-	  ---			-----------------			----
-	 <F1>	Causes Netrw to issue help
-	 <cr>	Netrw will enter the directory or read the file      netrw-cr
-	 <del>	Netrw will attempt to remove the file/directory      netrw-del
-<	 (etc.)
+	:Explore .
+<
 
-To select files for display and editing (with the cursor atop a filename):
->
-	   o	Enter the file/directory under the cursor in a new   netrw-o
-		browser window.  A horizontal split is used.
-	   O	Obtain a file specified by cursor                    netrw-O
-	   p	Preview the file                                     netrw-p
-	   P	Browse in the previously used window                 netrw-P
-	   v	Enter the file/directory under the cursor in a new   netrw-v
-		browser window.  A vertical split is used.
-<
-The following normal-mode commands may be used to control the browser display:
->
-	   i	Cycle between thin, long, wide, and tree listings    netrw-i
-	   r	Reverse sorting order                                netrw-r
-	   s	Select sorting style: by name, time, or file size    netrw-s
-<
-As a sampling of extra normal-mode commands:
->
-	   cd	Make browsing directory the current directory        netrw-cd
-	   D	Attempt to remove the file(s)/directory(ies)         netrw-D
-	   gb	Go to previous bookmarked directory                  netrw-gb
-	   mb	Bookmark current directory                           netrw-mb
-	   R	Rename the designated file(s)/directory(ies)         netrw-R
-<
-One may also use command mode; again, just a sampling:
->
-     :Explore[!]  [dir] Explore directory of current file......netrw-explore
-     :Hexplore[!] [dir] Horizontal Split & Explore.............netrw-explore
-<
-The netrw browser is not limited to just your local machine; one may use URLs
-such as: >
+The netrw browser may also use URLs such as: >
 
 	:Explore ftp://somehost/path/to/dir/
 	:e scp://somehost/path/to/dir/
