@@ -18,6 +18,7 @@ loaded by default while others are not loaded until requested by |:packadd|.
 Standard plugins                                        *standard-plugin-list*
 
 Help-link		Loaded	Short description ~
+|diffhl|		Yes	Treesitter highlighting inside diff hunks
 |difftool|		No	Compares two directories or files side-by-side
 |editorconfig|		Yes	Detect and interpret editorconfig
 |ft-shada|		Yes	Allows editing binary |shada| files
@@ -40,6 +41,27 @@ Help-link		Loaded	Short description ~
 |pi_tar.txt|		Yes	Tar file explorer
 |pi_tutor.txt|		Yes	Interactive tutorial
 |pi_zip.txt|		Yes	Zip archive explorer
+
+==============================================================================
+Builtin plugin: diff hunk highlighting                              *diffhl*
+
+Code inside the hunks of a diff buffer (a buffer with 'filetype' set to "diff",
+such as `git show` output or a `.patch` file) is highlighted using the
+treesitter parser for each hunk's language, on top of the regular diff syntax.
+Highlighting is applied to a hunk only when its language can be determined
+from the diff header and a parser for it is available; otherwise it is
+silently skipped.
+For more information on treesitter parsers, see |treesitter-parsers|.
+
+                                                         *g:diffhl* *b:diffhl*
+
+Diff hunk highlighting is enabled by default. To disable it, add to your
+config: >lua
+    vim.g.diffhl = false
+<
+
+(Vimscript: `let g:diffhl = v:false`). It can also be disabled per-buffer by
+setting the |b:diffhl| buffer-local variable to `false`.
 
 ==============================================================================
 Builtin plugin: difftool                                            *difftool*
