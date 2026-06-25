@@ -554,11 +554,12 @@ function Client:initialize()
   end
 
   -- HACK: Capability modules must be loaded
-  require('vim.lsp.semantic_tokens')
   require('vim.lsp._folding_range')
-  require('vim.lsp.inline_completion')
+  require('vim.lsp.diagnostic')
   require('vim.lsp.document_color')
+  require('vim.lsp.inline_completion')
   require('vim.lsp.linked_editing_range')
+  require('vim.lsp.semantic_tokens')
 
   local init_params = {
     -- The process Id of the parent process that started the server. Is null if
@@ -1187,9 +1188,9 @@ end
 --- Useful for buffer-local setup.
 --- @param bufnr integer Buffer number
 function Client:on_attach(bufnr)
-  self:_text_document_did_open_handler(bufnr)
-
   lsp._set_defaults(self, bufnr)
+
+  self:_text_document_did_open_handler(bufnr)
 
   api.nvim_exec_autocmds('LspAttach', {
     buf = bufnr,
@@ -1439,9 +1440,6 @@ function Client:_on_detach(bufnr)
   self:_text_document_did_close_handler(bufnr)
 
   self.attached_buffers[bufnr] = nil
-
-  local namespace = lsp.diagnostic.get_namespace(self.id)
-  vim.diagnostic.reset(namespace, bufnr)
 end
 
 --- Reset defaults set by `set_defaults`.
