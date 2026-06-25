@@ -17,13 +17,57 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: actions/checkout@v7.0.0
-        with:
-          persist-credentials: false
-
       - name: 'Request reviewers'
         uses: actions/github-script@v9
         with:
           script: |
-            const script = require('./.github/scripts/reviewers_add.js')
-            await script({github, context})
+            const labelReviewers = {
+              build: ["dundargoc", "jamessan", "justinmk"],
+              ci: ["dundargoc", "jamessan", "justinmk"],
+              column: ["lewis6991"],
+              comment: ["echasnovski"],
+              defaults: ["gpanders"],
+              diagnostic: ["gpanders"],
+              diff: ["lewis6991"],
+              editorconfig: ["gpanders"],
+              marks: ["bfredl"],
+              filetype: ["clason"],
+              inccommand: ["famiu"],
+              lsp: ["MariaSolOs", "ribru17"],
+              netrw: ["justinmk"],
+              options: ["famiu"],
+              "platform:nix": ["teto"],
+              "project-management": ["bfredl", "justinmk"],
+              snippet: ["MariaSolOs"],
+              statusline: ["famiu"],
+              treesitter: ["bfredl", "clason", "lewis6991", "wookayin", "ribru17"],
+              tui: ["gpanders"],
+              typo: ["dundargoc"],
+              "vim-patch": ["zeertzjq"],
+            };
+
+            // Fetch labels live: when called from labeler_pr.yml this job runs
+            // after labels are applied, so the event payload is stale.
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+
+            const reviewers = new Set();
+            for (const label of pr.labels.map((e) => e.name)) {
+              for (const r of labelReviewers[label] || []) {
+                reviewers.add(r);
+              }
+            }
+            // Can't review your own PR.
+            reviewers.delete(pr.user.login);
+
+            if (reviewers.size) {
+              await github.rest.pulls.requestReviewers({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+                reviewers: Array.from(reviewers),
+              });
+            }
