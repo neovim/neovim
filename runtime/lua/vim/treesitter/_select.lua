@@ -364,8 +364,10 @@ local function visual_select(range)
     ecol = #vim.fn.getline(erow + 1) + 1
   end
 
-  -- reset visualmode() to 'v'
-  vim.cmd.normal({ 'v\27', bang = true })
+  if vim.api.nvim_get_mode().mode ~= 'v' then
+    -- reset visualmode() to 'v'
+    vim.cmd.normal({ 'v\27', bang = true })
+  end
 
   vim.fn.setpos("'<", { 0, srow + 1, scol + 1, 0 })
   vim.fn.setpos("'>", { 0, erow + 1, ecol, 0 })
