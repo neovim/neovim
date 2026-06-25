@@ -83,6 +83,7 @@ end
 --- @return table?
 local function tags_lsp_to_vim(diagnostic, client_id)
   local tags ---@type table?
+  assert(diagnostic.tags ~= vim.NIL, 'server response has invalid (null) tags')
   for _, tag in ipairs(diagnostic.tags or {}) do
     if tag == protocol.DiagnosticTag.Unnecessary then
       tags = tags or {}

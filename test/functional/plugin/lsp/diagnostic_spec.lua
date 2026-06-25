@@ -7,6 +7,8 @@ local clear = n.clear
 local exec_lua = n.exec_lua
 local eq = t.eq
 local neq = t.neq
+local matches = t.matches
+local pcall_err = t.pcall_err
 
 local create_server_definition = t_lsp.create_server_definition
 
@@ -297,6 +299,20 @@ describe('vim.lsp.diagnostic', function()
         exec_lua(function()
           local ns = vim.lsp.diagnostic.get_namespace(client_id)
           return #vim.diagnostic.get(diagnostic_bufnr, { namespace = ns })
+        end)
+      )
+    end)
+
+    it('errors when diagnostic tags is null', function()
+      matches(
+        'server response has invalid %(null%) tags',
+        pcall_err(exec_lua, function()
+          vim.lsp.diagnostic.on_publish_diagnostics(nil, {
+            uri = fake_uri,
+            diagnostics = {
+              vim.tbl_extend('force', _G.make_error('Diagnostic', 0, 0, 0, 0), { tags = vim.NIL }),
+            },
+          }, { client_id = client_id })
         end)
       )
     end)
