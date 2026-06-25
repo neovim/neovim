@@ -42,7 +42,8 @@ Directories end in "/".
 
 You can use Normal mode Vim commands to move around in the text.  For example,
 move the cursor atop a file and press <Enter>; you will then be editing that
-file.  To go back to the listing use ":edit ." again.  CTRL-O also works.
+file.  Press "-" to open the parent directory of the current file or
+directory.  CTRL-O also works.
 
 Try using <Enter> while the cursor is atop a directory name.  The result is
 that the file browser moves into that directory and displays the items found

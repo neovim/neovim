@@ -50,6 +50,11 @@ listing is a buffer with 'filetype' set to "directory".
 
 Mappings:                                                       *dir-mappings*
 >
+	-	Open the parent directory of the current file or directory.
+<
+
+Directory buffer mappings:                                *dir-buffer-mappings*
+>
 	<CR>	Open the file or directory under the cursor.
 	-	Open the parent directory.
 	R	Reload the directory listing.
