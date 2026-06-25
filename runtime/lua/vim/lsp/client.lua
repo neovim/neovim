@@ -858,15 +858,19 @@ function Client:notify(method, params, bufnr)
   local client_active = self.rpc.notify(method, params)
 
   if client_active then
-    api.nvim_exec_autocmds('LspNotify', {
-      buf = bufnr,
-      modeline = false,
-      data = {
-        client_id = self.id,
-        method = method,
-        params = params,
-      },
-    })
+    vim.schedule(function()
+      if not self:is_stopped() and (not bufnr or self.attached_buffers[bufnr]) then
+        api.nvim_exec_autocmds('LspNotify', {
+          buf = bufnr,
+          modeline = false,
+          data = {
+            client_id = self.id,
+            method = method,
+            params = params,
+          },
+        })
+      end
+    end)
   end
 
   return client_active
