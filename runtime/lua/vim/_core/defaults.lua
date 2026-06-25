@@ -898,7 +898,7 @@ do
     return nil, nil, nil
   end
 
-  --- Classify an OSC 11 terminal background response as 'dark' or 'light'.
+  --- Classify an OSC 11 terminal background response as "dark" or "light".
   --- @param resp string
   --- @return string?
   local function detect_bg(resp)
