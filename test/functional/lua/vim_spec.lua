@@ -1598,6 +1598,10 @@ describe('lua stdlib', function()
       'arg1: expected table, got number',
       pcall_err(exec_lua, "vim.validate('arg1', 1, 'table')")
     )
+    matches(
+      'arg1: expected string|nil, got number',
+      pcall_err(exec_lua, "vim.validate('arg1', 1, 'string', true)")
+    )
 
     matches(
       'arg1: expected even number, got 3',
@@ -1611,6 +1615,14 @@ describe('lua stdlib', function()
       'arg1: expected number|string, got nil',
       pcall_err(exec_lua, "vim.validate('arg1', nil, {'number', 'string'})")
     )
+    matches(
+      'arg1: expected number|string|nil, got boolean',
+      pcall_err(exec_lua, "vim.validate('arg1', true, {'number', 'string'}, true)")
+    )
+    matches(
+      'arg1: expected number|nil, got boolean',
+      pcall_err(exec_lua, "vim.validate('arg1', true, {'number', 'nil'}, true)")
+    )
 
     -- Validator func can return an extra "Info" message.
     matches(
@@ -1621,6 +1633,17 @@ describe('lua stdlib', function()
     eq(
       'arg1: expected TEST_MSG, got nil',
       pcall_err(exec_lua, "vim.validate('arg1', nil, 'table', 'TEST_MSG')")
+    )
+    eq(
+      'arg1: expected TEST_MSG|nil, got number',
+      pcall_err(exec_lua, "vim.validate('arg1', 1, 'table', true, 'TEST_MSG')")
+    )
+    matches(
+      'arg1: expected even number|nil, got 3',
+      pcall_err(
+        exec_lua,
+        "vim.validate('arg1', 3, function(a) return a == 1 end, true, 'even number')"
+      )
     )
   end)
 
@@ -1672,6 +1695,10 @@ describe('lua stdlib', function()
 
     matches('arg1: expected table, got number', pcall_err(exec_lua, "vim.validate{arg1={1, 't'}}"))
     matches(
+      'arg1: expected string|nil, got number',
+      pcall_err(exec_lua, "vim.validate{arg1={1, 's', true}}")
+    )
+    matches(
       'arg2: expected string, got number',
       pcall_err(exec_lua, "vim.validate{arg1={{}, 't'}, arg2={1, 's'}}")
     )
@@ -1695,11 +1722,23 @@ describe('lua stdlib', function()
       'arg1: expected number|string, got nil',
       pcall_err(exec_lua, "vim.validate{ arg1={ nil, {'n', 's'} }}")
     )
+    matches(
+      'arg1: expected number|string|nil, got boolean',
+      pcall_err(exec_lua, "vim.validate{ arg1={ true, {'n', 's'}, true }}")
+    )
+    matches(
+      'arg1: expected number|nil, got boolean',
+      pcall_err(exec_lua, "vim.validate{ arg1={ true, {'n', 'nil'}, true }}")
+    )
 
     -- Pass an additional message back.
     matches(
       'arg1: expected %?, got 3. Info: TEST_MSG',
       pcall_err(exec_lua, "vim.validate{arg1={3, function(a) return a == 1, 'TEST_MSG' end}}")
+    )
+    matches(
+      'arg1: expected %?|nil, got 3',
+      pcall_err(exec_lua, 'vim.validate{arg1={3, function(a) return a == 1 end, true}}')
     )
   end)
 

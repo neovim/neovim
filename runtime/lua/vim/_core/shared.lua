@@ -1112,13 +1112,33 @@ do
     return type(val) == t or (t == 'callable' and vim.is_callable(val))
   end
 
+  --- @param expected string
+  --- @return string
+  local function add_optional_expected(expected)
+    for t in expected:gmatch('[^|]+') do
+      if t == 'nil' then
+        return expected
+      end
+    end
+
+    return expected .. '|nil'
+  end
+
+  --- @param expected string
+  --- @param optional boolean?
+  --- @return string
+  local function format_expected(expected, optional)
+    return optional and add_optional_expected(expected) or expected
+  end
+
   --- @param param_name string
   --- @param val any
   --- @param validator vim.validate.Validator
   --- @param message? string "Expected" message
   --- @param allow_alias? boolean Allow short type names: 'n', 's', 't', 'b', 'f', 'c'
+  --- @param optional? boolean Parameter is optional (may be nil)
   --- @return string?
-  local function is_valid(param_name, val, validator, message, allow_alias)
+  local function is_valid(param_name, val, validator, message, allow_alias, optional)
     if type(validator) == 'string' then
       local expected = allow_alias and type_aliases[validator] or validator
 
@@ -1127,7 +1147,11 @@ do
       end
 
       if not is_type(val, expected) then
-        return ('%s: expected %s, got %s'):format(param_name, message or expected, type(val))
+        return ('%s: expected %s, got %s'):format(
+          param_name,
+          format_expected(message or expected, optional),
+          type(val)
+        )
       end
     elseif vim.is_callable(validator) then
       -- Check user-provided validation function
@@ -1135,7 +1159,7 @@ do
       if not valid then
         local err_msg = ('%s: expected %s, got %s'):format(
           param_name,
-          message or '?',
+          format_expected(message or '?', optional),
           tostring(val)
         )
         err_msg = opt_msg and ('%s. Info: %s'):format(err_msg, opt_msg) or err_msg
@@ -1155,16 +1179,16 @@ do
       end
 
       -- Normalize validator types for error message
-      if allow_alias then
-        for i, t in ipairs(validator) do
-          validator[i] = type_aliases[t] or t
-        end
+      local expected_types = {}
+      for i, t in ipairs(validator) do
+        expected_types[i] = allow_alias and type_aliases[t] or t
       end
 
+      local expected = table.concat(expected_types, '|')
       return string.format(
         '%s: expected %s, got %s',
         param_name,
-        table.concat(validator, '|'),
+        format_expected(expected, optional),
         type(val)
       )
     else
@@ -1186,7 +1210,7 @@ do
         local msg = type(spec[3]) == 'string' and spec[3] or nil --[[@as string?]]
         local optional = spec[3] == true
         if not (optional and value == nil) then
-          err_msg = is_valid(param_name, value, validator, msg, true)
+          err_msg = is_valid(param_name, value, validator, msg, true, optional)
         end
       end
 
@@ -1275,7 +1299,7 @@ do
       if not ok then
         local msg = type(optional) == 'string' and optional or message --[[@as string?]]
         -- Check more complicated validators
-        err_msg = is_valid(name, value, validator, msg, false)
+        err_msg = is_valid(name, value, validator, msg, false, optional == true)
       end
     elseif type(name) == 'table' then -- Form 2
       vim.deprecate('vim.validate{<table>}', 'vim.validate(<params>)', '1.0')
