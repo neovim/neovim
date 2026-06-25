@@ -196,9 +196,6 @@ function first_open(buf, dir)
   end
   vim.b[buf].nvim_dir = dir
   set_maps(buf)
-  if api.nvim_get_option_value('filetype', { buf = buf }) ~= 'directory' then
-    api.nvim_set_option_value('filetype', 'directory', { buf = buf })
-  end
 end
 
 ---@param buf integer
@@ -213,7 +210,7 @@ function M.try_open(buf, path)
   if vim.bo[buf].buftype ~= '' then
     return
   end
-  if vim.bo[buf].filetype == 'netrw' or vim.b[buf].netrw_curdir ~= nil then
+  if vim.bo[buf].filetype ~= 'directory' or vim.b[buf].netrw_curdir ~= nil then
     return
   end
 
@@ -221,17 +218,6 @@ function M.try_open(buf, path)
     return
   end
   first_open(buf, normalize_dir(path))
-end
-
-function M.handle_startup_dirs()
-  for _, win in ipairs(api.nvim_tabpage_list_wins(0)) do
-    if api.nvim_win_is_valid(win) then
-      api.nvim_win_call(win, function()
-        local buf = api.nvim_get_current_buf()
-        M.try_open(buf, api.nvim_buf_get_name(buf))
-      end)
-    end
-  end
 end
 
 return M

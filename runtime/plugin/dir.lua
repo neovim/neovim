@@ -33,34 +33,55 @@ local function should_open(buf, path)
   return vim.fn.isdirectory(path) == 1
 end
 
+---@param buf integer
+---@param path string
+local function set_directory_filetype(buf, path)
+  if vim.bo[buf].filetype ~= 'directory' and should_open(buf, path) then
+    api.nvim_set_option_value('filetype', 'directory', { buf = buf })
+  end
+end
+
 local group = api.nvim_create_augroup('FileExplorer', { clear = true })
 -- Latch on our own VimEnter, not v:vim_did_enter (set just before VimEnter
 -- autocmds), so an earlier VimEnter autocmd's BufEnter can't preempt startup.
 local vimentered = vim.v.vim_did_enter == 1
 
-nvim_on('BufEnter', group, {
-  pattern = '*',
+nvim_on('FileType', group, {
+  pattern = 'directory',
   desc = 'Open local directories',
   nested = true,
 }, function(ev)
-  if vimentered and should_open(ev.buf, ev.file) then
-    require('nvim.dir').try_open(ev.buf, ev.file)
+  if not api.nvim_buf_is_valid(ev.buf) then
+    return
+  end
+  local path = api.nvim_buf_get_name(ev.buf)
+  if should_open(ev.buf, path) then
+    require('nvim.dir').try_open(ev.buf, path)
+  end
+end)
+
+nvim_on('BufEnter', group, {
+  pattern = '*',
+  desc = 'Set local directory filetype',
+  nested = true,
+}, function(ev)
+  if vimentered then
+    set_directory_filetype(ev.buf, ev.file)
   end
 end)
 
 nvim_on('VimEnter', group, {
   pattern = '*',
-  desc = 'Open startup local directories',
+  desc = 'Set startup local directory filetypes',
   nested = true,
 }, function()
   vimentered = true
   for _, win in ipairs(api.nvim_tabpage_list_wins(0)) do
     if api.nvim_win_is_valid(win) then
-      local buf = api.nvim_win_get_buf(win)
-      if should_open(buf, api.nvim_buf_get_name(buf)) then
-        require('nvim.dir').handle_startup_dirs()
-        return
-      end
+      api.nvim_win_call(win, function()
+        local buf = api.nvim_get_current_buf()
+        set_directory_filetype(buf, api.nvim_buf_get_name(buf))
+      end)
     end
   end
 end)
