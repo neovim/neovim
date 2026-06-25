@@ -241,6 +241,21 @@ describe('nvim.dir', function()
     line_of('new.txt')
   end)
 
+  it('displays filenames as buffer text and opens them from the buffer', function()
+    make_fixture()
+    n.clear({ args_rm = { '-u' } })
+
+    edit(root)
+    line_of('.hidden')
+    line_of('subdir/')
+    api.nvim_win_set_cursor(0, { line_of('alpha.txt'), 0 })
+    feed('<CR>')
+    poke_eventloop()
+
+    eq(file, api.nvim_buf_get_name(0))
+    eq({ 'alpha' }, lines())
+  end)
+
   it('encodes special filename characters in directory buffers', function()
     -- Windows reserves backslash as a separator and disallows control characters in filenames.
     -- https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file
