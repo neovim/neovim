@@ -3683,6 +3683,8 @@ describe('LSP', function()
 
           exec_lua(create_server_definition)
           local result = exec_lua(function()
+            local logfile = vim.lsp.log.get_filename()
+            vim.fn.writefile({ '' }, logfile)
             local server = _G._create_server()
             local client_id = assert(vim.lsp.start({
               name = 'watchfiles-test',
@@ -3724,6 +3726,17 @@ describe('LSP', function()
                   registerOptions = {
                     watchers = {
                       {
+                        globPattern = 'a/**b',
+                        kind = 7,
+                      },
+                      {
+                        globPattern = {
+                          baseUri = vim.uri_from_fname(root_dir),
+                          pattern = '{foo}',
+                        },
+                        kind = 7,
+                      },
+                      {
                         globPattern = '**/watch',
                         kind = 7,
                       },
@@ -3750,12 +3763,13 @@ describe('LSP', function()
 
             vim.lsp.get_client_by_id(client_id):stop()
 
-            return server.messages
+            return { logfile = logfile, messages = server.messages }
           end)
 
           local uri = vim.uri_from_fname(root_dir .. '/watch')
+          local messages = result.messages
 
-          eq(6, #result)
+          eq(6, #messages)
 
           eq({
             method = 'workspace/didChangeWatchedFiles',
@@ -3767,7 +3781,7 @@ describe('LSP', function()
                 },
               },
             },
-          }, result[3])
+          }, messages[3])
 
           eq({
             method = 'workspace/didChangeWatchedFiles',
@@ -3779,7 +3793,18 @@ describe('LSP', function()
                 },
               },
             },
-          }, result[4])
+          }, messages[4])
+
+          t.assert_log(
+            '%[ERROR%].-skipping invalid workspace/didChangeWatchedFiles globPattern.-'
+              .. pesc('a/**b'),
+            result.logfile
+          )
+          t.assert_log(
+            '%[ERROR%].-skipping invalid workspace/didChangeWatchedFiles globPattern.-'
+              .. pesc('{foo}'),
+            result.logfile
+          )
         end
       )
     end
