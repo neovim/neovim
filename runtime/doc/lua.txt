@@ -1302,6 +1302,7 @@ vim.notify({msg}, {level}, {opts})                              *vim.notify()*
       • {msg}    (`string`) Content of the notification to show to the user.
       • {level}  (`integer?`) One of the values from |vim.log.levels|.
       • {opts}   (`table?`) Optional parameters. Unused by default.
+                 • err (`boolean?`) Treat the message like `:echoerr`.
 
 vim.notify_once({msg}, {level}, {opts})                    *vim.notify_once()*
     Displays a notification only one time.

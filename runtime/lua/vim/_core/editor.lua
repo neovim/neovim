@@ -679,14 +679,14 @@ end
 ---@param msg string Content of the notification to show to the user.
 ---@param level integer|nil One of the values from |vim.log.levels|.
 ---@param opts table|nil Optional parameters. Unused by default.
+--- - err (`boolean?`)  Treat the message like `:echoerr`.
 ---@diagnostic disable-next-line: unused-local
 function vim.notify(msg, level, opts) -- luacheck: no unused args
   local chunks = { { msg, level == vim.log.levels.WARN and 'WarningMsg' or nil } }
-  vim.api.nvim_echo(
-    chunks,
-    true,
-    { err = level == vim.log.levels.ERROR, _truncate = opts and opts._truncate }
-  )
+  vim.api.nvim_echo(chunks, true, {
+    err = opts and opts.err,
+    _truncate = opts and opts._truncate,
+  })
 end
 
 do
