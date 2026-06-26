@@ -970,8 +970,8 @@ describe('statuscolumn', function()
       {8: 9}aaaaa                                              |
       {8:10}aaaaa                                              |
       {2:[No Name] [+]                                        }|
-      {1:: }set stc=%^l                                         |
-      {1:: }                                                   |
+      {1::}set stc=%^l                                          |
+      {1::}                                                    |
       {1:~                                                    }|*5
       {3:[Command Line]                                       }|
       :set stc=%l                                          |

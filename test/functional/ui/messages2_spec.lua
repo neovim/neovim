@@ -208,8 +208,8 @@ describe('messages2', function()
       x                                                    |
       {1:~                                                    }|*3
       ─────────────────────────────────────────────────────|
-      {1:: }echo "foo" | echo "bar\nbaz\n"->repeat(&lines)     |
-      {1:: }^                                                   |
+      {1::}echo "foo" | echo "bar\nbaz\n"->repeat(&lines)      |
+      {1::}^                                                    |
       {1:~                                                    }|*5
       {3:[Command Line]                     2,0-1          All}|
                                                            |
@@ -219,8 +219,8 @@ describe('messages2', function()
       x                                                    |
       {1:~                                                    }|*2
       ─────────────────────────────────────────────────────|
-      {1:: }echo "foo" | echo "bar\nbaz\n"->repeat(&lines)     |
-      {1:: }^                                                   |
+      {1::}echo "foo" | echo "bar\nbaz\n"->repeat(&lines)      |
+      {1::}^                                                    |
       {1:~                                                    }|*6
       {3:[Command Line]                     2,0-1          All}|
                                                            |
@@ -230,8 +230,8 @@ describe('messages2', function()
       x                                                    |
       {1:~                                                    }|*2
       ─────────────────────────────────────────────────────|
-      {1:: }echo "foo" | echo "bar\nbaz\n"->repeat(&lines)     |
-      {1:: }^                                                   |
+      {1::}echo "foo" | echo "bar\nbaz\n"->repeat(&lines)      |
+      {1::}^                                                    |
       {1:~                                                    }|*6
       {3:[Command Line]                     2,0-1          All}|
       foo                                                  |
@@ -252,8 +252,8 @@ describe('messages2', function()
       x                                                    |
       {1:~                                                    }|*3
       ─────────────────────────────────────────────────────|
-      {1:: }echo "foo" | echo "bar\nbaz\n"->repeat(&lines)     |
-      {1:: }^                                                   |
+      {1::}echo "foo" | echo "bar\nbaz\n"->repeat(&lines)      |
+      {1::}^                                                    |
       {1:~                                                    }|*5
       {3:[Command Line]                     2,0-1          All}|
                                                            |
@@ -272,9 +272,9 @@ describe('messages2', function()
       x                                                    |
       {1:~                                                    }|*3
       ─────────────────────────────────────────────────────|
-      {1:: }echo "foo" | echo "bar\nbaz\n"->repeat(&lines)     |
-      {1:: }messages                                           |
-      {1:: }^                                                   |
+      {1::}echo "foo" | echo "bar\nbaz\n"->repeat(&lines)      |
+      {1::}messages                                            |
+      {1::}^                                                    |
       {1:~                                                    }|*4
       {3:[Command Line]                     3,0-1          All}|
       {16::}{15:messages}                                            |

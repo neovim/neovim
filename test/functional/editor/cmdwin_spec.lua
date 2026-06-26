@@ -17,7 +17,7 @@ describe('cmdwin', function()
     eq(':', fn.getcmdwintype())
     eq('[Command Line]', vim.fs.basename(api.nvim_buf_get_name(0)))
     -- cmdwin-char is shown in window-local 'statuscolumn'.
-    eq('%#NonText#: ', api.nvim_get_option_value('statuscolumn', { win = 0 }))
+    eq('%#NonText#:', api.nvim_get_option_value('statuscolumn', { win = 0 }))
 
     eq('nofile', api.nvim_get_option_value('buftype', { buf = 0 }))
     eq('wipe', api.nvim_get_option_value('bufhidden', { buf = 0 }))

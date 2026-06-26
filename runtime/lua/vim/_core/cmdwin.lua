@@ -78,7 +78,7 @@ function M.open(type, init_line, init_col)
   vim.wo[win][0].winfixbuf = true
   vim.wo[win][0].foldenable = false
   -- Show cmdwin-char via 'statuscolumn'.
-  vim.wo[win][0].statuscolumn = '%#NonText#' .. type .. ' '
+  vim.wo[win][0].statuscolumn = '%#NonText#' .. type
 
   local filled = fill_history(buf, type)
 
