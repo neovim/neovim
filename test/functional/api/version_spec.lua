@@ -59,15 +59,15 @@ describe('api metadata', function()
   --- Remove or patch metadata that is not essential to backwards-compatibility.
   --- @param f gen_api_dispatch.Function.Exported
   local function normalize_func_metadata(f)
-    -- Dictionary was renamed to Dict. That doesn't break back-compat because clients don't actually
-    -- use the `return_type` field (evidence: "ArrayOf(…)" didn't break clients).
+    -- Dictionary was renamed to Dict. That doesn't break back-compat because it names the
+    -- same RPC map type.
     f.return_type = f.return_type:gsub('Dictionary', 'Dict')
     f.return_type = f.return_type:gsub('^ArrayOf%(.*', 'Array')
 
     f.deprecated_since = nil
     for idx, _ in ipairs(f.parameters) do
-      -- Dictionary was renamed to Dict. Doesn't break back-compat because clients don't actually
-      -- use the `parameters` field of API metadata (evidence: "ArrayOf(…)" didn't break clients).
+      -- Dictionary was renamed to Dict. That doesn't break back-compat because it names the
+      -- same RPC map type.
       f.parameters[idx][1] = f.parameters[idx][1]:gsub('Dictionary', 'Dict')
       f.parameters[idx][1] = f.parameters[idx][1]:gsub('ArrayOf%(.*', 'Array')
 
@@ -149,6 +149,13 @@ describe('api metadata', function()
     end
     -- No Nvim session will be used in the following tests.
     n.check_close()
+  end)
+
+  it('preserves ArrayOf type metadata', function()
+    local funcs = name_table(api_info.functions)
+    eq('ArrayOf(String)', funcs.nvim_list_runtime_paths.return_type)
+    eq('ArrayOf(Integer, 2)', funcs.nvim_buf_get_mark.return_type)
+    eq('ArrayOf(String)', funcs.nvim_buf_set_lines.parameters[5][1])
   end)
 
   it('functions are compatible with old metadata or have new level', function()
