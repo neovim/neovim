@@ -1487,7 +1487,7 @@ static int command_line_execute(VimState *state, int key)
     // confirms/cancels cmdwin, it will reopen cmdline with the command pre-filled.
     if (ex_normal_busy == 0 && got_int == false) {
       s->c = open_cmdwin();
-      s->some_key_typed = true;
+      s->some_key_typed = true;  // Treat c_CTRL-F as "typed" to skip the wait-return prompt.
     }
   } else {
     s->c = do_digraph(s->c);
@@ -4617,8 +4617,14 @@ static int open_cmdwin(void)
 
   CmdwinOpenArgs *a = xmalloc(sizeof(*a));
   a->firstc = ft;
-  a->content = ccline.cmdbuff ? xstrnsave(ccline.cmdbuff, (size_t)ccline.cmdlen) : NULL;
   a->pos = ccline.cmdpos;
+
+  // Capture the cmdline; will append to end of cmdwin.
+  // Clear the live cmdline so that unwinding it (via Ctrl_C below) does not add it to history.
+  a->content = ccline.cmdbuff ? xstrnsave(ccline.cmdbuff, (size_t)ccline.cmdlen) : NULL;
+  ccline.cmdlen = 0;
+  ccline.cmdpos = 0;
+
   // Intentionally not using vim.scheduled, see note on `open_cmdwin_event`.
   loop_schedule_deferred(&main_loop, event_create(open_cmdwin_event, a));
   return Ctrl_C;

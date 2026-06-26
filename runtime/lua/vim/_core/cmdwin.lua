@@ -18,12 +18,13 @@ local state = nil
 local cmdwin_types = { [':'] = true, ['/'] = true, ['?'] = true }
 
 --- Fills the cmdwin buffer with the cmdline history.
+--- @return boolean filled  Whether any lines were written.
 local function fill_history(buf, type)
   local histname = type == ':' and 'cmd' or (type == '/' or type == '?') and 'search' or nil
   assert(histname, 'cmdwin: unknown type: ' .. tostring(type))
   local n = vim.fn.histnr(histname)
   if n <= 0 then -- May be -1 if history is empty.
-    return
+    return false
   end
   local lines = {} --- @type string[]
   for i = 1, n do
@@ -33,9 +34,11 @@ local function fill_history(buf, type)
       lines[#lines + 1] = (h:gsub('\n', '\0'))
     end
   end
-  if #lines > 0 then
-    vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  if #lines == 0 then
+    return false
   end
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  return true
 end
 
 --- Open the command-line window.
@@ -77,10 +80,10 @@ function M.open(type, init_line, init_col)
   -- Show cmdwin-char via 'statuscolumn'.
   vim.wo[win][0].statuscolumn = '%#NonText#' .. type .. ' '
 
-  fill_history(buf, type)
+  local filled = fill_history(buf, type)
 
-  -- Append the in-flight cmdline (or empty placeholder) as the last line.
-  vim.api.nvim_buf_set_lines(buf, -1, -1, false, { init_line or '' })
+  -- Append the in-flight cmdline as the last line (or only line if history is empty).
+  vim.api.nvim_buf_set_lines(buf, filled and -1 or 0, -1, false, { init_line or '' })
   local last = vim.api.nvim_buf_line_count(buf)
   vim.api.nvim_win_set_cursor(win, { last, math.max(0, (init_col or 1) - 1) })
 
