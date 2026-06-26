@@ -804,8 +804,10 @@ local function emit_struct_validator(struct_name, structs, aliases, output, visi
     local fa = ("v['%s']"):format(prop.name)
     if not is_nullable(prop.type, aliases) then
       if effective_mode == 'strict' then
-         output[#output + 1] = ("  assert(%s ~= NIL, ctx .. '.%s must not be null')")
-           :format(fa, prop.name)
+        output[#output + 1] = ("  assert(%s ~= NIL, ctx .. '.%s must not be null')"):format(
+          fa,
+          prop.name
+        )
       else
         output[#output + 1] = ('  if %s == NIL then %s = nil end'):format(fa, fa)
       end
@@ -906,7 +908,10 @@ local function write_to_validate_lsp(protocol, output_file)
         ref_name
       )
     else
-      method_output[#method_output + 1] = ("  validate_%s(params, '%s params')"):format(ref_name, method)
+      method_output[#method_output + 1] = ("  validate_%s(params, '%s params')"):format(
+        ref_name,
+        method
+      )
     end
     method_output[#method_output + 1] = 'end'
     method_output[#method_output + 1] = ''
@@ -947,7 +952,9 @@ local function write_to_validate_lsp(protocol, output_file)
         -- skip null branch
       elseif t.kind == 'array' and t.element.kind == 'reference' then
         local name = t.element.name --- @type string?
-        if found and found ~= name then return nil end
+        if found and found ~= name then
+          return nil
+        end
         found = name
       elseif t.kind == 'reference' and structs[t.name] then
         -- Look for an "items" field that is an array of a consistent struct.
@@ -965,7 +972,9 @@ local function write_to_validate_lsp(protocol, output_file)
           and items_field.type.element.kind == 'reference'
         then
           local name = items_field.type.element.name
-          if found and found ~= name then return nil end
+          if found and found ~= name then
+            return nil
+          end
           found = name
         else
           return nil
@@ -1002,26 +1011,49 @@ local function write_to_validate_lsp(protocol, output_file)
       elseif #branches == 1 then
         local t = branches[1]
         if t.kind == 'reference' and structs[t.name] then
-          emit_struct_validator(t.name, structs, aliases, result_struct_output, result_visited, 0, VALIDATE_RESULT_MODE)
-          result_output[#result_output + 1] = ('validate_result[%q] = function(result)'):format(method)
+          emit_struct_validator(
+            t.name,
+            structs,
+            aliases,
+            result_struct_output,
+            result_visited,
+            0,
+            VALIDATE_RESULT_MODE
+          )
+          result_output[#result_output + 1] = ('validate_result[%q] = function(result)'):format(
+            method
+          )
           result_output[#result_output + 1] = '  if result == nil then return end'
-          result_output[#result_output + 1] =
-            ("  validate_%s(result, 'result')"):format(t.name)
+          result_output[#result_output + 1] = ("  validate_%s(result, 'result')"):format(t.name)
           result_output[#result_output + 1] = 'end'
           result_output[#result_output + 1] = ''
         elseif t.kind == 'array' and t.element.kind == 'reference' and structs[t.element.name] then
           local ename = t.element.name
-          emit_struct_validator(ename, structs, aliases, result_struct_output, result_visited, 0, VALIDATE_RESULT_MODE)
+          emit_struct_validator(
+            ename,
+            structs,
+            aliases,
+            result_struct_output,
+            result_visited,
+            0,
+            VALIDATE_RESULT_MODE
+          )
           result_output[#result_output + 1] = ('---@param result lsp.%s[]?'):format(ename)
-          result_output[#result_output + 1] = ('validate_result[%q] = function(result)'):format(method)
-          result_output[#result_output + 1] = '  if result == nil or not vim.islist(result) then return end'
+          result_output[#result_output + 1] = ('validate_result[%q] = function(result)'):format(
+            method
+          )
           result_output[#result_output + 1] =
-            ("  for i, x in ipairs(result) do validate_%s(x, 'result[' .. i .. ']') end"):format(ename)
+            '  if result == nil or not vim.islist(result) then return end'
+          result_output[#result_output + 1] = ("  for i, x in ipairs(result) do validate_%s(x, 'result[' .. i .. ']') end"):format(
+            ename
+          )
           result_output[#result_output + 1] = 'end'
           result_output[#result_output + 1] = ''
         else
-          result_output[#result_output + 1] =
-            ('-- TODO: %s result type %q not supported'):format(method, t.kind)
+          result_output[#result_output + 1] = ('-- TODO: %s result type %q not supported'):format(
+            method,
+            t.kind
+          )
         end
       else
         -- Union with multiple non-null branches.
@@ -1029,27 +1061,38 @@ local function write_to_validate_lsp(protocol, output_file)
         -- generate a validator that finds and checks those items in both shapes.
         local item_struct = uniform_or_item_struct(branches)
         if item_struct and structs[item_struct] then
-          emit_struct_validator(item_struct, structs, aliases, result_struct_output, result_visited, 0, VALIDATE_RESULT_MODE)
-          result_output[#result_output + 1] = ('validate_result[%q] = function(result)'):format(method)
+          emit_struct_validator(
+            item_struct,
+            structs,
+            aliases,
+            result_struct_output,
+            result_visited,
+            0,
+            VALIDATE_RESULT_MODE
+          )
+          result_output[#result_output + 1] = ('validate_result[%q] = function(result)'):format(
+            method
+          )
           result_output[#result_output + 1] = '  if result == nil then return end'
           result_output[#result_output + 1] = ('  ---@type lsp.%s[]?'):format(item_struct)
           result_output[#result_output + 1] = '  local items'
           result_output[#result_output + 1] = '  if vim.islist(result) then'
           result_output[#result_output + 1] = '    items = result'
-          result_output[#result_output + 1] = '  elseif type(result) == \'table\' then'
-          result_output[#result_output + 1] = '    items = result.items ~= NIL and result.items or nil'
-          result_output[#result_output + 1] = '  end'
-          result_output[#result_output + 1] = '  if type(items) == \'table\' then'
+          result_output[#result_output + 1] = "  elseif type(result) == 'table' then"
           result_output[#result_output + 1] =
-            ("    for i, x in ipairs(items) do validate_%s(x, 'result[' .. i .. ']') end"):format(
-              item_struct
-            )
+            '    items = result.items ~= NIL and result.items or nil'
+          result_output[#result_output + 1] = '  end'
+          result_output[#result_output + 1] = "  if type(items) == 'table' then"
+          result_output[#result_output + 1] = ("    for i, x in ipairs(items) do validate_%s(x, 'result[' .. i .. ']') end"):format(
+            item_struct
+          )
           result_output[#result_output + 1] = '  end'
           result_output[#result_output + 1] = 'end'
           result_output[#result_output + 1] = ''
         else
-          result_output[#result_output + 1] =
-            ('-- TODO: %s has union result, cannot resolve to single item struct'):format(method)
+          result_output[#result_output + 1] = ('-- TODO: %s has union result, cannot resolve to single item struct'):format(
+            method
+          )
         end
       end
     end
@@ -1078,7 +1121,9 @@ local function write_to_validate_lsp(protocol, output_file)
   vim.list_extend(output, method_output)
   vim.list_extend(output, result_struct_output)
   vim.list_extend(output, result_output)
-  output[#output + 1] = ('return { params = M, result = validate_result, mode = %q }'):format(VALIDATE_MODE)
+  output[#output + 1] = ('return { params = M, result = validate_result, mode = %q }'):format(
+    VALIDATE_MODE
+  )
 
   tofile(output_file, table.concat(output, '\n') .. '\n')
 end

@@ -3658,7 +3658,11 @@ describe('vim.diagnostic', function()
     end)
 
     it('errors when LSP relatedInformation is null', function()
-      if exec_lua(function() return require('vim.lsp._validate').mode end) ~= 'strict' then
+      if
+        exec_lua(function()
+          return require('vim.lsp._validate').mode
+        end) ~= 'strict'
+      then
         pending('VALIDATE_MODE is not strict')
         return
       end
