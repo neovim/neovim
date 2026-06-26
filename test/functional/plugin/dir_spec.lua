@@ -156,6 +156,34 @@ describe('nvim.dir', function()
     line_of('alpha.txt')
   end)
 
+  it('keeps directory detection in default autocmds', function()
+    make_fixture()
+    n.clear({ args_rm = { '-u' } })
+
+    eq(
+      { BufEnter = true, VimEnter = true },
+      exec_lua([[
+      local events = {}
+      for _, autocmd in ipairs(vim.api.nvim_get_autocmds({ group = 'nvim.directory' })) do
+        events[autocmd.event] = true
+      end
+      return events
+    ]])
+    )
+    eq(
+      {},
+      exec_lua([[
+      local events = {}
+      for _, autocmd in ipairs(vim.api.nvim_get_autocmds({ group = 'nvim.dir' })) do
+        if autocmd.event == 'BufEnter' or autocmd.event == 'VimEnter' then
+          events[#events + 1] = autocmd.event
+        end
+      end
+      return events
+    ]])
+    )
+  end)
+
   it('fires FileType before loading the directory browser', function()
     make_fixture()
     local args = {

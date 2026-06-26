@@ -96,8 +96,8 @@ Defaults                                            *defaults* *nvim-defaults*
 - 'viminfo' includes "!"
 - 'wildoptions' defaults to "pum,tagfile"
 
-- |dir| plugin is enabled, so editing a directory shows its contents in a
-  buffer with 'filetype' set to "directory".
+- Editing a directory sets 'filetype' to "directory"; the |dir| plugin shows
+  the directory contents by default.
 - |editorconfig| plugin is enabled, .editorconfig settings are applied.
 - |man.lua| plugin is enabled, so |:Man| is available by default.
 - |matchit| plugin is enabled. To disable it in your config: >vim
@@ -208,6 +208,10 @@ nvim.terminal:
     - 'winhighlight' uses |hl-StatusLineTerm| and |hl-StatusLineTermNC| in
       place of |hl-StatusLine| and |hl-StatusLineNC|
     - |[[| and |]]| to navigate between shell prompts
+
+nvim.directory:
+- |BufEnter|, |VimEnter|: Sets 'filetype' to "directory" for local directory
+  buffers. |dir|
 
 nvim.cmdwin:
 - |CmdwinEnter|: Limits syntax sync to maxlines=1 in the |cmdwin|.
