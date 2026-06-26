@@ -24,7 +24,16 @@ local function real_type(type, exported)
     local container = ptype[1]
     if container == 'Union' then
       return 'Object'
-    elseif container == 'Tuple' or container == 'ArrayOf' then
+    elseif container == 'Tuple' then
+      return 'Array'
+    elseif container == 'ArrayOf' then
+      if exported then
+        local elem = real_type(ptype[2], true)
+        if ptype[3] then
+          return ('ArrayOf(%s, %s)'):format(elem, ptype[3])
+        end
+        return ('ArrayOf(%s)'):format(elem)
+      end
       return 'Array'
     elseif container == 'DictOf' or container == 'DictAs' then
       return 'Dict'
