@@ -2960,7 +2960,7 @@ describe('LSP', function()
         exec_lua(function(conf)
           assert(vim.lsp.start(conf, { attach = false }))
         end, config)
-        t.assert_log(vim.pesc(case.expected_cwd .. '\n'), outfile))
+        t.assert_log(vim.pesc(case.expected_cwd), outfile)
       end
     end)
 
