@@ -2592,7 +2592,11 @@ int aupat_get_buflocal_nr(const char *pat, int patlen)
 
     // "<buffer=123>"
     if (skipdigits(pat + 8) == pat + patlen - 1) {
-      return atoi(pat + 8);
+      char *endptr;
+      long nr = strtol(pat + 8, &endptr, 10);
+      if (nr >= 0 && nr <= INT_MAX) {
+        return (int)nr;
+      }
     }
   }
 
