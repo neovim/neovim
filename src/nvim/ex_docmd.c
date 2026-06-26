@@ -4980,9 +4980,21 @@ static void ex_restart(exarg_T *eap)
   }
 
   const char *startreason = "restart!";
+  char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall";
+  char *after_cmd = eap->arg;
+
   // "+:::" is how ex_session_restart() signals that it (recursively) called into :restart.
-  if (eap->do_ecmd_cmd && strncmp(eap->do_ecmd_cmd, ":::", 3) == 0) {
+  if (strequal(quit_cmd, ":::")) {
     startreason = "restart";
+    // Set quit_cmd and after_cmd from args
+    if (eap->argc > 1) {
+      eap->args[1][eap->arglens[1]] = NUL;
+      quit_cmd = eap->args[1];
+      after_cmd = eap->argc > 2 ? eap->args[2] : "";
+    } else {
+      emsg("restart failed: +cmd did not quit the server");
+      return;
+    }
   }
 
   Error err = ERROR_INIT;
@@ -5098,12 +5110,12 @@ static void ex_restart(exarg_T *eap)
   arena_mem_free(result_mem);
   result_mem = NULL;
 
-  if (*eap->arg != NUL) {
+  if (*after_cmd != NUL) {
     // Execute [command] on new server on UIEnter.
     MAXSIZE_TEMP_DICT(autocmd_opts, 3);
     PUT_C(autocmd_opts, "once", BOOLEAN_OBJ(true));
     PUT_C(autocmd_opts, "nested", BOOLEAN_OBJ(true));
-    PUT_C(autocmd_opts, "command", CSTR_AS_OBJ(eap->arg));
+    PUT_C(autocmd_opts, "command", CSTR_AS_OBJ(after_cmd));
     MAXSIZE_TEMP_ARRAY(autocmd_args, 2);
     ADD_C(autocmd_args, CSTR_AS_OBJ("UIEnter"));
     ADD_C(autocmd_args, DICT_OBJ(autocmd_opts));
@@ -5158,7 +5170,6 @@ static void ex_restart(exarg_T *eap)
 
   set_vim_var_string(VV_EXITREASON, S_LEN("restart"));
 
-  char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall";
   char *quit_cmd_copy = NULL;
 
   // Prepend "confirm " to cmd if :confirm is used

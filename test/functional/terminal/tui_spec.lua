@@ -280,6 +280,7 @@ describe('TUI :restart', function()
     ]])
     server_session = n.connect(server_pipe)
     local _, starttime = server_session:request('nvim_eval', 'v:starttime')
+    eq({ true, '' }, { server_session:request('nvim_get_vvar', 'this_session') })
 
     -- :restart
     feed_data(':restart\r')
@@ -294,6 +295,7 @@ describe('TUI :restart', function()
     ]])
     starttime, server_session = assert_restarted(starttime, server_session, server_pipe)
     eq({ true, 'restart' }, { server_session:request('nvim_get_vvar', 'startreason') })
+    eq({ true, '' }, { server_session:request('nvim_get_vvar', 'this_session') })
 
     -- :restart!
     feed_data(':restart!\r')

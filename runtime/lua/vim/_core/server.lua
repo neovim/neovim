@@ -206,7 +206,7 @@ function M.ex_session_restart(eap, extra)
   local success, msg = pcall(function()
     -- "+:::" special argument tells the C handler that this is actually a non-bang restart
     -- That way, v:startreason can be set correctly
-    vim.cmd.restart { '+:::' .. quit_cmd, after, bang = true }
+    vim.cmd.restart { '+:::', quit_cmd, after, bang = true }
   end)
 
   if not success then
