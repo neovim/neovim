@@ -273,6 +273,10 @@ describe('vim.lsp.diagnostic', function()
     end)
 
       it('errors when diagnostic tags is null', function()
+        if exec_lua(function() return require('vim.lsp._validate').mode end) ~= 'strict' then
+          pending('VALIDATE_MODE is not strict')
+          return
+        end
         matches(
           "params%.diagnostics%[1%]%.tags must not be null",
           pcall_err(exec_lua, function()

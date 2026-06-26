@@ -1078,7 +1078,7 @@ local function write_to_validate_lsp(protocol, output_file)
   vim.list_extend(output, method_output)
   vim.list_extend(output, result_struct_output)
   vim.list_extend(output, result_output)
-  output[#output + 1] = 'return { params = M, result = validate_result }'
+  output[#output + 1] = ('return { params = M, result = validate_result, mode = %q }'):format(VALIDATE_MODE)
 
   tofile(output_file, table.concat(output, '\n') .. '\n')
 end

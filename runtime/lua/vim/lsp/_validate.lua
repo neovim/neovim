@@ -1353,4 +1353,4 @@ validate_result['workspace/willRenameFiles'] = function(result)
   validate_WorkspaceEdit(result, 'result')
 end
 
-return { params = M, result = validate_result }
+return { params = M, result = validate_result, mode = "strict" }
