@@ -624,13 +624,6 @@ error('Cannot require a meta file')
 ---The result id of a previous response if provided.
 ---@field previousResultId? string
 
----A partial result for a document diagnostic report.
----
----@since 3.17.0
----@class lsp.DocumentDiagnosticReportPartialResult
----
----@field relatedDocuments table<lsp.DocumentUri, lsp.FullDocumentDiagnosticReport|lsp.UnchangedDocumentDiagnosticReport>
-
 ---Cancellation data returned from a diagnostic request.
 ---
 ---@since 3.17.0
@@ -2221,37 +2214,12 @@ error('Cannot require a meta file')
 ---@since 3.17.0
 ---@field relatedDocuments? table<lsp.DocumentUri, lsp.FullDocumentDiagnosticReport|lsp.UnchangedDocumentDiagnosticReport>
 
----A diagnostic report with a full set of problems.
+---A partial result for a document diagnostic report.
 ---
 ---@since 3.17.0
----@class lsp.FullDocumentDiagnosticReport
+---@class lsp.DocumentDiagnosticReportPartialResult
 ---
----A full document diagnostic report.
----@field kind "full"
----
----An optional result id. If provided it will
----be sent on the next diagnostic request for the
----same document.
----@field resultId? string
----
----The actual items.
----@field items lsp.Diagnostic[]
-
----A diagnostic report indicating that the last returned
----report is still accurate.
----
----@since 3.17.0
----@class lsp.UnchangedDocumentDiagnosticReport
----
----A document diagnostic report indicating
----no changes to the last result. A server can
----only return `unchanged` if result ids are
----provided.
----@field kind "unchanged"
----
----A result id which will be sent on the next
----diagnostic request for the same document.
----@field resultId string
+---@field relatedDocuments table<lsp.DocumentUri, lsp.FullDocumentDiagnosticReport|lsp.UnchangedDocumentDiagnosticReport>
 
 ---Diagnostic options.
 ---
@@ -3304,6 +3272,38 @@ error('Cannot require a meta file')
 ---
 ---Additional options used during matching.
 ---@field options? lsp.FileOperationPatternOptions
+
+---A diagnostic report with a full set of problems.
+---
+---@since 3.17.0
+---@class lsp.FullDocumentDiagnosticReport
+---
+---A full document diagnostic report.
+---@field kind "full"
+---
+---An optional result id. If provided it will
+---be sent on the next diagnostic request for the
+---same document.
+---@field resultId? string
+---
+---The actual items.
+---@field items lsp.Diagnostic[]
+
+---A diagnostic report indicating that the last returned
+---report is still accurate.
+---
+---@since 3.17.0
+---@class lsp.UnchangedDocumentDiagnosticReport
+---
+---A document diagnostic report indicating
+---no changes to the last result. A server can
+---only return `unchanged` if result ids are
+---provided.
+---@field kind "unchanged"
+---
+---A result id which will be sent on the next
+---diagnostic request for the same document.
+---@field resultId string
 
 ---A full document diagnostic report for a workspace diagnostic result.
 ---
@@ -5624,6 +5624,23 @@ error('Cannot require a meta file')
 ---
 ---@since 3.17.0
 ---@alias lsp.DocumentDiagnosticReport lsp.RelatedFullDocumentDiagnosticReport|lsp.RelatedUnchangedDocumentDiagnosticReport
+
+---The document diagnostic report used when reporting partial result.
+---
+---When using partial results, the first literal sent needs to be a
+---DocumentDiagnosticReport providing the diagnostics on the document
+---followed by n DocumentDiagnosticReportPartialResult literals providing
+---the diagnostics for related documents.
+---
+---```
+---DocumentDiagnosticReport
+---DocumentDiagnosticReportPartialResult
+---DocumentDiagnosticReportPartialResult
+---...
+---```
+---
+---@since 3.18.1
+---@alias lsp.DocumentDiagnosticReportProgress lsp.DocumentDiagnosticReport|lsp.DocumentDiagnosticReportPartialResult
 
 ---@alias lsp.PrepareRenameResult lsp.Range|lsp.PrepareRenamePlaceholder|lsp.PrepareRenameDefaultBehavior
 

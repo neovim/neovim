@@ -248,7 +248,7 @@ local function write_to_vim_protocol(protocol)
         if item.documentation then
           local document = vim.split(item.documentation, '\n?\n', { trimempty = true })
           for _, docstring in ipairs(document) do
-            output[#output + 1] = '  --- ' .. docstring
+            output[#output + 1] = docstring == '' and '  ---' or '  --- ' .. docstring
           end
         end
         output[#output + 1] = ("  %s = '%s',"):format(to_luaname(item.method), item.method)

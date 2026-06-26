@@ -912,6 +912,7 @@ protocol.Methods = {
   --- {@link DefinitionLink} or a Thenable that resolves to such.
   textDocument_definition = 'textDocument/definition',
   --- The document diagnostic request definition.
+  ---
   --- @since 3.17.0
   textDocument_diagnostic = 'textDocument/diagnostic',
   --- The document change notification is sent from the client to the server to signal
