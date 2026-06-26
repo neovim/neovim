@@ -144,6 +144,18 @@ describe('nvim.dir', function()
     assert_directory(root)
   end)
 
+  it('maps - to open the parent directory of the current file', function()
+    make_fixture()
+    n.clear({ args_rm = { '-u' } })
+
+    edit(file)
+    feed('-')
+    poke_eventloop()
+
+    assert_directory(root)
+    line_of('alpha.txt')
+  end)
+
   it('uses an absolute buffer name for a relative startup directory argument', function()
     if t.is_zig_build() then
       return pending('broken with build.zig relative runtime paths after chdir')
