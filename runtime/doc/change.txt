@@ -1309,9 +1309,9 @@ and ":put" commands and with CTRL-R.
 -----------------------------------------------------------------------------
 6. Alternate file register "#                          *quote_#* *quote#* *@#*
 
-Contains the |alternate-file| name for current window
-This register is writable with `:let` and |setreg()|.  This changes which buffer
-CTRL-^ enters.  You can't yank or delete into this register.
+Contains the |alternate-file| name for current window.
+This register is writable with `:let` and |setreg()|.  This changes which
+buffer CTRL-^ enters.  You can't yank or delete into this register.
 A String is matched against existing buffer names, like |:buffer|: >
     let @# = 'buffer_name'
 Also supports using buffer number and |file-pattern|.
