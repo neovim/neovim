@@ -1,5 +1,6 @@
 local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
+local validate_params = require('vim.lsp._validate')
 local net_transport = require('vim.net._transport')
 local strbuffer = require('vim._core.stringbuffer')
 local validate = vim.validate
@@ -462,6 +463,10 @@ function Client:handle_body(body)
     -- we can still use the result.
     vim.schedule(coroutine.wrap(function()
       xpcall(function()
+        local pv = validate_params[decoded.method]
+        if pv then
+          pv(decoded.params)
+        end
         local result, err = self.dispatchers.server_request(decoded.method, decoded.params)
         log.debug('server_request: callback result', { result = result, err = err })
         if result == nil and err == nil then
@@ -559,6 +564,10 @@ function Client:handle_body(body)
     type(decoded.method) == 'string'
   then
     xpcall(function()
+      local pv = validate_params[decoded.method]
+      if pv then
+        pv(decoded.params)
+      end
       assert(
         self.dispatchers.notification(decoded.method, decoded.params) == nil,
         'notification handlers should not return a value'

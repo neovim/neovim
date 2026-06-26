@@ -3657,6 +3657,25 @@ describe('vim.diagnostic', function()
       )
     end)
 
+    it('errors when LSP relatedInformation is null', function()
+      matches(
+        'params%.diagnostics%[1%]%.relatedInformation must not be null',
+        pcall_err(exec_lua, function()
+          local validate = require('vim.lsp._validate')
+          validate['textDocument/publishDiagnostics']({
+            uri = 'file:///test.lua',
+            diagnostics = {
+              vim.tbl_extend(
+                'force',
+                _G.make_warning('Some warning', 1, 1, 1, 3),
+                { relatedInformation = vim.NIL }
+              ),
+            },
+          })
+        end)
+      )
+    end)
+
     it('works with the old signature', function()
       eq(
         { '1. Syntax error' },

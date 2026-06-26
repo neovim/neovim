@@ -695,11 +695,258 @@ local function parse_args()
   return opt
 end
 
+-- Maximum depth for recursive structure validation (0 = params fields only,
+-- 1 = params + directly-referenced structs, 2 = one more level, …).
+local VALIDATE_DEPTH = 2
+
+-- 'strict'  → assert(v.field ~= NIL, ...) — raises an error when a field is null
+-- 'lenient' → if v.field == NIL then v.field = nil end — silently repairs the value
+local VALIDATE_MODE = 'strict'
+
+--- Returns true when type_node represents a type that may legally be null.
+--- Follows typeAlias references so that e.g. LSPAny (which includes null) is
+--- correctly identified as nullable.
+--- @param type_node vim._gen_lsp.Type
+--- @param aliases table<string, vim._gen_lsp.TypeAlias>
+--- @return boolean
+local function is_nullable(type_node, aliases)
+  if type_node.kind == 'base' and type_node.name == 'null' then
+    return true
+  end
+  if type_node.kind == 'or' then
+    for _, item in ipairs(type_node.items) do
+      if is_nullable(item, aliases) then
+        return true
+      end
+    end
+  end
+  -- Follow type aliases (e.g. LSPAny is an or-type that includes null).
+  if type_node.kind == 'reference' and aliases[type_node.name] then
+    return is_nullable(aliases[type_node.name].type, aliases)
+  end
+  return false
+end
+
+--- Collects all properties of a structure, including those inherited via
+--- extends and mixins chains.
+--- @param struct vim._gen_lsp.Structure
+--- @param structs table<string, vim._gen_lsp.Structure>
+--- @param seen? table<string, boolean>
+--- @return vim._gen_lsp.Property[]
+local function collect_all_properties(struct, structs, seen)
+  seen = seen or {}
+  if seen[struct.name] then
+    return {}
+  end
+  seen[struct.name] = true
+
+  local props = vim.list_extend({}, struct.properties or {})
+  local bases = vim.list_extend({}, struct.extends or {}) --- @type { kind: string, name: string }[]
+  vim.list_extend(bases, struct.mixins or {})
+  for _, base_ref in ipairs(bases) do
+    local base = structs[base_ref.name]
+    if base then
+      vim.list_extend(props, collect_all_properties(base, structs, seen))
+    end
+  end
+  return props
+end
+
+--- Emits a `local validate_<Name> = function(v, ctx) … end` block into output.
+--- @param struct_name string
+--- @param structs table<string, vim._gen_lsp.Structure>
+--- @param aliases table<string, vim._gen_lsp.TypeAlias>
+--- @param output string[]
+--- @param visited table<string, boolean>  tracks already-emitted validators
+--- @param depth integer  current depth counter; stops recursing at VALIDATE_DEPTH
+local function emit_struct_validator(struct_name, structs, aliases, output, visited, depth)
+  if visited[struct_name] then
+    return
+  end
+  visited[struct_name] = true
+
+  local struct = structs[struct_name]
+  if not struct then
+    return
+  end
+
+  -- Recurse into referenced child-structs first so they are defined before us.
+  if depth < VALIDATE_DEPTH then
+    local props = collect_all_properties(struct, structs)
+    for _, prop in ipairs(props) do
+      local t = prop.type --[[@as vim._gen_lsp.Type]]
+      if t.kind == 'array' then
+        t = t.element --[[@as vim._gen_lsp.Type]]
+      end
+      if t.kind == 'reference' and structs[t.name] then
+        emit_struct_validator(t.name, structs, aliases, output, visited, depth + 1)
+      end
+    end
+  end
+
+  output[#output + 1] = ('---@param v lsp.%s|vim.NIL|nil'):format(struct_name)
+  output[#output + 1] = '---@param ctx string'
+  output[#output + 1] = ('local validate_%s = function(v, ctx)'):format(struct_name)
+  output[#output + 1] = '  if v == nil or v == NIL then'
+  output[#output + 1] = '    return'
+  output[#output + 1] = '  end'
+
+  local props = collect_all_properties(struct, structs)
+  for _, prop in ipairs(props) do
+    local fa = ("v['%s']"):format(prop.name)
+    if not is_nullable(prop.type, aliases) then
+      if VALIDATE_MODE == 'strict' then
+        output[#output + 1] = ("  assert(%s ~= NIL, ctx .. '.%s must not be null')"):format(
+          fa,
+          prop.name
+        )
+      else
+        output[#output + 1] = ('  if %s == NIL then %s = nil end'):format(fa, fa)
+      end
+    end
+    -- Call nested struct validators for referenced fields (up to depth limit).
+    if depth < VALIDATE_DEPTH then
+      local t = prop.type --[[@as vim._gen_lsp.Type]]
+      local is_array = t.kind == 'array'
+      if is_array then
+        t = t.element --[[@as vim._gen_lsp.Type]]
+      end
+      if t.kind == 'reference' and structs[t.name] then
+        if is_array then
+          output[#output + 1] = ("  if type(%s) == 'table' then"):format(fa)
+          output[#output + 1] = ('    for i, x in ipairs(%s) do'):format(fa)
+          output[#output + 1] = ("      validate_%s(x, ctx .. '.%s[' .. i .. ']')"):format(
+            t.name,
+            prop.name
+          )
+          output[#output + 1] = '    end'
+          output[#output + 1] = '  end'
+        else
+          output[#output + 1] = ("  validate_%s(%s, ctx .. '.%s')"):format(t.name, fa, prop.name)
+        end
+      end
+    end
+  end
+
+  output[#output + 1] = 'end'
+  output[#output + 1] = ''
+end
+
+--- Generates runtime/lua/vim/lsp/_validate.lua from the LSP protocol spec.
+--- The file contains a dispatch table M[method] = function(params) … end
+--- that validates non-nullable fields on incoming server→client messages.
+--- @param protocol vim._gen_lsp.Protocol
+--- @param output_file string
+local function write_to_validate_lsp(protocol, output_file)
+  local structs = {} --- @type table<string, vim._gen_lsp.Structure>
+  for _, s in ipairs(protocol.structures) do
+    structs[s.name] = s
+  end
+
+  local aliases = {} --- @type table<string, vim._gen_lsp.TypeAlias>
+  for _, a in ipairs(protocol.typeAliases) do
+    aliases[a.name] = a
+  end
+
+  local struct_output = {} --- @type string[]  structure validators (emitted before method table)
+  local method_output = {} --- @type string[]  M[method] entries
+  local visited = {} --- @type table<string, boolean>
+
+  --- @param method string
+  --- @param params_type vim._gen_lsp.Type?
+  local function handle_method(method, params_type)
+    if not params_type then
+      return
+    end
+
+    local ref_name --- @type string?
+    local is_array = false
+
+    if params_type.kind == 'reference' then
+      ref_name = params_type.name
+    elseif params_type.kind == 'array' and params_type.element.kind == 'reference' then
+      ref_name = (params_type.element --[[@as vim._gen_lsp.Type]]).name
+      is_array = true
+    else
+      method_output[#method_output + 1] = ('-- TODO: %s has unsupported params kind %q'):format(
+        method,
+        params_type.kind
+      )
+      return
+    end
+
+    if not ref_name or not structs[ref_name] then
+      return
+    end
+
+    emit_struct_validator(ref_name, structs, aliases, struct_output, visited, 0)
+
+    if is_array then
+      method_output[#method_output + 1] = ('---@param params lsp.%s[]?'):format(ref_name)
+    else
+      method_output[#method_output + 1] = ('---@param params lsp.%s?'):format(ref_name)
+    end
+    method_output[#method_output + 1] = ("M['%s'] = function(params)"):format(method)
+    method_output[#method_output + 1] = '  if params == nil then'
+    method_output[#method_output + 1] = '    return'
+    method_output[#method_output + 1] = '  end'
+
+    if is_array then
+      method_output[#method_output + 1] = ("  for i, item in ipairs(params) do validate_%s(item, '[' .. i .. ']') end"):format(
+        ref_name
+      )
+    else
+      method_output[#method_output + 1] = ("  validate_%s(params, '%s params')"):format(
+        ref_name,
+        method
+      )
+    end
+
+    method_output[#method_output + 1] = 'end'
+    method_output[#method_output + 1] = ''
+  end
+
+  local all_methods = {} --- @type (vim._gen_lsp.Request|vim._gen_lsp.Notification)[]
+  vim.list_extend(all_methods, protocol.requests)
+  vim.list_extend(all_methods, protocol.notifications)
+  table.sort(all_methods, compare_method)
+
+  for _, item in ipairs(all_methods) do
+    if item.messageDirection ~= 'clientToServer' then
+      handle_method(item.method, item.params)
+    end
+  end
+
+  local output = {
+    '--' .. '[[',
+    'THIS FILE IS GENERATED by src/gen/gen_lsp.lua',
+    'DO NOT EDIT MANUALLY',
+    '',
+    'Validates non-nullable fields on incoming LSP server→client messages.',
+    'Null (vim.NIL) values in fields that the spec does not allow to be null',
+    'are caught here, at message ingestion, before reaching any handler.',
+    '',
+    'Regenerate:',
+    '  nvim -l src/gen/gen_lsp.lua',
+    '--' .. ']]',
+    '',
+    'local NIL = vim.NIL',
+    'local M = {}',
+    '',
+  }
+  vim.list_extend(output, struct_output)
+  vim.list_extend(output, method_output)
+  output[#output + 1] = 'return M'
+
+  tofile(output_file, table.concat(output, '\n') .. '\n')
+end
+
 local function main()
   local opt = parse_args()
   local protocol = read_json(opt)
   write_to_vim_protocol(protocol)
   write_to_meta_protocol(protocol, opt.version, opt.output_file)
+  write_to_validate_lsp(protocol, 'runtime/lua/vim/lsp/_validate.lua')
 end
 
 main()

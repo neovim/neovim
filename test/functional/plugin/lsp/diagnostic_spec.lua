@@ -7,6 +7,8 @@ local clear = n.clear
 local exec_lua = n.exec_lua
 local eq = t.eq
 local neq = t.neq
+local matches = t.matches
+local pcall_err = t.pcall_err
 
 local create_server_definition = t_lsp.create_server_definition
 
@@ -268,6 +270,21 @@ describe('vim.lsp.diagnostic', function()
 
       eq(1, #before_delete)
       eq(0, #after_delete)
+    end)
+
+    it('errors when diagnostic tags is null', function()
+      matches(
+        'params%.diagnostics%[1%]%.tags must not be null',
+        pcall_err(exec_lua, function()
+          local validate = require('vim.lsp._validate')
+          validate['textDocument/publishDiagnostics']({
+            uri = fake_uri,
+            diagnostics = {
+              vim.tbl_extend('force', _G.make_error('Diagnostic', 0, 0, 0, 0), { tags = vim.NIL }),
+            },
+          })
+        end)
+      )
     end)
   end)
 
