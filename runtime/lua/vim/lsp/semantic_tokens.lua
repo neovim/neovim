@@ -40,10 +40,8 @@ local M = {}
 
 ---@class (private) STHighlighter : vim.lsp.Capability
 ---@field active table<integer, STHighlighter>
----@field bufnr integer
----@field augroup integer augroup for buffer events
 ---@field debounce integer milliseconds to debounce requests for new tokens
----@field timer table uv_timer for debouncing requests for new tokens
+---@field timer uv.uv_timer_t? uv_timer for debouncing requests for new tokens
 ---@field client_state table<integer, STClientState>
 local STHighlighter = {
   name = 'semantic_tokens',

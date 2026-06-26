@@ -2,11 +2,12 @@ local api = vim.api
 
 ---@alias vim.lsp.capability.Name
 ---| 'codelens'
+---| 'diagnostics'
 ---| 'document_color'
----| 'semantic_tokens'
 ---| 'folding_range'
----| 'linked_editing_range'
 ---| 'inline_completion'
+---| 'linked_editing_range'
+---| 'semantic_tokens'
 
 --- Tracks all supported capabilities, all of which derive from `vim.lsp.Capability`.
 --- Returns capability *prototypes*, not their instances.
@@ -30,7 +31,7 @@ local all_capabilities = {}
 --- Index in the form of `bufnr` -> `capability`
 ---@field active table<integer, vim.lsp.Capability?>
 ---
---- Buffer number it associated with.
+--- Buffer number the capability instance is associated with.
 ---@field bufnr integer
 ---
 --- The augroup owned by this instance, which will be cleared upon destruction.
@@ -143,7 +144,7 @@ function M.enable(name, enable, filter)
 
         if enable then
           if it_client:supports_method(Capability.method) then
-            local capability = Capability.active[bufnr] or Capability:new(it_bufnr)
+            local capability = Capability.active[it_bufnr] or Capability:new(it_bufnr)
             if not capability.client_state[it_client.id] then
               capability:on_attach(it_client.id)
             end
