@@ -2835,7 +2835,7 @@ local pattern = {
     end),
     ['/queries/.*%.scm$'] = 'query', -- treesitter queries (Neovim only)
     [',v$'] = 'rcs',
-    ['^supertux2/.*/info$'] = 'scheme',
+    ['/supertux2/.*/info$'] = 'scheme',
     ['^svn%-commit.*%.tmp$'] = 'svn',
     ['%.swift%.gyb$'] = 'swiftgyb',
     ['^vivado.*%.jou$'] = 'tcl',
