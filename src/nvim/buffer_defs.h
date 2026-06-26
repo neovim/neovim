@@ -603,6 +603,7 @@ struct file_buffer {
   int b_p_pi;                   ///< 'preserveindent'
   char *b_p_qe;                 ///< 'quoteescape'
   int b_p_ro;                   ///< 'readonly'
+  char *b_p_rootdir;            ///< 'rootdir'
   OptInt b_p_sw;                ///< 'shiftwidth'
   OptInt b_p_scbk;              ///< 'scrollback'
   int b_p_si;                   ///< 'smartindent'

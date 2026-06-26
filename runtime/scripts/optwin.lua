@@ -227,6 +227,7 @@ local options_list = {
     { 'undoreload', N_ 'maximum number lines to save for undo on a buffer reload' },
     { 'modified', N_ 'changes have been made and not written to a file' },
     { 'readonly', N_ 'buffer is not to be written' },
+    { 'rootdir', N_ 'project root directory for the buffer' },
     { 'modifiable', N_ 'changes to the text are possible' },
     { 'textwidth', N_ 'line length above which to break a line' },
     { 'wrapmargin', N_ 'margin from the right in which to break a line' },

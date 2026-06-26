@@ -874,6 +874,9 @@ function lsp._set_defaults(client, bufnr)
   if client:supports_method('textDocument/diagnostic') then
     lsp.diagnostic._enable(bufnr)
   end
+  if client.root_dir and vim.bo[bufnr].rootdir == '' then
+    vim.bo[bufnr].rootdir = client.root_dir
+  end
 end
 
 --- @deprecated

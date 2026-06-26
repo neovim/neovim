@@ -160,6 +160,7 @@ void check_buf_options(buf_T *buf)
   parse_cino(buf);
   check_string_option(&buf->b_p_lop);
   check_string_option(&buf->b_p_ft);
+  check_string_option(&buf->b_p_rootdir);
   check_string_option(&buf->b_p_cinw);
   check_string_option(&buf->b_p_cinsd);
   check_string_option(&buf->b_p_cot);

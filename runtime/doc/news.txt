@@ -259,6 +259,8 @@ OPTIONS
 • 'shortmess' flag |shm-u| silences undo/redo messages.
 • 'statusline' supports |stl-%0{| to insert the expression result verbatim.
 • 'winpinned' prevents window from closing unless specifically targeted.
+• 'rootdir' buffer option exposes the project root directory. Set automatically
+  by the LSP client on attach; plugins can read or write it independently of LSP.
 
 PERFORMANCE
 
