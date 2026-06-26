@@ -28,6 +28,7 @@
 #include "nvim/eval/vars.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/ex_getln.h"
 #include "nvim/extmark.h"
 #include "nvim/extmark_defs.h"
 #include "nvim/fileio.h"
@@ -740,6 +741,11 @@ static int insert_handle_key(InsertState *s)
     FALLTHROUGH;
 
   case Ctrl_C:        // End input mode
+    if (s->c == Ctrl_C && bt_cmdwin(curbuf)) {
+      got_int = false;  // Don't interrupt autocmds etc.
+      cmdwin_do_action("cancel");  // cmdwin: CTRL-C closes cmdwin, pre-fills cmdline.
+      return 0;  // exit insert mode
+    }
     if (s->c == Ctrl_C && bt_prompt(curbuf)) {
       if (invoke_prompt_interrupt()) {
         if (!bt_prompt(curbuf)) {
@@ -1099,6 +1105,10 @@ static int insert_handle_key(InsertState *s)
         do_cmdline_cmd(".ll");
       }
       break;
+    }
+    if (s->c == CAR && bt_cmdwin(curbuf)) {
+      cmdwin_do_action("confirm");  // cmdwin: <CR> executes the command under the cursor.
+      return 0;  // exit insert mode
     }
     if ((mod_mask & MOD_MASK_SHIFT) == 0 && bt_prompt(curbuf)) {
       prompt_invoke_callback();

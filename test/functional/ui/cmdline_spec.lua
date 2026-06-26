@@ -255,7 +255,7 @@ local function test_cmdline(linegrid)
     screen:expect([[
                                |
       {2:[No Name]                }|
-      {1:: }mak^e                   |
+      {1::}mak^e                    |
       {3:[Command Line]           }|
                                |
     ]])
@@ -266,7 +266,7 @@ local function test_cmdline(linegrid)
       grid = [[
                                  |
         {2:[No Name]                }|
-        {1:: }mak^e                   |
+        {1::}mak^e                    |
         {3:[Command Line]           }|
                                  |
       ]],
@@ -278,7 +278,7 @@ local function test_cmdline(linegrid)
       grid = [[
                                  |
         {2:[No Name]                }|
-        {1:: }mak^e                   |
+        {1::}mak^e                    |
         {3:[Command Line]           }|
                                  |
       ]],
@@ -291,7 +291,7 @@ local function test_cmdline(linegrid)
       grid = [[
                                  |
         {2:[No Name]                }|
-        {1:: }mak^e                   |
+        {1::}mak^e                    |
         {3:[Command Line]           }|
                                  |
       ]],
@@ -900,9 +900,8 @@ describe('cmdline redraw', function()
                                               |
       {1:~                                       }|*3
       {2:[No Name]                               }|
-      {1:: }                                      |
-      {1:: }^a{17:bc}                                   |
-      {1:~                                       }|
+      {1::}^a{17:bc}                                    |
+      {1:~                                       }|*2
       {3:[Command Line]                          }|
       {5:-- VISUAL --}                            |
     ]])

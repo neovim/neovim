@@ -17,11 +17,12 @@ describe('cmdwin', function()
     eq(':', fn.getcmdwintype())
     eq('[Command Line]', vim.fs.basename(api.nvim_buf_get_name(0)))
     -- cmdwin-char is shown in window-local 'statuscolumn'.
-    eq('%#NonText#: ', api.nvim_get_option_value('statuscolumn', { win = 0 }))
+    eq('%#NonText#:', api.nvim_get_option_value('statuscolumn', { win = 0 }))
 
     eq('nofile', api.nvim_get_option_value('buftype', { buf = 0 }))
     eq('wipe', api.nvim_get_option_value('bufhidden', { buf = 0 }))
     eq(false, api.nvim_get_option_value('swapfile', { buf = 0 }))
+    eq(true, api.nvim_get_option_value('buflisted', { buf = 0 })) -- #40431
     eq(true, api.nvim_get_option_value('winfixbuf', { win = 0 }))
 
     -- <CR> executes the cmdline
@@ -32,15 +33,23 @@ describe('cmdwin', function()
   end)
 
   it('q/ opens cmdwin with search history', function()
+    fn.histadd('/', 'foo')
+    fn.histadd('/', 'bar')
     feed('q/')
     eq('/', fn.getcmdwintype())
+    -- The "/" history is presented, plus an empty editable last line.
+    eq({ 'foo', 'bar', '' }, api.nvim_buf_get_lines(0, 0, -1, false))
   end)
 
   it('c_CTRL-F opens cmdwin pre-filled with current cmdline', function()
+    fn.histadd(':', 'let g:x = 1')
+    fn.histadd(':', 'let g:y = 2')
     feed(':echo "hi"<C-F>')
     n.poke_eventloop()
     eq(':', fn.getcmdwintype())
-    eq('echo "hi"', api.nvim_get_current_line())
+    -- The ":" history is presented. The in-flight cmdline must not be added to history (else it shows up twice).
+    eq({ 'let g:x = 1', 'let g:y = 2', 'echo "hi"' }, api.nvim_buf_get_lines(0, 0, -1, false))
+    eq(2, fn.histnr('cmd')) -- History unchanged (the in-flight cmdline was not added).
   end)
 
   it('history entry with literal newline char', function()
@@ -52,10 +61,13 @@ describe('cmdwin', function()
 
   it('<C-C> in normal mode cancels without executing', function()
     feed('q:')
-    feed('iecho "nope"<Esc>')
+    feed('ilet g:executed = 1<Esc>')
     feed('<C-C>')
     eq('', fn.getcmdwintype())
-    -- v:errmsg should not contain a successful echo from the cancelled line.
+    -- The cancelled line is neither executed nor added to history. It is pre-filled into the
+    -- cmdline; reopening via c_CTRL-F must then not duplicate it.
+    eq(0, fn.exists('g:executed'))
+    eq(-1, fn.histnr('cmd'))
   end)
 
   it('async API calls work while cmdwin is open #40312', function()
@@ -115,7 +127,7 @@ describe('cmdwin', function()
       })
     ]])
     feed('q:')
-    n.poke_eventloop() -- Ensure q: is processed before the <C-C> mapping fires.
+    n.poke_eventloop() -- Ensure q: is processed before <C-C>.
     feed('<C-C>')
     eq({ 'enter::', 'leave::' }, exec_lua('return _G.events'))
   end)

@@ -18,12 +18,13 @@ local state = nil
 local cmdwin_types = { [':'] = true, ['/'] = true, ['?'] = true }
 
 --- Fills the cmdwin buffer with the cmdline history.
+--- @return boolean filled  Whether any lines were written.
 local function fill_history(buf, type)
   local histname = type == ':' and 'cmd' or (type == '/' or type == '?') and 'search' or nil
   assert(histname, 'cmdwin: unknown type: ' .. tostring(type))
   local n = vim.fn.histnr(histname)
   if n <= 0 then -- May be -1 if history is empty.
-    return
+    return false
   end
   local lines = {} --- @type string[]
   for i = 1, n do
@@ -33,9 +34,11 @@ local function fill_history(buf, type)
       lines[#lines + 1] = (h:gsub('\n', '\0'))
     end
   end
-  if #lines > 0 then
-    vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  if #lines == 0 then
+    return false
   end
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  return true
 end
 
 --- Open the command-line window.
@@ -71,16 +74,16 @@ function M.open(type, init_line, init_col)
   vim.bo[buf].buftype = 'nofile'
   vim.bo[buf].bufhidden = 'wipe'
   vim.bo[buf].swapfile = false
-  vim.bo[buf].buflisted = false
+  vim.bo[buf].buflisted = true -- #40431
   vim.wo[win][0].winfixbuf = true
   vim.wo[win][0].foldenable = false
   -- Show cmdwin-char via 'statuscolumn'.
-  vim.wo[win][0].statuscolumn = '%#NonText#' .. type .. ' '
+  vim.wo[win][0].statuscolumn = '%#NonText#' .. type
 
-  fill_history(buf, type)
+  local filled = fill_history(buf, type)
 
-  -- Append the in-flight cmdline (or empty placeholder) as the last line.
-  vim.api.nvim_buf_set_lines(buf, -1, -1, false, { init_line or '' })
+  -- Append the in-flight cmdline as the last line (or only line if history is empty).
+  vim.api.nvim_buf_set_lines(buf, filled and -1 or 0, -1, false, { init_line or '' })
   local last = vim.api.nvim_buf_line_count(buf)
   vim.api.nvim_win_set_cursor(win, { last, math.max(0, (init_col or 1) - 1) })
 
@@ -97,20 +100,6 @@ function M.open(type, init_line, init_col)
     buf = buf,
     caller_win = caller,
   }
-
-  -- Buffer-local mappings.
-  vim.keymap.set(
-    { 'n', 'i' },
-    '<CR>',
-    [[<C-\><C-N><Cmd>lua require'vim._core.cmdwin'.confirm()<CR>]],
-    { buffer = buf, silent = true, desc = 'cmdwin: execute' }
-  )
-  vim.keymap.set(
-    { 'n', 'i', 'x' },
-    '<C-C>',
-    [[<C-\><C-N><Cmd>lua require'vim._core.cmdwin'.cancel()<CR>]],
-    { buffer = buf, silent = true, desc = 'cmdwin: cancel' }
-  )
 
   -- Clean up if the window is closed by other means (`:q`, `:close`, etc.).
   vim.api.nvim_create_autocmd({ 'WinClosed' }, {
@@ -143,25 +132,30 @@ function M._cleanup()
   end
 end
 
-local function _confirm()
-  if state == nil then
-    return
-  end
+--- Closes the cmdwin and returns its current line and type.
+--- @return string line, string type
+local function _close()
   local line = vim.api.nvim_get_current_line()
-  local type = state.type
+  local type = assert(state).type
   M._cleanup()
   return line, type
 end
 
 --- Confirm and execute the current line as a cmdline.
 function M.confirm()
-  local line, type = _confirm()
+  if state == nil then -- Not in cmdwin (closed already?).
+    return
+  end
+  local line, type = _close()
   vim.api.nvim_feedkeys(type .. line .. vim.keycode('<CR>'), 'nt', false)
 end
 
 --- Cancel: close the cmdwin and re-enter cmdline mode with the line pre-filled (no execute).
 function M.cancel()
-  local line, type = _confirm()
+  if state == nil then -- Not in cmdwin (closed already?).
+    return
+  end
+  local line, type = _close()
   vim.api.nvim_feedkeys(type .. line, 'nt', false)
 end
 
