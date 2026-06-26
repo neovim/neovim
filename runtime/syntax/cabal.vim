@@ -8,6 +8,7 @@
 "
 " 2026 Apr 29 by Léana: add missing haskell language editions
 " 2026 Apr 20 by Vim project: remove wrong oneline keyword #20018
+" 2026 Jun 26 by Vim project: add elif keyword #20623
 "
 " v1.6: Added support for foreign-libraries
 "       Added highlighting for various fields
@@ -53,7 +54,7 @@ syn iskeyword @,48-57,192-255,-
 " Case sensitive matches
 syn case match
 
-syn keyword cabalConditional	if else
+syn keyword cabalConditional	if elif else
 syn keyword cabalFunction	os arche impl flag
 syn match cabalComment		/--.*$/
 
