@@ -22,6 +22,7 @@ describe('cmdwin', function()
     eq('nofile', api.nvim_get_option_value('buftype', { buf = 0 }))
     eq('wipe', api.nvim_get_option_value('bufhidden', { buf = 0 }))
     eq(false, api.nvim_get_option_value('swapfile', { buf = 0 }))
+    eq(true, api.nvim_get_option_value('buflisted', { buf = 0 })) -- #40431
     eq(true, api.nvim_get_option_value('winfixbuf', { win = 0 }))
 
     -- <CR> executes the cmdline

@@ -74,7 +74,7 @@ function M.open(type, init_line, init_col)
   vim.bo[buf].buftype = 'nofile'
   vim.bo[buf].bufhidden = 'wipe'
   vim.bo[buf].swapfile = false
-  vim.bo[buf].buflisted = false
+  vim.bo[buf].buflisted = true -- #40431
   vim.wo[win][0].winfixbuf = true
   vim.wo[win][0].foldenable = false
   -- Show cmdwin-char via 'statuscolumn'.
