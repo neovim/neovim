@@ -3661,7 +3661,7 @@ describe('vim.diagnostic', function()
       matches(
         'params%.diagnostics%[1%]%.relatedInformation must not be null',
         pcall_err(exec_lua, function()
-          local validate = require('vim.lsp._validate')
+          local validate = require('vim.lsp._validate').params
           validate['textDocument/publishDiagnostics']({
             uri = 'file:///test.lua',
             diagnostics = {

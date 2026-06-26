@@ -703,6 +703,11 @@ local VALIDATE_DEPTH = 2
 -- 'lenient' → if v.field == NIL then v.field = nil end — silently repairs the value
 local VALIDATE_MODE = 'strict'
 
+-- Mode used for validators applied to client→server RESULTS (server responses).
+-- Lenient by default: responses often have null for optional capabilities, and
+-- crashing on a misbehaving server response would be worse than silently fixing it.
+local VALIDATE_RESULT_MODE = 'strict'
+
 --- Returns true when type_node represents a type that may legally be null.
 --- Follows typeAlias references so that e.g. LSPAny (which includes null) is
 --- correctly identified as nullable.
@@ -759,7 +764,8 @@ end
 --- @param output string[]
 --- @param visited table<string, boolean>  tracks already-emitted validators
 --- @param depth integer  current depth counter; stops recursing at VALIDATE_DEPTH
-local function emit_struct_validator(struct_name, structs, aliases, output, visited, depth)
+--- @param mode? string  'strict' or 'lenient'; overrides VALIDATE_MODE when set
+local function emit_struct_validator(struct_name, structs, aliases, output, visited, depth, mode)
   if visited[struct_name] then
     return
   end
@@ -770,6 +776,8 @@ local function emit_struct_validator(struct_name, structs, aliases, output, visi
     return
   end
 
+  local effective_mode = mode or VALIDATE_MODE
+
   -- Recurse into referenced child-structs first so they are defined before us.
   if depth < VALIDATE_DEPTH then
     local props = collect_all_properties(struct, structs)
@@ -779,7 +787,7 @@ local function emit_struct_validator(struct_name, structs, aliases, output, visi
         t = t.element --[[@as vim._gen_lsp.Type]]
       end
       if t.kind == 'reference' and structs[t.name] then
-        emit_struct_validator(t.name, structs, aliases, output, visited, depth + 1)
+        emit_struct_validator(t.name, structs, aliases, output, visited, depth + 1, mode)
       end
     end
   end
@@ -795,23 +803,23 @@ local function emit_struct_validator(struct_name, structs, aliases, output, visi
   for _, prop in ipairs(props) do
     local fa = ("v['%s']"):format(prop.name)
     if not is_nullable(prop.type, aliases) then
-      if VALIDATE_MODE == 'strict' then
-        output[#output + 1] = ("  assert(%s ~= NIL, ctx .. '.%s must not be null')"):format(
-          fa,
-          prop.name
-        )
+      if effective_mode == 'strict' then
+         output[#output + 1] = ("  assert(%s ~= NIL, ctx .. '.%s must not be null')")
+           :format(fa, prop.name)
       else
         output[#output + 1] = ('  if %s == NIL then %s = nil end'):format(fa, fa)
       end
     end
     -- Call nested struct validators for referenced fields (up to depth limit).
+    -- Skip self-references: a local variable is not in scope inside its own
+    -- initializer expression, so validate_X cannot safely call itself.
     if depth < VALIDATE_DEPTH then
       local t = prop.type --[[@as vim._gen_lsp.Type]]
       local is_array = t.kind == 'array'
       if is_array then
         t = t.element --[[@as vim._gen_lsp.Type]]
       end
-      if t.kind == 'reference' and structs[t.name] then
+      if t.kind == 'reference' and structs[t.name] and t.name ~= struct_name then
         if is_array then
           output[#output + 1] = ("  if type(%s) == 'table' then"):format(fa)
           output[#output + 1] = ('    for i, x in ipairs(%s) do'):format(fa)
@@ -851,6 +859,9 @@ local function write_to_validate_lsp(protocol, output_file)
   local struct_output = {} --- @type string[]  structure validators (emitted before method table)
   local method_output = {} --- @type string[]  M[method] entries
   local visited = {} --- @type table<string, boolean>
+  -- Separate visited set for result validators; they may use lenient mode even for
+  -- structures that params validators already emitted in strict mode.
+  local result_visited = {} --- @type table<string, boolean>
 
   --- @param method string
   --- @param params_type vim._gen_lsp.Type?
@@ -887,21 +898,16 @@ local function write_to_validate_lsp(protocol, output_file)
       method_output[#method_output + 1] = ('---@param params lsp.%s?'):format(ref_name)
     end
     method_output[#method_output + 1] = ("M['%s'] = function(params)"):format(method)
-    method_output[#method_output + 1] = '  if params == nil then'
-    method_output[#method_output + 1] = '    return'
-    method_output[#method_output + 1] = '  end'
-
     if is_array then
+      method_output[#method_output + 1] = '  if params == nil then'
+      method_output[#method_output + 1] = '    return'
+      method_output[#method_output + 1] = '  end'
       method_output[#method_output + 1] = ("  for i, item in ipairs(params) do validate_%s(item, '[' .. i .. ']') end"):format(
         ref_name
       )
     else
-      method_output[#method_output + 1] = ("  validate_%s(params, '%s params')"):format(
-        ref_name,
-        method
-      )
+      method_output[#method_output + 1] = ("  validate_%s(params, '%s params')"):format(ref_name, method)
     end
-
     method_output[#method_output + 1] = 'end'
     method_output[#method_output + 1] = ''
   end
@@ -917,12 +923,145 @@ local function write_to_validate_lsp(protocol, output_file)
     end
   end
 
+  -- Result validators for client→server requests.
+  -- These run when the server sends a response back to us.
+  -- When both modes match, seed result_visited from visited so shared helpers
+  -- (e.g. validate_Range) already in struct_output are not emitted a second time.
+  if VALIDATE_RESULT_MODE == VALIDATE_MODE then
+    for k, v in pairs(visited) do
+      result_visited[k] = v
+    end
+  end
+  local result_struct_output = {} --- @type string[]  structure validators for results only
+  local result_output = {} --- @type string[]
+
+  --- Resolves the "item struct name" for an or-type result whose branches are all
+  --- either array(Struct) or Struct-with-items-field. Returns the name when every
+  --- non-null branch resolves to the same struct; nil otherwise.
+  --- @param or_items vim._gen_lsp.Type[]
+  --- @return string?
+  local function uniform_or_item_struct(or_items)
+    local found --- @type string?
+    for _, t in ipairs(or_items) do
+      if t.kind == 'base' and t.name == 'null' then
+        -- skip null branch
+      elseif t.kind == 'array' and t.element.kind == 'reference' then
+        local name = t.element.name --- @type string?
+        if found and found ~= name then return nil end
+        found = name
+      elseif t.kind == 'reference' and structs[t.name] then
+        -- Look for an "items" field that is an array of a consistent struct.
+        local props = collect_all_properties(structs[t.name], structs)
+        local items_field --- @type vim._gen_lsp.Property?
+        for _, p in ipairs(props) do
+          if p.name == 'items' then
+            items_field = p
+            break
+          end
+        end
+        if
+          items_field
+          and items_field.type.kind == 'array'
+          and items_field.type.element.kind == 'reference'
+        then
+          local name = items_field.type.element.name
+          if found and found ~= name then return nil end
+          found = name
+        else
+          return nil
+        end
+      else
+        return nil
+      end
+    end
+    return found
+  end
+
+  local sorted_requests = vim.list_extend({}, protocol.requests)
+  table.sort(sorted_requests, compare_method)
+
+  for _, req in ipairs(sorted_requests) do
+    if req.messageDirection == 'clientToServer' and req.result then
+      local rtype = req.result --[[@as vim._gen_lsp.Type]]
+      local method = req.method
+
+      -- Strip null: collect non-null branches.
+      local branches = {} --- @type vim._gen_lsp.Type[]
+      if rtype.kind == 'or' then
+        for _, t in ipairs(rtype.items) do
+          if not (t.kind == 'base' and t.name == 'null') then
+            branches[#branches + 1] = t
+          end
+        end
+      elseif not (rtype.kind == 'base' and rtype.name == 'null') then
+        branches[#branches + 1] = rtype
+      end
+
+      if #branches == 0 then
+        -- void / null-only result — nothing to validate
+      elseif #branches == 1 then
+        local t = branches[1]
+        if t.kind == 'reference' and structs[t.name] then
+          emit_struct_validator(t.name, structs, aliases, result_struct_output, result_visited, 0, VALIDATE_RESULT_MODE)
+          result_output[#result_output + 1] = ('validate_result[%q] = function(result)'):format(method)
+          result_output[#result_output + 1] = '  if result == nil then return end'
+          result_output[#result_output + 1] =
+            ("  validate_%s(result, 'result')"):format(t.name)
+          result_output[#result_output + 1] = 'end'
+          result_output[#result_output + 1] = ''
+        elseif t.kind == 'array' and t.element.kind == 'reference' and structs[t.element.name] then
+          local ename = t.element.name
+          emit_struct_validator(ename, structs, aliases, result_struct_output, result_visited, 0, VALIDATE_RESULT_MODE)
+          result_output[#result_output + 1] = ('---@param result lsp.%s[]?'):format(ename)
+          result_output[#result_output + 1] = ('validate_result[%q] = function(result)'):format(method)
+          result_output[#result_output + 1] = '  if result == nil or not vim.islist(result) then return end'
+          result_output[#result_output + 1] =
+            ("  for i, x in ipairs(result) do validate_%s(x, 'result[' .. i .. ']') end"):format(ename)
+          result_output[#result_output + 1] = 'end'
+          result_output[#result_output + 1] = ''
+        else
+          result_output[#result_output + 1] =
+            ('-- TODO: %s result type %q not supported'):format(method, t.kind)
+        end
+      else
+        -- Union with multiple non-null branches.
+        -- If every branch resolves to the same item struct (e.g. CompletionList | CompletionItem[])
+        -- generate a validator that finds and checks those items in both shapes.
+        local item_struct = uniform_or_item_struct(branches)
+        if item_struct and structs[item_struct] then
+          emit_struct_validator(item_struct, structs, aliases, result_struct_output, result_visited, 0, VALIDATE_RESULT_MODE)
+          result_output[#result_output + 1] = ('validate_result[%q] = function(result)'):format(method)
+          result_output[#result_output + 1] = '  if result == nil then return end'
+          result_output[#result_output + 1] = ('  ---@type lsp.%s[]?'):format(item_struct)
+          result_output[#result_output + 1] = '  local items'
+          result_output[#result_output + 1] = '  if vim.islist(result) then'
+          result_output[#result_output + 1] = '    items = result'
+          result_output[#result_output + 1] = '  elseif type(result) == \'table\' then'
+          result_output[#result_output + 1] = '    items = result.items ~= NIL and result.items or nil'
+          result_output[#result_output + 1] = '  end'
+          result_output[#result_output + 1] = '  if type(items) == \'table\' then'
+          result_output[#result_output + 1] =
+            ("    for i, x in ipairs(items) do validate_%s(x, 'result[' .. i .. ']') end"):format(
+              item_struct
+            )
+          result_output[#result_output + 1] = '  end'
+          result_output[#result_output + 1] = 'end'
+          result_output[#result_output + 1] = ''
+        else
+          result_output[#result_output + 1] =
+            ('-- TODO: %s has union result, cannot resolve to single item struct'):format(method)
+        end
+      end
+    end
+  end
+
   local output = {
     '--' .. '[[',
     'THIS FILE IS GENERATED by src/gen/gen_lsp.lua',
     'DO NOT EDIT MANUALLY',
     '',
-    'Validates non-nullable fields on incoming LSP server→client messages.',
+    'Validates non-nullable fields on incoming LSP server→client messages (M)',
+    'and on results returned to client→server requests (validate_result).',
     'Null (vim.NIL) values in fields that the spec does not allow to be null',
     'are caught here, at message ingestion, before reaching any handler.',
     '',
@@ -932,11 +1071,14 @@ local function write_to_validate_lsp(protocol, output_file)
     '',
     'local NIL = vim.NIL',
     'local M = {}',
+    'local validate_result = {}',
     '',
   }
   vim.list_extend(output, struct_output)
   vim.list_extend(output, method_output)
-  output[#output + 1] = 'return M'
+  vim.list_extend(output, result_struct_output)
+  vim.list_extend(output, result_output)
+  output[#output + 1] = 'return { params = M, result = validate_result }'
 
   tofile(output_file, table.concat(output, '\n') .. '\n')
 end
@@ -946,7 +1088,9 @@ local function main()
   local protocol = read_json(opt)
   write_to_vim_protocol(protocol)
   write_to_meta_protocol(protocol, opt.version, opt.output_file)
-  write_to_validate_lsp(protocol, 'runtime/lua/vim/lsp/_validate.lua')
+  local validate_file = 'runtime/lua/vim/lsp/_validate.lua'
+  write_to_validate_lsp(protocol, validate_file)
+  vim.system({ 'stylua', validate_file }):wait()
 end
 
 main()

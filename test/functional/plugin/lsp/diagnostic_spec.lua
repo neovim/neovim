@@ -272,20 +272,20 @@ describe('vim.lsp.diagnostic', function()
       eq(0, #after_delete)
     end)
 
-    it('errors when diagnostic tags is null', function()
-      matches(
-        'params%.diagnostics%[1%]%.tags must not be null',
-        pcall_err(exec_lua, function()
-          local validate = require('vim.lsp._validate')
-          validate['textDocument/publishDiagnostics']({
-            uri = fake_uri,
-            diagnostics = {
-              vim.tbl_extend('force', _G.make_error('Diagnostic', 0, 0, 0, 0), { tags = vim.NIL }),
-            },
-          })
-        end)
-      )
-    end)
+      it('errors when diagnostic tags is null', function()
+        matches(
+          "params%.diagnostics%[1%]%.tags must not be null",
+          pcall_err(exec_lua, function()
+            local validate = require('vim.lsp._validate').params
+            validate['textDocument/publishDiagnostics']({
+              uri = fake_uri,
+              diagnostics = {
+                vim.tbl_extend('force', _G.make_error('Diagnostic', 0, 0, 0, 0), { tags = vim.NIL }),
+              },
+            })
+          end)
+        )
+      end)
   end)
 
   describe('vim.lsp.diagnostic.on_diagnostic', function()

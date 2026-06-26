@@ -1,6 +1,8 @@
 local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
-local validate_params = require('vim.lsp._validate')
+local _lsp_validate = require('vim.lsp._validate')
+local validate_params = _lsp_validate.params
+local validate_result = _lsp_validate.result
 local net_transport = require('vim.net._transport')
 local strbuffer = require('vim._core.stringbuffer')
 local validate = vim.validate
@@ -263,6 +265,7 @@ end
 --- @field private message_index integer
 --- @field private message_callbacks table<integer, function> dict of message_id to callback
 --- @field private notify_reply_callbacks table<integer, function> dict of message_id to callback
+--- @field private method_for_request table<integer, string> maps message_id to method name
 --- @field private transport vim.net.Transport
 --- @field private message_stream vim.net.MessageStream
 --- @field private dispatchers vim.lsp.rpc.Dispatchers
@@ -291,6 +294,7 @@ function Client.new(dispatchers, transport, decode, format)
     message_index = 0,
     message_callbacks = {},
     notify_reply_callbacks = {},
+    method_for_request = {},
     transport = transport,
     dispatchers = dispatchers,
   }
@@ -412,6 +416,7 @@ function Client:_request(method, params, callback, notify_reply_callback)
   end
 
   self.message_callbacks[message_id] = vim.schedule_wrap(callback)
+  self.method_for_request[message_id] = method
   if notify_reply_callback then
     self.notify_reply_callbacks[message_id] = vim.schedule_wrap(notify_reply_callback)
   end
@@ -547,11 +552,18 @@ function Client:handle_body(body)
     end
 
     local callback = self.message_callbacks[result_id]
+    local method = self.method_for_request[result_id]
+    self.method_for_request[result_id] = nil
     if callback then
       self.message_callbacks[result_id] = nil
       validate('callback', callback, 'function')
       xpcall(function()
-        callback(decoded.error, decoded.result ~= vim.NIL and decoded.result or nil, result_id)
+        local result = decoded.result ~= vim.NIL and decoded.result or nil
+        local rv = validate_result[method]
+        if rv and result then
+          rv(result)
+        end
+        callback(decoded.error, result, result_id)
       end, function(err)
         self:on_error(M.client_errors.SERVER_RESULT_CALLBACK_ERROR, err)
       end)
