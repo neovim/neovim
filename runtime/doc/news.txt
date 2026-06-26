@@ -97,6 +97,8 @@ EVENTS
 
 LSP
 
+• `vim.lsp.ClientConfig.cmd` given as a string array now uses
+  `vim.lsp.ClientConfig.root_dir` as its default process working directory.
 • `client.attached_buffers[buf]` now stores `languageId` string (was boolean).
 
 LUA
