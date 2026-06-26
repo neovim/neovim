@@ -101,20 +101,6 @@ function M.open(type, init_line, init_col)
     caller_win = caller,
   }
 
-  -- Buffer-local mappings.
-  vim.keymap.set(
-    { 'n', 'i' },
-    '<CR>',
-    [[<C-\><C-N><Cmd>lua require'vim._core.cmdwin'.confirm()<CR>]],
-    { buffer = buf, silent = true, desc = 'cmdwin: execute' }
-  )
-  vim.keymap.set(
-    { 'n', 'i', 'x' },
-    '<C-C>',
-    [[<C-\><C-N><Cmd>lua require'vim._core.cmdwin'.cancel()<CR>]],
-    { buffer = buf, silent = true, desc = 'cmdwin: cancel' }
-  )
-
   -- Clean up if the window is closed by other means (`:q`, `:close`, etc.).
   vim.api.nvim_create_autocmd({ 'WinClosed' }, {
     buffer = buf,
@@ -146,25 +132,30 @@ function M._cleanup()
   end
 end
 
-local function _confirm()
-  if state == nil then
-    return
-  end
+--- Closes the cmdwin and returns its current line and type.
+--- @return string line, string type
+local function _close()
   local line = vim.api.nvim_get_current_line()
-  local type = state.type
+  local type = assert(state).type
   M._cleanup()
   return line, type
 end
 
 --- Confirm and execute the current line as a cmdline.
 function M.confirm()
-  local line, type = _confirm()
+  if state == nil then -- Not in cmdwin (closed already?).
+    return
+  end
+  local line, type = _close()
   vim.api.nvim_feedkeys(type .. line .. vim.keycode('<CR>'), 'nt', false)
 end
 
 --- Cancel: close the cmdwin and re-enter cmdline mode with the line pre-filled (no execute).
 function M.cancel()
-  local line, type = _confirm()
+  if state == nil then -- Not in cmdwin (closed already?).
+    return
+  end
+  local line, type = _close()
   vim.api.nvim_feedkeys(type .. line, 'nt', false)
 end
 

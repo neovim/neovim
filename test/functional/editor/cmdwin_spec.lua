@@ -126,7 +126,7 @@ describe('cmdwin', function()
       })
     ]])
     feed('q:')
-    n.poke_eventloop() -- Ensure q: is processed before the <C-C> mapping fires.
+    n.poke_eventloop() -- Ensure q: is processed before <C-C>.
     feed('<C-C>')
     eq({ 'enter::', 'leave::' }, exec_lua('return _G.events'))
   end)

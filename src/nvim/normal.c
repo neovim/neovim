@@ -3859,8 +3859,11 @@ static void nv_down(cmdarg_T *cap)
     // <S-Down> is page down
     cap->arg = FORWARD;
     nv_page(cap);
+  } else if (bt_cmdwin(curbuf) && cap->cmdchar == CAR) {
+    // cmdwin: execute the command-line under the cursor.
+    cmdwin_do_action("confirm");
   } else if (bt_quickfix(curbuf) && cap->cmdchar == CAR) {
-    // Quickfix window only: view the result under the cursor.
+    // Quickfix window: view the result under the cursor.
     qf_view_result(false);
   } else {
     if (bt_prompt(curbuf) && cap->cmdchar == CAR
@@ -6174,9 +6177,13 @@ static void nv_esc(cmdarg_T *cap)
                     && cap->opcount == 0
                     && cap->count0 == 0
                     && cap->oap->regname == 0);
+  bool cmdwin_cancel = cap->arg && bt_cmdwin(curbuf);
 
-  if (cap->arg) {               // true for CTRL-C
-    if (restart_edit == 0 && !bt_cmdwin(curbuf) && !VIsual_active && no_reason) {
+  if (cmdwin_cancel) {
+    got_int = false;  // CTRL-C cancels cmdwin; don't interrupt autocmds etc.
+    cmdwin_do_action("cancel");
+  } else if (cap->arg) {        // true for CTRL-C
+    if (restart_edit == 0 && !VIsual_active && no_reason) {
       if (anyBufIsChanged()) {
         msg(_("Type  :qa!  and press <Enter> to abandon all changes"
               " and exit Nvim"), 0);
@@ -6197,7 +6204,7 @@ static void nv_esc(cmdarg_T *cap)
     check_cursor_col(curwin);         // make sure cursor is not beyond EOL
     curwin->w_set_curswant = true;
     redraw_curbuf_later(UPD_INVERTED);
-  } else if (no_reason) {
+  } else if (no_reason && !cmdwin_cancel) {
     vim_beep(kOptBoFlagEsc);
   }
   clearop(cap->oap);

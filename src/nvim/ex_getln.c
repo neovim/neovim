@@ -4572,25 +4572,37 @@ const char *did_set_cedit(optset_T *args)
 }
 
 typedef struct {
-  int firstc;
-  char *content;  // owned
-  int pos;
+  int firstc;     ///< ':'/'/'/'?'.
+  char *content;  ///< Initial cmdline (owned).
+  int pos;        ///< Cursor column.
 } CmdwinOpenArgs;
 
-/// Deferred event: opens cmdwin after the current cmdline-reader exits. (Can't use vim.schedule,
-/// where the event could fire _during typeahead_; revisit after #40380).
+/// Synchronously calls `vim._core.cmdwin.<action>(...)`.
+static void cmdwin_invoke(const char *action, int firstc, char *content, int pos)
+{
+  char fc[2] = { (char)firstc, 0 };
+  typval_T tv_args[] = {
+    { .v_type = VAR_STRING, .vval.v_string = fc },
+    { .v_type = VAR_STRING, .vval.v_string = content ? content : "" },
+    { .v_type = VAR_NUMBER, .vval.v_number = pos + 1 },
+    { .v_type = VAR_UNKNOWN },
+  };
+  nlua_call_vimfn("vim._core.cmdwin", action, firstc ? tv_args : tv_args + 3, NULL);
+  xfree(content);
+}
+
+/// Calls `vim._core.cmdwin.<action>()`, synchronously.
+void cmdwin_do_action(const char *action)
+{
+  cmdwin_invoke(action, 0, NULL, 0);
+}
+
+/// Deferred event: opens cmdwin after the cmdline-reader unwinds. Can't run synchronously (cmdline
+/// is still being read), nor via vim.schedule (could fire _during typeahead_; revisit after #40380).
 static void open_cmdwin_event(void **argv)
 {
   CmdwinOpenArgs *a = argv[0];
-  char fc[2] = { (char)a->firstc, 0 };
-  typval_T tv_args[] = {
-    { .v_type = VAR_STRING, .vval.v_string = fc },
-    { .v_type = VAR_STRING, .vval.v_string = a->content ? a->content : "" },
-    { .v_type = VAR_NUMBER, .vval.v_number = a->pos + 1 },
-    { .v_type = VAR_UNKNOWN },
-  };
-  nlua_call_vimfn("vim._core.cmdwin", "open", tv_args, NULL);
-  xfree(a->content);
+  cmdwin_invoke("open", a->firstc, a->content, a->pos);  // frees a->content
   xfree(a);
 }
 
@@ -4620,8 +4632,8 @@ static int open_cmdwin(void)
   a->pos = ccline.cmdpos;
 
   // Capture the cmdline; will append to end of cmdwin.
-  // Clear the live cmdline so that unwinding it (via Ctrl_C below) does not add it to history.
   a->content = ccline.cmdbuff ? xstrnsave(ccline.cmdbuff, (size_t)ccline.cmdlen) : NULL;
+  // Clear cmdline so that unwinding it (via Ctrl_C below) does not add it to history.
   ccline.cmdlen = 0;
   ccline.cmdpos = 0;
 
