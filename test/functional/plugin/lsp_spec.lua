@@ -2918,7 +2918,7 @@ describe('LSP', function()
   end)
 
   describe('cmd', function()
-    it('cmd string array respects cwd precedence', function()
+    it('cmd string[] CWD', function()
       local root_dir = tmpname(false)
       local cmd_cwd = tmpname(false)
       mkdir(root_dir)
