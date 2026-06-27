@@ -6,19 +6,51 @@
 /// @see https://learn.microsoft.com/en-us/dotnet/standard/io/file-path-formats
 typedef enum {
   kPathUnknown = 0,
-  kPathDOS,         ///< C:/foo/bar
+  kPathGeneric,     ///< foo/bar or /foo/bar
+  kPathDrive,       ///< C:/foo/bar
   kPathUNC,         ///< //server/share/foo/bar
   kPathDevice,      ///< //?/C:/foo/bar or //?/Volume{xxx}/foo/bar
   kPathDeviceUNC,   ///< //?/UNC/server/share/foo/bar
 } PathType;
 
 /// Struct which encapsulates file stat and path information.
+///
+/// A path is divided into three parts: prefix, logical root, rest.
+/// Examples:
+///   foo/bar  generic relative path
+///   ^------- rest
+///
+///   /foo/bar  generic absolute path
+///   ^^------- rest
+///   +-------- root & prefix
+///
+///   C:foo/bar  Windows drive path, relative path
+///   ^ ^------- rest
+///   +--------- root & prefix
+///
+///   C:/foo/bar  Windows drive path, absolute path
+///   ^  ^------- rest
+///   +---------- root & prefix
+///
+///   //?/C:/foo/bar  Windows device path
+///   ^   ^  ^------- rest
+///       +---------- root
+///   +-------------- prefix
+///
+///   //server/share/foo/bar  Windows UNC path
+///   ^              ^------- rest
+///   +---------------------- root & prefix
+///
+///   //?/UNC/server/share/foo/bar  Windows device UNC path
+///   ^       ^            ^------- rest
+///           +-------------------- root
+///   +---------------------------- prefix
 typedef struct {
   uv_stat_t stat;  ///< @private
 
-  /// Offset of the root component after any path type prefix. Currently
-  /// only used for Widnows device paths. e.g. "//?/" and "//?/UNC/"
-  size_t root_off;
+  size_t prefix_off;  ///< Offset where the type-determining prefix starts.
+  size_t root_off;  ///< Offset where the logical root starts.
+  size_t rest_off;  ///< Offset where the remaining path starts.
   PathType type;
 } FileInfo;
 

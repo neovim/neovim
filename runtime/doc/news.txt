@@ -369,6 +369,7 @@ These existing features changed their behavior.
 • Markdown inline highlighting now conceals the backslash in backslash escapes.
 • Markdown inline backslash escapes and hard line breaks no longer use the
   `@string.escape` capture.
+• `fnamemodify(':h')` preserves logical roots for more path formats.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
