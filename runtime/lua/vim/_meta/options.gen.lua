@@ -6875,12 +6875,16 @@ vim.wo.stc = vim.wo.statuscolumn
 ---          this label.
 ---       Use `getmousepos()`.winid in the specified function to get the
 ---       corresponding `window-ID` of the clicked item.
---- \< -   Where to truncate line if too long.  Default is at the start.
+--- \< -   Where to truncate line if too long.  Default is at the first
+---       item.  Truncation markers within item groups apply to the
+---       truncation of that group until its maxwid is reached.
 ---       No width fields allowed.
 --- = -   Separation point between alignment sections.  Each section will
 ---       be separated by an equal number of spaces.  With one %= what
 ---       comes after it will be right-aligned.  With two %= there is a
 ---       middle part, with white space left and right of it.
+---       Alignment sections within item groups will be separated until
+---       minwid of the group is reached.
 ---       No width fields allowed.
 --- # -   Set highlight group.  The name must follow and then a # again.
 ---       Thus use %#HLname# for highlight group HLname.  The same

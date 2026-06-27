@@ -108,7 +108,14 @@ LUA
 
 OPTIONS
 
-• todo
+• The 'statusline' `%=` item is no longer ignored in item groups. It applies
+  to the containing item group and its `minwid`.
+  An `%<` item inside an item group now only applies to the containing group
+  and its `maxwid`. Therefore, multiple `%<` can now be effective.
+  The default truncation of item groups is now at the first contained item.
+  To restore the previous truncation from the left, add a `%<` to the start.
+  The same applies to 'rulerformat', 'statuscolumn', 'tabline', 'winbar',
+  'titlestring', and 'iconstring'.
 
 PLUGINS
 
@@ -260,6 +267,11 @@ OPTIONS
 • 'scrolloffpad' allows vertically centering cursor at the end of file.
 • 'shortmess' flag |shm-u| silences undo/redo messages.
 • 'statusline' supports |stl-%0{| to insert the expression result verbatim.
+  The `%=` item is supported within item groups to separate alignment sections
+  within the containing group until its `minwid` is reached. The truncation
+  of an item group to its `maxwid` can be controlled with the `%<` item.
+  The same applies to 'rulerformat', 'statuscolumn', 'tabline', 'winbar',
+  'titlestring', and 'iconstring'.
 • 'winpinned' prevents window from closing unless specifically targeted.
 
 PERFORMANCE
