@@ -2933,13 +2933,20 @@ static void ins_reg(void)
     // append(), so that it can be undone separately.
     u_sync_once = 2;
 
+    expr_reg_from_insert = true;  // Allow c_CTRL-F to open the cmdwin for this `=` register.
     regname = get_expr_register();
+    expr_reg_from_insert = false;
 
     // Cursor may be moved back a column.
     curwin->w_cursor = curpos;
     check_cursor(curwin);
   }
-  if (regname == NUL || !valid_yank_reg(regname, false)) {
+  if (cmdwin_from_expr_reg) {
+    // c_CTRL-F opened the cmdwin from this `=` register: it will evaluate and insert the result
+    // (in Normal mode, after the stuffed <C-\><C-N> leaves Insert mode). Don't beep/insert here.
+    cmdwin_from_expr_reg = false;
+    need_redraw = true;  // remove the '"'
+  } else if (regname == NUL || !valid_yank_reg(regname, false)) {
     vim_beep(kOptBoFlagRegister);
     need_redraw = true;  // remove the '"'
   } else {
