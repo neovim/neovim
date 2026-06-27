@@ -280,26 +280,18 @@ local function watch_events(event)
   end)
 end
 
---- @param log table[]
-local function make_find_packchanged(log)
-  --- @param suffix string
-  return function(suffix, kind, name, version, active, user_data)
-    local path = pack_get_plug_path(name)
-    local spec = { name = name, src = repos_src[name], version = version, data = user_data }
-    local data = { active = active, kind = kind, path = path, spec = spec }
-    local entry = { event = 'PackChanged' .. suffix, match = vim.fs.abspath(path), data = data }
-
-    local res = 0
-    for i, tbl in ipairs(log) do
-      if vim.deep_equal(tbl, entry) then
-        res = i
-        break
-      end
-    end
-    eq(true, res > 0)
-
-    return res
+--- Input is array of  { suffix, kind, name, version, active, user_data }
+--- @param log_compact ([string,string,string,string,boolean,any])[]
+local function assert_packchanged(log_compact)
+  local log = exec_lua('return _G.event_log')
+  local expected = {} --- @type table[]
+  for i, l in ipairs(log_compact) do
+    local path = pack_get_plug_path(l[3])
+    local spec = { name = l[3], src = repos_src[l[3]], version = l[4], data = l[6] }
+    local data = { active = l[5], kind = l[2], path = path, spec = spec }
+    expected[i] = { event = 'PackChanged' .. l[1], match = vim.fs.abspath(path), data = data }
   end
+  eq(expected, log)
 end
 
 local function track_nvim_echo()
@@ -314,9 +306,9 @@ local function track_nvim_echo()
   end)
 end
 
-local function assert_progress_report(action, step_names)
-  -- NOTE: Assume that `nvim_echo` mocked log has only progress report messages
-  local echo_log = exec_lua('return _G.echo_log') ---@type table[]
+--- @param echo_log table[]?
+local function assert_progress_report(echo_log, action, step_names)
+  echo_log = echo_log or exec_lua('return _G.echo_log')
   local n_steps = #step_names
   eq(n_steps + 2, #echo_log)
 
@@ -653,16 +645,13 @@ describe('vim.pack', function()
       eq(true, pack_exists('defbranch'))
       eq(false, exec_lua('return pcall(require, "defbranch")'))
 
-      -- Should trigger `kind=install` events
-      local log = exec_lua('return _G.event_log')
-      local find_event = make_find_packchanged(log)
-      local installpre_basic = find_event('Pre', 'install', 'basic', 'main', false, { 'd' })
-      local installpre_defbranch = find_event('Pre', 'install', 'defbranch', nil, false)
-      local install_basic = find_event('', 'install', 'basic', 'main', false, { 'd' })
-      local install_defbranch = find_event('', 'install', 'defbranch', nil, false)
-      eq(4, #log)
-      eq(true, installpre_basic < install_basic)
-      eq(true, installpre_defbranch < install_defbranch)
+      -- Should trigger `kind=install` events in a pre-defined order
+      assert_packchanged({
+        { 'Pre', 'install', 'basic', 'main', false, { 'd' } },
+        { 'Pre', 'install', 'defbranch', nil, false },
+        { '', 'install', 'basic', 'main', false, { 'd' } },
+        { '', 'install', 'defbranch', nil, false },
+      })
 
       -- Running `update()` should still update to use `main`
       exec_lua(function()
@@ -920,26 +909,21 @@ describe('vim.pack', function()
     it('shows progress report during installation', function()
       track_nvim_echo()
       vim_pack_add({ repos_src.basic, repos_src.defbranch })
-      assert_progress_report('Installing plugins', { 'basic', 'defbranch' })
+      assert_progress_report(nil, 'Installing plugins', { 'basic', 'defbranch' })
     end)
 
     it('triggers relevant events', function()
       watch_events({ 'PackChangedPre', 'PackChanged' })
 
       -- Should provide event-data respecting manual `version` without inferring default
-      vim_pack_add({ { src = repos_src.basic, version = 'feat-branch' }, repos_src.defbranch })
-
-      local log = exec_lua('return _G.event_log')
-      local find_event = make_find_packchanged(log)
-      local installpre_basic = find_event('Pre', 'install', 'basic', 'feat-branch', false)
-      local installpre_defbranch = find_event('Pre', 'install', 'defbranch', nil, false)
-      local install_basic = find_event('', 'install', 'basic', 'feat-branch', false)
-      local install_defbranch = find_event('', 'install', 'defbranch', nil, false)
-      eq(4, #log)
-
-      -- NOTE: There is no guaranteed installation order among separate plugins (as it is async)
-      eq(true, installpre_basic < install_basic)
-      eq(true, installpre_defbranch < install_defbranch)
+      -- Should order events as they were supplied in `vim.pack.add`
+      vim_pack_add({ repos_src.defbranch, { src = repos_src.basic, version = 'feat-branch' } })
+      assert_packchanged({
+        { 'Pre', 'install', 'defbranch', nil, false },
+        { 'Pre', 'install', 'basic', 'feat-branch', false },
+        { '', 'install', 'defbranch', nil, false },
+        { '', 'install', 'basic', 'feat-branch', false },
+      })
     end)
 
     it('recognizes several `version` types', function()
@@ -1687,13 +1671,19 @@ describe('vim.pack', function()
         exec_lua('_G.echo_log = {}')
 
         ref_lockfile.plugins.fetch.rev = git_get_hash('main', 'fetch')
+        git_cmd({ 'checkout', 'main' }, 'fetch')
         repo_write_file('fetch', 'lua/fetch.lua', 'return "fetch new 3"')
         git_add_commit('Commit to be added 3', 'fetch')
 
         assert_action({ 3, 0 }, fetch_actions, 1)
 
         pack_assert_content('fetch', 'return "fetch new 2"')
-        assert_progress_report('Applying updates', { 'fetch' })
+
+        local echo_log = exec_lua('return _G.echo_log')
+        assert_progress_report(vim.list_slice(echo_log, 1, 3), 'Computing updates', { 'fetch' })
+        assert_progress_report(vim.list_slice(echo_log, 4, 6), 'Applying updates', { 'fetch' })
+        eq(6, #echo_log)
+
         line_match(1, '^# Update')
         eq(1, api.nvim_buf_line_count(0))
 
@@ -1943,7 +1933,7 @@ describe('vim.pack', function()
       end)
 
       -- There should be no progress report about downloading updates
-      assert_progress_report('Computing updates', { 'defbranch' })
+      assert_progress_report(nil, 'Computing updates', { 'defbranch' })
 
       n.exec('write')
       pack_assert_content('defbranch', 'return "defbranch main"')
@@ -1956,22 +1946,28 @@ describe('vim.pack', function()
       exec_lua('vim.pack.update()')
 
       -- During initial download
-      assert_progress_report('Downloading updates', { 'fetch', 'defbranch', 'semver' })
+      assert_progress_report(nil, 'Downloading updates', { 'fetch', 'defbranch', 'semver' })
       exec_lua('_G.echo_log = {}')
 
       -- During application (only for plugins that have updates)
       n.exec('write')
-      assert_progress_report('Applying updates', { 'fetch' })
+      assert_progress_report(nil, 'Applying updates', { 'fetch' })
 
       -- During force update
       n.clear()
       track_nvim_echo()
+      git_cmd({ 'checkout', 'main' }, 'fetch')
       repo_write_file('fetch', 'lua/fetch.lua', 'return "fetch new 3"')
       git_add_commit('Commit to be added 3', 'fetch')
 
       vim_pack_add({ repos_src.fetch, repos_src.defbranch })
       exec_lua('vim.pack.update(nil, { force = true })')
-      assert_progress_report('Updating', { 'fetch', 'defbranch', 'semver' })
+
+      local echo_log = exec_lua('return _G.echo_log')
+      local all_plugs = { 'fetch', 'defbranch', 'semver' }
+      assert_progress_report(vim.list_slice(echo_log, 1, 5), 'Downloading updates', all_plugs)
+      assert_progress_report(vim.list_slice(echo_log, 6, 8), 'Applying updates', { 'fetch' })
+      eq(8, #echo_log)
     end)
 
     it('triggers relevant events', function()
@@ -1983,11 +1979,10 @@ describe('vim.pack', function()
 
       -- Should trigger relevant events only for actually updated plugins
       n.exec('write')
-      local log = exec_lua('return _G.event_log')
-      local find_event = make_find_packchanged(log)
-      eq(1, find_event('Pre', 'update', 'fetch', nil, true))
-      eq(2, find_event('', 'update', 'fetch', nil, true))
-      eq(2, #log)
+      assert_packchanged({
+        { 'Pre', 'update', 'fetch', nil, true },
+        { '', 'update', 'fetch', nil, true },
+      })
     end)
 
     it('stashes before applying changes', function()
@@ -2332,21 +2327,23 @@ describe('vim.pack', function()
       local msg = 'vim.pack: Removed plugins: basic, plugindirs'
       eq(msg, n.exec_capture('messages'))
 
+      -- Should trigger relevant events in order as specified in `vim.pack.add()`
+      assert_packchanged({
+        { 'Pre', 'delete', 'basic', 'feat-branch', false },
+        { 'Pre', 'delete', 'defbranch', nil, true },
+        { 'Pre', 'delete', 'plugindirs', nil, false },
+        { '', 'delete', 'basic', 'feat-branch', false },
+        { '', 'delete', 'plugindirs', nil, false },
+      })
+      exec_lua('_G.event_log = {}')
+
       -- `:packdel` should output E5810 instead of the normal error
       eq(
         'Vim(packdel):E5810: Some plugins are active and were not deleted: defbranch',
         pcall_err(n.command, 'packdel defbranch')
       )
       assert_on_disk({ defbranch = true })
-
-      -- Should trigger relevant events in order as specified in `vim.pack.add()`
-      local log = exec_lua('return _G.event_log')
-      local find_event = make_find_packchanged(log)
-      eq(1, find_event('Pre', 'delete', 'basic', 'feat-branch', false))
-      eq(2, find_event('', 'delete', 'basic', 'feat-branch', false))
-      eq(3, find_event('Pre', 'delete', 'plugindirs', nil, false))
-      eq(4, find_event('', 'delete', 'plugindirs', nil, false))
-      eq(4, #log)
+      assert_packchanged({ { 'Pre', 'delete', 'defbranch', nil, true } })
 
       -- Should be possible to force delete active plugins
       n.exec('messages clear')
@@ -2355,15 +2352,13 @@ describe('vim.pack', function()
         vim.pack.del({ 'defbranch' }, { force = true })
       end)
 
-      assert_on_disk({ basic = false, defbranch = false, plugindirs = false })
-
       eq('vim.pack: Removed plugin: defbranch', n.exec_capture('messages'))
 
-      log = exec_lua('return _G.event_log')
-      find_event = make_find_packchanged(log)
-      eq(1, find_event('Pre', 'delete', 'defbranch', nil, true))
-      eq(2, find_event('', 'delete', 'defbranch', nil, false))
-      eq(2, #log)
+      assert_on_disk({ basic = false, defbranch = false, plugindirs = false })
+      assert_packchanged({
+        { 'Pre', 'delete', 'defbranch', nil, true },
+        { '', 'delete', 'defbranch', nil, false },
+      })
     end)
 
     it('works without prior `add()`', function()
