@@ -1487,7 +1487,7 @@ static void terminal_focus(const Terminal *term, bool focus)
 /// Lua `vim._core.terminal.save`.
 ///
 /// @param term     Terminal to export.
-/// @param fname    Destination name/path (must end in ".mpack", checked by the caller).
+/// @param fname    Destination name/path, or `""` (resolved in Lua).
 /// @param force    Overwrite an existing destination (`:write!`).
 /// @param mkdir_p  Create missing parent directories for explicit paths (`++p`).
 /// @return true on success.

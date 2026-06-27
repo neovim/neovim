@@ -370,43 +370,66 @@ describe(':terminal (with fake shell)', function()
 end)
 
 describe(':write on terminal buffer', function()
-  it(':w without arguments gives E32', function()
-    command('terminal')
-    eq('Vim(write):E32: No file name', pcall_err(command, 'write'))
+  local xstate = 'Xtest-functional-terminal'
+
+  before_each(function()
+    clear({ env = { XDG_STATE_HOME = xstate } })
   end)
 
-  it(':w *.mpack refuses to overwrite without !', function()
+  after_each(function()
+    n.rmdir(xstate)
+  end)
+
+  it(':w without arguments saves state under stdpath("state")/term/', function()
     command('terminal')
-    command('write test3.mpack')
-    eq('Vim(write):E13: File exists (add ! to override)', pcall_err(command, 'write test3.mpack'))
-    command('write! test3.mpack')
+    local dir = vim.fs.joinpath(fn.stdpath('state'), 'term')
+    local function has_mpack()
+      for name, ftype in vim.fs.dir(dir, { depth = 1 }) do
+        if ftype == 'file' and name:match('%.mpack$') then
+          return true
+        end
+      end
+      return false
+    end
+    eq(false, has_mpack())
+    command('write')
+    eq(true, has_mpack())
+  end)
+
+  it(':w <name> refuses to overwrite without !', function()
+    command('terminal')
+    command('write test3')
+    eq(1, fn.filereadable('test3.mpack'))
+    eq('Vim(write):E13: File exists (add ! to override)', pcall_err(command, 'write test3'))
+    command('write! test3')
     eq(1, fn.filereadable('test3.mpack'))
   end)
 
-  it(':w *.mpack onto a directory gives E17', function()
+  it(':w <name> onto a directory gives E17', function()
     command('terminal')
     n.mkdir_p('test_dir/dir.mpack')
-    local err = pcall_err(command, 'write test_dir/dir.mpack')
+    local err = pcall_err(command, 'write test_dir/dir')
     ok(err:find('E17') ~= nil)
   end)
 
-  it(':w *.mpack encodes state to the requested path', function()
+  it(':w <name> encodes state to the requested path (appends .mpack)', function()
     command('terminal')
-    command('write test1.mpack')
-    local fname = 'test1.mpack'
-    eq(1, fn.filereadable(fname))
-    local data = vim.mpack.decode(t.read_file(fname) --[[@as string]])
+    command('write test1')
+    eq(1, fn.filereadable('test1.mpack'))
+    local data = vim.mpack.decode(t.read_file('test1.mpack') --[[@as string]])
     eq('string', type(data.content))
     eq('table', type(data.argv))
     eq('string', type(data.cwd))
     eq('number', type(data.timestamp))
   end)
 
-  it(':w with a non-.mpack name writes the buffer as plain text', function()
+  it('range write writes plain text', function()
     command('terminal echo hi')
-    command('write test_plain_text.txt')
-    eq(1, fn.filereadable('test_plain_text.txt'))
-    local f = t.read_file('test_plain_text.txt') --[[@as string]]
+    n.mkdir_p(xstate)
+    local plain_file = vim.fs.joinpath(xstate, 'test_plain_text.txt')
+    command('%write ' .. plain_file)
+    eq(1, fn.filereadable(plain_file))
+    local f = t.read_file(plain_file) --[[@as string]]
     ok(f:find('\x1b') == nil)
   end)
 end)

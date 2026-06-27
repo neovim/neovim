@@ -286,21 +286,31 @@ TODO
 ==============================================================================
 Terminal persistence                                    *terminal-persistence*
 
-In a terminal buffer, `:write` with a ".mpack" extension exports the rendered
-terminal state (scrollback + visible screen) as a msgpack file, including
-metadata such as cwd, argv, and timestamp.
+In a terminal buffer, `:write` exports the rendered terminal state
+(scrollback + visible screen) as a msgpack file, including metadata such as
+cwd, argv, and timestamp.
 
-`:w {name}.mpack`           Save rendered terminal state as a msgpack file.
-`:w! {name}.mpack`          Overwrite an existing file.
+`:w`                        Save rendered terminal state to
+                          |stdpath()|/term/<name>.mpack.
+`:w {name}`                 Save rendered terminal state as a msgpack file
+                          at the given path (".mpack" appended if absent).
+`:w! {name}`                Overwrite an existing file.
+`:w ++p {path}`             Create intermediate directories.
 
-Plain `:write` without ".mpack" (e.g. `:w foo.txt`) writes the buffer text
-normally.
+Range writes (e.g. `:%w foo.txt`, `:'<,'>w`) write the buffer text normally.
 
-Terminal state files are stored in msgpack format with these fields:
+Terminal state files are stored in msgpack format. Example: >
+    {
+      argv = { "/bin/bash" },
+      content = "\x1b[32mhello\x1b[0m",
+      cwd = "/home/user/project",
+      timestamp = 1750000000,
+    }
+<
   `argv`        The command argument list of the terminal job.
   `content`     ANSI escape sequences of the scrollback and screen.
   `cwd`         Working directory of the terminal job.
-  `timestamp`   When the state was saved.
+  `timestamp`   When the state was saved (seconds since epoch).
 
 Note: The alternate screen (e.g. vim, top) cannot be saved.
 

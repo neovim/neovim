@@ -355,9 +355,10 @@ STARTUP
 
 TERMINAL
 
-• |:write| with a ".mpack" filename extension in a terminal buffer saves the
-  rendered state as a msgpack file at the requested path. Plain `:write`
-  without ".mpack" extention writes the buffer text normally.
+• |:write| in a terminal buffer exports the rendered state as a msgpack file
+  at |stdpath()|/term/. An explicit path (e.g. `:w foo`) writes to that path
+  with ".mpack" appended. Range writes (e.g. `:%w foo.txt`) write the buffer
+  text normally.
 
 TREESITTER
 
