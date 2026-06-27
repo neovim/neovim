@@ -7,20 +7,25 @@
 local M = {}
 
 --- @class vim._core.cmdwin.State
---- @field type string   ':', '/', '?'
+--- @field type string   ':', '/', '?', '='
 --- @field win integer   cmdwin window id
 --- @field buf integer   cmdwin buffer id
 --- @field caller_win integer  Window to return-to on close
+--- @field caller_cursor integer[]  (1,0)-cursor of caller_win (for '=': where to insert the result)
 
 --- @type vim._core.cmdwin.State?
 local state = nil
 
-local cmdwin_types = { [':'] = true, ['/'] = true, ['?'] = true }
+-- '=' is the expr register (i_CTRL-R =); on confirm its line is evaluated and inserted. #40407
+local cmdwin_types = { [':'] = true, ['/'] = true, ['?'] = true, ['='] = true }
 
 --- Fills the cmdwin buffer with the cmdline history.
 --- @return boolean filled  Whether any lines were written.
 local function fill_history(buf, type)
-  local histname = type == ':' and 'cmd' or (type == '/' or type == '?') and 'search' or nil
+  local histname = type == ':' and 'cmd'
+    or (type == '/' or type == '?') and 'search'
+    or type == '=' and 'expr'
+    or nil
   assert(histname, 'cmdwin: unknown type: ' .. tostring(type))
   local n = vim.fn.histnr(histname)
   if n <= 0 then -- May be -1 if history is empty.
@@ -43,10 +48,12 @@ end
 
 --- Open the command-line window.
 ---
---- @param type? string  ':', '/', '?'. Default ':'.
+--- @param type? string  ':', '/', '?', '='. Default ':'.
 --- @param init_line? string  Pre-fill the last line (the "live" cmdline).
 --- @param init_col? integer  1-based cursor column in the last line.
-function M.open(type, init_line, init_col)
+--- @param host_lnum? integer  For '=': caller cursor line where the result is inserted on confirm.
+--- @param host_col? integer  For '=': caller cursor column (0-based byte).
+function M.open(type, init_line, init_col, host_lnum, host_col)
   type = type or ':'
   assert(cmdwin_types[type], 'cmdwin: unknown type: ' .. tostring(type))
   if state ~= nil then
@@ -105,6 +112,10 @@ function M.open(type, init_line, init_col)
     win = win,
     buf = buf,
     caller_win = caller,
+    -- For '=', use the exact Insert-mode cursor (host_lnum/col); the post-<C-\><C-N> Normal-mode
+    -- cursor would be off by one at end-of-line. 1-based row, 0-based col.
+    caller_cursor = (type == '=' and host_lnum and host_lnum > 0) and { host_lnum, host_col }
+      or vim.api.nvim_win_get_cursor(caller),
   }
 
   -- Clean up when the (last-visible) cmdwin is closed by other means (`:q`, `:close`, etc.).
@@ -155,13 +166,43 @@ local function _close()
   return line, type
 end
 
---- Confirm and execute the current line as a cmdline.
+--- Confirm: execute the current line (':' / '/' / '?') or, for the expr register ('='), evaluate
+--- it and insert the result at the caller's cursor (like i_CTRL-R =). #40407
 function M.confirm()
   if state == nil then -- Not in cmdwin (closed already?).
     return
   end
-  local line, type = _close()
+  local caller_win = state.caller_win
+  local caller_cursor = state.caller_cursor
+  local line, type = _close() -- Closes the cmdwin; switches back to caller_win.
   line = line:gsub('%z', '\n'):gsub('(%c)', '\022%1') -- Escape control characters.
+  if type == '=' then
+    local ok, result = pcall(vim.fn.eval, line == '' and '@=' or line)
+    if not ok then
+      vim.api.nvim_echo({ { tostring(result), 'ErrorMsg' } }, true, { err = true })
+      return
+    end
+    if vim.api.nvim_win_is_valid(caller_win) then
+      vim.api.nvim_set_current_win(caller_win)
+      -- Insert the result at the host cursor (like i_CTRL-R =), then resume Insert mode after it.
+      local buf = vim.api.nvim_win_get_buf(caller_win)
+      local row, col = caller_cursor[1] - 1, caller_cursor[2]
+      local lines = vim.split(tostring(result), '\n', { plain = true })
+      vim.api.nvim_buf_set_text(buf, row, col, row, col, lines)
+      -- Resume Insert mode just after the inserted text.
+      local end_row = row + #lines - 1
+      local end_col = (#lines == 1 and col or 0) + #lines[#lines]
+      local linelen = #vim.api.nvim_buf_get_lines(buf, end_row, end_row + 1, false)[1]
+      if end_col >= linelen then
+        pcall(vim.api.nvim_win_set_cursor, caller_win, { end_row + 1, math.max(0, linelen - 1) })
+        vim.cmd('startinsert!')
+      else
+        pcall(vim.api.nvim_win_set_cursor, caller_win, { end_row + 1, end_col })
+        vim.cmd('startinsert')
+      end
+    end
+    return
+  end
   vim.api.nvim_feedkeys(type .. line .. vim.keycode('<CR>'), 'nt', false)
 end
 
@@ -170,8 +211,18 @@ function M.cancel()
   if state == nil then -- Not in cmdwin (closed already?).
     return
   end
+  local caller_win = state.caller_win
   local line, type = _close()
   line = line:gsub('%z', '\n'):gsub('(%c)', '\022%1') -- Escape control characters.
+
+  if type == '=' then
+    -- Expr register: nothing to execute. Resume Insert mode in the caller (the '=' was aborted).
+    if vim.api.nvim_win_is_valid(caller_win) then
+      vim.api.nvim_set_current_win(caller_win)
+      vim.api.nvim_feedkeys('a', 'n', false)
+    end
+    return
+  end
   vim.api.nvim_feedkeys(type .. line, 'nt', false)
 end
 
