@@ -2190,9 +2190,10 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
         if (ptr[-1] == '\\') {
           do_quotes = 1;
           if (start_in_quotes == kNone) {
-            // Do we need to use at_start here?
-            inquote = true;
-            start_in_quotes = kTrue;
+            inquote = at_start;
+            if (inquote) {
+              start_in_quotes = kTrue;
+            }
           } else if (backwards) {
             inquote = true;
           }
