@@ -788,6 +788,19 @@ local function emit_struct_validator(struct_name, structs, aliases, output, visi
       end
       if t.kind == 'reference' and structs[t.name] then
         emit_struct_validator(t.name, structs, aliases, output, visited, depth + 1, mode)
+      elseif t.kind == 'or' then
+        local all_or_structs = true
+        for _, item in ipairs(t.items) do
+          if item.kind ~= 'reference' or not structs[item.name] then
+            all_or_structs = false
+            break
+          end
+        end
+        if all_or_structs then
+          for _, item in ipairs(t.items) do
+            emit_struct_validator(item.name, structs, aliases, output, visited, depth + 1, mode)
+          end
+        end
       end
     end
   end
@@ -833,6 +846,42 @@ local function emit_struct_validator(struct_name, structs, aliases, output, visi
           output[#output + 1] = '  end'
         else
           output[#output + 1] = ("  validate_%s(%s, ctx .. '.%s')"):format(t.name, fa, prop.name)
+        end
+      elseif t.kind == 'or' then
+        -- For union types where every alternative is a struct reference, call each
+        -- struct validator. Each validator is nil/NIL-guarded, so calling e.g.
+        -- validate_TextEdit on an InsertReplaceEdit silently passes without false
+        -- positives — the wrong-alternative's fields are nil, and nil ~= vim.NIL.
+        local all_are_structs = true
+        for _, item in ipairs(t.items) do
+          if item.kind ~= 'reference' or not structs[item.name] then
+            all_are_structs = false
+            break
+          end
+        end
+        if all_are_structs then
+          for _, item in ipairs(t.items) do
+            if item.name ~= struct_name then
+              if is_array then
+                output[#output + 1] = ("  if type(%s) == 'table' then"):format(fa)
+                output[#output + 1] = ('    for i, x in ipairs(%s) do'):format(fa)
+                output[#output + 1] = ("      validate_%s(x --[[@as lsp.%s|vim.NIL|nil]], ctx .. '.%s[' .. i .. ']')"):format(
+                  item.name,
+                  item.name,
+                  prop.name
+                )
+                output[#output + 1] = '    end'
+                output[#output + 1] = '  end'
+              else
+                output[#output + 1] = ("  validate_%s(%s --[[@as lsp.%s|vim.NIL|nil]], ctx .. '.%s')"):format(
+                  item.name,
+                  fa,
+                  item.name,
+                  prop.name
+                )
+              end
+            end
+          end
         end
       end
     end
