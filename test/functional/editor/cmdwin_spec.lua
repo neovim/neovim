@@ -82,6 +82,49 @@ describe('cmdwin', function()
     eq(2, fn.histnr('cmd')) -- History unchanged (the in-flight cmdline was not added).
   end)
 
+  it('c_CTRL-F from insert-mode expr register evaluates+inserts, resumes Insert #40407', function()
+    -- The expr register (i_CTRL-R =) hosted by Insert mode supports c_CTRL-F: the cmdwin opens for
+    -- the expression; on confirm it is evaluated and the result inserted at the cursor.
+    feed('ifoo <C-R>=1+2')
+    n.poke_eventloop()
+    feed('<C-F>')
+    n.poke_eventloop()
+    eq('=', fn.getcmdwintype())
+    eq({ '1+2' }, api.nvim_buf_get_lines(0, 0, -1, false)) -- cmdwin holds the expression
+    feed('<CR>')
+    n.poke_eventloop()
+    eq('', fn.getcmdwintype())
+    eq('foo 3', api.nvim_get_current_line())
+    eq('i', api.nvim_get_mode().mode) -- Insert mode resumed after the result
+    feed('X<Esc>')
+    eq('foo 3X', api.nvim_get_current_line()) -- typing continues after the inserted result
+  end)
+
+  it('c_CTRL-F expr register: string result, mid-line, and <C-C> cancel #40407', function()
+    -- Mid-line insertion + string result.
+    feed("iabc<Left><C-R>='X'.'Y'")
+    n.poke_eventloop()
+    feed('<C-F>')
+    n.poke_eventloop()
+    eq('=', fn.getcmdwintype())
+    feed('<CR>')
+    n.poke_eventloop()
+    eq('abXYc', api.nvim_get_current_line())
+    feed('<Esc>')
+
+    -- <C-C> cancels: nothing inserted, Insert mode resumes in the host.
+    feed('o<C-R>=1+1')
+    n.poke_eventloop()
+    feed('<C-F>')
+    n.poke_eventloop()
+    eq('=', fn.getcmdwintype())
+    feed('<C-C>')
+    n.poke_eventloop()
+    eq('', fn.getcmdwintype())
+    eq('', api.nvim_get_current_line()) -- cancelled: no result inserted
+    eq('i', api.nvim_get_mode().mode)
+  end)
+
   it('<C-C> in normal mode cancels without executing', function()
     feed('q:')
     feed('ilet g:executed = 1<Esc>')
