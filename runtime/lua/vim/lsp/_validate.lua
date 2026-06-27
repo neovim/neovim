@@ -5,7 +5,7 @@ DO NOT EDIT MANUALLY
 Validates non-nullable fields on incoming LSP server→client messages (M)
 and on results returned to client→server requests (validate_result).
 Null (vim.NIL) values in fields that the spec does not allow to be null
-are caught here, at message ingestion, before reaching any handler.
+are repaired (set to nil) and a warning is logged to the LSP log.
 
 Regenerate:
   nvim -l src/gen/gen_lsp.lua
@@ -15,14 +15,35 @@ local NIL = vim.NIL
 local M = {}
 local validate_result = {}
 
+local _log = require('vim.lsp.log')
+local _client_name = '?'
+---@type table<string, true>
+local _warned = {}
+---@param msg string
+local function warn(msg)
+  local name = _client_name
+  local key = (msg:gsub('%[%d+%]', '[]'))
+  if _warned[name .. key] then
+    return
+  end
+  _warned[name .. key] = true
+  _log.warn(('LSP[%s] %s'):format(name, key))
+end
+
 ---@param v lsp.Registration|vim.NIL|nil
 ---@param ctx string
 local validate_Registration = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['id'] ~= NIL, ctx .. '.id must not be null')
-  assert(v['method'] ~= NIL, ctx .. '.method must not be null')
+  if v['id'] == NIL then
+    v['id'] = nil
+    warn(ctx .. '.id must not be null')
+  end
+  if v['method'] == NIL then
+    v['method'] = nil
+    warn(ctx .. '.method must not be null')
+  end
 end
 
 ---@param v lsp.RegistrationParams|vim.NIL|nil
@@ -31,7 +52,10 @@ local validate_RegistrationParams = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['registrations'] ~= NIL, ctx .. '.registrations must not be null')
+  if v['registrations'] == NIL then
+    v['registrations'] = nil
+    warn(ctx .. '.registrations must not be null')
+  end
   if type(v['registrations']) == 'table' then
     for i, x in ipairs(v['registrations']) do
       validate_Registration(x, ctx .. '.registrations[' .. i .. ']')
@@ -45,8 +69,14 @@ local validate_Unregistration = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['id'] ~= NIL, ctx .. '.id must not be null')
-  assert(v['method'] ~= NIL, ctx .. '.method must not be null')
+  if v['id'] == NIL then
+    v['id'] = nil
+    warn(ctx .. '.id must not be null')
+  end
+  if v['method'] == NIL then
+    v['method'] = nil
+    warn(ctx .. '.method must not be null')
+  end
 end
 
 ---@param v lsp.UnregistrationParams|vim.NIL|nil
@@ -55,7 +85,10 @@ local validate_UnregistrationParams = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['unregisterations'] ~= NIL, ctx .. '.unregisterations must not be null')
+  if v['unregisterations'] == NIL then
+    v['unregisterations'] = nil
+    warn(ctx .. '.unregisterations must not be null')
+  end
   if type(v['unregisterations']) == 'table' then
     for i, x in ipairs(v['unregisterations']) do
       validate_Unregistration(x, ctx .. '.unregisterations[' .. i .. ']')
@@ -69,7 +102,10 @@ local validate_CancelParams = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['id'] ~= NIL, ctx .. '.id must not be null')
+  if v['id'] == NIL then
+    v['id'] = nil
+    warn(ctx .. '.id must not be null')
+  end
 end
 
 ---@param v lsp.LogTraceParams|vim.NIL|nil
@@ -78,8 +114,14 @@ local validate_LogTraceParams = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['message'] ~= NIL, ctx .. '.message must not be null')
-  assert(v['verbose'] ~= NIL, ctx .. '.verbose must not be null')
+  if v['message'] == NIL then
+    v['message'] = nil
+    warn(ctx .. '.message must not be null')
+  end
+  if v['verbose'] == NIL then
+    v['verbose'] = nil
+    warn(ctx .. '.verbose must not be null')
+  end
 end
 
 ---@param v lsp.ProgressParams|vim.NIL|nil
@@ -88,7 +130,10 @@ local validate_ProgressParams = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['token'] ~= NIL, ctx .. '.token must not be null')
+  if v['token'] == NIL then
+    v['token'] = nil
+    warn(ctx .. '.token must not be null')
+  end
 end
 
 ---@param v lsp.Range|vim.NIL|nil
@@ -97,8 +142,14 @@ local validate_Range = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['start'] ~= NIL, ctx .. '.start must not be null')
-  assert(v['end'] ~= NIL, ctx .. '.end must not be null')
+  if v['start'] == NIL then
+    v['start'] = nil
+    warn(ctx .. '.start must not be null')
+  end
+  if v['end'] == NIL then
+    v['end'] = nil
+    warn(ctx .. '.end must not be null')
+  end
 end
 
 ---@param v lsp.CodeDescription|vim.NIL|nil
@@ -107,7 +158,10 @@ local validate_CodeDescription = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['href'] ~= NIL, ctx .. '.href must not be null')
+  if v['href'] == NIL then
+    v['href'] = nil
+    warn(ctx .. '.href must not be null')
+  end
 end
 
 ---@param v lsp.DiagnosticRelatedInformation|vim.NIL|nil
@@ -116,8 +170,14 @@ local validate_DiagnosticRelatedInformation = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['location'] ~= NIL, ctx .. '.location must not be null')
-  assert(v['message'] ~= NIL, ctx .. '.message must not be null')
+  if v['location'] == NIL then
+    v['location'] = nil
+    warn(ctx .. '.location must not be null')
+  end
+  if v['message'] == NIL then
+    v['message'] = nil
+    warn(ctx .. '.message must not be null')
+  end
 end
 
 ---@param v lsp.Diagnostic|vim.NIL|nil
@@ -126,16 +186,40 @@ local validate_Diagnostic = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['range'] ~= NIL, ctx .. '.range must not be null')
+  if v['range'] == NIL then
+    v['range'] = nil
+    warn(ctx .. '.range must not be null')
+  end
   validate_Range(v['range'], ctx .. '.range')
-  assert(v['severity'] ~= NIL, ctx .. '.severity must not be null')
-  assert(v['code'] ~= NIL, ctx .. '.code must not be null')
-  assert(v['codeDescription'] ~= NIL, ctx .. '.codeDescription must not be null')
+  if v['severity'] == NIL then
+    v['severity'] = nil
+    warn(ctx .. '.severity must not be null')
+  end
+  if v['code'] == NIL then
+    v['code'] = nil
+    warn(ctx .. '.code must not be null')
+  end
+  if v['codeDescription'] == NIL then
+    v['codeDescription'] = nil
+    warn(ctx .. '.codeDescription must not be null')
+  end
   validate_CodeDescription(v['codeDescription'], ctx .. '.codeDescription')
-  assert(v['source'] ~= NIL, ctx .. '.source must not be null')
-  assert(v['message'] ~= NIL, ctx .. '.message must not be null')
-  assert(v['tags'] ~= NIL, ctx .. '.tags must not be null')
-  assert(v['relatedInformation'] ~= NIL, ctx .. '.relatedInformation must not be null')
+  if v['source'] == NIL then
+    v['source'] = nil
+    warn(ctx .. '.source must not be null')
+  end
+  if v['message'] == NIL then
+    v['message'] = nil
+    warn(ctx .. '.message must not be null')
+  end
+  if v['tags'] == NIL then
+    v['tags'] = nil
+    warn(ctx .. '.tags must not be null')
+  end
+  if v['relatedInformation'] == NIL then
+    v['relatedInformation'] = nil
+    warn(ctx .. '.relatedInformation must not be null')
+  end
   if type(v['relatedInformation']) == 'table' then
     for i, x in ipairs(v['relatedInformation']) do
       validate_DiagnosticRelatedInformation(x, ctx .. '.relatedInformation[' .. i .. ']')
@@ -149,9 +233,18 @@ local validate_PublishDiagnosticsParams = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['uri'] ~= NIL, ctx .. '.uri must not be null')
-  assert(v['version'] ~= NIL, ctx .. '.version must not be null')
-  assert(v['diagnostics'] ~= NIL, ctx .. '.diagnostics must not be null')
+  if v['uri'] == NIL then
+    v['uri'] = nil
+    warn(ctx .. '.uri must not be null')
+  end
+  if v['version'] == NIL then
+    v['version'] = nil
+    warn(ctx .. '.version must not be null')
+  end
+  if v['diagnostics'] == NIL then
+    v['diagnostics'] = nil
+    warn(ctx .. '.diagnostics must not be null')
+  end
   if type(v['diagnostics']) == 'table' then
     for i, x in ipairs(v['diagnostics']) do
       validate_Diagnostic(x, ctx .. '.diagnostics[' .. i .. ']')
@@ -165,8 +258,14 @@ local validate_LogMessageParams = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['type'] ~= NIL, ctx .. '.type must not be null')
-  assert(v['message'] ~= NIL, ctx .. '.message must not be null')
+  if v['type'] == NIL then
+    v['type'] = nil
+    warn(ctx .. '.type must not be null')
+  end
+  if v['message'] == NIL then
+    v['message'] = nil
+    warn(ctx .. '.message must not be null')
+  end
 end
 
 ---@param v lsp.ShowDocumentParams|vim.NIL|nil
@@ -175,10 +274,22 @@ local validate_ShowDocumentParams = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['uri'] ~= NIL, ctx .. '.uri must not be null')
-  assert(v['external'] ~= NIL, ctx .. '.external must not be null')
-  assert(v['takeFocus'] ~= NIL, ctx .. '.takeFocus must not be null')
-  assert(v['selection'] ~= NIL, ctx .. '.selection must not be null')
+  if v['uri'] == NIL then
+    v['uri'] = nil
+    warn(ctx .. '.uri must not be null')
+  end
+  if v['external'] == NIL then
+    v['external'] = nil
+    warn(ctx .. '.external must not be null')
+  end
+  if v['takeFocus'] == NIL then
+    v['takeFocus'] = nil
+    warn(ctx .. '.takeFocus must not be null')
+  end
+  if v['selection'] == NIL then
+    v['selection'] = nil
+    warn(ctx .. '.selection must not be null')
+  end
   validate_Range(v['selection'], ctx .. '.selection')
 end
 
@@ -188,8 +299,14 @@ local validate_ShowMessageParams = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['type'] ~= NIL, ctx .. '.type must not be null')
-  assert(v['message'] ~= NIL, ctx .. '.message must not be null')
+  if v['type'] == NIL then
+    v['type'] = nil
+    warn(ctx .. '.type must not be null')
+  end
+  if v['message'] == NIL then
+    v['message'] = nil
+    warn(ctx .. '.message must not be null')
+  end
 end
 
 ---@param v lsp.MessageActionItem|vim.NIL|nil
@@ -198,7 +315,10 @@ local validate_MessageActionItem = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['title'] ~= NIL, ctx .. '.title must not be null')
+  if v['title'] == NIL then
+    v['title'] = nil
+    warn(ctx .. '.title must not be null')
+  end
 end
 
 ---@param v lsp.ShowMessageRequestParams|vim.NIL|nil
@@ -207,9 +327,18 @@ local validate_ShowMessageRequestParams = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['type'] ~= NIL, ctx .. '.type must not be null')
-  assert(v['message'] ~= NIL, ctx .. '.message must not be null')
-  assert(v['actions'] ~= NIL, ctx .. '.actions must not be null')
+  if v['type'] == NIL then
+    v['type'] = nil
+    warn(ctx .. '.type must not be null')
+  end
+  if v['message'] == NIL then
+    v['message'] = nil
+    warn(ctx .. '.message must not be null')
+  end
+  if v['actions'] == NIL then
+    v['actions'] = nil
+    warn(ctx .. '.actions must not be null')
+  end
   if type(v['actions']) == 'table' then
     for i, x in ipairs(v['actions']) do
       validate_MessageActionItem(x, ctx .. '.actions[' .. i .. ']')
@@ -223,7 +352,10 @@ local validate_WorkDoneProgressCreateParams = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['token'] ~= NIL, ctx .. '.token must not be null')
+  if v['token'] == NIL then
+    v['token'] = nil
+    warn(ctx .. '.token must not be null')
+  end
 end
 
 ---@param v lsp.TextDocumentEdit|vim.NIL|nil
@@ -232,8 +364,14 @@ local validate_TextDocumentEdit = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['textDocument'] ~= NIL, ctx .. '.textDocument must not be null')
-  assert(v['edits'] ~= NIL, ctx .. '.edits must not be null')
+  if v['textDocument'] == NIL then
+    v['textDocument'] = nil
+    warn(ctx .. '.textDocument must not be null')
+  end
+  if v['edits'] == NIL then
+    v['edits'] = nil
+    warn(ctx .. '.edits must not be null')
+  end
 end
 
 ---@param v lsp.CreateFile|vim.NIL|nil
@@ -242,11 +380,26 @@ local validate_CreateFile = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['kind'] ~= NIL, ctx .. '.kind must not be null')
-  assert(v['uri'] ~= NIL, ctx .. '.uri must not be null')
-  assert(v['options'] ~= NIL, ctx .. '.options must not be null')
-  assert(v['kind'] ~= NIL, ctx .. '.kind must not be null')
-  assert(v['annotationId'] ~= NIL, ctx .. '.annotationId must not be null')
+  if v['kind'] == NIL then
+    v['kind'] = nil
+    warn(ctx .. '.kind must not be null')
+  end
+  if v['uri'] == NIL then
+    v['uri'] = nil
+    warn(ctx .. '.uri must not be null')
+  end
+  if v['options'] == NIL then
+    v['options'] = nil
+    warn(ctx .. '.options must not be null')
+  end
+  if v['kind'] == NIL then
+    v['kind'] = nil
+    warn(ctx .. '.kind must not be null')
+  end
+  if v['annotationId'] == NIL then
+    v['annotationId'] = nil
+    warn(ctx .. '.annotationId must not be null')
+  end
 end
 
 ---@param v lsp.RenameFile|vim.NIL|nil
@@ -255,12 +408,30 @@ local validate_RenameFile = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['kind'] ~= NIL, ctx .. '.kind must not be null')
-  assert(v['oldUri'] ~= NIL, ctx .. '.oldUri must not be null')
-  assert(v['newUri'] ~= NIL, ctx .. '.newUri must not be null')
-  assert(v['options'] ~= NIL, ctx .. '.options must not be null')
-  assert(v['kind'] ~= NIL, ctx .. '.kind must not be null')
-  assert(v['annotationId'] ~= NIL, ctx .. '.annotationId must not be null')
+  if v['kind'] == NIL then
+    v['kind'] = nil
+    warn(ctx .. '.kind must not be null')
+  end
+  if v['oldUri'] == NIL then
+    v['oldUri'] = nil
+    warn(ctx .. '.oldUri must not be null')
+  end
+  if v['newUri'] == NIL then
+    v['newUri'] = nil
+    warn(ctx .. '.newUri must not be null')
+  end
+  if v['options'] == NIL then
+    v['options'] = nil
+    warn(ctx .. '.options must not be null')
+  end
+  if v['kind'] == NIL then
+    v['kind'] = nil
+    warn(ctx .. '.kind must not be null')
+  end
+  if v['annotationId'] == NIL then
+    v['annotationId'] = nil
+    warn(ctx .. '.annotationId must not be null')
+  end
 end
 
 ---@param v lsp.DeleteFile|vim.NIL|nil
@@ -269,11 +440,26 @@ local validate_DeleteFile = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['kind'] ~= NIL, ctx .. '.kind must not be null')
-  assert(v['uri'] ~= NIL, ctx .. '.uri must not be null')
-  assert(v['options'] ~= NIL, ctx .. '.options must not be null')
-  assert(v['kind'] ~= NIL, ctx .. '.kind must not be null')
-  assert(v['annotationId'] ~= NIL, ctx .. '.annotationId must not be null')
+  if v['kind'] == NIL then
+    v['kind'] = nil
+    warn(ctx .. '.kind must not be null')
+  end
+  if v['uri'] == NIL then
+    v['uri'] = nil
+    warn(ctx .. '.uri must not be null')
+  end
+  if v['options'] == NIL then
+    v['options'] = nil
+    warn(ctx .. '.options must not be null')
+  end
+  if v['kind'] == NIL then
+    v['kind'] = nil
+    warn(ctx .. '.kind must not be null')
+  end
+  if v['annotationId'] == NIL then
+    v['annotationId'] = nil
+    warn(ctx .. '.annotationId must not be null')
+  end
 end
 
 ---@param v lsp.WorkspaceEdit|vim.NIL|nil
@@ -282,8 +468,14 @@ local validate_WorkspaceEdit = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['changes'] ~= NIL, ctx .. '.changes must not be null')
-  assert(v['documentChanges'] ~= NIL, ctx .. '.documentChanges must not be null')
+  if v['changes'] == NIL then
+    v['changes'] = nil
+    warn(ctx .. '.changes must not be null')
+  end
+  if v['documentChanges'] == NIL then
+    v['documentChanges'] = nil
+    warn(ctx .. '.documentChanges must not be null')
+  end
   if type(v['documentChanges']) == 'table' then
     for i, x in ipairs(v['documentChanges']) do
       validate_TextDocumentEdit(
@@ -316,7 +508,10 @@ local validate_WorkspaceEdit = function(v, ctx)
       )
     end
   end
-  assert(v['changeAnnotations'] ~= NIL, ctx .. '.changeAnnotations must not be null')
+  if v['changeAnnotations'] == NIL then
+    v['changeAnnotations'] = nil
+    warn(ctx .. '.changeAnnotations must not be null')
+  end
 end
 
 ---@param v lsp.WorkspaceEditMetadata|vim.NIL|nil
@@ -325,7 +520,10 @@ local validate_WorkspaceEditMetadata = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['isRefactoring'] ~= NIL, ctx .. '.isRefactoring must not be null')
+  if v['isRefactoring'] == NIL then
+    v['isRefactoring'] = nil
+    warn(ctx .. '.isRefactoring must not be null')
+  end
 end
 
 ---@param v lsp.ApplyWorkspaceEditParams|vim.NIL|nil
@@ -334,10 +532,19 @@ local validate_ApplyWorkspaceEditParams = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['label'] ~= NIL, ctx .. '.label must not be null')
-  assert(v['edit'] ~= NIL, ctx .. '.edit must not be null')
+  if v['label'] == NIL then
+    v['label'] = nil
+    warn(ctx .. '.label must not be null')
+  end
+  if v['edit'] == NIL then
+    v['edit'] = nil
+    warn(ctx .. '.edit must not be null')
+  end
   validate_WorkspaceEdit(v['edit'], ctx .. '.edit')
-  assert(v['metadata'] ~= NIL, ctx .. '.metadata must not be null')
+  if v['metadata'] == NIL then
+    v['metadata'] = nil
+    warn(ctx .. '.metadata must not be null')
+  end
   validate_WorkspaceEditMetadata(v['metadata'], ctx .. '.metadata')
 end
 
@@ -347,8 +554,14 @@ local validate_ConfigurationItem = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['scopeUri'] ~= NIL, ctx .. '.scopeUri must not be null')
-  assert(v['section'] ~= NIL, ctx .. '.section must not be null')
+  if v['scopeUri'] == NIL then
+    v['scopeUri'] = nil
+    warn(ctx .. '.scopeUri must not be null')
+  end
+  if v['section'] == NIL then
+    v['section'] = nil
+    warn(ctx .. '.section must not be null')
+  end
 end
 
 ---@param v lsp.ConfigurationParams|vim.NIL|nil
@@ -357,7 +570,10 @@ local validate_ConfigurationParams = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['items'] ~= NIL, ctx .. '.items must not be null')
+  if v['items'] == NIL then
+    v['items'] = nil
+    warn(ctx .. '.items must not be null')
+  end
   if type(v['items']) == 'table' then
     for i, x in ipairs(v['items']) do
       validate_ConfigurationItem(x, ctx .. '.items[' .. i .. ']')
@@ -371,7 +587,10 @@ local validate_TextDocumentContentRefreshParams = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['uri'] ~= NIL, ctx .. '.uri must not be null')
+  if v['uri'] == NIL then
+    v['uri'] = nil
+    warn(ctx .. '.uri must not be null')
+  end
 end
 
 ---@param params lsp.RegistrationParams?
@@ -450,14 +669,35 @@ local validate_CallHierarchyItem = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['name'] ~= NIL, ctx .. '.name must not be null')
-  assert(v['kind'] ~= NIL, ctx .. '.kind must not be null')
-  assert(v['tags'] ~= NIL, ctx .. '.tags must not be null')
-  assert(v['detail'] ~= NIL, ctx .. '.detail must not be null')
-  assert(v['uri'] ~= NIL, ctx .. '.uri must not be null')
-  assert(v['range'] ~= NIL, ctx .. '.range must not be null')
+  if v['name'] == NIL then
+    v['name'] = nil
+    warn(ctx .. '.name must not be null')
+  end
+  if v['kind'] == NIL then
+    v['kind'] = nil
+    warn(ctx .. '.kind must not be null')
+  end
+  if v['tags'] == NIL then
+    v['tags'] = nil
+    warn(ctx .. '.tags must not be null')
+  end
+  if v['detail'] == NIL then
+    v['detail'] = nil
+    warn(ctx .. '.detail must not be null')
+  end
+  if v['uri'] == NIL then
+    v['uri'] = nil
+    warn(ctx .. '.uri must not be null')
+  end
+  if v['range'] == NIL then
+    v['range'] = nil
+    warn(ctx .. '.range must not be null')
+  end
   validate_Range(v['range'], ctx .. '.range')
-  assert(v['selectionRange'] ~= NIL, ctx .. '.selectionRange must not be null')
+  if v['selectionRange'] == NIL then
+    v['selectionRange'] = nil
+    warn(ctx .. '.selectionRange must not be null')
+  end
   validate_Range(v['selectionRange'], ctx .. '.selectionRange')
 end
 
@@ -467,9 +707,15 @@ local validate_CallHierarchyIncomingCall = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['from'] ~= NIL, ctx .. '.from must not be null')
+  if v['from'] == NIL then
+    v['from'] = nil
+    warn(ctx .. '.from must not be null')
+  end
   validate_CallHierarchyItem(v['from'], ctx .. '.from')
-  assert(v['fromRanges'] ~= NIL, ctx .. '.fromRanges must not be null')
+  if v['fromRanges'] == NIL then
+    v['fromRanges'] = nil
+    warn(ctx .. '.fromRanges must not be null')
+  end
   if type(v['fromRanges']) == 'table' then
     for i, x in ipairs(v['fromRanges']) do
       validate_Range(x, ctx .. '.fromRanges[' .. i .. ']')
@@ -483,9 +729,15 @@ local validate_CallHierarchyOutgoingCall = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['to'] ~= NIL, ctx .. '.to must not be null')
+  if v['to'] == NIL then
+    v['to'] = nil
+    warn(ctx .. '.to must not be null')
+  end
   validate_CallHierarchyItem(v['to'], ctx .. '.to')
-  assert(v['fromRanges'] ~= NIL, ctx .. '.fromRanges must not be null')
+  if v['fromRanges'] == NIL then
+    v['fromRanges'] = nil
+    warn(ctx .. '.fromRanges must not be null')
+  end
   if type(v['fromRanges']) == 'table' then
     for i, x in ipairs(v['fromRanges']) do
       validate_Range(x, ctx .. '.fromRanges[' .. i .. ']')
@@ -499,7 +751,10 @@ local validate_CodeActionDisabled = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['reason'] ~= NIL, ctx .. '.reason must not be null')
+  if v['reason'] == NIL then
+    v['reason'] = nil
+    warn(ctx .. '.reason must not be null')
+  end
 end
 
 ---@param v lsp.Command|vim.NIL|nil
@@ -508,10 +763,22 @@ local validate_Command = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['title'] ~= NIL, ctx .. '.title must not be null')
-  assert(v['tooltip'] ~= NIL, ctx .. '.tooltip must not be null')
-  assert(v['command'] ~= NIL, ctx .. '.command must not be null')
-  assert(v['arguments'] ~= NIL, ctx .. '.arguments must not be null')
+  if v['title'] == NIL then
+    v['title'] = nil
+    warn(ctx .. '.title must not be null')
+  end
+  if v['tooltip'] == NIL then
+    v['tooltip'] = nil
+    warn(ctx .. '.tooltip must not be null')
+  end
+  if v['command'] == NIL then
+    v['command'] = nil
+    warn(ctx .. '.command must not be null')
+  end
+  if v['arguments'] == NIL then
+    v['arguments'] = nil
+    warn(ctx .. '.arguments must not be null')
+  end
 end
 
 ---@param v lsp.CodeAction|vim.NIL|nil
@@ -520,22 +787,46 @@ local validate_CodeAction = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['title'] ~= NIL, ctx .. '.title must not be null')
-  assert(v['kind'] ~= NIL, ctx .. '.kind must not be null')
-  assert(v['diagnostics'] ~= NIL, ctx .. '.diagnostics must not be null')
+  if v['title'] == NIL then
+    v['title'] = nil
+    warn(ctx .. '.title must not be null')
+  end
+  if v['kind'] == NIL then
+    v['kind'] = nil
+    warn(ctx .. '.kind must not be null')
+  end
+  if v['diagnostics'] == NIL then
+    v['diagnostics'] = nil
+    warn(ctx .. '.diagnostics must not be null')
+  end
   if type(v['diagnostics']) == 'table' then
     for i, x in ipairs(v['diagnostics']) do
       validate_Diagnostic(x, ctx .. '.diagnostics[' .. i .. ']')
     end
   end
-  assert(v['isPreferred'] ~= NIL, ctx .. '.isPreferred must not be null')
-  assert(v['disabled'] ~= NIL, ctx .. '.disabled must not be null')
+  if v['isPreferred'] == NIL then
+    v['isPreferred'] = nil
+    warn(ctx .. '.isPreferred must not be null')
+  end
+  if v['disabled'] == NIL then
+    v['disabled'] = nil
+    warn(ctx .. '.disabled must not be null')
+  end
   validate_CodeActionDisabled(v['disabled'], ctx .. '.disabled')
-  assert(v['edit'] ~= NIL, ctx .. '.edit must not be null')
+  if v['edit'] == NIL then
+    v['edit'] = nil
+    warn(ctx .. '.edit must not be null')
+  end
   validate_WorkspaceEdit(v['edit'], ctx .. '.edit')
-  assert(v['command'] ~= NIL, ctx .. '.command must not be null')
+  if v['command'] == NIL then
+    v['command'] = nil
+    warn(ctx .. '.command must not be null')
+  end
   validate_Command(v['command'], ctx .. '.command')
-  assert(v['tags'] ~= NIL, ctx .. '.tags must not be null')
+  if v['tags'] == NIL then
+    v['tags'] = nil
+    warn(ctx .. '.tags must not be null')
+  end
 end
 
 ---@param v lsp.CodeLens|vim.NIL|nil
@@ -544,9 +835,15 @@ local validate_CodeLens = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['range'] ~= NIL, ctx .. '.range must not be null')
+  if v['range'] == NIL then
+    v['range'] = nil
+    warn(ctx .. '.range must not be null')
+  end
   validate_Range(v['range'], ctx .. '.range')
-  assert(v['command'] ~= NIL, ctx .. '.command must not be null')
+  if v['command'] == NIL then
+    v['command'] = nil
+    warn(ctx .. '.command must not be null')
+  end
   validate_Command(v['command'], ctx .. '.command')
 end
 
@@ -556,8 +853,14 @@ local validate_CompletionItemLabelDetails = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['detail'] ~= NIL, ctx .. '.detail must not be null')
-  assert(v['description'] ~= NIL, ctx .. '.description must not be null')
+  if v['detail'] == NIL then
+    v['detail'] = nil
+    warn(ctx .. '.detail must not be null')
+  end
+  if v['description'] == NIL then
+    v['description'] = nil
+    warn(ctx .. '.description must not be null')
+  end
 end
 
 ---@param v lsp.TextEdit|vim.NIL|nil
@@ -566,9 +869,15 @@ local validate_TextEdit = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['range'] ~= NIL, ctx .. '.range must not be null')
+  if v['range'] == NIL then
+    v['range'] = nil
+    warn(ctx .. '.range must not be null')
+  end
   validate_Range(v['range'], ctx .. '.range')
-  assert(v['newText'] ~= NIL, ctx .. '.newText must not be null')
+  if v['newText'] == NIL then
+    v['newText'] = nil
+    warn(ctx .. '.newText must not be null')
+  end
 end
 
 ---@param v lsp.InsertReplaceEdit|vim.NIL|nil
@@ -577,10 +886,19 @@ local validate_InsertReplaceEdit = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['newText'] ~= NIL, ctx .. '.newText must not be null')
-  assert(v['insert'] ~= NIL, ctx .. '.insert must not be null')
+  if v['newText'] == NIL then
+    v['newText'] = nil
+    warn(ctx .. '.newText must not be null')
+  end
+  if v['insert'] == NIL then
+    v['insert'] = nil
+    warn(ctx .. '.insert must not be null')
+  end
   validate_Range(v['insert'], ctx .. '.insert')
-  assert(v['replace'] ~= NIL, ctx .. '.replace must not be null')
+  if v['replace'] == NIL then
+    v['replace'] = nil
+    warn(ctx .. '.replace must not be null')
+  end
   validate_Range(v['replace'], ctx .. '.replace')
 end
 
@@ -590,35 +908,89 @@ local validate_CompletionItem = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['label'] ~= NIL, ctx .. '.label must not be null')
-  assert(v['labelDetails'] ~= NIL, ctx .. '.labelDetails must not be null')
+  if v['label'] == NIL then
+    v['label'] = nil
+    warn(ctx .. '.label must not be null')
+  end
+  if v['labelDetails'] == NIL then
+    v['labelDetails'] = nil
+    warn(ctx .. '.labelDetails must not be null')
+  end
   validate_CompletionItemLabelDetails(v['labelDetails'], ctx .. '.labelDetails')
-  assert(v['kind'] ~= NIL, ctx .. '.kind must not be null')
-  assert(v['tags'] ~= NIL, ctx .. '.tags must not be null')
-  assert(v['detail'] ~= NIL, ctx .. '.detail must not be null')
-  assert(v['documentation'] ~= NIL, ctx .. '.documentation must not be null')
-  assert(v['deprecated'] ~= NIL, ctx .. '.deprecated must not be null')
-  assert(v['preselect'] ~= NIL, ctx .. '.preselect must not be null')
-  assert(v['sortText'] ~= NIL, ctx .. '.sortText must not be null')
-  assert(v['filterText'] ~= NIL, ctx .. '.filterText must not be null')
-  assert(v['insertText'] ~= NIL, ctx .. '.insertText must not be null')
-  assert(v['insertTextFormat'] ~= NIL, ctx .. '.insertTextFormat must not be null')
-  assert(v['insertTextMode'] ~= NIL, ctx .. '.insertTextMode must not be null')
-  assert(v['textEdit'] ~= NIL, ctx .. '.textEdit must not be null')
+  if v['kind'] == NIL then
+    v['kind'] = nil
+    warn(ctx .. '.kind must not be null')
+  end
+  if v['tags'] == NIL then
+    v['tags'] = nil
+    warn(ctx .. '.tags must not be null')
+  end
+  if v['detail'] == NIL then
+    v['detail'] = nil
+    warn(ctx .. '.detail must not be null')
+  end
+  if v['documentation'] == NIL then
+    v['documentation'] = nil
+    warn(ctx .. '.documentation must not be null')
+  end
+  if v['deprecated'] == NIL then
+    v['deprecated'] = nil
+    warn(ctx .. '.deprecated must not be null')
+  end
+  if v['preselect'] == NIL then
+    v['preselect'] = nil
+    warn(ctx .. '.preselect must not be null')
+  end
+  if v['sortText'] == NIL then
+    v['sortText'] = nil
+    warn(ctx .. '.sortText must not be null')
+  end
+  if v['filterText'] == NIL then
+    v['filterText'] = nil
+    warn(ctx .. '.filterText must not be null')
+  end
+  if v['insertText'] == NIL then
+    v['insertText'] = nil
+    warn(ctx .. '.insertText must not be null')
+  end
+  if v['insertTextFormat'] == NIL then
+    v['insertTextFormat'] = nil
+    warn(ctx .. '.insertTextFormat must not be null')
+  end
+  if v['insertTextMode'] == NIL then
+    v['insertTextMode'] = nil
+    warn(ctx .. '.insertTextMode must not be null')
+  end
+  if v['textEdit'] == NIL then
+    v['textEdit'] = nil
+    warn(ctx .. '.textEdit must not be null')
+  end
   validate_TextEdit(v['textEdit'] --[[@as lsp.TextEdit|vim.NIL|nil]], ctx .. '.textEdit')
   validate_InsertReplaceEdit(
     v['textEdit'] --[[@as lsp.InsertReplaceEdit|vim.NIL|nil]],
     ctx .. '.textEdit'
   )
-  assert(v['textEditText'] ~= NIL, ctx .. '.textEditText must not be null')
-  assert(v['additionalTextEdits'] ~= NIL, ctx .. '.additionalTextEdits must not be null')
+  if v['textEditText'] == NIL then
+    v['textEditText'] = nil
+    warn(ctx .. '.textEditText must not be null')
+  end
+  if v['additionalTextEdits'] == NIL then
+    v['additionalTextEdits'] = nil
+    warn(ctx .. '.additionalTextEdits must not be null')
+  end
   if type(v['additionalTextEdits']) == 'table' then
     for i, x in ipairs(v['additionalTextEdits']) do
       validate_TextEdit(x, ctx .. '.additionalTextEdits[' .. i .. ']')
     end
   end
-  assert(v['commitCharacters'] ~= NIL, ctx .. '.commitCharacters must not be null')
-  assert(v['command'] ~= NIL, ctx .. '.command must not be null')
+  if v['commitCharacters'] == NIL then
+    v['commitCharacters'] = nil
+    warn(ctx .. '.commitCharacters must not be null')
+  end
+  if v['command'] == NIL then
+    v['command'] = nil
+    warn(ctx .. '.command must not be null')
+  end
   validate_Command(v['command'], ctx .. '.command')
 end
 
@@ -628,10 +1000,19 @@ local validate_DocumentLink = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['range'] ~= NIL, ctx .. '.range must not be null')
+  if v['range'] == NIL then
+    v['range'] = nil
+    warn(ctx .. '.range must not be null')
+  end
   validate_Range(v['range'], ctx .. '.range')
-  assert(v['target'] ~= NIL, ctx .. '.target must not be null')
-  assert(v['tooltip'] ~= NIL, ctx .. '.tooltip must not be null')
+  if v['target'] == NIL then
+    v['target'] = nil
+    warn(ctx .. '.target must not be null')
+  end
+  if v['tooltip'] == NIL then
+    v['tooltip'] = nil
+    warn(ctx .. '.tooltip must not be null')
+  end
 end
 
 ---@param v lsp.NotebookDocumentSyncOptions|vim.NIL|nil
@@ -640,8 +1021,14 @@ local validate_NotebookDocumentSyncOptions = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['notebookSelector'] ~= NIL, ctx .. '.notebookSelector must not be null')
-  assert(v['save'] ~= NIL, ctx .. '.save must not be null')
+  if v['notebookSelector'] == NIL then
+    v['notebookSelector'] = nil
+    warn(ctx .. '.notebookSelector must not be null')
+  end
+  if v['save'] == NIL then
+    v['save'] = nil
+    warn(ctx .. '.save must not be null')
+  end
 end
 
 ---@param v lsp.NotebookDocumentSyncRegistrationOptions|vim.NIL|nil
@@ -650,9 +1037,18 @@ local validate_NotebookDocumentSyncRegistrationOptions = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['notebookSelector'] ~= NIL, ctx .. '.notebookSelector must not be null')
-  assert(v['save'] ~= NIL, ctx .. '.save must not be null')
-  assert(v['id'] ~= NIL, ctx .. '.id must not be null')
+  if v['notebookSelector'] == NIL then
+    v['notebookSelector'] = nil
+    warn(ctx .. '.notebookSelector must not be null')
+  end
+  if v['save'] == NIL then
+    v['save'] = nil
+    warn(ctx .. '.save must not be null')
+  end
+  if v['id'] == NIL then
+    v['id'] = nil
+    warn(ctx .. '.id must not be null')
+  end
 end
 
 ---@param v lsp.CompletionOptions|vim.NIL|nil
@@ -661,11 +1057,26 @@ local validate_CompletionOptions = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['triggerCharacters'] ~= NIL, ctx .. '.triggerCharacters must not be null')
-  assert(v['allCommitCharacters'] ~= NIL, ctx .. '.allCommitCharacters must not be null')
-  assert(v['resolveProvider'] ~= NIL, ctx .. '.resolveProvider must not be null')
-  assert(v['completionItem'] ~= NIL, ctx .. '.completionItem must not be null')
-  assert(v['workDoneProgress'] ~= NIL, ctx .. '.workDoneProgress must not be null')
+  if v['triggerCharacters'] == NIL then
+    v['triggerCharacters'] = nil
+    warn(ctx .. '.triggerCharacters must not be null')
+  end
+  if v['allCommitCharacters'] == NIL then
+    v['allCommitCharacters'] = nil
+    warn(ctx .. '.allCommitCharacters must not be null')
+  end
+  if v['resolveProvider'] == NIL then
+    v['resolveProvider'] = nil
+    warn(ctx .. '.resolveProvider must not be null')
+  end
+  if v['completionItem'] == NIL then
+    v['completionItem'] = nil
+    warn(ctx .. '.completionItem must not be null')
+  end
+  if v['workDoneProgress'] == NIL then
+    v['workDoneProgress'] = nil
+    warn(ctx .. '.workDoneProgress must not be null')
+  end
 end
 
 ---@param v lsp.SignatureHelpOptions|vim.NIL|nil
@@ -674,9 +1085,18 @@ local validate_SignatureHelpOptions = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['triggerCharacters'] ~= NIL, ctx .. '.triggerCharacters must not be null')
-  assert(v['retriggerCharacters'] ~= NIL, ctx .. '.retriggerCharacters must not be null')
-  assert(v['workDoneProgress'] ~= NIL, ctx .. '.workDoneProgress must not be null')
+  if v['triggerCharacters'] == NIL then
+    v['triggerCharacters'] = nil
+    warn(ctx .. '.triggerCharacters must not be null')
+  end
+  if v['retriggerCharacters'] == NIL then
+    v['retriggerCharacters'] = nil
+    warn(ctx .. '.retriggerCharacters must not be null')
+  end
+  if v['workDoneProgress'] == NIL then
+    v['workDoneProgress'] = nil
+    warn(ctx .. '.workDoneProgress must not be null')
+  end
 end
 
 ---@param v lsp.CodeLensOptions|vim.NIL|nil
@@ -685,8 +1105,14 @@ local validate_CodeLensOptions = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['resolveProvider'] ~= NIL, ctx .. '.resolveProvider must not be null')
-  assert(v['workDoneProgress'] ~= NIL, ctx .. '.workDoneProgress must not be null')
+  if v['resolveProvider'] == NIL then
+    v['resolveProvider'] = nil
+    warn(ctx .. '.resolveProvider must not be null')
+  end
+  if v['workDoneProgress'] == NIL then
+    v['workDoneProgress'] = nil
+    warn(ctx .. '.workDoneProgress must not be null')
+  end
 end
 
 ---@param v lsp.DocumentLinkOptions|vim.NIL|nil
@@ -695,8 +1121,14 @@ local validate_DocumentLinkOptions = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['resolveProvider'] ~= NIL, ctx .. '.resolveProvider must not be null')
-  assert(v['workDoneProgress'] ~= NIL, ctx .. '.workDoneProgress must not be null')
+  if v['resolveProvider'] == NIL then
+    v['resolveProvider'] = nil
+    warn(ctx .. '.resolveProvider must not be null')
+  end
+  if v['workDoneProgress'] == NIL then
+    v['workDoneProgress'] = nil
+    warn(ctx .. '.workDoneProgress must not be null')
+  end
 end
 
 ---@param v lsp.DocumentOnTypeFormattingOptions|vim.NIL|nil
@@ -705,8 +1137,14 @@ local validate_DocumentOnTypeFormattingOptions = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['firstTriggerCharacter'] ~= NIL, ctx .. '.firstTriggerCharacter must not be null')
-  assert(v['moreTriggerCharacter'] ~= NIL, ctx .. '.moreTriggerCharacter must not be null')
+  if v['firstTriggerCharacter'] == NIL then
+    v['firstTriggerCharacter'] = nil
+    warn(ctx .. '.firstTriggerCharacter must not be null')
+  end
+  if v['moreTriggerCharacter'] == NIL then
+    v['moreTriggerCharacter'] = nil
+    warn(ctx .. '.moreTriggerCharacter must not be null')
+  end
 end
 
 ---@param v lsp.ExecuteCommandOptions|vim.NIL|nil
@@ -715,8 +1153,14 @@ local validate_ExecuteCommandOptions = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['commands'] ~= NIL, ctx .. '.commands must not be null')
-  assert(v['workDoneProgress'] ~= NIL, ctx .. '.workDoneProgress must not be null')
+  if v['commands'] == NIL then
+    v['commands'] = nil
+    warn(ctx .. '.commands must not be null')
+  end
+  if v['workDoneProgress'] == NIL then
+    v['workDoneProgress'] = nil
+    warn(ctx .. '.workDoneProgress must not be null')
+  end
 end
 
 ---@param v lsp.SemanticTokensOptions|vim.NIL|nil
@@ -725,10 +1169,22 @@ local validate_SemanticTokensOptions = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['legend'] ~= NIL, ctx .. '.legend must not be null')
-  assert(v['range'] ~= NIL, ctx .. '.range must not be null')
-  assert(v['full'] ~= NIL, ctx .. '.full must not be null')
-  assert(v['workDoneProgress'] ~= NIL, ctx .. '.workDoneProgress must not be null')
+  if v['legend'] == NIL then
+    v['legend'] = nil
+    warn(ctx .. '.legend must not be null')
+  end
+  if v['range'] == NIL then
+    v['range'] = nil
+    warn(ctx .. '.range must not be null')
+  end
+  if v['full'] == NIL then
+    v['full'] = nil
+    warn(ctx .. '.full must not be null')
+  end
+  if v['workDoneProgress'] == NIL then
+    v['workDoneProgress'] = nil
+    warn(ctx .. '.workDoneProgress must not be null')
+  end
 end
 
 ---@param v lsp.SemanticTokensRegistrationOptions|vim.NIL|nil
@@ -737,11 +1193,26 @@ local validate_SemanticTokensRegistrationOptions = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['legend'] ~= NIL, ctx .. '.legend must not be null')
-  assert(v['range'] ~= NIL, ctx .. '.range must not be null')
-  assert(v['full'] ~= NIL, ctx .. '.full must not be null')
-  assert(v['workDoneProgress'] ~= NIL, ctx .. '.workDoneProgress must not be null')
-  assert(v['id'] ~= NIL, ctx .. '.id must not be null')
+  if v['legend'] == NIL then
+    v['legend'] = nil
+    warn(ctx .. '.legend must not be null')
+  end
+  if v['range'] == NIL then
+    v['range'] = nil
+    warn(ctx .. '.range must not be null')
+  end
+  if v['full'] == NIL then
+    v['full'] = nil
+    warn(ctx .. '.full must not be null')
+  end
+  if v['workDoneProgress'] == NIL then
+    v['workDoneProgress'] = nil
+    warn(ctx .. '.workDoneProgress must not be null')
+  end
+  if v['id'] == NIL then
+    v['id'] = nil
+    warn(ctx .. '.id must not be null')
+  end
 end
 
 ---@param v lsp.DiagnosticOptions|vim.NIL|nil
@@ -750,10 +1221,22 @@ local validate_DiagnosticOptions = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['identifier'] ~= NIL, ctx .. '.identifier must not be null')
-  assert(v['interFileDependencies'] ~= NIL, ctx .. '.interFileDependencies must not be null')
-  assert(v['workspaceDiagnostics'] ~= NIL, ctx .. '.workspaceDiagnostics must not be null')
-  assert(v['workDoneProgress'] ~= NIL, ctx .. '.workDoneProgress must not be null')
+  if v['identifier'] == NIL then
+    v['identifier'] = nil
+    warn(ctx .. '.identifier must not be null')
+  end
+  if v['interFileDependencies'] == NIL then
+    v['interFileDependencies'] = nil
+    warn(ctx .. '.interFileDependencies must not be null')
+  end
+  if v['workspaceDiagnostics'] == NIL then
+    v['workspaceDiagnostics'] = nil
+    warn(ctx .. '.workspaceDiagnostics must not be null')
+  end
+  if v['workDoneProgress'] == NIL then
+    v['workDoneProgress'] = nil
+    warn(ctx .. '.workDoneProgress must not be null')
+  end
 end
 
 ---@param v lsp.DiagnosticRegistrationOptions|vim.NIL|nil
@@ -762,11 +1245,26 @@ local validate_DiagnosticRegistrationOptions = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['identifier'] ~= NIL, ctx .. '.identifier must not be null')
-  assert(v['interFileDependencies'] ~= NIL, ctx .. '.interFileDependencies must not be null')
-  assert(v['workspaceDiagnostics'] ~= NIL, ctx .. '.workspaceDiagnostics must not be null')
-  assert(v['workDoneProgress'] ~= NIL, ctx .. '.workDoneProgress must not be null')
-  assert(v['id'] ~= NIL, ctx .. '.id must not be null')
+  if v['identifier'] == NIL then
+    v['identifier'] = nil
+    warn(ctx .. '.identifier must not be null')
+  end
+  if v['interFileDependencies'] == NIL then
+    v['interFileDependencies'] = nil
+    warn(ctx .. '.interFileDependencies must not be null')
+  end
+  if v['workspaceDiagnostics'] == NIL then
+    v['workspaceDiagnostics'] = nil
+    warn(ctx .. '.workspaceDiagnostics must not be null')
+  end
+  if v['workDoneProgress'] == NIL then
+    v['workDoneProgress'] = nil
+    warn(ctx .. '.workDoneProgress must not be null')
+  end
+  if v['id'] == NIL then
+    v['id'] = nil
+    warn(ctx .. '.id must not be null')
+  end
 end
 
 ---@param v lsp.WorkspaceOptions|vim.NIL|nil
@@ -775,9 +1273,18 @@ local validate_WorkspaceOptions = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['workspaceFolders'] ~= NIL, ctx .. '.workspaceFolders must not be null')
-  assert(v['fileOperations'] ~= NIL, ctx .. '.fileOperations must not be null')
-  assert(v['textDocumentContent'] ~= NIL, ctx .. '.textDocumentContent must not be null')
+  if v['workspaceFolders'] == NIL then
+    v['workspaceFolders'] = nil
+    warn(ctx .. '.workspaceFolders must not be null')
+  end
+  if v['fileOperations'] == NIL then
+    v['fileOperations'] = nil
+    warn(ctx .. '.fileOperations must not be null')
+  end
+  if v['textDocumentContent'] == NIL then
+    v['textDocumentContent'] = nil
+    warn(ctx .. '.textDocumentContent must not be null')
+  end
 end
 
 ---@param v lsp.ServerCapabilities|vim.NIL|nil
@@ -786,9 +1293,18 @@ local validate_ServerCapabilities = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['positionEncoding'] ~= NIL, ctx .. '.positionEncoding must not be null')
-  assert(v['textDocumentSync'] ~= NIL, ctx .. '.textDocumentSync must not be null')
-  assert(v['notebookDocumentSync'] ~= NIL, ctx .. '.notebookDocumentSync must not be null')
+  if v['positionEncoding'] == NIL then
+    v['positionEncoding'] = nil
+    warn(ctx .. '.positionEncoding must not be null')
+  end
+  if v['textDocumentSync'] == NIL then
+    v['textDocumentSync'] = nil
+    warn(ctx .. '.textDocumentSync must not be null')
+  end
+  if v['notebookDocumentSync'] == NIL then
+    v['notebookDocumentSync'] = nil
+    warn(ctx .. '.notebookDocumentSync must not be null')
+  end
   validate_NotebookDocumentSyncOptions(
     v['notebookDocumentSync'] --[[@as lsp.NotebookDocumentSyncOptions|vim.NIL|nil]],
     ctx .. '.notebookDocumentSync'
@@ -797,55 +1313,115 @@ local validate_ServerCapabilities = function(v, ctx)
     v['notebookDocumentSync'] --[[@as lsp.NotebookDocumentSyncRegistrationOptions|vim.NIL|nil]],
     ctx .. '.notebookDocumentSync'
   )
-  assert(v['completionProvider'] ~= NIL, ctx .. '.completionProvider must not be null')
+  if v['completionProvider'] == NIL then
+    v['completionProvider'] = nil
+    warn(ctx .. '.completionProvider must not be null')
+  end
   validate_CompletionOptions(v['completionProvider'], ctx .. '.completionProvider')
-  assert(v['hoverProvider'] ~= NIL, ctx .. '.hoverProvider must not be null')
-  assert(v['signatureHelpProvider'] ~= NIL, ctx .. '.signatureHelpProvider must not be null')
+  if v['hoverProvider'] == NIL then
+    v['hoverProvider'] = nil
+    warn(ctx .. '.hoverProvider must not be null')
+  end
+  if v['signatureHelpProvider'] == NIL then
+    v['signatureHelpProvider'] = nil
+    warn(ctx .. '.signatureHelpProvider must not be null')
+  end
   validate_SignatureHelpOptions(v['signatureHelpProvider'], ctx .. '.signatureHelpProvider')
-  assert(v['declarationProvider'] ~= NIL, ctx .. '.declarationProvider must not be null')
-  assert(v['definitionProvider'] ~= NIL, ctx .. '.definitionProvider must not be null')
-  assert(v['typeDefinitionProvider'] ~= NIL, ctx .. '.typeDefinitionProvider must not be null')
-  assert(v['implementationProvider'] ~= NIL, ctx .. '.implementationProvider must not be null')
-  assert(v['referencesProvider'] ~= NIL, ctx .. '.referencesProvider must not be null')
-  assert(
-    v['documentHighlightProvider'] ~= NIL,
-    ctx .. '.documentHighlightProvider must not be null'
-  )
-  assert(v['documentSymbolProvider'] ~= NIL, ctx .. '.documentSymbolProvider must not be null')
-  assert(v['codeActionProvider'] ~= NIL, ctx .. '.codeActionProvider must not be null')
-  assert(v['codeLensProvider'] ~= NIL, ctx .. '.codeLensProvider must not be null')
+  if v['declarationProvider'] == NIL then
+    v['declarationProvider'] = nil
+    warn(ctx .. '.declarationProvider must not be null')
+  end
+  if v['definitionProvider'] == NIL then
+    v['definitionProvider'] = nil
+    warn(ctx .. '.definitionProvider must not be null')
+  end
+  if v['typeDefinitionProvider'] == NIL then
+    v['typeDefinitionProvider'] = nil
+    warn(ctx .. '.typeDefinitionProvider must not be null')
+  end
+  if v['implementationProvider'] == NIL then
+    v['implementationProvider'] = nil
+    warn(ctx .. '.implementationProvider must not be null')
+  end
+  if v['referencesProvider'] == NIL then
+    v['referencesProvider'] = nil
+    warn(ctx .. '.referencesProvider must not be null')
+  end
+  if v['documentHighlightProvider'] == NIL then
+    v['documentHighlightProvider'] = nil
+    warn(ctx .. '.documentHighlightProvider must not be null')
+  end
+  if v['documentSymbolProvider'] == NIL then
+    v['documentSymbolProvider'] = nil
+    warn(ctx .. '.documentSymbolProvider must not be null')
+  end
+  if v['codeActionProvider'] == NIL then
+    v['codeActionProvider'] = nil
+    warn(ctx .. '.codeActionProvider must not be null')
+  end
+  if v['codeLensProvider'] == NIL then
+    v['codeLensProvider'] = nil
+    warn(ctx .. '.codeLensProvider must not be null')
+  end
   validate_CodeLensOptions(v['codeLensProvider'], ctx .. '.codeLensProvider')
-  assert(v['documentLinkProvider'] ~= NIL, ctx .. '.documentLinkProvider must not be null')
+  if v['documentLinkProvider'] == NIL then
+    v['documentLinkProvider'] = nil
+    warn(ctx .. '.documentLinkProvider must not be null')
+  end
   validate_DocumentLinkOptions(v['documentLinkProvider'], ctx .. '.documentLinkProvider')
-  assert(v['colorProvider'] ~= NIL, ctx .. '.colorProvider must not be null')
-  assert(v['workspaceSymbolProvider'] ~= NIL, ctx .. '.workspaceSymbolProvider must not be null')
-  assert(
-    v['documentFormattingProvider'] ~= NIL,
-    ctx .. '.documentFormattingProvider must not be null'
-  )
-  assert(
-    v['documentRangeFormattingProvider'] ~= NIL,
-    ctx .. '.documentRangeFormattingProvider must not be null'
-  )
-  assert(
-    v['documentOnTypeFormattingProvider'] ~= NIL,
-    ctx .. '.documentOnTypeFormattingProvider must not be null'
-  )
+  if v['colorProvider'] == NIL then
+    v['colorProvider'] = nil
+    warn(ctx .. '.colorProvider must not be null')
+  end
+  if v['workspaceSymbolProvider'] == NIL then
+    v['workspaceSymbolProvider'] = nil
+    warn(ctx .. '.workspaceSymbolProvider must not be null')
+  end
+  if v['documentFormattingProvider'] == NIL then
+    v['documentFormattingProvider'] = nil
+    warn(ctx .. '.documentFormattingProvider must not be null')
+  end
+  if v['documentRangeFormattingProvider'] == NIL then
+    v['documentRangeFormattingProvider'] = nil
+    warn(ctx .. '.documentRangeFormattingProvider must not be null')
+  end
+  if v['documentOnTypeFormattingProvider'] == NIL then
+    v['documentOnTypeFormattingProvider'] = nil
+    warn(ctx .. '.documentOnTypeFormattingProvider must not be null')
+  end
   validate_DocumentOnTypeFormattingOptions(
     v['documentOnTypeFormattingProvider'],
     ctx .. '.documentOnTypeFormattingProvider'
   )
-  assert(v['renameProvider'] ~= NIL, ctx .. '.renameProvider must not be null')
-  assert(v['foldingRangeProvider'] ~= NIL, ctx .. '.foldingRangeProvider must not be null')
-  assert(v['selectionRangeProvider'] ~= NIL, ctx .. '.selectionRangeProvider must not be null')
-  assert(v['executeCommandProvider'] ~= NIL, ctx .. '.executeCommandProvider must not be null')
+  if v['renameProvider'] == NIL then
+    v['renameProvider'] = nil
+    warn(ctx .. '.renameProvider must not be null')
+  end
+  if v['foldingRangeProvider'] == NIL then
+    v['foldingRangeProvider'] = nil
+    warn(ctx .. '.foldingRangeProvider must not be null')
+  end
+  if v['selectionRangeProvider'] == NIL then
+    v['selectionRangeProvider'] = nil
+    warn(ctx .. '.selectionRangeProvider must not be null')
+  end
+  if v['executeCommandProvider'] == NIL then
+    v['executeCommandProvider'] = nil
+    warn(ctx .. '.executeCommandProvider must not be null')
+  end
   validate_ExecuteCommandOptions(v['executeCommandProvider'], ctx .. '.executeCommandProvider')
-  assert(v['callHierarchyProvider'] ~= NIL, ctx .. '.callHierarchyProvider must not be null')
-  assert(
-    v['linkedEditingRangeProvider'] ~= NIL,
-    ctx .. '.linkedEditingRangeProvider must not be null'
-  )
-  assert(v['semanticTokensProvider'] ~= NIL, ctx .. '.semanticTokensProvider must not be null')
+  if v['callHierarchyProvider'] == NIL then
+    v['callHierarchyProvider'] = nil
+    warn(ctx .. '.callHierarchyProvider must not be null')
+  end
+  if v['linkedEditingRangeProvider'] == NIL then
+    v['linkedEditingRangeProvider'] = nil
+    warn(ctx .. '.linkedEditingRangeProvider must not be null')
+  end
+  if v['semanticTokensProvider'] == NIL then
+    v['semanticTokensProvider'] = nil
+    warn(ctx .. '.semanticTokensProvider must not be null')
+  end
   validate_SemanticTokensOptions(
     v['semanticTokensProvider'] --[[@as lsp.SemanticTokensOptions|vim.NIL|nil]],
     ctx .. '.semanticTokensProvider'
@@ -854,11 +1430,26 @@ local validate_ServerCapabilities = function(v, ctx)
     v['semanticTokensProvider'] --[[@as lsp.SemanticTokensRegistrationOptions|vim.NIL|nil]],
     ctx .. '.semanticTokensProvider'
   )
-  assert(v['monikerProvider'] ~= NIL, ctx .. '.monikerProvider must not be null')
-  assert(v['typeHierarchyProvider'] ~= NIL, ctx .. '.typeHierarchyProvider must not be null')
-  assert(v['inlineValueProvider'] ~= NIL, ctx .. '.inlineValueProvider must not be null')
-  assert(v['inlayHintProvider'] ~= NIL, ctx .. '.inlayHintProvider must not be null')
-  assert(v['diagnosticProvider'] ~= NIL, ctx .. '.diagnosticProvider must not be null')
+  if v['monikerProvider'] == NIL then
+    v['monikerProvider'] = nil
+    warn(ctx .. '.monikerProvider must not be null')
+  end
+  if v['typeHierarchyProvider'] == NIL then
+    v['typeHierarchyProvider'] = nil
+    warn(ctx .. '.typeHierarchyProvider must not be null')
+  end
+  if v['inlineValueProvider'] == NIL then
+    v['inlineValueProvider'] = nil
+    warn(ctx .. '.inlineValueProvider must not be null')
+  end
+  if v['inlayHintProvider'] == NIL then
+    v['inlayHintProvider'] = nil
+    warn(ctx .. '.inlayHintProvider must not be null')
+  end
+  if v['diagnosticProvider'] == NIL then
+    v['diagnosticProvider'] = nil
+    warn(ctx .. '.diagnosticProvider must not be null')
+  end
   validate_DiagnosticOptions(
     v['diagnosticProvider'] --[[@as lsp.DiagnosticOptions|vim.NIL|nil]],
     ctx .. '.diagnosticProvider'
@@ -867,8 +1458,14 @@ local validate_ServerCapabilities = function(v, ctx)
     v['diagnosticProvider'] --[[@as lsp.DiagnosticRegistrationOptions|vim.NIL|nil]],
     ctx .. '.diagnosticProvider'
   )
-  assert(v['inlineCompletionProvider'] ~= NIL, ctx .. '.inlineCompletionProvider must not be null')
-  assert(v['workspace'] ~= NIL, ctx .. '.workspace must not be null')
+  if v['inlineCompletionProvider'] == NIL then
+    v['inlineCompletionProvider'] = nil
+    warn(ctx .. '.inlineCompletionProvider must not be null')
+  end
+  if v['workspace'] == NIL then
+    v['workspace'] = nil
+    warn(ctx .. '.workspace must not be null')
+  end
   validate_WorkspaceOptions(v['workspace'], ctx .. '.workspace')
 end
 
@@ -878,8 +1475,14 @@ local validate_ServerInfo = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['name'] ~= NIL, ctx .. '.name must not be null')
-  assert(v['version'] ~= NIL, ctx .. '.version must not be null')
+  if v['name'] == NIL then
+    v['name'] = nil
+    warn(ctx .. '.name must not be null')
+  end
+  if v['version'] == NIL then
+    v['version'] = nil
+    warn(ctx .. '.version must not be null')
+  end
 end
 
 ---@param v lsp.InitializeResult|vim.NIL|nil
@@ -888,9 +1491,15 @@ local validate_InitializeResult = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['capabilities'] ~= NIL, ctx .. '.capabilities must not be null')
+  if v['capabilities'] == NIL then
+    v['capabilities'] = nil
+    warn(ctx .. '.capabilities must not be null')
+  end
   validate_ServerCapabilities(v['capabilities'], ctx .. '.capabilities')
-  assert(v['serverInfo'] ~= NIL, ctx .. '.serverInfo must not be null')
+  if v['serverInfo'] == NIL then
+    v['serverInfo'] = nil
+    warn(ctx .. '.serverInfo must not be null')
+  end
   validate_ServerInfo(v['serverInfo'], ctx .. '.serverInfo')
 end
 
@@ -900,8 +1509,14 @@ local validate_Position = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['line'] ~= NIL, ctx .. '.line must not be null')
-  assert(v['character'] ~= NIL, ctx .. '.character must not be null')
+  if v['line'] == NIL then
+    v['line'] = nil
+    warn(ctx .. '.line must not be null')
+  end
+  if v['character'] == NIL then
+    v['character'] = nil
+    warn(ctx .. '.character must not be null')
+  end
 end
 
 ---@param v lsp.InlayHint|vim.NIL|nil
@@ -910,19 +1525,40 @@ local validate_InlayHint = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['position'] ~= NIL, ctx .. '.position must not be null')
+  if v['position'] == NIL then
+    v['position'] = nil
+    warn(ctx .. '.position must not be null')
+  end
   validate_Position(v['position'], ctx .. '.position')
-  assert(v['label'] ~= NIL, ctx .. '.label must not be null')
-  assert(v['kind'] ~= NIL, ctx .. '.kind must not be null')
-  assert(v['textEdits'] ~= NIL, ctx .. '.textEdits must not be null')
+  if v['label'] == NIL then
+    v['label'] = nil
+    warn(ctx .. '.label must not be null')
+  end
+  if v['kind'] == NIL then
+    v['kind'] = nil
+    warn(ctx .. '.kind must not be null')
+  end
+  if v['textEdits'] == NIL then
+    v['textEdits'] = nil
+    warn(ctx .. '.textEdits must not be null')
+  end
   if type(v['textEdits']) == 'table' then
     for i, x in ipairs(v['textEdits']) do
       validate_TextEdit(x, ctx .. '.textEdits[' .. i .. ']')
     end
   end
-  assert(v['tooltip'] ~= NIL, ctx .. '.tooltip must not be null')
-  assert(v['paddingLeft'] ~= NIL, ctx .. '.paddingLeft must not be null')
-  assert(v['paddingRight'] ~= NIL, ctx .. '.paddingRight must not be null')
+  if v['tooltip'] == NIL then
+    v['tooltip'] = nil
+    warn(ctx .. '.tooltip must not be null')
+  end
+  if v['paddingLeft'] == NIL then
+    v['paddingLeft'] = nil
+    warn(ctx .. '.paddingLeft must not be null')
+  end
+  if v['paddingRight'] == NIL then
+    v['paddingRight'] = nil
+    warn(ctx .. '.paddingRight must not be null')
+  end
 end
 
 ---@param v lsp.ColorPresentation|vim.NIL|nil
@@ -931,10 +1567,19 @@ local validate_ColorPresentation = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['label'] ~= NIL, ctx .. '.label must not be null')
-  assert(v['textEdit'] ~= NIL, ctx .. '.textEdit must not be null')
+  if v['label'] == NIL then
+    v['label'] = nil
+    warn(ctx .. '.label must not be null')
+  end
+  if v['textEdit'] == NIL then
+    v['textEdit'] = nil
+    warn(ctx .. '.textEdit must not be null')
+  end
   validate_TextEdit(v['textEdit'], ctx .. '.textEdit')
-  assert(v['additionalTextEdits'] ~= NIL, ctx .. '.additionalTextEdits must not be null')
+  if v['additionalTextEdits'] == NIL then
+    v['additionalTextEdits'] = nil
+    warn(ctx .. '.additionalTextEdits must not be null')
+  end
   if type(v['additionalTextEdits']) == 'table' then
     for i, x in ipairs(v['additionalTextEdits']) do
       validate_TextEdit(x, ctx .. '.additionalTextEdits[' .. i .. ']')
@@ -948,10 +1593,22 @@ local validate_Color = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['red'] ~= NIL, ctx .. '.red must not be null')
-  assert(v['green'] ~= NIL, ctx .. '.green must not be null')
-  assert(v['blue'] ~= NIL, ctx .. '.blue must not be null')
-  assert(v['alpha'] ~= NIL, ctx .. '.alpha must not be null')
+  if v['red'] == NIL then
+    v['red'] = nil
+    warn(ctx .. '.red must not be null')
+  end
+  if v['green'] == NIL then
+    v['green'] = nil
+    warn(ctx .. '.green must not be null')
+  end
+  if v['blue'] == NIL then
+    v['blue'] = nil
+    warn(ctx .. '.blue must not be null')
+  end
+  if v['alpha'] == NIL then
+    v['alpha'] = nil
+    warn(ctx .. '.alpha must not be null')
+  end
 end
 
 ---@param v lsp.ColorInformation|vim.NIL|nil
@@ -960,9 +1617,15 @@ local validate_ColorInformation = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['range'] ~= NIL, ctx .. '.range must not be null')
+  if v['range'] == NIL then
+    v['range'] = nil
+    warn(ctx .. '.range must not be null')
+  end
   validate_Range(v['range'], ctx .. '.range')
-  assert(v['color'] ~= NIL, ctx .. '.color must not be null')
+  if v['color'] == NIL then
+    v['color'] = nil
+    warn(ctx .. '.color must not be null')
+  end
   validate_Color(v['color'], ctx .. '.color')
 end
 
@@ -972,9 +1635,15 @@ local validate_DocumentHighlight = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['range'] ~= NIL, ctx .. '.range must not be null')
+  if v['range'] == NIL then
+    v['range'] = nil
+    warn(ctx .. '.range must not be null')
+  end
   validate_Range(v['range'], ctx .. '.range')
-  assert(v['kind'] ~= NIL, ctx .. '.kind must not be null')
+  if v['kind'] == NIL then
+    v['kind'] = nil
+    warn(ctx .. '.kind must not be null')
+  end
 end
 
 ---@param v lsp.FoldingRange|vim.NIL|nil
@@ -983,12 +1652,30 @@ local validate_FoldingRange = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['startLine'] ~= NIL, ctx .. '.startLine must not be null')
-  assert(v['startCharacter'] ~= NIL, ctx .. '.startCharacter must not be null')
-  assert(v['endLine'] ~= NIL, ctx .. '.endLine must not be null')
-  assert(v['endCharacter'] ~= NIL, ctx .. '.endCharacter must not be null')
-  assert(v['kind'] ~= NIL, ctx .. '.kind must not be null')
-  assert(v['collapsedText'] ~= NIL, ctx .. '.collapsedText must not be null')
+  if v['startLine'] == NIL then
+    v['startLine'] = nil
+    warn(ctx .. '.startLine must not be null')
+  end
+  if v['startCharacter'] == NIL then
+    v['startCharacter'] = nil
+    warn(ctx .. '.startCharacter must not be null')
+  end
+  if v['endLine'] == NIL then
+    v['endLine'] = nil
+    warn(ctx .. '.endLine must not be null')
+  end
+  if v['endCharacter'] == NIL then
+    v['endCharacter'] = nil
+    warn(ctx .. '.endCharacter must not be null')
+  end
+  if v['kind'] == NIL then
+    v['kind'] = nil
+    warn(ctx .. '.kind must not be null')
+  end
+  if v['collapsedText'] == NIL then
+    v['collapsedText'] = nil
+    warn(ctx .. '.collapsedText must not be null')
+  end
 end
 
 ---@param v lsp.Hover|vim.NIL|nil
@@ -997,8 +1684,14 @@ local validate_Hover = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['contents'] ~= NIL, ctx .. '.contents must not be null')
-  assert(v['range'] ~= NIL, ctx .. '.range must not be null')
+  if v['contents'] == NIL then
+    v['contents'] = nil
+    warn(ctx .. '.contents must not be null')
+  end
+  if v['range'] == NIL then
+    v['range'] = nil
+    warn(ctx .. '.range must not be null')
+  end
   validate_Range(v['range'], ctx .. '.range')
 end
 
@@ -1008,11 +1701,23 @@ local validate_InlineCompletionItem = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['insertText'] ~= NIL, ctx .. '.insertText must not be null')
-  assert(v['filterText'] ~= NIL, ctx .. '.filterText must not be null')
-  assert(v['range'] ~= NIL, ctx .. '.range must not be null')
+  if v['insertText'] == NIL then
+    v['insertText'] = nil
+    warn(ctx .. '.insertText must not be null')
+  end
+  if v['filterText'] == NIL then
+    v['filterText'] = nil
+    warn(ctx .. '.filterText must not be null')
+  end
+  if v['range'] == NIL then
+    v['range'] = nil
+    warn(ctx .. '.range must not be null')
+  end
   validate_Range(v['range'], ctx .. '.range')
-  assert(v['command'] ~= NIL, ctx .. '.command must not be null')
+  if v['command'] == NIL then
+    v['command'] = nil
+    warn(ctx .. '.command must not be null')
+  end
   validate_Command(v['command'], ctx .. '.command')
 end
 
@@ -1022,13 +1727,19 @@ local validate_LinkedEditingRanges = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['ranges'] ~= NIL, ctx .. '.ranges must not be null')
+  if v['ranges'] == NIL then
+    v['ranges'] = nil
+    warn(ctx .. '.ranges must not be null')
+  end
   if type(v['ranges']) == 'table' then
     for i, x in ipairs(v['ranges']) do
       validate_Range(x, ctx .. '.ranges[' .. i .. ']')
     end
   end
-  assert(v['wordPattern'] ~= NIL, ctx .. '.wordPattern must not be null')
+  if v['wordPattern'] == NIL then
+    v['wordPattern'] = nil
+    warn(ctx .. '.wordPattern must not be null')
+  end
 end
 
 ---@param v lsp.Moniker|vim.NIL|nil
@@ -1037,10 +1748,22 @@ local validate_Moniker = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['scheme'] ~= NIL, ctx .. '.scheme must not be null')
-  assert(v['identifier'] ~= NIL, ctx .. '.identifier must not be null')
-  assert(v['unique'] ~= NIL, ctx .. '.unique must not be null')
-  assert(v['kind'] ~= NIL, ctx .. '.kind must not be null')
+  if v['scheme'] == NIL then
+    v['scheme'] = nil
+    warn(ctx .. '.scheme must not be null')
+  end
+  if v['identifier'] == NIL then
+    v['identifier'] = nil
+    warn(ctx .. '.identifier must not be null')
+  end
+  if v['unique'] == NIL then
+    v['unique'] = nil
+    warn(ctx .. '.unique must not be null')
+  end
+  if v['kind'] == NIL then
+    v['kind'] = nil
+    warn(ctx .. '.kind must not be null')
+  end
 end
 
 ---@param v lsp.TypeHierarchyItem|vim.NIL|nil
@@ -1049,14 +1772,35 @@ local validate_TypeHierarchyItem = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['name'] ~= NIL, ctx .. '.name must not be null')
-  assert(v['kind'] ~= NIL, ctx .. '.kind must not be null')
-  assert(v['tags'] ~= NIL, ctx .. '.tags must not be null')
-  assert(v['detail'] ~= NIL, ctx .. '.detail must not be null')
-  assert(v['uri'] ~= NIL, ctx .. '.uri must not be null')
-  assert(v['range'] ~= NIL, ctx .. '.range must not be null')
+  if v['name'] == NIL then
+    v['name'] = nil
+    warn(ctx .. '.name must not be null')
+  end
+  if v['kind'] == NIL then
+    v['kind'] = nil
+    warn(ctx .. '.kind must not be null')
+  end
+  if v['tags'] == NIL then
+    v['tags'] = nil
+    warn(ctx .. '.tags must not be null')
+  end
+  if v['detail'] == NIL then
+    v['detail'] = nil
+    warn(ctx .. '.detail must not be null')
+  end
+  if v['uri'] == NIL then
+    v['uri'] = nil
+    warn(ctx .. '.uri must not be null')
+  end
+  if v['range'] == NIL then
+    v['range'] = nil
+    warn(ctx .. '.range must not be null')
+  end
   validate_Range(v['range'], ctx .. '.range')
-  assert(v['selectionRange'] ~= NIL, ctx .. '.selectionRange must not be null')
+  if v['selectionRange'] == NIL then
+    v['selectionRange'] = nil
+    warn(ctx .. '.selectionRange must not be null')
+  end
   validate_Range(v['selectionRange'], ctx .. '.selectionRange')
 end
 
@@ -1066,8 +1810,14 @@ local validate_Location = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['uri'] ~= NIL, ctx .. '.uri must not be null')
-  assert(v['range'] ~= NIL, ctx .. '.range must not be null')
+  if v['uri'] == NIL then
+    v['uri'] = nil
+    warn(ctx .. '.uri must not be null')
+  end
+  if v['range'] == NIL then
+    v['range'] = nil
+    warn(ctx .. '.range must not be null')
+  end
   validate_Range(v['range'], ctx .. '.range')
 end
 
@@ -1077,9 +1827,15 @@ local validate_SelectionRange = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['range'] ~= NIL, ctx .. '.range must not be null')
+  if v['range'] == NIL then
+    v['range'] = nil
+    warn(ctx .. '.range must not be null')
+  end
   validate_Range(v['range'], ctx .. '.range')
-  assert(v['parent'] ~= NIL, ctx .. '.parent must not be null')
+  if v['parent'] == NIL then
+    v['parent'] = nil
+    warn(ctx .. '.parent must not be null')
+  end
 end
 
 ---@param v lsp.SemanticTokens|vim.NIL|nil
@@ -1088,8 +1844,14 @@ local validate_SemanticTokens = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['resultId'] ~= NIL, ctx .. '.resultId must not be null')
-  assert(v['data'] ~= NIL, ctx .. '.data must not be null')
+  if v['resultId'] == NIL then
+    v['resultId'] = nil
+    warn(ctx .. '.resultId must not be null')
+  end
+  if v['data'] == NIL then
+    v['data'] = nil
+    warn(ctx .. '.data must not be null')
+  end
 end
 
 ---@param v lsp.ParameterInformation|vim.NIL|nil
@@ -1098,8 +1860,14 @@ local validate_ParameterInformation = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['label'] ~= NIL, ctx .. '.label must not be null')
-  assert(v['documentation'] ~= NIL, ctx .. '.documentation must not be null')
+  if v['label'] == NIL then
+    v['label'] = nil
+    warn(ctx .. '.label must not be null')
+  end
+  if v['documentation'] == NIL then
+    v['documentation'] = nil
+    warn(ctx .. '.documentation must not be null')
+  end
 end
 
 ---@param v lsp.SignatureInformation|vim.NIL|nil
@@ -1108,9 +1876,18 @@ local validate_SignatureInformation = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['label'] ~= NIL, ctx .. '.label must not be null')
-  assert(v['documentation'] ~= NIL, ctx .. '.documentation must not be null')
-  assert(v['parameters'] ~= NIL, ctx .. '.parameters must not be null')
+  if v['label'] == NIL then
+    v['label'] = nil
+    warn(ctx .. '.label must not be null')
+  end
+  if v['documentation'] == NIL then
+    v['documentation'] = nil
+    warn(ctx .. '.documentation must not be null')
+  end
+  if v['parameters'] == NIL then
+    v['parameters'] = nil
+    warn(ctx .. '.parameters must not be null')
+  end
   if type(v['parameters']) == 'table' then
     for i, x in ipairs(v['parameters']) do
       validate_ParameterInformation(x, ctx .. '.parameters[' .. i .. ']')
@@ -1124,13 +1901,19 @@ local validate_SignatureHelp = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['signatures'] ~= NIL, ctx .. '.signatures must not be null')
+  if v['signatures'] == NIL then
+    v['signatures'] = nil
+    warn(ctx .. '.signatures must not be null')
+  end
   if type(v['signatures']) == 'table' then
     for i, x in ipairs(v['signatures']) do
       validate_SignatureInformation(x, ctx .. '.signatures[' .. i .. ']')
     end
   end
-  assert(v['activeSignature'] ~= NIL, ctx .. '.activeSignature must not be null')
+  if v['activeSignature'] == NIL then
+    v['activeSignature'] = nil
+    warn(ctx .. '.activeSignature must not be null')
+  end
 end
 
 ---@param v lsp.LocationUriOnly|vim.NIL|nil
@@ -1139,7 +1922,10 @@ local validate_LocationUriOnly = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['uri'] ~= NIL, ctx .. '.uri must not be null')
+  if v['uri'] == NIL then
+    v['uri'] = nil
+    warn(ctx .. '.uri must not be null')
+  end
 end
 
 ---@param v lsp.WorkspaceSymbol|vim.NIL|nil
@@ -1148,16 +1934,31 @@ local validate_WorkspaceSymbol = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['location'] ~= NIL, ctx .. '.location must not be null')
+  if v['location'] == NIL then
+    v['location'] = nil
+    warn(ctx .. '.location must not be null')
+  end
   validate_Location(v['location'] --[[@as lsp.Location|vim.NIL|nil]], ctx .. '.location')
   validate_LocationUriOnly(
     v['location'] --[[@as lsp.LocationUriOnly|vim.NIL|nil]],
     ctx .. '.location'
   )
-  assert(v['name'] ~= NIL, ctx .. '.name must not be null')
-  assert(v['kind'] ~= NIL, ctx .. '.kind must not be null')
-  assert(v['tags'] ~= NIL, ctx .. '.tags must not be null')
-  assert(v['containerName'] ~= NIL, ctx .. '.containerName must not be null')
+  if v['name'] == NIL then
+    v['name'] = nil
+    warn(ctx .. '.name must not be null')
+  end
+  if v['kind'] == NIL then
+    v['kind'] = nil
+    warn(ctx .. '.kind must not be null')
+  end
+  if v['tags'] == NIL then
+    v['tags'] = nil
+    warn(ctx .. '.tags must not be null')
+  end
+  if v['containerName'] == NIL then
+    v['containerName'] = nil
+    warn(ctx .. '.containerName must not be null')
+  end
 end
 
 ---@param v lsp.WorkspaceDiagnosticReport|vim.NIL|nil
@@ -1166,7 +1967,10 @@ local validate_WorkspaceDiagnosticReport = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['items'] ~= NIL, ctx .. '.items must not be null')
+  if v['items'] == NIL then
+    v['items'] = nil
+    warn(ctx .. '.items must not be null')
+  end
 end
 
 ---@param v lsp.TextDocumentContentResult|vim.NIL|nil
@@ -1175,7 +1979,10 @@ local validate_TextDocumentContentResult = function(v, ctx)
   if v == nil or v == NIL then
     return
   end
-  assert(v['text'] ~= NIL, ctx .. '.text must not be null')
+  if v['text'] == NIL then
+    v['text'] = nil
+    warn(ctx .. '.text must not be null')
+  end
 end
 
 ---@param result lsp.CallHierarchyIncomingCall[]?
@@ -1562,4 +2369,10 @@ validate_result['workspace/willRenameFiles'] = function(result)
   validate_WorkspaceEdit(result, 'result')
 end
 
-return { params = M, result = validate_result, mode = 'strict' }
+return {
+  params = M,
+  result = validate_result,
+  set_client_name = function(name)
+    _client_name = name
+  end,
+}

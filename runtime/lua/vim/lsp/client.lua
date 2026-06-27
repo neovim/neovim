@@ -510,6 +510,7 @@ function Client.create(config)
       detached = config.detached,
     })
   end
+  self.rpc.client_name = self.name
 
   setmetatable(self, Client)
 

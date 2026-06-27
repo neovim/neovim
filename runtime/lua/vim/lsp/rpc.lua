@@ -3,6 +3,7 @@ local protocol = require('vim.lsp.protocol')
 local _lsp_validate = require('vim.lsp._validate')
 local validate_params = _lsp_validate.params
 local validate_result = _lsp_validate.result
+local lsp_validate_set_client = _lsp_validate.set_client_name
 local net_transport = require('vim.net._transport')
 local strbuffer = require('vim._core.stringbuffer')
 local validate = vim.validate
@@ -266,6 +267,7 @@ end
 --- @field private message_callbacks table<integer, function> dict of message_id to callback
 --- @field private notify_reply_callbacks table<integer, function> dict of message_id to callback
 --- @field private method_for_request table<integer, string> maps message_id to method name
+--- @field client_name? string set by vim.lsp.Client to identify the server in validation warnings
 --- @field private transport vim.net.Transport
 --- @field private message_stream vim.net.MessageStream
 --- @field private dispatchers vim.lsp.rpc.Dispatchers
@@ -470,6 +472,7 @@ function Client:handle_body(body)
       xpcall(function()
         local pv = validate_params[decoded.method]
         if pv then
+          lsp_validate_set_client(self.client_name or '?')
           pv(decoded.params)
         end
         local result, err = self.dispatchers.server_request(decoded.method, decoded.params)
@@ -561,6 +564,7 @@ function Client:handle_body(body)
         local result = decoded.result ~= vim.NIL and decoded.result or nil
         local rv = validate_result[method]
         if rv and result then
+          lsp_validate_set_client(self.client_name or '?')
           rv(result)
         end
         callback(decoded.error, result, result_id)
@@ -578,6 +582,7 @@ function Client:handle_body(body)
     xpcall(function()
       local pv = validate_params[decoded.method]
       if pv then
+        lsp_validate_set_client(self.client_name or '?')
         pv(decoded.params)
       end
       assert(

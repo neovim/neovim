@@ -3657,31 +3657,23 @@ describe('vim.diagnostic', function()
       )
     end)
 
-    it('errors when LSP relatedInformation is null', function()
-      if
-        exec_lua(function()
-          return require('vim.lsp._validate').mode
-        end) ~= 'strict'
-      then
-        pending('VALIDATE_MODE is not strict')
-        return
-      end
-      matches(
-        'params%.diagnostics%[1%]%.relatedInformation must not be null',
-        pcall_err(exec_lua, function()
-          local validate = require('vim.lsp._validate').params
-          validate['textDocument/publishDiagnostics']({
-            uri = 'file:///test.lua',
-            diagnostics = {
-              vim.tbl_extend(
-                'force',
-                _G.make_warning('Some warning', 1, 1, 1, 3),
-                { relatedInformation = vim.NIL }
-              ),
-            },
-          })
-        end)
-      )
+    it('warns and repairs when LSP relatedInformation is null', function()
+      local repaired = exec_lua(function()
+        local validate = require('vim.lsp._validate').params
+        local params = {
+          uri = 'file:///test.lua',
+          diagnostics = {
+            vim.tbl_extend(
+              'force',
+              _G.make_warning('Some warning', 1, 1, 1, 3),
+              { relatedInformation = vim.NIL }
+            ),
+          },
+        }
+        validate['textDocument/publishDiagnostics'](params)
+        return params.diagnostics[1].relatedInformation
+      end)
+      eq(nil, repaired)
     end)
 
     it('works with the old signature', function()

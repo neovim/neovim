@@ -699,15 +699,6 @@ end
 -- 1 = params + directly-referenced structs, 2 = one more level, …).
 local VALIDATE_DEPTH = 2
 
--- 'strict'  → assert(v.field ~= NIL, ...) — raises an error when a field is null
--- 'lenient' → if v.field == NIL then v.field = nil end — silently repairs the value
-local VALIDATE_MODE = 'strict'
-
--- Mode used for validators applied to client→server RESULTS (server responses).
--- Lenient by default: responses often have null for optional capabilities, and
--- crashing on a misbehaving server response would be worse than silently fixing it.
-local VALIDATE_RESULT_MODE = 'strict'
-
 --- Returns true when type_node represents a type that may legally be null.
 --- Follows typeAlias references so that e.g. LSPAny (which includes null) is
 --- correctly identified as nullable.
@@ -764,8 +755,7 @@ end
 --- @param output string[]
 --- @param visited table<string, boolean>  tracks already-emitted validators
 --- @param depth integer  current depth counter; stops recursing at VALIDATE_DEPTH
---- @param mode? string  'strict' or 'lenient'; overrides VALIDATE_MODE when set
-local function emit_struct_validator(struct_name, structs, aliases, output, visited, depth, mode)
+local function emit_struct_validator(struct_name, structs, aliases, output, visited, depth)
   if visited[struct_name] then
     return
   end
@@ -776,8 +766,6 @@ local function emit_struct_validator(struct_name, structs, aliases, output, visi
     return
   end
 
-  local effective_mode = mode or VALIDATE_MODE
-
   -- Recurse into referenced child-structs first so they are defined before us.
   if depth < VALIDATE_DEPTH then
     local props = collect_all_properties(struct, structs)
@@ -787,7 +775,7 @@ local function emit_struct_validator(struct_name, structs, aliases, output, visi
         t = t.element --[[@as vim._gen_lsp.Type]]
       end
       if t.kind == 'reference' and structs[t.name] then
-        emit_struct_validator(t.name, structs, aliases, output, visited, depth + 1, mode)
+        emit_struct_validator(t.name, structs, aliases, output, visited, depth + 1)
       elseif t.kind == 'or' then
         local all_or_structs = true
         for _, item in ipairs(t.items) do
@@ -798,7 +786,7 @@ local function emit_struct_validator(struct_name, structs, aliases, output, visi
         end
         if all_or_structs then
           for _, item in ipairs(t.items) do
-            emit_struct_validator(item.name, structs, aliases, output, visited, depth + 1, mode)
+            emit_struct_validator(item.name, structs, aliases, output, visited, depth + 1)
           end
         end
       end
@@ -816,14 +804,11 @@ local function emit_struct_validator(struct_name, structs, aliases, output, visi
   for _, prop in ipairs(props) do
     local fa = ("v['%s']"):format(prop.name)
     if not is_nullable(prop.type, aliases) then
-      if effective_mode == 'strict' then
-        output[#output + 1] = ("  assert(%s ~= NIL, ctx .. '.%s must not be null')"):format(
-          fa,
-          prop.name
-        )
-      else
-        output[#output + 1] = ('  if %s == NIL then %s = nil end'):format(fa, fa)
-      end
+      output[#output + 1] = ("  if %s == NIL then %s = nil; warn(ctx .. '.%s must not be null') end"):format(
+        fa,
+        fa,
+        prop.name
+      )
     end
     -- Call nested struct validators for referenced fields (up to depth limit).
     -- Skip self-references: a local variable is not in scope inside its own
@@ -979,13 +964,6 @@ local function write_to_validate_lsp(protocol, output_file)
 
   -- Result validators for client→server requests.
   -- These run when the server sends a response back to us.
-  -- When both modes match, seed result_visited from visited so shared helpers
-  -- (e.g. validate_Range) already in struct_output are not emitted a second time.
-  if VALIDATE_RESULT_MODE == VALIDATE_MODE then
-    for k, v in pairs(visited) do
-      result_visited[k] = v
-    end
-  end
   local result_struct_output = {} --- @type string[]  structure validators for results only
   local result_output = {} --- @type string[]
 
@@ -1035,6 +1013,12 @@ local function write_to_validate_lsp(protocol, output_file)
     return found
   end
 
+  -- Seed result_visited with everything already emitted in struct_output so that
+  -- structs shared between params and result validators are not redefined.
+  for k, v in pairs(visited) do
+    result_visited[k] = v
+  end
+
   local sorted_requests = vim.list_extend({}, protocol.requests)
   table.sort(sorted_requests, compare_method)
 
@@ -1060,15 +1044,7 @@ local function write_to_validate_lsp(protocol, output_file)
       elseif #branches == 1 then
         local t = branches[1]
         if t.kind == 'reference' and structs[t.name] then
-          emit_struct_validator(
-            t.name,
-            structs,
-            aliases,
-            result_struct_output,
-            result_visited,
-            0,
-            VALIDATE_RESULT_MODE
-          )
+          emit_struct_validator(t.name, structs, aliases, result_struct_output, result_visited, 0)
           result_output[#result_output + 1] = ('validate_result[%q] = function(result)'):format(
             method
           )
@@ -1078,15 +1054,7 @@ local function write_to_validate_lsp(protocol, output_file)
           result_output[#result_output + 1] = ''
         elseif t.kind == 'array' and t.element.kind == 'reference' and structs[t.element.name] then
           local ename = t.element.name
-          emit_struct_validator(
-            ename,
-            structs,
-            aliases,
-            result_struct_output,
-            result_visited,
-            0,
-            VALIDATE_RESULT_MODE
-          )
+          emit_struct_validator(ename, structs, aliases, result_struct_output, result_visited, 0)
           result_output[#result_output + 1] = ('---@param result lsp.%s[]?'):format(ename)
           result_output[#result_output + 1] = ('validate_result[%q] = function(result)'):format(
             method
@@ -1116,8 +1084,7 @@ local function write_to_validate_lsp(protocol, output_file)
             aliases,
             result_struct_output,
             result_visited,
-            0,
-            VALIDATE_RESULT_MODE
+            0
           )
           result_output[#result_output + 1] = ('validate_result[%q] = function(result)'):format(
             method
@@ -1155,7 +1122,7 @@ local function write_to_validate_lsp(protocol, output_file)
     'Validates non-nullable fields on incoming LSP server→client messages (M)',
     'and on results returned to client→server requests (validate_result).',
     'Null (vim.NIL) values in fields that the spec does not allow to be null',
-    'are caught here, at message ingestion, before reaching any handler.',
+    'are repaired (set to nil) and a warning is logged to the LSP log.',
     '',
     'Regenerate:',
     '  nvim -l src/gen/gen_lsp.lua',
@@ -1165,14 +1132,26 @@ local function write_to_validate_lsp(protocol, output_file)
     'local M = {}',
     'local validate_result = {}',
     '',
+    'local _log = require("vim.lsp.log")',
+    'local _client_name = "?"',
+    '---@type table<string, true>',
+    'local _warned = {}',
+    '---@param msg string',
+    'local function warn(msg)',
+    '  local name = _client_name',
+    "  local key = (msg:gsub('%[%d+%]', '[]'))",
+    '  if _warned[name .. key] then return end',
+    '  _warned[name .. key] = true',
+    "  _log.warn(('LSP[%s] %s'):format(name, key))",
+    'end',
+    '',
   }
   vim.list_extend(output, struct_output)
   vim.list_extend(output, method_output)
   vim.list_extend(output, result_struct_output)
   vim.list_extend(output, result_output)
-  output[#output + 1] = ('return { params = M, result = validate_result, mode = %q }'):format(
-    VALIDATE_MODE
-  )
+  output[#output + 1] =
+    'return { params = M, result = validate_result, set_client_name = function(name) _client_name = name end }'
 
   tofile(output_file, table.concat(output, '\n') .. '\n')
 end
