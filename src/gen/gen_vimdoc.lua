@@ -188,6 +188,7 @@ local config = {
       'hl.lua',
       'iter.lua',
       'json.lua',
+      'rpc.lua',
       'keymap.lua',
       'loader.lua',
       'log.lua',
@@ -231,6 +232,7 @@ local config = {
       'runtime/lua/vim/glob.lua',
       'runtime/lua/vim/hl.lua',
       'runtime/lua/vim/iter.lua',
+      'runtime/lua/vim/json/rpc.lua',
       'runtime/lua/vim/keymap.lua',
       'runtime/lua/vim/loader.lua',
       'runtime/lua/vim/log.lua',
@@ -275,6 +277,8 @@ local config = {
         return 'LUA-VIMSCRIPT BRIDGE'
       elseif name == 'builtin' then
         return 'VIM'
+      elseif name == 'rpc' then
+        return 'Lua module: vim.json.rpc'
       elseif name == 'ui2' then
         return 'UI2'
       end
@@ -287,6 +291,8 @@ local config = {
         return 'lua-vim-system'
       elseif name == 'Options' then
         return 'lua-vimscript'
+      elseif name == 'Rpc' then
+        return 'json-rpc'
       elseif name == 'ui2' then
         return 'ui2'
       end
