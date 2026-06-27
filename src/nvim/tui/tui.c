@@ -14,6 +14,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
+#include "nvim/charset.h"
 #include "nvim/cursor_shape.h"
 #include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
@@ -525,14 +526,16 @@ static void terminfo_start(TUIData *tui)
   char *konsolev_env = os_getenv("KONSOLE_VERSION");
   char *term_program_version_env = os_getenv("TERM_PROGRAM_VERSION");
 
-  int vtev = vte_version_env ? (int)strtol(vte_version_env, NULL, 10) : 0;
+  char *vte_version_end = vte_version_env;
+  int vtev = vte_version_env ? getdigits_int(&vte_version_end, false, 0) : 0;
   bool iterm_env = termprg && strstr(termprg, "iTerm.app");
   bool nsterm = (termprg && strstr(termprg, "Apple_Terminal"))
                 || terminfo_is_term_family(term, "nsterm");
   bool konsole = terminfo_is_term_family(term, "konsole")
                  || os_env_exists("KONSOLE_PROFILE_NAME", true)
                  || os_env_exists("KONSOLE_DBUS_SESSION", true);
-  int konsolev = konsolev_env ? (int)strtol(konsolev_env, NULL, 10)
+  char *konsolev_end = konsolev_env;
+  int konsolev = konsolev_env ? getdigits_int(&konsolev_end, false, 0)
                               : (konsole ? 1 : 0);
   bool wezterm = strequal(termprg, "WezTerm");
   const char *weztermv = wezterm ? term_program_version_env : NULL;

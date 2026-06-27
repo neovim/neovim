@@ -9,6 +9,7 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
+#include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/errors.h"
 #include "nvim/eval/funcs.h"
@@ -277,8 +278,8 @@ static int get_winnr(tabpage_T *tp, typval_T *argvar)
       }
     } else {
       // Extract the window count (if specified). e.g. winnr('3j')
-      char *endp;
-      int count = (int)strtol(arg, &endp, 10);
+      char *endp = (char *)arg;
+      int count = getdigits_int(&endp, false, 0);
       if (count <= 0) {
         // if count is not specified, default to 1
         count = 1;
