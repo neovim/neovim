@@ -1303,14 +1303,115 @@ err:
   NLUA_CLEAR_REF(preview_luaref);
   xfree(compl_arg);
 }
+
+/// Fill argt-derived fields (nargs, range, count, addr) into a dict.
+/// User commands pass their `uc_def`; for builtin commands, pass -1 (no def).
+static void argt_fields_to_dict(Dict *d, uint32_t argt, int64_t def, cmd_addr_T addr_type,
+                                Arena *arena)
+{
+  // nargs
+  char arg[2] = { 0, 0 };
+  switch (argt & (EX_EXTRA | EX_NOSPC | EX_NEEDARG | EX_ARGSPACE)) {
+  case 0:
+    arg[0] = '0'; break;
+  case (EX_EXTRA):
+    arg[0] = '*'; break;
+  case (EX_EXTRA | EX_NOSPC):
+    arg[0] = '?'; break;
+  case (EX_EXTRA | EX_NEEDARG):
+    arg[0] = '+'; break;
+  case (EX_EXTRA | EX_NOSPC | EX_NEEDARG):
+    arg[0] = '1'; break;
+  case (EX_EXTRA | EX_NOSPC | EX_NEEDARG | EX_ARGSPACE):
+    arg[0] = '_'; break;
+  }
+  PUT_C(*d, "nargs", CSTR_TO_ARENA_OBJ(arena, arg));
+  // count
+  Object obj = NIL;
+  if (argt & EX_COUNT) {
+    if (def >= 0) {
+      obj = STRING_OBJ(arena_printf(arena, "%" PRId64, def));
+    } else {
+      obj = CSTR_AS_OBJ("0");
+    }
+  }
+  PUT_C(*d, "count", obj);
+  // range
+  obj = NIL;
+  if (argt & EX_RANGE) {
+    if (argt & EX_DFLALL) {
+      obj = STATIC_CSTR_AS_OBJ("%");
+    } else if (def >= 0) {
+      obj = STRING_OBJ(arena_printf(arena, "%" PRId64, def));
+    } else {
+      obj = STATIC_CSTR_AS_OBJ(".");
+    }
+  }
+  PUT_C(*d, "range", obj);
+  // addr
+  const char *addr_name = cmd_addr_type_name(addr_type);
+  PUT_C(*d, "addr", addr_name ? CSTR_AS_OBJ((char *)addr_name) : NIL);
+  PUT_C(*d, "bang", BOOLEAN_OBJ(!!(argt & EX_BANG)));
+  PUT_C(*d, "bar", BOOLEAN_OBJ(!!(argt & EX_TRLBAR)));
+  PUT_C(*d, "register", BOOLEAN_OBJ(!!(argt & EX_REGSTR)));
+}
+
+/// Gets a map of maps describing user-commands defined for buffer `buf` or
+/// defined globally if `buf` is NULL.
+///
+/// @param buf  Buffer to inspect, or NULL to get global commands.
+/// @param name  Command name
+///
+/// @return Map of maps describing commands
+static Dict user_commands_array(buf_T *buf, const char *name, Arena *arena)
+{
+  garray_T *gap = (buf == NULL) ? &ucmds : &buf->b_ucmds;
+  Dict rv = arena_dict(arena, name != NULL ? 1 : (size_t)gap->ga_len);
+
+  for (int i = 0; i < gap->ga_len; i++) {
+    ucmd_T *cmd = USER_CMD_GA(gap, i);
+    if (name != NULL && !strequal(cmd->uc_name, name)) {
+      continue;
+    }
+
+    Dict d = arena_dict(arena, 16);
+    PUT_C(d, "name", CSTR_AS_OBJ(cmd->uc_name));
+    PUT_C(d, "definition", CSTR_AS_OBJ(cmd->uc_rep));
+    PUT_C(d, "desc", CSTR_AS_OBJ(cmd->uc_desc));
+    PUT_C(d, "script_id", INTEGER_OBJ(cmd->uc_script_ctx.sc_sid));
+    PUT_C(d, "keepscript", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_KEEPSCRIPT)));
+    argt_fields_to_dict(&d, cmd->uc_argt, cmd->uc_def, cmd->uc_addr_type, arena);
+
+    // user-only
+    if (cmd->uc_preview_luaref != LUA_NOREF) {
+      PUT_C(d, "preview", LUAREF_OBJ(api_new_luaref(cmd->uc_preview_luaref)));
+    }
+    if (cmd->uc_luaref != LUA_NOREF) {
+      PUT_C(d, "callback", LUAREF_OBJ(api_new_luaref(cmd->uc_luaref)));
+    }
+    if (cmd->uc_compl_luaref != LUA_NOREF) {
+      PUT_C(d, "complete", LUAREF_OBJ(api_new_luaref(cmd->uc_compl_luaref)));
+    } else {
+      char *cmd_compl = get_command_complete(cmd->uc_compl);
+      PUT_C(d, "complete", (cmd_compl == NULL ? NIL : CSTR_AS_OBJ(cmd_compl)));
+    }
+    PUT_C(d, "complete_arg", cmd->uc_compl_arg == NULL ? NIL : CSTR_AS_OBJ(cmd->uc_compl_arg));
+    PUT_C(rv, cmd->uc_name, DICT_OBJ(d));
+    if (name != NULL) {
+      break;
+    }
+  }
+  return rv;
+}
+
 /// Gets a map of global (non-buffer-local) Ex commands.
 ///
-/// Currently only |user-commands| are supported, not builtin Ex commands.
-///
 /// @see |nvim_get_all_options_info()|
-///
-/// @param  opts  Optional parameters. Currently only supports
-///               {"builtin":false}
+/// @param  opts  Optional parameters:
+///               - builtin: (boolean) Get builtin commands instead of user-defined ones.
+///               - desc: (boolean) Include the description. For builtin
+///                 commands, descriptions come from the corresponding help files.
+///               - name: (string) Only return the named command.
 /// @param[out]  err   Error details, if any.
 ///
 /// @returns Map of maps describing commands.
@@ -1320,10 +1421,62 @@ DictOf(DictAs(command_info)) nvim_get_commands(Dict(get_commands) *opts, Arena *
   return nvim_buf_get_commands(-1, opts, arena, err);
 }
 
+/// Similar to commands_array(), but for builtin Ex commands. Reads
+/// descriptions from help files when `desc` is true.
+static Dict builtin_commands_array(const char *name, bool desc, Arena *arena, Error *err)
+{
+  cmdidx_T single_idx = CMD_SIZE;
+  if (name != NULL) {
+    single_idx = excmd_get_cmdidx(name, strlen(name));
+    if (single_idx >= CMD_SIZE) {
+      api_set_error(err, kErrorTypeException, "Invalid command (not found): %s", name);
+      return (Dict)ARRAY_DICT_INIT;
+    }
+  }
+  size_t count = (name != NULL) ? 1 : (size_t)CMD_SIZE;
+  Array descs = ARRAY_DICT_INIT;
+
+  if (desc) {
+    Array names_arr = arena_array(arena, count);
+    for (size_t i = 0; i < count; i++) {
+      cmdidx_T idx = (name != NULL) ? single_idx : (cmdidx_T)i;
+      ADD_C(names_arr, CSTR_AS_OBJ((char *)get_command_name(NULL, idx)));
+    }
+    MAXSIZE_TEMP_ARRAY(args, 1);
+    ADD_C(args, ARRAY_OBJ(names_arr));
+    Object res = NLUA_EXEC_STATIC("return require('vim._core.help')._get_excmd_descs(...)",
+                                  args, kRetObject, arena, err);
+    if (ERROR_SET(err)) {
+      return (Dict)ARRAY_DICT_INIT;
+    }
+    if (res.type == kObjectTypeArray) {
+      descs = res.data.array;
+    }
+  }
+
+  Dict rv = arena_dict(arena, count);
+  for (size_t i = 0; i < count; i++) {
+    cmdidx_T idx = (name != NULL) ? single_idx : (cmdidx_T)i;
+    const char *cmd_name = get_command_name(NULL, idx);
+    Dict d = arena_dict(arena, 10);
+    PUT_C(d, "name", CSTR_AS_OBJ((char *)cmd_name));
+    argt_fields_to_dict(&d, excmd_get_argt(idx), -1, excmd_get_addr(idx), arena);
+
+    const char *desc_str = "";
+    if (i < descs.size && descs.items[i].type == kObjectTypeString) {
+      desc_str = descs.items[i].data.string.data;
+    }
+    PUT_C(d, "desc", CSTR_AS_OBJ((char *)desc_str));
+    PUT_C(rv, cmd_name, DICT_OBJ(d));
+  }
+  return rv;
+}
+
 /// Gets a map of buffer-local |user-commands|.
 ///
 /// @param  buf  Buffer id, or 0 for current buffer
-/// @param  opts  Optional parameters. Currently not used.
+/// @param  opts  Same as |nvim_get_commands()|, except `builtin` is ignored
+///               (buffer-local commands are always user-defined).
 /// @param[out]  err   Error details, if any.
 ///
 /// @returns Map of maps describing commands.
@@ -1336,17 +1489,27 @@ DictAs(command_info) nvim_buf_get_commands(Buffer buf, Dict(get_commands) *opts,
     return (Dict)ARRAY_DICT_INIT;
   }
 
+  const char *name = NULL;
+  if (HAS_KEY(opts, get_commands, name)) {
+    name = opts->name.data;
+  }
+
+  bool desc = false;
+  if (HAS_KEY(opts, get_commands, desc)) {
+    desc = opts->desc;
+  }
+
   if (global) {
     if (opts->builtin) {
-      api_set_error(err, kErrorTypeValidation, "builtin=true not implemented");
-      return (Dict)ARRAY_DICT_INIT;
+      return builtin_commands_array(name, desc, arena, err);
     }
-    return commands_array(NULL, arena);
+    return user_commands_array(NULL, name, arena);
   }
 
   buf_T *b = find_buffer_by_handle(buf, err);
   if (opts->builtin || !b) {
     return (Dict)ARRAY_DICT_INIT;
   }
-  return commands_array(b, arena);
+
+  return user_commands_array(b, name, arena);
 }
