@@ -215,6 +215,46 @@ describe('nvim.dir', function()
     line_of('beta.txt')
   end)
 
+  it("follows global 'hidden' when abandoned", function()
+    make_fixture()
+    n.clear({ args_rm = { '-u' } })
+
+    command('set hidden')
+
+    edit(root)
+    local root_buf = api.nvim_get_current_buf()
+    eq('', bufopt('bufhidden'))
+
+    edit(subdir)
+    eq(true, api.nvim_buf_is_loaded(root_buf))
+    eq(1, fn.getbufinfo(root_buf)[1].hidden)
+
+    n.clear({ args_rm = { '-u' } })
+    command('set nohidden')
+
+    edit(root)
+    root_buf = api.nvim_get_current_buf()
+    eq('', bufopt('bufhidden'))
+
+    edit(subdir)
+    eq(false, api.nvim_buf_is_loaded(root_buf))
+  end)
+
+  it("preserves custom 'bufhidden' when reloading", function()
+    make_fixture()
+    n.clear({
+      args_rm = { '-u' },
+      args = { '--cmd', [[autocmd FileType directory ++once setlocal bufhidden=delete]] },
+    })
+
+    edit(root)
+    eq('delete', bufopt('bufhidden'))
+
+    feed('R')
+    poke_eventloop()
+    eq('delete', bufopt('bufhidden'))
+  end)
+
   it('reports an error and keeps the buffer when reloading a removed directory', function()
     make_fixture()
     n.clear({ args_rm = { '-u' } })

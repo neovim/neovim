@@ -65,6 +65,12 @@ These keys map to <Plug>(nvim-dir-open), <Plug>(nvim-dir-up), and
 
 The listing is read-only and does not modify the filesystem.
 
+Directory buffers follow the global 'hidden' option by default. To delete them
+after use: >vim
+	autocmd FileType directory setlocal bufhidden=delete
+<
+Use "wipe" to discard all buffer state; see |'bufhidden'|.
+
                                                     *g:loaded_nvim_dir_plugin*
 To disable this plugin, set this in your config before startup: >lua
 	vim.g.loaded_nvim_dir_plugin = 1
