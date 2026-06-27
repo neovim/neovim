@@ -2790,8 +2790,8 @@ static char *get_filetypecmd_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
     return NULL;
   }
 
-  if (filetype_expand_what == EXP_FILETYPECMD_ALL && idx < 4) {
-    char *opts_all[] = { "indent", "plugin", "on", "off" };
+  if (filetype_expand_what == EXP_FILETYPECMD_ALL && idx < 5) {
+    char *opts_all[] = { "detect", "indent", "plugin", "on", "off" };
     return opts_all[idx];
   }
   if (filetype_expand_what == EXP_FILETYPECMD_PLUGIN && idx < 3) {
