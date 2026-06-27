@@ -85,7 +85,6 @@ local function render(buf, dir)
     not set_buf_options(buf, {
       { 'modeline', false },
       { 'buftype', 'nowrite' },
-      { 'bufhidden', 'hide' },
       { 'buflisted', true },
       { 'swapfile', false },
       { 'readonly', false },

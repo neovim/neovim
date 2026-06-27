@@ -1429,7 +1429,7 @@ terminal	A terminal window buffer, see |terminal|.  The contents cannot
 directory	Displays directory contents.  Can be used by a file explorer
 		plugin.  The buffer is created with these settings: >
 			:setlocal buftype=nowrite
-			:setlocal bufhidden=delete
+			:setlocal bufhidden=
 			:setlocal noswapfile
 <		The buffer name is the name of the directory and is adjusted
 		when using the |:cd| command.
