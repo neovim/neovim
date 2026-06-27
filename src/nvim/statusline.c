@@ -2044,7 +2044,7 @@ stcsign:
               XFREE_CLEAR(stl_items[j].cmd);
             }
           }
-          itemcnt = i;
+          itemcnt = i - evalstart;
           break;
         }
       }

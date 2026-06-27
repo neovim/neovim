@@ -956,6 +956,20 @@ describe('statusline', function()
     eq('B:' .. truncated, rendered)
   end)
 
+  it('truncation inside nested nvim_eval_statusline correctly adjusts highlights', function()
+    exec_lua('vim.o.laststatus = 2')
+    exec_lua([[vim.o.statusline = "%{%repeat('%#Error#',20)%}"]])
+    exec_lua([[
+      vim.o.statusline = "%l%l%l%l%{%nvim_eval_statusline('test%#Error#%l%<',{'maxwidth':4,'highlights':1}).highlights%}"
+    ]])
+    screen:expect([[
+      ^                                        |
+      {1:~                                       }|*5
+      {3:< 'groups': ['StatusLine'], 'start': 0}]}|
+                                              |
+    ]])
+  end)
+
   it('no cmdline ruler for autocmd window #39938', function()
     command('set ruler laststatus=2')
     api.nvim_create_autocmd('BufDelete', { command = 'redrawstatus' })
