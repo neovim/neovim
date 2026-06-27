@@ -555,7 +555,9 @@ func s:StructMembers(typename, items, all)
       if complete_check()
         return []
       endif
-      exe 'silent! keepj noautocmd ' . n . 'vimgrep /\t' . typename . '\(\t\|$\)/j ' . fnames
+      exe 'silent! keepj noautocmd '
+        \ .. n .. 'vimgrep /\t' .. escape(typename, '/\') .. '\(\t\|$\)/j '
+        \ .. fnames
 
       let qflist = getqflist()
       if len(qflist) > 0 || match(typename, "::") < 0
