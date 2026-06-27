@@ -652,6 +652,16 @@ func Test_textobj_find_paren_forward()
   normal 0di)
   call assert_equal('foo ()', getline(1))
 
+  call setline(1, ['x" (a "b" )\', '")'])
+  call cursor(1, 6)
+  normal va)y
+  call assert_equal('(a "b" )', @")
+
+  call setline(1, ['x" [a "b" ]\', '"]'])
+  call cursor(1, 6)
+  normal va]y
+  call assert_equal('[a "b" ]', @")
+
   bw!
 endfunc
 
