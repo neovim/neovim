@@ -3,6 +3,10 @@
 --- Implements cmdwin as a normal window+buffer, instead of the legacy nested `state_enter` loop.
 --- - On confirm, curline is fed back through the cmdline via |nvim_feedkeys()|.
 --- - On cancel, curline is pre-filled in the ":" cmdline.
+---
+--- `M.host()` is a variant that runs as the *entire* UI of a child Nvim (see `run_in_terminal`), used
+--- to host a cmdwin for blocking prompts like |input()|; there confirm returns the line to the parent
+--- over RPC instead of acting on a host window.
 
 local M = {}
 
@@ -19,31 +23,36 @@ local state = nil
 -- '=' is the expr register (i_CTRL-R =); on confirm its line is evaluated and inserted. #40407
 local cmdwin_types = { [':'] = true, ['/'] = true, ['?'] = true, ['='] = true }
 
---- Fills the cmdwin buffer with the cmdline history.
---- @return boolean filled  Whether any lines were written.
-local function fill_history(buf, type)
-  local histname = type == ':' and 'cmd'
+--- Maps a cmdwin type char to its history name.
+local function type_histname(type)
+  return type == ':' and 'cmd'
     or (type == '/' or type == '?') and 'search'
     or type == '=' and 'expr'
     or nil
-  assert(histname, 'cmdwin: unknown type: ' .. tostring(type))
-  local n = vim.fn.histnr(histname)
-  if n <= 0 then -- May be -1 if history is empty.
-    return false
-  end
-  local lines = {} --- @type string[]
-  for i = 1, n do
-    local h = vim.fn.histget(histname, i)
-    if h ~= '' then
-      -- One cmdwin line = one cmdline. Entry may have embedded newlines (e.g. via feedkeys or :execute).
-      lines[#lines + 1] = (h:gsub('\n', '\0'))
+end
+
+--- Prepends cmdline history (one entry per line) above the buffer's existing (editable) content,
+--- then puts the cursor on the last line. The caller seeds the editable line(s) first.
+--- @param buf integer
+--- @param win integer
+--- @param histname string?  'cmd'/'search'/'expr'/'input'; nil/empty for none.
+--- @param col? integer  1-based cursor column in the last line.
+local function fill_history(buf, win, histname, col)
+  if histname and histname ~= '' then
+    local lines = {} --- @type string[]
+    for i = 1, vim.fn.histnr(histname) do
+      local h = vim.fn.histget(histname, i)
+      if h ~= '' then
+        -- One cmdwin line = one entry. Entry may have embedded newlines (feedkeys or :execute).
+        lines[#lines + 1] = (h:gsub('\n', '\0'))
+      end
+    end
+    if #lines > 0 then
+      vim.api.nvim_buf_set_lines(buf, 0, 0, false, lines) -- prepend above the editable line(s)
     end
   end
-  if #lines == 0 then
-    return false
-  end
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-  return true
+  local last = vim.api.nvim_buf_line_count(buf)
+  vim.api.nvim_win_set_cursor(win, { last, math.max(0, (col or 1) - 1) })
 end
 
 --- Open the command-line window.
@@ -87,13 +96,11 @@ function M.open(type, init_line, init_col, host_lnum, host_col)
   -- Show cmdwin-char via 'statuscolumn'.
   vim.wo[win][0].statuscolumn = '%#NonText#' .. type
 
-  local filled = fill_history(buf, type)
   init_line = init_line and init_line:gsub('\n', '\0') or ''
 
-  -- Append the in-flight cmdline as the last line (or only line if history is empty).
-  vim.api.nvim_buf_set_lines(buf, filled and -1 or 0, -1, false, { init_line })
-  local last = vim.api.nvim_buf_line_count(buf)
-  vim.api.nvim_win_set_cursor(win, { last, math.max(0, (init_col or 1) - 1) })
+  -- Seed the in-flight cmdline as the editable line, then prepend history above it.
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { init_line or '' })
+  fill_history(buf, win, type_histname(type), init_col)
 
   pcall(vim.api.nvim_buf_set_name, buf, '[Command Line]')
   if type == ':' then
@@ -224,6 +231,43 @@ function M.cancel()
     return
   end
   vim.api.nvim_feedkeys(type .. line, 'nt', false)
+end
+
+--- cmdwin host: runs as the entire UI of a child Nvim spawned by `run_in_terminal.run_nvim()` to host
+--- a cmdwin for a blocking prompt (e.g. |input()|). Lays out history (from the ShaDa shared via `-i`)
+--- like `M.open`, with the seeded file as the editable last line; on confirm hands the *current* line
+--- back to the parent over its |$NVIM| RPC channel (instead of acting on a host window). #40407
+--- @param histname? string  History to show ('input'/'cmd'/'search'/'expr'); empty/nil for none.
+function M.host(histname)
+  vim.o.laststatus = 0
+  vim.o.ruler = false
+  vim.o.showmode = false
+  vim.bo.bufhidden = 'wipe'
+
+  fill_history(0, 0, histname) -- the seed (file contents) is already the buffer; prepend history above
+
+  local opts = { buffer = true, silent = true }
+  -- Confirm on <CR>/<NL> (the command-line submits on both; a pty may deliver Enter as <NL>): hand
+  -- the *current* line (the user may have moved onto a history entry) back to the parent over its
+  -- $NVIM RPC channel, flush history to the shared ShaDa, then exit.
+  local function confirm()
+    local line = vim.api.nvim_get_current_line()
+    if vim.env.NVIM then -- parent's RPC address (set by |terminal|/|jobstart()|)
+      local chan = vim.fn.sockconnect('pipe', vim.env.NVIM, { rpc = true })
+      vim.rpcrequest(chan, 'nvim_exec_lua', "require('vim._core.run_in_terminal')._confirm(...)", {
+        line,
+      })
+    end
+    vim.cmd('silent rshada') -- `silent` so messages don't trip the |more-prompt| in this tiny UI
+    vim.cmd('silent wshada')
+    vim.cmd('qall!')
+  end
+  for _, k in ipairs({ '<CR>', '<NL>' }) do
+    vim.keymap.set({ 'n', 'i' }, k, confirm, opts)
+  end
+  vim.keymap.set({ 'n', 'i' }, '<C-c>', '<Cmd>cquit<CR>', opts)
+
+  vim.cmd('startinsert!') -- append at end of the line, like a cmdline
 end
 
 return M

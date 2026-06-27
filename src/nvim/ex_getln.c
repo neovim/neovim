@@ -4612,6 +4612,40 @@ static void open_cmdwin_event(void **argv)
   xfree(a);
 }
 
+/// For blocking prompts (|input()|): synchronously edits the cmdline in a child Nvim hosted in a
+/// `:terminal` (see `vim._core.run_in_terminal.run_nvim`). Unlike the `:`/`/`/`?` cmdwin (deferred,
+/// non-blocking), input() has a C-stack caller waiting for a value, so it cannot unwind; instead we
+/// block here until the child exits.
+/// @return CAR if confirmed (cmdline replaced with the edited text, ready to submit), else K_IGNORE
+///         (cancelled: keep editing the current cmdline). #40407
+static int cmdwin_run_blocking(void)
+{
+  char *content = ccline.cmdbuff ? xstrnsave(ccline.cmdbuff, (size_t)ccline.cmdlen) : xstrdup("");
+
+  char histname[] = "input";  // input() history, shown in the hosted cmdwin
+  typval_T argvars[3];
+  argvars[0].v_type = VAR_STRING;
+  argvars[0].vval.v_string = content;
+  argvars[1].v_type = VAR_STRING;
+  argvars[1].vval.v_string = histname;
+  argvars[2].v_type = VAR_UNKNOWN;
+
+  typval_T rettv;
+  nlua_call_vimfn("vim._core.run_in_terminal", "run_nvim", argvars, &rettv);
+  xfree(content);
+
+  // The child's <C-c> (cancel) interrupts via :cquit; don't let that abort the parent's prompt.
+  got_int = false;
+
+  int c = K_IGNORE;
+  if (rettv.v_type == VAR_STRING && rettv.vval.v_string != NULL) {
+    set_cmdline_str(rettv.vval.v_string, -1);  // confirmed: replace cmdline, caller submits on CAR
+    c = CAR;
+  }
+  tv_clear(&rettv);
+  return c;
+}
+
 /// Schedules cmdwin to open after the current cmdline-reader returns. Returns Ctrl_C so the cmdline
 /// input loop unwinds, then `vim._core.cmdwin` does its work after typeahead. #40312
 static int open_cmdwin(void)
@@ -4635,9 +4669,13 @@ static int open_cmdwin(void)
     cmdwin_from_expr_reg = true;
     stuffcharReadbuff(Ctrl_BSL);
     stuffcharReadbuff(Ctrl_N);
+  } else if (ft == '@') {
+    // input(): a blocking prompt with a C-stack caller. Edit synchronously in a child Nvim hosted
+    // in a `:terminal`, then submit the result (or keep editing on cancel). #40407
+    return cmdwin_run_blocking();
   } else if (ft != ':' && ft != '/' && ft != '?') {
-    // Disallow cmdline-hosted expr-register and input()/inputlist(): no reentrant return path
-    // (the host editing context can't be reconstructed from buf/win/cursor). #40407
+    // Disallow other cmdline-hosted prompts (expr-register, confirm-style `-`): no reentrant return
+    // path (the host editing context can't be reconstructed from buf/win/cursor). #40407
     beep_flush();
     return K_IGNORE;
   }
