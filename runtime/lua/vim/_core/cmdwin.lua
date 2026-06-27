@@ -105,6 +105,7 @@ function M.open(type, init_line, init_col)
   vim.api.nvim_create_autocmd({ 'WinClosed' }, {
     buffer = buf,
     once = true,
+    nested = true,
     callback = function()
       if state ~= nil then
         M._cleanup()

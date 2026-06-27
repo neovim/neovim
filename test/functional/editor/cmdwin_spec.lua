@@ -104,8 +104,15 @@ describe('cmdwin', function()
   it(':quit closes cmdwin', function()
     feed('q:')
     eq(':', fn.getcmdwintype())
+    exec_lua([[
+      _G.events = {}
+      vim.api.nvim_create_autocmd('WinEnter', {
+        callback = function() table.insert(_G.events, vim.api.nvim_get_current_win()) end,
+      })
+    ]])
     feed(':q<CR>')
     eq('', fn.getcmdwintype())
+    eq({ api.nvim_get_current_win() }, exec_lua('return _G.events'))
   end)
 
   it(':messages from inside cmdwin works #40312', function()
