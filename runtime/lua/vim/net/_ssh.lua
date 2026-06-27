@@ -330,8 +330,12 @@ end
 ---@return string[]
 local function get_ssh_cmd(ssh_uri, opts)
   opts = opts or {}
-  local mux_dir = vim.fn.stdpath('run') --[[@as string]]
-  local mux_path = mux_dir .. '/ssh_mux_%h_%p_%r'
+  local mux_dir = vim.fn.stdpath('cache') .. '/ssh' --[[@as string]]
+  vim.fn.mkdir(mux_dir, 'p')
+  -- `%C` is SSH's hash of (localhost, host, port, user).
+  -- Its fixed length keeps the ControlPath socket under the 104-byte `sun_path` limit,
+  -- which the raw `%h_%p_%r` name plus a long base dir can exceed.
+  local mux_path = mux_dir .. '/mux_%C'
   local ssh_cmd = {
     'ssh',
     '-T',
