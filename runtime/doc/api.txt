@@ -4231,6 +4231,34 @@ nvim_win_is_valid({win})                                 *nvim_win_is_valid()*
     Return: ~
         (`boolean`) true if the window is valid, false otherwise
 
+nvim_win_resize({win}, {width}, {height}, {opts})          *nvim_win_resize()*
+    Resize a window, choosing which edge stays anchored.
+
+    The window first takes space from the non-anchored side (the window below
+    or to the right by default), and only then from the anchored side. The
+    "anchor" selects the fixed edge, so a window can also grow upwards or
+    leftwards.
+
+    Can set the height, the width, or both in a single call. "anchor" applies
+    to the matching axis ("top"/"bottom" for height, "left"/"right" for
+    width); the other axis, if also resized, uses its default anchor.
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Parameters: ~
+      • {win}     (`integer`) |window-ID|, or 0 for current window
+      • {width}   (`integer`) New width as a count of columns, set -1 as "no
+                  change"
+      • {height}  (`integer`) New height as a count of rows, set -1 as "no
+                  change"
+      • {opts}    (`vim.api.keyset.win_resize`) Optional parameters.
+                  • anchor: Edge that stays fixed while the opposite edge
+                    moves; the neighbor on the moving side is resized first.
+                    One of:
+                    • "top" (default for height) or "bottom"
+                    • "left" (default for width) or "right"
+
 nvim_win_set_buf({win}, {buf})                            *nvim_win_set_buf()*
     Sets the current buffer in a window.
 
@@ -4257,16 +4285,6 @@ nvim_win_set_cursor({win}, {pos})                      *nvim_win_set_cursor()*
       • {pos}  (`[integer, integer]`) (row, col) tuple representing the new
                position
 
-nvim_win_set_height({win}, {height})                   *nvim_win_set_height()*
-    Sets the window height.
-
-    Attributes: ~
-        Since: 0.1.0
-
-    Parameters: ~
-      • {win}     (`integer`) |window-ID|, or 0 for current window
-      • {height}  (`integer`) Height as a count of rows
-
 nvim_win_set_hl_ns({win}, {ns_id})                      *nvim_win_set_hl_ns()*
     Set highlight namespace for a window. This will use highlights defined
     with |nvim_set_hl()| for this namespace, but fall back to global
@@ -4291,17 +4309,6 @@ nvim_win_set_var({win}, {name}, {value})                  *nvim_win_set_var()*
       • {win}    (`integer`) |window-ID|, or 0 for current window
       • {name}   (`string`) Variable name
       • {value}  (`any`) Variable value
-
-nvim_win_set_width({win}, {width})                      *nvim_win_set_width()*
-    Sets the window width. This will only succeed if the screen is split
-    vertically.
-
-    Attributes: ~
-        Since: 0.1.0
-
-    Parameters: ~
-      • {win}    (`integer`) |window-ID|, or 0 for current window
-      • {width}  (`integer`) Width as a count of columns
 
 nvim_win_text_height({win}, {opts})                   *nvim_win_text_height()*
     Computes the number of screen lines occupied by a range of text in a given

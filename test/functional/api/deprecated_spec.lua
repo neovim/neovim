@@ -7,6 +7,7 @@ local Screen = require('test.functional.ui.screen')
 local clear, eval, eq, ok = n.clear, n.eval, t.eq, t.ok
 local api, command, fn = n.api, n.command, n.fn
 local pcall_err, assert_alive = t.pcall_err, n.assert_alive
+local insert, exec, feed = n.insert, n.exec, n.feed
 
 describe('deprecated', function()
   before_each(n.clear)
@@ -202,6 +203,108 @@ describe('deprecated', function()
       err, _ = pcall(api.nvim_buf_add_highlight, 1, -1, 'Question', 0, 0, -1)
       eq(true, err)
       assert_alive()
+    end)
+  end)
+
+  describe('{get,set}_height', function()
+    it('works', function()
+      command('vsplit')
+      eq(
+        api.nvim_win_get_height(api.nvim_list_wins()[2]),
+        api.nvim_win_get_height(api.nvim_list_wins()[1])
+      )
+      api.nvim_set_current_win(api.nvim_list_wins()[2])
+      command('split')
+      eq(
+        api.nvim_win_get_height(api.nvim_list_wins()[2]),
+        math.floor(api.nvim_win_get_height(api.nvim_list_wins()[1]) / 2)
+      )
+      api.nvim_win_set_height(api.nvim_list_wins()[2], 2)
+      eq(2, api.nvim_win_get_height(api.nvim_list_wins()[2]))
+    end)
+
+    it('failure modes', function()
+      command('split')
+      eq('Invalid window id: 999999', pcall_err(api.nvim_win_set_height, 999999, 10))
+      eq(
+        'Wrong type for argument 2 when calling nvim_win_set_height, expecting Integer',
+        pcall_err(api.nvim_win_set_height, 0, 0.9)
+      )
+    end)
+
+    it('correctly handles height=1', function()
+      command('split')
+      api.nvim_set_current_win(api.nvim_list_wins()[1])
+      api.nvim_win_set_height(api.nvim_list_wins()[2], 1)
+      eq(1, api.nvim_win_get_height(api.nvim_list_wins()[2]))
+    end)
+
+    it('correctly handles height=1 with a winbar', function()
+      command('set winbar=foobar')
+      command('set winminheight=0')
+      command('split')
+      api.nvim_set_current_win(api.nvim_list_wins()[1])
+      api.nvim_win_set_height(api.nvim_list_wins()[2], 1)
+      eq(1, api.nvim_win_get_height(api.nvim_list_wins()[2]))
+    end)
+
+    it('do not cause ml_get errors with foldmethod=expr #19989', function()
+      insert([[
+        aaaaa
+        bbbbb
+        ccccc]])
+      command('set foldmethod=expr')
+      exec([[
+        new
+        let w = nvim_get_current_win()
+        wincmd w
+        call nvim_win_set_height(w, 5)
+      ]])
+      feed('l')
+      eq('', api.nvim_get_vvar('errmsg'))
+    end)
+  end)
+
+  describe('{get,set}_width', function()
+    it('works', function()
+      command('split')
+      eq(
+        api.nvim_win_get_width(api.nvim_list_wins()[2]),
+        api.nvim_win_get_width(api.nvim_list_wins()[1])
+      )
+      api.nvim_set_current_win(api.nvim_list_wins()[2])
+      command('vsplit')
+      eq(
+        api.nvim_win_get_width(api.nvim_list_wins()[2]),
+        math.floor(api.nvim_win_get_width(api.nvim_list_wins()[1]) / 2)
+      )
+      api.nvim_win_set_width(api.nvim_list_wins()[2], 2)
+      eq(2, api.nvim_win_get_width(api.nvim_list_wins()[2]))
+    end)
+
+    it('failure modes', function()
+      command('vsplit')
+      eq('Invalid window id: 999999', pcall_err(api.nvim_win_set_width, 999999, 10))
+      eq(
+        'Wrong type for argument 2 when calling nvim_win_set_width, expecting Integer',
+        pcall_err(api.nvim_win_set_width, 0, 0.9)
+      )
+    end)
+
+    it('do not cause ml_get errors with foldmethod=expr #19989', function()
+      insert([[
+        aaaaa
+        bbbbb
+        ccccc]])
+      command('set foldmethod=expr')
+      exec([[
+        vnew
+        let w = nvim_get_current_win()
+        wincmd w
+        call nvim_win_set_width(w, 5)
+      ]])
+      feed('l')
+      eq('', api.nvim_get_vvar('errmsg'))
     end)
   end)
 end)

@@ -321,36 +321,172 @@ describe('API/win', function()
     end)
   end)
 
-  describe('{get,set}_height', function()
-    it('works', function()
-      command('vsplit')
-      eq(
-        api.nvim_win_get_height(api.nvim_list_wins()[2]),
-        api.nvim_win_get_height(api.nvim_list_wins()[1])
-      )
-      api.nvim_set_current_win(api.nvim_list_wins()[2])
-      command('split')
-      eq(
-        api.nvim_win_get_height(api.nvim_list_wins()[2]),
-        math.floor(api.nvim_win_get_height(api.nvim_list_wins()[1]) / 2)
-      )
-      api.nvim_win_set_height(api.nvim_list_wins()[2], 2)
-      eq(2, api.nvim_win_get_height(api.nvim_list_wins()[2]))
+  describe('resize', function()
+    local function heights(wins)
+      return vim.tbl_map(api.nvim_win_get_height, wins)
+    end
+    local function widths(wins)
+      return vim.tbl_map(api.nvim_win_get_width, wins)
+    end
+
+    it('height: default anchor="top"', function()
+      command('split | split')
+      local wins = api.nvim_list_wins()
+      local before = heights(wins)
+      api.nvim_win_resize(wins[2], -1, before[2] + 2, {})
+      -- default anchor top.
+      local after = heights(wins)
+      eq(before[1], after[1])
+      eq(before[2] + 2, after[2])
+      eq(before[3] - 2, after[3])
     end)
 
-    it('failure modes', function()
-      command('split')
-      eq('Invalid window id: 999999', pcall_err(api.nvim_win_set_height, 999999, 10))
-      eq(
-        'Wrong type for argument 2 when calling nvim_win_set_height, expecting Integer',
-        pcall_err(api.nvim_win_set_height, 0, 0.9)
-      )
+    it('height: anchor="bottom"', function()
+      command('split | split')
+      local wins = api.nvim_list_wins()
+      local before = heights(wins)
+      api.nvim_win_resize(wins[2], -1, before[2] + 2, { anchor = 'bottom' })
+      local after = heights(wins)
+      -- bottom anchor unchanged.
+      eq(before[1] - 2, after[1])
+      eq(before[2] + 2, after[2])
+      eq(before[3], after[3])
+    end)
+
+    it('height: anchor="bottom" in a nested frame', function()
+      -- layout: column[ Top, row[ML|MR], Bottom ]; current window = ML
+      command('split | split | 2wincmd w | vsplit')
+      local ml = api.nvim_get_current_win()
+      local function row_of(w)
+        return fn.win_screenpos(fn.win_id2win(w))[1]
+      end
+      local top, bottom
+      for _, w in ipairs(api.nvim_list_wins()) do
+        if row_of(w) == 1 then
+          top = w
+        end
+        if not bottom or row_of(w) > row_of(bottom) then
+          bottom = w
+        end
+      end
+      local top_h = api.nvim_win_get_height(top)
+      local bottom_h = api.nvim_win_get_height(bottom)
+      api.nvim_win_resize(ml, -1, api.nvim_win_get_height(ml) + 3, { anchor = 'bottom' })
+      -- "bottom" grow the row upward, taking from Top, not Bottom
+      eq(top_h - 3, api.nvim_win_get_height(top))
+      eq(bottom_h, api.nvim_win_get_height(bottom))
+    end)
+
+    it('height: anchor="bottom" with borrowing', function()
+      -- column[ Wupper, row[ col[Ltop|Ltarget], Right ], Wlower ]; current = Ltarget.
+      -- Growing Ltarget more than Ltop can supply forces us to borrow from row
+      -- and row's growth must respect given anchor.
+      command('split | split | 2wincmd w | vsplit | split | wincmd j')
+      local target = api.nvim_get_current_win()
+      local function row_of(w)
+        return fn.win_screenpos(fn.win_id2win(w))[1]
+      end
+      local wupper, wlower
+      for _, w in ipairs(api.nvim_list_wins()) do
+        if row_of(w) == 1 then
+          wupper = w
+        end
+        if not wlower or row_of(w) > row_of(wlower) then
+          wlower = w
+        end
+      end
+      local wupper_h = api.nvim_win_get_height(wupper)
+      local wlower_h = api.nvim_win_get_height(wlower)
+      api.nvim_win_resize(target, -1, api.nvim_win_get_height(target) + 6, { anchor = 'bottom' })
+      -- must borrow from above.
+      ok(api.nvim_win_get_height(wupper) < wupper_h)
+      eq(wlower_h, api.nvim_win_get_height(wlower))
+    end)
+
+    it('width: default anchor="left"', function()
+      command('vsplit | vsplit')
+      local wins = api.nvim_list_wins()
+      local before = widths(wins)
+      api.nvim_win_resize(wins[2], before[2] + 4, -1, {})
+      local after = widths(wins)
+      eq(before[1], after[1])
+      eq(before[2] + 4, after[2])
+      eq(before[3] - 4, after[3])
+    end)
+
+    it('width: anchor="right"', function()
+      command('vsplit | vsplit')
+      local wins = api.nvim_list_wins()
+      local before = widths(wins)
+      api.nvim_win_resize(wins[2], before[2] + 4, -1, { anchor = 'right' })
+      local after = widths(wins)
+      eq(before[1] - 4, after[1])
+      eq(before[2] + 4, after[2])
+      eq(before[3], after[3])
+    end)
+
+    it('width: anchor="right" a nested frame', function()
+      -- layout: row[ Left, col[MT|MB], Right ]; current window = MT
+      command('vsplit | vsplit | 2wincmd w | split')
+      local mt = api.nvim_get_current_win()
+      local function col_of(w)
+        return fn.win_screenpos(fn.win_id2win(w))[2]
+      end
+      local left, right
+      for _, w in ipairs(api.nvim_list_wins()) do
+        if col_of(w) == 1 then
+          left = w
+        end
+        if not right or col_of(w) > col_of(right) then
+          right = w
+        end
+      end
+      local left_w = api.nvim_win_get_width(left)
+      local right_w = api.nvim_win_get_width(right)
+      api.nvim_win_resize(mt, api.nvim_win_get_width(mt) + 3, -1, { anchor = 'right' })
+      -- "right" must grow the column leftward, taking from Left, not Right
+      eq(left_w - 3, api.nvim_win_get_width(left))
+      eq(right_w, api.nvim_win_get_width(right))
+    end)
+
+    it('sets both height and width in a single call', function()
+      -- layout: column[ Top, row[ML|MR], Bottom ]; current = ML.
+      command('split | split | 2wincmd w | vsplit')
+      local ml = api.nvim_get_current_win()
+      local function row_of(w)
+        return fn.win_screenpos(fn.win_id2win(w))[1]
+      end
+      local top, bottom, mr
+      for _, w in ipairs(api.nvim_list_wins()) do
+        if row_of(w) == 1 then
+          top = w
+        end
+        if not bottom or row_of(w) > row_of(bottom) then
+          bottom = w
+        end
+        if row_of(w) == row_of(ml) and w ~= ml then
+          mr = w
+        end
+      end
+      local top_h = api.nvim_win_get_height(top)
+      local bottom_h = api.nvim_win_get_height(bottom)
+      local mr_w = api.nvim_win_get_width(mr)
+      local h, w = api.nvim_win_get_height(ml), api.nvim_win_get_width(ml)
+      -- "bottom" anchors the height axis; width has no matching anchor so it defaults to "left"
+      api.nvim_win_resize(ml, w - 4, h + 2, { anchor = 'bottom' })
+      eq(h + 2, api.nvim_win_get_height(ml))
+      eq(w - 4, api.nvim_win_get_width(ml))
+      -- height took from above
+      eq(top_h - 2, api.nvim_win_get_height(top))
+      eq(bottom_h, api.nvim_win_get_height(bottom))
+      -- width default to "left"
+      eq(mr_w + 4, api.nvim_win_get_width(mr))
     end)
 
     it('correctly handles height=1', function()
       command('split')
       api.nvim_set_current_win(api.nvim_list_wins()[1])
-      api.nvim_win_set_height(api.nvim_list_wins()[2], 1)
+      api.nvim_win_resize(api.nvim_list_wins()[2], -1, 1, {})
       eq(1, api.nvim_win_get_height(api.nvim_list_wins()[2]))
     end)
 
@@ -359,11 +495,11 @@ describe('API/win', function()
       command('set winminheight=0')
       command('split')
       api.nvim_set_current_win(api.nvim_list_wins()[1])
-      api.nvim_win_set_height(api.nvim_list_wins()[2], 1)
+      api.nvim_win_resize(api.nvim_list_wins()[2], -1, 1, {})
       eq(1, api.nvim_win_get_height(api.nvim_list_wins()[2]))
     end)
 
-    it('do not cause ml_get errors with foldmethod=expr #19989', function()
+    it('does not cause ml_get errors with foldmethod=expr #19989', function()
       insert([[
         aaaaa
         bbbbb
@@ -373,53 +509,48 @@ describe('API/win', function()
         new
         let w = nvim_get_current_win()
         wincmd w
-        call nvim_win_set_height(w, 5)
+        call nvim_win_resize(w, -1, 5, #{})
       ]])
       feed('l')
       eq('', api.nvim_get_vvar('errmsg'))
     end)
-  end)
 
-  describe('{get,set}_width', function()
-    it('works', function()
-      command('split')
-      eq(
-        api.nvim_win_get_width(api.nvim_list_wins()[2]),
-        api.nvim_win_get_width(api.nvim_list_wins()[1])
-      )
-      api.nvim_set_current_win(api.nvim_list_wins()[2])
-      command('vsplit')
-      eq(
-        api.nvim_win_get_width(api.nvim_list_wins()[2]),
-        math.floor(api.nvim_win_get_width(api.nvim_list_wins()[1]) / 2)
-      )
-      api.nvim_win_set_width(api.nvim_list_wins()[2], 2)
-      eq(2, api.nvim_win_get_width(api.nvim_list_wins()[2]))
-    end)
+    it(
+      'accepts size = 0 (clamp to minimum size). Compatible with deprecated set_height/width',
+      function()
+        command('set winminheight=1')
+        command('split')
+        api.nvim_set_current_win(api.nvim_list_wins()[1])
+        api.nvim_win_resize(api.nvim_list_wins()[2], -1, 0, {})
+        eq(1, api.nvim_win_get_height(api.nvim_list_wins()[2]))
+      end
+    )
 
     it('failure modes', function()
-      command('vsplit')
-      eq('Invalid window id: 999999', pcall_err(api.nvim_win_set_width, 999999, 10))
+      command('split')
       eq(
-        'Wrong type for argument 2 when calling nvim_win_set_width, expecting Integer',
-        pcall_err(api.nvim_win_set_width, 0, 0.9)
+        "Required: must set at least one of 'height', 'width'",
+        pcall_err(api.nvim_win_resize, 0, -1, -1, {})
       )
-    end)
-
-    it('do not cause ml_get errors with foldmethod=expr #19989', function()
-      insert([[
-        aaaaa
-        bbbbb
-        ccccc]])
-      command('set foldmethod=expr')
-      exec([[
-        vnew
-        let w = nvim_get_current_win()
-        wincmd w
-        call nvim_win_set_width(w, 5)
-      ]])
-      feed('l')
-      eq('', api.nvim_get_vvar('errmsg'))
+      eq(
+        "Invalid 'width': expected a non-negative count of columns, or -1 for no change",
+        pcall_err(api.nvim_win_resize, 0, -2, 5, {})
+      )
+      eq(
+        "Invalid 'height': expected a non-negative count of rows, or -1 for no change",
+        pcall_err(api.nvim_win_resize, 0, 5, -2, {})
+      )
+      -- anchor not applicable to the dimension(s) being changed
+      eq(
+        "Conflict: 'left' not allowed with this dimension",
+        pcall_err(api.nvim_win_resize, 0, -1, 5, { anchor = 'left' })
+      )
+      -- unrecognized anchor value
+      eq(
+        [[Invalid 'anchor': expected "top", "bottom", "left" or "right", got garbage]],
+        pcall_err(api.nvim_win_resize, 0, -1, 5, { anchor = 'garbage' })
+      )
+      eq('Invalid window id: 999999', pcall_err(api.nvim_win_resize, 999999, 5, -1, {}))
     end)
   end)
 
