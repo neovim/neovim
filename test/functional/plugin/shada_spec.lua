@@ -2754,9 +2754,23 @@ describe('plugin/shada.vim', function()
       '  + l            line number  2',
       '  + c            column       -200',
     })
-    nvim_command('w ' .. fname .. '.tst')
+
+    nvim_command('set cpoptions-=+')
     nvim_command('w ' .. fname)
+    eq(false, api.nvim_get_option_value('modified', {}))
+
+    api.nvim_set_option_value('modified', true, {})
+    nvim_command('w ' .. fname .. '.tst')
+    eq(true, api.nvim_get_option_value('modified', {}))
+
+    nvim_command('set cpoptions+=+')
     nvim_command('w ' .. fname_tmp)
+    eq(false, api.nvim_get_option_value('modified', {}))
+
+    api.nvim_set_option_value('modified', true, {})
+    nvim_command('w ' .. fname)
+    eq(false, api.nvim_get_option_value('modified', {}))
+
     t.matches(
       '++opt not supported',
       t.pcall_err(function()
