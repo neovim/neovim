@@ -1854,22 +1854,11 @@ int do_write(exarg_T *eap)
     return FAIL;
   }
 
-  // A terminal buffer is not a real file: its buffer name is a "term://" URI.
-  // Keep plain `:write` as a normal buffer text write, and use the ".mpack"
-  // extension to opt into exporting rendered terminal state.
+  // Terminal buffers export rendered state as msgpack.
+  // Non-range `:write` / `:update` saves terminal state; explicit range writes
+  // (e.g. `:%w`, `:1,10w`) fall through to buf_write() for plain text.
   if (curbuf->terminal && (eap->cmdidx == CMD_write || eap->cmdidx == CMD_update)) {
-    if (*eap->arg == NUL) {
-      // TODO(Willaaaaaaa): once terminals have a stable name, it can be auto-saved to
-      // stdpath('state')/term/<name>.mpack instead of erroring.
-      emsg(_(e_noname));
-      goto theend;
-    }
-    if (path_with_extension(eap->arg, "mpack")) {
-      if (eap->line1 != 1 || eap->line2 != curbuf->b_ml.ml_line_count) {
-        // TODO(Willaaaaaaa): we can support this, mainly in `te_encode_export_ansi`.
-        emsg(_(e_norange));
-        goto theend;
-      }
+    if (eap->addr_count == 0) {
       if (eap->append) {
         emsg(_("Cannot append terminal state; use `:write` without \">>\""));
         goto theend;
