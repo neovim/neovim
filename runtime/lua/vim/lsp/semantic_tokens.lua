@@ -213,6 +213,11 @@ function STHighlighter:new(bufnr)
 
   nvim_on('LspNotify', self.augroup, { buf = self.bufnr }, function(opts)
     local client_id = opts.data.client_id ---@type integer
+
+    if not self.client_state[client_id] then
+      return
+    end
+
     if opts.data.method == 'textDocument/didClose' then
       self:reset(client_id)
     end
