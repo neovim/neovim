@@ -832,6 +832,15 @@ LspProgress			See |LspProgress|
 LspRequest			See |LspRequest|
 LspTokenUpdate			See |LspTokenUpdate|
 
+							*MacroEnter*
+MacroEnter			When a macro starts replaying.
+				The pattern is the current file name, and
+				|reg_executing()| is the replayed register.
+							*MacroLeave*
+MacroLeave			When a macro stops replaying.
+				The pattern is the current file name, and
+				|reg_executing()| is the replayed register.
+
 							*MarkSet*
 MarkSet				After a |mark| is set by |m|, |:mark|, and
 				|nvim_buf_set_mark()|, or deleted by |:delmarks|
