@@ -27,6 +27,11 @@ typedef enum {
 typedef enum {
   kChannelStdinPipe,
   kChannelStdinNull,
+  /// pty job only: child's stdin (fd 0) is a separate pipe instead of the tty. The pty remains the
+  /// controlling terminal (fd 1/2 + /dev/tty), so a program can read piped data on stdin while still
+  /// prompting/interacting on the tty (e.g. `:w !sudo tee`). chansend()/chanclose() feed fd 0; typed
+  /// keys go to the tty. #40407
+  kChannelStdinFd,
 } ChannelStdinMode;
 
 typedef struct {
