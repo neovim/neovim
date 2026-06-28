@@ -73,11 +73,13 @@ runtime/tools/vimspell.txt
 runtime/xdg.vim
 src/README.md
 src/blowfish.c
+src/cairo.c
 src/channel.c
 src/dlldata.c
 src/hardcopy.c
 src/iid_ole.c
 src/job.c
+src/kitty.c
 src/mysign
 src/po/ko.po
 src/po/pl.po
@@ -85,6 +87,8 @@ src/po/vim.pot
 src/po/zh_CN.cp936.po
 src/po/zh_CN.po
 src/po/zh_TW.po
+src/sixel.c
+src/socketserver.c
 src/terminal.c
 src/termlib.c
 src/testdir/Make_amiga.mak
