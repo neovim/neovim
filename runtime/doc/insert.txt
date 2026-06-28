@@ -2096,6 +2096,13 @@ NOTE: These commands cannot be used with |:global| or |:vglobal|.
 			any '!' is replaced with the previous command |:!|.
 			See |++opt| for the possible values of [++opt].
 
+							*:read-term* *E5681*
+:[range]r[ead] :term {cmd}
+			Like ":r !{cmd}", but run {cmd} in a |terminal| so it
+			can be interactive, and insert its standard output.
+			NOT IMPLEMENTED YET: this needs separate stdout capture
+			(|jobstart()|); for now it gives E5681.
+
 These commands insert the contents of a file, or the output of a command,
 into the buffer.  They can be undone.  They cannot be repeated with the "."
 command.  They work on a line basis, insertion starts below the line in which

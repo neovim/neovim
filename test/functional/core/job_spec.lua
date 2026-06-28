@@ -88,6 +88,13 @@ describe('jobs', function()
       "E475: Invalid argument: 'term' must be Boolean",
       pcall_err(command, "call jobstart(['cat', '-'], { 'term': 1 })")
     )
+    if is_os('win') then
+      -- stdin='fd' (separate stdin pipe for a pty job) is unimplemented on Windows ConPTY. #40407
+      matches(
+        "E475: Invalid argument: stdin='fd' is not supported for pty/terminal jobs on Windows",
+        pcall_err(command, "call jobstart(['cat', '-'], { 'term': v:true, 'stdin': 'fd' })")
+      )
+    end
     command('set modified')
     matches(
       vim.pesc('jobstart(...,{term=true}) requires unmodified buffer'),
