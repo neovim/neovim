@@ -2011,10 +2011,12 @@ int msg_outtrans_special(const char *strstart, bool from, int maxlen)
 /// @param[in]  str  String to convert.
 /// @param[in]  replace_spaces  Convert spaces into `<Space>`, normally used for
 ///                             lhs of mapping and keytrans(), but not rhs.
-/// @param[in]  replace_lt  Convert `<` into `<lt>`.
+/// @param[in]  replace_others  kTrue/kNone: Convert `<` into `<lt>`.
+///                             kTrue: Convert `|` into `<Bar>`, `\` into `<Bslash>`.
 ///
 /// @return [allocated] Converted string.
-char *str2special_save(const char *const str, const bool replace_spaces, const bool replace_lt)
+char *str2special_save(const char *const str, const bool replace_spaces,
+                       const TriState replace_others)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
   FUNC_ATTR_NONNULL_RET
 {
@@ -2023,7 +2025,7 @@ char *str2special_save(const char *const str, const bool replace_spaces, const b
 
   const char *p = str;
   while (*p != NUL) {
-    ga_concat(&ga, str2special(&p, replace_spaces, replace_lt));
+    ga_concat(&ga, str2special(&p, replace_spaces, replace_others));
   }
   ga_append(&ga, NUL);
   return (char *)ga.ga_data;
@@ -2036,24 +2038,26 @@ char *str2special_save(const char *const str, const bool replace_spaces, const b
 /// @param[in]  str  String to convert.
 /// @param[in]  replace_spaces  Convert spaces into `<Space>`, normally used for
 ///                             lhs of mapping and keytrans(), but not rhs.
-/// @param[in]  replace_lt  Convert `<` into `<lt>`.
+/// @param[in]  replace_others  kTrue/kNone: Convert `<` into `<lt>`.
+///                             kTrue: Convert `|` into `<Bar>`, `\` into `<Bslash>`.
 ///
 /// @return [allocated] Converted string.
-char *str2special_arena(const char *str, bool replace_spaces, bool replace_lt, Arena *arena)
+char *str2special_arena(const char *const str, const bool replace_spaces,
+                        const TriState replace_others, Arena *const arena)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
   FUNC_ATTR_NONNULL_RET
 {
   const char *p = str;
   size_t len = 0;
   while (*p) {
-    len += strlen(str2special(&p, replace_spaces, replace_lt));
+    len += strlen(str2special(&p, replace_spaces, replace_others));
   }
 
   char *buf = arena_alloc(arena, len + 1, false);
   size_t pos = 0;
   p = str;
   while (*p) {
-    const char *s = str2special(&p, replace_spaces, replace_lt);
+    const char *s = str2special(&p, replace_spaces, replace_others);
     size_t s_len = strlen(s);
     memcpy(buf + pos, s, s_len);
     pos += s_len;
@@ -2067,13 +2071,15 @@ char *str2special_arena(const char *str, bool replace_spaces, bool replace_lt, A
 /// @param[in,out]  sp  String to convert. Is advanced to the next key code.
 /// @param[in]  replace_spaces  Convert spaces into `<Space>`, normally used for
 ///                             lhs of mapping and keytrans(), but not rhs.
-/// @param[in]  replace_lt  Convert `<` into `<lt>`.
+/// @param[in]  replace_others  kTrue/kNone: Convert `<` into `<lt>`.
+///                             kTrue: Convert `|` into `<Bar>`, `\` into `<Bslash>`.
 ///
 /// @return Converted key code, in a static buffer. Buffer is always one and the
 ///         same, so save converted string somewhere before running str2special
 ///         for the second time.
 ///         On illegal byte return a string with only that byte.
-const char *str2special(const char **const sp, const bool replace_spaces, const bool replace_lt)
+const char *str2special(const char **const sp, const bool replace_spaces,
+                        const TriState replace_others)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 {
   static char buf[7];
@@ -2127,7 +2133,8 @@ const char *str2special(const char **const sp, const bool replace_spaces, const 
   if (special
       || c < ' '
       || (replace_spaces && c == ' ')
-      || (replace_lt && c == '<')) {
+      || (replace_others != kFalse && c == '<')
+      || (replace_others == kTrue && (c == '|' || c == '\\'))) {
     return get_special_key_name(c, modifiers);
   }
   buf[0] = (char)c;

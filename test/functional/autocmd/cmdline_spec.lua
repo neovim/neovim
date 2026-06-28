@@ -157,25 +157,20 @@ describe('cmdline autocommands', function()
     ]])
   end)
 
-  it('works with nested cmdline', function()
+  it('with nested cmdline', function()
+    -- Cmdwin is not supported in expr-register (<C-R>=) cmdline. #40312
     feed(':')
     eq({ 'notification', 'CmdlineEnter', { { cmdtype = ':', cmdlevel = 1 } } }, next_msg())
     feed('<c-r>=')
     eq({ 'notification', 'CmdlineEnter', { { cmdtype = '=', cmdlevel = 2 } } }, next_msg())
-    feed('<c-f>')
-    eq({ 'notification', 'CmdwinEnter', { {} } }, next_msg())
-    feed(':')
-    eq({ 'notification', 'CmdlineEnter', { { cmdtype = ':', cmdlevel = 3 } } }, next_msg())
-    feed('<c-c>')
-    eq(
-      { 'notification', 'CmdlineLeave', { { cmdtype = ':', cmdlevel = 3, abort = true } } },
-      next_msg()
-    )
-    feed('<c-c>')
-    eq({ 'notification', 'CmdwinLeave', { {} } }, next_msg())
     feed('1+2<cr>')
     eq(
       { 'notification', 'CmdlineLeave', { { cmdtype = '=', cmdlevel = 2, abort = false } } },
+      next_msg()
+    )
+    feed('<cr>')
+    eq(
+      { 'notification', 'CmdlineLeave', { { cmdtype = ':', cmdlevel = 1, abort = false } } },
       next_msg()
     )
   end)

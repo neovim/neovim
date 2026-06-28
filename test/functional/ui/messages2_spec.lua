@@ -95,6 +95,13 @@ describe('messages2', function()
       {1:~                                                    }|*12
       foo(1)                              0,0-1         All|
     ]])
+    command('echo "foo"')
+    -- Dupe counter increases beyond 1
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      foo(2)                              0,0-1         All|
+    ]])
     -- No error for ruler virt_text msg_row exceeding buffer length.
     command([[map Q <cmd>echo "foo\nbar" <bar> ls<CR>]])
     feed('Q')
@@ -198,7 +205,9 @@ describe('messages2', function()
     ]])
     feed(':<C-F>')
     screen:expect([[
-      foo                                                  |*5
+      x                                                    |
+      {1:~                                                    }|*3
+      ─────────────────────────────────────────────────────|
       {1::}echo "foo" | echo "bar\nbaz\n"->repeat(&lines)      |
       {1::}^                                                    |
       {1:~                                                    }|*5
@@ -207,7 +216,9 @@ describe('messages2', function()
     ]])
     command('wincmd +')
     screen:expect([[
-      foo                                                  |*4
+      x                                                    |
+      {1:~                                                    }|*2
+      ─────────────────────────────────────────────────────|
       {1::}echo "foo" | echo "bar\nbaz\n"->repeat(&lines)      |
       {1::}^                                                    |
       {1:~                                                    }|*6
@@ -216,21 +227,27 @@ describe('messages2', function()
     ]])
     command('echo "foo"')
     screen:expect([[
-      foo                                                  |*4
+      x                                                    |
+      {1:~                                                    }|*2
+      ─────────────────────────────────────────────────────|
       {1::}echo "foo" | echo "bar\nbaz\n"->repeat(&lines)      |
       {1::}^                                                    |
       {1:~                                                    }|*6
       {3:[Command Line]                     2,0-1          All}|
       foo                                                  |
     ]])
+    -- <C-C> closes the cmdwin and drops back into pre-filled cmdline. The pager remains visible.
     feed('<C-C>')
     screen:expect([[
-      foo                                                  |*12
+      x                                                    |
+      {1:~                                                    }|*11
       {3:[Pager]                            1,1            Top}|
       {16::}^                                                    |
     ]])
-    -- Can enter pager from cmdwin.
-    feed('<Esc>qq:')
+    feed('<Esc><Esc>')
+    -- Can enter pager from cmdwin (use cmdwin.open() since "q" is consumed by the pager on_key
+    -- callback before nv_record can read it).
+    exec_lua([[require('vim._core.cmdwin').open(':')]])
     screen:expect([[
       x                                                    |
       {1:~                                                    }|*3
@@ -244,9 +261,10 @@ describe('messages2', function()
     feed(':messages<CR>')
     screen:expect([[
       ^foo                                                  |
-      foo                                                  |*11
+      foo                                                  |*4
+      {1:~                                                    }|*7
       {3:[Pager]                            1,1            Top}|
-                                                           |
+      {16::}{15:messages}                                            |
     ]])
     -- Cmdwin is restored after pager is closed.
     feed('q')
@@ -259,7 +277,7 @@ describe('messages2', function()
       {1::}^                                                    |
       {1:~                                                    }|*4
       {3:[Command Line]                     3,0-1          All}|
-                                                           |
+      {16::}{15:messages}                                            |
     ]])
     -- Configured maximum height.
     command('quit | lua require("vim._core.ui2").enable({msg = {pager = {height = 2 } } })')
@@ -271,7 +289,7 @@ describe('messages2', function()
       ^foo                                                  |
       foo                                                  |
       {3:[Pager]                            1,1            Top}|
-                                                           |
+      {16::}{15:messages}                                            |
     ]])
   end)
 
@@ -1070,6 +1088,24 @@ describe('messages2', function()
       ^                                                     |
       {1:~                                                    }|*12
       foo [+1]                                             |
+    ]])
+  end)
+
+  it('search count is cleared', function()
+    command('set ruler shortmess-=S | call setline(1, ["foo", "bar"])')
+    feed('/foo<CR>')
+    screen:expect([[
+      {10:^foo}                                                  |
+      bar                                                  |
+      {1:~                                                    }|*11
+      /foo            W [1/1]             1,1           All|
+    ]])
+    feed('<C-L>j')
+    screen:expect([[
+      {10:foo}                                                  |
+      ^bar                                                  |
+      {1:~                                                    }|*11
+                                          2,1           All|
     ]])
   end)
 end)

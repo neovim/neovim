@@ -76,8 +76,8 @@ end
 --- - For TCP there is a builtin RPC client factory: |vim.lsp.rpc.connect()|
 --- @field cmd string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.Client
 ---
---- Directory to launch the `cmd` process. Not related to `root_dir`.
---- (default: cwd)
+--- Directory where the `cmd` process is launched when `cmd` is a string array. Defaults to
+--- `root_dir` when available, then the current working directory.
 --- @field cmd_cwd? string
 ---
 --- Environment variables passed to the LSP process on spawn. Non-string values are coerced to
@@ -505,7 +505,7 @@ function Client.create(config)
     self.rpc = config_cmd(dispatchers, config)
   else
     self.rpc = lsp.rpc.start(config_cmd, dispatchers, {
-      cwd = config.cmd_cwd,
+      cwd = config.cmd_cwd or config.root_dir,
       env = config.cmd_env,
       detached = config.detached,
     })
@@ -554,11 +554,12 @@ function Client:initialize()
   end
 
   -- HACK: Capability modules must be loaded
-  require('vim.lsp.semantic_tokens')
   require('vim.lsp._folding_range')
-  require('vim.lsp.inline_completion')
+  require('vim.lsp.diagnostic')
   require('vim.lsp.document_color')
+  require('vim.lsp.inline_completion')
   require('vim.lsp.linked_editing_range')
+  require('vim.lsp.semantic_tokens')
 
   local init_params = {
     -- The process Id of the parent process that started the server. Is null if
@@ -847,9 +848,10 @@ end
 ---
 --- @param method vim.lsp.protocol.Method.ClientToServer.Notification LSP method name.
 --- @param params table? LSP request params.
+--- @param bufnr integer? Buffer associated with notification.
 --- @return boolean status indicating if the notification was successful.
 ---                        If it is false, then the client has shutdown.
-function Client:notify(method, params)
+function Client:notify(method, params, bufnr)
   if method ~= 'textDocument/didChange' then
     changetracking.flush(self)
   end
@@ -858,14 +860,17 @@ function Client:notify(method, params)
 
   if client_active then
     vim.schedule(function()
-      api.nvim_exec_autocmds('LspNotify', {
-        modeline = false,
-        data = {
-          client_id = self.id,
-          method = method,
-          params = params,
-        },
-      })
+      if not self:is_stopped() and (not bufnr or self.attached_buffers[bufnr]) then
+        api.nvim_exec_autocmds('LspNotify', {
+          buf = bufnr,
+          modeline = false,
+          data = {
+            client_id = self.id,
+            method = method,
+            params = params,
+          },
+        })
+      end
     end)
   end
 
@@ -1137,14 +1142,14 @@ end
 
 --- Default handler for the 'textDocument/didClose' LSP notification.
 ---
---- @param buf integer Number of the buffer, or 0 for current
-function Client:_text_document_did_close_handler(buf)
+--- @param bufnr integer Number of the buffer, or 0 for current
+function Client:_text_document_did_close_handler(bufnr)
   if not self:supports_method('textDocument/didClose') then
     return
   end
-  local uri = vim.uri_from_bufnr(buf)
+  local uri = vim.uri_from_bufnr(bufnr)
   local params = { textDocument = { uri = uri } }
-  self:notify('textDocument/didClose', params)
+  self:notify('textDocument/didClose', params, bufnr)
 end
 
 --- Default handler for the 'textDocument/didOpen' LSP notification.
@@ -1166,7 +1171,7 @@ function Client:_text_document_did_open_handler(bufnr)
       languageId = self:_get_language_id(bufnr),
       text = lsp._buf_get_full_text(bufnr),
     },
-  })
+  }, bufnr)
 
   -- Next chance we get, we should re-do the diagnostics
   vim.schedule(function()
@@ -1183,9 +1188,9 @@ end
 --- Useful for buffer-local setup.
 --- @param bufnr integer Buffer number
 function Client:on_attach(bufnr)
-  self:_text_document_did_open_handler(bufnr)
-
   lsp._set_defaults(self, bufnr)
+
+  self:_text_document_did_open_handler(bufnr)
 
   api.nvim_exec_autocmds('LspAttach', {
     buf = bufnr,
@@ -1435,9 +1440,6 @@ function Client:_on_detach(bufnr)
   self:_text_document_did_close_handler(bufnr)
 
   self.attached_buffers[bufnr] = nil
-
-  local namespace = lsp.diagnostic.get_namespace(self.id)
-  vim.diagnostic.reset(namespace, bufnr)
 end
 
 --- Reset defaults set by `set_defaults`.

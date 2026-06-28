@@ -41,6 +41,8 @@ local function check_runtime()
     ['lua/vim/shared.lua'] = false,
     ['plugin/health.vim'] = false,
     ['plugin/man.vim'] = false,
+    ['plugin/nvim/net.lua'] = false,
+    ['plugin/nvim/spellfile.lua'] = false,
     ['queries/help/highlights.scm'] = false,
     ['queries/help/injections.scm'] = false,
     ['scripts.vim'] = false,
@@ -176,7 +178,7 @@ local function check_watchers()
   local a = vim._watch.active
   local total = a.watch + a.watchdirs + a.inotify
   health.info(
-    ('filewatchers (vim._watch): %d (watch=%d, watchdirs=%d, inotify=%d)'):format(
+    ('Filewatchers (vim._watch): %d (watch=%d, watchdirs=%d, inotify=%d)'):format(
       total,
       a.watch,
       a.watchdirs,

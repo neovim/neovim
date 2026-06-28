@@ -2,7 +2,7 @@
 " Maintainer: <vacancy>
 " Previous Maintainer: Aaron Griffin <aaronmgriffin@gmail.com>
 " Version: 0.10
-" Last Updated: 2026 Jun 04
+" Last Updated: 2026 Jun 21
 "
 " Roland Puntaier: this file contains adaptations for python3 and is parallel to pythoncomplete.vim
 "
@@ -22,6 +22,7 @@
 "     previous code passed buffer-supplied expressions to exec() which
 "     Python evaluates at definition time, allowing arbitrary code
 "     execution via crafted def/class headers
+"   * use repr() on doc strings to prevent code execution
 "
 " v 0.9
 "   * Fixed docstring parsing for classes and functions
@@ -338,7 +339,7 @@ class Scope(object):
 
     def get_code(self):
         str = ""
-        if len(self.docstr) > 0: str += '"""'+self.docstr+'"""\n'
+        if len(self.docstr) > 0: str += repr(self.docstr)+'\n'
         str += 'class _PyCmplNoType:\n    def __getattr__(self,name):\n        return None\n'
         for sub in self.subscopes:
             str += sub.get_code()
@@ -381,7 +382,7 @@ class Class(Scope):
                        if _DOTTED_NAME_RE.match(s.strip())]
         if len(safe_supers) > 0: str += '(%s)' % ','.join(safe_supers)
         str += ':\n'
-        if len(self.docstr) > 0: str += self.childindent()+'"""'+self.docstr+'"""\n'
+        if len(self.docstr) > 0: str += self.childindent()+repr(self.docstr)+'\n'
         if len(self.subscopes) > 0:
             for s in self.subscopes: str += s.get_code()
         else:
@@ -404,7 +405,7 @@ class Function(Scope):
         safe_params = [p for p in safe_params if p]
         str = "%sdef %s(%s):\n" % \
             (self.currentindent(),self.name,','.join(safe_params))
-        if len(self.docstr) > 0: str += self.childindent()+'"""'+self.docstr+'"""\n'
+        if len(self.docstr) > 0: str += self.childindent()+repr(self.docstr)+'\n'
         str += "%spass\n" % self.childindent()
         return str
 

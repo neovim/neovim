@@ -222,8 +222,6 @@
 # define FUNC_API_LUA_ONLY
 /// API function fails during textlock.
 # define FUNC_API_TEXTLOCK
-/// API function fails during textlock, but allows cmdwin.
-# define FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 /// API function introduced at the given API level.
 # define FUNC_API_SINCE(X)
 /// API function deprecated since the given API level.

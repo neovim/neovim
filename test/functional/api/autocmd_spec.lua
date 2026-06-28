@@ -1463,6 +1463,22 @@ describe('autocmd api', function()
       api.nvim_exec_autocmds('FileType', { group = auname })
       eq(true, api.nvim_get_var('group_executed'))
     end)
+
+    it('redraw restores curwin temporarily without clearing aucmd_win', function()
+      local win = api.nvim_get_current_win()
+      local buf = api.nvim_create_buf(true, true)
+      exec_lua([[
+        vim.api.nvim_set_decoration_provider(vim.api.nvim_create_namespace(''), {
+          on_start = function()
+            _G.win = vim.api.nvim_get_current_win()
+          end
+        })
+      ]])
+      api.nvim_create_autocmd('User', { command = 'let w:x=1|redraw!|let g:x=w:x' })
+      api.nvim_exec_autocmds('User', { buf = buf })
+      eq(1000, exec_lua('return _G.win'))
+      eq(1, n.eval('g:x'))
+    end)
   end)
 
   describe('nvim_create_augroup', function()

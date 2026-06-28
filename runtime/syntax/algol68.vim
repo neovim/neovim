@@ -3,7 +3,7 @@
 " Version:		0.4
 " Maintainer:		Janis Papanagnou
 " Previous Maintainer:	NevilleD.ALGOL_68@sgr-a.net
-" Last Change:		2026 May 19
+" Last Change:		2026 Jun 13
 
 if exists("b:current_syntax")
   finish
@@ -41,7 +41,8 @@ syn keyword algol68Repeat	FOR FROM BY UPTO DOWNTO TO WHILE DO UNTIL OD
 syn keyword algol68Statement	PAR BEGIN END EXIT
 syn keyword algol68Struct	STRUCT
 syn keyword algol68PreProc	VECTOR
-syn keyword algol68Type		FLEX HEAP LOC LONG REF SHORT
+syn match   algol68Type		"\<\%(LONG\|SHORT\)\>"
+syn keyword algol68Type		FLEX HEAP LOC REF
 syn keyword algol68Type		VOID BOOL INT REAL COMPL CHAR STRING COMPLEX
 syn keyword algol68Type		BITS BYTES FILE CHANNEL PIPE SEMA SOUND
 syn keyword algol68Type		FORMAT STRUCT UNION 
@@ -120,16 +121,16 @@ syn match   algol68DefiningOperator	"\u[A-Z0-9]" contained
 syn match   algol68DefiningOperator	"[!%&+\-?^~][*/<=>]\?\%(:=\|=:\)\?" contained
 syn match   algol68DefiningOperator	"\%([!%&+\-?^~]\|[*/<=>]\)[*/<=>]\?\%(:=\|=:\)\?" contained
 
-syn match  algol68Number	"\<\d\+\%(\s\+\d\+\)*\>"
+syn match  algol68Number	"\<\%(\%(LONG\s\+\)\+\|\%(SHORT\s\+\)\+\)\=\d\+\%(\s\+\d\+\)*\>"
 
-syn match  algol68Float		"\c\.\d\+\%(\s\+\d\+\)*\%(\s*[e\\⏨]\s*[-+]\?\s*\d\+\%(\s\+\d\+\)*\)\?\>"
-syn match  algol68Float		"\c\<\d\+\%(\s\+\d\+\)*\%(\s*[e\\⏨]\s*[-+]\?\s*\d\+\%(\s\+\d\+\)*\)\>"
-syn match  algol68Float		"\c\<\d\+\%(\s\+\d\+\)*\s*\.\s*\d\+\%(\s\+\d\+\)*\%(\s*[e\\⏨]\s*[-+]\?\s*\d\+\%(\s\+\d\+\)*\)\?\>"
+syn match  algol68Float		"\%(\%(LONG\s\+\)*\|\%(SHORT\s\+\)*\)\=\.\d\+\%(\s\+\d\+\)*\%(\s*[eE\\⏨]\s*[-+]\?\s*\d\+\%(\s\+\d\+\)*\)\?\>"
+syn match  algol68Float		"\<\%(\%(LONG\s\+\)*\|\%(SHORT\s\+\)*\)\=\d\+\%(\s\+\d\+\)*\%(\s*[eE\\⏨]\s*[-+]\?\s*\d\+\%(\s\+\d\+\)*\)\>"
+syn match  algol68Float		"\<\%(\%(LONG\s\+\)*\|\%(SHORT\s\+\)*\)\=\d\+\%(\s\+\d\+\)*\s*\.\s*\d\+\%(\s\+\d\+\)*\%(\s*[eE\\⏨]\s*[-+]\?\s*\d\+\%(\s\+\d\+\)*\)\?\>"
 
-syn match  algol68HexNumber	"\c\<2r\s*[01]\+\%(\s\+[01]\+\)*\>"
-syn match  algol68HexNumber	"\c\<4r\s*[0-3]\+\%(\s\+[0-3]\+\)*\>"
-syn match  algol68HexNumber	"\c\<8r\s*[0-7]\+\%(\s\+[0-7]\+\)*\>"
-syn match  algol68HexNumber	"\c\<16r\s*[0-9a-f]\+\%(\s\+[0-9a-f]\+\)*\>"
+syn match  algol68HexNumber	"\<\%(\%(LONG\s\+\)*\|\%(SHORT\s\+\)*\)\=2[rR]\s*[01]\+\%(\s\+[01]\+\)*\>"
+syn match  algol68HexNumber	"\<\%(\%(LONG\s\+\)*\|\%(SHORT\s\+\)*\)\=4[rR]\s*[0-3]\+\%(\s\+[0-3]\+\)*\>"
+syn match  algol68HexNumber	"\<\%(\%(LONG\s\+\)*\|\%(SHORT\s\+\)*\)\=8[rR]\s*[0-7]\+\%(\s\+[0-7]\+\)*\>"
+syn match  algol68HexNumber	"\<\%(\%(LONG\s\+\)*\|\%(SHORT\s\+\)*\)\=16[rR]\s*[0-9a-f]\+\%(\s\+[0-9a-f]\+\)*\>"
 
 
 syn region algol68Special	start="\$"  end="\$" contains=algol68String

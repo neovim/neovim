@@ -10,7 +10,6 @@ local insert, pcall_err = n.insert, t.pcall_err
 local matches = t.matches
 local api = n.api
 local feed = n.feed
-local command = n.command
 
 describe('eval-API', function()
   before_each(clear)
@@ -91,16 +90,22 @@ describe('eval-API', function()
       api.nvim_get_vvar('errmsg')
     )
 
-    -- Some functions checking textlock (usually those that may change the current window or buffer)
-    -- also ought to not be usable in the cmdwin.
+    -- cmdwin behavior (changed since #40312).
     local old_win = api.nvim_get_current_win()
     feed('q:')
+    local cmdwin_win = api.nvim_get_current_win()
     eq(
-      'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+      'Vim:E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
       pcall_err(api.nvim_set_current_win, old_win)
     )
+    eq(old_win, api.nvim_get_current_win())
+    -- TODO(justinmk): awkward: E11 is raised but the focus switch happens anyway; inherited bug in
+    -- goto_tabpage_win (calls win_enter unconditionally even when goto_tabpage_tp's CHECK_CMDWIN
+    -- emsg'd). We should probably just remove CHECK_CMDWIN from goto_tabpage_tp. #40407
+    pcall(api.nvim_set_current_win, cmdwin_win)
+    eq(cmdwin_win, api.nvim_get_current_win())
 
-    -- But others, like nvim_buf_set_lines(), which just changes text, is OK.
+    -- nvim_buf_set_lines() in the cmdwin buffer is OK.
     api.nvim_buf_set_lines(0, 0, -1, 1, { 'wow!' })
     eq({ 'wow!' }, api.nvim_buf_get_lines(0, 0, -1, 1))
 

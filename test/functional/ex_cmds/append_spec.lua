@@ -7,7 +7,6 @@ local dedent = t.dedent
 local exec = n.exec
 local feed = n.feed
 local clear = n.clear
-local fn = n.fn
 local command = n.command
 local api = n.api
 
@@ -33,30 +32,13 @@ local cmdtest = function(cmd, prep, ret1)
       feed(':' .. cmd .. '\nabc\ndef\n.\n')
       eq(ret1, buffer_contents())
     end)
-    -- This used to crash since that commit as well.
-    it('opens empty cmdline window', function()
-      local hisline = '" Some comment to be stored in history'
-      feed(':' .. hisline .. '<CR>')
-      feed(':' .. cmd .. '<CR>abc<CR>def<C-f>')
-      eq({ 'def' }, buffer_contents())
-      eq(hisline, fn.histget(':', -2))
-      eq(cmd, fn.histget(':'))
-      -- Test that command-line window was launched
-      eq('nofile', api.nvim_get_option_value('buftype', {}))
-      eq('n', fn.mode(1))
-      feed('<CR>')
-      eq('c', fn.mode(1))
-      feed('.<CR>')
-      eq('n', fn.mode(1))
-      eq(ret1, buffer_contents())
-    end)
   end)
 end
 cmdtest('insert', ' before', { 'abc', 'def', 'foo', 'bar', 'baz' })
 cmdtest('append', ' after', { 'foo', 'abc', 'def', 'bar', 'baz' })
 cmdtest('change', '', { 'abc', 'def', 'bar', 'baz' })
 
-describe('the first line is redrawn correctly after inserting text in an empty buffer', function()
+describe('first line is redrawn correctly after :append/:insert in an empty buffer', function()
   local screen
   before_each(function()
     clear()

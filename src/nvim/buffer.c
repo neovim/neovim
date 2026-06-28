@@ -3631,6 +3631,13 @@ bool bt_prompt(buf_T *buf)
   return buf != NULL && buf->b_p_bt[0] == 'p';
 }
 
+/// @return  true if "buf" is the |cmdwin| scratch buffer.
+bool bt_cmdwin(const buf_T *buf)
+  FUNC_ATTR_PURE
+{
+  return buf != NULL && buf == cmdwin_buf;
+}
+
 /// Open a window for a number of buffers.
 void ex_buffer_all(exarg_T *eap)
 {
@@ -4092,7 +4099,7 @@ char *buf_spname(buf_T *buf)
     if (buf->b_fname != NULL) {
       return buf->b_fname;
     }
-    if (buf == cmdwin_buf) {
+    if (bt_cmdwin(buf)) {
       return _("[Command Line]");
     }
     if (bt_prompt(buf)) {
@@ -4201,34 +4208,6 @@ void wipe_buffer(buf_T *buf, bool aucmd)
   if (!aucmd) {
     unblock_autocmds();
   }
-}
-
-/// Creates or switches to a scratch buffer. :h special-buffers
-/// Scratch buffer is:
-///   - buftype=nofile bufhidden=hide noswapfile
-///   - Always considered 'nomodified'
-///
-/// @param bufnr     Buffer to switch to, or 0 to create a new buffer.
-/// @param bufname   Buffer name, or NULL.
-///
-/// @see curbufIsChanged()
-///
-/// @return  FAIL for failure, OK otherwise
-int buf_open_scratch(handle_T bufnr, char *bufname)
-{
-  if (do_ecmd((int)bufnr, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, NULL) == FAIL) {
-    return FAIL;
-  }
-  if (bufname != NULL) {
-    apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, curbuf);
-    setfname(curbuf, bufname, NULL, true);
-    apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, curbuf);
-  }
-  set_option_value_give_err(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("hide"), OPT_LOCAL);
-  set_option_value_give_err(kOptBuftype, STATIC_CSTR_AS_OPTVAL("nofile"), OPT_LOCAL);
-  set_option_value_give_err(kOptSwapfile, BOOLEAN_OPTVAL(false), OPT_LOCAL);
-  RESET_BINDING(curwin);
-  return OK;
 }
 
 bool buf_is_empty(buf_T *buf)

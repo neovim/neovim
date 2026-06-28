@@ -3126,7 +3126,40 @@ func Test_autocmd_once()
   close
 
   call assert_fails('au WinNew * ++once ++once echo bad', 'E983:')
+  call assert_false(exists('#WinNew'))
 endfunc
+
+func Test_autocmd_dup_arg()
+  " Duplicate ++once / ++nested, or the legacy "nested" used twice, must
+  " error out *and* not create the autocommand.  Using an environment
+  " variable in the pattern also exercises the error-exit path that frees
+  " the expanded pattern (checked by the address/leak sanitizers).
+  augroup XdupTest
+    au!
+  augroup END
+  let $XAUTODIR = 'Xfoo'
+
+  " New behavior: duplicate ++once now aborts, the autocmd is not added
+  call assert_fails('au XdupTest WinNew $XAUTODIR/* ++once ++once echo bad', 'E983:')
+  call assert_false(exists('#XdupTest#WinNew'))
+
+  call assert_fails('au XdupTest WinNew $XAUTODIR/* ++nested ++nested echo bad', 'E983:')
+  call assert_false(exists('#XdupTest#WinNew'))
+
+  call assert_fails('au XdupTest WinNew $XAUTODIR/* nested nested echo bad', 'E983:')
+  call assert_false(exists('#XdupTest#WinNew'))
+
+  " "nested" without "++" is rejected in Vim9 script (also frees the pattern)
+  "call assert_fails('vim9cmd au XdupTest WinNew $XAUTODIR/* nested echo bad', 'E1078:')
+  call assert_false(exists('#XdupTest#WinNew'))
+
+  augroup XdupTest
+    au!
+  augroup END
+  augroup! XdupTest
+  let $XAUTODIR = ''
+endfunc
+
 
 func Test_autocmd_bufreadpre()
   new
@@ -3878,6 +3911,9 @@ endfunc
 
 " Fuzzer found some strange combination that caused a crash.
 func Test_autocmd_normal_mess()
+  " Uses `q/` (cmdwin) in autocmd; with non-blocking cmdwin (#40312) the
+  " expected E1159 path now hits E1513 (winfixbuf) instead.
+  throw 'Skipped: Nvim supports cmdwin freedom #40312'
   " For unknown reason this hangs on MS-Windows
   CheckNotMSWindows
 
@@ -3897,6 +3933,7 @@ func Test_autocmd_normal_mess()
 endfunc
 
 func Test_autocmd_closing_cmdwin()
+  throw 'Skipped: Nvim supports cmdwin freedom #40312'
   " For unknown reason this hangs on MS-Windows
   CheckNotMSWindows
 
@@ -4049,6 +4086,9 @@ endfunc
 
 " Test for ModeChanged pattern
 func Test_mode_changes()
+  " Asserts `n -> c -> n` mode transitions for `q:<C-C>`, but with the
+  " non-blocking cmdwin (#40312) `q:` enters cmdwin normal mode, not cmdline.
+  throw 'Skipped: Nvim supports cmdwin freedom #40312'
   let g:index = 0
   let g:mode_seq = ['n', 'i', 'n', 'v', 'V', 'i', 'ix', 'i', 'ic', 'i', 'n', 'no', 'noV', 'n', 'V', 'v', 's', 'n']
   func! TestMode()

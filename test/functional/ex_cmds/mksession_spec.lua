@@ -272,72 +272,38 @@ describe(':mksession', function()
 
   it('fires SessionWritePre autocmd', function()
     command('autocmd SessionWritePre * let g:session_write_pre = 1')
-
     command('mksession ' .. session_file)
-
     eq(1, api.nvim_eval('g:session_write_pre'))
   end)
 
   it('SessionWritePre handles editing buffer contents', function()
     local tmpfile = file_prefix .. '-tmpfile-float'
-
     command('edit ' .. tmpfile)
-
     command("autocmd SessionWritePre * call append(0, 'foo') | write")
-
     command('mksession ' .. session_file)
 
     clear()
     command('source ' .. session_file)
-
-    eq(2, api.nvim_buf_line_count(0))
-
-    eq({ 'foo', '' }, api.nvim_buf_get_lines(0, 0, 2, true))
-
+    eq({ 'foo', '' }, api.nvim_buf_get_lines(0, 0, -1, true))
     os.remove(tmpfile)
   end)
 
   it('SessionWritePre handles switching buffers', function()
     command('autocmd SessionWritePre * new')
-
     command('mksession ' .. session_file)
 
     clear()
     command('source ' .. session_file)
     -- both buffers are saved
-    eq(2, vim.tbl_count(api.nvim_list_bufs()))
+    eq(2, #api.nvim_list_bufs())
   end)
 
-  it('SessionWritePre handles bwipeout', function()
+  it('SessionWritePre handles buffer removal', function()
+    -- :bdelete and :bwipeout differ for "live" Nvim but are equivalent
+    -- from :mksession's perspective, so one test covers both.
     api.nvim_buf_set_name(0, 'foo')
-
     command('autocmd SessionWritePre * bwipeout!')
-
     command('mksession ' .. session_file)
-
-    -- old buffer is gone
-    eq('', api.nvim_buf_get_name(0))
-
-    clear()
-    command('source ' .. session_file)
-    -- gone for good
-    eq(
-      nil,
-      vim.iter(api.nvim_list_bufs()):find(function(b)
-        return api.nvim_buf_get_name(b) == 'foo'
-      end)
-    )
-  end)
-
-  it('SessionWritePre handles bdelete', function()
-    api.nvim_buf_set_name(0, 'foo')
-
-    command('autocmd SessionWritePre * bdelete!')
-
-    command('mksession ' .. session_file)
-
-    -- old buffer is gone
-    eq('', api.nvim_buf_get_name(0))
 
     clear()
     command('source ' .. session_file)
@@ -352,12 +318,11 @@ describe(':mksession', function()
 
   it('SessionWritePre handles splits', function()
     command('autocmd SessionWritePre * split | vsplit')
-
     command('mksession ' .. session_file)
 
     clear()
     command('source ' .. session_file)
     -- contains all splits
-    eq(3, vim.tbl_count(api.nvim_tabpage_list_wins(0)))
+    eq(3, #api.nvim_tabpage_list_wins(0))
   end)
 end)

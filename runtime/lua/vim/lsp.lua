@@ -871,9 +871,6 @@ function lsp._set_defaults(client, bufnr)
       end, { buf = bufnr, desc = 'vim.lsp.buf.hover()' })
     end
   end)
-  if client:supports_method('textDocument/diagnostic') then
-    lsp.diagnostic._enable(bufnr)
-  end
 end
 
 --- @deprecated
@@ -919,7 +916,7 @@ local function buf_attach(bufnr)
         reason = protocol.TextDocumentSaveReason.Manual, ---@type integer
       }
       if client:supports_method('textDocument/willSave') then
-        client:notify('textDocument/willSave', params)
+        client:notify('textDocument/willSave', params, bufnr)
       end
       if client:supports_method('textDocument/willSaveWaitUntil') then
         local result, err =
@@ -955,7 +952,7 @@ local function buf_attach(bufnr)
       for _, client in ipairs(clients) do
         changetracking.reset_buf(client, bufnr)
         if client:supports_method('textDocument/didClose') then
-          client:notify('textDocument/didClose', params)
+          client:notify('textDocument/didClose', params, bufnr)
         end
       end
       for _, client in ipairs(clients) do

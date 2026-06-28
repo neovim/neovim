@@ -165,6 +165,25 @@ function LinkedEditor:refresh()
 end
 
 ---@package
+function LinkedEditor:new(bufnr)
+  self = Capability.new(self, bufnr)
+
+  nvim_on({ 'TextChanged', 'TextChangedI' }, self.augroup, { buf = self.bufnr }, function()
+    for _, state in pairs(self.client_state) do
+      update_ranges(self.bufnr, state)
+    end
+
+    self:refresh()
+  end)
+
+  nvim_on('CursorMoved', self.augroup, { buf = self.bufnr }, function()
+    self:refresh()
+  end)
+
+  return self
+end
+
+---@package
 ---@param client_id integer
 function LinkedEditor:on_attach(client_id)
   local state = self.client_state[client_id]
@@ -176,15 +195,6 @@ function LinkedEditor:on_attach(client_id)
     self.client_state[client_id] = state
   end
 
-  nvim_on({ 'TextChanged', 'TextChangedI' }, self.augroup, { buf = self.bufnr }, function()
-    update_ranges(self.bufnr, state)
-    self:refresh()
-  end)
-
-  nvim_on('CursorMoved', self.augroup, { buf = self.bufnr }, function()
-    self:refresh()
-  end)
-
   self:refresh()
 end
 
@@ -195,7 +205,6 @@ function LinkedEditor:on_detach(client_id)
   if client_state then
     --TODO: delete namespace if/when that becomes possible
     clear_ranges(self.bufnr, client_state)
-    api.nvim_clear_autocmds({ group = self.augroup })
     self.client_state[client_id] = nil
   end
 end

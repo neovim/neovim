@@ -85,16 +85,24 @@ DIAGNOSTICS
 EDITOR
 
 • On Windows, the |trust| db now stores paths with "/" slashes. This means the
-  trust store will be reset.
+  trust store will be reset (one time).
 • `stdpath("log")` moved to `stdpath("state")/logs`.
+• |cmdwin| (|q:|, |q/|, |q?|, |c_CTRL-F|):
+  • Only supports one "cmdline level", not "infinite recursion".
+  • Expr-register (|i_CTRL-R_=|, |c_CTRL-R_=|) no longer supports opening
+    cmdwin via |c_CTRL-F|.
 
 EVENTS
 
 • |BufModifiedSet| has been removed. Use the |OptionSet| event with pattern
   "modified" instead.
+• |ui-messages| `msg_show.bufwrite` and `msg_show.completion` messages are now
+  `msg_show.progress` events.
 
 LSP
 
+• `vim.lsp.ClientConfig.cmd` given as a string array now uses
+  `vim.lsp.ClientConfig.root_dir` as its default process working directory.
 • `client.attached_buffers[buf]` now stores `languageId` string (was boolean).
 
 LUA
@@ -107,7 +115,14 @@ LUA
 
 OPTIONS
 
-• todo
+• The 'statusline' `%=` item is no longer ignored in item groups. It applies
+  to the containing item group and its `minwid`.
+  An `%<` item inside an item group now only applies to the containing group
+  and its `maxwid`. Therefore, multiple `%<` can now be effective.
+  The default truncation of item groups is now at the first contained item.
+  To restore the previous truncation from the left, add a `%<` to the start.
+  The same applies to 'rulerformat', 'statuscolumn', 'tabline', 'winbar',
+  'titlestring', and 'iconstring'.
 
 PLUGINS
 
@@ -172,6 +187,14 @@ EDITOR
 
 • |:command-completion-customlist| can return a list of dictionaries with
   kind/menu/info/abbr for the popup menu.
+• |cmdwin| (|q:|, |q/|, |q?|, |c_CTRL-F|) is implemented as a "normal"
+  buffer+window instead of a nested-state modal loop:
+  • 'inccommand' works in cmdwin!
+  • API calls (e.g. |nvim_buf_delete()|) that previously failed with
+    "E11: Invalid in command-line window" while cmdwin was open, now work
+    normally. Async plugins no longer need special |CmdwinLeave| workarounds.
+  • Removed most cmdwin-specific |E11| guards, except for window navigation.
+  • The |cmdwin-char| is shown via 'statuscolumn'.
 • |gf| and |<cfile>| support `file://…` URIs.
 • |:log| opens log files.
 • |ZR| restarts Nvim (|:restart|).
@@ -195,9 +218,9 @@ EVENTS
 
 • |:delmarks| now triggers the |MarkSet| autocommand with line==col==0, same
   as |nvim_buf_del_mark()|
+• |SessionWritePre| event emits just before |:mksession|.
 • |TextPutPre| and |TextPutPost| are triggered before/after putting text.
 • |TabMoved| is triggered when tabs are reordered.
-• Added the |SessionWritePre| autocommand event.
 
 HIGHLIGHTS
 
@@ -255,6 +278,11 @@ OPTIONS
 • 'scrolloffpad' allows vertically centering cursor at the end of file.
 • 'shortmess' flag |shm-u| silences undo/redo messages.
 • 'statusline' supports |stl-%0{| to insert the expression result verbatim.
+  The `%=` item is supported within item groups to separate alignment sections
+  within the containing group until its `minwid` is reached. The truncation
+  of an item group to its `maxwid` can be controlled with the `%<` item.
+  The same applies to 'rulerformat', 'statuscolumn', 'tabline', 'winbar',
+  'titlestring', and 'iconstring'.
 • 'winpinned' prevents window from closing unless specifically targeted.
 
 PERFORMANCE
@@ -321,6 +349,8 @@ These existing features changed their behavior.
 • `nvim_exec_autocmds({buf=…})` runs in the context of the target buffer.
 • |OptionSet| is no longer triggered during startup by automatic
   |'background'| detection.
+• Editing a local directory now shows its contents in a `filetype=directory`
+  buffer. See |dir|.
 • |:Open| with no arguments uses the current file.
 • The "buffer" key was renamed to "buf" in these functions (but the old name
   "buffer" is still accepted, for backwards compatibility):
@@ -329,6 +359,8 @@ These existing features changed their behavior.
   • |nvim_exec_autocmds()|
   • |nvim_get_autocmds()|
 • |vim.keymap.set()| and |vim.keymap.del()| accept a list of strings for `lhs`.
+• 'statuscolumn' click function labels can be different across rows.
+  |v:virtnum| and |v:lnum| are available during the click function callback.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

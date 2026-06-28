@@ -96,6 +96,8 @@ Defaults                                            *defaults* *nvim-defaults*
 - 'viminfo' includes "!"
 - 'wildoptions' defaults to "pum,tagfile"
 
+- |dir| plugin is enabled, so editing a directory shows its contents in a
+  buffer with 'filetype' set to "directory".
 - |editorconfig| plugin is enabled, .editorconfig settings are applied.
 - |man.lua| plugin is enabled, so |:Man| is available by default.
 - |matchit| plugin is enabled. To disable it in your config: >vim
@@ -304,6 +306,9 @@ Command-line:
 - (Experimental) *g:Nvim_color_cmdline* Command-line (|:|) is colored by
   callback defined in `g:Nvim_color_cmdline` (this callback is for testing
   only, and will be removed in the future).
+- |cmdwin| (|q:|, |q/|, |q?|, |c_CTRL-F|) is a "normal" buffer+window, instead
+  of a nested modal loop. API and Lua callbacks can run without |E11| while it
+  is open. The |cmdwin-char| is shown via 'statuscolumn'.
 
 Commands:
 - |:checkhealth|
@@ -434,7 +439,8 @@ Options:
 - 'showcmdloc'  cannot be set to empty.
 - 'signcolumn'  can show multiple signs (dynamic or fixed columns)
 - 'statuscolumn' full control of columns using 'statusline' format
-- 'statusline' default is exposed as a statusline expression.
+- 'statusline'  default is exposed as a statusline expression.
+- 'statusline'  and related options apply `%=` and `%<` to item groups.
 - 'splitkeep'   cannot be set to empty.
 - 'tabline'     middle-click on tabpage label closes tabpage,
                 and %@Func@foo%X can call any function on mouse-click
@@ -761,6 +767,7 @@ Compile-time features:
 - X11 integration (see |x11-selection|)
 
 Editor:
+- |c_CTRL-F| cannot enter |cmdwin| from the |expr-register| prompt.
 - *cscope* support was removed in favour of plugin-based solutions such as:
   https://github.com/dhananjaylatkar/cscope_maps.nvim
 - *popup-window* : Use |floating-windows| instead.

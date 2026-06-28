@@ -1957,12 +1957,12 @@ static const char *set_context_in_filetype_cmd(expand_T *xp, const char *arg)
   int val = 0;
 
   while (true) {
-    if (strncmp(p, "plugin", 6) == 0) {
+    if (strncmp(p, "plugin", 6) == 0 && ascii_iswhite(p[6])) {
       val |= EXPAND_FILETYPECMD_PLUGIN;
       p = skipwhite(p + 6);
       continue;
     }
-    if (strncmp(p, "indent", 6) == 0) {
+    if (strncmp(p, "indent", 6) == 0 && ascii_iswhite(p[6])) {
       val |= EXPAND_FILETYPECMD_INDENT;
       p = skipwhite(p + 6);
       continue;
@@ -2790,8 +2790,8 @@ static char *get_filetypecmd_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
     return NULL;
   }
 
-  if (filetype_expand_what == EXP_FILETYPECMD_ALL && idx < 4) {
-    char *opts_all[] = { "indent", "plugin", "on", "off" };
+  if (filetype_expand_what == EXP_FILETYPECMD_ALL && idx < 5) {
+    char *opts_all[] = { "detect", "indent", "plugin", "on", "off" };
     return opts_all[idx];
   }
   if (filetype_expand_what == EXP_FILETYPECMD_PLUGIN && idx < 3) {

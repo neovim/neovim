@@ -227,12 +227,12 @@ The latest state of all managed plugins is stored inside a *vim.pack-lockfile*
 located at `$XDG_CONFIG_HOME/nvim/nvim-pack-lock.json`. It is a JSON file that
 is used to persistently track data about plugins. For a more robust config
 treat lockfile like its part: put under version control, etc. In this case all
-plugins from the lockfile will be installed at once and at lockfile's revision
-(instead of inferring from `version`). This is done on the very first
-`vim.pack` function call to ensure that lockfile is aligned with what is
-actually on the disk. Lockfile should not be edited by hand. Corrupted data
-for installed plugins is repaired (including after deleting whole file), but
-`version` fields will be missing for not yet added plugins.
+plugins from the lockfile will be installed at once (in alphabetical order)
+and at lockfile's revision (instead of inferring from `version`). This is done
+on the very first `vim.pack` function call to ensure that lockfile is aligned
+with what is actually on the disk. Lockfile should not be edited by hand.
+Corrupted data for installed plugins is repaired (including after deleting
+whole file), but `version` fields will be missing for not yet added plugins.
 
                                                            *vim.pack-examples*
 
@@ -382,6 +382,11 @@ Commands                                             *vim.pack-commands* *E5807*
 Performing actions via `vim.pack` functions can trigger these events:
 • *PackChangedPre* - before trying to change plugin's state.
 • *PackChanged* - after plugin's state has changed.
+
+Events are triggered in bulk respecting order of plugins in which they are
+supplied. First all `PackChangedPre`, then perform all actions, and only after
+- all `PackChanged` for successful actions. This provides more control for
+connected plugins, like by specifying dependencies before the plugin itself.
 
 The |event-data| has these keys (type: `vim.event.packchanged.data`):
 • `active` - whether plugin was added via |vim.pack.add()| to current session.

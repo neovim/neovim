@@ -496,18 +496,18 @@ function vim.fn.browse(save, title, initdir, default) end
 --- @return 0|1
 function vim.fn.browsedir(title, initdir) end
 
---- Add a buffer to the buffer list with name {name} (must be a
---- String).
---- If a buffer for file {name} already exists, return that buffer
---- number.  Otherwise return the buffer number of the newly
---- created buffer.  When {name} is an empty string then a new
---- buffer is always created.
---- The buffer will not have 'buflisted' set and not be loaded
---- yet.  To add some text to the buffer use this: >vim
----   let bufnr = bufadd('someName')
----   call bufload(bufnr)
----   call setbufline(bufnr, 1, ['some', 'text'])
---- <Returns 0 on error.
+--- Adds buffer {name} to the buffer list literally: no special
+--- chars or expansion are applied (including "~"). Returns the
+--- new (or existing matching) buffer number, or 0 on error.
+---
+--- The buffer is not loaded and 'buflisted' is not set. When
+--- {name} is an empty string, a new buffer is always created.
+---
+--- Example (Lua): >lua
+---   local b = vim.fn.bufadd(vim.fs.normalize('someName'))
+---   vim.bo[b].buflisted = true
+---   vim.fn.bufload(b)
+--- <
 ---
 --- @param name string
 --- @return integer
@@ -2418,12 +2418,14 @@ function vim.fn.floor(expr) end
 --- @return any
 function vim.fn.fmod(expr1, expr2) end
 
---- Lua: Prefer |nvim_cmd()| or |vim.cmd()| with structured arguments to avoid Ex filename escaping.
+--- Escapes {filepath} for use as a command argument.
 ---
---- Escape {string} for use as file name command argument.  All
---- characters that have a special meaning, such as `'%'` and `'|'`
---- are escaped with a backslash. For most systems the characters
---- escaped are: >
+--- (Note: To open a literal filepath programmatically use
+--- `bufadd(vim.fs.normalize(…))`, see |open-file|.)
+---
+--- All characters that have a special meaning, such as `'%'` and
+--- `'|'` are escaped with a backslash. For most systems the
+--- characters escaped are: >
 ---   \t\n *?[{`$\\%#'\"|!<
 --- <For systems where a backslash appears in a filename, it
 --- depends on the value of 'isfname'. A leading '+' and '>' is
@@ -2437,9 +2439,9 @@ function vim.fn.fmod(expr1, expr2) end
 ---   edit \+some\ str\%nge\|name
 --- <
 ---
---- @param string string
+--- @param filepath string
 --- @return string
-function vim.fn.fnameescape(string) end
+function vim.fn.fnameescape(filepath) end
 
 --- Lua: Prefer |vim.fs.dirname()|, |vim.fs.basename()|, |vim.fs.abspath()|, and |vim.fs.normalize()| for common path modifiers; modifier coverage differs.
 ---

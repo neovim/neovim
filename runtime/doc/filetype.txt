@@ -625,6 +625,14 @@ under it.  If not found, a new entry and item is prepended to the beginning of
 the Changelog.
 
 
+DIRECTORY					*ft-directory*
+
+The "directory" filetype is used for directory listing buffers, such as those
+opened by |:edit| with a directory path.  See |dir| for mappings and behavior.
+
+Directory entries end in "/" and use the |hl-Directory| highlight group.
+
+
 FORTRAN							*ft-fortran-plugin*
 
 Options:

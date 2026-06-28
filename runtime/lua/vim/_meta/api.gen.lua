@@ -26,6 +26,14 @@ function vim.api.nvim__buf_stats(buf) end
 
 --- WARNING: This feature is experimental/unstable.
 ---
+--- Records the cmdwin scratchbuf and type, or clears both when type="" / buf=0. Internal use only.
+---
+--- @param type string ':', '/', '?' (first char only); empty to clear.
+--- @param buf integer cmdwin buffer id, or 0 to clear.
+function vim.api.nvim__cmdwin_set(type, buf) end
+
+--- WARNING: This feature is experimental/unstable.
+---
 --- Sets info for the completion item at the given index. If the info text was shown in a window,
 --- returns the window and buffer ids, or empty dict if not shown.
 ---
@@ -849,7 +857,7 @@ function vim.api.nvim_clear_autocmds(opts) end
 --- Executes an Ex command `cmd`, specified as a Dict with the same structure as returned by
 --- `nvim_parse_cmd()`.
 ---
---- Use `magic={…=false}` to disable special chars:
+--- Use `magic={…=false}` to disable special chars (see also `open-file`):
 --- ```lua
 --- vim.api.nvim_cmd({
 ---     cmd = 'edit',
@@ -967,12 +975,10 @@ function vim.api.nvim_create_autocmd(event, opts) end
 
 --- Creates a new, empty, unnamed buffer.
 ---
---- @see buf_open_scratch
 --- @param listed boolean Sets 'buflisted'
 --- @param scratch boolean Creates a "throwaway" `scratch-buffer` for temporary work
 --- (always 'nomodified'). Also sets 'nomodeline' on the buffer.
 --- @return integer # Buffer id, or 0 on error
----
 function vim.api.nvim_create_buf(listed, scratch) end
 
 --- Creates a new namespace or gets an existing one. [namespace]()

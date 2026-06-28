@@ -101,11 +101,13 @@ static int current_augroup = AUGROUP_DEFAULT;
 static bool au_need_clean = false;
 
 static int autocmd_blocked = 0;  // block all autocmds
+static int aucmd_prepbuf_depth = 0;
 
 static bool autocmd_nested = false;
 static bool autocmd_include_groups = false;
 
 static bool termresponse_changed = false;
+static uint64_t termresponse_chan_id = 0;
 
 // Map of autocmd group names and ids.
 //  name -> ID
@@ -762,7 +764,7 @@ void do_autocmd(exarg_T *eap, char *arg_in, int forceit)
   char *arg = arg_in;
   char *envpat = NULL;
   char *cmd;
-  bool need_free = false;
+  bool cmd_need_free = false;
   bool nested = false;
   bool once = false;
   int group;
@@ -831,7 +833,7 @@ void do_autocmd(exarg_T *eap, char *arg_in, int forceit)
     }
 
     if (invalid_flags) {
-      return;
+      goto err_exit;
     }
 
     // Find the start of the commands.
@@ -839,9 +841,9 @@ void do_autocmd(exarg_T *eap, char *arg_in, int forceit)
     if (*cmd != NUL) {
       cmd = expand_sfile(cmd);
       if (cmd == NULL) {  // some error
-        return;
+        goto err_exit;
       }
-      need_free = true;
+      cmd_need_free = true;
     }
   }
 
@@ -878,7 +880,8 @@ void do_autocmd(exarg_T *eap, char *arg_in, int forceit)
     }
   }
 
-  if (need_free) {
+err_exit:
+  if (cmd_need_free) {
     xfree(cmd);
   }
   xfree(envpat);
@@ -928,6 +931,10 @@ int do_autocmd_event(event_T event, const char *pat, bool once, int nested, cons
     if (is_buflocal) {
       const int buflocal_nr = aupat_get_buflocal_nr(pat, patlen);
 
+      if (buflocal_nr == 0 || buflist_findnr(buflocal_nr) == NULL) {
+        semsg(_(e_buffer_nr_invalid_buffer_number), buflocal_nr);
+        return FAIL;
+      }
       // normalize pat into standard "<buffer>#N" form
       aupat_normalize_buflocal_pat(buflocal_pat, pat, patlen, buflocal_nr);
 
@@ -997,6 +1004,10 @@ int autocmd_register(int64_t id, event_T event, const char *pat, int patlen, int
   if (is_buflocal) {
     buflocal_nr = aupat_get_buflocal_nr(pat, patlen);
 
+    if (buflocal_nr == 0 || buflist_findnr(buflocal_nr) == NULL) {
+      semsg(_(e_buffer_nr_invalid_buffer_number), buflocal_nr);
+      return FAIL;
+    }
     // normalize pat into standard "<buffer>#N" form
     aupat_normalize_buflocal_pat(buflocal_pat, pat, patlen, buflocal_nr);
 
@@ -1022,12 +1033,6 @@ int autocmd_register(int64_t id, event_T event, const char *pat, int patlen, int
 
   // No matching pattern found, allocate a new one.
   if (ap == NULL) {
-    // refuse to add buffer-local ap if buffer number is invalid
-    if (is_buflocal && (buflocal_nr == 0 || buflist_findnr(buflocal_nr) == NULL)) {
-      semsg(_("E680: <buffer=%d>: invalid buffer number "), buflocal_nr);
-      return FAIL;
-    }
-
     ap = xmalloc(sizeof(AutoPat));
 
     if (is_buflocal) {
@@ -1352,6 +1357,10 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
     // disable the Visual area, position may be invalid in another buffer
     VIsual_active = false;
   }
+  if (aco->new_curwin_handle != aco->save_curwin_handle) {
+    autocmd_save_curwin = aucmd_prepbuf_depth == 0 ? aco->save_curwin_handle : autocmd_save_curwin;
+    aucmd_prepbuf_depth++;
+  }
 }
 
 /// Cleanup after executing autocommands for a (hidden) buffer.
@@ -1464,7 +1473,6 @@ win_found:
         curbuf->b_nwindows++;
       }
 
-      curwin->w_redr_status = true;
       curwin = save_curwin;
       curbuf = curwin->w_buffer;
       prevwin = win_find_by_handle(aco->save_prevwin_handle);
@@ -1480,6 +1488,11 @@ win_found:
   check_cursor(curwin);  // just in case lines got deleted
   if (VIsual_active) {
     check_pos(curbuf, &VIsual);
+  }
+  if (aco->new_curwin_handle != aco->save_curwin_handle) {
+    assert(aucmd_prepbuf_depth > 0);
+    aucmd_prepbuf_depth--;
+    autocmd_save_curwin = aucmd_prepbuf_depth == 0 ? 0 : autocmd_save_curwin;
   }
 }
 
@@ -2078,13 +2091,15 @@ BYPASS_AU:
   return retval;
 }
 
-void do_termresponse_autocmd(const String sequence)
+void do_termresponse_autocmd(const String sequence, uint64_t channel_id)
 {
-  MAXSIZE_TEMP_DICT(data, 1);
+  MAXSIZE_TEMP_DICT(data, 2);
   PUT_C(data, "sequence", STRING_OBJ(sequence));
+  PUT_C(data, "chan", INTEGER_OBJ((Integer)channel_id));
   apply_autocmds_group(EVENT_TERMRESPONSE, NULL, NULL, true, AUGROUP_ALL, NULL, NULL,
                        &DICT_OBJ(data), false);
   termresponse_changed = true;
+  termresponse_chan_id = channel_id;
 }
 
 // Block triggering autocommands until unblock_autocmd() is called.
@@ -2094,6 +2109,7 @@ void block_autocmds(void)
   // Detect if v:termresponse is set while blocked.
   if (!is_autocmd_blocked()) {
     termresponse_changed = false;
+    termresponse_chan_id = 0;
   }
   autocmd_blocked++;
 }
@@ -2108,7 +2124,7 @@ void unblock_autocmds(void)
   if (!is_autocmd_blocked() && termresponse_changed && has_event(EVENT_TERMRESPONSE)) {
     // Copied to a new allocation, as termresponse may be freed during the event.
     const String sequence = cstr_to_string(get_vim_var_str(VV_TERMRESPONSE));
-    do_termresponse_autocmd(sequence);
+    do_termresponse_autocmd(sequence, termresponse_chan_id);
     api_free_string(sequence);
   }
 }
@@ -2578,7 +2594,8 @@ int aupat_get_buflocal_nr(const char *pat, int patlen)
 
     // "<buffer=123>"
     if (skipdigits(pat + 8) == pat + patlen - 1) {
-      return atoi(pat + 8);
+      char *p = (char *)pat + 8;
+      return getdigits_int(&p, false, 0);
     }
   }
 

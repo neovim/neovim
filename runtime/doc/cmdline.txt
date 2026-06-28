@@ -1188,72 +1188,65 @@ Also see |`=|.
 ==============================================================================
 7. Command-line window				*cmdline-window* *cmdwin*
 							*command-line-window*
-In the command-line window the command line can be edited just like editing
-text in any window.  It is a special kind of window, because you cannot leave
-it in a normal way.
+The command-line window ("cmdwin") is a buffer+window in which the command
+line can be edited.
 
 
 OPEN						*c_CTRL-F* *q:* *q/* *q?*
 
 There are two ways to open the command-line window:
-1. From Command-line mode, use the key specified with the 'cedit' option.
+1. From Command-line mode, use <C-F> (or the 'cedit' key).
+   - Not supported from the expr-register cmdline (|c_CTRL-R_=| |i_CTRL-R_=|).
 2. From Normal mode, use the "q:", "q/" or "q?" command.
    This starts editing an Ex command-line ("q:") or search string ("q/" or
    "q?").  Note that this is not possible while recording is in progress (the
    "q" stops recording then).
 
-When the window opens it is filled with the command-line history.  The last
-line contains the command as typed so far.  The left column will show a
-character that indicates the type of command-line being edited, see
-|cmdwin-char|.
+When the window opens it is filled with the command-line history.  The editor
+opens in Normal mode.  The last line contains the command as typed so far.  The
+|cmdwin-char| is shown in 'statuscolumn', indicating the type of command-line.
 
-Vim will be in Normal mode when the editor is opened.
+The window height is decided by 'cmdwinheight' (if there is room).  The window
+is full width and is positioned just above the command-line.
+
 								*E1292*
-Once a command-line window is open it is not possible to open another one.
-
-The height of the window is specified with 'cmdwinheight' (or smaller if there
-is no room).  The window is always full width and is positioned just above the
-command-line.
+Only one command-line window can be open at a time.
 
 
 EDIT
 
-You can now use commands to move around and edit the text in the window.  Both
-in Normal mode and Insert mode.
+You can use any commands to move around and edit the text in the window, both
+in Normal and Insert mode.
 
 It is possible to use ":", "/" and other commands that use the command-line,
-but it's not possible to open another command-line window then.  There is no
+but it's not possible to open another cmdwin from there.  There is no
 nesting.
-							*E11* *E1188*
-The command-line window is not a normal window.  It is not possible to move to
-another window or edit another buffer.  All commands that would do this are
-disabled in the command-line window.  Of course it _is_ possible to execute
-any command that you entered in the command-line window.  Other text edits are
-discarded when closing the window.
+
+								*E11*
+|CTRL-W| navigation/split commands and some operations (e.g. |:terminal|) emit
+E11. But mouse clicks may focus other windows. The cmdwin buffer is pinned by
+'winfixbuf', so the window cannot switch to a different buffer.
 
 
-CLOSE							*E199*
+CLOSE
 
 There are several ways to leave the command-line window:
 
 <CR>		Execute the command-line under the cursor.  Works both in
 		Insert and in Normal mode.
 CTRL-C		Continue in Command-line mode.  The command-line under the
-		cursor is used as the command-line.  Works both in Insert and
-		in Normal mode.  There is no redraw, thus the window will
-		remain visible.
+		cursor is pre-filled in the command-line.  Works both in
+		Insert and in Normal mode.
 :quit		Discard the command line and go back to Normal mode.
 		":close", CTRL-W c, ":exit", ":xit" and CTRL-\ CTRL-N also
 		work.
-:qall		Quit Vim, unless there are changes in some buffer.
-:qall!		Quit Vim, discarding changes to any buffer.
+:qall		Quit Nvim, unless there are changes in some buffer.
+:qall!		Quit Nvim, discarding changes to any buffer.
 
-Once the command-line window is closed the old window sizes are restored.  The
-executed command applies to the window and buffer where the command-line was
-started from.  This works as if the command-line window was not there, except
-that there will be an extra screen redraw.
-The buffer used for the command-line window is deleted.  Any changes to lines
-other than the one that is executed with <CR> are lost.
+When the cmdwin closes, focus returns to the window where the command-line
+was started from (if possible).  The cmdwin scratch buffer is destroyed
+(`bufhidden=wipe`).  Any text edits other than the line executed by
+<CR> are lost.
 
 If you would like to execute the command under the cursor and then have the
 command-line window open again, you may find this mapping useful: >
@@ -1263,16 +1256,15 @@ command-line window open again, you may find this mapping useful: >
 
 VARIOUS
 
-The command-line window cannot be used when there already is a command-line
-window (no nesting).
-
-Some options are set when the command-line window is opened:
-'filetype'	"vim", when editing an Ex command-line; this starts Vim syntax
-		highlighting if it was enabled
-'rightleft'	off
-'modifiable'	on
+Buffer and window options set on cmdwin open:
+'bufhidden'	"wipe"
+'buflisted'	off
 'buftype'	"nofile"
+'filetype'	"vim" (only for ":" type)
+'foldenable'	off
+'statuscolumn'	shows the |cmdwin-char|
 'swapfile'	off
+'winfixbuf'	on
 
 It is allowed to write the buffer contents to a file.  This is an easy way to
 save the command-line history and read it back later.
@@ -1289,10 +1281,8 @@ If you don't want these mappings, disable them with: >
 	au CmdwinEnter [:>] nunmap <buffer> <Tab>
 You could put these lines in your vimrc file.
 
-While in the command-line window you cannot use the mouse to put the cursor in
-another window, or drag statuslines of other windows.  You can drag the
-statusline of the command-line window itself and the statusline above it.
-Thus you can resize the command-line window, but not others.
+The mouse works as in any window: clicks focus other windows, and statuslines
+and vertical separators can be dragged to resize.
 
 The |getcmdwintype()| function returns the type of the command-line being
 edited as described in |cmdwin-char|.

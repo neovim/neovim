@@ -956,16 +956,31 @@ describe('statusline', function()
     eq('B:' .. truncated, rendered)
   end)
 
-  it('no cmdline ruler for autocmd window #39938', function()
-    command('set ruler laststatus=2')
-    api.nvim_create_autocmd('BufDelete', { command = 'redrawstatus' })
-    api.nvim_exec_autocmds('BufDelete', { buf = api.nvim_create_buf(true, true) })
+  it('truncation inside nested nvim_eval_statusline correctly adjusts highlights', function()
+    exec_lua('vim.o.laststatus = 2')
+    exec_lua([[vim.o.statusline = "%{%repeat('%#Error#',20)%}"]])
+    exec_lua([[
+      vim.o.statusline = "%l%l%l%l%{%nvim_eval_statusline('test%#Error#%l%<',{'maxwidth':4,'highlights':1}).highlights%}"
+    ]])
     screen:expect([[
       ^                                        |
       {1:~                                       }|*5
-      {2:[No Name]             0,0-1          All}|
+      {3:< 'groups': ['StatusLine'], 'start': 0}]}|
                                               |
     ]])
+  end)
+
+  it('no cmdline ruler for autocmd window #39938', function()
+    command('set ruler laststatus=2')
+    api.nvim_create_autocmd('BufDelete', { command = 'redrawstatus' })
+    screen:expect([[
+      ^                                        |
+      {1:~                                       }|*5
+      {3:[No Name]             0,0-1          All}|
+                                              |
+    ]])
+    api.nvim_exec_autocmds('BufDelete', { buf = api.nvim_create_buf(true, true) })
+    screen:expect_unchanged(true)
   end)
 
   it('active window is correct after nvim_exec_autocmds({buf}) #40153', function()
@@ -976,17 +991,32 @@ describe('statusline', function()
     api.nvim_set_current_buf(target)
     api.nvim_set_current_win(caller_win)
     exec_lua(function(buf)
+      _G.in_aucmd_statusline = false
+      _G.statusline_contexts = {}
       _G.Status = function()
-        return vim.api.nvim_get_current_win() == vim.g.statusline_winid and 'CUR' or 'nc'
+        local current = vim.api.nvim_get_current_win()
+        local statusline = vim.g.statusline_winid
+        local focus = current == statusline
+        table.insert(_G.statusline_contexts, {
+          current = current,
+          focus = focus,
+          in_aucmd = _G.in_aucmd_statusline,
+          statusline = statusline,
+        })
+        return focus and 'CUR' or 'nc'
       end
       vim.o.statusline = '%!v:lua.Status()'
       vim.api.nvim_create_autocmd('User', {
         buffer = buf,
         callback = function(ev)
+          _G.in_aucmd_statusline = true
           vim.api.nvim__redraw({ buf = ev.buf, statusline = true })
+          _G.in_aucmd_statusline = false
         end,
       })
     end, target)
+    -- Ignore statusline evaluations from setup; only the autocmd redraw matters.
+    exec_lua('_G.statusline_contexts = {}')
     api.nvim_exec_autocmds('User', { buf = target })
     screen:expect([[
                                               |
@@ -997,6 +1027,68 @@ describe('statusline', function()
       {3:CUR                                     }|
                                               |
     ]])
+    -- `%!` may evaluate during the callback, but must not see the target as focused.
+    eq(
+      {},
+      exec_lua(function(win)
+        return vim
+          .iter(_G.statusline_contexts)
+          :filter(function(context)
+            return context.in_aucmd and context.focus and context.current ~= win
+          end)
+          :totable()
+      end, caller_win)
+    )
+  end)
+
+  it('statusline evaluation during nvim_exec_autocmds({buf}) #40153', function()
+    command('set laststatus=2')
+    local caller_win = api.nvim_get_current_win()
+    command('split')
+    local target = api.nvim_create_buf(true, false)
+    api.nvim_set_current_buf(target)
+    api.nvim_set_current_win(caller_win)
+    exec_lua(function(buf)
+      _G.in_aucmd_statusline = false
+      _G.statusline_contexts = {}
+      _G.Status = function()
+        table.insert(_G.statusline_contexts, {
+          in_aucmd = _G.in_aucmd_statusline,
+          current = vim.api.nvim_get_current_win(),
+          actual = tonumber(vim.g.actual_curwin or -1),
+        })
+        return vim.api.nvim_get_current_win() == tonumber(vim.g.actual_curwin or -1) and 'CUR'
+          or 'nc'
+      end
+      -- `%{%...%}` sets g:actual_curwin while evaluating the statusline.
+      vim.o.statusline = '%{%v:lua.Status()%}'
+      vim.api.nvim_create_autocmd('User', {
+        buffer = buf,
+        callback = function(ev)
+          _G.in_aucmd_statusline = true
+          vim.api.nvim__redraw({ buf = ev.buf, statusline = true })
+          _G.in_aucmd_statusline = false
+        end,
+      })
+    end, target)
+    screen:expect([[
+                                              |
+      {1:~                                       }|*2
+      {2:nc                                      }|
+      ^                                        |
+      {1:~                                       }|
+      {3:CUR                                     }|
+                                              |
+    ]])
+    -- Ignore statusline evaluations from setup; only the autocmd redraw matters.
+    exec_lua('_G.statusline_contexts = {}')
+    api.nvim_exec_autocmds('User', { buf = target })
+    screen:expect({ unchanged = true })
+    local contexts = exec_lua(function()
+      return _G.statusline_contexts
+    end)
+    eq(true, #contexts > 0)
+    eq(caller_win, contexts[#contexts].actual)
   end)
 end)
 

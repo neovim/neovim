@@ -11,13 +11,22 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: actions/checkout@v6.0.3
-        with:
-          persist-credentials: false
-
       - name: 'Remove reviewers'
         uses: actions/github-script@v9
         with:
           script: |
-            const script = require('./.github/scripts/reviewers_remove.js')
-            await script({github, context})
+            const { data } = await github.rest.pulls.listRequestedReviewers({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+            const reviewers = data.users.map((e) => e.login);
+
+            if (reviewers.length) {
+              await github.rest.pulls.removeRequestedReviewers({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+                reviewers,
+              });
+            }

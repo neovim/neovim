@@ -9,6 +9,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
+#include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
@@ -52,6 +53,15 @@
 #include "nvim/undo.h"
 #include "nvim/window.h"
 
+// Specifies whether/where to add padding to reach target width.
+typedef enum {
+  kPaddingNone,
+  kPaddingLeft,
+  kPaddingRight,
+} StlPadding;
+
+#include "statusline.c.generated.h"
+
 // Determines how deeply nested %{} blocks will be evaluated in statusline.
 #define MAX_STL_EVAL_DEPTH 100
 
@@ -77,6 +87,7 @@ void win_redr_status(win_T *wp)
       || (wild_menu_showing != 0 && !ui_has(kUIWildmenu))) {
     return;
   }
+
   busy = true;
   wp->w_redr_status = false;
   if (wp->w_status_height == 0 && !(is_stl_global && wp == curwin)) {
@@ -87,8 +98,7 @@ void win_redr_status(win_T *wp)
     // popup menu is visible and may be drawn over it
     wp->w_redr_status = true;
   } else if (*wp->w_p_stl != NUL || !wp->w_floating || (is_stl_global && wp == curwin)) {
-    // redraw custom status line
-    redraw_custom_statusline(wp);
+    win_redr_stl_expr(wp, false, false, false);
   }
 
   hlf_T group = HLF_C;
@@ -209,12 +219,13 @@ void stl_fill_click_defs(StlClickDefinition *click_defs, StlClickRecord *click_r
 }
 
 static bool did_show_ext_ruler = false;
-/// Redraw the status line, window bar, ruler or tabline.
+/// Redraws the statusline, winbar, ruler or tabline.
+///
 /// @param wp  target window, NULL for 'tabline'
 /// @param draw_winbar  redraw 'winbar'
 /// @param draw_ruler  redraw 'rulerformat'
 /// @param ui_event  emit UI-event instead of drawing
-static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler, bool ui_event)
+static void win_redr_stl_expr(win_T *wp, bool draw_winbar, bool draw_ruler, bool ui_event)
 {
   static bool entered = false;
   int col = 0;
@@ -243,6 +254,14 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler, bool u
     return;
   }
   entered = true;
+
+  // Restore actual curwin before redrawing.
+  win_T *save_curwin = autocmd_save_curwin ? win_find_by_handle(autocmd_save_curwin) : NULL;
+  win_T *restore_curwin = save_curwin != NULL ? curwin : NULL;
+  if (save_curwin != NULL) {
+    curwin = save_curwin;
+    curbuf = curwin->w_buffer;
+  }
 
   // setup environment for the task at hand
   if (wp == NULL) {
@@ -421,6 +440,12 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler, bool u
 
 theend:
   entered = false;
+
+  // Restore temporary autocmd curwin.
+  if (restore_curwin != NULL) {
+    curwin = restore_curwin;
+    curbuf = restore_curwin->w_buffer;
+  }
 }
 
 void win_redr_winbar(win_T *wp)
@@ -437,7 +462,7 @@ void win_redr_winbar(win_T *wp)
   if (wp->w_winbar_height == 0 || !redrawing()) {
     // Do nothing.
   } else if (*p_wbr != NUL || *wp->w_p_wbr != NUL) {
-    win_redr_custom(wp, true, false, false);
+    win_redr_stl_expr(wp, true, false, false);
   }
   entered = false;
 }
@@ -477,7 +502,7 @@ void redraw_ruler(void)
 
   bool part_of_status = wp->w_status_height || is_stl_global;
   if (*p_ruf && (p_ch > 0 || (ui_has(kUIMessages) && !part_of_status))) {
-    win_redr_custom(wp, false, true, ui_has(kUIMessages));
+    win_redr_stl_expr(wp, false, true, ui_has(kUIMessages));
     return;
   }
 
@@ -586,23 +611,6 @@ schar_T fillchar_status(hlf_T *group, win_T *wp)
   }
 }
 
-/// Redraw the status line according to 'statusline' and take care of any
-/// errors encountered.
-void redraw_custom_statusline(win_T *wp)
-{
-  static bool entered = false;
-
-  // When called recursively return.  This can happen when the statusline
-  // contains an expression that triggers a redraw.
-  if (entered) {
-    return;
-  }
-  entered = true;
-
-  win_redr_custom(wp, false, false, false);
-  entered = false;
-}
-
 static void ui_ext_tabline_update(void)
 {
   Arena arena = ARENA_EMPTY;
@@ -677,7 +685,7 @@ void draw_tabline(void)
 
   // Use the 'tabline' option if it's set.
   if (*p_tal != NUL) {
-    win_redr_custom(NULL, false, false, false);
+    win_redr_stl_expr(NULL, false, false, false);
   } else {
     int tabcount = 0;
     int col = 0;
@@ -824,31 +832,239 @@ void draw_tabline(void)
 /// the v:lnum and v:relnum variables don't have to be updated.
 ///
 /// @return  The width of the built status column string for line "lnum"
-int build_statuscol_str(win_T *wp, linenr_T lnum, linenr_T relnum, char *buf, statuscol_T *stcp)
+int build_statuscol_str(win_T *wp, linenr_T lnum, int relnum, int virtnum, char *buf,
+                        statuscol_T *stcp)
 {
-  // Only update click definitions once per window per redraw.
-  // Don't update when current width is 0, since it will be redrawn again if not empty.
-  const bool fillclick = relnum >= 0 && stcp->width > 0 && lnum == wp->w_topline;
-
   if (relnum >= 0) {
     set_vim_var_nr(VV_LNUM, lnum);
     set_vim_var_nr(VV_RELNUM, relnum);
   }
+  set_vim_var_nr(VV_VIRTNUM, virtnum);
 
   StlClickRecord *clickrec;
   char *stc = xstrdup(wp->w_p_stc);
   int width = build_stl_str_hl(wp, buf, MAXPATHL, stc, kOptStatuscolumn, OPT_LOCAL, 0,
-                               stcp->width, &stcp->hlrec, NULL, fillclick ? &clickrec : NULL, stcp);
+                               stcp->width, &stcp->hlrec, NULL, &clickrec, stcp);
   xfree(stc);
 
-  if (fillclick) {
-    stl_clear_click_defs(wp->w_statuscol_click_defs, wp->w_statuscol_click_defs_size);
-    wp->w_statuscol_click_defs = stl_alloc_click_defs(wp->w_statuscol_click_defs, width,
-                                                      &wp->w_statuscol_click_defs_size);
-    stl_fill_click_defs(wp->w_statuscol_click_defs, clickrec, buf, width, false);
+  if (clickrec[0].start != NULL) {
+    StcClicks *clicks = map_put_ref(int, StcClicks)(wp->w_statuscol_click_defs, lnum, NULL, NULL);
+    StcClick *click_defs = map_put_ref(int, StcClick)(clicks, virtnum, NULL, NULL);
+    stl_clear_click_defs(click_defs->def, click_defs->size);
+    click_defs->def = stl_alloc_click_defs(click_defs->def, width, &click_defs->size);
+    stl_fill_click_defs(click_defs->def, clickrec, buf, width, false);
   }
 
   return width;
+}
+
+/// Truncates the statusline at the first truncation marker (%<) if present,
+/// or alternatively at the first item, or otherwise at the beginning.
+///
+/// @param width  Current width in cells (will be adjusted if truncation took place)
+/// @param minwid  Minimum width in cells
+/// @param maxwid  Maximum width in cells
+/// @param fillchar  Fillchar
+/// @param stl_items  Items
+/// @param startitem  Start item index (inclusive)
+/// @param curitem  End item index (exclusive)
+/// @param start_p  Start position in the output buffer
+/// @param out_p  Current output buffer position (will be adjusted if truncation took place)
+static void stl_truncate(int *width, int minwid, int maxwid, schar_T fillchar,
+                         stl_item_t *stl_items, int startitem, int *curitem, char *start_p,
+                         char **out_p)
+{
+  minwid = MIN(minwid, maxwid);
+
+  int item_idx = startitem;
+  char *trunc_p;
+
+  // If there are no items, truncate from beginning
+  if (startitem == *curitem) {
+    trunc_p = start_p;
+
+    // Otherwise, look for the truncation item
+  } else {
+    // Default to truncating at the first item
+    trunc_p = stl_items[item_idx].start;
+
+    for (int i = startitem; i < *curitem; i++) {
+      if (stl_items[i].type == Trunc) {
+        // Truncate at %< stl_items.
+        trunc_p = stl_items[i].start;
+        item_idx = i;
+        break;
+      }
+    }
+  }
+
+  // If the truncation point we found is beyond the maximum
+  // length of the string, truncate the end of the string.
+  if (*width - vim_strsize(trunc_p) >= maxwid) {
+    // Walk from the beginning of the
+    // string to find the last character that will fit.
+    trunc_p = start_p;
+    *width = 0;
+    while (true) {
+      int char_cells = ptr2cells(trunc_p);
+      if (*width + char_cells >= maxwid) {
+        break;
+      }
+
+      // Note: Only advance the pointer if the next
+      //       character will fit in the available output space
+      *width += char_cells;
+      trunc_p += utfc_ptr2len(trunc_p);
+    }
+
+    // Ignore any items in the statusline that occur after
+    // the truncation point
+    for (int i = startitem; i < *curitem; i++) {
+      if (stl_items[i].start > trunc_p) {
+        for (int j = i; j < *curitem; j++) {
+          if (stl_items[j].type == ClickFunc) {
+            XFREE_CLEAR(stl_items[j].cmd);
+          }
+        }
+        *curitem = i;
+        break;
+      }
+    }
+
+    // Truncate the output
+    *trunc_p++ = '>';
+    *out_p = trunc_p;
+
+    // Truncate at the truncation point we found
+  } else {
+    // { Determine how many bytes to remove
+    int trunc_len = 0;
+    while (*width >= maxwid) {
+      *width -= ptr2cells(trunc_p + trunc_len);
+      trunc_len += utfc_ptr2len(trunc_p + trunc_len);
+    }
+    // }
+
+    // { Truncate the string
+    char *trunc_end_p = trunc_p + trunc_len;
+    memmove(trunc_p + 1, trunc_end_p, (size_t)(*out_p - trunc_end_p) + 1);  // +1 for NUL
+    *out_p -= (size_t)(trunc_end_p - (trunc_p + 1));
+
+    // Put a `<` to mark where we truncated at
+    *trunc_p = '<';
+    // }
+
+    // { Change the start point for items based on
+    //  their position relative to our truncation point
+
+    // Note: The offset is one less than the truncation length because
+    //       the truncation marker `<` is not counted.
+    int item_offset = trunc_len - 1;
+
+    for (int i = item_idx; i < *curitem; i++) {
+      // Items starting at or after the end of the truncated section need
+      // to be moved backwards.
+      if (stl_items[i].start >= trunc_end_p) {
+        stl_items[i].start -= item_offset;
+      } else {
+        // Anything inside the truncated area is set to start
+        // at the `<` truncation character.
+        stl_items[i].start = trunc_p;
+      }
+    }
+    // }
+  }
+
+  // Fill up for half a double-wide character.
+  while (++*width < minwid) {
+    schar_get_adv(out_p, fillchar);
+  }
+  **out_p = NUL;
+}
+
+/// Expands the statusline at separation markers (%=) if present,
+/// or otherwise according to padding choice.
+///
+/// @param width  Current width in cells (will be adjusted if expansion took place)
+/// @param target_width  Target width in cells
+/// @param padding  Padding to add until target width is reached, if there are no separation markers
+/// @param remaining_capacity  Remaining output buffer capacity in bytes
+/// @param fillchar  Fillchar
+/// @param stl_items  Items
+/// @param startitem  Start item index (inclusive)
+/// @param curitem  End item index (exclusive)
+/// @param start_p  Start position in the output buffer
+/// @param out_p  Current output buffer position (will be adjusted if expansion took place)
+static void stl_expand(int *width, int target_width, StlPadding padding, int remaining_capacity,
+                       schar_T fillchar, stl_item_t *stl_items, int startitem, int curitem,
+                       char *start_p, char **out_p)
+{
+  int fillchar_bytes = (int)schar_len(fillchar);
+  int added_cells = target_width - *width;
+  int added_bytes = added_cells * fillchar_bytes;
+  if (added_bytes > remaining_capacity) {
+    added_cells = remaining_capacity / fillchar_bytes;
+    added_bytes = added_cells * fillchar_bytes;
+  }
+
+  // First, try to expand at separation markers %=.
+  int num_separators = 0;
+  for (int i = startitem; i < curitem; i++) {
+    if (stl_items[i].type == Separate) {
+      num_separators += 1;
+    }
+  }
+  if (num_separators > 0) {
+    int standard_spaces = added_cells / num_separators;
+    int final_spaces = added_cells - standard_spaces * (num_separators - 1);
+    int cumulated_dislocation = 0;
+
+    for (int i = startitem; i < curitem; i++) {
+      stl_items[i].start += cumulated_dislocation;
+
+      if (stl_items[i].type == Separate) {
+        int dislocation = --num_separators > 0 ? standard_spaces : final_spaces;
+        dislocation *= fillchar_bytes;
+        cumulated_dislocation += dislocation;
+
+        char *start = stl_items[i].start;
+        char *seploc = start + dislocation;
+        STRMOVE(seploc, start);
+        for (char *s = start; s < seploc;) {
+          schar_get_adv(&s, fillchar);
+        }
+      }
+    }
+
+    *width += added_cells;
+    *out_p += added_bytes;
+
+    // Add filler characters to the right.
+  } else if (padding == kPaddingRight) {
+    for (; added_cells > 0; added_cells--) {
+      schar_get_adv(out_p, fillchar);
+    }
+
+    *width += added_cells;
+
+    // Shift everything to the right and prepend with filler characters.
+  } else if (padding == kPaddingLeft) {
+    // Move the group to the right
+    memmove(start_p + added_bytes, start_p, (size_t)(*out_p - start_p));
+
+    // Prepend the fill characters
+    for (; added_cells > 0; added_cells--) {
+      schar_get_adv(&start_p, fillchar);
+    }
+
+    // Adjust item start positions
+    for (int n = startitem; n < curitem; n++) {
+      stl_items[n].start += added_bytes;
+    }
+
+    *width += added_cells;
+    *out_p += added_bytes;
+  }
 }
 
 /// Build a string from the status line items in "fmt".
@@ -887,7 +1103,6 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
   static int *stl_groupitems = NULL;
   static stl_hlrec_t *stl_hltab = NULL;
   static StlClickRecord *stl_tabtab = NULL;
-  static int *stl_separator_locations = NULL;
   static int curitem = 0;
 
 #define TMPLEN 70
@@ -915,8 +1130,6 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
     // end of the list.
     stl_hltab = xmalloc(sizeof(stl_hlrec_t) * (stl_items_len + 1));
     stl_tabtab = xmalloc(sizeof(StlClickRecord) * (stl_items_len + 1));
-
-    stl_separator_locations = xmalloc(sizeof(int) * stl_items_len);
   }
 
   // If "fmt" was set insecurely it needs to be evaluated in the sandbox.
@@ -1000,8 +1213,6 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
       stl_groupitems = xrealloc(stl_groupitems, sizeof(int) * new_len);
       stl_hltab = xrealloc(stl_hltab, sizeof(stl_hlrec_t) * (new_len + 1));
       stl_tabtab = xrealloc(stl_tabtab, sizeof(StlClickRecord) * (new_len + 1));
-      stl_separator_locations =
-        xrealloc(stl_separator_locations, sizeof(int) * new_len);
 
       stl_items_len = new_len;
     }
@@ -1041,13 +1252,9 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
       continue;
     }
 
-    // STL_SEPARATE: Separation between items, filled with white space.
+    // STL_SEPARATE: Separation between items, filled with fillchars.
     if (*fmt_p == STL_SEPARATE) {
       fmt_p++;
-      // Ignored when we are inside of a grouping
-      if (groupdepth > 0) {
-        continue;
-      }
       stl_items[curitem].type = Separate;
       stl_items[curitem++].start = out_p;
       continue;
@@ -1075,7 +1282,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
       //       so `vim_strsize` will work.
       char *t = stl_items[stl_groupitems[groupdepth]].start;
       *out_p = NUL;
-      ptrdiff_t group_len = vim_strsize(t);
+      int group_len = vim_strsize(t);
 
       // If the group contained internal items
       // and the group did not have a minimum width,
@@ -1122,84 +1329,34 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
         }
       }
 
+      int maxwid = stl_items[stl_groupitems[groupdepth]].maxwid;
       int minwid = stl_items[stl_groupitems[groupdepth]].minwid;
+      StlPadding padding = minwid < 0 ? kPaddingRight : kPaddingLeft;
+      minwid = abs(minwid);
 
       // If the group is longer than it is allowed to be truncate by removing
       // bytes from the start of the group text. Don't truncate when item is a
       // 'statuscolumn' fold item to ensure correctness of the mouse clicks.
-      if (group_len > stl_items[stl_groupitems[groupdepth]].maxwid
-          && stl_items[stl_groupitems[groupdepth]].type != HighlightFold) {
-        // { Determine the number of bytes to remove
-        int maxwid = stl_items[stl_groupitems[groupdepth]].maxwid;
+      if (group_len > maxwid && stl_items[stl_groupitems[groupdepth]].type != HighlightFold) {
+        stl_truncate(&group_len, minwid, maxwid, fillchar, stl_items,
+                     stl_groupitems[groupdepth] + 1, &curitem, t, &out_p);
 
-        // Find the first character that should be included.
-        int n = 0;
-        while (group_len >= maxwid) {
-          group_len -= ptr2cells(t + n);
-          n += utfc_ptr2len(t + n);
-        }
-        // }
-
-        // Prepend the `<` to indicate that the output was truncated.
-        *t = '<';
-
-        // { Move the truncated output
-        memmove(t + 1, t + n, (size_t)(out_p - (t + n)));
-        out_p = out_p - n + 1;
-        // Fill up space left over by half a double-wide char.
-        int minwid_fixed = MIN(minwid, maxwid);
-        while (++group_len < minwid_fixed) {
-          schar_get_adv(&out_p, fillchar);
-        }
-        // }
-
-        // correct the start of the items for the truncation
-        for (int idx = stl_groupitems[groupdepth] + 1; idx < curitem; idx++) {
-          // Shift everything back by the number of removed bytes
-          // Minus one for the leading '<' added above.
-          stl_items[idx].start -= n - 1;
-
-          // If the item was partially or completely truncated, set its
-          // start to the start of the group
-          stl_items[idx].start = MAX(stl_items[idx].start, t);
-        }
         // If the group is shorter than the minimum width, add padding characters.
-      } else if (abs(minwid) > group_len) {
-        ptrdiff_t fillchar_bytes = (ptrdiff_t)schar_len(fillchar);
-        // If the group is left-aligned, add characters to the right.
-        if (minwid < 0) {
-          minwid = 0 - minwid;
-          while (group_len++ < minwid && out_p + fillchar_bytes <= out_end_p) {
-            schar_get_adv(&out_p, fillchar);
-          }
-          // If the group is right-aligned, shift everything to the right and
-          // prepend with filler characters.
-        } else {
-          ptrdiff_t added_cells = minwid - group_len;
-          ptrdiff_t added_bytes = added_cells * fillchar_bytes;
-          if (out_p + added_bytes > out_end_p) {
-            added_cells = (out_end_p - out_p) / fillchar_bytes;
-            added_bytes = added_cells * fillchar_bytes;
-          }
+      } else if (minwid > group_len) {
+        stl_expand(&group_len, minwid, padding, (int)(out_end_p - out_p), fillchar, stl_items,
+                   stl_groupitems[groupdepth] + 1, curitem, t, &out_p);
+      }
 
-          // { Move the group to the right
-          memmove(t + added_bytes, t, (size_t)(out_p - t));
-          out_p += added_bytes;
-          // }
-
-          // Prepend the fill characters
-          for (; added_cells > 0; added_cells--) {
-            schar_get_adv(&t, fillchar);
-          }
-
-          // Adjust item start positions
-          for (int n = stl_groupitems[groupdepth] + 1; n < curitem; n++) {
-            stl_items[n].start += added_bytes;
-          }
+      // Deactivate separation/truncation markers for wrapping item groups and top-level.
+      for (int n = stl_groupitems[groupdepth] + 1; n < curitem; n++) {
+        if (stl_items[n].type == Separate || stl_items[n].type == Trunc) {
+          stl_items[n].type = Empty;
         }
       }
+
       continue;
     }
+
     int minwid = 0;
     int maxwid = 9999;
     int foldsignitem = -1;        // Start of fold or sign item
@@ -1915,11 +2072,6 @@ stcsign:
   }
 
   *out_p = NUL;
-  // Length of out[] used (excluding the NUL)
-  size_t outputlen = (size_t)(out_p - out);
-  // Subtract offset from `itemcnt` and restore `curitem` to previous recursion level.
-  int itemcnt = curitem - evalstart;
-  curitem = evalstart;
 
   // Free the format buffer if we allocated it internally
   if (usefmt != fmt) {
@@ -1932,167 +2084,20 @@ stcsign:
   int width = vim_strsize(out);
   if (maxwidth > 0 && width > maxwidth && (!stcp || width > MAX_STCWIDTH)) {
     // Result is too long, must truncate somewhere.
-    int item_idx = evalstart;
-    char *trunc_p;
-
-    // If there are no items, truncate from beginning
-    if (itemcnt == 0) {
-      trunc_p = out;
-
-      // Otherwise, look for the truncation item
-    } else {
-      // Default to truncating at the first item
-      trunc_p = stl_items[item_idx].start;
-
-      for (int i = evalstart; i < itemcnt + evalstart; i++) {
-        if (stl_items[i].type == Trunc) {
-          // Truncate at %< stl_items.
-          trunc_p = stl_items[i].start;
-          item_idx = i;
-          break;
-        }
-      }
-    }
-
-    // If the truncation point we found is beyond the maximum
-    // length of the string, truncate the end of the string.
-    if (width - vim_strsize(trunc_p) >= maxwidth) {
-      // Walk from the beginning of the
-      // string to find the last character that will fit.
-      trunc_p = out;
-      width = 0;
-      while (true) {
-        width += ptr2cells(trunc_p);
-        if (width >= maxwidth) {
-          break;
-        }
-
-        // Note: Only advance the pointer if the next
-        //       character will fit in the available output space
-        trunc_p += utfc_ptr2len(trunc_p);
-      }
-
-      // Ignore any items in the statusline that occur after
-      // the truncation point
-      for (int i = evalstart; i < itemcnt + evalstart; i++) {
-        if (stl_items[i].start > trunc_p) {
-          for (int j = i; j < itemcnt + evalstart; j++) {
-            if (stl_items[j].type == ClickFunc) {
-              XFREE_CLEAR(stl_items[j].cmd);
-            }
-          }
-          itemcnt = i;
-          break;
-        }
-      }
-
-      // Truncate the output
-      *trunc_p++ = '>';
-      *trunc_p = NUL;
-
-      // Truncate at the truncation point we found
-    } else {
-      char *end = out + outputlen;
-
-      // { Determine how many bytes to remove
-      int trunc_len = 0;
-      while (width >= maxwidth) {
-        width -= ptr2cells(trunc_p + trunc_len);
-        trunc_len += utfc_ptr2len(trunc_p + trunc_len);
-      }
-      // }
-
-      // { Truncate the string
-      char *trunc_end_p = trunc_p + trunc_len;
-      memmove(trunc_p + 1, trunc_end_p, (size_t)(end - trunc_end_p) + 1);  // +1 for NUL
-      end -= (size_t)(trunc_end_p - (trunc_p + 1));
-
-      // Put a `<` to mark where we truncated at
-      *trunc_p = '<';
-      // }
-
-      // { Change the start point for items based on
-      //  their position relative to our truncation point
-
-      // Note: The offset is one less than the truncation length because
-      //       the truncation marker `<` is not counted.
-      int item_offset = trunc_len - 1;
-
-      for (int i = item_idx; i < itemcnt + evalstart; i++) {
-        // Items starting at or after the end of the truncated section need
-        // to be moved backwards.
-        if (stl_items[i].start >= trunc_end_p) {
-          stl_items[i].start -= item_offset;
-        } else {
-          // Anything inside the truncated area is set to start
-          // at the `<` truncation character.
-          stl_items[i].start = trunc_p;
-        }
-      }
-      // }
-
-      if (width + 1 < maxwidth) {
-        // Advance the pointer to the end of the string
-        trunc_p = end;
-      }
-
-      // Fill up for half a double-wide character.
-      while (++width < maxwidth) {
-        schar_get_adv(&trunc_p, fillchar);
-        end = trunc_p;
-      }
-      (void)end;
-    }
-    width = maxwidth;
+    stl_truncate(&width, 0, maxwidth, fillchar, stl_items, evalstart, &curitem, out, &out_p);
 
     // If there is room left in our statusline, and room left in our buffer,
-    // add characters at the separate marker (if there is one) to
-    // fill up the available space.
-  } else if (width < maxwidth
-             && outputlen + (size_t)(maxwidth - width) * schar_len(fillchar) + 1 < outlen) {
-    // Find how many separators there are, which we will use when
-    // figuring out how many groups there are.
-    int num_separators = 0;
-    for (int i = evalstart; i < itemcnt + evalstart; i++) {
-      if (stl_items[i].type == Separate) {
-        // Create an array of the start location for each separator mark.
-        stl_separator_locations[num_separators] = i;
-        num_separators++;
-      }
-    }
-
-    // If we have separated groups, then we deal with it now
-    if (num_separators) {
-      int standard_spaces = (maxwidth - width) / num_separators;
-      int final_spaces = (maxwidth - width) -
-                         standard_spaces * (num_separators - 1);
-
-      for (int l = 0; l < num_separators; l++) {
-        int dislocation = (l == (num_separators - 1)) ? final_spaces : standard_spaces;
-        dislocation *= (int)schar_len(fillchar);
-        char *start = stl_items[stl_separator_locations[l]].start;
-        char *seploc = start + dislocation;
-        STRMOVE(seploc, start);
-        for (char *s = start; s < seploc;) {
-          schar_get_adv(&s, fillchar);
-        }
-
-        for (int item_idx = stl_separator_locations[l] + 1;
-             item_idx < itemcnt + evalstart;
-             item_idx++) {
-          stl_items[item_idx].start += dislocation;
-        }
-      }
-
-      width = maxwidth;
-    }
+    // add characters at the separation markers (if there are any) to fill up the available space.
+  } else if (width < maxwidth) {
+    stl_expand(&width, maxwidth, kPaddingNone, (int)(out_end_p - out_p), fillchar, stl_items,
+               evalstart, curitem, out, &out_p);
   }
 
   // Store the info about highlighting.
   if (hltab != NULL) {
     *hltab = stl_hltab;
     stl_hlrec_t *sp = stl_hltab;
-    for (int l = evalstart; l < itemcnt + evalstart; l++) {
+    for (int l = evalstart; l < curitem; l++) {
       if (stl_items[l].type == Highlight || stl_items[l].type == HighlightCombining
           || stl_items[l].type == HighlightFold || stl_items[l].type == HighlightSign) {
         sp->start = stl_items[l].start;
@@ -2108,14 +2113,14 @@ stcsign:
     sp->userhl = 0;
   }
   if (hltab_len) {
-    *hltab_len = (size_t)itemcnt;
+    *hltab_len = (size_t)(curitem - evalstart);
   }
 
   // Store the info about tab pages labels.
   if (tabtab != NULL) {
     *tabtab = stl_tabtab;
     StlClickRecord *cur_tab_rec = stl_tabtab;
-    for (int l = evalstart; l < itemcnt + evalstart; l++) {
+    for (int l = evalstart; l < curitem; l++) {
       if (stl_items[l].type == TabPage) {
         cur_tab_rec->start = stl_items[l].start;
         if (stl_items[l].minwid == 0) {
@@ -2146,6 +2151,9 @@ stcsign:
     cur_tab_rec->def.tabnr = 0;
     cur_tab_rec->def.func = NULL;
   }
+
+  // Restore `curitem` to previous recursion level.
+  curitem = evalstart;
 
   redraw_not_allowed = save_redraw_not_allowed;
 

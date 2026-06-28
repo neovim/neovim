@@ -273,7 +273,7 @@ void do_window(int nchar, int Prenum, int xchar)
 
 #define CHECK_CMDWIN \
   do { \
-    if (cmdwin_type != 0) { \
+    if (cmdwin_buf != NULL) { \
       emsg(_(e_cmdwin)); \
       return; \
     } \
@@ -2694,23 +2694,6 @@ static bool can_close_floating_windows(tabpage_T *tp)
   return true;
 }
 
-/// @return true if, considering the cmdwin, `win` is safe to close.
-/// If false and `win` is the cmdwin, it is closed; otherwise, `err` is set.
-bool can_close_in_cmdwin(win_T *win, Error *err)
-  FUNC_ATTR_NONNULL_ALL
-{
-  if (cmdwin_type != 0) {
-    if (win == cmdwin_win) {
-      cmdwin_result = Ctrl_C;
-      return false;
-    } else if (win == cmdwin_old_curwin) {
-      api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
-      return false;
-    }
-  }
-  return true;
-}
-
 /// Close the possibly last window in a tab page.
 ///
 /// @param  win          window to close
@@ -3384,8 +3367,6 @@ void win_free_all(void)
   // avoid an error for switching tabpage with the cmdline window open
   cmdwin_type = 0;
   cmdwin_buf = NULL;
-  cmdwin_win = NULL;
-  cmdwin_old_curwin = NULL;
 
   while (first_tabpage->tp_next != NULL) {
     tabpage_close(true);
@@ -4517,7 +4498,7 @@ tabpage_T *win_new_tabpage(int after, char *filename, bool enter, win_T **first)
 {
   tabpage_T *old_curtab = curtab;
 
-  if (enter && cmdwin_type != 0) {
+  if (enter && cmdwin_buf != NULL) {
     emsg(_(e_cmdwin));
     return NULL;
   }
@@ -5633,8 +5614,16 @@ void win_free(win_T *wp, tabpage_T *tp)
   stl_clear_click_defs(wp->w_winbar_click_defs, wp->w_winbar_click_defs_size);
   xfree(wp->w_winbar_click_defs);
 
-  stl_clear_click_defs(wp->w_statuscol_click_defs, wp->w_statuscol_click_defs_size);
-  xfree(wp->w_statuscol_click_defs);
+  StcClicks lnum_click_defs;
+  map_foreach_value(wp->w_statuscol_click_defs, lnum_click_defs, {
+    for (uint32_t i = 0; i < lnum_click_defs.set.h.n_keys; i++) {
+      StcClick row_click_defs = lnum_click_defs.values[i];
+      stl_clear_click_defs(row_click_defs.def, row_click_defs.size);
+      xfree(row_click_defs.def);
+    }
+    map_destroy(int, &lnum_click_defs);
+  })
+  map_destroy(int, wp->w_statuscol_click_defs);
 
   // Remove the window from the b_wininfo lists, it may happen that the
   // freed memory is re-used for another window.
@@ -6889,8 +6878,7 @@ static void win_fix_cursor(bool normal)
 {
   win_T *wp = curwin;
 
-  if (skip_win_fix_cursor
-      || !wp->w_do_win_fix_cursor
+  if (!wp->w_do_win_fix_cursor
       || wp->w_buffer->b_ml.ml_line_count < wp->w_view_height) {
     return;
   }

@@ -110,6 +110,15 @@ if !exists("cpp_no_cpp23")
   syn keyword cppType		float16_t float32_t float64_t float128_t bfloat16_t
 endif
 
+" C++ 26 extensions
+if !exists("cpp_no_cpp26")
+  " attribute [[ ... ]] with optional value expr, eg [[=foo{1}]]
+  syn region cppAttribute	matchgroup=cppAttributeBracket start="\w\@1<!\[\[" end="\]\]" contains=TOP,@Spell
+  syn match cppReflect		"\^\^"
+  syn match cppSpliceBracket	"\[:\|:\]"
+  syn keyword cppStatement	contract_assert
+endif
+
 " The minimum and maximum operators in GNU C++
 syn match cppMinMax "[<>]?"
 
@@ -134,6 +143,9 @@ hi def link cppString		String
 hi def link cppNumber		Number
 hi def link cppFloat		Number
 hi def link cppModule		Include
+hi def link cppAttributeBracket	Special
+hi def link cppReflect		Operator
+hi def link cppSpliceBracket	Special
 
 let b:current_syntax = "cpp"
 

@@ -79,22 +79,6 @@ win_T *win_new_float(win_T *wp, bool last, WinConfig fconfig, Error *err)
         || (win_tp != curtab && win_tp->tp_firstwin == wp && lastwin_nofloating(win_tp) == wp)) {
       api_set_error(err, kErrorTypeException, "Cannot change last window into float");
       return NULL;
-    } else if (cmdwin_win != NULL && !cmdwin_win->w_floating) {
-      // cmdwin can't become the only non-float. Check for others.
-      bool other_nonfloat = false;
-      FOR_ALL_WINDOWS_IN_TAB(wp2, win_tp) {
-        if (wp2->w_floating) {
-          break;
-        }
-        if (wp2 != wp && wp2 != cmdwin_win) {
-          other_nonfloat = true;
-          break;
-        }
-      }
-      if (!other_nonfloat) {
-        api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
-        return NULL;
-      }
     }
     tabpage_T *tp = win_tp == curtab ? NULL : win_tp;
     int dir;

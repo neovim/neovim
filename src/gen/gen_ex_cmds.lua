@@ -116,6 +116,12 @@ for _, cmd in ipairs(defs) do
       string.format('ex_cmds.lua:%s: Missing preview_func\n', cmd.command)
     )
   end
+  if bit.band(cmd.flags, flags.BUFLOCK_OK) == flags.BUFLOCK_OK then
+    assert(
+      bit.band(cmd.flags, flags.LOCK_OK) == flags.LOCK_OK,
+      string.format('ex_cmds.lua:%s: BUFLOCK_OK implies LOCK_OK\n', cmd.command)
+    )
+  end
   local enumname = cmd.enum or ('CMD_' .. cmd.command)
   local byte_cmd = cmd.command:sub(1, 1):byte()
   if byte_a <= byte_cmd and byte_cmd <= byte_z then

@@ -325,7 +325,7 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buf, Integer start, Integer 
                         Boolean strict_indexing, ArrayOf(String) replacement, Arena *arena,
                         Error *err)
   FUNC_API_SINCE(1)
-  FUNC_API_TEXTLOCK_ALLOW_CMDWIN
+  FUNC_API_TEXTLOCK
 {
   buf_T *b = api_buf_ensure_loaded(buf, err);
 
@@ -485,7 +485,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buf, Integer start_row, Integ
                        Integer end_row, Integer end_col, ArrayOf(String) replacement, Arena *arena,
                        Error *err)
   FUNC_API_SINCE(7)
-  FUNC_API_TEXTLOCK_ALLOW_CMDWIN
+  FUNC_API_TEXTLOCK
 {
   MAXSIZE_TEMP_ARRAY(scratch, 1);
   if (replacement.size == 0) {

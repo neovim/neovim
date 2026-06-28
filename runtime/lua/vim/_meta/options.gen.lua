@@ -226,7 +226,11 @@ vim.go.awa = vim.go.autowriteall
 
 --- When set to "dark" or "light", adjusts the default color groups for
 --- that background type.  The `TUI` or other UI sets this on startup
---- if it can detect the background color.
+--- if it can detect the background color, and re-detects it whenever a UI
+--- attaches later, unless 'background' was set explicitly.  When multiple
+--- terminal UIs are attached they share one value, taken from whichever
+--- terminal reports its background last (which may not be the most
+--- recently attached one, since it depends on response speed).
 ---
 --- This option does NOT change the background color, it tells Nvim what
 --- the "inherited" (terminal/GUI) background looks like.
@@ -6696,11 +6700,6 @@ vim.go.sol = vim.go.startofline
 --- When using `v:relnum`, keep in mind that cursor movement by itself will
 --- not cause the 'statuscolumn' to update unless 'relativenumber' is set.
 ---
---- NOTE: The %@ click execute function item is supported as well but the
---- specified function will be the same for each row in the same column.
---- It cannot be switched out through a dynamic 'statuscolumn' format, the
---- handler should be written with this in mind.
----
 --- Examples:
 ---
 --- ```vim
@@ -6876,12 +6875,16 @@ vim.wo.stc = vim.wo.statuscolumn
 ---          this label.
 ---       Use `getmousepos()`.winid in the specified function to get the
 ---       corresponding `window-ID` of the clicked item.
---- \< -   Where to truncate line if too long.  Default is at the start.
+--- \< -   Where to truncate line if too long.  Default is at the first
+---       item.  Truncation markers within item groups apply to the
+---       truncation of that group until its maxwid is reached.
 ---       No width fields allowed.
 --- = -   Separation point between alignment sections.  Each section will
 ---       be separated by an equal number of spaces.  With one %= what
 ---       comes after it will be right-aligned.  With two %= there is a
 ---       middle part, with white space left and right of it.
+---       Alignment sections within item groups will be separated until
+---       minwid of the group is reached.
 ---       No width fields allowed.
 --- # -   Set highlight group.  The name must follow and then a # again.
 ---       Thus use %#HLname# for highlight group HLname.  The same

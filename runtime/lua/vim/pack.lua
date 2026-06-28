@@ -19,9 +19,9 @@
 ---located at `$XDG_CONFIG_HOME/nvim/nvim-pack-lock.json`. It is a JSON file that
 ---is used to persistently track data about plugins.
 ---For a more robust config treat lockfile like its part: put under version control, etc.
----In this case all plugins from the lockfile will be installed at once and at lockfile's revision
----(instead of inferring from `version`). This is done on the very first `vim.pack` function call
----to ensure that lockfile is aligned with what is actually on the disk.
+---In this case all plugins from the lockfile will be installed at once (in alphabetical order) and
+---at lockfile's revision (instead of inferring from `version`). This is done on the very first
+---`vim.pack` function call to ensure that lockfile is aligned with what is actually on the disk.
 ---Lockfile should not be edited by hand. Corrupted data for installed plugins is repaired
 ---(including after deleting whole file), but `version` fields will be missing
 ---for not yet added plugins.
@@ -191,6 +191,11 @@
 ---Performing actions via `vim.pack` functions can trigger these events:
 ---- [PackChangedPre]() - before trying to change plugin's state.
 ---- [PackChanged]() - after plugin's state has changed.
+---
+---Events are triggered in bulk respecting order of plugins in which they are supplied.
+---First all `PackChangedPre`, then perform all actions, and only after - all
+---`PackChanged` for successful actions. This provides more control for connected
+---plugins, like by specifying dependencies before the plugin itself.
 ---
 ---The |event-data| has these keys (type: `vim.event.packchanged.data`):
 ---- `active` - whether plugin was added via |vim.pack.add()| to current session.
@@ -431,6 +436,7 @@ end
 --- @field err string The latest error when working on plugin. If non-empty,
 ---   all further actions should not be done (including triggering events).
 --- @field installed? boolean Whether plugin was successfully installed.
+--- @field updated? boolean Whether plugin was successfully updated.
 --- @field version_str? string `spec.version` with resolved version range.
 --- @field version_ref? string Resolved version as Git reference (if different
 ---   from `version_str`).
@@ -514,13 +520,15 @@ end
 local active_plugins = {}
 local n_active_plugins = 0
 
---- @param p vim.pack.Plug
+--- @param plugs vim.pack.Plug[]
 --- @param event_name 'PackChangedPre'|'PackChanged'
 --- @param kind 'install'|'update'|'delete'
-local function trigger_event(p, event_name, kind)
-  local active = active_plugins[p.path] ~= nil
-  local data = { active = active, kind = kind, spec = vim.deepcopy(p.spec), path = p.path }
-  api.nvim_exec_autocmds(event_name, { pattern = p.path, data = data })
+local function trigger_events(plugs, event_name, kind)
+  for _, p in ipairs(plugs) do
+    local active = active_plugins[p.path] ~= nil
+    local data = { active = active, kind = kind, spec = vim.deepcopy(p.spec), path = p.path }
+    api.nvim_exec_autocmds(event_name, { pattern = p.path, data = data })
+  end
 end
 
 --- @param action string
@@ -741,8 +749,6 @@ local function install_list(plug_list, confirm)
   --- @async
   --- @param p vim.pack.Plug
   local function do_install(p)
-    trigger_event(p, 'PackChangedPre', 'install')
-
     git_clone(p.spec.src, p.path)
 
     plugin_lock.plugins[p.spec.name].src = p.spec.src
@@ -752,13 +758,16 @@ local function install_list(plug_list, confirm)
 
     checkout(p, timestamp, true)
     p.info.installed = true
-
-    trigger_event(p, 'PackChanged', 'install')
   end
 
   -- Install possibly after user confirmation
   if not confirm or confirm_install(plug_list) then
+    trigger_events(plug_list, 'PackChangedPre', 'install')
     run_list(plug_list, do_install, 'Installing plugins')
+    local installed = vim.tbl_filter(function(p) --- @param p vim.pack.Plug
+      return p.info.installed
+    end, plug_list)
+    trigger_events(installed, 'PackChanged', 'install')
   end
 
   -- Ensure that not fully installed plugins are absent on disk and in lockfile
@@ -1246,6 +1255,26 @@ local function get_update_map(bufnr)
   return res
 end
 
+--- Checkout plugins to the update target
+--- @param plug_list vim.pack.Plug[]
+local function update_list(plug_list)
+  trigger_events(plug_list, 'PackChangedPre', 'update')
+
+  local timestamp = get_timestamp()
+  --- @async
+  --- @param p vim.pack.Plug
+  local function do_update(p)
+    checkout(p, timestamp)
+    p.info.updated = true
+  end
+  run_list(plug_list, do_update, 'Applying updates')
+
+  local updated = vim.tbl_filter(function(p) --- @param p vim.pack.Plug
+    return p.info.updated
+  end, plug_list)
+  trigger_events(updated, 'PackChanged', 'update')
+end
+
 --- @class vim.pack.keyset.update
 --- @inlinedoc
 --- @field force? boolean Whether to skip confirmation and make updates immediately. Default `false`.
@@ -1311,13 +1340,12 @@ function M.update(names, opts)
   git_ensure_exec()
   lock_read()
 
-  -- Perform update
-  local timestamp = get_timestamp()
+  -- Infer update details
   local needs_lock_write = opts.force --- @type boolean
 
   --- @async
   --- @param p vim.pack.Plug
-  local function do_update(p)
+  local function infer_details(p)
     local l_data = plugin_lock.plugins[p.spec.name]
     -- Ensure proper `origin` if needed
     if l_data.src ~= p.spec.src then
@@ -1337,17 +1365,17 @@ function M.update(names, opts)
       p.info.sha_target = l_data.rev
     end
     infer_update_details(p)
-
-    -- Checkout immediately if no need to confirm
-    if opts.force and p.info.sha_head ~= p.info.sha_target then
-      trigger_event(p, 'PackChangedPre', 'update')
-      checkout(p, timestamp)
-      trigger_event(p, 'PackChanged', 'update')
-    end
   end
-  local progress_title = opts.force and (opts.offline and 'Applying updates' or 'Updating')
-    or (opts.offline and 'Computing updates' or 'Downloading updates')
-  run_list(plug_list, do_update, progress_title)
+  local infer_title = opts.offline and 'Computing updates' or 'Downloading updates'
+  run_list(plug_list, infer_details, infer_title)
+
+  -- Update and show report
+  if opts.force then
+    local plugs_to_update = vim.tbl_filter(function(p) --- @param p vim.pack.Plug
+      return p.info.sha_head ~= p.info.sha_target
+    end, plug_list)
+    update_list(plugs_to_update)
+  end
 
   if needs_lock_write then
     lock_write()
@@ -1368,22 +1396,13 @@ function M.update(names, opts)
     end
 
     --- @param p vim.pack.Plug
-    local plugs_to_checkout = vim.tbl_filter(function(p)
+    local plugs_to_update = vim.tbl_filter(function(p)
       return to_update[p.spec.name]
     end, plug_list)
-
-    local timestamp2 = get_timestamp()
-    --- @async
-    --- @param p vim.pack.Plug
-    local function do_checkout(p)
-      trigger_event(p, 'PackChangedPre', 'update')
-      checkout(p, timestamp2)
-      trigger_event(p, 'PackChanged', 'update')
-    end
-    run_list(plugs_to_checkout, do_checkout, 'Applying updates')
+    update_list(plugs_to_update)
 
     lock_write()
-    feedback_log(plugs_to_checkout)
+    feedback_log(plugs_to_update)
   end)
 end
 
@@ -1410,33 +1429,35 @@ function M.del(names, opts)
 
   lock_read()
 
-  local successful_delete = {} --- @type string[]
-  local fail_to_delete = {} --- @type string[]
+  trigger_events(plug_list, 'PackChangedPre', 'delete')
+
+  local deleted = {} --- @type vim.pack.Plug[]
+  local deleted_names = {} --- @type string[]
+  local not_deleted_names = {} --- @type string[]
   for _, p in ipairs(plug_list) do
     if not active_plugins[p.path] or opts.force then
-      trigger_event(p, 'PackChangedPre', 'delete')
-
       vim.fs.rm(p.path, { recursive = true, force = true })
       active_plugins[p.path] = nil
       plugin_lock.plugins[p.spec.name] = nil
 
-      trigger_event(p, 'PackChanged', 'delete')
-      successful_delete[#successful_delete + 1] = p.spec.name
+      deleted[#deleted + 1] = p
+      deleted_names[#deleted_names + 1] = p.spec.name
     else
-      fail_to_delete[#fail_to_delete + 1] = p.spec.name
+      not_deleted_names[#not_deleted_names + 1] = p.spec.name
     end
   end
+  trigger_events(deleted, 'PackChanged', 'delete')
 
   lock_write()
 
-  if #successful_delete > 0 then
-    local suffix = #successful_delete == 1 and '' or 's'
-    local plugs = table.concat(successful_delete, ', ')
+  if #deleted_names > 0 then
+    local suffix = #deleted_names == 1 and '' or 's'
+    local plugs = table.concat(deleted_names, ', ')
     notify(('Removed plugin%s: %s'):format(suffix, plugs), 'INFO')
   end
 
-  if #fail_to_delete > 0 then
-    local plugs = table.concat(fail_to_delete, ', ')
+  if #not_deleted_names > 0 then
+    local plugs = table.concat(not_deleted_names, ', ')
     if opts._ex then
       util.echo_err(N_('E5810: Some plugins are active and were not deleted: %s'):format(plugs))
       return
