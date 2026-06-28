@@ -210,13 +210,13 @@ describe('startup', function()
         local callback_called = false
         local handle
         handle = assert(vim.uv.spawn(%q, { args = { 'EXIT', '0' } }, function()
-          handle:close()
-          callback_called = true
-          os.exit(73)
-          error('os.exit() returned')
+            handle:close()
+            callback_called = true
+            os.exit(73)
+            error('os.exit() returned')
         end))
         assert(vim.wait(1000, function()
-          return callback_called
+            return callback_called
         end))
       ]]):format(n.testprg('shell-test'))
       )
