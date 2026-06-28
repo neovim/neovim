@@ -69,8 +69,6 @@ API
 • |nvim_create_autocmd()|, |nvim_exec_autocmds()| and |nvim_clear_autocmds()|
   no longer treat an empty non-nil pattern as nil.
 • |nvim_clear_autocmds()| no longer treats an empty array event as nil.
-• |ui-messages| `msg_show.bufwrite` and `msg_show.completion` messages are now
-  `msg_show.progress` events.
 • |vim.o|, |vim.opt|, and |nvim_set_option_value()| expand `~` and environment
   variables (|expand-env|).
 
