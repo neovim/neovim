@@ -217,8 +217,8 @@ describe('startup', function()
           end))
           assert(vim.wait(1000, function()
             return callback_called
-        end))
-      ]]):format(n.testprg('shell-test'))
+          end))
+        ]]):format(n.testprg('shell-test'))
       )
 
       eq(0, eval('v:shell_error'))
