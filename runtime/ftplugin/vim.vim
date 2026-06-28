@@ -5,7 +5,8 @@
 " Contributors:      Riley Bruins <ribru17@gmail.com> ('commentstring')
 "                    @Konfekt
 "                    @tpope (s:Help())
-" Last Change:       2026 May 31
+"                    @lacygoill
+" Last Change:       2026 Jun 27
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -103,7 +104,7 @@ command! -buffer -nargs=1 VimKeywordPrg :exe 'help' s:Help(<q-args>)
 setlocal keywordprg=:VimKeywordPrg
 
 " Comments starts with # in Vim9 script.  We have to guess which one to use.
-if "\n" .. getline(1, 32)->join("\n") =~# '\n\s*vim9\%[script]\>'
+if "\n" .. getline(1, 32)->join("\n") =~# '\nvim9s\%[cript]\>'
   setlocal commentstring=#\ %s
   " Set 'comments' to format dashed lists in comments, for Vim9 script.
   setlocal com=sO:#\ -,mO:#\ \ ,eO:##,:#\\\ ,:#

@@ -876,4 +876,13 @@ func Test_netrw_local_rm_injection()
   endtry
 endfunc
 
+func Test_netrw_forward_slashes()
+  Explore
+  call assert_notmatch('\\', b:netrw_curdir)
+  bw!
+  Explore .
+  call assert_notmatch('\\', b:netrw_curdir)
+  bw!
+endfunc
+
 " vim:ts=8 sts=2 sw=2 et
