@@ -2473,6 +2473,39 @@ continuation, as mentioned above |use-cpo-save|.
 For undoing the effect of an indent script, the b:undo_indent variable should
 be set accordingly.
 
+RECOMMENDED STYLE				*ft_recommended_style*
+
+A filetype plugin or indent script may set options that reflect a
+recommended or commonly used style for that filetype, rather than a strict
+requirement of the language.  Since not every user wants these stylistic
+settings, guard them so they can be disabled.
+
+Check two variables, the filetype-specific one first, then the general one,
+defaulting to enabled (1): >
+
+	if get(g:, '<filetype>_recommended_style',
+		\ get(g:, 'filetype_recommended_style', 1))
+	  " set the recommended style options here
+	endif
+
+Replace <filetype> with the actual filetype name, e.g. "python" gives
+g:python_recommended_style.
+
+This lets the user turn recommended style settings off for all filetypes: >
+
+	let g:filetype_recommended_style = 0
+
+or for one filetype while leaving the rest enabled: >
+
+	let g:python_recommended_style = 0
+
+The filetype-specific variable takes precedence over the general one, so a
+user can disable styling everywhere with g:filetype_recommended_style and
+re-enable it for a single filetype by setting g:<filetype>_recommended_style
+to 1 (or vice versa).
+
+Settings that are required for the language to work correctly (not merely
+stylistic) should not be placed behind this guard.
 
 FILE NAME
 
