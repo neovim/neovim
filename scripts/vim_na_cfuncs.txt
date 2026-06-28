@@ -1,0 +1,9 @@
+bevalterm[a-zA-Z0-9_]\+(
+clip_xterm_[a-zA-Z0-9_]\+(
+crypt(
+crypt[a-zA-Z0-9_]\+(
+cscopequickfix(
+gui_mch_[a-zA-Z0-9_]\+(
+mch_kitty_probe(
+mzscheme_call_vim(
+text_prop[a-zA-Z0-9_]\+(

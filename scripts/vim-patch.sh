@@ -901,12 +901,35 @@ is_na_patch() {
   local patch=$1
   local NA_REGEXP="$NVIM_SOURCE_DIR/scripts/vim_na_regexp.txt"
   local NA_FILELIST="$NVIM_SOURCE_DIR/scripts/vim_na_files.txt"
+  local NA_CFUNC_LIST="$NVIM_SOURCE_DIR/scripts/vim_na_cfuncs.txt"
 
-  local FILES_REMAINING
+  local FILES_REMAINING C_FILES
   FILES_REMAINING="$(diff <(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id --name-only -r "$patch" | grep -v -f "$NA_REGEXP") "$NA_FILELIST" |
-    grep '^<')" || true
+    grep '^<' | sed 's/^< //')" || true
   test -z "$FILES_REMAINING" && return 0
-  if test "$FILES_REMAINING" == "$(printf "< src/version.c\n")"; then
+
+  C_FILES=$(echo "$FILES_REMAINING" | grep '.*\.c$')
+  FILES_REMAINING=$(echo "$FILES_REMAINING" | grep -v '.*\.c$')
+  for file in $C_FILES; do
+    if test "$file" != "src/version.c"; then
+      HUNK_NUM=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -U0  -r "$patch" -- "$file" | grep -Pc '^@@ .* @@')
+      HUNK_NUM_FINAL=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -U0  -r "$patch" -- "$file" |
+        grep -P '^@@ .* @@'|
+        sed 's/^@@ .* @@ \?//' |
+        grep -cv -f "$NA_CFUNC_LIST")
+      if test "$HUNK_NUM" -ne 0 -a "$HUNK_NUM_FINAL" -eq 0; then
+        continue
+      fi
+    fi
+    if test -z "$FILES_REMAINING"; then
+      FILES_REMAINING="$file"
+    else
+      FILES_REMAINING="$FILES_REMAINING
+$file"
+    fi
+  done
+
+  if test "$FILES_REMAINING" == "$(printf "src/version.c\n")"; then
     local VERSION_LNUM
     VERSION_LNUM=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id --numstat -r "$patch" -- src/version.c | grep -c '^2\s\+0')
     test "$VERSION_LNUM" -ne 1 && return 1
