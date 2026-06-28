@@ -3540,6 +3540,10 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         stdin_mode = kChannelStdinNull;
       } else if (!strncmp(s, "pipe", NUMBUFLEN)) {
         // Nothing to do, default value
+      } else if (!strncmp(s, "fd", NUMBUFLEN)) {
+        // pty only: stdin (fd 0) is a separate pipe, not the tty. For a non-pty job stdin is
+        // already a pipe, so "fd" is equivalent to "pipe" there.
+        stdin_mode = kChannelStdinFd;
       } else {
         semsg(_(e_invargNval), "stdin", s);
       }
@@ -3563,6 +3567,15 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (pty && overlapped) {
       semsg(_(e_invarg2),
             "job cannot have both 'pty' and 'overlapped' options set");
+      shell_free_argv(argv);
+      return;
+    }
+    // TODO(#40407): stdin="fd" (separate stdin pipe for a pty job) is unimplemented on Windows:
+    // ConPTY owns the child's std handles, so fd 0 can't be split off the console. A future port
+    // could feed stdin via a tempfile + shell redirect (as Vim's make_filter_cmd() does), or study
+    // the ConPTY/handle plumbing from #40074 (note: that is the non-pty path, so not a drop-in).
+    if (pty && stdin_mode == kChannelStdinFd) {
+      semsg(_(e_invarg2), "stdin='fd' is not supported for pty/terminal jobs on Windows");
       shell_free_argv(argv);
       return;
     }
@@ -3625,7 +3638,8 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     cwd = cwd ? cwd : ".";
     overlapped = false;
     detach = false;
-    stdin_mode = kChannelStdinPipe;
+    // term needs a connected stdin; keep an explicit "fd" (separate stdin pipe), else use the tty.
+    stdin_mode = stdin_mode == kChannelStdinFd ? kChannelStdinFd : kChannelStdinPipe;
     width = width ? width : (uint16_t)MAX(0, curwin->w_view_width - win_col_off(curwin));
     height = height ? height : (uint16_t)curwin->w_view_height;
   }

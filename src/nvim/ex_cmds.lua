@@ -2906,8 +2906,8 @@ M.cmds = {
   },
   {
     command = 'terminal',
-    flags = bit.bor(BANG, FILES, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_NONE',
+    flags = bit.bor(RANGE, BANG, FILES, BUFLOCK_OK, LOCK_OK),
+    addr_type = 'ADDR_LINES',
     func = 'ex_terminal',
   },
   {

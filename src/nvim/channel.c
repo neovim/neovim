@@ -430,7 +430,15 @@ Channel *channel_job_start(char **argv, const char *exepath, CallbackReader on_s
 #endif
   }
 
-  bool has_in = stdin_mode == kChannelStdinPipe;
+  bool has_in = stdin_mode != kChannelStdinNull;
+
+#ifndef MSWIN
+  // pty + "fd": child stdin (fd 0) is a separate pipe rather than the tty. See kChannelStdinFd.
+  // Unix only: Windows ConPTY owns the child's std handles, so "fd" degrades to "pipe" there. #40407
+  if (proc->type == kProcTypePty && stdin_mode == kChannelStdinFd) {
+    chan->stream.pty.stdin_pipe = true;
+  }
+#endif
 
   int status = proc_spawn(proc, has_in, has_out, has_err);
   if (status) {
@@ -908,14 +916,34 @@ static void term_read_pause(bool pause, void *data)
 static void term_write(const char *buf, size_t size, void *data)
 {
   Channel *chan = data;
-  if (chan->stream.proc.in.closed) {
+  Proc *proc = &chan->stream.proc;
+#ifndef MSWIN
+  // "fd" mode (kChannelStdinFd): proc->in is the child's stdin *pipe* (fed via chansend), so typed
+  // keys instead go to the tty (master) — that is where the child reads /dev/tty (e.g. a sudo
+  // password prompt). Best-effort direct write; keystrokes are tiny. #40407
+  if (proc->type == kProcTypePty && chan->stream.pty.stdin_pipe) {
+    int fd = chan->stream.pty.tty_fd;
+    for (size_t off = 0; fd != -1 && off < size;) {
+      ssize_t n = write(fd, buf + off, size - off);
+      if (n > 0) {
+        off += (size_t)n;
+      } else if (n == -1 && errno == EINTR) {
+        continue;
+      } else {
+        break;  // EAGAIN (tty buffer full) or error: drop the rest
+      }
+    }
+    return;
+  }
+#endif
+  if (proc->in.closed) {
     // If the backing stream was closed abruptly, there may be write events
     // ahead of the terminal close event. Just ignore the writes.
     ILOG("write failed: stream is closed");
     return;
   }
   WBuffer *wbuf = wstream_new_buffer(xmemdup(buf, size), size, 1, xfree);
-  wstream_write(&chan->stream.proc.in, wbuf);
+  wstream_write(&proc->in, wbuf);
 }
 
 static void term_resize(uint16_t width, uint16_t height, void *data)

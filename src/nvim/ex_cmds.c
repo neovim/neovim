@@ -1216,7 +1216,23 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
     strcat(newcmd, p_shq);
     free_newcmd = true;
   }
-  if (addr_count == 0) {                // :!
+  if (eap->useterm) {                 // ":[range]w :term cmd" / ":r :term cmd" #40407
+    if (do_in && !do_out) {           // pipe the lines to a command running in a `:terminal`
+      typval_T argv[4];
+      argv[0].v_type = VAR_STRING;  argv[0].vval.v_string = newcmd;
+      argv[1].v_type = VAR_NUMBER;  argv[1].vval.v_number = line1;
+      argv[2].v_type = VAR_NUMBER;  argv[2].vval.v_number = line2;
+      argv[3].v_type = VAR_UNKNOWN;
+      typval_T rettv;
+      nlua_call_vimfn("vim._core.run_in_terminal", "write_shell", argv, &rettv);
+      set_vim_var_nr(VV_SHELL_ERROR, rettv.v_type == VAR_NUMBER ? rettv.vval.v_number : -1);
+      tv_clear(&rettv);
+    } else {
+      // ":r :term" (read a terminal command's output into the buffer) needs separate stdout capture
+      // (jobstart stdout-as-fd), which is not implemented yet. #40407
+      emsg(_("E5681: ':read :term' is not implemented yet"));
+    }
+  } else if (addr_count == 0) {       // :!
     // echo the command
     msg_start();
     msg_ext_no_fast();

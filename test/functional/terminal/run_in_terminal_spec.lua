@@ -130,4 +130,114 @@ describe('vim._core.run_in_terminal', function()
     ]])
     t.eq({ 'oldsearch1', 'oldsearch2', 'SEEDLINE' }, lines)
   end)
+
+  -- jobstart stdin='fd': a pty/term job gets a real fd-0 pipe (separate from the tty), so chansend()
+  -- feeds the program's stdin while the terminal stays the tty. The buffer is NOT the stdin. #40407
+  it("jobstart stdin='fd' gives a pty job a separate stdin pipe #40407", function()
+    local got = n.exec_lua([[
+      local out = vim.fn.tempname()
+      vim.cmd('new')
+      local id = vim.fn.jobstart({ 'sh', '-c', 'cat > ' .. out }, { term = true, stdin = 'fd' })
+      vim.fn.chansend(id, 'hello\nworld\n')
+      vim.fn.chanclose(id, 'stdin') -- EOF on fd 0
+      vim.fn.jobwait({ id })
+      local r = vim.fn.readfile(out)
+      vim.fn.delete(out)
+      return r
+    ]])
+    t.eq({ 'hello', 'world' }, got)
+  end)
+
+  -- run_shell builds the 'shell' argv and returns the command's exit status. #40407
+  it('run_shell runs a shell command and returns its exit code #40407', function()
+    t.eq(0, n.exec_lua([[return require('vim._core.run_in_terminal').run_shell('exit 0')]]))
+    t.eq(7, n.exec_lua([[return require('vim._core.run_in_terminal').run_shell('exit 7')]]))
+  end)
+
+  -- write_shell pipes the buffer lines into a command's stdin (via the stdin='fd' pipe). #40407
+  it('write_shell pipes buffer lines to a command stdin #40407', function()
+    local got = n.exec_lua([[
+      local out = vim.fn.tempname()
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'alpha', 'beta', 'gamma' })
+      require('vim._core.run_in_terminal').write_shell(('cat > %s'):format(out), 1, 3)
+      local r = vim.fn.readfile(out)
+      vim.fn.delete(out)
+      return r
+    ]])
+    t.eq({ 'alpha', 'beta', 'gamma' }, got)
+  end)
+
+  -- `:[range]w :term cmd` (the `:w :term sudo tee %` trick): the buffer is piped to the command's
+  -- stdin while it runs in a terminal (so it could prompt on the tty). #40407
+  it(':w :term cmd pipes the buffer to the command #40407', function()
+    local got = n.exec_lua([[
+      local out = vim.fn.tempname()
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'one', 'two' })
+      vim.cmd(('%%w :term cat > %s'):format(out))
+      local r = vim.fn.readfile(out)
+      vim.fn.delete(out)
+      return r
+    ]])
+    t.eq({ 'one', 'two' }, got)
+  end)
+
+  -- The ":term" sigil is strict: a range/modifier prefix (e.g. ":1term") does NOT resolve to
+  -- CMD_terminal, so it falls through to a classic `:w {file}` and never pipes to the command. #40407
+  it(':w :1term is not treated as the :term sigil #40407', function()
+    local triggered = n.exec_lua([[
+      local target = vim.fn.tempname()
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'x' })
+      -- With strict semantics this is a classic write to a (weirdly named) file, which may error;
+      -- either way the shell redirect `> target` must NOT run, so `target` stays absent.
+      pcall(vim.cmd, ('1w :1term cat > %s'):format(target))
+      local existed = vim.uv.fs_stat(target) ~= nil
+      vim.fn.delete(target)
+      return existed
+    ]])
+    t.eq(false, triggered)
+  end)
+
+  -- `:[range]term {cmd}`: open a terminal running {cmd} with [range] piped to its stdin (non-blocking,
+  -- a normal terminal window). No-range `:term` is unchanged. #40407
+  it(':[range]term pipes the range to the command stdin #40407', function()
+    local got = n.exec_lua([[
+      local out = vim.fn.tempname()
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'r1', 'r2', 'r3' })
+      vim.cmd(('%%term cat > %s'):format(out))
+      vim.fn.jobwait({ vim.bo.channel }) -- non-blocking; wait for cat to drain stdin + exit
+      local r = vim.fn.readfile(out)
+      vim.fn.delete(out)
+      return r
+    ]])
+    t.eq({ 'r1', 'r2', 'r3' }, got)
+  end)
+
+  -- ':r :term cmd' (read a terminal command's output) needs stdout-as-fd, not yet implemented. #40407
+  it(':r :term errors until stdout capture exists #40407', function()
+    t.matches(
+      "E5681: ':read :term' is not implemented yet",
+      t.pcall_err(n.command, 'read :term echo hi')
+    )
+  end)
+
+  -- `:%w :term nvim -`: pipe the buffer into a child Nvim reading stdin (`-`). Interactive use works
+  -- for real; the child is `--headless` here only because this nested-pty harness can't drive a TUI
+  -- grandchild (no keystrokes, and it blocks on terminal queries the harness doesn't answer). #40407
+  it(':%w :term nvim - pipes the buffer into a child Nvim #40407', function()
+    local got = n.exec_lua([[
+      local out = vim.fn.tempname()
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'piped1', 'piped2', 'piped3' })
+      -- Child reads the piped buffer from stdin, writes it out, and exits.
+      local inner = ('VIMRUNTIME=%s %s --clean --headless - -c %s -c %s -c qa'):format(
+        vim.fn.shellescape(vim.env.VIMRUNTIME),
+        vim.fn.shellescape(vim.v.progpath),
+        vim.fn.shellescape('w ' .. out),
+        vim.fn.shellescape('set nomodified'))
+      vim.cmd('%w :term ' .. inner)
+      local r = vim.fn.readfile(out)
+      vim.fn.delete(out)
+      return r
+    ]])
+    t.eq({ 'piped1', 'piped2', 'piped3' }, got)
+  end)
 end)
