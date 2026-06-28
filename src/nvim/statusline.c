@@ -308,7 +308,15 @@ static void win_redr_stl_expr(win_T *wp, bool draw_winbar, bool draw_ruler, bool
     wp->w_status_click_defs = stl_alloc_click_defs(wp->w_status_click_defs, maxwidth,
                                                    &wp->w_status_click_defs_size);
 
-    if (draw_ruler) {
+    if (draw_ruler && ui_event) {
+      stl = p_ruf;
+      opt_idx = kOptRulerformat;
+      maxwidth = Columns / 2;
+      if (!in_status_line) {
+        fillchar = schar_from_ascii(' ');
+        group = HLF_MSG;
+      }
+    } else if (draw_ruler) {
       stl = p_ruf;
       opt_idx = kOptRulerformat;
       // advance past any leading group spec - implicit in ru_col

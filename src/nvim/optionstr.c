@@ -52,6 +52,7 @@
 #include "nvim/tag.h"
 #include "nvim/terminal.h"
 #include "nvim/types_defs.h"
+#include "nvim/ui.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 #include "nvim/winfloat.h"
@@ -1917,7 +1918,7 @@ static const char *did_set_statustabline_rulerformat(optset_T *args, bool rulerf
     win_config_float(win, win->w_config);
   }
 
-  if (rulerformat && *s == '%') {
+  if (rulerformat && !ui_has(kUIMessages) && *s == '%') {
     // set ru_wid if 'ruf' starts with "%99("
     if (*++s == '-') {        // ignore a '-'
       s++;
@@ -1932,8 +1933,8 @@ static const char *did_set_statustabline_rulerformat(optset_T *args, bool rulerf
         errmsg = check_stl_option(p_ruf);
       }
     }
-  } else if (rulerformat || s[0] != '%' || s[1] != '!') {
-    // check 'statusline', 'winbar', 'tabline' or 'statuscolumn'
+  } else if (s[0] != '%' || s[1] != '!') {
+    // check 'statusline', 'rulerformat', 'winbar', 'tabline' or 'statuscolumn'
     // only if it doesn't start with "%!"
     errmsg = check_stl_option(s);
   }
