@@ -182,15 +182,47 @@ int pty_proc_spawn(PtyProc *ptyproc)
   uv_signal_start(&proc->loop->children_watcher, chld_handler, SIGCHLD);
   ptyproc->winsize = (struct winsize){ ptyproc->height, ptyproc->width, 0, 0 };
   uv_disable_stdio_inheritance();
+
+  // pty + "fd" (kChannelStdinFd): give the child a separate stdin pipe instead of the tty. The read
+  // end is dup2()'d onto fd 0 in the child (init_child); the write end becomes proc->in. #40407
+  int stdin_wfd = -1;
+  if (ptyproc->stdin_pipe) {
+    int fds[2];
+    if (pipe(fds) != 0) {
+      status = -errno;
+      ELOG("pipe() failed: %s", strerror(errno));
+      return status;
+    }
+    ptyproc->stdin_rfd = fds[0];  // child read end: inherited across fork, NOT cloexec
+    stdin_wfd = fds[1];           // parent write end: dropped on the child's exec
+    if (os_set_cloexec(stdin_wfd) == -1) {
+      status = -errno;
+      close(fds[0]);
+      close(fds[1]);
+      return status;
+    }
+  }
+
   int master;
   int pid = forkpty(&master, NULL, &termios_default, &ptyproc->winsize);
 
   if (pid < 0) {
     status = -errno;
     ELOG("forkpty failed: %s", strerror(errno));
+    if (stdin_wfd != -1) {
+      close(stdin_wfd);
+      close(ptyproc->stdin_rfd);
+      ptyproc->stdin_rfd = -1;
+    }
     return status;
   } else if (pid == 0) {
     init_child(ptyproc);  // never returns
+  }
+
+  // Parent: close the child's read end (the forked child has its own copy).
+  if (ptyproc->stdin_rfd != -1) {
+    close(ptyproc->stdin_rfd);
+    ptyproc->stdin_rfd = -1;
   }
 
   // make sure the master file descriptor is non blocking
@@ -213,9 +245,15 @@ int pty_proc_spawn(PtyProc *ptyproc)
     goto error;
   }
 
+  // For "fd" mode proc->in is the stdin pipe (fed via chansend); otherwise it is the tty master.
   if (!proc->in.closed
-      && (status = set_duplicating_descriptor(master, &proc->in.uv.pipe))) {
+      && (status = set_duplicating_descriptor(ptyproc->stdin_pipe ? stdin_wfd : master,
+                                              &proc->in.uv.pipe))) {
     goto error;
+  }
+  if (stdin_wfd != -1) {
+    close(stdin_wfd);  // dup'd into proc->in above; drop the original so chanclose() can EOF fd 0
+    stdin_wfd = -1;
   }
   if (!proc->out.s.closed
       && (status = set_duplicating_descriptor(master, &proc->out.s.uv.pipe))) {
@@ -228,6 +266,9 @@ int pty_proc_spawn(PtyProc *ptyproc)
 
 error:
   close(master);
+  if (stdin_wfd != -1) {
+    close(stdin_wfd);
+  }
   kill(pid, SIGKILL);
   waitpid(pid, NULL, 0);
   return status;
@@ -317,6 +358,13 @@ static void init_child(PtyProc *ptyproc)
   if (proc->cwd && (err = uv_chdir(proc->cwd)) != 0) {
     ELOG("chdir(%s) failed: %s", proc->cwd, uv_strerror(err));
     _exit(122);
+  }
+
+  // "fd" mode: replace the tty on fd 0 (set by forkpty/login_tty) with the stdin pipe. fd 1/2 and
+  // the controlling terminal stay the pty, so the child still has a tty for prompts. #40407
+  if (ptyproc->stdin_rfd != -1) {
+    dup2(ptyproc->stdin_rfd, STDIN_FILENO);
+    close(ptyproc->stdin_rfd);
   }
 
   const char *prog = proc_get_exepath(proc);
@@ -460,5 +508,7 @@ PtyProc pty_proc_init(Loop *loop, void *data)
   rv.width = 80;
   rv.height = 24;
   rv.tty_fd = -1;
+  rv.stdin_pipe = false;
+  rv.stdin_rfd = -1;
   return rv;
 }
