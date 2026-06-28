@@ -9,9 +9,19 @@ local M = {}
 
 --- Runs `argv` in a terminal buffer, blocking (interactively) until the process exits.
 --- @param argv string[]  Command and arguments.
---- @param opts? table  Extra |jobstart()| options (cwd, env, ...). `term` is forced on.
+--- @param opts? table  Extra |jobstart()| options (cwd, env, ...). `term` is forced on. The extra
+---                     key `feed` (string) is written to the child's stdin via a separate pipe
+---                     (`stdin='fd'`), so the child reads it on fd 0 while the terminal stays the
+---                     tty — no tempfile. #40407
 --- @return integer? code  Process exit status, or nil if the job failed to start.
 function M.run(argv, opts)
+  local jobopts = vim.tbl_extend('force', opts or {}, { term = true })
+  local feed = jobopts.feed --[[@as string?]]
+  jobopts.feed = nil
+  if feed ~= nil then
+    jobopts.stdin = 'fd' -- child stdin is a pipe (the fed data), not the tty
+  end
+
   local caller_win = vim.api.nvim_get_current_win()
   vim.cmd('botright new') -- empty host buffer for the terminal
   local buf = vim.api.nvim_get_current_buf()
@@ -27,10 +37,15 @@ function M.run(argv, opts)
     end,
   })
 
-  local job = vim.fn.jobstart(argv, vim.tbl_extend('force', opts or {}, { term = true }))
+  local job = vim.fn.jobstart(argv, jobopts)
   if job <= 0 then
     pcall(vim.api.nvim_buf_delete, buf, { force = true })
     return nil
+  end
+
+  if feed ~= nil then
+    vim.fn.chansend(job, feed)
+    vim.fn.chanclose(job, 'stdin') -- EOF on fd 0
   end
 
   -- Block in Terminal-mode until the process exits (skip if it already did).
@@ -83,6 +98,31 @@ function M.run_nvim(text, histname)
   vim.fn.delete(tmp)
   vim.fn.delete(shada)
   return result
+end
+
+--- Runs a shell command line in an interactive terminal (blocking), for a terminal-based `:!`. The
+--- command runs in a real pty in *this* Nvim, so interactive programs (pagers, editors, prompts) work
+--- — unlike legacy `:!`, which dumps output to the message area. #40407
+--- @param cmd string  The (already-expanded) shell command line.
+--- @param feed? string  Written to the command's stdin (fd 0) via a pipe (see `M.run`'s `feed`).
+--- @return integer? code  Exit status, or nil if the shell failed to start.
+function M.run_shell(cmd, feed)
+  -- Build the shell argv: 'shell' (may itself contain args) + 'shellcmdflag' + the command.
+  local argv = vim.split(vim.o.shell, ' ', { plain = true, trimempty = true })
+  argv[#argv + 1] = vim.o.shellcmdflag
+  argv[#argv + 1] = cmd
+  return M.run(argv, feed ~= nil and { feed = feed } or nil)
+end
+
+--- Pipes buffer lines [line1, line2] (1-based, inclusive) into a shell command's stdin, run in an
+--- interactive terminal — for `:[range]w !cmd` (e.g. the `:w !sudo tee %` trick). The lines go to
+--- the command's stdin via a pipe (`stdin='fd'`), while the *tty* stays the terminal: it can still
+--- prompt (sudo reads /dev/tty, not stdin) and show output. No tempfile, no shell redirect. #40407
+--- @param cmd string  @param line1 integer  @param line2 integer
+--- @return integer? code  Exit status, or nil if the shell failed to start.
+function M.write_shell(cmd, line1, line2)
+  local lines = vim.api.nvim_buf_get_lines(0, line1 - 1, line2, false)
+  return M.run_shell(cmd, table.concat(lines, '\n') .. '\n')
 end
 
 --- Result line handed back by the hosted cmdwin child via `$NVIM` RPC on confirm; nil if cancelled.
