@@ -1,7 +1,7 @@
 " Creator:    Charles E Campbell
 " Previous Maintainer: Luca Saccarola <github.e41mv@aleeas.com>
 " Maintainer: This runtime file is looking for a new maintainer.
-" Last Change: 2026 Jun 16
+" Last Change: 2026 Jun 28
 " Copyright:  Copyright (C) 2016 Charles E. Campbell {{{1
 "             Permission is hereby granted to use and distribute this code,
 "             with or without modifications, provided that this copyright
@@ -418,7 +418,7 @@ endif
 "                == 6: Texplore
 function netrw#Explore(indx,dosplit,style,...)
   if !exists("b:netrw_curdir")
-    let b:netrw_curdir= getcwd()
+    let b:netrw_curdir= netrw#fs#Cwd(0)
   endif
 
   " record current file for Rexplore's benefit
@@ -525,6 +525,10 @@ function netrw#Explore(indx,dosplit,style,...)
     call s:NetrwClearExplore()
     return
   endif
+  " Win32: Use forward slashes
+  if !g:netrw_cygwin && has("win32")
+    let dirname= substitute(dirname,'\','/','g')
+  endif
 
   if dirname =~ '\.\./\=$'
     let dirname= simplify(fnamemodify(dirname,':p:h'))
@@ -568,14 +572,11 @@ function netrw#Explore(indx,dosplit,style,...)
 
   if starpat == 0 && a:indx >= 0
     " [Explore Hexplore Vexplore Sexplore] [dirname]
-    if dirname == ""
-      let dirname= curfiledir
-    endif
     if dirname =~# '^scp://' || dirname =~ '^ftp://'
       call netrw#Nread(2,dirname)
     else
       if dirname == ""
-        let dirname= getcwd()
+        let dirname= netrw#fs#Cwd(0)
       elseif has("win32") && !g:netrw_cygwin
         " Windows : check for a drive specifier, or else for a remote share name ('\\Foo' or '//Foo',
         " depending on whether backslashes have been converted to forward slashes by earlier code).
@@ -4987,7 +4988,7 @@ function s:NetrwMaps(islocal)
             nno  <buffer> <silent>              <Plug>NetrwSLeftmouse   :exec "norm! \<lt>leftmouse>"<bar>call <SID>NetrwSLeftmouse(1)<cr>
             nno  <buffer> <silent>              <Plug>NetrwSLeftdrag    :exec "norm! \<lt>leftmouse>"<bar>call <SID>NetrwSLeftdrag(1)<cr>
             nmap <buffer> <silent>              <Plug>Netrw2Leftmouse   -
-                exe 'nnoremap <buffer> <silent> <rightmouse>  :exec "norm! \<lt>leftmouse>"<bar>call <SID>NetrwLocalRm("'.mapsafecurdir.'")<cr>'
+            exe 'nnoremap <buffer> <silent> <rightmouse>  :exec "norm! \<lt>leftmouse>"<bar>call <SID>NetrwLocalRm("'.mapsafecurdir.'")<cr>'
             exe 'vnoremap <buffer> <silent> <rightmouse>  :exec "norm! \<lt>leftmouse>"<bar>call <SID>NetrwLocalRm("'.mapsafecurdir.'")<cr>'
         endif
         exe 'nnoremap <buffer> <silent> <nowait> <del>       :call <SID>NetrwLocalRm("'.mapsafecurdir.'")<cr>'
@@ -8683,7 +8684,15 @@ function s:NetrwLocalRename(path) range
             endif
 
             NetrwKeepj norm! 0
+            if exists('+shellslash') && !&ssl
+                let reset_ssl = 1
+                set ssl
+            endif
+            " Consistently use / as directory separator
             let oldname= netrw#fs#ComposePath(a:path,curword)
+            if reset_ssl
+                set nossl
+            endif
 
             call inputsave()
             let newname= input("Moving ".oldname." to : ",substitute(oldname,'/*$','','e'))
