@@ -1478,7 +1478,8 @@ void do_highlight(const char *line, const bool forceit, const bool init)
         // Ignored for now
       } else if (strcmp(key, "BLEND") == 0) {
         if (strcmp(arg, "NONE") != 0) {
-          hl_table[idx].sg_blend = (int)strtol(arg, NULL, 10);
+          char *arg_end = arg;
+          hl_table[idx].sg_blend = getdigits_int(&arg_end, false, 0);
         } else {
           hl_table[idx].sg_blend = -1;
         }
@@ -3182,7 +3183,7 @@ RgbValue name_to_color(const char *name, int *idx)
       && isxdigit((uint8_t)name[6]) && name[7] == NUL) {
     // rgb hex string
     *idx = kColorIdxHex;
-    return (RgbValue)strtol(name + 1, NULL, 16);
+    return (RgbValue)strtol(name + 1, NULL, 16);  // NOLINT(runtime/deprecated)
   } else if (!STRICMP(name, "bg") || !STRICMP(name, "background")) {
     *idx = kColorIdxBg;
     return normal_bg;

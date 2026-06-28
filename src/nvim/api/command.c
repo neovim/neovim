@@ -463,8 +463,8 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
         count_value = first_arg.data.integer;
       } else if (first_arg.type == kObjectTypeString) {
         // Try to parse string as a number Example: vim.api.nvim_cmd({cmd = 'copen', args = {'10'}}, {})
-        char *endptr;
-        long val = strtol(first_arg.data.string.data, &endptr, 10);
+        char *endptr = first_arg.data.string.data;
+        long val = getdigits_long(&endptr, false, 0);
         // Check if entire string was consumed (valid number) and string is not empty
         if (*endptr == '\0' && first_arg.data.string.size > 0) {
           is_numeric = true;
