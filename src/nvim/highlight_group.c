@@ -1313,7 +1313,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
         while (arg[off] != NUL) {
           for (i = ARRAY_SIZE(hl_attr_table); --i >= 0;) {
             int len = (int)strlen(hl_name_table[i]);
-            if (STRNICMP(arg + off, hl_name_table[i], len) == 0) {
+            if (STRNICMP(arg + off, hl_name_table[i], (size_t)len) == 0) {
               if (hl_attr_table[i] & HL_UNDERLINE_MASK) {
                 attr &= ~HL_UNDERLINE_MASK;
               }
