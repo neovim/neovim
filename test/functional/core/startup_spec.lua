@@ -214,8 +214,8 @@ describe('startup', function()
             callback_called = true
             os.exit(73)
             error('os.exit() returned')
-        end))
-        assert(vim.wait(1000, function()
+          end))
+          assert(vim.wait(1000, function()
             return callback_called
         end))
       ]]):format(n.testprg('shell-test'))
