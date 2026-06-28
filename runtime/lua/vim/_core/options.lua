@@ -92,6 +92,7 @@
 ---     Invalid or unset key returns `nil`.
 --- </pre>
 
+local M = {}
 local api = vim.api
 
 -- TODO(tjdevries): Improve option metadata so that this doesn't have to be hardcoded.
@@ -167,7 +168,7 @@ local function new_buf_opt_accessor(bufnr)
     end,
 
     __newindex = function(_, k, v)
-      return api.nvim_set_option_value(k, v, { buf = bufnr or 0 })
+      api.nvim_set_option_value(k, v, { buf = bufnr or 0 })
     end,
   })
 end
@@ -195,7 +196,7 @@ local function new_win_opt_accessor(winid, bufnr)
     end,
 
     __newindex = function(_, k, v)
-      return api.nvim_set_option_value(k, v, {
+      api.nvim_set_option_value(k, v, {
         scope = bufnr and 'local' or nil,
         win = winid or 0,
       })
@@ -221,6 +222,12 @@ end
 ---     To set a string value:
 ---         Vimscript: `set wildignore=*.o,*.a,__pycache__`
 ---         Lua:       `vim.o.wildignore = '*.o,*.a,__pycache__'`
+---         Lua (alt): `vim.o.wildignore = { '*.o', '*.a', '__pycache__' }`
+---
+---     To set a key:value type option:
+---         Vimscript: `set listchars=eol:~,space:-`
+---         Lua:       `vim.o.listchars = 'eol:~,space:-'`
+---         Lua (alt): `vim.o.listchars = { eol = '~', space = '-' }`
 ---
 --- Similarly, there is |vim.bo| and |vim.wo| for setting buffer-scoped and
 --- window-scoped options. Note that this must NOT be confused with
@@ -243,7 +250,7 @@ vim.o = setmetatable({}, {
     return api.nvim_get_option_value(k, {})
   end,
   __newindex = function(_, k, v)
-    return api.nvim_set_option_value(k, v, {})
+    api.nvim_set_option_value(k, v, {})
   end,
 })
 
@@ -264,7 +271,7 @@ vim.go = setmetatable({}, {
     return api.nvim_get_option_value(k, { scope = 'global' })
   end,
   __newindex = function(_, k, v)
-    return api.nvim_set_option_value(k, v, { scope = 'global' })
+    api.nvim_set_option_value(k, v, { scope = 'global' })
   end,
 })
 
@@ -350,25 +357,7 @@ local function passthrough(_, x)
   return x
 end
 
-local function tbl_merge(left, right)
-  return vim.tbl_extend('force', left, right)
-end
-
---- @param t table<any,any>
---- @param value any|any[]
-local function tbl_remove(t, value)
-  if type(value) == 'string' then
-    t[value] = nil
-  else
-    for _, v in ipairs(value) do
-      t[v] = nil
-    end
-  end
-
-  return t
-end
-
-local valid_types = {
+local type_mappings = {
   boolean = { 'boolean' },
   number = { 'number' },
   string = { 'string' },
@@ -376,6 +365,14 @@ local valid_types = {
   array = { 'string', 'table' },
   map = { 'string', 'table' },
 }
+
+local function valid_types(name, metatype)
+  -- Allow strings for special number options
+  if name == 'wildchar' or name == 'wildcharm' then
+    return { 'number', 'string' }
+  end
+  return type_mappings[metatype]
+end
 
 -- Map of functions to take a Lua style value and convert to vimoption_T style value.
 -- Each function takes (info, lua_value) -> vim_value
@@ -445,14 +442,24 @@ local to_vim_value = {
 }
 
 --- Convert a Lua value to a vimoption_T value
-local function convert_value_to_vim(name, info, value)
-  if value == nil then
+function M.convert_value_to_vim(name, value, operation)
+  if value == nil or value == vim.NIL then
     return vim.NIL
   end
 
-  assert_valid_value(name, value, valid_types[info.metatype])
+  local info = get_options_info(name) or error('Not a valid option name: ' .. name)
+  assert_valid_value(name, value, valid_types(name, info.metatype))
 
-  return to_vim_value[info.metatype](info, value)
+  local vim_value = to_vim_value[info.metatype](info, value)
+  -- In lua, we allow vim.opt.listchars = vim.opt.listchars - 'space'
+  -- In vim, the key requires a colon on the end. See stropt_handle_keymatch.
+  if operation == 'remove' and info.metatype == 'map' then
+    if not vim_value:find(':') then
+      vim_value = vim_value .. ':'
+    end
+  end
+
+  return vim_value
 end
 
 -- Map of OptionType to functions that take vimoption_T values and convert to Lua values.
@@ -462,15 +469,7 @@ local to_lua_value = {
   number = passthrough,
   string = passthrough,
 
-  array = function(info, value)
-    if type(value) == 'table' then
-      if not info.allows_duplicates then
-        value = remove_duplicate_values(value)
-      end
-
-      return value
-    end
-
+  array = function(_, value)
     -- Empty strings mean that there is nothing there,
     -- so empty table should be returned.
     if value == '' then
@@ -561,136 +560,16 @@ local to_lua_value = {
 }
 
 --- Converts a vimoption_T style value to a Lua value
-local function convert_value_to_lua(info, option_value)
+function M.convert_value_to_lua(name, option_value)
+  local info = get_options_info(name) or error('Not a valid option name: ' .. name)
   return to_lua_value[info.metatype](info, option_value)
-end
-
-local prepend_methods = {
-  number = function()
-    error("The '^' operator is not currently supported for")
-  end,
-
-  string = function(left, right)
-    return right .. left
-  end,
-
-  array = function(left, right)
-    for i = #right, 1, -1 do
-      table.insert(left, 1, right[i])
-    end
-
-    return left
-  end,
-
-  map = tbl_merge,
-  set = tbl_merge,
-}
-
---- Handles the '^' operator
-local function prepend_value(info, current, new)
-  return prepend_methods[info.metatype](
-    convert_value_to_lua(info, current),
-    convert_value_to_lua(info, new)
-  )
-end
-
-local add_methods = {
-  --- @param left integer
-  --- @param right integer
-  number = function(left, right)
-    return left + right
-  end,
-
-  --- @param left string
-  --- @param right string
-  string = function(left, right)
-    return left .. right
-  end,
-
-  --- @param left string[]
-  --- @param right string[]
-  --- @return string[]
-  array = function(left, right)
-    for _, v in ipairs(right) do
-      table.insert(left, v)
-    end
-
-    return left
-  end,
-
-  map = tbl_merge,
-  set = tbl_merge,
-}
-
---- Handles the '+' operator
-local function add_value(info, current, new)
-  return add_methods[info.metatype](
-    convert_value_to_lua(info, current),
-    convert_value_to_lua(info, new)
-  )
-end
-
---- @param t table<any,any>
---- @param val any
-local function remove_one_item(t, val)
-  if vim.islist(t) then
-    local remove_index = nil
-    for i, v in ipairs(t) do
-      if v == val then
-        remove_index = i
-      end
-    end
-
-    if remove_index then
-      table.remove(t, remove_index)
-    end
-  else
-    t[val] = nil
-  end
-end
-
-local remove_methods = {
-  --- @param left integer
-  --- @param right integer
-  number = function(left, right)
-    return left - right
-  end,
-
-  string = function()
-    error('Subtraction not supported for strings.')
-  end,
-
-  --- @param left string[]
-  --- @param right string[]
-  --- @return string[]
-  array = function(left, right)
-    if type(right) == 'string' then
-      remove_one_item(left, right)
-    else
-      for _, v in ipairs(right) do
-        remove_one_item(left, v)
-      end
-    end
-
-    return left
-  end,
-
-  map = tbl_remove,
-  set = tbl_remove,
-}
-
---- Handles the '-' operator
-local function remove_value(info, current, new)
-  return remove_methods[info.metatype](convert_value_to_lua(info, current), new)
 end
 
 local function create_option_accessor(scope)
   --- @diagnostic disable-next-line: no-unknown
   local option_mt
 
-  local function make_option(name, value)
-    local info = get_options_info(name) or error('Not a valid option name: ' .. name)
-
+  local function make_option(name, value, op_count)
     if type(value) == 'table' and getmetatable(value) == option_mt then
       assert(name == value._name, "must be the same value, otherwise that's weird.")
 
@@ -701,50 +580,63 @@ local function create_option_accessor(scope)
     return setmetatable({
       _name = name,
       _value = value,
-      _info = info,
+      _op_count = op_count,
     }, option_mt)
   end
 
   option_mt = {
-    -- To set a value, instead use:
-    --  opt[my_option] = value
-    _set = function(self)
-      local value = convert_value_to_vim(self._name, self._info, self._value)
-      api.nvim_set_option_value(self._name, value, { scope = scope })
-    end,
-
     get = function(self)
-      return convert_value_to_lua(self._info, self._value)
+      return M.convert_value_to_lua(self._name, self._value)
     end,
 
     append = function(self, right)
-      --- @diagnostic disable-next-line: no-unknown
-      self._value = add_value(self._info, self._value, right)
-      self:_set()
+      vim.api.nvim_set_option_value(self._name, right, { operation = 'append', scope = scope })
+    end,
+
+    __infix = function(self, right, operation)
+      -- TODO(kylesower): support multiple infix operations. Right now this
+      -- doesn't work because nvim_set_option_value uses get_option_newval to
+      -- merge the values, and that always expects a varp pointer that points
+      -- to the existing option value. Thus, when a new value is computed with
+      -- an infix op, but the option isn't updated, subsequent infix ops still
+      -- use the outdated option value.
+      -- This could be resolved by updating the option value when computing
+      -- the infix ops; however, this would then turn the infix ops into
+      -- assignments. The full solution to the problem requires computing the
+      -- infix op of two arbitrary values (not just one value compared to an
+      -- existing option).
+      if self._op_count > 0 then
+        error('Multiple vim.opt infix operations unsupported')
+      end
+      return make_option(
+        self._name,
+        vim.api.nvim_set_option_value(
+          self._name,
+          right,
+          { operation = operation, scope = scope, dry_run = true }
+        ),
+        self._op_count + 1
+      )
     end,
 
     __add = function(self, right)
-      return make_option(self._name, add_value(self._info, self._value, right))
+      return self:__infix(right, 'append')
     end,
 
     prepend = function(self, right)
-      --- @diagnostic disable-next-line: no-unknown
-      self._value = prepend_value(self._info, self._value, right)
-      self:_set()
+      vim.api.nvim_set_option_value(self._name, right, { operation = 'prepend', scope = scope })
     end,
 
     __pow = function(self, right)
-      return make_option(self._name, prepend_value(self._info, self._value, right))
+      return self:__infix(right, 'prepend')
     end,
 
     remove = function(self, right)
-      --- @diagnostic disable-next-line: no-unknown
-      self._value = remove_value(self._info, self._value, right)
-      self:_set()
+      vim.api.nvim_set_option_value(self._name, right, { operation = 'remove', scope = scope })
     end,
 
     __sub = function(self, right)
-      return make_option(self._name, remove_value(self._info, self._value, right))
+      return self:__infix(right, 'remove')
     end,
   }
   option_mt.__index = option_mt
@@ -754,11 +646,12 @@ local function create_option_accessor(scope)
       -- vim.opt_global must get global value only
       -- vim.opt_local may fall back to global value like vim.opt
       local opts = { scope = scope == 'global' and 'global' or nil }
-      return make_option(k, api.nvim_get_option_value(k, opts))
+      return make_option(k, api.nvim_get_option_value(k, opts), 0)
     end,
 
     __newindex = function(_, k, v)
-      make_option(k, v):_set()
+      local option = make_option(k, v, 0)
+      api.nvim_set_option_value(option._name, option._value, { scope = scope })
     end,
   })
 end
@@ -927,3 +820,5 @@ vim.opt_local = create_option_accessor('local')
 
 --- @nodoc
 vim.opt_global = create_option_accessor('global')
+
+return M

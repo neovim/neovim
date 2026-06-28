@@ -526,6 +526,95 @@ describe('lua stdlib', function()
   end)
 
   describe('options', function()
+    describe('vim.o', function()
+      it('works for boolean values', function()
+        eq_exec_lua(false, function()
+          vim.o.number = false
+          return vim.o.number
+        end)
+      end)
+
+      it('works for number values', function()
+        eq_exec_lua(10, function()
+          vim.o.tabstop = 10
+          return vim.o.tabstop
+        end)
+      end)
+
+      it('works for string values', function()
+        eq_exec_lua('hello world', function()
+          vim.o.makeprg = 'hello world'
+          return vim.o.makeprg
+        end)
+      end)
+
+      it('works for array type options', function()
+        eq_exec_lua('hello,world', function()
+          vim.o.wildignore = { 'hello', 'world' }
+          return vim.o.wildignore
+        end)
+      end)
+
+      it('works for key:value type options using string', function()
+        eq_exec_lua('eol:~,space:-', function()
+          vim.o.listchars = 'eol:~,space:-'
+          return vim.o.listchars
+        end)
+      end)
+
+      it('works for key:value type options using list of strings', function()
+        eq_exec_lua('eol:~,space:-', function()
+          vim.o.listchars = { 'eol:~', 'space:-' }
+          return vim.o.listchars
+        end)
+      end)
+
+      it('works for key:value type options using table', function()
+        eq_exec_lua('eol:~,space:.', function()
+          vim.o.listchars = { eol = '~', space = '.' }
+          return vim.o.listchars
+        end)
+      end)
+
+      it('works for set type flaglists', function()
+        eq_exec_lua('tcro', function()
+          vim.o.formatoptions = 'tcro'
+          return vim.o.formatoptions
+        end)
+      end)
+
+      it('works for set type flaglists using tables', function()
+        eq_exec_lua({ t = true, c = true, r = true, o = true }, function()
+          vim.o.formatoptions = { t = true, c = true, r = true, o = true }
+          -- use vim.opt to convert to lua value
+          return vim.opt.formatoptions:get()
+        end)
+      end)
+
+      it('works for weird number options', function()
+        eq_exec_lua(9, function()
+          vim.o.wildchar = '<Tab>'
+          return vim.o.wildchar
+        end)
+      end)
+
+      it('expands env vars', function()
+        eq_exec_lua('/dev/null', function()
+          vim.fn.setenv('INCLUDE', '/dev/null')
+          vim.o.path = '$INCLUDE'
+          return vim.o.path
+        end)
+      end)
+
+      it('expands ~', function()
+        eq_exec_lua('/dev/null', function()
+          vim.fn.setenv('HOME', '/dev/null')
+          vim.o.rtp = '~'
+          return vim.o.rtp
+        end)
+      end)
+    end)
+
     describe('vim.bo', function()
       it('can get and set options', function()
         eq('', fn.luaeval 'vim.bo.filetype')
@@ -847,12 +936,17 @@ describe('lua stdlib', function()
           end)
         end)
 
-        it('allows adding dict style', function()
-          eq_exec_lua('eol:~,space:_', function()
-            vim.opt.listchars = { eol = '~', space = '.' }
-            vim.opt.listchars = vim.opt.listchars + { space = '-' } + { space = '_' }
-            return vim.o.listchars
-          end)
+        it('does not allow adding dict style multiple times', function()
+          matches(
+            'Multiple vim.opt infix operations unsupported',
+            pcall_err(
+              exec_lua,
+              [[
+              vim.opt.listchars = { eol = '~', space = '.' }
+              vim.opt.listchars = vim.opt.listchars + { space = '-' } + { space = '_' }
+            ]]
+            )
+          )
         end)
 
         it('allows completely new keys', function()
@@ -871,20 +965,30 @@ describe('lua stdlib', function()
           end)
         end)
 
-        it('allows subtracting dict style', function()
-          eq_exec_lua('', function()
-            vim.opt.listchars = { eol = '~', space = '.' }
-            vim.opt.listchars = vim.opt.listchars - 'space' - 'eol'
-            return vim.o.listchars
-          end)
+        it('does not allow subtracting dict style multiple times', function()
+          matches(
+            'Multiple vim.opt infix operations unsupported',
+            pcall_err(
+              exec_lua,
+              [[
+              vim.opt.listchars = { eol = '~', space = '.' }
+              vim.opt.listchars = vim.opt.listchars - 'space' - 'eol'
+            ]]
+            )
+          )
         end)
 
-        it('allows subtracting dict style multiple times', function()
-          eq_exec_lua('eol:~', function()
-            vim.opt.listchars = { eol = '~', space = '.' }
-            vim.opt.listchars = vim.opt.listchars - 'space' - 'space'
-            return vim.o.listchars
-          end)
+        it('does not allow subtracting dict style multiple times with the same key', function()
+          matches(
+            'Multiple vim.opt infix operations unsupported',
+            pcall_err(
+              exec_lua,
+              [[
+              vim.opt.listchars = { eol = '~', space = '.' }
+              vim.opt.listchars = vim.opt.listchars - 'space' - 'space'
+            ]]
+            )
+          )
         end)
 
         it('allows adding a key:value string to a listchars', function()
@@ -898,6 +1002,7 @@ describe('lua stdlib', function()
         it('allows prepending a key:value string to a listchars', function()
           eq_exec_lua('eol:~,space:.,tab:>~', function()
             vim.opt.listchars = { eol = '~', space = '.' }
+            -- Operator overloading is cursed.
             vim.opt.listchars = vim.opt.listchars ^ 'tab:>~'
             return vim.o.listchars
           end)
@@ -965,12 +1070,17 @@ describe('lua stdlib', function()
         end)
       end)
 
-      it('allows adding multiple times', function()
-        eq_exec_lua('foo,bar,baz', function()
-          vim.opt.wildignore = 'foo'
-          vim.opt.wildignore = vim.opt.wildignore + 'bar' + 'baz'
-          return vim.o.wildignore
-        end)
+      it('does not allow adding multiple times', function()
+        matches(
+          'Multiple vim.opt infix operations unsupported',
+          pcall_err(
+            exec_lua,
+            [[
+            vim.opt.wildignore = 'foo'
+            vim.opt.wildignore = vim.opt.wildignore + 'bar' + 'baz'
+          ]]
+          )
+        )
       end)
 
       it('removes values when you use minus', function()
@@ -1209,6 +1319,22 @@ describe('lua stdlib', function()
             vim.opt.formatoptions:prepend('t')
             return vim.opt.formatoptions:get()
           end)
+        end)
+      end)
+
+      it('expands env vars', function()
+        eq_exec_lua({ '/dev/null' }, function()
+          vim.env.INCLUDE = '/dev/null'
+          vim.opt.path = '$INCLUDE'
+          return vim.opt.path:get()
+        end)
+      end)
+
+      it('expands ~', function()
+        eq_exec_lua({ '/dev/null' }, function()
+          vim.env.HOME = '/dev/null'
+          vim.opt.rtp = '~'
+          return vim.opt.rtp:get()
         end)
       end)
     end) -- vim.opt

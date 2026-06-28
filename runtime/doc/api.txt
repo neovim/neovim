@@ -3596,6 +3596,11 @@ nvim_set_option_value({name}, {value}, {opts})
       • {value}  (`any`) New option value
       • {opts}   (`vim.api.keyset.option`) Optional parameters
                  • buf: Buffer number. Used for setting buffer local option.
+                 • dry_run: (`boolean?`, default: false) If true, then the
+                   option value won't be set.
+                 • operation: One of "set", "append", "prepend", or "remove".
+                   Corresponds to |:set=|, |:set+=|, |:set^=|, and |:set-=|.
+                   Default is "set".
                  • scope: One of "global" or "local". Analogous to
                    |:setglobal| and |:setlocal|, respectively.
                  • tab: |tab-ID| for tab-local options (currently only
@@ -3603,6 +3608,9 @@ nvim_set_option_value({name}, {value}, {opts})
                    non-current tab is given, the value will take effect when
                    it is switched-to.
                  • win: |window-ID|. Used for setting window local option.
+
+    Return: ~
+        (`any`) Option value
 
 
 ==============================================================================

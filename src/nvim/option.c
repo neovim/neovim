@@ -151,13 +151,6 @@ static char *p_vsts_nopaste;
 
 #define OPTION_COUNT ARRAY_SIZE(options)
 
-/// :set boolean option prefix
-typedef enum {
-  PREFIX_NO = 0,  ///< "no" prefix
-  PREFIX_NONE,    ///< no prefix
-  PREFIX_INV,     ///< "inv" prefix
-} set_prefix_T;
-
 #include "option.c.generated.h"
 
 // options[] is initialized in options.generated.h.
@@ -1100,14 +1093,15 @@ static void stropt_remove_dupflags(char *newval, uint32_t flags)
 /// Get the string value specified for a ":set" command.  The following set options are supported:
 ///     set {opt}={val}
 ///     set {opt}:{val}
-static char *stropt_get_newval(int nextchar, OptIndex opt_idx, char **argp, void *varp,
-                               const char *origval, set_op_T *op_arg, uint32_t flags)
+static char *stropt_get_newval(OptIndex opt_idx, char **argp, void *varp, const char *origval,
+                               set_op_T *op_arg)
 {
   char *arg = *argp;
   set_op_T op = *op_arg;
   char *save_arg = NULL;
   char *newval;
   const char *s = NULL;
+  uint32_t flags = options[opt_idx].flags;
 
   arg++;  // jump to after the '=' or ':'
 
@@ -1326,18 +1320,29 @@ const char *find_option_end(const char *arg, OptIndex *opt_idxp)
 
 /// Get new option value from argp. Allocated OptVal must be freed by caller.
 /// Can unset local value of an option when ":set {option}<" is used.
-static OptVal get_option_newval(OptIndex opt_idx, int opt_flags, set_prefix_T prefix, char **argp,
-                                int nextchar, set_op_T op, uint32_t flags, void *varp, char *errbuf,
-                                const size_t errbuflen, const char **errmsg)
+OptVal get_option_newval(OptIndex opt_idx, int opt_flags, set_prefix_T prefix, char **argp,
+                         int nextchar, set_op_T op, uint32_t flags, void *varp,
+                         OptVal *oldval_override, char *errbuf, const size_t errbuflen,
+                         const char **errmsg)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   assert(varp != NULL);
 
   vimoption_T *opt = &options[opt_idx];
   char *arg = *argp;
-  // When setting the local value of a global option, the old value may be the global value.
-  const bool oldval_is_global = option_is_global_local(opt_idx) && (opt_flags & OPT_LOCAL);
-  OptVal oldval = optval_from_varp(opt_idx, oldval_is_global ? get_varp(opt) : varp);
+
+  OptVal oldval;
+  if (oldval_override != NULL) {
+    // Allow overriding the oldval. This is needed to handle the case where
+    // options for buffers/windows other than curbuf/curwin are updated. It can
+    // also support merging arbitrary values if necessary down the road.
+    oldval = *oldval_override;
+  } else {
+    // When setting the local value of a global option, the old value may be the global value.
+    const bool oldval_is_global = option_is_global_local(opt_idx) && (opt_flags & OPT_LOCAL);
+    oldval = optval_from_varp(opt_idx, oldval_is_global ? get_varp(opt) : varp);
+  }
+
   OptVal newval = NIL_OPTVAL;
 
   if (nextchar == '&') {
@@ -1434,8 +1439,7 @@ static OptVal get_option_newval(OptIndex opt_idx, int opt_flags, set_prefix_T pr
   case kOptValTypeString: {
     const char *oldval_str = oldval.data.string.data;
     // Get the new value for the option
-    const char *newval_str = stropt_get_newval(nextchar, opt_idx, argp, varp, oldval_str, &op,
-                                               flags);
+    const char *newval_str = stropt_get_newval(opt_idx, argp, varp, oldval_str, &op);
     newval = CSTR_AS_OPTVAL(newval_str);
     break;
   }
@@ -1555,7 +1559,7 @@ static void do_one_set_option(int opt_flags, char **argp, bool *did_show, char *
   }
 
   OptVal newval = get_option_newval(opt_idx, opt_flags, prefix, argp, nextchar, op, flags, varp,
-                                    errbuf, errbuflen, errmsg);
+                                    NULL, errbuf, errbuflen, errmsg);
 
   if (newval.type == kOptValTypeNil || *errmsg != NULL) {
     return;
@@ -6072,7 +6076,7 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, char *fuzzystr, int *numM
 
 /// Escape an option value that can be used on the command-line with :set.
 /// Caller needs to free the returned string, unless NULL is returned.
-static char *escape_option_str_cmdline(char *var)
+char *escape_option_str_cmdline(char *var)
 {
   // A backslash is required before some characters.  This is the reverse of
   // what happens in do_set().

@@ -2305,12 +2305,18 @@ function vim.api.nvim_set_option(name, value) end
 --- @param value any New option value
 --- @param opts vim.api.keyset.option Optional parameters
 --- - buf: Buffer number. Used for setting buffer local option.
+--- - dry_run: (`boolean?`, default: false) If true, then the
+---   option value won't be set.
+--- - operation: One of "set", "append", "prepend", or "remove".
+---   Corresponds to `:set=`, `:set+=`, `:set^=`, and `:set-=`.
+---   Default is "set".
 --- - scope: One of "global" or "local". Analogous to
 --- `:setglobal` and `:setlocal`, respectively.
 --- - tab: `tab-ID` for tab-local options (currently only 'cmdheight'). Tabpage 0
 ---   means the current tabpage. If a non-current tab is given, the value will take
 ---   effect when it is switched-to.
 --- - win: `window-ID`. Used for setting window local option.
+--- @return any # Option value
 function vim.api.nvim_set_option_value(name, value, opts) end
 
 --- Sets a global (g:) variable.

@@ -69,6 +69,8 @@ API
 • |nvim_create_autocmd()|, |nvim_exec_autocmds()| and |nvim_clear_autocmds()|
   no longer treat an empty non-nil pattern as nil.
 • |nvim_clear_autocmds()| no longer treats an empty array event as nil.
+• |vim.o|, |vim.opt|, and |nvim_set_option_value()| expand `~` and environment
+  variables (|expand-env|).
 
 DIAGNOSTICS
 
@@ -105,6 +107,9 @@ LUA
 
 • "standalone" Lua interpreter mode `nvim -ll` was removed. Use |-l| script
   mode instead.
+• |vim.opt| no longer supports chaining multiple infix operators (e.g.
+  `vim.opt.wildignore + '*.o' + '*.obj'`). Instead, use tables:
+  `vim.opt.wildignore + {'*.o', '*.obj'}`
 
 OPTIONS
 
@@ -148,6 +153,9 @@ API
 • |nvim_buf_set_extmark()| `virt_lines_overflow` accepts "wrap" to enable
   wrapping onto extra rows and "auto" which enables horizontal scrolling when
   'nowrap' is set and wrapping when 'wrap' is set.
+• |nvim_set_option_value()| accepts a new `operation` field to modify the
+  existing option value.
+• |nvim_set_option_value()| returns the new option value.
 
 BUILD
 
@@ -260,6 +268,7 @@ LUA
 • |vim.log| provides a logging interface.
 • |vim.pack.get()| output includes revision of a pending update.
 • |vim.pack.get()| can fetch new updates before computing the output.
+• |vim.o| now accepts table style values for assignment.
 
 OPTIONS
 
