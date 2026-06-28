@@ -6625,4 +6625,32 @@ func Test_call_complete_while_filtering()
   bwipe!
 endfunc
 
+func Test_complete_check_mapped_typed_key()
+  func SlowComplete(findstart, base)
+    if a:findstart
+      return col('.') - 1
+    endif
+    call complete_add('foobar')
+    let g:compl_iterations = 0
+    while !complete_check() && g:compl_iterations < 100
+      let g:compl_iterations += 1
+      sleep 5m
+    endwhile
+    return []
+  endfunc
+
+  new
+  setlocal completefunc=SlowComplete
+  setlocal completeopt=menuone,noselect
+  inoremap <buffer> <Space> <Space><Space>
+
+  let g:compl_iterations = -1
+  call feedkeys("Sfoo\<C-X>\<C-U> \<Esc>", 'tx')
+  call assert_inrange(0, 99, g:compl_iterations)
+
+  bwipe!
+  delfunc SlowComplete
+  unlet g:compl_iterations
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable
