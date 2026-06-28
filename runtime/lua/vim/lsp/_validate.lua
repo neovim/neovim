@@ -12,7 +12,9 @@ Regenerate:
 --]]
 
 local NIL = vim.NIL
+---@type table<string, fun(value: any): nil>
 local M = {}
+---@type table<string, fun(value: any): nil>
 local validate_result = {}
 
 local _log = require('vim.lsp.log')
