@@ -2922,7 +2922,8 @@ nvim_cmd({cmd}, {opts})                                           *nvim_cmd()*
       • {cmd}   (`vim.api.keyset.cmd`) Command to execute, a Dict with the
                 same structure as the return value of |nvim_parse_cmd()|
                 (except "addr", "nargs" and "nextcmd" are ignored). All keys
-                except "cmd" are optional.
+                except "cmd" are optional. Range elements may be integers or
+                Ex address strings.
       • {opts}  (`vim.api.keyset.cmd_opts`) Optional parameters.
                 • output: (boolean, default false) Whether to return command
                   output.

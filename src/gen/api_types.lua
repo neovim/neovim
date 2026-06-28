@@ -37,6 +37,10 @@ local function api_type(t)
       if count then
         return ('[%s]'):format(ty:rep(count, ', '))
       else
+        -- Wrap union types in () so integer|string[] -> (integer|string)[].
+        if ty:find('|', 1, true) and not vim.startswith(ty, '[') then
+          ty = '(' .. ty .. ')'
+        end
         return ty .. '[]'
       end
     elseif container == 'Dict' or container == 'DictAs' then
