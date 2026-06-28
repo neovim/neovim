@@ -2,6 +2,7 @@
 " Language:     Zig
 " Maintainer:   Mathias Lindgren <math.lindgren@gmail.com>
 " Last Change:  2024 Oct 04
+"               2026 Jun 27 by Vim Project (normalize recommended style guard)
 " Based on:     https://codeberg.org/ziglang/zig.vim
 
 if exists("b:did_ftplugin")
@@ -20,7 +21,8 @@ setlocal suffixesadd=.zig,.zir,.zon
 let &l:define='\v(<fn>|<const>|<var>|^\s*\#\s*define)'
 let b:undo_ftplugin = 'setl isk< fo< sua< mp< def<'
 
-if get(g:, 'zig_recommended_style', 1)
+if get(g:, 'zig_recommended_style',
+      \ get(g:, 'filetype_recommended_style', 1))
     setlocal expandtab
     setlocal tabstop=8
     setlocal softtabstop=4

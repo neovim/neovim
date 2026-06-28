@@ -4,13 +4,17 @@
 " Last Change:	2024 Jul 06
 " 2026 Jan 13 by Vim project: set compiler #19152
 " 2026 Jun 26 by Vim project: set expandtab #20623
+" 2026 Jun 27 by Vim Project: add recommended style guard
 
 if exists('b:did_ftplugin')
   finish
 endif
 let b:did_ftplugin = 1
 
-setlocal expandtab
+if get(g:, 'cabal_recommended_style',
+      \ get(g:, 'filetype_recommended_style', 1))
+  setlocal expandtab
+endif
 setlocal comments=:-- commentstring=--\ %s
 
 compiler cabal

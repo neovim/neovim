@@ -4,6 +4,7 @@
 " URL:			https://github.com/vim-ruby/vim-ruby
 " Last Change:		2023 Dec 31
 "			2024 Jan 14 by Vim Project (browsefilter)
+"			2026 Jun 27 by Vim Project (normalize recommended style guard)
 
 if (exists("b:did_ftplugin"))
   finish
@@ -160,7 +161,8 @@ let b:undo_ftplugin = "setl inc= sua= path= tags= fo< com< cms< kp="
       \."| unlet! b:browsefilter b:match_ignorecase b:match_words b:match_skip"
       \."| if exists('&ofu') && has('ruby') | setl ofu< | endif"
 
-if get(g:, 'ruby_recommended_style', 1)
+if get(g:, 'ruby_recommended_style',
+      \ get(g:, 'filetype_recommended_style', 1))
   setlocal shiftwidth=2 softtabstop=2 expandtab
   let b:undo_ftplugin .= ' | setl sw< sts< et<'
 endif

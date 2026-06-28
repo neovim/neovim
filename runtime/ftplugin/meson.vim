@@ -5,6 +5,7 @@
 " Original Author:	Laurent Pinchart <laurent.pinchart@ideasonboard.com>
 " Last Change:		2018 Nov 27
 "			2024 Jan 14 by Vim Project (browsefilter)
+"			2026 Jun 27 by Vim Project (normalize recommended style guard)
 
 if exists("b:did_ftplugin") | finish | endif
 let b:did_ftplugin = 1
@@ -17,7 +18,8 @@ setlocal formatoptions+=croql formatoptions-=t
 
 let b:undo_ftplugin = "setl com< cms< fo<"
 
-if get(g:, "meson_recommended_style", 1)
+if get(g:, 'meson_recommended_style',
+      \ get(g:, 'filetype_recommended_style', 1))
   setlocal expandtab
   setlocal shiftwidth=2
   setlocal softtabstop=2
