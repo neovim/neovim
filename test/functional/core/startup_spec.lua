@@ -203,6 +203,28 @@ describe('startup', function()
       eq('73\n', read_file(exit_file))
     end)
 
+    it('os.exit() fails from libuv process callback #39783', function()
+      local out = fn.system(
+        { nvim_prog, '--clean', '-l', '-' },
+        ([[
+          local callback_called = false
+          local handle
+          handle = assert(vim.uv.spawn(%q, { args = { 'EXIT', '0' } }, function()
+            handle:close()
+            callback_called = true
+            os.exit(73)
+            error('os.exit() returned')
+          end))
+          assert(vim.wait(1000, function()
+            return callback_called
+          end))
+        ]]):format(n.testprg('shell-test'))
+      )
+
+      eq(0, eval('v:shell_error'))
+      matches('E5560: os%.exit must not be called in a fast event context', out)
+    end)
+
     it('Lua-error sets Nvim exitcode', function()
       local proc = n.spawn_wait('-l', 'test/functional/fixtures/startup-fail.lua')
       matches('E5113: .* my pearls!!', (proc:output()))
