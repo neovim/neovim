@@ -3132,6 +3132,11 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
       eap->addr_count = 2;
     }
 
+    if (address_omitted) {
+      eap->addr_count++;
+      eap->addr_mode = kOmLineWise;
+    }
+
     if (*eap->cmd == ';') {
       if (!eap->skip) {
         curwin->w_cursor.lnum = eap->line2;
@@ -3149,11 +3154,6 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
       }
     } else if (*eap->cmd != ',') {
       break;
-    }
-
-    if (address_omitted) {
-      eap->addr_count++;
-      eap->addr_mode = kOmLineWise;
     }
 
     eap->cmd++;

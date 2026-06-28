@@ -3073,6 +3073,10 @@ void cursor_pos_info(dict_T *dict)
 /// Handle indent and format operators and visual mode ":".
 static void op_colon(oparg_T *oap)
 {
+  if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
+    curbuf->b_op_start = oap->start;
+    curbuf->b_op_end = oap->end;
+  }
   stuffcharReadbuff(':');
   if (oap->is_VIsual) {
     stuffReadbuff("'<,'>");

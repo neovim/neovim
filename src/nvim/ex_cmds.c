@@ -1389,6 +1389,11 @@ static void do_filter(exarg_T *eap, char *cmd, bool do_in, bool do_out)
   // When writing the input with a pipe or when catching the output with a
   // pipe only need to do 3.
 
+  curbuf->b_op_start.lnum = line1;
+  curbuf->b_op_start.col = col1;
+  curbuf->b_op_end.lnum = line2;
+  curbuf->b_op_end.col = col2;
+
   if (do_out) {
     shell_flags |= kShellOptDoOut;
   }
@@ -1398,27 +1403,15 @@ static void do_filter(exarg_T *eap, char *cmd, bool do_in, bool do_out)
     shell_flags |= kShellOptRead;
     curwin->w_cursor.lnum = line2;
     curwin->w_cursor.col = col2;
-    curbuf->b_op_start.lnum = line1;
-    curbuf->b_op_start.col = col1;
-    curbuf->b_op_end.lnum = line2;
-    curbuf->b_op_end.col = col2;
   } else if (do_in && !do_out && !stmp) {
     // Use a pipe to write stdin of the command, do not use a temp file.
     shell_flags |= kShellOptWrite;
-    curbuf->b_op_start.lnum = line1;
-    curbuf->b_op_start.col = col1;
-    curbuf->b_op_end.lnum = line2;
-    curbuf->b_op_end.col = col2;
   } else if (do_in && do_out && !stmp) {
     // Use a pipe to write stdin and fetch stdout of the command, do not
     // use a temp file.
     shell_flags |= kShellOptRead | kShellOptWrite;
     curwin->w_cursor.lnum = line2;
     curwin->w_cursor.col = col2;
-    curbuf->b_op_start.lnum = line1;
-    curbuf->b_op_start.col = col1;
-    curbuf->b_op_end.lnum = line2;
-    curbuf->b_op_end.col = col2;
   } else if ((do_in && (itmp = vim_tempname()) == NULL)
              || (do_out && (otmp = vim_tempname()) == NULL)) {
     emsg(_(e_notmp));
@@ -1498,17 +1491,8 @@ static void do_filter(exarg_T *eap, char *cmd, bool do_in, bool do_out)
 
     read_linecount = curbuf->b_ml.ml_line_count - read_linecount;
 
-    if (shell_flags & kShellOptRead) {
-      curbuf->b_op_start.lnum = line1;
-      curbuf->b_op_start.col = col1;
-      if (otmp != NULL) {
-        curbuf->b_op_end.lnum = line2;
-        curbuf->b_op_end.col = col2;
-        appended_lines_mark(line1, read_linecount);
-      } else {
-        curbuf->b_op_end.lnum = line2 + read_linecount;
-        curbuf->b_op_end.col = col2;
-      }
+    if (do_out && otmp != NULL) {
+      appended_lines_mark(line1, read_linecount);
     }
 
     if (do_in) {
@@ -1553,6 +1537,16 @@ static void do_filter(exarg_T *eap, char *cmd, bool do_in, bool do_out)
       linecount = curbuf->b_op_end.lnum - curbuf->b_op_start.lnum + 1;
       curwin->w_cursor.lnum = curbuf->b_op_end.lnum;
       curwin->w_cursor.col = curbuf->b_op_end.col;
+    }
+
+    if (do_out) {
+      curbuf->b_op_start.lnum = line1;
+      curbuf->b_op_start.col = col1;
+      curbuf->b_op_end.lnum = line1 + (read_linecount > 0 ? read_linecount - 1 : 0);
+      if (curbuf->b_op_end.lnum < line1) {
+        curbuf->b_op_end.lnum = line1;
+      }
+      curbuf->b_op_end.col = col2;
     }
 
     beginline(BL_WHITE | BL_FIX);           // cursor on first non-blank
