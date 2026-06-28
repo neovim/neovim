@@ -1171,6 +1171,22 @@ int32_t getdigits_int32(char **pp, bool strict, int32_t def)
   return (int32_t)number;
 }
 
+/// Gets a int64_t number from a string.
+///
+/// @see getdigits
+int64_t getdigits_int64(char **pp, bool strict, int64_t def)
+{
+  intmax_t number = getdigits(pp, strict, def);
+#if SIZEOF_INTMAX_T > 8
+  if (strict) {
+    assert(number >= INT64_MIN && number <= INT64_MAX);
+  } else if (!(number >= INT64_MIN && number <= INT64_MAX)) {
+    return def;
+  }
+#endif
+  return (int64_t)number;
+}
+
 /// Check that "lbuf" is empty or only contains blanks.
 ///
 /// @param  lbuf  line buffer to check
