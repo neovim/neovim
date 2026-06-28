@@ -207,9 +207,9 @@ describe('startup', function()
       local out = fn.system(
         { nvim_prog, '--clean', '-l', '-' },
         ([[
-        local callback_called = false
-        local handle
-        handle = assert(vim.uv.spawn(%q, { args = { 'EXIT', '0' } }, function()
+          local callback_called = false
+          local handle
+          handle = assert(vim.uv.spawn(%q, { args = { 'EXIT', '0' } }, function()
             handle:close()
             callback_called = true
             os.exit(73)
