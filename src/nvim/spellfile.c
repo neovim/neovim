@@ -1339,8 +1339,6 @@ static int read_sofo_section(FILE *fd, slang_T *slang)
   int cnt;
   int res;
 
-  slang->sl_sofo = true;
-
   // <sofofromlen> <sofofrom>
   char *from = read_cnt_string(fd, 2, &cnt);
   if (cnt < 0) {
@@ -1552,6 +1550,7 @@ static int set_sofo(slang_T *lp, const char *from, const char *to)
   ga_grow(gap, 256);
   memset(gap->ga_data, 0, sizeof(int *) * 256);
   gap->ga_len = 256;
+  lp->sl_sofo = true;
 
   // First count the number of items for each list.  Temporarily use
   // sl_sal_first[] for this.
