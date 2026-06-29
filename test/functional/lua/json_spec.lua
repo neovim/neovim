@@ -178,6 +178,13 @@ describe('vim.json.decode()', function()
       pcall_err(exec_lua, [[return vim.json.decode('{"a":1/*x*/0}', { skip_comments = true })]])
     )
   end)
+
+  it('gives nice error message when attempting to index into null value', function()
+    exec_lua [[ parsed = vim.json.decode('{"foo": null}') ]]
+
+    eq('attempt to index vim.NIL', pcall_err(exec_lua, [[ return parsed.foo.sub_field ]]))
+    eq('attempt to index vim.NIL', pcall_err(exec_lua, [[ parsed.foo.new_field = 3 ]]))
+  end)
 end)
 
 describe('vim.json.encode()', function()
