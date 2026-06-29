@@ -4469,10 +4469,6 @@ tabpage_T *win_new_tabpage(int after, char *filename, bool enter, win_T **first)
 {
   tabpage_T *old_curtab = curtab;
 
-  if (enter && cmdwin_buf != NULL) {
-    emsg(_(e_cmdwin));
-    return NULL;
-  }
   if (window_layout_locked(CMD_tabnew)) {
     return NULL;
   }

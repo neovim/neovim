@@ -1209,6 +1209,11 @@ opens in Normal mode.  The last line contains the command as typed so far.  The
 The window height is decided by 'cmdwinheight' (if there is room).  The window
 is full width and is positioned just above the command-line.
 
+Window and tabpage commands work as usual while cmdwin is open: you can
+navigate, resize, close and open windows/tabpages. The mouse works as in any
+window: clicks focus other windows, and statuslines and vertical separators
+can be dragged to resize.
+
 								*E1292*
 Only one command-line window can be open at a time.
 
@@ -1223,12 +1228,8 @@ but it's not possible to open another cmdwin from there.  There is no
 nesting.
 
 								*E11*
-|CTRL-W| commands work as usual: you can navigate between, split, resize, and
-close windows while the command-line window is open.  E11 is still emitted by
-operations that would leave or repurpose the cmdwin: opening a new tab page
-(CTRL-W_T, |:tabnew|) or turning its buffer into a terminal (|:terminal|).
-The cmdwin buffer is pinned by 'winfixbuf', so its window cannot switch to a
-different buffer.
+The cmdwin buffer cannot be used as a |:terminal|. Its window cannot switch to
+a different buffer ('winfixbuf').
 
 
 CLOSE
@@ -1283,9 +1284,6 @@ If you don't want these mappings, disable them with: >
 	au CmdwinEnter [:>] iunmap <buffer> <Tab>
 	au CmdwinEnter [:>] nunmap <buffer> <Tab>
 You could put these lines in your vimrc file.
-
-The mouse works as in any window: clicks focus other windows, and statuslines
-and vertical separators can be dragged to resize.
 
 The |getcmdwintype()| function returns the type of the command-line being
 edited as described in |cmdwin-char|.

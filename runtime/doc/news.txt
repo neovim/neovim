@@ -188,7 +188,7 @@ EDITOR
   kind/menu/info/abbr for the popup menu.
 • |cmdwin| (|q:|, |q/|, |q?|, |c_CTRL-F|) is implemented as a "normal"
   buffer+window instead of a nested-state modal loop:
-  • You can create (and navigate) windows while cmdwin is active. Chaos!
+  • You can create/navigate windows/tabpages while cmdwin is active. Chaos!
   • 'inccommand' works in cmdwin!
   • API calls (e.g. |nvim_buf_delete()|) that previously failed with
     "E11: Invalid in command-line window" while cmdwin was open, now work
