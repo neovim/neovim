@@ -5545,22 +5545,22 @@ void set_context_in_syntax_cmd(expand_T *xp, const char *arg)
   xp->xp_pattern = skipwhite(p);
   if (*skiptowhite(xp->xp_pattern) != NUL) {
     xp->xp_context = EXPAND_NOTHING;
-  } else if (STRNICMP(arg, "case", p - arg) == 0) {
+  } else if (STRNICMP(arg, "case", (size_t)(p - arg)) == 0) {
     expand_what = EXP_CASE;
-  } else if (STRNICMP(arg, "spell", p - arg) == 0) {
+  } else if (STRNICMP(arg, "spell", (size_t)(p - arg)) == 0) {
     expand_what = EXP_SPELL;
-  } else if (STRNICMP(arg, "sync", p - arg) == 0) {
+  } else if (STRNICMP(arg, "sync", (size_t)(p - arg)) == 0) {
     expand_what = EXP_SYNC;
-  } else if (STRNICMP(arg, "list", p - arg) == 0) {
+  } else if (STRNICMP(arg, "list", (size_t)(p - arg)) == 0) {
     p = skipwhite(p);
     if (*p == '@') {
       expand_what = EXP_CLUSTER;
     } else {
       xp->xp_context = EXPAND_HIGHLIGHT;
     }
-  } else if (STRNICMP(arg, "keyword", p - arg) == 0
-             || STRNICMP(arg, "region", p - arg) == 0
-             || STRNICMP(arg, "match", p - arg) == 0) {
+  } else if (STRNICMP(arg, "keyword", (size_t)(p - arg)) == 0
+             || STRNICMP(arg, "region", (size_t)(p - arg)) == 0
+             || STRNICMP(arg, "match", (size_t)(p - arg)) == 0) {
     xp->xp_context = EXPAND_HIGHLIGHT;
   } else {
     xp->xp_context = EXPAND_NOTHING;

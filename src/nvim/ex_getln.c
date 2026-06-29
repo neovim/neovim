@@ -3968,7 +3968,7 @@ static bool cmdline_paste(int regname, bool literally, bool remcr)
         w -= len;
       }
       len = (int)((ccline.cmdbuff + ccline.cmdpos) - w);
-      if (p_ic ? STRNICMP(w, arg, len) == 0 : strncmp(w, arg, (size_t)len) == 0) {
+      if (p_ic ? STRNICMP(w, arg, (size_t)len) == 0 : strncmp(w, arg, (size_t)len) == 0) {
         p += len;
       }
     }

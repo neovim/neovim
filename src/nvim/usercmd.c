@@ -246,15 +246,15 @@ const char *set_context_in_user_cmd(expand_T *xp, const char *arg_in)
 
       // For the -complete, -nargs and -addr attributes, we complete
       // their arguments as well.
-      if (STRNICMP(arg, "complete", p - arg) == 0) {
+      if (STRNICMP(arg, "complete", (size_t)(p - arg)) == 0) {
         xp->xp_context = EXPAND_USER_COMPLETE;
         xp->xp_pattern = (char *)p + 1;
         return NULL;
-      } else if (STRNICMP(arg, "nargs", p - arg) == 0) {
+      } else if (STRNICMP(arg, "nargs", (size_t)(p - arg)) == 0) {
         xp->xp_context = EXPAND_USER_NARGS;
         xp->xp_pattern = (char *)p + 1;
         return NULL;
-      } else if (STRNICMP(arg, "addr", p - arg) == 0) {
+      } else if (STRNICMP(arg, "addr", (size_t)(p - arg)) == 0) {
         xp->xp_context = EXPAND_USER_ADDR_TYPE;
         xp->xp_pattern = (char *)p + 1;
         return NULL;

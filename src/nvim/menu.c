@@ -1784,7 +1784,7 @@ static char *menutrans_lookup(char *name, int len)
   menutrans_T *tp = (menutrans_T *)menutrans_ga.ga_data;
 
   for (int i = 0; i < menutrans_ga.ga_len; i++) {
-    if (STRNICMP(name, tp[i].from, len) == 0 && tp[i].from[len] == NUL) {
+    if (STRNICMP(name, tp[i].from, (size_t)len) == 0 && tp[i].from[len] == NUL) {
       return tp[i].to;
     }
   }

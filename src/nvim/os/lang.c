@@ -159,19 +159,19 @@ void ex_language(exarg_T *eap)
   // confusion with a two letter language name "me" or "ct".
   char *p = skiptowhite(eap->arg);
   if ((*p == NUL || ascii_iswhite(*p)) && p - eap->arg >= 3) {
-    if (STRNICMP(eap->arg, "messages", p - eap->arg) == 0) {
+    if (STRNICMP(eap->arg, "messages", (size_t)(p - eap->arg)) == 0) {
       what = VIM_LC_MESSAGES;
       name = skipwhite(p);
       whatstr = "messages ";
-    } else if (STRNICMP(eap->arg, "ctype", p - eap->arg) == 0) {
+    } else if (STRNICMP(eap->arg, "ctype", (size_t)(p - eap->arg)) == 0) {
       what = LC_CTYPE;
       name = skipwhite(p);
       whatstr = "ctype ";
-    } else if (STRNICMP(eap->arg, "time", p - eap->arg) == 0) {
+    } else if (STRNICMP(eap->arg, "time", (size_t)(p - eap->arg)) == 0) {
       what = LC_TIME;
       name = skipwhite(p);
       whatstr = "time ";
-    } else if (STRNICMP(eap->arg, "collate", p - eap->arg) == 0) {
+    } else if (STRNICMP(eap->arg, "collate", (size_t)(p - eap->arg)) == 0) {
       what = LC_COLLATE;
       name = skipwhite(p);
       whatstr = "collate ";
