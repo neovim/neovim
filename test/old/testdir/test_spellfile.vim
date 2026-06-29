@@ -1326,4 +1326,31 @@ func Test_soundfold_overflow()
   let &enc = _enc
 endfunc
 
+func Test_spell_sal_sofo_truncated()
+  call mkdir('Xspelldir/spell', 'pR')
+
+  " "VIMspell" <ver=0x32>
+  "   SN_SAL(5)  flags=0 len=7   : <salflags=0><salcount=0,1><a><0><1>a<1>a
+  "   SN_SOFO(6) flags=0 len=0   : truncated, no body -> EOF in reader
+  " (28 bytes total)
+  let bytes = 0z56494d7370656c6c.3205000000000700.000101610161060000.000000
+  call writefile(bytes, 'Xspelldir/spell/Xx.utf-8.spl', 'b')
+
+  let save_rtp = &rtp
+  set rtp=./Xspelldir
+  try
+    set spelllang=Xx
+    silent! set spell
+  catch
+    " an error message is fine; a crash is not
+  endtry
+
+  " Reaching this point means Vim did not crash on the crafted file.
+  call assert_true(v:true)
+
+  set nospell
+  set spelllang&
+  let &rtp = save_rtp
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
