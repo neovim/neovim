@@ -1128,19 +1128,19 @@ describe('lua stdlib', function()
           end)
 
           matches(
-            "Invalid option type 'string' for 'tabstop'",
+            "Invalid 'tabstop': expected a valid type, got String",
             pcall_err(exec_lua, [[vim.opt.tabstop = '4']])
           )
           matches(
-            "Invalid option type 'boolean' for 'tabstop'",
+            "Invalid 'tabstop': expected a valid type, got Boolean",
             pcall_err(exec_lua, [[vim.opt.tabstop = true]])
           )
           matches(
-            "Invalid option type 'table' for 'tabstop'",
+            "Invalid 'tabstop': expected a valid type, got Array",
             pcall_err(exec_lua, [[vim.opt.tabstop = {4, 2}]])
           )
           matches(
-            "Invalid option type 'function' for 'tabstop'",
+            "Invalid 'tabstop': expected a valid type, got Function",
             pcall_err(exec_lua, [[vim.opt.tabstop = function() return 4 end]])
           )
         end)
@@ -1152,19 +1152,19 @@ describe('lua stdlib', function()
           end)
 
           matches(
-            "Invalid option type 'number' for 'undofile'",
+            "Invalid 'undofile': expected a valid type, got Integer",
             pcall_err(exec_lua, [[vim.opt.undofile = 0]])
           )
           matches(
-            "Invalid option type 'table' for 'undofile'",
+            "Invalid 'undofile': expected a valid type, got Array",
             pcall_err(exec_lua, [[vim.opt.undofile = {true}]])
           )
           matches(
-            "Invalid option type 'string' for 'undofile'",
+            "Invalid 'undofile': expected a valid type, got String",
             pcall_err(exec_lua, [[vim.opt.undofile = 'true']])
           )
           matches(
-            "Invalid option type 'function' for 'undofile'",
+            "Invalid 'undofile': expected a valid type, got Function",
             pcall_err(exec_lua, [[vim.opt.undofile = function() return true end]])
           )
         end)
@@ -1181,15 +1181,15 @@ describe('lua stdlib', function()
           end)
 
           matches(
-            "Invalid option type 'boolean' for 'backspace'",
+            "Invalid 'backspace': expected a valid type, got Boolean",
             pcall_err(exec_lua, [[vim.opt.backspace = true]])
           )
           matches(
-            "Invalid option type 'number' for 'backspace'",
+            "Invalid 'backspace': expected a valid type, got Integer",
             pcall_err(exec_lua, [[vim.opt.backspace = 2]])
           )
           matches(
-            "Invalid option type 'function' for 'backspace'",
+            "Invalid 'backspace': expected a valid type, got Function",
             pcall_err(exec_lua, [[vim.opt.backspace = function() return 'indent,eol,start' end]])
           )
         end)
@@ -1206,15 +1206,15 @@ describe('lua stdlib', function()
           end)
 
           matches(
-            "Invalid option type 'boolean' for 'listchars'",
+            "Invalid 'listchars': expected a valid type, got Boolean",
             pcall_err(exec_lua, [[vim.opt.listchars = true]])
           )
           matches(
-            "Invalid option type 'number' for 'listchars'",
+            "Invalid 'listchars': expected a valid type, got Integer",
             pcall_err(exec_lua, [[vim.opt.listchars = 2]])
           )
           matches(
-            "Invalid option type 'function' for 'listchars'",
+            "Invalid 'listchars': expected a valid type, got Function",
             pcall_err(
               exec_lua,
               [[vim.opt.listchars = function() return "eol:~,space:.,tab:>~" end]]
@@ -1234,15 +1234,15 @@ describe('lua stdlib', function()
           end)
 
           matches(
-            "Invalid option type 'boolean' for 'whichwrap'",
+            "Invalid 'whichwrap': expected a valid type, got Boolean",
             pcall_err(exec_lua, [[vim.opt.whichwrap = true]])
           )
           matches(
-            "Invalid option type 'number' for 'whichwrap'",
+            "Invalid 'whichwrap': expected a valid type, got Integer",
             pcall_err(exec_lua, [[vim.opt.whichwrap = 2]])
           )
           matches(
-            "Invalid option type 'function' for 'whichwrap'",
+            "Invalid 'whichwrap': expected a valid type, got Function",
             pcall_err(exec_lua, [[vim.opt.whichwrap = function() return "b,s,<,>,[,]" end]])
           )
         end)

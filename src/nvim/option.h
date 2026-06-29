@@ -56,22 +56,6 @@ static inline const char *optval_type_get_name(const OptValType type)
   UNREACHABLE;
 }
 
-/// Get name of set_op_T as a string
-static inline const char *set_op_get_name(const set_op_T op)
-{
-  switch (op) {
-  case OP_NONE:
-    return "set";
-  case OP_ADDING:
-    return "append";
-  case OP_PREPENDING:
-    return "prepend";
-  case OP_REMOVING:
-    return "remove";
-  }
-  UNREACHABLE;
-}
-
 // OptVal helper macros.
 #define NIL_OPTVAL ((OptVal) { .type = kOptValTypeNil })
 #define BOOLEAN_OPTVAL(b) ((OptVal) { .type = kOptValTypeBoolean, .data.boolean = b })
