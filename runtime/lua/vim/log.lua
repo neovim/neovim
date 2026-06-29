@@ -1,3 +1,7 @@
+local uv = vim.uv
+local api = vim.api
+local stringbuffer = require('vim._core.stringbuffer')
+
 --- @brief
 ---
 --- The |vim.log| module provides file-backed logger instances.
@@ -40,11 +44,17 @@
 --- Path of the log file.
 ---@field private filename string
 ---
---- Internal state for the log file handle. `nil` until the file is opened.
----@field private logfile file*?
+--- Internal string buffer used for formatting log entries.
+---@field private strbuf vim._core.stringbuffer
+---
+--- Internal file descriptor for the log file. `nil` until the file is opened.
+---@field private fd integer?
 ---
 --- Internal state for the log file open error.
 ---@field private openerr string?
+---
+--- The augroup owned by this instance, which will be cleared upon destruction.
+---@field private augroup integer
 ---
 --- Writes a message at `vim.log.levels.TRACE`.
 ---@field trace fun(...:any): boolean?
@@ -144,7 +154,8 @@ function M.new(opts)
   vim.validate('opts.current_level', opts.current_level, 'number', true)
   vim.validate('opts.format_func', opts.format_func, 'function', true)
 
-  local filename = vim.fs.joinpath(vim.fn.stdpath('log'), opts.name:lower() .. '.log')
+  local name = opts.name
+  local filename = vim.fs.joinpath(vim.fn.stdpath('log'), name:lower() .. '.log')
   local log_dir = vim.fs.dirname(filename)
   if log_dir then
     -- TODO: Ideally, directory creation should be delayed until open_file(), right before
@@ -152,12 +163,15 @@ function M.new(opts)
     -- where using fn.mkdir() is not allowed.
     vim.fn.mkdir(log_dir, 'p')
   end
+  local augroup = api.nvim_create_augroup(string.format('nvim.log:%s', name), { clear = true })
 
   local log = setmetatable({
-    name = opts.name,
+    name = name,
     filename = filename,
     current_level = opts.current_level or M.levels.WARN,
     format_func = opts.format_func or default_format_func,
+    strbuf = stringbuffer.new(),
+    augroup = augroup,
   }, { __index = M })
   log.trace = log:create_writer(M.levels.TRACE)
   log.debug = log:create_writer(M.levels.DEBUG)
@@ -165,7 +179,40 @@ function M.new(opts)
   log.warn = log:create_writer(M.levels.WARN)
   log.error = log:create_writer(M.levels.ERROR)
 
+  api.nvim_create_autocmd({ 'FocusGained', 'FocusLost' }, {
+    group = augroup,
+    desc = string.format('Flush %s log on focus change', name),
+    callback = function()
+      log:flush()
+    end,
+  })
+  api.nvim_create_autocmd('BufReadPre', {
+    group = augroup,
+    pattern = filename,
+    desc = string.format('Flush %s log before reading log file', name),
+    callback = function()
+      log:flush()
+    end,
+  })
+  api.nvim_create_autocmd('VimLeavePre', {
+    group = augroup,
+    desc = string.format('Flush %s log on exit', name),
+    callback = function()
+      log:flush()
+    end,
+  })
   return log
+end
+
+--- Destroys a logger instance.
+---
+--- Closes any open resources held by the logger.
+---
+---@param log vim.Log
+---@return boolean # `true` if the logger was destroyed, `false` on error.
+function M.destroy(log)
+  api.nvim_del_augroup_by_id(log.augroup)
+  return log:close_file()
 end
 
 ---@param msg string
@@ -180,6 +227,14 @@ local function notify(msg, level)
   end
 end
 
+---@package
+function M:flush()
+  if not self.fd then
+    return
+  end
+  uv.fs_write(self.fd, self.strbuf:get())
+end
+
 --- Opens the log file on first use.
 ---
 --- Writes a `[START]` marker when the file is opened successfully.
@@ -187,15 +242,15 @@ end
 ---@package
 ---@return boolean # `true` if the file is open, `false` on error.
 function M:open_file()
-  if self.logfile then
+  if self.fd then
     return true
   end
   if self.openerr then
     return false
   end
 
-  self.logfile, self.openerr = io.open(self.filename, 'a+')
-  if not self.logfile then
+  self.fd, self.openerr = uv.fs_open(self.filename, 'a+', tonumber('644', 8))
+  if not self.fd then
     local err_msg = string.format('Failed to open %s log file: %s', self.name, self.openerr)
     notify(err_msg, M.levels.ERROR)
     return false
@@ -213,9 +268,34 @@ function M:open_file()
   end
 
   -- Start message for logging
-  self.logfile:write(
+  uv.fs_write(
+    self.fd,
     string.format('[START][%s] %s logging initiated\n', os.date(log_date_format), self.name)
   )
+  return true
+end
+
+--- Closes the log file if it is open.
+---
+--- Calling this multiple times is safe. The next write will reopen the file.
+---
+---@package
+---@return boolean # `true` if the file is closed, `false` on error.
+function M:close_file()
+  local fd = self.fd
+  if not fd then
+    return true
+  end
+
+  self:flush()
+  self.fd = nil
+  local ok, err = uv.fs_close(fd)
+  if not ok then
+    local err_msg = string.format('Failed to close %s log file: %s', self.name, err)
+    notify(err_msg, M.levels.ERROR)
+    return false
+  end
+
   return true
 end
 
@@ -235,9 +315,10 @@ function M:create_writer(level)
     end
     local message = self.format_func(self.current_level, level, ...)
     if message then
-      assert(self.logfile)
-      self.logfile:write(message)
-      self.logfile:flush()
+      self.strbuf:put(message)
+      if stringbuffer.len(self.strbuf) > 1e6 then
+        self:flush()
+      end
     end
   end
 end
