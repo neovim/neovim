@@ -60,7 +60,7 @@ describe('eval-API', function()
     eq('Vim(call):E5555: API call: Invalid buffer id: 17', err)
   end)
 
-  it('cannot change text or window if textlocked', function()
+  it('cannot change text or window if textlock', function()
     command('autocmd TextYankPost <buffer> ++once call nvim_buf_set_lines(0, 0, -1, v:false, [])')
     matches(
       'Vim%(call%):E5555: API call: E565: Not allowed to change text or change window$',
@@ -90,19 +90,16 @@ describe('eval-API', function()
       api.nvim_get_vvar('errmsg')
     )
 
-    -- cmdwin behavior (changed since #40312).
+    -- cmdwin (#40312, #40484): E11 "Invalid in command-line window" restriction was removed.
     local old_win = api.nvim_get_current_win()
     feed('q:')
     local cmdwin_win = api.nvim_get_current_win()
-    eq(
-      'Vim:E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
-      pcall_err(api.nvim_set_current_win, old_win)
-    )
+    neq(old_win, cmdwin_win)
+    -- Switching to another window from the cmdwin now works (previously E11).
+    api.nvim_set_current_win(old_win)
     eq(old_win, api.nvim_get_current_win())
-    -- TODO(justinmk): awkward: E11 is raised but the focus switch happens anyway; inherited bug in
-    -- goto_tabpage_win (calls win_enter unconditionally even when goto_tabpage_tp's CHECK_CMDWIN
-    -- emsg'd). We should probably just remove CHECK_CMDWIN from goto_tabpage_tp. #40407
-    pcall(api.nvim_set_current_win, cmdwin_win)
+    -- ...and back into the cmdwin.
+    api.nvim_set_current_win(cmdwin_win)
     eq(cmdwin_win, api.nvim_get_current_win())
 
     -- nvim_buf_set_lines() in the cmdwin buffer is OK.

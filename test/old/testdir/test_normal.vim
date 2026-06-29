@@ -3242,11 +3242,8 @@ func Test_normal50_commandline()
   func! DoTimerWork(id)
     call assert_equal(1, getbufinfo('')[0].command)
 
-    " should fail, with E11, but does fail with E23?
-    "call feedkeys("\<c-^>", 'tm')
-
-    " should fail with E11 - "Invalid in command-line window"
-    call assert_fails(":wincmd p", 'E11')
+    " Nvim removed the E11 "Invalid in command-line window" restriction (#40312, #40484).
+    "call assert_fails(":wincmd p", 'E11')
 
     " Return from commandline window.
     call feedkeys("\<CR>", 't')

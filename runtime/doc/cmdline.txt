@@ -1223,9 +1223,12 @@ but it's not possible to open another cmdwin from there.  There is no
 nesting.
 
 								*E11*
-|CTRL-W| navigation/split commands and some operations (e.g. |:terminal|) emit
-E11. But mouse clicks may focus other windows. The cmdwin buffer is pinned by
-'winfixbuf', so the window cannot switch to a different buffer.
+|CTRL-W| commands work as usual: you can navigate between, split, resize, and
+close windows while the command-line window is open.  E11 is still emitted by
+operations that would leave or repurpose the cmdwin: opening a new tab page
+(CTRL-W_T, |:tabnew|) or turning its buffer into a terminal (|:terminal|).
+The cmdwin buffer is pinned by 'winfixbuf', so its window cannot switch to a
+different buffer.
 
 
 CLOSE
