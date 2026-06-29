@@ -810,11 +810,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 'autoread' 'ar'		boolean	(default on)
 			global or local to buffer |global-local|
 	When a file was changed outside of Nvim, automatically read it again.
-	Skipped if the file was deleted, so you have the text from before it
-	was deleted. If the file appears again then it is read. |timestamp|
+	Skipped if the file was deleted (so you still have the last-available
+	text). If the file appears again, then it is read; you can |undo| to
+	see the previous contents. |timestamp|
 
-	This is partially driven by OS filewatcher events |uv_fs_event_t|, so
-	even the current buffer may be updated.
+	This is driven (partially) by OS filewatcher events |uv_fs_event_t|,
+	so buffers are updated immediately (instead of only on focus-change or
+	shell-commands).
 
 	If this option has a local value, use this command to switch back to
 	using the global value: >vim
@@ -855,13 +857,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	that background type.  The |TUI| or other UI sets this on startup
 	if it can detect the background color, and re-detects it whenever a UI
 	attaches later, unless 'background' was set explicitly.  When multiple
-	terminal UIs are attached they share one value, taken from whichever
-	terminal reports its background last (which may not be the most
-	recently attached one, since it depends on response speed).
+	UIs are attached they share one value, decided by "last wins" (may
+	not be the most recently-attached UI, since it depends on response
+	speed).
 
 	This option does NOT change the background color, it tells Nvim what
-	the "inherited" (terminal/GUI) background looks like.
-	See |:hi-normal| if you want to set the background color explicitly.
+	the "inherited" (terminal/GUI) background looks like. See |:hi-normal|
+	to set the background color explicitly.
 						*g:colors_name*
 	When a color scheme is loaded (the "g:colors_name" variable is set)
 	changing 'background' will cause the color scheme to be reloaded.  If
@@ -869,14 +871,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	However, if the color scheme sets 'background' itself the effect may
 	be undone.  First delete the "g:colors_name" variable when needed.
 
-	Normally this option would be set in the vimrc file.  Possibly
-	depending on the terminal name.  Example: >vim
+	Historically, this option was set in the vimrc file.  Example: >vim
 		if $TERM ==# "xterm"
 		  set background=dark
 		endif
-<	When this option is changed, the default settings for the highlight groups
-	will change.  To use other settings, place ":highlight" commands AFTER
-	the setting of the 'background' option.
+<	When this option is changed, the defaults for highlight groups
+	will change.  To override those defaults, place ":highlight" commands
+	AFTER setting the 'background' option.
 
 						*'backspace'* *'bs'*
 'backspace' 'bs'	string	(default "indent,eol,start")

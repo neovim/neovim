@@ -89,6 +89,7 @@ EDITOR
   • Only supports one "cmdline level", not "infinite recursion".
   • Expr-register (|i_CTRL-R_=|, |c_CTRL-R_=|) no longer supports opening
     cmdwin via |c_CTRL-F|.
+• Behavior of |:restart| changed. Use "!" (|:restart!|) to get the old behavior.
 
 EVENTS
 
@@ -195,7 +196,8 @@ EDITOR
   • The |cmdwin-char| is shown via 'statuscolumn'.
 • |gf| and |<cfile>| support `file://…` URIs.
 • |:log| opens log files.
-• |:restart| now restores the current session while |:restart!| does not.
+• |:restart| saves/restores the current session (window layout, buffers, …).
+  • |:restart!| (with a bang "!") does not save/restore the session.
 • |ZR| restarts Nvim (|:restart!|).
 • |:uptime| displays uptime.
 • |:packupdate| and |:packdel| for managing |vim.pack|.
@@ -295,6 +297,7 @@ PERFORMANCE
 • Internal LSP data is cleared using `table.clear`, which reduces GC and
   memory reallocation during each data reset.
 • RPC client avoids string allocations when parsing Content-Length messages.
+• LSP: "overscan" semantic_token range requests to avoid flicker.
 
 PLUGINS
 
@@ -335,7 +338,7 @@ UI
 VIMSCRIPT
 
 • |v:exitreason| is set before |QuitPre|.
-• |v:startreason| differentiates between restart and normal start.
+• |v:startreason| indicates whether Nvim started normally or by |:restart|.
 • |v:starttime| is the process start time (nanoseconds since UNIX epoch).
 • |v:useractive| indicates user activity.
 • |serverlist()| with `info=true` returns details for each server (own + peers).

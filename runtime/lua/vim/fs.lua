@@ -640,7 +640,7 @@ end
 --- On Windows, backslash (\) characters are converted to forward slashes (/).
 ---
 --- Examples:
---- ```lua
+--- ```
 --- [[C:\Users\jdoe]]                         => "C:/Users/jdoe"
 --- "~/src/neovim"                            => "/home/jdoe/src/neovim"
 --- "$XDG_CONFIG_HOME/nvim/init.vim"          => "/Users/jdoe/.config/nvim/init.vim"

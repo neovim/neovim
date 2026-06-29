@@ -265,6 +265,12 @@ Example: >vim
 Use |jobwait()| to check if the terminal job has finished: >vim
     let running = jobwait([&channel], 0)[0] == -1
 <
+
+==============================================================================
+Concepts                                                   *terminal-concepts*
+
+TODO
+
 ==============================================================================
 :Termdebug plugin                         *terminal-debug* *terminal-debugger*
                                                *package-termdebug* *termdebug*

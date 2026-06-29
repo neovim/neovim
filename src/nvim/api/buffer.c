@@ -938,7 +938,7 @@ void nvim_buf_del_var(Buffer buf, String name, Error *err)
   dict_set_var(b->b_vars, name, NIL, true, false, NULL, err);
 }
 
-/// Gets the full file name for the buffer
+/// Gets the full/absolute filepath of the buffer, or the buffer name for non-file buffers.
 ///
 /// @param buf     Buffer id, or 0 for current buffer
 /// @param[out] err   Error details, if any

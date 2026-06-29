@@ -1803,7 +1803,7 @@ Note that this means that filetype plugins don't get a different set of script
 variables for each buffer.  Use local buffer variables instead |b:var|.
 
 
-PREDEFINED VIM VARIABLES			*vim-variable* *v:var* *v:*
+PREDEFINED VIM VARIABLES			*vim-variable*
 								*E963*
 
 The alphabetic list of all builtin variables and details are in a separate

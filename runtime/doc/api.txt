@@ -2606,7 +2606,8 @@ nvim_buf_get_mark({buf}, {name})                         *nvim_buf_get_mark()*
       • |nvim_buf_del_mark()|
 
 nvim_buf_get_name({buf})                                 *nvim_buf_get_name()*
-    Gets the full file name for the buffer
+    Gets the full/absolute filepath of the buffer, or the buffer name for
+    non-file buffers.
 
     Attributes: ~
         Since: 0.1.0

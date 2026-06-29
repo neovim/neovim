@@ -509,7 +509,7 @@ function vim.api.nvim_buf_get_lines(buf, start, end_, strict_indexing) end
 --- uppercase/file mark set in another buffer.
 function vim.api.nvim_buf_get_mark(buf, name) end
 
---- Gets the full file name for the buffer
+--- Gets the full/absolute filepath of the buffer, or the buffer name for non-file buffers.
 ---
 --- @param buf integer Buffer id, or 0 for current buffer
 --- @return string # Buffer name

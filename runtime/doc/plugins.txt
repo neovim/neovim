@@ -19,7 +19,7 @@ Standard plugins                                        *standard-plugin-list*
 
 Help-link		Loaded	Short description ~
 |dir|			Yes	Directory listing for |:edit|
-|difftool|		No	Compares two directories or files side-by-side
+|difftool|		No	Compares directories (and files) side-by-side
 |editorconfig|		Yes	Detect and interpret editorconfig
 |ft-shada|		Yes	Allows editing binary |shada| files
 |man.lua|		Yes	View manpages in Nvim
@@ -69,7 +69,7 @@ Directory buffers follow the global 'hidden' option by default. To delete them
 after use: >vim
 	autocmd FileType directory setlocal bufhidden=delete
 <
-Use "wipe" to discard all buffer state; see |'bufhidden'|.
+Use "wipe" to discard all buffer state; see 'bufhidden'.
 
                                                     *g:loaded_nvim_dir_plugin*
 To disable this plugin, set this in your config before startup: >lua
