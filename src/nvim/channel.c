@@ -406,6 +406,7 @@ Channel *channel_job_start(char **argv, const char *exepath, CallbackReader on_s
   proc->cwd = cwd;
   proc->env = env;
   proc->overlapped = overlapped;
+  proc->stdio_noinherit = true;
 
   char *cmd = xstrdup(proc_get_exepath(proc));
   bool has_out, has_err;
