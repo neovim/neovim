@@ -1402,14 +1402,8 @@ static void f_exists(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "expand()" function
 static void f_expand(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  int options = WILD_SILENT|WILD_USE_NL|WILD_LIST_NOTFOUND;
+  int options = WILD_SILENT|WILD_USE_NL|WILD_LIST_NOTFOUND|WILD_USE_SHELLSLASH;
   bool error = false;
-#ifdef BACKSLASH_IN_FILENAME
-  char *p_csl_save = p_csl;
-
-  // avoid using 'completeslash' here
-  p_csl = empty_string_option;
-#endif
 
   rettv->v_type = VAR_STRING;
   if (argvars[1].v_type != VAR_UNKNOWN
@@ -1469,9 +1463,6 @@ static void f_expand(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       rettv->vval.v_string = NULL;
     }
   }
-#ifdef BACKSLASH_IN_FILENAME
-  p_csl = p_csl_save;
-#endif
 }
 
 /// "menu_get(path [, modes])" function
@@ -6394,7 +6385,7 @@ static void f_serverstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       emsg(_(e_invarg));
       return;
     }
-    address = xstrdup(tv_get_string(argvars));
+    address = TO_SLASH_SAVE(tv_get_string(argvars));
   } else {
     address = server_address_new(NULL);
   }
@@ -6859,7 +6850,7 @@ static void f_sockconnect(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   const char *mode = tv_get_string(&argvars[0]);
-  const char *address = tv_get_string(&argvars[1]);
+  const char *address = TO_SLASH_SAVE(tv_get_string(&argvars[1]));
 
   bool tcp;
   if (strcmp(mode, "tcp") == 0) {
@@ -6868,7 +6859,7 @@ static void f_sockconnect(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     tcp = false;
   } else {
     semsg(_(e_invarg2), "invalid mode");
-    return;
+    goto cleanup;
   }
 
   bool rpc = false;
@@ -6878,7 +6869,7 @@ static void f_sockconnect(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     rpc = tv_dict_get_number(opts, "rpc") != 0;
 
     if (!tv_dict_get_callback(opts, S_LEN("on_data"), &on_data.cb)) {
-      return;
+      goto cleanup;
     }
     on_data.buffered = tv_dict_get_number(opts, "data_buffered");
     if (on_data.buffered && on_data.cb.type == kCallbackNone) {
@@ -6895,6 +6886,8 @@ static void f_sockconnect(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   rettv->vval.v_number = (varnumber_T)id;
   rettv->v_type = VAR_NUMBER;
+cleanup:
+  XFREE_CLEAR(address);
 }
 
 /// "stdioopen()" function

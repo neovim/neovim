@@ -47,7 +47,7 @@ describe(':source', function()
     os.remove(test_file)
   end)
 
-  it("changing 'shellslash' doesn't affect the result of expand()", function()
+  it("changing 'shellslash' changes the result of expand()", function()
     t.skip(not is_os('win'), "N/A: 'shellslash' only works on Windows")
 
     api.nvim_set_option_value('shellslash', false, {})
@@ -66,9 +66,9 @@ describe(':source', function()
 
     for _ = 1, 2 do
       command([[source Xshellslash/Xstack.vim]])
-      matches([[Xshellslash/Xstack%.vim]], api.nvim_get_var('stack1'))
+      matches([[Xshellslash\Xstack%.vim]], api.nvim_get_var('stack1'))
       matches([[Xshellslash/Xstack%.vim]], api.nvim_get_var('stack2'))
-      matches([[Xshellslash/Xstack%.vim]], api.nvim_get_var('stack3'))
+      matches([[Xshellslash\Xstack%.vim]], api.nvim_get_var('stack3'))
     end
 
     write_file(
@@ -84,9 +84,9 @@ describe(':source', function()
 
     for _ = 1, 2 do
       command([[source Xshellslash/Xstack.lua]])
-      matches([[Xshellslash/Xstack%.lua]], api.nvim_get_var('stack1'))
+      matches([[Xshellslash\Xstack%.lua]], api.nvim_get_var('stack1'))
       matches([[Xshellslash/Xstack%.lua]], api.nvim_get_var('stack2'))
-      matches([[Xshellslash/Xstack%.lua]], api.nvim_get_var('stack3'))
+      matches([[Xshellslash\Xstack%.lua]], api.nvim_get_var('stack3'))
     end
 
     rmdir('Xshellslash')

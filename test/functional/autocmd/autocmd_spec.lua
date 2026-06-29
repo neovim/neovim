@@ -855,4 +855,18 @@ describe('autocmd', function()
       fn.execute('autocmd User ,,,there,is,,a,fly,,')
     )
   end)
+
+  it('normalizes separators in pattern environment variables #39382', function()
+    t.skip(not t.is_os('win'), 'N/A for non-Windows')
+    exec [[
+      let $FOOBAR="C:\\foo\\bar"
+      autocmd User ~,$FOOBAR "
+    ]]
+    local cmds = exec_lua(function()
+      return vim.api.nvim_get_autocmds({ event = 'User' })
+    end)
+    eq(vim.fs.normalize('~'), cmds[1].pattern)
+    eq('C:\\foo\\bar', fn.eval('$FOOBAR'))
+    eq('C:/foo/bar', cmds[2].pattern)
+  end)
 end)

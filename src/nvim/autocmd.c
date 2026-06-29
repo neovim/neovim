@@ -800,18 +800,9 @@ void do_autocmd(exarg_T *eap, char *arg_in, int forceit)
       *cmd++ = NUL;
     }
 
-    // Expand environment variables in the pattern.  Set 'shellslash', we want
-    // forward slashes here.
+    // Expand environment variables in the pattern.
     if (vim_strchr(pat, '$') != NULL || vim_strchr(pat, '~') != NULL) {
-#ifdef BACKSLASH_IN_FILENAME
-      int p_ssl_save = p_ssl;
-
-      p_ssl = true;
-#endif
       envpat = expand_env_save(pat);
-#ifdef BACKSLASH_IN_FILENAME
-      p_ssl = p_ssl_save;
-#endif
       if (envpat != NULL) {
         pat = envpat;
       }
@@ -1841,7 +1832,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
     }
     fname = xstrdup(fname);  // make a copy, so we can change it
   } else {
-    sfname = xstrdup(fname);
+    sfname = TO_SLASH_SAVE(fname);
     // Don't try expanding the following events.
     if (event == EVENT_CMDLINECHANGED
         || event == EVENT_CMDLINEENTER
@@ -1874,7 +1865,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
         || event == EVENT_WINCLOSED
         || event == EVENT_WINRESIZED
         || event == EVENT_WINSCROLLED) {
-      fname = xstrdup(fname);
+      fname = TO_SLASH_SAVE(fname);
       autocmd_fname_full = true;  // don't expand it later
     } else {
       fname = FullName_save(fname, false);
@@ -1892,15 +1883,6 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
 
   save_changed = curbuf->b_changed;
   old_curbuf = curbuf;
-
-#ifdef BACKSLASH_IN_FILENAME
-  // Replace all backslashes with forward slashes. This makes the
-  // autocommand patterns portable between Unix and Windows.
-  if (sfname != NULL) {
-    forward_slash(sfname);
-  }
-  forward_slash(fname);
-#endif
 
   // Set the name to be used for <amatch>.
   autocmd_match = fname;
@@ -2337,14 +2319,6 @@ bool has_autocmd(event_T event, char *sfname, buf_T *buf)
     return false;
   }
 
-#ifdef BACKSLASH_IN_FILENAME
-  // Replace all backslashes with forward slashes. This makes the
-  // autocommand patterns portable between Unix and Windows.
-  sfname = xstrdup(sfname);
-  forward_slash(sfname);
-  forward_slash(fname);
-#endif
-
   AutoCmdVec *const acs = &autocmds[(int)event];
   for (size_t i = 0; i < kv_size(*acs); i++) {
     AutoPat *const ap = kv_A(*acs, i).pat;
@@ -2358,9 +2332,6 @@ bool has_autocmd(event_T event, char *sfname, buf_T *buf)
   }
 
   xfree(fname);
-#ifdef BACKSLASH_IN_FILENAME
-  xfree(sfname);
-#endif
 
   return retval;
 }

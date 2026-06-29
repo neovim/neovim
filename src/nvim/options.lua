@@ -4258,8 +4258,7 @@ local options = {
       cb = 'did_set_helpfile',
       defaults = {
         if_true = macros('DFLT_HELPFILE', 'string'),
-        doc = [[(MS-Windows) "$VIMRUNTIME\doc\help.txt"
-                  (others) "$VIMRUNTIME/doc/help.txt"]],
+        doc = [["$VIMRUNTIME/doc/help.txt"]],
       },
       desc = [=[
         Name of the main help file.  All distributed help files should be
@@ -7851,7 +7850,6 @@ local options = {
     },
     {
       abbreviation = 'ssl',
-      cb = 'did_set_shellslash',
       defaults = {
         condition = 'MSWIN',
         if_true = false,

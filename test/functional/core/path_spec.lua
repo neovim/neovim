@@ -82,9 +82,9 @@ describe('expand wildcard', function()
     }
     for _, folder in ipairs(folders) do
       mkdir(folder)
-      local file = join_path(folder, 'file.txt')
+      local file = ('%s%sfile.txt'):format(folder, n.get_pathsep())
       write_file(file, '')
-      eq(file, eval('expand("' .. folder .. '/*")'))
+      eq(file, fn.expand(('%s/*'):format(folder)))
       rmdir(folder)
     end
   end)

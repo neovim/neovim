@@ -365,7 +365,11 @@ void f_bufadd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   char *name = (char *)tv_get_string(&argvars[0]);
 
+  if (name != NULL) {
+    name = TO_SLASH_SAVE(name);
+  }
   rettv->vval.v_number = buflist_add(*name == NUL ? NULL : name, 0);
+  XFREE_CLEAR(name);
 }
 
 /// "bufexists(expr)" function
@@ -451,7 +455,9 @@ void f_bufnr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       && tv_get_number_chk(&argvars[1], &error) != 0
       && !error
       && (name = tv_get_string_chk(&argvars[0])) != NULL) {
+    name = TO_SLASH_SAVE(name);
     buf = buflist_new((char *)name, NULL, 1, 0);
+    XFREE_CLEAR(name);
   }
 
   if (buf != NULL) {

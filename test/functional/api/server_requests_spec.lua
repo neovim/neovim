@@ -9,7 +9,7 @@ local nvim_prog, command, fn = n.nvim_prog, n.command, n.fn
 local source, next_msg = n.source, n.next_msg
 local ok = t.ok
 local api = n.api
-local set_session = n.set_session
+local new_session, set_session = n.new_session, n.set_session
 local pcall_err = t.pcall_err
 local assert_alive = n.assert_alive
 
@@ -328,7 +328,19 @@ describe('server -> client', function()
       set_session(server)
       local address = fn.serverlist()[1]
       local first = string.sub(address, 1, 1)
-      ok(first == '/' or first == '\\')
+      ok(first == '/')
+      connect_test(server, 'pipe', address)
+    end)
+
+    it('via named pipe containing backslashes #39382', function()
+      t.skip(not t.is_os('win'), 'N/A for non-Windows')
+      local address = [[\\.\pipe\Xtest]]
+      local server = new_session(false, {
+        args_rm = { '--listen' },
+        args = { '--listen', address },
+      })
+      set_session(server)
+      eq(vim.fs.normalize(address), api.nvim_get_vvar('servername'))
       connect_test(server, 'pipe', address)
     end)
 
