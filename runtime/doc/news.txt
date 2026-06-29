@@ -195,7 +195,8 @@ EDITOR
   • The |cmdwin-char| is shown via 'statuscolumn'.
 • |gf| and |<cfile>| support `file://…` URIs.
 • |:log| opens log files.
-• |ZR| restarts Nvim (|:restart|).
+• |:restart| now restores the current session while |:restart!| does not.
+• |ZR| restarts Nvim (|:restart!|).
 • |:uptime| displays uptime.
 • |:packupdate| and |:packdel| for managing |vim.pack|.
 • 'scrollback' is now also valid in |prompt-buffer| buffers to limit the
