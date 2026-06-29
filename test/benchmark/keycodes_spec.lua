@@ -1,4 +1,5 @@
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 local clear = n.clear
 local api = n.api
 local fn = n.fn
@@ -9,7 +10,6 @@ describe('nvim_replace_termcodes performance', function()
   it('200 calls with a key repeated 5000 times', function()
     clear()
     local stats = {}
-    local sum = 0
     local ms = 1 / 1000000
 
     for _, keycode in ipairs(keycodes.names) do
@@ -23,24 +23,12 @@ describe('nvim_replace_termcodes performance', function()
       local elapsed = vim.uv.hrtime() - start
 
       table.insert(stats, elapsed)
-      sum = sum + elapsed
       io.stdout:write(('\n%-20s%14.6f ms'):format(notation, elapsed * ms))
       io.stdout:flush()
     end
     io.stdout:write('\n')
 
-    table.sort(stats)
-    print(('%18s'):rep(6):format('avg', 'min', '25%', 'median', '75%', 'max'))
-    print(
-      (' %14.6f ms'):rep(6):format(
-        sum / #stats * ms,
-        stats[1] * ms,
-        stats[1 + math.floor(#stats * 0.25)] * ms,
-        stats[1 + math.floor(#stats * 0.5)] * ms,
-        stats[1 + math.floor(#stats * 0.75)] * ms,
-        stats[#stats] * ms
-      )
-    )
+    t.bench_report(stats, { unit = 'ms' })
   end)
 end)
 
@@ -48,7 +36,6 @@ describe('keytrans() performance', function()
   it('200 calls with a key repeated 5000 times', function()
     clear()
     local stats = {}
-    local sum = 0
     local ms = 1 / 1000000
 
     for _, keycode in ipairs(keycodes.names) do
@@ -62,23 +49,11 @@ describe('keytrans() performance', function()
       local elapsed = vim.uv.hrtime() - start
 
       table.insert(stats, elapsed)
-      sum = sum + elapsed
       io.stdout:write(('\n%-20s%14.6f ms'):format(notation, elapsed * ms))
       io.stdout:flush()
     end
     io.stdout:write('\n')
 
-    table.sort(stats)
-    print((' %17s'):rep(6):format('avg', 'min', '25%', 'median', '75%', 'max'))
-    print(
-      (' %14.6f ms'):rep(6):format(
-        sum / #stats * ms,
-        stats[1] * ms,
-        stats[1 + math.floor(#stats * 0.25)] * ms,
-        stats[1 + math.floor(#stats * 0.5)] * ms,
-        stats[1 + math.floor(#stats * 0.75)] * ms,
-        stats[#stats] * ms
-      )
-    )
+    t.bench_report(stats, { unit = 'ms' })
   end)
 end)

@@ -897,4 +897,74 @@ function M.translations_enabled()
   return M.paths.translations_enabled
 end
 
+--- Sorts timing `samples` and prints + returns min/q25/median/q75/max/mean.
+---
+--- Shared reporter for `test/benchmark/`. Pair it with `M.bench()` (in-process) or `n.bench()`
+--- (Nvim-under-test), or call it directly with samples you collected yourself.
+---
+--- @param samples number[]  Per-iteration durations, in nanoseconds. Sorted in place.
+--- @param opts? { label?: string, unit?: 'ms'|'us' }
+--- @return { n: integer, min: number, q25: number, median: number, q75: number, max: number, mean: number }
+function M.bench_report(samples, opts)
+  opts = opts or {}
+  local n = #samples
+  assert(n > 0, 'bench_report: no samples')
+  local unit = opts.unit or 'ms'
+  local scale = unit == 'us' and 1e3 or 1e6
+
+  table.sort(samples)
+  local sum = 0
+  for _, v in ipairs(samples) do
+    sum = sum + v
+  end
+  --- @param p number percentile in [0,1]
+  local function pct(p)
+    return samples[math.max(1, math.min(n, 1 + math.floor(n * p)))] / scale
+  end
+  local stats = {
+    n = n,
+    min = samples[1] / scale,
+    q25 = pct(0.25),
+    median = pct(0.5),
+    q75 = pct(0.75),
+    max = samples[n] / scale,
+    mean = (sum / n) / scale,
+  }
+
+  print(
+    ('\n%smin %.4f  q25 %.4f  median %.4f  q75 %.4f  max %.4f  mean %.4f  (%s, n=%d)'):format(
+      opts.label and (opts.label .. '\n  ') or '',
+      stats.min,
+      stats.q25,
+      stats.median,
+      stats.q75,
+      stats.max,
+      stats.mean,
+      unit,
+      n
+    )
+  )
+  return stats
+end
+
+--- Benchmarks `fn` in the test-runner process: runs it `opts.n` times, timing each run, then reports.
+---
+--- Note: see `testnvim.bench()` to run in the Nvim-under-test.
+---
+--- @param fn fun()
+--- @param opts { n: integer, label?: string, unit?: 'ms'|'us', warmup?: integer }
+--- @return table stats  See `M.bench_report()`.
+function M.bench(fn, opts)
+  for _ = 1, (opts.warmup or 0) do
+    fn()
+  end
+  local samples = {} --- @type number[]
+  for i = 1, opts.n do
+    local t0 = uv.hrtime()
+    fn()
+    samples[i] = uv.hrtime() - t0
+  end
+  return M.bench_report(samples, opts)
+end
+
 return M

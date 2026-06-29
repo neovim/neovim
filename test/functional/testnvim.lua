@@ -957,6 +957,36 @@ function M.exec_lua(code, ...)
   return require('test.functional.testnvim.exec_lua')(session, 2, code, ...)
 end
 
+--- Benchmarks `fn` in the Nvim-under-test: runs it `opts.n` times, timing each run in-session, then reports.
+---
+--- Note: see `testutil.bench()` to run in the test-runner process.
+---
+--- @param body string  Lua source executed each iteration; the iteration index is available as `i`.
+--- @param opts { n: integer, label?: string, unit?: 'ms'|'us', warmup?: integer }
+--- @return table stats  See `testutil.bench_report()`.
+function M.bench(body, opts)
+  local samples = M.exec_lua(
+    [[
+    local body, n, warmup = ...
+    local fn = assert(loadstring('local i = ...\n' .. body))
+    for i = 1, warmup do
+      fn(i)
+    end
+    local samples = {}
+    for i = 1, n do
+      local t0 = vim.uv.hrtime()
+      fn(i)
+      samples[i] = vim.uv.hrtime() - t0
+    end
+    return samples
+  ]],
+    body,
+    opts.n,
+    opts.warmup or 100
+  )
+  return t.bench_report(samples, opts)
+end
+
 function M.get_pathsep()
   return is_os('win') and '\\' or '/'
 end

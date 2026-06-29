@@ -1,45 +1,6 @@
+local t = require('test.testutil')
+
 describe('vim.trim()', function()
-  --- @param t number[]
-  local function mean(t)
-    assert(#t > 0)
-    local sum = 0
-    for _, v in ipairs(t) do
-      sum = sum + v
-    end
-    return sum / #t
-  end
-
-  --- @param t number[]
-  local function median(t)
-    local len = #t
-    if len % 2 == 0 then
-      return t[len / 2]
-    end
-    return t[(len + 1) / 2]
-  end
-
-  --- @param f fun(t: number[]): table<number, number|string|table>
-  local function measure(f, input, N)
-    local stats = {} ---@type number[]
-    for _ = 1, N do
-      local tic = vim.uv.hrtime()
-      f(input)
-      local toc = vim.uv.hrtime()
-      stats[#stats + 1] = (toc - tic) / 1000000
-    end
-    table.sort(stats)
-    print(
-      string.format(
-        '\nN: %d, Min: %0.6f ms, Max: %0.6f ms, Median: %0.6f ms, Mean: %0.6f ms',
-        N,
-        math.min(unpack(stats)),
-        math.max(unpack(stats)),
-        median(stats),
-        mean(stats)
-      )
-    )
-  end
-
   local strings = {
     ['10000 whitespace characters'] = string.rep(' ', 10000),
     ['10000 whitespace characters and one non-whitespace at the end'] = string.rep(' ', 10000)
@@ -64,7 +25,9 @@ describe('vim.trim()', function()
 
   for _, name in ipairs(string_names) do
     it(name, function()
-      measure(vim.trim, strings[name], 100)
+      t.bench(function()
+        vim.trim(strings[name])
+      end, { n = 100, label = name })
     end)
   end
 end)
