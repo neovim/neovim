@@ -2,6 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local assert_alive = n.assert_alive
 local clear, eq, neq = n.clear, t.eq, t.neq
 local command, api, fn = n.command, n.api, n.fn
 local tbl_deep_extend = vim.tbl_deep_extend
@@ -111,4 +112,17 @@ describe('screenchar() and family respect floating windows', function()
       assert_screen_funcs()
     end)
   end)
+end)
+
+describe('screenstring()', function()
+  before_each(function()
+    clear()
+  end)
+
+  it('does not fail on asssert row >= 0', function()
+    command('autocmd VimResized * call screenstring(1, 1)')
+    command('echo "abc\ndef"')
+    command('set lines=10')
+  end)
+  assert_alive()
 end)
