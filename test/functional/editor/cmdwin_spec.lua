@@ -91,12 +91,15 @@ describe('cmdwin', function()
   it('<C-C> in normal mode cancels without executing', function()
     feed('q:')
     feed('ilet g:executed = 1<Esc>')
+    n.poke_eventloop() -- Ensure previous input is processed before <C-C>.
     feed('<C-C>')
     eq('', fn.getcmdwintype())
     -- The cancelled line is neither executed nor added to history. It is pre-filled into the
     -- cmdline; reopening via c_CTRL-F must then not duplicate it.
     eq(0, fn.exists('g:executed'))
     eq(-1, fn.histnr('cmd'))
+    eq('let g:executed = 1', fn.getcmdline())
+    eq(':', fn.getcmdtype())
   end)
 
   it('async API calls work while cmdwin is open #40312', function()
