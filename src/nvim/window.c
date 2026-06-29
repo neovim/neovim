@@ -271,20 +271,11 @@ void do_window(int nchar, int Prenum, int xchar)
 
   int Prenum1 = Prenum == 0 ? 1 : Prenum;
 
-#define CHECK_CMDWIN \
-  do { \
-    if (cmdwin_buf != NULL) { \
-      emsg(_(e_cmdwin)); \
-      return; \
-    } \
-  } while (0)
-
   switch (nchar) {
   // split current window in two parts, horizontally
   case 'S':
   case Ctrl_S:
   case 's':
-    CHECK_CMDWIN;
     reset_VIsual_and_resel();  // stop Visual mode
     // When splitting the quickfix window open a new buffer in it,
     // don't replicate the quickfix buffer.
@@ -297,7 +288,6 @@ void do_window(int nchar, int Prenum, int xchar)
   // split current window in two parts, vertically
   case Ctrl_V:
   case 'v':
-    CHECK_CMDWIN;
     reset_VIsual_and_resel();  // stop Visual mode
     // When splitting the quickfix window open a new buffer in it,
     // don't replicate the quickfix buffer.
@@ -310,7 +300,6 @@ void do_window(int nchar, int Prenum, int xchar)
   // split current window and edit alternate file
   case Ctrl_HAT:
   case '^':
-    CHECK_CMDWIN;
     reset_VIsual_and_resel();  // stop Visual mode
 
     if (buflist_findnr(Prenum == 0 ? curwin->w_alt_fnum : Prenum) == NULL) {
@@ -331,7 +320,6 @@ void do_window(int nchar, int Prenum, int xchar)
   // open new window
   case Ctrl_N:
   case 'n':
-    CHECK_CMDWIN;
     reset_VIsual_and_resel();  // stop Visual mode
 newwindow:
     if (Prenum) {
@@ -366,7 +354,6 @@ newwindow:
   // close preview window
   case Ctrl_Z:
   case 'z':
-    CHECK_CMDWIN;
     reset_VIsual_and_resel();  // stop Visual mode
     do_cmdline_cmd("pclose");
     break;
@@ -391,7 +378,6 @@ newwindow:
   // close all but current window
   case Ctrl_O:
   case 'o':
-    CHECK_CMDWIN;
     reset_VIsual_and_resel();  // stop Visual mode
     cmd_with_count("only", cbuf, sizeof(cbuf), Prenum);
     do_cmdline_cmd(cbuf);
@@ -402,7 +388,6 @@ newwindow:
   case 'w':
   // cursor to previous window with wrap around
   case 'W':
-    CHECK_CMDWIN;
     if (ONE_WINDOW && Prenum != 1) {  // just one window
       beep_flush();
     } else {
@@ -454,7 +439,6 @@ newwindow:
   case 'j':
   case K_DOWN:
   case Ctrl_J:
-    CHECK_CMDWIN;
     win_goto_ver(false, Prenum1);
     break;
 
@@ -462,7 +446,6 @@ newwindow:
   case 'k':
   case K_UP:
   case Ctrl_K:
-    CHECK_CMDWIN;
     win_goto_ver(true, Prenum1);
     break;
 
@@ -471,7 +454,6 @@ newwindow:
   case K_LEFT:
   case Ctrl_H:
   case K_BS:
-    CHECK_CMDWIN;
     win_goto_hor(true, Prenum1);
     break;
 
@@ -479,13 +461,11 @@ newwindow:
   case 'l':
   case K_RIGHT:
   case Ctrl_L:
-    CHECK_CMDWIN;
     win_goto_hor(false, Prenum1);
     break;
 
   // move window to new tab page
   case 'T':
-    CHECK_CMDWIN;
     if (one_window(curwin, NULL)) {
       msg(_(m_onlyone), 0);
     } else {
@@ -533,21 +513,18 @@ newwindow:
   // exchange current and next window
   case 'x':
   case Ctrl_X:
-    CHECK_CMDWIN;
     win_exchange(Prenum);
     break;
 
   // rotate windows downwards
   case Ctrl_R:
   case 'r':
-    CHECK_CMDWIN;
     reset_VIsual_and_resel();  // stop Visual mode
     win_rotate(false, Prenum1);  // downwards
     break;
 
   // rotate windows upwards
   case 'R':
-    CHECK_CMDWIN;
     reset_VIsual_and_resel();  // stop Visual mode
     win_rotate(true, Prenum1);  // upwards
     break;
@@ -557,7 +534,6 @@ newwindow:
   case 'J':
   case 'H':
   case 'L':
-    CHECK_CMDWIN;
     if (one_window(curwin, NULL)) {
       beep_flush();
     } else {
@@ -608,7 +584,6 @@ newwindow:
 
   // jump to tag and split window if tag exists (in preview window)
   case '}':
-    CHECK_CMDWIN;
     if (Prenum) {
       g_do_tagpreview = Prenum;
     } else {
@@ -617,7 +592,6 @@ newwindow:
     FALLTHROUGH;
   case ']':
   case Ctrl_RSB:
-    CHECK_CMDWIN;
     // Keep visual mode, can select words to use as a tag.
     if (Prenum) {
       postponed_split = Prenum;
@@ -640,7 +614,6 @@ newwindow:
   case 'F':
   case Ctrl_F: {
 wingotofile:
-    CHECK_CMDWIN;
     if (check_text_or_curbuf_locked(NULL)) {
       break;
     }
@@ -698,7 +671,6 @@ wingotofile:
     FALLTHROUGH;
   case 'd':                         // Go to definition, using 'define'
   case Ctrl_D: {
-    CHECK_CMDWIN;
     size_t len;
     char *ptr;
     if ((len = find_ident_under_cursor(&ptr, FIND_IDENT, NULL)) == 0) {
@@ -726,7 +698,6 @@ wingotofile:
   // CTRL-W g  extended commands
   case 'g':
   case Ctrl_G:
-    CHECK_CMDWIN;
     no_mapping++;
     allow_keys++;               // no mapping for xchar, but allow key codes
     if (xchar == NUL) {
@@ -4498,10 +4469,6 @@ tabpage_T *win_new_tabpage(int after, char *filename, bool enter, win_T **first)
 {
   tabpage_T *old_curtab = curtab;
 
-  if (enter && cmdwin_buf != NULL) {
-    emsg(_(e_cmdwin));
-    return NULL;
-  }
   if (window_layout_locked(CMD_tabnew)) {
     return NULL;
   }
@@ -4936,10 +4903,6 @@ void goto_tabpage(int n)
 /// @param trigger_leave_autocmds  when true trigger *Leave autocommands.
 void goto_tabpage_tp(tabpage_T *tp, bool trigger_enter_autocmds, bool trigger_leave_autocmds)
 {
-  if (trigger_enter_autocmds || trigger_leave_autocmds) {
-    CHECK_CMDWIN;
-  }
-
   // Don't repeat a message in another tab page.
   set_keep_msg(NULL, 0);
 

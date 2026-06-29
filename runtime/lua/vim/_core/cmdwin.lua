@@ -101,15 +101,22 @@ function M.open(type, init_line, init_col)
     caller_win = caller,
   }
 
-  -- Clean up if the window is closed by other means (`:q`, `:close`, etc.).
+  -- Clean up when the (last-visible) cmdwin is closed by other means (`:q`, `:close`, etc.).
   vim.api.nvim_create_autocmd({ 'WinClosed' }, {
     buffer = buf,
-    once = true,
     nested = true,
-    callback = function()
-      if state ~= nil then
-        M._cleanup()
+    callback = function(ev)
+      if state == nil then
+        return
       end
+      local closing = tonumber(ev.match)
+      for _, w in ipairs(vim.fn.win_findbuf(buf)) do
+        if w ~= closing then
+          return -- Still visible elsewhere; keep cmdwin (and this autocmd) active.
+        end
+      end
+      M._cleanup()
+      return true -- Last cmdwin window gone; delete this autocmd.
     end,
   })
 
@@ -125,8 +132,8 @@ function M._cleanup()
   state = nil
   pcall(vim.api.nvim__cmdwin_set, '', 0) -- Clear the C-side globals.
   pcall(vim.api.nvim_exec_autocmds, 'CmdwinLeave', { pattern = s.type, modeline = false })
-  if vim.api.nvim_win_is_valid(s.win) then
-    pcall(vim.api.nvim_win_close, s.win, true)
+  if vim.api.nvim_buf_is_valid(s.buf) then
+    pcall(vim.api.nvim_buf_delete, s.buf, { force = true })
   end
   if vim.api.nvim_win_is_valid(s.caller_win) then
     pcall(vim.api.nvim_set_current_win, s.caller_win)

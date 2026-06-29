@@ -32,6 +32,35 @@ describe('cmdwin', function()
     eq('', fn.getcmdwintype())
   end)
 
+  it('<CR> closes all cmdwin (split) windows #40484', function()
+    feed('q:')
+    feed('ilet g:cmdwin_result = 7<Esc>')
+    feed('<C-w>s') -- split: two windows now show the cmdwin buffer.
+    local cmdwin_buf = api.nvim_get_current_buf()
+    eq(2, #fn.win_findbuf(cmdwin_buf)) -- sanity: the split happened
+
+    feed('<CR>')
+    eq(7, api.nvim_get_var('cmdwin_result')) -- the cmdline executed
+    eq('', fn.getcmdwintype())
+    eq(0, #fn.win_findbuf(cmdwin_buf)) -- All cmdwin windows are closed.
+    eq(1, #api.nvim_list_wins()) -- Back to the single original window.
+  end)
+
+  it('<CR> executes when cmdwin was moved to another tabpage #40484', function()
+    feed('q:')
+    feed('ilet g:cmdwin_result = 9<Esc>')
+    feed('<C-w>T') -- Move the cmdwin to its own new tabpage.
+    eq(2, fn.tabpagenr('$')) -- sanity: the new tabpage exists
+    local cmdwin_buf = api.nvim_get_current_buf()
+
+    feed('<CR>')
+    eq(9, api.nvim_get_var('cmdwin_result')) -- the cmdline executed.
+    eq('', fn.getcmdwintype())
+    eq(0, #fn.win_findbuf(cmdwin_buf)) -- cmdwin window closed.
+    eq(1, fn.tabpagenr('$')) -- cmdwin's tabpage is gone.
+    eq(1, #api.nvim_list_wins())
+  end)
+
   it('q/ opens cmdwin with search history', function()
     fn.histadd('/', 'foo')
     fn.histadd('/', 'bar')
