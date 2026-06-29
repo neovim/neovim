@@ -1205,9 +1205,8 @@ There are two ways to open the command-line window:
 When the window opens it is filled with the command-line history.  The editor
 opens in Normal mode.  The last line contains the command as typed so far.  The
 |cmdwin-char| is shown in 'statuscolumn', indicating the type of command-line.
-
-The window height is decided by 'cmdwinheight' (if there is room).  The window
-is full width and is positioned just above the command-line.
+The window is full width, positioned just above the command-line; its height
+is decided by 'cmdwinheight' (if there is room).
 
 Window and tabpage commands work as usual while cmdwin is open: you can
 navigate, resize, close and open windows/tabpages. The mouse works as in any
@@ -1236,8 +1235,9 @@ CLOSE
 
 There are several ways to leave the command-line window:
 
-<CR>		Execute the command-line under the cursor.  Works both in
-		Insert and in Normal mode.
+<Enter>		Execute the command-line under the cursor, then close the
+		window(s) where cmdwin is visible.  Works both in Insert and
+		in Normal mode.
 CTRL-C		Continue in Command-line mode.  The command-line under the
 		cursor is pre-filled in the command-line.  Works both in
 		Insert and in Normal mode.
@@ -1249,8 +1249,8 @@ CTRL-C		Continue in Command-line mode.  The command-line under the
 
 When the cmdwin closes, focus returns to the window where the command-line
 was started from (if possible).  The cmdwin scratch buffer is destroyed
-(`bufhidden=wipe`).  Any text edits other than the line executed by
-<CR> are lost.
+(`bufhidden=wipe`).  Any text edits other than the line executed by <Enter>
+are lost.
 
 If you would like to execute the command under the cursor and then have the
 command-line window open again, you may find this mapping useful: >
