@@ -1683,25 +1683,58 @@ function vim.api.nvim_notify(msg, log_level, opts) end
 --- @return integer # |tab-ID| of the new tabpage
 function vim.api.nvim_open_tabpage(buf, enter, config) end
 
---- Open a terminal instance in a buffer
+--- Opens a terminal (libvterm) in `buf` and return its channel id.
 ---
---- By default (and currently the only option) the terminal will not be
---- connected to an external process. Instead, input sent on the channel
---- will be echoed directly by the terminal. This is useful to display
---- ANSI terminal sequences returned as part of an RPC message, or similar.
+--- The terminal is not connected to an external process (may change in the future). Input sent on
+--- the channel is processed by the terminal and echoed to `buf`. This is useful to display ANSI
+--- terminal sequences returned as part of an RPC message, or similar. [terminal-concepts]
 ---
---- Note: `:ls` reports the buffer as "R" (running) until the channel is closed. `chanclose()`
+--- The terminal processes two byte streams in opposite directions:
 ---
---- Note: To initialize the terminal size, display the buffer in a window first. E.g. for a floating display,
---- 1. Create an empty buffer using `nvim_create_buf()`.
---- 2. Display it with `nvim_open_win()`.
+--- 1. INTO the terminal: bytes a child process would write to its stdout (terminal escape
+---    sequences, text, etc.). Push these in via `nvim_chan_send()`. The terminal parses them and
+---    renders to `buf`.
+--- 2. OUT of the terminal: bytes the child would read from its stdin. Receive these via the
+---    `on_input` callback. Includes:
+---    - Keypresses in terminal mode (sent raw as they would be to the pty master end: CR is sent as
+---      "\r", not "\n").
+---    - Responses the terminal synthesizes when it parses a query (e.g. DA1 `\e[c`, OSC color
+---      queries) from the bytes you pushed via `nvim_chan_send()`.
+---
+--- Example: To connect the terminal to a child process, pair it with `jobstart()` (this is what
+--- `:terminal` and `jobstart({term=true})` do internally):
+---
+--- ```lua
+--- local chan
+--- local job
+--- chan = vim.api.nvim_open_term(buf, {
+---   on_input = function(_, _, _, data)
+---     -- Forward the terminal's output to the child's stdin.
+---     vim.fn.chansend(job, data)
+---   end,
+--- })
+--- job = vim.fn.jobstart(cmd, {
+---   pty = true,
+---   on_stdout = function(_, data)
+---     -- Forward the child's stdout to the terminal.
+---     vim.api.nvim_chan_send(chan, table.concat(data, '\n'))
+---   end,
+--- })
+--- ```
+---
+--- [ansi-colorize]() [terminal-scrollback-pager]()
+---
+--- Example: This `TermHl` command displays and highlights raw ANSI termcodes, so you can use Nvim
+--- as a "scrollback pager" (for terminals like kitty):
+---
+--- Note:
+--- |:ls| reports the buffer as "R" (running) until the channel is closed. |chanclose()|
+--- To initialize the terminal size, display the buffer in a window first. E.g. for a floating display:
+--- 1. Create an empty buffer using |nvim_create_buf()|.
+--- 2. Display it with |nvim_open_win()|.
 --- 3. Call nvim_open_term().
---- 4. Then calling `nvim_chan_send()` will process sequences in a virtual terminal with the
----    intended size (defined by the window width/height).
----
---- Example: this `TermHl` command can be used to display and highlight raw ANSI termcodes, so you
---- can use Nvim as a "scrollback pager" (for terminals like kitty): [ansi-colorize]()
---- [terminal-scrollback-pager]()
+--- 4. Then calling |nvim_chan_send()| will process sequences with the intended size (defined by the
+---    window width/height).
 ---
 --- ```lua
 --- vim.api.nvim_create_user_command('TermHl', function()
@@ -1709,8 +1742,9 @@ function vim.api.nvim_open_tabpage(buf, enter, config) end
 --- end, { desc = 'Highlights ANSI termcodes in curbuf' })
 --- ```
 ---
---- @param buf integer Buffer which displays the PTY output. The initial buffer contents (if any) will be
---- written to the PTY.
+---
+--- @param buf integer Buffer which displays the terminal output. The initial buffer contents (if any) will
+--- be fed to the terminal.
 --- @param opts vim.api.keyset.open_term? Optional parameters.
 --- - force_crlf: (boolean, default: true) Convert "\n" to "\r\n".
 --- - on_input: (`fun("input", chan: integer, buf: integer, data: string)`) Function invoked
