@@ -2,6 +2,7 @@
 " Language:	Sass
 " Maintainer:	Tim Pope <vimNOSPAM@tpope.org>
 " Last Change:	2023 Dec 28
+"		2026 Jun 27 by Vim Project normalize recommended style guard
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -23,7 +24,8 @@ if &filetype =~# '\<s[ac]ss]\>'
   let b:undo_ftplugin .= ' isk<'
 endif
 
-if get(g:, 'sass_recommended_style', 1)
+if get(g:, 'sass_recommended_style',
+      \ get(g:, 'filetype_recommended_style', 1))
   setlocal shiftwidth=2 softtabstop=2 expandtab
   let b:undo_ftplugin .= ' sw< sts< et<'
 endif

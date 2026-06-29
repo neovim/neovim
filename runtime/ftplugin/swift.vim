@@ -8,6 +8,7 @@
 "
 " Vim maintainer: 	Emir SARI <bitigchi@me.com>
 " Last Change:		2021 Jan 08
+"			2026 Jun 27 by Vim Project (add recommended style guard)
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -18,6 +19,9 @@ let b:did_ftplugin = 1
 let b:undo_ftplugin = "setlocal comments< expandtab< tabstop< shiftwidth< smartindent<"
 
 setlocal comments=s1:/*,mb:*,ex:*/,:///,://
-setlocal expandtab
-setlocal sw=4 sts=4
+if get(g:, 'swift_recommended_style',
+      \ get(g:, 'filetype_recommended_style', 1))
+  setlocal expandtab
+  setlocal sw=4 sts=4
+endif
 setlocal smartindent

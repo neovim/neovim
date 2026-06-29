@@ -3,6 +3,7 @@
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se> (inactive)
 " Last Change:          2024 Oct 04
 " 2025 Apr 22 by Vim project re-order b:undo_ftplugin (#17179)
+" 2026 Jun 27 by Vim Project normalize recommended style guard
 
 if exists("b:did_ftplugin")
   finish
@@ -17,7 +18,8 @@ let b:undo_ftplugin = "setl com< cms< et< fo<"
 setlocal comments=:# commentstring=#\ %s expandtab
 setlocal formatoptions-=t formatoptions+=croql
 
-if get(g:, "yaml_recommended_style",1)
+if get(g:, 'yaml_recommended_style',
+      \ get(g:, 'filetype_recommended_style', 1))
   let b:undo_ftplugin ..= " sw< sts<"
   setlocal shiftwidth=2 softtabstop=2
 endif

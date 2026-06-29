@@ -2,6 +2,7 @@
 " Language: Elixir
 " Maintainer:	Mitchell Hanberg <vimNOSPAM@mitchellhanberg.com>
 " Last Change: 2023 Dec 27
+"              2026 Jun 27 by Vim Project (add recommended style guard)
 
 if exists("b:did_ftplugin")
   finish
@@ -23,7 +24,11 @@ if exists('loaded_matchit') && !exists('b:match_words')
         \ ',{:},\[:\],(:)'
 endif
 
-setlocal shiftwidth=2 softtabstop=2 expandtab iskeyword+=!,?
+if get(g:, 'elixir_recommended_style',
+      \ get(g:, 'filetype_recommended_style', 1))
+  setlocal shiftwidth=2 softtabstop=2 expandtab
+endif
+setlocal iskeyword+=!,?
 setlocal comments=:#
 setlocal commentstring=#\ %s
 

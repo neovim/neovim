@@ -3,6 +3,7 @@
 " Maintainer:   redavy <hello.redavy@proton.me>
 " Upstream:     https://github.com/redavy/vim-tolk
 " Last Update:  24 May 2026
+"               27 Jun 2026 by Vim Project (normalize recommended style guard)
 
 if exists("b:did_ftplugin")
   finish
@@ -11,7 +12,8 @@ let b:did_ftplugin = 1
 
 setlocal commentstring=//\ %s
 
-if get(g:, 'tolk_recommended_style', get(g:, 'recommended_style', 1))
+if get(g:, 'tolk_recommended_style',
+      \ get(g:, 'filetype_recommended_style', 1))
   setlocal tabstop=2
   setlocal shiftwidth=2
   setlocal expandtab

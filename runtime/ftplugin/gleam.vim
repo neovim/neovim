@@ -5,6 +5,7 @@
 " Based On:            https://github.com/gleam-lang/gleam.vim
 " Last Change:         2025 Apr 21
 "                      2026 Feb 13 by Vim Project (remove 'formatprg' #19108)
+"                      2026 Jun 27 by Vim Project (normalize recommended style guard)
 
 if exists('b:did_ftplugin')
   finish
@@ -16,7 +17,8 @@ setlocal commentstring=//\ %s
 setlocal suffixesadd=.gleam
 let b:undo_ftplugin = "setlocal com< cms< sua<"
 
-if get(g:, "gleam_recommended_style", 1)
+if get(g:, 'gleam_recommended_style',
+      \ get(g:, 'filetype_recommended_style', 1))
   setlocal expandtab
   setlocal shiftwidth=2
   setlocal smartindent

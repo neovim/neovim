@@ -9,6 +9,7 @@
 " 2025 Jul 02 by Vim Project (add section movement mappings #17641)
 " 2025 Jul 05 by Vim Project (update b:undo_ftplugin #17664)
 " 2026 Feb 13 by Vim Project (remove formatprg #19108)
+" 2026 Jun 27 by Vim Project (normalize recommended style guard)
 
 if exists('b:did_ftplugin')
   finish
@@ -29,7 +30,8 @@ command! -buffer -nargs=* GoKeywordPrg call s:GoKeywordPrg()
 let b:undo_ftplugin = 'setl fo< com< cms< kp<'
                   \ . '| delcommand -buffer GoKeywordPrg'
 
-if get(g:, 'go_recommended_style', 1)
+if get(g:, 'go_recommended_style',
+      \ get(g:, 'filetype_recommended_style', 1))
   setlocal noexpandtab softtabstop=0 shiftwidth=0
   let b:undo_ftplugin .= ' | setl et< sts< sw<'
 endif
