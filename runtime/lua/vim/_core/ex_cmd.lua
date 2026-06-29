@@ -247,7 +247,8 @@ function M.ex_terminal(eap, shell_argv)
   -- BEFORE switching to the new terminal buffer. #40407
   local feed --- @type string?
   if (eap.range or 0) > 0 then
-    feed = table.concat(vim.api.nvim_buf_get_lines(0, eap.line1 - 1, eap.line2, false), '\n') .. '\n'
+    feed = table.concat(vim.api.nvim_buf_get_lines(0, eap.line1 - 1, eap.line2, false), '\n')
+      .. '\n'
   end
 
   local smods = eap.smods

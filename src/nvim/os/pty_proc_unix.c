@@ -166,6 +166,34 @@ pid_t vim_forkpty(int *amaster, char *name, struct termios *termp, struct winsiz
 # define forkpty vim_forkpty
 #endif
 
+/// Creates a pipe for a forked child's stdio: the parent's end is close-on-exec, the child's end
+/// (inherited across the fork) is not. `parent_reads` picks which end each side keeps (true = parent
+/// reads, e.g. capturing the child's stdout; false = parent writes, e.g. feeding the child's stdin).
+///
+/// @param[out] parent_fd  Parent's end (cloexec), or -1 on failure.
+/// @param[out] child_fd   Child's end (inherited), or -1 on failure.
+/// @return 0, or a negative error code.
+static int pty_make_pipe(bool parent_reads, int *parent_fd, int *child_fd)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int fds[2];
+  if (pipe(fds) != 0) {
+    ELOG("pipe() failed: %s", strerror(errno));
+    return -errno;
+  }
+  *parent_fd = fds[parent_reads ? 0 : 1];
+  *child_fd = fds[parent_reads ? 1 : 0];
+  if (os_set_cloexec(*parent_fd) == -1) {
+    int err = errno;
+    close(fds[0]);
+    close(fds[1]);
+    *parent_fd = -1;
+    *child_fd = -1;
+    return -err;
+  }
+  return 0;
+}
+
 /// @returns zero on success, or negative error code
 int pty_proc_spawn(PtyProc *ptyproc)
   FUNC_ATTR_NONNULL_ALL
@@ -178,7 +206,7 @@ int pty_proc_spawn(PtyProc *ptyproc)
 
   int status = 0;  // zero or negative error code (libuv convention)
   Proc *proc = (Proc *)ptyproc;
-  assert(proc->err.s.closed);
+  assert(proc->err.s.closed || ptyproc->stdout_pipe);  // err carries the stdout capture in fd mode
   uv_signal_start(&proc->loop->children_watcher, chld_handler, SIGCHLD);
   ptyproc->winsize = (struct winsize){ ptyproc->height, ptyproc->width, 0, 0 };
   uv_disable_stdio_inheritance();
@@ -186,43 +214,43 @@ int pty_proc_spawn(PtyProc *ptyproc)
   // pty + "fd" (kChannelStdinFd): give the child a separate stdin pipe instead of the tty. The read
   // end is dup2()'d onto fd 0 in the child (init_child); the write end becomes proc->in. #40407
   int stdin_wfd = -1;
+  int capture_rfd = -1;
+  int master = -1;
+  int pid = -1;
   if (ptyproc->stdin_pipe) {
-    int fds[2];
-    if (pipe(fds) != 0) {
-      status = -errno;
-      ELOG("pipe() failed: %s", strerror(errno));
-      return status;
-    }
-    ptyproc->stdin_rfd = fds[0];  // child read end: inherited across fork, NOT cloexec
-    stdin_wfd = fds[1];           // parent write end: dropped on the child's exec
-    if (os_set_cloexec(stdin_wfd) == -1) {
-      status = -errno;
-      close(fds[0]);
-      close(fds[1]);
-      return status;
+    status = pty_make_pipe(false, &stdin_wfd, &ptyproc->stdin_rfd);  // parent writes, child reads
+    if (status != 0) {
+      goto fail_prefork;
     }
   }
 
-  int master;
-  int pid = forkpty(&master, NULL, &termios_default, &ptyproc->winsize);
+  // pty + stdout="fd": capture the child's stdout (fd 1) on a separate pipe. The write end is
+  // dup2()'d onto fd 1 in the child; the read end becomes proc->err (the display stays proc->out =
+  // master). #40407
+  if (ptyproc->stdout_pipe) {
+    status = pty_make_pipe(true, &capture_rfd, &ptyproc->stdout_wfd);  // parent reads, child writes
+    if (status != 0) {
+      goto fail_prefork;
+    }
+  }
 
+  pid = forkpty(&master, NULL, &termios_default, &ptyproc->winsize);
   if (pid < 0) {
     status = -errno;
     ELOG("forkpty failed: %s", strerror(errno));
-    if (stdin_wfd != -1) {
-      close(stdin_wfd);
-      close(ptyproc->stdin_rfd);
-      ptyproc->stdin_rfd = -1;
-    }
-    return status;
+    goto fail_prefork;
   } else if (pid == 0) {
     init_child(ptyproc);  // never returns
   }
 
-  // Parent: close the child's read end (the forked child has its own copy).
+  // Parent: close the child-side ends (the forked child has its own copies).
   if (ptyproc->stdin_rfd != -1) {
     close(ptyproc->stdin_rfd);
     ptyproc->stdin_rfd = -1;
+  }
+  if (ptyproc->stdout_wfd != -1) {
+    close(ptyproc->stdout_wfd);
+    ptyproc->stdout_wfd = -1;
   }
 
   // make sure the master file descriptor is non blocking
@@ -259,15 +287,47 @@ int pty_proc_spawn(PtyProc *ptyproc)
       && (status = set_duplicating_descriptor(master, &proc->out.s.uv.pipe))) {
     goto error;
   }
+  // stdout="fd": proc->err carries the child's clean stdout (fd 1); the display stays proc->out.
+  if (ptyproc->stdout_pipe && !proc->err.s.closed
+      && (status = set_duplicating_descriptor(capture_rfd, &proc->err.s.uv.pipe))) {
+    goto error;
+  }
+  if (capture_rfd != -1) {
+    close(capture_rfd);  // dup'd into proc->err above
+    capture_rfd = -1;
+    (void)capture_rfd;
+  }
 
   ptyproc->tty_fd = master;
   proc->pid = pid;
   return 0;
 
+fail_prefork:
+  // Pre-fork failure (pipe setup or forkpty() itself): no child exists and master is still -1, so
+  // just close both ends of whichever pipe(s) we created.
+  if (stdin_wfd != -1) {
+    close(stdin_wfd);
+  }
+  if (ptyproc->stdin_rfd != -1) {
+    close(ptyproc->stdin_rfd);
+    ptyproc->stdin_rfd = -1;
+  }
+  if (capture_rfd != -1) {
+    close(capture_rfd);
+  }
+  if (ptyproc->stdout_wfd != -1) {
+    close(ptyproc->stdout_wfd);
+    ptyproc->stdout_wfd = -1;
+  }
+  return status;
+
 error:
   close(master);
   if (stdin_wfd != -1) {
     close(stdin_wfd);
+  }
+  if (capture_rfd != -1) {
+    close(capture_rfd);
   }
   kill(pid, SIGKILL);
   waitpid(pid, NULL, 0);
@@ -365,6 +425,11 @@ static void init_child(PtyProc *ptyproc)
   if (ptyproc->stdin_rfd != -1) {
     dup2(ptyproc->stdin_rfd, STDIN_FILENO);
     close(ptyproc->stdin_rfd);
+  }
+  // stdout="fd": child's stdout (fd 1) goes to the capture pipe; fd 2 + /dev/tty stay the pty.
+  if (ptyproc->stdout_wfd != -1) {
+    dup2(ptyproc->stdout_wfd, STDOUT_FILENO);
+    close(ptyproc->stdout_wfd);
   }
 
   const char *prog = proc_get_exepath(proc);
@@ -510,5 +575,7 @@ PtyProc pty_proc_init(Loop *loop, void *data)
   rv.tty_fd = -1;
   rv.stdin_pipe = false;
   rv.stdin_rfd = -1;
+  rv.stdout_pipe = false;
+  rv.stdout_wfd = -1;
   return rv;
 }

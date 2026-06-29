@@ -15,7 +15,7 @@ local M = {}
 ---                     tty — no tempfile. #40407
 --- @return integer? code  Process exit status, or nil if the job failed to start.
 function M.run(argv, opts)
-  local jobopts = vim.tbl_extend('force', opts or {}, { term = true })
+  local jobopts = vim.tbl_extend('force', opts or {}, { term = true }) --[[@as table<string, any>]]
   local feed = jobopts.feed --[[@as string?]]
   jobopts.feed = nil
   if feed ~= nil then
@@ -89,7 +89,9 @@ function M.run_nvim(text, histname)
   M.run(argv, {
     -- jobstart() unsets $VIMRUNTIME (see :help jobstart-env); restore it so the child can
     -- `require('vim._core.cmdwin')` from the same runtime as this Nvim.
-    env = { VIMRUNTIME = vim.env.VIMRUNTIME },
+    env = {
+      VIMRUNTIME = vim.env.VIMRUNTIME --[[@as string]],
+    },
   })
   vim.cmd('rshada ' .. vim.fn.fnameescape(shada)) -- merge back history the child added
 
@@ -123,6 +125,45 @@ end
 function M.write_shell(cmd, line1, line2)
   local lines = vim.api.nvim_buf_get_lines(0, line1 - 1, line2, false)
   return M.run_shell(cmd, table.concat(lines, '\n') .. '\n')
+end
+
+--- Runs a shell command in an interactive terminal, capturing its stdout (`stdout='fd'`) and
+--- inserting it into the current buffer after `line2` on exit — for `:[range]r :term cmd` (e.g. an
+--- interactive picker: TUI on the tty, selection on stdout). Non-blocking. #40407
+--- @param cmd string  @param _line1 integer  @param line2 integer  Insert after this 1-based line.
+function M.read_shell(cmd, _line1, line2)
+  local buf = vim.api.nvim_get_current_buf()
+  local caller_win = vim.api.nvim_get_current_win()
+
+  vim.cmd('botright new') -- throwaway terminal window
+  local termbuf = vim.api.nvim_get_current_buf()
+
+  local argv = vim.split(vim.o.shell, ' ', { plain = true, trimempty = true })
+  argv[#argv + 1] = vim.o.shellcmdflag
+  argv[#argv + 1] = cmd
+  vim.fn.jobstart(argv, {
+    term = true,
+    stdout = 'fd', -- capture the clean stdout; the tty (display) stays separate
+    stdout_buffered = true, -- deliver all of stdout once, at EOF
+    --- @param data string[]
+    on_stdout = function(_, data)
+      if vim.api.nvim_buf_is_valid(buf) then
+        -- Insert after line2 (captured when :read was invoked); clamp in case the buffer shrank.
+        local at = math.min(line2, vim.api.nvim_buf_line_count(buf))
+        if #data > 0 and data[#data] == '' then -- drop the trailing newline's empty element
+          data[#data] = nil
+        end
+        vim.api.nvim_buf_set_lines(buf, at, at, false, data)
+      end
+      if vim.api.nvim_buf_is_valid(termbuf) then
+        pcall(vim.api.nvim_buf_delete, termbuf, { force = true })
+      end
+      if vim.api.nvim_win_is_valid(caller_win) then
+        pcall(vim.api.nvim_set_current_win, caller_win)
+      end
+    end,
+  })
+  vim.cmd('startinsert') -- enter Terminal-mode so an interactive picker is usable immediately
 end
 
 --- Result line handed back by the hosted cmdwin child via `$NVIM` RPC on confirm; nil if cancelled.

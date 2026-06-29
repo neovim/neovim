@@ -63,7 +63,7 @@ uint64_t ui_client_start_server(const char *exepath, size_t argc, char **argv)
   varnumber_T exit_status;
   Channel *channel = channel_job_start(args, exepath,
                                        CALLBACK_READER_INIT, on_err, CALLBACK_NONE,
-                                       false, true, true, detach, kChannelStdinPipe,
+                                       false, true, true, detach, kChannelStdinPipe, false,
                                        NULL, 0, 0, NULL, &exit_status);
   if (!channel) {
     return 0;
