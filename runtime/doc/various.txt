@@ -280,6 +280,12 @@ gx			Opens the current filepath, URL (decided by
 			[range] is piped. Unix only; see |jobstart()| for the
 			Windows caveat.)
 
+			This is one of three ways to connect a buffer to an
+			interactive terminal command (same pipe plumbing, three
+			directions): |:terminal| pipes [range] in, |:write-term|
+			pipes the buffer to a command's stdin, and |:read-term|
+			captures a command's stdout into the buffer.
+
 			By default the current window is used. To open in
 			a split window, use |:horizontal| or |:vertical|: >
 				:hor te
