@@ -89,10 +89,14 @@ describe('jobs', function()
       pcall_err(command, "call jobstart(['cat', '-'], { 'term': 1 })")
     )
     if is_os('win') then
-      -- stdin='fd' (separate stdin pipe for a pty job) is unimplemented on Windows ConPTY. #40407
+      -- stdin/stdout='fd' (separate fd 0/1 pipe for a pty job) is unimplemented on Windows. #40407
       matches(
-        "E475: Invalid argument: stdin='fd' is not supported for pty/terminal jobs on Windows",
+        "E475: Invalid argument: stdin/stdout='fd' is not supported for pty/terminal jobs on Windows",
         pcall_err(command, "call jobstart(['cat', '-'], { 'term': v:true, 'stdin': 'fd' })")
+      )
+      matches(
+        "E475: Invalid argument: stdin/stdout='fd' is not supported for pty/terminal jobs on Windows",
+        pcall_err(command, "call jobstart(['cat', '-'], { 'term': v:true, 'stdout': 'fd' })")
       )
     end
     command('set modified')

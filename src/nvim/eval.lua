@@ -6412,6 +6412,14 @@ M.funcs = {
       	          Unix only: errors on Windows (TODO), where ConPTY
       	          owns the child's handles so fd 0 can't be split off
       	          the console.
+        stdout:     (string) "pipe" (default) or "fd". For a "pty"/"term"
+      	      job, "fd" captures the child's stdout (fd 1) on a
+      	      separate pipe (delivered to |on_stdout|), while the
+      	      terminal display stays on fd 2 + /dev/tty. Use it to
+      	      capture a command's output while its TUI still renders
+      	      (e.g. a picker that writes a selection to stdout). For a
+      	      non-pty job, where stdout is already a pipe, "fd" is the
+      	      same as "pipe". Unix only (same Windows caveat as stdin).
         term:       (boolean) Spawns {cmd} in a new pseudo-terminal
       	      session connected to the current (unmodified) buffer.
       	      Implies "pty". Defaults "height" and "width" to the
