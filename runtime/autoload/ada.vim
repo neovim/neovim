@@ -25,6 +25,7 @@
 "			      tweaking is done
 "		19.09.2007 NO still some mapleader problems
 "		31.01.2017 MB fix more mapleader problems
+"		29.06.2026 Vim add fnameescpe/shellescape
 "    Help Page: ft-ada-functions
 "------------------------------------------------------------------------------
 
@@ -423,14 +424,15 @@ endfunction ada#Completion_End
 "
 function ada#Create_Tags (option)
    if a:option == 'file'
-      let l:Filename = fnamemodify (bufname ('%'), ':p')
+      let l:Filename = shellescape (fnamemodify (bufname ('%'), ':p'))
    elseif a:option == 'dir'
+      let l:Dir = fnamemodify (bufname ('%'), ':p:h')
       let l:Filename =
-	 \ fnamemodify (bufname ('%'), ':p:h') . "*.ada " .
-	 \ fnamemodify (bufname ('%'), ':p:h') . "*.adb " .
-	 \ fnamemodify (bufname ('%'), ':p:h') . "*.ads"
+	 \ shellescape (l:Dir) . "*.ada " .
+	 \ shellescape (l:Dir) . "*.adb " .
+	 \ shellescape (l:Dir) . "*.ads"
    else
-      let l:Filename = a:option
+      let l:Filename = shellescape (a:option)
    endif
    execute '!ctags --excmd=number ' . l:Filename
 endfunction ada#Create_Tags
