@@ -7,8 +7,14 @@ describe('vim._core.run_in_terminal', function()
   before_each(n.clear)
 
   it('run() blocks until the process exits, returns its exit code', function()
-    t.eq(0, n.exec_lua([[return require('vim._core.run_in_terminal').run({ 'sh', '-c', 'sleep 0.1' })]]))
-    t.eq(3, n.exec_lua([[return require('vim._core.run_in_terminal').run({ 'sh', '-c', 'exit 3' })]]))
+    t.eq(
+      0,
+      n.exec_lua([[return require('vim._core.run_in_terminal').run({ 'sh', '-c', 'sleep 0.1' })]])
+    )
+    t.eq(
+      3,
+      n.exec_lua([[return require('vim._core.run_in_terminal').run({ 'sh', '-c', 'exit 3' })]])
+    )
   end)
 
   it('run() hosts a child Nvim that edits a file and round-trips it #40407', function()
@@ -28,22 +34,16 @@ describe('vim._core.run_in_terminal', function()
   end)
 
   -- The parent stays responsive while blocked in run()/terminal_enter: a UI client (the harness) sees
-  -- the child terminal's live output. (Guards against a "GUI freezes during the modal loop" regression.)
+  -- the child's live output. (Guards against a "GUI freezes during the modal loop" regression.) The
+  -- child here is `sh` (raw pty bytes, reliable); a *nested Nvim's* render does not surface reliably
+  -- through this doubly-nested test pty, so that variant is covered indirectly by the run_nvim tests.
   it('forwards UI: client sees terminal output while blocked in run()', function()
     local screen = tt.setup_child_nvim({ '--clean' }, { env = { COLORTERM = 'xterm-256color' } })
     screen:expect({ any = '%[No Name%]' })
-    feed_data(":lua require('vim._core.run_in_terminal').run({ 'sh', '-c', 'echo MARKER_XYZZY; sleep 2' })\r")
-    screen:expect({ any = 'MARKER_XYZZY' })
-  end)
-
-  it('forwards UI: client sees a child Nvim render while blocked in run()', function()
-    local screen = tt.setup_child_nvim({ '--clean' }, { env = { COLORTERM = 'xterm-256color' } })
-    screen:expect({ any = '%[No Name%]' })
     feed_data(
-      ":lua require('vim._core.run_in_terminal').run({ vim.v.progpath, '--clean', '-c',"
-        .. "[[lua vim.api.nvim_buf_set_lines(0,0,-1,false,{'GRANDCHILD_RENDER'})]], '-c', 'sleep 2' })\r"
+      ":lua require('vim._core.run_in_terminal').run({ 'sh', '-c', 'echo MARKER_XYZZY; sleep 2' })\r"
     )
-    screen:expect({ any = 'GRANDCHILD_RENDER' })
+    screen:expect({ any = 'MARKER_XYZZY' })
   end)
 
   -- run_nvim's full path inside a nested child: cmdwin host (require'd with $VIMRUNTIME, which
@@ -67,7 +67,7 @@ describe('vim._core.run_in_terminal', function()
   -- open_cmdwin → cmdwin_run_blocking). Real keystrokes edit the grandchild; confirming returns the
   -- edited text as input()'s value. The grandchild renders once the buffer *changes* (the idle case
   -- doesn't flush through nested test ptys, but an edit does). #40407
-  it("input() c_CTRL-F edits in a child Nvim and returns the result #40407", function()
+  it('input() c_CTRL-F edits in a child Nvim and returns the result #40407', function()
     local screen = tt.setup_child_nvim({ '--clean' }, { env = { COLORTERM = 'xterm-256color' } })
     screen:expect({ any = '%[No Name%]' })
     -- input() blocks with initial text "foo", then echoes its return value (a forced flush we can
@@ -148,6 +148,33 @@ describe('vim._core.run_in_terminal', function()
     t.eq({ 'hello', 'world' }, got)
   end)
 
+  -- jobstart stdout='fd': a pty/term job's clean stdout (fd 1) is captured on a separate pipe
+  -- (on_stdout), while what the command writes to /dev/tty still renders in the terminal. The
+  -- fzf model: TUI on the tty, result on stdout. #40407
+  it("jobstart stdout='fd' captures clean stdout while the tty renders #40407", function()
+    local got = n.exec_lua([[
+      vim.cmd('new')
+      local out = {}
+      local id = vim.fn.jobstart({ 'sh', '-c', 'printf TUI_ON_TTY > /dev/tty; echo THE_SELECTION' }, {
+        term = true, stdout = 'fd',
+        on_stdout = function(_, d)
+          for _, l in ipairs(d) do if l ~= '' then out[#out + 1] = l end end
+        end,
+      })
+      vim.fn.jobwait({ id })
+      vim.wait(500, function() return #out > 0 end)
+      local disp = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), '')
+      return {
+        capture = out,
+        tty_in_display = disp:find('TUI_ON_TTY') ~= nil,
+        stdout_in_display = disp:find('THE_SELECTION') ~= nil,
+      }
+    ]])
+    t.eq({ 'THE_SELECTION' }, got.capture) -- clean stdout captured
+    t.eq(true, got.tty_in_display) -- the tty write rendered in the terminal
+    t.eq(false, got.stdout_in_display) -- stdout did NOT leak into the display
+  end)
+
   -- run_shell builds the 'shell' argv and returns the command's exit status. #40407
   it('run_shell runs a shell command and returns its exit code #40407', function()
     t.eq(0, n.exec_lua([[return require('vim._core.run_in_terminal').run_shell('exit 0')]]))
@@ -212,12 +239,20 @@ describe('vim._core.run_in_terminal', function()
     t.eq({ 'r1', 'r2', 'r3' }, got)
   end)
 
-  -- ':r :term cmd' (read a terminal command's output) needs stdout-as-fd, not yet implemented. #40407
-  it(':r :term errors until stdout capture exists #40407', function()
-    t.matches(
-      "E5681: ':read :term' is not implemented yet",
-      t.pcall_err(n.command, 'read :term echo hi')
-    )
+  -- ':[range]r :term cmd' runs cmd in a terminal, captures its stdout (stdout='fd'), and inserts it
+  -- after the addressed line. Non-blocking, so wait for the async insert. #40407
+  it(':r :term inserts the command output after the line #40407', function()
+    local got = n.exec_lua([[
+      local buf = vim.api.nvim_get_current_buf()
+      vim.api.nvim_buf_set_lines(buf, 0, -1, false, { 'line1', 'line2' })
+      vim.api.nvim_win_set_cursor(0, { 1, 0 }) -- :r inserts after the current line (line1)
+      vim.cmd('r :term printf "AA\\nBB\\n"')
+      vim.wait(2000, function()
+        return vim.tbl_contains(vim.api.nvim_buf_get_lines(buf, 0, -1, false), 'AA')
+      end)
+      return vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+    ]])
+    t.eq({ 'line1', 'AA', 'BB', 'line2' }, got)
   end)
 
   -- `:%w :term nvim -`: pipe the buffer into a child Nvim reading stdin (`-`). Interactive use works

@@ -992,6 +992,8 @@ Note: When the 'write' option is off, you are not able to write any file.
 			(see |jobstart()| stdin="fd").  Example: >
 				:%w :term sudo tee % >/dev/null
 <			(Unix only; see |jobstart()| for the Windows caveat.)
+			See also |:terminal| (run with [range] as input) and
+			|:read-term| (capture a command's stdout).
 
 The default [range] for the ":w" command is the whole buffer (1,$).  The |'[|
 and |']| marks will be set to the [range] being used for the write command.
