@@ -360,28 +360,11 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
     }
   }
 
-  // Convert the incoming Lua object (which could be a table) into the proper
-  // OptVal type (string even for list/dict style options)
-  Error lua_err = ERROR_INIT;
-  MAXSIZE_TEMP_ARRAY(args, 3);
-  ADD_C(args, STRING_OBJ(name));
-  ADD_C(args, value);
-  ADD_C(args, CSTR_AS_OBJ(set_op_get_name(operation)));
-  Object vim_val =
-    NLUA_EXEC_STATIC("return require('vim._core.options').convert_value_to_vim(...)",
-                     args, kRetObject, NULL, &lua_err);
-  VALIDATE(!ERROR_SET(&lua_err), "%s", lua_err.msg, {
-    api_clear_error(&lua_err);
-    return NIL;
-  });
+  // Convert the incoming value into an OptVal.
   bool error = false;
-  OptVal optval_right = object_as_optval(vim_val, &error);
+  OptVal optval_right = object_as_optval_for(opt_idx, value, operation, &error);
 
-  // Handle invalid option value type.
-  // Don't use `name` in the error message here, because `name` can be any String.
-  // No need to check if value type actually matches the types for the option, as set_option_value()
-  // already handles that.
-  VALIDATE_EXP(!error, "value", "valid option type", api_typename(value.type), {
+  VALIDATE_EXP(!error, name.data, "a valid type", api_typename(value.type), {
     return NIL;
   });
 
@@ -433,8 +416,8 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
   }
 
   if (merged_val.type == kOptValTypeString) {
-    // Convert the return type to lua for string/list/map style option
-    lua_err = ERROR_INIT;
+    // Convert string/list/map style option to a (Lua) structure.
+    Error lua_err = ERROR_INIT;
     MAXSIZE_TEMP_ARRAY(lua_args, 2);
     ADD_C(lua_args, STRING_OBJ(name));
     ADD_C(lua_args, STRING_OBJ(merged_val.data.string));

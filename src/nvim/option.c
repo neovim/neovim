@@ -3544,6 +3544,130 @@ OptVal object_as_optval(Object o, bool *error)
   UNREACHABLE;
 }
 
+/// Converts a structured option (API Object) to an OptVal (stringly-typed ":set" string). Each
+/// option impl internally expects a ":set" string (unfortunately).
+///
+/// Example: 'listchars' `{ eol = "~" }` => "eol:~".
+///
+/// @param op  The :set operation; "key:value" removals are normalized to match by key.
+/// @return OptVal (owned; free with optval_free).
+OptVal object_as_optval_for(OptIndex opt_idx, Object o, set_op_T op, bool *error)
+{
+  if (o.type == kObjectTypeNil) {
+    return NIL_OPTVAL;
+  }
+
+  const uint32_t flags = options[opt_idx].flags;
+  const bool is_list = flags & (kOptFlagComma | kOptFlagFlagList);
+  const bool is_map = flags & kOptFlagColon;          // "key:value" list, e.g. 'listchars'.
+  const bool is_flaglist = flags & kOptFlagFlagList;  // single-char flag list, e.g. 'shortmess'.
+  const bool is_comma = flags & kOptFlagComma;
+  const bool allow_dup = !(flags & kOptFlagNoDup);
+
+  // Validate the value type. Special cases: 'wildchar'/'wildcharm'.
+  bool type_ok;
+  switch (o.type) {
+  case kObjectTypeBoolean:
+    type_ok = option_has_type(opt_idx, kOptValTypeBoolean);
+    break;
+  case kObjectTypeInteger:
+    type_ok = option_has_type(opt_idx, kOptValTypeNumber);
+    break;
+  case kObjectTypeString:
+    type_ok = option_has_type(opt_idx, kOptValTypeString)
+              || opt_idx == kOptWildchar || opt_idx == kOptWildcharm;
+    break;
+  case kObjectTypeArray:
+    type_ok = is_list;
+    break;
+  case kObjectTypeDict:
+    type_ok = is_map || is_flaglist;
+    break;
+  default:
+    type_ok = false;
+  }
+  if (!type_ok) {
+    *error = true;
+    return NIL_OPTVAL;
+  }
+
+  switch (o.type) {
+  case kObjectTypeBoolean:
+  case kObjectTypeInteger:
+    return object_as_optval(o, error);
+  default:
+    break;  // String/Array/Dict are serialized below.
+  }
+
+  char *str = NULL;
+  if (o.type == kObjectTypeString) {
+    str = xstrdup(o.data.string.data);
+  } else if (o.type == kObjectTypeArray) {
+    // List style: join items with comma, dropping duplicates unless the option allows them.
+    garray_T ga;
+    ga_init(&ga, sizeof(char *), 4);
+    for (size_t ai = 0; ai < o.data.array.size; ai++) {
+      Object item = o.data.array.items[ai];
+      if (item.type != kObjectTypeString) {
+        *error = true;
+        GA_DEEP_CLEAR_PTR(&ga);
+        return NIL_OPTVAL;
+      }
+      bool dup = false;
+      for (int j = 0; !allow_dup && j < ga.ga_len; j++) {
+        if (strequal(((char **)ga.ga_data)[j], item.data.string.data)) {
+          dup = true;
+          break;
+        }
+      }
+      if (!dup) {
+        GA_APPEND(char *, &ga, xstrdup(item.data.string.data));
+      }
+    }
+    str = ga_concat_strings(&ga, ",");
+    GA_DEEP_CLEAR_PTR(&ga);
+  } else {  // kObjectTypeDict
+    garray_T ga;
+    Dict dict = o.data.dict;
+    ga_init(&ga, sizeof(char *), 4);
+    for (size_t di = 0; di < dict.size; di++) {
+      String k = dict.items[di].key;
+      Object v = dict.items[di].value;
+      if (is_flaglist) {
+        // Flag set: include the key when its value is truthy; the value itself is dropped.
+        if (!(v.type == kObjectTypeNil || (v.type == kObjectTypeBoolean && !v.data.boolean))) {
+          GA_APPEND(char *, &ga, xstrdup(k.data));
+        }
+      } else if (v.type == kObjectTypeString) {
+        char *kv = concat_str(k.data, ":");
+        GA_APPEND(char *, &ga, concat_str(kv, v.data.string.data));
+        xfree(kv);
+      } else {
+        *error = true;
+        GA_DEEP_CLEAR_PTR(&ga);
+        return NIL_OPTVAL;
+      }
+    }
+    // Sort maps and comma-flag lists for a deterministic result (Dict order is unstable); a bare
+    // flag list is concatenated in-order with no separator.
+    if (is_map || is_comma) {
+      sort_strings(ga.ga_data, ga.ga_len);
+    }
+    str = ga_concat_strings(&ga, (is_flaglist && !is_comma) ? "" : ",");
+    GA_DEEP_CLEAR_PTR(&ga);
+  }
+
+  // `:set-=` on a "key:value" list matches by "key:"; a bare key needs the trailing colon appended.
+  // See stropt_handle_keymatch. (Lua: `vim.opt.listchars = vim.opt.listchars - 'space'`.)
+  if (op == OP_REMOVING && is_map && strchr(str, ':') == NULL) {
+    char *with_colon = concat_str(str, ":");
+    xfree(str);
+    str = with_colon;
+  }
+
+  return CSTR_AS_OPTVAL(str);
+}
+
 /// Check if option is hidden.
 ///
 /// @param  opt_idx  Option index in options[] table.

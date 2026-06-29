@@ -1941,15 +1941,15 @@ describe('API', function()
         pcall_err(api.nvim_get_option_value, 'scrolloff', { scope = 42 })
       )
       matches(
-        "Invalid option type 'table' for 'scrolloff', should be number",
+        "Invalid 'scrolloff': expected a valid type, got Array",
         pcall_err(api.nvim_set_option_value, 'scrolloff', {}, {})
       )
       matches(
-        "Invalid option type 'boolean' for 'scrolloff', should be number",
+        "Invalid 'scrolloff': expected a valid type, got Boolean",
         pcall_err(api.nvim_set_option_value, 'scrolloff', true, {})
       )
       matches(
-        "Invalid option type 'string' for 'scrolloff', should be number",
+        "Invalid 'scrolloff': expected a valid type, got String",
         pcall_err(api.nvim_set_option_value, 'scrolloff', 'wrong', {})
       )
       local tab1 = api.nvim_get_current_tabpage()
@@ -1983,6 +1983,14 @@ describe('API', function()
       eq(
         "Conflict: 'filetype' not allowed with 'scope', 'buf', 'win' or 'tab'",
         pcall_err(api.nvim_get_option_value, 'cmdheight', { filetype = 'c', tab = 0 })
+      )
+      eq(
+        "Invalid 'operation': expected 'set', 'append', 'prepend', or 'remove'",
+        pcall_err(api.nvim_set_option_value, 'wildignore', { 'x' }, { operation = 'bogus' })
+      )
+      eq(
+        "Conflict: 'append' not allowed with boolean options",
+        pcall_err(api.nvim_set_option_value, 'number', true, { operation = 'append' })
       )
     end)
 
@@ -2295,6 +2303,10 @@ describe('API', function()
         { operation = 'remove' }
       )
       eq('eol:~,space:-,tab:>-', api.nvim_get_option_value('listchars', {}))
+
+      -- A bare key (string or 1-item list) removes the matching "key:value" item by key.
+      api.nvim_set_option_value('listchars', { 'space' }, { operation = 'remove' })
+      eq('eol:~,tab:>-', api.nvim_get_option_value('listchars', {}))
     end)
 
     it('returns the new option value', function()
@@ -2308,15 +2320,26 @@ describe('API', function()
         api.nvim_set_option_value('listchars', { tab = '>-' }, { operation = 'append' })
       )
       eq('eol:~,space:-,tab:>-', api.nvim_get_option_value('listchars', {}))
+
+      -- Scalar option types return their plain value.
+      eq(7, api.nvim_set_option_value('scrolloff', 7, {}))
+      eq(true, api.nvim_set_option_value('number', true, {}))
+      eq(false, api.nvim_set_option_value('number', false, {}))
+      eq('foo', api.nvim_set_option_value('makeprg', 'foo', {}))
     end)
 
-    it("doesn't update option value with dry_run flag", function()
+    it("dry_run doesn't update option value", function()
       local listchars = api.nvim_get_option_value('listchars', {})
       eq(
         { eol = '~', space = '-' },
         api.nvim_set_option_value('listchars', { eol = '~', space = '-' }, { dry_run = true })
       )
       eq(listchars, api.nvim_get_option_value('listchars', {}))
+
+      -- dry_run also applies to operations: returns the merged result (5 + 10) without setting it.
+      api.nvim_set_option_value('scrolloff', 5, {})
+      eq(15, api.nvim_set_option_value('scrolloff', 10, { operation = 'append', dry_run = true }))
+      eq(5, api.nvim_get_option_value('scrolloff', {}))
     end)
 
     it('merges options against non-current window', function()
@@ -2397,6 +2420,41 @@ describe('API', function()
           { operation = 'append', buf = curbuf }
         )
       )
+    end)
+
+    it('applies operations to number options', function()
+      -- For number options the operations are arithmetic. `:set {number}+= ^= -=`
+      api.nvim_set_option_value('scrolloff', 5, {})
+      eq(8, api.nvim_set_option_value('scrolloff', 3, { operation = 'append' }))
+      eq(8, api.nvim_get_option_value('scrolloff', {}))
+
+      api.nvim_set_option_value('scrolloff', 5, {})
+      eq(15, api.nvim_set_option_value('scrolloff', 3, { operation = 'prepend' }))
+      eq(15, api.nvim_get_option_value('scrolloff', {}))
+
+      api.nvim_set_option_value('scrolloff', 5, {})
+      eq(3, api.nvim_set_option_value('scrolloff', 2, { operation = 'remove' }))
+      eq(3, api.nvim_get_option_value('scrolloff', {}))
+    end)
+
+    it('applies operations to flag-list and plain string options', function()
+      -- Flag-list option (no separator); the return value is the Lua map form.
+      api.nvim_set_option_value('formatoptions', 'tc', {})
+      eq(
+        { t = true, c = true, q = true },
+        api.nvim_set_option_value('formatoptions', 'q', { operation = 'append' })
+      )
+      eq('tcq', api.nvim_get_option_value('formatoptions', {}))
+      eq(
+        { c = true, q = true },
+        api.nvim_set_option_value('formatoptions', 't', { operation = 'remove' })
+      )
+      eq('cq', api.nvim_get_option_value('formatoptions', {}))
+
+      -- Plain (non-list) string option: append concatenates with no separator.
+      api.nvim_set_option_value('makeprg', 'make', {})
+      eq('make!', api.nvim_set_option_value('makeprg', '!', { operation = 'append' }))
+      eq('make!', api.nvim_get_option_value('makeprg', {}))
     end)
   end)
 
