@@ -208,6 +208,61 @@ local function check_watchers()
   )
 end
 
+--- Reads a single integer from a file (e.g. a `/proc/sys` entry).
+---@param path string
+---@return integer?
+local function read_int(path)
+  local ok, lines = pcall(vim.fn.readfile, path, '', 1)
+  local v = ok and lines[1] and tonumber(lines[1])
+  return v or nil
+end
+
+-- Note: this is part of check_performance().
+local function check_limits()
+  -- 'ulimit -n' (RLIMIT_NOFILE): each Nvim buffer may hold an open swapfile. Sockets, channels, filewatchers also consume file descriptors.
+  if vim.fn.has('win32') == 0 then
+    local ok, out = system({ 'sh', '-c', 'ulimit -Sn' }) -- Must use a shell.
+    out = vim.trim(out or '')
+    local soft = tonumber(out)
+    local used = require('vim._core.proc').count_open_fds()
+    local used_str = used and (', currently open: %d'):format(used) or ''
+    local raise_advice = {
+      '\'swapfile\' buffers, sockets, channels, and file-watchers consume file descriptors. A low limit causes "(libuv) kqueue(): Too many open files" (EMFILE) errors.',
+      'Increase the limit: add `ulimit -n 8192` to your shell rc. On macOS see also `launchctl limit maxfiles`; on Linux see `/etc/security/limits.conf` and systemd `LimitNOFILE`.',
+    }
+    if out == 'unlimited' then
+      health.ok(('ulimit -n (max open files): unlimited%s'):format(used_str))
+    elseif not ok or soft == nil then
+      health.info(('ulimit -n (max open files): unknown (%s)%s'):format(out, used_str))
+    elseif soft < 1024 then
+      health.warn(('ulimit -n (max open files) is low: %d%s'):format(soft, used_str), raise_advice)
+    elseif used and used > soft * 0.8 then
+      health.warn(
+        ('Open files near the limit: %d of %d (ulimit -n)'):format(used, soft),
+        raise_advice
+      )
+    else
+      health.ok(('ulimit -n (max open files): %d%s'):format(soft, used_str))
+    end
+  end
+
+  -- Linux inotify limits filewatchers (LSP, vim._watch). Exhausting them reports ENOSPC ("no space on device").
+  if vim.uv.os_uname().sysname == 'Linux' then
+    local watches = read_int('/proc/sys/fs/inotify/max_user_watches')
+    local instances = read_int('/proc/sys/fs/inotify/max_user_instances')
+    if watches and watches < 8192 then
+      health.warn(('fs.inotify.max_user_watches is low: %d'):format(watches), {
+        'Filewatchers may fail with ENOSPC. To increase the limit: `sysctl fs.inotify.max_user_watches=524288` (persist in /etc/sysctl.conf).',
+      })
+    end
+    if instances and instances < 128 then
+      health.warn(('fs.inotify.max_user_instances is low: %d'):format(instances), {
+        'To increase the limit: `sysctl fs.inotify.max_user_instances=512` (persist in /etc/sysctl.conf).',
+      })
+    end
+  end
+end
+
 local function check_performance()
   health.start('Performance')
 
@@ -240,6 +295,7 @@ local function check_performance()
   end
 
   check_watchers()
+  check_limits()
 end
 
 -- Load the remote plugin manifest file and check for unregistered plugins
