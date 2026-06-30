@@ -81,15 +81,21 @@ function M.open(type, init_line, init_col)
   vim.wo[win][0].statuscolumn = '%#NonText#' .. type
 
   local filled = fill_history(buf, type)
+  init_line = init_line and init_line:gsub('\n', '\0') or ''
 
   -- Append the in-flight cmdline as the last line (or only line if history is empty).
-  vim.api.nvim_buf_set_lines(buf, filled and -1 or 0, -1, false, { init_line or '' })
+  vim.api.nvim_buf_set_lines(buf, filled and -1 or 0, -1, false, { init_line })
   local last = vim.api.nvim_buf_line_count(buf)
   vim.api.nvim_win_set_cursor(win, { last, math.max(0, (init_col or 1) - 1) })
 
   pcall(vim.api.nvim_buf_set_name, buf, '[Command Line]')
   if type == ':' then
     vim.bo[buf].filetype = 'vim'
+  end
+
+  if vim.o.wildchar == ('\t'):byte() then
+    vim.keymap.set('i', '<Tab>', '<C-X><C-V>', { buf = buf })
+    vim.keymap.set('n', '<Tab>', 'a<C-X><C-V>', { buf = buf })
   end
 
   vim.api.nvim__cmdwin_set(type, buf) -- Update the C-side globals.
@@ -155,6 +161,7 @@ function M.confirm()
     return
   end
   local line, type = _close()
+  line = line:gsub('%z', '\n'):gsub('(%c)', '\022%1') -- Escape control characters.
   vim.api.nvim_feedkeys(type .. line .. vim.keycode('<CR>'), 'nt', false)
 end
 
@@ -164,6 +171,7 @@ function M.cancel()
     return
   end
   local line, type = _close()
+  line = line:gsub('%z', '\n'):gsub('(%c)', '\022%1') -- Escape control characters.
   vim.api.nvim_feedkeys(type .. line, 'nt', false)
 end
 
