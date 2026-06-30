@@ -1007,9 +1007,19 @@ func Test_mksession_winminheight()
     endif
   endfor
   call assert_equal(2, found_restore)
+  " Test with multiple tabpages
+  tab split | split | tab split | split
+  call assert_equal(3, tabpagenr('$'))
+  mksession! Xtest_mks.out
+  tabclose | tabclose | close
+  call assert_equal(1, tabpagenr('$'))
+  set winminheight=2 winminwidth=2
+  source Xtest_mks.out
+  call assert_equal(3, tabpagenr('$'))
+  call assert_equal([2, 2], [&winminheight, &winminwidth])
+  tabclose | tabclose | close
   call delete('Xtest_mks.out')
-  close
-  set sessionoptions&
+  set sessionoptions& winminheight& winminwidth&
 endfunc
 
 " Test for mksession with and without options restores shortmess

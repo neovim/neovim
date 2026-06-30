@@ -805,8 +805,10 @@ static int makeopens(FILE *fd, char *dirnow)
       // cursor can be set.  This is done again below.
       // winminheight and winminwidth need to be set to avoid an error if
       // the user has set winheight or winwidth.
-      PUTLINE_FAIL("let s:save_winminheight = &winminheight");
-      PUTLINE_FAIL("let s:save_winminwidth = &winminwidth");
+      if (!restore_height_width) {
+        PUTLINE_FAIL("let s:save_winminheight = &winminheight");
+        PUTLINE_FAIL("let s:save_winminwidth = &winminwidth");
+      }
       if (fprintf(fd,
                   "set winminheight=0\n"
                   "set winheight=1\n"
