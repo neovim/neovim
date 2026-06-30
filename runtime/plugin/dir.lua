@@ -43,8 +43,8 @@ nvim_on('BufEnter', group, {
   desc = 'Open local directories',
   nested = true,
 }, function(ev)
-  if vimentered and should_open(ev.buf, ev.file) then
-    require('nvim.dir').try_open(ev.buf, ev.file)
+  if vimentered and should_open(ev.buf, ev.match) then
+    require('nvim.dir').try_open(ev.buf, ev.match)
   end
 end)
 
