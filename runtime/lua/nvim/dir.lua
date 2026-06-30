@@ -198,6 +198,16 @@ function first_open(buf, dir)
     return
   end
   vim.b[buf].nvim_dir = dir
+  api.nvim_create_autocmd('BufReadCmd', {
+    buffer = buf,
+    nested = true,
+    desc = 'Reload directory listing',
+    callback = function()
+      if vim.b[buf].nvim_dir ~= nil then
+        reload(buf)
+      end
+    end,
+  })
   set_maps(buf)
   if api.nvim_get_option_value('filetype', { buf = buf }) ~= 'directory' then
     api.nvim_set_option_value('filetype', 'directory', { buf = buf })
