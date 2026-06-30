@@ -4,29 +4,30 @@ const LazyPath = std.Build.LazyPath;
 pub fn testStep(b: *std.Build, kind: []const u8, nvim_bin: *std.Build.Step.Compile, config_dir: LazyPath, include_path: ?[]const LazyPath) !*std.Build.Step.Run {
     const test_step = b.addRunArtifact(nvim_bin);
     test_step.addArg("-l");
-    test_step.addFileArg(b.path("./test/runner.lua"));
+    test_step.addFileArg(b.path("test/runner.lua"));
     if (include_path) |paths| {
         for (paths) |path| {
             test_step.addPrefixedDirectoryArg("-I", path);
         }
     }
-    test_step.addArg(b.fmt("-P{s}", .{b.install_path}));
+    const install_path = b.getInstallPath(.prefix, ".");
+    test_step.addArg(b.fmt("-P{s}", .{install_path}));
     test_step.addArg("-v");
-    test_step.addArg(b.fmt("--helper=./test/{s}/preload.lua", .{kind}));
-    test_step.addArg("--lpath=./src/?.lua");
-    test_step.addArg("--lpath=./runtime/lua/?.lua");
-    test_step.addArg("--lpath=./?.lua");
+    test_step.addPrefixedFileArg("--helper=", b.path(b.fmt("test/{s}/preload.lua", .{kind})));
+    test_step.addDecoratedDirectoryArg("--lpath=", b.path("src"), "/?.lua");
+    test_step.addDecoratedDirectoryArg("--lpath=", b.path("runtime/lua"), "/?.lua");
+    test_step.addDecoratedDirectoryArg("--lpath=", b.path("."), "/?.lua");
     test_step.addPrefixedFileArg("--lpath=", config_dir.path(b, "?.lua")); // FULING: not a real file but works anyway?
-    test_step.addArg(b.fmt("--default-path=./test/{s}", .{kind}));
+    test_step.addDecoratedDirectoryArg("--default-path=", b.path("test"), b.fmt("/{s}", .{kind}));
     if (b.args) |args| test_step.addArgs(args);
 
     const env = test_step.getEnvMap();
     try env.put("NVIM_TEST", "1");
-    try env.put("VIMRUNTIME", "runtime");
-    try env.put("NVIM_RPLUGIN_MANIFEST", "Xtest_xdg/Xtest_rplugin_manifest");
-    try env.put("XDG_CONFIG_HOME", "Xtest_xdg/config");
-    try env.put("XDG_DATA_HOME", "Xtest_xdg/share");
-    try env.put("XDG_STATE_HOME", "Xtest_xdg/state");
+    try env.put("VIMRUNTIME", try b.build_root.join(b.graph.arena, &.{"runtime"}));
+    try env.put("NVIM_RPLUGIN_MANIFEST", b.fmt("{s}/Xtest_xdg/Xtest_rplugin_manifest", .{install_path}));
+    try env.put("XDG_CONFIG_HOME", b.fmt("{s}/Xtest_xdg/config", .{install_path}));
+    try env.put("XDG_DATA_HOME", b.fmt("{s}/Xtest_xdg/share", .{install_path}));
+    try env.put("XDG_STATE_HOME", b.fmt("{s}/Xtest_xdg/state", .{install_path}));
 
     _ = env.swapRemove("NVIM");
     _ = env.swapRemove("XDG_DATA_DIRS");
