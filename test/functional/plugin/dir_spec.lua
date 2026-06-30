@@ -338,6 +338,23 @@ describe('nvim.dir', function()
     assert_directory(subdir)
   end)
 
+  it('reloads a directory buffer with :edit', function()
+    make_fixture()
+    n.clear({ args_rm = { '-u' } })
+
+    edit(root)
+    assert_directory(root)
+    local buf = api.nvim_get_current_buf()
+
+    t.write_file(root .. '/beta.txt', 'beta', true)
+    command('edit')
+    eq(buf, api.nvim_get_current_buf())
+    assert_directory(root)
+    line_of('subdir/')
+    line_of('alpha.txt')
+    line_of('beta.txt')
+  end)
+
   it('refreshes a directory when navigated into again', function()
     make_fixture()
     n.clear({ args_rm = { '-u' } })
