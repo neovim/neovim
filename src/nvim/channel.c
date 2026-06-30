@@ -406,7 +406,10 @@ Channel *channel_job_start(char **argv, const char *exepath, CallbackReader on_s
   proc->cwd = cwd;
   proc->env = env;
   proc->overlapped = overlapped;
+#ifdef MSWIN
+  // Windows: spawn channel jobs with noinherit (so writes don't leak to TUI #40074).
   proc->stdio_noinherit = true;
+#endif
 
   char *cmd = xstrdup(proc_get_exepath(proc));
   bool has_out, has_err;

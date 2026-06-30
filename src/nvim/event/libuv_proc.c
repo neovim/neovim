@@ -17,6 +17,62 @@
 
 #include "event/libuv_proc.c.generated.h"
 
+/// Configures a stdio slot (`idx`) before spawning a process: connects the parent end to
+/// `parent_pipe` and sets up the fd/pipe the child inherits. `child_readable` is true for the
+/// child's stdin (the child reads), false for stdout/stderr (the child writes).
+///
+/// On Windows, `win_create_pipe` requests a non-inherited pipe (UV_CREATE_PIPE).
+/// - stdout always needs this (IOCP);
+/// - channel jobs also set it for stdin/stderr.
+/// - NOTE(!): libuv sets CREATE_NO_WINDOW only when *all* stdio slots are non-UV_INHERIT_FD!
+///   A single UV_INHERIT_FD slot re-attaches child => leaks CON writes to TUI #40074.
+///   https://github.com/libuv/libuv/blob/601a1537bb5628398c2389efbc7eecd062e8aac2/src/win/process.c#L1032-L1041
+///
+/// Records any fd the parent must close after spawn in `to_close[idx]`.
+static void libuv_proc_stdio(LibuvProc *uvproc, int idx, uv_pipe_t *parent_pipe,
+                             bool child_readable, bool overlapped, bool win_create_pipe,
+                             int *to_close)
+{
+#ifdef MSWIN
+  if (win_create_pipe) {
+    uvproc->uvstdio[idx].flags = UV_CREATE_PIPE
+                                 | (child_readable ? UV_READABLE_PIPE : UV_WRITABLE_PIPE);
+    if (overlapped) {
+      // Pipe must also be readable for IOCP to work on Windows.
+      uvproc->uvstdio[idx].flags |= UV_OVERLAPPED_PIPE | UV_READABLE_PIPE;
+    }
+    uvproc->uvstdio[idx].data.stream = (uv_stream_t *)parent_pipe;
+    return;
+  }
+#endif
+
+  // Inherited-fd pipe: create a uv_pipe() pair, hand one end to child via UV_INHERIT_FD and keep
+  // other for parent.
+  //
+  // On non-Windows uv_pipe() is preferred over UV_CREATE_PIPE: as of libuv 1.51, UV_CREATE_PIPE
+  // uses socketpair() (behaves confusingly on Linux: breaks /proc/<pid>/fd/0, which the Linux
+  // socket maintainer disowned).
+  int child_flags = 0;
+#ifdef MSWIN
+  // Overlapped child stdin must be non-blocking.
+  child_flags = (child_readable && overlapped) ? UV_NONBLOCK_PIPE : 0;
+#endif
+  // pipe_pair[0] is the read end, pipe_pair[1] the write end; the parent end is non-blocking.
+  uv_file pipe_pair[2];
+  uv_pipe(pipe_pair,
+          child_readable ? child_flags : UV_NONBLOCK_PIPE,
+          child_readable ? UV_NONBLOCK_PIPE : child_flags);
+
+  // child_readable: child reads pipe_pair[0], parent writes pipe_pair[1].
+  // else:           child writes pipe_pair[1], parent reads pipe_pair[0].
+  int child_fd = child_readable ? pipe_pair[0] : pipe_pair[1];
+  int parent_fd = child_readable ? pipe_pair[1] : pipe_pair[0];
+  uvproc->uvstdio[idx].flags = UV_INHERIT_FD;
+  uvproc->uvstdio[idx].data.fd = child_fd;
+  to_close[idx] = child_fd;
+  uv_pipe_open(parent_pipe, parent_fd);
+}
+
 /// @returns zero on success, or negative error code
 int libuv_proc_spawn(LibuvProc *uvproc)
   FUNC_ATTR_NONNULL_ALL
@@ -66,90 +122,18 @@ int libuv_proc_spawn(LibuvProc *uvproc)
   int to_close[3] = { -1, -1, -1 };
 
   if (!proc->in.closed) {
-#ifdef MSWIN
-    if (proc->stdio_noinherit) {
-      // Let channel jobs use CREATE_NO_WINDOW so CON writes do not leak.
-      uvproc->uvstdio[0].flags = UV_CREATE_PIPE | UV_READABLE_PIPE;
-      uvproc->uvstdio[0].flags |= proc->overlapped ? UV_OVERLAPPED_PIPE : 0;
-      uvproc->uvstdio[0].data.stream = (uv_stream_t *)(&proc->in.uv.pipe);
-    } else {
-      uv_file pipe_pair[2];
-      int client_flags = proc->overlapped ? UV_NONBLOCK_PIPE : 0;
-
-      uv_pipe(pipe_pair, client_flags, UV_NONBLOCK_PIPE);
-
-      uvproc->uvstdio[0].flags = UV_INHERIT_FD;
-      uvproc->uvstdio[0].data.fd = pipe_pair[0];
-      to_close[0] = pipe_pair[0];
-
-      uv_pipe_open(&proc->in.uv.pipe, pipe_pair[1]);
-    }
-#else
-    uv_file pipe_pair[2];
-
-    // As of libuv 1.51, UV_CREATE_PIPE can only create pipes
-    // using socketpair(), not pipe(). We want the latter on linux
-    // as socket pairs behave different in some confusing ways, like
-    // breaking /proc/0/fd/0 which is disowned by the linux socket maintainer.
-    uv_pipe(pipe_pair, 0, UV_NONBLOCK_PIPE);
-
-    uvproc->uvstdio[0].flags = UV_INHERIT_FD;
-    uvproc->uvstdio[0].data.fd = pipe_pair[0];
-    to_close[0] = pipe_pair[0];
-
-    uv_pipe_open(&proc->in.uv.pipe, pipe_pair[1]);
-#endif
+    libuv_proc_stdio(uvproc, 0, &proc->in.uv.pipe, true, proc->overlapped, proc->stdio_noinherit,
+                     to_close);
   }
 
   if (!proc->out.s.closed) {
-#ifdef MSWIN
-    // TODO(bfredl): in theory it would have been nice if the uv_pipe() branch
-    // also worked for windows but IOCP happens because of reasons.
-    uvproc->uvstdio[1].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
-    // pipe must be readable for IOCP to work on Windows.
-    uvproc->uvstdio[1].flags |= proc->overlapped
-                                ? (UV_READABLE_PIPE | UV_OVERLAPPED_PIPE) : 0;
-    uvproc->uvstdio[1].data.stream = (uv_stream_t *)(&proc->out.s.uv.pipe);
-#else
-    uv_file pipe_pair[2];
-    uv_pipe(pipe_pair, UV_NONBLOCK_PIPE, 0);
-
-    uvproc->uvstdio[1].flags = UV_INHERIT_FD;
-    uvproc->uvstdio[1].data.fd = pipe_pair[1];
-    to_close[1] = pipe_pair[1];
-
-    uv_pipe_open(&proc->out.s.uv.pipe, pipe_pair[0]);
-#endif
+    // Windows: stdout always uses a non-inherited pipe (IOCP).
+    libuv_proc_stdio(uvproc, 1, &proc->out.s.uv.pipe, false, proc->overlapped, true, to_close);
   }
 
   if (!proc->err.s.closed) {
-#ifdef MSWIN
-    if (proc->stdio_noinherit) {
-      uvproc->uvstdio[2].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
-      // pipe must be readable for IOCP to work on Windows.
-      uvproc->uvstdio[2].flags |= proc->overlapped
-                                  ? (UV_READABLE_PIPE | UV_OVERLAPPED_PIPE) : 0;
-      uvproc->uvstdio[2].data.stream = (uv_stream_t *)(&proc->err.s.uv.pipe);
-    } else {
-      uv_file pipe_pair[2];
-      uv_pipe(pipe_pair, UV_NONBLOCK_PIPE, 0);
-
-      uvproc->uvstdio[2].flags = UV_INHERIT_FD;
-      uvproc->uvstdio[2].data.fd = pipe_pair[1];
-      to_close[2] = pipe_pair[1];
-
-      uv_pipe_open(&proc->err.s.uv.pipe, pipe_pair[0]);
-    }
-#else
-    uv_file pipe_pair[2];
-    uv_pipe(pipe_pair, UV_NONBLOCK_PIPE, 0);
-
-    uvproc->uvstdio[2].flags = UV_INHERIT_FD;
-    uvproc->uvstdio[2].data.fd = pipe_pair[1];
-    to_close[2] = pipe_pair[1];
-
-    uv_pipe_open(&proc->err.s.uv.pipe, pipe_pair[0]);
-#endif
+    libuv_proc_stdio(uvproc, 2, &proc->err.s.uv.pipe, false, proc->overlapped,
+                     proc->stdio_noinherit, to_close);
   } else if (proc->fwd_err) {
     uvproc->uvstdio[2].flags = UV_INHERIT_FD;
     uvproc->uvstdio[2].data.fd = STDERR_FILENO;
