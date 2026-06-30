@@ -42,14 +42,14 @@ void os_clear_hwnd(void)
   hWnd = NULL;
 }
 
-void os_replace_stdin_to_conin(void)
+void os_redirect_stdin_to_conin(void)
 {
   close(STDIN_FILENO);
   const int conin_fd = os_open_conin_fd();
   assert(conin_fd == STDIN_FILENO);
 }
 
-void os_replace_stdout_and_stderr_to_conout(void)
+void os_redirect_stdout_stderr_to_conout(void)
 {
   const HANDLE conout_handle =
     CreateFile("CONOUT$",
@@ -66,6 +66,16 @@ void os_replace_stdout_and_stderr_to_conout(void)
   assert(conerr_fd == STDERR_FILENO);
 }
 
+/// Points this process's stdio at the current console: enables Ctrl-C handling and replaces
+/// stdin/stdout/stderr with CONIN$/CONOUT$. The caller must have already acquired a console
+/// (via AttachConsole, AllocConsole, etc.).
+void os_reattach_console_stdio(void)
+{
+  os_enable_ctrl_c();
+  os_redirect_stdin_to_conin();
+  os_redirect_stdout_stderr_to_conout();
+}
+
 /// Detach from the current console and switch stdio to a hidden private one.
 ///
 /// Used when an embedded server must outlive its parent console, while keeping
@@ -75,9 +85,7 @@ void os_swap_to_hidden_console(void)
   FreeConsole();
   AllocConsole();
   ShowWindow(GetConsoleWindow(), SW_HIDE);
-  os_enable_ctrl_c();
-  os_replace_stdin_to_conin();
-  os_replace_stdout_and_stderr_to_conout();
+  os_reattach_console_stdio();
 }
 
 /// Resets Windows console icon if we got an original one on startup.
