@@ -281,6 +281,36 @@ describe('vim.ui.select()', function()
       eq(1, got.picker_cursor[1])
     end)
 
+    it('applies user choice in invoking window when the picker keeps focus', function()
+      prepare_test()
+
+      exec_lua(function()
+        vim.cmd('normal! gg0')
+        _G._orig_buf = vim.api.nvim_get_current_buf()
+        --- @diagnostic disable-next-line: duplicate-set-field
+        vim.ui.select = function(items, _, on_choice)
+          local buf = vim.api.nvim_create_buf(false, true)
+          _G._picker_buf = buf
+          vim.api.nvim_buf_set_lines(buf, 0, -1, false, { 'picker' })
+          _G._picker_win = vim.api.nvim_open_win(buf, true, {
+            relative = 'editor',
+            row = 1,
+            col = 1,
+            width = 30,
+            height = 1,
+          })
+          on_choice(items[1], 1)
+        end
+        vim.cmd('normal! z=')
+      end)
+
+      retry(nil, 1000, function()
+        neq('helo', api.nvim_buf_get_lines(exec_lua([[return _G._orig_buf]]), 0, 1, false)[1])
+      end)
+      eq('picker', api.nvim_buf_get_lines(exec_lua([[return _G._picker_buf]]), 0, 1, false)[1])
+      eq(exec_lua([[return _G._picker_win]]), api.nvim_get_current_win())
+    end)
+
     it('does not restore invoking window state after the picker changes its buffer', function()
       api.nvim_set_option_value('spell', false, {})
       api.nvim_set_option_value('spelllang', 'en_us', {})
