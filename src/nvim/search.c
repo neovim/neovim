@@ -1503,6 +1503,7 @@ end_do_search:
 int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char *pat)
 {
   linenr_T start = 0;
+  int compl_len = ins_compl_len();
 
   if (buf->b_ml.ml_line_count == 0) {
     return FAIL;
@@ -1548,9 +1549,9 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char *pat)
       }
     } else if (*p != NUL) {  // Ignore empty lines.
       // Expanding lines or words.
-      assert(ins_compl_len() >= 0);
-      if ((p_ic ? mb_strnicmp(p, pat, (size_t)ins_compl_len())
-                : strncmp(p, pat, (size_t)ins_compl_len())) == 0) {
+      assert(compl_len >= 0);
+      if ((p_ic ? mb_strnicmp(p, pat, (size_t)compl_len)
+                : strncmp(p, pat, (size_t)compl_len)) == 0) {
         return OK;
       }
     }
@@ -2620,9 +2621,8 @@ static int is_zero_width(char *pattern, size_t patternlen, bool move, pos_T *cur
         break;
       }
     } while (regmatch.regprog != NULL
-             && direction == FORWARD
-             ? regmatch.startpos[0].col < pos.col
-             : regmatch.startpos[0].col > pos.col);
+             && (direction == FORWARD ? regmatch.startpos[0].col < pos.col
+                                      : regmatch.startpos[0].col > pos.col));
 
     if (called_emsg == called_emsg_before) {
       result = (nmatched != 0
