@@ -71,11 +71,6 @@ after use: >vim
 <
 Use "wipe" to discard all buffer state; see 'bufhidden'.
 
-                                                    *g:loaded_nvim_dir_plugin*
-To disable this plugin, set this in your config before startup: >lua
-	vim.g.loaded_nvim_dir_plugin = 1
-<
-
 ==============================================================================
 Builtin plugin: difftool                                            *difftool*
 
