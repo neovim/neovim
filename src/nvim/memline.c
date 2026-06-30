@@ -2482,8 +2482,12 @@ int ml_replace_range_in_line(linenr_T lnum, pos_T range_start, pos_T range_end, 
     if (range_end.col < (colnr_T)old_len && range_end.col >= 0) {
       suffix = old_line + range_end.col + 1;
     }
-    char *new_line = concat_str(concat_str(old_txt, text), suffix);
+    char *tmp = concat_str(old_txt, text);
+    char *new_line = concat_str(tmp, suffix);
     ml_replace_buf_len(curbuf, lnum, new_line, (size_t)strlen(new_line), false, true);
+    xfree(old_txt);
+    xfree(tmp);
+    xfree(new_line);
   } else if (range_start.lnum == lnum) {  // we are at the start of the range
     char *old_line = ml_get(lnum);
     size_t old_chars_indx = (size_t)range_start.col;
@@ -2495,12 +2499,15 @@ int ml_replace_range_in_line(linenr_T lnum, pos_T range_start, pos_T range_end, 
     memcpy(old_txt, old_line, old_chars_indx * sizeof(char));
     char *new_line = concat_str(old_txt, text);
     ml_replace_buf_len(curbuf, lnum, new_line, (size_t)strlen(new_line), false, true);
+    xfree(old_txt);
+    xfree(new_line);
   } else if (range_end.lnum == lnum) {  // we are at the end of the range
     char *old_line = ml_get(lnum);
     if ((int)strlen(old_line) > range_end.col) {
       char *old_text_append = old_line + range_end.col + 1;
       char *new_line = concat_str(text, old_text_append);
       ml_replace_buf_len(curbuf, lnum, new_line, (size_t)strlen(new_line), false, true);
+      xfree(new_line);
     } else {
       ml_replace_buf_len(curbuf, lnum, text, (size_t)strlen(text), false, true);
     }
