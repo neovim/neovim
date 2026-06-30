@@ -569,7 +569,7 @@ do
     end)
   end
 
-  local group = vim.api.nvim_create_augroup('nvim.directory', { clear = true })
+  local nvim_directory_augroup = vim.api.nvim_create_augroup('nvim.directory', { clear = true })
 
   ---@param buf integer
   ---@param path string
@@ -599,7 +599,7 @@ do
   -- autocmds), so an earlier VimEnter autocmd's BufEnter can't preempt startup.
   local vimentered = vim.v.vim_did_enter == 1
 
-  nvim_on('BufEnter', group, {
+  nvim_on('BufEnter', nvim_directory_augroup, {
     pattern = '*',
     desc = 'Set local directory filetype',
     nested = true,
@@ -609,7 +609,7 @@ do
     end
   end)
 
-  nvim_on('VimEnter', group, {
+  nvim_on('VimEnter', nvim_directory_augroup, {
     pattern = '*',
     desc = 'Set startup local directory filetypes',
     nested = true,
