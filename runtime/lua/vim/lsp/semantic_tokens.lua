@@ -245,6 +245,14 @@ function STHighlighter:on_attach(client_id)
     end,
   })
 
+  api.nvim_create_autocmd('BufWinEnter', {
+    buf = self.bufnr,
+    group = self.augroup,
+    callback = function()
+      self:send_request()
+    end,
+  })
+
   if state.supports_range then
     api.nvim_create_autocmd('WinScrolled', {
       buf = self.bufnr,
