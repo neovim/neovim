@@ -554,6 +554,20 @@ os_dup_dup:
   return ret;
 }
 
+/// Duplicates file descriptor `fd` and marks the copy close-on-exec (Unix) / non-inheritable
+/// (Windows), so the duped fd is not leaked to spawned child processes.
+///
+/// @return New file descriptor, or libuv error code (< 0) if the dup failed.
+int os_dup_cloexec(const int fd)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  int newfd = os_dup(fd);
+  if (newfd >= 0) {
+    os_set_cloexec(newfd);
+  }
+  return newfd;
+}
+
 /// Open the file descriptor for stdin.
 int os_open_stdin_fd(void)
 {
@@ -564,7 +578,7 @@ int os_open_stdin_fd(void)
     stdin_dup_fd = os_dup(STDIN_FILENO);
 #ifdef MSWIN
     // Replace the original stdin with the console input handle.
-    os_replace_stdin_to_conin();
+    os_redirect_stdin_to_conin();
 #endif
   }
   return stdin_dup_fd;

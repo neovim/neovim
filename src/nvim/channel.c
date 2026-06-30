@@ -556,10 +556,8 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output, const char **err
   // Strangely, ConPTY doesn't work if stdin and stdout are pipes. So replace
   // stdin and stdout with CONIN$ and CONOUT$, respectively.
   if (embedded_mode && os_has_conpty_working()) {
-    stdin_dup_fd = os_dup(STDIN_FILENO);
-    os_set_cloexec(stdin_dup_fd);
-    stdout_dup_fd = os_dup(STDOUT_FILENO);
-    os_set_cloexec(stdout_dup_fd);
+    stdin_dup_fd = os_dup_cloexec(STDIN_FILENO);
+    stdout_dup_fd = os_dup_cloexec(STDOUT_FILENO);
     // :restart spawns a replacement server that must not borrow the parent
     // Nvim process console, because that parent process will soon exit.
     const bool restart_alloc_console = os_env_exists(ENV_RESTART_ALLOC_CONSOLE, true);
@@ -577,9 +575,7 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output, const char **err
         ShowWindow(GetConsoleWindow(), SW_HIDE);
       }
     }
-    os_enable_ctrl_c();
-    os_replace_stdin_to_conin();
-    os_replace_stdout_and_stderr_to_conout();
+    os_reattach_console_stdio();
   }
 #else
   if (embedded_mode) {
