@@ -871,26 +871,10 @@ int del_chars(int count, int fixpos)
     bytes += l;
     p += l;
   }
-  return del_bytes(bytes, fixpos, true);
+  return del_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col, bytes, fixpos, true);
 }
 
-/// Delete "count" bytes under the cursor.
-/// If "fixpos" is true, don't leave the cursor on the NUL after the line.
-/// Caller must have prepared for undo.
-///
-/// @param  count           number of bytes to be deleted
-/// @param  fixpos_arg      leave the cursor on the NUL after the line
-/// @param  use_delcombine  'delcombine' option applies
-///
-/// @return FAIL for failure, OK otherwise
-int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
-{
-  linenr_T lnum = curwin->w_cursor.lnum;
-  colnr_T col = curwin->w_cursor.col;
-  return del_bytes_pos(lnum, col, count, fixpos_arg, use_delcombine);
-}
-
-/// Delete "count" bytes under the cursor.
+/// Delete "count" bytes under the specified position.
 /// If "fixpos" is true, don't leave the cursor on the NUL after the line.
 /// Caller must have prepared for undo.
 ///
@@ -901,8 +885,8 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
 /// @param  use_delcombine  'delcombine' option applies
 ///
 /// @return FAIL for failure, OK otherwise
-int del_bytes_pos(linenr_T lnum, colnr_T startcol, colnr_T count, bool fixpos_arg,
-                  bool use_delcombine)
+int del_bytes(linenr_T lnum, colnr_T startcol, colnr_T count, bool fixpos_arg,
+              bool use_delcombine)
 {
   bool fixpos = fixpos_arg;
   char *oldp = ml_get(lnum);

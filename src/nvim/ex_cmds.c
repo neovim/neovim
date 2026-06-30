@@ -904,11 +904,7 @@ int do_move(linenr_T line1, colnr_T col1, linenr_T line2, colnr_T col2, linenr_T
 
   if (col2 == MAXCOL) {
     // Linewise move
-    // Do nothing if we are not actually moving any lines.  This will prevent
-    // the 'modified' flag from being set without cause.
     if (dest_lnum == line1 - 1 || dest_lnum == line2) {
-      // Move the cursor as if lines were moved (see below) to be backwards
-      // compatible.
       curwin->w_cursor.lnum = dest_lnum >= line1
                               ? dest_lnum
                               : dest_lnum + (line2 - line1) + 1;
@@ -920,17 +916,14 @@ int do_move(linenr_T line1, colnr_T col1, linenr_T line2, colnr_T col2, linenr_T
     bcount_t extent_byte = end_byte - start_byte;
     bcount_t dest_byte = ml_find_line_or_offset(curbuf, dest_lnum + 1, NULL, true);
 
-    linenr_T num_lines = line2 - line1 + 1;  // Num lines moved
+    linenr_T num_lines = line2 - line1 + 1;
 
-    // First we copy the old text to its new location -- webb
-    // Also copy the flag that ":global" command uses.
     if (u_save(dest_lnum, dest_lnum + 1) == FAIL) {
       return FAIL;
     }
 
-    linenr_T l;
-    linenr_T extra;      // Num lines added before line1
-    for (extra = 0, l = line1; l <= line2; l++) {
+    linenr_T extra = 0;
+    for (linenr_T l = line1; l <= line2; l++) {
       char *str = xstrnsave(ml_get(l + extra), (size_t)ml_get_len(l + extra));
       ml_append(dest_lnum + l - line1, str, 0, false);
       xfree(str);
@@ -939,56 +932,34 @@ int do_move(linenr_T line1, colnr_T col1, linenr_T line2, colnr_T col2, linenr_T
       }
     }
 
-    // Now we must be careful adjusting our marks so that we don't overlap our
-    // mark_adjust() calls.
-    //
-    // We adjust the marks within the old text so that they refer to the
-    // last lines of the file (temporarily), because we know no other marks
-    // will be set there since these line numbers did not exist until we added
-    // our new lines.
-    //
-    // Then we adjust the marks on lines between the old and new text positions
-    // (either forwards or backwards).
-    //
-    // And Finally we adjust the marks we put at the end of the file back to
-    // their final destination at the new text position -- webb
-    linenr_T last_line = curbuf->b_ml.ml_line_count;  // Last line in file after adding new text
+    linenr_T last_line = curbuf->b_ml.ml_line_count;
     mark_adjust_nofold(line1, line2, last_line - line2, 0, kExtmarkNOOP);
 
     disable_fold_update++;
     changed_lines(curbuf, last_line - num_lines + 1, 0, last_line + 1, num_lines, false);
     disable_fold_update--;
 
-    int line_off = 0;
-    bcount_t byte_off = 0;
-    if (dest_lnum >= line2) {
-      mark_adjust_nofold(line2 + 1, dest_lnum, -num_lines, 0, kExtmarkNOOP);
-      FOR_ALL_TAB_WINDOWS(tab, win) {
-        if (win->w_buffer == curbuf) {
+    bool moving_forward = (dest_lnum >= line2);
+    linenr_T m_from = moving_forward ? line2 + 1 : dest_lnum + 1;
+    linenr_T m_to = moving_forward ? dest_lnum : line1 - 1;
+    linenr_T m_amount = moving_forward ? -num_lines : num_lines;
+
+    mark_adjust_nofold(m_from, m_to, m_amount, 0, kExtmarkNOOP);
+    FOR_ALL_TAB_WINDOWS(tab, win) {
+      if (win->w_buffer == curbuf) {
+        if (moving_forward) {
           foldMoveRange(win, &win->w_folds, line1, line2, dest_lnum);
-        }
-      }
-      if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
-        curbuf->b_op_start.lnum = dest_lnum - num_lines + 1;
-        curbuf->b_op_end.lnum = dest_lnum;
-      }
-      line_off = -num_lines;
-      byte_off = -extent_byte;
-    } else {
-      mark_adjust_nofold(dest_lnum + 1, line1 - 1, num_lines, 0, kExtmarkNOOP);
-      FOR_ALL_TAB_WINDOWS(tab, win) {
-        if (win->w_buffer == curbuf) {
+        } else {
           foldMoveRange(win, &win->w_folds, dest_lnum + 1, line1 - 1, line2);
         }
       }
-      if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
-        curbuf->b_op_start.lnum = dest_lnum + 1;
-        curbuf->b_op_end.lnum = dest_lnum + num_lines;
-      }
     }
     if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
+      curbuf->b_op_start.lnum = moving_forward ? dest_lnum - num_lines + 1 : dest_lnum + 1;
+      curbuf->b_op_end.lnum = moving_forward ? dest_lnum : dest_lnum + num_lines;
       curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
     }
+
     mark_adjust_nofold(last_line - num_lines + 1, last_line,
                        -(last_line - dest_lnum - extra), 0, kExtmarkNOOP);
 
@@ -996,15 +967,13 @@ int do_move(linenr_T line1, colnr_T col1, linenr_T line2, colnr_T col2, linenr_T
     changed_lines(curbuf, last_line - num_lines + 1, 0, last_line + 1, -extra, false);
     disable_fold_update--;
 
-    // send update regarding the new lines that were added
     buf_updates_send_changes(curbuf, dest_lnum + 1, num_lines, 0);
 
-    // Now we delete the original text -- webb
     if (u_save(line1 + extra - 1, line2 + extra + 1) == FAIL) {
       return FAIL;
     }
 
-    for (l = line1; l <= line2; l++) {
+    for (linenr_T l = line1; l <= line2; l++) {
       ml_delete_flags(line1 + extra, ML_DEL_MESSAGE);
     }
     if (!global_busy && num_lines > p_report) {
@@ -1013,17 +982,14 @@ int do_move(linenr_T line1, colnr_T col1, linenr_T line2, colnr_T col2, linenr_T
            (int64_t)num_lines);
     }
 
+    int line_off = moving_forward ? -num_lines : 0;
+    bcount_t byte_off = moving_forward ? -extent_byte : 0;
     extmark_move_region(curbuf, line1 - 1, 0, start_byte,
-                        line2 - line1 + 1, 0, extent_byte,
+                        num_lines, 0, extent_byte,
                         dest_lnum + line_off, 0, dest_byte + byte_off,
                         kExtmarkUndo);
 
-    // Leave the cursor on the last of the moved lines.
-    if (dest_lnum >= line1) {
-      curwin->w_cursor.lnum = dest_lnum;
-    } else {
-      curwin->w_cursor.lnum = dest_lnum + (line2 - line1) + 1;
-    }
+    curwin->w_cursor.lnum = (dest_lnum >= line1) ? dest_lnum : dest_lnum + num_lines;
 
     if (line1 < dest_lnum) {
       dest_lnum += num_lines + 1;
@@ -1034,15 +1000,14 @@ int do_move(linenr_T line1, colnr_T col1, linenr_T line2, colnr_T col2, linenr_T
       changed_lines(curbuf, dest_lnum + 1, 0, line1 + num_lines, 0, false);
     }
 
-    // send nvim_buf_lines_event regarding lines that were deleted
     buf_updates_send_changes(curbuf, line1 + extra, 0, num_lines);
 
     return OK;
   }
 
   // Character-wise move
-  char *text = get_text_in_range((pos_T){ .lnum = line1, .col = col1, .coladd = 0 },
-                                 (pos_T){ .lnum = line2, .col = col2, .coladd = 0 });
+  char *text = get_text_in_range((pos_T){ .lnum = line1, .col = col1 },
+                                 (pos_T){ .lnum = line2, .col = col2 });
 
   if (u_save(line1 - 1, line2 + 1) == FAIL) {
     xfree(text);
@@ -1050,56 +1015,59 @@ int do_move(linenr_T line1, colnr_T col1, linenr_T line2, colnr_T col2, linenr_T
   }
 
   char *l1_text = ml_get(line1);
-  colnr_T l1_len = (colnr_T)strlen(l1_text);
-  colnr_T col1_clip = (col1 > l1_len) ? l1_len : col1;
-  char *prefix = xstrnsave(l1_text, (size_t)col1_clip);
+  colnr_T l1_len = ml_get_len(line1);
+  char *prefix = xstrnsave(l1_text, (size_t)MIN(col1, l1_len));
 
   char *l2_text = ml_get(line2);
-  colnr_T l2_len = (colnr_T)strlen(l2_text);
-  colnr_T col2_clip = (col2 >= l2_len) ? l2_len : (col2 + 1);
-  char *suffix = xstrdup(l2_text + col2_clip);
+  colnr_T l2_len = ml_get_len(line2);
+  char *suffix = xstrdup(l2_text + MIN(col2 == MAXCOL ? l2_len : col2 + 1, l2_len));
 
-  char *merged = xmalloc(strlen(prefix) + strlen(suffix) + 1);
-  sprintf(merged, "%s%s", prefix, suffix);
-  ml_replace(line1, merged, false);
-  changed_lines(curbuf, line1, 0, line1 + 1, 0, true);
+  linenr_T lines_deleted;
+  if (prefix[0] == NUL && suffix[0] == NUL && col1 == 0 && (col2 >= l2_len || col2 == MAXCOL)) {
+    for (linenr_T lnum = line2; lnum >= line1; lnum--) {
+      ml_delete(line1);
+    }
+    lines_deleted = line2 - line1 + 1;
+    deleted_lines_mark(line1, lines_deleted);
+  } else {
+    char *merged = xmalloc(strlen(prefix) + strlen(suffix) + 1);
+    sprintf(merged, "%s%s", prefix, suffix);
+    ml_replace(line1, merged, false);
+    changed_lines(curbuf, line1, 0, line1 + 1, 0, true);
 
-  for (linenr_T lnum = line2; lnum > line1; lnum--) {
-    ml_delete(line1 + 1);
+    for (linenr_T lnum = line2; lnum > line1; lnum--) {
+      ml_delete(line1 + 1);
+    }
+    lines_deleted = line2 - line1;
+    if (lines_deleted > 0) {
+      deleted_lines_mark(line1 + 1, lines_deleted);
+    }
   }
-  if (line2 > line1) {
-    deleted_lines_mark(line1 + 1, line2 - line1);
-  }
-  linenr_T lines_deleted = line2 - line1;
   xfree(prefix);
   xfree(suffix);
 
-  // Adjust destination line number
-  linenr_T adj_dest_lnum = dest_lnum;
   if (dest_lnum >= line2) {
-    adj_dest_lnum -= lines_deleted;
+    dest_lnum -= lines_deleted;
   }
 
-  if (u_save(adj_dest_lnum, adj_dest_lnum + 1) == FAIL) {
+  if (u_save(dest_lnum, dest_lnum + 1) == FAIL) {
     xfree(text);
     return FAIL;
   }
 
-  // Insert at adjusted destination
   if (dest_col == MAXCOL) {
-    insert_text_as_lines(adj_dest_lnum, text);
-    curwin->w_cursor.lnum = adj_dest_lnum + (line2 - line1 + 1);
+    insert_text_as_lines(dest_lnum, text);
+    curwin->w_cursor.lnum = dest_lnum + (lines_deleted > 0 ? lines_deleted : 1);
   } else {
-    linenr_T lines_before_ins = curbuf->b_ml.ml_line_count;
-    ml_append_pos((pos_T){ .lnum = adj_dest_lnum, .col = dest_col, .coladd = 0 }, text,
-                  strlen(text));
-    linenr_T lines_inserted = curbuf->b_ml.ml_line_count - lines_before_ins;
+    linenr_T lines_before = curbuf->b_ml.ml_line_count;
+    ml_append_pos((pos_T){ .lnum = dest_lnum, .col = dest_col }, text, strlen(text));
+    linenr_T lines_inserted = curbuf->b_ml.ml_line_count - lines_before;
     if (lines_inserted > 0) {
-      appended_lines_mark(adj_dest_lnum, lines_inserted);
+      appended_lines_mark(dest_lnum, lines_inserted);
     } else {
-      changed_bytes(adj_dest_lnum, dest_col);
+      changed_bytes(dest_lnum, dest_col);
     }
-    curwin->w_cursor.lnum = adj_dest_lnum + lines_inserted;
+    curwin->w_cursor.lnum = dest_lnum + lines_inserted;
   }
 
   xfree(text);
@@ -1107,11 +1075,10 @@ int do_move(linenr_T line1, colnr_T col1, linenr_T line2, colnr_T col2, linenr_T
 }
 
 /// ":copy"
-void ex_copy(linenr_T line1, colnr_T col1, linenr_T line2, colnr_T col2, linenr_T dest_lnum,
-             colnr_T dest_col)
+int ex_copy(linenr_T line1, colnr_T col1, linenr_T line2, colnr_T col2, linenr_T dest_lnum,
+            colnr_T dest_col)
 {
   if (col2 == MAXCOL) {
-    // Linewise copy
     linenr_T count = line2 - line1 + 1;
     if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
       curbuf->b_op_start.lnum = dest_lnum + 1;
@@ -1120,17 +1087,15 @@ void ex_copy(linenr_T line1, colnr_T col1, linenr_T line2, colnr_T col2, linenr_
     }
 
     if (u_save(dest_lnum, dest_lnum + 1) == FAIL) {
-      return;
+      return FAIL;
     }
 
     curwin->w_cursor.lnum = dest_lnum;
     while (line1 <= line2) {
-      // need to make a copy because the line will be unlocked within ml_append()
       char *p = xstrnsave(ml_get(line1), (size_t)ml_get_len(line1));
       ml_append(curwin->w_cursor.lnum, p, 0, false);
       xfree(p);
 
-      // situation 2: skip already copied lines
       if (line1 == dest_lnum) {
         line1 = curwin->w_cursor.lnum;
       }
@@ -1150,22 +1115,21 @@ void ex_copy(linenr_T line1, colnr_T col1, linenr_T line2, colnr_T col2, linenr_
     }
 
     msgmore(count);
-    return;
+    return OK;
   }
 
-  // Character-wise copy
-  char *text = get_text_in_range((pos_T){ .lnum = line1, .col = col1, .coladd = 0 },
-                                 (pos_T){ .lnum = line2, .col = col2, .coladd = 0 });
+  char *text = get_text_in_range((pos_T){ .lnum = line1, .col = col1 },
+                                 (pos_T){ .lnum = line2, .col = col2 });
   if (u_save(dest_lnum, dest_lnum + 1) == FAIL) {
     xfree(text);
-    return;
+    return FAIL;
   }
   if (dest_col == MAXCOL) {
     insert_text_as_lines(dest_lnum, text);
     curwin->w_cursor.lnum = dest_lnum + (line2 - line1 + 1);
   } else {
     linenr_T lines_before = curbuf->b_ml.ml_line_count;
-    ml_append_pos((pos_T){ .lnum = dest_lnum, .col = dest_col, .coladd = 0 }, text, strlen(text));
+    ml_append_pos((pos_T){ .lnum = dest_lnum, .col = dest_col }, text, strlen(text));
     linenr_T lines_inserted = curbuf->b_ml.ml_line_count - lines_before;
     if (lines_inserted > 0) {
       appended_lines_mark(dest_lnum, lines_inserted);
@@ -1175,6 +1139,7 @@ void ex_copy(linenr_T line1, colnr_T col1, linenr_T line2, colnr_T col2, linenr_
     curwin->w_cursor.lnum = dest_lnum + lines_inserted;
   }
   xfree(text);
+  return OK;
 }
 
 static char *prevcmd = NULL;        // the previous command

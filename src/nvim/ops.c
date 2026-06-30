@@ -972,8 +972,8 @@ int op_delete(oparg_T *oap)
         }
       }
 
-      del_bytes_pos(oap->start.lnum, oap->start.col, (colnr_T)n, !virtual_op,
-                    oap->op_type == OP_DELETE && !oap->is_VIsual);
+      del_bytes(oap->start.lnum, oap->start.col, (colnr_T)n, !virtual_op,
+                oap->op_type == OP_DELETE && !oap->is_VIsual);
     } else {
       // delete characters between lines
       pos_T curpos;
@@ -1000,8 +1000,8 @@ int op_delete(oparg_T *oap)
       // delete from start of line until op_end
       int n = (oap->end.col + 1 - !oap->inclusive);
       curwin->w_cursor.col = 0;  // TODO(616b2f): if this makes sense
-      del_bytes_pos(curwin->w_cursor.lnum, curwin->w_cursor.col, (colnr_T)n, !virtual_op,
-                    oap->op_type == OP_DELETE && !oap->is_VIsual);
+      del_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col, (colnr_T)n, !virtual_op,
+                oap->op_type == OP_DELETE && !oap->is_VIsual);
       curwin->w_cursor = curpos;  // restore curwin->w_cursor
       do_join(2, false, false, false, false);
       curbuf_splice_pending--;
@@ -1452,7 +1452,8 @@ bool swapchar(int op_type, pos_T *pos)
 
       curwin->w_cursor = *pos;
       // don't use del_char(), it also removes composing chars
-      del_bytes(utf_ptr2len(get_cursor_pos_ptr()), false, false);
+      del_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col, utf_ptr2len(get_cursor_pos_ptr()),
+                false, false);
       ins_char(nc);
       curwin->w_cursor = sp;
     } else {
