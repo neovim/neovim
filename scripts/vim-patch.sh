@@ -909,36 +909,26 @@ is_na_patch() {
   test -z "$FILES_REMAINING" && return 0
 
   C_FILES=$(echo "$FILES_REMAINING" | grep '.*\.c$')
-  FILES_REMAINING=$(echo "$FILES_REMAINING" | grep -v '.*\.c$')
+  test "$FILES_REMAINING" != "$C_FILES" && return 1
+
+  local VERSION_LNUM VERSION_VNUM
   for file in $C_FILES; do
-    if test "$file" != "src/version.c"; then
-      HUNK_NUM=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -U0  -r "$patch" -- "$file" | grep -Pc '^@@ .* @@')
-      HUNK_NUM_FINAL=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -U0  -r "$patch" -- "$file" |
-        grep -P '^@@ .* @@'|
-        sed 's/^@@ .* @@ \?//' |
-        grep -cv -f "$NA_CFUNC_LIST")
-      if test "$HUNK_NUM" -ne 0 -a "$HUNK_NUM_FINAL" -eq 0; then
-        continue
-      fi
-    fi
-    if test -z "$FILES_REMAINING"; then
-      FILES_REMAINING="$file"
+    if test "$file" == "src/version.c"; then
+      VERSION_LNUM=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id --numstat -r "$patch" -- src/version.c | grep -c '^2\s\+0')
+      test "$VERSION_LNUM" -ne 1 && return 1
+      VERSION_VNUM="$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -U1 -r "$patch" -- src/version.c |
+        grep -Pzc '[ +]\/\*\*\/\n\+\s+[0-9]+,\n[ +]\/\*\*\/\n')" || true
+      test "$VERSION_VNUM" -ne 1 && return 1
     else
-      FILES_REMAINING="$FILES_REMAINING
-$file"
+      HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -U0  -r "$patch" -- "$file" | grep -P '^@@ .* @@')
+      if test -n "$HUNKS"; then
+        HUNK_NUM_FINAL=$(echo "$HUNKS" | sed 's/^@@ .* @@ \?//' | grep -cv -f "$NA_CFUNC_LIST")
+        test "$HUNK_NUM_FINAL" -ne 0 && return 1
+      fi
     fi
   done
 
-  if test "$FILES_REMAINING" == "$(printf "src/version.c\n")"; then
-    local VERSION_LNUM
-    VERSION_LNUM=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id --numstat -r "$patch" -- src/version.c | grep -c '^2\s\+0')
-    test "$VERSION_LNUM" -ne 1 && return 1
-    local VERSION_VNUM
-    VERSION_VNUM="$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -U1 -r "$patch" -- src/version.c |
-      grep -Pzc '[ +]\/\*\*\/\n\+\s+[0-9]+,\n[ +]\/\*\*\/\n')" || true
-    test "$VERSION_VNUM" -eq 1 && return 0
-  fi
-  return 1
+  return 0
 }
 
 list_na_patches() {
