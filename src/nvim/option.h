@@ -33,6 +33,13 @@ typedef enum {
   OPT_SKIPRTP   = 0x80,  ///< "skiprtp" in 'sessionoptions'
 } OptionSetFlags;
 
+/// :set boolean option prefix
+typedef enum {
+  PREFIX_NO = 0,  ///< "no" prefix
+  PREFIX_NONE,    ///< no prefix
+  PREFIX_INV,     ///< "inv" prefix
+} set_prefix_T;
+
 /// Get name of OptValType as a string.
 static inline const char *optval_type_get_name(const OptValType type)
 {

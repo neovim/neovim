@@ -12,7 +12,7 @@ to look for deleting something, use: "/delete".
 
 For an overview of options see |option-list|.
 For an overview of built-in functions see |functions|.
-For a list of Vim variables see |vim-variable|.
+For a list of Vim variables see |vvars|.
 
                                       Type |gO| to see the table of contents.
 

@@ -465,6 +465,14 @@ int update_screen(void)
     return FAIL;
   }
 
+  // Restore actual curwin before redrawing.
+  win_T *save_curwin = autocmd_save_curwin ? win_find_by_handle(autocmd_save_curwin) : NULL;
+  win_T *restore_curwin = save_curwin != NULL ? curwin : NULL;
+  if (save_curwin != NULL) {
+    curwin = save_curwin;
+    curbuf = curwin->w_buffer;
+  }
+
   int type = must_redraw;
 
   // must_redraw is reset here, so that when we run into some weird
@@ -740,6 +748,13 @@ int update_screen(void)
   if (!ui_has(kUICmdline)) {
     cmdline_was_last_drawn = false;
   }
+
+  // Restore temporary autocmd curwin.
+  if (restore_curwin != NULL) {
+    curwin = restore_curwin;
+    curbuf = curwin->w_buffer;
+  }
+
   return OK;
 }
 

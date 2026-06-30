@@ -671,7 +671,7 @@ M.funcs = {
     args = 1,
     base = 1,
     desc = [=[
-      Adds buffer {name} to the buffer list literally: no special
+      Adds buffer {name} to the |buffer-list| literally: no special
       chars or expansion are applied (including "~"). Returns the
       new (or existing matching) buffer number, or 0 on error.
 
@@ -679,9 +679,9 @@ M.funcs = {
       {name} is an empty string, a new buffer is always created.
 
       Example (Lua): >lua
-      	local b = vim.fn.bufadd(vim.fs.normalize('someName'))
-      	vim.bo[b].buflisted = true
-      	vim.fn.bufload(b)
+      	local buf = vim.fn.bufadd(vim.fs.normalize('someName'))
+      	-- Set 'buflisted'; trigger BufReadPre/BufReadPost/FileType.
+      	vim.api.nvim_buf_call(buf, vim.cmd.edit)
       <
     ]=],
     name = 'bufadd',
@@ -6378,7 +6378,11 @@ M.funcs = {
         pty:	      (boolean) Connect the job to a new pseudo
       	      terminal, and its streams to the master file
       	      descriptor. `on_stdout` receives all output,
-      	      `on_stderr` is ignored. |terminal-start|
+      	      `on_stderr` is ignored. Note: if the child writes
+      	      a query (DA1, OSC, …), it may hang or timeout waiting
+      	      for a response! To avoid that, `on_stdout` should
+      	      reply via |nvim_chan_send()| on the child's stdin.
+      	      See |terminal-start| |terminal-concepts|
         rpc:	      (boolean) Use |msgpack-rpc| to communicate with
       	      the job over stdio. Then `on_stdout` is ignored,
       	      but `on_stderr` can still be used.
@@ -6389,11 +6393,12 @@ M.funcs = {
         stdin:      (string) Either "pipe" (default) to connect the
       	      job's stdin to a channel or "null" to disconnect
       	      stdin.
-        term:	    (boolean) Spawns {cmd} in a new pseudo-terminal session
-                connected to the current (unmodified) buffer. Implies "pty".
-                Default "height" and "width" are set to the current window
-                dimensions. |jobstart()|. Defaults $TERM to "xterm-256color".
-        width:      (number) Width of the `pty` terminal.
+        term:       (boolean) Spawns {cmd} in a new pseudo-terminal
+      	      session connected to the current (unmodified) buffer.
+      	      Implies "pty". Defaults "height" and "width" to the
+      	      current window dimensions. Defaults $TERM to
+      	      "xterm-256color".
+        width:      (number) Width of the `pty` pseudo-terminal.
 
       {opts} is passed as |self| dictionary to the callback; the
       caller may set other keys to pass application-specific data.
@@ -10106,14 +10111,13 @@ M.funcs = {
     args = 3,
     base = 3,
     desc = [=[
-      Set option or local variable {varname} in buffer {buf} to
-      {val}.
-      This also works for a global or local window option, but it
-      doesn't work for a global or local window variable.
-      For a local window option the global value is unchanged.
+      Set option or local variable {varname} (string, without "b:")
+      in buffer {buf} to {val}. Also works for a global or
+      window-local option (not variable). When targeting
+      a window-local option, the global option is unchanged.
+
       For the use of {buf}, see |bufname()| above.
-      The {varname} argument is a string.
-      Note that the variable name without "b:" must be used.
+
       Examples: >vim
       	call setbufvar(1, "&mod", 1)
       	call setbufvar("todo", "myvar", "foobar")

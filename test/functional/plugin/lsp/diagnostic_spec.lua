@@ -565,7 +565,7 @@ describe('vim.lsp.diagnostic', function()
 
     it('handles server cancellation', function()
       eq(
-        1,
+        2,
         exec_lua(function()
           vim.lsp.diagnostic.on_diagnostic({
             code = vim.lsp.protocol.ErrorCodes.ServerCancelled,
@@ -583,7 +583,7 @@ describe('vim.lsp.diagnostic', function()
       )
 
       eq(
-        2,
+        3,
         exec_lua(function()
           vim.lsp.diagnostic.on_diagnostic({
             code = vim.lsp.protocol.ErrorCodes.ServerCancelled,
@@ -600,7 +600,7 @@ describe('vim.lsp.diagnostic', function()
       )
 
       eq(
-        2,
+        3,
         exec_lua(function()
           vim.lsp.diagnostic.on_diagnostic({
             code = vim.lsp.protocol.ErrorCodes.ServerCancelled,
@@ -816,7 +816,7 @@ describe('vim.lsp.diagnostic', function()
 
         return _G.requests, vim.diagnostic.get(diagnostic_bufnr)
       end)
-      eq(1, requests)
+      eq(2, requests)
       eq(1, #refreshed_diags)
       eq(2, refreshed_diags[1].severity)
     end)

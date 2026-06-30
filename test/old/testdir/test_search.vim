@@ -2071,6 +2071,19 @@ func Test_search_match_paren()
   normal [(
   call assert_equal([1, 4], [line('.'), col('.')])
 
+  call setline(1, ['x" (a "b" )\', '")'])
+  call cursor(1, 4)
+  normal %
+  call assert_equal([1, 11], [line('.'), col('.')])
+  normal %
+  call assert_equal([1, 4], [line('.'), col('.')])
+  call cursor(1, 10)
+  normal [(
+  call assert_equal([1, 4], [line('.'), col('.')])
+  call cursor(1, 4)
+  normal ])
+  call assert_equal([1, 11], [line('.'), col('.')])
+
   " matching parenthesis in 'virtualedit' mode with cursor after the eol
   call setline(1, 'abc(defgh)')
   set virtualedit=all

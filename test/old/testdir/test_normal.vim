@@ -3081,6 +3081,9 @@ endfunc
 
 " Test for CTRL-\ commands
 func Test_normal40_ctrl_bsl()
+  " Nvim #40312: includes a cmdwin assertion that doesn't translate
+  " (cmdwin is now a normal window so CTRL-\ CTRL-N is a no-op there).
+  throw 'Skipped: Nvim supports cmdwin freedom #40312'
   new
   call append(0, 'here      are   some words')
   exe "norm! 1gg0a\<C-\>\<C-N>"
@@ -3239,11 +3242,8 @@ func Test_normal50_commandline()
   func! DoTimerWork(id)
     call assert_equal(1, getbufinfo('')[0].command)
 
-    " should fail, with E11, but does fail with E23?
-    "call feedkeys("\<c-^>", 'tm')
-
-    " should fail with E11 - "Invalid in command-line window"
-    call assert_fails(":wincmd p", 'E11')
+    " Nvim removed the E11 "Invalid in command-line window" restriction (#40312, #40484).
+    "call assert_fails(":wincmd p", 'E11')
 
     " Return from commandline window.
     call feedkeys("\<CR>", 't')

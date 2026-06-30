@@ -260,34 +260,33 @@ CTRL-^			Edit the alternate file.  Mostly the alternate file is
 			See |CTRL-^| above for further details.
 
 							*gf* *E446* *E447*
-[count]gf		Edit the file whose name is under or after the cursor.
+[count]gf		Edit the filename at (or after) cursor.
 			Mnemonic: "goto file".
-			Uses the 'isfname' option to find out which characters
-			are supposed to be in a file name.  Trailing
-			punctuation characters ".,:;!" are ignored.  Escaped
-			spaces "\ " are reduced to a single space.
-			Uses the 'path' option as a list of directory names to
-			look for the file.  See the 'path' option for details
-			about relative directories and wildcards.
-			Uses the 'suffixesadd' option to check for file names
-			with a suffix added.
-			If the file can't be found, 'includeexpr' is used to
-			modify the name and another attempt is done.
-			If a [count] is given, the count'th file that is found
-			in the 'path' is edited.
+
+			- The 'isfname' option decides what a filename is.
+			  Trailing punctuation characters ".,:;!" are ignored.
+			  Escaped spaces "\ " are reduced to a single space.
+			- The 'path' option decides where to look for the
+			  file, including relative directories and wildcards.
+			- The 'suffixesadd' option controls which suffixes
+			  (file extensions) are tried when building potential
+			  filepaths.
+			- If the search fails, it is retried after applying
+			  'includeexpr' to the filename.
+			- If a [count] is given, the count'th file that is
+			  found in the 'path' is edited.
+			- If the name is a URL ("type://machine/path"), you
+			  need the |netrw| plugin.
+			- Environment variables are expanded. |expand-env|.
+			- On unix: "~" is expanded.
+
 			This command fails if Vim refuses to |abandon| the
 			current file.
-			If you want to edit the file in a new window use
-			|CTRL-W_CTRL-F|.
+			See |CTRL-W_CTRL-F| to edit the file in a new window.
+
 			If you do want to edit a new file, use: >
 				:e <cfile>
-<			To make gf always work like that: >
-				:map gf :e <cfile><CR>
-<			If the name is a hypertext link, that looks like
-			"type://machine/path", you need the |netrw| plugin.
-			For Unix the '~' character is expanded, like in
-			"~user/file".  Environment variables are expanded too
-			|expand-env|.
+<
 
 							*v_gf*
 {Visual}[count]gf	Same as "gf", but the highlighted text is used as the
@@ -603,9 +602,8 @@ argument is subject to |cmdline-special| expansion, |wildcard| expansion, etc.
 
 Instead, to open a filepath literally, use `bufadd(vim.fs.normalize(…))`: >lua
 	local buf = vim.fn.bufadd(vim.fs.normalize(path))
-	vim.fn.bufload(buf) -- Trigger BufReadPre/BufReadPost/FileType.
-	vim.bo[buf].buflisted = true  -- Show in ":ls".
-	vim.api.nvim_win_set_buf(0, buf) -- Show in current window.
+	-- Set 'buflisted'; trigger BufReadPre/BufReadPost/FileType.
+	vim.api.nvim_buf_call(buf, vim.cmd.edit)
 
 Alternatively, |nvim_cmd()| and |vim.cmd()| accept a structured form whose
 `args` are tokenized verbatim. But the argument still goes through |:edit|'s
@@ -1229,8 +1227,8 @@ ZZ			Write current file, if modified, and close the current
 ZQ			Quit without checking for changes (same as ":q!").
 
 							*ZR*
-[count]ZR		Performs |:restart|. If a [count] is given, restarts
-			without checking for changes (":restart +qall!").
+[count]ZR		Performs |:restart!|. If a [count] is given, restarts
+			without checking for changes (":restart! +qall!").
 
 MULTIPLE WINDOWS AND BUFFERS				*window-exit*
 

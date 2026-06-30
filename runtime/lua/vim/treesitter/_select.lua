@@ -5,7 +5,7 @@ local Range = require('vim.treesitter._range')
 --- they get back to the child-node they were in instead of the parents first
 --- child-node.
 ---
---- @type {[integer]:vim.treesitter.select.node,[any]:any}
+--- @type {[integer]:{id:string,range:Range4},[any]:any}
 local history = {
   --- @type integer?
   bufnr = nil,
@@ -364,8 +364,10 @@ local function visual_select(range)
     ecol = #vim.fn.getline(erow + 1) + 1
   end
 
-  -- reset visualmode() to 'v'
-  vim.cmd.normal({ 'v\27', bang = true })
+  if vim.api.nvim_get_mode().mode ~= 'v' then
+    -- reset visualmode() to 'v'
+    vim.cmd.normal({ 'v\27', bang = true })
+  end
 
   vim.fn.setpos("'<", { 0, srow + 1, scol + 1, 0 })
   vim.fn.setpos("'>", { 0, erow + 1, ecol, 0 })
@@ -427,9 +429,13 @@ local function get_parent_from_range(range)
         changedtick = vim.b.changedtick,
       }
     end
-    table.insert(history, node)
-    history.current_node_id = node_id(parent)
 
+    table.insert(history, {
+      id = node_id(node),
+      range = node_range(node),
+    })
+
+    history.current_node_id = node_id(parent)
     return node_range(parent)
   end
 end
@@ -463,12 +469,12 @@ local function get_child_from_range(range)
     and history.changedtick == vim.b.changedtick
     and history.current_node_id == node_id(node)
   then
-    --- @type vim.treesitter.select.node
+    --- @type {id:string,range:Range4}
     local child = table.remove(history)
     if child then
-      history.current_node_id = node_id(child)
+      history.current_node_id = child.id
 
-      return node_range(child)
+      return child.range
     end
   end
   history = {}

@@ -871,9 +871,6 @@ function lsp._set_defaults(client, bufnr)
       end, { buf = bufnr, desc = 'vim.lsp.buf.hover()' })
     end
   end)
-  if client:supports_method('textDocument/diagnostic') then
-    lsp.diagnostic._enable(bufnr)
-  end
 end
 
 --- @deprecated

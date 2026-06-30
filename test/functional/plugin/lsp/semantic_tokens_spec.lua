@@ -335,6 +335,8 @@ describe('semantic token highlighting', function()
       -- modify the buffer
       feed('o<ESC>')
 
+      n.poke_eventloop()
+
       local messages = exec_lua('return _G.server_full.messages')
       local called_full = 0
       local called_range = 0

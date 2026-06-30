@@ -4,6 +4,7 @@
 "     (formerly Tim Pope <vimNOSPAM@tpope.info>)
 " Last Update:	By Ankit Jain (add gtk support) on 15.08.2020
 "		2024 Jan 14 by Vim Project (browsefilter)
+"		2026 Jun 27 by Vim Project (add recommended style guard)
 
 " Insert mode mappings: <C-T> <C-D> <Tab>
 " Normal mode mappings: < > << >> [[ ]] [] ][
@@ -20,8 +21,11 @@ set cpo&vim
 setlocal commentstring=\ \ \ \ \ \ *%s
 setlocal comments=:*
 setlocal fo+=croqlt
-setlocal expandtab
-setlocal textwidth=72
+if get(g:, 'cobol_recommended_style',
+      \ get(g:, 'filetype_recommended_style', 1))
+  setlocal expandtab
+  setlocal textwidth=72
+endif
 
 " matchit support
 if exists("loaded_matchit")

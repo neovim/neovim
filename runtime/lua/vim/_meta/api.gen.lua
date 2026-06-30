@@ -26,6 +26,14 @@ function vim.api.nvim__buf_stats(buf) end
 
 --- WARNING: This feature is experimental/unstable.
 ---
+--- Records the cmdwin scratchbuf and type, or clears both when type="" / buf=0. Internal use only.
+---
+--- @param type string ':', '/', '?' (first char only); empty to clear.
+--- @param buf integer cmdwin buffer id, or 0 to clear.
+function vim.api.nvim__cmdwin_set(type, buf) end
+
+--- WARNING: This feature is experimental/unstable.
+---
 --- Sets info for the completion item at the given index. If the info text was shown in a window,
 --- returns the window and buffer ids, or empty dict if not shown.
 ---
@@ -501,7 +509,7 @@ function vim.api.nvim_buf_get_lines(buf, start, end_, strict_indexing) end
 --- uppercase/file mark set in another buffer.
 function vim.api.nvim_buf_get_mark(buf, name) end
 
---- Gets the full file name for the buffer
+--- Gets the full/absolute filepath of the buffer, or the buffer name for non-file buffers.
 ---
 --- @param buf integer Buffer id, or 0 for current buffer
 --- @return string # Buffer name
@@ -967,12 +975,10 @@ function vim.api.nvim_create_autocmd(event, opts) end
 
 --- Creates a new, empty, unnamed buffer.
 ---
---- @see buf_open_scratch
 --- @param listed boolean Sets 'buflisted'
 --- @param scratch boolean Creates a "throwaway" `scratch-buffer` for temporary work
 --- (always 'nomodified'). Also sets 'nomodeline' on the buffer.
 --- @return integer # Buffer id, or 0 on error
----
 function vim.api.nvim_create_buf(listed, scratch) end
 
 --- Creates a new namespace or gets an existing one. [namespace]()
@@ -2301,12 +2307,18 @@ function vim.api.nvim_set_option(name, value) end
 --- @param value any New option value
 --- @param opts vim.api.keyset.option Optional parameters
 --- - buf: Buffer number. Used for setting buffer local option.
+--- - dry_run: (`boolean?`, default: false) If true, then the
+---   option value won't be set.
+--- - operation: One of "set", "append", "prepend", or "remove".
+---   Corresponds to `:set=`, `:set+=`, `:set^=`, and `:set-=`.
+---   Default is "set".
 --- - scope: One of "global" or "local". Analogous to
 --- `:setglobal` and `:setlocal`, respectively.
 --- - tab: `tab-ID` for tab-local options (currently only 'cmdheight'). Tabpage 0
 ---   means the current tabpage. If a non-current tab is given, the value will take
 ---   effect when it is switched-to.
 --- - win: `window-ID`. Used for setting window local option.
+--- @return any # Option value
 function vim.api.nvim_set_option_value(name, value, opts) end
 
 --- Sets a global (g:) variable.

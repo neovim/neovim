@@ -175,7 +175,6 @@ local function process_proto(item, state)
     'remote_only',
     'lua_only',
     'textlock',
-    'textlock_allow_cmdwin',
   }) do
     if item[a] then
       cur_obj.attrs = cur_obj.attrs or {}

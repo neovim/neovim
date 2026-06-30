@@ -1111,6 +1111,18 @@ void ml_recover(bool checkext)
           // Append all the lines in this block.
           bool has_error = false;
 
+          // Verify the cached block's actual size matches the
+          // pointer entry's pe_page_count.  mf_get() cache hits
+          // return the original block without resizing, so a
+          // crafted swap file referencing the same block twice
+          // with different pe_page_count values would cause an
+          // OOB write below.
+          if (hp->bh_page_count != page_count) {
+            error++;
+            ml_append(lnum++, _("??? BLOCK PAGE COUNT MISMATCH"), 0, true);
+            page_count = hp->bh_page_count;
+          }
+
           // Check the length of the block.
           // If wrong, use the length given in the pointer block.
           if (page_count * mfp->mf_page_size != dp->db_txt_end) {

@@ -102,6 +102,7 @@ static int current_augroup = AUGROUP_DEFAULT;
 static bool au_need_clean = false;
 
 static int autocmd_blocked = 0;  // block all autocmds
+static int aucmd_prepbuf_depth = 0;
 
 static bool autocmd_nested = false;
 static bool autocmd_include_groups = false;
@@ -764,7 +765,7 @@ void do_autocmd(exarg_T *eap, char *arg_in, int forceit)
   char *arg = arg_in;
   char *envpat = NULL;
   char *cmd;
-  bool need_free = false;
+  bool cmd_need_free = false;
   bool nested = false;
   bool once = false;
   int group;
@@ -833,7 +834,7 @@ void do_autocmd(exarg_T *eap, char *arg_in, int forceit)
     }
 
     if (invalid_flags) {
-      return;
+      goto err_exit;
     }
 
     // Find the start of the commands.
@@ -841,9 +842,9 @@ void do_autocmd(exarg_T *eap, char *arg_in, int forceit)
     if (*cmd != NUL) {
       cmd = expand_sfile(cmd);
       if (cmd == NULL) {  // some error
-        return;
+        goto err_exit;
       }
-      need_free = true;
+      cmd_need_free = true;
     }
   }
 
@@ -880,7 +881,8 @@ void do_autocmd(exarg_T *eap, char *arg_in, int forceit)
     }
   }
 
-  if (need_free) {
+err_exit:
+  if (cmd_need_free) {
     xfree(cmd);
   }
   xfree(envpat);
@@ -930,6 +932,10 @@ int do_autocmd_event(event_T event, const char *pat, bool once, int nested, cons
     if (is_buflocal) {
       const int buflocal_nr = aupat_get_buflocal_nr(pat, patlen);
 
+      if (buflocal_nr == 0 || buflist_findnr(buflocal_nr) == NULL) {
+        semsg(_(e_buffer_nr_invalid_buffer_number), buflocal_nr);
+        return FAIL;
+      }
       // normalize pat into standard "<buffer>#N" form
       aupat_normalize_buflocal_pat(buflocal_pat, pat, patlen, buflocal_nr);
 
@@ -999,6 +1005,10 @@ int autocmd_register(int64_t id, event_T event, const char *pat, int patlen, int
   if (is_buflocal) {
     buflocal_nr = aupat_get_buflocal_nr(pat, patlen);
 
+    if (buflocal_nr == 0 || buflist_findnr(buflocal_nr) == NULL) {
+      semsg(_(e_buffer_nr_invalid_buffer_number), buflocal_nr);
+      return FAIL;
+    }
     // normalize pat into standard "<buffer>#N" form
     aupat_normalize_buflocal_pat(buflocal_pat, pat, patlen, buflocal_nr);
 
@@ -1024,12 +1034,6 @@ int autocmd_register(int64_t id, event_T event, const char *pat, int patlen, int
 
   // No matching pattern found, allocate a new one.
   if (ap == NULL) {
-    // refuse to add buffer-local ap if buffer number is invalid
-    if (is_buflocal && (buflocal_nr == 0 || buflist_findnr(buflocal_nr) == NULL)) {
-      semsg(_("E680: <buffer=%d>: invalid buffer number "), buflocal_nr);
-      return FAIL;
-    }
-
     ap = xmalloc(sizeof(AutoPat));
 
     if (is_buflocal) {
@@ -1348,14 +1352,15 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
   curbuf = buf;
   aco->new_curwin_handle = curwin->handle;
   set_bufref(&aco->new_curbuf, curbuf);
-  if (aco->new_curwin_handle != aco->save_curwin_handle) {
-    aucmd_prepbuf_depth++;
-  }
 
   aco->save_VIsual_active = VIsual_active;
   if (!same_buffer) {
     // disable the Visual area, position may be invalid in another buffer
     VIsual_active = false;
+  }
+  if (aco->new_curwin_handle != aco->save_curwin_handle) {
+    autocmd_save_curwin = aucmd_prepbuf_depth == 0 ? aco->save_curwin_handle : autocmd_save_curwin;
+    aucmd_prepbuf_depth++;
   }
 }
 
@@ -1469,7 +1474,6 @@ win_found:
         curbuf->b_nwindows++;
       }
 
-      curwin->w_redr_status = true;
       curwin = save_curwin;
       curbuf = curwin->w_buffer;
       prevwin = win_find_by_handle(aco->save_prevwin_handle);
@@ -1489,6 +1493,7 @@ win_found:
   if (aco->new_curwin_handle != aco->save_curwin_handle) {
     assert(aucmd_prepbuf_depth > 0);
     aucmd_prepbuf_depth--;
+    autocmd_save_curwin = aucmd_prepbuf_depth == 0 ? 0 : autocmd_save_curwin;
   }
 }
 
@@ -2597,7 +2602,8 @@ int aupat_get_buflocal_nr(const char *pat, int patlen)
 
     // "<buffer=123>"
     if (skipdigits(pat + 8) == pat + patlen - 1) {
-      return atoi(pat + 8);
+      char *p = (char *)pat + 8;
+      return getdigits_int(&p, false, 0);
     }
   }
 

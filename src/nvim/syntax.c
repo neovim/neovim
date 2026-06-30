@@ -3234,8 +3234,19 @@ static void syn_cmd_list(exarg_T *eap, int syncing)
       msg_puts(_("syncing on C-style comments"));
       syn_lines_msg();
       syn_match_msg();
-      return;
-    } else if (!(curwin->w_s->b_syn_sync_flags & SF_MATCH)) {
+    } else if (curwin->w_s->b_syn_sync_flags & SF_MATCH) {
+      msg_puts_title(_("\n--- Syntax sync items ---"));
+      if (curwin->w_s->b_syn_sync_minlines > 0
+          || curwin->w_s->b_syn_sync_maxlines > 0
+          || curwin->w_s->b_syn_sync_linebreaks > 0) {
+        msg_puts(_("\nsyncing on items"));
+        syn_lines_msg();
+        syn_match_msg();
+      }
+      for (int id = 1; id <= highlight_num_groups() && !got_int; id++) {
+        syn_list_one(id, syncing, false);
+      }
+    } else {
       if (curwin->w_s->b_syn_sync_minlines == 0) {
         msg_puts(_("no syncing"));
       } else {
@@ -3248,19 +3259,11 @@ static void syn_cmd_list(exarg_T *eap, int syncing)
         }
         syn_match_msg();
       }
-      return;
     }
-    msg_puts_title(_("\n--- Syntax sync items ---"));
-    if (curwin->w_s->b_syn_sync_minlines > 0
-        || curwin->w_s->b_syn_sync_maxlines > 0
-        || curwin->w_s->b_syn_sync_linebreaks > 0) {
-      msg_puts(_("\nsyncing on items"));
-      syn_lines_msg();
-      syn_match_msg();
-    }
-  } else {
-    msg_puts_title(_("\n--- Syntax items ---"));
+    return;
   }
+
+  msg_puts_title(_("\n--- Syntax items ---"));
   if (ends_excmd(*arg)) {
     // No argument: List all group IDs and all syntax clusters.
     for (int id = 1; id <= highlight_num_groups() && !got_int; id++) {
@@ -5543,22 +5546,22 @@ void set_context_in_syntax_cmd(expand_T *xp, const char *arg)
   xp->xp_pattern = skipwhite(p);
   if (*skiptowhite(xp->xp_pattern) != NUL) {
     xp->xp_context = EXPAND_NOTHING;
-  } else if (STRNICMP(arg, "case", p - arg) == 0) {
+  } else if (STRNICMP(arg, "case", (size_t)(p - arg)) == 0) {
     expand_what = EXP_CASE;
-  } else if (STRNICMP(arg, "spell", p - arg) == 0) {
+  } else if (STRNICMP(arg, "spell", (size_t)(p - arg)) == 0) {
     expand_what = EXP_SPELL;
-  } else if (STRNICMP(arg, "sync", p - arg) == 0) {
+  } else if (STRNICMP(arg, "sync", (size_t)(p - arg)) == 0) {
     expand_what = EXP_SYNC;
-  } else if (STRNICMP(arg, "list", p - arg) == 0) {
+  } else if (STRNICMP(arg, "list", (size_t)(p - arg)) == 0) {
     p = skipwhite(p);
     if (*p == '@') {
       expand_what = EXP_CLUSTER;
     } else {
       xp->xp_context = EXPAND_HIGHLIGHT;
     }
-  } else if (STRNICMP(arg, "keyword", p - arg) == 0
-             || STRNICMP(arg, "region", p - arg) == 0
-             || STRNICMP(arg, "match", p - arg) == 0) {
+  } else if (STRNICMP(arg, "keyword", (size_t)(p - arg)) == 0
+             || STRNICMP(arg, "region", (size_t)(p - arg)) == 0
+             || STRNICMP(arg, "match", (size_t)(p - arg)) == 0) {
     xp->xp_context = EXPAND_HIGHLIGHT;
   } else {
     xp->xp_context = EXPAND_NOTHING;

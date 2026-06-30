@@ -1137,7 +1137,7 @@ static bool pum_set_selected(int n, int repeat)
         && (Rows > 10)
         && (repeat <= 1)
         && (cur_cot_flags & (kOptCotFlagPreview | kOptCotFlagPopup))
-        && !((cur_cot_flags & kOptCotFlagPreview) && cmdwin_type != 0)) {
+        && !((cur_cot_flags & kOptCotFlagPreview) && cmdwin_buf != NULL)) {
       win_T *curwin_save = curwin;
       tabpage_T *curtab_save = curtab;
 

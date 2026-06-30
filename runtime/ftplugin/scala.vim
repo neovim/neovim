@@ -5,6 +5,7 @@
 " License:              Same as Vim
 " Last Change:          11 August 2021
 "                       2023 Aug 28 by Vim Project (undo_ftplugin)
+"                       2026 Jun 27 by Vim Project (add recommended style guard)
 " ----------------------------------------------------------------------------
 
 if exists('b:did_ftplugin') || &cp
@@ -25,7 +26,10 @@ else
 endif
 setlocal commentstring=//\ %s
 
-setlocal shiftwidth=2 softtabstop=2 expandtab
+if get(g:, 'scala_recommended_style',
+      \ get(g:, 'filetype_recommended_style', 1))
+  setlocal shiftwidth=2 softtabstop=2 expandtab
+endif
 
 setlocal include=^\\s*import
 setlocal includeexpr=substitute(v:fname,'\\.','/','g')

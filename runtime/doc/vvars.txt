@@ -4,7 +4,7 @@
                 NVIM REFERENCE MANUAL
 
 
-Predefined variables                                             *vvars*
+Predefined variables					  *vvars* *v:var* *v:*
 
 Most variables are read-only, when a variable can be set by the user, it will
 be mentioned at the variable description below.  The type cannot be changed.
@@ -636,8 +636,9 @@ v:stacktrace
 				*v:startreason* *startreason-variable*
 v:startreason
 		The reason Nvim started. Possible values:
-		  - "normal"    normal startup.
-		  - "restart"   started by |:restart| or |ZR|.
+		- "normal"    Normal startup, yearning for life, etc.
+		- "restart"   Started by |:restart|.
+		- "restart!"  Started by |:restart!| or |ZR|.
 
 		Read-only.
 
@@ -762,7 +763,7 @@ v:true
 		operator) and to one when used as a Number (e.g. in |expr5| or
 		|expr7| when used with numeric operators).  Read-only.
 
-				*v:useractive* *useractive-variable*
+			*v:useractive* *useractive-variable* *user-idle*
 v:useractive
 		Timestamp (nanoseconds since UNIX epoch) indicating the most
 		recent user activity, i.e. when a key is received from a UI

@@ -668,8 +668,9 @@ vim.v.shell_error = ...
 vim.v.stacktrace = ...
 
 --- The reason Nvim started. Possible values:
----   - "normal"    normal startup.
----   - "restart"   started by `:restart` or `ZR`.
+--- - "normal"    Normal startup, yearning for life, etc.
+--- - "restart"   Started by `:restart`.
+--- - "restart!"  Started by `:restart!` or `ZR`.
 ---
 --- Read-only.
 --- @type string

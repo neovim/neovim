@@ -358,7 +358,7 @@ preference):
 4. `on_error` callback
   - For async and "visitors" traversing a graph, where many errors may be
     collected while work continues.
-5. `vim.notify` (sometimes with optional `opts.silent` (async, visitors))
+5. `nvim_echo` (consider `opts.silent` for async/visitors)
   - High-level / application-level messages. End-user invokes these directly.
 
 
@@ -409,9 +409,16 @@ API PATTERNS                                                *dev-api-patterns*
     filter(…, opts, fn)
     -- ❌ NO:
     filter(…, fn, opts)
-- Expose a `config(opts)` function if the module accepts user configuration.
-  If `opts` is omitted (or `nil`) it returns the current configuration.
-  - Example: See |vim.diagnostic.config()|.
+- If the module or topic wants to support configuration:
+  - Prefer a new 'option' (or family of related options, or "xxoptions" style
+    such as 'jumpoptions'). Options get these benefits "for free":
+    - Completion: `:set a<tab>`, `:lua vim.o.a<tab>`
+    - |OptionSet| event
+    - Scopes: global/buf/win/tab (can start as global, then "graduate" later)
+    - UI: `:verbose set`, `:options`, etc.
+  - Alternatively if the editor |options| system absolutey doesn't fit: Expose
+    a `config(opts)` interface (example: |vim.diagnostic.config()|). If `opts`
+    is omitted (or `nil`) it returns the current configuration.
 - "Enable" ("toggle") interface and behavior:
   - `enable(…, nil)` and `enable(…, {buf=nil})` are synonyms and control
     the "global" enablement of a feature.

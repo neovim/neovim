@@ -154,10 +154,10 @@ attempting to open, and so one may specify >
 for each site in a separate file: c:\Users\MyUserName\MachineName.
 
 Now about browsing -- when you just want to look around before editing a
-file.  For browsing on your current host, just "edit" a directory: >
+file.  For netrw browsing on your current host, use |:Explore|: >
 
-	vim .
-	vim /home/userid/path
+	:Explore .
+	:Explore /home/userid/path
 <
 For browsing on a remote host, "edit" a directory (but make sure that
 the directory name is followed by a "/"): >
@@ -944,11 +944,11 @@ moving (renaming) files and directories, copying files and directories, etc.
 One may mark files and execute any system command on them!  The Netrw browser
 generally implements the previous explorer's maps and commands for remote
 directories, although details (such as pertinent global variable names)
-necessarily differ.  To browse a directory, simply "edit" it! >
+necessarily differ.  To browse a local directory with netrw, use |:Explore|: >
 
-	vim /your/directory/
-	vim .
-	vim c:\your\directory\
+	:Explore /your/directory/
+	:Explore .
+	:Explore c:\your\directory\
 <
 (Related topics: |netrw-cr|  |netrw-o|  |netrw-p| |netrw-P| |netrw-t|
                  |netrw-mf|  |netrw-mx| |netrw-D| |netrw-R| |netrw-v| )
@@ -1344,7 +1344,7 @@ the tree style will become your default listing style.
 
 One typical way to use the netrw tree display is to: >
 
-	vim .
+	:Explore .
 	(use i until a tree display shows)
 	navigate to a file
 	v  (edit as desired in vertically split window)
@@ -1600,9 +1600,9 @@ The optional parameters are:
 	   that window.
 
 	   Return from Explorer~
-	   Conversely, when one is editing a directory, issuing a :Rexplore
-	   will return to editing the file that was last edited in that
-	   window.
+	   Conversely, when one is using a netrw directory browser, issuing a
+	   :Rexplore will return to editing the file that was last edited in
+	   that window.
 
 	   The <2-leftmouse> map (which is only available under gvim and
 	   cooperative terms) does the same as :Rexplore.
@@ -3029,9 +3029,8 @@ Also see: |g:netrw_chgwin| |netrw-p|
 
 REFRESHING THE LISTING		*netrw-refresh* *netrw-ctrl-l* *netrw-ctrl_l* {{{2
 
-To refresh either a local or remote directory listing, press ctrl-l (<c-l>) or
-hit the <cr> when atop the ./ directory entry in the listing.  One may also
-refresh a local directory by using ":e .".
+To refresh either a local or remote netrw directory listing, press ctrl-l
+(<c-l>) or hit the <cr> when atop the ./ directory entry in the listing.
 
 
 REVERSING SORTING ORDER		*netrw-r* *netrw-reverse* {{{2
@@ -3417,7 +3416,7 @@ Example: Clear netrw's marked file list via a mapping on gu >
 
 		* Put the following line in your <.vimrc>:
 			let g:netrw_altv = 1
-		* Edit the current directory:  :e .
+		* Explore the current directory:  :Explore .
 		* Select some file, press v
 		* Resize the windows as you wish (see |CTRL-W_<| and
 		  |CTRL-W_>|).  If you're using gvim, you can drag

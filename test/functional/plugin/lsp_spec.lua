@@ -2932,6 +2932,52 @@ describe('LSP', function()
   end)
 
   describe('cmd', function()
+    it('cmd string[] CWD', function()
+      local root_dir = tmpname(false)
+      local cmd_cwd = tmpname(false)
+      mkdir(root_dir)
+      mkdir(cmd_cwd)
+
+      local cwd = exec_lua(function()
+        return assert(vim.uv.cwd())
+      end)
+
+      local cases = {
+        {
+          desc = 'cmd_cwd takes precedence',
+          config = { name = 'cwd-test-cmd-cwd', root_dir = root_dir, cmd_cwd = cmd_cwd },
+          expected_cwd = cmd_cwd,
+        },
+        {
+          desc = 'root_dir is used when cmd_cwd is unset',
+          config = { name = 'cwd-test-root-dir', root_dir = root_dir },
+          expected_cwd = root_dir,
+        },
+        {
+          desc = 'current cwd is used when cmd_cwd and root_dir are unset',
+          config = { name = 'cwd-test-current-cwd' },
+          expected_cwd = cwd,
+        },
+      }
+
+      for _, case in ipairs(cases) do
+        local outfile = tmpname(false)
+        local config = vim.tbl_extend('force', {
+          cmd = {
+            n.nvim_prog,
+            '--clean',
+            '--headless',
+            ('+call writefile([getcwd()], %q)'):format(outfile),
+            '+qa!',
+          },
+        }, case.config)
+        exec_lua(function(conf)
+          assert(vim.lsp.start(conf, { attach = false }))
+        end, config)
+        t.assert_log(vim.pesc(case.expected_cwd), outfile)
+      end
+    end)
+
     it('connects to lsp server via rpc.connect using ip address', function()
       exec_lua(create_tcp_echo_server)
       exec_lua(function()
@@ -3730,6 +3776,8 @@ describe('LSP', function()
 
           exec_lua(create_server_definition)
           local result = exec_lua(function()
+            local logfile = vim.lsp.log.get_filename()
+            vim.fn.writefile({ '' }, logfile)
             local server = _G._create_server()
             local client_id = assert(vim.lsp.start({
               name = 'watchfiles-test',
@@ -3771,6 +3819,17 @@ describe('LSP', function()
                   registerOptions = {
                     watchers = {
                       {
+                        globPattern = 'a/**b',
+                        kind = 7,
+                      },
+                      {
+                        globPattern = {
+                          baseUri = vim.uri_from_fname(root_dir),
+                          pattern = '{foo}',
+                        },
+                        kind = 7,
+                      },
+                      {
                         globPattern = '**/watch',
                         kind = 7,
                       },
@@ -3797,12 +3856,13 @@ describe('LSP', function()
 
             vim.lsp.get_client_by_id(client_id):stop()
 
-            return server.messages
+            return { logfile = logfile, messages = server.messages }
           end)
 
           local uri = vim.uri_from_fname(root_dir .. '/watch')
+          local messages = result.messages
 
-          eq(6, #result)
+          eq(6, #messages)
 
           eq({
             method = 'workspace/didChangeWatchedFiles',
@@ -3814,7 +3874,7 @@ describe('LSP', function()
                 },
               },
             },
-          }, result[3])
+          }, messages[3])
 
           eq({
             method = 'workspace/didChangeWatchedFiles',
@@ -3826,7 +3886,18 @@ describe('LSP', function()
                 },
               },
             },
-          }, result[4])
+          }, messages[4])
+
+          t.assert_log(
+            '%[ERROR%].-skipping invalid workspace/didChangeWatchedFiles globPattern.-'
+              .. pesc('a/**b'),
+            result.logfile
+          )
+          t.assert_log(
+            '%[ERROR%].-skipping invalid workspace/didChangeWatchedFiles globPattern.-'
+              .. pesc('{foo}'),
+            result.logfile
+          )
         end
       )
     end

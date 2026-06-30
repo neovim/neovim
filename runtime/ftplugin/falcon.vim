@@ -5,6 +5,7 @@
 " License:      You may redistribute this under the same terms as Vim itself
 " Last Update:  2020 Oct 10
 "               2024 Jan 14 by Vim Project (browsefilter)
+"               2026 Jun 27 by Vim Project (add recommended style guard)
 " --------------------------------------------------------------------------
 
 " Only do this when not done yet for this buffer
@@ -16,7 +17,10 @@ let b:did_ftplugin = 1
 let s:cpo_save = &cpo
 set cpo&vim
 
-setlocal softtabstop=4 shiftwidth=4
+if get(g:, 'falcon_recommended_style',
+      \ get(g:, 'filetype_recommended_style', 1))
+  setlocal softtabstop=4 shiftwidth=4
+endif
 setlocal suffixesadd=.fal,.ftd
 
 " Matchit support

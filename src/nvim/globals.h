@@ -735,12 +735,8 @@ EXTERN char *last_chdir_reason INIT( = NULL);
 EXTERN bool km_stopsel INIT( = false);
 EXTERN bool km_startsel INIT( = false);
 
-EXTERN int cmdwin_type INIT( = 0);    ///< type of cmdline window or 0
-EXTERN int cmdwin_result INIT( = 0);  ///< result of cmdline window or 0
-EXTERN int cmdwin_level INIT( = 0);   ///< cmdline recursion level
-EXTERN buf_T *cmdwin_buf INIT( = NULL);  ///< buffer of cmdline window or NULL
-EXTERN win_T *cmdwin_win INIT( = NULL);  ///< window of cmdline window or NULL
-EXTERN win_T *cmdwin_old_curwin INIT( = NULL);  ///< curwin before opening cmdline window or NULL
+EXTERN int cmdwin_type INIT( = 0);  ///< |cmdwin| type (':', '/', '?') or 0.
+EXTERN buf_T *cmdwin_buf INIT( = NULL);  ///< |cmdwin| scratch buffer, or NULL.
 EXTERN win_T *cmdline_win INIT( = NULL);  ///< window in use by ext_cmdline
 
 EXTERN char no_lines_msg[] INIT( = N_("--No lines in buffer--"));
@@ -801,8 +797,6 @@ EXTERN char windowsVersion[20] INIT( = { 0 });
 /// overrules p_magic.  Otherwise set to OPTION_MAGIC_NOT_SET.
 EXTERN optmagic_T magic_overruled INIT( = OPTION_MAGIC_NOT_SET);
 
-/// Skip win_fix_cursor() call for 'splitkeep' when cmdwin is closed.
-EXTERN bool skip_win_fix_cursor INIT( = false);
 /// Skip win_fix_scroll() call for 'splitkeep' when closing tab page.
 EXTERN bool skip_win_fix_scroll INIT( = false);
 /// Skip update_topline() call while executing win_fix_scroll().

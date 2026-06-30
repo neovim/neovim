@@ -54,7 +54,12 @@ def_autocmd('BufWriteCmd', {}, function(ev)
   local buflines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
   local ret = vim.fn.writefile(shada_get_binstrings(buflines), ev.file, 'b')
   if ret == 0 then
-    vim.bo[ev.buf].modified = false
+    -- To check that we are not saving into a different file, we must compare ev.match (always an
+    -- absolute path), and not ev.file (can be relative), against nvim_buf_get_name() (always
+    -- returns an absolute path).
+    if ev.match == vim.api.nvim_buf_get_name(ev.buf) or vim.o.cpoptions:find('%+') then
+      vim.bo[ev.buf].modified = false
+    end
   end
 end)
 

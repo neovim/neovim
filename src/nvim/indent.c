@@ -67,9 +67,11 @@ bool tabstop_set(char *var, colnr_T **array)
 
   for (char *cp = var; *cp != NUL; cp++) {
     if (cp == var || cp[-1] == ',') {
-      char *end;
+      char *end = cp;
 
-      if (strtol(cp, &end, 10) <= 0) {
+      // Use def=1 so that overflow/too-large values pass this check and are
+      // instead rejected by the "n > TABSTOP_MAX" check in the loop below.
+      if (getdigits(&end, false, 1) <= 0) {
         if (cp != end) {
           emsg(_(e_positive));
         } else {

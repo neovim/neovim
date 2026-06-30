@@ -2753,7 +2753,7 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
   compl_num_bests = 0;
   compl_ins_end_col = 0;
 
-  if (c == Ctrl_C && cmdwin_type != 0) {
+  if (c == Ctrl_C && bt_cmdwin(curbuf)) {
     // Avoid the popup menu remains displayed when leaving the
     // command line window.
     update_screen();
@@ -5565,9 +5565,9 @@ void ins_compl_check_keys(int frequency, bool in_compl_func)
       // back with vungetc() below.  But skip K_IGNORE.
       c = safe_vgetc();
       if (c != K_IGNORE) {
-        // Don't interrupt completion when the character wasn't typed,
-        // e.g., when doing @q to replay keys.
-        if (c != Ctrl_R && KeyTyped) {
+        // Typed keys that get mapped lose KeyTyped. Still let
+        // complete_check() interrupt, except during @r replay.
+        if (c != Ctrl_R && (KeyTyped || (in_compl_func && reg_executing == 0))) {
           compl_interrupted = true;
         }
 

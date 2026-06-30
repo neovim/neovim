@@ -140,6 +140,7 @@ void test_more()
   // Try getenv and setenv
   char *env = getenv("HOME");  // Should trigger runtime/os_fn
   setenv("TEST", "value", 1);   // Should trigger runtime/os_fn
+  long n = strtol(env, NULL, 10);  // Should trigger runtime/deprecated
 }
 
 int main()

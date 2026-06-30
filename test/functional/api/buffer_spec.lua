@@ -975,6 +975,10 @@ describe('api/buf', function()
       eq('hello foo!', curbuf_depr('get_line', 0))
       -- cursor should be moved left by two columns (replacement is shorter by 2 chars)
       eq({ 1, 9 }, api.nvim_win_get_cursor(0))
+
+      -- changelist entry reflects the edit column #28618
+      local changes = fn.getchangelist()[1]
+      eq(6, changes[#changes].col)
     end)
 
     it('updates the cursor position in non-current window', function()

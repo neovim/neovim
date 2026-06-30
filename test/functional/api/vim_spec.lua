@@ -1940,16 +1940,16 @@ describe('API', function()
         "Invalid 'scope': expected String, got Integer",
         pcall_err(api.nvim_get_option_value, 'scrolloff', { scope = 42 })
       )
-      eq(
-        "Invalid 'value': expected valid option type, got Array",
+      matches(
+        "Invalid 'scrolloff': expected a valid type, got Array",
         pcall_err(api.nvim_set_option_value, 'scrolloff', {}, {})
       )
-      eq(
-        "Invalid value for option 'scrolloff': expected number, got boolean true",
+      matches(
+        "Invalid 'scrolloff': expected a valid type, got Boolean",
         pcall_err(api.nvim_set_option_value, 'scrolloff', true, {})
       )
-      eq(
-        'Invalid value for option \'scrolloff\': expected number, got string "wrong"',
+      matches(
+        "Invalid 'scrolloff': expected a valid type, got String",
         pcall_err(api.nvim_set_option_value, 'scrolloff', 'wrong', {})
       )
       local tab1 = api.nvim_get_current_tabpage()
@@ -1983,6 +1983,14 @@ describe('API', function()
       eq(
         "Conflict: 'filetype' not allowed with 'scope', 'buf', 'win' or 'tab'",
         pcall_err(api.nvim_get_option_value, 'cmdheight', { filetype = 'c', tab = 0 })
+      )
+      eq(
+        "Invalid 'operation': expected 'set', 'append', 'prepend', or 'remove'",
+        pcall_err(api.nvim_set_option_value, 'wildignore', { 'x' }, { operation = 'bogus' })
+      )
+      eq(
+        "Conflict: 'append' not allowed with boolean options",
+        pcall_err(api.nvim_set_option_value, 'number', true, { operation = 'append' })
       )
     end)
 
@@ -2242,6 +2250,217 @@ describe('API', function()
       eq(0, eval('g:swapfile'))
       eq(0, eval('g:modeline'))
       eq(1, eval('g:bufloaded'))
+    end)
+
+    it('expands env vars', function()
+      -- I don't know why setting vim.env.INCLUDE doesn't work here.
+      clear { env = { INCLUDE = '/dev/null' } }
+      api.nvim_set_option_value('path', '$INCLUDE', {})
+      eq('/dev/null', api.nvim_get_option_value('path', {}))
+    end)
+
+    it('expands ~', function()
+      clear { env = { HOME = '/dev/null' } }
+      api.nvim_set_option_value('rtp', '~', {})
+      eq('/dev/null', api.nvim_get_option_value('rtp', {}))
+    end)
+
+    it('allows setting, appending, prepending, and removing lists', function()
+      api.nvim_set_option_value('wildignore', { '*.o', '*.obj' }, {})
+      eq('*.o,*.obj', api.nvim_get_option_value('wildignore', {}))
+
+      api.nvim_set_option_value('wildignore', { '*.a', '*.b', '*.c' }, { operation = 'append' })
+      eq('*.o,*.obj,*.a,*.b,*.c', api.nvim_get_option_value('wildignore', {}))
+
+      api.nvim_set_option_value('wildignore', { '1', '2', '3' }, { operation = 'prepend' })
+      eq('1,2,3,*.o,*.obj,*.a,*.b,*.c', api.nvim_get_option_value('wildignore', {}))
+
+      -- NOTE: you can't remove something like { '1', '*.obj' } because lists
+      -- only support removing items in order. Behavior matches :set-=
+      api.nvim_set_option_value('wildignore', { '1', '2', '3' }, { operation = 'remove' })
+      eq('*.o,*.obj,*.a,*.b,*.c', api.nvim_get_option_value('wildignore', {}))
+
+      api.nvim_set_option_value('wildignore', {}, {})
+      eq('', api.nvim_get_option_value('wildignore', {}))
+    end)
+
+    it('allows setting, appending, prepending, removing dicts', function()
+      -- NOTE: order is dependent on lua's hash map implementation. I don't
+      -- *think* order matters for the map style options
+      api.nvim_set_option_value('listchars', { eol = '~', space = '-' }, {})
+      eq('eol:~,space:-', api.nvim_get_option_value('listchars', {}))
+
+      api.nvim_set_option_value(
+        'listchars',
+        { multispace = '---+', tab = '>-' },
+        { operation = 'append' }
+      )
+      eq('eol:~,space:-,multispace:---+,tab:>-', api.nvim_get_option_value('listchars', {}))
+
+      api.nvim_set_option_value('listchars', { lead = '.' }, { operation = 'prepend' })
+      eq('lead:.,eol:~,space:-,multispace:---+,tab:>-', api.nvim_get_option_value('listchars', {}))
+
+      api.nvim_set_option_value(
+        'listchars',
+        { lead = '', multispace = '' },
+        { operation = 'remove' }
+      )
+      eq('eol:~,space:-,tab:>-', api.nvim_get_option_value('listchars', {}))
+
+      -- A bare key (string or 1-item list) removes the matching "key:value" item by key.
+      api.nvim_set_option_value('listchars', { 'space' }, { operation = 'remove' })
+      eq('eol:~,tab:>-', api.nvim_get_option_value('listchars', {}))
+
+      api.nvim_set_option_value('listchars', vim.empty_dict(), {})
+      eq('', api.nvim_get_option_value('listchars', {}))
+    end)
+
+    it('returns the new option value', function()
+      eq(
+        { eol = '~', space = '-' },
+        api.nvim_set_option_value('listchars', { eol = '~', space = '-' }, {})
+      )
+      eq('eol:~,space:-', api.nvim_get_option_value('listchars', {}))
+      eq(
+        { eol = '~', space = '-', tab = '>-' },
+        api.nvim_set_option_value('listchars', { tab = '>-' }, { operation = 'append' })
+      )
+      eq('eol:~,space:-,tab:>-', api.nvim_get_option_value('listchars', {}))
+
+      -- Scalar option types return their plain value.
+      eq(7, api.nvim_set_option_value('scrolloff', 7, {}))
+      eq(true, api.nvim_set_option_value('number', true, {}))
+      eq(false, api.nvim_set_option_value('number', false, {}))
+      eq('foo', api.nvim_set_option_value('makeprg', 'foo', {}))
+    end)
+
+    it("dry_run doesn't update option value", function()
+      local listchars = api.nvim_get_option_value('listchars', {})
+      eq(
+        { eol = '~', space = '-' },
+        api.nvim_set_option_value('listchars', { eol = '~', space = '-' }, { dry_run = true })
+      )
+      eq(listchars, api.nvim_get_option_value('listchars', {}))
+
+      -- dry_run also applies to operations: returns the merged result (5 + 10) without setting it.
+      api.nvim_set_option_value('scrolloff', 5, {})
+      eq(15, api.nvim_set_option_value('scrolloff', 10, { operation = 'append', dry_run = true }))
+      eq(5, api.nvim_get_option_value('scrolloff', {}))
+    end)
+
+    it('merges options against non-current window', function()
+      api.nvim_set_option_value('listchars', {}, { operation = 'set' })
+
+      local oldwin = fn.win_getid()
+      command('split')
+      local curwin = fn.win_getid()
+      neq(oldwin, curwin)
+
+      eq(
+        { eol = '~' },
+        api.nvim_set_option_value(
+          'listchars',
+          { eol = '~' },
+          { operation = 'append', win = oldwin }
+        )
+      )
+      eq(
+        { tab = '>-' },
+        api.nvim_set_option_value(
+          'listchars',
+          { tab = '>-' },
+          { operation = 'append', win = curwin }
+        )
+      )
+      eq(
+        { eol = '~', space = '-' },
+        api.nvim_set_option_value(
+          'listchars',
+          { space = '-' },
+          { operation = 'append', win = oldwin }
+        )
+      )
+      eq(
+        { lead = '.', tab = '>-' },
+        api.nvim_set_option_value(
+          'listchars',
+          { lead = '.' },
+          { operation = 'append', win = curwin }
+        )
+      )
+    end)
+
+    it('merges options against non-current buffer', function()
+      eq({}, api.nvim_set_option_value('completeopt', {}, { operation = 'set' }))
+
+      local oldbuf = fn.bufnr()
+      command('new')
+      local curbuf = fn.bufnr()
+      neq(oldbuf, curbuf)
+
+      eq(
+        { 'fuzzy' },
+        api.nvim_set_option_value(
+          'completeopt',
+          { 'fuzzy' },
+          { operation = 'append', buf = oldbuf }
+        )
+      )
+      eq(
+        { 'longest' },
+        api.nvim_set_option_value(
+          'completeopt',
+          { 'longest' },
+          { operation = 'append', buf = curbuf }
+        )
+      )
+      eq(
+        { 'fuzzy', 'menu' },
+        api.nvim_set_option_value('completeopt', { 'menu' }, { operation = 'append', buf = oldbuf })
+      )
+      eq(
+        { 'longest', 'noinsert' },
+        api.nvim_set_option_value(
+          'completeopt',
+          { 'noinsert' },
+          { operation = 'append', buf = curbuf }
+        )
+      )
+    end)
+
+    it('applies operations to number options', function()
+      -- For number options the operations are arithmetic. `:set {number}+= ^= -=`
+      api.nvim_set_option_value('scrolloff', 5, {})
+      eq(8, api.nvim_set_option_value('scrolloff', 3, { operation = 'append' }))
+      eq(8, api.nvim_get_option_value('scrolloff', {}))
+
+      api.nvim_set_option_value('scrolloff', 5, {})
+      eq(15, api.nvim_set_option_value('scrolloff', 3, { operation = 'prepend' }))
+      eq(15, api.nvim_get_option_value('scrolloff', {}))
+
+      api.nvim_set_option_value('scrolloff', 5, {})
+      eq(3, api.nvim_set_option_value('scrolloff', 2, { operation = 'remove' }))
+      eq(3, api.nvim_get_option_value('scrolloff', {}))
+    end)
+
+    it('applies operations to flag-list and plain string options', function()
+      -- Flag-list option (no separator); the return value is the Lua map form.
+      api.nvim_set_option_value('formatoptions', 'tc', {})
+      eq(
+        { t = true, c = true, q = true },
+        api.nvim_set_option_value('formatoptions', 'q', { operation = 'append' })
+      )
+      eq('tcq', api.nvim_get_option_value('formatoptions', {}))
+      eq(
+        { c = true, q = true },
+        api.nvim_set_option_value('formatoptions', 't', { operation = 'remove' })
+      )
+      eq('cq', api.nvim_get_option_value('formatoptions', {}))
+
+      -- Plain (non-list) string option: append concatenates with no separator.
+      api.nvim_set_option_value('makeprg', 'make', {})
+      eq('make!', api.nvim_set_option_value('makeprg', '!', { operation = 'append' }))
+      eq('make!', api.nvim_get_option_value('makeprg', {}))
     end)
   end)
 

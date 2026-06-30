@@ -43,7 +43,8 @@ describe('clint.lua', function()
       'test/functional/fixtures/clint_test.c:138:  Use xfree(...) instead of free(...).  [runtime/memory_fn] [2]',
       'test/functional/fixtures/clint_test.c:141:  Use os_getenv(...) instead of getenv(...).  [runtime/os_fn] [2]',
       'test/functional/fixtures/clint_test.c:142:  Use os_setenv(...) instead of setenv(...).  [runtime/os_fn] [2]',
-      'Total errors found: 28',
+      'test/functional/fixtures/clint_test.c:143:  Use getdigits()/getdigits_int() (or vim_str2nr() for non-decimal bases) instead of strtol, which overflows silently. See src/nvim/charset.c.  [runtime/deprecated] [4]',
+      'Total errors found: 29',
     }
     t.eq(expected, output_lines)
   end)

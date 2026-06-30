@@ -9,6 +9,7 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
+#include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/errors.h"
 #include "nvim/eval/funcs.h"
@@ -277,8 +278,8 @@ static int get_winnr(tabpage_T *tp, typval_T *argvar)
       }
     } else {
       // Extract the window count (if specified). e.g. winnr('3j')
-      char *endp;
-      int count = (int)strtol(arg, &endp, 10);
+      char *endp = (char *)arg;
+      int count = getdigits_int(&endp, false, 0);
       if (count <= 0) {
         // if count is not specified, default to 1
         count = 1;
@@ -776,7 +777,7 @@ void f_win_gettype(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     rettv->vval.v_string = xstrdup("preview");
   } else if (wp->w_floating) {
     rettv->vval.v_string = xstrdup("popup");
-  } else if (wp == cmdwin_win) {
+  } else if (bt_cmdwin(wp->w_buffer)) {
     rettv->vval.v_string = xstrdup("command");
   } else if (bt_quickfix(wp->w_buffer)) {
     rettv->vval.v_string = xstrdup((wp->w_llist_ref != NULL ? "loclist" : "quickfix"));

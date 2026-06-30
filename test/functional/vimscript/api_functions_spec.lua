@@ -10,7 +10,6 @@ local insert, pcall_err = n.insert, t.pcall_err
 local matches = t.matches
 local api = n.api
 local feed = n.feed
-local command = n.command
 
 describe('eval-API', function()
   before_each(clear)
@@ -61,7 +60,7 @@ describe('eval-API', function()
     eq('Vim(call):E5555: API call: Invalid buffer id: 17', err)
   end)
 
-  it('cannot change text or window if textlocked', function()
+  it('cannot change text or window if textlock', function()
     command('autocmd TextYankPost <buffer> ++once call nvim_buf_set_lines(0, 0, -1, v:false, [])')
     matches(
       'Vim%(call%):E5555: API call: E565: Not allowed to change text or change window$',
@@ -91,16 +90,19 @@ describe('eval-API', function()
       api.nvim_get_vvar('errmsg')
     )
 
-    -- Some functions checking textlock (usually those that may change the current window or buffer)
-    -- also ought to not be usable in the cmdwin.
+    -- cmdwin (#40312, #40484): E11 "Invalid in command-line window" restriction was removed.
     local old_win = api.nvim_get_current_win()
     feed('q:')
-    eq(
-      'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
-      pcall_err(api.nvim_set_current_win, old_win)
-    )
+    local cmdwin_win = api.nvim_get_current_win()
+    neq(old_win, cmdwin_win)
+    -- Switching to another window from the cmdwin now works (previously E11).
+    api.nvim_set_current_win(old_win)
+    eq(old_win, api.nvim_get_current_win())
+    -- ...and back into the cmdwin.
+    api.nvim_set_current_win(cmdwin_win)
+    eq(cmdwin_win, api.nvim_get_current_win())
 
-    -- But others, like nvim_buf_set_lines(), which just changes text, is OK.
+    -- nvim_buf_set_lines() in the cmdwin buffer is OK.
     api.nvim_buf_set_lines(0, 0, -1, 1, { 'wow!' })
     eq({ 'wow!' }, api.nvim_buf_get_lines(0, 0, -1, 1))
 

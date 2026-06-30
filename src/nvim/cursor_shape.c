@@ -145,7 +145,7 @@ const char *parse_shape_opt(int what)
             all_idx = SHAPE_IDX_COUNT - 1;
           } else {
             for (idx = 0; idx < SHAPE_IDX_COUNT; idx++) {
-              if (STRNICMP(modep, shape_table[idx].name, len) == 0) {
+              if (STRNICMP(modep, shape_table[idx].name, (size_t)len) == 0) {
                 break;
               }
             }

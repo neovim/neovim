@@ -325,7 +325,7 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buf, Integer start, Integer 
                         Boolean strict_indexing, ArrayOf(String) replacement, Arena *arena,
                         Error *err)
   FUNC_API_SINCE(1)
-  FUNC_API_TEXTLOCK_ALLOW_CMDWIN
+  FUNC_API_TEXTLOCK
 {
   buf_T *b = api_buf_ensure_loaded(buf, err);
 
@@ -485,7 +485,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buf, Integer start_row, Integ
                        Integer end_row, Integer end_col, ArrayOf(String) replacement, Arena *arena,
                        Error *err)
   FUNC_API_SINCE(7)
-  FUNC_API_TEXTLOCK_ALLOW_CMDWIN
+  FUNC_API_TEXTLOCK
 {
   MAXSIZE_TEMP_ARRAY(scratch, 1);
   if (replacement.size == 0) {
@@ -680,7 +680,8 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buf, Integer start_row, Integ
                    (int)new_len - 1, (colnr_T)last_item.size, new_byte,
                    kExtmarkUndo);
 
-    changed_lines(b, (linenr_T)start_row, 0, (linenr_T)end_row + 1, (linenr_T)extra, true);
+    changed_lines(b, (linenr_T)start_row, (colnr_T)start_col, (linenr_T)end_row + 1,
+                  (linenr_T)extra, true);
 
     FOR_ALL_TAB_WINDOWS(tp, win) {
       if (win->w_buffer == b) {
@@ -938,7 +939,7 @@ void nvim_buf_del_var(Buffer buf, String name, Error *err)
   dict_set_var(b->b_vars, name, NIL, true, false, NULL, err);
 }
 
-/// Gets the full file name for the buffer
+/// Gets the full/absolute filepath of the buffer, or the buffer name for non-file buffers.
 ///
 /// @param buf     Buffer id, or 0 for current buffer
 /// @param[out] err   Error details, if any

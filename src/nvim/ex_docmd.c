@@ -1873,11 +1873,6 @@ int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
     goto end;
   }
   if (!IS_USER_CMDIDX(eap->cmdidx)) {
-    if (cmdwin_type != 0 && !(eap->argt & EX_CMDWIN)) {
-      // Command not allowed in the command line window
-      errormsg = _(e_cmdwin);
-      goto end;
-    }
     if (text_locked() && !(eap->argt & EX_LOCK_OK)) {
       // Command not allowed when text is locked
       errormsg = _(get_text_locked_msg());
@@ -1888,7 +1883,7 @@ int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
   // Do allow ":checktime" (it is postponed).
   // Do allow ":edit" (check for an argument later).
   // Do allow ":file" with no arguments
-  if (!(eap->argt & EX_CMDWIN)
+  if (!(eap->argt & EX_BUFLOCK_OK)
       && eap->cmdidx != CMD_checktime
       && eap->cmdidx != CMD_edit
       && !(eap->cmdidx == CMD_file && *eap->arg == NUL)
@@ -2259,11 +2254,6 @@ static char *do_one_cmd(exarg_T *eap, int flags)
     }
 
     if (!IS_USER_CMDIDX(ea.cmdidx)) {
-      if (cmdwin_type != 0 && !(ea.argt & EX_CMDWIN)) {
-        // Command not allowed in the command line window
-        errormsg = _(e_cmdwin);
-        goto doend;
-      }
       if (text_locked() && !(ea.argt & EX_LOCK_OK)) {
         // Command not allowed when text is locked
         errormsg = _(get_text_locked_msg());
@@ -2275,7 +2265,7 @@ static char *do_one_cmd(exarg_T *eap, int flags)
     // Do allow ":checktime" (it is postponed).
     // Do allow ":edit" (check for an argument later).
     // Do allow ":file" with no arguments (check for an argument later).
-    if (!(ea.argt & EX_CMDWIN)
+    if (!(ea.argt & EX_BUFLOCK_OK)
         && ea.cmdidx != CMD_checktime
         && ea.cmdidx != CMD_edit
         && ea.cmdidx != CMD_file
@@ -5050,10 +5040,6 @@ bool before_quit_autocmds(win_T *wp, bool quit_all, bool forceit)
 /// ":{nr}quit": quit window {nr}
 static void ex_quit(exarg_T *eap)
 {
-  if (cmdwin_type != 0) {
-    cmdwin_result = Ctrl_C;
-    return;
-  }
   // Don't quit while editing the command line.
   if (text_locked()) {
     text_locked_msg();
@@ -5126,13 +5112,6 @@ static void ex_cquit(exarg_T *eap)
 /// Returns FAIL when quitting should be aborted.
 int before_quit_all(exarg_T *eap)
 {
-  if (cmdwin_type != 0) {
-    cmdwin_result = eap->forceit
-                    ? K_XF1  // open_cmdwin() takes care of this
-                    : K_XF2;
-    return FAIL;
-  }
-
   // Don't quit while editing the command line.
   if (text_locked()) {
     text_locked_msg();
@@ -5165,6 +5144,32 @@ static void ex_quitall(exarg_T *eap)
 /// ":restart +cmd <command>": restart the Nvim server using ":cmd" and runs <command> in the new server.
 static void ex_restart(exarg_T *eap)
 {
+  if (!eap->forceit) {
+    dict_T *extra_d = tv_dict_alloc();  // Pass +cmd in the `extra` param of nlua_call_excmd.
+    tv_dict_add_str(extra_d, S_LEN("quit_cmd"), eap->do_ecmd_cmd ? eap->do_ecmd_cmd : "");
+    typval_T extra_tv = { .v_type = VAR_DICT, .vval.v_dict = extra_d };
+    nlua_call_excmd("vim._core.server", "ex_session_restart", eap, &cmdmod, &extra_tv);
+    tv_clear(&extra_tv);
+    return;
+  }
+
+  const char *startreason = "restart!";
+  char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall";
+  char *after_cmd = eap->arg;
+
+  // XXX: "+:::" is how ex_session_restart() signals that it (recursively) called :restart.
+  if (strequal(quit_cmd, ":::")) {
+    startreason = "restart";
+    if (eap->argc > 1) {
+      eap->args[1][eap->arglens[1]] = NUL;
+      quit_cmd = eap->args[1];
+      after_cmd = eap->argc > 2 ? eap->args[2] : "";
+    } else {
+      emsg("restart failed: +cmd did not quit the server");
+      return;
+    }
+  }
+
   Error err = ERROR_INIT;
   const bool no_ui = !ui_active();
   const char *exepath = get_vim_var_str(VV_PROGPATH);
@@ -5242,7 +5247,7 @@ static void ex_restart(exarg_T *eap)
 #endif
 
   dict_T *env = create_environment(NULL, false, false, false, NULL);
-  tv_dict_add_str(env, S_LEN(ENV_STARTREASON), "restart");
+  tv_dict_add_str(env, S_LEN(ENV_STARTREASON), startreason);
 #ifdef MSWIN
   tv_dict_add_str(env, S_LEN(ENV_RESTART_ALLOC_CONSOLE), "1");
 #endif
@@ -5278,12 +5283,12 @@ static void ex_restart(exarg_T *eap)
   arena_mem_free(result_mem);
   result_mem = NULL;
 
-  if (*eap->arg != NUL) {
+  if (*after_cmd != NUL) {
     // Execute [command] on new server on UIEnter.
     MAXSIZE_TEMP_DICT(autocmd_opts, 3);
     PUT_C(autocmd_opts, "once", BOOLEAN_OBJ(true));
     PUT_C(autocmd_opts, "nested", BOOLEAN_OBJ(true));
-    PUT_C(autocmd_opts, "command", CSTR_AS_OBJ(eap->arg));
+    PUT_C(autocmd_opts, "command", CSTR_AS_OBJ(after_cmd));
     MAXSIZE_TEMP_ARRAY(autocmd_args, 2);
     ADD_C(autocmd_args, CSTR_AS_OBJ("UIEnter"));
     ADD_C(autocmd_args, DICT_OBJ(autocmd_opts));
@@ -5338,7 +5343,6 @@ static void ex_restart(exarg_T *eap)
 
   set_vim_var_string(VV_EXITREASON, S_LEN("restart"));
 
-  char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall";
   char *quit_cmd_copy = NULL;
 
   // Prepend "confirm " to cmd if :confirm is used
@@ -5396,9 +5400,7 @@ static void ex_close(exarg_T *eap)
 {
   win_T *win = NULL;
   int winnr = 0;
-  if (cmdwin_type != 0) {
-    cmdwin_result = Ctrl_C;
-  } else if (!text_locked() && !curbuf_locked()) {
+  if (!text_locked() && !curbuf_locked()) {
     if (eap->addr_count == 0) {
       ex_win_close(eap->forceit, curwin, NULL);
     } else {
@@ -5473,11 +5475,6 @@ void ex_win_close(int forceit, win_T *win, tabpage_T *tp)
 /// ":tabclose N": close tab page N.
 static void ex_tabclose(exarg_T *eap)
 {
-  if (cmdwin_type != 0) {
-    cmdwin_result = K_IGNORE;
-    return;
-  }
-
   if (first_tabpage->tp_next == NULL) {
     emsg(_("E784: Cannot close last tab page"));
     return;
@@ -5508,11 +5505,6 @@ static void ex_tabclose(exarg_T *eap)
 /// ":tabonly": close all tab pages except the current one
 static void ex_tabonly(exarg_T *eap)
 {
-  if (cmdwin_type != 0) {
-    cmdwin_result = K_IGNORE;
-    return;
-  }
-
   if (first_tabpage->tp_next == NULL) {
     msg(_("Already only one tab page"), 0);
     return;
@@ -5688,10 +5680,6 @@ static void ex_stop(exarg_T *eap)
 /// ":exit", ":xit" and ":wq": Write file and quit the current window.
 static void ex_exit(exarg_T *eap)
 {
-  if (cmdwin_type != 0) {
-    cmdwin_result = Ctrl_C;
-    return;
-  }
   // Don't quit while editing the command line.
   if (text_locked()) {
     text_locked_msg();
@@ -6357,7 +6345,7 @@ void do_exedit(exarg_T *eap, win_T *old_curwin)
         redraw_all_later(UPD_NOT_VALID);
         pending_exmode_active = true;
 
-        normal_enter(false, true);
+        normal_enter(true);
 
         pending_exmode_active = false;
         RedrawingDisabled = save_rd;

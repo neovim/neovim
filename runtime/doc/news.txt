@@ -69,6 +69,8 @@ API
 • |nvim_create_autocmd()|, |nvim_exec_autocmds()| and |nvim_clear_autocmds()|
   no longer treat an empty non-nil pattern as nil.
 • |nvim_clear_autocmds()| no longer treats an empty array event as nil.
+• |vim.o|, |vim.opt|, and |nvim_set_option_value()| expand `~` and environment
+  variables (|expand-env|).
 
 DIAGNOSTICS
 
@@ -81,8 +83,13 @@ DIAGNOSTICS
 EDITOR
 
 • On Windows, the |trust| db now stores paths with "/" slashes. This means the
-  trust store will be reset.
+  trust store will be reset (one time).
 • `stdpath("log")` moved to `stdpath("state")/logs`.
+• |cmdwin| (|q:|, |q/|, |q?|, |c_CTRL-F|):
+  • Only supports one "cmdline level", not "infinite recursion".
+  • Expr-register (|i_CTRL-R_=|, |c_CTRL-R_=|) no longer supports opening
+    cmdwin via |c_CTRL-F|.
+• Behavior of |:restart| changed. Use "!" (|:restart!|) to get the old behavior.
 
 EVENTS
 
@@ -93,16 +100,28 @@ EVENTS
 
 LSP
 
+• `vim.lsp.ClientConfig.cmd` given as a string array now uses
+  `vim.lsp.ClientConfig.root_dir` as its default process working directory.
 • `client.attached_buffers[buf]` now stores `languageId` string (was boolean).
 
 LUA
 
 • "standalone" Lua interpreter mode `nvim -ll` was removed. Use |-l| script
   mode instead.
+• |vim.opt| no longer supports chaining multiple infix operators (e.g.
+  `vim.opt.wildignore + '*.o' + '*.obj'`). Instead, use tables:
+  `vim.opt.wildignore + {'*.o', '*.obj'}`
 
 OPTIONS
 
-• todo
+• The 'statusline' `%=` item is no longer ignored in item groups. It applies
+  to the containing item group and its `minwid`.
+  An `%<` item inside an item group now only applies to the containing group
+  and its `maxwid`. Therefore, multiple `%<` can now be effective.
+  The default truncation of item groups is now at the first contained item.
+  To restore the previous truncation from the left, add a `%<` to the start.
+  The same applies to 'rulerformat', 'statuscolumn', 'tabline', 'winbar',
+  'titlestring', and 'iconstring'.
 
 PLUGINS
 
@@ -135,6 +154,9 @@ API
 • |nvim_buf_set_extmark()| `virt_lines_overflow` accepts "wrap" to enable
   wrapping onto extra rows and "auto" which enables horizontal scrolling when
   'nowrap' is set and wrapping when 'wrap' is set.
+• |nvim_set_option_value()| accepts a new `operation` field to modify the
+  existing option value.
+• |nvim_set_option_value()| returns the new option value.
 
 BUILD
 
@@ -164,9 +186,19 @@ EDITOR
 
 • |:command-completion-customlist| can return a list of dictionaries with
   kind/menu/info/abbr for the popup menu.
+• |cmdwin| (|q:|, |q/|, |q?|, |c_CTRL-F|) is implemented as a "normal"
+  buffer+window instead of a nested-state modal loop:
+  • You can create/navigate windows/tabpages while cmdwin is active. Chaos!
+  • 'inccommand' works in cmdwin!
+  • API calls (e.g. |nvim_buf_delete()|) that previously failed with
+    "E11: Invalid in command-line window" while cmdwin was open, now work
+    normally. Async plugins no longer need special |CmdwinLeave| workarounds.
+  • The |cmdwin-char| is shown via 'statuscolumn'.
 • |gf| and |<cfile>| support `file://…` URIs.
 • |:log| opens log files.
-• |ZR| restarts Nvim (|:restart|).
+• |:restart| saves/restores the current session (window layout, buffers, …).
+  • |:restart!| (with a bang "!") does not save/restore the session.
+• |ZR| restarts Nvim (|:restart!|).
 • |:uptime| displays uptime.
 • |:packupdate| and |:packdel| for managing |vim.pack|.
 • 'scrollback' is now also valid in |prompt-buffer| buffers to limit the
@@ -239,6 +271,7 @@ LUA
 • |vim.log| provides a logging interface.
 • |vim.pack.get()| output includes revision of a pending update.
 • |vim.pack.get()| can fetch new updates before computing the output.
+• |vim.o| now accepts table style values for assignment.
 
 OPTIONS
 
@@ -246,6 +279,11 @@ OPTIONS
 • 'scrolloffpad' allows vertically centering cursor at the end of file.
 • 'shortmess' flag |shm-u| silences undo/redo messages.
 • 'statusline' supports |stl-%0{| to insert the expression result verbatim.
+  The `%=` item is supported within item groups to separate alignment sections
+  within the containing group until its `minwid` is reached. The truncation
+  of an item group to its `maxwid` can be controlled with the `%<` item.
+  The same applies to 'rulerformat', 'statuscolumn', 'tabline', 'winbar',
+  'titlestring', and 'iconstring'.
 • 'winpinned' prevents window from closing unless specifically targeted.
 
 PERFORMANCE
@@ -259,6 +297,7 @@ PERFORMANCE
 • Internal LSP data is cleared using `table.clear`, which reduces GC and
   memory reallocation during each data reset.
 • RPC client avoids string allocations when parsing Content-Length messages.
+• LSP: "overscan" semantic_token range requests to avoid flicker.
 
 PLUGINS
 
@@ -299,7 +338,7 @@ UI
 VIMSCRIPT
 
 • |v:exitreason| is set before |QuitPre|.
-• |v:startreason| differentiates between restart and normal start.
+• |v:startreason| indicates whether Nvim started normally or by |:restart|.
 • |v:starttime| is the process start time (nanoseconds since UNIX epoch).
 • |v:useractive| indicates user activity.
 • |serverlist()| with `info=true` returns details for each server (own + peers).
@@ -312,6 +351,8 @@ These existing features changed their behavior.
 • `nvim_exec_autocmds({buf=…})` runs in the context of the target buffer.
 • |OptionSet| is no longer triggered during startup by automatic
   |'background'| detection.
+• Editing a local directory now shows its contents in a `filetype=directory`
+  buffer. See |dir|.
 • |:Open| with no arguments uses the current file.
 • The "buffer" key was renamed to "buf" in these functions (but the old name
   "buffer" is still accepted, for backwards compatibility):

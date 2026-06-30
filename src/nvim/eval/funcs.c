@@ -3609,6 +3609,11 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       shell_free_argv(argv);
       return;
     }
+    if (bt_cmdwin(curbuf)) {
+      emsg(_(e_cmdwin));
+      shell_free_argv(argv);
+      return;
+    }
     if (curbuf->b_changed) {
       emsg(_("jobstart(...,{term=true}) requires unmodified buffer"));
       shell_free_argv(argv);

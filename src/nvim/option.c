@@ -151,13 +151,6 @@ static char *p_vsts_nopaste;
 
 #define OPTION_COUNT ARRAY_SIZE(options)
 
-/// :set boolean option prefix
-typedef enum {
-  PREFIX_NO = 0,  ///< "no" prefix
-  PREFIX_NONE,    ///< no prefix
-  PREFIX_INV,     ///< "inv" prefix
-} set_prefix_T;
-
 #include "option.c.generated.h"
 
 // options[] is initialized in options.generated.h.
@@ -1100,14 +1093,15 @@ static void stropt_remove_dupflags(char *newval, uint32_t flags)
 /// Get the string value specified for a ":set" command.  The following set options are supported:
 ///     set {opt}={val}
 ///     set {opt}:{val}
-static char *stropt_get_newval(int nextchar, OptIndex opt_idx, char **argp, void *varp,
-                               const char *origval, set_op_T *op_arg, uint32_t flags)
+static char *stropt_get_newval(OptIndex opt_idx, char **argp, void *varp, const char *origval,
+                               set_op_T *op_arg)
 {
   char *arg = *argp;
   set_op_T op = *op_arg;
   char *save_arg = NULL;
   char *newval;
   const char *s = NULL;
+  uint32_t flags = options[opt_idx].flags;
 
   arg++;  // jump to after the '=' or ':'
 
@@ -1326,18 +1320,29 @@ const char *find_option_end(const char *arg, OptIndex *opt_idxp)
 
 /// Get new option value from argp. Allocated OptVal must be freed by caller.
 /// Can unset local value of an option when ":set {option}<" is used.
-static OptVal get_option_newval(OptIndex opt_idx, int opt_flags, set_prefix_T prefix, char **argp,
-                                int nextchar, set_op_T op, uint32_t flags, void *varp, char *errbuf,
-                                const size_t errbuflen, const char **errmsg)
+OptVal get_option_newval(OptIndex opt_idx, int opt_flags, set_prefix_T prefix, char **argp,
+                         int nextchar, set_op_T op, uint32_t flags, void *varp,
+                         OptVal *oldval_override, char *errbuf, const size_t errbuflen,
+                         const char **errmsg)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   assert(varp != NULL);
 
   vimoption_T *opt = &options[opt_idx];
   char *arg = *argp;
-  // When setting the local value of a global option, the old value may be the global value.
-  const bool oldval_is_global = option_is_global_local(opt_idx) && (opt_flags & OPT_LOCAL);
-  OptVal oldval = optval_from_varp(opt_idx, oldval_is_global ? get_varp(opt) : varp);
+
+  OptVal oldval;
+  if (oldval_override != NULL) {
+    // Allow overriding the oldval. This is needed to handle the case where
+    // options for buffers/windows other than curbuf/curwin are updated. It can
+    // also support merging arbitrary values if necessary down the road.
+    oldval = *oldval_override;
+  } else {
+    // When setting the local value of a global option, the old value may be the global value.
+    const bool oldval_is_global = option_is_global_local(opt_idx) && (opt_flags & OPT_LOCAL);
+    oldval = optval_from_varp(opt_idx, oldval_is_global ? get_varp(opt) : varp);
+  }
+
   OptVal newval = NIL_OPTVAL;
 
   if (nextchar == '&') {
@@ -1434,8 +1439,7 @@ static OptVal get_option_newval(OptIndex opt_idx, int opt_flags, set_prefix_T pr
   case kOptValTypeString: {
     const char *oldval_str = oldval.data.string.data;
     // Get the new value for the option
-    const char *newval_str = stropt_get_newval(nextchar, opt_idx, argp, varp, oldval_str, &op,
-                                               flags);
+    const char *newval_str = stropt_get_newval(opt_idx, argp, varp, oldval_str, &op);
     newval = CSTR_AS_OPTVAL(newval_str);
     break;
   }
@@ -1555,7 +1559,7 @@ static void do_one_set_option(int opt_flags, char **argp, bool *did_show, char *
   }
 
   OptVal newval = get_option_newval(opt_idx, opt_flags, prefix, argp, nextchar, op, flags, varp,
-                                    errbuf, errbuflen, errmsg);
+                                    NULL, errbuf, errbuflen, errmsg);
 
   if (newval.type == kOptValTypeNil || *errmsg != NULL) {
     return;
@@ -3538,6 +3542,130 @@ OptVal object_as_optval(Object o, bool *error)
     return NIL_OPTVAL;
   }
   UNREACHABLE;
+}
+
+/// Converts a structured option (API Object) to an OptVal (stringly-typed ":set" string). Each
+/// option impl internally expects a ":set" string (unfortunately).
+///
+/// Example: 'listchars' `{ eol = "~" }` => "eol:~".
+///
+/// @param op  The :set operation; "key:value" removals are normalized to match by key.
+/// @return OptVal (owned; free with optval_free).
+OptVal object_as_optval_for(OptIndex opt_idx, Object o, set_op_T op, bool *error)
+{
+  if (o.type == kObjectTypeNil) {
+    return NIL_OPTVAL;
+  }
+
+  const uint32_t flags = options[opt_idx].flags;
+  const bool is_list = flags & (kOptFlagComma | kOptFlagFlagList);
+  const bool is_map = flags & kOptFlagColon;          // "key:value" list, e.g. 'listchars'.
+  const bool is_flaglist = flags & kOptFlagFlagList;  // single-char flag list, e.g. 'shortmess'.
+  const bool is_comma = flags & kOptFlagComma;
+  const bool allow_dup = !(flags & kOptFlagNoDup);
+
+  // Validate the value type. Special cases: 'wildchar'/'wildcharm'.
+  bool type_ok;
+  switch (o.type) {
+  case kObjectTypeBoolean:
+    type_ok = option_has_type(opt_idx, kOptValTypeBoolean);
+    break;
+  case kObjectTypeInteger:
+    type_ok = option_has_type(opt_idx, kOptValTypeNumber);
+    break;
+  case kObjectTypeString:
+    type_ok = option_has_type(opt_idx, kOptValTypeString)
+              || opt_idx == kOptWildchar || opt_idx == kOptWildcharm;
+    break;
+  case kObjectTypeArray:
+    type_ok = is_list;
+    break;
+  case kObjectTypeDict:
+    type_ok = is_map || is_flaglist;
+    break;
+  default:
+    type_ok = false;
+  }
+  if (!type_ok) {
+    *error = true;
+    return NIL_OPTVAL;
+  }
+
+  switch (o.type) {
+  case kObjectTypeBoolean:
+  case kObjectTypeInteger:
+    return object_as_optval(o, error);
+  default:
+    break;  // String/Array/Dict are serialized below.
+  }
+
+  char *str = NULL;
+  if (o.type == kObjectTypeString) {
+    str = xstrdup(o.data.string.data);
+  } else if (o.type == kObjectTypeArray) {
+    // List style: join items with comma, dropping duplicates unless the option allows them.
+    garray_T ga;
+    ga_init(&ga, sizeof(char *), 4);
+    for (size_t ai = 0; ai < o.data.array.size; ai++) {
+      Object item = o.data.array.items[ai];
+      if (item.type != kObjectTypeString) {
+        *error = true;
+        GA_DEEP_CLEAR_PTR(&ga);
+        return NIL_OPTVAL;
+      }
+      bool dup = false;
+      for (int j = 0; !allow_dup && j < ga.ga_len; j++) {
+        if (strequal(((char **)ga.ga_data)[j], item.data.string.data)) {
+          dup = true;
+          break;
+        }
+      }
+      if (!dup) {
+        GA_APPEND(char *, &ga, xstrdup(item.data.string.data));
+      }
+    }
+    str = ga_concat_strings(&ga, ",");
+    GA_DEEP_CLEAR_PTR(&ga);
+  } else {  // kObjectTypeDict
+    garray_T ga;
+    Dict dict = o.data.dict;
+    ga_init(&ga, sizeof(char *), 4);
+    for (size_t di = 0; di < dict.size; di++) {
+      String k = dict.items[di].key;
+      Object v = dict.items[di].value;
+      if (is_flaglist) {
+        // Flag set: include the key when its value is truthy; the value itself is dropped.
+        if (!(v.type == kObjectTypeNil || (v.type == kObjectTypeBoolean && !v.data.boolean))) {
+          GA_APPEND(char *, &ga, xstrdup(k.data));
+        }
+      } else if (v.type == kObjectTypeString) {
+        char *kv = concat_str(k.data, ":");
+        GA_APPEND(char *, &ga, concat_str(kv, v.data.string.data));
+        xfree(kv);
+      } else {
+        *error = true;
+        GA_DEEP_CLEAR_PTR(&ga);
+        return NIL_OPTVAL;
+      }
+    }
+    // Sort maps and comma-flag lists for a deterministic result (Dict order is unstable); a bare
+    // flag list is concatenated in-order with no separator.
+    if (ga.ga_len > 0 && (is_map || is_comma)) {
+      sort_strings(ga.ga_data, ga.ga_len);
+    }
+    str = ga_concat_strings(&ga, (is_flaglist && !is_comma) ? "" : ",");
+    GA_DEEP_CLEAR_PTR(&ga);
+  }
+
+  // `:set-=` on a "key:value" list matches by "key:"; a bare key needs the trailing colon appended.
+  // See stropt_handle_keymatch. (Lua: `vim.opt.listchars = vim.opt.listchars - 'space'`.)
+  if (op == OP_REMOVING && is_map && strchr(str, ':') == NULL) {
+    char *with_colon = concat_str(str, ":");
+    xfree(str);
+    str = with_colon;
+  }
+
+  return CSTR_AS_OPTVAL(str);
 }
 
 /// Check if option is hidden.
@@ -6072,7 +6200,7 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, char *fuzzystr, int *numM
 
 /// Escape an option value that can be used on the command-line with :set.
 /// Caller needs to free the returned string, unless NULL is returned.
-static char *escape_option_str_cmdline(char *var)
+char *escape_option_str_cmdline(char *var)
 {
   // A backslash is required before some characters.  This is the reverse of
   // what happens in do_set().

@@ -449,6 +449,7 @@ M.vars = {
   },
   useractive = {
     type = 'integer',
+    tags = { 'user-idle' },
     desc = [=[
       Timestamp (nanoseconds since UNIX epoch) indicating the most
       recent user activity, i.e. when a key is received from a UI
@@ -780,8 +781,9 @@ M.vars = {
     type = 'string',
     desc = [=[
       The reason Nvim started. Possible values:
-        - "normal"    normal startup.
-        - "restart"   started by |:restart| or |ZR|.
+      - "normal"    Normal startup, yearning for life, etc.
+      - "restart"   Started by |:restart|.
+      - "restart!"  Started by |:restart!| or |ZR|.
 
       Read-only.
     ]=],

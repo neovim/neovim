@@ -43,6 +43,18 @@ by |:mksession| to restore a terminal buffer (by restarting the {cmd}).
 The terminal environment is initialized as in |jobstart-env|.
 
 ==============================================================================
+MS-Windows ConPTY                      *terminal-ms-windows* *terminal-conpty*
+
+The system ConPTY (in "kernel32.dll") mangles some VT sequences, which can
+garble |:terminal| output. To use a newer ConPTY from the Windows Terminal
+project, put its "conpty.dll" (and "OpenConsole.exe") next to the Nvim
+executable. Nvim uses that "conpty.dll" if present, else falls back to the
+system ConPTY, and logs which one (|$NVIM_LOG_FILE|): >
+    Loaded new ConPTY from conpty.dll
+    Loaded system ConPTY from kernel32.dll
+<
+
+==============================================================================
 Input                                                           *terminal-input*
 
 To send input, enter |Terminal-mode| with |i|, |I|, |a|, |A| or
@@ -265,6 +277,12 @@ Example: >vim
 Use |jobwait()| to check if the terminal job has finished: >vim
     let running = jobwait([&channel], 0)[0] == -1
 <
+
+==============================================================================
+Concepts                                                   *terminal-concepts*
+
+TODO
+
 ==============================================================================
 :Termdebug plugin                         *terminal-debug* *terminal-debugger*
                                                *package-termdebug* *termdebug*

@@ -169,11 +169,13 @@ vim.bo.autoindent = vim.o.autoindent
 vim.bo.ai = vim.bo.autoindent
 
 --- When a file was changed outside of Nvim, automatically read it again.
---- Skipped if the file was deleted, so you have the text from before it
---- was deleted. If the file appears again then it is read. `timestamp`
+--- Skipped if the file was deleted (so you still have the last-available
+--- text). If the file appears again, then it is read; you can `undo` to
+--- see the previous contents. `timestamp`
 ---
---- This is partially driven by OS filewatcher events `uv_fs_event_t`, so
---- even the current buffer may be updated.
+--- This is driven (partially) by OS filewatcher events `uv_fs_event_t`,
+--- so buffers are updated immediately (instead of only on focus-change or
+--- shell-commands).
 ---
 --- If this option has a local value, use this command to switch back to
 --- using the global value:
@@ -228,13 +230,13 @@ vim.go.awa = vim.go.autowriteall
 --- that background type.  The `TUI` or other UI sets this on startup
 --- if it can detect the background color, and re-detects it whenever a UI
 --- attaches later, unless 'background' was set explicitly.  When multiple
---- terminal UIs are attached they share one value, taken from whichever
---- terminal reports its background last (which may not be the most
---- recently attached one, since it depends on response speed).
+--- UIs are attached they share one value, decided by "last wins" (may
+--- not be the most recently-attached UI, since it depends on response
+--- speed).
 ---
 --- This option does NOT change the background color, it tells Nvim what
---- the "inherited" (terminal/GUI) background looks like.
---- See `:hi-normal` if you want to set the background color explicitly.
+--- the "inherited" (terminal/GUI) background looks like. See `:hi-normal`
+--- to set the background color explicitly.
 --- 					*g:colors_name*
 --- When a color scheme is loaded (the "g:colors_name" variable is set)
 --- changing 'background' will cause the color scheme to be reloaded.  If
@@ -242,17 +244,16 @@ vim.go.awa = vim.go.autowriteall
 --- However, if the color scheme sets 'background' itself the effect may
 --- be undone.  First delete the "g:colors_name" variable when needed.
 ---
---- Normally this option would be set in the vimrc file.  Possibly
---- depending on the terminal name.  Example:
+--- Historically, this option was set in the vimrc file.  Example:
 ---
 --- ```vim
 --- 	if $TERM ==# "xterm"
 --- 	  set background=dark
 --- 	endif
 --- ```
---- When this option is changed, the default settings for the highlight groups
---- will change.  To use other settings, place ":highlight" commands AFTER
---- the setting of the 'background' option.
+--- When this option is changed, the defaults for highlight groups
+--- will change.  To override those defaults, place ":highlight" commands
+--- AFTER setting the 'background' option.
 ---
 --- @type 'light'|'dark'
 vim.o.background = "dark"
@@ -6875,12 +6876,16 @@ vim.wo.stc = vim.wo.statuscolumn
 ---          this label.
 ---       Use `getmousepos()`.winid in the specified function to get the
 ---       corresponding `window-ID` of the clicked item.
---- \< -   Where to truncate line if too long.  Default is at the start.
+--- \< -   Where to truncate line if too long.  Default is at the first
+---       item.  Truncation markers within item groups apply to the
+---       truncation of that group until its maxwid is reached.
 ---       No width fields allowed.
 --- = -   Separation point between alignment sections.  Each section will
 ---       be separated by an equal number of spaces.  With one %= what
 ---       comes after it will be right-aligned.  With two %= there is a
 ---       middle part, with white space left and right of it.
+---       Alignment sections within item groups will be separated until
+---       minwid of the group is reached.
 ---       No width fields allowed.
 --- # -   Set highlight group.  The name must follow and then a # again.
 ---       Thus use %#HLname# for highlight group HLname.  The same

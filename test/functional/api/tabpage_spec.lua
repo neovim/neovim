@@ -93,44 +93,18 @@ describe('api/tabpage', function()
       )
     end)
 
-    it('checks textlock, cmdwin restrictions', function()
+    it('checks textlock restrictions', function()
       command('autocmd TextYankPost * ++once call nvim_open_tabpage(0, 0, {})')
       matches('E565:', pcall_err(command, 'yank'))
       eq(1, fn.tabpagenr('$'))
 
-      local other_buf = api.nvim_get_current_buf()
-      feed('q:')
-      -- OK when not entering and not opening a tabpage with the cmdwin's buffer.
-      matches('E11:', pcall_err(api.nvim_open_tabpage, 0, false, {}))
-      eq(1, fn.tabpagenr('$'))
-      matches('E11:', pcall_err(api.nvim_open_tabpage, other_buf, true, {}))
-      eq(1, fn.tabpagenr('$'))
-      local tp = api.nvim_open_tabpage(other_buf, false, {})
-      eq(other_buf, api.nvim_win_get_buf(api.nvim_tabpage_get_win(tp)))
-      eq('command', fn.win_gettype())
-    end)
-
-    it('does not switch window when textlocked or in the cmdwin', function()
-      local target_win = api.nvim_get_current_win()
-      feed('q:')
-      local cur_win = api.nvim_get_current_win()
-      eq(
-        'Vim:E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
-        pcall_err(api.nvim_tabpage_set_win, 0, target_win)
-      )
-      eq(cur_win, api.nvim_get_current_win())
-      command('quit!')
-
-      exec(([[
+      exec([[
         new
         call setline(1, 'foo')
-        setlocal debug=throw indentexpr=nvim_tabpage_set_win(0,%d)
-      ]]):format(target_win))
-      cur_win = api.nvim_get_current_win()
-      eq(
-        'Vim(normal):E5555: API call: Vim:E565: Not allowed to change text or change window',
-        pcall_err(command, 'normal! ==')
-      )
+        setlocal debug=throw indentexpr=nvim_tabpage_set_win(0,win_getid())
+      ]])
+      local cur_win = api.nvim_get_current_win()
+      matches('E565: Not allowed to change text or change window', pcall_err(command, 'normal! =='))
       eq(cur_win, api.nvim_get_current_win())
     end)
   end)

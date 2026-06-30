@@ -962,6 +962,7 @@ describe('statuscolumn', function()
   end)
 
   it('works with cmdwin', function()
+    -- The cmdwin sets its own window-local 'statuscolumn' (cmdwin-char).
     feed(':set stc=%l<CR>q:k$')
     screen:expect([[
       {8: 7}aaaaa                                              |
@@ -969,11 +970,11 @@ describe('statuscolumn', function()
       {8: 9}aaaaa                                              |
       {8:10}aaaaa                                              |
       {2:[No Name] [+]                                        }|
-      {1::}{8:1}set stc=%^l                                         |
-      {1::}{8:2}                                                   |
+      {1::}set stc=%^l                                          |
+      {1::}                                                    |
       {1:~                                                    }|*5
       {3:[Command Line]                                       }|
-      :                                                    |
+      :set stc=%l                                          |
     ]])
   end)
 
@@ -1206,5 +1207,22 @@ describe('statuscolumn', function()
       {8: 5│}aaaaa                                             |
                                                            |
     ]])
+  end)
+
+  it('redrawn during nvim_exec_autocmds({buf})', function()
+    command([[let &statuscolumn='%{g:actual_curwin == win_getid() ? "CUR" : "NC"}']])
+    local buf = api.nvim_create_buf(true, false)
+    api.nvim_open_win(buf, false, { split = 'right' })
+    api.nvim_create_autocmd('User', { command = 'redraw!' })
+    screen:expect([[
+      {8:CUR}aaaaa                  │{8:NC}                        |
+      {8:CUR}aaaaa                  │{1:~                         }|*3
+      {8:CUR}^aaaaa                  │{1:~                         }|
+      {8:CUR}aaaaa                  │{1:~                         }|*7
+      {3:[No Name] [+]              }{2:[No Name]                 }|
+                                                           |
+    ]])
+    api.nvim_exec_autocmds('User', { buf = buf })
+    screen:expect_unchanged()
   end)
 end)

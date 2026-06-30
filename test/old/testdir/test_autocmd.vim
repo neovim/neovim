@@ -3126,7 +3126,40 @@ func Test_autocmd_once()
   close
 
   call assert_fails('au WinNew * ++once ++once echo bad', 'E983:')
+  call assert_false(exists('#WinNew'))
 endfunc
+
+func Test_autocmd_dup_arg()
+  " Duplicate ++once / ++nested, or the legacy "nested" used twice, must
+  " error out *and* not create the autocommand.  Using an environment
+  " variable in the pattern also exercises the error-exit path that frees
+  " the expanded pattern (checked by the address/leak sanitizers).
+  augroup XdupTest
+    au!
+  augroup END
+  let $XAUTODIR = 'Xfoo'
+
+  " New behavior: duplicate ++once now aborts, the autocmd is not added
+  call assert_fails('au XdupTest WinNew $XAUTODIR/* ++once ++once echo bad', 'E983:')
+  call assert_false(exists('#XdupTest#WinNew'))
+
+  call assert_fails('au XdupTest WinNew $XAUTODIR/* ++nested ++nested echo bad', 'E983:')
+  call assert_false(exists('#XdupTest#WinNew'))
+
+  call assert_fails('au XdupTest WinNew $XAUTODIR/* nested nested echo bad', 'E983:')
+  call assert_false(exists('#XdupTest#WinNew'))
+
+  " "nested" without "++" is rejected in Vim9 script (also frees the pattern)
+  "call assert_fails('vim9cmd au XdupTest WinNew $XAUTODIR/* nested echo bad', 'E1078:')
+  call assert_false(exists('#XdupTest#WinNew'))
+
+  augroup XdupTest
+    au!
+  augroup END
+  augroup! XdupTest
+  let $XAUTODIR = ''
+endfunc
+
 
 func Test_autocmd_bufreadpre()
   new
@@ -3878,6 +3911,9 @@ endfunc
 
 " Fuzzer found some strange combination that caused a crash.
 func Test_autocmd_normal_mess()
+  " Uses `q/` (cmdwin) in autocmd; with non-blocking cmdwin (#40312) the
+  " expected E1159 path now hits E1513 (winfixbuf) instead.
+  throw 'Skipped: Nvim supports cmdwin freedom #40312'
   " For unknown reason this hangs on MS-Windows
   CheckNotMSWindows
 
@@ -3897,6 +3933,7 @@ func Test_autocmd_normal_mess()
 endfunc
 
 func Test_autocmd_closing_cmdwin()
+  throw 'Skipped: Nvim supports cmdwin freedom #40312'
   " For unknown reason this hangs on MS-Windows
   CheckNotMSWindows
 
@@ -4113,11 +4150,12 @@ func Test_mode_changes()
   au ModeChanged n:c let g:n_to_c += 1
   let g:c_to_n = 0
   au ModeChanged c:n let g:c_to_n += 1
-  let g:mode_seq += ['c', 'n', 'c', 'n']
-  call feedkeys("q:\<C-C>\<Esc>", 'tnix')
-  call assert_equal(len(g:mode_seq) - 1, g:index)
-  call assert_equal(2, g:n_to_c)
-  call assert_equal(2, g:c_to_n)
+  " Nvim: Cannot test non-blocking cmdwin (#40312) using feedkeys() 'x' flag.
+  "let g:mode_seq += ['c', 'n', 'c', 'n']
+  "call feedkeys("q:\<C-C>\<Esc>", 'tnix')
+  "call assert_equal(len(g:mode_seq) - 1, g:index)
+  "call assert_equal(2, g:n_to_c)
+  "call assert_equal(2, g:c_to_n)
 
   let g:n_to_v = 0
   au ModeChanged n:v let g:n_to_v += 1

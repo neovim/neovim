@@ -201,14 +201,10 @@
 ///
 /// @return |window-ID|, or 0 on error
 Window nvim_open_win(Buffer buf, Boolean enter, Dict(win_config) *config, Error *err)
-  FUNC_API_SINCE(6) FUNC_API_TEXTLOCK_ALLOW_CMDWIN
+  FUNC_API_SINCE(6) FUNC_API_TEXTLOCK
 {
   buf_T *b = find_buffer_by_handle(buf, err);
   if (!b) {
-    return 0;
-  }
-  if ((cmdwin_type != 0 && enter) || b == cmdwin_buf) {
-    api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
     return 0;
   }
 
@@ -409,11 +405,6 @@ static bool win_can_move_tp(win_T *wp, tabpage_T *tp, Error *err)
   }
   if (is_aucmd_win(wp)) {
     api_set_error(err, kErrorTypeException, "Cannot move autocmd window to another tabpage");
-    return false;
-  }
-  // Can't move the cmdwin or its old curwin to a different tabpage.
-  if (wp == cmdwin_win || wp == cmdwin_old_curwin) {
-    api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
     return false;
   }
   return true;

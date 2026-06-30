@@ -17,7 +17,8 @@ set cpo&vim
 
 " Feature testing {{{1
 
-let s:vim9script = "\n" .. getline(1, 32)->join("\n") =~# '\n\s*vim9\%[script]\>'
+" NOTE: vimsyn_force_vim9 for internal use only
+let s:vim9script = get(b:, "vimsyn_force_vim9", v:false) || "\n" .. getline(1, 32)->join("\n") =~# '\nvim9s\%[cript]\>'
 
 function s:has(feature)
   return has(a:feature) || index(get(g:, "vimsyn_vim_features", []), a:feature) != -1

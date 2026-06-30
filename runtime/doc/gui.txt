@@ -75,30 +75,32 @@ Stop or detach the current UI
 ------------------------------------------------------------------------------
 Restart Nvim
 
-                                                *:restart*
-:restart [+cmd] [command]
-                Restarts Nvim. Sets |v:exitreason|. See also |ZR|.
+                                                *:restart* *:restart!*
+:restart[!] [+cmd] [command]
+                Restarts Nvim. Saves and restores the current session, unless
+                [!] is given. Sets |v:exitreason|. See also |ZR|.
 
-                1. Stops Nvim using `:qall` (or |+cmd|, if given).
-                2. Starts a new Nvim server using the same |v:argv| (except
-                   `-- [file…]` files). Sets |v:startreason| to "restart" on the
-                   new server.
-                3. Attaches all UIs to the new Nvim server and runs `[command]`
+                1. Saves the current session (unless [!] was given).
+                2. Stops Nvim using `:qall` (or |+cmd|, if given).
+                3. Starts a new Nvim server using the same |v:argv| (except
+                   `-- [file…]` files), and sets |v:startreason|.
+                4. Restores the saved session (unless [!] was given).
+                5. Attaches all UIs to the new Nvim server and runs `[command]`
                    on it.
 
                 Example: discard changes and stop with `:qall!`, then restart: >
                     :restart +qall!
-<                Example: restart and restore the current session: >
-                    :mksession! Session.vim | restart source Session.vim
+<                Example: restart and (manually) restore the session: >
+                    :mksession! Session.vim | restart! source Session.vim
 <                Example: restart and update plugins: >
-                    :restart lua vim.pack.update()
+                    :restart packupdate
 <
                 Note:
                 • Only works if the UI and server are on the same system.
-                • Windows limitation: when +cmd is executed, |v:servername|
+                • Windows limitation: during +cmd execution, |v:servername|
                   refers to a temporary address.
-                • If no UI handles the "restart" event, this command will lead
-                  to a dangling server process.
+                • If no UI handles the "restart" event, this leaves a dangling
+                  process.
 
 ------------------------------------------------------------------------------
 Connect UI to a different server

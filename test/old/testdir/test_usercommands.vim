@@ -836,6 +836,7 @@ endfunc
 
 " Test for using buffer-local user command from cmdwin.
 func Test_buflocal_usercmd_cmdwin()
+  throw 'Skipped: Nvim supports cmdwin freedom #40312'
   new
   command -buffer TestCmd edit Test
   " This used to crash Vim

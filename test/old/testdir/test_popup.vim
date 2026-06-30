@@ -2296,6 +2296,7 @@ endfunc
 " Test that Vim does not crash when completion inside cmdwin opens a 'info'
 " preview window.
 func Test_popup_complete_cmdwin_preview()
+  throw "Skipped: Nvim supports cmdwin freedom #40312"
   func! CompleteWithPreview(findstart, base)
     if a:findstart
       return getline('.')->strpart(0, col('.') - 1)
