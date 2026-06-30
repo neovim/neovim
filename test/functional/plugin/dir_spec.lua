@@ -352,7 +352,7 @@ describe('nvim.dir', function()
     eq('', api.nvim_get_option_value('filetype', { buf = 0 }))
   end)
 
-  it('coexists with netrw and can be disabled', function()
+  it('coexists with netrw', function()
     if t.is_zig_build() then
       return pending('broken with build.zig relative runtime paths after chdir')
     end
@@ -367,13 +367,6 @@ describe('nvim.dir', function()
     cd(root)
     command('Explore .')
     cd(cwd)
-    eq('netrw', api.nvim_get_option_value('filetype', { buf = 0 }))
-
-    n.clear({
-      args_rm = { '-u' },
-      args = { '--cmd', 'let g:loaded_nvim_dir_plugin = 1' },
-    })
-    edit(root)
     eq('netrw', api.nvim_get_option_value('filetype', { buf = 0 }))
   end)
 

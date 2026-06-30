@@ -1,8 +1,3 @@
-if vim.g.loaded_nvim_dir_plugin ~= nil then
-  return
-end
-vim.g.loaded_nvim_dir_plugin = true
-
 local api = vim.api
 local nvim_on = require('vim._core.util').nvim_on
 

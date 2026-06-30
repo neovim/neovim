@@ -1,8 +1,5 @@
 --- @brief
 --- Directory listing for `:edit <dir>`.
----
---- [g:loaded_nvim_dir_plugin]()
---- The plugin can be disabled by setting `g:loaded_nvim_dir_plugin = 1`.
 
 local api = vim.api
 local fs = vim.fs
