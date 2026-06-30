@@ -156,6 +156,74 @@ describe('nvim.dir', function()
     line_of('alpha.txt')
   end)
 
+  it('keeps directory detection in default autocmds', function()
+    make_fixture()
+    n.clear({ args_rm = { '-u' } })
+
+    eq(
+      { BufEnter = true, VimEnter = true },
+      exec_lua([[
+      local events = {}
+      for _, autocmd in ipairs(vim.api.nvim_get_autocmds({ group = 'nvim.directory' })) do
+        events[autocmd.event] = true
+      end
+      return events
+    ]])
+    )
+    eq(
+      {},
+      exec_lua([[
+      local events = {}
+      for _, autocmd in ipairs(vim.api.nvim_get_autocmds({ group = 'nvim.dir' })) do
+        if autocmd.event == 'BufEnter' or autocmd.event == 'VimEnter' then
+          events[#events + 1] = autocmd.event
+        end
+      end
+      return events
+    ]])
+    )
+  end)
+
+  it('fires FileType before loading the directory browser', function()
+    make_fixture()
+    local args = {
+      '--cmd',
+      'let g:nvim_dir_filetype_events = []',
+      '--cmd',
+      [[autocmd FileType directory call add(g:nvim_dir_filetype_events, luaeval("package.loaded['nvim.dir'] ~= nil"))]],
+    }
+
+    n.clear({ args_rm = { '-u' }, args = vim.list_extend(vim.deepcopy(args), { root }) })
+    eq({ false }, exec_lua('return vim.g.nvim_dir_filetype_events'))
+    assert_directory(root)
+
+    n.clear({ args_rm = { '-u' }, args = args })
+    edit(root)
+    eq({ false }, exec_lua('return vim.g.nvim_dir_filetype_events'))
+    assert_directory(root)
+  end)
+
+  it('lets FileType handlers take over directory buffers', function()
+    make_fixture()
+    local args = {
+      '--cmd',
+      [[autocmd FileType directory setlocal buftype=nofile | call setline(1, 'custom directory browser')]],
+    }
+
+    n.clear({ args_rm = { '-u' }, args = vim.list_extend(vim.deepcopy(args), { root }) })
+    eq('directory', bufopt('filetype'))
+    eq('nofile', bufopt('buftype'))
+    eq({ 'custom directory browser' }, lines())
+    eq(false, exec_lua([[return package.loaded['nvim.dir'] ~= nil]]))
+
+    n.clear({ args_rm = { '-u' }, args = args })
+    edit(root)
+    eq('directory', bufopt('filetype'))
+    eq('nofile', bufopt('buftype'))
+    eq({ 'custom directory browser' }, lines())
+    eq(false, exec_lua([[return package.loaded['nvim.dir'] ~= nil]]))
+  end)
+
   it('uses an absolute buffer name for a relative startup directory argument', function()
     if t.is_zig_build() then
       return pending('broken with build.zig relative runtime paths after chdir')
@@ -268,6 +336,23 @@ describe('nvim.dir', function()
 
     ok(exec_capture('messages'):find('ENOENT', 1, true) ~= nil)
     assert_directory(subdir)
+  end)
+
+  it('reloads a directory buffer with :edit', function()
+    make_fixture()
+    n.clear({ args_rm = { '-u' } })
+
+    edit(root)
+    assert_directory(root)
+    local buf = api.nvim_get_current_buf()
+
+    t.write_file(root .. '/beta.txt', 'beta', true)
+    command('edit')
+    eq(buf, api.nvim_get_current_buf())
+    assert_directory(root)
+    line_of('subdir/')
+    line_of('alpha.txt')
+    line_of('beta.txt')
   end)
 
   it('refreshes a directory when navigated into again', function()

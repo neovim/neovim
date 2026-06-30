@@ -45,8 +45,12 @@ Help-link		Loaded	Short description ~
 ==============================================================================
 Builtin plugin: dir                                                      *dir*
 
-Nvim opens a directory listing when |:edit| is used with a directory path.  The
-listing is a buffer with 'filetype' set to "directory".
+Nvim's default autocommands set 'filetype' to "directory" when |:edit| is
+used with a local directory path.  The built-in directory browser opens
+unclaimed `FileType` "directory" buffers.
+
+To replace the built-in browser, handle the `FileType` event for "directory"
+before this plugin does and claim the buffer, for example by setting 'buftype'.
 
 Mappings:                                                       *dir-mappings*
 >
