@@ -229,6 +229,12 @@ function STHighlighter:new(bufnr)
     end
   end)
 
+  nvim_on('BufWinEnter', self.augroup, { buf = self.bufnr }, function()
+    for client_id, _ in pairs(self.client_state) do
+      self:send_request(client_id)
+    end
+  end)
+
   nvim_on('WinScrolled', self.augroup, { buf = self.bufnr }, function()
     for client_id, state in pairs(self.client_state) do
       if state.supports_range then
