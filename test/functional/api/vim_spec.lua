@@ -2279,9 +2279,12 @@ describe('API', function()
       -- only support removing items in order. Behavior matches :set-=
       api.nvim_set_option_value('wildignore', { '1', '2', '3' }, { operation = 'remove' })
       eq('*.o,*.obj,*.a,*.b,*.c', api.nvim_get_option_value('wildignore', {}))
+
+      api.nvim_set_option_value('wildignore', {}, {})
+      eq('', api.nvim_get_option_value('wildignore', {}))
     end)
 
-    it('allows setting, appending, prepending, removing tables', function()
+    it('allows setting, appending, prepending, removing dicts', function()
       -- NOTE: order is dependent on lua's hash map implementation. I don't
       -- *think* order matters for the map style options
       api.nvim_set_option_value('listchars', { eol = '~', space = '-' }, {})
@@ -2307,6 +2310,9 @@ describe('API', function()
       -- A bare key (string or 1-item list) removes the matching "key:value" item by key.
       api.nvim_set_option_value('listchars', { 'space' }, { operation = 'remove' })
       eq('eol:~,tab:>-', api.nvim_get_option_value('listchars', {}))
+
+      api.nvim_set_option_value('listchars', vim.empty_dict(), {})
+      eq('', api.nvim_get_option_value('listchars', {}))
     end)
 
     it('returns the new option value', function()

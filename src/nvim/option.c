@@ -3650,7 +3650,7 @@ OptVal object_as_optval_for(OptIndex opt_idx, Object o, set_op_T op, bool *error
     }
     // Sort maps and comma-flag lists for a deterministic result (Dict order is unstable); a bare
     // flag list is concatenated in-order with no separator.
-    if (is_map || is_comma) {
+    if (ga.ga_len > 0 && (is_map || is_comma)) {
       sort_strings(ga.ga_data, ga.ga_len);
     }
     str = ga_concat_strings(&ga, (is_flaglist && !is_comma) ? "" : ",");
