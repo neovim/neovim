@@ -3862,7 +3862,7 @@ function s:NetrwBrowseChgDir(islocal, newdir, cursor, ...)
     endif
 
     " set up o/s-dependent directory recognition pattern
-    let dirpat = has("amiga") ? '[\/:]$' : '[\/]$'
+    let dirpat = has("win32") || has("win64") || has("amiga") ? '[\/:]$' : '[/]$'
 
     if newdir !~ dirpat && !(a:islocal && isdirectory(s:NetrwFile(netrw#fs#ComposePath(dirname, newdir))))
         " ------------------------------
