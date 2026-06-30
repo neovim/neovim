@@ -6,8 +6,8 @@
 
     .dependencies = .{
         .zlua = .{
-            .url = "git+https://github.com/natecraddock/ziglua#1dcb9f2b7b466a1609cc11e746c2efc4f17685da",
-            .hash = "zlua-0.1.0-hGRpC22ABQA4y12Uz7QaHuCkKrpaa_66xidApjtFuKFg",
+            .url = "git+https://github.com/natecraddock/ziglua#2f0f668a9a7e7d4ab5d90853958837bae5bc3ca2",
+            .hash = "zlua-0.1.0-hGRpC8aUBQD4jNxDkqeKXAk_5HInJKze1SWVYbYkLuxO",
         },
         .lpeg = .{
             .url = "https://github.com/neovim/deps/raw/d495ee6f79e7962a53ad79670cb92488abe0b9b4/opt/lpeg-1.1.0.tar.gz",
@@ -30,8 +30,8 @@
             .lazy = true,
         },
         .libuv = .{
-            .url = "git+https://github.com/allyourcodebase/libuv.git#b465d9ae435fadb4c30c3abf1fd3177dc0c8a5c5",
-            .hash = "libuv-1.52.0-htqqv0xqAAAccfnkBz9DgFM9I9FSzP05_44lKS63OrZr",
+            .url = "git+https://github.com/allyourcodebase/libuv.git#c1ccce24e1077ae7780857c89fb4b3aeb9080315",
+            .hash = "libuv-1.52.0-htqqvzNqAAAB6cHIx-wIffe_mqMW5GOKjHeDBJYHGwls",
             .lazy = true,
         },
         .utf8proc = .{ .path = "./deps/utf8proc/", .lazy = true },
