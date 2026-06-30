@@ -4086,9 +4086,6 @@ endfunc
 
 " Test for ModeChanged pattern
 func Test_mode_changes()
-  " Asserts `n -> c -> n` mode transitions for `q:<C-C>`, but with the
-  " non-blocking cmdwin (#40312) `q:` enters cmdwin normal mode, not cmdline.
-  throw 'Skipped: Nvim supports cmdwin freedom #40312'
   let g:index = 0
   let g:mode_seq = ['n', 'i', 'n', 'v', 'V', 'i', 'ix', 'i', 'ic', 'i', 'n', 'no', 'noV', 'n', 'V', 'v', 's', 'n']
   func! TestMode()
@@ -4153,11 +4150,12 @@ func Test_mode_changes()
   au ModeChanged n:c let g:n_to_c += 1
   let g:c_to_n = 0
   au ModeChanged c:n let g:c_to_n += 1
-  let g:mode_seq += ['c', 'n', 'c', 'n']
-  call feedkeys("q:\<C-C>\<Esc>", 'tnix')
-  call assert_equal(len(g:mode_seq) - 1, g:index)
-  call assert_equal(2, g:n_to_c)
-  call assert_equal(2, g:c_to_n)
+  " Nvim: Cannot test non-blocking cmdwin (#40312) using feedkeys() 'x' flag.
+  "let g:mode_seq += ['c', 'n', 'c', 'n']
+  "call feedkeys("q:\<C-C>\<Esc>", 'tnix')
+  "call assert_equal(len(g:mode_seq) - 1, g:index)
+  "call assert_equal(2, g:n_to_c)
+  "call assert_equal(2, g:c_to_n)
 
   let g:n_to_v = 0
   au ModeChanged n:v let g:n_to_v += 1
