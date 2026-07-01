@@ -297,16 +297,29 @@ describe('vim.fs', function()
         rmdir('testdir')
       end)
 
-      -- Unreadable root directory: error is the second return value.
+      -- With opts.err=false: errors are silent, unreadable root looks empty.
       eq(
-        'ENOENT: no such file or directory: does-not-exist',
+        0,
         exec_lua(function()
-          local _, err = vim.fs.dir('does-not-exist')
-          return err
+          local n0 = 0
+          for _ in vim.fs.dir('does-not-exist') do
+            n0 = n0 + 1
+          end
+          return n0
         end)
       )
 
-      -- Unreadable child directory: error is the iterator's third value.
+      -- With opts.err=true: unreadable root dir yields a single (name, nil, err).
+      eq(
+        { name = 'does-not-exist', err = 'ENOENT: no such file or directory: does-not-exist' },
+        exec_lua(function()
+          for name, type, err in vim.fs.dir('does-not-exist', { err = true }) do
+            return { name = name, type = type, err = err }
+          end
+        end)
+      )
+
+      -- With opts.err=true: unreadable child dir.
       local result = exec_lua(function()
         -- Stub fs_scandir since chmod doesn't work reliably on Windows.
         local orig_scandir = vim.uv.fs_scandir
@@ -317,20 +330,13 @@ describe('vim.fs', function()
           return orig_scandir(path, ...)
         end
 
-        local ok, errors_or_err = pcall(function()
-          local errors = {} ---@type table<string, string>
-          for f, _, err in vim.fs.dir('testdir', { depth = 2 }) do
-            errors[f] = err
-          end
-          return errors
-        end)
+        local errors = {} ---@type table<string, string>
+        for f, _, err in vim.fs.dir('testdir', { depth = 2, err = true }) do
+          errors[f] = err
+        end
 
         vim.uv.fs_scandir = orig_scandir
-
-        if not ok then
-          error(errors_or_err)
-        end
-        return errors_or_err
+        return errors
       end)
       eq('EACCES: permission denied: testdir/noaccess', result['noaccess'])
       -- nil: with depth=2 we don't scan testdir/a/noaccess.
@@ -473,7 +479,6 @@ describe('vim.fs', function()
           end
           return orig_scandir(path, ...)
         end
-        -- find()'s upward search probes readability via fs_access (not fs_scandir), so stub it too.
         vim.uv.fs_access = function(path, ...)
           if is_blocked(path) then
             return nil, 'EACCES: permission denied: ' .. path
@@ -481,29 +486,25 @@ describe('vim.fs', function()
           return orig_access(path, ...)
         end
 
-        local ok, out = pcall(function()
-          local r = {}
-          r.nonexistent = { vim.fs.find('foo', { path = 'does-not-exist' }) }
-          r.unreadable_root = { vim.fs.find('foo', { path = 'testdir/noaccess' }) }
-          r.downward =
-            { vim.fs.find('match.lua', { path = 'testdir', limit = math.huge, type = 'file' }) }
-          r.upward = select(
-            2,
-            vim.fs.find('match.lua', {
-              path = 'testdir/noaccess/x',
-              upward = true,
-              stop = 'testdir',
-            })
-          )
-          return r
-        end)
+        local r = {}
+        r.nonexistent = { vim.fs.find('foo', { path = 'does-not-exist' }) }
+        r.unreadable_root = { vim.fs.find('foo', { path = 'testdir/noaccess' }) }
+        local dmatches, derrors =
+          vim.fs.find('match.lua', { path = 'testdir', limit = math.huge, type = 'file' })
+        table.sort(derrors) -- readdir order is not deterministic
+        r.downward = { dmatches, derrors }
+        r.upward = select(
+          2,
+          vim.fs.find('match.lua', {
+            path = 'testdir/noaccess/x',
+            upward = true,
+            stop = 'testdir',
+          })
+        )
 
         vim.uv.fs_scandir = orig_scandir
         vim.uv.fs_access = orig_access
-        if not ok then
-          error(out)
-        end
-        return out
+        return r
       end)
 
       -- Nonexistent / unreadable root path: no matches, one error.
@@ -511,10 +512,13 @@ describe('vim.fs', function()
       eq({ {}, { 'EACCES: permission denied: testdir/noaccess' } }, res.unreadable_root)
 
       -- Downward search collects child errors, yet still returns the match found elsewhere.
-      eq(1, #res.downward[1])
-      eq(2, #res.downward[2])
-      eq(true, vim.tbl_contains(res.downward[2], 'EACCES: permission denied: testdir/noaccess'))
-      eq(true, vim.tbl_contains(res.downward[2], 'EACCES: permission denied: testdir/a/noaccess'))
+      eq({
+        { 'testdir/a/match.lua' },
+        {
+          'EACCES: permission denied: testdir/a/noaccess',
+          'EACCES: permission denied: testdir/noaccess',
+        },
+      }, res.downward)
 
       -- Upward search reports an error for each unreadable ancestor, in traversal order.
       eq({

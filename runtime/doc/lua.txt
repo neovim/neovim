@@ -2597,15 +2597,9 @@ vim.fs.dir({path}, {opts})                                      *vim.fs.dir()*
     |vim.fs.normalize()|).
 
     Example: >lua
-        local it, err = vim.fs.dir(path)
-
-        if err then
-          -- Failed to scan the root directory
-        end
-
-        for name, type, err in it do
+        for name, type, err in vim.fs.dir(path, { err = true }) do
           if err then
-            -- Failed to scan a child directory
+            -- Failed to scan directory {name} (may be the root {path} itself).
           end
         end
 <
@@ -2618,6 +2612,9 @@ vim.fs.dir({path}, {opts})                                      *vim.fs.dir()*
                 |vim.fs.normalize()|.
       • {opts}  (`table?`) Optional keyword arguments:
                 • {depth}? (`integer`, default: `1`) How deep to traverse.
+                • {err}? (`boolean`, default: `false`) Report errors via the
+                  iterator's third value ("err"), instead of silently
+                  skipping.
                 • {follow}? (`boolean`, default: `false`) Follow symbolic
                   links.
                 • {skip}? (`fun(dir_name: string): boolean`) Predicate to
@@ -2625,14 +2622,15 @@ vim.fs.dir({path}, {opts})                                      *vim.fs.dir()*
                   current directory. Only useful when depth > 1 Return an
                   iterator over the items located in {path}
 
-    Return (multiple): ~
-        (`Iterator`) over items in {path}. Each iteration yields two values:
-        "name" and "type", along with an optional value "err" "name" is the
-        basename of the item relative to {path}. "type" is one of the
-        following: "file", "directory", "link", "fifo", "socket", "char",
-        "block", "unknown". "err" is a string with the format {errname}:
-        {message}
-        (`string?`) err Error encountered while scanning the base directory
+    Return: ~
+        (`fun(): string?, string?, string?`) Iterator over items in {path},
+        yielding (name, type, err):
+        • name: Basename of the item relative to {path}.
+        • type: One of: "file", "directory", "link", "fifo", "socket", "char",
+          "block", "unknown".
+        • err: Error string, or nil. Only if `opts.err=true`. If the root
+          {path} itself could not be scanned, yields a single (name, nil, err)
+          item.
 
 vim.fs.dirname({file})                                      *vim.fs.dirname()*
     Gets the parent directory of the given path (not expanded/resolved, the
@@ -2726,9 +2724,9 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
                    directories (recursively).
 
     Return (multiple): ~
-        (`string[]`) matches Normalized paths |vim.fs.normalize()| of all
-        matching items.
-        (`string[]`) errors Errors for directories that could not be searched.
+        (`string[]`) Normalized paths |vim.fs.normalize()| of all matching
+        items.
+        (`string[]`) Errors collected while searching.
 
 vim.fs.joinpath({...})                                     *vim.fs.joinpath()*
     Concatenates partial paths (one absolute or relative path followed by zero
