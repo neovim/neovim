@@ -53,11 +53,6 @@ after/plugin file: >lua
 	vim.api.nvim_del_augroup_by_name('nvim.dir')
 <
 
-Mappings:                                                       *dir-mappings*
->
-	-	Open the parent directory of the current file or directory.
-<
-
 Directory buffer mappings:                                *dir-buffer-mappings*
 >
 	<CR>	Open the file or directory under the cursor.
@@ -66,7 +61,10 @@ Directory buffer mappings:                                *dir-buffer-mappings*
 <
 
 These keys map to <Plug>(nvim-dir-open), <Plug>(nvim-dir-up), and
-<Plug>(nvim-dir-reload); map those to use different keys.
+<Plug>(nvim-dir-reload); map those to use different keys. To use "-" outside
+of directory buffers, map it explicitly: >lua
+	vim.keymap.set('n', '-', '<Plug>(nvim-dir-up)')
+<
 
 The listing is read-only and does not modify the filesystem.
 
