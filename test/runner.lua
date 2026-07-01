@@ -23,15 +23,29 @@ _G.c_include_path = {}
 while _G.arg[1] and vim.startswith(_G.arg[1], '-I') do
   table.insert(_G.c_include_path, string.sub(table.remove(_G.arg, 1), 3))
 end
+-- TODO(bfredl): use also for cmake?
 if _G.arg[1] and vim.startswith(_G.arg[1], '-P') then
-  _G.nvim_build_dir = string.sub(table.remove(_G.arg, 1), 3)
+  local build_dir = string.sub(table.remove(_G.arg, 1), 3)
+  _G.nvim_build_dir = build_dir
 
-  vim.env.TMPDIR = _G.nvim_build_dir .. '/Xtest_tmpdir'
-  vim.env.NVIM_LOG_FILE = _G.nvim_build_dir .. '/Xtest_nvimlog'
+  -- TMPDIR: for testutil.tmpname() and Nvim tempname().
+  vim.env.TMPDIR = build_dir .. '/Xtest_tmpdir'
+  vim.fn.mkdir(vim.env.TMPDIR, 'p')
+end
+if _G.arg[1] and vim.startswith(_G.arg[1], '-X') then
+  local xdg_dir = string.sub(table.remove(_G.arg, 1), 3)
+  vim.env.NVIM_LOG_FILE = xdg_dir .. '/Xtest_nvimlog'
+  vim.env.NVIM_RPLUGIN_MANIFEST = xdg_dir .. '/Xtest_rplugin_manifest'
+  vim.env.XDG_CONFIG_HOME = xdg_dir .. '/config'
+  vim.env.XDG_DATA_HOME = xdg_dir .. '/share'
+  vim.env.XDG_STATE_HOME = xdg_dir .. '/state'
 end
 
 local root = repo_root()
 prepend_package_roots({ root, root .. '/test', '.', './test' })
+local entries = { root .. '/src/?.lua', root .. '/runtime/lua/?.lua' }
+package.path = table.concat(entries, ';') .. ';' .. package.path
+vim.env.VIMRUNTIME = root .. '/runtime'
 
 -- The harness is not an Nvim instance under test. If its startup server stays
 -- visible, serverlist({ peer = true }) can connect back to the runner and wait

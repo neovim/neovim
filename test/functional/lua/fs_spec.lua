@@ -356,6 +356,12 @@ describe('vim.fs', function()
       eq({ nvim_dir }, vim.fs.find(name, { path = parent, upward = true, type = 'directory' }))
     end)
 
+    local function filter_zig_cache(list)
+      return vim.tbl_filter(function(val)
+        return not vim.startswith(val, test_source_path .. '/.zig-cache/')
+      end, list)
+    end
+
     it('follows symlinks', function()
       local build_dir = test_build_dir ---@type string
       local symlink = test_source_path .. '/build_link' ---@type string
@@ -378,17 +384,14 @@ describe('vim.fs', function()
         })
       )
 
-      if t.is_zig_build() then
-        return pending('broken with build.zig')
-      end
       eq(
         { nvim_prog },
-        vim.fs.find(nvim_prog_basename, {
+        filter_zig_cache(vim.fs.find(nvim_prog_basename, {
           path = test_source_path,
           type = 'file',
           limit = 2,
           follow = false,
-        })
+        }))
       )
     end)
 

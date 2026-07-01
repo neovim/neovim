@@ -11,22 +11,16 @@ pub fn testStep(b: *std.Build, kind: []const u8, nvim_bin: *std.Build.Step.Compi
         }
     }
     test_step.addArg(b.fmt("-P{s}", .{b.install_path}));
+    // TODO(bfredl): investigate parallell test groups like in cmake
+    test_step.addArg(b.fmt("-X{s}/Xdg_dir", .{b.install_path}));
     test_step.addArg("-v");
     test_step.addArg(b.fmt("--helper=./test/{s}/preload.lua", .{kind}));
-    test_step.addArg("--lpath=./src/?.lua");
-    test_step.addArg("--lpath=./runtime/lua/?.lua");
-    test_step.addArg("--lpath=./?.lua");
     test_step.addPrefixedFileArg("--lpath=", config_dir.path(b, "?.lua")); // FULING: not a real file but works anyway?
     test_step.addArg(b.fmt("--default-path=./test/{s}", .{kind}));
     if (b.args) |args| test_step.addArgs(args);
 
     const env = test_step.getEnvMap();
     try env.put("NVIM_TEST", "1");
-    try env.put("VIMRUNTIME", "runtime");
-    try env.put("NVIM_RPLUGIN_MANIFEST", "Xtest_xdg/Xtest_rplugin_manifest");
-    try env.put("XDG_CONFIG_HOME", "Xtest_xdg/config");
-    try env.put("XDG_DATA_HOME", "Xtest_xdg/share");
-    try env.put("XDG_STATE_HOME", "Xtest_xdg/state");
 
     _ = env.swapRemove("NVIM");
     _ = env.swapRemove("XDG_DATA_DIRS");

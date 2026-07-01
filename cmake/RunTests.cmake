@@ -11,12 +11,7 @@ endif()
 set(ENV{NVIM_TEST} "1")
 # Set LC_ALL to meet expectations of some locale-sensitive tests.
 set(ENV{LC_ALL} "en_US.UTF-8")
-set(ENV{VIMRUNTIME} ${ROOT_DIR}/runtime)
 set(TEST_XDG_PREFIX ${BUILD_DIR}/Xtest_xdg${TEST_SUFFIX})
-set(ENV{XDG_CONFIG_HOME} ${TEST_XDG_PREFIX}/config)
-set(ENV{XDG_DATA_HOME} ${TEST_XDG_PREFIX}/share)
-set(ENV{XDG_STATE_HOME} ${TEST_XDG_PREFIX}/state)
-set(ENV{NVIM_RPLUGIN_MANIFEST} ${BUILD_DIR}/Xtest_rplugin_manifest${TEST_SUFFIX})
 unset(ENV{XDG_DATA_DIRS})
 unset(ENV{NVIM})  # Clear $NVIM in case tests are running from Nvim. #11009
 unset(ENV{TMUX})  # Nvim TUI shouldn't think it's running in tmux. #34173
@@ -87,13 +82,10 @@ if(NOT WIN32)
 endif()
 
 execute_process(
-  COMMAND ${NVIM_PRG} -l ${ROOT_DIR}/test/runner.lua -v
+  COMMAND ${NVIM_PRG} -l ${ROOT_DIR}/test/runner.lua -X${TEST_XDG_PREFIX} -v
     --summary-file=${TEST_SUMMARY_FILE}
     --helper=${TEST_DIR}/${TEST_TYPE}/preload.lua
     --lpath=${BUILD_DIR}/?.lua
-    --lpath=${ROOT_DIR}/src/?.lua
-    --lpath=${ROOT_DIR}/runtime/lua/?.lua
-    --lpath=?.lua
     ${TEST_ARGS}
     ${TEST_PATH}
   TIMEOUT $ENV{TEST_TIMEOUT}
