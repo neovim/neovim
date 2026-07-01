@@ -228,6 +228,7 @@ describe('vim._core', function()
       'vim._core.help',
       'vim._core.log',
       'vim._core.options',
+      'vim._core.proc',
       'vim._core.server',
       'vim._core.shared',
       'vim._core.spell',

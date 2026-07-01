@@ -7023,24 +7023,20 @@ vim.o.sua = vim.o.suffixesadd
 vim.bo.suffixesadd = vim.o.suffixesadd
 vim.bo.sua = vim.bo.suffixesadd
 
---- Use a swapfile for the buffer.  This option can be reset when a
---- swapfile is not wanted for a specific buffer.  For example, with
---- confidential information that even root must not be able to access.
---- Careful: All text will be in memory:
---- 	- Don't use this for big files.
---- 	- Recovery will be impossible!
---- A swapfile will only be present when 'updatecount' is non-zero and
---- 'swapfile' is set.
---- When 'swapfile' is reset, the swap file for the current buffer is
---- immediately deleted.  When 'swapfile' is set, and 'updatecount' is
---- non-zero, a swap file is immediately created.
---- Also see `swap-file`.
---- If you want to open a new buffer without creating a swap file for it,
---- use the `:noswapfile` modifier.
---- See 'directory' for where the swap file is created.
+--- Use a `swap-file` for the buffer (if 'updatecount' is non-zero). The
+--- 'directory' option decides where swapfiles are stored.
 ---
---- This option is used together with 'bufhidden' and 'buftype' to
---- specify special kinds of buffers.   See `special-buffers`.
+--- To open a new buffer without creating a swapfile, use `:noswapfile`.
+--- To disable for an existing buffer, reset its 'swapfile' option.
+--- Careful:
+--- 	- Recovery will be impossible!
+--- 	- The entire file will be in memory.
+---
+--- When reset, the swapfile for the current buffer is immediately
+--- deleted.  When re-enabled (and 'updatecount' is non-zero), a swapfile
+--- is immediately created.
+---
+--- Used with 'bufhidden' and 'buftype' to specify `special-buffers`.
 ---
 --- @type boolean
 vim.o.swapfile = true
@@ -7702,17 +7698,15 @@ vim.o.ur = vim.o.undoreload
 vim.go.undoreload = vim.o.undoreload
 vim.go.ur = vim.go.undoreload
 
---- After typing this many characters the swap file will be written to
---- disk.  When zero, no swap file will be created at all (see chapter on
---- recovery `crash-recovery`).  'updatecount' is set to zero by starting
---- Vim with the "-n" option, see `startup`.  When editing in readonly
---- mode this option will be initialized to 10000.
---- The swapfile can be disabled per buffer with 'swapfile'.
---- When 'updatecount' is set from zero to non-zero, swap files are
---- created for all buffers that have 'swapfile' set.  When 'updatecount'
---- is set to zero, existing swap files are not deleted.
---- This option has no meaning in buffers where 'buftype' is "nofile" or
---- "nowrite".
+--- The `swap-file` will be written after typing this many characters.
+---
+--- - Ignored in buffers where 'buftype' is "nofile" or "nowrite".
+--- - Initialized to 10000 when editing in readonly `-R` mode.
+--- - To disable swapfiles per-buffer, unset the 'swapfile' option.
+--- - To disable swapfiles globally, set this option to zero (or start
+---   with `-n`). See `crash-recovery`. Existing swapfiles are not deleted.
+--- - When re-enabled (from zero to non-zero), swapfiles are created for
+---   all buffers that have 'swapfile' set.
 ---
 --- @type integer
 vim.o.updatecount = 200
