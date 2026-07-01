@@ -312,8 +312,8 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
   PUT_KEY(result, cmd, mods, mods);
 
   Dict magic = arena_dict(arena, 2);
-  PUT_C(magic, "file", BOOLEAN_OBJ(cmdinfo.magic.file));
-  PUT_C(magic, "bar", BOOLEAN_OBJ(cmdinfo.magic.bar));
+  PUT_C(magic, "file", BOOLEAN_OBJ(ea.magic.file));
+  PUT_C(magic, "bar", BOOLEAN_OBJ(ea.magic.bar));
   PUT_KEY(result, cmd, magic, magic);
 
   undo_cmdmod(&cmdinfo.cmdmod);
@@ -629,16 +629,16 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
       goto end;
     }
 
-    cmdinfo.magic.file = HAS_KEY(magic, cmd_magic, file) ? magic->file : (ea.argt & EX_XFILE);
-    cmdinfo.magic.bar = HAS_KEY(magic, cmd_magic, bar) ? magic->bar : (ea.argt & EX_TRLBAR);
-    if (cmdinfo.magic.file) {
+    ea.magic.file = HAS_KEY(magic, cmd_magic, file) ? magic->file : (ea.argt & EX_XFILE);
+    ea.magic.bar = HAS_KEY(magic, cmd_magic, bar) ? magic->bar : (ea.argt & EX_TRLBAR);
+    if (ea.magic.file) {
       ea.argt |= EX_XFILE;
     } else {
       ea.argt &= ~EX_XFILE;
     }
   } else {
-    cmdinfo.magic.file = ea.argt & EX_XFILE;
-    cmdinfo.magic.bar = ea.argt & EX_TRLBAR;
+    ea.magic.file = ea.argt & EX_XFILE;
+    ea.magic.bar = ea.argt & EX_TRLBAR;
   }
 
   if (HAS_KEY(cmd, cmd, mods)) {
