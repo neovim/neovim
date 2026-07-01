@@ -93,6 +93,33 @@ describe('default', function()
   end)
 
   describe('key mappings', function()
+    it('maps - to open parent directories', function()
+      local root = t.tmpname(false)
+      local file = root .. '/alpha.txt'
+      t.mkdir(root)
+      t.write_file(file, 'alpha', true)
+      finally(function()
+        n.rmdir(root)
+      end)
+
+      n.clear({ args_rm = { '-u', '--cmd' } })
+      n.api.nvim_cmd({ cmd = 'edit', args = { file }, magic = { file = false, bar = false } }, {})
+      n.feed('-')
+      n.poke_eventloop()
+
+      t.eq(root, n.api.nvim_buf_get_name(0))
+      t.eq('directory', n.api.nvim_get_option_value('filetype', { buf = 0 }))
+      t.eq({ 'alpha.txt' }, n.api.nvim_buf_get_lines(0, 0, -1, false))
+
+      n.clear({ args_rm = { '--cmd' }, args = { '--noplugin' } })
+      n.api.nvim_buf_set_lines(0, 0, -1, false, { '  alpha', '  beta' })
+      n.api.nvim_win_set_cursor(0, { 2, 7 })
+      n.feed('-')
+
+      t.eq({ 1, 2 }, n.api.nvim_win_get_cursor(0))
+      t.eq(false, n.exec_lua([[return package.loaded['nvim.dir'] ~= nil]]))
+    end)
+
     describe('Visual mode search mappings', function()
       it('handle various chars properly', function()
         n.clear({ args_rm = { '--cmd' } })
