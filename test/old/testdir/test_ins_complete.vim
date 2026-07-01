@@ -6039,7 +6039,7 @@ func Test_autocompletedelay()
   call term_sendkeys(buf, "\<BS>")
   call VerifyScreenDump(buf, 'Test_autocompletedelay_5', {})
   sleep 500m
-  call VerifyScreenDump(buf, 'Test_autocompletedelay_6', {})
+  call VerifyScreenDump(buf, 'Test_autocompletedelay_5', {})
 
   " During delay wait, user can open menu using CTRL_N completion
   call term_sendkeys(buf, "\<Esc>:set completeopt=menuone\<CR>")
@@ -6442,8 +6442,6 @@ func Test_autocompletedelay_longest_preinsert()
 
   " Preinsert
   call term_sendkeys(buf, "\<Esc>:set completeopt& completeopt+=preinsert\<CR>")
-
-  " Show preinserted text right away but display popup later
   call term_sendkeys(buf, "\<Esc>Sau")
   sleep 100m
   call VerifyScreenDump(buf, 'Test_autocompletedelay_preinsert_1', {})

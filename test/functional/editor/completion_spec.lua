@@ -1811,8 +1811,6 @@ describe('completion', function()
 
     -- Preinsert
     command('set completeopt& completeopt+=preinsert')
-
-    -- Show preinserted text right away but display popup later
     feed('<Esc>Sau')
     screen:expect([[
       autocomplete                                                |
