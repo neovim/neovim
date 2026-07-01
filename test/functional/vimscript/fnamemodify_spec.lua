@@ -106,44 +106,60 @@ describe('fnamemodify()', function()
   end)
 
   it('handles :h', function()
+    -- generic path
     eq('.', fnamemodify('hello.txt', ':h'))
+    eq('path/to', fnamemodify('path/to/hello.txt', ':h'))
+    eq('/', fnamemodify('/', ':h'))
+    eq('/', fnamemodify('/foo', ':h'))
 
-    eq_slashconvert('path/to', fnamemodify('path/to/hello.txt', ':h'))
+    -- collapses more than two leading slashes into a single slash
+    eq('/', fnamemodify('///', ':h'))
+    eq('/', fnamemodify('////', ':h'))
+    eq('/', fnamemodify('///foo', ':h'))
+    eq('/foo', fnamemodify('///foo/bar', ':h'))
+    eq('/foo', fnamemodify('///foo////bar', ':h'))
+    eq('/foo', fnamemodify('////foo/bar', ':h'))
 
-    if is_os('win') then
-      -- Current Windows behavior for slash-style UNC paths, such as "//foo/C$/".
-      eq('/', fnamemodify('/', ':h'))
-      eq('/', fnamemodify('/foo', ':h'))
-      eq('//', fnamemodify('//', ':h'))
-      eq('//', fnamemodify('//foo', ':h'))
-      eq('//foo', fnamemodify('//foo/bar', ':h'))
-      eq('//foo', fnamemodify('//foo///bar', ':h'))
-      eq('//foo', fnamemodify('//foo/C$', ':h'))
-      eq('//foo/C$', fnamemodify('//foo/C$/', ':h'))
-      eq('//foo/C$', fnamemodify('//foo/C$/bar', ':h'))
-      eq('///', fnamemodify('///', ':h'))
-      eq('////', fnamemodify('////', ':h'))
-      eq('///', fnamemodify('///foo', ':h'))
-      eq('///foo', fnamemodify('///foo/bar', ':h'))
-      eq('///foo', fnamemodify('///foo////bar', ':h'))
-    else
-      -- POSIX roots.
-      eq('/', fnamemodify('/', ':h'))
-      eq('/', fnamemodify('/foo', ':h'))
+    -- preserves exactly two leading slashes
+    eq('//', fnamemodify('//', ':h'))
 
+    if not is_os('win') then
       -- POSIX permits special handling for exactly two leading slashes.
       eq('//', fnamemodify('//', ':h'))
       eq('//', fnamemodify('//foo', ':h'))
       eq('//foo', fnamemodify('//foo/bar', ':h'))
       eq('//foo', fnamemodify('//foo///bar', ':h'))
+    else
+      eq('//server', fnamemodify('//server', ':h'))
+      eq('//server/share', fnamemodify('//server/share', ':h'))
+      eq('//server/share/', fnamemodify('//server/share/', ':h'))
+      eq('//server///share', fnamemodify('//server///share', ':h'))
+      eq('//server/share/', fnamemodify('//server/share/foo', ':h'))
 
-      -- More than two leading slashes are ordinary absolute paths.
-      eq('/', fnamemodify('///', ':h'))
-      eq('/', fnamemodify('////', ':h'))
-      eq('/', fnamemodify('///foo', ':h'))
-      eq('/foo', fnamemodify('///foo/bar', ':h'))
-      eq('/foo', fnamemodify('///foo////bar', ':h'))
-      eq('/foo', fnamemodify('////foo/bar', ':h'))
+      eq([[\\foo\C$]], fnamemodify([[\\foo\C$]], ':h'))
+      eq([[\\foo\C$\]], fnamemodify([[\\foo\C$\]], ':h'))
+      eq([[\\foo\C$\]], fnamemodify([[\\foo\C$\bar]], ':h'))
+      eq([[\\foo\C$\]], fnamemodify([[\\foo\C$\bar]], ':h:h'))
+      eq([[//foo\C$/]], fnamemodify([[//foo\C$/bar]], ':h'))
+      -- `C$` is a share name, not a file name
+      eq('', fnamemodify('//foo/C$/bar', ':h:t'))
+
+      eq('C:', fnamemodify('C:foo', ':h'))
+      eq('C:/', fnamemodify('C:/foo', ':h'))
+
+      eq('//?/C:/', fnamemodify('//?/C:/', ':h'))
+      eq('//?/C:/', fnamemodify('//?/C:/foo', ':h'))
+      eq(
+        '//?/Volume{b75e2c83-0000-0000-0000-602f00000000}/',
+        fnamemodify('//?/Volume{b75e2c83-0000-0000-0000-602f00000000}/foo', ':h')
+      )
+      eq(
+        '//?/Volume{b75e2c83-0000-0000-0000-602f00000000}/',
+        fnamemodify('///?/Volume{b75e2c83-0000-0000-0000-602f00000000}/foo', ':h')
+      )
+      eq('//?/UNC/server', fnamemodify('//?/UNC/server', ':h'))
+      eq('//?/UNC/server/share', fnamemodify('//?/UNC/server/share', ':h'))
+      eq('//?/UNC/server/share/', fnamemodify('//?/UNC/server/share/foo', ':h'))
     end
   end)
 
