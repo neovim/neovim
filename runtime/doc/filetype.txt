@@ -1245,6 +1245,13 @@ Currently no other formats are recognized.
 
 TYPST							*ft-typst-plugin*
 
+						   *g:typst_recommended_style*
+By default, the Typst filetype plugin enables the following options: >
+	setlocal expandtab shiftwidth=2 softtabstop=2
+
+To disable this, set the following variable: >
+	let g:typst_recommended_style = 0
+<
 							*g:typst_conceal*
 When |TRUE| the Typst filetype plugin will set the 'conceallevel' option to 2.
 
