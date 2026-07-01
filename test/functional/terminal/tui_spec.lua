@@ -670,6 +670,57 @@ describe('TUI :restart', function()
     screen:expect({ any = vim.pesc('[Process exited 0]') })
   end)
 
+  it('drops "-S [file]" from v:argv', function()
+    local file = 'foo.lua'
+    write_file(file, "print('foo')\n")
+    finally(function()
+      os.remove(file)
+    end)
+
+    local server_session
+    finally(function()
+      if server_session then
+        server_session:close()
+      end
+    end)
+    local server_pipe = new_pipename()
+    local screen = tt.setup_child_nvim({
+      '--clean',
+      '--listen',
+      server_pipe,
+      '--cmd',
+      'set notermguicolors laststatus=0 noruler',
+      '-S',
+      file,
+    }, { env = env_notermguicolors })
+    screen:expect([[
+      ^                                                  |
+      ~                                                 |*4
+      foo                                               |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    server_session = n.connect(server_pipe)
+    local has_S = 'index(v:argv, "-S") >= 0 ? v:true : v:false'
+    local has_file = 'index(v:argv, "foo.lua") >= 0 ? v:true : v:false'
+    eq({ true, true }, { server_session:request('nvim_eval', has_S) })
+    eq({ true, true }, { server_session:request('nvim_eval', has_file) })
+
+    tt.feed_data(':restart\r')
+    screen:expect([[
+      ^                                                  |
+      ~                                                 |*4
+                                                        |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    server_session:close()
+    server_session = n.connect(server_pipe)
+    eq({ true, false }, { server_session:request('nvim_eval', has_S) })
+    eq({ true, false }, { server_session:request('nvim_eval', has_file) })
+
+    feed_data(':qall!\r')
+    screen:expect({ any = vim.pesc('[Process exited 0]') })
+  end)
+
   it('[command] triggers autocommands properly #38549', function()
     local screen = tt.setup_child_nvim({
       '--clean',
