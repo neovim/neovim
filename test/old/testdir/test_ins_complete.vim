@@ -6124,9 +6124,19 @@ func Test_autocompletedelay_no_record()
   let @a = ''
   " Type a char that arms the delay, idle past 'autocompletedelay' so a
   " K_COMPLETE_DELAY would be injected, then end Insert mode and stop recording.
-  call timer_start(200, { -> feedkeys("\<Esc>q", 't') })
+  call timer_start(300, { -> feedkeys("\<Esc>q", 't') })
   call feedkeys("qaSf", 'tx!')
   call assert_equal("Sf\<Esc>", @a)
+
+  " Delayed autocompletion still works when recording.
+  if !has('win32') || has('nvim')
+    call setline(1, 'foobar foofoo')
+    call timer_start(300, { -> feedkeys("\<Down>\<C-Y>\<Esc>q", 't') })
+    call feedkeys("qaof", 'tx!')
+    call assert_equal('foobar', getline('.'))
+    " XXX: This doesn't produce the same result when replaying.
+    call assert_equal("of\<Down>\<C-Y>\<Esc>", @a)
+  endif
 
   set autocomplete& autocompletedelay&
   bwipe!

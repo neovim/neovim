@@ -1194,6 +1194,10 @@ static bool gotchars_add_byte(gotchars_state_T *state, uint8_t byte)
         goto ret_false;
       }
       c = TO_SPECIAL(state->prev_c, c);
+      // Drop K_COMPLETE_DELAY, it's not useful in a recording.
+      if (c == K_COMPLETE_DELAY) {
+        state->buflen = 0;
+      }
     }
     // When receiving a multibyte character, store it until we have all
     // the bytes, so that it won't be split between two buffer blocks,
