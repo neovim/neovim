@@ -209,4 +209,19 @@ function M.ex_session_restart(eap, extra)
   end
 end
 
+--- Disconnects every UI except `keep_chan`, keeping the server running.
+---
+--- @param keep_chan integer Channel ID of the UI to preserve.
+--- @return integer # Number of UIs detached.
+function M.detach_others(keep_chan)
+  local detached = 0
+  for _, ui in ipairs(vim.api.nvim_list_uis()) do
+    if ui.chan and ui.chan ~= keep_chan then
+      vim.api.nvim__ui_detach(ui.chan)
+      detached = detached + 1
+    end
+  end
+  return detached
+end
+
 return M
