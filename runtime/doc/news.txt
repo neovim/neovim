@@ -363,6 +363,9 @@ These existing features changed their behavior.
 • |vim.keymap.set()| and |vim.keymap.del()| accept a list of strings for `lhs`.
 • 'statuscolumn' click function labels can be different across rows.
   |v:virtnum| and |v:lnum| are available during the click function callback.
+• Markdown inline highlighting now conceals the backslash in backslash escapes.
+• Markdown inline backslash escapes and hard line breaks no longer use the
+  `@string.escape` capture.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
