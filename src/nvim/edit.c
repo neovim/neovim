@@ -582,6 +582,10 @@ static int insert_execute(VimState *state, int key)
   if (key != K_EVENT) {
     did_cursorhold = true;
   }
+  if (key != K_EVENT && key != K_COMPLETE_DELAY) {
+    // Don't want delayed autocompletion from the previous key either.
+    ins_compl_clear_autocomplete_delay();
+  }
 
   // Special handling of keys while the popup menu is visible or wanted
   // and the cursor is still in the completed word.  Only when there is

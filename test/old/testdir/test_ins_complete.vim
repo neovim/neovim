@@ -6092,6 +6092,28 @@ func Test_autocompletedelay_ctrl_g_U()
   call Run_test_autocompletedelay_ctrl_g_U(150, 500)
 endfunc
 
+func Run_test_autocompletedelay_ctrl_k(delay1, delay2)
+  new
+  call setline(1, 'foo bar baz')
+  set autocomplete autocompletedelay=200
+
+  call timer_start(a:delay1, { -> feedkeys("\<C-K>", 't') })
+  call timer_start(a:delay2, { -> feedkeys(".,\<Esc>", 't') })
+  call feedkeys('ob', 'tx!')
+  call assert_equal(['foo bar baz', 'b…'], getline(1, '$'))
+
+  set autocomplete& autocompletedelay&
+  bwipe!
+endfunc
+
+func Test_autocompletedelay_ctrl_k()
+  throw 'Skipped: use test/functional/editor/completion_spec.lua'
+  " Ctrl-K typed after 'autocompletedelay' expires
+  call Run_test_autocompletedelay_ctrl_k(250, 500)
+  " Ctrl-K typed before 'autocompletedelay' expires
+  call Run_test_autocompletedelay_ctrl_k(150, 500)
+endfunc
+
 " Preinsert longest prefix when autocomplete
 func Test_autocomplete_longest()
   func GetLine()

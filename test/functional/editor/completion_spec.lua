@@ -1665,6 +1665,35 @@ describe('completion', function()
     feed('<esc>')
   end)
 
+  local function run_test_autocompletedelay_ctrl_k(delay1, delay2)
+    source([[
+      new
+      call setline(1, 'foo bar baz')
+      set autocomplete autocompletedelay=200
+    ]])
+
+    feed('ob')
+    vim.uv.sleep(delay1)
+    feed('<C-K>')
+    vim.uv.sleep(delay2)
+    feed('.,<Esc>')
+    poke_eventloop()
+    expect('foo bar baz\nb…')
+
+    source([[
+      set autocomplete& autocompletedelay&
+      bwipe!
+    ]])
+  end
+
+  -- oldtest: Test_autocompletedelay_ctrl_k()
+  it("'autocompletedelay' doesn't interfere with i_CTRL-K", function()
+    -- Ctrl-K typed after 'autocompletedelay' expires
+    run_test_autocompletedelay_ctrl_k(250, 500)
+    -- Ctrl-K typed before 'autocompletedelay' expires
+    run_test_autocompletedelay_ctrl_k(150, 500)
+  end)
+
   -- oldtest: Test_fuzzy_select_item_when_acl()
   it([[first item isn't selected with "fuzzy" and 'acl']], function()
     screen:try_resize(60, 10)
