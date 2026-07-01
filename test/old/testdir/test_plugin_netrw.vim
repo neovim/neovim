@@ -885,4 +885,27 @@ func Test_netrw_forward_slashes()
   bw!
 endfunc
 
+" Selecting a file whose name is a single backslash
+func Test_netrw_open_backslash_file()
+  CheckUnix
+
+  let dir   = getcwd() . '/Xbslash'
+  let fname = dir . '/\'
+  call mkdir(dir, 'p')
+  call writefile(['backslash file content'], fname)
+  call assert_true(filereadable(fname))
+
+  " list the directory and move onto the '\' entry
+  exe 'Explore ' .. dir
+  call assert_true(search('^\\$', 'w') > 0)
+
+  " open it
+  exe "normal \<CR>"
+
+  call assert_equal('\', expand('%:t'))
+  call assert_equal(['backslash file content'], getline(1, '$'))
+
+  bw!
+endfunc
+
 " vim:ts=8 sts=2 sw=2 et
