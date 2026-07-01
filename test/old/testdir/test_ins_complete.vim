@@ -6068,6 +6068,30 @@ func Test_autocompletedelay()
   call StopVimInTerminal(buf)
 endfunc
 
+func Run_test_autocompletedelay_ctrl_g_U(delay1, delay2)
+  new
+  call setline(1, 'foo bar baz')
+  inoremap <buffer> ( ()<C-g>U
+  set autocomplete autocompletedelay=200
+
+  call timer_start(a:delay1, { -> feedkeys('(', 't') })
+  call timer_start(a:delay2, { -> feedkeys("\<Left>a\<Esc>", 't') })
+  call feedkeys('ob', 'tx!')
+  call assert_equal(['foo bar baz', 'b(a)'], getline(1, '$'))
+  undo
+  call assert_equal(['foo bar baz'], getline(1, '$'))
+
+  set autocomplete& autocompletedelay&
+  bwipe!
+endfunc
+
+func Test_autocompletedelay_ctrl_g_U()
+  " '(' typed after 'autocompletedelay' expires
+  call Run_test_autocompletedelay_ctrl_g_U(250, 500)
+  " '(' typed before 'autocompletedelay' expires
+  call Run_test_autocompletedelay_ctrl_g_U(150, 500)
+endfunc
+
 " Preinsert longest prefix when autocomplete
 func Test_autocomplete_longest()
   func GetLine()
