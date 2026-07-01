@@ -100,6 +100,33 @@ describe('nvim.dir', function()
     line_of('alpha.txt')
   end)
 
+  it('fires FileType before BufEnter when opening directories', function()
+    make_fixture()
+    n.clear({ args_rm = { '-u' } })
+    exec_lua(function()
+      _G.nvim_dir_events = {}
+      vim.api.nvim_create_autocmd({ 'FileType', 'BufEnter' }, {
+        callback = function(ev)
+          if ev.event == 'FileType' or vim.bo[ev.buf].filetype == 'directory' then
+            _G.nvim_dir_events[#_G.nvim_dir_events + 1] = ev.event
+              .. ':'
+              .. vim.bo[ev.buf].filetype
+              .. ':'
+              .. tostring(package.loaded['nvim.dir'] ~= nil)
+          end
+        end,
+      })
+    end)
+
+    edit(root)
+
+    eq(
+      { 'FileType:directory:false', 'BufEnter:directory:true' },
+      exec_lua('return _G.nvim_dir_events')
+    )
+    assert_directory(root)
+  end)
+
   it('triggers nested autocmds when opening directory buffers', function()
     make_fixture()
 

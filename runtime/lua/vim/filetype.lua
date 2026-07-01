@@ -3258,6 +3258,13 @@ function M.match(args)
 
     local ok_abspath, path = pcall(vim.fs.abspath, name)
     if ok_abspath then -- First check for the simple case where the full path exists as a key
+      if name ~= '' then
+        local stat = vim.uv.fs_stat(path)
+        if stat and stat.type == 'directory' then
+          return 'directory'
+        end
+      end
+
       local ft, on_detect = dispatch(filename[path], path, bufnr)
       if ft then
         return ft, on_detect
