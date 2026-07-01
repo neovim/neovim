@@ -1,12 +1,12 @@
 " Vim filetype plugin file
-" Language:    Typst
-" Previous Maintainer:  Gregory Anders
+" Language:             Typst
+" Maintainer:           Maxim Kim <habamax@gmail.com>
+" Previous Maintainers: Gregory Anders
 "                       Luca Saccarola <github.e41mv@aleeas.com>
-" Maintainer:  This runtime file is looking for a new maintainer.
-" Last Change: 2025 Aug 05
-" Based on:    https://github.com/kaarmu/typst.vim
+" Last Change:          2026 Jun 29
+" Based on the ftplugin from https://github.com/kaarmu/typst.vim
 
-if exists('b:did_ftplugin')
+if exists("b:did_ftplugin")
   finish
 endif
 let b:did_ftplugin = 1
@@ -20,20 +20,38 @@ setlocal formatlistpat=^\\s*\\d\\+[\\]:.)}\\t\ ]\\s*
 setlocal formatlistpat+=\\\|^\\s*[-+/\]\\s\\+
 setlocal suffixesadd=.typ
 
-let b:undo_ftplugin = 'setl cms< com< fo< flp< sua<'
+let b:undo_ftplugin = "setl cms< com< fo< flp< sua<"
 
-if get(g:, 'typst_conceal', 0)
+if get(g:, "typst_conceal", 0)
   setlocal conceallevel=2
-  let b:undo_ftplugin .= ' cole<'
+  let b:undo_ftplugin ..= " cole<"
 endif
 
-if has("folding") && get(g:, 'typst_folding', 0)
-    setlocal foldexpr=typst#foldexpr()
-    setlocal foldmethod=expr
-    let b:undo_ftplugin .= "|setl foldexpr< foldmethod<"
+if get(g:, 'typst_recommended_style',
+      \ get(g:, 'filetype_recommended_style', 1))
+  setlocal expandtab
+  setlocal softtabstop=2
+  setlocal shiftwidth=2
+  let b:undo_ftplugin ..= " | setl et< sts< sw<"
 endif
 
-if !exists('current_compiler')
+if has("folding") && get(g:, "typst_folding", 0)
+  setlocal foldexpr=typst#foldexpr()
+  setlocal foldmethod=expr
+  let b:undo_ftplugin ..= " | setl foldexpr< foldmethod<"
+endif
+
+if !exists("current_compiler")
   compiler typst
-  let b:undo_ftplugin ..= "| compiler make"
+  let b:undo_ftplugin ..= " | compiler make"
+endif
+
+if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
+  let  b:browsefilter = "Typst Markup file (*.typ)\t*.typ\n"
+  if has("win32")
+    let b:browsefilter ..= "All Files (*.*)\t*\n"
+  else
+    let b:browsefilter ..= "All Files (*)\t*\n"
+  endif
+  let b:undo_ftplugin ..= " | unlet! b:browsefilter"
 endif
