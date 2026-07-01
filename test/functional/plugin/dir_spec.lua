@@ -51,22 +51,6 @@ local function filesystem_root(path)
   return root
 end
 
----@param args? string[]
----@return string[]
-local function with_buftype_optionset(args)
-  return vim.list_extend({
-    '--cmd',
-    'let g:nvim_dir_events = []',
-    '--cmd',
-    [[autocmd OptionSet buftype call add(g:nvim_dir_events, v:option_new)]],
-  }, args or {})
-end
-
-local function expect_buftype_optionset(path)
-  assert_directory(path)
-  eq({ 'nowrite' }, exec_lua('return vim.g.nvim_dir_events'))
-end
-
 describe('nvim.dir', function()
   local root
   local subdir
@@ -108,11 +92,7 @@ describe('nvim.dir', function()
       vim.api.nvim_create_autocmd({ 'FileType', 'BufEnter' }, {
         callback = function(ev)
           if ev.event == 'FileType' or vim.bo[ev.buf].filetype == 'directory' then
-            _G.nvim_dir_events[#_G.nvim_dir_events + 1] = ev.event
-              .. ':'
-              .. vim.bo[ev.buf].filetype
-              .. ':'
-              .. tostring(package.loaded['nvim.dir'] ~= nil)
+            _G.nvim_dir_events[#_G.nvim_dir_events + 1] = ev.event .. ':' .. vim.bo[ev.buf].filetype
           end
         end,
       })
@@ -120,45 +100,8 @@ describe('nvim.dir', function()
 
     edit(root)
 
-    eq(
-      { 'FileType:directory:false', 'BufEnter:directory:true' },
-      exec_lua('return _G.nvim_dir_events')
-    )
+    eq({ 'FileType:directory', 'BufEnter:directory' }, exec_lua('return _G.nvim_dir_events'))
     assert_directory(root)
-  end)
-
-  it('triggers nested autocmds when opening directory buffers', function()
-    make_fixture()
-
-    n.clear({
-      args_rm = { '-u' },
-      args = with_buftype_optionset({ root }),
-    })
-    expect_buftype_optionset(root)
-
-    n.clear({
-      args_rm = { '-u' },
-      args = with_buftype_optionset(),
-    })
-    edit(root)
-    expect_buftype_optionset(root)
-  end)
-
-  it('handles nested autocmds deleting the directory buffer', function()
-    make_fixture()
-    n.clear({
-      args_rm = { '-u' },
-      args = {
-        '--cmd',
-        'let g:nvim_dir_wiped = 0',
-        '--cmd',
-        [[autocmd OptionSet buftype let g:nvim_dir_wiped = 1 | bwipeout!]],
-        root,
-      },
-    })
-
-    eq(1, exec_lua('return vim.g.nvim_dir_wiped'))
-    eq('', exec_capture('messages'))
   end)
 
   it('does not load the module until opening a directory', function()
@@ -169,6 +112,23 @@ describe('nvim.dir', function()
     edit(root)
     eq(true, exec_lua([[return package.loaded['nvim.dir'] ~= nil]]))
     assert_directory(root)
+  end)
+
+  it('lets FileType handlers take over directory buffers', function()
+    make_fixture()
+    n.clear({
+      args_rm = { '-u' },
+      args = {
+        '--cmd',
+        [[autocmd FileType directory setlocal buftype=nofile | call setline(1, 'custom directory browser')]],
+      },
+    })
+
+    edit(root)
+    eq('directory', bufopt('filetype'))
+    eq('nofile', bufopt('buftype'))
+    eq({ 'custom directory browser' }, lines())
+    eq(false, exec_lua([[return package.loaded['nvim.dir'] ~= nil]]))
   end)
 
   it('maps - to open the parent directory of the current file', function()
