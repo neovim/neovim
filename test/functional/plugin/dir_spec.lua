@@ -157,9 +157,6 @@ describe('nvim.dir', function()
   end)
 
   it('uses an absolute buffer name for a relative startup directory argument', function()
-    if t.is_zig_build() then
-      return pending('broken with build.zig relative runtime paths after chdir')
-    end
     make_fixture()
     local cwd = assert(vim.uv.cwd())
     assert(vim.uv.chdir(root))
@@ -365,9 +362,6 @@ describe('nvim.dir', function()
   end)
 
   it('coexists with netrw', function()
-    if t.is_zig_build() then
-      return pending('broken with build.zig relative runtime paths after chdir')
-    end
     make_fixture()
     n.clear({ args_rm = { '-u' } })
     local cwd = fn.getcwd()
@@ -383,9 +377,6 @@ describe('nvim.dir', function()
   end)
 
   it('supports the FileExplorer browse contract', function()
-    if t.is_zig_build() then
-      return pending('broken with build.zig relative runtime paths after chdir')
-    end
     make_fixture()
     n.clear({ args_rm = { '-u' } })
     local cwd = fn.getcwd()
