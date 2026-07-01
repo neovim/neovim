@@ -243,8 +243,13 @@ local function check_plug_dir()
 
   local is_good = true
   local plug_dir = get_plug_dir()
-  for plug_name, _ in vim.fs.dir(plug_dir) do
-    is_good = check_installed_plugin(plug_name) and is_good
+  for plug_name, _, err in vim.fs.dir(plug_dir, { err = true }) do
+    if err then
+      health.error(err)
+      is_good = false
+    else
+      is_good = check_installed_plugin(plug_name) and is_good
+    end
   end
 
   if is_good then
