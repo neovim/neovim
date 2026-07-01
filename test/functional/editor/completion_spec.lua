@@ -1557,21 +1557,14 @@ describe('completion', function()
       foobar                                                      |
       foobarbaz                                                   |
       f^                                                           |
-      {1:~                                                           }|*5
-      {5:-- INSERT --}                                                |
-    ]])
-    vim.uv.sleep(500)
-    screen:expect([[
-      foo                                                         |
-      foobar                                                      |
-      foobarbaz                                                   |
-      f^                                                           |
       {4:foobarbaz      }{1:                                             }|
       {4:foobar         }{1:                                             }|
       {4:foo            }{1:                                             }|
       {1:~                                                           }|*2
       {5:-- INSERT --}                                                |
     ]])
+    vim.uv.sleep(500)
+    screen:expect_unchanged()
 
     -- During delay wait, user can open menu using CTRL_N completion
     feed('<Esc>')
@@ -1589,7 +1582,9 @@ describe('completion', function()
       {5:-- Keyword completion (^N^P) }{6:match 1 of 3}                   |
     ]])
 
-    -- After the menu is open, ^N/^P and Up/Down should not delay
+    -- After the menu is open, ^N/^P and Up/Down should not delay.
+    -- Wait a bit longer than 'autocompletedelay' so the popup is surely shown
+    -- before sending CTRL-N, otherwise the keys race with the deferred popup.
     feed('<Esc>')
     command('set completeopt=menu')
     feed('Sf')
@@ -1601,7 +1596,7 @@ describe('completion', function()
       {1:~                                                           }|*5
       {5:-- INSERT --}                                                |
     ]])
-    vim.uv.sleep(500)
+    vim.uv.sleep(600)
     screen:expect([[
       foo                                                         |
       foobar                                                      |
@@ -1670,6 +1665,35 @@ describe('completion', function()
     feed('<esc>')
   end)
 
+  local function run_test_autocompletedelay_ctrl_k(delay1, delay2)
+    source([[
+      new
+      call setline(1, 'foo bar baz')
+      set autocomplete autocompletedelay=200
+    ]])
+
+    feed('ob')
+    vim.uv.sleep(delay1)
+    feed('<C-K>')
+    vim.uv.sleep(delay2)
+    feed('.,<Esc>')
+    poke_eventloop()
+    expect('foo bar baz\nb…')
+
+    source([[
+      set autocomplete& autocompletedelay&
+      bwipe!
+    ]])
+  end
+
+  -- oldtest: Test_autocompletedelay_ctrl_k()
+  it("'autocompletedelay' doesn't interfere with i_CTRL-K", function()
+    -- Ctrl-K typed after 'autocompletedelay' expires
+    run_test_autocompletedelay_ctrl_k(250, 500)
+    -- Ctrl-K typed before 'autocompletedelay' expires
+    run_test_autocompletedelay_ctrl_k(150, 500)
+  end)
+
   -- oldtest: Test_fuzzy_select_item_when_acl()
   it([[first item isn't selected with "fuzzy" and 'acl']], function()
     screen:try_resize(60, 10)
@@ -1734,7 +1758,7 @@ describe('completion', function()
     screen:expect([[
       autocomplete                                                |
       autocomxxx                                                  |
-      au{102:^tocom}                                                     |
+      au^                                                          |
       {1:~                                                           }|*4
       {5:-- INSERT --}                                                |
     ]])
@@ -1742,7 +1766,7 @@ describe('completion', function()
     screen:expect([[
       autocomplete                                                |
       autocomxxx                                                  |
-      autoc{102:^om}                                                     |
+      autoc^                                                       |
       {1:~                                                           }|*4
       {5:-- INSERT --}                                                |
     ]])
@@ -1762,7 +1786,7 @@ describe('completion', function()
     screen:expect([[
       autocomplete                                                |
       autocomxxx                                                  |
-      aut{102:^ocom}                                                     |
+      aut^                                                         |
       {1:~                                                           }|*4
       {5:-- INSERT --}                                                |
     ]])
@@ -1770,7 +1794,7 @@ describe('completion', function()
     screen:expect([[
       autocomplete                                                |
       autocomxxx                                                  |
-      au{102:^tocom}                                                     |
+      au^                                                          |
       {1:~                                                           }|*4
       {5:-- INSERT --}                                                |
     ]])
@@ -1787,13 +1811,11 @@ describe('completion', function()
 
     -- Preinsert
     command('set completeopt& completeopt+=preinsert')
-
-    -- Show preinserted text right away but display popup later
     feed('<Esc>Sau')
     screen:expect([[
       autocomplete                                                |
       autocomxxx                                                  |
-      au{102:^tocomplete}                                                |
+      au^                                                          |
       {1:~                                                           }|*4
       {5:-- INSERT --}                                                |
     ]])
