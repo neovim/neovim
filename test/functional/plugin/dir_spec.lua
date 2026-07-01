@@ -101,6 +101,36 @@ describe('nvim.dir', function()
     line_of('alpha.txt')
   end)
 
+  it('lets FileType directory handlers show URI-backed browser buffers', function()
+    make_fixture()
+    n.clear({ args_rm = { '-u' } })
+    exec_lua(function()
+      _G.nvim_dir_loaded_in_filetype = nil
+      vim.api.nvim_create_autocmd('FileType', {
+        pattern = 'directory',
+        callback = function(ev)
+          _G.nvim_dir_loaded_in_filetype = package.loaded['nvim.dir'] ~= nil
+          local dir = vim.api.nvim_buf_get_name(ev.buf)
+          local browser = vim.api.nvim_create_buf(false, true)
+          vim.api.nvim_buf_set_name(browser, 'example://' .. dir)
+          vim.api.nvim_buf_set_lines(browser, 0, -1, false, {
+            'plugin browser for: ' .. dir,
+          })
+          vim.api.nvim_set_current_buf(browser)
+          vim.api.nvim_buf_delete(ev.buf, { force = true })
+        end,
+      })
+    end)
+
+    edit(root)
+
+    eq(false, exec_lua('return _G.nvim_dir_loaded_in_filetype'))
+    eq('example://' .. root .. '/', api.nvim_buf_get_name(0))
+    eq({ 'plugin browser for: ' .. root .. '/' }, lines())
+    eq(false, exec_lua([[return package.loaded['nvim.dir'] ~= nil]]))
+    eq('', exec_capture('messages'))
+  end)
+
   it('triggers nested autocmds when opening directory buffers', function()
     make_fixture()
 
