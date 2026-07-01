@@ -11,6 +11,9 @@ pub fn testStep(b: *std.Build, kind: []const u8, nvim_bin: *std.Build.Step.Compi
         }
     }
     const install_path = b.getInstallPath(.prefix, ".");
+    if (b.graph.host.result.os.tag != .windows) {
+        test_step.setCwd(.{ .cwd_relative = b.fmt("{s}/Xtest_xdg", .{install_path}) });
+    }
     test_step.addArg(b.fmt("-P{s}", .{install_path}));
     test_step.addArg("-v");
     test_step.addPrefixedFileArg("--helper=", b.path(b.fmt("test/{s}/preload.lua", .{kind})));
@@ -38,10 +41,30 @@ pub fn test_steps(b: *std.Build, nvim_bin: *std.Build.Step.Compile, depend_on: *
     const empty_dir = b.addWriteFiles();
     _ = empty_dir.add(".touch", "");
     const tmpdir_create = b.addInstallDirectory(.{ .source_dir = empty_dir.getDirectory(), .install_dir = .prefix, .install_subdir = "Xtest_tmpdir/" });
+    const install_path = b.getInstallPath(.prefix, ".");
+    const xdgdir_step = xdgdir: {
+        if (b.graph.host.result.os.tag == .windows) {
+            const xdgdir_create = b.addInstallDirectory(.{ .source_dir = empty_dir.getDirectory(), .install_dir = .prefix, .install_subdir = "Xtest_xdg/" });
+            break :xdgdir &xdgdir_create.step;
+        }
+        const xdgdir_setup = b.addSystemCommand(&.{
+            "sh",
+            "-c",
+            "mkdir -p \"$1\" && ln -sfn \"$2\" \"$1/runtime\" && ln -sfn \"$3\" \"$1/src\" && ln -sfn \"$4\" \"$1/test\" && ln -sfn \"$5\" \"$1/README.md\"",
+            "setup-test-xdg",
+            b.fmt("{s}/Xtest_xdg", .{install_path}),
+            try b.build_root.join(b.graph.arena, &.{"runtime"}),
+            try b.build_root.join(b.graph.arena, &.{"src"}),
+            try b.build_root.join(b.graph.arena, &.{"test"}),
+            try b.build_root.join(b.graph.arena, &.{"README.md"}),
+        });
+        break :xdgdir &xdgdir_setup.step;
+    };
 
     const functional_tests = try testStep(b, "functional", nvim_bin, config_dir, null);
     functional_tests.step.dependOn(depend_on);
     functional_tests.step.dependOn(&tmpdir_create.step);
+    functional_tests.step.dependOn(xdgdir_step);
 
     const functionaltest_step = b.step("functionaltest", "run functional tests");
     functionaltest_step.dependOn(&functional_tests.step);
@@ -63,6 +86,7 @@ pub fn test_steps(b: *std.Build, nvim_bin: *std.Build.Step.Compile, depend_on: *
         const unit_tests = try testStep(b, "unit", nvim_bin, config_dir, paths);
         unit_tests.step.dependOn(depend_on);
         unit_tests.step.dependOn(&tmpdir_create.step);
+        unit_tests.step.dependOn(xdgdir_step);
 
         const unittest_step = b.step("unittest", "run unit tests");
         unittest_step.dependOn(&unit_tests.step);
