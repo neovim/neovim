@@ -500,9 +500,6 @@ describe('LSP', function()
     end)
 
     it('should overwrite options set by ftplugins', function()
-      if t.is_zig_build() then
-        return pending('TODO: broken with zig build')
-      end
       local client --- @type vim.lsp.Client
       local BUFFER_1 --- @type integer
       local BUFFER_2 --- @type integer
