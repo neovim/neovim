@@ -1210,8 +1210,7 @@ static const char *path_skip_sep(const char *path)
   return path;
 }
 
-/// Populates path type and prefix/root/rest offsets for `path`.
-/// See `FileInfo` for path layout and examples.
+/// Parses `path` into a `FileInfo` structure.
 ///
 /// TODO(ntdiary): Could be extended for path.c cleanup and path normalization
 /// logic. Eventually merge this with `os_fileinfo`
