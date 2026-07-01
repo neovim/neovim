@@ -6046,10 +6046,12 @@ func Test_autocompletedelay()
   call term_sendkeys(buf, "Sf\<C-N>")
   call VerifyScreenDump(buf, 'Test_autocompletedelay_7', {})
 
-  " After the menu is open, ^N/^P and Up/Down should not delay
+  " After the menu is open, ^N/^P and Up/Down should not delay.
+  " Wait a bit longer than 'autocompletedelay' so the popup is surely shown
+  " before sending CTRL-N, otherwise the keys race with the deferred popup.
   call term_sendkeys(buf, "\<Esc>:set completeopt=menu noruler\<CR>")
   call term_sendkeys(buf, "\<Esc>Sf")
-  sleep 500ms
+  sleep 600ms
   call term_sendkeys(buf, "\<C-N>")
   call VerifyScreenDump(buf, 'Test_autocompletedelay_8', {})
   call term_sendkeys(buf, "\<Down>")

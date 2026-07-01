@@ -1557,21 +1557,14 @@ describe('completion', function()
       foobar                                                      |
       foobarbaz                                                   |
       f^                                                           |
-      {1:~                                                           }|*5
-      {5:-- INSERT --}                                                |
-    ]])
-    vim.uv.sleep(500)
-    screen:expect([[
-      foo                                                         |
-      foobar                                                      |
-      foobarbaz                                                   |
-      f^                                                           |
       {4:foobarbaz      }{1:                                             }|
       {4:foobar         }{1:                                             }|
       {4:foo            }{1:                                             }|
       {1:~                                                           }|*2
       {5:-- INSERT --}                                                |
     ]])
+    vim.uv.sleep(500)
+    screen:expect_unchanged()
 
     -- During delay wait, user can open menu using CTRL_N completion
     feed('<Esc>')
@@ -1589,7 +1582,9 @@ describe('completion', function()
       {5:-- Keyword completion (^N^P) }{6:match 1 of 3}                   |
     ]])
 
-    -- After the menu is open, ^N/^P and Up/Down should not delay
+    -- After the menu is open, ^N/^P and Up/Down should not delay.
+    -- Wait a bit longer than 'autocompletedelay' so the popup is surely shown
+    -- before sending CTRL-N, otherwise the keys race with the deferred popup.
     feed('<Esc>')
     command('set completeopt=menu')
     feed('Sf')
@@ -1601,7 +1596,7 @@ describe('completion', function()
       {1:~                                                           }|*5
       {5:-- INSERT --}                                                |
     ]])
-    vim.uv.sleep(500)
+    vim.uv.sleep(600)
     screen:expect([[
       foo                                                         |
       foobar                                                      |
@@ -1734,7 +1729,7 @@ describe('completion', function()
     screen:expect([[
       autocomplete                                                |
       autocomxxx                                                  |
-      au{102:^tocom}                                                     |
+      au^                                                          |
       {1:~                                                           }|*4
       {5:-- INSERT --}                                                |
     ]])
@@ -1742,7 +1737,7 @@ describe('completion', function()
     screen:expect([[
       autocomplete                                                |
       autocomxxx                                                  |
-      autoc{102:^om}                                                     |
+      autoc^                                                       |
       {1:~                                                           }|*4
       {5:-- INSERT --}                                                |
     ]])
@@ -1762,7 +1757,7 @@ describe('completion', function()
     screen:expect([[
       autocomplete                                                |
       autocomxxx                                                  |
-      aut{102:^ocom}                                                     |
+      aut^                                                         |
       {1:~                                                           }|*4
       {5:-- INSERT --}                                                |
     ]])
@@ -1770,7 +1765,7 @@ describe('completion', function()
     screen:expect([[
       autocomplete                                                |
       autocomxxx                                                  |
-      au{102:^tocom}                                                     |
+      au^                                                          |
       {1:~                                                           }|*4
       {5:-- INSERT --}                                                |
     ]])
@@ -1793,7 +1788,7 @@ describe('completion', function()
     screen:expect([[
       autocomplete                                                |
       autocomxxx                                                  |
-      au{102:^tocomplete}                                                |
+      au^                                                          |
       {1:~                                                           }|*4
       {5:-- INSERT --}                                                |
     ]])

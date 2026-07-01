@@ -146,14 +146,19 @@ static linenr_T o_lnum = 0;
 
 static kvec_t(char) replace_stack = KV_INITIAL_VALUE;
 
+// With 'autocompletedelay' set, arm the delay and let the main loop fire
+// Insert-mode autocommands; the popup is shown later on K_COMPLETE_DELAY.
+// Otherwise trigger completion right away.
 #define TRIGGER_AUTOCOMPLETE() \
   do { \
     redraw_later(curwin, UPD_VALID); \
     update_screen();  /* Show char deletion immediately */ \
     ui_flush(); \
     ins_compl_enable_autocomplete(); \
-    insert_do_complete(s); \
-    break; \
+    if (!ins_compl_arm_autocomplete_delay()) { \
+      insert_do_complete(s); \
+      break; \
+    } \
   } while (0)
 
 #define MAY_TRIGGER_AUTOCOMPLETE(c) \
@@ -519,8 +524,8 @@ static int insert_check(VimState *state)
   s->old_topline = curwin->w_topline;
   s->old_topfill = curwin->w_topfill;
 
-  if (s->c != K_EVENT) {
-    s->lastc = s->c;  // remember previous char for CTRL-D
+  if (s->c != K_EVENT && s->c != K_COMPLETE_DELAY) {
+    s->lastc = s->c;  // remember the previous char for CTRL-D
   }
 
   // After using CTRL-G U the next cursor key will not break undo.
@@ -540,9 +545,13 @@ static int insert_check(VimState *state)
       if (vim_isprintc(s->c)) {
         ins_compl_enable_autocomplete();
         ins_compl_init_get_longest();
-        insert_do_complete(s);
-        insert_handle_key_post(s);
-        return 1;
+        // Defer until the delay expires (K_COMPLETE_DELAY), or
+        // trigger now when no delay is in effect.
+        if (!ins_compl_arm_autocomplete_delay()) {
+          insert_do_complete(s);
+          insert_handle_key_post(s);
+          return 1;
+        }
       }
     }
   }
@@ -995,6 +1004,21 @@ static int insert_handle_key(InsertState *s)
     break;
   }
 
+  case K_COMPLETE_DELAY:  // 'autocompletedelay' expired
+    ins_compl_clear_autocomplete_delay();
+    if (!ins_compl_has_autocomplete() || char_avail() || curwin->w_cursor.col == 0) {
+      break;
+    }
+    s->c = char_before_cursor();
+    if (!vim_isprintc(s->c)) {
+      break;
+    }
+    // The completion may have been cleared while waiting, so re-enable
+    // autocomplete to match a zero delay.
+    ins_compl_enable_autocomplete();
+    insert_do_complete(s);
+    break;
+
   case K_HOME:        // <Home>
   case K_KHOME:
   case K_S_HOME:
@@ -1271,6 +1295,7 @@ normalchar:
 
 static void insert_do_complete(InsertState *s)
 {
+  ins_compl_clear_autocomplete_delay();
   compl_busy = true;
   disable_fold_update++;  // don't redraw folds here
   if (ins_complete(s->c, true) == FAIL) {
