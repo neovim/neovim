@@ -28,7 +28,7 @@ end
 ---@param path string
 ---@return string
 local function normalize_dir(path)
-  return fs.normalize(fs.abspath(path))
+  return fs.normalize(vim.fn.fnamemodify(path, ':p'))
 end
 
 ---@param name string
