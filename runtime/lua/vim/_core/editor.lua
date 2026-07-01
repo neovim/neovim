@@ -941,6 +941,19 @@ function vim.str_utfindex(s, encoding, index, strict_indexing)
   return encoding == 'utf-16' and max16 or max32
 end
 
+--- Returns the dotted prefix for the current completion context.
+--- Example: parts = {'vim', 'api'} -> "vim.api."
+---@param parts table<any, any>
+local function get_path_prefix(parts)
+  local path_parts = {} --- @type string[]
+  for _, p in ipairs(parts) do
+    if type(p) == 'string' then
+      path_parts[#path_parts + 1] = p
+    end
+  end
+  return #path_parts > 0 and (table.concat(path_parts, '.') .. '.') or ''
+end
+
 --- Generates a list of possible completions for the str
 --- String has the pattern.
 ---
@@ -1048,6 +1061,16 @@ function vim._expand_pat(pat, env)
 
   local keys = {} --- @type table<string,true>
 
+  local deprecated --- @type table<string, true>
+  do
+    local meta_path =
+      vim.fs.joinpath(vim.fn.expand('$VIMRUNTIME'), 'lua/vim/_meta/deprecated.gen.lua')
+    local fn, err = loadfile(meta_path)
+    deprecated = (fn and not err) and fn() or {}
+  end
+
+  local path_prefix = get_path_prefix(parts)
+
   --- @param obj table<any,any>
   local function insert_keys(obj)
     for k, _ in pairs(obj) do
@@ -1056,6 +1079,7 @@ function vim._expand_pat(pat, env)
         and string.sub(k, 1, string.len(match_part)) == match_part
         and k:match('^[_%w]+$') ~= nil -- filter out invalid identifiers for field, e.g. 'foo#bar'
         and (last_char ~= '.' or string.sub(k, 1, 1) ~= '_') -- don't include private fields after '.'
+        and not deprecated[path_prefix .. k]
       then
         keys[k] = true
       end

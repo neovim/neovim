@@ -1371,4 +1371,25 @@ function M.test_gen(help_dir)
   eq({}, rv.invalid_links, 'invalid tags in :help docs')
 end
 
+-- Verify deprecated.gen.lua is not stale.
+function M.check_deprecated()
+  local dep_path = vim.fs.normalize('runtime/lua/vim/_meta/deprecated.gen.lua')
+  local before = vim.fn.readfile(dep_path)
+  vim.fn.system({
+    vim.v.progpath,
+    '-u',
+    'NONE',
+    '-l',
+    'src/gen/preload.lua',
+    vim.fn.getcwd(),
+    'src/gen/gen_vimdoc.lua',
+    '--gen-deprecated',
+  })
+  assert(vim.v.shell_error == 0, 'gen_vimdoc.lua --gen-deprecated failed')
+  local after = vim.fn.readfile(dep_path)
+  vim.fn.writefile(before, dep_path)
+  assert(vim.deep_equal(before, after), 'deprecated.gen.lua is stale, run `make doc` to update')
+  print('deprecated.gen.lua OK')
+end
+
 return M
