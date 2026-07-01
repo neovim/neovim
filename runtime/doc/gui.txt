@@ -72,6 +72,11 @@ Stop or detach the current UI
                 for any UI client. But if the client isn't expecting this, it
                 may (incorrectly) report an error.
 
+                                                *:detach!*
+:detach!
+                Detaches all other UIs, keeping only the current one.
+                No-op if only one UI is attached.
+
 ------------------------------------------------------------------------------
 Restart Nvim
 

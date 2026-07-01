@@ -5964,18 +5964,23 @@ static void ex_tabs(exarg_T *eap)
 /// ":detach!" with bang (!) detaches all UIs _except_ the current UI.
 static void ex_detach(exarg_T *eap)
 {
-  // come on pooky let's burn this mf down
+  if (!current_ui) {
+    emsg(_(e_noui));
+    return;
+  }
+
   if (eap && eap->forceit) {
-    emsg("bang (!) not supported yet");
+    size_t n = remote_ui_disconnect_others(current_ui);
+    if (n == 0) {
+      msg(_("No other UIs are attached"), 0);
+    } else {
+      smsg(0, NGETTEXT("Detached %zu non-current UI", "Detached %zu non-current UIs", n), n);
+    }
+    ILOG("detach! current_ui=%" PRIu64 " detached=%zu", current_ui, n);
   } else {
     // 1. Send "error_exit" UI-event (notification only).
     // 2. Perform server-side UI detach.
     // 3. Close server-side channel without self-exit.
-
-    if (!current_ui) {
-      emsg("UI not attached");
-      return;
-    }
 
     Channel *chan = find_channel(current_ui);
     if (!chan) {

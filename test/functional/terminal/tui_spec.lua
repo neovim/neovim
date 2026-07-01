@@ -149,14 +149,16 @@ describe('TUI', function()
 end)
 
 describe('TUI :detach', function()
-  it('does not stop server', function()
+  local child_server, screen
+
+  local function setup_detach_child()
     n.clear()
     finally(function()
       n.check_close()
     end)
 
-    local child_server = new_pipename()
-    local screen = tt.setup_child_nvim({
+    child_server = new_pipename()
+    screen = tt.setup_child_nvim({
       '--listen',
       child_server,
       '-u',
@@ -169,6 +171,10 @@ describe('TUI :detach', function()
       nvim_set .. ' laststatus=2 background=dark',
     }, { env = env_notermguicolors })
     tt.override_screen_expect_for_conpty(screen)
+  end
+
+  it('does not stop server', function()
+    setup_detach_child()
 
     tt.feed_data('iHello, World')
     screen:expect([[
@@ -188,10 +194,6 @@ describe('TUI :detach', function()
     assert(status)
     eq(1, #child_uis)
 
-    eq(
-      { false, { 0, 'Vim(detach):E477: No ! allowed: detach!' } },
-      { child_session:request('nvim_command', 'detach!') }
-    )
     eq(
       { false, { 0, 'Vim(detach):E481: No range allowed: 1detach' } },
       { child_session:request('nvim_command', '1detach') }
@@ -233,6 +235,61 @@ describe('TUI :detach', function()
                                                         |
       {5:-- TERMINAL --}                                    |
     ]])
+  end)
+
+  it('! detaches other UIs', function()
+    setup_detach_child()
+    finally(function()
+      pcall(function()
+        local s = n.connect(child_server)
+        s:request('nvim_command', 'qall!')
+      end)
+    end)
+
+    tt.feed_data('iHello from detach!')
+    screen:expect([[
+      Hello from detach!^                                |
+      {100:~                                                 }|*3
+      {3:[No Name] [+]                                     }|
+      {5:-- INSERT --}                                      |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    tt.feed_data('\027')
+
+    local child_session = n.connect(child_server)
+    local _, uis_before = child_session:request('nvim_list_uis')
+    eq(1, #uis_before)
+    local tui_chan_id = uis_before[1].chan
+
+    -- :detach! with only 1 UI is a no-op.
+    tt.feed_data(':detach!\013')
+    screen:expect([[
+      Hello from detach^!                                |
+      {100:~                                                 }|*3
+      {3:[No Name] [+]                                     }|
+      No other UIs are attached                         |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    local _, uis_noop = child_session:request('nvim_list_uis')
+    eq(1, #uis_noop)
+
+    child_session:request('nvim_ui_attach', 50, 7, {})
+    local _, uis_attached = child_session:request('nvim_list_uis')
+    eq(2, #uis_attached)
+
+    tt.feed_data(':detach!\013')
+    screen:expect([[
+      Hello from detach^!                                |
+      {100:~                                                 }|*3
+      {3:[No Name] [+]                                     }|
+                                                        |
+      {5:-- TERMINAL --}                                    |
+    ]])
+
+    local verify_session = n.connect(child_server)
+    local _, uis_after = verify_session:request('nvim_list_uis')
+    eq(1, #uis_after)
+    eq(tui_chan_id, uis_after[1].chan)
   end)
 end)
 

@@ -108,6 +108,34 @@ void remote_ui_disconnect(uint64_t channel_id, Error *err, bool send_error_exit)
   remote_ui_destroy(ui);
 }
 
+/// Detaches all UIs except the one on `keep_channel_id`.
+///
+/// @return Number of UIs detached.
+size_t remote_ui_disconnect_others(uint64_t keep_channel_id)
+{
+  // Collect channel IDs first: remote_ui_disconnect() mutates connected_uis.
+  kvec_t(uint64_t) others = KV_INITIAL_VALUE;
+  uint64_t chan_id;
+  map_foreach_key(&connected_uis, chan_id, {
+    if (chan_id != keep_channel_id) {
+      kv_push(others, chan_id);
+    }
+  });
+
+  size_t n = kv_size(others);
+  for (size_t i = 0; i < n; i++) {
+    uint64_t id = kv_A(others, i);
+    Channel *chan = find_channel(id);
+    if (chan) {
+      chan->detach = true;
+    }
+    remote_ui_disconnect(id, NULL, true);
+    channel_close(id, kChannelPartAll, NULL);
+  }
+  kv_destroy(others);
+  return n;
+}
+
 #ifdef EXITFREE
 void remote_ui_free_all_mem(void)
 {
