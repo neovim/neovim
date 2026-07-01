@@ -2343,6 +2343,8 @@ static void ins_compl_new_leader(void)
     ui_flush();
   }
 
+  int save_w_wrow = curwin->w_wrow;
+  int save_w_leftcol = curwin->w_leftcol;
   if (compl_started) {
     ins_compl_set_original_text(compl_leader.data, compl_leader.size);
     if (is_cpt_func_refresh_always()) {
@@ -2361,7 +2363,7 @@ static void ins_compl_new_leader(void)
     } else {
       compl_autocomplete = false;
     }
-    if (ins_complete(Ctrl_N, true) == FAIL) {
+    if (ins_complete(Ctrl_N, false) == FAIL) {
       compl_cont_status = 0;
     }
     compl_restarting = false;
@@ -2370,7 +2372,9 @@ static void ins_compl_new_leader(void)
   compl_enter_selects = !compl_used_match && compl_selected_item != -1;
 
   // Show the popup menu with a different set of matches.
-  ins_compl_show_pum();
+  if (!compl_interrupted) {
+    show_pum(save_w_wrow, save_w_leftcol);
+  }
 
   // Don't let Enter select the original text when there is no popup menu.
   if (compl_match_array == NULL) {
