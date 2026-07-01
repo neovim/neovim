@@ -2343,8 +2343,8 @@ static void ins_compl_new_leader(void)
     ui_flush();
   }
 
-  int save_w_wrow;
-  int save_w_leftcol;
+  int save_w_wrow = curwin->w_wrow;
+  int save_w_leftcol = curwin->w_leftcol;
   if (compl_started) {
     ins_compl_set_original_text(compl_leader.data, compl_leader.size);
     if (is_cpt_func_refresh_always()) {
@@ -2357,8 +2357,6 @@ static void ins_compl_new_leader(void)
     spell_bad_len = 0;  // need to redetect bad word
     // Matches were cleared, need to search for them now.
     // Set "compl_restarting" to avoid that the first match is inserted.
-    save_w_wrow = curwin->w_wrow;
-    save_w_leftcol = curwin->w_leftcol;
     compl_restarting = true;
     if (ins_compl_has_autocomplete()) {
       ins_compl_enable_autocomplete();
