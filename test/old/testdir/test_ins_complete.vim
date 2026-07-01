@@ -6114,6 +6114,24 @@ func Test_autocompletedelay_ctrl_k()
   call Run_test_autocompletedelay_ctrl_k(150, 500)
 endfunc
 
+func Test_autocompletedelay_no_record()
+  " The K_COMPLETE_DELAY pseudo key must not be recorded into a register while
+  " recording a macro, like K_CURSORHOLD.
+  new
+  call setline(1, 'foobar')
+  set autocomplete autocompletedelay=100
+
+  let @a = ''
+  " Type a char that arms the delay, idle past 'autocompletedelay' so a
+  " K_COMPLETE_DELAY would be injected, then end Insert mode and stop recording.
+  call timer_start(200, { -> feedkeys("\<Esc>q", 't') })
+  call feedkeys("qaSf", 'tx!')
+  call assert_equal("Sf\<Esc>", @a)
+
+  set autocomplete& autocompletedelay&
+  bwipe!
+endfunc
+
 " Preinsert longest prefix when autocomplete
 func Test_autocomplete_longest()
   func GetLine()

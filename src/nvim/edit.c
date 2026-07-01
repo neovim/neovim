@@ -372,6 +372,8 @@ static void insert_enter(InsertState *s)
     // and return false, causing `state_enter` to be called again.
   } while (!ins_esc(&s->count, s->cmdchar, s->nomove));
 
+  // Drop a pending autocomplete so it does not outlive Insert mode.
+  ins_compl_clear_autocomplete_delay();
   // Always update o_lnum, so that a "CTRL-O ." that adds a line
   // still puts the cursor back after the inserted text.
   if (ins_at_eol) {
@@ -1327,8 +1329,9 @@ static void insert_do_cindent(InsertState *s)
 
 static void insert_handle_key_post(InsertState *s)
 {
-  // If typed something may trigger CursorHoldI again.
-  if (s->c != K_EVENT
+  // If typed something may trigger CursorHoldI again; K_COMPLETE_DELAY is
+  // injected, not typed.
+  if (s->c != K_EVENT && s->c != K_COMPLETE_DELAY
       // but not in CTRL-X mode, a script can't restore the state
       && ctrl_x_mode_normal()) {
     did_cursorhold = false;

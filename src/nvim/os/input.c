@@ -149,7 +149,13 @@ int input_get(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *e
     // When an autocomplete is pending, wake at the sooner of
     // 'autocompletedelay' and 'updatetime' so the delay does not postpone
     // CursorHold.  Once CursorHold has fired, only the delay is left.
-    bool delay_pending = ins_compl_autocomplete_pending() && p_acl > 0;
+    // Gate the injection like trigger_cursorhold() so the deferred key
+    // cannot fire while recording or outside Insert mode.
+    bool delay_pending = ins_compl_autocomplete_pending() && p_acl > 0
+                         && reg_recording == 0
+                         && typebuf.tb_len == 0
+                         && !ins_compl_active()
+                         && (get_real_state() & MODE_INSERT) != 0;
     // Measure the delay from when it was armed (the keystroke), so a
     // CursorHold returning in between does not push the popup back.
     int64_t wait_time = p_ut - cursorhold_time;
