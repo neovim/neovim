@@ -187,7 +187,6 @@ end
 --- (default: `false`)
 --- @field follow? boolean
 
----@alias Iterator fun(): string?, string?, string?
 
 --- Gets an iterator over items found in `path` (normalized via |vim.fs.normalize()|).
 ---
@@ -210,12 +209,10 @@ end
 ---@since 10
 ---@param path (string) Directory to iterate over, normalized via |vim.fs.normalize()|.
 ---@param opts? vim.fs.dir.Opts Optional keyword arguments:
----@return Iterator over items in {path}. Each iteration yields two values: "name" and "type", along
----        with an optional value "err"
----        "name" is the basename of the item relative to {path}.
----        "type" is one of the following:
----        "file", "directory", "link", "fifo", "socket", "char", "block", "unknown".
----        "err" is a string with the format {errname}: {message}
+---@return fun(): string?, string?, string? # Iterator over items in {path}. Each iteration yields three values: name, type, err.
+---        - name: Basename of the item relative to {path}.
+---        - type: One of: "file", "directory", "link", "fifo", "socket", "char", "block", "unknown".
+---        - err: Error string, or nil.
 ---@return string? err Error encountered while scanning the base directory
 function M.dir(path, opts)
   opts = opts or {}
@@ -304,15 +301,6 @@ end
 --- (default: `false`)
 --- @field follow? boolean
 
---- @class vim.fs.find.Error
---- @inlinedoc
----
---- Path at which error was encountered
---- @field path string
----
---- Error message
---- @field err string
-
 --- Find files or directories (or other items as specified by `opts.type`) in the given path.
 ---
 --- Finds items given in {names} starting from {path}. If {upward} is "true"
@@ -350,8 +338,8 @@ end
 ---             The function should return `true` if the given item is considered a match.
 ---
 ---@param opts? vim.fs.find.Opts Optional keyword arguments:
----@return string[] matches # Normalized paths |vim.fs.normalize()| of all matching items
----@return vim.fs.find.Error[] errors # list of errors encountered during the search
+---@return string[] matches # Normalized paths |vim.fs.normalize()| of all matching items.
+---@return string[] errors # Errors collected while searching.
 function M.find(names, opts)
   opts = opts or {}
   vim.validate('names', names, { 'string', 'table', 'function' })
@@ -371,7 +359,7 @@ function M.find(names, opts)
   local limit = opts.limit or 1
 
   local matches = {} --- @type string[]
-  local errors = {} --- @type vim.fs.find.Error[]
+  local errors = {} --- @type string[]
 
   local function add(match)
     matches[#matches + 1] = M.normalize(match)
@@ -388,12 +376,12 @@ function M.find(names, opts)
         local t = {}
         local it, base_err = M.dir(p)
         if base_err ~= nil then
-          table.insert(errors, { path = p, err = base_err })
+          table.insert(errors, base_err)
         end
         for name, type, err in it do
           local f = M.joinpath(p, name)
           if err ~= nil then
-            table.insert(errors, { path = f, err = err })
+            table.insert(errors, err)
           end
           if (not opts.type or opts.type == type) and names(name, p) then
             table.insert(t, f)
@@ -404,9 +392,9 @@ function M.find(names, opts)
     else
       test = function(p)
         local t = {} --- @type string[]
-        local _, base_err = M.dir(p)
-        if base_err ~= nil then -- Check if the directory itself is readable
-          table.insert(errors, { path = p, err = base_err })
+        local ok, aerr = uv.fs_access(p, 'R') -- Check if the directory itself is readable
+        if not ok then
+          table.insert(errors, aerr)
           return t
         end
         for _, name in ipairs(names) do
@@ -448,12 +436,12 @@ function M.find(names, opts)
 
       local it, base_err = M.dir(dir)
       if base_err ~= nil then
-        table.insert(errors, { path = dir, err = base_err })
+        table.insert(errors, base_err)
       end
       for other, type_, err in it do
         local f = M.joinpath(dir, other)
         if err ~= nil then
-          table.insert(errors, { path = f, err = err })
+          table.insert(errors, err)
         end
         if type(names) == 'function' then
           if (not opts.type or opts.type == type_) and names(other, dir) then

@@ -2727,10 +2727,8 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
 
     Return (multiple): ~
         (`string[]`) matches Normalized paths |vim.fs.normalize()| of all
-        matching items
-        (`table[]`) errors list of errors encountered during the search
-        • {err} (`string`) Error message
-        • {path} (`string`) Path at which error was encountered
+        matching items.
+        (`string[]`) errors Errors for directories that could not be searched.
 
 vim.fs.joinpath({...})                                     *vim.fs.joinpath()*
     Concatenates partial paths (one absolute or relative path followed by zero

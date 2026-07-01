@@ -288,56 +288,53 @@ describe('vim.fs', function()
       end)
     end)
 
-    describe('error handling', function()
-      before_each(function()
-        mkdir('testdir')
-        mkdir('testdir/noaccess')
-        mkdir('testdir/a')
-        mkdir('testdir/a/noaccess')
-      end)
-      after_each(function()
+    it('reports errors', function()
+      mkdir('testdir')
+      mkdir('testdir/noaccess')
+      mkdir('testdir/a')
+      mkdir('testdir/a/noaccess')
+      finally(function()
         rmdir('testdir')
       end)
 
-      it('returns error for unreadable root directory', function()
-        local result = exec_lua(function()
+      -- Unreadable root directory: error is the second return value.
+      eq(
+        'ENOENT: no such file or directory: does-not-exist',
+        exec_lua(function()
           local _, err = vim.fs.dir('does-not-exist')
           return err
         end)
-        eq('ENOENT: no such file or directory: does-not-exist', result)
-      end)
+      )
 
-      it('returns iterator errors for unreadable child directories', function()
-        local result = exec_lua(function()
-          -- Stub fs_scandir since chmod doesn't work reliably on Windows.
-          local orig_scandir = vim.uv.fs_scandir
-          vim.uv.fs_scandir = function(path, ...)
-            if path == 'testdir/noaccess' then
-              return nil, 'EACCES: permission denied: testdir/noaccess'
-            end
-            return orig_scandir(path, ...)
+      -- Unreadable child directory: error is the iterator's third value.
+      local result = exec_lua(function()
+        -- Stub fs_scandir since chmod doesn't work reliably on Windows.
+        local orig_scandir = vim.uv.fs_scandir
+        vim.uv.fs_scandir = function(path, ...)
+          if path == 'testdir/noaccess' then
+            return nil, 'EACCES: permission denied: testdir/noaccess'
           end
+          return orig_scandir(path, ...)
+        end
 
-          local ok, errors_or_err = pcall(function()
-            local errors = {} ---@type table<string, string>
-            local it = vim.fs.dir('testdir', { depth = 2 })
-            for f, _, err in it do
-              errors[f] = err
-            end
-            return errors
-          end)
-
-          vim.uv.fs_scandir = orig_scandir
-
-          if not ok then
-            error(errors_or_err)
+        local ok, errors_or_err = pcall(function()
+          local errors = {} ---@type table<string, string>
+          for f, _, err in vim.fs.dir('testdir', { depth = 2 }) do
+            errors[f] = err
           end
-          return errors_or_err
+          return errors
         end)
-        eq('EACCES: permission denied: testdir/noaccess', result['noaccess'])
-        -- This should be nil because with a depth of 2 we shouldn't be scanning it
-        eq(nil, result['a/noaccess'])
+
+        vim.uv.fs_scandir = orig_scandir
+
+        if not ok then
+          error(errors_or_err)
+        end
+        return errors_or_err
       end)
+      eq('EACCES: permission denied: testdir/noaccess', result['noaccess'])
+      -- nil: with depth=2 we don't scan testdir/a/noaccess.
+      eq(nil, result['a/noaccess'])
     end)
   end)
 
@@ -447,111 +444,83 @@ describe('vim.fs', function()
       )
     end)
 
-    describe('error handling', function()
-      before_each(function()
-        mkdir('testdir')
-        mkdir('testdir/noaccess')
-        mkdir('testdir/a')
-        mkdir('testdir/a/noaccess')
-        t.write_file('testdir/a/match.lua', '')
-
-        exec_lua(function()
-          -- Stub fs_scandir since chmod doesn't work reliably on Windows.
-          local blocked_prefixes = { 'testdir/noaccess', 'testdir/a/noaccess' }
-          local function is_blocked(path)
-            for _, prefix in ipairs(blocked_prefixes) do
-              if path == prefix or vim.startswith(path, prefix .. '/') then
-                return true
-              end
-            end
-            return false
-          end
-          _G.__orig_fs_scandir = vim.uv.fs_scandir
-          vim.uv.fs_scandir = function(path, ...)
-            if is_blocked(path) then
-              return nil, 'EACCES: permission denied: ' .. path
-            end
-            return _G.__orig_fs_scandir(path, ...)
-          end
-        end)
-      end)
-
-      after_each(function()
-        exec_lua(function()
-          vim.uv.fs_scandir = _G.__orig_fs_scandir
-          _G.__orig_fs_scandir = nil
-        end)
+    it('reports errors', function()
+      mkdir('testdir')
+      mkdir('testdir/noaccess')
+      mkdir('testdir/a')
+      mkdir('testdir/a/noaccess')
+      t.write_file('testdir/a/match.lua', '')
+      finally(function()
         rmdir('testdir')
       end)
 
-      it('returns an error for a nonexistent root path', function()
-        local result = exec_lua(function()
-          local matches, errors = vim.fs.find('foo', { path = 'does-not-exist' })
-          return { matches = matches, errors = errors }
-        end)
-        eq({}, result.matches)
-        eq(1, #result.errors)
-        eq('does-not-exist', result.errors[1].path)
-        eq('ENOENT: no such file or directory: does-not-exist', result.errors[1].err)
-      end)
-
-      it('returns an error for an unreadable root path', function()
-        local result = exec_lua(function()
-          local matches, errors = vim.fs.find('foo', { path = 'testdir/noaccess' })
-          return { matches = matches, errors = errors }
-        end)
-        eq({}, result.matches)
-        eq(1, #result.errors)
-        eq('testdir/noaccess', result.errors[1].path)
-        eq('EACCES: permission denied: testdir/noaccess', result.errors[1].err)
-      end)
-
-      it('collects errors for unreadable child directories during downward search', function()
-        local result = exec_lua(function()
-          local matches, errors = vim.fs.find('match.lua', {
-            path = 'testdir',
-            limit = math.huge,
-            type = 'file',
-          })
-          --- @type table<string, string>
-          local err_by_path = {}
-          for _, e in ipairs(errors) do
-            err_by_path[e.path] = e.err
+      -- Scenarios run in a shared setup(clear) so the fs_scandir/fs_access stubs (chmod is unreliable on
+      -- Windows) are installed and restored.
+      local res = exec_lua(function()
+        local orig_scandir = vim.uv.fs_scandir
+        local orig_access = vim.uv.fs_access
+        local function is_blocked(path)
+          for _, prefix in ipairs({ 'testdir/noaccess', 'testdir/a/noaccess' }) do
+            if path == prefix or vim.startswith(path, prefix .. '/') then
+              return true
+            end
           end
-          return { matches = matches, errors = err_by_path }
+          return false
+        end
+        vim.uv.fs_scandir = function(path, ...)
+          if is_blocked(path) then
+            return nil, 'EACCES: permission denied: ' .. path
+          end
+          return orig_scandir(path, ...)
+        end
+        -- find()'s upward search probes readability via fs_access (not fs_scandir), so stub it too.
+        vim.uv.fs_access = function(path, ...)
+          if is_blocked(path) then
+            return nil, 'EACCES: permission denied: ' .. path
+          end
+          return orig_access(path, ...)
+        end
+
+        local ok, out = pcall(function()
+          local r = {}
+          r.nonexistent = { vim.fs.find('foo', { path = 'does-not-exist' }) }
+          r.unreadable_root = { vim.fs.find('foo', { path = 'testdir/noaccess' }) }
+          r.downward =
+            { vim.fs.find('match.lua', { path = 'testdir', limit = math.huge, type = 'file' }) }
+          r.upward = select(
+            2,
+            vim.fs.find('match.lua', {
+              path = 'testdir/noaccess/x',
+              upward = true,
+              stop = 'testdir',
+            })
+          )
+          return r
         end)
-        eq(1, #result.matches)
-        eq('EACCES: permission denied: testdir/noaccess', result.errors['testdir/noaccess'])
-        eq('EACCES: permission denied: testdir/a/noaccess', result.errors['testdir/a/noaccess'])
+
+        vim.uv.fs_scandir = orig_scandir
+        vim.uv.fs_access = orig_access
+        if not ok then
+          error(out)
+        end
+        return out
       end)
 
-      it('still returns matches found despite errors elsewhere in the tree', function()
-        local result = exec_lua(function()
-          local matches, errors = vim.fs.find('match.lua', {
-            path = 'testdir',
-            limit = math.huge,
-            type = 'file',
-          })
-          return { matches = matches, has_errors = #errors > 0 }
-        end)
-        eq(1, #result.matches)
-        eq(true, result.has_errors)
-      end)
+      -- Nonexistent / unreadable root path: no matches, one error.
+      eq({ {}, { 'ENOENT: no such file or directory: does-not-exist' } }, res.nonexistent)
+      eq({ {}, { 'EACCES: permission denied: testdir/noaccess' } }, res.unreadable_root)
 
-      it('reports errors for unreadable directories during upward search', function()
-        local result = exec_lua(function()
-          local matches, errors = vim.fs.find('match.lua', {
-            path = 'testdir/noaccess/x',
-            upward = true,
-            stop = 'testdir',
-          })
-          return { matches = matches, errors = errors }
-        end)
-        eq('EACCES: permission denied: testdir/noaccess/x', result.errors[1].err)
-        eq('EACCES: permission denied: testdir/noaccess', result.errors[2].err)
-        eq('testdir/noaccess/x', result.errors[1].path)
-        eq('testdir/noaccess', result.errors[2].path)
-      end)
+      -- Downward search collects child errors, yet still returns the match found elsewhere.
+      eq(1, #res.downward[1])
+      eq(2, #res.downward[2])
+      eq(true, vim.tbl_contains(res.downward[2], 'EACCES: permission denied: testdir/noaccess'))
+      eq(true, vim.tbl_contains(res.downward[2], 'EACCES: permission denied: testdir/a/noaccess'))
+
+      -- Upward search reports an error for each unreadable ancestor, in traversal order.
+      eq({
+        'EACCES: permission denied: testdir/noaccess/x',
+        'EACCES: permission denied: testdir/noaccess',
+      }, res.upward)
     end)
   end)
 
