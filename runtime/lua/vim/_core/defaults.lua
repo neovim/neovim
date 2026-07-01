@@ -569,6 +569,62 @@ do
     end)
   end
 
+  local nvim_directory_augroup = vim.api.nvim_create_augroup('nvim.directory', { clear = true })
+
+  ---@param buf integer
+  ---@param path string
+  ---@return boolean
+  local function should_open_directory(buf, path)
+    if path == '' then
+      return false
+    end
+    if vim.bo[buf].buftype ~= '' and vim.b[buf].nvim_dir == nil then
+      return false
+    end
+    if vim.bo[buf].filetype == 'netrw' or vim.b[buf].netrw_curdir ~= nil then
+      return false
+    end
+    return vim.fn.isdirectory(path) == 1
+  end
+
+  ---@param buf integer
+  ---@param path string
+  local function set_directory_filetype(buf, path)
+    if vim.bo[buf].filetype ~= 'directory' and should_open_directory(buf, path) then
+      vim.api.nvim_set_option_value('filetype', 'directory', { buf = buf })
+    end
+  end
+
+  -- Latch on our own VimEnter, not v:vim_did_enter (set just before VimEnter
+  -- autocmds), so an earlier VimEnter autocmd's BufEnter can't preempt startup.
+  local vimentered = vim.v.vim_did_enter == 1
+
+  nvim_on('BufEnter', nvim_directory_augroup, {
+    pattern = '*',
+    desc = 'Set local directory filetype',
+    nested = true,
+  }, function(ev)
+    if vimentered then
+      set_directory_filetype(ev.buf, ev.file)
+    end
+  end)
+
+  nvim_on('VimEnter', nvim_directory_augroup, {
+    pattern = '*',
+    desc = 'Set startup local directory filetypes',
+    nested = true,
+  }, function()
+    vimentered = true
+    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+      if vim.api.nvim_win_is_valid(win) then
+        vim.api.nvim_win_call(win, function()
+          local buf = vim.api.nvim_get_current_buf()
+          set_directory_filetype(buf, vim.api.nvim_buf_get_name(buf))
+        end)
+      end
+    end
+  end)
+
   local nvim_terminal_augroup = vim.api.nvim_create_augroup('nvim.terminal', {})
   vim.api.nvim_create_autocmd('BufReadCmd', {
     pattern = 'term://*',

@@ -144,6 +144,66 @@ describe('nvim.dir', function()
     assert_directory(root)
   end)
 
+  it('opens a custom listing source', function()
+    n.clear({ args = { '--clean' } })
+
+    exec_lua([[
+      local calls = 0
+      _G.nvim_dir_source_items = {
+        { name = 'child', dir = true, path = 'child' },
+        { name = 'file.txt', dir = false, path = 'file' },
+      }
+      require('nvim.dir').open(0, {
+        name = 'custom://root',
+        filetype = 'directory',
+        list = function(callback)
+          calls = calls + 1
+          vim.g.nvim_dir_list_calls = calls
+          callback(nil, _G.nvim_dir_source_items)
+        end,
+        open = function(entry, buf)
+          vim.g.nvim_dir_opened = entry.path .. ':' .. buf
+        end,
+        parent = function()
+          vim.g.nvim_dir_parent = true
+        end,
+      })
+    ]])
+
+    eq('custom://root', api.nvim_buf_get_name(0))
+    eq('directory', bufopt('filetype'))
+    eq('nowrite', bufopt('buftype'))
+    eq(true, bufopt('buflisted'))
+    eq({ 'child/', 'file.txt' }, lines())
+
+    api.nvim_win_set_cursor(0, { 1, 0 })
+    feed('<CR>')
+    poke_eventloop()
+    eq('child:' .. api.nvim_get_current_buf(), exec_lua('return vim.g.nvim_dir_opened'))
+
+    feed('-')
+    poke_eventloop()
+    eq(true, exec_lua('return vim.g.nvim_dir_parent'))
+
+    exec_lua([[
+      _G.nvim_dir_source_items = {
+        { name = 'next.txt', dir = false, path = 'next' },
+      }
+    ]])
+    feed('R')
+    poke_eventloop()
+
+    eq({ 'next.txt' }, lines())
+    eq(2, exec_lua('return vim.g.nvim_dir_list_calls'))
+
+    exec_lua([[
+      _G.nvim_dir_source_items = nil
+      vim.g.nvim_dir_list_calls = nil
+      vim.g.nvim_dir_opened = nil
+      vim.g.nvim_dir_parent = nil
+    ]])
+  end)
+
   it('maps - to open the parent directory of the current file', function()
     make_fixture()
     n.clear({ args_rm = { '-u' } })
@@ -154,6 +214,29 @@ describe('nvim.dir', function()
 
     assert_directory(root)
     line_of('alpha.txt')
+  end)
+
+  it('lets FileType handlers take over directory buffers', function()
+    make_fixture()
+    local args = {
+      '--cmd',
+      [[autocmd FileType directory setlocal buftype=nofile | call setline(1, 'custom directory browser')]],
+    }
+
+    local startup_args = vim.list_extend({ '--clean' }, vim.deepcopy(args))
+    startup_args[#startup_args + 1] = root
+    n.clear({ args = startup_args })
+    eq('directory', bufopt('filetype'))
+    eq('nofile', bufopt('buftype'))
+    eq({ 'custom directory browser' }, lines())
+    eq(false, exec_lua([[return package.loaded['nvim.dir'] ~= nil]]))
+
+    n.clear({ args = vim.list_extend({ '--clean' }, args) })
+    edit(root)
+    eq('directory', bufopt('filetype'))
+    eq('nofile', bufopt('buftype'))
+    eq({ 'custom directory browser' }, lines())
+    eq(false, exec_lua([[return package.loaded['nvim.dir'] ~= nil]]))
   end)
 
   it('uses an absolute buffer name for a relative startup directory argument', function()
