@@ -1230,7 +1230,7 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
     // 'winfixwidth' window.  Take them from a window to the left or right
     // instead, if possible. Add one for the separator.
     if (oldwin->w_p_wfw) {
-      win_setwidth_win(oldwin->w_width + new_size + 1, oldwin);
+      win_setwidth_win(oldwin->w_width + new_size + 1, oldwin, true);
     }
 
     // Only make all windows the same width if one of them (except oldwin)
@@ -1317,7 +1317,7 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
       did_set_fraction = true;
 
       win_setheight_win(oldwin->w_height + new_size + STATUS_HEIGHT,
-                        oldwin);
+                        oldwin, true);
       oldwin_height = oldwin->w_height;
       if (need_status) {
         oldwin_height -= STATUS_HEIGHT;
@@ -2081,7 +2081,7 @@ int win_splitmove(win_T *wp, int size, int flags)
   // If splitting horizontally, try to preserve height.
   // Note that win_split_ins autocommands may have immediately closed "wp", or made it floating!
   if (size == 0 && !(flags & WSP_VERT) && win_valid(wp) && !wp->w_floating) {
-    win_setheight_win(height, wp);
+    win_setheight_win(height, wp, true);
     if (p_ea) {
       // Equalize windows.  Note that win_split_ins autocommands may have
       // made a window other than "wp" current.
@@ -6127,8 +6127,8 @@ void win_size_restore(garray_T *gap)
         int width = ((int *)gap->ga_data)[i++];
         int height = ((int *)gap->ga_data)[i++];
         if (!wp->w_floating) {
-          frame_setwidth(wp->w_frame, width);
-          win_setheight_win(height, wp);
+          frame_setwidth(wp->w_frame, width, true);
+          win_setheight_win(height, wp, true);
         }
       }
     }
@@ -6195,12 +6195,13 @@ static void frame_comp_pos(frame_T *topfrp, int *row, int *col)
 // fit around it.
 void win_setheight(int height)
 {
-  win_setheight_win(height, curwin);
+  win_setheight_win(height, curwin, true);
 }
 
 // Set the window height of window "win" and take care of repositioning other
 // windows to fit around it.
-void win_setheight_win(int height, win_T *win)
+// from_top: keep the top edge anchored (take space from the window below first).
+void win_setheight_win(int height, win_T *win, bool from_top)
 {
   // Always keep current window at least one line high, even when 'winminheight' is zero.
   // Keep window at least two lines high if 'winbar' is enabled.
@@ -6211,7 +6212,8 @@ void win_setheight_win(int height, win_T *win)
     win_config_float(win, win->w_config);
     redraw_later(win, UPD_VALID);
   } else {
-    frame_setheight(win->w_frame, height + win->w_hsep_height + win->w_status_height);
+    frame_setheight(win->w_frame, height + win->w_hsep_height + win->w_status_height,
+                    from_top);
 
     // recompute the window positions
     win_comp_pos();
@@ -6233,7 +6235,7 @@ void win_setheight_win(int height, win_T *win)
 // If the frame is part of a FR_ROW frame, all frames must be resized as well.
 // Check for the minimal height of the FR_ROW frame.
 // At the top level we can also use change the command line height.
-static void frame_setheight(frame_T *curfrp, int height)
+static void frame_setheight(frame_T *curfrp, int height, bool from_top)
 {
   // If the height already is the desired value, nothing to do.
   if (curfrp->fr_height == height) {
@@ -6250,7 +6252,7 @@ static void frame_setheight(frame_T *curfrp, int height)
     // one.  First check for the minimal height of these.
     int h = frame_minheight(curfrp->fr_parent, NULL);
     height = MAX(height, h);
-    frame_setheight(curfrp->fr_parent, height);
+    frame_setheight(curfrp->fr_parent, height, from_top);
   } else {
     // Column of frames: try to change only frames in this column.
 
@@ -6278,7 +6280,8 @@ static void frame_setheight(frame_T *curfrp, int height)
           room -= frame_minheight(frp, NULL);
         }
       }
-      if (curfrp->fr_width != Columns) {
+      // For bottom-anchored resize, treat cmdline room as zero.
+      if (!from_top || curfrp->fr_width != Columns) {
         room_cmdline = 0;
       } else {
         win_T *wp = lastwin_nofloating(NULL);
@@ -6295,7 +6298,8 @@ static void frame_setheight(frame_T *curfrp, int height)
         break;
       }
       frame_setheight(curfrp->fr_parent, height
-                      + frame_minheight(curfrp->fr_parent, NOWIN) - (int)p_wmh - 1);
+                      + frame_minheight(curfrp->fr_parent, NOWIN) - (int)p_wmh - 1,
+                      from_top);
       // NOTREACHED
     }
 
@@ -6328,9 +6332,10 @@ static void frame_setheight(frame_T *curfrp, int height)
     // that is not enough, takes lines from frames above the current
     // frame.
     for (int run = 0; run < 2; run++) {
-      // 1st run: start with next window
-      // 2nd run: start with prev window
-      frame_T *frp = run == 0 ? curfrp->fr_next : curfrp->fr_prev;
+      // 1st run: from the non-anchored side
+      // 2nd run: the anchored side
+      bool forward = (run == 0) == from_top;
+      frame_T *frp = forward ? curfrp->fr_next : curfrp->fr_prev;
 
       while (frp != NULL && take != 0) {
         int h = frame_minheight(frp, NULL);
@@ -6356,11 +6361,7 @@ static void frame_setheight(frame_T *curfrp, int height)
             take = 0;
           }
         }
-        if (run == 0) {
-          frp = frp->fr_next;
-        } else {
-          frp = frp->fr_prev;
-        }
+        frp = forward ? frp->fr_next : frp->fr_prev;
       }
     }
   }
@@ -6370,10 +6371,10 @@ static void frame_setheight(frame_T *curfrp, int height)
 // fit around it.
 void win_setwidth(int width)
 {
-  win_setwidth_win(width, curwin);
+  win_setwidth_win(width, curwin, true);
 }
 
-void win_setwidth_win(int width, win_T *wp)
+void win_setwidth_win(int width, win_T *wp, bool from_left)
 {
   // Always keep current window at least one column wide, even when
   // 'winminwidth' is zero.
@@ -6387,7 +6388,7 @@ void win_setwidth_win(int width, win_T *wp)
     win_config_float(wp, wp->w_config);
     redraw_later(wp, UPD_NOT_VALID);
   } else {
-    frame_setwidth(wp->w_frame, width + wp->w_vsep_width);
+    frame_setwidth(wp->w_frame, width + wp->w_vsep_width, from_left);
 
     // recompute the window positions
     win_comp_pos();
@@ -6400,7 +6401,7 @@ void win_setwidth_win(int width, win_T *wp)
 // are in the same FR_ROW frame.
 //
 // Strategy is similar to frame_setheight().
-static void frame_setwidth(frame_T *curfrp, int width)
+static void frame_setwidth(frame_T *curfrp, int width, bool from_left)
 {
   // If the width already is the desired value, nothing to do.
   if (curfrp->fr_width == width) {
@@ -6417,7 +6418,7 @@ static void frame_setwidth(frame_T *curfrp, int width)
     // this one.  First check for the minimal width of these.
     int w = frame_minwidth(curfrp->fr_parent, NULL);
     width = MAX(width, w);
-    frame_setwidth(curfrp->fr_parent, width);
+    frame_setwidth(curfrp->fr_parent, width, from_left);
   } else {
     // Row of frames: try to change only frames in this row.
     //
@@ -6452,7 +6453,7 @@ static void frame_setwidth(frame_T *curfrp, int width)
         break;
       }
       frame_setwidth(curfrp->fr_parent, width
-                     + frame_minwidth(curfrp->fr_parent, NOWIN) - (int)p_wmw - 1);
+                     + frame_minwidth(curfrp->fr_parent, NOWIN) - (int)p_wmw - 1, from_left);
     }
 
     // Compute the number of lines we will take from others frames (can be
@@ -6477,9 +6478,10 @@ static void frame_setwidth(frame_T *curfrp, int width)
     // that is not enough, takes lines from frames left of the current
     // frame.
     for (int run = 0; run < 2; run++) {
-      // 1st run: start with next window
-      // 2nd run: start with prev window
-      frame_T *frp = run == 0 ? curfrp->fr_next : curfrp->fr_prev;
+      // 1st run: from the non-anchored side
+      // 2nd run: the anchored side
+      bool forward = (run == 0) == from_left;
+      frame_T *frp = forward ? curfrp->fr_next : curfrp->fr_prev;
 
       while (frp != NULL && take != 0) {
         int w = frame_minwidth(frp, NULL);
@@ -6505,11 +6507,7 @@ static void frame_setwidth(frame_T *curfrp, int width)
             take = 0;
           }
         }
-        if (run == 0) {
-          frp = frp->fr_next;
-        } else {
-          frp = frp->fr_prev;
-        }
+        frp = forward ? frp->fr_next : frp->fr_prev;
       }
     }
   }

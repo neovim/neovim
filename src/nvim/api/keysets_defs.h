@@ -256,6 +256,11 @@ typedef struct {
 } Dict(win_text_height);
 
 typedef struct {
+  OptionalKeys is_set__win_resize_;
+  String anchor;
+} Dict(win_resize);
+
+typedef struct {
   OptionalKeys is_set__clear_autocmds_;
   Buffer buffer;  // deprecated - use buf
   Buffer buf;
