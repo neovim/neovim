@@ -281,7 +281,56 @@ Use |jobwait()| to check if the terminal job has finished: >vim
 ==============================================================================
 Concepts                                                   *terminal-concepts*
 
-TODO
+Nvim exposes two independent terminal-related primitives:
+1. "pty", the low-level OS primitive for child processes
+2. "terminal" (internally: libvterm), the component that renders escape
+   sequences to a buffer.
+
+>
+            Without terminal        With terminal (renders to buf)
+            ─────────────────────────────────────────────────────
+  No pty    jobstart()              nvim_open_term()
+  With pty  jobstart({pty=true})    :terminal, jobstart({term=true})
+<
+
+Comparing :terminal, jobstart(), and nvim_open_term():
+
+- `jobstart({term=true})` (and |:terminal|) creates a pty for the child AND
+  a buffer-connected terminal, then wires the two streams together: >
+    child stdout → terminal (parsed + rendered)
+    terminal output (key/mouse/query responses) → child stdin
+
+- `jobstart({pty=true})` gives the child a pty but no terminal. The child sees
+  a real TTY (so isatty(), ioctl TIOCGWINSZ, and color detection all work),
+  but its stdout arrives at Nvim as raw bytes via `on_stdout`. Escape
+  sequences are not rendered (because no terminal), and queries the child
+  sends (DA1, OSC, …) get no reply unless the plugin parses the `on_stdout`
+  stream and writes a response to the child's stdin via |nvim_chan_send()|.
+
+- |nvim_open_term()| creates a buffer-connected terminal with no associated
+  process. Push bytes in with |nvim_chan_send()|; the terminal parses and
+  renders. Useful to render escape sequences (RPC payloads, file contents, …),
+  or if you want to drive the terminal from multiple parallel jobs.
+
+                                                *terminal-job-concurrency*
+To pair |nvim_open_term()| with a real child process, route the child's
+stdout into the terminal via |nvim_chan_send()|, and forward the
+terminal's `on_input` callback bytes (query responses, terminal-mode
+keypresses) into the child's stdin via |chansend()|:
+>lua
+    local chan, job
+    chan = vim.api.nvim_open_term(buf, {
+      on_input = function(_, _, _, data)
+        vim.fn.chansend(job, data)
+      end,
+    })
+    job = vim.fn.jobstart(cmd, {
+      pty = true,
+      on_stdout = function(_, data)
+        vim.api.nvim_chan_send(chan, table.concat(data, '\n'))
+      end,
+    })
+<
 
 ==============================================================================
 :Termdebug plugin                         *terminal-debug* *terminal-debugger*
