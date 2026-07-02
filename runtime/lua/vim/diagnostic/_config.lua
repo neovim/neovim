@@ -25,6 +25,7 @@ local global_diagnostic_options = {
     -- Wrap around buffer
     wrap = true,
   },
+  ui2 = true, -- TODO(yochem): turn off after testing
 }
 
 --- @param name 'signs'|'underline'|'virtual_text'|'virtual_lines'|'float'
