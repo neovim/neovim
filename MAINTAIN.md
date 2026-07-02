@@ -140,6 +140,8 @@ Some can be auto-bumped by `scripts/bump_deps.lua`.
 * (Deprecated) [unibilium](https://github.com/neovim/unibilium)
     * The original project [was abandoned](https://github.com/neovim/neovim/issues/10302), so the [neovim/unibilium](https://github.com/neovim/unibilium) fork is considered "upstream" and is maintained on the `master` branch.
     * **Note:** unibilium is NOT required. See [BUILD.md](./BUILD.md#build-without-unibilium) to build Nvim without unibilium.
+* [uncrustify](https://github.com/uncrustify/uncrustify)
+    * Requires a PR to update the update the [Zig build files](https://github.com/neovim/neovim/tree/master/deps/uncrustify) first.
 
 ### Vendored dependencies
 
