@@ -18,6 +18,93 @@ local diff_lines = {
   '+local y = 3',
 }
 
+local function lua_attrs()
+  local colors = Screen.colors
+  return {
+    [131] = { foreground = colors.Red, background = colors.NvimDarkRed },
+    [132] = { bold = true, background = colors.NvimDarkRed, foreground = colors.Brown },
+    [133] = { foreground = colors.NvimLightGrey1, background = colors.NvimDarkRed },
+    [134] = { foreground = colors.DarkCyan, background = colors.NvimDarkRed },
+    [135] = { foreground = colors.Fuchsia, background = colors.NvimDarkRed },
+    [136] = { foreground = colors.SeaGreen, background = colors.NvimDarkGreen },
+    [137] = { bold = true, background = colors.NvimDarkGreen, foreground = colors.Brown },
+    [138] = { foreground = colors.NvimLightGrey1, background = colors.NvimDarkGreen },
+    [139] = { foreground = colors.DarkCyan, background = colors.NvimDarkGreen },
+    [140] = { foreground = colors.Fuchsia, background = colors.NvimDarkGreen },
+  }
+end
+
+local function add_lua_attrs()
+  local colors = Screen.colors
+  return {
+    [131] = { foreground = colors.SeaGreen, background = colors.NvimDarkGreen },
+    [132] = { bold = true, background = colors.NvimDarkGreen, foreground = colors.Brown },
+    [133] = { foreground = colors.NvimLightGrey1, background = colors.NvimDarkGreen },
+    [134] = { foreground = colors.DarkCyan, background = colors.NvimDarkGreen },
+    [135] = { foreground = colors.Fuchsia, background = colors.NvimDarkGreen },
+  }
+end
+
+local function late_parser_attrs()
+  local colors = Screen.colors
+  return {
+    [131] = { foreground = colors.Red, background = colors.NvimDarkRed },
+    [132] = { foreground = colors.NvimLightGrey1, background = colors.NvimDarkRed },
+    [133] = { foreground = colors.SeaGreen, background = colors.NvimDarkGreen },
+    [134] = { foreground = colors.NvimLightGrey1, background = colors.NvimDarkGreen },
+    [135] = { bold = true, background = colors.NvimDarkRed, foreground = colors.Brown },
+    [136] = { background = colors.NvimDarkRed, foreground = colors.Cyan4 },
+    [137] = { background = colors.NvimDarkRed, foreground = colors.Fuchsia },
+    [138] = { bold = true, background = colors.NvimDarkGreen, foreground = colors.Brown },
+    [139] = { background = colors.NvimDarkGreen, foreground = colors.Cyan4 },
+    [140] = { background = colors.NvimDarkGreen, foreground = colors.Fuchsia },
+  }
+end
+
+local function rename_attrs()
+  local colors = Screen.colors
+  return {
+    [131] = { foreground = colors.Red, background = colors.NvimDarkRed },
+    [132] = { bold = true, background = colors.NvimDarkRed, foreground = colors.Brown },
+    [133] = { foreground = colors.NvimLightGrey1, background = colors.NvimDarkRed },
+    [134] = { foreground = colors.DarkCyan, background = colors.NvimDarkRed },
+    [135] = { foreground = colors.Fuchsia, background = colors.NvimDarkRed },
+    [136] = { foreground = colors.SeaGreen, background = colors.NvimDarkGreen },
+    [137] = { foreground = colors.SlateBlue, background = colors.NvimDarkGreen },
+    [138] = { foreground = colors.NvimLightGrey1, background = colors.NvimDarkGreen },
+    [139] = { foreground = colors.DarkCyan, background = colors.NvimDarkGreen },
+    [140] = { bold = true, background = colors.NvimDarkGreen, foreground = colors.Brown },
+    [141] = { foreground = colors.Fuchsia, background = colors.NvimDarkGreen },
+  }
+end
+
+local function line_tint_attrs()
+  local colors = Screen.colors
+  return {
+    [131] = { background = colors.NvimDarkRed, foreground = colors.Red },
+    [132] = { background = colors.NvimDarkRed, foreground = colors.NvimLightGrey1 },
+    [133] = { background = colors.NvimDarkGreen, foreground = colors.SeaGreen },
+    [134] = { background = colors.NvimDarkGreen, foreground = colors.NvimLightGrey1 },
+  }
+end
+
+local function make_screen(attrs, height)
+  local screen = Screen.new(44, height or 8)
+  if attrs then
+    screen:add_extra_attr_ids(attrs())
+  end
+  return screen
+end
+
+local function set_lines(lines)
+  api.nvim_buf_set_lines(0, 0, -1, false, lines)
+end
+
+local function set_diff(lines)
+  set_lines(lines)
+  api.nvim_set_option_value('filetype', 'diff', { buf = 0 })
+end
+
 describe('diff hunk highlighting', function()
   before_each(function()
     clear()
@@ -27,32 +114,8 @@ describe('diff hunk highlighting', function()
   end)
 
   it('highlights code inside lua hunks via tree-sitter', function()
-    local screen = Screen.new(44, 8)
-    screen:add_extra_attr_ids({
-      [131] = { foreground = Screen.colors.Red, background = Screen.colors.NvimDarkRed },
-      [132] = {
-        bold = true,
-        background = Screen.colors.NvimDarkRed,
-        foreground = Screen.colors.Brown,
-      },
-      [133] = { foreground = Screen.colors.NvimLightGrey1, background = Screen.colors.NvimDarkRed },
-      [134] = { foreground = Screen.colors.DarkCyan, background = Screen.colors.NvimDarkRed },
-      [135] = { foreground = Screen.colors.Fuchsia, background = Screen.colors.NvimDarkRed },
-      [136] = { foreground = Screen.colors.SeaGreen, background = Screen.colors.NvimDarkGreen },
-      [137] = {
-        bold = true,
-        background = Screen.colors.NvimDarkGreen,
-        foreground = Screen.colors.Brown,
-      },
-      [138] = {
-        foreground = Screen.colors.NvimLightGrey1,
-        background = Screen.colors.NvimDarkGreen,
-      },
-      [139] = { foreground = Screen.colors.DarkCyan, background = Screen.colors.NvimDarkGreen },
-      [140] = { foreground = Screen.colors.Fuchsia, background = Screen.colors.NvimDarkGreen },
-    })
-    api.nvim_buf_set_lines(0, 0, -1, false, diff_lines)
-    api.nvim_set_option_value('filetype', 'diff', { buf = 0 })
+    local screen = make_screen(lua_attrs)
+    set_diff(diff_lines)
     screen:expect([[
       ^diff --git a/foo.lua b/foo.lua              |
       --- a/foo.lua                               |
@@ -66,21 +129,7 @@ describe('diff hunk highlighting', function()
   end)
 
   it('highlights the viewport of a large hunk without blocking', function()
-    local screen = Screen.new(44, 8)
-    screen:add_extra_attr_ids({
-      [131] = { foreground = Screen.colors.SeaGreen, background = Screen.colors.NvimDarkGreen },
-      [132] = {
-        bold = true,
-        background = Screen.colors.NvimDarkGreen,
-        foreground = Screen.colors.Brown,
-      },
-      [133] = {
-        foreground = Screen.colors.NvimLightGrey1,
-        background = Screen.colors.NvimDarkGreen,
-      },
-      [134] = { foreground = Screen.colors.DarkCyan, background = Screen.colors.NvimDarkGreen },
-      [135] = { foreground = Screen.colors.Fuchsia, background = Screen.colors.NvimDarkGreen },
-    })
+    local screen = make_screen(add_lua_attrs)
     local lines = {
       'diff --git a/big.lua b/big.lua',
       '--- /dev/null',
@@ -90,8 +139,7 @@ describe('diff hunk highlighting', function()
     for i = 1, 2000 do
       lines[#lines + 1] = ('+local v%d = %d'):format(i, i)
     end
-    api.nvim_buf_set_lines(0, 0, -1, false, lines)
-    api.nvim_set_option_value('filetype', 'diff', { buf = 0 })
+    set_diff(lines)
     screen:expect([[
       ^diff --git a/big.lua b/big.lua              |
       --- /dev/null                               |
@@ -105,10 +153,9 @@ describe('diff hunk highlighting', function()
   end)
 
   it('does not highlight when disabled via vim.g.diffhl', function()
-    local screen = Screen.new(44, 8)
+    local screen = make_screen()
     api.nvim_set_var('diffhl', false)
-    api.nvim_buf_set_lines(0, 0, -1, false, diff_lines)
-    api.nvim_set_option_value('filetype', 'diff', { buf = 0 })
+    set_diff(diff_lines)
     screen:expect([[
       ^diff --git a/foo.lua b/foo.lua              |
       --- a/foo.lua                               |
@@ -122,37 +169,13 @@ describe('diff hunk highlighting', function()
   end)
 
   it('re-highlights when a parser becomes available on runtimepath', function()
-    local screen = Screen.new(44, 8)
-    screen:add_extra_attr_ids({
-      [131] = { foreground = Screen.colors.Red, background = Screen.colors.NvimDarkRed },
-      [132] = { foreground = Screen.colors.NvimLightGrey1, background = Screen.colors.NvimDarkRed },
-      [133] = { foreground = Screen.colors.SeaGreen, background = Screen.colors.NvimDarkGreen },
-      [134] = {
-        foreground = Screen.colors.NvimLightGrey1,
-        background = Screen.colors.NvimDarkGreen,
-      },
-      [135] = {
-        bold = true,
-        background = Screen.colors.NvimDarkRed,
-        foreground = Screen.colors.Brown,
-      },
-      [136] = { background = Screen.colors.NvimDarkRed, foreground = Screen.colors.Cyan4 },
-      [137] = { background = Screen.colors.NvimDarkRed, foreground = Screen.colors.Fuchsia },
-      [138] = {
-        bold = true,
-        background = Screen.colors.NvimDarkGreen,
-        foreground = Screen.colors.Brown,
-      },
-      [139] = { background = Screen.colors.NvimDarkGreen, foreground = Screen.colors.Cyan4 },
-      [140] = { background = Screen.colors.NvimDarkGreen, foreground = Screen.colors.Fuchsia },
-    })
+    local screen = make_screen(late_parser_attrs)
     exec_lua(function()
       local so = vim.api.nvim_get_runtime_file('parser/lua.so', false)[1]
       _G.parser_dir = vim.fn.fnamemodify(so, ':h:h')
       vim.opt.rtp:remove(_G.parser_dir)
     end)
-    api.nvim_buf_set_lines(0, 0, -1, false, diff_lines)
-    api.nvim_set_option_value('filetype', 'diff', { buf = 0 })
+    set_diff(diff_lines)
     screen:expect([[
       ^diff --git a/foo.lua b/foo.lua              |
       --- a/foo.lua                               |
@@ -179,30 +202,7 @@ describe('diff hunk highlighting', function()
   end)
 
   it('keeps highlighting after an autoread reload', function()
-    local screen = Screen.new(44, 8)
-    screen:add_extra_attr_ids({
-      [131] = { foreground = Screen.colors.Red, background = Screen.colors.NvimDarkRed },
-      [132] = {
-        bold = true,
-        background = Screen.colors.NvimDarkRed,
-        foreground = Screen.colors.Brown,
-      },
-      [133] = { foreground = Screen.colors.NvimLightGrey1, background = Screen.colors.NvimDarkRed },
-      [134] = { foreground = Screen.colors.DarkCyan, background = Screen.colors.NvimDarkRed },
-      [135] = { foreground = Screen.colors.Fuchsia, background = Screen.colors.NvimDarkRed },
-      [136] = { foreground = Screen.colors.SeaGreen, background = Screen.colors.NvimDarkGreen },
-      [137] = {
-        bold = true,
-        background = Screen.colors.NvimDarkGreen,
-        foreground = Screen.colors.Brown,
-      },
-      [138] = {
-        foreground = Screen.colors.NvimLightGrey1,
-        background = Screen.colors.NvimDarkGreen,
-      },
-      [139] = { foreground = Screen.colors.DarkCyan, background = Screen.colors.NvimDarkGreen },
-      [140] = { foreground = Screen.colors.Fuchsia, background = Screen.colors.NvimDarkGreen },
-    })
+    local screen = make_screen(lua_attrs)
     local dir = 'Xtest-diffhl'
     n.mkdir_p(dir)
     finally(function()
@@ -245,19 +245,8 @@ describe('diff hunk highlighting', function()
   end)
 
   it('highlights deleted-file hunks via the old path', function()
-    local screen = Screen.new(44, 8)
-    screen:add_extra_attr_ids({
-      [131] = { foreground = Screen.colors.Red, background = Screen.colors.NvimDarkRed },
-      [132] = {
-        bold = true,
-        background = Screen.colors.NvimDarkRed,
-        foreground = Screen.colors.Brown,
-      },
-      [133] = { foreground = Screen.colors.NvimLightGrey1, background = Screen.colors.NvimDarkRed },
-      [134] = { foreground = Screen.colors.DarkCyan, background = Screen.colors.NvimDarkRed },
-      [135] = { foreground = Screen.colors.Fuchsia, background = Screen.colors.NvimDarkRed },
-    })
-    api.nvim_buf_set_lines(0, 0, -1, false, {
+    local screen = make_screen(lua_attrs)
+    set_diff({
       'diff --git a/foo.lua b/foo.lua',
       'deleted file mode 100644',
       '--- a/foo.lua',
@@ -266,7 +255,6 @@ describe('diff hunk highlighting', function()
       '-local x = 1',
       '-local y = 2',
     })
-    api.nvim_set_option_value('filetype', 'diff', { buf = 0 })
     screen:expect([[
       ^diff --git a/foo.lua b/foo.lua              |
       deleted file mode 100644                    |
@@ -280,31 +268,8 @@ describe('diff hunk highlighting', function()
   end)
 
   it('highlights hunks for spaced and quoted (non-ascii) paths', function()
-    local screen = Screen.new(44, 8)
-    screen:add_extra_attr_ids({
-      [131] = { foreground = Screen.colors.Red, background = Screen.colors.NvimDarkRed },
-      [132] = {
-        bold = true,
-        background = Screen.colors.NvimDarkRed,
-        foreground = Screen.colors.Brown,
-      },
-      [133] = { foreground = Screen.colors.NvimLightGrey1, background = Screen.colors.NvimDarkRed },
-      [134] = { foreground = Screen.colors.DarkCyan, background = Screen.colors.NvimDarkRed },
-      [135] = { foreground = Screen.colors.Fuchsia, background = Screen.colors.NvimDarkRed },
-      [136] = { foreground = Screen.colors.SeaGreen, background = Screen.colors.NvimDarkGreen },
-      [137] = {
-        bold = true,
-        background = Screen.colors.NvimDarkGreen,
-        foreground = Screen.colors.Brown,
-      },
-      [138] = {
-        foreground = Screen.colors.NvimLightGrey1,
-        background = Screen.colors.NvimDarkGreen,
-      },
-      [139] = { foreground = Screen.colors.DarkCyan, background = Screen.colors.NvimDarkGreen },
-      [140] = { foreground = Screen.colors.Fuchsia, background = Screen.colors.NvimDarkGreen },
-    })
-    api.nvim_buf_set_lines(0, 0, -1, false, {
+    local screen = make_screen(lua_attrs)
+    set_diff({
       'diff --git a/my file.lua b/my file.lua',
       '--- a/my file.lua',
       '+++ b/my file.lua',
@@ -312,7 +277,6 @@ describe('diff hunk highlighting', function()
       '-local y = 2',
       '+local y = 3',
     })
-    api.nvim_set_option_value('filetype', 'diff', { buf = 0 })
     screen:expect([[
       ^diff --git a/my file.lua b/my file.lua      |
       --- a/my file.lua                           |
@@ -324,7 +288,7 @@ describe('diff hunk highlighting', function()
                                                   |
     ]])
 
-    api.nvim_buf_set_lines(0, 0, -1, false, {
+    set_lines({
       'diff --git "a/\\303\\251.lua" "b/\\303\\251.lua"',
       '--- "a/\\303\\251.lua"',
       '+++ "b/\\303\\251.lua"',
@@ -345,32 +309,8 @@ describe('diff hunk highlighting', function()
   end)
 
   it('highlights each side in its own language for a rename with type change', function()
-    local screen = Screen.new(44, 10)
-    screen:add_extra_attr_ids({
-      [131] = { foreground = Screen.colors.Red, background = Screen.colors.NvimDarkRed },
-      [132] = {
-        bold = true,
-        background = Screen.colors.NvimDarkRed,
-        foreground = Screen.colors.Brown,
-      },
-      [133] = { foreground = Screen.colors.NvimLightGrey1, background = Screen.colors.NvimDarkRed },
-      [134] = { foreground = Screen.colors.DarkCyan, background = Screen.colors.NvimDarkRed },
-      [135] = { foreground = Screen.colors.Fuchsia, background = Screen.colors.NvimDarkRed },
-      [136] = { foreground = Screen.colors.SeaGreen, background = Screen.colors.NvimDarkGreen },
-      [137] = { foreground = Screen.colors.SlateBlue, background = Screen.colors.NvimDarkGreen },
-      [138] = {
-        foreground = Screen.colors.NvimLightGrey1,
-        background = Screen.colors.NvimDarkGreen,
-      },
-      [139] = { foreground = Screen.colors.DarkCyan, background = Screen.colors.NvimDarkGreen },
-      [140] = {
-        bold = true,
-        background = Screen.colors.NvimDarkGreen,
-        foreground = Screen.colors.Brown,
-      },
-      [141] = { foreground = Screen.colors.Fuchsia, background = Screen.colors.NvimDarkGreen },
-    })
-    api.nvim_buf_set_lines(0, 0, -1, false, {
+    local screen = make_screen(rename_attrs, 10)
+    set_diff({
       'diff --git a/foo.lua b/foo.c',
       'rename from foo.lua',
       'rename to foo.c',
@@ -380,7 +320,6 @@ describe('diff hunk highlighting', function()
       '-local x = 1',
       '+int x = 1;',
     })
-    api.nvim_set_option_value('filetype', 'diff', { buf = 0 })
     screen:expect([[
       ^diff --git a/foo.lua b/foo.c                |
       rename from foo.lua                         |
@@ -396,17 +335,8 @@ describe('diff hunk highlighting', function()
   end)
 
   it('tints added and removed lines without a parser', function()
-    local screen = Screen.new(44, 8)
-    screen:add_extra_attr_ids({
-      [131] = { background = Screen.colors.NvimDarkRed, foreground = Screen.colors.Red },
-      [132] = { background = Screen.colors.NvimDarkRed, foreground = Screen.colors.NvimLightGrey1 },
-      [133] = { background = Screen.colors.NvimDarkGreen, foreground = Screen.colors.SeaGreen },
-      [134] = {
-        background = Screen.colors.NvimDarkGreen,
-        foreground = Screen.colors.NvimLightGrey1,
-      },
-    })
-    api.nvim_buf_set_lines(0, 0, -1, false, {
+    local screen = make_screen(line_tint_attrs)
+    set_diff({
       'diff --git a/notes.xyz b/notes.xyz',
       '--- a/notes.xyz',
       '+++ b/notes.xyz',
@@ -415,7 +345,6 @@ describe('diff hunk highlighting', function()
       '-old value',
       '+new value',
     })
-    api.nvim_set_option_value('filetype', 'diff', { buf = 0 })
     screen:expect([[
       ^diff --git a/notes.xyz b/notes.xyz          |
       --- a/notes.xyz                             |
@@ -429,17 +358,8 @@ describe('diff hunk highlighting', function()
   end)
 
   it('tints combined (merge) diff hunks', function()
-    local screen = Screen.new(44, 10)
-    screen:add_extra_attr_ids({
-      [131] = { background = Screen.colors.NvimDarkRed, foreground = Screen.colors.Red },
-      [132] = { background = Screen.colors.NvimDarkRed, foreground = Screen.colors.NvimLightGrey1 },
-      [133] = { background = Screen.colors.NvimDarkGreen, foreground = Screen.colors.SeaGreen },
-      [134] = {
-        background = Screen.colors.NvimDarkGreen,
-        foreground = Screen.colors.NvimLightGrey1,
-      },
-    })
-    api.nvim_buf_set_lines(0, 0, -1, false, {
+    local screen = make_screen(line_tint_attrs, 10)
+    set_diff({
       'diff --cc foo.lua',
       'index 1111111,2222222..3333333',
       '--- a/foo.lua',
@@ -450,7 +370,6 @@ describe('diff hunk highlighting', function()
       ' -local y = 3',
       '++local y = 4',
     })
-    api.nvim_set_option_value('filetype', 'diff', { buf = 0 })
     screen:expect([[
       ^diff --cc foo.lua                           |
       index 1111111,2222222..3333333              |
