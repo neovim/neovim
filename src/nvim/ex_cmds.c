@@ -1854,6 +1854,23 @@ int do_write(exarg_T *eap)
     return FAIL;
   }
 
+  // Terminal buffers export rendered state as msgpack.
+  // Non-range `:write` / `:update` saves terminal state; explicit range writes
+  // (e.g. `:%w`, `:1,10w`) fall through to buf_write() for plain text.
+  if (curbuf->terminal && (eap->cmdidx == CMD_write || eap->cmdidx == CMD_update)) {
+    if (eap->addr_count == 0) {
+      if (eap->append) {
+        emsg(_("Cannot append terminal state; use `:write` without \">>\""));
+        goto theend;
+      }
+      if (terminal_save_state(curbuf->terminal, eap->arg, eap->forceit, eap->mkdir_p)) {
+        return OK;
+      } else {
+        goto theend;
+      }
+    }
+  }
+
   char *ffname = eap->arg;
   if (*ffname == NUL) {
     if (eap->cmdidx == CMD_saveas) {
