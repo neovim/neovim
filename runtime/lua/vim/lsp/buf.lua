@@ -364,7 +364,7 @@ end
 ---
 --- Position on a buffer to request.
 --- (default: cursor position)
---- @field pos vim.Pos
+--- @field pos? vim.Pos
 
 --- Jumps to the declaration of the symbol under the cursor.
 --- @note Many servers do not implement this method. Generally, see |vim.lsp.buf.definition()| instead.
