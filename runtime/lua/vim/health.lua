@@ -416,6 +416,21 @@ function M._check(eap)
     vim.api.nvim_set_current_win(float_winid)
     vim.bo[bufnr].modifiable = true
     vim.wo[float_winid].list = false
+    vim.api.nvim_create_autocmd('BufLeave', {
+      buffer = bufnr,
+      callback = function()
+        vim.schedule(function()
+          if
+            vim.api.nvim_win_is_valid(float_winid)
+            -- but not when jumping to the gO table-of-contents quickfix. #34784
+            and vim.api.nvim_get_option_value('filetype', { buf = 0 }) ~= 'qf'
+          then
+            vim.api.nvim_win_close(float_winid, true)
+          end
+        end)
+      end,
+      desc = 'Close the floating checkhealth window when focus leaves it',
+    })
   else
     bufnr = vim.api.nvim_create_buf(true, true)
     -- When no command modifiers are used:
