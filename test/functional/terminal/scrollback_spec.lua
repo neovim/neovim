@@ -300,7 +300,7 @@ local function test_terminal_scrollback(hide_curbuf)
         ^                              |
         {5:-- TERMINAL --}                |
       ]])
-      eq(17, api.nvim_buf_line_count(0))
+      eq(20, api.nvim_buf_line_count(0))
       try_resize(screen._width, screen._height - 2)
       screen:expect([[
         line26                        |
@@ -336,7 +336,7 @@ local function test_terminal_scrollback(hide_curbuf)
         ^                              |
         {5:-- TERMINAL --}                |
       ]])
-      eq(16, api.nvim_buf_line_count(0))
+      eq(18, api.nvim_buf_line_count(0))
       feed([[<C-\><C-N>8<C-Y>]])
       screen:expect([[
         line20                        |
@@ -573,14 +573,14 @@ local function test_terminal_scrollback(hide_curbuf)
     describe('and height decreased by 1', function()
       local function will_hide_top_line()
         feed([[<C-\><C-N>]])
-        try_resize(screen._width - 2, screen._height - 1)
+        try_resize(screen._width, screen._height - 1)
         screen:expect([[
-          {101:line2}                       |
-          line3                       |
-          line4                       |
-          rows: 5, cols: 28           |
-          ^                            |
-                                      |
+          {101:line2}                         |
+          line3                         |
+          line4                         |
+          rows: 5, cols: 30             |
+          ^                              |
+                                        |
         ]])
         eq({ 0, 3, 4, 0 }, fn.getpos("'m"))
       end
@@ -590,31 +590,35 @@ local function test_terminal_scrollback(hide_curbuf)
       describe('and then decreased by 2', function()
         before_each(function()
           will_hide_top_line()
-          try_resize(screen._width - 2, screen._height - 2)
+          try_resize(screen._width, screen._height - 2)
+          screen:expect({ any = 'rows: 3, cols: 30' })
         end)
 
         it('will hide the top 3 lines', function()
-          screen:expect([[
-            rows: 5, cols: 28         |
-            rows: 3, cols: 26         |
-            ^                          |
-                                      |
-          ]])
+          screen:expect({
+            grid = [[
+              rows: 5, cols: 30             |
+              rows: 3, cols: 30             |
+              ^                              |
+                                            |
+            ]],
+            unchanged = true,
+          })
           eq(8, api.nvim_buf_line_count(0))
           eq({ 0, 3, 4, 0 }, fn.getpos("'m"))
           feed('3k')
           screen:expect([[
-            ^line4                     |
-            rows: 5, cols: 28         |
-            rows: 3, cols: 26         |
-                                      |
+            ^line4                         |
+            rows: 5, cols: 30             |
+            rows: 3, cols: 30             |
+                                          |
           ]])
           feed('gg')
           screen:expect([[
-            ^tty ready                 |
-            line1                     |
-            {101:line2}                     |
-                                      |
+            ^tty ready                     |
+            line1                         |
+            {101:line2}                         |
+                                          |
           ]])
         end)
       end)
@@ -779,19 +783,19 @@ local function test_terminal_scrollback(hide_curbuf)
 
           it('will show all lines and leave a blank one at the end', function()
             screen:expect([[
-              tty ready                     |
-              line1                         |
-              {101:line2}                         |
-              line3                         |
-              line4                         |
-              rows: 3, cols: 30             |
-              rows: 4, cols: 30             |
-              rows: 7, cols: 30             |
-              rows: 11, cols: 30            |
-              ^                              |
-                                            |
-              {5:-- TERMINAL --}                |
-            ]])
+            tty ready                     |
+            line1                         |
+            {101:line2}                         |
+            line3                         |
+            line4                         |
+            rows: 3, cols: 30             |
+            rows: 4, cols: 30             |
+            rows: 7, cols: 30             |
+            rows: 11, cols: 30            |
+            ^                              |
+                                          |
+            {5:-- TERMINAL --}                |
+          ]])
             -- since there's an empty line after the cursor, the buffer line
             -- count equals the terminal screen height
             eq(11, api.nvim_buf_line_count(0))
@@ -1129,6 +1133,77 @@ describe('pending scrollback line handling', function()
   end)
 end)
 
+describe('wrapped lines in scrollback are reflown on resize', function()
+  local screen --- @type test.functional.ui.screen
+  local buf --- @type integer
+  local chan --- @type integer
+
+  local long_line = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWX'
+  local narrow_lines = {
+    'abcdefghijklmnopqrst',
+    'uvwxyzABCDEFGHIJKLMN',
+    'OPQRSTUVWX',
+    'line1',
+    'line2',
+    'line3',
+    'line4',
+    'line5',
+    'line6',
+    'line7',
+    'line8',
+    '',
+  }
+  local wide_lines = {
+    'abcdefghijklmnopqrstuvwxyzABCD',
+    'EFGHIJKLMNOPQRSTUVWX',
+    'line1',
+    'line2',
+    'line3',
+    'line4',
+    'line5',
+    'line6',
+    'line7',
+    'line8',
+    '',
+  }
+
+  local function expect_buffer_lines(lines)
+    retry(nil, 1000, function()
+      eq(lines, api.nvim_buf_get_lines(buf, 0, -1, true))
+    end)
+  end
+
+  before_each(function()
+    clear()
+    screen = Screen.new(20, 6)
+    buf = api.nvim_get_current_buf()
+    chan = exec_lua(function()
+      local chan_id = vim.api.nvim_open_term(0, {})
+      vim.bo.scrollback = 50
+      return chan_id
+    end)
+
+    local data = long_line .. '\n'
+    for i = 1, 8 do
+      data = data .. ('line%d\n'):format(i)
+    end
+    api.nvim_chan_send(chan, data)
+    expect_buffer_lines(narrow_lines)
+  end)
+
+  it('reflows scrollback when the terminal grows wider', function()
+    screen:try_resize(30, screen._height)
+    expect_buffer_lines(wide_lines)
+  end)
+
+  it('reflows scrollback back to the previous wrapping when narrowed again', function()
+    screen:try_resize(30, screen._height)
+    expect_buffer_lines(wide_lines)
+    screen:try_resize(20, screen._height)
+    expect_buffer_lines(narrow_lines)
+  end)
+end)
+
 describe('scrollback is correct', function()
   local screen --- @type test.functional.ui.screen
   local buf --- @type integer
@@ -1145,6 +1220,7 @@ describe('scrollback is correct', function()
         foreground = Screen.colors.White,
         background = Screen.colors.DarkGreen,
       },
+      [103] = { foreground = tonumber('0xcc6666'), fg_indexed = true },
     })
     api.nvim_buf_set_lines(0, 0, -1, true, { '\027[31mTEST\027[0m 0' })
     feed('yy99pG$<C-V>98kg<C-A>')
@@ -1174,10 +1250,10 @@ describe('scrollback is correct', function()
   local function check_common()
     feed('<C-W>lG')
     screen:expect([[
-                │{100:TEST} 96            |
-      {1:~         }│{100:TEST} 97            |
-      {1:~         }│{100:TEST} 98            |
-      {1:~         }│{100:TEST} 99            |
+                │{103:TEST} 96            |
+      {1:~         }│{103:TEST} 97            |
+      {1:~         }│{103:TEST} 98            |
+      {1:~         }│{103:TEST} 99            |
       {1:~         }│^                   |
       {2:[No Name]  }{102:[Scratch] [-]      }|
       99 lines changed              |
@@ -1190,11 +1266,11 @@ describe('scrollback is correct', function()
       vim.api.nvim_win_set_cursor(win, { 3, 0 })
     end)
     screen:expect([[
-      ^          │{100:TEST} 0             |
-      {1:~         }│{100:TEST} 1             |
-      {1:~         }│{100:TEST} 2             |
-      {1:~         }│{100:TEST} 3             |
-      {1:~         }│{100:TEST} 4             |
+      ^          │{103:TEST} 0             |
+      {1:~         }│{103:TEST} 1             |
+      {1:~         }│{103:TEST} 2             |
+      {1:~         }│{103:TEST} 3             |
+      {1:~         }│{103:TEST} 4             |
       {3:[No Name]  }{101:[Scratch] [-]      }|
       99 lines changed              |
     ]])
@@ -1210,11 +1286,11 @@ describe('scrollback is correct', function()
       vim.api.nvim_win_set_cursor(win, { 3, 3 })
     end)
     screen:expect([[
-      ^          │{100:TEST} 86            |
-      {1:~         }│{100:TEST} 87            |
-      {1:~         }│{100:TEST} 88            |
-      {1:~         }│{100:TEST} 89            |
-      {1:~         }│{100:TEST} 90            |
+      ^          │{103:TEST} 86            |
+      {1:~         }│{103:TEST} 87            |
+      {1:~         }│{103:TEST} 88            |
+      {1:~         }│{103:TEST} 89            |
+      {1:~         }│{103:TEST} 90            |
       {3:[No Name]  }{101:[Scratch] [-]      }|
       99 lines changed              |
     ]])
@@ -1233,13 +1309,13 @@ describe('scrollback is correct', function()
         vim.cmd('$')
       end)
       screen:expect([[
-                  │{100:TEST} 88            |
-        {1:~         }│{100:TEST} 89            |
-        {1:~         }│{100:TEST} 90            |
-        {1:~         }│{100:TEST} 91            |
-        {1:~         }│{100:TEST} 92            |
-        {1:~         }│{100:TEST} 93            |
-        {1:~         }│{100:TEST} 94            |
+                  │{103:TEST} 88            |
+        {1:~         }│{103:TEST} 89            |
+        {1:~         }│{103:TEST} 90            |
+        {1:~         }│{103:TEST} 91            |
+        {1:~         }│{103:TEST} 92            |
+        {1:~         }│{103:TEST} 93            |
+        {1:~         }│{103:TEST} 94            |
         {1:~         }│^                   |
         {2:[No Name]  }{102:[Scratch] [-]      }|
                                       |
@@ -1261,15 +1337,15 @@ describe('scrollback is correct', function()
       )
       assert(#perms == 2 + 6 + 6)
       local screen_final = [[
-                  │{100:TEST} 91            |
-        {1:~         }│{100:TEST} 92            |
-        {1:~         }│{100:TEST} 93            |
-        {1:~         }│{100:TEST} 94            |
-        {1:~         }│{100:TEST} 95            |
-        {1:~         }│{100:TEST} 96            |
-        {1:~         }│{100:TEST} 97            |
-        {1:~         }│{100:TEST} 98            |
-        {1:~         }│{100:TEST} 99            |
+                  │{103:TEST} 91            |
+        {1:~         }│{103:TEST} 92            |
+        {1:~         }│{103:TEST} 93            |
+        {1:~         }│{103:TEST} 94            |
+        {1:~         }│{103:TEST} 95            |
+        {1:~         }│{103:TEST} 96            |
+        {1:~         }│{103:TEST} 97            |
+        {1:~         }│{103:TEST} 98            |
+        {1:~         }│{103:TEST} 99            |
         {1:~         }│^                   |
         {2:[No Name]  }{102:[Scratch] [-]      }|
                                       |
@@ -1299,7 +1375,7 @@ describe('scrollback is correct', function()
         it('output first', function()
           command(send_cmd .. ' | resize +2')
           screen:expect(screen_final)
-          check_buffer_lines(87, 99)
+          check_buffer_lines(85, 99)
         end)
 
         it('resize first', function()
@@ -1319,11 +1395,11 @@ describe('scrollback is correct', function()
       )
       assert(#perms == 2 + 6 + 6)
       local screen_final = [[
-                  │{100:TEST} 95            |
-        {1:~         }│{100:TEST} 96            |
-        {1:~         }│{100:TEST} 97            |
-        {1:~         }│{100:TEST} 98            |
-        {1:~         }│{100:TEST} 99            |
+                  │{103:TEST} 95            |
+        {1:~         }│{103:TEST} 96            |
+        {1:~         }│{103:TEST} 97            |
+        {1:~         }│{103:TEST} 98            |
+        {1:~         }│{103:TEST} 99            |
         {1:~         }│^                   |
         {2:[No Name]  }{102:[Scratch] [-]      }|
                                       |
@@ -1359,7 +1435,7 @@ describe('scrollback is correct', function()
         { 'resize +6', 'resize -12', send_cmd },
       }
       local screen_final = [[
-                  │{100:TEST} 99            |
+                  │{103:TEST} 99            |
         {1:~         }│^                   |
         {2:[No Name]  }{102:[Scratch] [-]      }|
                                       |

@@ -6,7 +6,7 @@
 
 Terminal emulator                                     *terminal* *terminal-emulator*
 
-Nvim embeds a VT220/xterm terminal emulator based on libvterm. The terminal is
+Nvim embeds a VT220/xterm terminal emulator based on libghostty. The terminal is
 presented as a special 'buftype', asynchronously updated as data is received
 from the connected program.
 
@@ -208,9 +208,6 @@ Nvim uses the configured |clipboard| provider to write to the system
 clipboard. Reading from the system clipboard with OSC 52 is not supported, as
 this would allow any arbitrary program in the :terminal to read the user's
 clipboard.
-
-OSC 52 sequences sent from the :terminal buffer do not emit a |TermRequest|
-event. The event is handled directly by Nvim and is not forwarded to plugins.
 
 OSC 133: shell integration                    *terminal-osc133* *shell-prompt*
 
