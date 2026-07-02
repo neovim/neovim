@@ -196,8 +196,9 @@ describe(':terminal cursor', function()
       ]])
 
       -- Hide the cursor such that the escape sequence is processed as a side effect of showmode in
-      -- terminal_enter handling events (skip_showmode -> char_avail -> vpeekc -> os_breakcheck).
+      -- terminal_enter handling events (skip_showmode -> redrawing -> char_avail -> os_breakcheck).
       -- This requires a particular set of actions; :startinsert repros better than feed('i') here.
+      command('set lazyredraw')
       hide_cursor()
       command('mode | startinsert')
       screen:expect([[
@@ -205,6 +206,7 @@ describe(':terminal cursor', function()
                                                           |*5
         {5:-- TERMINAL --}                                    |
       ]])
+      command('set nolazyredraw')
 
       feed([[<C-\><C-N>]])
       screen:expect([[
