@@ -288,6 +288,7 @@ OPTIONS
   The same applies to 'rulerformat', 'statuscolumn', 'tabline', 'winbar',
   'titlestring', and 'iconstring'.
 • 'winpinned' prevents window from closing unless specifically targeted.
+• Added 'previewpopup' option.
 
 PERFORMANCE
 
