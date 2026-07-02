@@ -10,7 +10,6 @@ local write_file = t.write_file
 
 describe('vim.log', function()
   local xstate = 'Xstate-log'
-  local caller_script ---@type string?
 
   ---@param name string
   ---@return string
@@ -22,17 +21,16 @@ describe('vim.log', function()
 
   before_each(function()
     clear({ env = { XDG_STATE_HOME = xstate } })
-    caller_script = nil
   end)
 
   it('new() creates a logger with the documented defaults', function()
     local info = exec_lua(function()
-      local logger = vim.log.new({ name = 'MyPlugin' })
+      local logger = vim.log.new('MyPlugin')
       local logfile = vim.fs.joinpath(vim.fn.stdpath('log'), 'myplugin.log')
       logger.info('skip')
       logger.warn('keep')
       return {
-        level = vim.log.get_level(logger),
+        level = logger:get_level(),
         writers = {
           type(logger.trace),
           type(logger.debug),
@@ -60,7 +58,7 @@ describe('vim.log', function()
     eq(
       { true, true, true, true, true, false },
       exec_lua(function()
-        local logger = vim.log.new({ name = 'NoArgs', current_level = vim.log.levels.TRACE })
+        local logger = vim.log.new('NoArgs', { level = vim.log.levels.TRACE })
         local logfile = vim.fs.joinpath(vim.fn.stdpath('log'), 'noargs.log')
         return {
           logger.trace(),
@@ -74,12 +72,29 @@ describe('vim.log', function()
     )
   end)
 
-  it('new() respects current_level and format_func opts', function()
+  it('writer methods called with no args report should-log status', function()
+    eq(
+      { false, false, true, true, true, false },
+      exec_lua(function()
+        local logger = vim.log.new('ShouldLog', { level = vim.log.levels.INFO })
+        local logfile = vim.fs.joinpath(vim.fn.stdpath('log'), 'shouldlog.log')
+        return {
+          logger.trace(),
+          logger.debug(),
+          logger.info(),
+          logger.warn(),
+          logger.error(),
+          vim.uv.fs_stat(logfile) ~= nil,
+        }
+      end)
+    )
+  end)
+
+  it('new() respects level and fmt opts', function()
     exec_lua(function()
-      local logger = vim.log.new({
-        name = 'CustomFormat',
-        current_level = vim.log.levels.INFO,
-        format_func = function(current_level, level, ...)
+      local logger = vim.log.new('CustomFormat', {
+        level = vim.log.levels.INFO,
+        fmt = function(current_level, level, ...)
           if level < current_level then
             return nil
           end
@@ -105,13 +120,13 @@ describe('vim.log', function()
 
   it('set_level() changes filtering and get_level() reports the new level', function()
     local level = exec_lua(function()
-      local logger = vim.log.new({ name = 'SetLevel' })
+      local logger = vim.log.new('SetLevel')
 
-      vim.log.set_level(logger, vim.log.levels.INFO)
+      logger:set_level(vim.log.levels.INFO)
       logger.debug('skip')
       logger.info('keep')
 
-      return vim.log.get_level(logger)
+      return logger:get_level()
     end)
 
     eq(2, level)
@@ -122,25 +137,24 @@ describe('vim.log', function()
     assert_nolog('skip', logfile, 10)
   end)
 
-  it('set_format_func() replaces the formatter and can skip entries', function()
+  it('overriding log.fmt replaces the formatter and can skip entries', function()
     exec_lua(function()
-      local logger = vim.log.new({
-        name = 'SetFormat',
-        current_level = vim.log.levels.TRACE,
-        format_func = function()
+      local logger = vim.log.new('SetFormat', {
+        level = vim.log.levels.TRACE,
+        fmt = function()
           return 'old\n'
         end,
       })
 
-      vim.log.set_format_func(logger, function(current_level, level, ...)
+      logger.fmt = function(current_level, level, ...)
         return table.concat({ 'new', current_level, level, tostring(select(1, ...)) }, '|') .. '\n'
-      end)
+      end
 
       logger.error('formatted')
 
-      vim.log.set_format_func(logger, function()
+      logger.fmt = function()
         return nil
-      end)
+      end
 
       logger.error('skip-me')
     end)
@@ -153,10 +167,10 @@ describe('vim.log', function()
   end)
 
   it('default formatter logs the real caller source and line', function()
-    caller_script = t.tmpname(false) .. '.lua'
+    local caller_script = t.tmpname(false) .. '.lua'
     write_file(
       caller_script,
-      "local logger = vim.log.new({ name = 'Caller', current_level = vim.log.levels.TRACE })\n"
+      "local logger = vim.log.new('Caller', { level = vim.log.levels.TRACE })\n"
         .. "logger.info('from-script')\n",
       true
     )
