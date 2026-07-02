@@ -3284,12 +3284,15 @@ static void nv_Zet(cmdarg_T *cap)
     do_cmdline_cmd("q!");
     break;
 
-  // "ZR": restart. With count, restart without checking for changes.
+  // "ZR": restart. With count [1-8], restart without restoring session.
+  // With count 9, restart without restoring session or checking for changes.
   case 'R':
-    if (cap->count0 >= 1) {
+    if (cap->count0 >= 1 && cap->count0 <= 8) {
+      do_cmdline_cmd("restart!");
+    } else if(cap->count0 == 9) {
       do_cmdline_cmd("restart! +qall!");
     } else {
-      do_cmdline_cmd("restart!");
+      do_cmdline_cmd("restart");
     }
     break;
 
