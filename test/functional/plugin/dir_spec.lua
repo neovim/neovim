@@ -144,9 +144,9 @@ describe('nvim.dir', function()
     assert_directory(root)
   end)
 
-  it('maps - to open the parent directory of the current file', function()
+  it('maps - to open parent directories', function()
     make_fixture()
-    n.clear({ args_rm = { '-u' } })
+    n.clear({ args_rm = { '-u', '--cmd' } })
 
     edit(file)
     feed('-')
@@ -154,6 +154,14 @@ describe('nvim.dir', function()
 
     assert_directory(root)
     line_of('alpha.txt')
+
+    n.clear({ args_rm = { '--cmd' }, args = { '--noplugin' } })
+    api.nvim_buf_set_lines(0, 0, -1, false, { '  alpha', '  beta' })
+    api.nvim_win_set_cursor(0, { 2, 7 })
+    feed('-')
+
+    eq({ 1, 2 }, api.nvim_win_get_cursor(0))
+    eq(false, exec_lua([[return package.loaded['nvim.dir'] ~= nil]]))
   end)
 
   it('uses an absolute buffer name for a relative startup directory argument', function()

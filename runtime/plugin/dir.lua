@@ -18,10 +18,6 @@ vim.keymap.set('n', '<Plug>(nvim-dir-reload)', function()
   require('nvim.dir')._reload()
 end, { silent = true, desc = 'Reload directory' })
 
-if vim.fn.mapcheck('-', 'n') == '' and vim.fn.hasmapto('<Plug>(nvim-dir-up)', 'n') == 0 then
-  vim.keymap.set('n', '-', '<Plug>(nvim-dir-up)', { silent = true, desc = 'Open parent directory' })
-end
-
 ---@param buf integer
 ---@param path string
 ---@return boolean
