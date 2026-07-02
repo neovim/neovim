@@ -97,6 +97,13 @@ describe(':checkhealth', function()
     n.feed('gO')
     eq(true, api.nvim_win_is_valid(win))
     eq('qf', api.nvim_get_option_value('filetype', { buf = 0 }))
+
+    -- closes on BufLeave #39307
+    command('lclose | only | checkhealth full_render')
+    local float_win = api.nvim_get_current_win()
+    eq('editor', exec_lua('return vim.api.nvim_win_get_config(0).relative'))
+    command('split foo.lua')
+    eq(false, api.nvim_win_is_valid(float_win))
   end)
 
   it("vim.provider works with a misconfigured 'shell'", function()
