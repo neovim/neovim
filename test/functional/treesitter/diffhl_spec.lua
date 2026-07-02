@@ -267,23 +267,23 @@ describe('diff hunk highlighting', function()
     ]])
   end)
 
-  it('highlights hunks for spaced and quoted (non-ascii) paths', function()
+  it('highlights Vim-style markers and spaced/quoted paths', function()
     local screen = make_screen(lua_attrs)
     set_diff({
       'diff --git a/my file.lua b/my file.lua',
       '--- a/my file.lua',
       '+++ b/my file.lua',
       '@@ -1,1 +1,1 @@',
-      '-local y = 2',
-      '+local y = 3',
+      '<local y = 2',
+      '>local y = 3',
     })
     screen:expect([[
       ^diff --git a/my file.lua b/my file.lua      |
       --- a/my file.lua                           |
       +++ b/my file.lua                           |
       @@ -1,1 +1,1 @@                             |
-      {131:-}{132:local}{133: }{134:y}{133: }{132:=}{133: }{135:2}{133:                                }|
-      {136:+}{137:local}{138: }{139:y}{138: }{137:=}{138: }{140:3}{138:                                }|
+      {131:<}{132:local}{133: }{134:y}{133: }{132:=}{133: }{135:2}{133:                                }|
+      {136:>}{137:local}{138: }{139:y}{138: }{137:=}{138: }{140:3}{138:                                }|
       {1:~                                           }|
                                                   |
     ]])
@@ -342,8 +342,8 @@ describe('diff hunk highlighting', function()
       '+++ b/notes.xyz',
       '@@ -1,2 +1,2 @@',
       ' context line',
-      '-old value',
-      '+new value',
+      '<old value',
+      '>new value',
     })
     screen:expect([[
       ^diff --git a/notes.xyz b/notes.xyz          |
@@ -351,14 +351,14 @@ describe('diff hunk highlighting', function()
       +++ b/notes.xyz                             |
       @@ -1,2 +1,2 @@                             |
        context line                               |
-      {131:-}{132:old value                                  }|
-      {133:+}{134:new value                                  }|
+      {131:<}{132:old value                                  }|
+      {133:>}{134:new value                                  }|
                                                   |
     ]])
   end)
 
   it('tints combined (merge) diff hunks', function()
-    local screen = make_screen(line_tint_attrs, 10)
+    local screen = make_screen(line_tint_attrs, 11)
     set_diff({
       'diff --cc foo.lua',
       'index 1111111,2222222..3333333',
@@ -367,8 +367,9 @@ describe('diff hunk highlighting', function()
       '@@@ -1,2 -1,2 +1,2 @@@',
       '  local x = 1',
       '- local y = 2',
-      ' -local y = 3',
+      ' <local y = 3',
       '++local y = 4',
+      '>>local y = 5',
     })
     screen:expect([[
       ^diff --cc foo.lua                           |
@@ -378,8 +379,9 @@ describe('diff hunk highlighting', function()
       @@@ -1,2 -1,2 +1,2 @@@                      |
         local x = 1                               |
       {131:- }{132:local y = 2                               }|
-      {131: -}{132:local y = 3                               }|
+      {131: <}{132:local y = 3                               }|
       {133:++}{134:local y = 4                               }|
+      {133:>>}{134:local y = 5                               }|
                                                   |
     ]])
   end)
