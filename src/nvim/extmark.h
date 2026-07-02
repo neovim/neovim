@@ -14,6 +14,8 @@ EXTERN int curbuf_splice_pending INIT( = 0);
 
 typedef kvec_t(MTPair) ExtmarkInfoArray;
 
+bool extmark_clear_overlapping(buf_T *buf, int l_row, colnr_T l_col, int u_row, colnr_T u_col);
+
 // delete the columns between mincol and endcol
 typedef struct {
   int start_row;

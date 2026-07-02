@@ -252,6 +252,25 @@ bool extmark_clear(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_col, int u_r
   return marks_cleared_any;
 }
 
+bool extmark_clear_overlapping(buf_T *buf, int l_row, colnr_T l_col, int u_row, colnr_T u_col)
+{
+  if (!map_size(buf->b_extmark_ns)) {
+    return false;
+  }
+
+  ExtmarkInfoArray marks = extmark_get(buf, UINT32_MAX, l_row, l_col, u_row, u_col,
+                                       INT64_MAX, kExtmarkNone, true);
+  bool cleared = false;
+
+  for (size_t i = 0; i < kv_size(marks); i++) {
+    MTPair mark = kv_A(marks, i);
+    cleared |= extmark_del_id(buf, mark.start.ns, mark.start.id);
+  }
+
+  kv_destroy(marks);
+  return cleared;
+}
+
 /// @return  the position of marks between a range,
 ///          marks found at the start or end index will be included.
 ///
