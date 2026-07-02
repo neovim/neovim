@@ -7,6 +7,7 @@ local buf_lines = n.buf_lines
 local command = n.command
 local dedent = t.dedent
 local exec_lua = n.exec_lua
+local feed = n.feed
 local eq = t.eq
 local eval = n.eval
 local matches = t.matches
@@ -2828,6 +2829,303 @@ describe('LSP', function()
     end)
   end)
 
+  describe('vim.lsp.formatexpr', function()
+    ---@return string[]
+    local function nvim_buf_get_all_lines()
+      return exec_lua(function()
+        return vim.api.nvim_buf_get_lines(0, 0, -1, true)
+      end)
+    end
+
+    before_each(function()
+      exec_lua(create_server_definition)
+      exec_lua(function()
+        vim.bo.formatexpr = 'v:lua.vim.lsp.formatexpr()'
+
+        ---@class test.functional.plugin.lsp_spec.formatexpr.start_server.Opts
+        ---@field range_formatting_handler? fun(params: lsp.DocumentRangeFormattingParams): lsp.TextEdit[]?
+        ---@field formatting_handler? fun(params: lsp.DocumentFormattingParams): lsp.TextEdit[]?
+
+        local server_number = 1
+        ---Starts a server which can support textDocument/rangeFormatting and
+        ---textDocument/formatting. Providing a handler for either method enables the corresponding
+        ---capability.
+        ---@param opts test.functional.plugin.lsp_spec.formatexpr.start_server.Opts?
+        function _G.start_server(opts)
+          opts = opts or {}
+          local server = _G._create_server({
+            capabilities = {
+              documentRangeFormattingProvider = opts.range_formatting_handler ~= nil,
+              documentFormattingProvider = opts.formatting_handler ~= nil,
+            },
+            handlers = {
+              ---@param params lsp.DocumentRangeFormattingParams
+              ['textDocument/rangeFormatting'] = function(_, params, callback)
+                local text_edits = opts.range_formatting_handler(params)
+                callback(nil, text_edits)
+              end,
+              ---@param params lsp.DocumentFormattingParams
+              ['textDocument/formatting'] = function(_, params, callback)
+                local text_edits = opts.formatting_handler(params)
+                callback(nil, text_edits)
+              end,
+            },
+          })
+          vim.lsp.start({ name = string.format('server %d', server_number), cmd = server.cmd })
+          server_number = server_number + 1
+        end
+      end)
+    end)
+
+    it('formats range of lines with textDocument/rangeFormatting', function()
+      local lines = { 'line 1', 'line 2', 'line 3', 'line 4' }
+      exec_lua(function()
+        vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
+        -- This server formats a range starting on line n and ending on line m by replacing the
+        -- whole range with the lines "formatted line $i" where $i goes from n to m. This enables us
+        -- to verify that the correct range is requested for formatting (starts at first character
+        -- of first line and ends on last character of last line).
+        start_server({
+          range_formatting_handler = function(params)
+            local lines = {} ---@type string[]
+            for i = params.range.start.line + 1, params.range['end'].line + 1 do
+              table.insert(lines, string.format('formatted line %d', i))
+            end
+            return { { range = params.range, newText = table.concat(lines, '\n') } }
+          end,
+        })
+      end)
+
+      feed('2G') -- Move to line 2
+      feed('gqj') -- Format lines 2 and 3
+
+      local expected_lines = vim.deepcopy(lines)
+      expected_lines[2] = 'formatted line 2'
+      expected_lines[3] = 'formatted line 3'
+      eq(expected_lines, nvim_buf_get_all_lines())
+    end)
+
+    it(
+      'formats whole buffer with textDocument/rangeFormatting when client supports textDocument/rangeFormatting and textDocument/formatting',
+      function()
+        local range_formatting_new_text = 'range formatting result'
+        local formatting_new_text = 'formatting result'
+        exec_lua(function()
+          -- This server formats a range and a whole document by inserting "range formatting result"
+          -- and "formatting result" respectively at the start of the buffer.
+          local first_char = { line = 0, character = 0 }
+          start_server({
+            range_formatting_handler = function()
+              return {
+                {
+                  range = { start = first_char, ['end'] = first_char },
+                  newText = range_formatting_new_text,
+                },
+              }
+            end,
+            formatting_handler = function()
+              return {
+                {
+                  range = { start = first_char, ['end'] = first_char },
+                  newText = formatting_new_text,
+                },
+              }
+            end,
+          })
+        end)
+
+        feed('gqal') -- Format whole buffer
+
+        eq({ range_formatting_new_text }, nvim_buf_get_all_lines())
+      end
+    )
+
+    it(
+      'formats whole buffer with textDocument/formatting when client supports textDocument/formatting but not textDocument/rangeFormatting',
+      function()
+        local new_text = 'formatting result'
+        exec_lua(function()
+          -- This server formats a whole document by inserting "formatting result" at the start of
+          -- the buffer.
+          start_server({
+            formatting_handler = function()
+              local first_char = { line = 0, character = 0 }
+              return {
+                {
+                  range = { start = first_char, ['end'] = first_char },
+                  newText = new_text,
+                },
+              }
+            end,
+          })
+        end)
+
+        feed('gqal') -- Format whole buffer
+
+        eq({ new_text }, nvim_buf_get_all_lines())
+      end
+    )
+
+    it(
+      'does nothing when range is not whole buffer and client supports textDocument/formatting but not textDocument/rangeFormatting',
+      function()
+        local lines = { 'a b', 'c d' }
+        local new_text = 'formatting result'
+        exec_lua(function()
+          vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
+          -- Set small textwidth to verify that gq doesn't perform internal formatting (wrap
+          -- lines) on the buffer.
+          vim.bo.textwidth = 1
+          -- This server formats a whole document by inserting "formatting result" at the start of
+          -- the buffer.
+          start_server({
+            formatting_handler = function()
+              local first_char = { line = 0, character = 0 }
+              return {
+                {
+                  range = { start = first_char, ['end'] = first_char },
+                  newText = new_text,
+                },
+              }
+            end,
+          })
+        end)
+
+        feed('2G') -- Move to line 2
+        feed('Vgq') -- Format line 2
+
+        eq(lines, nvim_buf_get_all_lines())
+      end
+    )
+
+    it('applies only one formatting result when multiple clients support formatting', function()
+      local new_text = 'formatting result'
+      exec_lua(function()
+        -- These servers format a range by inserting "formatting result" at the start of the buffer.
+        -- This enables us to verify that only one client was used, since if both were used then
+        -- both results would have been inserted at the start of the buffer.
+        for _ = 1, 2 do
+          start_server({
+            range_formatting_handler = function()
+              local first_char = { line = 0, character = 0 }
+              return {
+                {
+                  range = { start = first_char, ['end'] = first_char },
+                  newText = new_text,
+                },
+              }
+            end,
+          })
+        end
+      end)
+
+      feed('gqal') -- Format whole buffer
+
+      eq({ new_text }, nvim_buf_get_all_lines())
+    end)
+
+    it(
+      'applies first non-null formatting result when multiple clients support formatting',
+      function()
+        local new_text = 'formatting result'
+        exec_lua(function()
+          -- These servers format a range by returning null if neither of them have been called
+          -- before and inserting "formatting result" otherwise. This decouples the test from the
+          -- (undefined) order that clients are called in.
+          for _ = 1, 2 do
+            start_server({
+              range_formatting_handler = function()
+                if not range_formatting_called then
+                  _G.range_formatting_called = true
+                  return nil
+                else
+                  local first_char = { line = 0, character = 0 }
+                  return {
+                    {
+                      range = { start = first_char, ['end'] = first_char },
+                      newText = new_text,
+                    },
+                  }
+                end
+              end,
+            })
+          end
+        end)
+
+        feed('gqal') -- Format whole buffer
+
+        eq({ new_text }, nvim_buf_get_all_lines())
+      end
+    )
+
+    describe('does nothing when', function()
+      ---@type table<string, function>
+      local test_case_setups = {
+        ['no clients are attached'] = function() end,
+        ['all servers return null formatting result'] = function()
+          start_server({
+            range_formatting_handler = function()
+              return nil
+            end,
+          })
+        end,
+        ['no servers support textDocument/rangeFormatting or textDocument/formatting'] = function()
+          start_server()
+        end,
+      }
+
+      for test_case, setup in pairs(test_case_setups) do
+        it(test_case, function()
+          local lines = { 'a b' }
+          exec_lua(function()
+            vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
+            -- Set small textwidth to verify that gq doesn't perform internal formatting (wrap
+            -- lines) on the buffer.
+            vim.bo.textwidth = 1
+            start_server({
+              range_formatting_handler = function()
+                return nil
+              end,
+            })
+          end)
+          exec_lua(setup)
+
+          feed('gqal') -- Format whole buffer
+
+          eq(lines, nvim_buf_get_all_lines())
+        end)
+      end
+    end)
+
+    describe('falls back to internal formatting', function()
+      for _, mode in ipairs({ 'i', 'R' }) do
+        it(string.format('in %q mode', mode), function()
+          exec_lua(function()
+            vim.bo.textwidth = 1
+            -- This server formats a range by inserting "formatting result" at the start of the
+            -- buffer.
+            start_server({
+              range_formatting_handler = function()
+                local first_char = { line = 0, character = 0 }
+                return {
+                  {
+                    range = { start = first_char, ['end'] = first_char },
+                    newText = 'formatting result',
+                  },
+                }
+              end,
+            })
+          end)
+
+          feed(mode)
+          feed('a b')
+
+          eq({ 'a', 'b' }, nvim_buf_get_all_lines())
+        end)
+      end
+    end)
+  end)
+
   describe('vim.lsp.tagfunc', function()
     before_each(function()
       ---@type lsp.Location[]
@@ -2851,17 +3149,14 @@ describe('LSP', function()
       exec_lua(function()
         _G.mock_locations = mock_locations
         _G.server = _G._create_server({
-          ---@type lsp.ServerCapabilities
           capabilities = {
             definitionProvider = true,
             workspaceSymbolProvider = true,
           },
           handlers = {
-            ---@return lsp.Location[]
             ['textDocument/definition'] = function(_, _, callback)
               callback(nil, { _G.mock_locations[1] })
             end,
-            ---@return lsp.WorkspaceSymbol[]
             ['workspace/symbol'] = function(_, request, callback)
               assert(request.query == 'foobar')
               callback(nil, {
@@ -3629,6 +3924,8 @@ describe('LSP', function()
           capabilities = {
             colorProvider = { id = 'color-registration' },
             diagnosticProvider = {
+              documentSelector = vim.NIL,
+              interFileDependencies = false,
               id = 'diag-registration',
               identifier = 'diag-ident-static',
               workspaceDiagnostics = true,
@@ -3678,6 +3975,8 @@ describe('LSP', function()
             id = 'diag-registration',
             method = 'textDocument/diagnostic',
             registerOptions = {
+              documentSelector = vim.NIL,
+              interFileDependencies = false,
               id = 'diag-registration',
               identifier = 'diag-ident-static',
               workspaceDiagnostics = true,

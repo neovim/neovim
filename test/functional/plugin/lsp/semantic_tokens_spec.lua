@@ -953,15 +953,14 @@ describe('semantic token highlighting', function()
           capabilities = {
             textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
             semanticTokensProvider = {
+              legend = vim.fn.json_decode(legend),
               full = { delta = false },
             },
           },
           handlers = {
-            --- @param callback function
             ['textDocument/semanticTokens/full'] = function(_, _, callback)
               callback(nil, nil)
             end,
-            --- @param callback function
             ['textDocument/semanticTokens/full/delta'] = function(_, _, callback)
               callback(nil, nil)
             end,
@@ -1005,6 +1004,7 @@ describe('semantic token highlighting', function()
           capabilities = {
             textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
             semanticTokensProvider = {
+              legend = vim.fn.json_decode(legend),
               full = { delta = false },
             },
           },

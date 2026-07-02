@@ -244,6 +244,9 @@ LSP
   |vim.lsp.buf.type_definition()|, and |vim.lsp.buf.implementation()|
   now supports passing arbitrary positions.
 • Support for nested snippets.
+• |vim.lsp.formatexpr()| now falls back to `textDocument/formatting` if the whole
+  buffer is being formatted and the language server doesn't support
+  `textDocument/rangeFormatting`.
 
 LUA
 
