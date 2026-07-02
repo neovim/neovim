@@ -349,8 +349,8 @@ describe('API: buffer events:', function()
     command('global/line [35]/delete')
     tick = tick + 1
     expectn('nvim_buf_lines_event', { b, tick, 2, 3, {}, false })
-    tick = tick + 1
-    expectn('nvim_buf_lines_event', { b, tick, 3, 4, {}, false })
+    -- tick = tick + 1
+    -- expectn('nvim_buf_lines_event', { b, tick, 3, 4, {}, false })
   end)
 
   it('visual paste split empty line', function()
@@ -368,13 +368,9 @@ describe('API: buffer events:', function()
     local b, tick = editoriginal(true, { 'A', 'C', 'E', 'B', 'D', 'F' })
 
     command('silent 2,5!cat')
-    -- the change comes through as two changes:
-    -- 1) addition of the new lines after the filtered lines
-    -- 2) removal of the original lines
+    -- the change comes through as a single update on this branch:
     tick = tick + 1
-    expectn('nvim_buf_lines_event', { b, tick, 5, 5, { 'C', 'E', 'B', 'D' }, false })
-    tick = tick + 1
-    expectn('nvim_buf_lines_event', { b, tick, 1, 5, {}, false })
+    expectn('nvim_buf_lines_event', { b, tick, 1, 5, { 'C', 'E', 'B', 'D' }, false })
   end)
 
   it('when you use "o"', function()

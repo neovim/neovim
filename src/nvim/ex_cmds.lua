@@ -45,7 +45,7 @@ M.cmds = {
   {
     command = 'append',
     flags = bit.bor(BANG, RANGE, ZEROR, TRLBAR, BUFLOCK_OK, LOCK_OK, MODIFY),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_append',
   },
   {
@@ -303,7 +303,7 @@ M.cmds = {
   {
     command = 'change',
     flags = bit.bor(BANG, WHOLEFOLD, RANGE, COUNT, TRLBAR, BUFLOCK_OK, LOCK_OK, MODIFY),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_change',
   },
   {
@@ -339,7 +339,7 @@ M.cmds = {
   {
     command = 'caddbuffer',
     flags = bit.bor(RANGE, WORD1, TRLBAR),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_cbuffer',
   },
   {
@@ -363,7 +363,7 @@ M.cmds = {
   {
     command = 'call',
     flags = bit.bor(RANGE, NEEDARG, EXTRA, NOTRLCOM, SBOXOK, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_call',
   },
   {
@@ -375,7 +375,7 @@ M.cmds = {
   {
     command = 'cbuffer',
     flags = bit.bor(BANG, RANGE, WORD1, TRLBAR),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_cbuffer',
   },
   {
@@ -423,7 +423,7 @@ M.cmds = {
   {
     command = 'center',
     flags = bit.bor(TRLBAR, RANGE, WHOLEFOLD, EXTRA, BUFLOCK_OK, LOCK_OK, MODIFY),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_align',
   },
   {
@@ -461,7 +461,7 @@ M.cmds = {
   {
     command = 'cgetbuffer',
     flags = bit.bor(RANGE, WORD1, TRLBAR),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_cbuffer',
   },
   {
@@ -587,7 +587,7 @@ M.cmds = {
   {
     command = 'copy',
     flags = bit.bor(RANGE, WHOLEFOLD, EXTRA, TRLBAR, BUFLOCK_OK, LOCK_OK, MODIFY),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_copymove',
   },
   {
@@ -701,7 +701,7 @@ M.cmds = {
   {
     command = 'delete',
     flags = bit.bor(RANGE, WHOLEFOLD, REGSTR, COUNT, TRLBAR, BUFLOCK_OK, LOCK_OK, MODIFY),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_operators',
   },
   {
@@ -761,7 +761,7 @@ M.cmds = {
   {
     command = 'diffget',
     flags = bit.bor(RANGE, ZEROR, EXTRA, TRLBAR, MODIFY),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_diffgetput',
   },
   {
@@ -779,7 +779,7 @@ M.cmds = {
   {
     command = 'diffput',
     flags = bit.bor(RANGE, ZEROR, EXTRA, TRLBAR),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_diffgetput',
   },
   {
@@ -803,13 +803,13 @@ M.cmds = {
   {
     command = 'djump',
     flags = bit.bor(BANG, RANGE, DFLALL, WHOLEFOLD, EXTRA),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_findpat',
   },
   {
     command = 'dlist',
     flags = bit.bor(BANG, RANGE, DFLALL, WHOLEFOLD, EXTRA, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_findpat',
   },
   {
@@ -833,13 +833,13 @@ M.cmds = {
   {
     command = 'dsearch',
     flags = bit.bor(BANG, RANGE, DFLALL, WHOLEFOLD, EXTRA, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_findpat',
   },
   {
     command = 'dsplit',
     flags = bit.bor(BANG, RANGE, DFLALL, WHOLEFOLD, EXTRA),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_findpat',
   },
   {
@@ -959,7 +959,7 @@ M.cmds = {
   {
     command = 'exit',
     flags = bit.bor(RANGE, WHOLEFOLD, BANG, FILE1, ARGOPT, DFLALL, TRLBAR, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_exit',
   },
   {
@@ -1019,31 +1019,31 @@ M.cmds = {
   {
     command = 'fold',
     flags = bit.bor(RANGE, WHOLEFOLD, TRLBAR, SBOXOK, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_fold',
   },
   {
     command = 'foldclose',
     flags = bit.bor(RANGE, BANG, WHOLEFOLD, TRLBAR, SBOXOK, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_foldopen',
   },
   {
     command = 'folddoopen',
     flags = bit.bor(RANGE, DFLALL, NEEDARG, EXTRA, NOTRLCOM),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_folddo',
   },
   {
     command = 'folddoclosed',
     flags = bit.bor(RANGE, DFLALL, NEEDARG, EXTRA, NOTRLCOM),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_folddo',
   },
   {
     command = 'foldopen',
     flags = bit.bor(RANGE, BANG, WHOLEFOLD, TRLBAR, SBOXOK, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_foldopen',
   },
   {
@@ -1067,7 +1067,7 @@ M.cmds = {
   {
     command = 'global',
     flags = bit.bor(RANGE, WHOLEFOLD, BANG, EXTRA, DFLALL, SBOXOK, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_global',
   },
   {
@@ -1151,7 +1151,7 @@ M.cmds = {
   {
     command = 'insert',
     flags = bit.bor(BANG, RANGE, TRLBAR, BUFLOCK_OK, LOCK_OK, MODIFY),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_append',
   },
   {
@@ -1175,13 +1175,13 @@ M.cmds = {
   {
     command = 'ijump',
     flags = bit.bor(BANG, RANGE, DFLALL, WHOLEFOLD, EXTRA),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_findpat',
   },
   {
     command = 'ilist',
     flags = bit.bor(BANG, RANGE, DFLALL, WHOLEFOLD, EXTRA, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_findpat',
   },
   {
@@ -1229,19 +1229,19 @@ M.cmds = {
   {
     command = 'iput',
     flags = bit.bor(RANGE, WHOLEFOLD, BANG, REGSTR, TRLBAR, ZEROR, BUFLOCK_OK, LOCK_OK, MODIFY),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_iput',
   },
   {
     command = 'isearch',
     flags = bit.bor(BANG, RANGE, DFLALL, WHOLEFOLD, EXTRA, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_findpat',
   },
   {
     command = 'isplit',
     flags = bit.bor(BANG, RANGE, DFLALL, WHOLEFOLD, EXTRA),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_findpat',
   },
   {
@@ -1265,7 +1265,7 @@ M.cmds = {
   {
     command = 'join',
     flags = bit.bor(BANG, RANGE, WHOLEFOLD, COUNT, FLAGS, TRLBAR, BUFLOCK_OK, LOCK_OK, MODIFY),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_join',
   },
   {
@@ -1277,7 +1277,7 @@ M.cmds = {
   {
     command = 'k',
     flags = bit.bor(RANGE, WORD1, TRLBAR, SBOXOK, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_mark',
   },
   {
@@ -1307,7 +1307,7 @@ M.cmds = {
   {
     command = 'list',
     flags = bit.bor(RANGE, WHOLEFOLD, COUNT, FLAGS, TRLBAR, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_print',
   },
   {
@@ -1349,7 +1349,7 @@ M.cmds = {
   {
     command = 'laddbuffer',
     flags = bit.bor(RANGE, WORD1, TRLBAR),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_cbuffer',
   },
   {
@@ -1373,7 +1373,7 @@ M.cmds = {
   {
     command = 'lbuffer',
     flags = bit.bor(BANG, RANGE, WORD1, TRLBAR),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_cbuffer',
   },
   {
@@ -1421,7 +1421,7 @@ M.cmds = {
   {
     command = 'left',
     flags = bit.bor(TRLBAR, RANGE, WHOLEFOLD, EXTRA, BUFLOCK_OK, LOCK_OK, MODIFY),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_align',
   },
   {
@@ -1471,7 +1471,7 @@ M.cmds = {
   {
     command = 'lgetbuffer',
     flags = bit.bor(RANGE, WORD1, TRLBAR),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_cbuffer',
   },
   {
@@ -1639,19 +1639,19 @@ M.cmds = {
   {
     command = 'lua',
     flags = bit.bor(RANGE, EXTRA, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_lua',
   },
   {
     command = 'luado',
     flags = bit.bor(RANGE, DFLALL, EXTRA, NEEDARG, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_luado',
   },
   {
     command = 'luafile',
     flags = bit.bor(RANGE, FILE1, NEEDARG, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_luafile',
   },
   {
@@ -1687,13 +1687,13 @@ M.cmds = {
   {
     command = 'move',
     flags = bit.bor(RANGE, WHOLEFOLD, EXTRA, TRLBAR, BUFLOCK_OK, LOCK_OK, MODIFY),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_copymove',
   },
   {
     command = 'mark',
     flags = bit.bor(RANGE, WORD1, TRLBAR, SBOXOK, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_mark',
   },
   {
@@ -1783,13 +1783,13 @@ M.cmds = {
   {
     command = 'mzscheme',
     flags = bit.bor(RANGE, EXTRA, DFLALL, NEEDARG, BUFLOCK_OK, LOCK_OK, SBOXOK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_script_ni',
   },
   {
     command = 'mzfile',
     flags = bit.bor(RANGE, FILE1, NEEDARG, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_ni',
   },
   {
@@ -1873,13 +1873,13 @@ M.cmds = {
   {
     command = 'normal',
     flags = bit.bor(RANGE, BANG, EXTRA, NEEDARG, NOTRLCOM, CTRLV, SBOXOK, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_normal',
   },
   {
     command = 'number',
     flags = bit.bor(RANGE, WHOLEFOLD, COUNT, FLAGS, TRLBAR, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_print',
   },
   {
@@ -1963,7 +1963,7 @@ M.cmds = {
   {
     command = 'print',
     flags = bit.bor(RANGE, WHOLEFOLD, COUNT, FLAGS, TRLBAR, BUFLOCK_OK, LOCK_OK, SBOXOK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_print',
   },
   {
@@ -2005,19 +2005,19 @@ M.cmds = {
   {
     command = 'perl',
     flags = bit.bor(RANGE, EXTRA, DFLALL, NEEDARG, SBOXOK, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_perl',
   },
   {
     command = 'perldo',
     flags = bit.bor(RANGE, EXTRA, DFLALL, NEEDARG, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_perldo',
   },
   {
     command = 'perlfile',
     flags = bit.bor(RANGE, FILE1, NEEDARG, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_perlfile',
   },
   {
@@ -2071,7 +2071,7 @@ M.cmds = {
   {
     command = 'psearch',
     flags = bit.bor(BANG, RANGE, WHOLEFOLD, DFLALL, EXTRA),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_psearch',
   },
   {
@@ -2131,7 +2131,7 @@ M.cmds = {
   {
     command = 'put',
     flags = bit.bor(RANGE, WHOLEFOLD, BANG, REGSTR, TRLBAR, ZEROR, BUFLOCK_OK, LOCK_OK, MODIFY),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_put',
   },
   {
@@ -2143,67 +2143,67 @@ M.cmds = {
   {
     command = 'python',
     flags = bit.bor(RANGE, EXTRA, NEEDARG, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_python3',
   },
   {
     command = 'pydo',
     flags = bit.bor(RANGE, DFLALL, EXTRA, NEEDARG, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_pydo3',
   },
   {
     command = 'pyfile',
     flags = bit.bor(RANGE, FILE1, NEEDARG, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_py3file',
   },
   {
     command = 'py3',
     flags = bit.bor(RANGE, EXTRA, NEEDARG, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_python3',
   },
   {
     command = 'py3do',
     flags = bit.bor(RANGE, DFLALL, EXTRA, NEEDARG, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_pydo3',
   },
   {
     command = 'python3',
     flags = bit.bor(RANGE, EXTRA, NEEDARG, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_python3',
   },
   {
     command = 'py3file',
     flags = bit.bor(RANGE, FILE1, NEEDARG, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_py3file',
   },
   {
     command = 'pyx',
     flags = bit.bor(RANGE, EXTRA, NEEDARG, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_python3',
   },
   {
     command = 'pyxdo',
     flags = bit.bor(RANGE, DFLALL, EXTRA, NEEDARG, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_pydo3',
   },
   {
     command = 'pythonx',
     flags = bit.bor(RANGE, EXTRA, NEEDARG, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_python3',
   },
   {
     command = 'pyxfile',
     flags = bit.bor(RANGE, FILE1, NEEDARG, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_py3file',
   },
   {
@@ -2238,7 +2238,7 @@ M.cmds = {
       LOCK_OK,
       MODIFY
     ),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_read',
   },
   {
@@ -2298,7 +2298,7 @@ M.cmds = {
   {
     command = 'retab',
     flags = bit.bor(TRLBAR, RANGE, WHOLEFOLD, DFLALL, BANG, WORD1, BUFLOCK_OK, LOCK_OK, MODIFY),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_retab',
   },
   {
@@ -2316,7 +2316,7 @@ M.cmds = {
   {
     command = 'right',
     flags = bit.bor(TRLBAR, RANGE, WHOLEFOLD, EXTRA, BUFLOCK_OK, LOCK_OK, MODIFY),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_align',
   },
   {
@@ -2346,19 +2346,19 @@ M.cmds = {
   {
     command = 'ruby',
     flags = bit.bor(RANGE, EXTRA, NEEDARG, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_ruby',
   },
   {
     command = 'rubydo',
     flags = bit.bor(RANGE, DFLALL, EXTRA, NEEDARG, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_rubydo',
   },
   {
     command = 'rubyfile',
     flags = bit.bor(RANGE, FILE1, NEEDARG, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_rubyfile',
   },
   {
@@ -2370,7 +2370,7 @@ M.cmds = {
   {
     command = 'substitute',
     flags = bit.bor(RANGE, WHOLEFOLD, EXTRA, BUFLOCK_OK, LOCK_OK, PREVIEW),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_substitute',
     preview_func = 'ex_substitute_preview',
   },
@@ -2539,7 +2539,7 @@ M.cmds = {
   {
     command = 'smagic',
     flags = bit.bor(RANGE, WHOLEFOLD, EXTRA, BUFLOCK_OK, LOCK_OK, PREVIEW),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_submagic',
     preview_func = 'ex_submagic_preview',
   },
@@ -2570,7 +2570,7 @@ M.cmds = {
   {
     command = 'snomagic',
     flags = bit.bor(RANGE, WHOLEFOLD, EXTRA, BUFLOCK_OK, LOCK_OK, PREVIEW),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_submagic',
     preview_func = 'ex_submagic_preview',
   },
@@ -2589,13 +2589,13 @@ M.cmds = {
   {
     command = 'source',
     flags = bit.bor(RANGE, DFLALL, BANG, FILE1, TRLBAR, SBOXOK, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_source',
   },
   {
     command = 'sort',
     flags = bit.bor(RANGE, DFLALL, WHOLEFOLD, BANG, EXTRA, NOTRLCOM, MODIFY),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_sort',
   },
   {
@@ -2763,7 +2763,7 @@ M.cmds = {
   {
     command = 't',
     flags = bit.bor(RANGE, WHOLEFOLD, EXTRA, TRLBAR, BUFLOCK_OK, LOCK_OK, MODIFY),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_copymove',
   },
   {
@@ -2889,19 +2889,19 @@ M.cmds = {
   {
     command = 'tcl',
     flags = bit.bor(RANGE, EXTRA, NEEDARG, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_script_ni',
   },
   {
     command = 'tcldo',
     flags = bit.bor(RANGE, DFLALL, EXTRA, NEEDARG, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_ni',
   },
   {
     command = 'tclfile',
     flags = bit.bor(RANGE, FILE1, NEEDARG, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_ni',
   },
   {
@@ -3063,7 +3063,7 @@ M.cmds = {
   {
     command = 'uniq',
     flags = bit.bor(RANGE, DFLALL, WHOLEFOLD, BANG, EXTRA, NOTRLCOM, MODIFY),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_uniq',
   },
   {
@@ -3099,7 +3099,7 @@ M.cmds = {
   {
     command = 'update',
     flags = bit.bor(RANGE, WHOLEFOLD, BANG, FILE1, ARGOPT, DFLALL, TRLBAR),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_update',
   },
   {
@@ -3111,7 +3111,7 @@ M.cmds = {
   {
     command = 'vglobal',
     flags = bit.bor(RANGE, WHOLEFOLD, EXTRA, DFLALL, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_global',
   },
   {
@@ -3219,7 +3219,7 @@ M.cmds = {
   {
     command = 'write',
     flags = bit.bor(RANGE, WHOLEFOLD, BANG, FILE1, ARGOPT, DFLALL, TRLBAR, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_write',
   },
   {
@@ -3279,7 +3279,7 @@ M.cmds = {
   {
     command = 'wq',
     flags = bit.bor(RANGE, WHOLEFOLD, BANG, FILE1, ARGOPT, DFLALL, TRLBAR),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_exit',
   },
   {
@@ -3309,7 +3309,7 @@ M.cmds = {
   {
     command = 'xit',
     flags = bit.bor(RANGE, WHOLEFOLD, BANG, FILE1, ARGOPT, DFLALL, TRLBAR, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_exit',
   },
   {
@@ -3363,13 +3363,13 @@ M.cmds = {
   {
     command = 'yank',
     flags = bit.bor(RANGE, WHOLEFOLD, REGSTR, COUNT, TRLBAR, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_operators',
   },
   {
     command = 'z',
     flags = bit.bor(RANGE, WHOLEFOLD, BANG, EXTRA, FLAGS, TRLBAR, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_z',
   },
   -- commands that don't start with a letter
@@ -3377,56 +3377,56 @@ M.cmds = {
     command = '!',
     enum = 'CMD_bang',
     flags = bit.bor(RANGE, WHOLEFOLD, BANG, FILES, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_bang',
   },
   {
     command = '#',
     enum = 'CMD_pound',
     flags = bit.bor(RANGE, WHOLEFOLD, COUNT, FLAGS, TRLBAR, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_print',
   },
   {
     command = '&',
     enum = 'CMD_and',
     flags = bit.bor(RANGE, WHOLEFOLD, EXTRA, BUFLOCK_OK, LOCK_OK, MODIFY),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_substitute',
   },
   {
     command = '<',
     enum = 'CMD_lshift',
     flags = bit.bor(RANGE, WHOLEFOLD, COUNT, FLAGS, TRLBAR, BUFLOCK_OK, LOCK_OK, MODIFY),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_operators',
   },
   {
     command = '=',
     enum = 'CMD_equal',
     flags = bit.bor(RANGE, EXTRA, DFLALL, ARGOPT, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_equal',
   },
   {
     command = '>',
     enum = 'CMD_rshift',
     flags = bit.bor(RANGE, WHOLEFOLD, COUNT, FLAGS, TRLBAR, BUFLOCK_OK, LOCK_OK, MODIFY),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_operators',
   },
   {
     command = '@',
     enum = 'CMD_at',
     flags = bit.bor(RANGE, WHOLEFOLD, EXTRA, TRLBAR, BUFLOCK_OK, LOCK_OK),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_at',
   },
   {
     command = '~',
     enum = 'CMD_tilde',
     flags = bit.bor(RANGE, WHOLEFOLD, EXTRA, BUFLOCK_OK, LOCK_OK, MODIFY),
-    addr_type = 'ADDR_LINES',
+    addr_type = 'ADDR_POSITIONS',
     func = 'ex_substitute',
   },
   -- commands that start with an uppercase letter

@@ -1016,6 +1016,8 @@ function vim.api.nvim_create_namespace(name) end
 ---   allowed), if any. [<f-args>]
 --- - line1: (number) Start of the command range. [<line1>]
 --- - line2: (number) End of the command range. [<line2>]
+--- - col1: (number) Start of the command column range. [<col1>]
+--- - col2: (number) End of the command column range. [<col2>]
 --- - mods: (string) Command modifiers (unstructured string), if any. [<mods>]
 --- - name: (string) Command name.
 --- - nargs: (string) Number of arguments allowed by the command. `:command-nargs`

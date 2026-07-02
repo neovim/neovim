@@ -4805,11 +4805,12 @@ describe('API', function()
       }, api.nvim_parse_cmd('echo foo', {}))
     end)
     it('works with ranges', function()
+      local maxcol = api.nvim_get_vvar('maxcol')
       eq({
         cmd = 'substitute',
         args = { '/math.random/math.max/' },
         bang = false,
-        range = { 4, 6 },
+        range = { 4, 6, 0, maxcol },
         addr = 'line',
         magic = {
           file = false,
@@ -4844,6 +4845,165 @@ describe('API', function()
         },
       }, api.nvim_parse_cmd('4,6s/math.random/math.max/', {}))
     end)
+    it('works with marker charwise ranges', function()
+      insert(('xxxxxxxxx\n'):rep(6))
+      local buf = api.nvim_get_current_buf()
+      api.nvim_buf_set_mark(buf, '<', 4, 5, {})
+      api.nvim_buf_set_mark(buf, '>', 6, 9, {})
+      eq({
+        cmd = 'substitute',
+        args = { '/math.random/math.max/' },
+        bang = false,
+        range = { 4, 6, 5, 9 },
+        addr = 'char',
+        magic = {
+          file = false,
+          bar = false,
+        },
+        nargs = '*',
+        nextcmd = '',
+        mods = {
+          browse = false,
+          confirm = false,
+          emsg_silent = false,
+          filter = {
+            pattern = '',
+            force = false,
+          },
+          hide = false,
+          horizontal = false,
+          keepalt = false,
+          keepjumps = false,
+          keepmarks = false,
+          keeppatterns = false,
+          lockmarks = false,
+          noautocmd = false,
+          noswapfile = false,
+          sandbox = false,
+          silent = false,
+          split = '',
+          tab = -1,
+          unsilent = false,
+          verbose = -1,
+          vertical = false,
+        },
+      }, api.nvim_parse_cmd('`<,`>s/math.random/math.max/', {}))
+    end)
+    it('works with explicit charwise ranges', function()
+      eq({
+        cmd = 'substitute',
+        args = { '/math.random/math.max/' },
+        bang = false,
+        range = { 4, 6, 5, 9 },
+        addr = 'char',
+        magic = {
+          file = false,
+          bar = false,
+        },
+        nargs = '*',
+        nextcmd = '',
+        mods = {
+          browse = false,
+          confirm = false,
+          emsg_silent = false,
+          filter = {
+            pattern = '',
+            force = false,
+          },
+          hide = false,
+          horizontal = false,
+          keepalt = false,
+          keepjumps = false,
+          keepmarks = false,
+          keeppatterns = false,
+          lockmarks = false,
+          noautocmd = false,
+          noswapfile = false,
+          sandbox = false,
+          silent = false,
+          split = '',
+          tab = -1,
+          unsilent = false,
+          verbose = -1,
+          vertical = false,
+        },
+      }, api.nvim_parse_cmd('4.5,6.9s/math.random/math.max/', {}))
+    end)
+    it('works with explicit charwise ranges', function()
+      eq({
+        cmd = 'delete',
+        args = {},
+        bang = false,
+        range = { 4, 8, 5, 9 },
+        count = 8,
+        addr = 'char',
+        magic = {
+          file = false,
+          bar = true,
+        },
+        nargs = '0',
+        nextcmd = '',
+        reg = '',
+        mods = {
+          browse = false,
+          confirm = false,
+          emsg_silent = false,
+          filter = {
+            pattern = '',
+            force = false,
+          },
+          hide = false,
+          horizontal = false,
+          keepalt = false,
+          keepjumps = false,
+          keepmarks = false,
+          keeppatterns = false,
+          lockmarks = false,
+          noautocmd = false,
+          noswapfile = false,
+          sandbox = false,
+          silent = false,
+          split = '',
+          tab = -1,
+          unsilent = false,
+          verbose = -1,
+          vertical = false,
+        },
+      }, api.nvim_parse_cmd('4.5,8.9delete', {}))
+    end)
+    -- oldtest: Test_gN_then_gn()
+    it('test gN then gn', function()
+      insert('this list is a list with a list of a last.')
+      feed('/l.st<CR>')
+      feed('$gNgN:<CR>')
+      local buf = api.nvim_get_current_buf()
+      eq({ 1, 27 }, api.nvim_buf_get_mark(buf, '<'))
+      eq({ 1, 40 }, api.nvim_buf_get_mark(buf, '>'))
+      clear()
+      insert('this list is a list with a list of a last.')
+      feed('/l.st<CR>')
+      feed('$gNgNgnx')
+      eq('last', fn.getreg('@'))
+      clear()
+      insert('this list is a list with a lust of a last.')
+      feed('/l.st<CR>')
+      feed('$gNgNgNgnx')
+      eq('lust of a last', fn.getreg('@'))
+    end)
+
+    -- oldtest: Test_shell_filter_buffer_with_nul_bytes()
+    it('test shell filter buffer with NUL bytes', function()
+      -- " \n is a NUL byte
+      insert([[
+        aaa\nbbb\nccc\nddd\neee
+        fff\nggg\nhhh\niii\njjj]])
+      command('%!cat')
+      eq({
+        'aaa\\nbbb\\nccc\\nddd\\neee',
+        'fff\\nggg\\nhhh\\niii\\njjj',
+      }, fn.getline(1, '$'))
+    end)
+
     it('works with count', function()
       eq({
         cmd = 'buffer',
@@ -4964,11 +5124,12 @@ describe('API', function()
       }, api.nvim_parse_cmd('put', {}))
     end)
     it('works with range, count and register', function()
+      local maxcol = api.nvim_get_vvar('maxcol')
       eq({
         cmd = 'delete',
         args = {},
         bang = false,
-        range = { 3, 7 },
+        range = { 3, 7, 0, maxcol },
         count = 7,
         reg = '*',
         addr = 'line',
@@ -5134,11 +5295,12 @@ describe('API', function()
     end)
     it('works with user commands', function()
       command('command -bang -nargs=+ -range -addr=lines MyCommand echo foo')
+      local maxcol = api.nvim_get_vvar('maxcol')
       eq({
         cmd = 'MyCommand',
         args = { 'test', 'it' },
         bang = true,
-        range = { 4, 6 },
+        range = { 4, 6, 0, maxcol },
         addr = 'line',
         magic = {
           file = false,
@@ -5362,7 +5524,7 @@ describe('API', function()
         cmd = 'normal',
         args = { 'x' },
         bang = true,
-        range = { 3, 4 },
+        range = { 3, 4, 0, 2147483647 },
         addr = 'line',
         magic = {
           file = false,
@@ -5474,7 +5636,7 @@ describe('API', function()
       feed('VG:')
       n.poke_eventloop()
       res = api.nvim_parse_cmd("'<,'>", {})
-      eq({ 1, 5 }, res.range)
+      eq({ 1, 5, 0, 0 }, res.range)
     end)
     it('parses modifier-only cmdline (:aboveleft)', function()
       local res = api.nvim_parse_cmd('aboveleft', {})
@@ -5520,8 +5682,8 @@ describe('API', function()
         pcall_err(api.nvim_cmd, { cmd = 'print', args = {}, range = true }, {})
       )
       eq(
-        "Invalid 'range': expected <=2 elements",
-        pcall_err(api.nvim_cmd, { cmd = 'print', args = {}, range = { 1, 2, 3, 4 } }, {})
+        "Invalid 'range': expected <=4 elements",
+        pcall_err(api.nvim_cmd, { cmd = 'print', args = {}, range = { 1, 2, 3, 4, 5 } }, {})
       )
       eq(
         'Invalid range element: expected non-negative Integer',
@@ -5611,6 +5773,486 @@ describe('API', function()
       ]]
     end)
 
+    it('works with |substitute| and charwise range', function()
+      insert [[
+        line1
+        line2
+        line3text that is
+        selected by charwise range
+        selection line5
+        line6
+      ]]
+      api.nvim_cmd({
+        cmd = 'substitute',
+        addr = 'char',
+        args = { '/.*/foo/' },
+        range = { 3, 5, 5, 10 },
+      }, {})
+      expect [[
+        line1
+        line2
+        line3foo
+        foo
+        fooline5
+        line6
+      ]]
+    end)
+
+    it('works with |global| and charwise range', function()
+      insert [[
+        line1
+        line2
+        line3text that is
+        selected by charwise range
+        selection line5
+        line6
+      ]]
+      command('3.5,5.9g/.*/delete')
+      expect [[
+        line1
+        line2
+        line3line5
+        line6
+      ]]
+      clear()
+      insert [[
+        line1
+        line2
+        line3text that is
+        selected by charwise range
+        selection line5
+        line6
+      ]]
+      api.nvim_cmd({
+        cmd = 'global',
+        addr = 'char',
+        args = { '/.*/delete' },
+        range = { 3, 5, 5, 9 },
+      }, {})
+      expect [[
+        line1
+        line2
+        line3line5
+        line6
+      ]]
+    end)
+
+    it('works with |delete| and charwise range', function()
+      insert [[
+        line1
+        line2
+        line3text that is
+        selected by charwise range
+        selection line5
+        line6
+      ]]
+      api.nvim_cmd({
+        cmd = 'delete',
+        addr = 'char',
+        range = { 3, 5, 5, 9 },
+      }, {})
+      expect [[
+        line1
+        line2
+        line3line5
+        line6
+      ]]
+      clear()
+      insert [[
+        line1
+        line2
+        line3text that is
+        selected by charwise range
+        selection line5
+        line6
+      ]]
+      api.nvim_cmd({
+        cmd = 'delete',
+        addr = 'char',
+        range = { 3, 5, 0, 0 },
+      }, {})
+      expect [[
+        line1
+        line2
+        election line5
+        line6
+      ]]
+    end)
+
+    it('works with charwise range before |delete| command', function()
+      insert [[
+        line1
+        line2
+        line3text that is
+        selected by charwise range
+        selection line5
+        line6
+      ]]
+      api.nvim_input([[:3.5,5.9delete<CR>]])
+      expect [[
+        line1
+        line2
+        line3line5
+        line6
+      ]]
+    end)
+
+    -- TODO(616b2f): document different expected addresses ranges
+    -- 3.5,0.0 -> single position e.g. cursor position (currently abandoned)
+    -- 3.5,3.5 -> smallest possible range both ends always inclusive
+    it('works with charwise range before |read| command with filter', function()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      api.nvim_input(':3.5read !echo "abc"<CR>')
+      expect [[
+        line1
+        line2
+        line3abc
+
+        line4
+        line5
+        line6
+      ]]
+      clear()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      api.nvim_input([[:3.5read !echo -n "abc"<CR>]])
+      expect [[
+        line1
+        line2
+        line3abc
+        line4
+        line5
+        line6
+      ]]
+      clear()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      api.nvim_input([[:3.0read !echo -n "abc"<CR>]])
+      expect [[
+        line1
+        line2
+        abcline3
+        line4
+        line5
+        line6
+      ]]
+      clear()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      api.nvim_input([[:3.2read !echo -en 'abc\nabc'<CR>]])
+      expect [[
+        line1
+        line2
+        liabc
+        abcne3
+        line4
+        line5
+        line6
+      ]]
+    end)
+
+    it('works with charwise range before |read| command reading from file', function()
+      local filename = tmpname()
+      local f = io.open(filename, 'w')
+      f:write('abc\ndef\n')
+      f:close()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      command('3.2read ' .. filename)
+      expect [[
+        line1
+        line2
+        liabc
+        defne3
+        line4
+        line5
+        line6
+      ]]
+      os.remove(filename)
+    end)
+
+    it('works with charwise range before |write| command writing to file', function()
+      local filename = tmpname()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      command('3.2,5.3write! ' .. filename)
+      local f = assert(io.open(filename, 'r'))
+      local content = f:read('*a')
+      f:close()
+      os.remove(filename)
+      eq('ne3\nline4\nline\n', content)
+    end)
+
+    it('works with charwise range before |append| command (inline)', function()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      command('3.2append|foo')
+      expect [[
+        line1
+        line2
+        linfooe3
+        line4
+        line5
+        line6
+      ]]
+    end)
+
+    it('works with charwise range before |append| command (multiline)', function()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      feed(':3.2append<CR>foo<CR>bar<CR>.<CR>')
+      expect [[
+        line1
+        line2
+        linfoo
+        bare3
+        line4
+        line5
+        line6
+      ]]
+    end)
+
+    it('works with charwise range before |insert| command (inline)', function()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      command('3.2insert|foo')
+      expect [[
+        line1
+        line2
+        lifoone3
+        line4
+        line5
+        line6
+      ]]
+    end)
+
+    it('works with charwise range before |insert| command (multiline)', function()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      feed(':3.2insert<CR>foo<CR>bar<CR>.<CR>')
+      expect [[
+        line1
+        line2
+        lifoo
+        barne3
+        line4
+        line5
+        line6
+      ]]
+    end)
+
+    it('works with charwise range before |change| command (multiline)', function()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      feed(':3.2,5.3change<CR>foo<CR>bar<CR>.<CR>')
+      expect [[
+        line1
+        line2
+        lifoo
+        bar5
+        line6
+      ]]
+    end)
+
+    it('works with charwise range at the end of line for |insert| command', function()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      command('3.5insert|foo')
+      expect [[
+        line1
+        line2
+        line3foo
+        line4
+        line5
+        line6
+      ]]
+    end)
+
+    it('works with charwise range at the end of line for |append| command', function()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      command('3.4append|foo')
+      expect [[
+        line1
+        line2
+        line3foo
+        line4
+        line5
+        line6
+      ]]
+    end)
+
+    it(
+      'works with charwise range beyond the end of line for |append| command (falls back to linewise)',
+      function()
+        insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+        command('3.5append|foo')
+        expect [[
+        line1
+        line2
+        line3
+        foo
+        line4
+        line5
+        line6
+      ]]
+      end
+    )
+
+    it('works with charwise range at the end of line for |read| command', function()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      local filename = 'Xtest_charwise_read_eol'
+      local f = io.open(filename, 'w')
+      f:write('foo\nbar\n')
+      f:close()
+      command('3.5read ' .. filename)
+      os.remove(filename)
+      expect [[
+        line1
+        line2
+        line3foo
+        bar
+        line4
+        line5
+        line6
+      ]]
+    end)
+
+    it('works with charwise range before |copy| command', function()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      command('3.2,5.3copy 1.3')
+      expect [[
+        linne3
+        line4
+        linee1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+    end)
+
+    it('works with charwise range before |move| command', function()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        line5
+        line6
+      ]]
+      command('3.2,5.3move 1.3')
+      expect [[
+        linne3
+        line4
+        linee1
+        line2
+        li5
+        line6
+      ]]
+    end)
+
     it('works with count', function()
       insert [[
         line1
@@ -5656,6 +6298,47 @@ describe('API', function()
       api.nvim_create_user_command('Foo', 'echo "<bang>"', { bang = true })
       eq('!', api.nvim_cmd({ cmd = 'Foo', bang = true }, { output = true }))
       eq('', api.nvim_cmd({ cmd = 'Foo', bang = false }, { output = true }))
+    end)
+
+    it('works with |:!| and charwise selection into shell command', function()
+      insert [[
+        line1
+        line2
+        aaaaaline3aaa
+        aaaaaaa
+        aaaaaaaaaaaaaaaaa
+        line5
+      ]]
+      local buf = api.nvim_get_current_buf()
+      api.nvim_buf_set_mark(buf, '<', 3, 2, {})
+      api.nvim_buf_set_mark(buf, '>', 5, 10, {})
+      command("`<,`>!tr 'a' 'b'")
+      print(vim.inspect(n.curbuf_contents()))
+      expect [[
+        line1
+        line2
+        aabbbline3bbb
+        bbbbbbb
+        bbbbbbbbbbbaaaaaa
+        line5
+      ]]
+      clear()
+      insert [[
+        line1
+        line2
+        bbbbbbbbbbbb
+        line4
+      ]]
+      buf = api.nvim_get_current_buf()
+      api.nvim_buf_set_mark(buf, '<', 3, 4, {})
+      api.nvim_buf_set_mark(buf, '>', 3, 8, {})
+      command("`<,`>!tr 'b' 'g'")
+      expect [[
+        line1
+        line2
+        bbbbgggggbbb
+        line4
+      ]]
     end)
 
     it('works with modifiers', function()

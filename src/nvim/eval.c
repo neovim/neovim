@@ -5417,9 +5417,9 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
     } else {
       pos.lnum = wp->w_cursor.lnum;
       if (charcol) {
-        pos.col = (colnr_T)mb_charlen(ml_get_buf(bp, wp->w_cursor.lnum));
+        pos.col = (colnr_T)mb_charlen(ml_get_buf(bp, pos.lnum));
       } else {
-        pos.col = ml_get_buf_len(bp, wp->w_cursor.lnum);
+        pos.col = ml_get_buf_len(bp, pos.lnum);
       }
     }
     return &pos;
@@ -6274,7 +6274,14 @@ void ex_execute(exarg_T *eap)
         did_emsg = save_did_emsg;
       }
     } else if (eap->cmdidx == CMD_execute) {
-      do_cmdline(ga.ga_data, eap->ea_getline, eap->cookie, DOCMD_NOWAIT|DOCMD_VERBOSE);
+      exarg_T ea = {
+        .cmd = ga.ga_data,
+        .line1 = 1,
+        .line2 = 1,
+        .ea_getline = eap->ea_getline,
+        .cookie = eap->cookie
+      };
+      do_cmdline(&ea, DOCMD_NOWAIT|DOCMD_VERBOSE);
     }
   }
 
