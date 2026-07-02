@@ -87,10 +87,12 @@ Builtin plugin: diff hunk highlighting                              *diffhl*
 Code inside the hunks of a diff buffer (a buffer with 'filetype' set to "diff",
 such as `git show` output or a `.patch` file) is highlighted using the
 treesitter parser for each hunk's language, on top of the regular diff syntax.
-Highlighting is applied to a hunk only when its language can be determined
-from the diff header and a parser for it is available; otherwise it is
-silently skipped.
-For more information on treesitter parsers, see |treesitter-parsers|.
+Added and removed lines are highlighted through the |hl-DiffAdd| and
+|hl-DiffDelete| groups, with the leading markers highlighted through
+|hl-Added| and |hl-Removed|. If the hunk language can be determined from the
+diff header and a parser is available, the code itself is highlighted using
+that parser. For more information on treesitter parsers, see
+|treesitter-parsers|.
 
                                                          *g:diffhl* *b:diffhl*
 
