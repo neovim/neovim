@@ -9,8 +9,68 @@ local http_methods = {
   DELETE = true,
 }
 
----@alias vim.net.request.ResponseFunc fun(err: string?, response: vim.net.request.Response?)
+--- @nodoc
+---@enum vim.net.HttpStatusCode
+M.http_status = {
+  CONTINUE = 100,
+  SWITCHING_PROTOCOLS = 101,
+  OK = 200,
+  CREATED = 201,
+  ACCEPTED = 202,
+  NO_CONTENT = 204,
+  RESET_CONTENT = 205,
+  PARTIAL_CONTENT = 206,
+  MOVED_PERMANENTLY = 301,
+  FOUND = 302,
+  SEE_OTHER = 303,
+  NOT_MODIFIED = 304,
+  TEMPORARY_REDIRECT = 307,
+  PERMANENT_REDIRECT = 308,
+  BAD_REQUEST = 400,
+  UNAUTHORIZED = 401,
+  FORBIDDEN = 403,
+  NOT_FOUND = 404,
+  METHOD_NOT_ALLOWED = 405,
+  REQUEST_TIMEOUT = 408,
+  CONFLICT = 409,
+  GONE = 410,
+  LENGTH_REQUIRED = 411,
+  PAYLOAD_TOO_LARGE = 413,
+  URI_TOO_LONG = 414,
+  UNSUPPORTED_MEDIA_TYPE = 415,
+  RANGE_NOT_SATISFIABLE = 416,
+  EXPECTATION_FAILED = 417,
+  TOO_MANY_REQUESTS = 429,
+  INTERNAL_SERVER_ERROR = 500,
+  NOT_IMPLEMENTED = 501,
+  BAD_GATEWAY = 502,
+  SERVICE_UNAVAILABLE = 503,
+  GATEWAY_TIMEOUT = 504,
+  HTTP_VERSION_NOT_SUPPORTED = 505,
+}
+
+-- dirty hack to split curl's body from metadata in the response using a string that
+-- does not show in the http response
+local split_metadata_body_char = '<>'
+
+---@param res string
+---@return vim.net.request.Response
+local function parse_response(res)
+  local splitted = vim.split(res, split_metadata_body_char)
+  local body, metadata = splitted[1], splitted[2]
+
+  local ok, parsed = pcall(vim.json.decode, metadata)
+  if not ok then
+    error('error on parsing response headers metadata')
+  end
+
+  ---@diagnostic disable-next-line: no-unknown
+  return { body = body, headers = parsed.headers, status = tonumber(parsed.status_code) }
+end
+
+---@alias vim.net.HttpResponseFunc fun(err: string?, response: vim.net.request.Response?)
 ---@alias vim.net.HttpMethod string "GET" | "POST" | "PUT" | "PATCH" | "HEAD" | "DELETE"
+---@alias vim.net.HttpHeaders table<string, string|string[]>
 
 ---@class vim.net.request.Opts
 ---@inlinedoc
@@ -32,12 +92,18 @@ local http_methods = {
 ---
 ---Custom headers to send with the request. Supports basic key/value headers and empty headers as
 ---supported by curl. Does not support "@filename" style, internal header deletion ("Header:").
----@field headers? table<string, string>
+---@field headers? vim.net.HttpHeaders
 
 ---@class vim.net.request.Response
 ---
 ---The HTTP body of the request
 ---@field body string
+---
+---The HTTP response status code
+---@field status vim.net.HttpStatusCode
+---
+---The HTTP response headers
+---@field headers vim.net.HttpHeaders
 
 --- Makes an HTTP request to the given URL, asynchronously passing the result to the specified
 --- `on_response`, `outpath` or `outbuf`.
@@ -49,14 +115,16 @@ local http_methods = {
 ---   outpath = 'vision.html',
 --- })
 ---
---- -- Process the response.
+--- -- Process the response. Check the status before doing any action
 --- vim.net.request(
 ---   'https://api.github.com/repos/neovim/neovim',
 ---   {},
 ---   function (err, res)
 ---     if err then return end
----     local stars = vim.json.decode(res.body).stargazers_count
----     vim.print(('Neovim currently has %d stars'):format(stars))
+---     local data = vim.json.decode(res.body)
+---     if res.status == vim.net.http_status.OK then
+---       vim.print(('Neovim currently has %d stars'):format(data.stargazers_count))
+---     end
 ---   end
 --- )
 ---
@@ -82,9 +150,9 @@ local http_methods = {
 --- @param method vim.net.HttpMethod (default: GET) The HTTP method (GET, POST, PUT, PATCH, HEAD, DELETE).
 --- @param url string The URL for the request.
 --- @param opts? vim.net.request.Opts
---- @param on_response? vim.net.request.ResponseFunc Callback invoked on request completion.
---- @overload fun(url: string, opts: vim.net.request.Opts, response: vim.net.request.ResponseFunc)
---- @overload fun(method: vim.net.HttpMethod, url: string, opts: vim.net.request.Opts, response: vim.net.request.ResponseFunc)
+--- @param on_response? vim.net.HttpResponseFunc Callback invoked on request completion.
+--- @overload fun(url: string, opts: vim.net.request.Opts, response: vim.net.HttpResponseFunc)
+--- @overload fun(method: vim.net.HttpMethod, url: string, opts: vim.net.request.Opts, response: vim.net.HttpResponseFunc)
 --- @return { close: fun() } # Object with `close()` method which cancels the request.
 function M.request(method, url, opts, on_response)
   if type(url) ~= 'string' then
@@ -114,10 +182,8 @@ function M.request(method, url, opts, on_response)
   local args = { 'curl' }
   if opts.verbose then
     table.insert(args, '--verbose')
-  else
-    vim.list_extend(args, { '--silent', '--show-error', '--fail' })
   end
-  vim.list_extend(args, { '--location', '--retry', tostring(retry) })
+  vim.list_extend(args, { '--silent', '--location', '--retry', tostring(retry) })
 
   if opts.outpath then
     vim.list_extend(args, { '--output', opts.outpath })
@@ -132,6 +198,7 @@ function M.request(method, url, opts, on_response)
 
   if opts.headers then
     for key, value in pairs(opts.headers) do
+      -- TODO(ellisonleao): handle table values
       if type(key) ~= 'string' or type(value) ~= 'string' then
         error('headers keys and values must be strings')
       end
@@ -148,6 +215,12 @@ function M.request(method, url, opts, on_response)
     end
   end
 
+  if on_response then
+    local metadata_format = split_metadata_body_char
+      .. '{"status_code":%{http_code},"headers":%{header_json}}'
+    vim.list_extend(args, { '--write-out', metadata_format })
+  end
+
   table.insert(args, url)
 
   local system_opts = opts.body and { stdin = opts.body } or {}
@@ -160,7 +233,7 @@ function M.request(method, url, opts, on_response)
       err = res.stderr ~= '' and res.stderr or ('Request failed with exit code %d'):format(res.code)
     else
       if on_response then
-        response = { body = res.stdout or '' }
+        response = parse_response(res.stdout)
       end
     end
 

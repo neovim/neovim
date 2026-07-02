@@ -13,6 +13,7 @@ local function request(method, url, opts)
   opts.retry = 3
   local result = exec_lua(function()
     local done = false
+    ---@type table
     local result
 
     vim.net.request(method, url, opts, function(err, res)
@@ -28,7 +29,7 @@ local function request(method, url, opts)
         else
           resp = res.body
         end
-        result = { error = nil, response = resp }
+        result = { error = nil, status = res.status, body = resp, headers = res.headers }
       end
       done = true
     end)
@@ -54,7 +55,7 @@ describe('vim.net.request', function()
     local result = request('GET', 'https://httpbingo.org/anything')
 
     t.eq(nil, result.error, ('request failed: %s'):format(result.error))
-    t.eq('https://httpbingo.org/anything', result.response.url)
+    t.eq('https://httpbingo.org/anything', result.body.url)
   end)
 
   it("detects filetype, sets 'nomodified'", function()
@@ -82,13 +83,6 @@ describe('vim.net.request', function()
 
     t.eq('lua', rv[1])
     t.eq(false, rv[2], 'Expected buffer to be unmodified for remote content')
-  end)
-
-  it('calls on_response with error on 404 (async failure)', function()
-    t.skip(skip_integ, 'NVIM_TEST_INTEG not set (network integration test)')
-
-    local result = request('GET', 'https://httpbingo.org/status/404')
-    t.matches('404', result.error)
   end)
 
   it('plugin writes output to buffer', function()
@@ -188,8 +182,8 @@ describe('vim.net.request', function()
     t.eq(true, rv.zipfile)
   end)
 
-  it('accepts custom headers', function()
-    t.skip(skip_integ, 'NVIM_TEST_INTEG not set (network integration test)')
+  it('accepts custom request headers', function()
+    t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
     ---@type table
     local result = request('GET', 'https://httpbingo.org/anything', {
       headers = {
@@ -200,16 +194,12 @@ describe('vim.net.request', function()
     })
 
     t.eq(nil, result.error, ('request failed: %s'):format(result.error))
-    t.eq('table', type(result.response.headers), 'Expected headers to be a table')
+    t.eq('table', type(result.body.headers), 'Expected headers to be a table')
 
     -- httpbingo.org/request returns each header as a list in the returned value
-    t.eq(
-      'Bearer test-token',
-      result.response.headers.Authorization[1],
-      'Expected Authorization header'
-    )
-    t.eq('custom-value', result.response.headers['X-Custom-Header'][1], 'Expected X-Custom-Header')
-    t.eq('', result.response.headers['Empty'][1], 'Expected Empty header')
+    t.eq('Bearer test-token', result.body.headers.Authorization[1], 'Expected Authorization header')
+    t.eq('custom-value', result.body.headers['X-Custom-Header'][1], 'Expected X-Custom-Header')
+    t.eq('', result.body.headers['Empty'][1], 'Expected Empty header')
   end)
 
   it('accepts multiple HTTP methods', function()
@@ -220,7 +210,7 @@ describe('vim.net.request', function()
     local function assert_accept_method(method)
       local result = request(method, url)
       t.eq(nil, result.error)
-      t.eq(method, result.response.method)
+      t.eq(method, result.body.method)
     end
 
     assert_accept_method('GET')
@@ -240,7 +230,23 @@ describe('vim.net.request', function()
       },
     })
     t.eq(nil, result.error)
-    t.eq(1, result.response.json.a)
+    t.eq(1, result.body.json.a)
+  end)
+
+  it('returns response status and headers in on_response', function()
+    t.skip(skip_integ, 'NVIM_TEST_INTEG not set: skipping network integration test')
+
+    local function assert_status_and_headers(expected_status, method, url)
+      local result = request(method, url)
+      t.eq(nil, result.error)
+      t.eq(expected_status, result.status)
+      -- all the response headers in those requests will have the same content-type header
+      t.matches('text/plain', result.headers['content-type'][1])
+    end
+
+    assert_status_and_headers(200, 'GET', 'https://httpbingo.org/status/200')
+    assert_status_and_headers(400, 'GET', 'https://httpbingo.org/status/400')
+    assert_status_and_headers(404, 'GET', 'https://httpbingo.org/status/404')
   end)
 
   it('validation', function()
@@ -256,7 +262,7 @@ describe('vim.net.request', function()
       t.matches(expected_err, result)
     end
 
-    -- headers asserts
+    -- request headers asserts
     assert_wrong_request('opts.headers: expected table, got number', { headers = 123 })
 
     --- FIXME(ellisonleao): this special assert is failing because the opts table is putting [""] in
