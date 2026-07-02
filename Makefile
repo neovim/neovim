@@ -128,15 +128,8 @@ build/.ran-deps-cmake::
 	$(MKDIR) build
 	$(TOUCH) "$@"
 
-# TODO: cmake 3.2+ add_custom_target() has a USES_TERMINAL flag.
 oldtest: | nvim
-	$(SINGLE_MAKE) -C test/old/testdir clean
-ifeq ($(strip $(TEST_FILE)),)
-	$(SINGLE_MAKE) -C test/old/testdir NVIM_PRG=$(NVIM_PRG) $(MAKEOVERRIDES)
-else
-	@# Handle TEST_FILE=test_foo{,.res,.vim}.
-	$(SINGLE_MAKE) -C test/old/testdir NVIM_PRG=$(NVIM_PRG) SCRIPTS= $(MAKEOVERRIDES) $(patsubst %.vim,%,$(patsubst %.res,%,$(TEST_FILE)))
-endif
+	BUILD_DIR=build/ $(NVIM_PRG) -l test/old/runner.lua $(TEST_FILE)
 
 # Build oldtest by specifying the relative .vim filename.
 .PHONY: phony_force
