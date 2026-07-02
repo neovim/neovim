@@ -835,81 +835,11 @@ do
     return info.was_set and info.last_set_sid ~= sid_lua
   end
 
-  --- Parse a string of hex characters as a color.
-  ---
-  --- The string can contain 1 to 4 hex characters. The returned value is
-  --- between 0.0 and 1.0 (inclusive) representing the intensity of the color.
-  ---
-  --- For instance, if only a single hex char "a" is used, then this function
-  --- returns 0.625 (10 / 16), while a value of "aa" would return 0.664 (170 /
-  --- 256).
-  ---
-  --- @param c string Color as a string of hex chars
-  --- @return number? Intensity of the color
-  local function parsecolor(c)
-    if #c == 0 or #c > 4 then
-      return nil
-    end
-
-    local val = vim._tointeger(c, 16)
-    if not val then
-      return nil
-    end
-
-    local max = vim._assert_integer(string.rep('f', #c), 16)
-    return val / max
-  end
-
-  --- Parse an OSC 11 response
-  ---
-  --- Either of the two formats below are accepted:
-  ---
-  ---   OSC 11 ; rgb:<red>/<green>/<blue>
-  ---
-  --- or
-  ---
-  ---   OSC 11 ; rgba:<red>/<green>/<blue>/<alpha>
-  ---
-  --- where
-  ---
-  ---   <red>, <green>, <blue>, <alpha> := h | hh | hhh | hhhh
-  ---
-  --- The alpha component is ignored, if present.
-  ---
-  --- @param resp string OSC 11 response
-  --- @return string? Red component
-  --- @return string? Green component
-  --- @return string? Blue component
-  local function parseosc11(resp)
-    local r, g, b
-    r, g, b = resp:match('^\027%]11;rgb:(%x+)/(%x+)/(%x+)$')
-    if not r and not g and not b then
-      local a
-      r, g, b, a = resp:match('^\027%]11;rgba:(%x+)/(%x+)/(%x+)/(%x+)$')
-      if not a or #a > 4 then
-        return nil, nil, nil
-      end
-    end
-
-    if r and g and b and #r <= 4 and #g <= 4 and #b <= 4 then
-      return r, g, b
-    end
-
-    return nil, nil, nil
-  end
-
   --- Guess value of 'background' based on terminal color.
   ---
   --- We write Operating System Command (OSC) 11 to the terminal to request the
-  --- terminal's background color. We then wait for a response. If the response
-  --- matches `rgba:RRRR/GGGG/BBBB/AAAA` where R, G, B, and A are hex digits, then
-  --- compute the luminance[1] of the RGB color and classify it as light/dark
-  --- accordingly. Note that the color components may have anywhere from one to
-  --- four hex digits, and require scaling accordingly as values out of 4, 8, 12,
-  --- or 16 bits. Also note the A(lpha) component is optional, and is parsed but
-  --- ignored in the calculations.
-  ---
-  --- [1] https://en.wikipedia.org/wiki/Luma_%28video%29
+  --- terminal's background color. We then wait for a response classified by
+  --- |TermResponse| as "dark" or "light".
   ---
   --- In slow environments (e.g. SSH with high latency), this will increase
   --- startup time and produce a warning, so users may want to disable it.
@@ -941,7 +871,7 @@ do
     vim.tty.request(
       osc11 .. (sync and dsr or ''),
       { group = bg_group, timeout = 0, chan = chan },
-      function(resp)
+      function(resp, data)
         -- DSR response that should come after the OSC 11 response if the terminal
         -- supports it.
         if sync and string.match(resp, '^\027%[0n$') then
@@ -952,23 +882,16 @@ do
           return
         end
 
+        local bg = data.detected_background
+
         -- Never override an explicit user value: stop once the user pins it.
         if bg_user_set() then
           return true
         end
 
-        local r, g, b = parseosc11(resp)
-        if r and g and b then
-          local rr = parsecolor(r)
-          local gg = parsecolor(g)
-          local bb = parsecolor(b)
-
-          if rr and gg and bb then
-            local luminance = (0.299 * rr) + (0.587 * gg) + (0.114 * bb)
-            local bg = luminance < 0.5 and 'dark' or 'light'
-            -- Use :noautocmd to suppress OptionSet event; OSC11 response may arrive after VimEnter.
-            vim.cmd('noautocmd set background=' .. bg)
-          end
+        if bg and bg ~= vim.o.background then
+          -- Use :noautocmd to suppress OptionSet event; OSC11 response may arrive after VimEnter.
+          vim.cmd('noautocmd set background=' .. bg)
         end
       end
     )
