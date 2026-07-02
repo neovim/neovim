@@ -44,6 +44,20 @@ local function clean_path(path)
   return (path:gsub('^"(.*)"$', '%1'):gsub('\t.*$', ''):gsub('^[ab]/', ''))
 end
 
+-- Match syntax/diff.vim: both + and > mark added lines.
+local function is_new_marker(c)
+  return c == '+' or c == '>'
+end
+
+-- Match syntax/diff.vim: both - and < mark removed lines.
+local function is_old_marker(c)
+  return c == '-' or c == '<'
+end
+
+local function is_body_marker(c)
+  return c == ' ' or is_new_marker(c) or is_old_marker(c)
+end
+
 ---@class (private) nvim.diffhl.Hunk
 ---@field old_lang string?
 ---@field new_lang string?
@@ -72,7 +86,7 @@ local function parse(buf)
     -- skipped without ending the hunk.
     if hunk then
       local c = line:sub(1, 1)
-      if c == ' ' or c == '+' or c == '-' then
+      if is_body_marker(c) then
         hunk.lines[#hunk.lines + 1] = line
       elseif line == '' then
         hunk.lines[#hunk.lines + 1] = ' '
@@ -139,12 +153,12 @@ local function build_sides(hunk)
     local c = line:sub(1, 1)
     local content = line:sub(2)
     local row = hunk.start + j - 1
-    if c == '+' then
+    if is_new_marker(c) then
       local i = #new.lines
       new.rows[i] = row
       new.paint[i] = true
       new.lines[i + 1] = content
-    elseif c == '-' then
+    elseif is_old_marker(c) then
       local i = #old.lines
       old.rows[i] = row
       old.paint[i] = true
@@ -312,9 +326,9 @@ api.nvim_set_decoration_provider(ns, {
           -- diff and >1 for a combined/merge diff.
           local prefix = hunk.lines[j]:sub(1, hunk.cols)
           local bg, marker ---@type string?, string?
-          if prefix:find('+', 1, true) then
+          if prefix:find('+', 1, true) or prefix:find('>', 1, true) then
             bg, marker = 'DiffAdd', 'Added'
-          elseif prefix:find('-', 1, true) then
+          elseif prefix:find('-', 1, true) or prefix:find('<', 1, true) then
             bg, marker = 'DiffDelete', 'Removed'
           end
           if bg then
