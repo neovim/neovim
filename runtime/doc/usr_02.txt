@@ -38,19 +38,19 @@ blank window.  This is what your screen will look like:
 >
 	+---------------------------------------+
 	|#					|
-	|~					|
-	|~					|
-	|~					|
+	|·					|
+	|·					|
+	|·					|
 	|~					|
 	|"file.txt" [New]			|
 	+---------------------------------------+
 		('#' is the cursor position.)
 <
-The tilde (~) lines indicate lines not in the file.  In other words, when Vim
-runs out of file to display, it displays tilde lines.  At the bottom of the
-screen, a message line indicates the file is named file.txt and shows that you
-are creating a new file.  The message information is temporary and other
-information overwrites it.
+The middle dot (·) lines indicate lines not in the file.  In other words, when
+Vim runs out of file to display, it displays middle dot lines.  At the bottom
+of the screen, a message line indicates the file is named file.txt and shows
+that you are creating a new file.  The message information is temporary and
+other information overwrites it.
 
 ==============================================================================
 *02.2*	Inserting text

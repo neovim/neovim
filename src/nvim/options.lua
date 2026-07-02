@@ -3234,7 +3234,7 @@ local options = {
         				repeated in a narrow 'foldcolumn'
           diff		'-'		deleted lines of the 'diff' option
           msgsep	' '		message separator 'display'
-          eob		'~'		empty lines at the end of a buffer
+          eob		'·'		empty lines at the end of a buffer
           lastline	'@'		'display' contains lastline/truncate
           trunc		'>'		truncated text in the
         				|ins-completion-menu|.

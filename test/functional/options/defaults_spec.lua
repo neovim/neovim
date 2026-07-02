@@ -129,6 +129,7 @@ describe('startup defaults', function()
   describe("'fillchars'", function()
     it('vert/fold flags', function()
       clear()
+      command('set fillchars&')
       local screen = Screen.new(50, 5)
       command('set laststatus=0')
       insert([[
@@ -142,7 +143,7 @@ describe('startup defaults', function()
         1                        │1                       |
         {13:^+--  2 lines: 2··········}│{13:+--  2 lines: 2·········}|
         4                        │4                       |
-        {1:~                        }│{1:~                       }|
+        {1:·                        }│{1:·                       }|
                                                           |
       ]])
 
@@ -182,7 +183,7 @@ describe('startup defaults', function()
         1                        |1                       |
         {13:^+--  2 lines: 2··········}|{13:+--  2 lines: 2·········}|
         4                        |4                       |
-        {1:~                        }|{1:~                       }|
+        {1:·                        }|{1:·                       }|
                                                           |
       ]])
     end)
