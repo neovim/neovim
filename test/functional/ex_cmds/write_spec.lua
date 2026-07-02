@@ -17,8 +17,20 @@ local fname_bak = fname .. '~'
 local fname_broken = fname_bak .. 'broken'
 
 describe(':write', function()
+  local attacker_job
+
+  local function stop_attacker()
+    if not attacker_job then
+      return
+    end
+    fn.jobstop(attacker_job)
+    fn.jobwait({ attacker_job }, 1000)
+    attacker_job = nil
+  end
+
   local function cleanup()
     n.rmdir('Xtest_write')
+    fn.delete('Xtest_bkc_race', 'rf')
     os.remove('Xtest_bkc_file.txt')
     os.remove('Xtest_bkc_link.txt')
     os.remove('Xtest_fifo')
@@ -28,9 +40,11 @@ describe(':write', function()
   end
   before_each(function()
     clear()
+    stop_attacker()
     cleanup()
   end)
   after_each(function()
+    stop_attacker()
     cleanup()
   end)
 
@@ -72,6 +86,60 @@ describe(':write', function()
     ]])
     eq(eval("['content0']"), eval("readfile('Xtest_bkc_file.txt')"))
     eq(eval("['content1']"), eval("readfile('Xtest_bkc_link.txt')"))
+  end)
+
+  it('does not clobber another file when racing the backup path', function()
+    if is_os('win') or eval("executable('sh')") == 0 or eval("executable('ln')") == 0 then
+      pending('missing symlink test prerequisites')
+    end
+
+    local dir = 'Xtest_bkc_race'
+    local dir_abs = fn.fnamemodify(dir, ':p')
+    local target_file = dir_abs .. '/file.txt'
+    local victim_file = dir_abs .. '/victim.txt'
+    local backup_file = dir_abs .. '/file.txt~'
+    local writer_lua = dir_abs .. '/writer.lua'
+
+    fn.mkdir(dir, 'p')
+    write_file(target_file, 'SOURCE-CONTENT\n')
+    write_file(victim_file, 'VICTIM-UNCHANGED\n')
+    eq(1, fn.setfperm(victim_file, 'rw-------'))
+
+    write_file(
+      writer_lua,
+      string.format(
+        table.concat({
+          "vim.o.backupskip = ''",
+          'vim.o.writebackup = true',
+          'vim.o.backup = false',
+          "vim.o.backupdir = '.'",
+          "vim.o.backupcopy = 'yes'",
+          "vim.cmd('edit ' .. vim.fn.fnameescape(%q))",
+          'for i = 1, 5000 do',
+          "  vim.api.nvim_buf_set_lines(0, 0, 1, false, { ('changed-%%d'):format(i) })",
+          "  pcall(vim.cmd, 'write')",
+          'end',
+          "vim.cmd('qa!')",
+          '',
+        }, '\n'),
+        target_file
+      )
+    )
+
+    attacker_job = fn.jobstart({
+      'sh',
+      '-c',
+      'while :; do rm -f "$1"; ln -s "$2" "$1" 2>/dev/null || true; done',
+      'sh',
+      backup_file,
+      victim_file,
+    })
+
+    fn.system({ n.nvim_prog, '--headless', '-u', 'NONE', '--clean', '-l', writer_lua })
+
+    eq(true, read_file(target_file):match('^changed%-%d+\n$') ~= nil)
+    eq('VICTIM-UNCHANGED\n', read_file(victim_file))
+    eq('rw-------', fn.getfperm(victim_file))
   end)
 
   it('appends FIFO file', function()
