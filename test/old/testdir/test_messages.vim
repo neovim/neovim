@@ -448,7 +448,7 @@ func Test_mode_cleared_after_silent_message()
   let buf = RunVimInTerminal('-S XsilentMessageMode', {'rows': 10})
 
   call term_sendkeys(buf, 'v')
-  call TermWait(buf)
+  call WaitForAssert({-> assert_match('VISUAL.*\d\+\s\+\d', term_getline(buf, 10))}, 1000)
   call VerifyScreenDump(buf, 'Test_mode_cleared_after_silent_message_1', {})
 
   call term_sendkeys(buf, 'd')
@@ -467,6 +467,8 @@ func Test_echo_verbose_system()
   CheckNotMac  " the macos TMPDIR is too long for snapshot testing
 
   let buf = RunVimInTerminal('', {'rows': 10})
+  " give it some time to handle DECRQM response
+  call TermWait(buf, 50)
   call term_sendkeys(buf, ":4 verbose echo system('seq 20')\<CR>")
   " Note that the screendump is filtered to remove the name of the temp file
   call VerifyScreenDump(buf, 'Test_verbose_system_1', {})

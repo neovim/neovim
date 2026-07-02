@@ -412,16 +412,23 @@ func Test_search_stat_and_incsearch()
   call writefile(lines, 'Xsearchstat_inc', 'D')
 
   let buf = RunVimInTerminal('-S Xsearchstat_inc', #{rows: 10})
+  call TermWait(buf, 100)
   call term_sendkeys(buf, "/abc")
   call TermWait(buf)
+  " The first 3 chars on line 2 should have highlighting, but the following not
+  " So assert the attr value of those 4 chars
+  call WaitForAssert({-> assert_true(
+    \ term_scrape(buf, 2)[0].attr == term_scrape(buf, 2)[1].attr &&
+    \ term_scrape(buf, 2)[1].attr == term_scrape(buf, 2)[2].attr &&
+    \ term_scrape(buf, 2)[2].attr != term_scrape(buf, 2)[3].attr)}, 1000)
   call VerifyScreenDump(buf, 'Test_searchstat_inc_1', {})
 
   call term_sendkeys(buf, "\<c-g>")
-  call TermWait(buf)
+  call WaitForAssert({-> assert_match('^3', term_getline(buf, 1))}, 1000)
   call VerifyScreenDump(buf, 'Test_searchstat_inc_2', {})
 
   call term_sendkeys(buf, "\<c-g>")
-  call TermWait(buf)
+  call WaitForAssert({-> assert_match('^1', term_getline(buf, 1))}, 1000)
   call VerifyScreenDump(buf, 'Test_searchstat_inc_3', {})
 
   call term_sendkeys(buf, "\<esc>:qa\<cr>")
