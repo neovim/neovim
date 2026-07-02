@@ -410,6 +410,67 @@ function vim.schedule_wrap(fn)
   end
 end
 
+-- TODO: This registry could leak if <Cmd> never fires (e.g., <C-c> clears typeahead).
+local _dispatch_pending = {} ---@type table<integer, fun()>
+local _dispatch_next_id = 1
+
+--- @nodoc
+--- Trampoline invoked from the queued `<Cmd>` keystroke. Not for direct use.
+function vim._core._dispatch_fire(id)
+  local fn = _dispatch_pending[id]
+  _dispatch_pending[id] = nil
+  if fn then
+    fn()
+  end
+end
+
+--- Run {fn} via the input-dispatch loop (typeahead) instead of the event queue.
+---
+--- Compare |vim.schedule()|: that runs from the event-loop pump, including while
+--- |vim.wait()| is blocking, and runs OUTSIDE mode dispatch. By contrast,
+--- `vim.schedule_dispatch` queues a synthetic `<Cmd>` keystroke that fires {fn} from
+--- inside `state_enter`'s mode dispatch — as if the user typed it. Use this when
+--- {fn} runs ex commands that print messages (so "Press ENTER" works), prompts
+--- (e.g. `:confirm`), or transitions modes (`startinsert`, terminal mode entry).
+---
+--- The keystroke is inserted at the FRONT of the typeahead, so {fn} runs before
+--- any pending user keys.
+---
+--- Constraints:
+--- - Cannot be called during an |api-fast| event (the underlying `feedkeys` is
+---   not fast-context-safe). Wrap in |vim.schedule()| if needed.
+--- - Will not fire while a `vim.wait()` is blocking; control must return to mode
+---   dispatch first. Use |vim.schedule()| for that case.
+---
+--- Example: re-running an ex command from a |vim.ui.select()| `on_choice` callback,
+--- where the recursive ex command may trigger "Press ENTER":
+---
+--- ```lua
+--- vim.ui.select(items, opts, function(_, idx)
+---   if idx then
+---     vim.schedule_dispatch(function()
+---       vim.cmd(('%dtag %s'):format(idx, name))
+---     end)
+---   end
+--- end)
+--- ```
+---
+--- @see |vim.schedule()|
+--- @see |event-queues|
+---
+--- @param fn fun()
+function vim.schedule_dispatch(fn)
+  vim.validate('fn', fn, 'function')
+  local id = _dispatch_next_id
+  _dispatch_next_id = _dispatch_next_id + 1
+  _dispatch_pending[id] = fn
+  vim.api.nvim_feedkeys(
+    vim.keycode(('<Cmd>lua vim._core._dispatch_fire(%d)<CR>'):format(id)),
+    'in',
+    false
+  )
+end
+
 -- vim.fn.{func}(...)
 ---@nodoc
 vim.fn = setmetatable({}, {
