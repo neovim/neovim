@@ -127,6 +127,33 @@ describe('vim.lsp.diagnostic', function()
       end)
     end)
 
+    it('allows configuring virtual text via vim.func.on_fun()', function()
+      local expected_spacing = 10
+      local extmarks = exec_lua([[
+        local spacing = ...
+        vim.func.on_fun(vim.lsp.diagnostic, 'on_publish_diagnostics', function(fn, args)
+          args[4] = args[4] or {}
+          args[4].virtual_text = { spacing = spacing }
+          return fn(unpack(args))
+        end)
+
+        vim.lsp.diagnostic.on_publish_diagnostics(nil, {
+            uri = fake_uri,
+            diagnostics = {
+              make_error('Delayed Diagnostic', 4, 4, 4, 4),
+            }
+          }, {client_id=client_id}
+        )
+
+        return get_extmarks(diagnostic_bufnr, client_id)
+      ]], expected_spacing)
+
+      local virt_text = extmarks[1][4].virt_text
+      local spacing = virt_text[1][1]
+
+      eq(expected_spacing, #spacing)
+    end)
+
     it('correctly handles UTF-16 offsets', function()
       local line = 'All 💼 and no 🎉 makes Jack a dull 👦'
       local result = exec_lua(function()
