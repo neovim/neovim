@@ -189,93 +189,95 @@ enc_canon_table[] = {
   { "ucs-2le",         ENC_UNICODE + ENC_ENDIAN_L + ENC_2BYTE, 0 },
 #define IDX_UTF16       19
   { "utf-16",          ENC_UNICODE + ENC_ENDIAN_B + ENC_2WORD, 0 },
-#define IDX_UTF16LE     20
+#define IDX_UTF16BE     20
+  { "utf-16be",        ENC_UNICODE + ENC_ENDIAN_B + ENC_2WORD, 0 },
+#define IDX_UTF16LE     21
   { "utf-16le",        ENC_UNICODE + ENC_ENDIAN_L + ENC_2WORD, 0 },
-#define IDX_UCS4        21
+#define IDX_UCS4        22
   { "ucs-4",           ENC_UNICODE + ENC_ENDIAN_B + ENC_4BYTE, 0 },
-#define IDX_UCS4LE      22
+#define IDX_UCS4LE      23
   { "ucs-4le",         ENC_UNICODE + ENC_ENDIAN_L + ENC_4BYTE, 0 },
 
   // For debugging DBCS encoding on Unix.
-#define IDX_DEBUG       23
+#define IDX_DEBUG       24
   { "debug",           ENC_DBCS,               DBCS_DEBUG },
-#define IDX_EUC_JP      24
+#define IDX_EUC_JP      25
   { "euc-jp",          ENC_DBCS,               DBCS_JPNU },
-#define IDX_SJIS        25
+#define IDX_SJIS        26
   { "sjis",            ENC_DBCS,               DBCS_JPN },
-#define IDX_EUC_KR      26
+#define IDX_EUC_KR      27
   { "euc-kr",          ENC_DBCS,               DBCS_KORU },
-#define IDX_EUC_CN      27
+#define IDX_EUC_CN      28
   { "euc-cn",          ENC_DBCS,               DBCS_CHSU },
-#define IDX_EUC_TW      28
+#define IDX_EUC_TW      29
   { "euc-tw",          ENC_DBCS,               DBCS_CHTU },
-#define IDX_BIG5        29
+#define IDX_BIG5        30
   { "big5",            ENC_DBCS,               DBCS_CHT },
 
   // MS-DOS and MS-Windows codepages are included here, so that they can be
   // used on Unix too.  Most of them are similar to ISO-8859 encodings, but
   // not exactly the same.
-#define IDX_CP437       30
+#define IDX_CP437       31
   { "cp437",           ENC_8BIT,               437 },   // like iso-8859-1
-#define IDX_CP737       31
+#define IDX_CP737       32
   { "cp737",           ENC_8BIT,               737 },   // like iso-8859-7
-#define IDX_CP775       32
+#define IDX_CP775       33
   { "cp775",           ENC_8BIT,               775 },   // Baltic
-#define IDX_CP850       33
+#define IDX_CP850       34
   { "cp850",           ENC_8BIT,               850 },   // like iso-8859-4
-#define IDX_CP852       34
+#define IDX_CP852       35
   { "cp852",           ENC_8BIT,               852 },   // like iso-8859-1
-#define IDX_CP855       35
+#define IDX_CP855       36
   { "cp855",           ENC_8BIT,               855 },   // like iso-8859-2
-#define IDX_CP857       36
+#define IDX_CP857       37
   { "cp857",           ENC_8BIT,               857 },   // like iso-8859-5
-#define IDX_CP860       37
+#define IDX_CP860       38
   { "cp860",           ENC_8BIT,               860 },   // like iso-8859-9
-#define IDX_CP861       38
+#define IDX_CP861       39
   { "cp861",           ENC_8BIT,               861 },   // like iso-8859-1
-#define IDX_CP862       39
+#define IDX_CP862       40
   { "cp862",           ENC_8BIT,               862 },   // like iso-8859-1
-#define IDX_CP863       40
+#define IDX_CP863       41
   { "cp863",           ENC_8BIT,               863 },   // like iso-8859-8
-#define IDX_CP865       41
+#define IDX_CP865       42
   { "cp865",           ENC_8BIT,               865 },   // like iso-8859-1
-#define IDX_CP866       42
+#define IDX_CP866       43
   { "cp866",           ENC_8BIT,               866 },   // like iso-8859-5
-#define IDX_CP869       43
+#define IDX_CP869       44
   { "cp869",           ENC_8BIT,               869 },   // like iso-8859-7
-#define IDX_CP874       44
+#define IDX_CP874       45
   { "cp874",           ENC_8BIT,               874 },   // Thai
-#define IDX_CP932       45
+#define IDX_CP932       46
   { "cp932",           ENC_DBCS,               DBCS_JPN },
-#define IDX_CP936       46
+#define IDX_CP936       47
   { "cp936",           ENC_DBCS,               DBCS_CHS },
-#define IDX_CP949       47
+#define IDX_CP949       48
   { "cp949",           ENC_DBCS,               DBCS_KOR },
-#define IDX_CP950       48
+#define IDX_CP950       49
   { "cp950",           ENC_DBCS,               DBCS_CHT },
-#define IDX_CP1250      49
+#define IDX_CP1250      50
   { "cp1250",          ENC_8BIT,               1250 },   // Czech, Polish, etc.
-#define IDX_CP1251      50
+#define IDX_CP1251      51
   { "cp1251",          ENC_8BIT,               1251 },   // Cyrillic
   // cp1252 is considered to be equal to latin1
-#define IDX_CP1253      51
+#define IDX_CP1253      52
   { "cp1253",          ENC_8BIT,               1253 },   // Greek
-#define IDX_CP1254      52
+#define IDX_CP1254      53
   { "cp1254",          ENC_8BIT,               1254 },   // Turkish
-#define IDX_CP1255      53
+#define IDX_CP1255      54
   { "cp1255",          ENC_8BIT,               1255 },   // Hebrew
-#define IDX_CP1256      54
+#define IDX_CP1256      55
   { "cp1256",          ENC_8BIT,               1256 },   // Arabic
-#define IDX_CP1257      55
+#define IDX_CP1257      56
   { "cp1257",          ENC_8BIT,               1257 },   // Baltic
-#define IDX_CP1258      56
+#define IDX_CP1258      57
   { "cp1258",          ENC_8BIT,               1258 },   // Vietnamese
 
-#define IDX_MACROMAN    57
+#define IDX_MACROMAN    58
   { "macroman",        ENC_8BIT + ENC_MACROMAN, 0 },      // Mac OS
-#define IDX_HPROMAN8    58
+#define IDX_HPROMAN8    59
   { "hp-roman8",       ENC_8BIT,               0 },       // HP Roman8
-#define IDX_COUNT       59
+#define IDX_COUNT       60
 };
 
 // Aliases for encoding names.
@@ -306,8 +308,8 @@ enc_alias_table[] = {
   { "ucs-2be",         IDX_UCS2 },
   { "ucs2le",          IDX_UCS2LE },
   { "utf16",           IDX_UTF16 },
-  { "utf16be",         IDX_UTF16 },
-  { "utf-16be",        IDX_UTF16 },
+  { "utf16be",         IDX_UTF16BE },
+  { "utf-16be",        IDX_UTF16BE },
   { "utf16le",         IDX_UTF16LE },
   { "ucs4",            IDX_UCS4 },
   { "ucs4be",          IDX_UCS4 },
