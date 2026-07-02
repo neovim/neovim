@@ -536,6 +536,15 @@ static int expand_set_opt_listflag(optexpand_T *args, char *flags, int *numMatch
   return OK;
 }
 
+static bool completing_value_for_subopt(optexpand_T *args, const char *name_suffix)
+{
+  const char *colon = args->oe_xp->xp_pattern - 1;
+  const size_t len = strlen(name_suffix);
+
+  return colon - args->oe_set_arg >= (int)len
+         && strncmp(colon - len, name_suffix, len) == 0;
+}
+
 /// The 'ambiwidth' option is changed.
 const char *did_set_ambiwidth(optset_T *args)
 {
@@ -1068,20 +1077,14 @@ int expand_set_diffopt(optexpand_T *args, int *numMatches, char ***matches)
   expand_T *xp = args->oe_xp;
 
   if (xp->xp_pattern > args->oe_set_arg && *(xp->xp_pattern - 1) == ':') {
-    // Within "algorithm:", we have a subgroup of possible options.
-    const size_t algo_len = strlen("algorithm:");
-    if (xp->xp_pattern - args->oe_set_arg >= (int)algo_len
-        && strncmp(xp->xp_pattern - algo_len, "algorithm:", algo_len) == 0) {
+    if (completing_value_for_subopt(args, "algorithm")) {
       return expand_set_opt_string(args,
                                    opt_dip_algorithm_values,
                                    ARRAY_SIZE(opt_dip_algorithm_values) - 1,
                                    numMatches,
                                    matches);
     }
-    // Within "inline:", we have a subgroup of possible options.
-    const size_t inline_len = strlen("inline:");
-    if (xp->xp_pattern - args->oe_set_arg >= (int)inline_len
-        && strncmp(xp->xp_pattern - inline_len, "inline:", inline_len) == 0) {
+    if (completing_value_for_subopt(args, "inline")) {
       return expand_set_opt_string(args,
                                    opt_dip_inline_values,
                                    ARRAY_SIZE(opt_dip_inline_values) - 1,
