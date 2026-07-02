@@ -260,4 +260,51 @@ describe('URI methods', function()
       eq('[%3a]', exec_lua('return vim.uri_encode(str, rfc)'))
     end)
   end)
+
+  describe('vim.uri.parse_nvim', function()
+    local function parse(uri)
+      return exec_lua([[return vim.uri.parse_nvim(...) ]], uri)
+    end
+
+    local function parse_err(uri)
+      return exec_lua([[
+        local _, err = vim.uri.parse_nvim(...)
+        return err
+      ]], uri)
+    end
+
+    it('parses nvim:// URI', function()
+      eq({ cmd = 'edit', file = '/path/to/file.txt' }, parse('nvim://edit?file=/path/to/file.txt'))
+      eq(
+        { cmd = 'tabedit', file = '/path/to/file.txt', line = 42 },
+        parse('nvim://tabedit?file=/path/to/file.txt&line=42')
+      )
+      eq({ cmd = 'split', file = '/path/to/file.txt' }, parse('nvim://split?file=/path/to/file.txt'))
+      eq({ cmd = 'vsplit', file = '/path/to/file.txt' }, parse('nvim://vsplit?file=/path/to/file.txt'))
+      eq(
+        { cmd = 'edit', file = '/path/to/file.txt', line = 42, column = 10 },
+        parse('nvim://edit?file=/path/to/file.txt&line=42&column=10')
+      )
+      eq(
+        { cmd = 'tabedit', file = '/path/to/file.txt', server = '/tmp/nvim.sock' },
+        parse('nvim://tabedit?file=/path/to/file.txt&server=/tmp/nvim.sock')
+      )
+      eq(
+        { cmd = 'edit', file = './relative/path.txt', line = 10 },
+        parse('nvim://edit?file=./relative/path.txt&line=10')
+      )
+      eq({ cmd = 'edit', file = '/path/to/my file.txt' }, parse('nvim://edit?file=/path/to/my%20file.txt'))
+      eq({ cmd = 'open', file = '/path/to/file.txt' }, parse('nvim://open?file=/path/to/file.txt'))
+    end)
+
+    it('validation', function()
+      eq('URI scheme must be "nvim"', parse_err('http://example.com'))
+      eq('Missing required "file" parameter', parse_err('nvim://edit?line=42'))
+      eq(
+        'Unsupported command: foo. Expected one of: drop, edit, open, split, tabedit, tabnew, vsplit',
+        parse_err('nvim://foo?file=/path/to/file.txt')
+      )
+      eq('Unsupported nvim:// URI format. Expected: nvim://{cmd}?file=...', parse_err('nvim://edit'))
+    end)
+  end)
 end)

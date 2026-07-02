@@ -34,6 +34,51 @@ filename        One or more file names.  The first one will be the current
 <                All arguments after "--" are interpreted as file names, no
                 other options or "+command" arguments can follow.
 
+                                                        *nvim://* *nvim-uri*
+nvim://{cmd}    Opens a file via the `nvim://` URI scheme.  Intended for
+                "Open in Editor" integration with browsers, file managers,
+                and other tools.
+
+                Format: `nvim://{cmd}?file={path}[&line={n}][&col={n}][&server={addr}]`
+
+                For external integrations, prefer `nvim://open?...` so users
+                can customize how files open in Nvim.
+
+                {cmd} is the Vim command to use:
+                  `edit`     - open in current window
+                  `tabedit`  - open in new tab
+                  `tabnew`   - open in new tab
+                  `split`    - open in horizontal split
+                  `vsplit`   - open in vertical split
+                  `drop`     - reuse existing window or open new
+                  `open`     - use |vim.ui.edit()| (default: `edit`)
+
+                Nvim auto-discovers existing instances via socket files in
+                `$XDG_RUNTIME_DIR` and opens the file there.  If no instance
+                is found, the file opens locally.
+
+                Use `&server={addr}` to target a specific instance.
+
+                To customize how `nvim://open?...` behaves, override
+                |vim.ui.edit()|. Example: >lua
+                        local default_edit = vim.ui.edit
+                        vim.ui.edit = function(path, opts)
+                          opts = opts or {}
+                          if opts.cmd == 'open' then
+                            opts.cmd = 'tabedit'
+                          end
+                          return default_edit(path, opts)
+                        end
+<
+
+                Examples: >
+                        nvim "nvim://open?file=/path/to/file.txt&line=10"
+                        nvim "nvim://edit?file=/tmp/foo.lua&line=5&column=12"
+<
+                To register Nvim as a handler for `nvim://` URIs, use the
+                provided `nvim.desktop` file or run: >
+                        xdg-mime default nvim.desktop x-scheme-handler/nvim
+<
                                                         *--*
 `-`               Alias for stdin (standard input).
                 Example: >

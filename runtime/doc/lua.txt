@@ -5534,6 +5534,32 @@ vim.ui.open({path}, {opt})                                     *vim.ui.open()*
     See also: ~
       • |vim.system()|
 
+vim.ui.edit({path}, {opt})                                     *vim.ui.edit()*
+    Opens `path` in the current Nvim instance.
+
+    Plugins may override `vim.ui.edit` to customize how paths are opened. The
+    default implementation maps `cmd = 'open'` to `:edit`.
+
+    Example: make `nvim://open?...` use `:tabedit`: >lua
+        local default_edit = vim.ui.edit
+        vim.ui.edit = function(path, opts)
+          opts = opts or {}
+          if opts.cmd == 'open' then
+            opts.cmd = 'tabedit'
+          end
+          return default_edit(path, opts)
+        end
+<
+
+    Parameters: ~
+      • {path}  (`string`) Path to edit
+      • {opt}   (`table?`) Options
+                • {cmd}? (`vim.uri.NvimCmd`) Vim command used to edit the path.
+                • {line}? (`integer`) 1-indexed line number to jump to after
+                  opening.
+                • {column}? (`integer`) 1-indexed column number to jump to
+                  after opening.
+
 vim.ui.progress_status()                            *vim.ui.progress_status()*
     Gets a status description summarizing currently running progress messages.
     Convenient for inclusion in 'statusline'.
@@ -5686,6 +5712,34 @@ vim.ui.img.set({data_or_id}, {opts})                        *vim.ui.img.set()*
 
 ==============================================================================
 Lua module: vim.uri                                                  *vim.uri*
+
+*vim.uri.NvimUri*
+
+    Fields: ~
+      • {cmd}      (`vim.uri.NvimCmd`) Vim command to use
+      • {file}     (`string`) File path
+      • {line}?    (`integer`) Line number
+      • {column}?  (`integer`) Column number
+      • {server}?  (`string`) Server address to connect to
+
+vim.uri_parse_nvim({uri})                               *vim.uri.parse_nvim()*
+    Parses a nvim:// URI into its components.
+
+    For external integrations, prefer `nvim://open?...` so users can
+    customize how files open via |vim.ui.edit()|.
+
+    Format:
+    `nvim://{cmd}?file={path}[&line={n}] [&column={n}] [&server={addr}]`
+    `{cmd}` must be one of: `drop`, `edit`, `open`, `split`, `tabedit`,
+    `tabnew`, `vsplit`.
+
+    Parameters: ~
+      • {uri}  (`string`) The nvim:// URI to parse
+
+    Return (multiple): ~
+        (`vim.uri.NvimUri?`) The parsed URI components, or nil if
+        invalid. See |vim.uri.NvimUri|.
+        (`string?`) Error message on failure, or nil on success.
 
 vim.uri_decode({str})                                       *vim.uri_decode()*
     URI-decodes a string containing percent escapes.
