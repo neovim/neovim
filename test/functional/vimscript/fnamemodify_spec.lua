@@ -54,6 +54,8 @@ describe('fnamemodify()', function()
       eq(old_dir, fnamemodify(letter_colon .. '../', ':p'))
       eq(foo_dir .. 'bar', fnamemodify(letter_colon .. 'bar', ':p'))
     end
+    eq('/localhost/foo/bar', fnamemodify('///localhost/foo/bar', ':p'))
+    eq('//localhost/foo/bar', fnamemodify('//localhost/foo/bar', ':p'))
   end)
 
   it(':8 works', function()
@@ -164,23 +166,88 @@ describe('fnamemodify()', function()
   end)
 
   it('handles :t', function()
-    eq('hello.txt', fnamemodify('hello.txt', ':t'))
-    eq_slashconvert('hello.txt', fnamemodify('path/to/hello.txt', ':t'))
+    eq('bar.txt', fnamemodify('bar.txt', ':t'))
+    eq('bar.txt', fnamemodify('path/to/bar.txt', ':t'))
+    eq('bar', fnamemodify('foo///bar', ':t'))
+    eq('bar', fnamemodify('/bar', ':t'))
+    eq('bar', fnamemodify('///bar', ':t'))
+    if not is_os('win') then
+      eq('bar', fnamemodify('//bar', ':t'))
+    else
+      eq('', fnamemodify('//localhost', ':t'))
+      eq('', fnamemodify('//localhost/C$', ':t'))
+      eq('bar', fnamemodify('//localhost/C$/bar', ':t'))
+      eq('', fnamemodify('//?/UNC/localhost', ':t'))
+      eq('', fnamemodify('//?/UNC/localhost/C$', ':t'))
+      eq('bar', fnamemodify('//?/UNC/localhost/C$/bar', ':t'))
+
+      eq('', fnamemodify('//?/', ':t'))
+      eq('', fnamemodify('//?/C:', ':t'))
+      eq('bar', fnamemodify('//?/C:/bar', ':t'))
+      eq('', fnamemodify('//?/Volume{b75e2c83-0000-0000-0000-602f00000000}', ':t'))
+      eq('bar', fnamemodify('//?/Volume{b75e2c83-0000-0000-0000-602f00000000}/bar', ':t'))
+    end
   end)
 
   it('handles :r', function()
-    eq('hello', fnamemodify('hello.txt', ':r'))
-    eq_slashconvert('path/to/hello', fnamemodify('path/to/hello.txt', ':r'))
+    eq('bar', fnamemodify('bar.txt', ':r'))
+    eq('path/to/bar', fnamemodify('path/to/bar.txt', ':r'))
+    eq('foo///bar', fnamemodify('foo///bar.txt', ':r'))
+    eq('/bar', fnamemodify('/bar.txt', ':r'))
+    eq('/bar', fnamemodify('///bar.txt', ':r'))
+    if not is_os('win') then
+      eq('//bar', fnamemodify('//bar.txt', ':r'))
+    else
+      eq('//127.0.0.1', fnamemodify('//127.0.0.1', ':r'))
+      eq('//127.0.0.1/C$', fnamemodify('//127.0.0.1/C$', ':r'))
+      eq('//127.0.0.1/C$/bar', fnamemodify('//127.0.0.1/C$/bar.txt', ':r'))
+      eq('//?/UNC/127.0.0.1', fnamemodify('//?/UNC/127.0.0.1', ':r'))
+      eq('//?/UNC/127.0.0.1/C$', fnamemodify('//?/UNC/127.0.0.1/C$', ':r'))
+      eq('//?/UNC/127.0.0.1/C$/bar', fnamemodify('//?/UNC/127.0.0.1/C$/bar.txt', ':r'))
+
+      eq('//?/', fnamemodify('//?/', ':r'))
+      eq('//?/C:', fnamemodify('//?/C:', ':r'))
+      eq('//?/C:/bar', fnamemodify('//?/C:/bar.txt', ':r'))
+      eq(
+        '//?/Volume{b75e2c83-0000-0000-0000-602f00000000}',
+        fnamemodify('//?/Volume{b75e2c83-0000-0000-0000-602f00000000}', ':r')
+      )
+      eq(
+        '//?/Volume{b75e2c83-0000-0000-0000-602f00000000}/bar',
+        fnamemodify('//?/Volume{b75e2c83-0000-0000-0000-602f00000000}/bar.txt', ':r')
+      )
+    end
   end)
 
   it('handles :e', function()
     eq('txt', fnamemodify('hello.txt', ':e'))
-    eq_slashconvert('txt', fnamemodify('path/to/hello.txt', ':e'))
+    eq('txt', fnamemodify('path/to/hello.txt', ':e'))
+    eq('txt', fnamemodify('foo///bar.txt', ':e'))
+    eq('txt', fnamemodify('/bar.txt', ':e'))
+    eq('txt', fnamemodify('///bar.txt', ':e'))
+    if not is_os('win') then
+      eq('txt', fnamemodify('//bar.txt', ':e'))
+    else
+      eq('', fnamemodify('//127.0.0.1', ':e'))
+      eq('', fnamemodify('//127.0.0.1/C$', ':e'))
+      eq('txt', fnamemodify('//127.0.0.1/C$/bar.txt', ':e'))
+      eq('', fnamemodify('//?/UNC/127.0.0.1', ':e'))
+      eq('', fnamemodify('//?/UNC/127.0.0.1/C$', ':e'))
+      eq('txt', fnamemodify('//?/UNC/127.0.0.1/C$/bar.txt', ':e'))
+
+      eq('', fnamemodify('//?/', ':e'))
+      eq('', fnamemodify('//?/C:', ':e'))
+      eq('txt', fnamemodify('//?/C:/bar.txt', ':e'))
+      eq('', fnamemodify('//?/Volume{b75e2c83-0000-0000-0000-602f00000000}', ':e'))
+      eq('txt', fnamemodify('//?/Volume{b75e2c83-0000-0000-0000-602f00000000}/bar.txt', ':e'))
+    end
   end)
 
   it('handles regex replacements', function()
     eq('content-there-here.txt', fnamemodify('content-here-here.txt', ':s/here/there/'))
     eq('content-there-there.txt', fnamemodify('content-here-here.txt', ':gs/here/there/'))
+
+    eq([[\foo\bar]], fnamemodify('///foo/bar', ':gs?/?\\?'))
   end)
 
   it('handles shell escape', function()

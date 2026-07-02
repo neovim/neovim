@@ -210,12 +210,10 @@ repeat:
 
   FileInfo file_info;
   os_fileinfo2(*fnamep, &file_info);
-  if (src[*usedlen] == ':' && src[*usedlen + 1] == 'h') {
-    s = *fnamep + file_info.rest_off;
-    *fnamep = *fnamep + file_info.prefix_off;
-  }
+  s = *fnamep + file_info.rest_off;  // "//?/C:/foo" => "foo"
+  *fnamep = *fnamep + file_info.prefix_off;  // "///foo/bar" => "/foo/bar"
 
-  char *tail = path_tail(*fnamep);
+  char *tail = path_tail(s);
   *fnamelen = strlen(*fnamep);
 
   // ":h" - head, remove "/file_name", can be repeated
@@ -226,7 +224,7 @@ repeat:
     while (tail > s && after_pathsep(s, tail)) {
       MB_PTR_BACK(*fnamep, tail);
     }
-    *fnamelen = tail <= s ? (size_t)(s - *fnamep) : (size_t)(tail - *fnamep);
+    *fnamelen = (size_t)(tail - *fnamep);
     if (*fnamelen == 0) {
       // Result is empty.  Turn it into "." to make ":cd %:h" work.
       xfree(*bufp);
