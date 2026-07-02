@@ -313,16 +313,17 @@ api.nvim_set_decoration_provider(ns, {
           local prefix = hunk.lines[j]:sub(1, hunk.cols)
           local bg, marker ---@type string?, string?
           if prefix:find('+', 1, true) then
-            bg, marker = 'DiffhlAdd', 'Added'
+            bg, marker = 'DiffAdd', 'Added'
           elseif prefix:find('-', 1, true) then
-            bg, marker = 'DiffhlDelete', 'Removed'
+            bg, marker = 'DiffDelete', 'Removed'
           end
           if bg then
             local row = hunk.start + j - 1
             -- Full-width tint, kept just below the tree-sitter priority so the
             -- syntax foreground composes on top of it.
             pcall(api.nvim_buf_set_extmark, buf, ns, row, 0, {
-              end_col = #hunk.lines[j],
+              end_row = row + 1,
+              end_col = 0,
               hl_group = bg,
               hl_eol = true,
               priority = vim.hl.priorities.treesitter - 1,
@@ -378,7 +379,6 @@ function M.attach(buf)
   end
   attached[buf] = true
   api.nvim_buf_attach(buf, false, {
-    -- Re-parse from scratch after the buffer is reloaded.
     on_reload = function()
       state[buf] = nil
     end,
