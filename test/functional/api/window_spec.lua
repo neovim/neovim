@@ -518,7 +518,7 @@ describe('API/win', function()
     it('failure modes', function()
       command('split')
       eq(
-        "Must set at least one of 'height', 'width'",
+        "Required: must set at least one of 'height', 'width'",
         pcall_err(api.nvim_win_resize, 0, -1, -1, {})
       )
       -- anchor not applicable to the dimension(s) being changed

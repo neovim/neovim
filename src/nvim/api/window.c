@@ -568,7 +568,7 @@ void nvim_win_resize(Window win, Integer height, Integer width, Dict(win_resize)
   bool from_top = true;
   bool from_left = true;
 
-  VALIDATE((height > 0 || width > 0), "%s", "Must set at least one of 'height', 'width'", {
+  VALIDATE_R((height > 0 || width > 0), "must set at least one of 'height', 'width'", {
     return;
   });
 
@@ -596,9 +596,9 @@ void nvim_win_resize(Window win, Integer height, Integer width, Dict(win_resize)
                  opts->anchor.data, { return; });
   }
   if (height > 0) {
-    TRY_WRAP(err, win_setheight_win((int)height, w, from_top));
+    win_setheight_win((int)height, w, from_top);
   }
-  if (!ERROR_SET(err) && width > 0) {
-    TRY_WRAP(err, win_setwidth_win((int)width, w, from_left));
+  if (width > 0) {
+    win_setwidth_win((int)width, w, from_left);
   }
 }
