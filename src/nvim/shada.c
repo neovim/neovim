@@ -1134,10 +1134,25 @@ static void shada_read(FileDescriptor *const sd_reader, const int flags)
     }
     case kSDItemBufferList:
       for (size_t i = 0; i < cur_entry.data.buffer_list.size; i++) {
-        char *const sfname =
-          path_try_shorten_fname(cur_entry.data.buffer_list.buffers[i].fname);
-        buf_T *const buf =
-          buflist_new(cur_entry.data.buffer_list.buffers[i].fname, sfname, 0, BLN_LISTED);
+        char *fname = cur_entry.data.buffer_list.buffers[i].fname;
+        char *fname_no_sep = NULL;
+        if (fname != NULL) {
+          size_t fname_len = strlen(fname);
+          if (after_pathsep(fname, fname + fname_len)
+              && fname + fname_len > get_past_head(fname)) {
+            fname_no_sep = xstrdup(fname);
+            char *past_head = get_past_head(fname_no_sep);
+            // Avoid resolving symlinked directories when restoring slash-ended buffer names.
+            while (fname_no_sep + fname_len > past_head
+                   && after_pathsep(fname_no_sep, fname_no_sep + fname_len)) {
+              fname_no_sep[--fname_len] = NUL;
+            }
+            fname = fname_no_sep;
+          }
+        }
+        char *const sfname = path_try_shorten_fname(fname);
+        buf_T *const buf = buflist_new(fname, sfname, 0, BLN_LISTED);
+        xfree(fname_no_sep);
         if (buf != NULL) {
           fmarkv_T view = INIT_FMARKV;
           RESET_FMARK(&buf->b_last_cursor,

@@ -404,6 +404,8 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
     curbuf->b_flags |= BF_READERR;
   }
 
+  // Directory reads return NOTDONE before readfile() reaches BufReadPost.
+  // Run filetype detection before BufEnter so directory buffers get the usual event order.
   if (retval == NOTDONE && *curbuf->b_p_ft == NUL) {
     if (augroup_exists("filetypedetect")) {
       do_doautocmd("filetypedetect BufRead", false, NULL);
@@ -3618,6 +3620,7 @@ void fname_expand(buf_T *buf, char **ffname, char **sfname)
     *sfname = *ffname;
   }
   *ffname = fix_fname((*ffname));     // expand to full path
+  // Restore the trailing path separator for directory buffers.
   if (*ffname != NULL && os_isdir(*ffname)) {
     *ffname = concat_fnames_realloc(*ffname, "", true);
   }
