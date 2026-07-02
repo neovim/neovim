@@ -1752,6 +1752,147 @@ describe('vim.lsp.completion: integration', function()
       end)
     )
   end)
+
+  it('dot-to-arrow with isIncomplete', function()
+    local completion_list = {
+      isIncomplete = true,
+      items = {
+        {
+          detail = 'handle_T',
+          filterText = 'handle',
+          insertText = '->handle',
+          insertTextFormat = 1,
+          kind = 5,
+          label = ' handle',
+          score = 0.43193808197975,
+          sortText = '4122d903handle',
+          textEdit = {
+            newText = '->handle',
+            range = {
+              ['end'] = {
+                character = 3,
+                line = 0,
+              },
+              start = {
+                character = 2,
+                line = 0,
+              },
+            },
+          },
+        },
+        {
+          detail = 'int',
+          filterText = 'w_alt_fnum',
+          insertText = '->w_alt_fnum',
+          insertTextFormat = 1,
+          kind = 5,
+          label = ' w_alt_fnum',
+          score = 0.43193808197975,
+          sortText = '4122d903w_alt_fnum',
+          textEdit = {
+            newText = '->w_alt_fnum',
+            range = {
+              ['end'] = {
+                character = 3,
+                line = 0,
+              },
+              start = {
+                character = 2,
+                line = 0,
+              },
+            },
+          },
+        },
+        {
+          detail = 'pointer',
+          filterText = 'get',
+          insertText = '.get()',
+          insertTextFormat = 2,
+          kind = 2,
+          label = ' get',
+          labelDetails = {
+            detail = '() const',
+          },
+          score = 0.46563199162483,
+          sortText = '411198afget',
+          textEdit = {
+            newText = '.get()',
+            range = {
+              ['end'] = {
+                character = 4,
+                line = 0,
+              },
+              start = {
+                character = 2,
+                line = 0,
+              },
+            },
+          },
+        },
+      },
+    }
+    exec_lua(function()
+      vim.o.completeopt = 'menu,menuone,noinsert'
+    end)
+    create_server('dummy', completion_list)
+
+    feed('iwp.<c-x><c-o>')
+    wait_for_pum()
+
+    feed('w')
+    wait_for_pum()
+
+    -- accept textEdit
+    feed('<C-y>')
+    eq(
+      { 'wp->w_alt_fnum', { 1, 14 } },
+      exec_lua(function()
+        return { vim.api.nvim_get_current_line(), vim.api.nvim_win_get_cursor(0) }
+      end)
+    )
+
+    n.command('set completeopt+=longest') --- #39001
+    feed('<ESC>Swp-><C-x><C-O>')
+    wait_for_pum()
+    feed('<C-N><C-y>')
+    eq('wp.get()', n.api.nvim_get_current_line())
+  end)
+
+  it('accept text.Edit when end_col equals the column at the end of the line.', function()
+    create_server('dummy1', {
+      isIncomplete = false,
+      items = {
+        {
+          detail = 'runtime/lua/vim/treesitter.lua',
+          insertTextFormat = 1,
+          kind = 17,
+          label = 'vim.treesitter',
+          sortText = '0082',
+          textEdit = {
+            newText = 'vim.treesitter',
+            range = {
+              ['end'] = {
+                character = 13,
+                line = 0,
+              },
+              start = {
+                character = 9,
+                line = 0,
+              },
+            },
+          },
+        },
+      },
+    })
+    exec_lua(function()
+      vim.o.completeopt = 'menu,menuone,noinsert'
+    end)
+    n.api.nvim_buf_set_lines(0, 0, -1, false, { 'require("vim.")' })
+    feed('A<left><left><C-x><C-O>')
+    wait_for_pum()
+    feed('<C-Y>')
+    eq('require("vim.treesitter")', exec_lua([[return vim.api.nvim_get_current_line()]]))
+  end)
 end)
 
 describe("vim.lsp.completion: omnifunc + 'autocomplete'", function()
