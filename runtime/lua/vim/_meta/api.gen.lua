@@ -26,6 +26,16 @@ function vim.api.nvim__buf_stats(buf) end
 
 --- WARNING: This feature is experimental/unstable.
 ---
+--- Sets the detach flag for a channel.
+---
+--- Detached channels do not trigger self-exit when they are closed.
+---
+--- @param chan integer Channel id, or 0 for the current channel.
+--- @param detach boolean New detach value for the channel.
+function vim.api.nvim__chan_set_detach(chan, detach) end
+
+--- WARNING: This feature is experimental/unstable.
+---
 --- Records the cmdwin scratchbuf and type, or clears both when type="" / buf=0. Internal use only.
 ---
 --- @param type string ':', '/', '?' (first char only); empty to clear.
