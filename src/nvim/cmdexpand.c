@@ -1484,7 +1484,7 @@ void set_expand_context(expand_T *xp)
     xp->xp_search_dir = (ccline->cmdfirstc == '/') ? FORWARD : BACKWARD;
     xp->xp_pattern = ccline->cmdbuff;
     xp->xp_pattern_len = (size_t)ccline->cmdpos;
-    search_first_line = 0;  // Search entire buffer
+    search_state.search_first_line = 0;  // Search entire buffer
     return;
   }
 
@@ -4317,7 +4317,7 @@ static char *concat_pattern_with_buffer_match(char *pat, int pat_len, pos_T *end
 static int expand_pattern_in_buf(char *pat, Direction dir, char ***matches, int *numMatches)
 {
   bool exacttext = wop_flags & kOptWopFlagExacttext;
-  bool has_range = search_first_line != 0;
+  bool has_range = search_state.search_first_line != 0;
 
   *matches = NULL;
   *numMatches = 0;
@@ -4329,7 +4329,7 @@ static int expand_pattern_in_buf(char *pat, Direction dir, char ***matches, int 
   int pat_len = (int)strlen(pat);
   pos_T cur_match_pos = { 0 }, prev_match_pos = { 0 };
   if (has_range) {
-    cur_match_pos.lnum = search_first_line;
+    cur_match_pos.lnum = search_state.search_first_line;
   } else {
     cur_match_pos = pre_incsearch_pos;
   }
@@ -4359,8 +4359,8 @@ static int expand_pattern_in_buf(char *pat, Direction dir, char ***matches, int 
     }
 
     // If in range mode, check if match is within the range
-    if (has_range && (cur_match_pos.lnum < search_first_line
-                      || cur_match_pos.lnum > search_last_line)) {
+    if (has_range && (cur_match_pos.lnum < search_state.search_first_line
+                      || cur_match_pos.lnum > search_state.search_last_line)) {
       break;
     }
 
