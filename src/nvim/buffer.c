@@ -403,6 +403,18 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
     curbuf->b_flags |= BF_READERR;
   }
 
+  // Directories return NOTDONE from readfile(), but still use filetype detection.
+  if (retval == NOTDONE && curbuf->b_ffname != NULL && *curbuf->b_p_ft == NUL
+      && !bt_nofileread(curbuf) && os_isdir(curbuf->b_ffname)
+      && augroup_exists("filetypedetect")) {
+    bufref_T bufref;
+    set_bufref(&bufref, curbuf);
+    do_doautocmd("filetypedetect BufRead", false, NULL);
+    if (!bufref_valid(&bufref) || curbuf != old_curbuf.br_buf || aborting()) {
+      return FAIL;
+    }
+  }
+
   // Need to update automatic folding.  Do this before the autocommands,
   // they may use the fold info.
   foldUpdateAll(curwin);

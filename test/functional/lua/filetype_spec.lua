@@ -126,6 +126,15 @@ describe('vim.filetype', function()
     )
   end)
 
+  it('detects directories', function()
+    mkdir('Xfiletype-directory')
+    finally(function()
+      rmdir('Xfiletype-directory')
+    end)
+
+    eq('directory', exec_lua([[return vim.filetype.match({ filename = 'Xfiletype-directory' })]]))
+  end)
+
   it('works with functions', function()
     command('new')
     command('file relevant_to_me')
