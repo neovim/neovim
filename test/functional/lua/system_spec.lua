@@ -150,6 +150,38 @@ describe('vim.system', function()
     end)
   end)
 
+  it('run_wait() can return before process exit', function()
+    t.skip(t.is_os('win'), 'shell command is POSIX-only')
+
+    exec_lua(function()
+      local res
+      local ok, err = pcall(function()
+        res = require('vim._core.system').run_wait(
+          { 'bash', '-c', 'echo READY; sleep 10' },
+          function(stdout)
+            return stdout:match('READY') ~= nil
+          end,
+          10000
+        )
+
+        assert(res)
+        assert(res.code == nil)
+        assert(res.stdout == 'READY\n')
+        assert(vim.api.nvim_get_proc(res.pid), 'process already exited')
+      end)
+
+      if res then
+        if not res:is_closing() then
+          res:kill('sigterm')
+        end
+        res:wait(1000)
+      end
+      if not ok then
+        error(err)
+      end
+    end)
+  end)
+
   it('SystemObj:wait() does not process non-fast events #27292', function()
     eq(
       false,

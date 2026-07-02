@@ -214,6 +214,8 @@ EDITOR
   Example: >vim
     set langmap=õ]
 <    Typing õõ in |Normal-mode| now invokes a mapping bound to ]].
+• |:connect| with `ssh://` URI orchestrates a remote Nvim session over SSH.
+  See |remote-ssh|.
 
 EVENTS
 

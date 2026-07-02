@@ -1,4 +1,5 @@
 local uv = vim.uv
+local M = {}
 
 --- @class vim.SystemOpts
 --- @inlinedoc
@@ -45,6 +46,12 @@ local uv = vim.uv
 --- @field stdout? string `nil` if stdout is disabled or has a custom handler.
 --- @field stderr? string `nil` if stderr is disabled or has a custom handler.
 
+--- @class (package) vim.SystemRunWaitResult : vim.SystemObj
+--- @field code? integer Exit code, if the process exited before the predicate matched.
+--- @field signal? integer Exit signal, if the process exited before the predicate matched.
+--- @field stdout string Captured stdout so far.
+--- @field stderr string Captured stderr so far.
+
 --- @class (package) vim.SystemState
 --- @field cmd string[]
 --- @field handle? uv.uv_process_t
@@ -78,7 +85,7 @@ end
 --- @class vim.SystemObj
 --- @field cmd string[] Command name and args
 --- @field pid integer Process ID
---- @field private _state vim.SystemState
+--- @field package _state vim.SystemState
 local SystemObj = {}
 
 --- @param state vim.SystemState
@@ -205,6 +212,52 @@ end
 function SystemObj:is_closing()
   local handle = self._state.handle
   return handle == nil or handle:is_closing() or false
+end
+
+--- @nodoc
+--- Runs a command and waits until it exits or streamed output satisfies a predicate.
+---
+--- Unlike `vim.system(...):wait()`, this can return before the process exits. That is needed for
+--- long-lived commands such as `ssh -L ...`, which print a readiness marker and then keep running.
+---
+--- @param cmd string[] Command to execute.
+--- @param wait_until? fun(stdout: string, stderr: string): boolean Predicate checked after output.
+--- @param timeout? integer Time limit in ms.
+--- @return vim.SystemRunWaitResult
+function M.run_wait(cmd, wait_until, timeout)
+  vim.validate('cmd', cmd, 'table')
+  vim.validate('wait_until', wait_until, 'function', true)
+  vim.validate('timeout', timeout, 'number', true)
+
+  local obj = vim.system(cmd, { text = true }) --[[@as vim.SystemRunWaitResult]]
+  local state = obj._state
+
+  local function stdout()
+    return table.concat(state.stdout_data or {})
+  end
+
+  local function stderr()
+    return table.concat(state.stderr_data or {})
+  end
+
+  local success = vim.wait(timeout or vim._maxint, function()
+    return state.result ~= nil or (wait_until and wait_until(stdout(), stderr())) or false
+  end, 50, true)
+
+  if not success then
+    if not obj:is_closing() then
+      obj:kill('sigterm')
+    end
+    obj:wait(1000)
+    error('command timed out')
+  end
+
+  obj.code = state.result and state.result.code or nil
+  obj.signal = state.result and state.result.signal or nil
+  obj.stdout = state.result and state.result.stdout or stdout()
+  obj.stderr = state.result and state.result.stderr or stderr()
+
+  return obj
 end
 
 --- @param output? fun(err: string?, data: string?)|false
@@ -528,3 +581,5 @@ function vim.system(cmd, opts, on_exit)
   end
   return run(cmd, opts, on_exit)
 end
+
+return M
