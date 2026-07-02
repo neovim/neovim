@@ -25,6 +25,7 @@ func Test_visual_block_scroll()
   let buf = RunVimInTerminal('-S '.filename, #{rows: 7})
   call term_sendkeys(buf, "V\<C-D>\<C-D>")
 
+  call WaitForAssert({-> assert_match('VISUAL.*\d\+\s\+\d', term_getline(buf, 7))}, 1000)
   call VerifyScreenDump(buf, 'Test_display_visual_block_scroll', {})
 
   call StopVimInTerminal(buf)
