@@ -1516,6 +1516,8 @@ void end_visual_mode(void)
 {
   VIsual_select_exclu_adj = false;
   VIsual_active = false;
+  VIsual_from_textobject = false;
+  VIsual_text_obj_inner = false;
   setmouse();
   mouse_dragging = 0;
 
@@ -6326,6 +6328,8 @@ static void nv_object(cmdarg_T *cap)
   } else {
     include = true;         // "ax" = an object: include white space
   }
+  // Store whether this is an inner or around text object for redo
+  VIsual_text_obj_inner = (cap->cmdchar == 'i');
   // Make sure (), [], {} and <> are in 'matchpairs'
   char *mps_save = curbuf->b_p_mps;
   curbuf->b_p_mps = "(:),{:},[:],<:>";

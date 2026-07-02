@@ -73,6 +73,7 @@
 #include "nvim/strings.h"
 #include "nvim/terminal.h"
 #include "nvim/textformat.h"
+#include "nvim/textobject.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/ui_defs.h"
@@ -3266,6 +3267,8 @@ typedef struct {
   colnr_T rv_vcol;         ///< number of cols or end column
   int rv_count;            ///< count for Visual operator
   int rv_arg;              ///< extra argument
+  bool is_text_object;     ///< true if selection came from text object (iw, i(, etc.)
+  bool is_inner_text_obj;  ///< true for inner (iw), false for around (aw)
 } redo_VIsual_T;
 
 static bool is_ex_cmdchar(cmdarg_T *cap)
@@ -3281,7 +3284,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
   int lbr_saved = curwin->w_p_lbr;
 
   // The visual area is remembered for redo
-  static redo_VIsual_T redo_VIsual = { NUL, 0, 0, 0, 0 };
+  static redo_VIsual_T redo_VIsual = { NUL, 0, 0, 0, 0, false, false };
 
   pos_T old_cursor = curwin->w_cursor;
 
@@ -3369,24 +3372,43 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     }
 
     if (redo_VIsual_busy) {
-      // Redo of an operation on a Visual area. Use the same size from
-      // redo_VIsual.rv_line_count and redo_VIsual.rv_vcol.
-      oap->start = curwin->w_cursor;
-      curwin->w_cursor.lnum += redo_VIsual.rv_line_count - 1;
-      curwin->w_cursor.lnum = MIN(curwin->w_cursor.lnum, curbuf->b_ml.ml_line_count);
-      VIsual_mode = redo_VIsual.rv_mode;
-      if (redo_VIsual.rv_vcol == MAXCOL || VIsual_mode == 'v') {
-        if (VIsual_mode == 'v') {
-          if (redo_VIsual.rv_line_count <= 1) {
-            validate_virtcol(curwin);
-            curwin->w_curswant = curwin->w_virtcol + redo_VIsual.rv_vcol - 1;
+      // Redo of an operation on a Visual area.
+      // SEMANTIC REDO: If the original selection came from a text object,
+      // re-evaluate it at the current cursor position instead of using
+      // the stored dimensions.
+      if (redo_VIsual.is_text_object) {
+        // Re-evaluate the text object (word) at current cursor position
+        // This makes the selection semantically meaningful: on `viw d . (next word)`
+        // it will delete the new word, not use the old word's dimensions
+        // Use the stored is_inner_text_obj to determine whether to include whitespace
+        bool include = !redo_VIsual.is_inner_text_obj;  // inner (i) = false, around (a) = true
+        current_word(oap, 1, include, false);
+        // current_word will either:
+        // - Set VIsual and VIsual_from_textobject if VIsual_active (from start_redo)
+        // - Set oap->start and oap->motion_type if !VIsual_active
+        // After current_word, we need to ensure oap is properly set from the result
+        oap->start = VIsual;
+        oap->motion_type = kMTCharWise;
+      } else {
+        // COORDINATE-BASED REDO: Use the stored dimensions (legacy behavior)
+        // Use the same size from redo_VIsual.rv_line_count and redo_VIsual.rv_vcol.
+        oap->start = curwin->w_cursor;
+        curwin->w_cursor.lnum += redo_VIsual.rv_line_count - 1;
+        curwin->w_cursor.lnum = MIN(curwin->w_cursor.lnum, curbuf->b_ml.ml_line_count);
+        VIsual_mode = redo_VIsual.rv_mode;
+        if (redo_VIsual.rv_vcol == MAXCOL || VIsual_mode == 'v') {
+          if (VIsual_mode == 'v') {
+            if (redo_VIsual.rv_line_count <= 1) {
+              validate_virtcol(curwin);
+              curwin->w_curswant = curwin->w_virtcol + redo_VIsual.rv_vcol - 1;
+            } else {
+              curwin->w_curswant = redo_VIsual.rv_vcol;
+            }
           } else {
-            curwin->w_curswant = redo_VIsual.rv_vcol;
+            curwin->w_curswant = MAXCOL;
           }
-        } else {
-          curwin->w_curswant = MAXCOL;
+          coladvance(curwin, curwin->w_curswant);
         }
-        coladvance(curwin, curwin->w_curswant);
       }
       cap->count0 = redo_VIsual.rv_count;
       cap->count1 = (cap->count0 == 0 ? 1 : cap->count0);
@@ -3540,6 +3562,10 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
           redo_VIsual.rv_line_count = resel_VIsual_line_count;
           redo_VIsual.rv_count = cap->count0;
           redo_VIsual.rv_arg = cap->arg;
+          // Store whether this selection came from a text object
+          redo_VIsual.is_text_object = VIsual_from_textobject;
+          // Store whether it was an inner (i) or around (a) text object
+          redo_VIsual.is_inner_text_obj = VIsual_text_obj_inner;
         }
       }
 
