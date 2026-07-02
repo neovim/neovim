@@ -249,6 +249,7 @@ LUA
 
 • |vim.ui.img| can display images. Use `:checkhealth img` to confirm your
   terminal supports it.
+• |vim.defer_fn()| allows more execution conditions.
 • |vim.net.request()| can specify custom headers by passing `opts.headers`.
 • |vim.net.request()| can now accept  `method` param overload for multiple HTTP methods.
 • |writefile()| treats Lua strings as "blob", so it can be used to write
