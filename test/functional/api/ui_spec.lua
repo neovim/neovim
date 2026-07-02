@@ -283,6 +283,55 @@ describe('UI event channels', function()
 
     session2:close()
   end)
+
+  it('tracks detected background metadata per stdout_tty UI channel', function()
+    clear()
+    local server = api.nvim_get_vvar('servername')
+    local session2 = n.connect(server)
+    local status2, chan2 = session2:request('nvim_get_chan_info', 0)
+    t.ok(status2)
+    local screen2 = Screen.new(20, 4, { stdout_tty = true }, false)
+    screen2.rpc_async = true
+    screen2:attach(session2)
+
+    local session3 = n.connect(server)
+    local status3, chan3 = session3:request('nvim_get_chan_info', 0)
+    t.ok(status3)
+    local screen3 = Screen.new(20, 4, { stdout_tty = true }, false)
+    screen3.rpc_async = true
+    screen3:attach(session3)
+
+    finally(function()
+      screen2:detach()
+      screen3:detach()
+      session2:close()
+      session3:close()
+    end)
+
+    t.retry(nil, 1000, function()
+      local seen = {}
+      for _, ui in ipairs(api.nvim_list_uis()) do
+        seen[ui.chan] = ui.stdout_tty
+      end
+      eq(true, seen[chan2.id])
+      eq(true, seen[chan3.id])
+    end)
+
+    session3:notify('nvim_ui_term_event', 'termresponse', '\027]11;rgb:ffff/ffff/ffff')
+
+    t.retry(nil, 1000, function()
+      eq('light', api.nvim__ui_get_detected_background(chan3.id))
+      eq('light', eval('&background'))
+    end)
+
+    session2:notify('nvim_ui_term_event', 'termresponse', '\027]11;rgb:0000/0000/0000')
+
+    t.retry(nil, 1000, function()
+      eq('dark', api.nvim__ui_get_detected_background(chan2.id))
+      eq('light', api.nvim__ui_get_detected_background(chan3.id))
+      eq('light', eval('&background'))
+    end)
+  end)
 end)
 
 it('autocmds VimSuspend/VimResume #22041', function()
