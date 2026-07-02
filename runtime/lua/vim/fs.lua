@@ -520,9 +520,17 @@ function M.root(source, marker)
 
   local markers = type(marker) == 'table' and marker or { marker }
   for _, mark in ipairs(markers) do
+    local mark_type = nil
+
+    if type(mark) == 'table' then
+      mark_type = mark.type
+      mark.type = nil
+    end
+
     local paths = M.find(mark, {
       upward = true,
       path = M.abspath(path),
+      type = mark_type,
     })
 
     if #paths ~= 0 then
