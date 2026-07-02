@@ -64,6 +64,7 @@
 #include "nvim/event/multiqueue.h"
 #include "nvim/event/time.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/garray.h"
 #include "nvim/getchar.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
@@ -1813,7 +1814,7 @@ static int term_sb_clear(void *data)
 static void term_clipboard_set(void **argv)
 {
   VTermSelectionMask mask = (VTermSelectionMask)(long)argv[0];
-  char *data = argv[1];
+  blob_T *blob = argv[1];
 
   char regname;
   switch (mask) {
@@ -1828,11 +1829,11 @@ static void term_clipboard_set(void **argv)
     break;
   }
 
-  list_T *lines = tv_list_alloc(1);
-  tv_list_append_allocated_string(lines, data);
-
   list_T *args = tv_list_alloc(3);
-  tv_list_append_list(args, lines);
+
+  // Forward as a Blob to clipboard provider so binary data is preserved.
+  // Avoids :help NL-used-for-Nul.
+  tv_list_append_blob(args, blob);
 
   const char regtype = 'v';
   tv_list_append_string(args, &regtype, 1);
@@ -1851,8 +1852,11 @@ static int term_selection_set(VTermSelectionMask mask, VTermStringFragment frag,
   kv_concat_len(term->selection, frag.str, frag.len);
 
   if (frag.final) {
-    char *data = xmemdupz(term->selection.items, kv_size(term->selection));
-    multiqueue_put(main_loop.events, term_clipboard_set, (void *)mask, data);
+    // Build the Blob here (on the main loop) and hand it to the deferred event,
+    // so the payload is copied once instead of through an intermediate buffer.
+    blob_T *blob = tv_blob_alloc();
+    ga_concat_len(&blob->bv_ga, term->selection.items, kv_size(term->selection));
+    multiqueue_put(main_loop.events, term_clipboard_set, (void *)mask, blob);
   }
 
   return 1;

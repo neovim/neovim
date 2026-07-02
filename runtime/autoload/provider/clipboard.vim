@@ -283,6 +283,7 @@ function! s:clipboard.get(reg) abort
   return clipboard_data
 endfunction
 
+" {lines} is a List of lines, or a Blob forwarded verbatim (e.g. an OSC 52 payload).
 function! s:clipboard.set(lines, regtype, reg) abort
   if a:reg == '"'
     call s:clipboard.set(a:lines,a:regtype,'+')
