@@ -210,7 +210,9 @@ function M.open(opts, ...)
     end
 
     --- @type lsp.DiagnosticRelatedInformation[]
-    local related_info = vim.tbl_get(diagnostic, 'user_data', 'lsp', 'relatedInformation') or {}
+    local related_info = vim.tbl_get(diagnostic, 'user_data', 'lsp', 'relatedInformation')
+    assert(related_info ~= vim.NIL, 'server response has invalid (null) relatedInformation')
+    related_info = related_info or {}
     -- Below the diagnostic, show its LSP related information (if any) in the form of file name and
     -- range, plus description.
     for _, info in ipairs(related_info) do
