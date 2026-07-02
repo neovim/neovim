@@ -4118,7 +4118,7 @@ static bool ins_tab(void)
       // In MODE_VREPLACE state, we haven't changed anything yet.  Do it
       // now by backspacing over the changed spacing and then inserting
       // the new spacing.
-      if (State & VREPLACE_FLAG) {
+      if ((State & VREPLACE_FLAG) && saved_line != NULL) {
         // Backspace from real cursor to change_col
         backspace_until_column(change_col);
 

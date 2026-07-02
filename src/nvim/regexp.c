@@ -2380,7 +2380,7 @@ static int vim_regsub_both(char *source, typval_T *expr, char *dest, int destlen
           }
         } else {
           s = rex.reg_match->startp[no];
-          if (rex.reg_match->endp[no] == NULL) {
+          if (s == NULL || rex.reg_match->endp[no] == NULL) {
             s = NULL;
           } else {
             len = (int)(rex.reg_match->endp[no] - s);
@@ -11813,6 +11813,9 @@ static Frag_T st_pop(Frag_T **p, Frag_T *stack)
 {
   Frag_T *stackp;
 
+  if (p == NULL || *p == NULL) {
+    return empty;
+  }
   *p = *p - 1;
   stackp = *p;
   if (stackp < stack) {

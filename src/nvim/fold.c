@@ -2334,7 +2334,7 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *const gap, const int level,
           // Insert new fold.  Careful: ga_data may be NULL and it
           // may change!
           int i;
-          if (gap->ga_len == 0) {
+          if (gap->ga_len <= 0 || fp == NULL) {
             i = 0;
           } else {
             i = (int)(fp - (fold_T *)gap->ga_data);

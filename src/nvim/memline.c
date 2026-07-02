@@ -2556,7 +2556,7 @@ size_t ml_append_pos(pos_T pos, char *output, size_t remaining)
       output[off] = NUL;
 
       if (pos.lnum == cur_ln_nr) {  // we are at the first line of operation
-        char *new_line = concat_str(text_to_prepend, output);
+        char *new_line = concat_str(text_to_prepend != NULL ? text_to_prepend : "", output);
         ml_replace(cur_ln_nr, new_line, false);
         text_to_prepend = NULL;  // reset what to prepent
       } else {
@@ -2582,7 +2582,7 @@ size_t ml_append_pos(pos_T pos, char *output, size_t remaining)
 
   if (remaining) {
     if (pos.lnum == cur_ln_nr) {  // we are at the first line of operation
-      char *temp = concat_str(text_to_prepend, output);
+      char *temp = concat_str(text_to_prepend != NULL ? text_to_prepend : "", output);
       char *new_line = concat_str(temp, text_to_append);
       xfree(temp);
       ml_replace(cur_ln_nr, new_line, false);

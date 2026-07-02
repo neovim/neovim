@@ -2873,11 +2873,11 @@ static int call_func_rettv(char **const arg, evalarg_T *const evalarg, typval_T 
       funcname = is_lua ? lua_funcname : partial_name(pt);
     } else {
       funcname = functv.vval.v_string;
-      if (funcname == NULL || *funcname == NUL) {
-        emsg(_(e_empty_function_name));
-        ret = FAIL;
-        goto theend;
-      }
+    }
+    if (funcname == NULL || *funcname == NUL) {
+      emsg(_(e_empty_function_name));
+      ret = FAIL;
+      goto theend;
     }
   } else {
     funcname = "";

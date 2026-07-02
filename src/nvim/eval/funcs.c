@@ -4181,6 +4181,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
         xfree(tofree);
         tofree = expr = str = encode_tv2echo(TV_LIST_ITEM_TV(li), NULL);
         if (str == NULL) {
+          match = false;
           break;
         }
       }
