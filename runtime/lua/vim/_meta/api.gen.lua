@@ -1179,7 +1179,8 @@ function vim.api.nvim_eval_statusline(str, opts) end
 function vim.api.nvim_exec(src, output) end
 
 --- Executes Vimscript (multiline block of Ex commands), like anonymous
---- `:source`.
+--- `:source`. Arguments are available through v:args inside the script. Values
+--- inserted into v:result inside the script will be returned.
 ---
 --- Unlike `nvim_command()` this function supports heredocs, script-scope (s:),
 --- etc.
@@ -1194,9 +1195,11 @@ function vim.api.nvim_exec(src, output) end
 --- @param opts vim.api.keyset.exec_opts Optional parameters.
 --- - output: (boolean, default false) Whether to capture and return
 ---           all (non-error, non-shell `:!`) output.
---- @return table<string,any> # Dict containing information about execution, with these keys:
---- - output: (string|nil) Output if `opts.output` is true.
-function vim.api.nvim_exec2(src, opts) end
+--- @param args any[] Optional arguments to pass to Vimscript via v:args.
+--- @return table<string,any> # Dict containing information about execution, with these possible keys:
+--- - output: (string) Captured output if `opts.output` is true.
+--- - result: (any[]) Values returned from the script via v:result, if any.
+function vim.api.nvim_exec2(src, opts, args) end
 
 --- Executes {event} handlers matching the {opts} query, in the context of {buf} (if given). `autocmd-execute`
 ---

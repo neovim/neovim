@@ -12,7 +12,7 @@ local insert = n.insert
 
 local function html_syntax_match()
   local styles =
-    vim.split(api.nvim_exec2([[/<style>/+,/<\/style>/-p]], { output = true }).output, '\n')
+    vim.split(api.nvim_exec2([[/<style>/+,/<\/style>/-p]], { output = true }, {}).output, '\n')
   local attrnames = {
     ['font%-weight: bold'] = 'bold',
     ['text%-decoration%-line: [^;]*underline'] = 'underline',

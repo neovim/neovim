@@ -17,6 +17,17 @@ M.vars = {
       <
     ]=],
   },
+  args = {
+    type = 'any[]',
+    desc = [=[
+      Arguments passed to Vimscript from Nvim API. Only valid during
+      the execution of |nvim_exec2()|.
+
+      See |v:result| for the corresponding return values.
+
+      Read-only.
+    ]=],
+  },
   argv = {
     type = 'string[]',
     desc = [=[
@@ -688,6 +699,15 @@ M.vars = {
     desc = [=[
       Relative line number for the 'statuscolumn' expression.
       Read-only.
+    ]=],
+  },
+  result = {
+    type = 'any[]',
+    desc = [=[
+      Values returned to Nvim API from Vimscript. Only valid during
+      the execution of |nvim_exec2()|.
+
+      See |v:args| for the corresponding arguments.
     ]=],
   },
   scrollstart = {

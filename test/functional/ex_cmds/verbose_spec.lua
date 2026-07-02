@@ -27,7 +27,7 @@ local function last_set_lua_verbose_tests(cmd, v1)
 vim.api.nvim_set_option_value('hlsearch', false, {})
 vim.bo.expandtab = true
 vim.opt.number = true
-vim.api.nvim_exec2('set numberwidth=2', {})
+vim.api.nvim_exec2('set numberwidth=2', {}, {})
 vim.cmd('set colorcolumn=+1')
 
 local function cb()
@@ -43,7 +43,7 @@ vim.api.nvim_exec2("augroup test_group\
                      autocmd!\
                      autocmd FileType c setl cindent\
                      augroup END\
-                  ", {})
+                  ", {}, {})
 
 vim.api.nvim_create_autocmd('FileType', {
   group = 'test_group',
@@ -51,7 +51,7 @@ vim.api.nvim_create_autocmd('FileType', {
   command = 'setl cindent',
 })
 
-vim.api.nvim_exec2(':highlight TestHL1 guibg=Blue', {})
+vim.api.nvim_exec2(':highlight TestHL1 guibg=Blue', {}, {})
 vim.api.nvim_set_hl(0, 'TestHL2', { bg = 'Green' })
 
 vim.api.nvim_command("command Bdelete :bd")
@@ -61,14 +61,14 @@ vim.api.nvim_exec2 ("\
 function Close_Window() abort\
   wincmd -\
 endfunction\
-", {})
+", {}, {})
 
 local ret = vim.api.nvim_exec2 ("\
 function! s:return80()\
   return 80\
 endfunction\
 let &tw = s:return80()\
-", {})
+", {}, {})
 
 local set_list = ([[
   func SetList()
@@ -77,7 +77,7 @@ local set_list = ([[
   endfunc
   call SetList()
 ]]):format(('\n'):rep(1234))
-vim.api.nvim_exec2(set_list, {})
+vim.api.nvim_exec2(set_list, {}, {})
 
 vim.api.nvim_create_autocmd('User', { pattern = 'set_mouse', callback = cb })
 

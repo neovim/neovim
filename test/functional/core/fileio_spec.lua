@@ -108,6 +108,7 @@ describe('fileio', function()
       write
       put ='fsyncd text'
     ]],
+      {},
       {}
     )
     eq('Xtest_startup_swapdir', fn.rpcrequest(j, 'nvim_eval', '&directory'))
