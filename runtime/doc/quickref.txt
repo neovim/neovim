@@ -501,8 +501,10 @@ In Insert or Command-line mode:
 |v_i'|	   N  i'	Select "inner single quoted string"
 |v_aquote| N  a"	Select "a double quoted string"
 |v_iquote| N  i"	Select "inner double quoted string"
-|v_a`|	   N  a`	Select "a backward quoted string"
-|v_i`|	   N  i`	Select "inner backward quoted string"
+|v_a`|	   N  a`	Select "a backtick quoted string"
+|v_i`|	   N  i`	Select "inner backtick quoted string"
+|v_abar| N  a|		Select "a vertical bar quoted string"
+|v_ibar| N  i|		Select "inner vertical bar quoted string"
 
 ------------------------------------------------------------------------------
 *Q_re*		Repeating commands

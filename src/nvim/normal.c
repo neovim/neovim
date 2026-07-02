@@ -6377,6 +6377,7 @@ static void nv_object(cmdarg_T *cap)
   case '"':       // "a"" = a double quoted string
   case '\'':       // "a'" = a single quoted string
   case '`':       // "a`" = a backtick quoted string
+  case '|':       // "a|" = a vertical bar quoted string
     flag = current_quote(cap->oap, cap->count1, include,
                          cap->nchar);
     break;

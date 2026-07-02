@@ -90,6 +90,7 @@ EDITOR
   • Expr-register (|i_CTRL-R_=|, |c_CTRL-R_=|) no longer supports opening
     cmdwin via |c_CTRL-F|.
 • Behavior of |:restart| changed. Use "!" (|:restart!|) to get the old behavior.
+• Added vertical bar | text object.
 
 EVENTS
 

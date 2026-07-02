@@ -685,7 +685,9 @@ iB			"inner Block", select [count] Blocks, from `[count] [{`
 a"							*v_aquote* *aquote*
 a'							*v_a'* *a'*
 a`							*v_a`* *a`*
+a|							*v_abar* *abar*
 			"a quoted string".  Selects the text from the previous
+			quote-like delimiter until the next one.  For a| this
 			quote until the next quote.  The 'quoteescape' option
 			is used to skip escaped quotes.
 			Only works within one line.
@@ -701,10 +703,11 @@ a`							*v_a`* *a`*
 i"							*v_iquote* *iquote*
 i'							*v_i'* *i'*
 i`							*v_i`* *i`*
-			Like a", a' and a`, but exclude the quotes and
+i|							*v_ibar* *ibar*
+			Like a", a', a` and a|, but exclude the delimiters and
 			repeating won't extend the Visual selection.
 			Special case: With a count of 2 the quotes are
-			included, but no extra white space as with a"/a'/a`.
+			included, but no extra white space as with a"/a'/a`/a|.
 
 							*o_object-select*
 When used after an operator:

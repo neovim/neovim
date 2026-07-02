@@ -249,6 +249,8 @@ The objects that can be used are:
 	i'	inner simple quoted string			|v_i'|
 	a`	a string in backticks (with backticks)		|v_a`|
 	i`	inner string in backticks			|v_i`|
+	a|	a string in vertical bars (with vertical bars)	|v_abar|
+	i|	inner string in vertical bars			|v_ibar|
 
 Additionally the following commands can be used:
 	:	start Ex command for highlighted lines (1)	|v_:|

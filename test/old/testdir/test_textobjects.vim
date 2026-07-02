@@ -544,7 +544,7 @@ func Test_textobj_sentence()
   bw!
 endfunc
 
-" Test for quote (', " and `) textobjects
+" Test for quote (', ", ` and |) textobjects
 func Test_textobj_quote()
   new
 

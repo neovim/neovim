@@ -484,6 +484,7 @@ Tag		Command		   Op-pending and Visual-mode action	~
 |v_a[|		a[		   "a []" from '[' to the matching ']'
 |v_a]|		a]		   same as a[
 |v_a`|		a`		   string in backticks
+|v_abar|	a|		   string in vertical bars
 |v_ab|		ab		   "a block" from "[(" to "])" (with braces)
 |v_al|		al		   all lines (entire buffer)
 |v_ap|		ap		   "a paragraph" (with white space)
@@ -503,6 +504,7 @@ Tag		Command		   Op-pending and Visual-mode action	~
 |v_i[|		i[		   "inner []" from '[' to the matching ']'
 |v_i]|		i]		   same as i[
 |v_i`|		i`		   string in backticks without the backticks
+|v_ibar|	i|		   string in vertical bars without the vertical bars
 |v_ib|		ib		   "inner block" from "[(" to "])"
 |v_il|		il		   inner line (without surrounding whitespace)
 |v_ip|		ip		   "inner paragraph"
@@ -953,6 +955,8 @@ Tag		Command	      Note Visual-mode action	~
 |v_a]|		a]		   same as a[
 |v_a`|		a`		   extend highlighted area with a backtick
 				   quoted string
+|v_abar|	a|		   extend highlighted area with a vertical
+				   bar quoted string
 |v_ab|		ab		   extend highlighted area with a () block
 |v_al|		al		   extend highlighted area to all lines
 |v_ap|		ap		   extend highlighted area with a paragraph
@@ -974,6 +978,8 @@ Tag		Command	      Note Visual-mode action	~
 				   quoted string (without quotes)
 |v_i'|		i'		   extend highlighted area with a single
 				   quoted string (without quotes)
+|v_ibar|	i|		   extend highlighted area with a vertical
+				   bar quoted string (without vertical bars)
 |v_i(|		i(		   same as ib
 |v_i)|		i)		   same as ib
 |v_i<|		i<		   extend highlighted area with inner <> block
