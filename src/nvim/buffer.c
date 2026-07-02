@@ -404,6 +404,13 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
     curbuf->b_flags |= BF_READERR;
   }
 
+  if (retval == NOTDONE && *curbuf->b_p_ft == NUL) {
+    if (augroup_exists("filetypedetect")) {
+      do_doautocmd("filetypedetect BufRead", false, NULL);
+    }
+    do_modelines(0);
+  }
+
   // Need to update automatic folding.  Do this before the autocommands,
   // they may use the fold info.
   foldUpdateAll(curwin);
@@ -3611,6 +3618,9 @@ void fname_expand(buf_T *buf, char **ffname, char **sfname)
     *sfname = *ffname;
   }
   *ffname = fix_fname((*ffname));     // expand to full path
+  if (*ffname != NULL && os_isdir(*ffname)) {
+    *ffname = concat_fnames_realloc(*ffname, "", true);
+  }
 
 #ifdef MSWIN
   if (!buf->b_p_bin) {

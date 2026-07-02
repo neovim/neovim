@@ -389,7 +389,7 @@ int path_fnamecmp(const char *fname1, const char *fname2)
   const size_t len2 = strlen(fname2);
   return path_fnamencmp(fname1, fname2, MAX(len1, len2));
 #else
-  return mb_strcmp_ic((bool)p_fic, fname1, fname2);
+  return pathcmp(fname1, fname2, -1);
 #endif
 }
 

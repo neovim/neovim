@@ -37,8 +37,9 @@ local function bufopt(name)
 end
 
 local function assert_directory(path)
-  eq(path, api.nvim_buf_get_name(0))
-  eq(path, fn.bufname('%'))
+  local ffname = path:sub(-1) == '/' and path or path .. '/'
+  eq(ffname, api.nvim_buf_get_name(0))
+  eq(path, vim.fs.normalize(fn.bufname('%')))
   eq('directory', bufopt('filetype'))
   eq(true, bufopt('buflisted'))
 end
