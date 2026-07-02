@@ -25,6 +25,7 @@
 ^f_test_settime(
 ^f_test_srand_seed(
 ^f_test_void(
+_balloon[a-zA-Z0-9_]\+(
 bevalterm[a-zA-Z0-9_]\+(
 clip_xterm_[a-zA-Z0-9_]\+(
 crypt(
