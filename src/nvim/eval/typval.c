@@ -2537,11 +2537,14 @@ int tv_dict_add_dict(dict_T *const d, const char *const key, const size_t key_le
 
   item->di_tv.v_type = VAR_DICT;
   item->di_tv.vval.v_dict = dict;
-  dict->dv_refcount++;
   if (tv_dict_add(d, item) == FAIL) {
+    // Detach "dict" so tv_dict_item_free() does not unref it: on failure
+    // ownership stays with the caller.
+    item->di_tv.vval.v_dict = NULL;
     tv_dict_item_free(item);
     return FAIL;
   }
+  dict->dv_refcount++;
   return OK;
 }
 
