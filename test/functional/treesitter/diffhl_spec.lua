@@ -171,9 +171,14 @@ describe('diff hunk highlighting', function()
   it('re-highlights when a parser becomes available on runtimepath', function()
     local screen = make_screen(late_parser_attrs)
     exec_lua(function()
-      local so = vim.api.nvim_get_runtime_file('parser/lua.so', false)[1]
-      _G.parser_dir = vim.fn.fnamemodify(so, ':h:h')
-      vim.opt.rtp:remove(_G.parser_dir)
+      local parser_dirs = {}
+      for _, parser in ipairs(vim.api.nvim_get_runtime_file('parser/lua.*', true)) do
+        parser_dirs[#parser_dirs + 1] = vim.fn.fnamemodify(parser, ':h:h')
+      end
+      _G.parser_dir = assert(parser_dirs[1])
+      for _, dir in ipairs(parser_dirs) do
+        vim.opt.rtp:remove(dir)
+      end
     end)
     set_diff(diff_lines)
     screen:expect([[
