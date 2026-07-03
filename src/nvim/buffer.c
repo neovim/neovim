@@ -404,13 +404,13 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
     curbuf->b_flags |= BF_READERR;
   }
 
-  // Directory reads return NOTDONE before readfile() reaches BufReadPost.
-  // Run filetype detection before BufEnter so directory buffers get the usual event order.
+  // readfile() returns NOTDONE without firing BufReadPost when it did not read a
+  // file (e.g. a directory). Since BufReadPost is what normally runs filetype
+  // detection, do it here so FileType fires before the BufEnter below.
   if (retval == NOTDONE && *curbuf->b_p_ft == NUL) {
     if (augroup_exists("filetypedetect")) {
       do_doautocmd("filetypedetect BufRead", false, NULL);
     }
-    do_modelines(0);
   }
 
   // Need to update automatic folding.  Do this before the autocommands,
@@ -2031,6 +2031,7 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
   }
 
   if (ffname != NULL) {
+    assert(sfname != NULL);
     buf->b_ffname = ffname;
     buf->b_sfname = xstrdup(sfname);
   }
@@ -3606,6 +3607,9 @@ int append_arg_number(win_T *wp, char *buf, size_t buflen)
 }
 
 /// Make "*ffname" a full file name, set "*sfname" to "*ffname" if not NULL.
+/// For a directory the resulting "*ffname" gets a trailing path separator. When
+/// "*sfname" already ends with a separator the final component is not resolved,
+/// so a symlinked directory keeps its spelling.
 /// "*ffname" becomes a pointer to allocated memory (or NULL).
 /// When resolving a link both "*sfname" and "*ffname" will point to the same
 /// allocated memory.
@@ -3619,9 +3623,29 @@ void fname_expand(buf_T *buf, char **ffname, char **sfname)
   if (*sfname == NULL) {  // no short file name given, use ffname
     *sfname = *ffname;
   }
-  *ffname = fix_fname((*ffname));     // expand to full path
-  // Restore the trailing path separator for directory buffers.
-  if (*ffname != NULL && os_isdir(*ffname)) {
+  *ffname = fix_fname(*ffname);     // expand to full path
+  if (*ffname == NULL) {
+    *sfname = NULL;
+    return;
+  }
+  // A directory buffer's name ends with a path separator. fix_fname() resolves
+  // the final component of a name that ends with a separator, and the caller may
+  // already have canonicalized *ffname, so re-derive the name from the still
+  // verbatim *sfname (with any trailing separator removed) to keep the spelling
+  // the user typed, e.g. a symlinked directory edited as ":edit link/".
+  if (os_isdir(*ffname)) {
+    char *name = xstrdup(*sfname);
+    size_t name_len = strlen(name);
+    if (name_len > 0 && after_pathsep(name, name + name_len)
+        && name + name_len > get_past_head(name)) {
+      *path_tail_with_sep(name) = NUL;
+    }
+    char *full = fix_fname(name);
+    xfree(name);
+    if (full != NULL) {
+      xfree(*ffname);
+      *ffname = full;
+    }
     *ffname = concat_fnames_realloc(*ffname, "", true);
   }
 

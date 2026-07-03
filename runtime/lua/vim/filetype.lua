@@ -3254,10 +3254,10 @@ function M.match(args)
   end
 
   if name then
-    name = normalize_path(name)
     if name:sub(-1) == '/' then
       return 'directory'
     end
+    name = normalize_path(name)
 
     local ok_abspath, path = pcall(vim.fs.abspath, name)
     if ok_abspath then -- First check for the simple case where the full path exists as a key

@@ -166,6 +166,26 @@ describe(':mksession', function()
     eq(cwd_dir .. '/' .. tmpfile_base .. '2', fn.expand('%:p'))
   end)
 
+  it('restores symlinked directory buffer names', function()
+    skip(is_os('win'), 'N/A for Windows')
+
+    local cwd_dir = t.fix_slashes(fn.getcwd())
+    local link_dir = file_prefix .. '-link'
+    assert(vim.uv.fs_symlink(assert(vim.uv.fs_realpath(tab_dir)), link_dir, { dir = true }))
+    finally(function()
+      os.remove(link_dir)
+    end)
+
+    command('set sessionoptions=buffers')
+    command('edit ' .. link_dir)
+    local expected = cwd_dir .. '/' .. link_dir .. '/'
+    eq(expected, api.nvim_buf_get_name(0))
+    command('mksession ' .. session_file)
+    command('%bwipeout!')
+    command('source ' .. session_file)
+    eq(expected, api.nvim_buf_get_name(0))
+  end)
+
   it('restores CWD for :terminal buffers #11288', function()
     local cwd_dir = fn.fnamemodify('.', ':p:~'):gsub([[[\/]*$]], '')
     cwd_dir = t.fix_slashes(cwd_dir) -- :mksession always uses unix slashes.

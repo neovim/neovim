@@ -2392,6 +2392,32 @@ describe('api/buf', function()
       os.remove(new_name)
     end)
 
+    it('appends a path separator for a directory', function()
+      local cwd = t.fix_slashes(fn.getcwd())
+      local dir = 'Xtest_dir_name'
+      t.mkdir(dir)
+      finally(function()
+        n.rmdir(dir)
+      end)
+      api.nvim_buf_set_name(0, dir)
+      eq(cwd .. '/' .. dir .. '/', t.fix_slashes(api.nvim_buf_get_name(0)))
+    end)
+
+    it('keeps the spelling of a symlinked directory', function()
+      t.skip(t.is_os('win'), 'N/A for Windows')
+      local cwd = t.fix_slashes(fn.getcwd())
+      local target = 'Xtest_dir_target'
+      local link = 'Xtest_dir_link'
+      t.mkdir(target)
+      assert(vim.uv.fs_symlink(assert(vim.uv.fs_realpath(target)), link, { dir = true }))
+      finally(function()
+        os.remove(link)
+        n.rmdir(target)
+      end)
+      api.nvim_buf_set_name(0, link .. '/')
+      eq(cwd .. '/' .. link .. '/', t.fix_slashes(api.nvim_buf_get_name(0)))
+    end)
+
     describe("with 'autochdir'", function()
       local topdir
       local oldbuf
