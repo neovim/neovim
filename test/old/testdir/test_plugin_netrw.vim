@@ -891,12 +891,12 @@ func Test_netrw_open_backslash_file()
 
   let dir   = getcwd() . '/Xbslash'
   let fname = dir . '/\'
-  call mkdir(dir, 'p')
+  call mkdir(dir, 'pR')
   call writefile(['backslash file content'], fname)
   call assert_true(filereadable(fname))
 
   " list the directory and move onto the '\' entry
-  exe 'Explore ' .. dir
+  exe 'Explore ' . dir
   call assert_true(search('^\\$', 'w') > 0)
 
   " open it
