@@ -283,8 +283,8 @@ similar to -1. >
 Notice that the last index is inclusive.  If you prefer using an exclusive
 index use the |slice()| method.
 
-If the first index is beyond the last item of the List or the second item is
-before the first item, the result is an empty list.  There is no error
+If the first index is beyond the last item of the List or the second index is
+numbered before the first index, the result is an empty list.  There is no error
 message.
 
 If the second index is equal to or greater than the length of the list the
