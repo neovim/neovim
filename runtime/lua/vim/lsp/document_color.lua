@@ -110,25 +110,22 @@ function Provider:new(bufnr)
   --- @type vim.lsp.document_color.Provider
   self = Capability.new(self, bufnr)
 
-  api.nvim_buf_attach(bufnr, false, {
-    on_lines = function(_, buf)
-      local provider = Provider.active[buf]
-      if not provider then
-        return true
+  api.nvim_create_autocmd('LspNotify', {
+    group = self.augroup,
+    buf = self.bufnr,
+    callback = function(ev)
+      local client_id = ev.data.client_id ---@type integer
+
+      if not self.client_state[client_id] then
+        return
       end
-      provider:request()
-    end,
-    on_reload = function(_, buf)
-      local provider = Provider.active[buf]
-      if provider then
-        provider:clear()
-        provider:request()
+
+      if ev.data.method == 'textDocument/didClose' then
+        self:clear(client_id)
       end
-    end,
-    on_detach = function(_, buf)
-      local provider = Provider.active[buf]
-      if provider then
-        provider:destroy()
+
+      if ev.data.method == 'textDocument/didChange' or ev.data.method == 'textDocument/didOpen' then
+        self:request(client_id)
       end
     end,
   })
@@ -138,10 +135,9 @@ function Provider:new(bufnr)
     desc = 'Refresh document_color',
     callback = function()
       color_cache = {}
-      local provider = Provider.active[bufnr]
-      if provider then
-        provider:clear()
-        provider:request()
+      for client_id, _ in pairs(self.client_state) do
+        self:clear(client_id)
+        self:request(client_id)
       end
     end,
   })
@@ -167,7 +163,6 @@ function Provider:on_detach(client_id)
     api.nvim_buf_clear_namespace(self.bufnr, state.namespace, 0, -1)
     self.client_state[client_id] = nil
   end
-  api.nvim__redraw({ buf = self.bufnr, valid = true, flush = false })
 end
 
 --- |lsp-handler| for the `textDocument/documentColor` method.
@@ -218,29 +213,29 @@ function Provider:handler(err, result, ctx)
 end
 
 --- @package
---- @param client_id? integer
+--- @param client_id integer
 function Provider:request(client_id)
-  for id in pairs(self.client_state) do
-    if not client_id or client_id == id then
-      local client = assert(lsp.get_client_by_id(id))
-      ---@type lsp.DocumentColorParams
-      local params = { textDocument = util.make_text_document_params(self.bufnr) }
-      client:request('textDocument/documentColor', params, function(...)
-        self:handler(...)
-      end, self.bufnr)
-    end
+  local state = self.client_state[client_id]
+  local client = assert(lsp.get_client_by_id(client_id))
+  if state and client then
+    ---@type lsp.DocumentColorParams
+    local params = { textDocument = util.make_text_document_params(self.bufnr) }
+    client:request('textDocument/documentColor', params, function(...)
+      self:handler(...)
+    end, self.bufnr)
   end
 end
 
 --- @package
-function Provider:clear()
-  for _, state in pairs(self.client_state) do
+--- @param client_id integer
+function Provider:clear(client_id)
+  local state = self.client_state[client_id]
+  if state then
     state.hl_info = {}
     state.processed_version = nil
     state.applied_version = nil
     api.nvim_buf_clear_namespace(self.bufnr, state.namespace, 0, -1)
   end
-  api.nvim__redraw({ buf = self.bufnr, valid = true, flush = false })
 end
 
 local document_color_ns = api.nvim_create_namespace('nvim.lsp.document_color')
@@ -406,8 +401,10 @@ function M.enable(enable, filter, opts)
     document_color_opts = vim.tbl_extend('keep', opts, document_color_opts)
     -- Re-process highlights with new style and refresh active providers.
     for _, provider in pairs(Provider.active) do
-      provider:clear()
-      provider:request()
+      for client_id, _ in pairs(provider.client_state) do
+        provider:clear(client_id)
+        provider:request(client_id)
+      end
     end
   end
 
