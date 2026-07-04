@@ -276,6 +276,7 @@ function STHighlighter:on_detach(client_id)
   if state then
     --TODO: delete namespace if/when that becomes possible
     api.nvim_buf_clear_namespace(self.bufnr, state.namespace, 0, -1)
+    self:reset_timer(state)
     self.client_state[client_id] = nil
   end
 end
@@ -299,14 +300,14 @@ end
 ---@package
 ---@param client_id integer
 function STHighlighter:send_request(client_id)
-  local version = util.buf_versions[self.bufnr]
-
-  self:reset_timer(client_id)
-
   local client = vim.lsp.get_client_by_id(client_id)
   local state = self.client_state[client_id]
 
   if client and state then
+    self:reset_timer(state)
+
+    local version = util.buf_versions[self.bufnr]
+
     -- If the server supports range and there's no full result yet, then start with a range
     -- request
     if state.supports_range and not state.has_full_result then
@@ -320,7 +321,6 @@ function STHighlighter:send_request(client_id)
       self:send_full_delta_request(client, state, version)
     end
   end
-  -- end
 end
 
 --- Send a range request for the visible area
@@ -445,7 +445,7 @@ end
 
 ---@private
 function STHighlighter:cancel_active_request(client_id)
-  local state = self.client_state[client_id]
+  local state = assert(self.client_state[client_id])
   local client = vim.lsp.get_client_by_id(client_id)
 
   ---@param request STActiveRequest
@@ -772,8 +772,7 @@ end
 ---@param client_id integer
 function STHighlighter:debounce_request(client_id)
   local state = assert(self.client_state[client_id])
-
-  self:reset_timer(client_id)
+  self:reset_timer(state)
   if self.debounce > 0 then
     state.timer = vim.defer_fn(function()
       self:send_request(client_id)
@@ -784,9 +783,8 @@ function STHighlighter:debounce_request(client_id)
 end
 
 ---@private
----@param client_id integer
-function STHighlighter:reset_timer(client_id)
-  local state = self.client_state[client_id]
+---@param state STClientState
+function STHighlighter:reset_timer(state)
   local timer = state.timer
   if timer then
     state.timer = nil
