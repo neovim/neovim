@@ -397,6 +397,13 @@ BufWriteCmd			Before writing the whole buffer to a file.
 BufWritePost			After writing the whole buffer to a file
 				(should undo the commands for BufWritePre).
 
+							*ChanClose*
+ChanClose			After a channel was closed, before it is removed.
+				This is triggered even when inside an
+				autocommand defined without |autocmd-nested|.
+				Sets these |v:event| keys:
+				    info	as from |nvim_get_chan_info()|
+
 							*ChanInfo*
 ChanInfo			State of channel changed, for instance the
 				client of a RPC channel described itself.

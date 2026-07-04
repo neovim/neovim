@@ -219,6 +219,7 @@ EVENTS
 
 • |:delmarks| now triggers the |MarkSet| autocommand with line==col==0, same
   as |nvim_buf_del_mark()|
+• |ChanClose| is triggered after a channel is closed, before it is removed.
 • |SessionWritePre| event emits just before |:mksession|.
 • |TextPutPre| and |TextPutPost| are triggered before/after putting text.
 • |TabMoved| is triggered when tabs are reordered.

@@ -675,7 +675,7 @@ void rpc_set_client_info(uint64_t id, Dict info)
     chan->rpc.client_type = kClientTypeUnknown;
   }
 
-  channel_info_changed(chan, false);
+  channel_event(chan, EVENT_CHANINFO);
 }
 
 Dict rpc_client_info(Channel *chan)
