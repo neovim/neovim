@@ -1456,8 +1456,26 @@ static void do_filter(exarg_T *eap, char *cmd, bool do_in, bool do_out)
 
     read_linecount = curbuf->b_ml.ml_line_count - read_linecount;
 
-    if (do_out && otmp != NULL) {
+    if (do_in) {
+      linenr_T actual_new_lines = (otmp == NULL) ? (linecount + read_linecount) : read_linecount;
+      curbuf->b_op_start.lnum = line1;
+      curbuf->b_op_start.col = col1;
+      curbuf->b_op_end.lnum = line1 + (actual_new_lines > 0 ? actual_new_lines - 1 : 0);
+      if (curbuf->b_op_end.lnum < line1) {
+        curbuf->b_op_end.lnum = line1;
+      }
+      curbuf->b_op_end.col = col2;
+    } else {
+      curbuf->b_op_start.lnum = line2 + 1;
+      curbuf->b_op_start.col = 0;
+      curbuf->b_op_end.lnum = line2 + read_linecount;
+      curbuf->b_op_end.col = MAXCOL;
+    }
+
+    if (otmp != NULL) {
       appended_lines_mark(line1, read_linecount);
+    } else if (!do_in && otmp == NULL) {
+      appended_lines_mark(line2, read_linecount);
     }
 
     if (do_in) {
@@ -1502,16 +1520,6 @@ static void do_filter(exarg_T *eap, char *cmd, bool do_in, bool do_out)
       linecount = curbuf->b_op_end.lnum - curbuf->b_op_start.lnum + 1;
       curwin->w_cursor.lnum = curbuf->b_op_end.lnum;
       curwin->w_cursor.col = curbuf->b_op_end.col;
-    }
-
-    if (do_out) {
-      curbuf->b_op_start.lnum = line1;
-      curbuf->b_op_start.col = col1;
-      curbuf->b_op_end.lnum = line1 + (read_linecount > 0 ? read_linecount - 1 : 0);
-      if (curbuf->b_op_end.lnum < line1) {
-        curbuf->b_op_end.lnum = line1;
-      }
-      curbuf->b_op_end.col = col2;
     }
 
     beginline(BL_WHITE | BL_FIX);           // cursor on first non-blank
