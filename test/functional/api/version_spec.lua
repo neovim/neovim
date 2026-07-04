@@ -3,6 +3,8 @@ local n = require('test.functional.testnvim')()
 
 local clear, fn, eq = n.clear, n.fn, t.eq
 local api = n.api
+local matches = t.matches
+local pcall_err = t.pcall_err
 
 local function read_mpack_file(fname)
   local fd = io.open(fname, 'rb')
@@ -278,5 +280,34 @@ describe('api metadata', function()
         end
       end
     end
+  end)
+end)
+
+describe('api: optional trailing opts parameter', function()
+  before_each(clear)
+
+  it('may be omitted', function()
+    api.nvim_exec2('let g:x = 41')
+    eq(41, api.nvim_get_var('x'))
+    eq({ output = 'hi' }, api.nvim_exec2('echo "hi"', { output = true }))
+  end)
+
+  it('may be omitted when it is the only parameter', function()
+    eq('table', type(api.nvim_get_context()))
+  end)
+
+  it('errors on too many arguments', function()
+    matches(
+      'Wrong number of arguments: expecting 1 to 2 but got 3',
+      pcall_err(api.nvim_exec2, 'echo 1', {}, 'surplus')
+    )
+    matches(
+      'Wrong number of arguments: expecting at most 1 but got 2',
+      pcall_err(api.nvim_get_context, {}, 'surplus')
+    )
+  end)
+
+  it('errors on too few arguments', function()
+    matches('Wrong number of arguments: expecting 1 to 2 but got 0', pcall_err(api.nvim_exec2))
   end)
 end)

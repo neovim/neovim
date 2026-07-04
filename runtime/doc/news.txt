@@ -140,6 +140,8 @@ API
 
 • |nvim_win_resize()| resizes a window with a specified anchor edge.
   |nvim_win_set_height()| and |nvim_win_set_width()| are now deprecated.
+• |api-contract| allows existing functions to add an optional trailing `opts`
+  parameter, which clients may omit.
 • |nvim_buf_call()| and |nvim_win_call()| now preserve multiple return values.
 • |nvim_set_hl()| supports "font" key.
 • |nvim_open_win()| `zindex` controls whether the UI will use a dimmed cursor
