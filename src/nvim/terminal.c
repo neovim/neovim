@@ -1483,13 +1483,15 @@ static void terminal_focus(const Terminal *term, bool focus)
 
 /// Export rendered terminal state (scrollback + visible screen) as ANSI escape sequences.
 ///
-/// @param term  Terminal to export.
+/// @param term   Terminal to export.
+/// @param start  1-based line number to start from (1 for first line).
+/// @param end    1-based line number to end at (inclusive), or 0 for all remaining.
 /// @return ANSI string (caller must xfree .data).
-String terminal_get_ansi(Terminal *term)
+String terminal_get_ansi(Terminal *term, int start, int end)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   refresh_terminal(term);
-  return te_encode_export_ansi(term);
+  return te_encode_export_ansi(term, start, end);
 }
 
 // }}}
