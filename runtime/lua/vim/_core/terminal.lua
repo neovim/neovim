@@ -1,3 +1,5 @@
+local N_ = vim.fn.gettext
+
 local M = {}
 
 --- Convert a "term://" URI into a filename.
@@ -26,7 +28,8 @@ function M.save(args)
 
   -- Resolve the destination path
   local des ---@type string
-  if vim.startswith(fname, 'term://') then
+  local is_uri = vim.startswith(fname, 'term://')
+  if is_uri then
     -- `:write` without args: derive a name from the URI
     local name = uri2fname(fname)
     des = vim.fs.joinpath(vim.fn.stdpath('state'), 'term', name .. '.mpack')
@@ -36,8 +39,32 @@ function M.save(args)
     des = vim.fn.fnamemodify(vim.fs.normalize(fname), ':p')
   end
 
-  -- Export ANSI content from the terminal
-  local ansi = vim.fn.term_getansi(bufnr)
+  -- For URI-derived paths, check_overwrite() in do_write() checked URI,
+  -- and check_overwrite's os_isdir check is UNIX-only,
+  -- so we must check them here.
+  local stat = vim.uv.fs_stat(des)
+  if stat and stat.type == 'directory' then
+    vim.api.nvim_echo(
+      { { N_('E17: "%s" is a directory'):format(des), 'ErrorMsg' } },
+      true,
+      { err = true }
+    )
+    return
+  end
+  if is_uri and stat and vim.v.cmdbang == 0 then
+    vim.api.nvim_echo(
+      { { N_('E13: File exists (add ! to override)'), 'ErrorMsg' } },
+      true,
+      { err = true }
+    )
+    return
+  end
+
+  -- Export ANSI content from the terminal.
+  -- Use '] and '[ marks (set by buf_write) to export the selected range.
+  local start_mark = vim.api.nvim_buf_get_mark(bufnr, '[')
+  local end_mark = vim.api.nvim_buf_get_mark(bufnr, ']')
+  local ansi = vim.fn.term_getansi(bufnr, start_mark[1], end_mark[1])
   if ansi == '' then
     return
   end
@@ -72,15 +99,13 @@ function M.save(args)
 
   vim.bo[bufnr].modified = false
 
-  -- Check if file existed before write (for the "[New]" indicator)
-  local existed = vim.uv.fs_stat(des) ~= nil
-
   -- Report message
-  local msg = ('"%s"%s %dL, %dB written'):format(
+  local msg = ('"%s"%s %dL, %dB %s'):format(
     des,
-    existed and '' or ' [New]',
+    stat and '' or (' ' .. N_('[New]')),
     line_count,
-    #packed
+    #packed,
+    N_('written')
   )
   vim.api.nvim_echo({ { msg } }, false, {})
 end

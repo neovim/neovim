@@ -10775,9 +10775,15 @@ function vim.fn.tempname() end
 ---
 --- Returns an empty string if {buf} is not a terminal buffer.
 ---
+--- When {start} and {end} are given, only the specified line
+--- range is exported. {start} defaults to 1, {end} defaults to
+--- the last line.
+---
 --- @param buf integer|string
+--- @param start? integer
+--- @param end_? integer
 --- @return string
-function vim.fn.term_getansi(buf) end
+function vim.fn.term_getansi(buf, start, end_) end
 
 --- @deprecated
 --- Use |jobstart()| with `{term: v:true}` instead.

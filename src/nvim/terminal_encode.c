@@ -227,53 +227,66 @@ static void te_encode_line2ansi(Terminal *term, const VTermScreenCell *cells, si
   kv_concat(*out, "\n");
 }
 
-/// Export the full terminal content (scrollback + visible screen) as an ANSI text.
+/// Export rendered terminal state (scrollback + visible screen) as ANSI escape sequences.
 ///
-/// @param term  Terminal instance to export.
-/// @return A `String` containing the raw ANSI-escaped terminal content. The caller
-///         must free `data`.
-String te_encode_export_ansi(Terminal *term)
+/// @param term   Terminal instance to export.
+/// @param start  1-based line number to start from (1 for first line).
+/// @param end    1-based line number to end at (inclusive), or 0 for all remaining.
+/// @return A `String` containing the ANSI escape sequences. The caller must free `data`.
+String te_encode_export_ansi(Terminal *term, int start, int end)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  StringBuilder out = KV_INITIAL_VALUE;
-
-  // Export scrollback buffer
-  for (size_t i = term->sb_current; i > 0; i--) {
-    ScrollbackLine *line = term->sb_buffer[i - 1];
-    te_encode_line2ansi(term, line->cells, line->cols, &out);
-  }
-
-  // Export current screen
   int height, width;
   vterm_get_size(term->vt, &height, &width);
-  int last_row = height - 1;
-  if (term->sb_current == 0) {
-    // Don't save empty line when the `vts` is not full.
-    while (last_row >= 0) {
-      bool empty = true;
-      for (int col = 0; col < width; col++) {
-        VTermScreenCell cell;
-        vterm_screen_get_cell(term->vts, (VTermPos){ .row = last_row, .col = col }, &cell);
-        if (!cell_is_blank(&cell)) {
-          empty = false;
+  linenr_T total = (linenr_T)term->sb_current + (linenr_T)height;
+  // Range write will skip this block so that user-selected ranges are exported as is.
+  if (end == 0 || end >= total) {
+    end = total;
+    if (term->sb_current == 0) {
+      // Don't save empty lines when the visible screen is not full.
+      int last_row = height - 1;
+      while (last_row >= 0) {
+        bool empty = true;
+        for (int col = 0; col < width; col++) {
+          VTermScreenCell cell;
+          vterm_screen_get_cell(term->vts, (VTermPos){ .row = last_row, .col = col }, &cell);
+          if (!cell_is_blank(&cell)) {
+            empty = false;
+            break;
+          }
+        }
+        if (!empty) {
           break;
         }
+        last_row--;
       }
-      if (!empty) {
-        break;
-      }
-      last_row--;
+      // Screen row 0 = buffer line 1
+      end = (linenr_T)last_row + 1;
     }
   }
-  VTermScreenCell *cells = xmalloc(sizeof(*cells) * (size_t)width);
-  for (int row = 0; row <= last_row; row++) {
-    for (int col = 0; col < width; col++) {
-      vterm_screen_get_cell(term->vts, (VTermPos){ .row = row, .col = col }, &cells[col]);
-    }
-    te_encode_line2ansi(term, cells, (size_t)width, &out);
-  }
-  xfree(cells);
 
+  StringBuilder out = KV_INITIAL_VALUE;
+  VTermScreenCell *cells = xmalloc(sizeof(*cells) * (size_t)width);
+
+  for (linenr_T lnum = start; lnum <= end; lnum++) {
+    if (lnum <= (linenr_T)term->sb_current) {
+      // Scrollback: line 1 = sb_buffer[sb_current-1]
+      size_t idx = term->sb_current - (size_t)lnum;
+      ScrollbackLine *line = term->sb_buffer[idx];
+      te_encode_line2ansi(term, line->cells, line->cols, &out);
+    } else {
+      // Visible screen: line sb_current+1 = row 0
+      int row = (lnum - (linenr_T)term->sb_current - 1);
+      for (int col = 0; col < width; col++) {
+        vterm_screen_get_cell(term->vts, (VTermPos){ .row = row, .col = col }, &cells[col]);
+      }
+      te_encode_line2ansi(term, cells, (size_t)width, &out);
+    }
+  }
+
+  xfree(cells);
+  // Reset SGR so the last char's attributes (if exist) do not bleed beyond the exported content.
+  kv_concat(out, "\x1b[0m");
   // Guarantee it's NUL-terminated. Otherwise, it will cause heap-buffer-overflow in `strlen`.
   kv_push(out, NUL);
   // .size should -1 to exclude the side-effect from `kv_push`.
