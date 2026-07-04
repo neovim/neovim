@@ -1880,8 +1880,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                      return vim.lsp.rpc.start(cmd, dispatchers)
                                    end
 <
-                               • See |vim.lsp.rpc.request()|
-                                 |vim.lsp.rpc.notify()|
+                               • See |vim.lsp.rpc.Client|.
                                • For TCP there is a builtin RPC client
                                  factory: |vim.lsp.rpc.connect()|
       • {cmd_cwd}?             (`string`) Directory where the `cmd` process is
@@ -2676,10 +2675,10 @@ Lua module: vim.lsp.rpc                                              *lsp-rpc*
 
     Fields: ~
       • {is_closing}  (`fun(): boolean`) Indicates if the RPC is closing.
-      • {notify}      (`fun(method: string, params: any): boolean`) See
-                      |vim.lsp.rpc.notify()|
+      • {notify}      (`fun(method: string, params: any): boolean`) Sends a
+                      notification to the LSP server.
       • {request}     (`fun(method: string, params: table?, callback: fun(err?: lsp.ResponseError, result: any, request_id: integer), notify_reply_callback?: fun(message_id: integer)):boolean,integer?`)
-                      See |vim.lsp.rpc.request()|
+                      Sends a request to the LSP server.
       • {terminate}   (`fun()`) Terminates the RPC client.
 
 
@@ -2709,34 +2708,6 @@ format_rpc_error({err})                       *vim.lsp.rpc.format_rpc_error()*
 
     Return: ~
         (`string`) error_message The formatted error message
-
-notify({method}, {params})                              *vim.lsp.rpc.notify()*
-    Sends a notification to the LSP server.
-
-    Parameters: ~
-      • {method}  (`string`) The invoked LSP method
-      • {params}  (`table?`) Parameters for the invoked LSP method
-
-    Return: ~
-        (`boolean`) `true` if notification could be sent, `false` if not
-
-                                                       *vim.lsp.rpc.request()*
-request({method}, {params}, {callback}, {notify_reply_callback})
-    Sends a request to the LSP server and runs {callback} upon response.
-
-    Parameters: ~
-      • {method}                 (`string`) The invoked LSP method
-      • {params}                 (`table?`) Parameters for the invoked LSP
-                                 method
-      • {callback}               (`fun(err: lsp.ResponseError?, result: any)`)
-                                 Callback to invoke
-      • {notify_reply_callback}  (`fun(message_id: integer)?`) Callback to
-                                 invoke as soon as a request is no longer
-                                 pending
-
-    Return (multiple): ~
-        (`boolean`) success `true` if request could be sent, `false` if not
-        (`integer?`) message_id if request could be sent, `nil` if not
 
                                             *vim.lsp.rpc.rpc_response_error()*
 rpc_response_error({code}, {message}, {data})

@@ -72,7 +72,7 @@ end
 --- end
 --- ```
 ---
---- - See |vim.lsp.rpc.request()| |vim.lsp.rpc.notify()|
+--- - See |vim.lsp.rpc.Client|.
 --- - For TCP there is a builtin RPC client factory: |vim.lsp.rpc.connect()|
 --- @field cmd string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.Client
 ---
