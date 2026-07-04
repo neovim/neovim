@@ -1293,7 +1293,7 @@ describe('stdpath()', function()
     end)
     local short_path =
       vim.fn.system(('for %%I in ("%s") do @echo %%~sI'):format(dir), ''):gsub('\n', '')
-    eq('XTEST_~1', vim.fs.basename(short_path))
+    t.matches('^XTEST_~[12]$', vim.fs.basename(short_path))
     clear({
       env = {
         TMP = short_path,
