@@ -2191,6 +2191,7 @@ vim.go.ei = vim.go.eventignore
 --- Note: The following events are considered to happen outside of a
 --- window context and thus cannot be ignored by 'eventignorewin':
 ---
+--- 	`ChanClose`,
 --- 	`ChanInfo`,
 --- 	`ChanOpen`,
 --- 	`CmdUndefined`,

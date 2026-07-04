@@ -22,6 +22,7 @@ return {
     BufWriteCmd = true, -- write buffer using command
     BufWritePost = true, -- after writing a buffer
     BufWritePre = true, -- before writing a buffer
+    ChanClose = false,
     ChanInfo = false, -- info was received about channel
     ChanOpen = false, -- channel was opened
     CmdUndefined = false, -- command undefined

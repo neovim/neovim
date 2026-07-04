@@ -263,7 +263,7 @@ void channel_create_event(Channel *chan, const char *ext_source)
   (void)ext_source;
 #endif
 
-  channel_info_changed(chan, true);
+  channel_event(chan, EVENT_CHANOPEN);
 }
 
 void channel_incref(Channel *chan)
@@ -273,6 +273,11 @@ void channel_incref(Channel *chan)
 
 void channel_decref(Channel *chan)
 {
+  if (chan->refcount == 1 && !chan->did_close_event) {
+    chan->did_close_event = true;
+    channel_event(chan, EVENT_CHANCLOSE);
+  }
+
   if (!(--chan->refcount)) {
     // delay free, so that libuv is done with the handles
     multiqueue_put(main_loop.events, free_channel_event, chan);
@@ -951,9 +956,8 @@ static void term_close(void *data)
   multiqueue_put(chan->events, term_delayed_free, data);
 }
 
-void channel_info_changed(Channel *chan, bool new_chan)
+void channel_event(Channel *chan, event_T event)
 {
-  event_T event = new_chan ? EVENT_CHANOPEN : EVENT_CHANINFO;
   if (has_event(event)) {
     channel_incref(chan);
     multiqueue_put(main_loop.events, set_info_event, chan, (void *)(intptr_t)event);

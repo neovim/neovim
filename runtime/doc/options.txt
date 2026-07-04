@@ -2544,6 +2544,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Note: The following events are considered to happen outside of a
 	window context and thus cannot be ignored by 'eventignorewin':
 
+		|ChanClose|,
 		|ChanInfo|,
 		|ChanOpen|,
 		|CmdUndefined|,
