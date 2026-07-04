@@ -32,6 +32,9 @@ func Test__mksession_arglocal()
 endfunc
 
 func Test_mksession_arglocal_localdir()
+  argglobal
+  %argdelete
+
   call mkdir('Xa', 'R')
   call writefile(['This is Xb'], 'Xa/Xb.txt', 'D')
   let olddir = getcwd()
@@ -71,6 +74,7 @@ func Test_mksession()
   tabnew
   let wrap_save = &wrap
   set sessionoptions=buffers splitbelow fileencoding=latin1
+  defer execute('set sessionoptions& splitbelow&')
   call setline(1, [
     \   'start:',
     \   'no multibyte chAracter',
@@ -163,13 +167,14 @@ func Test_mksession()
   call delete('Xtest_mks.out')
   call delete(tmpfile)
   let &wrap = wrap_save
-  set sessionoptions&
 endfunc
 
 func Test_mksession_winheight()
   new
   set winheight=10
+  defer execute('set winheight&')
   set winminheight=2
+  defer execute('set winminheight&')
   mksession! Xtest_mks.out
   source Xtest_mks.out
 
@@ -178,6 +183,7 @@ endfunc
 
 func Test_mksession_large_winheight()
   set winheight=999
+  defer execute('set winheight&')
   mksession! Xtest_mks_winheight.out
   set winheight&
   source Xtest_mks_winheight.out
@@ -186,6 +192,7 @@ endfunc
 
 func Test_mksession_zero_winheight()
   set winminheight=0
+  defer execute('set winminheight&')
   edit SomeFile
   split
   wincmd _
@@ -243,6 +250,9 @@ func Test_mksession_arglist()
 endfunc
 
 func Test_mksession_one_buffer_two_windows()
+  set splitbelow
+  defer execute('set splitbelow&')
+
   edit Xtest1
   new Xtest2
   split
@@ -351,6 +361,9 @@ func Test_mksession_blank_tabs()
 endfunc
 
 func Test_mksession_buffer_count()
+  argglobal
+  %argdelete
+
   set hidden
 
   " Edit exactly three files in the current session.
@@ -996,9 +1009,13 @@ endfunc
 
 " Test for mksession without options restores winminheight
 func Test_mksession_winminheight()
+  set winheight=10 winwidth=10 winminheight& winminwidth&
+  defer execute('set winheight& winwidth&')
   set sessionoptions-=options
+  defer execute('set sessionoptions&')
   split
   mksession! Xtest_mks.out
+  defer delete('Xtest_mks.out')
   let found_restore = 0
   let lines = readfile('Xtest_mks.out')
   for line in lines
@@ -1014,12 +1031,11 @@ func Test_mksession_winminheight()
   tabclose | tabclose | close
   call assert_equal(1, tabpagenr('$'))
   set winminheight=2 winminwidth=2
+  defer execute('set winminheight& winminwidth&')
   source Xtest_mks.out
   call assert_equal(3, tabpagenr('$'))
   call assert_equal([2, 2], [&winminheight, &winminwidth])
   tabclose | tabclose | close
-  call delete('Xtest_mks.out')
-  set sessionoptions& winminheight& winminwidth&
 endfunc
 
 " Test for mksession with and without options restores shortmess
@@ -1312,8 +1328,12 @@ func Test_mksession_vim9_expr_mappings()
 
   " Load and check the plugin
   const ref_txt = 'Hello from vim9 dummy plugin!'
+  let orig_packpath = &packpath
   let &packpath .= ',' . base
+  let orig_runtimepath = &runtimepath
   packadd dummy9
+  defer execute('let &packpath = orig_runtimepath')
+  defer execute('let &runtimepath = orig_runtimepath')
   messages clear
   normal dummy-test
 
@@ -1378,8 +1398,12 @@ func Test_mksession_legacy_expr_mappings()
 
   " Load and check the plugin
   const ref_txt = 'Hello from good old dummy plugin!'
+  let orig_packpath = &packpath
   let &packpath .= ',' . base
+  let orig_runtimepath = &runtimepath
   packadd dummy
+  defer execute('let &packpath = orig_runtimepath')
+  defer execute('let &runtimepath = orig_runtimepath')
   messages clear
   normal dummy-test
 
@@ -1454,6 +1478,8 @@ func Test_mksession_cursor_position()
   for file in files
       call delete(file)
   endfor
+
+  %bwipe
 endfunc
 
 " Test sessions global and local mappings
@@ -1472,32 +1498,37 @@ func Test_mksession_localmappings()
   for option in ["=options", "=localoptions"]
     for global in [0, 1]
 
-      " select options
-      exe "set sessionoptions" .. option
+      try
+        " select options
+        exe "set sessionoptions" .. option
 
-      " mapping
-      exe "nnoremap" . (global ? " " : " <buffer> ")
-            \ . "dummy-test <Cmd>silent write XDummyOutput<CR>"
-      let case = $"mapping_{global ? "global" : "local"}_{option}"
+        " mapping
+        exe "nnoremap" . (global ? " " : " <buffer> ")
+              \ . "dummy-test <Cmd>silent write XDummyOutput<CR>"
+        let case = $"mapping_{global ? "global" : "local"}_{option}"
 
-      " test mapping
-      normal dummy-test
-      call assert_true(filereadable("XDummyOutput"), $"Output file was not created by {case}")
-      call delete("XDummyOutput")
+        " test mapping
+        normal dummy-test
+        call assert_true(filereadable("XDummyOutput"), $"Output file was not created by {case}")
 
-      " session
-      let sessionfile = "XSession_" . case
-      exe $"mksession {sessionfile}"
+        " session
+        let sessionfile = "XSession_" . case
+        exe $"mksession {sessionfile}"
 
-      if global && option =~ "localoptions"
-        let invalid_sessions += [sessionfile]
-      else
-        let valid_sessions += [sessionfile]
-      endif
+        if global && option =~ "localoptions"
+          let invalid_sessions += [sessionfile]
+        else
+          let valid_sessions += [sessionfile]
+        endif
 
-      " clear mappings
-      nmapclear
-      nmapclear <buffer>
+      finally
+        call delete("XDummyOutput")
+
+        " clear mappings
+        nmapclear
+        nmapclear <buffer>
+        set sessionoptions&
+      endtry
 
     endfor
   endfor
