@@ -1203,10 +1203,10 @@ endfunc
 " Closing a window might cause an endless loop
 " E814 for older Vims
 func Test_autocmd_bufwipe_in_SessLoadPost()
+  set noswapfile
   edit Xtest
   tabnew
   file Xsomething
-  set noswapfile
   mksession!
 
   let content =<< trim [CODE]

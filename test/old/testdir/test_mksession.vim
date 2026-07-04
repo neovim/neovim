@@ -1280,4 +1280,270 @@ func Test_mkview_default_home()
   endif
 endfunc
 
+" Test vim9 expression mappings
+func Test_mksession_vim9_expr_mappings()
+  throw 'Skipped: Vim9 script is N/A'
+  CheckFeature packages
+
+  " Create a dummy vim9 plugin
+  const base = getcwd() . '/rtdir'
+  const root = base . '/pack/test/opt/dummy9'
+  call mkdir(root . '/plugin', 'p')
+  let plugin_sources =<< trim END
+    vim9script
+    import autoload 'dummy9.vim'
+    nnoremap <expr> dummy-test dummy9.Test() .. "<CR>"
+  END
+  call writefile(plugin_sources, root . '/plugin/dummy9.vim')
+
+  call mkdir(root . '/autoload', 'p')
+  let auto_sources =<< trim END
+    vim9script
+    const ref_txt = 'Hello from vim9 dummy plugin!'
+    export def Test(): string
+      writefile([ref_txt], 'XDummyOutput')
+      return has("gui_running") ? '' : $':echomsg "{ref_txt}"'
+    enddef
+  END
+  call writefile(auto_sources, root . '/autoload/dummy9.vim')
+
+  " clean up later
+  defer delete(base, 'rf')
+
+  " Load and check the plugin
+  const ref_txt = 'Hello from vim9 dummy plugin!'
+  let &packpath .= ',' . base
+  packadd dummy9
+  messages clear
+  normal dummy-test
+
+  if !has('gui_running')
+    call assert_match(ref_txt, execute('messages'), 'No vim9 plugin dummy.Test() execution')
+  endif
+  call assert_true(filereadable('XDummyOutput'), 'Output file was not created by Vim9 plugin')
+  call assert_equal([ref_txt], readfile('XDummyOutput'))
+  call delete('XDummyOutput')
+
+  " Create a session file
+  mksession! XDummySession.vim
+  defer delete('XDummySession.vim')
+  call assert_true(filereadable('XDummySession.vim'), 'Session file was not created')
+
+  " Check the session file mappings are operational
+  let test_sources =<< trim END
+    " load session
+    source XDummySession.vim
+    " execute vim9 expression mapping
+    normal dummy-test
+    " on my way
+    cq
+  END
+  call writefile(test_sources, 'XTest.vim', 'D')
+  " spawn a new Vim instance to load the session and execute the mapping
+  call system(GetVimCommand('XTest.vim'))
+  defer delete('XDummyOutput')
+  call assert_true(filereadable('XDummyOutput'),
+        \ 'Expected output file was not created by Vim9 plugin')
+  call assert_equal([ref_txt], readfile('XDummyOutput'))
+
+endfunc
+
+" Test legacy vimscript expression mappings
+func Test_mksession_legacy_expr_mappings()
+
+  CheckFeature packages
+
+  " Create a dummy vim9 plugin
+  const base = getcwd() . '/rtdir'
+  const root = base . '/pack/test/opt/dummy'
+  call mkdir(root . '/plugin', 'p')
+
+  " clean up later
+  defer delete(base, 'rf')
+
+  let plugin_sources =<< trim END
+    nnoremap <expr> dummy-test dummy#Test() . "<CR>"
+  END
+  call writefile(plugin_sources, root . '/plugin/dummy.vim')
+
+  call mkdir(root . '/autoload', 'p')
+  let auto_sources =<< trim END
+    const s:ref_txt = 'Hello from good old dummy plugin!'
+    func dummy#Test()
+      call writefile([s:ref_txt], 'XDummyOutput')
+      return has("gui_running") ? '' : $':echomsg "{s:ref_txt}"'
+    endfunc
+  END
+  call writefile(auto_sources, root . '/autoload/dummy.vim')
+
+  " Load and check the plugin
+  const ref_txt = 'Hello from good old dummy plugin!'
+  let &packpath .= ',' . base
+  packadd dummy
+  messages clear
+  normal dummy-test
+
+  if !has("gui_running")
+    call assert_match(ref_txt, execute('messages'), 'No vim9 plugin dummy.Test() execution')
+  endif
+  call assert_true(filereadable('XDummyOutput'), 'Output file was not created by legacy plugin')
+  call assert_equal([ref_txt], readfile('XDummyOutput'))
+  call delete('XDummyOutput')
+
+  " Create a session file
+  mksession! XDummySession.vim
+  defer delete('XDummySession.vim')
+  call assert_true(filereadable('XDummySession.vim'), 'Session file was not created')
+
+  " Check the session file mappings are operational
+  let test_sources =<< trim END
+    " load session
+    source XDummySession.vim
+    " execute legacy vimscript expression mapping
+    normal dummy-test
+    " on my way
+    cq
+  END
+  call writefile(test_sources, 'XTest.vim', 'D')
+  " spawn a new Vim instance to load the session and execute the mapping
+  call system(GetVimCommand('XTest.vim'))
+  defer delete('XDummyOutput')
+  call assert_true(filereadable('XDummyOutput'),
+        \ 'Expected output file was not created by legacy vim plugin')
+  call assert_equal([ref_txt], readfile('XDummyOutput'))
+
+endfunc
+
+" Test sessions cursor position management
+func Test_mksession_cursor_position()
+
+  " Set windows test scenario
+  let files = []
+  for i in range(10)
+      let file = $'Xfile{i}'
+      exe $"{i ? 'split' : 'edit'} {file}"
+      call append(0, $"Session file cursor position testing {i}")
+      " Force cursor position restoring commands
+      setlocal nowrap
+      normal dd29zl
+      " Check expected position
+      call assert_equal([0, 1, 30, 0], getpos('.'), $"Fail to set cursor position for {file}")
+      write!
+      let files += [file]
+  endfor
+
+  " Save session
+  mksession! Xtest_curpos
+
+  " Test restoring session
+  %bwipe!
+  try
+      source Xtest_curpos
+  catch
+      call assert_report("Failure sourcing session file")
+  endtry
+
+  " Check cursor position
+  for file in files
+      exe $"drop {file}"
+      call assert_equal([0, 1, 30, 0], getpos('.'), $"Cursor position not restored correctly for {file}")
+  endfor
+
+  " Clean up
+  call delete('Xtest_curpos')
+  for file in files
+      call delete(file)
+  endfor
+endfunc
+
+" Test sessions global and local mappings
+func Test_mksession_localmappings()
+
+  " Create sessions. Mapping execution is tested running a file
+  let valid_sessions = [] " keep map info
+  let invalid_sessions = [] " do not keep map info
+  " localoptions requires a buffer
+  setlocal noswapfile
+  silent write XDummy
+  defer delete('XDummy')
+
+  " Nvim: default 'sessionoptions' doesn't include "options"
+  "for option in ["&", "=options", "=localoptions"]
+  for option in ["=options", "=localoptions"]
+    for global in [0, 1]
+
+      " select options
+      exe "set sessionoptions" .. option
+
+      " mapping
+      exe "nnoremap" . (global ? " " : " <buffer> ")
+            \ . "dummy-test <Cmd>silent write XDummyOutput<CR>"
+      let case = $"mapping_{global ? "global" : "local"}_{option}"
+
+      " test mapping
+      normal dummy-test
+      call assert_true(filereadable("XDummyOutput"), $"Output file was not created by {case}")
+      call delete("XDummyOutput")
+
+      " session
+      let sessionfile = "XSession_" . case
+      exe $"mksession {sessionfile}"
+
+      if global && option =~ "localoptions"
+        let invalid_sessions += [sessionfile]
+      else
+        let valid_sessions += [sessionfile]
+      endif
+
+      " clear mappings
+      nmapclear
+      nmapclear <buffer>
+
+    endfor
+  endfor
+
+  " Check the session files are operational
+  for session in valid_sessions
+
+    let test_sources =<< trim eval END
+      " load session
+      silent source {session}
+      " execute legacy vimscript expression mapping
+      normal dummy-test
+      " on my way
+      cq
+    END
+
+    call writefile(test_sources, 'XTest.vim')
+    call system(GetVimCommand('XTest.vim'))
+    call assert_true(filereadable('XDummyOutput'),
+          \ $"Expected map not defined in session file {session}")
+    call delete('XDummyOutput')
+    call delete(session)
+
+  endfor
+
+  for session in invalid_sessions
+
+    let test_sources =<< trim eval END
+      " load session
+      silent source {session}
+      " execute legacy vimscript expression mapping
+      normal dummy-test
+      " on my way
+      cq
+    END
+
+    call writefile(test_sources, 'XTest.vim')
+    call system(GetVimCommand('XTest.vim'))
+    call assert_false(filereadable('XDummyOutput'),
+          \ $"Unexpected map defined in session file {session}")
+    if filereadable('XDummyOutput')
+      call delete('XDummyOutput')
+    endif
+    call delete(session)
+  endfor
+
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
