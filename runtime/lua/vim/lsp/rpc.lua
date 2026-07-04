@@ -266,10 +266,10 @@ end
 --- @field private message_stream vim.net.MessageStream
 --- @field private dispatchers vim.lsp.rpc.Dispatchers
 ---
---- See [vim.lsp.rpc.request()]
+--- Sends a request to the LSP server.
 --- @field request fun(method: vim.lsp.protocol.Method.ClientToServer.Request, params: table?, callback: fun(err?: lsp.ResponseError, result: any, request_id: integer), notify_reply_callback?: fun(message_id: integer)):boolean,integer?
 ---
---- See [vim.lsp.rpc.notify()]
+--- Sends a notification to the LSP server.
 --- @field notify fun(method: vim.lsp.protocol.Method.ClientToServer.Notification, params: any): boolean
 ---
 --- Indicates if the RPC is closing.
@@ -304,8 +304,7 @@ function Client.new(dispatchers, transport, decode, format)
     result.transport:terminate()
   end
 
-  --- Sends a request to the LSP server and runs {callback} upon response.
-  ---
+  ---@private
   ---@param method (vim.lsp.protocol.Method.ClientToServer.Request) The invoked LSP method
   ---@param params (table?) Parameters for the invoked LSP method
   ---@param callback fun(err: lsp.ResponseError?, result: any) Callback to invoke
@@ -316,7 +315,7 @@ function Client.new(dispatchers, transport, decode, format)
     return result:_request(method, params, callback, notify_reply_callback)
   end
 
-  --- Sends a notification to the LSP server.
+  ---@private
   ---@param method (vim.lsp.protocol.Method.ClientToServer.Notification) The invoked LSP method
   ---@param params (table?) Parameters for the invoked LSP method
   ---@return boolean `true` if notification could be sent, `false` if not
@@ -386,7 +385,7 @@ function Client:send_response(request_id, err, result)
 end
 
 ---@package
---- Sends a request to the LSP server and runs {callback} upon response. |vim.lsp.rpc.request()|
+--- Sends a request to the LSP server and runs {callback} upon response.
 ---
 ---@param method vim.lsp.protocol.Method.ClientToServer.Request The invoked LSP method
 ---@param params table? Parameters for the invoked LSP method
