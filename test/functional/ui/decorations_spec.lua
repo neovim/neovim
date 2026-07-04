@@ -665,6 +665,7 @@ describe('decorations providers', function()
 
   it('virtual text works with wrapped lines', function()
     insert(mulholland)
+    command('setlocal comments=://')
     feed('ggJj3JjJ')
     setup_provider [[
       local hl = api.nvim_get_hl_id_by_name "ErrorMsg"

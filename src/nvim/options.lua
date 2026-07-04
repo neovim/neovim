@@ -1433,7 +1433,7 @@ local options = {
     {
       abbreviation = 'com',
       cb = 'did_set_comments',
-      defaults = 's1:/*,mb:*,ex:*/,://,b:#,:%,:XCOMM,n:>,fb:-,fb:•',
+      defaults = '',
       deny_duplicates = true,
       desc = [=[
         A comma-separated list of strings that can start a comment line.  See

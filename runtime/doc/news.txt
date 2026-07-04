@@ -122,6 +122,8 @@ OPTIONS
   To restore the previous truncation from the left, add a `%<` to the start.
   The same applies to 'rulerformat', 'statuscolumn', 'tabline', 'winbar',
   'titlestring', and 'iconstring'.
+• The default value of 'comments' is now empty instead of
+  "s1:/*,mb:*,ex:*/,://,b:#,:%,:XCOMM,n:>,fb:-,fb:•".
 
 PLUGINS
 

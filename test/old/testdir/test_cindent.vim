@@ -2772,7 +2772,7 @@ func Test_cindent_15()
   new
   setl cindent ts=4 sw=4
   setl cino=c0
-  setl comments& comments-=s1:/* comments^=s0:/*
+  setl comments=s1:/*,mb:*,ex:*/,://,b:#,:%,:XCOMM,n:>,fb:- comments-=s1:/* comments^=s0:/*
 
   let code =<< trim [CODE]
   void f()
@@ -2807,7 +2807,7 @@ func Test_cindent_16()
   new
   setl cindent ts=4 sw=4
   setl cino=c0,C1
-  setl comments& comments-=s1:/* comments^=s0:/*
+  setl comments=s1:/*,mb:*,ex:*/,://,b:#,:%,:XCOMM,n:>,fb:- comments-=s1:/* comments^=s0:/*
 
   let code =<< trim [CODE]
   void f()

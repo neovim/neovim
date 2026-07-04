@@ -42,7 +42,7 @@ Defaults                                            *defaults* *nvim-defaults*
 - 'background' defaults to "dark" (unless set automatically by the terminal/UI)
 - 'backupdir' defaults to .,~/.local/state/nvim/backup// (|xdg|), auto-created
 - 'belloff' defaults to "all"
-- 'comments' includes "fb:•"
+- 'comments' defaults to ""
 - 'commentstring' defaults to ""
 - 'compatible' is always disabled
 - 'complete' excludes "i"

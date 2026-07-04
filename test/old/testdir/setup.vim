@@ -1,5 +1,6 @@
 if exists('s:did_load')
   " Align Nvim defaults to Vim.
+  set comments=s1:/*,mb:*,ex:*/,://,b:#,:%,:XCOMM,n:>,fb:-
   set commentstring=/*\ %s\ */
   if g:testname !~ 'test_ins_complete_no_halt\.vim$'
     set complete=.,w,b,u,t,i
