@@ -1595,9 +1595,11 @@ format({opts})                                          *vim.lsp.buf.format()*
                   default: current selection in visual mode, `nil` in other
                   modes, formatting the full buffer) Range to format. Table
                   must contain `start` and `end` keys with {row,col} tuples
-                  using (1,0) indexing. Can also be a list of tables that
-                  contain `start` and `end` keys as described above, in which
-                  case `textDocument/rangesFormatting` support is required.
+                  using (1,0) indexing. The end column can be -1 to format
+                  through the end of the line. Can also be a list of tables
+                  that contain `start` and `end` keys as described above, in
+                  which case `textDocument/rangesFormatting` support is
+                  required.
                 • {timeout_ms}? (`integer`, default: `1000`) Time in
                   milliseconds to block for formatting requests. No effect if
                   async=true.

@@ -1343,6 +1343,52 @@ describe('vim.lsp.buf', function()
       }
     end)
 
+    it('formats range ending with -1 column', function()
+      exec_lua(create_server_definition)
+      local result = exec_lua(function()
+        local server = _G._create_server({
+          capabilities = {
+            documentRangeFormattingProvider = true,
+          },
+          handlers = {
+            ['textDocument/rangeFormatting'] = function(_, params, callback)
+              callback(nil, {
+                {
+                  range = params.range,
+                  newText = 'function fn(abc)\n  print("hello")',
+                },
+              })
+            end,
+          },
+        })
+        local bufnr = vim.api.nvim_get_current_buf()
+        local client_id = assert(vim.lsp.start({ name = 'dummy', cmd = server.cmd }))
+        vim.api.nvim_win_set_buf(0, bufnr)
+        vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, {
+          'function fn(abc  )',
+          '  print("hello" )',
+          'end',
+        })
+        vim.lsp.buf.format({
+          bufnr = bufnr,
+          range = {
+            start = { 1, 0 },
+            ['end'] = { 2, -1 },
+          },
+        })
+        vim.lsp.get_client_by_id(client_id):stop()
+        return {
+          lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true),
+          range = server.messages[3].params.range,
+        }
+      end)
+      eq({
+        start = { line = 0, character = 0 },
+        ['end'] = { line = 1, character = 17 },
+      }, result.range)
+      eq({ 'function fn(abc)', '  print("hello")', 'end' }, result.lines)
+    end)
+
     it('sends textDocument/rangesFormatting request to format multiple ranges', function()
       local expected_handlers = {
         { NIL, {}, { method = 'shutdown', client_id = 1 } },

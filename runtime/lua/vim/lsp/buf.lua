@@ -611,7 +611,7 @@ end
 ---
 --- Range to format.
 --- Table must contain `start` and `end` keys with {row,col} tuples using
---- (1,0) indexing.
+--- (1,0) indexing. The end column can be -1 to format through the end of the line.
 --- Can also be a list of tables that contain `start` and `end` keys as described above,
 --- in which case `textDocument/rangesFormatting` support is required.
 --- (Default: current selection in visual mode, `nil` in other modes,
@@ -664,6 +664,13 @@ function M.format(opts)
   local function set_range(client, params)
     ---  @param r {start:[integer,integer],end:[integer, integer]}
     local function to_lsp_range(r)
+      if r['end'][2] == -1 then
+        local end_line = api.nvim_buf_get_lines(bufnr, r['end'][1] - 1, r['end'][1], true)[1]
+        return {
+          start = vim.pos(bufnr, r.start[1] - 1, r.start[2]):to_lsp(client.offset_encoding),
+          ['end'] = vim.pos(bufnr, r['end'][1] - 1, #end_line):to_lsp(client.offset_encoding),
+        }
+      end
       return util.make_given_range_params(r.start, r['end'], bufnr, client.offset_encoding).range
     end
 
