@@ -12016,6 +12016,18 @@ tempname()                                                          *tempname()*
                 Return: ~
                   (`string`)
 
+term_getansi({buf})                                             *term_getansi()*
+		Exports the rendered terminal state (scrollback and visible
+		screen) as ANSI escape sequences.
+
+		Returns an empty string if {buf} is not a terminal buffer.
+
+                Parameters: ~
+                  • {buf} (`integer|string`)
+
+                Return: ~
+                  (`string`)
+
 test_garbagecollect_now()                            *test_garbagecollect_now()*
 		Like |garbagecollect()|, but executed right away.  This must
 		only be called directly to avoid any structure to exist

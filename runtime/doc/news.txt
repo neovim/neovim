@@ -355,10 +355,9 @@ STARTUP
 
 TERMINAL
 
-• |:write| in a terminal buffer exports the rendered state as a msgpack file
-  at |stdpath()|/term/. An explicit path (e.g. `:w foo`) writes to that path
-  with ".mpack" appended. Range writes (e.g. `:%w foo.txt`) write the buffer
-  text normally.
+• |:write| in a terminal buffer exports the rendered terminal state as a
+  msgpack file at |stdpath()|/term/. An explicit path (e.g. `:w foo`) writes
+  to that path.
 
 TREESITTER
 

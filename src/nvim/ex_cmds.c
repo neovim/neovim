@@ -1854,23 +1854,6 @@ int do_write(exarg_T *eap)
     return FAIL;
   }
 
-  // Terminal buffers export rendered state as msgpack.
-  // Non-range `:write` / `:update` saves terminal state; explicit range writes
-  // (e.g. `:%w`, `:1,10w`) fall through to buf_write() for plain text.
-  if (curbuf->terminal && (eap->cmdidx == CMD_write || eap->cmdidx == CMD_update)) {
-    if (eap->addr_count == 0) {
-      if (eap->append) {
-        emsg(_("Cannot append terminal state; use `:write` without \">>\""));
-        goto theend;
-      }
-      if (terminal_save_state(curbuf->terminal, eap->arg, eap->forceit, eap->mkdir_p)) {
-        return OK;
-      } else {
-        goto theend;
-      }
-    }
-  }
-
   char *ffname = eap->arg;
   if (*ffname == NUL) {
     if (eap->cmdidx == CMD_saveas) {
@@ -1908,12 +1891,14 @@ int do_write(exarg_T *eap)
   // Writing to the current file is not allowed in readonly mode
   // and a file name is required.
   // "nofile" and "nowrite" buffers cannot be written implicitly either.
-  if (!other && (bt_dontwrite_msg(curbuf)
-                 || check_fname() == FAIL
+  // Terminal buffers use BufWriteCmd for state export, so let them reach buf_write().
+  if (!other && !curbuf->terminal
+      && (bt_dontwrite_msg(curbuf)
+          || check_fname() == FAIL
 #ifdef UNIX
-                 || check_writable(curbuf->b_ffname) == FAIL
+          || check_writable(curbuf->b_ffname) == FAIL
 #endif
-                 || check_readonly(&eap->forceit, curbuf))) {
+          || check_readonly(&eap->forceit, curbuf))) {
     goto theend;
   }
 
@@ -1937,6 +1922,12 @@ int do_write(exarg_T *eap)
         goto theend;
       }
     }
+  }
+
+  // Terminal buffers export rendered state as msgpack, and appending is not supported.
+  if (curbuf->terminal && eap->append) {
+    emsg(_("Cannot append terminal state; use `:write` without \">>\""));
+    goto theend;
   }
 
   if (check_overwrite(eap, curbuf, fname, ffname, other) == OK) {

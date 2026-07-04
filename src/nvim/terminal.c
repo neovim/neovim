@@ -1481,83 +1481,15 @@ static void terminal_focus(const Terminal *term, bool focus)
   }
 }
 
-/// Export the terminal's rendered state (scrollback + screen) to a msgpack file.
+/// Export rendered terminal state (scrollback + visible screen) as ANSI escape sequences.
 ///
-/// The destination, overwrite, and parent directory handling are decided by the
-/// Lua `vim._core.terminal.save`.
-///
-/// @param term     Terminal to export.
-/// @param fname    Destination name/path, or `""` (resolved in Lua).
-/// @param force    Overwrite an existing destination (`:write!`).
-/// @param mkdir_p  Create missing parent directories for explicit paths (`++p`).
-/// @return true on success.
-bool terminal_save_state(Terminal *term, char *fname, bool force, bool mkdir_p)
+/// @param term  Terminal to export.
+/// @return ANSI string (caller must xfree .data).
+String terminal_get_ansi(Terminal *term)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (term->in_altscreen) {
-    emsg(_("Cannot :write terminal state while the alternate screen is active"));
-    return false;
-  }
-
   refresh_terminal(term);
-
-  Channel *chan = (Channel *)term->opts.data;
-  const char *cwd = NULL;
-  if (chan->streamtype == kChannelStreamProc) {
-    // Internal streams have no associated process cwd; Lua receives an empty string in that case.
-    cwd = chan->stream.proc.cwd;
-  }
-
-  String content = te_encode_export_ansi(term);
-
-  typval_T tv_args[] = {
-    (typval_T){ .v_type = VAR_NUMBER, .vval.v_number = term->buf_handle },
-    (typval_T){ .v_type = VAR_STRING, .vval.v_string = content.data },
-    (typval_T){ .v_type = VAR_STRING, .vval.v_string = (char *)cwd },
-    (typval_T){ .v_type = VAR_STRING, .vval.v_string = fname },
-    (typval_T){ .v_type = VAR_BOOL, .vval.v_bool = force ? kBoolVarTrue : kBoolVarFalse },
-    (typval_T){ .v_type = VAR_BOOL, .vval.v_bool = mkdir_p ? kBoolVarTrue : kBoolVarFalse },
-    (typval_T){ .v_type = VAR_UNKNOWN },
-  };
-  typval_T rettv = TV_INITIAL_VALUE;
-  nlua_call_vimfn("vim._core.terminal", "save", tv_args, &rettv);
-
-  bool ok = false;
-  if (rettv.v_type == VAR_DICT) {
-    if (tv_dict_get_bool(rettv.vval.v_dict, "ok", false)) {
-      ok = true;
-      const char *msg_str = tv_dict_get_string(rettv.vval.v_dict, "msg", false);
-      if (msg_str) {
-        msg(msg_str, 0);
-      }
-    } else {
-      const int err = (int)tv_dict_get_number(rettv.vval.v_dict, "err");
-      const char *path = tv_dict_get_string(rettv.vval.v_dict, "path", false);
-      if (!path) {
-        path = "";
-      }
-      switch (err) {
-      case 13:
-        emsg(_(e_exists));
-        break;
-      case 17:
-        semsg(_(e_isadir2), path);
-        break;
-      case 212:
-        semsg(_(e_cant_open_file_for_writing_str), path);
-        break;
-      default:
-        emsg(_(e_cant_open_file_for_writing));
-        break;
-      }
-    }
-  } else if (rettv.v_type != VAR_UNKNOWN) {
-    emsg(_(e_cant_open_file_for_writing));
-  }
-
-  tv_clear(&rettv);
-  xfree(content.data);
-  return ok;
+  return te_encode_export_ansi(term);
 }
 
 // }}}

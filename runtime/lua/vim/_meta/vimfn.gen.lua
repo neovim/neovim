@@ -10770,6 +10770,15 @@ function vim.fn.tanh(expr) end
 --- @return string
 function vim.fn.tempname() end
 
+--- Exports the rendered terminal state (scrollback and visible
+--- screen) as ANSI escape sequences.
+---
+--- Returns an empty string if {buf} is not a terminal buffer.
+---
+--- @param buf integer|string
+--- @return string
+function vim.fn.term_getansi(buf) end
+
 --- @deprecated
 --- Use |jobstart()| with `{term: v:true}` instead.
 ---

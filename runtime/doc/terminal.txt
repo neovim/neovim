@@ -291,13 +291,11 @@ In a terminal buffer, `:write` exports the rendered terminal state
 cwd, argv, and timestamp.
 
 `:w`                        Save rendered terminal state to
-                          |stdpath()|/term/<name>.mpack.
+                          |stdpath()|/term/<name>.mpack, where <name>
+                          is derived from the terminal buffer URI.
 `:w {name}`                 Save rendered terminal state as a msgpack file
-                          at the given path (".mpack" appended if absent).
+                          at the given path.
 `:w! {name}`                Overwrite an existing file.
-`:w ++p {path}`             Create intermediate directories.
-
-Range writes (e.g. `:%w foo.txt`, `:'<,'>w`) write the buffer text normally.
 
 Terminal state files are stored in msgpack format. Example: >
     {
@@ -305,8 +303,10 @@ Terminal state files are stored in msgpack format. Example: >
       content = "\x1b[32mhello\x1b[0m",
       cwd = "/home/user/project",
       timestamp = 1750000000,
+      version = 1,
     }
 <
+  `version`     Format version number (currently 1).
   `argv`        The command argument list of the terminal job.
   `content`     ANSI escape sequences of the scrollback and screen.
   `cwd`         Working directory of the terminal job.

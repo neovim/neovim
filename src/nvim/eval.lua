@@ -12905,6 +12905,21 @@ M.funcs = {
       "|os.tmpname()| for a temporary name; Nvim's |tempdir| and nonexistence are not guaranteed",
     },
   },
+  term_getansi = {
+    args = 1,
+    base = 1,
+    desc = [=[
+      Exports the rendered terminal state (scrollback and visible
+      screen) as ANSI escape sequences.
+
+      Returns an empty string if {buf} is not a terminal buffer.
+
+    ]=],
+    name = 'term_getansi',
+    params = { { 'buf', 'integer|string' } },
+    returns = 'string',
+    signature = 'term_getansi({buf})',
+  },
   termopen = {
     deprecated = true,
     args = { 1, 2 },

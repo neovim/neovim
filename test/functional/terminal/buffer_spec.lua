@@ -369,7 +369,7 @@ describe(':terminal buffer', function()
   it('writing to an existing file with :w fails #13549', function()
     eq(
       'Vim(write):E13: File exists (add ! to override)',
-      pcall_err(command, '%write test/functional/fixtures/tty-test.c')
+      pcall_err(command, 'write test/functional/fixtures/tty-test.c')
     )
   end)
 
