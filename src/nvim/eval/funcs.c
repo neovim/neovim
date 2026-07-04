@@ -126,6 +126,7 @@
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
 #include "nvim/terminal.h"
+#include "nvim/terminal_defs.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"
@@ -7512,6 +7513,27 @@ static void f_taglist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
   get_tags(tv_list_alloc_ret(rettv, kListLenUnknown),
            (char *)tag_pattern, (char *)fname);
+}
+
+/// "term_getansi({buf})" function
+static void f_term_getansi(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+  FUNC_ATTR_NONNULL_ALL
+{
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = NULL;
+
+  buf_T *const buf = tv_get_buf_from_arg(&argvars[0]);
+  if (buf == NULL || buf->terminal == NULL) {
+    return;
+  }
+
+  if (buf->terminal->in_altscreen) {
+    emsg(_("Cannot :write terminal state while the alternate screen is active"));
+    return;
+  }
+
+  String ansi = terminal_get_ansi(buf->terminal);
+  rettv->vval.v_string = ansi.data;
 }
 
 /// "timer_info([timer])" function
