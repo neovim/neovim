@@ -11,6 +11,7 @@ local dedent = t.dedent
 local insert = n.insert
 local clear = n.clear
 local eq = t.eq
+local neq = t.neq
 local ok = t.ok
 local pesc = vim.pesc
 local eval = n.eval
@@ -2669,6 +2670,17 @@ describe('lua stdlib', function()
         exec_lua [[
         local a = string.char(97, 98, 99, 0, 100, 101, 102) -- abc\0def
         return string.len(vim.iconv(a, 'latin1', 'utf-8'))
+      ]]
+      )
+    end)
+
+    it('utf-16le should not be equal to utf-16be', function()
+      neq(
+        exec_lua [[
+        return vim.iconv('hello', 'utf-8', 'utf-16le')
+      ]],
+        exec_lua [[
+        return vim.iconv('hello', 'utf-8', 'utf-16be')
       ]]
       )
     end)

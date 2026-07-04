@@ -904,4 +904,30 @@ func Test_blob_byte_set_invalid_value()
   call CheckSourceLegacyAndVim9Failure(lines, 'E1239: Invalid value for blob:')
 endfunc
 
+func Test_blob_utf16be_encoding()
+  CheckFeature iconv
+
+  " Write utf-16be
+  new
+  setl nobomb
+  call setline(1, "A\u3042")
+  write ++enc=utf-16be ++ff=unix Xutf16be
+  defer delete('Xutf16be')
+  bwipe!
+
+  let bytes = readblob('Xutf16be')
+  " 'A' = U+0041 -> 00 41 (BE), U+3042 -> 30 42 (BE)
+  call assert_equal(0z0041.3042, bytes[0:3])
+
+  " iconv
+  let s = "A\u3042Z"
+  let be = iconv(s, 'utf-8', 'utf-16be')
+  if be == s
+    " iconv lacks utf-16be support
+    return
+  endif
+  call assert_equal(s, iconv(be, 'utf-16be', 'utf-8'))
+  call assert_notequal(be, iconv(s, 'utf-8', 'utf-16le'))
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
