@@ -1012,7 +1012,7 @@ static void diff_try_update(diffio_T *dio, int idx_orig, exarg_T *eap)
       if (diff_write(buf, &dio->dio_new, lnum_start, lnum_end) == FAIL) {
         continue;
       }
-      if (diff_file(dio) == FAIL) {
+      if (diff_file(dio, curtab->tp_diffbuf[idx_orig], curtab->tp_diffbuf[idx_new]) == FAIL) {
         continue;
       }
 
@@ -1053,10 +1053,15 @@ theend:
 /// Return true if the options are set to use the internal diff library.
 /// Note that if the internal diff failed for one of the buffers, the external
 /// diff will be used anyway.
+static bool diffexpr_is_fn(void)
+{
+  return *p_dex != NUL && strncmp(p_dex, "->", 2) == 0;
+}
+
 int diff_internal(void)
   FUNC_ATTR_PURE
 {
-  return (diff_flags & DIFF_INTERNAL) != 0 && *p_dex == NUL;
+  return (diff_flags & DIFF_INTERNAL) != 0 && (*p_dex == NUL || diffexpr_is_fn());
 }
 
 /// Completely update the diffs for the buffers involved.
@@ -1149,7 +1154,7 @@ static int check_external_diff(diffio_T *diffio)
           io_error = true;
         }
         fclose(fd);
-        fd = diff_file(diffio) == OK
+        fd = diff_file(diffio, NULL, NULL) == OK
              ? os_fopen(diffio->dio_diff.dout_fname, "r")
              : NULL;
 
@@ -1249,17 +1254,100 @@ static int diff_file_internal(diffio_T *diffio)
   return OK;
 }
 
-/// Make a diff between files "tmp_orig" and "tmp_new", results in "tmp_diff".
+static int xdiff_out(int start_a, int count_a, int start_b, int count_b, void *priv);
+
+/// Post-process the user-produced chunks so they fit into diffio_T logic.
+/// Responsible for freeing the chunks list.
 ///
-/// @param dio
+/// @param diffio
+/// @param chunks Non-null pointer to the list of chunks to translate and free.
 ///
 /// @return OK or FAIL
-static int diff_file(diffio_T *dio)
+static int translate_chunks(diffio_T *const diffio, list_T *const chunks)
+{
+  // If a custom expression has been used,
+  // translate received user chunks into diffio data.
+  listitem_T *c = tv_list_first(chunks);
+  list_T *i;  // chunk (i)nformation is made of 4 (n)umbers.
+  listitem_T *n;
+  typval_T *c_val;
+  typval_T *n_val;
+  int i_size;
+  long start_a;
+  long count_a;
+  long start_b;
+  long count_b;
+  int success = FAIL;
+  for (; c != NULL; c = TV_LIST_ITEM_NEXT(chunks, c)) {
+    // Typecheck chunk.
+    c_val = TV_LIST_ITEM_TV(c);
+    if (c_val->v_type != VAR_LIST) {
+      semsg("Invalid chunk type received (%i), expected list (%i).", c_val->v_type, VAR_LIST);
+      goto theend;
+    }
+    i = c_val->vval.v_list;
+    i_size = tv_list_len(i);
+    if (i_size != 4) {
+      semsg("Invalid chunk received: must contain 4 numbers (not %i).", i_size);
+      goto theend;
+    }
+    n = tv_list_first(i);
+    for (; n != NULL; n = TV_LIST_ITEM_NEXT(i, n)) {
+      n_val = TV_LIST_ITEM_TV(n);
+      if (n_val->v_type != VAR_NUMBER) {
+        emsg("Invalid chunk element type received: must be a number.");
+        goto theend;
+      }
+    }
+    // Types are ok: setup diff information.
+    n = tv_list_first(i);
+    start_a = (long)TV_LIST_ITEM_TV(n)->vval.v_number;
+    n = TV_LIST_ITEM_NEXT(i, n);
+    count_a = (long)TV_LIST_ITEM_TV(n)->vval.v_number;
+    n = TV_LIST_ITEM_NEXT(i, n);
+    start_b = (long)TV_LIST_ITEM_TV(n)->vval.v_number;
+    n = TV_LIST_ITEM_NEXT(i, n);
+    count_b = (long)TV_LIST_ITEM_TV(n)->vval.v_number;
+    // Counter-mimic extra offsets done by xdiff.
+    if (count_a > 0) {
+      start_a -= 1;
+    }
+    if (count_b > 0) {
+      start_b -= 1;
+    }
+    xdiff_out((int)start_a, (int)count_a, (int)start_b, (int)count_b, &diffio->dio_diff);
+  }
+  success = OK;
+theend:
+  tv_list_unref(chunks);
+  return success;
+}
+
+/// Make a diff between files "tmp_orig" and "tmp_new", results in "tmp_diff".
+/// Or evaluate custom Lua/Vimscript diff function option.
+///
+/// @param dio
+/// @param buf_orig  Original buffer (can be NULL for external check)
+/// @param buf_new   New buffer (can be NULL for external check)
+///
+/// @return OK or FAIL
+static int diff_file(diffio_T *dio, buf_T *buf_orig, buf_T *buf_new)
 {
   char *tmp_orig = dio->dio_orig.din_fname;
   char *tmp_new = dio->dio_new.din_fname;
   char *tmp_diff = dio->dio_diff.dout_fname;
   if (*p_dex != NUL) {
+    if (diffexpr_is_fn()) {
+      if (buf_orig == NULL || buf_new == NULL) {
+        return FAIL;
+      }
+      list_T *chunks = eval_diff_fn(buf_orig->b_fnum, buf_new->b_fnum, p_dex + 2);
+      if (chunks == NULL) {
+        semsg("Call to diff function '%s' failed, or it did not return a list.", p_dex + 2);
+        return FAIL;
+      }
+      return translate_chunks(dio, chunks);
+    }
     // Use 'diffexpr' to generate the diff file.
     eval_diff(tmp_orig, tmp_new, tmp_diff);
     return OK;

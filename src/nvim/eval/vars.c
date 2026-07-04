@@ -477,6 +477,23 @@ void eval_diff(const char *const origfile, const char *const newfile, const char
   current_sctx = saved_sctx;
 }
 
+/// Evaluate a custom diff function option (like 'diffexpr' starting with '->').
+///
+/// @param bufnr_in  Buffer number of the original buffer
+/// @param bufnr_new  Buffer number of the new buffer
+/// @param fn_name    Function name to call
+///
+/// @return list of chunks or NULL
+list_T *eval_diff_fn(const int bufnr_in, const int bufnr_new, const char *fn_name)
+{
+  typval_T args[2];
+  args[0].v_type = VAR_NUMBER;
+  args[1].v_type = VAR_NUMBER;
+  args[0].vval.v_number = bufnr_in;
+  args[1].vval.v_number = bufnr_new;
+  return call_func_retlist(fn_name, 2, args);
+}
+
 void eval_patch(const char *const origfile, const char *const difffile, const char *const outfile)
 {
   const sctx_T saved_sctx = current_sctx;
