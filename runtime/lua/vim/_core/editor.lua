@@ -20,6 +20,7 @@ for k, v in pairs({
   health = true,
   secure = true,
   snippet = true,
+  submode = true,
   pack = true,
   _watch = true,
   net = true,
