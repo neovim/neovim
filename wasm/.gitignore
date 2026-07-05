@@ -1,0 +1,2 @@
+# Build logs produced by build-deps.sh / build-nvim.sh
+*.log

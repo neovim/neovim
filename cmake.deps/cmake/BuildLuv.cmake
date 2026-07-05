@@ -11,6 +11,25 @@ if(USE_BUNDLED_LIBUV)
   list(APPEND LUV_CMAKE_ARGS -D CMAKE_PREFIX_PATH=${DEPS_INSTALL_DIR})
 endif()
 
+# Emscripten's CMake toolchain sets CMAKE_FIND_ROOT_PATH_MODE_{LIBRARY,INCLUDE}
+# to ONLY, confining find_library()/find_path() to the emscripten sysroot. That
+# stops luv's find_package(Libuv) from discovering our cross-compiled libuv in
+# DEPS_INSTALL_DIR. Hand luv the libuv location explicitly so it doesn't rely on
+# find_package. (Native builds are unaffected.)
+if(EMSCRIPTEN AND USE_BUNDLED_LIBUV)
+  list(APPEND LUV_CMAKE_ARGS
+    -D LIBUV_INCLUDE_DIR=${DEPS_INSTALL_DIR}/include
+    -D LIBUV_LIBRARIES=${DEPS_INSTALL_DIR}/lib/libuv.a)
+endif()
+
+# Likewise, luv needs the (PUC) Lua headers; find_package(Lua) can't locate them
+# under the emscripten find-root restriction, so point it at our bundled Lua.
+if(EMSCRIPTEN)
+  list(APPEND LUV_CMAKE_ARGS
+    -D LUA_INCLUDE_DIR=${DEPS_INSTALL_DIR}/include
+    -D LUA_LIBRARIES=${DEPS_INSTALL_DIR}/lib/liblua.a)
+endif()
+
 list(APPEND LUV_CMAKE_ARGS "-DCMAKE_C_FLAGS:STRING=${DEPS_INCLUDE_FLAGS} -w")
 if(CMAKE_GENERATOR MATCHES "Unix Makefiles" AND
     (CMAKE_SYSTEM_NAME MATCHES ".*BSD" OR CMAKE_SYSTEM_NAME MATCHES "DragonFly"))
