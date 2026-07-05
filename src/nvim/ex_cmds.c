@@ -1449,22 +1449,21 @@ static void do_filter(exarg_T *eap, char *cmd, bool do_in, bool do_out)
       }
     }
 
-    // if (cmd_output) {
-    //   ml_replace_range(curbuf->b_op_start, curbuf->b_op_end, cmd_output, nread);
-    //   xfree(cmd_output);
-    // }
-
     read_linecount = curbuf->b_ml.ml_line_count - read_linecount;
+    linenr_T actual_new_lines = (otmp == NULL) ? (linecount + read_linecount) : read_linecount;
 
     if (do_in) {
-      linenr_T actual_new_lines = (otmp == NULL) ? (linecount + read_linecount) : read_linecount;
-      curbuf->b_op_start.lnum = line1;
-      curbuf->b_op_start.col = col1;
-      curbuf->b_op_end.lnum = line1 + (actual_new_lines > 0 ? actual_new_lines - 1 : 0);
-      if (curbuf->b_op_end.lnum < line1) {
-        curbuf->b_op_end.lnum = line1;
+      if (otmp == NULL) {
+        if (actual_new_lines == 0) {
+          curbuf->b_op_start.lnum = curbuf->b_op_end.lnum = MIN(line1, curbuf->b_ml.ml_line_count);
+          curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
+        } else {
+          curbuf->b_op_start.lnum = line1;
+          curbuf->b_op_start.col = col1;
+          curbuf->b_op_end.lnum = line1 + actual_new_lines - 1;
+          curbuf->b_op_end.col = col2;
+        }
       }
-      curbuf->b_op_end.col = col2;
     } else {
       curbuf->b_op_start.lnum = line2 + 1;
       curbuf->b_op_start.col = 0;
@@ -1472,45 +1471,99 @@ static void do_filter(exarg_T *eap, char *cmd, bool do_in, bool do_out)
       curbuf->b_op_end.col = MAXCOL;
     }
 
-    if (otmp != NULL) {
-      appended_lines_mark(line1, read_linecount);
-    } else if (!do_in && otmp == NULL) {
+    if (!do_in && otmp == NULL) {
       appended_lines_mark(line2, read_linecount);
     }
 
     if (do_in) {
-      if (otmp != NULL) {
+      if (curbuf != old_curbuf) {
+        goto filterend;
+      }
+
+      if (otmp == NULL) {
+        // Pipe case: we must adjust both marks and folds manually
+        const bool keepmarks = (cmdmod.cmod_flags & CMOD_KEEPMARKS)
+                               || vim_strchr(p_cpo, CPO_REMMARK) == NULL;
+        if (keepmarks) {
+          if (actual_new_lines > 0) {
+            FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
+              if (win->w_buffer == curbuf) {
+                foldMarkAdjust(win, line2 + 1, MAXLNUM, actual_new_lines, 0);
+              }
+            }
+            mark_adjust_nofold(line2 + 1, MAXLNUM, actual_new_lines, 0, kExtmarkNOOP);
+          }
+          if (actual_new_lines >= linecount) {
+            FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
+              if (win->w_buffer == curbuf) {
+                foldMarkAdjust(win, line1, line2, linecount, 0);
+              }
+            }
+            mark_adjust_nofold(line1, line2, linecount, 0, kExtmarkNOOP);
+          } else {
+            if (actual_new_lines > 0) {
+              FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
+                if (win->w_buffer == curbuf) {
+                  foldMarkAdjust(win, line1, line1 + actual_new_lines - 1, linecount, 0);
+                }
+              }
+              mark_adjust_nofold(line1, line1 + actual_new_lines - 1, linecount, 0,
+                                 kExtmarkNOOP);
+            }
+            FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
+              if (win->w_buffer == curbuf) {
+                foldMarkAdjust(win, line1 + actual_new_lines, line2, MAXLNUM, 0);
+              }
+            }
+            mark_adjust_nofold(line1 + actual_new_lines, line2, MAXLNUM, 0,
+                               kExtmarkNOOP);
+          }
+          FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
+            if (win->w_buffer == curbuf) {
+              foldMarkAdjust(win, line1, line2, MAXLNUM, -linecount);
+            }
+          }
+          mark_adjust_nofold(line1, line2, MAXLNUM, -linecount, kExtmarkNOOP);
+        } else {
+          if (actual_new_lines > 0) {
+            FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
+              if (win->w_buffer == curbuf) {
+                foldMarkAdjust(win, line2 + 1, MAXLNUM, actual_new_lines, 0);
+              }
+            }
+            mark_adjust_nofold(line2 + 1, MAXLNUM, actual_new_lines, 0, kExtmarkNOOP);
+          }
+          FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
+            if (win->w_buffer == curbuf) {
+              foldMarkAdjust(win, line1, line2, MAXLNUM, -linecount);
+            }
+          }
+          mark_adjust_nofold(line1, line2, MAXLNUM, -linecount, kExtmarkNOOP);
+        }
+      } else {
+        // Temp file case: do like master (use standard mark_adjust which adjusts folds)
         if ((cmdmod.cmod_flags & CMOD_KEEPMARKS)
             || vim_strchr(p_cpo, CPO_REMMARK) == NULL) {
           if (read_linecount >= linecount) {
-            // move all marks from old lines to new lines
             mark_adjust(line1, line2, linecount, 0, kExtmarkNOOP);
           } else {
-            // move marks from old lines to new lines, delete marks
-            // that are in deleted lines
-            mark_adjust(line1, line1 + read_linecount - 1, linecount, 0,
-                        kExtmarkNOOP);
-            mark_adjust(line1 + read_linecount, line2, MAXLNUM, 0,
-                        kExtmarkNOOP);
+            mark_adjust(line1, line1 + read_linecount - 1, linecount, 0, kExtmarkNOOP);
+            mark_adjust(line1 + read_linecount, line2, MAXLNUM, 0, kExtmarkNOOP);
           }
-        }
-      } else {
-        if ((cmdmod.cmod_flags & CMOD_KEEPMARKS)
-            || vim_strchr(p_cpo, CPO_REMMARK) == NULL) {
-          // With in-place replacement, marks already stay where they are.
-        } else {
-          // Delete/unset marks in the replaced range
-          mark_adjust(line1, line2, MAXLNUM, 0, kExtmarkNOOP);
         }
       }
 
       // Put cursor on first filtered line for ":range!cmd".
-      // Adjust '[ and '] (set by buf_write()).
       curwin->w_cursor.lnum = line1;
       if (otmp != NULL) {
         del_lines(linecount, true);
-        curbuf->b_op_start.lnum -= linecount;             // adjust '[
-        curbuf->b_op_end.lnum -= linecount;               // adjust ']
+        if (actual_new_lines == 0) {
+          curbuf->b_op_start.lnum = curbuf->b_op_end.lnum = MIN(line1, curbuf->b_ml.ml_line_count);
+          curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
+        } else {
+          curbuf->b_op_start.lnum -= linecount;             // adjust '[
+          curbuf->b_op_end.lnum -= linecount;               // adjust ']
+        }
         write_lnum_adjust(-linecount);                    // adjust last line
                                                           // for next write
       }
