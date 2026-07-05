@@ -772,6 +772,32 @@ function M.normalize(path, opts)
   return path
 end
 
+--- @class vim.fs.mkdir.Opts
+--- @inlinedoc
+---
+--- Create intermediate directories as necessary.
+--- (default: `false`)
+--- @field parents? boolean
+---
+--- Permission bits for newly-created directories.
+--- (default: `493`)
+--- @field mode? integer
+
+--- Creates a directory.
+---
+---@since 15
+---@param path string Path to create (not expanded/resolved).
+---@param opts? vim.fs.mkdir.Opts Optional keyword arguments.
+function M.mkdir(path, opts)
+  vim.validate('path', path, 'string')
+  vim.validate('opts', opts, 'table', true)
+  opts = opts or {}
+  vim.validate('parents', opts.parents, 'boolean', true)
+  vim.validate('mode', opts.mode, 'number', true)
+
+  vim.fn.mkdir(path, opts.parents and 'p' or '', tostring(opts.mode or 493))
+end
+
 --- @param path string Path to remove
 --- @param ty string type of path
 --- @param recursive? boolean

@@ -6519,7 +6519,7 @@ function vim.fn.menu_info(name, mode) end
 --- @return number
 function vim.fn.min(expr) end
 
---- Lua: Prefer |uv.fs_mkdir()| for simple directory creation; `"p"`, `"D"`, `"R"`, and return semantics differ.
+--- Lua: Prefer |vim.fs.mkdir()|; `"D"`, `"R"`, and return semantics differ.
 ---
 --- Create directory {name}.
 ---
