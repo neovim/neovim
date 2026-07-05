@@ -610,6 +610,11 @@ describe('TUI :restart', function()
 
   it('drops "-" and "-- [files…]" from v:argv #34417', function()
     t.skip(is_os('win'), 'stdin behavior differs on Windows')
+    local file = 'file.lua'
+    write_file(file, "print('-S works')\n")
+    finally(function()
+      os.remove(file)
+    end)
     local server_session
     finally(function()
       if server_session then
@@ -626,6 +631,8 @@ describe('TUI :restart', function()
       server_pipe,
       '--cmd',
       'set notermguicolors',
+      '-S',
+      file,
       '-s',
       '-',
       '-',
@@ -637,14 +644,16 @@ describe('TUI :restart', function()
       ^                                                  |
       ~                                                 |*3
       {2:Xtest-file1                     0,0-1          All}|
-                                                        |
+      -S works                                          |
       {5:-- TERMINAL --}                                    |
     ]])
     server_session = n.connect(server_pipe)
     local expr = 'index(v:argv, "-") >= 0 || index(v:argv, "--") >= 0 ? v:true : v:false'
     local has_s = 'index(v:argv, "-s") >= 0 ? v:true : v:false'
+    local has_S = 'index(v:argv, "-S") >= 0 ? v:true : v:false'
     eq({ true, true }, { server_session:request('nvim_eval', expr) })
     eq({ true, true }, { server_session:request('nvim_eval', has_s) })
+    eq({ true, true }, { server_session:request('nvim_eval', has_S) })
 
     tt.feed_data(":restart! put='foo'\013")
     screen:expect([[
@@ -660,63 +669,13 @@ describe('TUI :restart', function()
 
     eq({ true, false }, { server_session:request('nvim_eval', expr) })
     eq({ true, false }, { server_session:request('nvim_eval', has_s) })
+    eq({ true, false }, { server_session:request('nvim_eval', has_S) })
 
     -- local argv = ({ server_session:request('nvim_eval', 'v:argv') })[2] --[[@type table]]
     -- eq(13, #argv)
     -- eq("-c put='foo'", table.concat(argv, ' ', #argv - 1, #argv))
 
     -- The server is now detached and needs to be quit explicitly.
-    feed_data(':qall!\r')
-    screen:expect({ any = vim.pesc('[Process exited 0]') })
-  end)
-
-  it('drops "-S [file]" from v:argv', function()
-    local file = 'foo.lua'
-    write_file(file, "print('foo')\n")
-    finally(function()
-      os.remove(file)
-    end)
-
-    local server_session
-    finally(function()
-      if server_session then
-        server_session:close()
-      end
-    end)
-    local server_pipe = new_pipename()
-    local screen = tt.setup_child_nvim({
-      '--clean',
-      '--listen',
-      server_pipe,
-      '--cmd',
-      'set notermguicolors laststatus=0 noruler',
-      '-S',
-      file,
-    }, { env = env_notermguicolors })
-    screen:expect([[
-      ^                                                  |
-      ~                                                 |*4
-      foo                                               |
-      {5:-- TERMINAL --}                                    |
-    ]])
-    server_session = n.connect(server_pipe)
-    local has_S = 'index(v:argv, "-S") >= 0 ? v:true : v:false'
-    local has_file = 'index(v:argv, "foo.lua") >= 0 ? v:true : v:false'
-    eq({ true, true }, { server_session:request('nvim_eval', has_S) })
-    eq({ true, true }, { server_session:request('nvim_eval', has_file) })
-
-    tt.feed_data(':restart\r')
-    screen:expect([[
-      ^                                                  |
-      ~                                                 |*4
-                                                        |
-      {5:-- TERMINAL --}                                    |
-    ]])
-    server_session:close()
-    server_session = n.connect(server_pipe)
-    eq({ true, false }, { server_session:request('nvim_eval', has_S) })
-    eq({ true, false }, { server_session:request('nvim_eval', has_file) })
-
     feed_data(':qall!\r')
     screen:expect({ any = vim.pesc('[Process exited 0]') })
   end)
