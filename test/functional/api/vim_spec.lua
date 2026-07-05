@@ -6253,6 +6253,42 @@ describe('API', function()
       ]]
     end)
 
+    it('works with charwise range before |put| and |iput| command', function()
+      insert [[
+        line1
+        line2
+        line3
+      ]]
+      fn.setreg('a', 'xyz')
+      command('2.2put a')
+      expect [[
+        line1
+        linxyze2
+        line3
+      ]]
+      command('undo')
+      command('2.2put! a')
+      expect [[
+        line1
+        lixyzne2
+        line3
+      ]]
+      command('undo')
+      command('2.2iput a')
+      expect [[
+        line1
+        linxyze2
+        line3
+      ]]
+      command('undo')
+      command('2.2iput! a')
+      expect [[
+        line1
+        lixyzne2
+        line3
+      ]]
+    end)
+
     it('works with count', function()
       insert [[
         line1
