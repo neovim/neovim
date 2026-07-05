@@ -22,6 +22,13 @@
 # include "nvim/os/fs.h"
 #endif
 
+#ifdef __EMSCRIPTEN__
+# include <sys/stat.h>
+# include <unistd.h>
+
+# include "nvim/os/fs.h"
+#endif
+
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer_defs.h"
@@ -130,11 +137,84 @@ static int tslua_add_language_from_object(lua_State *L)
   return add_language(L, false);
 }
 
+#ifdef __EMSCRIPTEN__
+// Stage a parser file into MEMFS so emscripten's dlopen can read it.
+//
+// dlopen resolves the library file at the JS FS layer (FS.readFile), which
+// only sees paths the wasm FS itself can resolve -- not every path nvim's C
+// file IO can read (hosts may intercept reads at the syscall layer). Read
+// the file through nvim's normal C file IO and write it below
+// /usr/share/nvim -- a MEMFS path in every configuration (plain MEMFS in
+// the browser, un-mounted MEMFS under Node's NODEFS roots). The staged copy
+// is unlinked by the caller right after dlopen (the library is in memory by
+// then); the counter keeps names unique so emscripten's per-filename
+// library cache can never hand back a previously loaded grammar.
+static const char *stage_parser_for_dlopen(lua_State *L, const char *path, const char *lang_name)
+{
+  FILE *in = os_fopen(path, "r");
+  if (in == NULL) {
+    // Keep the native load-failure shape ("...: uv_dlopen: ...") -- callers
+    // and tests match on it.
+    luaL_error(L, "Failed to load parser for language '%s': uv_dlopen: cannot open %s",
+               lang_name, path);
+  }
+  fseek(in, 0L, SEEK_END);
+  size_t len = (size_t)ftell(in);
+  fseek(in, 0L, SEEK_SET);
+  char *data = xmalloc(len);
+  if (len > 0 && fread(data, len, 1, in) != 1) {
+    xfree(data);
+    fclose(in);
+    luaL_error(L, "Failed to load parser for language '%s': uv_dlopen: cannot read %s",
+               lang_name, path);
+    return NULL;
+  }
+  fclose(in);
+
+  mkdir("/usr", 0755);
+  mkdir("/usr/share", 0755);
+  mkdir("/usr/share/nvim", 0755);
+  mkdir("/usr/share/nvim/parser-stage", 0755);
+
+  const char *base = strrchr(path, '/');
+  base = base != NULL ? base + 1 : path;
+  static unsigned stage_counter = 0;
+  static char staged[256];
+  snprintf(staged, sizeof(staged), "/usr/share/nvim/parser-stage/%u-%.128s",
+           stage_counter++, base);
+
+  FILE *out = os_fopen(staged, "w");
+  if (out == NULL || (len > 0 && fwrite(data, len, 1, out) != 1)) {
+    xfree(data);
+    if (out != NULL) {
+      fclose(out);
+    }
+    luaL_error(L, "Failed to load parser for language '%s': uv_dlopen: cannot stage %s",
+               lang_name, path);
+    return NULL;
+  }
+  fclose(out);
+  xfree(data);
+  return staged;
+}
+#endif
+
 static const TSLanguage *load_language_from_object(lua_State *L, const char *path,
                                                    const char *lang_name, const char *symbol)
 {
+#ifdef __EMSCRIPTEN__
+  const char *staged = stage_parser_for_dlopen(L, path, lang_name);
+  const char *load_path = staged;
+#else
+  const char *load_path = path;
+#endif
   uv_lib_t lib;
-  if (uv_dlopen(path, &lib)) {
+  int dlopen_err = uv_dlopen(load_path, &lib);
+#ifdef __EMSCRIPTEN__
+  // The library (or its error) is resolved; drop the MEMFS copy either way.
+  unlink(staged);
+#endif
+  if (dlopen_err) {
     xstrlcpy(IObuff, uv_dlerror(&lib), sizeof(IObuff));
     uv_dlclose(&lib);
     luaL_error(L, "Failed to load parser for language '%s': uv_dlopen: %s", lang_name, IObuff);
@@ -240,6 +320,97 @@ static int add_language(lua_State *L, bool is_wasm)
   lua_pushboolean(L, true);
   return 1;
 }
+
+#ifdef __EMSCRIPTEN__
+// Bundled grammars, statically linked into the wasm binary.
+//
+// The native build ships each bundled grammar as a shared object under
+// lib/nvim/parser/<lang>.so and dlopen()s it on demand
+// (load_language_from_object above). Wasm has no dlopen (that would require
+// emscripten dynamic linking, -sMAIN_MODULE), so the very same parser sources
+// are linked straight into nvim.wasm (see the EMSCRIPTEN block in
+// src/nvim/CMakeLists.txt) and registered here by name.
+// vim.treesitter.language.add() consults this registry (via
+// vim._ts_add_language_builtin) before searching 'runtimepath' for a library.
+// Keep this list in sync with the parsers cmake.deps builds and the archives
+// CMakeLists.txt links.
+extern const TSLanguage *tree_sitter_c(void);
+extern const TSLanguage *tree_sitter_lua(void);
+extern const TSLanguage *tree_sitter_markdown(void);
+extern const TSLanguage *tree_sitter_markdown_inline(void);
+extern const TSLanguage *tree_sitter_query(void);
+extern const TSLanguage *tree_sitter_vim(void);
+extern const TSLanguage *tree_sitter_vimdoc(void);
+
+static const struct {
+  const char *name;
+  const TSLanguage *(*lang)(void);
+} builtin_langs[] = {
+  { "c", tree_sitter_c },
+  { "lua", tree_sitter_lua },
+  { "markdown", tree_sitter_markdown },
+  { "markdown_inline", tree_sitter_markdown_inline },
+  { "query", tree_sitter_query },
+  { "vim", tree_sitter_vim },
+  { "vimdoc", tree_sitter_vimdoc },
+};
+
+// Implemented in wasm/nvim_ts_dl.js (--js-library): asks the embedding host
+// for the grammar's bytes (globalThis.__nvimParserFetch, installed by the
+// engine worker when create() is given a `parsers` config), writes them into
+// MEMFS, and fills `out` with the staged path. Returns 0 when no hook is
+// configured or the fetch fails. The wasm frame SUSPENDS via JSPI while the
+// host fetches (the import is __async), exactly like the proxied syscalls.
+extern int nvim_ts_parser_fetch(const char *lang, char *out, int outlen);
+
+// vim._ts_fetch_parser(lang) -> path of a host-fetched grammar file, or nil.
+// language.add() falls back to this after the 'runtimepath' search fails.
+static int tslua_fetch_parser(lua_State *L)
+{
+  const char *lang_name = luaL_checkstring(L, 1);
+  char buf[1024];
+  if (nvim_ts_parser_fetch(lang_name, buf, (int)sizeof(buf))) {
+    lua_pushstring(L, buf);
+  } else {
+    lua_pushnil(L);
+  }
+  return 1;
+}
+
+// vim._ts_add_language_builtin(lang) -> true if lang is a bundled grammar (now
+// registered in the language map), false if it is not bundled.
+static int tslua_add_language_builtin(lua_State *L)
+{
+  const char *lang_name = luaL_checkstring(L, 1);
+
+  if (map_has(cstr_t, &langs, lang_name)) {
+    lua_pushboolean(L, true);
+    return 1;
+  }
+
+  for (size_t i = 0; i < ARRAY_SIZE(builtin_langs); i++) {
+    if (strcmp(lang_name, builtin_langs[i].name) != 0) {
+      continue;
+    }
+    const TSLanguage *lang = builtin_langs[i].lang();
+    uint32_t lang_version = ts_language_abi_version(lang);
+    if (lang_version < TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION
+        || lang_version > TREE_SITTER_LANGUAGE_VERSION) {
+      return luaL_error(L,
+                        "ABI version mismatch for builtin parser %s: "
+                        "supported between %d and %d, found %d",
+                        lang_name, TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION,
+                        TREE_SITTER_LANGUAGE_VERSION, lang_version);
+    }
+    pmap_put(cstr_t)(&langs, xstrdup(lang_name), (TSLanguage *)lang);
+    lua_pushboolean(L, true);
+    return 1;
+  }
+
+  lua_pushboolean(L, false);
+  return 1;
+}
+#endif
 
 static int tslua_remove_lang(lua_State *L)
 {
@@ -1841,6 +2012,14 @@ void nlua_treesitter_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 #ifdef HAVE_WASMTIME
   lua_pushcfunction(lstate, tslua_add_language_from_wasm);
   lua_setfield(lstate, -2, "_ts_add_language_from_wasm");
+#endif
+
+#ifdef __EMSCRIPTEN__
+  lua_pushcfunction(lstate, tslua_add_language_builtin);
+  lua_setfield(lstate, -2, "_ts_add_language_builtin");
+
+  lua_pushcfunction(lstate, tslua_fetch_parser);
+  lua_setfield(lstate, -2, "_ts_fetch_parser");
 #endif
 
   lua_pushcfunction(lstate, tslua_has_language);
