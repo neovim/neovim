@@ -1648,7 +1648,7 @@ function Screen:_chunks_repr(chunks, attr_state)
     local hl, text, id = unpack(chunk)
     local attrs
     if self._options.ext_linegrid then
-      attrs = self._attr_table[hl][1]
+      attrs = (self._attr_table[hl] or {})[1] -- Tolerate undefined hl_id in a snapshot render.
     else
       attrs = hl
     end
@@ -2045,6 +2045,11 @@ function Screen:_get_attr_id(attr_state, attrs, hl_id)
       return nil
     elseif id ~= nil then
       return id
+    end
+    if self._attr_table[hl_id] == nil then
+      -- Grid references a hl_id that was never defined via "hl_attr_define".
+      -- TODO(justinmk): maybe an Nvim core bug. https://github.com/neovim/neovim/issues/36250
+      return ('UNKNOWN_HL_ID(%d)'):format(hl_id)
     end
     if attr_state.mutable then
       id = self:_insert_hl_id(attr_state, hl_id)
