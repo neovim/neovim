@@ -5,8 +5,10 @@ local describe, it, before_each = t.describe, t.it, t.before_each
 local clear = n.clear
 local command = n.command
 local eq = t.eq
+local finally = t.finally
 local api = n.api
 local retry = t.retry
+local rmdir = n.rmdir
 local write_file = t.write_file
 local sleep = vim.uv.sleep
 
@@ -15,6 +17,13 @@ local sleep = vim.uv.sleep
 local function is_watching(bufnr)
   return n.exec_lua(function(b)
     return require('nvim.autoread')._is_watching(b or vim.api.nvim_get_current_buf())
+  end, bufnr)
+end
+
+--- Returns the autoread watcher mode for the given buffer.
+local function watching_mode(bufnr)
+  return n.exec_lua(function(b)
+    return require('nvim.autoread')._watching_mode(b or vim.api.nvim_get_current_buf())
   end, bufnr)
 end
 
@@ -31,6 +40,31 @@ local function open_watched(content)
   command('edit ' .. path)
   eq(true, is_watching())
   return path
+end
+
+--- Creates a temporary directory and registers cleanup after the test.
+--- @return string
+local function new_watch_dir()
+  local dir = assert(vim.uv.fs_mkdtemp(vim.fs.dirname(t.tmpname(false)) .. '/nvim_XXXXXXXXXX'))
+  finally(function()
+    rmdir(dir)
+  end)
+  return dir
+end
+
+--- Creates and opens sibling files, returning their buffer numbers.
+--- @param dir string
+--- @param count? integer Defaults to three.
+--- @return integer[]
+local function open_siblings(dir, count)
+  local bufs = {}
+  for i = 1, count or 3 do
+    local path = dir .. '/' .. i .. '.txt'
+    write_file(path, 'original\n')
+    command('edit ' .. n.fn.fnameescape(path))
+    bufs[i] = api.nvim_get_current_buf()
+  end
+  return bufs
 end
 
 describe('autoread file watcher', function()
@@ -127,6 +161,178 @@ describe('autoread file watcher', function()
       eq({ 'after reenable' }, api.nvim_buf_get_lines(0, 0, -1, true))
     end)
   end)
+
+  it('shares a directory watcher at the default threshold and tracks its files', function()
+    t.skip(not (t.is_os('linux') or t.is_os('mac') or t.is_os('win')), 'directory backend')
+
+    -- Promote only when the threshold is reached.
+    local dir = new_watch_dir()
+    local bufs = {}
+    for i = 1, 3 do
+      local path = dir .. '/' .. i .. '.txt'
+      write_file(path, 'original\n')
+      command('edit ' .. n.fn.fnameescape(path))
+      bufs[i] = api.nvim_get_current_buf()
+      for _, buf in ipairs(bufs) do
+        eq(i < 3 and 'file' or 'dir', watching_mode(buf))
+      end
+      eq(i < 3 and i or 1, n.exec_lua('return vim._watch.active.watch'))
+    end
+
+    -- Route each change to its matching buffer.
+    for i = 1, 3 do
+      write_file(dir .. '/' .. i .. '.txt', i .. ' changed\n')
+    end
+    retry(nil, 3000, function()
+      for i, buf in ipairs(bufs) do
+        eq({ i .. ' changed' }, api.nvim_buf_get_lines(buf, 0, -1, true))
+      end
+    end)
+
+    -- Ignore unrelated files, even when their events arrive during a debounce window.
+    n.exec_lua([[require('nvim.autoread')._set_debounce(5000)]])
+    write_file(dir .. '/unrelated', 'noise\n')
+    sleep(200)
+    for _, buf in ipairs(bufs) do
+      eq(0, api.nvim_get_option_value('busy', { buf = buf }))
+    end
+    shorten_debounce()
+
+    -- Atomic replacement must not leave the shared watcher attached to an old file inode.
+    local path1 = dir .. '/1.txt'
+    local buf1 = bufs[1]
+    write_file(path1 .. '.tmp', 'replaced\n')
+    assert(vim.uv.fs_rename(path1 .. '.tmp', path1))
+    retry(nil, 3000, function()
+      eq({ 'replaced' }, api.nvim_buf_get_lines(buf1, 0, -1, true))
+    end)
+    write_file(path1, 'after replacement\n')
+    retry(nil, 3000, function()
+      eq({ 'after replacement' }, api.nvim_buf_get_lines(buf1, 0, -1, true))
+    end)
+
+    -- Keep the shared watcher until its last buffer is removed.
+    for i = 1, #bufs - 1 do
+      command('bdelete ' .. bufs[i])
+    end
+    eq('dir', watching_mode(bufs[#bufs]))
+    eq(1, n.exec_lua('return vim._watch.active.watch'))
+    command('bdelete ' .. bufs[#bufs])
+    eq(0, n.exec_lua('return vim._watch.active.watch'))
+  end)
+
+  it('respects a custom directory watcher threshold', function()
+    t.skip(not (t.is_os('linux') or t.is_os('mac') or t.is_os('win')), 'directory backend')
+    n.exec_lua('vim.g.autoread_watch_dir_threshold = 5')
+    local dir = new_watch_dir()
+
+    -- Four files stay separate, even though they exceed the default threshold.
+    local bufs = open_siblings(dir, 4)
+    for _, buf in ipairs(bufs) do
+      eq('file', watching_mode(buf))
+    end
+    eq(4, n.exec_lua('return vim._watch.active.watch'))
+
+    -- The fifth file promotes every sibling to one shared watcher.
+    local path = dir .. '/5.txt'
+    write_file(path, 'original\n')
+    command('edit ' .. n.fn.fnameescape(path))
+    bufs[5] = api.nvim_get_current_buf()
+    for _, buf in ipairs(bufs) do
+      eq('dir', watching_mode(buf))
+    end
+    eq(1, n.exec_lua('return vim._watch.active.watch'))
+  end)
+
+  it('can disable shared directory watchers', function()
+    n.exec_lua([[vim.g.autoread_watch_dir = false]])
+
+    for _, buf in ipairs(open_siblings(new_watch_dir())) do
+      eq('file', watching_mode(buf))
+    end
+  end)
+
+  it('keeps working file watchers when directory promotion fails', function()
+    t.skip(not (t.is_os('linux') or t.is_os('mac') or t.is_os('win')), 'directory backend')
+    n.exec_lua([[
+      _G.original_watch = vim._watch.watch
+      _G.promotion_attempts = 0
+      vim._watch.watch = function(path, opts, callback)
+        if vim.uv.fs_stat(path).type == 'directory' then
+          _G.promotion_attempts = _G.promotion_attempts + 1
+          opts.on_error('ENOSPC: no space left on device')
+          return function() end
+        end
+        return _G.original_watch(path, opts, callback)
+      end
+    ]])
+    local dir = new_watch_dir()
+    local bufs = open_siblings(dir)
+    n.exec_lua('vim._watch.watch = _G.original_watch')
+    eq(1, n.exec_lua('return _G.promotion_attempts'))
+    eq(3, n.exec_lua('return vim._watch.active.watch'))
+    for i, buf in ipairs(bufs) do
+      eq('file', watching_mode(buf))
+      write_file(dir .. '/' .. i .. '.txt', 'changed\n')
+    end
+    retry(nil, 3000, function()
+      for _, buf in ipairs(bufs) do
+        eq({ 'changed' }, api.nvim_buf_get_lines(buf, 0, -1, true))
+      end
+    end)
+  end)
+
+  it('does not report failed file watchers as active', function()
+    n.exec_lua([[
+      _G.original_watch = vim._watch.watch
+      vim._watch.watch = function(_, opts)
+        opts.on_error('EMFILE: too many open files')
+        return function() end
+      end
+    ]])
+    local path = t.tmpname()
+    write_file(path, 'original\n')
+    command('edit ' .. n.fn.fnameescape(path))
+    eq(false, is_watching())
+    eq(0, n.exec_lua('return vim._watch.active.watch'))
+    n.exec_lua('vim._watch.watch = _G.original_watch')
+    command('setlocal noautoread')
+    command('setlocal autoread')
+    eq(true, is_watching())
+  end)
+
+  for _, link_type in ipairs({ 'symlink', 'hardlink' }) do
+    it('keeps a file watcher for a ' .. link_type .. ' alongside shared watchers', function()
+      t.skip(not t.is_os('linux'), 'link target notifications on Linux')
+      local dir = new_watch_dir()
+      local target = t.tmpname()
+      write_file(target, 'original\n')
+      local path = dir .. '/linked.txt'
+      if link_type == 'symlink' then
+        assert(vim.uv.fs_symlink(target, path))
+      else
+        assert(vim.uv.fs_link(target, path))
+      end
+      command('edit ' .. n.fn.fnameescape(path))
+      local linked_buf = api.nvim_get_current_buf()
+      local bufs = open_siblings(dir)
+      eq('file', watching_mode(linked_buf))
+      for _, buf in ipairs(bufs) do
+        eq('dir', watching_mode(buf))
+      end
+      eq(2, n.exec_lua('return vim._watch.active.watch'))
+      write_file(target, 'target changed\n')
+      retry(nil, 3000, function()
+        eq({ 'target changed' }, api.nvim_buf_get_lines(linked_buf, 0, -1, true))
+      end)
+      for _, buf in ipairs(bufs) do
+        command('bdelete ' .. buf)
+      end
+      eq(1, n.exec_lua('return vim._watch.active.watch'))
+      command('bdelete ' .. linked_buf)
+      eq(0, n.exec_lua('return vim._watch.active.watch'))
+    end)
+  end
 
   it('handles file deletion gracefully', function()
     local path = open_watched('will be deleted\n')

@@ -342,6 +342,18 @@ local options = {
         using the global value: >vim
         	set autoread<
         <
+
+                                                        *g:autoread_watch_dir*
+        On Linux, macOS and Windows, Nvim may share one non-recursive directory
+        watcher between buffers in the same directory. Linked files retain
+        individual file watchers. Set `g:autoread_watch_dir` to
+        v:false before loading buffers to always use one watcher per buffer.
+
+                                        *g:autoread_watch_dir_threshold*
+        Minimum number of eligible buffers in one directory before sharing a
+        directory watcher. Must be an integer >= 2. The default is 3.
+        Set this before loading buffers; changing it does not immediately rebuild
+        existing watchers. Ignored when |g:autoread_watch_dir| is disabled.
       ]=],
       full_name = 'autoread',
       scope = { 'global', 'buf' },

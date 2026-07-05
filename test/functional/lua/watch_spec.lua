@@ -241,6 +241,39 @@ describe('vim._watch', function()
   end
 
   run('watch')
+
+  it('watch() reports start errors without counting a failed watcher', function()
+    eq(
+      { { 'ENOSPC: no space left on device' }, 1, 0 },
+      exec_lua(function()
+        local watch = vim._watch
+        local new_fs_event = vim.uv.new_fs_event
+        local before = watch.active.watch
+        local closed = 0
+        vim.uv.new_fs_event = function()
+          return {
+            start = function()
+              return nil, 'ENOSPC: no space left on device', 'ENOSPC'
+            end,
+            close = function()
+              closed = closed + 1
+            end,
+          }
+        end
+        local errors = {}
+        local cancel = watch.watch('.', {
+          on_error = function(err)
+            errors[#errors + 1] = err
+          end,
+        }, function() end)
+        vim.uv.new_fs_event = new_fs_event
+        cancel()
+        cancel()
+        return { errors, closed, watch.active.watch - before }
+      end)
+    )
+  end)
+
   run('watchdirs')
   run('inotify')
 end)
