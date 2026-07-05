@@ -6997,9 +6997,18 @@ static void ex_put(exarg_T *eap)
     eap->forceit = true;
   }
   curwin->w_cursor.lnum = eap->line2;
-  check_cursor_col(curwin);
-  do_put(eap->regname, NULL, eap->forceit ? BACKWARD : FORWARD, 1,
-         PUT_LINE|PUT_CURSLINE);
+  bool is_charwise = (eap->addr_type == ADDR_POSITIONS && eap->addr_mode == kOmCharWise)
+                     || (eap->col2 != MAXCOL);
+  if (is_charwise) {
+    curwin->w_cursor.col = eap->col2;
+    check_cursor_col(curwin);
+    do_put(eap->regname, NULL, eap->forceit ? BACKWARD : FORWARD, 1,
+           PUT_CURSLINE);
+  } else {
+    check_cursor_col(curwin);
+    do_put(eap->regname, NULL, eap->forceit ? BACKWARD : FORWARD, 1,
+           PUT_LINE | PUT_CURSLINE);
+  }
 }
 
 /// ":iput".
@@ -7011,9 +7020,18 @@ static void ex_iput(exarg_T *eap)
     eap->forceit = true;
   }
   curwin->w_cursor.lnum = eap->line2;
-  check_cursor_col(curwin);
-  do_put(eap->regname, NULL, eap->forceit ? BACKWARD : FORWARD, 1L,
-         PUT_LINE|PUT_CURSLINE|PUT_FIXINDENT);
+  bool is_charwise = (eap->addr_type == ADDR_POSITIONS && eap->addr_mode == kOmCharWise)
+                     || (eap->col2 != MAXCOL);
+  if (is_charwise) {
+    curwin->w_cursor.col = eap->col2;
+    check_cursor_col(curwin);
+    do_put(eap->regname, NULL, eap->forceit ? BACKWARD : FORWARD, 1L,
+           PUT_CURSLINE | PUT_FIXINDENT);
+  } else {
+    check_cursor_col(curwin);
+    do_put(eap->regname, NULL, eap->forceit ? BACKWARD : FORWARD, 1L,
+           PUT_LINE | PUT_CURSLINE | PUT_FIXINDENT);
+  }
 }
 
 char *get_text_in_range(pos_T start, pos_T end)

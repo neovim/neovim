@@ -957,5 +957,31 @@ describe('put command', function()
        test_string.
       Line of words 2]])
     end)
+
+    it('character-wise put and iput works', function()
+      fn.setreg('a', 'xyz')
+      command('1.2put a')
+      expect([[
+      Linxyze of words 1
+      Line of words 2]])
+
+      command('undo')
+      command('1.2put! a')
+      expect([[
+      Lixyzne of words 1
+      Line of words 2]])
+
+      command('undo')
+      command('1.2iput a')
+      expect([[
+      Linxyze of words 1
+      Line of words 2]])
+
+      command('undo')
+      command('1.2iput! a')
+      expect([[
+      Lixyzne of words 1
+      Line of words 2]])
+    end)
   end)
 end)
