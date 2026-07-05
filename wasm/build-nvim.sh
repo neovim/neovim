@@ -67,6 +67,25 @@ emcmake cmake \
 echo "==> Building nvim_bin (the executable; runtime bundling handled separately)"
 cmake --build "${BUILD}" --target nvim_bin
 
+# Ship the Node engine host next to nvim.js (pre.js/nvim_io.js are already linked
+# into nvim.js; worker.js hosts the engine wasm in a Node worker_thread, used by
+# the browser library's Node transport and the e2e test).
+#
+# worker.js is compiled from TypeScript (wasm/src/worker.ts) by wasm/build-ts.sh
+# into wasm/ (gitignored). Build it first (installing the wasm/ typescript +
+# @types/node devDeps if missing) so the copy below ships a fresh artifact.
+if command -v npm >/dev/null 2>&1; then
+  if [ ! -x "${ROOT}/wasm/node_modules/.bin/tsc" ]; then
+    echo "==> Installing wasm/ npm deps (typescript, @types/node)"
+    ( cd "${ROOT}/wasm" && npm install --no-audit --no-fund >/dev/null 2>&1 ) \
+      || echo "    (npm install failed; run it manually in wasm/ before building)"
+  fi
+fi
+"${ROOT}/wasm/build-ts.sh"
+
+echo "==> Installing the Node engine host next to nvim.js"
+cp "${ROOT}/wasm/worker.js" "${BUILD}/bin/"
+
 
 # -----------------------------------------------------------------------------
 # Runtime data packages (file_packager): the shared nvim.wasm is RUNTIME-AGNOSTIC

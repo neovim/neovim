@@ -1,0 +1,15 @@
+{
+  "name": "neovim-wasm-host",
+  "version": "1.0.0",
+  "description": "TypeScript sources for the wasm engine's Node host (worker.ts). Compiled by build-ts.sh into the worker.js the Node hosts consume.",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "build": "./build-ts.sh"
+  },
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "typescript": "^6.0.3",
+    "@types/node": "^22.0.0"
+  }
+}

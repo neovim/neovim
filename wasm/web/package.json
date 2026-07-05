@@ -4,7 +4,9 @@
   "description": "Browser UI + library for the Neovim wasm engine",
   "main": "dist/neovim.js",
   "scripts": {
-    "build": "./build-ts.sh"
+    "build": "./build-ts.sh",
+    "pretest": "./build-ts.sh",
+    "test": "node e2e.test.js && node treesitter.test.js"
   },
   "keywords": [],
   "author": "",

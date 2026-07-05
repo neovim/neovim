@@ -1,2 +1,8 @@
 # Build logs produced by build-deps.sh / build-nvim.sh
 *.log
+
+# wasm/ TypeScript build (sources live in src/; build-ts.sh emits these)
+node_modules/
+dist-worker/
+*.tsbuildinfo
+worker.js
