@@ -5,6 +5,8 @@ local uri_encode = vim.uri_encode --- @type function
 --- @type (fun(modename: string): fun()|string)[]
 local loaders = package.loaders
 local _loadfile = loadfile
+-- load()ing from a string (with mode/env arguments) is a LuaJIT extension.
+local can_load_string = (pcall(load, ''))
 
 local VERSION = 4
 local is_appimage = (os.getenv('APPIMAGE') ~= nil)
@@ -263,7 +265,18 @@ local function loadfile_cached(filename, mode, env)
     local e_hash, e_chunk = read_cachefile(cname)
     if hash_eq(e_hash, stat) and e_chunk then
       -- found in cache and up to date
-      local chunk, err = load(e_chunk, '@' .. modpath, mode, env)
+      -- PUC Lua 5.1's load() only accepts a function; loading from a string
+      -- (and the mode/env arguments) is a LuaJIT extension. Fall back to
+      -- loadstring()+setfenv() there.
+      local chunk, err ---@type function?, string?
+      if can_load_string then
+        chunk, err = load(e_chunk, '@' .. modpath, mode, env)
+      else
+        chunk, err = loadstring(e_chunk, '@' .. modpath)
+        if chunk and env then
+          setfenv(chunk, env)
+        end
+      end
       if not (err and err:find('cannot load incompatible bytecode', 1, true)) then
         return chunk, err
       end

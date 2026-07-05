@@ -773,6 +773,56 @@ if(STATIC_BUILD)
 endif()
 target_link_libraries(nvim_bin PRIVATE main_lib PUBLIC libuv)
 
+# ---------------------------------------------------------------------------
+# Emscripten / WebAssembly build glue.
+#
+# Keeps all wasm-specific sources/flags in one guarded block. These files live
+# under <repo>/wasm/ (outside the globbed source dirs) so they never affect a
+# native build. See wasm/ for the full porting notes.
+# ---------------------------------------------------------------------------
+if(EMSCRIPTEN)
+  target_sources(nvim_bin PRIVATE
+    ${PROJECT_SOURCE_DIR}/wasm/uv_stubs.c)
+  target_link_options(nvim_bin PRIVATE
+    # JSPI: lets blocking wasm code (the libuv event loop waiting on input)
+    # suspend on async JS promises via WebAssembly stack-switching.
+    -sJSPI
+    # Wasm-native setjmp/longjmp: the default emscripten model uses JS invoke_*
+    # trampolines whose JS stack frames break JSPI suspension. Must match the
+    # model the deps were built with (see wasm/build-deps.sh).
+    -sSUPPORT_LONGJMP=wasm
+    # Filesystem: use MEMFS (the default in-memory FS) with a NODEFS mount of the
+    # host filesystem (set up in wasm/pre.js). Unlike NODERAWFS, this keeps fd 0/1
+    # as first-class *virtual* streams, which is what lets wasm/nvim_io.js back
+    # them with the postMessage RPC channel (the engine runs in a worker with no
+    # real stdin/stdout). NODEFS still gives access to $VIMRUNTIME and real files.
+    -sFORCE_FILESYSTEM=1
+    -lnodefs.js
+    -sALLOW_MEMORY_GROWTH=1
+    # nvim recurses deeply (regex, syntax); the 64KB default stack is too small.
+    -sSTACK_SIZE=8MB
+    -sEXIT_RUNTIME=1
+    # Run in Node (worker_thread engine host) AND in the browser (Web Worker
+    # engine driven by a pure-JS UI on the page). One binary, both.
+    -sENVIRONMENT=node,web,worker
+    # NOTE: the $VIMRUNTIME is intentionally NOT baked in here with --preload-file.
+    # nvim.wasm is RUNTIME-AGNOSTIC: under Node the runtime is read from the
+    # on-disk runtime/ tree via the NODEFS mount; for the browser it is packaged
+    # out-of-band by wasm/build-nvim.sh (emscripten's file_packager) and loaded
+    # before nvim.js, so main() waits on the data via a run-dependency.
+    # Runs before everything (incl. the data-package loader): point locateFile at
+    # nvim.js's dir under Node so the data package resolves from any cwd. --pre-js
+    # is too late for this (the loader computes the path at the very top).
+    --extern-pre-js=${PROJECT_SOURCE_DIR}/wasm/extern-pre.js
+    # Boot-time JS that configures argv, the postMessage channel globals,
+    # $VIMRUNTIME and the environment (Emscripten does not inherit the host env).
+    --pre-js=${PROJECT_SOURCE_DIR}/wasm/pre.js
+    # Custom I/O glue: stdin/poll integration that suspends via JSPI (see file).
+    --js-library=${PROJECT_SOURCE_DIR}/wasm/nvim_io.js)
+  set_target_properties(nvim_bin PROPERTIES LINK_DEPENDS
+    "${PROJECT_SOURCE_DIR}/wasm/nvim_io.js;${PROJECT_SOURCE_DIR}/wasm/pre.js;${PROJECT_SOURCE_DIR}/wasm/extern-pre.js")
+endif()
+
 install_helper(TARGETS nvim_bin)
 if(MSVC)
   install(FILES $<TARGET_PDB_FILE:nvim_bin> DESTINATION ${CMAKE_INSTALL_BINDIR} OPTIONAL)

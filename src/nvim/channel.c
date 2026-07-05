@@ -582,6 +582,12 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output, const char **err
     }
     os_reattach_console_stdio();
   }
+#elif defined(__EMSCRIPTEN__)
+  // wasm: the engine's RPC channel (`nvim --embed`) is backed by the in-realm
+  // postMessage channel object, whose stream ops wasm/nvim_io.js installs
+  // directly on fd 0/1. There is no process spawning (so no cloexec concern) and
+  // no separate stdout to protect, so skip the dup/redirect dance entirely and
+  // use fd 0/1 as-is. See wasm/README.md.
 #else
   if (embedded_mode) {
     // Redirect stdout/stdin (the UI channel) to stderr. Use fnctl(F_DUPFD_CLOEXEC) instead of dup()
