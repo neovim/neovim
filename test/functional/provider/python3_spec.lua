@@ -13,6 +13,10 @@ local pcall_err = t.pcall_err
 local fn = n.fn
 local dedent = t.dedent
 
+if t.skip(t.is_wasm(), 'wasm: no child processes (python host)') then
+  return
+end
+
 do
   clear()
   local reason = missing_provider('python')

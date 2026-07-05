@@ -15,6 +15,10 @@ local async_meths = n.async_meths
 local testprg = n.testprg
 local assert_alive = n.assert_alive
 
+if t.skip(t.is_wasm(), 'wasm: no child processes') then
+  return
+end
+
 describe('terminal channel is closed and later released if', function()
   local screen
 

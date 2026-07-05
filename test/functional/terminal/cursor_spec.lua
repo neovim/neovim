@@ -15,6 +15,10 @@ local retry = t.retry
 local is_os = t.is_os
 local skip = t.skip
 
+if skip(t.is_wasm(), 'wasm: no child processes') then
+  return
+end
+
 describe(':terminal cursor', function()
   local screen
 

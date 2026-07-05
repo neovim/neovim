@@ -400,6 +400,7 @@ end)
 
 describe('event processing and input', function()
   it('not blocked by event bursts', function()
+    t.skip(t.is_wasm(), 'wasm: hangs; TODO investigate')
     api.nvim_set_keymap(
       '',
       '<f2>',

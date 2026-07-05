@@ -1435,6 +1435,7 @@ describe('lua stdlib', function()
   end)
 
   it('vim.rpcrequest and vim.rpcnotify', function()
+    t.skip(t.is_wasm(), 'wasm: no child processes')
     exec_lua([[
       chan = vim.fn.jobstart({'cat'}, {rpc=true})
       vim.rpcrequest(chan, 'nvim_set_current_line', 'meow')

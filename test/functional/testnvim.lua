@@ -663,7 +663,15 @@ function M._new_argv(...)
         'TMPDIR',
         'TSAN_OPTIONS',
         'VIMRUNTIME',
+        -- Keep sessions with a custom env inside the harness's isolated XDG
+        -- prefix (see cmake/RunTests.cmake): without these, such sessions
+        -- resolve stdpath() under the user's real $HOME -- polluting it, and
+        -- failing outright where it isn't writable (e.g. the wasm build's
+        -- sandboxed runs).
+        'XDG_CONFIG_HOME',
         'XDG_DATA_DIRS',
+        'XDG_DATA_HOME',
+        'XDG_STATE_HOME',
       }) do
         if not env_opt[k] then
           env_opt[k] = os.getenv(k)

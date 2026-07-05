@@ -34,6 +34,7 @@ describe(':mksession', function()
   end)
 
   it('restores same :terminal buf in splits', function()
+    skip(t.is_wasm(), 'wasm: no child processes')
     -- If the same :terminal is displayed in multiple windows, :mksession
     -- should restore it as such.
 
@@ -71,6 +72,7 @@ describe(':mksession', function()
   end
 
   it('do not restore :terminal if not set in sessionoptions, terminal in curwin #13078', function()
+    skip(t.is_wasm(), 'wasm: no child processes')
     local tmpfile_base = file_prefix .. '-tmpfile'
     command('edit ' .. tmpfile_base)
     command('terminal')
@@ -88,6 +90,7 @@ describe(':mksession', function()
   end)
 
   it('do not restore :terminal if not set in sessionoptions, terminal hidden #13078', function()
+    skip(t.is_wasm(), 'wasm: no child processes')
     command('terminal')
     local terminal_bufnr = api.nvim_get_current_buf()
 
@@ -107,6 +110,7 @@ describe(':mksession', function()
   end)
 
   it('do not restore :terminal if not set in sessionoptions, only buffer #13078', function()
+    skip(t.is_wasm(), 'wasm: no child processes')
     command('terminal')
     eq('terminal', api.nvim_get_option_value('buftype', {}))
 
@@ -167,6 +171,7 @@ describe(':mksession', function()
   end)
 
   it('restores CWD for :terminal buffers #11288', function()
+    skip(t.is_wasm(), 'wasm: no child processes')
     local cwd_dir = fn.fnamemodify('.', ':p:~'):gsub([[[\/]*$]], '')
     cwd_dir = t.fix_slashes(cwd_dir) -- :mksession always uses unix slashes.
     local session_path = cwd_dir .. '/' .. session_file
@@ -195,6 +200,7 @@ describe(':mksession', function()
   end)
 
   it('restores CWD for :terminal buffer at root directory #16988', function()
+    skip(t.is_wasm(), 'wasm: no child processes')
     skip(is_os('win'), 'N/A for Windows')
 
     local screen

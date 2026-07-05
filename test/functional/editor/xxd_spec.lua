@@ -7,6 +7,10 @@ local clear = n.clear
 local fn = n.fn
 local testprg = n.testprg
 
+if t.skip(t.is_wasm(), 'wasm: no child processes') then
+  return
+end
+
 describe('xxd', function()
   before_each(clear)
 

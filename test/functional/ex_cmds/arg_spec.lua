@@ -12,6 +12,7 @@ describe(':argument', function()
   end)
 
   it('does not restart :terminal buffer', function()
+    t.skip(t.is_wasm(), 'wasm: no child processes')
     command('terminal')
     n.feed([[<C-\><C-N>]])
     command('argadd')

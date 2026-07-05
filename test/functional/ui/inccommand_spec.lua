@@ -2544,6 +2544,7 @@ describe(':substitute', function()
 end)
 
 it(':substitute with inccommand during :terminal activity', function()
+  t.skip(t.is_wasm(), 'wasm: no child processes')
   if t.skip_fragile(pending) then
     return
   end

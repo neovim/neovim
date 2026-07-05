@@ -1190,6 +1190,7 @@ describe('default statusline', function()
   end)
 
   it('shows exit code when terminal exits #14986', function()
+    t.skip(t.is_wasm(), 'wasm: no child processes')
     exec_lua("vim.o.statusline = ''")
     api.nvim_set_option_value('shell', testprg('shell-test'), {})
     api.nvim_set_option_value('shellcmdflag', 'EXIT', {})

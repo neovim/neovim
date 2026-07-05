@@ -445,6 +445,14 @@ function M.is_zig_build()
   return M.paths.is_zig_build
 end
 
+--- True if the nvim under test ($NVIM_PRG) is the WebAssembly build (see
+--- wasm/test/run-functional.sh, which sets this). Used to skip tests that
+--- need capabilities the sandboxed wasm build does not have (child
+--- processes, PTYs, sockets).
+function M.is_wasm()
+  return os.getenv('NVIM_TEST_WASM') ~= nil
+end
+
 local tmpname_id = 0
 local tmpdir = os.getenv('TMPDIR') or os.getenv('TEMP')
 local tmpdir_is_local = not not (tmpdir and tmpdir:find('Xtest'))

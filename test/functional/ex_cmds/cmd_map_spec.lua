@@ -131,6 +131,7 @@ describe('mappings with <Cmd>', function()
   end)
 
   it('works in various modes and sees correct `mode()` value', function()
+    t.skip(t.is_wasm(), 'wasm: no child processes')
     -- normal mode
     feed('<F3>')
     eq('n', eval('m'))

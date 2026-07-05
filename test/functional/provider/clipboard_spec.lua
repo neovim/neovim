@@ -304,6 +304,7 @@ describe('clipboard (with fake clipboard.vim)', function()
   end)
 
   it('`:redir @+>` invokes clipboard once-per-message', function()
+    t.skip(t.is_wasm(), 'wasm: no child processes')
     eq(0, eval('g:clip_called_set'))
     n.exec([[
       redir @+>

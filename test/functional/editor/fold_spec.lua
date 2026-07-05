@@ -23,6 +23,7 @@ describe('Folding', function()
   end)
 
   it('manual folding adjusts with filter', function()
+    t.skip(t.is_wasm(), 'wasm: no child processes')
     insert([[
     1
     2

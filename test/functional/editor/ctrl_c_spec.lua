@@ -7,6 +7,10 @@ local command = n.command
 local poke_eventloop = n.poke_eventloop
 local sleep = vim.uv.sleep
 
+if t.skip(t.is_wasm(), 'wasm: no interrupt (CTRL-C) delivery') then
+  return
+end
+
 describe('CTRL-C (mapped)', function()
   local screen
 

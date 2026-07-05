@@ -99,6 +99,7 @@ describe('splitkeep', function()
 
   -- oldtest: Test_splitkeep_callback()
   it('does not scroll when split in callback', function()
+    t.skip(t.is_wasm(), 'wasm: no child processes')
     exec([[
       call setline(1, range(&lines))
       function C1(a, b, c)

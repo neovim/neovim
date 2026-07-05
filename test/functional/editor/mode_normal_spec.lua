@@ -25,6 +25,7 @@ describe('Normal mode', function()
   end)
 
   it('&showcmd does not crash with :startinsert #28419', function()
+    t.skip(t.is_wasm(), 'wasm: no child processes')
     local screen = Screen.new(60, 17)
     fn.jobstart({ n.nvim_prog, '--clean', '--cmd', 'startinsert' }, {
       term = true,

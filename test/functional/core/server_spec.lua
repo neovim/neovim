@@ -12,6 +12,10 @@ local is_os = t.is_os
 
 local testlog = 'Xtest-server-log'
 
+if t.skip(t.is_wasm(), 'wasm: no server sockets') then
+  return
+end
+
 local function clear_serverlist()
   for _, server in pairs(fn.serverlist()) do
     fn.serverstop(server)

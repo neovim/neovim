@@ -208,6 +208,7 @@ describe('ext_hlstate detailed highlights', function()
   end)
 
   it('work with :terminal', function()
+    skip(t.is_wasm(), 'wasm: no child processes')
     skip(is_os('win'))
 
     screen:set_default_attr_ids({

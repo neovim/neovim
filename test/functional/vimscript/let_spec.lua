@@ -66,6 +66,7 @@ describe(':let', function()
   end)
 
   it('multibyte env var to child process #8398 #9267', function()
+    t.skip(t.is_wasm(), 'wasm: no child processes')
     local cmd_get_child_env = ("let g:env_from_child = system(['%s', 'NVIM_TEST_LET'])"):format(
       testprg('printenv-test')
     )

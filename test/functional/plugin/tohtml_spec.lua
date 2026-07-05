@@ -267,6 +267,7 @@ describe(':TOhtml', function()
   end)
 
   it('diff', function()
+    t.skip(t.is_wasm(), 'wasm: no child processes')
     exec('set diffopt=')
     insert [[
     diffadd

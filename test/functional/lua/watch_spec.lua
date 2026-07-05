@@ -8,6 +8,10 @@ local is_ci = t.is_ci
 local is_os = t.is_os
 local skip = t.skip
 
+if skip(t.is_wasm(), 'wasm: no fs events') then
+  return
+end
+
 -- Create a file via a rename to avoid multiple
 -- events which can happen with some backends on some platforms
 local function touch(path)

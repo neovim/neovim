@@ -42,6 +42,7 @@ describe('WinResized', function()
   end)
 
   it('is triggered in terminal mode #21197 #27207', function()
+    t.skip(t.is_wasm(), 'wasm: no child processes')
     exec([[
       autocmd TermOpen * startinsert
       let g:resized = 0

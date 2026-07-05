@@ -81,6 +81,10 @@ if skip(is_os('win')) then
   return
 end
 
+if t.skip(t.is_wasm(), 'wasm: LSP tests spawn a language-server process') then
+  return
+end
+
 describe('LSP', function()
   before_each(function()
     clear_notrace()

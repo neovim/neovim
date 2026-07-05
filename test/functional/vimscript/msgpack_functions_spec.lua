@@ -469,6 +469,7 @@ describe('msgpackparse() function', function()
   end)
 
   it('msgpackparse(systemlist(...)) does not segfault. #3135', function()
+    t.skip(t.is_wasm(), 'wasm: no child processes')
     local cmd = "sort(keys(msgpackparse(systemlist('" .. n.nvim_prog .. " --api-info'))[0]))"
     eval(cmd)
     eval(cmd) -- do it again (try to force segfault)

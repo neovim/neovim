@@ -8,6 +8,10 @@ if t.skip(t.is_os('win')) then
   return
 end
 
+if t.skip(t.is_wasm(), 'wasm: no child processes') then
+  return
+end
+
 describe('api', function()
   local screen
   local socket_name = './Xtest_functional_api.sock'

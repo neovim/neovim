@@ -8,6 +8,10 @@ local feed_data = tt.feed_data
 local is_os = t.is_os
 local skip = t.skip
 
+if skip(t.is_wasm(), 'wasm: no child processes') then
+  return
+end
+
 describe(':terminal mouse', function()
   local screen
 

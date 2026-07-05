@@ -12,6 +12,10 @@ local nvim_set = n.nvim_set
 local is_os = t.is_os
 local skip = t.skip
 
+if skip(t.is_wasm(), 'wasm: no child processes') then
+  return
+end
+
 describe(':terminal highlight', function()
   local screen
 

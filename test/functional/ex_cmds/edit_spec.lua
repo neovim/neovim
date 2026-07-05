@@ -13,6 +13,7 @@ describe(':edit', function()
   end)
 
   it('without arguments does not restart :terminal buffer', function()
+    t.skip(t.is_wasm(), 'wasm: no child processes')
     command('terminal')
     feed([[<C-\><C-N>]])
     local bufname_before = fn.bufname('%')

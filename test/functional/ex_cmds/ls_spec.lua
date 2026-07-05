@@ -49,6 +49,7 @@ describe(':ls', function()
 
   describe('R, F for', function()
     it('terminal buffers', function()
+      t.skip(t.is_wasm(), 'wasm: no child processes')
       api.nvim_set_option_value('shell', string.format('"%s" INTERACT', testprg('shell-test')), {})
       test_ls_terminal_buffer(function()
         command('terminal')

@@ -8,6 +8,10 @@ local feed_data = tt.feed_data
 local enter_altscreen = tt.enter_altscreen
 local exit_altscreen = tt.exit_altscreen
 
+if t.skip(t.is_wasm(), 'wasm: no child processes') then
+  return
+end
+
 describe(':terminal altscreen', function()
   local screen
 

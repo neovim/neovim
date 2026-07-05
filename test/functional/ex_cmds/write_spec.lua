@@ -230,6 +230,7 @@ describe(':write', function()
   end)
 
   it('converts to GB18030 with iconv', function()
+    t.skip(t.is_wasm(), 'wasm: iconv lacks GB18030')
     api.nvim_buf_set_lines(0, 0, 1, true, { '你好，世界！', '这是一个测试。' })
     command('write ++enc=gb18030 ++ff=unix ' .. fname)
 

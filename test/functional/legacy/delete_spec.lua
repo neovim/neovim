@@ -49,6 +49,7 @@ describe('Test for delete()', function()
   end)
 
   it('symlink directory delete', function()
+    t.skip(t.is_wasm(), 'wasm: no child processes (:!ln)')
     command("call mkdir('Xdir1')")
     if t.is_os('win') then
       command('silent !mklink /j Xlink Xdir1')

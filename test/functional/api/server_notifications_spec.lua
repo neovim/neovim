@@ -78,6 +78,7 @@ describe('notify', function()
   end)
 
   it('cancels stale events on channel close #13537', function()
+    t.skip(t.is_wasm(), 'wasm: no child processes')
     local catchan = eval("jobstart(['cat'], {'rpc': v:true})")
     local catpath = vim.fs.normalize(eval('exepath("cat")'))
     api.nvim_set_var('somevar', 0)

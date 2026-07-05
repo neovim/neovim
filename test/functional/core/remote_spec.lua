@@ -15,6 +15,10 @@ local set_session = n.set_session
 local tmpname = t.tmpname
 local write_file = t.write_file
 
+if t.skip(t.is_wasm(), 'wasm: --remote needs a server socket') then
+  return
+end
+
 describe('Remote', function()
   local fname, other_fname
   local contents = 'The call is coming from outside the process'

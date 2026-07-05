@@ -16,6 +16,10 @@ local skip = t.skip
 local is_os = t.is_os
 local testprg = n.testprg
 
+if skip(t.is_wasm(), 'wasm: no child processes') then
+  return
+end
+
 describe(':terminal window', function()
   before_each(clear)
 

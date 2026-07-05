@@ -13,6 +13,10 @@ local set_session = n.set_session
 local pcall_err = t.pcall_err
 local assert_alive = n.assert_alive
 
+if t.skip(t.is_wasm(), 'wasm: no child processes or server sockets') then
+  return
+end
+
 describe('server -> client', function()
   local cid
 
