@@ -610,6 +610,11 @@ describe('TUI :restart', function()
 
   it('drops "-" and "-- [files…]" from v:argv #34417', function()
     t.skip(is_os('win'), 'stdin behavior differs on Windows')
+    local file = 'file.lua'
+    write_file(file, "print('-S works')\n")
+    finally(function()
+      os.remove(file)
+    end)
     local server_session
     finally(function()
       if server_session then
@@ -626,6 +631,8 @@ describe('TUI :restart', function()
       server_pipe,
       '--cmd',
       'set notermguicolors',
+      '-S',
+      file,
       '-s',
       '-',
       '-',
@@ -637,14 +644,16 @@ describe('TUI :restart', function()
       ^                                                  |
       ~                                                 |*3
       {2:Xtest-file1                     0,0-1          All}|
-                                                        |
+      -S works                                          |
       {5:-- TERMINAL --}                                    |
     ]])
     server_session = n.connect(server_pipe)
     local expr = 'index(v:argv, "-") >= 0 || index(v:argv, "--") >= 0 ? v:true : v:false'
     local has_s = 'index(v:argv, "-s") >= 0 ? v:true : v:false'
+    local has_S = 'index(v:argv, "-S") >= 0 ? v:true : v:false'
     eq({ true, true }, { server_session:request('nvim_eval', expr) })
     eq({ true, true }, { server_session:request('nvim_eval', has_s) })
+    eq({ true, true }, { server_session:request('nvim_eval', has_S) })
 
     tt.feed_data(":restart! put='foo'\013")
     screen:expect([[
@@ -660,6 +669,7 @@ describe('TUI :restart', function()
 
     eq({ true, false }, { server_session:request('nvim_eval', expr) })
     eq({ true, false }, { server_session:request('nvim_eval', has_s) })
+    eq({ true, false }, { server_session:request('nvim_eval', has_S) })
 
     -- local argv = ({ server_session:request('nvim_eval', 'v:argv') })[2] --[[@type table]]
     -- eq(13, #argv)
