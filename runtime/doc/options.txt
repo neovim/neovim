@@ -818,6 +818,16 @@ A jump table for the options with a short description can be found at |Q_op|.
 	so buffers are updated immediately (instead of only on focus-change or
 	shell-commands).
 
+							*g:autoread_watch_dir*
+	By default Nvim may share one non-recursive directory watcher between
+	multiple buffers in the same directory.  Set `g:autoread_watch_dir` to
+	v:false before loading buffers to always use one watcher per buffer.
+
+					*g:autoread_watch_dir_threshold*
+	When directory watcher sharing is enabled, this sets the number of
+	buffers in one directory required before Nvim switches to a shared
+	directory watcher.  The default is 3.
+
 	If this option has a local value, use this command to switch back to
 	using the global value: >vim
 		set autoread<
