@@ -1092,20 +1092,30 @@ describe('messages2', function()
   end)
 
   it('search count is cleared', function()
-    command('set ruler shortmess-=S | call setline(1, ["foo", "bar"])')
+    command('set ruler showcmd shortmess-=S | call setline(1, ["foo", "bar"])')
     feed('/foo<CR>')
-    screen:expect([[
+    local search_count = [[
       {10:^foo}                                                  |
       bar                                                  |
       {1:~                                                    }|*11
       /foo           W [1/1]             1,1            All|
-    ]])
+    ]]
+    screen:expect(search_count)
     feed('<C-L>j')
     screen:expect([[
       {10:foo}                                                  |
       ^bar                                                  |
       {1:~                                                    }|*11
                                          2,1            All|
+    ]])
+    feed('n')
+    screen:expect(search_count)
+    command('echo "-"->repeat(&columns)')
+    screen:expect([[
+      {10:^foo}                                                  |
+      bar                                                  |
+      {1:~                                                    }|*11
+      -----------------------------------1,1            All|
     ]])
   end)
 end)

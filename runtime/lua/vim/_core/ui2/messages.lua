@@ -462,6 +462,7 @@ function M.msg_show(kind, content, replace_last, _, append, id, trigger)
       M.cmd.last_emsg = (kind == 'emsg' or kind == 'wmsg') and os.time() or M.cmd.last_emsg
       -- Should clear the search count now, mark itself is cleared by invalidate.
       M.virt.last[M.virt.idx.search][1] = nil
+      M.virt.last[M.virt.idx.cmd] = {}
     end
     -- When message was emitted below an already expanded cmdline, move and route to pager.
     tgt = ui.cmd.expand > 0 and 'pager' or tgt
