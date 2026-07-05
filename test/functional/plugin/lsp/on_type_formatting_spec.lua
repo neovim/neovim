@@ -111,7 +111,7 @@ describe('vim.lsp.on_type_formatting', function()
       vim.api.nvim_win_set_cursor(win, { 2, 0 })
     end)
     feed('A =')
-    retry(nil, 100, function()
+    retry(2, nil, function()
       eq(
         {
           'int main() {',
@@ -158,7 +158,7 @@ describe('vim.lsp.on_type_formatting', function()
       vim.lsp.buf_attach_client(buf, _G.server_id)
     end)
     feed('A = 5')
-    retry(nil, 100, function()
+    retry(2, nil, function()
       eq(
         {
           'int main() {',
