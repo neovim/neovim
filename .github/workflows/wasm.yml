@@ -1,0 +1,115 @@
+# Build and test the WebAssembly port, and publish a downloadable demo bundle.
+#
+# One job, one build, three deliverables:
+#   1. the wasm build itself (the composite action runs the per-variant boot
+#      gate as part of wasm/build-nvim.sh — a variant that doesn't boot clean
+#      fails the build);
+#   2. the test run: the Node smoke tests (wasm/web: e2e + treesitter) plus a
+#      sample of the upstream functional suite executed against the wasm
+#      engine (wasm/test/run-functional.sh);
+#   3. the demo: wasm/web/build-site.sh assembled and uploaded as the
+#      `nvim-wasm-demo` artifact — a flat directory that runs on any static
+#      file server. Download, unzip, `python3 -m http.server`, open the page.
+name: wasm
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'wasm/**'
+      - 'src/**'
+      - 'cmake.deps/**'
+      - 'cmake/**'
+      - 'runtime/**'
+      - 'CMakeLists.txt'
+      - '.github/workflows/wasm.yml'
+      - '.github/actions/build-wasm/**'
+  pull_request:
+    paths:
+      - 'wasm/**'
+      - 'src/**'
+      - 'cmake.deps/**'
+      - 'cmake/**'
+      - 'runtime/**'
+      - 'CMakeLists.txt'
+      - '.github/workflows/wasm.yml'
+      - '.github/actions/build-wasm/**'
+  workflow_dispatch:
+
+concurrency:
+  group: wasm-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test-demo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      EM_VERSION: 3.1.69
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build wasm (engine + runtime packages + boot gate)
+        uses: ./.github/actions/build-wasm
+        with:
+          em-version: ${{ env.EM_VERSION }}
+
+      # The upstream functional-test harness RUNNER is the native nvim (it
+      # spawns child processes); the composite action already configured
+      # build/ (for nlua0), so this is an incremental build.
+      - name: Build native nvim (functional-test runner)
+        run: cmake --build build
+
+      - name: Node smoke tests (e2e + treesitter)
+        working-directory: wasm/web
+        run: npm test
+
+      # A sample of the upstream functional suite against the wasm engine
+      # (one runner invocation per file; the full sweep is wasm/test/triage.sh).
+      # These files cover RPC + API, the PUC-Lua loader fallback, editing +
+      # folds, normal-mode input, and tree-sitter.
+      - name: Functional suite sample (wasm engine)
+        run: |
+          for f in \
+            test/functional/api/version_spec.lua \
+            test/functional/lua/loader_spec.lua \
+            test/functional/editor/fold_spec.lua \
+            test/functional/editor/mode_normal_spec.lua \
+            test/functional/treesitter/language_spec.lua \
+          ; do
+            echo "==> $f"
+            TEST_TIMEOUT=900 wasm/test/run-functional.sh "$f"
+          done
+
+      - name: Assemble the demo site
+        run: wasm/web/build-site.sh "${GITHUB_WORKSPACE}/_site"
+
+      # A README so the unzipped bundle is self-explanatory.
+      - name: Add bundle README
+        run: |
+          cat > _site/README.txt <<'EOF'
+          Neovim (WebAssembly) — browser demo bundle
+
+          This directory is a complete static site: the Neovim engine compiled
+          to WebAssembly, three runtime bundles (full/core/minimal), and the
+          demo page that runs the editor in a Web Worker.
+
+          To try it locally, serve this directory with any static file server
+          (it must be served over HTTP, not opened as a file:// URL):
+
+              python3 -m http.server 8000
+              # or: npx http-server -p 8000
+
+          then open http://localhost:8000/ in a browser with WebAssembly JSPI
+          support (Chrome/Chromium >= 137), click the grid, and type.
+          EOF
+
+      - name: Zip the demo bundle
+        run: (cd _site && zip -qr ../nvim-wasm-demo.zip .)
+
+      - name: Upload demo bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: nvim-wasm-demo
+          path: nvim-wasm-demo.zip
+          retention-days: 30

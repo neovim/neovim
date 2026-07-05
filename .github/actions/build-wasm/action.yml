@@ -1,0 +1,76 @@
+# Composite action: cross-compile Neovim to WebAssembly.
+#
+# This is the heavy, shared half of the wasm pipeline — emscripten + the native
+# host helpers + the wasm cross-compile + the runtime variant packaging (which
+# includes the per-variant boot gate). Callers run tests against the build
+# and/or assemble the static demo bundle from it (wasm/web/build-site.sh).
+name: Build wasm
+description: Cross-compile Neovim to wasm (engine + runtime data packages).
+
+inputs:
+  em-version:
+    description: Emscripten version to pin (must have -sJSPI).
+    required: false
+    default: "3.1.69"
+
+runs:
+  using: composite
+  steps:
+    - name: Install host build deps
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ninja-build gettext cmake unzip curl build-essential
+
+    # Node 26 is the version wasm/README.md documents as tested for JSPI
+    # (WebAssembly.Suspending) — REQUIRED to run the wasm engine under Node.
+    # build-nvim.sh runs `node nvim.js` to verify each runtime variant boots clean
+    # AND to generate the full variant's help-tag database (doc/tags). Node 20
+    # lacks JSPI (the verify gate then passed vacuously and :help shipped
+    # untagged); Node 24 still gates JSPI behind a flag — 26 has it on by default.
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 26
+
+    # Emscripten, pinned to the version the wasm build was developed against.
+    - name: Setup Emscripten
+      uses: mymindstorm/setup-emsdk@v14
+      with:
+        version: ${{ inputs.em-version }}
+        actions-cache-folder: emsdk-cache-${{ inputs.em-version }}
+
+    # The cross build needs two host helpers produced by a native build:
+    # the bundled host luajit (.deps/usr/bin/luajit) and the nlua0 Lua C-module
+    # (build/lib/libnlua0.so) that drives Neovim's C-from-Lua codegen.
+    - name: Cache native deps (.deps)
+      uses: actions/cache@v4
+      with:
+        path: .deps
+        key: native-deps-${{ runner.os }}-${{ hashFiles('cmake.deps/**') }}
+
+    - name: Build native deps + nlua0 host helper
+      shell: bash
+      run: |
+        cmake -S cmake.deps -B .deps -G Ninja -D CMAKE_BUILD_TYPE=Release
+        cmake --build .deps
+        cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=Release
+        cmake --build build --target nlua0
+
+    # Cache ONLY the install output (libs + headers), never the CMake configure
+    # tree. The configure tree hard-codes emsdk's absolute path, and setup-emsdk
+    # reinstalls emsdk to a fresh random temp dir each run, so a cached configure
+    # tree points at a now-deleted toolchain and breaks the build. usr/ is
+    # path-independent and is all build-nvim.sh consumes (DEPS=.deps-wasm/usr).
+    - name: Cache wasm deps (.deps-wasm/usr)
+      uses: actions/cache@v4
+      with:
+        path: .deps-wasm/usr
+        key: wasm-deps-${{ runner.os }}-${{ inputs.em-version }}-${{ hashFiles('cmake.deps/**', 'wasm/build-deps.sh', 'wasm/shim.h') }}
+
+    - name: Cross-compile bundled deps to wasm
+      shell: bash
+      run: wasm/build-deps.sh
+
+    - name: Cross-compile Neovim to wasm
+      shell: bash
+      run: wasm/build-nvim.sh
