@@ -64,6 +64,7 @@ function! s:set_osc52() abort
   let s:copy['*'] = v:lua.require'vim.ui.clipboard.osc52'.copy('*')
   let s:paste['+'] = v:lua.require'vim.ui.clipboard.osc52'.paste('+')
   let s:paste['*'] = v:lua.require'vim.ui.clipboard.osc52'.paste('*')
+  let s:copy_blob = v:true
   return 'OSC 52'
 endfunction
 
@@ -175,6 +176,8 @@ function! s:set_tmux() abort
 endfunction
 
 let s:cache_enabled = 1
+" Whether the copy provider accepts a Blob payload (else it gets a List).
+let s:copy_blob = v:false
 let s:err = ''
 
 function! provider#clipboard#Error() abort
@@ -232,6 +235,7 @@ function! provider#clipboard#Executable() abort
     let s:paste['*'] = s:split_cmd(get(g:clipboard.paste, '*', v:null))
 
     let s:cache_enabled = get(g:clipboard, 'cache_enabled', 0)
+    let s:copy_blob = get(g:clipboard, 'blob', v:false)
     return get(g:clipboard, 'name', 'g:clipboard')
   elseif has('mac')
     return s:set_pbcopy()
@@ -273,9 +277,10 @@ function! s:clipboard.get(reg) abort
   end
 
   let clipboard_data = type(s:paste[a:reg]) == v:t_func ? s:paste[a:reg]() : s:try_cmd(s:paste[a:reg])
+  let cached = get(s:selections[a:reg].data, 0, v:null)
   if match(&clipboard, '\v(unnamed|unnamedplus)') >= 0
         \ && type(clipboard_data) == v:t_list
-        \ && get(s:selections[a:reg].data, 0, []) ==# clipboard_data
+        \ && type(cached) == v:t_list && cached ==# clipboard_data
     " When system clipboard return is same as our cache return the cache
     " as it contains regtype information
     return s:selections[a:reg].data
@@ -283,6 +288,15 @@ function! s:clipboard.get(reg) abort
   return clipboard_data
 endfunction
 
+" Convert a Blob payload to a List of lines for copy providers that predate
+" Blob support: split on NL, NUL within a line becomes NL (:help NL-used-for-Nul).
+function! s:blob2lines(blob) abort
+  return luaeval('vim.tbl_map(function(l) return (l:gsub("%z", "\n")) end, vim.split(_A, "\n", {plain=true}))', a:blob)
+endfunction
+
+" {lines} is a List of lines, or a Blob (binary payload, e.g. OSC 52). Command
+" providers and the cache keep the Blob; a function provider gets it verbatim
+" only if it opted in via g:clipboard.blob, else a converted List of lines.
 function! s:clipboard.set(lines, regtype, reg) abort
   if a:reg == '"'
     call s:clipboard.set(a:lines,a:regtype,'+')
@@ -294,7 +308,8 @@ function! s:clipboard.set(lines, regtype, reg) abort
 
   if s:cache_enabled == 0 || type(s:copy[a:reg]) == v:t_func
     if type(s:copy[a:reg]) == v:t_func
-      call s:copy[a:reg](a:lines, a:regtype)
+      let lines = (!s:copy_blob && type(a:lines) == v:t_blob) ? s:blob2lines(a:lines) : a:lines
+      call s:copy[a:reg](lines, a:regtype)
     else
       call s:try_cmd(s:copy[a:reg], a:lines)
     endif

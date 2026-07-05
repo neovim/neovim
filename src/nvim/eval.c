@@ -5133,19 +5133,30 @@ void timer_teardown(void)
 /// Saves a typval_T as a string.
 ///
 /// For lists or buffers, replaces NLs with NUL and separates items with NLs.
+/// A Blob is returned verbatim; an empty or NULL Blob yields NULL with *len==0
+/// (empty input, not an error).
 ///
 /// @param[in]  tv   Value to store as a string.
 /// @param[out] len  Length of the resulting string or -1 on error.
 /// @param[in]  endnl If true, the output will end in a newline (if a list).
 /// @param[in]  crlf  If true, list items will be joined with CRLF (if a list).
-/// @returns an allocated string if `tv` represents a Vimscript string, list, or
-///          number; NULL otherwise.
+/// @returns an allocated string if `tv` represents a Vimscript string, list,
+///          number, or Blob; NULL otherwise.
 char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl, bool crlf)
   FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   *len = 0;
   if (tv->v_type == VAR_UNKNOWN) {
     return NULL;
+  }
+
+  if (tv->v_type == VAR_BLOB) {
+    const blob_T *const b = tv->vval.v_blob;
+    *len = tv_blob_len(b);
+    if (*len == 0) {
+      return NULL;
+    }
+    return xmemdupz(b->bv_ga.ga_data, (size_t)(*len));
   }
 
   // For other types, let tv_get_string_buf_chk() get the value or
