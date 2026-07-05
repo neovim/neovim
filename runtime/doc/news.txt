@@ -138,6 +138,9 @@ The following new features were added.
 
 API
 
+• |nvim_win_resize()| resizes a window with a choosable anchor edge, letting a
+  window grow upwards or leftwards by taking space from the window above or to
+  the left first. |nvim_win_set_height()| and |nvim_win_set_width()| are now deprecated.
 • |nvim_buf_call()| and |nvim_win_call()| now preserve multiple return values.
 • |nvim_set_hl()| supports "font" key.
 • |nvim_open_win()| `zindex` controls whether the UI will use a dimmed cursor

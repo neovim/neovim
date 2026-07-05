@@ -268,9 +268,9 @@ Window nvim_open_win(Buffer buf, Boolean enter, Dict(win_config) *config, Error 
         // Without room for the requested size, window sizes may have been equalized instead.
         // If the size differs from what was requested, try to set it again now.
         if ((flags & WSP_VERT) && wp->w_width != size) {
-          win_setwidth_win(size, wp);
+          win_setwidth_win(size, wp, true);
         } else if (!(flags & WSP_VERT) && wp->w_height != size) {
-          win_setheight_win(size, wp);
+          win_setheight_win(size, wp, true);
         }
       }
     }
@@ -618,10 +618,10 @@ restore_curwin:
 
 resize:
   if (HAS_KEY_X(config, width)) {
-    win_setwidth_win(fconfig->width, win);
+    win_setwidth_win(fconfig->width, win, true);
   }
   if (HAS_KEY_X(config, height)) {
-    win_setheight_win(fconfig->height, win);
+    win_setheight_win(fconfig->height, win, true);
   }
 
   // Merge configs now. If previously a float, clear fields irrelevant to splits that `fconfig` may

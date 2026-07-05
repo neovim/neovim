@@ -31,6 +31,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
+#include "nvim/window.h"
 
 #include "api/deprecated.c.generated.h"
 
@@ -1005,4 +1006,51 @@ Object nvim_notify(String msg, Integer log_level, Dict opts, Arena *arena, Error
   ADD_C(args, DICT_OBJ(opts));
 
   return NLUA_EXEC_STATIC("return vim.notify(...)", args, kRetObject, arena, err);
+}
+
+/// @deprecated
+///
+/// Use |nvim_win_resize()| instead, e.g., nvim_win_resize(win, -1, height, {})
+///
+/// Sets the window height.
+///
+/// @param win   |window-ID|, or 0 for current window
+/// @param height   Height as a count of rows
+/// @param[out] err Error details, if any
+void nvim_win_set_height(Window win, Integer height, Error *err)
+  FUNC_API_SINCE(1) FUNC_API_DEPRECATED_SINCE(15)
+{
+  win_T *w = find_window_by_handle(win, err);
+
+  if (!w) {
+    return;
+  }
+
+  TRY_WRAP(err, {
+    win_setheight_win((int)height, w, true);
+  });
+}
+
+/// @deprecated
+///
+/// Use |nvim_win_resize()| instead, e.g., nvim_win_resize(win, width, -1, {})
+///
+/// Sets the window width. This will only succeed if the screen is split
+/// vertically.
+///
+/// @param win   |window-ID|, or 0 for current window
+/// @param width    Width as a count of columns
+/// @param[out] err Error details, if any
+void nvim_win_set_width(Window win, Integer width, Error *err)
+  FUNC_API_SINCE(1) FUNC_API_DEPRECATED_SINCE(15)
+{
+  win_T *w = find_window_by_handle(win, err);
+
+  if (!w) {
+    return;
+  }
+
+  TRY_WRAP(err, {
+    win_setwidth_win((int)width, w, true);
+  });
 }

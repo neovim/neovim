@@ -1625,7 +1625,7 @@ function M.open_floating_preview(contents, syntax, opts)
       local win_height = api.nvim_win_get_height(floating_winnr)
       local text_height = api.nvim_win_text_height(floating_winnr, { max_height = win_height }).all
       if text_height < win_height then
-        api.nvim_win_set_height(floating_winnr, text_height)
+        api.nvim_win_resize(floating_winnr, -1, text_height, {})
       end
     end
   end

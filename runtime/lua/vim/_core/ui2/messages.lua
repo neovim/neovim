@@ -139,7 +139,7 @@ local function set_virttext(type, tgt)
       -- Check if adding the virt_text on this line will exceed the current window width.
       local maxwidth = math.max(M.msg.width, math.min(o.columns, scol - offset + width))
       if tgt == 'msg' and api.nvim_win_get_width(win) < maxwidth then
-        api.nvim_win_set_width(win, maxwidth)
+        api.nvim_win_resize(win, maxwidth, -1, {})
         M.msg.width = maxwidth
       end
 
@@ -293,7 +293,7 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
     if tgt == 'msg' then
       local width_cmd = [[echo max(map(range(1, line('$')), 'virtcol([v:val, "$"])'))]]
       local width = tonumber(fn.win_execute(ui.wins.msg, width_cmd)) - 1
-      api.nvim_win_set_width(ui.wins.msg, width)
+      api.nvim_win_resize(ui.wins.msg, width, -1, {})
       local texth = api.nvim_win_text_height(ui.wins.msg, { start_row = start_row, end_row = row })
       if texth.all > math.ceil(lines * 0.5) then
         tgt, buf = M.expand_msg(tgt)

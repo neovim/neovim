@@ -677,7 +677,7 @@ local function update_popup_window(winid, bufnr, kind)
       vim.treesitter.start(bufnr, kind)
     end
     local all = api.nvim_win_text_height(winid, {}).all
-    api.nvim_win_set_height(winid, all)
+    api.nvim_win_resize(winid, -1, all, {})
   end
 end
 
