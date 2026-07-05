@@ -84,6 +84,10 @@
 # include <sys/file.h>
 #endif
 
+#ifdef MSWIN
+# include "nvim/os/os_win_console.h"
+#endif
+
 #ifdef OPEN_CHR_FILES
 # include "nvim/charset.h"
 #endif
@@ -1696,11 +1700,8 @@ failed:
       // On Unix, use stderr for stdin, makes shell commands work.
       vim_ignored = dup(2);
 #else
-      // On Windows, use the console input handle for stdin.
-      HANDLE conin = CreateFile("CONIN$", GENERIC_READ | GENERIC_WRITE,
-                                FILE_SHARE_READ, (LPSECURITY_ATTRIBUTES)NULL,
-                                OPEN_EXISTING, 0, (HANDLE)NULL);
-      vim_ignored = _open_osfhandle((intptr_t)conin, _O_RDONLY);
+      // On Windows, use the console input handle (CONIN$) for stdin.
+      vim_ignored = os_open_conin_fd();
 #endif
     }
   }

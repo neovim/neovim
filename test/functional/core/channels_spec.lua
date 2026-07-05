@@ -33,7 +33,7 @@ describe('channels', function()
     source(init)
   end)
 
-  pending('can connect to socket', function()
+  it('can connect to socket', function()
     local server = n.new_session(true)
     set_session(server)
     local address = fn.serverlist()[1]
@@ -60,6 +60,46 @@ describe('channels', function()
     eq({ 'notification', 'data', { id, res } }, next_msg())
     command("call chansend(g:id, msgpackdump([[2,'nvim_command',['quit']]]))")
     eq({ 'notification', 'data', { id, { '' } } }, next_msg())
+  end)
+
+  it('emits ChanClose when RPC socket reaches EOF', function()
+    local client = get_session()
+    local server = n.new_session(true)
+    finally(function()
+      set_session(client)
+      if server then
+        server:close()
+      end
+    end)
+    set_session(server)
+    local address = fn.serverlist()[1]
+    set_session(client)
+
+    api.nvim_set_var('address', address)
+    exec_lua(function()
+      _G.closed_event = nil
+      vim.api.nvim_create_autocmd('ChanClose', {
+        callback = function()
+          _G.closed_event = vim.deepcopy(vim.v.event.info)
+        end,
+      })
+    end)
+    command("let g:id = sockconnect('pipe', address, {'rpc': v:true})")
+    local id = eval('g:id')
+    ok(id > 0)
+    eq(5, eval("rpcrequest(g:id, 'nvim_eval', '2+3')"))
+
+    server:close()
+    server = nil
+    set_session(client)
+    retry(nil, 3000, function()
+      local info = exec_lua(function()
+        return _G.closed_event
+      end)
+      eq(id, info.id)
+      eq('socket', info.stream)
+      eq('rpc', info.mode)
+    end)
   end)
 
   it('dont crash due to garbage in rpc #23781', function()

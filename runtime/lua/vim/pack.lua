@@ -276,16 +276,16 @@ local function git_cmd(cmd, cwd)
   local sys_opts = { cwd = cwd, text = true, env = env, clear_env = true }
   local out = async.await(3, vim.system, cmd, sys_opts) --- @type vim.SystemCompleted
   async.await(1, vim.schedule)
+  local stderr = vim.nonnil(out.stderr, '')
   if out.code ~= 0 then
-    error(out.stderr)
+    error(stderr)
   end
-  local stdout, stderr = assert(out.stdout), assert(out.stderr)
   if stderr ~= '' then
     vim.schedule(function()
       vim.notify(stderr:gsub('\n+$', ''), vim.log.levels.WARN)
     end)
   end
-  return (stdout:gsub('\n+$', ''))
+  return (assert(out.stdout):gsub('\n+$', ''))
 end
 
 local function parse_semver(x)

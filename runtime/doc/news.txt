@@ -219,6 +219,7 @@ EVENTS
 
 • |:delmarks| now triggers the |MarkSet| autocommand with line==col==0, same
   as |nvim_buf_del_mark()|
+• |ChanClose| is triggered after a channel is closed, before it is removed.
 • |SessionWritePre| event emits just before |:mksession|.
 • |TextPutPre| and |TextPutPost| are triggered before/after putting text.
 • |TabMoved| is triggered when tabs are reordered.
@@ -253,6 +254,9 @@ LUA
 • |vim.net.request()| can now accept  `method` param overload for multiple HTTP methods.
 • |writefile()| treats Lua strings as "blob", so it can be used to write
   binary data.
+• |vim.fs.dir()| with `opts.err=true`, reports errors. An inaccessible root
+  dir yields a single (name, nil, err) item.
+• |vim.fs.find()| returns a list of errors as its second return value.
 • |vim.filetype.inspect()| returns a copy of the internal tables used for
   filetype detection.
 • Added `__eq` metamethod to |vim.VersionRange|. 2 distinct but representing
@@ -337,6 +341,7 @@ UI
 
 VIMSCRIPT
 
+• `fnamemodify(':h')` preserves logical roots for more path formats.
 • |v:exitreason| is set before |QuitPre|.
 • |v:startreason| indicates whether Nvim started normally or by |:restart|.
 • |v:starttime| is the process start time (nanoseconds since UNIX epoch).
@@ -363,6 +368,9 @@ These existing features changed their behavior.
 • |vim.keymap.set()| and |vim.keymap.del()| accept a list of strings for `lhs`.
 • 'statuscolumn' click function labels can be different across rows.
   |v:virtnum| and |v:lnum| are available during the click function callback.
+• Markdown inline highlighting now conceals the backslash in backslash escapes.
+• Markdown inline backslash escapes and hard line breaks no longer use the
+  `@string.escape` capture.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

@@ -102,6 +102,7 @@ error('Cannot require a meta file')
 --- |'BufWriteCmd'
 --- |'BufWritePost'
 --- |'BufWritePre'
+--- |'ChanClose'
 --- |'ChanInfo'
 --- |'ChanOpen'
 --- |'CmdUndefined'

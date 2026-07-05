@@ -89,6 +89,7 @@ src/po/zh_CN.po
 src/po/zh_TW.po
 src/sixel.c
 src/socketserver.c
+src/tabpanel.c
 src/terminal.c
 src/termlib.c
 src/testdir/Make_amiga.mak
@@ -124,6 +125,7 @@ src/testdir/test_restricted.vim
 src/testdir/test_short_sleep.py
 src/testdir/test_shortpathname.vim
 src/testdir/test_suspend.vim
+src/testdir/test_tabpanel.vim
 src/testdir/test_tcl.vim
 src/testdir/test_termencoding.vim
 src/testdir/test_xdg.vim

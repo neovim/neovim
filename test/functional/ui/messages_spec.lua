@@ -1727,6 +1727,30 @@ describe('ui/builtin messages', function()
     }
   end)
 
+  it('no cursor flicker during :write message (marks UI busy) #25974', function()
+    local fname = 'Xtest_write_busy'
+    finally(function()
+      os.remove(fname)
+    end)
+    local busy_start, busy_stop = 0, 0
+    screen._handle_busy_start = (function(orig)
+      return function()
+        orig(screen)
+        busy_start = busy_start + 1
+      end
+    end)(screen._handle_busy_start)
+    screen._handle_busy_stop = (function(orig)
+      return function()
+        orig(screen)
+        busy_stop = busy_stop + 1
+      end
+    end)(screen._handle_busy_stop)
+    command('write ' .. fname)
+    screen:expect({ any = 'written' })
+    eq(true, busy_start >= 1) -- cursor was hidden while the message was emitted
+    eq(busy_start, busy_stop) -- balanced: cursor restored afterwards
+  end)
+
   it(':hi Group output', function()
     screen:try_resize(70, 7)
     feed(':hi ErrorMsg<cr>')

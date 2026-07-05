@@ -995,6 +995,7 @@ func Test_hlsearch_and_visual()
 	\ ], 'Xhlvisual_script', 'D')
   let buf = RunVimInTerminal('-S Xhlvisual_script', {'rows': 6, 'cols': 40})
   call term_sendkeys(buf, "vjj")
+  call WaitForAssert({-> assert_match('VISUAL.*-\d', term_getline(buf, 6))}, 1000)
   call VerifyScreenDump(buf, 'Test_hlsearch_visual_1', {})
   call term_sendkeys(buf, "\<Esc>")
 
@@ -2119,6 +2120,7 @@ func Test_incsearch_highlighting_newline()
   [CODE]
   call writefile(commands, 'Xincsearch_nl', 'D')
   let buf = RunVimInTerminal('-S Xincsearch_nl', {'rows': 5, 'cols': 10})
+  call TermWait(buf, 100)
   call term_sendkeys(buf, '/test')
   call VerifyScreenDump(buf, 'Test_incsearch_newline1', {})
   " Need to send one key at a time to force a redraw

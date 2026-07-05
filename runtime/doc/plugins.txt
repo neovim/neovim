@@ -48,8 +48,12 @@ Builtin plugin: dir                                                      *dir*
 Nvim opens a directory listing when |:edit| is used with a directory path.  The
 listing is a buffer with 'filetype' set to "directory".
 
-To disable the built-in directory browser, delete its autocommand group from an
-after/plugin file: >lua
+                                                    *g:loaded_nvim_dir_plugin*
+To disable the built-in directory browser, set this before startup: >lua
+	vim.g.loaded_nvim_dir_plugin = 1
+<
+
+To delete only its directory-opening autocommands from an after/plugin file: >lua
 	vim.api.nvim_del_augroup_by_name('nvim.dir')
 <
 

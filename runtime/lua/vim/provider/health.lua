@@ -211,11 +211,18 @@ local function node()
   end
   health.info('Nvim node.js host: ' .. host)
 
-  local manager = 'npm'
-  if vim.fn.executable('yarn') == 1 then
-    manager = 'yarn'
+  -- only npm/pnpm query the registry here: `yarn info` errors outside a
+  -- project on yarn 2+ (#20924), and bun isn't used for this check.
+  local manager --- @type string?
+  if vim.fn.executable('npm') == 1 then
+    manager = 'npm'
   elseif vim.fn.executable('pnpm') == 1 then
     manager = 'pnpm'
+  end
+
+  if not manager then
+    health.info('Skipping latest "neovim" package check: npm or pnpm not in $PATH.')
+    return
   end
 
   local latest_npm_cmd = { manager, 'info', 'neovim', '--json' }

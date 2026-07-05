@@ -2087,6 +2087,7 @@ func Test_edit_ctrl_r_failed()
 
   " trying to insert a blob produces an error
   call term_sendkeys(buf, "i\<C-R>=0z\<CR>")
+  call WaitForAssert({-> assert_match('^E976:', term_getline(buf, 5))}, 1000)
 
   " ending Insert mode should put the cursor back on the ':'
   call term_sendkeys(buf, ":\<Esc>")

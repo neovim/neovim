@@ -1,3 +1,8 @@
+if vim.g.loaded_nvim_dir_plugin ~= nil then
+  return
+end
+vim.g.loaded_nvim_dir_plugin = true
+
 local api = vim.api
 local nvim_on = require('vim._core.util').nvim_on
 
@@ -12,10 +17,6 @@ end, { silent = true, desc = 'Open parent directory' })
 vim.keymap.set('n', '<Plug>(nvim-dir-reload)', function()
   require('nvim.dir')._reload()
 end, { silent = true, desc = 'Reload directory' })
-
-if vim.fn.mapcheck('-', 'n') == '' and vim.fn.hasmapto('<Plug>(nvim-dir-up)', 'n') == 0 then
-  vim.keymap.set('n', '-', '<Plug>(nvim-dir-up)', { silent = true, desc = 'Open parent directory' })
-end
 
 ---@param buf integer
 ---@param path string

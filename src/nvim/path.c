@@ -188,7 +188,7 @@ const char *invocation_path_tail(const char *invocation, size_t *len)
   return tail;
 }
 
-/// Get the next path component of a path name.
+/// Get the next separator-delimited component of a path name.
 ///
 /// @param fname A file path. (Must be != NULL.)
 /// @return Pointer to first found path separator + 1.
@@ -203,6 +203,20 @@ const char *path_next_component(const char *fname)
     fname++;
   }
   return fname;
+}
+
+/// Advances past consecutive path separators.
+///
+/// @param path   Position in a path.
+/// @param colon  Whether ':' counts as a separator on MS-Windows (see vim_ispathsep()).
+/// @return  Pointer to the first non-separator byte (or terminating NUL).
+char *path_skip_sep(const char *path, bool colon)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET FUNC_ATTR_PURE
+{
+  while (colon ? vim_ispathsep(*path) : vim_ispathsep_nocolon(*path)) {
+    path++;
+  }
+  return (char *)path;
 }
 
 /// Returns the length of the path head on the current platform.
@@ -249,9 +263,7 @@ char *get_past_head(const char *path)
   }
 #endif
 
-  while (vim_ispathsep(*retval)) {
-    retval++;
-  }
+  retval = path_skip_sep(retval, true);
 
   return (char *)retval;
 }
@@ -1006,9 +1018,7 @@ static char *get_path_cutoff(char *fname, garray_T *gap)
 
   // skip to the file or directory name
   if (cutoff != NULL) {
-    while (vim_ispathsep(*cutoff)) {
-      MB_PTR_ADV(cutoff);
-    }
+    cutoff = path_skip_sep(cutoff, true);
   }
 
   return cutoff;
@@ -1642,9 +1652,7 @@ size_t simplify_filename(char *filename)
 
   if (vim_ispathsep(*p)) {
     relative = false;
-    do {
-      p++;
-    } while (vim_ispathsep(*p));
+    p = path_skip_sep(p, true);
   }
   char *start = p;        // remember start after "c:/" or "/" or "///"
   char *p_end = p + strlen(p);  // point to NUL at end of string "p"
@@ -1674,9 +1682,7 @@ size_t simplify_filename(char *filename)
         // of an absolute path name.
         char *tail = p + 1;
         if (p[1] != NUL) {
-          while (vim_ispathsep(*tail)) {
-            MB_PTR_ADV(tail);
-          }
+          tail = path_skip_sep(tail, true);
         } else if (p > start) {
           p--;                          // strip preceding path separator
         }
@@ -1686,10 +1692,7 @@ size_t simplify_filename(char *filename)
     } else if (p[0] == '.' && p[1] == '.'
                && (vim_ispathsep(p[2]) || p[2] == NUL)) {
       // Skip to after ".." or "../" or "..///".
-      char *tail = p + 2;
-      while (vim_ispathsep(*tail)) {
-        MB_PTR_ADV(tail);
-      }
+      char *tail = path_skip_sep(p + 2, true);
 
       if (components > 0) {             // strip one preceding component
         bool do_strip = false;
@@ -2175,10 +2178,8 @@ char *path_shorten_fname(char *full_path, char *dir_name)
     return NULL;
   }
 
-  do {
-    p++;
-  } while (vim_ispathsep_nocolon(*p));
-  return p;
+  // Skip the matched separator, then any following separators (but not a colon).
+  return path_skip_sep(p + 1, false);
 }
 
 /// Invoke expand_wildcards() for one pattern

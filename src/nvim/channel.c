@@ -263,7 +263,7 @@ void channel_create_event(Channel *chan, const char *ext_source)
   (void)ext_source;
 #endif
 
-  channel_info_changed(chan, true);
+  channel_event(chan, EVENT_CHANOPEN);
 }
 
 void channel_incref(Channel *chan)
@@ -273,6 +273,11 @@ void channel_incref(Channel *chan)
 
 void channel_decref(Channel *chan)
 {
+  if (chan->refcount == 1 && !chan->did_close_event) {
+    chan->did_close_event = true;
+    channel_event(chan, EVENT_CHANCLOSE);
+  }
+
   if (!(--chan->refcount)) {
     // delay free, so that libuv is done with the handles
     multiqueue_put(main_loop.events, free_channel_event, chan);
@@ -556,10 +561,8 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output, const char **err
   // Strangely, ConPTY doesn't work if stdin and stdout are pipes. So replace
   // stdin and stdout with CONIN$ and CONOUT$, respectively.
   if (embedded_mode && os_has_conpty_working()) {
-    stdin_dup_fd = os_dup(STDIN_FILENO);
-    os_set_cloexec(stdin_dup_fd);
-    stdout_dup_fd = os_dup(STDOUT_FILENO);
-    os_set_cloexec(stdout_dup_fd);
+    stdin_dup_fd = os_dup_cloexec(STDIN_FILENO);
+    stdout_dup_fd = os_dup_cloexec(STDOUT_FILENO);
     // :restart spawns a replacement server that must not borrow the parent
     // Nvim process console, because that parent process will soon exit.
     const bool restart_alloc_console = os_env_exists(ENV_RESTART_ALLOC_CONSOLE, true);
@@ -577,9 +580,7 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output, const char **err
         ShowWindow(GetConsoleWindow(), SW_HIDE);
       }
     }
-    os_enable_ctrl_c();
-    os_replace_stdin_to_conin();
-    os_replace_stdout_and_stderr_to_conout();
+    os_reattach_console_stdio();
   }
 #else
   if (embedded_mode) {
@@ -955,9 +956,8 @@ static void term_close(void *data)
   multiqueue_put(chan->events, term_delayed_free, data);
 }
 
-void channel_info_changed(Channel *chan, bool new_chan)
+void channel_event(Channel *chan, event_T event)
 {
-  event_T event = new_chan ? EVENT_CHANOPEN : EVENT_CHANINFO;
   if (has_event(event)) {
     channel_incref(chan);
     multiqueue_put(main_loop.events, set_info_event, chan, (void *)(intptr_t)event);
