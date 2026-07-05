@@ -1118,4 +1118,94 @@ describe('messages2', function()
       -----------------------------------1,1            All|
     ]])
   end)
+
+  it('crops long messages to make place for ruler', function()
+    command('set noruler | echo "-"->repeat(&columns)')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      -----------------------------------------------------|
+    ]])
+    feed('<C-L>')
+    command('set ruler showcmd | echo "-"->repeat(&columns)')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      -----------------------------------0,0-1          All|
+    ]])
+    feed('<C-L>')
+    -- message with multibyte characters
+    command('echo "∙"->repeat(&columns)')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      ∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙∙0,0-1          All|
+    ]])
+    feed('<C-L>')
+    -- message with multicell characters
+    command('echo "-".."🙂"->repeat(&columns/2-1)')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      -🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂0,0-1          All|
+    ]])
+    feed('<C-L>')
+    command('echo "🙂"->repeat(&columns/2)')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂 0,0-1          All|
+    ]])
+    feed('<C-L>')
+    -- when cmdheight>1, only the last line is cropped
+    command('set cmdheight=2 | redraw | echo "-"->repeat(2*&columns)')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*11
+      -----------------------------------------------------|
+      -----------------------------------0,0-1          All|
+    ]])
+    feed('<C-L>')
+    command('set cmdheight=2 showbreak=> | redraw | echo "-"->repeat(2*&columns-1)')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*11
+      -----------------------------------------------------|
+      {1:>}----------------------------------0,0-1          All|
+    ]])
+    command('set showbreak&')
+    feed('<C-L>')
+    -- ruler is not shown after dismissing expanded cmdline with key press -> no need to crop
+    command('set cmdheight=1 | redraw | echo "-"->repeat(2*&columns)')
+    feed('k')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      -----------------------------------------------------|
+    ]])
+    feed('<C-L>')
+    -- messages are deferred until showcmd is cleared -> no need to crop for showcmd
+    command('lua vim.defer_fn(function() vim.cmd[[echo "-"->repeat(&columns)]] end, 50)')
+    feed('g')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+                              g          0,0-1          All|
+    ]])
+    screen:sleep(100)
+    feed('<Esc>')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      -----------------------------------0,0-1          All|
+    ]])
+    feed('<C-L>')
+    -- when the ruler is configured smaller, there is more space for messages
+    command('set rulerformat=%l | redraw | echo "-"->repeat(&columns)')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      ----------------------------------------------------0|
+    ]])
+  end)
 end)

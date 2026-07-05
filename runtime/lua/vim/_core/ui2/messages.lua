@@ -126,7 +126,7 @@ local function set_virttext(type, tgt)
     })
     local row = texth.end_row
     local col = fn.virtcol2col(win, row + 1, texth.end_vcol)
-    local scol = fn.screenpos(win, row + 1, col).col ---@type integer
+    local scol = fn.screenpos(win, row + 1, col).endcol ---@type integer
 
     if type ~= 'last' then
       -- Calculate at which column to place the virt_text such that it is at the end
@@ -179,7 +179,8 @@ local function set_virttext(type, tgt)
 
           -- Crop text on last screen row and find byte offset to place mark at.
           local vcol = texth.end_vcol - (scol - M.cmd.last_col)
-          col = vcol <= 0 and 0 or fn.virtcol2col(win, row + 1, vcol)
+          col = vcol <= 0 and 0 or fn.virtcol2col(win, row + 1, vcol + 1) - 1
+          scol = fn.screenpos(win, row + 1, col).endcol
           M.cmd.prev_msg = mode > 0 and '' or M.cmd.prev_msg
           M.virt.cmd = mode > 0 and { {}, {} } or M.virt.cmd
           api.nvim_buf_set_text(ui.bufs.cmd, row, col, row, -1, { mode > 0 and ' ' or '' })
