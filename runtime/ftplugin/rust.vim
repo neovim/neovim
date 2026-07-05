@@ -49,11 +49,13 @@ silent! setlocal formatoptions+=j
 setlocal smartindent nocindent
 
 if get(g:, 'rust_recommended_style',
-      \ get(g:, 'filetype_recommended_style', 1))
-    let b:rust_set_style = 1
-    setlocal shiftwidth=4 softtabstop=4 expandtab
-    setlocal textwidth=100
-endif
+        \ get(g:, 'filetype_recommended_style', 1)) && !exists('b:editorconfig')
+        let b:rust_set_style = 1
+        setlocal shiftwidth=4 softtabstop=4 expandtab
+        setlocal textwidth=100
+    endif
+
+
 
 setlocal include=\\v^\\s*(pub\\s+)?use\\s+\\zs(\\f\|:)+
 setlocal includeexpr=rust#IncludeExpr(v:fname)
