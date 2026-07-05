@@ -287,6 +287,7 @@ func Test_000_SvREFCNT()
 endfunc
 
 func Test_set_cursor()
+  throw 'skipped: bug in p5-MsgPack-Raw: https://github.com/jacquesg/p5-MsgPack-Raw/issues/4'
   " Check that setting the cursor position works.
   new
   call setline(1, ['first line', 'second line'])
