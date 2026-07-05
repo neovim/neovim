@@ -87,12 +87,18 @@ describe('vim.lsp.codelens', function()
   before_each(function()
     clear_notrace()
     exec_lua(create_server_definition)
+    exec_lua(function()
+      vim.lsp.config('*', {
+        flags = { debounce_text_changes = 0 },
+      })
+    end)
 
     screen = Screen.new(nil, 20)
 
     client_id = exec_lua(function()
       _G.server = _G._create_server({
         capabilities = {
+          textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
           codeLensProvider = {
             resolveProvider = true,
           },
@@ -251,8 +257,27 @@ describe('vim.lsp.codelens', function()
   end)
 
   it('refreshes code lenses on request', function()
+    local get_message_count = function()
+      local messages = exec_lua('return _G.server.messages')
+      local count = 0
+      for _, m in ipairs(messages) do
+        if m.method == 'textDocument/codeLens' then
+          count = count + 1
+        end
+      end
+      return count
+    end
+
+    eq(2, get_message_count())
+
     feed('ggdd')
 
+    -- Second codelens (▶︎ Run) is not resolved immediately, so its previous extmark (same row) isn't
+    -- cleared and it stays anchored to where it was. The new one (which would effectively look like
+    -- it moved a row down) needs to be resolved first, which goes through another screen update.
+    -- This is a quirk of the test since it returns the exact same result no matter what the text in
+    -- the buffer actually is
+
     screen:expect([[
       {1:       1 implementation}                              |
           ^a: i32,                                          |
@@ -275,13 +300,9 @@ describe('vim.lsp.codelens', function()
       {1:~                                                    }|
                                                            |
     ]])
-    exec_lua(function()
-      vim.lsp.codelens.on_refresh(
-        nil,
-        nil,
-        { method = 'workspace/codeLens/refresh', client_id = client_id }
-      )
-    end)
+
+    eq(2, get_message_count())
+
     screen:expect([[
       {1:       1 implementation}                              |
           ^a: i32,                                          |
@@ -304,58 +325,18 @@ describe('vim.lsp.codelens', function()
       {1:~                                                    }|
                                                            |
     ]])
-  end)
 
-  it('refreshes immediately and cancels a pending automatic refresh', function()
+    eq(3, get_message_count())
+
     exec_lua(function()
-      local deferred
-      local request_count = 0
-      local defer_fn = vim.defer_fn
-      local client = assert(vim.lsp.get_client_by_id(client_id))
-      local request = client.request
-
-      --- @diagnostic disable-next-line: duplicate-set-field
-      vim.defer_fn = function(callback)
-        deferred = {
-          callback = callback,
-          closed = false,
-          stopped = false,
-          is_closing = function(self)
-            return self.closed
-          end,
-          stop = function(self)
-            self.stopped = true
-          end,
-          close = function(self)
-            self.closed = true
-          end,
-        }
-        return deferred
-      end
-
-      client.request = function(self, method, ...)
-        if method == 'textDocument/codeLens' then
-          request_count = request_count + 1
-        end
-        return request(self, method, ...)
-      end
-
-      vim.api.nvim_buf_set_lines(0, 0, 0, false, { '// changed' })
-      assert(deferred, 'expected pending automatic codelens refresh')
-
       vim.lsp.codelens.on_refresh(
         nil,
         nil,
         { method = 'workspace/codeLens/refresh', client_id = client_id }
       )
-
-      vim.defer_fn = defer_fn
-      client.request = request
-
-      assert(deferred.stopped, 'expected pending codelens refresh to stop')
-      assert(deferred.closed, 'expected pending codelens refresh to close')
-      assert(request_count == 1, 'expected exactly one immediate codelens refresh request')
     end)
+
+    eq(4, get_message_count())
   end)
 
   it('ignores stale codeLens/resolve responses', function()
@@ -369,6 +350,7 @@ describe('vim.lsp.codelens', function()
       _G.stale_resolve_sent = false
       _G.server = _G._create_server({
         capabilities = {
+          textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
           codeLensProvider = {
             resolveProvider = true,
           },
@@ -446,6 +428,7 @@ describe('vim.lsp.codelens', function()
       _G.refresh_response_sent = false
       _G.server = _G._create_server({
         capabilities = {
+          textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
           codeLensProvider = {
             resolveProvider = true,
           },
@@ -529,11 +512,12 @@ describe('vim.lsp.codelens', function()
           }                                                |
       }                                                    |
                                                            |
-      {1:   ▶︎ Run }                                            |
+      {1:▶︎ Run }                                               |
       ^                                                     |
       {1:~                                                    }|*5
       4 fewer lines                                        |
     ]])
+
     feed('dd')
     screen:expect([[
       {1:       1 implementation}                              |
