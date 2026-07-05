@@ -414,7 +414,6 @@ function M._check(mods, plugin_names)
       close_events = {},
     })
     vim.api.nvim_set_current_win(float_winid)
-    vim.bo[bufnr].modifiable = true
     vim.wo[float_winid].list = false
   else
     bufnr = vim.api.nvim_create_buf(true, true)
@@ -424,6 +423,7 @@ function M._check(mods, plugin_names)
     local buf_cmd = #mods > 0 and (mods .. ' sbuffer') or emptybuf and 'buffer' or 'tab sbuffer'
     vim.cmd(buf_cmd .. ' ' .. bufnr)
   end
+  vim.bo[bufnr].modifiable = true
 
   if vim.fn.bufexists('health://') == 1 then
     vim.cmd.bwipe('health://')
