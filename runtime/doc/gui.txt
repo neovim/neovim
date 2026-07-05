@@ -99,8 +99,9 @@ Restart Nvim
                 • Only works if the UI and server are on the same system.
                 • Windows limitation: when +cmd is executed, |v:servername|
                   refers to a temporary address.
-                • If no UI handles the "restart" event, this command will lead
-                  to a dangling server process.
+                • If no UI handles the "restart" event, this leaves a dangling
+                  process.
+                • To adjust what `:restart` restores, set 'sessionoptions'.
 
 ------------------------------------------------------------------------------
 Connect UI to a different server
