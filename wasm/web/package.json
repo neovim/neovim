@@ -1,0 +1,19 @@
+{
+  "name": "web",
+  "version": "1.0.0",
+  "description": "Browser UI + library for the Neovim wasm engine",
+  "main": "dist/neovim.js",
+  "scripts": {
+    "build": "./build-ts.sh"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@msgpack/msgpack": "^3.1.3"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}

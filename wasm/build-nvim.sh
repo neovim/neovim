@@ -300,6 +300,22 @@ for v in full core minimal; do
 done
 rm -rf "${STAGE_ROOT}"
 
+# Browser target: the page UI (wasm/web/) is served straight from the source
+# tree by wasm/web/serve.js (which also points /nvim.js,/nvim.wasm and the
+# nvim-<variant>.data(.js) packages at this build dir), so nothing is copied.
+# Deps: @msgpack/msgpack (the UI client) and the typescript devDependency
+# (build-ts.sh compiles wasm/web/src/*.ts). Both are declared in
+# wasm/web/package.json; a full `npm install` (devDeps included) runs if any is
+# missing.
+if command -v npm >/dev/null 2>&1; then
+  if [ ! -d "${ROOT}/wasm/web/node_modules/@msgpack" ] || \
+     [ ! -x "${ROOT}/wasm/web/node_modules/.bin/tsc" ]; then
+    echo "==> Installing wasm/web npm deps (@msgpack/msgpack, typescript)"
+    ( cd "${ROOT}/wasm/web" && npm install --no-audit --no-fund >/dev/null 2>&1 ) \
+      || echo "    (npm install failed; run it manually in wasm/web before serving)"
+  fi
+fi
+
 # Boot smoke: prove the engine actually starts under Node. Node >= 24 has JSPI
 # on by default (22/23 need --experimental-wasm-jspi); anything older can't run
 # the engine, so skip the check rather than fail the build there.

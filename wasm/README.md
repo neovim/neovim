@@ -40,6 +40,43 @@ Everything after the literal `--` is ordinary nvim argv. Under Node the
 `$VIMRUNTIME` is read from the in-tree `runtime/` directory through a NODEFS
 mount — no packaging step is needed.
 
+## Running in the browser
+
+```sh
+node wasm/web/serve.js          # then open http://localhost:8000/
+```
+
+The demo page runs the engine (`nvim --embed`) in a Web Worker and drives it
+with a pure-JS msgpack-RPC client on the page:
+
+```
+   page main thread                        Web Worker (engine-worker.js)
+   ┌──────────────────────────────┐ postMessage ┌──────────────────────────┐
+   │ keydown → nvim_input  ────────┼────────────▶│ nvim --embed (wasm)      │
+   │ redraw  → Screen → <pre> ◀────┼─────────────┤ editor + ext_linegrid    │
+   └──────────────────────────────┘             └──────────────────────────┘
+       pure JS, no wasm, no JSPI                  poll() suspends via JSPI
+```
+
+The layers (wasm/web/src/, TypeScript, compiled by `wasm/web/build-ts.sh` into
+the gitignored `wasm/web/dist/`):
+
+- `neovim.js` — the headless core: spawns the engine worker, speaks
+  msgpack-RPC over postMessage, exposes `Neovim.create({args, env, cwd,
+  filesystem, plugins, parsers, clipboard})`.
+- `neovim-ui.js` — the headless `Screen` model: decodes `redraw`
+  (ext_linegrid) into a character grid + highlight table; no DOM.
+- `neovim-ui-pre.js` — the default renderer: paints a `Screen` into a `<pre>`
+  as styled spans, maps keydown → `nvim_input`, auto-sizes the grid to the
+  element and follows window resizes.
+- `app.js` / `index.html` — the demo page glue that composes the above.
+
+Because the transport is postMessage (no SharedArrayBuffer), the page needs no
+COOP/COEP headers and deploys on any static host: `wasm/web/build-site.sh
+[out]` assembles the whole demo (page + engine + all three runtime variants +
+msgpack) into one flat relative-path directory. Serve it with any static file
+server, e.g. `cd _site && python3 -m http.server`.
+
 ## How the cross-compile works
 
 Neovim generates a lot of C from Lua at build time. Those generators are

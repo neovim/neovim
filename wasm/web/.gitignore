@@ -1,0 +1,6 @@
+node_modules/
+dist/
+dist-lib/
+dist-app/
+dist-worker/
+*.tsbuildinfo
