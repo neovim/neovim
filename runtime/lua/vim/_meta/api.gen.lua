@@ -2504,24 +2504,22 @@ function vim.api.nvim_win_hide(win) end
 --- @return boolean # true if the window is valid, false otherwise
 function vim.api.nvim_win_is_valid(win) end
 
---- Resize a window, choosing which edge stays anchored.
+--- Resizes a window, anchored to a given edge.
 ---
---- The window first takes space from the non-anchored side (the window below or
---- to the right by default), and only then from the anchored side. The "anchor"
---- selects the fixed edge, so a window can also grow upwards or leftwards.
+--- The window first takes space from the non-anchored side, and only then from the anchored side.
+--- The "anchor" decides the fixed edge, so a window can grow or shrink in any direction.
 ---
---- Can set the height, the width, or both in a single call. "anchor" applies to the
---- matching axis ("top"/"bottom" for height, "left"/"right" for width); the other
---- axis, if also resized, uses its default anchor.
+--- Can set height, width (only for a vertical split), or both. The "anchor" applies to the matching
+--- axis (top/bottom for height, left/right for width); the other axis uses its default anchor.
 ---
 --- @param win integer `window-ID`, or 0 for current window
---- @param width integer New width as a count of columns, set -1 as "no change"
---- @param height integer New height as a count of rows, set -1 as "no change"
+--- @param width integer New width (columns), or -1 for "no change".
+--- @param height integer New height (rows), or -1 for "no change".
 --- @param opts vim.api.keyset.win_resize Optional parameters.
 --- - anchor: Edge that stays fixed while the opposite edge moves; the
 ---   neighbor on the moving side is resized first. One of:
----   - "top" (default for height) or "bottom"
----   - "left" (default for width) or "right"
+---   - "top" (default) or "bottom"
+---   - "left" (default) or "right"
 function vim.api.nvim_win_resize(win, width, height, opts) end
 
 --- Sets the current buffer in a window.

@@ -490,23 +490,20 @@ describe('API/win', function()
       end
     )
 
-    it('failure modes', function()
+    it('validation', function()
       command('split')
+      eq("Required: 'height' or 'width'", pcall_err(api.nvim_win_resize, 0, -1, -1, {}))
       eq(
-        "Required: must set at least one of 'height', 'width'",
-        pcall_err(api.nvim_win_resize, 0, -1, -1, {})
-      )
-      eq(
-        "Invalid 'width': expected a non-negative count of columns, or -1 for no change",
+        "Invalid 'width': expected non-negative number or -1",
         pcall_err(api.nvim_win_resize, 0, -2, 5, {})
       )
       eq(
-        "Invalid 'height': expected a non-negative count of rows, or -1 for no change",
+        "Invalid 'height': expected non-negative number or -1",
         pcall_err(api.nvim_win_resize, 0, 5, -2, {})
       )
       -- anchor not applicable to the dimension(s) being changed
       eq(
-        "Conflict: 'left' not allowed with this dimension",
+        "Conflict: 'left' not allowed with 'width'",
         pcall_err(api.nvim_win_resize, 0, -1, 5, { anchor = 'left' })
       )
       -- unrecognized anchor value

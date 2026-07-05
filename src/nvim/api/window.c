@@ -535,24 +535,22 @@ DictAs(win_text_height_ret) nvim_win_text_height(Window win, Dict(win_text_heigh
   return rv;
 }
 
-/// Resize a window, choosing which edge stays anchored.
+/// Resizes a window, anchored to a given edge.
 ///
-/// The window first takes space from the non-anchored side (the window below or
-/// to the right by default), and only then from the anchored side. The "anchor"
-/// selects the fixed edge, so a window can also grow upwards or leftwards.
+/// The window first takes space from the non-anchored side, and only then from the anchored side.
+/// The "anchor" decides the fixed edge, so a window can grow or shrink in any direction.
 ///
-/// Can set the height, the width, or both in a single call. "anchor" applies to the
-/// matching axis ("top"/"bottom" for height, "left"/"right" for width); the other
-/// axis, if also resized, uses its default anchor.
+/// Can set height, width (only for a vertical split), or both. The "anchor" applies to the matching
+/// axis (top/bottom for height, left/right for width); the other axis uses its default anchor.
 ///
 /// @param win        |window-ID|, or 0 for current window
-/// @param width      New width as a count of columns, set -1 as "no change"
-/// @param height     New height as a count of rows, set -1 as "no change"
+/// @param width      New width (columns), or -1 for "no change".
+/// @param height     New height (rows), or -1 for "no change".
 /// @param opts       Optional parameters.
 ///                     - anchor: Edge that stays fixed while the opposite edge moves; the
 ///                       neighbor on the moving side is resized first. One of:
-///                       - "top" (default for height) or "bottom"
-///                       - "left" (default for width) or "right"
+///                       - "top" (default) or "bottom"
+///                       - "left" (default) or "right"
 /// @param[out] err Error details, if any
 void nvim_win_resize(Window win, Integer width, Integer height, Dict(win_resize) *opts, Error *err)
   FUNC_API_SINCE(15)
@@ -563,16 +561,14 @@ void nvim_win_resize(Window win, Integer width, Integer height, Dict(win_resize)
     return;
   }
 
-  VALIDATE_EXP((height >= 0 || height == -1), "height",
-               "a non-negative count of rows, or -1 for no change", NULL, {
+  VALIDATE_EXP((height >= 0 || height == -1), "height", "non-negative number or -1", NULL, {
     return;
   });
-  VALIDATE_EXP((width >= 0 || width == -1), "width",
-               "a non-negative count of columns, or -1 for no change", NULL, {
+  VALIDATE_EXP((width >= 0 || width == -1), "width", "non-negative number or -1", NULL, {
     return;
   });
 
-  VALIDATE_R((height >= 0 || width >= 0), "must set at least one of 'height', 'width'", {
+  VALIDATE_R((height >= 0 || width >= 0), "'height' or 'width'", {
     return;
   });
 
@@ -589,15 +585,12 @@ void nvim_win_resize(Window win, Integer width, Integer height, Dict(win_resize)
                  anchor, { return; });
     // anchor must match a dimension that is actually being resized.
     VALIDATE_CON(!(is_height && height == -1) && !(is_width && width == -1), anchor,
-                 "this dimension", {
+                 is_width ? "width" : "height", {
       return;
     });
 
-    if (is_height) {
-      from_top = strequal("top", anchor);
-    } else {
-      from_left = strequal("left", anchor);
-    }
+    from_top = !strequal("bottom", anchor);
+    from_left = !strequal("right", anchor);
   }
   if (height >= 0) {
     TRY_WRAP(err, win_setheight_win((int)height, w, from_top));
