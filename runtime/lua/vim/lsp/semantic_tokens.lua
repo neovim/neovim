@@ -22,7 +22,7 @@ local M = {}
 --- @field version? integer document version associated with this result
 --- @field result_id? string resultId from the server; used with delta requests
 --- @field highlights? STTokenRange[] cache of highlight ranges for this document version
---- @field tokens? integer[] raw token array as received by the server. used for calculating delta responses
+--- @field tokens? uinteger[] raw token array as received by the server. used for calculating delta responses
 --- @field namespace_cleared? boolean whether the namespace was cleared for this result yet
 
 --- @class (private) STActiveRequest
@@ -283,12 +283,11 @@ end
 
 --- This is the entry point for getting all the tokens in a buffer.
 ---
---- For the given clients (or all attached, if not provided), this sends semantic token requests to
---- ask for semantic tokens. If the server supports range requests and a full result has not been
---- processed yet, it will send a range request for the current visible range. Additionally, if a
---- result for the current document version hasn't been processed yet, it sends either a full or
---- delta request, depending on what the server supports and whether there's a current full result
---- for the previous document version.
+--- For the given client, this sends semantic token requests to ask for semantic tokens. If the
+--- server supports range requests and a full result has not been processed yet, it will send a
+--- range request for the current visible range. Additionally, if a result for the current document
+--- version hasn't been processed yet, it sends either a full or delta request, depending on what
+--- the server supports and whether there's a current full result for the previous document version.
 ---
 --- This function will skip full/delta requests on servers where there is an already an active
 --- full/delta request in flight for the same version. If there is a stale request in flight, that
@@ -738,10 +737,10 @@ end
 ---@param client_id integer
 function STHighlighter:reset(client_id)
   local state = assert(self.client_state[client_id])
+  self:cancel_active_request(client_id)
   api.nvim_buf_clear_namespace(self.bufnr, state.namespace, 0, -1)
   state.current_result = {}
   state.has_full_result = false
-  self:cancel_active_request(client_id)
 end
 
 --- Mark a client's results as dirty. This method will cancel any active
@@ -987,8 +986,9 @@ end
 --- Refresh requests are sent by the server to indicate a project-wide change
 --- that requires all tokens to be re-requested by the client. This handler will
 --- invalidate the current results of all buffers and automatically kick off a
---- new request for buffers that are displayed in a window. For those that aren't, a
+--- new request for buffers that are displayed in a window. For those that aren't,
 --- the BufWinEnter event should take care of it next time it's displayed.
+---@param ctx lsp.HandlerContext
 function M._refresh(err, _, ctx)
   if err then
     return vim.NIL
