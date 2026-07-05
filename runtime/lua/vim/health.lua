@@ -414,7 +414,6 @@ function M._check(eap)
       close_events = {},
     })
     vim.api.nvim_set_current_win(float_winid)
-    vim.bo[bufnr].modifiable = true
     vim.wo[float_winid].list = false
   else
     bufnr = vim.api.nvim_create_buf(true, true)
@@ -430,6 +429,7 @@ function M._check(eap)
       vim.cmd.sbuffer { bufnr, mods = { tab = vim.api.nvim_tabpage_get_number(0) } }
     end
   end
+  vim.bo[bufnr].modifiable = true
 
   if vim.fn.bufexists('health://') == 1 then
     vim.cmd.bwipe('health://')
