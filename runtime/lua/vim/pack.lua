@@ -246,7 +246,7 @@ local function git_cmd(cmd, cwd)
   local sys_opts = { cwd = cwd, text = true, env = env, clear_env = true }
   local out = async.await(3, vim.system, cmd, sys_opts) --- @type vim.SystemCompleted
   async.await(1, vim.schedule)
-  local stderr = vim.nonnil(out.stderr, '')
+  local stderr = out.stderr or ''
   if out.code ~= 0 then
     error(stderr)
   end
