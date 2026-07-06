@@ -26,6 +26,7 @@
 ^f_test_settime(
 ^f_test_srand_seed(
 ^f_test_void(
+^static int included_patches\[\] =
 _balloon[a-zA-Z0-9_]\+(
 _tabpanelopt(
 bevalterm[a-zA-Z0-9_]\+(
