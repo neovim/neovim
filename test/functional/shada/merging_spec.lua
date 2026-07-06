@@ -313,6 +313,39 @@ describe('ShaDa search pattern support code', function()
     eq(1, found)
   end)
 
+  it('does not restore a search pattern cleared with :let @/ = ""', function()
+    command('let @/ = "foobar"')
+    command('wshada ' .. shada_fname)
+
+    reset({ shadafile = shada_fname })
+    eq('foobar', fn.getreg('/'))
+    command('let @/ = ""')
+    command('wshada ' .. shada_fname)
+
+    local found = 0
+    for _, v in ipairs(read_shada_file(shada_fname)) do
+      if v.type == 2 and v.value.sp == 'foobar' then
+        found = found + 1
+      end
+    end
+    eq(0, found)
+
+    reset({ shadafile = shada_fname })
+    eq('', fn.getreg('/'))
+  end)
+
+  it('keeps an on-disk search pattern that the instance never set', function()
+    wshada('\002\001\011\130\162sX\194\162sp\196\001-')
+    command('wshada ' .. shada_fname)
+    local found = 0
+    for _, v in ipairs(read_shada_file(shada_fname)) do
+      if v.type == 2 and v.value.sp == '-' then
+        found = found + 1
+      end
+    end
+    eq(1, found)
+  end)
+
   it('uses last s/ pattern with gt timestamp from instance when reading', function()
     wshada('\002\001\011\130\162ss\195\162sp\196\001-')
     command(sdrcmd())
