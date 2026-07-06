@@ -7378,15 +7378,47 @@ int set_winbar_win(win_T *wp, bool make_room, bool valid_cursor)
   return OK;
 }
 
+/// Add or remove window bars from all windows in the current tab.
+///
+/// @param make_room Whether to resize frames to make room for winbar.
+/// @param valid_cursor Whether the cursor is valid and should be used while resizing.
+/// @return false if a window failed to make room for winbar.
+static bool set_winbar_current_tab(bool make_room, bool valid_cursor)
+{
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (set_winbar_win(wp, make_room, valid_cursor) == FAIL) {
+      return false;
+    }
+  }
+  return true;
+}
+
 /// Add or remove window bars from all windows in tab depending on the value of 'winbar'.
 ///
 /// @param make_room Whether to resize frames to make room for winbar.
 void set_winbar(bool make_room)
 {
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (set_winbar_win(wp, make_room, true) == FAIL) {
-      break;
+  set_winbar_current_tab(make_room, true);
+}
+
+/// Add or remove window bars from all windows in all tabs depending on the value of 'winbar'.
+///
+/// @param make_room Whether to resize frames to make room for winbar.
+void set_winbar_all(bool make_room)
+{
+  (void)set_winbar_current_tab(make_room, true);
+
+  FOR_ALL_TABS(tp) {
+    if (tp == curtab) {
+      continue;
     }
+
+    switchwin_T switchwin;
+    // Use a no-display switch so the hidden tab's frame and window globals are active.
+    if (switch_win(&switchwin, tp->tp_curwin, tp, true) == OK) {
+      (void)set_winbar_current_tab(make_room, false);
+    }
+    restore_win(&switchwin, true);
   }
 }
 
