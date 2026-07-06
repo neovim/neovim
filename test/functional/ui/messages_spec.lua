@@ -3321,6 +3321,39 @@ it('pager works in headless mode with UI attached', function()
   ]])
 end)
 
+describe('bufwrite messages', function()
+  local screen
+  local fname = 'Xbufwrite_progress'
+
+  before_each(function()
+    clear()
+    os.remove(fname)
+    screen = Screen.new(80, 10)
+  end)
+
+  after_each(function()
+    os.remove(fname)
+  end)
+
+  it('are not corrupted by Progress autocmd with redrawstatus', function()
+    exec_lua(function()
+      vim.o.laststatus = 2
+      vim.o.statusline = "%{% luaeval('1') %}"
+      vim.api.nvim_create_autocmd('Progress', {
+        callback = function()
+          vim.cmd('redrawstatus!')
+        end,
+      })
+    end)
+
+    feed(':write ' .. fname .. '<CR>')
+
+    screen:expect({
+      any = '"Xbufwrite_progress" %[New%] 0L, 0B written',
+    })
+  end)
+end)
+
 describe('progress-message', function()
   local screen
 

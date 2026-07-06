@@ -1497,10 +1497,11 @@ void nlua_typval_eval(const String str, typval_T *const arg, typval_T *const ret
   FUNC_ATTR_NONNULL_ALL
 {
 #define EVALHEADER "local _A=select(1,...) return ("
+  char lcmd_buf[IOSIZE];
   const size_t lcmd_len = sizeof(EVALHEADER) - 1 + str.size + 1;
   char *lcmd;
   if (lcmd_len < IOSIZE) {
-    lcmd = IObuff;
+    lcmd = lcmd_buf;
   } else {
     lcmd = xmalloc(lcmd_len);
   }
@@ -1510,7 +1511,7 @@ void nlua_typval_eval(const String str, typval_T *const arg, typval_T *const ret
 #undef EVALHEADER
   nlua_typval_exec(lcmd, lcmd_len, "luaeval()", arg, 1, true, ret_tv);
 
-  if (lcmd != IObuff) {
+  if (lcmd != lcmd_buf) {
     xfree(lcmd);
   }
 }
@@ -1531,10 +1532,11 @@ void nlua_call_typval(const char *str, size_t len, typval_T *const args, int arg
 {
 #define CALLHEADER "return "
 #define CALLSUFFIX "(...)"
+  char lcmd_buf[IOSIZE];
   const size_t lcmd_len = sizeof(CALLHEADER) - 1 + len + sizeof(CALLSUFFIX) - 1;
   char *lcmd;
   if (lcmd_len < IOSIZE) {
-    lcmd = IObuff;
+    lcmd = lcmd_buf;
   } else {
     lcmd = xmalloc(lcmd_len);
   }
@@ -1547,7 +1549,7 @@ void nlua_call_typval(const char *str, size_t len, typval_T *const args, int arg
 
   nlua_typval_exec(lcmd, lcmd_len, "v:lua", args, argcount, false, ret_tv);
 
-  if (lcmd != IObuff) {
+  if (lcmd != lcmd_buf) {
     xfree(lcmd);
   }
 }
@@ -1934,12 +1936,13 @@ void ex_luado(exarg_T *const eap)
 
 #define DOSTART "return function(line, linenr) "
 #define DOEND " end"
+  char lcmd_buf[IOSIZE];
   const size_t lcmd_len = (cmd_len
                            + (sizeof(DOSTART) - 1)
                            + (sizeof(DOEND) - 1));
   char *lcmd;
   if (lcmd_len < IOSIZE) {
-    lcmd = IObuff;
+    lcmd = lcmd_buf;
   } else {
     lcmd = xmalloc(lcmd_len + 1);
   }
@@ -1951,12 +1954,12 @@ void ex_luado(exarg_T *const eap)
 
   if (luaL_loadbuffer(lstate, lcmd, lcmd_len, ":luado")) {
     nlua_error(lstate, _("E5109: Lua: %.*s"));
-    if (lcmd_len >= IOSIZE) {
+    if (lcmd != lcmd_buf) {
       xfree(lcmd);
     }
     return;
   }
-  if (lcmd_len >= IOSIZE) {
+  if (lcmd != lcmd_buf) {
     xfree(lcmd);
   }
   if (nlua_pcall(lstate, 0, 1)) {
