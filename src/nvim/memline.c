@@ -803,7 +803,7 @@ void ml_recover(bool checkext)
     if (n_swaps > 1) {
       // Several swapfiles found: prompt (async) via vim.ui.select().
       typval_T lua_args[] = { items_tv, { .v_type = VAR_UNKNOWN } };
-      nlua_call_vimfn("vim._core.swapfile", "select_swap", lua_args, NULL);
+      nlua_call_typval("vim._core.swapfile", "select_swap", lua_args, NULL);
       tv_clear(&items_tv);
       goto theend;
     }

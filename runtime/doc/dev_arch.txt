@@ -216,7 +216,7 @@ order of preference):
    a performance benefit: the Vimscript <=> Lua bridge is skipped when the
    `vim.fn.xx()` function is called from Lua. Examples:
     - `f_hostname`
-2. Partial Lua: the C implementation calls `nlua_call_vimfn` or
+2. Partial Lua: the C implementation calls `nlua_call_typval` or
    `nlua_call_excmd`. (Or in rare cases: `nlua_exec` / `NLUA_EXEC_STATIC`).
    Examples:
    - `ex_log`

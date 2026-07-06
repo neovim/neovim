@@ -503,7 +503,7 @@ int main(int argc, char **argv)
     tv_list_alloc_ret(&items_tv, 0);
     recover_names(NULL, false, items_tv.vval.v_list);
     typval_T lua_args[] = { items_tv, { .v_type = VAR_UNKNOWN } };
-    nlua_call_vimfn("vim._core.swapfile", "list_swaps", lua_args, NULL);
+    nlua_call_typval("vim._core.swapfile", "list_swaps", lua_args, NULL);
     tv_clear(&items_tv);
     os_exit(0);
   }

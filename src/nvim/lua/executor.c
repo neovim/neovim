@@ -1667,7 +1667,7 @@ Object nlua_exec(const String str, const char *chunkname, const Array args, LuaR
   return nlua_call_pop_retval(lstate, mode, arena, top, err);
 }
 
-/// Calls Lua to implement a "vimfn" ("f_xx"/"eval"/"builtin") function.
+/// Calls a Lua function with typval args.
 ///
 /// Converts argvars directly to Lua values (no Object intermediate), calls the Lua function, and
 /// converts the result back to typval_T.
@@ -1676,7 +1676,7 @@ Object nlua_exec(const String str, const char *chunkname, const Array args, LuaR
 /// @param func     Function name in the module, e.g. "serverlist".
 /// @param argvars  typval args (VAR_UNKNOWN-terminated).
 /// @param rettv    Return value (caller must tv_clear), or NULL to discard.
-void nlua_call_vimfn(const char *module, const char *func, typval_T *argvars, typval_T *rettv)
+void nlua_call_typval(const char *module, const char *func, typval_T *argvars, typval_T *rettv)
 {
   int argcount = 0;
   for (typval_T *tv = argvars; tv->v_type != VAR_UNKNOWN; tv++) {
