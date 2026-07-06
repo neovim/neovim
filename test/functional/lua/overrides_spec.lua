@@ -5,6 +5,7 @@ local Screen = require('test.functional.ui.screen')
 
 local eq = t.eq
 local matches = t.matches
+local not_matches = t.not_matches
 local NIL = vim.NIL
 local feed = n.feed
 local clear = n.clear
@@ -328,5 +329,13 @@ end)
 describe('bit module', function()
   it('works', function()
     eq(9, exec_lua [[ return require'bit'.band(11,13) ]])
+  end)
+end)
+
+describe('package.path and package.cpath', function()
+  it('do not contain "./?.{lua,so}', function()
+    clear({ args_rm = { '--cmd' } })
+    not_matches('%./%?%.lua', fn.luaeval('package.path'))
+    not_matches('%./%?%.so', fn.luaeval('package.cpath'))
   end)
 end)
