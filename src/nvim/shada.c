@@ -1772,11 +1772,18 @@ static inline ShaDaWriteResult shada_read_when_writing(FileDescriptor *const sd_
       ret = shada_pack_entry(packer, entry, 0);
       shada_free_shada_entry(&entry);
       break;
-    case kSDItemSearchPattern:
-      COMPARE_WITH_ENTRY((entry.data.search_pattern.is_substitute_pattern
-                          ? &wms->sub_search_pattern
-                          : &wms->search_pattern), entry);
+    case kSDItemSearchPattern: {
+      const bool is_sub = entry.data.search_pattern.is_substitute_pattern;
+      ShadaEntry *const wms_pat = is_sub ? &wms->sub_search_pattern : &wms->search_pattern;
+      if (wms_pat->type == kSDItemMissing
+          && search_pattern_cleared(is_sub)
+          && get_search_pattern_timestamp(is_sub) >= entry.timestamp) {
+        shada_free_shada_entry(&entry);
+        break;
+      }
+      COMPARE_WITH_ENTRY(wms_pat, entry);
       break;
+    }
     case kSDItemSubString:
       COMPARE_WITH_ENTRY(&wms->replacement, entry);
       break;

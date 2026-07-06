@@ -3604,6 +3604,18 @@ void get_substitute_pattern(SearchPattern *const pat)
   CLEAR_FIELD(pat->off);
 }
 
+/// Get timestamp of last search or substitute pattern
+Timestamp get_search_pattern_timestamp(bool substitute)
+{
+  return spats[substitute ? RE_SUBST : RE_SEARCH].timestamp;
+}
+
+/// Check whether last search or substitute pattern is cleared
+bool search_pattern_cleared(bool substitute)
+{
+  return spats[substitute ? RE_SUBST : RE_SEARCH].pat == NULL;
+}
+
 /// Set last search pattern
 void set_search_pattern(const SearchPattern pat)
 {
