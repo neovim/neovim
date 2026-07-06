@@ -820,6 +820,23 @@ describe('API', function()
       command("call nvim_input('<M-'.nr2char(0x40000000).'>')")
       eq(1, eval('1'))
     end)
+
+    it('keeps accepting input after the input buffer fills and drains', function()
+      -- Regression test: the fixed input buffer (INPUT_BUFFER_SIZE == 16386) is
+      -- compacted left, not a ring. Filling it to within <19 bytes of the top
+      -- and then draining it used to leave the read/write cursors pinned, so
+      -- input_enqueue() could never reclaim space and silently dropped all
+      -- further input, freezing the editor. One oversized burst of a Normal-mode
+      -- no-op (CTRL-L) saturates the buffer in a single nvim_input() call; once it
+      -- has drained, input must still register. poke_eventloop() waits for the
+      -- burst to be fully consumed before the probe: the fix only reclaims space
+      -- once the buffer is empty, so the probe must arrive after the drain.
+      api.nvim_input(('\12'):rep(20000))
+      n.poke_eventloop()
+      api.nvim_input('ix<Esc>')
+      n.poke_eventloop()
+      eq('x', api.nvim_get_current_line())
+    end)
   end)
 
   describe('nvim_paste', function()
