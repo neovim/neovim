@@ -159,27 +159,18 @@ end
 
 --- Request `textDocument/foldingRange` from the server.
 --- `foldupdate()` is scheduled once after the request is completed.
----@param client? vim.lsp.Client The client whose server supports `foldingRange`.
-function State:refresh(client)
-  ---@type lsp.FoldingRangeParams
-  local params = { textDocument = util.make_text_document_params(self.bufnr) }
-
+---@param client_id integer
+function State:refresh(client_id)
+  local client = vim.lsp.get_client_by_id(client_id)
   if client then
+    ---@type lsp.FoldingRangeParams
+    local params = { textDocument = util.make_text_document_params(self.bufnr) }
+
     client:request('textDocument/foldingRange', params, function(...)
       self:handler(...)
     end, self.bufnr)
     return
   end
-
-  if
-    not next(vim.lsp.get_clients({ bufnr = self.bufnr, method = 'textDocument/foldingRange' }))
-  then
-    return
-  end
-
-  vim.lsp.buf_request_all(self.bufnr, 'textDocument/foldingRange', params, function(...)
-    self:multi_handler(...)
-  end)
 end
 
 function State:reset()
@@ -202,14 +193,6 @@ function State:new(bufnr)
   self.row_virt_text = {}
 
   api.nvim_buf_attach(bufnr, false, {
-    -- Reset `bufstate` and request folding ranges.
-    on_reload = function()
-      local state = State.active[bufnr]
-      if state then
-        state:reset()
-        state:refresh()
-      end
-    end,
     --- Sync changed rows with their previous foldlevels before applying new ones.
     on_bytes = function(_, _, _, start_row, _, _, old_row, _, _, new_row, _, _)
       local state = State.active[bufnr]
@@ -235,15 +218,6 @@ function State:new(bufnr)
       end
     end,
   })
-  nvim_on('LspNotify', self.augroup, { buf = bufnr }, function(ev)
-    local client = assert(vim.lsp.get_client_by_id(ev.data.client_id))
-    if
-      client:supports_method('textDocument/foldingRange', bufnr)
-      and (ev.data.method == 'textDocument/didChange' or ev.data.method == 'textDocument/didOpen')
-    then
-      self:refresh(client)
-    end
-  end)
   nvim_on('OptionSet', self.augroup, { pattern = 'foldexpr' }, function()
     if vim.v.option_type == 'global' or api.nvim_get_current_buf() == bufnr then
       vim.lsp._capability.enable('folding_range', false, { bufnr = bufnr })
@@ -256,15 +230,10 @@ function State:new(bufnr)
   return self
 end
 
-function State:destroy()
-  api.nvim_del_augroup_by_id(self.augroup)
-  State.active[self.bufnr] = nil
-end
-
 ---@param client_id integer
 function State:on_attach(client_id)
   self.client_state[client_id] = {}
-  self:refresh(vim.lsp.get_client_by_id(client_id))
+  self:refresh(client_id)
 end
 
 ---@params client_id integer
@@ -272,6 +241,18 @@ function State:on_detach(client_id)
   self.client_state[client_id] = nil
   self:evaluate()
   foldupdate(self.bufnr)
+end
+
+---@private
+function State:on_close(client_id)
+  self.client_state[client_id] = {}
+  self:evaluate()
+  foldupdate(self.bufnr)
+end
+
+---@private
+function State:on_change(client_id)
+  self:refresh(client_id)
 end
 
 ---@param kind lsp.FoldingRangeKind
@@ -298,14 +279,14 @@ function M.foldclose(kind, winid)
 
   winid = winid or api.nvim_get_current_win()
   local bufnr = api.nvim_win_get_buf(winid)
-  local state = State.active[bufnr]
-  if not state then
+  local provider = State.active[bufnr]
+  if not provider then
     return
   end
 
   -- Schedule `foldclose()` if the buffer is not up-to-date.
-  if state.version == util.buf_versions[bufnr] then
-    state:foldclose(kind, winid)
+  if provider.version == util.buf_versions[bufnr] then
+    provider:foldclose(kind, winid)
     return
   end
 
@@ -315,11 +296,11 @@ function M.foldclose(kind, winid)
   ---@type lsp.FoldingRangeParams
   local params = { textDocument = util.make_text_document_params(bufnr) }
   vim.lsp.buf_request_all(bufnr, 'textDocument/foldingRange', params, function(...)
-    state:multi_handler(...)
+    provider:multi_handler(...)
     -- Ensure this window is still valid and buffer stays as the current buffer
     -- after the async request.
     if api.nvim_win_is_valid(winid) and api.nvim_win_get_buf(winid) == bufnr then
-      state:foldclose(kind, winid)
+      provider:foldclose(kind, winid)
     end
   end)
 end

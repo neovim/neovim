@@ -122,22 +122,6 @@ function Provider:new(bufnr)
   --- @type vim.lsp.document_color.Provider
   self = Capability.new(self, bufnr)
 
-  nvim_on('LspNotify', self.augroup, { buf = self.bufnr }, function(ev)
-    local client_id = ev.data.client_id ---@type integer
-
-    if not self.client_state[client_id] then
-      return
-    end
-
-    if ev.data.method == 'textDocument/didClose' then
-      self:clear(client_id)
-    end
-
-    if ev.data.method == 'textDocument/didChange' or ev.data.method == 'textDocument/didOpen' then
-      self:request(client_id)
-    end
-  end)
-
   nvim_on('ColorScheme', self.augroup, { desc = 'Refresh document_color' }, function()
     color_cache = {}
     n_color_cache = 0
@@ -168,6 +152,16 @@ function Provider:on_detach(client_id)
     api.nvim_buf_clear_namespace(self.bufnr, state.namespace, 0, -1)
     self.client_state[client_id] = nil
   end
+end
+
+---@private
+function Provider:on_close(client_id)
+  self:clear(client_id)
+end
+
+---@private
+function Provider:on_change(client_id)
+  self:request(client_id)
 end
 
 --- |lsp-handler| for the `textDocument/documentColor` method.
@@ -243,60 +237,53 @@ function Provider:clear(client_id)
   end
 end
 
-local document_color_ns = api.nvim_create_namespace('nvim.lsp.document_color')
-api.nvim_set_decoration_provider(document_color_ns, {
-  on_win = function(_, _, bufnr)
-    local provider = Provider.active[bufnr]
-    if not provider then
-      return
-    end
+--- @package
+function Provider:on_win()
+  local style = document_color_opts.style
 
-    local style = document_color_opts.style
+  for _, state in pairs(self.client_state) do
+    if
+      state.processed_version == util.buf_versions[self.bufnr]
+      and state.processed_version ~= state.applied_version
+    then
+      api.nvim_buf_clear_namespace(self.bufnr, state.namespace, 0, -1)
 
-    for _, state in pairs(provider.client_state) do
-      if
-        state.processed_version == util.buf_versions[bufnr]
-        and state.processed_version ~= state.applied_version
-      then
-        api.nvim_buf_clear_namespace(bufnr, state.namespace, 0, -1)
-
-        for _, hl in ipairs(state.hl_info) do
-          if type(style) == 'function' then
-            style(bufnr, hl.range, hl.hex_code)
-          elseif style == 'foreground' or style == 'background' then
-            api.nvim_buf_set_extmark(
-              bufnr,
-              state.namespace,
-              hl.range.start_row,
-              hl.range.start_col,
-              {
-                end_row = hl.range.end_row,
-                end_col = hl.range.end_col,
-                hl_group = hl.hl_group,
-                strict = false,
-              }
-            )
-          else
-            -- Default swatch: \uf0c8
-            local swatch = style == 'virtual' and ' ' or style
-            api.nvim_buf_set_extmark(
-              bufnr,
-              state.namespace,
-              hl.range.start_row,
-              hl.range.start_col,
-              {
-                virt_text = { { swatch, hl.hl_group } },
-                virt_text_pos = 'inline',
-              }
-            )
-          end
+      for _, hl in ipairs(state.hl_info) do
+        if type(style) == 'function' then
+          style(self.bufnr, hl.range, hl.hex_code)
+        elseif style == 'foreground' or style == 'background' then
+          api.nvim_buf_set_extmark(
+            self.bufnr,
+            state.namespace,
+            hl.range.start_row,
+            hl.range.start_col,
+            {
+              end_row = hl.range.end_row,
+              end_col = hl.range.end_col,
+              hl_group = hl.hl_group,
+              strict = false,
+            }
+          )
+        else
+          -- Default swatch: \uf0c8
+          local swatch = style == 'virtual' and ' ' or style
+          api.nvim_buf_set_extmark(
+            self.bufnr,
+            state.namespace,
+            hl.range.start_row,
+            hl.range.start_col,
+            {
+              virt_text = { { swatch, hl.hl_group } },
+              virt_text_pos = 'inline',
+            }
+          )
         end
-
-        state.applied_version = state.processed_version
       end
+
+      state.applied_version = state.processed_version
     end
-  end,
-})
+  end
+end
 
 --- @param provider vim.lsp.document_color.Provider
 --- @return vim.lsp.document_color.HighlightInfo?, integer?
