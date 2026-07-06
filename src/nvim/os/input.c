@@ -315,6 +315,16 @@ size_t input_enqueue(uint64_t chan_id, String keys)
 {
   current_ui = chan_id;
 
+  // If the buffer has been fully drained, rewind the read/write cursors to the
+  // start to reclaim tail space. Otherwise a drained-but-not-rewound buffer left
+  // pinned within <19 bytes of the top (input_get() advances input_read_pos but
+  // never rewinds it) would fail the `input_space() >= 19` gate below forever,
+  // silently dropping all further input and freezing the editor.
+  if (input_read_pos == input_write_pos) {
+    input_read_pos = input_buffer;
+    input_write_pos = input_buffer;
+  }
+
   if (keys.size > 0) {
     set_vim_var_nr(VV_USERACTIVE, (varnumber_T)os_realtime());
   }
