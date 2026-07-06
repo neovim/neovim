@@ -5,7 +5,6 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed = n.clear, n.feed
 local eval = n.eval
 local eq = t.eq
-local pcall_err = t.pcall_err
 local neq = t.neq
 local command = n.command
 local set_method_error = n.set_method_error
@@ -1749,6 +1748,30 @@ describe('ui/builtin messages', function()
     screen:expect({ any = 'written' })
     eq(true, busy_start >= 1) -- cursor was hidden while the message was emitted
     eq(busy_start, busy_stop) -- balanced: cursor restored afterwards
+  end)
+
+  it(':write message not clobbered by v:lua in statusline redraw #40616', function()
+    local fname = 'Xtest_write_progress'
+    finally(function()
+      os.remove(fname)
+    end)
+    exec_lua(function()
+      -- The Progress event fired by the ":write" message (since ff68fd6b8a84)
+      -- evaluates statusline mid-message.
+      _G.Statusline = function()
+        return 'STL'
+      end
+      vim.o.laststatus = 2
+      vim.o.statusline = '%{v:lua.Statusline()}'
+      vim.api.nvim_create_autocmd('Progress', {
+        callback = function()
+          vim.cmd('redrawstatus!')
+        end,
+      })
+    end)
+    command('write ' .. fname)
+    -- Should not be overwritten by "return Statusline(...)").
+    screen:expect({ any = ('"%s".*written'):format(fname) })
   end)
 
   it(':hi Group output', function()

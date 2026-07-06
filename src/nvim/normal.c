@@ -6419,7 +6419,7 @@ static void nv_record(cmdarg_T *cap)
       { .v_type = VAR_STRING, .vval.v_string = fc },
       { .v_type = VAR_UNKNOWN },
     };
-    nlua_call_vimfn("vim._core.cmdwin", "open", tv_args, NULL);
+    nlua_call_typval("vim._core.cmdwin", "open", tv_args, NULL);
   } else {
     // (stop) recording into a named register, unless executing a
     // register.

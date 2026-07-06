@@ -108,7 +108,7 @@ void ex_help(exarg_T *eap)
   if (helpbang) {
     typval_T no_args[] = { { .v_type = VAR_UNKNOWN } };
     typval_T rettv;
-    nlua_call_vimfn("vim._core.help", "resolve_tag", no_args, &rettv);
+    nlua_call_typval("vim._core.help", "resolve_tag", no_args, &rettv);
     if (rettv.v_type == VAR_STRING && rettv.vval.v_string != NULL && *rettv.vval.v_string != NUL) {
       allocated_arg = rettv.vval.v_string;  // takes ownership
       arg = allocated_arg;
@@ -339,7 +339,7 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
     { .v_type = VAR_UNKNOWN },
   };
   typval_T rettv;
-  nlua_call_vimfn("vim._core.help", "escape_subject", tv_args, &rettv);
+  nlua_call_typval("vim._core.help", "escape_subject", tv_args, &rettv);
   if (rettv.v_type != VAR_STRING || rettv.vval.v_string == NULL) {
     tv_clear(&rettv);
     return FAIL;
@@ -461,7 +461,7 @@ void prepare_help_buffer(void)
 void get_local_additions(void)
 {
   typval_T no_args[] = { { .v_type = VAR_UNKNOWN } };
-  nlua_call_vimfn("vim._core.help", "local_additions", no_args, NULL);
+  nlua_call_typval("vim._core.help", "local_additions", no_args, NULL);
 }
 
 /// ":exusage"

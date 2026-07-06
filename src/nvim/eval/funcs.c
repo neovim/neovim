@@ -4059,7 +4059,7 @@ static void f_luaeval(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  nlua_typval_eval(cstr_as_string(str), &argvars[1], rettv);
+  nlua_call_luaeval(cstr_as_string(str), &argvars[1], rettv);
 }
 
 static void find_some_match(typval_T *const argvars, typval_T *const rettv,
@@ -6373,7 +6373,7 @@ static void f_serverlist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
                                                                               .vval.v_special =
                                                                                 kSpecialVarNull };
   typval_T lua_args[] = { opts, addrs_tv, { .v_type = VAR_UNKNOWN } };
-  nlua_call_vimfn("vim._core.server", "serverlist", lua_args, rettv);
+  nlua_call_typval("vim._core.server", "serverlist", lua_args, rettv);
   tv_clear(&addrs_tv);
 }
 

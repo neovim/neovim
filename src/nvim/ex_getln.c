@@ -4587,7 +4587,7 @@ static void cmdwin_invoke(const char *action, int firstc, char *content, int pos
     { .v_type = VAR_NUMBER, .vval.v_number = pos + 1 },
     { .v_type = VAR_UNKNOWN },
   };
-  nlua_call_vimfn("vim._core.cmdwin", action, firstc ? tv_args : tv_args + 3, NULL);
+  nlua_call_typval("vim._core.cmdwin", action, firstc ? tv_args : tv_args + 3, NULL);
   xfree(content);
 }
 
