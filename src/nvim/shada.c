@@ -1806,6 +1806,13 @@ static inline ShaDaWriteResult shada_read_when_writing(FileDescriptor *const sd_
         shada_free_shada_entry(&entry);
         break;
       }
+      if (wms->registers[idx].type == kSDItemMissing) {
+        const yankreg_T *const reg = op_reg_get(entry.data.reg.name);
+        if (reg != NULL && reg_empty(reg) && reg->timestamp >= entry.timestamp) {
+          shada_free_shada_entry(&entry);
+          break;
+        }
+      }
       COMPARE_WITH_ENTRY(&wms->registers[idx], entry);
       break;
     }
