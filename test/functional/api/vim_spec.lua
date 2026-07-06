@@ -5928,7 +5928,7 @@ describe('API', function()
         line5
         line6
       ]]
-      api.nvim_input([[:3.5read !echo -n "abc"<CR>]])
+      api.nvim_input([[:3.5read !printf "abc"<CR>]])
       expect [[
         line1
         line2
@@ -5946,7 +5946,7 @@ describe('API', function()
         line5
         line6
       ]]
-      api.nvim_input([[:3.0read !echo -n "abc"<CR>]])
+      api.nvim_input([[:3.0read !printf "abc"<CR>]])
       expect [[
         line1
         line2
@@ -5964,7 +5964,7 @@ describe('API', function()
         line5
         line6
       ]]
-      api.nvim_input([[:3.2read !echo -en 'abc\nabc'<CR>]])
+      api.nvim_input([[:3.2read !printf 'abc\nabc'<CR>]])
       expect [[
         line1
         line2
