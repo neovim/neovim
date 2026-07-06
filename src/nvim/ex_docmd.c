@@ -38,6 +38,7 @@
 #include "nvim/edit.h"
 #include "nvim/errors.h"
 #include "nvim/eval/fs.h"
+#include "nvim/eval/funcs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
@@ -4975,6 +4976,41 @@ static void ex_quitall(exarg_T *eap)
 /// ":restart +cmd <command>": restart the Nvim server using ":cmd" and runs <command> in the new server.
 static void ex_restart(exarg_T *eap)
 {
+  if (!eap->forceit) {
+    Error err = ERROR_INIT;
+    MAXSIZE_TEMP_ARRAY(args, 2);
+
+    ADD_C(args, CSTR_AS_OBJ(eap->arg));
+    ADD_C(args, CSTR_AS_OBJ(eap->do_ecmd_cmd ? eap->do_ecmd_cmd : ""));
+
+    NLUA_EXEC_STATIC("require'vim._core.server'.ex_session_restart(...)", args, kRetNilBool, NULL,
+                     &err);
+
+    if (ERROR_SET(&err)) {
+      emsg(err.msg);
+    }
+    api_clear_error(&err);
+    return;
+  }
+
+  const char *startreason = "restart!";
+  char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall";
+  char *after_cmd = eap->arg;
+
+  // "+:::" is how ex_session_restart() signals that it (recursively) called into :restart.
+  if (strequal(quit_cmd, ":::")) {
+    startreason = "restart";
+    // Set quit_cmd and after_cmd from args
+    if (eap->argc > 1) {
+      eap->args[1][eap->arglens[1]] = NUL;
+      quit_cmd = eap->args[1];
+      after_cmd = eap->argc > 2 ? eap->args[2] : "";
+    } else {
+      emsg("restart failed: +cmd did not quit the server");
+      return;
+    }
+  }
+
   Error err = ERROR_INIT;
   const bool no_ui = !ui_active();
   const char *exepath = get_vim_var_str(VV_PROGPATH);
@@ -4991,6 +5027,16 @@ static void ex_restart(exarg_T *eap)
     // Drop "-- [files…]". Usually isn't wanted. User can :mksession instead.
     if (i > 0 && strequal(arg, "--")) {
       break;
+    }
+    // Drop "-S [file]". It conflicts with :restart and usually isn't wanted for :restart!
+    if (i > 0 && strequal(arg, "-S")) {
+      if (li->li_next != NULL) {
+        const char *next_arg = tv_get_string(TV_LIST_ITEM_TV(li->li_next));
+        if (next_arg[0] != '-') {
+          li = li->li_next;
+        }
+      }
+      continue;
     }
     // Drop "-s <scriptfile>": skip the scriptfile arg too.
     if (i > 0 && strequal(arg, "-s")) {
@@ -5051,11 +5097,10 @@ static void ex_restart(exarg_T *eap)
   bool server_stopped = listen_arg ? server_stop(listen_arg, true) : false;
 #endif
 
+  dict_T *env = create_environment(NULL, false, false, false, NULL);
+  tv_dict_add_str(env, S_LEN(ENV_STARTREASON), startreason);
 #ifdef MSWIN
-  bool restart_alloc_console_env = false;
-  if (os_setenv("__NVIM_RESTART_ALLOC_CONSOLE", "1", 1) == 0) {
-    restart_alloc_console_env = true;
-  }
+  tv_dict_add_str(env, S_LEN(ENV_RESTART_ALLOC_CONSOLE), "1");
 #endif
 
   CallbackReader on_err = CALLBACK_READER_INIT;
@@ -5072,12 +5117,7 @@ static void ex_restart(exarg_T *eap)
   Channel *channel = channel_job_start(argv, exepath,
                                        CALLBACK_READER_INIT, on_err, CALLBACK_NONE,
                                        false, true, true, detach, kChannelStdinPipe,
-                                       NULL, 0, 0, NULL, &exit_status);
-#ifdef MSWIN
-  if (restart_alloc_console_env) {
-    os_unsetenv("__NVIM_RESTART_ALLOC_CONSOLE");
-  }
-#endif
+                                       NULL, 0, 0, env, &exit_status);
   if (!channel) {
     emsg("cannot create a channel job");
     goto fail_1;
@@ -5094,12 +5134,12 @@ static void ex_restart(exarg_T *eap)
   arena_mem_free(result_mem);
   result_mem = NULL;
 
-  if (*eap->arg != NUL) {
+  if (*after_cmd != NUL) {
     // Execute [command] on new server on UIEnter.
     MAXSIZE_TEMP_DICT(autocmd_opts, 3);
     PUT_C(autocmd_opts, "once", BOOLEAN_OBJ(true));
     PUT_C(autocmd_opts, "nested", BOOLEAN_OBJ(true));
-    PUT_C(autocmd_opts, "command", CSTR_AS_OBJ(eap->arg));
+    PUT_C(autocmd_opts, "command", CSTR_AS_OBJ(after_cmd));
     MAXSIZE_TEMP_ARRAY(autocmd_args, 2);
     ADD_C(autocmd_args, CSTR_AS_OBJ("UIEnter"));
     ADD_C(autocmd_args, DICT_OBJ(autocmd_opts));
@@ -5154,7 +5194,6 @@ static void ex_restart(exarg_T *eap)
 
   set_vim_var_string(VV_EXITREASON, S_LEN("restart"));
 
-  char *quit_cmd = (eap->do_ecmd_cmd) ? eap->do_ecmd_cmd : "qall";
   char *quit_cmd_copy = NULL;
 
   // Prepend "confirm " to cmd if :confirm is used
