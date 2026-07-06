@@ -2132,6 +2132,7 @@ void do_wqall(exarg_T *eap)
         && channel_job_running((uint64_t)buf->b_p_channel)) {
       no_write_message_buf(buf);
       error++;
+      continue;
     } else if (!bufIsChanged(buf) || bt_dontwrite(buf)) {
       continue;
     }

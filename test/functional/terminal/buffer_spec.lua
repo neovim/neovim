@@ -16,6 +16,7 @@ local testprg = n.testprg
 local write_file = t.write_file
 local command = n.command
 local matches = t.matches
+local not_matches = t.not_matches
 local exec_lua = n.exec_lua
 local sleep = vim.uv.sleep
 local fn = n.fn
@@ -239,6 +240,9 @@ describe(':terminal buffer', function()
 
   it('requires bang (!) to close a running job #15402', function()
     eq('Vim(wqall):E948: Job still running (add ! to end the job)', pcall_err(command, 'wqall'))
+    command('redir => g:wqall_out | silent! wqall | redir END')
+    matches('E948:', api.nvim_get_var('wqall_out'))
+    not_matches('E676:', api.nvim_get_var('wqall_out'))
     for _, cmd in ipairs({ 'bdelete', '%bdelete', 'bwipeout', 'bunload' }) do
       matches(
         '^Vim%('
