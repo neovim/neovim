@@ -3609,7 +3609,7 @@ int append_arg_number(win_T *wp, char *buf, size_t buflen)
 /// Make "*ffname" a full file name, set "*sfname" to "*ffname" if not NULL.
 /// For a directory the resulting "*ffname" gets a trailing path separator. When
 /// "*sfname" already ends with a separator the final component is not resolved,
-/// so a symlinked directory keeps its spelling.
+/// so the symbolic link path is preserved.
 /// "*ffname" becomes a pointer to allocated memory (or NULL).
 /// When resolving a link both "*sfname" and "*ffname" will point to the same
 /// allocated memory.
@@ -3628,11 +3628,10 @@ void fname_expand(buf_T *buf, char **ffname, char **sfname)
     *sfname = NULL;
     return;
   }
-  // A directory buffer's name ends with a path separator. fix_fname() resolves
-  // the final component of a name that ends with a separator, and the caller may
-  // already have canonicalized *ffname, so re-derive the name from the still
-  // verbatim *sfname (with any trailing separator removed) to keep the spelling
-  // the user typed, e.g. a symlinked directory edited as ":edit link/".
+  // Preserve a symbolic link path for directory buffers. fix_fname("link/")
+  // resolves to the target, so re-expand without the trailing separator: if
+  // "link" is a symbolic link to directory "target", ":edit link/" produces
+  // ".../link/", not ".../target/".
   if (os_isdir(*ffname)) {
     char *name = xstrdup(*sfname);
     size_t name_len = strlen(name);

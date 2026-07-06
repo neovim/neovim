@@ -2392,7 +2392,7 @@ describe('api/buf', function()
       os.remove(new_name)
     end)
 
-    it('appends a path separator for a directory', function()
+    it('directory buffer-name always ends with slash', function()
       local cwd = t.fix_slashes(fn.getcwd())
       local dir = 'Xtest_dir_name'
       t.mkdir(dir)
@@ -2403,7 +2403,7 @@ describe('api/buf', function()
       eq(cwd .. '/' .. dir .. '/', t.fix_slashes(api.nvim_buf_get_name(0)))
     end)
 
-    it('keeps the spelling of a symlinked directory', function()
+    it('directory buffer-name preserves symbolic link path', function()
       t.skip(t.is_os('win'), 'N/A for Windows')
       local cwd = t.fix_slashes(fn.getcwd())
       local target = 'Xtest_dir_target'

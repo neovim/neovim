@@ -605,7 +605,9 @@ function vim.fn.bufloaded(buf) end
 ---
 --- The result is the name of a buffer.  Mostly as it is displayed
 --- by the `:ls` command, but not using special names such as
---- "[No Name]".
+--- "[No Name]".  If the buffer represents a directory, the name
+--- ends with a path separator, unless it was changed by |:file| or
+--- |nvim_buf_set_name()|.
 --- If {buf} is omitted the current buffer is used.
 --- If {buf} is a Number, that buffer number's name is given.
 --- Number zero is the alternate buffer for the current window.

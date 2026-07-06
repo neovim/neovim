@@ -2609,6 +2609,9 @@ nvim_buf_get_name({buf})                                 *nvim_buf_get_name()*
     Gets the full/absolute filepath of the buffer, or the buffer name for
     non-file buffers.
 
+    If the buffer represents a directory, the name ends with a path separator,
+    unless it was changed by |:file| or |nvim_buf_set_name()|.
+
     Attributes: ~
         Since: 0.1.0
 
