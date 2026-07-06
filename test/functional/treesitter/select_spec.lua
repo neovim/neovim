@@ -206,7 +206,10 @@ end)
 
 describe('treesitter incremental-selection with injections', function()
   before_each(function()
-    clear({ args_rm = { '--cmd' }, args = { '--clean', '--cmd', n.runtime_set } })
+    clear({
+      args_rm = { '--cmd' },
+      args = { '--clean', '--cmd', n.runtime_set, '--cmd', n.packagepath_set },
+    })
   end)
 
   it('works', function()

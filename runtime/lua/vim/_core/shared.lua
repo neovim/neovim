@@ -1762,4 +1762,9 @@ function vim.npcall(fn, ...)
   end)(pcall(fn, ...))
 end
 
+-- Security fix: prevent arbitrary code execution from files in the current
+-- directory when `require()` fails to find a module in 'runtimepath'. #38966
+package.path = package.path:gsub('%./%?%.lua;', '')
+package.cpath = package.cpath:gsub('%./%?%.so;', '')
+
 return vim
