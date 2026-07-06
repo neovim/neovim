@@ -1407,7 +1407,7 @@ static int call_user_func_check(ufunc_T *fp, int argcount, typval_T *argvars, ty
   FUNC_ATTR_NONNULL_ARG(1, 3, 4, 5)
 {
   if (fp->uf_flags & FC_LUAREF) {
-    return typval_exec_lua_callable(fp->uf_luaref, argcount, argvars, rettv);
+    return nlua_exec_typval_callable(fp->uf_luaref, argcount, argvars, rettv);
   }
 
   if ((fp->uf_flags & FC_RANGE) && funcexe->fe_doesrange != NULL) {
@@ -1741,7 +1741,7 @@ int call_func(const char *funcname, int len, typval_T *rettv, int argcount_in, t
       if (len > 0) {
         error = FCERR_NONE;
         argv_add_base(funcexe->fe_basetv, &argvars, &argcount, argv, &argv_base);
-        nlua_call_typval(funcname, (size_t)len, argvars, argcount, rettv);
+        nlua_call_vlua(funcname, (size_t)len, argvars, argcount, rettv);
       } else {
         // v:lua was called directly; show its name in the emsg
         XFREE_CLEAR(name);
@@ -1827,7 +1827,7 @@ int call_simple_luafunc(const char *funcname, size_t len, typval_T *rettv)
 
   typval_T argvars[1];
   argvars[0].v_type = VAR_UNKNOWN;
-  nlua_call_typval(funcname, len, argvars, 0, rettv);
+  nlua_call_vlua(funcname, len, argvars, 0, rettv);
   return OK;
 }
 
