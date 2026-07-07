@@ -885,8 +885,7 @@ int del_chars(int count, int fixpos)
 /// @param  use_delcombine  'delcombine' option applies
 ///
 /// @return FAIL for failure, OK otherwise
-int del_bytes(linenr_T lnum, colnr_T startcol, colnr_T count, bool fixpos_arg,
-              bool use_delcombine)
+int del_bytes(linenr_T lnum, colnr_T startcol, colnr_T count, bool fixpos_arg, bool use_delcombine)
 {
   bool fixpos = fixpos_arg;
   char *oldp = ml_get(lnum);
