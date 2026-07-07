@@ -235,9 +235,8 @@ function M.on_refresh(err, _, ctx)
     return vim.NIL
   end
 
-  for bufnr in pairs(vim.lsp.get_client_by_id(ctx.client_id).attached_buffers or {}) do
-    local provider = InlayHint.active[bufnr]
-    if provider and provider.client_state[ctx.client_id] then
+  for bufnr, provider in pairs(InlayHint.active) do
+    if provider.client_state[ctx.client_id] then
       provider:reset(ctx.client_id)
 
       if not vim.tbl_isempty(vim.fn.win_findbuf(bufnr)) then
