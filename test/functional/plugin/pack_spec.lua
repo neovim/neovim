@@ -385,6 +385,10 @@ local function get_lock_path()
   return vim.fs.joinpath(fn.stdpath('config'), 'nvim-pack-lock.json')
 end
 
+local function get_other_lock_path()
+  return vim.fs.joinpath(fn.stdpath('state'), 'test-pack-lock')
+end
+
 --- @return {plugins:table<string, {rev:string, src:string, version?:string}>}
 local function get_lock_tbl()
   return vim.json.decode(fn.readblob(get_lock_path()))
@@ -407,6 +411,7 @@ describe('vim.pack', function()
   after_each(function()
     local pack_dir = pack_get_dir()
     local lock_path = get_lock_path()
+    local other_lock_path = get_other_lock_path()
     local log_path = vim.fs.joinpath(fn.stdpath('log'), 'nvim-pack.log')
 
     -- Wait for neovim to close before removing directories so it can release
@@ -416,6 +421,7 @@ describe('vim.pack', function()
 
     n.rmdir(pack_dir)
     pcall(vim.fs.rm, lock_path, { force = true })
+    pcall(vim.fs.rm, other_lock_path, { force = true })
     pcall(vim.fs.rm, log_path, { force = true })
   end)
 
@@ -773,6 +779,29 @@ describe('vim.pack', function()
       -- Can not preserve `version` if it was deleted from the lockfile
       ref_lock_tbl.plugins.basic.version = nil
       assert()
+    end)
+
+    it("respects 'packlockfile'", function()
+      local other_lock_path = get_other_lock_path()
+      api.nvim_set_option_value('packlockfile', other_lock_path, { scope = 'global' })
+      exec_lua(function()
+        vim.pack.add({ repos_src.basic })
+      end)
+      local ref_lockfile = {
+        plugins = {
+          basic = { rev = git_get_hash('main', 'basic'), src = repos_src.basic },
+        },
+      }
+      eq(ref_lockfile, vim.json.decode(fn.readblob(other_lock_path)))
+      eq(false, vim.uv.fs_stat(get_lock_path()) ~= nil)
+
+      n.clear()
+      api.nvim_set_option_value('packlockfile', other_lock_path, { scope = 'global' })
+      exec_lua(function()
+        vim.pack.add({ { src = repos_src.basic, version = 'feat-branch' } })
+      end)
+      ref_lockfile.plugins.basic.version = "'feat-branch'"
+      eq(ref_lockfile, vim.json.decode(fn.readblob(other_lock_path)))
     end)
 
     it('removes unrepairable corrupted data and plugins', function()
@@ -2039,6 +2068,37 @@ describe('vim.pack', function()
       pack_assert_content('fetch', 'return "fetch dev"')
     end)
 
+    it("respects 'packlockfile'", function()
+      n.rmdir(pack_get_dir())
+      pcall(vim.fs.rm, get_lock_path(), { force = true })
+
+      n.clear()
+      local other_lock_path = get_other_lock_path()
+      api.nvim_set_option_value('packlockfile', other_lock_path, { scope = 'global' })
+
+      exec_lua(function()
+        vim.pack.add({ repos_src.basic })
+      end)
+
+      eq(true, vim.uv.fs_stat(other_lock_path) ~= nil)
+      eq(false, vim.uv.fs_stat(get_lock_path()) ~= nil)
+
+      n.clear()
+      api.nvim_set_option_value('packlockfile', other_lock_path, { scope = 'global' })
+
+      exec_lua(function()
+        vim.pack.add({ { src = repos_src.basic, version = 'feat-branch' } })
+        vim.pack.update({ 'basic' }, { force = true })
+      end)
+      pack_assert_content('basic', 'return "basic feat-branch"')
+      local basic_lock = {
+        rev = git_get_hash('feat-branch', 'basic'),
+        src = repos_src.basic,
+        version = "'feat-branch'",
+      }
+      eq({ plugins = { basic = basic_lock } }, vim.json.decode(fn.readblob(other_lock_path)))
+    end)
+
     it('validates input', function()
       local function assert(err_pat, input)
         local function update_input()
@@ -2287,6 +2347,23 @@ describe('vim.pack', function()
       eq(2, exec_lua('return #vim.pack.get()'))
       eq(2, vim.tbl_count(get_lock_tbl().plugins))
     end)
+
+    it("respects 'packlockfile'", function()
+      n.rmdir(pack_get_dir())
+      pcall(vim.fs.rm, get_lock_path(), { force = true })
+
+      n.clear()
+      local other_lock_path = get_other_lock_path()
+      api.nvim_set_option_value('packlockfile', other_lock_path, { scope = 'global' })
+
+      exec_lua(function()
+        vim.pack.add({ { src = repos_src.basic, version = 'feat-branch' } })
+      end)
+
+      local basic_data = make_basic_data(true, true)
+      eq({ basic_data }, exec_lua('return vim.pack.get()'))
+      eq(false, vim.uv.fs_stat(get_lock_path()) ~= nil)
+    end)
   end)
 
   describe('del()', function()
@@ -2394,6 +2471,24 @@ describe('vim.pack', function()
       exec_lua('vim.pack.del({ "basic" })')
       eq(1, exec_lua('return #vim.pack.get()'))
       eq({ 'plugindirs' }, vim.tbl_keys(get_lock_tbl().plugins))
+    end)
+
+    it("respects 'packlockfile'", function()
+      n.rmdir(pack_get_dir())
+      pcall(vim.fs.rm, get_lock_path(), { force = true })
+
+      n.clear()
+      local other_lock_path = vim.fs.joinpath(fn.stdpath('data'), 'test-pack-lock')
+      api.nvim_set_option_value('packlockfile', other_lock_path, { scope = 'global' })
+
+      exec_lua(function()
+        vim.pack.add({ repos_src.basic })
+      end)
+
+      exec_lua('vim.pack.del({ "basic" }, { force = true })')
+      eq({ plugins = {} }, vim.json.decode(fn.readblob(other_lock_path)))
+      eq(false, pack_exists('basic'))
+      eq(false, vim.uv.fs_stat(get_lock_path()) ~= nil)
     end)
 
     it('validates input', function()

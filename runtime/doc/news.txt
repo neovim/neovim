@@ -291,6 +291,7 @@ OPTIONS
   The same applies to 'rulerformat', 'statuscolumn', 'tabline', 'winbar',
   'titlestring', and 'iconstring'.
 • 'winpinned' prevents window from closing unless specifically targeted.
+• 'packlockfile' sets the path used for |vim.pack-lockfile|.
 
 PERFORMANCE
 

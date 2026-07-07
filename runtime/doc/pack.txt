@@ -224,15 +224,15 @@ semver convention `v<major>.<minor>.<patch>` (with or without `v` prefix).
 Like `v1.2.0` or `1.2.0`, but not `1.2` or `v1`.
 
 The latest state of all managed plugins is stored inside a *vim.pack-lockfile*
-located at `$XDG_CONFIG_HOME/nvim/nvim-pack-lock.json`. It is a JSON file that
-is used to persistently track data about plugins. For a more robust config
-treat lockfile like its part: put under version control, etc. In this case all
-plugins from the lockfile will be installed at once (in alphabetical order)
-and at lockfile's revision (instead of inferring from `version`). This is done
-on the very first `vim.pack` function call to ensure that lockfile is aligned
-with what is actually on the disk. Lockfile should not be edited by hand.
-Corrupted data for installed plugins is repaired (including after deleting
-whole file), but `version` fields will be missing for not yet added plugins.
+located at |'packlockfile'|. It is a JSON file that is used to persistently
+track data about plugins. For a more robust config treat lockfile like its
+part: put under version control, etc. In this case all plugins from the
+lockfile will be installed at once (in alphabetical order) and at lockfile's
+revision (instead of inferring from `version`). This is done on the very first
+`vim.pack` function call to ensure that lockfile is aligned with what is
+actually on the disk. Lockfile should not be edited by hand. Corrupted data
+for installed plugins is repaired (including after deleting whole file), but
+`version` fields will be missing for not yet added plugins.
 
                                                            *vim.pack-examples*
 
