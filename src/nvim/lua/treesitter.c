@@ -42,6 +42,10 @@
 #define TS_META_QUERYCURSOR "treesitter_querycursor"
 #define TS_META_QUERYMATCH "treesitter_querymatch"
 
+#ifdef __EMSCRIPTEN__
+extern const TSLanguage *nvim_ts_get_parser(const char *lang);
+#endif
+
 typedef struct {
   LuaRef cb;
   lua_State *lstate;
@@ -133,6 +137,13 @@ static int tslua_add_language_from_object(lua_State *L)
 static const TSLanguage *load_language_from_object(lua_State *L, const char *path,
                                                    const char *lang_name, const char *symbol)
 {
+#ifdef __EMSCRIPTEN__
+  const TSLanguage *static_lang = nvim_ts_get_parser(symbol);
+  if (static_lang != NULL) {
+    return static_lang;
+  }
+#endif
+
   uv_lib_t lib;
   if (uv_dlopen(path, &lib)) {
     xstrlcpy(IObuff, uv_dlerror(&lib), sizeof(IObuff));

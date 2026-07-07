@@ -1,68 +1,213 @@
 <!DOCTYPE html>
 <html>
-<head>
-<meta charset="utf-8">
-<title>nvim.wasm test</title>
-</head>
+<head><meta charset="utf-8"><title>nvim.wasm runtime + persistence test</title></head>
 <body style="font-family: monospace; white-space: pre-wrap">
-<h3>nvim.wasm load test</h3>
-
+<h3>nvim.wasm runtime bundling</h3>
+<button id="persistBtn">Persist now</button>
 <script src="../zig-out/bin/nvim.js"></script>
-
 <script>
-function log(msg) {
-  document.body.append(msg + "\n");
-}
+const log = (msg) => document.body.append(msg + "\n");
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const ok = (label, cond, hint) => label + (cond ? "  OK" : "  FAIL" + (hint ? " " + hint : ""));
 
-function makeArgv(Module, args) {
-  const ptrs = [];
-
-  for (const s of args) {
-    const len = Module.lengthBytesUTF8(s) + 1;
-    const p = Module._malloc(len);
-    Module.stringToUTF8(s, p, len);
-    ptrs.push(p);
-  }
-
-  const argv = Module._malloc((ptrs.length + 1) * 4);
-
-  for (let i = 0; i < ptrs.length; i++) {
-    Module.setValue(argv + i * 4, ptrs[i], '*');
-  }
-
-  Module.setValue(argv + ptrs.length * 4, 0, '*');
-
+// Builds a C-style argv array in wasm memory for _nvim_main
+function makeArgv(M, args) {
+  const ptrs = args.map(s => {
+    const len = M.lengthBytesUTF8(s) + 1, p = M._malloc(len);
+    M.stringToUTF8(s, p, len);
+    return p;
+  });
+  const argv = M._malloc((ptrs.length + 1) * 4);
+  ptrs.forEach((p, i) => M.setValue(argv + i * 4, p, '*'));
+  M.setValue(argv + ptrs.length * 4, 0, '*');
   return { argc: ptrs.length, argv };
 }
+// Test only helper. Runs the WASM nvim build headlessly with a scripted
+// set of -c commands, by calling its exported _nvim_main directly
+async function runNvimCommands(m, cmds, opts = {}) {
+  const args = ["nvim", "--headless", ...(opts.noPlugin ? ["-u", "NONE"] : []), ...(opts.extraArgs ?? [])];
+  cmds.forEach(c => args.push("-c", c));
+  const { argc, argv } = makeArgv(m, args);
+  const ret = m._nvim_main(argc, argv);
+  await sleep(opts.settleMs ?? 300);
+  return ret;
+}
 
-createNvim({
-  noInitialRun: true,
+async function waitForFile(m, path, timeoutMs = 2000, intervalMs = 50) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    try { return m.FS.readFile(path, { encoding: 'utf8' }); }
+    catch (e) { await sleep(intervalMs); }
+  }
+  return m.FS.readFile(path, { encoding: 'utf8' });
+}
 
-  print: (t) => log("[stdout] " + t),
-  printErr: (t) => log("[stderr] " + t),
+async function freshNvim() {
+  const m = await createNvim({
+    locateFile: (p, prefix) => p.endsWith('.data') ? '/zig-out/bin/nvim.data' : prefix + p,
+    noInitialRun: true,
+    print: t => log("[stdout] " + t),
+    printErr: t => log("[stderr] " + t),
+    preRun: [m => {
+      m.ENV.TERM = "dumb"; m.ENV.HOME = "/home/user"; m.ENV.VIMRUNTIME = "/runtime";
+      try { m.FS.mkdir('/tmp'); } catch (e) {}
+      m.FS.mkdir('/home/user');
+      m.FS.mkdir('/home/user/.config');
+      m.FS.mkdir('/home/user/.local');
+      m.FS.mkdir('/home/user/.local/share');
+      m.FS.mount(m.IDBFS, {}, '/home/user/.config');
+      m.FS.mount(m.IDBFS, {}, '/home/user/.local/share');
+    }],
+  });
+  await new Promise((res, rej) => m.FS.syncfs(true, e => e ? rej(e) : res())); // restore from IndexedDB
 
-  preRun: [(m) => {
-    m.ENV.TERM = "dumb";
-    m.ENV.HOME = "/home/user";
-    m.ENV.VIMRUNTIME = "/runtime";
-  }],
-})
-.then((m) => {
-  log("module loaded");
+  try { m.FS.mkdir('/home/user/.config/nvim'); } catch (e) {}
+  try { m.FS.mkdir('/home/user/.local/share/nvim'); } catch (e) {}
+  try { m.FS.mkdir('/runtime/parser'); } catch (e) {}
+  ['lua', 'c', 'vim', 'vimdoc', 'query', 'markdown', 'markdown_inline'].forEach(p => {
+    try { m.FS.writeFile(`/runtime/parser/${p}.so`, ''); } catch (e) {}
+  });
+  return m;
+}
 
-  const args = makeArgv(m, [
-    "nvim",
-    "--version"
-  ]);
+const tests = [
+  ["filetype detection", ["e test.lua", "call writefile([&filetype], '/tmp/ft.txt')", "q"], "/tmp/ft.txt", { noPlugin: false },
+    ft => [ok(`filetype: '${ft}'`, ft === 'lua', "expected 'lua'")]],
 
-  const ret = m._nvim_main(args.argc, args.argv);
+  [":help (no args)", ["help", "redir! > /tmp/help.txt", "silent! echo bufname('%').'---'.line('$')", "redir END", "qa!"], "/tmp/help.txt", {},
+    raw => { const [b, n] = raw.split('---'); return [
+      ok(`help buffer: '${b}'`, b?.includes('help.txt'), "expected 'help.txt'"),
+      ok(`help.txt lines: '${n}'`, parseInt(n) > 0, "expected > 0")]; }],
 
-  log("_nvim_main returned: " + ret);
-})
-.catch((e) => {
-  log("module init failed: " + e);
+  [":help <topic>", ["help autocmd", "redir! > /tmp/help_topic.txt", "silent! echo bufname('%').'---'.line('.')", "redir END", "qa!"], "/tmp/help_topic.txt", {},
+    raw => { const [b, n] = raw.split('---'); return [
+      ok(`help autocmd -> buffer: '${b}'`, b?.includes('autocmd.txt'), "expected 'autocmd.txt'"),
+      ok(`help autocmd -> line: '${n}'`, parseInt(n) > 1, "(tag unresolved)")]; }],
+
+  [":q smoke test", ["e test.md", "q"], null, {},
+    ret => [`:q returned ${ret}`]],
+
+  [":qa! smoke test", ["e test.md", "sp test2.md", "qa!"], null, {},
+    ret => [`:qa! returned ${ret}`]],
+
+  ["require() builtin", ["lua local ok,mod=pcall(require,'vim.fs'); vim.fn.writefile({tostring(ok),type(mod)}, '/tmp/req_builtin.txt')", "qa!"], "/tmp/req_builtin.txt", {},
+    raw => { const [o, t] = raw.split('\n'); return [ok(`require('vim.fs') -> ok=${o}, type=${t}`, o === 'true' && t === 'table')]; }],
+
+  ["require() user module", ["lua local ok,mod=pcall(require,'mymod'); local msg=ok and mod.greet() or tostring(mod); vim.fn.writefile({tostring(ok),msg}, '/tmp/req_user.txt')", "qa!"], "/tmp/req_user.txt",
+    { setup: m => m.FS.writeFile('/runtime/lua/mymod.lua', "return { greet = function() return 'hi from mymod' end }") },
+    raw => { const [o, msg] = raw.split('\n'); return [ok(`require('mymod') -> ok=${o}, result='${msg}'`, o === 'true' && msg === 'hi from mymod')]; }],
+
+  ["syntax highlighting", ["e /home/user/synhl.lua", "syntax on", "lua local id=vim.fn.synID(1,7,1); vim.fn.writefile({vim.fn.synIDattr(id,'name')}, '/tmp/syn.txt')", "qa!"], "/tmp/syn.txt",
+    { setup: m => m.FS.writeFile('/home/user/synhl.lua', 'local function foo()\n  return 1\nend\n') },
+    name => [ok(`syntax group at 'function': '${name}'`, name.length > 0, "(no group / syntax off)")]],
+
+  ["tree-sitter parsing", ["e /home/user/ts.lua", "lua local ok,r=pcall(function() return vim.treesitter.get_parser(0,'lua'):parse()[1]:root():type() end); vim.fn.writefile({tostring(ok),tostring(r)}, '/tmp/ts.txt')", "qa!"], "/tmp/ts.txt",
+    { setup: m => m.FS.writeFile('/home/user/ts.lua', 'local x = 1\nprint(x)\n') },
+    raw => { const [o, msg] = raw.split('\n'); return [ok(`tree-sitter parse -> ok=${o}, result='${msg}'`, o === 'true', "(see error above)")]; }],
+
+  [":w write test", ["e /home/user/write.txt", "call setline(1, 'hello wasm write test')", "w", "q"], "/home/user/write.txt", {},
+    txt => [ok(`:w result: '${txt}'`, txt === 'hello wasm write test')]],
+
+  [":edit existing file", ["e /home/user/existing.txt", "call writefile([getline(1)], '/tmp/edit.txt')", "q"], "/tmp/edit.txt",
+    { setup: m => m.FS.writeFile('/home/user/existing.txt', 'pre-existing content here') },
+    txt => [ok(`:edit read back: '${txt}'`, txt === 'pre-existing content here')]],
+
+  [":split window", ["e /home/user/split_a.txt", "split /home/user/split_b.txt", "call writefile([winnr('$')], '/tmp/split.txt')", "qa!"], "/tmp/split.txt", {},
+    n => [ok(`window count: '${n}'`, parseInt(n) === 2, "expected 2")]],
+
+  [":set number", ["set number", "call writefile([&number], '/tmp/set.txt')", "qa!"], "/tmp/set.txt", {},
+    n => [ok(`&number = '${n}'`, n === '1', "expected 1")]],
+];
+
+async function runTest([name, cmds, file, opts, check]) {
+  log(name);
+  const m = await freshNvim();
+  try {
+    if (opts.setup) opts.setup(m);
+    const ret = await runNvimCommands(m, cmds, { noPlugin: true, ...opts });
+    const raw = file ? (await waitForFile(m, file)).trim() : ret;
+    check(raw).forEach(log);
+  } catch (e) { log("ERROR in " + name + ": " + e); }
+  return m;
+}
+
+// checks the runtime files bundled into the wasm image are actually there
+async function runtimeSanityCheck() {
+  log("runtime sanity check");
+  const m = await freshNvim();
+  try { log("/runtime contents: " + m.FS.readdir('/runtime').join(', ')); }
+  catch (e) { log("ERROR reading /runtime: " + e); }
+  try {
+    m.FS.writeFile('/home/user/.local/share/nvim/test.txt', 'hello from session ' + Date.now());
+    log("wrote+read dynamic test file: " + m.FS.readFile('/home/user/.local/share/nvim/test.txt', { encoding: 'utf8' }));
+  } catch (e) { log("ERROR writing dynamic test file: " + e); }
+  try { log("/runtime/doc contains " + m.FS.readdir('/runtime/doc').length + " entries"); }
+  catch (e) { log("ERROR reading /runtime/doc: " + e); }
+  try {
+    const n = m.FS.readFile('/runtime/doc/tags', { encoding: 'utf8' }).split('\n').filter(Boolean).length;
+    log(ok(`doc/tags found, ${n} lines`, n > 0, "(empty)"));
+  } catch (e) { log("ERROR: /runtime/doc/tags missing: " + e + "  FAIL"); }
+  return m;
+}
+
+// verifies tree-sitter
+async function treesitterHighlightCapturesTest() {
+  log("tree-sitter highlight captures test");
+  const m1 = await freshNvim();
+  try { log("/runtime/queries: " + m1.FS.readdir('/runtime/queries').join(', ')); }
+  catch (e) { log("ERROR reading /runtime/queries: " + e); }
+  try { log("/runtime/queries/lua: " + m1.FS.readdir('/runtime/queries/lua').join(', ')); }
+  catch (e) { log("ERROR reading /runtime/queries/lua: " + e + "  <-- likely root cause if missing"); }
+
+  try {
+    m1.FS.writeFile('/home/user/ts_hl.lua', 'local x = 1\nprint(x)\n');
+    await runNvimCommands(m1, [
+      "e /home/user/ts_hl.lua",
+      "lua local qok,q=pcall(vim.treesitter.query.get,'lua','highlights'); vim.fn.writefile({tostring(qok),tostring(q~=nil)}, '/tmp/query_check.txt')",
+      "qa!",
+    ], { noPlugin: true });
+    log("query.get('lua','highlights') -> " + (await waitForFile(m1, '/tmp/query_check.txt')).trim().replace('\n', ', loaded='));
+  } catch (e) { log("ERROR checking highlights query: " + e); }
+
+  const m2 = await freshNvim();
+  try {
+    m2.FS.writeFile('/home/user/ts_hl2.lua', 'local x = 1\nprint(x)\n');
+    await runNvimCommands(m2, [
+      "e /home/user/ts_hl2.lua",
+      "lua " +
+      "local sok,serr=pcall(vim.treesitter.start,0,'lua'); " +
+      "local hlok,hlmod=pcall(require,'vim.treesitter.highlighter'); " +
+      "local active=hlok and (hlmod.active[vim.api.nvim_get_current_buf()]~=nil); " +
+      "local pok,perr=pcall(function() vim.treesitter.get_parser(0,'lua'):parse() end); " +
+      "local cok,caps=pcall(vim.treesitter.get_captures_at_pos,0,0,6); " +
+      "local names='none'; " +
+      "if cok and type(caps)=='table' and #caps>0 then " +
+      "  local l={}; for _,c in ipairs(caps) do table.insert(l,c.capture) end; names=table.concat(l,','); end; " +
+      "vim.fn.writefile({tostring(sok),tostring(serr),tostring(active),tostring(pok),tostring(perr),tostring(cok),names}, '/tmp/ts_hl.txt')",
+      "qa!",
+    ], { noPlugin: true });
+
+    const [sok, serr, active, pok, perr, cok, caps] = (await waitForFile(m2, '/tmp/ts_hl.txt')).trim().split('\n');
+    log("treesitter.start -> ok=" + sok + (serr !== 'nil' ? `, err='${serr}'` : ""));
+    log("highlighter.active[bufnr] registered: " + active);
+    log("parser:parse() -> ok=" + pok + (perr !== 'nil' ? `, err='${perr}'` : ""));
+    log(ok(`get_captures_at_pos -> ok=${cok}, captures='${caps}'`, cok === 'true' && caps !== 'none', "(no captures)"));
+  } catch (e) { log("ERROR in tree-sitter highlight captures test: " + e); }
+}
+
+let moduleRef = null;
+document.getElementById('persistBtn').addEventListener('click', () => {
+  if (!moduleRef) return log("module not ready yet");
+  moduleRef.FS.syncfs(false, e => log(e ? "persist error: " + e : "persisted dynamic data to IndexedDB"));
 });
-</script>
 
+(async () => {
+  await runtimeSanityCheck();
+  for (const t of tests) await runTest(t);
+  await treesitterHighlightCapturesTest();
+  moduleRef = await freshNvim();
+  log("persistent session ready (use 'Persist now' button to sync IDBFS)");
+})().catch(e => log("test run failed: " + e));
+</script>
 </body>
 </html>
