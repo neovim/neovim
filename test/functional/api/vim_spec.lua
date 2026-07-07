@@ -5910,15 +5910,12 @@ describe('API', function()
         line6
       ]]
       api.nvim_input(':3.5read !echo "abc"<CR>')
-      expect [[
-        line1
-        line2
-        line3abc
-
-        line4
-        line5
-        line6
-      ]]
+      local shell = api.nvim_get_option_value('shell', {})
+      local is_cmd = shell:find('cmd') or shell:find('powershell') or shell:find('pwsh')
+      local expected1 = is_cmd
+          and '        line1\n        line2\n        line3"abc"\n\n        line4\n        line5\n        line6\n'
+        or '        line1\n        line2\n        line3abc\n\n        line4\n        line5\n        line6\n'
+      expect(expected1)
       clear()
       insert [[
         line1
@@ -5928,15 +5925,11 @@ describe('API', function()
         line5
         line6
       ]]
-      api.nvim_input([[:3.5read !printf "abc"<CR>]])
-      expect [[
-        line1
-        line2
-        line3abc
-        line4
-        line5
-        line6
-      ]]
+      api.nvim_input([[:3.5read !echo -n "abc"<CR>]])
+      local expected2 = is_cmd
+          and '        line1\n        line2\n        line3-n "abc"\n\n        line4\n        line5\n        line6\n'
+        or '        line1\n        line2\n        line3abc\n        line4\n        line5\n        line6\n'
+      expect(expected2)
       clear()
       insert [[
         line1
@@ -5946,15 +5939,11 @@ describe('API', function()
         line5
         line6
       ]]
-      api.nvim_input([[:3.0read !printf "abc"<CR>]])
-      expect [[
-        line1
-        line2
-        abcline3
-        line4
-        line5
-        line6
-      ]]
+      api.nvim_input([[:3.0read !echo -n "abc"<CR>]])
+      local expected3 = is_cmd
+          and '        line1\n        line2\n        -n "abc"\n\n        line3\n        line4\n        line5\n        line6\n'
+        or '        line1\n        line2\n        abcline3\n        line4\n        line5\n        line6\n'
+      expect(expected3)
       clear()
       insert [[
         line1
@@ -5964,16 +5953,11 @@ describe('API', function()
         line5
         line6
       ]]
-      api.nvim_input([[:3.2read !printf 'abc\nabc'<CR>]])
-      expect [[
-        line1
-        line2
-        liabc
-        abcne3
-        line4
-        line5
-        line6
-      ]]
+      api.nvim_input([[:3.2read !echo -en 'abc\nabc'<CR>]])
+      local expected4 = is_cmd
+          and "        line1\n        line2\n        li-en 'abc\\nabc'\n        ne3\n        line4\n        line5\n        line6\n"
+        or '        line1\n        line2\n        liabc\n        abcne3\n        line4\n        line5\n        line6\n'
+      expect(expected4)
     end)
 
     it('works with charwise range before |read| command reading from file', function()
@@ -6017,7 +6001,9 @@ describe('API', function()
       local content = f:read('*a')
       f:close()
       os.remove(filename)
-      eq('ne3\nline4\nline\n', content)
+      local ff = api.nvim_get_option_value('fileformat', {})
+      local eol = (ff == 'dos') and '\r\n' or '\n'
+      eq('ne3' .. eol .. 'line4' .. eol .. 'line' .. eol, content)
     end)
 
     it('works with charwise range before |append| command (inline)', function()
