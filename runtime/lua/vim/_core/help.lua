@@ -432,10 +432,17 @@ local function extract_tags(tags, file)
   for _, match in query:iter_matches(root, source) do
     for id, node in pairs(match) do
       if query.captures[id] == 'tagname' then
-        local tagname = ts.get_node_text(node[1], source)
-        local escaped = tagname:gsub('[\\/]', '\\%0')
-        local searchcmd = '/*' .. escaped .. '*'
-        table.insert(tags, { tagname, filename, searchcmd })
+        -- Only accept a *tag* when there is white space (or nothing) before it
+        -- and it is followed by a white character or end-of-line.
+        local _, _, start_byte, _, _, end_byte = node[1]:parent():range(true)
+        local before = source:sub(start_byte, start_byte)
+        local after = source:sub(end_byte + 1, end_byte + 1)
+        if before:match('^[ \t\n\r]?$') and after:match('^[ \t\n\r]?$') then
+          local tagname = ts.get_node_text(node[1], source)
+          local escaped = tagname:gsub('[\\/]', '\\%0')
+          local searchcmd = '/*' .. escaped .. '*'
+          table.insert(tags, { tagname, filename, searchcmd })
+        end
       end
     end
   end

@@ -383,7 +383,7 @@ describe(':helptags', function()
     os.remove('Xhelptags/doc/Xd.txt')
 
     -- duplicate tags in same file
-    write_file('Xhelptags/doc/Xa.txt', '*Xa*', nil, true)
+    write_file('Xhelptags/doc/Xa.txt', '\n*Xa*', nil, true)
 
     msg = t.pcall_err(command, 'helptags Xhelptags/doc')
     eq(true, msg:find('E154') ~= nil)
