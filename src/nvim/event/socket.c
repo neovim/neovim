@@ -169,7 +169,8 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
     }
     uv_freeaddrinfo(watcher->uv.tcp.addrinfo);
   } else {
-    result = uv_pipe_bind(&watcher->uv.pipe.handle, watcher->addr);
+    result = uv_pipe_bind2(&watcher->uv.pipe.handle, watcher->addr, strlen(watcher->addr),
+                           UV_PIPE_NO_TRUNCATE);
 
     // If bind failed with EACCES/EADDRINUSE, check if socket is stale
     if (result == UV_EACCES || result == UV_EADDRINUSE) {
@@ -196,7 +197,8 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
           watcher->stream->data = watcher;
 
           // Retry bind with fresh handle
-          result = uv_pipe_bind(&watcher->uv.pipe.handle, watcher->addr);
+          result = uv_pipe_bind2(&watcher->uv.pipe.handle, watcher->addr, strlen(watcher->addr),
+                                 UV_PIPE_NO_TRUNCATE);
         }
       } else {
         // Socket is alive - this is a real error
