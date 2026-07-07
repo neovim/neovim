@@ -245,13 +245,13 @@ local function apply_defaults(item, defaults, apply_kind)
   -- Unset means Replace for every field.
   apply_kind = apply_kind or {}
 
-  local merge_commit_characters = (
-    apply_kind.commitCharacters == protocol.ApplyKind.Merge and defaults.commitCharacters
-  )
-  -- No dedup, it ends up as a flat string anyway.
-  -- An empty list means no commit chars, not use the defaults.
-  item.commitCharacters = merge_commit_characters
+  local merge = apply_kind.commitCharacters == protocol.ApplyKind.Merge
+    and defaults.commitCharacters
+
+  item.commitCharacters = merge
+      -- No dedup, it ends up as a flat string anyway.
       and vim.list_extend(item.commitCharacters or {}, defaults.commitCharacters)
+    -- An empty list means no commit chars, not use the defaults.
     or (item.commitCharacters or defaults.commitCharacters)
 
   item.insertTextFormat = item.insertTextFormat or defaults.insertTextFormat

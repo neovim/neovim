@@ -37,7 +37,7 @@ LUA
   Use range.mark() and range.to_mark() instead.
 • pos.to_cursor() returns a (`row,` `col)` tuple
   instead of returning them as separate values.
-• Healthchecks for |vim.ui.img| were moved to `:checkhealth vim.health`.
+• Renamed current_level param of vim.log.new().
 
 DIAGNOSTICS
 
@@ -57,7 +57,7 @@ TREESITTER
 
 UI
 
-• todo
+• Healthchecks for |vim.ui.img| were moved to `:checkhealth vim.health`.
 
 VIMSCRIPT
 
@@ -231,7 +231,7 @@ EDITOR
 • |v_al| and |v_il| text objects select the whole buffer and the current line
   without leading or trailing white space.
 • 'autoread' uses file system watchers to detect external changes in
-  real-time, instead of only on |FocusGained|/|:checktime|.
+  real-time, instead of only on |FocusGained| or |:checktime|.
 • During |complete()|-triggered completion, CTRL-N and CTRL-P are now subject
   to insert-mode mappings.
 • Multi-byte characters, translated by 'langmap', now invoke correct
@@ -267,7 +267,7 @@ LSP
   • Completon supports `CompletionList.applyKind`: a server can ask for
     `commitCharacters` and `data` from `itemDefaults` to be merged with the
     item's own values instead of replacing them.
-    https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/#completionItemApplyKinds
+    https://microsoft.github.io/language-server-protocol/specification/#completionItemApplyKinds
 • `:checkhealth vim.lsp` highlights the "current buffer".
 • |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|,
   |vim.lsp.buf.type_definition()|, and |vim.lsp.buf.implementation()|

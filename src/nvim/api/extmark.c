@@ -191,7 +191,7 @@ static Array extmark_to_array(MTPair extmark, bool id, bool add_dict, bool hl_na
 /// Gets the position (0-indexed) of an |extmark|.
 ///
 /// @param buf  Buffer id, or 0 for current buffer
-/// @param ns_id  Namespace id from |nvim_create_namespace()|
+/// @param ns_id  |namespace| id
 /// @param id  Extmark id
 /// @param opts  Optional parameters. Keys:
 ///          - details: Whether to include the details dict
@@ -274,7 +274,7 @@ nvim_buf_get_extmark_by_id(Buffer buf, Integer ns_id, Integer id, Dict(get_extma
 /// ```
 ///
 /// @param buf  Buffer id, or 0 for current buffer
-/// @param ns_id  Namespace id from |nvim_create_namespace()| or -1 for all namespaces
+/// @param ns_id  |namespace| id, or -1 for all namespaces
 /// @param start  Start of range: a 0-indexed (row, col) or valid extmark id
 /// (whose position defines the bound). |api-indexing|
 /// @param end  End of range (inclusive): a 0-indexed (row, col) or valid
@@ -394,7 +394,7 @@ ArrayOf(DictAs(get_extmark_item)) nvim_buf_get_extmarks(Buffer buf, Integer ns_i
 /// range (no highlighting).
 ///
 /// @param buf  Buffer id, or 0 for current buffer
-/// @param ns_id  Namespace id from |nvim_create_namespace()|
+/// @param ns_id  |namespace| id
 /// @param line  Line where to place the mark, 0-based. |api-indexing|
 /// @param col  Column where to place the mark, 0-based. |api-indexing|
 /// @param opts  Optional parameters:
@@ -937,7 +937,7 @@ error:
 /// Removes an |extmark|.
 ///
 /// @param buf Buffer id, or 0 for current buffer
-/// @param ns_id Namespace id from |nvim_create_namespace()|
+/// @param ns_id |namespace| id
 /// @param id Extmark id
 /// @param[out] err   Error details, if any
 /// @return true if the extmark was found, else false
@@ -1019,7 +1019,7 @@ void nvim_buf_clear_namespace(Buffer buf, Integer ns_id, Integer line_start, Int
 ///
 /// Note: Callbacks will not run for |window-hidden|, as they are not redrawn.
 ///
-/// @param ns_id  Namespace id from |nvim_create_namespace()|
+/// @param ns_id  |namespace| id
 /// @param opts  Table of callbacks:
 ///             - on_buf: called for each buffer being redrawn (once per edit,
 ///               before window callbacks)

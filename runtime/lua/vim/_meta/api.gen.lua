@@ -323,7 +323,7 @@ function vim.api.nvim_buf_create_user_command(buf, name, cmd, opts) end
 --- Removes an `extmark`.
 ---
 --- @param buf integer Buffer id, or 0 for current buffer
---- @param ns_id integer Namespace id from `nvim_create_namespace()`
+--- @param ns_id integer `namespace` id
 --- @param id integer Extmark id
 --- @return boolean # true if the extmark was found, else false
 function vim.api.nvim_buf_del_extmark(buf, ns_id, id) end
@@ -395,7 +395,7 @@ function vim.api.nvim_buf_get_commands(buf, opts) end
 --- Gets the position (0-indexed) of an `extmark`.
 ---
 --- @param buf integer Buffer id, or 0 for current buffer
---- @param ns_id integer Namespace id from `nvim_create_namespace()`
+--- @param ns_id integer `namespace` id
 --- @param id integer Extmark id
 --- @param opts vim.api.keyset.get_extmark? Optional parameters. Keys:
 --- - details: Whether to include the details dict
@@ -451,7 +451,7 @@ function vim.api.nvim_buf_get_extmark_by_id(buf, ns_id, id, opts) end
 --- ```
 ---
 --- @param buf integer Buffer id, or 0 for current buffer
---- @param ns_id integer Namespace id from `nvim_create_namespace()` or -1 for all namespaces
+--- @param ns_id integer `namespace` id, or -1 for all namespaces
 --- @param start any Start of range: a 0-indexed (row, col) or valid extmark id
 --- (whose position defines the bound). `api-indexing`
 --- @param end_ any End of range (inclusive): a 0-indexed (row, col) or valid
@@ -606,7 +606,7 @@ function vim.api.nvim_buf_line_count(buf) end
 --- range (no highlighting).
 ---
 --- @param buf integer Buffer id, or 0 for current buffer
---- @param ns_id integer Namespace id from `nvim_create_namespace()`
+--- @param ns_id integer `namespace` id
 --- @param line integer Line where to place the mark, 0-based. `api-indexing`
 --- @param col integer Column where to place the mark, 0-based. `api-indexing`
 --- @param opts vim.api.keyset.set_extmark? Optional parameters:
@@ -1712,13 +1712,10 @@ function vim.api.nvim_open_tabpage(buf, enter, config) end
 --- @param buf integer Buffer which displays the PTY output. The initial buffer contents (if any) will be
 --- written to the PTY.
 --- @param opts vim.api.keyset.open_term? Optional parameters.
---- - force_crlf: (boolean, default true) Convert "\n" to "\r\n".
---- - on_input: Lua callback for input sent, i e keypresses in terminal
----   mode. Note: keypresses are sent raw as they would be to the pty
----   master end. For instance, a carriage return is sent
----   as a "\r", not as a "\n". `textlock` applies. It is possible
----   to call `nvim_chan_send()` directly in the callback however.
----        `["input", term, bufnr, data]`
+--- - force_crlf: (boolean, default: true) Convert "\n" to "\r\n".
+--- - on_input: (`fun("input", chan: integer, buf: integer, data: string)`) Function invoked
+---   when the terminal emits bytes, see above. `textlock` applies. May call
+---   `nvim_chan_send()` directly.
 --- @return integer # Channel id, or 0 on error
 function vim.api.nvim_open_term(buf, opts) end
 
@@ -1771,7 +1768,7 @@ function vim.api.nvim_open_term(buf, opts) end
 ---    - "NE" northeast
 ---    - "SW" southwest
 ---    - "SE" southeast
---- - border: (`string|string[]`) (defaults to 'winborder' option) Window border. The string form
+--- - border: (`string|string[]`, default: 'winborder' option) Window border. The string form
 ---   accepts the same values as the 'winborder' option. The array form must have a length of
 ---   eight or any divisor of eight, specifying the chars that form the border in a clockwise
 ---   fashion starting from the top-left corner. For example, the double-box style can be
@@ -1811,26 +1808,20 @@ function vim.api.nvim_open_term(buf, opts) end
 ---     configuration together with this.
 --- - fixed: If true when anchor is NW or SW, the float window
 ---          would be kept fixed even if the window would be truncated.
---- - focusable: Enable focus by user actions (wincmds, mouse events).
----     Defaults to true. Non-focusable windows can be entered by
----     `nvim_set_current_win()`, or, when the `mouse` field is set to true,
----     by mouse events. See `focusable`.
---- - footer: (optional) Footer in window border, string or list.
----     List should consist of `[text, highlight]` tuples.
----     If string, or a tuple lacks a highlight, the default highlight group is `FloatFooter`.
---- - footer_pos: Footer position. Must be set with `footer` option.
----     Value can be one of "left", "center", or "right".
----     Default is `"left"`.
+--- - focusable: (default: true) Enable focus by user actions (wincmds, mouse events).
+---   Non-`focusable` windows can be entered by `nvim_set_current_win()`, or by mouse events if
+---   `mouse=true`.
+--- - footer: (`string|string[]?`) Footer in window border: string or list of `[text, highlight]`
+---   tuples. Default highlight group is `FloatFooter`.
+--- - footer_pos: (default: "left") Footer position. One of: "left", "center", "right". The
+---  `footer` field must be set also.
 --- - height: Window height (in character cells). Minimum of 1.
 --- - hide: Hides the floating window. `window-hidden`
---- - mouse: Specify how this window interacts with mouse events.
----     Defaults to `focusable` value.
----     - If false, mouse events pass through this window.
----     - If true, mouse events interact with this window normally.
+--- - mouse: (default: `focusable` value) If true, mouse events interact with the window
+---   normally; if false, they pass through to the window behind it.
 --- - noautocmd: Block all autocommands for the duration of the call. Cannot be changed by
 ---   `nvim_win_set_config()`.
---- - relative: Sets the window layout to "floating", placed at (row,col)
----               coordinates relative to:
+--- - relative: Sets the window layout to "floating", placed at (row,col) coordinates relative to:
 ---    - "cursor"     Cursor position in current window.
 ---    - "editor"     The global editor grid.
 ---    - "laststatus" 'laststatus' if present, or last row.
@@ -1854,9 +1845,8 @@ function vim.api.nvim_open_term(buf, opts) end
 --- - title: (optional) Title in window border, string or list.
 ---     List should consist of `[text, highlight]` tuples.
 ---     If string, or a tuple lacks a highlight, the default highlight group is `FloatTitle`.
---- - title_pos: Title position. Must be set with `title` option.
----     Value can be one of "left", "center", or "right".
----     Default is `"left"`.
+--- - title_pos: (default: "left") Title position. One of: "left", "center", "right". The `title`
+---   field must be set also.
 --- - vertical: Split vertically `:vertical`.
 --- - width: Window width (in character cells). Minimum of 1.
 --- - win: `window-ID` target window. Can be in a different tab page. Determines the window to
@@ -2148,7 +2138,7 @@ function vim.api.nvim_set_current_win(win) end
 ---
 --- Note: Callbacks will not run for `window-hidden`, as they are not redrawn.
 ---
---- @param ns_id integer Namespace id from `nvim_create_namespace()`
+--- @param ns_id integer `namespace` id
 --- @param opts vim.api.keyset.set_decoration_provider? Table of callbacks:
 --- - on_buf: called for each buffer being redrawn (once per edit,
 ---   before window callbacks)
@@ -2224,7 +2214,7 @@ function vim.api.nvim_set_decoration_provider(ns_id, opts) end
 --- - fg: Color name or "#RRGGBB", see note.
 --- - fg_indexed: boolean. Same as `bg_indexed`, for `fg` and `ctermfg`.
 --- - font: GUI font name (string). Sets `highlight-font`. Use "NONE" to clear.
---- - force: boolean (default false) Update the highlight group even if it already exists.
+--- - force: (boolean, default: false) Update the highlight group even if it already exists.
 --- - italic: boolean
 --- - link: Name of highlight group to link to. `:hi-link`
 --- - link_global: Like "link", but always resolved in the global namespace (ns=0).
@@ -2239,7 +2229,7 @@ function vim.api.nvim_set_decoration_provider(ns_id, opts) end
 --- - underdotted: boolean
 --- - underdouble: boolean
 --- - underline: boolean
---- - update: boolean (default false) Update specified attributes only, leave others unchanged.
+--- - update: (boolean, default: false) Update specified attributes only, leave others unchanged.
 function vim.api.nvim_set_hl(ns_id, name, val) end
 
 --- Set active namespace for highlights defined with `nvim_set_hl()`. This can be set for

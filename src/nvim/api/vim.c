@@ -159,7 +159,7 @@ DictAs(get_hl_info) nvim_get_hl(Integer ns_id, Dict(get_highlight) *opts, Arena 
 ///                - fg: Color name or "#RRGGBB", see note.
 ///                - fg_indexed: boolean. Same as `bg_indexed`, for `fg` and `ctermfg`.
 ///                - font: GUI font name (string). Sets |highlight-font|. Use "NONE" to clear.
-///                - force: boolean (default false) Update the highlight group even if it already exists.
+///                - force: (boolean, default: false) Update the highlight group even if it already exists.
 ///                - italic: boolean
 ///                - link: Name of highlight group to link to. |:hi-link|
 ///                - link_global: Like "link", but always resolved in the global namespace (ns=0).
@@ -174,7 +174,7 @@ DictAs(get_hl_info) nvim_get_hl(Integer ns_id, Dict(get_highlight) *opts, Arena 
 ///                - underdotted: boolean
 ///                - underdouble: boolean
 ///                - underline: boolean
-///                - update: boolean (default false) Update specified attributes only, leave others unchanged.
+///                - update: (boolean, default: false) Update specified attributes only, leave others unchanged.
 /// @param[out] err Error details, if any
 void nvim_set_hl(uint64_t channel_id, Integer ns_id, String name, Dict(highlight) *val, Error *err)
   FUNC_API_SINCE(7)
@@ -1136,13 +1136,10 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 /// @param buf Buffer which displays the PTY output. The initial buffer contents (if any) will be
 ///            written to the PTY.
 /// @param opts   Optional parameters.
-///          - force_crlf: (boolean, default true) Convert "\n" to "\r\n".
-///          - on_input: Lua callback for input sent, i e keypresses in terminal
-///            mode. Note: keypresses are sent raw as they would be to the pty
-///            master end. For instance, a carriage return is sent
-///            as a "\r", not as a "\n". |textlock| applies. It is possible
-///            to call |nvim_chan_send()| directly in the callback however.
-///                 `["input", term, bufnr, data]`
+///          - force_crlf: (boolean, default: true) Convert "\n" to "\r\n".
+///          - on_input: (`fun("input", chan: integer, buf: integer, data: string)`) Function invoked
+///            when the terminal emits bytes, see above. |textlock| applies. May call
+///            |nvim_chan_send()| directly.
 /// @param[out] err Error details, if any
 /// @return Channel id, or 0 on error
 Integer nvim_open_term(Buffer buf, Dict(open_term) *opts, Error *err)

@@ -2273,8 +2273,7 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
     // rxvt-unicode has a default steady block cursor, though there's an option
     // to initialize it with an underline https://cvs.schmorp.de/rxvt-unicode/src/init.C?revision=1.351&view=markup#l727
     // \x1b[0 q doesn't work because it makes it a blinking block https://cvs.schmorp.de/rxvt-unicode/src/command.C?revision=1.605&view=markup#l4122
-    // We can't really account for that, so just set it to steady block and hope
-    // for the best.
+    // We can't really account for that, so just set it to steady block and hope for the best.
     terminfo_set_str(tui, kTerm_reset_cursor_style, "\x1b[2 q");
     terminfo_set_str(tui, kTerm_set_cursor_style, "\x1b[%p1%d q");
   } else if (screen) {
