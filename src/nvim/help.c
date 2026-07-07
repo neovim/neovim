@@ -487,18 +487,13 @@ void ex_helptags(exarg_T *eap)
     eap->arg = skipwhite(eap->arg + 3);
   }
 
-  MAXSIZE_TEMP_ARRAY(args, 2);
-
-  bool is_all = strcmp(eap->arg, "ALL") == 0;
-  ADD_C(args, is_all ? NIL : CSTR_AS_OBJ(eap->arg));
-
-  ADD_C(args, BOOLEAN_OBJ(add_help_tags));
-
-  Error err = ERROR_INIT;
-  NLUA_EXEC_STATIC("require('vim._core.help').gen_tags(...)", args,
-                   kRetNilBool, NULL, &err);
-
-  if (ERROR_SET(&err)) {
-    emsg(err.msg);
+  typval_T tv_args[] = {
+    { .v_type = VAR_STRING, .vval.v_string = eap->arg },
+    { .v_type = VAR_BOOL, .vval.v_bool = add_help_tags ? kBoolVarTrue : kBoolVarFalse },
+    { .v_type = VAR_UNKNOWN },
+  };
+  if (strcmp(eap->arg, "ALL") == 0) {
+    tv_args[0] = (typval_T){ .v_type = VAR_SPECIAL, .vval.v_special = kSpecialVarNull };
   }
+  nlua_call_typval("vim._core.help", "gen_tags", tv_args, NULL);
 }
