@@ -317,6 +317,7 @@ LUA
 • |vim.net.request()| can now accept  `method` param overload for multiple HTTP methods.
 • |writefile()| treats Lua and RPC strings as |Blob|, so it can be used to
   write binary data.
+• |vim.fs.abspath()| gained `cwd` and `plain` parameters.
 • |vim.fs.dir()| with `opts.err=true`, reports errors. An inaccessible root
   dir yields a single (name, nil, err) item.
 • |vim.fs.dir()| gained a `normalize` parameter.
