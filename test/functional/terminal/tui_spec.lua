@@ -4705,31 +4705,33 @@ describe('TUI bg color', function()
       XDG_DATA_HOME = xdg .. '/data',
       XDG_STATE_HOME = xdg .. '/state',
     }
-    t.mkdir(xdg)
-    t.mkdir(env.XDG_CACHE_HOME)
-    t.mkdir(env.XDG_CONFIG_HOME)
-    t.mkdir(env.XDG_DATA_HOME)
-    t.mkdir(env.XDG_STATE_HOME)
-    local argv = {
-      nvim_prog,
-      '--headless',
-      '--listen',
-      server,
-      '--noplugin',
-      '-i',
-      'NONE',
-      '--cmd',
-      'set noswapfile',
-      '--cmd',
-      'colorscheme vim',
-    }
-    local job = fn.jobstart(argv, { env = env })
+    for _, dir in ipairs({
+      env.XDG_CACHE_HOME,
+      env.XDG_CONFIG_HOME,
+      env.XDG_DATA_HOME,
+      env.XDG_STATE_HOME,
+    }) do
+      n.mkdir_p(dir)
+    end
+    local session = n.new_session(true, {
+      merge = false,
+      env = env,
+      args = {
+        '--embed',
+        '--headless',
+        '--listen',
+        server,
+        '--noplugin',
+        '-i',
+        'NONE',
+        '--cmd',
+        'set noswapfile',
+        '--cmd',
+        'colorscheme vim',
+      },
+    })
     finally(function()
-      pcall(fn.jobstop, job)
-    end)
-    local session
-    retry(nil, nil, function()
-      session = n.connect(server)
+      session:close()
     end)
     return server, session
   end
