@@ -6419,6 +6419,22 @@ local options = {
       varname = 'p_opfunc',
     },
     {
+      abbreviation = 'plf',
+      defaults = '$XDG_CONFIG_HOME/nvim/nvim-pack-lock.json',
+      deny_duplicates = true,
+      desc = [=[
+        Path of |vim.pack-lockfile|. Must be set before the first usage of any
+        |vim.pack| function. Environment variables are expanded |:set_env|.
+      ]=],
+      expand = true,
+      full_name = 'packlockfile',
+      scope = { 'global' },
+      secure = true,
+      short_desc = N_('path of vim.pack lockfile'),
+      type = 'string',
+      varname = 'p_plf',
+    },
+    {
       abbreviation = 'pp',
       cb = 'did_set_runtimepackpath',
       defaults = {
