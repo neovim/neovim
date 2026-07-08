@@ -199,7 +199,7 @@ describe('nvim_get_commands', function()
       range = NIL,
       register = false,
       keepscript = false,
-      script_id = -8, -- Lua
+      script_id = -10, -- anonymous :source
     }
     local withDesc = {
       addr = vim.NIL,
@@ -215,7 +215,7 @@ describe('nvim_get_commands', function()
       nargs = '0',
       range = vim.NIL,
       register = false,
-      script_id = -8,
+      script_id = -10,
     }
 
     source([[
