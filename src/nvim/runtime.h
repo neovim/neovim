@@ -45,6 +45,9 @@ enum {
   DIP_DIRFILE = 0x200,  ///< find both files and directories
 };
 
+/// Return the next source-context sequence number.
+int sctx_next_seq(void);
+
 #ifdef ABORT_ON_INTERNAL_ERROR
 # define ESTACK_CHECK_DECLARATION int estack_len_before
 # define ESTACK_CHECK_SETUP do { estack_len_before = exestack.ga_len; } while (0)

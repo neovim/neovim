@@ -1056,10 +1056,11 @@ sctx_T api_set_sctx(uint64_t channel_id)
   if (channel_id != VIML_INTERNAL_CALL) {
     current_sctx.sc_lnum = 0;
     if (channel_id == LUA_INTERNAL_CALL) {
-      // When the current script is a Lua script, don't override sc_sid.
-      if (!script_is_lua(current_sctx.sc_sid)) {
+      // Preserve startup/source SIDs; plain RPC Lua uses SID_LUA.
+      if (current_sctx.sc_sid == 0 || current_sctx.sc_sid == SID_API_CLIENT) {
         current_sctx.sc_sid = SID_LUA;
       }
+      current_sctx.sc_chan = 0;
     } else {
       current_sctx.sc_sid = SID_API_CLIENT;
       current_sctx.sc_chan = channel_id;

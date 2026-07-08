@@ -788,8 +788,8 @@ do
   -- it.
   --
   -- Precedence: never override an explicit user setting. For 'background',
-  -- bg_user_set() treats only our own sets (SID_LUA, -8) as re-applicable; a
-  -- user set (real script SID, ":set", or API client) is preserved.
+  -- bg_user_set() treats only our automatic defaults sets as re-applicable; a
+  -- user set (real script SID, ":set", Lua chunk, or API client) is preserved.
   -- 'termguicolors' is guarded by `was_set` and is only ever enabled here.
   --
   -- Limitation: 'background' is global, the OSC 11 query is broadcast to every
@@ -827,12 +827,12 @@ do
 
   --- Script ID (SID) used for our own automatic 'background' sets. Lets
   --- bg_user_set() distinguish a user set from our detection.
-  local sid_lua = -8
+  local sid_defaults = -11
 
-  --- True if 'background' was set by the user, not by our detection (sid_lua).
+  --- True if 'background' was set by the user, not by our detection (sid_defaults).
   local function bg_user_set()
     local info = vim.api.nvim_get_option_info2('background')
-    return info.was_set and info.last_set_sid ~= sid_lua
+    return info.was_set and info.last_set_sid ~= sid_defaults
   end
 
   --- Parse a string of hex characters as a color.
@@ -967,7 +967,12 @@ do
             local luminance = (0.299 * rr) + (0.587 * gg) + (0.114 * bb)
             local bg = luminance < 0.5 and 'dark' or 'light'
             -- Use :noautocmd to suppress OptionSet event; OSC11 response may arrive after VimEnter.
-            vim.cmd('noautocmd set background=' .. bg)
+            -- Mark as defaults so later OSC 11 updates remain re-applicable.
+            vim._with_internal_sctx(function()
+              vim._with({ noautocmd = true }, function()
+                vim.o.background = bg
+              end)
+            end)
           end
         end
       end

@@ -58,6 +58,7 @@
 #include "nvim/option_vars.h"
 #include "nvim/os/fileio.h"
 #include "nvim/os/fileio_defs.h"
+#include "nvim/os/fs.h"
 #include "nvim/os/os.h"
 #include "nvim/path.h"
 #include "nvim/pos_defs.h"
@@ -1991,13 +1992,52 @@ void ex_luado(exarg_T *const eap)
   redraw_curbuf_later(UPD_NOT_VALID);
 }
 
+/// Execute a Lua file with file-backed script context for provenance.
+static bool nlua_exec_file_script_ctx(const char *path)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (strequal(path, "-")) {
+    return nlua_exec_file(path);
+  }
+
+  char *p = expand_env_save((char *)path);
+  if (p == NULL) {
+    return false;
+  }
+
+  char *exec_path = fix_fname(p);
+  xfree(p);
+  if (exec_path == NULL) {
+    return false;
+  }
+  if (!os_path_exists(exec_path)) {
+    xfree(exec_path);
+    return nlua_exec_file(path);
+  }
+
+  scid_T sid = find_script_by_name(exec_path);
+  if (sid <= 0) {
+    scriptitem_T *si = new_script_item(exec_path, &sid);
+    si->sn_lua = true;
+    exec_path = xstrdup(si->sn_name);
+  }
+
+  const sctx_T save_current_sctx = current_sctx;
+  current_sctx = (sctx_T){ .sc_sid = sid, .sc_seq = sctx_next_seq() };
+  bool ok = nlua_exec_file(path);
+  current_sctx = save_current_sctx;
+
+  xfree(exec_path);
+  return ok;
+}
+
 /// Implements `:luafile`: executes Lua code from a file.
 ///
 /// @param  eap  Vimscript `:luafile {file}` command.
 void ex_luafile(exarg_T *const eap)
   FUNC_ATTR_NONNULL_ALL
 {
-  nlua_exec_file(eap->arg);
+  nlua_exec_file_script_ctx(eap->arg);
 }
 
 /// Executes Lua code from a file or "-" (stdin).

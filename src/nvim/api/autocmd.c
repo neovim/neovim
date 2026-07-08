@@ -632,17 +632,17 @@ Integer nvim_create_augroup(uint64_t channel_id, String name, Dict(create_augrou
   int augroup = -1;
   WITH_SCRIPT_CONTEXT(channel_id, {
     augroup = augroup_add(augroup_name);
-    if (augroup == AUGROUP_ERROR) {
-      api_set_error(err, kErrorTypeException, "Failed to set augroup");
-      return -1;
-    }
-
-    if (clear_autocmds) {
+    if (augroup != AUGROUP_ERROR && clear_autocmds) {
       FOR_ALL_AUEVENTS(event) {
         aucmd_del_for_event_and_group(event, augroup);
       }
     }
   });
+
+  if (augroup == AUGROUP_ERROR) {
+    api_set_error(err, kErrorTypeException, "Failed to set augroup");
+    return -1;
+  }
 
   return augroup;
 }

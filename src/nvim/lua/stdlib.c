@@ -580,6 +580,27 @@ static int nlua_foldupdate(lua_State *lstate)
   return 0;
 }
 
+/// Call a function with internal-defaults script context.
+static int nlua_with_internal_sctx(lua_State *L)
+{
+  luaL_argcheck(L, lua_isfunction(L, 1), 1, "function expected");
+
+  const sctx_T save_current_sctx = current_sctx;
+  current_sctx = (sctx_T){ .sc_sid = SID_DEFAULTS };
+
+  lua_pushvalue(L, 1);
+  const int status = lua_pcall(L, 0, LUA_MULTRET, 0);
+  const int rets = lua_gettop(L) - 1;
+
+  current_sctx = save_current_sctx;
+
+  if (status) {
+    return lua_error(L);
+  }
+
+  return rets;
+}
+
 static int nlua_with(lua_State *L)
 {
   int flags = 0;
@@ -744,6 +765,9 @@ static void nlua_state_add_internal(lua_State *const lstate)
 
   lua_pushcfunction(lstate, &nlua_with);
   lua_setfield(lstate, -2, "_with_c");
+
+  lua_pushcfunction(lstate, &nlua_with_internal_sctx);
+  lua_setfield(lstate, -2, "_with_internal_sctx");
 
   // vim._core.keyparse
   lua_getfield(lstate, -1, "_core");
