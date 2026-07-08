@@ -40,6 +40,11 @@ LUA
 • vim.F.npcall()			Renamed to |vim.npcall()|
 • vim.F.nil_wrap()			Use |vim.npcall()| instead
 
+UI
+
+• |v:echospace|		Its purpose to avoid a "Press ENTER" prompt
+			no longer applies with |ui2|.
+
 LSP
 
 • vim.lsp.util.character_offset()	Use to |vim.str_utfindex()| instead
