@@ -4744,16 +4744,13 @@ describe('TUI bg color', function()
     retry(nil, nil, function()
       eq({ true, 'light' }, { session:request('nvim_eval', '&background') })
     end)
-    eq(
-      { true, -11 },
-      {
-        session:request(
-          'nvim_exec_lua',
-          [[return vim.api.nvim_get_option_info2('background', {}).last_set_sid]],
-          {}
-        ),
-      }
-    )
+    eq({ true, -11 }, {
+      session:request(
+        'nvim_exec_lua',
+        [[return vim.api.nvim_get_option_info2('background', {}).last_set_sid]],
+        {}
+      ),
+    })
   end)
 
   it('enables termguicolors on remote-ui attach to a headless server #30320', function()
@@ -4859,27 +4856,32 @@ describe('TUI bg color', function()
       end,
     },
   }) do
-    it(('does not override an explicit user background from %s on remote-ui attach'):format(test_case.desc), function()
-      command('highlight clear Normal')
-      command('set background=light')
-      local server, session = test_case.start()
-      watch_osc11_responses(session)
-      local screen = tt.setup_child_nvim({ '--remote-ui', '--server', server })
-      screen:expect({ any = '%[No Name%]' })
-      expect_osc11_response(session)
-      eq({ true, 'dark' }, { session:request('nvim_eval', '&background') })
-      local ok_, sid = session:request(
-        'nvim_exec_lua',
-        [[return vim.api.nvim_get_option_info2('background', {}).last_set_sid]],
-        {}
-      )
-      eq(true, ok_)
-      if test_case.expected_sid == 'script' then
-        ok(sid > 0)
-      else
-        eq(test_case.expected_sid, sid)
+    it(
+      ('does not override an explicit user background from %s on remote-ui attach'):format(
+        test_case.desc
+      ),
+      function()
+        command('highlight clear Normal')
+        command('set background=light')
+        local server, session = test_case.start()
+        watch_osc11_responses(session)
+        local screen = tt.setup_child_nvim({ '--remote-ui', '--server', server })
+        screen:expect({ any = '%[No Name%]' })
+        expect_osc11_response(session)
+        eq({ true, 'dark' }, { session:request('nvim_eval', '&background') })
+        local ok_, sid = session:request(
+          'nvim_exec_lua',
+          [[return vim.api.nvim_get_option_info2('background', {}).last_set_sid]],
+          {}
+        )
+        eq(true, ok_)
+        if test_case.expected_sid == 'script' then
+          ok(sid > 0)
+        else
+          eq(test_case.expected_sid, sid)
+        end
       end
-    end)
+    )
   end
 
   it('reacts to a runtime theme change over remote-ui', function()
