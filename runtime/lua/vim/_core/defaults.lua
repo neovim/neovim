@@ -836,10 +836,20 @@ do
   --- bg_user_set() distinguish a user set from our detection.
   local sid_lua = -8
 
+  local auto_bg_info = nil
+
   --- True if 'background' was set by the user, not by our detection (sid_lua).
   local function bg_user_set()
     local info = vim.api.nvim_get_option_info2('background', {})
-    return info.was_set and info.last_set_sid ~= sid_lua
+    return info.was_set
+      and (
+        info.last_set_sid ~= sid_lua
+        or not auto_bg_info
+        or vim.o.background ~= auto_bg_info.value
+        or info.last_set_sid ~= auto_bg_info.last_set_sid
+        or info.last_set_linenr ~= auto_bg_info.last_set_linenr
+        or info.last_set_chan ~= auto_bg_info.last_set_chan
+      )
   end
 
   --- Parse a string of hex characters as a color.
@@ -975,6 +985,13 @@ do
             local bg = luminance < 0.5 and 'dark' or 'light'
             -- Use :noautocmd to suppress OptionSet event; OSC11 response may arrive after VimEnter.
             vim.cmd('noautocmd set background=' .. bg)
+            local info = vim.api.nvim_get_option_info2('background', {})
+            auto_bg_info = {
+              value = bg,
+              last_set_sid = info.last_set_sid,
+              last_set_linenr = info.last_set_linenr,
+              last_set_chan = info.last_set_chan,
+            }
           end
         end
       end

@@ -4566,17 +4566,7 @@ describe('TUI bg color', function()
     end)
   end)
 
-  it('does not override an explicit user background on remote-ui attach', function()
-    command('highlight clear Normal')
-    command('set background=light') -- light terminal
-    local server, session = start_headless({
-      '--cmd',
-      'set background=dark', -- user pins dark
-      '--cmd',
-      'colorscheme vim',
-      '--cmd',
-      'set noswapfile',
-    })
+  local function watch_osc11_responses(session)
     -- Count OSC 11 responses so we can wait for the attach round-trip to finish
     -- (a deterministic barrier) before asserting the user's value held.
     session:request(
@@ -4591,13 +4581,68 @@ describe('TUI bg color', function()
       ]],
       {}
     )
-    local screen = tt.setup_child_nvim({ '--remote-ui', '--server', server })
-    screen:expect({ any = '%[No Name%]' })
+  end
+
+  local function expect_osc11_response(session)
     retry(nil, nil, function()
       eq({ true, true }, { session:request('nvim_exec_lua', 'return _G.osc11 > 0', {}) })
     end)
-    eq({ true, 'dark' }, { session:request('nvim_eval', '&background') })
-  end)
+  end
+
+  for _, test_case in ipairs({
+    {
+      name = 'Vimscript --cmd',
+      terminal_bg = 'light', -- light terminal
+      args = { '--clean', '--cmd', 'set background=dark' }, -- user pins dark
+      expected_bg = 'dark',
+    },
+    {
+      name = 'Lua VIMINIT',
+      terminal_bg = 'dark',
+      args = { '--noplugin' },
+      env = { VIMINIT = "lua vim.opt.background = 'light'" },
+      expected_bg = 'light',
+    },
+    {
+      name = 'Lua --cmd',
+      terminal_bg = 'dark',
+      args = { '--clean', '--cmd', "lua vim.opt.background = 'light'" },
+      expected_bg = 'light',
+    },
+    {
+      name = 'Lua -c',
+      terminal_bg = 'dark',
+      args = { '--clean', '-c', "lua vim.opt.background = 'light'" },
+      expected_bg = 'light',
+    },
+  }) do
+    it(
+      'does not override explicit background from ' .. test_case.name .. ' on remote-ui attach',
+      function()
+        command('highlight clear Normal')
+        command('set background=' .. test_case.terminal_bg)
+        local server = new_pipename()
+        local argv = { nvim_prog }
+        vim.list_extend(argv, test_case.args)
+        vim.list_extend(argv, { '--headless', '--listen', server, '--cmd', 'set noswapfile' })
+        local job = test_case.env and fn.jobstart(argv, { env = test_case.env })
+          or fn.jobstart(argv)
+        finally(function()
+          pcall(fn.jobstop, job)
+        end)
+        local session
+        retry(nil, nil, function()
+          session = n.connect(server)
+        end)
+        eq({ true, test_case.expected_bg }, { session:request('nvim_eval', '&background') })
+        watch_osc11_responses(session)
+        local screen = tt.setup_child_nvim({ '--remote-ui', '--server', server })
+        screen:expect({ any = '%[No Name%]' })
+        expect_osc11_response(session)
+        eq({ true, test_case.expected_bg }, { session:request('nvim_eval', '&background') })
+      end
+    )
+  end
 
   it('reacts to a runtime theme change over remote-ui', function()
     command('highlight clear Normal')
