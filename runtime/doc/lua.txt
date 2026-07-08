@@ -2748,6 +2748,20 @@ vim.fs.joinpath({...})                                     *vim.fs.joinpath()*
     Return: ~
         (`string`)
 
+vim.fs.mkdir({path}, {opts})                                  *vim.fs.mkdir()*
+    Creates a directory.
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Parameters: ~
+      • {path}  (`string`) Path to create (not expanded/resolved).
+      • {opts}  (`table?`) Optional keyword arguments.
+                • {mode}? (`integer`, default: `493`) Permission bits for
+                  newly-created directories.
+                • {parents}? (`boolean`, default: `false`) Create intermediate
+                  directories as necessary.
+
 vim.fs.normalize({path}, {opts})                          *vim.fs.normalize()*
     Normalize a path to a standard format. A tilde (~) character at the
     beginning of the path is expanded to the user's home directory and
