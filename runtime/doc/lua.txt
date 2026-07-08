@@ -3954,14 +3954,14 @@ new({opts})                                                    *vim.log.new()*
 
     Parameters: ~
       • {opts}  (`table`) A table with the following fields:
-                • {current_level}? (`vim.log.levels`, default:
-                  `vim.log.levels.WARN`) Minimum level that will be written.
                 • {format_func}?
-                  (`fun(current_level: vim.log.levels, level: vim.log.levels, ...): string?`)
+                  (`fun(min_level: vim.log.levels, level: vim.log.levels, ...): string?`)
                   Formatter used for each log entry. Receives the logger's
-                  current level, the message level, and the values passed to
+                  minimum level, the message level, and the values passed to
                   the writer. Return a string to write an entry, or `nil` to
                   skip it.
+                • {level}? (`vim.log.levels`, default: `vim.log.levels.WARN`)
+                  Minimum level that will be written.
                 • {name} (`string`) Display name used in notifications emitted
                   by the logger.
 
@@ -3971,13 +3971,13 @@ new({opts})                                                    *vim.log.new()*
 set_format_func({log}, {func})                     *vim.log.set_format_func()*
     Sets the formatter used to produce log entries.
 
-    The formatter receives the logger's current level, the message level, and
+    The formatter receives the logger's minimum level, the message level, and
     the values passed to the writer method. Return a string to write an entry,
     or `nil` to skip it.
 
     Parameters: ~
       • {log}   (`vim.Log`) See |vim.Log|.
-      • {func}  (`fun(current_level: vim.log.levels, level: vim.log.levels, ...): string?`)
+      • {func}  (`fun(min_level: vim.log.levels, level: vim.log.levels, ...): string?`)
 
 set_level({log}, {level})                                *vim.log.set_level()*
     Sets the current log level.

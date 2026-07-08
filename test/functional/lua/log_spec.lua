@@ -60,7 +60,7 @@ describe('vim.log', function()
     eq(
       { true, true, true, true, true, false },
       exec_lua(function()
-        local logger = vim.log.new({ name = 'NoArgs', current_level = vim.log.levels.TRACE })
+        local logger = vim.log.new({ name = 'NoArgs', level = vim.log.levels.TRACE })
         local logfile = vim.fs.joinpath(vim.fn.stdpath('log'), 'noargs.log')
         return {
           logger.trace(),
@@ -74,13 +74,13 @@ describe('vim.log', function()
     )
   end)
 
-  it('new() respects current_level and format_func opts', function()
+  it('new() respects level and format_func opts', function()
     exec_lua(function()
       local logger = vim.log.new({
         name = 'CustomFormat',
-        current_level = vim.log.levels.INFO,
-        format_func = function(current_level, level, ...)
-          if level < current_level then
+        level = vim.log.levels.INFO,
+        format_func = function(min_level, level, ...)
+          if level < min_level then
             return nil
           end
           return tostring(select(1, ...)) .. '\n'
@@ -126,14 +126,14 @@ describe('vim.log', function()
     exec_lua(function()
       local logger = vim.log.new({
         name = 'SetFormat',
-        current_level = vim.log.levels.TRACE,
+        level = vim.log.levels.TRACE,
         format_func = function()
           return 'old\n'
         end,
       })
 
-      vim.log.set_format_func(logger, function(current_level, level, ...)
-        return table.concat({ 'new', current_level, level, tostring(select(1, ...)) }, '|') .. '\n'
+      vim.log.set_format_func(logger, function(min_level, level, ...)
+        return table.concat({ 'new', min_level, level, tostring(select(1, ...)) }, '|') .. '\n'
       end)
 
       logger.error('formatted')
@@ -156,7 +156,7 @@ describe('vim.log', function()
     caller_script = t.tmpname(false) .. '.lua'
     write_file(
       caller_script,
-      "local logger = vim.log.new({ name = 'Caller', current_level = vim.log.levels.TRACE })\n"
+      "local logger = vim.log.new({ name = 'Caller', level = vim.log.levels.TRACE })\n"
         .. "logger.info('from-script')\n",
       true
     )
