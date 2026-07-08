@@ -1436,6 +1436,8 @@ function Client:_on_detach(bufnr)
     end
   end
 
+  vim.diagnostic.reset(vim.lsp.diagnostic.get_namespace(self.id, false), bufnr)
+
   changetracking.reset_buf(self, bufnr)
 
   self:_text_document_did_close_handler(bufnr)
