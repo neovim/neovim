@@ -969,9 +969,7 @@ do
             -- Use :noautocmd to suppress OptionSet event; OSC11 response may arrive after VimEnter.
             -- Mark as defaults so later OSC 11 updates remain re-applicable.
             vim._with_internal_sctx(function()
-              vim._with({ noautocmd = true }, function()
-                vim.o.background = bg
-              end)
+              vim.cmd('noautocmd set background=' .. bg)
             end)
           end
         end
