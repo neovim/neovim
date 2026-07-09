@@ -20,6 +20,7 @@
 #include "nvim/channel.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand_defs.h"
+#include "nvim/context.h"
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
 #include "nvim/errors.h"
@@ -4070,9 +4071,9 @@ bool garbage_collect(bool testing)
     ABORTING(set_ref_in_item)(&wp->w_winvar.di_tv, copyID, NULL, NULL);
   }
   // window-local variables in autocmd windows
-  for (int i = 0; i < AUCMD_WIN_COUNT; i++) {
-    if (aucmd_win[i].auc_win != NULL) {
-      ABORTING(set_ref_in_item)(&aucmd_win[i].auc_win->w_winvar.di_tv, copyID, NULL, NULL);
+  for (int i = 0; i < CTX_WIN_COUNT; i++) {
+    if (ctx_win[i].cw_win != NULL) {
+      ABORTING(set_ref_in_item)(&ctx_win[i].cw_win->w_winvar.di_tv, copyID, NULL, NULL);
     }
   }
 

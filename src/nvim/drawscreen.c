@@ -68,6 +68,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
+#include "nvim/context.h"
 #include "nvim/decoration.h"
 #include "nvim/decoration_defs.h"
 #include "nvim/decoration_provider.h"
@@ -466,7 +467,7 @@ int update_screen(void)
   }
 
   // Restore actual curwin before redrawing.
-  win_T *save_curwin = autocmd_save_curwin ? win_find_by_handle(autocmd_save_curwin) : NULL;
+  win_T *save_curwin = ctx_saved_curwin();
   win_T *restore_curwin = save_curwin != NULL ? curwin : NULL;
   if (save_curwin != NULL) {
     curwin = save_curwin;
