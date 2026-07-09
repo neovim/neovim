@@ -909,6 +909,8 @@ static bool nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_setfield(lstate, -2, "ui_flush");
   lua_pushcfunction(lstate, &nlua_check_interrupt);
   lua_setfield(lstate, -2, "check_interrupt");
+  lua_pushcfunction(lstate, &nlua_with_internal_sctx);
+  lua_setfield(lstate, -2, "with_internal_sctx");
   lua_pop(lstate, 1);
 
   // patch require() (only for --startuptime)
@@ -1992,7 +1994,7 @@ void ex_luado(exarg_T *const eap)
   redraw_curbuf_later(UPD_NOT_VALID);
 }
 
-/// Execute a Lua file with file-backed script context for provenance.
+/// Execute a Lua file with a script context so :verbose and last_set_sid point to the file.
 static bool nlua_exec_file_script_ctx(const char *path)
   FUNC_ATTR_NONNULL_ALL
 {

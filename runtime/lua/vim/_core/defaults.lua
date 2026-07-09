@@ -825,11 +825,11 @@ do
     end
   end
 
-  --- Script ID (SID) used for our own automatic 'background' sets. Lets
-  --- bg_user_set() distinguish a user set from our detection.
+  --- Script ID (SID) used for automatic OSC 11 'background' sets. Lets
+  --- bg_user_set() distinguish a user set from an automatic value.
   local sid_defaults = -11
 
-  --- True if 'background' was set by the user, not by our detection (sid_defaults).
+  --- True if 'background' was set by the user, not by automatic OSC 11 detection.
   local function bg_user_set()
     local info = vim.api.nvim_get_option_info2('background')
     return info.was_set and info.last_set_sid ~= sid_defaults
@@ -967,8 +967,8 @@ do
             local luminance = (0.299 * rr) + (0.587 * gg) + (0.114 * bb)
             local bg = luminance < 0.5 and 'dark' or 'light'
             -- Use :noautocmd to suppress OptionSet event; OSC11 response may arrive after VimEnter.
-            -- Mark as defaults so later OSC 11 updates remain re-applicable.
-            vim._with_internal_sctx(function()
+            -- Mark as automatic so later OSC 11 updates remain re-applicable.
+            vim._core.with_internal_sctx(function()
               vim.api.nvim_command('noautocmd set background=' .. bg)
             end)
           end

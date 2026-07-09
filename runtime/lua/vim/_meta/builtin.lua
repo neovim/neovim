@@ -208,6 +208,11 @@ function vim._core.check_interrupt() end
 --- @return vim.keycode.chord[]
 function vim._core.keyparse(keys) end
 
+--- @nodoc
+--- @param fn function
+--- @return any
+function vim._core.with_internal_sctx(fn) end
+
 --- Subscribe to |ui-events|, similar to |nvim_ui_attach()| but receive events in a Lua callback.
 --- Used to implement screen elements like popupmenu or message handling in Lua.
 ---

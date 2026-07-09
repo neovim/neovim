@@ -580,8 +580,8 @@ static int nlua_foldupdate(lua_State *lstate)
   return 0;
 }
 
-/// Call a function with internal-defaults script context.
-static int nlua_with_internal_sctx(lua_State *L)
+/// Call a function with the script context used for automatic defaults.
+int nlua_with_internal_sctx(lua_State *L)
 {
   luaL_argcheck(L, lua_isfunction(L, 1), 1, "function expected");
 
@@ -765,9 +765,6 @@ static void nlua_state_add_internal(lua_State *const lstate)
 
   lua_pushcfunction(lstate, &nlua_with);
   lua_setfield(lstate, -2, "_with_c");
-
-  lua_pushcfunction(lstate, &nlua_with_internal_sctx);
-  lua_setfield(lstate, -2, "_with_internal_sctx");
 
   // vim._core.keyparse
   lua_getfield(lstate, -1, "_core");
