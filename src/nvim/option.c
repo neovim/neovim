@@ -363,6 +363,8 @@ void set_init_1(bool clean_arg)
                      true);
   set_string_default(kOptUndodir, stdpaths_user_state_subpath("undo", 2, true),
                      true);
+  set_string_default(kOptPacklockfile, stdpaths_user_conf_subpath("nvim-pack-lock.json"),
+                     true);
   // Set default for &runtimepath. All necessary expansions are performed in
   // this function.
   char *rtp = runtimepath_default(clean_arg);
