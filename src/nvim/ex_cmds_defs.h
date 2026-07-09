@@ -194,11 +194,6 @@ typedef struct {
   int cmod_did_esilent;  ///< incremented when emsg_silent is
 } cmdmod_T;
 
-/// Stores command parse info used by `nvim_parse_cmd`
-typedef struct {
-  cmdmod_T cmdmod;
-} CmdParseInfo;
-
 /// Previous :substitute replacement string definition
 typedef struct {
   char *sub;            ///< Previous replacement string.

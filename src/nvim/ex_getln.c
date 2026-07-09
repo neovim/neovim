@@ -2771,13 +2771,13 @@ static bool cmdpreview_may_show(CommandLineState *s)
 {
   // Parse the command line and return if it fails.
   exarg_T ea;
-  CmdParseInfo cmdinfo;
+  cmdmod_T cmod;
   // Copy the command line so we can modify it.
   int cmdpreview_type = 0;
   char *cmdline = xstrdup(ccline.cmdbuff);
   const char *errormsg = NULL;
   emsg_off++;  // Block errors when parsing the command line, and don't update v:errmsg
-  if (!parse_cmdline(&cmdline, &ea, &cmdinfo, &errormsg)) {
+  if (!parse_cmdline(&cmdline, &ea, &cmod, &errormsg)) {
     emsg_off--;
     goto end;
   }
@@ -2785,7 +2785,7 @@ static bool cmdpreview_may_show(CommandLineState *s)
 
   // Check if command is previewable, if not, don't attempt to show preview
   if (!(ea.argt & EX_PREVIEW)) {
-    undo_cmdmod(&cmdinfo.cmdmod);
+    undo_cmdmod(&cmod);
     goto end;
   }
 
@@ -2835,7 +2835,7 @@ static bool cmdpreview_may_show(CommandLineState *s)
   // the preview.
   Error err = ERROR_INIT;
   TRY_WRAP(&err, {
-    cmdpreview_type = execute_cmd(&ea, &cmdinfo, true);
+    cmdpreview_type = execute_cmd(&ea, &cmod, true);
   });
   if (ERROR_SET(&err)) {
     api_clear_error(&err);
