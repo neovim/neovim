@@ -5,6 +5,7 @@ local api = n.api
 local clear = n.clear
 local command = n.command
 local eq = t.eq
+local matches = t.matches
 local exec = n.exec
 local feed = n.feed
 
@@ -41,6 +42,15 @@ describe('matchit', function()
     eq(1, api.nvim_get_var('loaded_matchit'))
     eq('<Plug>(MatchitNormalForward)', n.fn.maparg('%', 'n', false))
     eq('<Plug>(MatchitNormalBackward)', n.fn.maparg('g%', 'n', false))
+  end)
+
+  it('respects no_plugin_maps', function()
+    clear({ args = { '-u', 'NORC', '--cmd', 'let g:no_plugin_maps = 1' } })
+    eq('', n.fn.maparg('%', 'n', false))
+    matches('^<Lua %d+: .*/runtime/lua/nvim/matchit.lua:%d+>$', n.fn.maparg('<Plug>(MatchitNormalForward)', 'n', false))
+    api.nvim_del_var('no_plugin_maps')
+    command('MatchEnable')
+    eq('<Plug>(MatchitNormalForward)', n.fn.maparg('%', 'n', false))
   end)
 
   it('matches html tags', function()
@@ -108,11 +118,29 @@ describe('matchit', function()
     eq(5, api.nvim_win_get_cursor(0)[2] + 1)
   end)
 
+  it('prefers earlier groups when matches start together', function()
+    set_lines({ '<tag>body</tag>' })
+    exec([[let b:match_words='<:>,<tag>:</tag>']])
+    cursor(1, 1)
+    feed('%')
+    eq(5, api.nvim_win_get_cursor(0)[2] + 1)
+    cursor(1, 3)
+    feed('%')
+    eq(10, api.nvim_win_get_cursor(0)[2] + 1)
+  end)
+
   it('selects visual text object', function()
     setup({ '<b>', '<big>some text</big>', '</b>' }, 'html')
     cursor(2, 7)
     feed('va%y')
     eq('<big>some text</big>', n.fn.getreg('"'))
+  end)
+
+  it('selects visual text object from an opening tag', function()
+    setup({ '<b>', '  <i>text</i>', '</b>' }, 'html')
+    cursor(1, 2)
+    feed('va%y')
+    eq('<b>\n  <i>text</i>\n</b>', n.fn.getreg('"'))
   end)
 
   it('handles exclusive visual selections', function()

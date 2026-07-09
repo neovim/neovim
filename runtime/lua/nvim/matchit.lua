@@ -20,8 +20,7 @@ local fn = vim.fn
 local M = {}
 
 local NOTSLASH = [[\\\@1<!\%(\\\\\)*]]
-local DEFAULT_WORDS =
-  [[\/\*:\*\/,#\s*if\%(n\=def\)\=:#\s*else\>:#\s*elif\%(n\=def\)\=\>:#\s*endif\>]]
+local DEFAULT_WORDS = [[\/\*:\*\/,#\s*if\%(n\=def\)\=:#\s*else\>:#\s*elif\%(n\=def\)\=\>:#\s*endif\>]]
 
 ---@param s string
 ---@param idx integer
@@ -303,15 +302,15 @@ local function better_candidate(candidate, best, cursor_col)
   if candidate.start_col ~= best.start_col then
     return candidate.start_col > best.start_col
   end
-  local candidate_length = candidate.end_col - candidate.start_col
-  local best_length = best.end_col - best.start_col
-  if candidate_length ~= best_length then
-    return candidate_length > best_length
-  end
   if candidate.group_index ~= best.group_index then
     return candidate.group_index < best.group_index
   end
-  return candidate.part_index < best.part_index
+  if candidate.part_index ~= best.part_index then
+    return candidate.part_index < best.part_index
+  end
+  local candidate_length = candidate.end_col - candidate.start_col
+  local best_length = best.end_col - best.start_col
+  return candidate_length > best_length
 end
 
 ---@return nvim.matchit.MatchCandidate?
@@ -492,8 +491,7 @@ local function search_patterns(match, forward)
   if forward and match.part_index == #resolved or not forward and match.part_index == 1 then
     middle = ''
   end
-  local backward = forward and match.part_index == #resolved
-    or not forward and match.part_index ~= 1
+  local backward = forward and match.part_index == #resolved or not forward and match.part_index ~= 1
   return open, middle, close, backward and 'bW' or 'W'
 end
 
@@ -630,14 +628,7 @@ function M.multi_match(flags, mode)
     vim.cmd([[normal! gv\<Esc>]])
   end
   with_options(function()
-    local current = find_current()
-    local open, middle, close
-    if current ~= nil and current.contains then
-      open, middle, close = group_patterns(assert(current.resolved))
-      api.nvim_win_set_cursor(0, { assert(current.line), current.start_col })
-    else
-      open, middle, close = all_patterns()
-    end
+    local open, middle, close = all_patterns()
     local skip = parse_skip()
     if skip() then
       skip = function()
@@ -681,12 +672,18 @@ function M.enable_mappings()
   vim.keymap.set('n', '<Plug>(MatchitNormalMultiForward)', function()
     M.multi_match('W', 'n')
   end, { silent = true })
-  vim.keymap.set('x', '<Plug>(MatchitVisualMultiBackward)', function()
-    M.multi_match('bW', 'v')
-  end, { silent = true })
-  vim.keymap.set('x', '<Plug>(MatchitVisualMultiForward)', function()
-    M.multi_match('W', 'v')
-  end, { silent = true })
+  vim.keymap.set(
+    'x',
+    '<Plug>(MatchitVisualMultiBackward)',
+    [[:<C-U>lua require('nvim.matchit').multi_match('bW', 'n')<CR>m'gv``]],
+    { silent = true }
+  )
+  vim.keymap.set(
+    'x',
+    '<Plug>(MatchitVisualMultiForward)',
+    [[:<C-U>lua require('nvim.matchit').multi_match('W', 'n')<CR>m'gv``]],
+    { silent = true }
+  )
   vim.keymap.set('o', '<Plug>(MatchitOperationMultiBackward)', function()
     M.multi_match('bW', 'o')
   end, { silent = true })
@@ -710,18 +707,8 @@ function M.enable_mappings()
     vim.keymap.set('n', ']%', '<Plug>(MatchitNormalMultiForward)', { silent = true, remap = true })
     vim.keymap.set('x', '[%', '<Plug>(MatchitVisualMultiBackward)', { silent = true, remap = true })
     vim.keymap.set('x', ']%', '<Plug>(MatchitVisualMultiForward)', { silent = true, remap = true })
-    vim.keymap.set(
-      'o',
-      '[%',
-      '<Plug>(MatchitOperationMultiBackward)',
-      { silent = true, remap = true }
-    )
-    vim.keymap.set(
-      'o',
-      ']%',
-      '<Plug>(MatchitOperationMultiForward)',
-      { silent = true, remap = true }
-    )
+    vim.keymap.set('o', '[%', '<Plug>(MatchitOperationMultiBackward)', { silent = true, remap = true })
+    vim.keymap.set('o', ']%', '<Plug>(MatchitOperationMultiForward)', { silent = true, remap = true })
     vim.keymap.set('x', 'a%', '<Plug>(MatchitVisualTextObject)', { silent = true, remap = true })
   end
 end
