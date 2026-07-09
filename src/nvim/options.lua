@@ -6426,7 +6426,7 @@ local options = {
         Path of |vim.pack-lockfile|. Must be set before the first usage of any
         |vim.pack| function. Environment variables are expanded |:set_env|.
       ]=],
-      expand = true,
+      expand = 'nodefault',
       full_name = 'packlockfile',
       scope = { 'global' },
       secure = true,
