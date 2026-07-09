@@ -364,6 +364,15 @@ describe('startup --listen', function()
       ('nvim.*: Failed to %%-%%-listen: [^:]+ already [^:]+: "%s"'):format(vim.pesc(in_use))
     )
     _test({ '--listen', '/' }, nil, 'nvim.*: Failed to %-%-listen: [^:]+: "/"')
+    if not is_os('win') then
+      -- Too-long path is rejected, not silently truncated. #38623
+      local too_long = './Xtest-listen-' .. ('x'):rep(192)
+      _test(
+        { '--listen', too_long },
+        nil,
+        ('nvim.*: Failed to %%-%%-listen: invalid argument: "%s"'):format(vim.pesc(too_long))
+      )
+    end
     _test(
       { '--listen', 'https://example.com' },
       nil,
