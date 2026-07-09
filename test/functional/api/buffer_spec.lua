@@ -2750,7 +2750,11 @@ describe('api/buf', function()
   end)
 end)
 
-describe('path separator handling in ffname and sfname #39382,', function()
+describe('path sep in ffname/sfname #39382,', function()
+  if not t.is_os('win') then
+    return
+  end
+
   local cwd, files = vim.uv.cwd(), {}
   local expected_cwd = vim.fs.normalize(cwd)
   for i = 1, 3 do
@@ -2771,7 +2775,6 @@ describe('path separator handling in ffname and sfname #39382,', function()
   end)
 
   before_each(function()
-    t.skip(not t.is_os('win'), 'N/A for non-Windows')
     clear()
   end)
 

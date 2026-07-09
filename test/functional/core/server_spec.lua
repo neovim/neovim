@@ -316,6 +316,40 @@ describe('server', function()
     matches('Failed.*listen', result.stderr)
     fn.serverstop(socket_path)
   end)
+
+  it('normalizes sep in named pipe paths #39382', function()
+    t.skip(not is_os('win'), 'N/A: Named pipe is Windows feature')
+
+    local name, named_pipe = 'Xtest-server', [[\\.\pipe\Xtest-server]]
+    -- default address
+    clear { args_rm = { '--listen' } }
+    matches('//./pipe/', fn.eval('v:servername'), true)
+
+    clear({ args_rm = { '--listen' }, env = { NVIM_LISTEN_ADDRESS = named_pipe } })
+    eq(vim.fs.normalize(named_pipe), fn.eval('v:servername'))
+
+    clear({ args_rm = { '--listen' }, args = { '--listen', name } })
+    matches(vim.fs.normalize(named_pipe), fn.eval('v:servername'), true)
+
+    clear({ args_rm = { '--listen' }, args = { '--listen', named_pipe } })
+    eq(vim.fs.normalize(named_pipe), fn.eval('v:servername'))
+
+    local server = n.get_session()
+    local client = n.new_session(true)
+    n.set_session(client)
+    local res = fn.system({
+      n.nvim_prog,
+      '--clean',
+      '-es',
+      '--server',
+      named_pipe,
+      '--remote-expr',
+      'v:servername',
+    })
+    eq(vim.fs.normalize(named_pipe), res)
+    client:close()
+    n.set_session(server)
+  end)
 end)
 
 describe('startup --listen', function()
@@ -399,51 +433,6 @@ describe('startup --listen', function()
     -- Address without slashes is a "name" which is appended to a generated path. #8519
     clear({ args = { '--listen', 'test-name' } })
     matches([[[/\\]test%-name[^/\\]*]], api.nvim_get_vvar('servername'))
-  end)
-end)
-
-describe('path separator handling #39382', function()
-  local name, named_pipe = 'Xtest-server', [[\\.\pipe\Xtest-server]]
-  before_each(function()
-    t.skip(not is_os('win'), 'N/A for non-Windows')
-  end)
-
-  it('normalizes default server name', function()
-    clear { args_rm = { '--listen' } }
-    matches('//./pipe/', fn.eval('v:servername'), true)
-  end)
-
-  it('normalizes --listen name', function()
-    clear({ args_rm = { '--listen' }, args = { '--listen', name } })
-    matches(vim.fs.normalize(named_pipe), fn.eval('v:servername'), true)
-  end)
-
-  it('normalizes --listen named pipe', function()
-    clear({ args_rm = { '--listen' }, args = { '--listen', named_pipe } })
-    eq(vim.fs.normalize(named_pipe), fn.eval('v:servername'))
-  end)
-
-  it('normalizes $NVIM_LISTEN_ADDRESS', function()
-    clear({ args_rm = { '--listen' }, env = { NVIM_LISTEN_ADDRESS = named_pipe } })
-    eq(vim.fs.normalize(named_pipe), fn.eval('v:servername'))
-  end)
-
-  it('normalizes --server named pipe', function()
-    local server = clear({ args_rm = { '--listen' }, args = { '--listen', named_pipe } })
-    local client = n.new_session(true)
-    n.set_session(client)
-    local res = fn.system({
-      n.nvim_prog,
-      '--clean',
-      '-es',
-      '--server',
-      named_pipe,
-      '--remote-expr',
-      'v:servername',
-    })
-    eq(vim.fs.normalize(named_pipe), res)
-    client:close()
-    n.set_session(server)
   end)
 end)
 

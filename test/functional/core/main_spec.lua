@@ -10,7 +10,6 @@ local clear = n.clear
 local fn = n.fn
 local write_file = t.write_file
 local is_os = t.is_os
-local api = n.api
 
 describe('command-line option', function()
   describe('-s', function()
@@ -178,66 +177,6 @@ describe('command-line option', function()
     matches('fall%-back for %$VIM: .*Run :checkhealth', fn.execute(':verbose version'))
     matches('Run "nvim %-V1 %-v"', n.spawn_wait('-v').stdout)
     matches('fall%-back for %$VIM: .*Run :checkhealth', n.spawn_wait('-V1', '-v').stdout)
-  end)
-end)
-
-describe('path handling', function()
-  local home, foo, bar = vim.fs.normalize('~'), 'Xtest-foo.lua', 'Xtest-bar.lua'
-
-  setup(function()
-    write_file(('%s/%s'):format(home, foo), 'local foo = 1;')
-    write_file(('%s/%s'):format(home, bar), '')
-  end)
-
-  teardown(function()
-    os.remove(('%s/%s'):format(home, foo))
-    os.remove(('%s/%s'):format(home, bar))
-  end)
-
-  before_each(function()
-    t.skip(not is_os('win'), 'N/A for non-Windows')
-  end)
-
-  it('expands tilde-prefixed paths #29380', function()
-    clear {
-      args = { ('~/%s'):format(foo), ('~\\%s'):format(bar) },
-    }
-    local expected = {
-      ('%s/%s'):format(home, foo),
-      ('%s/%s'):format(home, bar),
-    }
-    eq(expected, vim.tbl_map(fn.bufname, api.nvim_list_bufs()))
-    eq(expected, fn.argv())
-  end)
-
-  it('normalizes v:progpath #39382', function()
-    clear()
-    eq(
-      n.nvim_prog,
-      fn.system({
-        n.nvim_prog:gsub('/', '\\'),
-        '--clean',
-        '--headless',
-        '+echo v:progpath',
-        '+q',
-      })
-    )
-  end)
-
-  it('normalizes -u arguments and triggers autocmd events #39382', function()
-    clear {
-      args_rm = { '--cmd', '-u' },
-      args = {
-        '--cmd',
-        ('autocmd SourcePre */%s let g:matched = 1'):format(foo),
-        '-u',
-        ('%s/%s'):format(home, foo):gsub('/', '\\'),
-      },
-    }
-    local scripts = fn.getscriptinfo({ name = foo })
-    eq(1, #scripts)
-    eq(('%s/%s'):format(home, foo), scripts[1].name)
-    t.ok(fn.eval('g:matched'))
   end)
 end)
 

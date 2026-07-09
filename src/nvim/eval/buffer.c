@@ -451,9 +451,7 @@ void f_bufnr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       && tv_get_number_chk(&argvars[1], &error) != 0
       && !error
       && (name = tv_get_string_chk(&argvars[0])) != NULL) {
-    name = TO_SLASH_SAVE(name);
     buf = buflist_new((char *)name, NULL, 1, 0);
-    XFREE_CLEAR(name);
   }
 
   if (buf != NULL) {

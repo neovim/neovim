@@ -1853,7 +1853,6 @@ describe('completion', function()
   end)
 
   it('returns all entries in the directory #25791', function()
-    t.skip(not t.is_os('win'), 'N/A for non-Windows')
     n.mkdir_p('Xtest/sub1')
     n.mkdir_p('Xtest/sub2')
     t.write_file('Xtest/A', '')

@@ -7727,6 +7727,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
   bool tilde_file = false;
   bool skip_mod = false;
   char strbuf[30];
+  // we want 'shellslash' for path expansions like "%", "#", "<afile>", etc.
   bool use_shellslash = false;
 
   *errormsg = NULL;
