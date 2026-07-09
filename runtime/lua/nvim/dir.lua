@@ -85,7 +85,14 @@ local function render(buf, dir)
   then
     return false
   end
-  api.nvim_buf_set_name(buf, dir)
+  api.nvim_buf_call(buf, function()
+    api.nvim_cmd({
+      cmd = 'file',
+      args = { dir },
+      mods = { keepalt = true },
+      magic = { file = false, bar = false },
+    }, {})
+  end)
   if not api.nvim_buf_is_valid(buf) then
     return false
   end
