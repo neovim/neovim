@@ -151,7 +151,11 @@ end
 
 ---@param buf integer
 local function open_parent(buf)
-  navigate(fs.dirname(api.nvim_buf_get_name(buf)))
+  local path = api.nvim_buf_get_name(buf)
+  -- TODO(barrettruth): simplify after #40552
+  local name = encode_name(fs.basename(path)) .. (vim.fn.isdirectory(path) == 1 and '/' or '')
+  navigate(fs.dirname(path))
+  vim.fn.search([[\C\m^\V]] .. vim.fn.escape(name, [[\]]) .. [[\m$]], 'cw')
 end
 
 function M._open_entry()
