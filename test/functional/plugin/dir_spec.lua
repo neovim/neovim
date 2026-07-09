@@ -164,6 +164,19 @@ describe('nvim.dir', function()
     eq(false, exec_lua([[return package.loaded['nvim.dir'] ~= nil]]))
   end)
 
+  it('preserves alternate buffer when opening a parent directory', function()
+    make_fixture()
+    n.clear({ args_rm = { '-u', '--cmd' } })
+
+    edit(file)
+    feed('-')
+    poke_eventloop()
+
+    assert_directory(root)
+    -- Keep the alternate buffer on the file we navigated up from.
+    eq(file, api.nvim_buf_get_name(fn.bufnr('#')))
+  end)
+
   it('uses an absolute buffer name for a relative startup directory argument', function()
     make_fixture()
     local cwd = assert(vim.uv.cwd())
