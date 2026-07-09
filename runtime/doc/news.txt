@@ -192,7 +192,7 @@ EDITOR
   (Or use `:{range}lua` to skip the detection.)
 • |:wall| with |++p| auto-creates missing parent directories.
 • |:restart| now restores the current session while |:restart!| does not.
-• |ZR| restarts Nvim (|:restart!|).
+• |ZR| restarts Nvim (|:restart|).
 
 EVENTS
 
