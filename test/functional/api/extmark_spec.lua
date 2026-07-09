@@ -983,6 +983,25 @@ describe('API/extmarks', function()
     eq(2, #rv)
   end)
 
+  it('undo and redo of a mark explicitly moved during an edit', function()
+    feed('ggdGiabcdef<esc>')
+    set_extmark(ns, marks[1], 0, 4)
+    -- Insert at col 0; while the undo block is still open, explicitly
+    -- move the mark.
+    feed('0i!!')
+    set_extmark(ns, marks[1], 0, 1)
+    feed('<esc>')
+    eq({ 0, 1 }, get_extmark_by_id(ns, marks[1]))
+    feed('u')
+    -- Back where it was before the edit (the recorded set-time position,
+    -- shifted back by the splice reversal).
+    eq({ 0, 4 }, get_extmark_by_id(ns, marks[1]))
+    feed('<c-r>')
+    -- Redo restores the explicit position: splice adjustment alone would
+    -- leave the mark at col 6.
+    eq({ 0, 1 }, get_extmark_by_id(ns, marks[1]))
+  end)
+
   it('undo and redo of marks deleted during edits', function()
     -- test extmark_adjust
     feed('A<cr>12345<esc>')
