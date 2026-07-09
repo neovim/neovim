@@ -155,6 +155,9 @@ describe('nvim.dir', function()
     assert_directory(root)
     line_of('alpha.txt')
 
+    -- Ensure the cursor stays on the entry we navigated up from.
+    eq('alpha.txt', api.nvim_get_current_line())
+
     n.clear({ args_rm = { '--cmd' }, args = { '--noplugin' } })
     api.nvim_buf_set_lines(0, 0, -1, false, { '  alpha', '  beta' })
     api.nvim_win_set_cursor(0, { 2, 7 })
