@@ -90,6 +90,7 @@ EDITOR
   • Expr-register (|i_CTRL-R_=|, |c_CTRL-R_=|) no longer supports opening
     cmdwin via |c_CTRL-F|.
 • Behavior of |:restart| changed. Use "!" (|:restart!|) to get the old behavior.
+  • |ZR| now performs |:restart|. Add a count to change the behavior.
 
 EVENTS
 
@@ -200,7 +201,7 @@ EDITOR
 • |:log| opens log files.
 • |:restart| saves/restores the current session (window layout, buffers, …).
   • |:restart!| (with a bang "!") does not save/restore the session.
-• |ZR| restarts Nvim (|:restart!|).
+• |ZR| restarts Nvim (|:restart|).
 • |:uptime| displays uptime.
 • |:packupdate| and |:packdel| for managing |vim.pack|.
 • 'scrollback' is now also valid in |prompt-buffer| buffers to limit the
