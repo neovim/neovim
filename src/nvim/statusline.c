@@ -13,6 +13,7 @@
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
+#include "nvim/context.h"
 #include "nvim/digraph.h"
 #include "nvim/drawline.h"
 #include "nvim/drawscreen.h"
@@ -256,7 +257,7 @@ static void win_redr_stl_expr(win_T *wp, bool draw_winbar, bool draw_ruler, bool
   entered = true;
 
   // Restore actual curwin before redrawing.
-  win_T *save_curwin = autocmd_save_curwin ? win_find_by_handle(autocmd_save_curwin) : NULL;
+  win_T *save_curwin = ctx_saved_curwin();
   win_T *restore_curwin = save_curwin != NULL ? curwin : NULL;
   if (save_curwin != NULL) {
     curwin = save_curwin;

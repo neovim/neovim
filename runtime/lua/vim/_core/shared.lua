@@ -1474,6 +1474,7 @@ end
 --- @class vim.context.mods
 --- @field bo? table<string, any>
 --- @field buf? integer
+--- @field cwd? string
 --- @field emsg_silent? boolean
 --- @field env? table<string, any>
 --- @field go? table<string, any>
@@ -1560,6 +1561,7 @@ function vim._with(context, f)
 
   vim.validate('context.bo', context.bo, 'table', true)
   vim.validate('context.buf', context.buf, 'number', true)
+  vim.validate('context.cwd', context.cwd, 'string', true)
   vim.validate('context.emsg_silent', context.emsg_silent, 'boolean', true)
   vim.validate('context.env', context.env, 'table', true)
   vim.validate('context.go', context.go, 'table', true)
@@ -1617,6 +1619,13 @@ function vim._with(context, f)
       end
     end
 
+    --- @type string
+    local state_cwd
+    if context.cwd then
+      -- NOTE: triggers `DirChanged{Pre,}` events
+      state_cwd = vim.fn.chdir(context.cwd)
+    end
+
     -- Execute
     local res = { pcall(f) }
 
@@ -1629,6 +1638,11 @@ function vim._with(context, f)
         --- @diagnostic disable-next-line:no-unknown
         vim[scope][name] = cached_value
       end
+    end
+
+    if state_cwd then
+      -- NOTE: triggers `DirChanged{Pre,}` events
+      vim.fn.chdir(state_cwd)
     end
 
     -- Return

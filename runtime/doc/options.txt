@@ -4784,6 +4784,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	the name of a function, a |lambda| or a |Funcref|.  See
 	|option-value-function| for more information.
 
+						*'packlockfile'* *'plf'*
+'packlockfile' 'plf'	string	(default "$XDG_CONFIG_HOME/nvim/nvim-pack-lock.json")
+			global
+			Disallowed in |modeline|. |no-modeline-option|
+	Path of |vim.pack-lockfile|. Must be set before the first usage of any
+	|vim.pack| function. Environment variables are expanded |:set_env|.
+
 						*'packpath'* *'pp'*
 'packpath' 'pp'		string	(default see 'runtimepath')
 			global

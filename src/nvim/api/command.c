@@ -128,11 +128,11 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
 
   // Parse command line
   exarg_T ea;
-  CmdParseInfo cmdinfo;
+  cmdmod_T cmod;
   char *cmdline = arena_memdupz(arena, str.data, str.size);
   const char *errormsg = NULL;
 
-  if (!parse_cmdline(&cmdline, &ea, &cmdinfo, &errormsg)) {
+  if (!parse_cmdline(&cmdline, &ea, &cmod, &errormsg)) {
     if (errormsg != NULL) {
       api_set_error(err, kErrorTypeException, "Parsing command-line: %s", errormsg);
     } else {
@@ -272,37 +272,37 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
   Dict mods = arena_dict(arena, 20);
 
   Dict filter = arena_dict(arena, 2);
-  PUT_C(filter, "pattern", CSTR_TO_ARENA_OBJ(arena, cmdinfo.cmdmod.cmod_filter_pat));
-  PUT_C(filter, "force", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_filter_force));
+  PUT_C(filter, "pattern", CSTR_TO_ARENA_OBJ(arena, cmod.cmod_filter_pat));
+  PUT_C(filter, "force", BOOLEAN_OBJ(cmod.cmod_filter_force));
   PUT_C(mods, "filter", DICT_OBJ(filter));
 
-  PUT_C(mods, "silent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_SILENT));
-  PUT_C(mods, "emsg_silent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_ERRSILENT));
-  PUT_C(mods, "unsilent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_UNSILENT));
-  PUT_C(mods, "sandbox", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_SANDBOX));
-  PUT_C(mods, "noautocmd", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_NOAUTOCMD));
-  PUT_C(mods, "tab", INTEGER_OBJ(cmdinfo.cmdmod.cmod_tab - 1));
-  PUT_C(mods, "verbose", INTEGER_OBJ(cmdinfo.cmdmod.cmod_verbose - 1));
-  PUT_C(mods, "browse", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_BROWSE));
-  PUT_C(mods, "confirm", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_CONFIRM));
-  PUT_C(mods, "hide", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_HIDE));
-  PUT_C(mods, "keepalt", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_KEEPALT));
-  PUT_C(mods, "keepjumps", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_KEEPJUMPS));
-  PUT_C(mods, "keepmarks", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_KEEPMARKS));
-  PUT_C(mods, "keeppatterns", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_KEEPPATTERNS));
-  PUT_C(mods, "lockmarks", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_LOCKMARKS));
-  PUT_C(mods, "noswapfile", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_NOSWAPFILE));
-  PUT_C(mods, "vertical", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_split & WSP_VERT));
-  PUT_C(mods, "horizontal", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_split & WSP_HOR));
+  PUT_C(mods, "silent", BOOLEAN_OBJ(cmod.cmod_flags & CMOD_SILENT));
+  PUT_C(mods, "emsg_silent", BOOLEAN_OBJ(cmod.cmod_flags & CMOD_ERRSILENT));
+  PUT_C(mods, "unsilent", BOOLEAN_OBJ(cmod.cmod_flags & CMOD_UNSILENT));
+  PUT_C(mods, "sandbox", BOOLEAN_OBJ(cmod.cmod_flags & CMOD_SANDBOX));
+  PUT_C(mods, "noautocmd", BOOLEAN_OBJ(cmod.cmod_flags & CMOD_NOAUTOCMD));
+  PUT_C(mods, "tab", INTEGER_OBJ(cmod.cmod_tab - 1));
+  PUT_C(mods, "verbose", INTEGER_OBJ(cmod.cmod_verbose - 1));
+  PUT_C(mods, "browse", BOOLEAN_OBJ(cmod.cmod_flags & CMOD_BROWSE));
+  PUT_C(mods, "confirm", BOOLEAN_OBJ(cmod.cmod_flags & CMOD_CONFIRM));
+  PUT_C(mods, "hide", BOOLEAN_OBJ(cmod.cmod_flags & CMOD_HIDE));
+  PUT_C(mods, "keepalt", BOOLEAN_OBJ(cmod.cmod_flags & CMOD_KEEPALT));
+  PUT_C(mods, "keepjumps", BOOLEAN_OBJ(cmod.cmod_flags & CMOD_KEEPJUMPS));
+  PUT_C(mods, "keepmarks", BOOLEAN_OBJ(cmod.cmod_flags & CMOD_KEEPMARKS));
+  PUT_C(mods, "keeppatterns", BOOLEAN_OBJ(cmod.cmod_flags & CMOD_KEEPPATTERNS));
+  PUT_C(mods, "lockmarks", BOOLEAN_OBJ(cmod.cmod_flags & CMOD_LOCKMARKS));
+  PUT_C(mods, "noswapfile", BOOLEAN_OBJ(cmod.cmod_flags & CMOD_NOSWAPFILE));
+  PUT_C(mods, "vertical", BOOLEAN_OBJ(cmod.cmod_split & WSP_VERT));
+  PUT_C(mods, "horizontal", BOOLEAN_OBJ(cmod.cmod_split & WSP_HOR));
 
   char *split;
-  if (cmdinfo.cmdmod.cmod_split & WSP_BOT) {
+  if (cmod.cmod_split & WSP_BOT) {
     split = "botright";
-  } else if (cmdinfo.cmdmod.cmod_split & WSP_TOP) {
+  } else if (cmod.cmod_split & WSP_TOP) {
     split = "topleft";
-  } else if (cmdinfo.cmdmod.cmod_split & WSP_BELOW) {
+  } else if (cmod.cmod_split & WSP_BELOW) {
     split = "belowright";
-  } else if (cmdinfo.cmdmod.cmod_split & WSP_ABOVE) {
+  } else if (cmod.cmod_split & WSP_ABOVE) {
     split = "aboveleft";
   } else {
     split = "";
@@ -312,11 +312,11 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
   PUT_KEY(result, cmd, mods, mods);
 
   Dict magic = arena_dict(arena, 2);
-  PUT_C(magic, "file", BOOLEAN_OBJ(cmdinfo.magic.file));
-  PUT_C(magic, "bar", BOOLEAN_OBJ(cmdinfo.magic.bar));
+  PUT_C(magic, "file", BOOLEAN_OBJ(ea.magic.file));
+  PUT_C(magic, "bar", BOOLEAN_OBJ(ea.magic.bar));
   PUT_KEY(result, cmd, magic, magic);
 
-  undo_cmdmod(&cmdinfo.cmdmod);
+  undo_cmdmod(&cmod);
 end:
   return result;
 }
@@ -357,8 +357,8 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
   exarg_T ea;
   CLEAR_FIELD(ea);
 
-  CmdParseInfo cmdinfo;
-  CLEAR_FIELD(cmdinfo);
+  cmdmod_T cmod;
+  CLEAR_FIELD(cmod);
 
   char *cmdline = NULL;
   char *cmdname = NULL;
@@ -629,16 +629,16 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
       goto end;
     }
 
-    cmdinfo.magic.file = HAS_KEY(magic, cmd_magic, file) ? magic->file : (ea.argt & EX_XFILE);
-    cmdinfo.magic.bar = HAS_KEY(magic, cmd_magic, bar) ? magic->bar : (ea.argt & EX_TRLBAR);
-    if (cmdinfo.magic.file) {
+    ea.magic.file = HAS_KEY(magic, cmd_magic, file) ? magic->file : (ea.argt & EX_XFILE);
+    ea.magic.bar = HAS_KEY(magic, cmd_magic, bar) ? magic->bar : (ea.argt & EX_TRLBAR);
+    if (ea.magic.file) {
       ea.argt |= EX_XFILE;
     } else {
       ea.argt &= ~EX_XFILE;
     }
   } else {
-    cmdinfo.magic.file = ea.argt & EX_XFILE;
-    cmdinfo.magic.bar = ea.argt & EX_TRLBAR;
+    ea.magic.file = ea.argt & EX_XFILE;
+    ea.magic.bar = ea.argt & EX_TRLBAR;
   }
 
   if (HAS_KEY(cmd, cmd, mods)) {
@@ -656,14 +656,13 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
       }
 
       if (HAS_KEY(filter, cmd_mods_filter, pattern)) {
-        cmdinfo.cmdmod.cmod_filter_force = filter->force;
+        cmod.cmod_filter_force = filter->force;
 
         // "filter! // is not no-op, so add a filter if either the pattern is non-empty or if filter
         // is inverted.
-        if (*filter->pattern.data != NUL || cmdinfo.cmdmod.cmod_filter_force) {
-          cmdinfo.cmdmod.cmod_filter_pat = string_to_cstr(filter->pattern);
-          cmdinfo.cmdmod.cmod_filter_regmatch.regprog = vim_regcomp(cmdinfo.cmdmod.cmod_filter_pat,
-                                                                    RE_MAGIC);
+        if (*filter->pattern.data != NUL || cmod.cmod_filter_force) {
+          cmod.cmod_filter_pat = string_to_cstr(filter->pattern);
+          cmod.cmod_filter_regmatch.regprog = vim_regcomp(cmod.cmod_filter_pat, RE_MAGIC);
         }
       }
     }
@@ -671,34 +670,34 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
     if (HAS_KEY(mods, cmd_mods, tab)) {
       if ((int)mods->tab >= 0) {
         // Silently ignore negative integers to allow mods.tab to be set to -1.
-        cmdinfo.cmdmod.cmod_tab = (int)mods->tab + 1;
+        cmod.cmod_tab = (int)mods->tab + 1;
       }
     }
 
     if (HAS_KEY(mods, cmd_mods, verbose)) {
       if ((int)mods->verbose >= 0) {
         // Silently ignore negative integers to allow mods.verbose to be set to -1.
-        cmdinfo.cmdmod.cmod_verbose = (int)mods->verbose + 1;
+        cmod.cmod_verbose = (int)mods->verbose + 1;
       }
     }
 
-    cmdinfo.cmdmod.cmod_split |= (mods->vertical ? WSP_VERT : 0);
+    cmod.cmod_split |= (mods->vertical ? WSP_VERT : 0);
 
-    cmdinfo.cmdmod.cmod_split |= (mods->horizontal ? WSP_HOR : 0);
+    cmod.cmod_split |= (mods->horizontal ? WSP_HOR : 0);
 
     if (HAS_KEY(mods, cmd_mods, split)) {
       if (*mods->split.data == NUL) {
         // Empty string, do nothing.
       } else if (strcmp(mods->split.data, "aboveleft") == 0
                  || strcmp(mods->split.data, "leftabove") == 0) {
-        cmdinfo.cmdmod.cmod_split |= WSP_ABOVE;
+        cmod.cmod_split |= WSP_ABOVE;
       } else if (strcmp(mods->split.data, "belowright") == 0
                  || strcmp(mods->split.data, "rightbelow") == 0) {
-        cmdinfo.cmdmod.cmod_split |= WSP_BELOW;
+        cmod.cmod_split |= WSP_BELOW;
       } else if (strcmp(mods->split.data, "topleft") == 0) {
-        cmdinfo.cmdmod.cmod_split |= WSP_TOP;
+        cmod.cmod_split |= WSP_TOP;
       } else if (strcmp(mods->split.data, "botright") == 0) {
-        cmdinfo.cmdmod.cmod_split |= WSP_BOT;
+        cmod.cmod_split |= WSP_BOT;
       } else {
         VALIDATE_S(false, "mods.split", "", {
           goto end;
@@ -708,7 +707,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
 
 #define OBJ_TO_CMOD_FLAG(flag, value) \
   if (value) { \
-    cmdinfo.cmdmod.cmod_flags |= (flag); \
+    cmod.cmod_flags |= (flag); \
   }
 
     OBJ_TO_CMOD_FLAG(CMOD_SILENT, mods->silent);
@@ -726,13 +725,13 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
     OBJ_TO_CMOD_FLAG(CMOD_LOCKMARKS, mods->lockmarks);
     OBJ_TO_CMOD_FLAG(CMOD_NOSWAPFILE, mods->noswapfile);
 
-    if (cmdinfo.cmdmod.cmod_flags & CMOD_ERRSILENT) {
+    if (cmod.cmod_flags & CMOD_ERRSILENT) {
       // CMOD_ERRSILENT must imply CMOD_SILENT, otherwise apply_cmdmod() and undo_cmdmod() won't
       // work properly.
-      cmdinfo.cmdmod.cmod_flags |= CMOD_SILENT;
+      cmod.cmod_flags |= CMOD_SILENT;
     }
 
-    VALIDATE(!((cmdinfo.cmdmod.cmod_flags & CMOD_SANDBOX) && !(ea.argt & EX_SBOXOK)),
+    VALIDATE(!((cmod.cmod_flags & CMOD_SANDBOX) && !(ea.argt & EX_SBOXOK)),
              "%s", "Command cannot be run in sandbox", {
       goto end;
     });
@@ -740,7 +739,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
 
   // Finally, build the command line string that will be stored inside ea.cmdlinep.
   // This also sets the values of ea.cmd, ea.arg, ea.args and ea.arglens.
-  build_cmdline_str(&cmdline, &ea, &cmdinfo, args);
+  build_cmdline_str(&cmdline, &ea, &cmod, args);
   ea.cmdlinep = &cmdline;
 
   // Check for "++opt=val" argument.
@@ -778,7 +777,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
     }
 
     WITH_SCRIPT_CONTEXT(channel_id, {
-      execute_cmd(&ea, &cmdinfo, false);
+      execute_cmd(&ea, &cmod, false);
     });
 
     if (opts->output) {
@@ -835,32 +834,31 @@ static bool string_iswhite(String str)
 }
 
 /// Build cmdline string for command, used by `nvim_cmd()`.
-static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdinfo,
-                              ArrayOf(String) args)
+static void build_cmdline_str(char **cmdlinep, exarg_T *eap, cmdmod_T *cmod, ArrayOf(String) args)
 {
   size_t argc = args.size;
   StringBuilder cmdline = KV_INITIAL_VALUE;
   kv_resize(cmdline, 32);  // Make it big enough to handle most typical commands
 
   // Add command modifiers
-  if (cmdinfo->cmdmod.cmod_tab != 0) {
-    kv_printf(cmdline, "%dtab ", cmdinfo->cmdmod.cmod_tab - 1);
+  if (cmod->cmod_tab != 0) {
+    kv_printf(cmdline, "%dtab ", cmod->cmod_tab - 1);
   }
-  if (cmdinfo->cmdmod.cmod_verbose > 0) {
-    kv_printf(cmdline, "%dverbose ", cmdinfo->cmdmod.cmod_verbose - 1);
+  if (cmod->cmod_verbose > 0) {
+    kv_printf(cmdline, "%dverbose ", cmod->cmod_verbose - 1);
   }
 
-  if (cmdinfo->cmdmod.cmod_flags & CMOD_ERRSILENT) {
+  if (cmod->cmod_flags & CMOD_ERRSILENT) {
     kv_concat(cmdline, "silent! ");
-  } else if (cmdinfo->cmdmod.cmod_flags & CMOD_SILENT) {
+  } else if (cmod->cmod_flags & CMOD_SILENT) {
     kv_concat(cmdline, "silent ");
   }
 
-  if (cmdinfo->cmdmod.cmod_flags & CMOD_UNSILENT) {
+  if (cmod->cmod_flags & CMOD_UNSILENT) {
     kv_concat(cmdline, "unsilent ");
   }
 
-  switch (cmdinfo->cmdmod.cmod_split & (WSP_ABOVE | WSP_BELOW | WSP_TOP | WSP_BOT)) {
+  switch (cmod->cmod_split & (WSP_ABOVE | WSP_BELOW | WSP_TOP | WSP_BOT)) {
   case WSP_ABOVE:
     kv_concat(cmdline, "aboveleft ");
     break;
@@ -884,19 +882,19 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
     } \
   } while (0)
 
-  CMDLINE_APPEND_IF(cmdinfo->cmdmod.cmod_split & WSP_VERT, "vertical ");
-  CMDLINE_APPEND_IF(cmdinfo->cmdmod.cmod_split & WSP_HOR, "horizontal ");
-  CMDLINE_APPEND_IF(cmdinfo->cmdmod.cmod_flags & CMOD_SANDBOX, "sandbox ");
-  CMDLINE_APPEND_IF(cmdinfo->cmdmod.cmod_flags & CMOD_NOAUTOCMD, "noautocmd ");
-  CMDLINE_APPEND_IF(cmdinfo->cmdmod.cmod_flags & CMOD_BROWSE, "browse ");
-  CMDLINE_APPEND_IF(cmdinfo->cmdmod.cmod_flags & CMOD_CONFIRM, "confirm ");
-  CMDLINE_APPEND_IF(cmdinfo->cmdmod.cmod_flags & CMOD_HIDE, "hide ");
-  CMDLINE_APPEND_IF(cmdinfo->cmdmod.cmod_flags & CMOD_KEEPALT, "keepalt ");
-  CMDLINE_APPEND_IF(cmdinfo->cmdmod.cmod_flags & CMOD_KEEPJUMPS, "keepjumps ");
-  CMDLINE_APPEND_IF(cmdinfo->cmdmod.cmod_flags & CMOD_KEEPMARKS, "keepmarks ");
-  CMDLINE_APPEND_IF(cmdinfo->cmdmod.cmod_flags & CMOD_KEEPPATTERNS, "keeppatterns ");
-  CMDLINE_APPEND_IF(cmdinfo->cmdmod.cmod_flags & CMOD_LOCKMARKS, "lockmarks ");
-  CMDLINE_APPEND_IF(cmdinfo->cmdmod.cmod_flags & CMOD_NOSWAPFILE, "noswapfile ");
+  CMDLINE_APPEND_IF(cmod->cmod_split & WSP_VERT, "vertical ");
+  CMDLINE_APPEND_IF(cmod->cmod_split & WSP_HOR, "horizontal ");
+  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_SANDBOX, "sandbox ");
+  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_NOAUTOCMD, "noautocmd ");
+  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_BROWSE, "browse ");
+  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_CONFIRM, "confirm ");
+  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_HIDE, "hide ");
+  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_KEEPALT, "keepalt ");
+  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_KEEPJUMPS, "keepjumps ");
+  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_KEEPMARKS, "keepmarks ");
+  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_KEEPPATTERNS, "keeppatterns ");
+  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_LOCKMARKS, "lockmarks ");
+  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_NOSWAPFILE, "noswapfile ");
 #undef CMDLINE_APPEND_IF
 
   // Command range / count.

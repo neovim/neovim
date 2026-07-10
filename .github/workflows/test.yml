@@ -30,13 +30,47 @@ env:
   # TEST_FILTER: foo
 
 jobs:
+  lintc:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      NVIM_LOG_FILE: ${{ github.workspace }}/zig-out/nvim.log
+      OPTS: -Doptimize=ReleaseFast -Dci-build
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup
+
+      - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+        with:
+          version: 0.16.0
+      - run: sudo apt-get install -y inotify-tools
+
+      - name: nvim_bin
+        id: nvim_bin
+        run: zig build nvim_bin $OPTS
+
+      - if: success() || failure() && steps.nvim_bin.outcome == 'success'
+        name: clint.lua
+        run: zig build lintc-clint $OPTS
+
+      - if: success() || failure() && steps.nvim_bin.outcome == 'success'
+        name: clang-tidy
+        run: zig build lintc-clang-tidy $OPTS
+
+      - if: success() || failure() && steps.nvim_bin.outcome == 'success'
+        name: uncrustify
+        run: zig build lintc-uncrustify $OPTS
+
   lint:
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 10
     env:
       CC: clang
     steps:
-      - uses: actions/checkout@v7.0.0
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -82,25 +116,13 @@ jobs:
         name: lintquery
         run: cmake --build build --target lintquery
 
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: clint.lua
-        run: cmake --build build --target lintc-clint
-
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: clang-tidy
-        run: cmake --build build --target lintc-clang-tidy
-
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: uncrustify
-        run: cmake --build build --target lintc-uncrustify
-
   clang-analyzer:
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 20
     env:
       CC: clang
     steps:
-      - uses: actions/checkout@v7.0.0
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -148,7 +170,7 @@ jobs:
       CC: ${{ matrix.build.cc }}
       NVIM_TEST_INTEG: ${{ matrix.build.flavor == 'release' && '1' || '0' }}
     steps:
-      - uses: actions/checkout@v7.0.0
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -250,7 +272,7 @@ jobs:
       # NB: tests assume there is a chosen install path, but nothing needs to be actually installed
       OPTS: -Doptimize=ReleaseSafe -Dinstall-path=/usr/
     steps:
-      - uses: actions/checkout@v7.0.0
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -278,7 +300,7 @@ jobs:
     env:
       OPTS: -Dinstall-path=/usr/
     steps:
-      - uses: actions/checkout@v7.0.0
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -297,7 +319,7 @@ jobs:
     timeout-minutes: 45
     name: build using zig build (windows)
     steps:
-      - uses: actions/checkout@v7.0.0
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -321,7 +343,7 @@ jobs:
     env:
       CC: gcc
     steps:
-      - uses: actions/checkout@v7.0.0
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 

@@ -345,6 +345,43 @@ describe('vim._with', function()
     end)
   end)
 
+  describe('`cwd` context', function()
+    it('works', function()
+      local out = exec_lua [[
+        local cwd = vim.uv.cwd()
+        local temp_cwd = vim.fs.joinpath(cwd, 'test')
+        local test_cwd
+        vim._with({ cwd = temp_cwd }, function() test_cwd = vim.uv.cwd() end)
+        -- Use `fs_realpath` to resolve symlinks from how tests are set up
+        return { vim.uv.cwd() == cwd, vim.uv.fs_realpath(test_cwd) == vim.uv.fs_realpath(temp_cwd) }
+      ]]
+      eq({ true, true }, out)
+    end)
+
+    it('can be nested', function()
+      local out = exec_lua [[
+        local cwd = vim.uv.cwd()
+        local temp_cwd = vim.fs.joinpath(cwd, 'test')
+        local temp_cwd2 = vim.fs.joinpath(cwd, 'src')
+        local test_cwd_before, test_cwd, test_cwd_after
+        vim._with({ cwd = temp_cwd }, function()
+          test_cwd_before = vim.uv.cwd()
+          vim._with({ cwd = temp_cwd2 }, function()
+            test_cwd = vim.uv.cwd()
+          end)
+          test_cwd_after = vim.uv.cwd()
+        end)
+        return {
+          vim.uv.cwd() == cwd,
+          vim.uv.fs_realpath(test_cwd_before) == vim.uv.fs_realpath(temp_cwd),
+          vim.uv.fs_realpath(test_cwd) == vim.uv.fs_realpath(temp_cwd2),
+          vim.uv.fs_realpath(test_cwd_after) == vim.uv.fs_realpath(temp_cwd),
+        }
+      ]]
+      eq({ true, true, true, true }, out)
+    end)
+  end)
+
   describe('`emsg_silent` context', function()
     pending('works', function()
       local ok = pcall(

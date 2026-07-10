@@ -348,7 +348,12 @@ describe('TUI :restart', function()
   end)
 
   it('ZR', function()
-    -- Just exercise ZR, don't need to test all :restart! functionality here.
+    -- Just exercise ZR, don't need to test all :restart functionality here.
+    local file = 'Xtest-restart-file'
+    write_file(file, 'foo')
+    finally(function()
+      os.remove(file)
+    end)
     local server_pipe = new_pipename()
     local server_session
     finally(function()
@@ -371,18 +376,30 @@ describe('TUI :restart', function()
     finally(function()
       os.remove(testlog)
     end)
-    screen:expect({ any = '%[No Name%]' })
+    feed_data(':edit ' .. file .. '\r')
+    screen:expect({ any = 'foo' })
 
     server_session = n.connect(server_pipe)
     local _, starttime = server_session:request('nvim_eval', 'v:starttime')
+
+    -- ZR preserves screen state
+    tt.feed_data('ZR')
+    starttime, server_session = assert_restarted(starttime, server_session, server_pipe)
+    screen:expect({ any = 'foo' })
+
+    -- [1-8]ZR does not preserve screen state
+    tt.feed_data('1ZR')
+    screen:expect({ any = vim.pesc('[No Name]'), none = 'foo' })
 
     -- ZR on modified buffer fails with E37.
     tt.feed_data('ifoo\027')
     tt.feed_data('ZR')
     screen:expect({ any = 'E37:' })
-
-    -- [count]ZR discards unsaved changes.
     tt.feed_data('1ZR')
+    screen:expect({ any = 'E37:' })
+
+    -- [9]ZR discards unsaved changes.
+    tt.feed_data('9ZR')
     screen:expect({ any = vim.pesc('[No Name]') })
     starttime, server_session = assert_restarted(starttime, server_session, server_pipe)
 

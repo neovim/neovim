@@ -7944,7 +7944,7 @@ M.funcs = {
     signature = 'mkdir({name} [, {flags} [, {prot}]])',
     tags = { 'E739' },
     see_lua = {
-      '|uv.fs_mkdir()| for simple directory creation; `"p"`, `"D"`, `"R"`, and return semantics differ',
+      '|vim.fs.mkdir()|; `"D"`, `"R"`, and return semantics differ',
     },
   },
   mode = {

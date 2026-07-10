@@ -3767,6 +3767,24 @@ describe('API/win', function()
   end)
 
   describe('nvim_win_call', function()
+    it('restores prevwin', function()
+      local w1 = api.nvim_get_current_win()
+      command('split')
+      local w2 = api.nvim_get_current_win()
+      command('split')
+      local w3 = api.nvim_get_current_win()
+      -- Entry state: curwin=w3, prevwin=w2.
+      eq(w2, fn.win_getid(fn.winnr('#')))
+      exec_lua(function()
+        vim.api.nvim_win_call(w1, function()
+          vim.api.nvim_set_current_win(w2) -- changes prevwin to w1
+        end)
+      end)
+      -- No evidence of the context-switch; curwin/prevwin are restored.
+      eq(w3, api.nvim_get_current_win())
+      eq(w2, fn.win_getid(fn.winnr('#')))
+    end)
+
     it('supports multiple returns', function()
       local cur = api.nvim_get_current_win()
       local other = api.nvim_open_win(api.nvim_create_buf(false, true), false, { split = 'left' })

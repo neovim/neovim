@@ -405,13 +405,16 @@ function M.on_refresh(err, _, ctx)
   end
   if client:supports_method('workspace/diagnostic') then
     M._workspace_diagnostics({ client_id = ctx.client_id })
-  else
-    for bufnr in pairs(client.attached_buffers or {}) do
-      local provider = Diagnostics.active[bufnr]
-      local state = provider and provider.client_state[ctx.client_id]
-      if state and state.pull_kind == 'document' then
-        provider:refresh(ctx.client_id)
-      end
+  end
+
+  -- Always refresh document-pull buffers. Workspace diagnostics only cover
+  -- buffers with pull_kind == 'workspace', so open buffers must be refreshed
+  -- individually or their diagnostics go stale until the next didChange.
+  for bufnr in pairs(client.attached_buffers or {}) do
+    local provider = Diagnostics.active[bufnr]
+    local state = provider and provider.client_state[ctx.client_id]
+    if state and state.pull_kind == 'document' then
+      provider:refresh(ctx.client_id)
     end
   end
 

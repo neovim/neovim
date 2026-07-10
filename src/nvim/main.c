@@ -33,6 +33,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/channel.h"
 #include "nvim/channel_defs.h"
+#include "nvim/context.h"
 #include "nvim/decoration.h"
 #include "nvim/decoration_provider.h"
 #include "nvim/diff.h"

@@ -90,6 +90,7 @@ EDITOR
   • Expr-register (|i_CTRL-R_=|, |c_CTRL-R_=|) no longer supports opening
     cmdwin via |c_CTRL-F|.
 • Behavior of |:restart| changed. Use "!" (|:restart!|) to get the old behavior.
+  • |ZR| now performs |:restart|. Add a count to change the behavior.
 
 EVENTS
 
@@ -200,7 +201,7 @@ EDITOR
 • |:log| opens log files.
 • |:restart| saves/restores the current session (window layout, buffers, …).
   • |:restart!| (with a bang "!") does not save/restore the session.
-• |ZR| restarts Nvim (|:restart!|).
+• |ZR| restarts Nvim (|:restart|).
 • |:uptime| displays uptime.
 • |:packupdate| and |:packdel| for managing |vim.pack|.
 • 'scrollback' is now also valid in |prompt-buffer| buffers to limit the
@@ -259,6 +260,8 @@ LUA
 • |vim.fs.dir()| with `opts.err=true`, reports errors. An inaccessible root
   dir yields a single (name, nil, err) item.
 • |vim.fs.find()| returns a list of errors as its second return value.
+• |vim.fs.mkdir()| creates directories, including parent directories with
+  `opts.parents=true`.
 • |vim.filetype.inspect()| returns a copy of the internal tables used for
   filetype detection.
 • Added `__eq` metamethod to |vim.VersionRange|. 2 distinct but representing
@@ -291,6 +294,7 @@ OPTIONS
   The same applies to 'rulerformat', 'statuscolumn', 'tabline', 'winbar',
   'titlestring', and 'iconstring'.
 • 'winpinned' prevents window from closing unless specifically targeted.
+• 'packlockfile' sets the path used for |vim.pack-lockfile|.
 
 PERFORMANCE
 

@@ -140,6 +140,10 @@ struct exarg {
   LineGetter ea_getline;        ///< function used to get the next line
   void *cookie;                 ///< argument for ea_getline()
   cstack_T *cstack;             ///< condition stack for ":if" etc.
+  struct {                      ///< special char handling in command args
+    bool file;
+    bool bar;
+  } magic;
 };
 
 #define FORCE_BIN 1             // ":edit ++bin file"
@@ -189,15 +193,6 @@ typedef struct {
   int cmod_save_msg_scroll;  ///< for restoring msg_scroll
   int cmod_did_esilent;  ///< incremented when emsg_silent is
 } cmdmod_T;
-
-/// Stores command modifier info used by `nvim_parse_cmd`
-typedef struct {
-  cmdmod_T cmdmod;
-  struct {
-    bool file;
-    bool bar;
-  } magic;
-} CmdParseInfo;
 
 /// Previous :substitute replacement string definition
 typedef struct {

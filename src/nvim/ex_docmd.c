@@ -31,6 +31,7 @@
 #include "nvim/clipboard.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/cmdexpand_defs.h"
+#include "nvim/context.h"
 #include "nvim/cursor.h"
 #include "nvim/debugger.h"
 #include "nvim/digraph.h"
@@ -1536,11 +1537,11 @@ bool cmd_has_expr_args(cmdidx_T cmdidx)
 ///
 /// @param cmdline Command line string
 /// @param[out] eap Ex command arguments
-/// @param[out] cmdinfo Command parse information
+/// @param[out] cmod Command modifiers
 /// @param[out] errormsg Error message, if any
 ///
 /// @return Success or failure
-bool parse_cmdline(char **cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const char **errormsg)
+bool parse_cmdline(char **cmdline, exarg_T *eap, cmdmod_T *cmod, const char **errormsg)
 {
   char *after_modifier = NULL;
   bool retval = false;
@@ -1551,8 +1552,8 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const ch
   // parsing the command range may set the last search pattern
   save_last_search_pattern();
 
-  // Initialize cmdinfo
-  CLEAR_POINTER(cmdinfo);
+  // Initialize cmod
+  CLEAR_POINTER(cmod);
 
   // Initialize eap
   *eap = (exarg_T){
@@ -1566,7 +1567,7 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const ch
 
   char *orig_cmd = eap->cmd;
   // If parse command modifiers failed but modifiers were passed, continue
-  int result = parse_command_modifiers(eap, errormsg, &cmdinfo->cmdmod, false);
+  int result = parse_command_modifiers(eap, errormsg, cmod, false);
   after_modifier = eap->cmd;
   if (result == FAIL && after_modifier == orig_cmd) {
     goto end;
@@ -1685,17 +1686,13 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const ch
   }
 
   // Set the "magic" values (characters that get treated specially)
-  if (eap->argt & EX_XFILE) {
-    cmdinfo->magic.file = true;
-  }
-  if (eap->argt & EX_TRLBAR) {
-    cmdinfo->magic.bar = true;
-  }
+  eap->magic.file = eap->argt & EX_XFILE;
+  eap->magic.bar = eap->argt & EX_TRLBAR;
 
   retval = true;
 end:
   if (!retval) {
-    undo_cmdmod(&cmdinfo->cmdmod);
+    undo_cmdmod(cmod);
   }
   ex_pressedreturn = save_ex_pressedreturn;
   curwin->w_cursor = save_cursor;
@@ -1806,9 +1803,9 @@ static int execute_cmd0(int *retv, exarg_T *eap, const char **errormsg, bool pre
 /// Does not do any validation of the Ex command arguments.
 ///
 /// @param eap Ex-command arguments
-/// @param cmdinfo Command parse information
+/// @param cmod Command modifiers
 /// @param preview Execute command preview callback instead of actual command
-int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
+int execute_cmd(exarg_T *eap, cmdmod_T *cmod, bool preview)
 {
   int retv = 0;
   if (do_cmdline_start() == FAIL) {
@@ -1819,7 +1816,7 @@ int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
   const char *errormsg = NULL;
 
   cmdmod_T save_cmdmod = cmdmod;
-  cmdmod = cmdinfo->cmdmod;
+  cmdmod = *cmod;
 
   // Apply command modifiers
   apply_cmdmod(&cmdmod);
@@ -5272,7 +5269,7 @@ static void ex_pclose(exarg_T *eap)
 void ex_win_close(int forceit, win_T *win, tabpage_T *tp)
 {
   // Never close the autocommand window.
-  if (is_aucmd_win(win)) {
+  if (is_ctx_win(win)) {
     emsg(_(e_autocmd_close));
     return;
   }

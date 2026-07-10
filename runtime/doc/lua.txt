@@ -2752,6 +2752,20 @@ vim.fs.joinpath({...})                                     *vim.fs.joinpath()*
     Return: ~
         (`string`)
 
+vim.fs.mkdir({path}, {opts})                                  *vim.fs.mkdir()*
+    Creates a directory.
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Parameters: ~
+      • {path}  (`string`) Path to create (not expanded/resolved).
+      • {opts}  (`table?`) Optional keyword arguments.
+                • {mode}? (`integer`, default: `493`) Permission bits for
+                  newly-created directories.
+                • {parents}? (`boolean`, default: `false`) Create intermediate
+                  directories as necessary.
+
 vim.fs.normalize({path}, {opts})                          *vim.fs.normalize()*
     Normalize a path to a standard format. A tilde (~) character at the
     beginning of the path is expanded to the user's home directory and
@@ -3944,14 +3958,14 @@ new({opts})                                                    *vim.log.new()*
 
     Parameters: ~
       • {opts}  (`table`) A table with the following fields:
-                • {current_level}? (`vim.log.levels`, default:
-                  `vim.log.levels.WARN`) Minimum level that will be written.
                 • {format_func}?
-                  (`fun(current_level: vim.log.levels, level: vim.log.levels, ...): string?`)
+                  (`fun(min_level: vim.log.levels, level: vim.log.levels, ...): string?`)
                   Formatter used for each log entry. Receives the logger's
-                  current level, the message level, and the values passed to
+                  minimum level, the message level, and the values passed to
                   the writer. Return a string to write an entry, or `nil` to
                   skip it.
+                • {level}? (`vim.log.levels`, default: `vim.log.levels.WARN`)
+                  Minimum level that will be written.
                 • {name} (`string`) Display name used in notifications emitted
                   by the logger.
 
@@ -3961,13 +3975,13 @@ new({opts})                                                    *vim.log.new()*
 set_format_func({log}, {func})                     *vim.log.set_format_func()*
     Sets the formatter used to produce log entries.
 
-    The formatter receives the logger's current level, the message level, and
+    The formatter receives the logger's minimum level, the message level, and
     the values passed to the writer method. Return a string to write an entry,
     or `nil` to skip it.
 
     Parameters: ~
       • {log}   (`vim.Log`) See |vim.Log|.
-      • {func}  (`fun(current_level: vim.log.levels, level: vim.log.levels, ...): string?`)
+      • {func}  (`fun(min_level: vim.log.levels, level: vim.log.levels, ...): string?`)
 
 set_level({log}, {level})                                *vim.log.set_level()*
     Sets the current log level.

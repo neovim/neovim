@@ -551,7 +551,7 @@ function Screen:expect(expected, attr_ids, ...)
     end
 
     local actual_rows
-    if expected.any or grid then
+    if expected.any or expected.none or grid then
       actual_rows = self:render(not (expected.any or expected.none), attr_state)
     end
 
