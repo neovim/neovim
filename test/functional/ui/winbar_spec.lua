@@ -631,11 +631,11 @@ describe('global winbar with tabs', function()
   it('updates hidden tabs when enabled #28641', function()
     command('tabnew')
     command('tabprev')
-    command('set winbar=%f%m')
+    command('set winbar=my-winbar')
     command('tabnext')
     screen:expect([[
       {24: [No Name] }{5: [No Name] }{2:                                     }{24:X}|
-      {5:[No Name]                                                   }|
+      {5:my-winbar                                                   }|
       ^                                                            |
       {1:~                                                           }|*6
                                                                   |
@@ -644,7 +644,7 @@ describe('global winbar with tabs', function()
   end)
 
   it('updates hidden tabs when disabled #28641', function()
-    command('setglobal winbar=%f%m')
+    command('setglobal winbar=my-winbar')
     command('tabnew')
     command('tabprev')
     command('setglobal winbar=')
