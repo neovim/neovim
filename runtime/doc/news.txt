@@ -281,6 +281,7 @@ LUA
 • |vim.pack.get()| output includes revision of a pending update.
 • |vim.pack.get()| can fetch new updates before computing the output.
 • |vim.o| now accepts table style values for assignment.
+• Generic JSON-RPC client/server implementation: |json-rpc|.
 
 OPTIONS
 
