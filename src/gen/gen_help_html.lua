@@ -947,11 +947,11 @@ local function ts_node_to_typ(root, level, lang_tree, headings, opt, stats)
     if root:has_error() then
       return text
     end
-    -- TODO column_heading can be either:
+    -- column_heading can be either:
     -- * Some sort of title (see usr_toc.txt)
     -- * Some example text (see usr_02.txt)
-    -- So what do we do with that?
-    return ('%s\n'):format(text)
+    -- TODO this doesn't work in the second case
+    return ('\n==== %s \\ \n'):format(text)
   elseif node_name == 'block' then
     if is_blank(text) then
       return ''
@@ -1114,7 +1114,7 @@ local function ts_node_to_typ(root, level, lang_tree, headings, opt, stats)
       return (' #h(1fr) %s'):format(s)
     end
     return s
-    -- Probably needed - check the equivalent after seeing a mushing example
+    -- TODO Probably needed - check the equivalent after seeing a mushing example
     -- return s .. (h4 and '<br>' or '') -- HACK: <br> avoids h4 pseudo-heading mushing with text.
   elseif node_name == 'delimiter' or node_name == 'modeline' then
     return ''
