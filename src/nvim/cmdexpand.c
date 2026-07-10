@@ -2122,11 +2122,11 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
   case CMD_dsplit:
     return find_cmd_after_isearch_cmd(xp, arg);
   case CMD_autocmd:
-    return set_context_in_autocmd(xp, (char *)arg, false);
+    return aucmd_set_expand_context(xp, (char *)arg, false);
 
   case CMD_doautocmd:
   case CMD_doautoall:
-    return set_context_in_autocmd(xp, (char *)arg, true);
+    return aucmd_set_expand_context(xp, (char *)arg, true);
   case CMD_set:
     set_context_in_set_cmd(xp, (char *)arg, 0);
     break;

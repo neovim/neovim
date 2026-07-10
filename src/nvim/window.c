@@ -15,6 +15,7 @@
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
+#include "nvim/context.h"
 #include "nvim/cursor.h"
 #include "nvim/decoration.h"
 #include "nvim/diff.h"
@@ -805,14 +806,14 @@ void win_set_buf(win_T *win, buf_T *buf, Error *err)
     win_result = switch_win_noblock(&switchwin, win, tab, true);
     if (win_result != FAIL) {
       const int save_acd = p_acd;
-      if (!switchwin.sw_same_win) {
+      if (!switchwin.cs_same_win) {
         // Temporarily disable 'autochdir' when setting buffer in another window.
         p_acd = false;
       }
 
       do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->b_fnum, 0);
 
-      if (!switchwin.sw_same_win) {
+      if (!switchwin.cs_same_win) {
         p_acd = save_acd;
       }
     }
@@ -1136,8 +1137,8 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
 {
   win_T *wp = new_wp;
 
-  // aucmd_win[] should always remain floating
-  if (new_wp != NULL && is_aucmd_win(new_wp)) {
+  // ctx_win[] should always remain floating
+  if (new_wp != NULL && is_ctx_win(new_wp)) {
     return NULL;
   }
 
@@ -1616,7 +1617,7 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
   // equalize the window sizes.
   if (do_equal || dir != 0) {
     win_equal(wp, true, vertical ? (dir == 'v' ? 'b' : 'h') : (dir == 'h' ? 'b' : 'v'));
-  } else if (!is_aucmd_win(wp)) {
+  } else if (!is_ctx_win(wp)) {
     win_fix_scroll(false);
   }
 
@@ -2049,7 +2050,7 @@ int win_splitmove(win_T *wp, int size, int flags)
   if (one_window(wp, NULL)) {
     return OK;  // nothing to do
   }
-  if (is_aucmd_win(wp) || check_split_disallowed(wp) == FAIL) {
+  if (is_ctx_win(wp) || check_split_disallowed(wp) == FAIL) {
     return FAIL;
   }
 
@@ -2204,7 +2205,7 @@ void win_equal(win_T *next_curwin, bool current, int dir)
   win_equal_rec(next_curwin == NULL ? curwin : next_curwin, current,
                 topframe, dir, 0, tabline_height(),
                 Columns, topframe->fr_height);
-  if (!is_aucmd_win(next_curwin)) {
+  if (!is_ctx_win(next_curwin)) {
     win_fix_scroll(true);
   }
 }
@@ -2499,7 +2500,7 @@ void leaving_window(win_T *const win)
   // Only matters for a prompt window.
   // Don't do mode changes for a prompt buffer in an autocommand window, as
   // it's only used temporarily during an autocommand.
-  if (!bt_prompt(win->w_buffer) || is_aucmd_win(win)) {
+  if (!bt_prompt(win->w_buffer) || is_ctx_win(win)) {
     return;
   }
 
@@ -2528,7 +2529,7 @@ void entering_window(win_T *const win)
   // Only matters for a prompt window.
   // Don't do mode changes for a prompt buffer in an autocommand window, as
   // it's only used temporarily during an autocommand.
-  if (!bt_prompt(win->w_buffer) || is_aucmd_win(win)) {
+  if (!bt_prompt(win->w_buffer) || is_ctx_win(win)) {
     return;
   }
 
@@ -2579,7 +2580,7 @@ void close_windows(buf_T *buf, bool keep_curwin)
 
   // Start from lastwin to close floating windows with the same buffer first.
   // When the autocommand window is involved win_close() may need to print an error message.
-  for (win_T *wp = lastwin; wp != NULL && (is_aucmd_win(lastwin) || !one_window(wp, NULL));) {
+  for (win_T *wp = lastwin; wp != NULL && (is_ctx_win(lastwin) || !one_window(wp, NULL));) {
     if (wp->w_buffer == buf && (!keep_curwin || wp != curwin)
         && !(win_locked(wp) || wp->w_buffer->b_locked > 0)) {
       if (window_layout_locked(CMD_SIZE)) {
@@ -2653,7 +2654,7 @@ bool one_window(win_T *win, tabpage_T *tp)
 /// @return true if all floating windows can be closed
 static bool can_close_floating_windows(tabpage_T *tp)
 {
-  assert(tp != curtab && (tp || !is_aucmd_win(lastwin)));
+  assert(tp != curtab && (tp || !is_ctx_win(lastwin)));
   for (win_T *wp = tp ? tp->tp_lastwin : lastwin; wp->w_floating; wp = wp->w_prev) {
     buf_T *buf = wp->w_buffer;
     int need_hide = (bufIsChanged(buf) && buf->b_nwindows <= 1);
@@ -2798,12 +2799,12 @@ int win_close(win_T *win, bool free_buf, bool force)
       || (win->w_buffer != NULL && win->w_buffer->b_locked > 0)) {
     return FAIL;     // window is already being closed
   }
-  if (is_aucmd_win(win)) {
+  if (is_ctx_win(win)) {
     emsg(_(e_autocmd_close));
     return FAIL;
   }
   if (lastwin->w_floating && one_window(win, NULL)) {
-    if (is_aucmd_win(lastwin)) {
+    if (is_ctx_win(lastwin)) {
       emsg(_("E814: Cannot close window, only autocmd window would remain"));
       return FAIL;
     }
@@ -3166,7 +3167,7 @@ bool win_close_othertab(win_T *win, int free_buf, tabpage_T *tp, bool force)
       || (win->w_buffer != NULL && win->w_buffer->b_locked > 0)) {
     return false;  // window is already being closed
   }
-  if (is_aucmd_win(win)) {
+  if (is_ctx_win(win)) {
     emsg(_(e_autocmd_close));
     return false;
   }
@@ -3348,22 +3349,22 @@ void win_free_all(void)
     win_remove(lastwin, NULL);
     int dummy;
     win_free_mem(wp, &dummy, NULL);
-    for (int i = 0; i < AUCMD_WIN_COUNT; i++) {
-      if (aucmd_win[i].auc_win == wp) {
-        aucmd_win[i].auc_win = NULL;
+    for (int i = 0; i < CTX_WIN_COUNT; i++) {
+      if (ctx_win[i].cw_win == wp) {
+        ctx_win[i].cw_win = NULL;
       }
     }
   }
 
-  for (int i = 0; i < AUCMD_WIN_COUNT; i++) {
-    if (aucmd_win[i].auc_win != NULL) {
+  for (int i = 0; i < CTX_WIN_COUNT; i++) {
+    if (ctx_win[i].cw_win != NULL) {
       int dummy;
-      win_free_mem(aucmd_win[i].auc_win, &dummy, NULL);
-      aucmd_win[i].auc_win = NULL;
+      win_free_mem(ctx_win[i].cw_win, &dummy, NULL);
+      ctx_win[i].cw_win = NULL;
     }
   }
 
-  kv_destroy(aucmd_win_vec);
+  kv_destroy(ctx_win_vec);
 
   while (firstwin != NULL) {
     int dummy;
@@ -4336,9 +4337,9 @@ void win_alloc_first(void)
   unuse_tabpage(first_tabpage);
 }
 
-// Init `aucmd_win[idx]`. This can only be done after the first window
+// Init `ctx_win[idx]`. This can only be done after the first window
 // is fully initialized, thus it can't be in win_alloc_first().
-void win_alloc_aucmd_win(int idx)
+void win_alloc_ctx_win(int idx)
 {
   Error err = ERROR_INIT;
   WinConfig fconfig = WIN_CONFIG_INIT;
@@ -4347,9 +4348,9 @@ void win_alloc_aucmd_win(int idx)
   fconfig.focusable = false;
   fconfig.mouse = false;
   fconfig.hide = true;
-  aucmd_win[idx].auc_win = win_new_float(NULL, true, fconfig, &err);
-  aucmd_win[idx].auc_win->w_buffer->b_nwindows--;
-  RESET_BINDING(aucmd_win[idx].auc_win);
+  ctx_win[idx].cw_win = win_new_float(NULL, true, fconfig, &err);
+  ctx_win[idx].cw_win->w_buffer->b_nwindows--;
+  RESET_BINDING(ctx_win[idx].cw_win);
 }
 
 // Allocate the first window or the first window in a new tab page.
@@ -7413,7 +7414,7 @@ int min_rows_for_all_tabpages(void)
 
 /// Check that there is only one window (and only one tab page), not counting a
 /// help or preview window, unless it is the current window. Does not count
-/// "aucmd_win". Does not count floats unless it is current.
+/// "ctx_win". Does not count floats unless it is current.
 bool only_one_window(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // If there is another tab page there always is another window.
@@ -7425,7 +7426,7 @@ bool only_one_window(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_buffer != NULL
         && (!((bt_help(wp->w_buffer) && !bt_help(curbuf)) || wp->w_floating
-              || wp->w_p_pvw) || wp == curwin) && !is_aucmd_win(wp)) {
+              || wp->w_p_pvw) || wp == curwin) && !is_ctx_win(wp)) {
       count++;
     }
   }

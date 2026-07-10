@@ -5,23 +5,10 @@
 #include <stdint.h>
 
 #include "nvim/buffer_defs.h"
+#include "nvim/context_defs.h"  // IWYU pragma: keep (aco_save_T)
 #include "nvim/ex_cmds_defs.h"
 
 #include "auevents_enum.generated.h"
-
-/// Struct to save values in before executing autocommands for a buffer that is
-/// not the current buffer.
-typedef struct {
-  int use_aucmd_win_idx;          ///< index in aucmd_win[] if >= 0
-  handle_T save_curwin_handle;    ///< ID of saved curwin
-  handle_T new_curwin_handle;     ///< ID of new curwin
-  handle_T save_prevwin_handle;   ///< ID of saved prevwin
-  bufref_T new_curbuf;            ///< new curbuf
-  char *tp_localdir;              ///< saved value of tp_localdir
-  char *globaldir;                ///< saved value of globaldir
-  bool save_VIsual_active;        ///< saved VIsual_active
-  int save_prompt_insert;         ///< saved b_prompt_insert
-} aco_save_T;
 
 typedef struct {
   size_t refcount;          ///< Reference count (freed when reaches zero)

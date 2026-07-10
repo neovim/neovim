@@ -22,6 +22,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/buffer_updates.h"
 #include "nvim/change.h"
+#include "nvim/context.h"
 #include "nvim/cursor.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/extmark.h"
@@ -1221,13 +1222,13 @@ Object nvim_buf_call(Buffer buf, LuaRef fn, lua_State *lstate, Error *err)
   }
 
   TRY_WRAP(err, {
-    aco_save_T aco = { 0 };
-    aucmd_prepbuf(&aco, b);
+    CtxSwitch cs = { 0 };
+    ctx_switch(&cs, NULL, NULL, b, 0);
 
     Array args = ARRAY_DICT_INIT;
     nlua_call_ref(fn, NULL, args, kRetMultiStack, NULL, err);
 
-    aucmd_restbuf(&aco);
+    ctx_restore(&cs);
   });
 
   return NIL;  // kRetMultiStack: values are already on the lua stack

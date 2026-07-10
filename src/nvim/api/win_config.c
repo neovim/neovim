@@ -16,6 +16,7 @@
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
+#include "nvim/context.h"
 #include "nvim/decoration_defs.h"
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
@@ -403,7 +404,7 @@ static bool win_can_move_tp(win_T *wp, tabpage_T *tp, Error *err)
     api_set_error(err, kErrorTypeException, "%s", e_textlock);
     return false;
   }
-  if (is_aucmd_win(wp)) {
+  if (is_ctx_win(wp)) {
     api_set_error(err, kErrorTypeException, "Cannot move autocmd window to another tabpage");
     return false;
   }
