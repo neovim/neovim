@@ -341,7 +341,7 @@ static void ctx_cwd_restore(CtxSwitch *cs)
   XFREE_CLEAR(cs->cs_cwd);
 }
 
-/// Return true if "win" is an active entry in ctx_win[] (the pool of temporary scratch windows).
+/// Return true if `win` is an active entry in ctx_win[] (the pool of temporary scratch windows).
 bool is_ctx_win(win_T *win)
 {
   for (int i = 0; i < CTX_WIN_COUNT; i++) {
@@ -352,11 +352,12 @@ bool is_ctx_win(win_T *win)
   return false;
 }
 
-/// Prepares a temporary "autocmd window" showing `buf`: allocated (or reused) from the `ctx_win[]`
-/// pool, appended to the window list of the current tabpage, and entered, all without side effects
-/// (autocommands, chdir, redraw).  Records what ctx_restore() needs to undo it in `cs`.
+/// Prepares a temporary "autocmd window" showing `buf`: allocated/reused from the `ctx_win[]` pool
+/// and appended to the window list of curtab. Records what ctx_restore() needs to undo in `cs`.
 ///
-/// @return  the entered autocmd window (the new curwin).
+/// Window lifecycle only: does not enter the window, no side effects (autocmds, chdir, redraw).
+///
+/// @return  the prepared autocmd window.
 static win_T *ctx_win_prep(CtxSwitch *cs, buf_T *buf)
 {
   bool need_append = true;  // Append `cw_win` to the window list.
@@ -387,36 +388,26 @@ static win_T *ctx_win_prep(CtxSwitch *cs, buf_T *buf)
   buf->b_nwindows++;
   win_init_empty(cw_win);  // set cursor and topline to safe values
 
-  // Make sure w_localdir, tp_localdir and globaldir are NULL to avoid a
-  // chdir() in win_enter_ext().
+  // Make sure w_localdir, tp_localdir, globaldir are NULL: the switched-to code runs in the actual
+  // cwd (no chdir on switch), and a pooled tmp-window must not carry a stale w_localdir.
   XFREE_CLEAR(cw_win->w_localdir);
   cs->cs_tp_localdir = curtab->tp_localdir;
   curtab->tp_localdir = NULL;
   cs->cs_globaldir = globaldir;
   globaldir = NULL;
 
-  block_autocmds();  // We don't want BufEnter/WinEnter autocommands.
   if (need_append) {
     win_append(lastwin, cw_win, NULL);
     pmap_put(int)(&window_handles, cw_win->handle, cw_win);
     win_config_float(cw_win, cw_win->w_config);
   }
-  // Prevent chdir() call in win_enter_ext(), through do_autochdir()
-  const int save_acd = p_acd;
-  p_acd = false;
-  // no redrawing and don't set the window title
-  RedrawingDisabled++;
-  win_enter(cw_win, false);
-  RedrawingDisabled--;
-  p_acd = save_acd;
-  unblock_autocmds();
 
   return cw_win;
 }
 
-/// Removes the temporary "autocmd window" prepared by ctx_win_prep() from the window list (entering
-/// it first if needed), and releases its pool slot.  Caller must restore curwin (the removed window
-/// is curwin) and the directory state saved in "cs".
+/// Removes the temp win (FKA "autocmd win") prepared by ctx_win_prep() from the window list
+/// (entering it if needed), and releases its pool slot. Caller must restore curwin (the removed
+/// window is curwin) and the directory state saved in "cs".
 ///
 /// @return  the removed autocmd window.
 static win_T *ctx_win_rest(CtxSwitch *cs)
@@ -541,9 +532,12 @@ bool ctx_switch(CtxSwitch *cs, win_T *wp, tabpage_T *tp, buf_T *buf, CtxSwitchFl
 
   if (buf != NULL) {
     if (wp == NULL) {
-      // No window shows "buf": prepare an autocmd window.  Anything related to a window (e.g.,
-      // setting folds) may have unexpected results.
+      // No window shows `buf`: prepare a temp window. Anything related to a window (e.g., setting
+      // folds) may have unexpected results.
       wp = ctx_win_prep(cs, buf);
+      // Leave the window we entered "from".
+      leaving_window(curwin);
+      prevwin = curwin;
     }
     assert(win_valid(wp));
   } else if (!win_valid(wp)) {
@@ -617,7 +611,7 @@ void ctx_restore(CtxSwitch *cs)
 
     ctx_restore_curwin(cs, firstwin);
     // May need to restore insert-mode for a prompt buffer.
-    // Pairs with the win_enter()..leaving_window() from ctx_win_prep().
+    // Pairs with the leaving_window() in ctx_switch().
     entering_window(curwin);
     if (bt_prompt(curbuf)) {
       curbuf->b_prompt_insert = cs->cs_prompt_insert;

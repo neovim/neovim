@@ -2494,12 +2494,14 @@ static void win_equal_rec(win_T *next_curwin, bool current, frame_T *topfr, int 
   }
 }
 
+/// Called when `win` stops being curwin: closing, switching, or leaving its tabpage. Pairs with
+/// entering_window(). Only matters for a prompt buffer...
+///
+/// @see win_enter
 void leaving_window(win_T *const win)
   FUNC_ATTR_NONNULL_ALL
 {
-  // Only matters for a prompt window.
-  // Don't do mode changes for a prompt buffer in an autocommand window, as
-  // it's only used temporarily during an autocommand.
+  // Not for a ctx window: it shows its buffer only temporarily.
   if (!bt_prompt(win->w_buffer) || is_ctx_win(win)) {
     return;
   }
@@ -2523,12 +2525,14 @@ void leaving_window(win_T *const win)
   }
 }
 
+/// Called when `win` becomes curwin: switching to it, entering its tabpage, or ctx_restore().
+/// Pairs with leaving_window(). Only matters for a prompt buffer...
+///
+/// @see win_enter
 void entering_window(win_T *const win)
   FUNC_ATTR_NONNULL_ALL
 {
-  // Only matters for a prompt window.
-  // Don't do mode changes for a prompt buffer in an autocommand window, as
-  // it's only used temporarily during an autocommand.
+  // Not for a ctx window: it shows its buffer only temporarily.
   if (!bt_prompt(win->w_buffer) || is_ctx_win(win)) {
     return;
   }
@@ -2579,7 +2583,7 @@ void close_windows(buf_T *buf, bool keep_curwin)
   RedrawingDisabled++;
 
   // Start from lastwin to close floating windows with the same buffer first.
-  // When the autocommand window is involved win_close() may need to print an error message.
+  // When the ctx window is involved win_close() may need to print an error message.
   for (win_T *wp = lastwin; wp != NULL && (is_ctx_win(lastwin) || !one_window(wp, NULL));) {
     if (wp->w_buffer == buf && (!keep_curwin || wp != curwin)
         && !(win_locked(wp) || wp->w_buffer->b_locked > 0)) {
@@ -2648,7 +2652,7 @@ bool one_window(win_T *win, tabpage_T *tp)
 }
 
 /// Check if floating windows in tabpage `tp` can be closed.
-/// Do not call this when the autocommand window is in use!
+/// Do not call this when the ctx window is in use!
 ///
 /// @param tp tabpage to check. Must be NULL for the current tabpage.
 /// @return true if all floating windows can be closed
