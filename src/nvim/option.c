@@ -3972,7 +3972,11 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, OptVal old_value
     redraw_all_later(UPD_NOT_VALID);
   } else if (varp == &p_wbr || varp == &(curwin->w_p_wbr)) {
     // add / remove window bars for 'winbar'
-    set_winbar(true);
+    if (varp == &p_wbr) {
+      set_winbar_all(true);
+    } else {
+      set_winbar(true);
+    }
   }
 
   if (curwin->w_curswant != MAXCOL
