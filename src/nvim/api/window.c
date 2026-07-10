@@ -375,7 +375,7 @@ Object nvim_win_call(Window win, LuaRef fn, lua_State *lstate, Error *err)
   tabpage_T *tabpage = win_find_tabpage(w);
 
   TRY_WRAP(err, {
-    CtxSwitch cs;
+    CtxSwitch cs = { 0 };
     if (ctx_switch(&cs, w, tabpage, NULL, kCtxNoDisplay | kCtxKeepCwd | kCtxValidate)) {
       Array args = ARRAY_DICT_INIT;
       nlua_call_ref(fn, NULL, args, kRetMultiStack, NULL, err);

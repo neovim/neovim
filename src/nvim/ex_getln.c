@@ -158,30 +158,12 @@ typedef struct {
 } CommandLineState;
 
 typedef struct {
-  u_header_T *save_b_u_oldhead;
-  u_header_T *save_b_u_newhead;
-  u_header_T *save_b_u_curhead;
-  int save_b_u_numhead;
-  bool save_b_u_synced;
-  int save_b_u_seq_last;
-  int save_b_u_save_nr_last;
-  int save_b_u_seq_cur;
-  time_t save_b_u_time_cur;
-  int save_b_u_save_nr_cur;
-  char *save_b_u_line_ptr;
-  linenr_T save_b_u_line_lnum;
-  colnr_T save_b_u_line_colnr;
-} CpUndoInfo;
-
-typedef struct {
   buf_T *buf;
-  OptInt save_b_p_ul;
   int save_b_p_ma;
   int save_b_changed;
   pos_T save_b_op_start;
   pos_T save_b_op_end;
-  varnumber_T save_changedtick;
-  CpUndoInfo undo_info;
+  UndoCheckpoint undo_checkpoint;
 } CpBufInfo;
 
 typedef struct {
@@ -2574,45 +2556,6 @@ static void cmdpreview_close_win(void)
   }
 }
 
-/// Save the undo state of a buffer for command preview.
-static void cmdpreview_save_undo(CpUndoInfo *cp_undoinfo, buf_T *buf)
-  FUNC_ATTR_NONNULL_ALL
-{
-  cp_undoinfo->save_b_u_synced = buf->b_u_synced;
-  cp_undoinfo->save_b_u_oldhead = buf->b_u_oldhead;
-  cp_undoinfo->save_b_u_newhead = buf->b_u_newhead;
-  cp_undoinfo->save_b_u_curhead = buf->b_u_curhead;
-  cp_undoinfo->save_b_u_numhead = buf->b_u_numhead;
-  cp_undoinfo->save_b_u_seq_last = buf->b_u_seq_last;
-  cp_undoinfo->save_b_u_save_nr_last = buf->b_u_save_nr_last;
-  cp_undoinfo->save_b_u_seq_cur = buf->b_u_seq_cur;
-  cp_undoinfo->save_b_u_time_cur = buf->b_u_time_cur;
-  cp_undoinfo->save_b_u_save_nr_cur = buf->b_u_save_nr_cur;
-  cp_undoinfo->save_b_u_line_ptr = buf->b_u_line_ptr;
-  cp_undoinfo->save_b_u_line_lnum = buf->b_u_line_lnum;
-  cp_undoinfo->save_b_u_line_colnr = buf->b_u_line_colnr;
-}
-
-/// Restore the undo state of a buffer for command preview.
-static void cmdpreview_restore_undo(const CpUndoInfo *cp_undoinfo, buf_T *buf)
-{
-  buf->b_u_oldhead = cp_undoinfo->save_b_u_oldhead;
-  buf->b_u_newhead = cp_undoinfo->save_b_u_newhead;
-  buf->b_u_curhead = cp_undoinfo->save_b_u_curhead;
-  buf->b_u_numhead = cp_undoinfo->save_b_u_numhead;
-  buf->b_u_seq_last = cp_undoinfo->save_b_u_seq_last;
-  buf->b_u_save_nr_last = cp_undoinfo->save_b_u_save_nr_last;
-  buf->b_u_seq_cur = cp_undoinfo->save_b_u_seq_cur;
-  buf->b_u_time_cur = cp_undoinfo->save_b_u_time_cur;
-  buf->b_u_save_nr_cur = cp_undoinfo->save_b_u_save_nr_cur;
-  buf->b_u_line_ptr = cp_undoinfo->save_b_u_line_ptr;
-  buf->b_u_line_lnum = cp_undoinfo->save_b_u_line_lnum;
-  buf->b_u_line_colnr = cp_undoinfo->save_b_u_line_colnr;
-  if (buf->b_u_curhead == NULL) {
-    buf->b_u_synced = cp_undoinfo->save_b_u_synced;
-  }
-}
-
 /// Save current state and prepare windows and buffers for command preview.
 static void cmdpreview_prepare(CpInfo *cpinfo)
   FUNC_ATTR_NONNULL_ALL
@@ -2634,17 +2577,12 @@ static void cmdpreview_prepare(CpInfo *cpinfo)
       CpBufInfo cp_bufinfo;
       cp_bufinfo.buf = buf;
       cp_bufinfo.save_b_p_ma = buf->b_p_ma;
-      cp_bufinfo.save_b_p_ul = buf->b_p_ul;
       cp_bufinfo.save_b_changed = buf->b_changed;
       cp_bufinfo.save_b_op_start = buf->b_op_start;
       cp_bufinfo.save_b_op_end = buf->b_op_end;
-      cp_bufinfo.save_changedtick = buf_get_changedtick(buf);
-      cmdpreview_save_undo(&cp_bufinfo.undo_info, buf);
+      u_checkpoint(&cp_bufinfo.undo_checkpoint, buf);
       kv_push(cpinfo->buf_info, cp_bufinfo);
       set_put(ptr_t, &saved_bufs, buf);
-
-      u_clearall(buf);
-      buf->b_p_ul = INT_MAX;  // Make sure we can undo all changes
     }
 
     CpWinInfo cp_wininfo;
@@ -2692,38 +2630,11 @@ static void cmdpreview_restore_state(CpInfo *cpinfo)
     // Clear preview highlights.
     extmark_clear(buf, (uint32_t)cmdpreview_ns, 0, 0, MAXLNUM, MAXCOL);
 
-    if (buf->b_u_seq_cur != cp_bufinfo.undo_info.save_b_u_seq_cur) {
-      int count = 0;
-
-      // Calculate how many undo steps are necessary to restore earlier state.
-      for (u_header_T *uhp = buf->b_u_curhead ? buf->b_u_curhead : buf->b_u_newhead;
-           uhp != NULL;
-           uhp = uhp->uh_next.ptr, ++count) {}
-
-      aco_save_T aco = { 0 };
-      aucmd_prepbuf(&aco, buf);
-      // Ensure all the entries will be undone
-      if (curbuf->b_u_synced == false) {
-        u_sync(true);
-      }
-      // Undo invisibly. This also moves the cursor!
-      if (!u_undo_and_forget(count, false)) {
-        abort();
-      }
-      aucmd_restbuf(&aco);
-    }
-
-    u_blockfree(buf);
-    cmdpreview_restore_undo(&cp_bufinfo.undo_info, buf);
+    u_rollback(&cp_bufinfo.undo_checkpoint, buf);
 
     buf->b_op_start = cp_bufinfo.save_b_op_start;
     buf->b_op_end = cp_bufinfo.save_b_op_end;
 
-    if (cp_bufinfo.save_changedtick != buf_get_changedtick(buf)) {
-      buf_set_changedtick(buf, cp_bufinfo.save_changedtick);
-    }
-
-    buf->b_p_ul = cp_bufinfo.save_b_p_ul;        // Restore 'undolevels'
     buf->b_p_ma = cp_bufinfo.save_b_p_ma;        // Restore 'modifiable'
   }
 

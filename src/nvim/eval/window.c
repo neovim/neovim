@@ -518,7 +518,7 @@ void f_win_execute(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  CtxSwitch cs;
+  CtxSwitch cs = { 0 };
   if (ctx_switch(&cs, wp, tp, NULL, kCtxNoDisplay | kCtxKeepCwd | kCtxValidate)) {
     execute_common(argvars, rettv, 1);
   }

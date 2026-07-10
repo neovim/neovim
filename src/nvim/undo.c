@@ -88,6 +88,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/buffer_updates.h"
 #include "nvim/change.h"
+#include "nvim/context.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
@@ -3247,4 +3248,79 @@ u_header_T *u_force_get_undo_header(buf_T *buf)
     }
   }
   return uhp;
+}
+
+/// Checkpoints the undo state of `buf` and detaches its undotree: subsequent edits build
+/// a disposable tree. Then u_rollback() can revert them without a trace ("undo-invisible"
+/// speculative edits, e.g. 'inccommand' preview). Sets 'undolevels' so every edit stays undoable.
+void u_checkpoint(UndoCheckpoint *uc, buf_T *buf)
+  FUNC_ATTR_NONNULL_ALL
+{
+  uc->uc_synced = buf->b_u_synced;
+  uc->uc_oldhead = buf->b_u_oldhead;
+  uc->uc_newhead = buf->b_u_newhead;
+  uc->uc_curhead = buf->b_u_curhead;
+  uc->uc_numhead = buf->b_u_numhead;
+  uc->uc_seq_last = buf->b_u_seq_last;
+  uc->uc_save_nr_last = buf->b_u_save_nr_last;
+  uc->uc_seq_cur = buf->b_u_seq_cur;
+  uc->uc_time_cur = buf->b_u_time_cur;
+  uc->uc_save_nr_cur = buf->b_u_save_nr_cur;
+  uc->uc_line_ptr = buf->b_u_line_ptr;
+  uc->uc_line_lnum = buf->b_u_line_lnum;
+  uc->uc_line_colnr = buf->b_u_line_colnr;
+  uc->uc_undolevels = buf->b_p_ul;
+  uc->uc_changedtick = buf_get_changedtick(buf);
+
+  u_clearall(buf);
+  buf->b_p_ul = INT_MAX;  // Make sure we can undo all changes
+}
+
+/// Reverts `buf` from a checkpoint: drops all edits made since u_checkpoint(), and reattaches the
+/// checkpointed undotree. Also restores b:changedtick and 'undolevels'.
+void u_rollback(UndoCheckpoint *uc, buf_T *buf)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (buf->b_u_seq_cur != uc->uc_seq_cur) {
+    int count = 0;
+
+    // Calculate how many undo steps are necessary to restore earlier state.
+    for (u_header_T *uhp = buf->b_u_curhead ? buf->b_u_curhead : buf->b_u_newhead;
+         uhp != NULL;
+         uhp = uhp->uh_next.ptr, ++count) {}
+
+    CtxSwitch cs = { 0 };
+    ctx_switch(&cs, NULL, NULL, buf, 0);
+    // Ensure all the entries will be undone
+    if (curbuf->b_u_synced == false) {
+      u_sync(true);
+    }
+    // Undo invisibly. This also moves the cursor!
+    if (!u_undo_and_forget(count, false)) {
+      abort();
+    }
+    ctx_restore(&cs);
+  }
+
+  u_blockfree(buf);
+  buf->b_u_oldhead = uc->uc_oldhead;
+  buf->b_u_newhead = uc->uc_newhead;
+  buf->b_u_curhead = uc->uc_curhead;
+  buf->b_u_numhead = uc->uc_numhead;
+  buf->b_u_seq_last = uc->uc_seq_last;
+  buf->b_u_save_nr_last = uc->uc_save_nr_last;
+  buf->b_u_seq_cur = uc->uc_seq_cur;
+  buf->b_u_time_cur = uc->uc_time_cur;
+  buf->b_u_save_nr_cur = uc->uc_save_nr_cur;
+  buf->b_u_line_ptr = uc->uc_line_ptr;
+  buf->b_u_line_lnum = uc->uc_line_lnum;
+  buf->b_u_line_colnr = uc->uc_line_colnr;
+  if (buf->b_u_curhead == NULL) {
+    buf->b_u_synced = uc->uc_synced;
+  }
+
+  if (uc->uc_changedtick != buf_get_changedtick(buf)) {
+    buf_set_changedtick(buf, uc->uc_changedtick);
+  }
+  buf->b_p_ul = uc->uc_undolevels;  // Restore 'undolevels'
 }

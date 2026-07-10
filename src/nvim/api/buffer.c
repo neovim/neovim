@@ -1222,7 +1222,7 @@ Object nvim_buf_call(Buffer buf, LuaRef fn, lua_State *lstate, Error *err)
   }
 
   TRY_WRAP(err, {
-    CtxSwitch cs;
+    CtxSwitch cs = { 0 };
     ctx_switch(&cs, NULL, NULL, b, 0);
 
     Array args = ARRAY_DICT_INIT;
