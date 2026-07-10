@@ -39,6 +39,7 @@
 #include "nvim/channel.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
+#include "nvim/context.h"
 #include "nvim/cursor.h"
 #include "nvim/diff.h"
 #include "nvim/digraph.h"
@@ -1455,7 +1456,7 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
     // Repeat this so long as we end up in a window with this buffer.
     while (buf == curbuf
            && !(win_locked(curwin) || curwin->w_buffer->b_locked > 0)
-           && (is_aucmd_win(lastwin) || !last_window(curwin))) {
+           && (is_ctx_win(lastwin) || !last_window(curwin))) {
       if (win_close(curwin, false, false) == FAIL) {
         break;
       }
@@ -3681,7 +3682,7 @@ void ex_buffer_all(exarg_T *eap)
            || (had_tab > 0 && wp != firstwin))
           && !ONE_WINDOW
           && !(win_locked(wp) || wp->w_buffer->b_locked > 0)
-          && !is_aucmd_win(wp)) {
+          && !is_ctx_win(wp)) {
         if (win_close(wp, false, false) == FAIL) {
           break;
         }
@@ -3708,7 +3709,7 @@ void ex_buffer_all(exarg_T *eap)
   //
   // Don't execute Win/Buf Enter/Leave autocommands here.
   autocmd_no_enter++;
-  // lastwin may be aucmd_win
+  // lastwin may be ctx_win
   win_enter(lastwin_nofloating(NULL), false);
   autocmd_no_leave++;
   for (buf_T *buf = firstbuf; buf != NULL && open_wins < count; buf = buf->b_next) {
@@ -3800,7 +3801,7 @@ void ex_buffer_all(exarg_T *eap)
   // Close superfluous windows.
   for (win_T *wp = lastwin; open_wins > count;) {
     bool r = (buf_hide(wp->w_buffer) || !bufIsChanged(wp->w_buffer)
-              || autowrite(wp->w_buffer, false) == OK) && !is_aucmd_win(wp);
+              || autowrite(wp->w_buffer, false) == OK) && !is_ctx_win(wp);
     if (!win_valid(wp)) {
       // BufWrite Autocommands made the window invalid, start over
       wp = lastwin;

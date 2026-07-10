@@ -2553,6 +2553,16 @@ describe('api/buf', function()
   end)
 
   describe('nvim_buf_call', function()
+    it('preserves visual-mode, unless the callback ended it', function()
+      -- Same-buffer: Visual survives untouched.
+      command('normal! v')
+      exec_lua('vim.api.nvim_buf_call(0, function() end)')
+      eq('v', fn.mode())
+      -- The callback ends Visual mode: it must STAY ended.
+      exec_lua([[vim.api.nvim_buf_call(0, function() vim.cmd('normal! \27') end)]])
+      eq('n', fn.mode())
+    end)
+
     it('supports multiple returns', function()
       local curbuf = api.nvim_get_current_buf()
       local other = api.nvim_create_buf(false, true)

@@ -872,7 +872,7 @@ static void f_ctxget(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "ctxpop()" function
 static void f_ctxpop(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  if (!ctx_restore(NULL, kCtxAll)) {
+  if (!ctx_load(NULL, kCtxAll)) {
     emsg(_("Context stack is empty"));
   }
 }

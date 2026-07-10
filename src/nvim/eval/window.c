@@ -10,6 +10,7 @@
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
+#include "nvim/context.h"
 #include "nvim/cursor.h"
 #include "nvim/errors.h"
 #include "nvim/eval/funcs.h"
@@ -503,78 +504,6 @@ void f_tabpagewinnr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   rettv->vval.v_number = nr;
 }
 
-/// Switch to a window for executing user code.
-/// Caller must call win_execute_after() later regardless of return value.
-///
-/// @return  whether switching the window succeeded.
-bool win_execute_before(win_execute_T *args, win_T *wp, tabpage_T *tp)
-{
-  args->wp = wp;
-  args->curpos = wp->w_cursor;
-  args->cwd_status = FAIL;
-  args->apply_acd = false;
-  args->save_sfname = NULL;
-
-  // Getting and setting directory can be slow on some systems, only do
-  // this when the current or target window/tab have a local directory or
-  // 'acd' is set.
-  if (curwin != wp
-      && (curwin->w_localdir != NULL || wp->w_localdir != NULL
-          || (curtab != tp && (curtab->tp_localdir != NULL || tp->tp_localdir != NULL))
-          || p_acd)) {
-    args->cwd_status = os_dirname(args->cwd, MAXPATHL);
-  }
-
-  // If 'acd' is set, check we are using that directory.  If yes, then
-  // apply 'acd' afterwards, otherwise restore the current directory.
-  if (args->cwd_status == OK && p_acd) {
-    if (curbuf->b_sfname != NULL && curbuf->b_fname == curbuf->b_sfname) {
-      args->save_sfname = xstrdup(curbuf->b_sfname);
-    }
-    do_autochdir();
-    char autocwd[MAXPATHL];
-    if (os_dirname(autocwd, MAXPATHL) == OK) {
-      args->apply_acd = strcmp(args->cwd, autocwd) == 0;
-    }
-  }
-
-  if (switch_win_noblock(&args->switchwin, wp, tp, true) == OK) {
-    check_cursor(curwin);
-    return true;
-  }
-  return false;
-}
-
-/// Restore the previous window after executing user code.
-void win_execute_after(win_execute_T *args)
-{
-  restore_win_noblock(&args->switchwin, true);
-
-  if (args->apply_acd) {
-    xfree(args->save_sfname);
-    do_autochdir();
-  } else if (args->cwd_status == OK) {
-    os_chdir(args->cwd);
-    if (args->save_sfname != NULL) {
-      xfree(curbuf->b_sfname);
-      curbuf->b_sfname = args->save_sfname;
-      curbuf->b_fname = curbuf->b_sfname;
-    }
-  }
-
-  // Update the status line if the cursor moved.
-  if (win_valid(args->wp) && !equalpos(args->curpos, args->wp->w_cursor)) {
-    args->wp->w_redr_status = true;
-  }
-
-  // In case the command moved the cursor or changed the Visual area,
-  // check it is valid.
-  check_cursor(curwin);
-  if (VIsual_active) {
-    check_pos(curbuf, &VIsual);
-  }
-}
-
 /// "win_execute(win_id, command)" function
 void f_win_execute(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
@@ -589,11 +518,11 @@ void f_win_execute(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  win_execute_T win_execute_args;
-  if (win_execute_before(&win_execute_args, wp, tp)) {
+  CtxSwitch cs = { 0 };
+  if (ctx_switch(&cs, wp, tp, NULL, kCtxNoDisplay | kCtxKeepCwd | kCtxValidate)) {
     execute_common(argvars, rettv, 1);
   }
-  win_execute_after(&win_execute_args);
+  ctx_restore(&cs);
 }
 
 /// "win_findbuf()" function
@@ -735,7 +664,7 @@ void f_win_splitmove(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   // Check if we're allowed to continue before we bother switching windows.
-  if (is_aucmd_win(wp) || text_or_buf_locked() || check_split_disallowed(wp) == FAIL) {
+  if (is_ctx_win(wp) || text_or_buf_locked() || check_split_disallowed(wp) == FAIL) {
     return;
   }
 
@@ -771,7 +700,7 @@ void f_win_gettype(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       return;
     }
   }
-  if (is_aucmd_win(wp)) {
+  if (is_ctx_win(wp)) {
     rettv->vval.v_string = xstrdup("autocmd");
   } else if (wp->w_p_pvw) {
     rettv->vval.v_string = xstrdup("preview");
@@ -962,81 +891,30 @@ void f_winwidth(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 }
 
-/// Set "win" to be the curwin and "tp" to be the current tab page.
-/// restore_win() MUST be called to undo, also when FAIL is returned.
-/// No autocommands will be executed until restore_win() is called.
-///
-/// @param no_display  if true the display won't be affected, no redraw is
-///                    triggered, another tabpage access is limited.
-///
-/// @return FAIL if switching to "win" failed.
+/// TODO(justinmk): legacy shim, use ctx_switch() directly.
 int switch_win(switchwin_T *switchwin, win_T *win, tabpage_T *tp, bool no_display)
 {
-  block_autocmds();
-  return switch_win_noblock(switchwin, win, tp, no_display);
+  return ctx_switch(switchwin, win, tp, NULL, kCtxNoEvents | (no_display ? kCtxNoDisplay : 0))
+         ? OK : FAIL;
 }
 
-// As switch_win() but without blocking autocommands.
+// TODO(justinmk): legacy shim, use ctx_switch() directly.
 int switch_win_noblock(switchwin_T *switchwin, win_T *win, tabpage_T *tp, bool no_display)
 {
-  CLEAR_POINTER(switchwin);
-  switchwin->sw_curwin = curwin;
-  if (win == curwin) {
-    switchwin->sw_same_win = true;
-  } else {
-    // Disable Visual selection, because redrawing may fail.
-    switchwin->sw_visual_active = VIsual_active;
-    VIsual_active = false;
-  }
-
-  if (tp != NULL) {
-    switchwin->sw_curtab = curtab;
-    if (no_display) {
-      unuse_tabpage(curtab);
-      use_tabpage(tp);
-    } else {
-      goto_tabpage_tp(tp, false, false);
-    }
-  }
-  if (!win_valid(win)) {
-    return FAIL;
-  }
-  curwin = win;
-  curbuf = curwin->w_buffer;
-  return OK;
+  return ctx_switch(switchwin, win, tp, NULL, no_display ? kCtxNoDisplay : 0)
+         ? OK : FAIL;
 }
 
-/// Restore current tabpage and window saved by switch_win(), if still valid.
-/// When "no_display" is true the display won't be affected, no redraw is
-/// triggered.
+/// TODO(justinmk): legacy shim, use ctx_restore() directly.
 void restore_win(switchwin_T *switchwin, bool no_display)
 {
-  restore_win_noblock(switchwin, no_display);
-  unblock_autocmds();
+  (void)no_display;  // recorded by ctx_switch()
+  ctx_restore(switchwin);
 }
 
-/// As restore_win() but without unblocking autocommands.
+/// TODO(justinmk): legacy shim, use ctx_restore() directly.
 void restore_win_noblock(switchwin_T *switchwin, bool no_display)
 {
-  if (switchwin->sw_curtab != NULL && valid_tabpage(switchwin->sw_curtab)) {
-    if (no_display) {
-      win_T *const old_tp_curwin = curtab->tp_curwin;
-
-      unuse_tabpage(curtab);
-      // Don't change the curwin of the tabpage we temporarily visited.
-      curtab->tp_curwin = old_tp_curwin;
-      use_tabpage(switchwin->sw_curtab);
-    } else {
-      goto_tabpage_tp(switchwin->sw_curtab, false, false);
-    }
-  }
-
-  if (!switchwin->sw_same_win) {
-    VIsual_active = switchwin->sw_visual_active;
-  }
-
-  if (win_valid(switchwin->sw_curwin)) {
-    curwin = switchwin->sw_curwin;
-    curbuf = curwin->w_buffer;
-  }
+  (void)no_display;  // recorded by ctx_switch()
+  ctx_restore(switchwin);
 }
