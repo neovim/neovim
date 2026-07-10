@@ -3254,6 +3254,9 @@ function M.match(args)
   end
 
   if name then
+    if name:sub(-1) == '/' then
+      return 'directory'
+    end
     name = normalize_path(name)
 
     local ok_abspath, path = pcall(vim.fs.abspath, name)

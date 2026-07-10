@@ -511,6 +511,9 @@ function vim.api.nvim_buf_get_mark(buf, name) end
 
 --- Gets the full/absolute filepath of the buffer, or the buffer name for non-file buffers.
 ---
+--- If the buffer represents a directory, the name ends with a path separator,
+--- unless it was changed by `:file` or `nvim_buf_set_name()`.
+---
 --- @param buf integer Buffer id, or 0 for current buffer
 --- @return string # Buffer name
 function vim.api.nvim_buf_get_name(buf) end

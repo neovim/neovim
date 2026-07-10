@@ -404,6 +404,19 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
     curbuf->b_flags |= BF_READERR;
   }
 
+  // Directory buf:
+  // readfile() returns NOTDONE without firing BufReadPost when it did not read a
+  // file (e.g. a directory). Since BufReadPost is what normally runs filetype
+  // detection, do it here so FileType fires before the BufEnter below.
+  if (retval == NOTDONE && *curbuf->b_p_ft == NUL
+      && curbuf->b_ffname != NULL
+      && after_pathsep(curbuf->b_ffname,
+                       curbuf->b_ffname + strlen(curbuf->b_ffname))) {
+    if (augroup_exists("filetypedetect")) {
+      do_doautocmd("filetypedetect BufRead", false, NULL);
+    }
+  }
+
   // Need to update automatic folding.  Do this before the autocommands,
   // they may use the fold info.
   foldUpdateAll(curwin);
@@ -2022,6 +2035,7 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
   }
 
   if (ffname != NULL) {
+    assert(sfname != NULL);
     buf->b_ffname = ffname;
     buf->b_sfname = xstrdup(sfname);
   }
@@ -3597,6 +3611,9 @@ int append_arg_number(win_T *wp, char *buf, size_t buflen)
 }
 
 /// Make "*ffname" a full file name, set "*sfname" to "*ffname" if not NULL.
+/// For a directory the resulting "*ffname" gets a trailing path separator. When
+/// "*sfname" already ends with a separator the final component is not resolved,
+/// so the symbolic link path is preserved.
 /// "*ffname" becomes a pointer to allocated memory (or NULL).
 /// When resolving a link both "*sfname" and "*ffname" will point to the same
 /// allocated memory.
@@ -3610,7 +3627,30 @@ void fname_expand(buf_T *buf, char **ffname, char **sfname)
   if (*sfname == NULL) {  // no short file name given, use ffname
     *sfname = *ffname;
   }
-  *ffname = fix_fname((*ffname));     // expand to full path
+  *ffname = fix_fname(*ffname);     // expand to full path
+  if (*ffname == NULL) {
+    *sfname = NULL;
+    return;
+  }
+  // Preserve a symbolic link path for directory buffers. fix_fname("link/")
+  // resolves to the target, so re-expand without the trailing separator: if
+  // "link" is a symbolic link to directory "target", ":edit link/" produces
+  // ".../link/", not ".../target/".
+  if (os_isdir(*ffname)) {
+    char *name = xstrdup(*sfname);
+    size_t name_len = strlen(name);
+    if (name_len > 0 && after_pathsep(name, name + name_len)
+        && name + name_len > get_past_head(name)) {
+      *path_tail_with_sep(name) = NUL;
+    }
+    char *full = fix_fname(name);
+    xfree(name);
+    if (full != NULL) {
+      xfree(*ffname);
+      *ffname = full;
+    }
+    *ffname = concat_fnames_realloc(*ffname, "", true);
+  }
 
 #ifdef MSWIN
   if (!buf->b_p_bin) {
