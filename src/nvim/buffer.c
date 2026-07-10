@@ -407,7 +407,10 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
   // readfile() returns NOTDONE without firing BufReadPost when it did not read a
   // file (e.g. a directory). Since BufReadPost is what normally runs filetype
   // detection, do it here so FileType fires before the BufEnter below.
-  if (retval == NOTDONE && *curbuf->b_p_ft == NUL) {
+  if (retval == NOTDONE && *curbuf->b_p_ft == NUL
+      && curbuf->b_ffname != NULL
+      && after_pathsep(curbuf->b_ffname,
+                       curbuf->b_ffname + strlen(curbuf->b_ffname))) {
     if (augroup_exists("filetypedetect")) {
       do_doautocmd("filetypedetect BufRead", false, NULL);
     }
