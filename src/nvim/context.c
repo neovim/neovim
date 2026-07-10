@@ -564,6 +564,20 @@ bool ctx_switch(CtxSwitch *cs, win_T *wp, tabpage_T *tp, buf_T *buf, CtxSwitchFl
   return true;
 }
 
+/// Restores curwin/curbuf and prevwin. If the saved window no longer exists, enters `fallback`.
+static void ctx_restore_curwin(CtxSwitch *cs, win_T *fallback)
+{
+  win_T *save_curwin = win_find_by_handle(cs->cs_curwin);
+  if (save_curwin == NULL) {
+    save_curwin = fallback;  // Hmm, original window disappeared.
+  }
+  if (save_curwin != NULL) {
+    curwin = save_curwin;
+    curbuf = curwin->w_buffer;
+  }
+  prevwin = win_find_by_handle(cs->cs_prevwin);
+}
+
 /// Undoes ctx_switch(): restores the previous location (if possible) and the kept state.
 ///
 /// No-op if `cs` was zero-initialized, even if ctx_switch() was not called on it:
@@ -597,31 +611,18 @@ void ctx_restore(CtxSwitch *cs)
       }
     }
 
-    // Look up the window by handle: the user code may have closed it, and
-    // its memory been reused for another window.
-    win_T *const save_curwin = win_find_by_handle(cs->cs_curwin);
-    if (save_curwin != NULL) {
-      curwin = save_curwin;
-      curbuf = curwin->w_buffer;
-    }
+    ctx_restore_curwin(cs, NULL);
   } else if (cs->cs_ctxwin_idx >= 0) {
     win_T *cwp = ctx_win_rest(cs);
 
-    win_T *const save_curwin = win_find_by_handle(cs->cs_curwin);
-    if (save_curwin != NULL) {
-      curwin = save_curwin;
-    } else {
-      // Hmm, original window disappeared.  Just use the first one.
-      curwin = firstwin;
-    }
-    curbuf = curwin->w_buffer;
-    // May need to restore insert mode for a prompt buffer.
+    ctx_restore_curwin(cs, firstwin);
+    // May need to restore insert-mode for a prompt buffer.
+    // Pairs with the win_enter()..leaving_window() from ctx_win_prep().
     entering_window(curwin);
     if (bt_prompt(curbuf)) {
       curbuf->b_prompt_insert = cs->cs_prompt_insert;
     }
 
-    prevwin = win_find_by_handle(cs->cs_prevwin);
     vars_clear(&cwp->w_vars->dv_hashtab);         // free all w: variables
     hash_init(&cwp->w_vars->dv_hashtab);          // re-use the hashtab
 
@@ -641,29 +642,21 @@ void ctx_restore(CtxSwitch *cs)
       curwin->w_topfill = 0;
     }
   } else {
-    // Restore curwin.  Use the window ID, a window may have been closed
-    // and the memory re-used for another one.
-    win_T *const save_curwin = win_find_by_handle(cs->cs_curwin);
-    if (save_curwin != NULL) {
-      // Restore the buffer which was previously edited by curwin, if it was
-      // changed, we are still the same window and the buffer is valid.
-      if (curwin->handle == cs->cs_new_curwin
-          && curbuf != cs->cs_new_curbuf.br_buf
-          && bufref_valid(&cs->cs_new_curbuf)
-          && cs->cs_new_curbuf.br_buf->b_ml.ml_mfp != NULL) {
-        if (curwin->w_s == &curbuf->b_s) {
-          curwin->w_s = &cs->cs_new_curbuf.br_buf->b_s;
-        }
-        curbuf->b_nwindows--;
-        curbuf = cs->cs_new_curbuf.br_buf;
-        curwin->w_buffer = curbuf;
-        curbuf->b_nwindows++;
+    // Restore the buffer previously edited by curwin.
+    if (curwin->handle == cs->cs_new_curwin
+        && curbuf != cs->cs_new_curbuf.br_buf
+        && bufref_valid(&cs->cs_new_curbuf)
+        && cs->cs_new_curbuf.br_buf->b_ml.ml_mfp != NULL) {
+      if (curwin->w_s == &curbuf->b_s) {
+        curwin->w_s = &cs->cs_new_curbuf.br_buf->b_s;
       }
-
-      curwin = save_curwin;
-      curbuf = curwin->w_buffer;
-      prevwin = win_find_by_handle(cs->cs_prevwin);
+      curbuf->b_nwindows--;
+      curbuf = cs->cs_new_curbuf.br_buf;
+      curwin->w_buffer = curbuf;
+      curbuf->b_nwindows++;
     }
+
+    ctx_restore_curwin(cs, NULL);
   }
 
   if (!cs->cs_same_win) {
