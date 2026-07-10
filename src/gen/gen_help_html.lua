@@ -847,16 +847,14 @@ local function ts_node_to_html(root, level, lang_tree, headings, opt, stats)
   end
 end
 
--- Generates .typ from node `root` recursively.
+-- Generate .typ from node `root` recursively.
 ---@param root TSNode
 ---@param level integer
 ---@param lang_tree TSTree
 ---@param headings nvim.gen_help_html.heading[]
 ---@param opt table
 ---@param stats table
-local function node_to_typ(root, level, lang_tree, headings, opt, stats)
-  level = level or 0
-
+local function ts_node_to_typ(root, level, lang_tree, headings, opt, stats)
   local function node_text(node, ws_)
     node = node or root
     ws_ = (ws_ == nil or ws_ == true) and getws(node, opt.buf) or ''
@@ -896,7 +894,7 @@ local function node_to_typ(root, level, lang_tree, headings, opt, stats)
     -- Process children and join them with whitespace.
     for node, _ in root:iter_children() do
       if node:named() then
-        local r = node_to_typ(node, level + 1, lang_tree, headings, opt, stats)
+        local r = ts_node_to_typ(node, level + 1, lang_tree, headings, opt, stats)
         text = string.format('%s%s', text, r)
       end
     end
@@ -1111,21 +1109,13 @@ local function node_to_typ(root, level, lang_tree, headings, opt, stats)
     -- return s .. (h4 and '<br>' or '') -- HACK: <br> avoids h4 pseudo-heading mushing with text.
   elseif node_name == 'delimiter' or node_name == 'modeline' then
     return ''
-  -- elseif node_name == 'ERROR' then
-  --   if ignore_parse_error(opt.fname, trimmed) then
-  --     return text
-  --   end
-  --
-  --   -- Store the raw text to give context to the bug report.
-  --   local sample_text = level > 0 and getbuflinestr(root, opt.buf, 3) or '[top level!]'
-  --   table.insert(stats.parse_errors, sample_text)
-  --   return ('<a class="parse-error" target="_blank" title="Report bug... (parse error)" href="%s">%s</a>'):format(
-  --     get_bug_url_vimdoc(opt.fname, opt.to_fname, sample_text),
-  --     trimmed
-  --   )
   else -- Unknown token.
-    -- TODO handle better
-    return ('U-%s '):format(node_name)
+    local sample_text = level > 0 and getbuflinestr(root, opt.buf, 3) or '[top level!]'
+    if node_name == 'ERROR' then
+      table.insert(stats.parse_errors, sample_text)
+    end
+    print(('Unexpected token %s: %s'):format(node_name, sample_text))
+    return ''
   end
 end
 
@@ -1321,7 +1311,7 @@ local function gen_one_typ(fname, text, to_fname, old, commit)
   for _, tree in ipairs(lang_tree:trees()) do
     typ = typ
       .. (
-        node_to_typ(
+        ts_node_to_typ(
           tree:root(),
           0,
           tree,
