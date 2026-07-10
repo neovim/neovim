@@ -404,6 +404,7 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
     curbuf->b_flags |= BF_READERR;
   }
 
+  // Directory buf:
   // readfile() returns NOTDONE without firing BufReadPost when it did not read a
   // file (e.g. a directory). Since BufReadPost is what normally runs filetype
   // detection, do it here so FileType fires before the BufEnter below.
