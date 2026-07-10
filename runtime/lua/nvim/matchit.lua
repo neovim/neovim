@@ -1,6 +1,8 @@
 -- matchit: Extended "%" matching
 
+local api = vim.api
 local fn = vim.fn
+local keymap = vim.keymap
 
 local M = {}
 
@@ -24,9 +26,7 @@ local function restore_options()
     match_ignorecase = match_ignorecase ~= 0
   end
   if match_ignorecase ~= vim.o.ignorecase then
-    restore_options = restore_options
-      .. (vim.o.ignorecase and ' ' or ' no')
-      .. 'ignorecase'
+    restore_options = restore_options .. (vim.o.ignorecase and ' ' or ' no') .. 'ignorecase'
     vim.o.ignorecase = match_ignorecase
   end
   if vim.o.virtualedit ~= '' then
@@ -73,7 +73,8 @@ function M.match_wrapper(word, forward, mode)
 
   -- Check for custom match function hook
   if vim.b.match_function ~= nil then
-    local ok, result = pcall(fn.call, vim.b.match_function, { forward })
+    local expression = ('call(b:match_function, [%d])'):format(forward and 1 or 0)
+    local ok, result = pcall(fn.eval, expression)
     if ok then
       if not vim.tbl_isempty(result) then
         fn.cursor(result)
@@ -81,7 +82,7 @@ function M.match_wrapper(word, forward, mode)
       end
     else
       if vim.b.match_debug ~= nil then
-        vim.api.nvim_echo({ { 'matchit: b:match_function error: ' .. result, 'WarningMsg' } }, true, {})
+        api.nvim_echo({ { 'matchit: b:match_function error: ' .. result, 'WarningMsg' } }, true, {})
       end
       return clean_up(restore_options, mode, startpos)
     end
@@ -149,7 +150,7 @@ function M.match_wrapper(word, forward, mode)
   if word ~= '' then
     -- word given
     if fn.match(word, all) == -1 then
-      vim.api.nvim_echo({ { 'Missing rule for word:"' .. word .. '"', 'WarningMsg' } }, false, {})
+      api.nvim_echo({ { 'Missing rule for word:"' .. word .. '"', 'WarningMsg' } }, false, {})
       return clean_up(restore_options, mode, startpos)
     end
     matchline = word
@@ -213,14 +214,16 @@ function M.match_wrapper(word, forward, mode)
   mid = fn.substitute(mid, notslash .. [[\zs\\(]], [[\\%(]], 'g')
   fin = fn.substitute(fin, notslash .. [[\zs\\(]], [[\\%(]], 'g')
   -- Set mid.  This is optimized for readability, not micro-efficiency!
-  if (forward and fn.match(matchline, prefix .. fin .. suffix) ~= -1)
+  if
+    (forward and fn.match(matchline, prefix .. fin .. suffix) ~= -1)
     or (not forward and fn.match(matchline, prefix .. ini .. suffix) ~= -1)
   then
     mid = ''
   end
   -- Set flag.  This is optimized for readability, not micro-efficiency!
   local flag
-  if (forward and fn.match(matchline, prefix .. fin .. suffix) ~= -1)
+  if
+    (forward and fn.match(matchline, prefix .. fin .. suffix) ~= -1)
     or (not forward and fn.match(matchline, prefix .. ini .. suffix) == -1)
   then
     flag = 'bW'
@@ -246,7 +249,8 @@ function M.match_wrapper(word, forward, mode)
   -- Later, :execute restore_cursor to get to the original screen.
   local view = fn.winsaveview()
   fn.cursor(0, curcol + 1)
-  if (skip:find('synID', 1, true) and not (vim.fn.has('syntax') == 1 and vim.g.syntax_on ~= nil))
+  if
+    (skip:find('synID', 1, true) and not (vim.fn.has('syntax') == 1 and vim.g.syntax_on ~= nil))
     or (skip:find('v:lua.vim.treesitter', 1, true) and vim.b.ts_highlight == nil)
   then
     skip = '0'
@@ -291,9 +295,7 @@ clean_up = function(options, mode, startpos, ...)
     -- In Operator-pending mode, we want to include the whole match
     -- (for example, d%).
     -- This is only a problem if we end up moving in the forward direction.
-  elseif startpos[1] < fn.line('.')
-    or (startpos[1] == fn.line('.') and startpos[2] < fn.col('.'))
-  then
+  elseif startpos[1] < fn.line('.') or (startpos[1] == fn.line('.') and startpos[2] < fn.col('.')) then
     local args = { ... }
     if #args > 0 then
       -- Check whether the match is a single character.  If not, move to the
@@ -514,10 +516,7 @@ resolve = function(source, target, output)
       else
         local start, len = ref(backref, b, 'start', 'len')
         local nested_ref = fn.strpart(backref, start, len)
-        backref = fn.strpart(backref, 0, start)
-          .. ':'
-          .. fn.strpart(ref_table, s, 1)
-          .. fn.strpart(backref, start + len)
+        backref = fn.strpart(backref, 0, start) .. ':' .. fn.strpart(ref_table, s, 1) .. fn.strpart(backref, start + len)
         s = s + count(fn.substitute(nested_ref, [[\\\\]], '', 'g'), [[\(]], '1')
       end
     end
@@ -546,8 +545,7 @@ choose = function(patterns, string, comma, branch, prefix, suffix, ...)
     j = fn.matchend(alttail, notslash .. comma)
   end
   local current = fn.strpart(tail, 0, i - 1)
-  local currpat = branch == '' and current
-    or fn.substitute(current, notslash .. branch, [[\\|]], 'g')
+  local currpat = branch == '' and current or fn.substitute(current, notslash .. branch, [[\\|]], 'g')
   -- un-escape \, and \: to , and :
   currpat = fn.substitute(currpat, notslash .. [[\zs\\\(:\|,\)]], [[\1]], 'g')
   while fn.match(string, prefix .. currpat .. suffix) == -1 do
@@ -557,8 +555,7 @@ choose = function(patterns, string, comma, branch, prefix, suffix, ...)
       return -1
     end
     current = fn.strpart(tail, 0, i - 1)
-    currpat = branch == '' and current
-      or fn.substitute(current, notslash .. branch, [[\\|]], 'g')
+    currpat = branch == '' and current or fn.substitute(current, notslash .. branch, [[\\|]], 'g')
     currpat = fn.substitute(currpat, notslash .. [[\zs\\\(:\|,\)]], [[\1]], 'g')
     if #args > 0 then
       alttail = fn.strpart(alttail, j)
@@ -695,7 +692,8 @@ function M.multi_match(spflag, mode)
   local middlepat = fn.substitute(middle, [[\%(]] .. notslash .. [[\)\@<=\\(]], [[\\%(]], 'g')
   middlepat = fn.substitute(middlepat, ',', [[\\|]], 'g')
 
-  if (skip:find('synID', 1, true) and not (fn.has('syntax') == 1 and vim.g.syntax_on ~= nil))
+  if
+    (skip:find('synID', 1, true) and not (fn.has('syntax') == 1 and vim.g.syntax_on ~= nil))
     or (skip:find('v:lua.vim.treesitter', 1, true) and vim.b.ts_highlight == nil)
   then
     skip = '0'
@@ -739,9 +737,7 @@ parse_skip = function(str)
     local pattern = fn.strpart(skip, 2)
     if kind == 't' or (kind == 's' and vim.o.syntax ~= 'on' and vim.b.ts_highlight ~= nil) then
       skip = "match(v:lua.vim.treesitter.get_captures_at_cursor(), '" .. pattern .. "') != -1"
-    elseif kind == 'T'
-      or (kind == 'S' and vim.o.syntax ~= 'on' and vim.b.ts_highlight ~= nil)
-    then
+    elseif kind == 'T' or (kind == 'S' and vim.o.syntax ~= 'on' and vim.b.ts_highlight ~= nil) then
       skip = "match(v:lua.vim.treesitter.get_captures_at_cursor(), '" .. pattern .. "') == -1"
     elseif kind == 's' then
       skip = "synIDattr(synID(line('.'),col('.'),1),'name') =~? '" .. pattern .. "'"
@@ -759,72 +755,99 @@ end
 function M.enable()
   vim.g.loaded_matchit = 1
 
-  vim.cmd([[nnoremap <silent> <Plug>(MatchitNormalForward)     :<C-U>call matchit#Match_wrapper('',1,'n')<CR>]])
-  vim.cmd([[nnoremap <silent> <Plug>(MatchitNormalBackward)    :<C-U>call matchit#Match_wrapper('',0,'n')<CR>]])
-  vim.cmd([[xnoremap <silent> <Plug>(MatchitVisualForward)     :<C-U>call matchit#Match_wrapper('',1,'v')<CR>:if line("''") != line(".") \|\| col("''") != col("$") \| exe ":normal! m'" \| endif<CR>gv``]])
-  vim.cmd([[xnoremap <silent> <Plug>(MatchitVisualBackward)    :<C-U>call matchit#Match_wrapper('',0,'v')<CR>m'gv``]])
-  vim.cmd([[onoremap <silent> <Plug>(MatchitOperationForward)  :<C-U>call matchit#Match_wrapper('',1,'o')<CR>]])
-  vim.cmd([[onoremap <silent> <Plug>(MatchitOperationBackward) :<C-U>call matchit#Match_wrapper('',0,'o')<CR>]])
+  keymap.set('n', '<Plug>(MatchitNormalForward)', function()
+    M.match_wrapper('', true, 'n')
+  end, { silent = true })
+  keymap.set('n', '<Plug>(MatchitNormalBackward)', function()
+    M.match_wrapper('', false, 'n')
+  end, { silent = true })
+  keymap.set('x', '<Plug>(MatchitVisualForward)', function()
+    M.match_wrapper('', true, 'v')
+    if fn.line("''") ~= fn.line('.') or fn.col("''") ~= fn.col('$') then
+      vim.cmd([[normal! m']])
+    end
+    vim.cmd([[normal! gv``]])
+  end, { silent = true })
+  keymap.set('x', '<Plug>(MatchitVisualBackward)', function()
+    M.match_wrapper('', false, 'v')
+    vim.cmd([[normal! m'gv``]])
+  end, { silent = true })
+  keymap.set('o', '<Plug>(MatchitOperationForward)', function()
+    M.match_wrapper('', true, 'o')
+  end, { silent = true })
+  keymap.set('o', '<Plug>(MatchitOperationBackward)', function()
+    M.match_wrapper('', false, 'o')
+  end, { silent = true })
 
   -- Analogues of [{ and ]} using matching patterns:
-  vim.cmd([[nnoremap <silent> <Plug>(MatchitNormalMultiBackward)    :<C-U>call matchit#MultiMatch("bW", "n")<CR>]])
-  vim.cmd([[nnoremap <silent> <Plug>(MatchitNormalMultiForward)     :<C-U>call matchit#MultiMatch("W",  "n")<CR>]])
-  vim.cmd([[xnoremap <silent> <Plug>(MatchitVisualMultiBackward)    :<C-U>call matchit#MultiMatch("bW", "n")<CR>m'gv``]])
-  vim.cmd([[xnoremap <silent> <Plug>(MatchitVisualMultiForward)     :<C-U>call matchit#MultiMatch("W",  "n")<CR>m'gv``]])
-  vim.cmd([[onoremap <silent> <Plug>(MatchitOperationMultiBackward) :<C-U>call matchit#MultiMatch("bW", "o")<CR>]])
-  vim.cmd([[onoremap <silent> <Plug>(MatchitOperationMultiForward)  :<C-U>call matchit#MultiMatch("W",  "o")<CR>]])
+  keymap.set('n', '<Plug>(MatchitNormalMultiBackward)', function()
+    M.multi_match('bW', 'n')
+  end, { silent = true })
+  keymap.set('n', '<Plug>(MatchitNormalMultiForward)', function()
+    M.multi_match('W', 'n')
+  end, { silent = true })
+  keymap.set('x', '<Plug>(MatchitVisualMultiBackward)', function()
+    M.multi_match('bW', 'n')
+    vim.cmd([[normal! m'gv``]])
+  end, { silent = true })
+  keymap.set('x', '<Plug>(MatchitVisualMultiForward)', function()
+    M.multi_match('W', 'n')
+    vim.cmd([[normal! m'gv``]])
+  end, { silent = true })
+  keymap.set('o', '<Plug>(MatchitOperationMultiBackward)', function()
+    M.multi_match('bW', 'o')
+  end, { silent = true })
+  keymap.set('o', '<Plug>(MatchitOperationMultiForward)', function()
+    M.multi_match('W', 'o')
+  end, { silent = true })
 
   -- text object:
-  vim.cmd([[xmap <silent> <Plug>(MatchitVisualTextObject) <Plug>(MatchitVisualMultiBackward)o<Plug>(MatchitVisualMultiForward)]])
+  keymap.set(
+    'x',
+    '<Plug>(MatchitVisualTextObject)',
+    '<Plug>(MatchitVisualMultiBackward)o<Plug>(MatchitVisualMultiForward)',
+    { remap = true, silent = true }
+  )
 
   if vim.g.no_plugin_maps == nil then
-    vim.cmd([[nmap <silent> %  <Plug>(MatchitNormalForward)]])
-    vim.cmd([[nmap <silent> g% <Plug>(MatchitNormalBackward)]])
-    vim.cmd([[xmap <silent> %  <Plug>(MatchitVisualForward)]])
-    vim.cmd([[xmap <silent> g% <Plug>(MatchitVisualBackward)]])
-    vim.cmd([[omap <silent> %  <Plug>(MatchitOperationForward)]])
-    vim.cmd([[omap <silent> g% <Plug>(MatchitOperationBackward)]])
+    keymap.set('n', '%', '<Plug>(MatchitNormalForward)', { remap = true, silent = true })
+    keymap.set('n', 'g%', '<Plug>(MatchitNormalBackward)', { remap = true, silent = true })
+    keymap.set('x', '%', '<Plug>(MatchitVisualForward)', { remap = true, silent = true })
+    keymap.set('x', 'g%', '<Plug>(MatchitVisualBackward)', { remap = true, silent = true })
+    keymap.set('o', '%', '<Plug>(MatchitOperationForward)', { remap = true, silent = true })
+    keymap.set('o', 'g%', '<Plug>(MatchitOperationBackward)', { remap = true, silent = true })
 
     -- Analogues of [{ and ]} using matching patterns:
-    vim.cmd([[nmap <silent> [% <Plug>(MatchitNormalMultiBackward)]])
-    vim.cmd([[nmap <silent> ]% <Plug>(MatchitNormalMultiForward)]])
-    vim.cmd([[xmap <silent> [% <Plug>(MatchitVisualMultiBackward)]])
-    vim.cmd([[xmap <silent> ]% <Plug>(MatchitVisualMultiForward)]])
-    vim.cmd([[omap <silent> [% <Plug>(MatchitOperationMultiBackward)]])
-    vim.cmd([[omap <silent> ]% <Plug>(MatchitOperationMultiForward)]])
+    keymap.set('n', '[%', '<Plug>(MatchitNormalMultiBackward)', { remap = true, silent = true })
+    keymap.set('n', ']%', '<Plug>(MatchitNormalMultiForward)', { remap = true, silent = true })
+    keymap.set('x', '[%', '<Plug>(MatchitVisualMultiBackward)', { remap = true, silent = true })
+    keymap.set('x', ']%', '<Plug>(MatchitVisualMultiForward)', { remap = true, silent = true })
+    keymap.set('o', '[%', '<Plug>(MatchitOperationMultiBackward)', { remap = true, silent = true })
+    keymap.set('o', ']%', '<Plug>(MatchitOperationMultiForward)', { remap = true, silent = true })
 
     -- Text object
-    vim.cmd([[xmap a% <Plug>(MatchitVisualTextObject)]])
+    keymap.set('x', 'a%', '<Plug>(MatchitVisualTextObject)', { remap = true })
   end
 
-  vim.api.nvim_create_user_command('MatchDebug', function()
-    M.match_debug()
-  end, { force = true })
-  vim.api.nvim_create_user_command('MatchDisable', function()
-    M.disable()
-  end, { force = true })
-  vim.api.nvim_create_user_command('MatchEnable', function()
-    M.enable()
-  end, { force = true })
+  if fn.exists(':MatchDebug') ~= 2 then
+    api.nvim_create_user_command('MatchDebug', M.match_debug, {})
+  end
+  if fn.exists(':MatchDisable') ~= 2 then
+    api.nvim_create_user_command('MatchDisable', M.disable, {})
+  end
+  if fn.exists(':MatchEnable') ~= 2 then
+    api.nvim_create_user_command('MatchEnable', M.enable, {})
+  end
 end
 
 function M.disable()
   -- remove all the setup keymappings
-  vim.cmd('nunmap %')
-  vim.cmd('nunmap g%')
-  vim.cmd('xunmap %')
-  vim.cmd('xunmap g%')
-  vim.cmd('ounmap %')
-  vim.cmd('ounmap g%')
-
-  vim.cmd('nunmap [%')
-  vim.cmd('nunmap ]%')
-  vim.cmd('xunmap [%')
-  vim.cmd('xunmap ]%')
-  vim.cmd('ounmap [%')
-  vim.cmd('ounmap ]%')
-
-  vim.cmd('xunmap a%')
+  for _, mode in ipairs({ 'n', 'x', 'o' }) do
+    for _, lhs in ipairs({ '%', 'g%', '[%', ']%' }) do
+      keymap.del(mode, lhs)
+    end
+  end
+  keymap.del('x', 'a%')
 end
 
 return M

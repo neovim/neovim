@@ -382,15 +382,15 @@ back to where you started.
 DEBUGGING				*matchit-debug* *:MatchDebug*
 
 If you are having trouble figuring out the appropriate definition of
-|b:match_words| then you can take advantage of the same information I use when
-debugging the script.  This is especially true if you are not sure whether
-your patterns or my script are at fault!  To make this more convenient, I have
+|b:match_words| then you can take advantage of the same information used when
+debugging the plugin.  This is especially true if you are not sure whether
+your patterns or the plugin are at fault!  To make this more convenient, the
 made the command :MatchDebug, which defines the variable |b:match_debug| and
 creates a Matchit menu.  This menu makes it convenient to check the values of
 the variables described below.  You will probably also want to read
 |matchit-details| above.
 
-Defining the variable |b:match_debug| causes the script to set the following
+Defining the variable |b:match_debug| causes the plugin to set the following
 variables, each time you hit the "%" key.  Several of these are only defined
 if |b:match_words| includes |backref|s.
 
