@@ -82,6 +82,18 @@ describe('vim.filetype', function()
     )
   end)
 
+  it('does not detect URI buffers as directories', function()
+    eq(
+      nil,
+      exec_lua(function()
+        local bufnr = vim.api.nvim_create_buf(false, true)
+        vim.bo[bufnr].buftype = 'acwrite'
+        vim.api.nvim_buf_set_name(bufnr, 'example:///tmp/example/')
+        return vim.filetype.match({ buf = bufnr })
+      end)
+    )
+  end)
+
   it('works without defined g:ft_ignore_pat', function()
     local match_opts = { filename = 'unknown-ft', buf = api.nvim_create_buf(false, true) }
     eq(

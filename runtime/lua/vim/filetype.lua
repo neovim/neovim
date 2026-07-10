@@ -3254,7 +3254,9 @@ function M.match(args)
   end
 
   if name then
-    if name:sub(-1) == '/' then
+    -- A trailing slash in a URI is part of the resource name and does not
+    -- imply that the buffer represents a filesystem directory.
+    if name:sub(-1) == '/' and not name:match('^%a[%w+.-]*://') then
       return 'directory'
     end
     name = normalize_path(name)
