@@ -314,7 +314,7 @@ typedef struct {
   Integer count;
   String reg;
   Boolean bang;
-  ArrayOf(String) args;
+  ArrayOf(Union(Integer, String, Boolean)) args;
   DictAs(cmd__magic) magic;
   DictAs(cmd__mods) mods;
   Union(Integer, Enum("?", "+", "*")) nargs;
