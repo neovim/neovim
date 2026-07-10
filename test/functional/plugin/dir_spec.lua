@@ -157,14 +157,22 @@ describe('nvim.dir', function()
 
     -- Ensure the cursor stays on the entry we navigated up from.
     eq('alpha.txt', api.nvim_get_current_line())
+  end)
 
-    n.clear({ args_rm = { '--cmd' }, args = { '--noplugin' } })
-    api.nvim_buf_set_lines(0, 0, -1, false, { '  alpha', '  beta' })
-    api.nvim_win_set_cursor(0, { 2, 7 })
-    feed('-')
+  it('lets startup plugins replace the - mapping', function()
+    local config_dir = fn.stdpath('config')
+    local plugin_dir = vim.fs.joinpath(config_dir, 'plugin')
+    fn.mkdir(plugin_dir, 'p')
+    fn.writefile({
+      [[if vim.fn.mapcheck('-', 'n') == '' and vim.fn.hasmapto('<Plug>(dirvish_up)', 'n') == 0 then]],
+      [[  vim.keymap.set('n', '-', '<Plug>(dirvish_up)')]],
+      [[end]],
+    }, vim.fs.joinpath(plugin_dir, 'dirvish.lua'))
 
-    eq({ 1, 2 }, api.nvim_win_get_cursor(0))
-    eq(false, exec_lua([[return package.loaded['nvim.dir'] ~= nil]]))
+    n.clear({ args_rm = { '-u', '--cmd' } })
+
+    eq('<Plug>(dirvish_up)', fn.mapcheck('-', 'n'))
+    n.rmdir(config_dir)
   end)
 
   it('preserves alternate buffer when opening a parent directory', function()

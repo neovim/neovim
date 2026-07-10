@@ -129,13 +129,6 @@ do
   --- See |&-default|
   vim.keymap.set('n', '&', ':&&<CR>', { desc = ':help &-default' })
 
-  vim.keymap.set('n', '-', function()
-    if vim.fn.maparg('<Plug>(nvim-dir-up)', 'n') ~= '' then
-      return '<Plug>(nvim-dir-up)'
-    end
-    return (vim.v.count == 0 and '' or vim.v.count) .. '-'
-  end, { expr = true, silent = true, desc = 'Open parent directory' })
-
   --- Use Q in Visual mode to execute a macro on each line of the selection. #21422
   --- This only make sense in linewise Visual mode. #28287
   ---
