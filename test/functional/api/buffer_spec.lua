@@ -2553,6 +2553,21 @@ describe('api/buf', function()
   end)
 
   describe('nvim_buf_call', function()
+    it('window keeps the buffer when the callback closes the original window', function()
+      local origin = api.nvim_get_current_win()
+      local other_buf = api.nvim_create_buf(true, false)
+      local other_win = api.nvim_open_win(other_buf, false, { split = 'right' })
+      exec_lua(function()
+        vim.api.nvim_buf_call(other_buf, function()
+          vim.api.nvim_win_close(origin, true)
+          vim.cmd('enew') -- switch the context window away from other_buf
+        end)
+      end)
+      -- Original window is gone: stay in the nvim_buf_call window, but buffer is restored.
+      eq(other_win, api.nvim_get_current_win())
+      eq(other_buf, api.nvim_win_get_buf(other_win))
+    end)
+
     it('preserves visual-mode, unless the callback ended it', function()
       -- Same-buffer: Visual survives untouched.
       command('normal! v')
