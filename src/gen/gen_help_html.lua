@@ -1002,10 +1002,19 @@ local function ts_node_to_typ(root, level, lang_tree, headings, opt, stats)
       return '' -- Discard common "noise" lines.
     end
     -- XXX: Avoid newlines (too much whitespace) after block elements in old (preformatted) layout.
-    local div = opt.old
+    local old_after_block = opt.old
       and root:child(0)
       and vim.list_contains({ 'column_heading', 'h1', 'h2', 'h3' }, root:child(0):type())
-    return string.format('%s%s', div and trim(text) or text, div and '' or '\n')
+
+    if parent == 'codeblock' or parent == 'code' then
+      return text
+    elseif old_after_block then
+      return trim(text)
+    else
+      -- It would be nice to let the texxt flow when possible
+      -- But many lines do need an explicit line break (e.g. in the ToC)
+      return string.format('%s \\ \n', text)
+    end
   elseif parent == 'line_li' and node_name == 'prefix' then
     return ''
   elseif node_name == 'line_li' then
