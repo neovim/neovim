@@ -1012,7 +1012,20 @@ end
 --- @return string
 function M.new_pipename()
   -- HACK: Start a server temporarily, get the name, then stop it.
-  local pipename = M.eval('serverstart()')
+  --
+  -- XXX: If a (still-alive) Nvim process is using an old "--listen nvim.<PID>.<counter>" pipename,
+  -- and the OS reuses the PID, then serverstart() may generate a duplicate name (bc of PID reuse).
+  -- Retry serverstart() to force an incremented <counter>.
+  local ok = false
+  local pipename ---@type string
+  for _ = 1, 100 do
+    ok, pipename = pcall(M.eval, 'serverstart()')
+    if ok then
+      break
+    end
+    sleep(20) -- Avoid hot loop; give stale process time to exit.
+  end
+  assert(ok, pipename)
   M.fn.serverstop(pipename)
   -- Remove the pipe so that trying to connect to it without a server listening
   -- will be an error instead of a hang.
