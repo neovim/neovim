@@ -390,6 +390,13 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
     M.virt[tgt][M.virt.idx.dupe][1] = dupe > 0 and { 0, ('(%d)'):format(dupe) } or nil
     M.virt[tgt][M.virt.idx.spill][1] = tgt == 'cmd' and M.virt.cmd[M.virt.idx.spill][1] or nil
     set_virttext(tgt --[[@as 'cmd'|'msg']], tgt)
+    if tgt == 'cmd' then
+      -- make sure repeated long messages are cropped to keep the ruler intact
+      -- (if this is not scheduled, it breaks messages during textlock)
+      vim.schedule(function()
+        set_virttext('last', 'cmd')
+      end)
+    end
   end
 
   -- Reset message state the next event loop iteration.

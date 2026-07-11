@@ -1200,6 +1200,15 @@ describe('messages2', function()
       -----------------------------------0,0-1          All|
     ]])
     feed('<C-L>')
+    -- message with repetition indicator keeps ruler intact
+    command('echo "-"->repeat(&columns)')
+    command('echo "-"->repeat(&columns)')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      --------------------------------(1)0,0-1          All|
+    ]])
+    feed('<C-L>')
     -- when the ruler is configured smaller, there is more space for messages
     command('set rulerformat=%l | redraw | echo "-"->repeat(&columns)')
     screen:expect([[
