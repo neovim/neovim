@@ -1074,7 +1074,7 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 
     // Only strictly needed for scratch, but could just as well be consistent
     // and do this now. Buffer is created NOW, not when it later first happens
-    // to reach a window or aucmd_prepbuf() ..
+    // to reach a window or ctx_switch() ..
     buf_copy_options(buf, BCO_ENTER | BCO_NOHELP);
 
     if (scratch) {

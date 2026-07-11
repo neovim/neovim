@@ -12,6 +12,7 @@
 #include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/context.h"
 #include "nvim/globals.h"
 #include "nvim/lua/executor.h"
 #include "nvim/memline.h"
@@ -161,7 +162,7 @@ static int validate_option_value_args(Dict(option) *opts, char *name, bool allow
 }
 
 /// Create a dummy buffer and run the FileType autocmd on it.
-static buf_T *do_ft_buf(const char *filetype, aco_save_T *aco, Error *err)
+static buf_T *do_ft_buf(const char *filetype, CtxSwitch *aco, Error *err)
   FUNC_ATTR_NONNULL_ARG(2, 3)
 {
   if (filetype == NULL) {
@@ -185,7 +186,7 @@ static buf_T *do_ft_buf(const char *filetype, aco_save_T *aco, Error *err)
   set_bufref(&bufref, ftbuf);
 
   // Set curwin/curbuf to buf and save a few things.
-  aucmd_prepbuf(aco, ftbuf);
+  ctx_switch(aco, NULL, NULL, ftbuf, 0);
 
   set_option_direct(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("hide"), OPT_LOCAL, SID_NONE);
   set_option_direct(kOptBuftype, STATIC_CSTR_AS_OPTVAL("nofile"), OPT_LOCAL, SID_NONE);
@@ -271,12 +272,12 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
     return (Object)OBJECT_INIT;
   }
 
-  aco_save_T aco = { 0 };
+  CtxSwitch aco = { 0 };
 
   buf_T *ftbuf = do_ft_buf(filetype, &aco, err);
   if (ERROR_SET(err)) {
     // Restore curwin/curbuf and a few other things.
-    aucmd_restbuf(&aco);
+    ctx_restore(&aco);
     if (ftbuf != NULL) {
       wipe_ft_buf(ftbuf);
     }
@@ -291,7 +292,7 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
   OptVal value = get_option_value_for(opt_idx, opt_flags, scope, from, err);
 
   // Restore curwin/curbuf and a few other things.
-  aucmd_restbuf(&aco);
+  ctx_restore(&aco);
   if (ftbuf != NULL) {
     wipe_ft_buf(ftbuf);
   }

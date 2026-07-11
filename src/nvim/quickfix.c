@@ -18,6 +18,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/change.h"
 #include "nvim/charset.h"
+#include "nvim/context.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
@@ -4225,11 +4226,11 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
   // autocommands may cause trouble
   incr_quickfix_busy();
 
-  aco_save_T aco = { 0 };
+  CtxSwitch aco = { 0 };
 
   if (old_last == NULL) {
     // set curwin/curbuf to buf and save a few things
-    aucmd_prepbuf(&aco, buf);
+    ctx_switch(&aco, NULL, NULL, buf, 0);
   }
 
   qf_update_win_titlevar(qi);
@@ -4259,7 +4260,7 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
     qf_win_pos_update(qi, 0);
 
     // restore curwin/curbuf and a few other things
-    aucmd_restbuf(&aco);
+    ctx_restore(&aco);
   }
 
   // Only redraw when added lines are visible.  This avoids flickering when
@@ -5820,11 +5821,11 @@ static int vgr_process_files(win_T *wp, qf_info_T *qi, vgr_args_T *cmd_args, boo
           // need to be done now, in that buffer.  And the modelines
           // need to be done (again).  But not the window-local
           // options!
-          aco_save_T aco = { 0 };
-          aucmd_prepbuf(&aco, buf);
+          CtxSwitch aco = { 0 };
+          ctx_switch(&aco, NULL, NULL, buf, 0);
           apply_autocmds(EVENT_FILETYPE, buf->b_p_ft, buf->b_fname, true, buf);
           do_modelines(OPT_NOWIN);
-          aucmd_restbuf(&aco);
+          ctx_restore(&aco);
         }
       }
     }
@@ -5984,8 +5985,8 @@ static buf_T *load_dummy_buffer(char *fname, char *dirname_start, char *resultin
     // Make sure this buffer isn't wiped out by autocommands.
     newbuf->b_locked++;
     // set curwin/curbuf to buf and save a few things
-    aco_save_T aco = { 0 };
-    aucmd_prepbuf(&aco, newbuf);
+    CtxSwitch aco = { 0 };
+    ctx_switch(&aco, NULL, NULL, newbuf, 0);
 
     // Need to set the filename for autocommands.
     setfname(curbuf, fname, NULL, false);
@@ -6018,7 +6019,7 @@ static buf_T *load_dummy_buffer(char *fname, char *dirname_start, char *resultin
     }
 
     // Restore curwin/curbuf and a few other things.
-    aucmd_restbuf(&aco);
+    ctx_restore(&aco);
 
     if (newbuf_to_wipe.br_buf != NULL && bufref_valid(&newbuf_to_wipe)) {
       block_autocmds();

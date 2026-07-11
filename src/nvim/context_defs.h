@@ -90,6 +90,5 @@ typedef struct {
   char *cs_save_sfname;           ///< saved b_sfname (kCtxKeepCwd)
 } CtxSwitch;
 
-// TODO(justinmk): legacy aliases, to avoid churn. They will be unalived soooon.
-typedef CtxSwitch aco_save_T;
+// TODO(justinmk): legacy alias, to avoid churn. Will be unalived soooon.
 typedef CtxSwitch switchwin_T;

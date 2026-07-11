@@ -969,7 +969,7 @@ describe('vim._with', function()
         wo = { ve_cur = 'insert', ve_other = 'block', winbl_cur = 25, winbl_other = 10 },
         -- Global `winbl` inside context ideally should be untouched and equal
         -- to 50. It seems to be equal to 0 because `context.buf` uses
-        -- `aucmd_prepbuf` C approach which has no guarantees about window or
+        -- `ctx_switch` C approach which has no guarantees about window or
         -- window option values inside context.
         go = { cms = '-- %s', ul = 0, ve = 'none', winbl = 0, lmap = 'xy,yx', cf = false },
       }, out.inner)

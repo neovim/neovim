@@ -23,6 +23,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/buffer_updates.h"
 #include "nvim/change.h"
+#include "nvim/context.h"
 #include "nvim/cursor.h"
 #include "nvim/diff.h"
 #include "nvim/drawscreen.h"
@@ -3140,11 +3141,11 @@ void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
   buf_T *savebuf;
   bufref_T bufref;
   int saved = OK;
-  aco_save_T aco = { 0 };
+  CtxSwitch aco = { 0 };
   int flags = READ_NEW;
 
   // Set curwin/curbuf for "buf" and save some things.
-  aucmd_prepbuf(&aco, buf);
+  ctx_switch(&aco, NULL, NULL, buf, 0);
 
   // Unless reload_options is set, we only want to read the text from the
   // file, not reset the syntax highlighting, clear marks, diff status, etc.
@@ -3260,7 +3261,7 @@ void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
   do_modelines(0);
 
   // restore curwin/curbuf and a few other things
-  aucmd_restbuf(&aco);
+  ctx_restore(&aco);
   // Careful: autocommands may have made "buf" invalid!
 }
 

@@ -225,13 +225,13 @@ bool buf_ensure_loaded(buf_T *buf)
     return true;
   }
 
-  aco_save_T aco = { 0 };
+  CtxSwitch aco = { 0 };
 
   // Make sure the buffer is in a window.
-  aucmd_prepbuf(&aco, buf);
+  ctx_switch(&aco, NULL, NULL, buf, 0);
   // status can be OK or NOTDONE (which also means ok/done)
   int status = open_buffer(false, NULL, 0);
-  aucmd_restbuf(&aco);
+  ctx_restore(&aco);
   return (status != FAIL);
 }
 
@@ -436,10 +436,10 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
   // The autocommands may have changed the current buffer.  Apply the
   // modelines to the correct buffer, if it still exists and is loaded.
   if (bufref_valid(&old_curbuf) && old_curbuf.br_buf->b_ml.ml_mfp != NULL) {
-    aco_save_T aco = { 0 };
+    CtxSwitch aco = { 0 };
 
     // Go to the buffer that was opened, make sure it is in a window.
-    aucmd_prepbuf(&aco, old_curbuf.br_buf);
+    ctx_switch(&aco, NULL, NULL, old_curbuf.br_buf, 0);
     do_modelines(0);
     curbuf->b_flags &= ~(BF_CHECK_RO | BF_NEVERLOADED);
 
@@ -449,7 +449,7 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
     }
 
     // restore curwin/curbuf and a few other things
-    aucmd_restbuf(&aco);
+    ctx_restore(&aco);
   }
 
   return retval;
@@ -4201,8 +4201,8 @@ bool buf_contents_changed(buf_T *buf)
   prep_exarg(&ea, buf);
 
   // Set curwin/curbuf to buf and save a few things.
-  aco_save_T aco = { 0 };
-  aucmd_prepbuf(&aco, newbuf);
+  CtxSwitch aco = { 0 };
+  ctx_switch(&aco, NULL, NULL, newbuf, 0);
 
   // We don't want to trigger autocommands now, they may have nasty
   // side-effects like wiping buffers
@@ -4226,7 +4226,7 @@ bool buf_contents_changed(buf_T *buf)
   xfree(ea.cmd);
 
   // restore curwin/curbuf and a few other things
-  aucmd_restbuf(&aco);
+  ctx_restore(&aco);
 
   if (curbuf != newbuf) {  // safety check
     wipe_buffer(newbuf, false);

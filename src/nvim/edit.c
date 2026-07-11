@@ -17,6 +17,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/change.h"
 #include "nvim/charset.h"
+#include "nvim/context.h"
 #include "nvim/cursor.h"
 #include "nvim/decoration.h"
 #include "nvim/digraph.h"
@@ -1458,13 +1459,13 @@ void ins_redraw(bool ready)
   if (ready && has_event(EVENT_TEXTCHANGEDI)
       && curbuf->b_last_changedtick_i != buf_get_changedtick(curbuf)
       && !pum_visible()) {
-    aco_save_T aco = { 0 };
+    CtxSwitch aco = { 0 };
     varnumber_T tick = buf_get_changedtick(curbuf);
 
     // save and restore curwin and curbuf, in case the autocmd changes them
-    aucmd_prepbuf(&aco, curbuf);
+    ctx_switch(&aco, NULL, NULL, curbuf, 0);
     apply_autocmds(EVENT_TEXTCHANGEDI, NULL, NULL, false, curbuf);
-    aucmd_restbuf(&aco);
+    ctx_restore(&aco);
     curbuf->b_last_changedtick_i = buf_get_changedtick(curbuf);
     if (tick != buf_get_changedtick(curbuf)) {  // see ins_apply_autocmds()
       u_save(curwin->w_cursor.lnum,
@@ -1478,13 +1479,13 @@ void ins_redraw(bool ready)
   if (ready && has_event(EVENT_TEXTCHANGEDP)
       && curbuf->b_last_changedtick_pum != buf_get_changedtick(curbuf)
       && pum_visible()) {
-    aco_save_T aco = { 0 };
+    CtxSwitch aco = { 0 };
     varnumber_T tick = buf_get_changedtick(curbuf);
 
     // save and restore curwin and curbuf, in case the autocmd changes them
-    aucmd_prepbuf(&aco, curbuf);
+    ctx_switch(&aco, NULL, NULL, curbuf, 0);
     apply_autocmds(EVENT_TEXTCHANGEDP, NULL, NULL, false, curbuf);
-    aucmd_restbuf(&aco);
+    ctx_restore(&aco);
     curbuf->b_last_changedtick_pum = buf_get_changedtick(curbuf);
     if (tick != buf_get_changedtick(curbuf)) {  // see ins_apply_autocmds()
       u_save(curwin->w_cursor.lnum,

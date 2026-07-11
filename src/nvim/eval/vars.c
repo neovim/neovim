@@ -14,6 +14,7 @@
 #include "nvim/autocmd_defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
+#include "nvim/context.h"
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
 #include "nvim/eval.h"
@@ -3617,15 +3618,15 @@ void f_setbufvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   if (*varname == '&') {
-    aco_save_T aco = { 0 };
+    CtxSwitch aco = { 0 };
 
     // Set curbuf to be our buf, temporarily.
-    aucmd_prepbuf(&aco, buf);
+    ctx_switch(&aco, NULL, NULL, buf, 0);
 
     set_option_from_tv(varname + 1, varp);
 
     // reset notion of buffer
-    aucmd_restbuf(&aco);
+    ctx_restore(&aco);
   } else {
     const size_t varname_len = strlen(varname);
     char *const bufvarname = xmalloc(varname_len + 3);

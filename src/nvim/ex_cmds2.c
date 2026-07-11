@@ -17,6 +17,7 @@
 #include "nvim/bufwrite.h"
 #include "nvim/change.h"
 #include "nvim/channel.h"
+#include "nvim/context.h"
 #include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
@@ -693,7 +694,7 @@ void ex_listdo(exarg_T *eap)
   msg_listdo_overwrite--;
   if (save_ei != NULL) {
     buf_T *bnext;
-    aco_save_T aco = { 0 };
+    CtxSwitch aco = { 0 };
 
     au_event_restore(save_ei);
 
@@ -708,9 +709,9 @@ void ex_listdo(exarg_T *eap)
           apply_autocmds(EVENT_SYNTAX, curbuf->b_p_syn, curbuf->b_fname, true,
                          curbuf);
         } else {
-          aucmd_prepbuf(&aco, buf);
+          ctx_switch(&aco, NULL, NULL, buf, 0);
           apply_autocmds(EVENT_SYNTAX, buf->b_p_syn, buf->b_fname, true, buf);
-          aucmd_restbuf(&aco);
+          ctx_restore(&aco);
         }
 
         // start over, in case autocommands messed things up.
