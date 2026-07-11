@@ -1199,7 +1199,9 @@ describe('TUI', function()
 
   it("split sequences work within 'ttimeoutlen' time", function()
     poke_both_eventloop() -- Make sure startup requests have finished.
-    child_session:request('nvim_set_option_value', 'ttimeoutlen', 250, {})
+    -- The split sequences below are always completed, so this timeout never actually fires; it only
+    -- needs to exceed the inter-byte gap, which balloons on slow CI.
+    child_session:request('nvim_set_option_value', 'ttimeoutlen', n.load_adjust(1000), {})
     feed_data('i')
     screen:expect([[
       ^                                                  |
@@ -1236,7 +1238,11 @@ describe('TUI', function()
       {5:-- ^X mode (^]^D^E^F^I^K^L^N^O^P^Rs^U^V^Y)}        |
       {5:-- TERMINAL --}                                    |
     ]])
-    -- <Esc> is sent after 'ttimeoutlen' exceeds.
+
+    -- <Esc> is sent after 'ttimeoutlen' exceeds. Use a small value so the sleep below reliably exceeds it.
+    child_session:request('nvim_set_option_value', 'ttimeoutlen', 250, {})
+    poke_both_eventloop()
+
     feed_data('\027')
     screen:expect_unchanged(false, 25)
     vim.uv.sleep(225)
