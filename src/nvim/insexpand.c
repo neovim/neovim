@@ -5241,7 +5241,13 @@ void ins_compl_insert(bool move_cursor, bool insert_prefix)
 static void ins_compl_show_filename(void)
 {
   char *const lead = _("match in file");
-  int space = sc_col - vim_strsize(lead) - 2;
+
+  // In the case of ext_messages, `sc_col` is obsolete. Fortunately, long messages are no longer
+  // disruptive, so truncation could be skipped. But in this particular case, with default
+  // configuration `showmode cmdheight=1`, a multi-line message is shown partially, and a message
+  // that fits into one line is not shown at all. It's better to be consistent: it should not depend
+  // on the exact length of the message whether it is displayed at all.
+  int space = (ui_has(kUIMessages) ? Columns : sc_col) - vim_strsize(lead) - 2;
   if (space <= 0) {
     return;
   }
