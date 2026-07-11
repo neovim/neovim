@@ -1554,7 +1554,9 @@ void wait_return(int redraw)
       } else if (vim_strchr("\r\n ", c) == NULL && c != Ctrl_C && c != 'q') {
         // Put the character back in the typeahead buffer.  Don't use the
         // stuff buffer, because lmaps wouldn't work.
-        ins_char_typebuf(vgetc_char, vgetc_mod_mask, true);
+        requeue_key(vgetc_char, vgetc_mod_mask,
+                    // Recording was suppressed around safe_vgetc() above.
+                    false);
         do_redraw = true;  // need a redraw even though there is typeahead
       }
     } else {
@@ -3782,7 +3784,7 @@ int do_dialog(int type, const char *title, const char *message, const char *butt
       }
       if (c == ':' && ex_cmd) {
         retval = dfltbutton;
-        ins_char_typebuf(':', 0, false);
+        ins_typebuf(":", REMAP_YES, 0, false, false);
         break;
       }
 

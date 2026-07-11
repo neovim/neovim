@@ -1,4 +1,5 @@
 local t = require('test.testutil')
+local Screen = require('test.functional.ui.screen')
 local n = require('test.functional.testnvim')()
 
 local eq = t.eq
@@ -10,6 +11,42 @@ local command = n.command
 local fn = n.fn
 local api = n.api
 local insert = n.insert
+
+describe('macro recording with requeued key', function()
+  before_each(function()
+    clear({ args_rm = { '--cmd' } })
+  end)
+
+  it('mapped key does not corrupt the recording', function()
+    -- Typing over a Select-mode selection puts the key back for Insert mode (requeue_key()).
+    -- A key produced by a mapping is not "typed", so ungetchars() must not touch the recording.
+    command('snoremap Z Y')
+    insert('abc')
+    feed('qq0ghZ<Esc>q')
+    -- "Y" replaced the selected "a".
+    expect('Ybc')
+    -- The recording holds the typed keys: the "Y" mapping must not have eaten the recorded "Z".
+    eq('0ghZ\27', eval('@q'))
+  end)
+
+  it('at hit-enter prompt records the key ONCE', function()
+    -- A non-prompt key typed at the hit-enter prompt is put back to execute
+    -- as a normal command: it is consumed twice, but must be recorded once.
+    local screen = Screen.new(40, 6)
+    insert('abc')
+    feed('qq0')
+    feed(':echo "one\\ntwo"<CR>')
+    -- The prompt must actually engage (needs an attached UI).
+    screen:expect({ any = 'Press ENTER' })
+    feed('x')
+    feed('q')
+    expect('bc')
+    eq('0:echo "one\\ntwo"\rx', eval('@q'))
+    -- Replaying executes "x" once, not twice.
+    feed('@q')
+    expect('c')
+  end)
+end)
 
 describe('macros with default mappings', function()
   before_each(function()

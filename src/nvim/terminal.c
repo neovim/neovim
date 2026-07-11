@@ -2307,10 +2307,7 @@ end:
     return false;
   }
 
-  int len = ins_char_typebuf(vgetc_char, vgetc_mod_mask, true);
-  if (KeyTyped) {
-    ungetchars(len);
-  }
+  requeue_key(vgetc_char, vgetc_mod_mask, true);
   return true;
 }
 
