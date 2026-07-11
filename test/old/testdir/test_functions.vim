@@ -2220,7 +2220,7 @@ func Test_balloon_show()
 endfunc
 
 func Test_setbufvar_options()
-  " This tests that aucmd_prepbuf() and aucmd_restbuf() properly restore the
+  " This tests that ctx_switch() and ctx_restore() properly restore the
   " window layout and cursor position.
   call assert_equal(1, winnr('$'))
   split dummy_preview

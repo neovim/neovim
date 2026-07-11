@@ -588,8 +588,8 @@ void terminal_open(Terminal **termpp, buf_T *buf)
   Terminal *term = *termpp;
   assert(term != NULL);
 
-  aco_save_T aco = { 0 };
-  aucmd_prepbuf(&aco, buf);
+  CtxSwitch aco = { 0 };
+  ctx_switch(&aco, NULL, NULL, buf, 0);
 
   if (term->sb_buffer != NULL) {
     // If scrollback has been allocated by autocommands between terminal_alloc()
@@ -616,7 +616,7 @@ void terminal_open(Terminal **termpp, buf_T *buf)
   // allocated anyway if needed.
   apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, buf);
 
-  aucmd_restbuf(&aco);
+  ctx_restore(&aco);
 
   if (*termpp == NULL || term->buf_handle == 0) {
     return;  // Terminal has already been destroyed.

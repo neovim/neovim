@@ -6,6 +6,11 @@
 // + CtxSwitch/ctx_switch (FKA: aucmd_prepbuf, switch_win, win_execute_T)
 // + TODO: sessions
 // + TODO: undo save/restore (for cmdpreview, multicursor)
+// + TODO: TRY_WRAP ?
+//
+// Related:
+// - vim.with()
+// - switch_option_context(), restore_option_context()
 
 #include <assert.h>
 #include <stdbool.h>

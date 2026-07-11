@@ -17,6 +17,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/bufwrite.h"
 #include "nvim/change.h"
+#include "nvim/context.h"
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
 #include "nvim/eval/typval_defs.h"
@@ -355,7 +356,7 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
   linenr_T old_line_count = buf->b_ml.ml_line_count;
   int msg_save = msg_scroll;
 
-  aco_save_T aco = { 0 };
+  CtxSwitch aco = { 0 };
   bool did_cmd = false;
   bool nofile_err = false;
   bool empty_memline = buf->b_ml.ml_mfp == NULL;
@@ -372,7 +373,7 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
   bool buf_fname_s = *fnamep == buf->b_sfname;
 
   // Set curwin/curbuf to buf and save a few things.
-  aucmd_prepbuf(&aco, buf);
+  ctx_switch(&aco, NULL, NULL, buf, 0);
   set_bufref(&bufref, buf);
 
   if (append) {
@@ -421,7 +422,7 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
   }
 
   // restore curwin/curbuf and a few other things
-  aucmd_restbuf(&aco);
+  ctx_restore(&aco);
 
   // In three situations we return here and don't write the file:
   // 1. the autocommands deleted or unloaded the buffer.
@@ -518,13 +519,13 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
 static void buf_write_do_post_autocmds(buf_T *buf, char *fname, exarg_T *eap, bool append,
                                        bool filtering, bool reset_changed, bool whole)
 {
-  aco_save_T aco = { 0 };
+  CtxSwitch aco = { 0 };
 
   curbuf->b_no_eol_lnum = 0;      // in case it was set by the previous read
 
   // Apply POST autocommands.
   // Careful: The autocommands may call buf_write() recursively!
-  aucmd_prepbuf(&aco, buf);
+  ctx_switch(&aco, NULL, NULL, buf, 0);
 
   if (append) {
     apply_autocmds_exarg(EVENT_FILEAPPENDPOST, fname, fname,
@@ -541,7 +542,7 @@ static void buf_write_do_post_autocmds(buf_T *buf, char *fname, exarg_T *eap, bo
   }
 
   // restore curwin/curbuf and a few other things
-  aucmd_restbuf(&aco);
+  ctx_restore(&aco);
 }
 
 static inline Error_T set_err_num(const char *num, const char *msg)

@@ -41,6 +41,7 @@
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/cmdexpand_defs.h"
+#include "nvim/context.h"
 #include "nvim/cursor_shape.h"
 #include "nvim/decoration_defs.h"
 #include "nvim/decoration_provider.h"
@@ -4215,7 +4216,7 @@ void set_option_direct_for(OptIndex opt_idx, OptVal value, int opt_flags, scid_T
   buf_T *save_curbuf = curbuf;
   win_T *save_curwin = curwin;
 
-  // Don't use switch_option_context(), as that calls aucmd_prepbuf(), which may have unintended
+  // Don't use switch_option_context(), as that calls ctx_switch(), which may have unintended
   // side-effects when setting an option directly. Just change the values of curbuf and curwin if
   // needed, no need to properly switch the window / buffer.
   switch (scope) {
@@ -4320,8 +4321,7 @@ void set_option_value_give_err(const OptIndex opt_idx, OptVal value, int opt_fla
 /// Tab-scope switch is GET-only (SET requires side-effects, see set_option_value_for()).
 ///
 /// @param[out]  ctx   Switched-from context, restored by restore_option_context():
-///                    - kOptScopeWin: switchwin_T
-///                    - kOptScopeBuf: aco_save_T
+///                    - kOptScopeWin/kOptScopeBuf: CtxSwitch
 ///                    - kOptScopeTab: tabpage_T * (saved curtab)
 ///                    - kOptScopeGlobal: unused
 /// @param       scope Option scope. See OptScope in option.h.
@@ -4336,31 +4336,28 @@ static bool switch_option_context(void *const ctx, OptScope scope, void *const f
     return false;
   case kOptScopeWin: {
     win_T *const win = (win_T *)from;
-    switchwin_T *const switchwin = (switchwin_T *)ctx;
 
     if (win == curwin) {
       return false;
     }
 
-    if (FAIL == switch_win_noblock(switchwin, win, win_find_tabpage(win), true)) {
-      restore_win_noblock(switchwin, true);
-
-      if (ERROR_SET(err)) {
-        return false;
+    // kCtxNoDisplay (no kCtxNoEvents): switch without redraw, but let autocommands fire.
+    if (!ctx_switch((CtxSwitch *)ctx, win, win_find_tabpage(win), NULL, kCtxNoDisplay)) {
+      ctx_restore((CtxSwitch *)ctx);
+      if (!ERROR_SET(err)) {
+        api_set_error(err, kErrorTypeException, "Problem while switching windows");
       }
-      api_set_error(err, kErrorTypeException, "Problem while switching windows");
       return false;
     }
     return true;
   }
   case kOptScopeBuf: {
     buf_T *const buf = (buf_T *)from;
-    aco_save_T *const aco = (aco_save_T *)ctx;
 
     if (buf == curbuf) {
       return false;
     }
-    aucmd_prepbuf(aco, buf);
+    ctx_switch((CtxSwitch *)ctx, NULL, NULL, buf, 0);
     return true;
   }
   case kOptScopeTab: {
@@ -4389,10 +4386,8 @@ static void restore_option_context(void *const ctx, OptScope scope)
   case kOptScopeGlobal:
     break;
   case kOptScopeWin:
-    restore_win_noblock((switchwin_T *)ctx, true);
-    break;
   case kOptScopeBuf:
-    aucmd_restbuf((aco_save_T *)ctx);
+    ctx_restore((CtxSwitch *)ctx);
     break;
   case kOptScopeTab: {
     tabpage_T *const saved_curtab = *(tabpage_T **)ctx;
@@ -4417,13 +4412,9 @@ static void restore_option_context(void *const ctx, OptScope scope)
 OptVal get_option_value_for(OptIndex opt_idx, int opt_flags, const OptScope scope, void *const from,
                             Error *err)
 {
-  switchwin_T switchwin;
-  aco_save_T aco = { 0 };
+  CtxSwitch cs = { 0 };
   tabpage_T *swtab = NULL;
-  void *ctx = scope == kOptScopeWin ? (void *)&switchwin
-                                    : scope == kOptScopeBuf ? (void *)&aco
-                                                            : scope == kOptScopeTab ? (void *)&swtab
-                                                                                    : NULL;
+  void *ctx = scope == kOptScopeTab ? (void *)&swtab : (void *)&cs;
 
   bool switched = switch_option_context(ctx, scope, from, err);
   if (ERROR_SET(err)) {
@@ -4468,13 +4459,9 @@ void set_option_value_for(const char *name, OptIndex opt_idx, OptVal value, cons
     return;
   }
 
-  switchwin_T switchwin;
-  aco_save_T aco = { 0 };
+  CtxSwitch cs = { 0 };
   tabpage_T *swtab = NULL;
-  void *ctx = scope == kOptScopeWin ? (void *)&switchwin
-                                    : scope == kOptScopeBuf ? (void *)&aco
-                                                            : scope == kOptScopeTab ? (void *)&swtab
-                                                                                    : NULL;
+  void *ctx = scope == kOptScopeTab ? (void *)&swtab : (void *)&cs;
 
   bool switched = switch_option_context(ctx, scope, from, err);
   if (ERROR_SET(err)) {

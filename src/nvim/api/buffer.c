@@ -985,11 +985,11 @@ void nvim_buf_set_name(Buffer buf, String name, Error *err)
       p_acd = false;
     }
 
-    // Using aucmd_*: autocommands will be executed by rename_buffer
-    aco_save_T aco = { 0 };
-    aucmd_prepbuf(&aco, b);
+    // Switch context to `b`: autocommands will be executed by rename_buffer
+    CtxSwitch aco = { 0 };
+    ctx_switch(&aco, NULL, NULL, b, 0);
     ren_ret = rename_buffer(name.data);
-    aucmd_restbuf(&aco);
+    ctx_restore(&aco);
 
     if (!is_curbuf) {
       RedrawingDisabled--;

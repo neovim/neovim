@@ -5,7 +5,6 @@
 #include <stdint.h>
 
 #include "nvim/buffer_defs.h"
-#include "nvim/context_defs.h"  // IWYU pragma: keep (aco_save_T)
 #include "nvim/ex_cmds_defs.h"
 
 #include "auevents_enum.generated.h"

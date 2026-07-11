@@ -10,6 +10,7 @@
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/change.h"
+#include "nvim/context.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
@@ -36,7 +37,7 @@
 
 typedef struct {
   win_T *cob_curwin_save;
-  aco_save_T cob_aco;
+  CtxSwitch cob_aco;
   int cob_using_aco;
   int cob_save_VIsual_active;
 } cob_T;
@@ -105,7 +106,7 @@ static void change_other_buffer_prepare(cob_T *cob, buf_T *buf)
     // No existing window for this buffer.  It is dangerous to have
     // curwin->w_buffer differ from "curbuf", use the autocmd window.
     curbuf = curwin->w_buffer;
-    aucmd_prepbuf(&cob->cob_aco, buf);
+    ctx_switch(&cob->cob_aco, NULL, NULL, buf, 0);
     cob->cob_using_aco = true;
   }
 }
@@ -113,7 +114,7 @@ static void change_other_buffer_prepare(cob_T *cob, buf_T *buf)
 static void change_other_buffer_restore(cob_T *cob)
 {
   if (cob->cob_using_aco) {
-    aucmd_restbuf(&cob->cob_aco);
+    ctx_restore(&cob->cob_aco);
   } else {
     curwin = cob->cob_curwin_save;
     curbuf = curwin->w_buffer;
@@ -780,7 +781,7 @@ void f_setline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// Make "buf" the current buffer.
 ///
 /// restore_buffer() MUST be called to undo.
-/// No autocommands will be executed. Use aucmd_prepbuf() if there are any.
+/// No autocommands will be executed. Use ctx_switch() if there are any.
 void switch_buffer(bufref_T *save_curbuf, buf_T *buf)
 {
   block_autocmds();
