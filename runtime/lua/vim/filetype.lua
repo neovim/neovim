@@ -3254,7 +3254,7 @@ function M.match(args)
   end
 
   if name then
-    if name:sub(-1) == '/' then
+    if name:sub(-1) == '/' and not name:find('^%a[%w+.-]*://') then
       return 'directory'
     end
     name = normalize_path(name)
