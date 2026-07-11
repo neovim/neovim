@@ -255,8 +255,8 @@ LUA
   terminal supports it.
 • |vim.net.request()| can specify custom headers by passing `opts.headers`.
 • |vim.net.request()| can now accept  `method` param overload for multiple HTTP methods.
-• |writefile()| treats Lua strings as "blob", so it can be used to write
-  binary data.
+• |writefile()| treats Lua and RPC strings as |Blob|, so it can be used to
+  write binary data.
 • |vim.fs.dir()| with `opts.err=true`, reports errors. An inaccessible root
   dir yields a single (name, nil, err) item.
 • |vim.fs.find()| returns a list of errors as its second return value.

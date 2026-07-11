@@ -1794,8 +1794,10 @@ void f_writefile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       }
     });
   } else if (argvars[0].v_type != VAR_BLOB
-             // Always treat Lua strings as "blob" data.
-             && !(argvars[0].v_type == VAR_STRING && script_is_lua(current_sctx.sc_sid))) {
+             // Always treat Lua/RPC strings as "blob" data.
+             && !(argvars[0].v_type == VAR_STRING
+                  && (script_is_lua(current_sctx.sc_sid)
+                      || current_sctx.sc_sid == SID_API_CLIENT))) {
     semsg(_(e_invarg2), _("writefile() first argument must be a List or a Blob"));
     return;
   }
