@@ -254,13 +254,13 @@ Window nvim_open_win(Buffer buf, Boolean enter, Dict(win_config) *config, Error 
       if (parent == NULL || parent == curwin) {
         wp = win_split_ins(size, flags, NULL, 0, NULL);
       } else {
-        switchwin_T switchwin;
-        // `parent` is valid in `tp`, so switch_win should not fail.
-        const int result = switch_win(&switchwin, parent, tp, true);
-        assert(result == OK);
+        CtxSwitch switchwin;
+        // `parent` is valid in `tp`, so ctx_switch should not fail.
+        const bool result = ctx_switch(&switchwin, parent, tp, NULL, kCtxNoEvents | kCtxNoDisplay);
+        assert(result);
         (void)result;
         wp = win_split_ins(size, flags, NULL, 0, NULL);
-        restore_win(&switchwin, true);
+        ctx_restore(&switchwin);
       }
     });
     if (wp) {
@@ -297,19 +297,19 @@ Window nvim_open_win(Buffer buf, Boolean enter, Dict(win_config) *config, Error 
   }
 
   // Autocommands may close `wp` or move it to another tabpage, so update and check `tp` after each
-  // event. In each case, `wp` should already be valid in `tp`, so switch_win should not fail.
+  // event. In each case, `wp` should already be valid in `tp`, so ctx_switch should not fail.
   // Also, autocommands may free the `buf` to switch to, so store a bufref to check.
   bufref_T bufref;
   set_bufref(&bufref, b);
   if (!fconfig.noautocmd) {
-    switchwin_T switchwin;
-    const int result = switch_win_noblock(&switchwin, wp, tp, true);
-    assert(result == OK);
+    CtxSwitch switchwin;
+    const bool result = ctx_switch(&switchwin, wp, tp, NULL, kCtxNoDisplay);
+    assert(result);
     (void)result;
     if (apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf)) {
       tp = win_find_tabpage(wp);
     }
-    restore_win_noblock(&switchwin, true);
+    ctx_restore(&switchwin);
   }
   if (tp && enter) {
     goto_tabpage_win(tp, wp);
@@ -577,20 +577,21 @@ static bool win_config_split(win_T *win, const Dict(win_config) *config, WinConf
 
   TRY_WRAP(err, {
     const bool need_switch = parent != NULL && parent != curwin;
-    switchwin_T switchwin;
+    CtxSwitch switchwin;
     if (need_switch) {
-      // `parent` is valid in its tabpage, so switch_win should not fail.
-      const int result = switch_win(&switchwin, parent, parent_tp, true);
+      // `parent` is valid in its tabpage, so ctx_switch should not fail.
+      const bool result = ctx_switch(&switchwin, parent, parent_tp, NULL,
+                                     kCtxNoEvents | kCtxNoDisplay);
       (void)result;
-      assert(result == OK);
+      assert(result);
     }
     to_split_ok = win_split_ins(0, flags, win, 0, unflat_altfr) != NULL;
     if (!to_split_ok) {
-      // Restore `win` to the window list now, so it's valid for restore_win (if used).
+      // Restore `win` to the window list now, so it's valid for ctx_restore (if used).
       win_append(win->w_prev, win, win_tp == curtab ? NULL : win_tp);
     }
     if (need_switch) {
-      restore_win(&switchwin, true);
+      ctx_restore(&switchwin);
     }
   });
   if (!to_split_ok) {
@@ -714,7 +715,7 @@ restore_curwin:
 
     // Remove grid if present. More reliable than checking curtab, as tabpage_check_windows may not
     // run when temporarily switching tabpages, meaning grids may be stale from another tabpage!
-    // (e.g: switch_win_noblock with no_display=true)
+    // (e.g: ctx_switch with kCtxNoDisplay)
     ui_comp_remove_grid(&win->w_grid_alloc);
 
     // Redraw tabline, update window's hl attribs, etc. Set must_redraw here, as redraw_later might

@@ -890,31 +890,3 @@ void f_winwidth(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     rettv->vval.v_number = wp->w_view_width;
   }
 }
-
-/// TODO(justinmk): legacy shim, use ctx_switch() directly.
-int switch_win(switchwin_T *switchwin, win_T *win, tabpage_T *tp, bool no_display)
-{
-  return ctx_switch(switchwin, win, tp, NULL, kCtxNoEvents | (no_display ? kCtxNoDisplay : 0))
-         ? OK : FAIL;
-}
-
-// TODO(justinmk): legacy shim, use ctx_switch() directly.
-int switch_win_noblock(switchwin_T *switchwin, win_T *win, tabpage_T *tp, bool no_display)
-{
-  return ctx_switch(switchwin, win, tp, NULL, no_display ? kCtxNoDisplay : 0)
-         ? OK : FAIL;
-}
-
-/// TODO(justinmk): legacy shim, use ctx_restore() directly.
-void restore_win(switchwin_T *switchwin, bool no_display)
-{
-  (void)no_display;  // recorded by ctx_switch()
-  ctx_restore(switchwin);
-}
-
-/// TODO(justinmk): legacy shim, use ctx_restore() directly.
-void restore_win_noblock(switchwin_T *switchwin, bool no_display)
-{
-  (void)no_display;  // recorded by ctx_switch()
-  ctx_restore(switchwin);
-}
