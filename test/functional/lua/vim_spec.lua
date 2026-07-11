@@ -713,7 +713,7 @@ describe('lua stdlib', function()
     eq(true, pcall(vim.split, 'string', 'string'))
     matches('s: expected string, got number', pcall_err(vim.split, 1, 'string'))
     matches('sep: expected string, got number', pcall_err(vim.split, 'string', 1))
-    matches('opts: expected table, got number', pcall_err(vim.split, 'string', 'string', 1))
+    matches('opts: expected table|nil, got number', pcall_err(vim.split, 'string', 'string', 1))
   end)
 
   it('vim.trim', function()
@@ -1578,6 +1578,11 @@ describe('lua stdlib', function()
     matches('arg1: expected function, got nil', pcall_err(vim.validate, 'arg1', nil, 'function'))
     matches('arg1: expected string, got number', pcall_err(vim.validate, 'arg1', 5, 'string'))
     matches('arg1: expected table, got number', pcall_err(vim.validate, 'arg1', 5, 'table'))
+    -- Optional param present with the wrong type: message notes nil was also valid.
+    matches(
+      'arg1: expected string|nil, got number',
+      pcall_err(vim.validate, 'arg1', 5, 'string', true)
+    )
     matches('arg1: expected function, got number', pcall_err(vim.validate, 'arg1', 5, 'function'))
     matches('arg1: expected number, got string', pcall_err(vim.validate, 'arg1', '5', 'number'))
     matches('arg1: expected x, got number', pcall_err(exec_lua, "vim.validate('arg1', 1, 'x')"))
@@ -2370,7 +2375,7 @@ describe('lua stdlib', function()
     it('callback must be a function', function()
       local result = exec_lua [[return {pcall(function() vim.wait(1000, 13) end)}]]
       eq(false, result[1])
-      matches('callback: expected callable, got number$', remove_trace(result[2]))
+      matches('callback: expected callable|nil, got number$', remove_trace(result[2]))
     end)
 
     it('waits if callback arg is nil', function()
@@ -2951,7 +2956,7 @@ describe('vim.keymap', function()
     )
 
     matches(
-      'opts: expected table, got function',
+      'opts: expected table|nil, got function',
       pcall_err(exec_lua, [[vim.keymap.set({}, 'x', 'x', function() end)]])
     )
 

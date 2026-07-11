@@ -1274,6 +1274,10 @@ do
       local ok = (type(value) == validator) or (value == nil and optional == true)
       if not ok then
         local msg = type(optional) == 'string' and optional or message --[[@as string?]]
+        if not msg and optional == true and type(validator) == 'string' then
+          -- Value is optional but present with the wrong type: say so in the message.
+          msg = validator .. '|nil'
+        end
         -- Check more complicated validators
         err_msg = is_valid(name, value, validator, msg, false)
       end
