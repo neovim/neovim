@@ -3815,6 +3815,7 @@ void ex_diffgetput(exarg_T *eap)
     change_warning(curbuf, 0);
     if (diff_buf_idx(curbuf, curtab) != idx_to) {
       emsg(_("E787: Buffer changed unexpectedly"));
+      aucmd_restbuf(&aco);
       goto theend;
     }
   }
