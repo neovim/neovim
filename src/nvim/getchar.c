@@ -1,5 +1,36 @@
-// getchar.c: Code related to getting a character from the user or a script
-// file, manipulations with redo buffer and stuff buffer.
+// getchar.c: the input engine.
+// - Get a character from the user, a script file, or the keybufs described below.
+// - Apply mappings and abbreviations to typed keys (the :map tables live in mapping.c; the
+//   matching loop is handle_mapping()).
+// - Assemble K_SPECIAL/multibyte byte sequences into keys (vgetc()).
+// - Record macros (recordbuff) and the redo keys (redobuff: "." capture and replay).
+//
+// Concepts:
+// - "Stuffing" = when some internal logic pushes keys to execute next. This is how a cmd
+//   "translates" into another cmd: "x" stuffs "dl" (nv_optrans()), "." stuffs the redo buf.
+// - TYPEAHEAD vs READ-AHEAD:
+//   - typeahead = external input that arrived faster than can be executed (user typed fast).
+//   - readahead = Nvim's own self-input.
+//     - vgetorpeek() drains it BEFORE typeahead.
+//     - Its keys are never mapped (mappings apply only to the
+//       typebuf; abbreviations are disabled too), though they count as typed for most purposes
+//       (KeyStuffed).
+//
+// These buffers are used:
+// - stuff buffers (`readbuf1`, `readbuf2`) are readahead buffers.
+//   - TWO stuff buffers, because stuffing nests: a cmd executed FROM redo keys (readbuf2) may
+//     itself stuff a translation (readbuf1), which must be consumed before the remaining redo.
+// - `typebuf`: typeahead (see below).
+// - `redobuff`: the keys of the last change ("." stuffs them, start_redo());
+//   `old_redobuff` is the previous change, for "CTRL-O ." in Insert mode.
+// - `recordbuff`: accumulates the keys of a recording ("q").
+//
+// Buffer bytes are encoded as follows:
+// - K_SPECIAL introduces a special key (two more bytes follow).
+//   A literal K_SPECIAL is stored as K_SPECIAL KS_SPECIAL KE_FILLER.
+// - These translations are also done on multi-byte characters!
+// - Escaping K_SPECIAL is done by inchar().
+// - Un-escaping is done by vgetc().
 
 #include <assert.h>
 #include <limits.h>
@@ -85,19 +116,6 @@ typedef struct {
 static int curscript = -1;
 /// Streams to read script from
 static FileDescriptor scriptin[NSCRIPT] = { 0 };
-
-// These buffers are used for storing:
-// - stuffed characters: A command that is translated into another command.
-// - redo characters: will redo the last change.
-// - recorded characters: for the "q" command.
-//
-// The bytes are stored like in the typeahead buffer:
-// - K_SPECIAL introduces a special key (two more bytes follow).  A literal
-//   K_SPECIAL is stored as K_SPECIAL KS_SPECIAL KE_FILLER.
-// These translations are also done on multi-byte characters!
-//
-// Escaping K_SPECIAL is done by inchar().
-// Un-escaping is done by vgetc().
 
 #define MINIMAL_SIZE 20                 // minimal size for b_str
 
@@ -1046,25 +1064,21 @@ int ins_typebuf(char *str, int noremap, int offset, bool nottyped, bool silent)
   return OK;
 }
 
-/// Put character "c" back into the typeahead buffer.
-/// Can be used for a character obtained by vgetc() that needs to be put back.
-/// Uses cmd_silent, KeyTyped and KeyNoremap to restore the flags belonging to
-/// the char.
+/// Re-queues key `c`: puts a key obtained by vgetc() back into typeahead, to be reprocessed: mapped
+/// (cf. vungetc(), which bypasses mapping), recorded and reported. Calls ungetchars() to drop the
+/// effects of consuming it the first time.
 ///
-/// @param on_key_ignore don't store these bytes for vim.on_key()
+/// Uses cmd_silent, KeyTyped and KeyNoremap to restore the flags belonging to the char.
 ///
-/// @return the length of what was inserted
-int ins_char_typebuf(int c, int modifiers, bool on_key_ignore)
+/// @param recorded  Pass false if the caller suppressed recording on the initial read.
+void requeue_key(int c, int modifiers, bool recorded)
 {
   char buf[MB_MAXBYTES * 3 + 4];
   unsigned len = special_to_buf(c, modifiers, true, buf);
   assert(len < sizeof(buf));
   buf[len] = NUL;
   ins_typebuf(buf, KeyNoremap, 0, !KeyTyped, cmd_silent);
-  if (KeyTyped && on_key_ignore) {
-    on_key_ignore_len += len;
-  }
-  return (int)len;
+  ungetchars((int)len, recorded);
 }
 
 /// Return true if the typeahead buffer was changed (while waiting for a
@@ -1270,18 +1284,24 @@ void gotchars_ignore(void)
   gotchars(nop_buf, 3);
 }
 
-/// Undo the last gotchars() for "len" bytes.  To be used when putting a typed
-/// character back into the typeahead buffer, thus gotchars() will be called
-/// again.
-/// Only affects recorded characters.
-void ungetchars(int len)
+/// Undo the last gotchars() for `len` bytes: a key that was read is being re-queued into typeahead,
+/// so it will be read (+ gotchars()) again. Un-reports the bytes, and (if `recorded`) removes them
+/// from the recording.
+///
+/// @param recorded  Pass false if recording was suppressed on the first read: the trailing
+///        `recordbuff` bytes are unrelated and deleting them would corrupt it.
+static void ungetchars(int len, bool recorded)
 {
-  if (reg_recording == 0) {
-    return;
+  if (!KeyTyped) {
+    return;  // gotchars() only sees typed keys; nothing to undo.
   }
-
-  delete_buff_tail(&recordbuff, len);
-  last_recorded_len -= (size_t)len;
+  if (recorded && reg_recording != 0) {
+    delete_buff_tail(&recordbuff, len);
+    last_recorded_len -= (size_t)len;
+  }
+  size_t trim = MIN((size_t)len, on_key_buf.size);
+  on_key_buf.size -= trim;
+  on_key_ignore_len += (size_t)len - trim;
 }
 
 /// Sync undo.  Called when typed characters are obtained from the typeahead
@@ -1709,13 +1729,15 @@ int vgetc(void)
       if (!no_mapping && KeyTyped && mod_mask == MOD_MASK_ALT
           && !(State & MODE_TERMINAL) && !is_mouse_key(c)) {
         mod_mask = 0;
-        int len = ins_char_typebuf(c, 0, false);
-        ins_char_typebuf(ESC, 0, false);
-        int old_len = len + 3;  // K_SPECIAL KS_MODIFIER MOD_MASK_ALT takes 3 more bytes
-        ungetchars(old_len);
-        if (on_key_buf.size >= (size_t)old_len) {
-          on_key_buf.size -= (size_t)old_len;
-        }
+        char kbuf[MB_MAXBYTES * 3 + 4];
+        unsigned klen = special_to_buf(c, 0, true, kbuf);
+        assert(klen < sizeof(kbuf));
+        kbuf[klen] = NUL;
+        // Un-record/un-report the consumed <M-x> (its K_SPECIAL KS_MODIFIER MOD_MASK_ALT prefix
+        // took 3 more bytes); the rewritten <Esc>x is consumed (recorded, reported) in its place.
+        ungetchars((int)klen + 3, true);
+        ins_typebuf(kbuf, KeyNoremap, 0, !KeyTyped, cmd_silent);
+        ins_typebuf(ESC_STR, KeyNoremap, 0, !KeyTyped, cmd_silent);
         continue;
       }
 
