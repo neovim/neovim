@@ -160,20 +160,25 @@ describe('nvim.dir', function()
     eq('alpha.txt', api.nvim_get_current_line())
   end)
 
-  it('lets startup plugins replace the - mapping', function()
-    local config_dir = fn.stdpath('config')
-    local plugin_dir = vim.fs.joinpath(config_dir, 'plugin')
-    fn.mkdir(plugin_dir, 'p')
-    fn.writefile({
-      [[if vim.fn.mapcheck('-', 'n') == '' and vim.fn.hasmapto('<Plug>(dirvish_up)', 'n') == 0 then]],
-      [[  vim.keymap.set('n', '-', '<Plug>(dirvish_up)')]],
-      [[end]],
-    }, vim.fs.joinpath(plugin_dir, 'dirvish.lua'))
+  it('startup plugins can replace the `-` mapping', function()
+    local plugin_file = vim.fs.joinpath(vim.fn.stdpath('config'), 'plugin/dirvish.lua')
+    vim.fs.mkdir(vim.fs.dirname(plugin_file), { parents = true })
+    finally(function()
+      os.remove(plugin_file) -- XXX: Remove file only, to avoid n.rmdir() hang on Windows.
+    end)
+    vim.fn.writefile(
+      [[
+        if vim.fn.mapcheck('-', 'n') == '' and vim.fn.hasmapto('<Plug>(dirvish_up)', 'n') == 0 then
+          vim.keymap.set('n', '-', '<Plug>(dirvish_up)')
+        end
+      ]],
+      plugin_file
+    )
 
     n.clear({ args_rm = { '-u', '--cmd' } })
 
+    eq(1, fn.exists('g:loaded_nvim_dir_plugin')) -- Avoid false negatives.
     eq('<Plug>(dirvish_up)', fn.mapcheck('-', 'n'))
-    n.rmdir(config_dir)
   end)
 
   it('preserves alternate buffer when opening a parent directory', function()
