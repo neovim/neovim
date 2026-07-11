@@ -26,7 +26,7 @@ error('Cannot require a meta file')
 
 --- @class vim.api.keyset.cmd
 --- @field addr? "line"|"arg"|"buf"|"load"|"win"|"tab"|"qf"|"none"|"?"
---- @field args? string[]
+--- @field args? (integer|string|boolean)[]
 --- @field bang? boolean
 --- @field cmd? string
 --- @field count? integer
