@@ -204,6 +204,61 @@ Common examples of non-fast code: regexp matching, wildcard expansion,
 expression evaluation.
 
 ==============================================================================
+LSP                                                                  *dev-lsp*
+
+------------------------------------------------------------------------------
+LSP Capability Framework                                  *dev-lsp-capability*
+
+Certain LSP functions are exposed to the user as optional capabilities that
+can be enabled/disabled based on the preference. At the moment they include:
+- codelens                                                      |lsp-codelens|
+- diagnostics (pull diagnostics only)                         |diagnostic-api|
+- document_color                                          |lsp-document_color|
+- folding_range                                           |vim.lsp.foldexpr()|
+- inlay_hint                                                  |lsp-inlay_hint|
+- inline_completion                                    |lsp-inline_completion|
+- linked_editing_range                              |lsp-linked_editing_range|
+- semantic_tokens                                        |lsp-semantic_tokens|
+
+Capabilities can be enabled globally, per LSP client, per buffer, or per
+a combination of a client and a buffer. More precise settings override less
+precise ones.
+       Global
+     ^       ^
+    /         \
+ Client      Buffer
+   ^           ^
+    \         /
+    Client+Buffer
+
+Each capability can be enabled and its state can be queried as: >lua
+    vim.lsp._capability.enable("codelens", true, filter)
+    vim.lsp._capability.is_enabled("codelens", filter)
+<
+
+Modules intended for users ususally have own methods that call those
+internally, like: >lua
+    vim.lsp.codelens.enable(true, filter)
+    vim.lsp.codelens.is_enabled(filter)
+<
+
+When querying whether a capability is enabled, `true` should be
+interpreted as following for:
+- `is_enabled()` - means that the capability is enabled in general, the
+    following (more precise) queries can override it;
+- `is_enabled({ client_id })` - the capability is enabled for the client in
+    any buffer. Individual buffers or client+buffer exceptions can
+    restrict this;
+- `is_enabled({ bufnr })` - the capability is enabled in the buffer for any
+    enabled client. To be used neither client, nor client+buffer should
+    disable the capability;
+- `is_enabled({ client_id, bufnr })` - allowed for the client in the buffer.
+
+Note: Capability implementations, plugins, etc. will usually use the most
+precise form `is_enabled({ client_id, bufnr })` to test whether the capability
+should do its thing.
+
+==============================================================================
 Internal practices and patterns                          *dev-internals-howto*
 
 ------------------------------------------------------------------------------

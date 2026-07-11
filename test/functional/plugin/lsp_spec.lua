@@ -1687,7 +1687,10 @@ describe('LSP', function()
         on_handler = function(err, result, ctx)
           if ctx.method == 'start' then
             exec_lua(function()
-              vim.lsp.inlay_hint.enable(true, { bufnr = _G.BUFFER })
+              vim.lsp.inlay_hint.enable(
+                true,
+                { client_id = _G.TEST_RPC_CLIENT_ID, bufnr = _G.BUFFER }
+              )
             end)
           end
           if ctx.method == 'textDocument/inlayHint' then
