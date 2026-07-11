@@ -1490,15 +1490,15 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
         // Switch to buf's holder window without entering it: caller keeps focus,
         // BufEnter doesn't fire for the deleted buffer.
         // curwin must be floating: buf != curbuf, yet firstwin (the last non-float) shows buf.
-        // Also firstwin is valid in curtab, so switch_win_noblock should not fail.
+        // Also firstwin is valid in curtab, so ctx_switch should not fail.
         assert(curwin->w_floating);
-        switchwin_T switchwin;
-        const int rv = switch_win_noblock(&switchwin, firstwin, curtab, true);
-        assert(rv == OK);
+        CtxSwitch switchwin;
+        const bool rv = ctx_switch(&switchwin, firstwin, curtab, NULL, kCtxNoDisplay);
+        assert(rv);
         (void)rv;
         // retry (recurse)
         do_buffer_ext(action, start, dir, count, flags);
-        restore_win_noblock(&switchwin, true);
+        ctx_restore(&switchwin);
       }
 
       if (buf != curbuf && bufref_valid(&bufref) && buf->b_nwindows <= 0) {

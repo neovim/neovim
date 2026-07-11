@@ -799,12 +799,12 @@ void win_set_buf(win_T *win, buf_T *buf, Error *err)
   // no redrawing and don't set the window title
   RedrawingDisabled++;
 
-  switchwin_T switchwin;
-  int win_result;
+  CtxSwitch switchwin;
+  bool win_ok;
 
   TRY_WRAP(err, {
-    win_result = switch_win_noblock(&switchwin, win, tab, true);
-    if (win_result != FAIL) {
+    win_ok = ctx_switch(&switchwin, win, tab, NULL, kCtxNoDisplay);
+    if (win_ok) {
       const int save_acd = p_acd;
       if (!switchwin.cs_same_win) {
         // Temporarily disable 'autochdir' when setting buffer in another window.
@@ -818,7 +818,7 @@ void win_set_buf(win_T *win, buf_T *buf, Error *err)
       }
     }
   });
-  if (win_result == FAIL && !ERROR_SET(err)) {
+  if (!win_ok && !ERROR_SET(err)) {
     api_set_error(err, kErrorTypeException, "Failed to switch to window %d", win_handle);
   }
 
@@ -826,7 +826,7 @@ void win_set_buf(win_T *win, buf_T *buf, Error *err)
   // Still needed if do_buffer returns FAIL (e.g: autocmds abort script after buffer was set).
   validate_cursor(curwin);
 
-  restore_win_noblock(&switchwin, true);
+  ctx_restore(&switchwin);
   RedrawingDisabled--;
 }
 
@@ -4305,7 +4305,7 @@ void unuse_tabpage(tabpage_T *tp)
   tp->tp_curwin = curwin;
   // Set this tab's stored cmdheight so use_tabpage() can restore it later.
   // command_height() and win_new_screen_rows() also keep tp_ch_used in sync for the current tab
-  // between tab switches; this catches the no-display switch_win() path which bypasses them.
+  // between tab switches; this catches the no-display ctx_switch() path which bypasses them.
   tp->tp_ch_used = p_ch;
 }
 
@@ -4560,17 +4560,17 @@ tabpage_T *win_new_tabpage(int after, char *filename, bool enter, win_T **first)
       win_new_screen_rows();
     }
 
-    // Trigger autocommands in the context of the new window. Let switch_win_noblock handle stuff
+    // Trigger autocommands in the context of the new window. Let ctx_switch handle stuff
     // like temporarily resetting VIsual_active.
-    switchwin_T switchwin;
-    const int sw_result = switch_win_noblock(&switchwin, newtp->tp_curwin, newtp, true);
-    assert(sw_result == OK);  // tp_curwin is valid in newtp
-    (void)sw_result;
+    CtxSwitch switchwin;
+    const bool sw_ok = ctx_switch(&switchwin, newtp->tp_curwin, newtp, NULL, kCtxNoDisplay);
+    assert(sw_ok);  // tp_curwin is valid in newtp
+    (void)sw_ok;
 
     apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf);
     apply_autocmds(EVENT_TABNEW, filename, filename, false, curbuf);
 
-    restore_win_noblock(&switchwin, true);
+    ctx_restore(&switchwin);
   }
 
   return newtp;
@@ -7367,12 +7367,12 @@ void set_winbar_all(bool make_room)
       continue;
     }
 
-    switchwin_T switchwin;
+    CtxSwitch switchwin;
     // Use a no-display switch so the hidden tab's frame and window globals are active.
-    if (switch_win(&switchwin, tp->tp_curwin, tp, true) == OK) {
+    if (ctx_switch(&switchwin, tp->tp_curwin, tp, NULL, kCtxNoEvents | kCtxNoDisplay)) {
       (void)set_winbar_curtab(make_room, false);
     }
-    restore_win(&switchwin, true);
+    ctx_restore(&switchwin);
   }
 }
 
