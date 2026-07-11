@@ -4,7 +4,6 @@ local n = require('test.functional.testnvim')()
 local clear = n.clear
 local exec_lua = n.exec_lua
 local eq = t.eq
-local pcall_err = t.pcall_err
 
 local function system_sync(cmd, opts)
   return exec_lua(function()
@@ -18,8 +17,13 @@ local function system_sync(cmd, opts)
 
     local res = obj:wait()
 
-    -- Check the process is no longer running
-    assert(not vim.api.nvim_get_proc(obj.pid), 'process still exists')
+    -- Check the process is no longer running. nvim_get_proc() can lag the exit callback (on Windows)?
+    assert(
+      vim.wait(1000, function()
+        return not vim.api.nvim_get_proc(obj.pid)
+      end),
+      'process still exists'
+    )
 
     return res
   end)
@@ -40,8 +44,13 @@ local function system_async(cmd, opts)
 
     assert(ok, 'process did not exit')
 
-    -- Check the process is no longer running
-    assert(not vim.api.nvim_get_proc(obj.pid), 'process still exists')
+    -- Check the process is no longer running. nvim_get_proc() can lag the exit callback (on Windows)?
+    assert(
+      vim.wait(1000, function()
+        return not vim.api.nvim_get_proc(obj.pid)
+      end),
+      'process still exists'
+    )
 
     return res
   end)
