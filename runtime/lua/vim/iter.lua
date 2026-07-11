@@ -326,7 +326,6 @@ function IterArray:flatten(depth)
   self._head = 1
   self._tail = #target + 1
   self._table = target
-  self._has_packed = false
   return self
 end
 
@@ -532,11 +531,8 @@ function IterArray:totable()
     self._table[i] = nil
   end
 
-  self._head = 1
   self._tail = len + 1
-  if needs_sanitize then
-    self._head = self._tail
-  end
+  self._head = self._tail
   self._has_packed = false
 
   return self._table

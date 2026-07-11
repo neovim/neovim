@@ -117,6 +117,7 @@ describe('vim.iter', function()
       eq({ { 1, 1 }, { 2, 4 }, { 3, 9 } }, it:totable())
     end
 
+    -- Sanitizes a packed value even when it is not the first live element.
     do
       local it = vim.iter({ 1, 2 }):map(function(v)
         if v == 1 then
@@ -132,6 +133,7 @@ describe('vim.iter', function()
       eq({}, it:totable())
     end
 
+    -- Preserves zero as the first value of a packed tuple and drains the iterator.
     do
       local it = vim.iter({ 1 }):map(function()
         return 0, 1
@@ -144,6 +146,15 @@ describe('vim.iter', function()
       eq({}, it:totable())
     end
 
+    -- Preserves packed tuples through a zero-depth flatten for later sanitization.
+    do
+      local it = vim.iter({ 1 }):map(function()
+        return 0, 1
+      end)
+      eq({ { 0, 1 } }, it:flatten(0):totable())
+    end
+
+    -- next() unpacks mapped tuples and ends after the final value.
     do
       local it = vim.iter({ 1 }):map(function()
         return 0, 1
@@ -158,12 +169,14 @@ describe('vim.iter', function()
       eq(nil, d)
     end
 
+    -- Drains the non-packed array fast path.
     do
       local it = vim.iter({ 1 })
       eq({ 1 }, it:totable())
-      eq(1, it:next())
+      eq(nil, it:next())
     end
 
+    -- Keeps an empty iterator drained after collection.
     do
       local it = vim.iter({})
       eq({}, it:totable())
@@ -382,8 +395,8 @@ describe('vim.iter', function()
       local q = { 4, 3, 2, 1 }
       local it = vim.iter(q)
       eq({ 4, 3 }, it:take(2):totable())
-      -- tail is already set from the previous take()
-      eq({ 4, 3 }, it:take(3):totable())
+      -- totable() drains the iterator after the previous take()
+      eq({}, it:take(3):totable())
     end
 
     do
@@ -729,6 +742,7 @@ describe('vim.iter', function()
     local nested_non_lists = vim.iter({ 1, { { a = 2 } }, { { nil } }, { 3 } })
     eq({ 1, { a = 2 }, { nil }, 3 }, nested_non_lists:flatten():totable())
     -- only error if we're going deep enough to flatten a dict-like table
+    nested_non_lists = vim.iter({ 1, { { a = 2 } }, { { nil } }, { 3 } })
     matches(flat_err, pcall_err(nested_non_lists.flatten, nested_non_lists, math.huge))
   end)
 
