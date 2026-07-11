@@ -107,8 +107,15 @@ describe('writefile()', function()
     eq('a\0', read_file(fname))
   end)
 
-  it('writes Lua (binary) strings to a file', function()
+  it('writes Lua (binary) strings', function()
     eq(0, exec_lua([[return vim.fn.writefile('foo\0bar', ..., 'b')]], fname))
+    eq('foo\0bar', read_file(fname))
+  end)
+
+  it('writes RPC-API (binary) String', function()
+    eq(0, api.nvim_call_function('writefile', { 'foobar', fname }))
+    eq('foobar', read_file(fname))
+    eq(0, api.nvim_call_function('writefile', { 'foo\0bar', fname }))
     eq('foo\0bar', read_file(fname))
   end)
 
