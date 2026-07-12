@@ -149,7 +149,7 @@ function TSHighlighter.new(tree, opts)
   self._highlight_states = {}
   self.parsing = false
   self._first_parse_done = false
-  
+
   -- Queries for a specific language can be overridden by a custom
   -- string query... if one is not provided it will be looked up by file.
   if opts.queries then
