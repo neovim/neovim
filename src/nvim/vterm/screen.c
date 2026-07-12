@@ -249,6 +249,9 @@ static int erase_user(VTermRect rect, int selective, void *user)
 {
   VTermScreen *screen = user;
 
+  if (screen->callbacks && screen->callbacks->erase) {
+    (*screen->callbacks->erase)(rect, selective, screen->cbdata);
+  }
   damagerect(screen, rect);
 
   return 1;
@@ -257,7 +260,7 @@ static int erase_user(VTermRect rect, int selective, void *user)
 static int erase(VTermRect rect, int selective, void *user)
 {
   erase_internal(rect, selective, user);
-  return erase_user(rect, 0, user);
+  return erase_user(rect, selective, user);
 }
 
 static int scrollrect(VTermRect rect, int downward, int rightward, void *user)

@@ -12,6 +12,7 @@ local command = n.command
 local retry = t.retry
 local eq = t.eq
 local eval = n.eval
+local fn = n.fn
 local skip = t.skip
 local is_os = t.is_os
 local testprg = n.testprg
@@ -206,31 +207,84 @@ describe(':terminal window', function()
   end)
 
   describe('with fold set', function()
-    before_each(function()
-      feed([[<C-\><C-N>:set foldenable foldmethod=manual<CR>i]])
-      feed_data({ 'line1', 'line2', 'line3', 'line4', '' })
-      screen:expect([[
-        tty ready                                         |
-        line1                                             |
-        line2                                             |
-        line3                                             |
-        line4                                             |
-        ^                                                  |
-        {5:-- TERMINAL --}                                    |
-      ]])
+    it('supports marker folds', function()
+      feed_data('start {{{\nbody\n}}}\n')
+      retry(nil, nil, function()
+        eq('}}}', fn.getline(4))
+      end)
+
+      feed('<C-\\><C-N>')
+      command('setlocal foldenable foldmethod=marker')
+      command('normal! zM')
+
+      eq(1, fn.foldlevel(2))
+      eq(4, fn.foldclosedend(2))
     end)
 
-    it('wont show any folds', function()
-      feed([[<C-\><C-N>ggvGzf]])
-      poke_eventloop()
-      screen:expect([[
-        ^tty ready                                         |
-        line1                                             |
-        line2                                             |
-        line3                                             |
-        line4                                             |
-                                                          |*2
-      ]])
+    it('supports manual folds', function()
+      feed_data('one\ntwo\nthree\n')
+      retry(nil, nil, function()
+        eq('three', fn.getline(4))
+      end)
+
+      feed('<C-\\><C-N>')
+      command('setlocal foldenable foldmethod=manual')
+      command('2,4fold')
+
+      eq(4, fn.foldclosedend(2))
+    end)
+
+    it('clears manual folds when the terminal erases whole lines', function()
+      feed_data('one\ntwo\nthree\n')
+      retry(nil, nil, function()
+        eq('three', fn.getline(4))
+      end)
+
+      feed('<C-\\><C-N>')
+      command('setlocal foldenable foldmethod=manual')
+      command('2,4fold')
+      eq(4, fn.foldclosedend(2))
+
+      feed_data('\027[2J')
+      retry(nil, nil, function()
+        eq(-1, fn.foldclosedend(2))
+      end)
+    end)
+
+    it('keeps manual folds on partial erases', function()
+      feed_data('one\ntwo\nthree\n')
+      retry(nil, nil, function()
+        eq('three', fn.getline(4))
+      end)
+
+      feed('<C-\\><C-N>')
+      command('setlocal foldenable foldmethod=manual')
+      command('2,4fold')
+      eq(4, fn.foldclosedend(2))
+
+      feed_data('\027[2;2H\027[K')
+      retry(nil, nil, function()
+        eq(4, fn.foldclosedend(2))
+      end)
+    end)
+
+    it('keeps manual folds when erase and scroll happen in the same refresh', function()
+      feed_data('one\ntwo\nthree\n')
+      retry(nil, nil, function()
+        eq('three', fn.getline(4))
+      end)
+
+      feed('<C-\\><C-N>')
+      command('setlocal foldenable foldmethod=manual scrollback=0')
+      command('2,4fold')
+      eq(4, fn.foldclosedend(2))
+
+      feed_data('\027[H\027[2K\027[6;1H\n')
+      retry(nil, nil, function()
+        eq(true, fn.foldclosedend(1) ~= -1
+          or fn.foldclosedend(2) ~= -1
+          or fn.foldclosedend(3) ~= -1)
+      end)
     end)
   end)
 

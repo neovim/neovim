@@ -12,4 +12,6 @@
 
 EXTERN int disable_fold_update INIT( = 0);
 
+void foldRemoveManual(buf_T *buf, linenr_T top, linenr_T bot);
+
 #include "fold.h.generated.h"
