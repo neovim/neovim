@@ -118,6 +118,25 @@ describe('vim.func._memoize', function()
     eq(4, exec_lua([[return _G.count]]))
   end)
 
+  it('does not collide distinct arguments containing the separator #40697', function()
+    exec_lua([[
+      _G.count = 0
+
+      local fn = vim.func._memoize('concat', function(arg1, arg2)
+        _G.count = _G.count + 1
+        return arg1 .. '|' .. arg2
+      end)
+
+      collectgarbage('stop')
+      -- These two argument tuples must not share a cache key.
+      fn('a', '%b')
+      fn('a%', 'b')
+      collectgarbage('restart')
+    ]])
+
+    eq(2, exec_lua([[return _G.count]]))
+  end)
+
   it('can cache functions that return nil', function()
     exec_lua([[
       _G.count = 0

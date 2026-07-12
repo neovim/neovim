@@ -6,7 +6,25 @@
 --- @return fun(...): any
 local function concat_hash(argc)
   return function(...)
-    return table.concat({ ... }, '%%', 1, argc)
+    --- @type any[]
+    local args = { ... }
+    local n = argc or select('#', ...)
+    --- @type string[]
+    local parts = {}
+    for i = 1, n do
+      -- Use a self-delimiting, collision-free encoding: `n` for nil, `<len>:<content>`
+      -- otherwise. A plain `table.concat` with a fixed separator collides when an
+      -- argument contains the separator (e.g. ("a","%b") and ("a%","b") both hashed to
+      -- "a%%%b").
+      local v = args[i]
+      if v == nil then
+        parts[i] = 'n'
+      else
+        local s = tostring(v)
+        parts[i] = #s .. ':' .. s
+      end
+    end
+    return table.concat(parts, '|')
   end
 end
 
