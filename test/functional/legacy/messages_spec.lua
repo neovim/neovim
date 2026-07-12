@@ -501,6 +501,7 @@ describe('messages', function()
 
     -- oldtest: Test_echo_verbose_system()
     it('verbose message before echo command', function()
+      t.skip(t.is_wasm(), 'wasm: no child processes')
       screen = Screen.new(60, 10)
 
       command('cd ' .. nvim_dir)

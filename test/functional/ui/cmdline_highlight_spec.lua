@@ -366,6 +366,7 @@ describe('Command-line coloring', function()
     eq(msg:rep(1), fn.execute('messages'))
   end)
   it('allows interrupting callback with <C-c>', function()
+    t.skip(t.is_wasm(), 'wasm: no interrupt (CTRL-C) delivery')
     set_color_cb('Halting')
     start_prompt('echo 42')
     screen:expect([[

@@ -82,6 +82,7 @@ describe('command-line option', function()
     end)
 
     it('does not crash after reading from stdin in non-headless mode', function()
+      t.skip(t.is_wasm(), 'wasm: no child processes')
       -- Repro from fdfa1ed (2017): the empty `echo ""` pipe makes scriptin (`-s -`) hit EOF
       -- immediately and call closescript(); if scriptin held fd 0 directly, libuv asserts.
       --

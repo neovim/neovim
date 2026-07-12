@@ -1,0 +1,14 @@
+{
+  "// description": "Shared TypeScript compiler options for the wasm/ host build. tsconfig.worker.json extends this; wasm/build-ts.sh drives it. Mirrors wasm/web/tsconfig.base.json.",
+  "compilerOptions": {
+    "target": "ES2020",
+    "strict": false,
+    "noImplicitAny": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "removeComments": false,
+    "newLine": "lf"
+  }
+}

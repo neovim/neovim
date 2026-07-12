@@ -129,6 +129,7 @@ describe('vim.ui', function()
     end)
 
     it('opt.cmd #29490', function()
+      t.skip(t.is_wasm(), 'wasm: no child processes')
       t.matches(
         'ENOENT: no such file or directory',
         t.pcall_err(exec_lua, function()

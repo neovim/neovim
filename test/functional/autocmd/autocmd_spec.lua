@@ -555,6 +555,7 @@ describe('autocmd', function()
 
   describe('v:event is readonly #18063', function()
     it('during ChanOpen event', function()
+      t.skip(t.is_wasm(), 'wasm: no child processes')
       command('autocmd ChanOpen * let v:event.info.id = 0')
       fn.jobstart({ 'cat' })
       retry(nil, nil, function()
@@ -579,6 +580,7 @@ describe('autocmd', function()
     end)
 
     it('during TermClose event', function()
+      t.skip(t.is_wasm(), 'wasm: no child processes')
       command('autocmd TermClose * let v:event.status = 0')
       command('terminal')
       eq(

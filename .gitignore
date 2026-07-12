@@ -86,3 +86,7 @@ tags
 /contrib/result-*
 
 CMakeUserPresets.json
+
+# WebAssembly build outputs
+/build-wasm/
+/.deps-wasm/

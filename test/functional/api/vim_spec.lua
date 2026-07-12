@@ -544,6 +544,7 @@ describe('API', function()
     end)
 
     it('returns shell |:!| output', function()
+      skip(t.is_wasm(), 'wasm: no child processes')
       local win_lf = is_os('win') and '\r' or ''
       eq(':!echo foo\r\n\nfoo' .. win_lf .. '\n', command_output([[!echo foo]]))
     end)
@@ -3200,6 +3201,7 @@ describe('API', function()
     end)
 
     it('stream=job channel', function()
+      skip(t.is_wasm(), 'wasm: no child processes')
       eq(3, eval("jobstart(['cat'], {'rpc': v:true})"))
       local catpath = vim.fs.normalize(eval('exepath("cat")'))
       local info = {
@@ -3254,6 +3256,7 @@ describe('API', function()
     end
 
     it('stream=job :terminal channel', function()
+      skip(t.is_wasm(), 'wasm: no child processes')
       local screen = Screen.new(80, 24)
 
       command(':terminal')
@@ -5862,6 +5865,7 @@ describe('API', function()
     end)
 
     it(":make command works when argument count isn't 1 #19696", function()
+      skip(t.is_wasm(), 'wasm: no child processes')
       command('set makeprg=echo')
       command('set shellquote=')
       matches('^:!echo ', api.nvim_cmd({ cmd = 'make' }, { output = true }))

@@ -1,0 +1,17 @@
+{
+  "// description": "Shared TypeScript compiler options for the wasm/web build. The per-target configs (tsconfig.lib/app/worker.json) extend this; wasm/web/build-ts.sh drives them. See build-ts.sh for the full pipeline.",
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": false,
+    "noImplicitAny": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "removeComments": false,
+    "newLine": "lf"
+  }
+}

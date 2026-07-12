@@ -12,6 +12,10 @@ local eq = t.eq
 local matches = t.matches
 local pesc = vim.pesc
 
+if t.skip(t.is_wasm(), 'wasm: no child processes') then
+  return
+end
+
 describe(':edit term://*', function()
   before_each(function()
     clear()

@@ -1,0 +1,13 @@
+{
+  "// description": "The engine Web Worker host (engine-worker.ts). WebWorker lib (importScripts/self/postMessage); classic worker script, no declarations. Emitted to dist-worker/, copied into dist/ by build-ts.sh.",
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist-worker",
+    "rootDir": "./src",
+    "lib": ["ES2020", "WebWorker"],
+    "declaration": false,
+    "module": "ES2020",
+    "moduleResolution": "Bundler"
+  },
+  "files": ["src/engine-worker.ts"]
+}

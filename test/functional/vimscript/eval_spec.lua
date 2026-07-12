@@ -77,6 +77,7 @@ describe('backtick expansion', function()
   end)
 
   it("with default 'shell'", function()
+    t.skip(t.is_wasm(), 'wasm: no child processes')
     if t.is_os('win') then
       command(':silent args `dir /b *2`')
     else

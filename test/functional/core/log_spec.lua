@@ -32,6 +32,7 @@ describe('log', function()
   end)
 
   it('TUI client name is "ui"', function()
+    t.skip(t.is_wasm(), 'wasm: no child processes')
     local function setup(env)
       clear()
       -- Start Nvim with builtin UI.

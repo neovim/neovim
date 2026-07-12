@@ -26,6 +26,10 @@ if skip(is_os('win')) then
   return
 end
 
+if t.skip(t.is_wasm(), 'wasm: LSP tests spawn a language-server process') then
+  return
+end
+
 describe('vim.lsp.buf', function()
   local function exec_capture(cmd)
     return exec_lua(function(cmd0)

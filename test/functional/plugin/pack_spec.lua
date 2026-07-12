@@ -3,6 +3,10 @@ local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 local skip_integ = os.getenv('NVIM_TEST_INTEG') ~= '1'
 
+if t.skip(t.is_wasm(), 'wasm: no child processes (git)') then
+  return
+end
+
 local api = n.api
 local fn = n.fn
 

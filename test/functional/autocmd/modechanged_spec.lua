@@ -5,6 +5,10 @@ local clear, eval, eq = n.clear, n.eval, t.eq
 local feed, command = n.feed, n.command
 local exec_lua = n.exec_lua
 
+if t.skip(t.is_wasm(), 'wasm: no child processes') then
+  return
+end
+
 describe('ModeChanged', function()
   before_each(function()
     clear()

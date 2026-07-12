@@ -101,6 +101,7 @@ describe('--embed UI', function()
   end)
 
   it('can pass stdin', function()
+    t.skip(t.is_wasm(), 'wasm: no io_extra fd')
     local pipe = assert(uv.pipe())
 
     local writer = assert(uv.new_pipe(false))
@@ -142,6 +143,7 @@ describe('--embed UI', function()
   end)
 
   it('can pass stdin to -q - #17523', function()
+    t.skip(t.is_wasm(), 'wasm: no io_extra fd')
     write_file(
       'Xbadfile.c',
       [[
@@ -285,6 +287,7 @@ describe('--embed UI', function()
   end)
 
   it('closing stdio with another remote UI does not leak memory #36392', function()
+    t.skip(t.is_wasm(), 'wasm: no server sockets')
     clear({ args_rm = { '--headless' } })
     Screen.new()
     eq(1, #api.nvim_list_uis())
@@ -299,6 +302,7 @@ end)
 
 describe('--embed --listen UI', function()
   it('waits for connection on listening address', function()
+    t.skip(t.is_wasm(), 'wasm: no server sockets')
     clear()
     local child_server = assert(n.new_pipename())
     fn.jobstart({

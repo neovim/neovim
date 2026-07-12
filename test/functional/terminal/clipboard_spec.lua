@@ -10,6 +10,10 @@ local testprg = n.testprg
 local exec_lua = n.exec_lua
 local eval = n.eval
 
+if t.skip(t.is_wasm(), 'wasm: no child processes') then
+  return
+end
+
 describe(':terminal', function()
   before_each(function()
     clear()

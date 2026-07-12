@@ -14,6 +14,10 @@ local expect = n.expect
 local pcall_err = t.pcall_err
 local is_os = t.is_os
 
+if t.skip(t.is_wasm(), 'wasm: no child processes') then
+  return
+end
+
 local function create_file_with_nuls(name)
   return function()
     feed('ipart1<C-V>000part2<C-V>000part3<ESC>:w ' .. name .. '<CR>')

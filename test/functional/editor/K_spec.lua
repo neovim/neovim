@@ -26,6 +26,7 @@ describe('K', function()
   end)
 
   it("invokes non-prefixed 'keywordprg' as shell command", function()
+    t.skip(t.is_wasm(), 'wasm: no child processes')
     n.source([[
       let @a='fnord'
       set keywordprg=echo\ fnord>>]])
@@ -44,6 +45,7 @@ describe('K', function()
   end)
 
   it("<esc> kills the buffer for a running 'keywordprg' command", function()
+    t.skip(t.is_wasm(), 'wasm: no child processes')
     n.source('set keywordprg=less')
     eval('writefile(["hello", "world"], "' .. test_file .. '")')
     feed('i' .. test_file .. '<esc>K')

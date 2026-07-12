@@ -13,6 +13,10 @@ local sleep = vim.uv.sleep
 local retry = t.retry
 local is_os = t.is_os
 
+if t.skip(t.is_wasm(), 'wasm: no child processes') then
+  return
+end
+
 describe(':terminal', function()
   local screen
 

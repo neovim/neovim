@@ -90,6 +90,7 @@ describe('file reading, writing and bufnew and filter autocommands', function()
     pending('skipped (missing `gzip` utility)', function() end)
   else
     it('BufReadPre, BufReadPost (using gzip)', function()
+      t.skip(t.is_wasm(), 'wasm: no child processes')
       prepare_gz_file('Xtestfile', text1)
       local gzip_data = read_file('Xtestfile.gz')
       -- Setup autocommands to decompress before reading and re-compress afterwards.
@@ -110,6 +111,7 @@ describe('file reading, writing and bufnew and filter autocommands', function()
     -- luacheck: ignore 621 (Indentation)
     -- luacheck: ignore 611 (Line contains only whitespaces)
     it('FileReadPre, FileReadPost', function()
+      t.skip(t.is_wasm(), 'wasm: no child processes')
       prepare_gz_file('Xtestfile', text1)
       feed_command(
         'au! FileReadPre    *.gz   exe "silent !gzip -d " . shellescape(expand("<afile>"))'
@@ -154,6 +156,7 @@ describe('file reading, writing and bufnew and filter autocommands', function()
   end)
 
   it('FilterReadPre, FilterReadPost', function()
+    t.skip(t.is_wasm(), 'wasm: no child processes')
     -- Write a special input file for this test block.
     write_file('test.out', dedent([[
       startstart

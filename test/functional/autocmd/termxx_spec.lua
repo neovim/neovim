@@ -15,6 +15,10 @@ local assert_alive = n.assert_alive
 local skip = t.skip
 local is_os = t.is_os
 
+if skip(t.is_wasm(), 'wasm: no child processes') then
+  return
+end
+
 describe('autocmd TermClose', function()
   before_each(function()
     clear()

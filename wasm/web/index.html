@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neovim (wasm)</title>
+<style>
+  :root { color-scheme: light dark; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; padding: 0;
+    font-family: ui-monospace, "DejaVu Sans Mono", Menlo, Consolas, monospace;
+    background: #000; color: #dcdcdc;
+    overflow: hidden;
+  }
+  /* The <pre> renderer (neovim-ui-pre.js) fills the viewport; mount_into
+     derives cols/rows from this CSS box and its ResizeObserver reflows the
+     grid (nvim_ui_try_resize -> grid_resize) whenever the window changes
+     size. The cursor is an outlined cell (span.cursor, styled inline). */
+  #screen {
+    display: block;
+    margin: 0;
+    background: #000;
+    box-sizing: border-box;
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    outline: none;
+    white-space: pre;
+  }
+  #status {
+    position: fixed;
+    right: 1rem; bottom: 1rem;
+    max-width: min(28rem, 90vw);
+    font-size: .8rem; line-height: 1.3;
+    padding: .5rem .75rem;
+    border-radius: 6px;
+    background: rgba(40, 40, 40, .95);
+    color: #e8e8e8;
+    border: 1px solid #555;
+    z-index: 10;
+    pointer-events: none;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  #status.error { background: rgba(90, 30, 30, .95); border-color: #a55; }
+  #status:empty { display: none; }
+</style>
+</head>
+<body>
+  <pre id="screen" aria-label="Neovim screen"></pre>
+  <div id="status" aria-live="polite"></div>
+
+  <!-- Layered: MessagePack global, then the core, then the screen model, then
+       the <pre> renderer, then the page glue that composes them. -->
+  <script src="msgpack.min.js"></script>
+  <script src="neovim.js"></script>
+  <script src="neovim-ui.js"></script>
+  <script src="neovim-ui-pre.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

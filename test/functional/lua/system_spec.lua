@@ -5,6 +5,10 @@ local clear = n.clear
 local exec_lua = n.exec_lua
 local eq = t.eq
 
+if t.skip(t.is_wasm(), 'wasm: no child processes') then
+  return
+end
+
 local function system_sync(cmd, opts)
   return exec_lua(function()
     local obj = vim.system(cmd, opts)

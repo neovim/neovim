@@ -74,6 +74,7 @@ describe('nvim_ui_attach()', function()
   end)
 
   it('does not crash if maximum UI count is reached', function()
+    t.skip(t.is_wasm(), 'wasm: no server sockets')
     local server = api.nvim_get_vvar('servername')
     local screens = {} --- @type test.functional.ui.screen[]
     for i = 1, 16 do
@@ -175,6 +176,7 @@ end)
 
 describe('UI event channels', function()
   it('sets chan for UIEnter/UILeave', function()
+    t.skip(t.is_wasm(), 'wasm: no server sockets')
     clear { args_rm = { '--headless' } }
     exec([[
     let g:evs = []

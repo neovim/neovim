@@ -65,6 +65,7 @@ describe('fileio', function()
   end
 
   it("fsync() with 'nofsync' #8304", function()
+    skip(t.is_wasm(), 'wasm: no child processes')
     clear({ args = { '--cmd', 'set nofsync directory=Xtest_startup_swapdir' } })
 
     -- These cases ALWAYS force fsync (regardless of 'fsync' option):
@@ -334,6 +335,7 @@ describe('tmpdir', function()
   end
 
   it('failure modes', function()
+    skip(t.is_wasm(), 'wasm: no server sockets')
     clear({ env = { NVIM_LOG_FILE = testlog, TMPDIR = os_tmpdir } })
     assert_nolog('tempdir is not a directory', testlog)
     assert_nolog('tempdir has invalid permissions', testlog)

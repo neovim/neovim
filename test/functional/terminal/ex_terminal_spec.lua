@@ -17,6 +17,10 @@ local command = n.command
 local skip = t.skip
 local is_os = t.is_os
 
+if skip(t.is_wasm(), 'wasm: no child processes') then
+  return
+end
+
 describe(':terminal', function()
   local screen
 

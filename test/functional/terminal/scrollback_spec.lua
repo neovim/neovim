@@ -18,6 +18,10 @@ local assert_alive = n.assert_alive
 local skip = t.skip
 local is_os = t.is_os
 
+if skip(t.is_wasm(), 'wasm: no child processes') then
+  return
+end
+
 local function test_terminal_scrollback(hide_curbuf)
   local screen --- @type test.functional.ui.screen
   local buf --- @type integer

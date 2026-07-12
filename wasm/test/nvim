@@ -1,0 +1,99 @@
+#!/usr/bin/env node
+// wasm/test/nvim - drop-in `nvim` executable backed by the wasm engine.
+//
+// Lets Neovim's own functional test suite (test/functional) exercise the wasm
+// build: the harness spawns $NVIM_PRG as a child process and speaks msgpack-RPC
+// over its stdin/stdout (see test/client/uv_stream.lua ProcStream). This script
+// boots the wasm ENGINE role on the Node main thread with an __nvimChannel
+// wired to the real process stdio -- the same channel contract the worker hosts
+// use (wasm/src/worker.ts, wasm/nvim_io.js), so poll()/JSPI suspension works
+// identically; only the far end of the channel differs (pipes, not postMessage).
+//
+// Differences from `build-wasm/bin/nvim` (the interactive launcher):
+//   * argv is passed VERBATIM -- no -u NONE/-i NONE defaults; the harness owns
+//     the command line.
+//   * the full environment is forwarded via __nvimEnv (pre.js's direct-run mode
+//     only copies an allowlist; tests set arbitrary vars for the child).
+//   * fd 0/1 are backed by the channel, so `--embed` RPC over pipes works (the
+//     launcher's direct-run mode leaves them as default TTY streams).
+//
+// Env knobs:
+//   NVIM_WASM_BIN     dir containing nvim.js (default: ../../build-wasm/bin)
+//   NVIM_WASM_KEEP_LISTEN  keep `--listen <addr>` args (default: stripped; the
+//                          sandboxed build has no unix-socket support and
+//                          a failed --listen is fatal at startup)
+'use strict';
+
+const path = require('path');
+
+const major = Number(process.versions.node.split('.')[0]);
+if (major < 24) {
+  process.stderr.write('wasm/test/nvim: Node >= 24 required (JSPI). Got ' + process.version + '\n');
+  process.exit(1);
+}
+
+let args = process.argv.slice(2);
+
+// The test harness appends `--listen <test-id>` to the default argv purely to
+// name the server for logging (testnvim.lua _new_argv). serverstart() on a
+// unix socket is unsupported in the sandboxed wasm build and a failed
+// --listen aborts startup, so strip it unless explicitly kept. Tests that
+// exercise --listen itself would fail either way in sandbox mode.
+if (!process.env.NVIM_WASM_KEEP_LISTEN) {
+  const stripped = [];
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--listen') { i++; continue; }
+    stripped.push(args[i]);
+  }
+  args = stripped;
+}
+
+// The channel contract from wasm/nvim_io.js: fd-0 reads drain inQueue, fd-1
+// writes call postOutput, notify resumes a JSPI-suspended poll().
+const channel = {
+  inQueue: [],
+  closed: false,
+  notify: null,
+  postOutput: function (u8) { process.stdout.write(u8); },
+};
+
+process.stdin.on('data', function (d) {
+  // Copy out of Node's pooled Buffer slab before retaining.
+  channel.inQueue.push({ buf: new Uint8Array(d), off: 0 });
+  if (channel.notify) { channel.notify(); }
+});
+process.stdin.on('end', function () {
+  channel.closed = true;
+  if (channel.notify) { channel.notify(); }
+});
+// The parent closing our stdin must read as EOF, not crash the shim.
+process.stdin.on('error', function () {
+  channel.closed = true;
+  if (channel.notify) { channel.notify(); }
+});
+// nvim writes after the harness closed its read end (session teardown races);
+// don't let EPIPE kill the shim before nvim exits with its own status.
+process.stdout.on('error', function () {});
+
+const G = globalThis;
+G.__nvimChannel = channel;
+G.__nvimArgs = args;
+// Full environment, verbatim -- pre.js applies __nvimEnv on top of its
+// defaults, giving tests' custom vars (and NVIM_TEST, ASAN_OPTIONS, ...) to
+// the engine's getenv().
+G.__nvimEnv = Object.assign({}, process.env);
+
+const bin = process.env.NVIM_WASM_BIN ||
+  path.resolve(__dirname, '..', '..', 'build-wasm', 'bin');
+require(path.join(bin, 'nvim.js'));
+
+// When nvim exits (:qall from RPC), Emscripten's Node shell does a SOFT exit:
+// it sets process.exitCode and lets the event loop drain. Our flowing stdin
+// handler keeps the loop alive forever, so the process would linger and the
+// test harness (which waits for child exit, e.g. expect_exit) hangs. Watch for
+// the soft exit with an unref'd timer (doesn't itself hold the loop open) and
+// turn it into a real exit.
+const exitWatch = setInterval(function () {
+  if (process.exitCode !== undefined) { process.exit(process.exitCode); }
+}, 10);
+exitWatch.unref();

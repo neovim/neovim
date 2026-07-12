@@ -103,6 +103,7 @@ describe("preserve and (R)ecover with custom 'directory'", function()
   end
 
   it('with :preserve and SIGKILL', function()
+    skip(t.is_wasm(), 'wasm: no child processes')
     local swappath1 = setup_swapname()
     command('preserve')
     neq(nil, uv.fs_stat(swappath1))
@@ -118,6 +119,7 @@ describe("preserve and (R)ecover with custom 'directory'", function()
   end)
 
   it('killing TUI process without :preserve #22096', function()
+    skip(t.is_wasm(), 'wasm: no server sockets')
     -- Windows(#38669): inner server could attach to the outer Nvim terminal's console
     -- and die abruptly when the outer terminal job closed, leaving an unreadable swapfile
     skip(is_os('win'), 'unreadable swapfile on Windows after TUI process exit')
@@ -392,6 +394,7 @@ describe('swapfile detection', function()
   end)
 
   it('default SwapExists handler selects "(E)dit" and skips prompt', function()
+    skip(t.is_wasm(), 'wasm: no process inspection (fake pid)')
     exec(init)
     command('edit Xfile1')
     command("put ='some text...'")
@@ -467,6 +470,7 @@ describe('swapfile detection', function()
 
   -- oldtest: Test_swap_prompt_splitwin()
   it('selecting "q" in the attention prompt', function()
+    skip(t.is_wasm(), 'wasm: no process inspection (fake pid)')
     exec(init)
     command('edit Xfile1')
     command('preserve') -- Make sure the swap file exists.
@@ -605,6 +609,7 @@ describe('swapfile detection', function()
   end)
 
   it('swapfile created before boot + default SwapExists handler', function()
+    skip(t.is_wasm(), 'wasm: no process inspection (fake pid)')
     test_swapfile_after_reboot(true, function(screen)
       screen:expect({ any = 'W325: Ignoring swapfile from Nvim process' })
     end)
@@ -647,6 +652,7 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
   end)
 
   it('(Q)uit at first file argument', function()
+    skip(t.is_wasm(), 'wasm: no child processes')
     local chan = fn.jobstart(
       { nvim_prog, '-u', 'NONE', '-i', 'NONE', '--cmd', init_dir, '--cmd', init_set, testfile },
       {
@@ -665,6 +671,7 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
   end)
 
   it('(A)bort at second file argument with -p', function()
+    skip(t.is_wasm(), 'wasm: no child processes')
     local chan = fn.jobstart({
       nvim_prog,
       '-u',
@@ -693,6 +700,7 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
   end)
 
   it('(Q)uit at file opened by -t', function()
+    skip(t.is_wasm(), 'wasm: no child processes')
     write_file(
       otherfile,
       ([[

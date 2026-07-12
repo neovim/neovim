@@ -364,6 +364,7 @@ describe('API: buffer events:', function()
   end)
 
   it('when lines are filtered', function()
+    t.skip(t.is_wasm(), 'wasm: no child processes')
     -- Test filtering lines with !cat
     local b, tick = editoriginal(true, { 'A', 'C', 'E', 'B', 'D', 'F' })
 
@@ -511,6 +512,7 @@ describe('API: buffer events:', function()
   end)
 
   it('can notify several channels at once', function()
+    t.skip(t.is_wasm(), 'wasm: no server sockets')
     -- create several new sessions, in addition to our main API
     local sessions = {}
     local pipe = n.new_pipename()
@@ -883,6 +885,7 @@ describe('API: buffer events:', function()
   end
 
   it('when :terminal lines change', function()
+    t.skip(t.is_wasm(), 'wasm: no child processes')
     local buffer_lines = {}
     local expected_lines = {}
     fn.jobstart({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '-n', '-c', 'set shortmess+=A' }, {

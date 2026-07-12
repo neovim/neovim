@@ -36,6 +36,10 @@ local testlog = 'Xtest-tui-log'
 -- that causes delay on exit with ASAN/TSAN.
 local env_notermguicolors = { COLORTERM = 'xterm-256color' }
 
+if t.skip(t.is_wasm(), 'wasm: no child processes') then
+  return
+end
+
 describe('TUI', function()
   it('exit status 1 and error message with server --listen error #34365', function()
     clear()

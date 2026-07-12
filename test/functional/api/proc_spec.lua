@@ -11,6 +11,10 @@ local retry = t.retry
 local NIL = vim.NIL
 local is_os = t.is_os
 
+if t.skip(t.is_wasm(), 'wasm: no process inspection or child processes') then
+  return
+end
+
 describe('API', function()
   before_each(clear)
 

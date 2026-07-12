@@ -94,6 +94,7 @@ describe('has()', function()
   end)
 
   it('"gui_running"', function()
+    t.skip(t.is_wasm(), 'wasm: no server sockets')
     eq(0, fn.has('gui_running'))
     local tui_session = get_session()
     local gui_session = connect(fn.serverstart())

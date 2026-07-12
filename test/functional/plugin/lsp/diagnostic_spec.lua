@@ -102,6 +102,11 @@ describe('vim.lsp.diagnostic', function()
   end)
 
   describe('vim.lsp.diagnostic.on_publish_diagnostics', function()
+    -- The before_each below spawns a nvim process as a language server.
+    if t.skip(t.is_wasm(), 'wasm: LSP tests spawn a language-server process') then
+      return
+    end
+
     before_each(function()
       exec_lua(create_server_definition)
       exec_lua(function()

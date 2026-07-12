@@ -16,6 +16,10 @@ local assert_alive = n.assert_alive
 local pcall_err = t.pcall_err
 local skip = t.skip
 
+if skip(t.is_wasm(), 'wasm: no child processes') then
+  return
+end
+
 describe('channels', function()
   local init = [[
     function! Normalize(data) abort

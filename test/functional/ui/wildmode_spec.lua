@@ -241,6 +241,7 @@ describe("'wildmenu'", function()
   end)
 
   it('with laststatus=0, :vsplit, :term #2255', function()
+    t.skip(t.is_wasm(), 'wasm: no child processes')
     if not is_os('win') then
       command('set shell=sh') -- Need a predictable "$" prompt.
       command('let $PS1 = "$"')

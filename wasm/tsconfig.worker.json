@@ -1,0 +1,14 @@
+{
+  "// description": "The Node worker_thread engine host (worker.ts). CommonJS for Node (require + __dirname at runtime); @types/node for the Node globals. No DOM/WebWorker lib.",
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist-worker",
+    "rootDir": "./src",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2020"],
+    "types": ["node"],
+    "declaration": false
+  },
+  "files": ["src/worker.ts"]
+}

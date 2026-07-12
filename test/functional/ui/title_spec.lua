@@ -92,6 +92,7 @@ describe('title', function()
   end)
 
   it('is updated in Terminal mode', function()
+    t.skip(t.is_wasm(), 'wasm: no child processes')
     api.nvim_set_option_value('title', true, {})
     api.nvim_set_option_value('titlestring', '%t (%{mode(1)}) | nvim', {})
     fn.jobstart({ n.testprg('shell-test'), 'INTERACT' }, { term = true })

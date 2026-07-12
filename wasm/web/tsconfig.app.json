@@ -1,0 +1,13 @@
+{
+  "// description": "The page glue (app.ts). Classic <script> for the browser DOM; no declarations. Emitted to dist-app/, copied into dist/ by build-ts.sh.",
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist-app",
+    "rootDir": "./src",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "declaration": false,
+    "module": "ES2020",
+    "moduleResolution": "Bundler"
+  },
+  "files": ["src/app.ts"]
+}

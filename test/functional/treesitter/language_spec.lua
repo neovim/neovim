@@ -15,6 +15,7 @@ before_each(clear)
 describe('treesitter language API', function()
   -- error tests not requiring a parser library
   it('handles missing language', function()
+    t.skip(t.is_wasm(), 'wasm: cannot dlopen native parser objects (uv_dlsym assertion)')
     local parser, error = exec_lua(function()
       return vim.treesitter.get_parser(0, 'borklang')
     end)

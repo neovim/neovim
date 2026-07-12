@@ -35,6 +35,10 @@ local matches = t.matches
 local skip = t.skip
 local is_os = t.is_os
 
+if skip(t.is_wasm(), 'wasm: no child processes') then
+  return
+end
+
 describe('jobs', function()
   local channel
 

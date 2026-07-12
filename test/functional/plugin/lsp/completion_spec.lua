@@ -1139,6 +1139,7 @@ describe('vim.lsp.completion: protocol', function()
   end)
 
   it('enable(…,{cmp=fn}) custom sort order', function()
+    t.skip(t.is_wasm(), 'wasm: host Lua bytecode is not loadable in the 32-bit PUC VM')
     create_server('dummy', {
       isIncomplete = false,
       items = {

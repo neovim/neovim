@@ -11,6 +11,10 @@ local next_msg = n.next_msg
 local NIL = vim.NIL
 local pcall_err = t.pcall_err
 
+if t.skip(t.is_wasm(), 'wasm: no threads') then
+  return
+end
+
 describe('thread', function()
   local screen
 

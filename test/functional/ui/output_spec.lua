@@ -17,6 +17,10 @@ local set_shell_powershell = n.set_shell_powershell
 local skip = t.skip
 local is_os = t.is_os
 
+if skip(t.is_wasm(), 'wasm: no child processes') then
+  return
+end
+
 clear() -- for has_powershell()
 
 describe('shell command :!', function()

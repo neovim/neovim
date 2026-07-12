@@ -773,6 +773,95 @@ if(STATIC_BUILD)
 endif()
 target_link_libraries(nvim_bin PRIVATE main_lib PUBLIC libuv)
 
+# ---------------------------------------------------------------------------
+# Emscripten / WebAssembly build glue.
+#
+# Keeps all wasm-specific sources/flags in one guarded block. These files live
+# under <repo>/wasm/ (outside the globbed source dirs) so they never affect a
+# native build. See wasm/ for the full porting notes.
+# ---------------------------------------------------------------------------
+if(EMSCRIPTEN)
+  target_sources(nvim_bin PRIVATE
+    ${PROJECT_SOURCE_DIR}/wasm/uv_stubs.c)
+  # Bundled tree-sitter grammars. Natively these are the dlopen()able
+  # lib/nvim/parser/<lang>.so modules; wasm has no host dlopen, so the same
+  # parser sources (cross-compiled to static archives by wasm/build-deps.sh --
+  # CMake demotes their MODULE targets to static under emscripten) are linked
+  # straight into the binary and registered by name via
+  # vim._ts_add_language_builtin (treesitter.c). Keep this list in sync with
+  # builtin_langs[] there and the parser list in cmake.deps.
+  foreach(TS_PARSER c lua markdown markdown_inline query vim vimdoc)
+    target_link_libraries(nvim_bin PRIVATE ${DEPS_PREFIX}/lib/${TS_PARSER}.a)
+  endforeach()
+  # -fPIC: the engine is linked -sMAIN_MODULE=2 (below) so THIRD-PARTY
+  # tree-sitter grammars -- emscripten side modules, the artifact
+  # `tree-sitter build --wasm` publishes -- can be dlopen'd at runtime. A main
+  # module is itself relocatable, so every object linked into it must be PIC
+  # (the deps archives are too: wasm/build-deps.sh adds -fPIC to EMCC_CFLAGS).
+  target_compile_options(nvim_bin PRIVATE -fPIC)
+  target_link_options(nvim_bin PRIVATE
+    # JSPI: lets blocking wasm code (the libuv event loop waiting on input)
+    # suspend on async JS promises via WebAssembly stack-switching.
+    -sJSPI
+    # Wasm-native setjmp/longjmp: the default emscripten model uses JS invoke_*
+    # trampolines whose JS stack frames break JSPI suspension. Must match the
+    # model the deps were built with (see wasm/build-deps.sh).
+    -sSUPPORT_LONGJMP=wasm
+    # Filesystem: use MEMFS (the default in-memory FS) with a NODEFS mount of the
+    # host filesystem (set up in wasm/pre.js). Unlike NODERAWFS, this keeps fd 0/1
+    # as first-class *virtual* streams, which is what lets wasm/nvim_io.js back
+    # them with the postMessage RPC channel (the engine runs in a worker with no
+    # real stdin/stdout). NODEFS still gives access to $VIMRUNTIME and real files.
+    -sFORCE_FILESYSTEM=1
+    -lnodefs.js
+    -sALLOW_MEMORY_GROWTH=1
+    # nvim recurses deeply (regex, syntax); the 64KB default stack is too small.
+    -sSTACK_SIZE=8MB
+    -sEXIT_RUNTIME=1
+    # Run in Node (worker_thread engine host) AND in the browser (Web Worker
+    # engine driven by a pure-JS UI on the page). One binary, both.
+    -sENVIRONMENT=node,web,worker
+    # NOTE: the $VIMRUNTIME is intentionally NOT baked in here with --preload-file.
+    # nvim.wasm is RUNTIME-AGNOSTIC: under Node the runtime is read from the
+    # on-disk runtime/ tree via the NODEFS mount; for the browser it is packaged
+    # out-of-band by wasm/build-nvim.sh (emscripten's file_packager) and loaded
+    # before nvim.js, so main() waits on the data via a run-dependency.
+    # Runs before everything (incl. the data-package loader): point locateFile at
+    # nvim.js's dir under Node so the data package resolves from any cwd. --pre-js
+    # is too late for this (the loader computes the path at the very top).
+    --extern-pre-js=${PROJECT_SOURCE_DIR}/wasm/extern-pre.js
+    # Boot-time JS that configures argv, the postMessage channel globals,
+    # $VIMRUNTIME and the environment (Emscripten does not inherit the host env).
+    --pre-js=${PROJECT_SOURCE_DIR}/wasm/pre.js
+    # Custom I/O glue: stdin/poll integration that suspends via JSPI (see file).
+    --js-library=${PROJECT_SOURCE_DIR}/wasm/nvim_io.js
+    # Dynamic tree-sitter grammars (additive, opt-in): the host-fetch hook
+    # language.add() falls back to when no parser file exists anywhere --
+    # lets a browser page fetch() grammar .wasm side modules at runtime.
+    # With no hook installed it returns 0 synchronously and the usual
+    # "No parser for language" error is unchanged. See file.
+    --js-library=${PROJECT_SOURCE_DIR}/wasm/nvim_ts_dl.js
+    # Dynamic tree-sitter grammars: link as an emscripten MAIN MODULE so
+    # dlopen() (nvim's existing parser loader, load_language_from_object) can
+    # load grammar side modules at runtime. =2 keeps dead-code elimination (=1
+    # would export all of libc and grow the binary further); the cost is that
+    # symbols a side module imports must be EXPLICITLY kept alive via
+    # EXPORTED_FUNCTIONS below. Costs ~0.9MB (+13%) on nvim.wasm. Grammar
+    # parser.c only ever calls the allocator; external scanners may use the
+    # ctype/wctype/mem/str families -- the curated list below covers what
+    # scanners commonly need. An unresolved side-module import does NOT fail
+    # dlopen: it becomes a lazy stub that throws "TypeError: resolved is not a
+    # function" AT FIRST CALL -- if a grammar hits that, extend this list.
+    -sMAIN_MODULE=2
+    "SHELL:-sEXPORTED_FUNCTIONS=_main,_malloc,_calloc,_realloc,_free,_abort,_memcpy,_memmove,_memset,_memcmp,_memchr,_strlen,_strcmp,_strncmp,_strchr,_strcpy,_strncpy,_isalnum,_isalpha,_isdigit,_isspace,_isxdigit,_islower,_isupper,_ispunct,_tolower,_toupper,_iswalnum,_iswalpha,_iswdigit,_iswspace,_iswxdigit,_iswlower,_iswupper,_iswpunct,_iswblank,_towlower,_towupper"
+    # NB: EXPORTED_FUNCTIONS replaces emcc's default export set (hence _main).
+    # We only need a few runtime methods the js-libraries use to pass the
+    # handle pointer + read strings.
+    -sEXPORTED_RUNTIME_METHODS=ccall,UTF8ToString,stringToUTF8,lengthBytesUTF8,getValue,setValue)
+  set_target_properties(nvim_bin PROPERTIES LINK_DEPENDS
+    "${PROJECT_SOURCE_DIR}/wasm/nvim_io.js;${PROJECT_SOURCE_DIR}/wasm/nvim_ts_dl.js;${PROJECT_SOURCE_DIR}/wasm/pre.js;${PROJECT_SOURCE_DIR}/wasm/extern-pre.js")
+endif()
+
 install_helper(TARGETS nvim_bin)
 if(MSVC)
   install(FILES $<TARGET_PDB_FILE:nvim_bin> DESTINATION ${CMAKE_INSTALL_BINDIR} OPTIONAL)
