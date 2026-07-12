@@ -5186,8 +5186,8 @@ function vim.fn.jobsend(...) end
 --- Lua: Prefer |vim.system()| for simple processes; |RPC|, PTY/term, streaming callbacks, and shell-string behavior differ.
 ---
 --- Spawns {cmd} as a job.
---- If {cmd} is a List it runs directly (no 'shell').
---- If {cmd} is a String it runs in the 'shell', like this: >vim
+--- - If {cmd} is a List it runs directly (no 'shell').
+--- - If {cmd} is a String it runs in the 'shell', like this: >vim
 ---   call jobstart(split(&shell) + split(&shellcmdflag) + ['{cmd}'])
 --- <(See |shell-unquoting| for details.)
 ---
@@ -5264,11 +5264,12 @@ function vim.fn.jobsend(...) end
 ---   stdin:      (string) Either "pipe" (default) to connect the
 ---         job's stdin to a channel or "null" to disconnect
 ---         stdin.
----   term:       (boolean) Spawns {cmd} in a new pseudo-terminal
+---   term:      (boolean) Spawns {cmd} in a new pseudo-terminal
 ---         session connected to the current (unmodified) buffer.
----         Implies "pty". Defaults "height" and "width" to the
----         current window dimensions. Defaults $TERM to
----         "xterm-256color".
+---         Implies "pty". The buffer name is set to a `term://`
+---         URI which represents the command as a JSON array.
+---         Defaults "height" and "width" to the current window
+---         dimensions. Defaults $TERM to "xterm-256color".
 ---   width:      (number) Width of the `pty` pseudo-terminal.
 ---
 --- {opts} is passed as |self| dictionary to the callback; the

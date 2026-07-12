@@ -46,13 +46,25 @@ describe(':mksession', function()
     command('mksession ' .. session_file)
     command('%bwipeout!')
 
-    -- Create a new test instance of Nvim.
-    clear()
-    -- Restore session.
-    command('source ' .. session_file)
+    clear() -- Create a new test instance of Nvim.
+    command('source ' .. session_file) -- Restore session.
 
     eq(fn.winbufnr(1), fn.winbufnr(2))
     neq(fn.winbufnr(1), fn.winbufnr(3))
+  end)
+
+  it('restores jobstart(term=true) special-char buf in split-win', function()
+    -- Restoring the split-window buffer must still resolve to the same buffer. #7836
+    fn.jobstart({ n.testprg('shell-test'), 'a]b*c' }, { term = true })
+    command('split')
+    matches('%[', fn.bufname('%')) -- sanity: name contains glob metacharacters
+    command('mksession ' .. session_file)
+    command('%bwipeout!')
+
+    clear()
+    command('source ' .. session_file)
+
+    eq(fn.winbufnr(1), fn.winbufnr(2))
   end)
 
   -- common testing procedure for testing "sessionoptions-=terminal"
