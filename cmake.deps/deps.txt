@@ -47,8 +47,8 @@ TREESITTER_QUERY_URL https://github.com/tree-sitter-grammars/tree-sitter-query/a
 TREESITTER_QUERY_SHA256 c2b23b9a54cffcc999ded4a5d3949daf338bebb7945dece229f832332e6e6a7d
 TREESITTER_MARKDOWN_URL https://github.com/tree-sitter-grammars/tree-sitter-markdown/archive/v0.5.3.tar.gz
 TREESITTER_MARKDOWN_SHA256 df845b1ab7c7c163ec57d7fa17170c92b04be199bddab02523636efec5224ab6
-TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/9fc2f486a8c1e1f5a4b1954cdcd240fcd09eb003.tar.gz
-TREESITTER_SHA256 0874cf4bffa04b8ded95f07560402ca2e52c97d8c43a6dfdb32bc2887fc9c29f
+TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/d11d18f746fdfd1826362c2531ce06808f386b02.tar.gz
+TREESITTER_SHA256 50546072d031b0cc1bf2075f3c2a22cdc94f95845059f3c68060389eab560a40
 
 # NOTE: Also update the find_package() call if bumping the minimum.
 WASMTIME_URL https://github.com/bytecodealliance/wasmtime/archive/v36.0.12.tar.gz
