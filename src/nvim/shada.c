@@ -473,7 +473,6 @@ static inline void hmll_remove(HMLList *const hmll, HMLListEntry *const hmll_ent
 /// @param[in]   hmll_entry      Entry to insert after or NULL if it is needed
 ///                              to insert at the first entry.
 /// @param[in]   data            Data to insert.
-/// @param[in]   can_free_entry  True if data can be freed.
 static inline void hmll_insert(HMLList *const hmll, HMLListEntry *hmll_entry, const ShadaEntry data)
   FUNC_ATTR_NONNULL_ARG(1)
 {
@@ -1606,17 +1605,13 @@ static int compare_file_marks(const void *a, const void *b)
           : ((*a_fms)->greatest_timestamp > (*b_fms)->greatest_timestamp ? -1 : 1));
 }
 
-/// Parse msgpack object that has given length
+/// Check the result of parsing one msgpack object from the ShaDa file.
 ///
-/// @param[in]   sd_reader     Structure containing file reader definition.
-/// @param[in]   length        Object length.
-/// @param[out]  ret_unpacked  Location where read result should be saved. If
-///                            NULL then unpacked data will be freed. Must be
-///                            NULL if `ret_buf` is NULL.
-/// @param[out]  ret_buf       Buffer containing parsed string.
+/// @param[in]  initial_fpos  File position where the object started (for error messages).
+/// @param[in]  status        mpack parser status (MPACK_OK, MPACK_EOF, …).
+/// @param[in]  remaining     Unparsed bytes left over (must be 0 for a well-formed object).
 ///
-/// @return kSDReadStatusNotShaDa, kSDReadStatusReadError or
-///         kSDReadStatusSuccess.
+/// @return kSDReadStatusSuccess, or kSDReadStatusNotShaDa on a parse error.
 static ShaDaReadResult shada_check_status(uintmax_t initial_fpos, int status, size_t remaining)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -1718,7 +1713,7 @@ static const char *shada_format_entry(const ShadaEntry entry)
 /// @param[in]      sd_reader   Structure containing file reader definition.
 /// @param[in]      srni_flags  Flags determining what to read.
 /// @param[in]      max_kbyte   Maximum size of one element.
-/// @param[in,out]  ret_wms     Location where results are saved.
+/// @param[in,out]  wms         Location where results are saved.
 /// @param[out]     packer      MessagePack packer for entries which are not
 ///                             merged.
 static inline ShaDaWriteResult shada_read_when_writing(FileDescriptor *const sd_reader,
@@ -2693,7 +2688,7 @@ shada_write_exit:
 
 /// Write ShaDa file to a given location
 ///
-/// @param[in]  fname    File to write to. If it is NULL or empty then default
+/// @param[in]  file     File to write to. If it is NULL or empty then default
 ///                      location is used.
 /// @param[in]  nomerge  If true then old file is ignored.
 ///
@@ -3613,9 +3608,7 @@ static inline size_t shada_init_jumps(ShadaEntry *jumps, Set(ptr_t) *const remov
   return jumps_size;
 }
 
-/// Write registers ShaDa entries in given msgpack_sbuffer.
-///
-/// @param[in]  sbuf  target msgpack_sbuffer to write to.
+/// Gets registers as a msgpack-encoded string, in shada format.
 String shada_encode_regs(void)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -3634,9 +3627,7 @@ String shada_encode_regs(void)
   return packer_take_string(&packer);
 }
 
-/// Write jumplist ShaDa entries in given msgpack_sbuffer.
-///
-/// @param[in]  sbuf            target msgpack_sbuffer to write to.
+/// Gets the jumplist as a msgpack-encoded string, in shada format.
 String shada_encode_jumps(void)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -3653,9 +3644,7 @@ String shada_encode_jumps(void)
   return packer_take_string(&packer);
 }
 
-/// Write buffer list ShaDa entry in given msgpack_sbuffer.
-///
-/// @param[in]  sbuf            target msgpack_sbuffer to write to.
+/// Gets the buffer-list as a msgpack-encoded string, in shada format.
 String shada_encode_buflist(void)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -3671,9 +3660,7 @@ String shada_encode_buflist(void)
   return packer_take_string(&packer);
 }
 
-/// Write global variables ShaDa entries in given msgpack_sbuffer.
-///
-/// @param[in]  sbuf            target msgpack_sbuffer to write to.
+/// Gets global Vimscript variables as a msgpack-encoded string, in shada format.
 String shada_encode_gvars(void)
   FUNC_ATTR_NONNULL_ALL
 {
