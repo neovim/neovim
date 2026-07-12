@@ -87,7 +87,7 @@ describe('server', function()
 
     -- v:servername and $NVIM take the next available server.
     local servername = (
-      is_os('win') and [[\\.\pipe\Xtest-functional-server-pipe]]
+      is_os('win') and [[//./pipe/Xtest-functional-server-pipe]]
       or './Xtest-functional-server-socket'
     )
     fn.serverstart(servername)
@@ -170,7 +170,7 @@ describe('server', function()
 
     -- Add some servers.
     local servs = (
-      is_os('win') and { [[\\.\pipe\Xtest-pipe0934]], [[\\.\pipe\Xtest-pipe4324]] }
+      is_os('win') and { [[//./pipe/Xtest-pipe0934]], [[//./pipe/Xtest-pipe4324]] }
       or { [[./Xtest-pipe0934]], [[./Xtest-pipe4324]] }
     )
     for _, s in ipairs(servs) do
@@ -316,6 +316,40 @@ describe('server', function()
     matches('Failed.*listen', result.stderr)
     fn.serverstop(socket_path)
   end)
+
+  it('normalizes sep in named pipe paths #39382', function()
+    t.skip(not is_os('win'), 'N/A: Named pipe is Windows feature')
+
+    local name, named_pipe = 'Xtest-server', [[\\.\pipe\Xtest-server]]
+    -- default address
+    clear { args_rm = { '--listen' } }
+    matches('//./pipe/', fn.eval('v:servername'), true)
+
+    clear({ args_rm = { '--listen' }, env = { NVIM_LISTEN_ADDRESS = named_pipe } })
+    eq(vim.fs.normalize(named_pipe), fn.eval('v:servername'))
+
+    clear({ args_rm = { '--listen' }, args = { '--listen', name } })
+    matches(vim.fs.normalize(named_pipe), fn.eval('v:servername'), true)
+
+    clear({ args_rm = { '--listen' }, args = { '--listen', named_pipe } })
+    eq(vim.fs.normalize(named_pipe), fn.eval('v:servername'))
+
+    local server = n.get_session()
+    local client = n.new_session(true)
+    n.set_session(client)
+    local res = fn.system({
+      n.nvim_prog,
+      '--clean',
+      '-es',
+      '--server',
+      named_pipe,
+      '--remote-expr',
+      'v:servername',
+    })
+    eq(vim.fs.normalize(named_pipe), res)
+    client:close()
+    n.set_session(server)
+  end)
 end)
 
 describe('startup --listen', function()
@@ -400,7 +434,7 @@ describe('startup --listen', function()
   end)
 
   it('sets v:servername, overrides $NVIM_LISTEN_ADDRESS', function()
-    local addr = (is_os('win') and [[\\.\pipe\Xtest-listen-pipe]] or './Xtest-listen-pipe')
+    local addr = (is_os('win') and [[//./pipe/Xtest-listen-pipe]] or './Xtest-listen-pipe')
     clear({ env = { NVIM_LISTEN_ADDRESS = './Xtest-env-pipe' }, args = { '--listen', addr } })
     eq('', eval('$NVIM_LISTEN_ADDRESS')) -- Cleared on startup.
     eq(addr, api.nvim_get_vvar('servername'))

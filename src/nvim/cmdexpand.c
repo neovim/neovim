@@ -2768,11 +2768,13 @@ static int expand_files_and_dirs(expand_T *xp, char *pat, char ***matches, int *
     xfree(pat);
   }
 #ifdef BACKSLASH_IN_FILENAME
-  if ((options & WILD_USE_COMPLETESLASH) && ((p_csl[0] == NUL && !p_ssl) || p_csl[0] == 'b')) {
+  if (((options & WILD_USE_SHELLSLASH) && !p_ssl)
+      || ((options & WILD_USE_COMPLETESLASH)
+          && ((p_csl[0] == NUL && !p_ssl) || p_csl[0] == 'b'))) {
     for (int j = 0; j < *numMatches; j++) {
       char *ptr = (*matches)[j];
       for (; *ptr; ptr++) {
-        if (*ptr == '/') {
+        if (*ptr == PATHSEP) {
           *ptr = '\\';
         }
       }
@@ -3721,14 +3723,6 @@ void globpath(char *path, char *file, garray_T *ga, int expand_options, bool dir
 
   size_t filelen = strlen(file);
 
-#ifdef MSWIN
-  // Using the platform's path separator (\) makes vim incorrectly
-  // treat it as an escape character, use '/' instead.
-# define TMP_PATHSEPSTR "/"
-#else
-# define TMP_PATHSEPSTR PATHSEPSTR
-#endif
-
   // Loop over all entries in {path}.
   while (*path != NUL) {
     // Copy one item of the path to buf[] and concatenate the file name.
@@ -3736,11 +3730,11 @@ void globpath(char *path, char *file, garray_T *ga, int expand_options, bool dir
     // length of the path portion of buf (including trailing slash).
     size_t pathlen = copy_option_part(&path, buf, MAXPATHL, ",");
     size_t seplen = (*buf != NUL && !after_pathsep(buf, buf + pathlen))
-                    ? STRLEN_LITERAL(TMP_PATHSEPSTR) : 0;
+                    ? STRLEN_LITERAL(PATHSEPSTR) : 0;
 
     if (pathlen + seplen + filelen + 1 <= MAXPATHL) {
       if (seplen > 0) {
-        xmemcpyz(buf + pathlen, S_LEN(TMP_PATHSEPSTR));
+        xmemcpyz(buf + pathlen, S_LEN(PATHSEPSTR));
         pathlen += seplen;
       }
       xmemcpyz(buf + pathlen, file, filelen);
@@ -3765,7 +3759,6 @@ void globpath(char *path, char *file, garray_T *ga, int expand_options, bool dir
 
   xfree(buf);
 }
-#undef TMP_PATHSEPSTR
 
 /// Translate some keys pressed when 'wildmenu' is used.
 int wildmenu_translate_key(CmdlineInfo *cclp, int key, expand_T *xp, bool did_wild_list)

@@ -1793,12 +1793,11 @@ describe('API', function()
       eq(NIL, api.nvim_get_var('Unknown_script_func'))
 
       -- Check if autoload works properly
-      local pathsep = n.get_pathsep()
       local xhome = 'Xhome_api'
-      local xconfig = xhome .. pathsep .. 'Xconfig'
-      local xdata = xhome .. pathsep .. 'Xdata'
-      local autoload_folder = table.concat({ xconfig, 'nvim', 'autoload' }, pathsep)
-      local autoload_file = table.concat({ autoload_folder, 'testload.vim' }, pathsep)
+      local xconfig = ('%s/Xconfig'):format(xhome)
+      local xdata = ('%s/Xdata'):format(xhome)
+      local autoload_folder = ('%s/nvim/autoload'):format(xconfig)
+      local autoload_file = ('%s/testload.vim'):format(autoload_folder)
       mkdir_p(autoload_folder)
       write_file(autoload_file, [[let testload#value = 2]])
 
@@ -2845,7 +2844,7 @@ describe('API', function()
         filter(map(add(
         getjumplist()[0], { 'bufnr': bufnr('%'), 'lnum': getcurpos()[1] }),
         'filter(
-        { "f": expand("#".v:val.bufnr.":p"), "l": v:val.lnum },
+        { "f": expand("#".v:val.bufnr.":p:gs?\\?/?"), "l": v:val.lnum },
         { k, v -> k != "l" || v != 1 })'), '!empty(v:val.f)')
         ]]):gsub('\n', ''))),
 
@@ -3414,9 +3413,8 @@ describe('API', function()
     local test_dir = 'Xtest_list_runtime_paths'
 
     setup(function()
-      local pathsep = n.get_pathsep()
-      mkdir_p(test_dir .. pathsep .. 'a')
-      mkdir_p(test_dir .. pathsep .. 'b')
+      mkdir_p(('%s/a'):format(test_dir))
+      mkdir_p(('%s/b'):format(test_dir))
     end)
     teardown(function()
       rmdir(test_dir)
@@ -3934,7 +3932,6 @@ describe('API', function()
   end)
 
   describe('nvim_get_runtime_file', function()
-    local p = t.fix_slashes
     it('can find files', function()
       eq({}, api.nvim_get_runtime_file('bork.borkbork', false))
       eq({}, api.nvim_get_runtime_file('bork.borkbork', true))
@@ -3943,36 +3940,36 @@ describe('API', function()
       local val = api.nvim_get_runtime_file('autoload/remote/*.vim', true)
       eq(2, #val)
       if endswith(val[1], 'define.vim') then
-        ok(endswith(p(val[1]), 'autoload/remote/define.vim'))
-        ok(endswith(p(val[2]), 'autoload/remote/host.vim'))
+        ok(endswith(val[1], 'autoload/remote/define.vim'))
+        ok(endswith(val[2], 'autoload/remote/host.vim'))
       else
-        ok(endswith(p(val[1]), 'autoload/remote/host.vim'))
-        ok(endswith(p(val[2]), 'autoload/remote/define.vim'))
+        ok(endswith(val[1], 'autoload/remote/host.vim'))
+        ok(endswith(val[2], 'autoload/remote/define.vim'))
       end
       val = api.nvim_get_runtime_file('autoload/remote/*.vim', false)
       eq(1, #val)
       ok(
-        endswith(p(val[1]), 'autoload/remote/define.vim')
-          or endswith(p(val[1]), 'autoload/remote/host.vim')
+        endswith(val[1], 'autoload/remote/define.vim')
+          or endswith(val[1], 'autoload/remote/host.vim')
       )
 
       val = api.nvim_get_runtime_file('lua', true)
       eq(1, #val)
-      ok(endswith(p(val[1]), 'lua'))
+      ok(endswith(val[1], 'lua'))
 
       val = api.nvim_get_runtime_file('lua/vim', true)
       eq(1, #val)
-      ok(endswith(p(val[1]), 'lua/vim'))
+      ok(endswith(val[1], 'lua/vim'))
     end)
 
     it('can find directories', function()
       local val = api.nvim_get_runtime_file('lua/', true)
       eq(1, #val)
-      ok(endswith(p(val[1]), 'lua/'))
+      ok(endswith(val[1], 'lua/'))
 
       val = api.nvim_get_runtime_file('lua/vim/', true)
       eq(1, #val)
-      ok(endswith(p(val[1]), 'lua/vim/'))
+      ok(endswith(val[1], 'lua/vim/'))
 
       eq({}, api.nvim_get_runtime_file('foobarlang/', true))
     end)
@@ -3993,8 +3990,8 @@ describe('API', function()
 
       local val = api.nvim_get_runtime_file('vim.vim', true)
       eq(2, #val)
-      eq(p(val[1]), vimruntime .. '/syntax/vim.vim')
-      eq(p(val[2]), vimruntime .. '/ftplugin/vim.vim')
+      eq(val[1], ('%s/syntax/vim.vim'):format(vimruntime))
+      eq(val[2], ('%s/ftplugin/vim.vim'):format(vimruntime))
     end)
 
     it('finds files via an 8.3 filename path #25019', function()
@@ -4006,8 +4003,8 @@ describe('API', function()
       finally(function()
         rmdir(path)
       end)
-      local path_with_shortname =
-        p(fn.system(('for %%I in ("%s") do @echo %%~sI'):format(path), ''):gsub('\n', ''))
+      local path_with_shortname = fn.system(('for %%I in ("%s") do @echo %%~sI'):format(path), '')
+      path_with_shortname = vim.fs.normalize(vim.trim(path_with_shortname))
       eq('XTEST_~1', vim.fs.basename(path_with_shortname))
       exec_lua(('vim.opt.rtp:prepend("%s/*")'):format(path_with_shortname))
       local val = api.nvim_get_runtime_file('lua/foo.lua', true)

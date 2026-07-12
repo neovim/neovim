@@ -3459,8 +3459,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	attempt to set 'guifontwide' to a matching double-width font.
 
 						*'helpfile'* *'hf'*
-'helpfile' 'hf'		string	(default (MS-Windows) "$VIMRUNTIME\doc\help.txt"
-                                         (others) "$VIMRUNTIME/doc/help.txt")
+'helpfile' 'hf'		string	(default "$VIMRUNTIME/doc/help.txt")
 			global
 			Disallowed in |modeline|. |no-modeline-option|
 	Name of the main help file.  All distributed help files should be

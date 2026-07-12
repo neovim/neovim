@@ -837,6 +837,10 @@ describe('TUI :connect', function()
     tt.feed_data('iThis is server 2.\027')
     screen2:expect({ any = vim.pesc('This is server 2^.') })
 
+    if is_os('win') then
+      -- still supports backslashes
+      server1 = server1:gsub('/', '\\')
+    end
     tt.feed_data(':connect ' .. server1 .. '\013')
     screen2:expect({ any = vim.pesc('This is server 1^.') })
 

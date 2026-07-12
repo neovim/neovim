@@ -9,7 +9,7 @@ local describe_lua_and_rpc = n.describe_lua_and_rpc(describe)
 local api = n.api
 local fn = n.fn
 local request = n.request
-local exec_lua = n.exec_lua
+local exec, exec_lua = n.exec, n.exec_lua
 local insert = n.insert
 local NIL = vim.NIL
 local command = n.command
@@ -2798,5 +2798,237 @@ describe('api/buf', function()
       ]])
       eq({ 'bar ' }, text)
     end)
+  end)
+end)
+
+describe('path sep in ffname/sfname #39382,', function()
+  if not t.is_os('win') then
+    return
+  end
+
+  local cwd, files = vim.uv.cwd(), {}
+  local expected_cwd = vim.fs.normalize(cwd)
+  for i = 1, 3 do
+    files[i] = ([[%s\Xtest\file%s]]):format(cwd, i)
+  end
+
+  local sfname_eq = function(expected, nr)
+    command(('buffer %s'):format(nr or ''))
+    eq(expected, api.nvim_eval_statusline('%f', {}).str)
+  end
+
+  setup(function()
+    t.mkdir('Xtest')
+  end)
+
+  teardown(function()
+    n.rmdir('Xtest')
+  end)
+
+  before_each(function()
+    clear()
+  end)
+
+  it('normalizes startup file arguments', function()
+    clear { args = files }
+    for i = 1, 3 do
+      eq(('%s/Xtest/file%s'):format(expected_cwd, i), api.nvim_buf_get_name(i))
+      sfname_eq(('Xtest/file%s'):format(i), i)
+    end
+  end)
+
+  it('normalizes :next arguments (FILES flag)', function()
+    command(('next %s'):format(table.concat(files, ' ')))
+    for i = 1, 3 do
+      eq(('%s/Xtest/file%s'):format(expected_cwd, i), api.nvim_buf_get_name(i))
+      sfname_eq(('%s/Xtest/file%s'):format(expected_cwd, i), i)
+    end
+  end)
+
+  it('normalizes :edit arguments (FILE1 flag)', function()
+    -- tilde prefix
+    command([[edit ~\foo\bar]])
+    eq(('%s/foo/bar'):format(fn.getenv('HOME')), api.nvim_buf_get_name(0))
+    sfname_eq('~/foo/bar')
+
+    -- absolute path
+    command(('edit %s'):format(files[1]))
+    eq(('%s/Xtest/file1'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq(('%s/Xtest/file1'):format(expected_cwd))
+  end)
+
+  it('normalizes bufadd() arguments', function()
+    local n = fn.bufadd(files[1])
+    eq(('%s/Xtest/file1'):format(expected_cwd), api.nvim_buf_get_name(n))
+    sfname_eq(('%s/Xtest/file1'):format(expected_cwd), n)
+  end)
+
+  it('normalizes bufnr() arguments', function()
+    local n = fn.bufnr(files[1], 1)
+    eq(('%s/Xtest/file1'):format(expected_cwd), api.nvim_buf_get_name(n))
+    sfname_eq(('%s/Xtest/file1'):format(expected_cwd), n)
+  end)
+
+  it('normalizes temp paths, <afile> and <amatch> for :diffpatch', function()
+    t.write_file('Xtest/patch', [[diff file]])
+    t.write_file('Xtest/test.txt', [[input file]])
+    command('edit Xtest/test.txt')
+    exec([[
+      fun MyPatch()
+        call writefile(['output file'], v:fname_out)
+      endfunc
+      set patchexpr=MyPatch()
+    ]])
+    exec_lua([[
+      vim.api.nvim_create_autocmd('BufAdd', {
+        pattern = '*',
+        callback = function(ev)
+          vim.g.test_file = ev.file
+          vim.g.test_match = ev.match
+        end
+      })
+    ]])
+    command('diffpatch Xtest/patch')
+    eq(('%s/Xtest/test.txt.new'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq('Xtest/test.txt.new')
+    local tmp = fn.getenv('TMPDIR')
+    local afile = fn.eval('g:test_file') ---@type string
+    local amatch = fn.eval('g:test_match') ---@type string
+    t.matches(tmp, afile, true)
+    t.not_matches('\\', afile, true)
+    t.matches(tmp, amatch, true)
+    t.not_matches('\\', amatch, true)
+  end)
+
+  it('normalizes :find results', function()
+    t.write_file('Xtest/file1', '')
+    command([[find Xtest\file1]])
+    eq(('%s/Xtest/file1'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq('Xtest/file1')
+
+    -- 'findfunc'
+    exec(([[
+      func FindFile(cmdarg, cmdcomplete)
+        return  ['%s']
+      endfunc
+      set findfunc=FindFile
+    ]]):format(files[2]))
+    command([[find file2]])
+    eq(('%s/Xtest/file2'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq(('%s/Xtest/file2'):format(expected_cwd))
+  end)
+
+  it('normalizes :scriptnames arguments', function()
+    command(('scriptnames %s'):format(files[1]))
+    eq(('%s/Xtest/file1'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq(('%s/Xtest/file1'):format(expected_cwd))
+  end)
+
+  it('normalizes gf targets', function()
+    t.write_file('Xtest/file1', '')
+    feed(('i%s<Esc>0gf'):format(files[1]))
+    eq(('%s/Xtest/file1'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq(('%s/Xtest/file1'):format(expected_cwd))
+    command('bw')
+    feed('<C-W>f')
+    eq(('%s/Xtest/file1'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq(('%s/Xtest/file1'):format(expected_cwd))
+  end)
+
+  it('normalizes macro definition targets and completions', function()
+    t.mkdir('Xtest/sub')
+    t.write_file(
+      'Xtest/sub/bar.h',
+      [[
+      #define MIN 0;
+      #define MAX 10;
+    ]]
+    )
+    t.write_file(
+      'Xtest/foo.c',
+      [[
+      #include "sub\bar.h";
+      void main() {
+        int i = MIN;
+      }
+    ]]
+    )
+    local screen = Screen.new(30, 10)
+    command([[set include=^\\s*#\\s*include]])
+    command([[set define=^\\s*#\\s*define]])
+    command('e Xtest/foo.c')
+    command('djump MIN')
+    eq(('%s/Xtest/sub/bar.h'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq('Xtest/sub/bar.h')
+    command('bw')
+    feed('/MIN<CR>lxxi<C-x><C-d>')
+    screen:expect({
+      any = {
+        'MIN Xtest/sub/bar.h',
+        'MAX Xtest/sub/bar.h',
+      },
+    })
+  end)
+
+  it('normalizes tag targets', function()
+    t.write_file(
+      'Xtest/tags',
+      [[
+      main	.\\foo.c	/^void main() /;"	f	typeref:typename:void
+      main2	$DIR\foo.c	/^void main2() /;"	f	typeref:typename:void
+      main3	./foo.c	/^void main3() /;"	f	typeref:typename:void
+    ]]
+    )
+    t.write_file(
+      'Xtest/foo.c',
+      [[
+      void main() {}
+      void main2() {};
+      void main3() {};
+    ]]
+    )
+
+    command('cd Xtest')
+    command('tjump main')
+    eq(('%s/Xtest/foo.c'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq('.//foo.c')
+
+    command('bw')
+    fn.setenv('DIR', ([[%s\Xtest]]):format(cwd))
+    command('tjump main2')
+    eq(('%s/Xtest/foo.c'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq(('%s/Xtest/foo.c'):format(expected_cwd))
+
+    command('bw')
+    command('tjump main3')
+    eq(('%s/Xtest/foo.c'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq('./foo.c')
+  end)
+
+  it('normalizes quickfix targets', function()
+    t.write_file(
+      'Xtest/error',
+      [[
+      foo.c
+      .\Xtest\foo.c(3): error C2143: syntax error: missing ';' before 'return'
+    ]]
+    )
+    local screen = Screen.new(40, 10)
+    command('cg Xtest/error')
+    command('copen')
+    screen:expect({
+      any = './Xtest/foo.c',
+    })
+    feed('<CR>')
+    eq(('%s/Xtest/foo.c'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq('./Xtest/foo.c')
+  end)
+
+  it('preserves backslashes in URIs', function()
+    local exe_path = fn.exepath('cmd')
+    t.not_matches('/', exe_path, true)
+    command(('e term://%s'):format(exe_path))
+    t.matches(exe_path, api.nvim_buf_get_name(0), true)
+    t.matches(exe_path, api.nvim_eval_statusline('%f', {}).str, true)
   end)
 end)

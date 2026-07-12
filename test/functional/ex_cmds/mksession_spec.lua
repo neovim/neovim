@@ -145,7 +145,7 @@ describe(':mksession', function()
 
   it('restores buffers with tab-local CWD', function()
     local tmpfile_base = file_prefix .. '-tmpfile'
-    local cwd_dir = t.fix_slashes(fn.getcwd())
+    local cwd_dir = vim.fs.normalize(fn.getcwd())
     local session_path = cwd_dir .. get_pathsep() .. session_file
 
     command('edit ' .. tmpfile_base .. '1')
@@ -161,9 +161,9 @@ describe(':mksession', function()
     -- Use :silent to avoid hit-enter prompt due to long path
     command('silent source ' .. session_path)
     command('tabnext 1')
-    eq(cwd_dir .. '/' .. tmpfile_base .. '1', fn.expand('%:p'))
+    eq(('%s/%s1'):format(cwd_dir, tmpfile_base), vim.fs.normalize(fn.expand('%:p')))
     command('tabnext 2')
-    eq(cwd_dir .. '/' .. tmpfile_base .. '2', fn.expand('%:p'))
+    eq(('%s/%s2'):format(cwd_dir, tmpfile_base), vim.fs.normalize(fn.expand('%:p')))
   end)
 
   it('restores symlinked directory buffer names', function()
@@ -187,8 +187,7 @@ describe(':mksession', function()
   end)
 
   it('restores CWD for :terminal buffers #11288', function()
-    local cwd_dir = fn.fnamemodify('.', ':p:~'):gsub([[[\/]*$]], '')
-    cwd_dir = t.fix_slashes(cwd_dir) -- :mksession always uses unix slashes.
+    local cwd_dir = fn.fnamemodify('.', ':p:~'):gsub([[/*$]], '')
     local session_path = cwd_dir .. '/' .. session_file
 
     command('cd ' .. tab_dir)

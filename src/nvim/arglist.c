@@ -228,30 +228,6 @@ void alist_add(alist_T *al, char *fname, int set_fnum)
   wp->w_locked--;
 }
 
-#ifdef BACKSLASH_IN_FILENAME
-
-/// Adjust slashes in file names.  Called after 'shellslash' was set.
-void alist_slash_adjust(void)
-{
-  for (int i = 0; i < GARGCOUNT; i++) {
-    if (GARGLIST[i].ae_fname != NULL) {
-      slash_adjust(GARGLIST[i].ae_fname);
-    }
-  }
-
-  FOR_ALL_TAB_WINDOWS(tp, wp) {
-    if (wp->w_alist != &global_alist) {
-      for (int i = 0; i < WARGCOUNT(wp); i++) {
-        if (WARGLIST(wp)[i].ae_fname != NULL) {
-          slash_adjust(WARGLIST(wp)[i].ae_fname);
-        }
-      }
-    }
-  }
-}
-
-#endif
-
 /// Isolate one argument, taking backticks.
 /// Changes the argument in-place, puts a NUL after it.  Backticks remain.
 ///

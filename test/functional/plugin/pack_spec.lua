@@ -850,7 +850,7 @@ describe('vim.pack', function()
 
       eq('basic feat-branch', out)
 
-      local rtp = vim.tbl_map(t.fix_slashes, api.nvim_list_runtime_paths())
+      local rtp = api.nvim_list_runtime_paths()
       local plug_path = pack_get_plug_path('basic')
       local after_dir = vim.fs.joinpath(plug_path, 'after')
       eq(true, vim.tbl_contains(rtp, plug_path))
@@ -989,7 +989,7 @@ describe('vim.pack', function()
         eq(ref, out)
 
         -- Should add necessary directories to runtimepath regardless of `opts.load`
-        local rtp = vim.tbl_map(t.fix_slashes, api.nvim_list_runtime_paths())
+        local rtp = api.nvim_list_runtime_paths()
         local plug_path = pack_get_plug_path('plugin % dirs')
         local after_dir = vim.fs.joinpath(plug_path, 'after')
         eq(true, vim.tbl_contains(rtp, plug_path))
