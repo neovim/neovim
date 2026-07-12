@@ -1781,6 +1781,8 @@ static void create_windows(mparm_T *parmp)
     // Don't execute Win/Buf Enter/Leave autocommands here
     autocmd_no_enter++;
     autocmd_no_leave++;
+    // Save the window selection made by startup scripts.
+    win_T *startup_curwin = curwin;
     bool dorewind = true;
     while (done++ < 1000) {
       if (dorewind) {
@@ -1840,8 +1842,11 @@ static void create_windows(mparm_T *parmp)
     }
     if (parmp->window_layout == WIN_TABS) {
       goto_tabpage(1);
-    } else {
+    } else if (parmp->window_count > 1 || !win_valid(startup_curwin)) {
+      // Multiple windows mode (-o/-O), or startup_curwin was closed: use firstwin.
       curwin = firstwin;
+    } else {
+      curwin = startup_curwin;
     }
     curbuf = curwin->w_buffer;
     autocmd_no_enter--;
@@ -1947,7 +1952,7 @@ static void edit_buffers(mparm_T *parmp)
   autocmd_no_enter--;
 
   // make the first window the current window
-  win = firstwin;
+  win = (parmp->window_count > 1) ? firstwin : curwin;
   // Avoid making a preview window the current window.
   while (win->w_p_pvw) {
     win = win->w_next;
