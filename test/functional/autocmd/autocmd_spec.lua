@@ -856,7 +856,7 @@ describe('autocmd', function()
     )
   end)
 
-  it('normalizes sep in pattern environment variables #39382', function()
+  it('normalizes path sep (slashes) in env var `pattern` #39382', function()
     local path = t.is_os('win') and [[C:\foo\bar]] or 'C:/foo/bar'
     fn.setenv('FOOBAR', path)
     exec [[
