@@ -75,6 +75,9 @@ end
 ---@field private redraw_count integer
 --- A map from window ID to whether we are currently parsing that window asynchronously
 ---@field parsing boolean
+--- Wether the first parse has completed and treesitter highlighting has
+--- replaced the legacy syntax highlighting for the buffer.
+---@field private _first_parse_done boolean
 local TSHighlighter = {
   active = {},
 }
@@ -145,7 +148,8 @@ function TSHighlighter.new(tree, opts)
   self._queries = {}
   self._highlight_states = {}
   self.parsing = false
-
+  self._first_parse_done = false
+  
   -- Queries for a specific language can be overridden by a custom
   -- string query... if one is not provided it will be looked up by file.
   if opts.queries then
@@ -157,7 +161,6 @@ function TSHighlighter.new(tree, opts)
   set_conceal_lines(tree:lang())
   self.orig_spelloptions = vim.bo[self.bufnr].spelloptions
 
-  vim.bo[self.bufnr].syntax = ''
   vim.b[self.bufnr].ts_highlight = true
 
   TSHighlighter.active[self.bufnr] = self
@@ -178,6 +181,32 @@ function TSHighlighter.new(tree, opts)
   end)
 
   return self
+end
+
+--- Disables legacy syntax highlighting when treesitter completes first parse
+---
+--- Deferred until the first parse completes (see _on_start) so that any pre-existing syntax
+--- highlighting stays visible while treesitter performs it's initial parse, instead of 
+--- leaving the buffer completely without unhighlighted until the tree is ready.
+---@private
+function TSHighlighter:_on_first_parse()
+  -- Return if first parse already done or highlighter was destroyed while parsing
+  if self._first_parse_done then
+    return
+  end
+  self._first_parse_done = true
+
+  -- Deferred: changing syntax during redraw is probably not a good idea
+  vim.schedule(function()
+    if TSHighlighter.active[self.bufnr] ~= self or not api.nvim_buf_is_loaded(self.bufnr) then
+      return
+    end
+
+    -- Disable legacy syntax highlighting unless the user re-enabled it with `:setlocal syntax=ON`
+    if vim.bo[self.bufnr].syntax ~= 'ON' then
+      vim.bo[self.bufnr].syntax = ''
+    end
+  end)
 end
 
 --- @nodoc
@@ -587,14 +616,19 @@ function TSHighlighter._on_start()
       table.sort(ranges, function(a, b)
         return a[1] < b[1]
       end)
-      highlighter.parsing = highlighter.parsing
-        or nil
-          == highlighter.tree:parse(ranges, function(_, trees)
-            if trees and highlighter.parsing then
-              highlighter.parsing = false
-              api.nvim__redraw({ buf = buf, valid = false, flush = false })
-            end
-          end)
+      local trees = highlighter.tree:parse(ranges, function(_, trees)
+        if trees and highlighter.parsing then
+          highlighter.parsing = false
+          highlighter:_on_first_parse()
+          api.nvim__redraw({ buf = buf, valid = false, flush = false })
+        end
+      end)
+      -- parse() returns non-nil only when it completed synchronously
+      if trees then
+        highlighter:_on_first_parse()
+      else
+        highlighter.parsing = true
+      end
     end
   end
 end
