@@ -1,6 +1,7 @@
 // clipboard.c: Functions to handle the clipboard
 
 #include <assert.h>
+#include <string.h>
 
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
@@ -109,9 +110,17 @@ bool get_clipboard(int name, yankreg_T **target, bool quiet)
 
   list_T *res = result.vval.v_list;
   list_T *lines = NULL;
-  if (tv_list_len(res) == 2
-      && TV_LIST_ITEM_TV(tv_list_first(res))->v_type == VAR_LIST) {
-    lines = TV_LIST_ITEM_TV(tv_list_first(res))->vval.v_list;
+  blob_T *blob = NULL;
+  typval_T *const data_tv = tv_list_len(res) == 2 ? TV_LIST_ITEM_TV(tv_list_first(res)) : NULL;
+  if (data_tv != NULL && (data_tv->v_type == VAR_LIST || data_tv->v_type == VAR_BLOB)) {
+    if (data_tv->v_type == VAR_LIST) {
+      lines = data_tv->vval.v_list;
+    } else {
+      blob = data_tv->vval.v_blob;
+      if (blob == NULL) {  // v:_null_blob: invalid provider data
+        goto err;
+      }
+    }
     if (TV_LIST_ITEM_TV(tv_list_last(res))->v_type != VAR_STRING) {
       goto err;
     }
@@ -144,22 +153,39 @@ bool get_clipboard(int name, yankreg_T **target, bool quiet)
     reg->y_type = kMTUnknown;
   }
 
-  reg->y_array = xcalloc((size_t)tv_list_len(lines), sizeof(String));
-  reg->y_size = (size_t)tv_list_len(lines);
   reg->y_width = 0;  // Will be updated by update_yankreg_width() below.
   reg->additional_data = NULL;
   reg->timestamp = 0;
   // Timestamp is not saved for clipboard registers because clipboard registers
   // are not saved in the ShaDa file.
 
-  size_t tv_idx = 0;
-  TV_LIST_ITER_CONST(lines, li, {
-    if (TV_LIST_ITEM_TV(li)->v_type != VAR_STRING) {
-      goto err;
+  if (blob != NULL) {
+    // Split the Blob on NL into lines; raw NUL bytes become NL (:help NL-used-for-Nul).
+    const size_t len = (size_t)tv_blob_len(blob);
+    const char *pos = len > 0 ? blob->bv_ga.ga_data : "";
+    const char *const end = pos + len;
+    reg->y_size = memcnt(pos, NL, len) + 1;
+    reg->y_array = xcalloc(reg->y_size, sizeof(String));
+    for (size_t y_idx = 0; y_idx < reg->y_size; y_idx++) {
+      const char *const nl = memchr(pos, NL, (size_t)(end - pos));
+      String s = cbuf_to_string(pos, (size_t)((nl != NULL ? nl : end) - pos));
+      memchrsub(s.data, NUL, NL, s.size);
+      reg->y_array[y_idx] = s;
+      pos = nl != NULL ? nl + 1 : end;
     }
-    const char *s = TV_LIST_ITEM_TV(li)->vval.v_string;
-    reg->y_array[tv_idx++] = cstr_to_string(s != NULL ? s : "");
-  });
+  } else {
+    reg->y_array = xcalloc((size_t)tv_list_len(lines), sizeof(String));
+    reg->y_size = (size_t)tv_list_len(lines);
+
+    size_t tv_idx = 0;
+    TV_LIST_ITER_CONST(lines, li, {
+      if (TV_LIST_ITEM_TV(li)->v_type != VAR_STRING) {
+        goto err;
+      }
+      const char *s = TV_LIST_ITEM_TV(li)->vval.v_string;
+      reg->y_array[tv_idx++] = cstr_to_string(s != NULL ? s : "");
+    });
+  }
 
   if (reg->y_size > 0 && reg->y_array[reg->y_size - 1].size == 0) {
     // a known-to-be charwise yank might have a final linebreak

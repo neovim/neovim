@@ -12691,6 +12691,7 @@ M.funcs = {
       |writefile()| does with {binary} set to "b" (i.e. with
       a newline between each list item, and newlines inside list
       items converted to NULs).
+      If {input} is a |Blob| it is written to the pipe verbatim.
       When {input} is given and is a valid buffer id, the content of
       the buffer is written to the file line by line, each line
       terminated by NL (and NUL where the text has NL).
