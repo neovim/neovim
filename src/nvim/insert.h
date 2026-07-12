@@ -34,4 +34,4 @@ enum {
   INSCHAR_COM_LIST = 16,  ///< format comments with list/2nd line indent
 };
 
-#include "edit.h.generated.h"
+#include "insert.h.generated.h"

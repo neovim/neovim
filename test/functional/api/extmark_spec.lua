@@ -538,7 +538,7 @@ describe('API/extmarks', function()
   end)
 
   it('marks move with char inserts', function()
-    -- insertchar in edit.c (the ins_str branch)
+    -- insertchar in insert.c (the ins_str branch)
     screen = Screen.new(15, 10)
     set_extmark(ns, marks[1], 0, 3)
     feed('0')
@@ -555,7 +555,7 @@ describe('API/extmarks', function()
 
   -- gravity right as definted in tk library
   it('marks have gravity right', function()
-    -- insertchar in edit.c (the ins_str branch)
+    -- insertchar in insert.c (the ins_str branch)
     set_extmark(ns, marks[1], 0, 2)
     feed('03l')
     insert('X')
@@ -568,7 +568,7 @@ describe('API/extmarks', function()
   end)
 
   it('we can insert multibyte chars', function()
-    -- insertchar in edit.c
+    -- insertchar in insert.c
     feed('a<cr>12345<esc>')
     set_extmark(ns, marks[1], 1, 2)
     -- Insert a fullwidth (two col) tilde, NICE
@@ -896,7 +896,7 @@ describe('API/extmarks', function()
   end)
 
   it('tab works with expandtab', function()
-    -- ins_tab in edit.c
+    -- ins_tab in insert.c
     feed(':set expandtab<cr><esc>')
     feed(':set shiftwidth=2<cr><esc>')
     set_extmark(ns, marks[1], 0, 2)
@@ -905,7 +905,7 @@ describe('API/extmarks', function()
   end)
 
   it('tabs work', function()
-    -- ins_tab in edit.c
+    -- ins_tab in insert.c
     feed(':set noexpandtab<cr><esc>')
     feed(':set shiftwidth=2<cr><esc>')
     feed(':set softtabstop=2<cr><esc>')

@@ -436,7 +436,7 @@ The basic structure described for normal mode in 3, 4 and 5 is used for other
 modes managed by the `state_enter` loop:
 
 - command-line mode: `command_line_{enter,check,execute}()`(`ex_getln.c`)
-- insert mode: `insert_{enter,check,execute}()`(`edit.c`)
+- insert mode: `insert_{enter,check,execute}()`(`insert.c`)
 - terminal mode: `terminal_{enter,execute}()`(`terminal.c`)
 
 IMPORTANT VARIABLES
