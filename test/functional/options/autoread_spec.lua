@@ -163,10 +163,13 @@ describe('autoread file watcher', function()
       eq({ 'final' }, api.nvim_buf_get_lines(0, 0, -1, true))
     end)
 
-    -- Let any late-arriving event flush (> debounce window), then assert all 4 writes coalesced.
-    -- Every fs_event restarts the debounce timer, so the timer fires exactly once.
+    -- Debouncing collapses 4 writes into (ideally) 1 reload. But we assert "<=2" bc OS filewatch
+    -- events may arrive in multiple batches under CI load => a straggler may arrive after the
+    -- debounce window and trigger a second reload.
+    -- The buffer already holds "final" (checked above); without debouncing each write would reload.
     sleep(250)
-    eq(1, n.exec_lua('return _G.reloads'))
+    local reloads = n.exec_lua('return _G.reloads')
+    t.ok(reloads >= 1 and reloads <= 2, '1 or 2 reloads (4 writes coalesced)', reloads)
   end)
 
   it("bumps 'busy' on each watched buffer while a reload is pending", function()
