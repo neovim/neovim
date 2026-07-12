@@ -75,7 +75,7 @@ end
 ---@field private redraw_count integer
 --- A map from window ID to whether we are currently parsing that window asynchronously
 ---@field parsing boolean
---- Wether the first parse has completed and treesitter highlighting has
+--- Whether the first parse has completed and treesitter highlighting has
 --- replaced the legacy syntax highlighting for the buffer.
 ---@field private _first_parse_done boolean
 local TSHighlighter = {
@@ -186,7 +186,7 @@ end
 --- Disables legacy syntax highlighting when treesitter completes first parse
 ---
 --- Deferred until the first parse completes (see _on_start) so that any pre-existing syntax
---- highlighting stays visible while treesitter performs it's initial parse, instead of 
+--- highlighting stays visible while treesitter performs its initial parse, instead of 
 --- leaving the buffer completely without unhighlighted until the tree is ready.
 ---@private
 function TSHighlighter:_on_first_parse()
