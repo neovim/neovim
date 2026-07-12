@@ -1632,6 +1632,7 @@ static void add_byte_to_showcmd(uint8_t byte)
   }
 }
 
+static bool is_getchar = false;
 /// Get the next input character.
 /// Can return a special key or a multi-byte character.
 /// Can return NUL when called recursively, use safe_vgetc() if that's not
@@ -1838,7 +1839,7 @@ int vgetc(void)
 
   // Execute Lua on_key callbacks.
   kvi_push(on_key_buf, NUL);
-  if (nlua_execute_on_key(c, on_key_buf.items)) {
+  if (nlua_execute_on_key(c, on_key_buf.items, is_getchar)) {
     // Keys following K_COMMAND/K_LUA/K_PASTE_START aren't normally received by
     // vim.on_key() callbacks, so discard them along with the current key.
     if (c == K_COMMAND) {
@@ -1973,6 +1974,7 @@ static void getchar_common(typval_T *argvars, typval_T *rettv, bool allow_number
     ui_busy_start();
   }
 
+  is_getchar = true;
   no_mapping++;
   allow_keys++;
   if (!simplify) {
@@ -2017,6 +2019,7 @@ static void getchar_common(typval_T *argvars, typval_T *rettv, bool allow_number
     }
     break;
   }
+  is_getchar = false;
   no_mapping--;
   allow_keys--;
   if (!simplify) {

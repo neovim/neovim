@@ -2238,6 +2238,51 @@ describe('lua stdlib', function()
       expect('21')
       eq('', eval('v:errmsg'))
     end)
+
+    it('executes callbacks in order', function()
+      local ns = {
+        api.nvim_create_namespace(''),
+        api.nvim_create_namespace(''),
+        api.nvim_create_namespace(''),
+      }
+      exec_lua(function()
+        _G.res = {}
+        vim.on_key(function()
+          table.insert(_G.res, ns[1])
+        end)
+        vim.on_key(function()
+          table.insert(_G.res, ns[3])
+        end)
+        vim.on_key(function()
+          table.insert(_G.res, ns[2])
+        end)
+      end)
+      feed('<CR>')
+      eq({ ns[2], ns[3], ns[1] }, exec_lua('return _G.res'))
+    end)
+
+    it('sets discard for callback return and getchar())', function()
+      feed(':call getchar()')
+      exec_lua(function()
+        _G.res = {}
+        vim.on_key(function(_, _, discard)
+          table.insert(_G.res, discard)
+        end)
+      end)
+      feed('<CR>')
+      eq({ false }, exec_lua('return _G.res'))
+      feed('<CR>')
+      eq({ false, true }, exec_lua('return _G.res'))
+      exec_lua(function()
+        _G.res = {}
+        vim.on_key(function(_, _, discard)
+          table.insert(_G.res, discard)
+          return ''
+        end)
+      end)
+      feed('<CR>')
+      eq({ false, true }, exec_lua('return _G.res'))
+    end)
   end)
 
   describe('vim.wait', function()
