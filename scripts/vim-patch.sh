@@ -283,6 +283,10 @@ preprocess_patch() {
   LC_ALL=C sed -Ee 's/( [ab]\/src\/nvim)\/getchar\.c/\1\/input.c/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
+  # Rename edit.c to insert.c
+  LC_ALL=C sed -Ee 's/( [ab]\/src\/nvim)\/edit\.c/\1\/insert.c/g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+
   # Rename profiler.c to profile.c
   LC_ALL=C sed -Ee 's/( [ab]\/src\/nvim)\/profiler\.c/\1\/profile.c/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"

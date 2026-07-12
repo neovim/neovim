@@ -31,7 +31,7 @@ You can start hacking on Nvim in less than 5 minutes:
    Tests that want to check the UI can also use `screen:expect()`.
 6. Now make a code change in Nvim itself, then you can see the effects. The
    example test does `feed('iline1…')`, so let's make a change to the
-   insert-mode code, which lives in `src/nvim/edit.c`. In the
+   insert-mode code, which lives in `src/nvim/insert.c`. In the
    `insert_handle_key` function, just after the `normalchar` label, add this
    code: >
         s->c = 'x';
