@@ -135,9 +135,10 @@ void nvim_win_set_cursor(Window win, ArrayOf(Integer, 2) pos, Error *err)
   // make sure cursor is in visible range and
   // cursorcolumn and cursorline are updated even if w != curwin
   CtxSwitch switchwin;
-  ctx_switch(&switchwin, w, NULL, NULL, kCtxNoEvents | kCtxNoDisplay);
-  update_topline(curwin);
-  validate_cursor(curwin);
+  if (ctx_switch(&switchwin, w, NULL, NULL, kCtxNoEvents | kCtxNoDisplay)) {
+    update_topline(curwin);
+    validate_cursor(curwin);
+  }
   ctx_restore(&switchwin);
 
   redraw_later(w, UPD_VALID);
