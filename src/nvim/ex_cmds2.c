@@ -18,6 +18,7 @@
 #include "nvim/change.h"
 #include "nvim/channel.h"
 #include "nvim/context.h"
+#include "nvim/dialog.h"
 #include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"

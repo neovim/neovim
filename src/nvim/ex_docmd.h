@@ -5,7 +5,7 @@
 #include "nvim/buffer_defs.h"  // IWYU pragma: keep
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
-#include "nvim/getchar_defs.h"
+#include "nvim/input_defs.h"
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 #include "nvim/vim_defs.h"  // IWYU pragma: keep
 

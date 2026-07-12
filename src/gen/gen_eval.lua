@@ -32,7 +32,7 @@ hashpipe:write([[
 #include "nvim/ex_getln.h"
 #include "nvim/fold.h"
 #include "nvim/fuzzy.h"
-#include "nvim/getchar.h"
+#include "nvim/input.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
 #include "nvim/insexpand.h"

@@ -16,13 +16,13 @@ describe('edit', function()
     -- leaving insert mode in a new line with indent added by autoindent, should
     -- remove the indent.
     feed('i<Tab>foo<CR><Esc>')
-    -- Need to delay for sometime, otherwise the code in getchar.c will not be
+    -- Need to delay for sometime, otherwise the code in input.c will not be
     -- exercised.
     sleep(50)
     -- when a line is wrapped and the cursor is at the start of the second line,
     -- leaving insert mode, should move the cursor back to the first line.
     feed('o' .. ('x'):rep(20) .. '<Esc>')
-    -- Need to delay for sometime, otherwise the code in getchar.c will not be
+    -- Need to delay for sometime, otherwise the code in input.c will not be
     -- exercised.
     sleep(50)
     expect('\tfoo\n\n' .. ('x'):rep(20))
