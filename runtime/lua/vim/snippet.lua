@@ -11,7 +11,7 @@
 --- Heads-up: |vim.snippet.jump()| re-registers them on every jump.
 
 local G = vim.lsp._snippet_grammar
-local snippet_group = vim.api.nvim_create_augroup('nvim.snippet', {})
+local snippet_group = vim.api.nvim_create_augroup('nvim.snippet')
 local snippet_ns = vim.api.nvim_create_namespace('nvim.snippet')
 local hl_group = 'SnippetTabstop'
 local hl_group_active = 'SnippetTabstopActive'
@@ -166,7 +166,7 @@ end
 function Tabstop:get_text()
   local range = self:get_range()
   return table.concat(
-    vim.api.nvim_buf_get_text(self.bufnr, range[1], range[2], range[3], range[4], {}),
+    vim.api.nvim_buf_get_text(self.bufnr, range[1], range[2], range[3], range[4]),
     '\n'
   )
 end

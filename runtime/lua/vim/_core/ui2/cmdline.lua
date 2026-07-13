@@ -22,7 +22,7 @@ local function win_config(win, hide, height)
   if ui.cmdheight == 0 and api.nvim_win_get_config(win).hide ~= hide then
     api.nvim_win_set_config(win, { hide = hide, height = not hide and height or nil })
   elseif api.nvim_win_get_height(win) ~= height then
-    api.nvim_win_resize(win, -1, height, {})
+    api.nvim_win_resize(win, -1, height)
   end
   if vim.o.cmdheight ~= height then
     -- Avoid moving the cursor with 'splitkeep' = "screen", and altering the user
@@ -105,7 +105,7 @@ function M.cmdline_show(content, pos, firstc, prompt, indent, level, hl_id)
   set_text(content, ('%s%s%s'):format(firstc, prompt, (' '):rep(indent)), hl_id)
   ui.msg.virt.last = { {}, {}, {}, {} }
 
-  local height = math.max(ui.cmdheight, api.nvim_win_text_height(ui.wins.cmd, {}).all)
+  local height = math.max(ui.cmdheight, api.nvim_win_text_height(ui.wins.cmd).all)
   win_config(ui.wins.cmd, false, height)
   M.cmdline_pos(pos)
 end

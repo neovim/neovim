@@ -1010,7 +1010,7 @@ Object nvim_notify(String msg, Integer log_level, Dict opts, Arena *arena, Error
 
 /// @deprecated
 ///
-/// Use |nvim_win_resize()| instead, e.g., nvim_win_resize(win, -1, height, {})
+/// Use |nvim_win_resize()| instead, e.g., nvim_win_resize(win, -1, height)
 ///
 /// Sets the window height.
 ///
@@ -1033,7 +1033,7 @@ void nvim_win_set_height(Window win, Integer height, Error *err)
 
 /// @deprecated
 ///
-/// Use |nvim_win_resize()| instead, e.g., nvim_win_resize(win, width, -1, {})
+/// Use |nvim_win_resize()| instead, e.g., nvim_win_resize(win, width, -1)
 ///
 /// Sets the window width. This will only succeed if the screen is split
 /// vertically.

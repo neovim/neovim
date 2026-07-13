@@ -471,7 +471,7 @@ local function on_range_impl(
 
           if
             (metadata.conceal_lines or metadata[capture] and metadata[capture].conceal_lines)
-            and #api.nvim_buf_get_extmarks(buf, ns, { start_row, 0 }, { start_row, 0 }, {}) == 0
+            and #api.nvim_buf_get_extmarks(buf, ns, { start_row, 0 }, { start_row, 0 }) == 0
           then
             api.nvim_buf_set_extmark(buf, ns, start_row, 0, {
               end_line = end_row,

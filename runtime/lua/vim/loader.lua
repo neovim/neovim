@@ -527,7 +527,7 @@ function M._inspect(opts)
         end
       end
     end
-    vim.api.nvim_echo(chunks, true, {})
+    vim.api.nvim_echo(chunks, true)
   end
   return stats
 end

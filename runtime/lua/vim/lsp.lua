@@ -644,7 +644,7 @@ function lsp.enable(name, enable)
   else
     -- Only ever create autocmd once to reuse computation of config merging.
     lsp_enable_autocmd_id = lsp_enable_autocmd_id
-      or nvim_on('FileType', api.nvim_create_augroup('nvim.lsp.enable', {}), function(ev)
+      or nvim_on('FileType', api.nvim_create_augroup('nvim.lsp.enable'), function(ev)
         lsp_enable_callback(ev.buf)
       end)
   end

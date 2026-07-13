@@ -9,7 +9,7 @@ local current_buf = api.nvim_get_current_buf
 local get_mode = api.nvim_get_mode
 
 local ns = api.nvim_create_namespace('nvim.lsp.on_type_formatting')
-local augroup = api.nvim_create_augroup('nvim.lsp.on_type_formatting', {})
+local augroup = api.nvim_create_augroup('nvim.lsp.on_type_formatting')
 
 local M = {}
 

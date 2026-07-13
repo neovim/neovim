@@ -806,7 +806,7 @@ void nvim_set_vvar(String name, Object value, Error *err)
 ///
 /// Example:
 /// ```lua
-/// vim.api.nvim_echo({ { 'chunk1-line1\nchunk1-line2\n' }, { 'chunk2-line1' } }, true, {})
+/// vim.api.nvim_echo({ { 'chunk1-line1\nchunk1-line2\n' }, { 'chunk2-line1' } }, true)
 /// ```
 ///
 /// @param chunks List of `[text, hl_group]` pairs, where each is a `text` string highlighted by
@@ -1129,7 +1129,7 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 ///
 /// ```lua
 /// vim.api.nvim_create_user_command('TermHl', function()
-///   vim.api.nvim_open_term(0, {})
+///   vim.api.nvim_open_term(0)
 /// end, { desc = 'Highlights ANSI termcodes in curbuf' })
 /// ```
 ///
