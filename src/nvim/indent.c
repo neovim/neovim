@@ -1082,7 +1082,7 @@ void ins_try_si(int c)
   pos_T *pos;
 
   // do some very smart indenting when entering '{' or '}'
-  if (((did_si || can_si_back) && c == '{') || (can_si && c == '}' && inindent(0))) {
+  if (((Ins.did_si || Ins.can_si_back) && c == '{') || (Ins.can_si && c == '}' && inindent(0))) {
     pos_T old_pos;
     char *ptr;
     int i;
@@ -1116,7 +1116,7 @@ void ins_try_si(int c)
       // when inserting '{' after "O" reduce indent, but not
       // more than indent of previous line
       temp = true;
-      if (c == '{' && can_si_back && curwin->w_cursor.lnum > 1) {
+      if (c == '{' && Ins.can_si_back && curwin->w_cursor.lnum > 1) {
         old_pos = curwin->w_cursor;
         i = get_indent();
         while (curwin->w_cursor.lnum > 1) {
@@ -1139,14 +1139,14 @@ void ins_try_si(int c)
   }
 
   // set indent of '#' always to 0
-  if (curwin->w_cursor.col > 0 && can_si && c == '#' && inindent(0)) {
+  if (curwin->w_cursor.col > 0 && Ins.can_si && c == '#' && inindent(0)) {
     // remember current indent for next line
     old_indent = get_indent();
     set_indent(0, SIN_CHANGED);
   }
 
-  // Adjust ai_col, the char at this position can be deleted.
-  ai_col = MIN(ai_col, curwin->w_cursor.col);
+  // Adjust Ins.ai_col, the char at this position can be deleted.
+  Ins.ai_col = MIN(Ins.ai_col, curwin->w_cursor.col);
 }
 
 /// Insert an indent (for <Tab> or CTRL-T) or delete an indent (for CTRL-D).
@@ -1159,7 +1159,7 @@ void ins_try_si(int c)
 /// @param call_changed_bytes  call changed_bytes()
 void change_indent(int type, int amount, int round, bool call_changed_bytes)
 {
-  int insstart_less;                    // reduction for Insstart.col
+  int insstart_less;                    // reduction for Ins.start.col
   colnr_T orig_col = 0;                 // init for GCC
   char *orig_line = NULL;     // init for GCC
 
@@ -1280,17 +1280,17 @@ void change_indent(int type, int amount, int round, bool call_changed_bytes)
 
   // May have to adjust the start of the insert.
   if (State & MODE_INSERT) {
-    if (curwin->w_cursor.lnum == Insstart.lnum && Insstart.col != 0) {
-      if ((int)Insstart.col <= insstart_less) {
-        Insstart.col = 0;
+    if (curwin->w_cursor.lnum == Ins.start.lnum && Ins.start.col != 0) {
+      if ((int)Ins.start.col <= insstart_less) {
+        Ins.start.col = 0;
       } else {
-        Insstart.col -= insstart_less;
+        Ins.start.col -= insstart_less;
       }
     }
-    if ((int)ai_col <= insstart_less) {
-      ai_col = 0;
+    if ((int)Ins.ai_col <= insstart_less) {
+      Ins.ai_col = 0;
     } else {
-      ai_col -= insstart_less;
+      Ins.ai_col -= insstart_less;
     }
   }
 
@@ -1921,7 +1921,7 @@ void fixthisline(IndentGetter get_the_indent)
 
   change_indent(INDENT_SET, amount, false, true);
   if (linewhite(curwin->w_cursor.lnum)) {
-    did_ai = true;  // delete the indent if the line stays empty
+    Ins.did_ai = true;  // delete the indent if the line stays empty
   }
 }
 

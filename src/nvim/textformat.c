@@ -164,8 +164,8 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
     // Stop at first entered white when 'formatoptions' has 'v'
     while ((!fo_ins_blank && !has_format_option(FO_INS_VI))
            || (flags & INSCHAR_FORMAT)
-           || curwin->w_cursor.lnum != Insstart.lnum
-           || curwin->w_cursor.col >= Insstart.col) {
+           || curwin->w_cursor.lnum != Ins.start.lnum
+           || curwin->w_cursor.col >= Ins.start.col) {
       if (curwin->w_cursor.col == startcol && c != NUL) {
         cc = c;
       } else {
@@ -438,10 +438,10 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
     haveto_redraw = true;
     set_can_cindent(true);
     // moved the cursor, don't autoindent or cindent now
-    did_ai = false;
-    did_si = false;
-    can_si = false;
-    can_si_back = false;
+    Ins.did_ai = false;
+    Ins.did_si = false;
+    Ins.can_si = false;
+    Ins.can_si_back = false;
     line_breakcheck();
   }
 

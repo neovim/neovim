@@ -1311,7 +1311,7 @@ static void ungetchars(int len, bool recorded)
 /// - When no_u_sync is non-zero.
 void may_sync_undo(void)
 {
-  if ((!(State & (MODE_INSERT | MODE_CMDLINE)) || arrow_used)
+  if ((!(State & (MODE_INSERT | MODE_CMDLINE)) || Ins.arrow_used)
       && curscript < 0) {
     u_sync(false);
   }
@@ -2868,7 +2868,7 @@ static int vgetorpeek(bool advance)
               // we are expecting to truncate the trailing
               // white-space, so find the last non-white
               // character -- webb
-              if (did_ai && *skipwhite(get_cursor_line_ptr() + curwin->w_cursor.col) == NUL) {
+              if (Ins.did_ai && *skipwhite(get_cursor_line_ptr() + curwin->w_cursor.col) == NUL) {
                 curwin->w_wcol = 0;
                 ptr = get_cursor_line_ptr();
                 char *endptr = ptr + curwin->w_cursor.col;
