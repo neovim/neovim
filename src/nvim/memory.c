@@ -983,7 +983,6 @@ void free_all_mem(void)
   channel_free_all_mem();
   eval_clear();
   api_extmark_free_all_mem();
-  ctx_free_all();
 
   map_destroy(int, &buffer_handles);
   map_destroy(int, &window_handles);

@@ -1722,61 +1722,6 @@ M.funcs = {
     returns = 'integer',
     signature = 'count({comp}, {expr} [, {ic} [, {start}]])',
   },
-  ctxget = {
-    args = { 0, 1 },
-    desc = [=[
-      Returns a |Dictionary| representing the |context| at {index}
-      from the top of the |context-stack| (see |context-dict|).
-      If {index} is not given, it is assumed to be 0 (i.e.: top).
-    ]=],
-    name = 'ctxget',
-    params = { { 'index', 'integer' } },
-    returns = 'table',
-    signature = 'ctxget([{index}])',
-  },
-  ctxpop = {
-    desc = [=[
-      Pops and restores the |context| at the top of the
-      |context-stack|.
-    ]=],
-    name = 'ctxpop',
-    params = {},
-    signature = 'ctxpop()',
-  },
-  ctxpush = {
-    args = { 0, 1 },
-    desc = [=[
-      Pushes the current editor state (|context|) on the
-      |context-stack|.
-      If {types} is given and is a |List| of |String|s, it specifies
-      which |context-types| to include in the pushed context.
-      Otherwise, all context types are included.
-    ]=],
-    name = 'ctxpush',
-    params = { { 'types', 'string[]' } },
-    signature = 'ctxpush([{types}])',
-  },
-  ctxset = {
-    args = { 1, 2 },
-    desc = [=[
-      Sets the |context| at {index} from the top of the
-      |context-stack| to that represented by {context}.
-      {context} is a Dictionary with context data (|context-dict|).
-      If {index} is not given, it is assumed to be 0 (i.e.: top).
-    ]=],
-    name = 'ctxset',
-    params = { { 'context', 'table' }, { 'index', 'integer' } },
-    returns = 'integer',
-    signature = 'ctxset({context} [, {index}])',
-  },
-  ctxsize = {
-    desc = [=[
-      Returns the size of the |context-stack|.
-    ]=],
-    name = 'ctxsize',
-    params = {},
-    signature = 'ctxsize()',
-  },
   cursor = {
     args = { 1, 3 },
     base = 1,
