@@ -77,7 +77,7 @@ end
 ---@field parsing boolean
 --- Whether the first parse has completed and treesitter highlighting has
 --- replaced the legacy syntax highlighting for the buffer.
----@field private _first_parse_done boolean
+---@field private _syntax_disabled boolean
 local TSHighlighter = {
   active = {},
 }
@@ -148,7 +148,7 @@ function TSHighlighter.new(tree, opts)
   self._queries = {}
   self._highlight_states = {}
   self.parsing = false
-  self._first_parse_done = false
+  self._syntax_disabled = false
 
   -- Queries for a specific language can be overridden by a custom
   -- string query... if one is not provided it will be looked up by file.
@@ -189,12 +189,12 @@ end
 --- highlighting stays visible while treesitter performs its initial parse, instead of 
 --- leaving the buffer completely without unhighlighted until the tree is ready.
 ---@private
-function TSHighlighter:_on_first_parse()
+function TSHighlighter:_disable_syntax()
   -- Return if first parse already done or highlighter was destroyed while parsing
-  if self._first_parse_done then
+  if self._syntax_disabled then
     return
   end
-  self._first_parse_done = true
+  self._syntax_disabled = true
 
   -- Deferred: changing syntax during redraw is probably not a good idea
   vim.schedule(function()
@@ -616,19 +616,21 @@ function TSHighlighter._on_start()
       table.sort(ranges, function(a, b)
         return a[1] < b[1]
       end)
-      local trees = highlighter.tree:parse(ranges, function(_, trees)
-        if trees and highlighter.parsing then
-          highlighter.parsing = false
-          highlighter:_on_first_parse()
-          api.nvim__redraw({ buf = buf, valid = false, flush = false })
-        end
-      end)
-      -- parse() returns non-nil only when it completed synchronously
-      if trees then
-        highlighter:_on_first_parse()
-      else
-        highlighter.parsing = true
-      end
+      highlighter.parsing = highlighter.parsing
+        or nil
+          == highlighter.tree:parse(ranges, function(_, trees)
+            -- error; trees nil
+            if not trees then
+              return
+            end
+
+            -- success; parse completed
+            highlighter:_disable_syntax()
+            highlighter.parsing = false
+            if highlighter.parsing then
+              api.nvim__redraw({ buf = buf, valid = false, flush = false })
+            end
+          end)
     end
   end
 end
