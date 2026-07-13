@@ -13,6 +13,7 @@
 #include "nvim/insert_defs.h"
 #include "nvim/macros_defs.h"
 #include "nvim/menu_defs.h"
+#include "nvim/normal_defs.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/runtime_defs.h"
 #include "nvim/state_defs.h"
@@ -472,10 +473,9 @@ EXTERN int VIsual_mode INIT( = 'v');
 /// true when redoing Visual.
 EXTERN bool redo_VIsual_busy INIT( = false);
 
-// The Visual area is remembered for reselection.
-EXTERN int resel_VIsual_mode INIT( = NUL);       // 'v', 'V', or Ctrl-V
-EXTERN linenr_T resel_VIsual_line_count;        // number of lines
-EXTERN colnr_T resel_VIsual_vcol;               // nr of cols or end col
+// Remember the previous Visual area, for reselection ("gv"). Also seeds operator-redo.
+// mode == NUL: no previous Visual area.
+EXTERN VisualExtent resel_VIsual;
 
 /// When pasting text with the middle mouse button in visual mode with
 /// restart_edit set, remember where it started so we can set Ins.start.

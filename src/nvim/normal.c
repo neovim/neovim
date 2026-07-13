@@ -5039,7 +5039,7 @@ static void nv_visual(cmdarg_T *cap)
     }
     redraw_curbuf_later(UPD_INVERTED);  // update the inversion
   } else {                // start Visual mode
-    if (cap->count0 > 0 && resel_VIsual_mode != NUL) {
+    if (cap->count0 > 0 && resel_VIsual.mode != NUL) {
       // use previously selected part
       VIsual = curwin->w_cursor;
 
@@ -5055,25 +5055,25 @@ static void nv_visual(cmdarg_T *cap)
       }
       // For V and ^V, we multiply the number of lines even if there
       // was only one -- webb
-      if (resel_VIsual_mode != 'v' || resel_VIsual_line_count > 1) {
-        curwin->w_cursor.lnum += resel_VIsual_line_count * cap->count0 - 1;
+      if (resel_VIsual.mode != 'v' || resel_VIsual.line_count > 1) {
+        curwin->w_cursor.lnum += resel_VIsual.line_count * cap->count0 - 1;
         check_cursor(curwin);
       }
-      VIsual_mode = resel_VIsual_mode;
+      VIsual_mode = resel_VIsual.mode;
       if (VIsual_mode == 'v') {
-        if (resel_VIsual_line_count <= 1) {
+        if (resel_VIsual.line_count <= 1) {
           update_curswant_force();
           assert(cap->count0 >= INT_MIN && cap->count0 <= INT_MAX);
-          curwin->w_curswant += resel_VIsual_vcol * cap->count0;
+          curwin->w_curswant += resel_VIsual.vcol * cap->count0;
           if (*p_sel != 'e') {
             curwin->w_curswant--;
           }
         } else {
-          curwin->w_curswant = resel_VIsual_vcol;
+          curwin->w_curswant = resel_VIsual.vcol;
         }
         coladvance(curwin, curwin->w_curswant);
       }
-      if (resel_VIsual_vcol == MAXCOL) {
+      if (resel_VIsual.vcol == MAXCOL) {
         curwin->w_curswant = MAXCOL;
         coladvance(curwin, MAXCOL);
       } else if (VIsual_mode == Ctrl_V) {
@@ -5082,7 +5082,7 @@ static void nv_visual(cmdarg_T *cap)
         curwin->w_cursor.lnum = VIsual.lnum;
         update_curswant_force();
         assert(cap->count0 >= INT_MIN && cap->count0 <= INT_MAX);
-        curwin->w_curswant += resel_VIsual_vcol * cap->count0 - 1;
+        curwin->w_curswant += resel_VIsual.vcol * cap->count0 - 1;
         curwin->w_cursor.lnum = lnum;
         if (*p_sel == 'e') {
           curwin->w_curswant++;
