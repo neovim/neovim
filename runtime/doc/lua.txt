@@ -4596,7 +4596,7 @@ mark({buf}, {lnum}, {col})                                    *vim.pos.mark()*
     Creates a new |vim.Pos| from mark position (see |api-indexing|).
 
     Example: >lua
-        local mark_info = vim.api.nvim_get_mark('M', {})
+        local mark_info = vim.api.nvim_get_mark('M')
         local lnum, col, buf, name = unpack(mark_info)
 
         if lnum == 0 and col == 0 and buf == 0 then
@@ -4688,7 +4688,7 @@ to_mark({pos})                                             *vim.pos.to_mark()*
 
         -- Convert to mark position, you can call it in a method style.
         local lnum, col = pos:to_mark()
-        vim.api.nvim_buf_set_mark(0, 'M', lnum, col, {})
+        vim.api.nvim_buf_set_mark(0, 'M', lnum, col)
 <
 
     Parameters: ~

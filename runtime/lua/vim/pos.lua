@@ -210,7 +210,7 @@ end
 ---
 --- -- Convert to mark position, you can call it in a method style.
 --- local lnum, col = pos:to_mark()
---- vim.api.nvim_buf_set_mark(0, 'M', lnum, col, {})
+--- vim.api.nvim_buf_set_mark(0, 'M', lnum, col)
 --- ```
 ---@param pos vim.Pos
 ---@return integer lnum, integer col
@@ -223,7 +223,7 @@ end
 ---
 --- Example:
 --- ```lua
---- local mark_info = vim.api.nvim_get_mark('M', {})
+--- local mark_info = vim.api.nvim_get_mark('M')
 --- local lnum, col, buf, name = unpack(mark_info)
 ---
 --- if lnum == 0 and col == 0 and buf == 0 then

@@ -141,8 +141,15 @@ API
 
 • |nvim_win_resize()| resizes a window with a specified anchor edge.
   |nvim_win_set_height()| and |nvim_win_set_width()| are now deprecated.
-• |api-contract| allows existing functions to add an optional trailing `opts`
-  parameter, which clients may omit.
+• |api-contract| treats `opts` and any parameters thereafter, as optional
+  (equivalent to passing an empty dict). Clients may omit such optional
+  parameters.
+  • The Lua |vim.api| bridge is also a "client" and thus may omit `opts` and
+    any following parameters: >lua
+    -- Before:
+    vim.print(vim.api.nvim_get_mark('A', {}))
+    -- After:
+    vim.print(vim.api.nvim_get_mark('A'))
 • |nvim_buf_call()| and |nvim_win_call()| now preserve multiple return values.
 • |nvim_set_hl()| supports "font" key.
 • |nvim_open_win()| `zindex` controls whether the UI will use a dimmed cursor

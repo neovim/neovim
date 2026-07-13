@@ -196,6 +196,7 @@ About the `functions` map:
 
   - Container types may be decorated with type/size constraints, e.g.
     ArrayOf(Buffer) or ArrayOf(Integer, 2).
+  - Each function `parameters` item is a `[type, name, optional]` tuple.
   - Functions considered to be methods that operate on instances of Nvim
     special types (msgpack EXT) have the "method=true" flag. The receiver type
     is that of the first argument. Method names are prefixed with `nvim_` plus
@@ -244,6 +245,9 @@ As Nvim evolves the API may change in compliance with this CONTRACT:
     new return value.
   - An optional `opts` parameter may be ADDED.
   - Optional parameters may be ADDED following an `opts` parameter.
+  - The `opts` parameter and any following parameters MAY BE OMITTED by the
+    client (equivalent to passing an empty dict). Explicitly passing a nil
+    value is an error.
 - Event parameters will not be removed or reordered (after release).
 - Events may be EXTENDED: new parameters may be added.
 - Deprecated functions will not be removed until Nvim 2.0.
