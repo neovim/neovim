@@ -335,7 +335,9 @@ function vim.api.nvim_buf_del_extmark(buf, ns_id, id) end
 --- @param buf integer Buffer id, or 0 for current buffer
 --- @param mode string
 --- @param lhs string
-function vim.api.nvim_buf_del_keymap(buf, mode, lhs) end
+--- @param opts vim.api.keyset.keymap_del? Optional parameters.
+--- - lhs: When true, only match {lhs}, not {rhs}.
+function vim.api.nvim_buf_del_keymap(buf, mode, lhs, opts) end
 
 --- Deletes a named mark in the buffer. See `mark-motions`.
 ---
@@ -1073,7 +1075,9 @@ function vim.api.nvim_del_current_line() end
 --- @see vim.api.nvim_set_keymap
 --- @param mode string
 --- @param lhs string
-function vim.api.nvim_del_keymap(mode, lhs) end
+--- @param opts vim.api.keyset.keymap_del? Optional parameters.
+--- - lhs: When true, only match {lhs}, not {rhs}.
+function vim.api.nvim_del_keymap(mode, lhs, opts) end
 
 --- Deletes an uppercase/file named mark. See `mark-motions`.
 ---

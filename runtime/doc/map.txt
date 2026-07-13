@@ -86,8 +86,10 @@ modes.
 			Remove the mapping of {lhs} for the modes where the
 			map command applies.  The mapping may remain defined
 			for other modes where it applies.
-			It also works when {lhs} matches the {rhs} of a
-			mapping.  This is for when an abbreviation applied.
+			If no mapping with {lhs} exists, it also works when
+			{lhs} matches the {rhs} of a mapping (see
+			|vim.keymap.del()| to avoid that).  This is for
+			when an abbreviation applied.
 			Note: Trailing spaces are included in the {lhs}.
 			See |map-trailing-white|.
 

@@ -3048,6 +3048,23 @@ describe('vim.keymap', function()
     eq('\nNo mapping found', n.exec_capture('nmap qwer'))
   end)
 
+  it('unmap with lhs option', function()
+    eq(
+      'q',
+      exec_lua [[
+      vim.keymap.set('n', 'ge', 'q')
+      local ok, err = pcall(vim.keymap.del, 'n', 'q', { lhs = true })
+      assert(not ok and err:match('E31: No such mapping'), err)
+      return vim.fn.maparg('ge', 'n')
+    ]]
+    )
+
+    exec_lua [[
+      vim.keymap.del('n', 'ge', { lhs = true })
+    ]]
+    eq('\nNo mapping found', n.exec_capture('nmap ge'))
+  end)
+
   it('buffer-local mappings', function()
     eq(
       0,

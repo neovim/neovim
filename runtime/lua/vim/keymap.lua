@@ -119,8 +119,11 @@ end
 ---
 --- Remove a mapping from the given buffer. `0` for current.
 --- @field buf? integer
+--- When true, only match {lhs}, not {rhs}.
+--- @field lhs? boolean
 
 --- Removes a mapping, or removes each (mode, lhs) pair if `lhs` is a list.
+---
 --- Examples:
 ---
 --- ```lua
@@ -151,11 +154,18 @@ function keymap.del(modes, lhs, opts)
     assert(opts.buf == nil, "Conflict: 'buf' not allowed with 'buffer'")
     buf = opts.buffer == true and 0 or opts.buffer --[[@as integer?]]
   end
+  local api_opts = opts.lhs == nil and nil or { lhs = opts.lhs }
 
   for _, m in ipairs(modes) do
     for _, l in ipairs(lhs) do
       if buf then
-        vim.api.nvim_buf_del_keymap(buf, m, l)
+        if api_opts then
+          vim.api.nvim_buf_del_keymap(buf, m, l, api_opts)
+        else
+          vim.api.nvim_buf_del_keymap(buf, m, l)
+        end
+      elseif api_opts then
+        vim.api.nvim_del_keymap(m, l, api_opts)
       else
         vim.api.nvim_del_keymap(m, l)
       end

@@ -620,7 +620,7 @@ nvim_del_current_line()                              *nvim_del_current_line()*
         not allowed when |textlock| is active
         Since: 0.1.0
 
-nvim_del_keymap({mode}, {lhs})                             *nvim_del_keymap()*
+nvim_del_keymap({mode}, {lhs}, {opts})                     *nvim_del_keymap()*
     Unmaps a global |mapping| for the given mode.
 
     To unmap a buffer-local mapping, use |nvim_buf_del_keymap()|.
@@ -631,6 +631,8 @@ nvim_del_keymap({mode}, {lhs})                             *nvim_del_keymap()*
     Parameters: ~
       • {mode}  (`string`)
       • {lhs}   (`string`)
+      • {opts}  (`vim.api.keyset.keymap_del?`) Optional parameters.
+                • lhs: When true, only match {lhs}, not {rhs}.
 
     See also: ~
       • |nvim_set_keymap()|
@@ -2453,7 +2455,7 @@ nvim_buf_call({buf}, {fn})                                   *nvim_buf_call()*
     Return: ~
         (`any`) Value(s) returned by `fn()`.
 
-nvim_buf_del_keymap({buf}, {mode}, {lhs})              *nvim_buf_del_keymap()*
+nvim_buf_del_keymap({buf}, {mode}, {lhs}, {opts})      *nvim_buf_del_keymap()*
     Unmaps a buffer-local |mapping| for the given mode.
 
     Attributes: ~
@@ -2463,6 +2465,8 @@ nvim_buf_del_keymap({buf}, {mode}, {lhs})              *nvim_buf_del_keymap()*
       • {buf}   (`integer`) Buffer id, or 0 for current buffer
       • {mode}  (`string`)
       • {lhs}   (`string`)
+      • {opts}  (`vim.api.keyset.keymap_del?`) Optional parameters.
+                • lhs: When true, only match {lhs}, not {rhs}.
 
     See also: ~
       • |nvim_del_keymap()|

@@ -1639,18 +1639,22 @@ void nvim_set_keymap(uint64_t channel_id, String mode, String lhs, String rhs, D
                      Error *err)
   FUNC_API_SINCE(6)
 {
-  modify_keymap(channel_id, -1, false, mode, lhs, rhs, opts, err);
+  modify_keymap(channel_id, -1, false, false, mode, lhs, rhs, opts, err);
 }
 
 /// Unmaps a global |mapping| for the given mode.
 ///
 /// To unmap a buffer-local mapping, use |nvim_buf_del_keymap()|.
 ///
+/// @param  opts  Optional parameters.
+///               - lhs: When true, only match {lhs}, not {rhs}.
+///
 /// @see |nvim_set_keymap()|
-void nvim_del_keymap(uint64_t channel_id, String mode, String lhs, Error *err)
+void nvim_del_keymap(uint64_t channel_id, String mode, String lhs, Dict(keymap_del) *opts,
+                     Error *err)
   FUNC_API_SINCE(6)
 {
-  nvim_buf_del_keymap(channel_id, -1, mode, lhs, err);
+  nvim_buf_del_keymap(channel_id, -1, mode, lhs, opts, err);
 }
 
 /// Returns a 2-tuple (Array), where item 0 is the current channel id and item

@@ -386,6 +386,8 @@ These existing features changed their behavior.
 • Markdown inline highlighting now conceals the backslash in backslash escapes.
 • Markdown inline backslash escapes and hard line breaks no longer use the
   `@string.escape` capture.
+• |nvim_del_keymap()|, |nvim_buf_del_keymap()| and |vim.keymap.del()| can
+  match only {lhs}, not {rhs}, with `opts.lhs=true`.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
