@@ -517,10 +517,11 @@ vim.go.bo = vim.go.belloff
 --- This option should be set before editing a binary file.  You can also
 --- use the `-b` Vim argument.  When this option is switched on a few
 --- options will be changed (also when it already was on):
---- 	'textwidth'  will be set to 0
---- 	'wrapmargin' will be set to 0
---- 	'modeline'   will be off
---- 	'expandtab'  will be off
+--- 	'textwidth'      will be set to 0
+--- 	'wrapmargin'     will be set to 0
+--- 	'modeline'       will be off
+--- 	'expandtab'      will be off
+--- 	'expandtabalign' will be off
 --- Also, 'fileformat' and 'fileformats' options will not be used, the
 --- file is read and written like 'fileformat' was "unix" (a single <NL>
 --- separates lines).
@@ -2287,6 +2288,18 @@ vim.o.expandtab = false
 vim.o.et = vim.o.expandtab
 vim.bo.expandtab = vim.o.expandtab
 vim.bo.et = vim.bo.expandtab
+
+--- In Insert mode: Indent with tabs, but use the appropriate number of
+--- spaces to insert a non-leading <Tab>. Indent operations are not
+--- affected.  Has no effect when 'expandtab' is on.  To insert a real tab
+--- in non-indentation region when 'expandtabalign' is on, use CTRL-V<Tab>.
+--- See also `ins-expandtabalign`.
+---
+--- @type boolean
+vim.o.expandtabalign = false
+vim.o.eta = vim.o.expandtabalign
+vim.bo.expandtabalign = vim.o.expandtabalign
+vim.bo.eta = vim.bo.expandtabalign
 
 --- Enables project-local configuration. Nvim will execute any .nvim.lua,
 --- .nvimrc, or .exrc file found in the `current-directory` and all parent

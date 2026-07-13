@@ -1107,10 +1107,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option should be set before editing a binary file.  You can also
 	use the |-b| Vim argument.  When this option is switched on a few
 	options will be changed (also when it already was on):
-		'textwidth'  will be set to 0
-		'wrapmargin' will be set to 0
-		'modeline'   will be off
-		'expandtab'  will be off
+		'textwidth'      will be set to 0
+		'wrapmargin'     will be set to 0
+		'modeline'       will be off
+		'expandtab'      will be off
+		'expandtabalign' will be off
 	Also, 'fileformat' and 'fileformats' options will not be used, the
 	file is read and written like 'fileformat' was "unix" (a single <NL>
 	separates lines).
@@ -2631,6 +2632,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 	<Tab>.  Spaces are used in indents with the '>' and '<' commands and
 	when 'autoindent' is on.  To insert a real tab when 'expandtab' is
 	on, use CTRL-V<Tab>.  See also |:retab| and |ins-expandtab|.
+
+		*'expandtabalign'* *'eta'* *'noexpandtabalign'* *'noeta'*
+'expandtabalign' 'eta'	boolean	(default off)
+			local to buffer
+	In Insert mode: Indent with tabs, but use the appropriate number of
+	spaces to insert a non-leading <Tab>. Indent operations are not
+	affected.  Has no effect when 'expandtab' is on.  To insert a real tab
+	in non-indentation region when 'expandtabalign' is on, use CTRL-V<Tab>.
+	See also |ins-expandtabalign|.
 
 	*'exrc'* *'ex'* *'noexrc'* *'noex'* *project-config* *workspace-config*
 'exrc' 'ex'		boolean	(default off)

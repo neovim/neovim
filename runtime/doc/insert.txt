@@ -84,8 +84,9 @@ CTRL-U		Delete all characters that were entered after starting Insert
 <Tab> or CTRL-I Insert a tab.  If the 'expandtab' option is on, the
 		equivalent number of spaces is inserted (use CTRL-V <Tab> to
 		avoid the expansion; use CTRL-Q <Tab> if CTRL-V is mapped
-		|i_CTRL-Q|).  See also the 'smarttab' option and
-		|ins-expandtab|.
+		|i_CTRL-Q|). If the 'expandtabalign' option is on above will
+		apply only for non-leading tabs.  See also the 'smarttab'
+		option, |ins-expandtab| and |ins-expandtabalign|.
 						*i_CTRL-J* *i_<NL>*
 <NL> or CTRL-J	Begin new line.
 						*i_CTRL-M* *i_<CR>*
@@ -524,6 +525,12 @@ character is replaced with several spaces.  The result of this is that the
 number of characters in the line increases.  Backspacing will delete one
 space at a time.  The original character will be put back for only one space
 that you backspace over (the last one).
+
+							*ins-expandtabalign*
+If the 'expandtab' option is off and 'expandtabalign' option is on, spaces
+will be used to fill the amount of whitespace of the tab only in alignment
+portion of the line (after the first non-whitespace character).  Indentation
+will work as when the 'expandtab' option is off.
 
 							*ins-softtabstop*
 When the 'softtabstop' option is non-zero, a <Tab> inserts 'softtabstop'

@@ -573,6 +573,9 @@ struct file_buffer {
   int b_p_et;                   ///< 'expandtab'
   int b_p_et_nobin;             ///< b_p_et saved for binary mode
   int b_p_et_nopaste;           ///< b_p_et saved for paste mode
+  int b_p_eta;                  ///< 'expandtabalign'
+  int b_p_eta_nobin;            ///< b_p_eta saved for binary mode
+  int b_p_eta_nopaste;          ///< b_p_eta saved for paste mode
   char *b_p_fenc;               ///< 'fileencoding'
   char *b_p_ff;                 ///< 'fileformat'
   char *b_p_ft;                 ///< 'filetype'
