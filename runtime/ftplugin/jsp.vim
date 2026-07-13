@@ -25,7 +25,7 @@ else
 endif
 let s:match_words = ""
 
-runtime! ftplugin/html.vim ftplugin/html_*.vim ftplugin/html/*.vim
+runtime! ftplugin/html[.]{vim,lua} ftplugin/html_*.{vim,lua} ftplugin/html/*.{vim,lua}
 unlet b:did_ftplugin
 
 " Override our defaults if these were set by an included ftplugin.
@@ -42,7 +42,7 @@ if exists("b:match_words")
     unlet b:match_words
 endif
 
-runtime! ftplugin/java.vim ftplugin/java_*.vim ftplugin/java/*.vim
+runtime! ftplugin/java[.]{vim,lua} ftplugin/java_*.{vim,lua} ftplugin/java/*.{vim,lua}
 let b:did_ftplugin = 1
 
 " Combine the new set of values with those previously included.

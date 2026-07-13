@@ -10,7 +10,7 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
-runtime! ftplugin/m3quake.vim
+runtime! ftplugin/m3quake[.]{vim,lua}
 
 if (has("gui_win32") || has("gui_gtk")) && exists("b:m3quake_set_browsefilter")
   let b:browsefilter = "Modula-3 Makefile (m3makefile, m3overrides)\tm3makefile;m3overrides\n"

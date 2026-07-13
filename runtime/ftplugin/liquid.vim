@@ -27,9 +27,9 @@ if !exists('b:liquid_subtype')
 endif
 
 if exists('b:liquid_subtype') && b:liquid_subtype != ''
-  exe 'runtime! ftplugin/'.b:liquid_subtype.'.vim ftplugin/'.b:liquid_subtype.'_*.vim ftplugin/'.b:liquid_subtype.'/*.vim'
+  exe 'runtime! ftplugin/'.b:liquid_subtype.'[.]{vim,lua} ftplugin/'.b:liquid_subtype.'_*.{vim,lua} ftplugin/'.b:liquid_subtype.'/*.{vim,lua}'
 else
-  runtime! ftplugin/html.vim ftplugin/html_*.vim ftplugin/html/*.vim
+  runtime! ftplugin/html[.]{vim,lua} ftplugin/html_*.{vim,lua} ftplugin/html/*.{vim,lua}
 endif
 let b:did_ftplugin = 1
 

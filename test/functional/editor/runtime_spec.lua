@@ -235,6 +235,18 @@ describe('runtime:', function()
       exec('setfiletype new-ft')
       eq('ABCDEFabcdef', eval('g:seq'))
     end)
+
+    it('inherited Vimscript ftplugins load bundled Lua ftplugins', function()
+      exec('setfiletype objc')
+      eq(1, eval([[b:undo_ftplugin =~# 'path<']]))
+    end)
+
+    it('inherited Vimscript ftplugins load user Lua ftplugins', function()
+      mkdir_p(ftplugin_folder)
+      write_file(('%s/mail.lua'):format(ftplugin_folder), [[vim.b.mail_lua = 1]])
+      exec('setfiletype gitsendemail')
+      eq(1, eval([[get(b:, 'mail_lua', 0)]]))
+    end)
   end)
 
   describe('indent', function()

@@ -16,9 +16,9 @@ if !exists('b:docbk_type')
 endif
 
 if b:docbk_type == 'sgml'
-  runtime! ftplugin/sgml.vim ftplugin/sgml_*.vim ftplugin/sgml/*.vim
+  runtime! ftplugin/sgml[.]{vim,lua} ftplugin/sgml_*.{vim,lua} ftplugin/sgml/*.{vim,lua}
 else
-  runtime! ftplugin/xml.vim ftplugin/xml_*.vim ftplugin/xml/*.vim
+  runtime! ftplugin/xml[.]{vim,lua} ftplugin/xml_*.{vim,lua} ftplugin/xml/*.{vim,lua}
 endif
 
 let b:undo_ftplugin = "unlet! b:docbk_type"

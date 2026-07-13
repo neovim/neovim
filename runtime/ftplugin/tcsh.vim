@@ -20,7 +20,7 @@ else
     let s:browsefilter ..= "All Files (*)\t*\n"
 endif
 
-runtime! ftplugin/csh.vim ftplugin/csh_*.vim ftplugin/csh/*.vim
+runtime! ftplugin/csh[.]{vim,lua} ftplugin/csh_*.{vim,lua} ftplugin/csh/*.{vim,lua}
 let b:did_ftplugin = 1
 
 " Override our defaults if these were set by an included ftplugin.

@@ -14,7 +14,7 @@ if exists("b:did_ftplugin")
 endif
 
 if exists('g:rmd_include_html') && g:rmd_include_html
-  runtime! ftplugin/html.vim ftplugin/html_*.vim ftplugin/html/*.vim
+  runtime! ftplugin/html[.]{vim,lua} ftplugin/html_*.{vim,lua} ftplugin/html/*.{vim,lua}
 endif
 
 setlocal comments=fb:*,fb:-,fb:+,n:>
