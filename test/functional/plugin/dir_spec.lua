@@ -36,6 +36,10 @@ local function bufopt(name)
   return api.nvim_get_option_value(name, { buf = 0 })
 end
 
+local function has_syntax_group(name)
+  return exec_capture('syntax list ' .. name):find(name, 1, true) ~= nil
+end
+
 local function assert_directory(path)
   local ffname = path:sub(-1) == '/' and path or path .. '/'
   eq(ffname, api.nvim_buf_get_name(0))
@@ -285,18 +289,21 @@ describe('nvim.dir', function()
     edit(root)
     assert_directory(root)
     eq('delete', bufopt('bufhidden'))
+    eq(true, has_syntax_group('directoryDirectory'))
     local buf = api.nvim_get_current_buf()
 
     t.write_file(root .. '/beta.txt', 'beta', true)
     feed('R')
     poke_eventloop()
     eq('delete', bufopt('bufhidden'))
+    eq(true, has_syntax_group('directoryDirectory'))
     line_of('beta.txt')
 
     t.write_file(root .. '/gamma.txt', 'gamma', true)
     command('edit')
     eq(buf, api.nvim_get_current_buf())
     assert_directory(root)
+    eq(true, has_syntax_group('directoryDirectory'))
     line_of('subdir/')
     line_of('alpha.txt')
     line_of('gamma.txt')

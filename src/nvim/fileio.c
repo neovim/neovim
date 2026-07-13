@@ -317,6 +317,12 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
         // consider this to work like ":edit", thus reset the
         // BF_NOTEDITED flag.  Then ":write" will work to overwrite the
         // same file.
+        if (retval == OK && !curbuf->b_au_did_filetype && *curbuf->b_p_ft != NUL) {
+          apply_autocmds(EVENT_FILETYPE, curbuf->b_p_ft, curbuf->b_fname, true, curbuf);
+          if (aborting()) {
+            retval = FAIL;
+          }
+        }
         if (retval == OK) {
           curbuf->b_flags &= ~BF_NOTEDITED;
         }
