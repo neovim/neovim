@@ -5909,13 +5909,20 @@ describe('API', function()
         line5
         line6
       ]]
-      api.nvim_input(':3.5read !echo "abc"<CR>')
-      local shell = api.nvim_get_option_value('shell', {})
-      local is_cmd = shell:find('cmd') or shell:find('powershell') or shell:find('pwsh')
-      local expected1 = is_cmd
-          and '        line1\n        line2\n        line3"abc"\n\n        line4\n        line5\n        line6\n'
-        or '        line1\n        line2\n        line3abc\n\n        line4\n        line5\n        line6\n'
-      expect(expected1)
+      if is_os('win') then
+        api.nvim_input(':3.5read !pwsh -Command "Write-Host \'abc\'"<CR>')
+      else
+        api.nvim_input(':3.5read !printf "abc\\n"<CR>')
+      end
+      expect [[
+        line1
+        line2
+        line3abc
+
+        line4
+        line5
+        line6
+      ]]
       clear()
       insert [[
         line1
@@ -5925,11 +5932,19 @@ describe('API', function()
         line5
         line6
       ]]
-      api.nvim_input([[:3.5read !echo -n "abc"<CR>]])
-      local expected2 = is_cmd
-          and '        line1\n        line2\n        line3-n "abc"\n\n        line4\n        line5\n        line6\n'
-        or '        line1\n        line2\n        line3abc\n        line4\n        line5\n        line6\n'
-      expect(expected2)
+      if is_os('win') then
+        api.nvim_input([[:3.5read !pwsh -Command "Write-Host -NoNewline 'abc'"<CR>]])
+      else
+        api.nvim_input([[:3.5read !printf "abc"<CR>]])
+      end
+      expect [[
+        line1
+        line2
+        line3abc
+        line4
+        line5
+        line6
+      ]]
       clear()
       insert [[
         line1
@@ -5939,11 +5954,19 @@ describe('API', function()
         line5
         line6
       ]]
-      api.nvim_input([[:3.0read !echo -n "abc"<CR>]])
-      local expected3 = is_cmd
-          and '        line1\n        line2\n        -n "abc"\n\n        line3\n        line4\n        line5\n        line6\n'
-        or '        line1\n        line2\n        abcline3\n        line4\n        line5\n        line6\n'
-      expect(expected3)
+      if is_os('win') then
+        api.nvim_input([[:3.0read !pwsh -Command "Write-Host -NoNewline 'abc'"<CR>]])
+      else
+        api.nvim_input([[:3.0read !printf "abc"<CR>]])
+      end
+      expect [[
+        line1
+        line2
+        abcline3
+        line4
+        line5
+        line6
+      ]]
       clear()
       insert [[
         line1
@@ -5953,11 +5976,22 @@ describe('API', function()
         line5
         line6
       ]]
-      api.nvim_input([[:3.2read !echo -en 'abc\nabc'<CR>]])
-      local expected4 = is_cmd
-          and "        line1\n        line2\n        li-en 'abc\\nabc'\n        ne3\n        line4\n        line5\n        line6\n"
-        or '        line1\n        line2\n        liabc\n        abcne3\n        line4\n        line5\n        line6\n'
-      expect(expected4)
+      if is_os('win') then
+        api.nvim_input(
+          [[:3.2read !pwsh -Command "Write-Host 'abc'; Write-Host -NoNewline 'abc'"<CR>]]
+        )
+      else
+        api.nvim_input([[:3.2read !printf 'abc\nabc'<CR>]])
+      end
+      expect [[
+        line1
+        line2
+        liabc
+        abcne3
+        line4
+        line5
+        line6
+      ]]
     end)
 
     it('works with charwise range before |read| command reading from file', function()
