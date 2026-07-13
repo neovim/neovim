@@ -3737,6 +3737,22 @@ describe('API', function()
       expected[1].height = 99
       eq(expected, api.nvim_list_uis())
     end)
+
+    it('tracks detected background metadata', function()
+      local screen = Screen.new(20, 4)
+      local chan = api.nvim_list_uis()[1].chan
+
+      api.nvim__ui_set_detected_background(chan, 'dark')
+      eq('dark', api.nvim__ui_get_detected_background(chan))
+
+      api.nvim__ui_set_detected_background(chan, 'light')
+      eq('light', api.nvim__ui_get_detected_background(chan))
+
+      api.nvim__ui_set_detected_background(chan, '')
+      eq('', api.nvim__ui_get_detected_background(chan))
+
+      screen:detach()
+    end)
   end)
 
   describe('nvim_create_namespace', function()

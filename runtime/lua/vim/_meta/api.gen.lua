@@ -188,6 +188,18 @@ function vim.api.nvim__stats() end
 
 --- WARNING: This feature is experimental/unstable.
 ---
+--- @param chan integer
+--- @return string
+function vim.api.nvim__ui_get_detected_background(chan) end
+
+--- WARNING: This feature is experimental/unstable.
+---
+--- @param chan integer
+--- @param background string
+function vim.api.nvim__ui_set_detected_background(chan, background) end
+
+--- WARNING: This feature is experimental/unstable.
+---
 --- @param str string
 --- @return any
 function vim.api.nvim__unpack(str) end

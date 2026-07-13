@@ -4623,6 +4623,13 @@ describe('TUI bg color', function()
     retry(nil, nil, function()
       eq({ true, true }, { session:request('nvim_exec_lua', 'return _G.osc11 > 0', {}) })
     end)
+    eq({ true, 'light' }, {
+      session:request(
+        'nvim_exec_lua',
+        'local ui = vim.api.nvim_list_uis()[1]; return vim.api.nvim__ui_get_detected_background(ui.chan)',
+        {}
+      ),
+    })
     eq({ true, 'dark' }, { session:request('nvim_eval', '&background') })
   end)
 
@@ -4635,11 +4642,25 @@ describe('TUI bg color', function()
     screen:expect({ any = '%[No Name%]' })
     retry(nil, nil, function()
       eq({ true, 'light' }, { session:request('nvim_eval', '&background') })
+      eq({ true, 'light' }, {
+        session:request(
+          'nvim_exec_lua',
+          'local ui = vim.api.nvim_list_uis()[1]; return vim.api.nvim__ui_get_detected_background(ui.chan)',
+          {}
+        ),
+      })
     end)
     command('highlight clear Normal')
     command('set background=dark') -- flip the outer terminal at runtime
     retry(nil, nil, function()
       eq({ true, 'dark' }, { session:request('nvim_eval', '&background') })
+      eq({ true, 'dark' }, {
+        session:request(
+          'nvim_exec_lua',
+          'local ui = vim.api.nvim_list_uis()[1]; return vim.api.nvim__ui_get_detected_background(ui.chan)',
+          {}
+        ),
+      })
     end)
   end)
 end)
