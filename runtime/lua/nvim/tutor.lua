@@ -87,7 +87,7 @@ function M.apply_marks()
         invalidate = true,
       })
 
-      local mark_id = vim.api.nvim_buf_set_extmark(0, tutor_mark_ns, lnum - 1, 0, {})
+      local mark_id = vim.api.nvim_buf_set_extmark(0, tutor_mark_ns, lnum - 1, 0)
 
       -- Cannot edit field of a Vimscript dictionary from Lua directly, see `:h lua-vim-variables`
       ---@type nvim.TutorExtmarks

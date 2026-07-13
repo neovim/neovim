@@ -60,7 +60,7 @@ local function update_ranges(bufnr, client_state)
   end
 
   local r = assert(ranges[client_state.range_index])
-  local replacement = api.nvim_buf_get_text(bufnr, r[2], r[3], r[4].end_row, r[4].end_col, {})
+  local replacement = api.nvim_buf_get_text(bufnr, r[2], r[3], r[4].end_row, r[4].end_col)
 
   if not string.match(table.concat(replacement, '\n'), client_state.word_pattern) then
     clear_ranges(bufnr, client_state)

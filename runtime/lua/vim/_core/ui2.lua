@@ -52,7 +52,7 @@ local api = vim.api
 local nvim_on = require('vim._core.util').nvim_on
 local M = {
   ns = api.nvim_create_namespace('nvim.ui2'),
-  augroup = api.nvim_create_augroup('nvim.ui2', {}),
+  augroup = api.nvim_create_augroup('nvim.ui2'),
   cmdheight = vim.o.cmdheight, -- 'cmdheight' option value set by user.
   redrawing = false, -- True when redrawing to display UI event.
   wins = { cmd = -1, dialog = -1, msg = -1, pager = -1 },
@@ -147,7 +147,7 @@ function M.check_targets()
 
       if type == 'pager' then
         -- Close pager with `q`, same as `checkhealth`
-        api.nvim_buf_set_keymap(M.bufs.pager, 'n', 'q', '<Cmd>wincmd c<CR>', {})
+        api.nvim_buf_set_keymap(M.bufs.pager, 'n', 'q', '<Cmd>wincmd c<CR>')
       elseif M.msg[type] then
         M.msg[type].prev_msg = '' -- Will no longer be visible.
       end

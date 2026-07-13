@@ -66,7 +66,7 @@ end
 function M.wrapped_edit(file, mods)
   assert(mods)
   if type(mods) == 'string' then
-    mods = vim.api.nvim_parse_cmd(mods .. ' edit', {}).mods --[[@as vim.api.keyset.cmd_mods]]
+    mods = vim.api.nvim_parse_cmd(mods .. ' edit').mods --[[@as vim.api.keyset.cmd_mods]]
   end
   --- @cast mods vim.api.keyset.cmd_mods
   if (mods.tab or 0) > 0 or (mods.split or '') ~= '' or mods.horizontal or mods.vertical then

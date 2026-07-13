@@ -327,7 +327,7 @@ function M.apply_text_edits(text_edits, bufnr, position_encoding, change_annotat
       -- make sure we don't go out of bounds
       pos[1] = math.min(pos[1], max)
       pos[2] = math.min(pos[2], #get_line(bufnr, pos[1] - 1))
-      api.nvim_buf_set_mark(bufnr or 0, mark, pos[1], pos[2], {})
+      api.nvim_buf_set_mark(bufnr or 0, mark, pos[1], pos[2])
     end
   end
 
@@ -473,7 +473,7 @@ function M.rename(old_fname, new_fname, opts)
         return
       end
       -- no need to preserve if such a buffer is empty
-      api.nvim_buf_delete(existing_buf, {})
+      api.nvim_buf_delete(existing_buf)
     end
 
     buf_rename[b] = { from = old_bname, to = new_bname }
@@ -1625,7 +1625,7 @@ function M.open_floating_preview(contents, syntax, opts)
       local win_height = api.nvim_win_get_height(floating_winnr)
       local text_height = api.nvim_win_text_height(floating_winnr, { max_height = win_height }).all
       if text_height < win_height then
-        api.nvim_win_resize(floating_winnr, -1, text_height, {})
+        api.nvim_win_resize(floating_winnr, -1, text_height)
       end
     end
   end

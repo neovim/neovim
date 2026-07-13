@@ -1515,7 +1515,7 @@ local get_context_state = function(context)
     for name, _ in
       pairs(context[scope] or {} --[[@as table<string,any>]])
     do
-      local sc = scope == 'o' and scope_map[vim.api.nvim_get_option_info2(name, {}).scope] or scope
+      local sc = scope == 'o' and scope_map[vim.api.nvim_get_option_info2(name).scope] or scope
 
       -- Do not override already set state and fall back to `vim.NIL` for
       -- state `nil` values (which still needs restoring later)

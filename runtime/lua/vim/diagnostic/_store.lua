@@ -9,7 +9,7 @@ local M = {}
 -- bufnr -> ns -> Diagnostic[]
 local diagnostic_cache = {} --- @type table<integer,table<integer,vim.Diagnostic[]?>>
 
-local group = api.nvim_create_augroup('nvim.diagnostic.buf_wipeout', {})
+local group = api.nvim_create_augroup('nvim.diagnostic.buf_wipeout')
 setmetatable(diagnostic_cache, {
   --- @param t table<integer,vim.Diagnostic[]>
   --- @param bufnr integer

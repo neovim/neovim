@@ -129,7 +129,7 @@ end
 --- @param name string
 --- @return vim._option.Info
 local function get_options_info(name)
-  local info = api.nvim_get_option_info2(name, {})
+  local info = api.nvim_get_option_info2(name)
   --- @cast info vim._option.Info
   info.metatype = get_option_metatype(name, info)
   return info
@@ -247,10 +247,10 @@ end
 --- ```
 vim.o = setmetatable({}, {
   __index = function(_, k)
-    return api.nvim_get_option_value(k, {})
+    return api.nvim_get_option_value(k)
   end,
   __newindex = function(_, k, v)
-    api.nvim_set_option_value(k, v, {})
+    api.nvim_set_option_value(k, v)
   end,
 })
 

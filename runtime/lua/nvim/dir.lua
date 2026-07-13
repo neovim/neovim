@@ -121,7 +121,7 @@ end
 ---@param path string
 local function edit(path)
   navigating = true
-  api.nvim_cmd({ cmd = 'edit', args = { path }, magic = { file = false, bar = false } }, {})
+  api.nvim_cmd({ cmd = 'edit', args = { path }, magic = { file = false, bar = false } })
   navigating = false
 end
 

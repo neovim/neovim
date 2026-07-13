@@ -1145,7 +1145,7 @@ function M.status(buf)
   return result_str
 end
 
-nvim_on('DiagnosticChanged', api.nvim_create_augroup('nvim.diagnostic.status', {}), {
+nvim_on('DiagnosticChanged', api.nvim_create_augroup('nvim.diagnostic.status'), {
   desc = 'diagnostics component for the statusline',
 }, function(ev)
   if vim.fn.win_gettype(vim.fn.bufwinid(ev.buf)) == '' then

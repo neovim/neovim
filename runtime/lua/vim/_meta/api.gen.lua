@@ -417,8 +417,8 @@ function vim.api.nvim_buf_get_extmark_by_id(buf, ns_id, id, opts) end
 --- respectively, thus the following are equivalent:
 ---
 --- ```lua
---- vim.api.nvim_buf_get_extmarks(0, my_ns, 0, -1, {})
---- vim.api.nvim_buf_get_extmarks(0, my_ns, {0,0}, {-1,-1}, {})
+--- vim.api.nvim_buf_get_extmarks(0, my_ns, 0, -1)
+--- vim.api.nvim_buf_get_extmarks(0, my_ns, {0,0}, {-1,-1})
 --- ```
 ---
 --- If `end` is less than `start`, marks are returned in reverse order.
@@ -442,13 +442,13 @@ function vim.api.nvim_buf_get_extmark_by_id(buf, ns_id, id, opts) end
 --- local pos = api.nvim_win_get_cursor(0)
 --- local ns  = api.nvim_create_namespace('my-plugin')
 --- -- Create new extmark at line 1, column 1.
---- local m1  = api.nvim_buf_set_extmark(0, ns, 0, 0, {})
+--- local m1  = api.nvim_buf_set_extmark(0, ns, 0, 0)
 --- -- Create new extmark at line 3, column 1.
---- local m2  = api.nvim_buf_set_extmark(0, ns, 2, 0, {})
+--- local m2  = api.nvim_buf_set_extmark(0, ns, 2, 0)
 --- -- Get extmarks only from line 3.
---- local ms  = api.nvim_buf_get_extmarks(0, ns, {2,0}, {2,0}, {})
+--- local ms  = api.nvim_buf_get_extmarks(0, ns, {2,0}, {2,0})
 --- -- Get all marks in this buffer + namespace.
---- local all = api.nvim_buf_get_extmarks(0, ns, 0, -1, {})
+--- local all = api.nvim_buf_get_extmarks(0, ns, 0, -1)
 --- vim.print(ms)
 --- ```
 ---
@@ -1106,7 +1106,7 @@ function vim.api.nvim_del_var(name) end
 ---
 --- Example:
 --- ```lua
---- vim.api.nvim_echo({ { 'chunk1-line1\nchunk1-line2\n' }, { 'chunk2-line1' } }, true, {})
+--- vim.api.nvim_echo({ { 'chunk1-line1\nchunk1-line2\n' }, { 'chunk2-line1' } }, true)
 --- ```
 ---
 --- @param chunks [string, integer|string?][] List of `[text, hl_group]` pairs, where each is a `text` string highlighted by
@@ -1707,7 +1707,7 @@ function vim.api.nvim_open_tabpage(buf, enter, config) end
 ---
 --- ```lua
 --- vim.api.nvim_create_user_command('TermHl', function()
----   vim.api.nvim_open_term(0, {})
+---   vim.api.nvim_open_term(0)
 --- end, { desc = 'Highlights ANSI termcodes in curbuf' })
 --- ```
 ---
