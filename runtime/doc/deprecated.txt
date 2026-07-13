@@ -44,6 +44,10 @@ LSP
 
 • vim.lsp.util.character_offset()	Use to |vim.str_utfindex()| instead
 
+VIMSCRIPT
+• ctxget(), ctxpop(), ctxpush(), ctxset(), ctxsize(). Use
+  |nvim_get_context()| and |nvim_load_context()| instead.
+
 ------------------------------------------------------------------------------
 DEPRECATED IN 0.12					*deprecated-0.12*
 

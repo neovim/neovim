@@ -132,6 +132,11 @@ TREESITTER
 
 • todo
 
+VIMSCRIPT
+
+• Removed: ctxget(), ctxpop(), ctxpush(), ctxset(), ctxsize(). Use
+  |nvim_get_context()| and |nvim_load_context()| instead.
+
 ==============================================================================
 NEW FEATURES                                                    *news-features*
 
@@ -392,6 +397,9 @@ REMOVED FEATURES                                                 *news-removed*
 
 These deprecated features were removed.
 
+• Vimscript functions ctxget(), ctxpop(), ctxpush(), ctxset(), ctxsize()
+  and the "context stack". Use |nvim_get_context()| and |nvim_load_context()|
+  with a script-owned list instead.
 • |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|,
   |vim.lsp.buf.type_definition()|, and |vim.lsp.buf.implementation()|
   no longer accept the `reuse_win` option.

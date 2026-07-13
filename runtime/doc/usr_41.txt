@@ -1101,13 +1101,6 @@ Registers:					*register-functions*
 	reg_executing()		return the name of the register being executed
 	reg_recording()		return the name of the register being recorded
 
-Context Stack:					*ctx-functions*
-	ctxget()		return context at given index from top
-	ctxpop()		pop and restore top context
-	ctxpush()		push given context
-	ctxset()		set context at given index from top
-	ctxsize()		return context stack size
-
 Various:					*various-functions*
 	mode()			get current editing mode
 	visualmode()		last visual mode used
