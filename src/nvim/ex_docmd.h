@@ -30,6 +30,12 @@ enum {
 
 enum { DIALOG_MSG_SIZE = 1000, };  ///< buffer size for dialog messages
 
+/// parse_cmdline() mode.
+typedef enum {
+  kCmdlineParseFull = 0,    ///< Parse modifiers, nextcmd, register and count.
+  kCmdlineParseStructured,  ///< Skip them; caller provides structured fields.
+} CmdlineParseMode;
+
 /// Structure used to save the current state.  Used when executing Normal mode
 /// commands while in any other mode.
 typedef struct {

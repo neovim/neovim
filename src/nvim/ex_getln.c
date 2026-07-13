@@ -2689,7 +2689,7 @@ static bool cmdpreview_may_show(CommandLineState *s)
   char *cmdline = xstrdup(ccline.cmdbuff);
   const char *errormsg = NULL;
   emsg_off++;  // Block errors when parsing the command line, and don't update v:errmsg
-  if (!parse_cmdline(&cmdline, &ea, &cmod, &errormsg)) {
+  if (!parse_cmdline(&cmdline, &ea, &cmod, &errormsg, kCmdlineParseFull)) {
     emsg_off--;
     goto end;
   }

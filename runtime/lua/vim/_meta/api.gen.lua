@@ -883,6 +883,10 @@ function vim.api.nvim_clear_autocmds(opts) end
 --- @param cmd vim.api.keyset.cmd Command to execute, a Dict with the same structure as the return value of
 --- `nvim_parse_cmd()` (except "addr", "nargs" and "nextcmd" are ignored).
 --- All keys except "cmd" are optional.
+--- Range elements may be integers or Ex address strings such as
+--- ".", "$", "%", "'m" and "/pat/". Each string must be a single
+--- address; patterns are resolved when the command is parsed
+--- and do not become the last search pattern.
 --- @param opts vim.api.keyset.cmd_opts Optional parameters.
 --- - output: (boolean, default false) Whether to return command output.
 --- @return string # Command output (non-error, non-shell |:!|) if `output` is true, else empty string.
