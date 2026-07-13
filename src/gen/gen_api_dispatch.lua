@@ -59,7 +59,7 @@ end
 --- @field can_fail? true
 --- @field has_lua_imp? true
 --- @field receives_arena? true
---- @field has_opts? true
+--- @field opts_idx? integer Index of the `opts` param: starts optional params. #31903
 --- @field impl_name? string
 --- @field remote? boolean
 --- @field lua? boolean
@@ -117,12 +117,22 @@ local function add_function(fn)
       fn.receives_arena = true
       fn.parameters[#fn.parameters] = nil
     end
-    if
-      #fn.parameters ~= 0
-      and fn.parameters[#fn.parameters][2] == 'opts'
-      and real_type(fn.parameters[#fn.parameters][1]):match('^KeyDict_')
-    then
-      fn.has_opts = true
+    -- `opts` (a KeyDict) and every parameter following it are optional: clients may omit them.
+    for k = 1, #fn.parameters do
+      if fn.parameters[k][2] == 'opts' and real_type(fn.parameters[k][1]):match('^KeyDict_') then
+        fn.opts_idx = k
+        break
+      end
+    end
+    -- Omitted optional param is zero-initialized, which assumes Dict/Array.
+    if fn.opts_idx then
+      for k = fn.opts_idx + 1, #fn.parameters do
+        local rt = real_type(fn.parameters[k][1])
+        if not (rt == 'Dict' or rt == 'Dictionary' or rt == 'Array' or rt:match('^KeyDict_')) then
+          local msg = '%s: optional param "%s" has type "%s" but (currently) we assume Dict/Array'
+          error(msg:format(fn.name, fn.parameters[k][2], fn.parameters[k][1]))
+        end
+      end
     end
   end
 end
@@ -280,7 +290,7 @@ end
 --- don't expose internal attributes like "impl_name" in public metadata
 --- @class gen_api_dispatch.Function.Exported
 --- @field name string
---- @field parameters [string, string][]
+--- @field parameters [string, string, boolean][] each param is `[ type, name, optional ]`
 --- @field return_type string
 --- @field method boolean
 --- @field since integer
@@ -301,7 +311,9 @@ for _, f in ipairs(functions) do
       return_type = real_type(f.return_type, true),
     }
     for i, param in ipairs(f.parameters) do
-      f_exported.parameters[i] = { real_type(param[1], true), param[2] }
+      -- `opts` and every param after it are optional.
+      local optional = f.opts_idx ~= nil and i >= f.opts_idx
+      f_exported.parameters[i] = { real_type(param[1], true), param[2], optional }
     end
     exported_functions[#exported_functions + 1] = f_exported
   end
@@ -439,7 +451,8 @@ for i = 1, #functions do
       local param = fn.parameters[j]
       local rt = real_type(param[1])
       local converted = 'arg_' .. j
-      if fn.has_opts and j == #fn.parameters then
+      -- Optional params (`opts` + rest) are currently assumed to be Dict/Array types (enforced in add_function).
+      if fn.opts_idx and j >= fn.opts_idx then
         output:write('\n  ' .. rt .. ' ' .. converted .. ' = { 0 };')
       else
         output:write('\n  ' .. rt .. ' ' .. converted .. ';')
@@ -447,42 +460,23 @@ for i = 1, #functions do
     end
     output:write('\n')
     if not fn.receives_array_args then
-      if fn.has_opts then
-        local minargs = #fn.parameters - 1
-        if minargs > 0 then
-          output:write(
-            '\n  if (args.size < ' .. minargs .. ' || args.size > ' .. #fn.parameters .. ') {'
-          )
-          output:write(
-            '\n    api_set_error(error, kErrorTypeException, \
-        "Wrong number of arguments: expecting '
-              .. minargs
-              .. ' to '
-              .. #fn.parameters
-              .. ' but got %zu", args.size);'
-          )
-        else
-          output:write('\n  if (args.size > ' .. #fn.parameters .. ') {')
-          output:write(
-            '\n    api_set_error(error, kErrorTypeException, \
-        "Wrong number of arguments: expecting at most '
-              .. #fn.parameters
-              .. ' but got %zu", args.size);'
-          )
-        end
-        output:write('\n    goto cleanup;')
-        output:write('\n  }\n')
+      -- `opts` and following params are optional: accept minargs..maxargs; else require maxargs.
+      local maxargs = #fn.parameters
+      local minargs = fn.opts_idx and fn.opts_idx - 1 or maxargs
+      local cond, expect
+      if minargs == maxargs then
+        cond, expect = 'args.size != ' .. maxargs, maxargs
+      elseif minargs > 0 then
+        cond, expect =
+          'args.size < ' .. minargs .. ' || args.size > ' .. maxargs, minargs .. ' to ' .. maxargs
       else
-        output:write('\n  if (args.size != ' .. #fn.parameters .. ') {')
-        output:write(
-          '\n    api_set_error(error, kErrorTypeException, \
-        "Wrong number of arguments: expecting '
-            .. #fn.parameters
-            .. ' but got %zu", args.size);'
-        )
-        output:write('\n    goto cleanup;')
-        output:write('\n  }\n')
+        cond, expect = 'args.size > ' .. maxargs, 'at most ' .. maxargs
       end
+      output:write('\n  if (' .. cond .. ') {')
+      output:write('\n    api_set_error(error, kErrorTypeException, \
+        "Wrong number of arguments: expecting ' .. expect .. ' but got %zu", args.size);')
+      output:write('\n    goto cleanup;')
+      output:write('\n  }\n')
     end
 
     -- Validation/conversion for each argument
@@ -491,14 +485,15 @@ for i = 1, #functions do
       param = fn.parameters[j]
       converted = 'arg_' .. j
       local rt = real_type(param[1])
+      -- `opts` + rest are optional: ensure omitted arg keeps its zero-initialized default.
+      local optional = fn.opts_idx and j >= fn.opts_idx
+      if optional then
+        output:write('\n  if (args.size >= ' .. j .. ') {')
+      end
       if rt == 'Object' then
         output:write('\n  ' .. converted .. ' = args.items[' .. (j - 1) .. '];\n')
       elseif rt:match('^KeyDict_') then
         converted = '&' .. converted
-        local optional = fn.has_opts and j == #fn.parameters
-        if optional then
-          output:write('\n  if (args.size == ' .. j .. ') {')
-        end
         output:write('\n  if (args.items[' .. (j - 1) .. '].type == kObjectTypeDict) {') --luacheck: ignore 631
         output:write('\n    memset(' .. converted .. ', 0, sizeof(*' .. converted .. '));') -- TODO: neeeee
         output:write(
@@ -534,9 +529,6 @@ for i = 1, #functions do
         )
         output:write('\n    goto cleanup;')
         output:write('\n  }\n')
-        if optional then
-          output:write('\n  }\n')
-        end
       else
         if rt:match('^Buffer$') or rt:match('^Window$') or rt:match('^Tabpage$') then
           -- Buffer, Window, and Tabpage have a specific type, but are stored in integer
@@ -612,6 +604,9 @@ for i = 1, #functions do
             .. '");'
         )
         output:write('\n    goto cleanup;')
+        output:write('\n  }\n')
+      end
+      if optional then
         output:write('\n  }\n')
       end
       args[#args + 1] = converted
@@ -779,45 +774,30 @@ local function process_function(fn)
   ]],
     lua_c_function_name
   )
-  if fn.has_opts then
-    local minargs = #fn.parameters - 1
-    if minargs > 0 then
-      write_shifted_output(
-        [[
-    if (lua_gettop(lstate) < %i || lua_gettop(lstate) > %i) {
-      api_set_error(&err, kErrorTypeValidation, "Expected %i to %i arguments");
-      goto exit_0;
-    }
-  ]],
-        minargs,
-        #fn.parameters,
-        minargs,
-        #fn.parameters
-      )
+  do
+    -- `opts` + rest are optional: accept minargs..maxargs; else require maxargs.
+    local maxargs = #fn.parameters
+    local minargs = fn.opts_idx and fn.opts_idx - 1 or maxargs
+    local cond, msg
+    if minargs == maxargs then
+      cond = ('lua_gettop(lstate) != %d'):format(maxargs)
+      msg = ('Expected %d argument%s'):format(maxargs, maxargs == 1 and '' or 's')
+    elseif minargs > 0 then
+      cond = ('lua_gettop(lstate) < %d || lua_gettop(lstate) > %d'):format(minargs, maxargs)
+      msg = ('Expected %d to %d arguments'):format(minargs, maxargs)
     else
-      write_shifted_output(
-        [[
-    if (lua_gettop(lstate) > %i) {
-      api_set_error(&err, kErrorTypeValidation, "Expected at most %i argument%s");
-      goto exit_0;
-    }
-  ]],
-        #fn.parameters,
-        #fn.parameters,
-        (#fn.parameters == 1) and '' or 's'
-      )
+      cond = ('lua_gettop(lstate) > %d'):format(maxargs)
+      msg = ('Expected at most %d argument%s'):format(maxargs, maxargs == 1 and '' or 's')
     end
-  else
     write_shifted_output(
       [[
-    if (lua_gettop(lstate) != %i) {
-      api_set_error(&err, kErrorTypeValidation, "Expected %i argument%s");
+    if (%s) {
+      api_set_error(&err, kErrorTypeValidation, "%s");
       goto exit_0;
     }
   ]],
-      #fn.parameters,
-      #fn.parameters,
-      (#fn.parameters == 1) and '' or 's'
+      cond,
+      msg
     )
   end
   lua_c_functions[#lua_c_functions + 1] = {
@@ -864,7 +844,9 @@ local function process_function(fn)
     end
     local errshift = 0
     local seterr = ''
-    local optional = fn.has_opts and j == #fn.parameters
+    -- `opts` + rest are optional. Params pop in reverse, so the stack top holds arg `j` exactly
+    -- when `lua_gettop(lstate) == j`; else it was omitted.
+    local optional = fn.opts_idx and j >= fn.opts_idx
     if param_type:match('^KeyDict_') then
       if optional then
         write_shifted_output(
@@ -875,7 +857,7 @@ local function process_function(fn)
     ]],
           param_type,
           cparam,
-          #fn.parameters,
+          j,
           cparam,
           param_type
         )
@@ -898,6 +880,21 @@ local function process_function(fn)
         .. ', '
         .. param_type:sub(9)
         .. '_table);'
+    elseif optional then
+      -- Conditionally pop; keep a zero-init `{ 0 }` default when the arg was omitted.
+      write_shifted_output(
+        [[
+    %s %s = { 0 };
+    if (lua_gettop(lstate) == %d) {
+      %s = nlua_pop_%s(lstate, %s&arena, &err);]],
+        param[1],
+        cparam,
+        j,
+        cparam,
+        param_type,
+        extra
+      )
+      seterr = '\n      err_param = "' .. param[2] .. '";'
     else
       write_shifted_output(
         [[
