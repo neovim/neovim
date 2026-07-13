@@ -7431,7 +7431,7 @@ static void ex_startinsert(exarg_T *eap)
 static void ex_stopinsert(exarg_T *eap)
 {
   restart_edit = 0;
-  stop_insert_mode = true;
+  Ins.stop_insert_mode = true;
   clearmode();
 }
 

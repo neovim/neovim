@@ -5786,7 +5786,7 @@ static void nv_dot(cmdarg_T *cap)
   // If "restart_edit" is true, the last but one command is repeated
   // instead of the last command (inserting text). This is used for
   // CTRL-O <.> in insert mode.
-  if (start_redo(cap->count0, restart_edit != 0 && !arrow_used) == false) {
+  if (start_redo(cap->count0, restart_edit != 0 && !Ins.arrow_used) == false) {
     clearopbeep(cap->oap);
   }
 }

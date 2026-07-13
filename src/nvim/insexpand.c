@@ -2673,7 +2673,7 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
     }
 
     // only format when something was inserted
-    if (!arrow_used && !ins_need_undo_get() && c != Ctrl_E) {
+    if (!Ins.arrow_used && !ins_need_undo_get() && c != Ctrl_E) {
       insertchar(NUL, 0, -1);
     }
 
@@ -6064,16 +6064,16 @@ static void ins_compl_continue_search(char *line)
 /// start insert mode completion
 static int ins_compl_start(void)
 {
-  const bool save_did_ai = did_ai;
+  const bool save_did_ai = Ins.did_ai;
 
   // First time we hit ^N or ^P (in a row, I mean)
 
-  did_ai = false;
-  did_si = false;
-  can_si = false;
-  can_si_back = false;
+  Ins.did_ai = false;
+  Ins.did_si = false;
+  Ins.can_si = false;
+  Ins.can_si_back = false;
   if (stop_arrow() == FAIL) {
-    did_ai = save_did_ai;
+    Ins.did_ai = save_did_ai;
     return FAIL;
   }
 
@@ -6109,8 +6109,8 @@ static int ins_compl_start(void)
   if (compl_get_info(line, startcol, curs_col, &line_invalid) == FAIL) {
     if (ctrl_x_mode_function() || ctrl_x_mode_omni()
         || thesaurus_func_complete(ctrl_x_mode)) {
-      // restore did_ai, so that adding comment leader works
-      did_ai = save_did_ai;
+      // restore Ins.did_ai, so that adding comment leader works
+      Ins.did_ai = save_did_ai;
     }
     return FAIL;
   }
@@ -6168,7 +6168,7 @@ static int ins_compl_start(void)
     API_CLEAR_STRING(compl_pattern);
     API_CLEAR_STRING(compl_orig_text);
     kv_destroy(compl_orig_extmarks);
-    did_ai = save_did_ai;
+    Ins.did_ai = save_did_ai;
     return FAIL;
   }
 
@@ -6183,7 +6183,7 @@ static int ins_compl_start(void)
     ui_flush();
   }
 
-  did_ai = save_did_ai;
+  Ins.did_ai = save_did_ai;
   return OK;
 }
 

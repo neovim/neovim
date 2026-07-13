@@ -472,7 +472,7 @@ struct file_buffer {
   garray_T b_ucmds;
   // start and end of an operator, also used for '[ and ']
   pos_T b_op_start;
-  pos_T b_op_start_orig;  // used for Insstart_orig
+  pos_T b_op_start_orig;  // used for Ins.start_orig
   pos_T b_op_end;
 
   bool b_marks_read;            // Have we read ShaDa marks yet?

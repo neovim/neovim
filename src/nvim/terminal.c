@@ -905,7 +905,7 @@ bool terminal_enter(void)
   TerminalState s[1] = { 0 };
   s->term = buf->terminal;
   s->cursor_visible = true;  // Assume visible; may change via refresh_cursor later.
-  stop_insert_mode = false;
+  Ins.stop_insert_mode = false;
 
   // Ensure the terminal is properly sized. Ideally window size management
   // code should always have resized the terminal already, but check here to
@@ -1053,7 +1053,7 @@ static int terminal_check(VimState *state)
   // Shouldn't reach here when pressing a key to close the terminal buffer.
   assert(!s->close || (s->term->buf_handle == 0 && s->term != curbuf->terminal));
 
-  if (stop_insert_mode || !terminal_check_focus(s)) {
+  if (Ins.stop_insert_mode || !terminal_check_focus(s)) {
     return 0;
   }
 
