@@ -66,6 +66,17 @@ enum {
   CA_NO_ADJ_OP_END = 2,  ///< don't adjust operator end
 };
 
+/// A Visual selection's mode and extent (line/column span, not absolute positions), so it can be
+/// re-applied starting at the cursor: for "gv" reselect (`resel_VIsual`) and Visual-operator redo
+/// (`redo_VIsual`).
+typedef struct {
+  int mode;             ///< 'v', 'V', or Ctrl-V
+  linenr_T line_count;  ///< number of lines
+  colnr_T vcol;         ///< number of cols or end column (MAXCOL: to end of line)
+  int count;            ///< count for the Visual operator
+  int arg;              ///< extra argument
+} VisualExtent;
+
 /// Replacement for nchar used by nv_replace().
 enum {
   REPLACE_CR_NCHAR  = -1,
