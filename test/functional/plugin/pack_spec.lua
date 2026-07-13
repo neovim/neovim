@@ -53,26 +53,6 @@ local function repo_write_file(repo_name, rel_path, text, no_dedent, append)
   t.write_file(path, text, no_dedent, append)
 end
 
---- @return vim.SystemCompleted
-local function system_sync(cmd, opts)
-  return exec_lua(function()
-    local obj = vim.system(cmd, opts)
-
-    if opts and opts.timeout then
-      -- Minor delay before calling wait() so the timeout uv timer can have a headstart over the
-      -- internal call to vim.wait() in wait().
-      vim.wait(10)
-    end
-
-    local res = obj:wait()
-
-    -- Check the process is no longer running
-    assert(not vim.api.nvim_get_proc(obj.pid), 'process still exists')
-
-    return res
-  end)
-end
-
 local function git_cmd(cmd, repo_name)
   local git_cmd_prefix = {
     'git',
@@ -89,7 +69,7 @@ local function git_cmd(cmd, repo_name)
   cmd = vim.list_extend(git_cmd_prefix, cmd)
   local cwd = repo_get_path(repo_name)
   local sys_opts = { cwd = cwd, text = true, clear_env = true }
-  local out = system_sync(cmd, sys_opts)
+  local out = n.system_sync(cmd, sys_opts)
   if out.code ~= 0 then
     error(out.stderr)
   end
@@ -440,7 +420,8 @@ describe('vim.pack', function()
 
       -- Should not create redundant stash entry
       local basic_path = pack_get_plug_path('basic')
-      local stash_list = system_sync({ 'git', 'stash', 'list' }, { cwd = basic_path }).stdout or ''
+      local stash_list = n.system_sync({ 'git', 'stash', 'list' }, { cwd = basic_path }).stdout
+        or ''
       eq('', stash_list)
     end)
 
@@ -1920,7 +1901,7 @@ describe('vim.pack', function()
       local function assert_origin(ref)
         -- Should be in sync both on disk and in lockfile
         local opts = { cwd = pack_get_plug_path('basic') }
-        local real_origin = system_sync({ 'git', 'remote', 'get-url', 'origin' }, opts)
+        local real_origin = n.system_sync({ 'git', 'remote', 'get-url', 'origin' }, opts)
         eq(ref, vim.trim(real_origin.stdout))
 
         eq(ref, get_lock_tbl().plugins.basic.src)
@@ -2023,7 +2004,8 @@ describe('vim.pack', function()
       n.exec('write')
 
       local fetch_path = pack_get_plug_path('fetch')
-      local stash_list = system_sync({ 'git', 'stash', 'list' }, { cwd = fetch_path }).stdout or ''
+      local stash_list = n.system_sync({ 'git', 'stash', 'list' }, { cwd = fetch_path }).stdout
+        or ''
       matches('vim%.pack: %d%d%d%d%-%d%d%-%d%d %d%d:%d%d:%d%d Stash before checkout', stash_list)
 
       -- Update should still be applied

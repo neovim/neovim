@@ -957,6 +957,65 @@ function M.exec_lua(code, ...)
   return require('test.functional.testnvim.exec_lua')(session, 2, code, ...)
 end
 
+--- Runs `cmd` via `vim.system()` in the Nvim-under-test and returns its result.
+---
+--- Asserts the child process is gone afterward, polling to absorb the brief lag between the
+--- exit-handler and nvim_get_proc() reporting it (seen on Windows).
+---
+--- @param cmd string[]
+--- @param opts? vim.SystemOpts
+--- @param async? boolean  Wait via the on_exit callback instead of a blocking `obj:wait()`.
+--- @return vim.SystemCompleted
+local function system(cmd, opts, async)
+  return M.exec_lua(function()
+    local res --- @type vim.SystemCompleted?
+    local obj
+    if async then
+      local done = false
+      obj = vim.system(cmd, opts, function(o)
+        done = true
+        res = o
+      end)
+      assert(
+        vim.wait(10000, function()
+          return done
+        end),
+        'process did not exit'
+      )
+    else
+      obj = vim.system(cmd, opts)
+      if opts and opts.timeout then
+        -- Minor delay before calling wait() so the timeout uv timer can have a headstart over the
+        -- internal call to vim.wait() in wait().
+        vim.wait(10)
+      end
+      res = obj:wait()
+    end
+
+    -- Assert that the process terminated.
+    -- XXX: Poll bc nvim_get_proc() can briefly lag the exit callback (on Windows): `uv_close`
+    -- completes on a later tick, thus the PID is still briefly resolvable.
+    assert(
+      vim.wait(1000, function()
+        return not vim.api.nvim_get_proc(obj.pid)
+      end),
+      'process still exists'
+    )
+
+    return res
+  end)
+end
+
+--- Runs `cmd` via `vim.system()` in the Nvim-under-test and waits (synchronously) for it to exit.
+function M.system_sync(cmd, opts)
+  return system(cmd, opts, false)
+end
+
+--- Like `system_sync()` but waits via the `vim.system()` on_exit callback.
+function M.system_async(cmd, opts)
+  return system(cmd, opts, true)
+end
+
 --- Benchmarks `fn` in the Nvim-under-test: runs it `opts.n` times, timing each run in-session, then reports.
 ---
 --- Note: see `testutil.bench()` to run in the test-runner process.
