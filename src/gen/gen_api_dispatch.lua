@@ -118,12 +118,7 @@ local function add_function(fn)
       fn.parameters[#fn.parameters] = nil
     end
     -- `opts` (a KeyDict) and every parameter following it are optional: clients may omit them.
-    for k = 1, #fn.parameters do
-      if fn.parameters[k][2] == 'opts' and real_type(fn.parameters[k][1]):match('^KeyDict_') then
-        fn.opts_idx = k
-        break
-      end
-    end
+    fn.opts_idx = c_grammar.opts_index(fn.parameters)
     -- Omitted optional param is zero-initialized, which assumes Dict/Array.
     if fn.opts_idx then
       for k = fn.opts_idx + 1, #fn.parameters do

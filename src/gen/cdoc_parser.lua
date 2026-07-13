@@ -192,6 +192,17 @@ local function process_proto(item, state)
       table.remove(cur_obj.params, i)
     end
   end
+
+  -- HACK: Mark optional params (:help api-contract) with "?" so docs render them as optional.
+  if c_grammar.opts_index(item.parameters) then
+    local optional = false
+    for _, p in ipairs(cur_obj.params) do
+      optional = optional or p.name == 'opts'
+      if optional and not p.type:match('%?$') then
+        p.type = p.type .. '?'
+      end
+    end
+  end
 end
 
 local M = {}
