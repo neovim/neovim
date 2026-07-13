@@ -5,63 +5,12 @@ local clear = n.clear
 local exec_lua = n.exec_lua
 local eq = t.eq
 
-local function system_sync(cmd, opts)
-  return exec_lua(function()
-    local obj = vim.system(cmd, opts)
-
-    if opts and opts.timeout then
-      -- Minor delay before calling wait() so the timeout uv timer can have a headstart over the
-      -- internal call to vim.wait() in wait().
-      vim.wait(10)
-    end
-
-    local res = obj:wait()
-
-    -- Check the process is no longer running. nvim_get_proc() can lag the exit callback (on Windows)?
-    assert(
-      vim.wait(1000, function()
-        return not vim.api.nvim_get_proc(obj.pid)
-      end),
-      'process still exists'
-    )
-
-    return res
-  end)
-end
-
-local function system_async(cmd, opts)
-  return exec_lua(function()
-    local done = false
-    local res --- @type vim.SystemCompleted?
-    local obj = vim.system(cmd, opts, function(obj)
-      done = true
-      res = obj
-    end)
-
-    local ok = vim.wait(10000, function()
-      return done
-    end)
-
-    assert(ok, 'process did not exit')
-
-    -- Check the process is no longer running. nvim_get_proc() can lag the exit callback (on Windows)?
-    assert(
-      vim.wait(1000, function()
-        return not vim.api.nvim_get_proc(obj.pid)
-      end),
-      'process still exists'
-    )
-
-    return res
-  end)
-end
-
 describe('vim.system', function()
   before_each(function()
     clear()
   end)
 
-  for name, system in pairs { sync = system_sync, async = system_async } do
+  for name, system in pairs { sync = n.system_sync, async = n.system_async } do
     describe('(' .. name .. ')', function()
       it('failure modes', function()
         t.matches(
@@ -178,8 +127,8 @@ describe('vim.system', function()
   if t.is_os('win') then
     it('can resolve windows command extensions', function()
       t.write_file('test.bat', 'echo hello world')
-      system_sync({ 'chmod', '+x', 'test.bat' })
-      system_sync({ './test' })
+      n.system_sync({ 'chmod', '+x', 'test.bat' })
+      n.system_sync({ './test' })
     end)
   end
 
