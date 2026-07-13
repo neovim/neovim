@@ -73,6 +73,29 @@ describe('vim.filetype', function()
     )
   end)
 
+  it('detects directory filenames', function()
+    eq(
+      'directory',
+      exec_lua(function()
+        return vim.filetype.match({ filename = '/tmp/example/' })
+      end)
+    )
+  end)
+
+  it('matches URI buffer patterns ending in slash', function()
+    eq(
+      'example',
+      exec_lua(function()
+        vim.filetype.add({
+          pattern = {
+            ['example://.*'] = 'example',
+          },
+        })
+        return vim.filetype.match({ filename = 'example:///tmp/example/' })
+      end)
+    )
+  end)
+
   it('works without defined g:ft_ignore_pat', function()
     local match_opts = { filename = 'unknown-ft', buf = api.nvim_create_buf(false, true) }
     eq(

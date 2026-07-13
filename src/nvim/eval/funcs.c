@@ -34,7 +34,7 @@
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/context.h"
 #include "nvim/cursor.h"
-#include "nvim/edit.h"
+#include "nvim/dialog.h"
 #include "nvim/errors.h"
 #include "nvim/eval/buffer.h"
 #include "nvim/eval/decode.h"
@@ -58,8 +58,6 @@
 #include "nvim/ex_getln.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
-#include "nvim/getchar.h"
-#include "nvim/getchar_defs.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
@@ -69,6 +67,8 @@
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
 #include "nvim/input.h"
+#include "nvim/input_defs.h"
+#include "nvim/insert.h"
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
 #include "nvim/lua/executor.h"
@@ -872,7 +872,7 @@ static void f_ctxget(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "ctxpop()" function
 static void f_ctxpop(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  if (!ctx_restore(NULL, kCtxAll)) {
+  if (!ctx_load(NULL, kCtxAll)) {
     emsg(_("Context stack is empty"));
   }
 }
@@ -1409,14 +1409,8 @@ static void f_exists(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "expand()" function
 static void f_expand(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  int options = WILD_SILENT|WILD_USE_NL|WILD_LIST_NOTFOUND;
+  int options = WILD_SILENT|WILD_USE_NL|WILD_LIST_NOTFOUND|WILD_USE_SHELLSLASH;
   bool error = false;
-#ifdef BACKSLASH_IN_FILENAME
-  char *p_csl_save = p_csl;
-
-  // avoid using 'completeslash' here
-  p_csl = empty_string_option;
-#endif
 
   rettv->v_type = VAR_STRING;
   if (argvars[1].v_type != VAR_UNKNOWN
@@ -1476,9 +1470,6 @@ static void f_expand(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       rettv->vval.v_string = NULL;
     }
   }
-#ifdef BACKSLASH_IN_FILENAME
-  p_csl = p_csl_save;
-#endif
 }
 
 /// "menu_get(path [, modes])" function
@@ -4066,7 +4057,7 @@ static void f_luaeval(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  nlua_typval_eval(cstr_as_string(str), &argvars[1], rettv);
+  nlua_call_luaeval(cstr_as_string(str), &argvars[1], rettv);
 }
 
 static void find_some_match(typval_T *const argvars, typval_T *const rettv,
@@ -6381,7 +6372,7 @@ static void f_serverlist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
                                                                               .vval.v_special =
                                                                                 kSpecialVarNull };
   typval_T lua_args[] = { opts, addrs_tv, { .v_type = VAR_UNKNOWN } };
-  nlua_call_vimfn("vim._core.server", "serverlist", lua_args, rettv);
+  nlua_call_typval("vim._core.server", "serverlist", lua_args, rettv);
   tv_clear(&addrs_tv);
 }
 
@@ -6402,7 +6393,7 @@ static void f_serverstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       emsg(_(e_invarg));
       return;
     }
-    address = xstrdup(tv_get_string(argvars));
+    address = TO_SLASH_SAVE(tv_get_string(argvars));
   } else {
     address = server_address_new(NULL);
   }
@@ -6867,7 +6858,7 @@ static void f_sockconnect(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   const char *mode = tv_get_string(&argvars[0]);
-  const char *address = tv_get_string(&argvars[1]);
+  const char *address = TO_SLASH_SAVE(tv_get_string(&argvars[1]));
 
   bool tcp;
   if (strcmp(mode, "tcp") == 0) {
@@ -6876,7 +6867,7 @@ static void f_sockconnect(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     tcp = false;
   } else {
     semsg(_(e_invarg2), "invalid mode");
-    return;
+    goto cleanup;
   }
 
   bool rpc = false;
@@ -6886,7 +6877,7 @@ static void f_sockconnect(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     rpc = tv_dict_get_number(opts, "rpc") != 0;
 
     if (!tv_dict_get_callback(opts, S_LEN("on_data"), &on_data.cb)) {
-      return;
+      goto cleanup;
     }
     on_data.buffered = tv_dict_get_number(opts, "data_buffered");
     if (on_data.buffered && on_data.cb.type == kCallbackNone) {
@@ -6903,6 +6894,8 @@ static void f_sockconnect(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   rettv->vval.v_number = (varnumber_T)id;
   rettv->v_type = VAR_NUMBER;
+cleanup:
+  XFREE_CLEAR(address);
 }
 
 /// "stdioopen()" function

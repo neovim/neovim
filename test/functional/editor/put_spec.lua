@@ -889,16 +889,16 @@ describe('put command', function()
         -- check bell is not set by nvim before the action
         screen:sleep(50)
       end
-      t.ok(not screen.bell and not screen.visualbell)
+      t.ok(not screen.bell and not screen.visual_bell)
       actions()
       screen:expect {
         condition = function()
           if should_ring then
-            if not screen.bell and not screen.visualbell then
+            if not screen.bell and not screen.visual_bell then
               error('Bell was not rung after action')
             end
           else
-            if screen.bell or screen.visualbell then
+            if screen.bell or screen.visual_bell then
               error('Bell was rung after action')
             end
           end
@@ -906,7 +906,7 @@ describe('put command', function()
         unchanged = not should_ring,
       }
       screen.bell = false
-      screen.visualbell = false
+      screen.visual_bell = false
     end
 
     it('should not ring the bell with gp at end of line', function()

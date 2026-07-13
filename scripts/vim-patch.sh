@@ -279,6 +279,14 @@ preprocess_patch() {
   LC_ALL=C sed -Ee 's/( [ab]\/src\/nvim)\/map\.c/\1\/mapping.c/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
+  # Rename getchar.c to input.c
+  LC_ALL=C sed -Ee 's/( [ab]\/src\/nvim)\/getchar\.c/\1\/input.c/g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+
+  # Rename edit.c to insert.c
+  LC_ALL=C sed -Ee 's/( [ab]\/src\/nvim)\/edit\.c/\1\/insert.c/g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+
   # Rename profiler.c to profile.c
   LC_ALL=C sed -Ee 's/( [ab]\/src\/nvim)\/profiler\.c/\1\/profile.c/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
@@ -901,21 +909,25 @@ is_na_patch() {
   local patch=$1
   local NA_REGEXP="$NVIM_SOURCE_DIR/scripts/vim_na_regexp.txt"
   local NA_FILELIST="$NVIM_SOURCE_DIR/scripts/vim_na_files.txt"
+  local NA_HUNKS_C="$NVIM_SOURCE_DIR/scripts/vim_na_hunks_c.txt"
 
-  local FILES_REMAINING
+  local FILES_REMAINING C_FILES
   FILES_REMAINING="$(diff <(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id --name-only -r "$patch" | grep -v -f "$NA_REGEXP") "$NA_FILELIST" |
-    grep '^<')" || true
+    grep '^<' | sed 's/^< //')" || true
   test -z "$FILES_REMAINING" && return 0
-  if test "$FILES_REMAINING" == "$(printf "< src/version.c\n")"; then
-    local VERSION_LNUM
-    VERSION_LNUM=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id --numstat -r "$patch" -- src/version.c | grep -c '^2\s\+0')
-    test "$VERSION_LNUM" -ne 1 && return 1
-    local VERSION_VNUM
-    VERSION_VNUM="$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -U1 -r "$patch" -- src/version.c |
-      grep -Pzc '[ +]\/\*\*\/\n\+\s+[0-9]+,\n[ +]\/\*\*\/\n')" || true
-    test "$VERSION_VNUM" -eq 1 && return 0
-  fi
-  return 1
+
+  C_FILES=$(echo "$FILES_REMAINING" | grep '.*\.c$')
+  test "$FILES_REMAINING" != "$C_FILES" && return 1
+
+  for file in $C_FILES; do
+    HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -U0  -r "$patch" -- "$file" | grep -P '^@@ .* @@')
+    if test -n "$HUNKS"; then
+      HUNK_NUM_FINAL=$(echo "$HUNKS" | sed 's/^@@ .* @@ \?//' | grep -cv -f "$NA_HUNKS_C")
+      test "$HUNK_NUM_FINAL" -ne 0 && return 1
+    fi
+  done
+
+  return 0
 }
 
 list_na_patches() {

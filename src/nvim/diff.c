@@ -23,6 +23,7 @@
 #include "nvim/bufwrite.h"
 #include "nvim/change.h"
 #include "nvim/charset.h"
+#include "nvim/context.h"
 #include "nvim/cursor.h"
 #include "nvim/decoration.h"
 #include "nvim/diff.h"
@@ -857,7 +858,7 @@ static int diff_write(buf_T *buf, diffin_T *din, linenr_T start, linenr_T end)
   }
 
   // Writing the diff buffers may trigger changes in the window structure
-  // via aucmd_prepbuf()/aucmd_restbuf() commands.
+  // via ctx_switch()/ctx_restore() commands.
   // This may cause recursively calling winframe_remove() which is not safe and causes
   // use after free, so let's stop it here.
   if (frames_locked()) {
@@ -3795,14 +3796,14 @@ void ex_diffgetput(exarg_T *eap)
     }
   }
 
-  aco_save_T aco = { 0 };
+  CtxSwitch aco = { 0 };
 
   if (eap->cmdidx != CMD_diffget) {
     // Need to make the other buffer the current buffer to be able to make
     // changes in it.
 
     // Set curwin/curbuf to buf and save a few things.
-    aucmd_prepbuf(&aco, curtab->tp_diffbuf[idx_other]);
+    ctx_switch(&aco, NULL, NULL, curtab->tp_diffbuf[idx_other], 0);
   }
 
   const int idx_from = eap->cmdidx == CMD_diffget ? idx_other : idx_cur;
@@ -3815,6 +3816,7 @@ void ex_diffgetput(exarg_T *eap)
     change_warning(curbuf, 0);
     if (diff_buf_idx(curbuf, curtab) != idx_to) {
       emsg(_("E787: Buffer changed unexpectedly"));
+      ctx_restore(&aco);
       goto theend;
     }
   }
@@ -3829,7 +3831,7 @@ void ex_diffgetput(exarg_T *eap)
     if (KeyTyped) {
       u_sync(false);
     }
-    aucmd_restbuf(&aco);
+    ctx_restore(&aco);
   }
 
 theend:
@@ -3866,7 +3868,7 @@ theend:
 
 /// Apply diffget/diffput to buffers and diffblocks
 ///
-/// @param idx_cur   index of "curbuf" before aucmd_prepbuf() in the list of diff buffers
+/// @param idx_cur   index of "curbuf" before ctx_switch() in the list of diff buffers
 /// @param idx_from  index of the buffer to read from in the list of diff buffers
 /// @param idx_to    index of the buffer to modify in the list of diff buffers
 static void diffgetput(const int addr_count, const int idx_cur, const int idx_from,

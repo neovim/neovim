@@ -13,16 +13,16 @@
 #include "nvim/decoration.h"
 #include "nvim/diff.h"
 #include "nvim/drawscreen.h"
-#include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/vars.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/fold.h"
-#include "nvim/getchar.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/grid_defs.h"
+#include "nvim/input.h"
+#include "nvim/insert.h"
 #include "nvim/keycodes.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mark_defs.h"
@@ -867,7 +867,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
     }
     prep_redo(regname, count, NUL, c1, NUL, c2, NUL);
 
-    // Remember where the paste started, so in edit() Insstart can be set to this position
+    // Remember where the paste started, so in edit() Ins.start can be set to this position
     if (restart_edit != 0) {
       where_paste_started = curwin->w_cursor;
     }

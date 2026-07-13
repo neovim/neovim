@@ -85,7 +85,14 @@ local function render(buf, dir)
   then
     return false
   end
-  api.nvim_buf_set_name(buf, dir)
+  api.nvim_buf_call(buf, function()
+    api.nvim_cmd({
+      cmd = 'file',
+      args = { dir },
+      mods = { keepalt = true },
+      magic = { file = false, bar = false },
+    }, {})
+  end)
   if not api.nvim_buf_is_valid(buf) then
     return false
   end
@@ -114,7 +121,7 @@ end
 ---@param path string
 local function edit(path)
   navigating = true
-  api.nvim_cmd({ cmd = 'edit', args = { path }, magic = { file = false, bar = false } }, {})
+  api.nvim_cmd({ cmd = 'edit', args = { path }, magic = { file = false, bar = false } })
   navigating = false
 end
 
@@ -151,7 +158,10 @@ end
 
 ---@param buf integer
 local function open_parent(buf)
-  navigate(fs.dirname(api.nvim_buf_get_name(buf)))
+  local path = fs.normalize(api.nvim_buf_get_name(buf))
+  local name = encode_name(fs.basename(path)) .. (vim.fn.isdirectory(path) == 1 and '/' or '')
+  navigate(fs.dirname(path))
+  vim.fn.search([[\C\m^\V]] .. vim.fn.escape(name, [[\]]) .. [[\m$]], 'cw')
 end
 
 function M._open_entry()

@@ -26,7 +26,7 @@ error('Cannot require a meta file')
 
 --- @class vim.api.keyset.cmd
 --- @field addr? "line"|"char"|"arg"|"buf"|"load"|"win"|"tab"|"qf"|"none"|"?"
---- @field args? string[]
+--- @field args? (integer|string|boolean)[]
 --- @field bang? boolean
 --- @field cmd? string
 --- @field count? integer
@@ -495,6 +495,9 @@ error('Cannot require a meta file')
 --- @field win? integer
 --- @field zindex? integer
 --- @field _cmdline_offset? integer
+
+--- @class vim.api.keyset.win_resize
+--- @field anchor? string
 
 --- @class vim.api.keyset.win_text_height
 --- @field end_row? integer

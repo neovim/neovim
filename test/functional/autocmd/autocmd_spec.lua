@@ -855,4 +855,17 @@ describe('autocmd', function()
       fn.execute('autocmd User ,,,there,is,,a,fly,,')
     )
   end)
+
+  it('normalizes path sep (slashes) in env var `pattern` #39382', function()
+    local path = t.is_os('win') and [[C:\foo\bar]] or 'C:/foo/bar'
+    fn.setenv('FOOBAR', path)
+    exec [[
+      autocmd User ~,$FOOBAR "
+    ]]
+    local cmds = exec_lua(function()
+      return vim.api.nvim_get_autocmds({ event = 'User' })
+    end)
+    eq(vim.fs.normalize('~'), cmds[1].pattern)
+    eq(vim.fs.normalize(path), cmds[2].pattern)
+  end)
 end)

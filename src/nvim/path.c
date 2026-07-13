@@ -389,7 +389,7 @@ int path_fnamecmp(const char *fname1, const char *fname2)
   const size_t len2 = strlen(fname2);
   return path_fnamencmp(fname1, fname2, MAX(len1, len2));
 #else
-  return mb_strcmp_ic((bool)p_fic, fname1, fname2);
+  return pathcmp(fname1, fname2, -1);
 #endif
 }
 
@@ -1546,9 +1546,11 @@ void slash_adjust(char *p)
     }
   }
 
+  char from = p_ssl ? '\\' : PATHSEP;
+  char to = p_ssl ? PATHSEP : '\\';
   while (*p) {
-    if (*p == psepcN) {
-      *p = psepc;
+    if (*p == from) {
+      *p = to;
     }
     MB_PTR_ADV(p);
   }
@@ -1564,10 +1566,11 @@ char *path_to_backslash(char *p)
   return p;
 }
 
-/// Convert all backslashes to forward slashes in-place.
+/// Convert all backslashes to forward slashes in-place,
+/// unless when it looks like a URL (e.g. `term://xxxC:\cmd.exe`).
 char *path_to_slash(char *p)
 {
-  if (p != NULL) {
+  if (p != NULL && !path_with_url(p)) {
     strchrsub(p, '\\', PATHSEP);
   }
   return p;

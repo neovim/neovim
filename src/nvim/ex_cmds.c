@@ -32,10 +32,10 @@
 #include "nvim/cmdhist.h"
 #include "nvim/cursor.h"
 #include "nvim/decoration.h"
+#include "nvim/dialog.h"
 #include "nvim/diff.h"
 #include "nvim/digraph.h"
 #include "nvim/drawscreen.h"
-#include "nvim/edit.h"
 #include "nvim/errors.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
@@ -50,7 +50,6 @@
 #include "nvim/extmark_defs.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
-#include "nvim/getchar.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/help.h"
@@ -58,6 +57,7 @@
 #include "nvim/highlight_group.h"
 #include "nvim/indent.h"
 #include "nvim/input.h"
+#include "nvim/insert.h"
 #include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
@@ -2280,6 +2280,7 @@ void do_wqall(exarg_T *eap)
         && channel_job_running((uint64_t)buf->b_p_channel)) {
       no_write_message_buf(buf);
       error++;
+      continue;
     } else if (!bufIsChanged(buf) || bt_dontwrite(buf)) {
       continue;
     }

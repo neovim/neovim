@@ -823,7 +823,9 @@ M.funcs = {
     desc = [=[
       The result is the name of a buffer.  Mostly as it is displayed
       by the `:ls` command, but not using special names such as
-      "[No Name]".
+      "[No Name]".  If the buffer represents a directory, the name
+      ends with a path separator, unless it was changed by |:file| or
+      |nvim_buf_set_name()|.
       If {buf} is omitted the current buffer is used.
       If {buf} is a Number, that buffer number's name is given.
       Number zero is the alternate buffer for the current window.
@@ -7944,7 +7946,7 @@ M.funcs = {
     signature = 'mkdir({name} [, {flags} [, {prot}]])',
     tags = { 'E739' },
     see_lua = {
-      '|uv.fs_mkdir()| for simple directory creation; `"p"`, `"D"`, `"R"`, and return semantics differ',
+      '|vim.fs.mkdir()|; `"D"`, `"R"`, and return semantics differ',
     },
   },
   mode = {
@@ -10045,7 +10047,7 @@ M.funcs = {
 
       <Example named pipe: >vim
       	if has('win32')
-      	  echo serverstart('\\.\pipe\nvim-pipe-1234')
+      	  echo serverstart('//./pipe/nvim-pipe-1234')
       	else
       	  echo serverstart('nvim.sock')
       	endif

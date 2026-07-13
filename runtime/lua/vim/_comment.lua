@@ -68,7 +68,7 @@ local function get_comment_parts(ref_position)
   local cs = get_commentstring(ref_position)
 
   if cs == nil or cs == '' then
-    vim.api.nvim_echo({ { "Option 'commentstring' is empty.", 'WarningMsg' } }, true, {})
+    vim.api.nvim_echo({ { "Option 'commentstring' is empty.", 'WarningMsg' } }, true)
     return { left = '', right = '' }
   end
 

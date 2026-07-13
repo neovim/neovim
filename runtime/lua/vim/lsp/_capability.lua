@@ -5,6 +5,7 @@ local api = vim.api
 ---| 'diagnostics'
 ---| 'document_color'
 ---| 'folding_range'
+---| 'inlay_hint'
 ---| 'inline_completion'
 ---| 'linked_editing_range'
 ---| 'semantic_tokens'

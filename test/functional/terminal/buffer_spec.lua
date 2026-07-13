@@ -16,6 +16,7 @@ local testprg = n.testprg
 local write_file = t.write_file
 local command = n.command
 local matches = t.matches
+local not_matches = t.not_matches
 local exec_lua = n.exec_lua
 local sleep = vim.uv.sleep
 local fn = n.fn
@@ -239,6 +240,9 @@ describe(':terminal buffer', function()
 
   it('requires bang (!) to close a running job #15402', function()
     eq('Vim(wqall):E948: Job still running (add ! to end the job)', pcall_err(command, 'wqall'))
+    command('redir => g:wqall_out | silent! wqall | redir END')
+    matches('E948:', api.nvim_get_var('wqall_out'))
+    not_matches('E676:', api.nvim_get_var('wqall_out'))
     for _, cmd in ipairs({ 'bdelete', '%bdelete', 'bwipeout', 'bunload' }) do
       matches(
         '^Vim%('
@@ -1618,30 +1622,40 @@ describe('terminal input', function()
       '<C-LeftMouse><0,0>',
       '<C-LeftDrag><0,1>',
       '<C-LeftRelease><0,1>',
+      '<LeftMouse><0,1>',
+      '<LeftRelease><0,1>',
       '<2-LeftMouse><0,1>',
       '<2-LeftDrag><0,0>',
       '<2-LeftRelease><0,0>',
       '<M-MiddleMouse><0,0>',
       '<M-MiddleDrag><0,1>',
       '<M-MiddleRelease><0,1>',
+      '<MiddleMouse><0,1>',
+      '<MiddleRelease><0,1>',
       '<2-MiddleMouse><0,1>',
       '<2-MiddleDrag><0,0>',
       '<2-MiddleRelease><0,0>',
       '<S-RightMouse><0,0>',
       '<S-RightDrag><0,1>',
       '<S-RightRelease><0,1>',
+      '<RightMouse><0,1>',
+      '<RightRelease><0,1>',
       '<2-RightMouse><0,1>',
       '<2-RightDrag><0,0>',
       '<2-RightRelease><0,0>',
       '<S-X1Mouse><0,0>',
       '<S-X1Drag><0,1>',
       '<S-X1Release><0,1>',
+      '<X1Mouse><0,1>',
+      '<X1Release><0,1>',
       '<2-X1Mouse><0,1>',
       '<2-X1Drag><0,0>',
       '<2-X1Release><0,0>',
       '<S-X2Mouse><0,0>',
       '<S-X2Drag><0,1>',
       '<S-X2Release><0,1>',
+      '<X2Mouse><0,1>',
+      '<X2Release><0,1>',
       '<2-X2Mouse><0,1>',
       '<2-X2Drag><0,0>',
       '<2-X2Release><0,0>',

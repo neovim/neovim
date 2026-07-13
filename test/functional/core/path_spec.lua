@@ -12,6 +12,7 @@ local is_os = t.is_os
 local mkdir = t.mkdir
 local rmdir = n.rmdir
 local write_file = t.write_file
+local api = n.api
 
 local function join_path(...)
   return table.concat({ ... }, '/')
@@ -69,6 +70,64 @@ describe('path', function()
   end)
 end)
 
+describe('startup', function()
+  local home, foo, bar = vim.fs.normalize('~'), 'Xtest-foo.lua', 'Xtest-bar.lua'
+
+  setup(function()
+    write_file(('%s/%s'):format(home, foo), 'local foo = 1;')
+    write_file(('%s/%s'):format(home, bar), '')
+  end)
+
+  teardown(function()
+    os.remove(('%s/%s'):format(home, foo))
+    os.remove(('%s/%s'):format(home, bar))
+  end)
+
+  it('expands tilde-prefixed paths #29380', function()
+    t.skip(not is_os('win'), 'N/A: shell expands ~ on Unix')
+    clear {
+      args = { ('~/%s'):format(foo), ('~\\%s'):format(bar) },
+    }
+    local expected = { ('%s/%s'):format(home, foo), ('%s/%s'):format(home, bar) }
+    eq(expected, vim.tbl_map(fn.bufname, api.nvim_list_bufs()))
+    eq(expected, fn.argv())
+  end)
+
+  it('normalizes v:progpath #39382', function()
+    clear()
+    eq(
+      n.nvim_prog,
+      fn.system({
+        is_os('win') and n.nvim_prog:gsub('/', '\\') or n.nvim_prog,
+        '--clean',
+        '--headless',
+        '+echo v:progpath',
+        '+q',
+      })
+    )
+  end)
+
+  it('normalizes -u arguments and triggers autocmd events #39382', function()
+    local file = ('%s/%s'):format(home, foo)
+    if is_os('win') then
+      file = file:gsub('/', '\\')
+    end
+    clear {
+      args_rm = { '--cmd', '-u' },
+      args = {
+        '--cmd',
+        ('autocmd SourcePre */%s let g:matched = 1'):format(foo),
+        '-u',
+        file,
+      },
+    }
+    local scripts = fn.getscriptinfo({ name = foo })
+    eq(1, #scripts)
+    eq(('%s/%s'):format(home, foo), scripts[1].name)
+    t.ok(fn.eval('g:matched'))
+  end)
+end)
+
 describe('expand wildcard', function()
   before_each(clear)
 
@@ -82,9 +141,9 @@ describe('expand wildcard', function()
     }
     for _, folder in ipairs(folders) do
       mkdir(folder)
-      local file = join_path(folder, 'file.txt')
+      local file = ('%s%sfile.txt'):format(folder, n.get_pathsep())
       write_file(file, '')
-      eq(file, eval('expand("' .. folder .. '/*")'))
+      eq(file, fn.expand(('%s/*'):format(folder)))
       rmdir(folder)
     end
   end)

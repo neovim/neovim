@@ -1227,8 +1227,10 @@ ZZ			Write current file, if modified, and close the current
 ZQ			Quit without checking for changes (same as ":q!").
 
 							*ZR*
-[count]ZR		Performs |:restart!|. If a [count] is given, restarts
-			without checking for changes (":restart! +qall!").
+[count]ZR		Performs |:restart|. If a [count] of [1-8] is given,
+			the session is not restored (":restart! +qall"). If a
+			[count] of 9 is given, restarts without restoring the
+			session or checking for changes (":restart! +qall!").
 
 MULTIPLE WINDOWS AND BUFFERS				*window-exit*
 

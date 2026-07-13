@@ -8,8 +8,9 @@
 #include "nvim/event/loop.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_eval_defs.h"
-#include "nvim/getchar_defs.h"
 #include "nvim/iconv_defs.h"
+#include "nvim/input_defs.h"
+#include "nvim/insert_defs.h"
 #include "nvim/macros_defs.h"
 #include "nvim/menu_defs.h"
 #include "nvim/os/os_defs.h"
@@ -477,24 +478,8 @@ EXTERN linenr_T resel_VIsual_line_count;        // number of lines
 EXTERN colnr_T resel_VIsual_vcol;               // nr of cols or end col
 
 /// When pasting text with the middle mouse button in visual mode with
-/// restart_edit set, remember where it started so we can set Insstart.
+/// restart_edit set, remember where it started so we can set Ins.start.
 EXTERN pos_T where_paste_started;
-
-// This flag is used to make auto-indent work right on lines where only a
-// <RETURN> or <ESC> is typed. It is set when an auto-indent is done, and
-// reset when any other editing is done on the line. If an <ESC> or <RETURN>
-// is received, and did_ai is true, the line is truncated.
-EXTERN bool did_ai INIT( = false);
-
-// Column of first char after autoindent.  0 when no autoindent done.  Used
-// when 'backspace' is 0, to avoid backspacing over autoindent.
-EXTERN colnr_T ai_col INIT( = 0);
-
-// This is a character which will end a start-middle-end comment when typed as
-// the first character on a new line.  It is taken from the last character of
-// the "end" comment leader when the COM_AUTO_END flag is given for that
-// comment end in 'comments'.  It is only valid when did_ai is true.
-EXTERN int end_comment_pending INIT( = NUL);
 
 // This flag is set after a ":syncbind" to let the check_scrollbind() function
 // know that it should not attempt to perform scrollbinding due to the scroll
@@ -502,31 +487,13 @@ EXTERN int end_comment_pending INIT( = NUL);
 // undo some of the work done by ":syncbind.")  -ralston
 EXTERN bool did_syncbind INIT( = false);
 
-// This flag is set when a smart indent has been performed. When the next typed
-// character is a '{' the inserted tab will be deleted again.
-EXTERN bool did_si INIT( = false);
-
-// This flag is set after an auto indent. If the next typed character is a '}'
-// one indent will be removed.
-EXTERN bool can_si INIT( = false);
-
-// This flag is set after an "O" command. If the next typed character is a '{'
-// one indent will be removed.
-EXTERN bool can_si_back INIT( = false);
-
 EXTERN int old_indent INIT( = 0);  ///< for ^^D command in insert mode
 
 // w_cursor before formatting text.
 EXTERN pos_T saved_cursor INIT( = { 0, 0, 0 });
 
-// Stuff for insert mode.
-EXTERN pos_T Insstart;                  // This is where the latest
-                                        // insert/append mode started.
-
-// This is where the latest insert/append mode started. In contrast to
-// Insstart, this won't be reset by certain keys and is needed for
-// op_insert(), to detect correctly where inserting by the user started.
-EXTERN pos_T Insstart_orig;
+// Stuff for insert mode: the current insert session.
+EXTERN InsState Ins;
 
 // Stuff for MODE_VREPLACE state.
 EXTERN linenr_T orig_line_count INIT( = 0);       // Line count when "gR" started
@@ -593,10 +560,6 @@ EXTERN int u_sync_once INIT( = 0);       // Call u_sync() once when evaluating
 EXTERN bool force_restart_edit INIT( = false);  // force restart_edit after
                                                 // ex_normal returns
 EXTERN int restart_edit INIT( = 0);      // call edit when next cmd finished
-EXTERN bool arrow_used;                  // Normally false, set to true after
-                                         // hitting cursor key in insert mode.
-                                         // Used by vgetorpeek() to decide when
-                                         // to call u_sync()
 EXTERN bool ins_at_eol INIT( = false);   // put cursor after eol when
                                          // restarting edit after CTRL-O
 
@@ -651,7 +614,6 @@ EXTERN bool typebuf_was_empty INIT( = false);
 EXTERN int ex_normal_busy INIT( = 0);      // recursiveness of ex_normal()
 EXTERN int expr_map_lock INIT( = 0);       // running expr mapping, prevent use of ex_normal() and text changes
 EXTERN bool ignore_script INIT( = false);  // ignore script input
-EXTERN bool stop_insert_mode;              // for ":stopinsert"
 EXTERN bool KeyTyped;                      // true if user typed current char
 EXTERN int KeyStuffed;                     // true if current char from stuffbuf
 EXTERN int maptick INIT( = 0);             // tick for each non-mapped char
@@ -760,12 +722,6 @@ EXTERN bool no_hlsearch INIT( = false);
 
 EXTERN bool typebuf_was_filled INIT( = false);     // received text from client
                                                    // or from feedkeys()
-
-#ifdef BACKSLASH_IN_FILENAME
-EXTERN char psepc INIT( = '\\');            // normal path separator character
-EXTERN char psepcN INIT( = '/');            // abnormal path separator character
-EXTERN char pseps[2] INIT( = { '\\', 0 });  // normal path separator string
-#endif
 
 // Set to kTrue when an operator is being executed with virtual editing
 // kNone when no operator is being executed, kFalse otherwise.

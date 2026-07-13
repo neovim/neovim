@@ -584,7 +584,7 @@ CTRL-W _	Set current window height to N (default: highest possible).
 
 :{winnr}res[ize] [+-]N
 		Like `:resize` above, but apply the size to window {winnr}
-		instead of the current window.
+		instead of the current window. See also |nvim_win_resize()|.
 
 z{nr}<CR>	Set current window height to {nr}.
 

@@ -57,7 +57,7 @@ function M.paste(reg)
         )
       elseif res == -2 then
         -- Clear message area
-        vim.api.nvim_echo({ { '' } }, false, {})
+        vim.api.nvim_echo({ { '' } }, false)
       end
       return 0
     end

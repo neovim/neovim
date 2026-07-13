@@ -53,10 +53,6 @@ To disable the built-in directory browser, set this before startup: >lua
 	vim.g.loaded_nvim_dir_plugin = 1
 <
 
-To delete only its directory-opening autocommands from an after/plugin file: >lua
-	vim.api.nvim_del_augroup_by_name('nvim.dir')
-<
-
 Mappings:                                                       *dir-mappings*
 >
 	-	Open the parent directory of the current file or directory.

@@ -557,6 +557,7 @@ function Client:initialize()
   require('vim.lsp._folding_range')
   require('vim.lsp.diagnostic')
   require('vim.lsp.document_color')
+  require('vim.lsp.inlay_hint')
   require('vim.lsp.inline_completion')
   require('vim.lsp.linked_editing_range')
   require('vim.lsp.semantic_tokens')
@@ -1434,6 +1435,8 @@ function Client:_on_detach(bufnr)
       end
     end
   end
+
+  vim.diagnostic.reset(vim.lsp.diagnostic.get_namespace(self.id, false), bufnr)
 
   changetracking.reset_buf(self, bufnr)
 

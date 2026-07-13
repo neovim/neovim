@@ -14,6 +14,7 @@
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand_defs.h"
+#include "nvim/context.h"
 #include "nvim/cursor.h"
 #include "nvim/errors.h"
 #include "nvim/eval.h"
@@ -25,14 +26,14 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
 #include "nvim/fileio.h"
-#include "nvim/getchar.h"
-#include "nvim/getchar_defs.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/grid_defs.h"
 #include "nvim/hashtab.h"
 #include "nvim/highlight_defs.h"
+#include "nvim/input.h"
+#include "nvim/input_defs.h"
 #include "nvim/insexpand.h"
 #include "nvim/lua/executor.h"
 #include "nvim/main.h"
@@ -102,7 +103,6 @@ static int current_augroup = AUGROUP_DEFAULT;
 static bool au_need_clean = false;
 
 static int autocmd_blocked = 0;  // block all autocmds
-static int aucmd_prepbuf_depth = 0;
 
 static bool autocmd_nested = false;
 static bool autocmd_include_groups = false;
@@ -599,20 +599,9 @@ void free_all_autocmds(void)
   })
   map_destroy(int, &map_augroup_id_to_name);
 
-  // aucmd_win[] is freed in win_free_all()
+  // ctx_win[] is freed in win_free_all()
 }
 #endif
-
-/// Return true if "win" is an active entry in aucmd_win[].
-bool is_aucmd_win(win_T *win)
-{
-  for (int i = 0; i < AUCMD_WIN_COUNT; i++) {
-    if (aucmd_win[i].auc_win_used && aucmd_win[i].auc_win == win) {
-      return true;
-    }
-  }
-  return false;
-}
 
 /// Return the event number for event name "start".
 /// Return NUM_EVENTS if the event name was not found.
@@ -801,18 +790,9 @@ void do_autocmd(exarg_T *eap, char *arg_in, int forceit)
       *cmd++ = NUL;
     }
 
-    // Expand environment variables in the pattern.  Set 'shellslash', we want
-    // forward slashes here.
+    // Expand environment variables in the pattern.
     if (vim_strchr(pat, '$') != NULL || vim_strchr(pat, '~') != NULL) {
-#ifdef BACKSLASH_IN_FILENAME
-      int p_ssl_save = p_ssl;
-
-      p_ssl = true;
-#endif
       envpat = expand_env_save(pat);
-#ifdef BACKSLASH_IN_FILENAME
-      p_ssl = p_ssl_save;
-#endif
       if (envpat != NULL) {
         pat = envpat;
       }
@@ -1185,7 +1165,7 @@ int do_doautocmd(char *arg_start, bool do_msg, bool *did_something)
 void ex_doautoall(exarg_T *eap)
 {
   int retval = OK;
-  aco_save_T aco = { 0 };
+  CtxSwitch aco = { 0 };
   char *arg = eap->arg;
   int call_do_modelines = check_nomodeline(&arg);
   bufref_T bufref;
@@ -1203,7 +1183,7 @@ void ex_doautoall(exarg_T *eap)
     }
 
     // Find a window for this buffer and save some values.
-    aucmd_prepbuf(&aco, buf);
+    ctx_switch(&aco, NULL, NULL, buf, 0);
     set_bufref(&bufref, buf);
 
     // execute the autocommands for this buffer
@@ -1213,11 +1193,11 @@ void ex_doautoall(exarg_T *eap)
       // Execute the modeline settings, but don't set window-local
       // options if we are using the current window for another
       // buffer.
-      do_modelines(is_aucmd_win(curwin) ? OPT_NOWIN : 0);
+      do_modelines(is_ctx_win(curwin) ? OPT_NOWIN : 0);
     }
 
     // restore the current window
-    aucmd_restbuf(&aco);
+    ctx_restore(&aco);
 
     // Stop if there is some error or buffer was deleted.
     if (retval == FAIL || !bufref_valid(&bufref)) {
@@ -1248,253 +1228,6 @@ bool check_nomodeline(char **argp)
     return false;
   }
   return true;
-}
-
-/// Prepare for executing autocommands for (hidden) buffer `buf`.
-/// If the current buffer is not in any visible window, put it in a temporary
-/// floating window using an entry in `aucmd_win[]`.
-/// Set `curbuf` and `curwin` to match `buf`.
-///
-/// @param aco  structure to save values in
-/// @param buf  new curbuf
-void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
-{
-  win_T *win;
-  bool need_append = true;  // Append `aucmd_win` to the window list.
-  const bool same_buffer = buf == curbuf;
-
-  // Find a window that is for the new buffer
-  if (same_buffer) {  // be quick when buf is curbuf
-    win = curwin;
-  } else {
-    win = NULL;
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      if (wp->w_buffer == buf) {
-        win = wp;
-        break;
-      }
-    }
-  }
-
-  // Allocate a window when needed.
-  win_T *auc_win = NULL;
-  int auc_idx = AUCMD_WIN_COUNT;
-  if (win == NULL) {
-    for (auc_idx = 0; auc_idx < AUCMD_WIN_COUNT; auc_idx++) {
-      if (!aucmd_win[auc_idx].auc_win_used) {
-        break;
-      }
-    }
-
-    if (auc_idx == AUCMD_WIN_COUNT) {
-      kv_push(aucmd_win_vec, ((aucmdwin_T){
-        .auc_win = NULL,
-        .auc_win_used = false,
-      }));
-    }
-
-    if (aucmd_win[auc_idx].auc_win == NULL) {
-      win_alloc_aucmd_win(auc_idx);
-      need_append = false;
-    }
-    auc_win = aucmd_win[auc_idx].auc_win;
-    aucmd_win[auc_idx].auc_win_used = true;
-  }
-
-  aco->save_curwin_handle = curwin->handle;
-  aco->save_prevwin_handle = prevwin == NULL ? 0 : prevwin->handle;
-  if (bt_prompt(curbuf)) {
-    aco->save_prompt_insert = curbuf->b_prompt_insert;
-  }
-
-  if (win != NULL) {
-    // There is a window for "buf" in the current tab page, make it the
-    // curwin.  This is preferred, it has the least side effects (esp. if
-    // "buf" is curbuf).
-    aco->use_aucmd_win_idx = -1;
-    curwin = win;
-  } else {
-    // There is no window for "buf", use "auc_win".  To minimize the side
-    // effects, insert it in the current tab page.
-    // Anything related to a window (e.g., setting folds) may have
-    // unexpected results.
-    aco->use_aucmd_win_idx = auc_idx;
-    auc_win->w_buffer = buf;
-    auc_win->w_s = &buf->b_s;
-    buf->b_nwindows++;
-    win_init_empty(auc_win);  // set cursor and topline to safe values
-
-    // Make sure w_localdir, tp_localdir and globaldir are NULL to avoid a
-    // chdir() in win_enter_ext().
-    XFREE_CLEAR(auc_win->w_localdir);
-    aco->tp_localdir = curtab->tp_localdir;
-    curtab->tp_localdir = NULL;
-    aco->globaldir = globaldir;
-    globaldir = NULL;
-
-    block_autocmds();  // We don't want BufEnter/WinEnter autocommands.
-    if (need_append) {
-      win_append(lastwin, auc_win, NULL);
-      pmap_put(int)(&window_handles, auc_win->handle, auc_win);
-      win_config_float(auc_win, auc_win->w_config);
-    }
-    // Prevent chdir() call in win_enter_ext(), through do_autochdir()
-    const int save_acd = p_acd;
-    p_acd = false;
-    // no redrawing and don't set the window title
-    RedrawingDisabled++;
-    win_enter(auc_win, false);
-    RedrawingDisabled--;
-    p_acd = save_acd;
-    unblock_autocmds();
-    curwin = auc_win;
-  }
-  curbuf = buf;
-  aco->new_curwin_handle = curwin->handle;
-  set_bufref(&aco->new_curbuf, curbuf);
-
-  aco->save_VIsual_active = VIsual_active;
-  if (!same_buffer) {
-    // disable the Visual area, position may be invalid in another buffer
-    VIsual_active = false;
-  }
-  if (aco->new_curwin_handle != aco->save_curwin_handle) {
-    autocmd_save_curwin = aucmd_prepbuf_depth == 0 ? aco->save_curwin_handle : autocmd_save_curwin;
-    aucmd_prepbuf_depth++;
-  }
-}
-
-/// Cleanup after executing autocommands for a (hidden) buffer.
-/// Restore the window as it was (if possible).
-///
-/// If `aco` was zero-initialized, then `aucmd_restbuf` may be safely called even if `aucmd_prepbuf`
-/// was skipped:
-///
-///      aco_save_T aco = { 0 };
-///      if (some_condition) {
-///        aucmd_prepbuf(&aco, buf);
-///      }
-///      ...
-///      aucmd_restbuf(&aco);  // no-op if aucmd_prepbuf was skipped.
-///
-/// @param aco  structure holding saved values
-void aucmd_restbuf(aco_save_T *aco)
-{
-  // NULL br_buf means `aucmd_prepbuf` was never called on this `aco`.
-  if (aco->new_curbuf.br_buf == NULL) {
-    return;
-  }
-
-  if (aco->use_aucmd_win_idx >= 0) {
-    win_T *awp = aucmd_win[aco->use_aucmd_win_idx].auc_win;
-
-    // Find "awp", it can't be closed, but it may be in another tab page.
-    // Do not trigger autocommands here.
-    block_autocmds();
-    if (curwin != awp) {
-      FOR_ALL_TAB_WINDOWS(tp, wp) {
-        if (wp == awp) {
-          if (tp != curtab) {
-            goto_tabpage_tp(tp, true, true);
-          }
-          win_goto(awp);
-          goto win_found;
-        }
-      }
-    }
-win_found:
-    curbuf->b_nwindows--;
-    // Remove the window.
-    win_remove(curwin, NULL);
-    pmap_del(int)(&window_handles, curwin->handle, NULL);
-
-    // The window is marked as not used, but it is not freed, it can be
-    // used again.
-    aucmd_win[aco->use_aucmd_win_idx].auc_win_used = false;
-
-    if (!valid_tabpage_win(curtab)) {
-      // no valid window in current tabpage
-      close_tabpage(curtab);
-    }
-
-    unblock_autocmds();
-
-    win_T *const save_curwin = win_find_by_handle(aco->save_curwin_handle);
-    if (save_curwin != NULL) {
-      curwin = save_curwin;
-    } else {
-      // Hmm, original window disappeared.  Just use the first one.
-      curwin = firstwin;
-    }
-    curbuf = curwin->w_buffer;
-    // May need to restore insert mode for a prompt buffer.
-    entering_window(curwin);
-    if (bt_prompt(curbuf)) {
-      curbuf->b_prompt_insert = aco->save_prompt_insert;
-    }
-
-    prevwin = win_find_by_handle(aco->save_prevwin_handle);
-    vars_clear(&awp->w_vars->dv_hashtab);         // free all w: variables
-    hash_init(&awp->w_vars->dv_hashtab);          // re-use the hashtab
-
-    // If :lcd has been used in the autocommand window, correct current
-    // directory before restoring tp_localdir and globaldir.
-    if (awp->w_localdir != NULL) {
-      win_fix_current_dir();
-    }
-    xfree(curtab->tp_localdir);
-    curtab->tp_localdir = aco->tp_localdir;
-    xfree(globaldir);
-    globaldir = aco->globaldir;
-
-    // the buffer contents may have changed
-    VIsual_active = aco->save_VIsual_active;
-    check_cursor(curwin);
-    if (curwin->w_topline > curbuf->b_ml.ml_line_count) {
-      curwin->w_topline = curbuf->b_ml.ml_line_count;
-      curwin->w_topfill = 0;
-    }
-  } else {
-    // Restore curwin.  Use the window ID, a window may have been closed
-    // and the memory re-used for another one.
-    win_T *const save_curwin = win_find_by_handle(aco->save_curwin_handle);
-    if (save_curwin != NULL) {
-      // Restore the buffer which was previously edited by curwin, if it was
-      // changed, we are still the same window and the buffer is valid.
-      if (curwin->handle == aco->new_curwin_handle
-          && curbuf != aco->new_curbuf.br_buf
-          && bufref_valid(&aco->new_curbuf)
-          && aco->new_curbuf.br_buf->b_ml.ml_mfp != NULL) {
-        if (curwin->w_s == &curbuf->b_s) {
-          curwin->w_s = &aco->new_curbuf.br_buf->b_s;
-        }
-        curbuf->b_nwindows--;
-        curbuf = aco->new_curbuf.br_buf;
-        curwin->w_buffer = curbuf;
-        curbuf->b_nwindows++;
-      }
-
-      curwin = save_curwin;
-      curbuf = curwin->w_buffer;
-      prevwin = win_find_by_handle(aco->save_prevwin_handle);
-
-      // In case the autocommand moves the cursor to a position that does not
-      // exist in curbuf
-      VIsual_active = aco->save_VIsual_active;
-      check_cursor(curwin);
-    }
-  }
-
-  VIsual_active = aco->save_VIsual_active;
-  check_cursor(curwin);  // just in case lines got deleted
-  if (VIsual_active) {
-    check_pos(curbuf, &VIsual);
-  }
-  if (aco->new_curwin_handle != aco->save_curwin_handle) {
-    assert(aucmd_prepbuf_depth > 0);
-    aucmd_prepbuf_depth--;
-    autocmd_save_curwin = aucmd_prepbuf_depth == 0 ? 0 : autocmd_save_curwin;
-  }
 }
 
 /// Schedules an autocommand event, to be executed at the next event-loop tick.
@@ -1559,10 +1292,10 @@ static void deferred_event(void **argv)
     }
     tv_dict_set_keys_readonly(v_event);
 
-    aco_save_T aco = { 0 };
-    aucmd_prepbuf(&aco, buf);
+    CtxSwitch aco = { 0 };
+    ctx_switch(&aco, NULL, NULL, buf, 0);
     apply_autocmds_group(event, fname, fname_io, false, group, buf, eap, data, false);
-    aucmd_restbuf(&aco);
+    ctx_restore(&aco);
 
     restore_v_event(v_event, &save_v_event);
   }
@@ -1585,10 +1318,10 @@ static void deferred_optionset_modified(void **argv)
     bool new_val = (bool)(uintptr_t)argv[1];
     OptVal old = BOOLEAN_OPTVAL(!new_val);
     OptVal new = BOOLEAN_OPTVAL(new_val);
-    aco_save_T aco = { 0 };
-    aucmd_prepbuf(&aco, buf);
+    CtxSwitch aco = { 0 };
+    ctx_switch(&aco, NULL, NULL, buf, 0);
     apply_optionset_autocmd_now(kOptModified, OPT_LOCAL, old, old, old, new, NULL);
-    aucmd_restbuf(&aco);
+    ctx_restore(&aco);
   }
 }
 
@@ -1718,7 +1451,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   save_redo_T save_redo;
   const bool save_KeyTyped = KeyTyped;
   ESTACK_CHECK_DECLARATION;
-  aco_save_T aco = { 0 };
+  CtxSwitch aco = { 0 };
   bool save_changed = false;
   buf_T *old_curbuf = NULL;
 
@@ -1842,7 +1575,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
     }
     fname = xstrdup(fname);  // make a copy, so we can change it
   } else {
-    sfname = xstrdup(fname);
+    sfname = TO_SLASH_SAVE(fname);
     // Don't try expanding the following events.
     if (event == EVENT_CMDLINECHANGED
         || event == EVENT_CMDLINEENTER
@@ -1875,7 +1608,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
         || event == EVENT_WINCLOSED
         || event == EVENT_WINRESIZED
         || event == EVENT_WINSCROLLED) {
-      fname = xstrdup(fname);
+      fname = TO_SLASH_SAVE(fname);
       autocmd_fname_full = true;  // don't expand it later
     } else {
       fname = FullName_save(fname, false);
@@ -1888,20 +1621,11 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   }
 
   if (with_buf && buf != NULL && buf != curbuf) {
-    aucmd_prepbuf(&aco, buf);
+    ctx_switch(&aco, NULL, NULL, buf, 0);
   }
 
   save_changed = curbuf->b_changed;
   old_curbuf = curbuf;
-
-#ifdef BACKSLASH_IN_FILENAME
-  // Replace all backslashes with forward slashes. This makes the
-  // autocommand patterns portable between Unix and Windows.
-  if (sfname != NULL) {
-    forward_slash(sfname);
-  }
-  forward_slash(fname);
-#endif
 
   // Set the name to be used for <amatch>.
   autocmd_match = fname;
@@ -2094,7 +1818,7 @@ BYPASS_AU:
     curbuf->b_au_did_filetype = true;
   }
 
-  aucmd_restbuf(&aco);
+  ctx_restore(&aco);
 
   return retval;
 }
@@ -2345,14 +2069,6 @@ bool has_autocmd(event_T event, char *sfname, buf_T *buf)
     return false;
   }
 
-#ifdef BACKSLASH_IN_FILENAME
-  // Replace all backslashes with forward slashes. This makes the
-  // autocommand patterns portable between Unix and Windows.
-  sfname = xstrdup(sfname);
-  forward_slash(sfname);
-  forward_slash(fname);
-#endif
-
   AutoCmdVec *const acs = &autocmds[(int)event];
   for (size_t i = 0; i < kv_size(*acs); i++) {
     AutoPat *const ap = kv_A(*acs, i).pat;
@@ -2366,9 +2082,6 @@ bool has_autocmd(event_T event, char *sfname, buf_T *buf)
   }
 
   xfree(fname);
-#ifdef BACKSLASH_IN_FILENAME
-  xfree(sfname);
-#endif
 
   return retval;
 }
@@ -2381,7 +2094,7 @@ char *expand_get_augroup_name(expand_T *xp, int idx)
 }
 
 /// @param doautocmd  true for :doauto*, false for :autocmd
-char *set_context_in_autocmd(expand_T *xp, char *arg, bool doautocmd)
+char *aucmd_set_expand_context(expand_T *xp, char *arg, bool doautocmd)
 {
   // check for a group name, skip it if present
   autocmd_include_groups = false;

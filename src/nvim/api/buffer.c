@@ -22,6 +22,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/buffer_updates.h"
 #include "nvim/change.h"
+#include "nvim/context.h"
 #include "nvim/cursor.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/extmark.h"
@@ -941,6 +942,9 @@ void nvim_buf_del_var(Buffer buf, String name, Error *err)
 
 /// Gets the full/absolute filepath of the buffer, or the buffer name for non-file buffers.
 ///
+/// If the buffer represents a directory, the name ends with a path separator,
+/// unless it was changed by |:file| or |nvim_buf_set_name()|.
+///
 /// @param buf     Buffer id, or 0 for current buffer
 /// @param[out] err   Error details, if any
 /// @return Buffer name
@@ -981,11 +985,11 @@ void nvim_buf_set_name(Buffer buf, String name, Error *err)
       p_acd = false;
     }
 
-    // Using aucmd_*: autocommands will be executed by rename_buffer
-    aco_save_T aco = { 0 };
-    aucmd_prepbuf(&aco, b);
+    // Switch context to `b`: autocommands will be executed by rename_buffer
+    CtxSwitch aco = { 0 };
+    ctx_switch(&aco, NULL, NULL, b, 0);
     ren_ret = rename_buffer(name.data);
-    aucmd_restbuf(&aco);
+    ctx_restore(&aco);
 
     if (!is_curbuf) {
       RedrawingDisabled--;
@@ -1221,13 +1225,13 @@ Object nvim_buf_call(Buffer buf, LuaRef fn, lua_State *lstate, Error *err)
   }
 
   TRY_WRAP(err, {
-    aco_save_T aco = { 0 };
-    aucmd_prepbuf(&aco, b);
+    CtxSwitch cs = { 0 };
+    ctx_switch(&cs, NULL, NULL, b, 0);
 
     Array args = ARRAY_DICT_INIT;
     nlua_call_ref(fn, NULL, args, kRetMultiStack, NULL, err);
 
-    aucmd_restbuf(&aco);
+    ctx_restore(&cs);
   });
 
   return NIL;  // kRetMultiStack: values are already on the lua stack

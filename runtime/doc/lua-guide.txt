@@ -685,7 +685,7 @@ takes three mandatory arguments:
 
 Example:
 >lua
-    vim.api.nvim_create_user_command('Test', 'echo "It works!"', {})
+    vim.api.nvim_create_user_command('Test', 'echo "It works!"')
     vim.cmd.Test()
     --> It works!
 <

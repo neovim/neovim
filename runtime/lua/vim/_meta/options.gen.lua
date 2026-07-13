@@ -4888,6 +4888,15 @@ vim.o.opfunc = vim.o.operatorfunc
 vim.go.operatorfunc = vim.o.operatorfunc
 vim.go.opfunc = vim.go.operatorfunc
 
+--- Path of `vim.pack-lockfile`. Must be set before the first usage of any
+--- `vim.pack` function. Environment variables are expanded `:set_env`.
+---
+--- @type string
+vim.o.packlockfile = "$XDG_CONFIG_HOME/nvim/nvim-pack-lock.json"
+vim.o.plf = vim.o.packlockfile
+vim.go.packlockfile = vim.o.packlockfile
+vim.go.plf = vim.go.packlockfile
+
 --- Directories used to find packages.
 --- See `packages` and `packages-runtimepath`.
 --- Environment variables are expanded `:set_env`.

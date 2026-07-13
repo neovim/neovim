@@ -28,7 +28,6 @@
 #include "nvim/diff.h"
 #include "nvim/digraph.h"
 #include "nvim/drawscreen.h"
-#include "nvim/edit.h"
 #include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/vars.h"
@@ -40,7 +39,6 @@
 #include "nvim/file_search.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
-#include "nvim/getchar.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
@@ -48,6 +46,8 @@
 #include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/indent_c.h"
+#include "nvim/input.h"
+#include "nvim/insert.h"
 #include "nvim/keycodes.h"
 #include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
@@ -1100,13 +1100,7 @@ static int normal_execute(VimState *state, int key)
     // When "restart_edit" is set fake a "d"elete command, Insert mode will restart automatically.
     // Insert the typed character in the typeahead buffer, so that it can
     // be mapped in Insert mode.  Required for ":lmap" to work.
-    int len = ins_char_typebuf(vgetc_char, vgetc_mod_mask, true);
-
-    // When recording and gotchars() was called the character will be
-    // recorded again, remove the previous recording.
-    if (KeyTyped) {
-      ungetchars(len);
-    }
+    requeue_key(vgetc_char, vgetc_mod_mask, true);
 
     if (restart_edit != 0) {
       s->c = 'd';
@@ -3291,12 +3285,14 @@ static void nv_Zet(cmdarg_T *cap)
     do_cmdline_cmd("q!");
     break;
 
-  // "ZR": restart. With count, restart without checking for changes.
+  // "ZR": restart. With count, does not restore session/check for changes.
   case 'R':
-    if (cap->count0 >= 1) {
+    if (cap->count0 >= 1 && cap->count0 <= 8) {
+      do_cmdline_cmd("restart!");
+    } else if (cap->count0 == 9) {
       do_cmdline_cmd("restart! +qall!");
     } else {
-      do_cmdline_cmd("restart!");
+      do_cmdline_cmd("restart");
     }
     break;
 
@@ -5797,7 +5793,7 @@ static void nv_dot(cmdarg_T *cap)
   // If "restart_edit" is true, the last but one command is repeated
   // instead of the last command (inserting text). This is used for
   // CTRL-O <.> in insert mode.
-  if (start_redo(cap->count0, restart_edit != 0 && !arrow_used) == false) {
+  if (start_redo(cap->count0, restart_edit != 0 && !Ins.arrow_used) == false) {
     clearopbeep(cap->oap);
   }
 }
@@ -6426,7 +6422,7 @@ static void nv_record(cmdarg_T *cap)
       { .v_type = VAR_STRING, .vval.v_string = fc },
       { .v_type = VAR_UNKNOWN },
     };
-    nlua_call_vimfn("vim._core.cmdwin", "open", tv_args, NULL);
+    nlua_call_typval("vim._core.cmdwin", "open", tv_args, NULL);
   } else {
     // (stop) recording into a named register, unless executing a
     // register.

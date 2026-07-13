@@ -18,14 +18,15 @@
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/event/rstream.h"
-#include "nvim/getchar.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
+#include "nvim/input.h"
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
 #include "nvim/log.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
+#include "nvim/mouse.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/input.h"
@@ -315,6 +316,16 @@ size_t input_enqueue(uint64_t chan_id, String keys)
 {
   current_ui = chan_id;
 
+  // If the buffer has been fully drained, rewind the read/write cursors to the
+  // start to reclaim tail space. Otherwise a drained-but-not-rewound buffer left
+  // pinned within <19 bytes of the top (input_get() advances input_read_pos but
+  // never rewinds it) would fail the `input_space() >= 19` gate below forever,
+  // silently dropping all further input and freezing the editor.
+  if (input_read_pos == input_write_pos) {
+    input_read_pos = input_buffer;
+    input_write_pos = input_buffer;
+  }
+
   if (keys.size > 0) {
     set_vim_var_nr(VV_USERACTIVE, (varnumber_T)os_realtime());
   }
@@ -385,14 +396,15 @@ static uint8_t check_multiclick(int code, int grid, int row, int col, bool *skip
   }
 
   bool no_move = orig_mouse_grid == grid && orig_mouse_col == col && orig_mouse_row == row;
+  bool is_click, is_drag;
+  (void)get_mouse_button(code, &is_click, &is_drag);
 
-  if (code == KE_MOUSEMOVE) {
-    if (no_move) {
-      *skip_event = true;
-      return 0;
-    }
-  } else if (code == KE_LEFTMOUSE || code == KE_RIGHTMOUSE || code == KE_MIDDLEMOUSE
-             || code == KE_X1MOUSE || code == KE_X2MOUSE) {
+  if (is_drag && no_move) {
+    *skip_event = true;
+    return 0;
+  }
+
+  if (is_click) {
     // For click events the number of clicks is updated.
     uint64_t mouse_time = os_hrtime();    // time of current mouse click (ns)
     // Compute the time elapsed since the previous mouse click.
@@ -409,8 +421,11 @@ static uint8_t check_multiclick(int code, int grid, int row, int col, bool *skip
     }
     orig_mouse_code = code;
     orig_mouse_time = mouse_time;
+  } else if (!no_move) {
+    // For drag and release events the number of clicks is kept.
+    // However, if the mouse has moved, the next click should reset the click count.
+    orig_mouse_code = code;
   }
-  // For drag and release events the number of clicks is kept.
 
   orig_mouse_grid = grid;
   orig_mouse_col = col;

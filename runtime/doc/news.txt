@@ -90,6 +90,7 @@ EDITOR
   • Expr-register (|i_CTRL-R_=|, |c_CTRL-R_=|) no longer supports opening
     cmdwin via |c_CTRL-F|.
 • Behavior of |:restart| changed. Use "!" (|:restart!|) to get the old behavior.
+  • |ZR| now performs |:restart|. Add a count to change the behavior.
 
 EVENTS
 
@@ -138,6 +139,17 @@ The following new features were added.
 
 API
 
+• |nvim_win_resize()| resizes a window with a specified anchor edge.
+  |nvim_win_set_height()| and |nvim_win_set_width()| are now deprecated.
+• |api-contract| treats `opts` and any parameters thereafter, as optional
+  (equivalent to passing an empty dict). Clients may omit such optional
+  parameters.
+  • The Lua |vim.api| bridge is also a "client" and thus may omit `opts` and
+    any following parameters: >lua
+    -- Before:
+    vim.print(vim.api.nvim_get_mark('A', {}))
+    -- After:
+    vim.print(vim.api.nvim_get_mark('A'))
 • |nvim_buf_call()| and |nvim_win_call()| now preserve multiple return values.
 • |nvim_set_hl()| supports "font" key.
 • |nvim_open_win()| `zindex` controls whether the UI will use a dimmed cursor
@@ -198,7 +210,7 @@ EDITOR
 • |:log| opens log files.
 • |:restart| saves/restores the current session (window layout, buffers, …).
   • |:restart!| (with a bang "!") does not save/restore the session.
-• |ZR| restarts Nvim (|:restart!|).
+• |ZR| restarts Nvim (|:restart|).
 • |:uptime| displays uptime.
 • |:packupdate| and |:packdel| for managing |vim.pack|.
 • 'scrollback' is now also valid in |prompt-buffer| buffers to limit the
@@ -252,11 +264,13 @@ LUA
   terminal supports it.
 • |vim.net.request()| can specify custom headers by passing `opts.headers`.
 • |vim.net.request()| can now accept  `method` param overload for multiple HTTP methods.
-• |writefile()| treats Lua strings as "blob", so it can be used to write
-  binary data.
+• |writefile()| treats Lua and RPC strings as |Blob|, so it can be used to
+  write binary data.
 • |vim.fs.dir()| with `opts.err=true`, reports errors. An inaccessible root
   dir yields a single (name, nil, err) item.
 • |vim.fs.find()| returns a list of errors as its second return value.
+• |vim.fs.mkdir()| creates directories, including parent directories with
+  `opts.parents=true`.
 • |vim.filetype.inspect()| returns a copy of the internal tables used for
   filetype detection.
 • Added `__eq` metamethod to |vim.VersionRange|. 2 distinct but representing
@@ -289,6 +303,7 @@ OPTIONS
   The same applies to 'rulerformat', 'statuscolumn', 'tabline', 'winbar',
   'titlestring', and 'iconstring'.
 • 'winpinned' prevents window from closing unless specifically targeted.
+• 'packlockfile' sets the path used for |vim.pack-lockfile|.
 
 PERFORMANCE
 

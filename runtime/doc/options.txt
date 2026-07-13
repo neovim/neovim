@@ -3459,8 +3459,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	attempt to set 'guifontwide' to a matching double-width font.
 
 						*'helpfile'* *'hf'*
-'helpfile' 'hf'		string	(default (MS-Windows) "$VIMRUNTIME\doc\help.txt"
-                                         (others) "$VIMRUNTIME/doc/help.txt")
+'helpfile' 'hf'		string	(default "$VIMRUNTIME/doc/help.txt")
 			global
 			Disallowed in |modeline|. |no-modeline-option|
 	Name of the main help file.  All distributed help files should be
@@ -4783,6 +4782,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	See |:map-operator| for more info and an example.  The value can be
 	the name of a function, a |lambda| or a |Funcref|.  See
 	|option-value-function| for more information.
+
+						*'packlockfile'* *'plf'*
+'packlockfile' 'plf'	string	(default "$XDG_CONFIG_HOME/nvim/nvim-pack-lock.json")
+			global
+			Disallowed in |modeline|. |no-modeline-option|
+	Path of |vim.pack-lockfile|. Must be set before the first usage of any
+	|vim.pack| function. Environment variables are expanded |:set_env|.
 
 						*'packpath'* *'pp'*
 'packpath' 'pp'		string	(default see 'runtimepath')

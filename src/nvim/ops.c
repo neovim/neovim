@@ -25,7 +25,6 @@
 #include "nvim/clipboard.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
-#include "nvim/edit.h"
 #include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
@@ -38,13 +37,14 @@
 #include "nvim/fold.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
-#include "nvim/getchar.h"
-#include "nvim/getchar_defs.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
+#include "nvim/input.h"
+#include "nvim/input_defs.h"
+#include "nvim/insert.h"
 #include "nvim/keycodes.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mark.h"
@@ -883,8 +883,8 @@ int op_delete(oparg_T *oap)
       }
       if (curbuf->b_p_ai) {                 // don't delete indent
         beginline(BL_WHITE);                // cursor on first non-white
-        did_ai = true;                      // delete the indent when ESC hit
-        ai_col = curwin->w_cursor.col;
+        Ins.did_ai = true;                      // delete the indent when ESC hit
+        Ins.ai_col = curwin->w_cursor.col;
       } else {
         beginline(0);                       // cursor in column 0
       }
@@ -1643,8 +1643,8 @@ void op_insert(oparg_T *oap, int count1)
     if (oap->op_type == OP_APPEND) {
       add += bd.textlen;
       // account for pressing cursor in insert mode when '$' was used
-      if (bd.is_MAX && start_insert.lnum == Insstart.lnum && start_insert.col > Insstart.col) {
-        offset = start_insert.col - Insstart.col;
+      if (bd.is_MAX && start_insert.lnum == Ins.start.lnum && start_insert.col > Ins.start.col) {
+        offset = start_insert.col - Ins.start.col;
         add -= offset;
         if (oap->end_vcol > offset) {
           oap->end_vcol -= offset + 1;
@@ -1685,7 +1685,7 @@ int op_change(oparg_T *oap)
   colnr_T l = oap->start.col;
   if (oap->motion_type == kMTLineWise) {
     l = 0;
-    can_si = may_do_si();  // Like opening a new line, do smart indent
+    Ins.can_si = may_do_si();  // Like opening a new line, do smart indent
   }
 
   // First delete the text in the region.  In an empty buffer only need to

@@ -14,6 +14,7 @@
 #include "nvim/change.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
+#include "nvim/dialog.h"
 #include "nvim/errors.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
@@ -21,7 +22,6 @@
 #include "nvim/fileio.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
-#include "nvim/getchar.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/hashtab.h"
@@ -479,7 +479,7 @@ static void select_spell_suggestion(suginfo_T *sug)
   typval_T bad_tv = { .v_type = VAR_STRING,
                       .vval.v_string = xstrnsave(sug->su_badptr, (size_t)sug->su_badlen) };
   typval_T lua_args[] = { items_tv, bad_tv, { .v_type = VAR_UNKNOWN } };
-  nlua_call_vimfn("vim._core.spell", "select_suggest", lua_args, NULL);
+  nlua_call_typval("vim._core.spell", "select_suggest", lua_args, NULL);
 
   tv_clear(&items_tv);
   tv_clear(&bad_tv);

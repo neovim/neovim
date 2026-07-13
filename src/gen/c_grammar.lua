@@ -354,7 +354,20 @@ if arg[1] == '--test' then
   end
 end
 
+--- Index of the `opts` parameter, which starts optional parameters.
+--- @param fn_params [string,string][] Raw `{type, name}` pairs of a parsed API function.
+--- @return integer? opts_idx 1-based index of `opts`, or nil.
+local function opts_index(fn_params)
+  for i = 1, #fn_params do
+    local c = typed_container:match(fn_params[i][1])
+    if fn_params[i][2] == 'opts' and c and c[1] == 'Dict' then
+      return i
+    end
+  end
+end
+
 return {
   grammar = grammar --[[@as nvim.c_grammar]],
   typed_container = typed_container,
+  opts_index = opts_index,
 }

@@ -36,9 +36,14 @@ local function bufopt(name)
   return api.nvim_get_option_value(name, { buf = 0 })
 end
 
+local function has_syntax_group(name)
+  return exec_capture('syntax list ' .. name):find(name, 1, true) ~= nil
+end
+
 local function assert_directory(path)
-  eq(path, api.nvim_buf_get_name(0))
-  eq(path, fn.bufname('%'))
+  local ffname = path:sub(-1) == '/' and path or path .. '/'
+  eq(ffname, api.nvim_buf_get_name(0))
+  eq(path, vim.fs.normalize(fn.bufname('%')))
   eq('directory', bufopt('filetype'))
   eq(true, bufopt('buflisted'))
 end
@@ -100,6 +105,36 @@ describe('nvim.dir', function()
     line_of('alpha.txt')
   end)
 
+  it('3P dir-browser can handle `FileType directory` event and rename buf', function()
+    make_fixture()
+    n.clear({ args_rm = { '-u' } })
+    exec_lua(function()
+      _G.nvim_dir_loaded_in_filetype = nil
+      vim.api.nvim_create_autocmd('FileType', {
+        pattern = 'directory',
+        callback = function(ev)
+          _G.nvim_dir_loaded_in_filetype = package.loaded['nvim.dir'] ~= nil
+          local dir = vim.api.nvim_buf_get_name(ev.buf)
+          local browser = vim.api.nvim_create_buf(false, true)
+          vim.api.nvim_buf_set_name(browser, 'example://' .. dir)
+          vim.api.nvim_buf_set_lines(browser, 0, -1, false, {
+            'plugin browser for: ' .. dir,
+          })
+          vim.api.nvim_set_current_buf(browser)
+          vim.api.nvim_buf_delete(ev.buf, { force = true })
+        end,
+      })
+    end)
+
+    edit(root)
+
+    eq(false, exec_lua('return _G.nvim_dir_loaded_in_filetype'))
+    eq('example://' .. root .. '/', api.nvim_buf_get_name(0))
+    eq({ 'plugin browser for: ' .. root .. '/' }, lines())
+    eq(false, exec_lua([[return package.loaded['nvim.dir'] ~= nil]]))
+    eq('', exec_capture('messages'))
+  end)
+
   it('triggers nested autocmds when opening directory buffers', function()
     make_fixture()
 
@@ -155,19 +190,45 @@ describe('nvim.dir', function()
     assert_directory(root)
     line_of('alpha.txt')
 
-    n.clear({ args_rm = { '--cmd' }, args = { '--noplugin' } })
-    api.nvim_buf_set_lines(0, 0, -1, false, { '  alpha', '  beta' })
-    api.nvim_win_set_cursor(0, { 2, 7 })
-    feed('-')
+    -- Ensure the cursor stays on the entry we navigated up from.
+    eq('alpha.txt', api.nvim_get_current_line())
+  end)
 
-    eq({ 1, 2 }, api.nvim_win_get_cursor(0))
-    eq(false, exec_lua([[return package.loaded['nvim.dir'] ~= nil]]))
+  it('startup plugins can replace the `-` mapping', function()
+    local plugin_file = vim.fs.joinpath(vim.fn.stdpath('config'), 'plugin/dirvish.lua')
+    vim.fs.mkdir(vim.fs.dirname(plugin_file), { parents = true })
+    finally(function()
+      os.remove(plugin_file) -- XXX: Remove file only, to avoid n.rmdir() hang on Windows.
+    end)
+    vim.fn.writefile(
+      [[
+        if vim.fn.mapcheck('-', 'n') == '' and vim.fn.hasmapto('<Plug>(dirvish_up)', 'n') == 0 then
+          vim.keymap.set('n', '-', '<Plug>(dirvish_up)')
+        end
+      ]],
+      plugin_file
+    )
+
+    n.clear({ args_rm = { '-u', '--cmd' } })
+
+    eq(1, fn.exists('g:loaded_nvim_dir_plugin')) -- Avoid false negatives.
+    eq('<Plug>(dirvish_up)', fn.mapcheck('-', 'n'))
+  end)
+
+  it('preserves alternate buffer when opening a parent directory', function()
+    make_fixture()
+    n.clear({ args_rm = { '-u', '--cmd' } })
+
+    edit(file)
+    feed('-')
+    poke_eventloop()
+
+    assert_directory(root)
+    -- Keep the alternate buffer on the file we navigated up from.
+    eq(file, api.nvim_buf_get_name(fn.bufnr('#')))
   end)
 
   it('uses an absolute buffer name for a relative startup directory argument', function()
-    if t.is_zig_build() then
-      return pending('broken with build.zig relative runtime paths after chdir')
-    end
     make_fixture()
     local cwd = assert(vim.uv.cwd())
     assert(vim.uv.chdir(root))
@@ -258,18 +319,21 @@ describe('nvim.dir', function()
     edit(root)
     assert_directory(root)
     eq('delete', bufopt('bufhidden'))
+    eq(true, has_syntax_group('directoryDirectory'))
     local buf = api.nvim_get_current_buf()
 
     t.write_file(root .. '/beta.txt', 'beta', true)
     feed('R')
     poke_eventloop()
     eq('delete', bufopt('bufhidden'))
+    eq(true, has_syntax_group('directoryDirectory'))
     line_of('beta.txt')
 
     t.write_file(root .. '/gamma.txt', 'gamma', true)
     command('edit')
     eq(buf, api.nvim_get_current_buf())
     assert_directory(root)
+    eq(true, has_syntax_group('directoryDirectory'))
     line_of('subdir/')
     line_of('alpha.txt')
     line_of('gamma.txt')
@@ -373,9 +437,6 @@ describe('nvim.dir', function()
   end)
 
   it('coexists with netrw and can be disabled', function()
-    if t.is_zig_build() then
-      return pending('broken with build.zig relative runtime paths after chdir')
-    end
     make_fixture()
     n.clear({ args_rm = { '-u' } })
     local cwd = fn.getcwd()
@@ -399,7 +460,7 @@ describe('nvim.dir', function()
 
   it('supports the FileExplorer browse contract', function()
     if t.is_zig_build() then
-      return pending('broken with build.zig relative runtime paths after chdir')
+      return pending('broken with build.zig: TMPDIR relative cwd')
     end
     make_fixture()
     n.clear({ args_rm = { '-u' } })

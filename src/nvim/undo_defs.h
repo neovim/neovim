@@ -2,8 +2,10 @@
 
 #include <time.h>
 
+#include "nvim/eval/typval_defs.h"
 #include "nvim/extmark_defs.h"
 #include "nvim/mark_defs.h"
+#include "nvim/option_defs.h"
 
 enum { UNDO_HASH_SIZE = 32, };  ///< Size in bytes of the hash used in the undo file.
 
@@ -73,3 +75,24 @@ enum {
   UH_EMPTYBUF = 0x02,  ///< buffer was empty
   UH_RELOAD   = 0x04,  ///< buffer was reloaded
 };
+
+/// Checkpoint of buffer undo state, for "undo-invisible" speculative edits: u_checkpoint() detaches
+/// the undo tree so subsequent edits build a disposable one; u_rollback() reverts those edits and
+/// reattaches the checkpointed tree.  Used by 'inccommand' preview.
+typedef struct {
+  u_header_T *uc_oldhead;
+  u_header_T *uc_newhead;
+  u_header_T *uc_curhead;
+  int uc_numhead;
+  bool uc_synced;
+  int uc_seq_last;
+  int uc_save_nr_last;
+  int uc_seq_cur;
+  time_t uc_time_cur;
+  int uc_save_nr_cur;
+  char *uc_line_ptr;
+  linenr_T uc_line_lnum;
+  colnr_T uc_line_colnr;
+  OptInt uc_undolevels;        ///< saved 'undolevels'
+  varnumber_T uc_changedtick;  ///< saved b:changedtick
+} UndoCheckpoint;

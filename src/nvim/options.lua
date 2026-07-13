@@ -4259,8 +4259,7 @@ local options = {
       cb = 'did_set_helpfile',
       defaults = {
         if_true = macros('DFLT_HELPFILE', 'string'),
-        doc = [[(MS-Windows) "$VIMRUNTIME\doc\help.txt"
-                  (others) "$VIMRUNTIME/doc/help.txt"]],
+        doc = [["$VIMRUNTIME/doc/help.txt"]],
       },
       desc = [=[
         Name of the main help file.  All distributed help files should be
@@ -6419,6 +6418,22 @@ local options = {
       varname = 'p_opfunc',
     },
     {
+      abbreviation = 'plf',
+      defaults = '$XDG_CONFIG_HOME/nvim/nvim-pack-lock.json',
+      deny_duplicates = true,
+      desc = [=[
+        Path of |vim.pack-lockfile|. Must be set before the first usage of any
+        |vim.pack| function. Environment variables are expanded |:set_env|.
+      ]=],
+      expand = 'nodefault',
+      full_name = 'packlockfile',
+      scope = { 'global' },
+      secure = true,
+      short_desc = N_('path of vim.pack lockfile'),
+      type = 'string',
+      varname = 'p_plf',
+    },
+    {
       abbreviation = 'pp',
       cb = 'did_set_runtimepackpath',
       defaults = {
@@ -7852,7 +7867,6 @@ local options = {
     },
     {
       abbreviation = 'ssl',
-      cb = 'did_set_shellslash',
       defaults = {
         condition = 'MSWIN',
         if_true = false,

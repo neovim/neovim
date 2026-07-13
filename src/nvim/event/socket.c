@@ -33,9 +33,8 @@ char *socket_address_tcp_host_end(const char *address)
     return NULL;
   }
 
-  // Windows drive letter path: "X:\..." or "X:/..." is a local path, not TCP.
-  if (ASCII_ISALPHA((uint8_t)address[0]) && address[1] == ':'
-      && (address[2] == '\\' || address[2] == '/')) {
+  // Windows drive letter path: "X:/..." is a local path, not TCP.
+  if (ASCII_ISALPHA((uint8_t)address[0]) && address[1] == ':' && address[2] == '/') {
     return NULL;
   }
 
@@ -169,7 +168,8 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
     }
     uv_freeaddrinfo(watcher->uv.tcp.addrinfo);
   } else {
-    result = uv_pipe_bind(&watcher->uv.pipe.handle, watcher->addr);
+    result = uv_pipe_bind2(&watcher->uv.pipe.handle, watcher->addr, strlen(watcher->addr),
+                           UV_PIPE_NO_TRUNCATE);
 
     // If bind failed with EACCES/EADDRINUSE, check if socket is stale
     if (result == UV_EACCES || result == UV_EADDRINUSE) {
@@ -196,7 +196,8 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
           watcher->stream->data = watcher;
 
           // Retry bind with fresh handle
-          result = uv_pipe_bind(&watcher->uv.pipe.handle, watcher->addr);
+          result = uv_pipe_bind2(&watcher->uv.pipe.handle, watcher->addr, strlen(watcher->addr),
+                                 UV_PIPE_NO_TRUNCATE);
         }
       } else {
         // Socket is alive - this is a real error

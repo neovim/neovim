@@ -17,6 +17,8 @@ DEPRECATED IN 0.13					*deprecated-0.13*
 
 API
 
+• *nvim_win_set_height()*	Use |nvim_win_resize()| instead.
+• *nvim_win_set_width()*	Use |nvim_win_resize()| instead.
 • The "buffer" key accepted and/or returned by these functions, was renamed to
   "buf":
   • |nvim_create_autocmd()|
