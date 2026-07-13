@@ -11,13 +11,25 @@ jobs:
   scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - name: Check for the Coverity Scan token
+        env:
+          TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
+          EMAIL: ${{ secrets.COVERITY_SCAN_EMAIL }}
+        run: |
+          if [[ -n "$TOKEN" && -n "EMAIL" ]]; then
+            echo "have_coverity_token=yes" >> $GITHUB_ENV
+          fi
+
+      - if: env.have_coverity_token
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup
+      - if: env.have_coverity_token
+        uses: ./.github/actions/setup
 
-      - name: Download Coverity
+      - if: env.have_coverity_token
+        name: Download Coverity
         run: |
           wget -q https://scan.coverity.com/download/cxx/linux64 --post-data "token=$TOKEN&project=neovim%2Fneovim" -O coverity_tool.tgz
           mkdir cov-scan
@@ -25,14 +37,17 @@ jobs:
         env:
           TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
 
-      - name: Build dependencies
+      - if: env.have_coverity_token
+        name: Build dependencies
         run: make deps
 
-      - name: Build/scan neovim
+      - if: env.have_coverity_token
+        name: Build/scan neovim
         run: |
           env PATH=$(pwd)/cov-scan/bin:$PATH cov-build --dir cov-int make
 
-      - name: Submit results
+      - if: env.have_coverity_token
+        name: Submit results
         run: |
           tar zcf cov-scan.tgz cov-int
           curl --form token=$TOKEN \
