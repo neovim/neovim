@@ -413,7 +413,12 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
       && after_pathsep(curbuf->b_ffname,
                        curbuf->b_ffname + strlen(curbuf->b_ffname))) {
     if (augroup_exists("filetypedetect")) {
+      bufref_T bufref;
+      set_bufref(&bufref, curbuf);
       do_doautocmd("filetypedetect BufRead", false, NULL);
+      if (!bufref_valid(&bufref) || curbuf != old_curbuf.br_buf || aborting()) {
+        return FAIL;
+      }
     }
   }
 
