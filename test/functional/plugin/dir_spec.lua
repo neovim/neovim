@@ -101,7 +101,7 @@ describe('nvim.dir', function()
     line_of('alpha.txt')
   end)
 
-  it('lets FileType directory handlers show URI-backed browser buffers', function()
+  it('3P dir-browser can handle `FileType directory` event and rename buf', function()
     make_fixture()
     n.clear({ args_rm = { '-u' } })
     exec_lua(function()
