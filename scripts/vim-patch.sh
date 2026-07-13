@@ -911,20 +911,32 @@ is_na_patch() {
   local NA_FILELIST="$NVIM_SOURCE_DIR/scripts/vim_na_files.txt"
   local NA_HUNKS_C="$NVIM_SOURCE_DIR/scripts/vim_na_hunks_c.txt"
 
-  local FILES_REMAINING C_FILES
+  local FILES_REMAINING HUNKS HUNK_NUM_FINAL RT_NUMSTAT RT_TITLE_PAT RT_TITLE_NUM
   FILES_REMAINING="$(diff <(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id --name-only -r "$patch" | grep -v -f "$NA_REGEXP") "$NA_FILELIST" |
     grep '^<' | sed 's/^< //')" || true
   test -z "$FILES_REMAINING" && return 0
 
-  C_FILES=$(echo "$FILES_REMAINING" | grep '.*\.c$')
-  test "$FILES_REMAINING" != "$C_FILES" && return 1
-
-  for file in $C_FILES; do
-    HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -U0  -r "$patch" -- "$file" | grep -P '^@@ .* @@')
-    if test -n "$HUNKS"; then
-      HUNK_NUM_FINAL=$(echo "$HUNKS" | sed 's/^@@ .* @@ \?//' | grep -cv -f "$NA_HUNKS_C")
-      test "$HUNK_NUM_FINAL" -ne 0 && return 1
-    fi
+  for file in $FILES_REMAINING; do
+    case ${file} in
+      runtime/doc/*.txt)
+        RT_NUMSTAT=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id --numstat -r "$patch" -- "${file}" | grep -c '^1\s\+1\s\+')
+        test "${RT_NUMSTAT}" -ne 1 && return 1
+        RT_TITLE_PAT="\*$(basename "${file}")\*\s+For Vim version [0-9]\.[0-9]\.\s+Last change: [0-9]+ [A-Z][a-z]+ [0-9]+\n"
+        RT_TITLE_NUM="$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -U0 -r "$patch" -- "${file}" |
+          grep -Pzc "@@\n-${RT_TITLE_PAT}\+${RT_TITLE_PAT}$")" || true
+        test "$RT_TITLE_NUM" -ne 1 && return 1
+        ;;
+      *.c)
+        HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -U0  -r "$patch" -- "$file" | grep -P '^@@ .* @@')
+        if test -n "$HUNKS"; then
+          HUNK_NUM_FINAL=$(echo "$HUNKS" | sed 's/^@@ .* @@ \?//' | grep -cv -f "$NA_HUNKS_C")
+          test "$HUNK_NUM_FINAL" -ne 0 && return 1
+        fi
+        ;;
+      *)
+        return 1
+        ;;
+    esac
   done
 
   return 0
