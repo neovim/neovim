@@ -5030,6 +5030,7 @@ static void ex_restart(exarg_T *eap)
       if (next_li != NULL) {
         const char *addr = tv_get_string(TV_LIST_ITEM_TV(next_li));
         if (strstr(addr, ":") || strstr(addr, "/") || strstr(addr, "\\")) {
+          XFREE_CLEAR(listen_arg);
           listen_arg = TO_SLASH_SAVE(addr);
 #ifdef MSWIN
           // On Windows, don't pass --listen to new server (named pipe can't be reused immediately).

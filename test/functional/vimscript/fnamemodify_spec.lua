@@ -104,6 +104,10 @@ describe('fnamemodify()', function()
   it('handles :h', function()
     -- generic path
     eq('.', fnamemodify('hello.txt', ':h'))
+    -- Repeated ":h" on a bare name: the first ":h" replaces the buffer with ".", the
+    -- next must re-anchor into it and not read the freed buffer (Coverity CID 649200).
+    eq('.', fnamemodify('hello.txt', ':h:h'))
+    eq('.', fnamemodify('hello.txt', ':h:h:h'))
     eq('path/to', fnamemodify('path/to/hello.txt', ':h'))
     eq('/', fnamemodify('/', ':h'))
     eq('/', fnamemodify('/foo', ':h'))

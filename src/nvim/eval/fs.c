@@ -233,6 +233,7 @@ repeat:
       // Result is empty.  Turn it into "." to make ":cd %:h" work.
       xfree(*bufp);
       *bufp = *fnamep = tail = xstrdup(".");
+      s = *fnamep;  // s pointed into the freed buffer.
       *fnamelen = 1;
     } else {
       while (tail > s && !after_pathsep(s, tail)) {
