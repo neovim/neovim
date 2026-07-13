@@ -13,7 +13,7 @@ let s:keepcpo= &cpo
 set cpo&vim
 
 " Behaves just like Python
-runtime! ftplugin/python.vim ftplugin/python_*.vim ftplugin/python/*.vim
+runtime! ftplugin/python[.]{vim,lua} ftplugin/python_*.{vim,lua} ftplugin/python/*.{vim,lua}
 
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
     let  b:browsefilter = "Pyrex files (*.pyx, *.pxd)\t*.pyx;*.pxd\n" .

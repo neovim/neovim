@@ -9,4 +9,4 @@ if exists("b:did_ftplugin")
 endif
 
 " source the HTML ftplugin
-runtime! ftplugin/html.vim
+runtime! ftplugin/html[.]{vim,lua}

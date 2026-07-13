@@ -11,4 +11,4 @@ if exists('b:did_ftplugin')
   finish
 endif
 
-runtime! ftplugin/erlang.vim
+runtime! ftplugin/erlang[.]{vim,lua}

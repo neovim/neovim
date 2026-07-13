@@ -12,4 +12,4 @@ if exists("b:did_ftplugin")
 endif
 
 " Just use the C plugin for now.
-runtime! ftplugin/c.vim ftplugin/c_*.vim ftplugin/c/*.vim
+runtime! ftplugin/c[.]{vim,lua} ftplugin/c_*.{vim,lua} ftplugin/c/*.{vim,lua}

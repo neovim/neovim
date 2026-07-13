@@ -8,4 +8,4 @@ if exists('b:did_ftplugin')
 endif
 
 " Behaves mostly just like C++
-runtime! ftplugin/cpp.vim
+runtime! ftplugin/cpp[.]{vim,lua}
