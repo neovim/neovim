@@ -195,8 +195,12 @@ describe('TUI :detach', function()
     eq(1, #child_uis)
 
     eq(
-      { false, { 0, 'Vim(detach):E481: No range allowed: 1detach' } },
-      { child_session:request('nvim_command', '1detach') }
+      { false, { 0, 'Vim(detach):E477: No ! allowed: detach!' } },
+      { child_session:request('nvim_command', 'detach!') }
+    )
+    eq(
+      { false, { 0, 'Vim(detach):E16: Invalid range' } },
+      { child_session:request('nvim_command', '2detach') }
     )
     eq(
       { false, { 0, 'Vim(detach):E488: Trailing characters: foo: detach foo' } },
@@ -237,7 +241,7 @@ describe('TUI :detach', function()
     ]])
   end)
 
-  it('! detaches other UIs', function()
+  it('% detaches other UIs', function()
     setup_detach_child()
     finally(function()
       pcall(function()
@@ -255,8 +259,8 @@ describe('TUI :detach', function()
     eq(1, #uis_before)
     local tui_chan_id = uis_before[1].chan
 
-    -- :detach! with only 1 UI is a no-op.
-    tt.feed_data(':detach!\013')
+    -- :%detach with only 1 UI is a no-op.
+    tt.feed_data(':%detach\013')
     screen:expect({ any = vim.pesc('No other UIs are attached') })
     local _, uis_noop = child_session:request('nvim_list_uis')
     eq(1, #uis_noop)
@@ -265,7 +269,7 @@ describe('TUI :detach', function()
     local _, uis_attached = child_session:request('nvim_list_uis')
     eq(2, #uis_attached)
 
-    tt.feed_data(':detach!\013')
+    tt.feed_data(':%detach\013')
     screen:expect([[
       Hello from detach^!                                |
       {100:~                                                 }|*3
