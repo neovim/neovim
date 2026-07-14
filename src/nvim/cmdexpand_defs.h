@@ -133,6 +133,7 @@ enum {
   EXPAND_LOG,
   EXPAND_PACKDEL,
   EXPAND_PACKUPDATE,
+  EXPAND_MARKS,
 };
 
 /// Type used by ExpandGeneric()

@@ -3539,7 +3539,8 @@ function vim.fn.getloclist(nr, what) end
 --- If the optional {buf} argument is specified, returns the
 --- local marks defined in buffer {buf}.  For the use of {buf},
 --- see |bufname()|.  If {buf} is invalid, an empty list is
---- returned.
+--- returned.  For a |prompt-buffer| the result includes the
+--- |':| mark.
 ---
 --- Each item in the returned List is a |Dict| with the following:
 ---     mark   name of the mark prefixed by "'"
