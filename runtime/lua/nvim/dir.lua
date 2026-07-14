@@ -54,20 +54,6 @@ local function notify_error(operation, err)
   vim.notify('dir: ' .. prefix .. tostring(err), vim.log.levels.ERROR)
 end
 
----@param buf integer?
----@param allow_nil boolean
----@return integer
-local function resolve_buf(buf, allow_nil)
-  vim.validate('buf', buf, 'number', allow_nil)
-  if buf == nil or buf == 0 then
-    buf = api.nvim_get_current_buf()
-  end
-  if not api.nvim_buf_is_valid(buf) then
-    error('invalid buffer: ' .. buf, 2)
-  end
-  return buf
-end
-
 ---@param buf integer
 ---@param options [string, any][]
 ---@return boolean
@@ -142,11 +128,7 @@ end
 ---@param ... any
 ---@return boolean
 local function call_driver(ctx, method, ...)
-  local fn = ctx.driver[method]
-  if fn == nil then
-    return true
-  end
-  local ok, err = pcall(fn, ctx, ...)
+  local ok, err = pcall(ctx.driver[method], ctx, ...)
   if not ok then
     notify_error(method, err)
     return false
@@ -289,12 +271,9 @@ end
 ---@param driver nvim.dir.Driver
 ---@return nvim.dir.Ctx
 function M.open(buf, name, driver)
-  buf = resolve_buf(buf, false)
-  vim.validate('name', name, 'string')
-  vim.validate('driver', driver, 'table')
-  vim.validate('driver.list_entries', driver.list_entries, 'function')
-  vim.validate('driver.open_entry', driver.open_entry, 'function')
-  vim.validate('driver.open_parent', driver.open_parent, 'function')
+  if buf == 0 then
+    buf = api.nvim_get_current_buf()
+  end
 
   local old = active_sessions[buf]
   if old then
@@ -320,30 +299,24 @@ end
 ---@param buf integer
 ---@return nvim.dir.Ctx?
 function M.session(buf)
-  return active_sessions[resolve_buf(buf, false)]
+  if buf == 0 then
+    buf = api.nvim_get_current_buf()
+  end
+  return active_sessions[buf]
 end
 
---- Return the entry rendered at {lnum}, or at the cursor in current {buf}.
+--- Return the entry under the cursor in {buf}.
 ---@param buf integer
----@param lnum? integer
 ---@return nvim.dir.Entry?
-function M.entry(buf, lnum)
-  buf = resolve_buf(buf, false)
-  vim.validate('lnum', lnum, 'number', true)
+function M.entry(buf)
+  if buf == 0 then
+    buf = api.nvim_get_current_buf()
+  end
   local ctx = active_sessions[buf]
-  if not ctx then
+  if not ctx or api.nvim_get_current_buf() ~= buf then
     return nil
   end
-  if lnum == nil then
-    if api.nvim_get_current_buf() ~= buf then
-      error('lnum required unless buf is current buffer', 2)
-    end
-    lnum = api.nvim_win_get_cursor(0)[1]
-  end
-  if lnum < 1 or lnum ~= math.floor(lnum) or lnum > #ctx.entries then
-    return nil
-  end
-  return ctx.entries[lnum]
+  return ctx.entries[api.nvim_win_get_cursor(0)[1]]
 end
 
 function M._open_entry()
@@ -368,7 +341,9 @@ end
 
 ---@param buf? integer
 function M._reload(buf)
-  buf = resolve_buf(buf, true)
+  if buf == nil or buf == 0 then
+    buf = api.nvim_get_current_buf()
+  end
   local ctx = active_sessions[buf]
   if not ctx then
     return
@@ -379,8 +354,9 @@ end
 ---@param buf integer
 ---@param path string
 function M.try_open(buf, path)
-  buf = resolve_buf(buf, false)
-  vim.validate('path', path, 'string')
+  if buf == 0 then
+    buf = api.nvim_get_current_buf()
+  end
   local fs_driver = require('nvim.dir._filesystem')
   if fs_driver.is_navigating() or path == '' then
     return
