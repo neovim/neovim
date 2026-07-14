@@ -143,6 +143,9 @@ local function close_session(ctx)
   if active_sessions[ctx.buf] == ctx then
     active_sessions[ctx.buf] = nil
   end
+  if api.nvim_buf_is_valid(ctx.buf) and vim.b[ctx.buf].nvim_dir == ctx.name then
+    vim.b[ctx.buf].nvim_dir = nil
+  end
   local group = session_groups[ctx]
   if group then
     pcall(api.nvim_del_augroup_by_id, group)
@@ -270,7 +273,6 @@ end
 ---@param buf integer
 ---@param name string
 ---@param driver nvim.dir.Driver
----@return nvim.dir.Ctx
 function M.open(buf, name, driver)
   buf = vim._resolve_bufnr(buf)
 
@@ -292,7 +294,6 @@ function M.open(buf, name, driver)
   active_sessions[buf] = ctx
   setup_session_autocmds(ctx)
   load(ctx)
-  return ctx
 end
 
 --- Return the active listing session for {buf}.
