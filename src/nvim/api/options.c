@@ -31,7 +31,7 @@
 static int validate_option_value_args(Dict(option) *opts, char *name, bool allow_tab,
                                       OptIndex *opt_idxp, int *opt_flags, OptScope *scope,
                                       void **from, char **filetype, set_op_T *operation,
-                                      bool *dry_run, Error *err)
+                                      bool *dry_run, Object *lhs, Error *err)
 {
 #define HAS_KEY_X(d, v) HAS_KEY(d, option, v)
   // Validate incompatible argument combinations first, then resolve handles and scope.
@@ -136,6 +136,10 @@ static int validate_option_value_args(Dict(option) *opts, char *name, bool allow
 
   if (dry_run != NULL && HAS_KEY_X(opts, dry_run)) {
     *dry_run = opts->dry_run;
+  }
+
+  if (lhs != NULL && HAS_KEY_X(opts, lhs)) {
+    *lhs = opts->lhs;
   }
 
   // Reject keys whose scope the option doesn't support.
@@ -268,7 +272,7 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
   char *filetype = NULL;
 
   if (!validate_option_value_args(opts, name.data, true, &opt_idx, &opt_flags, &scope, &from,
-                                  &filetype, NULL, NULL, err)) {
+                                  &filetype, NULL, NULL, NULL, err)) {
     return (Object)OBJECT_INIT;
   }
 
@@ -323,6 +327,8 @@ err:
 ///                  - buf: Buffer number. Used for setting buffer local option.
 ///                  - dry_run: (`boolean?`, default: false) If true, then the
 ///                    option value won't be set.
+///                  - lhs: Value used as left hand side in `operation`. Default
+///                    is the existing option value.
 ///                  - operation: One of "set", "append", "prepend", or "remove".
 ///                    Corresponds to |:set=|, |:set+=|, |:set^=|, and |:set-=|.
 ///                    Default is "set".
@@ -344,8 +350,9 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
   set_op_T operation = OP_NONE;
   void *to = NULL;
   bool dry_run = false;
+  Object lhs = OBJECT_INIT;
   if (!validate_option_value_args(opts, name.data, true, &opt_idx, &opt_flags, &scope, &to, NULL,
-                                  &operation, &dry_run, err)) {
+                                  &operation, &dry_run, &lhs, err)) {
     return NIL;
   }
 
@@ -403,8 +410,19 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
 
   if (optval_right.type == kOptValTypeNumber || optval_right.type == kOptValTypeString) {
     OptVal oldval = optval_from_varp(opt_idx, varp);
+
+    if (lhs.type != kObjectTypeNil) {
+      oldval = object_as_optval_for(opt_idx, lhs, operation, &error);
+      VALIDATE_EXP(!error, "lhs", "a valid type", api_typename(value.type), {
+        return NIL;
+      });
+    }
+
     merged_val = get_option_newval(opt_idx, opt_flags, PREFIX_NONE, &argp, 0, operation,
                                    option->flags, varp, &oldval, NULL, 0, &errmsg);
+    if (lhs.type != kObjectTypeNil) {
+      optval_free(oldval);
+    }
     VALIDATE(errmsg == NULL, "%s", errmsg, {
       return NIL;
     });
@@ -496,7 +514,7 @@ DictAs(get_option_info) nvim_get_option_info2(String name, Dict(option) *opts, A
   void *from = NULL;
   // TODO(justinmk): support tab-local option.
   if (!validate_option_value_args(opts, name.data, false, &opt_idx, &opt_flags, &scope, &from, NULL,
-                                  NULL, NULL, err)) {
+                                  NULL, NULL, NULL, err)) {
     return (Dict)ARRAY_DICT_INIT;
   }
 

@@ -2310,6 +2310,8 @@ function vim.api.nvim_set_option(name, value) end
 --- - buf: Buffer number. Used for setting buffer local option.
 --- - dry_run: (`boolean?`, default: false) If true, then the
 ---   option value won't be set.
+--- - lhs: Value used as left hand side in `operation`. Default
+---   is the existing option value.
 --- - operation: One of "set", "append", "prepend", or "remove".
 ---   Corresponds to `:set=`, `:set+=`, `:set^=`, and `:set-=`.
 ---   Default is "set".

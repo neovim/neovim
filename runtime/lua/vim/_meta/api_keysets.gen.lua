@@ -384,6 +384,7 @@ error('Cannot require a meta file')
 --- @field buf? integer
 --- @field dry_run? boolean
 --- @field filetype? string
+--- @field lhs? any
 --- @field operation? string
 --- @field scope? string
 --- @field tab? integer

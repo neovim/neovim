@@ -416,7 +416,7 @@ local function create_option_accessor(scope)
   --- @diagnostic disable-next-line: no-unknown
   local option_mt
 
-  local function make_option(name, value, op_count)
+  local function make_option(name, value)
     if type(value) == 'table' and getmetatable(value) == option_mt then
       assert(name == value._name, "must be the same value, otherwise that's weird.")
 
@@ -427,7 +427,6 @@ local function create_option_accessor(scope)
     return setmetatable({
       _name = name,
       _value = value,
-      _op_count = op_count,
     }, option_mt)
   end
 
@@ -441,28 +440,13 @@ local function create_option_accessor(scope)
     end,
 
     __infix = function(self, right, operation)
-      -- TODO(kylesower): support multiple infix operations. Right now this
-      -- doesn't work because nvim_set_option_value uses get_option_newval to
-      -- merge the values, and that always expects a varp pointer that points
-      -- to the existing option value. Thus, when a new value is computed with
-      -- an infix op, but the option isn't updated, subsequent infix ops still
-      -- use the outdated option value.
-      -- This could be resolved by updating the option value when computing
-      -- the infix ops; however, this would then turn the infix ops into
-      -- assignments. The full solution to the problem requires computing the
-      -- infix op of two arbitrary values (not just one value compared to an
-      -- existing option).
-      if self._op_count > 0 then
-        error('Multiple vim.opt infix operations unsupported')
-      end
       return make_option(
         self._name,
         vim.api.nvim_set_option_value(
           self._name,
           right,
-          { operation = operation, scope = scope, dry_run = true }
-        ),
-        self._op_count + 1
+          { operation = operation, scope = scope, dry_run = true, lhs = self._value }
+        )
       )
     end,
 
@@ -493,11 +477,11 @@ local function create_option_accessor(scope)
       -- vim.opt_global must get global value only
       -- vim.opt_local may fall back to global value like vim.opt
       local opts = { scope = scope == 'global' and 'global' or nil }
-      return make_option(k, api.nvim_get_option_value(k, opts), 0)
+      return make_option(k, api.nvim_get_option_value(k, opts))
     end,
 
     __newindex = function(_, k, v)
-      local option = make_option(k, v, 0)
+      local option = make_option(k, v)
       api.nvim_set_option_value(option._name, option._value, { scope = scope })
     end,
   })

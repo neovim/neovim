@@ -172,6 +172,7 @@ typedef struct {
   String filetype;
   String operation;
   Boolean dry_run;
+  Object lhs;
 } Dict(option);
 
 typedef struct {

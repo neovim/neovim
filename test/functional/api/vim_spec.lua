@@ -2444,6 +2444,48 @@ describe('API', function()
       )
     end)
 
+    it('merges options against string and table lhs', function()
+      eq({}, api.nvim_set_option_value('wildignore', {}, { operation = 'set' }))
+      eq(
+        { 'a', 'b', 'c', 'd' },
+        api.nvim_set_option_value(
+          'wildignore',
+          { 'a', 'b' },
+          { operation = 'prepend', lhs = { 'c', 'd' } }
+        )
+      )
+
+      eq({}, api.nvim_set_option_value('wildignore', {}, { operation = 'set' }))
+      eq(
+        { 'a', 'b', 'c', 'd' },
+        api.nvim_set_option_value(
+          'wildignore',
+          { 'a', 'b' },
+          { operation = 'prepend', lhs = 'c,d' }
+        )
+      )
+
+      eq({}, api.nvim_set_option_value('listchars', {}, { operation = 'set' }))
+      eq(
+        { eol = '~', space = '-' },
+        api.nvim_set_option_value(
+          'listchars',
+          { eol = '~' },
+          { operation = 'prepend', lhs = { space = '-' } }
+        )
+      )
+
+      eq({}, api.nvim_set_option_value('listchars', {}, { operation = 'set' }))
+      eq(
+        { eol = '~', space = '-' },
+        api.nvim_set_option_value(
+          'listchars',
+          { eol = '~' },
+          { operation = 'prepend', lhs = 'space:-' }
+        )
+      )
+    end)
+
     it('applies operations to number options', function()
       -- For number options the operations are arithmetic. `:set {number}+= ^= -=`
       api.nvim_set_option_value('scrolloff', 5, {})
