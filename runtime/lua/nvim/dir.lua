@@ -6,16 +6,16 @@ local api = vim.api
 local M = {}
 
 --- An entry rendered as one line in a listing buffer.
----@class nvim.dir.Entry
+---@class (private) nvim.dir.Entry
 ---@field name string
 ---@field dir boolean
 ---@field path? string
 
 --- Callback for `Driver.list_entries`; call once with either an error or entries.
----@alias nvim.dir.ListCallback fun(err: string?, entries: nvim.dir.Entry[]?)
+---@alias (private) nvim.dir.ListCallback fun(err: string?, entries: nvim.dir.Entry[]?)
 
 --- State for one buffer opened through `nvim.dir.open()`.
----@class nvim.dir.Ctx
+---@class (private) nvim.dir.Ctx
 ---@field buf integer
 ---@field name string
 ---@field driver nvim.dir.Driver
@@ -27,7 +27,7 @@ local M = {}
 ---@field list_generation integer
 
 --- Source adapter that provides entries and listing actions.
----@class nvim.dir.Driver
+---@class (private) nvim.dir.Driver
 --- Produce entries for this listing.
 ---@field list_entries fun(ctx: nvim.dir.Ctx, cb: nvim.dir.ListCallback)
 --- Open an entry from the listing.
