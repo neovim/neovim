@@ -220,7 +220,6 @@ describe('nvim.dir', function()
     eq('custom://root', exec_lua('return vim.g.nvim_dir_list_name'))
 
     api.nvim_win_set_cursor(0, { 2, 0 })
-    eq('file-id', exec_lua([[return require('nvim.dir').entry(0).id]]))
     feed('<CR>')
     poke_eventloop()
     eq('file-id:custom://root', exec_lua('return vim.g.nvim_dir_opened'))

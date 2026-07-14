@@ -302,11 +302,9 @@ function M.session(buf)
   return active_sessions[vim._resolve_bufnr(buf)]
 end
 
---- Return the entry under the cursor in {buf}.
 ---@param buf integer
 ---@return nvim.dir.Entry?
-function M.entry(buf)
-  buf = vim._resolve_bufnr(buf)
+local function current_entry(buf)
   local ctx = active_sessions[buf]
   if not ctx or api.nvim_get_current_buf() ~= buf then
     return nil
@@ -317,7 +315,7 @@ end
 function M._open_entry()
   local buf = api.nvim_get_current_buf()
   local ctx = active_sessions[buf]
-  local entry = M.entry(buf)
+  local entry = current_entry(buf)
   if ctx and entry then
     call_driver(ctx, 'open_entry', ctx.driver.open_entry, entry)
   end
