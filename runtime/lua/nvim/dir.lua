@@ -93,26 +93,6 @@ local function entry_line(entry)
   return encode_name(entry.name) .. (entry.dir and '/' or '')
 end
 
----@param entries any
----@return string?
-local function entries_error(entries)
-  if type(entries) ~= 'table' or not vim.islist(entries) then
-    return 'list_entries callback must provide entries'
-  end
-  for i, entry in ipairs(entries) do
-    if type(entry) ~= 'table' then
-      return ('entry %d must be a table'):format(i)
-    end
-    if type(entry.name) ~= 'string' or entry.name == '' then
-      return ('entry %d must have a name'):format(i)
-    end
-    if type(entry.dir) ~= 'boolean' then
-      return ('entry %d must say whether it is a directory'):format(i)
-    end
-  end
-  return nil
-end
-
 ---@param buf integer
 ---@param name string
 ---@param entries nvim.dir.Entry[]
@@ -267,15 +247,6 @@ local function load(ctx, restore_view)
     end
     if err ~= nil then
       notify_error(nil, err)
-      if first_render then
-        close_session(ctx)
-      end
-      return
-    end
-
-    local invalid = entries_error(entries)
-    if invalid then
-      notify_error('list_entries', invalid)
       if first_render then
         close_session(ctx)
       end
