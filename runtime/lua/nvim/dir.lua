@@ -278,6 +278,10 @@ function M.open(buf, name, driver)
 
   local old = active_sessions[buf]
   if old then
+    if old.name == name and old.driver == driver then
+      load(old, api.nvim_get_current_buf() == buf and vim.fn.winsaveview() or nil)
+      return
+    end
     close_session(old)
   end
 
@@ -294,13 +298,6 @@ function M.open(buf, name, driver)
   active_sessions[buf] = ctx
   setup_session_autocmds(ctx)
   load(ctx)
-end
-
---- Return the active listing session for {buf}.
----@param buf integer
----@return nvim.dir.Ctx?
-function M.session(buf)
-  return active_sessions[vim._resolve_bufnr(buf)]
 end
 
 ---@param buf integer

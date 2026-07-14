@@ -45,12 +45,7 @@ local function navigate(path)
     return
   end
 
-  local nvim_dir = require('nvim.dir')
-  if nvim_dir.session(buf) == nil then
-    nvim_dir.open(buf, dir, M)
-  else
-    nvim_dir._reload(buf)
-  end
+  require('nvim.dir').open(buf, dir, M)
 end
 
 ---@param path string

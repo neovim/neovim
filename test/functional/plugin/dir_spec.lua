@@ -243,7 +243,7 @@ describe('nvim.dir', function()
     end)
 
     ok(exec_capture('messages'):find('simulated error', 1, true) ~= nil)
-    eq(false, exec_lua([[return require('nvim.dir').session(0) ~= nil]]))
+    eq(false, exec_lua([[return vim.b.nvim_dir ~= nil]]))
   end)
 
   it('reloads custom listing drivers', function()
@@ -264,7 +264,6 @@ describe('nvim.dir', function()
     feed('R')
     poke_eventloop()
     eq({ 'file2.txt' }, lines())
-    eq(2, exec_lua([[return require('nvim.dir').session(0).driver_state.count]]))
   end)
 
   it('maps - to open parent directories', function()
