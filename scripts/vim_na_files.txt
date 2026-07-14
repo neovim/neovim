@@ -138,6 +138,7 @@ src/testdir/util/vms.vim
 src/typemap
 src/uninstall.c
 src/version.h
+src/vim.def
 src/vimrun.c
 src/winclip.c
 uninstall.txt

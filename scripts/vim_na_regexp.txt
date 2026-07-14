@@ -6,7 +6,7 @@
 ^pixmaps/
 ^runtime/colors/tools/
 ^runtime/doc/gui_
-^runtime/doc/version[4-6]\.txt
+^runtime/doc/version[4-8]\.txt
 ^runtime/doc/vim9
 ^runtime/hi[1-9]
 ^runtime/icons
@@ -38,6 +38,7 @@
 ^src/GvimExt/
 ^src/INSTALL
 ^src/Make
+^src/VisVim/
 ^src/[a-z]\+_cmdidxs\.h$
 ^src/auto/
 ^src/beval
@@ -46,6 +47,7 @@
 ^src/configure
 ^src/crypt
 ^src/gui[_.]
+^src/gvim
 ^src/if_
 ^src/install
 ^src/json[_.]
