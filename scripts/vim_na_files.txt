@@ -137,6 +137,7 @@ src/testdir/util/socketserver.vim
 src/testdir/util/vms.vim
 src/typemap
 src/uninstall.c
+src/version.h
 src/vimrun.c
 src/winclip.c
 uninstall.txt
