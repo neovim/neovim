@@ -2,14 +2,67 @@
 --- Directory listing for `:edit <dir>`.
 
 local api = vim.api
-local fs = vim.fs
 
 local M = {}
 
----@type fun(buf: integer, dir: string)
-local first_open
+--- An entry rendered as one line in a listing buffer.
+---@class nvim.dir.Entry
+---@field name string
+---@field dir boolean
+---@field path? string
 
-local navigating = false
+--- Callback for `Driver.list_entries`; call once with either an error or entries.
+---@alias nvim.dir.ListCallback fun(err: string?, entries: nvim.dir.Entry[]?)
+
+--- State for one buffer opened through `nvim.dir.open()`.
+---@class nvim.dir.Ctx
+---@field buf integer
+---@field name string
+---@field driver nvim.dir.Driver
+--- Last entries rendered; indexes match buffer lines.
+---@field entries nvim.dir.Entry[]
+--- Driver-owned mutable state preserved across reloads.
+---@field driver_state table
+--- Incremented for each list call to ignore stale callbacks.
+---@field list_generation integer
+--- Buffer-local autocmds owned by this session.
+---@field autocmds integer[]
+
+--- Source adapter that provides entries and listing actions.
+---@class nvim.dir.Driver
+--- Produce entries for this listing.
+---@field list_entries fun(ctx: nvim.dir.Ctx, cb: nvim.dir.ListCallback)
+--- Open an entry from the listing.
+---@field open_entry fun(ctx: nvim.dir.Ctx, entry: nvim.dir.Entry)
+--- Open the parent listing.
+---@field open_parent fun(ctx: nvim.dir.Ctx)
+--- Run driver-specific buffer setup after the first render.
+---@field attach? fun(ctx: nvim.dir.Ctx)
+
+--- Active listing sessions used by maps/reloads and stale callback checks.
+---@type table<integer,nvim.dir.Ctx>
+local active_sessions = {}
+
+---@param operation string?
+---@param err any
+local function notify_error(operation, err)
+  local prefix = operation and (operation .. ': ') or ''
+  vim.notify('dir: ' .. prefix .. tostring(err), vim.log.levels.ERROR)
+end
+
+---@param buf integer?
+---@param allow_nil boolean
+---@return integer
+local function resolve_buf(buf, allow_nil)
+  vim.validate('buf', buf, 'number', allow_nil)
+  if buf == nil or buf == 0 then
+    buf = api.nvim_get_current_buf()
+  end
+  if not api.nvim_buf_is_valid(buf) then
+    error('invalid buffer: ' .. buf, 2)
+  end
+  return buf
+end
 
 ---@param buf integer
 ---@param options [string, any][]
@@ -24,53 +77,46 @@ local function set_buf_options(buf, options)
   return api.nvim_buf_is_valid(buf)
 end
 
----@param path string
----@return string
-local function normalize_dir(path)
-  return fs.normalize(fs.abspath(path))
-end
-
 ---@param name string
 ---@return string
 local function encode_name(name)
   return (name:gsub('\n', '\0'))
 end
 
----@param line string
+---@param entry nvim.dir.Entry
 ---@return string
-local function decode_line(line)
-  if line:sub(-1) == '/' then
-    line = line:sub(1, -2)
+local function entry_line(entry)
+  return encode_name(entry.name) .. (entry.dir and '/' or '')
+end
+
+---@param entries any
+---@return string?
+local function entries_error(entries)
+  if type(entries) ~= 'table' or not vim.islist(entries) then
+    return 'list_entries callback must provide entries'
   end
-  return (line:gsub('%z', '\n'))
+  for i, entry in ipairs(entries) do
+    if type(entry) ~= 'table' then
+      return ('entry %d must be a table'):format(i)
+    end
+    if type(entry.name) ~= 'string' or entry.name == '' then
+      return ('entry %d must have a name'):format(i)
+    end
+    if type(entry.dir) ~= 'boolean' then
+      return ('entry %d must say whether it is a directory'):format(i)
+    end
+  end
+  return nil
 end
 
 ---@param buf integer
----@param dir string
+---@param name string
+---@param entries nvim.dir.Entry[]
 ---@return boolean
-local function render(buf, dir)
-  ---@type { name: string, dir: boolean }[]
-  local items = {}
-  for name, type, err in fs.dir(dir, { err = true }) do
-    if err then
-      vim.notify('dir: ' .. err, vim.log.levels.ERROR)
-      return false
-    end
-    if type == 'link' and vim.fn.isdirectory(fs.joinpath(dir, name)) == 1 then
-      type = 'directory'
-    end
-    items[#items + 1] = { name = name, dir = type == 'directory' }
-  end
-  table.sort(items, function(a, b)
-    if a.dir ~= b.dir then
-      return a.dir
-    end
-    return a.name < b.name
-  end)
-
+local function render_entries(buf, name, entries)
   local lines = {} ---@type string[]
-  for i, item in ipairs(items) do
-    lines[i] = encode_name(item.name) .. (item.dir and '/' or '')
+  for i, entry in ipairs(entries) do
+    lines[i] = entry_line(entry)
   end
 
   if
@@ -88,7 +134,7 @@ local function render(buf, dir)
   api.nvim_buf_call(buf, function()
     api.nvim_cmd({
       cmd = 'file',
-      args = { dir },
+      args = { name },
       mods = { keepalt = true },
       magic = { file = false, bar = false },
     }, {})
@@ -107,77 +153,38 @@ local function render(buf, dir)
   })
 end
 
----@param buf integer
----@return string?
-local function entry_path(buf)
-  local lnum = api.nvim_win_get_cursor(0)[1]
-  local line = api.nvim_buf_get_lines(buf, lnum - 1, lnum, false)[1]
-  if not line or line == '' then
-    return nil
+---@param ctx nvim.dir.Ctx
+---@param method string
+---@param ... any
+---@return boolean
+local function call_driver(ctx, method, ...)
+  local fn = ctx.driver[method]
+  if fn == nil then
+    return true
   end
-  return fs.joinpath(api.nvim_buf_get_name(buf), decode_line(line))
+  local ok, err = pcall(fn, ctx, ...)
+  if not ok then
+    notify_error(method, err)
+    return false
+  end
+  return true
 end
 
----@param path string
-local function edit(path)
-  navigating = true
-  api.nvim_cmd({ cmd = 'edit', args = { path }, magic = { file = false, bar = false } })
-  navigating = false
-end
-
----@param buf integer
-local function reload(buf)
-  local view = vim.fn.winsaveview()
-  if render(buf, api.nvim_buf_get_name(buf)) then
-    vim.fn.winrestview(view)
+--- Stop tracking a listing session and remove its autocmds.
+---@param ctx nvim.dir.Ctx
+local function close_session(ctx)
+  if active_sessions[ctx.buf] == ctx then
+    active_sessions[ctx.buf] = nil
   end
-end
-
----@param path string
-local function navigate(path)
-  edit(path)
-  local buf = api.nvim_get_current_buf()
-  local dir = normalize_dir(api.nvim_buf_get_name(buf))
-  if vim.fn.isdirectory(dir) == 0 then
-    return
+  for _, id in ipairs(ctx.autocmds) do
+    pcall(api.nvim_del_autocmd, id)
   end
-  if vim.b[buf].nvim_dir == nil then
-    first_open(buf, dir)
-  else
-    reload(buf)
-  end
+  ctx.autocmds = {}
 end
 
 ---@param buf integer
-local function open_entry(buf)
-  local path = entry_path(buf)
-  if path then
-    navigate(path)
-  end
-end
-
----@param buf integer
-local function open_parent(buf)
-  local path = fs.normalize(api.nvim_buf_get_name(buf))
-  local name = encode_name(fs.basename(path)) .. (vim.fn.isdirectory(path) == 1 and '/' or '')
-  navigate(fs.dirname(path))
-  vim.fn.search([[\C\m^\V]] .. vim.fn.escape(name, [[\]]) .. [[\m$]], 'cw')
-end
-
-function M._open_entry()
-  open_entry(api.nvim_get_current_buf())
-end
-
-function M._open_parent()
-  open_parent(api.nvim_get_current_buf())
-end
-
-function M._reload()
-  reload(api.nvim_get_current_buf())
-end
-
----@param buf integer
-local function set_maps(buf)
+---@param ctx nvim.dir.Ctx
+local function set_maps(buf, ctx)
   ---@param lhs string
   ---@param plug string
   local function map(lhs, plug)
@@ -197,39 +204,200 @@ local function set_maps(buf)
   map('R', '<Plug>(nvim-dir-reload)')
 end
 
----@param buf integer
----@param dir string
-function first_open(buf, dir)
-  if not render(buf, dir) then
-    return
-  end
-  if not api.nvim_buf_is_valid(buf) then
-    return
-  end
-  vim.b[buf].nvim_dir = dir
-  api.nvim_create_autocmd('BufReadCmd', {
-    buffer = buf,
-    nested = true,
-    desc = 'Reload directory listing',
-    callback = function()
-      if vim.b[buf].nvim_dir ~= nil then
-        reload(buf)
+---@param ctx nvim.dir.Ctx
+local function setup_autocmds(ctx)
+  ctx.autocmds = {
+    api.nvim_create_autocmd('BufReadCmd', {
+      buffer = ctx.buf,
+      nested = true,
+      desc = 'Reload directory listing',
+      callback = function()
+        if active_sessions[ctx.buf] == ctx then
+          M._reload(ctx.buf)
+        end
+      end,
+    }),
+    api.nvim_create_autocmd('BufWipeout', {
+      buffer = ctx.buf,
+      once = true,
+      callback = function()
+        if active_sessions[ctx.buf] == ctx then
+          close_session(ctx)
+        end
+      end,
+    }),
+  }
+end
+
+--- Request entries and render the current list generation.
+---@param ctx nvim.dir.Ctx
+---@param restore_view? table
+local function load(ctx, restore_view)
+  ctx.list_generation = ctx.list_generation + 1
+  local list_generation = ctx.list_generation
+  -- Used to abort failed first opens while preserving the old listing on reload failure.
+  local first_render = #ctx.autocmds == 0
+  local done = false
+
+  ---@param err string?
+  ---@param entries nvim.dir.Entry[]?
+  local function on_list(err, entries)
+    if done then
+      return
+    end
+    done = true
+    if active_sessions[ctx.buf] ~= ctx or list_generation ~= ctx.list_generation or not api.nvim_buf_is_valid(ctx.buf) then
+      return
+    end
+    if err ~= nil then
+      notify_error(nil, err)
+      if first_render then
+        close_session(ctx)
       end
-    end,
-  })
-  set_maps(buf)
-  if api.nvim_get_option_value('filetype', { buf = buf }) ~= 'directory' then
-    api.nvim_set_option_value('filetype', 'directory', { buf = buf })
+      return
+    end
+
+    local invalid = entries_error(entries)
+    if invalid then
+      notify_error('list_entries', invalid)
+      if first_render then
+        close_session(ctx)
+      end
+      return
+    end
+
+    if not render_entries(ctx.buf, ctx.name, entries) then
+      if first_render then
+        close_session(ctx)
+      end
+      return
+    end
+    if restore_view and api.nvim_get_current_buf() == ctx.buf then
+      vim.fn.winrestview(restore_view)
+    end
+    ctx.entries = entries
+    vim.b[ctx.buf].nvim_dir = ctx.name
+
+    if not first_render then
+      return
+    end
+
+    setup_autocmds(ctx)
+    set_maps(ctx.buf, ctx)
+    if ctx.driver.attach then
+      call_driver(ctx, 'attach')
+    end
   end
+
+  local ok, err = pcall(ctx.driver.list_entries, ctx, on_list)
+  if not ok then
+    on_list(tostring(err))
+  end
+end
+
+--- Open {buf} as a listing named {name} using {driver}.
+---@param buf integer
+---@param name string
+---@param driver nvim.dir.Driver
+---@return nvim.dir.Ctx
+function M.open(buf, name, driver)
+  buf = resolve_buf(buf, false)
+  vim.validate('name', name, 'string')
+  vim.validate('driver', driver, 'table')
+  vim.validate('driver.list_entries', driver.list_entries, 'function')
+  vim.validate('driver.open_entry', driver.open_entry, 'function')
+  vim.validate('driver.open_parent', driver.open_parent, 'function')
+
+  local old = active_sessions[buf]
+  if old then
+    close_session(old)
+  end
+
+  local ctx = {
+    buf = buf,
+    name = name,
+    driver = driver,
+    entries = {},
+    driver_state = {},
+    list_generation = 0,
+    autocmds = {},
+  }
+
+  active_sessions[buf] = ctx
+  load(ctx)
+  return ctx
+end
+
+--- Return the active listing session for {buf}.
+---@param buf integer
+---@return nvim.dir.Ctx?
+function M.session(buf)
+  return active_sessions[resolve_buf(buf, false)]
+end
+
+--- Return the entry rendered at {lnum}, or at the cursor in current {buf}.
+---@param buf integer
+---@param lnum? integer
+---@return nvim.dir.Entry?
+function M.entry(buf, lnum)
+  buf = resolve_buf(buf, false)
+  vim.validate('lnum', lnum, 'number', true)
+  local ctx = active_sessions[buf]
+  if not ctx then
+    return nil
+  end
+  if lnum == nil then
+    if api.nvim_get_current_buf() ~= buf then
+      error('lnum required unless buf is current buffer', 2)
+    end
+    lnum = api.nvim_win_get_cursor(0)[1]
+  end
+  if lnum < 1 or lnum ~= math.floor(lnum) or lnum > #ctx.entries then
+    return nil
+  end
+  return ctx.entries[lnum]
+end
+
+function M._open_entry()
+  local buf = api.nvim_get_current_buf()
+  local ctx = active_sessions[buf]
+  local entry = M.entry(buf)
+  if ctx and entry then
+    call_driver(ctx, 'open_entry', entry)
+  end
+end
+
+function M._open_parent()
+  local buf = api.nvim_get_current_buf()
+  local ctx = active_sessions[buf]
+  if ctx then
+    call_driver(ctx, 'open_parent')
+    return
+  end
+  -- Keep the global `-` mapping useful from regular file buffers.
+  require('nvim.dir.filesystem').open_parent_path(api.nvim_buf_get_name(buf))
+end
+
+---@param buf? integer
+function M._reload(buf)
+  buf = resolve_buf(buf, true)
+  local ctx = active_sessions[buf]
+  if not ctx then
+    return
+  end
+  load(ctx, vim.fn.winsaveview())
 end
 
 ---@param buf integer
 ---@param path string
 function M.try_open(buf, path)
-  if navigating or path == '' then
+  buf = resolve_buf(buf, false)
+  vim.validate('path', path, 'string')
+  local fs_driver = require('nvim.dir.filesystem')
+  if fs_driver.is_navigating() or path == '' then
     return
   end
-  if vim.b[buf].nvim_dir ~= nil then
+  if active_sessions[buf] ~= nil then
     return
   end
   if vim.bo[buf].buftype ~= '' then
@@ -242,7 +410,7 @@ function M.try_open(buf, path)
   if vim.fn.isdirectory(path) == 0 then
     return
   end
-  first_open(buf, normalize_dir(path))
+  M.open(buf, fs_driver.normalize(path), fs_driver)
 end
 
 function M.handle_startup_dirs()

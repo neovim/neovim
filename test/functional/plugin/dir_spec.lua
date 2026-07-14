@@ -190,6 +190,84 @@ describe('nvim.dir', function()
     assert_directory(root)
   end)
 
+  it('opens a custom listing driver', function()
+    n.clear({ args_rm = { '-u' } })
+
+    exec_lua(function()
+      require('nvim.dir').open(0, 'custom://root', {
+        list_entries = function(ctx, cb)
+          vim.g.nvim_dir_list_name = ctx.name
+          cb(nil, {
+            { name = 'child', dir = true, id = 'child-id' },
+            { name = 'file.txt', dir = false, id = 'file-id' },
+          })
+        end,
+        open_entry = function(ctx, entry)
+          vim.g.nvim_dir_opened = entry.id .. ':' .. ctx.name
+        end,
+        open_parent = function(ctx)
+          vim.g.nvim_dir_parent = ctx.name
+        end,
+        attach = function(ctx)
+          vim.bo[ctx.buf].filetype = 'customdir'
+        end,
+      })
+    end)
+
+    eq('custom://root', api.nvim_buf_get_name(0))
+    eq('customdir', bufopt('filetype'))
+    eq({ 'child/', 'file.txt' }, lines())
+    eq('custom://root', exec_lua('return vim.g.nvim_dir_list_name'))
+
+    api.nvim_win_set_cursor(0, { 2, 0 })
+    eq('file-id', exec_lua([[return require('nvim.dir').entry(0).id]]))
+    feed('<CR>')
+    poke_eventloop()
+    eq('file-id:custom://root', exec_lua('return vim.g.nvim_dir_opened'))
+
+    feed('-')
+    poke_eventloop()
+    eq('custom://root', exec_lua('return vim.g.nvim_dir_parent'))
+  end)
+
+  it('reports custom listing driver errors', function()
+    n.clear({ args_rm = { '-u' } })
+
+    exec_lua(function()
+      require('nvim.dir').open(0, 'custom://error', {
+        list_entries = function(_, cb)
+          cb('simulated error')
+        end,
+        open_entry = function() end,
+        open_parent = function() end,
+      })
+    end)
+
+    ok(exec_capture('messages'):find('simulated error', 1, true) ~= nil)
+    eq(false, exec_lua([[return require('nvim.dir').session(0) ~= nil]]))
+  end)
+
+  it('reloads custom listing drivers', function()
+    n.clear({ args_rm = { '-u' } })
+
+    exec_lua(function()
+      require('nvim.dir').open(0, 'custom://root', {
+        list_entries = function(ctx, cb)
+          ctx.driver_state.count = (ctx.driver_state.count or 0) + 1
+          cb(nil, { { name = 'file' .. ctx.driver_state.count .. '.txt', dir = false } })
+        end,
+        open_entry = function() end,
+        open_parent = function() end,
+      })
+    end)
+
+    eq({ 'file1.txt' }, lines())
+    feed('R')
+    poke_eventloop()
+    eq({ 'file2.txt' }, lines())
+    eq(2, exec_lua([[return require('nvim.dir').session(0).driver_state.count]]))
+  end)
+
   it('maps - to open parent directories', function()
     make_fixture()
     n.clear({ args_rm = { '-u', '--cmd' } })
