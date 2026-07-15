@@ -75,7 +75,7 @@ Stop or detach the current UI
 ------------------------------------------------------------------------------
 Restart Nvim
 
-                                                *:restart* *:restart!*
+                                                *:restart* *:restart!* *E5201*
 :restart[!] [+cmd] [command]
                 Restarts Nvim. Saves and restores the current session, unless
                 [!] is given. Sets |v:exitreason|. See also |ZR|.
