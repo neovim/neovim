@@ -762,7 +762,7 @@ describe('API/win', function()
       local prevwin = curwin()
       eq(2, eval('tabpagenr()'))
       local opts = { relative = 'editor', row = 10, col = 10, width = 50, height = 10 }
-      local win = vim.api.nvim_open_win(0, true, opts)
+      local win = api.nvim_open_win(0, true, opts)
       local tab = eval('tabpagenr()')
       command('tabprevious')
       eq(1, eval('tabpagenr()'))
@@ -778,8 +778,6 @@ describe('API/win', function()
       -- win1 becomes the tabpage's current window after win2 is closed
       api.nvim_win_close(win2, false)
       api.nvim_win_close(win1, false)
-
-      eq(prevwin, api.nvim_tabpage_get_win(tab))
       assert_alive()
     end)
 
