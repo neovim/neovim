@@ -2213,6 +2213,12 @@ you want to trigger on EVERY keypress you can either:
   example.
 • Call `vim.lsp.completion.get()` from an |InsertCharPre| autocommand.
 
+If the server provides `commitCharacters` for a completion item, typing one of
+those characters while the item is selected accepts the completion and then
+inserts the character. To disable this: >lua
+    vim.lsp.completion.enable(true, client_id, bufnr, { commit_characters = false })
+<
+
 
                                                  *vim.lsp.completion.enable()*
 enable({enable}, {client_id}, {bufnr}, {opts})
@@ -2249,6 +2255,8 @@ enable({enable}, {client_id}, {bufnr}, {opts})
                        `triggerCharacters`.
                      • {cmp}? (`fun(a: table, b: table): boolean`) Comparator
                        for sorting merged completion items from all servers.
+                     • {commit_characters}? (`boolean`) (default: true) When
+                       false, commit characters are ignored.
                      • {convert}? (`fun(item: lsp.CompletionItem): table`)
                        Transforms an LSP CompletionItem to |complete-items|.
 

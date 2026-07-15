@@ -237,6 +237,8 @@ EDITOR
   Example: >vim
     set langmap=õ]
 <    Typing õõ in |Normal-mode| now invokes a mapping bound to ]].
+• New |complete-items| field "commit_chars": characters that accept the
+  selected completion item when typed.
 
 EVENTS
 
@@ -268,6 +270,10 @@ LSP
   |vim.lsp.buf.type_definition()|, and |vim.lsp.buf.implementation()|
   now supports passing arbitrary positions.
 • Support for nested snippets.
+• |lsp-completion| supports `commitCharacters`: typing a commit character
+  while a completion item is selected accepts the item as with
+  |complete_CTRL-Y|, then inserts the character. Previously
+  `commitCharacters` had no effect.
 
 LUA
 

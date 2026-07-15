@@ -592,9 +592,10 @@ static int insert_execute(VimState *state, int key)
         return 1;  // continue
       }
 
+      const bool is_commit = ins_compl_commit_char(s->c);
       // A non-white character that fits in with the current
       // completion: Add to "compl_leader".
-      if (ins_compl_accept_char(s->c)) {
+      if (!is_commit && ins_compl_accept_char(s->c)) {
         // Trigger InsertCharPre.
         char *str = do_insert_char_pre(s->c);
 
@@ -611,7 +612,7 @@ static int insert_execute(VimState *state, int key)
 
       // Pressing CTRL-Y selects the current match.  When
       // compl_enter_selects is set the Enter key does the same.
-      if ((s->c == Ctrl_Y
+      if ((s->c == Ctrl_Y || is_commit
            || (ins_compl_enter_selects()
                && (s->c == CAR || s->c == K_KENTER || s->c == NL)))
           && stop_arrow() == OK) {
