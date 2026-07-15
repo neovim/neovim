@@ -528,16 +528,18 @@ describe('TUI :restart', function()
     assert_exitreason()
     assert_termguicolors_and_no_gui_running()
 
-    -- Check ":restart! +echo" cannot restart server.
+    -- Check ":restart[!] +echo" cannot restart server.
     -- Check the full screen state to ensure this doesn't pollute the current UI.
-    tt.feed_data(':restart! +echo\013')
-    screen:expect([[
-      ^                                                  |
-      {1:~}{18:                                                 }|*3
-      {3:[No Name]                                         }|
-      {9:restart failed: +cmd did not quit the server}      |
-      {5:-- TERMINAL --}                                    |
-    ]])
+    for _, cmd in ipairs({ ':restart', ':restart!' }) do
+      tt.feed_data(cmd .. ' +echo\013')
+      screen:expect([[
+        ^                                                  |
+        {1:~}{18:                                                 }|*3
+        {3:[No Name]                                         }|
+        {9:restart failed: +cmd did not quit the server}      |
+        {5:-- TERMINAL --}                                    |
+      ]])
+    end
 
     tt.feed_data('ithis will be removed\027')
     screen:expect({ any = vim.pesc('this will be remove^d') })
@@ -575,11 +577,13 @@ describe('TUI :restart', function()
     tt.feed_data(':confirm restart! +echo\013')
     screen:expect({ any = vim.pesc('+cmd did not quit the server') })
 
-    -- Check ":restart!" on a modified buffer.
+    -- Check ":restart[!]" on a modified buffer.
     tt.feed_data('ithis will be removed\027')
-    tt.feed_data(':restart!\013')
-    screen:expect({ any = vim.pesc('Vim(qall):E37: No write since last change') })
-    assert_exitreason('QuitPre:restart\nExitPre:restart\n')
+    for _, cmd in ipairs({ ':restart', ':restart!' }) do
+      tt.feed_data(cmd .. '\013')
+      screen:expect({ any = vim.pesc('Vim(qall):E37: No write since last change') })
+      assert_exitreason('QuitPre:restart\nExitPre:restart\n')
+    end
 
     -- Check ":restart! +qall!" on a modified buffer.
     tt.feed_data('ithis will be removed\027')
