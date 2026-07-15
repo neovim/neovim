@@ -3215,6 +3215,13 @@ bool win_close_othertab(win_T *win, int free_buf, tabpage_T *tp, bool force)
     }
   }
 
+  if (ui_has(kUIMultigrid)) {
+    ui_call_win_close(win->w_grid_alloc.handle);
+  }
+  if (win->w_floating) {
+    ui_comp_remove_grid(&win->w_grid_alloc);
+  }
+
   bufref_T bufref;
   set_bufref(&bufref, win->w_buffer);
 
