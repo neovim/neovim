@@ -105,6 +105,11 @@ local function set_diff(lines)
   api.nvim_set_option_value('filetype', 'diff', { buf = 0 })
 end
 
+local function set_diffhl(lines)
+  api.nvim_set_var('diffhl', true)
+  set_diff(lines)
+end
+
 describe('diff hunk highlighting', function()
   before_each(function()
     clear()
@@ -115,7 +120,7 @@ describe('diff hunk highlighting', function()
 
   it('highlights code inside lua hunks via tree-sitter', function()
     local screen = make_screen(lua_attrs)
-    set_diff(diff_lines)
+    set_diffhl(diff_lines)
     screen:expect([[
       ^diff --git a/foo.lua b/foo.lua              |
       --- a/foo.lua                               |
@@ -139,7 +144,7 @@ describe('diff hunk highlighting', function()
     for i = 1, 2000 do
       lines[#lines + 1] = ('+local v%d = %d'):format(i, i)
     end
-    set_diff(lines)
+    set_diffhl(lines)
     screen:expect([[
       ^diff --git a/big.lua b/big.lua              |
       --- /dev/null                               |
@@ -152,9 +157,8 @@ describe('diff hunk highlighting', function()
     ]])
   end)
 
-  it('does not highlight when disabled via vim.g.diffhl', function()
+  it('does not highlight by default', function()
     local screen = make_screen()
-    api.nvim_set_var('diffhl', false)
     set_diff(diff_lines)
     screen:expect([[
       ^diff --git a/foo.lua b/foo.lua              |
@@ -180,7 +184,7 @@ describe('diff hunk highlighting', function()
         vim.opt.rtp:remove(dir)
       end
     end)
-    set_diff(diff_lines)
+    set_diffhl(diff_lines)
     screen:expect([[
       ^diff --git a/foo.lua b/foo.lua              |
       --- a/foo.lua                               |
@@ -215,6 +219,7 @@ describe('diff hunk highlighting', function()
     end)
     local path = dir .. '/foo.diff'
     write_file(path, table.concat(diff_lines, '\n') .. '\n')
+    api.nvim_set_var('diffhl', true)
     command('edit ' .. path)
     command('set autoread')
     screen:expect([[
@@ -251,7 +256,7 @@ describe('diff hunk highlighting', function()
 
   it('highlights deleted-file hunks via the old path', function()
     local screen = make_screen(lua_attrs)
-    set_diff({
+    set_diffhl({
       'diff --git a/foo.lua b/foo.lua',
       'deleted file mode 100644',
       '--- a/foo.lua',
@@ -274,7 +279,7 @@ describe('diff hunk highlighting', function()
 
   it('highlights Vim-style markers and spaced/quoted paths', function()
     local screen = make_screen(lua_attrs)
-    set_diff({
+    set_diffhl({
       'diff --git a/my file.lua b/my file.lua',
       '--- a/my file.lua',
       '+++ b/my file.lua',
@@ -315,7 +320,7 @@ describe('diff hunk highlighting', function()
 
   it('highlights each side in its own language for a rename with type change', function()
     local screen = make_screen(rename_attrs, 10)
-    set_diff({
+    set_diffhl({
       'diff --git a/foo.lua b/foo.c',
       'rename from foo.lua',
       'rename to foo.c',
@@ -341,7 +346,7 @@ describe('diff hunk highlighting', function()
 
   it('tints added and removed lines without a parser', function()
     local screen = make_screen(line_tint_attrs)
-    set_diff({
+    set_diffhl({
       'diff --git a/notes.xyz b/notes.xyz',
       '--- a/notes.xyz',
       '+++ b/notes.xyz',
@@ -364,7 +369,7 @@ describe('diff hunk highlighting', function()
 
   it('tints combined (merge) diff hunks', function()
     local screen = make_screen(line_tint_attrs, 11)
-    set_diff({
+    set_diffhl({
       'diff --cc foo.lua',
       'index 1111111,2222222..3333333',
       '--- a/foo.lua',

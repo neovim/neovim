@@ -19,7 +19,7 @@ Standard plugins                                        *standard-plugin-list*
 
 Help-link		Loaded	Short description ~
 |dir|			Yes	Directory listing for |:edit|
-|diffhl|		Yes	Treesitter highlighting inside diff hunks
+|diffhl|		No	Treesitter highlighting inside diff hunks
 |difftool|		No	Compares directories (and files) side-by-side
 |editorconfig|		Yes	Detect and interpret editorconfig
 |ft-shada|		Yes	Allows editing binary |shada| files
@@ -91,12 +91,12 @@ information on treesitter parsers, see |treesitter-parsers|.
 
                                                          *g:diffhl* *b:diffhl*
 
-Diff hunk highlighting is enabled by default. Disable it in your config: >lua
-    vim.g.diffhl = false
+Diff hunk highlighting is disabled by default. Enable it in your config: >lua
+    vim.g.diffhl = true
 <
 
-(Vimscript: `let g:diffhl = v:false`). It can also be disabled per-buffer by
-setting the |b:diffhl| buffer-local variable to `false`.
+(Vimscript: `let g:diffhl = v:true`). It can also be enabled or disabled
+per-buffer by setting the |b:diffhl| buffer-local variable to `true` or `false`.
 
 ==============================================================================
 Builtin plugin: difftool                                            *difftool*

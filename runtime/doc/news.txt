@@ -348,10 +348,9 @@ TREESITTER
   capture.
 • |vim.treesitter.select()| starts or adjusts a visual selection at cursor,
   based on tree nodes.
-• Diff hunks (buffers with 'filetype' set to "diff") highlight added and
+• Diff hunks (buffers with 'filetype' set to "diff") can highlight added and
   removed lines with |hl-DiffAdd| and |hl-DiffDelete|, and code inside hunks
-  with the treesitter parser for each hunk's language. Enabled by default;
-  disable with |g:diffhl|.
+  with the treesitter parser for each hunk's language. Enable with |g:diffhl|.
 
 TUI
 
