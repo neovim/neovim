@@ -4652,6 +4652,25 @@ describe('API', function()
       eq({ str = '<3456', width = 5 }, api.nvim_eval_statusline('%S', { maxwidth = 5 }))
     end)
 
+    it('does not include internal mapping keys in %S', function()
+      command('set showcmd')
+      command(
+        [[nnoremap <F3> <Cmd>let g:showcmd_statusline = nvim_eval_statusline('AAA%SBBB', {}).str<CR>]]
+      )
+      exec_lua([[vim.api.nvim_feedkeys(vim.keycode('<F3>'), 'xt', false)]])
+      eq('AAABBB', api.nvim_get_var('showcmd_statusline'))
+      command('nunmap <F3>')
+
+      exec_lua [[
+        vim.g.showcmd_statusline = ''
+        vim.keymap.set('n', '<F3>', function()
+          vim.g.showcmd_statusline = vim.api.nvim_eval_statusline('AAA%SBBB', {}).str
+        end)
+        vim.api.nvim_feedkeys(vim.keycode('<F3>'), 'xt', false)
+      ]]
+      eq('AAABBB', api.nvim_get_var('showcmd_statusline'))
+    end)
+
     describe('highlight parsing', function()
       it('works', function()
         eq(
