@@ -149,8 +149,16 @@ function M.ex_session_restart(after_cmd, quit_cmd)
   end)
 
   if not success then
+    --- @cast msg string
     fs.rm(session, { force = true })
-    error(msg)
+
+    -- Trim error message to be equivalent to `:restart!`
+    local trimmed_msg = msg:match('Vim:.*$')
+    if trimmed_msg then
+      vim.api.nvim_echo({ { trimmed_msg:sub(5) } }, true, { err = true })
+    else
+      error(msg)
+    end
   end
 end
 
