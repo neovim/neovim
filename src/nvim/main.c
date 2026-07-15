@@ -311,7 +311,15 @@ int main(int argc, char **argv)
   if (embedded_mode) {
     const char *err;
     if (!channel_from_stdio(true, CALLBACK_READER_INIT, &err)) {
-      abort();
+      // If we failed to open the stdio channel, we shouldn't abort if the user
+      // provided a --listen address (or $NVIM_LISTEN_ADDRESS). remote_ui_wait_for_attach()
+      // will correctly block and wait for a UI to connect to the socket.
+      // See Issue #38456.
+      if (params.listen_addr != NULL || os_env_exists("NVIM_LISTEN_ADDRESS", true)) {
+        WLOG("Failed to start embedded mode stdio channel: %s", err);
+      } else {
+        abort();
+      }
     }
   }
 
