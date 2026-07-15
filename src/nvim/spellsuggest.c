@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "nvim/ascii_defs.h"
+#include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/change.h"
 #include "nvim/charset.h"
@@ -53,6 +54,7 @@
 #include "nvim/ui_defs.h"
 #include "nvim/undo.h"
 #include "nvim/vim_defs.h"
+#include "nvim/window.h"
 
 // Use this to adjust the score after finding suggestions, based on the
 // suggested word sounding like the bad word.  This is much faster than doing
@@ -485,20 +487,33 @@ static void select_spell_suggestion(suginfo_T *sug)
   tv_clear(&bad_tv);
 }
 
+static bool spell_suggest_win_valid(win_T *wp, bufref_T *bufref)
+{
+  return win_valid_any_tab(wp)
+         && bufref_valid(bufref)
+         && wp->w_buffer == bufref->br_buf;
+}
+
 /// "z=": Find badly spelled word under or after the cursor.
 /// Give suggestions for the properly spelled word.
 /// In Visual mode use the highlighted word as the bad word.
 /// When "count" is non-zero use that suggestion.
 void spell_suggest(int count)
 {
-  pos_T prev_cursor = curwin->w_cursor;
+  win_T *spell_win = curwin;
+  bufref_T spell_bufref;
+  set_bufref(&spell_bufref, curbuf);
+  pos_T prev_cursor = spell_win->w_cursor;
   int badlen = 0;
   int msg_scroll_save = msg_scroll;
-  const int wo_spell_save = curwin->w_p_spell;
+  const int wo_spell_save = spell_win->w_p_spell;
 
-  if (!curwin->w_p_spell) {
-    parse_spelllang(curwin);
-    curwin->w_p_spell = true;
+  if (!spell_win->w_p_spell) {
+    parse_spelllang(spell_win);
+    if (!spell_suggest_win_valid(spell_win, &spell_bufref) || curwin != spell_win) {
+      goto skip;
+    }
+    spell_win->w_p_spell = true;
   }
 
   if (*curwin->w_s->b_p_spl == NUL) {
@@ -574,6 +589,9 @@ void spell_suggest(int count)
     }
   } else {
     // Hand off to (async) vim.ui.select().
+    if (spell_suggest_win_valid(spell_win, &spell_bufref)) {
+      spell_win->w_p_spell = wo_spell_save;
+    }
     select_spell_suggestion(&sug);
 
     lines_left = Rows;                  // avoid more prompt
@@ -621,13 +639,18 @@ void spell_suggest(int count)
 
     inserted_bytes(curwin->w_cursor.lnum, c, stp->st_orglen, stp->st_wordlen);
   } else {
-    curwin->w_cursor = prev_cursor;
+    if (spell_suggest_win_valid(spell_win, &spell_bufref)) {
+      spell_win->w_cursor = prev_cursor;
+      check_cursor(spell_win);
+    }
   }
 
   spell_find_cleanup(&sug);
   xfree(line);
 skip:
-  curwin->w_p_spell = wo_spell_save;
+  if (spell_suggest_win_valid(spell_win, &spell_bufref)) {
+    spell_win->w_p_spell = wo_spell_save;
+  }
 }
 
 /// Find spell suggestions for "word".  Return them in the growarray "*gap" as
