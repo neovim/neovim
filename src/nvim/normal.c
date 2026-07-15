@@ -1851,7 +1851,6 @@ void may_clear_cmdline(void)
 
 // Routines for displaying a partly typed command
 static char old_showcmd_buf[SHOWCMD_BUFLEN];    // For push_showcmd()
-static bool showcmd_is_clear = true;
 static bool showcmd_visual = false;
 
 void clear_showcmd(void)
@@ -1951,7 +1950,7 @@ bool add_to_showcmd(int c)
     K_RIGHTMOUSE, K_RIGHTDRAG, K_RIGHTRELEASE,
     K_MOUSEDOWN, K_MOUSEUP, K_MOUSELEFT, K_MOUSERIGHT,
     K_X1MOUSE, K_X1DRAG, K_X1RELEASE, K_X2MOUSE, K_X2DRAG, K_X2RELEASE,
-    K_EVENT,
+    K_EVENT, K_COMMAND, K_LUA,
     0
   };
 

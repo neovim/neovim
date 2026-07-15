@@ -418,6 +418,10 @@ static void win_redr_stl_expr(win_T *wp, bool draw_winbar, bool draw_ruler, bool
     }
   }
 
+  if (p_sc && find_option(p_sloc) == opt_idx) {
+    showcmd_is_clear = (showcmd_buf[0] == NUL);
+  }
+
   if (ui_event) {
     ui_call_msg_ruler(content);
     did_show_ext_ruler = true;
@@ -809,6 +813,7 @@ void draw_tabline(void)
         grid_line_puts(Columns - sc_width - (tabcount > 1) * 2,
                        showcmd_buf, sc_width, attr_nosel);
       }
+      showcmd_is_clear = (showcmd_buf[0] == NUL);
     }
 
     // Put an "X" for closing the current tab if there are several.

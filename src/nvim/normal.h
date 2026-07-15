@@ -16,5 +16,6 @@ enum {
 
 /// 'showcmd' buffer shared between normal.c and statusline.c
 EXTERN char showcmd_buf[SHOWCMD_BUFLEN];
+EXTERN bool showcmd_is_clear INIT( = true);
 
 #include "normal.h.generated.h"
