@@ -3,9 +3,11 @@ local n = require('test.functional.testnvim')()
 
 local clear = n.clear
 local eq = t.eq
+local exec_lua = n.exec_lua
 local fnamemodify = n.fn.fnamemodify
 local getcwd = n.fn.getcwd
 local command = n.command
+local poke_eventloop = n.poke_eventloop
 local write_file = t.write_file
 local is_os = t.is_os
 local chdir = n.fn.chdir
@@ -50,6 +52,24 @@ describe('fnamemodify()', function()
       eq(old_dir, fnamemodify(letter_colon .. '../', ':p'))
       eq(foo_dir .. 'bar', fnamemodify(letter_colon .. 'bar', ':p'))
     end
+  end)
+
+  it('handles an unknown user in a fast event #40707', function()
+    exec_lua([[
+      local timer = assert(vim.uv.new_timer())
+      timer:start(0, 0, function()
+        timer:close()
+        assert(vim.in_fast_event())
+        _G.result = vim.fn.fnamemodify('~neovim_user_not_found_test/', ':p')
+      end)
+    ]])
+    poke_eventloop()
+    local expected = '~neovim_user_not_found_test/'
+    if is_os('win') then
+      -- Windows never expands ~user, ':p' just prefixes the cwd.
+      expected = fnamemodify('.', ':p') .. expected
+    end
+    eq(expected, exec_lua('return _G.result'))
   end)
 
   it(':8 works', function()
