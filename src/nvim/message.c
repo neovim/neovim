@@ -511,7 +511,12 @@ char *msg_strtrunc(const char *s, int force)
       room = (Rows - msg_row) * Columns - 1;
     } else {
       // Use up to 'showcmd' column.
-      room = (Rows - msg_row - 1) * Columns + sc_col - 1;
+      // In the case of ui2, we no longer need to avoid the "Press ENTER" prompt, but the message is
+      // still kept under 1 line to avoid glitches. For example, when a long search term is
+      // displayed that expands the cmdline, it will be immediately collapsed again when the search
+      // count is displayed, which leads to flickering on each hit.
+      int last_row = ui_has(kUIMessages) ? Columns : sc_col - 1;
+      room = (Rows - msg_row - 1) * Columns + last_row;
     }
     if (len > room && room > 0) {
       // may have up to 18 bytes per cell (6 per char, up to two

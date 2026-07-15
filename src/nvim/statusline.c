@@ -308,7 +308,15 @@ static void win_redr_stl_expr(win_T *wp, bool draw_winbar, bool draw_ruler, bool
     wp->w_status_click_defs = stl_alloc_click_defs(wp->w_status_click_defs, maxwidth,
                                                    &wp->w_status_click_defs_size);
 
-    if (draw_ruler) {
+    if (draw_ruler && ui_event) {
+      stl = p_ruf;
+      opt_idx = kOptRulerformat;
+      maxwidth = Columns / 2;
+      if (!in_status_line) {
+        fillchar = schar_from_ascii(' ');
+        group = HLF_MSG;
+      }
+    } else if (draw_ruler) {
       stl = p_ruf;
       opt_idx = kOptRulerformat;
       // advance past any leading group spec - implicit in ru_col
@@ -549,8 +557,8 @@ void redraw_ruler(void)
   char rel_pos[RULER_BUF_LEN];
   int rel_poslen = get_rel_pos(wp, rel_pos, RULER_BUF_LEN);
   int n1 = bufferlen + vim_strsize(rel_pos);
-  if (wp->w_status_height == 0 && !is_stl_global) {  // can't use last char of screen
-    n1++;
+  if (wp->w_status_height == 0 && !is_stl_global && !ui_has(kUIMessages)) {
+    n1++;  // can't use last char of screen
   }
 
   int this_ru_col = ru_col - (Columns - width);
@@ -1464,9 +1472,8 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
       }
     }
 
-    // Bound the minimum width at 50.
     // Make the number negative to denote left alignment of the item
-    minwid = (minwid > 50 ? 50 : minwid) * (left_align ? -1 : 1);
+    minwid *= left_align ? -1 : 1;
 
     // Denotes the start of a new group
     if (*fmt_p == '(') {

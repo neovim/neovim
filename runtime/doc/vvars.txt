@@ -128,7 +128,7 @@ v:dying
 v:echospace
 		Number of screen cells that can be used for an `:echo` message
 		in the last screen line before causing the |hit-enter| prompt
-		(or "overflow" with |ui2|).
+		(no longer applicable when |ui2| is enabled).
 
 		Depends on 'showcmd', 'ruler' and 'columns'.  You need to
 		check 'cmdheight' for whether there are full-width lines

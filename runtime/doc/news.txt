@@ -44,7 +44,11 @@ DIAGNOSTICS
 
 OPTIONS
 
-• todo
+• When |ui2| is enabled, since the ruler is no longer a left-aligned box of
+  fixed width, there is no longer an inconsistent special handling of item
+  groups in 'rulerformat' to configure that fixed width. An old-style left-
+  aligned fixed-width ruler can now be achieved by using item groups exactly
+  as they are documented, e.g. `%-20.20(...%)`.
 
 TREESITTER
 

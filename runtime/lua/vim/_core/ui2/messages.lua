@@ -126,7 +126,7 @@ local function set_virttext(type, tgt)
     })
     local row = texth.end_row
     local col = fn.virtcol2col(win, row + 1, texth.end_vcol)
-    local scol = fn.screenpos(win, row + 1, col).col ---@type integer
+    local scol = fn.screenpos(win, row + 1, col).endcol ---@type integer
 
     if type ~= 'last' then
       -- Calculate at which column to place the virt_text such that it is at the end
@@ -179,7 +179,8 @@ local function set_virttext(type, tgt)
 
           -- Crop text on last screen row and find byte offset to place mark at.
           local vcol = texth.end_vcol - (scol - M.cmd.last_col)
-          col = vcol <= 0 and 0 or fn.virtcol2col(win, row + 1, vcol)
+          col = vcol <= 0 and 0 or fn.virtcol2col(win, row + 1, vcol + 1) - 1
+          scol = fn.screenpos(win, row + 1, col).endcol
           M.cmd.prev_msg = mode > 0 and '' or M.cmd.prev_msg
           M.virt.cmd = mode > 0 and { {}, {} } or M.virt.cmd
           api.nvim_buf_set_text(ui.bufs.cmd, row, col, row, -1, { mode > 0 and ' ' or '' })
@@ -389,6 +390,13 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
     M.virt[tgt][M.virt.idx.dupe][1] = dupe > 0 and { 0, ('(%d)'):format(dupe) } or nil
     M.virt[tgt][M.virt.idx.spill][1] = tgt == 'cmd' and M.virt.cmd[M.virt.idx.spill][1] or nil
     set_virttext(tgt --[[@as 'cmd'|'msg']], tgt)
+    if tgt == 'cmd' then
+      -- make sure repeated long messages are cropped to keep the ruler intact
+      -- (if this is not scheduled, it breaks messages during textlock)
+      vim.schedule(function()
+        set_virttext('last', 'cmd')
+      end)
+    end
   end
 
   -- Reset message state the next event loop iteration.
@@ -462,6 +470,7 @@ function M.msg_show(kind, content, replace_last, _, append, id, trigger)
       M.cmd.last_emsg = (kind == 'emsg' or kind == 'wmsg') and os.time() or M.cmd.last_emsg
       -- Should clear the search count now, mark itself is cleared by invalidate.
       M.virt.last[M.virt.idx.search][1] = nil
+      M.virt.last[M.virt.idx.cmd] = {}
     end
     -- When message was emitted below an already expanded cmdline, move and route to pager.
     tgt = ui.cmd.expand > 0 and 'pager' or tgt
