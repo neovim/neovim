@@ -205,6 +205,7 @@ describe('vim._core', function()
       'vim._core.exrc',
       'vim._core.help',
       'vim._core.log',
+      'vim._core.marks',
       'vim._core.options',
       'vim._core.proc',
       'vim._core.server',

@@ -1575,6 +1575,8 @@ vim.show_pos({buf}, {row}, {col}, {filter})                   *vim.show_pos()*
 
     Can also be shown with `:Inspect`.                              *:Inspect*
 
+    See also |:marks| to list all extmarks.
+
     Example: To bind this function to the vim-scriptease inspired `zS` in
     Normal mode: >lua
         vim.keymap.set('n', 'zS', vim.show_pos)
