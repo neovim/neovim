@@ -53,6 +53,28 @@ To disable the built-in directory browser, set this before startup: >lua
 	vim.g.loaded_nvim_dir_plugin = 1
 <
 
+Replacing the directory browser                         *dir-replace-browser*
+
+To use another directory browser for the current session, delete the
+`nvim.dir` autocommand group on or after |VimEnter| and handle |FileType| "directory":
+>lua
+	vim.api.nvim_del_augroup_by_name('nvim.dir')
+	vim.api.nvim_create_autocmd('FileType', {
+	  pattern = 'directory',
+	  callback = function(args)
+	    require('my_browser').open(args.buf, vim.api.nvim_buf_get_name(args.buf))
+	  end,
+	})
+<
+This stops the built-in directory-opening autocommands. The plugin and its
+mappings remain loaded.
+
+Define replacement keymaps explicitly, for example: >lua
+	vim.keymap.set('n', '-', function()
+	  require('my_browser').open_parent()
+	end)
+<
+
 Mappings:                                                       *dir-mappings*
 >
 	-	Open the parent directory of the current file or directory.
@@ -66,7 +88,9 @@ Directory buffer mappings:                                *dir-buffer-mappings*
 <
 
 These keys map to <Plug>(nvim-dir-open), <Plug>(nvim-dir-up), and
-<Plug>(nvim-dir-reload); map those to use different keys.
+<Plug>(nvim-dir-reload); map those to use different keys. Default mappings are
+skipped when the target <Plug> mapping is already mapped. The default global and
+directory-buffer "-" mappings are also skipped when "-" is already mapped.
 
 The listing is read-only and does not modify the filesystem.
 
