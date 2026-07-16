@@ -11,30 +11,30 @@ local M = {}
 ---@field dir boolean
 ---@field path? string
 
---- Callback for `Driver.list_entries`; call once with either an error or entries.
+--- Callback for `Provider.list_entries`; call once with either an error or entries.
 ---@alias (private) nvim.dir.ListCallback fun(err: string?, entries: nvim.dir.Entry[]?)
 
 --- State for one buffer opened through `nvim.dir.open()`.
 ---@class (private) nvim.dir.Ctx
 ---@field buf integer
 ---@field name string
----@field driver nvim.dir.Driver
+---@field provider nvim.dir.Provider
 --- Last entries rendered; indexes match buffer lines.
 ---@field entries nvim.dir.Entry[]
---- Driver-owned mutable state preserved across reloads.
----@field driver_state table
+--- Provider-owned mutable state preserved across reloads.
+---@field provider_state table
 --- Incremented for each list call to ignore stale callbacks.
 ---@field list_generation integer
 
 --- Source adapter that provides entries and listing actions.
----@class (private) nvim.dir.Driver
+---@class (private) nvim.dir.Provider
 --- Produce entries for this listing.
 ---@field list_entries fun(ctx: nvim.dir.Ctx, cb: nvim.dir.ListCallback)
 --- Open an entry from the listing.
 ---@field open_entry fun(ctx: nvim.dir.Ctx, entry: nvim.dir.Entry)
 --- Open the parent listing.
 ---@field open_parent fun(ctx: nvim.dir.Ctx)
---- Run driver-specific buffer setup after the first render.
+--- Run provider-specific buffer setup after the first render.
 ---@field attach? fun(ctx: nvim.dir.Ctx)
 
 --- Active listing sessions used by maps/reloads and stale callback checks.
@@ -128,7 +128,7 @@ end
 ---@param fn fun(ctx: nvim.dir.Ctx, ...)
 ---@param ... any
 ---@return boolean
-local function call_driver(ctx, operation, fn, ...)
+local function call_provider(ctx, operation, fn, ...)
   local ok, err = pcall(fn, ctx, ...) ---@type boolean, any
   if not ok then
     notify_error(operation, err)
@@ -258,27 +258,27 @@ local function load(ctx, restore_view)
     setup_render_autocmds(ctx)
     rendered_sessions[ctx] = true
     set_maps(ctx.buf)
-    if ctx.driver.attach then
-      call_driver(ctx, 'attach', ctx.driver.attach)
+    if ctx.provider.attach then
+      call_provider(ctx, 'attach', ctx.provider.attach)
     end
   end
 
-  local ok, err = pcall(ctx.driver.list_entries, ctx, on_list) ---@type boolean, any
+  local ok, err = pcall(ctx.provider.list_entries, ctx, on_list) ---@type boolean, any
   if not ok then
     on_list(tostring(err))
   end
 end
 
---- Open {buf} as a listing named {name} using {driver}.
+--- Open {buf} as a listing named {name} using {provider}.
 ---@param buf integer
 ---@param name string
----@param driver nvim.dir.Driver
-function M.open(buf, name, driver)
+---@param provider nvim.dir.Provider
+function M.open(buf, name, provider)
   buf = vim._resolve_bufnr(buf)
 
   local old = active_sessions[buf]
   if old then
-    if old.name == name and old.driver == driver then
+    if old.name == name and old.provider == provider then
       load(old, api.nvim_get_current_buf() == buf and vim.fn.winsaveview() or nil)
       return
     end
@@ -289,9 +289,9 @@ function M.open(buf, name, driver)
   local ctx = {
     buf = buf,
     name = name,
-    driver = driver,
+    provider = provider,
     entries = {},
-    driver_state = {},
+    provider_state = {},
     list_generation = 0,
   }
 
@@ -315,7 +315,7 @@ function M._open_entry()
   local ctx = active_sessions[buf]
   local entry = current_entry(buf)
   if ctx and entry then
-    call_driver(ctx, 'open_entry', ctx.driver.open_entry, entry)
+    call_provider(ctx, 'open_entry', ctx.provider.open_entry, entry)
   end
 end
 
@@ -323,7 +323,7 @@ function M._open_parent()
   local buf = api.nvim_get_current_buf()
   local ctx = active_sessions[buf]
   if ctx then
-    call_driver(ctx, 'open_parent', ctx.driver.open_parent)
+    call_provider(ctx, 'open_parent', ctx.provider.open_parent)
     return
   end
   -- Keep the global `-` mapping useful from regular file buffers.
@@ -344,8 +344,8 @@ end
 ---@param path string
 function M.try_open(buf, path)
   buf = vim._resolve_bufnr(buf)
-  local fs_driver = require('nvim.dir._filesystem')
-  if fs_driver.is_navigating() or path == '' then
+  local fs_provider = require('nvim.dir._filesystem')
+  if fs_provider.is_navigating() or path == '' then
     return
   end
   if active_sessions[buf] ~= nil then
@@ -361,7 +361,7 @@ function M.try_open(buf, path)
   if vim.fn.isdirectory(path) == 0 then
     return
   end
-  M.open(buf, fs_driver.normalize(path), fs_driver)
+  M.open(buf, fs_provider.normalize(path), fs_provider)
 end
 
 function M.handle_startup_dirs()

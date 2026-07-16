@@ -190,7 +190,7 @@ describe('nvim.dir', function()
     assert_directory(root)
   end)
 
-  it('opens a custom listing driver', function()
+  it('opens a custom listing provider', function()
     n.clear({ args_rm = { '-u' } })
 
     exec_lua(function()
@@ -229,7 +229,7 @@ describe('nvim.dir', function()
     eq('custom://root', exec_lua('return vim.g.nvim_dir_parent'))
   end)
 
-  it('reports custom listing driver errors', function()
+  it('reports custom listing provider errors', function()
     n.clear({ args_rm = { '-u' } })
 
     exec_lua(function()
@@ -246,14 +246,14 @@ describe('nvim.dir', function()
     eq(false, exec_lua([[return vim.b.nvim_dir ~= nil]]))
   end)
 
-  it('reloads custom listing drivers', function()
+  it('reloads custom listing providers', function()
     n.clear({ args_rm = { '-u' } })
 
     exec_lua(function()
       require('nvim.dir').open(0, 'custom://root', {
         list_entries = function(ctx, cb)
-          ctx.driver_state.count = (ctx.driver_state.count or 0) + 1
-          cb(nil, { { name = 'file' .. ctx.driver_state.count .. '.txt', dir = false } })
+          ctx.provider_state.count = (ctx.provider_state.count or 0) + 1
+          cb(nil, { { name = 'file' .. ctx.provider_state.count .. '.txt', dir = false } })
         end,
         open_entry = function() end,
         open_parent = function() end,
