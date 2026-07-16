@@ -189,11 +189,15 @@ describe('autoread file watcher', function()
     write_file(path1, 'b1\n')
     write_file(path2, 'b2\n')
 
-    -- Confirm busy=1 during the debounce window.
-    retry(nil, 1000, function()
-      eq(1, api.nvim_get_option_value('busy', { buf = buf1 }))
-      eq(1, api.nvim_get_option_value('busy', { buf = buf2 }))
-    end)
+    -- Confirm busy=1. Sample with vim.wait: busy=1 pulse only lasts ~debounce_ms.
+    eq(
+      true,
+      n.exec_lua(function(b1, b2)
+        return vim.wait(2000, function()
+          return vim.bo[b1].busy == 1 and vim.bo[b2].busy == 1
+        end, 5)
+      end, buf1, buf2)
+    )
 
     -- Confirm busy=0 after the autoread.
     retry(nil, 3000, function()
