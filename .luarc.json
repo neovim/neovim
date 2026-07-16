@@ -5,6 +5,7 @@
   },
   "workspace": {
     "ignoreDir": [
+      "/lua/vim/async.lua",
       ".deps",
       "build",
       "test"
