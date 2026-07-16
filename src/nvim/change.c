@@ -991,7 +991,8 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   char *next_line = NULL;         // copy of the next line
   char *p_extra = NULL;           // what goes to next line
   colnr_T less_cols = 0;          // less columns for mark in new line
-  colnr_T less_cols_off = 0;      // columns to skip for mark adjust
+  colnr_T less_cols_off = 0;      // columns to skip for mark and
+                                  // extmark adjustment
   pos_T old_cursor;               // old cursor position
   colnr_T newcol = 0;             // new cursor column
   int newindent = 0;              // auto-indent of the new line
