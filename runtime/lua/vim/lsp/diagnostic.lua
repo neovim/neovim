@@ -353,17 +353,7 @@ end
 --- Refresh diagnostics, only if we have attached clients that support it
 ---@package
 ---@param client_id integer Client ID to refresh
----@param only_visible? boolean Whether to only refresh for the visible regions of the buffer (default: false)
-function Diagnostics:refresh(client_id, only_visible)
-  if
-    only_visible
-    and vim.iter(api.nvim_list_wins()):all(function(window)
-      return api.nvim_win_get_buf(window) ~= self.bufnr
-    end)
-  then
-    return
-  end
-
+function Diagnostics:refresh(client_id)
   local client = vim.lsp.get_client_by_id(client_id)
 
   local method = 'textDocument/diagnostic'
