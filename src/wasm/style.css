@@ -1,0 +1,5 @@
+body { font-family: monospace; background: #1e1e1e; color: #ddd; padding: 10px; margin: 0; }
+#bar { margin-bottom: 10px; }
+#bar button { margin-right: 8px; }
+#status { color: #9c9; }
+#log { white-space: pre-wrap; background: #111; padding: 10px; border-radius: 4px; }
