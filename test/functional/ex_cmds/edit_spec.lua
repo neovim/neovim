@@ -13,7 +13,7 @@ describe(':edit', function()
     clear()
   end)
 
-  it('explains why a glob matching multiple files is rejected', function()
+  it('E77 message', function()
     local glob_files = { 'Xedit-glob-one.js', 'Xedit-glob-two.js' }
 
     finally(function()
