@@ -11,7 +11,6 @@ local exec_lua = n.exec_lua
 local feed = n.feed
 local api = n.api
 local request = n.request
-local poke_eventloop = n.poke_eventloop
 local pcall_err = t.pcall_err
 local uv = vim.uv
 
@@ -123,15 +122,15 @@ describe('nvim_ui_send', function()
       close_pipe(read_pipe)
     end)
 
-    api.nvim_ui_send('Hello world')
-
-    poke_eventloop()
-
     screen:expect([[
       ^                                                  |
       {1:~                                                 }|*8
                                                         |
     ]])
+
+    api.nvim_ui_send('Hello world')
+
+    screen:expect_unchanged()
 
     -- The TUI client queries OSC 11 on connect, so that precedes the payload.
     local bg_request = '\027]11;?\007'
@@ -159,15 +158,15 @@ describe('nvim_ui_send', function()
       close_pipe(read_pipe)
     end)
 
-    api.nvim_ui_send('Hello world')
-
-    poke_eventloop()
-
     screen:expect([[
       ^                                                  |
       {1:~                                                 }|*8
                                                         |
     ]])
+
+    api.nvim_ui_send('Hello world')
+
+    screen:expect_unchanged()
 
     eq('', table.concat(read_data))
   end)
