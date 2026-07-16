@@ -13,6 +13,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand_defs.h"
+#include "nvim/context.h"
 #include "nvim/errors.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
@@ -226,30 +227,6 @@ void alist_add(alist_T *al, char *fname, int set_fnum)
   arglist_locked = false;
   wp->w_locked--;
 }
-
-#ifdef BACKSLASH_IN_FILENAME
-
-/// Adjust slashes in file names.  Called after 'shellslash' was set.
-void alist_slash_adjust(void)
-{
-  for (int i = 0; i < GARGCOUNT; i++) {
-    if (GARGLIST[i].ae_fname != NULL) {
-      slash_adjust(GARGLIST[i].ae_fname);
-    }
-  }
-
-  FOR_ALL_TAB_WINDOWS(tp, wp) {
-    if (wp->w_alist != &global_alist) {
-      for (int i = 0; i < WARGCOUNT(wp); i++) {
-        if (WARGLIST(wp)[i].ae_fname != NULL) {
-          slash_adjust(WARGLIST(wp)[i].ae_fname);
-        }
-      }
-    }
-  }
-}
-
-#endif
 
 /// Isolate one argument, taking backticks.
 /// Changes the argument in-place, puts a NUL after it.  Backticks remain.
@@ -879,7 +856,7 @@ static void arg_all_close_unused_windows(arg_all_state_T *aall)
       if (buf->b_ffname == NULL
           || (!aall->keep_tabs
               && (buf->b_nwindows > 1 || wp->w_width != Columns
-                  || (wp->w_floating && !is_aucmd_win(wp))))) {
+                  || (wp->w_floating && !is_ctx_win(wp))))) {
         i = aall->opened_len;
       } else {
         // check if the buffer in this window is in the arglist
@@ -1113,7 +1090,7 @@ static void do_arg_all(int count, int forceit, int keep_tabs)
   autocmd_no_leave++;
   last_curwin = curwin;
   last_curtab = curtab;
-  // lastwin may be aucmd_win
+  // lastwin may be ctx_win
   win_enter(lastwin_nofloating(NULL), false);
 
   // Open up to "count" windows.

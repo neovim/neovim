@@ -31,11 +31,12 @@
 #include "nvim/clipboard.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/cmdexpand_defs.h"
+#include "nvim/context.h"
 #include "nvim/cursor.h"
 #include "nvim/debugger.h"
+#include "nvim/dialog.h"
 #include "nvim/digraph.h"
 #include "nvim/drawscreen.h"
-#include "nvim/edit.h"
 #include "nvim/errors.h"
 #include "nvim/eval/fs.h"
 #include "nvim/eval/funcs.h"
@@ -60,12 +61,12 @@
 #include "nvim/fold.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
-#include "nvim/getchar.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
 #include "nvim/input.h"
+#include "nvim/insert.h"
 #include "nvim/keycodes.h"
 #include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
@@ -1536,11 +1537,11 @@ bool cmd_has_expr_args(cmdidx_T cmdidx)
 ///
 /// @param cmdline Command line string
 /// @param[out] eap Ex command arguments
-/// @param[out] cmdinfo Command parse information
+/// @param[out] cmod Command modifiers
 /// @param[out] errormsg Error message, if any
 ///
 /// @return Success or failure
-bool parse_cmdline(char **cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const char **errormsg)
+bool parse_cmdline(char **cmdline, exarg_T *eap, cmdmod_T *cmod, const char **errormsg)
 {
   char *after_modifier = NULL;
   bool retval = false;
@@ -1551,8 +1552,8 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const ch
   // parsing the command range may set the last search pattern
   save_last_search_pattern();
 
-  // Initialize cmdinfo
-  CLEAR_POINTER(cmdinfo);
+  // Initialize cmod
+  CLEAR_POINTER(cmod);
 
   // Initialize eap
   *eap = (exarg_T){
@@ -1566,7 +1567,7 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const ch
 
   char *orig_cmd = eap->cmd;
   // If parse command modifiers failed but modifiers were passed, continue
-  int result = parse_command_modifiers(eap, errormsg, &cmdinfo->cmdmod, false);
+  int result = parse_command_modifiers(eap, errormsg, cmod, false);
   after_modifier = eap->cmd;
   if (result == FAIL && after_modifier == orig_cmd) {
     goto end;
@@ -1685,17 +1686,13 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, const ch
   }
 
   // Set the "magic" values (characters that get treated specially)
-  if (eap->argt & EX_XFILE) {
-    cmdinfo->magic.file = true;
-  }
-  if (eap->argt & EX_TRLBAR) {
-    cmdinfo->magic.bar = true;
-  }
+  eap->magic.file = eap->argt & EX_XFILE;
+  eap->magic.bar = eap->argt & EX_TRLBAR;
 
   retval = true;
 end:
   if (!retval) {
-    undo_cmdmod(&cmdinfo->cmdmod);
+    undo_cmdmod(cmod);
   }
   ex_pressedreturn = save_ex_pressedreturn;
   curwin->w_cursor = save_cursor;
@@ -1806,9 +1803,9 @@ static int execute_cmd0(int *retv, exarg_T *eap, const char **errormsg, bool pre
 /// Does not do any validation of the Ex command arguments.
 ///
 /// @param eap Ex-command arguments
-/// @param cmdinfo Command parse information
+/// @param cmod Command modifiers
 /// @param preview Execute command preview callback instead of actual command
-int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
+int execute_cmd(exarg_T *eap, cmdmod_T *cmod, bool preview)
 {
   int retv = 0;
   if (do_cmdline_start() == FAIL) {
@@ -1819,7 +1816,7 @@ int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
   const char *errormsg = NULL;
 
   cmdmod_T save_cmdmod = cmdmod;
-  cmdmod = cmdinfo->cmdmod;
+  cmdmod = *cmod;
 
   // Apply command modifiers
   apply_cmdmod(&cmdmod);
@@ -5012,6 +5009,16 @@ static void ex_restart(exarg_T *eap)
     if (i > 0 && strequal(arg, "--")) {
       break;
     }
+    // Drop "-S [file]". It conflicts with :restart and usually isn't wanted for :restart!
+    if (i > 0 && strequal(arg, "-S")) {
+      if (li->li_next != NULL) {
+        const char *next_arg = tv_get_string(TV_LIST_ITEM_TV(li->li_next));
+        if (next_arg[0] != '-') {
+          li = li->li_next;
+        }
+      }
+      continue;
+    }
     // Drop "-s <scriptfile>": skip the scriptfile arg too.
     if (i > 0 && strequal(arg, "-s")) {
       li = li->li_next;
@@ -5023,7 +5030,8 @@ static void ex_restart(exarg_T *eap)
       if (next_li != NULL) {
         const char *addr = tv_get_string(TV_LIST_ITEM_TV(next_li));
         if (strstr(addr, ":") || strstr(addr, "/") || strstr(addr, "\\")) {
-          listen_arg = addr;
+          XFREE_CLEAR(listen_arg);
+          listen_arg = TO_SLASH_SAVE(addr);
 #ifdef MSWIN
           // On Windows, don't pass --listen to new server (named pipe can't be reused immediately).
           // Instead pass the address via RPC; new server rebinds after startup.
@@ -5053,14 +5061,12 @@ static void ex_restart(exarg_T *eap)
   // On Windows, --listen is omitted from child argv because the named pipe can't be reused immediately.
   // Recover the canonical address from the Lua module state (set by the previous rebind_after_restart() call),
   // and keep the current listener alive (new server reclaims it).
-  char *listen_arg_alloc = NULL;
   if (listen_arg == NULL) {
     Error lua_err = ERROR_INIT;
     Object rv = NLUA_EXEC_STATIC("return require('vim._core.server').restart_canonical_addr",
                                  (Array)ARRAY_DICT_INIT, kRetObject, NULL, &lua_err);
     if (!ERROR_SET(&lua_err) && rv.type == kObjectTypeString && rv.data.string.size > 0) {
-      listen_arg_alloc = xstrdup(rv.data.string.data);
-      listen_arg = listen_arg_alloc;
+      listen_arg = xstrdup(rv.data.string.data);
     }
     api_free_object(rv);
     api_clear_error(&lua_err);
@@ -5215,9 +5221,7 @@ fail_1:
   if (server_stopped && server_start(listen_arg) != 0) {
     semsg("couldn't resume listening on %s", listen_arg);
   }
-#ifdef MSWIN
-  xfree(listen_arg_alloc);
-#endif
+  XFREE_CLEAR(listen_arg);
 }
 
 /// ":close": close current window, unless it is the last one
@@ -5262,7 +5266,7 @@ static void ex_pclose(exarg_T *eap)
 void ex_win_close(int forceit, win_T *win, tabpage_T *tp)
 {
   // Never close the autocommand window.
-  if (is_aucmd_win(win)) {
+  if (is_ctx_win(win)) {
     emsg(_(e_autocmd_close));
     return;
   }
@@ -5706,6 +5710,7 @@ static char *findfunc_find_file(char *findarg, size_t findarg_len, int count)
 
   findarg[findarg_len] = cc;
 
+  TO_SLASH(ret_fname);
   return ret_fname;
 }
 
@@ -6067,14 +6072,14 @@ static void ex_resize(exarg_T *eap)
     } else if (n == 0 && eap->arg[0] == NUL) {  // default is very wide
       n = Columns;
     }
-    win_setwidth_win(n, wp);
+    win_setwidth_win(n, wp, true);
   } else {
     if (*eap->arg == '-' || *eap->arg == '+') {
       n += wp->w_height;
     } else if (n == 0 && eap->arg[0] == NUL) {  // default is very high
       n = Rows - 1;
     }
-    win_setheight_win(n, wp);
+    win_setheight_win(n, wp, true);
   }
 }
 
@@ -6504,15 +6509,19 @@ bool changedir_func(char *new_dir, CdScope scope)
     new_dir = NameBuff;
   }
 
+  new_dir = TO_SLASH_SAVE(new_dir);
+
   bool dir_differs = pdir == NULL || pathcmp(pdir, new_dir, -1) != 0;
   if (dir_differs) {
     do_autocmd_dirchanged(new_dir, scope, kCdCauseManual, true);
     if (vim_chdir(new_dir) != 0) {
       emsg(_(e_failed));
+      xfree(new_dir);
       xfree(pdir);
       return false;
     }
   }
+  xfree(new_dir);
 
   char **pp;
   switch (scope) {
@@ -7422,7 +7431,7 @@ static void ex_startinsert(exarg_T *eap)
 static void ex_stopinsert(exarg_T *eap)
 {
   restart_edit = 0;
-  stop_insert_mode = true;
+  Ins.stop_insert_mode = true;
   clearmode();
 }
 
@@ -7726,6 +7735,8 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
   bool tilde_file = false;
   bool skip_mod = false;
   char strbuf[30];
+  // we want 'shellslash' for path expansions like "%", "#", "<afile>", etc.
+  bool use_shellslash = false;
 
   *errormsg = NULL;
   if (escaped != NULL) {
@@ -7778,6 +7789,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
         result = curbuf->b_fname;
         tilde_file = strcmp(result, "~") == 0;
       }
+      use_shellslash = true;
       break;
 
     case SPEC_HASH:             // '#' or "#99": alternate file
@@ -7791,6 +7803,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
         skip_mod = true;
         break;
       }
+      use_shellslash = true;
       char *s = src + 1;
       if (*s == '<') {                  // "#<99" uses v:oldfiles.
         s++;
@@ -7845,6 +7858,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
       break;
 
     case SPEC_AFILE:  // file name for autocommand
+      use_shellslash = !autocmd_fname_full;
       if (autocmd_fname != NULL && !autocmd_fname_full) {
         // Still need to turn the fname into a full path.  It was
         // postponed to avoid a delay when <afile> is not used.
@@ -7880,6 +7894,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
       break;
 
     case SPEC_SFILE:            // file name for ":so" command
+      use_shellslash = true;
       result = estack_sfile(ESTACK_SFILE);
       if (result == NULL) {
         *errormsg = _(e_no_source_file_name_to_substitute_for_sfile);
@@ -7888,6 +7903,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
       resultbuf = result;  // remember allocated string
       break;
     case SPEC_STACK:            // call stack
+      use_shellslash = true;
       result = estack_sfile(ESTACK_STACK);
       if (result == NULL) {
         *errormsg = _(e_no_call_stack_to_substitute_for_stack);
@@ -7896,6 +7912,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
       resultbuf = result;  // remember allocated string
       break;
     case SPEC_SCRIPT:           // script file name
+      use_shellslash = true;
       result = estack_sfile(ESTACK_SCRIPT);
       if (result == NULL) {
         *errormsg = _(e_no_script_file_name_to_substitute_for_script);
@@ -7950,7 +7967,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
       }
     } else if (!skip_mod) {
       valid |= modify_fname(src, tilde_file, usedlen, &result,
-                            &resultbuf, &resultlen);
+                            &resultbuf, &resultlen, use_shellslash);
       if (result == NULL) {
         *errormsg = "";
         return NULL;

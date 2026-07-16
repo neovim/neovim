@@ -6,8 +6,8 @@
 
     .dependencies = .{
         .zlua = .{
-            .url = "git+https://github.com/natecraddock/ziglua#1dcb9f2b7b466a1609cc11e746c2efc4f17685da",
-            .hash = "zlua-0.1.0-hGRpC22ABQA4y12Uz7QaHuCkKrpaa_66xidApjtFuKFg",
+            .url = "git+https://github.com/natecraddock/ziglua#2f0f668a9a7e7d4ab5d90853958837bae5bc3ca2",
+            .hash = "zlua-0.1.0-hGRpC8aUBQD4jNxDkqeKXAk_5HInJKze1SWVYbYkLuxO",
         },
         .lpeg = .{
             .url = "https://github.com/neovim/deps/raw/d495ee6f79e7962a53ad79670cb92488abe0b9b4/opt/lpeg-1.1.0.tar.gz",
@@ -25,17 +25,21 @@
             .lazy = true,
         },
         .treesitter = .{
-            .url = "git+https://github.com/tree-sitter/tree-sitter#ae2081989ea86a45f240c6e0f128616aaf860171",
-            .hash = "tree_sitter-0.27.0-Tw2sR6kHDABKRSwSbCKPQ3QrkG7Pml0ISHfh8SOIgy-G",
+            .url = "git+https://github.com/tree-sitter/tree-sitter#d11d18f746fdfd1826362c2531ce06808f386b02",
+            .hash = "tree_sitter-0.27.0-Tw2sR5ghDADIg6dNGsLLC9F8764vuny5P6VQedEuANTU",
             .lazy = true,
         },
         .libuv = .{
-            .url = "git+https://github.com/allyourcodebase/libuv.git#b465d9ae435fadb4c30c3abf1fd3177dc0c8a5c5",
-            .hash = "libuv-1.52.0-htqqv0xqAAAccfnkBz9DgFM9I9FSzP05_44lKS63OrZr",
+            .url = "git+https://github.com/allyourcodebase/libuv.git#c1ccce24e1077ae7780857c89fb4b3aeb9080315",
+            .hash = "libuv-1.52.0-htqqvzNqAAAB6cHIx-wIffe_mqMW5GOKjHeDBJYHGwls",
             .lazy = true,
         },
         .utf8proc = .{ .path = "./deps/utf8proc/", .lazy = true },
         .unibilium = .{ .path = "./deps/unibilium/", .lazy = true },
+        .uncrustify = .{
+            .url = "git+https://codeberg.org/allyourcodebase/uncrustify#2cdf880e4ffbe438a7946368cd45fca2df9f0f7a",
+            .hash = "uncrustify-0.83.0-qkVd7cVCAADAg1kS3ctVBhY2gkxEIs-W8wgurLadbgC-",
+        },
         .libiconv = .{
             .url = "git+https://github.com/allyourcodebase/libiconv#9def4c8a1743380e85bcedb80f2c15b455e236f3",
             .hash = "libiconv-1.18.0-p9sJwWnqAACzVYeWgXB5r5lOQ74XwTPlptixV0JPRO28",
@@ -64,6 +68,10 @@
         .treesitter_query = .{
             .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-query?ref=v0.8.0#a225e21d81201be77da58de614e2b7851735677a",
             .hash = "N-V-__8AAMR5AwAzZ5_8S2p2COTEf5usBeeT4ORzh-lBGkWy",
+        },
+        .compile_commands = .{
+            .url = "https://github.com/the-argus/zig-compile-commands/archive/9400cd1963ea6bb58fe47ba7d9700075b808cdd2.tar.gz",
+            .hash = "zig_compile_commands-0.0.1-OZg5-e_JAAAGg1WHAePtq4l4Uvjs34BexnFFCZk63EaG",
         },
     },
     .paths = .{

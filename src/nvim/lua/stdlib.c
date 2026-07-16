@@ -8,6 +8,7 @@
 #include <string.h>
 #include <uv.h>
 
+#include "nvim/context.h"
 #include "nvim/log.h"
 #ifdef NVIM_VENDOR_BIT
 # include "bit.h"
@@ -639,29 +640,25 @@ static int nlua_with(lua_State *L)
 
   Error err = ERROR_INIT;
   TRY_WRAP(&err, {
-    aco_save_T aco = { 0 };
-    win_execute_T win_execute_args;
+    CtxSwitch cs = { 0 };
+    bool switched = true;
 
     if (win) {
       tabpage_T *tabpage = win_find_tabpage(win);
-      if (!win_execute_before(&win_execute_args, win, tabpage)) {
-        goto end;
-      }
+      switched = ctx_switch(&cs, win, tabpage, NULL, kCtxNoDisplay | kCtxKeepCwd | kCtxValidate);
     } else if (buf) {
-      aucmd_prepbuf(&aco, buf);
+      ctx_switch(&cs, NULL, NULL, buf, 0);
     }
 
-    int s = lua_gettop(L);
-    lua_pushvalue(L, 2);
-    status = lua_pcall(L, 0, LUA_MULTRET, 0);
-    rets = lua_gettop(L) - s;
-
-    if (win) {
-      win_execute_after(&win_execute_args);
-    } else if (buf) {
-      aucmd_restbuf(&aco);
+    if (switched) {
+      int s = lua_gettop(L);
+      lua_pushvalue(L, 2);
+      status = lua_pcall(L, 0, LUA_MULTRET, 0);
+      rets = lua_gettop(L) - s;
     }
-    end:;
+
+    // No-op if nothing was switched.  Restores even when ctx_switch() failed.
+    ctx_restore(&cs);
   });
 
   undo_cmdmod(&cmdmod);

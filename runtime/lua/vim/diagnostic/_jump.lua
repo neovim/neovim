@@ -123,7 +123,7 @@ end
 --- @param opts vim.diagnostic.JumpOpts?
 local function goto_diagnostic(diagnostic, opts)
   if not diagnostic then
-    api.nvim_echo({ { 'No more valid diagnostics to move to', 'WarningMsg' } }, true, {})
+    api.nvim_echo({ { 'No more valid diagnostics to move to', 'WarningMsg' } }, true)
     return
   end
 

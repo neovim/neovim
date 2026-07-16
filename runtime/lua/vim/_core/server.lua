@@ -1,5 +1,7 @@
 -- For "--listen", ":restart", and related remote/server functionality.
 
+local util = require('vim._core.util')
+
 local M = {}
 
 --- Called by builtin serverlist(). Returns the combined server list (own + peers).
@@ -204,8 +206,16 @@ function M.ex_session_restart(eap, extra)
   end)
 
   if not success then
+    --- @cast msg string
     vim.fs.rm(session, { force = true })
-    error(msg)
+
+    -- Trim error message to be equivalent to `:restart!`
+    local trimmed_msg = msg:match('Vim:.*$')
+    if trimmed_msg then
+      util.echo_err(trimmed_msg:sub(5))
+    else
+      error(msg)
+    end
   end
 end
 

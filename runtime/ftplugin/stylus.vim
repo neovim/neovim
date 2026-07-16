@@ -15,7 +15,7 @@ set cpo-=C
 let s:undo_ftplugin = ""
 let s:browsefilter = "All Files (*.*)\t*.*\n"
 
-runtime! ftplugin/html.vim ftplugin/html_*.vim ftplugin/html/*.vim
+runtime! ftplugin/html[.]{vim,lua} ftplugin/html_*.{vim,lua} ftplugin/html/*.{vim,lua}
 unlet! b:did_ftplugin
 
 " Override our defaults if these were set by an included ftplugin.

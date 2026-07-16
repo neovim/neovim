@@ -25,7 +25,6 @@
 #include "nvim/clipboard.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
-#include "nvim/edit.h"
 #include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
@@ -38,13 +37,14 @@
 #include "nvim/fold.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
-#include "nvim/getchar.h"
-#include "nvim/getchar_defs.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
+#include "nvim/input.h"
+#include "nvim/input_defs.h"
+#include "nvim/insert.h"
 #include "nvim/keycodes.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mark.h"
@@ -883,8 +883,8 @@ int op_delete(oparg_T *oap)
       }
       if (curbuf->b_p_ai) {                 // don't delete indent
         beginline(BL_WHITE);                // cursor on first non-white
-        did_ai = true;                      // delete the indent when ESC hit
-        ai_col = curwin->w_cursor.col;
+        Ins.did_ai = true;                      // delete the indent when ESC hit
+        Ins.ai_col = curwin->w_cursor.col;
       } else {
         beginline(0);                       // cursor in column 0
       }
@@ -1637,8 +1637,8 @@ void op_insert(oparg_T *oap, int count1)
     if (oap->op_type == OP_APPEND) {
       add += bd.textlen;
       // account for pressing cursor in insert mode when '$' was used
-      if (bd.is_MAX && start_insert.lnum == Insstart.lnum && start_insert.col > Insstart.col) {
-        offset = start_insert.col - Insstart.col;
+      if (bd.is_MAX && start_insert.lnum == Ins.start.lnum && start_insert.col > Ins.start.col) {
+        offset = start_insert.col - Ins.start.col;
         add -= offset;
         if (oap->end_vcol > offset) {
           oap->end_vcol -= offset + 1;
@@ -1679,7 +1679,7 @@ int op_change(oparg_T *oap)
   colnr_T l = oap->start.col;
   if (oap->motion_type == kMTLineWise) {
     l = 0;
-    can_si = may_do_si();  // Like opening a new line, do smart indent
+    Ins.can_si = may_do_si();  // Like opening a new line, do smart indent
   }
 
   // First delete the text in the region.  In an empty buffer only need to
@@ -3259,15 +3259,6 @@ static void get_op_vcol(oparg_T *oap, colnr_T redo_VIsual_vcol, bool initial)
   oap->start = curwin->w_cursor;
 }
 
-/// Information for redoing the previous Visual selection.
-typedef struct {
-  int rv_mode;             ///< 'v', 'V', or Ctrl-V
-  linenr_T rv_line_count;  ///< number of lines
-  colnr_T rv_vcol;         ///< number of cols or end column
-  int rv_count;            ///< count for Visual operator
-  int rv_arg;              ///< extra argument
-} redo_VIsual_T;
-
 static bool is_ex_cmdchar(cmdarg_T *cap)
 {
   return cap->cmdchar == ':' || cap->cmdchar == K_COMMAND;
@@ -3281,7 +3272,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
   int lbr_saved = curwin->w_p_lbr;
 
   // The visual area is remembered for redo
-  static redo_VIsual_T redo_VIsual = { NUL, 0, 0, 0, 0 };
+  static VisualExtent redo_VIsual = { NUL, 0, 0, 0, 0 };
 
   pos_T old_cursor = curwin->w_cursor;
 
@@ -3370,25 +3361,25 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
 
     if (redo_VIsual_busy) {
       // Redo of an operation on a Visual area. Use the same size from
-      // redo_VIsual.rv_line_count and redo_VIsual.rv_vcol.
+      // redo_VIsual.line_count and redo_VIsual.vcol.
       oap->start = curwin->w_cursor;
-      curwin->w_cursor.lnum += redo_VIsual.rv_line_count - 1;
+      curwin->w_cursor.lnum += redo_VIsual.line_count - 1;
       curwin->w_cursor.lnum = MIN(curwin->w_cursor.lnum, curbuf->b_ml.ml_line_count);
-      VIsual_mode = redo_VIsual.rv_mode;
-      if (redo_VIsual.rv_vcol == MAXCOL || VIsual_mode == 'v') {
+      VIsual_mode = redo_VIsual.mode;
+      if (redo_VIsual.vcol == MAXCOL || VIsual_mode == 'v') {
         if (VIsual_mode == 'v') {
-          if (redo_VIsual.rv_line_count <= 1) {
+          if (redo_VIsual.line_count <= 1) {
             validate_virtcol(curwin);
-            curwin->w_curswant = curwin->w_virtcol + redo_VIsual.rv_vcol - 1;
+            curwin->w_curswant = curwin->w_virtcol + redo_VIsual.vcol - 1;
           } else {
-            curwin->w_curswant = redo_VIsual.rv_vcol;
+            curwin->w_curswant = redo_VIsual.vcol;
           }
         } else {
           curwin->w_curswant = MAXCOL;
         }
         coladvance(curwin, curwin->w_curswant);
       }
-      cap->count0 = redo_VIsual.rv_count;
+      cap->count0 = redo_VIsual.count;
       cap->count1 = (cap->count0 == 0 ? 1 : cap->count0);
     } else if (VIsual_active) {
       if (!gui_yank) {
@@ -3473,14 +3464,14 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     virtual_op = virtual_active(curwin);
 
     if (VIsual_active || redo_VIsual_busy) {
-      get_op_vcol(oap, redo_VIsual.rv_vcol, true);
+      get_op_vcol(oap, redo_VIsual.vcol, true);
 
       if (!redo_VIsual_busy && !gui_yank) {
         // Prepare to reselect and redo Visual: this is based on the
         // size of the Visual text
-        resel_VIsual_mode = VIsual_mode;
+        resel_VIsual.mode = VIsual_mode;
         if (curwin->w_curswant == MAXCOL) {
-          resel_VIsual_vcol = MAXCOL;
+          resel_VIsual.vcol = MAXCOL;
         } else {
           if (VIsual_mode != Ctrl_V) {
             getvvcol(curwin, &(oap->end), NULL, NULL, &oap->end_vcol, 0);
@@ -3489,12 +3480,12 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
             if (VIsual_mode != Ctrl_V) {
               getvvcol(curwin, &(oap->start), &oap->start_vcol, NULL, NULL, 0);
             }
-            resel_VIsual_vcol = oap->end_vcol - oap->start_vcol + 1;
+            resel_VIsual.vcol = oap->end_vcol - oap->start_vcol + 1;
           } else {
-            resel_VIsual_vcol = oap->end_vcol;
+            resel_VIsual.vcol = oap->end_vcol;
           }
         }
-        resel_VIsual_line_count = oap->line_count;
+        resel_VIsual.line_count = oap->line_count;
       }
 
       // can't redo yank (unless 'y' is in 'cpoptions') and ":"
@@ -3535,11 +3526,9 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
           }
         }
         if (!redo_VIsual_busy) {
-          redo_VIsual.rv_mode = resel_VIsual_mode;
-          redo_VIsual.rv_vcol = resel_VIsual_vcol;
-          redo_VIsual.rv_line_count = resel_VIsual_line_count;
-          redo_VIsual.rv_count = cap->count0;
-          redo_VIsual.rv_arg = cap->arg;
+          redo_VIsual = resel_VIsual;
+          redo_VIsual.count = cap->count0;
+          redo_VIsual.arg = cap->arg;
         }
       }
 
@@ -3794,7 +3783,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       break;
 
     case OP_FUNCTION: {
-      redo_VIsual_T save_redo_VIsual = redo_VIsual;
+      VisualExtent save_redo_VIsual = redo_VIsual;
 
       // Restore linebreak, so that when the user edits it looks as before.
       restore_lbr(lbr_saved);
@@ -3889,7 +3878,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       } else {
         VIsual_active = true;
         restore_lbr(lbr_saved);
-        op_addsub(oap, (linenr_T)cap->count1, redo_VIsual.rv_arg);
+        op_addsub(oap, (linenr_T)cap->count1, redo_VIsual.arg);
         VIsual_active = false;
       }
       check_cursor_col(curwin);

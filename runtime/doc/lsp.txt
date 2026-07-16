@@ -279,7 +279,7 @@ LspAttach handler.
 Example: Enable auto-completion and auto-formatting ("linting"): >lua
 
     vim.api.nvim_create_autocmd('LspAttach', {
-      group = vim.api.nvim_create_augroup('my.lsp', {}),
+      group = vim.api.nvim_create_augroup('my.lsp'),
       callback = function(ev)
         local client = assert(vim.lsp.get_client_by_id(ev.data.client_id))
         if client:supports_method('textDocument/implementation') then
@@ -1465,7 +1465,7 @@ the current buffer.
 
                     See |setqflist-what| for the structure of the `what`
                     parameter.
-      • {pos}       (`vim.Pos`, default: cursor position) Position on a buffer
+      • {pos}?      (`vim.Pos`, default: cursor position) Position on a buffer
                     to request.
 
 *vim.lsp.buf.hover.Opts*
@@ -1595,9 +1595,11 @@ format({opts})                                          *vim.lsp.buf.format()*
                   default: current selection in visual mode, `nil` in other
                   modes, formatting the full buffer) Range to format. Table
                   must contain `start` and `end` keys with {row,col} tuples
-                  using (1,0) indexing. Can also be a list of tables that
-                  contain `start` and `end` keys as described above, in which
-                  case `textDocument/rangesFormatting` support is required.
+                  using (1,0) indexing. The end column can be -1 to format
+                  through the end of the line. Can also be a list of tables
+                  that contain `start` and `end` keys as described above, in
+                  which case `textDocument/rangesFormatting` support is
+                  required.
                 • {timeout_ms}? (`integer`, default: `1000`) Time in
                   milliseconds to block for formatting requests. No effect if
                   async=true.
@@ -1880,8 +1882,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                      return vim.lsp.rpc.start(cmd, dispatchers)
                                    end
 <
-                               • See |vim.lsp.rpc.request()|
-                                 |vim.lsp.rpc.notify()|
+                               • See |vim.lsp.rpc.Client|.
                                • For TCP there is a builtin RPC client
                                  factory: |vim.lsp.rpc.connect()|
       • {cmd_cwd}?             (`string`) Directory where the `cmd` process is
@@ -2212,6 +2213,12 @@ you want to trigger on EVERY keypress you can either:
   example.
 • Call `vim.lsp.completion.get()` from an |InsertCharPre| autocommand.
 
+If the server provides `commitCharacters` for a completion item, typing one of
+those characters while the item is selected accepts the completion and then
+inserts the character. To disable this: >lua
+    vim.lsp.completion.enable(true, client_id, bufnr, { commit_characters = false })
+<
+
 
                                                  *vim.lsp.completion.enable()*
 enable({enable}, {client_id}, {bufnr}, {opts})
@@ -2248,6 +2255,8 @@ enable({enable}, {client_id}, {bufnr}, {opts})
                        `triggerCharacters`.
                      • {cmp}? (`fun(a: table, b: table): boolean`) Comparator
                        for sorting merged completion items from all servers.
+                     • {commit_characters}? (`boolean`) (default: true) When
+                       false, commit characters are ignored.
                      • {convert}? (`fun(item: lsp.CompletionItem): table`)
                        Transforms an LSP CompletionItem to |complete-items|.
 
@@ -2387,9 +2396,11 @@ enable({enable}, {filter})                       *vim.lsp.inlay_hint.enable()*
 
     Parameters: ~
       • {enable}  (`boolean?`) true/nil to enable, false to disable
-      • {filter}  (`table?`) Optional filters |kwargs|, or `nil` for all.
-                  • {bufnr} (`integer?`) Buffer number, or 0 for current
-                    buffer, or nil for all.
+      • {filter}  (`table?`) Optional filters |kwargs|,
+                  • {bufnr}? (`integer`, default: all) Buffer number, or 0 for
+                    current buffer, or nil for all.
+                  • {client_id}? (`integer`, default: all) Client ID, or nil
+                    for all.
 
 get({filter})                                       *vim.lsp.inlay_hint.get()*
     Get the list of inlay hints, (optionally) restricted by buffer or range.
@@ -2433,9 +2444,11 @@ is_enabled({filter})                         *vim.lsp.inlay_hint.is_enabled()*
         Since: 0.10.0
 
     Parameters: ~
-      • {filter}  (`table?`) Optional filters |kwargs|, or `nil` for all.
-                  • {bufnr} (`integer?`) Buffer number, or 0 for current
-                    buffer, or nil for all.
+      • {filter}  (`table?`) Optional filters |kwargs|,
+                  • {bufnr}? (`integer`, default: all) Buffer number, or 0 for
+                    current buffer, or nil for all.
+                  • {client_id}? (`integer`, default: all) Client ID, or nil
+                    for all.
 
     Return: ~
         (`boolean`)
@@ -2676,10 +2689,10 @@ Lua module: vim.lsp.rpc                                              *lsp-rpc*
 
     Fields: ~
       • {is_closing}  (`fun(): boolean`) Indicates if the RPC is closing.
-      • {notify}      (`fun(method: string, params: any): boolean`) See
-                      |vim.lsp.rpc.notify()|
+      • {notify}      (`fun(method: string, params: any): boolean`) Sends a
+                      notification to the LSP server.
       • {request}     (`fun(method: string, params: table?, callback: fun(err?: lsp.ResponseError, result: any, request_id: integer), notify_reply_callback?: fun(message_id: integer)):boolean,integer?`)
-                      See |vim.lsp.rpc.request()|
+                      Sends a request to the LSP server.
       • {terminate}   (`fun()`) Terminates the RPC client.
 
 
@@ -2709,34 +2722,6 @@ format_rpc_error({err})                       *vim.lsp.rpc.format_rpc_error()*
 
     Return: ~
         (`string`) error_message The formatted error message
-
-notify({method}, {params})                              *vim.lsp.rpc.notify()*
-    Sends a notification to the LSP server.
-
-    Parameters: ~
-      • {method}  (`string`) The invoked LSP method
-      • {params}  (`table?`) Parameters for the invoked LSP method
-
-    Return: ~
-        (`boolean`) `true` if notification could be sent, `false` if not
-
-                                                       *vim.lsp.rpc.request()*
-request({method}, {params}, {callback}, {notify_reply_callback})
-    Sends a request to the LSP server and runs {callback} upon response.
-
-    Parameters: ~
-      • {method}                 (`string`) The invoked LSP method
-      • {params}                 (`table?`) Parameters for the invoked LSP
-                                 method
-      • {callback}               (`fun(err: lsp.ResponseError?, result: any)`)
-                                 Callback to invoke
-      • {notify_reply_callback}  (`fun(message_id: integer)?`) Callback to
-                                 invoke as soon as a request is no longer
-                                 pending
-
-    Return (multiple): ~
-        (`boolean`) success `true` if request could be sent, `false` if not
-        (`integer?`) message_id if request could be sent, `nil` if not
 
                                             *vim.lsp.rpc.rpc_response_error()*
 rpc_response_error({code}, {message}, {data})

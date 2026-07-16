@@ -10,10 +10,6 @@ local write_file = t.write_file
 local is_os = t.is_os
 local chdir = n.fn.chdir
 
-local function eq_slashconvert(expected, got)
-  eq(t.fix_slashes(expected), t.fix_slashes(got))
-end
-
 describe('fnamemodify()', function()
   setup(function()
     write_file('Xtest-fnamemodify.txt', [[foobar]])
@@ -42,7 +38,7 @@ describe('fnamemodify()', function()
       eq(root, fnamemodify([[/]], ':p'))
 
       local letter_colon = root:sub(1, 2)
-      local old_dir = t.fix_slashes(getcwd()) .. '/'
+      local old_dir = ('%s/'):format(getcwd())
       local foo_dir = old_dir .. 'foo/'
       eq(old_dir, fnamemodify(letter_colon, ':p'))
       eq(old_dir, fnamemodify(letter_colon .. '.', ':p'))
@@ -65,28 +61,28 @@ describe('fnamemodify()', function()
     n.api.nvim_set_current_dir(t.paths.test_source_path)
 
     local filename = 'src/version.c'
-    local cwd = getcwd()
+    local cwd = vim.fs.normalize(getcwd())
 
-    eq_slashconvert(cwd .. '/src/version.c', fnamemodify(filename, ':p'))
+    eq(('%s/src/version.c'):format(cwd), fnamemodify(filename, ':p'))
 
-    eq_slashconvert('src/version.c', fnamemodify(filename, ':p:.'))
-    eq_slashconvert(cwd .. '/src', fnamemodify(filename, ':p:h'))
-    eq_slashconvert(cwd .. '', fnamemodify(filename, ':p:h:h'))
+    eq('src/version.c', fnamemodify(filename, ':p:.'))
+    eq(('%s/src'):format(cwd), fnamemodify(filename, ':p:h'))
+    eq(cwd, fnamemodify(filename, ':p:h:h'))
     eq('version.c', fnamemodify(filename, ':p:t'))
-    eq_slashconvert(cwd .. '/src/version', fnamemodify(filename, ':p:r'))
+    eq(('%s/src/version'):format(cwd), fnamemodify(filename, ':p:r'))
 
-    eq_slashconvert(cwd .. '/src/main.c', fnamemodify(filename, ':s?version?main?:p'))
+    eq(('%s/src/main.c'):format(cwd), fnamemodify(filename, ':s?version?main?:p'))
 
     local converted_cwd = cwd:gsub('/', '\\')
     eq(converted_cwd .. '\\src\\version.c', fnamemodify(filename, ':p:gs?/?\\\\?'))
 
     eq('src', fnamemodify(filename, ':h'))
     eq('version.c', fnamemodify(filename, ':t'))
-    eq_slashconvert('src/version', fnamemodify(filename, ':r'))
+    eq('src/version', fnamemodify(filename, ':r'))
     eq('version', fnamemodify(filename, ':t:r'))
     eq('c', fnamemodify(filename, ':e'))
 
-    eq_slashconvert('src/main.c', fnamemodify(filename, ':s?version?main?'))
+    eq('src/main.c', fnamemodify(filename, ':s?version?main?'))
   end)
 
   it('handles advanced examples from ":help filename-modifiers"', function()
@@ -98,68 +94,88 @@ describe('fnamemodify()', function()
 
     eq('c', fnamemodify(filename, ':e:e:r'))
 
-    eq_slashconvert('src/version.c', fnamemodify(filename, ':r'))
+    eq('src/version.c', fnamemodify(filename, ':r'))
     eq('c', fnamemodify(filename, ':r:e'))
 
-    eq_slashconvert('src/version', fnamemodify(filename, ':r:r'))
-    eq_slashconvert('src/version', fnamemodify(filename, ':r:r:r'))
+    eq('src/version', fnamemodify(filename, ':r:r'))
+    eq('src/version', fnamemodify(filename, ':r:r:r'))
   end)
 
   it('handles :h', function()
+    -- generic path
     eq('.', fnamemodify('hello.txt', ':h'))
+    -- Repeated ":h" on a bare name: the first ":h" replaces the buffer with ".", the
+    -- next must re-anchor into it and not read the freed buffer (Coverity CID 649200).
+    eq('.', fnamemodify('hello.txt', ':h:h'))
+    eq('.', fnamemodify('hello.txt', ':h:h:h'))
+    eq('path/to', fnamemodify('path/to/hello.txt', ':h'))
+    eq('/', fnamemodify('/', ':h'))
+    eq('/', fnamemodify('/foo', ':h'))
 
-    eq_slashconvert('path/to', fnamemodify('path/to/hello.txt', ':h'))
+    -- collapses more than two leading slashes into a single slash
+    eq('/', fnamemodify('///', ':h'))
+    eq('/', fnamemodify('////', ':h'))
+    eq('/', fnamemodify('///foo', ':h'))
+    eq('/foo', fnamemodify('///foo/bar', ':h'))
+    eq('/foo', fnamemodify('///foo////bar', ':h'))
+    eq('/foo', fnamemodify('////foo/bar', ':h'))
 
-    if is_os('win') then
-      -- Current Windows behavior for slash-style UNC paths, such as "//foo/C$/".
-      eq('/', fnamemodify('/', ':h'))
-      eq('/', fnamemodify('/foo', ':h'))
-      eq('//', fnamemodify('//', ':h'))
-      eq('//', fnamemodify('//foo', ':h'))
-      eq('//foo', fnamemodify('//foo/bar', ':h'))
-      eq('//foo', fnamemodify('//foo///bar', ':h'))
-      eq('//foo', fnamemodify('//foo/C$', ':h'))
-      eq('//foo/C$', fnamemodify('//foo/C$/', ':h'))
-      eq('//foo/C$', fnamemodify('//foo/C$/bar', ':h'))
-      eq('///', fnamemodify('///', ':h'))
-      eq('////', fnamemodify('////', ':h'))
-      eq('///', fnamemodify('///foo', ':h'))
-      eq('///foo', fnamemodify('///foo/bar', ':h'))
-      eq('///foo', fnamemodify('///foo////bar', ':h'))
-    else
-      -- POSIX roots.
-      eq('/', fnamemodify('/', ':h'))
-      eq('/', fnamemodify('/foo', ':h'))
+    -- preserves exactly two leading slashes
+    eq('//', fnamemodify('//', ':h'))
 
+    if not is_os('win') then
       -- POSIX permits special handling for exactly two leading slashes.
       eq('//', fnamemodify('//', ':h'))
       eq('//', fnamemodify('//foo', ':h'))
       eq('//foo', fnamemodify('//foo/bar', ':h'))
       eq('//foo', fnamemodify('//foo///bar', ':h'))
+    else
+      eq('//server', fnamemodify('//server', ':h'))
+      eq('//server/share', fnamemodify('//server/share', ':h'))
+      eq('//server/share/', fnamemodify('//server/share/', ':h'))
+      eq('//server///share', fnamemodify('//server///share', ':h'))
+      eq('//server/share/', fnamemodify('//server/share/foo', ':h'))
 
-      -- More than two leading slashes are ordinary absolute paths.
-      eq('/', fnamemodify('///', ':h'))
-      eq('/', fnamemodify('////', ':h'))
-      eq('/', fnamemodify('///foo', ':h'))
-      eq('/foo', fnamemodify('///foo/bar', ':h'))
-      eq('/foo', fnamemodify('///foo////bar', ':h'))
-      eq('/foo', fnamemodify('////foo/bar', ':h'))
+      eq([[//foo/C$]], fnamemodify([[\\foo\C$]], ':h'))
+      eq([[//foo/C$/]], fnamemodify([[\\foo\C$\]], ':h'))
+      eq([[//foo/C$/]], fnamemodify([[\\foo\C$\bar]], ':h'))
+      eq([[//foo/C$/]], fnamemodify([[\\foo\C$\bar]], ':h:h'))
+      eq([[//foo/C$/]], fnamemodify([[//foo\C$/bar]], ':h'))
+      -- `C$` is a share name, not a file name
+      eq('', fnamemodify('//foo/C$/bar', ':h:t'))
+
+      eq('C:', fnamemodify('C:foo', ':h'))
+      eq('C:/', fnamemodify('C:/foo', ':h'))
+
+      eq('//?/C:/', fnamemodify('//?/C:/', ':h'))
+      eq('//?/C:/', fnamemodify('//?/C:/foo', ':h'))
+      eq(
+        '//?/Volume{b75e2c83-0000-0000-0000-602f00000000}/',
+        fnamemodify('//?/Volume{b75e2c83-0000-0000-0000-602f00000000}/foo', ':h')
+      )
+      eq(
+        '//?/Volume{b75e2c83-0000-0000-0000-602f00000000}/',
+        fnamemodify('///?/Volume{b75e2c83-0000-0000-0000-602f00000000}/foo', ':h')
+      )
+      eq('//?/UNC/server', fnamemodify('//?/UNC/server', ':h'))
+      eq('//?/UNC/server/share', fnamemodify('//?/UNC/server/share', ':h'))
+      eq('//?/UNC/server/share/', fnamemodify('//?/UNC/server/share/foo', ':h'))
     end
   end)
 
   it('handles :t', function()
     eq('hello.txt', fnamemodify('hello.txt', ':t'))
-    eq_slashconvert('hello.txt', fnamemodify('path/to/hello.txt', ':t'))
+    eq('hello.txt', fnamemodify('path/to/hello.txt', ':t'))
   end)
 
   it('handles :r', function()
     eq('hello', fnamemodify('hello.txt', ':r'))
-    eq_slashconvert('path/to/hello', fnamemodify('path/to/hello.txt', ':r'))
+    eq('path/to/hello', fnamemodify('path/to/hello.txt', ':r'))
   end)
 
   it('handles :e', function()
     eq('txt', fnamemodify('hello.txt', ':e'))
-    eq_slashconvert('txt', fnamemodify('path/to/hello.txt', ':e'))
+    eq('txt', fnamemodify('path/to/hello.txt', ':e'))
   end)
 
   it('handles regex replacements', function()

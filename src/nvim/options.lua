@@ -4259,8 +4259,7 @@ local options = {
       cb = 'did_set_helpfile',
       defaults = {
         if_true = macros('DFLT_HELPFILE', 'string'),
-        doc = [[(MS-Windows) "$VIMRUNTIME\doc\help.txt"
-                  (others) "$VIMRUNTIME/doc/help.txt"]],
+        doc = [["$VIMRUNTIME/doc/help.txt"]],
       },
       desc = [=[
         Name of the main help file.  All distributed help files should be
@@ -6419,6 +6418,22 @@ local options = {
       varname = 'p_opfunc',
     },
     {
+      abbreviation = 'plf',
+      defaults = '$XDG_CONFIG_HOME/nvim/nvim-pack-lock.json',
+      deny_duplicates = true,
+      desc = [=[
+        Path of |vim.pack-lockfile|. Must be set before the first usage of any
+        |vim.pack| function. Environment variables are expanded |:set_env|.
+      ]=],
+      expand = 'nodefault',
+      full_name = 'packlockfile',
+      scope = { 'global' },
+      secure = true,
+      short_desc = N_('path of vim.pack lockfile'),
+      type = 'string',
+      varname = 'p_plf',
+    },
+    {
       abbreviation = 'pp',
       cb = 'did_set_runtimepackpath',
       defaults = {
@@ -7057,6 +7072,13 @@ local options = {
         Example: >vim
         	set rulerformat=%15(%c%V\ %p%%%)
         <
+        This looks like an item group, but there are some differences in this
+        particular case.  Most notably, the width is fixed and not a minimum,
+        and the ruler is left-aligned, whereas the alignment of item groups is
+        configurable and right-aligned by default.
+
+        When |ui2| is enabled, the ruler no longer has a fixed width and the
+        item group syntax has no special meaning for 'rulerformat'.
       ]=],
       full_name = 'rulerformat',
       modelineexpr = true,
@@ -7852,7 +7874,6 @@ local options = {
     },
     {
       abbreviation = 'ssl',
-      cb = 'did_set_shellslash',
       defaults = {
         condition = 'MSWIN',
         if_true = false,
@@ -9071,24 +9092,20 @@ local options = {
       cb = 'did_set_swapfile',
       defaults = true,
       desc = [=[
-        Use a swapfile for the buffer.  This option can be reset when a
-        swapfile is not wanted for a specific buffer.  For example, with
-        confidential information that even root must not be able to access.
-        Careful: All text will be in memory:
-        	- Don't use this for big files.
-        	- Recovery will be impossible!
-        A swapfile will only be present when 'updatecount' is non-zero and
-        'swapfile' is set.
-        When 'swapfile' is reset, the swap file for the current buffer is
-        immediately deleted.  When 'swapfile' is set, and 'updatecount' is
-        non-zero, a swap file is immediately created.
-        Also see |swap-file|.
-        If you want to open a new buffer without creating a swap file for it,
-        use the |:noswapfile| modifier.
-        See 'directory' for where the swap file is created.
+        Use a |swap-file| for the buffer (if 'updatecount' is non-zero). The
+        'directory' option decides where swapfiles are stored.
 
-        This option is used together with 'bufhidden' and 'buftype' to
-        specify special kinds of buffers.   See |special-buffers|.
+        To open a new buffer without creating a swapfile, use |:noswapfile|.
+        To disable for an existing buffer, reset its 'swapfile' option.
+        Careful:
+        	- Recovery will be impossible!
+        	- The entire file will be in memory.
+
+        When reset, the swapfile for the current buffer is immediately
+        deleted.  When re-enabled (and 'updatecount' is non-zero), a swapfile
+        is immediately created.
+
+        Used with 'bufhidden' and 'buftype' to specify |special-buffers|.
       ]=],
       full_name = 'swapfile',
       redraw = { 'statuslines' },
@@ -9942,17 +9959,15 @@ local options = {
       cb = 'did_set_updatecount',
       defaults = 200,
       desc = [=[
-        After typing this many characters the swap file will be written to
-        disk.  When zero, no swap file will be created at all (see chapter on
-        recovery |crash-recovery|).  'updatecount' is set to zero by starting
-        Vim with the "-n" option, see |startup|.  When editing in readonly
-        mode this option will be initialized to 10000.
-        The swapfile can be disabled per buffer with 'swapfile'.
-        When 'updatecount' is set from zero to non-zero, swap files are
-        created for all buffers that have 'swapfile' set.  When 'updatecount'
-        is set to zero, existing swap files are not deleted.
-        This option has no meaning in buffers where 'buftype' is "nofile" or
-        "nowrite".
+        The |swap-file| will be written after typing this many characters.
+
+        - Ignored in buffers where 'buftype' is "nofile" or "nowrite".
+        - Initialized to 10000 when editing in readonly |-R| mode.
+        - To disable swapfiles per-buffer, unset the 'swapfile' option.
+        - To disable swapfiles globally, set this option to zero (or start
+          with |-n|). See |crash-recovery|. Existing swapfiles are not deleted.
+        - When re-enabled (from zero to non-zero), swapfiles are created for
+          all buffers that have 'swapfile' set.
       ]=],
       full_name = 'updatecount',
       scope = { 'global' },

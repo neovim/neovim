@@ -140,6 +140,12 @@ describe(':checkhealth', function()
     eq(true, report:find('- custom_ft:', 1, true) ~= nil)
     eq(true, report:find('- bad_ft:', 1, true) ~= nil)
   end)
+
+  it('renders report when Nvim starts with -M', function()
+    clear { args = { '-M' } }
+    command('checkhealth lsp')
+    eq(true, curbuf_contents() ~= '')
+  end)
 end)
 
 describe('vim.health', function()

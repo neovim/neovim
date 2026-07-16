@@ -9,7 +9,6 @@ local util = lsp.util
 local Capability = require('vim.lsp._capability')
 
 local api = vim.api
-local nvim_on = require('vim._core.util').nvim_on
 
 local M = {}
 
@@ -83,6 +82,7 @@ end
 --- @return table?
 local function tags_lsp_to_vim(diagnostic, client_id)
   local tags ---@type table?
+  assert(diagnostic.tags ~= vim.NIL, 'server response has invalid (null) tags')
   for _, tag in ipairs(diagnostic.tags or {}) do
     if tag == protocol.DiagnosticTag.Unnecessary then
       tags = tags or {}
@@ -405,39 +405,20 @@ function M.on_refresh(err, _, ctx)
   end
   if client:supports_method('workspace/diagnostic') then
     M._workspace_diagnostics({ client_id = ctx.client_id })
-  else
-    for bufnr in pairs(client.attached_buffers or {}) do
-      local provider = Diagnostics.active[bufnr]
-      local state = provider and provider.client_state[ctx.client_id]
-      if state and state.pull_kind == 'document' then
-        provider:refresh(ctx.client_id)
-      end
+  end
+
+  -- Always refresh document-pull buffers. Workspace diagnostics only cover
+  -- buffers with pull_kind == 'workspace', so open buffers must be refreshed
+  -- individually or their diagnostics go stale until the next didChange.
+  for bufnr in pairs(client.attached_buffers or {}) do
+    local provider = Diagnostics.active[bufnr]
+    local state = provider and provider.client_state[ctx.client_id]
+    if state and state.pull_kind == 'document' then
+      provider:refresh(ctx.client_id)
     end
   end
 
   return vim.NIL
-end
-
----@package
-function Diagnostics:new(bufnr)
-  self = Capability.new(self, bufnr)
-
-  nvim_on('LspNotify', self.augroup, { buf = self.bufnr }, function(opts)
-    local client_id = opts.data.client_id ---@type integer
-    local state = self.client_state[client_id]
-    if state and state.pull_kind == 'document' then
-      if opts.data.method == 'textDocument/didClose' then
-        self:clear(client_id)
-      end
-      if
-        opts.data.method == 'textDocument/didChange' or opts.data.method == 'textDocument/didOpen'
-      then
-        self:refresh(client_id, true)
-      end
-    end
-  end)
-
-  return self
 end
 
 --- Enable pull diagnostics for a buffer from a client
@@ -462,6 +443,22 @@ function Diagnostics:on_detach(client_id)
   if state then
     self:clear(client_id)
     self.client_state[client_id] = nil
+  end
+end
+
+---@private
+function Diagnostics:on_close(client_id)
+  local state = self.client_state[client_id]
+  if state and state.pull_kind == 'document' then
+    self:clear(client_id)
+  end
+end
+
+---@private
+function Diagnostics:on_change(client_id)
+  local state = self.client_state[client_id]
+  if state and state.pull_kind == 'document' then
+    self:refresh(client_id)
   end
 end
 

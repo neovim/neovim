@@ -10523,6 +10523,27 @@ describe('float window', function()
       end)
     end)
 
+    it('no crash when closing a floating window from a non-current tab', function()
+      local buf = api.nvim_create_buf(false, true)
+      local win = api.nvim_open_win(buf, false, { relative = 'editor', width = 5, height = 5, row = 0, col = 0 })
+      local triggered = exec_lua(function()
+        vim.cmd.tabnew()
+        vim.api.nvim_win_call(win, vim.cmd.redraw)
+        local triggered = false
+        vim.api.nvim_create_autocmd('BufHidden', {
+          once = true,
+          buf = buf,
+          callback = function()
+            vim.api.nvim_win_call(win, vim.cmd.redraw)
+            triggered = true
+          end,
+        })
+        vim.api.nvim_win_close(win, true)
+        return triggered
+      end)
+      eq(true, triggered)
+    end)
+
     it(':sleep cursor placement #22639', function()
       local float_opts = { relative = 'editor', row = 1, col = 1, width = 4, height = 3 }
       local win = api.nvim_open_win(api.nvim_create_buf(false, false), true, float_opts)

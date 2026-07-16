@@ -843,7 +843,6 @@ To avoid overflow ("spill") of the |ui2| messages area:
 - Set 'cmdheight' to 2 or higher.
 - Add flags to 'shortmess'.
 - Reset 'showcmd' and/or 'ruler'.
-- Make sure `:echo` text is within |v:echospace| screen cells.
 
 						*more-prompt* *pager*  >
   f/d/j: screen/page/line down, b/u/k: up, <Esc>: stop paging

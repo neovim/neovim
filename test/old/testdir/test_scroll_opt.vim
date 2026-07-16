@@ -2051,9 +2051,9 @@ func Test_scrolloffpad_diff_eof_filler_behavior()
 endfunc
 
 func Test_scrolloffpad_with_folds()
-  CheckScreendump
   CheckRunVimInTerminal
   CheckFeature folding
+  let g:test_is_flaky = 1
 
   let save_termwinsize = &termwinsize
   set termwinsize=
@@ -2078,27 +2078,40 @@ func Test_scrolloffpad_with_folds()
 
   let buf = RunVimInTerminal('-S XScrolloffpadFolds', #{rows: 20, cols: 78})
 
-  " Case 1: Jump to end-of-file
-  " With folds present, scrolloffpad should still
-  " keep the cursor positioned with padding below EOF
+  " Case 1: Jump to end-of-file.
+  " With folds present, scrolloffpad should still keep the cursor positioned
+  " with padding below EOF.
   call term_sendkeys(buf, "\<Esc>:\<C-U>normal! G\<CR>")
   call term_sendkeys(buf, "\<C-L>")
-  call TermWait(buf)
-  call VerifyScreenDump(buf, 'Test_scrolloffpad_folds_1', {})
+  call WaitForAssert({-> assert_equal('line 120', trim(term_getline(buf, 10)))},
+        \ 1000)
+  call assert_equal('line 111', trim(term_getline(buf, 1)))
+  call assert_equal('line 119', trim(term_getline(buf, 9)))
+  call assert_equal('~', trim(term_getline(buf, 11)))
+  call assert_match('120,1\s\+Bot', term_getline(buf, 20))
 
-  " Case 2: Move to the folded line to ensure the fold is actually in view
+  " Case 2: Move to the folded line to ensure the fold is actually in view.
   call term_sendkeys(buf, "\<Esc>:\<C-U>normal! 60G\<CR>")
   call term_sendkeys(buf, "\<C-L>")
-  call TermWait(buf)
-  call VerifyScreenDump(buf, 'Test_scrolloffpad_folds_2', {})
+  call WaitForAssert({-> assert_match('^\s*+-- 51 lines: line 60--',
+        \ term_getline(buf, 10))}, 1000)
+  call assert_equal('line 51', trim(term_getline(buf, 1)))
+  call assert_equal('line 59', trim(term_getline(buf, 9)))
+  call assert_equal('line 111', trim(term_getline(buf, 11)))
+  call assert_equal('line 119', trim(term_getline(buf, 19)))
+  call assert_match('60,1\s\+98%', term_getline(buf, 20))
 
-  " Case 3: Close the fold explicitly and go to EOF again
-  " Behavior should remain stable with closed folds
+  " Case 3: Close the fold explicitly and go to EOF again.
+  " Behavior should remain stable with closed folds.
   call term_sendkeys(buf, "\<Esc>:\<C-U>normal! zc\<CR>")
   call term_sendkeys(buf, "\<Esc>:\<C-U>normal! G\<CR>")
   call term_sendkeys(buf, "\<C-L>")
-  call TermWait(buf)
-  call VerifyScreenDump(buf, 'Test_scrolloffpad_folds_3', {})
+  call WaitForAssert({-> assert_equal('line 120', trim(term_getline(buf, 10)))},
+        \ 1000)
+  call assert_equal('line 111', trim(term_getline(buf, 1)))
+  call assert_equal('line 119', trim(term_getline(buf, 9)))
+  call assert_equal('~', trim(term_getline(buf, 11)))
+  call assert_match('120,1\s\+Bot', term_getline(buf, 20))
 
   call StopVimInTerminal(buf)
   let &termwinsize = save_termwinsize

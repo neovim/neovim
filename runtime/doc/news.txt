@@ -44,7 +44,11 @@ DIAGNOSTICS
 
 OPTIONS
 
-• todo
+• When |ui2| is enabled, since the ruler is no longer a left-aligned box of
+  fixed width, there is no longer an inconsistent special handling of item
+  groups in 'rulerformat' to configure that fixed width. An old-style left-
+  aligned fixed-width ruler can now be achieved by using item groups exactly
+  as they are documented, e.g. `%-20.20(...%)`.
 
 TREESITTER
 
@@ -90,6 +94,7 @@ EDITOR
   • Expr-register (|i_CTRL-R_=|, |c_CTRL-R_=|) no longer supports opening
     cmdwin via |c_CTRL-F|.
 • Behavior of |:restart| changed. Use "!" (|:restart!|) to get the old behavior.
+  • |ZR| now performs |:restart|. Add a count to change the behavior.
 
 EVENTS
 
@@ -131,6 +136,11 @@ TREESITTER
 
 • todo
 
+VIMSCRIPT
+
+• Removed: ctxget(), ctxpop(), ctxpush(), ctxset(), ctxsize(). Use
+  |nvim_get_context()| and |nvim_load_context()| instead.
+
 ==============================================================================
 NEW FEATURES                                                    *news-features*
 
@@ -138,6 +148,17 @@ The following new features were added.
 
 API
 
+• |nvim_win_resize()| resizes a window with a specified anchor edge.
+  |nvim_win_set_height()| and |nvim_win_set_width()| are now deprecated.
+• |api-contract| treats `opts` and any parameters thereafter, as optional
+  (equivalent to passing an empty dict). Clients may omit such optional
+  parameters.
+  • The Lua |vim.api| bridge is also a "client" and thus may omit `opts` and
+    any following parameters: >lua
+    -- Before:
+    vim.print(vim.api.nvim_get_mark('A', {}))
+    -- After:
+    vim.print(vim.api.nvim_get_mark('A'))
 • |nvim_buf_call()| and |nvim_win_call()| now preserve multiple return values.
 • |nvim_set_hl()| supports "font" key.
 • |nvim_open_win()| `zindex` controls whether the UI will use a dimmed cursor
@@ -196,9 +217,11 @@ EDITOR
   • The |cmdwin-char| is shown via 'statuscolumn'.
 • |gf| and |<cfile>| support `file://…` URIs.
 • |:log| opens log files.
+• |:marks| can list |extmarks| for a given |namespace|.
+• |:marks| gained tab-completion.
 • |:restart| saves/restores the current session (window layout, buffers, …).
   • |:restart!| (with a bang "!") does not save/restore the session.
-• |ZR| restarts Nvim (|:restart!|).
+• |ZR| restarts Nvim (|:restart|).
 • |:uptime| displays uptime.
 • |:packupdate| and |:packdel| for managing |vim.pack|.
 • 'scrollback' is now also valid in |prompt-buffer| buffers to limit the
@@ -214,11 +237,14 @@ EDITOR
   Example: >vim
     set langmap=õ]
 <    Typing õõ in |Normal-mode| now invokes a mapping bound to ]].
+• New |complete-items| field "commit_chars": characters that accept the
+  selected completion item when typed.
 
 EVENTS
 
 • |:delmarks| now triggers the |MarkSet| autocommand with line==col==0, same
   as |nvim_buf_del_mark()|
+• |ChanClose| is triggered after a channel is closed, before it is removed.
 • |SessionWritePre| event emits just before |:mksession|.
 • |TextPutPre| and |TextPutPost| are triggered before/after putting text.
 • |TabMoved| is triggered when tabs are reordered.
@@ -244,6 +270,10 @@ LSP
   |vim.lsp.buf.type_definition()|, and |vim.lsp.buf.implementation()|
   now supports passing arbitrary positions.
 • Support for nested snippets.
+• |lsp-completion| supports `commitCharacters`: typing a commit character
+  while a completion item is selected accepts the item as with
+  |complete_CTRL-Y|, then inserts the character. Previously
+  `commitCharacters` had no effect.
 
 LUA
 
@@ -251,8 +281,13 @@ LUA
   terminal supports it.
 • |vim.net.request()| can specify custom headers by passing `opts.headers`.
 • |vim.net.request()| can now accept  `method` param overload for multiple HTTP methods.
-• |writefile()| treats Lua strings as "blob", so it can be used to write
-  binary data.
+• |writefile()| treats Lua and RPC strings as |Blob|, so it can be used to
+  write binary data.
+• |vim.fs.dir()| with `opts.err=true`, reports errors. An inaccessible root
+  dir yields a single (name, nil, err) item.
+• |vim.fs.find()| returns a list of errors as its second return value.
+• |vim.fs.mkdir()| creates directories, including parent directories with
+  `opts.parents=true`.
 • |vim.filetype.inspect()| returns a copy of the internal tables used for
   filetype detection.
 • Added `__eq` metamethod to |vim.VersionRange|. 2 distinct but representing
@@ -285,6 +320,7 @@ OPTIONS
   The same applies to 'rulerformat', 'statuscolumn', 'tabline', 'winbar',
   'titlestring', and 'iconstring'.
 • 'winpinned' prevents window from closing unless specifically targeted.
+• 'packlockfile' sets the path used for |vim.pack-lockfile|.
 
 PERFORMANCE
 
@@ -337,6 +373,7 @@ UI
 
 VIMSCRIPT
 
+• `fnamemodify(':h')` preserves logical roots for more path formats.
 • |v:exitreason| is set before |QuitPre|.
 • |v:startreason| indicates whether Nvim started normally or by |:restart|.
 • |v:starttime| is the process start time (nanoseconds since UNIX epoch).
@@ -363,12 +400,18 @@ These existing features changed their behavior.
 • |vim.keymap.set()| and |vim.keymap.del()| accept a list of strings for `lhs`.
 • 'statuscolumn' click function labels can be different across rows.
   |v:virtnum| and |v:lnum| are available during the click function callback.
+• Markdown inline highlighting now conceals the backslash in backslash escapes.
+• Markdown inline backslash escapes and hard line breaks no longer use the
+  `@string.escape` capture.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 
 These deprecated features were removed.
 
+• Vimscript functions ctxget(), ctxpop(), ctxpush(), ctxset(), ctxsize()
+  and the "context stack". Use |nvim_get_context()| and |nvim_load_context()|
+  with a script-owned list instead.
 • |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|,
   |vim.lsp.buf.type_definition()|, and |vim.lsp.buf.implementation()|
   no longer accept the `reuse_win` option.

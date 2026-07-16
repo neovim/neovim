@@ -266,7 +266,7 @@ function M.ex_uptime()
   local now = assert(uv.clock_gettime('realtime'))
   local uptime = math.floor((now.sec * 1e9 + now.nsec - vim.v.starttime) / 1e9)
   local uptime_display = time.fmt_rtime(uptime)
-  api.nvim_echo({ { N_('Up %s'):format(uptime_display) } }, true, {})
+  api.nvim_echo({ { N_('Up %s'):format(uptime_display) } }, true)
 end
 
 --- `:oldfiles` and `:browse oldfiles`. Lists v:oldfiles (plain `:oldfiles`) or shows (async)
@@ -275,7 +275,7 @@ end
 function M.ex_oldfiles(eap)
   local files = vim.v.oldfiles
   if not files or #files == 0 then
-    api.nvim_echo({ { N_('No old files') } }, false, {})
+    api.nvim_echo({ { N_('No old files') } }, false)
     return
   end
 
@@ -305,7 +305,7 @@ function M.ex_oldfiles(eap)
   if #lines == 0 then
     return
   end
-  api.nvim_echo(lines, false, {})
+  api.nvim_echo(lines, false)
 end
 
 --- Verify that all plugins in a list are installed.
@@ -390,7 +390,7 @@ end
 --- @param line string content of the current command line
 --- @return string[] completions
 function M.packdel_complete(pattern, line)
-  local cmd = api.nvim_parse_cmd(line, {})
+  local cmd = api.nvim_parse_cmd(line)
   if #cmd.args == 1 and vim.startswith(pattern, '++') then
     return { '++all' }
   end

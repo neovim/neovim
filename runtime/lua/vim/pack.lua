@@ -16,8 +16,8 @@
 ---Like `v1.2.0` or `1.2.0`, but not `1.2` or `v1`.
 ---
 ---The latest state of all managed plugins is stored inside a [vim.pack-lockfile]()
----located at `$XDG_CONFIG_HOME/nvim/nvim-pack-lock.json`. It is a JSON file that
----is used to persistently track data about plugins.
+---located at |'packlockfile'|.
+---It is a JSON file that is used to persistently track data about plugins.
 ---For a more robust config treat lockfile like its part: put under version control, etc.
 ---In this case all plugins from the lockfile will be installed at once (in alphabetical order) and
 ---at lockfile's revision (instead of inferring from `version`). This is done on the very first
@@ -258,10 +258,6 @@ local function get_plug_dir()
   return vim.fs.joinpath(vim.fn.stdpath('data'), 'site', 'pack', 'core', 'opt')
 end
 
-local function lock_get_path()
-  return vim.fs.joinpath(vim.fn.stdpath('config'), 'nvim-pack-lock.json')
-end
-
 -- Git ------------------------------------------------------------------------
 
 --- @async
@@ -276,16 +272,16 @@ local function git_cmd(cmd, cwd)
   local sys_opts = { cwd = cwd, text = true, env = env, clear_env = true }
   local out = async.await(3, vim.system, cmd, sys_opts) --- @type vim.SystemCompleted
   async.await(1, vim.schedule)
+  local stderr = vim.nonnil(out.stderr, '')
   if out.code ~= 0 then
-    error(out.stderr)
+    error(stderr)
   end
-  local stdout, stderr = assert(out.stdout), assert(out.stderr)
   if stderr ~= '' then
     vim.schedule(function()
       vim.notify(stderr:gsub('\n+$', ''), vim.log.levels.WARN)
     end)
   end
-  return (stdout:gsub('\n+$', ''))
+  return (assert(out.stdout):gsub('\n+$', ''))
 end
 
 local function parse_semver(x)
@@ -871,9 +867,8 @@ local function lock_write()
     end
   end
 
-  local path = lock_get_path()
-  vim.fn.mkdir(vim.fs.dirname(path), 'p')
-  local fd = assert(uv.fs_open(path, 'w', 438))
+  vim.fn.mkdir(vim.fs.dirname(M._plugin_lock_path), 'p')
+  local fd = assert(uv.fs_open(M._plugin_lock_path, 'w', 438))
 
   local data = vim.json.encode(lock, { indent = '  ', sort_keys = true })
   assert(uv.fs_write(fd, data .. '\n'))
@@ -998,7 +993,8 @@ local function lock_read(confirm, specs)
     return
   end
 
-  local fd = uv.fs_open(lock_get_path(), 'r', 438)
+  M._plugin_lock_path = vim.go.packlockfile
+  local fd = uv.fs_open(M._plugin_lock_path, 'r', 438)
   if fd then
     local stat = assert(uv.fs_fstat(fd))
     local data = assert(uv.fs_read(fd, stat.size, 0))

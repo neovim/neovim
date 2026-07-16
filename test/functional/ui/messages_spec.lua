@@ -5,7 +5,6 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed = n.clear, n.feed
 local eval = n.eval
 local eq = t.eq
-local pcall_err = t.pcall_err
 local neq = t.neq
 local command = n.command
 local set_method_error = n.set_method_error
@@ -942,7 +941,7 @@ describe('ui/ext_messages', function()
         ^                         |
         {1:~                        }|*4
       ]],
-      ruler = { { '0,0-1   All', 9, 'MsgArea' } },
+      ruler = { { '0,0-1    All', 9, 'MsgArea' } },
     })
     command('hi clear MsgArea')
     feed('i')
@@ -952,7 +951,7 @@ describe('ui/ext_messages', function()
         {1:~                        }|*4
       ]],
       showmode = { { '-- INSERT --', 5, 'ModeMsg' } },
-      ruler = { { '0,1     All', 'MsgArea' } },
+      ruler = { { '0,1      All', 'MsgArea' } },
     }
     feed('abcde<cr>12345<esc>')
     screen:expect {
@@ -961,7 +960,7 @@ describe('ui/ext_messages', function()
         1234^5                    |
         {1:~                        }|*3
       ]],
-      ruler = { { '2,5     All', 'MsgArea' } },
+      ruler = { { '2,5      All', 'MsgArea' } },
     }
     feed('d')
     screen:expect {
@@ -971,7 +970,7 @@ describe('ui/ext_messages', function()
         {1:~                        }|*3
       ]],
       showcmd = { { 'd' } },
-      ruler = { { '2,5     All', 'MsgArea' } },
+      ruler = { { '2,5      All', 'MsgArea' } },
     }
     feed('<esc>^')
     screen:expect {
@@ -980,7 +979,7 @@ describe('ui/ext_messages', function()
         ^12345                    |
         {1:~                        }|*3
       ]],
-      ruler = { { '2,1     All', 'MsgArea' } },
+      ruler = { { '2,1      All', 'MsgArea' } },
     }
     feed('<c-v>k2l')
     screen:expect({
@@ -991,7 +990,7 @@ describe('ui/ext_messages', function()
       ]],
       showmode = { { '-- VISUAL BLOCK --', 5, 'ModeMsg' } },
       showcmd = { { '2x3' } },
-      ruler = { { '1,3     All', 'MsgArea' } },
+      ruler = { { '1,3      All', 'MsgArea' } },
     })
     feed('o<esc>d')
     screen:expect {
@@ -1001,7 +1000,7 @@ describe('ui/ext_messages', function()
         {1:~                        }|*3
       ]],
       showcmd = { { 'd' } },
-      ruler = { { '2,1     All', 'MsgArea' } },
+      ruler = { { '2,1      All', 'MsgArea' } },
     }
     feed('i')
     screen:expect {
@@ -1011,7 +1010,7 @@ describe('ui/ext_messages', function()
         {1:~                        }|*3
       ]],
       showcmd = { { 'di' } },
-      ruler = { { '2,1     All', 'MsgArea' } },
+      ruler = { { '2,1      All', 'MsgArea' } },
     }
     feed('w')
     screen:expect {
@@ -1020,7 +1019,7 @@ describe('ui/ext_messages', function()
         ^                         |
         {1:~                        }|*3
       ]],
-      ruler = { { '2,0-1   All', 'MsgArea' } },
+      ruler = { { '2,0-1    All', 'MsgArea' } },
     }
     command('set rulerformat=Foo%#ErrorMsg#Bar')
     screen:expect({
@@ -1725,6 +1724,54 @@ describe('ui/builtin messages', function()
         end
       end,
     }
+  end)
+
+  it('no cursor flicker during :write message (marks UI busy) #25974', function()
+    local fname = 'Xtest_write_busy'
+    finally(function()
+      os.remove(fname)
+    end)
+    local busy_start, busy_stop = 0, 0
+    screen._handle_busy_start = (function(orig)
+      return function()
+        orig(screen)
+        busy_start = busy_start + 1
+      end
+    end)(screen._handle_busy_start)
+    screen._handle_busy_stop = (function(orig)
+      return function()
+        orig(screen)
+        busy_stop = busy_stop + 1
+      end
+    end)(screen._handle_busy_stop)
+    command('write ' .. fname)
+    screen:expect({ any = 'written' })
+    eq(true, busy_start >= 1) -- cursor was hidden while the message was emitted
+    eq(busy_start, busy_stop) -- balanced: cursor restored afterwards
+  end)
+
+  it(':write message not clobbered by v:lua in statusline redraw #40616', function()
+    local fname = 'Xtest_write_progress'
+    finally(function()
+      os.remove(fname)
+    end)
+    exec_lua(function()
+      -- The Progress event fired by the ":write" message (since ff68fd6b8a84)
+      -- evaluates statusline mid-message.
+      _G.Statusline = function()
+        return 'STL'
+      end
+      vim.o.laststatus = 2
+      vim.o.statusline = '%{v:lua.Statusline()}'
+      vim.api.nvim_create_autocmd('Progress', {
+        callback = function()
+          vim.cmd('redrawstatus!')
+        end,
+      })
+    end)
+    command('write ' .. fname)
+    -- Should not be overwritten by "return Statusline(...)").
+    screen:expect({ any = ('"%s".*written'):format(fname) })
   end)
 
   it(':hi Group output', function()

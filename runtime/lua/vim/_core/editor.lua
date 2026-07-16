@@ -485,9 +485,9 @@ local VIM_CMD_ARG_MAX = 20
 vim.cmd = setmetatable({}, {
   __call = function(_, cmd)
     if type(cmd) == 'table' then
-      return vim.api.nvim_cmd(cmd, {})
+      return vim.api.nvim_cmd(cmd)
     else
-      vim.api.nvim_exec2(cmd, {})
+      vim.api.nvim_exec2(cmd)
       return ''
     end
   end,
@@ -515,7 +515,7 @@ vim.cmd = setmetatable({}, {
         opts = { args = { ... } }
       end
       opts.cmd = cmd
-      return vim.api.nvim_cmd(opts, {})
+      return vim.api.nvim_cmd(opts)
     end
     return t[cmd]
   end,

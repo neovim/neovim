@@ -13,6 +13,7 @@
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
+#include "nvim/context.h"
 #include "nvim/digraph.h"
 #include "nvim/drawline.h"
 #include "nvim/drawscreen.h"
@@ -256,7 +257,7 @@ static void win_redr_stl_expr(win_T *wp, bool draw_winbar, bool draw_ruler, bool
   entered = true;
 
   // Restore actual curwin before redrawing.
-  win_T *save_curwin = autocmd_save_curwin ? win_find_by_handle(autocmd_save_curwin) : NULL;
+  win_T *save_curwin = ctx_saved_curwin();
   win_T *restore_curwin = save_curwin != NULL ? curwin : NULL;
   if (save_curwin != NULL) {
     curwin = save_curwin;
@@ -307,7 +308,15 @@ static void win_redr_stl_expr(win_T *wp, bool draw_winbar, bool draw_ruler, bool
     wp->w_status_click_defs = stl_alloc_click_defs(wp->w_status_click_defs, maxwidth,
                                                    &wp->w_status_click_defs_size);
 
-    if (draw_ruler) {
+    if (draw_ruler && ui_event) {
+      stl = p_ruf;
+      opt_idx = kOptRulerformat;
+      maxwidth = Columns / 2;
+      if (!in_status_line) {
+        fillchar = schar_from_ascii(' ');
+        group = HLF_MSG;
+      }
+    } else if (draw_ruler) {
       stl = p_ruf;
       opt_idx = kOptRulerformat;
       // advance past any leading group spec - implicit in ru_col
@@ -415,6 +424,10 @@ static void win_redr_stl_expr(win_T *wp, bool draw_winbar, bool draw_ruler, bool
     if (curattr != attr) {
       curattr = hl_combine_attr(attr, curattr);
     }
+  }
+
+  if (p_sc && find_option(p_sloc) == opt_idx) {
+    showcmd_is_clear = (showcmd_buf[0] == NUL);
   }
 
   if (ui_event) {
@@ -544,8 +557,8 @@ void redraw_ruler(void)
   char rel_pos[RULER_BUF_LEN];
   int rel_poslen = get_rel_pos(wp, rel_pos, RULER_BUF_LEN);
   int n1 = bufferlen + vim_strsize(rel_pos);
-  if (wp->w_status_height == 0 && !is_stl_global) {  // can't use last char of screen
-    n1++;
+  if (wp->w_status_height == 0 && !is_stl_global && !ui_has(kUIMessages)) {
+    n1++;  // can't use last char of screen
   }
 
   int this_ru_col = ru_col - (Columns - width);
@@ -808,6 +821,7 @@ void draw_tabline(void)
         grid_line_puts(Columns - sc_width - (tabcount > 1) * 2,
                        showcmd_buf, sc_width, attr_nosel);
       }
+      showcmd_is_clear = (showcmd_buf[0] == NUL);
     }
 
     // Put an "X" for closing the current tab if there are several.
@@ -1458,9 +1472,8 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
       }
     }
 
-    // Bound the minimum width at 50.
     // Make the number negative to denote left alignment of the item
-    minwid = (minwid > 50 ? 50 : minwid) * (left_align ? -1 : 1);
+    minwid *= left_align ? -1 : 1;
 
     // Denotes the start of a new group
     if (*fmt_p == '(') {

@@ -353,7 +353,7 @@ function M.inspect_tree(opts)
   local win = api.nvim_get_current_win()
   local treeview, err = TSTreeView:new(buf, opts.lang)
   if err and err:match('no parser for lang') then
-    api.nvim_echo({ { err, 'WarningMsg' } }, true, {})
+    api.nvim_echo({ { err, 'WarningMsg' } }, true)
     return
   elseif not treeview then
     error(err)
@@ -468,7 +468,7 @@ function M.inspect_tree(opts)
     nowait = true,
   })
 
-  local group = api.nvim_create_augroup('nvim.treesitter.dev', {})
+  local group = api.nvim_create_augroup('nvim.treesitter.dev')
 
   nvim_on('CursorMoved', group, { buf = b }, function()
     if not api.nvim_buf_is_loaded(buf) then
@@ -647,7 +647,7 @@ function M.edit_query(lang)
   -- can infer the language later.
   api.nvim_buf_set_name(query_buf, string.format('%s/query_editor.scm', lang))
 
-  local group = api.nvim_create_augroup('nvim.treesitter.dev_edit', {})
+  local group = api.nvim_create_augroup('nvim.treesitter.dev_edit')
   nvim_on({ 'TextChanged', 'InsertLeave' }, group, {
     buf = query_buf,
     desc = 'Update query editor diagnostics when the query changes',

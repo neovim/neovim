@@ -41,6 +41,7 @@
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/cmdexpand_defs.h"
+#include "nvim/context.h"
 #include "nvim/cursor_shape.h"
 #include "nvim/decoration_defs.h"
 #include "nvim/decoration_provider.h"
@@ -362,6 +363,8 @@ void set_init_1(bool clean_arg)
   set_string_default(kOptDirectory, stdpaths_user_state_subpath("swap", 2, true),
                      true);
   set_string_default(kOptUndodir, stdpaths_user_state_subpath("undo", 2, true),
+                     true);
+  set_string_default(kOptPacklockfile, stdpaths_user_conf_subpath("nvim-pack-lock.json"),
                      true);
   // Set default for &runtimepath. All necessary expansions are performed in
   // this function.
@@ -2684,31 +2687,6 @@ static const char *did_set_scrollbind(optset_T *args)
   return NULL;
 }
 
-#ifdef BACKSLASH_IN_FILENAME
-/// Process the updated 'shellslash' option value.
-/// TODO(ntdiary): Remove this once we're confident that the `shellslash`
-/// option is no longer needed.
-static const char *did_set_shellslash(optset_T *args FUNC_ATTR_UNUSED)
-{
-  if (p_ssl) {
-    psepc = '/';
-    psepcN = '\\';
-    pseps[0] = '/';
-  } else {
-    psepc = '\\';
-    psepcN = '/';
-    pseps[0] = '\\';
-  }
-
-  // TODO(ntdiary): Remove these in the follow PR.
-  // need to adjust the file name arguments and buffer names.
-  // buflist_slash_adjust();
-  // alist_slash_adjust();
-  // scriptnames_slash_adjust();
-  return NULL;
-}
-#endif
-
 /// Process the new 'shiftwidth' or the 'tabstop' option value.
 static const char *did_set_shiftwidth_tabstop(optset_T *args)
 {
@@ -3970,7 +3948,11 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, OptVal old_value
     redraw_all_later(UPD_NOT_VALID);
   } else if (varp == &p_wbr || varp == &(curwin->w_p_wbr)) {
     // add / remove window bars for 'winbar'
-    set_winbar(true);
+    if (varp == &p_wbr) {
+      set_winbar_all(true);
+    } else {
+      set_winbar(true);
+    }
   }
 
   if (curwin->w_curswant != MAXCOL
@@ -4209,7 +4191,7 @@ void set_option_direct_for(OptIndex opt_idx, OptVal value, int opt_flags, scid_T
   buf_T *save_curbuf = curbuf;
   win_T *save_curwin = curwin;
 
-  // Don't use switch_option_context(), as that calls aucmd_prepbuf(), which may have unintended
+  // Don't use switch_option_context(), as that calls ctx_switch(), which may have unintended
   // side-effects when setting an option directly. Just change the values of curbuf and curwin if
   // needed, no need to properly switch the window / buffer.
   switch (scope) {
@@ -4314,8 +4296,7 @@ void set_option_value_give_err(const OptIndex opt_idx, OptVal value, int opt_fla
 /// Tab-scope switch is GET-only (SET requires side-effects, see set_option_value_for()).
 ///
 /// @param[out]  ctx   Switched-from context, restored by restore_option_context():
-///                    - kOptScopeWin: switchwin_T
-///                    - kOptScopeBuf: aco_save_T
+///                    - kOptScopeWin/kOptScopeBuf: CtxSwitch
 ///                    - kOptScopeTab: tabpage_T * (saved curtab)
 ///                    - kOptScopeGlobal: unused
 /// @param       scope Option scope. See OptScope in option.h.
@@ -4330,31 +4311,28 @@ static bool switch_option_context(void *const ctx, OptScope scope, void *const f
     return false;
   case kOptScopeWin: {
     win_T *const win = (win_T *)from;
-    switchwin_T *const switchwin = (switchwin_T *)ctx;
 
     if (win == curwin) {
       return false;
     }
 
-    if (FAIL == switch_win_noblock(switchwin, win, win_find_tabpage(win), true)) {
-      restore_win_noblock(switchwin, true);
-
-      if (ERROR_SET(err)) {
-        return false;
+    // kCtxNoDisplay (no kCtxNoEvents): switch without redraw, but let autocommands fire.
+    if (!ctx_switch((CtxSwitch *)ctx, win, win_find_tabpage(win), NULL, kCtxNoDisplay)) {
+      ctx_restore((CtxSwitch *)ctx);
+      if (!ERROR_SET(err)) {
+        api_set_error(err, kErrorTypeException, "Problem while switching windows");
       }
-      api_set_error(err, kErrorTypeException, "Problem while switching windows");
       return false;
     }
     return true;
   }
   case kOptScopeBuf: {
     buf_T *const buf = (buf_T *)from;
-    aco_save_T *const aco = (aco_save_T *)ctx;
 
     if (buf == curbuf) {
       return false;
     }
-    aucmd_prepbuf(aco, buf);
+    ctx_switch((CtxSwitch *)ctx, NULL, NULL, buf, 0);
     return true;
   }
   case kOptScopeTab: {
@@ -4383,10 +4361,8 @@ static void restore_option_context(void *const ctx, OptScope scope)
   case kOptScopeGlobal:
     break;
   case kOptScopeWin:
-    restore_win_noblock((switchwin_T *)ctx, true);
-    break;
   case kOptScopeBuf:
-    aucmd_restbuf((aco_save_T *)ctx);
+    ctx_restore((CtxSwitch *)ctx);
     break;
   case kOptScopeTab: {
     tabpage_T *const saved_curtab = *(tabpage_T **)ctx;
@@ -4411,13 +4387,9 @@ static void restore_option_context(void *const ctx, OptScope scope)
 OptVal get_option_value_for(OptIndex opt_idx, int opt_flags, const OptScope scope, void *const from,
                             Error *err)
 {
-  switchwin_T switchwin;
-  aco_save_T aco = { 0 };
+  CtxSwitch cs = { 0 };
   tabpage_T *swtab = NULL;
-  void *ctx = scope == kOptScopeWin ? (void *)&switchwin
-                                    : scope == kOptScopeBuf ? (void *)&aco
-                                                            : scope == kOptScopeTab ? (void *)&swtab
-                                                                                    : NULL;
+  void *ctx = scope == kOptScopeTab ? (void *)&swtab : (void *)&cs;
 
   bool switched = switch_option_context(ctx, scope, from, err);
   if (ERROR_SET(err)) {
@@ -4462,13 +4434,9 @@ void set_option_value_for(const char *name, OptIndex opt_idx, OptVal value, cons
     return;
   }
 
-  switchwin_T switchwin;
-  aco_save_T aco = { 0 };
+  CtxSwitch cs = { 0 };
   tabpage_T *swtab = NULL;
-  void *ctx = scope == kOptScopeWin ? (void *)&switchwin
-                                    : scope == kOptScopeBuf ? (void *)&aco
-                                                            : scope == kOptScopeTab ? (void *)&swtab
-                                                                                    : NULL;
+  void *ctx = scope == kOptScopeTab ? (void *)&swtab : (void *)&cs;
 
   bool switched = switch_option_context(ctx, scope, from, err);
   if (ERROR_SET(err)) {

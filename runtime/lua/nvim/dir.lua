@@ -3,7 +3,6 @@
 
 local api = vim.api
 local fs = vim.fs
-local uv = vim.uv
 
 local M = {}
 
@@ -50,17 +49,13 @@ end
 ---@param dir string
 ---@return boolean
 local function render(buf, dir)
-  -- TODO(#39878): drop this scandir probe once vim.fs.dir() can report
-  -- traversal errors.
-  local handle, err = uv.fs_scandir(dir)
-  if not handle then
-    vim.notify('dir: ' .. (err or ('cannot read directory: ' .. dir)), vim.log.levels.ERROR)
-    return false
-  end
-
   ---@type { name: string, dir: boolean }[]
   local items = {}
-  for name, type in fs.dir(dir) do
+  for name, type, err in fs.dir(dir, { err = true }) do
+    if err then
+      vim.notify('dir: ' .. err, vim.log.levels.ERROR)
+      return false
+    end
     if type == 'link' and vim.fn.isdirectory(fs.joinpath(dir, name)) == 1 then
       type = 'directory'
     end
@@ -90,7 +85,14 @@ local function render(buf, dir)
   then
     return false
   end
-  api.nvim_buf_set_name(buf, dir)
+  api.nvim_buf_call(buf, function()
+    api.nvim_cmd({
+      cmd = 'file',
+      args = { dir },
+      mods = { keepalt = true },
+      magic = { file = false, bar = false },
+    }, {})
+  end)
   if not api.nvim_buf_is_valid(buf) then
     return false
   end
@@ -119,7 +121,7 @@ end
 ---@param path string
 local function edit(path)
   navigating = true
-  api.nvim_cmd({ cmd = 'edit', args = { path }, magic = { file = false, bar = false } }, {})
+  api.nvim_cmd({ cmd = 'edit', args = { path }, magic = { file = false, bar = false } })
   navigating = false
 end
 
@@ -156,7 +158,10 @@ end
 
 ---@param buf integer
 local function open_parent(buf)
-  navigate(fs.dirname(api.nvim_buf_get_name(buf)))
+  local path = fs.normalize(api.nvim_buf_get_name(buf))
+  local name = encode_name(fs.basename(path)) .. (vim.fn.isdirectory(path) == 1 and '/' or '')
+  navigate(fs.dirname(path))
+  vim.fn.search([[\C\m^\V]] .. vim.fn.escape(name, [[\]]) .. [[\m$]], 'cw')
 end
 
 function M._open_entry()

@@ -80,7 +80,7 @@ function M.list_swaps(items)
       lines[#lines + 1] = { ('%d. %s\n'):format(i, format_swap(path)) }
     end
   end
-  api.nvim_echo(lines, false, {})
+  api.nvim_echo(lines, false)
 end
 
 return M

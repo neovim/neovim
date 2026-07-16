@@ -92,8 +92,7 @@ end
 function Completor:destroy()
   self:reset_timer()
   api.nvim_buf_clear_namespace(self.bufnr, namespace, 0, -1)
-  api.nvim_del_augroup_by_id(self.augroup)
-  self.active[self.bufnr] = nil
+  Capability.destroy(self)
 end
 
 --- Longest common prefix

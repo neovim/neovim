@@ -877,7 +877,9 @@ g'{mark}  g`{mark}
 			See also |:keepjumps|.
 
 						*:marks*
-:marks			List all the current marks (not a motion command).
+:marks			List all marks, and |extmarks| namespaces (use ":marks
+			{ns}" to list them).
+
 			The |'(|, |')|, |'{| and |'}| marks are not listed.
 			The first column has number zero.
 						*E283*
@@ -885,7 +887,10 @@ g'{mark}  g`{mark}
 			motion command).  For example: >
 				:marks aB
 <			to list marks 'a' and 'B'.
-
+			If {arg} is |extmark| |namespace|, the extmarks for
+			current buffer are listed: >
+				:marks nvim.multicursor
+<
 							*:delm* *:delmarks*
 :delm[arks] {marks}	Delete the specified marks.  Marks that can be deleted
 			include A-Z and 0-9.  You cannot delete the ' mark.

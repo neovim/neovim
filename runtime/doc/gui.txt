@@ -83,7 +83,7 @@ Restart Nvim
                 1. Saves the current session (unless [!] was given).
                 2. Stops Nvim using `:qall` (or |+cmd|, if given).
                 3. Starts a new Nvim server using the same |v:argv| (except
-                   `-- [file…]` files), and sets |v:startreason|.
+                   `-- [file…]` files and `-S [file]`), and sets |v:startreason|.
                 4. Restores the saved session (unless [!] was given).
                 5. Attaches all UIs to the new Nvim server and runs `[command]`
                    on it.
@@ -101,6 +101,7 @@ Restart Nvim
                   refers to a temporary address.
                 • If no UI handles the "restart" event, this leaves a dangling
                   process.
+                • To adjust what `:restart` restores, set 'sessionoptions'.
 
 ------------------------------------------------------------------------------
 Connect UI to a different server

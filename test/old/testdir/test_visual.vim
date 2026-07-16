@@ -1321,10 +1321,11 @@ func Test_visual_block_with_virtualedit()
     set virtualedit=block
     normal G
   END
-  call writefile(lines, 'XTest_block')
+  call writefile(lines, 'XTest_block', 'D')
 
   let buf = RunVimInTerminal('-S XTest_block', {'rows': 8, 'cols': 50})
   call term_sendkeys(buf, "\<C-V>gg$")
+  call WaitForAssert({-> assert_match('VISUAL.*\dx\d', term_getline(buf, 8))}, 1000)
   call VerifyScreenDump(buf, 'Test_visual_block_with_virtualedit', {})
 
   call term_sendkeys(buf, "\<Esc>gg\<C-V>G$")
@@ -1333,7 +1334,6 @@ func Test_visual_block_with_virtualedit()
   " clean up
   call term_sendkeys(buf, "\<Esc>")
   call StopVimInTerminal(buf)
-  call delete('XTest_block')
 endfunc
 
 func Test_visual_block_ctrl_w_f()

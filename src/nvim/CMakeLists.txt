@@ -29,7 +29,7 @@ target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LUV_INCLUDE_DIR})
 target_link_libraries(main_lib INTERFACE ${LUV_LIBRARY})
 
 find_package(Iconv REQUIRED)
-find_package(Libuv 1.28.0 REQUIRED)
+find_package(Libuv 1.46.0 REQUIRED)
 find_package(Lpeg REQUIRED)
 find_package(Treesitter 0.25.0 REQUIRED)
 find_package(UTF8proc REQUIRED)
@@ -443,6 +443,8 @@ list(APPEND UNCRUSTIFY_NVIM_SOURCES ${NVIM_SOURCES} ${NVIM_HEADERS})
 list(APPEND UNCRUSTIFY_NVIM_SOURCES
   ${PROJECT_SOURCE_DIR}/src/tee/tee.c
   ${PROJECT_SOURCE_DIR}/src/xxd/xxd.c
+  ${PROJECT_SOURCE_DIR}/src/wasm_stubs.c
+  ${PROJECT_SOURCE_DIR}/src/static_ts_registry.c
 )
 
 foreach(sfile ${NVIM_SOURCES})

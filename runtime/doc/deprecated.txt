@@ -17,6 +17,8 @@ DEPRECATED IN 0.13					*deprecated-0.13*
 
 API
 
+• *nvim_win_set_height()*	Use |nvim_win_resize()| instead.
+• *nvim_win_set_width()*	Use |nvim_win_resize()| instead.
 • The "buffer" key accepted and/or returned by these functions, was renamed to
   "buf":
   • |nvim_create_autocmd()|
@@ -38,9 +40,18 @@ LUA
 • vim.F.npcall()			Renamed to |vim.npcall()|
 • vim.F.nil_wrap()			Use |vim.npcall()| instead
 
+UI
+
+• |v:echospace|		Its purpose to avoid a "Press ENTER" prompt
+			no longer applies with |ui2|.
+
 LSP
 
 • vim.lsp.util.character_offset()	Use to |vim.str_utfindex()| instead
+
+VIMSCRIPT
+• ctxget(), ctxpop(), ctxpush(), ctxset(), ctxsize(). Use
+  |nvim_get_context()| and |nvim_load_context()| instead.
 
 ------------------------------------------------------------------------------
 DEPRECATED IN 0.12					*deprecated-0.12*

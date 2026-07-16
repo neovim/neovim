@@ -224,6 +224,8 @@ enum key_extra {
   // KE_SID = 106,
   // KE_ESC = 107,
   KE_WILD = 108,            // triggers wildmode completion
+  // KE_OSC = 109,
+  KE_COMPLETE_DELAY = 110,  // 'autocompletedelay' expired
 };
 
 // the three byte codes are replaced with the following int when using vgetc()
@@ -450,6 +452,8 @@ enum key_extra {
 #define K_PLUG          TERMCAP2KEY(KS_EXTRA, KE_PLUG)
 
 #define K_DROP          TERMCAP2KEY(KS_EXTRA, KE_DROP)
+
+#define K_COMPLETE_DELAY TERMCAP2KEY(KS_EXTRA, KE_COMPLETE_DELAY)
 
 #define K_EVENT         TERMCAP2KEY(KS_EXTRA, KE_EVENT)
 #define K_COMMAND       TERMCAP2KEY(KS_EXTRA, KE_COMMAND)

@@ -1468,6 +1468,21 @@ printf('Hello World!');
       assert(vim.api.nvim_win_text_height(0, {}).all == 1, 'line concealed')
     end)
   end)
+
+  it('conceals backslash in hard_line_break/backslash_escape', function()
+    command('set concealcursor=n')
+    command('set conceallevel=2')
+    insert('Hello\\\nWorld\nHello\\. World')
+    screen:expect({
+      grid = [[
+        Hello                                   |
+        World                                   |
+        Hello. Worl^d                            |
+        {1:~                                       }|*2
+                                                |
+      ]],
+    })
+  end)
 end)
 
 it('starting and stopping treesitter highlight in init.lua works #29541', function()

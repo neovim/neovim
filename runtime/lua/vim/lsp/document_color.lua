@@ -122,36 +122,12 @@ function Provider:new(bufnr)
   --- @type vim.lsp.document_color.Provider
   self = Capability.new(self, bufnr)
 
-  api.nvim_buf_attach(bufnr, false, {
-    on_lines = function(_, buf)
-      local provider = Provider.active[buf]
-      if not provider then
-        return true
-      end
-      provider:request()
-    end,
-    on_reload = function(_, buf)
-      local provider = Provider.active[buf]
-      if provider then
-        provider:clear()
-        provider:request()
-      end
-    end,
-    on_detach = function(_, buf)
-      local provider = Provider.active[buf]
-      if provider then
-        provider:destroy()
-      end
-    end,
-  })
-
   nvim_on('ColorScheme', self.augroup, { desc = 'Refresh document_color' }, function()
     color_cache = {}
     n_color_cache = 0
-    local provider = Provider.active[bufnr]
-    if provider then
-      provider:clear()
-      provider:request()
+    for client_id, _ in pairs(self.client_state) do
+      self:clear(client_id)
+      self:request(client_id)
     end
   end)
 
@@ -176,7 +152,16 @@ function Provider:on_detach(client_id)
     api.nvim_buf_clear_namespace(self.bufnr, state.namespace, 0, -1)
     self.client_state[client_id] = nil
   end
-  api.nvim__redraw({ buf = self.bufnr, valid = true, flush = false })
+end
+
+---@private
+function Provider:on_close(client_id)
+  self:clear(client_id)
+end
+
+---@private
+function Provider:on_change(client_id)
+  self:request(client_id)
 end
 
 --- |lsp-handler| for the `textDocument/documentColor` method.
@@ -227,85 +212,78 @@ function Provider:handler(err, result, ctx)
 end
 
 --- @package
---- @param client_id? integer
+--- @param client_id integer
 function Provider:request(client_id)
-  for id in pairs(self.client_state) do
-    if not client_id or client_id == id then
-      local client = assert(lsp.get_client_by_id(id))
-      ---@type lsp.DocumentColorParams
-      local params = { textDocument = util.make_text_document_params(self.bufnr) }
-      client:request('textDocument/documentColor', params, function(...)
-        self:handler(...)
-      end, self.bufnr)
-    end
+  local state = self.client_state[client_id]
+  local client = assert(lsp.get_client_by_id(client_id))
+  if state and client then
+    ---@type lsp.DocumentColorParams
+    local params = { textDocument = util.make_text_document_params(self.bufnr) }
+    client:request('textDocument/documentColor', params, function(...)
+      self:handler(...)
+    end, self.bufnr)
   end
 end
 
 --- @package
-function Provider:clear()
-  for _, state in pairs(self.client_state) do
+--- @param client_id integer
+function Provider:clear(client_id)
+  local state = self.client_state[client_id]
+  if state then
     state.hl_info = {}
     state.processed_version = nil
     state.applied_version = nil
     api.nvim_buf_clear_namespace(self.bufnr, state.namespace, 0, -1)
   end
-  api.nvim__redraw({ buf = self.bufnr, valid = true, flush = false })
 end
 
-local document_color_ns = api.nvim_create_namespace('nvim.lsp.document_color')
-api.nvim_set_decoration_provider(document_color_ns, {
-  on_win = function(_, _, bufnr)
-    local provider = Provider.active[bufnr]
-    if not provider then
-      return
-    end
+--- @package
+function Provider:on_win()
+  local style = document_color_opts.style
 
-    local style = document_color_opts.style
+  for _, state in pairs(self.client_state) do
+    if
+      state.processed_version == util.buf_versions[self.bufnr]
+      and state.processed_version ~= state.applied_version
+    then
+      api.nvim_buf_clear_namespace(self.bufnr, state.namespace, 0, -1)
 
-    for _, state in pairs(provider.client_state) do
-      if
-        state.processed_version == util.buf_versions[bufnr]
-        and state.processed_version ~= state.applied_version
-      then
-        api.nvim_buf_clear_namespace(bufnr, state.namespace, 0, -1)
-
-        for _, hl in ipairs(state.hl_info) do
-          if type(style) == 'function' then
-            style(bufnr, hl.range, hl.hex_code)
-          elseif style == 'foreground' or style == 'background' then
-            api.nvim_buf_set_extmark(
-              bufnr,
-              state.namespace,
-              hl.range.start_row,
-              hl.range.start_col,
-              {
-                end_row = hl.range.end_row,
-                end_col = hl.range.end_col,
-                hl_group = hl.hl_group,
-                strict = false,
-              }
-            )
-          else
-            -- Default swatch: \uf0c8
-            local swatch = style == 'virtual' and ' ' or style
-            api.nvim_buf_set_extmark(
-              bufnr,
-              state.namespace,
-              hl.range.start_row,
-              hl.range.start_col,
-              {
-                virt_text = { { swatch, hl.hl_group } },
-                virt_text_pos = 'inline',
-              }
-            )
-          end
+      for _, hl in ipairs(state.hl_info) do
+        if type(style) == 'function' then
+          style(self.bufnr, hl.range, hl.hex_code)
+        elseif style == 'foreground' or style == 'background' then
+          api.nvim_buf_set_extmark(
+            self.bufnr,
+            state.namespace,
+            hl.range.start_row,
+            hl.range.start_col,
+            {
+              end_row = hl.range.end_row,
+              end_col = hl.range.end_col,
+              hl_group = hl.hl_group,
+              strict = false,
+            }
+          )
+        else
+          -- Default swatch: \uf0c8
+          local swatch = style == 'virtual' and ' ' or style
+          api.nvim_buf_set_extmark(
+            self.bufnr,
+            state.namespace,
+            hl.range.start_row,
+            hl.range.start_col,
+            {
+              virt_text = { { swatch, hl.hl_group } },
+              virt_text_pos = 'inline',
+            }
+          )
         end
-
-        state.applied_version = state.processed_version
       end
+
+      state.applied_version = state.processed_version
     end
-  end,
-})
+  end
+end
 
 --- @param provider vim.lsp.document_color.Provider
 --- @return vim.lsp.document_color.HighlightInfo?, integer?
@@ -415,8 +393,10 @@ function M.enable(enable, filter, opts)
     document_color_opts = vim.tbl_extend('keep', opts, document_color_opts)
     -- Re-process highlights with new style and refresh active providers.
     for _, provider in pairs(Provider.active) do
-      provider:clear()
-      provider:request()
+      for client_id, _ in pairs(provider.client_state) do
+        provider:clear(client_id)
+        provider:request(client_id)
+      end
     end
   end
 

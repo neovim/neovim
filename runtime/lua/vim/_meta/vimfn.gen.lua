@@ -605,7 +605,9 @@ function vim.fn.bufloaded(buf) end
 ---
 --- The result is the name of a buffer.  Mostly as it is displayed
 --- by the `:ls` command, but not using special names such as
---- "[No Name]".
+--- "[No Name]".  If the buffer represents a directory, the name
+--- ends with a path separator, unless it was changed by |:file| or
+--- |nvim_buf_set_name()|.
 --- If {buf} is omitted the current buffer is used.
 --- If {buf} is a Number, that buffer number's name is given.
 --- Number zero is the alternate buffer for the current window.
@@ -1330,45 +1332,6 @@ function vim.fn.cosh(expr) end
 --- @param start? integer
 --- @return integer
 function vim.fn.count(comp, expr, ic, start) end
-
---- Returns a |Dictionary| representing the |context| at {index}
---- from the top of the |context-stack| (see |context-dict|).
---- If {index} is not given, it is assumed to be 0 (i.e.: top).
----
---- @param index? integer
---- @return table
-function vim.fn.ctxget(index) end
-
---- Pops and restores the |context| at the top of the
---- |context-stack|.
----
---- @return any
-function vim.fn.ctxpop() end
-
---- Pushes the current editor state (|context|) on the
---- |context-stack|.
---- If {types} is given and is a |List| of |String|s, it specifies
---- which |context-types| to include in the pushed context.
---- Otherwise, all context types are included.
----
---- @param types? string[]
---- @return any
-function vim.fn.ctxpush(types) end
-
---- Sets the |context| at {index} from the top of the
---- |context-stack| to that represented by {context}.
---- {context} is a Dictionary with context data (|context-dict|).
---- If {index} is not given, it is assumed to be 0 (i.e.: top).
----
---- @param context table
---- @param index? integer
---- @return integer
-function vim.fn.ctxset(context, index) end
-
---- Returns the size of the |context-stack|.
----
---- @return any
-function vim.fn.ctxsize() end
 
 --- @param lnum integer|string
 --- @param col? integer
@@ -3576,7 +3539,8 @@ function vim.fn.getloclist(nr, what) end
 --- If the optional {buf} argument is specified, returns the
 --- local marks defined in buffer {buf}.  For the use of {buf},
 --- see |bufname()|.  If {buf} is invalid, an empty list is
---- returned.
+--- returned.  For a |prompt-buffer| the result includes the
+--- |':| mark.
 ---
 --- Each item in the returned List is a |Dict| with the following:
 ---     mark   name of the mark prefixed by "'"
@@ -6519,7 +6483,7 @@ function vim.fn.menu_info(name, mode) end
 --- @return number
 function vim.fn.min(expr) end
 
---- Lua: Prefer |uv.fs_mkdir()| for simple directory creation; `"p"`, `"D"`, `"R"`, and return semantics differ.
+--- Lua: Prefer |vim.fs.mkdir()|; `"D"`, `"R"`, and return semantics differ.
 ---
 --- Create directory {name}.
 ---
@@ -8361,7 +8325,7 @@ function vim.fn.serverlist(opts) end
 ---
 --- <Example named pipe: >vim
 ---   if has('win32')
----     echo serverstart('\\.\pipe\nvim-pipe-1234')
+---     echo serverstart('//./pipe/nvim-pipe-1234')
 ---   else
 ---     echo serverstart('nvim.sock')
 ---   endif

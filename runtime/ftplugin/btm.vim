@@ -10,4 +10,4 @@ if exists("b:did_ftplugin")
 endif
 
 " Behaves just like dosbatch
-runtime! ftplugin/dosbatch.vim ftplugin/dosbatch_*.vim ftplugin/dosbatch/*.vim
+runtime! ftplugin/dosbatch[.]{vim,lua} ftplugin/dosbatch_*.{vim,lua} ftplugin/dosbatch/*.{vim,lua}

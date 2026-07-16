@@ -33,7 +33,6 @@
 #include "nvim/fuzzy.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
-#include "nvim/getchar.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
@@ -43,6 +42,7 @@
 #include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
+#include "nvim/input.h"
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
 #include "nvim/lua/executor.h"
@@ -1337,6 +1337,7 @@ char *addstar(char *fname, size_t len, int context)
         || context == EXPAND_LOG
         || context == EXPAND_PACKDEL
         || context == EXPAND_PACKUPDATE
+        || context == EXPAND_MARKS
         || context == EXPAND_LUA) {
       retval = xstrnsave(fname, len);
     } else {
@@ -2122,11 +2123,11 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
   case CMD_dsplit:
     return find_cmd_after_isearch_cmd(xp, arg);
   case CMD_autocmd:
-    return set_context_in_autocmd(xp, (char *)arg, false);
+    return aucmd_set_expand_context(xp, (char *)arg, false);
 
   case CMD_doautocmd:
   case CMD_doautoall:
-    return set_context_in_autocmd(xp, (char *)arg, true);
+    return aucmd_set_expand_context(xp, (char *)arg, true);
   case CMD_set:
     set_context_in_set_cmd(xp, (char *)arg, 0);
     break;
@@ -2350,6 +2351,10 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
     break;
   case CMD_checkhealth:
     xp->xp_context = EXPAND_CHECKHEALTH;
+    break;
+
+  case CMD_marks:
+    xp->xp_context = EXPAND_MARKS;
     break;
 
   case CMD_log:
@@ -2768,11 +2773,13 @@ static int expand_files_and_dirs(expand_T *xp, char *pat, char ***matches, int *
     xfree(pat);
   }
 #ifdef BACKSLASH_IN_FILENAME
-  if ((options & WILD_USE_COMPLETESLASH) && ((p_csl[0] == NUL && !p_ssl) || p_csl[0] == 'b')) {
+  if (((options & WILD_USE_SHELLSLASH) && !p_ssl)
+      || ((options & WILD_USE_COMPLETESLASH)
+          && ((p_csl[0] == NUL && !p_ssl) || p_csl[0] == 'b'))) {
     for (int j = 0; j < *numMatches; j++) {
       char *ptr = (*matches)[j];
       for (; *ptr; ptr++) {
-        if (*ptr == '/') {
+        if (*ptr == PATHSEP) {
           *ptr = '\\';
         }
       }
@@ -2938,9 +2945,15 @@ static char *get_arg1_from_lua(char *lua, expand_T *xp, int idx)
   return NULL;
 }
 
-/// Completion for |:log| command.
-///
-/// Given to ExpandGeneric() to obtain `:log` completion.
+/// Completion for the |:marks| command. Given to ExpandGeneric().
+/// @param[in] xp  Expandy thing 🤷
+/// @param[in] idx  Index of the item.
+static char *get_marks_arg(expand_T *xp, int idx)
+{
+  return get_arg1_from_lua("return require'vim._core.marks'.complete(...)", xp, idx);
+}
+
+/// Completion for |:log| command. Given to ExpandGeneric().
 /// @param[in] xp  Expandy thing 🤷
 /// @param[in] idx  Index of the item.
 static char *get_log_arg(expand_T *xp, int idx)
@@ -2948,9 +2961,7 @@ static char *get_log_arg(expand_T *xp, int idx)
   return get_arg1_from_lua("return require'vim._core.ex_cmd'.log_complete(...)", xp, idx);
 }
 
-/// Completion for |:lsp| command.
-///
-/// Given to ExpandGeneric() to obtain `:lsp` completion.
+/// Completion for |:lsp| command. Given to ExpandGeneric().
 /// @param[in] xp  Expandy thing 🤷
 /// @param[in] idx  Index of the item.
 static char *get_lsp_arg(expand_T *xp, int idx)
@@ -2958,9 +2969,7 @@ static char *get_lsp_arg(expand_T *xp, int idx)
   return get_arg1_from_lua("return require'vim._core.ex_cmd'.lsp_complete(...)", xp, idx);
 }
 
-/// Completion for |:packdel| command.
-///
-/// Given to ExpandGeneric() to obtain `:packdel` completion.
+/// Completion for |:packdel| command. Given to ExpandGeneric().
 /// @param[in] xp  Expandy thing.
 /// @param[in] idx  Index of the item.
 static char *get_packdel_arg(expand_T *xp, int idx)
@@ -2968,9 +2977,7 @@ static char *get_packdel_arg(expand_T *xp, int idx)
   return get_arg1_from_lua("return require'vim._core.ex_cmd'.packdel_complete(...)", xp, idx);
 }
 
-/// Completion for |:packupdate| command.
-///
-/// Given to ExpandGeneric() to obtain `:packupdate` completion.
+/// Completion for |:packupdate| command. Given to ExpandGeneric().
 /// @param[in] xp  Expandy thing.
 /// @param[in] idx  Index of the item.
 static char *get_packupdate_arg(expand_T *xp, int idx)
@@ -3020,6 +3027,7 @@ static int ExpandOther(char *pat, expand_T *xp, regmatch_T *rmp, char ***matches
     { EXPAND_SCRIPTNAMES, get_scriptnames_arg, true, false },
     { EXPAND_RETAB, get_retab_arg, true, true },
     { EXPAND_CHECKHEALTH, get_healthcheck_names, true, false },
+    { EXPAND_MARKS, get_marks_arg, true, false },
     { EXPAND_LOG, get_log_arg, true, false },
     { EXPAND_LSP, get_lsp_arg, true, false },
     { EXPAND_PACKDEL, get_packdel_arg, true, false },
@@ -3721,14 +3729,6 @@ void globpath(char *path, char *file, garray_T *ga, int expand_options, bool dir
 
   size_t filelen = strlen(file);
 
-#ifdef MSWIN
-  // Using the platform's path separator (\) makes vim incorrectly
-  // treat it as an escape character, use '/' instead.
-# define TMP_PATHSEPSTR "/"
-#else
-# define TMP_PATHSEPSTR PATHSEPSTR
-#endif
-
   // Loop over all entries in {path}.
   while (*path != NUL) {
     // Copy one item of the path to buf[] and concatenate the file name.
@@ -3736,11 +3736,11 @@ void globpath(char *path, char *file, garray_T *ga, int expand_options, bool dir
     // length of the path portion of buf (including trailing slash).
     size_t pathlen = copy_option_part(&path, buf, MAXPATHL, ",");
     size_t seplen = (*buf != NUL && !after_pathsep(buf, buf + pathlen))
-                    ? STRLEN_LITERAL(TMP_PATHSEPSTR) : 0;
+                    ? STRLEN_LITERAL(PATHSEPSTR) : 0;
 
     if (pathlen + seplen + filelen + 1 <= MAXPATHL) {
       if (seplen > 0) {
-        xmemcpyz(buf + pathlen, S_LEN(TMP_PATHSEPSTR));
+        xmemcpyz(buf + pathlen, S_LEN(PATHSEPSTR));
         pathlen += seplen;
       }
       xmemcpyz(buf + pathlen, file, filelen);
@@ -3765,7 +3765,6 @@ void globpath(char *path, char *file, garray_T *ga, int expand_options, bool dir
 
   xfree(buf);
 }
-#undef TMP_PATHSEPSTR
 
 /// Translate some keys pressed when 'wildmenu' is used.
 int wildmenu_translate_key(CmdlineInfo *cclp, int key, expand_T *xp, bool did_wild_list)

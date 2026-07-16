@@ -1202,9 +1202,7 @@ bool os_fileinfo(const char *path, FileInfo *file_info)
   return os_stat(path, &(file_info->stat)) == kLibuvSuccess;
 }
 
-/// Identify Windows path type and provide root offset for now, examples:
-/// - "//?/C:/foo" => type is `kPathDevice` root offset is 4
-/// - "//?/UNC/localhost/C$/foo" => type is `kPathDeviceUNC`, root offset is 8
+/// Parses `path` into a `FileInfo` structure.
 ///
 /// TODO(ntdiary): Could be extended for path.c cleanup and path normalization
 /// logic. Eventually merge this with `os_fileinfo`
@@ -1214,25 +1212,55 @@ bool os_fileinfo2(const char *path, FileInfo *info)
   FUNC_ATTR_NONNULL_ALL
 {
   CLEAR_POINTER(info);
-#ifdef MSWIN
-  size_t len = strlen(path);
-  if (len < 4) {
+  if (path_with_url(path)) {
     return true;
   }
-  if (vim_ispathsep_nocolon(path[0])
-      && vim_ispathsep_nocolon(path[1])
-      && (path[2] == '?' || path[2] == '.')
-      && vim_ispathsep_nocolon(path[3])) {
-    if (len >= 8 && vim_strnicmp_asc(path + 4, "unc/", 4) == 0) {
-      info->root_off = 8;
-      info->type = kPathDeviceUNC;
-    } else {
-      info->root_off = 4;
-      info->type = kPathDevice;
+  // Preserves the leading two "/"; 3+ "///…" collapse to a single "/" (IEEE 1003.1).
+  // Same rule applies to kPathUNC/kPathGeneric on Windows, but not to kPathDevice or
+  // kPathDeviceUNC, where the leading "//" is significant.
+  const char *p = path_skip_sep(path, false);
+  size_t leading_slashes = (size_t)(p - path);
+#ifdef MSWIN
+  if (leading_slashes == 0 && ASCII_ISALPHA(p[0]) && p[1] == ':') {
+    info->type = kPathDrive;
+    p = path_skip_sep(p + 2, false);
+    info->rest_off = (size_t)(p - path);
+    return true;
+  }
+  if (p[0] == '?' || p[0] == '.') {
+    if (!vim_ispathsep_nocolon(p[1])) {
+      return true;
     }
+    info->type = kPathDevice;
+    info->prefix_off = leading_slashes - 2;
+    p = path_skip_sep(p + 2, false);
+    if (vim_strnicmp_asc(p, "unc", 3) == 0 && vim_ispathsep_nocolon(p[3])) {
+      info->type = kPathDeviceUNC;
+      p = path_skip_sep(p + 4, false);
+      info->root_off = (size_t)(p - path);
+      goto server;
+    }
+    info->root_off = (size_t)(p - path);
+    if (ASCII_ISALPHA(p[0]) && p[1] == ':') {
+      p += 2;
+    }
+    p = path_skip_sep(path_next_component(p), false);
+    info->rest_off = (size_t)(p - path);
+    return true;
+  }
+  if (leading_slashes == 2) {
+    info->type = kPathUNC;
+  server:
+    p = path_skip_sep(path_next_component(p), false);
+    p = path_skip_sep(path_next_component(p), false);
+    info->rest_off = (size_t)(p - path);
     return true;
   }
 #endif
+  info->type = kPathGeneric;
+  info->rest_off = leading_slashes;
+  info->root_off = leading_slashes > 2 ? leading_slashes - 1 : 0;
+  info->prefix_off = info->root_off;
   return true;
 }
 

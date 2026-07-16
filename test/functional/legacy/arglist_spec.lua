@@ -46,6 +46,6 @@ describe('argument list commands', function()
       {6:2 more files to edit.  Quit anyway?}                         |
       {6:[Y]es, (N)o: }^                                               |
     ]])
-    expect_exit(1000, feed, 'Y')
+    expect_exit(n.load_adjust(1000), feed, 'Y')
   end)
 end)

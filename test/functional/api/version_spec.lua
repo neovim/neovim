@@ -3,17 +3,14 @@ local n = require('test.functional.testnvim')()
 
 local clear, fn, eq = n.clear, n.fn, t.eq
 local api = n.api
+local matches = t.matches
+local pcall_err = t.pcall_err
 
 local function read_mpack_file(fname)
-  local fd = io.open(fname, 'rb')
-  if fd == nil then
+  if vim.fn.filereadable(fname) == 0 then
     return nil
   end
-
-  local data = fd:read('*a')
-  fd:close()
-  local unpack = vim.mpack.Unpacker()
-  return unpack(data)
+  return vim.mpack.Unpacker()(vim.fn.readblob(fname))
 end
 
 describe("api_info()['version']", function()
@@ -72,6 +69,9 @@ describe('api metadata', function()
       f.parameters[idx][1] = f.parameters[idx][1]:gsub('ArrayOf%(.*', 'Array')
 
       f.parameters[idx][2] = '' -- Remove parameter name.
+      -- Strip the `optional` flag: `assert_func_backcompat` checks it asymmetrically (relaxing a
+      -- param to optional is allowed, the reverse is breaking).
+      f.parameters[idx][3] = nil
     end
 
     if string.sub(f.name, 1, 4) ~= 'nvim' then
@@ -85,6 +85,13 @@ describe('api metadata', function()
   --- @param old_fn gen_api_dispatch.Function.Exported
   --- @param new_fn gen_api_dispatch.Function.Exported
   local function assert_func_backcompat(old_fn, new_fn)
+    -- Optional param must stay optional.
+    for idx, old_param in ipairs(old_fn.parameters) do
+      local new_param = new_fn.parameters[idx]
+      if old_param[3] and new_param and not new_param[3] then
+        error(('"%s": parameter %d was optional, now required'):format(old_fn.name, idx))
+      end
+    end
     old_fn = normalize_func_metadata(old_fn)
     new_fn = normalize_func_metadata(new_fn)
     if old_fn.return_type == 'void' then
@@ -158,6 +165,14 @@ describe('api metadata', function()
     eq('ArrayOf(String)', funcs.nvim_buf_set_lines.parameters[5][1])
   end)
 
+  it('function parameters', function()
+    local funcs = name_table(api_info.functions)
+    eq({ 'String', 'src', false }, funcs.nvim_exec2.parameters[1])
+    eq({ 'Dict', 'opts', true }, funcs.nvim_exec2.parameters[2])
+    eq({ 'Dict', 'opts', true }, funcs.nvim_get_context.parameters[1])
+    eq({ 'String', 'name', false }, funcs.nvim_get_var.parameters[1])
+  end)
+
   it('functions are compatible with old metadata or have new level', function()
     local funcs_new = name_table(api_info.functions)
     local funcs_compat = {}
@@ -211,6 +226,25 @@ describe('api metadata', function()
         end
       end
     end
+  end)
+
+  it('param may not change from optional to required', function()
+    local function example_fn(opts_optional)
+      return {
+        name = 'nvim_example',
+        method = false,
+        since = 1,
+        return_type = 'void',
+        parameters = { { 'String', 'src', false }, { 'Dict', 'opts', opts_optional } },
+      }
+    end
+    -- "Required -> Optional" is allowed.
+    assert_func_backcompat(example_fn(false), example_fn(true))
+    -- "Optional -> Required" is breaking.
+    matches(
+      '"nvim_example": parameter 2 was optional, now required',
+      pcall_err(assert_func_backcompat, example_fn(true), example_fn(false))
+    )
   end)
 
   it('UI events are compatible with old metadata or have new level', function()
@@ -278,5 +312,54 @@ describe('api metadata', function()
         end
       end
     end
+  end)
+end)
+
+describe('api: optional parameters', function()
+  before_each(clear)
+
+  it('may be omitted', function()
+    eq('table', type(api.nvim_get_context({})))
+    eq('table', type(api.nvim_get_context()))
+
+    api.nvim_exec2('let g:x = 41')
+    eq(41, api.nvim_get_var('x'))
+    eq({ output = 'hi' }, api.nvim_exec2('echo "hi"', { output = true }))
+
+    -- Lua bridge: vim.api
+    n.exec_lua([[vim.api.nvim_exec2('let g:y = 7')]])
+    eq(7, api.nvim_get_var('y'))
+    eq('table', n.exec_lua('return type(vim.api.nvim_get_context())'))
+  end)
+
+  it('omitted is equivalent to empty dict', function()
+    eq(api.nvim_get_context({}), api.nvim_get_context()) -- RPC path
+    eq(
+      n.exec_lua('return vim.api.nvim_get_context({})'),
+      n.exec_lua('return vim.api.nvim_get_context()')
+    ) -- Lua-binding path
+  end)
+
+  it('validation', function()
+    matches(
+      'Wrong number of arguments: expecting 1 to 2 but got 3',
+      pcall_err(api.nvim_exec2, 'echo 1', {}, 'surplus')
+    )
+    matches(
+      'Wrong number of arguments: expecting at most 1 but got 2',
+      pcall_err(api.nvim_get_context, {}, 'surplus')
+    )
+    matches('Wrong number of arguments: expecting 1 to 2 but got 0', pcall_err(api.nvim_exec2))
+
+    -- Lua bridge: vim.api
+    matches(
+      'Expected 1 to 2 arguments',
+      pcall_err(n.exec_lua, [[vim.api.nvim_exec2('echo 1', {}, 'surplus')]])
+    )
+    matches('Expected 1 to 2 arguments', pcall_err(n.exec_lua, [[vim.api.nvim_exec2()]]))
+    matches(
+      'Expected at most 1 argument',
+      pcall_err(n.exec_lua, [[vim.api.nvim_get_context({}, 'surplus')]])
+    )
   end)
 end)

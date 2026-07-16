@@ -37,6 +37,10 @@ local function api_type(t)
       if count then
         return ('[%s]'):format(ty:rep(count, ', '))
       else
+        -- "foo|bar" => "(foo|bar)"
+        if ty:find('|', 1, true) and not vim.startswith(ty, '[') then
+          ty = ('(%s)'):format(ty)
+        end
         return ty .. '[]'
       end
     elseif container == 'Dict' or container == 'DictAs' then

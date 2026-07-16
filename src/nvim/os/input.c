@@ -18,13 +18,15 @@
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/event/rstream.h"
-#include "nvim/getchar.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
+#include "nvim/input.h"
+#include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
 #include "nvim/log.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
+#include "nvim/mouse.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/input.h"
@@ -111,6 +113,7 @@ static void reset_cursorhold_wait(int tb_change_cnt)
 /// @return Bytes read into buf, or 0 if no input was read
 int input_get(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *events)
 {
+  assert((maxlen > 0 && buf != NULL) || maxlen == 0);
   // This check is needed so that feeding typeahead from RPC can prevent CursorHold.
   if (tb_change_cnt != cursorhold_tb_change_cnt) {
     reset_cursorhold_wait(tb_change_cnt);
@@ -120,7 +123,6 @@ int input_get(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *e
   do { \
     if (maxlen && input_available()) { \
       reset_cursorhold_wait(tb_change_cnt); \
-      assert(maxlen >= 0); \
       size_t to_read = MIN((size_t)maxlen, input_available()); \
       memcpy(buf, input_read_pos, to_read); \
       input_read_pos += to_read; \
@@ -145,10 +147,44 @@ int input_get(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *e
   } else {
     uint64_t wait_start = os_hrtime();
     cursorhold_time = MIN(cursorhold_time, (int)p_ut);
-    if ((result = inbuf_poll((int)p_ut - cursorhold_time, events)) == kFalse) {
+    // When an autocomplete is pending, wake at the sooner of
+    // 'autocompletedelay' and 'updatetime' so the delay does not postpone
+    // CursorHold.  Once CursorHold has fired, only the delay is left.
+    // Gate the injection like trigger_cursorhold() so the deferred key
+    // cannot fire while outside Insert mode, but do still fire the key
+    // when recording a register (gotchars_add_byte() will ignore it).
+    bool delay_pending = ins_compl_autocomplete_pending() && p_acl > 0
+                         && typebuf.tb_len == 0
+                         && !ins_compl_active()
+                         && (get_real_state() & MODE_INSERT) != 0;
+    // Measure the delay from when it was armed (the keystroke), so a
+    // CursorHold returning in between does not push the popup back.
+    int64_t wait_time = p_ut - cursorhold_time;
+    if (delay_pending) {
+      int64_t delay_left = p_acl - ins_compl_autocomplete_elapsed();
+      wait_time = MIN(MAX(delay_left, 0), wait_time);
+    }
+    if ((result = inbuf_poll((int)wait_time, events)) == kFalse) {
       if (read_stream.s.closed && silent_mode) {
         // Drained eventloop & initial input; exit silent/batch-mode (-es/-Es).
         read_error_exit();
+      }
+      // The 'autocompletedelay' expired: trigger the popup.  When
+      // 'updatetime' is shorter, fall through to CursorHold instead.
+      if (delay_pending && ins_compl_autocomplete_elapsed() >= p_acl
+          && (buf == NULL || maxlen >= 3) && !typebuf_changed(tb_change_cnt)) {
+        if (buf == NULL) {
+          uint8_t ibuf[3];
+          ibuf[0] = K_SPECIAL;
+          ibuf[1] = KS_EXTRA;
+          ibuf[2] = KE_COMPLETE_DELAY;
+          input_enqueue_raw((char *)ibuf, 3);
+          return 0;
+        }
+        buf[0] = K_SPECIAL;
+        buf[1] = KS_EXTRA;
+        buf[2] = KE_COMPLETE_DELAY;
+        return 3;
       }
       reset_cursorhold_wait(tb_change_cnt);
       if (trigger_cursorhold() && !typebuf_changed(tb_change_cnt)) {
@@ -280,6 +316,16 @@ size_t input_enqueue(uint64_t chan_id, String keys)
 {
   current_ui = chan_id;
 
+  // If the buffer has been fully drained, rewind the read/write cursors to the
+  // start to reclaim tail space. Otherwise a drained-but-not-rewound buffer left
+  // pinned within <19 bytes of the top (input_get() advances input_read_pos but
+  // never rewinds it) would fail the `input_space() >= 19` gate below forever,
+  // silently dropping all further input and freezing the editor.
+  if (input_read_pos == input_write_pos) {
+    input_read_pos = input_buffer;
+    input_write_pos = input_buffer;
+  }
+
   if (keys.size > 0) {
     set_vim_var_nr(VV_USERACTIVE, (varnumber_T)os_realtime());
   }
@@ -350,14 +396,15 @@ static uint8_t check_multiclick(int code, int grid, int row, int col, bool *skip
   }
 
   bool no_move = orig_mouse_grid == grid && orig_mouse_col == col && orig_mouse_row == row;
+  bool is_click, is_drag;
+  (void)get_mouse_button(code, &is_click, &is_drag);
 
-  if (code == KE_MOUSEMOVE) {
-    if (no_move) {
-      *skip_event = true;
-      return 0;
-    }
-  } else if (code == KE_LEFTMOUSE || code == KE_RIGHTMOUSE || code == KE_MIDDLEMOUSE
-             || code == KE_X1MOUSE || code == KE_X2MOUSE) {
+  if (is_drag && no_move) {
+    *skip_event = true;
+    return 0;
+  }
+
+  if (is_click) {
     // For click events the number of clicks is updated.
     uint64_t mouse_time = os_hrtime();    // time of current mouse click (ns)
     // Compute the time elapsed since the previous mouse click.
@@ -374,8 +421,11 @@ static uint8_t check_multiclick(int code, int grid, int row, int col, bool *skip
     }
     orig_mouse_code = code;
     orig_mouse_time = mouse_time;
+  } else if (!no_move) {
+    // For drag and release events the number of clicks is kept.
+    // However, if the mouse has moved, the next click should reset the click count.
+    orig_mouse_code = code;
   }
-  // For drag and release events the number of clicks is kept.
 
   orig_mouse_grid = grid;
   orig_mouse_col = col;

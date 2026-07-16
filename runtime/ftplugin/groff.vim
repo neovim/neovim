@@ -10,7 +10,7 @@ endif
 
 let b:nroff_is_groff = 1
 
-runtime! ftplugin/nroff.vim
+runtime! ftplugin/nroff[.]{vim,lua}
 
 setlocal commentstring=\\#\ %s
 setlocal comments=:\\#,:.\\\",:\\\",:'\\\",:'''

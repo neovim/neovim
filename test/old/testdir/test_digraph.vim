@@ -513,14 +513,11 @@ func Test_entering_digraph()
   CheckRunVimInTerminal
   let buf = RunVimInTerminal('', {'rows': 6})
   call term_sendkeys(buf, "i\<C-K>")
-  call TermWait(buf)
-  call assert_equal('?', term_getline(buf, 1))
+  call WaitForAssert({-> assert_equal('?', term_getline(buf, 1))}, 1000)
   call term_sendkeys(buf, "1")
-  call TermWait(buf)
-  call assert_equal('1', term_getline(buf, 1))
+  call WaitForAssert({-> assert_equal('1', term_getline(buf, 1))}, 1000)
   call term_sendkeys(buf, "2")
-  call TermWait(buf)
-  call assert_equal('½', term_getline(buf, 1))
+  call WaitForAssert({-> assert_equal('½', term_getline(buf, 1))}, 1000)
   call StopVimInTerminal(buf)
 endfunc
 

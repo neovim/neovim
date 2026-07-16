@@ -64,14 +64,16 @@ static const char e_error_while_writing_str[] = N_("E80: Error while writing: %s
 /// @param fnamep  file name so far
 /// @param bufp  buffer for allocated file name or NULL
 /// @param fnamelen  length of fnamep
+/// @param use_shellslash adjust separators in `*fnamep` according to 'shellslash'
 int modify_fname(char *src, bool tilde_file, size_t *usedlen, char **fnamep, char **bufp,
-                 size_t *fnamelen)
+                 size_t *fnamelen, bool use_shellslash)
 {
   int valid = 0;
   char *s, *p, *pbuf;
   char dirname[MAXPATHL];
   bool has_fullname = false;
   bool has_homerelative = false;
+  bool didit = false;
 
 repeat:
   // ":p" - full path/file_name
@@ -208,38 +210,30 @@ repeat:
     }
   }
 
-#ifndef MSWIN
+  FileInfo file_info;
+  os_fileinfo2(*fnamep, &file_info);
   if (src[*usedlen] == ':' && src[*usedlen + 1] == 'h') {
-    char *fname = *fnamep;
-    // POSIX reserves exactly "//"; longer slash runs are ordinary absolute paths.
-    // "///foo/bar" => "/foo"
-    // "//foo/bar" => "//foo"
-    if (fname[0] == '/' && fname[1] == '/' && fname[2] == '/') {
-      while (fname[1] == '/') {
-        fname++;
-      }
-      *fnamep = fname;
-    }
+    s = *fnamep + file_info.rest_off;
+    *fnamep = *fnamep + file_info.prefix_off;
   }
-#endif
 
   char *tail = path_tail(*fnamep);
   *fnamelen = strlen(*fnamep);
 
   // ":h" - head, remove "/file_name", can be repeated
-  // Don't remove the first "/" or "c:\"
+  // Don't remove the logical root, see `FileInfo`.
   while (src[*usedlen] == ':' && src[*usedlen + 1] == 'h') {
     valid |= VALID_HEAD;
     *usedlen += 2;
-    s = get_past_head(*fnamep);
     while (tail > s && after_pathsep(s, tail)) {
       MB_PTR_BACK(*fnamep, tail);
     }
-    *fnamelen = (size_t)(tail - *fnamep);
+    *fnamelen = tail <= s ? (size_t)(s - *fnamep) : (size_t)(tail - *fnamep);
     if (*fnamelen == 0) {
       // Result is empty.  Turn it into "." to make ":cd %:h" work.
       xfree(*bufp);
       *bufp = *fnamep = tail = xstrdup(".");
+      s = *fnamep;  // s pointed into the freed buffer.
       *fnamelen = 1;
     } else {
       while (tail > s && !after_pathsep(s, tail)) {
@@ -312,13 +306,20 @@ repeat:
     *usedlen += 2;
   }
 
+#ifdef BACKSLASH_IN_FILENAME
+  if (!didit && use_shellslash && *fnamep != NULL) {
+    *fnamep = xstrdup(*fnamep);
+    slash_adjust(*fnamep);
+    xfree(*bufp);
+    *bufp = *fnamep;
+  }
+#endif
+
   // ":s?pat?foo?" - substitute
   // ":gs?pat?foo?" - global substitute
   if (src[*usedlen] == ':'
       && (src[*usedlen + 1] == 's'
           || (src[*usedlen + 1] == 'g' && src[*usedlen + 2] == 's'))) {
-    bool didit = false;
-
     char *flags = "";
     s = src + *usedlen + 2;
     if (src[*usedlen + 1] == 'g') {
@@ -621,11 +622,13 @@ void f_fnamemodify(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (mods == NULL || fname == NULL) {
     fname = NULL;
   } else {
+    fbuf = TO_SLASH_SAVE(fname);
+    fname = fbuf;
     len = strlen(fname);
     if (*mods != NUL) {
       size_t usedlen = 0;
       modify_fname((char *)mods, false, &usedlen,
-                   (char **)&fname, &fbuf, &len);
+                   (char **)&fname, &fbuf, &len, false);
     }
   }
 
@@ -1803,8 +1806,10 @@ void f_writefile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       }
     });
   } else if (argvars[0].v_type != VAR_BLOB
-             // Always treat Lua strings as "blob" data.
-             && !(argvars[0].v_type == VAR_STRING && script_is_lua(current_sctx.sc_sid))) {
+             // Always treat Lua/RPC strings as "blob" data.
+             && !(argvars[0].v_type == VAR_STRING
+                  && (script_is_lua(current_sctx.sc_sid)
+                      || current_sctx.sc_sid == SID_API_CLIENT))) {
     semsg(_(e_invarg2), _("writefile() first argument must be a List or a Blob"));
     return;
   }

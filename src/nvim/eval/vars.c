@@ -14,6 +14,7 @@
 #include "nvim/autocmd_defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
+#include "nvim/context.h"
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
 #include "nvim/eval.h"
@@ -3096,8 +3097,8 @@ static void get_var_from(const char *varname, typval_T *rettv, typval_T *deftv, 
     // If we have a buffer reference avoid the switching, we're saving and
     // restoring curbuf directly.
     const bool need_switch_win = !(tp == curtab && win == curwin) && !do_change_curbuf;
-    switchwin_T switchwin;
-    if (!need_switch_win || switch_win(&switchwin, win, tp, true) == OK) {
+    CtxSwitch switchwin;
+    if (!need_switch_win || ctx_switch(&switchwin, win, tp, NULL, kCtxNoEvents | kCtxNoDisplay)) {
       if (*varname == '&' && htname != 't') {
         buf_T *const save_curbuf = curbuf;
 
@@ -3154,7 +3155,7 @@ static void get_var_from(const char *varname, typval_T *rettv, typval_T *deftv, 
 
     if (need_switch_win) {
       // restore previous notion of curwin
-      restore_win(&switchwin, true);
+      ctx_restore(&switchwin);
     }
   }
 
@@ -3326,8 +3327,8 @@ static void setwinvar(typval_T *argvars, int off)
   }
 
   bool need_switch_win = !(tp == curtab && win == curwin);
-  switchwin_T switchwin;
-  if (!need_switch_win || switch_win(&switchwin, win, tp, true) == OK) {
+  CtxSwitch switchwin;
+  if (!need_switch_win || ctx_switch(&switchwin, win, tp, NULL, kCtxNoEvents | kCtxNoDisplay)) {
     if (*varname == '&') {
       set_option_from_tv(varname + 1, varp);
     } else {
@@ -3340,7 +3341,7 @@ static void setwinvar(typval_T *argvars, int off)
     }
   }
   if (need_switch_win) {
-    restore_win(&switchwin, true);
+    ctx_restore(&switchwin);
   }
 }
 
@@ -3617,15 +3618,15 @@ void f_setbufvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   if (*varname == '&') {
-    aco_save_T aco = { 0 };
+    CtxSwitch aco = { 0 };
 
     // Set curbuf to be our buf, temporarily.
-    aucmd_prepbuf(&aco, buf);
+    ctx_switch(&aco, NULL, NULL, buf, 0);
 
     set_option_from_tv(varname + 1, varp);
 
     // reset notion of buffer
-    aucmd_restbuf(&aco);
+    ctx_restore(&aco);
   } else {
     const size_t varname_len = strlen(varname);
     char *const bufvarname = xmalloc(varname_len + 3);

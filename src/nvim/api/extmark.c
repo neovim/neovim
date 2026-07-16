@@ -232,31 +232,29 @@ nvim_buf_get_extmark_by_id(Buffer buf, Integer ns_id, Integer id, Dict(get_extma
   return extmark_to_array(extmark, false, details, hl_name, arena);
 }
 
-/// Gets |extmarks| in "traversal order" from a |charwise| region defined by
-/// buffer positions (inclusive, 0-indexed |api-indexing|).
+/// Gets |extmarks| in "traversal order" from a |charwise| region defined by buffer positions
+/// (inclusive, 0-indexed |api-indexing|).
 ///
 /// Region can be given as (row,col) tuples, or valid extmark ids (whose
 /// positions define the bounds). 0 and -1 are understood as (0,0) and (-1,-1)
 /// respectively, thus the following are equivalent:
 ///
 /// ```lua
-/// vim.api.nvim_buf_get_extmarks(0, my_ns, 0, -1, {})
-/// vim.api.nvim_buf_get_extmarks(0, my_ns, {0,0}, {-1,-1}, {})
+/// vim.api.nvim_buf_get_extmarks(0, my_ns, 0, -1)
+/// vim.api.nvim_buf_get_extmarks(0, my_ns, {0,0}, {-1,-1})
 /// ```
 ///
 /// If `end` is less than `start`, marks are returned in reverse order.
 /// (Useful with `limit`, to get the first marks prior to a given position.)
 ///
-/// Note: For a reverse range, `limit` does not actually affect the traversed
-/// range, just how many marks are returned
-///
-/// Note: when using extmark ranges (marks with a end_row/end_col position)
-/// the `overlap` option might be useful. Otherwise only the start position
-/// of an extmark will be considered.
-///
-/// Note: legacy signs placed through the |:sign| commands are implemented
-/// as extmarks and will show up here. Their details array will contain a
-/// `sign_name` field.
+/// Note:
+/// - For a reverse range, `limit` does not actually affect the traversed range, just how many marks
+///   are returned
+/// - When using extmark ranges (marks with a end_row/end_col position) the `overlap` option might
+///   be useful. Otherwise only the start position of an extmark will be considered.
+/// - The |:marks| command can list extmarks.
+/// - Legacy signs placed through the |:sign| commands are implemented as extmarks. Their details
+///   array will contain a `sign_name` field.
 ///
 /// Example:
 ///
@@ -265,13 +263,13 @@ nvim_buf_get_extmark_by_id(Buffer buf, Integer ns_id, Integer id, Dict(get_extma
 /// local pos = api.nvim_win_get_cursor(0)
 /// local ns  = api.nvim_create_namespace('my-plugin')
 /// -- Create new extmark at line 1, column 1.
-/// local m1  = api.nvim_buf_set_extmark(0, ns, 0, 0, {})
+/// local m1  = api.nvim_buf_set_extmark(0, ns, 0, 0)
 /// -- Create new extmark at line 3, column 1.
-/// local m2  = api.nvim_buf_set_extmark(0, ns, 2, 0, {})
+/// local m2  = api.nvim_buf_set_extmark(0, ns, 2, 0)
 /// -- Get extmarks only from line 3.
-/// local ms  = api.nvim_buf_get_extmarks(0, ns, {2,0}, {2,0}, {})
+/// local ms  = api.nvim_buf_get_extmarks(0, ns, {2,0}, {2,0})
 /// -- Get all marks in this buffer + namespace.
-/// local all = api.nvim_buf_get_extmarks(0, ns, 0, -1, {})
+/// local all = api.nvim_buf_get_extmarks(0, ns, 0, -1)
 /// vim.print(ms)
 /// ```
 ///
