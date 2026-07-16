@@ -2778,7 +2778,7 @@ bool before_set_vvar(const char *const varname, dictitem_T *const di, typval_T *
     if (strcmp(varname, "searchforward") == 0) {
       set_search_direction(di->di_tv.vval.v_number ? '/' : '?');
     } else if (strcmp(varname, "hlsearch") == 0) {
-      no_hlsearch = !di->di_tv.vval.v_number;
+      Search.no_hlsearch = !di->di_tv.vval.v_number;
       redraw_all_later(UPD_SOME_VALID);
     }
     // Notify watchers

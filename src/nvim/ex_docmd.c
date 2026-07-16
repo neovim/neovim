@@ -3652,7 +3652,7 @@ linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, 
         // line, and can match anywhere in the
         // next/previous line.
         curwin->w_cursor.col = (c == '/' && curwin->w_cursor.lnum > 0) ? MAXCOL : 0;
-        searchcmdlen = 0;
+        Search.cmdlen = 0;
         flags = silent ? SEARCH_KEEP : SEARCH_HIS | SEARCH_MSG;
         if (!do_search(NULL, c, c, cmd, strlen(cmd), 1, flags, NULL)) {
           curwin->w_cursor = pos;
@@ -3662,7 +3662,7 @@ linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, 
         lnum = curwin->w_cursor.lnum;
         curwin->w_cursor = pos;
         // adjust command string pointer
-        cmd += searchcmdlen;
+        cmd += Search.cmdlen;
       }
       break;
 
@@ -8182,8 +8182,8 @@ static void ex_digraphs(exarg_T *eap)
 
 void set_no_hlsearch(bool flag)
 {
-  no_hlsearch = flag;
-  set_vim_var_nr(VV_HLSEARCH, !no_hlsearch && p_hls);
+  Search.no_hlsearch = flag;
+  set_vim_var_nr(VV_HLSEARCH, !Search.no_hlsearch && p_hls);
 }
 
 /// ":nohlsearch"

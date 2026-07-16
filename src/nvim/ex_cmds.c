@@ -4014,15 +4014,13 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
                 ml_replace(lnum, new_line.data, false);
               }
 
-              search_match_lines = regmatch.endpos[0].lnum
-                                   - regmatch.startpos[0].lnum;
-              search_match_endcol = regmatch.endpos[0].col
-                                    + len_change;
-              if (search_match_lines == 0 && search_match_endcol == 0) {
+              Search.match_lines = regmatch.endpos[0].lnum - regmatch.startpos[0].lnum;
+              Search.match_endcol = regmatch.endpos[0].col + len_change;
+              if (Search.match_lines == 0 && Search.match_endcol == 0) {
                 // highlight at least one character for /^/
-                search_match_endcol = 1;
+                Search.match_endcol = 1;
               }
-              highlight_match = true;
+              Search.hl_match = true;
 
               update_topline(curwin);
               validate_cursor(curwin);
@@ -4037,7 +4035,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
               snprintf(IObuff, IOSIZE, p, sub);
               p = xstrdup(IObuff);
               typed = prompt_for_input(p, HLF_R, true, NULL);
-              highlight_match = false;
+              Search.hl_match = false;
               xfree(p);
 
               msg_didout = false;                 // don't scroll up

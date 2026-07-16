@@ -2322,7 +2322,7 @@ static const char *did_set_helpheight(optset_T *args)
 /// Process the updated 'hlsearch' option value.
 static const char *did_set_hlsearch(optset_T *args FUNC_ATTR_UNUSED)
 {
-  // when 'hlsearch' is set or reset: reset no_hlsearch
+  // when 'hlsearch' is set or reset: reset Search.no_hlsearch
   set_no_hlsearch(false);
   return NULL;
 }
