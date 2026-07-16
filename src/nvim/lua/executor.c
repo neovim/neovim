@@ -680,6 +680,8 @@ static void nlua_common_vim_init(lua_State *lstate, bool is_thread)
   lua_setfield(lstate, -2, "__index");
   lua_pushcfunction(lstate, &nlua_nil_index);
   lua_setfield(lstate, -2, "__newindex");
+  lua_pushcfunction(lstate, &nlua_nil_len);
+  lua_setfield(lstate, -2, "__len");
   lua_setmetatable(lstate, -2);
   ref_state->nil_ref = nlua_ref(lstate,  ref_state, -1);
   lua_pushvalue(lstate, -1);
@@ -1402,6 +1404,11 @@ static int nlua_nil_tostring(lua_State *lstate)
 static int nlua_nil_index(lua_State *lstate)
 {
   return luaL_error(lstate, "attempt to index vim.NIL");
+}
+
+static int nlua_nil_len(lua_State *lstate)
+{
+  return luaL_error(lstate, "attempt to get length of vim.NIL");
 }
 
 static int nlua_empty_dict_tostring(lua_State *lstate)

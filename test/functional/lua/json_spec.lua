@@ -185,6 +185,15 @@ describe('vim.json.decode()', function()
     eq('attempt to index vim.NIL', pcall_err(exec_lua, [[ return parsed.foo.sub_field ]]))
     eq('attempt to index vim.NIL', pcall_err(exec_lua, [[ parsed.foo.new_field = 3 ]]))
   end)
+
+  it('gives nice error message when attempting to iterate over null value', function()
+    exec_lua [[ parsed = vim.json.decode('{"foo": null}') ]]
+
+    eq('attempt to iterate vim.NIL', pcall_err(exec_lua, [[ for _, _ in pairs(parsed.foo) do end ]]))
+    eq('attempt to iterate vim.NIL', pcall_err(exec_lua, [[ for _, _ in ipairs(parsed.foo) do end ]]))
+    eq('attempt to iterate vim.NIL', pcall_err(exec_lua, [[ next(parsed.foo) ]]))
+    eq('attempt to get length of vim.NIL', pcall_err(exec_lua, [[ return #parsed.foo ]]))
+  end)
 end)
 
 describe('vim.json.encode()', function()

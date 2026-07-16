@@ -99,3 +99,27 @@ if vim.api and not vim.is_thread() then
   require('vim._core.editor')
   require('vim._core.system')
 end
+
+local _pairs = pairs
+_G.pairs = function(t)
+  if t == vim.NIL then
+    error('attempt to iterate vim.NIL', 2)
+  end
+  return _pairs(t)
+end
+
+local _ipairs = ipairs
+_G.ipairs = function(t)
+  if t == vim.NIL then
+    error('attempt to iterate vim.NIL', 2)
+  end
+  return _ipairs(t)
+end
+
+local _next = next
+_G.next = function(t, k)
+  if t == vim.NIL then
+    error('attempt to iterate vim.NIL', 2)
+  end
+  return _next(t, k)
+end
