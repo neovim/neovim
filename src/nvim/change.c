@@ -143,7 +143,7 @@ void changed(buf_T *buf)
   buf_inc_changedtick(buf);
 
   // If a pattern is highlighted, the position may now be invalid.
-  search_state.highlight_match = false;
+  Search.hl_match = false;
 }
 
 /// Internal part of changed(), no user interaction.

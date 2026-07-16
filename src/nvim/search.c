@@ -171,7 +171,7 @@ int search_regcomp(char *pat, size_t patlen, char **used_pat, int pat_save, int 
     pat = spats[i].pat;
     patlen = spats[i].patlen;
     magic = spats[i].magic;
-    search_state.no_smartcase = spats[i].no_scs;
+    Search.no_smartcase = spats[i].no_scs;
   } else if (options & SEARCH_HIS) {      // put new pattern in history
     add_to_history(HIST_SEARCH, pat, patlen, true, NUL);
   }
@@ -226,7 +226,7 @@ void save_re_pat(int idx, char *pat, size_t patlen, int magic)
   spats[idx].pat = xstrnsave(pat, patlen);
   spats[idx].patlen = patlen;
   spats[idx].magic = magic;
-  spats[idx].no_scs = search_state.no_smartcase;
+  spats[idx].no_scs = Search.no_smartcase;
   spats[idx].timestamp = os_time();
   spats[idx].additional_data = NULL;
   last_idx = idx;
@@ -262,7 +262,7 @@ void save_search_patterns(void)
     saved_mr_patternlen = mr_patternlen;
   }
   saved_spats_last_idx = last_idx;
-  saved_spats_no_hlsearch = search_state.no_hlsearch;
+  saved_spats_no_hlsearch = Search.no_hlsearch;
 }
 
 void restore_search_patterns(void)
@@ -331,7 +331,7 @@ void save_last_search_pattern(void)
     saved_last_search_spat.patlen = spats[RE_SEARCH].patlen;
   }
   saved_last_idx = last_idx;
-  saved_no_hlsearch = search_state.no_hlsearch;
+  saved_no_hlsearch = Search.no_hlsearch;
 }
 
 void restore_last_search_pattern(void)
@@ -360,14 +360,14 @@ void restore_last_search_pattern(void)
 /// incsearch highlighting.
 static void save_incsearch_state(void)
 {
-  saved_search_match_endcol = search_state.search_match_endcol;
-  saved_search_match_lines = search_state.search_match_lines;
+  saved_search_match_endcol = Search.match_endcol;
+  saved_search_match_lines = Search.match_lines;
 }
 
 static void restore_incsearch_state(void)
 {
-  search_state.search_match_endcol = saved_search_match_endcol;
-  search_state.search_match_lines = saved_search_match_lines;
+  Search.match_endcol = saved_search_match_endcol;
+  Search.match_lines = saved_search_match_lines;
 }
 
 char *last_search_pattern(void)
@@ -391,12 +391,12 @@ int ignorecase(char *pat)
 int ignorecase_opt(char *pat, int ic_in, int scs)
 {
   int ic = ic_in;
-  if (ic && !search_state.no_smartcase && scs
+  if (ic && !Search.no_smartcase && scs
       && !(ctrl_x_mode_not_default()
            && curbuf->b_p_inf)) {
     ic = !pat_has_uppercase(pat);
   }
-  search_state.no_smartcase = false;
+  Search.no_smartcase = false;
 
   return ic;
 }
@@ -531,7 +531,7 @@ void set_last_search_pat(const char *s, int idx, int magic, bool setlast)
     saved_spats_last_idx = last_idx;
   }
   // If 'hlsearch' set and search pat changed: need redraw.
-  if (p_hls && idx == last_idx && !search_state.no_hlsearch) {
+  if (p_hls && idx == last_idx && !Search.no_hlsearch) {
     redraw_all_later(UPD_SOME_VALID);
   }
 }
@@ -900,8 +900,8 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
           first_match = false;
 
           // Set variables used for 'incsearch' highlighting.
-          search_state.search_match_lines = endpos.lnum - matchpos.lnum;
-          search_state.search_match_endcol = endpos.col;
+          Search.match_lines = endpos.lnum - matchpos.lnum;
+          Search.match_endcol = endpos.col;
           break;
         }
         line_breakcheck();              // stop if ctrl-C typed
@@ -1148,7 +1148,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
   size_t msgbuflen = 0;
   bool has_offset = false;
 
-  search_state.searchcmdlen = 0;
+  Search.cmdlen = 0;
 
   // A line offset is not remembered, this is vi compatible.
   if (spats[0].off.line && vim_strchr(p_cpo, CPO_LINEOFF) != NULL) {
@@ -1187,7 +1187,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
   }
 
   // Turn 'hlsearch' highlighting back on.
-  if (search_state.no_hlsearch && !(options & SEARCH_KEEP)) {
+  if (Search.no_hlsearch && !(options & SEARCH_KEEP)) {
     redraw_all_later(UPD_SOME_VALID);
     set_no_hlsearch(false);
   }
@@ -1218,10 +1218,10 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
     }
 
     if (pat != NULL && *pat != NUL) {   // look for (new) offset
-      search_state.searchcmdlen += parse_search_pattern_offset(&pat, &patlen, search_delim,
-                                                               options, &strcopy, &searchstr,
-                                                               &searchstrlen, &dircp,
-                                                               &spats[0].off);
+      Search.cmdlen += parse_search_pattern_offset(&pat, &patlen, search_delim,
+                                                   options, &strcopy, &searchstr,
+                                                   &searchstrlen, &dircp,
+                                                   &spats[0].off);
     }
 
     bool show_search_stats = false;

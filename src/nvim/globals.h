@@ -322,9 +322,8 @@ EXTERN int include_none INIT( = 0);     // when 1 include "None"
 EXTERN int include_default INIT( = 0);  // when 1 include "default"
 EXTERN int include_link INIT( = 0);     // when 2 include "link" and "clear"
 
-/// Per-subsystem state for the search/highlight engine.
-/// Previously these were bare EXTERN symbols; see search_defs.h.
-EXTERN SearchState search_state INIT( = { .search_last_line = MAXLNUM });
+/// Per-subsystem state for the search/highlight engine; see search_defs.h.
+EXTERN SearchState Search INIT( = { .last_line = MAXLNUM });
 
 EXTERN bool need_check_timestamps INIT( = false);  // need to check file
                                                    // timestamps asap
