@@ -35,6 +35,8 @@ UTF8PROC_SHA256 abfed50b6d4da51345713661370290f4f4747263ee73dc90356299dfc7990c78
 
 TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/v0.24.2.tar.gz
 TREESITTER_C_SHA256 2eeb4db31f8fa0865e45488503d13403923bcb485a1bdb637abff8c42dd97364
+TREESITTER_DIFF_URL https://github.com/tree-sitter-grammars/tree-sitter-diff/archive/v0.1.0.tar.gz
+TREESITTER_DIFF_SHA256 0d0414ac873c33154b458f4d62fe096aa966392ff416920a08c5629c765aaed3
 TREESITTER_LUA_URL https://github.com/tree-sitter-grammars/tree-sitter-lua/archive/v0.5.0.tar.gz
 TREESITTER_LUA_SHA256 cf01b93f4b61b96a6d27942cf28eeda4cbce7d503c3bef773a8930b3d778a2d9
 TREESITTER_LUA_WASM_URL https://github.com/tree-sitter-grammars/tree-sitter-lua/releases/download/v0.5.0/tree-sitter-lua.wasm

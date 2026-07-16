@@ -73,6 +73,10 @@
             .url = "https://github.com/the-argus/zig-compile-commands/archive/9400cd1963ea6bb58fe47ba7d9700075b808cdd2.tar.gz",
             .hash = "zig_compile_commands-0.0.1-OZg5-e_JAAAGg1WHAePtq4l4Uvjs34BexnFFCZk63EaG",
         },
+        .treesitter_diff = .{
+            .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-diff?ref=v0.1.0#2520c3f934b3179bb540d23e0ef45f75304b5fed",
+            .hash = "N-V-__8AAAULEwDDBPj9cGOTHPT1iE6oZabnwo70bstgVEf_",
+        },
     },
     .paths = .{
         // TODO(bfredl): explicitly list the subdirs which actually are used
