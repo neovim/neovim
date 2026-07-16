@@ -202,6 +202,135 @@ local client_push_namespaces = {}
 ---@type table<string, integer>
 local client_pull_namespaces = {}
 
+---@param diagnostic vim.Diagnostic
+---@return string
+local function diagnostic_identity_key(diagnostic)
+  local tags = diagnostic._tags or {}
+  local code = diagnostic.code
+  if type(code) == 'table' then
+    code = vim.inspect(code)
+  end
+
+  return table.concat({
+    diagnostic.lnum,
+    diagnostic.end_lnum,
+    diagnostic.col,
+    diagnostic.end_col,
+    diagnostic.severity or '',
+    diagnostic.message or '',
+    diagnostic.source or '',
+    code or '',
+    tags.unnecessary and '1' or '0',
+    tags.deprecated and '1' or '0',
+  }, '\x1f')
+end
+
+---@param bufnr integer
+---@param client_id integer
+---@param into table<string, true>
+---@param incoming? vim.Diagnostic[]
+local function collect_pull_keys(bufnr, client_id, into, incoming)
+  if incoming then
+    for _, diagnostic in ipairs(incoming) do
+      into[diagnostic_identity_key(diagnostic)] = true
+    end
+    return
+  end
+
+  for key, ns in pairs(client_pull_namespaces) do
+    if vim.startswith(key, ('%d:'):format(client_id)) then
+      for _, diagnostic in ipairs(vim.diagnostic.get(bufnr, { namespace = ns })) do
+        into[diagnostic_identity_key(diagnostic)] = true
+      end
+    end
+  end
+end
+
+---@param bufnr integer
+---@param client_id integer
+---@param incoming_pull? vim.Diagnostic[]
+local function dedupe_push_against_pull(bufnr, client_id, incoming_pull)
+  local push_ns = client_push_namespaces[client_id]
+  if not push_ns then
+    return
+  end
+
+  local push_diags = vim.diagnostic.get(bufnr, { namespace = push_ns })
+  if vim.tbl_isempty(push_diags) then
+    return
+  end
+
+  local pull_keys = {} ---@type table<string, true>
+  collect_pull_keys(bufnr, client_id, pull_keys, incoming_pull)
+
+  if vim.tbl_isempty(pull_keys) then
+    return
+  end
+
+  local filtered = {} ---@type vim.Diagnostic[]
+  local changed = false
+  for _, diagnostic in ipairs(push_diags) do
+    if pull_keys[diagnostic_identity_key(diagnostic)] then
+      changed = true
+    else
+      filtered[#filtered + 1] = diagnostic
+    end
+  end
+
+  if changed then
+    vim.diagnostic.set(push_ns, bufnr, filtered)
+  end
+end
+
+---@param bufnr integer
+---@param client_id integer
+---@param incoming_push vim.Diagnostic[]
+---@return vim.Diagnostic[]
+local function filter_push_against_pull(bufnr, client_id, incoming_push)
+  if vim.tbl_isempty(incoming_push) then
+    return incoming_push
+  end
+
+  local pull_keys = {} ---@type table<string, true>
+  collect_pull_keys(bufnr, client_id, pull_keys)
+
+  if vim.tbl_isempty(pull_keys) then
+    return incoming_push
+  end
+
+  local filtered = {} ---@type vim.Diagnostic[]
+  for _, diagnostic in ipairs(incoming_push) do
+    if not pull_keys[diagnostic_identity_key(diagnostic)] then
+      filtered[#filtered + 1] = diagnostic
+    end
+  end
+  return filtered
+end
+
+---@param bufnr integer
+---@param client_id integer
+---@return integer?
+local function active_single_pull_namespace(bufnr, client_id)
+  local provider = Diagnostics.active[bufnr]
+  local state = provider and provider.client_state[client_id]
+  if not state or state.pull_kind ~= 'document' then
+    return nil
+  end
+
+  local matching = {} ---@type integer[]
+  for key, ns in pairs(client_pull_namespaces) do
+    if vim.startswith(key, ('%d:'):format(client_id)) then
+      matching[#matching + 1] = ns
+    end
+  end
+
+  if #matching == 1 then
+    return matching[1]
+  end
+
+  return nil
+end
+
 --- Get the diagnostic namespace associated with an LSP client |vim.diagnostic| for diagnostics
 ---
 ---@param client_id integer The id of the LSP client
@@ -259,9 +388,22 @@ local function handle_diagnostics(uri, client_id, diagnostics, is_pull, pull_id)
 
   client_id = client_id or DEFAULT_CLIENT_ID
 
+  local push_namespace = M.get_namespace(client_id, false)
   local namespace = M.get_namespace(client_id, is_pull, pull_id)
 
-  vim.diagnostic.set(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id))
+  local vim_diagnostics = diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
+
+  if client_id and is_pull then
+    dedupe_push_against_pull(bufnr, client_id, vim_diagnostics)
+  elseif client_id then
+    namespace = active_single_pull_namespace(bufnr, client_id) or namespace
+    vim_diagnostics = filter_push_against_pull(bufnr, client_id, vim_diagnostics)
+    if namespace ~= push_namespace and vim.tbl_isempty(vim_diagnostics) then
+      return
+    end
+  end
+
+  vim.diagnostic.set(namespace, bufnr, vim_diagnostics)
 end
 
 --- |lsp-handler| for the method "textDocument/publishDiagnostics"
