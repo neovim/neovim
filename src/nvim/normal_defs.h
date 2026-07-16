@@ -67,7 +67,7 @@ enum {
 };
 
 /// A Visual selection's mode and extent (line/column span, not absolute positions), so it can be
-/// re-applied starting at the cursor: for "gv" reselect (`resel_VIsual`) and Visual-operator redo
+/// re-applied starting at the cursor: for "gv" reselect (`Visual.resel`) and Visual-operator redo
 /// (`redo_VIsual`).
 typedef struct {
   int mode;             ///< 'v', 'V', or Ctrl-V
@@ -76,6 +76,21 @@ typedef struct {
   int count;            ///< count for the Visual operator
   int arg;              ///< extra argument
 } VisualExtent;
+
+/// Visual/Select mode state, as one global "group" (Visual). Previously these were bare EXTERN
+/// symbols in globals.h; grouped here to make subsystem ownership explicit.
+typedef struct {
+  pos_T start;            ///< Start position of the active Visual selection.
+  bool active;            ///< Whether Visual mode is active.
+  bool select;            ///< Whether Select mode is active.
+  int select_reg;         ///< Register name for Select mode.
+  bool select_exclu_adj;  ///< Cursor was incremented during exclusive selection.
+  int restart_select;     ///< Restart Select mode when next cmd finished.
+  int reselect;           ///< Restart the selection after a Select-mode mapping or menu.
+  int mode;               ///< Type of Visual mode: 'v', 'V', Ctrl-V.
+  bool redo_busy;         ///< True when redoing Visual.
+  VisualExtent resel;     ///< Previous Visual area, for reselection ("gv"); seeds operator-redo.
+} VisualState;
 
 /// Replacement for nchar used by nv_replace().
 enum {

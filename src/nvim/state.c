@@ -149,12 +149,12 @@ bool virtual_active(win_T *wp)
   }
 
   // While an operator is being executed we return "virtual_op", because
-  // VIsual_active has already been reset, thus we can't check for "block"
+  // Visual.active has already been reset, thus we can't check for "block"
   // being used.
   if (virtual_op != kNone) {
     return virtual_op;
   }
-  return (cur_ve_flags & kOptVeFlagBlock) && VIsual_active && VIsual_mode == Ctrl_V;
+  return (cur_ve_flags & kOptVeFlagBlock) && Visual.active && Visual.mode == Ctrl_V;
 }
 
 /// MODE_VISUAL, MODE_SELECT and MODE_OP_PENDING State are never set, they are
@@ -163,8 +163,8 @@ bool virtual_active(win_T *wp)
 int get_real_state(void)
 {
   if (State & MODE_NORMAL) {
-    if (VIsual_active) {
-      if (VIsual_select) {
+    if (Visual.active) {
+      if (Visual.select) {
         return MODE_SELECT;
       }
       return MODE_VISUAL;
@@ -220,12 +220,12 @@ void get_mode(char *buf)
     }
   } else if (State & MODE_TERMINAL) {
     buf[i++] = 't';
-  } else if (VIsual_active) {
-    if (VIsual_select) {
-      buf[i++] = (char)(VIsual_mode + 's' - 'v');
+  } else if (Visual.active) {
+    if (Visual.select) {
+      buf[i++] = (char)(Visual.mode + 's' - 'v');
     } else {
-      buf[i++] = (char)VIsual_mode;
-      if (restart_VIsual_select) {
+      buf[i++] = (char)Visual.mode;
+      if (Visual.restart_select) {
         buf[i++] = 's';
       }
     }

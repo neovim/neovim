@@ -1457,11 +1457,11 @@ void nvim_put(ArrayOf(String) lines, String type, Boolean after, Boolean follow,
   finish_yankreg_from_object(reg, false);
 
   TRY_WRAP(err, {
-    bool VIsual_was_active = VIsual_active;
+    bool VIsual_was_active = Visual.active;
     msg_silent++;  // Avoid "N more lines" message.
     do_put('_', reg, after ? FORWARD : BACKWARD, 1, follow ? PUT_CURSEND : 0);
     msg_silent--;
-    VIsual_active = VIsual_was_active;
+    Visual.active = VIsual_was_active;
   });
 }
 

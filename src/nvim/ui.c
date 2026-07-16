@@ -618,7 +618,7 @@ void ui_check_mouse(void)
   }
 
   int checkfor = MOUSE_NORMAL;  // assume normal mode
-  if (VIsual_active) {
+  if (Visual.active) {
     checkfor = MOUSE_VISUAL;
   } else if (State == MODE_HITRETURN || State == MODE_ASKMORE || State == MODE_SETWSIZE) {
     checkfor = MOUSE_RETURN;

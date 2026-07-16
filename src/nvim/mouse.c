@@ -288,27 +288,27 @@ static int do_popup(int which_button, int m_pos_flag, pos_T m_pos)
   int jump_flags = 0;
   if (strcmp(p_mousem, "popup_setpos") == 0) {
     // First set the cursor position before showing the popup menu.
-    if (VIsual_active) {
+    if (Visual.active) {
       // set MOUSE_MAY_STOP_VIS if we are outside the selection
       // or the current window (might have false negative here)
       if (m_pos_flag != IN_BUFFER) {
         jump_flags = MOUSE_MAY_STOP_VIS;
       } else {
-        if (VIsual_mode == 'V') {
-          if ((curwin->w_cursor.lnum <= VIsual.lnum
-               && (m_pos.lnum < curwin->w_cursor.lnum || VIsual.lnum < m_pos.lnum))
-              || (VIsual.lnum < curwin->w_cursor.lnum
-                  && (m_pos.lnum < VIsual.lnum || curwin->w_cursor.lnum < m_pos.lnum))) {
+        if (Visual.mode == 'V') {
+          if ((curwin->w_cursor.lnum <= Visual.start.lnum
+               && (m_pos.lnum < curwin->w_cursor.lnum || Visual.start.lnum < m_pos.lnum))
+              || (Visual.start.lnum < curwin->w_cursor.lnum
+                  && (m_pos.lnum < Visual.start.lnum || curwin->w_cursor.lnum < m_pos.lnum))) {
             jump_flags = MOUSE_MAY_STOP_VIS;
           }
-        } else if ((ltoreq(curwin->w_cursor, VIsual)
-                    && (lt(m_pos, curwin->w_cursor) || lt(VIsual, m_pos)))
-                   || (lt(VIsual, curwin->w_cursor)
-                       && (lt(m_pos, VIsual) || lt(curwin->w_cursor, m_pos)))) {
+        } else if ((ltoreq(curwin->w_cursor, Visual.start)
+                    && (lt(m_pos, curwin->w_cursor) || lt(Visual.start, m_pos)))
+                   || (lt(Visual.start, curwin->w_cursor)
+                       && (lt(m_pos, Visual.start) || lt(curwin->w_cursor, m_pos)))) {
           jump_flags = MOUSE_MAY_STOP_VIS;
-        } else if (VIsual_mode == Ctrl_V) {
+        } else if (Visual.mode == Ctrl_V) {
           colnr_T leftcol, rightcol;
-          getvcols(curwin, &curwin->w_cursor, &VIsual, &leftcol, &rightcol, 0);
+          getvcols(curwin, &curwin->w_cursor, &Visual.start, &leftcol, &rightcol, 0);
           getvcol(curwin, &m_pos, NULL, &m_pos.col, NULL, 0);
           if (m_pos.col < leftcol || m_pos.col > rightcol) {
             jump_flags = MOUSE_MAY_STOP_VIS;
@@ -321,7 +321,7 @@ static int do_popup(int which_button, int m_pos_flag, pos_T m_pos)
   }
   if (jump_flags) {
     jump_flags = jump_to_mouse(jump_flags, NULL, which_button);
-    redraw_curbuf_later(VIsual_active ? UPD_INVERTED : UPD_VALID);
+    redraw_curbuf_later(Visual.active ? UPD_INVERTED : UPD_VALID);
     update_screen();
     setcursor();
     ui_flush();  // Update before showing popup menu
@@ -483,8 +483,8 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
       // If visual was active, yank the highlighted text and put it
       // before the mouse pointer position.
       // In Select mode replace the highlighted text with the clipboard.
-      if (VIsual_active) {
-        if (VIsual_select) {
+      if (Visual.active) {
+        if (Visual.select) {
           stuffcharReadbuff(Ctrl_G);
           stuffReadbuff("\"+p");
         } else {
@@ -618,20 +618,20 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
     if (which_button == MOUSE_LEFT && mouse_can_visual) {
       if (is_click) {
         // stop Visual mode for a left click in a window, but not when on a status line
-        if (VIsual_active) {
+        if (Visual.active) {
           jump_flags |= MOUSE_MAY_STOP_VIS;
         }
       } else {
         jump_flags |= MOUSE_MAY_VIS;
       }
     } else if (which_button == MOUSE_RIGHT && mouse_can_visual) {
-      if (is_click && VIsual_active) {
+      if (is_click && Visual.active) {
         // Remember the start and end of visual before moving the cursor.
-        if (lt(curwin->w_cursor, VIsual)) {
+        if (lt(curwin->w_cursor, Visual.start)) {
           start_visual = curwin->w_cursor;
-          end_visual = VIsual;
+          end_visual = Visual.start;
         } else {
-          start_visual = VIsual;
+          start_visual = Visual.start;
           end_visual = curwin->w_cursor;
         }
       }
@@ -654,12 +654,12 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
   }
 
   // JUMP!
-  int old_active = VIsual_active;
+  int old_active = Visual.active;
   pos_T save_cursor = curwin->w_cursor;
 
   // Even though we gate *_VIS flags above, we want to make sure the cursor doesn't move
   // in visual mode unless it is set as a mouse option
-  if (!VIsual_active || mouse_can_visual) {
+  if (!Visual.active || mouse_can_visual) {
     jump_flags = jump_to_mouse(jump_flags, oap == NULL ? NULL : &(oap->inclusive), which_button);
   }
 
@@ -757,7 +757,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
 
   // Set global flag that we are extending the Visual area with mouse dragging;
   // temporarily minimize 'scrolloff'.
-  if (VIsual_active && is_drag && get_scrolloff_value(curwin)) {
+  if (Visual.active && is_drag && get_scrolloff_value(curwin)) {
     // In the very first line, allow scrolling one line
     if (mouse_row == 0) {
       mouse_dragging = 2;
@@ -772,17 +772,17 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
     mouse_row = 0;
   }
 
-  int old_mode = VIsual_mode;
+  int old_mode = Visual.mode;
   if (start_visual.lnum) {              // right click in visual mode
     linenr_T diff;
     // When ALT is pressed make Visual mode blockwise.
     if (mod_mask & MOD_MASK_ALT) {
-      VIsual_mode = Ctrl_V;
+      Visual.mode = Ctrl_V;
     }
 
     // In Visual-block mode, divide the area in four, pick up the corner
     // that is in the quarter that the cursor is in.
-    if (VIsual_mode == Ctrl_V) {
+    if (Visual.mode == Ctrl_V) {
       colnr_T leftcol, rightcol;
       getvcols(curwin, &start_visual, &end_visual, &leftcol, &rightcol, 0);
       if (curwin->w_curswant > (leftcol + rightcol) / 2) {
@@ -795,28 +795,28 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
         end_visual.lnum = start_visual.lnum;
       }
 
-      // move VIsual to the right column
+      // move Visual.start to the right column
       start_visual = curwin->w_cursor;              // save the cursor pos
       curwin->w_cursor = end_visual;
       coladvance(curwin, end_visual.col);
-      VIsual = curwin->w_cursor;
+      Visual.start = curwin->w_cursor;
       curwin->w_cursor = start_visual;              // restore the cursor
     } else {
       // If the click is before the start of visual, change the start.
       // If the click is after the end of visual, change the end.  If
       // the click is inside the visual, change the closest side.
       if (lt(curwin->w_cursor, start_visual)) {
-        VIsual = end_visual;
+        Visual.start = end_visual;
       } else if (lt(end_visual, curwin->w_cursor)) {
-        VIsual = start_visual;
+        Visual.start = start_visual;
       } else {
         // In the same line, compare column number
         if (end_visual.lnum == start_visual.lnum) {
           if (curwin->w_cursor.col - start_visual.col >
               end_visual.col - curwin->w_cursor.col) {
-            VIsual = start_visual;
+            Visual.start = start_visual;
           } else {
-            VIsual = end_visual;
+            Visual.start = end_visual;
           }
         } else {
           // In different lines, compare line number
@@ -824,21 +824,21 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
                  (end_visual.lnum - curwin->w_cursor.lnum);
 
           if (diff > 0) {                       // closest to end
-            VIsual = start_visual;
+            Visual.start = start_visual;
           } else if (diff < 0) {                   // closest to start
-            VIsual = end_visual;
+            Visual.start = end_visual;
           } else {                                // in the middle line
             if (curwin->w_cursor.col <
                 (start_visual.col + end_visual.col) / 2) {
-              VIsual = end_visual;
+              Visual.start = end_visual;
             } else {
-              VIsual = start_visual;
+              Visual.start = start_visual;
             }
           }
         }
       }
     }
-  } else if ((State & MODE_INSERT) && VIsual_active) {
+  } else if ((State & MODE_INSERT) && Visual.active) {
     // If Visual mode started in insert mode, execute "CTRL-O"
     stuffcharReadbuff(Ctrl_O);
   }
@@ -895,7 +895,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
   } else if ((mod_mask & MOD_MASK_SHIFT)) {
     // Shift-Mouse click searches for the next occurrence of the word under
     // the mouse pointer
-    if (State & MODE_INSERT || (VIsual_active && VIsual_select)) {
+    if (State & MODE_INSERT || (Visual.active && Visual.select)) {
       stuffcharReadbuff(Ctrl_O);
     }
     if (which_button == MOUSE_LEFT) {
@@ -908,14 +908,14 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
     // Handle double clicks otherwise
   } else if ((mod_mask & MOD_MASK_MULTI_CLICK) && (State & (MODE_NORMAL | MODE_INSERT))
              && mouse_can_visual) {
-    if (is_click || !VIsual_active) {
-      if (VIsual_active) {
-        orig_cursor = VIsual;
+    if (is_click || !Visual.active) {
+      if (Visual.active) {
+        orig_cursor = Visual.start;
       } else {
-        VIsual = curwin->w_cursor;
-        orig_cursor = VIsual;
-        VIsual_active = true;
-        VIsual_reselect = true;
+        Visual.start = curwin->w_cursor;
+        orig_cursor = Visual.start;
+        Visual.active = true;
+        Visual.reselect = true;
         // start Select mode if 'selectmode' contains "mouse"
         may_start_select('o');
         setmouse();
@@ -923,14 +923,14 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
       if ((mod_mask & MOD_MASK_MULTI_CLICK) == MOD_MASK_2CLICK) {
         // Double click with ALT pressed makes it blockwise.
         if (mod_mask & MOD_MASK_ALT) {
-          VIsual_mode = Ctrl_V;
+          Visual.mode = Ctrl_V;
         } else {
-          VIsual_mode = 'v';
+          Visual.mode = 'v';
         }
       } else if ((mod_mask & MOD_MASK_MULTI_CLICK) == MOD_MASK_3CLICK) {
-        VIsual_mode = 'V';
+        Visual.mode = 'V';
       } else if ((mod_mask & MOD_MASK_MULTI_CLICK) == MOD_MASK_4CLICK) {
-        VIsual_mode = Ctrl_V;
+        Visual.mode = Ctrl_V;
       }
     }
     // A double click selects a word or a block.
@@ -950,16 +950,16 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
           oap->motion_type = kMTCharWise;
         }
         if (oap != NULL
-            && VIsual_mode == 'v'
+            && Visual.mode == 'v'
             && !vim_iswordc(gchar_pos(&end_visual))
-            && equalpos(curwin->w_cursor, VIsual)
+            && equalpos(curwin->w_cursor, Visual.start)
             && (pos = findmatch(oap, NUL)) != NULL) {
           curwin->w_cursor = *pos;
           if (oap->motion_type == kMTLineWise) {
-            VIsual_mode = 'V';
+            Visual.mode = 'V';
           } else if (*p_sel == 'e') {
-            if (lt(curwin->w_cursor, VIsual)) {
-              VIsual.col++;
+            if (lt(curwin->w_cursor, Visual.start)) {
+              Visual.start.col++;
             } else {
               curwin->w_cursor.col++;
             }
@@ -971,9 +971,9 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
         // When not found a match or when dragging: extend to include a word.
         if (lt(curwin->w_cursor, orig_cursor)) {
           find_start_of_word(&curwin->w_cursor);
-          find_end_of_word(&VIsual);
+          find_end_of_word(&Visual.start);
         } else {
-          find_start_of_word(&VIsual);
+          find_start_of_word(&Visual.start);
           if (*p_sel == 'e' && *get_cursor_pos_ptr() != NUL) {
             curwin->w_cursor.col +=
               utfc_ptr2len(get_cursor_pos_ptr());
@@ -986,18 +986,18 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
     if (is_click) {
       redraw_curbuf_later(UPD_INVERTED);  // update the inversion
     }
-  } else if (VIsual_active && !old_active) {
+  } else if (Visual.active && !old_active) {
     if (mod_mask & MOD_MASK_ALT) {
-      VIsual_mode = Ctrl_V;
+      Visual.mode = Ctrl_V;
     } else {
-      VIsual_mode = 'v';
+      Visual.mode = 'v';
     }
   }
 
   // If Visual mode changed show it later.
-  if ((!VIsual_active && old_active && mode_displayed)
-      || (VIsual_active && p_smd && msg_silent == 0
-          && (!old_active || VIsual_mode != old_mode))) {
+  if ((!Visual.active && old_active && mode_displayed)
+      || (Visual.active && p_smd && msg_silent == 0
+          && (!old_active || Visual.mode != old_mode))) {
     redraw_cmdline = true;
   }
 
@@ -1246,7 +1246,7 @@ void reset_dragwin(void)
 /// if the mouse is outside the window then the text will scroll, or if the
 /// mouse was previously on a status line, then the status line may be dragged.
 ///
-/// If flags has MOUSE_MAY_VIS, then VIsual mode will be started before the
+/// If flags has MOUSE_MAY_VIS, then Visual mode will be started before the
 /// cursor is moved unless the cursor was on a status line or window bar.
 /// This function returns one of IN_UNKNOWN, IN_BUFFER, IN_STATUS_LINE or
 /// IN_SEP_LINE depending on where the cursor was clicked.
@@ -1409,7 +1409,7 @@ retnomove:
 
     // Before jumping to another buffer, or moving the cursor for a left
     // click, stop Visual mode.
-    if (VIsual_active
+    if (Visual.active
         && (wp->w_buffer != curwin->w_buffer
             || (!status_line_offset
                 && !sep_line_offset
@@ -1569,10 +1569,10 @@ foldclick:;
   }
 
   // Start Visual mode before coladvance(), for when 'sel' != "old"
-  if ((flags & MOUSE_MAY_VIS) && !VIsual_active) {
-    VIsual = old_cursor;
-    VIsual_active = true;
-    VIsual_reselect = true;
+  if ((flags & MOUSE_MAY_VIS) && !Visual.active) {
+    Visual.start = old_cursor;
+    Visual.active = true;
+    Visual.reselect = true;
     // if 'selectmode' contains "mouse", start Select mode
     may_start_select('o');
     setmouse();

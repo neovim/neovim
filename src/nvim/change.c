@@ -322,7 +322,7 @@ static void changed_common(buf_T *buf, linenr_T lnum, colnr_T col, linenr_T lnum
     }
   }
 
-  if (curwin->w_buffer == buf && VIsual_active) {
+  if (curwin->w_buffer == buf && Visual.active) {
     check_visual_pos();
   }
 

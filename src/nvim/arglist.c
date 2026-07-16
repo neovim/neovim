@@ -1068,7 +1068,7 @@ static void do_arg_all(int count, int forceit, int keep_tabs)
 
   tabpage_T *const new_lu_tp = curtab;
 
-  // Stop Visual mode, the cursor and "VIsual" may very well be invalid after
+  // Stop Visual mode, the cursor and `Visual.start` may very well be invalid after
   // switching to another buffer.
   reset_VIsual_and_resel();
 

@@ -656,7 +656,7 @@ int do_execreg(int regname, int colon, int addcr, int silent)
                                       Ctrl_V, false);
     // When in Visual mode "'<,'>" will be prepended to the command.
     // Remove it when it's already there.
-    if (VIsual_active && strncmp(p, "'<,'>", 5) == 0) {
+    if (Visual.active && strncmp(p, "'<,'>", 5) == 0) {
       retval = put_in_typebuf(p + 5, true, true, silent);
     } else {
       retval = put_in_typebuf(p, true, true, silent);
@@ -1317,7 +1317,7 @@ static void put_do_autocmd(int regname, yankreg_T *reg, const String *insert, bo
 
   add_regtype_to_dict(reg, v_event, buf, sizeof(buf));
 
-  tv_dict_add_bool(v_event, S_LEN("visual"), VIsual_active);
+  tv_dict_add_bool(v_event, S_LEN("visual"), Visual.active);
 
   // Lock the dictionary and its keys
   tv_dict_set_keys_readonly(v_event);
@@ -1397,7 +1397,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
   // Using inserted text works differently, because the register includes
   // special characters (newlines, etc.).
   if (regname == '.' && !reg) {
-    bool non_linewise_vis = (VIsual_active && VIsual_mode != 'V');
+    bool non_linewise_vis = (Visual.active && Visual.mode != 'V');
 
     // PUT_LINE has special handling below which means we use 'i' to start.
     char command_start_char = non_linewise_vis
@@ -1915,7 +1915,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
       linenr_T start_lnum = lnum;
       int first_byte_off = 0;
 
-      if (VIsual_active) {
+      if (Visual.active) {
         end_lnum = MAX(curbuf->b_visual.vi_end.lnum, curbuf->b_visual.vi_start.lnum);
         if (end_lnum > start_lnum) {
           // "col" is valid for the first line, in following lines
@@ -1931,7 +1931,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
       }
 
       if (count == 0 || yanklen == 0) {
-        if (VIsual_active) {
+        if (Visual.active) {
           lnum = end_lnum;
         }
       } else if (count > INT_MAX / yanklen) {
@@ -1952,7 +1952,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
               col = MAXCOL;
             }
           }
-          if (VIsual_active && col > oldlen) {
+          if (Visual.active && col > oldlen) {
             lnum++;
             continue;
           }
@@ -1979,12 +1979,12 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
           changed_bytes(lnum, col);
           extmark_splice_cols(curbuf, (int)lnum - 1, col,
                               0, (int)totlen, kExtmarkUndo);
-          if (VIsual_active) {
+          if (Visual.active) {
             lnum++;
           }
-        } while (VIsual_active && lnum <= end_lnum);
+        } while (Visual.active && lnum <= end_lnum);
 
-        if (VIsual_active) {  // reset lnum to the last visual line
+        if (Visual.active) {  // reset lnum to the last visual line
           lnum--;
         }
       }
@@ -2210,7 +2210,7 @@ end:
   }
 
   if (!curbuf->terminal) {  // XXX
-    VIsual_active = false;
+    Visual.active = false;
   }
 
   // If the cursor is past the end of the line put it at the end.

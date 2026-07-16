@@ -1453,19 +1453,19 @@ static bool reg_match_visual(void)
   colnr_T curswant;
 
   // Check if the buffer is the current buffer and not using a string.
-  if (rex.reg_buf != curbuf || VIsual.lnum == 0 || !REG_MULTI) {
+  if (rex.reg_buf != curbuf || Visual.start.lnum == 0 || !REG_MULTI) {
     return false;
   }
 
-  if (VIsual_active) {
-    if (lt(VIsual, wp->w_cursor)) {
-      top = VIsual;
+  if (Visual.active) {
+    if (lt(Visual.start, wp->w_cursor)) {
+      top = Visual.start;
       bot = wp->w_cursor;
     } else {
       top = wp->w_cursor;
-      bot = VIsual;
+      bot = Visual.start;
     }
-    mode = VIsual_mode;
+    mode = Visual.mode;
     curswant = wp->w_curswant;
   } else {
     if (lt(curbuf->b_visual.vi_start, curbuf->b_visual.vi_end)) {
