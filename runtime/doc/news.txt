@@ -262,6 +262,10 @@ LSP
     "preselect". https://microsoft.github.io/language-server-protocol/specification/#completionClientCapabilities
   • `textDocument/foldingRange` |vim.lsp.foldtext()| highlights collapsed text.
     https://microsoft.github.io/language-server-protocol/specification/#textDocument_foldingRange
+  • Completon supports `CompletionList.applyKind`: a server can ask for
+    `commitCharacters` and `data` from `itemDefaults` to be merged with the
+    item's own values instead of replacing them.
+    https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/#completionItemApplyKinds
 • `:checkhealth vim.lsp` highlights the "current buffer".
 • |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|,
   |vim.lsp.buf.type_definition()|, and |vim.lsp.buf.implementation()|
