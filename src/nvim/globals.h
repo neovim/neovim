@@ -446,28 +446,8 @@ EXTERN int sandbox INIT( = 0);
 /// Batch-mode: "-es", "-Es", "-l" commandline argument was given.
 EXTERN bool silent_mode INIT( = false);
 
-/// Start position of active Visual selection.
-EXTERN pos_T VIsual;
-/// Whether Visual mode is active.
-EXTERN bool VIsual_active INIT( = false);
-/// Whether Select mode is active.
-EXTERN bool VIsual_select INIT( = false);
-/// Register name for Select mode
-EXTERN int VIsual_select_reg INIT( = 0);
-/// Whether incremented cursor during exclusive selection
-EXTERN bool VIsual_select_exclu_adj INIT( = false);
-/// Restart Select mode when next cmd finished
-EXTERN int restart_VIsual_select INIT( = 0);
-/// Whether to restart the selection after a Select-mode mapping or menu.
-EXTERN int VIsual_reselect;
-/// Type of Visual mode.
-EXTERN int VIsual_mode INIT( = 'v');
-/// true when redoing Visual.
-EXTERN bool redo_VIsual_busy INIT( = false);
-
-// Remember the previous Visual area, for reselection ("gv"). Also seeds operator-redo.
-// mode == NUL: no previous Visual area.
-EXTERN VisualExtent resel_VIsual;
+/// Per-subsystem state for Visual/Select mode; see normal_defs.h.
+EXTERN VisualState Visual INIT( = { .mode = 'v' });
 
 /// When pasting text with the middle mouse button in visual mode with
 /// restart_edit set, remember where it started so we can set Ins.start.

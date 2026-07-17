@@ -13,10 +13,10 @@ typedef struct u_header u_header_T;
 
 /// Structure to store info about the Visual area.
 typedef struct {
-  pos_T vi_start;       ///< start pos of last VIsual
-  pos_T vi_end;         ///< end position of last VIsual
-  int vi_mode;          ///< VIsual_mode of last VIsual
-  colnr_T vi_curswant;  ///< MAXCOL from w_curswant
+  pos_T vi_start;       ///< Start pos of last Visual.
+  pos_T vi_end;         ///< End position of last Visual.
+  int vi_mode;          ///< Visual.mode of last Visual.
+  colnr_T vi_curswant;  ///< MAXCOL from w_curswant.
 } visualinfo_T;
 
 typedef struct u_entry u_entry_T;

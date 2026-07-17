@@ -96,8 +96,8 @@ static void change_other_buffer_prepare(cob_T *cob, buf_T *buf)
 
   // Set "curbuf" to the buffer being changed.  Then make sure there is a
   // window for it to handle any side effects.
-  cob->cob_save_VIsual_active = VIsual_active;
-  VIsual_active = false;
+  cob->cob_save_VIsual_active = Visual.active;
+  Visual.active = false;
   cob->cob_curwin_save = curwin;
   curbuf = buf;
   find_win_for_curbuf();  // simplest: find existing window for "buf"
@@ -119,7 +119,7 @@ static void change_other_buffer_restore(cob_T *cob)
     curwin = cob->cob_curwin_save;
     curbuf = curwin->w_buffer;
   }
-  VIsual_active = cob->cob_save_VIsual_active;
+  Visual.active = cob->cob_save_VIsual_active;
 }
 
 /// Set line or list of lines in buffer "buf" to "lines".

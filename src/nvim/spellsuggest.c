@@ -506,18 +506,18 @@ void spell_suggest(int count)
     goto skip;
   }
 
-  if (VIsual_active) {
+  if (Visual.active) {
     // Use the Visually selected text as the bad word.  But reject
     // a multi-line selection.
-    if (curwin->w_cursor.lnum != VIsual.lnum) {
+    if (curwin->w_cursor.lnum != Visual.start.lnum) {
       vim_beep(kOptBoFlagSpell);
       goto skip;
     }
-    badlen = (int)curwin->w_cursor.col - (int)VIsual.col;
+    badlen = (int)curwin->w_cursor.col - (int)Visual.start.col;
     if (badlen < 0) {
       badlen = -badlen;
     } else {
-      curwin->w_cursor.col = VIsual.col;
+      curwin->w_cursor.col = Visual.start.col;
     }
     badlen++;
     end_visual_mode();

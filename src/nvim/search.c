@@ -2444,21 +2444,21 @@ void showmatch(int c)
 int current_search(int count, bool forward)
 {
   bool old_p_ws = p_ws;
-  pos_T save_VIsual = VIsual;
+  pos_T save_VIsual = Visual.start;
 
   // Correct cursor when 'selection' is exclusive
-  if (VIsual_active && *p_sel == 'e' && lt(VIsual, curwin->w_cursor)) {
+  if (Visual.active && *p_sel == 'e' && lt(Visual.start, curwin->w_cursor)) {
     dec_cursor();
   }
 
   // When searching forward and the cursor is at the start of the Visual
   // area, skip the first search backward, otherwise it doesn't move.
-  const bool skip_first_backward = forward && VIsual_active
-                                   && lt(curwin->w_cursor, VIsual);
+  const bool skip_first_backward = forward && Visual.active
+                                   && lt(curwin->w_cursor, Visual.start);
 
   pos_T pos = curwin->w_cursor;       // position after the pattern
   pos_T orig_pos = curwin->w_cursor;  // position of the cursor at beginning
-  if (VIsual_active) {
+  if (Visual.active) {
     // Searching further will extend the match.
     if (forward) {
       incl(&pos);
@@ -2516,8 +2516,8 @@ int current_search(int count, bool forward)
     // selection works.
     if (i == 1 && !result) {  // not found, abort
       curwin->w_cursor = orig_pos;
-      if (VIsual_active) {
-        VIsual = save_VIsual;
+      if (Visual.active) {
+        Visual.start = save_VIsual;
       }
       return FAIL;
     } else if (i == 0 && !result) {
@@ -2533,13 +2533,13 @@ int current_search(int count, bool forward)
 
   pos_T start_pos = pos;
 
-  if (!VIsual_active) {
-    VIsual = start_pos;
+  if (!Visual.active) {
+    Visual.start = start_pos;
   }
 
   // put the cursor after the match
   curwin->w_cursor = end_pos;
-  if (lt(VIsual, end_pos) && forward) {
+  if (lt(Visual.start, end_pos) && forward) {
     if (skip_first_backward) {
       // put the cursor on the start of the match
       curwin->w_cursor = pos;
@@ -2547,18 +2547,18 @@ int current_search(int count, bool forward)
       // put the cursor on last character of match
       dec_cursor();
     }
-  } else if (VIsual_active && lt(curwin->w_cursor, VIsual) && forward) {
+  } else if (Visual.active && lt(curwin->w_cursor, Visual.start) && forward) {
     curwin->w_cursor = pos;   // put the cursor on the start of the match
   }
-  VIsual_active = true;
-  VIsual_mode = 'v';
+  Visual.active = true;
+  Visual.mode = 'v';
 
   if (*p_sel == 'e') {
     // Correction for exclusive selection depends on the direction.
-    if (forward && ltoreq(VIsual, curwin->w_cursor)) {
+    if (forward && ltoreq(Visual.start, curwin->w_cursor)) {
       inc_cursor();
-    } else if (!forward && ltoreq(curwin->w_cursor, VIsual)) {
-      inc(&VIsual);
+    } else if (!forward && ltoreq(curwin->w_cursor, Visual.start)) {
+      inc(&Visual.start);
     }
   }
 

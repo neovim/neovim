@@ -430,8 +430,8 @@ int end_word(int count, bool bigword, bool stop, bool empty)
   cls_bigword = bigword;
 
   // If adjusted cursor position previously, unadjust it.
-  if (*p_sel == 'e' && VIsual_active && VIsual_mode == 'v'
-      && VIsual_select_exclu_adj) {
+  if (*p_sel == 'e' && Visual.active && Visual.mode == 'v'
+      && Visual.select_exclu_adj) {
     unadjust_for_sel();
   }
 
@@ -593,13 +593,13 @@ int current_word(oparg_T *oap, int count, bool include, bool bigword)
   clearpos(&start_pos);
 
   // Correct cursor when 'selection' is exclusive
-  if (VIsual_active && *p_sel == 'e' && lt(VIsual, curwin->w_cursor)) {
+  if (Visual.active && *p_sel == 'e' && lt(Visual.start, curwin->w_cursor)) {
     dec_cursor();
   }
 
-  // When Visual mode is not active, or when the VIsual area is only one
+  // When Visual mode is not active, or when the Visual area is only one
   // character, select the word and/or white space under the cursor.
-  if (!VIsual_active || equalpos(curwin->w_cursor, VIsual)) {
+  if (!Visual.active || equalpos(curwin->w_cursor, Visual.start)) {
     // Go to start of current word or white space.
     back_in_line();
     start_pos = curwin->w_cursor;
@@ -629,9 +629,9 @@ int current_word(oparg_T *oap, int count, bool include, bool bigword)
       }
     }
 
-    if (VIsual_active) {
+    if (Visual.active) {
       // should do something when inclusive == false !
-      VIsual = start_pos;
+      Visual.start = start_pos;
       redraw_curbuf_later(UPD_INVERTED);  // update the inversion
     } else {
       oap->start = start_pos;
@@ -643,7 +643,7 @@ int current_word(oparg_T *oap, int count, bool include, bool bigword)
   // When count is still > 0, extend with more objects.
   while (count > 0) {
     inclusive = true;
-    if (VIsual_active && lt(curwin->w_cursor, VIsual)) {
+    if (Visual.active && lt(curwin->w_cursor, Visual.start)) {
       // In Visual mode, with cursor at start: move cursor back.
       if (decl(&curwin->w_cursor) == -1) {
         return FAIL;
@@ -695,8 +695,8 @@ int current_word(oparg_T *oap, int count, bool include, bool bigword)
     if (oneleft() == OK) {
       back_in_line();
       if (cls() == 0 && curwin->w_cursor.col > 0) {
-        if (VIsual_active) {
-          VIsual = curwin->w_cursor;
+        if (Visual.active) {
+          Visual.start = curwin->w_cursor;
         } else {
           oap->start = curwin->w_cursor;
         }
@@ -705,12 +705,12 @@ int current_word(oparg_T *oap, int count, bool include, bool bigword)
     curwin->w_cursor = pos;     // put cursor back at end
   }
 
-  if (VIsual_active) {
-    if (*p_sel == 'e' && inclusive && ltoreq(VIsual, curwin->w_cursor)) {
+  if (Visual.active) {
+    if (*p_sel == 'e' && inclusive && ltoreq(Visual.start, curwin->w_cursor)) {
       inc_cursor();
     }
-    if (VIsual_mode == 'V') {
-      VIsual_mode = 'v';
+    if (Visual.mode == 'V') {
+      Visual.mode = 'v';
       redraw_cmdline = true;                    // show mode later
     }
   } else {
@@ -727,11 +727,11 @@ int current_word(oparg_T *oap, int count, bool include, bool bigword)
 int current_line(oparg_T *oap, bool include)
 {
   if (include) {
-    if (VIsual_active) {
-      VIsual.lnum = 1;
-      VIsual.col = 0;
-      VIsual.coladd = 0;
-      VIsual_mode = 'V';
+    if (Visual.active) {
+      Visual.start.lnum = 1;
+      Visual.start.col = 0;
+      Visual.start.coladd = 0;
+      Visual.mode = 'V';
       redraw_curbuf_later(UPD_INVERTED);
       showmode();
     } else {
@@ -770,13 +770,13 @@ int current_line(oparg_T *oap, bool include)
   end_pos.col = (colnr_T)(mb_prevptr(line, end) - line);
   end_pos.coladd = 0;
 
-  if (VIsual_active) {
-    VIsual = start_pos;
+  if (Visual.active) {
+    Visual.start = start_pos;
     curwin->w_cursor = end_pos;
-    if (*p_sel == 'e' && ltoreq(VIsual, curwin->w_cursor)) {
+    if (*p_sel == 'e' && ltoreq(Visual.start, curwin->w_cursor)) {
       inc_cursor();
     }
-    VIsual_mode = 'v';
+    Visual.mode = 'v';
     redraw_curbuf_later(UPD_INVERTED);
     showmode();
   } else {
@@ -803,9 +803,9 @@ int current_sent(oparg_T *oap, int count, bool include)
   findsent(FORWARD, 1);        // Find start of next sentence.
 
   // When the Visual area is bigger than one character: Extend it.
-  if (VIsual_active && !equalpos(start_pos, VIsual)) {
+  if (Visual.active && !equalpos(start_pos, Visual.start)) {
 extend:
-    if (lt(start_pos, VIsual)) {
+    if (lt(start_pos, Visual.start)) {
       // Cursor at start of Visual area.
       // Find out where we are:
       // - in the white space before a sentence
@@ -921,7 +921,7 @@ extend:
     }
   }
 
-  if (VIsual_active) {
+  if (Visual.active) {
     // Avoid getting stuck with "is" on a single space before a sentence.
     if (equalpos(start_pos, curwin->w_cursor)) {
       goto extend;
@@ -929,8 +929,8 @@ extend:
     if (*p_sel == 'e') {
       curwin->w_cursor.col++;
     }
-    VIsual = start_pos;
-    VIsual_mode = 'v';
+    Visual.start = start_pos;
+    Visual.mode = 'v';
     redraw_cmdline = true;    // show mode later
     redraw_curbuf_later(UPD_INVERTED);  // update the inversion
   } else {
@@ -964,7 +964,7 @@ int current_block(oparg_T *oap, int count, bool include, int what, int other)
   pos_T old_start = old_end;
 
   // If we start on '(', '{', ')', '}', etc., use the whole block inclusive.
-  if (!VIsual_active || equalpos(VIsual, curwin->w_cursor)) {
+  if (!Visual.active || equalpos(Visual.start, curwin->w_cursor)) {
     setpcmark();
     if (what == '{') {                  // ignore indent
       while (inindent(1)) {
@@ -977,11 +977,11 @@ int current_block(oparg_T *oap, int count, bool include, int what, int other)
       // cursor on '(' or '{', move cursor just after it
       curwin->w_cursor.col++;
     }
-  } else if (lt(VIsual, curwin->w_cursor)) {
-    old_start = VIsual;
-    curwin->w_cursor = VIsual;              // cursor at low end of Visual
+  } else if (lt(Visual.start, curwin->w_cursor)) {
+    old_start = Visual.start;
+    curwin->w_cursor = Visual.start;              // cursor at low end of Visual
   } else {
-    old_end = VIsual;
+    old_end = Visual.start;
   }
 
   // Search backwards for unclosed '(', '{', etc..
@@ -1034,7 +1034,7 @@ int current_block(oparg_T *oap, int count, bool include, int what, int other)
 
     // In Visual mode, when resulting area is empty
     // i.e. there is no inner block to select, abort.
-    if (equalpos(start_pos, *end_pos) && VIsual_active) {
+    if (equalpos(start_pos, *end_pos) && Visual.active) {
       curwin->w_cursor = old_pos;
       return FAIL;
     }
@@ -1044,7 +1044,7 @@ int current_block(oparg_T *oap, int count, bool include, int what, int other)
     // Don't try to expand the area if the area is empty.
     if (!lt(start_pos, old_start) && !lt(old_end, curwin->w_cursor)
         && !equalpos(start_pos, curwin->w_cursor)
-        && VIsual_active) {
+        && Visual.active) {
       curwin->w_cursor = old_start;
       decl(&curwin->w_cursor);
       if ((pos = findmatch(NULL, what)) == NULL) {
@@ -1063,15 +1063,15 @@ int current_block(oparg_T *oap, int count, bool include, int what, int other)
     }
   }
 
-  if (VIsual_active) {
+  if (Visual.active) {
     if (*p_sel == 'e') {
       inc(&curwin->w_cursor);
     }
     if (sol && gchar_cursor() != NUL) {
       inc(&curwin->w_cursor);  // include the line break
     }
-    VIsual = start_pos;
-    VIsual_mode = 'v';
+    Visual.start = start_pos;
+    Visual.mode = 'v';
     redraw_curbuf_later(UPD_INVERTED);  // update the inversion
     showmode();
   } else {
@@ -1161,12 +1161,12 @@ int current_tagblock(oparg_T *oap, int count_arg, bool include)
   pos_T old_pos = curwin->w_cursor;
   pos_T old_end = curwin->w_cursor;               // remember where we started
   pos_T old_start = old_end;
-  if (!VIsual_active || *p_sel == 'e') {
+  if (!Visual.active || *p_sel == 'e') {
     decl(&old_end);                         // old_end is inclusive
   }
 
   // If we start on "<aaa>" select that block.
-  if (!VIsual_active || equalpos(VIsual, curwin->w_cursor)) {
+  if (!Visual.active || equalpos(Visual.start, curwin->w_cursor)) {
     setpcmark();
 
     // ignore indent
@@ -1193,11 +1193,11 @@ int current_tagblock(oparg_T *oap, int count_arg, bool include)
       dec_cursor();
       old_end = curwin->w_cursor;
     }
-  } else if (lt(VIsual, curwin->w_cursor)) {
-    old_start = VIsual;
-    curwin->w_cursor = VIsual;              // cursor at low end of Visual
+  } else if (lt(Visual.start, curwin->w_cursor)) {
+    old_start = Visual.start;
+    curwin->w_cursor = Visual.start;              // cursor at low end of Visual
   } else {
-    old_end = VIsual;
+    old_end = Visual.start;
   }
 
 again:
@@ -1259,7 +1259,7 @@ again:
     // Exclude the '<' of the end tag.
     // If the closing tag is on new line, do not decrement cursor, but make
     // operation exclusive, so that the linefeed will be selected
-    if (*c == '<' && !VIsual_active && curwin->w_cursor.col == 0) {
+    if (*c == '<' && !Visual.active && curwin->w_cursor.col == 0) {
       // do not decrement cursor
       is_inclusive = false;
     } else if (*c == '<') {
@@ -1287,7 +1287,7 @@ again:
 
     // If we are in Visual mode and now have the same text as before set
     // "do_include" and try again.
-    if (VIsual_active
+    if (Visual.active
         && equalpos(start_pos, old_start)
         && equalpos(end_pos, old_end)) {
       do_include = true;
@@ -1297,7 +1297,7 @@ again:
     }
   }
 
-  if (VIsual_active) {
+  if (Visual.active) {
     // If the end is before the start there is no text between tags, select
     // the char under the cursor.
     if (lt(end_pos, start_pos)) {
@@ -1305,8 +1305,8 @@ again:
     } else if (*p_sel == 'e') {
       inc_cursor();
     }
-    VIsual = start_pos;
-    VIsual_mode = 'v';
+    Visual.start = start_pos;
+    Visual.mode = 'v';
     redraw_curbuf_later(UPD_INVERTED);  // update the inversion
     showmode();
   } else {
@@ -1343,9 +1343,9 @@ int current_par(oparg_T *oap, int count, bool include, int type)
   linenr_T start_lnum = curwin->w_cursor.lnum;
 
   // When visual area is more than one line: extend it.
-  if (VIsual_active && start_lnum != VIsual.lnum) {
+  if (Visual.active && start_lnum != Visual.start.lnum) {
 extend:
-    dir = start_lnum < VIsual.lnum ? BACKWARD : FORWARD;
+    dir = start_lnum < Visual.start.lnum ? BACKWARD : FORWARD;
     for (int i = count; --i >= 0;) {
       if (start_lnum ==
           (dir == BACKWARD ? 1 : curbuf->b_ml.ml_line_count)) {
@@ -1455,17 +1455,17 @@ extend:
     }
   }
 
-  if (VIsual_active) {
+  if (Visual.active) {
     // Problem: when doing "Vipipip" nothing happens in a single white
     // line, we get stuck there.  Trap this here.
-    if (VIsual_mode == 'V' && start_lnum == curwin->w_cursor.lnum) {
+    if (Visual.mode == 'V' && start_lnum == curwin->w_cursor.lnum) {
       goto extend;
     }
-    if (VIsual.lnum != start_lnum) {
-      VIsual.lnum = start_lnum;
-      VIsual.col = 0;
+    if (Visual.start.lnum != start_lnum) {
+      Visual.start.lnum = start_lnum;
+      Visual.start.col = 0;
     }
-    VIsual_mode = 'V';
+    Visual.mode = 'V';
     redraw_curbuf_later(UPD_INVERTED);  // update the inversion
     showmode();
   } else {
@@ -1552,34 +1552,34 @@ bool current_quote(oparg_T *oap, int count, bool include, int quotechar)
   bool inside_quotes = false;           // Looks like "i'" done before
   bool selected_quote = false;          // Has quote inside selection
   int i;
-  bool restore_vis_bef = false;         // restore VIsual on abort
+  bool restore_vis_bef = false;         // restore Visual.start on abort
 
   // When 'selection' is "exclusive" move the cursor to where it would be
   // with 'selection' "inclusive", so that the logic is the same for both.
   // The cursor then is moved forward after adjusting the area.
-  if (VIsual_active) {
+  if (Visual.active) {
     // this only works within one line
-    if (VIsual.lnum != curwin->w_cursor.lnum) {
+    if (Visual.start.lnum != curwin->w_cursor.lnum) {
       return false;
     }
 
-    vis_bef_curs = lt(VIsual, curwin->w_cursor);
-    vis_empty = equalpos(VIsual, curwin->w_cursor);
+    vis_bef_curs = lt(Visual.start, curwin->w_cursor);
+    vis_empty = equalpos(Visual.start, curwin->w_cursor);
     if (*p_sel == 'e') {
       if (vis_bef_curs) {
         dec_cursor();
         did_exclusive_adj = true;
       } else if (!vis_empty) {
-        dec(&VIsual);
+        dec(&Visual.start);
         did_exclusive_adj = true;
       }
-      vis_empty = equalpos(VIsual, curwin->w_cursor);
+      vis_empty = equalpos(Visual.start, curwin->w_cursor);
       if (!vis_bef_curs && !vis_empty) {
-        // VIsual needs to be start of Visual selection.
+        // Visual.start needs to be start of Visual selection.
         pos_T t = curwin->w_cursor;
 
-        curwin->w_cursor = VIsual;
-        VIsual = t;
+        curwin->w_cursor = Visual.start;
+        Visual.start = t;
         vis_bef_curs = true;
         restore_vis_bef = true;
       }
@@ -1590,19 +1590,19 @@ bool current_quote(oparg_T *oap, int count, bool include, int quotechar)
     // Check if the existing selection exactly spans the text inside
     // quotes.
     if (vis_bef_curs) {
-      inside_quotes = VIsual.col > 0
-                      && (uint8_t)line[VIsual.col - 1] == quotechar
+      inside_quotes = Visual.start.col > 0
+                      && (uint8_t)line[Visual.start.col - 1] == quotechar
                       && line[curwin->w_cursor.col] != NUL
                       && (uint8_t)line[curwin->w_cursor.col + 1] == quotechar;
-      i = VIsual.col;
+      i = Visual.start.col;
       col_end = curwin->w_cursor.col;
     } else {
       inside_quotes = curwin->w_cursor.col > 0
                       && (uint8_t)line[curwin->w_cursor.col - 1] == quotechar
-                      && line[VIsual.col] != NUL
-                      && (uint8_t)line[VIsual.col + 1] == quotechar;
+                      && line[Visual.start.col] != NUL
+                      && (uint8_t)line[Visual.start.col + 1] == quotechar;
       i = curwin->w_cursor.col;
-      col_end = VIsual.col;
+      col_end = Visual.start.col;
     }
 
     // Find out if we have a quote in the selection.
@@ -1718,7 +1718,7 @@ bool current_quote(oparg_T *oap, int count, bool include, int quotechar)
     col_start++;
   }
   curwin->w_cursor.col = col_start;
-  if (VIsual_active) {
+  if (Visual.active) {
     // Set the start of the Visual area when the Visual area was empty, we
     // were just inside quotes or the Visual area didn't start at a quote
     // and didn't include a quote.
@@ -1726,10 +1726,10 @@ bool current_quote(oparg_T *oap, int count, bool include, int quotechar)
         || (vis_bef_curs
             && !selected_quote
             && (inside_quotes
-                || ((uint8_t)line[VIsual.col] != quotechar
-                    && (VIsual.col == 0
-                        || (uint8_t)line[VIsual.col - 1] != quotechar))))) {
-      VIsual = curwin->w_cursor;
+                || ((uint8_t)line[Visual.start.col] != quotechar
+                    && (Visual.start.col == 0
+                        || (uint8_t)line[Visual.start.col - 1] != quotechar))))) {
+      Visual.start = curwin->w_cursor;
       redraw_curbuf_later(UPD_INVERTED);
     }
   } else {
@@ -1744,7 +1744,7 @@ bool current_quote(oparg_T *oap, int count, bool include, int quotechar)
        || (!vis_empty && inside_quotes)) && inc_cursor() == 2) {
     inclusive = true;
   }
-  if (VIsual_active) {
+  if (Visual.active) {
     if (vis_empty || vis_bef_curs) {
       // decrement cursor when 'selection' is not exclusive
       if (*p_sel != 'e') {
@@ -1756,16 +1756,16 @@ bool current_quote(oparg_T *oap, int count, bool include, int quotechar)
       // quote.
       if (inside_quotes
           || (!selected_quote
-              && (uint8_t)line[VIsual.col] != quotechar
-              && (line[VIsual.col] == NUL
-                  || (uint8_t)line[VIsual.col + 1] != quotechar))) {
+              && (uint8_t)line[Visual.start.col] != quotechar
+              && (line[Visual.start.col] == NUL
+                  || (uint8_t)line[Visual.start.col + 1] != quotechar))) {
         dec_cursor();
-        VIsual = curwin->w_cursor;
+        Visual.start = curwin->w_cursor;
       }
       curwin->w_cursor.col = col_start;
     }
-    if (VIsual_mode == 'V') {
-      VIsual_mode = 'v';
+    if (Visual.mode == 'V') {
+      Visual.mode = 'v';
       redraw_cmdline = true;                    // show mode later
     }
   } else {
@@ -1776,15 +1776,15 @@ bool current_quote(oparg_T *oap, int count, bool include, int quotechar)
   return true;
 
 abort_search:
-  if (VIsual_active && *p_sel == 'e') {
+  if (Visual.active && *p_sel == 'e') {
     if (did_exclusive_adj) {
       inc_cursor();
     }
     if (restore_vis_bef) {
       pos_T t = curwin->w_cursor;
 
-      curwin->w_cursor = VIsual;
-      VIsual = t;
+      curwin->w_cursor = Visual.start;
+      Visual.start = t;
     }
   }
   return false;

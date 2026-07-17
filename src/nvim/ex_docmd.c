@@ -6722,7 +6722,7 @@ static void ex_operators(exarg_T *eap)
     beginline(BL_SOL | BL_FIX);
   }
 
-  if (VIsual_active) {
+  if (Visual.active) {
     end_visual_mode();
   }
 
@@ -7095,7 +7095,7 @@ static void ex_redraw(exarg_T *eap)
   if (eap->forceit) {
     redraw_all_later(UPD_NOT_VALID);
     redraw_cmdline = true;
-  } else if (VIsual_active) {
+  } else if (Visual.active) {
     redraw_curbuf_later(UPD_INVERTED);
   }
   update_screen();
@@ -7135,7 +7135,7 @@ static void ex_redrawstatus(exarg_T *eap)
   if (State & MODE_CMDLINE) {
     redraw_statuslines();
   } else {
-    if (VIsual_active) {
+    if (Visual.active) {
       redraw_curbuf_later(UPD_INVERTED);
     }
     update_screen();
@@ -7422,7 +7422,7 @@ static void ex_startinsert(exarg_T *eap)
     curwin->w_curswant = 0;  // avoid MAXCOL
   }
 
-  if (VIsual_active) {
+  if (Visual.active) {
     showmode();
   }
 }

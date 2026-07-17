@@ -1579,12 +1579,12 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
 
       buf_T *const save_curbuf = curbuf;
       win_T *const save_curwin = curwin;
-      const int save_VIsual_active = VIsual_active;
+      const int save_VIsual_active = Visual.active;
       curwin = wp;
       curbuf = wp->w_buffer;
       // Visual mode is only valid in the current window.
       if (curwin != save_curwin) {
-        VIsual_active = false;
+        Visual.active = false;
       }
 
       // Note: The result stored in `t` is unused.
@@ -1592,7 +1592,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
 
       curwin = save_curwin;
       curbuf = save_curbuf;
-      VIsual_active = save_VIsual_active;
+      Visual.active = save_VIsual_active;
 
       // Remove the variable we just stored
       do_unlet(S_LEN("g:actual_curbuf"), true);

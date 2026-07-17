@@ -1327,7 +1327,7 @@ const char *did_set_guicursor(optset_T *args FUNC_ATTR_UNUSED)
   if (errmsg != NULL) {
     return errmsg;
   }
-  if (VIsual_active) {
+  if (Visual.active) {
     // In Visual mode cursor may be drawn differently.
     redrawWinline(curwin, curwin->w_cursor.lnum);
   }
@@ -1646,7 +1646,7 @@ const char *did_set_selection(optset_T *args FUNC_ATTR_UNUSED)
   if (errmsg != NULL) {
     return errmsg;
   }
-  if (VIsual_active) {
+  if (Visual.active) {
     // Visual selection may be drawn differently.
     redraw_curbuf_later(UPD_INVERTED);
   }
