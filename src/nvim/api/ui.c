@@ -41,6 +41,10 @@
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 
+#ifdef MSWIN
+# include "nvim/os/os_win_console.h"
+#endif
+
 #define BUF_POS(ui) ((size_t)((ui)->packer.ptr - (ui)->packer.startptr))
 
 #include "api/ui.c.generated.h"
@@ -123,12 +127,20 @@ void nvim__ui_detach(Integer chan, Error *err)
   VALIDATE(c != NULL, "%s", e_invchan, {
     return;
   });
+#ifdef MSWIN
+  bool detach_stdio = c->streamtype == kChannelStreamStdio;
+#endif
   c->detach = true;
   remote_ui_disconnect((uint64_t)chan, err, true);
   if (ERROR_SET(err)) {
     return;
   }
   channel_close((uint64_t)chan, kChannelPartAll, NULL);
+#ifdef MSWIN
+  if (detach_stdio) {
+    os_swap_to_hidden_console();
+  }
+#endif
 }
 
 #ifdef EXITFREE
