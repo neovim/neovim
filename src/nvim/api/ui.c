@@ -113,34 +113,66 @@ void remote_ui_disconnect(uint64_t channel_id, Error *err, bool send_error_exit)
   remote_ui_destroy(ui);
 }
 
-/// Detaches the UI on channel `chan`.
-///
-/// Sets the channel's detach flag (so the server doesn't exit on stdio UIs),
-/// sends an "error_exit" UI event, and closes the channel.
+/// Detaches the UI on channel `chan` (server keeps running). Sets `channel.detach`, sends an
+/// "error_exit" UI event, and closes the channel.
 ///
 /// @param chan  UI channel to disconnect.
 /// @param[out] err Error details, if any.
-void nvim__ui_detach(Integer chan, Error *err)
-  FUNC_API_SINCE(14)
+void ui_detach_channel(uint64_t chan, Error *err)
 {
-  Channel *c = find_channel((uint64_t)chan);
+  Channel *c = find_channel(chan);
   VALIDATE(c != NULL, "%s", e_invchan, {
     return;
   });
 #ifdef MSWIN
   bool detach_stdio = c->streamtype == kChannelStreamStdio;
 #endif
+  // Prevent server self-exit on channel-close.
   c->detach = true;
-  remote_ui_disconnect((uint64_t)chan, err, true);
+  // Server-side UI detach. Doesn't close the channel.
+  remote_ui_disconnect(chan, err, true);
   if (ERROR_SET(err)) {
     return;
   }
-  channel_close((uint64_t)chan, kChannelPartAll, NULL);
+  // Server-side channel close.
+  channel_close(chan, kChannelPartAll, NULL);
 #ifdef MSWIN
   if (detach_stdio) {
+    // After UI/channel detach, move this server off the parent's console so it
+    // survives terminal closure and still has working CONIN$/CONOUT$.
     os_swap_to_hidden_console();
   }
 #endif
+}
+
+/// Detaches every UI except `keep_chan` (server keeps running).
+///
+/// @param keep_chan  UI channel to preserve.
+/// @return Number of UIs detached.
+size_t ui_detach_others(uint64_t keep_chan)
+{
+  // Snapshot the channel ids first: ui_detach_channel() mutates connected_uis.
+  kvec_t(uint64_t) chans = KV_INITIAL_VALUE;
+  uint64_t chan;
+  map_foreach_key(&connected_uis, chan, {
+    if (chan != keep_chan) {
+      kv_push(chans, chan);
+    }
+  });
+
+  size_t detached = 0;
+  for (size_t i = 0; i < kv_size(chans); i++) {
+    Error err = ERROR_INIT;
+    ui_detach_channel(kv_A(chans, i), &err);
+    if (ERROR_SET(&err)) {
+      api_clear_error(&err);
+    } else {
+      detached++;
+    }
+  }
+
+  kv_destroy(chans);
+  return detached;
 }
 
 #ifdef EXITFREE
