@@ -926,8 +926,12 @@ is_na_patch() {
           grep -Pzc "@@\n-${RT_TITLE_PAT}\+${RT_TITLE_PAT}$")" || true
         test "$RT_TITLE_NUM" -ne 1 && return 1
         ;;
+      *.h)
+        HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -U0 -r '-I^#\s*(else|endif)' '-I^#\s*(ifdef|if.*defined\().*FEAT_' "$patch" -- "${file}")
+        test -n "${HUNKS}" && return 1
+        ;;
       *.c)
-        HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -U0  -r "$patch" -- "$file" | grep -P '^@@ .* @@')
+        HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -U0 -r '-I^#\s*(else|endif)' '-I^#\s*(ifdef|if.*defined\().*FEAT_' "$patch" -- "$file" | grep -P '^@@ .* @@')
         if test -n "$HUNKS"; then
           HUNK_NUM_FINAL=$(echo "$HUNKS" | sed 's/^@@ .* @@ \?//' | grep -cv -f "$NA_HUNKS_C")
           test "$HUNK_NUM_FINAL" -ne 0 && return 1
