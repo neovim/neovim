@@ -1121,6 +1121,9 @@ local function ts_node_to_typ(root, level, lang_tree, headings, opt, stats)
   else -- Unknown token.
     local sample_text = level > 0 and getbuflinestr(root, opt.buf, 3) or '[top level!]'
     if node_name == 'ERROR' then
+      if ignore_parse_error(opt.fname, trimmed) then
+        return text
+      end
       table.insert(stats.parse_errors, sample_text)
     end
     print(('Unexpected token %s: %s'):format(node_name, sample_text))
