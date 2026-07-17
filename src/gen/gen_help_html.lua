@@ -1062,7 +1062,7 @@ local function ts_node_to_typ(root, level, lang_tree, headings, opt, stats)
     -- Ideally, links with invalid destinations would be allowed and just be normal text
     -- When only generating the user manual, a lot of the links are going to be broken because
     -- they would go to the reference manual.
-    return text
+    return (' %s'):format(text)
   elseif vim.list_contains({ 'codespan', 'keycode' }, node_name) then
     if root:has_error() then
       return text
@@ -1116,7 +1116,9 @@ local function ts_node_to_typ(root, level, lang_tree, headings, opt, stats)
     return s
     -- TODO Probably needed - check the equivalent after seeing a mushing example
     -- return s .. (h4 and '<br>' or '') -- HACK: <br> avoids h4 pseudo-heading mushing with text.
-  elseif node_name == 'delimiter' or node_name == 'modeline' then
+  elseif node_name == 'delimiter' then
+    return '\n'
+  elseif node_name == 'modeline' then
     return ''
   else -- Unknown token.
     local sample_text = level > 0 and getbuflinestr(root, opt.buf, 3) or '[top level!]'
