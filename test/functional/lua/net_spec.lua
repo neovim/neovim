@@ -89,8 +89,9 @@ describe('vim.net.request', function()
     t.skip(skip_integ, 'NVIM_TEST_INTEG not set (network integration test)')
 
     local result = request('GET', 'https://httpbingo.org/status/404')
-    t.matches('404', result.error)
+    t.eq(404, result.status)
   end)
+
   it('plugin writes output to buffer', function()
     t.skip(skip_integ, 'NVIM_TEST_INTEG not set (network integration test)')
 
