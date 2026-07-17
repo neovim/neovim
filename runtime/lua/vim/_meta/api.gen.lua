@@ -26,16 +26,6 @@ function vim.api.nvim__buf_stats(buf) end
 
 --- WARNING: This feature is experimental/unstable.
 ---
---- Sets the detach flag for a channel.
----
---- Detached channels do not trigger self-exit when they are closed.
----
---- @param chan integer Channel id, or 0 for the current channel.
---- @param detach boolean New detach value for the channel.
-function vim.api.nvim__chan_set_detach(chan, detach) end
-
---- WARNING: This feature is experimental/unstable.
----
 --- Records the cmdwin scratchbuf and type, or clears both when type="" / buf=0. Internal use only.
 ---
 --- @param type string ':', '/', '?' (first char only); empty to clear.
@@ -195,6 +185,16 @@ function vim.api.nvim__set_restart_on_crash(progpath, argv) end
 ---
 --- @return table<string,any> # Map of various internal stats.
 function vim.api.nvim__stats() end
+
+--- WARNING: This feature is experimental/unstable.
+---
+--- Detaches the UI on channel `chan`.
+---
+--- Sets the channel's detach flag (so the server doesn't exit on stdio UIs),
+--- sends an "error_exit" UI event, and closes the channel.
+---
+--- @param chan integer UI channel to disconnect.
+function vim.api.nvim__ui_detach(chan) end
 
 --- WARNING: This feature is experimental/unstable.
 ---

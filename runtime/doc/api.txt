@@ -1698,18 +1698,18 @@ nvim_strwidth({text})                                        *nvim_strwidth()*
     Return: ~
         (`integer`) Number of cells
 
-nvim__chan_set_detach({chan}, {detach})              *nvim__chan_set_detach()*
+nvim__chan_set_detach({detach})                      *nvim__chan_set_detach()*
     WARNING: This feature is experimental/unstable.
 
-    Sets the detach flag for a channel.
+    Sets the detach flag for the channel.
 
     Detached channels do not trigger self-exit when they are closed.
 
     Attributes: ~
+        |RPC| only
         Since: 0.12.0
 
     Parameters: ~
-      • {chan}    (`integer`) Channel id, or 0 for the current channel.
       • {detach}  (`boolean`) New detach value for the channel.
 
 nvim__cmdwin_set({type}, {buf})                           *nvim__cmdwin_set()*
@@ -3863,6 +3863,20 @@ nvim_ui_try_resize_grid({grid}, {width}, {height})
       • {grid}    (`integer`) The handle of the grid to be changed.
       • {width}   (`integer`) The new requested width.
       • {height}  (`integer`) The new requested height.
+
+nvim__ui_detach({chan})                                    *nvim__ui_detach()*
+    WARNING: This feature is experimental/unstable.
+
+    Detaches the UI on channel `chan`.
+
+    Sets the channel's detach flag (so the server doesn't exit on stdio UIs),
+    sends an "error_exit" UI event, and closes the channel.
+
+    Attributes: ~
+        Since: 0.12.0
+
+    Parameters: ~
+      • {chan}  (`integer`) UI channel to disconnect.
 
 
 ==============================================================================
