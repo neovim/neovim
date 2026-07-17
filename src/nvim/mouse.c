@@ -53,6 +53,7 @@
 #include "nvim/ui_compositor.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
+#include "nvim/winfloat.h"
 
 #include "mouse.c.generated.h"
 
@@ -685,6 +686,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
   bool in_status_line = (jump_flags & IN_STATUS_LINE);
   bool in_global_statusline = in_status_line && global_stl_height() > 0;
   bool in_sep_line = (jump_flags & IN_SEP_LINE);
+  bool in_floatwin_edge = (jump_flags & MOUSE_FLOATWIN);
 
   if ((in_winbar || in_status_line || in_statuscol) && is_click) {
     // Handle click event on window bar, status line or status column
@@ -903,7 +905,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
     } else {  // MOUSE_RIGHT
       stuffcharReadbuff('#');
     }
-  } else if (in_status_line || in_sep_line) {
+  } else if (in_status_line || in_sep_line || in_floatwin_edge) {
     // Do nothing if on status line or vertical separator
     // Handle double clicks otherwise
   } else if ((mod_mask & MOD_MASK_MULTI_CLICK) && (State & (MODE_NORMAL | MODE_INSERT))
@@ -1273,6 +1275,9 @@ int jump_to_mouse(int flags, bool *inclusive, int which_button)
   static int prev_row = -1;
   static int prev_col = -1;
   static int did_drag = false;          // drag was noticed
+  static int float_edge_type = 0;
+  static int float_mouse_col_offset = 0;
+  static int float_mouse_row_offset = 0;
 
   int count;
   bool first;
@@ -1293,6 +1298,9 @@ int jump_to_mouse(int flags, bool *inclusive, int which_button)
     }
     dragwin = NULL;
     did_drag = false;
+    float_edge_type = 0;
+    float_mouse_row_offset = 0;
+    float_mouse_col_offset = 0;
   }
 
   if ((flags & MOUSE_DID_MOVE)
@@ -1389,6 +1397,20 @@ retnomove:
       status_line_offset = 0;
     }
 
+    if (float_edge_type == 0 && wp->w_floating
+        && (wp->w_config.mousedrag_title
+            || wp->w_config.mousedrag_border != kMouseDragBorderNone
+            || wp->w_config.mousedrag_content)) {
+      float_edge_type = win_float_drag_at(wp, mouse_row, mouse_col);
+      if (float_edge_type > 0) {
+        float_mouse_col_offset = mouse_col - wp->w_wincol;
+        float_mouse_row_offset = mouse_row - wp->w_winrow;
+        if (float_edge_type != kDragMove) {
+          dragwin = wp;
+        }
+      }
+    }
+
     if (grid == DEFAULT_GRID_HANDLE && col >= wp->w_width) {
       // In separator line
       sep_line_offset = col - wp->w_width + 1;
@@ -1445,6 +1467,10 @@ retnomove:
       return IN_SEP_LINE | CURSOR_MOVED;
     }
 
+    if (float_edge_type > 0 && float_edge_type != kDragMove) {
+      return MOUSE_FLOATWIN;
+    }
+
     curwin->w_cursor.lnum = curwin->w_topline;
   } else if (status_line_offset) {
     if (which_button == MOUSE_LEFT && dragwin != NULL) {
@@ -1472,6 +1498,16 @@ retnomove:
   } else if (on_statuscol && which_button == MOUSE_RIGHT) {
     // After a click on the status column don't start Visual mode.
     return IN_OTHER_WIN | MOUSE_STATUSCOL;
+  } else if (float_edge_type && which_button == MOUSE_LEFT) {
+    if (dragwin == NULL && curwin->w_floating) {
+      dragwin = curwin;
+    }
+    if (dragwin != NULL) {
+      win_float_drag(dragwin, float_edge_type, mouse_row, mouse_col,
+                     float_mouse_row_offset, float_mouse_col_offset);
+      did_drag = true;
+    }
+    return MOUSE_FLOATWIN;
   } else {
     // keep_window_focus must be true
     // before moving the cursor for a left click, stop Visual mode

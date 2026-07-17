@@ -459,3 +459,119 @@ win_T *win_float_create_preview(bool enter, bool new_buf)
   }
   return wp;
 }
+
+static bool in_bordertext(win_T *wp, int rel_col, int width, AlignTextPos pos)
+{
+  int w = MIN(width, wp->w_width);
+  int start = wp->w_wincol_off + get_bordertext_col(wp->w_width, w, pos) - 1;
+  return rel_col >= start && rel_col < start + w;
+}
+
+/// Hit-test a screen position against a floating window's move/resize regions.
+/// @return 0, kDragMove, or a bitmask of kFloatDrag{Top,Bot,Left,Right}.
+int win_float_drag_at(win_T *wp, int row, int col)
+{
+  int rel_row = row - wp->w_winrow;
+  int rel_col = col - wp->w_wincol;
+  int outer_h = wp->w_height_outer;
+  int outer_w = wp->w_width_outer;
+  bool on_top = wp->w_border_adj[0] && rel_row == 0;
+  bool on_bot = wp->w_border_adj[2] && rel_row == outer_h - 1;
+  bool on_left = wp->w_border_adj[3] && rel_col == 0;
+  bool on_right = wp->w_border_adj[1] && rel_col == outer_w - 1;
+  bool on_border = on_top || on_bot || on_left || on_right;
+
+  if (!on_border) {
+    return wp->w_config.mousedrag_content ? kDragMove : 0;
+  }
+
+  // Title/footer text is a move handle when "title" is set.
+  if (wp->w_config.mousedrag_title) {
+    if (on_top && wp->w_config.title
+        && in_bordertext(wp, rel_col, wp->w_config.title_width, wp->w_config.title_pos)) {
+      return kDragMove;
+    }
+    if (on_bot && wp->w_config.footer
+        && in_bordertext(wp, rel_col, wp->w_config.footer_width, wp->w_config.footer_pos)) {
+      return kDragMove;
+    }
+  }
+
+  // The border proper: move handle, resize handle, or inert.
+  if (wp->w_config.mousedrag_border == kMouseDragBorderMove) {
+    return kDragMove;
+  }
+  if (wp->w_config.mousedrag_border == kMouseDragBorderResize) {
+    int hit = 0;
+    if (on_top) {
+      hit |= kDragTop;
+    }
+    if (on_bot) {
+      hit |= kDragBot;
+    }
+    if (on_left) {
+      hit |= kDragLeft;
+    }
+    if (on_right) {
+      hit |= kDragRight;
+    }
+    return hit;
+  }
+
+  if (wp->w_config.mousedrag_content) {
+    return kDragMove;
+  }
+  return 0;
+}
+
+/// Move or resize a floating window so the dragged point follows (row, col).
+void win_float_drag(win_T *wp, int edge, int row, int col, int row_off, int col_off)
+{
+  WinConfig new_config = wp->w_config;
+  FloatAnchor anchor = new_config.anchor;
+
+  new_config.relative = kFloatRelativeEditor;
+  new_config.bufpos.lnum = -1;
+  new_config.bufpos.col = 0;
+  new_config.window = 0;
+
+  // Anchor-adjusted screen position of the window's anchor corner.
+  int base_row = wp->w_winrow + ((anchor & kFloatAnchorSouth) ? wp->w_height_outer : 0);
+  int base_col = wp->w_wincol + ((anchor & kFloatAnchorEast) ? wp->w_width_outer : 0);
+
+  if (edge == kDragMove) {
+    new_config.row = row - row_off + (base_row - wp->w_winrow);
+    new_config.col = col - col_off + (base_col - wp->w_wincol);
+  } else if (edge & kDragResizeMask) {
+    new_config.row = base_row;
+    new_config.col = base_col;
+    if (edge & kDragTop) {
+      if (!(anchor & kFloatAnchorSouth)) {
+        new_config.row = row;
+      }
+      new_config.height = wp->w_winrow + wp->w_height - row;
+    } else if (edge & kDragBot) {
+      if (anchor & kFloatAnchorSouth) {
+        new_config.row = row;
+      }
+      new_config.height = row - wp->w_winrow - 1;
+    }
+    if (edge & kDragLeft) {
+      if (!(anchor & kFloatAnchorEast)) {
+        new_config.col = col;
+      }
+      new_config.width = wp->w_wincol + wp->w_width - col;
+    } else if (edge & kDragRight) {
+      if (anchor & kFloatAnchorEast) {
+        new_config.col = col;
+      }
+      new_config.width = col - wp->w_wincol - 1;
+    }
+  }
+
+  new_config.width = MAX(1, MIN(Columns, new_config.width));
+  new_config.height = MAX(1, MIN(Rows - 1, new_config.height));
+  new_config.row = MAX(0, MIN(Rows - 1, new_config.row));
+  new_config.col = MAX(0, MIN(Columns - 1, new_config.col));
+  win_config_float(wp, new_config);
+}

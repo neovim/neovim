@@ -995,6 +995,21 @@ typedef enum {
   kBorderTextFooter = 1,
 } BorderTextType;
 
+typedef enum {
+  kDragMove       = 0x01,
+  kDragTop        = 0x02,
+  kDragBot        = 0x04,
+  kDragLeft       = 0x08,
+  kDragRight      = 0x10,
+  kDragResizeMask = 0x1e,  // Top|Bot|Left|Right
+} WinDragFlags;
+
+typedef enum {
+  kMouseDragBorderNone,
+  kMouseDragBorderMove,
+  kMouseDragBorderResize,
+} MouseDragBorder;
+
 /// See ":help nvim_open_win()" for documentation.
 typedef struct {
   Window window;
@@ -1026,6 +1041,9 @@ typedef struct {
   bool fixed;
   bool hide;
   int _cmdline_offset;
+  bool mousedrag_title;
+  MouseDragBorder mousedrag_border;
+  bool mousedrag_content;
 } WinConfig;
 
 #define WIN_CONFIG_INIT ((WinConfig){ .height = 0, .width = 0, \

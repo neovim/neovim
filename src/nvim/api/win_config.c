@@ -152,6 +152,16 @@
 ///       Defaults to `focusable` value.
 ///       - If false, mouse events pass through this window.
 ///       - If true, mouse events interact with this window normally.
+///   - mousedrag: Table controlling mouse drag interactions with the window,
+///       with fields:
+///       - title: (boolean) When true, dragging the title or footer text moves
+///         the window. Default false.
+///       - content: (boolean) When true, dragging the content area moves the
+///         window. Default false.
+///       - border: (`"none"|"move"|"resize"`) Behavior when dragging the border
+///         or corners. "resize" resizes the window, "move" moves it, "none"
+///         (default) ignores border drags. Has no effect without a border.
+///       Dragging a non-editor-relative float converts it to editor-relative.
 ///   - noautocmd: Block all autocommands for the duration of the call. Cannot be changed by
 ///     |nvim_win_set_config()|.
 ///   - relative: Sets the window layout to "floating", placed at (row,col)
@@ -873,6 +883,17 @@ Dict(win_config) nvim_win_get_config(Window win, Arena *arena, Error *err)
   PUT_KEY_X(rv, mouse, config->mouse);
   PUT_KEY_X(rv, style, cstr_as_string(win_style_str[config->style]));
 
+  Dict mousedrag = arena_dict(arena, 3);
+  PUT_C(mousedrag, "title", BOOLEAN_OBJ(config->mousedrag_title));
+  PUT_C(mousedrag, "content", BOOLEAN_OBJ(config->mousedrag_content));
+  const char *border_str = config->mousedrag_border == kMouseDragBorderMove ? "move"
+                                                                            : config->
+                           mousedrag_border == kMouseDragBorderResize ? "resize"
+                                                                      :
+                           "none";
+  PUT_C(mousedrag, "border", CSTR_AS_OBJ(border_str));
+  PUT_KEY_X(rv, mousedrag, mousedrag);
+
   if (wp->w_floating) {
     PUT_KEY_X(rv, width, config->width);
     PUT_KEY_X(rv, height, config->height);
@@ -1504,6 +1525,28 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
     fconfig->_cmdline_offset = (int)config->_cmdline_offset;
   }
 
+  if (HAS_KEY_X(config, mousedrag)) {
+    Dict(win_config_mousedrag) md[1] = KEYDICT_INIT;
+    if (!api_dict_to_keydict(md, DictHash(win_config_mousedrag), config->mousedrag, err)) {
+      return false;
+    }
+    if (HAS_KEY(md, win_config_mousedrag, title)) {
+      fconfig->mousedrag_title = md->title;
+    }
+    if (HAS_KEY(md, win_config_mousedrag, border)) {
+      String s = md->border;
+      if (s.size == 0 || strequal(s.data, "none")) {
+        fconfig->mousedrag_border = kMouseDragBorderNone;
+      } else if (strequal(s.data, "move")) {
+        fconfig->mousedrag_border = kMouseDragBorderMove;
+      } else if (strequal(s.data, "resize")) {
+        fconfig->mousedrag_border = kMouseDragBorderResize;
+      }
+    }
+    if (HAS_KEY(md, win_config_mousedrag, content)) {
+      fconfig->mousedrag_content = md->content;
+    }
+  }
   return true;
 
 fail:

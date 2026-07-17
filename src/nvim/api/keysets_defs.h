@@ -115,6 +115,13 @@ typedef struct {
 } Dict(user_command);
 
 typedef struct {
+  OptionalKeys is_set__win_config_mousedrag_;
+  Boolean title;
+  Enum("none", "move", "resize") border;
+  Boolean content;
+} Dict(win_config_mousedrag);
+
+typedef struct {
   OptionalKeys is_set__win_config_;
   Boolean external;
   Boolean fixed;
@@ -140,6 +147,7 @@ typedef struct {
   Object title;
   Enum("center", "left", "right") title_pos;
   Integer _cmdline_offset;
+  DictAs(win_config_mousedrag) mousedrag;
 } Dict(win_config);
 
 typedef struct {

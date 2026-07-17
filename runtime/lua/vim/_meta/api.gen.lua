@@ -1827,6 +1827,16 @@ function vim.api.nvim_open_term(buf, opts) end
 ---     Defaults to `focusable` value.
 ---     - If false, mouse events pass through this window.
 ---     - If true, mouse events interact with this window normally.
+--- - mousedrag: Table controlling mouse drag interactions with the window,
+---     with fields:
+---     - title: (boolean) When true, dragging the title or footer text moves
+---       the window. Default false.
+---     - content: (boolean) When true, dragging the content area moves the
+---       window. Default false.
+---     - border: (`"none"`"move"`"resize"`) Behavior when dragging the border
+---       or corners. "resize" resizes the window, "move" moves it, "none"
+---       (default) ignores border drags. Has no effect without a border.
+---     Dragging a non-editor-relative float converts it to editor-relative.
 --- - noautocmd: Block all autocommands for the duration of the call. Cannot be changed by
 ---   `nvim_win_set_config()`.
 --- - relative: Sets the window layout to "floating", placed at (row,col)
