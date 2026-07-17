@@ -189,12 +189,16 @@ describe('autoread file watcher', function()
     write_file(path1, 'b1\n')
     write_file(path2, 'b2\n')
 
-    -- Confirm busy=1. Sample with vim.wait: busy=1 pulse only lasts ~debounce_ms.
+    -- Confirm busy=1 on each buffer. Sample with vim.wait: each busy=1 pulse only lasts
+    -- ~debounce_ms. Track the 2 buffers independently: their debounce timers are separate,.
     eq(
       true,
       n.exec_lua(function(b1, b2)
+        local saw1, saw2 = false, false
         return vim.wait(2000, function()
-          return vim.bo[b1].busy == 1 and vim.bo[b2].busy == 1
+          saw1 = saw1 or vim.bo[b1].busy == 1
+          saw2 = saw2 or vim.bo[b2].busy == 1
+          return saw1 and saw2
         end, 5)
       end, buf1, buf2)
     )
