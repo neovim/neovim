@@ -59,7 +59,7 @@ Use cases:
 ------------------------------------------------------------------------------
 Stop or detach the current UI
 
-                                      *:detach* *:%detach* *E5768*
+                                      *:detach* *E5768*
 :[range]detach
                 Detaches the current UI. Other UIs (if any) remain attached.
                 Fails with |E5768| if no UI is attached.
