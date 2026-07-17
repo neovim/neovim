@@ -37,6 +37,7 @@ LUA
   Use range.mark() and range.to_mark() instead.
 • pos.to_cursor() returns a (`row,` `col)` tuple
   instead of returning them as separate values.
+• Healthchecks for |vim.ui.img| were moved to `:checkhealth vim.health`.
 
 DIAGNOSTICS
 
@@ -277,8 +278,8 @@ LSP
 
 LUA
 
-• |vim.ui.img| can display images. Use `:checkhealth img` to confirm your
-  terminal supports it.
+• |vim.ui.img| can display images. Use `:checkhealth vim.health` to confirm
+  your terminal supports it.
 • |vim.net.request()| can specify custom headers by passing `opts.headers`.
 • |vim.net.request()| can now accept  `method` param overload for multiple HTTP methods.
 • |writefile()| treats Lua and RPC strings as |Blob|, so it can be used to

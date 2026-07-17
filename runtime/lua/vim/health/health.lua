@@ -391,6 +391,8 @@ local function check_tmux()
 
   health.start('tmux')
 
+  health.warn('tmux is detected. Images may not display correctly.')
+
   -- check escape-time
   local suggestions =
     { 'set escape-time in ~/.tmux.conf:\nset-option -sg escape-time 10', suggest_faq }
@@ -469,12 +471,30 @@ local function check_tmux()
   end
 end
 
+-- Note: this is part of check_terminal().
+local function check_graphics()
+  local supported, msg = require('vim.ui.img')._supported()
+
+  if supported then
+    if msg then
+      health.ok(('Graphics protocol: supported (%s)'):format(msg))
+    else
+      health.ok('Graphics protocol: supported')
+    end
+  else
+    health.error('Graphics protocol: not supported by this terminal.')
+  end
+end
+
 local function check_terminal()
   if vim.fn.executable('infocmp') == 0 then
     return
   end
 
   health.start('Terminal')
+
+  check_graphics()
+
   local cmd = { 'infocmp', '-L' }
   local ok, out = system(cmd)
   local kbs_entry = vim.fn.matchstr(out, 'key_backspace=[^,[:space:]]*')
