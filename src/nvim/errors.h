@@ -232,6 +232,8 @@ EXTERN const char e_conflicting_configs[] INIT(= N_("E5422: Conflicting configs:
 
 EXTERN const char e_unknown_option2[] INIT(= N_("E355: Unknown option: %s"));
 
+EXTERN const char e_restart_failed_cmd_no_quit[] INIT(= N_("E5201: Restart failed: +cmd did not quit server: %s"));
+
 EXTERN const char top_bot_msg[] INIT(= N_("search hit TOP, continuing at BOTTOM"));
 EXTERN const char bot_top_msg[] INIT(= N_("search hit BOTTOM, continuing at TOP"));
 

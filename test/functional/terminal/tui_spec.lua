@@ -436,6 +436,9 @@ describe('TUI :restart', function()
       'set laststatus=2 background=dark noruler noshowcmd',
     }, { env = { COLORTERM = 'truecolor' } })
     screen:set_option('rgb', true)
+    screen:add_extra_attr_ids({
+      [101] = { bold = true, foreground = Screen.colors.WebGreen },
+    })
 
     -- 'termguicolors' support should be detected properly after :restart!
     -- The value of has("gui_running") should be 0 before and after :restart!
@@ -525,12 +528,15 @@ describe('TUI :restart', function()
     for _, cmd in ipairs({ ':restart', ':restart!' }) do
       tt.feed_data(cmd .. ' +echo\013')
       screen:expect([[
-        ^                                                  |
-        {1:~}{18:                                                 }|*3
-        {3:[No Name]                                         }|
-        {9:restart failed: +cmd did not quit the server}      |
+                                                          |
+        {1:~}{18:                                                 }|
+        {3:                                                  }|
+        {9:E5201: Restart failed: +cmd did not quit server: e}|
+        {9:cho}                                               |
+        {101:Press ENTER or type command to continue}^           |
         {5:-- TERMINAL --}                                    |
       ]])
+      tt.feed_data('\013')
     end
 
     tt.feed_data('ithis will be removed\027')
@@ -567,7 +573,7 @@ describe('TUI :restart', function()
 
     -- Check ":confirm restart! +echo" correctly ignores ":confirm"
     tt.feed_data(':confirm restart! +echo\013')
-    screen:expect({ any = vim.pesc('+cmd did not quit the server') })
+    screen:expect({ any = vim.pesc('E5201: Restart failed: +cmd did not quit server') })
 
     -- Check ":restart[!]" on a modified buffer.
     tt.feed_data('ithis will be removed\027')

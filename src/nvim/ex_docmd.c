@@ -5006,7 +5006,7 @@ static void ex_restart(exarg_T *eap)
       quit_cmd = eap->args[1];
       after_cmd = eap->argc > 2 ? eap->args[2] : "";
     } else {
-      emsg("restart failed: +cmd did not quit the server");
+      semsg(e_restart_failed_cmd_no_quit, quit_cmd);
       return;
     }
   }
@@ -5203,14 +5203,14 @@ static void ex_restart(exarg_T *eap)
   }
   // Try to quit.
   nvim_command(cstr_as_string(quit_cmd), &err);
-  xfree(quit_cmd_copy);
 
   if (ERROR_SET(&err)) {
     emsg(err.msg);  // Could not exit
     api_clear_error(&err);
   } else if (!exiting) {
-    emsg("restart failed: +cmd did not quit the server");
+    semsg(e_restart_failed_cmd_no_quit, quit_cmd);
   }
+  xfree(quit_cmd_copy);
 
 fail_2:
   set_vim_var_string(VV_EXITREASON, NULL, -1);
