@@ -670,7 +670,7 @@ vim.v.stacktrace = ...
 --- The reason Nvim started. Possible values:
 --- - "normal"    Normal startup, yearning for life, etc.
 --- - "restart"   Started by `:restart`.
---- - "restart!"  Started by `:restart!` or `ZR`.
+--- - "restart!"  Started by `:restart!`.
 ---
 --- Read-only.
 --- @type string

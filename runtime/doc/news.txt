@@ -229,7 +229,7 @@ EDITOR
 • |v_al| and |v_il| text objects select the whole buffer and the current line
   without leading or trailing white space.
 • 'autoread' uses file system watchers to detect external changes in
-  real-time, instead of only on |FocusGained|/|:checktime|.
+  real-time, instead of only on |FocusGained| or |:checktime|.
 • During |complete()|-triggered completion, CTRL-N and CTRL-P are now subject
   to insert-mode mappings.
 • Multi-byte characters, translated by 'langmap', now invoke correct
