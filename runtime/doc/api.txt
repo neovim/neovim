@@ -3863,6 +3863,20 @@ nvim_ui_try_resize_grid({grid}, {width}, {height})
       • {width}   (`integer`) The new requested width.
       • {height}  (`integer`) The new requested height.
 
+nvim__ui_detach({chan})                                    *nvim__ui_detach()*
+    WARNING: This feature is experimental/unstable.
+
+    Detaches the UI on channel `chan`.
+
+    Sets the channel's detach flag (so the server doesn't exit on stdio UIs),
+    sends an "error_exit" UI event, and closes the channel.
+
+    Attributes: ~
+        Since: 0.12.0
+
+    Parameters: ~
+      • {chan}  (`integer`) UI channel to disconnect.
+
 
 ==============================================================================
 Win_config Functions                                          *api-win_config*

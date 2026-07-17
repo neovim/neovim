@@ -188,6 +188,16 @@ function vim.api.nvim__stats() end
 
 --- WARNING: This feature is experimental/unstable.
 ---
+--- Detaches the UI on channel `chan`.
+---
+--- Sets the channel's detach flag (so the server doesn't exit on stdio UIs),
+--- sends an "error_exit" UI event, and closes the channel.
+---
+--- @param chan integer UI channel to disconnect.
+function vim.api.nvim__ui_detach(chan) end
+
+--- WARNING: This feature is experimental/unstable.
+---
 --- @param str string
 --- @return any
 function vim.api.nvim__unpack(str) end

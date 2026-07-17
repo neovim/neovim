@@ -5961,21 +5961,35 @@ static void ex_tabs(exarg_T *eap)
 ///
 /// Detaches the current UI.
 ///
-/// ":detach!" with bang (!) detaches all UIs _except_ the current UI.
+/// ":%detach" detaches all UIs _except_ the current UI.
 static void ex_detach(exarg_T *eap)
 {
   // come on pooky let's burn this mf down
-  if (eap && eap->forceit) {
-    emsg("bang (!) not supported yet");
+  if (!current_ui) {
+    emsg(_(e_noui));
+    return;
+  }
+
+  if (eap && eap->addr_count > 0) {
+    if (eap->line1 != 1 || eap->line2 != curbuf->b_ml.ml_line_count) {
+      emsg(_(e_invrange));
+      return;
+    }
+
+    typval_T lua_args[] = {
+      { .v_type = VAR_NUMBER, .vval.v_number = (varnumber_T)current_ui },
+      { .v_type = VAR_UNKNOWN },
+    };
+    typval_T rv = TV_INITIAL_VALUE;
+    nlua_call_typval("vim._core.server", "detach_others", lua_args, &rv);
+    ILOG("%%detach current_ui=%" PRIu64 " detached=%zu", current_ui,
+         (rv.v_type == VAR_NUMBER && rv.vval.v_number > 0)
+         ? (size_t)rv.vval.v_number : (size_t)0);
+    tv_clear(&rv);
   } else {
     // 1. Send "error_exit" UI-event (notification only).
     // 2. Perform server-side UI detach.
     // 3. Close server-side channel without self-exit.
-
-    if (!current_ui) {
-      emsg("UI not attached");
-      return;
-    }
 
     Channel *chan = find_channel(current_ui);
     if (!chan) {
