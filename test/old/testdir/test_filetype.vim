@@ -377,6 +377,7 @@ func s:GetFilenameChecks() abort
     \ 'hercules': ['file.vc', 'file.ev', 'file.sum', 'file.errsum'],
     \ 'hex': ['file.hex', 'file.ihex', 'file.ihe', 'file.ihx', 'file.int', 'file.mcs', 'file.h32', 'file.h80', 'file.h86', 'file.a43', 'file.a90'],
     \ 'hgcommit': ['hg-editor-file.txt'],
+    \ 'hip': ['file.hip'],
     \ 'hjson': ['file.hjson'],
     \ 'hlsplaylist': ['file.m3u', 'file.m3u8'],
     \ 'hog': ['file.hog', 'snort.conf', 'vision.conf'],
