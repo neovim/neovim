@@ -236,15 +236,33 @@ end
 ---
 --- @param item lsp.CompletionItem
 --- @param defaults lsp.ItemDefaults?
-local function apply_defaults(item, defaults)
+--- @param apply_kind lsp.CompletionItemApplyKinds?
+local function apply_defaults(item, defaults, apply_kind)
   if not defaults then
     return
   end
 
-  item.commitCharacters = item.commitCharacters or defaults.commitCharacters
+  -- Unset means Replace for every field.
+  apply_kind = apply_kind or {}
+
+  local merge_commit_characters = (
+    apply_kind.commitCharacters == protocol.ApplyKind.Merge and defaults.commitCharacters
+  )
+  -- No dedup, it ends up as a flat string anyway.
+  -- An empty list means no commit chars, not use the defaults.
+  item.commitCharacters = merge_commit_characters
+      and vim.list_extend(item.commitCharacters or {}, defaults.commitCharacters)
+    or (item.commitCharacters or defaults.commitCharacters)
+
   item.insertTextFormat = item.insertTextFormat or defaults.insertTextFormat
   item.insertTextMode = item.insertTextMode or defaults.insertTextMode
-  item.data = item.data or defaults.data
+
+  item.data = apply_kind.data == protocol.ApplyKind.Merge
+      and type(defaults.data) == 'table'
+      and type(item.data) == 'table'
+      and vim.tbl_extend('force', defaults.data, item.data)
+    or vim.nonnil(item.data, defaults.data)
+
   if defaults.editRange then
     local textEdit = item.textEdit or {}
     item.textEdit = textEdit
@@ -265,8 +283,9 @@ local function get_items(result)
     -- When we have a list, apply the defaults and return an array of items.
     for _, item in ipairs(result.items) do
       ---@diagnostic disable-next-line: param-type-mismatch
-      apply_defaults(item, result.itemDefaults)
+      apply_defaults(item, result.itemDefaults, result.applyKind)
     end
+    result.itemDefaults = nil
     return result.items
   else
     -- Else just return the items as they are.

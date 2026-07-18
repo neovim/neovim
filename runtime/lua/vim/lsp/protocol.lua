@@ -243,6 +243,15 @@ local constants = {
     Delete = 4,
   },
 
+  -- Defines how values from a set of defaults and an individual item will be merged.
+  ApplyKind = {
+    -- The value from the individual item (if provided and not `null`) will be used
+    -- instead of the default.
+    Replace = 1,
+    -- The value from the item will be merged with the default.
+    Merge = 2,
+  },
+
   -- Defines whether the insert text in a completion item should be interpreted as
   -- plain text or a snippet.
   InsertTextFormat = {
@@ -504,6 +513,7 @@ function protocol.make_client_capabilities()
             'insertTextMode',
             'data',
           },
+          applyKindSupport = true,
         },
         contextSupport = true,
       },
