@@ -5076,13 +5076,13 @@ static void nv_visual(cmdarg_T *cap)
         curwin->w_curswant = MAXCOL;
         coladvance(curwin, MAXCOL);
       } else if (Visual.mode == Ctrl_V) {
-        // Update curswant on the original line, that is where "col" is valid.
-        linenr_T lnum = curwin->w_cursor.lnum;
-        curwin->w_cursor.lnum = Visual.start.lnum;
+        // Update curswant at the original cursor position.
+        pos_T tmp_cursor = curwin->w_cursor;
+        curwin->w_cursor = Visual.start;
         update_curswant_force();
         assert(cap->count0 >= INT_MIN && cap->count0 <= INT_MAX);
         curwin->w_curswant += Visual.resel.vcol * cap->count0 - 1;
-        curwin->w_cursor.lnum = lnum;
+        curwin->w_cursor = tmp_cursor;
         if (*p_sel == 'e') {
           curwin->w_curswant++;
         }
