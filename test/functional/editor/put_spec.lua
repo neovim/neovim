@@ -1,6 +1,5 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
-local Screen = require('test.functional.ui.screen')
 
 local clear = n.clear
 local insert = n.insert
@@ -879,54 +878,28 @@ describe('put command', function()
       )
     end)
 
-    local screen
-    setup(function()
-      screen = Screen.new()
-    end)
-
-    local function bell_test(actions, should_ring)
+    -- Asserts whether `keys` makes Nvim beep.
+    local function bell_test(keys, should_ring)
+      local cmd = 'normal! ' .. keys
       if should_ring then
-        -- check bell is not set by nvim before the action
-        screen:sleep(50)
+        eq(0, fn.assert_beeps(cmd))
+      else
+        eq(0, fn.assert_nobeep(cmd))
       end
-      t.ok(not screen.bell and not screen.visual_bell)
-      actions()
-      screen:expect {
-        condition = function()
-          if should_ring then
-            if not screen.bell and not screen.visual_bell then
-              error('Bell was not rung after action')
-            end
-          else
-            if screen.bell or screen.visual_bell then
-              error('Bell was rung after action')
-            end
-          end
-        end,
-        unchanged = not should_ring,
-      }
-      screen.bell = false
-      screen.visual_bell = false
     end
 
     it('should not ring the bell with gp at end of line', function()
-      bell_test(function()
-        feed('$".gp')
-      end)
+      bell_test('$".gp')
 
       -- Even if the last character is a multibyte character.
       reset()
       fn.setline(1, 'helloม')
-      bell_test(function()
-        feed('$".gp')
-      end)
+      bell_test('$".gp')
     end)
 
     it('should not ring the bell with gp and end of file', function()
       fn.setpos('.', { 0, 2, 1, 0 })
-      bell_test(function()
-        feed('$vl".gp')
-      end)
+      bell_test('$vl".gp')
     end)
 
     it('should ring the bell when deleting if not appropriate', function()
@@ -937,9 +910,7 @@ describe('put command', function()
       expect([[
       ine of words 1
       Line of words 2]])
-      bell_test(function()
-        feed('".P')
-      end, true)
+      bell_test('".P', true)
     end)
 
     it('should restore cursor position after undo of ".p', function()
