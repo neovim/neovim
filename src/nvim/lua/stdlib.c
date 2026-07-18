@@ -42,7 +42,7 @@
 #include "nvim/mbyte_defs.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
-#include "nvim/message_defs.h"
+#include "nvim/message.h"
 #include "nvim/pos_defs.h"
 #include "nvim/regexp.h"
 #include "nvim/regexp_defs.h"
@@ -680,8 +680,9 @@ static int nlua_with(lua_State *L)
   return rets;
 }
 
-// Parses internal representation of key into detailed dict about each key chord.
-static int nlua_keyarg(lua_State *L)
+/// Parses the internal representation of `keys` (as produced by nvim_replace_termcodes()) into
+/// a structured list of dicts representing one or more key-chords.
+static int nlua_keyparse(lua_State *L)
 {
   luaL_argcheck(L, lua_isstring(L, 1), 1, "string expected");
 
@@ -690,16 +691,17 @@ static int nlua_keyarg(lua_State *L)
 
   lua_newtable(L);
 
-  struct keycode_data data;
+  struct keychord data;
 
   while (*p != NUL) {
-    const char *key = str2special(&p, true, true, &data);
+    // kTrue (same flags as keytrans()) so `keys` == keytrans(vim.keycode(…)).
+    const char *keys = str2special(&p, true, kTrue, &data);
 
     lua_createtable(L, 0, 3);
 
     lua_newtable(L);
     for (int i = 0; mod_mask_table[i].name != 'A'; i++) {
-      if ((data.modifiers & mod_mask_table[i].mod_mask) == mod_mask_table[i].mod_flag) {
+      if ((data.mods & mod_mask_table[i].mod_mask) == mod_mask_table[i].mod_flag) {
         lua_pushlstring(L, &mod_mask_table[i].name, 1);
         lua_rawseti(L, -2, (int)lua_objlen(L, -2) + 1);
       }
@@ -709,12 +711,12 @@ static int nlua_keyarg(lua_State *L)
     lua_pushlstring(L, data.key.data, data.key.size);
     lua_setfield(L, -2, "key");
 
-    lua_pushstring(L, key);
-    lua_setfield(L, -2, "key_raw");
+    lua_pushstring(L, keys);
+    lua_setfield(L, -2, "keys");
 
-    if (data.key_orig.size != 0) {
-      lua_pushlstring(L, data.key_orig.data, data.key_orig.size);
-      lua_setfield(L, -2, "key_orig");
+    if (data.key_alt.size != 0) {
+      lua_pushlstring(L, data.key_alt.data, data.key_alt.size);
+      lua_setfield(L, -2, "key_alt");
     }
 
     lua_rawseti(L, -2, (int)lua_objlen(L, -2) + 1);
@@ -743,8 +745,11 @@ static void nlua_state_add_internal(lua_State *const lstate)
   lua_pushcfunction(lstate, &nlua_with);
   lua_setfield(lstate, -2, "_with_c");
 
-  lua_pushcfunction(lstate, &nlua_keyarg);
-  lua_setfield(lstate, -2, "_keyarg");
+  // vim._core.keyparse
+  lua_getfield(lstate, -1, "_core");
+  lua_pushcfunction(lstate, &nlua_keyparse);
+  lua_setfield(lstate, -2, "keyparse");
+  lua_pop(lstate, 1);
 }
 
 void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)

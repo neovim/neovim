@@ -1260,46 +1260,55 @@ function vim.print(...)
   return vim._print(false, ...)
 end
 
---- @class vim.keycode.info
+--- @class vim.keycode.chord
 --- @inlinedoc
 ---
---- The key chord normalized without modifiers.
+--- Key without modifiers. Example: `<C-A>` has `key` `a`.
 --- @field key string
 ---
---- Non-normalized version of key chord,
---- only present when it differs from {key}.
---- Example: `lt` and `<`.
---- @field key_orig string?
+--- Alternative spelling of `key`, or nil if There Is No Alternative (TINA).
+--- Example: `key="<"` has `key_alt="lt"`.
+--- @field key_alt string?
 ---
---- The original key chord with modifiers.
---- @field key_raw string
+--- Full key-chord in canonical key-notation (as produced by |keytrans()|), including modifiers.
+--- Example: `<A-f>` has `keys="<M-f>"`.
+--- @field keys string
 ---
 --- A list of single character modifiers of the key.
 --- @field mod ('M'|'T'|'C'|'S'|'2'|'3'|'4'|'D')[]
 
---- Translates keycodes.
+--- Converts keys from [key-notation] to the internal encoding. Optionally returns
+--- structured key-chord info as retval 2.
 ---
---- Example:
+--- Inverse of [keytrans()], which converts the internal encoding back to [key-notation].
+---
+--- Examples:
 ---
 --- ```lua
 --- local k = vim.keycode
 --- vim.g.mapleader = k'<bs>'
+---
+--- -- Split a key sequence into chords, e.g. to inspect modifiers.
+--- local _, chords = vim.keycode('<C-w>v', true)
+--- assert(chords[1].key == 'w' and chords[1].mod[1] == 'C')
+---
+--- -- keytrans() is the inverse: internal encoding => key-notation.
+--- assert(vim.fn.keytrans(vim.keycode('<C-a>')) == '<C-A>')
 --- ```
 ---
 ---
---- @param str string String to be converted.
---- @param info boolean? Also returns a normalized
---- detailed info about the key as a second return value.
---- @return string
---- @return vim.keycode.info[]? List of dicts where
----   each dict represents a key chord, and has fields:
+--- @param keys string Keys in [key-notation].
+--- @param info boolean? Also return key-chord info.
+--- @return string # Internal bytes representation of the given `keys`.
+--- @return vim.keycode.chord[]? # List of parsed key-chords, each with fields:
 --- @see |nvim_replace_termcodes()|
-function vim.keycode(str, info)
+--- @see |keytrans()|
+function vim.keycode(keys, info)
   if info then
-    local keycode = vim.keycode(str)
-    return keycode, vim._keyarg(keycode)
+    local keycode = vim.keycode(keys)
+    return keycode, vim._core.keyparse(keycode)
   else
-    return vim.api.nvim_replace_termcodes(str, true, true, true)
+    return vim.api.nvim_replace_termcodes(keys, true, true, true)
   end
 end
 

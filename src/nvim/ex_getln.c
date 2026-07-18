@@ -2391,7 +2391,7 @@ static int command_line_handle_key(CommandLineState *s)
 end:
   // put the character in the command line
   if (IS_SPECIAL(s->c) || mod_mask != 0) {
-    put_on_cmdline(get_special_key_name(s->c, mod_mask, NULL), -1, true);
+    put_on_cmdline(get_special_key_name(s->c, mod_mask), -1, true);
   } else {
     int j = utf_char2bytes(s->c, IObuff);
     IObuff[j] = NUL;                // exclude composing chars

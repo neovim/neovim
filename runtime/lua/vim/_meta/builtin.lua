@@ -202,6 +202,12 @@ function vim._core.ui_flush() end
 --- @return boolean
 function vim._core.check_interrupt() end
 
+--- @nodoc
+--- Parses `keys` (internal representation) into a list of key chords. See |vim.keycode()|.
+--- @param keys string
+--- @return vim.keycode.chord[]
+function vim._core.keyparse(keys) end
+
 --- Subscribe to |ui-events|, similar to |nvim_ui_attach()| but receive events in a Lua callback.
 --- Used to implement screen elements like popupmenu or message handling in Lua.
 ---

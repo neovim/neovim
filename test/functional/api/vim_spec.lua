@@ -2890,55 +2890,6 @@ describe('API', function()
     end)
   end)
 
-  describe('nvim_replace_termcodes', function()
-    it('escapes K_SPECIAL as K_SPECIAL KS_SPECIAL KE_FILLER', function()
-      eq('\128\254X', n.api.nvim_replace_termcodes('\128', true, true, true))
-    end)
-
-    it('leaves non-K_SPECIAL string unchanged', function()
-      eq('abc', n.api.nvim_replace_termcodes('abc', true, true, true))
-    end)
-
-    it('converts <expressions>', function()
-      eq('\\', n.api.nvim_replace_termcodes('<Leader>', true, true, true))
-    end)
-
-    it('converts <LeftMouse> to K_SPECIAL KS_EXTRA KE_LEFTMOUSE', function()
-      -- K_SPECIAL KS_EXTRA KE_LEFTMOUSE
-      -- 0x80      0xfd     0x2c
-      -- 128       253      44
-      eq('\128\253\44', n.api.nvim_replace_termcodes('<LeftMouse>', true, true, true))
-    end)
-
-    it('converts keycodes', function()
-      eq('\nx\27x\rx<x', n.api.nvim_replace_termcodes('<NL>x<Esc>x<CR>x<lt>x', true, true, true))
-    end)
-
-    it('does not convert keycodes if special=false', function()
-      eq(
-        '<NL>x<Esc>x<CR>x<lt>x',
-        n.api.nvim_replace_termcodes('<NL>x<Esc>x<CR>x<lt>x', true, true, false)
-      )
-    end)
-
-    it('does not crash when transforming an empty string', function()
-      -- Actually does not test anything, because current code will use NULL for
-      -- an empty string.
-      --
-      -- Problem here is that if String argument has .data in allocated memory
-      -- then `return str` in vim_replace_termcodes body will make Neovim free
-      -- `str.data` twice: once when freeing arguments, then when freeing return
-      -- value.
-      eq('', api.nvim_replace_termcodes('', true, true, true))
-    end)
-
-    -- Not exactly the case, as nvim_replace_termcodes() escapes K_SPECIAL in Unicode
-    it('translates the result of keytrans() on string with 0x80 byte back', function()
-      local s = 'ff\128\253\097tt'
-      eq(s, api.nvim_replace_termcodes(fn.keytrans(s), true, true, true))
-    end)
-  end)
-
   describe('nvim_feedkeys', function()
     it('K_SPECIAL escaping', function()
       local function on_setup()

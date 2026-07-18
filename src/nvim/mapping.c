@@ -1223,7 +1223,7 @@ static char *translate_mapping(const char *const str_in, const char *const cpo_v
         str += 2;
       }
       if (IS_SPECIAL(c) || modifiers) {         // special key
-        ga_concat(&ga, get_special_key_name(c, modifiers, NULL));
+        ga_concat(&ga, get_special_key_name(c, modifiers));
         continue;         // for (str)
       }
     }
@@ -1948,7 +1948,7 @@ int put_escstr(FILE *fd, const char *strstart, int what)
         str += 2;
       }
       if (IS_SPECIAL(c) || modifiers) {         // special key
-        if (fputs(get_special_key_name(c, modifiers, NULL), fd) < 0) {
+        if (fputs(get_special_key_name(c, modifiers), fd) < 0) {
           return FAIL;
         }
         continue;
