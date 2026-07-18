@@ -40,7 +40,13 @@
 ^f_test_settime(
 ^f_test_srand_seed(
 ^f_test_void(
+^l\?alloc(size_t
+^l\?alloc[a-zA-Z0-9_]\+(size_t
+^mem_[a-zA-Z0-9_]\+(
 ^static int included_patches\[\] =
+^vim_free(
+^vim_mem_profile_dump(
+^vim_memset(
 _balloon[a-zA-Z0-9_]\+(
 _tabpanelopt(
 bevalterm[a-zA-Z0-9_]\+(
