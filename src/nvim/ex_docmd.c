@@ -5172,7 +5172,7 @@ static void ex_restart(exarg_T *eap)
   ui_flush();
   xfree(listen_addr);
 
-  set_vim_var_string(VV_EXITREASON, S_LEN("restart"));
+  set_vim_var_string(VV_EXITREASON, startreason, -1);
 
   char *quit_cmd_copy = NULL;
 
