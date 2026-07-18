@@ -246,7 +246,7 @@ func s:GetFilenameChecks() abort
     \ 'dircolors': ['.dir_colors', '.dircolors', '/etc/DIR_COLORS', 'any/etc/DIR_COLORS'],
     \ 'djot': ['file.dj', 'file.djot'],
     \ 'dnsmasq': ['/etc/dnsmasq.conf', '/etc/dnsmasq.d/file', 'any/etc/dnsmasq.conf', 'any/etc/dnsmasq.d/file'],
-    \ 'dockerfile': ['Containerfile', 'Dockerfile', 'dockerfile', 'file.Dockerfile', 'file.dockerfile', 'Dockerfile.debian', 'Containerfile.something'],
+    \ 'dockerfile': ['Containerfile', 'Dockerfile', 'dockerfile', 'file.Dockerfile', 'file.dockerfile', 'file.Containerfile', 'file.containerfile', 'Dockerfile.debian', 'Containerfile.something'],
     \ 'dosbatch': ['file.bat'],
     \ 'dosini': ['/etc/yum.conf', '/etc/nfs.conf', '/etc/nfsmount.conf', 'file.ini',
     \            'npmrc', '.npmrc', 'php.ini', 'php.ini-5', 'php.ini-file', 'php-fpm.conf', 'php-fpm.conf.default', 'www.conf', 'www.conf.default',
