@@ -486,7 +486,8 @@ function M.msg_show(kind, content, replace_last, _, append, id, trigger)
       M.cmd.ids, M.cmd.prev_msg = {}, ''
     elseif tgt == 'pager' then
       -- Position cursor at start of first or last message at bottom of window.
-      fn.win_execute(ui.wins.pager, 'norm! ' .. (enter_pager and 'gg0' or 'G0zb'))
+      local lnum = enter_pager and 1 or api.nvim_buf_line_count(ui.bufs.pager)
+      api.nvim_win_set_cursor(ui.wins.pager, { lnum, 0 })
     end
   end
 end
@@ -718,7 +719,7 @@ function M.set_pos(tgt)
         M.dialog_on_key = vim.on_key(dialog_on_key, M.dialog_on_key)
       elseif tgt == 'msg' then
         -- Ensure last line is visible and first line is at top of window.
-        fn.win_execute(ui.wins.msg, 'norm! Gzb')
+        api.nvim_win_set_cursor(ui.wins.msg, { api.nvim_buf_line_count(ui.bufs.msg), 0 })
       elseif tgt == 'pager' and not in_pager then
         enter_pager()
       end
