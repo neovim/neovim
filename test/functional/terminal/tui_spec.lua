@@ -418,7 +418,8 @@ describe('TUI :restart', function()
     end)
 
     local function assert_exitreason(expected)
-      local default = 'QuitPre:restart\nExitPre:restart\nVimLeavePre:restart\nVimLeave:restart\n'
+      local default =
+        'QuitPre:restart!\nExitPre:restart!\nVimLeavePre:restart!\nVimLeave:restart!\n'
       eq(expected or default, t.read_file(eventlog))
       os.remove(eventlog)
     end
@@ -486,6 +487,13 @@ describe('TUI :restart', function()
     ]]
 
     tt.feed_data(':set nomodified\013')
+    tt.feed_data(':restart\013')
+    screen:expect(s0)
+    assert_new_pid()
+    assert_exitreason('QuitPre:restart\nExitPre:restart\nVimLeavePre:restart\nVimLeave:restart\n')
+    assert_termguicolors_and_no_gui_running()
+
+    tt.feed_data(':set nomodified\013')
     -- Command is run on new server.
     tt.feed_data(":restart! put ='Hello1'\013")
     screen:expect(s1)
@@ -550,7 +558,7 @@ describe('TUI :restart', function()
     tt.feed_data('C\013')
     screen:expect({ any = vim.pesc('[No Name]') })
     -- Failed/cancelled restarts still fire QuitPre/ExitPre (but not VimLeave[Pre]).
-    assert_exitreason('QuitPre:restart\nExitPre:restart\n')
+    assert_exitreason('QuitPre:restart!\nExitPre:restart!\n')
 
     -- Check :restart! respects 'confirm' option.
     tt.feed_data(':set confirm\013')
@@ -560,7 +568,7 @@ describe('TUI :restart', function()
     screen:expect({ any = vim.pesc('[No Name]') })
     tt.feed_data(':set noconfirm\013')
     -- Failed/cancelled restarts still fire QuitPre/ExitPre (but not VimLeave[Pre]).
-    assert_exitreason('QuitPre:restart\nExitPre:restart\n')
+    assert_exitreason('QuitPre:restart!\nExitPre:restart!\n')
 
     -- Check ":confirm restart! <cmd>" on a modified buffer.
     tt.feed_data(":confirm restart! put ='Hello3'\013")
@@ -577,10 +585,13 @@ describe('TUI :restart', function()
 
     -- Check ":restart[!]" on a modified buffer.
     tt.feed_data('ithis will be removed\027')
-    for _, cmd in ipairs({ ':restart', ':restart!' }) do
+    for cmd, exitreason in pairs({
+      [':restart'] = 'restart',
+      [':restart!'] = 'restart!',
+    }) do
       tt.feed_data(cmd .. '\013')
       screen:expect({ any = vim.pesc('Vim(qall):E37: No write since last change') })
-      assert_exitreason('QuitPre:restart\nExitPre:restart\n')
+      assert_exitreason(('QuitPre:%s\nExitPre:%s\n'):format(exitreason, exitreason))
     end
 
     -- Check ":restart! +qall!" on a modified buffer.

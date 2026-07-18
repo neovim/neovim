@@ -256,6 +256,7 @@ vim.v.exiting = ...
 --- - ""          Not exiting, or exit was canceled.
 --- - "quit"      `:quit`, `:qall`, `:wq`, `ZZ`, `ZQ`, etc.
 --- - "restart"   `:restart`, `ZR`.
+--- - "restart!"  `:restart!`, `[count]``ZR`.
 ---
 --- Example:
 ---
