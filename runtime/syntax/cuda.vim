@@ -12,7 +12,7 @@ endif
 " Read the C++ syntax to start with
 runtime! syntax/cpp.vim
 
-" CUDA extentions.
+" CUDA extensions.
 " Reference: https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#c-language-extensions
 syn keyword cudaStorageClass	__device__ __global__ __host__ __managed__
 syn keyword cudaStorageClass	__constant__ __grid_constant__ __shared__
