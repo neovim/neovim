@@ -310,7 +310,10 @@ describe(':terminal buffer', function()
     screen:expect_unchanged()
     for i = 1, 10 do
       eq({ mode = 't', blocking = true }, api.nvim_get_mode())
-      vim.uv.sleep(15) -- Wait for the previously scheduled refresh timer to arrive
+      -- Wait for the previously scheduled refresh timer to arrive. Must comfortably exceed
+      -- terminal.c REFRESH_DELAY *plus* PTY echo round-trip; else the refresh isn't queued before
+      -- the next key and, since a partial mapping never drains main_loop.events, screen is stale.
+      vim.uv.sleep(50)
       feed('j') -- Refresh scheduled for the last 'j' and processed for the one before
       screen:expect(([[
         tty ready                                         |
@@ -343,7 +346,10 @@ describe(':terminal buffer', function()
     screen:expect_unchanged()
     for i = 1, 10 do
       eq({ mode = 'nt', blocking = true }, api.nvim_get_mode())
-      vim.uv.sleep(15) -- Wait for the previously scheduled refresh timer to arrive
+      -- Wait for the previously scheduled refresh timer to arrive. Must comfortably exceed
+      -- terminal.c REFRESH_DELAY *plus* PTY echo round-trip; else the refresh isn't queued before
+      -- the next key and, since a partial mapping never drains main_loop.events, screen is stale.
+      vim.uv.sleep(50)
       feed('j') -- Refresh scheduled for the last 'j' and processed for the one before
       screen:expect(([[
         tty ready                                         |
