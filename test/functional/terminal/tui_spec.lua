@@ -269,7 +269,10 @@ describe('TUI :detach', function()
     local _, uis_attached = child_session:request('nvim_list_uis')
     eq(2, #uis_attached)
 
-    tt.feed_data(':%detach\013')
+    -- Send the command in two steps, to avoid "Screen test succeeded immediately" warning.
+    tt.feed_data(':%detach')
+    screen:expect({ any = vim.pesc(':%detach^') })
+    tt.feed_data('\013')
     screen:expect([[
       Hello from detach^!                                |
       {100:~                                                 }|*3
@@ -457,7 +460,14 @@ describe('TUI :restart', function()
     -- ZR preserves screen state
     tt.feed_data('ZR')
     starttime, server_session = assert_restarted(starttime, server_session, server_pipe)
-    screen:expect({ any = 'foo' })
+    -- Match the full restored screen, to avoid "Screen test succeeded immediately" warning.
+    screen:expect([[
+      ^foo                                               |
+      ~                                                 |*3
+      {2:Xtest-restart-file              1,1            All}|
+                                                        |
+      {5:-- TERMINAL --}                                    |
+    ]])
 
     -- [1-8]ZR does not preserve screen state
     tt.feed_data('1ZR')
@@ -467,6 +477,9 @@ describe('TUI :restart', function()
     tt.feed_data('ifoo\027')
     tt.feed_data('ZR')
     screen:expect({ any = 'E37:' })
+    -- Dismiss hit-enter so the next "E37" assertion below doesn't match this one immediately.
+    tt.feed_data('\013')
+    screen:expect({ any = vim.pesc('[No Name]') })
     tt.feed_data('1ZR')
     screen:expect({ any = 'E37:' })
 
@@ -625,6 +638,8 @@ describe('TUI :restart', function()
         {5:-- TERMINAL --}                                    |
       ]])
       tt.feed_data('\013')
+      -- Return to a distinct state so the next screen:expect() doesn't "succeed immediately".
+      screen:expect({ any = vim.pesc('[No Name]') })
     end
 
     tt.feed_data('ithis will be removed\027')
@@ -669,7 +684,10 @@ describe('TUI :restart', function()
       [':restart'] = 'restart',
       [':restart!'] = 'restart!',
     }) do
-      tt.feed_data(cmd .. '\013')
+      tt.feed_data(cmd)
+      -- Assert the command-line echo so the E37 assertion below doesn't "succeed immediately".
+      screen:expect({ any = vim.pesc(cmd) })
+      tt.feed_data('\013')
       screen:expect({ any = vim.pesc('Vim(qall):E37: No write since last change') })
       assert_exitreason(('QuitPre:%s\nExitPre:%s\n'):format(exitreason, exitreason))
     end
