@@ -93,7 +93,7 @@ getkey:
     }
 
 #ifdef NVIM_LOG_DEBUG
-    char *keyname = key == K_EVENT ? "K_EVENT" : get_special_key_name(key, mod_mask);
+    char *keyname = key == K_EVENT ? "K_EVENT" : get_special_key_name(key, mod_mask, NULL);
     DLOG("input: %s", keyname);
 #endif
 

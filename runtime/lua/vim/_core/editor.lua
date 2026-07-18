@@ -1260,6 +1260,23 @@ function vim.print(...)
   return vim._print(false, ...)
 end
 
+--- @class vim.keycode.info
+--- @inlinedoc
+---
+--- The key chord normalized without modifiers.
+--- @field key string
+---
+--- Non-normalized version of key chord,
+--- only present when it differs from {key}.
+--- Example: `lt` and `<`.
+--- @field key_orig string?
+---
+--- The original key chord with modifiers.
+--- @field key_raw string
+---
+--- A list of single character modifiers of the key.
+--- @field mod ('M'|'T'|'C'|'S'|'2'|'3'|'4'|'D')[]
+
 --- Translates keycodes.
 ---
 --- Example:
@@ -1269,11 +1286,21 @@ end
 --- vim.g.mapleader = k'<bs>'
 --- ```
 ---
+---
 --- @param str string String to be converted.
+--- @param info boolean? Also returns a normalized
+--- detailed info about the key as a second return value.
 --- @return string
+--- @return vim.keycode.info[]? List of dicts where
+---   each dict represents a key chord, and has fields:
 --- @see |nvim_replace_termcodes()|
-function vim.keycode(str)
-  return vim.api.nvim_replace_termcodes(str, true, true, true)
+function vim.keycode(str, info)
+  if info then
+    local keycode = vim.keycode(str)
+    return keycode, vim._keyarg(keycode)
+  else
+    return vim.api.nvim_replace_termcodes(str, true, true, true)
+  end
 end
 
 --- @param server_addr string
