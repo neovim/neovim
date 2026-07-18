@@ -254,8 +254,8 @@ int handle_x_keys(const int key)
   return key;
 }
 
-/// @return  a string which contains the name of the given key when the given modifiers are down.
-char *get_special_key_name(int c, int modifiers, struct keycode_data *data)
+/// Gets a key "chord" (key + modifiers) as a string, and optionally as structured `data`.
+char *get_special_key(int c, int modifiers, struct keychord *data)
 {
   static char string[MAX_KEY_NAME_LEN + 1];
   bool is_ascii_ctrl = false;
@@ -298,7 +298,7 @@ char *get_special_key_name(int c, int modifiers, struct keycode_data *data)
   }
 
   if (data) {
-    data->modifiers = 0;
+    data->mods = 0;
   }
 
   // translate the modifier into a string
@@ -309,7 +309,7 @@ char *get_special_key_name(int c, int modifiers, struct keycode_data *data)
       string[idx++] = '-';
 
       if (data) {
-        data->modifiers |= mod_mask_table[i].mod_flag;
+        data->mods |= mod_mask_table[i].mod_flag;
       }
     }
   }
@@ -317,7 +317,7 @@ char *get_special_key_name(int c, int modifiers, struct keycode_data *data)
   if (table_idx < 0) {          // unknown special key, may output t_xx
     if (IS_SPECIAL(c)) {
       if (data) {
-        data->key_orig = (String){ NULL, 0 };
+        data->key_alt = (String){ NULL, 0 };
         data->key = (String){ &string[idx], 4 };
       }
 
@@ -331,14 +331,14 @@ char *get_special_key_name(int c, int modifiers, struct keycode_data *data)
       if (len == 1 && vim_isprintc(c)) {
         if (data) {
           if ('A' <= c && c <= 'Z') {
-            data->_key_mem = (char)c + 32;
-            data->key = (String){ &data->_key_mem, 1 };
+            data->key_mem = (char)c + 32;
+            data->key = (String){ &data->key_mem, 1 };
             if (!is_ascii_ctrl) {
-              data->modifiers |= MOD_MASK_SHIFT;
+              data->mods |= MOD_MASK_SHIFT;
             }
-            data->key_orig = (String){ &string[idx], (size_t)len };
+            data->key_alt = (String){ &string[idx], (size_t)len };
           } else {
-            data->key_orig = (String){ NULL, 0 };
+            data->key_alt = (String){ NULL, 0 };
             data->key = (String){ &string[idx], (size_t)len };
           }
         }
@@ -347,7 +347,7 @@ char *get_special_key_name(int c, int modifiers, struct keycode_data *data)
       } else if (len > 1) {
         if (data) {
           data->key = (String){ &string[idx], (size_t)len };
-          data->key_orig = (String){ NULL, 0 };
+          data->key_alt = (String){ NULL, 0 };
         }
 
         idx += utf_char2bytes(c, string + idx);
@@ -355,9 +355,9 @@ char *get_special_key_name(int c, int modifiers, struct keycode_data *data)
         char *s = transchar(c);
 
         if (data) {
-          data->_key_mem = (char)c;
-          data->key = (String){ &data->_key_mem, 1 };
-          data->key_orig = (String){ &string[idx], strlen(s) };
+          data->key_mem = (char)c;
+          data->key = (String){ &data->key_mem, 1 };
+          data->key_alt = (String){ &string[idx], strlen(s) };
         }
 
         while (*s) {
@@ -370,12 +370,12 @@ char *get_special_key_name(int c, int modifiers, struct keycode_data *data)
 
     if (data) {
       if (0 <= c && c <= 0x7f) {
-        data->_key_mem = (char)c;
-        data->key = (String){ &data->_key_mem, 1 };
-        data->key_orig = *s;
+        data->key_mem = (char)c;
+        data->key = (String){ &data->key_mem, 1 };
+        data->key_alt = *s;
       } else {
         data->key = *s;
-        data->key_orig = (String){ NULL, 0 };
+        data->key_alt = (String){ NULL, 0 };
       }
     }
 
@@ -388,6 +388,12 @@ char *get_special_key_name(int c, int modifiers, struct keycode_data *data)
   string[idx] = NUL;
 
   return string;
+}
+
+/// @return  String representing the key "chord" (key + modifiers).
+char *get_special_key_name(int c, int modifiers)
+{
+  return get_special_key(c, modifiers, NULL);
 }
 
 /// Try translating a <> name ("keycode").

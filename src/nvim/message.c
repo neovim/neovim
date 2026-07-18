@@ -2072,13 +2072,14 @@ char *str2special_arena(const char *const str, const bool replace_spaces,
 ///                             lhs of mapping and keytrans(), but not rhs.
 /// @param[in]  replace_others  kTrue/kNone: Convert `<` into `<lt>`.
 ///                             kTrue: Convert `|` into `<Bar>`, `\` into `<Bslash>`.
+/// @param[out]  data  If non-NULL, gets structured info about the key chord.
 ///
 /// @return Converted key code, in a static buffer. Buffer is always one and the
 ///         same, so save converted string somewhere before running str2special
 ///         for the second time.
 ///         On illegal byte return a string with only that byte.
 const char *str2special(const char **const sp, const bool replace_spaces,
-                        const TriState replace_others, struct keycode_data *data)
+                        const TriState replace_others, struct keychord *data)
   FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 {
   static char buf[7];
@@ -2089,9 +2090,9 @@ const char *str2special(const char **const sp, const bool replace_spaces,
     const char *const p = mb_unescape(sp);
     if (p != NULL) {
       if (data) {
-        data->modifiers = 0;
+        data->mods = 0;
         data->key = (String){ (char *)p, strlen(p) };
-        data->key_orig = (String){ NULL, 0 };
+        data->key_alt = (String){ NULL, 0 };
       }
 
       return p;
@@ -2140,19 +2141,19 @@ const char *str2special(const char **const sp, const bool replace_spaces,
       || (replace_spaces && c == ' ')
       || (replace_others != kFalse && c == '<')
       || (replace_others == kTrue && (c == '|' || c == '\\'))) {
-    return get_special_key_name(c, modifiers, data);
+    return get_special_key(c, modifiers, data);
   }
 
   if (data) {
-    data->modifiers = 0;
+    data->mods = 0;
     if ('A' <= c && c <= 'Z') {
-      data->_key_mem = (char)c + 32;
-      data->key = (String){ &data->_key_mem, 1 };
-      data->modifiers |= MOD_MASK_SHIFT;
-      data->key_orig = (String){ buf, 1 };
+      data->key_mem = (char)c + 32;
+      data->key = (String){ &data->key_mem, 1 };
+      data->mods |= MOD_MASK_SHIFT;
+      data->key_alt = (String){ buf, 1 };
     } else {
       data->key = (String){ buf, 1 };
-      data->key_orig = (String){ NULL, 0 };
+      data->key_alt = (String){ NULL, 0 };
     }
   }
 

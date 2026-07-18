@@ -1271,32 +1271,45 @@ vim.inspect()                                                  *vim.inspect()*
       • https://github.com/kikito/inspect.lua
       • https://github.com/mpeterv/vinspect
 
-vim.keycode({str}, {info})                                     *vim.keycode()*
-    Translates keycodes.
+vim.keycode({keys}, {info})                                    *vim.keycode()*
+    Converts keys from |key-notation| to the internal encoding. Optionally
+    returns structured key-chord info as retval 2.
 
-    Example: >lua
+    Inverse of |keytrans()|, which converts the internal encoding back to
+    |key-notation|.
+
+    Examples: >lua
         local k = vim.keycode
         vim.g.mapleader = k'<bs>'
+
+        -- Split a key sequence into chords, e.g. to inspect modifiers.
+        local _, chords = vim.keycode('<C-w>v', true)
+        assert(chords[1].key == 'w' and chords[1].mod[1] == 'C')
+
+        -- keytrans() is the inverse: internal encoding => key-notation.
+        assert(vim.fn.keytrans(vim.keycode('<C-a>')) == '<C-A>')
 <
 
     Parameters: ~
-      • {str}   (`string`) String to be converted.
-      • {info}  (`boolean?`) Also returns a normalized detailed info about the
-                key as a second return value.
+      • {keys}  (`string`) Keys in |key-notation|.
+      • {info}  (`boolean?`) Also return key-chord info.
 
     Return (multiple): ~
-        (`string`)
-        (`table?`) List of dicts where each dict represents a key chord, and
-        has fields:
-        • {key} (`string`) The key chord normalized without modifiers.
-        • {key_orig} (`string?`) Non-normalized version of key chord, only
-          present when it differs from {key}. Example: `lt` and `<`.
-        • {key_raw} (`string`) The original key chord with modifiers.
+        (`string`) Internal bytes representation of the given `keys`.
+        (`table?`) List of parsed key-chords, each with fields:
+        • {key} (`string`) Key without modifiers. Example: `<C-A>` has `key`
+          `a`.
+        • {key_alt} (`string?`) Alternative spelling of `key`, or nil if There
+          Is No Alternative (TINA). Example: `key="<"` has `key_alt="lt"`.
+        • {keys} (`string`) Full key-chord in canonical key-notation (as
+          produced by |keytrans()|), including modifiers. Example: `<A-f>` has
+          `keys="<M-f>"`.
         • {mod} (`('M'|'T'|'C'|'S'|'2'|'3'|'4'|'D')[]`) A list of single
           character modifiers of the key.
 
     See also: ~
       • |nvim_replace_termcodes()|
+      • |keytrans()|
 
 vim.lua_omnifunc({find_start})                            *vim.lua_omnifunc()*
     Omnifunc for completing Lua values from the runtime Lua interpreter,
