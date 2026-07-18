@@ -53,28 +53,6 @@ To disable the built-in directory browser, set this before startup: >lua
 	vim.g.loaded_nvim_dir_plugin = 1
 <
 
-Replacing the directory browser                         *dir-replace-browser*
-
-To use another directory browser for the current session, delete the
-`nvim.dir` autocommand group on or after |VimEnter| and handle |FileType| "directory":
->lua
-	vim.api.nvim_del_augroup_by_name('nvim.dir')
-	vim.api.nvim_create_autocmd('FileType', {
-	  pattern = 'directory',
-	  callback = function(args)
-	    require('my_browser').open(args.buf, vim.api.nvim_buf_get_name(args.buf))
-	  end,
-	})
-<
-This stops the built-in directory-opening autocommands. The plugin and its
-mappings remain loaded.
-
-Define replacement keymaps explicitly, for example: >lua
-	vim.keymap.set('n', '-', function()
-	  require('my_browser').open_parent()
-	end)
-<
-
 Mappings:                                                       *dir-mappings*
 >
 	-	Open the parent directory of the current file or directory.
@@ -99,6 +77,29 @@ after use: >vim
 	autocmd FileType directory setlocal bufhidden=delete
 <
 Use "wipe" to discard all buffer state; see 'bufhidden'.
+
+
+Replacing the directory browser                                  *dir-disable*
+
+To use another directory browser for the current session, delete the
+`nvim.dir` autocommand group on or after |VimEnter| and handle |FileType| "directory":
+>lua
+	vim.api.nvim_del_augroup_by_name('nvim.dir')
+	vim.api.nvim_create_autocmd('FileType', {
+	  pattern = 'directory',
+	  callback = function(args)
+	    require('my_browser').open(args.buf, vim.api.nvim_buf_get_name(args.buf))
+	  end,
+	})
+<
+This stops the built-in directory-opening autocommands. The plugin and its
+mappings remain loaded.
+
+Define replacement keymaps explicitly, for example: >lua
+	vim.keymap.set('n', '-', function()
+	  require('my_browser').open_parent()
+	end)
+<
 
 ==============================================================================
 Builtin plugin: difftool                                            *difftool*

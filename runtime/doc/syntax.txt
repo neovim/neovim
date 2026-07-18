@@ -5392,7 +5392,7 @@ NormalFloat	Normal text in floating windows.
 FloatBorder	Border of floating windows.
 							*hl-FloatShadow*
 FloatShadow	Blended areas when border is "shadow".
-							*hl-FLoatShadowThrough*
+							*hl-FloatShadowThrough*
 FloatShadowThrough
 		Shadow corners when border is "shadow".
 							*hl-FloatTitle*

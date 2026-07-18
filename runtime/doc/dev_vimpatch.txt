@@ -10,15 +10,15 @@ patches in order to avoid duplicate work. Run `vim-patch.sh` to see the status
 of Vim patches: >bash
     ./scripts/vim-patch.sh -l
 <
-Everyone is welcome to |dev-vimpatch-pull-requests| for relevant Vim patches,
-but some types of patches are |dev-vimpatch-not-applicable|. See
-|dev-vimpatch-quickstart| to get started immediately.
+Everyone is welcome to create a |dev-vimpatch-pr| for relevant Vim patches,
+but some types of patches are |dev-vimpatch-na|. See |dev-vimpatch-quickstart|
+to get started immediately.
 
 
                                          Type |gO| to see the table of contents.
 
 ==============================================================================
-QUICKSTART                                        *dev-vimpatch-quickstart*
+QUICKSTART                                           *dev-vimpatch-quickstart*
 
 1. Pull the Nvim source: >bash
      git clone https://github.com/neovim/neovim.git
@@ -29,7 +29,7 @@ QUICKSTART                                        *dev-vimpatch-quickstart*
 4. Run `./scripts/vim-patch.sh -p 8.0.0123`
 5. Follow the instructions given by the script.
 
-NOTES ~
+NOTES
 
 - It's strongly recommended to work on the oldest missing patch, because
   later patches might depend on the changes.
@@ -44,7 +44,7 @@ NOTES ~
     ./scripts/vim-patch.sh -L --grep quickfix -- src
 <
 ==============================================================================
-PULL REQUESTS                                  *dev-vimpatch-pull-requests*
+PULL REQUESTS                                                *dev-vimpatch-pr*
 
 Note: vim-patch.sh automates these steps for you. Use it!
 
@@ -64,16 +64,16 @@ Reviewers: hint for reviewing `runtime/` patches
 https://github.com/neovim/neovim/pull/1744#issuecomment-68202876
 
 ==============================================================================
-NA (NOT APPLICABLE) PATCHES                    *dev-vimpatch-not-applicable*
+NA (NOT APPLICABLE) PATCHES                                  *dev-vimpatch-na*
 
-Many Vim patches are not applicable to Nvim. If you find NA patches, visit an
-open "version.c: update" pull request
+Most Vim patches are not applicable to Nvim. If you find NA patches, visit an
+the latest "version.c: update" pull request
 https://github.com/neovim/neovim/pulls?q=is%3Apr+author%3Aapp%2Fgithub-actions+version.c+is%3Aopen
 and mention the NA patches in a comment (please edit/update one comment,
 rather than adding a new comment for each patch).
 
-If there are no open `version.c: update` pull requests, include NA patches in
-a commit message in the following format:
+Or if there is no open `version.c: update` pull request, include NA patches in
+a commit message in this format:
 >
     vim-patch:<version-or-commit>
     vim-patch:<version-or-commit>
@@ -82,73 +82,42 @@ a commit message in the following format:
 where `<version-or-commit>` is a valid Vim version (like `8.0.0123`) or
 commit-id (SHA). Each patch is on a separate line.
 
-It is preferred to include NA patches by squashing it in applicable Vim
-patches, especially if the Vim patches are related. First line of the commit
-message should be from the applicable Vim patch.
->
-    ./scripts/vim-patch -p <na-patch>
-    ./scripts/vim-patch -p <na-patch>
-    ...
-    ./scripts/vim-patch -P <patch>
-    git rebase -i master
-<
-Example:
-https://github.com/neovim/neovim/commit/00f60c2ce78fc1280e93d5a36bc7b2267d5f4ac6
+Example: https://github.com/neovim/neovim/commit/00f60c2ce78fc1280e93d5a36bc7b2267d5f4ac6
 
-TYPES OF "NOT APPLICABLE" VIM PATCHES ~
+------------------------------------------------------------------------------
+HOW TO DECIDE IF A VIM-PATCH IS WANTED
 
-- Unwanted features:
-  - "modelinestrict" https://github.com/neovim/neovim/issues/38985
-  - "tabpanel"
+Legacy Vim is becoming much less relevant to Nvim: we expect to decline the
+majority of their patches. Thus this is an "allow-list" instead of
+a "deny-list". Generally, only modules explicitly noted in the "OWNED BY VIM"
+list below, are in-scope; everything else should be marked "N/A".
+
+OWNED BY VIM
+
+- quickfix
+- regex
+- runtime files
+
+Everything else is owned by Nvim. Most of Vim's "bug fixes" for e.g.
+buffer/window behavior, or the events/autocmds subysytem, or "getchar" (input
+engine), just aren't relevant to Nvim anymore, because we've significantly
+enhanced and redesigned those subsystems to make them simpler.
+
+UNWANTED VIM-PATCHES
+
+- "channel"
+- "job"
+- "modelinestrict" https://github.com/neovim/neovim/issues/38985
+- "tabpanel"
+- "terminal"
 - Vim9script features, and anything related to `:scriptversion`. (Nvim
-  supports Vimscript version 1 only.) Be aware that patches labelled `Vim9:`
-  may still contain applicable fixes to other parts of the codebase, so these
-  patch need to be checked individually.
-- Updates to `testdir/Makefile` are usually NA because the Makefile implicitly
-  finds
-  https://github.com/neovim/neovim/commit/8a677f8a4bff6005fa39f090c14e970c3dfdbe6e#diff-b3c6ad6680a25a1b42095879e3a87104R52
-  all `test_*.vim` files.
-- Compiler warning fixes: Nvim strives to have no warnings at all, and has a
-  very different build system from Vim.
-    - Note: Coverity fixes in Vim are relevant to Nvim.
-- `*.proto` changes: Nvim autogenerates function prototypes
-- `#ifdef` tweaking: For example, Vim decided to enable `FEAT_VISUAL` for all
-  platforms - but Nvim already does that. Adding new `FEAT_` guards also isn't
-  relevant to Nvim.
-- Legacy system support: Fixes for legacy systems such as Amiga, OS/2 Xenix,
-  Mac OS 9, Windows older than XP SP2, are not needed because they are not
-  supported by Nvim.
-    - NA files: `src/Make_*`, `src/testdir/Make__*`
-- `if_*.c` changes: `if_python.c` et. al. were removed.
-- Most `term.c` changes: the Nvim TUI uses `libtermkey` to read terminal sequences;
-  Note: `replace_termcodes()` is applicable and moved to `src/nvim/keycodes.c`.
-- `job` patches: incompatible API and implementation
-    - NA files: `src/channel_*`, `src/job_*`, `src/testdir/test_channel_*`,
-      `src/testdir/test_job_*`
-- `:terminal` patches that modify NA files: incompatible API and
-  implementation
-    - NA files: `src/terminal_*`, `src/testdir/test_terminal_*`
-- `defaults.vim` patches
-- Most GUI-related changes: Nvim GUIs are implemented external to the core C
-  codebase.
-    - NA files: `src/gui_*`, `src/gvim_*`, `src/GvimExt/*`, `src/testdir/test_gui*`
-- `balloon` changes: Nvim does not support balloon feature
-    - NA files: `src/beval_*`, `src/testdir/test_balloon_*`
-- Screendump tests from `test_popupwin.vim`, `test_popupwin_textprop.vim`:
-  https://github.com/neovim/neovim/pull/12741#issuecomment-704677141
-- json changes: incompatible API https://github.com/neovim/neovim/pull/4131
-    - NA files: `src/json*`, `src/testdir/test_json.vim`
-- `test_restricted.vim` restricted mode is removed in
-  https://github.com/neovim/neovim/pull/11996
-- Many tests in `test_prompt_buffer.vim` require incompatible Vim features
-  such as `channel`; they should still be included, but skipped
-- Non-runtime documentation: Moved to `BUILD.md`, `INSTALL.md`.
-    - NA files: `Filelist`, `README`, `INSTALL`,
-- Anything else might be relevant; err on the side of caution, and post an
-  issue if you aren't sure.
+  supports Vimscript version 1 only.)
+- Fixes for build warnings.
+- GUI-related changes.
+- Most new Vimscript functions or Ex commands (with rare exceptions).
 
 ==============================================================================
-VERSION.C                                          *dev-vimpatch-version.c*
+VERSION.C                                             *dev-vimpatch-version.c*
 
 The list of Vim patches in `src/nvim/version.c` is automatically updated
 https://github.com/neovim/neovim/pull/7780 based on the presence of
@@ -161,7 +130,7 @@ https://github.com/neovim/neovim/pull/7780 based on the presence of
   `vim-patch:8.0.1206`, not `vim-patch:<hash>`.
 
 ==============================================================================
-CODE DIFFERENCES                            *dev-vimpatch-code-differences*
+CODE DIFFERENCES                                           *dev-vimpatch-diff*
 
 The following functions have been removed or deprecated in favor of newer
 alternatives. See `memory.c`
@@ -254,7 +223,7 @@ replaced with an ordinary function call `utfc_ptr2len(...)`.
   Nvim. (also see https://github.com/neovim/neovim/pull/16936)
 
 ==============================================================================
-LIST MANAGEMENT                              *dev-vimpatch-list-management*
+LIST MANAGEMENT                                       *dev-vimpatch-list-impl*
 
 Management of lists (types `list_T` and `listitem_T` from vim) was changed in
 https://github.com/neovim/neovim/pull/7708/. There is a lint against the "old"
@@ -291,7 +260,7 @@ Declarations for the table
 For more details and some more advanced usage, see `typval.h` and `typval.c`.
 
 ==============================================================================
-DOCUMENTATION DIFFERENCES          *dev-vimpatch-documentation*
+DOCUMENTATION DIFFERENCES                                   *dev-vimpatch-doc*
 
 The following should be removed from all imported documentation, and not be
 used in new documentation:
@@ -300,7 +269,7 @@ used in new documentation:
   made non-optional (see https://github.com/neovim/neovim/wiki/Introduction)
 
 ==============================================================================
-FILETYPE DETECTION                 *dev-vimpatch-filetype*
+FILETYPE DETECTION                                     *dev-vimpatch-filetype*
 
 Nvim's filetype detection behavior matches Vim, but is implemented as part of
 |vim.filetype| (see `$VIMRUNTIME/lua/vim/filetype.lua`). The logic is encoded in

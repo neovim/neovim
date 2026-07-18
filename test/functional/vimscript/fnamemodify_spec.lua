@@ -26,7 +26,7 @@ describe('fnamemodify()', function()
     n.rmdir('foo')
   end)
 
-  it('handles the root path', function()
+  it('root path', function()
     local root = assert(t.fix_slashes(n.pathroot()))
     eq(root, fnamemodify([[/]], ':p:h'))
     eq(root, fnamemodify([[/]], ':p'))
@@ -54,7 +54,7 @@ describe('fnamemodify()', function()
     end
   end)
 
-  it('handles an unknown user in a fast event #40707', function()
+  it('~user in a fast event #40707', function()
     exec_lua([[
       local timer = assert(vim.uv.new_timer())
       timer:start(0, 0, function()
@@ -72,11 +72,11 @@ describe('fnamemodify()', function()
     eq(expected, exec_lua('return _G.result'))
   end)
 
-  it(':8 works', function()
+  it(':8 (DOS 8.3 short format)', function()
     eq('Xtest-fnamemodify.txt', fnamemodify([[Xtest-fnamemodify.txt]], ':8'))
   end)
 
-  it('handles examples from ":help filename-modifiers"', function()
+  it('examples from ":help filename-modifiers"', function()
     -- src/ cannot be a symlink in this test.
     n.api.nvim_set_current_dir(t.paths.test_source_path)
 
@@ -105,7 +105,7 @@ describe('fnamemodify()', function()
     eq('src/main.c', fnamemodify(filename, ':s?version?main?'))
   end)
 
-  it('handles advanced examples from ":help filename-modifiers"', function()
+  it('advanced examples from ":help filename-modifiers"', function()
     local filename = 'src/version.c.gz'
 
     eq('gz', fnamemodify(filename, ':e'))
@@ -121,7 +121,7 @@ describe('fnamemodify()', function()
     eq('src/version', fnamemodify(filename, ':r:r:r'))
   end)
 
-  it('handles :h', function()
+  it(':h', function()
     -- generic path
     eq('.', fnamemodify('hello.txt', ':h'))
     -- Repeated ":h" on a bare name: the first ":h" replaces the buffer with ".", the
@@ -183,27 +183,27 @@ describe('fnamemodify()', function()
     end
   end)
 
-  it('handles :t', function()
+  it(':t', function()
     eq('hello.txt', fnamemodify('hello.txt', ':t'))
     eq('hello.txt', fnamemodify('path/to/hello.txt', ':t'))
   end)
 
-  it('handles :r', function()
+  it(':r', function()
     eq('hello', fnamemodify('hello.txt', ':r'))
     eq('path/to/hello', fnamemodify('path/to/hello.txt', ':r'))
   end)
 
-  it('handles :e', function()
+  it(':e', function()
     eq('txt', fnamemodify('hello.txt', ':e'))
     eq('txt', fnamemodify('path/to/hello.txt', ':e'))
   end)
 
-  it('handles regex replacements', function()
+  it('regex replacements', function()
     eq('content-there-here.txt', fnamemodify('content-here-here.txt', ':s/here/there/'))
     eq('content-there-there.txt', fnamemodify('content-here-here.txt', ':gs/here/there/'))
   end)
 
-  it('handles shell escape', function()
+  it('shell escape', function()
     local expected
 
     if is_os('win') then

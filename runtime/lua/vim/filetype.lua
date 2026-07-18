@@ -2964,6 +2964,7 @@ end
 --- the filename is matched against the list of |lua-pattern|s (sorted by priority)
 --- until a match is found. Lastly, if pattern matching does not find a
 --- filetype, then the file extension is used.
+--- Extension mappings match only the text after the final dot in the filename.
 ---
 --- The filetype can be either a string (in which case it is used as the
 --- filetype directly) or a function. If a function, it takes the full path and

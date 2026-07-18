@@ -96,7 +96,7 @@
 ///      - "NE" northeast
 ///      - "SW" southwest
 ///      - "SE" southeast
-///   - border: (`string|string[]`) (defaults to 'winborder' option) Window border. The string form
+///   - border: (`string|string[]`, default: 'winborder' option) Window border. The string form
 ///     accepts the same values as the 'winborder' option. The array form must have a length of
 ///     eight or any divisor of eight, specifying the chars that form the border in a clockwise
 ///     fashion starting from the top-left corner. For example, the double-box style can be
@@ -136,26 +136,20 @@
 ///       configuration together with this.
 ///   - fixed: If true when anchor is NW or SW, the float window
 ///            would be kept fixed even if the window would be truncated.
-///   - focusable: Enable focus by user actions (wincmds, mouse events).
-///       Defaults to true. Non-focusable windows can be entered by
-///       |nvim_set_current_win()|, or, when the `mouse` field is set to true,
-///       by mouse events. See |focusable|.
-///   - footer: (optional) Footer in window border, string or list.
-///       List should consist of `[text, highlight]` tuples.
-///       If string, or a tuple lacks a highlight, the default highlight group is `FloatFooter`.
-///   - footer_pos: Footer position. Must be set with `footer` option.
-///       Value can be one of "left", "center", or "right".
-///       Default is `"left"`.
+///   - focusable: (default: true) Enable focus by user actions (wincmds, mouse events).
+///     Non-|focusable| windows can be entered by |nvim_set_current_win()|, or by mouse events if
+///     `mouse=true`.
+///   - footer: (`string|string[]?`) Footer in window border: string or list of `[text, highlight]`
+///     tuples. Default highlight group is `FloatFooter`.
+///   - footer_pos: (default: "left") Footer position. One of: "left", "center", "right". The
+///    `footer` field must be set also.
 ///   - height: Window height (in character cells). Minimum of 1.
 ///   - hide: Hides the floating window. |window-hidden|
-///   - mouse: Specify how this window interacts with mouse events.
-///       Defaults to `focusable` value.
-///       - If false, mouse events pass through this window.
-///       - If true, mouse events interact with this window normally.
+///   - mouse: (default: `focusable` value) If true, mouse events interact with the window
+///     normally; if false, they pass through to the window behind it.
 ///   - noautocmd: Block all autocommands for the duration of the call. Cannot be changed by
 ///     |nvim_win_set_config()|.
-///   - relative: Sets the window layout to "floating", placed at (row,col)
-///                 coordinates relative to:
+///   - relative: Sets the window layout to "floating", placed at (row,col) coordinates relative to:
 ///      - "cursor"     Cursor position in current window.
 ///      - "editor"     The global editor grid.
 ///      - "laststatus" 'laststatus' if present, or last row.
@@ -179,9 +173,8 @@
 ///   - title: (optional) Title in window border, string or list.
 ///       List should consist of `[text, highlight]` tuples.
 ///       If string, or a tuple lacks a highlight, the default highlight group is `FloatTitle`.
-///   - title_pos: Title position. Must be set with `title` option.
-///       Value can be one of "left", "center", or "right".
-///       Default is `"left"`.
+///   - title_pos: (default: "left") Title position. One of: "left", "center", "right". The `title`
+///     field must be set also.
 ///   - vertical: Split vertically |:vertical|.
 ///   - width: Window width (in character cells). Minimum of 1.
 ///   - win: |window-ID| target window. Can be in a different tab page. Determines the window to

@@ -178,8 +178,8 @@ DIAGNOSTICS
 • Configuring |diagnostic-signs| using |:sign-define| or |sign_define()|. Use
   the "signs" key of |vim.diagnostic.config()| instead.
 • vim.diagnostic functions:
-  • *vim.diagnostic.disable()*		Use |vim.diagnostic.enable()|
-  • *vim.diagnostic.is_disabled()*	Use |vim.diagnostic.is_enabled()|
+  • vim.diagnostic.disable()		Use |vim.diagnostic.enable()|
+  • vim.diagnostic.is_disabled()	Use |vim.diagnostic.is_enabled()|
   • Legacy signature: `vim.diagnostic.enable(buf:number, namespace:number)`
 
 LSP
@@ -287,38 +287,38 @@ HIGHLIGHTS
 LSP DIAGNOSTICS
 For each of the functions below, use the corresponding function in
 |vim.diagnostic| instead (unless otherwise noted). For example, use
-|vim.diagnostic.get()| instead of |vim.lsp.diagnostic.get()|.
+|vim.diagnostic.get()| instead of vim.lsp.diagnostic.get().
 
-• *vim.lsp.diagnostic.clear()*		Use |vim.diagnostic.hide()| instead.
-• *vim.lsp.diagnostic.disable()*          Use |vim.diagnostic.enable()| instead.
-• *vim.lsp.diagnostic.display()*	Use |vim.diagnostic.show()| instead.
-• *vim.lsp.diagnostic.enable()*
-• *vim.lsp.diagnostic.get()*
-• *vim.lsp.diagnostic.get_all()*	Use |vim.diagnostic.get()| instead.
-• *vim.lsp.diagnostic.get_count()*	Use |vim.diagnostic.count()| instead.
-• *vim.lsp.diagnostic.get_line_diagnostics()* Use |vim.diagnostic.get()| instead.
-• *vim.lsp.diagnostic.get_next()*
-• *vim.lsp.diagnostic.get_next_pos()*
-• *vim.lsp.diagnostic.get_prev()*
-• *vim.lsp.diagnostic.get_prev_pos()*
-• *vim.lsp.diagnostic.get_virtual_text_chunks_for_line()* No replacement. Use
+• vim.lsp.diagnostic.clear()		Use |vim.diagnostic.hide()| instead.
+• vim.lsp.diagnostic.disable()          Use |vim.diagnostic.enable()| instead.
+• vim.lsp.diagnostic.display()		Use |vim.diagnostic.show()| instead.
+• vim.lsp.diagnostic.enable()
+• vim.lsp.diagnostic.get()
+• vim.lsp.diagnostic.get_all()		Use |vim.diagnostic.get()| instead.
+• vim.lsp.diagnostic.get_count()	Use |vim.diagnostic.count()| instead.
+• vim.lsp.diagnostic.get_line_diagnostics() Use |vim.diagnostic.get()| instead.
+• vim.lsp.diagnostic.get_next()
+• vim.lsp.diagnostic.get_next_pos()
+• vim.lsp.diagnostic.get_prev()
+• vim.lsp.diagnostic.get_prev_pos()
+• vim.lsp.diagnostic.get_virtual_text_chunks_for_line() No replacement. Use
   options provided by |vim.diagnostic.config()| to customize virtual text.
-• *vim.lsp.diagnostic.goto_next()*
-• *vim.lsp.diagnostic.goto_prev()*
-• *vim.lsp.diagnostic.redraw()*		Use |vim.diagnostic.show()| instead.
-• *vim.lsp.diagnostic.save()*		Use |vim.diagnostic.set()| instead.
-• *vim.lsp.diagnostic.set_loclist()*	Use |vim.diagnostic.setloclist()| instead.
-• *vim.lsp.diagnostic.set_qflist()*	Use |vim.diagnostic.setqflist()| instead.
-• *vim.lsp.diagnostic.show_line_diagnostics()* Use |vim.diagnostic.open_float()| instead.
-• *vim.lsp.diagnostic.show_position_diagnostics()* Use |vim.diagnostic.open_float()| instead.
+• vim.lsp.diagnostic.goto_next()
+• vim.lsp.diagnostic.goto_prev()
+• vim.lsp.diagnostic.redraw()		Use |vim.diagnostic.show()| instead.
+• vim.lsp.diagnostic.save()		Use |vim.diagnostic.set()| instead.
+• vim.lsp.diagnostic.set_loclist()	Use |vim.diagnostic.setloclist()| instead.
+• vim.lsp.diagnostic.set_qflist()	Use |vim.diagnostic.setqflist()| instead.
+• vim.lsp.diagnostic.show_line_diagnostics() Use |vim.diagnostic.open_float()| instead.
+• vim.lsp.diagnostic.show_position_diagnostics() Use |vim.diagnostic.open_float()| instead.
 
 The following are deprecated without replacement. These functions are moved
 internally and are no longer exposed as part of the API. Instead, use
 |vim.diagnostic.config()| and |vim.diagnostic.show()|.
 
-• *vim.lsp.diagnostic.set_signs()*
-• *vim.lsp.diagnostic.set_underline()*
-• *vim.lsp.diagnostic.set_virtual_text()*
+• vim.lsp.diagnostic.set_signs()
+• vim.lsp.diagnostic.set_underline()
+• vim.lsp.diagnostic.set_virtual_text()
 
 LSP FUNCTIONS
 • *vim.lsp.buf.server_ready()*
