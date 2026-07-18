@@ -638,6 +638,7 @@ local extension = {
   ihe = 'hex',
   ihx = 'hex',
   mcs = 'hex',
+  hip = 'hip',
   hjson = 'hjson',
   m3u = 'hlsplaylist',
   m3u8 = 'hlsplaylist',

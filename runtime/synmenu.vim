@@ -261,6 +261,7 @@ an 50.50.170 &Syntax.HIJK.Hercules :cal SetSyn("hercules")<CR>
 an 50.50.180 &Syntax.HIJK.Hex\ dump.XXD :cal SetSyn("xxd")<CR>
 an 50.50.190 &Syntax.HIJK.Hex\ dump.Intel\ MCS51 :cal SetSyn("hex")<CR>
 an 50.50.200 &Syntax.HIJK.Hg\ commit :cal SetSyn("hgcommit")<CR>
+an 50.50.205 &Syntax.HIJK.HIP :cal SetSyn("hip")<CR>
 an 50.50.210 &Syntax.HIJK.Hollywood :cal SetSyn("hollywood")<CR>
 an 50.50.220 &Syntax.HIJK.HTML.HTML :cal SetSyn("html")<CR>
 an 50.50.230 &Syntax.HIJK.HTML.HTML\ with\ M4 :cal SetSyn("htmlm4")<CR>
