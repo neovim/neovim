@@ -173,8 +173,8 @@ describe('autoread file watcher', function()
   end)
 
   it("bumps 'busy' on each watched buffer while a reload is pending", function()
-    -- Use a longer debounce so we can sample 'busy' during pending autoreads.
-    n.exec_lua([[require('nvim.autoread')._set_debounce(100)]])
+    -- Use a long debounce-window so we can sample 'busy' during pending autoreads.
+    n.exec_lua([[require('nvim.autoread')._set_debounce(5000)]])
 
     local path1 = open_watched('a1\n')
     local buf1 = api.nvim_get_current_buf()
@@ -189,24 +189,24 @@ describe('autoread file watcher', function()
     write_file(path1, 'b1\n')
     write_file(path2, 'b2\n')
 
-    -- Confirm busy=1 on each buffer. Sample with vim.wait: each busy=1 pulse only lasts
-    -- ~debounce_ms. Track the 2 buffers independently: their debounce timers are separate,.
     eq(
       true,
       n.exec_lua(function(b1, b2)
-        local saw1, saw2 = false, false
         return vim.wait(2000, function()
-          saw1 = saw1 or vim.bo[b1].busy == 1
-          saw2 = saw2 or vim.bo[b2].busy == 1
-          return saw1 and saw2
+          return vim.bo[b1].busy == 1 and vim.bo[b2].busy == 1
         end, 5)
       end, buf1, buf2)
     )
 
+    -- A short debounce + fresh write lets the pending reload complete, clearing 'busy'.
+    n.exec_lua([[require('nvim.autoread')._set_debounce(10)]])
+    write_file(path1, 'c1\n')
+    write_file(path2, 'c2\n')
+
     -- Confirm busy=0 after the autoread.
     retry(nil, 3000, function()
-      eq({ 'b1' }, api.nvim_buf_get_lines(buf1, 0, -1, true))
-      eq({ 'b2' }, api.nvim_buf_get_lines(buf2, 0, -1, true))
+      eq({ 'c1' }, api.nvim_buf_get_lines(buf1, 0, -1, true))
+      eq({ 'c2' }, api.nvim_buf_get_lines(buf2, 0, -1, true))
       eq(0, api.nvim_get_option_value('busy', { buf = buf1 }))
       eq(0, api.nvim_get_option_value('busy', { buf = buf2 }))
     end)
