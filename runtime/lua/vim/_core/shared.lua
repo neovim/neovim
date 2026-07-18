@@ -1443,6 +1443,32 @@ function vim._defer_require(root, mod)
   })
 end
 
+--- @generic T
+--- @param tbl T
+--- @param root string
+--- @param mod table<string, any>
+--- @return T
+function vim._defer_require_into(tbl, root, mod)
+  local mt = getmetatable(tbl) or {}
+  local old_index = mt.__index
+
+  ---@param t table<string, any>
+  ---@param k string
+  mt.__index = function(t, k)
+    if not mod[k] then
+      if type(old_index) == 'table' then
+        return old_index[k]
+      end
+      return
+    end
+    local name = string.format('%s.%s', root, k)
+    t[k] = require(name)
+    return t[k]
+  end
+
+  return setmetatable(tbl, mt)
+end
+
 --- Creates a module alias/shim that lazy-loads a target module.
 ---
 --- Unlike `vim.defaulttable()` this also:

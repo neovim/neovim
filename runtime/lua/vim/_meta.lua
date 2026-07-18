@@ -76,6 +76,7 @@ local iter = require('vim.iter')
 -- LuaLS onto the fallback module shape above so `make luals` stays clean.
 ---@cast iter vim.IterModule
 vim.iter = iter
+vim.json = require('vim.json')
 vim.keymap = require('vim.keymap')
 vim.loader = require('vim.loader')
 vim.log = require('vim.log')
