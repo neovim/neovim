@@ -1168,7 +1168,12 @@ func Test_listdict_extend()
 
       LET l = [1, 2, 3]
       call extend(l, [4, 5, 6], -3)
-      call assert_equal([4, 5, 6, 1, 2,  3], l)
+      call assert_equal([4, 5, 6, 1, 2, 3], l)
+
+      LET l = [1, 2, 3]
+      call assert_equal([1, 2, 3], l->extend([]))
+      call assert_equal([1, 2, 3], l->extend(v:_null_list))
+      call assert_equal([1, 2, 3], l)
   END
   call CheckLegacyAndVim9Success(lines)
 
@@ -1198,6 +1203,11 @@ func Test_listdict_extend()
       LET d = {'a': 'A', 'b': 9}
       call extend(d, {'b': 0, 'c': 'C'}, "keep")
       call assert_equal({'a': 'A', 'b': 9, 'c': 'C'}, d)
+
+      LET d = {'a': 'A', 'b': 9}
+      call assert_equal({'a': 'A', 'b': 9}, d->extend({}))
+      call assert_equal({'a': 'A', 'b': 9}, d->extend(v:_null_dict))
+      call assert_equal({'a': 'A', 'b': 9}, d)
   END
   call CheckLegacyAndVim9Success(lines)
 
@@ -1241,6 +1251,11 @@ func Test_listdict_extendnew()
   call assert_equal([1, 2, 3], l)
   lockvar l
   call assert_equal([1, 2, 3, 4, 5], extendnew(l, [4, 5]))
+  let l2 = extendnew(l, v:_null_list)
+  call assert_equal([1, 2, 3], l2)
+  let l2 += [4]
+  call assert_equal([1, 2, 3, 4], l2)
+  call assert_equal([1, 2, 3], l)
 
   " Test extendnew() with dictionaries.
   let d = {'a': {'b': 'B'}}
@@ -1248,6 +1263,11 @@ func Test_listdict_extendnew()
   call assert_equal({'a': {'b': 'B'}}, d)
   lockvar d
   call assert_equal({'a': {'b': 'B'}, 'c': 'cc'}, extendnew(d, {'c': 'cc'}))
+  let d2 = extendnew(d, v:_null_dict)
+  call assert_equal({'a': {'b': 'B'}}, d2)
+  let d2['c'] = 'C'
+  call assert_equal({'a': {'b': 'B'}, 'c': 'C'}, d2)
+  call assert_equal({'a': {'b': 'B'}}, d)
 endfunc
 
 func s:check_scope_dict(x, fixed)

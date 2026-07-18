@@ -584,12 +584,6 @@ static void extend_dict(typval_T *argvars, const char *arg_errmsg, bool is_new, 
     assert(locked == true);
     return;
   }
-  dict_T *const d2 = argvars[1].vval.v_dict;
-  if (d2 == NULL) {
-    // Do nothing
-    tv_copy(&argvars[0], rettv);
-    return;
-  }
 
   if (!is_new && value_check_lock(d1->dv_lock, arg_errmsg, TV_TRANSLATE)) {
     return;
@@ -600,6 +594,11 @@ static void extend_dict(typval_T *argvars, const char *arg_errmsg, bool is_new, 
     if (d1 == NULL) {
       return;
     }
+  }
+
+  dict_T *const d2 = argvars[1].vval.v_dict;
+  if (d2 == NULL) {
+    goto theend;
   }
 
   const char *action = "force";
@@ -631,6 +630,7 @@ static void extend_dict(typval_T *argvars, const char *arg_errmsg, bool is_new, 
 
   tv_dict_extend(d1, d2, action);
 
+theend:
   if (is_new) {
     *rettv = (typval_T){
       .v_type = VAR_DICT,
@@ -651,7 +651,6 @@ static void extend_list(typval_T *argvars, const char *arg_errmsg, bool is_new, 
   bool error = false;
 
   list_T *l1 = argvars[0].vval.v_list;
-  list_T *const l2 = argvars[1].vval.v_list;
 
   if (!is_new && value_check_lock(tv_list_locked(l1), arg_errmsg, TV_TRANSLATE)) {
     return;
@@ -662,6 +661,11 @@ static void extend_list(typval_T *argvars, const char *arg_errmsg, bool is_new, 
     if (l1 == NULL) {
       return;
     }
+  }
+
+  list_T *const l2 = argvars[1].vval.v_list;
+  if (l2 == NULL) {
+    goto theend;
   }
 
   listitem_T *item;
@@ -684,6 +688,7 @@ static void extend_list(typval_T *argvars, const char *arg_errmsg, bool is_new, 
   }
   tv_list_extend(l1, l2, item);
 
+theend:
   if (is_new) {
     *rettv = (typval_T){
       .v_type = VAR_LIST,
