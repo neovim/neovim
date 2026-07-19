@@ -44,6 +44,10 @@ vim.api.nvim_create_autocmd('BufReadCmd', {
 
     local url = ev.file
     local archive_kind = archive_type(url)
+    if archive_kind == 'zip' and (vim.g.nvim_zip_plugin == true or vim.g.nvim_zip_plugin == 1) then
+      vim.notify('nvim.zip: remote zip archives are not supported', vim.log.levels.WARN)
+      return
+    end
 
     vim.notify(('Fetching %s …'):format(url), vim.log.levels.INFO)
 

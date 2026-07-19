@@ -1,0 +1,46 @@
+*zip.txt*    Nvim
+
+
+                            NVIM REFERENCE MANUAL
+
+
+Builtin plugin: zip.lua                                           *nvim-zip*
+
+zip.lua is an experimental, read-only browser for zip archives. It uses the
+builtin |dir| listing interface and requires the `unzip` executable.
+
+The legacy |zip| plugin remains enabled by default. To use zip.lua instead, set
+this before startup: >lua
+
+    vim.g.nvim_zip_plugin = true
+<
+                                                        *g:nvim_zip_plugin*
+When enabled, zip.lua handles zip-like files and the legacy zip plugin does not
+load. The module implementing zip.lua is private and is not a supported Lua API.
+
+ARCHIVE LISTINGS                                       *nvim-zip-listing*
+
+Editing a zip-like file opens a read-only listing. Directory entries can be
+opened to browse that level of the archive. File entries open as read-only
+`zipfile://{archive}::{member}` buffers.
+
+Mappings:                                               *nvim-zip-mappings*
+>
+    <CR>    Open the file or directory under the cursor.
+    -       Open the parent archive directory.
+    R       Reload the current archive directory.
+<
+At the archive root, "-" opens the containing filesystem directory.
+
+zip.lua recognizes the same zip-like extensions as the legacy plugin, including
+`zip`, `jar`, `apk`, `epub`, Office/OpenDocument formats, `whl`, `xpi`, `pkpass`,
+and `cbz`.
+
+LIMITATIONS                                          *nvim-zip-limitations*
+
+zip.lua does not update or extract archive members. It does not currently support
+PowerShell fallback, remote archives, custom backend commands, or the legacy
+`g:zip_*` configuration variables. Use the legacy |zip| plugin when those
+features are required.
+
+vim:tw=78:ts=8:noet:ft=help

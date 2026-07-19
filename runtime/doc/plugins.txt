@@ -26,6 +26,7 @@ Help-link		Loaded	Short description ~
 |matchit|		Yes	Extended |%| matching
 |matchparen|		Yes	Highlight matching pairs
 |netrw|			Yes	Reading and writing files over a network
+|nvim-zip|		No	Read-only zip archive browser
 |package-cfilter|	No	Filtering quickfix/location list
 |package-justify|	No	Justify text
 |package-nohlsearch|	No	Automatically run :nohlsearch
