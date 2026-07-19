@@ -910,4 +910,15 @@ func Test_netrw_open_backslash_file()
   bw!
 endfunc
 
+" :Explore without a [dir] argument should open the dir of the current file
+func Test_netrw_open_no_dir_arg()
+  let dir = tempname()
+  call mkdir(dir, 'pR')
+  call writefile([], dir . '/foo')
+  exe 'edit ' . dir . '/foo'
+  Explore
+  call assert_equal(fnamemodify(dir, ':p'), fnamemodify(b:netrw_curdir, ':p'))
+  bw!
+endfunc
+
 " vim:ts=8 sts=2 sw=2 et
