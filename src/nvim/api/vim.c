@@ -493,7 +493,7 @@ error:
 /// @param do_lt      Also translate [<lt>]. Ignored if `special` is false.
 /// @param special    Replace |keycodes|, e.g. [<CR>] becomes a "\r" char.
 String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt, Boolean special)
-  FUNC_API_SINCE(1) FUNC_API_RET_ALLOC
+  FUNC_API_SINCE(1) FUNC_API_FAST FUNC_API_RET_ALLOC
 {
   if (str.size == 0) {
     // Empty string

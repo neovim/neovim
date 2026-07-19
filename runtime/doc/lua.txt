@@ -1273,7 +1273,7 @@ vim.inspect()                                                  *vim.inspect()*
 
 vim.keycode({keys}, {info})                                    *vim.keycode()*
     Converts keys from |key-notation| to the internal encoding. Optionally
-    returns structured key-chord info as retval 2.
+    returns structured *key-chord* info as retval 2.
 
     Inverse of |keytrans()|, which converts the internal encoding back to
     |key-notation|.
@@ -1347,33 +1347,36 @@ vim.notify_once({msg}, {level}, {opts})                    *vim.notify_once()*
         (`boolean`) true if message was displayed, else false
 
 vim.on_key({fn}, {ns_id}, {opts})                               *vim.on_key()*
-    Adds Lua function {fn} with namespace id {ns_id} as a listener to every,
-    yes every, input key.
+    Registers function {fn} with |namespace| {ns_id} as a listener to every,
+    yes EVERY, input key.
 
-    The Nvim command-line option |-w| is related but does not support
-    callbacks and cannot be toggled dynamically.
+    To parse |key-chord|s, see |vim.keycode()|. Example: >lua
+        local keychords = vim.keycode(vim.fn.keytrans(key), true)
+<
+
+    The |-w| command-line option is related but does not support callbacks and
+    cannot be toggled dynamically.
 
     Note: ~
+      • If {fn} returns an empty string, {key} is discarded/ignored; if {key}
+        is <Cmd> then the "<Cmd>…<CR>" sequence is discarded as a whole.
+      • Non-recursive: if {fn} itself consumes input, it won't be invoked for
+        those keys.
+      • To UNregister a given {ns_id}, pass `nil` {fn}.
       • {fn} will be removed on error.
-      • {fn} won't be invoked recursively, i.e. if {fn} itself consumes input,
-        it won't be invoked for those keys.
       • {fn} will not be cleared by |nvim_buf_clear_namespace()|
 
     Parameters: ~
       • {fn}     (`fun(key: string, typed: string): string??`) Function
                  invoked for every input key, after mappings have been applied
                  but before further processing. Arguments {key} and {typed}
-                 are raw keycodes, where {key} is the key after mappings are
-                 applied, and {typed} is the key(s) before mappings are
-                 applied. {typed} may be empty if {key} is produced by
-                 non-typed key(s) or by the same typed key(s) that produced a
-                 previous {key}. If {fn} returns an empty string, {key} is
-                 discarded/ignored, and if {key} is <Cmd> then the
-                 "<Cmd>…<CR>" sequence is discarded as a whole. When {fn} is
-                 `nil`, the callback associated with namespace {ns_id} is
-                 removed.
-      • {ns_id}  (`integer?`) Namespace ID. If nil or 0, generates and returns
-                 a new |nvim_create_namespace()| id.
+                 are raw input (use |keytrans()| to get |keycodes|).
+                 • {key} is the key after mappings are applied.
+                 • {typed} is the input before mappings are applied; may be
+                   empty if {key} was produced by non-typed key(s) or by the
+                   same typed key(s) that produced a previous {key}.
+      • {ns_id}  (`integer?`) Namespace ID. If nil or 0, returns a new
+                 |namespace| id.
       • {opts}   (`table?`) Optional parameters
 
     Return: ~
@@ -1382,6 +1385,7 @@ vim.on_key({fn}, {ns_id}, {opts})                               *vim.on_key()*
 
     See also: ~
       • |keytrans()|
+      • |vim.keycode()|
 
 vim.paste({lines}, {phase})                                      *vim.paste()*
     Paste handler, invoked by |nvim_paste()|.

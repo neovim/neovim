@@ -386,6 +386,11 @@ VIMSCRIPT
 • |v:starttime| is the process start time (nanoseconds since UNIX epoch).
 • |v:useractive| indicates user activity.
 • |serverlist()| with `info=true` returns details for each server (own + peers).
+• These Vimscript functions may be called from |api-fast| context (e.g.
+  |vim.uv| timer/handle callbacks): |keytrans()|, |char2nr()|, |nr2char()|,
+  |str2list()|, |strpart()|, |strcharpart()|, |strgetchar()|, |strchars()|,
+  |strcharlen()|, |strlen()|, |strdisplaywidth()|, |byteidx()|, |charidx()|,
+  |utf16idx()|, |tr()|, |trim()|.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
