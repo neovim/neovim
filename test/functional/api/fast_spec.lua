@@ -24,7 +24,11 @@ describe('|api-fast| functions', function()
             keycode = vim.keycode('<C-a>'),
             keytrans = vim.fn.keytrans(vim.keycode('<C-Home>')),
             nr2char = vim.fn.nr2char(65),
-            replace_termcodes = vim.api.nvim_replace_termcodes('<Esc>', true, true, true),
+            nvim_create_autocmd = vim.api.nvim_create_autocmd('User', {
+              pattern = 'Fast',
+              callback = function() end,
+            }) > 0,
+            nvim_replace_termcodes = vim.api.nvim_replace_termcodes('<Esc>', true, true, true),
             str2list = vim.fn.str2list('AB'),
             strcharlen = vim.fn.strcharlen('abc'),
             strcharpart = vim.fn.strcharpart('héllo', 1, 2),
@@ -53,7 +57,8 @@ describe('|api-fast| functions', function()
       keycode = '\1', -- <C-a>
       keytrans = '<C-Home>',
       nr2char = 'A',
-      replace_termcodes = '\27', -- <Esc>
+      nvim_create_autocmd = true,
+      nvim_replace_termcodes = '\27', -- <Esc>
       str2list = { 65, 66 },
       strcharlen = 3,
       strcharpart = 'él',
@@ -87,6 +92,9 @@ describe('|api-fast| functions', function()
       -- for `veryfast_breakcheck`). Small input could pass (false negative).
       local big = ('héllo wörld '):rep(100000) -- 1.2M chars.
 
+      local aupat = ('a'):rep(80000) -- Must stay under the "E339: Pattern too long" limit.
+      vim.api.nvim_create_autocmd('User', { pattern = aupat, callback = function() end })
+
       local cases = {
         byteidx = function()
           vim.fn.byteidx(big, 500000)
@@ -106,7 +114,10 @@ describe('|api-fast| functions', function()
         nr2char = function()
           vim.fn.nr2char(65)
         end,
-        replace_termcodes = function()
+        nvim_create_autocmd = function()
+          vim.api.nvim_exec_autocmds('User', { pattern = aupat })
+        end,
+        nvim_replace_termcodes = function()
           vim.api.nvim_replace_termcodes('<Esc>', true, true, true)
         end,
         str2list = function()

@@ -179,6 +179,8 @@ API
 • |nvim_set_option_value()| accepts a new `operation` field to modify the
   existing option value.
 • |nvim_set_option_value()| returns the new option value.
+• |nvim_create_autocmd()| is now |api-fast|, so it can be called from a fast
+  event context (e.g. |vim.uv| callbacks).
 
 BUILD
 
