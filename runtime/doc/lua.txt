@@ -3152,6 +3152,15 @@ Iter:any({pred})                                                  *Iter:any()*
                 all values returned from the previous stage in the pipeline as
                 arguments and returns true if the predicate matches.
 
+Iter:count()                                                    *Iter:count()*
+    Drains the iterator, counting the number of iterations and returning it.
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Return: ~
+        (`integer`)
+
 Iter:each({f})                                                   *Iter:each()*
     Calls a function once for each item in the pipeline, draining the
     iterator.
