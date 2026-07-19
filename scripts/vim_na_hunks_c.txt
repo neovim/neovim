@@ -44,7 +44,9 @@
 ^l\?alloc(size_t
 ^l\?alloc[a-zA-Z0-9_]\+(size_t
 ^mem_[a-zA-Z0-9_]\+(
+^restore_buffer(bufref_T
 ^static int included_patches\[\] =
+^switch_buffer(bufref_T
 ^vim_free(
 ^vim_isNormalIDc(
 ^vim_isalpha(
