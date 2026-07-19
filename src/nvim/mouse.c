@@ -1176,7 +1176,7 @@ bool cmdline_mousescroll(int dir)
 
   // Only scroll when the mouse is on top of the info popup.
   win_T *wp = mouse_find_win_inner(&grid, &row, &col);
-  if (wp == NULL || !wp->w_float_is_info) {
+  if (wp == NULL || wp->w_kind != kWinInfo) {
     return false;
   }
 
