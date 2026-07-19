@@ -1266,18 +1266,20 @@ end
 --- @class vim.keycode.chord
 --- @inlinedoc
 ---
---- Key without modifiers. Example: `<C-A>` has `key` `a`.
+--- Key without modifiers.
+--- Example: `<C-A>` has `key="a"`.
 --- @field key string
 ---
 --- Alternative spelling of `key`, or nil if There Is No Alternative (TINA).
---- Example: `key="<"` has `key_alt="lt"`.
+--- Example: `"<"` has `key_alt="lt"`.
 --- @field key_alt string?
 ---
 --- Full key-chord in canonical key-notation (as produced by |keytrans()|), including modifiers.
 --- Example: `<A-f>` has `keys="<M-f>"`.
 --- @field keys string
 ---
---- A list of single character modifiers of the key.
+--- List of key-chord modifiers.
+--- Example: `<C-S-f>` has `mod={ 'C', 'S' }`.
 --- @field mod ('M'|'T'|'C'|'S'|'2'|'3'|'4'|'D')[]
 
 --- Converts keys from [key-notation] to the internal encoding. Optionally returns structured
@@ -1302,7 +1304,7 @@ end
 ---
 --- @param keys string Keys in [key-notation].
 --- @param info boolean? Also return key-chord info.
---- @return string # Internal bytes representation of the given `keys`.
+--- @return string # Internal representation of the given `keys`.
 --- @return vim.keycode.chord[]? # List of parsed key-chords, each with fields:
 --- @see |nvim_replace_termcodes()|
 --- @see |keytrans()|
