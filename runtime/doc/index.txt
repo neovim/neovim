@@ -402,7 +402,8 @@ Tag		Char	      Note Normal-mode action	~
 |q|		q{0-9a-zA-Z"}	   record typed characters into named register
 				   {0-9a-zA-Z"} (uppercase to append)
 |q|		q		   (while recording) stops recording
-|Q|		Q		2  replay last recorded register
+|Q|		Q		   place/remove a multicursor; with [count]:
+				   place at each search match
 |q:|		[count]q:	   edit : command-line in command-line window,
 				   with [count]: switch to |Ex-mode|
 |q/|		q/		   edit / command-line in command-line window
@@ -430,7 +431,7 @@ Tag		Char	      Note Normal-mode action	~
 |<C-End>|	<C-End>		1  same as "G"
 |<C-Home>|	<C-Home>	1  same as "gg"
 |<C-Left>|	<C-Left>	1  same as "b"
-|<C-LeftMouse>|	<C-LeftMouse>	   ":ta" to the keyword at the mouse click
+|<C-LeftMouse>|	<C-LeftMouse>	   place a multicursor at mouse-click
 |<C-Right>|	<C-Right>	1  same as "w"
 |<C-RightMouse>| <C-RightMouse>	   same as "CTRL-T"
 |<C-Tab>|	<C-Tab>		   same as "g<Tab>"
@@ -632,6 +633,7 @@ Tag		Char	      Note Normal-mode action	~
 |[star|		[*		1  same as "[/"
 |[`|		[`		1  cursor to previous lowercase mark
 |[/|		[/		1  cursor to N previous start of a C comment
+|[C|		[C		1  jump to N previous multicursor
 |[D|		[D		   list all defines found in current and
 				   included files matching the word under the
 				   cursor, start searching at beginning of
@@ -674,6 +676,7 @@ Tag		Char	      Note Normal-mode action	~
 |]star|		]*		1  same as "]/"
 |]`|		]`		1  cursor to next lowercase mark
 |]/|		]/		1  cursor to N next end of a C comment
+|]C|		]C		1  jump to N next multicursor
 |]D|		]D		   list all #defines found in current and
 				   included files matching the word under the
 				   cursor, start searching at cursor position
@@ -706,6 +709,8 @@ Tag		Char	      Note Normal-mode action	~
 
 Tag		Char	      Note Normal-mode action	~
 ------------------------------------------------------------------------------ ~
+|g_CTRL-A|	g CTRL-A	   insert an ascending number at each
+				   multicursor ("counter")
 |g_CTRL-G|	g CTRL-G	   show information about current cursor
 				   position
 |g_CTRL-H|	g CTRL-H	   start Select block mode
@@ -796,7 +801,7 @@ Tag		Char	      Note Normal-mode action	~
 |g<End>|	g<End>		1  same as "g$" but go to the rightmost
 				   non-blank character instead
 |g<Home>|	g<Home>		1  same as "g0"
-|g<LeftMouse>|	g<LeftMouse>	   same as <C-LeftMouse>
+|g<LeftMouse>|	g<LeftMouse>	   ":tag" on the keyword at mouse-click
 		g<MiddleMouse>	   same as <C-MiddleMouse>
 |g<RightMouse>|	g<RightMouse>	   same as <C-RightMouse>
 |g<Tab>|	g<Tab>		   go to last accessed tabpage

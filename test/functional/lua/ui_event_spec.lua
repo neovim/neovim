@@ -452,7 +452,7 @@ describe('vim.ui_attach', function()
         end
       end)
     ]])
-    feed('Q')
+    feed('@@')
     screen:expect({
       grid = [[
                                                                           |
@@ -479,7 +479,7 @@ describe('vim.ui_attach', function()
         end
       end)
     ]])
-    feed('Q')
+    feed('@@')
     screen:expect({
       grid = [[
                                                                           |

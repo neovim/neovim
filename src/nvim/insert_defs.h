@@ -13,8 +13,8 @@ typedef enum {
   kInsJump,      ///< Non-replayable jump (mouse, <PageUp>, …): atom terminated (<Esc>).
 } InsArrow;
 
-/// Insert-mode session state: the in-progress insert session, as one global "group" (Ins), so the
-/// insert session can be saved/restored as a whole around nested edit() sessions.
+/// Insert-mode session state: the in-progress insert session, as one global "group" (Ins), so it
+/// can be saved/restored around nested edit() sessions (mc_ins_save_state).
 typedef struct {
   pos_T start;               ///< Start of current INSERTION: from here to cursor is the unit that
                              ///< undo, '[ and ". treat as one. Reanchored after cursor-move, C-G u.

@@ -562,6 +562,8 @@ CONCEPTS
   structured fields (`CmdSpec`). Every user action emits a |CmdAtom| event.
   - SPAN: Fragment of an Insert or Visual sequence, cascades but does not emit
     a CmdAtom.
+- CASCADE: Replay queued atoms at the "clock edge" at every cursor. Visual
+  cascade "dry-runs" spans to display the selection.
 - COMPOSITE: An atom composed of subatoms (`CmdAtom.atoms`): a mapping/macro's
   commands, or a Visual sequence.
 - INSERT-SESSION: All changes from an insert-mode session, until <Esc>.
@@ -569,13 +571,13 @@ CONCEPTS
   - INSERT-CASCADE: Replay an insert-session span-by-span as it is typed (each
     span is packaged as a quasi-session: `i` + keys + `<Esc>`), via nested
     `edit()`. Pending literal text is a PREVIEW until its span completes.
-- REPLAY: Execute keys (dot-repeat, or atom).
-- CASCADE: Replay queued atoms at the "clock edge" at every cursor. Visual
-  cascade "dry-runs" spans to display the selection.
-- VOID: When a pending (Visual) atom's keys were tainted/poisoned (by: mouse,
-  `gv`, a scroll that drags the cursor, …), thus not replayable.
 - LOSSY: When capture lost part of a composite (payload with no capturing
   atom, incomplete insert-session): `keys` cannot replay it, `lhs` can.
+- PAYLOAD: Keys a command reads interactively while executing: a search/Ex
+  cmdline (`d/pat<CR>`), `f{char}`, a mapping's `getchar()`.
+- REPLAY: Execute keys (dot-repeat, or atom).
+- VOID: When a pending (Visual) atom's keys were tainted/poisoned (by: mouse,
+  `gv`, a scroll that drags the cursor, …), thus not replayable.
 
 IMPLEMENTATION
 
@@ -595,12 +597,11 @@ Capture happens at the `atom_xx()` hooks.
 
 DOT-REPEAT
 
-The redo buffer itself is the pending change atom (`RedoBuf`); the register,
-Visual flag and count are FIELDS, and the command body is bytes appended
-during execution by the `redo_append_xx()` family (Vim's `AppendToRedobuff*`).
-The old `["x][v][count]body` byte encoding no longer exists; `prep_redo()`
-stores the prefix structurally, and consumers recompose it at the boundaries
-(`redo_keys()`, `start_redo()`, `atom_from_redo()`).
+The redo buffer is the pending change as a `CmdSpec` (`RedoState`): the
+`["x][count]` prefix is structured fields set by `prep_redo()`, and the
+command body is bytes appended during execution by the `redo_append_xx()`
+family (Vim's `AppendToRedobuff*`).  Consumers rebuild the keysequence at
+the boundaries (`redo_keys()`, `start_redo()`, `atom_from_redo()`).
 
 THE CASCADE
 
@@ -646,7 +647,7 @@ draw "real" cursors, it is expected to:
   "nvim.multicursor.cursor" positions while any exist (in-progress Visual
   selection).
 - render selections from "nvim.multicursor.visual", or simply keep their
-  "hl-MultiCursorVisual" grid highlights.
+  |hl-MCursorVisual| grid highlights.
 
 ==============================================================================
 

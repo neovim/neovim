@@ -459,11 +459,11 @@ describe('messages2', function()
       {1:~                                                    }|*12
       {19:W10: Warning: Changing a readonly file}               |
     ]])
-    feed('<Esc>Qi')
+    feed('<Esc>@@i')
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*12
-      {9:E354: Invalid register name: '^@'}                    |
+      {9:E748: No previously used register}                    |
     ]])
   end)
 

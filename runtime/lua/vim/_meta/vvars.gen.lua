@@ -773,10 +773,10 @@ vim.v.t_string = ...
 --- @type string
 vim.v.termrequest = ...
 
---- The value of the most recent OSC or DCS control sequence
---- received by Nvim from the terminal. This can be read in a
---- `TermResponse` event handler after querying the terminal using
---- another escape sequence.
+--- The most recent OSC, DCS, APC, or recognized CSI (DA1, kitty
+--- multiple-cursors) control sequence received by Nvim from the
+--- host-terminal. Can be read in a `TermResponse` event handler
+--- after querying the terminal.
 --- @type string
 vim.v.termresponse = ...
 

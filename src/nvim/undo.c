@@ -113,6 +113,7 @@
 #include "nvim/mark.h"
 #include "nvim/mark_defs.h"
 #include "nvim/mbyte.h"
+#include "nvim/mcursor.h"
 #include "nvim/memline.h"
 #include "nvim/memline_defs.h"
 #include "nvim/memory.h"
@@ -481,6 +482,7 @@ int u_savecommon(buf_T *buf, linenr_T top, linenr_T bot, linenr_T newbot, bool r
     } else {
       uhp->uh_cursor_vcol = -1;
     }
+    clearpos(&uhp->uh_cursor_after);
 
     // save changed and buffer empty flag for undo
     uhp->uh_flags = (buf->b_changed ? UH_CHANGED : 0) +
@@ -1902,7 +1904,7 @@ static void u_doit(int startcount, bool quiet, bool do_buf_event)
   if (!undo_allowed(curbuf)) {
     return;
   }
-  atom_op_global_set();  // multicursor: undo/redo must not cascade (global, not per-cursor).
+  atom_did_global_op();  // multicursor: undo/redo must not cascade (global, not per-cursor).
 
   u_newcount = 0;
   u_oldcount = 0;
@@ -1979,6 +1981,7 @@ void undo_time(int step, bool sec, bool file, bool absolute)
     text_locked_msg();
     return;
   }
+  mc_undo_time();  // Time-travel crosses cascade boundaries, exit mc-session.
 
   // First make sure the current undoable change is synced.
   if (!curbuf->b_u_synced) {
@@ -2569,6 +2572,12 @@ static void u_undoredo(bool undo, bool do_buf_event)
 
   // Make sure the cursor is on an existing line and column.
   check_cursor(curwin);
+
+  if (!undo && curhead->uh_cursor_after.lnum > 0) {
+    // Restore the post-change cursor pos, if available.
+    curwin->w_cursor = curhead->uh_cursor_after;
+    check_cursor(curwin);
+  }
 
   // Remember where we are for "g-" and ":earlier 10s".
   curbuf->b_u_seq_cur = curhead->uh_seq;

@@ -2883,6 +2883,15 @@ describe('API', function()
       eq({ 'a', 'b', 'c' }, eval('[g:one, g:Two, g:THREE]'))
       api.nvim_load_context(ctx)
       eq({ 1, 2, 3 }, eval('[g:one, g:Two, g:THREE]'))
+
+      -- Context restores what it saved, irrespective of 'shada'.
+      command('set shada=')
+      command('autocmd OptionSet shada let g:optionset = 1')
+      api.nvim_set_var('one', 'a')
+      api.nvim_load_context(ctx)
+      eq(1, eval('g:one'))
+      eq('', eval('&shada'))
+      eq(0, eval("get(g:, 'optionset', 0)"))
     end)
 
     it('errors when context dict is invalid', function()

@@ -335,8 +335,8 @@ the help text is displayed as it was intended:
 
 Jump to specific subjects by using tags.  This can be done in two ways:
 - Use the "CTRL-]" command while standing on the name of a command or option.
-  This only works when the tag is a keyword.  "<C-Leftmouse>" and
-  "g<LeftMouse>" work just like "CTRL-]".
+  This only works when the tag is a keyword.  "g<LeftMouse>" works just like
+  "CTRL-]".
 - use the ":ta {subject}" command.  This also works with non-keyword
   characters.
 

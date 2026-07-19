@@ -2802,6 +2802,7 @@ func Test_normal33_g_cmd2()
 endfunc
 
 func Test_normal_ex_substitute()
+  throw 'Skipped: Nvim "gQ" restores multicursors (not Ex-mode)'
   " This was hanging on the substitute prompt.
   new
   call setline(1, 'a')

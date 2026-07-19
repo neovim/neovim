@@ -78,6 +78,7 @@
 #include "nvim/macros_defs.h"
 #include "nvim/mapping.h"
 #include "nvim/mbyte.h"
+#include "nvim/mcursor.h"
 #include "nvim/memfile.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -6833,6 +6834,11 @@ static void didset_options_sctx(int opt_flags, int *buf)
 bool can_bs(int what)
 {
   if (what == BS_START && bt_prompt(curbuf)) {
+    return false;
+  }
+
+  // Multicursor replays may join lines only if the primary's own span did.
+  if (what == BS_EOL && !mc_ins_replay_can_join()) {
     return false;
   }
 

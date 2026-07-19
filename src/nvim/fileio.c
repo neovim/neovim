@@ -47,6 +47,7 @@
 #include "nvim/macros_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/mbyte_defs.h"
+#include "nvim/mcursor.h"
 #include "nvim/memfile.h"
 #include "nvim/memfile_defs.h"
 #include "nvim/memline.h"
@@ -3167,6 +3168,8 @@ void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
 
   // Set curwin/curbuf for "buf" and save some things.
   ctx_switch(&aco, NULL, NULL, buf, 0);
+
+  mc_buf_clear(buf);  // Multicursor: file-reload invalidates the extmarks.
 
   // Unless reload_options is set, we only want to read the text from the
   // file, not reset the syntax highlighting, clear marks, diff status, etc.

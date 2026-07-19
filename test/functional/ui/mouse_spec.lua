@@ -54,6 +54,30 @@ describe('ui/mouse/input', function()
       })
     end)
 
+    it('middle click in Visual selection yanks, then puts', function()
+      command('let g:loaded_clipboard_provider = 1') -- Avoid clipboard.
+      feed('<LeftMouse><0,1>')
+      eq({ 2, 0 }, api.nvim_win_get_cursor(0))
+      feed('viw')
+      eq('v', fn.mode())
+      eq({ 2, 4 }, api.nvim_win_get_cursor(0))
+      feed('"a') -- User typed register "a.
+      feed('<MiddleMouse><3,0>')
+      eq('mouse', fn.getreg('a'))
+      eq('mouse', fn.getreg('"'))
+      eq('tesmouseting', api.nvim_get_current_line())
+    end)
+
+    it('shift-click search and CTRL-T pop execute within the click', function()
+      fn.setline(1, { 'foo bar', 'x foo y' })
+      feed('gg0')
+      feed('<S-LeftMouse><0,0>') -- "*": search for the shift-clicked word.
+      eq({ 2, 2 }, api.nvim_win_get_cursor(0))
+      eq('', api.nvim_get_vvar('errmsg'))
+      feed('<C-RightMouse><0,0>') -- "CTRL-T": empty tag stack raises E73.
+      eq('E73: Tag stack empty', api.nvim_get_vvar('errmsg'))
+    end)
+
     it("in external ui works with unset 'mouse'", function()
       api.nvim_set_option_value('mouse', '', {})
       feed('<LeftMouse><2,1>')
@@ -957,9 +981,19 @@ describe('ui/mouse/input', function()
       })
     end)
 
-    it('ctrl + left click will search for a tag', function()
-      api.nvim_set_option_value('tags', './non-existent-tags-file', {})
+    it('ctrl + left click places a multicursor', function()
+      command('hi MCursor guifg=Black guibg=LightGrey')
       feed('<C-LeftMouse><0,0>')
+      -- A cursor at the click; the primary cursor did not move.
+      screen:expect({
+        any = { '{17:t}esting', 'support and selectio^n' },
+      })
+      feed('q<BS>') -- remove all cursors
+    end)
+
+    it('g + left click will search for a tag', function()
+      api.nvim_set_option_value('tags', './non-existent-tags-file', {})
+      feed('g<LeftMouse><0,0>')
       screen:expect({
         any = {
           '{9:E433: No tags file}',

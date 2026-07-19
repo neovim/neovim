@@ -133,9 +133,10 @@ describe('nvim_ui_send', function()
 
     screen:expect_unchanged()
 
-    -- The TUI client queries OSC 11 on connect, so that precedes the payload.
-    local bg_request = '\027]11;?\007'
-    eq(bg_request .. 'Hello world', table.concat(read_data))
+    -- On connect, these queries precede the payload.
+    local mcursor_request = '\027[> q' -- kitty-multicursor (CSI > SP q) query.
+    local bg_request = '\027]11;?\007' -- TUI client OSC 11 query.
+    eq(mcursor_request .. bg_request .. 'Hello world', table.concat(read_data))
   end)
 
   it('ignores ui_send event for UIs without stdout_tty', function()

@@ -3216,6 +3216,22 @@ describe('TUI', function()
     end)
   end)
 
+  it('TermResponse on kitty-multiple-cursors protocol query', function()
+    child_exec_lua([[
+      _G.termresponse = nil
+      vim.api.nvim_create_autocmd('TermResponse', {
+        once = true,
+        callback = function(ev)
+          _G.termresponse = ev.data.sequence
+        end,
+      })
+    ]])
+    feed_data('\027[>1;2;3;29;30;40;100;101 q')
+    retry(nil, nil, function()
+      eq('\027[>1;2;3;29;30;40;100;101 q', child_exec_lua('return _G.termresponse'))
+    end)
+  end)
+
   it('TermResponse works with vim.wait() from another autocommand #32706', function()
     child_exec_lua([[
       _G.termresponse = nil

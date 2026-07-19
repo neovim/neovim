@@ -29,6 +29,7 @@
 #include "nvim/mark_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/mbyte_defs.h"
+#include "nvim/mcursor.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/menu.h"
@@ -227,9 +228,10 @@ static void call_click_def_func(StlClickDefinition *click_defs, int col, int whi
 }
 
 /// Translate window coordinates to buffer position without any side effects.
-/// Returns IN_BUFFER and sets "mpos->col" to the column when in buffer text.
-/// The column is one for the first column.
-static int get_fpos_of_mouse(pos_T *mpos)
+/// Returns IN_BUFFER and sets `mpos` (0-based column) when in buffer text.
+///
+/// @param wpp  If not NULL: consider any window (not just `curwin`), and return it here.
+static int get_fpos_of_mouse(pos_T *mpos, win_T **wpp)
 {
   int grid = mouse_grid;
   int row = mouse_row;
@@ -243,6 +245,9 @@ static int get_fpos_of_mouse(pos_T *mpos)
   win_T *wp = mouse_find_win_inner(&grid, &row, &col);
   if (wp == NULL) {
     return IN_UNKNOWN;
+  }
+  if (wpp != NULL) {
+    *wpp = wp;
   }
   int winrow = row;
   int wincol = col;
@@ -276,7 +281,7 @@ static int get_fpos_of_mouse(pos_T *mpos)
     return IN_SEP_LINE;
   }
 
-  if (wp != curwin || below_buffer) {
+  if ((wpp == NULL && wp != curwin) || below_buffer) {
     return IN_UNKNOWN;
   }
 
@@ -333,37 +338,7 @@ static int do_popup(int which_button, int m_pos_flag, pos_T m_pos)
 }
 
 /// Do the appropriate action for the current mouse click in the current mode.
-/// Not used for Command-line mode.
-///
-/// Normal and Visual Mode:
-/// event         modi-  position      visual       change   action
-///               fier   cursor                     window
-/// left press     -     yes         end             yes
-/// left press     C     yes         end             yes     "^]" (2)
-/// left press     S     yes     end (popup: extend) yes     "*" (2)
-/// left drag      -     yes     start if moved      no
-/// left relse     -     yes     start if moved      no
-/// middle press   -     yes      if not active      no      put register
-/// middle press   -     yes      if active          no      yank and put
-/// right press    -     yes     start or extend     yes
-/// right press    S     yes     no change           yes     "#" (2)
-/// right drag     -     yes     extend              no
-/// right relse    -     yes     extend              no
-///
-/// Insert or Replace Mode:
-/// event         modi-  position      visual       change   action
-///               fier   cursor                     window
-/// left press     -     yes     (cannot be active)  yes
-/// left press     C     yes     (cannot be active)  yes     "CTRL-O^]" (2)
-/// left press     S     yes     (cannot be active)  yes     "CTRL-O*" (2)
-/// left drag      -     yes     start or extend (1) no      CTRL-O (1)
-/// left relse     -     yes     start or extend (1) no      CTRL-O (1)
-/// middle press   -     no      (cannot be active)  no      put register
-/// right press    -     yes     start or extend     yes     CTRL-O
-/// right press    S     yes     (cannot be active)  yes     "CTRL-O#" (2)
-///
-/// (1) only if mouse pointer moved since press
-/// (2) only if click is in same buffer
+/// Not used for Command-line mode. Per-mode/button behavior: |mouse-mode-table|.
 ///
 /// @param oap        operator argument, can be NULL
 /// @param c          K_LEFTMOUSE, etc
@@ -438,6 +413,9 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
     }
     stuffcharReadbuff(Ctrl_T);
     got_click = false;            // ignore drag&release now
+    if ((State & MODE_INSERT) == 0) {
+      exec_stuffed(NULL);
+    }
     return false;
   }
 
@@ -489,10 +467,15 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
           stuffcharReadbuff(Ctrl_G);
           stuffReadbuff("\"+p");
         } else {
+          // Reg prefix must travel in the keys run by exec_stuffed. E.g. `"ay<MiddleMouse>`
+          if (regname != 0) {
+            stuffcharReadbuff('"');
+            stuffcharReadbuff(regname);
+          }
           stuffcharReadbuff('y');
           stuffcharReadbuff(K_MIDDLEMOUSE);
         }
-        exec_stuffed(oap);
+        exec_stuffed(NULL);
         return false;
       }
       // The rest is below jump_to_mouse()
@@ -587,6 +570,21 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
     }
   }
 
+  // Multicursor: CTRL-click toggles a cursor at click pos, without moving the primary cursor.
+  // Not in quickfix: there CTRL-click jumps to the item. No-op during insert.
+  if (is_click && (mod_mask & MOD_MASK_CTRL) && which_button == MOUSE_LEFT) {
+    pos_T pos;
+    win_T *wp = NULL;
+    if (get_fpos_of_mouse(&pos, &wp) == IN_BUFFER && !bt_quickfix(wp->w_buffer)) {
+      got_click = false;  // ignore drag&release now
+      if ((State & MODE_INSERT) == 0) {
+        pos.coladd = 0;
+        mc_toggle(wp->w_buffer, pos, false);
+      }
+      return false;
+    }
+  }
+
   int m_pos_flag = 0;
   pos_T m_pos = { 0 };
   // When 'mousemodel' is "popup" or "popup_setpos", translate mouse events:
@@ -594,7 +592,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
   // shift-left button -> right button
   // alt-left button   -> alt-right button
   if (mouse_model_popup()) {
-    m_pos_flag = get_fpos_of_mouse(&m_pos);
+    m_pos_flag = get_fpos_of_mouse(&m_pos, NULL);
     if (!(m_pos_flag & (IN_STATUS_LINE|MOUSE_WINBAR|MOUSE_STATUSCOL))
         && which_button == MOUSE_RIGHT && !(mod_mask & (MOD_MASK_SHIFT|MOD_MASK_CTRL))) {
       if (!is_click) {
@@ -885,15 +883,16 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
       do_cmdline_cmd(".ll");
     }
     got_click = false;                          // ignore drag&release now
-  } else if ((mod_mask & MOD_MASK_CTRL)
-             || (curbuf->b_help && (mod_mask & MOD_MASK_MULTI_CLICK) == MOD_MASK_2CLICK)) {
-    // Ctrl-Mouse click (or double click in a help window) jumps to the tag
-    // under the mouse pointer.
+  } else if (curbuf->b_help && (mod_mask & MOD_MASK_MULTI_CLICK) == MOD_MASK_2CLICK) {
+    // Double-click in a help window jumps to the clicked tag.
     if (State & MODE_INSERT) {
       stuffcharReadbuff(Ctrl_O);
     }
     stuffcharReadbuff(Ctrl_RSB);
     got_click = false;                          // ignore drag&release now
+    if ((State & MODE_INSERT) == 0) {
+      exec_stuffed(NULL);
+    }
   } else if ((mod_mask & MOD_MASK_SHIFT)) {
     // Shift-Mouse click searches for the next occurrence of the word under
     // the mouse pointer
@@ -904,6 +903,9 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
       stuffcharReadbuff('*');
     } else {  // MOUSE_RIGHT
       stuffcharReadbuff('#');
+    }
+    if ((State & MODE_INSERT) == 0) {
+      exec_stuffed(NULL);
     }
   } else if (in_status_line || in_sep_line) {
     // Do nothing if on status line or vertical separator

@@ -55,8 +55,9 @@ struct u_header {
   int uh_walk;                    ///< used by undo_time()
   u_entry_T *uh_entry;            ///< pointer to first entry
   u_entry_T *uh_getbot_entry;     ///< pointer to where ue_bot must be set
-  pos_T uh_cursor;                ///< cursor position before saving
-  colnr_T uh_cursor_vcol;
+  pos_T uh_cursor;                ///< Pre-change cursor pos; restored on undo.
+  pos_T uh_cursor_after;          ///< Post-change pos; restored on redo. Not saved to undofile.
+  colnr_T uh_cursor_vcol;         ///< Virtual column of uh_cursor ('virtualedit'), or -1.
   int uh_flags;                   ///< see below
   fmark_T uh_namedm[NMARKS];      ///< marks before undo/after redo
   extmark_undo_vec_t uh_extmark;  ///< info to move extmarks
