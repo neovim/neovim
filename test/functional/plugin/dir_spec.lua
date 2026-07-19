@@ -56,6 +56,15 @@ local function filesystem_root(path)
   return root
 end
 
+local function write_config_plugin(path, text)
+  local plugin_file = vim.fs.joinpath(vim.fn.stdpath('config'), path)
+  vim.fs.mkdir(vim.fs.dirname(plugin_file), { parents = true })
+  finally(function()
+    os.remove(plugin_file)
+  end)
+  t.write_file(plugin_file, text)
+end
+
 ---@param args? string[]
 ---@return string[]
 local function with_buftype_optionset(args)
@@ -194,25 +203,30 @@ describe('nvim.dir', function()
     eq('alpha.txt', api.nvim_get_current_line())
   end)
 
-  it('startup plugins can replace the `-` mapping', function()
-    local plugin_file = vim.fs.joinpath(vim.fn.stdpath('config'), 'plugin/dirvish.lua')
-    vim.fs.mkdir(vim.fs.dirname(plugin_file), { parents = true })
-    finally(function()
-      os.remove(plugin_file) -- XXX: Remove file only, to avoid n.rmdir() hang on Windows.
-    end)
-    vim.fn.writefile(
+  it('does not shadow startup plugin `-` mappings in directory buffers', function()
+    make_fixture()
+    write_config_plugin(
+      'plugin/dirvish.lua',
       [[
-        if vim.fn.mapcheck('-', 'n') == '' and vim.fn.hasmapto('<Plug>(dirvish_up)', 'n') == 0 then
-          vim.keymap.set('n', '-', '<Plug>(dirvish_up)')
-        end
-      ]],
-      plugin_file
+        vim.g.dirvish_up = 0
+        vim.keymap.set('n', '-', function()
+          vim.g.dirvish_up = vim.g.dirvish_up + 1
+        end)
+      ]]
     )
 
     n.clear({ args_rm = { '-u', '--cmd' } })
 
     eq(1, fn.exists('g:loaded_nvim_dir_plugin')) -- Avoid false negatives.
-    eq('<Plug>(dirvish_up)', fn.mapcheck('-', 'n'))
+    edit(root)
+    assert_directory(root)
+    eq(0, fn.maparg('-', 'n', false, true).buffer)
+
+    feed('-')
+    poke_eventloop()
+
+    eq(1, exec_lua('return vim.g.dirvish_up'))
+    assert_directory(root)
   end)
 
   it('preserves alternate buffer when opening a parent directory', function()

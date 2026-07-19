@@ -713,31 +713,34 @@ end
 
 local on_key_cbs = {} --- @type table<integer,[function, table]>
 
---- Adds Lua function {fn} with namespace id {ns_id} as a listener to every,
---- yes every, input key.
+--- Registers function {fn} with [namespace] {ns_id} as a listener to every, yes EVERY, input key.
 ---
---- The Nvim command-line option |-w| is related but does not support callbacks
---- and cannot be toggled dynamically.
+--- To parse [key-chord]s, see |vim.keycode()|. Example:
+--- ```lua
+--- local keychords = vim.keycode(vim.fn.keytrans(key), true)
+--- ```
 ---
+--- The |-w| command-line option is related but does not support callbacks and cannot be toggled
+--- dynamically.
+---
+---@note If {fn} returns an empty string, {key} is discarded/ignored; if {key} is [<Cmd>] then the
+---      "[<Cmd>]…[<CR>]" sequence is discarded as a whole.
+---@note Non-recursive: if {fn} itself consumes input, it won't be invoked for those keys.
+---@note To UNregister a given {ns_id}, pass `nil` {fn}.
 ---@note {fn} will be removed on error.
----@note {fn} won't be invoked recursively, i.e. if {fn} itself consumes input,
----           it won't be invoked for those keys.
 ---@note {fn} will not be cleared by |nvim_buf_clear_namespace()|
 ---
 ---@param fn nil|fun(key: string, typed: string): string? Function invoked for every input key,
----          after mappings have been applied but before further processing. Arguments
----          {key} and {typed} are raw keycodes, where {key} is the key after mappings
----          are applied, and {typed} is the key(s) before mappings are applied.
----          {typed} may be empty if {key} is produced by non-typed key(s) or by the
----          same typed key(s) that produced a previous {key}.
----          If {fn} returns an empty string, {key} is discarded/ignored, and if {key}
----          is [<Cmd>] then the "[<Cmd>]…[<CR>]" sequence is discarded as a whole.
----          When {fn} is `nil`, the callback associated with namespace {ns_id} is removed.
----@param ns_id integer? Namespace ID. If nil or 0, generates and returns a
----                      new |nvim_create_namespace()| id.
+---          after mappings have been applied but before further processing. Arguments {key} and
+---          {typed} are raw input (use [keytrans()] to get [keycodes]).
+---          - {key} is the key after mappings are applied.
+---          - {typed} is the input before mappings are applied; may be empty if {key} was produced
+---            by non-typed key(s) or by the same typed key(s) that produced a previous {key}.
+---@param ns_id integer? Namespace ID. If nil or 0, returns a new |namespace| id.
 ---@param opts table? Optional parameters
 ---
 ---@see |keytrans()|
+---@see |vim.keycode()|
 ---
 ---@return integer Namespace id associated with {fn}. Or count of all callbacks
 ---if on_key() is called without arguments.
@@ -1260,20 +1263,56 @@ function vim.print(...)
   return vim._print(false, ...)
 end
 
---- Translates keycodes.
+--- @class vim.keycode.chord
+--- @inlinedoc
 ---
---- Example:
+--- Key without modifiers. Example: `<C-A>` has `key` `a`.
+--- @field key string
+---
+--- Alternative spelling of `key`, or nil if There Is No Alternative (TINA).
+--- Example: `key="<"` has `key_alt="lt"`.
+--- @field key_alt string?
+---
+--- Full key-chord in canonical key-notation (as produced by |keytrans()|), including modifiers.
+--- Example: `<A-f>` has `keys="<M-f>"`.
+--- @field keys string
+---
+--- A list of single character modifiers of the key.
+--- @field mod ('M'|'T'|'C'|'S'|'2'|'3'|'4'|'D')[]
+
+--- Converts keys from [key-notation] to the internal encoding. Optionally returns structured
+--- [key-chord]() info as retval 2.
+---
+--- Inverse of [keytrans()], which converts the internal encoding back to [key-notation].
+---
+--- Examples:
 ---
 --- ```lua
 --- local k = vim.keycode
 --- vim.g.mapleader = k'<bs>'
+---
+--- -- Split a key sequence into chords, e.g. to inspect modifiers.
+--- local _, chords = vim.keycode('<C-w>v', true)
+--- assert(chords[1].key == 'w' and chords[1].mod[1] == 'C')
+---
+--- -- keytrans() is the inverse: internal encoding => key-notation.
+--- assert(vim.fn.keytrans(vim.keycode('<C-a>')) == '<C-A>')
 --- ```
 ---
---- @param str string String to be converted.
---- @return string
+---
+--- @param keys string Keys in [key-notation].
+--- @param info boolean? Also return key-chord info.
+--- @return string # Internal bytes representation of the given `keys`.
+--- @return vim.keycode.chord[]? # List of parsed key-chords, each with fields:
 --- @see |nvim_replace_termcodes()|
-function vim.keycode(str)
-  return vim.api.nvim_replace_termcodes(str, true, true, true)
+--- @see |keytrans()|
+function vim.keycode(keys, info)
+  if info then
+    local keycode = vim.keycode(keys)
+    return keycode, vim._core.keyparse(keycode)
+  else
+    return vim.api.nvim_replace_termcodes(keys, true, true, true)
+  end
 end
 
 --- @param server_addr string

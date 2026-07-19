@@ -1986,7 +1986,7 @@ int msg_outtrans_special(const char *strstart, bool from, int maxlen)
       text = "<Space>";
       str++;
     } else {
-      text = str2special(&str, from, false);
+      text = str2special(&str, from, false, NULL);
     }
     if (text[0] != NUL && text[1] == NUL) {
       // single-byte character or illegal byte
@@ -2024,7 +2024,7 @@ char *str2special_save(const char *const str, const bool replace_spaces,
 
   const char *p = str;
   while (*p != NUL) {
-    ga_concat(&ga, str2special(&p, replace_spaces, replace_others));
+    ga_concat(&ga, str2special(&p, replace_spaces, replace_others, NULL));
   }
   ga_append(&ga, NUL);
   return (char *)ga.ga_data;
@@ -2049,14 +2049,14 @@ char *str2special_arena(const char *const str, const bool replace_spaces,
   const char *p = str;
   size_t len = 0;
   while (*p) {
-    len += strlen(str2special(&p, replace_spaces, replace_others));
+    len += strlen(str2special(&p, replace_spaces, replace_others, NULL));
   }
 
   char *buf = arena_alloc(arena, len + 1, false);
   size_t pos = 0;
   p = str;
   while (*p) {
-    const char *s = str2special(&p, replace_spaces, replace_others);
+    const char *s = str2special(&p, replace_spaces, replace_others, NULL);
     size_t s_len = strlen(s);
     memcpy(buf + pos, s, s_len);
     pos += s_len;
@@ -2072,14 +2072,15 @@ char *str2special_arena(const char *const str, const bool replace_spaces,
 ///                             lhs of mapping and keytrans(), but not rhs.
 /// @param[in]  replace_others  kTrue/kNone: Convert `<` into `<lt>`.
 ///                             kTrue: Convert `|` into `<Bar>`, `\` into `<Bslash>`.
+/// @param[out]  data  If non-NULL, gets structured info about the key chord.
 ///
 /// @return Converted key code, in a static buffer. Buffer is always one and the
 ///         same, so save converted string somewhere before running str2special
 ///         for the second time.
 ///         On illegal byte return a string with only that byte.
 const char *str2special(const char **const sp, const bool replace_spaces,
-                        const TriState replace_others)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
+                        const TriState replace_others, struct keychord *data)
+  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 {
   static char buf[7];
 
@@ -2088,6 +2089,12 @@ const char *str2special(const char **const sp, const bool replace_spaces,
     // string if it is a multi-byte character.
     const char *const p = mb_unescape(sp);
     if (p != NULL) {
+      if (data) {
+        data->mods = 0;
+        data->key = (String){ (char *)p, strlen(p) };
+        data->key_alt = (String){ NULL, 0 };
+      }
+
       return p;
     }
   }
@@ -2134,8 +2141,22 @@ const char *str2special(const char **const sp, const bool replace_spaces,
       || (replace_spaces && c == ' ')
       || (replace_others != kFalse && c == '<')
       || (replace_others == kTrue && (c == '|' || c == '\\'))) {
-    return get_special_key_name(c, modifiers);
+    return get_special_key(c, modifiers, data);
   }
+
+  if (data) {
+    data->mods = 0;
+    if ('A' <= c && c <= 'Z') {
+      data->key_mem = (char)c + 32;
+      data->key = (String){ &data->key_mem, 1 };
+      data->mods |= MOD_MASK_SHIFT;
+      data->key_alt = (String){ buf, 1 };
+    } else {
+      data->key = (String){ buf, 1 };
+      data->key_alt = (String){ NULL, 0 };
+    }
+  }
+
   buf[0] = (char)c;
   buf[1] = NUL;
   return buf;
@@ -2150,7 +2171,7 @@ void str2specialbuf(const char *sp, char *buf, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
   while (*sp) {
-    const char *s = str2special(&sp, false, false);
+    const char *s = str2special(&sp, false, false, NULL);
     const size_t s_len = strlen(s);
     if (len <= s_len) {
       break;

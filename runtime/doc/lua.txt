@@ -1271,22 +1271,45 @@ vim.inspect()                                                  *vim.inspect()*
       • https://github.com/kikito/inspect.lua
       • https://github.com/mpeterv/vinspect
 
-vim.keycode({str})                                             *vim.keycode()*
-    Translates keycodes.
+vim.keycode({keys}, {info})                                    *vim.keycode()*
+    Converts keys from |key-notation| to the internal encoding. Optionally
+    returns structured *key-chord* info as retval 2.
 
-    Example: >lua
+    Inverse of |keytrans()|, which converts the internal encoding back to
+    |key-notation|.
+
+    Examples: >lua
         local k = vim.keycode
         vim.g.mapleader = k'<bs>'
+
+        -- Split a key sequence into chords, e.g. to inspect modifiers.
+        local _, chords = vim.keycode('<C-w>v', true)
+        assert(chords[1].key == 'w' and chords[1].mod[1] == 'C')
+
+        -- keytrans() is the inverse: internal encoding => key-notation.
+        assert(vim.fn.keytrans(vim.keycode('<C-a>')) == '<C-A>')
 <
 
     Parameters: ~
-      • {str}  (`string`) String to be converted.
+      • {keys}  (`string`) Keys in |key-notation|.
+      • {info}  (`boolean?`) Also return key-chord info.
 
-    Return: ~
-        (`string`)
+    Return (multiple): ~
+        (`string`) Internal bytes representation of the given `keys`.
+        (`table?`) List of parsed key-chords, each with fields:
+        • {key} (`string`) Key without modifiers. Example: `<C-A>` has `key`
+          `a`.
+        • {key_alt} (`string?`) Alternative spelling of `key`, or nil if There
+          Is No Alternative (TINA). Example: `key="<"` has `key_alt="lt"`.
+        • {keys} (`string`) Full key-chord in canonical key-notation (as
+          produced by |keytrans()|), including modifiers. Example: `<A-f>` has
+          `keys="<M-f>"`.
+        • {mod} (`('M'|'T'|'C'|'S'|'2'|'3'|'4'|'D')[]`) A list of single
+          character modifiers of the key.
 
     See also: ~
       • |nvim_replace_termcodes()|
+      • |keytrans()|
 
 vim.lua_omnifunc({find_start})                            *vim.lua_omnifunc()*
     Omnifunc for completing Lua values from the runtime Lua interpreter,
@@ -1324,33 +1347,36 @@ vim.notify_once({msg}, {level}, {opts})                    *vim.notify_once()*
         (`boolean`) true if message was displayed, else false
 
 vim.on_key({fn}, {ns_id}, {opts})                               *vim.on_key()*
-    Adds Lua function {fn} with namespace id {ns_id} as a listener to every,
-    yes every, input key.
+    Registers function {fn} with |namespace| {ns_id} as a listener to every,
+    yes EVERY, input key.
 
-    The Nvim command-line option |-w| is related but does not support
-    callbacks and cannot be toggled dynamically.
+    To parse |key-chord|s, see |vim.keycode()|. Example: >lua
+        local keychords = vim.keycode(vim.fn.keytrans(key), true)
+<
+
+    The |-w| command-line option is related but does not support callbacks and
+    cannot be toggled dynamically.
 
     Note: ~
+      • If {fn} returns an empty string, {key} is discarded/ignored; if {key}
+        is <Cmd> then the "<Cmd>…<CR>" sequence is discarded as a whole.
+      • Non-recursive: if {fn} itself consumes input, it won't be invoked for
+        those keys.
+      • To UNregister a given {ns_id}, pass `nil` {fn}.
       • {fn} will be removed on error.
-      • {fn} won't be invoked recursively, i.e. if {fn} itself consumes input,
-        it won't be invoked for those keys.
       • {fn} will not be cleared by |nvim_buf_clear_namespace()|
 
     Parameters: ~
       • {fn}     (`fun(key: string, typed: string): string??`) Function
                  invoked for every input key, after mappings have been applied
                  but before further processing. Arguments {key} and {typed}
-                 are raw keycodes, where {key} is the key after mappings are
-                 applied, and {typed} is the key(s) before mappings are
-                 applied. {typed} may be empty if {key} is produced by
-                 non-typed key(s) or by the same typed key(s) that produced a
-                 previous {key}. If {fn} returns an empty string, {key} is
-                 discarded/ignored, and if {key} is <Cmd> then the
-                 "<Cmd>…<CR>" sequence is discarded as a whole. When {fn} is
-                 `nil`, the callback associated with namespace {ns_id} is
-                 removed.
-      • {ns_id}  (`integer?`) Namespace ID. If nil or 0, generates and returns
-                 a new |nvim_create_namespace()| id.
+                 are raw input (use |keytrans()| to get |keycodes|).
+                 • {key} is the key after mappings are applied.
+                 • {typed} is the input before mappings are applied; may be
+                   empty if {key} was produced by non-typed key(s) or by the
+                   same typed key(s) that produced a previous {key}.
+      • {ns_id}  (`integer?`) Namespace ID. If nil or 0, returns a new
+                 |namespace| id.
       • {opts}   (`table?`) Optional parameters
 
     Return: ~
@@ -1359,6 +1385,7 @@ vim.on_key({fn}, {ns_id}, {opts})                               *vim.on_key()*
 
     See also: ~
       • |keytrans()|
+      • |vim.keycode()|
 
 vim.paste({lines}, {phase})                                      *vim.paste()*
     Paste handler, invoked by |nvim_paste()|.
@@ -2351,7 +2378,8 @@ vim.filetype.add({filetypes})                             *vim.filetype.add()*
     followed by the file name. If a match is not found using the filename,
     then the filename is matched against the list of |lua-pattern|s (sorted by
     priority) until a match is found. Lastly, if pattern matching does not
-    find a filetype, then the file extension is used.
+    find a filetype, then the file extension is used. Extension mappings match
+    only the text after the final dot in the filename.
 
     The filetype can be either a string (in which case it is used as the
     filetype directly) or a function. If a function, it takes the full path

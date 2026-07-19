@@ -338,7 +338,7 @@ int cursor_get_mode_idx(void)
     }
   } else if (finish_op) {
     return SHAPE_IDX_O;
-  } else if (VIsual_active) {
+  } else if (Visual.active) {
     if (*p_sel == 'e') {
       return SHAPE_IDX_VE;
     } else {

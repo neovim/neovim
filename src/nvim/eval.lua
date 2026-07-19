@@ -1233,6 +1233,7 @@ M.funcs = {
       	echo charidx('a😊😊', 4, 0, 1)	" returns 2
       <
     ]=],
+    fast = true,
     name = 'charidx',
     params = {
       { 'string', 'string' },
@@ -6506,6 +6507,7 @@ M.funcs = {
       <	<C-Home>
 
     ]=],
+    fast = true,
     name = 'keytrans',
     params = { { 'string', 'string' } },
     returns = 'string',
@@ -8099,6 +8101,7 @@ M.funcs = {
       string, thus results in an empty string.
 
     ]=],
+    fast = true,
     name = 'nr2char',
     params = { { 'expr', 'integer' }, { 'utf8', 'boolean' } },
     returns = 'string',
@@ -11818,6 +11821,7 @@ M.funcs = {
       	echo str2list("á")		" returns [97, 769]
       <
     ]=],
+    fast = true,
     name = 'str2list',
     params = { { 'string', 'string' }, { 'utf8', 'boolean' } },
     signature = 'str2list({string} [, {utf8}])',
@@ -11865,6 +11869,7 @@ M.funcs = {
       Also see |strlen()|, |strdisplaywidth()| and |strwidth()|.
 
     ]=],
+    fast = true,
     name = 'strcharlen',
     params = { { 'string', 'string' } },
     returns = 'integer',
@@ -11931,6 +11936,7 @@ M.funcs = {
           endif
       <
     ]=],
+    fast = true,
     name = 'strchars',
     params = { { 'string', 'string' }, { 'skipcc', '0|1|boolean' } },
     returns = 'integer',
@@ -11958,6 +11964,7 @@ M.funcs = {
       Also see |strlen()|, |strwidth()| and |strchars()|.
 
     ]=],
+    fast = true,
     name = 'strdisplaywidth',
     params = { { 'string', 'string' }, { 'col', 'integer' } },
     returns = 'integer',
@@ -12005,6 +12012,7 @@ M.funcs = {
       Also see |strcharpart()| and |strchars()|.
 
     ]=],
+    fast = true,
     name = 'strgetchar',
     params = { { 'str', 'string' }, { 'index', 'integer' } },
     returns = 'integer',
@@ -12091,6 +12099,7 @@ M.funcs = {
       Also see |len()|, |strdisplaywidth()| and |strwidth()|.
 
     ]=],
+    fast = true,
     name = 'strlen',
     params = { { 'string', 'string' } },
     returns = 'integer',
@@ -13085,6 +13094,7 @@ M.funcs = {
       <returns "{blob}"
 
     ]=],
+    fast = true,
     name = 'tr',
     params = { { 'src', 'string' }, { 'fromstr', 'string' }, { 'tostr', 'string' } },
     returns = 'string',
@@ -13122,6 +13132,7 @@ M.funcs = {
       <returns "  vim"
 
     ]=],
+    fast = true,
     name = 'trim',
     params = { { 'text', 'string' }, { 'mask', 'string' }, { 'dir', '0|1|2' } },
     returns = 'string',
@@ -13317,6 +13328,7 @@ M.funcs = {
       	echo utf16idx('a😊😊', 9)	" returns -1
       <
     ]=],
+    fast = true,
     name = 'utf16idx',
     params = {
       { 'string', 'string' },

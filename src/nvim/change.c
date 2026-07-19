@@ -143,7 +143,7 @@ void changed(buf_T *buf)
   buf_inc_changedtick(buf);
 
   // If a pattern is highlighted, the position may now be invalid.
-  highlight_match = false;
+  Search.hl_match = false;
 }
 
 /// Internal part of changed(), no user interaction.
@@ -322,7 +322,7 @@ static void changed_common(buf_T *buf, linenr_T lnum, colnr_T col, linenr_T lnum
     }
   }
 
-  if (curwin->w_buffer == buf && VIsual_active) {
+  if (curwin->w_buffer == buf && Visual.active) {
     check_visual_pos();
   }
 
@@ -991,7 +991,8 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   char *next_line = NULL;         // copy of the next line
   char *p_extra = NULL;           // what goes to next line
   colnr_T less_cols = 0;          // less columns for mark in new line
-  colnr_T less_cols_off = 0;      // columns to skip for mark adjust
+  colnr_T less_cols_off = 0;      // columns to skip for mark and
+                                  // extmark adjustment
   pos_T old_cursor;               // old cursor position
   colnr_T newcol = 0;             // new cursor column
   int newindent = 0;              // auto-indent of the new line

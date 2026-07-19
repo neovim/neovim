@@ -71,8 +71,8 @@ typedef struct {
   handle_T cs_curwin;             ///< saved curwin
   handle_T cs_prevwin;            ///< saved prevwin (ctx_switch())
   tabpage_T *cs_curtab;           ///< saved curtab (NULL: tabpage unchanged)
-  bool cs_same_win;               ///< VIsual_active was not reset
-  bool cs_visual_active;          ///< saved VIsual_active
+  bool cs_same_win;               ///< Visual.active was not reset
+  bool cs_visual_active;          ///< saved Visual.active
   int cs_prompt_insert;           ///< saved b_prompt_insert
   // Temporary location (ctx_switch()):
   handle_T cs_new_curwin;         ///< ID of new curwin

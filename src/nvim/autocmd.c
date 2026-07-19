@@ -1022,7 +1022,8 @@ int autocmd_register(int64_t id, event_T event, const char *pat, int patlen, int
       ap->buflocal_nr = 0;
       char *reg_pat = file_pat_to_reg_pat(pat, pat + patlen, &ap->allow_dirs, true);
       if (reg_pat != NULL) {
-        ap->reg_prog = vim_regcomp(reg_pat, RE_MAGIC);
+        // RE_NOBREAK: autocmd-pattern matching (aucmd_next()) must not os_breakcheck(). #35071
+        ap->reg_prog = vim_regcomp(reg_pat, RE_MAGIC | RE_NOBREAK);
       }
       xfree(reg_pat);
       if (reg_pat == NULL || ap->reg_prog == NULL) {

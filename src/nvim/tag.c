@@ -2764,8 +2764,8 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
 
     const optmagic_T save_magic_overruled = magic_overruled;
     magic_overruled = OPTION_MAGIC_OFF;  // always execute with 'nomagic'
-    // Save value of no_hlsearch, jumping to a tag is not a real search
-    const bool save_no_hlsearch = no_hlsearch;
+    // Save no_hlsearch: jumping to a tag is not a real search
+    const bool save_no_hlsearch = Search.no_hlsearch;
 
     // If 'cpoptions' contains 't', store the search pattern for the "n"
     // command.  If 'cpoptions' does not contain 't', the search pattern

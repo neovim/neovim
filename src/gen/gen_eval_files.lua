@@ -571,6 +571,12 @@ local function render_eval_doc(f, fun, write)
     write('')
   end
 
+  if fun.fast then
+    write(util.md_to_vimdoc('Attributes: ~', 16, 16, TEXT_WIDTH))
+    write(util.md_to_vimdoc('|api-fast|', 18, 18, TEXT_WIDTH))
+    write('')
+  end
+
   if #params > 0 then
     write(util.md_to_vimdoc('Parameters: ~', 16, 16, TEXT_WIDTH))
     for i, param in ipairs(params) do

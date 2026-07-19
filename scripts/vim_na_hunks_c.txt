@@ -16,6 +16,7 @@
 ^did_set_toolbar[a-zA-Z0-9_]\+(
 ^did_set_ttymouse(
 ^do_fixdel(
+^dynamic_feature(
 ^ex_behave(
 ^ex_open(
 ^ex_scriptversion(
@@ -40,7 +41,21 @@
 ^f_test_settime(
 ^f_test_srand_seed(
 ^f_test_void(
+^l\?alloc(size_t
+^l\?alloc[a-zA-Z0-9_]\+(size_t
+^mem_[a-zA-Z0-9_]\+(
 ^static int included_patches\[\] =
+^vim_free(
+^vim_isNormalIDc(
+^vim_isalpha(
+^vim_islower(
+^vim_isupper(
+^vim_mem_profile_dump(
+^vim_memset(
+^vim_strcat(
+^vim_strncpy(
+^vim_tolower(
+^vim_toupper(
 _balloon[a-zA-Z0-9_]\+(
 _tabpanelopt(
 bevalterm[a-zA-Z0-9_]\+(

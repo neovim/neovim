@@ -37,6 +37,7 @@ LUA
   Use range.mark() and range.to_mark() instead.
 • pos.to_cursor() returns a (`row,` `col)` tuple
   instead of returning them as separate values.
+• Renamed current_level param of vim.log.new().
 
 DIAGNOSTICS
 
@@ -56,7 +57,7 @@ TREESITTER
 
 UI
 
-• todo
+• Healthchecks for |vim.ui.img| were moved to `:checkhealth vim.health`.
 
 VIMSCRIPT
 
@@ -178,6 +179,8 @@ API
 • |nvim_set_option_value()| accepts a new `operation` field to modify the
   existing option value.
 • |nvim_set_option_value()| returns the new option value.
+• |nvim_create_autocmd()| is now |api-fast|, so it can be called from a fast
+  event context (e.g. |vim.uv| callbacks).
 
 BUILD
 
@@ -222,6 +225,7 @@ EDITOR
 • |:restart| saves/restores the current session (window layout, buffers, …).
   • |:restart!| (with a bang "!") does not save/restore the session.
 • |ZR| restarts Nvim (|:restart|).
+• |:detach| with range "%" detaches all UIs except the current one.
 • |:uptime| displays uptime.
 • |:packupdate| and |:packdel| for managing |vim.pack|.
 • 'scrollback' is now also valid in |prompt-buffer| buffers to limit the
@@ -229,7 +233,7 @@ EDITOR
 • |v_al| and |v_il| text objects select the whole buffer and the current line
   without leading or trailing white space.
 • 'autoread' uses file system watchers to detect external changes in
-  real-time, instead of only on |FocusGained|/|:checktime|.
+  real-time, instead of only on |FocusGained| or |:checktime|.
 • During |complete()|-triggered completion, CTRL-N and CTRL-P are now subject
   to insert-mode mappings.
 • Multi-byte characters, translated by 'langmap', now invoke correct
@@ -262,6 +266,10 @@ LSP
     "preselect". https://microsoft.github.io/language-server-protocol/specification/#completionClientCapabilities
   • `textDocument/foldingRange` |vim.lsp.foldtext()| highlights collapsed text.
     https://microsoft.github.io/language-server-protocol/specification/#textDocument_foldingRange
+  • Completon supports `CompletionList.applyKind`: a server can ask for
+    `commitCharacters` and `data` from `itemDefaults` to be merged with the
+    item's own values instead of replacing them.
+    https://microsoft.github.io/language-server-protocol/specification/#completionItemApplyKinds
 • `:checkhealth vim.lsp` highlights the "current buffer".
 • |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|,
   |vim.lsp.buf.type_definition()|, and |vim.lsp.buf.implementation()|
@@ -277,8 +285,8 @@ LSP
 
 LUA
 
-• |vim.ui.img| can display images. Use `:checkhealth img` to confirm your
-  terminal supports it.
+• |vim.ui.img| can display images. Use `:checkhealth vim.health` to confirm
+  your terminal supports it.
 • |vim.net.request()| can specify custom headers by passing `opts.headers`.
 • |vim.net.request()| can now accept  `method` param overload for multiple HTTP methods.
 • |writefile()| treats Lua and RPC strings as |Blob|, so it can be used to
@@ -307,6 +315,7 @@ LUA
 • |vim.pack.get()| output includes revision of a pending update.
 • |vim.pack.get()| can fetch new updates before computing the output.
 • |vim.o| now accepts table style values for assignment.
+• |vim.keycode()| returns structured info as return value 2.
 
 OPTIONS
 
@@ -379,6 +388,11 @@ VIMSCRIPT
 • |v:starttime| is the process start time (nanoseconds since UNIX epoch).
 • |v:useractive| indicates user activity.
 • |serverlist()| with `info=true` returns details for each server (own + peers).
+• These Vimscript functions may be called from |api-fast| context (e.g.
+  |vim.uv| timer/handle callbacks): |keytrans()|, |char2nr()|, |nr2char()|,
+  |str2list()|, |strpart()|, |strcharpart()|, |strgetchar()|, |strchars()|,
+  |strcharlen()|, |strlen()|, |strdisplaywidth()|, |byteidx()|, |charidx()|,
+  |utf16idx()|, |tr()|, |trim()|.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*

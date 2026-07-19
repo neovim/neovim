@@ -2349,7 +2349,7 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
 
         // <C-S-Right> may have started Visual mode, adjust the position for
         // deleted characters.
-        if (VIsual_active) {
+        if (Visual.active) {
           check_visual_pos();
         }
       } else {
@@ -2895,7 +2895,7 @@ static void ins_reg(void)
 {
   bool need_redraw = false;
   int literally = 0;
-  int vis_active = VIsual_active;
+  int vis_active = Visual.active;
 
   // If we are going to wait for a character, show a '"'.
   pc_status = PC_STATUS_UNSET;
@@ -2981,7 +2981,7 @@ static void ins_reg(void)
   clear_showcmd();
 
   // Disallow starting Visual mode here, would get a weird mode.
-  if (!vis_active && VIsual_active) {
+  if (!vis_active && Visual.active) {
     end_visual_mode();
   }
 }
@@ -3134,7 +3134,7 @@ static bool ins_esc(int *count, int cmdchar, bool nomove)
   // Don't do it for CTRL-O, unless past the end of the line.
   if (!nomove
       && (curwin->w_cursor.col != 0 || curwin->w_cursor.coladd > 0)
-      && (restart_edit == NUL || (gchar_cursor() == NUL && !VIsual_active))
+      && (restart_edit == NUL || (gchar_cursor() == NUL && !Visual.active))
       && !Ins.revins_on) {
     if (curwin->w_cursor.coladd > 0 || get_ve_flags(curwin) == kOptVeFlagAll) {
       oneleft();
@@ -3260,7 +3260,7 @@ static void ins_insert(int replaceState)
 // Pressed CTRL-O in Insert mode.
 static void ins_ctrl_o(void)
 {
-  restart_VIsual_select = 0;
+  Visual.restart_select = 0;
   if (State & VREPLACE_FLAG) {
     restart_edit = 'V';
   } else if (State & REPLACE_FLAG) {

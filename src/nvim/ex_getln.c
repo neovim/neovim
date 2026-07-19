@@ -262,8 +262,8 @@ static void set_search_match(pos_T *t)
 {
   // First move cursor to end of match, then to the start.  This
   // moves the whole match onto the screen when 'nowrap' is set.
-  t->lnum += search_match_lines;
-  t->col = search_match_endcol;
+  t->lnum += Search.match_lines;
+  t->col = Search.match_endcol;
   if (t->lnum > curbuf->b_ml.ml_line_count) {
     t->lnum = curbuf->b_ml.ml_line_count;
     coladvance(curwin, MAXCOL);
@@ -273,7 +273,7 @@ static void set_search_match(pos_T *t)
 /// Parses the :[range]s/foo like commands and returns details needed for
 /// incsearch and wildmenu completion.
 /// Returns true if pattern is valid.
-/// Sets skiplen, patlen, search_first_line, and search_last_line.
+/// Sets skiplen, patlen, Search.first_line, and Search.last_line.
 bool parse_pattern_and_range(pos_T *incsearch_start, int *search_delim, int *skiplen, int *patlen)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -286,8 +286,8 @@ bool parse_pattern_and_range(pos_T *incsearch_start, int *search_delim, int *ski
   *patlen = ccline.cmdlen;
 
   // Default range
-  search_first_line = 0;
-  search_last_line = MAXLNUM;
+  Search.first_line = 0;
+  Search.last_line = MAXLNUM;
 
   exarg_T ea = {
     .line1 = 1,
@@ -386,11 +386,11 @@ bool parse_pattern_and_range(pos_T *incsearch_start, int *search_delim, int *ski
 
   if (ea.addr_count > 0) {
     // Allow for reverse match.
-    search_first_line = MIN(ea.line2, ea.line1);
-    search_last_line = MAX(ea.line2, ea.line1);
+    Search.first_line = MIN(ea.line2, ea.line1);
+    Search.last_line = MAX(ea.line2, ea.line1);
   } else if (cmd[0] == 's' && cmd[1] != 'o') {
     // :s defaults to the current line
-    search_first_line = search_last_line = curwin->w_cursor.lnum;
+    Search.first_line = Search.last_line = curwin->w_cursor.lnum;
   }
 
   curwin->w_cursor = save_cursor;
@@ -398,7 +398,7 @@ bool parse_pattern_and_range(pos_T *incsearch_start, int *search_delim, int *ski
 }
 
 /// Return true when 'incsearch' highlighting is to be done.
-/// Sets search_first_line and search_last_line to the address range.
+/// Sets Search.first_line and Search.last_line to the address range.
 /// May change the last search pattern.
 static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_state_T *is_state,
                                       int *skiplen, int *patlen)
@@ -413,8 +413,8 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   }
 
   // By default search all lines
-  search_first_line = 0;
-  search_last_line = MAXLNUM;
+  Search.first_line = 0;
+  Search.last_line = MAXLNUM;
 
   if (firstc == '/' || firstc == '?') {
     *search_delim = firstc;
@@ -467,16 +467,16 @@ static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state
     ui_flush();
   }
 
-  if (search_first_line == 0) {
+  if (Search.first_line == 0) {
     // start at the original cursor position
     curwin->w_cursor = s->search_start;
-  } else if (search_first_line > curbuf->b_ml.ml_line_count) {
+  } else if (Search.first_line > curbuf->b_ml.ml_line_count) {
     // start after the last line
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
     curwin->w_cursor.col = MAXCOL;
   } else {
     // start at the first line in the range
-    curwin->w_cursor.lnum = search_first_line;
+    curwin->w_cursor.lnum = Search.first_line;
     curwin->w_cursor.col = 0;
   }
 
@@ -487,7 +487,7 @@ static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state
     if (!p_hls) {
       search_flags += SEARCH_KEEP;
     }
-    if (search_first_line != 0) {
+    if (Search.first_line != 0) {
       search_flags += SEARCH_START;
     }
     // Set the time limit to half a second.
@@ -500,8 +500,8 @@ static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state
                       search_flags, &sia);
     emsg_off--;
     ccline.cmdbuff[skiplen + patlen] = next_char;
-    if (curwin->w_cursor.lnum < search_first_line
-        || curwin->w_cursor.lnum > search_last_line) {
+    if (curwin->w_cursor.lnum < Search.first_line
+        || curwin->w_cursor.lnum > Search.last_line) {
       // match outside of address range
       found = 0;
       curwin->w_cursor = s->search_start;
@@ -522,7 +522,7 @@ static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state
     redraw_all_later(UPD_SOME_VALID);
   }
 
-  highlight_match = found != 0;  // add or remove search match position
+  Search.hl_match = found != 0;  // add or remove search match position
 
   // first restore the old curwin values, so the screen is
   // positioned in the same way as the actual search command
@@ -546,7 +546,7 @@ static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state
     next_char = ccline.cmdbuff[skiplen + patlen];
     ccline.cmdbuff[skiplen + patlen] = NUL;
     if (empty_pattern(ccline.cmdbuff + skiplen, (size_t)patlen, search_delim)
-        && !no_hlsearch) {
+        && !Search.no_hlsearch) {
       redraw_all_later(UPD_SOME_VALID);
       set_no_hlsearch(true);
     }
@@ -562,7 +562,7 @@ static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state
 
   redraw_later(curwin, UPD_SOME_VALID);
   update_screen();
-  highlight_match = false;
+  Search.hl_match = false;
   restore_last_search_pattern();
 
   // Leave it at the end to make CTRL-R CTRL-W work.  But not when beyond the
@@ -655,11 +655,11 @@ static void finish_incsearch_highlighting(bool gotesc, incsearch_state_T *s,
     curwin->w_cursor = s->search_start;
   }
   restore_viewstate(curwin, &s->old_viewstate);
-  highlight_match = false;
+  Search.hl_match = false;
 
   // by default search all lines
-  search_first_line = 0;
-  search_last_line = MAXLNUM;
+  Search.first_line = 0;
+  Search.last_line = MAXLNUM;
 
   magic_overruled = s->magic_overruled_save;
 
@@ -1683,11 +1683,11 @@ static int may_do_command_line_next_incsearch(int firstc, int count, incsearch_s
     changed_cline_bef_curs(curwin);
     update_topline(curwin);
     validate_cursor(curwin);
-    highlight_match = true;
+    Search.hl_match = true;
     save_viewstate(curwin, &s->old_viewstate);
     redraw_later(curwin, UPD_NOT_VALID);
     update_screen();
-    highlight_match = false;
+    Search.hl_match = false;
     redrawcmdline();
     curwin->w_cursor = s->match_end;
   } else {

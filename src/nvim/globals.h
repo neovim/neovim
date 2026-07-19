@@ -16,6 +16,7 @@
 #include "nvim/normal_defs.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/runtime_defs.h"
+#include "nvim/search_defs.h"
 #include "nvim/state_defs.h"
 #include "nvim/syntax_defs.h"
 #include "nvim/types_defs.h"
@@ -321,17 +322,8 @@ EXTERN int include_none INIT( = 0);     // when 1 include "None"
 EXTERN int include_default INIT( = 0);  // when 1 include "default"
 EXTERN int include_link INIT( = 0);     // when 2 include "link" and "clear"
 
-// When highlight_match is true, highlight a match, starting at the cursor
-// position.  Search_match_lines is the number of lines after the match (0 for
-// a match within one line), search_match_endcol the column number of the
-// character just after the match in the last line.
-EXTERN bool highlight_match INIT( = false);         // show search match pos
-EXTERN linenr_T search_match_lines;                // lines of matched string
-EXTERN colnr_T search_match_endcol;                // col nr of match end
-EXTERN linenr_T search_first_line INIT( = 0);       // for :{FIRST},{last}s/pat
-EXTERN linenr_T search_last_line INIT( = MAXLNUM);  // for :{first},{LAST}s/pat
-
-EXTERN bool no_smartcase INIT( = false);          // don't use 'smartcase' once
+/// Per-subsystem state for the search/highlight engine; see search_defs.h.
+EXTERN SearchState Search INIT( = { .last_line = MAXLNUM });
 
 EXTERN bool need_check_timestamps INIT( = false);  // need to check file
                                                    // timestamps asap
@@ -454,28 +446,8 @@ EXTERN int sandbox INIT( = 0);
 /// Batch-mode: "-es", "-Es", "-l" commandline argument was given.
 EXTERN bool silent_mode INIT( = false);
 
-/// Start position of active Visual selection.
-EXTERN pos_T VIsual;
-/// Whether Visual mode is active.
-EXTERN bool VIsual_active INIT( = false);
-/// Whether Select mode is active.
-EXTERN bool VIsual_select INIT( = false);
-/// Register name for Select mode
-EXTERN int VIsual_select_reg INIT( = 0);
-/// Whether incremented cursor during exclusive selection
-EXTERN bool VIsual_select_exclu_adj INIT( = false);
-/// Restart Select mode when next cmd finished
-EXTERN int restart_VIsual_select INIT( = 0);
-/// Whether to restart the selection after a Select-mode mapping or menu.
-EXTERN int VIsual_reselect;
-/// Type of Visual mode.
-EXTERN int VIsual_mode INIT( = 'v');
-/// true when redoing Visual.
-EXTERN bool redo_VIsual_busy INIT( = false);
-
-// Remember the previous Visual area, for reselection ("gv"). Also seeds operator-redo.
-// mode == NUL: no previous Visual area.
-EXTERN VisualExtent resel_VIsual;
+/// Per-subsystem state for Visual/Select mode; see normal_defs.h.
+EXTERN VisualState Visual INIT( = { .mode = 'v' });
 
 /// When pasting text with the middle mouse button in visual mode with
 /// restart_edit set, remember where it started so we can set Ins.start.
@@ -632,7 +604,6 @@ EXTERN FILE *scriptout INIT( = NULL);  ///< Write input to this file ("nvim -w")
 // callback is not called directly from the signal handlers.
 EXTERN bool got_int INIT( = false);          // set to true when interrupt signal occurred
 EXTERN bool bangredo INIT( = false);         // set to true with ! command
-EXTERN int searchcmdlen;                    // length of previous search cmd
 EXTERN int reg_do_extmatch INIT( = 0);       // Used when compiling regexp:
                                              // REX_SET to allow \z\(...\),
                                              // REX_USE to allow \z\1 et al.
@@ -716,9 +687,6 @@ EXTERN uint8_t wim_flags[4];
 #define STL_IN_ICON    1
 #define STL_IN_TITLE   2
 EXTERN int stl_syntax INIT( = 0);
-
-// don't use 'hlsearch' temporarily
-EXTERN bool no_hlsearch INIT( = false);
 
 EXTERN bool typebuf_was_filled INIT( = false);     // received text from client
                                                    // or from feedkeys()

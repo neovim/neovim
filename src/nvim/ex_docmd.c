@@ -3652,7 +3652,7 @@ linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, 
         // line, and can match anywhere in the
         // next/previous line.
         curwin->w_cursor.col = (c == '/' && curwin->w_cursor.lnum > 0) ? MAXCOL : 0;
-        searchcmdlen = 0;
+        Search.cmdlen = 0;
         flags = silent ? SEARCH_KEEP : SEARCH_HIS | SEARCH_MSG;
         if (!do_search(NULL, c, c, cmd, strlen(cmd), 1, flags, NULL)) {
           curwin->w_cursor = pos;
@@ -3662,7 +3662,7 @@ linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, 
         lnum = curwin->w_cursor.lnum;
         curwin->w_cursor = pos;
         // adjust command string pointer
-        cmd += searchcmdlen;
+        cmd += Search.cmdlen;
       }
       break;
 
@@ -4987,7 +4987,7 @@ static void ex_restart(exarg_T *eap)
       quit_cmd = eap->args[1];
       after_cmd = eap->argc > 2 ? eap->args[2] : "";
     } else {
-      emsg("restart failed: +cmd did not quit the server");
+      semsg(e_restart_failed_cmd_no_quit, quit_cmd);
       return;
     }
   }
@@ -5172,7 +5172,7 @@ static void ex_restart(exarg_T *eap)
   ui_flush();
   xfree(listen_addr);
 
-  set_vim_var_string(VV_EXITREASON, S_LEN("restart"));
+  set_vim_var_string(VV_EXITREASON, startreason, -1);
 
   char *quit_cmd_copy = NULL;
 
@@ -5183,14 +5183,14 @@ static void ex_restart(exarg_T *eap)
   }
   // Try to quit.
   nvim_command(cstr_as_string(quit_cmd), &err);
-  xfree(quit_cmd_copy);
 
   if (ERROR_SET(&err)) {
     emsg(err.msg);  // Could not exit
     api_clear_error(&err);
   } else if (!exiting) {
-    emsg("restart failed: +cmd did not quit the server");
+    semsg(e_restart_failed_cmd_no_quit, quit_cmd);
   }
+  xfree(quit_cmd_copy);
 
 fail_2:
   set_vim_var_string(VV_EXITREASON, NULL, -1);
@@ -5961,58 +5961,45 @@ static void ex_tabs(exarg_T *eap)
 ///
 /// Detaches the current UI.
 ///
-/// ":detach!" with bang (!) detaches all UIs _except_ the current UI.
+/// ":%detach" detaches all UIs _except_ the current UI.
 static void ex_detach(exarg_T *eap)
 {
-  // come on pooky let's burn this mf down
-  if (eap && eap->forceit) {
+  if (!current_ui) {
+    emsg(_(e_noui));
+    return;
+  } else if (eap && eap->forceit) {
     emsg("bang (!) not supported yet");
+    return;
+  }
+
+  if (eap && eap->addr_count > 0) {
+    // ":%detach" detaches every UI except the current one.
+    if (eap->line1 != 1 || eap->line2 != curbuf->b_ml.ml_line_count) {
+      emsg(_(e_invrange));
+      return;
+    }
+
+    size_t n = ui_detach_others(current_ui);
+    if (n == 0) {
+      msg(_("No other UIs are attached"), 0);
+    } else {
+      smsg(0, _("Detached %d non-current UIs"), (int)n);
+    }
+    ILOG("%%detach current_ui=%" PRIu64 " detached=%zu", current_ui, n);
   } else {
+    // come on pooky let's burn this mf down
+    //
     // 1. Send "error_exit" UI-event (notification only).
     // 2. Perform server-side UI detach.
     // 3. Close server-side channel without self-exit.
-
-    if (!current_ui) {
-      emsg("UI not attached");
+    Error err = ERROR_INIT;
+    ui_detach_channel(current_ui, &err);
+    if (ERROR_SET(&err)) {
+      emsg(err.msg);  // UI disappeared already?
+      api_clear_error(&err);
       return;
     }
-
-    Channel *chan = find_channel(current_ui);
-    if (!chan) {
-      emsg(e_invchan);
-      return;
-    }
-    // Prevent self-exit on channel-close.
-    Error detach_err = ERROR_INIT;
-    nvim__chan_set_detach(chan->id, true, &detach_err);
-    api_clear_error(&detach_err);
-
-    // Server-side UI detach. Doesn't close the channel.
-    Error err2 = ERROR_INIT;
-    remote_ui_disconnect(chan->id, &err2, true);
-    if (ERROR_SET(&err2)) {
-      emsg(err2.msg);  // UI disappeared already?
-      api_clear_error(&err2);
-      return;
-    }
-
-    // Server-side channel close.
-    const char *err = NULL;
-    bool rv = channel_close(chan->id, kChannelPartAll, &err);
-    if (!rv && err) {
-      emsg(err);  // UI disappeared already?
-      return;
-    }
-    // XXX: Can't do this, channel_decref() is async...
-    // assert(!find_channel(chan->id));
-
-#ifdef MSWIN
-    // After UI/channel detach, move this server off the parent's console so it
-    // survives terminal closure and still has working CONIN$/CONOUT$.
-    os_swap_to_hidden_console();
-#endif
-
-    ILOG("detach current_ui=%" PRId64, chan->id);
+    ILOG("detach current_ui=%" PRIu64, current_ui);
   }
 }
 
@@ -6722,7 +6709,7 @@ static void ex_operators(exarg_T *eap)
     beginline(BL_SOL | BL_FIX);
   }
 
-  if (VIsual_active) {
+  if (Visual.active) {
     end_visual_mode();
   }
 
@@ -7095,7 +7082,7 @@ static void ex_redraw(exarg_T *eap)
   if (eap->forceit) {
     redraw_all_later(UPD_NOT_VALID);
     redraw_cmdline = true;
-  } else if (VIsual_active) {
+  } else if (Visual.active) {
     redraw_curbuf_later(UPD_INVERTED);
   }
   update_screen();
@@ -7135,7 +7122,7 @@ static void ex_redrawstatus(exarg_T *eap)
   if (State & MODE_CMDLINE) {
     redraw_statuslines();
   } else {
-    if (VIsual_active) {
+    if (Visual.active) {
       redraw_curbuf_later(UPD_INVERTED);
     }
     update_screen();
@@ -7422,7 +7409,7 @@ static void ex_startinsert(exarg_T *eap)
     curwin->w_curswant = 0;  // avoid MAXCOL
   }
 
-  if (VIsual_active) {
+  if (Visual.active) {
     showmode();
   }
 }
@@ -8182,8 +8169,8 @@ static void ex_digraphs(exarg_T *eap)
 
 void set_no_hlsearch(bool flag)
 {
-  no_hlsearch = flag;
-  set_vim_var_nr(VV_HLSEARCH, !no_hlsearch && p_hls);
+  Search.no_hlsearch = flag;
+  set_vim_var_nr(VV_HLSEARCH, !Search.no_hlsearch && p_hls);
 }
 
 /// ":nohlsearch"

@@ -1070,7 +1070,7 @@ void ex_mkrc(exarg_T *eap)
       if (p_hls && fprintf(fd, "%s", "set hlsearch\n") < 0) {
         failed = true;
       }
-      if (no_hlsearch && fprintf(fd, "%s", "nohlsearch\n") < 0) {
+      if (Search.no_hlsearch && fprintf(fd, "%s", "nohlsearch\n") < 0) {
         failed = true;
       }
       if (fprintf(fd, "%s", "doautoall SessionLoadPost\n") < 0) {

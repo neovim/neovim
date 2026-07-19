@@ -1014,12 +1014,8 @@ static void stl_expand(int *width, int target_width, StlPadding padding, int rem
                        char *start_p, char **out_p)
 {
   int fillchar_bytes = (int)schar_len(fillchar);
-  int added_cells = target_width - *width;
+  int added_cells = MIN(target_width - *width, remaining_capacity / fillchar_bytes);
   int added_bytes = added_cells * fillchar_bytes;
-  if (added_bytes > remaining_capacity) {
-    added_cells = remaining_capacity / fillchar_bytes;
-    added_bytes = added_cells * fillchar_bytes;
-  }
 
   // First, try to expand at separation markers %=.
   int num_separators = 0;
@@ -1579,12 +1575,12 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
 
       buf_T *const save_curbuf = curbuf;
       win_T *const save_curwin = curwin;
-      const int save_VIsual_active = VIsual_active;
+      const int save_VIsual_active = Visual.active;
       curwin = wp;
       curbuf = wp->w_buffer;
       // Visual mode is only valid in the current window.
       if (curwin != save_curwin) {
-        VIsual_active = false;
+        Visual.active = false;
       }
 
       // Note: The result stored in `t` is unused.
@@ -1592,7 +1588,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
 
       curwin = save_curwin;
       curbuf = save_curbuf;
-      VIsual_active = save_VIsual_active;
+      Visual.active = save_VIsual_active;
 
       // Remove the variable we just stored
       do_unlet(S_LEN("g:actual_curbuf"), true);

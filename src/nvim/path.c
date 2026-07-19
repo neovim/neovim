@@ -1321,10 +1321,9 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
   bool did_expand_in_path = false;
   char *path_option = *curbuf->b_p_path == NUL ? p_path : curbuf->b_p_path;
 
-  // expand_env() is called to expand things like "~user".  If this fails,
-  // it calls ExpandOne(), which brings us back here.  In this case, always
-  // call the machine specific expansion function, if possible.  Otherwise,
-  // return FAIL.
+  // A recursive call can happen when a `=expr` item evaluates an expression
+  // that starts another expansion.  In this case, always call the machine
+  // specific expansion function, if possible.  Otherwise, return FAIL.
   if (recursive) {
 #ifdef SPECIAL_WILDCHAR
     return os_expand_wildcards(num_pat, pat, num_file, file, flags);

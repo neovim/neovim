@@ -28,7 +28,7 @@
 --    * If the timeout expires, the last match error will be reported and the
 --      test will fail.
 --
--- The 30 most common highlight groups are predefined, see init_colors() below.
+-- The 31 most common highlight groups are predefined, see init_colors() below.
 -- In this case "5" is a predefined highlight associated with the set composed of one
 -- attribute: bold. Note that since the {5:} markup is not a real part of the
 -- screen, the delimiter "|" moved to the right. Also, the highlighting of the
@@ -155,6 +155,7 @@ local function _init_colors()
     [28] = { foreground = Screen.colors.SlateBlue, underline = true },
     [29] = { foreground = Screen.colors.SlateBlue, bold = true },
     [30] = { background = Screen.colors.Red },
+    [31] = { background = Screen.colors.Plum1, reverse = true },
   }
 
   Screen._global_hl_names = {}
@@ -1845,7 +1846,7 @@ function Screen:_print_snapshot()
         dict = '{ ' .. self:_pprint_attrs(a) .. ' }'
       end
       local keyval = (type(i) == 'number') and '[' .. tostring(i) .. ']' or i
-      if not (type(i) == 'number' and modify_attrs and i <= 30) then
+      if not (type(i) == 'number' and modify_attrs and i <= 31) then
         table.insert(attrstrs, '  ' .. keyval .. ' = ' .. dict .. ',')
       end
       if modify_attrs then

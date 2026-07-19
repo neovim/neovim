@@ -2,6 +2,7 @@
 
 #include "nvim/ascii_defs.h"
 #include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
+#include "nvim/keycodes_defs.h"  // IWYU pragma: keep
 
 // Keycode definitions for special keys.
 //
@@ -503,5 +504,11 @@ enum {
   FSK_IN_STRING  = 0x04,  ///< in string, double quote is escaped
   FSK_SIMPLIFY   = 0x08,  ///< simplify <C-H>, etc.
 };
+
+extern const struct modmasktable {
+  uint16_t mod_mask;  ///< Bit-mask for particular key modifier.
+  uint16_t mod_flag;  ///< Bit(s) for particular key modifier.
+  char name;  ///< Single letter name of modifier.
+} mod_mask_table[];
 
 #include "keycodes.h.generated.h"

@@ -1599,6 +1599,7 @@ endfunc
 " tree_count_words() fix (9.2.0653).
 func Test_spelldump_prefixtree_overflow()
   CheckUnix
+  let save_rtp = &runtimepath
   call mkdir('Xrtp/spell', 'pR')
   " VIMspell + v50, SN_PREFCOND(prefixcnt=1), SN_END,
   " LWORDTREE word "a" with affixID=1 (so dump_prefixes runs),
@@ -1614,7 +1615,8 @@ func Test_spelldump_prefixtree_overflow()
   spelldump
   call assert_true(line('$') > 1)
 
-  set spell& spelllang& runtimepath&
+  set spell& spelllang&
+  let &runtimepath = save_rtp
   bwipe!
   bwipe!
 endfunc

@@ -650,6 +650,12 @@ describe('messages2', function()
     screen:add_extra_attr_ids({
       [100] = { background = Screen.colors.Blue1, foreground = Screen.colors.Red },
       [101] = { background = Screen.colors.Red1, foreground = Screen.colors.Blue1 },
+      [102] = {
+        background = Screen.colors.Blue,
+        foreground = Screen.colors.Red1,
+        reverse = true,
+        bold = true,
+      },
     })
     command('hi MsgArea guifg=Red guibg=Blue')
     command('hi Search guifg=Blue guibg=Red')
@@ -671,7 +677,7 @@ describe('messages2', function()
     screen:expect([[
                                                            |
       {1:~                                                    }|*11
-      {3:                                                     }|
+      {102:                                                     }|
       {101:^foo}{100:                                                  }|
     ]])
   end)
@@ -992,6 +998,19 @@ describe('messages2', function()
       {1:~                                                   }{4:5}|
       {1:~                                                   }{4: }|
     ]])
+  end)
+
+  it('msg window timer does not trigger ModeChanged #40780', function()
+    exec_lua(function()
+      require('vim._core.ui2').enable({ msg = { targets = 'msg', msg = { timeout = 50 } } })
+    end)
+    command('let g:modechanged = []')
+    command([[autocmd ModeChanged i:n call add(g:modechanged, copy(v:event))]])
+    command([[echo "a" | echo "b" | startinsert]])
+    screen:sleep(100)
+    t.eq({}, n.eval('g:modechanged'))
+    feed('<Esc>')
+    t.eq({ { old_mode = 'i', new_mode = 'n' } }, n.eval('g:modechanged'))
   end)
 
   it('configured targets per kind', function()

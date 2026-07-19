@@ -2217,7 +2217,7 @@ char *nlua_register_table_as_callable(const typval_T *const arg)
 }
 
 /// @return true to discard the key
-bool nlua_execute_on_key(int c, char *typed_buf)
+bool nlua_exec_on_key(int c, char *typed_buf)
 {
   static bool recursive = false;
 

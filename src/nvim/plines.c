@@ -594,7 +594,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
         && (State & MODE_NORMAL)
         && !wp->w_p_list
         && !virtual_active(wp)
-        && !(VIsual_active && ((*p_sel == 'e') || ltoreq(*pos, VIsual)))) {
+        && !(Visual.active && ((*p_sel == 'e') || ltoreq(*pos, Visual.start)))) {
       // TODO(zeertzjq): subtracting "tail" may lead to better cursor position
       *cursor = vcol + incr - 1;  // cursor at end
     } else {

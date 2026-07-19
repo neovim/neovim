@@ -1472,7 +1472,7 @@ function lsp.foldexpr(lnum)
   return vim.lsp._folding_range.foldexpr(lnum)
 end
 
---- Close all {kind} of folds in the the window with {winid}.
+--- Close all {kind} of folds in the window with {winid}.
 ---
 --- To automatically fold imports when opening a file, you can use an autocmd:
 ---

@@ -467,8 +467,8 @@ bool ctx_switch(CtxSwitch *cs, win_T *wp, tabpage_T *tp, buf_T *buf, CtxSwitchFl
   }
   if (!cs->cs_same_win) {
     // Disable Visual selection, because redrawing may fail.
-    cs->cs_visual_active = VIsual_active;
-    VIsual_active = false;
+    cs->cs_visual_active = Visual.active;
+    Visual.active = false;
   }
 
   if (flags & kCtxNoEvents) {
@@ -608,12 +608,12 @@ void ctx_restore(CtxSwitch *cs)
   }
 
   if (!cs->cs_same_win) {
-    VIsual_active = cs->cs_visual_active;
+    Visual.active = cs->cs_visual_active;
   }
   if (cs->cs_mode == kCtxSwitchBuf) {
     check_cursor(curwin);  // just in case lines got deleted
-    if (VIsual_active) {
-      check_pos(curbuf, &VIsual);
+    if (Visual.active) {
+      check_pos(curbuf, &Visual.start);
     }
   }
 
@@ -632,8 +632,8 @@ void ctx_restore(CtxSwitch *cs)
     }
     // In case the code moved the cursor or changed the Visual area, check it is valid.
     check_cursor(curwin);
-    if (VIsual_active) {
-      check_pos(curbuf, &VIsual);
+    if (Visual.active) {
+      check_pos(curbuf, &Visual.start);
     }
   }
   if (cs->cs_mode == kCtxSwitchBuf && cs->cs_new_curwin != cs->cs_curwin) {

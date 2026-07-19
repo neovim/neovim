@@ -171,7 +171,7 @@ int search_regcomp(char *pat, size_t patlen, char **used_pat, int pat_save, int 
     pat = spats[i].pat;
     patlen = spats[i].patlen;
     magic = spats[i].magic;
-    no_smartcase = spats[i].no_scs;
+    Search.no_smartcase = spats[i].no_scs;
   } else if (options & SEARCH_HIS) {      // put new pattern in history
     add_to_history(HIST_SEARCH, pat, patlen, true, NUL);
   }
@@ -226,7 +226,7 @@ void save_re_pat(int idx, char *pat, size_t patlen, int magic)
   spats[idx].pat = xstrnsave(pat, patlen);
   spats[idx].patlen = patlen;
   spats[idx].magic = magic;
-  spats[idx].no_scs = no_smartcase;
+  spats[idx].no_scs = Search.no_smartcase;
   spats[idx].timestamp = os_time();
   spats[idx].additional_data = NULL;
   last_idx = idx;
@@ -262,7 +262,7 @@ void save_search_patterns(void)
     saved_mr_patternlen = mr_patternlen;
   }
   saved_spats_last_idx = last_idx;
-  saved_spats_no_hlsearch = no_hlsearch;
+  saved_spats_no_hlsearch = Search.no_hlsearch;
 }
 
 void restore_search_patterns(void)
@@ -331,7 +331,7 @@ void save_last_search_pattern(void)
     saved_last_search_spat.patlen = spats[RE_SEARCH].patlen;
   }
   saved_last_idx = last_idx;
-  saved_no_hlsearch = no_hlsearch;
+  saved_no_hlsearch = Search.no_hlsearch;
 }
 
 void restore_last_search_pattern(void)
@@ -360,14 +360,14 @@ void restore_last_search_pattern(void)
 /// incsearch highlighting.
 static void save_incsearch_state(void)
 {
-  saved_search_match_endcol = search_match_endcol;
-  saved_search_match_lines = search_match_lines;
+  saved_search_match_endcol = Search.match_endcol;
+  saved_search_match_lines = Search.match_lines;
 }
 
 static void restore_incsearch_state(void)
 {
-  search_match_endcol = saved_search_match_endcol;
-  search_match_lines = saved_search_match_lines;
+  Search.match_endcol = saved_search_match_endcol;
+  Search.match_lines = saved_search_match_lines;
 }
 
 char *last_search_pattern(void)
@@ -391,12 +391,12 @@ int ignorecase(char *pat)
 int ignorecase_opt(char *pat, int ic_in, int scs)
 {
   int ic = ic_in;
-  if (ic && !no_smartcase && scs
+  if (ic && !Search.no_smartcase && scs
       && !(ctrl_x_mode_not_default()
            && curbuf->b_p_inf)) {
     ic = !pat_has_uppercase(pat);
   }
-  no_smartcase = false;
+  Search.no_smartcase = false;
 
   return ic;
 }
@@ -531,7 +531,7 @@ void set_last_search_pat(const char *s, int idx, int magic, bool setlast)
     saved_spats_last_idx = last_idx;
   }
   // If 'hlsearch' set and search pat changed: need redraw.
-  if (p_hls && idx == last_idx && !no_hlsearch) {
+  if (p_hls && idx == last_idx && !Search.no_hlsearch) {
     redraw_all_later(UPD_SOME_VALID);
   }
 }
@@ -900,8 +900,8 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
           first_match = false;
 
           // Set variables used for 'incsearch' highlighting.
-          search_match_lines = endpos.lnum - matchpos.lnum;
-          search_match_endcol = endpos.col;
+          Search.match_lines = endpos.lnum - matchpos.lnum;
+          Search.match_endcol = endpos.col;
           break;
         }
         line_breakcheck();              // stop if ctrl-C typed
@@ -1148,7 +1148,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
   size_t msgbuflen = 0;
   bool has_offset = false;
 
-  searchcmdlen = 0;
+  Search.cmdlen = 0;
 
   // A line offset is not remembered, this is vi compatible.
   if (spats[0].off.line && vim_strchr(p_cpo, CPO_LINEOFF) != NULL) {
@@ -1187,7 +1187,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
   }
 
   // Turn 'hlsearch' highlighting back on.
-  if (no_hlsearch && !(options & SEARCH_KEEP)) {
+  if (Search.no_hlsearch && !(options & SEARCH_KEEP)) {
     redraw_all_later(UPD_SOME_VALID);
     set_no_hlsearch(false);
   }
@@ -1218,9 +1218,10 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
     }
 
     if (pat != NULL && *pat != NUL) {   // look for (new) offset
-      searchcmdlen += parse_search_pattern_offset(&pat, &patlen, search_delim, options,
-                                                  &strcopy, &searchstr, &searchstrlen, &dircp,
-                                                  &spats[0].off);
+      Search.cmdlen += parse_search_pattern_offset(&pat, &patlen, search_delim,
+                                                   options, &strcopy, &searchstr,
+                                                   &searchstrlen, &dircp,
+                                                   &spats[0].off);
     }
 
     bool show_search_stats = false;
@@ -2443,21 +2444,21 @@ void showmatch(int c)
 int current_search(int count, bool forward)
 {
   bool old_p_ws = p_ws;
-  pos_T save_VIsual = VIsual;
+  pos_T save_VIsual = Visual.start;
 
   // Correct cursor when 'selection' is exclusive
-  if (VIsual_active && *p_sel == 'e' && lt(VIsual, curwin->w_cursor)) {
+  if (Visual.active && *p_sel == 'e' && lt(Visual.start, curwin->w_cursor)) {
     dec_cursor();
   }
 
   // When searching forward and the cursor is at the start of the Visual
   // area, skip the first search backward, otherwise it doesn't move.
-  const bool skip_first_backward = forward && VIsual_active
-                                   && lt(curwin->w_cursor, VIsual);
+  const bool skip_first_backward = forward && Visual.active
+                                   && lt(curwin->w_cursor, Visual.start);
 
   pos_T pos = curwin->w_cursor;       // position after the pattern
   pos_T orig_pos = curwin->w_cursor;  // position of the cursor at beginning
-  if (VIsual_active) {
+  if (Visual.active) {
     // Searching further will extend the match.
     if (forward) {
       incl(&pos);
@@ -2515,8 +2516,8 @@ int current_search(int count, bool forward)
     // selection works.
     if (i == 1 && !result) {  // not found, abort
       curwin->w_cursor = orig_pos;
-      if (VIsual_active) {
-        VIsual = save_VIsual;
+      if (Visual.active) {
+        Visual.start = save_VIsual;
       }
       return FAIL;
     } else if (i == 0 && !result) {
@@ -2532,13 +2533,13 @@ int current_search(int count, bool forward)
 
   pos_T start_pos = pos;
 
-  if (!VIsual_active) {
-    VIsual = start_pos;
+  if (!Visual.active) {
+    Visual.start = start_pos;
   }
 
   // put the cursor after the match
   curwin->w_cursor = end_pos;
-  if (lt(VIsual, end_pos) && forward) {
+  if (lt(Visual.start, end_pos) && forward) {
     if (skip_first_backward) {
       // put the cursor on the start of the match
       curwin->w_cursor = pos;
@@ -2546,18 +2547,18 @@ int current_search(int count, bool forward)
       // put the cursor on last character of match
       dec_cursor();
     }
-  } else if (VIsual_active && lt(curwin->w_cursor, VIsual) && forward) {
+  } else if (Visual.active && lt(curwin->w_cursor, Visual.start) && forward) {
     curwin->w_cursor = pos;   // put the cursor on the start of the match
   }
-  VIsual_active = true;
-  VIsual_mode = 'v';
+  Visual.active = true;
+  Visual.mode = 'v';
 
   if (*p_sel == 'e') {
     // Correction for exclusive selection depends on the direction.
-    if (forward && ltoreq(VIsual, curwin->w_cursor)) {
+    if (forward && ltoreq(Visual.start, curwin->w_cursor)) {
       inc_cursor();
-    } else if (!forward && ltoreq(curwin->w_cursor, VIsual)) {
-      inc(&VIsual);
+    } else if (!forward && ltoreq(curwin->w_cursor, Visual.start)) {
+      inc(&Visual.start);
     }
   }
 

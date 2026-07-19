@@ -176,7 +176,7 @@ static void redraw_for_cursorcolumn(win_T *wp)
   }
 
   // When current buffer's cursor moves in Visual mode, redraw it with UPD_INVERTED.
-  if (VIsual_active && wp->w_buffer == curbuf) {
+  if (Visual.active && wp->w_buffer == curbuf) {
     redraw_buf_later(curbuf, UPD_INVERTED);
   }
 }
@@ -2603,11 +2603,11 @@ void do_check_cursorbind(void)
   bool set_curswant = curwin->w_set_curswant;
   win_T *old_curwin = curwin;
   buf_T *old_curbuf = curbuf;
-  int old_VIsual_select = VIsual_select;
-  int old_VIsual_active = VIsual_active;
+  int old_VIsual_select = Visual.select;
+  int old_VIsual_active = Visual.active;
 
   // loop through the cursorbound windows
-  VIsual_select = VIsual_active = false;
+  Visual.select = Visual.active = false;
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     curwin = wp;
     curbuf = curwin->w_buffer;
@@ -2652,8 +2652,8 @@ void do_check_cursorbind(void)
   }
 
   // reset current-window
-  VIsual_select = old_VIsual_select;
-  VIsual_active = old_VIsual_active;
+  Visual.select = old_VIsual_select;
+  Visual.active = old_VIsual_active;
   curwin = old_curwin;
   curbuf = old_curbuf;
 }
