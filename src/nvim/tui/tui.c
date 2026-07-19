@@ -1703,6 +1703,10 @@ void tui_ui_send(TUIData *tui, String content)
 /// @see flush_buf
 void tui_flush(TUIData *tui)
 {
+  if (tui->stopped) {
+    return;
+  }
+
   UGrid *grid = &tui->grid;
 
   size_t nrevents = loop_size(tui->loop);

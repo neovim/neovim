@@ -150,7 +150,6 @@ bool loop_close(Loop *loop, bool wait)
 {
   bool rv = true;
   loop->closing = true;
-  uv_mutex_destroy(&loop->mutex);
   uv_close((uv_handle_t *)&loop->children_watcher, NULL);
   uv_close((uv_handle_t *)&loop->children_kill_timer, NULL);
   uv_close((uv_handle_t *)&loop->poll_timer, timer_close_cb);
@@ -186,6 +185,7 @@ bool loop_close(Loop *loop, bool wait)
     }
 #endif
   }
+  uv_mutex_destroy(&loop->mutex);
   multiqueue_free(loop->fast_events);
   multiqueue_free(loop->thread_events);
   multiqueue_free(loop->events);
