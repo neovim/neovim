@@ -1379,6 +1379,7 @@ nvim_replace_termcodes({str}, {from_part}, {do_lt}, {special})
       • Lua can use |vim.keycode()| instead.
 
     Attributes: ~
+        |api-fast|
         Since: 0.1.0
 
     Parameters: ~

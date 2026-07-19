@@ -713,31 +713,34 @@ end
 
 local on_key_cbs = {} --- @type table<integer,[function, table]>
 
---- Adds Lua function {fn} with namespace id {ns_id} as a listener to every,
---- yes every, input key.
+--- Registers function {fn} with [namespace] {ns_id} as a listener to every, yes EVERY, input key.
 ---
---- The Nvim command-line option |-w| is related but does not support callbacks
---- and cannot be toggled dynamically.
+--- To parse [key-chord]s, see |vim.keycode()|. Example:
+--- ```lua
+--- local keychords = vim.keycode(vim.fn.keytrans(key), true)
+--- ```
 ---
+--- The |-w| command-line option is related but does not support callbacks and cannot be toggled
+--- dynamically.
+---
+---@note If {fn} returns an empty string, {key} is discarded/ignored; if {key} is [<Cmd>] then the
+---      "[<Cmd>]…[<CR>]" sequence is discarded as a whole.
+---@note Non-recursive: if {fn} itself consumes input, it won't be invoked for those keys.
+---@note To UNregister a given {ns_id}, pass `nil` {fn}.
 ---@note {fn} will be removed on error.
----@note {fn} won't be invoked recursively, i.e. if {fn} itself consumes input,
----           it won't be invoked for those keys.
 ---@note {fn} will not be cleared by |nvim_buf_clear_namespace()|
 ---
 ---@param fn nil|fun(key: string, typed: string): string? Function invoked for every input key,
----          after mappings have been applied but before further processing. Arguments
----          {key} and {typed} are raw keycodes, where {key} is the key after mappings
----          are applied, and {typed} is the key(s) before mappings are applied.
----          {typed} may be empty if {key} is produced by non-typed key(s) or by the
----          same typed key(s) that produced a previous {key}.
----          If {fn} returns an empty string, {key} is discarded/ignored, and if {key}
----          is [<Cmd>] then the "[<Cmd>]…[<CR>]" sequence is discarded as a whole.
----          When {fn} is `nil`, the callback associated with namespace {ns_id} is removed.
----@param ns_id integer? Namespace ID. If nil or 0, generates and returns a
----                      new |nvim_create_namespace()| id.
+---          after mappings have been applied but before further processing. Arguments {key} and
+---          {typed} are raw input (use [keytrans()] to get [keycodes]).
+---          - {key} is the key after mappings are applied.
+---          - {typed} is the input before mappings are applied; may be empty if {key} was produced
+---            by non-typed key(s) or by the same typed key(s) that produced a previous {key}.
+---@param ns_id integer? Namespace ID. If nil or 0, returns a new |namespace| id.
 ---@param opts table? Optional parameters
 ---
 ---@see |keytrans()|
+---@see |vim.keycode()|
 ---
 ---@return integer Namespace id associated with {fn}. Or count of all callbacks
 ---if on_key() is called without arguments.
@@ -1277,8 +1280,8 @@ end
 --- A list of single character modifiers of the key.
 --- @field mod ('M'|'T'|'C'|'S'|'2'|'3'|'4'|'D')[]
 
---- Converts keys from [key-notation] to the internal encoding. Optionally returns
---- structured key-chord info as retval 2.
+--- Converts keys from [key-notation] to the internal encoding. Optionally returns structured
+--- [key-chord]() info as retval 2.
 ---
 --- Inverse of [keytrans()], which converts the internal encoding back to [key-notation].
 ---
