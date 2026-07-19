@@ -371,6 +371,7 @@ TREESITTER
   capture.
 • |vim.treesitter.select()| starts or adjusts a visual selection at cursor,
   based on tree nodes.
+• The `diff` treesitter parser is bundled.
 
 TUI
 
@@ -382,6 +383,9 @@ TUI
 UI
 
 • |:checkhealth| shows filewatcher info in the Performance section.
+• Floating window border highlights (|hl-FloatBorder|, |hl-FloatTitle|,
+  |hl-FloatFooter|) combine with the window-local |hl-Normal| background
+  instead of falling back to the global background.
 • These builtin "picker" menus delegate to |vim.ui.select()|:
   • :browse oldfiles
   • |:recover|

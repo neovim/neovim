@@ -11,53 +11,53 @@ vim.uv = ...
 --- EmmyLua reads the precise generics from `runtime/lua/vim/iter.lua`; LuaLS uses
 --- these broader shapes for downstream type-checking.
 --- @class vim.Iter
---- @field filter fun(self: vim.Iter, f: fun(...): boolean): vim.Iter
---- @field unique fun(self: vim.Iter, key?: fun(...): any): vim.Iter
---- @field flatten fun(self: vim.Iter, depth?: integer): vim.IterArray
---- @field map fun(self: vim.Iter, f: fun(...): ...): vim.Iter
---- @field each fun(self: vim.Iter, f: fun(...)): nil
---- @field totable fun(self: vim.Iter): table
---- @field join fun(self: vim.Iter, delim: string): string
---- @field fold fun(self: vim.Iter, init: any, f: fun(acc: any, ...): any): any
---- @field next fun(self: vim.Iter): any
---- @field rev fun(self: vim.Iter): vim.IterArray
---- @field peek fun(self: vim.Iter): any
---- @field find fun(self: vim.Iter, f: any): any
---- @field rfind fun(self: vim.Iter, f: any): any
---- @field take fun(self: vim.Iter, n: integer|fun(...): boolean): vim.Iter
---- @field pop fun(self: vim.Iter): any
---- @field rpeek fun(self: vim.Iter): any
---- @field skip fun(self: vim.Iter, n: integer|fun(...): boolean): vim.Iter
---- @field rskip fun(self: vim.Iter, n: integer): vim.IterArray
---- @field nth fun(self: vim.Iter, n: integer): any
---- @field slice fun(self: vim.Iter, first: integer, last: integer): vim.IterArray
---- @field any fun(self: vim.Iter, pred: fun(...): boolean): boolean
 --- @field all fun(self: vim.Iter, pred: fun(...): boolean): boolean
---- @field last fun(self: vim.Iter): any
---- @field enumerate fun(self: vim.Iter): vim.Iter
+--- @field any fun(self: vim.Iter, pred: fun(...): boolean): boolean
 --- @field count fun(self: vim.Iter): integer
+--- @field each fun(self: vim.Iter, f: fun(...)): nil
+--- @field enumerate fun(self: vim.Iter): vim.Iter
+--- @field filter fun(self: vim.Iter, f: fun(...): boolean): vim.Iter
+--- @field find fun(self: vim.Iter, f: any): any
+--- @field flatten fun(self: vim.Iter, depth?: integer): vim.IterArray
+--- @field fold fun(self: vim.Iter, init: any, f: fun(acc: any, ...): any): any
+--- @field join fun(self: vim.Iter, delim: string): string
+--- @field last fun(self: vim.Iter): any
+--- @field map fun(self: vim.Iter, f: fun(...): ...): vim.Iter
+--- @field next fun(self: vim.Iter): any
+--- @field nth fun(self: vim.Iter, n: integer): any
+--- @field peek fun(self: vim.Iter): any
+--- @field pop fun(self: vim.Iter): any
+--- @field rev fun(self: vim.Iter): vim.IterArray
+--- @field rfind fun(self: vim.Iter, f: any): any
+--- @field rpeek fun(self: vim.Iter): any
+--- @field rskip fun(self: vim.Iter, n: integer): vim.IterArray
+--- @field skip fun(self: vim.Iter, n: integer|fun(...): boolean): vim.Iter
+--- @field slice fun(self: vim.Iter, first: integer, last: integer): vim.IterArray
+--- @field take fun(self: vim.Iter, n: integer|fun(...): boolean): vim.Iter
+--- @field totable fun(self: vim.Iter): table
+--- @field unique fun(self: vim.Iter, key?: fun(...): any): vim.Iter
 
 --- @class vim.IterArray : vim.Iter
---- @field filter fun(self: vim.IterArray, f: fun(...): boolean): vim.IterArray
---- @field unique fun(self: vim.IterArray, key?: fun(...): any): vim.IterArray
---- @field flatten fun(self: vim.IterArray, depth?: integer): vim.IterArray
---- @field map fun(self: vim.IterArray, f: fun(...): ...): vim.IterArray
---- @field totable fun(self: vim.IterArray): table
---- @field fold fun(self: vim.IterArray, init: any, f: fun(acc: any, ...): any): any
---- @field next fun(self: vim.IterArray): any
---- @field rev fun(self: vim.IterArray): vim.IterArray
---- @field peek fun(self: vim.IterArray): any
---- @field find fun(self: vim.IterArray, f: any): any
---- @field rfind fun(self: vim.IterArray, f: any): any
---- @field take fun(self: vim.IterArray, n: integer|fun(...): boolean): vim.IterArray
---- @field pop fun(self: vim.IterArray): any
---- @field rpeek fun(self: vim.IterArray): any
---- @field skip fun(self: vim.IterArray, n: integer|fun(...): boolean): vim.IterArray
---- @field rskip fun(self: vim.IterArray, n: integer): vim.IterArray
---- @field slice fun(self: vim.IterArray, first: integer, last: integer): vim.IterArray
---- @field last fun(self: vim.IterArray): any
---- @field enumerate fun(self: vim.IterArray): vim.IterArray
 --- @field count fun(self: vim.IterArray): integer
+--- @field enumerate fun(self: vim.IterArray): vim.IterArray
+--- @field filter fun(self: vim.IterArray, f: fun(...): boolean): vim.IterArray
+--- @field find fun(self: vim.IterArray, f: any): any
+--- @field flatten fun(self: vim.IterArray, depth?: integer): vim.IterArray
+--- @field fold fun(self: vim.IterArray, init: any, f: fun(acc: any, ...): any): any
+--- @field last fun(self: vim.IterArray): any
+--- @field map fun(self: vim.IterArray, f: fun(...): ...): vim.IterArray
+--- @field next fun(self: vim.IterArray): any
+--- @field peek fun(self: vim.IterArray): any
+--- @field pop fun(self: vim.IterArray): any
+--- @field rev fun(self: vim.IterArray): vim.IterArray
+--- @field rfind fun(self: vim.IterArray, f: any): any
+--- @field rpeek fun(self: vim.IterArray): any
+--- @field rskip fun(self: vim.IterArray, n: integer): vim.IterArray
+--- @field skip fun(self: vim.IterArray, n: integer|fun(...): boolean): vim.IterArray
+--- @field slice fun(self: vim.IterArray, first: integer, last: integer): vim.IterArray
+--- @field take fun(self: vim.IterArray, n: integer|fun(...): boolean): vim.IterArray
+--- @field totable fun(self: vim.IterArray): table
+--- @field unique fun(self: vim.IterArray, key?: fun(...): any): vim.IterArray
 
 --- @class vim.IterModule
 --- @operator call: fun(src: any, ...): vim.Iter

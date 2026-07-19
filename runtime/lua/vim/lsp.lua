@@ -572,8 +572,8 @@ local function lsp_enable_callback(bufnr)
   end
 end
 
---- Auto-activates LSP in each buffer based on the |lsp-config| `filetypes`, `root_markers`, and
---- `root_dir`.
+--- Enables a [lsp-config]: automatically attaches the client to any buffer based on the config
+--- `filetypes`, `root_markers`, and `root_dir`. See [lsp-activate] for details.
 ---
 --- To disable, pass `enable=false`: Stops related clients and servers (force-stops servers after
 --- a timeout, unless `exit_timeout=false`).

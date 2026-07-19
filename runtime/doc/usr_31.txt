@@ -24,19 +24,20 @@ Table of contents: |usr_toc.txt|
 ==============================================================================
 *31.1*	The file browser
 
-Nvim can open the current directory in its |dir| browser with: >
+You can open the current directory with: >
 
 	:browse edit
 
-The same works when opening a split or tab page: >
+The same works when opening a split or tabpage: >
 
 	:browse split
 	:browse vsplit
 	:browse tabedit
 	:browse tabnew
 
-A third-party directory browser may handle the directory instead; see
-|dir-disable|.  Use the browser's mappings to open a file.
+By default this is handled by the builtin |dir| plugin. To use a third-party
+directory browser instead, see |dir-disable|.  Use the dir browser's mappings
+to open a file.
 
 When a file or directory argument is given, the command is executed normally.
 For example: >

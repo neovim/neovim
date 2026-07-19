@@ -1291,17 +1291,19 @@ Examples: >
 If you want to always use ":confirm", set the 'confirm' option.
 
 							*:browse* *:bro*
-:bro[wse] {command}	For |:edit|, |:split|, |:vsplit|, |:tabedit|, and
-			|:tabnew| without a file argument, open the current
-			directory with the |dir| browser.  A third-party directory
-			browser may handle it instead; see |dir-disable|.
+:bro[wse] {command} [file]
+			Without [file]: opens the |current-directory| (with
+			the |dir| browser by default; see |dir-disable|).
 
-			With a file argument, or when {command} does not support
-			browsing, execute {command} unmodified.
+			{command} must be one of: |:edit|, |:split|,
+			|:vsplit|, |:tabedit|, |:tabnew|.
+
+			With a [file] argument, or if {command} does not
+			support browsing: executes {command}.
 
 Examples: >
 	:browse edit
-<		Open the current directory in the current window. >
+<		Open the current directory. >
 	:browse vsplit
 <		Open the current directory in a vertical split.
 

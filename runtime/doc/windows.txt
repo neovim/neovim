@@ -953,7 +953,7 @@ windows.
 						*preview-popup*
 Alternatively, a floating window can be used by setting the 'previewpopup'
 option.  When set, it overrules the 'previewwindow' and 'previewheight'
-settings.  See 'previewpopup' for the accepted items.
+settings.
 
 						*:pt* *:ptag*
 :pt[ag][!] [tagname]

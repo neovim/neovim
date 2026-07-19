@@ -45,7 +45,7 @@ Follow these steps to get LSP features:
          }
        }
      }
-3. Use |vim.lsp.enable()| to enable the config.
+3. Use |vim.lsp.enable()| to enable the config. See |lsp-activate|.
    Example: >lua
      vim.lsp.enable('emmylua_ls')
 4. Open a code file matching one of the `filetypes` specified in the config.
@@ -182,15 +182,19 @@ Use |vim.lsp.config()| to define or modify LSP configurations, and
 |vim.lsp.start()| which allows you to share and merge configs (provided by
 Nvim, plugins, and your local config).
 
+
 NEW CONFIG                                            *lsp-new-config*
+
 To create a new config you can either use `vim.lsp.config()` or create
 a `lsp/<config-name>.lua` file.
+
 
 EXAMPLE: DEFINE A CONFIG AS CODE ~
 
 1. Run `:lua vim.lsp.config('foo', {cmd={'true'}})`
 2. Run `:lua vim.lsp.enable('foo')`
 3. Run `:checkhealth vim.lsp`, check "Enabled Configurations". 😎
+
 
 EXAMPLE: DEFINE A CONFIG AS A FILE ~
 
@@ -207,7 +211,23 @@ EXAMPLE: DEFINE A CONFIG AS A FILE ~
    :lua vim.lsp.enable('foo')
 5. Run `:checkhealth vim.lsp`, check "Enabled Configurations". 🌈
 
+
+HOW CONFIGS ACTIVATE                                    *lsp-activate*
+
+Call |vim.lsp.enable()| to ENABLE a config: it will automatically ACTIVATE
+(attach a client) whenever you open a buffer, if:
+
+- 'filetype' matches one of the config `filetypes`
+- 'buftype' is empty or "help"
+- `root_markers` or `root_dir()` resolved a workspace roort, or the config has
+  `workspace_required=false`
+
+Note: The initial call to |vim.lsp.enable()| (or |:lsp-enable|) also actively
+checks and activates EXISTING buffers, if any.
+
+
 HOW CONFIGS ARE MERGED                                  *lsp-config-merge*
+
 When an LSP client starts, it resolves its configuration by merging the
 following sources (merge semantics defined by |vim.tbl_deep_extend()| with
 "force" behavior), in order of increasing priority:
@@ -270,7 +290,9 @@ Example: given the following configs... >lua
     }
   }
 <
+
 CONFIGURE ON ATTACH                                     *lsp-attach*
+
 To use LSP features beyond those provided by Nvim (see |lsp-buf|), you can set
 keymaps and options on |Client:on_attach()| or |LspAttach|. Not all language
 servers provide the same capabilities; check `supports_method()` in your
@@ -362,20 +384,20 @@ FAQ                                                     *lsp-faq*
      but it is fast, lightweight and useful for navigating polyglot projects.
 
 ================================================================================
-LSP API                                                 *lsp-api*
+CONCEPTS
+
+API                                                                  *lsp-api*
 
 The |lsp-core| API provides core functions for creating and managing clients,
 You can even create creating custom (in-process) |lsp-server|s.
 The |lsp-buf| functions operate LSP clients attached to the current buffer.
 
-------------------------------------------------------------------------------
-CONCEPTS
 
-                                                                  *lsp-method*
+METHOD                                                            *lsp-method*
 Requests and notifications defined by the LSP specification are referred to as
 "LSP methods". These are handled by |lsp-handler| functions.
 
-                                                                 *lsp-handler*
+HANDLER                                                          *lsp-handler*
 LSP handlers are functions that handle |lsp-response|s to requests made by Nvim
 to the server. (Notifications, as opposed to requests, are fire-and-forget:
 there is no response, so they can't be handled. |lsp-notification|)
@@ -1118,8 +1140,9 @@ config({name}, {cfg})                                       *vim.lsp.config()*
       • {cfg}   (`vim.lsp.Config`) See |vim.lsp.Config|.
 
 enable({name}, {enable})                                    *vim.lsp.enable()*
-    Auto-activates LSP in each buffer based on the |lsp-config| `filetypes`,
-    `root_markers`, and `root_dir`.
+    Enables a |lsp-config|: automatically attaches the client to any buffer
+    based on the config `filetypes`, `root_markers`, and `root_dir`. See
+    |lsp-activate| for details.
 
     To disable, pass `enable=false`: Stops related clients and servers
     (force-stops servers after a timeout, unless `exit_timeout=false`).
