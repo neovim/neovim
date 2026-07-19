@@ -436,9 +436,9 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buf, Integer start, Integer 
     mark_adjust_buf(b, (linenr_T)start, (linenr_T)(end - 1), adjust, (linenr_T)extra,
                     true, kMarkAdjustApi, kExtmarkNOOP);
 
-    if (VIsual_active && b == curbuf && VIsual.lnum >= (linenr_T)start) {
-      if (VIsual.lnum >= (linenr_T)end) {
-        VIsual.lnum += (linenr_T)extra;
+    if (Visual.active && b == curbuf && Visual.start.lnum >= (linenr_T)start) {
+      if (Visual.start.lnum >= (linenr_T)end) {
+        Visual.start.lnum += (linenr_T)extra;
       }
       check_visual_pos();
     }
@@ -670,8 +670,8 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buf, Integer start_row, Integ
     mark_adjust_buf(b, (linenr_T)start_row, (linenr_T)end_row - 1, adjust, (linenr_T)extra,
                     true, kMarkAdjustApi, kExtmarkNOOP);
 
-    if (VIsual_active && b == curbuf && VIsual_mode != Ctrl_V) {
-      fix_pos_col(b, &VIsual, (linenr_T)start_row, (colnr_T)start_col, (linenr_T)end_row,
+    if (Visual.active && b == curbuf && Visual.mode != Ctrl_V) {
+      fix_pos_col(b, &Visual.start, (linenr_T)start_row, (colnr_T)start_col, (linenr_T)end_row,
                   (colnr_T)end_col, (linenr_T)new_len, (colnr_T)last_item.size, 1);
       check_visual_pos();
     }

@@ -1337,6 +1337,7 @@ char *addstar(char *fname, size_t len, int context)
         || context == EXPAND_LOG
         || context == EXPAND_PACKDEL
         || context == EXPAND_PACKUPDATE
+        || context == EXPAND_MARKS
         || context == EXPAND_LUA) {
       retval = xstrnsave(fname, len);
     } else {
@@ -1484,7 +1485,7 @@ void set_expand_context(expand_T *xp)
     xp->xp_search_dir = (ccline->cmdfirstc == '/') ? FORWARD : BACKWARD;
     xp->xp_pattern = ccline->cmdbuff;
     xp->xp_pattern_len = (size_t)ccline->cmdpos;
-    search_first_line = 0;  // Search entire buffer
+    Search.first_line = 0;  // Search entire buffer
     return;
   }
 
@@ -2352,6 +2353,10 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
     xp->xp_context = EXPAND_CHECKHEALTH;
     break;
 
+  case CMD_marks:
+    xp->xp_context = EXPAND_MARKS;
+    break;
+
   case CMD_log:
     xp->xp_context = EXPAND_LOG;
     break;
@@ -2940,9 +2945,15 @@ static char *get_arg1_from_lua(char *lua, expand_T *xp, int idx)
   return NULL;
 }
 
-/// Completion for |:log| command.
-///
-/// Given to ExpandGeneric() to obtain `:log` completion.
+/// Completion for the |:marks| command. Given to ExpandGeneric().
+/// @param[in] xp  Expandy thing 🤷
+/// @param[in] idx  Index of the item.
+static char *get_marks_arg(expand_T *xp, int idx)
+{
+  return get_arg1_from_lua("return require'vim._core.marks'.complete(...)", xp, idx);
+}
+
+/// Completion for |:log| command. Given to ExpandGeneric().
 /// @param[in] xp  Expandy thing 🤷
 /// @param[in] idx  Index of the item.
 static char *get_log_arg(expand_T *xp, int idx)
@@ -2950,9 +2961,7 @@ static char *get_log_arg(expand_T *xp, int idx)
   return get_arg1_from_lua("return require'vim._core.ex_cmd'.log_complete(...)", xp, idx);
 }
 
-/// Completion for |:lsp| command.
-///
-/// Given to ExpandGeneric() to obtain `:lsp` completion.
+/// Completion for |:lsp| command. Given to ExpandGeneric().
 /// @param[in] xp  Expandy thing 🤷
 /// @param[in] idx  Index of the item.
 static char *get_lsp_arg(expand_T *xp, int idx)
@@ -2960,9 +2969,7 @@ static char *get_lsp_arg(expand_T *xp, int idx)
   return get_arg1_from_lua("return require'vim._core.ex_cmd'.lsp_complete(...)", xp, idx);
 }
 
-/// Completion for |:packdel| command.
-///
-/// Given to ExpandGeneric() to obtain `:packdel` completion.
+/// Completion for |:packdel| command. Given to ExpandGeneric().
 /// @param[in] xp  Expandy thing.
 /// @param[in] idx  Index of the item.
 static char *get_packdel_arg(expand_T *xp, int idx)
@@ -2970,9 +2977,7 @@ static char *get_packdel_arg(expand_T *xp, int idx)
   return get_arg1_from_lua("return require'vim._core.ex_cmd'.packdel_complete(...)", xp, idx);
 }
 
-/// Completion for |:packupdate| command.
-///
-/// Given to ExpandGeneric() to obtain `:packupdate` completion.
+/// Completion for |:packupdate| command. Given to ExpandGeneric().
 /// @param[in] xp  Expandy thing.
 /// @param[in] idx  Index of the item.
 static char *get_packupdate_arg(expand_T *xp, int idx)
@@ -3022,6 +3027,7 @@ static int ExpandOther(char *pat, expand_T *xp, regmatch_T *rmp, char ***matches
     { EXPAND_SCRIPTNAMES, get_scriptnames_arg, true, false },
     { EXPAND_RETAB, get_retab_arg, true, true },
     { EXPAND_CHECKHEALTH, get_healthcheck_names, true, false },
+    { EXPAND_MARKS, get_marks_arg, true, false },
     { EXPAND_LOG, get_log_arg, true, false },
     { EXPAND_LSP, get_lsp_arg, true, false },
     { EXPAND_PACKDEL, get_packdel_arg, true, false },
@@ -4310,7 +4316,7 @@ static char *concat_pattern_with_buffer_match(char *pat, int pat_len, pos_T *end
 static int expand_pattern_in_buf(char *pat, Direction dir, char ***matches, int *numMatches)
 {
   bool exacttext = wop_flags & kOptWopFlagExacttext;
-  bool has_range = search_first_line != 0;
+  bool has_range = Search.first_line != 0;
 
   *matches = NULL;
   *numMatches = 0;
@@ -4322,7 +4328,7 @@ static int expand_pattern_in_buf(char *pat, Direction dir, char ***matches, int 
   int pat_len = (int)strlen(pat);
   pos_T cur_match_pos = { 0 }, prev_match_pos = { 0 };
   if (has_range) {
-    cur_match_pos.lnum = search_first_line;
+    cur_match_pos.lnum = Search.first_line;
   } else {
     cur_match_pos = pre_incsearch_pos;
   }
@@ -4352,8 +4358,8 @@ static int expand_pattern_in_buf(char *pat, Direction dir, char ***matches, int 
     }
 
     // If in range mode, check if match is within the range
-    if (has_range && (cur_match_pos.lnum < search_first_line
-                      || cur_match_pos.lnum > search_last_line)) {
+    if (has_range && (cur_match_pos.lnum < Search.first_line
+                      || cur_match_pos.lnum > Search.last_line)) {
       break;
     }
 

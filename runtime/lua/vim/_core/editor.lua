@@ -1260,20 +1260,56 @@ function vim.print(...)
   return vim._print(false, ...)
 end
 
---- Translates keycodes.
+--- @class vim.keycode.chord
+--- @inlinedoc
 ---
---- Example:
+--- Key without modifiers. Example: `<C-A>` has `key` `a`.
+--- @field key string
+---
+--- Alternative spelling of `key`, or nil if There Is No Alternative (TINA).
+--- Example: `key="<"` has `key_alt="lt"`.
+--- @field key_alt string?
+---
+--- Full key-chord in canonical key-notation (as produced by |keytrans()|), including modifiers.
+--- Example: `<A-f>` has `keys="<M-f>"`.
+--- @field keys string
+---
+--- A list of single character modifiers of the key.
+--- @field mod ('M'|'T'|'C'|'S'|'2'|'3'|'4'|'D')[]
+
+--- Converts keys from [key-notation] to the internal encoding. Optionally returns
+--- structured key-chord info as retval 2.
+---
+--- Inverse of [keytrans()], which converts the internal encoding back to [key-notation].
+---
+--- Examples:
 ---
 --- ```lua
 --- local k = vim.keycode
 --- vim.g.mapleader = k'<bs>'
+---
+--- -- Split a key sequence into chords, e.g. to inspect modifiers.
+--- local _, chords = vim.keycode('<C-w>v', true)
+--- assert(chords[1].key == 'w' and chords[1].mod[1] == 'C')
+---
+--- -- keytrans() is the inverse: internal encoding => key-notation.
+--- assert(vim.fn.keytrans(vim.keycode('<C-a>')) == '<C-A>')
 --- ```
 ---
---- @param str string String to be converted.
---- @return string
+---
+--- @param keys string Keys in [key-notation].
+--- @param info boolean? Also return key-chord info.
+--- @return string # Internal bytes representation of the given `keys`.
+--- @return vim.keycode.chord[]? # List of parsed key-chords, each with fields:
 --- @see |nvim_replace_termcodes()|
-function vim.keycode(str)
-  return vim.api.nvim_replace_termcodes(str, true, true, true)
+--- @see |keytrans()|
+function vim.keycode(keys, info)
+  if info then
+    local keycode = vim.keycode(keys)
+    return keycode, vim._core.keyparse(keycode)
+  else
+    return vim.api.nvim_replace_termcodes(keys, true, true, true)
+  end
 end
 
 --- @param server_addr string

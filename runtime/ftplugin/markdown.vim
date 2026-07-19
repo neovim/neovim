@@ -9,7 +9,7 @@ if exists("b:did_ftplugin")
   finish
 endif
 
-runtime! ftplugin/html.vim ftplugin/html_*.vim ftplugin/html/*.vim
+runtime! ftplugin/html[.]{vim,lua} ftplugin/html_*.{vim,lua} ftplugin/html/*.{vim,lua}
 
 let s:keepcpo= &cpo
 set cpo&vim

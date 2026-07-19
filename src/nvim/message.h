@@ -6,6 +6,7 @@
 
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/grid_defs.h"
+#include "nvim/keycodes_defs.h"  // IWYU pragma: keep
 #include "nvim/macros_defs.h"
 #include "nvim/message_defs.h"  // IWYU pragma: keep
 

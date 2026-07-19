@@ -52,40 +52,11 @@
 
 int kCtxAll = (kCtxRegs | kCtxJumps | kCtxBufs | kCtxGVars | kCtxSFuncs | kCtxFuncs);
 
-static ContextVec ctx_stack = KV_INITIAL_VALUE;
-
 /// Nesting depth of ctx_switch() calls that changed curwin.
 static int _ctx_switch_depth = 0;
 
 /// curwin saved by the outermost curwin-changing ctx_switch() (0: none).
 static handle_T _ctx_saved_curwin = 0;
-
-/// Clears and frees the context stack
-void ctx_free_all(void)
-{
-  for (size_t i = 0; i < kv_size(ctx_stack); i++) {
-    ctx_free(&kv_A(ctx_stack, i));
-  }
-  kv_destroy(ctx_stack);
-}
-
-/// Returns the size of the context stack.
-size_t ctx_size(void)
-  FUNC_ATTR_PURE
-{
-  return kv_size(ctx_stack);
-}
-
-/// Returns pointer to Context object with given zero-based index from the top
-/// of context stack or NULL if index is out of bounds.
-Context *ctx_get(size_t index)
-  FUNC_ATTR_PURE
-{
-  if (index < kv_size(ctx_stack)) {
-    return &kv_Z(ctx_stack, index);
-  }
-  return NULL;
-}
 
 /// Free resources used by Context object.
 ///
@@ -102,18 +73,13 @@ void ctx_free(Context *ctx)
 
 /// Saves the editor state to a context.
 ///
-/// If "context" is NULL, pushes context on context stack.
 /// Use "flags" to select particular types of context.
 ///
-/// @param  ctx    Save to this context, or push on context stack if NULL.
+/// @param  ctx    Save to this context.
 /// @param  flags  Flags, see ContextTypeFlags enum.
 void ctx_save(Context *ctx, const int flags)
+  FUNC_ATTR_NONNULL_ALL
 {
-  if (ctx == NULL) {
-    kv_push(ctx_stack, CONTEXT_INIT);
-    ctx = &kv_last(ctx_stack);
-  }
-
   if (flags & kCtxRegs) {
     ctx->regs = shada_encode_regs();
   }
@@ -158,24 +124,13 @@ void ctx_save(Context *ctx, const int flags)
 
 /// Loads (restores) the editor state from a Context snapshot.
 ///
-/// If "context" is NULL, pops context from context stack.
 /// Use "flags" to select particular types of context.
 ///
-/// @param  ctx    Load from this context. Pop from context stack if NULL.
+/// @param  ctx    Load from this context.
 /// @param  flags  Flags, see ContextTypeFlags enum.
-///
-/// @return true on success, false otherwise (i.e.: empty context stack).
-bool ctx_load(Context *ctx, const int flags)
+void ctx_load(Context *ctx, const int flags)
+  FUNC_ATTR_NONNULL_ALL
 {
-  bool free_ctx = false;
-  if (ctx == NULL) {
-    if (ctx_stack.size == 0) {
-      return false;
-    }
-    ctx = &kv_pop(ctx_stack);
-    free_ctx = true;
-  }
-
   OptVal op_shada = get_option_value(kOptShada, OPT_GLOBAL);
   set_option_value(kOptShada, STATIC_CSTR_AS_OPTVAL("!,'100,%"), OPT_GLOBAL);
 
@@ -201,14 +156,8 @@ bool ctx_load(Context *ctx, const int flags)
     }
   }
 
-  if (free_ctx) {
-    ctx_free(ctx);
-  }
-
   set_option_value(kOptShada, op_shada, OPT_GLOBAL);
   optval_free(op_shada);
-
-  return true;
 }
 
 /// Convert readfile()-style array to String
@@ -518,8 +467,8 @@ bool ctx_switch(CtxSwitch *cs, win_T *wp, tabpage_T *tp, buf_T *buf, CtxSwitchFl
   }
   if (!cs->cs_same_win) {
     // Disable Visual selection, because redrawing may fail.
-    cs->cs_visual_active = VIsual_active;
-    VIsual_active = false;
+    cs->cs_visual_active = Visual.active;
+    Visual.active = false;
   }
 
   if (flags & kCtxNoEvents) {
@@ -659,12 +608,12 @@ void ctx_restore(CtxSwitch *cs)
   }
 
   if (!cs->cs_same_win) {
-    VIsual_active = cs->cs_visual_active;
+    Visual.active = cs->cs_visual_active;
   }
   if (cs->cs_mode == kCtxSwitchBuf) {
     check_cursor(curwin);  // just in case lines got deleted
-    if (VIsual_active) {
-      check_pos(curbuf, &VIsual);
+    if (Visual.active) {
+      check_pos(curbuf, &Visual.start);
     }
   }
 
@@ -683,8 +632,8 @@ void ctx_restore(CtxSwitch *cs)
     }
     // In case the code moved the cursor or changed the Visual area, check it is valid.
     check_cursor(curwin);
-    if (VIsual_active) {
-      check_pos(curbuf, &VIsual);
+    if (Visual.active) {
+      check_pos(curbuf, &Visual.start);
     }
   }
   if (cs->cs_mode == kCtxSwitchBuf && cs->cs_new_curwin != cs->cs_curwin) {

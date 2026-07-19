@@ -762,7 +762,7 @@ int update_screen(void)
 /// Prepare for 'hlsearch' highlighting.
 void start_search_hl(void)
 {
-  if (!p_hls || no_hlsearch) {
+  if (!p_hls || Search.no_hlsearch) {
     return;
   }
 
@@ -848,10 +848,10 @@ void show_cursor_info_later(bool force)
       || empty_line != curwin->w_stl_empty
       || reg_recording != curwin->w_stl_recording
       || state != curwin->w_stl_state
-      || (VIsual_active && (VIsual_mode != curwin->w_stl_visual_mode
-                            || VIsual.lnum != curwin->w_stl_visual_pos.lnum
-                            || VIsual.col != curwin->w_stl_visual_pos.col
-                            || VIsual.coladd != curwin->w_stl_visual_pos.coladd))) {
+      || (Visual.active && (Visual.mode != curwin->w_stl_visual_mode
+                            || Visual.start.lnum != curwin->w_stl_visual_pos.lnum
+                            || Visual.start.col != curwin->w_stl_visual_pos.col
+                            || Visual.start.coladd != curwin->w_stl_visual_pos.coladd))) {
     if (curwin->w_status_height || global_stl_height()) {
       curwin->w_redr_status = true;
     } else {
@@ -873,9 +873,9 @@ void show_cursor_info_later(bool force)
   curwin->w_stl_topfill = curwin->w_topfill;
   curwin->w_stl_recording = reg_recording;
   curwin->w_stl_state = state;
-  if (VIsual_active) {
-    curwin->w_stl_visual_mode = VIsual_mode;
-    curwin->w_stl_visual_pos = VIsual;
+  if (Visual.active) {
+    curwin->w_stl_visual_mode = Visual.mode;
+    curwin->w_stl_visual_pos = Visual.start;
   }
 }
 
@@ -912,7 +912,7 @@ int showmode(void)
                   && ((State & MODE_TERMINAL)
                       || (State & MODE_INSERT)
                       || restart_edit != NUL
-                      || VIsual_active));
+                      || Visual.active));
 
   bool can_show_mode = (p_ch != 0 || ui_has(kUIMessages));
   if ((do_mode || reg_recording != 0) && can_show_mode) {
@@ -1007,14 +1007,14 @@ int showmode(void)
           msg_puts_hl(_(" (paste)"), hl_id, false);
         }
 
-        if (VIsual_active) {
+        if (Visual.active) {
           char *p;
 
           // Don't concatenate separate words to avoid translation
           // problems.
-          switch ((VIsual_select ? 4 : 0)
-                  + (VIsual_mode == Ctrl_V) * 2
-                  + (VIsual_mode == 'V')) {
+          switch ((Visual.select ? 4 : 0)
+                  + (Visual.mode == Ctrl_V) * 2
+                  + (Visual.mode == 'V')) {
           case 0:
             p = N_(" VISUAL"); break;
           case 1:
@@ -1064,7 +1064,7 @@ int showmode(void)
   msg_ext_flush_showmode();
 
   // In Visual mode the size of the selected area must be redrawn.
-  if (VIsual_active) {
+  if (Visual.active) {
     clear_showcmd();
   }
 
@@ -1831,20 +1831,20 @@ static void win_update(win_T *wp)
   }
 
   // check if we are updating or removing the inverted part
-  if ((VIsual_active && buf == curwin->w_buffer)
+  if ((Visual.active && buf == curwin->w_buffer)
       || (wp->w_old_cursor_lnum != 0 && type != UPD_NOT_VALID)) {
     linenr_T from, to;
 
-    if (VIsual_active) {
-      if (VIsual_mode != wp->w_old_visual_mode || type == UPD_INVERTED_ALL) {
+    if (Visual.active) {
+      if (Visual.mode != wp->w_old_visual_mode || type == UPD_INVERTED_ALL) {
         // If the type of Visual selection changed, redraw the whole
         // selection.  Also when the ownership of the X selection is
         // gained or lost.
-        if (curwin->w_cursor.lnum < VIsual.lnum) {
+        if (curwin->w_cursor.lnum < Visual.start.lnum) {
           from = curwin->w_cursor.lnum;
-          to = VIsual.lnum;
+          to = Visual.start.lnum;
         } else {
-          from = VIsual.lnum;
+          from = Visual.start.lnum;
           to = curwin->w_cursor.lnum;
         }
         // redraw more when the cursor moved as well
@@ -1865,36 +1865,36 @@ static void win_update(win_T *wp)
           }
         }
 
-        if (VIsual.lnum != wp->w_old_visual_lnum
-            || VIsual.col != wp->w_old_visual_col) {
+        if (Visual.start.lnum != wp->w_old_visual_lnum
+            || Visual.start.col != wp->w_old_visual_col) {
           if (wp->w_old_visual_lnum < from
               && wp->w_old_visual_lnum != 0) {
             from = wp->w_old_visual_lnum;
           }
-          to = MAX(MAX(to, wp->w_old_visual_lnum), VIsual.lnum);
-          from = MIN(from, VIsual.lnum);
+          to = MAX(MAX(to, wp->w_old_visual_lnum), Visual.start.lnum);
+          from = MIN(from, Visual.start.lnum);
         }
       }
 
       // If in block mode and changed column or curwin->w_curswant:
       // update all lines.
       // First compute the actual start and end column.
-      if (VIsual_mode == Ctrl_V) {
+      if (Visual.mode == Ctrl_V) {
         colnr_T fromc, toc;
-        getvcols(wp, &VIsual, &curwin->w_cursor, &fromc, &toc, GETVCOL_END_EXCL_LBR);
+        getvcols(wp, &Visual.start, &curwin->w_cursor, &fromc, &toc, GETVCOL_END_EXCL_LBR);
         toc++;
         // Highlight to the end of the line, unless 'virtualedit' has
         // "block".
         if (curwin->w_curswant == MAXCOL) {
           if (get_ve_flags(curwin) & kOptVeFlagBlock) {
             pos_T pos;
-            int cursor_above = curwin->w_cursor.lnum < VIsual.lnum;
+            int cursor_above = curwin->w_cursor.lnum < Visual.start.lnum;
 
             // Need to find the longest line.
             toc = 0;
             pos.coladd = 0;
             for (pos.lnum = curwin->w_cursor.lnum;
-                 cursor_above ? pos.lnum <= VIsual.lnum : pos.lnum >= VIsual.lnum;
+                 cursor_above ? pos.lnum <= Visual.start.lnum : pos.lnum >= Visual.start.lnum;
                  pos.lnum += cursor_above ? 1 : -1) {
               colnr_T t;
 
@@ -1910,8 +1910,8 @@ static void win_update(win_T *wp)
 
         if (fromc != wp->w_old_cursor_fcol
             || toc != wp->w_old_cursor_lcol) {
-          from = MIN(from, VIsual.lnum);
-          to = MAX(to, VIsual.lnum);
+          from = MIN(from, Visual.start.lnum);
+          to = MAX(to, Visual.start.lnum);
         }
         wp->w_old_cursor_fcol = fromc;
         wp->w_old_cursor_lcol = toc;
@@ -1980,11 +1980,11 @@ static void win_update(win_T *wp)
     }
   }
 
-  if (VIsual_active && buf == curwin->w_buffer) {
-    wp->w_old_visual_mode = (char)VIsual_mode;
+  if (Visual.active && buf == curwin->w_buffer) {
+    wp->w_old_visual_mode = (char)Visual.mode;
     wp->w_old_cursor_lnum = curwin->w_cursor.lnum;
-    wp->w_old_visual_lnum = VIsual.lnum;
-    wp->w_old_visual_col = VIsual.col;
+    wp->w_old_visual_lnum = Visual.start.lnum;
+    wp->w_old_visual_col = Visual.start.col;
     wp->w_old_curswant = curwin->w_curswant;
   } else {
     wp->w_old_visual_mode = 0;

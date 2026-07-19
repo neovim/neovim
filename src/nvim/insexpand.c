@@ -171,6 +171,7 @@ struct compl_S {
   typval_T cp_user_data;
   char *cp_fname;                ///< file containing the match, allocated when
                                  ///< cp_flags has CP_FREE_FNAME
+  char *cp_commit_chars;         ///< commit characters, allocated. May be NULL.
   int cp_flags;                  ///< CP_ values
   int cp_number;                 ///< sequence number
   bool cp_preselect;             ///< preselect item
@@ -699,6 +700,22 @@ bool ins_compl_accept_char(int c)
   return vim_iswordc(c);
 }
 
+/// Check if "c" is a commit character for the currently selected completion
+/// match: typing it accepts the match, then "c" is inserted as usual.
+/// Set with the "commit_chars" item property, see |complete-items|.
+bool ins_compl_commit_char(int c)
+{
+  // Control characters and special keys (negative) are never commit
+  // characters: CR/NL must keep their compl_enter_selects semantics.
+  if (c < ' ') {
+    return false;
+  }
+  return compl_shown_match != NULL
+         && !match_at_original_text(compl_shown_match)
+         && compl_shown_match->cp_commit_chars != NULL
+         && vim_strchr(compl_shown_match->cp_commit_chars, c) != NULL;
+}
+
 /// Get the completed text by inferring the case of the originally typed text.
 /// If the result is in allocated memory "tofree" is set to it.
 static char *ins_compl_infercase_gettext(const char *str, int char_len, int compl_char_len,
@@ -852,7 +869,7 @@ int ins_compl_add_infercase(char *str_arg, int len, bool icase, char *fname, Dir
   }
 
   int res = ins_compl_add(str, len, fname, NULL, false, NULL, dir, flags, false, NULL, score,
-                          false);
+                          false, NULL);
   xfree(tofree);
   return res;
 }
@@ -912,6 +929,9 @@ bool ins_compl_preinsert_longest(void)
 /// @param[in]  flags_arg  match flags (cp_flags)
 /// @param[in]  adup       accept this match even if it is already present.
 /// @param[in]  user_hl    list of extra highlight attributes for abbr kind.
+/// @param[in]  commit_chars  commit characters for this match. May be NULL.
+///                           Must be allocated, ownership is transferred:
+///                           freed here when the match is not added.
 ///
 /// If "cdir" is FORWARD, then the match is added after the current match.
 /// Otherwise, it is added before the current match.
@@ -922,7 +942,7 @@ bool ins_compl_preinsert_longest(void)
 static int ins_compl_add(char *const str, int len, char *const fname, char *const *const cptext,
                          const bool cptext_allocated, typval_T *user_data, const Direction cdir,
                          int flags_arg, const bool adup, const int *user_hl, const int score,
-                         bool preselect)
+                         bool preselect, char *const commit_chars)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   compl_T *match;
@@ -939,6 +959,7 @@ static int ins_compl_add(char *const str, int len, char *const fname, char *cons
     if (cptext_allocated) {
       free_cptext(cptext);
     }
+    xfree(commit_chars);
     return FAIL;
   }
   if (len < 0) {
@@ -958,6 +979,7 @@ static int ins_compl_add(char *const str, int len, char *const fname, char *cons
         if (cptext_allocated) {
           free_cptext(cptext);
         }
+        xfree(commit_chars);
         return NOTDONE;
       }
       match = match->cp_next;
@@ -972,6 +994,7 @@ static int ins_compl_add(char *const str, int len, char *const fname, char *cons
   match = xcalloc(1, sizeof(compl_T));
   match->cp_number = flags & CP_ORIGINAL_TEXT ? 0 : -1;
   match->cp_str = cbuf_to_string(str, (size_t)len);
+  match->cp_commit_chars = commit_chars;
   match->cp_preselect = preselect;
   if (preselect && compl_preselect_match == NULL
       && (get_cot_flags() & kOptCotFlagPreselect)) {
@@ -1252,7 +1275,7 @@ static void ins_compl_add_matches(int num_matches, char **matches, int icase)
   for (int i = 0; i < num_matches && add_r != FAIL; i++) {
     add_r = ins_compl_add(matches[i], -1, NULL, NULL, false, NULL, dir,
                           CP_FAST | (icase ? CP_ICASE : 0), false, NULL,
-                          FUZZY_SCORE_NONE, false);
+                          FUZZY_SCORE_NONE, false, NULL);
     if (add_r == OK) {
       // If dir was BACKWARD then honor it just once.
       dir = FORWARD;
@@ -2099,6 +2122,7 @@ static void ins_compl_item_free(compl_T *match)
   }
   free_cptext(match->cp_text);
   tv_clear(&match->cp_user_data);
+  xfree(match->cp_commit_chars);
   xfree(match);
 }
 
@@ -2684,14 +2708,18 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
   }
 
   String word = STRING_INIT;
+  const bool is_commit = pum_visible() && ins_compl_commit_char(c);
   // If the popup menu is displayed pressing CTRL-Y means accepting
   // the selection without inserting anything.  When
   // compl_enter_selects is set the Enter key does the same.
-  if ((c == Ctrl_Y || (compl_enter_selects
-                       && (c == CAR || c == K_KENTER || c == NL)))
+  // Note: Unlike Ctrl_Y, a commit-char accepts the match but does not consume the key.
+  if ((c == Ctrl_Y || is_commit || (compl_enter_selects
+                                    && (c == CAR || c == K_KENTER || c == NL)))
       && pum_visible()) {
     word = copy_string(compl_shown_match->cp_str, NULL);
-    retval = true;
+    if (!is_commit) {
+      retval = true;
+    }
     // May need to remove ComplMatchIns highlight.
     redrawWinline(curwin, curwin->w_cursor.lnum);
   }
@@ -3345,6 +3373,7 @@ static int ins_compl_add_tv(typval_T *const tv, const Direction dir, bool fast)
   char *(cptext[CPT_COUNT]);
   char *user_abbr_hlname = NULL;
   char *user_kind_hlname = NULL;
+  char *commit_chars = NULL;
   int user_hl[2] = { -1, -1 };
   typval_T user_data;
 
@@ -3355,6 +3384,7 @@ static int ins_compl_add_tv(typval_T *const tv, const Direction dir, bool fast)
     cptext[CPT_MENU] = tv_dict_get_string(tv->vval.v_dict, "menu", true);
     cptext[CPT_KIND] = tv_dict_get_string(tv->vval.v_dict, "kind", true);
     cptext[CPT_INFO] = tv_dict_get_string(tv->vval.v_dict, "info", true);
+    commit_chars = tv_dict_get_string(tv->vval.v_dict, "commit_chars", true);
 
     user_abbr_hlname = tv_dict_get_string(tv->vval.v_dict, "abbr_hlgroup", false);
     user_hl[0] = get_user_highlight_attr(user_abbr_hlname);
@@ -3381,10 +3411,12 @@ static int ins_compl_add_tv(typval_T *const tv, const Direction dir, bool fast)
   if (word == NULL || (!empty && *word == NUL)) {
     free_cptext(cptext);
     tv_clear(&user_data);
+    xfree(commit_chars);
     return FAIL;
   }
   int status = ins_compl_add((char *)word, -1, NULL, cptext, true,
-                             &user_data, dir, flags, dup, user_hl, FUZZY_SCORE_NONE, preselect);
+                             &user_data, dir, flags, dup, user_hl, FUZZY_SCORE_NONE, preselect,
+                             commit_chars);
   if (status != OK) {
     tv_clear(&user_data);
   }
@@ -3480,7 +3512,7 @@ static void set_completion(colnr_T startcol, list_T *list)
   }
   if (ins_compl_add(compl_orig_text.data, (int)compl_orig_text.size,
                     NULL, NULL, false, NULL, 0,
-                    flags | CP_FAST, false, NULL, FUZZY_SCORE_NONE, false) != OK) {
+                    flags | CP_FAST, false, NULL, FUZZY_SCORE_NONE, false, NULL) != OK) {
     return;
   }
 
@@ -4155,7 +4187,7 @@ static void get_next_filename_completion(void)
         int current_score = compl_fuzzy_scores[fuzzy_indices_data[i]];
         if (ins_compl_add(match, -1, NULL, NULL, false, NULL, dir,
                           CP_FAST | ((p_fic || p_wic) ? CP_ICASE : 0),
-                          false, NULL, current_score, false) == OK) {
+                          false, NULL, current_score, false, NULL) == OK) {
           dir = FORWARD;
         }
 
@@ -4214,7 +4246,7 @@ static void get_next_cmdline_completion(void)
       }
 
       add_r = ins_compl_add(matches[i], -1, NULL, cptext, false, NULL, dir,
-                            CP_FAST, false, NULL, FUZZY_SCORE_NONE, false);
+                            CP_FAST, false, NULL, FUZZY_SCORE_NONE, false, NULL);
       if (add_r == OK) {
         // if dir was BACKWARD then honor it just once
         dir = FORWARD;
@@ -4646,7 +4678,7 @@ static void get_next_bufname_token(void)
       char *tail = path_tail(b->b_sfname);
       if (strncmp(tail, compl_orig_text.data, compl_orig_text.size) == 0) {
         ins_compl_add(tail, (int)strlen(tail), NULL, NULL, false, NULL, 0,
-                      p_ic ? CP_ICASE : 0, false, NULL, FUZZY_SCORE_NONE, false);
+                      p_ic ? CP_ICASE : 0, false, NULL, FUZZY_SCORE_NONE, false, NULL);
       }
     }
   }
@@ -5241,7 +5273,13 @@ void ins_compl_insert(bool move_cursor, bool insert_prefix)
 static void ins_compl_show_filename(void)
 {
   char *const lead = _("match in file");
-  int space = sc_col - vim_strsize(lead) - 2;
+
+  // In the case of ext_messages, `sc_col` is obsolete. Fortunately, long messages are no longer
+  // disruptive, so truncation could be skipped. But in this particular case, with default
+  // configuration `showmode cmdheight=1`, a multi-line message is shown partially, and a message
+  // that fits into one line is not shown at all. It's better to be consistent: it should not depend
+  // on the exact length of the message whether it is displayed at all.
+  int space = (ui_has(kUIMessages) ? Columns : sc_col) - vim_strsize(lead) - 2;
   if (space <= 0) {
     return;
   }
@@ -6164,7 +6202,7 @@ static int ins_compl_start(void)
   }
   if (ins_compl_add(compl_orig_text.data, (int)compl_orig_text.size,
                     NULL, NULL, false, NULL, 0,
-                    flags, false, NULL, FUZZY_SCORE_NONE, false) != OK) {
+                    flags, false, NULL, FUZZY_SCORE_NONE, false, NULL) != OK) {
     API_CLEAR_STRING(compl_pattern);
     API_CLEAR_STRING(compl_orig_text);
     kv_destroy(compl_orig_extmarks);

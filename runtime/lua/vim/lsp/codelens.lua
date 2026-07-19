@@ -1,6 +1,5 @@
 local api = vim.api
 local log = require('vim.lsp.log')
-local nvim_on = require('vim._core.util').nvim_on
 local tableclear = require('vim._core.table').clear
 local util = require('vim.lsp.util')
 
@@ -32,32 +31,6 @@ setmetatable(Provider, Capability)
 Capability.all[Provider.name] = Provider
 
 ---@package
----@param bufnr integer
----@return vim.lsp.codelens.Provider
-function Provider:new(bufnr)
-  ---@type vim.lsp.codelens.Provider
-  self = Capability.new(self, bufnr)
-
-  nvim_on('LspNotify', self.augroup, { buf = self.bufnr }, function(ev)
-    local client_id = ev.data.client_id ---@type integer
-
-    if not self.client_state[client_id] then
-      return
-    end
-
-    if ev.data.method == 'textDocument/didClose' then
-      self:clear(client_id)
-    end
-
-    if ev.data.method == 'textDocument/didChange' or ev.data.method == 'textDocument/didOpen' then
-      self:request(client_id)
-    end
-  end)
-
-  return self
-end
-
----@package
 ---@param client_id integer
 function Provider:on_attach(client_id)
   if not self.client_state[client_id] then
@@ -77,6 +50,16 @@ function Provider:on_detach(client_id)
     self:clear(client_id)
     self.client_state[client_id] = nil
   end
+end
+
+---@private
+function Provider:on_close(client_id)
+  self:clear(client_id)
+end
+
+---@private
+function Provider:on_change(client_id)
+  self:request(client_id)
 end
 
 ---@package
@@ -268,16 +251,6 @@ function Provider:on_win(toprow, botrow)
     end
   end
 end
-
-local namespace = api.nvim_create_namespace('nvim.lsp.codelens')
-api.nvim_set_decoration_provider(namespace, {
-  on_win = function(_, _, bufnr, toprow, botrow)
-    local provider = Provider.active[bufnr]
-    if provider then
-      provider:on_win(toprow, botrow)
-    end
-  end,
-})
 
 --- Query whether code lens is enabled in the {filter}ed scope
 ---

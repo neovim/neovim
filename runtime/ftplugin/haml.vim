@@ -21,7 +21,7 @@ else
 endif
 let s:match_words = ""
 
-runtime! ftplugin/html.vim ftplugin/html_*.vim ftplugin/html/*.vim
+runtime! ftplugin/html[.]{vim,lua} ftplugin/html_*.{vim,lua} ftplugin/html/*.{vim,lua}
 unlet! b:did_ftplugin
 set matchpairs-=<:>
 
@@ -39,7 +39,7 @@ if exists("b:match_words")
   unlet b:match_words
 endif
 
-runtime! ftplugin/ruby.vim ftplugin/ruby_*.vim ftplugin/ruby/*.vim
+runtime! ftplugin/ruby[.]{vim,lua} ftplugin/ruby_*.{vim,lua} ftplugin/ruby/*.{vim,lua}
 let b:did_ftplugin = 1
 
 let &l:define .= empty(&l:define ? '' : '\|') . '^\s*\%(%\w*\)\=\%(\.[[:alnum:]_-]\+\)*#'

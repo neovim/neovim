@@ -24,7 +24,7 @@ else
 endif
 let s:match_words = ""
 
-runtime! ftplugin/sh.vim ftplugin/sh_*.vim ftplugin/sh/*.vim
+runtime! ftplugin/sh[.]{vim,lua} ftplugin/sh_*.{vim,lua} ftplugin/sh/*.{vim,lua}
 let b:did_ftplugin = 1
 
 " Override our defaults if these were set by an included ftplugin.

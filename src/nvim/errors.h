@@ -119,7 +119,7 @@ EXTERN const char e_swapclose[] INIT(= N_("E72: Close error on swap file"));
 EXTERN const char e_toocompl[] INIT(= N_("E74: Command too complex"));
 EXTERN const char e_longname[] INIT(= N_("E75: Name too long"));
 EXTERN const char e_toomsbra[] INIT(= N_("E76: Too many ["));
-EXTERN const char e_toomany[] INIT(= N_("E77: Too many file names"));
+EXTERN const char e_toomany[] INIT(= N_("E77: Too many file names (glob not allowed)"));
 EXTERN const char e_trailing[] INIT(= N_("E488: Trailing characters"));
 EXTERN const char e_trailing_arg[] INIT(= N_("E488: Trailing characters: %s"));
 EXTERN const char e_umark[] INIT(= N_("E78: Unknown mark"));
@@ -164,6 +164,7 @@ EXTERN const char e_auabort[] INIT(= N_("E855: Autocommands caused command to ab
 EXTERN const char e_api_error[] INIT(= N_("E5555: API call: %s"));
 
 EXTERN const char e_fast_api_disabled[] INIT(= N_("E5560: %s must not be called in a fast event context"));
+EXTERN const char e_noui[] INIT(= N_("E5768: No UI attached"));
 
 EXTERN const char e_floatonly[] INIT(= N_("E5601: Cannot close window, only floating window would remain"));
 EXTERN const char e_floatexchange[] INIT(= N_("E5602: Cannot exchange or rotate float"));
@@ -233,6 +234,8 @@ EXTERN const char e_cannot_read_from_str_2[] INIT(= N_("E282: Cannot read from \
 EXTERN const char e_conflicting_configs[] INIT(= N_("E5422: Conflicting configs: \"%s\" \"%s\""));
 
 EXTERN const char e_unknown_option2[] INIT(= N_("E355: Unknown option: %s"));
+
+EXTERN const char e_restart_failed_cmd_no_quit[] INIT(= N_("E5201: Restart failed: +cmd did not quit server: %s"));
 
 EXTERN const char top_bot_msg[] INIT(= N_("search hit TOP, continuing at BOTTOM"));
 EXTERN const char bot_top_msg[] INIT(= N_("search hit BOTTOM, continuing at TOP"));

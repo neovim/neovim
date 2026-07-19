@@ -101,7 +101,7 @@ static int coladvance2(win_T *wp, pos_T *pos, bool addspaces, bool finetune, col
   int one_more = (State & MODE_INSERT)
                  || (State & MODE_TERMINAL)
                  || restart_edit != NUL
-                 || (VIsual_active && *p_sel != 'o')
+                 || (Visual.active && *p_sel != 'o')
                  || ((get_ve_flags(wp) & kOptVeFlagOnemore) && wcol < MAXCOL);
 
   char *line = ml_get_buf(wp->w_buffer, pos->lnum);
@@ -111,7 +111,7 @@ static int coladvance2(win_T *wp, pos_T *pos, bool addspaces, bool finetune, col
     idx = linelen - 1 + one_more;
     col = wcol;
 
-    if ((addspaces || finetune) && !VIsual_active) {
+    if ((addspaces || finetune) && !Visual.active) {
       wp->w_curswant = linetabsize(wp, pos->lnum) + one_more;
       if (wp->w_curswant > 0) {
         wp->w_curswant--;
@@ -343,7 +343,7 @@ void check_cursor_col(win_T *win)
     // - 'virtualedit' is set
     if ((State & MODE_INSERT) || restart_edit
         || (State & MODE_TERMINAL)
-        || (VIsual_active && *p_sel != 'o')
+        || (Visual.active && *p_sel != 'o')
         || (cur_ve_flags & kOptVeFlagOnemore)
         || virtual_active(win)) {
       win->w_cursor.col = len;
@@ -389,20 +389,20 @@ void check_cursor(win_T *wp)
   check_cursor_col(wp);
 }
 
-/// Check if VIsual position is valid, correct it if not.
+/// Check if Visual.start position is valid, correct it if not.
 /// Can be called when in Visual mode and a change has been made.
 void check_visual_pos(void)
 {
-  if (VIsual.lnum > curbuf->b_ml.ml_line_count) {
-    VIsual.lnum = curbuf->b_ml.ml_line_count;
-    VIsual.col = 0;
-    VIsual.coladd = 0;
+  if (Visual.start.lnum > curbuf->b_ml.ml_line_count) {
+    Visual.start.lnum = curbuf->b_ml.ml_line_count;
+    Visual.start.col = 0;
+    Visual.start.coladd = 0;
   } else {
-    int len = ml_get_len(VIsual.lnum);
+    int len = ml_get_len(Visual.start.lnum);
 
-    if (VIsual.col > len) {
-      VIsual.col = len;
-      VIsual.coladd = 0;
+    if (Visual.start.col > len) {
+      Visual.start.col = len;
+      Visual.start.coladd = 0;
     }
   }
 }
@@ -412,7 +412,7 @@ void check_visual_pos(void)
 void adjust_cursor_col(void)
 {
   if (curwin->w_cursor.col > 0
-      && (!VIsual_active || *p_sel == 'o')
+      && (!Visual.active || *p_sel == 'o')
       && gchar_cursor() == NUL) {
     curwin->w_cursor.col--;
   }

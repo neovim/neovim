@@ -5380,6 +5380,13 @@ vim.go.ru = vim.go.ruler
 --- 	set rulerformat=%15(%c%V\ %p%%%)
 --- ```
 ---
+--- This looks like an item group, but there are some differences in this
+--- particular case.  Most notably, the width is fixed and not a minimum,
+--- and the ruler is left-aligned, whereas the alignment of item groups is
+--- configurable and right-aligned by default.
+---
+--- When `ui2` is enabled, the ruler no longer has a fixed width and the
+--- item group syntax has no special meaning for 'rulerformat'.
 ---
 --- @type string
 vim.o.rulerformat = ""

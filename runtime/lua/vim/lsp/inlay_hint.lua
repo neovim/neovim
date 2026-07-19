@@ -41,22 +41,6 @@ Capability.all[InlayHint.name] = InlayHint
 function InlayHint:new(bufnr)
   self = Capability.new(self, bufnr)
 
-  nvim_on('LspNotify', self.augroup, { buf = self.bufnr }, function(ev)
-    local client_id = ev.data.client_id ---@type integer
-
-    if not self.client_state[client_id] then
-      return
-    end
-
-    if ev.data.method == 'textDocument/didClose' then
-      self:reset(client_id)
-    end
-
-    if ev.data.method == 'textDocument/didChange' or ev.data.method == 'textDocument/didOpen' then
-      self:refresh(client_id)
-    end
-  end)
-
   nvim_on('BufWinEnter', self.augroup, { buf = self.bufnr }, function()
     for client_id, _ in pairs(self.client_state) do
       self:refresh(client_id)
@@ -85,6 +69,16 @@ function InlayHint:on_detach(client_id)
     self:reset(client_id)
     self.client_state[client_id] = nil
   end
+end
+
+---@private
+function InlayHint:on_close(client_id)
+  self:reset(client_id)
+end
+
+---@private
+function InlayHint:on_change(client_id)
+  self:refresh(client_id)
 end
 
 --- Reset the buffer's inlay hint state and clear the extmarks
@@ -417,15 +411,5 @@ end
 function M.enable(enable, filter)
   Capability.enable('inlay_hint', enable, filter)
 end
-
-local namespace = api.nvim_create_namespace('nvim.lsp.inlay_hint')
-api.nvim_set_decoration_provider(namespace, {
-  on_win = function(_, _, bufnr, topline, botline)
-    local provider = InlayHint.active[bufnr]
-    if provider then
-      provider:on_win(topline, botline)
-    end
-  end,
-})
 
 return M

@@ -1,4 +1,5 @@
 local api = vim.api
+local nvim_on = require('vim._core.util').nvim_on
 
 ---@alias vim.lsp.capability.Name
 ---| 'codelens'
@@ -14,6 +15,10 @@ local api = vim.api
 --- Returns capability *prototypes*, not their instances.
 ---@type table<vim.lsp.capability.Name, vim.lsp.Capability>
 local all_capabilities = {}
+
+--- Track each capability instance created per buffer
+---@type table<integer, vim.lsp.Capability[]> buffer -> list of active capability instances
+local buf_capabilities = {}
 
 -- Abstract base class (not instantiable directly).
 -- For each buffer that has at least one supported client attached,
@@ -68,6 +73,12 @@ function M:new(bufnr)
   })
   self.client_state = {}
 
+  if not buf_capabilities[bufnr] then
+    buf_capabilities[bufnr] = {}
+  end
+
+  table.insert(buf_capabilities[bufnr], self)
+
   Class.active[bufnr] = self
   return self
 end
@@ -80,6 +91,14 @@ function M:destroy()
 
   api.nvim_del_augroup_by_id(self.augroup)
   self.active[self.bufnr] = nil
+
+  buf_capabilities[self.bufnr] = vim.tbl_filter(function(cap) ---@param cap vim.lsp.Capability
+    return cap ~= self
+  end, buf_capabilities[self.bufnr])
+
+  if not next(buf_capabilities[self.bufnr]) then
+    buf_capabilities[self.bufnr] = nil
+  end
 end
 
 --- Callback invoked when an LSP client attaches.
@@ -96,6 +115,22 @@ end
 function M:on_detach(client_id)
   self.client_state[client_id] = nil
 end
+
+--- Callback invoked when textDocument/didClose is sent for a client.
+---@param client_id integer
+---@diagnostic disable-next-line: unused-local
+function M:on_close(client_id) end
+
+--- Callback invoked when textDocument/didChange or textDocument/didOpen is sent for a client.
+---@param client_id integer
+---@diagnostic disable-next-line: unused-local
+function M:on_change(client_id) end
+
+--- Callback invoked on every redraw.
+---@param topline integer
+---@param botline integer
+---@diagnostic disable-next-line: unused-local
+function M:on_win(topline, botline) end
 
 ---@param name vim.lsp.capability.Name
 local function make_enable_var(name)
@@ -214,5 +249,43 @@ function M.is_enabled(name, filter)
 end
 
 M.all = all_capabilities
+
+local augroup = api.nvim_create_augroup('nvim.lsp.capability', {
+  clear = true,
+})
+
+nvim_on('LspNotify', augroup, function(ev)
+  local client_id = ev.data.client_id ---@type integer
+  local bufnr = ev.buf
+
+  if not buf_capabilities[bufnr] then
+    return
+  end
+
+  for _, provider in ipairs(buf_capabilities[bufnr]) do
+    if provider.client_state[client_id] then
+      if ev.data.method == 'textDocument/didClose' then
+        provider:on_close(client_id)
+      end
+
+      if ev.data.method == 'textDocument/didChange' or ev.data.method == 'textDocument/didOpen' then
+        provider:on_change(client_id)
+      end
+    end
+  end
+end)
+
+local namespace = api.nvim_create_namespace('nvim.lsp.capability')
+api.nvim_set_decoration_provider(namespace, {
+  on_win = function(_, _, bufnr, topline, botline)
+    if not buf_capabilities[bufnr] then
+      return
+    end
+
+    for _, provider in ipairs(buf_capabilities[bufnr]) do
+      provider:on_win(topline, botline)
+    end
+  end,
+})
 
 return M

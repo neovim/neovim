@@ -145,7 +145,7 @@ M.vars = {
     desc = [=[
       Number of screen cells that can be used for an `:echo` message
       in the last screen line before causing the |hit-enter| prompt
-      (or "overflow" with |ui2|).
+      (no longer applicable when |ui2| is enabled).
 
       Depends on 'showcmd', 'ruler' and 'columns'.  You need to
       check 'cmdheight' for whether there are full-width lines
@@ -282,6 +282,7 @@ M.vars = {
       - ""          Not exiting, or exit was canceled.
       - "quit"      |:quit|, |:qall|, |:wq|, |ZZ|, |ZQ|, etc.
       - "restart"   |:restart|, |ZR|.
+      - "restart!"  |:restart!|, |[count]||ZR|.
 
       Example: >vim
         autocmd ExitPre * if v:exitreason ==# 'restart' | echomsg 'restarting' | endif
@@ -783,7 +784,7 @@ M.vars = {
       The reason Nvim started. Possible values:
       - "normal"    Normal startup, yearning for life, etc.
       - "restart"   Started by |:restart|.
-      - "restart!"  Started by |:restart!| or |ZR|.
+      - "restart!"  Started by |:restart!|.
 
       Read-only.
     ]=],

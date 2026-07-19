@@ -742,8 +742,8 @@ M.cmds = {
   },
   {
     command = 'detach',
-    flags = TRLBAR,
-    addr_type = 'ADDR_NONE',
+    flags = bit.bor(RANGE, TRLBAR),
+    addr_type = 'ADDR_OTHER',
     func = 'ex_detach',
   },
   {

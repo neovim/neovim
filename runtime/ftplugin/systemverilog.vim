@@ -9,7 +9,7 @@ if exists("b:did_ftplugin")
 endif
 
 " Behaves just like Verilog
-runtime! ftplugin/verilog.vim
+runtime! ftplugin/verilog[.]{vim,lua}
 
 let s:cpo_save = &cpo
 set cpo&vim

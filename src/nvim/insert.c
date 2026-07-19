@@ -592,9 +592,10 @@ static int insert_execute(VimState *state, int key)
         return 1;  // continue
       }
 
+      const bool is_commit = ins_compl_commit_char(s->c);
       // A non-white character that fits in with the current
       // completion: Add to "compl_leader".
-      if (ins_compl_accept_char(s->c)) {
+      if (!is_commit && ins_compl_accept_char(s->c)) {
         // Trigger InsertCharPre.
         char *str = do_insert_char_pre(s->c);
 
@@ -611,7 +612,7 @@ static int insert_execute(VimState *state, int key)
 
       // Pressing CTRL-Y selects the current match.  When
       // compl_enter_selects is set the Enter key does the same.
-      if ((s->c == Ctrl_Y
+      if ((s->c == Ctrl_Y || is_commit
            || (ins_compl_enter_selects()
                && (s->c == CAR || s->c == K_KENTER || s->c == NL)))
           && stop_arrow() == OK) {
@@ -2357,7 +2358,7 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
 
         // <C-S-Right> may have started Visual mode, adjust the position for
         // deleted characters.
-        if (VIsual_active) {
+        if (Visual.active) {
           check_visual_pos();
         }
       } else {
@@ -2903,7 +2904,7 @@ static void ins_reg(void)
 {
   bool need_redraw = false;
   int literally = 0;
-  int vis_active = VIsual_active;
+  int vis_active = Visual.active;
 
   // If we are going to wait for a character, show a '"'.
   pc_status = PC_STATUS_UNSET;
@@ -2989,7 +2990,7 @@ static void ins_reg(void)
   clear_showcmd();
 
   // Disallow starting Visual mode here, would get a weird mode.
-  if (!vis_active && VIsual_active) {
+  if (!vis_active && Visual.active) {
     end_visual_mode();
   }
 }
@@ -3142,7 +3143,7 @@ static bool ins_esc(int *count, int cmdchar, bool nomove)
   // Don't do it for CTRL-O, unless past the end of the line.
   if (!nomove
       && (curwin->w_cursor.col != 0 || curwin->w_cursor.coladd > 0)
-      && (restart_edit == NUL || (gchar_cursor() == NUL && !VIsual_active))
+      && (restart_edit == NUL || (gchar_cursor() == NUL && !Visual.active))
       && !Ins.revins_on) {
     if (curwin->w_cursor.coladd > 0 || get_ve_flags(curwin) == kOptVeFlagAll) {
       oneleft();
@@ -3268,7 +3269,7 @@ static void ins_insert(int replaceState)
 // Pressed CTRL-O in Insert mode.
 static void ins_ctrl_o(void)
 {
-  restart_VIsual_select = 0;
+  Visual.restart_select = 0;
   if (State & VREPLACE_FLAG) {
     restart_edit = 'V';
   } else if (State & REPLACE_FLAG) {

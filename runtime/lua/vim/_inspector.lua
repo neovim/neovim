@@ -151,6 +151,8 @@ end
 ---
 ---Can also be shown with `:Inspect`. [:Inspect]()
 ---
+---See also |:marks| to list all extmarks.
+---
 ---Example: To bind this function to the vim-scriptease
 ---inspired `zS` in Normal mode:
 ---

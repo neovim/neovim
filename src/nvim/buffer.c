@@ -893,7 +893,7 @@ bool buf_freeall(buf_T *buf, int flags)
   }
 
   // If curbuf, stop Visual mode just before freeing, but after autocmds that may restart it.
-  if (buf == curbuf && VIsual_active
+  if (buf == curbuf && Visual.active
 #if defined(EXITFREE)
       && !entered_free_all_mem
 #endif
@@ -1451,7 +1451,7 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
     int buf_fnum = buf->b_fnum;
 
     // When closing the current buffer stop Visual mode.
-    if (buf == curbuf && VIsual_active) {
+    if (buf == curbuf && Visual.active) {
       end_visual_mode();
     }
 
@@ -1719,7 +1719,7 @@ void set_curbuf(buf_T *buf, int action, bool update_jumplist)
   buflist_altfpos(curwin);                       // remember curpos
 
   // Don't restart Select mode after switching to another buffer.
-  VIsual_reselect = false;
+  Visual.reselect = false;
 
   // close_windows() or apply_autocmds() may change curbuf and wipe out "buf"
   prevbuf = curbuf;
@@ -1780,7 +1780,7 @@ static void enter_buffer(buf_T *buf)
 {
   // Stop Visual mode before changing curbuf.  Assumes curbuf and curwin->w_buffer is valid; if not,
   // buf_freeall() should've done this already!
-  if (VIsual_active
+  if (Visual.active
 #ifdef EXITFREE
       && !entered_free_all_mem
 #endif
@@ -3693,7 +3693,7 @@ void ex_buffer_all(exarg_T *eap)
   // When true also load inactive buffers.
   int all = eap->cmdidx != CMD_unhide && eap->cmdidx != CMD_sunhide;
 
-  // Stop Visual mode, the cursor and "VIsual" may very well be invalid after
+  // Stop Visual mode, the cursor and `Visual.start` may very well be invalid after
   // switching to another buffer.
   reset_VIsual_and_resel();
 

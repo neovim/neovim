@@ -1239,20 +1239,20 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
     advance_color_col(&wlv, vcol_hlc(wlv));
 
     // handle Visual active in this window
-    if (VIsual_active && wp->w_buffer == curwin->w_buffer) {
+    if (Visual.active && wp->w_buffer == curwin->w_buffer) {
       pos_T *top, *bot;
 
-      if (ltoreq(curwin->w_cursor, VIsual)) {
+      if (ltoreq(curwin->w_cursor, Visual.start)) {
         // Visual is after curwin->w_cursor
         top = &curwin->w_cursor;
-        bot = &VIsual;
+        bot = &Visual.start;
       } else {
         // Visual is before curwin->w_cursor
-        top = &VIsual;
+        top = &Visual.start;
         bot = &curwin->w_cursor;
       }
       lnum_in_visual_area = (lnum >= top->lnum && lnum <= bot->lnum);
-      if (VIsual_mode == Ctrl_V) {
+      if (Visual.mode == Ctrl_V) {
         // block mode
         if (lnum_in_visual_area) {
           wlv.fromcol = wp->w_old_cursor_fcol;
@@ -1263,7 +1263,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         if (lnum > top->lnum && lnum <= bot->lnum) {
           wlv.fromcol = 0;
         } else if (lnum == top->lnum) {
-          if (VIsual_mode == 'V') {       // linewise
+          if (Visual.mode == 'V') {       // linewise
             wlv.fromcol = 0;
           } else {
             getvvcol(wp, top, &wlv.fromcol, NULL, NULL, 0);
@@ -1272,7 +1272,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
             }
           }
         }
-        if (VIsual_mode != 'V' && lnum == bot->lnum) {
+        if (Visual.mode != 'V' && lnum == bot->lnum) {
           if (*p_sel == 'e' && bot->col == 0
               && bot->coladd == 0) {
             wlv.fromcol = -10;
@@ -1292,7 +1292,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       }
 
       // Check if the char under the cursor should be inverted (highlighted).
-      if (!highlight_match && in_curline
+      if (!Search.hl_match && in_curline
           && cursor_is_block_during_visual(*p_sel == 'e')) {
         noinvcur = true;
       }
@@ -1303,25 +1303,25 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         vi_attr = win_hl_attr(wp, HLF_V);
       }
       // handle 'incsearch' and ":s///c" highlighting
-    } else if (highlight_match
+    } else if (Search.hl_match
                && wp == curwin
                && !has_foldtext
                && lnum >= curwin->w_cursor.lnum
-               && lnum <= curwin->w_cursor.lnum + search_match_lines) {
+               && lnum <= curwin->w_cursor.lnum + Search.match_lines) {
       if (lnum == curwin->w_cursor.lnum) {
         getvcol(curwin, &(curwin->w_cursor), &wlv.fromcol, NULL, NULL, 0);
       } else {
         wlv.fromcol = 0;
       }
-      if (lnum == curwin->w_cursor.lnum + search_match_lines) {
+      if (lnum == curwin->w_cursor.lnum + Search.match_lines) {
         pos_T pos = {
           .lnum = lnum,
-          .col = search_match_endcol,
+          .col = Search.match_endcol,
         };
         getvcol(curwin, &pos, &wlv.tocol, NULL, NULL, 0);
       }
       // do at least one character; happens when past end of line
-      if (wlv.fromcol == wlv.tocol && search_match_endcol) {
+      if (wlv.fromcol == wlv.tocol && Search.match_endcol) {
         wlv.tocol = wlv.fromcol + 1;
       }
       area_highlighting = true;
@@ -1379,7 +1379,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
   if (wp->w_p_cul && wp->w_p_culopt_flags != kOptCuloptFlagNumber && lnum == wp->w_cursorline
       // Do not show the cursor line in the text when Visual mode is active,
       // because it's not clear what is selected then.
-      && !(wp == curwin && VIsual_active)) {
+      && !(wp == curwin && Visual.active)) {
     cul_screenline = (is_wrapped && (wp->w_p_culopt_flags & kOptCuloptFlagScreenline));
     if (!cul_screenline) {
       apply_cursorline_highlight(wp, &wlv);
@@ -1592,7 +1592,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
     if (wlv.vcol < start_vcol && (wp->w_p_cuc
                                   || wlv.color_cols
                                   || virtual_active(wp)
-                                  || (VIsual_active && wp->w_buffer == curwin->w_buffer)
+                                  || (Visual.active && wp->w_buffer == curwin->w_buffer)
                                   || has_fold)) {
       wlv.vcol = start_vcol;
     }
@@ -2022,7 +2022,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       // Decide which of the highlight attributes to use.
       if (area_attr != 0) {
         char_attr_pri = hl_combine_attr(wlv.line_attr, area_attr);
-        if (!highlight_match) {
+        if (!Search.hl_match) {
           // let search highlight show in Visual area if possible
           char_attr_pri = hl_combine_attr(search_attr, char_attr_pri);
         }
@@ -2609,7 +2609,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
                    && (wp->w_p_list
                        || ((wlv.fromcol >= 0 || fromcol_prev >= 0)
                            && wlv.tocol > wlv.vcol
-                           && VIsual_mode != Ctrl_V
+                           && Visual.mode != Ctrl_V
                            && wlv.col < view_width
                            && !(noinvcur
                                 && lnum == wp->w_cursor.lnum
@@ -2663,8 +2663,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           wlv.extra_attr = win_hl_attr(wp, HLF_8);
           saved_attr2 = wlv.char_attr;  // save current attr
           mb_schar = schar_from_ascii(mb_c);
-        } else if (VIsual_active
-                   && (VIsual_mode == Ctrl_V || VIsual_mode == 'v')
+        } else if (Visual.active
+                   && (Visual.mode == Ctrl_V || Visual.mode == 'v')
                    && virtual_active(wp)
                    && wlv.tocol != MAXCOL
                    && wlv.vcol < wlv.tocol
@@ -2823,8 +2823,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       // needed when a '$' was displayed for 'list'.
       if (lcs_eol_todo
           && ((area_attr != 0 && wlv.vcol == wlv.fromcol
-               && (VIsual_mode != Ctrl_V
-                   || lnum == VIsual.lnum
+               && (Visual.mode != Ctrl_V
+                   || lnum == Visual.start.lnum
                    || lnum == curwin->w_cursor.lnum))
               // highlight 'hlsearch' match at end of line
               || prevcol_hl_flag)) {

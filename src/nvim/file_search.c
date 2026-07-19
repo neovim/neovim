@@ -1596,7 +1596,7 @@ char *grab_file_name(int count, linenr_T *file_lnum)
 {
   int options = FNAME_MESS | FNAME_EXP | FNAME_REL | FNAME_UNESC;
   char *fname;
-  if (VIsual_active) {
+  if (Visual.active) {
     size_t len;
     char *ptr;
     if (get_visual_text(NULL, &ptr, &len) == FAIL) {

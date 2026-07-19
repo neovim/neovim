@@ -808,6 +808,52 @@ describe('vim.lsp.completion: item conversion', function()
     eq(1, #result.items)
     eq('foobar', result.items[1].user_data.nvim.lsp.completion_item.textEdit.newText)
   end)
+
+  --- @param candidates lsp.CompletionList
+  --- @return table<string, lsp.CompletionItem>
+  local function convert(candidates)
+    local items = {} --- @type table<string, lsp.CompletionItem>
+    for _, match in ipairs(complete('|', candidates).items) do
+      local item = match.user_data.nvim.lsp.completion_item
+      items[item.label] = item
+    end
+    return items
+  end
+
+  it('itemDefaults are replaced by the item by default', function()
+    local items = convert({
+      isIncomplete = false,
+      itemDefaults = { commitCharacters = { '.', ';' }, data = { a = 1 } },
+      items = {
+        { label = 'own', commitCharacters = { '(' }, data = { b = 2 } },
+        { label = 'absent' },
+        { label = 'empty', commitCharacters = {}, data = false },
+      },
+    })
+    eq({ '(' }, items.own.commitCharacters)
+    eq({ b = 2 }, items.own.data)
+    eq({ '.', ';' }, items.absent.commitCharacters)
+    eq({ a = 1 }, items.absent.data)
+    eq({}, items.empty.commitCharacters)
+    eq(false, items.empty.data)
+  end)
+
+  it('applyKind=Merge merges the item with itemDefaults', function()
+    local Merge = 2
+    local items = convert({
+      isIncomplete = false,
+      applyKind = { commitCharacters = Merge, data = Merge },
+      itemDefaults = { commitCharacters = { '.', ';' }, data = { a = 1, nested = { x = 1 } } },
+      items = {
+        { label = 'own', commitCharacters = { '(' }, data = { a = 9, nested = { y = 2 } } },
+        { label = 'absent' },
+      },
+    })
+    eq({ '(', '.', ';' }, items.own.commitCharacters)
+    eq({ a = 9, nested = { y = 2 } }, items.own.data)
+    eq({ '.', ';' }, items.absent.commitCharacters)
+    eq({ a = 1, nested = { x = 1 } }, items.absent.data)
+  end)
 end)
 
 --- @param name string
@@ -1751,6 +1797,50 @@ describe('vim.lsp.completion: integration', function()
         return vim.fn.complete_info({ 'selected' }).selected
       end)
     )
+  end)
+
+  it('support commitCharacters', function()
+    n.command('set completeopt=menuone,menu,noinsert')
+    -- from typescript-language-server
+    local completion_list = {
+      isIncomplete = false,
+      items = {
+        {
+          commitCharacters = { '.', ',', ';', '(' },
+          data = {
+            cacheId = 1,
+          },
+          filterText = '.bar',
+          kind = 2,
+          label = 'bar',
+          sortText = '11',
+          textEdit = {
+            newText = '.bar',
+            range = {
+              ['end'] = {
+                character = 2,
+                line = 0,
+              },
+              start = {
+                character = 1,
+                line = 0,
+              },
+            },
+          },
+        },
+      },
+    }
+    create_server('dummy', completion_list, { trigger_chars = { '.' } })
+    feed('Sf.')
+    wait_for_pum()
+    feed('(')
+    eq('f.bar(', n.api.nvim_get_current_line())
+
+    n.command('set completeopt+=noselect')
+    feed('<ESC>Sf.')
+    wait_for_pum()
+    feed('(')
+    eq('f.(', n.api.nvim_get_current_line())
   end)
 end)
 

@@ -211,24 +211,6 @@ end
 function STHighlighter:new(bufnr)
   self = Capability.new(self, bufnr)
 
-  nvim_on('LspNotify', self.augroup, { buf = self.bufnr }, function(opts)
-    local client_id = opts.data.client_id ---@type integer
-
-    if not self.client_state[client_id] then
-      return
-    end
-
-    if opts.data.method == 'textDocument/didClose' then
-      self:reset(client_id)
-    end
-
-    if
-      opts.data.method == 'textDocument/didChange' or opts.data.method == 'textDocument/didOpen'
-    then
-      self:send_request(client_id)
-    end
-  end)
-
   nvim_on('BufWinEnter', self.augroup, { buf = self.bufnr }, function()
     for client_id, _ in pairs(self.client_state) do
       self:send_request(client_id)
@@ -279,6 +261,16 @@ function STHighlighter:on_detach(client_id)
     self:reset_timer(state)
     self.client_state[client_id] = nil
   end
+end
+
+---@private
+function STHighlighter:on_close(client_id)
+  self:reset(client_id)
+end
+
+---@private
+function STHighlighter:on_change(client_id)
+  self:send_request(client_id)
 end
 
 --- This is the entry point for getting all the tokens in a buffer.
@@ -1007,16 +999,6 @@ function M._refresh(err, _, ctx)
 
   return vim.NIL
 end
-
-local namespace = api.nvim_create_namespace('nvim.lsp.semantic_tokens')
-api.nvim_set_decoration_provider(namespace, {
-  on_win = function(_, _, bufnr, topline, botline)
-    local highlighter = STHighlighter.active[bufnr]
-    if highlighter then
-      highlighter:on_win(topline, botline)
-    end
-  end,
-})
 
 -- Semantic tokens is enabled by default
 M.enable(true)

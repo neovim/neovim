@@ -13,7 +13,6 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
-#include "nvim/cmdexpand.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/eval.h"
 #include "nvim/eval/fs.h"
@@ -645,20 +644,9 @@ size_t expand_env_esc(const char *restrict srcp, char *restrict dst, int dstlen,
           *var++ = *tail++;
         }
         *var = NUL;
-        // Get the user directory. If this fails the shell is used to expand
-        // ~user, which is slower and may fail on old versions of /bin/sh.
         var = (*dst == NUL) ? NULL
                             : os_get_userdir(dst + 1);
         mustfree = true;
-        if (var == NULL) {
-          expand_T xpc;
-
-          ExpandInit(&xpc);
-          xpc.xp_context = EXPAND_FILES;
-          var = ExpandOne(&xpc, dst, NULL,
-                          WILD_ADD_SLASH|WILD_SILENT, WILD_EXPAND_FREE);
-          mustfree = true;
-        }
 #else
         // cannot expand user's home directory, so don't try
         var = NULL;

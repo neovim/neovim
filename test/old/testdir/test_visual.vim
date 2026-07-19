@@ -1008,6 +1008,28 @@ func Test_virtualedit_visual_block()
   bwipe!
 endfunc
 
+func Test_virtualedit_visual_block_reselect()
+  set ve=all
+  new
+  call append(0, ['###', '###', '###', '#####'])
+  call cursor(1, 1)
+  exe "norm! \<C-V>lljj"
+  call assert_equal([0, 3, 3, 0], getpos('.'))
+  call assert_equal([0, 1, 1, 0], getpos('v'))
+  norm! y
+  call assert_equal(['###', '###', '###'], getreg('"', v:true, v:true))
+  call cursor(2, 6)
+  call assert_equal([0, 2, 4, 2], getpos('.'))
+  norm! 1v
+  call assert_equal([0, 4, 6, 2], getpos('.'))
+  call assert_equal([0, 2, 4, 2], getpos('v'))
+  norm! r!
+  call assert_equal(['###  !!!', '###  !!!', '#####!!!'], getline(2, 4))
+
+  bwipe!
+  set ve&
+endfunc
+
 " Test for changing case
 func Test_visual_change_case()
   new

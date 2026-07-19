@@ -9,7 +9,6 @@ local util = lsp.util
 local Capability = require('vim.lsp._capability')
 
 local api = vim.api
-local nvim_on = require('vim._core.util').nvim_on
 
 local M = {}
 
@@ -354,17 +353,7 @@ end
 --- Refresh diagnostics, only if we have attached clients that support it
 ---@package
 ---@param client_id integer Client ID to refresh
----@param only_visible? boolean Whether to only refresh for the visible regions of the buffer (default: false)
-function Diagnostics:refresh(client_id, only_visible)
-  if
-    only_visible
-    and vim.iter(api.nvim_list_wins()):all(function(window)
-      return api.nvim_win_get_buf(window) ~= self.bufnr
-    end)
-  then
-    return
-  end
-
+function Diagnostics:refresh(client_id)
   local client = vim.lsp.get_client_by_id(client_id)
 
   local method = 'textDocument/diagnostic'
@@ -422,28 +411,6 @@ function M.on_refresh(err, _, ctx)
   return vim.NIL
 end
 
----@package
-function Diagnostics:new(bufnr)
-  self = Capability.new(self, bufnr)
-
-  nvim_on('LspNotify', self.augroup, { buf = self.bufnr }, function(opts)
-    local client_id = opts.data.client_id ---@type integer
-    local state = self.client_state[client_id]
-    if state and state.pull_kind == 'document' then
-      if opts.data.method == 'textDocument/didClose' then
-        self:clear(client_id)
-      end
-      if
-        opts.data.method == 'textDocument/didChange' or opts.data.method == 'textDocument/didOpen'
-      then
-        self:refresh(client_id, true)
-      end
-    end
-  end)
-
-  return self
-end
-
 --- Enable pull diagnostics for a buffer from a client
 ---@package
 function Diagnostics:on_attach(client_id)
@@ -466,6 +433,22 @@ function Diagnostics:on_detach(client_id)
   if state then
     self:clear(client_id)
     self.client_state[client_id] = nil
+  end
+end
+
+---@private
+function Diagnostics:on_close(client_id)
+  local state = self.client_state[client_id]
+  if state and state.pull_kind == 'document' then
+    self:clear(client_id)
+  end
+end
+
+---@private
+function Diagnostics:on_change(client_id)
+  local state = self.client_state[client_id]
+  if state and state.pull_kind == 'document' then
+    self:refresh(client_id)
   end
 end
 

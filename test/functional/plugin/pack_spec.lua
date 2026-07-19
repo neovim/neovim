@@ -98,7 +98,9 @@ local function git_get_hash(rev, repo_name)
 end
 
 local function git_get_short_hash(rev, repo_name)
-  return git_cmd({ 'rev-list', '-1', '--abbrev-commit', rev }, repo_name)
+  -- Pin `--abbrev`. Git's default abbrev differs across environments, which would shift the
+  -- hard-coded column alignment and LSP link positions in the confirmation-buffer tests.
+  return git_cmd({ 'rev-list', '-1', '--abbrev=7', '--abbrev-commit', rev }, repo_name)
 end
 
 -- Common test repos ----------------------------------------------------------
@@ -1171,6 +1173,13 @@ describe('vim.pack', function()
         repos_src.defbranch,
       })
       n.clear()
+
+      -- Pin git's short-hash length so the confirmation buffer's `%h` columns are deterministic.
+      exec_lua([[
+        vim.env.GIT_CONFIG_COUNT = '1'
+        vim.env.GIT_CONFIG_KEY_0 = 'core.abbrev'
+        vim.env.GIT_CONFIG_VALUE_0 = '7'
+      ]])
 
       -- Mock remote repo update
       -- - Force push

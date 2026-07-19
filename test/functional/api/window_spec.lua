@@ -756,24 +756,28 @@ describe('API/win', function()
       eq('', fn.getcmdwintype())
     end)
 
-    it('closing current (float) window of another tabpage #15313', function()
+    it('closing current (float) window of another tabpage #15313 #40745', function()
       command('tabedit')
       command('botright split')
       local prevwin = curwin()
       eq(2, eval('tabpagenr()'))
-      local win = api.nvim_open_win(0, true, {
-        relative = 'editor',
-        row = 10,
-        col = 10,
-        width = 50,
-        height = 10,
-      })
+      local opts = { relative = 'editor', row = 10, col = 10, width = 50, height = 10 }
+      local win = api.nvim_open_win(0, true, opts)
       local tab = eval('tabpagenr()')
       command('tabprevious')
       eq(1, eval('tabpagenr()'))
       api.nvim_win_close(win, false)
 
       eq(prevwin, api.nvim_tabpage_get_win(tab))
+      assert_alive()
+
+      command('tabnext')
+      local win1 = api.nvim_open_win(0, true, opts)
+      local win2 = api.nvim_open_win(0, true, opts)
+      command('tabprevious')
+      -- win1 becomes the tabpage's current window after win2 is closed
+      api.nvim_win_close(win2, false)
+      api.nvim_win_close(win1, false)
       assert_alive()
     end)
 

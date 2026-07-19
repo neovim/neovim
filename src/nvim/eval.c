@@ -5368,8 +5368,8 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
     pos = wp->w_cursor;
   } else if (name[0] == 'v' && name[1] == NUL) {
     // Visual start
-    if (VIsual_active && wp == curwin) {
-      pos = VIsual;
+    if (Visual.active && wp == curwin) {
+      pos = Visual.start;
     } else {
       pos = wp->w_cursor;
     }

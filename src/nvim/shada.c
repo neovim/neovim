@@ -2404,7 +2404,7 @@ static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer,
   }
 
   if (dump_one_history[HIST_SEARCH] > 0) {  // Skip if /0 in 'shada'
-    const bool search_highlighted = !(no_hlsearch
+    const bool search_highlighted = !(Search.no_hlsearch
                                       || find_shada_parameter('h') != NULL);
     const bool search_last_used = search_was_last_used();
 
