@@ -28,7 +28,7 @@ function(BuildTSParser)
     ${EXTERNALPROJECT_OPTIONS})
 endfunction()
 
-foreach(lang c lua vim vimdoc query)
+foreach(lang c lua vim vimdoc query ssh_config)
   BuildTSParser(LANG ${lang})
 endforeach()
 BuildTSParser(LANG markdown CMAKE_FILE MarkdownParserCMakeLists.txt)

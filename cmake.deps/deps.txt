@@ -47,6 +47,8 @@ TREESITTER_QUERY_URL https://github.com/tree-sitter-grammars/tree-sitter-query/a
 TREESITTER_QUERY_SHA256 c2b23b9a54cffcc999ded4a5d3949daf338bebb7945dece229f832332e6e6a7d
 TREESITTER_MARKDOWN_URL https://github.com/tree-sitter-grammars/tree-sitter-markdown/archive/v0.5.3.tar.gz
 TREESITTER_MARKDOWN_SHA256 df845b1ab7c7c163ec57d7fa17170c92b04be199bddab02523636efec5224ab6
+TREESITTER_SSH_CONFIG_URL https://github.com/tree-sitter-grammars/tree-sitter-ssh-config/releases/download/v0.5.0/tree-sitter-ssh-config.tar.gz
+TREESITTER_SSH_CONFIG_SHA256 cec94317144c77b751d79ad6ae69f7a751a4fea702fa05c32409295c81f76bc5
 TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/d11d18f746fdfd1826362c2531ce06808f386b02.tar.gz
 TREESITTER_SHA256 50546072d031b0cc1bf2075f3c2a22cdc94f95845059f3c68060389eab560a40
 

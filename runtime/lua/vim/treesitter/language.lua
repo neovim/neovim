@@ -6,6 +6,7 @@ local M = {}
 local ft_to_lang = {
   help = 'vimdoc',
   checkhealth = 'vimdoc',
+  sshconfig = 'ssh_config',
 }
 
 --- Returns the filetypes for which a parser named {lang} is used.
