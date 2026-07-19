@@ -6545,8 +6545,9 @@ static void ex_read(exarg_T *eap)
     if (check_fname() == FAIL) {       // check for no file name
       if (do_split && split_line != NULL) {
         char *line = ml_get(split_lnum);
-        char *restored = xmalloc(strlen(line) + strlen(split_line) + 1);
-        sprintf(restored, "%s%s", line, split_line);
+        size_t restored_len = strlen(line) + strlen(split_line) + 1;
+        char *restored = xmalloc(restored_len);
+        snprintf(restored, restored_len, "%s%s", line, split_line);
         ml_replace(split_lnum, restored, false);
         changed_lines(curbuf, split_lnum, 0, split_lnum + 1, 0, true);
         xfree(split_line);
@@ -6568,8 +6569,9 @@ static void ex_read(exarg_T *eap)
     }
     if (do_split && split_line != NULL) {
       char *line = ml_get(split_lnum);
-      char *restored = xmalloc(strlen(line) + strlen(split_line) + 1);
-      sprintf(restored, "%s%s", line, split_line);
+      size_t restored_len = strlen(line) + strlen(split_line) + 1;
+      char *restored = xmalloc(restored_len);
+      snprintf(restored, restored_len, "%s%s", line, split_line);
       ml_replace(split_lnum, restored, false);
       changed_lines(curbuf, split_lnum, 0, split_lnum + 1, 0, true);
       xfree(split_line);
@@ -6598,8 +6600,9 @@ static void ex_read(exarg_T *eap)
       if (lines_inserted > 0) {
         char *prefix = xstrdup(ml_get(split_lnum));
         char *first_read = ml_get(split_lnum + 1);
-        char *merged_first = xmalloc(strlen(prefix) + strlen(first_read) + 1);
-        sprintf(merged_first, "%s%s", prefix, first_read);
+        size_t merged_first_len = strlen(prefix) + strlen(first_read) + 1;
+        char *merged_first = xmalloc(merged_first_len);
+        snprintf(merged_first, merged_first_len, "%s%s", prefix, first_read);
         ml_replace(split_lnum, merged_first, false);
         changed_lines(curbuf, split_lnum, 0, split_lnum + 1, 0, true);
         xfree(prefix);
@@ -6612,8 +6615,9 @@ static void ex_read(exarg_T *eap)
 
       linenr_T target_lnum = split_lnum + lines_inserted - (lines_inserted > 0 ? 1 : 0);
       char *last_line = ml_get(target_lnum);
-      char *merged_last = xmalloc(strlen(last_line) + strlen(split_line) + 1);
-      sprintf(merged_last, "%s%s", last_line, split_line);
+      size_t merged_last_len = strlen(last_line) + strlen(split_line) + 1;
+      char *merged_last = xmalloc(merged_last_len);
+      snprintf(merged_last, merged_last_len, "%s%s", last_line, split_line);
       ml_replace(target_lnum, merged_last, false);
       changed_lines(curbuf, target_lnum, 0, target_lnum + 1, 0, true);
 
@@ -7048,7 +7052,7 @@ char *get_text_in_range(pos_T start, pos_T end)
     if (e_col == MAXCOL) {
       ga_concat(&ga, line + s_col);
     } else {
-      char *slice = xstrnsave(line + s_col, (size_t)(e_col - s_col + 1));
+      char *slice = xstrnsave(line + s_col, (size_t)(e_col - s_col) + 1);
       ga_concat(&ga, slice);
       xfree(slice);
     }

@@ -1030,8 +1030,9 @@ int do_move(linenr_T line1, colnr_T col1, linenr_T line2, colnr_T col2, linenr_T
     lines_deleted = line2 - line1 + 1;
     deleted_lines_mark(line1, lines_deleted);
   } else {
-    char *merged = xmalloc(strlen(prefix) + strlen(suffix) + 1);
-    sprintf(merged, "%s%s", prefix, suffix);
+    size_t merged_len = strlen(prefix) + strlen(suffix) + 1;
+    char *merged = xmalloc(merged_len);
+    snprintf(merged, merged_len, "%s%s", prefix, suffix);
     ml_replace(line1, merged, false);
     changed_lines(curbuf, line1, 0, line1 + 1, 0, true);
 
@@ -3283,8 +3284,9 @@ void ex_append(exarg_T *eap)
     if (lines_inserted > 0) {
       char *prefix = xstrdup(ml_get(split_lnum));
       char *first_read = ml_get(split_lnum + 1);
-      char *merged_first = xmalloc(strlen(prefix) + strlen(first_read) + 1);
-      sprintf(merged_first, "%s%s", prefix, first_read);
+      size_t merged_first_len = strlen(prefix) + strlen(first_read) + 1;
+      char *merged_first = xmalloc(merged_first_len);
+      snprintf(merged_first, merged_first_len, "%s%s", prefix, first_read);
       ml_replace(split_lnum, merged_first, false);
       changed_lines(curbuf, split_lnum, 0, split_lnum + 1, 0, true);
       xfree(prefix);
@@ -3297,8 +3299,9 @@ void ex_append(exarg_T *eap)
 
     linenr_T target_lnum = split_lnum + lines_inserted - (lines_inserted > 0 ? 1 : 0);
     char *last_line = ml_get(target_lnum);
-    char *merged_last = xmalloc(strlen(last_line) + strlen(split_line) + 1);
-    sprintf(merged_last, "%s%s", last_line, split_line);
+    size_t merged_last_len = strlen(last_line) + strlen(split_line) + 1;
+    char *merged_last = xmalloc(merged_last_len);
+    snprintf(merged_last, merged_last_len, "%s%s", last_line, split_line);
     ml_replace(target_lnum, merged_last, false);
     changed_lines(curbuf, target_lnum, 0, target_lnum + 1, 0, true);
   }
@@ -3365,8 +3368,9 @@ void ex_change(exarg_T *eap)
     colnr_T col2_clip = (eap->col2 >= l2_len) ? l2_len : (eap->col2 + 1);
     char *suffix = xstrdup(l2_text + col2_clip);
 
-    char *merged = xmalloc(strlen(prefix) + strlen(suffix) + 1);
-    sprintf(merged, "%s%s", prefix, suffix);
+    size_t merged_len = strlen(prefix) + strlen(suffix) + 1;
+    char *merged = xmalloc(merged_len);
+    snprintf(merged, merged_len, "%s%s", prefix, suffix);
     ml_replace(eap->line1, merged, false);
     changed_lines(curbuf, eap->line1, 0, eap->line1 + 1, 0, true);
 

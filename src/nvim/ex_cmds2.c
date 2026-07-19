@@ -903,9 +903,10 @@ void ex_drop(exarg_T *eap)
 
       // execute [+cmd]
       if (eap->do_ecmd_cmd) {
-        bool did_set_swapcommand = set_swapcommand(eap->do_ecmd_cmd, 0);
+        char *cmd = xstrdup(eap->do_ecmd_cmd);
+        bool did_set_swapcommand = set_swapcommand(cmd, 0);
         exarg_T ea = {
-          .cmd = eap->do_ecmd_cmd,
+          .cmd = cmd,
           .line1 = 1,
           .line2 = 1,
           .ea_getline = NULL,
@@ -916,6 +917,7 @@ void ex_drop(exarg_T *eap)
         if (did_set_swapcommand) {
           set_vim_var_string(VV_SWAPCOMMAND, NULL, -1);
         }
+        XFREE_CLEAR(cmd);
       }
 
       // no need to execute [++opts] - they only apply for newly loaded buffers.
