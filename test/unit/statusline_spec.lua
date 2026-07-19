@@ -552,6 +552,16 @@ describe('build_stl_str_hl', function()
     'Ą@mid@@end',
     { fillchar = '@' }
   )
+  for _, fillchar in ipairs({ '-', '±', '━', '𝕚' }) do
+    local minwid = math.floor(2147483647 / #fillchar) + 10000 -- this supposes 4-byte integers
+    itp("doesn't crash due to integer overflow with fillchar " .. fillchar, function()
+      build_stl_str_hl {
+        pat = '%' .. tostring(minwid) .. '(%)',
+        maximum_cell_count = 10,
+        fillchar = fillchar,
+      }
+    end)
+  end
 
   -- escaping % testing
   statusline_test('handles escape of %', 4, 'abc%%', 'abc%')

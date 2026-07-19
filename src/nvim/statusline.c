@@ -1014,12 +1014,8 @@ static void stl_expand(int *width, int target_width, StlPadding padding, int rem
                        char *start_p, char **out_p)
 {
   int fillchar_bytes = (int)schar_len(fillchar);
-  int added_cells = target_width - *width;
+  int added_cells = MIN(target_width - *width, remaining_capacity / fillchar_bytes);
   int added_bytes = added_cells * fillchar_bytes;
-  if (added_bytes > remaining_capacity) {
-    added_cells = remaining_capacity / fillchar_bytes;
-    added_bytes = added_cells * fillchar_bytes;
-  }
 
   // First, try to expand at separation markers %=.
   int num_separators = 0;
