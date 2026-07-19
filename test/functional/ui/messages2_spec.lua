@@ -448,6 +448,27 @@ describe('messages2', function()
     ]])
   end)
 
+  it('showmode does not overwrite Visual word count #40824', function()
+    if t.is_os('win') then
+      pending('FIXME #40843')
+    end
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'one two', 'three four' })
+    feed('Vj')
+    screen:expect([[
+      {17:one two}                                              |
+      ^t{17:hree four}                                           |
+      {1:~                                                    }|*11
+      {5:-- VISUAL LINE --}                                    |
+    ]])
+    feed('g<C-G>')
+    screen:expect([[
+      {17:one two}                                              |
+      ^t{17:hree four}                                           |
+      {1:~                                                    }|*11
+      Selected 2 of 2 Lines; 4 of 4 Words; 19 of 19 Bytes  |
+    ]])
+  end)
+
   it('hit-enter prompt does not error for invalid window #35095', function()
     command('echo "foo\nbar"')
     screen:expect([[

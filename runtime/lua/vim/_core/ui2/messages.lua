@@ -25,7 +25,7 @@ local M = {
     ids = {}, ---@type table<string|integer, Msg> List of visible messages.
     msg_row = -1, -- Last row of message to distinguish for placing virt_text.
     last_col = o.columns, -- Crop text to start column of 'last' virt_text.
-    last_emsg = 0, -- Time an error was printed that should not be overwritten.
+    last_msg = 0, -- Time an important message was printed that should not be overwritten.
     prev_msg = '', -- Concatenated content of the previous message.
     prev_id = 0, ---@type string|integer Message id of the previous message.
     dupe = 0, -- Number of times message is repeated.
@@ -168,7 +168,12 @@ local function set_virttext(type, tgt)
       else
         if scol > M.cmd.last_col then
           -- Give the user some time to read an important message.
-          if os.time() - M.cmd.last_emsg < 2 then
+          if os.time() - M.cmd.last_msg < 2 then
+            -- The existing overlay may already cover the message, so hide it during the delay.
+            if M.virt.ids.last then
+              api.nvim_buf_del_extmark(ui.bufs.cmd, ui.ns, M.virt.ids.last)
+              M.virt.ids.last = nil
+            end
             M.virt.delayed = true
             vim.defer_fn(function()
               M.virt.delayed = false
@@ -467,7 +472,9 @@ function M.msg_show(kind, content, replace_last, _, append, id, trigger)
     if tgt == 'cmd' then
       -- Store the time when an important message was emitted in order to not overwrite
       -- it with 'last' virt_text in the cmdline so that the user has a chance to read it.
-      M.cmd.last_emsg = (kind == 'emsg' or kind == 'wmsg') and os.time() or M.cmd.last_emsg
+      local mode = api.nvim_get_mode().mode
+      local visual = mode:match('^[vV\22]') ~= nil
+      M.cmd.last_msg = (kind == 'emsg' or kind == 'wmsg' or visual) and os.time() or M.cmd.last_msg
       -- Should clear the search count now, mark itself is cleared by invalidate.
       M.virt.last[M.virt.idx.search][1] = nil
       M.virt.last[M.virt.idx.cmd] = {}
