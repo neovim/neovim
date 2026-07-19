@@ -128,16 +128,14 @@ describe(':write', function()
     )
 
     eq('Vim(write):E32: No file name', pcall_err(command, 'write ++p Xotherdir/'))
-    if not is_os('win') then
-      eq(
-        ('Vim(write):E17: "' .. fn.fnamemodify('.', ':p:h') .. '" is a directory'),
-        pcall_err(command, 'write ++p .')
-      )
-      eq(
-        ('Vim(write):E17: "' .. fn.fnamemodify('.', ':p:h') .. '" is a directory'),
-        pcall_err(command, 'write ++p ./')
-      )
-    end
+    eq(
+      ('Vim(write):E17: "' .. fn.fnamemodify('.', ':p:h') .. '" is a directory'),
+      pcall_err(command, 'write ++p .')
+    )
+    eq(
+      ('Vim(write):E17: "' .. fn.fnamemodify('.', ':p:h') .. '" is a directory'),
+      pcall_err(command, 'write ++p ./')
+    )
 
     t.matches(
       'E474: Invalid argument',
@@ -149,12 +147,10 @@ describe(':write', function()
     command('let $HOME=""')
     eq(fn.fnamemodify('.', ':p:h'), fn.fnamemodify('.', ':p:h:~'))
     -- Message from check_overwrite
-    if not is_os('win') then
-      eq(
-        ('Vim(write):E17: "' .. fn.fnamemodify('.', ':p:h') .. '" is a directory'),
-        pcall_err(command, 'write .')
-      )
-    end
+    eq(
+      ('Vim(write):E17: "' .. fn.fnamemodify('.', ':p:h') .. '" is a directory'),
+      pcall_err(command, 'write .')
+    )
     api.nvim_set_option_value('writeany', true, {})
     -- Message from buf_write
     eq('Vim(write):E502: "." is a directory', pcall_err(command, 'write .'))

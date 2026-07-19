@@ -2028,13 +2028,10 @@ int check_overwrite(exarg_T *eap, buf_T *buf, char *fname, char *ffname, bool ot
       && !p_wa
       && os_path_exists(ffname)) {
     if (!eap->forceit && !eap->append) {
-#ifdef UNIX
-      // It is possible to open a directory on Unix.
       if (os_isdir(ffname)) {
         semsg(_(e_isadir2), ffname);
         return FAIL;
       }
-#endif
       if (p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM)) {
         char buff[DIALOG_MSG_SIZE];
         snprintf(buff, sizeof buff, _("Overwrite existing file \"%s\"?"), fname);
