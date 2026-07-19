@@ -2,19 +2,50 @@ local N_ = vim.fn.gettext
 
 local M = {}
 
+--- Replace unsafe filename characters and whitespace with '-'.
+--- Non-ASCII characters are kept.
+---
+---@param s string
+---@return string
+local function safe_fname(s)
+  local r = s:gsub('[%c%s/\\:*?"<>|]+', '-'):gsub('%-+', '-')
+  return (r:gsub('^%-+', ''):gsub('%-+$', ''))
+end
+
 --- Convert a "term://" URI into a filename.
---- e.g. "term://~/project//12345:bash" -> "~-project-12345-bash"
+--- e.g. "term://~/project//12345:/bin/bash" -> "~-project--12345--bash"
 ---
 ---@param uri string
 ---@return string
 local function uri2fname(uri)
   -- strip prefix
   local s = uri:gsub('^term://', '')
-  -- replace unsafe chars with '-'
-  s = s:gsub('[^%w._~-]+', '-')
-  -- trim leading/trailing '-'
-  s = s:gsub('^-+', ''):gsub('-+$', '')
-  return s ~= '' and s or 'undefined_terminal'
+  -- split into "cwd//pid:cmd"
+  local cwd, pid, cmd = s:match('^(.-)//(%d+):(.*)$')
+  if not cmd then
+    return 'undefined_terminal'
+  end
+
+  local segments = {} ---@type string[]
+  ---@param segment string?
+  local function add(segment)
+    if segment and segment ~= '' then
+      segments[#segments + 1] = segment
+    end
+  end
+  -- "/" (root dir) -> "." and carries no information, so call it "root"
+  local dir = safe_fname(cwd)
+  if dir == '.' then
+    dir = 'root'
+  end
+  add(dir)
+  add(pid)
+  -- cmd without spaces is usually a full path: keep its basename.
+  -- Otherwise keep the whole command line ("echo hello" -> "echo-hello").
+  add(safe_fname(cmd:find('%s') and cmd or (vim.fs.basename(cmd) or cmd)))
+
+  local name = table.concat(segments, '--')
+  return name ~= '' and name or 'undefined_terminal'
 end
 
 --- Saves a terminal buffer's rendered state and metadata as a msgpack file.
