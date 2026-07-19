@@ -9,7 +9,6 @@ local SocketStream = uv_stream.SocketStream
 local ProcStream = uv_stream.ProcStream
 
 local check_cores = t.check_cores
-local pcall_err = t.pcall_err
 local check_logs = t.check_logs
 local dedent = t.dedent
 local eq = t.eq
@@ -133,7 +132,7 @@ end
 --- @return any
 function M.request(method, ...)
   assert(session, 'no Nvim session')
-  assert(not session.eof_err, 'sending request after EOF from Nvim')
+  assert(not session.eof_err, 'RPC request after Nvim EOF')
   local status, rv = session:request(method, ...)
   if not status then
     if loop_running then
@@ -331,12 +330,11 @@ end
 -- Use for commands which expect nvim to quit.
 -- The first argument can also be a timeout.
 function M.expect_exit(fn_or_timeout, ...)
-  local eof_err_msg = 'EOF was received from Nvim. Likely the Nvim process crashed.'
   if type(fn_or_timeout) == 'function' then
-    t.matches(vim.pesc(eof_err_msg), t.pcall_err(fn_or_timeout, ...))
+    t.matches(vim.pesc(Session.eof_err_msg), t.pcall_err(fn_or_timeout, ...))
   else
     t.matches(
-      vim.pesc(eof_err_msg),
+      vim.pesc(Session.eof_err_msg),
       t.pcall_err(function(timeout, fn, ...)
         fn(...)
         assert(session)
