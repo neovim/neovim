@@ -832,6 +832,7 @@ function M.make_floating_popup_options(width, height, opts)
     zindex = opts.zindex or (api.nvim_win_get_config(0).zindex or 49) + 1,
     title = title,
     title_pos = title_pos,
+    noautocmd = opts.noautocmd,
   }
 end
 
@@ -1323,15 +1324,17 @@ local function close_preview_autocmd(events, winnr, floating_bufnr, bufnr)
 
   -- close the preview window when entered a buffer that is not
   -- the floating window buffer or the buffer that spawned it
-  nvim_on('BufLeave', augroup, { buf = bufnr }, function()
-    vim.schedule(function()
-      -- When jumping to the quickfix window from the preview window,
-      -- do not close the preview window.
-      if api.nvim_get_option_value('filetype', { buf = 0 }) ~= 'qf' then
-        close_preview_window(winnr, { floating_bufnr, bufnr })
-      end
+  for _, b in ipairs({ bufnr, floating_bufnr }) do
+    nvim_on('BufLeave', augroup, { buf = b }, function()
+      vim.schedule(function()
+        -- When jumping to the quickfix window from the preview window,
+        -- do not close the preview window.
+        if api.nvim_get_option_value('filetype', { buf = 0 }) ~= 'qf' then
+          close_preview_window(winnr, { floating_bufnr, bufnr })
+        end
+      end)
     end)
-  end)
+  end
 
   if #events > 0 then
     nvim_on(events, augroup, { buf = bufnr }, function()
@@ -1419,61 +1422,71 @@ end
 
 --- @class vim.lsp.util.open_floating_preview.Opts
 ---
---- Height of floating window
---- @field height? integer
----
---- Width of floating window
---- @field width? integer
----
---- Wrap long lines
---- (default: `true`)
---- @field wrap? boolean
----
---- Character to wrap at for computing height when wrap is enabled
---- @field wrap_at? integer
----
---- Maximal width of floating window
---- @field max_width? integer
----
---- Maximal height of floating window
---- @field max_height? integer
----
---- If a popup with this id is opened, then focus it
---- @field focus_id? string
----
---- List of events that closes the floating window
---- @field close_events? table
----
---- Make float focusable.
---- (default: `true`)
---- @field focusable? boolean
----
---- If `true`, and if {focusable} is also `true`, focus an existing floating
---- window with the same {focus_id}
---- (default: `true`)
---- @field focus? boolean
----
---- offset to add to `col`
---- @field offset_x? integer
----
---- offset to add to `row`
---- @field offset_y? integer
---- @field border? string|(string|[string,string])[] override `border`
---- @field zindex? integer override `zindex`, defaults to 50
---- @field title? string|[string,string][]
---- @field title_pos? 'left'|'center'|'right'
----
---- (default: `'cursor'`)
---- @field relative? 'mouse'|'cursor'|'editor'
----
 --- Adjusts placement relative to cursor.
---- - "auto": place window based on which side of the cursor has more lines
+--- - "auto": place window based on which side of the cursor has more lines.
 --- - "above": place the window above the cursor unless there are not enough lines
 ---   to display the full window height.
 --- - "below": place the window below the cursor unless there are not enough lines
 ---   to display the full window height.
 --- (default: `'auto'`)
 --- @field anchor_bias? 'auto'|'above'|'below'
+---
+--- @field border? string|(string|[string,string])[] Override `border`.
+---
+--- List of events that close the floating window.
+--- @field close_events? string[]
+---
+--- Enter the window.
+--- @field enter? boolean
+---
+--- If `true`, and if {focusable} is also `true`, focus an existing floating
+--- window with the same {focus_id}
+--- (default: `true`)
+--- @field focus? boolean
+---
+--- If a popup with this id is opened, then focus it.
+--- @field focus_id? string
+---
+--- Make float focusable.
+--- (default: `true`)
+--- @field focusable? boolean
+---
+--- Height of floating window.
+--- @field height? integer
+---
+--- Maximal height of floating window.
+--- @field max_height? integer
+---
+--- Maximal width of floating window.
+--- @field max_width? integer
+---
+--- Do not trigger autocommands while opening the floating window.
+--- @field noautocmd? boolean
+---
+--- Offset to add to `col`.
+--- @field offset_x? integer
+---
+--- Offset to add to `row`.
+--- @field offset_y? integer
+---
+--- (default: `'cursor'`)
+--- @field relative? 'mouse'|'cursor'|'editor'
+---
+--- @field title? string|[string,string][]
+---
+--- @field title_pos? 'left'|'center'|'right'
+---
+--- Width of floating window.
+--- @field width? integer
+---
+--- Wrap long lines.
+--- (default: `true`)
+--- @field wrap? boolean
+---
+--- Character to wrap at for computing height when wrap is enabled.
+--- @field wrap_at? integer
+---
+--- @field zindex? integer Override `zindex`, defaults to 50
 ---
 --- @field _update_win? integer
 
@@ -1569,7 +1582,7 @@ function M.open_floating_preview(contents, syntax, opts)
     local width, height = M._make_floating_popup_size(contents, opts)
     local float_option = M.make_floating_popup_options(width, height, opts)
 
-    floating_winnr = api.nvim_open_win(floating_bufnr, false, float_option)
+    floating_winnr = api.nvim_open_win(floating_bufnr, opts.enter or false, float_option)
 
     api.nvim_buf_set_keymap(
       floating_bufnr,

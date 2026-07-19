@@ -406,14 +406,15 @@ function M._check(eap)
     local max_width = 80
     local float_winid
     bufnr, float_winid = vim.lsp.util.open_floating_preview({}, '', {
+      enter = true,
       height = max_height,
       width = max_width,
       offset_x = math.floor((vim.o.columns - max_width) / 2),
       offset_y = math.floor((available_lines - max_height) / 2),
       relative = 'editor',
       close_events = {},
+      noautocmd = true,
     })
-    vim.api.nvim_set_current_win(float_winid)
     vim.wo[float_winid].list = false
   else
     bufnr = vim.api.nvim_create_buf(true, true)

@@ -2860,36 +2860,39 @@ Lua module: vim.lsp.util                                            *lsp-util*
       • {anchor_bias}?   (`'auto'|'above'|'below'`, default: `'auto'`) Adjusts
                          placement relative to cursor.
                          • "auto": place window based on which side of the
-                           cursor has more lines
+                           cursor has more lines.
                          • "above": place the window above the cursor unless
                            there are not enough lines to display the full
                            window height.
                          • "below": place the window below the cursor unless
                            there are not enough lines to display the full
                            window height.
-      • {border}?        (`string|(string|[string,string])[]`) override
-                         `border`
-      • {close_events}?  (`table`) List of events that closes the floating
-                         window
+      • {border}?        (`string|(string|[string,string])[]`) Override
+                         `border`.
+      • {close_events}?  (`string[]`) List of events that close the floating
+                         window.
+      • {enter}?         (`boolean`) Enter the window.
       • {focus}?         (`boolean`, default: `true`) If `true`, and if
                          {focusable} is also `true`, focus an existing
                          floating window with the same {focus_id}
       • {focus_id}?      (`string`) If a popup with this id is opened, then
-                         focus it
+                         focus it.
       • {focusable}?     (`boolean`, default: `true`) Make float focusable.
-      • {height}?        (`integer`) Height of floating window
-      • {max_height}?    (`integer`) Maximal height of floating window
-      • {max_width}?     (`integer`) Maximal width of floating window
-      • {offset_x}?      (`integer`) offset to add to `col`
-      • {offset_y}?      (`integer`) offset to add to `row`
+      • {height}?        (`integer`) Height of floating window.
+      • {max_height}?    (`integer`) Maximal height of floating window.
+      • {max_width}?     (`integer`) Maximal width of floating window.
+      • {noautocmd}?     (`boolean`) Do not trigger autocommands while opening
+                         the floating window.
+      • {offset_x}?      (`integer`) Offset to add to `col`.
+      • {offset_y}?      (`integer`) Offset to add to `row`.
       • {relative}?      (`'mouse'|'cursor'|'editor'`) (default: `'cursor'`)
       • {title}?         (`string|[string,string][]`)
       • {title_pos}?     (`'left'|'center'|'right'`)
-      • {width}?         (`integer`) Width of floating window
-      • {wrap}?          (`boolean`, default: `true`) Wrap long lines
+      • {width}?         (`integer`) Width of floating window.
+      • {wrap}?          (`boolean`, default: `true`) Wrap long lines.
       • {wrap_at}?       (`integer`) Character to wrap at for computing height
-                         when wrap is enabled
-      • {zindex}?        (`integer`) override `zindex`, defaults to 50
+                         when wrap is enabled.
+      • {zindex}?        (`integer`) Override `zindex`, defaults to 50
 
 
                                      *vim.lsp.util.apply_text_document_edit()*
