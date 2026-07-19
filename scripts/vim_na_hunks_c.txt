@@ -16,6 +16,7 @@
 ^did_set_toolbar[a-zA-Z0-9_]\+(
 ^did_set_ttymouse(
 ^do_fixdel(
+^dynamic_feature(
 ^ex_behave(
 ^ex_open(
 ^ex_scriptversion(
