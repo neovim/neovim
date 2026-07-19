@@ -434,4 +434,31 @@ describe(':write on terminal buffer', function()
     eq(2, #files)
     ok(files[1] ~= files[2])
   end)
+
+  it('derives the filename from the buffer URI', function()
+    local uris = {
+      'term://C:/Users/me//999:bash',
+      'term://foo/bar//123:bash',
+      'term://foo/bar//123:echo hello',
+      'term://foo/bar//123:/usr/bin/python3',
+      'term://foo/测试//123:bash',
+      'term:///.//123:bash',
+    }
+    command('terminal')
+    for _, uri in ipairs(uris) do
+      command('file ' .. uri)
+      command('write')
+    end
+    local dir = vim.fs.joinpath(fn.stdpath('state'), 'term')
+    local files = fn.readdir(dir)
+    table.sort(files)
+    eq({
+      'C-Users-me--999--bash.mpack',
+      'foo-bar--123--bash.mpack',
+      'foo-bar--123--echo-hello.mpack',
+      'foo-bar--123--python3.mpack',
+      'foo-测试--123--bash.mpack',
+      'root--123--bash.mpack',
+    }, files)
+  end)
 end)

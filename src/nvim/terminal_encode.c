@@ -175,7 +175,7 @@ static void te_encode_append_sgr(StringBuilder *out, const VTermScreenCell *cell
 /// Encode one row of cells into an ANSI text line.
 ///
 /// Trailing blank cells are trimmed to reduce output size. Adjacent cells with identical SGR
-/// attributes reuse the same escape sequence. Wide character cells with width 0 are skipped.
+/// attributes reuse the same escape sequence. The padding cell of a wide char is skipped.
 ///
 /// @param term   Terminal instance (provides VTerm state).
 /// @param cells  Array of `VTermScreenCell` representing one screen row.
@@ -199,14 +199,9 @@ static void te_encode_line2ansi(Terminal *term, const VTermScreenCell *cells, si
   VTermState *state = vterm_obtain_state(term->vt);
   VTermScreenCell curr = { 0 };
 
-  // iterate cells
-  for (size_t col = 0; col < end; col++) {
+  // Iterate cells
+  for (size_t col = 0; col < end;) {
     const VTermScreenCell *cell = &cells[col];
-
-    // Skip for wide chars
-    if (cell->width == 0) {
-      continue;
-    }
 
     // Append escape sequence on sgr change
     if (!cell_sgr_equal(&curr, cell)) {
@@ -222,6 +217,9 @@ static void te_encode_line2ansi(Terminal *term, const VTermScreenCell *cells, si
     } else {
       kv_push(*out, ' ');
     }
+
+    // Advance by the cell width, skipping the padding cell of a wide char.
+    col += (size_t)cell->width;
   }
 
   kv_concat(*out, "\n");
