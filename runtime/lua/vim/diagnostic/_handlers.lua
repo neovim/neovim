@@ -265,29 +265,34 @@ function M.underline.show(namespace, bufnr, diagnostics, opts)
     local underline_ns = ns.user_data.underline_ns
     local get_priority = severity_to_extmark_priority(vim.hl.priorities.diagnostics, opts)
 
+    -- skip diagnostics with an out-of-range lnum.
+    local line_count = api.nvim_buf_line_count(bufnr)
+
     for _, diagnostic0 in ipairs(diagnostics) do
-      local higroups = { underline_highlight_map[diagnostic0.severity] }
+      if diagnostic0.lnum < line_count then
+        local higroups = { underline_highlight_map[diagnostic0.severity] }
 
-      if diagnostic0._tags then
-        if diagnostic0._tags.unnecessary then
-          table.insert(higroups, 'DiagnosticUnnecessary')
+        if diagnostic0._tags then
+          if diagnostic0._tags.unnecessary then
+            table.insert(higroups, 'DiagnosticUnnecessary')
+          end
+          if diagnostic0._tags.deprecated then
+            table.insert(higroups, 'DiagnosticDeprecated')
+          end
         end
-        if diagnostic0._tags.deprecated then
-          table.insert(higroups, 'DiagnosticDeprecated')
-        end
+
+        local lines =
+          api.nvim_buf_get_lines(diagnostic0.bufnr, diagnostic0.lnum, diagnostic0.lnum + 1, true)
+
+        vim.hl.range(
+          bufnr,
+          underline_ns,
+          higroups,
+          { diagnostic0.lnum, math.min(diagnostic0.col, #lines[1] - 1) },
+          { diagnostic0.end_lnum, diagnostic0.end_col },
+          { priority = get_priority(diagnostic0.severity) }
+        )
       end
-
-      local lines =
-        api.nvim_buf_get_lines(diagnostic0.bufnr, diagnostic0.lnum, diagnostic0.lnum + 1, true)
-
-      vim.hl.range(
-        bufnr,
-        underline_ns,
-        higroups,
-        { diagnostic0.lnum, math.min(diagnostic0.col, #lines[1] - 1) },
-        { diagnostic0.end_lnum, diagnostic0.end_col },
-        { priority = get_priority(diagnostic0.severity) }
-      )
     end
 
     save_extmarks(underline_ns, bufnr)
