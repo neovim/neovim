@@ -686,7 +686,7 @@ void pum_redraw(void)
 
   int scroll_range = pum_size - pum_height;
   if (fconfig.border) {
-    grid_draw_border(&pum_grid, &fconfig, NULL, 0, NULL);
+    grid_draw_border(&pum_grid, &fconfig, NULL, 0, NULL, 0);
     if (!fconfig.shadow) {
       row++;
       col_off++;
