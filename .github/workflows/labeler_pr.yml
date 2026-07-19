@@ -1,4 +1,4 @@
-name: "labeler: PR"
+name: "label-pr"
 on:
   pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
@@ -6,7 +6,7 @@ on:
 permissions: {}
 
 jobs:
-  changed-files:
+  label:
     if: github.event.action == 'opened'
     runs-on: ubuntu-latest
     permissions:
@@ -17,29 +17,34 @@ jobs:
       with:
         persist-credentials: false
 
-    - uses: actions/labeler@v6.2.0
+    - name: "changed-files"
+      uses: actions/labeler@v6.2.0
       with:
         configuration-path: .github/scripts/labeler_configuration.yml
 
-  type-scope:
-    if: github.event.action == 'opened'
-    needs: changed-files
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      GH_REPO: ${{ github.repository }}
-      PR_NUMBER: ${{ github.event.pull_request.number }}
-      PR_TITLE: ${{ github.event.pull_request.title }}
-    steps:
-    - name: "Extract commit type and add as label"
-      run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|([[:alpha:]]+)(\(.*\))?!?:.*|\1|')" || true
-    - name: "Extract commit scope and add as label"
-      run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|[[:alpha:]]+\((.+)\)!?:.*|\1|')" || true
-    - name: "Extract if the PR is a breaking change and add it as label"
-      run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|[[:alpha:]]+(\(.*\))?!:.*|breaking-change|')" || true
+    # Scope GITHUB_TOKEN to this step only, avoid exposing to 3P `actions/labeler`.
+    - name: "guess type/scope from title"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_REPO: ${{ github.repository }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        PR_TITLE: ${{ github.event.pull_request.title }}
+      run: |
+        gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|([[:alpha:]]+)(\(.*\))?!?:.*|\1|')" || true
+        gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|[[:alpha:]]+\((.+)\)!?:.*|\1|')" || true
+        gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|[[:alpha:]]+(\(.*\))?!:.*|breaking-change|')" || true
+
+    - name: "target:release"
+      if: startsWith(github.base_ref, 'release')
+      uses: actions/github-script@v9
+      with:
+        script: |
+          github.rest.issues.addLabels({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            labels: ['target:release']
+          })
 
   ai-assisted:
     runs-on: ubuntu-latest
@@ -82,27 +87,9 @@ jobs:
 
         gh pr edit "$PR_NUMBER" --add-label "$AI_LABEL"
 
-  target-release:
-    if: github.event.action == 'opened'
-    needs: ["changed-files", "type-scope"]
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-    steps:
-    - if: startsWith(github.base_ref, 'release')
-      uses: actions/github-script@v9
-      with:
-        script: |
-          github.rest.issues.addLabels({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            labels: ['target:release']
-          })
-
   request-reviewer:
     if: github.event.action == 'opened'
-    needs: ["changed-files", "type-scope", "target-release"]
+    needs: label
     permissions:
       pull-requests: write
     uses: ./.github/workflows/reviewers_add.yml
