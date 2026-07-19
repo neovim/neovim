@@ -380,7 +380,7 @@ char *get_special_key(int c, int modifiers, struct keychord *data)
     }
 
     if ((int)s->size + idx + 2 <= MAX_KEY_NAME_LEN) {
-      STRCPY(string + idx, s->data);
+      memcpy(string + idx, s->data, s->size);
       idx += (int)s->size;
     }
   }
