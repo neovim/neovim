@@ -6,6 +6,7 @@
 
 extern const TSLanguage *tree_sitter_lua(void);
 extern const TSLanguage *tree_sitter_c(void);
+extern const TSLanguage *tree_sitter_diff(void);
 extern const TSLanguage *tree_sitter_vim(void);
 extern const TSLanguage *tree_sitter_markdown(void);
 extern const TSLanguage *tree_sitter_markdown_inline(void);
@@ -22,6 +23,7 @@ typedef struct {
 static TsParserEntry parsers[] = {
   { "lua", tree_sitter_lua },
   { "c", tree_sitter_c },
+  { "diff", tree_sitter_diff },
   { "vim", tree_sitter_vim },
   { "markdown", tree_sitter_markdown },
   { "markdown_inline", tree_sitter_markdown_inline },

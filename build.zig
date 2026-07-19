@@ -750,6 +750,9 @@ pub fn build(b: *std.Build) !void {
     const parser_c = b.dependency("treesitter_c", .{ .target = target, .optimize = optimize_ts });
     parser_deps.dependOn(add_ts_parser(b, "c", parser_c.path("."), false, target, optimize_ts));
 
+    const parser_diff = b.dependency("treesitter_diff", .{ .target = target, .optimize = optimize_ts });
+    parser_deps.dependOn(add_ts_parser(b, "diff", parser_diff.path("."), false, target, optimize_ts));
+
     const parser_markdown = b.dependency("treesitter_markdown", .{ .target = target, .optimize = optimize_ts });
     parser_deps.dependOn(add_ts_parser(b, "markdown", parser_markdown.path("tree-sitter-markdown/"), true, target, optimize_ts));
     parser_deps.dependOn(add_ts_parser(b, "markdown_inline", parser_markdown.path("tree-sitter-markdown-inline/"), true, target, optimize_ts));
@@ -775,6 +778,7 @@ pub fn build(b: *std.Build) !void {
         const wasm_ts_parsers = [_]WasmTsParser{
             .{ .name = "lua", .dir = parser_lua.path("."), .has_scanner = true },
             .{ .name = "c", .dir = parser_c.path("."), .has_scanner = false },
+            .{ .name = "diff", .dir = parser_diff.path("."), .has_scanner = false },
             .{ .name = "markdown", .dir = parser_markdown.path("tree-sitter-markdown/"), .has_scanner = true },
             .{ .name = "markdown_inline", .dir = parser_markdown.path("tree-sitter-markdown-inline/"), .has_scanner = true },
             .{ .name = "vim", .dir = parser_vim.path("."), .has_scanner = true },
