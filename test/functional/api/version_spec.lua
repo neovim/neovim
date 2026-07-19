@@ -92,6 +92,9 @@ describe('api metadata', function()
         error(('"%s": parameter %d was optional, now required'):format(old_fn.name, idx))
       end
     end
+    while #new_fn.parameters > #old_fn.parameters and new_fn.parameters[#new_fn.parameters][3] do
+      table.remove(new_fn.parameters)
+    end
     old_fn = normalize_func_metadata(old_fn)
     new_fn = normalize_func_metadata(new_fn)
     if old_fn.return_type == 'void' then
@@ -245,6 +248,22 @@ describe('api metadata', function()
       '"nvim_example": parameter 2 was optional, now required',
       pcall_err(assert_func_backcompat, example_fn(true), example_fn(false))
     )
+  end)
+
+  it('optional param may be added', function()
+    assert_func_backcompat({
+      name = 'nvim_example',
+      method = false,
+      since = 1,
+      return_type = 'void',
+      parameters = { { 'String', 'src', false } },
+    }, {
+      name = 'nvim_example',
+      method = false,
+      since = 1,
+      return_type = 'void',
+      parameters = { { 'String', 'src', false }, { 'Dict', 'opts', true } },
+    })
   end)
 
   it('UI events are compatible with old metadata or have new level', function()

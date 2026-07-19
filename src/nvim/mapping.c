@@ -2739,8 +2739,8 @@ void ex_abclear(exarg_T *eap)
 /// @param  buffer    Buffer handle for a specific buffer, or 0 for the current
 ///                   buffer, or -1 to signify global behavior ("all buffers")
 /// @param  is_unmap  When true, removes the mapping that matches {lhs}.
-void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mode, String lhs,
-                   String rhs, Dict(keymap) *opts, Error *err)
+void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, bool unmap_lhs_only,
+                   String mode, String lhs, String rhs, Dict(keymap) *opts, Error *err)
 {
   LuaRef lua_funcref = LUA_NOREF;
   bool global = (buffer == -1);
@@ -2836,7 +2836,12 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
   // buf_do_map() reads noremap/unmap as its own argument.
   int maptype_val = MAPTYPE_MAP;
   if (is_unmap) {
-    maptype_val = MAPTYPE_UNMAP;
+    if (unmap_lhs_only) {
+      // Match only {lhs}, not {rhs} (unlike :unmap).
+      maptype_val = MAPTYPE_UNMAP_LHS;
+    } else {
+      maptype_val = MAPTYPE_UNMAP;
+    }
   } else if (is_noremap) {
     maptype_val = MAPTYPE_NOREMAP;
   }

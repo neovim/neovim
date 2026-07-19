@@ -3789,6 +3789,7 @@ Lua module: vim.keymap                                            *vim.keymap*
 
 vim.keymap.del({modes}, {lhs}, {opts})                      *vim.keymap.del()*
     Removes a mapping, or removes each (mode, lhs) pair if `lhs` is a list.
+
     Examples: >lua
         vim.keymap.del('n', 'lhs')
         vim.keymap.del({'n', 'i', 'v'}, '<leader>w', { buf = 5 })
@@ -3800,6 +3801,7 @@ vim.keymap.del({modes}, {lhs}, {opts})                      *vim.keymap.del()*
       • {opts}   (`table?`) A table with the following fields:
                  • {buf}? (`integer`) Remove a mapping from the given buffer.
                    `0` for current.
+                 • {lhs}? (`boolean`) When true, only match {lhs}, not {rhs}.
 
     See also: ~
       • |vim.keymap.set()|

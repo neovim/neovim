@@ -890,7 +890,7 @@ void nvim_buf_set_keymap(uint64_t channel_id, Buffer buf, String mode, String lh
                          Dict(keymap) *opts, Error *err)
   FUNC_API_SINCE(6)
 {
-  modify_keymap(channel_id, buf, false, mode, lhs, rhs, opts, err);
+  modify_keymap(channel_id, buf, false, false, mode, lhs, rhs, opts, err);
 }
 
 /// Unmaps a buffer-local |mapping| for the given mode.
@@ -898,11 +898,14 @@ void nvim_buf_set_keymap(uint64_t channel_id, Buffer buf, String mode, String lh
 /// @see |nvim_del_keymap()|
 ///
 /// @param  buf  Buffer id, or 0 for current buffer
-void nvim_buf_del_keymap(uint64_t channel_id, Buffer buf, String mode, String lhs, Error *err)
+/// @param  opts  Optional parameters.
+///               - lhs: When true, only match {lhs}, not {rhs}.
+void nvim_buf_del_keymap(uint64_t channel_id, Buffer buf, String mode, String lhs,
+                         Dict(keymap_del) *opts, Error *err)
   FUNC_API_SINCE(6)
 {
   String rhs = { .data = "", .size = 0 };
-  modify_keymap(channel_id, buf, true, mode, lhs, rhs, NULL, err);
+  modify_keymap(channel_id, buf, true, opts && opts->lhs, mode, lhs, rhs, NULL, err);
 }
 
 /// Sets a buffer-scoped (b:) variable
