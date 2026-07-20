@@ -37,7 +37,8 @@ local function request(method, url, opts)
     vim.wait(2000, function()
       return done
     end)
-    return result
+
+    return result ~= nil and result or { error = 'failed to get result from provider' }
   end)
 
   return result
