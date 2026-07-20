@@ -3735,47 +3735,6 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   rettv->vval.v_list = rv;
 }
 
-/// json_decode() function
-static void f_json_decode(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  char numbuf[NUMBUFLEN];
-  const char *s = NULL;
-  char *tofree = NULL;
-  size_t len;
-  if (argvars[0].v_type == VAR_LIST) {
-    if (!encode_vim_list_to_buf(argvars[0].vval.v_list, &len, &tofree)) {
-      emsg(_("E474: Failed to convert list to string"));
-      return;
-    }
-    s = tofree;
-    if (s == NULL) {
-      assert(len == 0);
-      s = "";
-    }
-  } else {
-    s = tv_get_string_buf_chk(&argvars[0], numbuf);
-    if (s) {
-      len = strlen(s);
-    } else {
-      return;
-    }
-  }
-  if (json_decode_string(s, len, rettv) == FAIL) {
-    semsg(_("E474: Failed to parse %.*s"), (int)len, s);
-    rettv->v_type = VAR_NUMBER;
-    rettv->vval.v_number = 0;
-  }
-  assert(rettv->v_type != VAR_UNKNOWN);
-  xfree(tofree);
-}
-
-/// json_encode() function
-static void f_json_encode(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = encode_tv2json(&argvars[0], NULL);
-}
-
 /// "keytrans()" function
 static void f_keytrans(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
