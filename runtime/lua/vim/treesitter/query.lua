@@ -19,6 +19,7 @@ local M = {}
 ---@field captures string[] list of (unique) capture names defined in query
 ---@field info vim.treesitter.QueryInfo query context (e.g. captures, predicates, directives)
 ---@field has_conceal_line boolean whether the query sets conceal_lines metadata
+---@field has_conceal boolean whether the query sets intra-line conceal metadata
 ---@field has_combined_injections boolean whether the query contains combined injections
 ---@field query TSQuery userdata query object
 ---@field private _processed_patterns table<integer, vim.treesitter.query.ProcessedPattern>
@@ -64,6 +65,11 @@ function Query:_process_patterns()
         end
         if vim.deep_equal(pattern, { 'set!', 'conceal_lines', '' }) then
           self.has_conceal_line = true
+        end
+        -- Intra-line conceal, set either at the pattern level (#set! conceal "x")
+        -- or on a capture (#set! @capture conceal "x").
+        if pattern[1] == 'set!' and (pattern[2] == 'conceal' or pattern[3] == 'conceal') then
+          self.has_conceal = true
         end
       else
         local should_match = true
