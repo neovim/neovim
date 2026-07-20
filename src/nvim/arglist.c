@@ -375,7 +375,7 @@ static void arglist_del_files(garray_T *alist_ga)
         xfree(ARGLIST[match].ae_fname);
         memmove(ARGLIST + match, ARGLIST + match + 1,
                 (size_t)(ARGCOUNT - match - 1) * sizeof(aentry_T));
-        ALIST(curwin)->al_ga.ga_len--;
+        ARGCOUNT--;
         if (curwin->w_arg_idx > match) {
           curwin->w_arg_idx--;
         }
@@ -780,32 +780,37 @@ void ex_argdelete(exarg_T *eap)
     if (*eap->arg != NUL) {
       // Can't have both a range and an argument.
       emsg(_(e_invarg));
-    } else if (n <= 0) {
+      return;
+    }
+    if (n <= 0) {
       // Don't give an error for ":%argdel" if the list is empty.
       if (eap->line1 != 1 || eap->line2 != 0) {
         emsg(_(e_invrange));
       }
-    } else {
-      for (linenr_T i = eap->line1; i <= eap->line2; i++) {
-        xfree(ARGLIST[i - 1].ae_fname);
-      }
-      memmove(ARGLIST + eap->line1 - 1, ARGLIST + eap->line2,
-              (size_t)(ARGCOUNT - eap->line2) * sizeof(aentry_T));
-      ALIST(curwin)->al_ga.ga_len -= (int)n;
-      if (curwin->w_arg_idx >= eap->line2) {
-        curwin->w_arg_idx -= (int)n;
-      } else if (curwin->w_arg_idx > eap->line1) {
-        curwin->w_arg_idx = (int)eap->line1;
-      }
-      if (ARGCOUNT == 0) {
-        curwin->w_arg_idx = 0;
-      } else if (curwin->w_arg_idx >= ARGCOUNT) {
-        curwin->w_arg_idx = ARGCOUNT - 1;
-      }
+      return;
+    }
+
+    for (linenr_T i = eap->line1; i <= eap->line2; i++) {
+      xfree(ARGLIST[i - 1].ae_fname);
+    }
+    memmove(ARGLIST + eap->line1 - 1, ARGLIST + eap->line2,
+            (size_t)(ARGCOUNT - eap->line2) * sizeof(aentry_T));
+    ARGCOUNT -= n;
+    if (curwin->w_arg_idx >= eap->line2) {
+      curwin->w_arg_idx -= n;
+    } else if (curwin->w_arg_idx > eap->line1) {
+      curwin->w_arg_idx = eap->line1;
     }
   } else {
     do_arglist(eap->arg, AL_DEL, 0, false);
   }
+
+  if (ARGCOUNT == 0) {
+    curwin->w_arg_idx = 0;
+  } else if (curwin->w_arg_idx >= ARGCOUNT) {
+    curwin->w_arg_idx = ARGCOUNT - 1;
+  }
+
   maketitle();
 }
 
