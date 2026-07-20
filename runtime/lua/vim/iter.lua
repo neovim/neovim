@@ -93,7 +93,7 @@ end
 --- @field private _table (V1|[V1, V...])[] Underlying table data. Items may be packed tuples after transforms.
 --- @field private _head integer Index to the front of a table iterator
 --- @field private _tail integer Index to the end of a table iterator (exclusive)
---- @field private _has_packed boolean True if the live window may contain packed tuples.
+--- @field private _packed boolean Whether unconsumed items may contain packed tuples.
 local IterArray = setmetatable({}, Iter)
 IterArray.__index = IterArray
 IterArray.__call = Iter.__call
@@ -417,7 +417,7 @@ function IterArray:map(f)
     end
   end
   self._tail = n
-  self._has_packed = has_packed
+  self._packed = has_packed
   return self
 end
 
@@ -506,7 +506,7 @@ function IterArray:totable()
   -- Reindex and sanitize.
   local len = self._tail - self._head
 
-  local needs_sanitize = self._has_packed
+  local needs_sanitize = self._packed
   if needs_sanitize then
     needs_sanitize = false
     for i = self._head, self._tail - 1 do
@@ -533,7 +533,7 @@ function IterArray:totable()
 
   self._tail = len + 1
   self._head = self._tail
-  self._has_packed = false
+  self._packed = false
 
   return self._table
 end
@@ -1243,7 +1243,7 @@ function IterArray:enumerate()
     local v = self._table[i]
     self._table[i] = pack(n, unpack(v))
   end
-  self._has_packed = self._head ~= self._tail
+  self._packed = self._head ~= self._tail
   return self
 end
 
@@ -1314,7 +1314,7 @@ function IterArray.new(t)
     _table = t,
     _head = 1,
     _tail = #t + 1,
-    _has_packed = false,
+    _packed = false,
   }, IterArray)
 end
 

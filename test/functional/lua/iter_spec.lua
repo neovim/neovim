@@ -109,16 +109,15 @@ describe('vim.iter', function()
     eq(45, acc)
   end)
 
-  it('totable()', function()
-    do
+  describe('totable()', function()
+    it('collects mapped multivalues', function()
       local it = vim.iter({ 1, 2, 3 }):map(function(v)
         return v, v * v
       end)
       eq({ { 1, 1 }, { 2, 4 }, { 3, 9 } }, it:totable())
-    end
+    end)
 
-    -- Sanitizes a packed value even when it is not the first live element.
-    do
+    it('collects mixed scalar and multivalues', function()
       local it = vim.iter({ 1, 2 }):map(function(v)
         if v == 1 then
           return v
@@ -131,10 +130,9 @@ describe('vim.iter', function()
       eq(nil, a)
       eq(nil, b)
       eq({}, it:totable())
-    end
+    end)
 
-    -- Preserves zero as the first value of a packed tuple and drains the iterator.
-    do
+    it('collects multivalues starting with zero', function()
       local it = vim.iter({ 1 }):map(function()
         return 0, 1
       end)
@@ -144,18 +142,16 @@ describe('vim.iter', function()
       eq(nil, a)
       eq(nil, b)
       eq({}, it:totable())
-    end
+    end)
 
-    -- Preserves packed tuples through a zero-depth flatten for later sanitization.
-    do
+    it('collects multivalues after flatten(0)', function()
       local it = vim.iter({ 1 }):map(function()
         return 0, 1
       end)
       eq({ { 0, 1 } }, it:flatten(0):totable())
-    end
+    end)
 
-    -- next() unpacks mapped tuples and ends after the final value.
-    do
+    it('unpacks mapped multivalues', function()
       local it = vim.iter({ 1 }):map(function()
         return 0, 1
       end)
@@ -167,29 +163,28 @@ describe('vim.iter', function()
       local c, d = it:next()
       eq(nil, c)
       eq(nil, d)
-    end
+    end)
 
-    -- Drains the non-packed array fast path.
-    do
+    it('advances the iterator', function()
       local it = vim.iter({ 1 })
       eq({ 1 }, it:totable())
       eq(nil, it:next())
-    end
+    end)
 
-    -- Keeps an empty iterator drained after collection.
-    do
+    it('keeps an empty iterator drained', function()
       local it = vim.iter({})
       eq({}, it:totable())
       eq(nil, it:next())
-    end
+    end)
 
-    -- Holes in array-like tables are removed
-    eq({ 1, 2, 3 }, vim.iter({ 1, nil, 2, nil, 3 }):totable())
+    it('removes holes', function()
+      eq({ 1, 2, 3 }, vim.iter({ 1, nil, 2, nil, 3 }):totable())
+    end)
 
-    do
+    it('collects function iterators', function()
       local it = vim.iter(string.gmatch('1,4,lol,17,blah,2,9,3', '%d+')):map(tonumber)
       eq({ 1, 4, 17, 2, 9, 3 }, it:totable())
-    end
+    end)
   end)
 
   it('join()', function()
