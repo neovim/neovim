@@ -9,6 +9,10 @@ describe('vim.text', function()
       t.matches('size%: expected number, got string', t.pcall_err(vim.text.indent, 'x', 'x'))
       t.matches('size%: expected number, got nil', t.pcall_err(vim.text.indent, nil, 'x'))
       t.matches('opts%: expected table, got string', t.pcall_err(vim.text.indent, 0, 'x', 'z'))
+      t.matches(
+        'opts%.prefix%: expected string, got number',
+        t.pcall_err(vim.text.indent, 0, 'x', { prefix = 5 })
+      )
     end)
 
     it('basic cases', function()
@@ -127,6 +131,21 @@ return
           { expandtab = 6 }
         ),
       })
+    end)
+
+    it('opts.prefix forces the indent char', function()
+      -- Force tabs on space-indented text (inverse of expandtab).
+      eq({ '\ta\n\t  b\n', 2 }, { vim.text.indent(1, '  a\n    b\n', { prefix = '\t' }) })
+      -- Force spaces on tab-indented text.
+      eq({ '  a\n  b', 1 }, { vim.text.indent(2, '\ta\n\tb', { prefix = ' ' }) })
+      -- Arbitrary indent char (e.g. visual guide).
+      eq({ '··a\n··b', 4 }, { vim.text.indent(2, '    a\n    b', { prefix = '·' }) })
+      -- Char is forced even when the indent size is unchanged.
+      eq({ '\t\ta\n\t\tb', 2 }, { vim.text.indent(2, '  a\n  b', { prefix = '\t' }) })
+      -- Blank/empty lines are unaffected.
+      eq({ '\ta\n\n\tb\n', 2 }, { vim.text.indent(1, '  a\n\n  b\n', { prefix = '\t' }) })
+      -- Forcing the already-inferred char is a no-op.
+      eq({ '  a\n  b', 4 }, { vim.text.indent(2, '    a\n    b', { prefix = ' ' }) })
     end)
   end)
 
