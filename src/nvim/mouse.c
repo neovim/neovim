@@ -279,7 +279,9 @@ static int get_fpos_of_mouse(pos_T *mpos)
     return IN_UNKNOWN;
   }
 
-  mpos->col = vcol2col(wp, mpos->lnum, col, &mpos->coladd);
+  // "col" from mouse_comp_pos() is a screen-layout column; map it back to a buffer column
+  // accounting for cells hidden by conceal (degrades to vcol2col() when nothing is concealed).
+  mpos->col = scol_to_col(wp, mpos->lnum, col, &mpos->coladd);
   return IN_BUFFER;
 }
 
@@ -2045,7 +2047,7 @@ void f_getmousepos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       wincol = col + 1 + wp->w_wincol_off;  // Adjust by 1 for left border
       if (row >= 0 && row < wp->w_height && col >= 0 && col < wp->w_width) {
         mouse_comp_pos(wp, &row, &col, &lnum);
-        col = vcol2col(wp, lnum, col, &coladd);
+        col = scol_to_col(wp, lnum, col, &coladd);
         column = col + 1;
       }
     }
