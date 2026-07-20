@@ -2690,11 +2690,12 @@ int tv_dict_add_func(dict_T *const d, const char *const key, const size_t key_le
 
   item->di_tv.v_type = VAR_FUNC;
   item->di_tv.vval.v_string = xmemdupz(fp->uf_name, fp->uf_namelen);
+  // Reference before tv_dict_add() so tv_dict_item_free()'s unref stays balanced on failure.
+  func_ref(item->di_tv.vval.v_string);
   if (tv_dict_add(d, item) == FAIL) {
     tv_dict_item_free(item);
     return FAIL;
   }
-  func_ref(item->di_tv.vval.v_string);
   return OK;
 }
 
