@@ -1103,12 +1103,6 @@ static void grid_draw_bordertext(VirtText vt, int col, int winbl, const int *hl_
     if (text == NULL) {
       break;
     }
-    if (attr == -1) {  // No highlight specified.
-      attr = default_attr;
-    } else {
-      attr = hl_apply_winblend(winbl, attr);
-      attr = hl_combine_attr(win_hl_attr_normal, attr);
-    }
     // Skip characters from the beginning when title overflows available width.
     if (overflow > 0) {
       int cells = (int)mb_string2cells(text);
@@ -1124,6 +1118,12 @@ static void grid_draw_bordertext(VirtText vt, int col, int winbl, const int *hl_
         p += utfc_ptr2len(p);
       }
       text = p;
+    }
+    if (attr == -1) {  // No highlight specified.
+      attr = default_attr;
+    } else {
+      attr = hl_apply_winblend(winbl, attr);
+      attr = hl_combine_attr(win_hl_attr_normal, attr);
     }
     col += grid_line_puts(col, text, -1, attr);
   }
