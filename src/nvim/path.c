@@ -107,13 +107,11 @@ char *path_tail(const char *fname)
   }
 
   const char *tail = get_past_head(fname);
-  const char *p = tail;
   // Find last part of path.
-  while (*p != NUL) {
+  for (const char *p = tail; *p != NUL; p++) {
     if (vim_ispathsep_nocolon(*p)) {
       tail = p + 1;
     }
-    MB_PTR_ADV(p);
   }
   return (char *)tail;
 }
@@ -197,7 +195,7 @@ const char *path_next_component(const char *fname)
   FUNC_ATTR_NONNULL_ALL
 {
   while (*fname != NUL && !vim_ispathsep(*fname)) {
-    MB_PTR_ADV(fname);
+    fname++;
   }
   if (*fname != NUL) {
     fname++;
@@ -588,27 +586,28 @@ char *save_abs_path(const char *name)
   return TO_SLASH_SAVE(name);
 }
 
-/// Checks if a path has a wildcard character including '~', unless at the end.
-/// @param p  The path to expand.
-/// @returns Unix: True if it contains one of "?[{`'$".
-/// @returns Windows: True if it contains one of "*?$[".
-bool path_has_wildcard(const char *p)
+/// Checks if a path has an unescaped wildcard requiring expansion (path_expand).
+/// @param p The path to expand.
+/// @param all Also detect chars requiring special handling:
+///            - "`": backtick expansion
+///            - "'": shell quoting (Only Unix)
+///            - "$": environment variable expansion
+///            - "~": home directory expansion (historically treated as a wildcard
+///                   unless at the end)
+/// @return True if it has an unescaped wildcard
+bool path_has_wildcard(const char *p, bool all)
   FUNC_ATTR_NONNULL_ALL
 {
-  for (; *p; MB_PTR_ADV(p)) {
+  char *wildcards = all ? PATH_ALL_WILDCARDS : PATH_ESC_WILDCARDS;
+  for (; *p; p++) {
 #ifdef UNIX
     if (p[0] == '\\' && p[1] != NUL) {
       p++;
       continue;
     }
-
-    const char *wildcards = "*?[{`'$";
-#else
-    // Windows:
-    const char *wildcards = "?*$[`";
 #endif
     if (vim_strchr(wildcards, (uint8_t)(*p)) != NULL
-        || (p[0] == '~' && p[1] != NUL)) {
+        || (all && p[0] == '~' && p[1] != NUL)) {
       return true;
     }
   }
@@ -618,31 +617,6 @@ bool path_has_wildcard(const char *p)
 static int pstrcmp(const void *a, const void *b)
 {
   return pathcmp(*(char **)a, *(char **)b, -1);
-}
-
-/// Checks if a path has a character path_expand can expand.
-/// @param p  The path to expand.
-/// @returns Unix: True if it contains one of *?[{.
-/// @returns Windows: True if it contains one of *?[.
-bool path_has_exp_wildcard(const char *p)
-  FUNC_ATTR_NONNULL_ALL
-{
-  for (; *p != NUL; MB_PTR_ADV(p)) {
-#ifdef UNIX
-    if (p[0] == '\\' && p[1] != NUL) {
-      p++;
-      continue;
-    }
-
-    const char *wildcards = "*?[{";
-#else
-    const char *wildcards = "*?[";  // Windows.
-#endif
-    if (vim_strchr(wildcards, (uint8_t)(*p)) != NULL) {
-      return true;
-    }
-  }
-  return false;
 }
 
 /// Recursively expands one path component into all matching files and/or
@@ -718,14 +692,13 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
       }
       s = p + 1;
     } else if (path_end >= path + wildoff
-#ifdef MSWIN
                // "~" not included here, we want to treat it as literal.
-               // The "~/" case is already handled in `gen_expand_wildcards`.
-               && vim_strchr("*?[", (uint8_t)(*path_end)) != NULL
-#else
-               && (vim_strchr("*?[{~$", (uint8_t)(*path_end)) != NULL
-                   || (!p_fic && (flags & EW_ICASE) && mb_isalpha(utf_ptr2char(path_end))))
+               // "~/", "~user/" and env expansion are already handled in `gen_expand_wildcards`.
+               && (vim_strchr(PATH_ESC_WILDCARDS, (uint8_t)(*path_end)) != NULL
+#ifndef MSWIN
+                   || (!p_fic && (flags & EW_ICASE) && mb_isalpha(utf_ptr2char(path_end)))
 #endif
+                   )
                ) {
       e = p;
     }
@@ -829,7 +802,7 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
         }
 
         vim_snprintf(buf + len, buflen - len, "%s", path_end);
-        if (path_has_exp_wildcard(path_end)) {      // handle more wildcards
+        if (path_has_wildcard(path_end, false)) {      // handle more wildcards
           if (stardepth < 100) {
             stardepth++;
             // need to expand another component of the path
@@ -1186,7 +1159,7 @@ const char *gettail_dir(const char *const fname)
   const char *next_dir_end = fname;
   bool look_for_sep = true;
 
-  for (const char *p = fname; *p != NUL;) {
+  for (const char *p = fname; *p != NUL; p++) {
     if (vim_ispathsep(*p)) {
       if (look_for_sep) {
         next_dir_end = p;
@@ -1198,7 +1171,6 @@ const char *gettail_dir(const char *const fname)
       }
       look_for_sep = true;
     }
-    MB_PTR_ADV(p);
   }
   return dir_end;
 }
@@ -1249,7 +1221,7 @@ static int expand_in_path(garray_T *const gap, char *const pattern, const int fl
 static bool has_env_var(char *p)
   FUNC_ATTR_NONNULL_ALL
 {
-  for (; *p; MB_PTR_ADV(p)) {
+  for (; *p; p++) {
     if (*p == '\\' && p[1] != NUL) {
       p++;
     } else if (vim_strchr("$", (uint8_t)(*p)) != NULL) {
@@ -1266,7 +1238,7 @@ static bool has_env_var(char *p)
 static bool has_special_wildchar(char *p, int flags)
   FUNC_ATTR_NONNULL_ALL
 {
-  for (; *p; MB_PTR_ADV(p)) {
+  for (; *p; p++) {
     // Disallow line break characters.
     if (*p == '\r' || *p == '\n') {
       break;
@@ -1391,7 +1363,7 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
       // there is no match, and EW_NOTFOUND is given, add the pattern.
       // Otherwise: Add the file name if it exists or when EW_NOTFOUND is
       // given.
-      if (path_has_exp_wildcard(p) || (flags & EW_ICASE)) {
+      if (path_has_wildcard(p, false) || (flags & EW_ICASE)) {
         if ((flags & (EW_PATH | EW_CDPATH))
             && !path_is_absolute(p)
             && !(p[0] == '.'
@@ -1547,12 +1519,7 @@ void slash_adjust(char *p)
 
   char from = p_ssl ? '\\' : PATHSEP;
   char to = p_ssl ? PATHSEP : '\\';
-  while (*p) {
-    if (*p == from) {
-      *p = to;
-    }
-    MB_PTR_ADV(p);
-  }
+  strchrsub(p, from, to);
 }
 #endif
 

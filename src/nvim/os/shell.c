@@ -72,7 +72,7 @@ static void save_patterns(int num_pat, char **pat, int *num_file, char ***file)
 static bool have_wildcard(int num, char **file)
 {
   for (int i = 0; i < num; i++) {
-    if (path_has_wildcard(file[i])) {
+    if (path_has_wildcard(file[i], true)) {
       return true;
     }
   }
