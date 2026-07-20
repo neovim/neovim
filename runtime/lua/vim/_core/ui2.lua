@@ -159,8 +159,8 @@ local function ui_callback(redraw_msg, event, ...)
   local handler = M.msg[event] or M.cmd[event] --[[@as function]]
   M.check_targets()
   handler(...)
-  -- Cmdline mode, non-fast message and non-empty showcmd require an immediate redraw.
-  if M.cmd[event] or redraw_msg or (event == 'msg_showcmd' and select(1, ...)[1]) then
+  -- Cmdline mode, non-fast message and showcmd require an immediate redraw.
+  if M.cmd[event] or redraw_msg or event == 'msg_showcmd' then
     M.redrawing = true
     api.nvim__redraw({
       flush = handler ~= M.cmd.cmdline_hide or nil,
