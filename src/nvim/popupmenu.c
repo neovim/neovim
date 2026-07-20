@@ -1175,7 +1175,7 @@ static bool pum_set_selected(int n, int repeat)
       RedrawingDisabled--;
       g_do_tagpreview = 0;
 
-      if (curwin->w_p_pvw || curwin->w_float_is_info) {
+      if (curwin->w_p_pvw || curwin->w_kind == kWinInfo) {
         int res = OK;
         if (!resized
             && (curbuf->b_nwindows == 1)

@@ -364,7 +364,7 @@ bool win_float_valid(const win_T *win)
 win_T *win_float_find_preview(void)
 {
   for (win_T *wp = lastwin; wp && wp->w_floating; wp = wp->w_prev) {
-    if (wp->w_float_is_info) {
+    if (wp->w_kind == kWinInfo) {
       return wp;
     }
   }
@@ -451,7 +451,7 @@ win_T *win_float_create_preview(bool enter, bool new_buf)
   }
   unblock_autocmds();
   wp->w_p_diff = false;
-  wp->w_float_is_info = true;
+  wp->w_kind = kWinInfo;
   wp->w_p_wrap = true;  // 'wrap' is default on
   wp->w_p_so = 0;       // 'scrolloff' zero
   if (enter) {
