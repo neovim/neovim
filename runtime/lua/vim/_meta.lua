@@ -35,6 +35,7 @@ vim.uv = ...
 --- @field all fun(self: vim.Iter, pred: fun(...): boolean): boolean
 --- @field last fun(self: vim.Iter): any
 --- @field enumerate fun(self: vim.Iter): vim.Iter
+--- @field count fun(self: vim.Iter): integer
 
 --- @class vim.IterArray : vim.Iter
 --- @field filter fun(self: vim.IterArray, f: fun(...): boolean): vim.IterArray
@@ -56,6 +57,7 @@ vim.uv = ...
 --- @field slice fun(self: vim.IterArray, first: integer, last: integer): vim.IterArray
 --- @field last fun(self: vim.IterArray): any
 --- @field enumerate fun(self: vim.IterArray): vim.IterArray
+--- @field count fun(self: vim.IterArray): integer
 
 --- @class vim.IterModule
 --- @operator call: fun(src: any, ...): vim.Iter

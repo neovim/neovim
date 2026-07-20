@@ -696,6 +696,47 @@ describe('vim.iter', function()
     )
   end)
 
+  it('count()', function()
+    local odd = function(v)
+      return v % 2 ~= 0
+    end
+
+    eq(0, vim.iter({}):count())
+
+    local q = { 1, 2, 3, 4, 5 }
+    eq(5, vim.iter(q):count())
+    eq(5, vim.iter(q):rev():count())
+    eq(3, vim.iter(q):filter(odd):count())
+
+    do
+      local it = vim.iter(q)
+      eq(5, it:count())
+      eq(0, it:count())
+      eq(nil, it:next())
+    end
+
+    local m = { a = 1, b = 2, c = 3 }
+    eq(3, vim.iter(m):count())
+    eq(
+      2,
+      vim
+        .iter(m)
+        :filter(function(_, v)
+          return odd(v)
+        end)
+        :count()
+    )
+
+    do
+      local it = vim.iter(m)
+      eq(3, it:count())
+      eq(0, it:count())
+      eq(nil, it:next())
+    end
+
+    eq(6, vim.iter(vim.split('123abc', '')):count())
+  end)
+
   it('handles map-like tables', function()
     local it = vim.iter({ a = 1, b = 2, c = 3 }):map(function(k, v)
       if v % 2 ~= 0 then

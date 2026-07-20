@@ -1227,6 +1227,24 @@ function IterArray:enumerate()
   return self
 end
 
+--- Drains the iterator, counting the number of iterations and returning it.
+---
+--- @since 15
+--- @return integer
+function Iter:count()
+  return self:fold(0, function(acc)
+    return acc + 1
+  end)
+end
+
+--- @nodoc
+--- @return integer
+function IterArray:count()
+  local count = math.abs(self._tail - self._head)
+  self._head = self._tail
+  return count
+end
+
 --- Creates a new Iter object from a table or other |iterable|.
 ---
 --- @generic R1, R...

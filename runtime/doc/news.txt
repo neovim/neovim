@@ -316,6 +316,7 @@ LUA
 • |vim.pack.get()| can fetch new updates before computing the output.
 • |vim.o| now accepts table style values for assignment.
 • |vim.keycode()| returns structured info as return value 2.
+• |Iter:count()| counts items in the iterator.
 
 OPTIONS
 
