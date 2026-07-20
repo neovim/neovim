@@ -92,18 +92,29 @@ end
 ---
 --- @param s string Multiline string
 --- @param no_blank boolean? Drop blank lines for each @param/@return (except one empty line
---- separating each). Workaround for https://github.com/LuaLS/lua-language-server/issues/2333
+--- separating each, and before a codeblock).
+--- Workaround for https://github.com/LuaLS/lua-language-server/issues/2333
 local function split_lines(s, no_blank)
   s = string.gsub(s, '\r\n?', '\n')
+  local raw = vim.split(s, '\n', { plain = true, trimempty = true })
+
+  --- @return boolean # true if line begins a (4-space-indented) codeblock. #40860
+  local function codeblock(l)
+    return l:find('^    ') or l:find('^\t')
+  end
+
   local lines = {}
   local in_desc = true -- Main description block, before seeing any @foo.
-  for line in vim.gsplit(s, '\n', { plain = true, trimempty = true }) do
+  for i, line in ipairs(raw) do
     local start_annotation = not not line:find('^ ?%@.?[pr]')
     in_desc = (not start_annotation) and in_desc or false
     if start_annotation and no_blank and not (lines[#lines] or ''):find('^%s*$') then
       table.insert(lines, '') -- Separate each @foo with a blank line.
     end
-    if in_desc or not no_blank or not line:find('^%s*$') then
+
+    local blank = line:find('^%s*$')
+    local keep_blank = blank and codeblock(raw[i + 1] or '') -- Keep if it precedes a codeblock. #40860
+    if in_desc or not no_blank or not blank or keep_blank then
       table.insert(lines, line)
     end
   end
