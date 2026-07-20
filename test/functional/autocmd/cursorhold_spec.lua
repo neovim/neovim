@@ -75,8 +75,10 @@ describe('CursorHold', function()
     sleep(50)
     eq(0, api.nvim_get_var('cursorhold'))
     feed('0')
-    sleep(50)
-    eq(1, api.nvim_get_var('cursorhold'))
+    -- Poll: CursorHold may take longer than one 'updatetime' to fire.
+    retry(nil, 1000, function()
+      eq(1, api.nvim_get_var('cursorhold'))
+    end)
   end)
 end)
 
