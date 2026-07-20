@@ -23,6 +23,7 @@ search for in the `parser` runtime directory.
 Nvim includes these parsers:
 
 - C
+- Diff
 - Lua
 - Markdown
 - Vimscript

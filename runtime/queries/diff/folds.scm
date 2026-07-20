@@ -1,0 +1,5 @@
+[
+  (block)
+  (hunks)
+  (hunk)
+] @fold
