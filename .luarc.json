@@ -6,8 +6,10 @@
   "workspace": {
     "ignoreDir": [
       ".deps",
-      "build",
-      "test"
+      "build"
+    ],
+    "ignoreGlobs": [
+      "test/**/fixtures/**"
     ],
     "preloadFileSize": 1000,
     "checkThirdParty": "Disable"
