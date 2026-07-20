@@ -344,6 +344,23 @@ Assuming a suitable parser and `highlights.scm` query is found in runtimepath,
 treesitter highlighting for the current buffer can be enabled simply via
 |vim.treesitter.start()|.
 
+Nvim's `diff` queries also highlight code within diff hunks when the
+corresponding language parser is available. To enable treesitter highlighting
+for diff buffers: >lua
+    vim.api.nvim_create_autocmd('FileType', {
+      pattern = 'diff',
+      callback = function(args)
+        vim.treesitter.start(args.buf)
+      end,
+    })
+<
+Since the injected code supplies its own foreground colors, `@diff.plus` and
+`@diff.minus` are specialized as `@diff.plus.diff` and `@diff.minus.diff`
+(see |treesitter-highlight-groups|), which set only a background so that added
+and deleted lines remain distinguishable.  To turn that off: >lua
+    vim.api.nvim_set_hl(0, '@diff.plus.diff', {})
+    vim.api.nvim_set_hl(0, '@diff.minus.diff', {})
+<
                                                  *treesitter-highlight-groups*
 The capture names, prefixed with `@`, are directly usable as highlight groups.
 For many commonly used captures, the corresponding highlight groups are linked
