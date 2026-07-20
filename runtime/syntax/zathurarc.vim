@@ -5,6 +5,7 @@
 " Upstream:             https://github.com/Freed-Wu/zathurarc.vim
 " Latest Revision:      2024-09-16
 " 2026 Apr 04 by Vim project: add page-v-padding and page-h-padding
+" 2026 Jul 20 by Vim project: syn options with latest zathura upstream repo
 
 if exists('b:current_syntax')
   finish
@@ -30,26 +31,31 @@ syntax keyword zathurarcOption completion-highlight-fg continuous-hist-save data
 syntax keyword zathurarcOption dbus-raise-window dbus-service default-bg default-fg
 syntax keyword zathurarcOption double-click-follow exec-command filemonitor
 syntax keyword zathurarcOption first-page-column font guioptions highlight-active-color
-syntax keyword zathurarcOption highlight-color highlight-fg highlight-transparency
+syntax keyword zathurarcOption highlight-color highlighter-modifier highlight-fg
 syntax keyword zathurarcOption incremental-search index-active-bg index-active-fg index-bg
-syntax keyword zathurarcOption index-fg inputbar-bg inputbar-fg link-hadjust link-zoom
-syntax keyword zathurarcOption n-completion-items notification-bg notification-error-bg
-syntax keyword zathurarcOption notification-error-fg notification-fg
+syntax keyword zathurarcOption index-fg inputbar-bg inputbar-fg jumplist-size link-hadjust
+syntax keyword zathurarcOption link-zoom n-completion-items nohlsearch notification-bg
+syntax keyword zathurarcOption notification-error-bg notification-error-fg notification-fg
 syntax keyword zathurarcOption notification-warning-bg notification-warning-fg
-syntax keyword zathurarcOption page-cache-size page-h-padding page-v-padding
-syntax keyword zathurarcOption page-right-to-left page-thumbnail-size pages-per-row recolor
-syntax keyword zathurarcOption recolor-darkcolor recolor-keephue recolor-lightcolor
-syntax keyword zathurarcOption recolor-reverse-video render-loading render-loading-bg
-syntax keyword zathurarcOption render-loading-fg sandbox scroll-full-overlap scroll-hstep
+syntax keyword zathurarcOption open-first-page open-link-confirm page-cache-size
+syntax keyword zathurarcOption page-h-padding page-mode page-right-to-left pages-per-row
+syntax keyword zathurarcOption page-thumbnail-size page-v-padding recolor
+syntax keyword zathurarcOption recolor-adjust-lightness recolor-darkcolor recolor-keephue
+syntax keyword zathurarcOption recolor-lightcolor recolor-reverse-video render-loading
+syntax keyword zathurarcOption render-loading-bg render-loading-fg scrollbar-bg
+syntax keyword zathurarcOption scrollbar-fg scroll-full-overlap scroll-hstep
 syntax keyword zathurarcOption scroll-page-aware scroll-step scroll-wrap search-hadjust
-syntax keyword zathurarcOption selection-clipboard selection-notification show-directories
-syntax keyword zathurarcOption show-hidden show-recent statusbar-basename statusbar-bg
-syntax keyword zathurarcOption statusbar-fg statusbar-h-padding statusbar-home-tilde
+syntax keyword zathurarcOption selection-clipboard selection-keep-highlight
+syntax keyword zathurarcOption selection-notification show-directories show-hidden
+syntax keyword zathurarcOption show-recent show-signature-information signature-error-color
+syntax keyword zathurarcOption signature-success-color signature-warning-color
+syntax keyword zathurarcOption single-page-mode statusbar-basename statusbar-bg
+syntax keyword zathurarcOption statusbar-fg statusbar-home-tilde statusbar-h-padding
 syntax keyword zathurarcOption statusbar-page-percent statusbar-v-padding synctex
-syntax keyword zathurarcOption synctex-editor-command vertical-center window-height
-syntax keyword zathurarcOption window-icon window-icon-document window-title-basename
-syntax keyword zathurarcOption window-title-home-tilde window-title-page window-width
-syntax keyword zathurarcOption zoom-center zoom-max zoom-min zoom-step
+syntax keyword zathurarcOption synctex-edit-modifier synctex-editor-command vertical-center
+syntax keyword zathurarcOption window-height window-title-basename window-title-home-tilde
+syntax keyword zathurarcOption window-title-page window-width word-separator zoom-center
+syntax keyword zathurarcOption zoom-max zoom-min zoom-step
 
 highlight default link zathurarcComment Comment
 highlight default link zathurarcNumber Number
