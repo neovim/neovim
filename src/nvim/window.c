@@ -2617,7 +2617,7 @@ void close_windows(buf_T *buf, bool keep_curwin)
           }
           if (!win_close_othertab(wp, false, tp, false)) {
             // If closing the window fails give up, to avoid looping forever.
-            break;
+            goto theend;
           }
 
           // Start all over, the tab page may be closed and
