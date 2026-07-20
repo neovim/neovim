@@ -333,10 +333,10 @@ describe('api: optional parameters', function()
   end)
 
   it('omitted is equivalent to empty dict', function()
-    eq(api.nvim_get_context({}), api.nvim_get_context()) -- RPC path
+    eq(n.parse_context(api.nvim_get_context({})), n.parse_context(api.nvim_get_context())) -- RPC path
     eq(
-      n.exec_lua('return vim.api.nvim_get_context({})'),
-      n.exec_lua('return vim.api.nvim_get_context()')
+      n.parse_context(n.exec_lua('return vim.api.nvim_get_context({})')),
+      n.parse_context(n.exec_lua('return vim.api.nvim_get_context()'))
     ) -- Lua-binding path
   end)
 
