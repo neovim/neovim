@@ -981,7 +981,7 @@ int ins_typebuf(char *str, int noremap, int offset, bool nottyped, bool silent)
     int extra = addlen + newoff + 4 * (MAXMAPLEN + 4);
     if (typebuf.tb_len > INT_MAX - extra) {
       // string is getting too long for 32 bit int
-      emsg(_(e_toocompl));          // also calls flush_buffers
+      emsg(_(e_command_too_complex));  // also calls flush_buffers
       setcursor();
       return FAIL;
     }

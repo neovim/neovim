@@ -984,6 +984,12 @@ func Test_regexp_error()
   call assert_equal('', matchstr('abcd', '\%o181\%o142'))
 endfunc
 
+func Test_regexp_recursion_limit()
+  let nested = repeat('\%(', 20000) .. 'x' .. repeat('\)', 20000)
+  call assert_fails("call matchstr('x', '\%#=2' .. nested)", 'E74:')
+  call assert_fails("call matchstr('x', '\%#=1' .. nested)", 'E74:')
+endfunc
+
 " Test for using the last substitute string pattern (~)
 func Test_regexp_last_subst_string()
   new

@@ -356,9 +356,10 @@ static const char e_missing_delimiter_after_search_pattern_str[]
 static const char e_missingbracket[] = N_("E769: Missing ] after %s[");
 static const char e_reverse_range[] = N_("E944: Reverse range in character class");
 static const char e_large_class[] = N_("E945: Range too large in character class");
-static const char e_unmatchedpp[] = N_("E53: Unmatched %s%%(");
-static const char e_unmatchedp[] = N_("E54: Unmatched %s(");
-static const char e_unmatchedpar[] = N_("E55: Unmatched %s)");
+static const char e_unmatched_z[] = N_("E52: Unmatched \\z(");
+static const char e_unmatched_str_percent_open[] = N_("E53: Unmatched %s%%(");
+static const char e_unmatched_str_open[] = N_("E54: Unmatched %s(");
+static const char e_unmatched_str_close[] = N_("E55: Unmatched %s)");
 static const char e_z_not_allowed[] = N_("E66: \\z( not allowed here");
 static const char e_z1_not_allowed[] = N_("E67: \\z1 - \\z9 not allowed here");
 static const char e_missing_sb[] = N_("E69: Missing ] after %s%%[");
@@ -633,6 +634,9 @@ static int nextchr;             // used for ungetchr()
 #define REG_PAREN       1       // \(\)
 #define REG_ZPAREN      2       // \z(\)
 #define REG_NPAREN      3       // \%(\)
+
+// Limit recursive parsing of nested regexp atoms to avoid using up the C stack.
+#define REG_MAX_PAREN_DEPTH     1000
 
 typedef struct {
   char *regparse;
@@ -2891,6 +2895,7 @@ static int num_complex_braces;  ///< Complex \{...} count
 static uint8_t *regcode;         ///< Code-emit pointer, or JUST_CALC_SIZE
 static int64_t regsize;            ///< Code size.
 static int reg_toolong;         ///< true when offset out of range
+static int bt_reg_parse_depth;     ///< nesting depth in reg()
 static uint8_t had_endbrace[NSUBEXP];  ///< flags, true if end of () found
 static int64_t brace_min[10];        ///< Minimums for complex brace repeats
 static int64_t brace_max[10];        ///< Maximums for complex brace repeats
@@ -3029,6 +3034,7 @@ static void regcomp_start(uint8_t *expr, int re_flags)                        //
   re_has_z = 0;
   regsize = 0L;
   reg_toolong = false;
+  bt_reg_parse_depth = 0;
   regflags = 0;
   had_eol = false;
 }
@@ -5344,10 +5350,16 @@ static uint8_t *reg(int paren, int *flagp)
     ret = NULL;
   }
 
+  if (bt_reg_parse_depth >= REG_MAX_PAREN_DEPTH) {
+    EMSG_RET_NULL(_(e_command_too_complex));
+  }
+  bt_reg_parse_depth++;
+
   // Pick up the branches, linking them together.
   br = regbranch(&flags);
   if (br == NULL) {
-    return NULL;
+    ret = NULL;
+    goto theend;
   }
   if (ret != NULL) {
     regtail(ret, br);           // [MZ]OPEN -> first.
@@ -5365,7 +5377,8 @@ static uint8_t *reg(int paren, int *flagp)
     skipchr();
     br = regbranch(&flags);
     if (br == NULL || reg_toolong) {
-      return NULL;
+      ret = NULL;
+      goto theend;
     }
     regtail(ret, br);           // BRANCH -> BRANCH.
     if (!(flags & HASWIDTH)) {
@@ -5388,25 +5401,42 @@ static uint8_t *reg(int paren, int *flagp)
   // Check for proper termination.
   if (paren != REG_NOPAREN && getchr() != Magic(')')) {
     if (paren == REG_ZPAREN) {
-      EMSG_RET_NULL(_("E52: Unmatched \\z("));
+      emsg(_(e_unmatched_z));
+      rc_did_emsg = true;
+      ret = NULL;
+      goto theend;
     } else if (paren == REG_NPAREN) {
-      EMSG2_RET_NULL(_(e_unmatchedpp), reg_magic == MAGIC_ALL);
+      semsg(_(e_unmatched_str_percent_open), reg_magic == MAGIC_ALL ? "" : "\\");
+      rc_did_emsg = true;
+      ret = NULL;
+      goto theend;
     } else {
-      EMSG2_RET_NULL(_(e_unmatchedp), reg_magic == MAGIC_ALL);
+      semsg(_(e_unmatched_str_open), reg_magic == MAGIC_ALL ? "" : "\\");
+      rc_did_emsg = true;
+      ret = NULL;
+      goto theend;
     }
   } else if (paren == REG_NOPAREN && peekchr() != NUL) {
     if (curchr == Magic(')')) {
-      EMSG2_RET_NULL(_(e_unmatchedpar), reg_magic == MAGIC_ALL);
+      semsg(_(e_unmatched_str_close), reg_magic == MAGIC_ALL ? "" : "\\");
+      rc_did_emsg = true;
+      ret = NULL;
+      goto theend;
     } else {
-      EMSG_RET_NULL(_(e_trailing));             // "Can't happen".
+      emsg(_(e_trailing));     // "Can't happen".
+      rc_did_emsg = true;
+      ret = NULL;
+      goto theend;
     }
-    // NOTREACHED
   }
   // Here we set the flag allowing back references to this set of
   // parentheses.
   if (paren == REG_PAREN) {
     had_endbrace[parno] = true;  // have seen the close paren
   }
+
+theend:
+  bt_reg_parse_depth--;
   return ret;
 }
 
@@ -8538,6 +8568,7 @@ static int nfa_re_flags;  ///< re_flags passed to nfa_regcomp().
 static int *post_start;   ///< holds the postfix form of r.e.
 static int *post_end;
 static int *post_ptr;
+static int nfa_reg_parse_depth;  // nesting depth in nfa_reg()
 
 // Set when the pattern should use the NFA engine.
 // E.g. [[:upper:]] only allows 8bit characters for BT engine,
@@ -8588,6 +8619,7 @@ static void nfa_regcomp_start(uint8_t *expr, int re_flags)
   wants_nfa = false;
   rex.nfa_has_zend = false;
   rex.nfa_has_backref = false;
+  nfa_reg_parse_depth = 0;
 
   // shared with BT engine
   regcomp_start(expr, re_flags);
@@ -11126,6 +11158,7 @@ static int nfa_regbranch(void)
 static int nfa_reg(int paren)
 {
   int parno = 0;
+  int status = FAIL;
 
   if (paren == REG_PAREN) {
     if (regnpar >= NSUBEXP) {   // Too many `('
@@ -11140,13 +11173,18 @@ static int nfa_reg(int paren)
     parno = regnzpar++;
   }
 
+  if (nfa_reg_parse_depth >= REG_MAX_PAREN_DEPTH) {
+    EMSG_RET_FAIL(_(e_command_too_complex));
+  }
+  nfa_reg_parse_depth++;
+
   if (nfa_regbranch() == FAIL) {
-    return FAIL;            // cascaded error
+    goto theend;            // cascaded error
   }
   while (peekchr() == Magic('|')) {
     skipchr();
     if (nfa_regbranch() == FAIL) {
-      return FAIL;          // cascaded error
+      goto theend;          // cascaded error
     }
     EMIT(NFA_OR);
   }
@@ -11154,16 +11192,20 @@ static int nfa_reg(int paren)
   // Check for proper termination.
   if (paren != REG_NOPAREN && getchr() != Magic(')')) {
     if (paren == REG_NPAREN) {
-      EMSG2_RET_FAIL(_(e_unmatchedpp), reg_magic == MAGIC_ALL);
+      semsg(_(e_unmatched_str_percent_open), reg_magic == MAGIC_ALL ? "" : "\\");
     } else {
-      EMSG2_RET_FAIL(_(e_unmatchedp), reg_magic == MAGIC_ALL);
+      semsg(_(e_unmatched_str_open), reg_magic == MAGIC_ALL ? "" : "\\");
     }
+    rc_did_emsg = true;
+    goto theend;
   } else if (paren == REG_NOPAREN && peekchr() != NUL) {
     if (peekchr() == Magic(')')) {
-      EMSG2_RET_FAIL(_(e_unmatchedpar), reg_magic == MAGIC_ALL);
+      semsg(_(e_unmatched_str_close), reg_magic == MAGIC_ALL ? "" : "\\");
     } else {
-      EMSG_RET_FAIL(_("E873: (NFA regexp) proper termination error"));
+      emsg(_("E873: (NFA regexp) proper termination error"));
     }
+    rc_did_emsg = true;
+    goto theend;
   }
   // Here we set the flag allowing back references to this set of
   // parentheses.
@@ -11174,7 +11216,11 @@ static int nfa_reg(int paren)
     EMIT(NFA_ZOPEN + parno);
   }
 
-  return OK;
+  status = OK;
+
+theend:
+  nfa_reg_parse_depth--;
+  return status;
 }
 
 #ifdef REGEXP_DEBUG
