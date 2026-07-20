@@ -1081,6 +1081,7 @@ void nvim_set_decoration_provider(Integer ns_id, Dict(set_decoration_provider) *
     { "_on_hl_def", &opts->_on_hl_def, &p->hl_def },
     { "_on_spell_nav", &opts->_on_spell_nav, &p->spell_nav },
     { "_on_conceal_line", &opts->_on_conceal_line, &p->conceal_line },
+    { "_on_conceal", &opts->_on_conceal, &p->conceal },
     { NULL, NULL, NULL },
   };
 

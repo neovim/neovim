@@ -12,6 +12,7 @@
 #include "nvim/charset.h"
 #include "nvim/decoration.h"
 #include "nvim/decoration_defs.h"
+#include "nvim/decoration_provider.h"
 #include "nvim/diff.h"
 #include "nvim/drawscreen.h"
 #include "nvim/fold.h"
@@ -112,11 +113,13 @@ CSType init_charsize_arg(CharsizeArg *csarg, win_T *wp, linenr_T lnum, char *lin
     }
   }
 
-  // A line whose cells may be hidden by persistent conceal must use the regular path so that
+  // A line whose cells may be hidden by conceal must use the regular path so that
   // linesize_regular() can compute the conceal-aware screen-layout width. The cursor line reveals
-  // conceal unless 'concealcursor' applies.
+  // conceal unless 'concealcursor' applies. Conceal may come from the marktree or be materialised
+  // on demand by an `_on_conceal` decoration provider (see decor_conceal_materialise()).
   csarg->maybe_conceal = csarg->row >= 0 && wp->w_p_cole > 0
-                         && wp->w_buffer->b_marktree->n_keys > 0
+                         && (wp->w_buffer->b_marktree->n_keys > 0
+                             || decor_has_conceal_providers())
                          && !(wp == curwin && lnum == wp->w_cursor.lnum
                               && !conceal_cursor_line(wp));
 
@@ -454,6 +457,9 @@ static bool linesize_conceal_start(CharsizeArg *csarg, DecorState *state)
   if (!csarg->maybe_conceal) {
     return false;
   }
+  // Let `_on_conceal` providers materialise this row's conceal into the marktree first, so the scan
+  // below sees provider (e.g. tree-sitter) conceal the same way as non-provider conceal.
+  decor_conceal_materialise(csarg->win, csarg->row);
   *state = (DecorState){ 0 };
   if (decor_redraw_reset(csarg->win, state) == 0) {
     return false;
