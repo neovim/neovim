@@ -704,17 +704,28 @@ local function ts_node_to_html(root, level, lang_tree, headings, opt, stats)
 
     if not prev_li then
       opt.indent = 1
+      -- Track the leading whitespace for each indent level so that we can dedent
+      -- to the correct level later.
+      opt.indent_ws = { ws() }
     else
+      opt.indent_ws = opt.indent_ws or { ws() }
       local sib_ws = ws(sib)
       local this_ws = ws()
       if get_indent(node_text()) == 0 then
         opt.indent = 1
+        opt.indent_ws = { this_ws }
       elseif this_ws > sib_ws then
         -- Previous sibling is logically the _parent_ if it is indented less.
         opt.indent = opt.indent + 1
+        opt.indent_ws[opt.indent] = this_ws
       elseif this_ws < sib_ws then
-        -- TODO(justinmk): This is buggy. Need to track exact whitespace length for each level.
-        opt.indent = math.max(1, opt.indent - 1)
+        -- Dedent: pop indent levels whose tracked whitespace is deeper than the
+        -- current item, so we return to the correct ancestor level.
+        while opt.indent > 1 and (opt.indent_ws[opt.indent] or '') > this_ws do
+          opt.indent_ws[opt.indent] = nil
+          opt.indent = opt.indent - 1
+        end
+        opt.indent_ws[opt.indent] = this_ws
       end
     end
     local margin = opt.indent == 1 and '' or ('margin-left: %drem;'):format((1.5 * opt.indent))
