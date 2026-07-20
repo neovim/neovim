@@ -1,6 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local it, finally = t.it, t.finally
 local clear = n.clear
 local exec = n.exec
 local command = n.command

@@ -1,5 +1,6 @@
 local t = require('test.testutil')
 
+local describe, it = t.describe, t.it
 describe('vim.trim()', function()
   local strings = {
     ['10000 whitespace characters'] = string.rep(' ', 10000),

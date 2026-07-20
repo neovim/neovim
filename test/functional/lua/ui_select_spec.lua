@@ -1,6 +1,7 @@
 -- Tests for vim.ui.select(), including integration with builtins (:tselect, z=).
 
 local t = require('test.testutil')
+local describe, it, before_each, finally = t.describe, t.it, t.before_each, t.finally
 local retry = t.retry
 local n = require('test.functional.testnvim')()
 local clear = n.clear

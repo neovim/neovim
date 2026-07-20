@@ -1,6 +1,8 @@
 -- Black-box tests for the local Lua harness itself. These spawn a separate
 -- Nvim process instead of driving an embedded instance via testnvim.
 local t = require('test.testutil')
+local describe, it, before_each, after_each, setup, teardown, pending, finally =
+  t.describe, t.it, t.before_each, t.after_each, t.setup, t.teardown, t.pending, t.finally
 local uv = vim.uv
 
 local eq = t.eq

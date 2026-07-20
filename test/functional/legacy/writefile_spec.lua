@@ -1,7 +1,9 @@
 -- Tests for writefile()
 
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 
+local describe, it, setup = t.describe, t.it, t.setup
 local clear, command, expect = n.clear, n.command, n.expect
 
 describe('writefile', function()

@@ -1,6 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it = t.describe, t.it
 describe('clint.lua', function()
   local clint_path = 'src/clint.lua'
   local test_file = 'test/functional/fixtures/clint_test.c'

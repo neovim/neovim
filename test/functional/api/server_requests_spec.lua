@@ -3,6 +3,8 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, before_each, after_each, pending, finally =
+  t.describe, t.it, t.before_each, t.after_each, t.pending, t.finally
 local clear, eval = n.clear, n.eval
 local eq, neq, run, stop = t.eq, t.neq, n.run, n.stop
 local nvim_prog, command, fn = n.nvim_prog, n.command, n.fn

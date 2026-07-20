@@ -1,7 +1,9 @@
 -- Test for CTRL-W in Insert mode
 
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 
+local describe, it, setup = t.describe, t.it, t.setup
 local clear, feed, expect = n.clear, n.feed, n.expect
 
 describe('CTRL-W in Insert mode', function()

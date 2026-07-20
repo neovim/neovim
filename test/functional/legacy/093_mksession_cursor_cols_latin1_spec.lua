@@ -4,7 +4,9 @@
 -- Same as legacy test 92 but using Latin-1 file encoding.
 
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 
+local describe, it, setup, teardown = t.describe, t.it, t.setup, t.teardown
 local feed, insert = n.feed, n.insert
 local clear, feed_command, expect = n.clear, n.feed_command, n.expect
 

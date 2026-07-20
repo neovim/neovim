@@ -3,6 +3,7 @@ local n = require('test.functional.testnvim')()
 local t_lsp = require('test.functional.plugin.lsp.testutil')
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local dedent = t.dedent
 local exec_lua = n.exec_lua
 local insert = n.insert

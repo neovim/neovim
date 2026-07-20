@@ -4,6 +4,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear, eval, eq, ok = n.clear, n.eval, t.eq, t.ok
 local api, command, fn = n.api, n.command, n.fn
 local pcall_err, assert_alive = t.pcall_err, n.assert_alive

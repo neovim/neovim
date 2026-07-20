@@ -2,6 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it = t.describe, t.it
 local clear = n.clear
 local command = n.command
 local exec = n.exec

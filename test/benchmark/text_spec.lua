@@ -1,5 +1,6 @@
 local t = require('test.testutil')
 
+local describe, it = t.describe, t.it
 describe('vim.text', function()
   local input, output = string.rep('😂', 2 ^ 16), string.rep('F09F9882', 2 ^ 16)
 

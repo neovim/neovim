@@ -1,6 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local t_lsp = require('test.functional.plugin.lsp.testutil')
+local describe, it, before_each = t.describe, t.it, t.before_each
 local retry = t.retry
 
 local eq = t.eq

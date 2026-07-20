@@ -2,7 +2,9 @@ local bit = require('bit')
 local t = require('test.unit.testutil')
 local t_eval = require('test.unit.eval.testutil')
 
-local itp = t.gen_itp(it)
+local describe, before_each, after_each, pending =
+  t.describe, t.before_each, t.after_each, t.pending
+local itp = t.gen_itp(t.it)
 
 local OK = t.OK
 local eq = t.eq

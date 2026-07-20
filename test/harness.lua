@@ -5,7 +5,7 @@
 ---| 'failure'
 ---| 'error'
 
---- Hook phases supported by the chunk environment.
+--- Hook phases supported by the test framework.
 --- @alias test.harness.HookKind
 ---| 'setup'
 ---| 'teardown'
@@ -132,6 +132,7 @@ local uv = vim.uv
 --- Public test harness module surface.
 --- @class test.harness
 --- @field is_ci fun(name?: 'github'): boolean
+--- @field is_defining fun(): boolean
 --- @field on_suite_end fun(callback: fun()): fun()
 --- @field read_nvim_log fun(logfile?: string, ci_rename?: boolean): string?
 local M = {}
@@ -386,6 +387,13 @@ local function current_suite()
   return state.current_define_suite
 end
 
+--- Whether a test file/suite is currently being defined (vs. executing, or neither: e.g. when this
+--- module is loaded from a preload/helper). Lets callers register hooks at a valid stage.
+--- @return boolean
+function M.is_defining()
+  return state.current_define_suite ~= nil
+end
+
 --- Add a test node to the current suite.
 --- @param name string
 --- @param fn? fun()
@@ -410,7 +418,7 @@ local function register_test(name, fn, pending_message)
   return test
 end
 
---- Build a hook registrar exposed in the test chunk environment.
+--- Build a hook registrar exposed in the test framework.
 --- @param kind test.harness.HookKind
 --- @return fun(fn: fun())
 local function chunk_hook(kind)
@@ -423,21 +431,18 @@ local function chunk_hook(kind)
   end
 end
 
--- Chunk environment
-local chunk_env = {
-  _G = _G,
-  assert = test_assert,
-  setup = chunk_hook('setup'),
-  teardown = chunk_hook('teardown'),
-  before_each = chunk_hook('before_each'),
-  after_each = chunk_hook('after_each'),
-}
+-- Busted-style test API.
+-- Specs import it explicitly (`local describe, it = require('test.testutil').describe, …`).
+M.setup = chunk_hook('setup')
+M.teardown = chunk_hook('teardown')
+M.before_each = chunk_hook('before_each')
+M.after_each = chunk_hook('after_each')
 
---- Define a nested suite in the chunk environment.
+--- Define a nested suite.
 --- @param name string
 --- @param fn fun()
 --- @return test.harness.Suite
-function chunk_env.describe(name, fn)
+function M.describe(name, fn)
   assert(type(name) == 'string', 'describe() expects a string')
   assert(type(fn) == 'function', 'describe() expects a function body')
 
@@ -457,11 +462,11 @@ function chunk_env.describe(name, fn)
   return suite
 end
 
---- Define a test in the chunk environment.
+--- Define a test.
 --- @param name string
 --- @param fn? fun()
 --- @return test.harness.Test
-function chunk_env.it(name, fn)
+function M.it(name, fn)
   return register_test(name, fn, nil)
 end
 
@@ -475,7 +480,7 @@ end
 --- @param name? string
 --- @param block? fun()|string
 --- @return boolean
-function chunk_env.pending(name, block)
+function M.pending(name, block)
   if state.current_execution then
     error({
       __harness_pending = true,
@@ -489,7 +494,7 @@ end
 
 --- Register a finalizer to run after the current test body.
 --- @param fn fun()
-function chunk_env.finally(fn)
+function M.finally(fn)
   assert(type(fn) == 'function', 'finally() expects a function')
   assert(
     state.current_execution and state.current_execution.scope == 'test',
@@ -1401,17 +1406,14 @@ local function parse_args(argv)
   return opts
 end
 
---- Load a Lua chunk and bind it to a shallow copy of the given environment.
+--- Load a Lua chunk.
+---
+--- Note: Tests run in the real global environment and import the "framework" explicitly
+--- (`testutil.it()`, …), so we no longer inject it into the spec environment via `setfenv`.
 --- @param path string
---- @param env table<any, any>
 --- @return function?, string?
-local function load_chunk(path, env)
-  local chunk, err = loadfile(path)
-  if not chunk then
-    return nil, err
-  end
-
-  return setfenv(chunk, setmetatable(vim._copy(env), { __index = _G }))
+local function load_chunk(path)
+  return loadfile(path)
 end
 
 --- Load a helper file before the test baseline is captured.
@@ -1421,10 +1423,7 @@ end
 --- @return boolean?, string?
 local function load_helper(path)
   local helper_path = normalize_path(path)
-  local chunk, err = load_chunk(helper_path, {
-    _G = _G,
-    assert = test_assert,
-  })
+  local chunk, err = load_chunk(helper_path)
   if not chunk then
     return nil, err
   end
@@ -1448,7 +1447,7 @@ local function evaluate_test_file(file, root_suite)
   table.insert(root_suite.children, file_suite)
 
   state.current_define_suite = file_suite
-  local chunk, load_err = load_chunk(file.path, chunk_env)
+  local chunk, load_err = load_chunk(file.path)
   if not chunk then
     state.current_define_suite = nil
     return file_suite,

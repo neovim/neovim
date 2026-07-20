@@ -1167,22 +1167,13 @@ local testid = (function()
 end)()
 
 return function()
-  local g = getfenv(2)
-
-  --- @type function?
-  local before_each = g.before_each
-  --- @type function?
-  local after_each = g.after_each
-
-  if before_each then
-    before_each(function()
+  if harness.is_defining() then
+    harness.before_each(function()
       local id = ('T%d'):format(testid())
       _G._nvim_test_id = id
     end)
-  end
 
-  if after_each then
-    after_each(function()
+    harness.after_each(function()
       close_extra_sessions(_G._nvim_test_id, true)
       if not vim.endswith(_G._nvim_test_id, 'x') then
         -- Use a different test ID for skipped tests as well as Nvim instances spawned

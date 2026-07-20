@@ -3,6 +3,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each, setup = t.describe, t.it, t.before_each, t.setup
 local command, clear = n.command, n.clear
 local source, expect = n.source, n.expect
 local matches = t.matches

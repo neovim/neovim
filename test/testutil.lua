@@ -8,6 +8,16 @@ local Paths = require('test.cmakeconfig.paths')
 --- @class test.testutil
 local M = {
   paths = Paths,
+
+  -- Test framework:
+  after_each = harness.after_each,
+  before_each = harness.before_each,
+  describe = harness.describe,
+  finally = harness.finally,
+  it = harness.it,
+  pending = harness.pending,
+  setup = harness.setup,
+  teardown = harness.teardown,
 }
 
 --- @param path string
@@ -869,9 +879,7 @@ end
 --- @return boolean
 function M.skip(cond, reason)
   if cond then
-    --- @type fun(reason: string)
-    local pending = getfenv(2).pending
-    pending(reason or 'FIXME')
+    M.pending(reason or 'FIXME')
     return true
   end
   return false

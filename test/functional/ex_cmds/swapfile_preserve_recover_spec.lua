@@ -3,6 +3,8 @@ local n = require('test.functional.testnvim')()
 local tt = require('test.functional.testterm')
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each, after_each, finally =
+  t.describe, t.it, t.before_each, t.after_each, t.finally
 local uv = vim.uv
 local eq, eval, expect, exec = t.eq, n.eval, n.expect, n.exec
 local assert_alive = n.assert_alive

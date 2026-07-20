@@ -8,6 +8,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it = t.describe, t.it
 describe('default', function()
   describe('autocommands', function()
     it('nvim.terminal.TermClose closes terminal with default shell on success', function()

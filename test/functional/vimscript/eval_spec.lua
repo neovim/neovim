@@ -13,6 +13,8 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each, setup, teardown, pending, finally =
+  t.describe, t.it, t.before_each, t.setup, t.teardown, t.pending, t.finally
 local mkdir = t.mkdir
 local pcall_err = t.pcall_err
 local clear = n.clear

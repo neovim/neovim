@@ -1,5 +1,6 @@
 local n = require('test.functional.testnvim')()
 local t = require('test.testutil')
+local describe, it = t.describe, t.it
 local clear = n.clear
 local api = n.api
 local fn = n.fn

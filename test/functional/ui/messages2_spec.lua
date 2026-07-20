@@ -4,6 +4,8 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each, after_each, finally =
+  t.describe, t.it, t.before_each, t.after_each, t.finally
 local api, clear, command, exec_lua, feed = n.api, n.clear, n.command, n.exec_lua, n.feed
 
 local msg_timeout = 400
@@ -450,7 +452,7 @@ describe('messages2', function()
 
   it('showmode does not overwrite Visual word count #40824', function()
     if t.is_os('win') then
-      pending('FIXME #40843')
+      t.pending('FIXME #40843')
     end
     api.nvim_buf_set_lines(0, 0, -1, true, { 'one two', 'three four' })
     feed('Vj')

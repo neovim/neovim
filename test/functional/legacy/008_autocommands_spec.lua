@@ -4,6 +4,8 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, before_each, setup, teardown =
+  t.describe, t.it, t.before_each, t.setup, t.teardown
 local source = n.source
 local clear, command, expect, eq, eval = n.clear, n.command, n.expect, t.eq, n.eval
 local write_file, dedent = t.write_file, t.dedent

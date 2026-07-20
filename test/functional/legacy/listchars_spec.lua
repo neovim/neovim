@@ -1,8 +1,10 @@
 -- Tests for 'listchars' display with 'list' and :list.
 
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local feed, insert, exec = n.feed, n.insert, n.exec
 local clear, feed_command, expect = n.clear, n.feed_command, n.expect
 

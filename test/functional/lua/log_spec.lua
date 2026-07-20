@@ -1,6 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local assert_log = t.assert_log
 local assert_nolog = t.assert_nolog
 local clear = n.clear

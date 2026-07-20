@@ -1,7 +1,9 @@
 -- Tests for complicated + argument to :edit command
 
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 
+local describe, it, setup, teardown = t.describe, t.it, t.setup, t.teardown
 local clear, insert = n.clear, n.insert
 local command, expect = n.command, n.expect
 local poke_eventloop = n.poke_eventloop

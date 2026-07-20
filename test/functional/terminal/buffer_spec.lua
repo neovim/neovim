@@ -3,6 +3,7 @@ local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 local tt = require('test.functional.testterm')
 
+local describe, it, before_each, finally = t.describe, t.it, t.before_each, t.finally
 local assert_alive = n.assert_alive
 local feed, clear = n.feed, n.clear
 local poke_eventloop = n.poke_eventloop
