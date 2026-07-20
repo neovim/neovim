@@ -255,7 +255,7 @@ describe('env.c', function()
     eq(OK, os_unsetenv(name))
     neq(value, os_getenv(name))
     -- Depending on the platform the var might be unset or set as ''
-    assert.True(os_getenv(name) == nil or os_getenv(name) == '')
+    t.ok(os_getenv(name) == nil or os_getenv(name) == '')
     if os_getenv(name) == nil then
       eq(false, os_env_exists(name, false))
     end
@@ -373,8 +373,8 @@ describe('env.c', function()
       local dst = cstr(256, '~' .. curuser)
       cimp.expand_env_esc(src, dst, 256, NULL, false, NULL)
       local len = string.len(ffi.string(dst))
-      assert.True(len > 56)
-      assert.True(len < 256)
+      t.ok(len > 56)
+      t.ok(len < 256)
     end)
 
     itp('respects `dstlen` without expansion', function()
