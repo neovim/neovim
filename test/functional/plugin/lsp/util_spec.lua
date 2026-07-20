@@ -1159,7 +1159,7 @@ describe('vim.lsp.util', function()
       local r = exec_lua(function()
         local hover_data = {
           kind = 'markdown',
-          value = '```lua\nfunction vim.api.nvim_buf_attach(buffer: integer, send_buffer: boolean, opts: vim.api.keyset.buf_attach)\n  -> boolean\n```\n\n---\n\n Activates buffer-update events. Example:\n\n\n\n ```lua\n events = {}\n vim.api.nvim_buf_attach(0, false, {\n   on_lines = function(...)\n     table.insert(events, {...})\n   end,\n })\n ```\n\n\n @see `nvim_buf_detach()`\n @see `api-buffer-updates-lua`\n@*param* `buffer` — Buffer handle, or 0 for current buffer\n\n\n\n@*param* `send_buffer` — True if whole buffer.\n Else the first notification will be `nvim_buf_changedtick_event`.\n\n\n@*param* `opts` — Optional parameters.\n\n - on_lines: Lua callback. Args:\n   - the string "lines"\n   - buffer handle\n   - b:changedtick\n@*return* — False if foo;\n\n otherwise True.\n\n@see foo\n@see bar\n\n',
+          value = '```lua\nfunction vim.api.nvim_buf_attach(buffer: integer, send_buffer: boolean, opts: vim.api.keyset.buf_attach)\n  -> boolean\n```\n\n---\n\n Activates buffer-update events. Example:\n\n\n\n ```lua\n events = {}\n vim.api.nvim_buf_attach(0, false, {\n   on_lines = function(...)\n     table.insert(events, {...})\n   end,\n })\n ```\n\n\n @see `nvim_buf_detach()`\n @see `api-buffer-updates-lua`\n@*param* `buffer` — Buffer handle, or 0 for current buffer\n\n\n\n@*param* `send_buffer` — True if whole buffer.\n Else the first notification will be `nvim_buf_changedtick_event`.\n\n\n@*param* `opts` — Optional parameters.\n\n - on_lines: Lua callback. Args:\n   - the string "lines"\n   - buffer handle\n   - b:changedtick\n@*return* — False if foo;\n\n otherwise True.\n\n@see foo\n@see bar\n\nExample:\n\n    iex> params = %{title: "", topics: []}\n\n    iex> changeset.changes[:topics]\n',
         }
         return vim.lsp.util.convert_input_to_markdown_lines(hover_data)
       end)
@@ -1206,6 +1206,12 @@ describe('vim.lsp.util', function()
         ' otherwise True.',
         '@see foo',
         '@see bar',
+        -- Blank line preceding a 4-space-indented codeblock is required, per Markdown spec. #40860
+        'Example:',
+        '',
+        '    iex> params = %{title: "", topics: []}',
+        '',
+        '    iex> changeset.changes[:topics]',
       }
       eq(expected, r)
     end)
