@@ -1088,9 +1088,9 @@ static void grid_draw_bordertext(VirtText vt, int col, int winbl, const int *hl_
                                  int win_hl_attr_normal, BorderTextType bt, int overflow)
 {
   int default_attr = hl_attr[bt == kBorderTextTitle ? HLF_BTITLE : HLF_BFOOTER];
-  default_attr = hl_combine_attr(win_hl_attr_normal, default_attr);
 
   if (overflow > 0) {
+    default_attr = hl_combine_attr(win_hl_attr_normal, default_attr);
     grid_line_puts(1, "<", -1,  hl_apply_winblend(winbl, default_attr));
     col += 1;
     overflow += 1;
@@ -1122,6 +1122,7 @@ static void grid_draw_bordertext(VirtText vt, int col, int winbl, const int *hl_
       text = p;
     }
     attr = hl_apply_winblend(winbl, attr);
+    attr = hl_combine_attr(win_hl_attr_normal, attr);
     col += grid_line_puts(col, text, -1, attr);
   }
 }
