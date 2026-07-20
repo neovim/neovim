@@ -480,7 +480,6 @@ void win_redr_winbar(win_T *wp)
 void redraw_ruler(void)
 {
   static bool did_show_ruler = false;
-  static int did_ruler_col = -1;
   win_T *wp = !curwin->w_config.hide
               && curwin->w_status_height == 0 ? curwin : lastwin_nofloating(NULL);
   bool is_stl_global = global_stl_height() > 0;
@@ -491,15 +490,10 @@ void redraw_ruler(void)
     if (did_show_ext_ruler && ui_has(kUIMessages)) {
       ui_call_msg_ruler((Array)ARRAY_DICT_INIT);
       did_show_ext_ruler = false;
-    } else if (did_ruler_col > 0) {
-      msg_col = did_ruler_col;
-      msg_row = Rows - 1;
-    }
-    if (did_show_ruler && !ui_has(kUIMessages)) {
+    } else if (did_show_ruler && !ui_has(kUIMessages)) {
       msg_clr_eos();
     }
     did_show_ruler = false;
-    did_ruler_col = -1;
     return;
   }
 
@@ -515,99 +509,8 @@ void redraw_ruler(void)
     return;
   }
 
-  if (*p_ruf && (p_ch > 0 || ui_has(kUIMessages))) {
-    win_redr_stl_expr(wp, false, true, ui_has(kUIMessages));
-    did_show_ruler = !ui_has(kUIMessages);
-    return;
-  }
-
-  hlf_T group = HLF_MSG;
-  int off = wp->w_status_height ? wp->w_wincol : 0;
-  int width = wp->w_status_height ? wp->w_width : Columns;
-  schar_T fillchar = schar_from_ascii(' ');
-  int attr = HL_ATTR(group);
-
-  // In list mode virtcol needs to be recomputed
-  colnr_T virtcol = wp->w_virtcol;
-  if (wp->w_p_list && wp->w_p_lcs_chars.tab1 == NUL) {
-    wp->w_p_list = false;
-    getvvcol(wp, &wp->w_cursor, NULL, &virtcol, NULL, 0);
-    wp->w_p_list = true;
-  }
-
-  // Check if not in Insert mode and the line is empty (will show "0-1").
-  int empty_line = (State & MODE_INSERT) == 0
-                   && *ml_get_buf(wp->w_buffer, wp->w_cursor.lnum) == NUL;
-
-#define RULER_BUF_LEN 70
-  char buffer[RULER_BUF_LEN];
-
-  // row number, column number is appended
-  // l10n: leave as-is unless a space after the comma is preferred
-  // l10n: do not add any row/column label, due to the limited space
-  int bufferlen = vim_snprintf(buffer, RULER_BUF_LEN, _("%" PRId64 ","),
-                               (wp->w_buffer->b_ml.ml_flags & ML_EMPTY)
-                               ? 0
-                               : (int64_t)wp->w_cursor.lnum);
-  bufferlen += col_print(buffer + bufferlen, RULER_BUF_LEN - (size_t)bufferlen,
-                         empty_line ? 0 : (int)wp->w_cursor.col + 1,
-                         (int)virtcol + 1);
-
-  // Add a "50%" if there is room for it.
-  char rel_pos[RULER_BUF_LEN];
-  int rel_poslen = get_rel_pos(wp, rel_pos, RULER_BUF_LEN);
-  int n1 = bufferlen + vim_strsize(rel_pos);
-
-  int this_ru_col = ru_col - (Columns - width);
-  // Never use more than half the window/screen width, leave the other half
-  // for the filename.
-  int n2 = (width + 1) / 2;
-  this_ru_col = MAX(this_ru_col, n2);
-  if (this_ru_col + n1 < width) {
-    // need at least space for rel_pos + NUL
-    while (this_ru_col + n1 < width
-           && RULER_BUF_LEN > bufferlen + rel_poslen + 1) {  // +1 for NUL
-      bufferlen += (int)schar_get(buffer + bufferlen, fillchar);
-      n1++;
-    }
-    bufferlen += vim_snprintf(buffer + bufferlen, RULER_BUF_LEN - (size_t)bufferlen,
-                              "%s", rel_pos);
-  }
-  (void)bufferlen;
-
-  if (ui_has(kUIMessages)) {
-    MAXSIZE_TEMP_ARRAY(content, 1);
-    MAXSIZE_TEMP_ARRAY(chunk, 3);
-    ADD_C(chunk, INTEGER_OBJ(attr));
-    ADD_C(chunk, CSTR_AS_OBJ(buffer));
-    ADD_C(chunk, INTEGER_OBJ(HLF_MSG));
-    assert(attr == HL_ATTR(HLF_MSG));
-    ADD_C(content, ARRAY_OBJ(chunk));
-    ui_call_msg_ruler(content);
-    did_show_ext_ruler = true;
-    did_ruler_col = 1;
-  } else {
-    if (did_show_ext_ruler) {
-      ui_call_msg_ruler((Array)ARRAY_DICT_INIT);
-      did_show_ext_ruler = false;
-    }
-    // Truncate at window boundary.
-    for (n1 = 0, n2 = 0; buffer[n1] != NUL; n1 += utfc_ptr2len(buffer + n1)) {
-      n2 += utf_ptr2cells(buffer + n1);
-      if (this_ru_col + n2 > width) {
-        bufferlen = n1;
-        buffer[bufferlen] = NUL;
-        break;
-      }
-    }
-
-    grid_line_start(&msg_grid_adj, Rows - 1);
-    did_show_ruler = true;
-    did_ruler_col = off + this_ru_col;
-    int w = grid_line_puts(did_ruler_col, buffer, -1, attr);
-    grid_line_fill(did_ruler_col + w, off + width, fillchar, attr);
-    grid_line_flush();
-  }
+  win_redr_stl_expr(wp, false, true, ui_has(kUIMessages));
+  did_show_ruler = !ui_has(kUIMessages);
 }
 
 /// Get the character to use in a status line.  Get its attributes in "*attr".

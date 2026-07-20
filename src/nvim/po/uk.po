@@ -5477,10 +5477,6 @@ msgstr "Замінити «%.*s» на:"
 msgid " < \"%.*s\""
 msgstr " < «%.*s»"
 
-#, c-format
-msgid "%<PRId64>,"
-msgstr "%<PRId64>, "
-
 msgid "[Help]"
 msgstr "[Допомога]"
 

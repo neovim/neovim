@@ -154,6 +154,8 @@ OPTIONS
   To restore the previous truncation from the left, add a `%<` to the start.
   The same applies to 'rulerformat', 'statuscolumn', 'tabline', 'winbar',
   'titlestring', and 'iconstring'.
+• 'rulerformat' can no longer be set empty, the new default expression will be
+  restored instead.
 
 PLUGINS
 
@@ -229,7 +231,8 @@ BUILD
 
 DEFAULTS
 
-• todo
+• 'rulerformat' default is exposed as a statusline expression (previously it
+  was implemented as an internal C routine).
 
 DIAGNOSTICS
 

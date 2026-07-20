@@ -936,7 +936,7 @@ describe('ui/ext_messages', function()
   end)
 
   it("supports 'showcmd' and 'ruler(format)'", function()
-    command('set showcmd ruler')
+    command('set showcmd ruler rulerformat=%12(%l,%c%V%=%P%)')
     command('hi link MsgArea ErrorMsg')
     screen:expect({
       grid = [[

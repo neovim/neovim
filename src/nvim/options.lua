@@ -7272,28 +7272,31 @@ local options = {
       abbreviation = 'ru',
       defaults = true,
       desc = [=[
-        Show the line and column number of the cursor position, separated by a
-        comma.  When there is room, the relative position of the displayed
-        text in the file is shown on the far right:
-        	Top	first line is visible
-        	Bot	last line is visible
-        	All	first and last line are visible
-        	45%	relative position in the file
-        If 'rulerformat' is set, it will determine the contents of the ruler.
-        Each window has its own ruler.  If a window has a status line, the
-        ruler is shown there.  If a window doesn't have a status line and
-        'cmdheight' is zero, the ruler is not shown.  Otherwise it is shown in
-        the last line of the screen.  If the statusline is given by
-        'statusline' (i.e. not empty), this option takes precedence over
-        'ruler' and 'rulerformat'.
+        When on, show some buffer information in the ruler.  Each window has
+        its own ruler.  The ruler of the active window is shown in the last
+        line of the screen, unless 'cmdheight' is zero, or the window has a
+        status line, which (by default) contains the window's ruler.
+
+        'rulerformat' determines the contents of the ruler.
+        By default, the line and column number of the current cursor position
+        are shown, separated by a comma.
         If the number of characters displayed is different from the number of
         bytes in the text (e.g., for a TAB or a multibyte character), both
         the text column (byte number) and the screen column are shown,
         separated with a dash.
         For an empty line "0-1" is shown.
         For an empty buffer the line number will also be zero: "0,0-1".
+        Finally, the relative position of the displayed text in the file is
+        shown on the far right:
+        	Top	first line is visible
+        	Bot	last line is visible
+        	All	first and last line are visible
+        	45%	relative position in the file
+
         If you don't want to see the ruler all the time but want to know where
         you are, use "g CTRL-G" |g_CTRL-G|.
+        When 'ruler' is on, the output of |CTRL-G| doen't contain the current
+        line number of the cursor position.
       ]=],
       full_name = 'ruler',
       redraw = { 'statuslines' },
@@ -7305,19 +7308,18 @@ local options = {
     {
       abbreviation = 'ruf',
       cb = 'did_set_rulerformat',
-      defaults = '',
+      defaults = '%18(%l,%c%V%= %P%)%<',
       desc = [=[
-        When this option is not empty, it determines the content of the ruler
-        string, as displayed for the 'ruler' option.
+        This option determines the content of the ruler string, as displayed
+        for the 'ruler' option.
         The format of this option is like that of 'statusline'.
+        Setting to empty (`:set rulerformat=`) sets the value to the default.
         This option cannot be set in a modeline when 'modelineexpr' is off.
 
-        The default ruler width is 18 characters.  To make the ruler 15
-        characters wide, put "%15(" at the start and "%)" at the end.
-        Example: >vim
-        	set rulerformat=%15(%c%V\ %p%%%)
-        <
-        This looks like an item group, but there are some differences in this
+        When 'ruler' is on, the default 'statusline' includes 'rulerformat'.
+
+        The default ruler width is 18 characters, which is configured with
+        what looks like an item group.  But there are some differences in this
         particular case.  Most notably, the width is fixed and not a minimum,
         and the ruler is left-aligned, whereas the alignment of item groups is
         configurable and right-aligned by default.
@@ -9086,7 +9088,7 @@ local options = {
       cb = 'did_set_statusline',
       defaults = {
         if_true = table.concat({
-          '%<',
+          '%<', -- guards the default truncation from the left against a %< injected via rulerformat
           '%f %h%w%m%r ',
           "%{% v:lua.require('vim._core.util').term_exitcode() %}",
           '%=',
@@ -9095,7 +9097,7 @@ local options = {
           "%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}",
           "%{% &busy > 0 ? '◐ ' : '' %}",
           "%{% luaeval('(package.loaded[''vim.diagnostic''] and next(vim.diagnostic.count()) and vim.diagnostic.status() .. '' '') or '''' ') %}",
-          "%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}",
+          "%{% &ruler ? &rulerformat : '' %}",
         }),
         doc = 'is very long',
       },
@@ -9126,8 +9128,11 @@ local options = {
         would loop.  When the result contains unprintable characters the
         result is unpredictable.
 
-        Note that the only effect of 'ruler' when this option is set (and
-        'laststatus' is 2 or 3) is controlling the output of |CTRL-G|.
+        When 'ruler' is on, the default 'statusline' includes 'rulerformat'.
+        See note below.
+        Note that if 'statusline' is configured without including the ruler,
+        the only effect of 'ruler' when this option is set (and 'laststatus'
+        is 2 or 3) is controlling the output of |CTRL-G|.
 
         field	    meaning ~
         -	    Left justify the item.  The default is right justified
@@ -9144,10 +9149,10 @@ local options = {
 
         Following is a description of the possible statusline items.  The
         second character in "item" is the type:
-        	N for number
-        	S for string
-        	F for flags as described below
-        	- not applicable
+        	"N" for number
+        	"S" for string
+        	"F" for flags as described below
+        	"-" not applicable
 
         item  meaning ~
         f S   Path to the file in the buffer, as typed or relative to current
@@ -9201,6 +9206,8 @@ local options = {
         	endfunc
         <	        `stl=%{Stl_filename()}`   results in `"%t"`
                 `stl=%{%Stl_filename()%}` results in `"Name of current file"`
+              The default status line uses this to include 'rulerformat', see
+              note below.
         %} -  End of "{%" expression
         ( -   Start of item group.  Can be used for setting the width and
               alignment of a section.  Must be followed by %) somewhere.
@@ -9237,11 +9244,13 @@ local options = {
                  is a bug that denotes that new mouse button recognition was
                  added without modifying code that reacts on mouse clicks on
                  this label.
+
               Use |getmousepos()|.winid in the specified function to get the
               corresponding |window-ID| of the clicked item.
         \< -   Where to truncate line if too long.  Default is at the first
               item.  Truncation markers within item groups apply to the
               truncation of that group until its maxwid is reached.
+              In case of several competing truncation markers, the first wins.
               No width fields allowed.
         = -   Separation point between alignment sections.  Each section will
               be separated by an equal number of spaces.  With one %= what
@@ -9304,12 +9313,12 @@ local options = {
         edit your vimrc or whatever with "vim --clean" to get it right.
 
         Examples:
-        Emulate standard status line with 'ruler' set >vim
-          set statusline=%<%f\ %h%w%m%r%=%-14.(%l,%c%V%)\ %P
+        A simple version of the standard status line with 'ruler' set >vim
+          set statusline=%f\ %h%w%m%r%=\ %-14.(%l,%c%V%)\ %P
         <	Similar, but add ASCII value of char under the cursor (like "ga") >vim
-          set statusline=%<%f%h%m%r%=%b\ 0x%B\ \ %l,%c%V\ %P
+          set statusline=%f%h%m%r%=\ %b\ 0x%B\ \ %l,%c%V\ %P
         <	Display byte count and byte value, modified flag in red. >vim
-          set statusline=%<%f%=\ [%1*%M%*%n%R%H]\ %-19(%3l,%02c%03V%)%O'%02b'
+          set statusline=%f%=\ [%1*%M%*%n%R%H]\ %-19(%3l,%02c%03V%)%O'%02b'
           hi User1 term=inverse,bold cterm=inverse,bold ctermfg=red
         <	Display a ,GZ flag if a compressed file is loaded >vim
           set statusline=...%r%{VarExists('b:gzflag','\ [GZ]')}%h...
@@ -9321,6 +9330,17 @@ local options = {
           function VarExists(var, val)
               if exists(a:var) | return a:val | else | return '' | endif
           endfunction
+        <
+        Note: By default, the status line is truncated from the left, and the
+        ruler from the right.  But the status line can include the ruler.
+        To ensure that a top-level (i.e. not inside an item group) `%<` in
+        'rulerformat' doesn't change the truncation of the status line,
+        - 'statusline' can be prepended with an explicit `%<`, which otherwise
+          would not be necessary. Example: >vim
+            set statusline=%<%f%=\ %{%&rulerformat%}
+        <	- Or the ruler can be wrapped in an item group, which also collapses
+          any top-level `%=` in 'rulerformat' unless minwid is specified: >vim
+            set statusline=%f%=\ %(%{%&rulerformat%}%)
         <
       ]=],
       full_name = 'statusline',
