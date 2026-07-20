@@ -950,6 +950,12 @@ local function find_window_by_var(name, value)
   end
 end
 
+---@param winnr integer
+---@return boolean `true` if `winnr` is a valid floating window
+local function is_float(winnr)
+  return api.nvim_win_is_valid(winnr) and vim.fn.win_gettype(winnr) == 'popup'
+end
+
 ---Returns true if the line is empty or only contains whitespace.
 ---@param line string
 ---@return boolean
@@ -1305,6 +1311,21 @@ local function close_preview_window(winnr, bufnrs)
 
     local augroup = 'nvim.preview_window_' .. winnr
     pcall(api.nvim_del_augroup_by_name, augroup)
+
+    -- Preview window was converted to a normal window (e.g. |CTRL-W_H|):
+    -- keep it open and stop managing it.
+    if api.nvim_win_is_valid(winnr) and not is_float(winnr) then
+      local srcbuf = vim.w[winnr].lsp_floating_bufnr
+      if
+        srcbuf
+        and api.nvim_buf_is_valid(srcbuf)
+        and vim.b[srcbuf].lsp_floating_preview == winnr
+      then
+        vim.b[srcbuf].lsp_floating_preview = nil
+      end
+      return
+    end
+
     pcall(api.nvim_win_close, winnr, true)
   end)
 end
@@ -1508,13 +1529,13 @@ function M.open_floating_preview(contents, syntax, opts)
     if opts.focus_id and opts.focusable ~= false and opts.focus then
       -- Go back to previous window if we are in a focusable one
       local current_winnr = api.nvim_get_current_win()
-      if vim.w[current_winnr][opts.focus_id] then
+      if vim.w[current_winnr][opts.focus_id] and is_float(current_winnr) then
         api.nvim_command('wincmd p')
         return bufnr, current_winnr
       end
       do
         local win = find_window_by_var(opts.focus_id, bufnr)
-        if win and api.nvim_win_is_valid(win) and vim.fn.pumvisible() == 0 then
+        if win and is_float(win) and vim.fn.pumvisible() == 0 then
           -- focus and return the existing buf, win
           api.nvim_set_current_win(win)
           api.nvim_command('stopinsert')
@@ -1526,7 +1547,7 @@ function M.open_floating_preview(contents, syntax, opts)
     -- check if another floating preview already exists for this buffer
     -- and close it if needed
     local existing_float = vim.b[bufnr].lsp_floating_preview
-    if existing_float and api.nvim_win_is_valid(existing_float) then
+    if existing_float and is_float(existing_float) then
       api.nvim_win_close(existing_float, true)
     end
     floating_bufnr = api.nvim_create_buf(false, true)

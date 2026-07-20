@@ -1385,6 +1385,35 @@ describe('vim.lsp.util', function()
         -- b:lsp_floating_preview should be cleared.
         eq('Key not found: lsp_floating_preview', pcall_err(api.nvim_buf_get_var, 0, var_name))
       end)
+
+      it('converted to a normal window is unmanaged, not closed #36659', function()
+        local converted = exec_lua(function()
+          local opts = { focus_id = 'focus_test' }
+          local cur_winnr = vim.api.nvim_get_current_win()
+          vim.lsp.util.open_floating_preview({ 'test' }, '', opts)
+          local converted = vim.b.lsp_floating_preview
+          vim.api.nvim_win_set_config(converted, { win = cur_winnr, split = 'right' })
+          -- close events unmanage the converted window instead of closing it
+          vim.api.nvim_exec_autocmds('CursorMoved', { buffer = 0 })
+          assert(
+            vim.wait(1000, function()
+              return vim.b.lsp_floating_preview == nil
+            end),
+            'preview should be untracked after close event'
+          )
+          -- reusing the focus_id opens a new float instead of refocusing the converted window
+          local _, new_win = vim.lsp.util.open_floating_preview({ 'test' }, '', opts)
+          assert(new_win ~= converted, 'expected a new float')
+          -- also when triggered from inside the converted window
+          vim.api.nvim_set_current_win(converted)
+          local _, newer_win = vim.lsp.util.open_floating_preview({ 'test' }, '', opts)
+          assert(newer_win ~= converted, 'expected a new float')
+          assert(vim.api.nvim_get_current_win() == converted, 'focus changed')
+          return converted
+        end)
+        eq(true, api.nvim_win_is_valid(converted))
+        eq('', api.nvim_win_get_config(converted).relative)
+      end)
     end)
 
     it('open_floating_preview zindex greater than current window', function()
