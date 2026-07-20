@@ -23,6 +23,7 @@ search for in the `parser` runtime directory.
 Nvim includes these parsers:
 
 - C
+- Diff
 - Lua
 - Markdown
 - Vimscript
@@ -343,6 +344,16 @@ Assuming a suitable parser and `highlights.scm` query is found in runtimepath,
 treesitter highlighting for the current buffer can be enabled simply via
 |vim.treesitter.start()|.
 
+Nvim's `diff` queries also highlight code within diff hunks when the
+corresponding language parser is available. To enable treesitter highlighting
+for diff buffers: >lua
+    vim.api.nvim_create_autocmd('FileType', {
+      pattern = 'diff',
+      callback = function(args)
+        vim.treesitter.start(args.buf)
+      end,
+    })
+<
                                                  *treesitter-highlight-groups*
 The capture names, prefixed with `@`, are directly usable as highlight groups.
 For many commonly used captures, the corresponding highlight groups are linked
@@ -475,7 +486,9 @@ the exact definition):
 @markup.list.unchecked  unchecked todo-style list markers
 
 @diff.plus              added text (for diff files)
+@diff.plus.line         added line (for diff files)
 @diff.minus             deleted text (for diff files)
+@diff.minus.line        deleted line (for diff files)
 @diff.delta             changed text (for diff files)
 
 @tag                    XML-style tag names (e.g. in XML, HTML, etc.)
