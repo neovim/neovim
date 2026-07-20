@@ -1216,6 +1216,20 @@ Integer nvim_open_term(Buffer buf, Dict(open_term) *opts, Error *err)
   return (Integer)chan->id;
 }
 
+/// Checks if a terminal buffer row is a continuation of the previous row.
+///
+/// A continuation is caused by terminal soft-wrapping. Scrollback buffer lines will err.
+///
+/// @param buf Buffer id, or 0 for current buffer
+/// @param row Buffer row (zero-based)
+/// @param[out] err Error details, if any
+/// @return true if the row is a continuation, false otherwise
+Boolean nvim__term_row_is_continuation(Buffer buf, Integer row, Error *err)
+{
+  buf_T *b = find_buffer_by_handle(buf, err);
+  return b && terminal_row_is_continuation(b, row, err);
+}
+
 static void term_read_pause(bool pause, void *data)
 {
   // Not currently needed as sending to channel isn't allowed during buffer updates.

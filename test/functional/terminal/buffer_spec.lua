@@ -1832,3 +1832,53 @@ describe('jobstart(…,{term=true})', function()
     end)
   end)
 end)
+
+describe('nvim__term_row_is_continuation()', function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(8, 10)
+  end)
+
+  it('reports whether a buffer row continues the previous terminal line', function()
+    local buf = api.nvim_get_current_buf()
+    eq(
+      ('Buffer %d is not a terminal buffer'):format(buf),
+      pcall_err(api.nvim__term_row_is_continuation, buf, 0)
+    )
+
+    local term = api.nvim_open_term(buf, {})
+    api.nvim_chan_send(term, 'abcdefghijklmnop')
+    screen:expect([[
+      ^abcdefghijkl|
+      mnop        |
+                  |*8
+    ]])
+    eq(false, api.nvim__term_row_is_continuation(buf, 0))
+    eq(true, api.nvim__term_row_is_continuation(buf, 1))
+  end)
+
+  it('does not report rows after explicit line breaks as continuations', function()
+    local buf = api.nvim_get_current_buf()
+    local term = api.nvim_open_term(buf, {})
+    api.nvim_chan_send(term, 'abcdefghijkl\r\nmnop')
+    screen:expect([[
+      ^abcdefghijkl|
+      mnop        |
+                  |*8
+    ]])
+    eq(false, api.nvim__term_row_is_continuation(buf, 1))
+  end)
+
+  it('rejects continuation queries for scrollback rows', function()
+    local buf = api.nvim_get_current_buf()
+    local term = api.nvim_open_term(buf, {})
+    api.nvim_chan_send(term, 'abcdefghijklmnop\027[10;1H\027D')
+    poke_eventloop()
+    eq(true, api.nvim__term_row_is_continuation(buf, 1))
+    eq("Invalid 'row': row is in scrollback", pcall_err(api.nvim__term_row_is_continuation, buf, 0))
+    eq("Invalid 'row': out of range", pcall_err(api.nvim__term_row_is_continuation, buf, -1))
+    eq("Invalid 'row': out of range", pcall_err(api.nvim__term_row_is_continuation, buf, 99))
+  end)
+end)

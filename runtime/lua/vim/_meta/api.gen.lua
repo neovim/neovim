@@ -188,6 +188,17 @@ function vim.api.nvim__stats() end
 
 --- WARNING: This feature is experimental/unstable.
 ---
+--- Checks if a terminal buffer row is a continuation of the previous row.
+---
+--- A continuation is caused by terminal soft-wrapping. Scrollback buffer lines will err.
+---
+--- @param buf integer Buffer id, or 0 for current buffer
+--- @param row integer Buffer row (zero-based)
+--- @return boolean # true if the row is a continuation, false otherwise
+function vim.api.nvim__term_row_is_continuation(buf, row) end
+
+--- WARNING: This feature is experimental/unstable.
+---
 --- @param str string
 --- @return any
 function vim.api.nvim__unpack(str) end

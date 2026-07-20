@@ -1528,6 +1528,37 @@ bool terminal_suspended(const Terminal *term)
   return term->suspended;
 }
 
+bool terminal_row_is_continuation(const buf_T *buf, int64_t row, Error *err)
+{
+  Terminal *term = buf->terminal;
+  if (!term) {
+    api_set_error(err, kErrorTypeValidation, "Buffer %d is not a terminal buffer", buf->handle);
+    return false;
+  }
+
+  if (row < 0 || row >= buf->b_ml.ml_line_count) {
+    api_set_error(err, kErrorTypeValidation, "Invalid 'row': out of range");
+    return false;
+  }
+
+  int screen_row = linenr_to_row(term, (int)row + 1);
+  if (screen_row < 0) {
+    api_set_error(err, kErrorTypeValidation, "Invalid 'row': row is in scrollback");
+    return false;
+  }
+
+  int height;
+  vterm_get_size(term->vt, &height, NULL);
+  if (screen_row >= height) {
+    api_set_error(err, kErrorTypeValidation, "Invalid 'row': out of range");
+    return false;
+  }
+
+  VTermState *state = vterm_obtain_state(term->vt);
+  const VTermLineInfo *line_info = vterm_state_get_lineinfo(state, screen_row);
+  return line_info->continuation;
+}
+
 void terminal_notify_theme(Terminal *term, bool dark)
   FUNC_ATTR_NONNULL_ALL
 {
