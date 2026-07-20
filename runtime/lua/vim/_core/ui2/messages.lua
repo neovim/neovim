@@ -486,8 +486,9 @@ function M.msg_show(kind, content, replace_last, _, append, id, trigger)
       M.cmd.ids, M.cmd.prev_msg = {}, ''
     elseif tgt == 'pager' then
       -- Position cursor at start of first or last message at bottom of window.
-      local lnum = enter_pager and 1 or api.nvim_buf_line_count(ui.bufs.pager)
-      api.nvim_win_set_cursor(ui.wins.pager, { lnum, 0 })
+      -- Keep Normal commands: nvim_win_set_cursor() only ensures visibility, while zb
+      -- reliably places the final message at the bottom. :noautocmd avoids #40780.
+      fn.win_execute(ui.wins.pager, 'noautocmd norm! ' .. (enter_pager and 'gg0' or 'G0zb'))
     end
   end
 end
@@ -622,6 +623,7 @@ local dialog_on_key = function(_, typed)
 
   local info = map[typed] and fn.getwininfo(ui.wins.dialog)[1]
   if info and (not eob or info.botline < api.nvim_buf_line_count(ui.bufs.dialog)) then
+    -- Keep Normal commands for screen-relative H/L and page scrolling behavior.
     fn.win_execute(ui.wins.dialog, ('exe "norm! %s"'):format(map[typed]))
     set_top_bot_spill()
     return fn.getwininfo(ui.wins.dialog)[1].topline ~= info.topline and '' or nil
@@ -719,7 +721,9 @@ function M.set_pos(tgt)
         M.dialog_on_key = vim.on_key(dialog_on_key, M.dialog_on_key)
       elseif tgt == 'msg' then
         -- Ensure last line is visible and first line is at top of window.
-        api.nvim_win_set_cursor(ui.wins.msg, { api.nvim_buf_line_count(ui.bufs.msg), 0 })
+        -- Keep Normal commands: nvim_win_set_cursor() only ensures visibility, while zb
+        -- reliably places the final message at the bottom. :noautocmd avoids #40780.
+        fn.win_execute(ui.wins.msg, 'noautocmd norm! Gzb')
       elseif tgt == 'pager' and not in_pager then
         enter_pager()
       end
