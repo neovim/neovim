@@ -8,6 +8,7 @@
       "../runtime/lua",
       "${3rd}/luv/library"
     ],
+    "preloadFileSize": 1000,
     "checkThirdParty": "Disable"
   },
   "diagnostics": {
