@@ -332,6 +332,11 @@ OPTIONS
 • 'winpinned' prevents window from closing unless specifically targeted.
 • 'packlockfile' sets the path used for |vim.pack-lockfile|.
 • 'previewpopup' decides how the preview window is displayed.
+• 'wrap' is now conceal-aware: a line whose text is hidden by conceal wraps
+  at its displayed width instead of at the pre-conceal wrap points, and the
+  cursor, |screenpos()|, |wincol()| and mouse follow the reflowed layout.
+  This applies to conceal from |extmarks| and |matchadd()|; ":syntax" conceal
+  and conceal from decoration providers are unchanged.
 
 PERFORMANCE
 
