@@ -563,6 +563,20 @@ colnr_T scol_to_col(win_T *wp, linenr_T lnum, colnr_T scol, colnr_T *coladdp)
   return (colnr_T)(ci.ptr - line);
 }
 
+/// Screen-layout width of line "lnum" in window "wp": like linetabsize(), but
+/// excluding cells hidden by persistent conceal. Equals linetabsize() when
+/// nothing on the line is concealed.
+int win_screen_linewidth(win_T *wp, linenr_T lnum)
+{
+  char *const line = ml_get_buf(wp->w_buffer, lnum);
+  CharsizeArg csarg;
+  CSType const cstype = init_charsize_arg(&csarg, wp, lnum, line);
+  if (cstype == kCharsizeFast) {
+    return linesize_fast(&csarg, 0, MAXCOL);
+  }
+  return linesize_regular(&csarg, 0, MAXCOL, true);
+}
+
 /// Calculate virtual column until the given "len".
 ///
 /// @param csarg    Argument to charsize functions.

@@ -2480,7 +2480,12 @@ bool find_decl(char *ptr, size_t len, bool locally, bool thisblock, int flags_ar
 /// @return  true if able to move cursor, false otherwise.
 bool nv_screengo(oparg_T *oap, int dir, int dist, bool skip_conceal)
 {
-  int linelen = linetabsize(curwin, curwin->w_cursor.lnum);
+  // On a concealed cursor line, gj/gk work in screen-layout columns so they
+  // keep the visible column; otherwise (the common case) they use the
+  // virtual w_curswant directly, unchanged.
+  bool const use_scol = curwin->w_p_cole > 0 && conceal_cursor_line(curwin);
+  int linelen = use_scol ? win_screen_linewidth(curwin, curwin->w_cursor.lnum)
+                         : linetabsize(curwin, curwin->w_cursor.lnum);
   bool retval = true;
   bool atend = false;
   int col_off1;                 // margin offset for first screen line
@@ -2490,6 +2495,18 @@ bool nv_screengo(oparg_T *oap, int dir, int dist, bool skip_conceal)
 
   oap->motion_type = kMTCharWise;
   oap->inclusive = (curwin->w_curswant == MAXCOL);
+
+  // Working column. On a concealed cursor line "cw" points at a local
+  // screen-layout column (derived from w_curswant); otherwise it points at
+  // w_curswant itself so the behavior is unchanged.
+  colnr_T scol_want = curwin->w_curswant;
+  if (use_scol && scol_want != MAXCOL) {
+    validate_virtcol(curwin);
+    scol_want -= MIN(scol_want,
+                     (colnr_T)conceal_off_before(curwin, curwin->w_cursor.lnum,
+                                                 curwin->w_cursor.col));
+  }
+  colnr_T *const cw = use_scol ? &scol_want : &curwin->w_curswant;
 
   col_off1 = win_col_off(curwin);
   col_off2 = col_off1 - win_col_off2(curwin);
@@ -2504,17 +2521,21 @@ bool nv_screengo(oparg_T *oap, int dir, int dist, bool skip_conceal)
     int n;
     // Instead of sticking at the last character of the buffer line we
     // try to stick in the last column of the screen.
-    if (curwin->w_curswant == MAXCOL) {
+    if (*cw == MAXCOL) {
       atend = true;
       validate_virtcol(curwin);
+      colnr_T virtcol = curwin->w_virtcol;
+      if (use_scol) {
+        virtcol -= MIN(virtcol,
+                       (colnr_T)conceal_off_before(curwin, curwin->w_cursor.lnum,
+                                                   curwin->w_cursor.col));
+      }
       if (width1 <= 0) {
-        curwin->w_curswant = 0;
+        *cw = 0;
       } else {
-        curwin->w_curswant = width1 - 1;
-        if (curwin->w_virtcol > curwin->w_curswant) {
-          curwin->w_curswant += ((curwin->w_virtcol
-                                  - curwin->w_curswant -
-                                  1) / width2 + 1) * width2;
+        *cw = width1 - 1;
+        if (virtcol > *cw) {
+          *cw += ((virtcol - *cw - 1) / width2 + 1) * width2;
         }
       }
     } else {
@@ -2523,17 +2544,17 @@ bool nv_screengo(oparg_T *oap, int dir, int dist, bool skip_conceal)
       } else {
         n = width1;
       }
-      curwin->w_curswant = MIN(curwin->w_curswant, n - 1);
+      *cw = MIN(*cw, n - 1);
     }
 
     while (dist--) {
       if (dir == BACKWARD) {
-        if (curwin->w_curswant >= width1
+        if (*cw >= width1
             && !hasFolding(curwin, curwin->w_cursor.lnum, NULL, NULL)) {
           // Move back within the line. This can give a negative value
-          // for w_curswant if width1 < width2 (with cpoptions+=n),
+          // for the column if width1 < width2 (with cpoptions+=n),
           // which will get clipped to column 0.
-          curwin->w_curswant -= width2;
+          *cw -= width2;
         } else {
           // to previous line
           if (curwin->w_cursor.lnum <= 1) {
@@ -2542,11 +2563,12 @@ bool nv_screengo(oparg_T *oap, int dir, int dist, bool skip_conceal)
           }
           cursor_up_inner(curwin, 1, skip_conceal);
 
-          linelen = linetabsize(curwin, curwin->w_cursor.lnum);
+          linelen = use_scol ? win_screen_linewidth(curwin, curwin->w_cursor.lnum)
+                             : linetabsize(curwin, curwin->w_cursor.lnum);
           if (linelen > width1) {
             int w = (((linelen - width1 - 1) / width2) + 1) * width2;
-            assert(w <= 0 || curwin->w_curswant <= INT_MAX - w);
-            curwin->w_curswant += w;
+            assert(w <= 0 || *cw <= INT_MAX - w);
+            *cw += w;
           }
         }
       } else {  // dir == FORWARD
@@ -2555,10 +2577,10 @@ bool nv_screengo(oparg_T *oap, int dir, int dist, bool skip_conceal)
         } else {
           n = width1;
         }
-        if (curwin->w_curswant + width2 < (colnr_T)n
+        if (*cw + width2 < (colnr_T)n
             && !hasFolding(curwin, curwin->w_cursor.lnum, NULL, NULL)) {
           // move forward within line
-          curwin->w_curswant += width2;
+          *cw += width2;
         } else {
           // to next line
           if (curwin->w_cursor.lnum >= curwin->w_buffer->b_ml.ml_line_count) {
@@ -2566,25 +2588,42 @@ bool nv_screengo(oparg_T *oap, int dir, int dist, bool skip_conceal)
             break;
           }
           cursor_down_inner(curwin, 1, skip_conceal);
-          curwin->w_curswant %= width2;
+          *cw %= width2;
 
           // Check if the cursor has moved below the number display
           // when width1 < width2 (with cpoptions+=n). Subtract width2
-          // to get a negative value for w_curswant, which will get
+          // to get a negative value for the column, which will get
           // clipped to column 0.
-          if (curwin->w_curswant >= width1) {
-            curwin->w_curswant -= width2;
+          if (*cw >= width1) {
+            *cw -= width2;
           }
-          linelen = linetabsize(curwin, curwin->w_cursor.lnum);
+          linelen = use_scol ? win_screen_linewidth(curwin, curwin->w_cursor.lnum)
+                             : linetabsize(curwin, curwin->w_cursor.lnum);
         }
       }
     }
   }
 
+  colnr_T vcol_target = 0;  // virtual equivalent of the desired screen column (use_scol only)
+  bool have_vcol_target = false;
   if (virtual_active(curwin) && atend) {
     coladvance(curwin, MAXCOL);
+  } else if (use_scol && *cw != MAXCOL) {
+    // Land at the desired screen-layout column. Convert it through the buffer
+    // position to the equivalent virtual column so coladvance()'s
+    // 'virtualedit'/one_more handling still applies.
+    colnr_T sc_coladd;
+    colnr_T bcol = scol_to_col(curwin, curwin->w_cursor.lnum, *cw, &sc_coladd);
+    if (sc_coladd > 0) {
+      vcol_target = (colnr_T)linetabsize(curwin, curwin->w_cursor.lnum) + sc_coladd;
+    } else {
+      pos_T tp = { .lnum = curwin->w_cursor.lnum, .col = bcol, .coladd = 0 };
+      getvcol(curwin, &tp, &vcol_target, NULL, NULL, 0);
+    }
+    have_vcol_target = true;
+    coladvance(curwin, vcol_target);
   } else {
-    coladvance(curwin, curwin->w_curswant);
+    coladvance(curwin, *cw);
   }
 
   if (curwin->w_cursor.col > 0 && curwin->w_p_wrap) {
@@ -2593,21 +2632,27 @@ bool nv_screengo(oparg_T *oap, int dir, int dist, bool skip_conceal)
     // screenline or move two screenlines.
     validate_virtcol(curwin);
     colnr_T virtcol = curwin->w_virtcol;
+    if (use_scol) {
+      // Compare in screen-layout columns on a concealed line.
+      virtcol -= MIN(virtcol,
+                     (colnr_T)conceal_off_before(curwin, curwin->w_cursor.lnum,
+                                                 curwin->w_cursor.col));
+    }
     if (virtcol > (colnr_T)width1 && *get_showbreak_value(curwin) != NUL) {
       virtcol -= vim_strsize(get_showbreak_value(curwin));
     }
 
     int c = utf_ptr2char(get_cursor_pos_ptr());
-    if (dir == FORWARD && virtcol < curwin->w_curswant
-        && (curwin->w_curswant <= (colnr_T)width1)
+    if (dir == FORWARD && virtcol < *cw
+        && (*cw <= (colnr_T)width1)
         && !vim_isprintc(c) && c > 255) {
       oneright();
     }
 
-    if (virtcol > curwin->w_curswant
-        && (curwin->w_curswant < (colnr_T)width1
-            ? (curwin->w_curswant > (colnr_T)width1 / 2)
-            : ((curwin->w_curswant - width1) % width2
+    if (virtcol > *cw
+        && (*cw < (colnr_T)width1
+            ? (*cw > (colnr_T)width1 / 2)
+            : ((*cw - width1) % width2
                > (colnr_T)width2 / 2))) {
       curwin->w_cursor.col--;
     }
@@ -2615,6 +2660,12 @@ bool nv_screengo(oparg_T *oap, int dir, int dist, bool skip_conceal)
 
   if (atend) {
     curwin->w_curswant = MAXCOL;            // stick in the last column
+  } else if (use_scol) {
+    // Keep the virtual w_curswant at the desired column (its virtual
+    // equivalent), so the buffer-line motions j/k continue from there. This
+    // matches the unconcealed behavior, where the desired column *cw is itself
+    // virtual and is left in w_curswant.
+    curwin->w_curswant = have_vcol_target ? vcol_target : *cw;
   }
   adjust_skipcol();
 

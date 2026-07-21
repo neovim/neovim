@@ -9,6 +9,7 @@ local clear = n.clear
 local api = n.api
 local command = n.command
 local exec_lua = n.exec_lua
+local feed = n.feed
 local fn = n.fn
 local eq = t.eq
 
@@ -77,6 +78,26 @@ describe('conceal-aware wrapping (#14409)', function()
     api.nvim_win_set_cursor(0, { 1, 20 })
     eq(1, fn.winline())
     eq(15, fn.wincol())
+  end)
+
+  it('gj/gk move by the reflowed screen line', function()
+    -- Reflowed: row 1 = a*10 + b*10 (buf 16..25), row 2 = b*20 (buf 26..45).
+    api.nvim_buf_set_lines(0, 0, -1, true, { ('a'):rep(10) .. 'HIDDEN' .. ('b'):rep(30) })
+    api.nvim_buf_set_extmark(0, ns, 0, 10, { end_col = 16, conceal = '' })
+
+    -- gj from row 1 col 0 lands straight below on row 2 col 0 = buffer col 26
+    -- (pre-conceal it landed on the virtual row 2, buffer col 20).
+    api.nvim_win_set_cursor(0, { 1, 0 })
+    feed('gj')
+    eq({ 1, 26 }, api.nvim_win_get_cursor(0))
+    -- gk returns to the same visible column on row 1.
+    feed('gk')
+    eq({ 1, 0 }, api.nvim_win_get_cursor(0))
+
+    -- gj keeps the screen column: from a 'b' at screen col 15 (buf 20) to row 2 col 15 (buf 40).
+    api.nvim_win_set_cursor(0, { 1, 20 })
+    feed('gj')
+    eq({ 1, 40 }, api.nvim_win_get_cursor(0))
   end)
 
   it('ephemeral (decoration-provider) conceal does not reflow', function()
