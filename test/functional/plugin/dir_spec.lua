@@ -266,6 +266,38 @@ describe('nvim.dir', function()
     eq({ 'file2.txt' }, lines())
   end)
 
+  it('ignores callbacks from replaced listing sessions', function()
+    n.clear({ args_rm = { '-u' } })
+
+    exec_lua(function()
+      local dir = require('nvim.dir')
+      dir.open(0, 'custom://old', {
+        list_entries = function(_, cb)
+          _G.nvim_dir_stale_callback = cb
+        end,
+        open_entry = function() end,
+        open_parent = function() end,
+      })
+      dir.open(0, 'custom://new', {
+        list_entries = function(_, cb)
+          cb(nil, { { name = 'current.txt', dir = false } })
+        end,
+        open_entry = function() end,
+        open_parent = function() end,
+      })
+    end)
+
+    eq('custom://new', api.nvim_buf_get_name(0))
+    eq({ 'current.txt' }, lines())
+
+    exec_lua(function()
+      _G.nvim_dir_stale_callback(nil, { { name = 'stale.txt', dir = false } })
+    end)
+
+    eq('custom://new', api.nvim_buf_get_name(0))
+    eq({ 'current.txt' }, lines())
+  end)
+
   it('maps - to open parent directories', function()
     make_fixture()
     n.clear({ args_rm = { '-u', '--cmd' } })
