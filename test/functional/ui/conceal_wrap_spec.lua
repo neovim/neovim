@@ -188,3 +188,61 @@ describe('conceal-aware wrapping (#14409)', function()
     eq(1, api.nvim_win_text_height(0, {}).all)
   end)
 end)
+
+-- When a wrapped line's screen height depends on its conceal state, moving the cursor onto/off it
+-- (which reveals/conceals it under 'concealcursor') changes that line's height at runtime. The
+-- incremental redraw would emit a grid_scroll for the shifted lines below, which the TUI turns into
+-- a terminal scroll that mishandles the height change and leaves stale cells. Like whole-line
+-- 'conceal_lines', such a transition must force a full window redraw. This mirrors the pre-existing
+-- conceal_lines guard in check_cursor_moved()/conceal_check_cursor_line() and exercises the new
+-- conceal_line_changes_height() path (the other tests use 'concealcursor' so the cursor line is
+-- never revealed and that path is not hit).
+--
+-- Note: the grid_scroll -> stale-cell corruption itself is a TUI/terminal effect that the Screen
+-- test harness cannot observe (it always renders the correct logical grid, and defaults to
+-- 'redrawdebug=invalid' which disables the scroll optimisation). This test therefore verifies that
+-- walking the cursor through a scrolled, height-changing-conceal region keeps the rendered geometry
+-- correct (guarding conceal_line_changes_height()); the scroll-suppression is verified separately.
+describe('conceal-aware wrapping redraw (#14409)', function()
+  before_each(clear)
+
+  it(
+    'keeps geometry correct moving through a scrolled reflowing region with a revealed cursor line',
+    function()
+      local screen = Screen.new(30, 8)
+      local ns = api.nvim_create_namespace('conceal_wrap_redraw')
+      -- concealcursor= reveals the cursor line, so moving the cursor changes that line's height.
+      command('set wrap conceallevel=2 concealcursor= scrolloff=1')
+      -- Each line reflows: revealed is 34 cells (2 rows at width 30), concealed is 22 (1 row).
+      local lines = {}
+      for i = 1, 20 do
+        lines[i] = ('L%02d-AAA'):format(i)
+          .. ('C'):rep(12)
+          .. ('-t%02d-'):format(i)
+          .. ('B'):rep(10)
+      end
+      api.nvim_buf_set_lines(0, 0, -1, true, lines)
+      for i = 0, 19 do
+        local c = lines[i + 1]:find('C')
+        api.nvim_buf_set_extmark(0, ns, i, c - 1, { end_col = c - 1 + 12, conceal = '' })
+      end
+
+      -- Scroll into the middle, then walk the cursor down through several reflowing lines.
+      api.nvim_win_set_cursor(0, { 8, 0 })
+      feed('zzjjj')
+
+      -- Cursor is on line 11 (revealed: 2 rows, C's visible); the other visible lines are concealed
+      -- (1 row, C's hidden). Every line's geometry must be correct after the height-changing moves.
+      screen:expect([[
+      L07-AAA-t07-BBBBBBBBBB        |
+      L08-AAA-t08-BBBBBBBBBB        |
+      L09-AAA-t09-BBBBBBBBBB        |
+      L10-AAA-t10-BBBBBBBBBB        |
+      ^L11-AAACCCCCCCCCCCC-t11-BBBBBB|
+      BBBB                          |
+      L12-AAA-t12-BBBBBBBBBB        |
+                                    |
+    ]])
+    end
+  )
+end)
