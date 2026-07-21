@@ -319,7 +319,8 @@ local function spawn(cmd, opts, on_exit, on_error)
   if is_win then
     local cmd1 = vim.fn.exepath(cmd)
     if cmd1 ~= '' then
-      cmd = cmd1
+      -- Use native separators when launching a resolved Windows executable.
+      cmd = cmd1:gsub('/', '\\')
     end
   end
 
