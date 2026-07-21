@@ -2,6 +2,8 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each, after_each, setup, teardown, finally =
+  t.describe, t.it, t.before_each, t.after_each, t.setup, t.teardown, t.finally
 local assert_alive = n.assert_alive
 local assert_log = t.assert_log
 local clear = n.clear

@@ -1,5 +1,6 @@
 local t = require('test.testutil')
 
+local describe, it = t.describe, t.it
 local dedent = t.dedent
 local eq = t.eq
 

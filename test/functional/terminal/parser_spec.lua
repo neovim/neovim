@@ -1,5 +1,7 @@
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local api = n.api
 local assert_alive = n.assert_alive
 local clear = n.clear
@@ -26,7 +28,7 @@ describe(':terminal', function()
     api.nvim_chan_send(chan, input)
     --- @type string
     local term_title = api.nvim_buf_get_var(0, 'term_title')
-    assert.Equal(term_title, 'This title set with OSC 2')
+    t.eq(term_title, 'This title set with OSC 2')
     assert_alive()
   end)
 
@@ -38,7 +40,7 @@ describe(':terminal', function()
     api.nvim_chan_send(chan, input)
     --- @type string
     local term_title = api.nvim_buf_get_var(0, 'term_title')
-    assert.Equal(term_title, 'This title set with OSC 0')
+    t.eq(term_title, 'This title set with OSC 0')
     assert_alive()
   end)
 
@@ -80,14 +82,14 @@ describe(':terminal', function()
 
     send_osc_with_terminator(BEL)
     --- @type string
-    assert.eq(
+    t.eq(
       { sequence = OSC_PREFIX .. '10;?', terminator = BEL },
       exec_lua([[return _G.osc10_response]])
     )
 
     send_osc_with_terminator(ST)
     --- @type string
-    assert.eq(
+    t.eq(
       { sequence = OSC_PREFIX .. '10;?', terminator = ST },
       exec_lua([[return _G.osc10_response]])
     )

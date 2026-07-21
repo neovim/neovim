@@ -1,5 +1,6 @@
 -- ShaDa marks saving/reading support
 local t = require('test.testutil')
+local describe, it, before_each, after_each = t.describe, t.it, t.before_each, t.after_each
 local pcall_err = t.pcall_err
 local n = require('test.functional.testnvim')()
 local t_shada = require('test.functional.shada.testutil')

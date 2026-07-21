@@ -2,6 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
 local snippet = require('vim.lsp._snippet_grammar')
+local describe, it, before_each = t.describe, t.it, t.before_each
 local type = snippet.NodeType
 
 local eq = t.eq

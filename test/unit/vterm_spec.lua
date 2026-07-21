@@ -1,5 +1,6 @@
 local t = require('test.unit.testutil')
-local itp = t.gen_itp(it)
+local describe, before_each, pending = t.describe, t.before_each, t.pending
+local itp = t.gen_itp(t.it)
 local bit = require('bit')
 
 --- @class vterm

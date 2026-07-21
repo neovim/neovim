@@ -1,4 +1,5 @@
 local t = require('test.testutil')
+local describe, it, setup = t.describe, t.it, t.setup
 local pcall_err = t.pcall_err
 local n = require('test.functional.testnvim')()
 

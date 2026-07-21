@@ -5,7 +5,7 @@ local FORMAT_DEPTH = 100
 
 --- @param value any
 --- @return string
-local function format_value(value)
+local function fmt(value)
   if type(value) == 'string' then
     return string.format('%q', value)
   end
@@ -36,8 +36,8 @@ end
 local function comparison_message(expected, actual, comparator)
   return ('Expected values to be %s.\nExpected:\n%s\nActual:\n%s'):format(
     comparator,
-    format_value(expected),
-    format_value(actual)
+    fmt(expected),
+    fmt(actual)
   )
 end
 
@@ -63,29 +63,9 @@ function M.neq(expected, actual, context)
     not vim.deep_equal(expected, actual),
     actual,
     context,
-    ('Expected values to differ.\nValue:\n%s'):format(format_value(actual))
+    ('Expected values to differ.\nValue:\n%s'):format(fmt(actual))
   )
 end
-
---- @param value any
---- @param context? any
---- @return any
-function M.is_true(value, context)
-  return M.eq(true, value, context)
-end
-
---- @param value any
---- @param context? any
---- @return any
-function M.is_false(value, context)
-  return M.eq(false, value, context)
-end
-
--- TODO(lewis6991): remove these aliases
-M.True = M.is_true
-M.False = M.is_false
-M.equals = M.eq
-M.Equal = M.eq
 
 return setmetatable(M, {
   --- @param condition any

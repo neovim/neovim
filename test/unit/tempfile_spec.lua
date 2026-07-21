@@ -1,5 +1,6 @@
 local t = require('test.unit.testutil')
-local itp = t.gen_itp(it)
+local describe, before_each = t.describe, t.before_each
+local itp = t.gen_itp(t.it)
 
 local eq = t.eq
 local neq = t.neq
@@ -25,12 +26,12 @@ describe('tempfile related functions', function()
   describe('vim_gettempdir', function()
     itp('returns path to Nvim own temp directory', function()
       local dir = vim_gettempdir()
-      assert.True(dir ~= nil and dir:len() > 0)
+      t.ok(dir ~= nil and dir:len() > 0)
       -- os_file_is_writable returns 2 for a directory which we have rights
       -- to write into.
       eq(2, lib.os_file_is_writable(t.to_cstr(dir)))
       for entry in vim.fs.dir(dir) do
-        assert.True(entry == '.' or entry == '..')
+        t.ok(entry == '.' or entry == '..')
       end
     end)
 
@@ -47,7 +48,7 @@ describe('tempfile related functions', function()
     itp('generate name of non-existing file', function()
       local file = vim_tempname()
       assert(file)
-      assert.False(lib.os_path_exists(file))
+      assert(not lib.os_path_exists(file))
     end)
 
     itp('generate different names on each call', function()

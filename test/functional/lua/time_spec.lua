@@ -1,6 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it = t.describe, t.it
 local clear = n.clear
 
 local exec_lua = n.exec_lua

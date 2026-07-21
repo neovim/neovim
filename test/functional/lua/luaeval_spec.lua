@@ -3,6 +3,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local pcall_err = t.pcall_err
 local remove_trace = t.remove_trace
 local exec_lua = n.exec_lua

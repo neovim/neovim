@@ -1,7 +1,9 @@
 -- Test for visual mode not being reset causing E315 error.
 
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 
+local describe, it, setup = t.describe, t.it, t.setup
 local feed, source = n.feed, n.source
 local clear, expect = n.clear, n.expect
 

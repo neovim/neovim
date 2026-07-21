@@ -1,6 +1,8 @@
 local n = require('test.functional.testnvim')()
 local t = require('test.testutil')
 
+local describe, it, after_each, pending, finally =
+  t.describe, t.it, t.after_each, t.pending, t.finally
 local api = n.api
 local command = n.command
 local eq = t.eq

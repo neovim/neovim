@@ -1,6 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it = t.describe, t.it
 local eq = t.eq
 local is_os = t.is_os
 local skip = t.skip

@@ -2,6 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local assert_visible = n.assert_visible
 local assert_alive = n.assert_alive
 local dedent = t.dedent

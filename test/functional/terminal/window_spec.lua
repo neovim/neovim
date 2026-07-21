@@ -3,6 +3,7 @@ local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
 local tt = require('test.functional.testterm')
+local describe, it, before_each = t.describe, t.it, t.before_each
 local feed_data = tt.feed_data
 local feed_csi = tt.feed_csi
 local feed, clear = n.feed, n.clear

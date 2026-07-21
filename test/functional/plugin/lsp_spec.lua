@@ -3,6 +3,8 @@ local n = require('test.functional.testnvim')()
 
 local t_lsp = require('test.functional.plugin.lsp.testutil')
 
+local describe, it, before_each, after_each, setup, teardown, pending =
+  t.describe, t.it, t.before_each, t.after_each, t.setup, t.teardown, t.pending
 local buf_lines = n.buf_lines
 local command = n.command
 local dedent = t.dedent

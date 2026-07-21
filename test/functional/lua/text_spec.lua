@@ -1,5 +1,6 @@
 local t = require('test.testutil')
 
+local describe, it = t.describe, t.it
 local eq = t.eq
 local pcall_err = t.pcall_err
 

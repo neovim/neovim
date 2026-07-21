@@ -1,5 +1,6 @@
 -- Test suite for vim.list
 local t = require('test.testutil')
+local describe, it = t.describe, t.it
 local eq = t.eq
 
 describe('vim.list', function()

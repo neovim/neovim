@@ -3,6 +3,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local t_shada = require('test.functional.shada.testutil')
 
+local describe, it, before_each, after_each = t.describe, t.it, t.before_each, t.after_each
 local api, fn, nvim_command, eq, eval = n.api, n.fn, n.command, t.eq, n.eval
 local expect_exit = n.expect_exit
 local reset, clear = t_shada.reset, t_shada.clear

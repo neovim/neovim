@@ -1,8 +1,10 @@
 -- Tests for adjusting window and contents
 
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, setup = t.describe, t.it, t.setup
 local poke_eventloop = n.poke_eventloop
 local clear = n.clear
 local insert = n.insert

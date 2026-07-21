@@ -2,6 +2,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local t_shada = require('test.functional.shada.testutil')
+local describe, it, before_each, after_each = t.describe, t.it, t.before_each, t.after_each
 local uv = vim.uv
 local paths = t.paths
 local pcall_err = t.pcall_err

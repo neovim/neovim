@@ -1,6 +1,8 @@
 local uv = vim.uv
 local t = require('test.unit.testutil')
-local itp = t.gen_itp(it)
+local describe, before_each, after_each, setup, teardown =
+  t.describe, t.before_each, t.after_each, t.setup, t.teardown
+local itp = t.gen_itp(t.it)
 
 local cimport = t.cimport
 local eq = t.eq

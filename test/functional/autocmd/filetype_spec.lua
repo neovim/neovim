@@ -1,5 +1,7 @@
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local eval = n.eval
 local clear = n.clear
 local command = n.command
@@ -12,6 +14,6 @@ describe('autocmd FileType', function()
     command('let g:foo = 0')
     command('autocmd FileType help let g:foo = g:foo + 1')
     command('help help')
-    assert.eq(1, eval('g:foo'))
+    t.eq(1, eval('g:foo'))
   end)
 end)

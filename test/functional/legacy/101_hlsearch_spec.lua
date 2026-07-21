@@ -1,7 +1,9 @@
 -- Test for v:hlsearch
 
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 
+local describe, it, setup = t.describe, t.it, t.setup
 local clear, feed = n.clear, n.feed
 local feed_command, expect = n.feed_command, n.expect
 

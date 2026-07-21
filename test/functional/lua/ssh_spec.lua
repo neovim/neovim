@@ -1,5 +1,6 @@
 local t = require('test.testutil')
 local parser = require('vim.net._ssh')
+local describe, it = t.describe, t.it
 local eq = t.eq
 
 describe('SSH parser', function()

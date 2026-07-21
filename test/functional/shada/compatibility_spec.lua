@@ -3,6 +3,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local t_shada = require('test.functional.shada.testutil')
 
+local describe, it, before_each, after_each = t.describe, t.it, t.before_each, t.after_each
 local nvim_command, fn, eq = n.command, n.fn, t.eq
 local reset, clear, get_shada_rw = t_shada.reset, t_shada.clear, t_shada.get_shada_rw
 local read_shada_file = t_shada.read_shada_file

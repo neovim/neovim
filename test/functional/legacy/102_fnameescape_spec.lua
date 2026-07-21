@@ -1,7 +1,9 @@
 -- Test if fnameescape is correct for special chars like!
 
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 
+local describe, it, setup, teardown = t.describe, t.it, t.setup, t.teardown
 local clear = n.clear
 local command, expect = n.command, n.expect
 

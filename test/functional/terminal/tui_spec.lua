@@ -9,6 +9,8 @@ local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 local tt = require('test.functional.testterm')
 
+local describe, it, before_each, after_each, pending, finally =
+  t.describe, t.it, t.before_each, t.after_each, t.pending, t.finally
 local eq = t.eq
 local feed_data = tt.feed_data
 local clear = n.clear

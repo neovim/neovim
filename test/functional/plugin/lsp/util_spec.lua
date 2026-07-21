@@ -4,6 +4,7 @@ local Screen = require('test.functional.ui.screen')
 
 local t_lsp = require('test.functional.plugin.lsp.testutil')
 
+local describe, it, before_each, after_each = t.describe, t.it, t.before_each, t.after_each
 local feed = n.feed
 local eq = t.eq
 local exec_lua = n.exec_lua

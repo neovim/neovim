@@ -1,7 +1,9 @@
 -- Test for user command counts
 
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 
+local describe, it = t.describe, t.it
 local clear, source, expect = n.clear, n.source, n.expect
 local feed_command = n.feed_command
 

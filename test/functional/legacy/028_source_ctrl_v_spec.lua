@@ -1,7 +1,9 @@
 -- Test for sourcing a file with CTRL-V's at the end of the line
 
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 
+local describe, it, before_each, teardown = t.describe, t.it, t.before_each, t.teardown
 local clear, feed, insert = n.clear, n.feed, n.insert
 local feed_command, expect = n.feed_command, n.expect
 

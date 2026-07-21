@@ -3,6 +3,8 @@ local n = require('test.functional.testnvim')()
 
 local t_lsp = require('test.functional.plugin.lsp.testutil')
 
+local describe, it, before_each, after_each, teardown =
+  t.describe, t.it, t.before_each, t.after_each, t.teardown
 local command = n.command
 local eq = t.eq
 local exec_lua = n.exec_lua
