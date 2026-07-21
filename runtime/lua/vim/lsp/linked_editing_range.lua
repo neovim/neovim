@@ -249,7 +249,9 @@ local function attach_linked_editor(bufnr, client)
 
   local linked_editor = LinkedEditor.active[bufnr] or LinkedEditor.new(bufnr)
   linked_editor:attach(client_id)
-  linked_editor:refresh()
+  if bufnr == api.nvim_get_current_buf() then
+    linked_editor:refresh()
+  end
 end
 
 ---@param bufnr integer
