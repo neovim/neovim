@@ -41,6 +41,7 @@
 #include "nvim/message.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
+#include "nvim/optionstr.h"
 #include "nvim/os/os.h"
 #include "nvim/register.h"
 #include "nvim/runtime.h"
@@ -1376,6 +1377,14 @@ static char *ex_let_option(char *arg, typval_T *const tv, const bool is_const,
   if (curval.type == kOptValTypeNil) {
     semsg(_(e_unknown_option2), arg);
     goto theend;
+  }
+  // `:let &opt` operates on the string form; a dict option is handled as its serialization
+  // (set_option() reifies it back). This also lets `.=` concatenate onto it like any string option.
+  if (curval.type == kOptValTypeDict) {
+    OptVal strval = CSTR_AS_OPTVAL(opt_serialize(curval.data.dictval.ptr,
+                                                 curval.data.dictval.table));
+    optval_free(curval);
+    curval = strval;
   }
   if (op != NULL && *op != '='
       && ((curval.type != kOptValTypeString && *op == '.')
@@ -3202,7 +3211,9 @@ static OptVal tv_to_optval(typval_T *tv, OptIndex opt_idx, const char *option, b
   const bool is_tty_opt = is_tty_option(option);
   const bool option_has_bool = !is_tty_opt && option_has_type(opt_idx, kOptValTypeBoolean);
   const bool option_has_num = !is_tty_opt && option_has_type(opt_idx, kOptValTypeNumber);
-  const bool option_has_str = is_tty_opt || option_has_type(opt_idx, kOptValTypeString);
+  // Struct-stored options (e.g. 'diffopt') take their ":set" string here; set_option() reifies it.
+  const bool option_has_str = is_tty_opt || option_has_type(opt_idx, kOptValTypeString)
+                              || option_has_type(opt_idx, kOptValTypeDict);
 
   if (!is_tty_opt && (get_option(opt_idx)->flags & kOptFlagFunc) && tv_is_func(*tv)) {
     // If the option can be set to a function reference or a lambda
@@ -3249,6 +3260,10 @@ static OptVal tv_to_optval(typval_T *tv, OptIndex opt_idx, const char *option, b
 
 /// Convert an option value to typval.
 ///
+/// A "schema.dict" option has no stored string to alias, so it serializes to an allocated string
+/// owned by the returned; every other type borrows from `value`. Either transfer that string to
+/// a longer-lived owner or release it with `optval_as_tv_free()`.
+///
 /// @param[in]  value    Option value to convert.
 /// @param      numbool  Whether to convert boolean values to number.
 ///                      Used for backwards compatibility.
@@ -3278,9 +3293,23 @@ typval_T optval_as_tv(OptVal value, bool numbool)
     rettv.v_type = VAR_STRING;
     rettv.vval.v_string = value.data.string.data;
     break;
+  case kOptValTypeDict:
+    // Surfaced to Vimscript as its ":set" string, allocated.
+    rettv.v_type = VAR_STRING;
+    rettv.vval.v_string = opt_serialize(value.data.dictval.ptr, value.data.dictval.table);
+    break;
   }
 
   return rettv;
+}
+
+/// Release `optval_as_tv()` result. Only for "schema.dict" options; no-op for other types (they
+/// alias the source value).
+void optval_as_tv_free(OptVal value, typval_T tv)
+{
+  if (value.type == kOptValTypeDict) {
+    xfree(tv.vval.v_string);
+  }
 }
 
 /// Set option "varname" to the value of "varp" for the current buffer/window.

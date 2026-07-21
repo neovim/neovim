@@ -1790,7 +1790,7 @@ void u_undo(int count)
     count = 1;
   }
 
-  if (vim_strchr(p_cpo, CPO_UNDO) == NULL) {
+  if (vim_strchr(p_cpo, kCpoUndo) == NULL) {
     undo_undoes = true;
   } else {
     undo_undoes = !undo_undoes;
@@ -1802,7 +1802,7 @@ void u_undo(int count)
 /// If 'cpoptions' does not contain 'u': Always redo.
 void u_redo(int count)
 {
-  if (vim_strchr(p_cpo, CPO_UNDO) == NULL) {
+  if (vim_strchr(p_cpo, kCpoUndo) == NULL) {
     undo_undoes = false;
   }
 
@@ -1893,7 +1893,7 @@ static void u_doit(int startcount, bool quiet, bool do_buf_event)
         curbuf->b_u_curhead = curbuf->b_u_oldhead;
         beep_flush();
         if (count == startcount - 1) {
-          if (!shortmess(SHM_UNDO)) {
+          if (!shortmess(kShmUndo)) {
             msg(_("Already at oldest change"), 0);
           }
           return;
@@ -1906,7 +1906,7 @@ static void u_doit(int startcount, bool quiet, bool do_buf_event)
       if (curbuf->b_u_curhead == NULL || get_undolevel(curbuf) <= 0) {
         beep_flush();  // nothing to redo
         if (count == startcount - 1) {
-          if (!shortmess(SHM_UNDO)) {
+          if (!shortmess(kShmUndo)) {
             msg(_("Already at newest change"), 0);
           }
           return;
@@ -2129,7 +2129,7 @@ void undo_time(int step, bool sec, bool file, bool absolute)
     }
 
     if (closest == closest_start) {
-      if (!shortmess(SHM_UNDO)) {
+      if (!shortmess(kShmUndo)) {
         if (step < 0) {
           msg(_("Already at oldest change"), 0);
         } else {
@@ -2565,7 +2565,7 @@ static void u_undo_end(bool did_undo, bool absolute, bool quiet)
   if (quiet
       || global_busy        // no messages until global is finished
       || !messaging()       // 'lazyredraw' set, don't do messages now
-      || shortmess(SHM_UNDO)) {
+      || shortmess(kShmUndo)) {
     return;
   }
 

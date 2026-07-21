@@ -98,7 +98,7 @@ int findsent(Direction dir, int count)
 
     // remember the line where the search started
     const int startlnum = pos.lnum;
-    const bool cpo_J = vim_strchr(p_cpo, CPO_ENDOFSENT) != NULL;
+    const bool cpo_J = vim_strchr(p_cpo, kCpoEndofsent) != NULL;
 
     while (true) {              // find end of sentence
       c = gchar_pos(&pos);
@@ -989,7 +989,7 @@ int current_block(oparg_T *oap, int count, bool include, int what, int other)
   // Ignore quotes here.  Keep the "M" flag in 'cpo', as that is what the
   // user wants.
   char *save_cpo = p_cpo;
-  p_cpo = vim_strchr(p_cpo, CPO_MATCHBSL) != NULL ? "%M" : "%";
+  p_cpo = vim_strchr(p_cpo, kCpoMatchbsl) != NULL ? "%M" : "%";
   if ((pos = findmatch(NULL, what)) != NULL) {
     while (count-- > 0) {
       if ((pos = findmatch(NULL, what)) == NULL) {

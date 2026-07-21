@@ -769,7 +769,7 @@ int op_delete(oparg_T *oap)
       // marks as if it happened.
       goto setmarks;
     }
-    if (vim_strchr(p_cpo, CPO_EMPTYREGION) != NULL) {
+    if (vim_strchr(p_cpo, kCpoEmptyregion) != NULL) {
       beep_flush();
     }
     return OK;
@@ -942,7 +942,7 @@ int op_delete(oparg_T *oap)
       }
 
       // if 'cpoptions' contains '$', display '$' at end of change
-      if (vim_strchr(p_cpo, CPO_DOLLAR) != NULL
+      if (vim_strchr(p_cpo, kCpoDollar) != NULL
           && oap->op_type == OP_CHANGE
           && oap->end.lnum == curwin->w_cursor.lnum
           && !oap->is_VIsual) {
@@ -1894,7 +1894,7 @@ int do_join(size_t count, bool insert_space, bool save_undo, bool use_formatopti
   int sumsize = 0;              // size of the long new line
   int ret = OK;
   int *comments = NULL;
-  bool remove_comments = use_formatoptions && has_format_option(FO_REMOVE_COMS);
+  bool remove_comments = use_formatoptions && has_format_option(kFoRemoveComs);
   bool prev_was_comment = false;
   assert(count >= 1);
 
@@ -1939,9 +1939,9 @@ int do_join(size_t count, bool insert_space, bool save_undo, bool use_formatopti
           && *curr != ')'
           && sumsize != 0
           && endcurr1 != TAB
-          && (!has_format_option(FO_MBYTE_JOIN)
+          && (!has_format_option(kFoMbyteJoin)
               || (utf_ptr2char(curr) < 0x100 && endcurr1 < 0x100))
-          && (!has_format_option(FO_MBYTE_JOIN2)
+          && (!has_format_option(kFoMbyteJoin2)
               || (utf_ptr2char(curr) < 0x100 && !utf_eat_space(endcurr1))
               || (endcurr1 < 0x100
                   && !utf_eat_space(utf_ptr2char(curr))))) {
@@ -2062,7 +2062,7 @@ int do_join(size_t count, bool insert_space, bool save_undo, bool use_formatopti
   // Vi compatible: use the column of the first join
   // vim:             use the column of the last join
   curwin->w_cursor.col =
-    (vim_strchr(p_cpo, CPO_JOINCOL) != NULL ? currsize : col);
+    (vim_strchr(p_cpo, kCpoJoincol) != NULL ? currsize : col);
   check_cursor_col(curwin);
 
   curwin->w_cursor.coladd = 0;
@@ -3285,7 +3285,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     bool include_line_break = false;
     // Yank can be redone when 'y' is in 'cpoptions', but not when yanking
     // for the clipboard.
-    const bool redo_yank = vim_strchr(p_cpo, CPO_YANK) != NULL && !gui_yank;
+    const bool redo_yank = vim_strchr(p_cpo, kCpoYank) != NULL && !gui_yank;
 
     // Avoid a problem with unwanted linebreaks in block mode
     reset_lbr();
@@ -3334,7 +3334,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       if (cap->cmdchar == '/' || cap->cmdchar == '?') {     // was a search
         // If 'cpoptions' does not contain 'r', insert the search
         // pattern to really repeat the same command.
-        if (vim_strchr(p_cpo, CPO_REDO) == NULL) {
+        if (vim_strchr(p_cpo, kCpoRedo) == NULL) {
           AppendToRedobuffLit(cap->searchbuf, -1);
         }
         AppendToRedobuff(NL_STR);
@@ -3602,7 +3602,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     // For delete, change and yank, it's an error to operate on an
     // empty region, when 'E' included in 'cpoptions' (Vi compatible).
     empty_region_error = (oap->empty
-                          && vim_strchr(p_cpo, CPO_EMPTYREGION) != NULL);
+                          && vim_strchr(p_cpo, kCpoEmptyregion) != NULL);
 
     // Force a redraw when operating on an empty Visual region, when
     // 'modifiable is off or creating a fold.
@@ -3668,7 +3668,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         op_delete(oap);
         // save cursor line for undo if it wasn't saved yet
         if (oap->motion_type == kMTLineWise
-            && has_format_option(FO_AUTO)
+            && has_format_option(kFoAuto)
             && u_save_cursor() == OK) {
           auto_format(false, true);
         }
@@ -3724,7 +3724,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       break;
 
     case OP_FILTER:
-      if (vim_strchr(p_cpo, CPO_FILTER) != NULL) {
+      if (vim_strchr(p_cpo, kCpoFilter) != NULL) {
         AppendToRedobuff("!\r");  // Use any last used !cmd.
       } else {
         bangredo = true;  // do_bang() will put cmd in redo buffer.

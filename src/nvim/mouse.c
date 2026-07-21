@@ -612,7 +612,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
 
   pos_T end_visual = { 0 };
   pos_T start_visual = { 0 };
-  bool mouse_can_visual = ui_mouse_has(MOUSE_VISUAL);
+  bool mouse_can_visual = ui_mouse_has(kMouseVisual);
   if ((State & (MODE_NORMAL | MODE_INSERT))
       && !(mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL))) {
     if (which_button == MOUSE_LEFT && mouse_can_visual) {

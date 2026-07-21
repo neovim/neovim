@@ -668,7 +668,7 @@ static int get_line_number_attr(win_T *wp, winlinevars_T *wlv)
 /// blanks when the 'n' flag isn't in 'cpo'.
 static void draw_lnum_col(win_T *wp, winlinevars_T *wlv)
 {
-  bool has_cpo_n = vim_strchr(p_cpo, CPO_NUMCOL) != NULL;
+  bool has_cpo_n = vim_strchr(p_cpo, kCpoNumcol) != NULL;
 
   if ((wp->w_p_nu || wp->w_p_rnu)
       && (wlv->row == wlv->startrow + wlv->filler_lines || !has_cpo_n)
@@ -3268,7 +3268,7 @@ end_check:
       if (wlv.filler_todo <= 0) {
         wlv.need_showbreak = true;
       }
-      if (statuscol.draw && vim_strchr(p_cpo, CPO_NUMCOL)
+      if (statuscol.draw && vim_strchr(p_cpo, kCpoNumcol)
           && wlv.row > startrow + wlv.filler_lines) {
         statuscol.draw = false;  // don't draw status column if "n" is in 'cpo'
       }

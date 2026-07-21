@@ -617,15 +617,15 @@ void ui_check_mouse(void)
     return;
   }
 
-  int checkfor = MOUSE_NORMAL;  // assume normal mode
+  int checkfor = kMouseNormal;  // assume normal mode
   if (Visual.active) {
-    checkfor = MOUSE_VISUAL;
+    checkfor = kMouseVisual;
   } else if (State == MODE_HITRETURN || State == MODE_ASKMORE || State == MODE_SETWSIZE) {
-    checkfor = MOUSE_RETURN;
+    checkfor = kMouseReturn;
   } else if (State & MODE_INSERT) {
-    checkfor = MOUSE_INSERT;
+    checkfor = kMouseInsert;
   } else if (State & MODE_CMDLINE) {
-    checkfor = MOUSE_COMMAND;
+    checkfor = kMouseCommand;
   } else if (State == MODE_EXTERNCMD) {
     checkfor = ' ';  // don't use mouse for ":!cmd"
   }
@@ -652,8 +652,8 @@ bool ui_mouse_has(int mode)
       }
 
       break;
-    case MOUSE_HELP:
-      if (mode != MOUSE_RETURN && curbuf->b_help) {
+    case kMouseHelp:
+      if (mode != kMouseReturn && curbuf->b_help) {
         return true;
       }
 

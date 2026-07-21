@@ -3533,7 +3533,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
         //  - there is an old swapfile for the current file
         //  - the buffer was not recovered
         if (!differ && !(curbuf->b_flags & BF_RECOVERED)
-            && vim_strchr(p_shm, SHM_ATTENTION) == NULL) {
+            && vim_strchr(p_shm, kShmAttention) == NULL) {
           sea_choice_T choice = SEA_CHOICE_NONE;
 
           // It's safe to delete the swapfile if all these are true:

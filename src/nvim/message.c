@@ -501,7 +501,7 @@ char *msg_strtrunc(const char *s, int force)
   char *buf = NULL;
 
   // May truncate message to avoid a hit-return prompt
-  if ((!msg_scroll && !need_wait_return && shortmess(SHM_TRUNCALL)
+  if ((!msg_scroll && !need_wait_return && shortmess(kShmTruncall)
        && !exmode_active && msg_silent == 0 && !ui_has(kUIMessages))
       || force) {
     int room;
@@ -1072,7 +1072,7 @@ char *msg_may_trunc(bool force, char *s)
   // just in case.
   int room = (Rows - cmdline_row - 1) * Columns + sc_col - 1;
   if (room > 0
-      && (force || (shortmess(SHM_TRUNC) && !exmode_active))
+      && (force || (shortmess(kShmTrunc) && !exmode_active))
       && (int)strlen(s) - room > 0) {
     int size = vim_strsize(s);
 

@@ -305,7 +305,13 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
     goto err;
   });
 
-  return optval_as_object(value);
+  Object rv = optval_as_object(value);
+  // kOptValTypeDict serializes into a fresh Object string (not aliased like a plain string), so
+  // its keyset must be freed here.
+  if (value.type == kOptValTypeDict) {
+    optval_free(value);
+  }
+  return rv;
 err:
   optval_free(value);
   return (Object)OBJECT_INIT;
@@ -397,6 +403,10 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
   case kOptValTypeBoolean:
     merged_val = optval_right;
     break;
+  case kOptValTypeDict:
+    // Unreachable: object_as_optval_for() yields the string form for dict options, which is
+    // merged as a string (below) and reified by set_option().
+    break;
   }
 
   optval_free(optval_right);
@@ -416,27 +426,10 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
     });
   }
 
-  if (merged_val.type == kOptValTypeString) {
-    // Convert string/list/map style option to a (Lua) structure.
-    Error lua_err = ERROR_INIT;
-    MAXSIZE_TEMP_ARRAY(lua_args, 2);
-    ADD_C(lua_args, STRING_OBJ(name));
-    ADD_C(lua_args, STRING_OBJ(merged_val.data.string));
-    Object lua_val =
-      NLUA_EXEC_STATIC("return require('vim._core.options').convert_value_to_lua(...)",
-                       lua_args, kRetObject, arena, &lua_err);
-
-    optval_free(merged_val);
-
-    VALIDATE(!ERROR_SET(&lua_err), "%s", lua_err.msg, {
-      api_clear_error(&lua_err);
-      return NIL;
-    });
-
-    return lua_val;
-  }
-
-  return optval_as_object(merged_val);
+  // Return the value in its structured (list/map/set) form.
+  Object rv = optval_to_struct(opt_idx, merged_val, arena);
+  optval_free(merged_val);
+  return rv;
 }
 
 /// Gets the option information for all options.

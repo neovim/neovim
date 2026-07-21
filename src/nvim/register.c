@@ -1094,7 +1094,7 @@ void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
     // Concatenate the last line of the old block with the first line of
     // the new block, unless being Vi compatible.
     if (curr->y_type == kMTCharWise
-        && vim_strchr(p_cpo, CPO_REGAPPEND) == NULL) {
+        && vim_strchr(p_cpo, kCpoRegappend) == NULL) {
       char *pnew = xmalloc(curr->y_array[curr->y_size - 1].size
                            + reg->y_array[0].size + 1);
       j--;

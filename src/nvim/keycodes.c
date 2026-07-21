@@ -694,7 +694,7 @@ int get_mouse_button(int code, bool *is_click, bool *is_drag)
 /// `<C-H>` => 0x08.
 ///
 /// When "flags" has REPTERM_FROM_PART, trailing <C-v> is included, otherwise it is removed (to make
-/// ":map xx ^V" map xx to nothing). When cpo_val contains CPO_BSLASH, a backslash can be used in
+/// ":map xx ^V" map xx to nothing). When cpo_val contains kCpoBslash, a backslash can be used in
 /// place of <C-v>. All other <C-v> characters are removed.
 ///
 /// @param[in]  from  What characters to replace.
@@ -709,7 +709,7 @@ int get_mouse_button(int code, bool *is_click, bool *is_drag)
 ///                    REPTERM_NO_SPECIAL   do not accept <key> notation
 ///                    REPTERM_NO_SIMPLIFY  do not simplify <C-H> into 0x08, etc.
 /// @param[out]  did_simplify  set when some <C-H> code was simplified, unless it is NULL.
-/// @param[in]  cpo_val  The value of 'cpoptions' to use. Only CPO_BSLASH matters.
+/// @param[in]  cpo_val  The value of 'cpoptions' to use. Only kCpoBslash matters.
 ///
 /// @return  The same as what `*bufp` is set to.
 char *replace_termcodes(const char *const from, const size_t from_len, char **const bufp,
@@ -721,7 +721,7 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
   const char *const end = from + from_len - 1;
 
   // backslash is a special character
-  const bool do_backslash = (vim_strchr(cpo_val, CPO_BSLASH) == NULL);
+  const bool do_backslash = (vim_strchr(cpo_val, kCpoBslash) == NULL);
   const bool do_special = !(flags & REPTERM_NO_SPECIAL);
 
   bool allocated = (*bufp == NULL);

@@ -159,6 +159,7 @@ static char *p_vsts_nopaste;
 // ignored and they are not printed.
 
 #include "options.generated.h"
+#include "options_keysets.generated.h"
 #include "options_map.generated.h"
 
 static int p_bin_dep_opts[] = {
@@ -471,6 +472,19 @@ static void alloc_options_default(void)
 {
   for (OptIndex opt_idx = 0; opt_idx < kOptCount; opt_idx++) {
     options[opt_idx].def_val = optval_copy(options[opt_idx].def_val);
+
+    // A dict option declares its default as a ":set" string (options.lua). Reify it into a
+    // keyset once here, so the default is a keyset, for reset and ":set opt&".
+    if (option_has_type(opt_idx, kOptValTypeDict)
+        && options[opt_idx].def_val.type == kOptValTypeString) {
+      const char *emsg = NULL;
+      OptVal reified = opt_dict_from_string(opt_idx, options[opt_idx].def_val.data.string.data,
+                                            NULL, 0, &emsg);
+      assert(emsg == NULL);  // A built-in default must be valid.
+      (void)emsg;
+      optval_free(options[opt_idx].def_val);
+      options[opt_idx].def_val = reified;
+    }
   }
 }
 
@@ -1446,6 +1460,15 @@ OptVal get_option_newval(OptIndex opt_idx, int opt_flags, set_prefix_T prefix, c
     newval = CSTR_AS_OPTVAL(newval_str);
     break;
   }
+  case kOptValTypeDict: {
+    // Merge at the string level (serialize the old keyset, apply =/+=/-=); set_option() reifies and
+    // validates the result. stropt_get_newval() doesn't dereference varp except for 'keywordprg'.
+    char *oldval_str = opt_serialize(oldval.data.dictval.ptr, oldval.data.dictval.table);
+    char *newval_str = stropt_get_newval(opt_idx, argp, varp, oldval_str, &op);
+    xfree(oldval_str);
+    newval = CSTR_AS_OPTVAL(newval_str);
+    break;
+  }
   }
 
   return newval;
@@ -2009,20 +2032,17 @@ bool parse_winhl_opt(const char *winhl, win_T *wp)
     }
   }
 
-  while (*p) {
-    const char *colon = strchr(p, ':');
-    if (!colon) {
-      return false;
+  const char *key, *val;
+  size_t keylen, vallen;
+  while (option_next_keyval(&p, &key, &keylen, &val, &vallen)) {
+    if (val == NULL) {
+      return false;  // every part must be "group:hl"
     }
-    size_t nlen = (size_t)(colon - p);
-    const char *hi = colon + 1;
-    const char *commap = xstrchrnul(hi, ',');
-    size_t len = (size_t)(commap - hi);
-    int hl_id = len ? syn_check_group(hi, len) : -1;
+    int hl_id = vallen ? syn_check_group(val, vallen) : -1;
     if (hl_id == 0) {
       return false;
     }
-    int hl_id_link = nlen ? syn_check_group(p, nlen) : 0;
+    int hl_id_link = keylen ? syn_check_group(key, keylen) : 0;
     if (hl_id_link == 0) {
       return false;
     }
@@ -2032,8 +2052,6 @@ bool parse_winhl_opt(const char *winhl, win_T *wp)
       attrs.rgb_ae_attr |= HL_GLOBAL;
       ns_hl_def(ns_hl, hl_id_link, attrs, hl_id, NULL);
     }
-
-    p = *commap ? commap + 1 : "";
   }
 
   if (wp != NULL) {
@@ -2118,6 +2136,12 @@ void apply_optionset_autocmd_now(OptIndex opt_idx, int opt_flags, OptVal oldval,
   }
   apply_autocmds(EVENT_OPTIONSET, options[opt_idx].fullname, NULL, false, NULL);
   reset_v_option_vars();
+
+  // set_vim_var_tv() copied each typval, so release the strings optval_as_tv() freshly allocated.
+  optval_as_tv_free(oldval, oldval_tv);
+  optval_as_tv_free(oldval_g, oldval_g_tv);
+  optval_as_tv_free(oldval_l, oldval_l_tv);
+  optval_as_tv_free(newval, newval_tv);
 }
 
 /// For 'modified', the event is deferred.
@@ -3338,6 +3362,86 @@ OptIndex find_option(const char *const name)
   return find_option_len(name, strlen(name));
 }
 
+/// Free the owned resources of a dict option value: its `String` fields and the keyset.
+static void opt_dict_free(OptDict s)
+{
+  if (s.ptr == NULL) {
+    return;
+  }
+  for (const KeySetLink *f = s.table; f->str != NULL; f++) {
+    if (f->type == kObjectTypeString) {
+      api_free_string(*(String *)((char *)s.ptr + f->ptr_off));
+    }
+  }
+  xfree(s.ptr);
+}
+
+/// Deep-copy a dict option value (keyset + its `String` fields).
+static OptDict opt_dict_dup(OptDict s)
+{
+  if (s.ptr == NULL) {
+    return s;
+  }
+  void *ptr = xmemdup(s.ptr, s.size);
+  for (const KeySetLink *f = s.table; f->str != NULL; f++) {
+    if (f->type == kObjectTypeString) {
+      String *field = (String *)((char *)ptr + f->ptr_off);
+      *field = copy_string(*field, NULL);
+    }
+  }
+  return (OptDict){ ptr, s.table, s.size };
+}
+
+/// Compare two dict option values: same keys present (`is_set_`) and same field values.
+static bool opt_dict_equal(OptDict a, OptDict b)
+{
+  if (a.ptr == NULL || b.ptr == NULL) {
+    return a.ptr == b.ptr;
+  }
+  for (const KeySetLink *f = a.table; f->str != NULL; f++) {
+    const void *fa = (const char *)a.ptr + f->ptr_off;
+    const void *fb = (const char *)b.ptr + f->ptr_off;
+    switch (f->type) {
+    case kObjectTypeInteger:
+      if (*(const Integer *)fa != *(const Integer *)fb) {
+        return false;
+      }
+      break;
+    case kObjectTypeString: {
+      const String *sa = fa;
+      const String *sb = fb;
+      if (sa->size != sb->size || (sa->size != 0 && memcmp(sa->data, sb->data, sa->size) != 0)) {
+        return false;
+      }
+      break;
+    }
+    default:  // Boolean and other scalars
+      if (*(const Boolean *)fa != *(const Boolean *)fb) {
+        return false;
+      }
+      break;
+    }
+  }
+  // is_set__<abbr>_ (OptionalKeys) is the first member of every keyset.
+  return *(const OptionalKeys *)a.ptr == *(const OptionalKeys *)b.ptr;
+}
+
+/// Validate a ":set" string against a dict option's grammar and reify it into a fresh
+/// heap keyset. On success returns an owned struct OptVal; on failure sets `errmsg` and returns Nil.
+static OptVal opt_dict_from_string(OptIndex opt_idx, const char *str, char *errbuf,
+                                   size_t errbuflen, const char **errmsg)
+{
+  const OptDictInfo *si = opt_dict_info(opt_idx);
+  const char *err = opt_strings_check(str, si->schema, errbuf, errbuflen);
+  if (err != NULL) {
+    *errmsg = err;
+    return NIL_OPTVAL;
+  }
+  void *ptr = xcalloc(1, si->size);
+  opt_fill(str, si->get_field, ptr);
+  return (OptVal){ .type = kOptValTypeDict, .data.dictval = { ptr, si->table, si->size } };
+}
+
 /// Free an allocated OptVal.
 void optval_free(OptVal o)
 {
@@ -3352,6 +3456,9 @@ void optval_free(OptVal o)
       api_free_string(o.data.string);
     }
     break;
+  case kOptValTypeDict:
+    opt_dict_free(o.data.dictval);
+    break;
   }
 }
 
@@ -3365,6 +3472,9 @@ OptVal optval_copy(OptVal o)
     return o;
   case kOptValTypeString:
     return STRING_OPTVAL(copy_string(o.data.string, NULL));
+  case kOptValTypeDict:
+    return (OptVal){ .type = kOptValTypeDict,
+                     .data.dictval = opt_dict_dup(o.data.dictval) };
   }
   UNREACHABLE;
 }
@@ -3387,6 +3497,8 @@ bool optval_equal(OptVal o1, OptVal o2)
     return o1.data.string.size == o2.data.string.size
            && (o1.data.string.data == o2.data.string.data
                || strnequal(o1.data.string.data, o2.data.string.data, o1.data.string.size));
+  case kOptValTypeDict:
+    return opt_dict_equal(o1.data.dictval, o2.data.dictval);
   }
   UNREACHABLE;
 }
@@ -3423,6 +3535,13 @@ OptVal optval_from_varp(OptIndex opt_idx, void *varp)
     return NUMBER_OPTVAL(*(OptInt *)varp);
   case kOptValTypeString:
     return STRING_OPTVAL(cstr_as_string(*(char **)varp));
+  case kOptValTypeDict: {
+    // Alias the stored keyset (like the string case aliases the stored char*): free frees it, copy
+    // dupes it. The table/size travel with the value so free/copy need no option index.
+    const OptDictInfo *si = opt_dict_info(opt_idx);
+    return (OptVal){ .type = kOptValTypeDict,
+                     .data.dictval = { *(void **)varp, si->table, si->size } };
+  }
   }
   UNREACHABLE;
 }
@@ -3454,6 +3573,11 @@ static void set_option_varp(OptIndex opt_idx, void *varp, OptVal value, bool fre
   case kOptValTypeString:
     *(char **)varp = value.data.string.data;
     return;
+  case kOptValTypeDict:
+    // Move the keyset pointer in (ownership transfers, like the string case). The old value was
+    // already freed above when free_oldval is set.
+    *(void **)varp = value.data.dictval.ptr;
+    return;
   }
   UNREACHABLE;
 }
@@ -3474,6 +3598,14 @@ static char *optval_to_cstr(OptVal o)
   case kOptValTypeString: {
     char *buf = xmalloc(o.data.string.size + 3);
     snprintf(buf, o.data.string.size + 3, "\"%s\"", o.data.string.data);
+    return buf;
+  }
+  case kOptValTypeDict: {
+    char *s = opt_serialize(o.data.dictval.ptr, o.data.dictval.table);
+    size_t len = strlen(s);
+    char *buf = xmalloc(len + 3);
+    snprintf(buf, len + 3, "\"%s\"", s);
+    xfree(s);
     return buf;
   }
   }
@@ -3499,8 +3631,94 @@ Object optval_as_object(OptVal o)
     return INTEGER_OBJ(o.data.number);
   case kOptValTypeString:
     return STRING_OBJ(o.data.string);
+  case kOptValTypeDict:
+    // The API surfaces the string form; the returned Object owns a fresh serialization.
+    return STRING_OBJ(cstr_as_string(opt_serialize(o.data.dictval.ptr, o.data.dictval.table)));
   }
   UNREACHABLE;
+}
+
+/// Converts an option value to its structured form.
+///
+/// @return Object allocated in `arena`.
+Object optval_to_struct(OptIndex opt_idx, OptVal value, Arena *arena)
+{
+  if (value.type != kOptValTypeString && value.type != kOptValTypeDict) {
+    return optval_as_object(value);  // boolean/number/nil scalar
+  }
+
+  const uint32_t flags = options[opt_idx].flags;
+  const OptSchemaItem *schema = options[opt_idx].schema;
+
+  bool owned = false;
+  char *str;
+  if (value.type == kOptValTypeDict) {
+    str = opt_serialize(value.data.dictval.ptr, value.data.dictval.table);
+    owned = true;
+  } else {
+    str = value.data.string.data != NULL ? value.data.string.data : "";
+  }
+
+  Object rv;
+  // Plain string option: no list/map structure.
+  if (!(flags & (kOptFlagComma | kOptFlagFlagList))) {
+    rv = STRING_OBJ(CSTR_TO_ARENA_STR(arena, str));
+  } else if ((flags & kOptFlagFlagList) && !(flags & kOptFlagComma)) {
+    // Single-char flag list, e.g. 'shortmess': each character is a flag.
+    size_t n = strlen(str);
+    Dict d = arena_dict(arena, n);
+    for (size_t i = 0; i < n; i++) {
+      PUT_C(d, arena_memdupz(arena, &str[i], 1), BOOLEAN_OBJ(true));
+    }
+    rv = DICT_OBJ(d);
+  } else {
+    // Comma-separated list/map/set. Upper-bound the item count for arena sizing.
+    size_t nparts = 1;
+    for (char *p = str; *p != NUL; p++) {
+      nparts += (*p == ',');
+    }
+    const bool as_map = (flags & kOptFlagColon) || (flags & kOptFlagFlagList) || schema != NULL;
+    Dict d = as_map ? arena_dict(arena, nparts) : (Dict)ARRAY_DICT_INIT;
+    Array a = as_map ? (Array)ARRAY_DICT_INIT : arena_array(arena, nparts);
+    char *item = xmalloc(strlen(str) + 1);
+    for (char *p = str; *p != NUL;) {
+      copy_option_part(&p, item, strlen(str) + 1, ",");
+      if (*item == NUL) {
+        continue;  // skip empty parts, e.g. "a,,b"
+      }
+      if (!as_map) {
+        // Note: the raw string preserves the ",," literal-comma convention (e.g. 'isfname'); the
+        // structured view splits on every comma and does not reconstruct literal commas.
+        ADD_C(a, STRING_OBJ(CSTR_TO_ARENA_STR(arena, item)));
+        continue;
+      }
+      char *colon = strchr(item, ':');
+      char *val = NULL;
+      if (colon != NULL) {
+        *colon = NUL;
+        val = colon + 1;
+      }
+      String key = CSTR_TO_ARENA_STR(arena, item);
+      Object v;
+      if (flags & kOptFlagFlagList) {
+        v = BOOLEAN_OBJ(true);  // comma flag list ('whichwrap'): each item is a flag
+      } else if (val == NULL) {
+        v = BOOLEAN_OBJ(true);  // bare flag in a typed/colon map
+      } else {
+        // A key's value stays a string, even for a num/enum key: option sub-value types are not a
+        // stable contract (Vim options are "stringly typed"), so we expose structure, not types.
+        v = STRING_OBJ(CSTR_TO_ARENA_STR(arena, val));
+      }
+      PUT_C(d, key.data, v);
+    }
+    xfree(item);
+    rv = as_map ? DICT_OBJ(d) : ARRAY_OBJ(a);
+  }
+
+  if (owned) {
+    xfree(str);
+  }
+  return rv;
 }
 
 /// Convert an API Object to an OptVal.
@@ -3537,7 +3755,9 @@ OptVal object_as_optval_for(OptIndex opt_idx, Object o, set_op_T op, bool *error
 
   const uint32_t flags = options[opt_idx].flags;
   const bool is_list = flags & (kOptFlagComma | kOptFlagFlagList);
-  const bool is_map = flags & kOptFlagColon;          // "key:value" list, e.g. 'listchars'.
+  // "key:value" list, e.g. 'listchars', or a dict option, e.g. 'breakindentopt' (which
+  // accepts a Dict even without kOptFlagColon, mirroring optval_to_struct()'s `as_map`).
+  const bool is_map = (flags & kOptFlagColon) || option_has_type(opt_idx, kOptValTypeDict);
   const bool is_flaglist = flags & kOptFlagFlagList;  // single-char flag list, e.g. 'shortmess'.
   const bool is_comma = flags & kOptFlagComma;
   const bool allow_dup = !(flags & kOptFlagNoDup);
@@ -3552,7 +3772,9 @@ OptVal object_as_optval_for(OptIndex opt_idx, Object o, set_op_T op, bool *error
     type_ok = option_has_type(opt_idx, kOptValTypeNumber);
     break;
   case kObjectTypeString:
+    // Struct-stored options take their ":set" string here; set_option() reifies it.
     type_ok = option_has_type(opt_idx, kOptValTypeString)
+              || option_has_type(opt_idx, kOptValTypeDict)
               || opt_idx == kOptWildchar || opt_idx == kOptWildcharm;
     break;
   case kObjectTypeArray:
@@ -3620,6 +3842,17 @@ OptVal object_as_optval_for(OptIndex opt_idx, Object o, set_op_T op, bool *error
         char *kv = concat_str(k.data, ":");
         GA_APPEND(char *, &ga, concat_str(kv, v.data.string.data));
         xfree(kv);
+      } else if (v.type == kObjectTypeInteger) {
+        // Typed map value, e.g. 'diffopt' `{ context = 4 }` -> "context:4".
+        char buf[NUMBUFLEN];
+        snprintf(buf, sizeof(buf), ":%" PRId64, (int64_t)v.data.integer);
+        char *kv = concat_str(k.data, buf);
+        GA_APPEND(char *, &ga, kv);
+      } else if (v.type == kObjectTypeBoolean || v.type == kObjectTypeNil) {
+        // Bare flag in a typed map, e.g. 'diffopt' `{ internal = true }` -> "internal".
+        if (v.type == kObjectTypeBoolean && v.data.boolean) {
+          GA_APPEND(char *, &ga, xstrdup(k.data));
+        }
       } else {
         *error = true;
         GA_DEEP_CLEAR_PTR(&ga);
@@ -4047,6 +4280,19 @@ static const char *set_option(const OptIndex opt_idx, OptVal value, int opt_flag
   assert(opt_idx != kOptInvalid);
 
   const char *errmsg = NULL;
+
+  // Struct-stored options keep a reified keyset as the stored value. Every set path (":set", the
+  // API, Vimscript, a merge) funnels through here as a ":set" string; validate and reify it once,
+  // the single choke point. Reset-to-default/global (":set opt&/<") already produces a keyset.
+  if (value.type == kOptValTypeString && option_has_type(opt_idx, kOptValTypeDict)) {
+    OptVal reified = opt_dict_from_string(opt_idx, value.data.string.data, errbuf, errbuflen,
+                                          &errmsg);
+    optval_free(value);
+    if (errmsg != NULL) {
+      return errmsg;
+    }
+    value = reified;
+  }
 
   if (!direct) {
     errmsg = validate_option_value(opt_idx, &value, opt_flags, errbuf, errbuflen);
@@ -4862,6 +5108,16 @@ static int put_set(FILE *fd, char *cmd, OptIndex opt_idx, void *varp)
     xfree(part);
     return FAIL;
   }
+  case kOptValTypeDict: {
+    // Written back as its ":set" string, e.g. `set diffopt=internal,filler,...`.
+    char *value_str = opt_serialize(value.data.dictval.ptr, value.data.dictval.table);
+    bool ok = fprintf(fd, "%s %s=", cmd, name) >= 0 && put_escstr(fd, value_str, 2) == OK;
+    xfree(value_str);
+    if (!ok) {
+      return FAIL;
+    }
+    break;
+  }
   }
 
   if (put_eol(fd) < 0) {
@@ -5335,6 +5591,21 @@ static char *copy_option_val(const char *val)
   return xstrdup(val);
 }
 
+/// Deep-copy a dict (keyset) window/buffer option value, or NULL.
+static void *copy_opt_dict(void *keyset, OptIndex opt_idx)
+{
+  const OptDictInfo *si = opt_dict_info(opt_idx);
+  return opt_dict_dup((OptDict){ keyset, si->table, si->size }).ptr;
+}
+
+/// Free a dict option value and clear the pointer.
+static void clear_opt_dict(void **keyset, OptIndex opt_idx)
+{
+  const OptDictInfo *si = opt_dict_info(opt_idx);
+  opt_dict_free((OptDict){ *keyset, si->table, si->size });
+  *keyset = NULL;
+}
+
 /// Copy the options from one winopt_T to another.
 /// Doesn't free the old option values in "to", use clear_winopt() for that.
 /// The 'scroll' option is not copied, because it depends on the window height.
@@ -5359,7 +5630,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_wrap_save = from->wo_wrap_save;
   to->wo_lbr = from->wo_lbr;
   to->wo_bri = from->wo_bri;
-  to->wo_briopt = copy_option_val(from->wo_briopt);
+  to->wo_briopt = copy_opt_dict(from->wo_briopt, kOptBreakindentopt);
   to->wo_scb = from->wo_scb;
   to->wo_scb_save = from->wo_scb_save;
   to->wo_sms = from->wo_sms;
@@ -5435,7 +5706,7 @@ static void check_winopt(winopt_T *wop)
   check_string_option(&wop->wo_culopt);
   check_string_option(&wop->wo_cc);
   check_string_option(&wop->wo_cocu);
-  check_string_option(&wop->wo_briopt);
+  // wo_briopt: keyset (may be NULL until set); briopt_check() handles NULL.
   check_string_option(&wop->wo_winhl);
   check_string_option(&wop->wo_lcs);
   check_string_option(&wop->wo_fcs);
@@ -5463,7 +5734,7 @@ void clear_winopt(winopt_T *wop)
   clear_string_option(&wop->wo_culopt);
   clear_string_option(&wop->wo_cc);
   clear_string_option(&wop->wo_cocu);
-  clear_string_option(&wop->wo_briopt);
+  clear_opt_dict((void **)&wop->wo_briopt, kOptBreakindentopt);
   clear_string_option(&wop->wo_winhl);
   clear_string_option(&wop->wo_lcs);
   clear_string_option(&wop->wo_fcs);
@@ -5481,7 +5752,7 @@ void didset_window_options(win_T *wp, bool valid_cursor)
     wp->w_skipcol = 0;
   }
   check_colorcolumn(NULL, wp);
-  briopt_check(NULL, wp);
+  briopt_check(wp);
   fill_culopt_flags(NULL, wp);
   set_chars_option(wp, wp->w_p_fcs, kFillchars, true, NULL, 0);
   set_chars_option(wp, wp->w_p_lcs, kListchars, true, NULL, 0);
@@ -5522,10 +5793,10 @@ void buf_copy_options(buf_T *buf, int flags)
     //     X         no          no        no      true
     //    no         yes         no         X      true
     ///
-    if ((vim_strchr(p_cpo, CPO_BUFOPTGLOB) == NULL || !(flags & BCO_ENTER))
+    if ((vim_strchr(p_cpo, kCpoBufoptglob) == NULL || !(flags & BCO_ENTER))
         && (buf->b_p_initialized
             || (!(flags & BCO_ENTER)
-                && vim_strchr(p_cpo, CPO_BUFOPT) != NULL))) {
+                && vim_strchr(p_cpo, kCpoBufopt) != NULL))) {
       should_copy = false;
     }
 
@@ -6264,6 +6535,14 @@ int ExpandSettingSubtract(expand_T *xp, regmatch_T *regmatch, int *numMatches, c
                                                           expand_option_flags,
                                                           curbuf, curwin);
 
+  // A dict option's varp holds a keyset; expand on its serialized string form instead.
+  char *option_serialized = NULL;
+  if (option_has_type(expand_option_idx, kOptValTypeDict)) {
+    option_serialized = opt_serialize((void *)option_val,
+                                      opt_dict_info(expand_option_idx)->table);
+    option_val = option_serialized;
+  }
+
   uint32_t option_flags = options[expand_option_idx].flags;
 
   if (option_has_type(expand_option_idx, kOptValTypeNumber)) {
@@ -6275,11 +6554,13 @@ int ExpandSettingSubtract(expand_T *xp, regmatch_T *regmatch, int *numMatches, c
     // kOptFlagComma and kOptFlagFlagList.
 
     if (*option_val == NUL) {
+      xfree(option_serialized);
       return FAIL;
     }
 
     // Make a copy as we need to inject null characters destructively.
     char *option_copy = xstrdup(option_val);
+    xfree(option_serialized);  // struct form copied into option_copy; no longer needed
     char *next_val = option_copy;
 
     garray_T ga;
@@ -6381,6 +6662,10 @@ static void option_value2string(vimoption_T *opt, int opt_flags)
                "%" PRId64,
                (int64_t)(*(OptInt *)varp));
     }
+  } else if (option_has_type(get_opt_idx(opt), kOptValTypeDict)) {
+    char *str = opt_serialize(*(void **)varp, opt_dict_info(get_opt_idx(opt))->table);
+    xstrlcpy(NameBuff, str, MAXPATHL);
+    xfree(str);
   } else {  // string
     varp = *(char **)varp;
 
@@ -6760,6 +7045,73 @@ size_t copy_option_part(char **option, char *buf, size_t maxlen, char *sep_chars
   return len;
 }
 
+/// Iterates comma-separated parts of option, splitting each part at its first ':' into key/value.
+/// The returned pointers are slices into the original string: for simple "key:value" list options
+/// like 'winhighlight' and 'previewpopup', but not 'listchars'/'fillchars' whose values need
+/// decoding.
+///
+/// Slices are paired lengths; copy with xmemcpyz() if you need a NUL-terminated string.
+///
+/// A part with no ':' yields `*val == NULL`, i.e. a bare flag such as 'diffopt' "filler". An empty
+/// part (from "a,,b" or a leading ',') yields "*keylen == 0" with "*val == NULL"; the caller
+/// decides if that is an error (strict key:value options, but not 'diffopt').
+///
+/// Drive it with a loop, advancing `*p` each step:
+///
+///      const char *key, *val;
+///      size_t keylen, vallen;
+///      for (const char *p = value; option_next_keyval(&p, &key, &keylen, &val, &vallen);) {
+///        ...
+///      }
+///
+/// @param[in,out] p       Cursor into the option string; advanced past the part.
+/// @param[out] key        Start of the key slice.
+/// @param[out] keylen     Length of the key slice.
+/// @param[out] val        Start of the value slice, or NULL if the part had no ':'.
+/// @param[out] vallen     Length of the value slice (0 when "*val" is NULL).
+///
+/// @return true if a part was returned, false at the end of the string.
+bool option_next_keyval(const char **p, const char **key, size_t *keylen, const char **val,
+                        size_t *vallen)
+  FUNC_ATTR_NONNULL_ALL
+{
+  const char *s = *p;
+  if (*s == NUL) {
+    return false;
+  }
+
+  const char *comma = vim_strchr(s, ',');
+  const char *end = comma != NULL ? comma : s + strlen(s);
+  const char *colon = vim_strchr(s, ':');
+
+  *key = s;
+  if (colon != NULL && colon < end) {
+    *keylen = (size_t)(colon - s);
+    *val = colon + 1;
+    *vallen = (size_t)(end - (colon + 1));
+  } else {
+    *keylen = (size_t)(end - s);
+    *val = NULL;
+    *vallen = 0;
+  }
+
+  *p = comma != NULL ? comma + 1 : end;
+  return true;
+}
+
+/// Compare a (non-NUL-terminated) slice from option_next_keyval() against a name.
+///
+/// @param slice     Start of the slice; may be NULL (e.g. a bare flag's value).
+/// @param slicelen  Length of the slice.
+/// @param name      NUL-terminated name to match.
+///
+/// @return true if "slice[0..slicelen)" equals "name".
+bool option_slice_eq(const char *slice, size_t slicelen, const char *name)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return slice != NULL && strlen(name) == slicelen && strncmp(slice, name, slicelen) == 0;
+}
+
 /// Return true when 'shell' has "csh" in the tail.
 int csh_like_shell(void)
 {
@@ -6786,8 +7138,11 @@ dict_T *get_winbuf_options(const int bufopt)
       void *varp = get_varp(opt);
 
       if (varp != NULL) {
-        typval_T opt_tv = optval_as_tv(optval_from_varp(opt_idx, varp), true);
+        OptVal value = optval_from_varp(opt_idx, varp);
+        typval_T opt_tv = optval_as_tv(value, true);
         tv_dict_add_tv(d, opt->fullname, strlen(opt->fullname), &opt_tv);
+        // tv_dict_add_tv() copied the typval, so release any string optval_as_tv() allocated.
+        optval_as_tv_free(value, opt_tv);
       }
     }
   }

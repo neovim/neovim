@@ -3409,6 +3409,10 @@ int eval_option(const char **const arg, typval_T *const rettv, const bool evalua
     assert(value.type != kOptValTypeNil);
 
     *rettv = optval_as_tv(value, true);
+    // A dict option serializes into a fresh typval string that rettv now owns, so free its keyset.
+    if (value.type == kOptValTypeDict) {
+      optval_free(value);
+    }
   } else if (working && !is_tty_opt && is_option_hidden(opt_idx)) {
     ret = FAIL;
   }

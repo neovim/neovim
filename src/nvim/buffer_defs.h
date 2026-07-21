@@ -92,7 +92,7 @@ typedef struct {
 #define w_p_arab w_onebuf_opt.wo_arab  // 'arabic'
   int wo_bri;
 #define w_p_bri w_onebuf_opt.wo_bri    // 'breakindent'
-  char *wo_briopt;
+  struct OptKeyDict_briopt *wo_briopt;  // 'breakindentopt'
 #define w_p_briopt w_onebuf_opt.wo_briopt  // 'breakindentopt'
   int wo_diff;
 #define w_p_diff w_onebuf_opt.wo_diff  // 'diff'

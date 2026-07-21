@@ -386,33 +386,44 @@ static int sps_limit = 9999;      ///< max nr of suggestions given
 /// Sets "sps_flags" and "sps_limit".
 int spell_check_sps(void)
 {
-  char buf[MAXPATHL];
-
   sps_flags = 0;
   sps_limit = 9999;
 
-  for (char *p = p_sps; *p != NUL;) {
-    copy_option_part(&p, buf, MAXPATHL, ",");
-
+  const char *key, *val;
+  size_t keylen, vallen;
+  for (const char *p = p_sps; option_next_keyval(&p, &key, &keylen, &val, &vallen);) {
     int f = 0;
-    if (ascii_isdigit(*buf)) {
-      char *s = buf;
-      sps_limit = getdigits_int(&s, true, 0);
-      if (*s != NUL && !ascii_isdigit(*s)) {
+    if (val == NULL) {
+      // A bare number is the suggestion limit.
+      if (keylen > 0 && ascii_isdigit((uint8_t)(*key))) {
+        char *s = (char *)key;
+        sps_limit = getdigits_int(&s, true, 0);
+        if (s != key + keylen) {  // trailing non-digits
+          f = -1;
+        }
+      } else if (option_slice_eq(key, keylen, "best")) {
+        f = SPS_BEST;
+      } else if (option_slice_eq(key, keylen, "fast")) {
+        f = SPS_FAST;
+      } else if (option_slice_eq(key, keylen, "double")) {
+        f = SPS_DOUBLE;
+      } else {
         f = -1;
       }
-      // Note: Keep this in sync with opt_sps_values.
-    } else if (strcmp(buf, "best") == 0) {
-      f = SPS_BEST;
-    } else if (strcmp(buf, "fast") == 0) {
-      f = SPS_FAST;
-    } else if (strcmp(buf, "double") == 0) {
-      f = SPS_DOUBLE;
-    } else if (strncmp(buf, "expr:", 5) != 0
-               && strncmp(buf, "file:", 5) != 0
-               && (strncmp(buf, "timeout:", 8) != 0
-                   || (!ascii_isdigit(buf[8])
-                       && !(buf[8] == '-' && ascii_isdigit(buf[9]))))) {
+    } else if (option_slice_eq(key, keylen, "expr") || option_slice_eq(key, keylen, "file")) {
+      // Value is an expression/filename, consumed later in spell_find_suggest().
+    } else if (option_slice_eq(key, keylen, "timeout")) {
+      // Optional leading '-', then at least one digit.
+      const char *v = val;
+      size_t vl = vallen;
+      if (vl > 0 && *v == '-') {
+        v++;
+        vl--;
+      }
+      if (vl == 0 || !ascii_isdigit((uint8_t)(*v))) {
+        f = -1;
+      }
+    } else {
       f = -1;
     }
 

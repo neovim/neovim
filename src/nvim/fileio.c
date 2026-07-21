@@ -124,7 +124,7 @@ void filemess(buf_T *buf, char *name, char *s)
   // For further ones overwrite the previous one, reset msg_scroll before
   // calling filemess().
   int msg_scroll_save = msg_scroll;
-  if (shortmess(SHM_OVERALL) && !msg_listdo_overwrite && !exiting && p_verbose == 0) {
+  if (shortmess(kShmOverall) && !msg_listdo_overwrite && !exiting && p_verbose == 0) {
     msg_scroll = false;
   }
   if (!msg_scroll) {    // wait a bit when overwriting an error msg
@@ -260,7 +260,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
   if (curbuf->b_ffname == NULL
       && !filtering
       && fname != NULL
-      && vim_strchr(p_cpo, CPO_FNAMER) != NULL
+      && vim_strchr(p_cpo, kCpoFnamer) != NULL
       && !(flags & READ_DUMMY)) {
     if (set_rw_fname(fname, sfname) == FAIL) {
       goto theend;
@@ -344,7 +344,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
     }
   }
 
-  if (((shortmess(SHM_OVER) && !msg_listdo_overwrite) || curbuf->b_help) && p_verbose == 0) {
+  if (((shortmess(kShmOver) && !msg_listdo_overwrite) || curbuf->b_help) && p_verbose == 0) {
     msg_scroll = false;         // overwrite previous file message
   } else {
     msg_scroll = true;          // don't overwrite previous file message
@@ -1783,7 +1783,7 @@ failed:
 #endif
       if (curbuf->b_p_ro) {
         buflen += snprintf(IObuff + buflen, (size_t)(IOSIZE - buflen), "%s",
-                           shortmess(SHM_RO) ? _("[RO]") : _("[readonly]"));
+                           shortmess(kShmRo) ? _("[RO]") : _("[readonly]"));
         c = true;
       }
       if (read_no_eol_lnum) {
@@ -2210,7 +2210,7 @@ void msg_add_lines(int insert_space, linenr_T lnum, off_T nchars)
 {
   size_t len = strlen(IObuff);
 
-  if (shortmess(SHM_LINES)) {
+  if (shortmess(kShmLines)) {
     snprintf(IObuff + len, IOSIZE - len,
              _("%s%" PRId64 "L, %" PRId64 "B"),  // l10n: L as in line, B as in byte
              insert_space ? " " : "", (int64_t)lnum, (int64_t)nchars);
@@ -3205,7 +3205,7 @@ void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
     curbuf->b_flags |= BF_CHECK_RO;           // check for RO again
     curbuf->b_keep_filetype = true;           // don't detect 'filetype'
     if (readfile(buf->b_ffname, buf->b_fname, 0, 0,
-                 (linenr_T)MAXLNUM, &ea, flags, shortmess(SHM_FILEINFO)) != OK) {
+                 (linenr_T)MAXLNUM, &ea, flags, shortmess(kShmFileinfo)) != OK) {
       if (!aborting()) {
         semsg(_("E321: Could not reload \"%s\""), buf->b_fname);
       }

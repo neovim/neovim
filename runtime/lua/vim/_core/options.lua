@@ -95,46 +95,6 @@
 local M = {}
 local api = vim.api
 
--- TODO(tjdevries): Improve option metadata so that this doesn't have to be hardcoded.
-local key_value_options = {
-  fillchars = true,
-  fcs = true,
-  listchars = true,
-  lcs = true,
-  winhighlight = true,
-  winhl = true,
-}
-
---- @nodoc
---- @class vim._option.Info : vim.api.keyset.get_option_info
---- @field metatype 'boolean'|'string'|'number'|'map'|'array'|'set'
-
---- Convert a vimoption_T style dictionary to the correct OptionType associated with it.
----@return string
-local function get_option_metatype(name, info)
-  if info.type == 'string' then
-    if info.flaglist then
-      return 'set'
-    elseif info.commalist then
-      if key_value_options[name] then
-        return 'map'
-      end
-      return 'array'
-    end
-    return 'string'
-  end
-  return info.type
-end
-
---- @param name string
---- @return vim._option.Info
-local function get_options_info(name)
-  local info = api.nvim_get_option_info2(name)
-  --- @cast info vim._option.Info
-  info.metatype = get_option_metatype(name, info)
-  return info
-end
-
 --- Gets or sets environment variables in the current editor process. See |expand-env| and
 --- |:let-environment| for the Vimscript behavior. Invalid or unset key returns `nil`.
 ---
@@ -305,113 +265,6 @@ vim.bo = new_buf_opt_accessor()
 --- ```
 vim.wo = new_win_opt_accessor()
 
-local function passthrough(_, x)
-  return x
-end
-
--- Map of OptionType to functions that take vimoption_T values and convert to Lua values.
--- Each function takes (info, vim_value) -> lua_value
-local to_lua_value = {
-  boolean = passthrough,
-  number = passthrough,
-  string = passthrough,
-
-  array = function(_, value)
-    -- Empty strings mean that there is nothing there,
-    -- so empty table should be returned.
-    if value == '' then
-      return {}
-    end
-
-    -- Handles unescaped commas in a list.
-    if value:find(',,,') then
-      --- @type string, string
-      local left, right = unpack(vim.split(value, ',,,'))
-
-      local result = {}
-      vim.list_extend(result, vim.split(left, ','))
-      table.insert(result, ',')
-      vim.list_extend(result, vim.split(right, ','))
-
-      table.sort(result)
-
-      return result
-    end
-
-    if value:find(',^,,', 1, true) then
-      --- @type string, string
-      local left, right = unpack(vim.split(value, ',^,,', { plain = true }))
-
-      local result = {}
-      vim.list_extend(result, vim.split(left, ','))
-      table.insert(result, '^,')
-      vim.list_extend(result, vim.split(right, ','))
-
-      table.sort(result)
-
-      return result
-    end
-
-    return vim.split(value, ',')
-  end,
-
-  set = function(info, value)
-    if type(value) == 'table' then
-      return value
-    end
-
-    -- Empty strings mean that there is nothing there,
-    -- so empty table should be returned.
-    if value == '' then
-      return {}
-    end
-
-    assert(info.flaglist, 'That is the only one I know how to handle')
-
-    local result = {} --- @type table<string,true>
-
-    if info.flaglist and info.commalist then
-      local split_value = vim.split(value, ',')
-      for _, v in ipairs(split_value) do
-        result[v] = true
-      end
-    else
-      for i = 1, #value do
-        result[value:sub(i, i)] = true
-      end
-    end
-
-    return result
-  end,
-
-  map = function(info, raw_value)
-    if type(raw_value) == 'table' then
-      return raw_value
-    end
-
-    assert(info.commalist, 'Only commas are supported currently')
-
-    local result = {} --- @type table<string,string>
-
-    local comma_split = vim.split(raw_value, ',')
-    for _, key_value_str in ipairs(comma_split) do
-      --- @type string, string
-      local key, value = unpack(vim.split(key_value_str, ':'))
-      key = vim.trim(key)
-
-      result[key] = value
-    end
-
-    return result
-  end,
-}
-
---- Converts a vimoption_T style value to a Lua value
-function M.convert_value_to_lua(name, option_value)
-  local info = get_options_info(name) or error('Not a valid option name: ' .. name)
-  return to_lua_value[info.metatype](info, option_value)
-end
-
 local function create_option_accessor(scope)
   --- @diagnostic disable-next-line: no-unknown
   local option_mt
@@ -433,7 +286,12 @@ local function create_option_accessor(scope)
 
   option_mt = {
     get = function(self)
-      return M.convert_value_to_lua(self._name, self._value)
+      -- `nvim_set_option_value(dry_run)` returns the value in its structured form.
+      return api.nvim_set_option_value(
+        self._name,
+        self._value,
+        { operation = 'set', scope = scope, dry_run = true }
+      )
     end,
 
     append = function(self, right)

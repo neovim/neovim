@@ -461,7 +461,7 @@ static int str_to_mapargs(const char *strargs, bool is_unmap, MapArguments *mapa
   // With :unmap, literal white space is included in the {lhs}; there is no
   // separate {rhs}.
   const char *lhs_end = to_parse;
-  bool do_backslash = (vim_strchr(p_cpo, CPO_BSLASH) == NULL);
+  bool do_backslash = (vim_strchr(p_cpo, kCpoBslash) == NULL);
   while (*lhs_end && (is_unmap || !ascii_iswhite(*lhs_end))) {
     if ((lhs_end[0] == Ctrl_V || (do_backslash && lhs_end[0] == '\\'))
         && lhs_end[1] != NUL) {
@@ -1202,7 +1202,7 @@ static char *translate_mapping(const char *const str_in, const char *const cpo_v
   garray_T ga;
   ga_init(&ga, 1, 40);
 
-  const bool cpo_bslash = (vim_strchr(cpo_val, CPO_BSLASH) != NULL);
+  const bool cpo_bslash = (vim_strchr(cpo_val, kCpoBslash) != NULL);
 
   for (; *str; str++) {
     int c = *str;

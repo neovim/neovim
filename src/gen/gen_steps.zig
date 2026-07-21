@@ -41,6 +41,8 @@ pub fn nvim_gen_sources(
         _ = gen_header(b, gen_step, "options_enum.generated.h", gen_headers);
         _ = gen_header(b, gen_step, "options_map.generated.h", gen_headers);
         _ = gen_header(b, gen_step, "option_vars.generated.h", gen_headers);
+        _ = gen_header(b, gen_step, "options_chartab.generated.h", gen_headers);
+        _ = gen_header(b, gen_step, "options_keysets.generated.h", gen_headers);
         gen_step.addFileArg(b.path("src/nvim/options.lua"));
 
         const test_gen_step = b.step("wipopt", "debug one nlua0 (options)");

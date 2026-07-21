@@ -38,6 +38,12 @@ LUA
 • pos.to_cursor() returns a (`row,` `col)` tuple
   instead of returning them as separate values.
 • Renamed current_level param of vim.log.new().
+• `vim.opt.{option}:get()` has improved structure for dict-like options.
+  Some shapes changed:
+  - "key:value" list options (e.g. 'diffopt', 'mousescroll') return a map
+    `{ key = value }` instead of an array of `"key:value"` strings.
+  - The `,,` literal-comma convention (e.g. 'isfname') is not reconstructed in
+    the structured view; the raw string value is unchanged.
 
 DIAGNOSTICS
 

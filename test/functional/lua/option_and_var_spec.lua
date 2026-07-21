@@ -897,6 +897,37 @@ describe('lua stdlib', function()
           end)
         end)
 
+        it("returns structured values for a dict option ('diffopt')", function()
+          -- Bare flags -> true; sub-values stay strings (option sub-value types are not exposed).
+          eq_exec_lua({ internal = true, filler = true, context = '4' }, function()
+            vim.opt.diffopt = 'internal,filler,context:4'
+            return vim.opt.diffopt:get()
+          end)
+        end)
+
+        it('roundtrips a dict option through :set', function()
+          eq_exec_lua('context:4,filler,internal', function()
+            vim.opt.diffopt = 'internal,filler,context:4'
+            vim.opt.diffopt = vim.opt.diffopt:get()
+            return vim.go.diffopt
+          end)
+        end)
+
+        -- Dict option accepts a table and :get() returns a map. #18875
+        it("roundtrips a window-local dict option ('breakindentopt')", function()
+          eq_exec_lua({ sbr = true, shift = '3' }, function()
+            vim.opt.breakindentopt = { sbr = true, shift = 3 }
+            return vim.opt.breakindentopt:get()
+          end)
+        end)
+
+        it("roundtrips a table for 'mousescroll'", function()
+          eq_exec_lua({ hor = '6', ver = '3' }, function()
+            vim.opt.mousescroll = { hor = 6, ver = 3 }
+            return vim.opt.mousescroll:get()
+          end)
+        end)
+
         it('works for key-value pair options', function()
           eq_exec_lua({ tab = '> ', space = '_' }, function()
             vim.opt.listchars = 'tab:> ,space:_'
@@ -1249,17 +1280,17 @@ describe('lua stdlib', function()
         end)
       end)
 
-      -- isfname=a,b,c,,,d,e,f
+      -- The raw string keeps the ",," literal-comma convention; the structured view splits on every
+      -- comma and does not reconstruct literal commas.
       it('can handle isfname ,,,', function()
-        eq_exec_lua({ { ',', 'a', 'b', 'c' }, 'a,b,,,c' }, function()
+        eq_exec_lua({ { 'a', 'b', 'c' }, 'a,b,,,c' }, function()
           vim.opt.isfname = 'a,b,,,c'
           return { vim.opt.isfname:get(), vim.go.isfname }
         end)
       end)
 
-      -- isfname=a,b,c,^,,def
       it('can handle isfname ,^,,', function()
-        eq_exec_lua({ { '^,', 'a', 'b', 'c' }, 'a,b,^,,c' }, function()
+        eq_exec_lua({ { 'a', 'b', '^', 'c' }, 'a,b,^,,c' }, function()
           vim.opt.isfname = 'a,b,^,,c'
           return { vim.opt.isfname:get(), vim.go.isfname }
         end)

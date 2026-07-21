@@ -781,7 +781,7 @@ static void normal_get_additional_char(NormalState *s)
       // Typing CTRL-K gets a digraph.
       if (*cp == Ctrl_K && ((nv_cmds[s->idx].cmd_flags & NV_LANG)
                             || cp == &s->ca.extra_char)
-          && vim_strchr(p_cpo, CPO_DIGRAPH) == NULL) {
+          && vim_strchr(p_cpo, kCpoDigraph) == NULL) {
         s->c = get_digraph(false);
         if (s->c > 0) {
           *cp = s->c;
@@ -1379,7 +1379,7 @@ static void normal_redraw(NormalState *s)
   }
 
   // show fileinfo after redraw
-  if (need_fileinfo && !shortmess(SHM_FILEINFO)) {
+  if (need_fileinfo && !shortmess(kShmFileinfo)) {
     fileinfo(false, true, false);
     need_fileinfo = false;
   }
@@ -2302,7 +2302,7 @@ static void nv_gd(oparg_T *oap, int nchar, int thisblock)
     foldOpenCursor();
   }
   // clear any search statistics
-  if (messaging() && !msg_silent && !shortmess(SHM_SEARCHCOUNT)) {
+  if (messaging() && !msg_silent && !shortmess(kShmSearchcount)) {
     clear_cmdline = true;
   }
 }
@@ -4394,7 +4394,7 @@ static void nv_percent(cmdarg_T *cap)
     // Skip matching parens inside C-style comments, like the "=" operator
     // does, but not when "%" is in 'cpoptions' (Vi-compatible) or the
     // cursor sits in a line comment (so a match there can still be found).
-    if (vim_strchr(p_cpo, CPO_MATCH) == NULL && buf_has_cstyle_comments()) {
+    if (vim_strchr(p_cpo, kCpoMatch) == NULL && buf_has_cstyle_comments()) {
       int comment_col = check_linecomment(get_cursor_line_ptr());
       if (comment_col == MAXCOL || curwin->w_cursor.col < (colnr_T)comment_col) {
         flags = FM_SKIPCOMM;
@@ -5765,7 +5765,7 @@ static void n_opencmd(cmdarg_T *cap)
   if (u_save(curwin->w_cursor.lnum - (cap->cmdchar == 'O' ? 1 : 0),
              curwin->w_cursor.lnum + (cap->cmdchar == 'o' ? 1 : 0))
       && open_line(cap->cmdchar == 'O' ? BACKWARD : FORWARD,
-                   has_format_option(FO_OPEN_COMS) ? OPENLINE_DO_COM : 0,
+                   has_format_option(kFoOpenComs) ? OPENLINE_DO_COM : 0,
                    0, NULL)) {
     if (win_cursorline_standout(curwin)) {
       // force redraw of cursorline
@@ -5991,7 +5991,7 @@ static void nv_wordcmd(cmdarg_T *cap)
       // Another strangeness: When standing on the end of a word "ce" will
       // change until the end of the next word, but "cw" will change only one
       // character!  This is done by setting "flag".
-      if (vim_strchr(p_cpo, CPO_CHANGEW) != NULL) {
+      if (vim_strchr(p_cpo, kCpoChangew) != NULL) {
         cap->oap->inclusive = true;
         word_end = true;
       }

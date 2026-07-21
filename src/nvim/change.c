@@ -440,7 +440,7 @@ void changed_bytes(linenr_T lnum, colnr_T col)
   // Don't do this when displaying '$' at the end of changed text.
   if (spell_check_window(curwin)
       && lnum < curbuf->b_ml.ml_line_count
-      && vim_strchr(p_cpo, CPO_DOLLAR) == NULL) {
+      && vim_strchr(p_cpo, kCpoDollar) == NULL) {
     redrawWinline(curwin, lnum + 1);
   }
   // notify any channels that are watching
@@ -747,7 +747,7 @@ void ins_char_bytes(char *buf, size_t charlen)
       // Returns the old value of list, so when finished,
       // curwin->w_p_list should be set back to this.
       int old_list = curwin->w_p_list;
-      if (old_list && vim_strchr(p_cpo, CPO_LISTWM) == NULL) {
+      if (old_list && vim_strchr(p_cpo, kCpoListwm) == NULL) {
         curwin->w_p_list = false;
       }
       // In virtual replace mode each character may replace one or more
@@ -1237,7 +1237,7 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   if (flags & OPENLINE_DO_COM) {
     lead_len = get_leader_len(saved_line, &lead_flags, dir == BACKWARD, true);
     if (lead_len == 0 && curbuf->b_p_cin && do_cindent && dir == FORWARD
-        && (!has_format_option(FO_NO_OPEN_COMS) || (flags & OPENLINE_FORMAT))) {
+        && (!has_format_option(kFoNoOpenComs) || (flags & OPENLINE_FORMAT))) {
       // Check for a line comment after code.
       comment_start = check_linecomment(saved_line);
       if (comment_start != MAXCOL) {
