@@ -27,6 +27,20 @@ describe('api/buf', function()
     return request('buffer_' .. method, 0, ...)
   end
 
+  it('nvim__buf_stats preserves all fields in an atomic call', function()
+    local function check()
+      eq(
+        { { api.nvim__buf_stats(0) }, NIL },
+        api.nvim_call_atomic({
+          { 'nvim__buf_stats', { 0 } },
+        })
+      )
+    end
+    check()
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'text' })
+    check()
+  end)
+
   describe('nvim_buf_set_lines, nvim_buf_line_count', function()
     it('deprecated forms', function()
       eq(1, curbuf_depr('line_count'))

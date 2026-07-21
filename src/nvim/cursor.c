@@ -87,6 +87,24 @@ int coladvance(win_T *wp, colnr_T wcol)
   return rc;
 }
 
+/// Move to a displayed column without interpreting its offset as a raw virtual column.
+void coladvance_scol(win_T *wp, colnr_T scol)
+{
+  if (!maybe_extconceal_line(wp, wp->w_cursor.lnum)) {
+    coladvance(wp, scol);
+    return;
+  }
+  pos_T pos = { .lnum = wp->w_cursor.lnum };
+  pos.col = scol2col(wp, pos.lnum, scol, &pos.coladd);
+  colnr_T vcol;
+  getvcol(wp, &pos, &vcol, NULL, NULL, 0);
+  coladvance(wp, vcol);
+  if (virtual_active(wp)) {
+    wp->w_cursor.coladd = pos.coladd;
+    wp->w_valid &= ~(VALID_WCOL | VALID_WROW | VALID_VIRTCOL);
+  }
+}
+
 /// @param addspaces  change the text to achieve our goal? only for wp=curwin!
 /// @param finetune  change char offset for the exact column
 /// @param wcol_arg  column to move to (can be negative)

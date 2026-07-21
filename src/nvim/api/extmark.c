@@ -848,7 +848,7 @@ Integer nvim_buf_set_extmark(Buffer buf, Integer ns_id, Integer line, Integer co
       goto error;
     }
 
-    uint16_t decor_flags = 0;
+    uint32_t decor_flags = 0;
 
     DecorVirtText *decor_alloc = NULL;
     if (kv_size(virt_text.data.virt_text)) {
@@ -890,6 +890,9 @@ Integer nvim_buf_set_extmark(Buffer buf, Integer ns_id, Integer line, Integer co
       }
     }
 
+    if (hl.flags & (kSHConceal | kSHConcealLines)) {
+      decor_flags |= MT_FLAG_DECOR_CONCEAL;
+    }
     if (hl.flags & kSHConcealLines) {
       decor_flags |= MT_FLAG_DECOR_CONCEAL_LINES;
     }
