@@ -1856,6 +1856,7 @@ local filename = {
   ['mplayer.conf'] = 'mplayerconf',
   mrxvtrc = 'mrxvtrc',
   ['.mrxvtrc'] = 'mrxvtrc',
+  msmtprc = 'msmtp',
   ['.msmtprc'] = 'msmtp',
   ['Muttngrc'] = 'muttrc',
   ['Muttrc'] = 'muttrc',
