@@ -910,21 +910,27 @@ is_na_patch() {
   local NA_REGEXP="$NVIM_SOURCE_DIR/scripts/vim_na_regexp.txt"
   local NA_FILELIST="$NVIM_SOURCE_DIR/scripts/vim_na_files.txt"
   local NA_HUNKS_C="$NVIM_SOURCE_DIR/scripts/vim_na_hunks_c.txt"
+  local NA_HUNKS_VIM="$NVIM_SOURCE_DIR/scripts/vim_na_hunks_vim.txt"
 
-  local FILES_REMAINING HUNKS HUNK_NUM_FINAL RT_NUMSTAT RT_TITLE_PAT RT_TITLE_NUM
+  local FILES_REMAINING HUNKS HUNK_NUM_FINAL
   FILES_REMAINING="$(diff <(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b --name-only "$patch" | grep -v -f "$NA_REGEXP") "$NA_FILELIST" |
     grep '^<' | sed 's/^< //')" || true
   test -z "$FILES_REMAINING" && return 0
 
   for file in $FILES_REMAINING; do
     case ${file} in
-      runtime/doc/*.txt)
-        RT_NUMSTAT=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b --numstat "$patch" -- "${file}" | grep -c '^1\s\+1\s\+')
-        test "${RT_NUMSTAT}" -ne 1 && return 1
-        RT_TITLE_PAT="\*$(basename "${file}")\*\s+For Vim version [0-9]\.[0-9]\.\s+Last change: [0-9]+ [A-Z][a-z]+ [0-9]+\n"
-        RT_TITLE_NUM="$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 "$patch" -- "${file}" |
-          grep -Pzc "@@\n-${RT_TITLE_PAT}\+${RT_TITLE_PAT}$")" || true
-        test "$RT_TITLE_NUM" -ne 1 && return 1
+      runtime/doc/*.txt | runtime/pack/dist/opt/*/doc/*.txt)
+        HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
+          '-I\*\s+For Vim version [0-9]\.[0-9]\.\s+Last change: [0-9]+ [A-Z][a-z]+ [0-9]+' \
+          '-I compiled \(with\|without\) .*(\|.*\|) feature\.$' \
+          "$patch" -- "${file}" |
+          grep -v -e '{.\+ \(available\|compiled\) \(with\|without\) .\+}' |
+          grep -Pzo '(?<=\n)@@ -[0-9][^@\n]+\+[0-9][^@\n]* @@[^@\n]*\n(?=([-+][^\n]*\n)+(@|$))' |
+          tr '\0' '\n')
+        if test -n "$HUNKS"; then
+          HUNK_NUM_FINAL=$(echo "$HUNKS" | sed 's/^@@ .* @@ \?//' | grep -cv -f "$NA_HUNKS_VIM")
+          test "$HUNK_NUM_FINAL" -ne 0 && return 1
+        fi
         ;;
       *.h)
         HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 '-I^#\s*(else|endif)' '-I^#\s*(ifdef|if.*defined\().*FEAT_' "$patch" -- "${file}")
