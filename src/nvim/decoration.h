@@ -92,6 +92,7 @@ typedef struct {
   int conceal;
   schar_T conceal_char;
   int conceal_attr;
+  bool conceal_persistent;  ///< at least one active conceal range is a persistent (non-owned) mark
 
   TriState spell;
 

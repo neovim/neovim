@@ -29,6 +29,9 @@ typedef struct {
 
   int max_head_vcol;         ///< See charsize_regular().
   MarkTreeIter iter[1];
+
+  int row;                   ///< Buffer row (lnum - 1), or -1 for a bare string.
+  bool maybe_conceal;        ///< Line may have persistent conceal hiding cells (screen width).
 } CharsizeArg;
 
 typedef struct {
@@ -87,7 +90,7 @@ static inline int win_linetabsize(win_T *wp, linenr_T lnum, char *line, colnr_T 
   if (cstype == kCharsizeFast) {
     return linesize_fast(&csarg, 0, len);
   } else {
-    return linesize_regular(&csarg, 0, len);
+    return linesize_regular(&csarg, 0, len, false);
   }
 }
 
