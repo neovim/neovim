@@ -24,6 +24,7 @@ typedef struct {
   LuaRefOf(("hl_def" _)) _on_hl_def;
   LuaRefOf(("spell_nav" _)) _on_spell_nav;
   LuaRefOf(("conceal_line" _)) _on_conceal_line;
+  LuaRefOf(("conceal" _, Integer winid, Integer bufnr, Integer row)) _on_conceal;
 } Dict(set_decoration_provider);
 
 typedef struct {

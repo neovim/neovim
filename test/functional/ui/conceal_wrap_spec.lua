@@ -126,4 +126,31 @@ describe('conceal-aware wrapping (#14409)', function()
     -- The line still occupies two screen rows (pre-conceal wrap points kept).
     eq(2, api.nvim_win_text_height(0, {}).all)
   end)
+
+  it('_on_conceal provider conceal reflows (materialized into the marktree)', function()
+    -- A provider that materializes intra-line conceal on demand via the _on_conceal callback
+    -- (as an ordinary marktree extmark) DOES reflow, because the off-draw geometry can read it.
+    -- This is how tree-sitter @conceal becomes wrap-aware.
+    api.nvim_buf_set_lines(0, 0, -1, true, { ('a'):rep(10) .. 'HIDDEN' .. ('b'):rep(30) })
+    exec_lua(function(nsid)
+      local materialized = {}
+      vim.api.nvim_set_decoration_provider(nsid, {
+        _on_conceal = function(_, _, buf, row)
+          if row == 0 and not materialized[row] then
+            materialized[row] = true
+            vim.api.nvim_buf_set_extmark(buf, nsid, 0, 10, { end_col = 16, conceal = '' })
+          end
+        end,
+      })
+    end, ns)
+
+    -- 46 raw -> hide 6 -> 40 cells -> 2 rows (would be 3 without the materialized conceal).
+    eq(2, api.nvim_win_text_height(0, {}).all)
+    -- Geometry follows: first 'b' of visual row 2 (buffer col 26) is at row 2, col 1.
+    eq({ row = 2, col = 1, curscol = 1, endcol = 1 }, fn.screenpos(0, 1, 27))
+    -- gj follows the reflowed layout.
+    api.nvim_win_set_cursor(0, { 1, 0 })
+    feed('gj')
+    eq({ 1, 26 }, api.nvim_win_get_cursor(0))
+  end)
 end)

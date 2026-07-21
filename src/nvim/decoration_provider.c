@@ -105,6 +105,41 @@ bool decor_providers_invoke_conceal_line(win_T *wp, int row)
   return wp->w_buffer->b_marktree->n_keys > keys;
 }
 
+/// For each provider invoke the intra-line 'conceal' callback for a given
+/// buffer row, so that the provider can materialise the row's conceal as
+/// marktree extmarks that off-draw geometry (and drawing) can read. Providers
+/// are expected to cache their own per-row work, so repeated calls are cheap.
+///
+/// @return whether any provider added marks (i.e. the buffer marktree grew).
+bool decor_providers_invoke_conceal(win_T *wp, int row)
+{
+  size_t keys = wp->w_buffer->b_marktree->n_keys;
+  for (size_t i = 0; i < kv_size(decor_providers); i++) {
+    DecorProvider *p = &kv_A(decor_providers, i);
+    if (p->state != kDecorProviderDisabled && p->conceal != LUA_NOREF) {
+      MAXSIZE_TEMP_ARRAY(args, 3);
+      ADD_C(args, INTEGER_OBJ(wp->handle));
+      ADD_C(args, INTEGER_OBJ(wp->w_buffer->handle));
+      ADD_C(args, INTEGER_OBJ(row));
+      decor_provider_invoke((int)i, "conceal", p->conceal, args, true, NULL);
+    }
+  }
+  return wp->w_buffer->b_marktree->n_keys > keys;
+}
+
+/// @return whether any decoration provider has registered an intra-line
+/// `_on_conceal` callback.
+bool decor_has_conceal_providers(void)
+{
+  for (size_t i = 0; i < kv_size(decor_providers); i++) {
+    DecorProvider *p = &kv_A(decor_providers, i);
+    if (p->state != kDecorProviderDisabled && p->conceal != LUA_NOREF) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /// For each provider invoke the 'start' callback
 ///
 /// @param[out] providers Decoration providers
@@ -334,6 +369,7 @@ void decor_provider_clear(DecorProvider *p)
   NLUA_CLEAR_REF(p->redraw_end);
   NLUA_CLEAR_REF(p->spell_nav);
   NLUA_CLEAR_REF(p->conceal_line);
+  NLUA_CLEAR_REF(p->conceal);
   p->state = kDecorProviderDisabled;
 }
 

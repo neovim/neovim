@@ -2250,6 +2250,13 @@ static void win_update(win_T *wp)
 
         bool display_buf_line = !concealed && (foldinfo.fi_lines == 0 || *wp->w_p_fdt == NUL);
 
+        // Materialise intra-line conceal for this row (e.g. tree-sitter
+        // @conceal) into the marktree before drawing, so win_line() reflows it
+        // the same way plines()/geometry does.
+        if (display_buf_line) {
+          decor_conceal_materialise(wp, lnum - 1);
+        }
+
         // Display one line
         spellvars_T zero_spv = { 0 };
         row = win_line(wp, lnum, srow, wp->w_view_height, 0, concealed,

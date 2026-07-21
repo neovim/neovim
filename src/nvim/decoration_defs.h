@@ -164,6 +164,7 @@ typedef struct {
   LuaRef hl_def;
   LuaRef spell_nav;
   LuaRef conceal_line;
+  LuaRef conceal;
   int hl_valid;
   bool hl_cached;
 
@@ -171,6 +172,9 @@ typedef struct {
 } DecorProvider;
 
 #define DECORATION_PROVIDER_INIT(ns_id) (DecorProvider) \
-  { ns_id, kDecorProviderDisabled, 0, 0, LUA_NOREF, LUA_NOREF, \
-    LUA_NOREF, LUA_NOREF, LUA_NOREF, LUA_NOREF, \
-    LUA_NOREF, LUA_NOREF, -1, false, false, 0 }
+  { .ns_id = (ns_id), .state = kDecorProviderDisabled, \
+    .redraw_start = LUA_NOREF, .redraw_buf = LUA_NOREF, \
+    .redraw_win = LUA_NOREF, .redraw_line = LUA_NOREF, \
+    .redraw_range = LUA_NOREF, .redraw_end = LUA_NOREF, \
+    .hl_def = LUA_NOREF, .spell_nav = LUA_NOREF, .conceal_line = LUA_NOREF, \
+    .conceal = LUA_NOREF, .hl_valid = -1 }
