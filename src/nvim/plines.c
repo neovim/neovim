@@ -13,6 +13,7 @@
 #include "nvim/decoration.h"
 #include "nvim/decoration_defs.h"
 #include "nvim/diff.h"
+#include "nvim/drawscreen.h"
 #include "nvim/fold.h"
 #include "nvim/globals.h"
 #include "nvim/indent.h"
@@ -65,7 +66,7 @@ int linetabsize_col(int startvcol, char *s)
   CharsizeArg csarg;
   CSType const cstype = init_charsize_arg(&csarg, curwin, 0, s);
   if (cstype == kCharsizeFast) {
-    return linesize_fast(&csarg, startvcol, MAXCOL, false);
+    return linesize_fast(&csarg, startvcol, MAXCOL);
   } else {
     return linesize_regular(&csarg, startvcol, MAXCOL, false);
   }
@@ -102,6 +103,7 @@ CSType init_charsize_arg(CharsizeArg *csarg, win_T *wp, linenr_T lnum, char *lin
   csarg->virt_row = -1;
   csarg->indent_width = INT_MIN;
   csarg->use_tabstop = !wp->w_p_list || wp->w_p_lcs_chars.tab1;
+  csarg->row = lnum > 0 ? lnum - 1 : -1;
 
   if (lnum > 0) {
     if (marktree_itr_get_filter(wp->w_buffer->b_marktree, lnum - 1, 0, lnum, 0,
@@ -110,7 +112,15 @@ CSType init_charsize_arg(CharsizeArg *csarg, win_T *wp, linenr_T lnum, char *lin
     }
   }
 
-  if (csarg->virt_row >= 0
+  // A line whose cells may be hidden by persistent conceal must use the regular path so that
+  // linesize_regular() can compute the conceal-aware screen-layout width. The cursor line reveals
+  // conceal unless 'concealcursor' applies.
+  csarg->maybe_conceal = csarg->row >= 0 && wp->w_p_cole > 0
+                         && wp->w_buffer->b_marktree->n_keys > 0
+                         && !(wp == curwin && lnum == wp->w_cursor.lnum
+                              && !conceal_cursor_line(wp));
+
+  if (csarg->virt_row >= 0 || csarg->maybe_conceal
       || (wp->w_p_wrap && (wp->w_p_lbr || wp->w_p_bri || *get_showbreak_value(wp) != NUL))) {
     return kCharsizeRegular;
   } else {
@@ -432,6 +442,49 @@ static bool in_win_border(win_T *wp, colnr_T vcol)
   return (vcol - width1) % width2 == width2 - 1;
 }
 
+/// Set up per-line persistent-conceal tracking for the screen-layout width.
+///
+/// Only persistent marktree conceal is considered (no decoration providers are invoked), which
+/// keeps plines_win_nofold() in sync with win_line(): win_line() only reflows non-ephemeral
+/// conceal (see decor_state.conceal_persistent).
+///
+/// @return true if conceal tracking is active for this line.
+static bool linesize_conceal_start(CharsizeArg *csarg, DecorState *state)
+{
+  if (!csarg->maybe_conceal) {
+    return false;
+  }
+  *state = (DecorState){ 0 };
+  if (decor_redraw_reset(csarg->win, state) == 0) {
+    return false;
+  }
+  decor_redraw_line(csarg->win, csarg->row, state);
+  return true;
+}
+
+/// @return number of cells at buffer column "col" hidden by persistent conceal (0 if visible).
+static int linesize_conceal_hidden(CharsizeArg *csarg, DecorState *state, int col, int width)
+{
+  decor_redraw_col(csarg->win, col, -1, false, state, MAXCOL);
+  if (state->conceal == 0) {
+    return 0;
+  }
+  // Mirror win_line()'s fully-hidden ("is_concealing") chars: a concealed cell is hidden unless it
+  // is the region start showing a replacement char. At 'conceallevel' 1 a replacement (the custom
+  // cchar, or else a default space) is always shown; at level 2 only a custom cchar is shown;
+  // level 3 always hides.
+  bool const replacement = state->conceal == 2
+                           && (state->conceal_char != 0 || csarg->win->w_p_cole == 1)
+                           && csarg->win->w_p_cole != 3;
+  return replacement ? 0 : width;
+}
+
+static void linesize_conceal_end(DecorState *state)
+{
+  kv_destroy(state->ranges_i);
+  kv_destroy(state->slots);
+}
+
 /// Calculate virtual column until the given "len".
 ///
 /// @param csarg    Argument to charsize functions.
@@ -446,10 +499,17 @@ int linesize_regular(CharsizeArg *const csarg, int vcol_arg, colnr_T const len, 
   char *const line = csarg->line;
   int64_t vcol = vcol_arg;
 
+  DecorState conceal_state;
+  bool const conceal = screen && linesize_conceal_start(csarg, &conceal_state);
+
   StrCharInfo ci = utf_ptr2StrCharInfo(line);
   while (ci.ptr - line < len && *ci.ptr != NUL) {
     CharSize cs = charsize_regular(csarg, ci.ptr, vcol_arg, ci.chr.value);
-    vcol += cs.width - (screen ? cs.conceal_width : 0);
+    int const hidden = conceal
+                       ? linesize_conceal_hidden(csarg, &conceal_state,
+                                                 (int)(ci.ptr - line), cs.width)
+                       : 0;
+    vcol += cs.width - hidden;
     ci = utfc_next(ci);
     if (vcol > MAXCOL) {
       vcol_arg = MAXCOL;
@@ -457,6 +517,10 @@ int linesize_regular(CharsizeArg *const csarg, int vcol_arg, colnr_T const len, 
     } else {
       vcol_arg = (int)vcol;
     }
+  }
+
+  if (conceal) {
+    linesize_conceal_end(&conceal_state);
   }
 
   // Check for inline virtual text after the end of the line.
@@ -472,7 +536,7 @@ int linesize_regular(CharsizeArg *const csarg, int vcol_arg, colnr_T const len, 
 /// Like linesize_regular(), but can be used when CSType is kCharsizeFast.
 ///
 /// @see linesize_regular
-int linesize_fast(CharsizeArg const *const csarg, int vcol_arg, colnr_T const len, bool screen)
+int linesize_fast(CharsizeArg const *const csarg, int vcol_arg, colnr_T const len)
 {
   win_T *const wp = csarg->win;
   bool const use_tabstop = csarg->use_tabstop;
@@ -482,8 +546,7 @@ int linesize_fast(CharsizeArg const *const csarg, int vcol_arg, colnr_T const le
 
   StrCharInfo ci = utf_ptr2StrCharInfo(line);
   while (ci.ptr - line < len && *ci.ptr != NUL) {
-    CharSize cs = charsize_fast_impl(wp, ci.ptr, use_tabstop, vcol_arg, ci.chr.value);
-    vcol += cs.width - (screen ? cs.conceal_width : 0);
+    vcol += charsize_fast_impl(wp, ci.ptr, use_tabstop, vcol_arg, ci.chr.value).width;
     ci = utfc_next(ci);
     if (vcol > MAXCOL) {
       vcol_arg = MAXCOL;
@@ -791,7 +854,7 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
 
   int64_t col;
   if (cstype == kCharsizeFast) {
-    col = linesize_fast(&csarg, 0, MAXCOL, true);
+    col = linesize_fast(&csarg, 0, MAXCOL);
   } else {
     col = linesize_regular(&csarg, 0, MAXCOL, true);
   }

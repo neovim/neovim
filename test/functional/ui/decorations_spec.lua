@@ -2234,8 +2234,8 @@ describe('extmark decorations', function()
     screen:expect {
       grid = [[
       ^                                        |
-      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{1:>}  |
-      古                                      |
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa古 |
+      {1:~                                       }|
                                               |
     ]],
     }
