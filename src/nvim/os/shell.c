@@ -1266,8 +1266,6 @@ static size_t word_length(const char *str)
   return length;
 }
 
-
-
 static void shell_write_cb(Stream *stream, void *data, int status)
 {
   if (status) {

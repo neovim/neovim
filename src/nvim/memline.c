@@ -2516,9 +2516,9 @@ char **split_contiguous_buffer(char *output, size_t remaining, size_t *out_len, 
 /// @param[out] new_byte Returns the byte count of the replacement lines.
 /// @param[out] last_len Returns the byte length of the last replacement line.
 /// @return            OK on success, FAIL on failure.
-int ml_replace_text_range(buf_T *buf, pos_T start, pos_T end, char **lines,
-                          size_t lines_len, bool copy, ptrdiff_t *extra,
-                          ptrdiff_t *old_byte, ptrdiff_t *new_byte, colnr_T *last_len)
+int ml_replace_text_range(buf_T *buf, pos_T start, pos_T end, char **lines, size_t lines_len,
+                          bool copy, ptrdiff_t *extra, ptrdiff_t *old_byte, ptrdiff_t *new_byte,
+                          colnr_T *last_len)
 {
   if (lines_len == 0) {
     return FAIL;
@@ -2705,7 +2705,8 @@ size_t ml_replace_range(pos_T range_start, pos_T range_end, char *output, size_t
 
   linenr_T old_len = end.lnum - range_start.lnum + 1;
   ptrdiff_t extra = 0;
-  ml_replace_text_range(curbuf, range_start, end, lines, lines_len, false, &extra, NULL, NULL, NULL);
+  ml_replace_text_range(curbuf, range_start, end, lines, lines_len, false, &extra, NULL, NULL,
+                        NULL);
   xfree(lines);
 
   size_t to_delete = (lines_len < (size_t)old_len) ? (size_t)old_len - lines_len : 0;

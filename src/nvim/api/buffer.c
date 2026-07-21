@@ -513,18 +513,15 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buf, Integer start_row, Integ
     return;
   });
 
-  // Another call to ml_get_buf() may free the lines, so we make copies
-  char *str_at_start = ml_get_buf(b, (linenr_T)start_row);
+  // Fetch line lengths for column validation. Splicing text pointers is handled
+  // safely by ml_replace_text_range().
   colnr_T len_at_start = ml_get_buf_len(b, (linenr_T)start_row);
-  str_at_start = arena_memdupz(arena, str_at_start, (size_t)len_at_start);
   start_col = start_col < 0 ? len_at_start + start_col + 1 : start_col;
   VALIDATE_RANGE((start_col >= 0 && start_col <= len_at_start), "start_col", {
     return;
   });
 
-  char *str_at_end = ml_get_buf(b, (linenr_T)end_row);
   colnr_T len_at_end = ml_get_buf_len(b, (linenr_T)end_row);
-  str_at_end = arena_memdupz(arena, str_at_end, (size_t)len_at_end);
   end_col = end_col < 0 ? len_at_end + end_col + 1 : end_col;
   VALIDATE_RANGE((end_col >= 0 && end_col <= len_at_end), "end_col", {
     return;
