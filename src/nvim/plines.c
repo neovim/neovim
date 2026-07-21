@@ -65,9 +65,9 @@ int linetabsize_col(int startvcol, char *s)
   CharsizeArg csarg;
   CSType const cstype = init_charsize_arg(&csarg, curwin, 0, s);
   if (cstype == kCharsizeFast) {
-    return linesize_fast(&csarg, startvcol, MAXCOL);
+    return linesize_fast(&csarg, startvcol, MAXCOL, false);
   } else {
-    return linesize_regular(&csarg, startvcol, MAXCOL);
+    return linesize_regular(&csarg, startvcol, MAXCOL, false);
   }
 }
 
@@ -437,17 +437,19 @@ static bool in_win_border(win_T *wp, colnr_T vcol)
 /// @param csarg    Argument to charsize functions.
 /// @param vcol_arg Starting virtual column.
 /// @param len      First byte of the end character, or MAXCOL.
+/// @param screen   When true, exclude concealed cells to get the screen-layout width.
 ///
 /// @return virtual column before the character at "len",
 ///         or full size of the line if "len" is MAXCOL.
-int linesize_regular(CharsizeArg *const csarg, int vcol_arg, colnr_T const len)
+int linesize_regular(CharsizeArg *const csarg, int vcol_arg, colnr_T const len, bool screen)
 {
   char *const line = csarg->line;
   int64_t vcol = vcol_arg;
 
   StrCharInfo ci = utf_ptr2StrCharInfo(line);
   while (ci.ptr - line < len && *ci.ptr != NUL) {
-    vcol += charsize_regular(csarg, ci.ptr, vcol_arg, ci.chr.value).width;
+    CharSize cs = charsize_regular(csarg, ci.ptr, vcol_arg, ci.chr.value);
+    vcol += cs.width - (screen ? cs.conceal_width : 0);
     ci = utfc_next(ci);
     if (vcol > MAXCOL) {
       vcol_arg = MAXCOL;
@@ -470,7 +472,7 @@ int linesize_regular(CharsizeArg *const csarg, int vcol_arg, colnr_T const len)
 /// Like linesize_regular(), but can be used when CSType is kCharsizeFast.
 ///
 /// @see linesize_regular
-int linesize_fast(CharsizeArg const *const csarg, int vcol_arg, colnr_T const len)
+int linesize_fast(CharsizeArg const *const csarg, int vcol_arg, colnr_T const len, bool screen)
 {
   win_T *const wp = csarg->win;
   bool const use_tabstop = csarg->use_tabstop;
@@ -480,7 +482,8 @@ int linesize_fast(CharsizeArg const *const csarg, int vcol_arg, colnr_T const le
 
   StrCharInfo ci = utf_ptr2StrCharInfo(line);
   while (ci.ptr - line < len && *ci.ptr != NUL) {
-    vcol += charsize_fast_impl(wp, ci.ptr, use_tabstop, vcol_arg, ci.chr.value).width;
+    CharSize cs = charsize_fast_impl(wp, ci.ptr, use_tabstop, vcol_arg, ci.chr.value);
+    vcol += cs.width - (screen ? cs.conceal_width : 0);
     ci = utfc_next(ci);
     if (vcol > MAXCOL) {
       vcol_arg = MAXCOL;
@@ -788,9 +791,9 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
 
   int64_t col;
   if (cstype == kCharsizeFast) {
-    col = linesize_fast(&csarg, 0, MAXCOL);
+    col = linesize_fast(&csarg, 0, MAXCOL, true);
   } else {
-    col = linesize_regular(&csarg, 0, MAXCOL);
+    col = linesize_regular(&csarg, 0, MAXCOL, true);
   }
 
   // If list mode is on, then the '$' at the end of the line may take up one
