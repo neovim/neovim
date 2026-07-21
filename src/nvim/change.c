@@ -243,9 +243,17 @@ static void changed_common(buf_T *buf, linenr_T lnum, colnr_T col, linenr_T lnum
   changed(buf);
 
   FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
-    if (win->w_buffer == buf && win->w_p_diff && diff_internal()) {
-      curtab->tp_diff_update = true;
-      diff_update_line(lnum);
+    if (win->w_buffer == buf) {
+      if (win->w_p_diff && diff_internal()) {
+        curtab->tp_diff_update = true;
+        diff_update_line(lnum);
+      }
+
+      // Redraw status when line count changes to prevent 'statusline' or
+      // 'rulerformat' items becoming invalid.
+      if (xtra != 0) {
+        win->w_redr_status = true;
+      }
     }
   }
 

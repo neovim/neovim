@@ -361,7 +361,7 @@ describe(':terminal window', function()
       rows: 5, cols: 25        │rows: 5, cols: 25       |
       ^                         │                        |
                                │                        |*2
-      {120:<o [-] 3,0-1          All }{119:< [-] 2,0-1          Top}|
+      {120:<o [-] 3,0-1          All }{119:< [-] 2,0-1          All}|
       {5:-- TERMINAL --}                                    |
     ]])
     command("call win_execute(win_getid(winnr('#')), 'call cursor(1, 1)')")
