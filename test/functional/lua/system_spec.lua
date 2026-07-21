@@ -130,6 +130,17 @@ describe('vim.system', function()
       n.system_sync({ 'chmod', '+x', 'test.bat' })
       n.system_sync({ './test' })
     end)
+
+    it('launches cmd.exe when shellslash is set', function()
+      n.command('set shellslash')
+      local path = exec_lua([[return vim.fn.exepath('cmd.exe')]])
+      t.neq(nil, path:find('/', 1, true))
+
+      local result = n.system_sync({ 'cmd.exe', '/c', 'echo OK' })
+      eq(0, result.code)
+      eq('OK\r\n', result.stdout)
+      eq('', result.stderr)
+    end)
   end
 
   it('always captures all content of stdout/stderr #30846', function()
