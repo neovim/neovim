@@ -485,6 +485,39 @@ static void linesize_conceal_end(DecorState *state)
   kv_destroy(state->slots);
 }
 
+/// Number of screen cells hidden by persistent conceal strictly before buffer byte "len" on line
+/// "lnum" of window "wp". This is the offset between a position's virtual column and its
+/// screen-layout column: screen_col = virtual_col - conceal_off_before().
+///
+/// Returns 0 when conceal cannot apply to the line (no 'conceallevel', no conceal marks, or the
+/// line is the cursor line revealed by 'concealcursor'), so callers degrade to conceal-neutral
+/// behavior. Only persistent (marktree) conceal is considered, matching win_line()'s reflow and
+/// plines_win_nofold()'s screen width.
+int conceal_off_before(win_T *wp, linenr_T lnum, colnr_T len)
+{
+  char *const line = ml_get_buf(wp->w_buffer, lnum);
+  CharsizeArg csarg;
+  init_charsize_arg(&csarg, wp, lnum, line);
+
+  DecorState conceal_state;
+  if (!linesize_conceal_start(&csarg, &conceal_state)) {
+    return 0;
+  }
+
+  int hidden = 0;
+  int vcol = 0;
+  StrCharInfo ci = utf_ptr2StrCharInfo(line);
+  while (ci.ptr - line < len && *ci.ptr != NUL) {
+    CharSize cs = charsize_regular(&csarg, ci.ptr, vcol, ci.chr.value);
+    hidden += linesize_conceal_hidden(&csarg, &conceal_state, (int)(ci.ptr - line), cs.width);
+    vcol += cs.width;
+    ci = utfc_next(ci);
+  }
+
+  linesize_conceal_end(&conceal_state);
+  return hidden;
+}
+
 /// Calculate virtual column until the given "len".
 ///
 /// @param csarg    Argument to charsize functions.

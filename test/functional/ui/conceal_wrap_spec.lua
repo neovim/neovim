@@ -9,6 +9,7 @@ local clear = n.clear
 local api = n.api
 local command = n.command
 local exec_lua = n.exec_lua
+local fn = n.fn
 local eq = t.eq
 
 local Screen = require('test.functional.ui.screen')
@@ -33,6 +34,18 @@ describe('conceal-aware wrapping (#14409)', function()
     -- Hide "HIDDEN" (cols 10..16, no replacement char): 19 displayed cells -> one row.
     api.nvim_buf_set_extmark(0, ns, 0, 10, { end_col = 16, conceal = '' })
     eq(1, api.nvim_win_text_height(0, {}).all)
+  end)
+
+  it('screenpos() reports the reflowed screen column', function()
+    -- 10 a + HIDDEN(6) + 30 b = 46 raw; hide the 6 -> 40 cells -> 2 rows at width 20.
+    api.nvim_buf_set_lines(0, 0, -1, true, { ('a'):rep(10) .. 'HIDDEN' .. ('b'):rep(30) })
+    api.nvim_buf_set_extmark(0, ns, 0, 10, { end_col = 16, conceal = '' })
+    -- Buffer col 26 (1-based 27) is the first 'b' of visual row 2: reflowed to row 2, col 1
+    -- (pre-conceal it would report row 2, col 7).
+    eq({ row = 2, col = 1, curscol = 1, endcol = 1 }, fn.screenpos(0, 1, 27))
+    -- First 'a' stays at row 1, col 1; a 'b' at buffer col 20 reflows onto row 1.
+    eq({ row = 1, col = 1, curscol = 1, endcol = 1 }, fn.screenpos(0, 1, 1))
+    eq({ row = 1, col = 15, curscol = 15, endcol = 15 }, fn.screenpos(0, 1, 21))
   end)
 
   it('ephemeral (decoration-provider) conceal does not reflow', function()

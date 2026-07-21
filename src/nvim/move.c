@@ -1113,6 +1113,15 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
       assert(lnum == pos->lnum);
       getvcol(wp, pos, &scol, &ccol, &ecol, 0);
 
+      // Convert the virtual columns to screen-layout columns when conceal hides cells on this
+      // line, so screenpos() reflects the reflowed (displayed) position, not the pre-conceal one.
+      colnr_T coff = (colnr_T)conceal_off_before(wp, pos->lnum, pos->col);
+      if (coff > 0) {
+        scol -= MIN(scol, coff);
+        ccol -= MIN(ccol, coff);
+        ecol -= MIN(ecol, coff);
+      }
+
       // similar to what is done in validate_cursor_col()
       colnr_T col = scol;
       col += off;
