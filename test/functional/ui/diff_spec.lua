@@ -3428,3 +3428,37 @@ it(':diffput to empty buffer redraws properly', function()
                                                                                |
   ]])
 end)
+
+it(
+  "diff mode forces 'nowrap' by default, so conceal-aware reflow height stays 1 (#14409)",
+  function()
+    -- Diff mode forces 'nowrap' unless 'diffopt' has "followwrap" (see diff_win_options() in
+    -- diff.c): entering diff mode sidesteps reflow entirely, so the concealed row renders as a
+    -- single (horizontally scrollable) line, and unrelated 'same1'/'same2' lines below stay aligned
+    -- between the two diff windows exactly like plain nowrap.
+    local screen = Screen.new(44, 10)
+    local ns = api.nvim_create_namespace('conceal_wrap_diff')
+    command('set wrap conceallevel=2 concealcursor=nvic')
+    api.nvim_buf_set_lines(0, 0, -1, true, {
+      ('a'):rep(10) .. 'HIDDEN' .. ('b'):rep(30),
+      'same1',
+      'same2',
+    })
+    api.nvim_buf_set_extmark(0, ns, 0, 10, { end_col = 16, conceal = '' })
+    command('vnew')
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'different', 'same1', 'same2' })
+    command('windo diffthis')
+    command('wincmd h')
+
+    eq(false, api.nvim_get_option_value('wrap', { win = 0 }))
+    eq(1, api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all)
+    screen:expect([[
+    {7:  }{27:^different}{4:           }│{7:  }{27:aaaaaaaaaabbbbbbbbb}|
+    {7:  }same1               │{7:  }same1              |
+    {7:  }same2               │{7:  }same2              |
+    {1:~                     }│{1:~                    }|*5
+    {3:[No Name] [+]          }{2:[No Name] [+]        }|
+                                                |
+  ]])
+  end
+)

@@ -769,6 +769,7 @@ next_mark:
   int attr = 0;
   int hl_eol_attr = 0;
   int conceal = 0;
+  bool conceal_persistent = false;
   schar_T conceal_char = 0;
   int conceal_attr = 0;
   TriState spell = kNone;
@@ -797,6 +798,9 @@ next_mark:
 
       if (r->kind == kDecorKindHighlight && (r->data.sh.flags & kSHConceal)) {
         conceal = 1;
+        if (!r->owned) {
+          conceal_persistent = true;
+        }
         if (r->start_row == row && r->start_col == col) {
           DecorSignHighlight *sh = &r->data.sh;
           conceal = 2;
@@ -858,6 +862,7 @@ next_mark:
   state->current = attr;
   state->current_hl_eol = hl_eol_attr;
   state->conceal = conceal;
+  state->conceal_persistent = conceal_persistent;
   state->conceal_char = conceal_char;
   state->conceal_attr = conceal_attr;
   state->spell = spell;

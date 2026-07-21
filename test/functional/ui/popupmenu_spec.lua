@@ -10199,6 +10199,39 @@ describe('builtin popupmenu', function()
     end)
   end
 
+  describe('conceal-aware wrap (#14409)', function()
+    before_each(clear)
+
+    it('pum row follows the conceal-reflowed cursor row', function()
+      local screen = Screen.new(30, 10)
+      local ns = api.nvim_create_namespace('conceal_wrap_pum')
+      command('set wrap conceallevel=2 concealcursor=nvic')
+      -- 31 raw cells (10a + 6-char HIDDEN + 15b): concealed to 25 displayed cells -> one row at
+      -- width 30. Unconcealed/raw would be 31 cells -> two rows (30+1).
+      api.nvim_buf_set_lines(0, 0, -1, true, {
+        ('a'):rep(10) .. 'HIDDEN' .. ('b'):rep(15),
+      })
+      api.nvim_buf_set_extmark(0, ns, 0, 10, { end_col = 16, conceal = '' })
+
+      feed('A')
+      exec_lua(function()
+        vim.fn.complete(vim.fn.col('.'), { 'foo', 'foobar', 'foobaz' })
+      end)
+
+      -- The cursor line is one (reflowed) row, so the menu must anchor at screen row 1, not a
+      -- stale row 2 that a raw (non-conceal-aware) two-row height would produce.
+      eq(1, fn.pum_getpos().row)
+      screen:expect([[
+      aaaaaaaaaabbbbbbbbbbbbbbbfoo^  |
+      {12:foo            }{1:               }|
+      {4:foobar         }{1:               }|
+      {4:foobaz         }{1:               }|
+      {1:~                             }|*5
+      {5:-- INSERT --}                  |
+      ]])
+    end)
+  end)
+
   describe('with ext_multigrid and actual mouse grid', function()
     with_ext_multigrid(true, true)
   end)

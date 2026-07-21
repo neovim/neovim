@@ -1019,6 +1019,47 @@ describe('CursorLine and CursorLineNr highlights', function()
     ]])
   end)
 
+  it('follows a conceal-aware reflowed cursor line (#14409)', function()
+    local screen = Screen.new(20, 6)
+    local ns = api.nvim_create_namespace('conceal_wrap_cursorline')
+    command('set wrap conceallevel=2 concealcursor= cursorline scrolloff=0')
+    -- 25 raw cells: concealed (not the cursor line) is 19 -> one row; revealed (cursor line,
+    -- 'concealcursor' excludes normal mode) is 25 -> two rows.
+    api.nvim_buf_set_lines(0, 0, -1, true, {
+      ('a'):rep(5) .. 'HIDDEN' .. ('b'):rep(14),
+      'line2',
+    })
+    api.nvim_buf_set_extmark(0, ns, 0, 5, { end_col = 11, conceal = '' })
+
+    -- Cursor on line2: line1 isn't the cursor line, so it's concealed to one row and unhighlighted.
+    api.nvim_win_set_cursor(0, { 2, 0 })
+    screen:expect([[
+      aaaaabbbbbbbbbbbbbb |
+      {21:^line2               }|
+      {1:~                   }|*3
+                          |
+    ]])
+
+    -- Cursor moves onto line1: it reveals and reflows to two rows; CursorLine must cover both.
+    api.nvim_win_set_cursor(0, { 1, 0 })
+    screen:expect([[
+      {21:^aaaaaHIDDENbbbbbbbbb}|
+      {21:bbbbb               }|
+      line2               |
+      {1:~                   }|*2
+                          |
+    ]])
+
+    -- Cursor moves back to line2: line1 must re-conceal to one row with no stale highlight.
+    api.nvim_win_set_cursor(0, { 2, 0 })
+    screen:expect([[
+      aaaaabbbbbbbbbbbbbb |
+      {21:^line2               }|
+      {1:~                   }|*3
+                          |
+    ]])
+  end)
+
   it("'cursorlineopt' screenline", function()
     local screen = Screen.new(20, 5)
     screen:add_extra_attr_ids {

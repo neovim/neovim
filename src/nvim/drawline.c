@@ -1071,10 +1071,17 @@ static void win_line_start(win_T *wp, winlinevars_T *wlv)
   }
 }
 
-static void fix_for_boguscols(winlinevars_T *wlv)
+static void fix_for_boguscols(winlinevars_T *wlv, bool is_wrapped)
 {
-  wlv->n_extra += wlv->vcol_off_co;
-  wlv->vcol -= wlv->vcol_off_co;
+  // Tab alignment must compensate for all concealed width via "vcol_off_co" ("identical regardless
+  // of 'conceallevel'", matching pre-reflow behavior) UNLESS conceal-aware reflow is active, in
+  // which case "boguscols" (0 exactly when reflow shrank the display, and otherwise equal to
+  // vcol_off_co) must be used, or a reflowed run's width would leak back in as a phantom gap before
+  // the tab. Only relevant when wrapped: boguscols is never tracked under 'nowrap', so vcol_off_co
+  // is the only valid accumulator there.
+  int const discount = is_wrapped ? wlv->boguscols : wlv->vcol_off_co;
+  wlv->n_extra += discount;
+  wlv->vcol -= discount;
   wlv->vcol_off_co = 0;
   wlv->col -= wlv->boguscols;
   wlv->old_boguscols = wlv->boguscols;
@@ -1174,6 +1181,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
 
   bool search_attr_from_match = false;  // if search_attr is from :match
   bool has_decor = false;               // this buffer has decoration
+  // Resume point shared by this line's extconceal_off_before() queries: the 'linebreak' lookahead
+  // below runs at every word break, so each resumes instead of remeasuring from the line start.
+  ConcealOffState conceal_off = { 0 };
 
   int saved_search_attr = 0;            // search_attr to be used when n_extra goes to zero
   int saved_area_attr = 0;              // idem for area_attr
@@ -2416,50 +2426,71 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           wlv.need_lbr = true;
         }
         // Found last space before word: check for line break.
-        if (wp->w_p_lbr && c0 == mb_c && mb_c < 128 && wlv.need_lbr
-            && vim_isbreak(mb_c) && !vim_isbreak((uint8_t)(*ptr))) {
+        if (wp->w_p_lbr && c0 == mb_c && mb_c < 128 && wlv.need_lbr && vim_isbreak(mb_c)) {
           int mb_off = utf_head_off(line, ptr - 1);
           char *p = ptr - (mb_off + 1);
 
-          CharsizeArg csarg;
-          // lnum == 0, do not want virtual text to be counted here
-          CSType cstype = init_charsize_arg(&csarg, wp, 0, line);
-          // TODO(zeertzjq): consider using CharSize.tail here
-          wlv.n_extra = win_charsize(cstype, wlv.vcol, p, utf_ptr2CharInfo(p).value,
-                                     &csarg).width - 1;
+          // A byte hidden by persistent conceal never reaches the screen (see win_line()'s "reflow"
+          // handling below), so it can't anchor the padding that pushes the following word to the
+          // next screen line. Look past any concealed run for the real boundary. Nothing can be
+          // concealed on a row carrying no decoration, so skip the lookahead entirely there.
+          bool const may_conceal = has_decor;
+          int next_c = (uint8_t)(*ptr);
+          bool const anchor_ok = !may_conceal
+                                 || extconceal_lbr_anchor_ok(wp, lnum, line, (int)(p - line),
+                                                             (int)(ptr - line), &next_c);
 
-          // Do not bleed attrs into the filler for the pushed-down word (TABs keep their own
-          // full-width highlight; see attr_has_line_deco()). search_attr also resets when its own
-          // span ends exactly here (on_last_col), matching its pre-existing semantics.
-          if (mb_c != TAB) {
-            if (on_last_col || attr_has_line_deco(search_attr)) {
-              search_attr = 0;
+          if (anchor_ok && !vim_isbreak((uint8_t)next_c)) {
+            CharsizeArg csarg;
+            CSType cstype = init_charsize_arg(&csarg, wp, lnum, line);
+            // Pass the real "lnum" so conceal-awareness (tied to the same check) still works, but
+            // this call must not count virtual text, so clear virt_row again.
+            csarg.virt_row = -1;
+            csarg.maybe_conceal = csarg.maybe_conceal && may_conceal;
+            if (csarg.maybe_conceal) {
+              // "wlv.vcol" is raw (pre-conceal); give the lookahead the screen-layout baseline
+              // plines.c's own conceal-aware callers use. Breaks are visited left to right, so
+              // "conceal_off" resumes where the previous one stopped.
+              csarg.scr_vcol_offset = (colnr_T)extconceal_off_before(wp, lnum, (colnr_T)(p - line),
+                                                                     NULL, &conceal_off);
             }
-            if (has_decor) {
-              decor_attr = gap_attr_save;
-            }
-            if (attr_has_line_deco(decor_attr)) {
-              decor_attr = 0;
-            }
-            if (attr_has_line_deco(area_attr)) {
-              area_attr = 0;
-            }
-          }
+            // TODO(zeertzjq): consider using CharSize.tail here
+            wlv.n_extra = win_charsize(cstype, wlv.vcol, p, utf_ptr2CharInfo(p).value,
+                                       &csarg).width - 1;
 
-          if (mb_c == TAB && wlv.n_extra + wlv.col > view_width) {
-            wlv.n_extra = tabstop_padding(wlv.vcol, wp->w_buffer->b_p_ts,
-                                          wp->w_buffer->b_p_vts_array) - 1;
-          }
-          wlv.sc_extra = schar_from_ascii(mb_off > 0 ? MB_FILLER_CHAR : ' ');
-          wlv.sc_final = NUL;
-          if (mb_c < 128 && ascii_iswhite(mb_c)) {
-            if (mb_c == TAB) {
-              // See "Tab alignment" below.
-              fix_for_boguscols(&wlv);
+            // Do not bleed attrs into the filler for the pushed-down word (TABs keep their own
+            // full-width highlight; see attr_has_line_deco()). search_attr also resets when its own
+            // span ends exactly here (on_last_col), matching its pre-existing semantics.
+            if (mb_c != TAB) {
+              if (on_last_col || attr_has_line_deco(search_attr)) {
+                search_attr = 0;
+              }
+              if (has_decor) {
+                decor_attr = gap_attr_save;
+              }
+              if (attr_has_line_deco(decor_attr)) {
+                decor_attr = 0;
+              }
+              if (attr_has_line_deco(area_attr)) {
+                area_attr = 0;
+              }
             }
-            if (!wp->w_p_list) {
-              mb_c = ' ';
-              mb_schar = schar_from_ascii(mb_c);
+
+            if (mb_c == TAB && wlv.n_extra + wlv.col > view_width) {
+              wlv.n_extra = tabstop_padding(wlv.vcol, wp->w_buffer->b_p_ts,
+                                            wp->w_buffer->b_p_vts_array) - 1;
+            }
+            wlv.sc_extra = schar_from_ascii(mb_off > 0 ? MB_FILLER_CHAR : ' ');
+            wlv.sc_final = NUL;
+            if (mb_c < 128 && ascii_iswhite(mb_c)) {
+              if (mb_c == TAB) {
+                // See "Tab alignment" below.
+                fix_for_boguscols(&wlv, is_wrapped);
+              }
+              if (!wp->w_p_list) {
+                mb_c = ' ';
+                mb_schar = schar_from_ascii(mb_c);
+              }
             }
           }
         }
@@ -2613,7 +2644,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
             // vcol_off_co and boguscols accumulated so far in the
             // line. Note that the tab can be longer than
             // 'tabstop' when there are concealed characters.
-            fix_for_boguscols(&wlv);
+            fix_for_boguscols(&wlv, is_wrapped);
 
             // Make sure, the highlighting for the tab char will be
             // correctly set further below (effectively reverts the
@@ -2719,10 +2750,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         bool syntax_conceal = (syntax_flags & HL_CONCEAL) != 0;
         wlv.char_attr = conceal_attr;
         if (((prev_syntax_id != syntax_seqnr && syntax_conceal)
-             || has_match_conc > 1 || decor_conceal > 1)
+             || has_match_conc > 1 || decor_conceal_is_start(&decor_state))
             && ((syntax_conceal && syn_get_sub_char() != NUL)
                 || (has_match_conc && match_conc)
-                || (decor_conceal && decor_state.conceal_char)
+                || decor_conceal_has_char(&decor_state)
                 || wp->w_p_cole == 1)
             && wp->w_p_cole != 3) {
           if (schar_cells(mb_schar) > 1) {
@@ -2735,7 +2766,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           // character.
           if (has_match_conc && match_conc) {
             mb_schar = schar_from_char(match_conc);
-          } else if (decor_conceal && decor_state.conceal_char) {
+          } else if (decor_conceal_has_char(&decor_state)) {
             mb_schar = decor_state.conceal_char;
             if (decor_state.conceal_attr) {
               wlv.char_attr = decor_state.conceal_attr;
@@ -3117,6 +3148,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       wlv.col++;
     } else if (wp->w_p_cole > 0 && is_concealing) {
       bool concealed_wide = schar_cells(mb_schar) > 1;
+      // Conceal-aware wrap: for persistent extmark conceal only, reflow (drop boguscols) to the
+      // line's displayed width. Syntax/match/ephemeral conceal keep the old boguscols behavior,
+      // matching plines_win_nofold()'s scope.
+      bool reflow = wp->w_p_cole >= 1
+                    && decor_conceal > 0 && decor_state.conceal_persistent;
 
       wlv.skip_cells--;
       wlv.vcol_off_co++;
@@ -3131,7 +3167,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         wlv.vcol_off_co += wlv.n_extra;
       }
 
-      if (is_wrapped) {
+      if (is_wrapped && !reflow) {
         // Special voodoo required if 'wrap' is on.
         //
         // Advance the column indicator to force the line

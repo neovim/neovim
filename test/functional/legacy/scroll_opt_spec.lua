@@ -7,6 +7,9 @@ local clear = n.clear
 local exec = n.exec
 local feed = n.feed
 local assert_alive = n.assert_alive
+local api = n.api
+local command = n.command
+local eq = t.eq
 
 before_each(clear)
 
@@ -1599,4 +1602,209 @@ describe('scrolloffpad', function()
     exec('normal! G')
     screen:expect(s1)
   end)
+end)
+
+describe('window motions and scrolling with conceal-aware wrap (#14409)', function()
+  before_each(clear)
+
+  -- Fills the buffer with "count" short lines, except line "lnum" which is 36 raw cells and
+  -- reflows to 30 displayed (2 rows at width 21) instead of 3.
+  local function reflowing_buf(count, lnum)
+    local ns = api.nvim_create_namespace('conceal_wrap_scroll')
+    local lines = {}
+    for i = 1, count do
+      lines[i] = i == lnum and (('a'):rep(10) .. 'HIDDEN' .. ('b'):rep(20)) or ('L%02d'):format(i)
+    end
+    api.nvim_buf_set_lines(0, 0, -1, true, lines)
+    api.nvim_buf_set_extmark(0, ns, lnum - 1, 10, { end_col = 16, conceal = '' })
+  end
+
+  it('zz centers the window around a reflowed line', function()
+    local screen = Screen.new(21, 8)
+    command('set wrap conceallevel=2 concealcursor=nvic')
+    reflowing_buf(30, 15)
+
+    api.nvim_win_set_cursor(0, { 15, 0 })
+    feed('zz')
+    -- 8-row window, cursor's line takes 2 rows: 2 lines above (L13, L14), 3 below (L16-L18) to fill
+    -- the remaining 3 rows, matching its reflowed (not raw) height.
+    screen:expect([[
+      L13                  |
+      L14                  |
+      ^aaaaaaaaaabbbbbbbbbbb|
+      bbbbbbbbb            |
+      L16                  |
+      L17                  |
+      L18                  |
+                           |
+    ]])
+  end)
+
+  it('H and M target the correct reflowed row', function()
+    local screen = Screen.new(21, 8)
+    command('set wrap conceallevel=2 concealcursor=nvic')
+    reflowing_buf(10, 3)
+
+    api.nvim_win_set_cursor(0, { 1, 0 })
+    feed('zt')
+    -- L01 at the top, line 3 reflows to 2 rows, 6 buffer lines fit the 7-row window.
+    screen:expect([[
+      ^L01                  |
+      L02                  |
+      aaaaaaaaaabbbbbbbbbbb|
+      bbbbbbbbb            |
+      L04                  |
+      L05                  |
+      L06                  |
+                           |
+    ]])
+
+    feed('L')
+    eq({ 6, 0 }, api.nvim_win_get_cursor(0))
+    feed('gg')
+    feed('M')
+    -- The reflowed line 3 sits in the middle of the 6 visible buffer lines.
+    eq({ 3, 0 }, api.nvim_win_get_cursor(0))
+  end)
+
+  it("sum_scroll_delta accounts for a reflowed line under 'nosmoothscroll' Ctrl-E", function()
+    local screen = Screen.new(21, 8, { ext_multigrid = true })
+    command('set wrap conceallevel=2 concealcursor=nvic')
+    reflowing_buf(20, 5)
+    api.nvim_win_set_cursor(0, { 1, 0 })
+    screen:expect({
+      grid = [[
+      ## grid 1
+        [2:---------------------]|*7
+        [3:---------------------]|
+      ## grid 2
+        ^L01                  |
+        L02                  |
+        L03                  |
+        L04                  |
+        aaaaaaaaaabbbbbbbbbbb|
+        bbbbbbbbb            |
+        L06                  |
+      ## grid 3
+                             |
+      ]],
+      win_viewport = {
+        [2] = {
+          win = 1000,
+          topline = 0,
+          botline = 7,
+          curline = 0,
+          curcol = 0,
+          linecount = 20,
+          sum_scroll_delta = 0,
+        },
+      },
+    })
+
+    feed('3<C-E>')
+    -- Without 'smoothscroll', Ctrl-E always scrolls by whole buffer lines: 3 lines scrolled,
+    -- matching sum_scroll_delta=3 regardless of the reflowed line's own row count.
+    screen:expect({
+      grid = [[
+      ## grid 1
+        [2:---------------------]|*7
+        [3:---------------------]|
+      ## grid 2
+        ^L04                  |
+        aaaaaaaaaabbbbbbbbbbb|
+        bbbbbbbbb            |
+        L06                  |
+        L07                  |
+        L08                  |
+        L09                  |
+      ## grid 3
+                             |
+      ]],
+      win_viewport = {
+        [2] = {
+          win = 1000,
+          topline = 3,
+          botline = 10,
+          curline = 3,
+          curcol = 0,
+          linecount = 20,
+          sum_scroll_delta = 3,
+        },
+      },
+    })
+  end)
+
+  it(
+    "sum_scroll_delta accounts for 'smoothscroll' Ctrl-E landing mid-way through a reflowed line",
+    function()
+      local screen = Screen.new(21, 8, { ext_multigrid = true })
+      command('set wrap conceallevel=2 concealcursor=nvic smoothscroll')
+      reflowing_buf(20, 5)
+      api.nvim_win_set_cursor(0, { 1, 0 })
+
+      -- 4 presses reach line 5 (the reflowed line) as topline.
+      feed('4<C-E>')
+      screen:expect({
+        grid = [[
+        ## grid 1
+          [2:---------------------]|*7
+          [3:---------------------]|
+        ## grid 2
+          ^aaaaaaaaaabbbbbbbbbbb|
+          bbbbbbbbb            |
+          L06                  |
+          L07                  |
+          L08                  |
+          L09                  |
+          L10                  |
+        ## grid 3
+                               |
+        ]],
+        win_viewport = {
+          [2] = {
+            win = 1000,
+            topline = 4,
+            botline = 11,
+            curline = 4,
+            curcol = 0,
+            linecount = 20,
+            sum_scroll_delta = 4,
+          },
+        },
+      })
+
+      -- A 5th press must skip into the reflowed line's own 2nd row (skipcol), the sub-line boundary
+      -- this feature's reflow affects: topline stays on line 5 (0-indexed 4), only the screen view
+      -- advances by the single reflowed row.
+      feed('<C-E>')
+      screen:expect({
+        grid = [[
+        ## grid 1
+          [2:---------------------]|*7
+          [3:---------------------]|
+        ## grid 2
+          {1:<<<}bbbbbbbbbbb^b      |
+          L06                  |
+          L07                  |
+          L08                  |
+          L09                  |
+          L10                  |
+          L11                  |
+        ## grid 3
+                               |
+        ]],
+        win_viewport = {
+          [2] = {
+            win = 1000,
+            topline = 4,
+            botline = 12,
+            curline = 4,
+            curcol = 35,
+            linecount = 20,
+            sum_scroll_delta = 5,
+          },
+        },
+      })
+    end
+  )
 end)

@@ -10,6 +10,7 @@ local feed = n.feed
 local insert = n.insert
 local expect = n.expect
 local feed_command = n.feed_command
+local api = n.api
 
 describe('joining lines', function()
   before_each(clear)
@@ -355,5 +356,26 @@ describe('joining lines', function()
       Some code!// Make sure backspacing does not remove this comment leader.
       }
       ]])
+  end)
+
+  it("uses a reflowed line's raw content, landing at the join point (#14409)", function()
+    clear()
+    local ns = api.nvim_create_namespace('conceal_wrap_join')
+    command('set wrap conceallevel=2 concealcursor=nvic')
+    api.nvim_buf_set_lines(0, 0, -1, true, {
+      ('a'):rep(10) .. 'HIDDEN' .. ('b'):rep(20),
+      'next',
+    })
+    api.nvim_buf_set_extmark(0, ns, 0, 10, { end_col = 16, conceal = '' })
+
+    api.nvim_win_set_cursor(0, { 1, 0 })
+    feed('J')
+    eq(
+      { ('a'):rep(10) .. 'HIDDEN' .. ('b'):rep(20) .. ' next' },
+      api.nvim_buf_get_lines(0, 0, -1, true)
+    )
+    -- Cursor lands on the inserted space at the raw join point (buffer col 36), not a
+    -- screen-adjusted one from the line's reflowed (displayed) width.
+    eq({ 1, 36 }, api.nvim_win_get_cursor(0))
   end)
 end)
