@@ -707,30 +707,15 @@ int os_call_shell(char *cmd, int opts, char *extra_args)
       ml_replace_range(curbuf->b_op_start, curbuf->b_op_end, output, nread);
     } else {
       if (curbuf->b_op_start.col == 0 && curbuf->b_op_end.col == MAXCOL) {
-        size_t off = 0;
+        size_t lines_len = 0;
+        char **lines = split_contiguous_buffer(output, nread, &lines_len, false);
         linenr_T insert_lnum = curbuf->b_op_start.lnum;
-        while (off < nread) {
-          bool is_car = output[off] == CAR && !curbuf->b_p_bin;
-          bool is_nl = output[off] == NL;
-          if (is_car || is_nl) {
-            size_t skip = off + 1;
-            if (is_car && output[off + 1] == NL) {
-              skip = off + 2;
-            }
-            output[off] = NUL;
-            ml_append(insert_lnum++, output, (int)strlen(output) + 1, false);
-            output += skip;
-            nread -= skip;
-            off = 0;
-            continue;
-          }
-          if (output[off] == NUL) {
-            output[off] = NL;
-          }
-          off++;
+        for (size_t i = 0; i < lines_len; i++) {
+          ml_append_buf(curbuf, insert_lnum++, lines[i], 0, false);
+          xfree(lines[i]);
         }
-        if (nread > 0) {
-          ml_append(insert_lnum++, output, 0, false);
+        xfree(lines);
+        if (nread > 0 && output[nread - 1] != NL) {
           curbuf->b_no_eol_lnum = insert_lnum;
         } else {
           curbuf->b_no_eol_lnum = 0;

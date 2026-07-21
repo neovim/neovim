@@ -542,63 +542,27 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buf, Integer start_row, Integ
 
   size_t new_len = replacement.size;
 
-  bcount_t new_byte = 0;
-  bcount_t old_byte = 0;
+  ptrdiff_t old_byte = 0;
+  ptrdiff_t new_byte = 0;
+  colnr_T last_len = 0;
 
-  // calculate byte size of old region before it gets modified/deleted
-  if (start_row == end_row) {
-    old_byte = (bcount_t)end_col - start_col;
-  } else {
-    old_byte += len_at_start - start_col;
-    for (int64_t i = 1; i < end_row - start_row; i++) {
-      int64_t lnum = start_row + i;
-      old_byte += ml_get_buf_len(b, (linenr_T)lnum) + 1;
-    }
-    old_byte += (bcount_t)end_col + 1;
+  char **lines = xmalloc(new_len * sizeof(char *));
+  for (size_t i = 0; i < new_len; i++) {
+    String s = replacement.items[i].data.string;
+    lines[i] = xmemdupz(s.data, s.size);
+    memchrsub(lines[i], NUL, NL, s.size);
   }
 
-  String first_item = replacement.items[0].data.string;
-  String last_item = replacement.items[replacement.size - 1].data.string;
-
-  size_t firstlen = (size_t)start_col + first_item.size;
-  size_t last_part_len = (size_t)len_at_end - (size_t)end_col;
-  if (replacement.size == 1) {
-    firstlen += last_part_len;
-  }
-  char *first = arena_allocz(arena, firstlen);
-  char *last = NULL;
-  memcpy(first, str_at_start, (size_t)start_col);
-  memcpy(first + start_col, first_item.data, first_item.size);
-  memchrsub(first + start_col, NUL, NL, first_item.size);
-  if (replacement.size == 1) {
-    memcpy(first + start_col + first_item.size, str_at_end + end_col, last_part_len);
-  } else {
-    last = arena_allocz(arena, last_item.size + last_part_len);
-    memcpy(last, last_item.data, last_item.size);
-    memchrsub(last, NUL, NL, last_item.size);
-    memcpy(last + last_item.size, str_at_end + end_col, last_part_len);
-  }
-
-  char **lines = arena_alloc(arena, new_len * sizeof(char *), true);
-  lines[0] = first;
-  new_byte += (bcount_t)(first_item.size);
-  for (size_t i = 1; i < new_len - 1; i++) {
-    const String l = replacement.items[i].data.string;
-
-    // Fill lines[i] with l's contents. Convert NULs to newlines as required by
-    // NL-used-for-NUL.
-    lines[i] = arena_memdupz(arena, l.data, l.size);
-    memchrsub(lines[i], NUL, NL, l.size);
-    new_byte += (bcount_t)(l.size) + 1;
-  }
-  if (replacement.size > 1) {
-    lines[replacement.size - 1] = last;
-    new_byte += (bcount_t)(last_item.size) + 1;
-  }
+  ptrdiff_t extra = 0;
+  pos_T start = { .lnum = (linenr_T)start_row, .col = (colnr_T)start_col };
+  pos_T end = { .lnum = (linenr_T)end_row, .col = (colnr_T)end_col };
 
   TRY_WRAP(err, {
     if (!MODIFIABLE(b)) {
       api_set_error(err, kErrorTypeException, "Buffer is not 'modifiable'");
+      for (size_t i = 0; i < new_len; i++) {
+        xfree(lines[i]);
+      }
       goto end;
     }
 
@@ -606,58 +570,19 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buf, Integer start_row, Integ
     // undo state of one past the end_row, since end_row is inclusive.
     if (u_save_buf(b, (linenr_T)start_row - 1, (linenr_T)end_row + 1) == FAIL) {
       api_set_error(err, kErrorTypeException, "Failed to save undo information");
+      for (size_t i = 0; i < new_len; i++) {
+        xfree(lines[i]);
+      }
       goto end;
     }
 
-    ptrdiff_t extra = 0;  // lines added to text, can be negative
-    size_t old_len = (size_t)(end_row - start_row + 1);
-
-    // If the size of the range is reducing (ie, new_len < old_len) we
-    // need to delete some old_len. We do this at the start, by
-    // repeatedly deleting line "start".
-    size_t to_delete = (new_len < old_len) ? old_len - new_len : 0;
-    for (size_t i = 0; i < to_delete; i++) {
-      if (ml_delete_buf(b, (linenr_T)start_row, false) == FAIL) {
-        api_set_error(err, kErrorTypeException, "Failed to delete line");
-        goto end;
+    if (ml_replace_text_range(b, start, end, lines, new_len, false, &extra,
+                              &old_byte, &new_byte, &last_len) == FAIL) {
+      api_set_error(err, kErrorTypeException, "Failed to replace text");
+      for (size_t i = 0; i < new_len; i++) {
+        xfree(lines[i]);
       }
-    }
-
-    if (to_delete > 0) {
-      extra -= (ptrdiff_t)to_delete;
-    }
-
-    // For as long as possible, replace the existing old_len with the
-    // new old_len. This is a more efficient operation, as it requires
-    // less memory allocation and freeing.
-    size_t to_replace = old_len < new_len ? old_len : new_len;
-    for (size_t i = 0; i < to_replace; i++) {
-      int64_t lnum = start_row + (int64_t)i;
-
-      VALIDATE((lnum < MAXLNUM), "%s", "Index out of bounds", {
-        goto end;
-      });
-
-      if (ml_replace_buf(b, (linenr_T)lnum, lines[i], false, true) == FAIL) {
-        api_set_error(err, kErrorTypeException, "Failed to replace line");
-        goto end;
-      }
-    }
-
-    // Now we may need to insert the remaining new old_len
-    for (size_t i = to_replace; i < new_len; i++) {
-      int64_t lnum = start_row + (int64_t)i - 1;
-
-      VALIDATE((lnum < MAXLNUM), "%s", "Index out of bounds", {
-        goto end;
-      });
-
-      if (ml_append_buf(b, (linenr_T)lnum, lines[i], 0, false) == FAIL) {
-        api_set_error(err, kErrorTypeException, "Failed to insert line");
-        goto end;
-      }
-
-      extra++;
+      goto end;
     }
 
     colnr_T col_extent = (colnr_T)(end_col
@@ -672,13 +597,13 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buf, Integer start_row, Integ
 
     if (Visual.active && b == curbuf && Visual.mode != Ctrl_V) {
       fix_pos_col(b, &Visual.start, (linenr_T)start_row, (colnr_T)start_col, (linenr_T)end_row,
-                  (colnr_T)end_col, (linenr_T)new_len, (colnr_T)last_item.size, 1);
+                  (colnr_T)end_col, (linenr_T)new_len, last_len, 1);
       check_visual_pos();
     }
 
     extmark_splice(b, (int)start_row - 1, (colnr_T)start_col,
-                   (int)(end_row - start_row), col_extent, old_byte,
-                   (int)new_len - 1, (colnr_T)last_item.size, new_byte,
+                   (int)(end_row - start_row), col_extent, (bcount_t)old_byte,
+                   (int)new_len - 1, last_len, (bcount_t)new_byte,
                    kExtmarkUndo);
 
     changed_lines(b, (linenr_T)start_row, (colnr_T)start_col, (linenr_T)end_row + 1,
@@ -688,7 +613,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buf, Integer start_row, Integ
       if (win->w_buffer == b) {
         if (win->w_cursor.lnum >= start_row && win->w_cursor.lnum <= end_row) {
           fix_cursor_cols(win, (linenr_T)start_row, (colnr_T)start_col, (linenr_T)end_row,
-                          (colnr_T)end_col, (linenr_T)new_len, (colnr_T)last_item.size);
+                          (colnr_T)end_col, (linenr_T)new_len, last_len);
         } else {
           fix_cursor(win, (linenr_T)start_row, (linenr_T)end_row, (linenr_T)extra);
         }
@@ -696,6 +621,8 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buf, Integer start_row, Integ
     }
     end:;
   });
+
+  xfree(lines);
 }
 
 /// Gets a range from the buffer (may be partial lines, unlike |nvim_buf_get_lines()|).
