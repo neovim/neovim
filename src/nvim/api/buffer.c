@@ -1265,6 +1265,8 @@ Dict nvim__buf_stats(Buffer buf, Arena *arena, Error *err)
   PUT_C(rv, "dirty_bytes", INTEGER_OBJ((Integer)b->deleted_bytes));
   PUT_C(rv, "dirty_bytes2", INTEGER_OBJ((Integer)b->deleted_bytes2));
   PUT_C(rv, "virt_blocks", INTEGER_OBJ((Integer)buf_meta_total(b, kMTMetaLines)));
+  PUT_C(rv, "conceal_marks", INTEGER_OBJ((Integer)buf_meta_total(b, kMTMetaConceal)));
+  PUT_C(rv, "conceal_line_marks", INTEGER_OBJ((Integer)buf_meta_total(b, kMTMetaConcealLines)));
 
   u_header_T *uhp = NULL;
   if (b->b_u_curhead != NULL) {
