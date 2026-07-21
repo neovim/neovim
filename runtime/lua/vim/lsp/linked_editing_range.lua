@@ -195,7 +195,9 @@ function LinkedEditor:on_attach(client_id)
     self.client_state[client_id] = state
   end
 
-  self:refresh()
+  if self.bufnr == api.nvim_get_current_buf() then
+    self:refresh()
+  end
 end
 
 ---@package
