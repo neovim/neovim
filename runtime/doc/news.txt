@@ -335,8 +335,9 @@ OPTIONS
 • 'wrap' is now conceal-aware: a line whose text is hidden by conceal wraps
   at its displayed width instead of at the pre-conceal wrap points, and the
   cursor, |screenpos()|, |wincol()| and mouse follow the reflowed layout.
-  This applies to conceal from |extmarks| and |matchadd()|; ":syntax" conceal
-  and conceal from decoration providers are unchanged.
+  This applies to conceal from |extmarks|, |matchadd()| and
+  |treesitter-highlight-conceal|; ":syntax" conceal and conceal from other
+  decoration providers are unchanged.
 
 PERFORMANCE
 
