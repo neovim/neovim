@@ -518,6 +518,51 @@ int conceal_off_before(win_T *wp, linenr_T lnum, colnr_T len)
   return hidden;
 }
 
+/// Convert a screen-layout column "scol" to a buffer byte column on line "lnum" of window "wp",
+/// accounting for cells hidden by persistent conceal. This is the inverse of conceal_off_before()
+/// and the screen-aware analog of mouse.c's vcol2col(): it walks the line accumulating displayed
+/// (screen) width, stepping over fully-hidden characters without consuming the target.
+///
+/// When conceal cannot apply (see conceal_off_before()), this behaves exactly like the virtual
+/// walk. Sets "*coladdp" (if non-NULL) to the overshoot past the last visible column, as vcol2col()
+/// does, for 'virtualedit'.
+colnr_T scol_to_col(win_T *wp, linenr_T lnum, colnr_T scol, colnr_T *coladdp)
+{
+  char *const line = ml_get_buf(wp->w_buffer, lnum);
+  CharsizeArg csarg;
+  CSType const cstype = init_charsize_arg(&csarg, wp, lnum, line);
+
+  DecorState conceal_state;
+  bool const conceal = linesize_conceal_start(&csarg, &conceal_state);
+
+  StrCharInfo ci = utf_ptr2StrCharInfo(line);
+  int cur_vcol = 0;  // virtual column, needed for TAB width
+  int cur_scol = 0;  // screen column, compared against the target
+  while (cur_scol < scol && *ci.ptr != NUL) {
+    int const w = win_charsize(cstype, cur_vcol, ci.ptr, ci.chr.value, &csarg).width;
+    int const hidden = conceal
+                       ? linesize_conceal_hidden(&csarg, &conceal_state, (int)(ci.ptr - line), w)
+                       : 0;
+    if (hidden == 0) {
+      if (cur_scol + w > scol) {
+        break;  // target falls within this visible character
+      }
+      cur_scol += w;
+    }
+    cur_vcol += w;
+    ci = utfc_next(ci);
+  }
+
+  if (conceal) {
+    linesize_conceal_end(&conceal_state);
+  }
+
+  if (coladdp != NULL) {
+    *coladdp = scol - cur_scol;
+  }
+  return (colnr_T)(ci.ptr - line);
+}
+
 /// Calculate virtual column until the given "len".
 ///
 /// @param csarg    Argument to charsize functions.

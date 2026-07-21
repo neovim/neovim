@@ -48,6 +48,21 @@ describe('conceal-aware wrapping (#14409)', function()
     eq({ row = 1, col = 15, curscol = 15, endcol = 15 }, fn.screenpos(0, 1, 21))
   end)
 
+  it('mouse click maps to the reflowed screen column', function()
+    command('set mouse=a')
+    -- 10 a + HIDDEN(6) + 30 b; reflowed: row 1 = a*10 + b*10 (buf 16..25), row 2 = b*20 (buf 26..45).
+    api.nvim_buf_set_lines(0, 0, -1, true, { ('a'):rep(10) .. 'HIDDEN' .. ('b'):rep(30) })
+    api.nvim_buf_set_extmark(0, ns, 0, 10, { end_col = 16, conceal = '' })
+
+    -- Click row 1 (0-based 0), cell 14: a 'b' at buffer col 20 (pre-conceal this cell was hidden).
+    api.nvim_input_mouse('left', 'press', '', 0, 0, 14)
+    eq({ 1, 20 }, api.nvim_win_get_cursor(0))
+
+    -- Click row 2 (0-based 1), cell 0: first 'b' of visual row 2 = buffer col 26.
+    api.nvim_input_mouse('left', 'press', '', 0, 1, 0)
+    eq({ 1, 26 }, api.nvim_win_get_cursor(0))
+  end)
+
   it('ephemeral (decoration-provider) conceal does not reflow', function()
     -- Ephemeral conceal is created during drawing and is not in the marktree, so the
     -- shared size/geometry path cannot see it off-draw. Reflowing it would make the
