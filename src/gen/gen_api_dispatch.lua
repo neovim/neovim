@@ -952,7 +952,9 @@ local function process_function(fn)
   for i = 1, #free_code do
     local rev_i = #free_code - i + 1
     local code = free_code[rev_i]
-    if i == 1 and not real_type(fn.parameters[1][1]):match('^KeyDict_') then
+    local cur_is_keydict = real_type(fn.parameters[i][1]):match('^KeyDict_')
+    local prev_is_keydict = i > 1 and real_type(fn.parameters[i - 1][1]):match('^KeyDict_')
+    if not cur_is_keydict and (i == 1 or prev_is_keydict) then
       free_at_exit_code = free_at_exit_code .. ('\n%s'):format(code)
     else
       free_at_exit_code = free_at_exit_code .. ('\nexit_%u:\n%s'):format(rev_i, code)
