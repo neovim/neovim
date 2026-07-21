@@ -1281,69 +1281,7 @@ static size_t word_length(const char *str)
   return length;
 }
 
-/// To remain compatible with the old implementation (which forked a process
-/// for writing) the entire text is copied to a temporary buffer before the
-/// event loop starts. If we don't (by writing in chunks returned by `ml_get`)
-/// the buffer being modified might get modified by reading from the process
-/// before we finish writing.
-static void read_input(StringBuilder *buf)
-{
-  read_buffer_into(curbuf, &curbuf->b_op_start, &curbuf->b_op_end, buf);
-}
 
-static size_t write_output(char *output, size_t remaining, bool eof)
-{
-  if (!output) {
-    return 0;
-  }
-
-  char *start = output;
-  size_t off = 0;
-  while (off < remaining) {
-    // CRLF
-    // special case: for binary mode, don't remove CR.
-    if (output[off] == CAR && output[off + 1] == NL && !curbuf->b_p_bin) {
-      output[off] = NUL;
-      ml_append(curwin->w_cursor.lnum++, output, (int)off + 1, false);
-      size_t skip = off + 2;
-      output += skip;
-      remaining -= skip;
-      off = 0;
-      continue;
-    } else if ((output[off] == CAR && !curbuf->b_p_bin) || output[off] == NL) {
-      // Insert the line
-      output[off] = NUL;
-      ml_append(curwin->w_cursor.lnum++, output, (int)off + 1, false);
-      size_t skip = off + 1;
-      output += skip;
-      remaining -= skip;
-      off = 0;
-      continue;
-    }
-
-    if (output[off] == NUL) {
-      // Translate NUL to NL
-      output[off] = NL;
-    }
-    off++;
-  }
-
-  if (eof) {
-    if (remaining) {
-      // append unfinished line
-      ml_append(curwin->w_cursor.lnum++, output, 0, false);
-      // remember that the line ending was missing
-      curbuf->b_no_eol_lnum = curwin->w_cursor.lnum;
-      output += remaining;
-    } else {
-      curbuf->b_no_eol_lnum = 0;
-    }
-  }
-
-  ui_flush();
-
-  return (size_t)(output - start);
-}
 
 static void shell_write_cb(Stream *stream, void *data, int status)
 {
