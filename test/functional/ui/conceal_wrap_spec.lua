@@ -63,6 +63,22 @@ describe('conceal-aware wrapping (#14409)', function()
     eq({ 1, 26 }, api.nvim_win_get_cursor(0))
   end)
 
+  it('winline()/wincol() report the reflowed cursor position', function()
+    -- Same reflowed line; winline()/wincol() go through curs_columns(), not a redraw.
+    api.nvim_buf_set_lines(0, 0, -1, true, { ('a'):rep(10) .. 'HIDDEN' .. ('b'):rep(30) })
+    api.nvim_buf_set_extmark(0, ns, 0, 10, { end_col = 16, conceal = '' })
+
+    -- Buffer col 26 (first 'b' of visual row 2) sits at screen row 2, col 1.
+    api.nvim_win_set_cursor(0, { 1, 26 })
+    eq(2, fn.winline())
+    eq(1, fn.wincol())
+
+    -- Buffer col 20 reflows back onto row 1 at col 15 (pre-conceal it was row 2, col 1).
+    api.nvim_win_set_cursor(0, { 1, 20 })
+    eq(1, fn.winline())
+    eq(15, fn.wincol())
+  end)
+
   it('ephemeral (decoration-provider) conceal does not reflow', function()
     -- Ephemeral conceal is created during drawing and is not in the marktree, so the
     -- shared size/geometry path cannot see it off-draw. Reflowing it would make the

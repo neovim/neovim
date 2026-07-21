@@ -882,6 +882,14 @@ void curs_columns(win_T *wp, int may_scroll)
   } else if (wp->w_p_wrap && wp->w_view_width != 0) {
     width2 = width1 + win_col_off2(wp);
 
+    // On a concealed cursor line, subtract cells hidden by conceal so w_wcol and the screen row
+    // computed below are in screen-layout columns, matching win_line()'s reflow. This also keeps
+    // winline()/wincol() correct without relying on a redraw. Zero when nothing is concealed.
+    if (wp->w_p_cole > 0) {
+      int coff = conceal_off_before(wp, wp->w_cursor.lnum, wp->w_cursor.col);
+      wp->w_wcol -= MIN(wp->w_wcol, coff);
+    }
+
     // skip columns that are not visible
     if (wp->w_cursor.lnum == wp->w_topline
         && wp->w_skipcol > 0
