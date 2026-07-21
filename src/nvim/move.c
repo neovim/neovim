@@ -542,11 +542,16 @@ void check_cursor_moved(win_T *wp)
     wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL
                      |VALID_CHEIGHT|VALID_CROW|VALID_TOPLINE);
 
-    // Concealed line visibility toggled.
+    // Concealed line visibility toggled: a line whose height changes when it is
+    // revealed or concealed shifts the layout of the lines below, so the whole
+    // window must be redrawn (see conceal_line_changes_height()). Whole-line
+    // conceal ('conceal_lines') is covered by decor_conceal_line().
     if (wp == curwin && wp->w_valid_cursor.lnum > 0 && wp->w_p_cole >= 2
         && !conceal_cursor_line(wp)
         && (decor_conceal_line(wp, wp->w_cursor.lnum - 1, true)
-            || decor_conceal_line(wp, wp->w_valid_cursor.lnum - 1, true))) {
+            || decor_conceal_line(wp, wp->w_valid_cursor.lnum - 1, true)
+            || conceal_line_changes_height(wp, wp->w_cursor.lnum)
+            || conceal_line_changes_height(wp, wp->w_valid_cursor.lnum))) {
       changed_window_setting(wp);
     }
     wp->w_valid_cursor = wp->w_cursor;

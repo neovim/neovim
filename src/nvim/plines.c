@@ -955,6 +955,24 @@ int plines_win_nofill(win_T *wp, linenr_T lnum, bool limit_winheight)
   return lines;
 }
 
+/// Number of screen rows that "col" screen cells of text occupy in window "wp"
+/// under 'wrap', accounting for the 'number'/'foldcolumn' offsets on the first
+/// and subsequent screen rows.
+static int win_text_width_to_plines(win_T *wp, int64_t col)
+{
+  int width = wp->w_view_width - win_col_off(wp);
+  if (width <= 0) {
+    return 32000;  // bigger than the number of screen lines
+  }
+  if (col <= width) {
+    return 1;
+  }
+  col -= width;
+  width += win_col_off2(wp);
+  const int64_t lines = (col + (width - 1)) / width + 1;
+  return (lines > 0 && lines <= INT_MAX) ? (int)lines : INT_MAX;
+}
+
 /// Get number of window lines physical line "lnum" will occupy in window "wp".
 /// Does not care about folding, 'wrap' or filler lines.
 int plines_win_nofold(win_T *wp, linenr_T lnum)
@@ -979,18 +997,45 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
     col += 1;
   }
 
-  // Add column offset for 'number', 'relativenumber' and 'foldcolumn'.
-  int width = wp->w_view_width - win_col_off(wp);
-  if (width <= 0) {
-    return 32000;  // bigger than the number of screen lines
+  return win_text_width_to_plines(wp, col);
+}
+
+/// Whether buffer line "lnum" occupies a different number of screen rows in
+/// window "wp" when its intra-line conceal is applied versus revealed. Moving
+/// the cursor onto/off such a line reveals or conceals it (unless
+/// 'concealcursor' applies), which shifts the layout of the lines below, so the
+/// whole window must be redrawn instead of incrementally scrolled (otherwise
+/// the TUI's scroll optimisation leaves stale cells). Only meaningful with
+/// 'wrap' and 'conceallevel' >= 2; whole-line conceal ('conceal_lines') is
+/// handled separately via decor_conceal_line().
+bool conceal_line_changes_height(win_T *wp, linenr_T lnum)
+{
+  if (!wp->w_p_wrap || wp->w_p_cole < 2 || wp->w_view_width == 0
+      || lnum < 1 || lnum > wp->w_buffer->b_ml.ml_line_count) {
+    return false;
   }
-  if (col <= width) {
-    return 1;
+  if (!(wp->w_buffer->b_marktree->n_keys > 0 || decor_has_conceal_providers())) {
+    return false;
   }
-  col -= width;
-  width += win_col_off2(wp);
-  const int64_t lines = (col + (width - 1)) / width + 1;
-  return (lines > 0 && lines <= INT_MAX) ? (int)lines : INT_MAX;
+
+  char *const line = ml_get_buf(wp->w_buffer, lnum);
+  int const extra = (wp->w_p_list && wp->w_p_lcs_chars.eol != NUL) ? 1 : 0;
+
+  // Revealed width: screen == false ignores conceal entirely (conceal-neutral).
+  CharsizeArg csarg;
+  init_charsize_arg(&csarg, wp, lnum, line);
+  int64_t const revealed = linesize_regular(&csarg, 0, MAXCOL, false) + extra;
+
+  // Concealed width: force conceal evaluation regardless of whether this is
+  // the revealed cursor line, so we compare the two states of the same line.
+  init_charsize_arg(&csarg, wp, lnum, line);
+  csarg.maybe_conceal = true;
+  int64_t const concealed = linesize_regular(&csarg, 0, MAXCOL, true) + extra;
+
+  if (revealed == concealed) {
+    return false;  // nothing on the line is actually concealed
+  }
+  return win_text_width_to_plines(wp, revealed) != win_text_width_to_plines(wp, concealed);
 }
 
 /// Like plines_win(), but only reports the number of physical screen lines

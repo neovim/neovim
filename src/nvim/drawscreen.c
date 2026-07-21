@@ -149,8 +149,12 @@ void conceal_check_cursor_line(void)
 
   redrawWinline(curwin, curwin->w_cursor.lnum);
 
-  // Concealed line visibility toggled.
-  if (decor_conceal_line(curwin, curwin->w_cursor.lnum - 1, true)) {
+  // Concealed line visibility toggled. A line whose height changes when
+  // revealed/concealed shifts the lines below it, so redraw the whole window
+  // (see conceal_line_changes_height()); whole-line conceal ('conceal_lines')
+  // is covered by decor_conceal_line().
+  if (decor_conceal_line(curwin, curwin->w_cursor.lnum - 1, true)
+      || conceal_line_changes_height(curwin, curwin->w_cursor.lnum)) {
     changed_window_setting(curwin);
   }
   // Need to recompute cursor column, e.g., when starting Visual mode

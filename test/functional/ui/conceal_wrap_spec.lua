@@ -190,3 +190,52 @@ describe('conceal-aware wrapping (#14409)', function()
     eq(1, api.nvim_win_text_height(0, {}).all)
   end)
 end)
+
+-- Revealing/concealing a wrapped line via 'concealcursor' changes its height, so cursor moves must
+-- force a full redraw (like the existing 'conceal_lines' guard) to avoid stale cells from the TUI's
+-- grid_scroll optimisation. The Screen harness can't observe that TUI effect directly, so this
+-- verifies geometry stays correct while walking the cursor through a scrolled, height-changing
+-- region (exercising conceal_line_changes_height()).
+describe('conceal-aware wrapping redraw (#14409)', function()
+  before_each(clear)
+
+  it(
+    'keeps geometry correct moving through a scrolled reflowing region with a revealed cursor line',
+    function()
+      local screen = Screen.new(30, 8)
+      local ns = api.nvim_create_namespace('conceal_wrap_redraw')
+      -- concealcursor= reveals the cursor line, so moving the cursor changes that line's height.
+      command('set wrap conceallevel=2 concealcursor= scrolloff=1')
+      -- Each line reflows: revealed is 34 cells (2 rows at width 30), concealed is 22 (1 row).
+      local lines = {}
+      for i = 1, 20 do
+        lines[i] = ('L%02d-AAA'):format(i)
+          .. ('C'):rep(12)
+          .. ('-t%02d-'):format(i)
+          .. ('B'):rep(10)
+      end
+      api.nvim_buf_set_lines(0, 0, -1, true, lines)
+      for i = 0, 19 do
+        local c = lines[i + 1]:find('C')
+        api.nvim_buf_set_extmark(0, ns, i, c - 1, { end_col = c - 1 + 12, conceal = '' })
+      end
+
+      -- Scroll into the middle, then walk the cursor down through several reflowing lines.
+      api.nvim_win_set_cursor(0, { 8, 0 })
+      feed('zzjjj')
+
+      -- Cursor is on line 11 (revealed: 2 rows, C's visible); the other visible lines are concealed
+      -- (1 row, C's hidden). Every line's geometry must be correct after the height-changing moves.
+      screen:expect([[
+      L07-AAA-t07-BBBBBBBBBB        |
+      L08-AAA-t08-BBBBBBBBBB        |
+      L09-AAA-t09-BBBBBBBBBB        |
+      L10-AAA-t10-BBBBBBBBBB        |
+      ^L11-AAACCCCCCCCCCCC-t11-BBBBBB|
+      BBBB                          |
+      L12-AAA-t12-BBBBBBBBBB        |
+                                    |
+    ]])
+    end
+  )
+end)
