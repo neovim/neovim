@@ -107,7 +107,7 @@ function M.escape_subject(word)
     -- Add underscores around 'CTRL-X' characters
     -- E.g. 'iCTRL-GCTRL-J' --> 'i_CTRL-G_CTRL-J'
     -- Only exception: 'CTRL-{character}'
-    word = word:gsub('([^_])CTRL%-', '%1_CTRL-')
+    word = word:gsub('([^-_])CTRL%-', '%1_CTRL-')
     word = word:gsub('(CTRL%-[^{])([^%u_\\-])', '%1_%2')
 
     -- Skip function arguments
