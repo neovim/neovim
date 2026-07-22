@@ -9,7 +9,6 @@ local M = {}
 ---@class (private) nvim.dir.Entry
 ---@field name string
 ---@field dir boolean
----@field path? string
 
 --- Callback for `Provider.list_entries`; call once with either an error or entries.
 ---@alias (private) nvim.dir.ListCallback fun(err: string?, entries: nvim.dir.Entry[]?)
@@ -19,8 +18,6 @@ local M = {}
 ---@field buf integer
 ---@field name string
 ---@field provider nvim.dir.Provider
---- Last entries rendered; indexes match buffer lines.
----@field entries nvim.dir.Entry[]
 --- Provider-owned mutable state preserved across reloads.
 ---@field provider_state table
 --- Incremented for each list call to ignore stale callbacks.
@@ -252,7 +249,6 @@ local function load(ctx, restore_view)
     if restore_view and api.nvim_get_current_buf() == ctx.buf then
       vim.fn.winrestview(restore_view)
     end
-    ctx.entries = entries
 
     if not first_render then
       return
@@ -293,7 +289,6 @@ function M.open(buf, name, provider)
     buf = buf,
     name = name,
     provider = provider,
-    entries = {},
     provider_state = {},
     list_generation = 0,
     rendered = false,
@@ -309,11 +304,21 @@ end
 ---@param buf integer
 ---@return nvim.dir.Entry?
 local function current_entry(buf)
-  local ctx = get_session(buf)
-  if not ctx or api.nvim_get_current_buf() ~= buf then
+  if not get_session(buf) or api.nvim_get_current_buf() ~= buf then
     return nil
   end
-  return ctx.entries[api.nvim_win_get_cursor(0)[1]]
+  local line = api.nvim_get_current_line()
+  if line == '' then
+    return nil
+  end
+  local dir = line:sub(-1) == '/'
+  if dir then
+    line = line:sub(1, -2)
+  end
+  if line == '' then
+    return nil
+  end
+  return { name = line:gsub('%z', '\n'), dir = dir }
 end
 
 function M._open_entry()

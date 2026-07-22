@@ -198,12 +198,12 @@ describe('nvim.dir', function()
         list_entries = function(ctx, cb)
           vim.g.nvim_dir_list_name = ctx.name
           cb(nil, {
-            { name = 'child', dir = true, id = 'child-id' },
-            { name = 'file.txt', dir = false, id = 'file-id' },
+            { name = 'child', dir = true },
+            { name = 'file.txt', dir = false },
           })
         end,
         open_entry = function(ctx, entry)
-          vim.g.nvim_dir_opened = entry.id .. ':' .. ctx.name
+          vim.g.nvim_dir_opened = entry.name .. ':' .. ctx.name
         end,
         open_parent = function(ctx)
           vim.g.nvim_dir_parent = ctx.name
@@ -220,9 +220,11 @@ describe('nvim.dir', function()
     eq('custom://root', exec_lua('return vim.g.nvim_dir_list_name'))
 
     api.nvim_win_set_cursor(0, { 2, 0 })
+    api.nvim_set_option_value('modifiable', true, { buf = 0 })
+    api.nvim_set_current_line('renamed.txt')
     feed('<CR>')
     poke_eventloop()
-    eq('file-id:custom://root', exec_lua('return vim.g.nvim_dir_opened'))
+    eq('renamed.txt:custom://root', exec_lua('return vim.g.nvim_dir_opened'))
 
     feed('-')
     poke_eventloop()

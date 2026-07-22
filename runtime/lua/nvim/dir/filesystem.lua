@@ -71,7 +71,6 @@ function M.list_entries(ctx, cb)
     entries[#entries + 1] = {
       name = name,
       dir = type == 'directory',
-      path = fs.joinpath(ctx.name, name),
     }
   end
   table.sort(entries, function(a, b)
@@ -83,10 +82,10 @@ function M.list_entries(ctx, cb)
   cb(nil, entries)
 end
 
----@param _ nvim.dir.Ctx
+---@param ctx nvim.dir.Ctx
 ---@param entry nvim.dir.Entry
-function M.open_entry(_, entry)
-  navigate(entry.path)
+function M.open_entry(ctx, entry)
+  navigate(fs.joinpath(ctx.name, entry.name))
 end
 
 ---@param ctx nvim.dir.Ctx
