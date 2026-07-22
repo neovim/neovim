@@ -2449,6 +2449,279 @@ int ml_append(linenr_T lnum, char *line, colnr_T len, bool newfile)
   return ml_append_flags(lnum, line, len, newfile ? ML_APPEND_NEW : 0);
 }
 
+char **split_contiguous_buffer(char *output, size_t remaining, size_t *out_len, bool is_charwise)
+{
+  size_t capacity = 16;
+  size_t len = 0;
+  char **lines = xmalloc(capacity * sizeof(char *));
+
+  size_t off = 0;
+  char *line_start = output;
+  while (off < remaining) {
+    bool is_car = output[off] == CAR && !curbuf->b_p_bin;
+    bool is_nl = output[off] == NL;
+    if (is_car || is_nl) {
+      size_t skip = off + 1;
+      if (is_car && output[off + 1] == NL) {
+        skip = off + 2;
+      }
+      output[off] = NUL;
+      if (len >= capacity) {
+        capacity *= 2;
+        lines = xrealloc(lines, capacity * sizeof(char *));
+      }
+      lines[len++] = xstrdup(line_start);
+
+      output += skip;
+      remaining -= skip;
+      off = 0;
+      line_start = output;
+      continue;
+    }
+    if (output[off] == NUL) {
+      // Translate NUL to NL
+      output[off] = NL;
+    }
+    off++;
+  }
+
+  if (remaining > 0) {
+    if (len >= capacity) {
+      capacity += 1;
+      lines = xrealloc(lines, capacity * sizeof(char *));
+    }
+    lines[len++] = xstrnsave(line_start, remaining);
+  } else if (is_charwise && len > 0 && line_start != NULL && *line_start == NUL) {
+    if (len >= capacity) {
+      capacity += 1;
+      lines = xrealloc(lines, capacity * sizeof(char *));
+    }
+    lines[len++] = xstrdup("");
+  }
+
+  *out_len = len;
+  return lines;
+}
+
+/// Replaces a range of characters/lines in a buffer with an array of new lines.
+///
+/// @param buf         Target buffer.
+/// @param start       Start coordinate (inclusive, 1-based line, 0-based col).
+/// @param end         End coordinate (exclusive, 1-based line, 0-based col).
+/// @param lines       Array of replacement lines.
+/// @param lines_len   Number of replacement lines.
+/// @param copy        If true, duplicates the replacement strings.
+/// @param[out] extra  Returns the net change in line count (can be negative).
+/// @param[out] old_byte Returns the byte count of the replaced range in the buffer.
+/// @param[out] new_byte Returns the byte count of the replacement lines.
+/// @param[out] last_len Returns the byte length of the last replacement line.
+/// @return            OK on success, FAIL on failure.
+int ml_replace_text_range(buf_T *buf, pos_T start, pos_T end, char **lines, size_t lines_len,
+                          bool copy, ptrdiff_t *extra, ptrdiff_t *old_byte, ptrdiff_t *new_byte,
+                          colnr_T *last_len)
+{
+  if (lines_len == 0) {
+    return FAIL;
+  }
+
+  char *start_line = ml_get_buf(buf, start.lnum);
+  colnr_T start_line_len = ml_get_buf_len(buf, start.lnum);
+  colnr_T s_col = MIN(start.col, start_line_len);
+  char *prefix = xstrnsave(start_line, (size_t)s_col);
+
+  char *end_line = ml_get_buf(buf, end.lnum);
+  colnr_T end_line_len = ml_get_buf_len(buf, end.lnum);
+  colnr_T e_col = (end.col == MAXCOL) ? end_line_len : MIN(end.col, end_line_len);
+  char *suffix = xstrdup(end_line + e_col);
+
+  if (old_byte != NULL) {
+    if (start.lnum == end.lnum) {
+      *old_byte = (e_col >= s_col) ? (e_col - s_col) : 0;
+    } else {
+      *old_byte = (start_line_len - s_col) + 1;
+      for (linenr_T l = start.lnum + 1; l < end.lnum; l++) {
+        *old_byte += ml_get_buf_len(buf, l) + 1;
+      }
+      *old_byte += e_col;
+    }
+  }
+
+  if (new_byte != NULL) {
+    ptrdiff_t new_b = 0;
+    for (size_t i = 0; i < lines_len; i++) {
+      new_b += (ptrdiff_t)strlen(lines[i]);
+    }
+    new_b += (ptrdiff_t)lines_len - 1;
+    *new_byte = new_b;
+  }
+
+  if (last_len != NULL) {
+    *last_len = (colnr_T)strlen(lines[lines_len - 1]);
+  }
+
+  linenr_T old_len = end.lnum - start.lnum + 1;
+  int status = OK;
+
+  if (lines_len == 1) {
+    size_t merged_len = strlen(prefix) + strlen(lines[0]) + strlen(suffix) + 1;
+    char *merged = xmalloc(merged_len);
+    snprintf(merged, merged_len, "%s%s%s", prefix, lines[0], suffix);
+
+    for (size_t i = 0; i < (size_t)old_len - 1; i++) {
+      if (ml_delete_buf(buf, start.lnum + 1, false) == FAIL) {
+        status = FAIL;
+      }
+    }
+    if (ml_replace_buf(buf, start.lnum, merged, false, true) == FAIL) {
+      status = FAIL;
+    }
+    xfree(merged);
+    if (!copy) {
+      xfree(lines[0]);
+    }
+  } else {
+    size_t first_len = strlen(prefix) + strlen(lines[0]) + 1;
+    char *first = xmalloc(first_len);
+    snprintf(first, first_len, "%s%s", prefix, lines[0]);
+
+    size_t last_len_val = strlen(lines[lines_len - 1]) + strlen(suffix) + 1;
+    char *last = xmalloc(last_len_val);
+    snprintf(last, last_len_val, "%s%s", lines[lines_len - 1], suffix);
+
+    size_t to_delete = (lines_len < (size_t)old_len) ? (size_t)old_len - lines_len : 0;
+    for (size_t i = 0; i < to_delete; i++) {
+      if (ml_delete_buf(buf, start.lnum, false) == FAIL) {
+        status = FAIL;
+      }
+    }
+
+    size_t to_replace = (size_t)old_len < lines_len ? (size_t)old_len : lines_len;
+    for (size_t i = 0; i < to_replace; i++) {
+      linenr_T lnum = start.lnum + (linenr_T)i;
+      if (i == 0) {
+        if (ml_replace_buf(buf, lnum, first, false, true) == FAIL) {
+          status = FAIL;
+        }
+        xfree(first);
+      } else if (i == lines_len - 1) {
+        if (ml_replace_buf(buf, lnum, last, false, true) == FAIL) {
+          status = FAIL;
+        }
+        xfree(last);
+        last = NULL;
+      } else {
+        if (ml_replace_buf(buf, lnum, lines[i], copy, !copy) == FAIL) {
+          status = FAIL;
+        }
+        if (!copy) {
+          xfree(lines[i]);
+        }
+      }
+    }
+
+    for (size_t i = to_replace; i < lines_len; i++) {
+      linenr_T lnum = start.lnum + (linenr_T)i - 1;
+      if (i == lines_len - 1) {
+        if (ml_append_buf(buf, lnum, last, 0, false) == FAIL) {
+          status = FAIL;
+        }
+        xfree(last);
+        last = NULL;
+      } else {
+        if (ml_append_buf(buf, lnum, lines[i], 0, false) == FAIL) {
+          status = FAIL;
+        }
+        if (!copy) {
+          xfree(lines[i]);
+        }
+      }
+    }
+
+    if (last != NULL) {
+      xfree(last);
+    }
+    if (!copy) {
+      xfree(lines[0]);
+      xfree(lines[lines_len - 1]);
+    }
+  }
+
+  if (extra != NULL) {
+    *extra = (ptrdiff_t)lines_len - (ptrdiff_t)old_len;
+  }
+
+  xfree(prefix);
+  xfree(suffix);
+
+  return status;
+}
+
+size_t ml_append_pos(pos_T pos, char *output, size_t remaining)
+{
+  if (!output) {
+    return 0;
+  }
+
+  size_t lines_len = 0;
+  char **lines = split_contiguous_buffer(output, remaining, &lines_len, true);
+
+  if (lines_len == 0) {
+    xfree(lines);
+    return 0;
+  }
+
+  ptrdiff_t extra = 0;
+  ml_replace_text_range(curbuf, pos, pos, lines, lines_len, false, &extra, NULL, NULL, NULL);
+  xfree(lines);
+
+  if (extra > 0) {
+    appended_lines_mark(pos.lnum, (linenr_T)extra);
+  }
+  changed_lines(curbuf, pos.lnum, pos.col, pos.lnum + 1, (linenr_T)extra, true);
+  ui_flush();
+
+  return remaining;
+}
+
+size_t ml_replace_range(pos_T range_start, pos_T range_end, char *output, size_t remaining)
+{
+  if (!output) {
+    return 0;
+  }
+
+  size_t lines_len = 0;
+  bool is_charwise = !(range_start.col == 0 && range_end.col == MAXCOL);
+  char **lines = split_contiguous_buffer(output, remaining, &lines_len, is_charwise);
+
+  if (lines_len == 0) {
+    xfree(lines);
+    return 0;
+  }
+
+  pos_T end = range_end;
+  if (end.col != MAXCOL) {
+    end.col++;
+  }
+
+  linenr_T old_len = end.lnum - range_start.lnum + 1;
+  ptrdiff_t extra = 0;
+  ml_replace_text_range(curbuf, range_start, end, lines, lines_len, false, &extra, NULL, NULL,
+                        NULL);
+  xfree(lines);
+
+  size_t to_delete = (lines_len < (size_t)old_len) ? (size_t)old_len - lines_len : 0;
+  if (to_delete > 0) {
+    deleted_lines_mark(range_start.lnum, (linenr_T)to_delete);
+  }
+  if (lines_len > (size_t)old_len) {
+    appended_lines_mark(end.lnum, (linenr_T)(lines_len - (size_t)old_len));
+  }
+  changed_lines(curbuf, range_start.lnum, range_start.col, end.lnum + 1, (linenr_T)extra, true);
+  ui_flush();
+
+  return remaining;
+}
+
 /// @param lnum  append after this line (can be 0)
 /// @param line  text of the new line
 /// @param len  length of new line, including nul, or 0

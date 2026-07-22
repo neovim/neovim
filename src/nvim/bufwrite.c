@@ -1434,15 +1434,32 @@ restore_backup:
     write_info.bw_flags = wb_flags;
     fileformat = get_fileformat_force(buf, eap);
     char *s = buffer;
+    colnr_T col1 = (eap != NULL) ? eap->col1 : 0;
+    colnr_T col2 = (eap != NULL) ? eap->col2 : MAXCOL;
     for (lnum = start; lnum <= end; lnum++) {
       // The next while loop is done once for each character written.
       // Keep it fast!
-      char *ptr = ml_get_buf(buf, lnum) - 1;
+      char *line_start = ml_get_buf(buf, lnum);
+      colnr_T len = (colnr_T)strlen(line_start);
+      colnr_T start_col = (lnum == start ? col1 : 0);
+      if (start_col > len) {
+        start_col = len;
+      }
+      char *ptr = line_start + start_col - 1;
+      colnr_T end_col = (lnum == end ? col2 : MAXCOL);
+      if (end_col != MAXCOL && end_col >= len) {
+        end_col = MAXCOL;
+      }
       if (write_undo_file) {
         sha256_update(&sha_ctx, (uint8_t *)ptr + 1, (uint32_t)(strlen(ptr + 1) + 1));
       }
+      colnr_T curr_col = start_col;
       char c;
       while ((c = *++ptr) != NUL) {
+        if (end_col != MAXCOL && curr_col > end_col) {
+          break;
+        }
+        curr_col++;
         if (c == NL) {
           *s = NUL;                       // replace newlines with NULs
         } else if (c == CAR && fileformat == EOL_MAC) {

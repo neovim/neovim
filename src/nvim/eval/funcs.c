@@ -1212,7 +1212,14 @@ void execute_common(typval_T *argvars, typval_T *rettv, int arg_off)
       .l = list,
       .li = tv_list_first(list),
     };
-    do_cmdline(NULL, get_list_line, (void *)&cookie,
+    exarg_T ea = {
+      .cmd = NULL,
+      .line1 = 1,
+      .line2 = 1,
+      .ea_getline = get_list_line,
+      .cookie = (void *)&cookie
+    };
+    do_cmdline(&ea,
                DOCMD_NOWAIT|DOCMD_VERBOSE|DOCMD_REPEAT|DOCMD_KEYTYPED);
     tv_list_unref(list);
   }
@@ -4050,6 +4057,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
         xfree(tofree);
         tofree = expr = str = encode_tv2echo(TV_LIST_ITEM_TV(li), NULL);
         if (str == NULL) {
+          match = false;
           break;
         }
       }

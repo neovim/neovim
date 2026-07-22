@@ -1099,13 +1099,13 @@ void format_lines(linenr_T line_count, bool avoid_fex)
           break;
         }
         if (next_leader_len > 0) {
-          del_bytes(next_leader_len, false, false);
+          del_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col, next_leader_len, false, false);
           mark_col_adjust(curwin->w_cursor.lnum, 0, 0, -next_leader_len, 0);
         } else if (second_indent > 0) {   // the "leader" for FO_Q_SECOND
           int indent = (int)getwhitecols_curline();
 
           if (indent > 0) {
-            del_bytes(indent, false, false);
+            del_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col, indent, false, false);
             mark_col_adjust(curwin->w_cursor.lnum, 0, 0, -indent, 0);
           }
         }

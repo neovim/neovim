@@ -626,7 +626,14 @@ void ex_listdo(exarg_T *eap)
       i++;
       // execute the command
       if (execute) {
-        do_cmdline(eap->arg, eap->ea_getline, eap->cookie, DOCMD_VERBOSE + DOCMD_NOWAIT);
+        exarg_T ea = {
+          .cmd = eap->arg,
+          .line1 = 1,
+          .line2 = 1,
+          .ea_getline = eap->ea_getline,
+          .cookie = eap->cookie
+        };
+        do_cmdline(&ea, DOCMD_VERBOSE + DOCMD_NOWAIT);
       }
 
       if (eap->cmdidx == CMD_bufdo) {
@@ -896,11 +903,21 @@ void ex_drop(exarg_T *eap)
 
       // execute [+cmd]
       if (eap->do_ecmd_cmd) {
-        bool did_set_swapcommand = set_swapcommand(eap->do_ecmd_cmd, 0);
-        do_cmdline(eap->do_ecmd_cmd, NULL, NULL, DOCMD_VERBOSE);
+        char *cmd = xstrdup(eap->do_ecmd_cmd);
+        bool did_set_swapcommand = set_swapcommand(cmd, 0);
+        exarg_T ea = {
+          .cmd = cmd,
+          .line1 = 1,
+          .line2 = 1,
+          .ea_getline = NULL,
+          .cookie = NULL
+        };
+        do_cmdline(&ea, DOCMD_VERBOSE);
+
         if (did_set_swapcommand) {
           set_vim_var_string(VV_SWAPCOMMAND, NULL, -1);
         }
+        XFREE_CLEAR(cmd);
       }
 
       // no need to execute [++opts] - they only apply for newly loaded buffers.

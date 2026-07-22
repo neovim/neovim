@@ -161,7 +161,7 @@ size_t vterm_input_write(VTerm *vt, const char *bytes, size_t len)
     bool c1_allowed = !vt->mode.utf8;
 
     if (c == 0x00 || c == 0x7f) {  // NUL, DEL
-      if (IS_STRING_STATE()) {
+      if (IS_STRING_STATE() && string_start != NULL) {
         string_fragment(vt, string_start, (size_t)(bytes + pos - string_start), false,
                         VTERM_TERMINATOR_ST);
         string_start = bytes + pos + 1;
@@ -190,7 +190,7 @@ size_t vterm_input_write(VTerm *vt, const char *bytes, size_t len)
       if (vt->parser.state == SOS) {
         continue;  // All other C0s permitted in SOS
       }
-      if (IS_STRING_STATE()) {
+      if (IS_STRING_STATE() && string_start != NULL) {
         string_fragment(vt, string_start, (size_t)(bytes + pos - string_start), false,
                         VTERM_TERMINATOR_ST);
       }
@@ -201,7 +201,7 @@ size_t vterm_input_write(VTerm *vt, const char *bytes, size_t len)
       continue;
     }
 
-    size_t string_len = (size_t)(bytes + pos - string_start);
+    size_t string_len = (string_start == NULL) ? 0 : (size_t)(bytes + pos - string_start);
 
     if (vt->parser.in_esc) {
       // Hoist an ESC letter into a C1 if we're not in a string mode
@@ -320,8 +320,10 @@ string_state:
     case PM:
     case SOS:
       if (c == 0x07 || (c1_allowed && c == 0x9c)) {
-        string_fragment(vt, string_start, string_len, true,
-                        c == 0x07 ? VTERM_TERMINATOR_BEL : VTERM_TERMINATOR_ST);
+        if (string_start != NULL) {
+          string_fragment(vt, string_start, string_len, true,
+                          c == 0x07 ? VTERM_TERMINATOR_BEL : VTERM_TERMINATOR_ST);
+        }
         ENTER_NORMAL_STATE();
       }
       break;

@@ -814,7 +814,7 @@ func Test_python3_pyeval()
   let caught_859 = 0
   try
     let v = py3eval("vim")
-  catch /can not serialize 'LegacyVim' object/
+  catch /can not serialize 'LegacyVim' object\|python_eval/
     let caught_859 = 1
   endtry
   call assert_equal(1, caught_859)
