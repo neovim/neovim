@@ -2740,7 +2740,7 @@ static void update_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, searchst
     stat->cnt = cnt;
     stat->exact_match = exact_match;
     stat->incomplete = incomplete;
-    stat->last_maxcount = (int)p_msc;
+    stat->last_maxcount = last_maxcount;
     return;
   }
   last_maxcount = maxcount;

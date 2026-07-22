@@ -2363,4 +2363,17 @@ func Test_incsearch_delimiter_ctrlg()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_searchcount_maxcount_cached()
+  new
+  call setline(1, repeat(['foo'], 5))
+  set maxsearchcount=99
+  let @/ = 'foo'
+  call cursor(1, 1)
+  call searchcount(#{recompute: v:true,  maxcount: 3})
+  let r = searchcount(#{recompute: v:false, maxcount: 3})
+  call assert_equal(3, r.maxcount)
+  set maxsearchcount&
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
