@@ -7380,6 +7380,10 @@ static void ex_normal(exarg_T *eap)
 /// ":startinsert", ":startreplace" and ":startgreplace"
 static void ex_startinsert(exarg_T *eap)
 {
+  if (!curbuf->b_p_ma && !curbuf->terminal) {
+    emsg(_(e_modifiable));
+    return;
+  }
   if (eap->forceit) {
     // cursor line can be zero on startup
     if (!curwin->w_cursor.lnum) {

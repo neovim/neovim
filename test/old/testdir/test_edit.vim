@@ -1780,7 +1780,47 @@ func Test_edit_startinsert()
   call feedkeys(":startinsert!\<CR>\<C-U>\<Esc>", 'xt')
   call assert_equal('', getline(1))
 
+  call setline(1, 'foobar')
+  setl nomodifiable
+  call assert_fails('startinsert', 'E21:')
+
+  call cursor(1, 1)
+  call assert_fails('startinsert!', 'E21:')
+  call assert_equal(1, col('.'))
+
   set backspace&
+  bwipe!
+endfunc
+
+" ":startinsert" is ineffective in a terminal window: it must not give an
+" error and with "!" it must not move the cursor.
+func Test_edit_startinsert_in_terminal()
+  CheckFeature terminal
+
+  let buf = Run_shell_in_terminal({})
+
+  " Fill the terminal with text.
+  if has('win32')
+    call feedkeys("dir\<CR>", 'xt')
+  else
+    call feedkeys("ls\<CR>", 'xt')
+  endif
+  call WaitForAssert({-> assert_notequal('', term_getline(buf, 1))})
+
+  " Go to Terminal-Normal mode and put the cursor on a line with text.
+  call feedkeys("\<C-W>N", 'xt')
+  call assert_notequal(0, search('\S', 'w'))
+  call cursor(line('.'), 1)
+
+  startinsert
+  startinsert!
+  call assert_equal(1, col('.'))
+
+  " Clear "restart_edit" in case the commands were not ignored.
+  stopinsert
+
+  call feedkeys("i", 'xt')
+  call StopShellInTerminal(buf)
   bwipe!
 endfunc
 
@@ -1797,6 +1837,19 @@ func Test_edit_startreplace()
   call assert_equal("axyz\tb", getline(1))
   call feedkeys("0i\<C-R>=execute('startreplace')\<CR>12\e", 'xt')
   call assert_equal("12axyz\tb", getline(1))
+
+  call setline(1, 'abc')
+  setl nomodifiable
+  call assert_fails('startreplace', 'E21:')
+  call assert_fails('startgreplace', 'E21:')
+
+  call cursor(1, 1)
+  call assert_fails('startreplace!', 'E21:')
+  call assert_equal(1, col('.'))
+  call cursor(1, 1)
+  call assert_fails('startgreplace!', 'E21:')
+  call assert_equal(1, col('.'))
+
   bw!
 endfunc
 
