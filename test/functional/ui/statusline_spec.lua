@@ -1100,6 +1100,21 @@ describe('statusline', function()
     eq(true, #contexts > 0)
     eq(caller_win, contexts[#contexts].actual)
   end)
+
+  it('%P %L updates in other windows', function()
+    screen:try_resize(40, 14)
+    command('set laststatus=2 statusline=%P\\ %L | split')
+    feed(':put=range(10)<cr>dgg')
+    screen:expect([[
+      ^                                        |
+      {1:~                                       }|*5
+      {3:All 1                                   }|
+                                              |
+      {1:~                                       }|*4
+      {2:All 1                                   }|
+      --No lines in buffer--                  |
+    ]])
+  end)
 end)
 
 describe('default statusline', function()
