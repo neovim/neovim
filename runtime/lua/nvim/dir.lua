@@ -283,7 +283,7 @@ function M._open_parent()
     return
   end
   -- Keep the global `-` mapping useful from regular file buffers.
-  require('nvim.dir.filesystem').open_parent_path(api.nvim_buf_get_name(buf))
+  require('nvim.dir.fs').open_parent_path(api.nvim_buf_get_name(buf))
 end
 
 ---@param buf? integer
@@ -299,7 +299,7 @@ end
 ---@param path string
 function M.try_open(buf, path)
   buf = vim._resolve_bufnr(buf)
-  local fs_provider = require('nvim.dir.filesystem')
+  local fs_provider = require('nvim.dir.fs')
   if fs_provider.is_navigating() or path == '' then
     return
   end

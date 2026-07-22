@@ -1,3 +1,5 @@
+-- Filesystem backend.
+
 local api = vim.api
 local fs = vim.fs
 
