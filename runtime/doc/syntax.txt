@@ -5319,6 +5319,10 @@ DiffAdd		Diff mode: Added line. |diff.txt|
 DiffChange	Diff mode: Changed line. |diff.txt|
 							*hl-DiffDelete*
 DiffDelete	Diff mode: Deleted line. |diff.txt|
+							*hl-DiffLineAdd*
+DiffLineAdd	Background for an added line in a syntax-highlighted diff.
+							*hl-DiffLineDelete*
+DiffLineDelete	Background for a deleted line in a syntax-highlighted diff.
 							*hl-DiffText*
 DiffText	Diff mode: Changed text within a changed line. |diff.txt|
 							*hl-DiffTextAdd*
