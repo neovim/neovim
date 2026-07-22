@@ -1216,6 +1216,53 @@ Integer nvim_open_term(Buffer buf, Dict(open_term) *opts, Error *err)
   return (Integer)chan->id;
 }
 
+/// Captures the rendered terminal state (scrollback and visible screen)
+/// as ANSI escape sequences.
+///
+/// Returns an empty string if {buf} is not a terminal buffer.
+///
+/// Examples:
+///
+/// ```lua
+/// -- Capture everything (scrollback + visible screen):
+/// local ansi = vim.api.nvim__term_capture(buf, 1, 0)
+///
+/// -- Capture lines:
+/// local ansi = vim.api.nvim__term_capture(buf, 5, 10)
+///
+/// -- sb = scrollback line count (buffer lines - screen height):
+/// local sb = vim.api.nvim_buf_line_count(buf) - vim.api.nvim_win_get_height(win)
+/// -- Capture only the scrollback:
+/// local scrollback = vim.api.nvim__term_capture(buf, 1, sb)
+/// -- Capture only the visible screen:
+/// local screen = vim.api.nvim__term_capture(buf, sb + 1, 0)
+/// ```
+///
+/// @param buf    Buffer handle of a terminal buffer.
+/// @param start  1-based line number to start from (1 for first line).
+/// @param end    1-based line number to end at (inclusive), or 0 for all remaining.
+/// @param arena
+/// @param[out] err Error details, if any
+/// @return ANSI escape sequences.
+String nvim__term_capture(Buffer buf, Integer start, Integer end, Arena *arena, Error *err)
+  FUNC_API_SINCE(15)
+{
+  buf_T *b = find_buffer_by_handle(buf, err);
+  if (!b || b->terminal == NULL) {
+    return (String){ .data = NULL, .size = 0 };
+  }
+  if (terminal_in_altscreen(b->terminal)) {
+    api_set_error(err, kErrorTypeException,
+                  "Cannot capture terminal state while the alternate screen is active");
+    return (String){ .data = NULL, .size = 0 };
+  }
+
+  String ansi = terminal_get_ansi(b->terminal, (int)start, (int)end);
+  String arena_ansi = { .data = arena_memdupz(arena, ansi.data, ansi.size), .size = ansi.size };
+  xfree(ansi.data);
+  return arena_ansi;
+}
+
 static void term_read_pause(bool pause, void *data)
 {
   // Not currently needed as sending to channel isn't allowed during buffer updates.

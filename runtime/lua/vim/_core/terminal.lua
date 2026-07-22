@@ -95,7 +95,7 @@ function M.save(args)
   -- Use '] and '[ marks (set by buf_write) to export the selected range.
   local start_mark = vim.api.nvim_buf_get_mark(bufnr, '[')
   local end_mark = vim.api.nvim_buf_get_mark(bufnr, ']')
-  local ansi = vim.fn.term_getansi(bufnr, start_mark[1], end_mark[1])
+  local ansi = vim.api.nvim__term_capture(bufnr, start_mark[1], end_mark[1])
   if ansi == '' then
     return
   end

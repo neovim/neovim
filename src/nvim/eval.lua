@@ -12905,25 +12905,6 @@ M.funcs = {
       "|os.tmpname()| for a temporary name; Nvim's |tempdir| and nonexistence are not guaranteed",
     },
   },
-  term_getansi = {
-    args = { 1, 3 },
-    base = 1,
-    desc = [=[
-      Exports the rendered terminal state (scrollback and visible
-      screen) as ANSI escape sequences.
-
-      Returns an empty string if {buf} is not a terminal buffer.
-
-      When {start} and {end} are given, only the specified line
-      range is exported. {start} defaults to 1, {end} defaults to
-      the last line.
-
-    ]=],
-    name = 'term_getansi',
-    params = { { 'buf', 'integer|string' }, { 'start', 'integer' }, { 'end', 'integer' } },
-    returns = 'string',
-    signature = 'term_getansi({buf} [, {start} [, {end}]])',
-  },
   termopen = {
     deprecated = true,
     args = { 1, 2 },
