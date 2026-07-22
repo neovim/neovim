@@ -103,7 +103,11 @@ function M.escape_subject(word)
 
     -- Change caret notation to 'CTRL-', except '^_'
     -- E.g. 'i^G^J' --> 'iCTRL-GCTRL-J'
-    word = word:gsub('%^([^_])', 'CTRL-%1')
+    -- Only treat '^' as control notation when followed by a caret-notation
+    -- char (a letter or one of "?@[\]^{"); otherwise leave it literal so
+    -- patterns like ':set^=' are not wrongly split. '{' is included so
+    -- '^{char}' matches the 'CTRL-{char}' placeholder tag.
+    word = word:gsub('%^([%a?@\\[\\%]{^])', 'CTRL-%1')
     -- Add underscores around 'CTRL-X' characters
     -- E.g. 'iCTRL-GCTRL-J' --> 'i_CTRL-G_CTRL-J'
     -- Only exception: 'CTRL-{character}'

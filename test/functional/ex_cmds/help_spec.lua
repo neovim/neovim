@@ -110,6 +110,7 @@ describe(':help', function()
     check_tag('help :[range]', '*:[range]*')
     check_tag('help [<space>', '[<Space>')
     check_tag('help ]_^D', ']_CTRL-D')
+    check_tag('help :set^=', '*:set^=*')
 
     check_tag([[help $HOME]], [[*$HOME*]])
 
