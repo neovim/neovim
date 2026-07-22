@@ -297,6 +297,9 @@ function M._open_parent()
   require('nvim.dir.fs').open_parent_path(api.nvim_buf_get_name(buf))
 end
 
+--- Reload the existing listing with its current buffer name and provider.
+--- Replace the lines and restore the view only after a successful list; preserve the existing
+--- listing on failure. Do not rerun provider initialization or reinstall listing handlers.
 ---@param buf? integer
 function M._reload(buf)
   buf = vim._resolve_bufnr(buf)
