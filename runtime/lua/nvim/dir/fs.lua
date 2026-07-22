@@ -7,12 +7,6 @@ local M = {}
 
 local navigating = false
 
----@param name string
----@return string
-local function encode_name(name)
-  return (name:gsub('\n', '\0'))
-end
-
 ---@param path string
 ---@return string
 function M.normalize(path)
@@ -39,7 +33,8 @@ local function edit(path)
 end
 
 ---@param path string
-local function navigate(path)
+---@param select? nvim.dir.Entry
+local function navigate(path, select)
   edit(path)
   local buf = api.nvim_get_current_buf()
   local dir = M.normalize(api.nvim_buf_get_name(buf))
@@ -47,15 +42,13 @@ local function navigate(path)
     return
   end
 
-  require('nvim.dir').open(buf, dir, M)
+  require('nvim.dir').open(buf, dir, M, select)
 end
 
 ---@param path string
 function M.open_parent_path(path)
   path = M.normalize(path)
-  local name = encode_name(fs.basename(path)) .. (vim.fn.isdirectory(path) == 1 and '/' or '')
-  navigate(fs.dirname(path))
-  vim.fn.search([[\C\m^\V]] .. vim.fn.escape(name, [[\]]) .. [[\m$]], 'cw')
+  navigate(fs.dirname(path), { name = fs.basename(path), dir = vim.fn.isdirectory(path) == 1 })
 end
 
 ---@param _ integer

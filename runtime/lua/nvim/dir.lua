@@ -56,6 +56,12 @@ local function entry_line(entry)
   return encode_name(entry.name) .. (entry.dir and '/' or '')
 end
 
+---@param entry nvim.dir.Entry
+local function select_entry(entry)
+  local line = entry_line(entry)
+  vim.fn.search([[\C\m^\V]] .. vim.fn.escape(line, [[\]]) .. [[\m$]], 'cw')
+end
+
 ---@param buf integer
 ---@param name string
 ---@param entries nvim.dir.Entry[]
@@ -132,7 +138,7 @@ local function current_entry(buf)
   return { name = line:gsub('%z', '\n'), dir = dir }
 end
 
----@type fun(buf: integer, name: string, provider: nvim.dir.Provider, restore_view?: table, setup?: boolean)
+---@type fun(buf: integer, name: string, provider: nvim.dir.Provider, restore_view?: table, setup?: boolean, select?: nvim.dir.Entry)
 local load
 
 ---@param buf integer
@@ -189,7 +195,8 @@ end
 ---@param provider nvim.dir.Provider
 ---@param restore_view? table
 ---@param setup? boolean
-function load(buf, name, provider, restore_view, setup)
+---@param select? nvim.dir.Entry
+function load(buf, name, provider, restore_view, setup, select)
   local list_gen = vim._assert_integer(vim.b[buf].nvim_dir_gen or 0) + 1
   vim.b[buf].nvim_dir_gen = list_gen
   -- Used to abort failed first opens while preserving the old listing on reload failure.
@@ -224,6 +231,9 @@ function load(buf, name, provider, restore_view, setup)
     if restore_view and api.nvim_get_current_buf() == buf then
       vim.fn.winrestview(restore_view)
     end
+    if select and api.nvim_get_current_buf() == buf then
+      select_entry(select)
+    end
     vim.b[buf].nvim_dir = name
 
     if not setup then
@@ -247,13 +257,14 @@ end
 ---@param buf integer
 ---@param name string
 ---@param provider nvim.dir.Provider
-function M.open(buf, name, provider)
+---@param select? nvim.dir.Entry
+function M.open(buf, name, provider, select)
   buf = vim._resolve_bufnr(buf)
   local restore_view = vim.b[buf].nvim_dir ~= nil
       and api.nvim_get_current_buf() == buf
       and vim.fn.winsaveview()
     or nil
-  load(buf, name, provider, restore_view, true)
+  load(buf, name, provider, restore_view, true, select)
 end
 
 ---@param buf integer
