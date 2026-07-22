@@ -223,8 +223,8 @@ function load(buf, name, provider, restore_view, setup, select)
       return
     end
     done = true
-    state = get_state(buf)
-    if not state or state.gen ~= list_gen then
+    local current_state = get_state(buf)
+    if not current_state or current_state.gen ~= list_gen then
       return
     end
     if err ~= nil then
@@ -248,8 +248,8 @@ function load(buf, name, provider, restore_view, setup, select)
     if select and api.nvim_get_current_buf() == buf then
       select_entry(select)
     end
-    state.provider = provider
-    vim.b[buf].nvim_dir = state
+    current_state.provider = provider
+    vim.b[buf].nvim_dir = current_state
 
     if not setup then
       return
