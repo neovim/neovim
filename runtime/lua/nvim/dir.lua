@@ -13,45 +13,18 @@ local M = {}
 --- Callback for `Provider.list_entries`; call once with either an error or entries.
 ---@alias (private) nvim.dir.ListCallback fun(err: string?, entries: nvim.dir.Entry[]?)
 
---- State for one buffer opened through `nvim.dir.open()`.
----@class (private) nvim.dir.Ctx
----@field buf integer
----@field name string
----@field provider nvim.dir.Provider
---- Provider-owned mutable state preserved across reloads.
----@field provider_state table
---- Incremented for each list call to ignore stale callbacks.
----@field list_generation integer
----@field group? integer
----@field rendered boolean
-
 --- Source adapter that provides entries and listing actions.
 ---@class (private) nvim.dir.Provider
 --- Produce entries for this listing.
----@field list_entries fun(ctx: nvim.dir.Ctx, cb: nvim.dir.ListCallback)
+---@field list_entries fun(buf: integer, name: string, cb: nvim.dir.ListCallback)
 --- Open an entry from the listing.
----@field open_entry fun(ctx: nvim.dir.Ctx, entry: nvim.dir.Entry)
+---@field open_entry fun(buf: integer, name: string, entry: nvim.dir.Entry)
 --- Open the parent listing.
----@field open_parent fun(ctx: nvim.dir.Ctx)
---- Run provider-specific buffer setup after the first render.
----@field attach? fun(ctx: nvim.dir.Ctx)
+---@field open_parent fun(buf: integer, name: string)
+--- Run provider-specific buffer setup after a successful open.
+---@field attach? fun(buf: integer, name: string)
 
---- Active listing sessions used by maps/reloads and stale callback checks.
----@param buf integer
----@return nvim.dir.Ctx?
-local function get_session(buf)
-  if not api.nvim_buf_is_valid(buf) then
-    return nil
-  end
-  local session = vim.b[buf].nvim_dir
-  return type(session) == 'function' and session() or nil
-end
-
----@param ctx nvim.dir.Ctx
----@return boolean
-local function is_current(ctx)
-  return get_session(ctx.buf) == ctx
-end
+local listing_group = api.nvim_create_augroup('nvim.dir.listing', { clear = false })
 
 ---@param operation string?
 ---@param err any
@@ -129,13 +102,12 @@ local function render_entries(buf, name, entries)
   })
 end
 
----@param ctx nvim.dir.Ctx
 ---@param operation string
----@param fn fun(ctx: nvim.dir.Ctx, ...)
+---@param fn fun(...)
 ---@param ... any
 ---@return boolean
-local function call_provider(ctx, operation, fn, ...)
-  local ok, err = pcall(fn, ctx, ...) ---@type boolean, any
+local function call_provider(operation, fn, ...)
+  local ok, err = pcall(fn, ...) ---@type boolean, any
   if not ok then
     notify_error(operation, err)
     return false
@@ -143,20 +115,67 @@ local function call_provider(ctx, operation, fn, ...)
   return true
 end
 
---- Stop tracking a listing session and remove its autocmds.
----@param ctx nvim.dir.Ctx
-local function close_session(ctx)
-  if is_current(ctx) then
-    vim.b[ctx.buf].nvim_dir = nil
+--- Stop tracking a listing and remove its autocmds.
+---@param buf integer
+local function close_listing(buf)
+  if not api.nvim_buf_is_valid(buf) then
+    return
   end
-  if ctx.group then
-    pcall(api.nvim_del_augroup_by_id, ctx.group)
-    ctx.group = nil
-  end
+  vim.b[buf].nvim_dir = nil
+  vim.b[buf].nvim_dir_generation = nil
+  vim.b[buf].nvim_dir_handler = nil
+  api.nvim_clear_autocmds({ group = listing_group, buffer = buf })
 end
 
 ---@param buf integer
-local function set_maps(buf)
+---@return nvim.dir.Entry?
+local function current_entry(buf)
+  if vim.b[buf].nvim_dir == nil or api.nvim_get_current_buf() ~= buf then
+    return nil
+  end
+  local line = api.nvim_get_current_line()
+  if line == '' then
+    return nil
+  end
+  local dir = line:sub(-1) == '/'
+  if dir then
+    line = line:sub(1, -2)
+  end
+  if line == '' then
+    return nil
+  end
+  return { name = line:gsub('%z', '\n'), dir = dir }
+end
+
+---@type fun(buf: integer, name: string, provider: nvim.dir.Provider, restore_view?: table, setup?: boolean)
+local load
+
+---@param buf integer
+---@param provider nvim.dir.Provider
+local function reload(buf, provider)
+  if not api.nvim_buf_is_valid(buf) or vim.b[buf].nvim_dir == nil then
+    return
+  end
+  local restore_view = api.nvim_get_current_buf() == buf and vim.fn.winsaveview() or nil
+  load(buf, api.nvim_buf_get_name(buf), provider, restore_view)
+end
+
+---@param buf integer
+---@param provider nvim.dir.Provider
+local function set_maps(buf, provider)
+  vim.b[buf].nvim_dir_handler = function(action)
+    if action == 'open' then
+      local entry = current_entry(buf)
+      if entry then
+        call_provider('open_entry', provider.open_entry, buf, api.nvim_buf_get_name(buf), entry)
+      end
+    elseif action == 'parent' then
+      call_provider('open_parent', provider.open_parent, buf, api.nvim_buf_get_name(buf))
+    elseif action == 'reload' then
+      reload(buf, provider)
+    end
+  end
+
   ---@param lhs string
   ---@param plug string
   local function map(lhs, plug)
@@ -176,42 +195,31 @@ local function set_maps(buf)
   map('R', '<Plug>(nvim-dir-reload)')
 end
 
----@param ctx nvim.dir.Ctx
-local function setup_session_autocmds(ctx)
-  ctx.group = api.nvim_create_augroup(('nvim.dir.%d'):format(ctx.buf), { clear = true })
-  api.nvim_create_autocmd('BufWipeout', {
-    group = ctx.group,
-    buffer = ctx.buf,
-    once = true,
-    callback = function()
-      close_session(ctx)
-    end,
-  })
-end
-
----@param ctx nvim.dir.Ctx
-local function setup_render_autocmds(ctx)
+---@param buf integer
+local function setup_render_autocmds(buf)
+  api.nvim_clear_autocmds({ group = listing_group, buffer = buf })
   api.nvim_create_autocmd('BufReadCmd', {
-    group = ctx.group,
-    buffer = ctx.buf,
+    group = listing_group,
+    buffer = buf,
     nested = true,
     desc = 'Reload directory listing',
     callback = function()
-      if is_current(ctx) then
-        M._reload(ctx.buf)
-      end
+      M._reload(buf)
     end,
   })
 end
 
 --- Request entries and render the current list generation.
----@param ctx nvim.dir.Ctx
+---@param buf integer
+---@param name string
+---@param provider nvim.dir.Provider
 ---@param restore_view? table
-local function load(ctx, restore_view)
-  ctx.list_generation = ctx.list_generation + 1
-  local list_generation = ctx.list_generation
+---@param setup? boolean
+function load(buf, name, provider, restore_view, setup)
+  local list_generation = (vim.b[buf].nvim_dir_generation or 0) + 1
+  vim.b[buf].nvim_dir_generation = list_generation
   -- Used to abort failed first opens while preserving the old listing on reload failure.
-  local first_render = not ctx.rendered
+  local first_render = vim.b[buf].nvim_dir == nil
   local done = false
 
   ---@param err string?
@@ -221,48 +229,41 @@ local function load(ctx, restore_view)
       return
     end
     done = true
-    if list_generation ~= ctx.list_generation then
-      return
-    end
-    if not api.nvim_buf_is_valid(ctx.buf) then
-      close_session(ctx)
-      return
-    end
-    if not is_current(ctx) then
+    if not api.nvim_buf_is_valid(buf) or vim.b[buf].nvim_dir_generation ~= list_generation then
       return
     end
     if err ~= nil then
       notify_error(nil, err)
       if first_render then
-        close_session(ctx)
+        close_listing(buf)
       end
       return
     end
     ---@cast entries nvim.dir.Entry[]
 
-    if not render_entries(ctx.buf, ctx.name, entries) then
+    if not render_entries(buf, name, entries) then
       if first_render then
-        close_session(ctx)
+        close_listing(buf)
       end
       return
     end
-    if restore_view and api.nvim_get_current_buf() == ctx.buf then
+    if restore_view and api.nvim_get_current_buf() == buf then
       vim.fn.winrestview(restore_view)
     end
+    vim.b[buf].nvim_dir = name
 
-    if not first_render then
+    if not setup then
       return
     end
 
-    setup_render_autocmds(ctx)
-    ctx.rendered = true
-    set_maps(ctx.buf)
-    if ctx.provider.attach then
-      call_provider(ctx, 'attach', ctx.provider.attach)
+    setup_render_autocmds(buf)
+    set_maps(buf, provider)
+    if provider.attach then
+      call_provider('attach', provider.attach, buf, name)
     end
   end
 
-  local ok, err = pcall(ctx.provider.list_entries, ctx, on_list) ---@type boolean, any
+  local ok, err = pcall(provider.list_entries, buf, name, on_list) ---@type boolean, any
   if not ok then
     on_list(tostring(err))
   end
@@ -274,67 +275,35 @@ end
 ---@param provider nvim.dir.Provider
 function M.open(buf, name, provider)
   buf = vim._resolve_bufnr(buf)
-
-  local old = get_session(buf)
-  if old then
-    if old.name == name and old.provider == provider then
-      load(old, api.nvim_get_current_buf() == buf and vim.fn.winsaveview() or nil)
-      return
-    end
-    close_session(old)
-  end
-
-  ---@type nvim.dir.Ctx
-  local ctx = {
-    buf = buf,
-    name = name,
-    provider = provider,
-    provider_state = {},
-    list_generation = 0,
-    rendered = false,
-  }
-
-  vim.b[buf].nvim_dir = function()
-    return ctx
-  end
-  setup_session_autocmds(ctx)
-  load(ctx)
+  local restore_view = vim.b[buf].nvim_dir ~= nil
+      and api.nvim_get_current_buf() == buf
+      and vim.fn.winsaveview()
+    or nil
+  load(buf, name, provider, restore_view, true)
 end
 
 ---@param buf integer
----@return nvim.dir.Entry?
-local function current_entry(buf)
-  if not get_session(buf) or api.nvim_get_current_buf() ~= buf then
-    return nil
+---@param action string
+---@return boolean
+local function dispatch(buf, action)
+  if not api.nvim_buf_is_valid(buf) then
+    return false
   end
-  local line = api.nvim_get_current_line()
-  if line == '' then
-    return nil
+  local handler = vim.b[buf].nvim_dir_handler
+  if type(handler) ~= 'function' then
+    return false
   end
-  local dir = line:sub(-1) == '/'
-  if dir then
-    line = line:sub(1, -2)
-  end
-  if line == '' then
-    return nil
-  end
-  return { name = line:gsub('%z', '\n'), dir = dir }
+  handler(action)
+  return true
 end
 
 function M._open_entry()
-  local buf = api.nvim_get_current_buf()
-  local ctx = get_session(buf)
-  local entry = current_entry(buf)
-  if ctx and entry then
-    call_provider(ctx, 'open_entry', ctx.provider.open_entry, entry)
-  end
+  dispatch(api.nvim_get_current_buf(), 'open')
 end
 
 function M._open_parent()
   local buf = api.nvim_get_current_buf()
-  local ctx = get_session(buf)
-  if ctx then
-    call_provider(ctx, 'open_parent', ctx.provider.open_parent)
+  if dispatch(buf, 'parent') then
     return
   end
   -- Keep the global `-` mapping useful from regular file buffers.
@@ -343,12 +312,7 @@ end
 
 ---@param buf? integer
 function M._reload(buf)
-  buf = vim._resolve_bufnr(buf)
-  local ctx = get_session(buf)
-  if not ctx then
-    return
-  end
-  load(ctx, vim.fn.winsaveview())
+  dispatch(vim._resolve_bufnr(buf), 'reload')
 end
 
 ---@param buf integer
@@ -359,7 +323,7 @@ function M.try_open(buf, path)
   if fs_provider.is_navigating() or path == '' then
     return
   end
-  if get_session(buf) ~= nil then
+  if vim.b[buf].nvim_dir ~= nil then
     return
   end
   if vim.bo[buf].buftype ~= '' then
