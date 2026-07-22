@@ -2,14 +2,38 @@
 --- Directory listing for `:edit <dir>`.
 
 local api = vim.api
-local fs = vim.fs
 
 local M = {}
 
----@type fun(buf: integer, dir: string)
-local first_open
+--- An entry rendered as one line in a listing buffer.
+---@class (private) nvim.dir.Entry
+---@field name string
+---@field dir boolean
 
-local navigating = false
+--- Handler for `Provider.list`; call once with either an error or entries.
+---@alias (private) nvim.dir.ListHandler fun(err: string?, entries: nvim.dir.Entry[]?)
+
+--- Source adapter that provides entries and listing actions.
+---@class (private) nvim.dir.Provider
+--- Produce entries for this listing.
+---@field list fun(buf: integer, name: string, cb: nvim.dir.ListHandler)
+--- Open an entry from the listing.
+---@field open fun(buf: integer, name: string, entry: nvim.dir.Entry)
+--- Open the parent listing.
+---@field open_parent fun(buf: integer, name: string)
+--- Run provider-specific buffer setup after a successful open.
+---@field init? fun(buf: integer, name: string)
+
+---@class (private) nvim.dir.State
+---@field gen integer
+---@field provider? nvim.dir.Provider
+
+local listing_group = api.nvim_create_augroup('nvim.dir.listing', { clear = false })
+
+---@param err any
+local function notify_error(err)
+  vim.notify('dir: ' .. tostring(err), vim.log.levels.ERROR)
+end
 
 ---@param buf integer
 ---@param options [string, any][]
@@ -24,53 +48,32 @@ local function set_buf_options(buf, options)
   return api.nvim_buf_is_valid(buf)
 end
 
----@param path string
----@return string
-local function normalize_dir(path)
-  return fs.normalize(fs.abspath(path))
-end
-
 ---@param name string
 ---@return string
 local function encode_name(name)
   return (name:gsub('\n', '\0'))
 end
 
----@param line string
+---@param entry nvim.dir.Entry
 ---@return string
-local function decode_line(line)
-  if line:sub(-1) == '/' then
-    line = line:sub(1, -2)
-  end
-  return (line:gsub('%z', '\n'))
+local function entry_line(entry)
+  return encode_name(entry.name) .. (entry.dir and '/' or '')
+end
+
+---@param entry nvim.dir.Entry
+local function select_entry(entry)
+  local line = entry_line(entry)
+  vim.fn.search([[\C\m^\V]] .. vim.fn.escape(line, [[\]]) .. [[\m$]], 'cw')
 end
 
 ---@param buf integer
----@param dir string
+---@param name string
+---@param entries nvim.dir.Entry[]
 ---@return boolean
-local function render(buf, dir)
-  ---@type { name: string, dir: boolean }[]
-  local items = {}
-  for name, type, err in fs.dir(dir, { err = true }) do
-    if err then
-      vim.notify('dir: ' .. err, vim.log.levels.ERROR)
-      return false
-    end
-    if type == 'link' and vim.fn.isdirectory(fs.joinpath(dir, name)) == 1 then
-      type = 'directory'
-    end
-    items[#items + 1] = { name = name, dir = type == 'directory' }
-  end
-  table.sort(items, function(a, b)
-    if a.dir ~= b.dir then
-      return a.dir
-    end
-    return a.name < b.name
-  end)
-
+local function render_entries(buf, name, entries)
   local lines = {} ---@type string[]
-  for i, item in ipairs(items) do
-    lines[i] = encode_name(item.name) .. (item.dir and '/' or '')
+  for i, entry in ipairs(entries) do
+    lines[i] = entry_line(entry)
   end
 
   if
@@ -88,7 +91,7 @@ local function render(buf, dir)
   api.nvim_buf_call(buf, function()
     api.nvim_cmd({
       cmd = 'file',
-      args = { dir },
+      args = { name },
       mods = { keepalt = true },
       magic = { file = false, bar = false },
     }, {})
@@ -107,73 +110,59 @@ local function render(buf, dir)
   })
 end
 
+--- Stop tracking a listing and remove its autocmds.
 ---@param buf integer
----@return string?
-local function entry_path(buf)
-  local lnum = api.nvim_win_get_cursor(0)[1]
-  local line = api.nvim_buf_get_lines(buf, lnum - 1, lnum, false)[1]
-  if not line or line == '' then
-    return nil
-  end
-  return fs.joinpath(api.nvim_buf_get_name(buf), decode_line(line))
-end
-
----@param path string
-local function edit(path)
-  navigating = true
-  api.nvim_cmd({ cmd = 'edit', args = { path }, magic = { file = false, bar = false } })
-  navigating = false
-end
-
----@param buf integer
-local function reload(buf)
-  local view = vim.fn.winsaveview()
-  if render(buf, api.nvim_buf_get_name(buf)) then
-    vim.fn.winrestview(view)
-  end
-end
-
----@param path string
-local function navigate(path)
-  edit(path)
-  local buf = api.nvim_get_current_buf()
-  local dir = normalize_dir(api.nvim_buf_get_name(buf))
-  if vim.fn.isdirectory(dir) == 0 then
+local function close_listing(buf)
+  if not api.nvim_buf_is_valid(buf) then
     return
   end
-  if vim.b[buf].nvim_dir == nil then
-    first_open(buf, dir)
-  else
-    reload(buf)
-  end
+  vim.b[buf].nvim_dir = nil
+  api.nvim_clear_autocmds({ group = listing_group, buffer = buf })
 end
 
 ---@param buf integer
-local function open_entry(buf)
-  local path = entry_path(buf)
-  if path then
-    navigate(path)
+---@return nvim.dir.State?
+local function get_state(buf)
+  if not api.nvim_buf_is_valid(buf) then
+    return nil
   end
+  local state = vim.b[buf].nvim_dir
+  return type(state) == 'table' and state or nil
 end
 
 ---@param buf integer
-local function open_parent(buf)
-  local path = fs.normalize(api.nvim_buf_get_name(buf))
-  local name = encode_name(fs.basename(path)) .. (vim.fn.isdirectory(path) == 1 and '/' or '')
-  navigate(fs.dirname(path))
-  vim.fn.search([[\C\m^\V]] .. vim.fn.escape(name, [[\]]) .. [[\m$]], 'cw')
+---@return nvim.dir.Entry?
+local function current_entry(buf)
+  local state = get_state(buf)
+  if not state or not state.provider or api.nvim_get_current_buf() ~= buf then
+    return nil
+  end
+  local line = api.nvim_get_current_line()
+  if line == '' then
+    return nil
+  end
+  local dir = line:sub(-1) == '/'
+  if dir then
+    line = line:sub(1, -2)
+  end
+  if line == '' then
+    return nil
+  end
+  return { name = line:gsub('%z', '\n'), dir = dir }
 end
 
-function M._open_entry()
-  open_entry(api.nvim_get_current_buf())
-end
+---@type fun(buf: integer, name: string, provider: nvim.dir.Provider, restore_view?: table, setup?: boolean, select?: nvim.dir.Entry)
+local load
 
-function M._open_parent()
-  open_parent(api.nvim_get_current_buf())
-end
-
-function M._reload()
-  reload(api.nvim_get_current_buf())
+---@param buf integer
+---@param provider nvim.dir.Provider
+local function reload(buf, provider)
+  local state = get_state(buf)
+  if not state or not state.provider then
+    return
+  end
+  local restore_view = api.nvim_get_current_buf() == buf and vim.fn.winsaveview() or nil
+  load(buf, api.nvim_buf_get_name(buf), provider, restore_view)
 end
 
 ---@param buf integer
@@ -198,35 +187,149 @@ local function set_maps(buf)
 end
 
 ---@param buf integer
----@param dir string
-function first_open(buf, dir)
-  if not render(buf, dir) then
-    return
-  end
-  if not api.nvim_buf_is_valid(buf) then
-    return
-  end
-  vim.b[buf].nvim_dir = dir
+local function setup_render_autocmds(buf)
+  api.nvim_clear_autocmds({ group = listing_group, buffer = buf })
   api.nvim_create_autocmd('BufReadCmd', {
+    group = listing_group,
     buffer = buf,
     nested = true,
     desc = 'Reload directory listing',
     callback = function()
-      if vim.b[buf].nvim_dir ~= nil then
-        reload(buf)
-      end
+      M._reload(buf)
     end,
   })
-  set_maps(buf)
-  if api.nvim_get_option_value('filetype', { buf = buf }) ~= 'directory' then
-    api.nvim_set_option_value('filetype', 'directory', { buf = buf })
+end
+
+--- Request entries and render the current list generation.
+---@param buf integer
+---@param name string
+---@param provider nvim.dir.Provider
+---@param restore_view? table
+---@param setup? boolean
+---@param select? nvim.dir.Entry
+function load(buf, name, provider, restore_view, setup, select)
+  local state = get_state(buf) or { gen = 0 }
+  local list_gen = state.gen + 1
+  state.gen = list_gen
+  vim.b[buf].nvim_dir = state
+  -- Discard the listing state if the initial load fails, but preserve an existing listing on reload failure.
+  local first_render = state.provider == nil
+  local done = false
+
+  ---@param err string?
+  ---@param entries nvim.dir.Entry[]?
+  local function on_list(err, entries)
+    if done then
+      return
+    end
+    done = true
+    local current_state = get_state(buf)
+    if not current_state or current_state.gen ~= list_gen then
+      return
+    end
+    if err ~= nil then
+      notify_error(err)
+      if first_render then
+        close_listing(buf)
+      end
+      return
+    end
+    ---@cast entries nvim.dir.Entry[]
+
+    if not render_entries(buf, name, entries) then
+      if first_render then
+        close_listing(buf)
+      end
+      return
+    end
+    if restore_view and api.nvim_get_current_buf() == buf then
+      vim.fn.winrestview(restore_view)
+    end
+    if select and api.nvim_get_current_buf() == buf then
+      select_entry(select)
+    end
+    current_state.provider = provider
+    vim.b[buf].nvim_dir = current_state
+
+    if not setup then
+      return
+    end
+
+    setup_render_autocmds(buf)
+    set_maps(buf)
+    if provider.init then
+      provider.init(buf, name)
+    end
+  end
+
+  local ok, call_err = pcall(provider.list, buf, name, on_list) ---@type boolean, any
+  if not ok then
+    -- Route provider exceptions through the list handler so failures share one cleanup path.
+    on_list(tostring(call_err), nil)
+  end
+end
+
+--- Open {buf} as a listing named {name} using {provider}.
+---@param buf integer
+---@param name string
+---@param provider nvim.dir.Provider
+---@param select? nvim.dir.Entry
+function M.open(buf, name, provider, select)
+  buf = vim._resolve_bufnr(buf)
+  local state = get_state(buf)
+  local restore_view = state
+      and state.provider
+      and api.nvim_get_current_buf() == buf
+      and vim.fn.winsaveview()
+    or nil
+  load(buf, name, provider, restore_view, true, select)
+end
+
+---@param buf integer
+---@return nvim.dir.Provider?
+local function get_provider(buf)
+  local state = get_state(buf)
+  return state and state.provider or nil
+end
+
+function M._open_entry()
+  local buf = api.nvim_get_current_buf()
+  local provider = get_provider(buf)
+  local entry = current_entry(buf)
+  if provider and entry then
+    provider.open(buf, api.nvim_buf_get_name(buf), entry)
+  end
+end
+
+function M._open_parent()
+  local buf = api.nvim_get_current_buf()
+  local provider = get_provider(buf)
+  if provider then
+    provider.open_parent(buf, api.nvim_buf_get_name(buf))
+    return
+  end
+  -- Keep the global `-` mapping useful from regular file buffers.
+  require('nvim.dir.fs').open_parent_path(api.nvim_buf_get_name(buf))
+end
+
+--- Reload the existing listing with its current buffer name and provider.
+--- Replace the lines and restore the view only after a successful list; preserve the existing
+--- listing on failure. Do not rerun provider initialization or reinstall listing handlers.
+---@param buf? integer
+function M._reload(buf)
+  buf = vim._resolve_bufnr(buf)
+  local provider = get_provider(buf)
+  if provider then
+    reload(buf, provider)
   end
 end
 
 ---@param buf integer
 ---@param path string
 function M.try_open(buf, path)
-  if navigating or path == '' then
+  buf = vim._resolve_bufnr(buf)
+  local fs_provider = require('nvim.dir.fs')
+  if fs_provider.is_navigating() or path == '' then
     return
   end
   if vim.b[buf].nvim_dir ~= nil then
@@ -242,7 +345,7 @@ function M.try_open(buf, path)
   if vim.fn.isdirectory(path) == 0 then
     return
   end
-  first_open(buf, normalize_dir(path))
+  M.open(buf, fs_provider.normalize(path), fs_provider)
 end
 
 function M.handle_startup_dirs()

@@ -190,6 +190,164 @@ describe('nvim.dir', function()
     assert_directory(root)
   end)
 
+  it('opens a custom listing provider', function()
+    n.clear({ args_rm = { '-u' } })
+
+    exec_lua(function()
+      require('nvim.dir').open(0, 'custom://root', {
+        list = function(_, name, cb)
+          vim.g.nvim_dir_list_name = name
+          cb(nil, {
+            { name = 'child', dir = true },
+            { name = 'file.txt', dir = false },
+          })
+        end,
+        open = function(_, name, entry)
+          vim.g.nvim_dir_opened = entry.name .. ':' .. name
+        end,
+        open_parent = function(_, name)
+          vim.g.nvim_dir_parent = name
+        end,
+        init = function(buf)
+          vim.bo[buf].filetype = 'customdir'
+        end,
+      })
+    end)
+
+    eq('custom://root', api.nvim_buf_get_name(0))
+    eq('customdir', bufopt('filetype'))
+    eq({ 'child/', 'file.txt' }, lines())
+    eq('custom://root', exec_lua('return vim.g.nvim_dir_list_name'))
+
+    api.nvim_win_set_cursor(0, { 2, 0 })
+    api.nvim_set_option_value('modifiable', true, { buf = 0 })
+    api.nvim_set_current_line('renamed.txt')
+    feed('<CR>')
+    poke_eventloop()
+    eq('renamed.txt:custom://root', exec_lua('return vim.g.nvim_dir_opened'))
+
+    feed('-')
+    poke_eventloop()
+    eq('custom://root', exec_lua('return vim.g.nvim_dir_parent'))
+  end)
+
+  it('reports custom listing provider errors', function()
+    n.clear({ args_rm = { '-u' } })
+
+    exec_lua(function()
+      require('nvim.dir').open(0, 'custom://error', {
+        list = function(_, _, cb)
+          cb('simulated error')
+        end,
+        open = function() end,
+        open_parent = function() end,
+      })
+    end)
+
+    ok(exec_capture('messages'):find('simulated error', 1, true) ~= nil)
+    eq(false, exec_lua([[return vim.b.nvim_dir ~= nil]]))
+  end)
+
+  it('reloads custom listing providers', function()
+    n.clear({ args_rm = { '-u' } })
+
+    exec_lua(function()
+      require('nvim.dir').open(0, 'custom://root', {
+        list = function(buf, _, cb)
+          vim.b[buf].custom_count = (vim.b[buf].custom_count or 0) + 1
+          cb(nil, { { name = 'file' .. vim.b[buf].custom_count .. '.txt', dir = false } })
+        end,
+        open = function() end,
+        open_parent = function() end,
+      })
+    end)
+
+    eq({ 'file1.txt' }, lines())
+    feed('R')
+    poke_eventloop()
+    eq({ 'file2.txt' }, lines())
+  end)
+
+  it('ignores callbacks from replaced listings', function()
+    n.clear({ args_rm = { '-u' } })
+
+    exec_lua(function()
+      local dir = require('nvim.dir')
+      dir.open(0, 'custom://old', {
+        list = function(_, _, cb)
+          _G.nvim_dir_stale_callback = cb
+        end,
+        open = function() end,
+        open_parent = function() end,
+      })
+      dir.open(0, 'custom://new', {
+        list = function(_, _, cb)
+          cb(nil, { { name = 'current.txt', dir = false } })
+        end,
+        open = function() end,
+        open_parent = function() end,
+      })
+    end)
+
+    eq('custom://new', api.nvim_buf_get_name(0))
+    eq({ 'current.txt' }, lines())
+
+    exec_lua(function()
+      _G.nvim_dir_stale_callback(nil, { { name = 'stale.txt', dir = false } })
+    end)
+
+    eq('custom://new', api.nvim_buf_get_name(0))
+    eq({ 'current.txt' }, lines())
+  end)
+
+  it('replaces listing providers', function()
+    n.clear({ args_rm = { '-u' } })
+
+    exec_lua(function()
+      local dir = require('nvim.dir')
+      local function provider(label)
+        return {
+          list = function(buf, _, cb)
+            local key = 'nvim_dir_' .. label .. '_lists'
+            vim.b[buf][key] = (vim.b[buf][key] or 0) + 1
+            vim.g.nvim_dir_provider_list = label .. ':' .. vim.b[buf][key]
+            cb(nil, { { name = label .. '.txt', dir = false } })
+          end,
+          open = function(_, _, entry)
+            vim.g.nvim_dir_provider_open = label .. ':' .. entry.name
+          end,
+          open_parent = function()
+            vim.g.nvim_dir_provider_parent = label
+          end,
+        }
+      end
+      dir.open(0, 'custom://old', provider('old'))
+      dir.open(0, 'custom://new', provider('new'))
+    end)
+
+    eq({ 'new.txt' }, lines())
+    eq('new:1', exec_lua('return vim.g.nvim_dir_provider_list'))
+    for _, plug in ipairs({
+      '<Plug>(nvim-dir-open)',
+      '<Plug>(nvim-dir-up)',
+      '<Plug>(nvim-dir-reload)',
+    }) do
+      eq(0, fn.maparg(plug, 'n', false, true).buffer)
+    end
+
+    feed('<CR>')
+    poke_eventloop()
+    eq('new:new.txt', exec_lua('return vim.g.nvim_dir_provider_open'))
+
+    feed('-')
+    poke_eventloop()
+    eq('new', exec_lua('return vim.g.nvim_dir_provider_parent'))
+
+    feed('R')
+    poke_eventloop()
+    eq('new:2', exec_lua('return vim.g.nvim_dir_provider_list'))
+  end)
+
   it('maps - to open parent directories', function()
     make_fixture()
     n.clear({ args_rm = { '-u', '--cmd' } })
