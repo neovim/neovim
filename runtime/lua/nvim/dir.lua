@@ -107,7 +107,7 @@ local function close_listing(buf)
     return
   end
   vim.b[buf].nvim_dir = nil
-  vim.b[buf].nvim_dir_generation = nil
+  vim.b[buf].nvim_dir_gen = nil
   vim.b[buf].nvim_dir_provider = nil
   api.nvim_clear_autocmds({ group = listing_group, buffer = buf })
 end
@@ -190,8 +190,8 @@ end
 ---@param restore_view? table
 ---@param setup? boolean
 function load(buf, name, provider, restore_view, setup)
-  local list_generation = vim._assert_integer(vim.b[buf].nvim_dir_generation or 0) + 1
-  vim.b[buf].nvim_dir_generation = list_generation
+  local list_gen = vim._assert_integer(vim.b[buf].nvim_dir_gen or 0) + 1
+  vim.b[buf].nvim_dir_gen = list_gen
   -- Used to abort failed first opens while preserving the old listing on reload failure.
   local first_render = vim.b[buf].nvim_dir == nil
   local done = false
@@ -203,7 +203,7 @@ function load(buf, name, provider, restore_view, setup)
       return
     end
     done = true
-    if not api.nvim_buf_is_valid(buf) or vim.b[buf].nvim_dir_generation ~= list_generation then
+    if not api.nvim_buf_is_valid(buf) or vim.b[buf].nvim_dir_gen ~= list_gen then
       return
     end
     if err ~= nil then
