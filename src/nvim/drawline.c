@@ -1671,7 +1671,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
   }
 
   decor_redraw_line(wp, lnum - 1, &decor_state);
-  if (!has_decor && decor_has_more_decorations(&decor_state, lnum - 1)) {
+  bool has_matchaddpos = false;
+  if (col_rows == 0 && draw_text && wp->w_match_head != NULL) {
+    has_matchaddpos = matchaddpos_decor(wp, lnum);
+  }
+  if (!has_decor && (decor_has_more_decorations(&decor_state, lnum - 1)
+                     || has_matchaddpos)) {
     has_decor = true;
     extra_check = true;
   }
@@ -2299,7 +2304,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         if (has_decor && v > 0) {
           // extmarks take preceedence over syntax.c
           decor_attr = hl_combine_attr(decor_attr, extmark_attr);
-          decor_conceal = decor_state.conceal;
+          decor_conceal = (mb_schar == 0) ? 0 : decor_state.conceal;
           can_spell = TRISTATE_TO_BOOL(decor_state.spell, can_spell);
         }
 
@@ -2408,6 +2413,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
             // line break, but for TABs the highlighting should
             // include the complete width of the character
             search_attr = 0;
+          }
+          // Same for extmark highlights at a linebreak boundary.
+          if (has_decor && mb_c != TAB
+              && decor_state.col_last >= 0
+              && (int)(ptr - 1 - line) >= decor_state.col_last) {
+            decor_attr = 0;
           }
 
           if (mb_c == TAB && wlv.n_extra + wlv.col > view_width) {
