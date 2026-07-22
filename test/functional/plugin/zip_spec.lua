@@ -22,7 +22,7 @@ end
 local function clear_zip()
   n.clear({
     args_rm = { '-u' },
-    args = { '--cmd', 'let g:nvim_zip_plugin = v:true' },
+    args = { '--cmd', 'let g:nvim_zip_plugin = 1' },
   })
 end
 

@@ -12,7 +12,7 @@ builtin |dir| listing interface and requires the `unzip` executable.
 The legacy |zip| plugin remains enabled by default. To use zip.lua instead, set
 this before startup: >lua
 
-    vim.g.nvim_zip_plugin = true
+    vim.g.nvim_zip_plugin = 1
 <
                                                         *g:nvim_zip_plugin*
 When enabled, zip.lua handles zip-like files and the legacy zip plugin does not
