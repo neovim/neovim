@@ -24,6 +24,10 @@ local M = {}
 --- Run provider-specific buffer setup after a successful open.
 ---@field init? fun(buf: integer, name: string)
 
+---@class (private) nvim.dir.State
+---@field gen integer
+---@field provider? nvim.dir.Provider
+
 local listing_group = api.nvim_create_augroup('nvim.dir.listing', { clear = false })
 
 ---@param err any
@@ -113,15 +117,24 @@ local function close_listing(buf)
     return
   end
   vim.b[buf].nvim_dir = nil
-  vim.b[buf].nvim_dir_gen = nil
-  vim.b[buf].nvim_dir_provider = nil
   api.nvim_clear_autocmds({ group = listing_group, buffer = buf })
+end
+
+---@param buf integer
+---@return nvim.dir.State?
+local function get_state(buf)
+  if not api.nvim_buf_is_valid(buf) then
+    return nil
+  end
+  local state = vim.b[buf].nvim_dir
+  return type(state) == 'table' and state or nil
 end
 
 ---@param buf integer
 ---@return nvim.dir.Entry?
 local function current_entry(buf)
-  if vim.b[buf].nvim_dir == nil or api.nvim_get_current_buf() ~= buf then
+  local state = get_state(buf)
+  if not state or not state.provider or api.nvim_get_current_buf() ~= buf then
     return nil
   end
   local line = api.nvim_get_current_line()
@@ -144,7 +157,8 @@ local load
 ---@param buf integer
 ---@param provider nvim.dir.Provider
 local function reload(buf, provider)
-  if not api.nvim_buf_is_valid(buf) or vim.b[buf].nvim_dir == nil then
+  local state = get_state(buf)
+  if not state or not state.provider then
     return
   end
   local restore_view = api.nvim_get_current_buf() == buf and vim.fn.winsaveview() or nil
@@ -152,10 +166,7 @@ local function reload(buf, provider)
 end
 
 ---@param buf integer
----@param provider nvim.dir.Provider
-local function set_maps(buf, provider)
-  vim.b[buf].nvim_dir_provider = provider
-
+local function set_maps(buf)
   ---@param lhs string
   ---@param plug string
   local function map(lhs, plug)
@@ -197,10 +208,12 @@ end
 ---@param setup? boolean
 ---@param select? nvim.dir.Entry
 function load(buf, name, provider, restore_view, setup, select)
-  local list_gen = vim._assert_integer(vim.b[buf].nvim_dir_gen or 0) + 1
-  vim.b[buf].nvim_dir_gen = list_gen
+  local state = get_state(buf) or { gen = 0 }
+  local list_gen = state.gen + 1
+  state.gen = list_gen
+  vim.b[buf].nvim_dir = state
   -- Discard the listing state if the initial load fails, but preserve an existing listing on reload failure.
-  local first_render = vim.b[buf].nvim_dir == nil
+  local first_render = state.provider == nil
   local done = false
 
   ---@param err string?
@@ -210,7 +223,8 @@ function load(buf, name, provider, restore_view, setup, select)
       return
     end
     done = true
-    if not api.nvim_buf_is_valid(buf) or vim.b[buf].nvim_dir_gen ~= list_gen then
+    state = get_state(buf)
+    if not state or state.gen ~= list_gen then
       return
     end
     if err ~= nil then
@@ -234,14 +248,15 @@ function load(buf, name, provider, restore_view, setup, select)
     if select and api.nvim_get_current_buf() == buf then
       select_entry(select)
     end
-    vim.b[buf].nvim_dir = name
+    state.provider = provider
+    vim.b[buf].nvim_dir = state
 
     if not setup then
       return
     end
 
     setup_render_autocmds(buf)
-    set_maps(buf, provider)
+    set_maps(buf)
     if provider.init then
       provider.init(buf, name)
     end
@@ -260,8 +275,8 @@ end
 ---@param select? nvim.dir.Entry
 function M.open(buf, name, provider, select)
   buf = vim._resolve_bufnr(buf)
-  local restore_view = vim.b[buf].nvim_dir ~= nil
-      and api.nvim_get_current_buf() == buf
+  local state = get_state(buf)
+  local restore_view = state and state.provider and api.nvim_get_current_buf() == buf
       and vim.fn.winsaveview()
     or nil
   load(buf, name, provider, restore_view, true, select)
@@ -270,11 +285,8 @@ end
 ---@param buf integer
 ---@return nvim.dir.Provider?
 local function get_provider(buf)
-  if not api.nvim_buf_is_valid(buf) then
-    return nil
-  end
-  local provider = vim.b[buf].nvim_dir_provider
-  return type(provider) == 'table' and provider or nil
+  local state = get_state(buf)
+  return state and state.provider or nil
 end
 
 function M._open_entry()
