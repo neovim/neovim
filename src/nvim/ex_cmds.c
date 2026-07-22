@@ -3506,10 +3506,11 @@ static int check_regexp_delim(int c)
 ///
 /// The usual escapes are supported as described in the regexp docs.
 ///
+/// @param tm             Timeout limit
 /// @param cmdpreview_ns  The namespace to show 'inccommand' preview highlights.
 ///                       If <= 0, preview shouldn't be shown.
 /// @return  0, 1 or 2. See cmdpreview_may_show() for more information on the meaning.
-static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_ns,
+static int do_sub(exarg_T *eap, proftime_T tm, const int cmdpreview_ns,
                   const handle_T cmdpreview_bufnr)
 {
 #define ADJUST_SUB_FIRSTLNUM() \
@@ -3737,13 +3738,15 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
   // If preview: limit to max('cmdwinheight', viewport).
   linenr_T line2 = eap->line2;
 
+  int timed_out = false;
+
   for (linenr_T lnum = eap->line1;
-       lnum <= line2 && !got_quit && !aborting()
+       lnum <= line2 && !got_quit && !timed_out && !aborting()
        && (cmdpreview_ns <= 0 || preview_lines.lines_needed <= (linenr_T)p_cwh
            || lnum <= curwin->w_botline);
        lnum++) {
     int nmatch = vim_regexec_multi(&regmatch, curwin, curbuf, lnum,
-                                   0, NULL, NULL);
+                                   0, &tm, &timed_out);
     if (nmatch) {
       colnr_T copycol;
       colnr_T matchcol;
@@ -4332,7 +4335,7 @@ skip:
             || nmatch_tl > 0
             || (nmatch = vim_regexec_multi(&regmatch, curwin,
                                            curbuf, sub_firstlnum,
-                                           matchcol, NULL, NULL)) == 0
+                                           matchcol, &tm, &timed_out)) == 0
             || regmatch.startpos[0].lnum > 0) {
           if (new_start.data != NULL) {
             // Copy the rest of the line, that didn't match.
@@ -4407,7 +4410,7 @@ skip:
           }
           if (nmatch == -1 && !lastone) {
             nmatch = vim_regexec_multi(&regmatch, curwin, curbuf,
-                                       sub_firstlnum, matchcol, NULL, NULL);
+                                       sub_firstlnum, matchcol, &tm, &timed_out);
           }
 
           // 5. break if there isn't another match in this line
@@ -4464,7 +4467,7 @@ skip:
 
     line_breakcheck();
 
-    if (profile_passed_limit(timeout)) {
+    if (timed_out || profile_passed_limit(tm)) {
       got_quit = true;
     }
   }
@@ -4547,7 +4550,7 @@ skip:
 
   // Show 'inccommand' preview if there are matched lines.
   if (cmdpreview_ns > 0 && !aborting()) {
-    if (got_quit || profile_passed_limit(timeout)) {  // Too slow, disable.
+    if (got_quit || profile_passed_limit(tm)) {  // Too slow, disable.
       set_option_direct(kOptInccommand, STATIC_CSTR_AS_OPTVAL(""), 0, SID_NONE);
     } else if (*p_icm != NUL && pat.data != NULL) {
       if (pre_hl_id == 0) {
