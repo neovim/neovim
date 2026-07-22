@@ -10,13 +10,13 @@ local M = {}
 ---@field name string
 ---@field dir boolean
 
---- Callback for `Provider.list_entries`; call once with either an error or entries.
----@alias (private) nvim.dir.ListCallback fun(err: string?, entries: nvim.dir.Entry[]?)
+--- Handler for `Provider.list_entries`; call once with either an error or entries.
+---@alias (private) nvim.dir.ListHandler fun(err: string?, entries: nvim.dir.Entry[]?)
 
 --- Source adapter that provides entries and listing actions.
 ---@class (private) nvim.dir.Provider
 --- Produce entries for this listing.
----@field list_entries fun(buf: integer, name: string, cb: nvim.dir.ListCallback)
+---@field list_entries fun(buf: integer, name: string, cb: nvim.dir.ListHandler)
 --- Open an entry from the listing.
 ---@field open_entry fun(buf: integer, name: string, entry: nvim.dir.Entry)
 --- Open the parent listing.
