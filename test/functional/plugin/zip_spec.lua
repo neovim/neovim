@@ -99,6 +99,7 @@ describe('nvim.zip', function()
     feed('-')
     poke_eventloop()
     eq({ 'nested/', 'root.txt' }, lines())
+    eq('nested/', api.nvim_get_current_line())
 
     api.nvim_win_set_cursor(0, { 2, 0 })
     feed('<CR>')

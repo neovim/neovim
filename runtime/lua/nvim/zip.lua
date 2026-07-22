@@ -296,7 +296,7 @@ end
 ---@param buf integer
 ---@param _ string
 ---@param cb fun(err?: string, entries?: nvim.dir.Entry[])
-function M.list_entries(buf, _, cb)
+function M.list(buf, _, cb)
   local source = vim.b[buf].nvim_zip_source ---@type string?
   if not source then
     cb('zip source is not set')
@@ -324,7 +324,7 @@ end
 ---@param buf integer
 ---@param name string
 ---@param entry nvim.dir.Entry
-function M.open_entry(buf, name, entry)
+function M.open(buf, name, entry)
   local source = vim.b[buf].nvim_zip_source ---@type string?
   if not source then
     return
@@ -357,15 +357,17 @@ function M.open_parent(buf, name)
   end
   local prefix = vim.b[buf].nvim_zip_prefix or '' ---@type string
   if prefix ~= '' then
-    vim.b[buf].nvim_zip_pending_prefix = prefix:sub(1, -2):match('^(.*[/])') or ''
-    require('nvim.dir').open(buf, name, M)
+    local path = prefix:sub(1, -2)
+    local child = assert(path:match('([^/]+)$'))
+    vim.b[buf].nvim_zip_pending_prefix = path:match('^(.*[/])') or ''
+    require('nvim.dir').open(buf, name, M, { name = child, dir = true })
     return
   end
-  require('nvim.dir.filesystem').open_parent_path(source)
+  require('nvim.dir.fs').open_parent_path(source)
 end
 
 ---@param buf integer
-function M.attach(buf)
+function M.init(buf)
   vim.b[buf].nvim_zip = true
   api.nvim_set_option_value('filetype', 'zip', { buf = buf })
   api.nvim_buf_call(buf, function()
