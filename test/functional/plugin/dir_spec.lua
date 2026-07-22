@@ -195,20 +195,20 @@ describe('nvim.dir', function()
 
     exec_lua(function()
       require('nvim.dir').open(0, 'custom://root', {
-        list_entries = function(_, name, cb)
+        list = function(_, name, cb)
           vim.g.nvim_dir_list_name = name
           cb(nil, {
             { name = 'child', dir = true },
             { name = 'file.txt', dir = false },
           })
         end,
-        open_entry = function(_, name, entry)
+        open = function(_, name, entry)
           vim.g.nvim_dir_opened = entry.name .. ':' .. name
         end,
         open_parent = function(_, name)
           vim.g.nvim_dir_parent = name
         end,
-        attach = function(buf)
+        init = function(buf)
           vim.bo[buf].filetype = 'customdir'
         end,
       })
@@ -236,10 +236,10 @@ describe('nvim.dir', function()
 
     exec_lua(function()
       require('nvim.dir').open(0, 'custom://error', {
-        list_entries = function(_, _, cb)
+        list = function(_, _, cb)
           cb('simulated error')
         end,
-        open_entry = function() end,
+        open = function() end,
         open_parent = function() end,
       })
     end)
@@ -253,11 +253,11 @@ describe('nvim.dir', function()
 
     exec_lua(function()
       require('nvim.dir').open(0, 'custom://root', {
-        list_entries = function(buf, _, cb)
+        list = function(buf, _, cb)
           vim.b[buf].custom_count = (vim.b[buf].custom_count or 0) + 1
           cb(nil, { { name = 'file' .. vim.b[buf].custom_count .. '.txt', dir = false } })
         end,
-        open_entry = function() end,
+        open = function() end,
         open_parent = function() end,
       })
     end)
@@ -274,17 +274,17 @@ describe('nvim.dir', function()
     exec_lua(function()
       local dir = require('nvim.dir')
       dir.open(0, 'custom://old', {
-        list_entries = function(_, _, cb)
+        list = function(_, _, cb)
           _G.nvim_dir_stale_callback = cb
         end,
-        open_entry = function() end,
+        open = function() end,
         open_parent = function() end,
       })
       dir.open(0, 'custom://new', {
-        list_entries = function(_, _, cb)
+        list = function(_, _, cb)
           cb(nil, { { name = 'current.txt', dir = false } })
         end,
-        open_entry = function() end,
+        open = function() end,
         open_parent = function() end,
       })
     end)
@@ -307,13 +307,13 @@ describe('nvim.dir', function()
       local dir = require('nvim.dir')
       local function provider(label)
         return {
-          list_entries = function(buf, _, cb)
+          list = function(buf, _, cb)
             local key = 'nvim_dir_' .. label .. '_lists'
             vim.b[buf][key] = (vim.b[buf][key] or 0) + 1
             vim.g.nvim_dir_provider_list = label .. ':' .. vim.b[buf][key]
             cb(nil, { { name = label .. '.txt', dir = false } })
           end,
-          open_entry = function(_, _, entry)
+          open = function(_, _, entry)
             vim.g.nvim_dir_provider_open = label .. ':' .. entry.name
           end,
           open_parent = function()

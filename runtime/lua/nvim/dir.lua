@@ -10,19 +10,19 @@ local M = {}
 ---@field name string
 ---@field dir boolean
 
---- Handler for `Provider.list_entries`; call once with either an error or entries.
+--- Handler for `Provider.list`; call once with either an error or entries.
 ---@alias (private) nvim.dir.ListHandler fun(err: string?, entries: nvim.dir.Entry[]?)
 
 --- Source adapter that provides entries and listing actions.
 ---@class (private) nvim.dir.Provider
 --- Produce entries for this listing.
----@field list_entries fun(buf: integer, name: string, cb: nvim.dir.ListHandler)
+---@field list fun(buf: integer, name: string, cb: nvim.dir.ListHandler)
 --- Open an entry from the listing.
----@field open_entry fun(buf: integer, name: string, entry: nvim.dir.Entry)
+---@field open fun(buf: integer, name: string, entry: nvim.dir.Entry)
 --- Open the parent listing.
 ---@field open_parent fun(buf: integer, name: string)
 --- Run provider-specific buffer setup after a successful open.
----@field attach? fun(buf: integer, name: string)
+---@field init? fun(buf: integer, name: string)
 
 local listing_group = api.nvim_create_augroup('nvim.dir.listing', { clear = false })
 
@@ -242,12 +242,12 @@ function load(buf, name, provider, restore_view, setup, select)
 
     setup_render_autocmds(buf)
     set_maps(buf, provider)
-    if provider.attach then
-      provider.attach(buf, name)
+    if provider.init then
+      provider.init(buf, name)
     end
   end
 
-  local ok, err = pcall(provider.list_entries, buf, name, on_list) ---@type boolean, any
+  local ok, err = pcall(provider.list, buf, name, on_list) ---@type boolean, any
   if not ok then
     on_list(tostring(err))
   end
@@ -282,7 +282,7 @@ function M._open_entry()
   local provider = get_provider(buf)
   local entry = current_entry(buf)
   if provider and entry then
-    provider.open_entry(buf, api.nvim_buf_get_name(buf), entry)
+    provider.open(buf, api.nvim_buf_get_name(buf), entry)
   end
 end
 

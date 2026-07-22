@@ -54,7 +54,7 @@ end
 ---@param _ integer
 ---@param path string
 ---@param cb fun(err?: string, entries?: nvim.dir.Entry[])
-function M.list_entries(_, path, cb)
+function M.list(_, path, cb)
   local entries = {} ---@type nvim.dir.Entry[]
   for name, type, err in fs.dir(path, { err = true }) do
     if err then
@@ -81,7 +81,7 @@ end
 ---@param _ integer
 ---@param path string
 ---@param entry nvim.dir.Entry
-function M.open_entry(_, path, entry)
+function M.open(_, path, entry)
   navigate(fs.joinpath(path, entry.name))
 end
 
@@ -92,7 +92,7 @@ function M.open_parent(_, path)
 end
 
 ---@param buf integer
-function M.attach(buf)
+function M.init(buf)
   if api.nvim_get_option_value('filetype', { buf = buf }) ~= 'directory' then
     api.nvim_set_option_value('filetype', 'directory', { buf = buf })
   end
