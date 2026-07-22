@@ -1,7 +1,7 @@
 " Creator:    Charles E Campbell
 " Previous Maintainer: Luca Saccarola <github.e41mv@aleeas.com>
 " Maintainer: This runtime file is looking for a new maintainer.
-" Last Change: 2026 Jul 18
+" Last Change: 2026 Jul 22
 " Copyright:  Copyright (C) 2016 Charles E. Campbell {{{1
 "             Permission is hereby granted to use and distribute this code,
 "             with or without modifications, provided that this copyright
@@ -3939,7 +3939,7 @@ function s:NetrwBrowseChgDir(islocal, newdir, cursor, ...)
                             let curwin= winnr()
                             exe "NetrwKeepj keepalt ".winnr("$")."wincmd w"
                             vs
-                            exe "NetrwKeepj keepalt ".g:netrw_chgwin."wincmd ".curwin
+                            exe "NetrwKeepj keepalt ".curwin."wincmd w"
                         endif
                         exe "NetrwKeepj keepalt ".g:netrw_chgwin."wincmd w"
                     endif
