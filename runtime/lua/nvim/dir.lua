@@ -199,7 +199,7 @@ end
 function load(buf, name, provider, restore_view, setup, select)
   local list_gen = vim._assert_integer(vim.b[buf].nvim_dir_gen or 0) + 1
   vim.b[buf].nvim_dir_gen = list_gen
-  -- Used to abort failed first opens while preserving the old listing on reload failure.
+  -- Discard the listing state if the initial load fails, but preserve an existing listing on reload failure.
   local first_render = vim.b[buf].nvim_dir == nil
   local done = false
 
