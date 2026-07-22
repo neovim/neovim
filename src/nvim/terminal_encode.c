@@ -2,20 +2,26 @@
 ///
 /// Serialize terminal screen content (including scrollback) to ANSI escape sequences.
 
+#include <assert.h>
+
 #include "klib/kvec.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/grid.h"
 #include "nvim/strings.h"
-#include "nvim/terminal_defs.h"
+#include "nvim/terminal.h"
 #include "nvim/terminal_encode.h"
 #include "nvim/vterm/pen.h"
 #include "nvim/vterm/screen.h"
-#include "nvim/vterm/state.h"
 #include "nvim/vterm/vterm.h"
 #include "nvim/vterm/vterm_defs.h"
 
 #include "terminal_encode.c.generated.h"
+
+typedef struct {
+  Terminal *term;
+  StringBuilder *out;
+} TeEncodeCtx;
 
 /// Check if a `VTermScreenCell` is blank (empty or space).
 ///
@@ -88,9 +94,9 @@ static bool cell_sgr_equal(const VTermScreenCell *a, const VTermScreenCell *b)
 /// @param out    Output buffer to append to.
 /// @param color  The `VTermColor` to encode.
 /// @param is_fg  true for foreground (38), false for background (48).
-/// @param state  VTerm state.
+/// @param term   Terminal instance.
 static void te_encode_append_sgr_color(StringBuilder *out, const VTermColor *color, bool is_fg,
-                                       VTermState *state)
+                                       Terminal *term)
   FUNC_ATTR_NONNULL_ALL
 {
   // default color
@@ -106,7 +112,7 @@ static void te_encode_append_sgr_color(StringBuilder *out, const VTermColor *col
 
   // RGB color
   VTermColor rgb = *color;
-  vterm_state_convert_color_to_rgb(state, &rgb);
+  terminal_convert_color_to_rgb(term, &rgb);
   kv_printf(*out, ";%d;2;%d;%d;%d", is_fg ? 38 : 48, rgb.rgb.red, rgb.rgb.green, rgb.rgb.blue);
 }
 
@@ -115,8 +121,8 @@ static void te_encode_append_sgr_color(StringBuilder *out, const VTermColor *col
 ///
 /// @param out    Output buffer to append to.
 /// @param cell   The cell to encode.
-/// @param state  VTerm state.
-static void te_encode_append_sgr(StringBuilder *out, const VTermScreenCell *cell, VTermState *state)
+/// @param term   Terminal instance.
+static void te_encode_append_sgr(StringBuilder *out, const VTermScreenCell *cell, Terminal *term)
   FUNC_ATTR_NONNULL_ALL
 {
   kv_concat(*out, "\x1b[0");
@@ -157,8 +163,8 @@ static void te_encode_append_sgr(StringBuilder *out, const VTermScreenCell *cell
   if (cell->attrs.font) {
     kv_printf(*out, ";%d", 10 + cell->attrs.font);
   }
-  te_encode_append_sgr_color(out, &cell->fg, true, state);
-  te_encode_append_sgr_color(out, &cell->bg, false, state);
+  te_encode_append_sgr_color(out, &cell->fg, true, term);
+  te_encode_append_sgr_color(out, &cell->bg, false, term);
   if (cell->attrs.overline) {
     kv_concat(*out, ";53");
   }
@@ -196,7 +202,6 @@ static void te_encode_line2ansi(Terminal *term, const VTermScreenCell *cells, si
     return;
   }
 
-  VTermState *state = vterm_obtain_state(term->vt);
   VTermScreenCell curr = { 0 };
 
   // Iterate cells
@@ -205,7 +210,7 @@ static void te_encode_line2ansi(Terminal *term, const VTermScreenCell *cells, si
 
     // Append escape sequence on sgr change
     if (!cell_sgr_equal(&curr, cell)) {
-      te_encode_append_sgr(out, cell, state);
+      te_encode_append_sgr(out, cell, term);
       curr = *cell;
     }
 
@@ -225,6 +230,13 @@ static void te_encode_line2ansi(Terminal *term, const VTermScreenCell *cells, si
   kv_concat(*out, "\n");
 }
 
+/// Encode one row into ANSI text, as a terminal_foreach_row() callback.
+static void te_encode_row_cb(const VTermScreenCell *cells, size_t cols, void *data)
+{
+  TeEncodeCtx *ctx = data;
+  te_encode_line2ansi(ctx->term, cells, cols, ctx->out);
+}
+
 /// Export rendered terminal state (scrollback + visible screen) as ANSI escape sequences.
 ///
 /// @param term   Terminal instance to export.
@@ -234,55 +246,10 @@ static void te_encode_line2ansi(Terminal *term, const VTermScreenCell *cells, si
 String te_encode_export_ansi(Terminal *term, int start, int end)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  int height, width;
-  vterm_get_size(term->vt, &height, &width);
-  linenr_T total = (linenr_T)term->sb_current + (linenr_T)height;
-  // Range write will skip this block so that user-selected ranges are exported as is.
-  if (end == 0 || end >= total) {
-    end = total;
-    if (term->sb_current == 0) {
-      // Don't save empty lines when the visible screen is not full.
-      int last_row = height - 1;
-      while (last_row >= 0) {
-        bool empty = true;
-        for (int col = 0; col < width; col++) {
-          VTermScreenCell cell;
-          vterm_screen_get_cell(term->vts, (VTermPos){ .row = last_row, .col = col }, &cell);
-          if (!cell_is_blank(&cell)) {
-            empty = false;
-            break;
-          }
-        }
-        if (!empty) {
-          break;
-        }
-        last_row--;
-      }
-      // Screen row 0 = buffer line 1
-      end = (linenr_T)last_row + 1;
-    }
-  }
-
   StringBuilder out = KV_INITIAL_VALUE;
-  VTermScreenCell *cells = xmalloc(sizeof(*cells) * (size_t)width);
+  TeEncodeCtx ctx = { .term = term, .out = &out };
+  terminal_foreach_row(term, (linenr_T)start, (linenr_T)end, te_encode_row_cb, &ctx);
 
-  for (linenr_T lnum = start; lnum <= end; lnum++) {
-    if (lnum <= (linenr_T)term->sb_current) {
-      // Scrollback: line 1 = sb_buffer[sb_current-1]
-      size_t idx = term->sb_current - (size_t)lnum;
-      ScrollbackLine *line = term->sb_buffer[idx];
-      te_encode_line2ansi(term, line->cells, line->cols, &out);
-    } else {
-      // Visible screen: line sb_current+1 = row 0
-      int row = (lnum - (linenr_T)term->sb_current - 1);
-      for (int col = 0; col < width; col++) {
-        vterm_screen_get_cell(term->vts, (VTermPos){ .row = row, .col = col }, &cells[col]);
-      }
-      te_encode_line2ansi(term, cells, (size_t)width, &out);
-    }
-  }
-
-  xfree(cells);
   // Reset SGR so the last char's attributes (if exist) do not bleed beyond the exported content.
   kv_concat(out, "\x1b[0m");
   // Guarantee it's NUL-terminated. Otherwise, it will cause heap-buffer-overflow in `strlen`.

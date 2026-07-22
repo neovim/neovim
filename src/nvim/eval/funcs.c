@@ -126,7 +126,6 @@
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
 #include "nvim/terminal.h"
-#include "nvim/terminal_defs.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"
@@ -7527,7 +7526,7 @@ static void f_term_getansi(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
     return;
   }
 
-  if (buf->terminal->in_altscreen) {
+  if (terminal_in_altscreen(buf->terminal)) {
     emsg(_("Cannot :write terminal state while the alternate screen is active"));
     return;
   }

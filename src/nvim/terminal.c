@@ -96,7 +96,6 @@
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"
 #include "nvim/terminal.h"
-#include "nvim/terminal_defs.h"
 #include "nvim/terminal_encode.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
@@ -141,6 +140,82 @@ typedef struct {
 
 static TimeWatcher refresh_timer;
 static bool refresh_pending = false;
+
+typedef struct {
+  size_t cols;
+  VTermScreenCell cells[];
+} ScrollbackLine;
+
+struct terminal {
+  TerminalOptions opts;  // options passed to terminal_alloc()
+  VTerm *vt;
+  VTermScreen *vts;
+  // buffer used to:
+  //  - convert VTermScreen cell arrays into utf8 strings
+  //  - receive data from libvterm as a result of key presses.
+  char textbuf[0x1fff];
+
+  ScrollbackLine **sb_buffer;  ///< Scrollback storage.
+  size_t sb_current;           ///< Lines stored in sb_buffer.
+  size_t sb_size;              ///< Capacity of sb_buffer.
+  /// "virtual index" that points to the first sb_buffer row that we need to
+  /// push to the terminal buffer when refreshing the scrollback.
+  int sb_pending;
+  size_t sb_deleted;      ///< Lines deleted from sb_buffer.
+  size_t old_sb_deleted;  ///< Value of sb_deleted on last refresh_scrollback().
+  /// Lines in the terminal buffer belonging to the screen instead of the scrollback.
+  int old_height;
+
+  char *title;     // VTermStringFragment buffer
+  size_t title_len;
+  size_t title_size;
+
+  // buf_T instance that acts as a "drawing surface" for libvterm
+  // we can't store a direct reference to the buffer because the
+  // refresh_timer_cb may be called after the buffer was freed, and there's
+  // no way to know if the memory was reused.
+  handle_T buf_handle;
+  bool in_altscreen;
+  // program suspended
+  bool suspended;
+  // program exited
+  bool closed;
+  // when true, the terminal's destruction is already enqueued.
+  bool destroy;
+
+  // some vterm properties
+  bool forward_mouse;
+  int invalid_start, invalid_end;   // invalid rows in libvterm screen
+  struct {
+    int row, col;
+    int shape;
+    bool visible;  ///< Terminal wants to show cursor.
+                   ///< `TerminalState.cursor_visible` indicates whether it is actually shown.
+    bool blink;
+  } cursor;
+
+  struct {
+    bool resize;          ///< pending width/height
+    bool cursor;          ///< pending cursor shape or blink change
+    StringBuilder *send;  ///< When there is a pending TermRequest autocommand, block and store input.
+    MultiQueue *events;   ///< Events waiting for refresh.
+  } pending;
+
+  bool streamed_paste;  ///< Streamed pasting
+  bool theme_updates;  ///< Send a theme update notification when 'bg' changes
+  bool synchronized_output;  ///< Mode 2026: suppress redraws until end of synchronized update
+  bool sync_flush_pending;   ///< Set when mode 2026 ends; triggers immediate buffer refresh
+
+  bool color_set[16];
+
+  char *selection_buffer;  ///< libvterm selection buffer
+  StringBuilder selection;  ///< Growable array containing full selection data
+
+  StringBuilder termrequest_buffer;  ///< Growable array containing unfinished request sequence
+  VTermTerminator termrequest_terminator;  ///< Terminator (BEL or ST) used in the termrequest
+
+  size_t refcount;                  // reference count
+};
 
 static VTermScreenCallbacks vterm_screen_callbacks = {
   .damage = term_damage,
@@ -1481,6 +1556,56 @@ static void terminal_focus(const Terminal *term, bool focus)
   }
 }
 
+/// Walk a terminal's logical lines [start, end] (1-based, inclusive): scrollback
+/// (oldest first) followed by the visible screen. end == 0 means "to the last line".
+///
+/// @param start  1-based line number to start from (values < 1 are clamped to 1).
+/// @param end    1-based line number to end at (inclusive), or 0 for all remaining.
+/// @param cb     Called once per logical line.
+/// @param data   User data passed to `cb`.
+void terminal_foreach_row(Terminal *term, linenr_T start, linenr_T end, TerminalRowCb cb,
+                          void *data)
+  FUNC_ATTR_NONNULL_ARG(1, 4)
+{
+  int height, width;
+  vterm_get_size(term->vt, &height, &width);
+  linenr_T total = (linenr_T)term->sb_current + (linenr_T)height;
+  if (end == 0 || end > total) {
+    end = total;
+  }
+  start = MAX(start, 1);
+
+  VTermScreenCell *screen_row = xmalloc(sizeof(*screen_row) * (size_t)width);
+  for (linenr_T lnum = start; lnum <= end; lnum++) {
+    if (lnum <= (linenr_T)term->sb_current) {
+      // Scrollback: line 1 = oldest = sb_buffer[sb_current - 1].
+      size_t idx = term->sb_current - (size_t)lnum;
+      ScrollbackLine *line = term->sb_buffer[idx];
+      cb(line->cells, line->cols, data);
+    } else {
+      // Visible screen: line sb_current+1 = row 0.
+      int row = lnum - (linenr_T)term->sb_current - 1;
+      for (int col = 0; col < width; col++) {
+        vterm_screen_get_cell(term->vts, (VTermPos){ .row = row, .col = col }, &screen_row[col]);
+      }
+      cb(screen_row, (size_t)width, data);
+    }
+  }
+  xfree(screen_row);
+}
+
+void terminal_convert_color_to_rgb(Terminal *term, VTermColor *color)
+  FUNC_ATTR_NONNULL_ALL
+{
+  vterm_state_convert_color_to_rgb(vterm_obtain_state(term->vt), color);
+}
+
+bool terminal_in_altscreen(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return term->in_altscreen;
+}
+
 /// Export rendered terminal state (scrollback + visible screen) as ANSI escape sequences.
 ///
 /// @param term   Terminal to export.
@@ -1491,6 +1616,36 @@ String terminal_get_ansi(Terminal *term, int start, int end)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   refresh_terminal(term);
+
+  int height, width;
+  vterm_get_size(term->vt, &height, &width);
+  linenr_T total = (linenr_T)term->sb_current + (linenr_T)height;
+  // Range write will skip this block so that user-selected ranges are exported as is.
+  if (end == 0 || end >= total) {
+    end = total;
+    if (term->sb_current == 0) {
+      // Don't save empty lines when the visible screen is not full.
+      int last_row = height - 1;
+      while (last_row >= 0) {
+        bool empty = true;
+        for (int col = 0; col < width; col++) {
+          VTermScreenCell cell;
+          vterm_screen_get_cell(term->vts, (VTermPos){ .row = last_row, .col = col }, &cell);
+          if (cell.schar != 0 && cell.schar != schar_from_char(' ')) {
+            empty = false;
+            break;
+          }
+        }
+        if (!empty) {
+          break;
+        }
+        last_row--;
+      }
+      // Screen row 0 = buffer line 1
+      end = (linenr_T)last_row + 1;
+    }
+  }
+
   return te_encode_export_ansi(term, start, end);
 }
 
