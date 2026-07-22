@@ -300,7 +300,7 @@ describe('nvim.dir', function()
     eq({ 'current.txt' }, lines())
   end)
 
-  it('replaces listing provider handlers', function()
+  it('replaces listing providers', function()
     n.clear({ args_rm = { '-u' } })
 
     exec_lua(function()

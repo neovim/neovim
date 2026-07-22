@@ -26,11 +26,9 @@ local M = {}
 
 local listing_group = api.nvim_create_augroup('nvim.dir.listing', { clear = false })
 
----@param operation string?
 ---@param err any
-local function notify_error(operation, err)
-  local prefix = operation and (operation .. ': ') or ''
-  vim.notify('dir: ' .. prefix .. tostring(err), vim.log.levels.ERROR)
+local function notify_error(err)
+  vim.notify('dir: ' .. tostring(err), vim.log.levels.ERROR)
 end
 
 ---@param buf integer
@@ -102,19 +100,6 @@ local function render_entries(buf, name, entries)
   })
 end
 
----@param operation string
----@param fn fun(...)
----@param ... any
----@return boolean
-local function call_provider(operation, fn, ...)
-  local ok, err = pcall(fn, ...) ---@type boolean, any
-  if not ok then
-    notify_error(operation, err)
-    return false
-  end
-  return true
-end
-
 --- Stop tracking a listing and remove its autocmds.
 ---@param buf integer
 local function close_listing(buf)
@@ -123,7 +108,7 @@ local function close_listing(buf)
   end
   vim.b[buf].nvim_dir = nil
   vim.b[buf].nvim_dir_generation = nil
-  vim.b[buf].nvim_dir_handler = nil
+  vim.b[buf].nvim_dir_provider = nil
   api.nvim_clear_autocmds({ group = listing_group, buffer = buf })
 end
 
@@ -163,18 +148,7 @@ end
 ---@param buf integer
 ---@param provider nvim.dir.Provider
 local function set_maps(buf, provider)
-  vim.b[buf].nvim_dir_handler = function(action)
-    if action == 'open' then
-      local entry = current_entry(buf)
-      if entry then
-        call_provider('open_entry', provider.open_entry, buf, api.nvim_buf_get_name(buf), entry)
-      end
-    elseif action == 'parent' then
-      call_provider('open_parent', provider.open_parent, buf, api.nvim_buf_get_name(buf))
-    elseif action == 'reload' then
-      reload(buf, provider)
-    end
-  end
+  vim.b[buf].nvim_dir_provider = provider
 
   ---@param lhs string
   ---@param plug string
@@ -233,7 +207,7 @@ function load(buf, name, provider, restore_view, setup)
       return
     end
     if err ~= nil then
-      notify_error(nil, err)
+      notify_error(err)
       if first_render then
         close_listing(buf)
       end
@@ -259,7 +233,7 @@ function load(buf, name, provider, restore_view, setup)
     setup_render_autocmds(buf)
     set_maps(buf, provider)
     if provider.attach then
-      call_provider('attach', provider.attach, buf, name)
+      provider.attach(buf, name)
     end
   end
 
@@ -283,27 +257,29 @@ function M.open(buf, name, provider)
 end
 
 ---@param buf integer
----@param action string
----@return boolean
-local function dispatch(buf, action)
+---@return nvim.dir.Provider?
+local function get_provider(buf)
   if not api.nvim_buf_is_valid(buf) then
-    return false
+    return nil
   end
-  local handler = vim.b[buf].nvim_dir_handler
-  if type(handler) ~= 'function' then
-    return false
-  end
-  handler(action)
-  return true
+  local provider = vim.b[buf].nvim_dir_provider
+  return type(provider) == 'table' and provider or nil
 end
 
 function M._open_entry()
-  dispatch(api.nvim_get_current_buf(), 'open')
+  local buf = api.nvim_get_current_buf()
+  local provider = get_provider(buf)
+  local entry = current_entry(buf)
+  if provider and entry then
+    provider.open_entry(buf, api.nvim_buf_get_name(buf), entry)
+  end
 end
 
 function M._open_parent()
   local buf = api.nvim_get_current_buf()
-  if dispatch(buf, 'parent') then
+  local provider = get_provider(buf)
+  if provider then
+    provider.open_parent(buf, api.nvim_buf_get_name(buf))
     return
   end
   -- Keep the global `-` mapping useful from regular file buffers.
@@ -312,7 +288,11 @@ end
 
 ---@param buf? integer
 function M._reload(buf)
-  dispatch(vim._resolve_bufnr(buf), 'reload')
+  buf = vim._resolve_bufnr(buf)
+  local provider = get_provider(buf)
+  if provider then
+    reload(buf, provider)
+  end
 end
 
 ---@param buf integer
