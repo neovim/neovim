@@ -3,23 +3,6 @@ local uv = vim.uv
 
 local M = {}
 
----@class (private) nvim.zip.Entry : nvim.dir.Entry
----@field member string
-
----@class (private) nvim.zip.Session
----@field source string
----@field members string[]
----@field prefix string
----@field pending_prefix? string
-
--- Seed `provider_state` on the first `nvim.dir` list request.
----@type table<integer,nvim.zip.Session>
-local pending_sessions = {}
-
--- Preserve generated member identity separately from the legacy, delimiter-based buffer name.
----@type table<string,{ source: string, member: string }>
-local pending_reads = {}
-
 ---@param msg string
 ---@param level? integer
 local function notify(msg, level)
@@ -85,16 +68,16 @@ end
 --- Project the flat archive-member list into one navigable directory level.
 ---@param members string[] Raw member names from the archive.
 ---@param prefix string Raw archive-directory prefix, including its trailing slash.
----@return nvim.zip.Entry[]
+---@return nvim.dir.Entry[]
 local function entries_at(members, prefix)
-  local entries = {} ---@type nvim.zip.Entry[]
+  local entries = {} ---@type nvim.dir.Entry[]
   local seen = {} ---@type table<string,true>
   for _, member in ipairs(members) do
     if prefix == '' and opaque_member(member) then
       local key = 'opaque:' .. member
       if not seen[key] then
         seen[key] = true
-        entries[#entries + 1] = { name = member, dir = false, member = member }
+        entries[#entries + 1] = { name = member, dir = false }
       end
     elseif vim.startswith(member, prefix) then
       local rest = member:sub(#prefix + 1)
@@ -106,7 +89,7 @@ local function entries_at(members, prefix)
         local key = (dir and 'dir:' or 'file:') .. path
         if not seen[key] then
           seen[key] = true
-          entries[#entries + 1] = { name = name, dir = dir, member = path }
+          entries[#entries + 1] = { name = name, dir = dir }
         end
       end
     end
@@ -265,7 +248,9 @@ function M.browse(buf, source)
     end
     return
   end
-  pending_sessions[buf] = { source = source, members = members, prefix = '' }
+  vim.b[buf].nvim_zip_source = source
+  vim.b[buf].nvim_zip_members = members
+  vim.b[buf].nvim_zip_prefix = ''
   local name = vim.fn.bufname(buf)
   require('nvim.dir').open(buf, name ~= '' and name or source, M)
 end
@@ -275,13 +260,9 @@ end
 ---@param name string `zipfile://` buffer name.
 function M.read(buf, name)
   buf = vim._resolve_bufnr(buf)
-  local pending = pending_reads[name]
-  pending_reads[name] = nil
-  local source ---@type string?
-  local member ---@type string?
-  if pending then
-    source, member = pending.source, pending.member
-  else
+  local source = vim.b[buf].nvim_zip_source ---@type string?
+  local member = vim.b[buf].nvim_zip_member ---@type string?
+  if not source or not member then
     source, member = parse_member_name(name)
   end
   if not source or not member then
@@ -312,71 +293,82 @@ function M.read(buf, name)
 end
 
 --- List the requested archive level and commit its prefix only after the backend succeeds.
----@param ctx nvim.dir.Ctx
----@param cb fun(err?: string, entries?: nvim.zip.Entry[])
-function M.list_entries(ctx, cb)
-  local state = ctx.provider_state ---@cast state nvim.zip.Session
-  local initial = pending_sessions[ctx.buf]
-  if initial then
-    pending_sessions[ctx.buf] = nil
-    state.source = initial.source
-    state.members = initial.members
-    state.prefix = ''
-    cb(nil, entries_at(state.members, state.prefix))
+---@param buf integer
+---@param _ string
+---@param cb fun(err?: string, entries?: nvim.dir.Entry[])
+function M.list_entries(buf, _, cb)
+  local source = vim.b[buf].nvim_zip_source ---@type string?
+  if not source then
+    cb('zip source is not set')
     return
   end
-  local members, err = list_archive(state.source)
+  local members = vim.b[buf].nvim_zip_members ---@type string[]?
+  vim.b[buf].nvim_zip_members = nil
+  local err ---@type string?
   if not members then
-    state.pending_prefix = nil
+    members, err = list_archive(source)
+  end
+  if not members then
+    vim.b[buf].nvim_zip_pending_prefix = nil
     cb(err)
     return
   end
-  local prefix = state.pending_prefix or state.prefix
-  state.members = members
-  state.prefix = prefix
-  state.pending_prefix = nil
+  local prefix = vim.b[buf].nvim_zip_prefix or '' ---@type string
+  local pending_prefix = vim.b[buf].nvim_zip_pending_prefix ---@type string?
+  prefix = pending_prefix or prefix
+  vim.b[buf].nvim_zip_prefix = prefix
+  vim.b[buf].nvim_zip_pending_prefix = nil
   cb(nil, entries_at(members, prefix))
 end
 
----@param ctx nvim.dir.Ctx
----@param entry nvim.zip.Entry
-function M.open_entry(ctx, entry)
-  local state = ctx.provider_state ---@cast state nvim.zip.Session
-  if entry.dir then
-    state.pending_prefix = entry.member
-    require('nvim.dir').open(ctx.buf, ctx.name, M)
+---@param buf integer
+---@param name string
+---@param entry nvim.dir.Entry
+function M.open_entry(buf, name, entry)
+  local source = vim.b[buf].nvim_zip_source ---@type string?
+  if not source then
     return
   end
-  local uri = ('zipfile://%s::%s'):format(state.source, entry.member)
-  pending_reads[uri] = { source = state.source, member = entry.member }
-  local ok, err = pcall(api.nvim_cmd, {
+  local prefix = vim.b[buf].nvim_zip_prefix or '' ---@type string
+  local member = prefix .. entry.name .. (entry.dir and '/' or '')
+  if entry.dir then
+    vim.b[buf].nvim_zip_pending_prefix = member
+    require('nvim.dir').open(buf, name, M)
+    return
+  end
+  local uri = ('zipfile://%s::%s'):format(source, member)
+  local member_buf = vim.fn.bufadd(uri)
+  vim.b[member_buf].nvim_zip_source = source
+  vim.b[member_buf].nvim_zip_member = member
+  api.nvim_cmd({
     cmd = 'edit',
     args = { uri },
     mods = { noswapfile = true },
     magic = { file = false, bar = false },
   }, {})
-  if not ok then
-    pending_reads[uri] = nil
-    error(err, 0)
-  end
 end
 
----@param ctx nvim.dir.Ctx
-function M.open_parent(ctx)
-  local state = ctx.provider_state ---@cast state nvim.zip.Session
-  if state.prefix ~= '' then
-    state.pending_prefix = state.prefix:sub(1, -2):match('^(.*[/])') or ''
-    require('nvim.dir').open(ctx.buf, ctx.name, M)
+---@param buf integer
+---@param name string
+function M.open_parent(buf, name)
+  local source = vim.b[buf].nvim_zip_source ---@type string?
+  if not source then
     return
   end
-  require('nvim.dir._filesystem').open_parent_path(state.source)
+  local prefix = vim.b[buf].nvim_zip_prefix or '' ---@type string
+  if prefix ~= '' then
+    vim.b[buf].nvim_zip_pending_prefix = prefix:sub(1, -2):match('^(.*[/])') or ''
+    require('nvim.dir').open(buf, name, M)
+    return
+  end
+  require('nvim.dir.filesystem').open_parent_path(source)
 end
 
----@param ctx nvim.dir.Ctx
-function M.attach(ctx)
-  vim.b[ctx.buf].nvim_zip = true
-  api.nvim_set_option_value('filetype', 'zip', { buf = ctx.buf })
-  api.nvim_buf_call(ctx.buf, function()
+---@param buf integer
+function M.attach(buf)
+  vim.b[buf].nvim_zip = true
+  api.nvim_set_option_value('filetype', 'zip', { buf = buf })
+  api.nvim_buf_call(buf, function()
     vim.wo.wrap = false
   end)
 end
