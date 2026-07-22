@@ -277,7 +277,9 @@ end
 function M.open(buf, name, provider, select)
   buf = vim._resolve_bufnr(buf)
   local state = get_state(buf)
-  local restore_view = state and state.provider and api.nvim_get_current_buf() == buf
+  local restore_view = state
+      and state.provider
+      and api.nvim_get_current_buf() == buf
       and vim.fn.winsaveview()
     or nil
   load(buf, name, provider, restore_view, true, select)
