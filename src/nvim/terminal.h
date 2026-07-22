@@ -5,7 +5,9 @@
 #include <stdint.h>
 
 #include "nvim/api/private/defs.h"  // IWYU pragma: keep
+#include "nvim/pos_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
+#include "nvim/vterm/vterm_defs.h"  // IWYU pragma: keep
 
 typedef void (*terminal_read_pause_cb)(bool pause, void *data);
 typedef void (*terminal_write_cb)(const char *buffer, size_t size, void *data);
@@ -23,5 +25,9 @@ typedef struct {
   terminal_close_cb close_cb;
   bool force_crlf;
 } TerminalOptions;
+
+/// Called once per logical line by `terminal_foreach_row()`. `cells`/`cols` are
+/// owned by the caller and valid only for the duration of the call.
+typedef void (*TerminalRowCb)(const VTermScreenCell *cells, size_t cols, void *data);
 
 #include "terminal.h.generated.h"
