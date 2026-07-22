@@ -190,7 +190,7 @@ end
 ---@param restore_view? table
 ---@param setup? boolean
 function load(buf, name, provider, restore_view, setup)
-  local list_generation = (vim.b[buf].nvim_dir_generation or 0) + 1
+  local list_generation = vim._assert_integer(vim.b[buf].nvim_dir_generation or 0) + 1
   vim.b[buf].nvim_dir_generation = list_generation
   -- Used to abort failed first opens while preserving the old listing on reload failure.
   local first_render = vim.b[buf].nvim_dir == nil
