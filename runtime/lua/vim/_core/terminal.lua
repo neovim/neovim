@@ -103,18 +103,24 @@ function M.save(args)
   -- Get metadata
   local chan = vim.bo[bufnr].channel
   local info = vim.api.nvim_get_chan_info(chan)
-  local cwd = info.cwd or ''
+  -- TODO(Willaaaaaaa): Use OSC 7 to get a real-time cwd.
+  --     Ref https://github.com/neovim/neovim/pull/40097#discussion_r3616464826
+  -- channel info in Lua has no "cwd" field, so temporarily use the cwd recorded in the "term://"
+  -- buffer name (the job's cwd at spawn time).
+  local cwd = vim.api.nvim_buf_get_name(bufnr):match('^term://(.-)//') or ''
+  if cwd ~= '' then
+    cwd = vim.fs.normalize(cwd)
+  end
 
   -- Encode to msgpack
   local packed = vim.mpack.encode({
-    version = 1,
     cwd = cwd,
     argv = info.argv,
     timestamp = vim.fn.localtime(),
     content = ansi,
   })
 
-  -- Count lines
+  -- Count lines: use a cheap for-loop for performance, don't use `select()`.
   local line_count = 0
   ---@type string
   for _ in ansi:gmatch('\n') do

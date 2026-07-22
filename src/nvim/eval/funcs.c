@@ -7527,7 +7527,7 @@ static void f_term_getansi(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
   }
 
   if (terminal_in_altscreen(buf->terminal)) {
-    emsg(_("Cannot :write terminal state while the alternate screen is active"));
+    emsg(_(e_cant_write_terminal_altscreen));
     return;
   }
 

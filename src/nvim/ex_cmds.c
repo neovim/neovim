@@ -1926,7 +1926,7 @@ int do_write(exarg_T *eap)
 
   // Terminal buffers export rendered state as msgpack, and appending is not supported.
   if (curbuf->terminal && eap->append) {
-    emsg(_("Cannot append terminal state; use `:write` without \">>\""));
+    emsg(_(e_cant_append_terminal_state));
     goto theend;
   }
 

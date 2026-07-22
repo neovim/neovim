@@ -303,16 +303,15 @@ Terminal state files are stored in msgpack format. Example: >
       content = "\x1b[32mhello\x1b[0m",
       cwd = "/home/user/project",
       timestamp = 1750000000,
-      version = 1,
     }
-<
-  `version`     Format version number (currently 1).
   `argv`        The command argument list of the terminal job.
   `content`     ANSI escape sequences of the scrollback and screen.
-  `cwd`         Working directory of the terminal job.
+  `cwd`         Working directory of the terminal job at spawn time.
   `timestamp`   When the state was saved (seconds since epoch).
 
-Note: The alternate screen (e.g. vim, top) cannot be saved.
+Note: Appending to a terminal state file (`:write >>`) is not supported.
+								*E5008*
+Note: The alternate screen (e.g. vim, top) cannot be saved.     *E5006*
 
 ==============================================================================
 :Termdebug plugin                         *terminal-debug* *terminal-debugger*

@@ -18,8 +18,10 @@ EXTERN const char e_cmdwin[] INIT(= N_("E11: Invalid in command-line window; <CR
 EXTERN const char e_curdir[] INIT(= N_("E12: Command not allowed in secure mode in current dir or tag search"));
 EXTERN const char e_invalid_buffer_name_str[] INIT(= N_("E158: Invalid buffer name: %s"));
 EXTERN const char e_command_too_recursive[] INIT(= N_("E169: Command too recursive"));
+EXTERN const char e_cant_append_terminal_state[] INIT(= N_("E5008: Cannot append terminal state; use `:write` without \">>\""));
 EXTERN const char e_cant_open_file_for_writing[] INIT(= N_("E212: Can't open file for writing"));
 EXTERN const char e_cant_open_file_for_writing_str[] INIT(= N_("E212: Can't open file for writing: %s"));
+EXTERN const char e_cant_write_terminal_altscreen[] INIT(= N_("E5006: Cannot :write terminal state while the alternate screen is active"));
 EXTERN const char e_buffer_nr_invalid_buffer_number[] INIT(= N_("E680: <buffer=%d>: invalid buffer number"));
 EXTERN const char e_buffer_is_not_loaded[] INIT(= N_("E681: Buffer is not loaded"));
 EXTERN const char e_endif[] INIT(= N_("E171: Missing :endif"));
