@@ -53,8 +53,10 @@ typedef enum file_comparison {
 
 #ifdef MSWIN
 # define PATH_ESC_WILDCARDS "*?["
+# define PATH_ALL_WILDCARDS "*?[`$"
 #else
 # define PATH_ESC_WILDCARDS "*?[{"
+# define PATH_ALL_WILDCARDS "*?[{`'$"
 #endif
 
 #include "path.h.generated.h"

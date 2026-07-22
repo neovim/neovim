@@ -2938,7 +2938,7 @@ static char *expand_tag_fname(char *fname, char *const tag_fname, const bool exp
   // Expand file name (for environment variables) when needed.
   // Disallow backticks, they could execute arbitrary shell
   // commands.  This is not needed for tag filenames.
-  if (expand && path_has_wildcard(fname) && vim_strchr(fname, '`') == NULL) {
+  if (expand && path_has_wildcard(fname, true) && vim_strchr(fname, '`') == NULL) {
     ExpandInit(&xpc);
     xpc.xp_context = EXPAND_FILES;
     expanded_fname = ExpandOne(&xpc, fname, NULL,
