@@ -22,7 +22,7 @@
 " Cleanse your hands, you sinners; and purify your hearts, you double-minded.
 " ---------------------------------------------------------------------
 " Load Once: {{{1
-if &cp || exists("g:loaded_zipPlugin") || get(g:, "nvim_zip_plugin", v:false)
+if &cp || exists("g:loaded_zipPlugin") || get(g:, "nvim_zip_plugin", v:false) is v:true
  finish
 endif
 let g:loaded_zipPlugin = "v33"

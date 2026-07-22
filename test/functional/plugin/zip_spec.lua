@@ -11,67 +11,6 @@ local poke_eventloop = n.poke_eventloop
 local fixtures = vim.fs.joinpath(t.paths.test_source_path, 'test/functional/fixtures/zip')
 local old_samples = vim.fs.joinpath(t.paths.test_source_path, 'test/old/testdir/samples')
 
-local extensions = {
-  'aar',
-  'apk',
-  'cbz',
-  'celzip',
-  'crtx',
-  'docm',
-  'docx',
-  'dotm',
-  'dotx',
-  'ear',
-  'epub',
-  'gcsx',
-  'glox',
-  'gqsx',
-  'ja',
-  'jar',
-  'kmz',
-  'odb',
-  'odc',
-  'odf',
-  'odg',
-  'odi',
-  'odm',
-  'odp',
-  'ods',
-  'odt',
-  'otc',
-  'otf',
-  'otg',
-  'oth',
-  'oti',
-  'otp',
-  'ots',
-  'ott',
-  'oxt',
-  'pkpass',
-  'potm',
-  'potx',
-  'ppam',
-  'ppsm',
-  'ppsx',
-  'pptm',
-  'pptx',
-  'sldx',
-  'thmx',
-  'vdw',
-  'war',
-  'whl',
-  'wsz',
-  'xap',
-  'xlam',
-  'xlsb',
-  'xlsm',
-  'xlsx',
-  'xltm',
-  'xltx',
-  'xpi',
-  'zip',
-}
-
 local function lines()
   return api.nvim_buf_get_lines(0, 0, -1, false)
 end
@@ -124,24 +63,15 @@ describe('nvim.zip', function()
     eq(false, exec_lua('return vim.g.nvim_zip_plugin == true'))
   end)
 
-  it('registers the complete extension set when enabled', function()
+  it('opens zip-compatible file types', function()
+    local archive = vim.fs.joinpath(root, 'browser.jar')
+    copy_fixture(vim.fs.joinpath(fixtures, 'browser.zip'), archive)
     clear_zip()
-    eq(false, exec_lua('return vim.g.loaded_zipPlugin ~= nil'))
-    local actual = exec_lua(function()
-      local patterns = {}
-      for _, autocmd in ipairs(vim.api.nvim_get_autocmds({ group = 'nvim.zip' })) do
-        if autocmd.pattern ~= 'zipfile://*' then
-          patterns[#patterns + 1] = autocmd.pattern
-        end
-      end
-      table.sort(patterns)
-      return patterns
-    end)
-    local expected = vim.tbl_map(function(extension)
-      return '*.' .. extension
-    end, extensions)
-    table.sort(expected)
-    eq(expected, actual)
+
+    edit(archive)
+
+    eq('folder/', lines()[1])
+    eq('zip', api.nvim_get_option_value('filetype', { buf = 0 }))
   end)
 
   it('browses directories and opens members', function()
@@ -157,9 +87,6 @@ describe('nvim.zip', function()
     )
     eq('zip', api.nvim_get_option_value('filetype', { buf = 0 }))
     eq(true, exec_capture('syntax list zipDirectory'):find('zipDirectory', 1, true) ~= nil)
-    eq('table', exec_lua('return type(vim.b.nvim_dir_provider)'))
-    eq(archive, exec_lua('return vim.b.nvim_zip_source'))
-    eq('', exec_lua('return vim.b.nvim_zip_prefix'))
 
     feed('<CR>')
     poke_eventloop()

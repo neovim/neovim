@@ -1,4 +1,4 @@
-if vim.g.nvim_zip_plugin ~= true and vim.g.nvim_zip_plugin ~= 1 then
+if vim.g.nvim_zip_plugin ~= true then
   return
 end
 
