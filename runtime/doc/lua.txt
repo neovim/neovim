@@ -5488,6 +5488,8 @@ vim.text.indent({size}, {text}, {opts})                    *vim.text.indent()*
       • `SPC SPC TAB …` = two-space indent.
       • `TAB SPC …` = one-tab indent.
     • Set `opts.expandtab` to treat tabs as spaces.
+    • Set `opts.prefix` to force the output indent char (default: inferred
+      from input).
 
     To "dedent" (remove the common indent), pass `size=0`: >lua
         vim.print(vim.text.indent(0, ' a\n  b\n'))
@@ -5505,10 +5507,15 @@ vim.text.indent({size}, {text}, {opts})                    *vim.text.indent()*
         vim.print(vim.text.indent(0, (text:gsub('\n[\t ]+\n?$', '\n'))))
 <
 
+    To force a specific indent char (e.g. tabs) regardless of the input (the
+    inverse of `opts.expandtab`), pass `opts.prefix`: >lua
+        vim.print(vim.text.indent(1, '  a\n    b\n', { prefix = '\t' }))
+<
+
     Parameters: ~
       • {size}  (`integer`) Number of spaces.
       • {text}  (`string`) Text to indent.
-      • {opts}  (`{ expandtab?: integer }?`)
+      • {opts}  (`{ expandtab?: integer, prefix?: string }?`)
 
     Return (multiple): ~
         (`string`) Indented text.

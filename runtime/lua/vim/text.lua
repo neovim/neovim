@@ -133,6 +133,7 @@ end
 ---   - `SPC SPC TAB …` = two-space indent.
 ---   - `TAB SPC …` = one-tab indent.
 --- - Set `opts.expandtab` to treat tabs as spaces.
+--- - Set `opts.prefix` to force the output indent char (default: inferred from input).
 ---
 --- To "dedent" (remove the common indent), pass `size=0`:
 --- ```lua
@@ -152,17 +153,26 @@ end
 --- vim.print(vim.text.indent(0, (text:gsub('\n[\t ]+\n?$', '\n'))))
 --- ```
 ---
+--- To force a specific indent char (e.g. tabs) regardless of the input (the inverse of
+--- `opts.expandtab`), pass `opts.prefix`:
+--- ```lua
+--- vim.print(vim.text.indent(1, '  a\n    b\n', { prefix = '\t' }))
+--- ```
+---
 --- @param size integer Number of spaces.
 --- @param text string Text to indent.
---- @param opts? { expandtab?: integer }
+--- @param opts? { expandtab?: integer, prefix?: string }
 --- @return string # Indented text.
 --- @return integer # Indent size _before_ modification.
 function M.indent(size, text, opts)
+  -- TODO(justinmk): `opts.predicate` like python https://docs.python.org/3/library/textwrap.html
+  opts = opts or {}
+
   vim.validate('size', size, 'number')
   vim.validate('text', text, 'string')
   vim.validate('opts', opts, 'table', true)
-  -- TODO(justinmk): `opts.prefix`, `predicate` like python https://docs.python.org/3/library/textwrap.html
-  opts = opts or {}
+  vim.validate('opts.prefix', opts.prefix, 'string', true)
+
   local tabspaces = opts.expandtab and (' '):rep(opts.expandtab) or nil
 
   --- Minimum common indent shared by all lines.
@@ -187,12 +197,18 @@ function M.indent(size, text, opts)
   old_indent = old_indent or 0
   prefix = prefix and prefix or ' '
 
-  if old_indent == size then
+  -- Output indent char: forced by `opts.prefix`, else the char inferred from the input.
+  local out_char = opts.prefix or prefix
+
+  -- Whether the indent (size and char) already matches the desired output.
+  local unchanged = old_indent == size and out_char == prefix
+
+  if unchanged then
     -- Optimization: if the indent is the same, return the text unchanged.
     return text, old_indent
   end
 
-  local new_indent = prefix:rep(size)
+  local new_indent = out_char:rep(size)
 
   --- Replaces indentation of a line.
   --- @param line string
