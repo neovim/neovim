@@ -211,7 +211,16 @@ local function parse_member_name(name)
     return
   end
   local value = name:sub(11)
-  local separator = value:find('::', 1, true)
+  local separator
+  local offset = 1
+  while true do
+    local next_separator = value:find('::', offset, true)
+    if not next_separator then
+      break
+    end
+    separator = next_separator
+    offset = next_separator + 2
+  end
   if not separator then
     return
   end

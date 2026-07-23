@@ -7,6 +7,7 @@ local eq = t.eq
 local exec_capture = n.exec_capture
 local exec_lua = n.exec_lua
 local feed = n.feed
+local fn = n.fn
 local poke_eventloop = n.poke_eventloop
 
 local fixtures = vim.fs.joinpath(t.paths.test_source_path, 'test/functional/fixtures/zip')
@@ -240,6 +241,11 @@ describe('nvim.zip', function()
     feed('<CR>')
     poke_eventloop()
     eq({ 'nested payload' }, lines())
+
+    local uri = ('zipfile://%s::crlf.txt'):format(archive)
+    edit(uri)
+    eq(uri, api.nvim_buf_get_name(0))
+    eq({ 'one', 'two' }, lines())
   end)
 
   it('keeps suspicious member paths visible and readable', function()
