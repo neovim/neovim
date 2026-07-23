@@ -2982,49 +2982,49 @@ func Test_comma_option_key_value()
   " += replaces existing item with same key
   set diffopt=internal,filler,algorithm:patience
   set diffopt+=algorithm:histogram
-  call assert_equal('algorithm:histogram,filler,internal', &diffopt)
+  call assert_equal('internal,filler,algorithm:histogram', &diffopt)
 
   " += with exact duplicate does nothing
   set diffopt=internal,filler,algorithm:patience
   set diffopt+=algorithm:patience
-  call assert_equal('algorithm:patience,filler,internal', &diffopt)
+  call assert_equal('internal,filler,algorithm:patience', &diffopt)
 
   " += with multiple items, each processed individually
   set diffopt=algorithm:patience,filler
   set diffopt+=algorithm:histogram,filler
-  call assert_equal('algorithm:histogram,filler', &diffopt)
+  call assert_equal('filler,algorithm:histogram', &diffopt)
 
   " += with non-colon item appends normally
   set diffopt=internal,filler
   set diffopt+=iwhite
-  call assert_equal('filler,internal,iwhite', &diffopt)
+  call assert_equal('internal,filler,iwhite', &diffopt)
 
   " += repeated updates
   set diffopt=internal,filler,algorithm:patience
   set diffopt+=algorithm:histogram
   set diffopt+=algorithm:minimal
   set diffopt+=algorithm:myers
-  call assert_equal('algorithm:myers,filler,internal', &diffopt)
+  call assert_equal('internal,filler,algorithm:myers', &diffopt)
 
   " += all exact duplicates does nothing
   set diffopt=internal,filler,algorithm:patience
   set diffopt+=algorithm:patience,filler
-  call assert_equal('algorithm:patience,filler,internal', &diffopt)
+  call assert_equal('internal,filler,algorithm:patience', &diffopt)
 
   " -= with "key:" removes item regardless of value
   set diffopt=internal,filler,algorithm:patience
   set diffopt-=algorithm:
-  call assert_equal('filler,internal', &diffopt)
+  call assert_equal('internal,filler', &diffopt)
 
   " -= with "key:value" also matches by key
   set diffopt=internal,filler,algorithm:patience
   set diffopt-=algorithm:histogram
-  call assert_equal('filler,internal', &diffopt)
+  call assert_equal('internal,filler', &diffopt)
 
   " -= without colon does not match "key:value" items
   set diffopt=internal,filler,algorithm:patience
   set diffopt-=algorithm
-  call assert_equal('algorithm:patience,filler,internal', &diffopt)
+  call assert_equal('internal,filler,algorithm:patience', &diffopt)
 
   " -= with multiple non-colon items (order independent)
   set diffopt=internal,filler,closeoff
@@ -3039,22 +3039,22 @@ func Test_comma_option_key_value()
   " -= with multiple items: non-colon and colon mixed
   set diffopt& diffopt=internal,filler,closeoff,indent-heuristic,inline:char
   set diffopt-=indent-heuristic,inline:char
-  call assert_equal('closeoff,filler,internal', &diffopt)
+  call assert_equal('internal,filler,closeoff', &diffopt)
 
   " -= with multiple items: colon and non-colon mixed (reverse order)
   set diffopt& diffopt=internal,filler,closeoff,indent-heuristic,inline:char
   set diffopt-=inline:char,indent-heuristic
-  call assert_equal('closeoff,filler,internal', &diffopt)
+  call assert_equal('internal,filler,closeoff', &diffopt)
 
   " += with multiple non-colon items
   set diffopt=internal,filler
   set diffopt+=closeoff,iwhite
-  call assert_equal('closeoff,filler,internal,iwhite', &diffopt)
+  call assert_equal('internal,filler,closeoff,iwhite', &diffopt)
 
   " += with multiple non-colon items, some already exist
   set diffopt=internal,filler,closeoff
   set diffopt+=filler,iwhite
-  call assert_equal('closeoff,filler,internal,iwhite', &diffopt)
+  call assert_equal('internal,filler,closeoff,iwhite', &diffopt)
 
   " -= with multiple items including key match
   set diffopt=internal,filler,algorithm:patience
@@ -3064,12 +3064,12 @@ func Test_comma_option_key_value()
   " -= key match when item is at the beginning
   set diffopt=algorithm:patience,internal,filler
   set diffopt-=algorithm:
-  call assert_equal('filler,internal', &diffopt)
+  call assert_equal('internal,filler', &diffopt)
 
   " -= key match when item is at the end
   set diffopt=internal,filler,algorithm:patience
   set diffopt-=algorithm:
-  call assert_equal('filler,internal', &diffopt)
+  call assert_equal('internal,filler', &diffopt)
 
   " -= key match when item is the only item
   set diffopt=algorithm:patience
@@ -3079,17 +3079,17 @@ func Test_comma_option_key_value()
   " ^= prepends new item
   set diffopt=internal,filler
   set diffopt^=algorithm:histogram
-  call assert_equal('algorithm:histogram,filler,internal', &diffopt)
+  call assert_equal('algorithm:histogram,internal,filler', &diffopt)
 
   " ^= replaces item and prepends
   set diffopt=internal,filler,algorithm:patience
   set diffopt^=algorithm:histogram
-  call assert_equal('algorithm:histogram,filler,internal', &diffopt)
+  call assert_equal('algorithm:histogram,internal,filler', &diffopt)
 
   " ^= with exact duplicate does nothing
   set diffopt=internal,filler,algorithm:patience
   set diffopt^=algorithm:patience
-  call assert_equal('algorithm:patience,filler,internal', &diffopt)
+  call assert_equal('internal,filler,algorithm:patience', &diffopt)
 
   set diffopt&
 

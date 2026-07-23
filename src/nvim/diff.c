@@ -2654,12 +2654,13 @@ int diffanchors_changed(bool buflocal)
   return result;
 }
 
-/// Map the 'diffopt' keyset onto diff.c's globals. `v` is the stored value (`p_dip`), reified from
-/// the ":set" string by `opt_fill()` when the option is set.
+/// Map the 'diffopt' keyset onto diff.c's globals. `v` is `p_dip` reified into a keyset.
 ///
 /// @return  FAIL only for the cross-part "horizontal" + "vertical" conflict.
-static int diffopt_apply(OptKeyDict_dip *v)
+int diffopt_changed(void)
 {
+  OptKeyDict_dip *v = opt_keyset_alloc(kOptDiffopt, p_dip);
+
   int flags = (v->filler ? DIFF_FILLER : 0) | (v->anchor ? DIFF_ANCHOR : 0)
               | (v->iblank ? DIFF_IBLANK : 0) | (v->icase ? DIFF_ICASE : 0)
               | (v->iwhiteall ? DIFF_IWHITEALL : 0) | (v->iwhiteeol ? DIFF_IWHITEEOL : 0)
@@ -2693,38 +2694,34 @@ static int diffopt_apply(OptKeyDict_dip *v)
     }  // else "myers" -> 0
   }
 
+  int ret = OK;
   // Can't have both "horizontal" and "vertical".
   if ((flags & DIFF_HORIZONTAL) && (flags & DIFF_VERTICAL)) {
-    return FAIL;
-  }
-
-  // If flags were added or removed, or the algorithm was changed, update the diff.
-  if (diff_flags != flags || diff_algorithm != algorithm) {
-    FOR_ALL_TABS(tp) {
-      tp->tp_diff_invalid = true;
+    ret = FAIL;
+  } else {
+    // If flags were added or removed, or the algorithm was changed, update the diff.
+    if (diff_flags != flags || diff_algorithm != algorithm) {
+      FOR_ALL_TABS(tp) {
+        tp->tp_diff_invalid = true;
+      }
     }
+
+    int context = HAS_KEY(v, dip, context) ? (int)v->context : 6;
+    diff_flags = flags;
+    diff_context = context == 0 ? 1 : context;
+    linematch_lines = HAS_KEY(v, dip, linematch) ? (int)v->linematch : 0;
+    diff_foldcolumn = HAS_KEY(v, dip, foldcolumn) ? (int)v->foldcolumn : 2;
+    diff_algorithm = algorithm;
+
+    diff_redraw(true);
+
+    // recompute the scroll binding with the new option value, may
+    // remove or add filler lines
+    check_scrollbind(0, 0);
   }
 
-  int context = HAS_KEY(v, dip, context) ? (int)v->context : 6;
-  diff_flags = flags;
-  diff_context = context == 0 ? 1 : context;
-  linematch_lines = HAS_KEY(v, dip, linematch) ? (int)v->linematch : 0;
-  diff_foldcolumn = HAS_KEY(v, dip, foldcolumn) ? (int)v->foldcolumn : 2;
-  diff_algorithm = algorithm;
-
-  diff_redraw(true);
-
-  // recompute the scroll binding with the new option value, may
-  // remove or add filler lines
-  check_scrollbind(0, 0);
-  return OK;
-}
-
-/// Apply the current 'diffopt'. Its value is stored as the reified keyset `p_dip` (see
-/// `opt_dict_info()`), so this just hands the stored struct to `diffopt_apply()`.
-int diffopt_changed(void)
-{
-  return p_dip == NULL ? OK : diffopt_apply(p_dip);
+  opt_keyset_free(kOptDiffopt, v);
+  return ret;
 }
 
 /// Check that "diffopt" contains "horizontal".

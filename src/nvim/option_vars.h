@@ -238,7 +238,7 @@ EXTERN char *p_debug;           ///< 'debug'
 EXTERN char *p_def;             ///< 'define'
 EXTERN char *p_inc;
 EXTERN char *p_dia;             ///< 'diffanchors'
-EXTERN struct OptKeyDict_dip *p_dip;  ///< 'diffopt'
+EXTERN char *p_dip;             ///< 'diffopt'
 EXTERN char *p_dex;             ///< 'diffexpr'
 EXTERN char *p_dict;            ///< 'dictionary'
 EXTERN int p_dg;                ///< 'digraph'
@@ -348,7 +348,7 @@ EXTERN char *p_mousem;          ///< 'mousemodel'
 EXTERN int p_mousemev;          ///< 'mousemoveevent'
 EXTERN int p_mousef;            ///< 'mousefocus'
 EXTERN int p_mh;                ///< 'mousehide'
-EXTERN struct OptKeyDict_mousescroll *p_mousescroll;  ///< 'mousescroll'
+EXTERN char *p_mousescroll;     ///< 'mousescroll'
 EXTERN OptInt p_mousescroll_vert INIT( = MOUSESCROLL_VERT_DFLT);
 EXTERN OptInt p_mousescroll_hor INIT( = MOUSESCROLL_HOR_DFLT);
 EXTERN OptInt p_mouset;         ///< 'mousetime'

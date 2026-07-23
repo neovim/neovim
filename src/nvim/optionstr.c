@@ -1560,14 +1560,15 @@ int expand_set_mouse(optexpand_T *args, int *numMatches, char ***matches)
 /// @return error message, NULL if it's OK.
 const char *did_set_mousescroll(optset_T *args FUNC_ATTR_UNUSED)
 {
+  OptKeyDict_mousescroll *v = opt_keyset_alloc(kOptMousescroll, p_mousescroll);
   // An empty value sets no direction; reject it (mousescroll always needs at least one).
-  OptKeyDict_mousescroll *v = p_mousescroll;
-  if (!HAS_KEY(v, mousescroll, hor) && !HAS_KEY(v, mousescroll, ver)) {
-    return e_invarg;
+  bool has_dir = HAS_KEY(v, mousescroll, hor) || HAS_KEY(v, mousescroll, ver);
+  if (has_dir) {
+    p_mousescroll_hor = HAS_KEY(v, mousescroll, hor) ? (int)v->hor : MOUSESCROLL_HOR_DFLT;
+    p_mousescroll_vert = HAS_KEY(v, mousescroll, ver) ? (int)v->ver : MOUSESCROLL_VERT_DFLT;
   }
-  p_mousescroll_hor = HAS_KEY(v, mousescroll, hor) ? (int)v->hor : MOUSESCROLL_HOR_DFLT;
-  p_mousescroll_vert = HAS_KEY(v, mousescroll, ver) ? (int)v->ver : MOUSESCROLL_VERT_DFLT;
-  return NULL;
+  opt_keyset_free(kOptMousescroll, v);
+  return has_dir ? NULL : e_invarg;
 }
 
 /// One of the '*expr' options is changed:, 'diffexpr', 'foldexpr', 'foldtext',
@@ -2301,8 +2302,8 @@ const char *opt_strings_check(const char *val, const OptSchemaItem *schema, char
 }
 
 /// Parses a validated dict option ":set" string into its keyset (`OptKeyDict_…`), see also
-/// `api_dict_to_keydict()`. The keyset owns its `String` fields, so free it with `opt_dict_free()`
-/// (via `optval_free()`/`clear_opt_dict()`), not `xfree()`.
+/// `api_dict_to_keydict()`. The keyset owns its `String` fields, so free it with `opt_keyset_free()`
+/// (which frees those fields), never a bare `xfree()`. Callers use `opt_keyset_alloc()`.
 void opt_fill(const char *value, FieldHashfn get_field, void *out)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -2324,71 +2325,15 @@ void opt_fill(const char *value, FieldHashfn get_field, void *out)
       break;
     }
     case kObjectTypeString:
-      *(String *)field = (String){ .data = xmemdupz(v, vlen), .size = vlen };  // owned; keyset is stored
+      // A repeated key is "last wins" (e.g. 'diffopt' "inline:char,inline:word"); free the old one.
+      xfree(((String *)field)->data);
+      *(String *)field = (String){ .data = xmemdupz(v, vlen), .size = vlen };  // owned by the keyset
       break;
     default:
       break;
     }
     ((OptKeySet *)out)->is_set_ |= (1ULL << (unsigned)f->opt_index);
   }
-}
-
-/// Serializes a keyset to ":set" string form (inverse of `opt_fill()`), for storage and `:set opt?`.
-/// Emits set keys only: "key" for a true flag, "key:value" for a set num/enum. `table` is the
-/// keyset's `KeySetLink` table.
-///
-/// XXX: Keys are emitted in a canonical (alphanum) order, so the string is deterministic regardless
-/// of the order they were set in. The reified value is an unordered map; unlike Vim, the serialized
-/// order is not insertion-order.
-///
-/// @return  an owned string (caller frees).
-char *opt_serialize(const void *keyset, const KeySetLink *table)
-  FUNC_ATTR_NONNULL_ALL
-{
-  // Collect the set keys, then sort by name. `set[]` is bounded by the number of sub-options.
-  const KeySetLink *set[64];
-  int n = 0;
-  for (const KeySetLink *f = table; f->str != NULL; f++) {
-    if (!(((const OptKeySet *)keyset)->is_set_ & (1ULL << (unsigned)f->opt_index))) {
-      continue;
-    }
-    if (f->type == kObjectTypeBoolean && !*(const Boolean *)((const char *)keyset + f->ptr_off)) {
-      continue;  // a false flag is simply absent
-    }
-    assert(n < (int)ARRAY_SIZE(set));
-    set[n++] = f;
-  }
-  for (int i = 1; i < n; i++) {  // insertion sort (n is small)
-    const KeySetLink *cur = set[i];
-    int j = i - 1;
-    while (j >= 0 && strcmp(set[j]->str, cur->str) > 0) {
-      set[j + 1] = set[j];
-      j--;
-    }
-    set[j + 1] = cur;
-  }
-
-  garray_T ga;
-  ga_init(&ga, 1, 64);
-  for (int i = 0; i < n; i++) {
-    const KeySetLink *f = set[i];
-    const void *field = (const char *)keyset + f->ptr_off;
-    if (ga.ga_len > 0) {
-      ga_append(&ga, ',');
-    }
-    ga_concat(&ga, f->str);
-    if (f->type == kObjectTypeInteger) {
-      char buf[32];
-      snprintf(buf, sizeof(buf), ":%" PRId64, *(const Integer *)field);
-      ga_concat(&ga, buf);
-    } else if (f->type == kObjectTypeString) {
-      const String *s = field;
-      ga_append(&ga, ':');
-      ga_concat_len(&ga, s->data, s->size);
-    }
-  }
-  ga_append(&ga, NUL);
-  return ga.ga_data;
 }
 
 /// @return  OK if "p" is a valid fileformat name, FAIL otherwise.

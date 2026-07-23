@@ -757,12 +757,7 @@ static Object get_option_from(void *from, OptScope scope, String name, Error *er
     return (Object)OBJECT_INIT;
   });
 
-  Object rv = optval_as_object(value);
-  // A struct value serializes into a fresh Object string, so its keyset must be freed here.
-  if (value.type == kOptValTypeDict) {
-    optval_free(value);
-  }
-  return rv;
+  return optval_as_object(value);
 }
 
 /// Sets the value of a global or local (buffer, window) option.

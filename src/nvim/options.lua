@@ -898,7 +898,7 @@ local options = {
       redraw = { 'current_buffer' },
       scope = { 'win' },
       short_desc = N_("settings for 'breakindent'"),
-      type = 'string', -- The `schema` reifies to OptKeyDict_briopt.
+      type = 'string', -- OptKeyDict_briopt
     },
     {
       abbreviation = 'bsdir',
@@ -2625,7 +2625,7 @@ local options = {
       redraw = { 'current_window' },
       scope = { 'global' },
       short_desc = N_('options for using diff mode'),
-      type = 'string', -- The `schema` reifies to OptKeyDict_dip.
+      type = 'string', -- OptKeyDict_dip
       varname = 'p_dip',
     },
     {
@@ -6368,7 +6368,7 @@ local options = {
       scope = { 'global' },
       short_desc = N_('amount to scroll by when scrolling with a mouse'),
       tags = { 'E5080' },
-      type = 'string', -- The `schema` reifies to OptKeyDict_mousescroll.
+      type = 'string', -- OptKeyDict_mousescroll
       varname = 'p_mousescroll',
       vi_def = true,
     },

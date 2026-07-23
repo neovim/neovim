@@ -50,17 +50,7 @@ typedef enum {
   kOptValTypeBoolean,
   kOptValTypeNumber,
   kOptValTypeString,
-  kOptValTypeDict,      ///< Option stored as a reified keyset (`schema.dict` in options.lua).
 } OptValType;
-
-/// Storage for a dict option ("schema" in options.lua): a heap-allocated keyset
-/// (`OptKeyDict_<name>`) plus the field table needed to free, copy and serialize it without an
-/// option index. The string form is derived on-demand (`opt_serialize()`), never stored.
-typedef struct {
-  void *ptr;                  ///< Heap keyset (owned), or NULL.
-  const KeySetLink *table;    ///< Field layout (borrowed; points at generated static data).
-  size_t size;                ///< sizeof the keyset, for (re)allocation.
-} OptDict;
 
 /// Scopes that an option can support.
 typedef enum {
@@ -78,7 +68,6 @@ typedef union {
   TriState boolean;
   OptInt number;
   String string;
-  OptDict dictval;
 } OptValData;
 
 /// Option value
@@ -108,7 +97,7 @@ typedef struct {
 /// `opt_dict_info()`. NULL from `opt_dict_info()` means the option is not a dict option.
 typedef struct {
   FieldHashfn get_field;        ///< Keyset perfect-hash lookup, for opt_fill().
-  const KeySetLink *table;      ///< Field layout, for opt_serialize()/free/copy.
+  const KeySetLink *table;      ///< Field layout, for freeing a keyset's `String` fields.
   const OptSchemaItem *schema;  ///< Grammar, for opt_strings_check() validation.
   size_t size;                  ///< sizeof the keyset, for allocation.
 } OptDictInfo;

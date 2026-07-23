@@ -29,8 +29,9 @@ local function get_values_var(o)
   return ('opt_%s_values'):format(o.abbreviation or o.full_name)
 end
 
---- True if an option is stored as a reified keyset (kOptValTypeDict): a `dict` schema (typed
---- key:value map, e.g. 'diffopt'), as opposed to a flag/enum/char category.
+--- True if an option is a dict option: a `dict` schema (typed key:value map, e.g. 'diffopt'), as
+--- opposed to a flag/enum/char category. Dict options are stored as their (canonical) ":set"
+--- string; the `dict` schema generates the keyset machinery used to validate and reify it on demand.
 --- @param o vim.option_meta
 --- @return boolean
 local function is_dict_option(o)
@@ -215,7 +216,7 @@ local function dump_option(i, o, write)
   if o.abbreviation then
     write('    .shortname=', cstr(o.abbreviation))
   end
-  write('    .type=', is_dict_option(o) and 'kOptValTypeDict' or opt_type_enum(o.type))
+  write('    .type=', opt_type_enum(o.type))
   write('    .flags=', get_flags(o))
   write('    .scope_flags=', get_scope_flags(o))
   write('    .scope_idx=', get_scope_idx(o))

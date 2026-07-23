@@ -62,7 +62,7 @@ describe("'mousescroll'", function()
   end)
 
   it('default set correctly', function()
-    eq('hor:6,ver:3', eval('&mousescroll'))
+    eq('ver:3,hor:6', eval('&mousescroll'))
 
     eq(10, screenrow())
     scroll('up')

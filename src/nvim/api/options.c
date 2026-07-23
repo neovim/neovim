@@ -305,13 +305,7 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
     goto err;
   });
 
-  Object rv = optval_as_object(value);
-  // kOptValTypeDict serializes into a fresh Object string (not aliased like a plain string), so
-  // its keyset must be freed here.
-  if (value.type == kOptValTypeDict) {
-    optval_free(value);
-  }
-  return rv;
+  return optval_as_object(value);
 err:
   optval_free(value);
   return (Object)OBJECT_INIT;
@@ -402,10 +396,6 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
     break;
   case kOptValTypeBoolean:
     merged_val = optval_right;
-    break;
-  case kOptValTypeDict:
-    // Unreachable: object_as_optval_for() yields the string form for dict options, which is
-    // merged as a string (below) and reified by set_option().
     break;
   }
 

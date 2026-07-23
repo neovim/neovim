@@ -52,8 +52,6 @@ static inline const char *optval_type_get_name(const OptValType type)
     return "number";
   case kOptValTypeString:
     return "string";
-  case kOptValTypeDict:
-    return "string";  // dict options present as strings at the API/error surface.
   }
   UNREACHABLE;
 }
