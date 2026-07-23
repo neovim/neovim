@@ -5762,6 +5762,18 @@ bool set_ref_in_findfunc(int copyID)
   return abort;
 }
 
+static void set_browse_edit_arg(exarg_T *eap)
+{
+  if ((cmdmod.cmod_flags & CMOD_BROWSE) && *eap->arg == NUL
+      && (eap->cmdidx == CMD_edit
+          || eap->cmdidx == CMD_split
+          || eap->cmdidx == CMD_vsplit
+          || eap->cmdidx == CMD_tabedit
+          || eap->cmdidx == CMD_tabnew)) {
+    eap->arg = ".";
+  }
+}
+
 /// :sview [+command] file       split window with new file, read-only
 /// :split [[+command] file]     split window with current or new file
 /// :vsplit [[+command] file]    split window vertically with current or new file
@@ -5775,6 +5787,7 @@ bool set_ref_in_findfunc(int copyID)
 /// :tabfind [+command] file     open new Tab page and find "file"
 void ex_splitview(exarg_T *eap)
 {
+  set_browse_edit_arg(eap);
   win_T *old_curwin = curwin;
   char *fname = NULL;
   const bool use_tab = eap->cmdidx == CMD_tabedit
@@ -6111,6 +6124,7 @@ static void ex_find(exarg_T *eap)
 /// ":edit", ":badd", ":balt", ":visual".
 static void ex_edit(exarg_T *eap)
 {
+  set_browse_edit_arg(eap);
   char *ffname = eap->cmdidx == CMD_enew ? NULL : eap->arg;
 
   // Exclude commands which keep the window's current buffer

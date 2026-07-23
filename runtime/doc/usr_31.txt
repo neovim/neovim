@@ -24,61 +24,24 @@ Table of contents: |usr_toc.txt|
 ==============================================================================
 *31.1*	The file browser
 
-When using the File/Open... menu you get a file browser.  This makes it easier
-to find the file you want to edit.  But what if you want to split a window to
-edit another file?  There is no menu entry for this.  You could first use
-Window/Split and then File/Open..., but that's more work.
-   Since you are typing most commands in Vim, opening the file browser with a
-typed command is possible as well.  To make the split command use the file
-browser, prepend "browse": >
+Nvim can open the current directory in its |dir| browser with: >
+
+	:browse edit
+
+The same works when opening a split or tab page: >
 
 	:browse split
+	:browse vsplit
+	:browse tabedit
+	:browse tabnew
 
-Select a file and then the ":split" command will be executed with it.  If you
-cancel the file dialog nothing happens, the window isn't split.
-   You can also specify a file name argument.  This is used to tell the file
-browser where to start.  Example: >
+A third-party directory browser may handle the directory instead; see
+|dir-disable|.  Use the browser's mappings to open a file.
 
-	:browse split /etc
+When a file or directory argument is given, the command is executed normally.
+For example: >
 
-The file browser will pop up, starting in the directory "/etc".
-
-The ":browse" command can be prepended to just about any command that opens a
-file.
-   If no directory is specified, Vim will decide where to start the file
-browser.  By default it uses the same directory as the last time.  Thus when
-you used ":browse split" and selected a file in "/usr/local/share", the next
-time you use a ":browse" it will start in "/usr/local/share" again.
-   This can be changed with the 'browsedir' option.  It can have one of three
-values:
-
-	last		Use the last directory browsed (default)
-	buffer		Use the same directory as the current buffer
-	current		use the current directory
-
-For example, when you are in the directory "/usr", editing the file
-"/usr/local/share/readme", then the command: >
-
-	:set browsedir=buffer
-	:browse edit
-
-Will start the browser in "/usr/local/share".  Alternatively: >
-
-	:set browsedir=current
-	:browse edit
-
-Will start the browser in "/usr".
-
-	Note:
-	To avoid using the mouse, most file browsers offer using key presses
-	to navigate.  Since this is different for every system, it is not
-	explained here.  Vim uses a standard browser when possible, your
-	system documentation should contain an explanation on the keyboard
-	shortcuts somewhere.
-
-When you are not using the GUI version, you could use the file explorer window
-to select files like in a file browser.  However, this doesn't work for the
-":browse" command.  See |netrw-browse|.
+	:browse edit /etc
 
 ==============================================================================
 *31.2*	Confirmation
