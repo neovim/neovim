@@ -363,6 +363,43 @@ describe('nvim.dir', function()
     eq('alpha.txt', api.nvim_get_current_line())
   end)
 
+  it('maps - to open the current directory from an unnamed buffer', function()
+    make_fixture()
+    n.clear({ args_rm = { '-u', '--cmd' } })
+    local cwd = fn.getcwd()
+    cd(root)
+    finally(function()
+      cd(cwd)
+    end)
+
+    eq('', api.nvim_buf_get_name(0))
+    feed('-')
+    poke_eventloop()
+
+    assert_directory(root)
+  end)
+
+  it('preserves a modified unnamed buffer when opening the current directory', function()
+    make_fixture()
+    n.clear({ args_rm = { '-u', '--cmd' } })
+    local cwd = fn.getcwd()
+    cd(root)
+    finally(function()
+      cd(cwd)
+    end)
+    local old_buf = api.nvim_get_current_buf()
+    api.nvim_buf_set_lines(old_buf, 0, -1, false, { 'unsaved' })
+
+    feed('-')
+    poke_eventloop()
+
+    assert_directory(root)
+    eq(old_buf, fn.bufnr('#'))
+    eq(true, api.nvim_buf_is_valid(old_buf))
+    eq(true, api.nvim_get_option_value('modified', { buf = old_buf }))
+    eq({ 'unsaved' }, api.nvim_buf_get_lines(old_buf, 0, -1, false))
+  end)
+
   it('does not shadow startup plugin `-` mappings in directory buffers', function()
     make_fixture()
     write_config_plugin(

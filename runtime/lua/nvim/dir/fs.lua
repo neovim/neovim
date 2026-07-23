@@ -47,6 +47,10 @@ end
 
 ---@param path string
 function M.open_parent_path(path)
+  if path == '' then
+    navigate('.')
+    return
+  end
   path = M.normalize(path)
   navigate(fs.dirname(path), { name = fs.basename(path), dir = vim.fn.isdirectory(path) == 1 })
 end
