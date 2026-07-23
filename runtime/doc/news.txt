@@ -348,6 +348,7 @@ PERFORMANCE
 
 PLUGINS
 
+• The |dir| `-` mapping accepts a count to open multiple parent directories.
 • provider: add bun support for Node.js plugins
 
 STARTUP
