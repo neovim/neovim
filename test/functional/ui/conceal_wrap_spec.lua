@@ -237,6 +237,57 @@ describe('conceal-aware wrapping (#14409)', function()
     eq({ 1, 26 }, api.nvim_win_get_cursor(0))
   end)
 
+  it('reflow and motions account for inline virtual text width', function()
+    -- 10 a (buf0-9) + HIDDEN (buf10-15, concealed) + 4 b (buf16-19) + inline virt_text (10
+    -- cells) anchored at buf20 (renders just before it) + the 5th 'b' (buf20).
+    api.nvim_buf_set_lines(0, 0, -1, true, { ('a'):rep(10) .. 'HIDDEN' .. ('b'):rep(5) })
+    api.nvim_buf_set_extmark(0, ns, 0, 10, { end_col = 16, conceal = '' })
+    api.nvim_buf_set_extmark(0, ns, 0, 20, {
+      virt_text = { { ('X'):rep(10), 'Comment' } },
+      virt_text_pos = 'inline',
+    })
+
+    -- Without the virt_text, concealed reflow (10 + 5 = 15 cells) would fit in one row; the
+    -- virt_text's 10 cells push the total to 25, so it must be counted to get 2 rows.
+    eq(2, api.nvim_win_text_height(0, {}).all)
+
+    -- Row 1: 10(a) + 4(b) + 6(first part of virt_text) = 20 cells.
+    -- Row 2: 4(remaining virt_text) + 1(last b, buf20) = 5 cells.
+
+    -- gj from row 1 lands on the last 'b' (buf20), the only real buffer position on row 2.
+    api.nvim_win_set_cursor(0, { 1, 0 })
+    feed('gj')
+    eq({ 1, 20 }, api.nvim_win_get_cursor(0))
+
+    -- g$ from row 1 lands on the last real buffer position on that row (buf19), not the
+    -- virtual text that visually follows it.
+    api.nvim_win_set_cursor(0, { 1, 0 })
+    feed('g$')
+    eq({ 1, 19 }, api.nvim_win_get_cursor(0))
+
+    -- Mouse clicks map through the virtual text correctly: row 2 cell 4 is the last 'b'.
+    command('set mouse=a')
+    api.nvim_input_mouse('left', 'press', '', 0, 1, 4)
+    eq({ 1, 20 }, api.nvim_win_get_cursor(0))
+
+    -- Not testing screenpos() here: it misreports the row for a position right after inline
+    -- virtual text spanning a wrap boundary, even without conceal (pre-existing, unrelated).
+  end)
+
+  it('non-inline virtual text (eol/overlay/right_align) does not affect reflow', function()
+    -- Unlike inline virtual text, these positions don't occupy in-line width, so they must
+    -- not change the reflowed line's wrap point.
+    api.nvim_buf_set_lines(0, 0, -1, true, { ('a'):rep(10) .. 'HIDDEN' .. ('b'):rep(5) })
+    api.nvim_buf_set_extmark(0, ns, 0, 10, { end_col = 16, conceal = '' })
+    api.nvim_buf_set_extmark(0, ns, 0, 20, {
+      virt_text = { { ('X'):rep(10), 'Comment' } },
+      virt_text_pos = 'eol',
+    })
+
+    -- Concealed reflow is still 10 + 5 = 15 cells -> 1 row.
+    eq(1, api.nvim_win_text_height(0, {}).all)
+  end)
+
   it('ephemeral (decoration-provider) conceal does not reflow', function()
     -- Ephemeral conceal is created during drawing and is not in the marktree, so the
     -- shared size/geometry path cannot see it off-draw. Reflowing it would make the
