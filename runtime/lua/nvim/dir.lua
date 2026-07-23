@@ -309,6 +309,11 @@ function M._open_parent()
     return
   end
   -- Keep the global `-` mapping useful from regular file buffers.
+  local name = api.nvim_buf_get_name(buf)
+  if name == '' then
+    M.try_open(buf, vim.fn.getcwd())
+    return
+  end
   require('nvim.dir.fs').open_parent_path(api.nvim_buf_get_name(buf))
 end
 
