@@ -24,8 +24,8 @@
 ^ex_smile(
 ^ex_tearoff(
 ^f_err_teapot(
-^f_listener_add(
-^f_redraw_listener_add(
+^f_listener_[a-zA-Z0-9]\+(
+^f_redraw_listener_[a-zA-Z0-9]\+(
 ^f_test_alloc_fail(
 ^f_test_autochdir(
 ^f_test_feedinput(
