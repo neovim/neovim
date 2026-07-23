@@ -331,6 +331,9 @@ OPTIONS
   'titlestring', and 'iconstring'.
 • 'winpinned' prevents window from closing unless specifically targeted.
 • 'packlockfile' sets the path used for |vim.pack-lockfile|.
+• 'diffexpr' accepts an in-process Vimscript/Lua function callback when
+  prefixed with `->` (e.g. `set diffexpr=->v:lua.MyDiff`). This bypasses
+  disk I/O and shell execution, evaluating diff hunks completely in-process.
 
 PERFORMANCE
 

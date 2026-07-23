@@ -3428,3 +3428,56 @@ it(':diffput to empty buffer redraws properly', function()
                                                                                |
   ]])
 end)
+
+it('supports diffexpr set to a Lua function with -> prefix', function()
+  exec([[
+    lua _G.my_custom_diff_called = 0
+    lua _G.my_custom_diff = function(bufnr_in, bufnr_new) _G.my_custom_diff_called = _G.my_custom_diff_called + 1; return { { 2, 0, 2, 1 } } end
+    set diffexpr=->v:lua.my_custom_diff
+    new
+    vnew
+    windo diffthis
+  ]])
+  local called = api.nvim_eval("luaeval('_G.my_custom_diff_called')")
+  eq(true, called > 0)
+end)
+
+it('diffexpr function callback: handles multiple disjoint chunks', function()
+  exec([[
+    lua _G.my_custom_diff = function(bufnr_in, bufnr_new) return { { 1, 1, 1, 0 }, { 3, 0, 3, 1 } } end
+    set diffexpr=->v:lua.my_custom_diff
+    new
+    vnew
+    windo diffthis
+  ]])
+  local hunks = api.nvim_exec_lua('return _G.my_custom_diff(1, 2)', {})
+  eq(2, #hunks)
+  eq(1, hunks[1][1])
+  eq(3, hunks[2][1])
+end)
+
+it('diffexpr function callback: handles invalid callback return types', function()
+  local pcall_err = t.pcall_err
+  local matches = t.matches
+  exec([[
+    lua _G.my_custom_diff = function(bufnr_in, bufnr_new) return nil end
+    set diffexpr=->v:lua.my_custom_diff
+    new
+    vnew
+  ]])
+  local err = pcall_err(command, 'windo diffthis')
+  matches("Call to diff function 'v:lua.my_custom_diff' failed, or it did not return a list.", err)
+end)
+
+it('diffexpr function callback: handles invalid chunk formats', function()
+  local pcall_err = t.pcall_err
+  local matches = t.matches
+  exec([[
+    lua _G.my_custom_diff = function(bufnr_in, bufnr_new) return { { 1, 2, 3 } } end
+    set diffexpr=->v:lua.my_custom_diff
+    new
+    vnew
+  ]])
+  local err = pcall_err(command, 'windo diffthis')
+  matches('Invalid chunk received: must contain 4 numbers %(not 3%).', err)
+end)
