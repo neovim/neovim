@@ -179,6 +179,64 @@ describe('conceal-aware wrapping (#14409)', function()
     eq({ 1, 74 }, api.nvim_win_get_cursor(0))
   end)
 
+  it('tab width uses raw (position-dependent) vcol through conceal', function()
+    -- 5 a (buf0-4) + HIDDEN (buf5-10, concealed, 6 raw cols) + TAB (buf11) + 30 b (buf12-41).
+    -- Raw vcol at the TAB is 11 (5 + 6 hidden), tabstop=8 -> tab expands to 5 cells (11->16),
+    -- same as if the hidden text were still visible: conceal must not shrink tab stops.
+    api.nvim_buf_set_lines(0, 0, -1, true, { ('a'):rep(5) .. 'HIDDEN' .. '\t' .. ('b'):rep(30) })
+    api.nvim_buf_set_extmark(0, ns, 0, 5, { end_col = 11, conceal = '' })
+
+    -- Reflowed: 5(a) + 5(tab) + 30(b) = 40 cells -> 2 rows of 20.
+    eq(2, api.nvim_win_text_height(0, {}).all)
+
+    -- Row 2 starts at buf 22 (10 of the 30 b fill out row 1's remaining 10 cells after a+tab=10).
+    eq({ row = 2, col = 1, curscol = 1, endcol = 1 }, fn.screenpos(0, 1, 23))
+
+    api.nvim_win_set_cursor(0, { 1, 0 })
+    feed('gj')
+    eq({ 1, 22 }, api.nvim_win_get_cursor(0))
+
+    api.nvim_win_set_cursor(0, { 1, 30 })
+    feed('g0')
+    eq({ 1, 22 }, api.nvim_win_get_cursor(0))
+
+    api.nvim_win_set_cursor(0, { 1, 30 })
+    feed('g$')
+    eq({ 1, 41 }, api.nvim_win_get_cursor(0))
+  end)
+
+  it('reflow and motions compose with asymmetric width1/width2 (number, cpoptions+=n)', function()
+    -- cpoptions+=n makes continuation rows not repeat the number column, so they are wider
+    -- than the first row: width1 = 16 (20-4), width2 = 20 (16+4).
+    command('set number numberwidth=4 cpoptions+=n')
+    -- 10 a (buf0-9) + HIDDEN (buf10-15, concealed) + 30 b (buf16-45).
+    api.nvim_buf_set_lines(0, 0, -1, true, { ('a'):rep(10) .. 'HIDDEN' .. ('b'):rep(30) })
+    api.nvim_buf_set_extmark(0, ns, 0, 10, { end_col = 16, conceal = '' })
+
+    -- Reflowed visible width 40 cells -> row1=16, row2=20, row3=4 (3 rows).
+    eq(3, api.nvim_win_text_height(0, {}).all)
+
+    -- g0/g$ (this patch's fix) independently compute each row's true start/end from the
+    -- cursor's own row, so they land exactly on row 2's boundaries regardless of width1/width2
+    -- being unequal: start = buf 22, end = buf 41.
+    api.nvim_win_set_cursor(0, { 1, 30 })
+    feed('g0')
+    eq({ 1, 22 }, api.nvim_win_get_cursor(0))
+
+    api.nvim_win_set_cursor(0, { 1, 30 })
+    feed('g$')
+    eq({ 1, 41 }, api.nvim_win_get_cursor(0))
+
+    -- gj (pre-existing nv_screengo logic, unchanged by this patch) instead accumulates the
+    -- target column by width2 per row without realigning to each row's start when width1 !=
+    -- width2: from buf 0 it lands on buf 26, not row 2's start (buf 22). Verified this exact
+    -- offset also happens with plain unconcealed text and the same options, so it is a
+    -- pre-existing 'cpoptions'+=n quirk unrelated to conceal, not a reflow regression.
+    api.nvim_win_set_cursor(0, { 1, 0 })
+    feed('gj')
+    eq({ 1, 26 }, api.nvim_win_get_cursor(0))
+  end)
+
   it('ephemeral (decoration-provider) conceal does not reflow', function()
     -- Ephemeral conceal is created during drawing and is not in the marktree, so the
     -- shared size/geometry path cannot see it off-draw. Reflowing it would make the
