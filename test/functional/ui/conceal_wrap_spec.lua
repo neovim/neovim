@@ -124,6 +124,61 @@ describe('conceal-aware wrapping (#14409)', function()
     eq({ 1, 45 }, api.nvim_win_get_cursor(0))
   end)
 
+  it('reflow and motions account for double-width (CJK) characters', function()
+    -- 10 a (buf 0-9) + HIDDEN (buf 10-15, concealed) + 15x 古 (3 bytes, 2 cells each, buf 16-60).
+    api.nvim_buf_set_lines(0, 0, -1, true, { ('a'):rep(10) .. 'HIDDEN' .. ('古'):rep(15) })
+    api.nvim_buf_set_extmark(0, ns, 0, 10, { end_col = 16, conceal = '' })
+
+    -- Reflowed width counts 古 as 2 cells: 10 + 15*2 = 40 cells -> 2 rows of 20.
+    eq(2, api.nvim_win_text_height(0, {}).all)
+
+    -- Row 2 starts at buf 31 (5 of the 15 古 fill out row 1's remaining 10 cells).
+    -- endcol=2 because 古 is double-width; curscol stays at its left cell.
+    eq({ row = 2, col = 1, curscol = 1, endcol = 2 }, fn.screenpos(0, 1, 32))
+
+    api.nvim_win_set_cursor(0, { 1, 0 })
+    feed('gj')
+    eq({ 1, 31 }, api.nvim_win_get_cursor(0))
+
+    api.nvim_win_set_cursor(0, { 1, 40 })
+    feed('g0')
+    eq({ 1, 31 }, api.nvim_win_get_cursor(0))
+
+    -- g$ lands on row 2's last (10th) 古, at its start byte.
+    api.nvim_win_set_cursor(0, { 1, 40 })
+    feed('g$')
+    eq({ 1, 58 }, api.nvim_win_get_cursor(0))
+
+    -- A mouse click on row 2's last cell maps to that same 古.
+    api.nvim_input_mouse('left', 'press', '', 0, 1, 19)
+    eq({ 1, 58 }, api.nvim_win_get_cursor(0))
+  end)
+
+  it('reflow and motions account for narrow multi-byte characters', function()
+    -- 10 a (buf 0-9) + HIDDEN (buf 10-15, concealed) + 30x 'é' (2 bytes, 1 cell each, buf 16-75).
+    api.nvim_buf_set_lines(0, 0, -1, true, { ('a'):rep(10) .. 'HIDDEN' .. ('é'):rep(30) })
+    api.nvim_buf_set_extmark(0, ns, 0, 10, { end_col = 16, conceal = '' })
+
+    -- Reflowed width: 10 + 30 = 40 cells -> 2 rows of 20 (byte count would wrongly suggest more).
+    eq(2, api.nvim_win_text_height(0, {}).all)
+
+    -- Row 2 starts at buf 36 (10 of the 30 'é' fill out row 1's remaining 10 cells).
+    eq({ row = 2, col = 1, curscol = 1, endcol = 1 }, fn.screenpos(0, 1, 37))
+
+    api.nvim_win_set_cursor(0, { 1, 0 })
+    feed('gj')
+    eq({ 1, 36 }, api.nvim_win_get_cursor(0))
+
+    api.nvim_win_set_cursor(0, { 1, 50 })
+    feed('g0')
+    eq({ 1, 36 }, api.nvim_win_get_cursor(0))
+
+    -- g$ lands on row 2's last 'é', at its start byte.
+    api.nvim_win_set_cursor(0, { 1, 50 })
+    feed('g$')
+    eq({ 1, 74 }, api.nvim_win_get_cursor(0))
+  end)
+
   it('ephemeral (decoration-provider) conceal does not reflow', function()
     -- Ephemeral conceal is created during drawing and is not in the marktree, so the
     -- shared size/geometry path cannot see it off-draw. Reflowing it would make the
