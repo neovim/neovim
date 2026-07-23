@@ -2473,6 +2473,14 @@ bool find_decl(char *ptr, size_t len, bool locally, bool thisblock, int flags_ar
   return retval;
 }
 
+/// Convert virtual column "vcol" at the cursor's current position to a screen-layout column, by
+/// subtracting cells hidden by conceal. No-op (returns "vcol" unchanged) if nothing is hidden.
+static colnr_T vcol_to_scol_cursor(colnr_T vcol)
+{
+  return vcol - MIN(vcol, (colnr_T)conceal_off_before(curwin, curwin->w_cursor.lnum,
+                                                      curwin->w_cursor.col));
+}
+
 /// Move 'dist' lines in direction 'dir', counting lines by *screen*
 /// lines rather than lines in the file.
 /// 'dist' must be positive.
@@ -2502,9 +2510,7 @@ bool nv_screengo(oparg_T *oap, int dir, int dist, bool skip_conceal)
   colnr_T scol_want = curwin->w_curswant;
   if (use_scol && scol_want != MAXCOL) {
     validate_virtcol(curwin);
-    scol_want -= MIN(scol_want,
-                     (colnr_T)conceal_off_before(curwin, curwin->w_cursor.lnum,
-                                                 curwin->w_cursor.col));
+    scol_want = vcol_to_scol_cursor(scol_want);
   }
   colnr_T *const cw = use_scol ? &scol_want : &curwin->w_curswant;
 
@@ -2526,9 +2532,7 @@ bool nv_screengo(oparg_T *oap, int dir, int dist, bool skip_conceal)
       validate_virtcol(curwin);
       colnr_T virtcol = curwin->w_virtcol;
       if (use_scol) {
-        virtcol -= MIN(virtcol,
-                       (colnr_T)conceal_off_before(curwin, curwin->w_cursor.lnum,
-                                                   curwin->w_cursor.col));
+        virtcol = vcol_to_scol_cursor(virtcol);
       }
       if (width1 <= 0) {
         *cw = 0;
@@ -2634,9 +2638,7 @@ bool nv_screengo(oparg_T *oap, int dir, int dist, bool skip_conceal)
     colnr_T virtcol = curwin->w_virtcol;
     if (use_scol) {
       // Compare in screen-layout columns on a concealed line.
-      virtcol -= MIN(virtcol,
-                     (colnr_T)conceal_off_before(curwin, curwin->w_cursor.lnum,
-                                                 curwin->w_cursor.col));
+      virtcol = vcol_to_scol_cursor(virtcol);
     }
     if (virtcol > (colnr_T)width1 && *get_showbreak_value(curwin) != NUL) {
       virtcol -= vim_strsize(get_showbreak_value(curwin));
@@ -5330,8 +5332,7 @@ void nv_g_home_m_cmd(cmdarg_T *cap)
     validate_virtcol(curwin);
     colnr_T scol = curwin->w_virtcol;
     if (use_scol) {
-      scol -= MIN(scol, (colnr_T)conceal_off_before(curwin, curwin->w_cursor.lnum,
-                                                    curwin->w_cursor.col));
+      scol = vcol_to_scol_cursor(scol);
     }
     i = 0;
     if (scol >= (colnr_T)width1 && width2 > 0) {
@@ -5424,8 +5425,7 @@ static void nv_g_dollar_cmd(cmdarg_T *cap)
       validate_virtcol(curwin);
       colnr_T scol = curwin->w_virtcol;
       if (use_scol) {
-        scol -= MIN(scol, (colnr_T)conceal_off_before(curwin, curwin->w_cursor.lnum,
-                                                      curwin->w_cursor.col));
+        scol = vcol_to_scol_cursor(scol);
       }
       i = width1 - 1;
       if (scol >= (colnr_T)width1) {
@@ -5442,8 +5442,7 @@ static void nv_g_dollar_cmd(cmdarg_T *cap)
         // the next screen line.
         colnr_T vcol = curwin->w_virtcol;
         if (use_scol) {
-          vcol -= MIN(vcol, (colnr_T)conceal_off_before(curwin, curwin->w_cursor.lnum,
-                                                        curwin->w_cursor.col));
+          vcol = vcol_to_scol_cursor(vcol);
         }
         if (vcol > (colnr_T)i) {
           curwin->w_cursor.col--;
