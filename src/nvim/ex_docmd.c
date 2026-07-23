@@ -5079,9 +5079,6 @@ static void ex_restart(exarg_T *eap)
 
   dict_T *env = create_environment(NULL, false, false, false, NULL);
   tv_dict_add_str(env, S_LEN(ENV_STARTREASON), startreason);
-#ifdef MSWIN
-  tv_dict_add_str(env, S_LEN(ENV_RESTART_ALLOC_CONSOLE), "1");
-#endif
 
   CallbackReader on_err = CALLBACK_READER_INIT;
 #ifdef MSWIN
