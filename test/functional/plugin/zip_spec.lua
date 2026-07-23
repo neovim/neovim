@@ -161,6 +161,36 @@ describe('nvim.zip', function()
     eq(false, api.nvim_get_option_value('swapfile', { buf = 0 }))
   end)
 
+  it('opens the containing directory from the archive root', function()
+    local archive = vim.fs.joinpath(root, 'browser.zip')
+    copy_fixture(vim.fs.joinpath(fixtures, 'browser.zip'), archive)
+    clear_zip()
+
+    edit(archive)
+    feed('-')
+    poke_eventloop()
+
+    eq(root, vim.fs.normalize(api.nvim_buf_get_name(0)))
+    eq('browser.zip', api.nvim_get_current_line())
+    eq('directory', api.nvim_get_option_value('filetype', { buf = 0 }))
+  end)
+
+  it('opens members at quickfix locations', function()
+    local archive = vim.fs.joinpath(root, 'browser.zip')
+    copy_fixture(vim.fs.joinpath(fixtures, 'browser.zip'), archive)
+    clear_zip()
+    local uri = ('zipfile://%s::crlf.txt'):format(archive)
+    fn.setqflist({}, 'r', {
+      items = { { filename = uri, lnum = 2, col = 1 } },
+    })
+
+    api.nvim_cmd({ cmd = 'cfirst' }, {})
+
+    eq(uri, api.nvim_buf_get_name(0))
+    eq({ 2, 0 }, api.nvim_win_get_cursor(0))
+    eq('text', api.nvim_get_option_value('filetype', { buf = 0 }))
+  end)
+
   it('does not reinterpret a member ending in .zip as an archive', function()
     local archive = vim.fs.joinpath(root, 'browser.zip')
     copy_fixture(vim.fs.joinpath(fixtures, 'browser.zip'), archive)
