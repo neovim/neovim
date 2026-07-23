@@ -41,7 +41,7 @@ foreach(PACKAGE ${PACKAGES})
     add_custom_command(OUTPUT "${GENERATED_PACKAGE_DIR}/${PACKNAME}/doc/tags"
       COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${PACKAGE} ${GENERATED_PACKAGE_DIR}/${PACKNAME}
-      COMMAND ${NVIM_HOST_PRG}
+      COMMAND ${CMAKE_COMMAND} -E env "VIMRUNTIME=${PROJECT_SOURCE_DIR}/runtime" ${NVIM_HOST_PRG}
         -u NONE -i NONE -e --headless -c "helptags doc" -c quit
       DEPENDS
         nvim_bin
@@ -73,7 +73,7 @@ add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
   COMMAND ${CMAKE_COMMAND} -E remove_directory doc
   COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${PROJECT_SOURCE_DIR}/runtime/doc doc
-  COMMAND ${NVIM_HOST_PRG}
+  COMMAND ${CMAKE_COMMAND} -E env "VIMRUNTIME=${PROJECT_SOURCE_DIR}/runtime" ${NVIM_HOST_PRG}
     -u NONE -i NONE -e --headless -c "helptags ++t doc" -c quit
   DEPENDS
     nvim_bin
