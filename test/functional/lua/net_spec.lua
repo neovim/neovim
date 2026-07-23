@@ -164,11 +164,13 @@ describe('vim.net.request', function()
     t.eq(true, rv.tarfile)
   end)
 
-  it('opens remote zip URLs as zip archives', function()
+  it('keeps remote zip URLs on the legacy browser', function()
     t.skip(skip_integ, 'NVIM_TEST_INTEG not set (network integration test)')
 
     local rv = exec_lua(function()
+      vim.g.nvim_zip_plugin = true
       vim.cmd('runtime! plugin/net.lua')
+      vim.cmd('runtime! plugin/zip.lua')
       vim.cmd('runtime! plugin/zipPlugin.vim')
 
       vim.cmd('edit https://github.com/neovim/neovim/releases/download/nightly/nvim-win-arm64.zip')
@@ -179,13 +181,17 @@ describe('vim.net.request', function()
 
       return {
         filetype = vim.bo.filetype,
+        legacy = vim.g.loaded_zip ~= nil,
         modified = vim.bo.modified,
+        nvim_zip = vim.b.nvim_zip ~= nil,
         zipfile = vim.b.zipfile ~= nil,
       }
     end)
 
     t.eq('zip', rv.filetype)
+    t.eq(true, rv.legacy)
     t.eq(false, rv.modified)
+    t.eq(false, rv.nvim_zip)
     t.eq(true, rv.zipfile)
   end)
 
