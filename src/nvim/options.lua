@@ -1757,6 +1757,56 @@ local options = {
       flags_varname = 'cot_flags',
     },
     {
+      abbreviation = 'cpp',
+      cb = 'did_set_completepopup',
+      defaults = { if_true = '' },
+      schema = {
+        dict = {
+          { 'align', 'enum', { values = { 'item', 'menu' } } },
+          {
+            'border',
+            'enum',
+            { values = { 'double', 'single', 'shadow', 'rounded', 'solid', 'bold', 'none' } },
+          },
+          { 'height', 'num' },
+          { 'width', 'num' },
+        },
+      },
+      expand_cb = 'expand_set_popupoption',
+      desc = [=[
+        When 'completeopt' contains "popup", this option specifies the
+        properties of the info window.  If an info window already exists it is
+        closed, so that the option value is applied when it is created again.
+
+        The option is a comma-separated list of these items:
+
+        	align	"item" (default) lines the info window up with
+        		the selected item.  "menu" lines it up with the
+        		popup menu: with the top of the menu when the menu
+        		is below the cursor line, with the bottom when it
+        		is above.
+        	border	Border style, see 'winborder' for the possible
+        		values.  When omitted the value of 'winborder' is used.
+        	height	Maximum height of the info window.  The window is
+        		sized to the text and never grows beyond this.
+        	width	Maximum width of the info window.  The window is
+        		sized to the text and never grows beyond this.
+        		Setting it also lifts the minimum of 10 columns
+        		below which the info window is hidden, as long as
+        		the requested width fits.
+
+        Example: >vim
+        	set completepopup=align:menu,height:10,width:60,border:rounded
+        <
+      ]=],
+      full_name = 'completepopup',
+      list = 'onecommacolon',
+      scope = { 'global' },
+      short_desc = N_('properties of the completion info window'),
+      type = 'string',
+      varname = 'p_cpp',
+    },
+    {
       abbreviation = 'csl',
       cb = 'did_set_completeslash',
       defaults = '',

@@ -88,6 +88,8 @@ static bool pum_is_drawn = false;
 static bool pum_external = false;
 static bool pum_invalid = false;  // the screen was just cleared
 
+static PumAlign pum_info_align = kPumAlignItem;  // 'completepopup' "align";
+
 #include "popupmenu.c.generated.h"
 #define PUM_DEF_HEIGHT 10
 
@@ -982,40 +984,107 @@ static void pum_preview_set_text(win_T *win, char *info, linenr_T *lnum, int *ma
   buf->b_p_ma = false;
 }
 
-/// adjust floating info preview window position
+/// Set how the info window lines up, see 'completepopup' "align".
+void pum_set_align(PumAlign align)
+{
+  pum_info_align = align;
+}
+
+/// Adjust the position and size of the floating info window, following the
+/// 'completepopup' option: "width"/"height" cap the size, "align" decides
+/// whether it lines up with the selected item or with the popup menu.
+///
+/// @param wp     the info window (kWinInfo)
+/// @param width  width needed to display the info text
+///
+/// @return  false when there is not enough room and the window was hidden
 static bool pum_adjust_info_position(win_T *wp, int width)
 {
-  int border_width = pum_border_width();
-  int col = pum_col + pum_width + 1 + MAX(border_width, pum_scrollbar);
-  // TODO(glepnir): support config align border by using completepopup
-  // align menu
-  int right_extra = Columns - col;
-  int left_extra = pum_col - 2;
+  // Border of the info window itself, as set by 'completepopup' "border".
+  int border_w = win_border_width(wp);
+  int border_h = win_border_height(wp);
 
-  int max_extra = MAX(right_extra, left_extra);
-  // Close info window if there's insufficient space
-  // TODO(glepnir): Replace the hardcoded value (10) with values from the 'completepopup' width/height options.
-  if (max_extra < 10) {
-    wp->w_config.hide = true;
+  // 'completepopup' "width" is a maximum: the window still shrinks to the text.
+  int width_opt = wp->w_maxwidth;
+  if (width_opt > 0) {
+    width = MIN(width, width_opt);
+  }
+
+  // Space left for the info text on either side of the popup menu.
+  int col = pum_col + pum_width + 1 + MAX(pum_border_width(), pum_scrollbar);
+  int right_extra = Columns - col - border_w;
+  int left_extra = pum_col - 2 - border_w;
+
+  bool place_in_right;
+  if (right_extra > width) {
+    place_in_right = true;
+  } else if (left_extra > width) {
+    place_in_right = false;
+  } else {  // neither side is wide enough, just use the biggest one.
+    place_in_right = right_extra > left_extra;
+  }
+  int avail = place_in_right ? right_extra : left_extra;
+
+  // Hide the info window if there's insufficient space.  An explicit "width" in
+  // 'completepopup' lifts the minimum of 10 columns, but only when the width it
+  // asks for actually fits.
+  if (avail < 10 && !(width_opt > 0 && avail > width_opt)) {
+    if (!wp->w_config.hide) {
+      wp->w_config.hide = true;
+      win_config_float(wp, wp->w_config);
+    }
     return false;
   }
 
-  if (right_extra > width) {  // place in right
-    wp->w_config.width = width;
-    wp->w_config.col = col - 1;
-  } else if (left_extra > width) {  // place in left
-    wp->w_config.width = width;
-    wp->w_config.col = pum_col - wp->w_config.width - 1;
-  } else {  // either width is enough just use the biggest one.
-    const bool place_in_right = right_extra > left_extra;
-    wp->w_config.width = max_extra;
-    wp->w_config.col = place_in_right ? col - 1 : pum_col - wp->w_config.width - 1;
+  wp->w_config.width = MIN(width, avail);
+  wp->w_config.col = place_in_right
+                     ? col - 1
+                     : pum_col - wp->w_config.width - border_w - 1;
+
+  int height = win_float_text_height(wp, wp->w_topline, wp->w_config.width);
+  // 'completepopup' "height" is the maximum height.
+  if (wp->w_maxheight > 0) {
+    height = MIN(height, wp->w_maxheight);
   }
-  wp->w_config.anchor = 0;  // NW: align top of info window with top of pum
-  linenr_T count = wp->w_buffer->b_ml.ml_line_count;
-  wp->w_view_width = wp->w_config.width;
-  wp->w_config.height = plines_m_win(wp, wp->w_topline, count, Rows);
-  wp->w_config.row = pum_row;
+
+  // Vertical placement.  `line` is the screen row the info *text* lines up
+  // with; `bottom_aligned` picks whether that is its first or its last line.
+  int line = 0;
+  bool bottom_aligned = false;
+  if (pum_info_align == kPumAlignMenu) {
+    // "align:menu": the top of the menu, or its bottom row when the menu is
+    // above the cursor line.
+    if (pum_above) {
+      line = pum_row + pum_height - 1;
+      bottom_aligned = true;
+    } else {
+      line = pum_row;
+    }
+  } else {
+    // "align:item": the selected item.
+    line = pum_row + MIN(MAX(pum_selected - pum_first, 0), pum_height - 1);
+  }
+
+  int wantline = line - wp->w_border_adj[0] + 1;
+  if (!bottom_aligned && wantline + height + border_h - 1 > Rows - (int)p_ch
+      && wantline * 2 > Rows) {
+    bottom_aligned = true;
+  }
+
+  int anchor = 0;  // NW
+  int row;
+  if (bottom_aligned) {
+    anchor = kFloatAnchorSouth;
+    row = line + wp->w_border_adj[2] + 1;  // exclusive outer bottom
+  } else {
+    row = line - wp->w_border_adj[0];      // outer top
+  }
+
+  // Shrink the window only when it still does not fit on the chosen side.
+  int space = bottom_aligned ? row : Rows - (int)p_ch - row;
+  wp->w_config.height = MAX(1, MIN(height, space - border_h));
+  wp->w_config.anchor = anchor;
+  wp->w_config.row = row;
   wp->w_config.hide = false;
   win_config_float(wp, wp->w_config);
   return true;
@@ -1084,7 +1153,7 @@ static bool pum_set_selected(int n, int repeat)
   // state. It is also closed when the selected item has no corresponding info item.
   if (use_float && (pum_selected < 0 || pum_array[pum_selected].pum_info == NULL)) {
     win_T *wp = win_float_find(kWinInfo);
-    if (wp) {
+    if (wp && !wp->w_config.hide) {
       wp->w_config.hide = true;
       win_config_float(wp, wp->w_config);
     }

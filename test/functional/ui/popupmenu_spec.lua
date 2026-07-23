@@ -2051,15 +2051,15 @@ describe('builtin popupmenu', function()
             win_pos = { [2] = { height = 10, startcol = 0, startrow = 0, width = 40, win = 1000 } },
             float_pos = {
               [5] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 },
-              [4] = { 1001, 'NW', 1, 1, 19, true, 50, 1, 1, 19 },
+              [4] = { 1001, 'NW', 1, 3, 19, true, 50, 1, 3, 19 },
             },
           })
         else
           screen:expect([[
             looooooooooooooong^                      |
-            {n:one                3info}{1:                }|
+            {n:one                }{1:                     }|
             {n:two                }{1:                     }|
-            {12:looooooooooooooong }{1:                     }|
+            {12:looooooooooooooong }{n:3info}{1:                }|
             {1:~                                       }|*6
             {5:-- }{6:match 3 of 3}                         |
           ]])
@@ -2179,14 +2179,15 @@ describe('builtin popupmenu', function()
             },
             float_pos = {
               [5] = { -1, 'SW', 2, 9, 0, false, 100, 2, 6, 0 },
-              [4] = { 1001, 'NW', 1, 6, 19, true, 50, 1, 6, 19 },
+              [4] = { 1001, 'SW', 1, 7, 19, true, 50, 1, 5, 19 },
             },
           })
         else
           screen:expect([[
-                                                    |*6
-            {12:one                }{mn:```}{102:lua}{n:         }      |
-            {n:two                }{102:function}{mn: }{103:test}{104:()}      |
+                                                    |*5
+                               {mn:```}{102:lua}{n:         }      |
+            {12:one                }{102:function}{mn: }{103:test}{104:()}      |
+            {n:two                }                     |
             {n:looooooooooooooong }                     |
             one^                                     |
             {5:-- }{6:match 1 of 3}                         |
@@ -2223,20 +2224,22 @@ describe('builtin popupmenu', function()
             ]],
             win_pos = { [2] = { height = 10, startcol = 0, startrow = 0, width = 40, win = 1000 } },
             float_pos = {
-              [5] = { 1001, 'NW', 1, 1, 19, true, 50, 1, 1, 19 },
+              [5] = { 1001, 'NW', 1, 4, 19, true, 50, 1, 4, 19 },
               [4] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 },
             },
           })
         else
           screen:expect([[
             for .. ipairs^                           |
-            {n:one                ```lua              }{1: }|
-            {n:two                for index, value in }{1: }|
-            {n:looooooooooooooong ipairs(t) do        }{1: }|
-            {12:for .. ipairs      }{n:                    }{1: }|
+            {n:one                }{1:                     }|
+            {n:two                }{1:                     }|
+            {n:looooooooooooooong }{1:                     }|
+            {12:for .. ipairs      }{n:```lua              }{1: }|
+            {1:~                  }{n:for index, value in }{1: }|
+            {1:~                  }{n:ipairs(t) do        }{1: }|
+            {1:~                  }{n:                    }{1: }|
             {1:~                  }{n:end                 }{1: }|
             {1:~                  }{n:```                 }{1: }|
-            {1:~                                       }|*3
             {5:-- }{6:match 1 of 4}                         |
           ]])
         end
@@ -5452,15 +5455,15 @@ describe('builtin popupmenu', function()
         ]],
           float_pos = {
             [5] = { -1, 'SW', 1, 11, 8, false, 250, 3, 7, 8 },
-            [4] = { 1001, 'NW', 1, 7, 28, true, 50, 1, 7, 28 },
+            [4] = { 1001, 'NW', 1, 8, 28, true, 50, 1, 8, 28 },
           },
         })
       else
         screen:expect([[
                                                                  |
           {1:~                                                      }|*6
-          {1:~       }{n: 🍎     f fruit     A yellow fruit}{1:             }|
-          {1:~       }{12: 🍌     f fruit     }{1:                           }|
+          {1:~       }{n: 🍎     f fruit     }{1:                           }|
+          {1:~       }{12: 🍌     f fruit     }{n:A yellow fruit}{1:             }|
           {1:~       }{n: carrot v vegetable }{1:                           }|
           {1:~       }{n: plain              }{1:                           }|
           :DictCmd banana^                                        |
@@ -5489,16 +5492,16 @@ describe('builtin popupmenu', function()
         ]],
           float_pos = {
             [5] = { -1, 'SW', 1, 11, 8, false, 250, 3, 7, 8 },
-            [4] = { 1001, 'NW', 1, 7, 28, true, 50, 1, 7, 28 },
+            [4] = { 1001, 'NW', 1, 9, 28, true, 50, 1, 9, 28 },
           },
         })
       else
         screen:expect([[
                                                                  |
           {1:~                                                      }|*6
-          {1:~       }{n: 🍎     f fruit     An orange vegetable}{1:        }|
+          {1:~       }{n: 🍎     f fruit     }{1:                           }|
           {1:~       }{n: 🍌     f fruit     }{1:                           }|
-          {1:~       }{12: carrot v vegetable }{1:                           }|
+          {1:~       }{12: carrot v vegetable }{n:An orange vegetable}{1:        }|
           {1:~       }{n: plain              }{1:                           }|
           :DictCmd carrot^                                        |
         ]])
@@ -5638,14 +5641,14 @@ describe('builtin popupmenu', function()
         ]],
           float_pos = {
             [5] = { -1, 'NW', 2, 1, 7, false, 100, 2, 1, 7 },
-            [6] = { 1002, 'NW', 1, 1, 27, true, 50, 1, 1, 27 },
+            [6] = { 1002, 'NW', 1, 2, 27, true, 50, 1, 2, 27 },
           },
         })
       else
         screen:expect([[
           DictCmd banana^                                         |
-          {1:~      }{n: 🍎     f fruit     A yellow fruit}{1:              }|
-          {1:~      }{12: 🍌     f fruit     }{1:                            }|
+          {1:~      }{n: 🍎     f fruit     }{1:                            }|
+          {1:~      }{12: 🍌     f fruit     }{n:A yellow fruit}{1:              }|
           {1:~      }{n: carrot v vegetable }{1:                            }|
           {1:~      }{n: plain              }{1:                            }|
           {1:~                                                      }|*6
@@ -5675,15 +5678,15 @@ describe('builtin popupmenu', function()
         ]],
           float_pos = {
             [5] = { -1, 'NW', 2, 1, 7, false, 100, 2, 1, 7 },
-            [6] = { 1002, 'NW', 1, 1, 27, true, 50, 1, 1, 27 },
+            [6] = { 1002, 'NW', 1, 3, 27, true, 50, 1, 3, 27 },
           },
         })
       else
         screen:expect([[
           DictCmd carrot^                                         |
-          {1:~      }{n: 🍎     f fruit     An orange vegetable}{1:         }|
+          {1:~      }{n: 🍎     f fruit     }{1:                            }|
           {1:~      }{n: 🍌     f fruit     }{1:                            }|
-          {1:~      }{12: carrot v vegetable }{1:                            }|
+          {1:~      }{12: carrot v vegetable }{n:An orange vegetable}{1:         }|
           {1:~      }{n: plain              }{1:                            }|
           {1:~                                                      }|*6
           {5:-- Command-line completion (^V^N^P) }{6:match 3 of 4}       |
@@ -5834,15 +5837,13 @@ describe('builtin popupmenu', function()
           {n:info line 8 }|
           {n:info line 9 }|
           {n:info line 10}|
-          {n:info line 11}|
-          {n:info line 12}|
         ## grid 5
           {12: apple  f fruit }|
           {n: banana f fruit }|
         ]],
           float_pos = {
             [5] = { -1, 'SW', 1, 11, 8, false, 250, 3, 9, 8 },
-            [4] = { 1001, 'NW', 1, 9, 24, true, 50, 1, 0, 24 },
+            [4] = { 1001, 'SW', 1, 10, 24, true, 50, 1, 0, 24 },
           },
         })
       else
@@ -5857,7 +5858,7 @@ describe('builtin popupmenu', function()
           {1:~                       }{n:info line 8 }{1:                   }|
           {1:~                       }{n:info line 9 }{1:                   }|
           {1:~       }{12: apple  f fruit }{n:info line 10}{1:                   }|
-          {1:~       }{n: banana f fruit info line 11}{1:                   }|
+          {1:~       }{n: banana f fruit }{1:                               }|
           :DictCmd apple^                                         |
         ]])
       end
@@ -5893,15 +5894,13 @@ describe('builtin popupmenu', function()
           {n:info line 17}|
           {n:info line 18}|
           {n:info line 19}|
-          {n:info line 20}|
-          {n:info line 21}|
         ## grid 5
           {12: apple  f fruit }|
           {n: banana f fruit }|
         ]],
           float_pos = {
             [5] = { -1, 'SW', 1, 11, 8, false, 250, 3, 9, 8 },
-            [4] = { 1001, 'NW', 1, 9, 24, true, 50, 1, 0, 24 },
+            [4] = { 1001, 'SW', 1, 10, 24, true, 50, 1, 0, 24 },
           },
         })
       else
@@ -5916,7 +5915,7 @@ describe('builtin popupmenu', function()
           {1:~                       }{n:info line 17}{1:                   }|
           {1:~                       }{n:info line 18}{1:                   }|
           {1:~       }{12: apple  f fruit }{n:info line 19}{1:                   }|
-          {1:~       }{n: banana f fruit info line 20}{1:                   }|
+          {1:~       }{n: banana f fruit }{1:                               }|
           :DictCmd apple^                                         |
         ]])
       end
@@ -5950,15 +5949,13 @@ describe('builtin popupmenu', function()
           {n:info line 11}|
           {n:info line 12}|
           {n:info line 13}|
-          {n:info line 14}|
-          {n:info line 15}|
         ## grid 5
           {12: apple  f fruit }|
           {n: banana f fruit }|
         ]],
           float_pos = {
             [5] = { -1, 'SW', 1, 11, 8, false, 250, 3, 9, 8 },
-            [4] = { 1001, 'NW', 1, 9, 24, true, 50, 1, 0, 24 },
+            [4] = { 1001, 'SW', 1, 10, 24, true, 50, 1, 0, 24 },
           },
         })
       else
@@ -5973,7 +5970,7 @@ describe('builtin popupmenu', function()
           {1:~                       }{n:info line 11}{1:                   }|
           {1:~                       }{n:info line 12}{1:                   }|
           {1:~       }{12: apple  f fruit }{n:info line 13}{1:                   }|
-          {1:~       }{n: banana f fruit info line 14}{1:                   }|
+          {1:~       }{n: banana f fruit }{1:                               }|
           :DictCmd apple^                                         |
         ]])
       end
@@ -6057,17 +6054,17 @@ describe('builtin popupmenu', function()
         ]],
           float_pos = {
             [4] = { -1, 'SW', 1, 11, 5, false, 250, 3, 6, 5 },
-            [5] = { 1001, 'NW', 1, 6, 21, true, 50, 1, 6, 21 },
+            [5] = { 1001, 'NW', 1, 9, 21, true, 50, 1, 9, 21 },
           },
         })
       else
         screen:expect([[
                                                                  |
           {1:~                                                      }|*5
-          {1:~    }{n: Xplain         1st dir}{1:                           }|
+          {1:~    }{n: Xplain         }{1:                                  }|
           {1:~    }{n: Xfile1 F file  }{1:                                  }|
           {1:~    }{n: Xfile2 F file  }{1:                                  }|
-          {1:~    }{12: Xdir1  D dir   }{1:                                  }|
+          {1:~    }{12: Xdir1  D dir   }{n:1st dir}{1:                           }|
           {1:~    }{n: Xdir2  D dir   }{1:                                  }|
           :find Xdir1^                                            |
         ]])
