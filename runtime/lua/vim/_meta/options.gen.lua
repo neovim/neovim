@@ -1171,8 +1171,8 @@ vim.go.cia = vim.go.completeitemalign
 --- 	    See also `preinserted()`.
 ---
 ---    menu	    Use a popup menu to show the possible completions.  The
---- 	    menu is only shown when there is more than one match and
---- 	    sufficient colors are available.  `ins-completion-menu`
+--- 	    menu is only shown when there is more than one match.
+--- 	    `ins-completion-menu`
 ---
 ---    menuone  Use the popup menu also when there is only one match.
 --- 	    Useful when there is additional information about the
