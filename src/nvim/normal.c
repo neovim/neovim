@@ -5297,12 +5297,29 @@ static void nv_gv_cmd(cmdarg_T *cap)
   showmode();
 }
 
+/// Convert screen-layout column "scol" to its virtual-column equivalent, for coladvance().
+/// Same conversion nv_screengo() does for gj/gk.
+static colnr_T nv_scol_to_vcol(win_T *wp, linenr_T lnum, colnr_T scol)
+{
+  colnr_T coladd;
+  colnr_T const bcol = scol_to_col(wp, lnum, scol, &coladd);
+  if (coladd > 0) {
+    return (colnr_T)linetabsize(wp, lnum) + coladd;
+  }
+  pos_T tp = { .lnum = lnum, .col = bcol, .coladd = 0 };
+  colnr_T vcol;
+  getvcol(wp, &tp, &vcol, NULL, NULL, 0);
+  return vcol;
+}
+
 /// "g0", "g^" : Like "0" and "^" but for screen lines.
 /// "gm": middle of "g0" and "g$".
 void nv_g_home_m_cmd(cmdarg_T *cap)
 {
   int i;
   const bool flag = cap->nchar == '^';
+  // Concealed cursor line: use screen-layout columns, like nv_screengo() does for gj/gk.
+  bool const use_scol = curwin->w_p_cole > 0 && conceal_cursor_line(curwin);
 
   cap->oap->motion_type = kMTCharWise;
   cap->oap->inclusive = false;
@@ -5311,9 +5328,14 @@ void nv_g_home_m_cmd(cmdarg_T *cap)
     int width2 = width1 + win_col_off2(curwin);
 
     validate_virtcol(curwin);
+    colnr_T scol = curwin->w_virtcol;
+    if (use_scol) {
+      scol -= MIN(scol, (colnr_T)conceal_off_before(curwin, curwin->w_cursor.lnum,
+                                                    curwin->w_cursor.col));
+    }
     i = 0;
-    if (curwin->w_virtcol >= (colnr_T)width1 && width2 > 0) {
-      i = (curwin->w_virtcol - width1) / width2 * width2 + width1;
+    if (scol >= (colnr_T)width1 && width2 > 0) {
+      i = (scol - width1) / width2 * width2 + width1;
     }
 
     // When ending up below 'smoothscroll' marker, move just beyond it so
@@ -5334,7 +5356,11 @@ void nv_g_home_m_cmd(cmdarg_T *cap)
     i += (curwin->w_view_width - win_col_off(curwin)
           + ((curwin->w_p_wrap && i > 0) ? win_col_off2(curwin) : 0)) / 2;
   }
-  coladvance(curwin, (colnr_T)i);
+  colnr_T target = (colnr_T)i;
+  if (use_scol) {
+    target = nv_scol_to_vcol(curwin, curwin->w_cursor.lnum, (colnr_T)i);
+  }
+  coladvance(curwin, target);
   if (flag) {
     do {
       i = gchar_cursor();
@@ -5384,6 +5410,8 @@ static void nv_g_dollar_cmd(cmdarg_T *cap)
   int i;
   int col_off = win_col_off(curwin);
   const bool flag = cap->nchar == K_END || cap->nchar == K_KEND;
+  // Concealed cursor line: use screen-layout columns, like nv_screengo() does for gj/gk.
+  bool const use_scol = curwin->w_p_cole > 0 && conceal_cursor_line(curwin);
 
   oap->motion_type = kMTCharWise;
   oap->inclusive = true;
@@ -5394,11 +5422,17 @@ static void nv_g_dollar_cmd(cmdarg_T *cap)
       int width2 = width1 + win_col_off2(curwin);
 
       validate_virtcol(curwin);
-      i = width1 - 1;
-      if (curwin->w_virtcol >= (colnr_T)width1) {
-        i += ((curwin->w_virtcol - width1) / width2 + 1) * width2;
+      colnr_T scol = curwin->w_virtcol;
+      if (use_scol) {
+        scol -= MIN(scol, (colnr_T)conceal_off_before(curwin, curwin->w_cursor.lnum,
+                                                      curwin->w_cursor.col));
       }
-      coladvance(curwin, (colnr_T)i);
+      i = width1 - 1;
+      if (scol >= (colnr_T)width1) {
+        i += ((scol - width1) / width2 + 1) * width2;
+      }
+      coladvance(curwin, use_scol ? nv_scol_to_vcol(curwin, curwin->w_cursor.lnum, (colnr_T)i)
+                                  : (colnr_T)i);
 
       // Make sure we stick in this column.
       update_curswant_force();
@@ -5406,7 +5440,12 @@ static void nv_g_dollar_cmd(cmdarg_T *cap)
         // Check for landing on a character that got split at
         // the end of the line.  We do not want to advance to
         // the next screen line.
-        if (curwin->w_virtcol > (colnr_T)i) {
+        colnr_T vcol = curwin->w_virtcol;
+        if (use_scol) {
+          vcol -= MIN(vcol, (colnr_T)conceal_off_before(curwin, curwin->w_cursor.lnum,
+                                                        curwin->w_cursor.col));
+        }
+        if (vcol > (colnr_T)i) {
           curwin->w_cursor.col--;
         }
       }

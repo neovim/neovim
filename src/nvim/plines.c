@@ -572,6 +572,17 @@ colnr_T scol_to_col(win_T *wp, linenr_T lnum, colnr_T scol, colnr_T *coladdp)
     ci = utfc_next(ci);
   }
 
+  // A hidden character has no screen column: skip past one landed on, to the next visible
+  // character (or EOL), since that is what is actually drawn at "scol".
+  while (conceal && *ci.ptr != NUL) {
+    int const w = win_charsize(cstype, cur_vcol, ci.ptr, ci.chr.value, &csarg).width;
+    if (linesize_conceal_hidden(&csarg, &conceal_state, (int)(ci.ptr - line), w) == 0) {
+      break;
+    }
+    cur_vcol += w;
+    ci = utfc_next(ci);
+  }
+
   if (conceal) {
     linesize_conceal_end(&conceal_state);
   }

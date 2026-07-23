@@ -100,6 +100,30 @@ describe('conceal-aware wrapping (#14409)', function()
     eq({ 1, 40 }, api.nvim_win_get_cursor(0))
   end)
 
+  it('g0/g^/gm/g$ move within the reflowed screen line', function()
+    -- Reflowed: row 1 = a*20 (buf 0..19), row 2 = '  ' + c*18 (buf 26..45).
+    api.nvim_buf_set_lines(0, 0, -1, true, { ('a'):rep(20) .. 'HIDDEN' .. '  ' .. ('c'):rep(18) })
+    api.nvim_buf_set_extmark(0, ns, 0, 20, { end_col = 26, conceal = '' })
+
+    -- All four land within row 2 (pre-fix: raw-column math landed in the concealed
+    -- region or short of the true row/line end).
+    api.nvim_win_set_cursor(0, { 1, 35 })
+    feed('g0')
+    eq({ 1, 26 }, api.nvim_win_get_cursor(0))
+
+    api.nvim_win_set_cursor(0, { 1, 35 })
+    feed('g^')
+    eq({ 1, 28 }, api.nvim_win_get_cursor(0))
+
+    api.nvim_win_set_cursor(0, { 1, 35 })
+    feed('gm')
+    eq({ 1, 36 }, api.nvim_win_get_cursor(0))
+
+    api.nvim_win_set_cursor(0, { 1, 35 })
+    feed('g$')
+    eq({ 1, 45 }, api.nvim_win_get_cursor(0))
+  end)
+
   it('ephemeral (decoration-provider) conceal does not reflow', function()
     -- Ephemeral conceal is created during drawing and is not in the marktree, so the
     -- shared size/geometry path cannot see it off-draw. Reflowing it would make the
