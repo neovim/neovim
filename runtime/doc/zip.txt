@@ -12,11 +12,13 @@ builtin |dir| listing interface and requires the `unzip` executable.
 The legacy |zip| plugin remains enabled by default. To use zip.lua instead, set
 this before startup: >lua
 
-    vim.g.nvim_zip_plugin = 1
+    vim.g.nvim_zip_plugin = true
 <
                                                         *g:nvim_zip_plugin*
-When enabled, zip.lua handles zip-like files and the legacy zip plugin does not
-load. The module implementing zip.lua is private and is not a supported Lua API.
+When set to `true` or `1`, zip.lua handles local zip-like files and the legacy
+zip plugin does not install its archive handlers. When unset, `false`, or `0`,
+the legacy plugin remains enabled. The module implementing zip.lua is private
+and is not a supported Lua API.
 
 ARCHIVE LISTINGS                                       *nvim-zip-listing*
 
@@ -36,10 +38,16 @@ zip.lua recognizes the same zip-like extensions as the legacy plugin, including
 `zip`, `jar`, `apk`, `epub`, Office/OpenDocument formats, `whl`, `xpi`, `pkpass`,
 and `cbz`.
 
+INTEGRATIONS                                      *nvim-zip-integrations*
+
+Remote zip URLs continue to use the legacy |zip| browser. The Java ftplugin
+opens members from |g:ftplugin_java_source_path| directly as read-only
+`zipfile://` buffers when zip.lua is enabled.
+
 LIMITATIONS                                          *nvim-zip-limitations*
 
-zip.lua does not update or extract archive members. It does not currently support
-PowerShell fallback, remote archives, custom backend commands, or the legacy
+zip.lua does not update or extract archive members. It does not fetch remote
+archives or support PowerShell fallback, custom backend commands, or the legacy
 `g:zip_*` configuration variables. Use the legacy |zip| plugin when those
 features are required.
 
