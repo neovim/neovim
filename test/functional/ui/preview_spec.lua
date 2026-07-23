@@ -53,16 +53,34 @@ describe("'previewpopup'", function()
 
     it('validation', function()
       local err = pcall_err(n.exec_capture, 'set previewpopup=height:yes')
-      eq('nvim_exec2(), line 1: Vim(set):E474: Invalid argument: previewpopup=height:yes', err)
+      eq(
+        "nvim_exec2(), line 1: Vim(set):E474: 'height' requires a number: previewpopup=height:yes",
+        err
+      )
 
       err = pcall_err(n.exec_capture, 'set previewpopup=width:yes')
-      eq('nvim_exec2(), line 1: Vim(set):E474: Invalid argument: previewpopup=width:yes', err)
+      eq(
+        "nvim_exec2(), line 1: Vim(set):E474: 'width' requires a number: previewpopup=width:yes",
+        err
+      )
 
       err = pcall_err(n.exec_capture, 'set previewpopup=width:20,height;10')
       eq(
-        'nvim_exec2(), line 1: Vim(set):E474: Invalid argument: previewpopup=width:20,height;10',
+        "nvim_exec2(), line 1: Vim(set):E474: Unknown item 'height;10': previewpopup=width:20,height;10",
         err
       )
+
+      err = pcall_err(n.exec_capture, 'set previewpopup=border:fancy')
+      eq(
+        'nvim_exec2(), line 1: Vim(set):E474: '
+          .. "'border' must be one of: double, single, shadow, rounded, solid, bold, none: "
+          .. 'previewpopup=border:fancy',
+        err
+      )
+
+      -- height/width must be >= 1 (semantic check, not the schema).
+      err = pcall_err(n.exec_capture, 'set previewpopup=height:0')
+      eq('nvim_exec2(), line 1: Vim(set):E474: Invalid argument: previewpopup=height:0', err)
     end)
 
     -- oldtest: Test_previewpopup

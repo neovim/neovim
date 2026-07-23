@@ -46,6 +46,7 @@
 #include "nvim/window.h"
 #include "nvim/winfloat.h"
 
+#include "options_keysets.generated.h"
 #include "winfloat.c.generated.h"
 
 /// Creates a new float, or transforms an existing window to a float.
@@ -446,7 +447,7 @@ win_T *win_float_special(bool enter, bool new_buf, WinKind kind)
   config.style = kWinStyleMinimal;
   Error err = ERROR_INIT;
   bool preview = kind == kWinPreview;
-  if (preview && !win_float_parse_option(p_pvp, &config)) {
+  if (preview && !win_previewpopup_config(p_pvp, &config)) {
     emsg(_(e_invarg));
     return NULL;
   }
@@ -580,45 +581,28 @@ void win_float_update_preview(win_T *wp)
 /// @param value  the option value to parse (e.g. 'previewpopup')
 ///
 /// @return false on an invalid value; caller emits E474.
-bool win_float_parse_option(char *value, WinConfig *config)
+bool win_previewpopup_config(char *value, WinConfig *config)
   FUNC_ATTR_NONNULL_ALL
 {
-  int height = 0;
-  int width = 0;
-  bool has_border = false;
+  // Basic validation was done by opt_strings_check; do more validation here.
+  OptKeyDict_pvp *v = opt_keyset_alloc(kOptPreviewpopup, value);
+  bool ok = true;
 
-  char item[32];  // one "key:value" part; longest is "border:rounded"
-  for (char *p = value; *p != NUL;) {
-    copy_option_part(&p, item, sizeof(item), ",");
-
-    char *val = vim_strchr(item, ':');
-    if (val == NULL) {
-      return false;
-    }
-    *val++ = NUL;
-
-    if (strcmp(item, "border") == 0) {
-      Error err = ERROR_INIT;
-      bool ok = *val != NUL && parse_winborder(config, val, &err);
-      api_clear_error(&err);
-      if (!ok) {
-        return false;
-      }
-      has_border = true;
-    } else if (strcmp(item, "height") == 0 || strcmp(item, "width") == 0) {
-      char *end = val;
-      int n = getdigits_int(&end, false, 0);
-      if (end == val || *end != NUL || n < 1) {
-        return false;
-      }
-      *(item[0] == 'h' ? &height : &width) = n;
-    } else {
-      return false;
-    }
+  if ((HAS_KEY(v, pvp, height) && v->height < 1) || (HAS_KEY(v, pvp, width) && v->width < 1)) {
+    ok = false;
   }
 
-  config->height = height;
-  config->width = width;
+  bool has_border = HAS_KEY(v, pvp, border);
+  if (ok && has_border) {
+    Error err = ERROR_INIT;
+    ok = parse_winborder(config, v->border.data, &err);
+    api_clear_error(&err);
+  }
+
+  config->height = HAS_KEY(v, pvp, height) ? (int)v->height : 0;
+  config->width = HAS_KEY(v, pvp, width) ? (int)v->width : 0;
+
+  opt_keyset_free(kOptPreviewpopup, v);
 
   if (!has_border) {
     config->border = false;
@@ -633,5 +617,5 @@ bool win_float_parse_option(char *value, WinConfig *config)
     config->title = false;
   }
 
-  return true;
+  return ok;
 }

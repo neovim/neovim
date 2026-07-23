@@ -6846,10 +6846,17 @@ local options = {
     {
       abbreviation = 'pvp',
       cb = 'did_set_previewpopup',
-      values = {
-        'height:',
-        'width:',
-        'border:',
+      schema = {
+        dict = {
+          { 'height', 'num' },
+          { 'width', 'num' },
+          -- Only the named 'winborder' styles; a custom (comma) border can't be given here.
+          {
+            'border',
+            'enum',
+            { values = { 'double', 'single', 'shadow', 'rounded', 'solid', 'bold', 'none' } },
+          },
+        },
       },
       expand_cb = 'expand_set_popupoption',
       defaults = { if_true = '' },
