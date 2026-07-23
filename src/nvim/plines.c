@@ -1029,3 +1029,17 @@ int64_t win_text_height(win_T *const wp, const linenr_T start_lnum, const int64_
   }
   return height_sum_fill + height_sum_nofill;
 }
+
+/// Return the maximum display width of lines "first" through "last".
+///
+/// @param max  stop measuring once this width is reached
+///
+/// @return  maximum display width, capped at "max"
+int win_max_displaywidth(win_T *wp, linenr_T first, linenr_T last, int max)
+{
+  int width = 0;
+  for (linenr_T lnum = first; lnum <= last && width < max; lnum++) {
+    width = MAX(width, linetabsize(wp, lnum));
+  }
+  return MIN(max, width);
+}

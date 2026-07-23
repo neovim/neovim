@@ -99,6 +99,7 @@
 #include "nvim/undo.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
+#include "nvim/winfloat.h"
 
 /// Case matching style to use for :substitute
 typedef enum {
@@ -2844,6 +2845,9 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     changed_line_abv_curs();
 
     maketitle();
+    if (retval != FAIL) {
+      win_float_update_preview(curwin);
+    }
   }
 
   // Tell the diff stuff that this buffer is new and/or needs updating.
@@ -4808,10 +4812,11 @@ void free_old_sub(void)
 
 /// Set up for a tagpreview.
 ///
-/// @param undo_sync  sync undo when leaving the window
+/// @param undo_sync        sync undo when leaving the window
+/// @param use_previewpopup use floating window if 'previewpopup' set
 ///
 /// @return           true when it was created.
-bool prepare_tagpreview(bool undo_sync)
+bool prepare_tagpreview(bool undo_sync, bool use_previewpopup)
 {
   if (curwin->w_p_pvw) {
     return false;
@@ -4820,16 +4825,33 @@ bool prepare_tagpreview(bool undo_sync)
   // If there is already a preview window open, use that one.
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_p_pvw) {
+      if (use_previewpopup ? wp->w_kind != kWinPreview : wp->w_floating) {
+        continue;
+      }
+
+      // if find a floating preview window update wantline/wantcol
+      if (use_previewpopup) {
+        wp->w_wantline = curwin->w_winrow + curwin->w_wrow;
+        wp->w_wantcol = curwin->w_wincol + curwin->w_wcol;
+      }
       win_enter(wp, undo_sync);
       return false;
     }
   }
 
-  // There is no preview window open yet.  Create one.
-  if (win_split(g_do_tagpreview > 0 ? g_do_tagpreview : 0, 0)
-      == FAIL) {
+  if (use_previewpopup) {
+    win_T *wp = win_float_special(false, true, kWinPreview);
+    if (!wp) {
+      return false;
+    }
+    win_enter(wp, undo_sync);
+    return true;
+  }
+  // There is no preview window open yet. Create one.
+  if (win_split(g_do_tagpreview > 0 ? g_do_tagpreview : 0, 0) == FAIL) {
     return false;
   }
+
   curwin->w_p_pvw = true;
   curwin->w_p_wfh = true;
   RESET_BINDING(curwin);                // don't take over 'scrollbind' and 'cursorbind'

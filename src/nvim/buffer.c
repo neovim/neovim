@@ -1854,6 +1854,7 @@ static void enter_buffer(buf_T *buf)
 
   check_arg_idx(curwin);                // check for valid arg_idx
   maketitle();
+  win_float_update_preview(curwin);
   // when autocmds didn't change it
   if (curwin->w_topline == 1 && !curwin->w_topline_was_set) {
     scroll_cursor_halfway(curwin, false, false);  // redisplay at correct position
