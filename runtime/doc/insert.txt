@@ -1347,7 +1347,6 @@ Vim can display the matches in a popup menu.
 
 The menu is used when:
 - The 'completeopt' option contains "menu" or "menuone".
-- The terminal supports at least 8 colors.
 - There are at least two matches.  One if "menuone" is used.
 
 The 'pumheight' option can be used to set a maximum height.  The default is to
