@@ -81,6 +81,7 @@ src/hardcopy.c
 src/iid_ole.c
 src/job.c
 src/kitty.c
+src/logfile.c
 src/mysign
 src/po/ko.po
 src/po/pl.po
