@@ -943,15 +943,15 @@ local function ts_node_to_typ(root, level, lang_tree, headings, opt, stats)
     return ('%s %s'):format(string.rep("=", heading_level), trimmed)
   elseif node_name == 'heading' then
     return trimmed
-  elseif node_name == 'column_heading' or node_name == 'column_name' then
+  elseif node_name == 'column_heading' then
     if root:has_error() then
       return text
     end
-    -- column_heading can be either:
-    -- * Some sort of title (see usr_toc.txt)
-    -- * Some example text (see usr_02.txt)
-    -- TODO this doesn't work in the second case
-    return ('\n==== %s \\ \n'):format(text)
+    -- In help files column_heading is used for a lot more than column headings.
+    -- Sometimes it's some sort of title (see usr_toc.txt), and sometimes it's some example
+    -- text that really should be a code block (see usr_02.txt)
+    -- Using a raw block allows us to match all use cases fairly well
+    return ('```\n%s\n```\n'):format(trimmed)
   elseif node_name == 'block' then
     if is_blank(text) then
       return ''
