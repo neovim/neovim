@@ -20,10 +20,11 @@ local function edit(path)
   api.nvim_cmd({ cmd = 'edit', args = { path }, magic = { file = false, bar = false } }, {})
 end
 
-local function clear_zip()
+---@param value? string
+local function clear_zip(value)
   n.clear({
     args_rm = { '-u' },
-    args = { '--cmd', 'let g:nvim_zip_plugin = 1' },
+    args = { '--cmd', ('let g:nvim_zip_plugin = %s'):format(value or '1') },
   })
 end
 
@@ -62,6 +63,53 @@ describe('nvim.zip', function()
 
     eq(true, lines()[1]:find('" zip.vim version', 1, true) ~= nil)
     eq(false, exec_lua('return vim.g.nvim_zip_plugin == true'))
+  end)
+
+  it('selects the Lua plugin with true values only', function()
+    local archive = vim.fs.joinpath(root, 'browser.zip')
+    copy_fixture(vim.fs.joinpath(fixtures, 'browser.zip'), archive)
+
+    for _, case in ipairs({
+      { value = '0', lua = false },
+      { value = 'v:false', lua = false },
+      { value = "''", lua = false },
+      { value = '1', lua = true },
+      { value = 'v:true', lua = true },
+    }) do
+      clear_zip(case.value)
+      edit(archive)
+
+      eq(case.lua, lines()[1] == 'folder/')
+      eq(not case.lua, exec_lua('return vim.g.loaded_zipPlugin ~= nil'))
+      eq(
+        case.lua and 2 or 0,
+        exec_lua(function()
+          local ok, autocmds = pcall(vim.api.nvim_get_autocmds, { group = 'nvim.zip' })
+          local ids = {}
+          for _, autocmd in ipairs(ok and autocmds or {}) do
+            ids[autocmd.id] = true
+          end
+          return vim.tbl_count(ids)
+        end)
+      )
+    end
+  end)
+
+  it('can source the Lua plugin repeatedly', function()
+    clear_zip()
+
+    eq(
+      2,
+      exec_lua(function()
+        vim.cmd.runtime('plugin/zip.lua')
+        vim.cmd.runtime('plugin/zip.lua')
+        local ids = {}
+        for _, autocmd in ipairs(vim.api.nvim_get_autocmds({ group = 'nvim.zip' })) do
+          ids[autocmd.id] = true
+        end
+        return vim.tbl_count(ids)
+      end)
+    )
   end)
 
   it('opens zip-compatible file types', function()
