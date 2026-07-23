@@ -37,6 +37,7 @@
 #include "nvim/optionstr.h"
 #include "nvim/os/fs.h"
 #include "nvim/plines.h"
+#include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
@@ -186,6 +187,18 @@ int win_border_height(win_T *wp)
 int win_border_width(win_T *wp)
 {
   return wp->w_border_adj[1] + wp->w_border_adj[3];
+}
+
+/// Number of display lines the buffer takes from `from` to its last line when
+/// the window is `width` columns wide.  'w_view_width' is restored.
+int win_float_text_height(win_T *wp, linenr_T from, int width)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int saved_view_width = wp->w_view_width;
+  wp->w_view_width = width;
+  int height = MAX(plines_m_win(wp, from, wp->w_buffer->b_ml.ml_line_count, Rows), 1);
+  wp->w_view_width = saved_view_width;
+  return height;
 }
 
 void win_config_float(win_T *wp, WinConfig fconfig)
@@ -454,7 +467,9 @@ win_T *win_float_special(bool enter, bool new_buf, WinKind kind)
   config.style = kWinStyleMinimal;
   Error err = ERROR_INIT;
   bool preview = kind == kWinPreview;
-  if (preview && !win_previewpopup_config(&config)) {
+  bool info = kind == kWinInfo;
+  if ((preview || info)
+      && !win_popupopt_config(preview ? kOptPreviewpopup : kOptCompletepopup, &config)) {
     emsg(_(e_invarg));
     return NULL;
   }
@@ -551,10 +566,7 @@ void win_float_update_preview(win_T *wp)
   want_w = MIN(want_w, Columns);
 
   if (want_h == 0) {
-    int saved_view_width = wp->w_view_width;
-    wp->w_view_width = want_w;
-    want_h = MAX(plines_m_win(wp, 1, last, Rows), 1);
-    wp->w_view_width = saved_view_width;
+    want_h = win_float_text_height(wp, 1, want_w);
   }
   want_h = MIN(want_h, Rows);
 
@@ -579,25 +591,41 @@ void win_float_update_preview(win_T *wp)
   win_config_float(wp, wp->w_config);
 }
 
-/// Applies 'previewpopup' ("height:N,width:N,border:style") to `config`.
+/// Applies 'previewpopup' or 'completepopup' ("height:N,width:N,border:style")
+/// to `config`.  'completepopup' additionally accepts "align:item|menu", which
+/// is applied with pum_set_align().
+///
+/// @param opt_idx  kOptPreviewpopup or kOptCompletepopup.
 ///
 /// @return false on an invalid value; caller emits E474.
-bool win_previewpopup_config(WinConfig *config)
+bool win_popupopt_config(OptIndex opt_idx, WinConfig *config)
   FUNC_ATTR_NONNULL_ALL
 {
-  OptKeyDict_pvp *v = opt_keyset(p_pvp, kOptPreviewpopup, NULL);
-
-  if ((HAS_KEY(v, pvp, height) && v->height < 1) || (HAS_KEY(v, pvp, width) && v->width < 1)) {
-    return false;
-  }
-  config->height = HAS_KEY(v, pvp, height) ? (int)v->height : 0;
-  config->width = HAS_KEY(v, pvp, width) ? (int)v->width : 0;
-
-  // Use 'previewpopup' border if set, else fallback to 'winborder'.
+  // Basic validation was done by opt_strings_check; do more validation here.
   char *border = NULL;
-  if (HAS_KEY(v, pvp, border)) {
-    border = v->border;
-  } else if (*p_winborder != NUL) {
+
+  if (opt_idx == kOptCompletepopup) {
+    OptKeyDict_cpp *v = opt_keyset(p_cpp, opt_idx, NULL);
+    if ((HAS_KEY(v, cpp, height) && v->height < 1) || (HAS_KEY(v, cpp, width) && v->width < 1)) {
+      return false;
+    }
+    config->height = HAS_KEY(v, cpp, height) ? (int)v->height : 0;
+    config->width = HAS_KEY(v, cpp, width) ? (int)v->width : 0;
+    border = HAS_KEY(v, cpp, border) ? v->border : NULL;
+    pum_set_align(HAS_KEY(v, cpp, align) && strequal(v->align, "item") ? kPumAlignItem
+                                                                       : kPumAlignMenu);
+  } else {
+    OptKeyDict_pvp *v = opt_keyset(p_pvp, opt_idx, NULL);
+    if ((HAS_KEY(v, pvp, height) && v->height < 1) || (HAS_KEY(v, pvp, width) && v->width < 1)) {
+      return false;
+    }
+    config->height = HAS_KEY(v, pvp, height) ? (int)v->height : 0;
+    config->width = HAS_KEY(v, pvp, width) ? (int)v->width : 0;
+    border = HAS_KEY(v, pvp, border) ? v->border : NULL;
+  }
+
+  // Use the option's border if set, else fall back to 'winborder'.
+  if (border == NULL && *p_winborder != NUL) {
     border = p_winborder;
   }
   if (border != NULL) {

@@ -2718,24 +2718,41 @@ const char *check_chars_options(void)
 const char *did_set_previewpopup(optset_T *args)
 {
   WinConfig fconfig = WIN_CONFIG_INIT;
-  if (!win_previewpopup_config(&fconfig)) {
+  if (!win_popupopt_config(kOptPreviewpopup, &fconfig)) {
     return e_invarg;
   }
   return NULL;
 }
 
+/// The 'completepopup' option is changed.
+const char *did_set_completepopup(optset_T *args)
+{
+  WinConfig fconfig = WIN_CONFIG_INIT;
+  if (!win_popupopt_config(kOptCompletepopup, &fconfig)) {
+    return e_invarg;
+  }
+
+  win_float_close(kWinInfo);
+  return NULL;
+}
+
+/// Expand the sub-options of 'previewpopup' and 'completepopup'.
 int expand_set_popupoption(optexpand_T *args, int *numMatches, char ***matches)
 {
   expand_T *xp = args->oe_xp;
 
   if (xp->xp_pattern > args->oe_set_arg && *(xp->xp_pattern - 1) == ':') {
     if (completing_value_for_subopt(args, "border")) {
+      // Since they use the same border value, there is no need to differentiate them.
       return expand_set_opt_string(args, opt_pvp_border_values,
                                    ARRAY_SIZE(opt_pvp_border_values) - 1, numMatches, matches);
     }
-    return FAIL;  // "height:"/"width:" = number, nothing to complete.
+    if (args->oe_idx == kOptCompletepopup && completing_value_for_subopt(args, "align")) {
+      return expand_set_opt_string(args, opt_cpp_align_values,
+                                   ARRAY_SIZE(opt_cpp_align_values) - 1, numMatches, matches);
+    }
+    return FAIL;    // "height:"/"width:" = number, nothing to complete.
   }
 
-  return expand_set_opt_string(args, opt_pvp_values, ARRAY_SIZE(opt_pvp_values) - 1,
-                               numMatches, matches);
+  return expand_set_str_generic(args, numMatches, matches);
 }
