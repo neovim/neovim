@@ -1730,6 +1730,7 @@ local filename = {
   ['.vscodeignore'] = 'gitignore',
   ['gitolite.conf'] = 'gitolite',
   ['git-rebase-todo'] = 'gitrebase',
+  ['.git-blame-ignore-revs'] = 'gitrevlist',
   gkrellmrc = 'gkrellmrc',
   ['.gnashrc'] = 'gnash',
   ['.gnashpluginrc'] = 'gnash',
