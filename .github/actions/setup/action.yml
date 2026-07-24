@@ -27,5 +27,9 @@ runs:
       run: ./.github/scripts/install_deps.sh ${INSTALL_FLAGS}
       shell: bash
 
+    - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+      with:
+        version: 0.15.2
+
     - name: Cache
       uses: ./.github/actions/cache

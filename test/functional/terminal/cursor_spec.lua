@@ -45,6 +45,28 @@ describe(':terminal cursor', function()
     ]])
   end)
 
+  it("uses the t: block of 'guicursor' as the terminal default cursor", function()
+    command('set guicursor=t:hor20-blinkon500-blinkoff500')
+
+    tt.feed_data('\027[6 q')
+    screen:expect({
+      condition = function()
+        eq('vertical', screen._mode_info[terminal_mode_idx].cursor_shape)
+        eq(0, screen._mode_info[terminal_mode_idx].blinkon)
+        eq(0, screen._mode_info[terminal_mode_idx].blinkoff)
+      end,
+    })
+
+    tt.feed_data('\027[0 q')
+    screen:expect({
+      condition = function()
+        eq('horizontal', screen._mode_info[terminal_mode_idx].cursor_shape)
+        eq(500, screen._mode_info[terminal_mode_idx].blinkon)
+        eq(500, screen._mode_info[terminal_mode_idx].blinkoff)
+      end,
+    })
+  end)
+
   it('is highlighted when not focused', function()
     feed('<c-\\><c-n>')
     screen:expect([[
@@ -313,8 +335,8 @@ describe(':terminal cursor', function()
         tty ready                                         |
         ^                                                  |
         {120:~~~                                               }|
+        tty ready                                         |
         rows: 2, cols: 50                                 |
-                                                          |
         {119:~~~                                               }|
         {5:-- TERMINAL --}                                    |
       ]],
@@ -333,8 +355,8 @@ describe(':terminal cursor', function()
         tty ready                                         |
         ^                                                  |
         {120:~~~                                               }|
+        tty ready                                         |
         rows: 2, cols: 50                                 |
-                                                          |
         {119:~~~                                               }|
         {5:-- TERMINAL --}                                    |
       ]],

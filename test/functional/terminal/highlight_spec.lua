@@ -132,9 +132,13 @@ it(':terminal highlight has lower precedence than editor #9964', function()
   screen:set_default_attr_ids({
     -- "Normal" highlight emitted by the child nvim process.
     N_child = {
-      foreground = tonumber('0x4040ff'),
-      background = tonumber('0xffff40'),
+      foreground = tonumber('0x7aa6da'),
+      background = tonumber('0xe7c547'),
       fg_indexed = true,
+      bg_indexed = true,
+    },
+    N_child_blank = {
+      background = tonumber('0xe7c547'),
       bg_indexed = true,
     },
     -- "Search" highlight in the parent nvim process.
@@ -142,7 +146,7 @@ it(':terminal highlight has lower precedence than editor #9964', function()
     -- "Question" highlight in the parent nvim process.
     -- note: bg is indexed as it comes from the (cterm) child, while fg isn't as it comes from (rgb) parent
     Q = {
-      background = tonumber('0xffff40'),
+      background = tonumber('0xe7c547'),
       bold = true,
       foreground = Screen.colors.SeaGreen4,
       bg_indexed = true,
@@ -168,24 +172,24 @@ it(':terminal highlight has lower precedence than editor #9964', function()
     },
   })
   screen:expect([[
-    {N_child:^child nvim                    }|
-    {N_child:line 2                        }|
-    {N_child:                              }|
+    {N_child:^child nvim}{N_child_blank:                    }|
+    {N_child:line 2}{N_child_blank:                        }|
+    {N_child_blank:                              }|
                                   |
   ]])
   command('hi Search gui=italic guifg=Red guibg=Green cterm=italic ctermfg=Red ctermbg=Green')
   feed('/nvim<cr>')
   screen:expect([[
-    {N_child:child }{S:^nvim}{N_child:                    }|
-    {N_child:line 2                        }|
-    {N_child:                              }|
+    {N_child:child }{S:^nvim}{N_child_blank:                    }|
+    {N_child:line 2}{N_child_blank:                        }|
+    {N_child_blank:                              }|
     /nvim                         |
   ]])
   command('syntax keyword Question line')
   screen:expect([[
-    {N_child:child }{S:^nvim}{N_child:                    }|
-    {Q:line}{N_child: 2                        }|
-    {N_child:                              }|
+    {N_child:child }{S:^nvim}{N_child_blank:                    }|
+    {Q:line}{N_child: 2}{N_child_blank:                        }|
+    {N_child_blank:                              }|
     /nvim                         |
   ]])
 end)
@@ -304,14 +308,31 @@ describe(':terminal highlight forwarding', function()
     screen:set_rgb_cterm(true)
     screen:set_default_attr_ids({
       [1] = { { bold = true }, { bold = true } },
-      [2] = { { fg_indexed = true, foreground = tonumber('0xe0e000') }, { foreground = 3 } },
+      [2] = { { fg_indexed = true, foreground = tonumber('0xf0c674') }, { foreground = 3 } },
       [3] = { { foreground = tonumber('0xff8000') }, {} },
+      [4] = { { undercurl = true, special = tonumber('0xf08f68') }, { undercurl = true } },
+      [5] = { { undercurl = true }, { undercurl = true } },
     })
     command(("enew | call jobstart(['%s'], {'term':v:true})"):format(testprg('tty-test')))
     feed('i')
     screen:expect([[
       tty ready                                         |
       ^                                                  |
+                                                        |*4
+      {1:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('will handle colored underline', function()
+    tt.set_undercurl()
+    tt.feed_termcode('[58:2::240:143:104m')
+    tt.feed_data('color')
+    tt.feed_termcode('[59m')
+    tt.feed_data('plain')
+    tt.clear_attrs()
+    screen:expect([[
+      tty ready                                         |
+      {4:color}{5:plain}^                                        |
                                                         |*4
       {1:-- TERMINAL --}                                    |
     ]])

@@ -195,8 +195,8 @@ describe(':terminal buffer', function()
       ab^c                                               |
       {100:~                                                 }|
       {3:==========                                        }|
+      tty ready                                         |
       rows: 2, cols: 50                                 |
-                                                        |
       {119:==========                                        }|
                                                         |
     ]])
@@ -388,8 +388,8 @@ describe(':terminal buffer', function()
     command('file foo | enew | vsplit')
     api.nvim_set_current_buf(term_buf)
     screen:expect([[
-      tty ready                │                        |
-      ^rows: 5, cols: 25        │{100:~                       }|
+      ^tty ready                │                        |
+      rows: 5, cols: 25        │{100:~                       }|
                                │{100:~                       }|*3
       {120:foo [-]                   }{2:[No Name]               }|
                                                         |
@@ -397,8 +397,8 @@ describe(':terminal buffer', function()
 
     feed('<C-^><C-W><C-O><C-^>')
     screen:expect([[
-      tty ready                                         |
-      ^rows: 5, cols: 25                                 |
+      ^tty ready                                         |
+      rows: 5, cols: 25                                 |
       rows: 6, cols: 50                                 |
                                                         |*4
     ]])
@@ -582,9 +582,9 @@ describe(':terminal buffer', function()
         {5:-- TERMINAL --}                                    |
       ]])
       api.nvim_input_mouse('right', 'press', '', 0, 0, 25)
-      screen:expect({ any = vim.pesc('"!!^') })
+      screen:expect({ any = vim.pesc('"!!') })
       api.nvim_input_mouse('right', 'release', '', 0, 0, 25)
-      screen:expect({ any = vim.pesc('#!!^') })
+      screen:expect({ any = vim.pesc('#!!') })
       vim.uv.kill(pid, 'sigstop')
       local s1 = [[
         rows: 6, cols: 25       │rows: 6, cols: 25        |
@@ -615,14 +615,14 @@ describe(':terminal buffer', function()
         rows: 6, cols: 25       │rows: 6, cols: 25        |
         mouse enabled           │mouse enabled            |
                                 │                         |*3
-           #!!                  │   #!!^                   |
+        #!!                     │#!!^                      |
         {5:-- TERMINAL --}                                    |
       ]])
       -- Mouse is forwarded after process is resumed.
       api.nvim_input_mouse('right', 'press', '', 0, 0, 28)
-      screen:expect({ any = vim.pesc('"$!^') })
+      screen:expect({ any = vim.pesc('"$!') })
       api.nvim_input_mouse('right', 'release', '', 0, 0, 28)
-      screen:expect({ any = vim.pesc('#$!^') })
+      screen:expect({ any = vim.pesc('#$!') })
     end
 
     it('resumed by an external signal', function()
@@ -645,6 +645,7 @@ describe(':terminal buffer', function()
 
     local screen = Screen.new(50, 7)
     screen:add_extra_attr_ids({
+      Blank = { background = Screen.colors.NvimLightGrey2 },
       [100] = {
         foreground = Screen.colors.NvimDarkGrey2,
         background = Screen.colors.NvimLightGrey2,
@@ -661,14 +662,13 @@ describe(':terminal buffer', function()
     command('set shell=fish termguicolors')
     command(('terminal %s -u NONE -i NONE'):format(fn.shellescape(nvim_prog)))
     command('startinsert')
-    local s0 = [[
-      {100:^                                                  }|
-      {101:~                                                 }|*3
+    screen:expect([[
+      {Blank:^                                                  }|
+      {101:~}{Blank:                                                 }|*3
       {102:[No Name]                       0,0-1          All}|
-      {100:                                                  }|
+      {Blank:                                                  }|
       {5:-- TERMINAL --}                                    |
-    ]]
-    screen:expect(s0)
+    ]])
     feed('<C-Z>')
     screen:expect([[
                                                         |*5
@@ -676,7 +676,13 @@ describe(':terminal buffer', function()
       {5:-- TERMINAL --}                                    |
     ]])
     feed('<Space>')
-    screen:expect(s0)
+    screen:expect([[
+      {Blank:^                                                  }|
+      {101:~}{Blank:                                                 }|*3
+      {102:[No Name]                       0,0-1          All}|
+      {100:                                                  }|
+      {5:-- TERMINAL --}                                    |
+    ]])
   end)
 
   it('term_close() use-after-free #4393', function()
@@ -703,6 +709,23 @@ describe(':terminal buffer', function()
       eq(termbuf, eval('g:termbuf'))
     end)
 
+    it('emits event if autocommand is created before sequence terminates', function()
+      command('autocmd! nvim.terminal TermRequest')
+      local term = api.nvim_open_term(0, {})
+      api.nvim_chan_send(term, '\027]777;part')
+
+      exec_lua([[
+        vim.api.nvim_create_autocmd('TermRequest', {
+          callback = function(ev)
+            _G.termrequest_sequence = ev.data.sequence
+          end,
+        })
+      ]])
+      api.nvim_chan_send(term, 'ial\027\\')
+
+      eq('\027]777;partial', exec_lua('return _G.termrequest_sequence'))
+    end)
+
     it('emits events for APC', function()
       local term = api.nvim_open_term(0, {})
 
@@ -726,18 +749,18 @@ describe(':terminal buffer', function()
         })
         vim.api.nvim_create_autocmd('TermRequest', {
           callback = function(ev)
-            if ev.data.sequence == '\027]11;?' then
-              table.insert(_G.input, '\027]11;rgb:0000/0000/0000\027\\')
+            if ev.data.sequence == '\027]777;?' then
+              table.insert(_G.input, '\027]777;ok\027\\')
             end
           end
         })
         return term
       ]])
-      api.nvim_chan_send(term, '\027]11;?\007\027[5n\027]11;?\007\027[5n')
+      api.nvim_chan_send(term, '\027]777;?\007\027[5n\027]777;?\007\027[5n')
       eq({
-        '\027]11;rgb:0000/0000/0000\027\\',
+        '\027]777;ok\027\\',
         '\027[0n',
-        '\027]11;rgb:0000/0000/0000\027\\',
+        '\027]777;ok\027\\',
         '\027[0n',
       }, exec_lua('return _G.input'))
     end)
@@ -803,7 +826,7 @@ describe(':terminal buffer', function()
         world!^                                            |
         {5:-- TERMINAL --}                                    |
       ]])
-      eq({ 22, 6 }, exec_lua('return _G.cursor'))
+      eq({ 21, 6 }, exec_lua('return _G.cursor'))
 
       api.nvim_chan_send(term, '\nHello\027]133;D\027\\\nworld!\n')
       screen:expect([[
@@ -815,7 +838,7 @@ describe(':terminal buffer', function()
         ^                                                  |
         {5:-- TERMINAL --}                                    |
       ]])
-      eq({ 23, 5 }, exec_lua('return _G.cursor'))
+      eq({ 22, 5 }, exec_lua('return _G.cursor'))
 
       api.nvim_chan_send(term, 'Hello\027]133;D\027\\\nworld!' .. ('\n'):rep(6))
       screen:expect([[
@@ -840,7 +863,7 @@ describe(':terminal buffer', function()
         world!^                                            |
         {5:-- TERMINAL --}                                    |
       ]])
-      eq({ 19, 6 }, exec_lua('return _G.cursor'))
+      eq({ 18, 6 }, exec_lua('return _G.cursor'))
 
       api.nvim_chan_send(term, '\nHello\027]133;D\027\\\nworld!\n')
       screen:expect([[
@@ -852,7 +875,7 @@ describe(':terminal buffer', function()
         ^                                                  |
         {5:-- TERMINAL --}                                    |
       ]])
-      eq({ 17, 5 }, exec_lua('return _G.cursor'))
+      eq({ 16, 5 }, exec_lua('return _G.cursor'))
 
       api.nvim_chan_send(term, 'Hello\027]133;D\027\\\nworld!' .. ('\n'):rep(6))
       screen:expect([[
@@ -935,6 +958,27 @@ describe(':terminal buffer', function()
         assert_alive()
       end)
     end)
+  end)
+
+  it('reports color scheme queries', function()
+    local function assert_color_scheme(background, response)
+      command('enew!')
+      command('set background=' .. background)
+      local term = exec_lua(function()
+        _G.input_data = ''
+        return vim.api.nvim_open_term(0, {
+          on_input = function(_, _, _, data)
+            _G.input_data = _G.input_data .. data
+          end,
+        })
+      end)
+
+      api.nvim_chan_send(term, '\027[?996n')
+      eq(response, exec_lua('return _G.input_data'))
+    end
+
+    assert_color_scheme('dark', '\027[?997;1n')
+    assert_color_scheme('light', '\027[?997;2n')
   end)
 
   it('no heap-buffer-overflow when using jobstart("echo",{term=true}) #3161', function()
@@ -1100,13 +1144,13 @@ describe(':terminal buffer', function()
     local screen = Screen.new(50, 7)
     feed 'i'
     local chan = api.nvim_open_term(0, {})
-    api.nvim_chan_send(chan, '\239\187\191') -- '\xef\xbb\xbf'
+    api.nvim_chan_send(chan, '\239\191\191') -- U+FFFF
     screen:expect([[
-      {18:<feff>}^                                            |
+      {18:<ffff>}^                                            |
                                                         |*5
       {5:-- TERMINAL --}                                    |
     ]])
-    eq('\239\187\191', api.nvim_get_current_line())
+    eq('\239\191\191', api.nvim_get_current_line())
   end)
 
   it("handles bell respecting 'belloff' and 'visualbell'", function()
@@ -1538,6 +1582,22 @@ describe('terminal input', function()
     eq('aaa\0bbb', exec_lua([[return _G.input_data]]))
   end)
 
+  it('sends normal-mode keypad keys as generated text', function()
+    feed('<KP0><KP1><KP3><KP5><KP7><KP9>')
+    feed('<KPPeriod><KPDiv><KPMult><KPMinus><KPPlus><KPComma><KPEquals>')
+    eq('013579./*-+,=', exec_lua([[return _G.input_data]]))
+  end)
+
+  it('sends super-modified keys', function()
+    feed('<D-Left>')
+    eq('\027[1;9D', exec_lua([[return _G.input_data]]))
+
+    api.nvim_chan_send(chan, '\027[>1u')
+    poke_eventloop()
+    feed('<D-w>')
+    eq('\027[1;9D\027[119;9u', exec_lua([[return _G.input_data]]))
+  end)
+
   it('unknown special keys are not sent', function()
     feed('aaa<Help>bbb')
     eq('aaabbb', exec_lua([[return _G.input_data]]))
@@ -1590,7 +1650,7 @@ describe('terminal input', function()
     })
     screen:expect([[
       ^                                                  |
-      {100:~                                                 }|*3
+      {100:~}                                                 |*3
       {3:[No Name]                       0,0-1          All}|
                                                         |
       {5:-- TERMINAL --}                                    |
@@ -1685,7 +1745,7 @@ describe('terminal input', function()
       feed(key)
       screen:expect(([[
                                                           |
-        {100:~                                                 }|*3
+        {100:~}                                                 |*3
         {3:[No Name]                       0,0-1          All}|
         %s^ {MATCH: *}|
         {5:-- TERMINAL --}                                    |

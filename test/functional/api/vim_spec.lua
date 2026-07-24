@@ -4299,16 +4299,16 @@ describe('API', function()
     before_each(function()
       screen = Screen.new(100, 35)
       screen:add_extra_attr_ids {
-        [100] = { background = tonumber('0xffff40'), bg_indexed = true },
+        [100] = { background = tonumber('0xe7c547'), bg_indexed = true },
         [101] = {
           background = Screen.colors.LightMagenta,
-          foreground = tonumber('0x00e000'),
+          foreground = tonumber('0xb5bd68'),
           fg_indexed = true,
         },
         [102] = { background = Screen.colors.LightMagenta, reverse = true },
         [103] = { background = Screen.colors.LightMagenta, bold = true, reverse = true },
-        [104] = { fg_indexed = true, foreground = tonumber('0xe00000') },
-        [105] = { fg_indexed = true, foreground = tonumber('0xe0e000') },
+        [104] = { fg_indexed = true, foreground = tonumber('0xcc6666') },
+        [105] = { fg_indexed = true, foreground = tonumber('0xf0c674') },
       }
     end)
 
