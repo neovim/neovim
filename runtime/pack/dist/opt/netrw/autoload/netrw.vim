@@ -1,7 +1,7 @@
 " Creator:    Charles E Campbell
 " Previous Maintainer: Luca Saccarola <github.e41mv@aleeas.com>
 " Maintainer: This runtime file is looking for a new maintainer.
-" Last Change: 2026 Jul 22
+" Last Change: 2026 Jul 23
 " Copyright:  Copyright (C) 2016 Charles E. Campbell {{{1
 "             Permission is hereby granted to use and distribute this code,
 "             with or without modifications, provided that this copyright
@@ -375,7 +375,7 @@ if has("win32")
 else
   call s:NetrwInit("g:netrw_glob_escape",'*[]?`{~$\')
 endif
-call s:NetrwInit("g:netrw_menu_escape",'.&? \')
+call s:NetrwInit("g:netrw_menu_escape",'.&? \|')
 call s:NetrwInit("s:netrw_map_escape","<|\n\r\\\<C-V>\"")
 if has("gui_running") && (&enc == 'utf-8' || &enc == 'utf-16' || &enc == 'ucs-4')
   let s:treedepthstring= "│ "
@@ -3777,13 +3777,14 @@ function s:NetrwBookmarkMenu()
         if exists("g:netrw_bookmarklist") && g:netrw_bookmarklist != [] && g:netrw_dirhistmax > 0
             let cnt= 1
             for bmd in g:netrw_bookmarklist
-                let bmd= escape(bmd,g:netrw_menu_escape)
+                let ebmd= escape(bmd,g:netrw_menu_escape)
+                let fbmd= escape(fnameescape(bmd),'|')
 
                 " show bookmarks for goto menu
-                exe 'sil! menu '.g:NetrwMenuPriority.".2.".cnt." ".g:NetrwTopLvlMenu.'Bookmarks.'.bmd.'    :e '.bmd."\<cr>"
+                exe 'sil! menu '.g:NetrwMenuPriority.".2.".cnt." ".g:NetrwTopLvlMenu.'Bookmarks.'.ebmd.'    :e '.fbmd."\<cr>"
 
                 " show bookmarks for deletion menu
-                exe 'sil! menu '.g:NetrwMenuPriority.".8.2.".cnt." ".g:NetrwTopLvlMenu.'Bookmarks\ and\ History.Bookmark\ Delete.'.bmd.'   '.cnt."mB"
+                exe 'sil! menu '.g:NetrwMenuPriority.".8.2.".cnt." ".g:NetrwTopLvlMenu.'Bookmarks\ and\ History.Bookmark\ Delete.'.ebmd.'   '.cnt."mB"
                 let cnt= cnt + 1
             endfor
 
@@ -3799,7 +3800,8 @@ function s:NetrwBookmarkMenu()
                 let priority = g:netrw_dirhistcnt + histcnt
                 if exists("g:netrw_dirhist_{cnt}")
                     let histdir= escape(g:netrw_dirhist_{cnt},g:netrw_menu_escape)
-                    exe 'sil! menu '.g:NetrwMenuPriority.".3.".priority." ".g:NetrwTopLvlMenu.'History.'.histdir.'    :e '.histdir."\<cr>"
+                    let ehistdir= escape(fnameescape(g:netrw_dirhist_{cnt}),'|')
+                    exe 'sil! menu '.g:NetrwMenuPriority.".3.".priority." ".g:NetrwTopLvlMenu.'History.'.histdir.'    :e '.ehistdir."\<cr>"
                 endif
                 let first = 0
                 let cnt   = ( cnt - 1 ) % g:netrw_dirhistmax
@@ -7156,7 +7158,7 @@ function s:NetrwTgtMenu()
                 let tgtdict[bmd]= cnt
                 let ebmd= escape(bmd,g:netrw_menu_escape)
                 " show bookmarks for goto menu
-                exe 'sil! menu <silent> '.g:NetrwMenuPriority.".19.1.".cnt." ".g:NetrwTopLvlMenu.'Targets.'.ebmd." :call netrw#MakeTgt('".bmd."')\<cr>"
+                exe 'sil! menu <silent> '.g:NetrwMenuPriority.".19.1.".cnt." ".g:NetrwTopLvlMenu.'Targets.'.ebmd." :call netrw#MakeTgt(".escape(string(bmd),'|').")\<cr>"
                 let cnt= cnt + 1
             endfor
         endif
@@ -7174,7 +7176,7 @@ function s:NetrwTgtMenu()
                     endif
                     let tgtdict[histentry] = histcnt
                     let ehistentry         = escape(histentry,g:netrw_menu_escape)
-                    exe 'sil! menu <silent> '.g:NetrwMenuPriority.".19.2.".priority." ".g:NetrwTopLvlMenu.'Targets.'.ehistentry."     :call netrw#MakeTgt('".histentry."')\<cr>"
+                    exe 'sil! menu <silent> '.g:NetrwMenuPriority.".19.2.".priority." ".g:NetrwTopLvlMenu.'Targets.'.ehistentry."     :call netrw#MakeTgt(".escape(string(histentry),'|').")\<cr>"
                 endif
                 let histcnt = histcnt + 1
             endwhile
