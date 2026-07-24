@@ -8,6 +8,7 @@ set_target_properties(nvim_bin
   PROPERTIES
   EXPORT_COMPILE_COMMANDS ON
   ENABLE_EXPORTS TRUE
+  WINDOWS_EXPORT_ALL_SYMBOLS TRUE
   OUTPUT_NAME nvim)
 
 #-------------------------------------------------------------------------------
