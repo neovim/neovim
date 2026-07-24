@@ -171,10 +171,11 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
         // Don't close the file descriptor, as that may cause later writes to stderr
         // to go to an unrelated file. Redirect it to NUL or /dev/null instead.
 #ifdef MSWIN
-        freopen("NUL:", "w", stderr);
+        FILE *const fp = freopen("NUL:", "w", stderr);
 #else
-        freopen("/dev/null", "w", stderr);
+        FILE *const fp = freopen("/dev/null", "w", stderr);
 #endif
+        (void)fp;
       }
       channel_decref(chan);
     }
@@ -1038,6 +1039,9 @@ Dict channel_info(uint64_t id, Arena *arena)
   case kChannelStreamSocket:
     stream_desc = "socket";
     break;
+
+  default:
+    UNREACHABLE;
   }
   PUT_C(info, "stream", CSTR_AS_OBJ(stream_desc));
 
