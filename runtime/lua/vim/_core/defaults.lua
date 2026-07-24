@@ -592,6 +592,17 @@ do
     end
   end)
 
+  nvim_on({ 'TermOpen' }, nvim_terminal_augroup, {
+    desc = 'Set up BufWriteCmd for terminal state persistence',
+  }, function(args)
+    vim.api.nvim_create_autocmd('BufWriteCmd', {
+      group = nvim_terminal_augroup,
+      buffer = args.buf,
+      callback = require('vim._core.terminal').save,
+      desc = 'Save terminal state as msgpack on :write',
+    })
+  end)
+
   local nvim_terminal_exitmsg_ns = vim.api.nvim_create_namespace('nvim.terminal.exitmsg')
 
   --- @param buf integer

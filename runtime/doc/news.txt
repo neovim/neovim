@@ -356,7 +356,9 @@ STARTUP
 
 TERMINAL
 
-• todo
+• |:write| in a terminal buffer exports the rendered terminal state as a
+  msgpack file at |stdpath()|/term/. An explicit path (e.g. `:w foo`) writes
+  to that path.
 
 TREESITTER
 

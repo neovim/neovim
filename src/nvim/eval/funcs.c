@@ -7514,6 +7514,36 @@ static void f_taglist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
            (char *)tag_pattern, (char *)fname);
 }
 
+/// "term_getansi({buf} [, {start} [, {end}]])" function
+static void f_term_getansi(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+  FUNC_ATTR_NONNULL_ALL
+{
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = NULL;
+
+  buf_T *const buf = tv_get_buf_from_arg(&argvars[0]);
+  if (buf == NULL || buf->terminal == NULL) {
+    return;
+  }
+
+  if (terminal_in_altscreen(buf->terminal)) {
+    emsg(_(e_cant_write_terminal_altscreen));
+    return;
+  }
+
+  linenr_T start = 1;
+  linenr_T end = 0;
+  if (argvars[1].v_type != VAR_UNKNOWN) {
+    start = (linenr_T)tv_get_number(&argvars[1]);
+  }
+  if (argvars[2].v_type != VAR_UNKNOWN) {
+    end = (linenr_T)tv_get_number(&argvars[2]);
+  }
+
+  String ansi = terminal_get_ansi(buf->terminal, start, end);
+  rettv->vval.v_string = ansi.data;
+}
+
 /// "timer_info([timer])" function
 static void f_timer_info(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {

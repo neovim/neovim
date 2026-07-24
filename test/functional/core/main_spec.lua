@@ -218,6 +218,7 @@ describe('vim._core', function()
       'vim._core.system',
       'vim._core.table',
       'vim._core.tag',
+      'vim._core.terminal',
       'vim._core.time',
       'vim._core.ui',
       'vim._core.ui2',

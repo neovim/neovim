@@ -1892,12 +1892,14 @@ int do_write(exarg_T *eap)
   // Writing to the current file is not allowed in readonly mode
   // and a file name is required.
   // "nofile" and "nowrite" buffers cannot be written implicitly either.
-  if (!other && (bt_dontwrite_msg(curbuf)
-                 || check_fname() == FAIL
+  // Terminal buffers use BufWriteCmd for state export, so let them reach buf_write().
+  if (!other && !curbuf->terminal
+      && (bt_dontwrite_msg(curbuf)
+          || check_fname() == FAIL
 #ifdef UNIX
-                 || check_writable(curbuf->b_ffname) == FAIL
+          || check_writable(curbuf->b_ffname) == FAIL
 #endif
-                 || check_readonly(&eap->forceit, curbuf))) {
+          || check_readonly(&eap->forceit, curbuf))) {
     goto theend;
   }
 
@@ -1921,6 +1923,12 @@ int do_write(exarg_T *eap)
         goto theend;
       }
     }
+  }
+
+  // Terminal buffers export rendered state as msgpack, and appending is not supported.
+  if (curbuf->terminal && eap->append) {
+    emsg(_(e_cant_append_terminal_state));
+    goto theend;
   }
 
   if (check_overwrite(eap, curbuf, fname, ffname, other) == OK) {
