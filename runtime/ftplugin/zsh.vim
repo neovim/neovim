@@ -2,7 +2,7 @@
 " Language:             Zsh shell script
 " Maintainer:           Christian Brabandt <cb@256bit.org>
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2025 Jul 23
+" Latest Revision:      2026 Jul 23
 " License:              Vim (see :h license)
 " Repository:           https://github.com/chrisbra/vim-zsh
 
@@ -25,9 +25,9 @@ endif
 
 if executable('zsh') && &shell !~# '/\%(nologin\|false\)$'
   if exists(':terminal') == 2
-    command! -buffer -nargs=1 ZshKeywordPrg silent exe ':hor :term zsh -c "autoload -Uz run-help; run-help <args>"'
-  else
-    command! -buffer -nargs=1 ZshKeywordPrg echo system('MANPAGER= zsh -c "autoload -Uz run-help; run-help <args> 2>/dev/null"')
+    command! -buffer -nargs=1 ZshKeywordPrg call term_start(['zsh', '-c', 'autoload -Uz run-help; run-help "$1"', '--', <q-args>])
+  elseif has("patch-9.2.0250")
+    command! -buffer -nargs=1 ZshKeywordPrg echo system(['zsh', '-c', 'autoload -Uz run-help; MANPAGER= run-help "$1" 2>/dev/null', '--', <q-args>])
   endif
   setlocal keywordprg=:ZshKeywordPrg
   let b:undo_ftplugin .= '| setl keywordprg< | sil! delc -buffer ZshKeywordPrg'
