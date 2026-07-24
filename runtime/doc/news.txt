@@ -354,6 +354,10 @@ PERFORMANCE
 
 PLUGINS
 
+• The zip plugin is now |zip.lua|, a read-only archive browser built on |dir|.
+  To use the legacy plugin instead: >
+  :packadd zip
+<
 • provider: add bun support for Node.js plugins
 
 STARTUP
