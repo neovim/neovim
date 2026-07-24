@@ -816,6 +816,8 @@ static void config_put_bordertext(Dict(win_config) *config, WinConfig *fconfig,
   case kAlignRight:
     pos = "right";
     break;
+  default:
+    UNREACHABLE;
   }
 
   switch (bordertext_type) {
