@@ -37,6 +37,7 @@
 #include "nvim/optionstr.h"
 #include "nvim/os/fs.h"
 #include "nvim/plines.h"
+#include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
@@ -186,6 +187,18 @@ int win_border_height(win_T *wp)
 int win_border_width(win_T *wp)
 {
   return wp->w_border_adj[1] + wp->w_border_adj[3];
+}
+
+/// Number of display lines the buffer takes from `from` to its last line when
+/// the window is `width` columns wide.  'w_view_width' is restored.
+int win_float_text_height(win_T *wp, linenr_T from, int width)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int saved_view_width = wp->w_view_width;
+  wp->w_view_width = width;
+  int height = MAX(plines_m_win(wp, from, wp->w_buffer->b_ml.ml_line_count, Rows), 1);
+  wp->w_view_width = saved_view_width;
+  return height;
 }
 
 void win_config_float(win_T *wp, WinConfig fconfig)
@@ -447,7 +460,11 @@ win_T *win_float_special(bool enter, bool new_buf, WinKind kind)
   config.style = kWinStyleMinimal;
   Error err = ERROR_INIT;
   bool preview = kind == kWinPreview;
-  if (preview && !win_previewpopup_config(p_pvp, &config)) {
+  bool info = kind == kWinInfo;
+
+  if ((preview || info)
+      && !win_popupopt_config(preview ? p_pvp : p_cpp,
+                              preview ? kOptPreviewpopup : kOptCompletepopup, &config)) {
     emsg(_(e_invarg));
     return NULL;
   }
@@ -480,11 +497,14 @@ win_T *win_float_special(bool enter, bool new_buf, WinKind kind)
   wp->w_p_wrap = true;  // 'wrap' is default on
   wp->w_p_so = 0;       // 'scrolloff' zero
 
+  if (preview || info) {
+    // Zero means "not given in the option": autosize to the content.
+    wp->w_maxheight = config.height;
+    wp->w_maxwidth = config.width;
+  }
   if (preview) {
     wp->w_p_pvw = true;
     RESET_BINDING(wp);
-    wp->w_maxheight = config.height;
-    wp->w_maxwidth = config.width;
     wp->w_wantline = curwin->w_winrow + curwin->w_wrow;
     wp->w_wantcol = curwin->w_wincol + curwin->w_wcol;
   }
@@ -548,10 +568,7 @@ void win_float_update_preview(win_T *wp)
 
   int want_h = wp->w_maxheight;
   if (want_h == 0) {
-    int saved_view_width = wp->w_view_width;
-    wp->w_view_width = want_w;
-    want_h = MAX(plines_m_win(wp, 1, last, Rows), 1);
-    wp->w_view_width = saved_view_width;
+    want_h = win_float_text_height(wp, 1, want_w);
   }
   want_h = MIN(want_h, Rows);
 
@@ -576,31 +593,49 @@ void win_float_update_preview(win_T *wp)
   win_config_float(wp, wp->w_config);
 }
 
-/// Parse 'previewpopup' ("height:N,width:N,border:style") into `config`.
-///
-/// @param value  the option value to parse (e.g. 'previewpopup')
+/// Parse 'previewpopup' or 'completepopup' ("height:N,width:N,border:style")
+/// into `config`.  'completepopup' additionally accepts "align:item|menu".
 ///
 /// @return false on an invalid value; caller emits E474.
-bool win_previewpopup_config(char *value, WinConfig *config)
+bool win_popupopt_config(char *value, OptIndex opt_idx, WinConfig *config)
   FUNC_ATTR_NONNULL_ALL
 {
   // Basic validation was done by opt_strings_check; do more validation here.
-  OptKeyDict_pvp *v = opt_keyset(value, kOptPreviewpopup, NULL);
+  Integer height = 0;
+  Integer width = 0;
+  char *border = NULL;
+  PumAlign align = kPumAlignItem;
   bool ok = true;
 
-  if ((HAS_KEY(v, pvp, height) && v->height < 1) || (HAS_KEY(v, pvp, width) && v->width < 1)) {
-    ok = false;
+  if (opt_idx == kOptCompletepopup) {
+    OptKeyDict_cpp *v = opt_keyset(value, opt_idx, NULL);
+    ok = !((HAS_KEY(v, cpp, height) && v->height < 1) || (HAS_KEY(v, cpp, width) && v->width < 1));
+    height = HAS_KEY(v, cpp, height) ? v->height : 0;
+    width = HAS_KEY(v, cpp, width) ? v->width : 0;
+    border = HAS_KEY(v, cpp, border) ? v->border : NULL;
+    if (HAS_KEY(v, cpp, align) && strequal(v->align, "menu")) {
+      align = kPumAlignMenu;
+    }
+  } else {
+    OptKeyDict_pvp *v = opt_keyset(value, opt_idx, NULL);
+    ok = !((HAS_KEY(v, pvp, height) && v->height < 1) || (HAS_KEY(v, pvp, width) && v->width < 1));
+    height = HAS_KEY(v, pvp, height) ? v->height : 0;
+    width = HAS_KEY(v, pvp, width) ? v->width : 0;
+    border = HAS_KEY(v, pvp, border) ? v->border : NULL;
   }
 
-  bool has_border = HAS_KEY(v, pvp, border);
+  bool has_border = border != NULL;
   if (ok && has_border) {
     Error err = ERROR_INIT;
-    ok = parse_winborder(config, v->border, &err);
+    ok = parse_winborder(config, border, &err);
     api_clear_error(&err);
   }
+  if (ok && opt_idx == kOptCompletepopup) {
+    pum_set_align(align);
+  }
 
-  config->height = HAS_KEY(v, pvp, height) ? (int)v->height : 0;
-  config->width = HAS_KEY(v, pvp, width) ? (int)v->width : 0;
+  config->height = (int)height;
+  config->width = (int)width;
 
   if (!has_border) {
     config->border = false;
@@ -610,10 +645,8 @@ bool win_previewpopup_config(char *value, WinConfig *config)
       api_clear_error(&err);
     }
   }
-
   if (!config->border) {
     config->title = false;
   }
-
   return ok;
 }

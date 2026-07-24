@@ -1637,6 +1637,7 @@ describe('vim.lsp.completion: integration', function()
       }
       exec_lua(function()
         vim.o.completeopt = 'menuone,popup'
+        vim.o.completepopup = 'align:menu'
       end)
       create_server('dummy', completion_list, {
         resolve_result = opts.resolved_items,

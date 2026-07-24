@@ -338,6 +338,7 @@ OPTIONS
 • 'winpinned' prevents window from closing unless specifically targeted.
 • 'packlockfile' sets the path used for |vim.pack-lockfile|.
 • 'previewpopup' decides how the preview window is displayed.
+• 'completepopup' decides how the completion info window is displayed.
 
 PERFORMANCE
 

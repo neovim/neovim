@@ -20,6 +20,12 @@ typedef struct {
   int pum_user_kind_hlattr;  ///< highlight attribute for kind
 } pumitem_T;
 
+/// 'completepopup' "align": what the info window lines up with.
+typedef enum {
+  kPumAlignItem = 0,  ///< the selected item (default)
+  kPumAlignMenu,      ///< the popup menu
+} PumAlign;
+
 EXTERN ScreenGrid pum_grid INIT( = SCREEN_GRID_INIT);
 
 /// state for pum_ext_select_item.
