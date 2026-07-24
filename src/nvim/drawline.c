@@ -494,17 +494,22 @@ static void draw_foldcolumn(win_T *wp, winlinevars_T *wlv)
 }
 
 /// Get foldcolumn char based on line fold level and column, either `foldsep`, `foldinner`,
-/// or an overflow indicator. `foldopen` and `foldclosed` are set in `fill_foldcolumn`.
-/// @param first_level Lowest fold level displayed on line
+/// or an overflow indicator in the first column. `foldopen` and `foldclosed` are set in
+/// `fill_foldcolumn`.
+/// @param level Line fold level
+/// @param overflow Number of fold levels over `fdc`
 /// @param i Column index
-static inline schar_T foldcolumn_sep_char(int first_level, int i, win_T *wp)
+static inline schar_T foldcolumn_sep_char(int level, int overflow, int i, win_T *wp)
 {
-  if (first_level == 1) {
+  if (i >= level) {
+    return schar_from_ascii(' ');
+  } else if (i > 0 || overflow == 0) {
     return wp->w_p_fcs_chars.foldsep;
   } else if (wp->w_p_fcs_chars.foldinner != NUL) {
     return wp->w_p_fcs_chars.foldinner;
-  } else if (first_level + i <= 9) {
-    return schar_from_ascii('0' + first_level + i);
+  } else if (overflow <= 8) {
+    // This starts at 2 because we're replacing 2+ separators with one character
+    return schar_from_ascii('1' + overflow);
   } else {
     return schar_from_ascii('>');
   }
@@ -520,36 +525,29 @@ static inline schar_T foldcolumn_sep_char(int first_level, int i, win_T *wp)
 void fill_foldcolumn(win_T *wp, foldinfo_T foldinfo, linenr_T lnum, int attr, int fdc, bool is_virt,
                      int *wlv_off, colnr_T *out_vcol, schar_T *out_buffer)
 {
-  bool closed = foldinfo.fi_level != 0 && foldinfo.fi_lines > 0;
   int level = foldinfo.fi_level;
+  int num_folds = level != 0 ? foldinfo.fi_num_folds : 0;
+  bool closed = level != 0 && foldinfo.fi_lines > 0;
 
-  // If the column is too narrow, we start at the lowest level that
-  // fits and use numbers to indicate the depth.
-  int first_level = MAX(level - fdc - closed + 1, 1);
+  int overflow = MAX(level - fdc, 0);  // Fold levels that don't fit inside fold column
   int closedcol = MIN(fdc, level);
 
   for (int i = 0; i < fdc; i++) {
-    schar_T symbol = 0;
-    if (i >= level) {
-      symbol = schar_from_ascii(' ');
-    } else if (i == closedcol - 1 && closed) {
+    schar_T symbol;
+    if (i == closedcol - 1 && closed) {
       symbol = wp->w_p_fcs_chars.foldclosed;
-    } else if (foldinfo.fi_lnum == lnum && first_level + i >= foldinfo.fi_low_level) {
+    } else if (i >= closedcol - num_folds && i < closedcol) {
       symbol = wp->w_p_fcs_chars.foldopen;
     } else {
-      symbol = foldcolumn_sep_char(first_level, i, wp);
+      symbol = foldcolumn_sep_char(level, overflow, i, wp);
     }
 
     // We don't want to show `foldopen` or `foldclose` twice, so we compute
     // the fold level of `lnum - 1` and reuse the logic from above.
-    if (is_virt && foldinfo.fi_level != 0 && foldinfo.fi_lnum == lnum) {
-      int outer_level = MAX(foldinfo.fi_low_level - 1, 0);
-      int outer_first_level = MAX(outer_level - fdc + 1, 1);
-      if (i >= outer_level) {
-        symbol = schar_from_ascii(' ');
-      } else {
-        symbol = foldcolumn_sep_char(outer_first_level, i, wp);
-      }
+    if (is_virt && num_folds > 0) {
+      int outer_level = MAX(level - 1, 0);
+      int outer_overflow = MAX(outer_level - fdc, 0);
+      symbol = foldcolumn_sep_char(outer_level, outer_overflow, i, wp);
     }
 
     int vcol = i >= level ? -1 : (i == closedcol - 1 && closed) ? -2 : -3;

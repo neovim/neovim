@@ -200,7 +200,7 @@ bool hasFoldingWin(win_T *const win, const linenr_T lnum, linenr_T *const firstp
 
   linenr_T lnum_rel = lnum;
   int level = 0;
-  int low_level = 0;
+  int num_folds = 0;
   fold_T *fp;
   bool maybe_small = false;
   bool use_level = false;
@@ -213,9 +213,8 @@ bool hasFoldingWin(win_T *const win, const linenr_T lnum, linenr_T *const firstp
         break;
       }
 
-      // Remember lowest level of fold that starts in "lnum".
-      if (lnum_rel == fp->fd_top && low_level == 0) {
-        low_level = level + 1;
+      if (lnum_rel == fp->fd_top) {
+        num_folds += 1;
       }
 
       first += fp->fd_top;
@@ -242,7 +241,7 @@ bool hasFoldingWin(win_T *const win, const linenr_T lnum, linenr_T *const firstp
     if (infop != NULL) {
       infop->fi_level = level;
       infop->fi_lnum = lnum - lnum_rel;
-      infop->fi_low_level = low_level == 0 ? level : low_level;
+      infop->fi_num_folds = num_folds;
     }
     return false;
   }
@@ -257,7 +256,7 @@ bool hasFoldingWin(win_T *const win, const linenr_T lnum, linenr_T *const firstp
   if (infop != NULL) {
     infop->fi_level = level + 1;
     infop->fi_lnum = first;
-    infop->fi_low_level = low_level == 0 ? level + 1 : low_level;
+    infop->fi_num_folds = num_folds;
   }
   return true;
 }

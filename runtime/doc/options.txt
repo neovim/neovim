@@ -2881,8 +2881,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  foldclose	'+'		show a closed fold
 	  foldsep	'│' or '|'	open fold middle marker
 	  foldinner	none		character to show instead of the
-					numeric foldlevel when it would be
-					repeated in a narrow 'foldcolumn'
+					overflow indicator in a narrow
+					'foldcolumn'
 	  diff		'-'		deleted lines of the 'diff' option
 	  msgsep	' '		message separator 'display'
 	  eob		'~'		empty lines at the end of a buffer

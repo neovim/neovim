@@ -421,7 +421,8 @@ Options:
 - 'fileformat'  cannot be set to empty.
 - 'fillchars'   flags: "msgsep", "horiz", "horizup", "horizdown",
                 "vertleft", "vertright", "verthoriz"
-- 'foldcolumn'  supports up to 9 dynamic/fixed columns
+- 'foldcolumn'  supports up to 9 dynamic/fixed columns and shows at most a
+                single overflow indicator
 - 'guicursor'   works in the terminal (TUI)
 - 'inccommand'  shows interactive results for |:substitute|-like commands
                 and |:command-preview| commands
