@@ -857,6 +857,15 @@ function M.rm(path, opts)
   end
 end
 
+--- @class vim.fs.abspath.Opts
+--- @inlinedoc
+---
+--- Set directory to expand path relative to.
+--- @field cwd? string
+---
+--- Do not expand tilde (~) at the beginning of the path.
+--- @field plain? boolean
+
 --- Converts `path` to an absolute path. Expands tilde (~) at the beginning of the path
 --- to the user's home directory. Does not check if the path exists, normalize the path, resolve
 --- symlinks or hardlinks (including `.` and `..`), or expand environment variables. If the path is
@@ -864,14 +873,21 @@ end
 ---
 --- @since 13
 --- @param path string Path
+--- @param opts? vim.fs.abspath.Opts
 --- @return string Absolute path
-function M.abspath(path)
+function M.abspath(path, opts)
   -- TODO(justinmk): mark f_fnamemodify as API_FAST and use it, ":p:h" should be safe...
+  --
+  opts = opts or {}
 
   vim.validate('path', path, 'string')
+  vim.validate('cwd', opts.cwd, 'string', true)
+  vim.validate('plain', opts.plain, 'boolean', true)
 
   -- Expand ~ to user's home directory
-  path = expand_home(path)
+  if not opts.plain then
+    path = expand_home(path)
+  end
 
   -- Convert path separator to `/`
   path = path:gsub(os_sep, '/')
@@ -889,7 +905,8 @@ function M.abspath(path)
 
   -- Windows allows paths like C:foo/bar, these paths are relative to the current working directory
   -- of the drive specified in the path
-  local cwd = assert((iswin and prefix:match('^%w:$')) and uv.fs_realpath(prefix) or uv.cwd())
+  local cwd =
+    assert((iswin and prefix:match('^%w:$')) and uv.fs_realpath(prefix) or opts.cwd or uv.cwd())
   -- Convert cwd path separator to `/`
   cwd = cwd:gsub(os_sep, '/')
 
