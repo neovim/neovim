@@ -13,3 +13,6 @@ src/cjson/**    linguist-vendored
 src/unicode/**  linguist-vendored
 
 .github/    export-ignore
+
+runtime/doc/*.txt diff=helphelp
+runtime/pack/dist/opt/*/doc/*.txt diff=helphelp

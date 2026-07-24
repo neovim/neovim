@@ -927,7 +927,8 @@ is_na_patch() {
   for file in $FILES_REMAINING; do
     case ${file} in
       runtime/doc/*.txt | runtime/pack/dist/opt/*/doc/*.txt)
-        HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
+        HUNKS=$(git -c core.attributesfile="$NVIM_SOURCE_DIR"/.gitattributes -c 'diff.helphelp.xfuncname=^.*\*[.a-zA-Z0-9\-]+\*\s*$' -C "${VIM_SOURCE_DIR}" \
+          diff-tree --no-commit-id -r -b -U0 \
           '-I\*\s+For Vim version [0-9]\.[0-9]\.\s+Last change: [0-9]+ [A-Z][a-z]+ [0-9]+' \
           '-I compiled \(with\|without\) .*(\|.*\|) feature\.$' \
           "$patch" -- "${file}" |
