@@ -250,32 +250,40 @@ void win_config_float(win_T *wp, WinConfig fconfig)
     redraw_later(wp, UPD_NOT_VALID);
   }
 
+  WinConfig c = wp->w_config;
+  int row = (int)c.row;
+  int col = (int)c.col;
   // compute initial position
-  if (wp->w_config.relative == kFloatRelativeWindow) {
-    int row = (int)wp->w_config.row;
-    int col = (int)wp->w_config.col;
+  if (c.relative == kFloatRelativeWindow) {
     Error dummy = ERROR_INIT;
-    win_T *parent = find_window_by_handle(wp->w_config.window, &dummy);
+    win_T *parent = find_window_by_handle(c.window, &dummy);
+    api_clear_error(&dummy);
     if (parent) {
-      row += parent->w_winrow;
-      col += parent->w_wincol;
-      grid_adjust(&parent->w_grid, &row, &col);
-      if (wp->w_config.bufpos.lnum >= 0) {
-        pos_T pos = { MIN(wp->w_config.bufpos.lnum + 1, parent->w_buffer->b_ml.ml_line_count),
-                      wp->w_config.bufpos.col, 0 };
+      row += parent->w_winrow + parent->w_winrow_off;
+      col += parent->w_wincol + parent->w_wincol_off;
+      if (c.bufpos.lnum >= 0) {
+        pos_T pos = { MIN(c.bufpos.lnum + 1, parent->w_buffer->b_ml.ml_line_count),
+                      c.bufpos.col, 0 };
         int trow, tcol, tcolc, tcole;
         textpos2screenpos(parent, &pos, &trow, &tcol, &tcolc, &tcole, true);
         row += trow - 1;
         col += tcol - 1;
       }
     }
-    api_clear_error(&dummy);
-    wp->w_winrow = row;
-    wp->w_wincol = col;
-  } else {
-    wp->w_winrow = (int)fconfig.row;
-    wp->w_wincol = (int)fconfig.col;
+  } else if (c.relative == kFloatRelativeLaststatus) {
+    row += Rows - (int)p_ch - last_stl_height(false);
+  } else if (c.relative == kFloatRelativeTabline) {
+    row += tabline_height();
   }
+
+  if (c.anchor & kFloatAnchorSouth) {
+    row -= wp->w_height_outer;
+  }
+  if (c.anchor & kFloatAnchorEast) {
+    col -= wp->w_width_outer;
+  }
+  wp->w_winrow = row;
+  wp->w_wincol = col;
 
   // changing border style while keeping border only requires redrawing border
   if (fconfig.border) {

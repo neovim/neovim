@@ -392,6 +392,36 @@ describe('float window', function()
     eq({ 14, 12 }, { pos[1], pos[2] })
   end)
 
+  it('reports position before first redraw #24078', function()
+    local result = exec_lua([[
+      local top = vim.api.nvim_get_current_win()
+      vim.cmd('split')
+      vim.cmd('resize 5')
+      vim.cmd('redrawstatus!')
+      local parent = top
+      local buf = vim.api.nvim_create_buf(false, true)
+      local base = {
+        relative = 'win', win = parent,
+        width = 30, height = 2, col = 50, row = 0, style = 'minimal',
+      }
+      local nw = vim.api.nvim_open_win(buf, false, base)
+      base.anchor = 'SW'
+      local sw = vim.api.nvim_open_win(buf, false, base)
+      local se = vim.api.nvim_open_win(buf, false, {
+        relative = 'editor', width = 10, height = 3, row = 20, col = 40,
+        anchor = 'SE', style = 'minimal',
+      })
+      return {
+        vim.api.nvim_win_get_position(nw),
+        vim.api.nvim_win_get_position(sw),
+        vim.api.nvim_win_get_position(se),
+      }
+    ]])
+    eq({ 6, 50 }, result[1])
+    eq({ 4, 50 }, result[2])
+    eq({ 17, 30 }, result[3])
+  end)
+
   it('error when reconfig missing relative field', function()
     local bufnr = api.nvim_create_buf(false, true)
     local opts = { width = 10, height = 10, col = 5, row = 5, relative = 'editor', style = 'minimal' }
