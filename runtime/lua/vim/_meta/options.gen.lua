@@ -7819,25 +7819,31 @@ vim.bo.vts = vim.bo.vartabstop
 --- Sets the verbosity level.  Also set by `-V` and `:verbose`.
 ---
 --- Tracing of assignments to options, mappings, etc. in Lua scripts is
---- enabled at level 1; Lua scripts are not traced when 'verbose' is 0,
+--- enabled at level 3; Lua scripts are not traced when 'verbose' is 0,
 --- for performance.
 ---
---- If greater than or equal to a given level, Nvim produces the following
+--- If greater than or equal to a given level, Nvim logs the following
 --- messages:
 ---
 --- Level   Messages ~
 --- ----------------------------------------------------------------------
---- 1	Enables Lua tracing (see above). Does not produce messages.
---- 2	When a file is ":source"'ed, or `shada` file is read or written.
---- 3	UI info, terminal capabilities.
---- 4	Shell commands.
---- 5	Every searched tags file and include file.
---- 8	Files for which a group of autocommands is executed.
---- 9	Executed autocommands.
+--- 1	Enables `nvim_log()` at "warning" level.
+--- 2	Enables `nvim_log()` at "info" level.
+--- 3	Enables Lua tracing (see above).
+--- 	Enables `nvim_log()` at "debug" level.
+--- 	UI info, terminal capabilities.
+--- 4	Enables `nvim_log()` at "trace" level.
+---         NOTE: channel communication is logged, this may contain
+---         private info, e.g. a password you type in a terminal window.
+--- 5	Shell commands.
+--- 6	Activity from `shada`, `swap-file`, `spell`, 'undofile',
+--- 	`:source`, `tags`, `include-search`.
+--- 8	Filenames where autocommands executed.
+--- 9	Event handler (autocommands) execution.
 --- 11	Finding items in a path.
---- 12	Vimscript function calls.
---- 13	When an exception is thrown, caught, finished, or discarded.
---- 14	Anything pending in a ":finally" clause.
+--- 12	Vimscript function execution.
+--- 13	Exceptions thrown, caught, finished, or discarded.
+--- 14	Pending ":finally" clauses.
 --- 15	Ex commands from a script (truncated at 200 characters).
 --- 16	Ex commands.
 ---

@@ -546,6 +546,10 @@ function M.new_session(keep, ...)
   sessions[new_session] = true
   -- Make it possible to check whether two sessions are from the same test.
   new_session.data = { test_id = test_id }
+
+  -- Identify the test client so it shows up in log messages emitted via |nvim_log()|.
+  new_session:request('nvim_set_client_info', 'testclient', {}, 'remote', {}, {})
+
   return new_session
 end
 

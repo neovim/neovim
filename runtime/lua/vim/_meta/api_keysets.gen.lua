@@ -373,6 +373,11 @@ error('Cannot require a meta file')
 --- @field silent? boolean
 --- @field unique? boolean
 
+--- @class vim.api.keyset.log
+--- @field join? boolean
+--- @field trunc? integer
+--- @field type? string
+
 --- @class vim.api.keyset.ns_opts
 --- @field wins? any[]
 

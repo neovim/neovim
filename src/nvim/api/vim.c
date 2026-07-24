@@ -89,6 +89,52 @@
 
 #include "api/vim.c.generated.h"
 
+/// Posts a message to the global logger (which by default synchronously writes to |$NVIM_LOG_FILE|
+/// using a best-effort, naive implementation).
+///
+/// Message is skipped (not logged) if `level` is not "error", unless 'verbose' is set.
+///
+/// Example log message:
+/// ```
+/// ERROR 2020-01-12T01:56:19.484 93296 pynvim:remote: connected…
+/// ^level ^timestamp             ^pid  ^category      ^message
+/// ```
+///
+/// @see |nvim_get_chan_info()|
+/// @see |nvim_set_client_info()|
+///
+/// @param channel_id Channel id (implicit dispatcher arg)
+/// @param level  Log level (from highest to lowest: "ERR", "WRN", "INF", "DBG"). If 'verbose' is
+///               not set, only "ERR" messages are written to |$NVIM_LOG_FILE|.
+/// @param msg  Message body
+/// @param opts  Optional parameters:
+///   - `join`: (boolean, default false) Replace embedded line endings with SPACE, to keep the message on one log-line.
+///   - `trunc`: (integer, default 0) Constrain the message body to this size.
+///   - `type`: (string) Name of the subsystem or grouping (e.g. "UI", "RPC", "MyPlugin", …). For
+///     API clients this defaults to the `client.name` field of |nvim_get_chan_info()|.
+/// @param[out] err Error details, if any.
+void nvim_log(uint64_t channel_id, String level, String msg, Dict(log) *opts, Error *err)
+  FUNC_API_SINCE(14)
+{
+  int loglevel = log_level_from_name(level.data);
+  VALIDATE_S(loglevel != -1, "level", level.data, {
+    return;
+  });
+
+  bool join = HAS_KEY(opts, log, join) && opts->join;
+  int64_t trunc = HAS_KEY(opts, log, trunc) && opts->trunc > 0 ? opts->trunc : 0;
+
+  char p[32];  // Formatted prefix.
+  if (HAS_KEY(opts, log, type) && opts->type.size > 0) {
+    snprintf(p, sizeof(p), "%s: ", opts->type.data);
+  } else {
+    // Generate a default category/group/prefix.
+    rpc_chan_desc(channel_id, p, sizeof(p) - 2);
+    strcat(p, ": ");
+  }
+  logmsg(loglevel, p, NULL, -1, join, (size_t)trunc, true, "%s", msg.data);
+}
+
 /// Gets a highlight group by name
 ///
 /// similar to |hlID()|, but allocates a new ID if not present.
