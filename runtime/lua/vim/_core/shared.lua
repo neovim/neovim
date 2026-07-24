@@ -1117,8 +1117,17 @@ do
   --- @param validator vim.validate.Validator
   --- @param message? string "Expected" message
   --- @param allow_alias? boolean Allow short type names: 'n', 's', 't', 'b', 'f', 'c'
+  --- @param optional? boolean Flag for optional argument
   --- @return string?
-  local function is_valid(param_name, val, validator, message, allow_alias)
+  local function is_valid(param_name, val, validator, message, allow_alias, optional)
+    local type_mismatch_msg = '%s: expected %s, got %s'
+    local show_nil_in_err_msg = optional == true
+      and validator ~= 'nil'
+      and not (type(validator) == 'table' and vim.tbl_contains(validator, 'nil'))
+    if show_nil_in_err_msg then
+      type_mismatch_msg = '%s: expected %s|nil, got %s'
+    end
+
     if type(validator) == 'string' then
       local expected = allow_alias and type_aliases[validator] or validator
 
@@ -1127,17 +1136,13 @@ do
       end
 
       if not is_type(val, expected) then
-        return ('%s: expected %s, got %s'):format(param_name, message or expected, type(val))
+        return (type_mismatch_msg):format(param_name, message or expected, type(val))
       end
     elseif vim.is_callable(validator) then
       -- Check user-provided validation function
       local valid, opt_msg = validator(val)
       if not valid then
-        local err_msg = ('%s: expected %s, got %s'):format(
-          param_name,
-          message or '?',
-          tostring(val)
-        )
+        local err_msg = (type_mismatch_msg):format(param_name, message or '?', tostring(val))
         err_msg = opt_msg and ('%s. Info: %s'):format(err_msg, opt_msg) or err_msg
 
         return err_msg
@@ -1161,12 +1166,7 @@ do
         end
       end
 
-      return string.format(
-        '%s: expected %s, got %s',
-        param_name,
-        table.concat(validator, '|'),
-        type(val)
-      )
+      return string.format(type_mismatch_msg, param_name, table.concat(validator, '|'), type(val))
     else
       return string.format('invalid validator: %s', tostring(validator))
     end
@@ -1275,7 +1275,7 @@ do
       if not ok then
         local msg = type(optional) == 'string' and optional or message --[[@as string?]]
         -- Check more complicated validators
-        err_msg = is_valid(name, value, validator, msg, false)
+        err_msg = is_valid(name, value, validator, msg, false, optional)
       end
     elseif type(name) == 'table' then -- Form 2
       vim.deprecate('vim.validate{<table>}', 'vim.validate(<params>)', '1.0')

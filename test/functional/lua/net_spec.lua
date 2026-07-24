@@ -258,7 +258,7 @@ describe('vim.net.request', function()
     end
 
     -- headers asserts
-    assert_wrong_request('opts.headers: expected table, got number', { headers = 123 })
+    assert_wrong_request('opts.headers: expected table|nil, got number', { headers = 123 })
 
     --- FIXME(ellisonleao): this special assert is failing because the opts table is putting [""] in
     --- the key value instead of [123] upon calling the helper method
