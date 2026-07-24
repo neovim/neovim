@@ -486,14 +486,11 @@ local function check_graphics()
   end
 end
 
-local function check_terminal()
+-- Note: this is part of check_terminal().
+local function check_infocmp()
   if vim.fn.executable('infocmp') == 0 then
     return
   end
-
-  health.start('Terminal')
-
-  check_graphics()
 
   local cmd = { 'infocmp', '-L' }
   local ok, out = system(cmd)
@@ -527,6 +524,14 @@ local function check_terminal()
       )
     )
   end
+end
+
+local function check_terminal()
+  health.start('Terminal')
+
+  check_graphics()
+
+  check_infocmp()
 
   for _, env_var in ipairs({
     'XTERM_VERSION',
