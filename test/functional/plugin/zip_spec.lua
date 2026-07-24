@@ -271,7 +271,7 @@ describe('nvim.zip', function()
     end
   end)
 
-  it('keeps a leading dash in a member from becoming a backend option', function()
+  it('keeps a leading dash in a path from becoming a backend option', function()
     local archive = vim.fs.joinpath(root, 'poc.zip')
     copy_fixture(vim.fs.joinpath(old_samples, 'poc.zip'), archive)
     clear_zip()
@@ -361,6 +361,81 @@ describe('nvim.zip', function()
     feed('R')
     poke_eventloop()
     eq({ 'nested/', 'root.txt', 'root.java' }, lines())
+  end)
+
+  it('extracts the entry under the cursor into the current directory', function()
+    local archive = vim.fs.joinpath(root, 'browser.zip')
+    copy_fixture(vim.fs.joinpath(fixtures, 'browser.zip'), archive)
+    clear_zip()
+    api.nvim_set_current_dir(root)
+
+    edit(archive)
+    feed('<CR>')
+    poke_eventloop()
+    api.nvim_win_set_cursor(0, { line_of('root.java'), 0 })
+    feed('x')
+    poke_eventloop()
+
+    eq('class root {}\n', t.read_file(vim.fs.joinpath(root, 'root.java')))
+  end)
+
+  it('refuses to extract a directory', function()
+    local archive = vim.fs.joinpath(root, 'browser.zip')
+    copy_fixture(vim.fs.joinpath(fixtures, 'browser.zip'), archive)
+    clear_zip()
+    api.nvim_set_current_dir(root)
+
+    edit(archive)
+    api.nvim_win_set_cursor(0, { line_of('folder/'), 0 })
+    feed('x')
+    poke_eventloop()
+
+    eq(true, exec_capture('messages'):find('not a directory', 1, true) ~= nil)
+    eq(nil, vim.uv.fs_stat(vim.fs.joinpath(root, 'folder')))
+  end)
+
+  it('refuses to overwrite an existing file when extracting', function()
+    local archive = vim.fs.joinpath(root, 'browser.zip')
+    copy_fixture(vim.fs.joinpath(fixtures, 'browser.zip'), archive)
+    local target = vim.fs.joinpath(root, 'root.java')
+    t.write_file(target, 'untouched', true)
+    clear_zip()
+    api.nvim_set_current_dir(root)
+
+    edit(archive)
+    feed('<CR>')
+    poke_eventloop()
+    api.nvim_win_set_cursor(0, { line_of('root.java'), 0 })
+    feed('x')
+    poke_eventloop()
+
+    eq(true, exec_capture('messages'):find('already exists', 1, true) ~= nil)
+    eq('untouched', t.read_file(target))
+  end)
+
+  it('extracts suspicious entries without escaping the current directory', function()
+    local archive = vim.fs.joinpath(root, 'evil.zip')
+    copy_fixture(vim.fs.joinpath(old_samples, 'evil.zip'), archive)
+    clear_zip()
+    api.nvim_set_current_dir(root)
+
+    edit(archive)
+    eq({
+      '../../../../etc/ax-pwn',
+      'a/../../../../../../../../../../../../../../../../../../tmp/foobar',
+      '/tmp/vim_zip/a/b/payload.txt',
+    }, lines())
+
+    for _, entry in ipairs(lines()) do
+      api.nvim_win_set_cursor(0, { line_of(entry), 0 })
+      feed('x')
+      poke_eventloop()
+    end
+
+    for _, name in ipairs({ 'ax-pwn', 'foobar', 'payload.txt' }) do
+      eq(true, vim.uv.fs_stat(vim.fs.joinpath(root, name)) ~= nil)
+    end
+    eq(nil, vim.uv.fs_stat(vim.fs.joinpath(root, '..', 'ax-pwn')))
   end)
 
   it('reports an unavailable backend without claiming the buffer', function()

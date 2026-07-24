@@ -398,9 +398,64 @@ function M.open_parent(buf, name)
   require('nvim.dir.fs').open_parent_path(state.source)
 end
 
+--- Extract the entry under the cursor into the current directory.
+--- `-j` discards the archive path, so the destination is always a name in the
+--- current directory and cannot be redirected by a hostile entry.
+function M._extract()
+  local buf = api.nvim_get_current_buf()
+  local state = get_state(buf)
+  if not state then
+    return
+  end
+  local command, command_err = unzip()
+  if not command then
+    notify('zip', command_err or 'unzip executable not found')
+    return
+  end
+  local line = api.nvim_get_current_line()
+  if line == '' then
+    return
+  end
+  if line:sub(-1) == '/' then
+    notify('zip', 'please specify a file, not a directory')
+    return
+  end
+  local path = (state.prefix or '') .. line
+  local directory = vim.fn.getcwd()
+  local target = vim.fs.joinpath(directory, vim.fs.basename(path))
+  if uv.fs_stat(target) then
+    notify('zip', ('%s already exists, not overwriting'):format(target))
+    return
+  end
+  local ok, system = pcall(vim.system, {
+    command,
+    '-o',
+    '-j',
+    '--',
+    literal_pattern(state.source),
+    literal_pattern(path),
+  }, { cwd = directory, text = true })
+  if not ok then
+    notify('zip', tostring(system))
+    return
+  end
+  local result = system:wait()
+  if not uv.fs_stat(target) then
+    notify(
+      'zip',
+      ('unable to extract %s from %s: %s'):format(path, state.source, vim.trim(result.stderr or ''))
+    )
+    return
+  end
+  notify('zip', ('extracted %s'):format(target), vim.log.levels.INFO)
+end
+
 ---@param buf integer
 function M.init(buf)
   api.nvim_set_option_value('filetype', 'zip', { buf = buf })
+  if vim.fn.hasmapto('<Plug>(nvim-zip-extract)', 'n') == 0 then
+    vim.keymap.set('n', 'x', '<Plug>(nvim-zip-extract)', { buffer = buf, silent = true })
+  end
   api.nvim_buf_call(buf, function()
     vim.wo.wrap = false
   end)
