@@ -220,6 +220,9 @@ function State:new(bufnr)
   })
   nvim_on('OptionSet', self.augroup, { pattern = 'foldexpr' }, function()
     if vim.v.option_type == 'global' or api.nvim_get_current_buf() == bufnr then
+      for _, client in ipairs(vim.lsp.get_clients({ bufnr = bufnr, method = State.method })) do
+        vim.lsp._capability.enable('folding_range', false, { bufnr = bufnr, client_id = client.id })
+      end
       vim.lsp._capability.enable('folding_range', false, { bufnr = bufnr })
     end
   end)
@@ -413,6 +416,13 @@ function M.foldexpr(lnum)
     vim.schedule(function()
       if api.nvim_buf_is_valid(bufnr) then
         vim.lsp._capability.enable('folding_range', true, { bufnr = bufnr })
+        for _, client in ipairs(vim.lsp.get_clients({ bufnr = bufnr, method = State.method })) do
+          vim.lsp._capability.enable(
+            'folding_range',
+            true,
+            { client_id = client.id, bufnr = bufnr }
+          )
+        end
       end
     end)
   end

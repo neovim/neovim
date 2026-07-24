@@ -244,6 +244,7 @@ end
 --- @field workspace_folders lsp.WorkspaceFolder[]?
 ---
 --- @field _enabled_capabilities table<vim.lsp.capability.Name, boolean?>
+--- @field _buf_enabled_capabilities table<integer, table<vim.lsp.capability.Name, boolean?>>
 ---
 --- Whether on-type formatting is enabled for this client.
 --- @field _otf_enabled boolean?
@@ -479,6 +480,10 @@ function Client.create(config)
 
   ---@type table <vim.lsp.capability.Name, boolean?>
   self._enabled_capabilities = {}
+  ---@type table<integer, table<vim.lsp.capability.Name, boolean?>>
+  self._buf_enabled_capabilities = vim.defaulttable(function()
+    return {}
+  end)
 
   --- @type table<string|integer, string> title of unfinished progress sequences by token
   self.progress.pending = {}
