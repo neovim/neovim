@@ -657,11 +657,15 @@ local function render_option_meta(_f, opt, write)
     write('--- ' .. l)
   end
 
-  if opt.type == 'string' and not opt.list and opt.values then
-    local values = {} --- @type string[]
-    for _, e in ipairs(opt.values) do
-      values[#values + 1] = fmt("'%s'", e)
+  -- A non-list string option with a fixed value set (e.g. 'ambiwidth', 'tagcase') documents its
+  -- exact value union; everything else uses its Lua type.
+  local values = {} --- @type string[]
+  if opt.type == 'string' and not opt.list and opt.schema then
+    for _, v in ipairs(require('nvim.options').schema_values(opt.schema)) do
+      values[#values + 1] = fmt("'%s'", v)
     end
+  end
+  if #values > 0 then
     write('--- @type ' .. table.concat(values, '|'))
   else
     write('--- @type ' .. OPTION_TYPES[opt.type])

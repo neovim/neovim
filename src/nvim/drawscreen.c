@@ -944,7 +944,7 @@ int showmode(void)
     if (do_mode) {
       msg_puts_hl("--", hl_id, false);
       // CTRL-X in Insert mode
-      if (edit_submode != NULL && !shortmess(SHM_COMPLETIONMENU)) {
+      if (edit_submode != NULL && !shortmess(kShmCompletionmenu)) {
         // These messages can get long, avoid a wrap in a narrow window.
         // Prefer showing edit_submode_extra. With external messages there
         // is no imposed limit.
@@ -1116,7 +1116,7 @@ void clearmode(void)
 
 static void recording_mode(int hl_id)
 {
-  if (shortmess(SHM_RECORDING)) {
+  if (shortmess(kShmRecording)) {
     return;
   }
 
@@ -2553,7 +2553,7 @@ void win_draw_end(win_T *wp, schar_T c1, bool draw_margin, int startrow, int end
       }
 
       // draw the number column
-      if ((wp->w_p_nu || wp->w_p_rnu) && vim_strchr(p_cpo, CPO_NUMCOL) == NULL) {
+      if ((wp->w_p_nu || wp->w_p_rnu) && vim_strchr(p_cpo, kCpoNumcol) == NULL) {
         int width = number_width(wp) + 1;
         n = grid_line_fill(n, MIN(view_width, n + width),
                            schar_from_ascii(' '), win_hl_attr(wp, HLF_N));

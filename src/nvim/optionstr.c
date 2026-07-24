@@ -22,6 +22,7 @@
 #include "nvim/eval/vars.h"
 #include "nvim/ex_getln.h"
 #include "nvim/fold.h"
+#include "nvim/garray.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
@@ -57,6 +58,7 @@
 #include "nvim/window.h"
 #include "nvim/winfloat.h"
 
+#include "options_keysets.generated.h"
 #include "optionstr.c.generated.h"
 
 static const char e_illegal_character_after_chr[]
@@ -78,33 +80,33 @@ static const char e_wrong_character_width_for_field_str[]
 
 /// All possible flags for 'shm'.
 /// the literal chars before 0 are removed flags. these are safely ignored
-static char SHM_ALL[] = { SHM_RO, SHM_MOD, SHM_LINES,
-                          SHM_WRI, SHM_ABBREVIATIONS, SHM_WRITE, SHM_TRUNC, SHM_TRUNCALL,
-                          SHM_OVER, SHM_OVERALL, SHM_SEARCH, SHM_ATTENTION, SHM_INTRO,
-                          SHM_COMPLETIONMENU, SHM_COMPLETIONSCAN, SHM_RECORDING, SHM_FILEINFO,
-                          SHM_SEARCHCOUNT, SHM_UNDO, 'n', 'f', 'x', 'i', 0, };
+static char SHM_ALL[] = { kShmRo, kShmMod, kShmLines,
+                          kShmWri, kShmAbbreviations, kShmWrite, kShmTrunc, kShmTruncall,
+                          kShmOver, kShmOverall, kShmSearch, kShmAttention, kShmIntro,
+                          kShmCompletionmenu, kShmCompletionscan, kShmRecording, kShmFileinfo,
+                          kShmSearchcount, kShmUndo, 'n', 'f', 'x', 'i', 0, };
 
 /// After setting various option values: recompute variables that depend on
 /// option values.
 void didset_string_options(void)
 {
-  check_str_opt(kOptCasemap, NULL);
-  check_str_opt(kOptBackupcopy, NULL);
-  check_str_opt(kOptBelloff, NULL);
-  check_str_opt(kOptCompleteopt, NULL);
-  check_str_opt(kOptSessionoptions, NULL);
-  check_str_opt(kOptViewoptions, NULL);
-  check_str_opt(kOptFoldopen, NULL);
-  check_str_opt(kOptDisplay, NULL);
-  check_str_opt(kOptJumpoptions, NULL);
-  check_str_opt(kOptRedrawdebug, NULL);
-  check_str_opt(kOptTagcase, NULL);
-  check_str_opt(kOptTermpastefilter, NULL);
-  check_str_opt(kOptVirtualedit, NULL);
-  check_str_opt(kOptSwitchbuf, NULL);
-  check_str_opt(kOptTabclose, NULL);
-  check_str_opt(kOptWildoptions, NULL);
-  check_str_opt(kOptClipboard, NULL);
+  check_str_opt(kOptCasemap, NULL, NULL, 0);
+  check_str_opt(kOptBackupcopy, NULL, NULL, 0);
+  check_str_opt(kOptBelloff, NULL, NULL, 0);
+  check_str_opt(kOptCompleteopt, NULL, NULL, 0);
+  check_str_opt(kOptSessionoptions, NULL, NULL, 0);
+  check_str_opt(kOptViewoptions, NULL, NULL, 0);
+  check_str_opt(kOptFoldopen, NULL, NULL, 0);
+  check_str_opt(kOptDisplay, NULL, NULL, 0);
+  check_str_opt(kOptJumpoptions, NULL, NULL, 0);
+  check_str_opt(kOptRedrawdebug, NULL, NULL, 0);
+  check_str_opt(kOptTagcase, NULL, NULL, 0);
+  check_str_opt(kOptTermpastefilter, NULL, NULL, 0);
+  check_str_opt(kOptVirtualedit, NULL, NULL, 0);
+  check_str_opt(kOptSwitchbuf, NULL, NULL, 0);
+  check_str_opt(kOptTabclose, NULL, NULL, 0);
+  check_str_opt(kOptWildoptions, NULL, NULL, 0);
+  check_str_opt(kOptClipboard, NULL, NULL, 0);
 }
 
 char *illegal_char(char *errbuf, size_t errbuflen, int c)
@@ -241,7 +243,7 @@ int check_signcolumn(char *scl, win_T *wp)
     return FAIL;
   }
 
-  if (opt_strings_flags(val, opt_scl_values, NULL, false) == OK) {
+  if (opt_strings_flags(val, opt_scl_values, NULL, false, NULL, 0) == NULL) {
     if (wp == NULL) {
       return OK;
     }
@@ -369,12 +371,10 @@ bool check_illegal_path_names(char *val, uint32_t flags)
 
 /// An option that accepts a list of flags is changed.
 /// e.g. 'viewoptions', 'switchbuf', 'casemap', etc.
-static const char *did_set_opt_flags(char *val, const char **values, unsigned *flagp, bool list)
+static const char *did_set_opt_flags(char *val, const char **values, unsigned *flagp, bool list,
+                                     char *errbuf, size_t errbuflen)
 {
-  if (opt_strings_flags(val, values, flagp, list) != OK) {
-    return e_invarg;
-  }
-  return NULL;
+  return opt_strings_flags(val, values, flagp, list, errbuf, errbuflen);
 }
 
 static const char **opt_values(OptIndex idx, size_t *values_len)
@@ -390,7 +390,7 @@ static const char **opt_values(OptIndex idx, size_t *values_len)
   return opt->values;
 }
 
-static int check_str_opt(OptIndex idx, char **varp)
+static const char *check_str_opt(OptIndex idx, char **varp, char *errbuf, size_t errbuflen)
 {
   vimoption_T *opt = get_option(idx);
   if (varp == NULL) {
@@ -398,7 +398,7 @@ static int check_str_opt(OptIndex idx, char **varp)
   }
   bool list = opt->flags & (kOptFlagComma | kOptFlagOneComma);
   const char **values = opt_values(idx, NULL);
-  return opt_strings_flags(*varp, values, opt->flags_var, list);
+  return opt_strings_flags(*varp, values, opt->flags_var, list, errbuf, errbuflen);
 }
 
 int expand_set_str_generic(optexpand_T *args, int *numMatches, char ***matches)
@@ -410,7 +410,7 @@ int expand_set_str_generic(optexpand_T *args, int *numMatches, char ***matches)
 
 const char *did_set_str_generic(optset_T *args)
 {
-  return check_str_opt(args->os_idx, args->os_varp) != OK ? e_invarg : NULL;
+  return check_str_opt(args->os_idx, args->os_varp, args->os_errbuf, args->os_errbuflen);
 }
 
 /// An option which is a list of flags is set.  Valid values are in "flags".
@@ -559,8 +559,9 @@ const char *did_set_ambiwidth(optset_T *args)
 /// The 'emoji' option is changed.
 const char *did_set_emoji(optset_T *args)
 {
-  if (check_str_opt(kOptAmbiwidth, NULL) != OK) {
-    return e_invarg;
+  const char *errmsg = check_str_opt(kOptAmbiwidth, NULL, args->os_errbuf, args->os_errbuflen);
+  if (errmsg != NULL) {
+    return errmsg;
   }
   return check_chars_options();
 }
@@ -637,15 +638,17 @@ const char *did_set_backupcopy(optset_T *args)
     // make the local value empty: use the global value
     *flags = 0;
   } else {
-    if (opt_strings_flags(bkc, opt_bkc_values, flags, true) != OK) {
-      return e_invarg;
+    const char *errmsg = opt_strings_flags(bkc, opt_bkc_values, flags, true, args->os_errbuf,
+                                           args->os_errbuflen);
+    if (errmsg != NULL) {
+      return errmsg;
     }
 
     if (((*flags & kOptBkcFlagAuto) != 0)
         + ((*flags & kOptBkcFlagYes) != 0)
         + ((*flags & kOptBkcFlagNo) != 0) != 1) {
       // Must have exactly one of "auto", "yes"  and "no".
-      opt_strings_flags(oldval, opt_bkc_values, flags, true);
+      opt_strings_flags(oldval, opt_bkc_values, flags, true, NULL, 0);
       return e_invarg;
     }
   }
@@ -684,14 +687,12 @@ const char *did_set_breakat(optset_T *args FUNC_ATTR_UNUSED)
 const char *did_set_breakindentopt(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
-  char **varp = (char **)args->os_varp;
-
-  if (briopt_check(*varp, varp == &win->w_p_briopt ? win : NULL) == FAIL) {
-    return e_invarg;
-  }
+  // Apply it to the window, or to nothing if setting the global value.
+  bool is_local = args->os_varp == (void *)&win->w_p_briopt;
+  briopt_check(is_local ? win : NULL);
 
   // list setting requires a redraw
-  if (varp == &win->w_p_briopt && win->w_briopt_list) {
+  if (is_local && win->w_briopt_list) {
     redraw_all_later(UPD_NOT_VALID);
   }
 
@@ -702,7 +703,8 @@ const char *did_set_breakindentopt(optset_T *args)
 const char *did_set_bufhidden(optset_T *args)
 {
   buf_T *buf = (buf_T *)args->os_buf;
-  return did_set_opt_flags(buf->b_p_bh, opt_bh_values, NULL, false);
+  return did_set_opt_flags(buf->b_p_bh, opt_bh_values, NULL, false, args->os_errbuf,
+                           args->os_errbuflen);
 }
 
 /// The 'buftype' option is changed.
@@ -711,9 +713,13 @@ const char *did_set_buftype(optset_T *args)
   buf_T *buf = (buf_T *)args->os_buf;
   win_T *win = (win_T *)args->os_win;
   // When 'buftype' is set, check for valid value.
+  const char *errmsg = opt_strings_flags(buf->b_p_bt, opt_bt_values, NULL, false, args->os_errbuf,
+                                         args->os_errbuflen);
+  if (errmsg != NULL) {
+    return errmsg;
+  }
   if ((buf->terminal && buf->b_p_bt[0] != 't')
-      || (!buf->terminal && buf->b_p_bt[0] == 't')
-      || opt_strings_flags(buf->b_p_bt, opt_bt_values, NULL, false) != OK) {
+      || (!buf->terminal && buf->b_p_bt[0] == 't')) {
     return e_invarg;
   }
   // buftype=prompt:
@@ -997,11 +1003,7 @@ const char *did_set_completeopt(optset_T *args FUNC_ATTR_UNUSED)
     buf->b_cot_flags = 0;
   }
 
-  if (opt_strings_flags(cot, opt_cot_values, flags, true) != OK) {
-    return e_invarg;
-  }
-
-  return NULL;
+  return opt_strings_flags(cot, opt_cot_values, flags, true, args->os_errbuf, args->os_errbuflen);
 }
 
 #ifdef BACKSLASH_IN_FILENAME
@@ -1009,11 +1011,13 @@ const char *did_set_completeopt(optset_T *args FUNC_ATTR_UNUSED)
 const char *did_set_completeslash(optset_T *args)
 {
   buf_T *buf = (buf_T *)args->os_buf;
-  if (opt_strings_flags(p_csl, opt_csl_values, NULL, false) != OK
-      || opt_strings_flags(buf->b_p_csl, opt_csl_values, NULL, false) != OK) {
-    return e_invarg;
+  const char *errmsg = opt_strings_flags(p_csl, opt_csl_values, NULL, false, args->os_errbuf,
+                                         args->os_errbuflen);
+  if (errmsg != NULL) {
+    return errmsg;
   }
-  return NULL;
+  return opt_strings_flags(buf->b_p_csl, opt_csl_values, NULL, false, args->os_errbuf,
+                           args->os_errbuflen);
 }
 #endif
 
@@ -1556,65 +1560,14 @@ int expand_set_mouse(optexpand_T *args, int *numMatches, char ***matches)
 /// @return error message, NULL if it's OK.
 const char *did_set_mousescroll(optset_T *args FUNC_ATTR_UNUSED)
 {
-  OptInt vertical = -1;
-  OptInt horizontal = -1;
-
-  char *string = p_mousescroll;
-
-  while (true) {
-    char *end = vim_strchr(string, ',');
-    size_t length = end ? (size_t)(end - string) : strlen(string);
-
-    // Both "ver:" and "hor:" are 4 bytes long.
-    // They should be followed by at least one digit.
-    if (length <= 4) {
-      return e_invarg;
-    }
-
-    OptInt *direction;
-
-    if (memcmp(string, "ver:", 4) == 0) {
-      direction = &vertical;
-    } else if (memcmp(string, "hor:", 4) == 0) {
-      direction = &horizontal;
-    } else {
-      return e_invarg;
-    }
-
-    // If the direction has already been set, this is a duplicate.
-    if (*direction != -1) {
-      return e_invarg;
-    }
-
-    // Verify that only digits follow the colon.
-    for (size_t i = 4; i < length; i++) {
-      if (!ascii_isdigit(string[i])) {
-        return N_("E5080: Digit expected");
-      }
-    }
-
-    string += 4;
-    *direction = getdigits_int(&string, false, -1);
-
-    // Num options are generally kept within the signed int range.
-    // We know this number won't be negative because we've already checked for
-    // a minus sign. We'll allow 0 as a means of disabling mouse scrolling.
-    if (*direction == -1) {
-      return e_invarg;
-    }
-
-    if (!end) {
-      break;
-    }
-
-    string = end + 1;
+  OptKeyDict_mousescroll *v = opt_keyset(p_mousescroll, kOptMousescroll, NULL);
+  // An empty value sets no direction; reject it (mousescroll always needs at least one).
+  bool has_dir = HAS_KEY(v, mousescroll, hor) || HAS_KEY(v, mousescroll, ver);
+  if (has_dir) {
+    p_mousescroll_hor = HAS_KEY(v, mousescroll, hor) ? (int)v->hor : MOUSESCROLL_HOR_DFLT;
+    p_mousescroll_vert = HAS_KEY(v, mousescroll, ver) ? (int)v->ver : MOUSESCROLL_VERT_DFLT;
   }
-
-  // If a direction wasn't set, fallback to the default value.
-  p_mousescroll_vert = (vertical == -1) ? MOUSESCROLL_VERT_DFLT : vertical;
-  p_mousescroll_hor = (horizontal == -1) ? MOUSESCROLL_HOR_DFLT : horizontal;
-
-  return NULL;
+  return has_dir ? NULL : e_invarg;
 }
 
 /// One of the '*expr' options is changed:, 'diffexpr', 'foldexpr', 'foldtext',
@@ -1663,7 +1616,7 @@ const char *did_set_sessionoptions(optset_T *args)
   if ((ssop_flags & kOptSsopFlagCurdir) && (ssop_flags & kOptSsopFlagSesdir)) {
     // Don't allow both "sesdir" and "curdir".
     const char *oldval = args->os_oldval.string.data;
-    opt_strings_flags(oldval, opt_ssop_values, &ssop_flags, true);
+    opt_strings_flags(oldval, opt_ssop_values, &ssop_flags, true, NULL, 0);
     return e_invarg;
   }
   return NULL;
@@ -1845,13 +1798,19 @@ const char *did_set_spelloptions(optset_T *args)
   int opt_flags = args->os_flags;
   const char *val = args->os_newval.string.data;
 
-  if (!(opt_flags & OPT_LOCAL)
-      && opt_strings_flags(val, opt_spo_values, &spo_flags, true) != OK) {
-    return e_invarg;
+  if (!(opt_flags & OPT_LOCAL)) {
+    const char *errmsg = opt_strings_flags(val, opt_spo_values, &spo_flags, true, args->os_errbuf,
+                                           args->os_errbuflen);
+    if (errmsg != NULL) {
+      return errmsg;
+    }
   }
-  if (!(opt_flags & OPT_GLOBAL)
-      && opt_strings_flags(val, opt_spo_values, &win->w_s->b_p_spo_flags, true) != OK) {
-    return e_invarg;
+  if (!(opt_flags & OPT_GLOBAL)) {
+    const char *errmsg = opt_strings_flags(val, opt_spo_values, &win->w_s->b_p_spo_flags, true,
+                                           args->os_errbuf, args->os_errbuflen);
+    if (errmsg != NULL) {
+      return errmsg;
+    }
   }
   return NULL;
 }
@@ -1970,8 +1929,12 @@ const char *did_set_tagcase(optset_T *args)
   if ((opt_flags & OPT_LOCAL) && *p == NUL) {
     // make the local value empty: use the global value
     *flags = 0;
-  } else if (opt_strings_flags(p, opt_tc_values, flags, false) != OK) {
-    return e_invarg;
+  } else {
+    const char *errmsg = opt_strings_flags(p, opt_tc_values, flags, false, args->os_errbuf,
+                                           args->os_errbuflen);
+    if (errmsg != NULL) {
+      return errmsg;
+    }
   }
   return NULL;
 }
@@ -2089,8 +2052,10 @@ const char *did_set_virtualedit(optset_T *args)
     // make the local value empty: use the global value
     *flags = 0;
   } else {
-    if (opt_strings_flags(ve, opt_ve_values, flags, true) != OK) {
-      return e_invarg;
+    const char *errmsg = opt_strings_flags(ve, opt_ve_values, flags, true, args->os_errbuf,
+                                           args->os_errbuflen);
+    if (errmsg != NULL) {
+      return errmsg;
     } else if (strcmp(ve, args->os_oldval.string.data) != 0) {
       // Recompute cursor position in case the new 've' setting
       // changes something.
@@ -2176,15 +2141,38 @@ int expand_set_winhighlight(optexpand_T *args, int *numMatches, char ***matches)
   return expand_set_opt_generic(args, get_highlight_name, numMatches, matches);
 }
 
+/// Format an "invalid value" error naming the offending item (up to the next comma) and listing the
+/// valid values. Returns `errbuf`, or the generic `e_invarg` when no buffer is available.
+static const char *opt_invalid_value_err(const char *val, const char **values, char *errbuf,
+                                         size_t errbuflen)
+{
+  if (errbuf == NULL) {
+    return e_invarg;
+  }
+  size_t bad_len = 0;
+  while (val[bad_len] != NUL && val[bad_len] != ',') {
+    bad_len++;
+  }
+  char badbuf[64];
+  xmemcpyz(badbuf, val, MIN(bad_len, sizeof(badbuf) - 1));
+  int n = vim_snprintf(errbuf, errbuflen, _("E474: Invalid value '%s', expected one of:"), badbuf);
+  for (int j = 0; values[j] != NULL && n > 0 && (size_t)n < errbuflen; j++) {
+    n += vim_snprintf(errbuf + n, errbuflen - (size_t)n, "%s%s", j == 0 ? " " : ", ", values[j]);
+  }
+  return errbuf;
+}
+
 /// Handle an option that can be a range of string values.
 /// Set a flag in "*flagp" for each string present.
 ///
-/// @param val  new value
-/// @param values  array of valid string values
-/// @param list  when true: accept a list of values
+/// @param val      new value
+/// @param values   array of valid string values
+/// @param list     when true: accept a list of values
+/// @param errbuf   buffer for the error message (may be NULL, then a generic error is returned)
 ///
-/// @return  OK for correct value, FAIL otherwise. Empty is always OK.
-static int opt_strings_flags(const char *val, const char **values, unsigned *flagp, bool list)
+/// @return  NULL for a correct value, otherwise an error message. Empty is always OK.
+static const char *opt_strings_flags(const char *val, const char **values, unsigned *flagp,
+                                     bool list, char *errbuf, size_t errbuflen)
 {
   unsigned new_flags = 0;
 
@@ -2194,7 +2182,7 @@ static int opt_strings_flags(const char *val, const char **values, unsigned *fla
   while (*val || iter_one) {
     for (unsigned i = 0;; i++) {
       if (values[i] == NULL) {          // val not found in values[]
-        return FAIL;
+        return opt_invalid_value_err(val, values, errbuf, errbuflen);
       }
 
       size_t len = strlen(values[i]);
@@ -2214,13 +2202,171 @@ static int opt_strings_flags(const char *val, const char **values, unsigned *fla
     *flagp = new_flags;
   }
 
-  return OK;
+  return NULL;
+}
+
+/// Format a schema-validation error naming the offending key. Returns `errbuf`, or the generic
+/// `e_invarg` when no buffer is available.
+static const char *opt_schema_err(char *errbuf, size_t errbuflen, const char *fmt, const char *key,
+                                  size_t keylen)
+{
+  if (errbuf == NULL) {
+    return e_invarg;
+  }
+  char keybuf[64];
+  xmemcpyz(keybuf, key, MIN(keylen, sizeof(keybuf) - 1));
+  vim_snprintf(errbuf, errbuflen, _(fmt), keybuf);
+  return errbuf;
+}
+
+/// Validates a dict option against its schema (options.lua). On failure, writes a msg to `errbuf`.
+///
+/// @param val     The option value.
+/// @param schema  NULL-terminated schema array (opt_<name>_schema).
+/// @param errbuf  Error message (may be NULL, then a generic error is returned).
+///
+/// @return  NULL when valid, otherwise an (untranslated) error message.
+const char *opt_strings_check(const char *val, const OptSchemaItem *schema, char *errbuf,
+                              size_t errbuflen)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
+{
+  const char *key, *v;
+  size_t keylen, vlen;
+  for (const char *p = val; option_next_keyval(&p, &key, &keylen, &v, &vlen);) {
+    if (keylen == 0 && v == NULL) {
+      continue;  // tolerate empty parts, e.g. "a,,b"
+    }
+    const OptSchemaItem *it = schema;
+    while (it->name != NULL && !option_slice_eq(key, keylen, it->name)) {
+      it++;
+    }
+    if (it->name == NULL) {
+      return opt_schema_err(errbuf, errbuflen, N_("E474: Unknown item '%s'"), key, keylen);
+    }
+    switch (it->kind) {
+    case kOptSchemaFlag:
+      if (v != NULL) {
+        return opt_schema_err(errbuf, errbuflen, N_("E474: '%s' does not take a value"), key,
+                              keylen);
+      }
+      break;
+    case kOptSchemaNum:
+    case kOptSchemaSNum: {
+      // snum allows a leading '-'; both require at least one digit and nothing else.
+      size_t i = (v != NULL && it->kind == kOptSchemaSNum && *v == '-') ? 1 : 0;
+      bool ok = v != NULL && vlen > i;
+      for (; ok && i < vlen; i++) {
+        ok = ascii_isdigit((uint8_t)v[i]);
+      }
+      if (!ok) {
+        return opt_schema_err(errbuf, errbuflen, N_("E474: '%s' requires a number"), key, keylen);
+      }
+      // The value must fit the `int` it is parsed into (opt_fill() uses getdigits_int()).
+      char *end = (char *)v;
+      intmax_t n;
+      if (!try_getdigits(&end, &n) || n < INT_MIN || n > INT_MAX) {
+        return opt_schema_err(errbuf, errbuflen, N_("E474: '%s' number is out of range"), key,
+                              keylen);
+      }
+      break;
+    }
+    case kOptSchemaEnum: {
+      const char **ev = it->enum_values;
+      while (v != NULL && *ev != NULL && !option_slice_eq(v, vlen, *ev)) {
+        ev++;
+      }
+      if (v != NULL && *ev != NULL) {
+        break;  // matched an enum value
+      }
+      if (errbuf == NULL) {
+        return e_invarg;
+      }
+      char keybuf[64];
+      xmemcpyz(keybuf, key, MIN(keylen, sizeof(keybuf) - 1));
+      int n = vim_snprintf(errbuf, errbuflen, _("E474: '%s' must be one of:"), keybuf);
+      for (ev = it->enum_values; *ev != NULL && n > 0 && (size_t)n < errbuflen; ev++) {
+        n += vim_snprintf(errbuf + n, errbuflen - (size_t)n, "%s%s",
+                          ev == it->enum_values ? " " : ", ", *ev);
+      }
+      return errbuf;
+    }
+    case kOptSchemaStr:
+      if (v == NULL) {
+        return opt_schema_err(errbuf, errbuflen, N_("E474: '%s' requires a value"), key, keylen);
+      }
+      if (vlen >= 256) {  // This limit must match `keyset_str_max` (gen_options.lua).
+        return opt_schema_err(errbuf, errbuflen, N_("E474: '%s' value is too long"), key, keylen);
+      }
+      break;
+    }
+  }
+  return NULL;
+}
+
+/// Parses a validated dict option into `out`. String-ish values live in fixed `char[]` fields (not
+/// allocated), so the keyset owns nothing and needs no free.
+///
+/// @param value Option value in ":set"-string form.
+/// @param get_field Perfect-hash fn.
+/// @param out Caller-provided keyset storage (`OptKeyDict_…`).
+void opt_fill(const char *value, FieldHashfn get_field, void *out)
+  FUNC_ATTR_NONNULL_ALL
+{
+  const char *key, *v;
+  size_t keylen, vlen;
+  for (const char *p = value; option_next_keyval(&p, &key, &keylen, &v, &vlen);) {
+    KeySetLink *f = get_field(key, keylen);
+    if (f == NULL) {
+      continue;  // unknown key can't occur after validation
+    }
+    void *field = (char *)out + f->ptr_off;
+    switch (f->type) {
+    case kObjectTypeBoolean:
+      *(Boolean *)field = true;  // a flag: present means true
+      break;
+    case kObjectTypeInteger: {
+      char *end = (char *)v;
+      *(Integer *)field = getdigits_int(&end, false, 0);
+      break;
+    }
+    case kObjectTypeString:
+      // A repeated key is "last wins" (overwritten). opt_strings_check() bounds the size.
+      memcpy(field, v, vlen);
+      ((char *)field)[vlen] = NUL;
+      break;
+    default:
+      break;
+    }
+    ((OptKeySet *)out)->is_set_ |= (1ULL << (unsigned)f->opt_index);
+  }
+}
+
+/// Reify a dict-option value to a keyset (`OptKeyDict_…`). String values live in fixed char[]
+/// fields (not allocated), so the keyset owns nothing and needs no free.
+///
+/// @param value   Option value in ":set"-string form.
+/// @param opt_idx Option idx.
+/// @param keyset  Caller-provided storage, or NULL to use shared static storage (only for callers
+///                that never "overlap"). Cleared first; a NUL string yields an all-unset keyset.
+/// @return  the keyset (for convenient assignment).
+void *opt_keyset(const char *value, OptIndex opt_idx, void *keyset)
+{
+  static OptKeyDict shared;
+  if (keyset == NULL) {
+    keyset = &shared;
+  }
+  const OptDictSchema *si = opt_dict_schema(opt_idx);
+  memset(keyset, 0, si->size);
+  if (value != NULL) {
+    opt_fill(value, si->get_field, keyset);
+  }
+  return keyset;
 }
 
 /// @return  OK if "p" is a valid fileformat name, FAIL otherwise.
 int check_ff_value(char *p)
 {
-  return opt_strings_flags(p, opt_ff_values, NULL, false);
+  return opt_strings_flags(p, opt_ff_values, NULL, false, NULL, 0) == NULL ? OK : FAIL;
 }
 
 static const char e_conflicts_with_value_of_listchars[]
@@ -2268,45 +2414,12 @@ struct chars_tab {
   { (cp), STATIC_CSTR_STRING_INIT(name), def, fallback }
 
 static fcs_chars_T fcs_chars;
-static const struct chars_tab fcs_tab[] = {
-  CHARSTAB_ENTRY(&fcs_chars.stl,        "stl",       " ",  NULL),
-  CHARSTAB_ENTRY(&fcs_chars.stlnc,      "stlnc",     " ",  NULL),
-  CHARSTAB_ENTRY(&fcs_chars.wbr,        "wbr",       " ",  NULL),
-  CHARSTAB_ENTRY(&fcs_chars.horiz,      "horiz",     "─",  "-"),
-  CHARSTAB_ENTRY(&fcs_chars.horizup,    "horizup",   "┴",  "-"),
-  CHARSTAB_ENTRY(&fcs_chars.horizdown,  "horizdown", "┬",  "-"),
-  CHARSTAB_ENTRY(&fcs_chars.vert,       "vert",      "│",  "|"),
-  CHARSTAB_ENTRY(&fcs_chars.vertleft,   "vertleft",  "┤",  "|"),
-  CHARSTAB_ENTRY(&fcs_chars.vertright,  "vertright", "├",  "|"),
-  CHARSTAB_ENTRY(&fcs_chars.verthoriz,  "verthoriz", "┼",  "+"),
-  CHARSTAB_ENTRY(&fcs_chars.fold,       "fold",      "·",  "-"),
-  CHARSTAB_ENTRY(&fcs_chars.foldopen,   "foldopen",  "-",  NULL),
-  CHARSTAB_ENTRY(&fcs_chars.foldclosed, "foldclose", "+",  NULL),
-  CHARSTAB_ENTRY(&fcs_chars.foldsep,    "foldsep",   "│",  "|"),
-  CHARSTAB_ENTRY(&fcs_chars.foldinner,  "foldinner", NULL, NULL),
-  CHARSTAB_ENTRY(&fcs_chars.diff,       "diff",      "-",  NULL),
-  CHARSTAB_ENTRY(&fcs_chars.msgsep,     "msgsep",    " ",  NULL),
-  CHARSTAB_ENTRY(&fcs_chars.eob,        "eob",       "~",  NULL),
-  CHARSTAB_ENTRY(&fcs_chars.lastline,   "lastline",  "@",  NULL),
-  CHARSTAB_ENTRY(&fcs_chars.trunc,      "trunc",     ">",  NULL),
-  CHARSTAB_ENTRY(&fcs_chars.truncrl,    "truncrl",   "<",  NULL),
-};
-
 static lcs_chars_T lcs_chars;
-static const struct chars_tab lcs_tab[] = {
-  CHARSTAB_ENTRY(&lcs_chars.eol,      "eol",            NULL, NULL),
-  CHARSTAB_ENTRY(&lcs_chars.ext,      "extends",        NULL, NULL),
-  CHARSTAB_ENTRY(&lcs_chars.nbsp,     "nbsp",           NULL, NULL),
-  CHARSTAB_ENTRY(&lcs_chars.prec,     "precedes",       NULL, NULL),
-  CHARSTAB_ENTRY(&lcs_chars.space,    "space",          NULL, NULL),
-  CHARSTAB_ENTRY(&lcs_chars.tab2,     "tab",            NULL, NULL),
-  CHARSTAB_ENTRY(&lcs_chars.leadtab2, "leadtab",        NULL, NULL),
-  CHARSTAB_ENTRY(&lcs_chars.lead,     "lead",           NULL, NULL),
-  CHARSTAB_ENTRY(&lcs_chars.trail,    "trail",          NULL, NULL),
-  CHARSTAB_ENTRY(&lcs_chars.conceal,  "conceal",        NULL, NULL),
-  CHARSTAB_ENTRY(NULL,                "multispace",     NULL, NULL),
-  CHARSTAB_ENTRY(NULL,                "leadmultispace", NULL, NULL),
-};
+
+// Generated from options.lua:
+// - 'fillchars' => fcs_tab[]
+// - 'listchars' => lcs_tab[]
+#include "options_chartab.generated.h"
 
 #undef CHARSTAB_ENTRY
 
@@ -2608,7 +2721,7 @@ const char *check_chars_options(void)
 const char *did_set_previewpopup(optset_T *args)
 {
   WinConfig fconfig = WIN_CONFIG_INIT;
-  if (!win_float_parse_option(p_pvp, &fconfig)) {
+  if (!win_previewpopup_config(p_pvp, &fconfig)) {
     return e_invarg;
   }
   return NULL;
@@ -2618,8 +2731,7 @@ int expand_set_popupoption(optexpand_T *args, int *numMatches, char ***matches)
 {
   expand_T *xp = args->oe_xp;
   if (xp->xp_pattern - args->oe_set_arg >= 7 && strncmp(xp->xp_pattern - 7, "border:", 7) == 0) {
-    return expand_set_opt_string(args, opt_winborder_values,
-                                 ARRAY_SIZE(opt_winborder_values) - 1,
+    return expand_set_opt_string(args, opt_pvp_border_values, ARRAY_SIZE(opt_pvp_border_values) - 1,
                                  numMatches, matches);
   }
   if (xp->xp_pattern > args->oe_set_arg && *(xp->xp_pattern - 1) == ':') {

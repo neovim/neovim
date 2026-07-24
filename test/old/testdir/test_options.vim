@@ -2232,7 +2232,7 @@ func Test_opt_winminheight()
 endfunc
 
 func Test_opt_winminheight_term()
-  " See test/functional/legacy/options_spec.lua
+  " See test/functional/options/options_spec.lua
   CheckRunVimInTerminal
 
   " The tabline should be taken into account.
@@ -2253,7 +2253,7 @@ func Test_opt_winminheight_term()
 endfunc
 
 func Test_opt_winminheight_term_tabs()
-  " See test/functional/legacy/options_spec.lua
+  " See test/functional/options/options_spec.lua
   CheckRunVimInTerminal
 
   " The tabline should be taken into account.
@@ -2295,7 +2295,7 @@ endfunc
 
 " Test that resetting laststatus does change scroll option
 func Test_opt_reset_scroll()
-  " See test/functional/legacy/options_spec.lua
+  " See test/functional/options/options_spec.lua
   CheckRunVimInTerminal
   let vimrc =<< trim [CODE]
     set scroll=2

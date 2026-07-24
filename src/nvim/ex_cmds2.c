@@ -490,7 +490,7 @@ void ex_listdo(exarg_T *eap)
 
   char *save_ei = NULL;
 
-  // Temporarily override SHM_OVER and SHM_OVERALL to avoid that file
+  // Temporarily override kShmOver and kShmOverall to avoid that file
   // message overwrites output from the command.
   msg_listdo_overwrite++;
 

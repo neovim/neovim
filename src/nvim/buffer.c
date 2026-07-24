@@ -177,7 +177,7 @@ int get_highest_fnum(void)
 static int read_buffer(bool read_stdin, exarg_T *eap, int flags)
 {
   int retval = OK;
-  bool silent = shortmess(SHM_FILEINFO);
+  bool silent = shortmess(kShmFileinfo);
 
   // Read from the buffer which the text is already filled in and append at
   // the end.  This makes it possible to retry when 'fileformat' or
@@ -250,7 +250,7 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
   bufref_T old_curbuf;
   OptInt old_tw = curbuf->b_p_tw;
   bool read_fifo = false;
-  bool silent = shortmess(SHM_FILEINFO);
+  bool silent = shortmess(kShmFileinfo);
 
   // The 'readonly' flag is only set when BF_NEVERLOADED is being reset.
   // When re-entering the same buffer, it should not change, because the
@@ -384,9 +384,9 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
   // When reading stdin, the buffer contents always needs writing, so set
   // the changed flag.  Unless in readonly mode: "ls | nvim -R -".
   // When interrupted and 'cpoptions' contains 'i' set changed flag.
-  if ((got_int && vim_strchr(p_cpo, CPO_INTMOD) != NULL)
+  if ((got_int && vim_strchr(p_cpo, kCpoIntmod) != NULL)
       || curbuf->b_modified_was_set  // autocmd did ":set modified"
-      || (aborting() && vim_strchr(p_cpo, CPO_INTMOD) != NULL)) {
+      || (aborting() && vim_strchr(p_cpo, kCpoIntmod) != NULL)) {
     changed(curbuf);
   } else if (retval != FAIL && !read_stdin && !read_fifo) {
     unchanged(curbuf, false, true);
@@ -1287,7 +1287,7 @@ static int empty_curbuf(bool close_others, int forceit, int action)
 
   if (!close_others) {
     need_fileinfo = false;
-  } else if (retval == OK && !shortmess(SHM_FILEINFO)) {
+  } else if (retval == OK && !shortmess(kShmFileinfo)) {
     // do_ecmd() does not display file info for a new empty buffer.
     need_fileinfo = true;
   }
@@ -1834,7 +1834,7 @@ static void enter_buffer(buf_T *buf)
 
     open_buffer(false, NULL, 0);
   } else {
-    if (!msg_silent && !shortmess(SHM_FILEINFO)) {
+    if (!msg_silent && !shortmess(kShmFileinfo)) {
       need_fileinfo = true;             // display file info after redraw
     }
     // check if file changed
@@ -3349,7 +3349,7 @@ void fileinfo(int fullname, int shorthelp, bool dont_truncate)
                                     IOSIZE - bufferlen,
                                     "\"%s%s%s%s%s%s",
                                     curbufIsChanged()
-                                    ? (shortmess(SHM_MOD) ? " [+]" : _(" [Modified]"))
+                                    ? (shortmess(kShmMod) ? " [+]" : _(" [Modified]"))
                                     : " ",
                                     (curbuf->b_flags & BF_NOTEDITED) && !dontwrite
                                     ? _("[Not edited]") : "",
@@ -3358,7 +3358,7 @@ void fileinfo(int fullname, int shorthelp, bool dont_truncate)
                                     (curbuf->b_flags & BF_READERR)
                                     ? _("[Read errors]") : "",
                                     curbuf->b_p_ro
-                                    ? (shortmess(SHM_RO) ? _("[RO]") : _("[readonly]"))
+                                    ? (shortmess(kShmRo) ? _("[RO]") : _("[readonly]"))
                                     : "",
                                     (curbufIsChanged()
                                      || (curbuf->b_flags & BF_WRITE_MASK)

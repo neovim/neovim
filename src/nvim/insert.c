@@ -1949,7 +1949,7 @@ void insertchar(int c, int flags, int second_indent)
   int force_format = flags & INSCHAR_FORMAT;
 
   const int textwidth = comp_textwidth(force_format);
-  const bool fo_ins_blank = has_format_option(FO_INS_BLANK);
+  const bool fo_ins_blank = has_format_option(kFoInsBlank);
 
   // Try to break the line in two or more pieces when:
   // - Always do this if we have been called to do formatting only.
@@ -1971,7 +1971,7 @@ void insertchar(int c, int flags, int second_indent)
                    && !(State & VREPLACE_FLAG)
                    && *get_cursor_pos_ptr() != NUL)
               && (curwin->w_cursor.lnum != Ins.start.lnum
-                  || ((!has_format_option(FO_INS_LONG)
+                  || ((!has_format_option(kFoInsLong)
                        || Ins.start_textlen <= (colnr_T)textwidth)
                       && (!fo_ins_blank
                           || Ins.start_blank_vcol <= (colnr_T)textwidth)))))) {
@@ -2265,7 +2265,7 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
     // insertion (or moving the cursor), but it's required when appending
     // a line and having it end in a space.  But only do it when something
     // was actually inserted, otherwise undo won't work.
-    if (!Ins.need_undo && has_format_option(FO_AUTO)) {
+    if (!Ins.need_undo && has_format_option(kFoAuto)) {
       pos_T tpos = curwin->w_cursor;
 
       // When the cursor is at the end of the line after a space the
@@ -2304,7 +2304,7 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
     // Do this when ESC was used or moving the cursor up/down.
     // Check for the old position still being valid, just in case the text
     // got changed unexpectedly.
-    if (!nomove && Ins.did_ai && (esc || (vim_strchr(p_cpo, CPO_INDENT) == NULL
+    if (!nomove && Ins.did_ai && (esc || (vim_strchr(p_cpo, kCpoIndent) == NULL
                                           && curwin->w_cursor.lnum !=
                                           end_insert_pos->lnum))
         && end_insert_pos->lnum <= curbuf->b_ml.ml_line_count) {
@@ -3097,7 +3097,7 @@ static bool ins_esc(int *count, int cmdchar, bool nomove)
 
     if (--*count > 0) {         // repeat what was typed
       // Vi repeats the insert without replacing characters.
-      if (vim_strchr(p_cpo, CPO_REPLCNT) != NULL) {
+      if (vim_strchr(p_cpo, kCpoReplcnt) != NULL) {
         State &= ~REPLACE_FLAG;
       }
 
@@ -3435,8 +3435,8 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         // When "aw" is in 'formatoptions' we must delete the space at
         // the end of the line, otherwise the line will be broken
         // again when auto-formatting.
-        if (has_format_option(FO_AUTO)
-            && has_format_option(FO_WHITE_PAR)) {
+        if (has_format_option(kFoAuto)
+            && has_format_option(kFoWhitePar)) {
           const char *ptr = ml_get_buf(curbuf, curwin->w_cursor.lnum);
           int len = get_cursor_line_len();
           if (len > 0 && ptr[len - 1] == ' ') {
@@ -3675,7 +3675,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
   // We can emulate the vi behaviour by pretending there is a dollar
   // displayed even when there isn't.
   //  --pkv Sun Jan 19 01:56:40 EST 2003
-  if (vim_strchr(p_cpo, CPO_BACKSPACE) != NULL && dollar_vcol == -1) {
+  if (vim_strchr(p_cpo, kCpoBackspace) != NULL && dollar_vcol == -1) {
     dollar_vcol = curwin->w_virtcol;
   }
 
@@ -4023,7 +4023,7 @@ static bool ins_tab(void)
     }
 
     // When 'L' is not in 'cpoptions' a tab always takes up 'ts' spaces.
-    if (vim_strchr(p_cpo, CPO_LISTWM) == NULL) {
+    if (vim_strchr(p_cpo, kCpoListwm) == NULL) {
       curwin->w_p_list = false;
     }
 
@@ -4182,7 +4182,7 @@ bool ins_eol(int c)
 
   AppendToRedobuff(NL_STR);
   bool i = open_line(FORWARD,
-                     has_format_option(FO_RET_COMS) ? OPENLINE_DO_COM : 0,
+                     has_format_option(kFoRetComs) ? OPENLINE_DO_COM : 0,
                      old_indent, NULL);
   old_indent = 0;
   Ins.can_cindent = true;
@@ -4338,7 +4338,7 @@ colnr_T get_nolist_virtcol(void)
       || curwin->w_cursor.lnum > curwin->w_buffer->b_ml.ml_line_count) {
     return 0;
   }
-  if (curwin->w_p_list && vim_strchr(p_cpo, CPO_LISTWM) == NULL) {
+  if (curwin->w_p_list && vim_strchr(p_cpo, kCpoListwm) == NULL) {
     return getvcol_nolist(&curwin->w_cursor);
   }
   validate_virtcol(curwin);

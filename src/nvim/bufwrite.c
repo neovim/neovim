@@ -467,7 +467,7 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
         }
       }
       if (reset_changed && buf->b_changed && !append
-          && (overwriting || vim_strchr(p_cpo, CPO_PLUS) != NULL)) {
+          && (overwriting || vim_strchr(p_cpo, kCpoPlus) != NULL)) {
         // Buffer still changed, the autocommands didn't work properly.
         return FAIL;
       }
@@ -664,7 +664,7 @@ static int get_fileinfo(buf_T *buf, char *fname, bool overwriting, bool forceit,
     *readonly = !os_file_is_writable(fname);
 
     if (!forceit && *readonly) {
-      if (vim_strchr(p_cpo, CPO_FWRITE) != NULL) {
+      if (vim_strchr(p_cpo, kCpoFwrite) != NULL) {
         *err = set_err_num("E504", _(err_readonly));
       } else {
         *err = set_err_num("E505", _("is read-only (add ! to override)"));
@@ -903,7 +903,7 @@ nobackup:
     // If 'cpoptions' includes the "W" flag, we don't want to
     // overwrite a read-only file.  But rename may be possible
     // anyway, thus we need an extra check here.
-    if (file_readonly && vim_strchr(p_cpo, CPO_FWRITE) != NULL) {
+    if (file_readonly && vim_strchr(p_cpo, kCpoFwrite) != NULL) {
       *err = set_err_num("E504", _(err_readonly));
       return FAIL;
     }
@@ -1028,8 +1028,8 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
       && buf == curbuf
       && !bt_nofilename(buf)
       && !filtering
-      && (!append || vim_strchr(p_cpo, CPO_FNAMEAPP) != NULL)
-      && vim_strchr(p_cpo, CPO_FNAMEW) != NULL) {
+      && (!append || vim_strchr(p_cpo, kCpoFnameapp) != NULL)
+      && vim_strchr(p_cpo, kCpoFnamew) != NULL) {
     if (set_rw_fname(fname, sfname) == FAIL) {
       return FAIL;
     }
@@ -1076,7 +1076,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
     buf->b_op_end = orig_end;
   }
 
-  if (shortmess(SHM_OVER) && !exiting) {
+  if (shortmess(kShmOver) && !exiting) {
     msg_scroll = false;             // overwrite previous file message
   } else {
     msg_scroll = true;              // don't overwrite previous file message
@@ -1164,7 +1164,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   // When using ":w!" and the file was read-only: make it writable
   if (forceit && perm >= 0 && !(perm & 0200)
       && file_info_old.stat.st_uid == getuid()
-      && vim_strchr(p_cpo, CPO_FWRITE) == NULL) {
+      && vim_strchr(p_cpo, kCpoFwrite) == NULL) {
     perm |= 0200;
     os_setperm(fname, perm);
     made_writable = true;
@@ -1173,7 +1173,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
 
   // When using ":w!" and writing to the current file, 'readonly' makes no
   // sense, reset it, unless 'Z' appears in 'cpoptions'.
-  if (forceit && overwriting && vim_strchr(p_cpo, CPO_KEEPRO) == NULL) {
+  if (forceit && overwriting && vim_strchr(p_cpo, kCpoKeepro) == NULL) {
     buf->b_p_ro = false;
     need_maketitle = true;          // set window title later
     status_redraw_all();            // redraw status lines later
@@ -1328,7 +1328,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
             err = set_err(_("E166: Can't open linked file for writing"));
           } else {
             err = set_err_arg(_("E212: Can't open file for writing: %s"), fd);
-            if (forceit && vim_strchr(p_cpo, CPO_FWRITE) == NULL && perm >= 0) {
+            if (forceit && vim_strchr(p_cpo, kCpoFwrite) == NULL && perm >= 0) {
               // we write to the file, thus it should be marked
               // writable after all
               if (!(perm & 0200)) {
@@ -1347,7 +1347,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
           }
 #else
           err = set_err_arg(_("E212: Can't open file for writing: %s"), fd);
-          if (forceit && vim_strchr(p_cpo, CPO_FWRITE) == NULL && perm >= 0) {
+          if (forceit && vim_strchr(p_cpo, kCpoFwrite) == NULL && perm >= 0) {
             if (!append) {                    // don't remove when appending
               os_remove(wfname);
             }
@@ -1704,11 +1704,11 @@ restore_backup:
       insert_space = true;
     }
     msg_add_lines(insert_space, lnum, nchars);       // add line/char count
-    if (!shortmess(SHM_WRITE)) {
+    if (!shortmess(kShmWrite)) {
       if (append) {
-        xstrlcat(IObuff, shortmess(SHM_WRI) ? _(" [a]") : _(" appended"), IOSIZE);
+        xstrlcat(IObuff, shortmess(kShmWri) ? _(" [a]") : _(" appended"), IOSIZE);
       } else {
-        xstrlcat(IObuff, shortmess(SHM_WRI) ? _(" [w]") : _(" written"), IOSIZE);
+        xstrlcat(IObuff, shortmess(kShmWri) ? _(" [w]") : _(" written"), IOSIZE);
       }
     }
     // Hide cursor while emitting "written" message, so cursor doesn't flicker in cmdline. #25974
@@ -1721,7 +1721,7 @@ restore_backup:
   // writing to the original file and '+' is not in 'cpoptions'.
   if (reset_changed && whole && !append
       && !write_info.bw_conv_error
-      && (overwriting || vim_strchr(p_cpo, CPO_PLUS) != NULL)) {
+      && (overwriting || vim_strchr(p_cpo, kCpoPlus) != NULL)) {
     unchanged(buf, true, false);
     const varnumber_T changedtick = buf_get_changedtick(buf);
     if (buf->b_last_changedtick + 1 == changedtick) {

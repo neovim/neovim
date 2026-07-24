@@ -2770,7 +2770,7 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
     // If 'cpoptions' contains 't', store the search pattern for the "n"
     // command.  If 'cpoptions' does not contain 't', the search pattern
     // is not stored.
-    if (vim_strchr(p_cpo, CPO_TAGPAT) != NULL) {
+    if (vim_strchr(p_cpo, kCpoTagpat) != NULL) {
       search_options = 0;
     } else {
       search_options = SEARCH_KEEP;

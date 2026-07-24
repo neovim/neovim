@@ -610,7 +610,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
     return FAIL;
   }
 
-  const bool search_from_match_end = vim_strchr(p_cpo, CPO_SEARCH) != NULL;
+  const bool search_from_match_end = vim_strchr(p_cpo, kCpoSearch) != NULL;
 
   // find the string
   do {  // loop for count
@@ -951,8 +951,8 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
       lnum = dir == BACKWARD  // start second loop at the other end
              ? buf->b_ml.ml_line_count
              : 1;
-      if (!shortmess(SHM_SEARCH)
-          && shortmess(SHM_SEARCHCOUNT)
+      if (!shortmess(kShmSearch)
+          && shortmess(kShmSearchcount)
           && (options & SEARCH_MSG)) {
         give_warning(_(dir == BACKWARD ? top_bot_msg : bot_top_msg), true, false);
       }
@@ -1151,7 +1151,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
   Search.cmdlen = 0;
 
   // A line offset is not remembered, this is vi compatible.
-  if (spats[0].off.line && vim_strchr(p_cpo, CPO_LINEOFF) != NULL) {
+  if (spats[0].off.line && vim_strchr(p_cpo, kCpoLineoff) != NULL) {
     spats[0].off.line = false;
     spats[0].off.off = 0;
   }
@@ -1226,7 +1226,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
 
     bool show_search_stats = false;
     if ((options & SEARCH_ECHO) && messaging() && !msg_silent
-        && (!cmd_silent || !shortmess(SHM_SEARCHCOUNT))) {
+        && (!cmd_silent || !shortmess(kShmSearchcount))) {
       char off_buf[40];
       size_t off_len = 0;
 
@@ -1260,7 +1260,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
       }
 
       size_t msgbufsize;
-      if (!shortmess(SHM_SEARCHCOUNT) || cmd_silent) {
+      if (!shortmess(kShmSearchcount) || cmd_silent) {
         // Reserve enough space for the search pattern + offset +
         // search stat.  Use all the space available, so that the
         // search state is right aligned.  If there is not enough space
@@ -1343,7 +1343,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
         msg_nowait = true;  // don't wait for this message
       }
 
-      if (!shortmess(SHM_SEARCHCOUNT)) {
+      if (!shortmess(kShmSearchcount)) {
         show_search_stats = true;
       }
     }
@@ -1390,7 +1390,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
       *dircp = (char)search_delim;  // restore second '/' or '?' for normal_cmd()
     }
 
-    if (!shortmess(SHM_SEARCH) && sia && sia->sa_wrapped) {
+    if (!shortmess(kShmSearch) && sia && sia->sa_wrapped) {
       show_top_bot_msg = true;
     }
 
@@ -1514,7 +1514,7 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char *pat)
     if (pos->lnum < 1) {
       if (p_ws) {
         pos->lnum = buf->b_ml.ml_line_count;
-        if (!shortmess(SHM_SEARCH)) {
+        if (!shortmess(kShmSearch)) {
           give_warning(_(top_bot_msg), true, false);
         }
       } else {
@@ -1524,7 +1524,7 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char *pat)
     } else if (pos->lnum > buf->b_ml.ml_line_count) {
       if (p_ws) {
         pos->lnum = 1;
-        if (!shortmess(SHM_SEARCH)) {
+        if (!shortmess(kShmSearch)) {
           give_warning(_(bot_top_msg), true, false);
         }
       } else {
@@ -1600,7 +1600,7 @@ int searchc(cmdarg_T *cap, bool t_cmd)
     // Force a move of at least one char, so ";" and "," will move the
     // cursor, even if the cursor is right in front of char we are looking
     // at.
-    if (vim_strchr(p_cpo, CPO_SCOLON) == NULL && count == 1 && t_cmd) {
+    if (vim_strchr(p_cpo, kCpoScolon) == NULL && count == 1 && t_cmd) {
       stop = false;
     }
   }
@@ -1798,9 +1798,9 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
   char *linep = ml_get(pos.lnum);     // pointer to current line
 
   // vi compatible matching
-  bool cpo_match = (vim_strchr(p_cpo, CPO_MATCH) != NULL);
+  bool cpo_match = (vim_strchr(p_cpo, kCpoMatch) != NULL);
   // don't recognize backslashes
-  bool cpo_bsl = (vim_strchr(p_cpo, CPO_MATCHBSL) != NULL);
+  bool cpo_bsl = (vim_strchr(p_cpo, kCpoMatchbsl) != NULL);
 
   // Direction to search when initc is '/', '*' or '#'
   if (flags & FM_BACKWARD) {
@@ -2425,7 +2425,7 @@ void showmatch(int c)
 
   // brief pause, unless 'm' is present in 'cpo' and a character is
   // available.
-  if (vim_strchr(p_cpo, CPO_SHOWMATCH) != NULL) {
+  if (vim_strchr(p_cpo, kCpoShowmatch) != NULL) {
     os_delay((uint64_t)p_mat * 100 + 8, true);
   } else if (!char_avail()) {
     os_delay((uint64_t)p_mat * 100 + 9, false);
@@ -2831,7 +2831,7 @@ void f_searchcount(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   tv_dict_alloc_ret(rettv);
 
-  if (shortmess(SHM_SEARCHCOUNT)) {  // 'shortmess' contains 'S' flag
+  if (shortmess(kShmSearchcount)) {  // 'shortmess' contains 'S' flag
     recompute = true;
   }
 
@@ -3187,7 +3187,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
           files[depth].name = curr_fname = new_fname;
           files[depth].lnum = 0;
           files[depth].matched = false;
-          if (action == ACTION_EXPAND && !shortmess(SHM_COMPLETIONSCAN) && !silent) {
+          if (action == ACTION_EXPAND && !shortmess(kShmCompletionscan) && !silent) {
             msg_hist_off = true;                // reset in msg_trunc()
             vim_snprintf(IObuff, IOSIZE,
                          _("Scanning included file: %s"),

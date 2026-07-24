@@ -295,7 +295,7 @@ void *vim_findfile_init(char *path, char *filename, size_t filenamelen, char *st
   // If path is absolute, we do that later.
   if (path[0] == '.'
       && (vim_ispathsep(path[1]) || path[1] == NUL)
-      && (!tagfile || vim_strchr(p_cpo, CPO_DOTTAG) == NULL)
+      && (!tagfile || vim_strchr(p_cpo, kCpoDottag) == NULL)
       && rel_fname != NULL) {
     size_t len = (size_t)(path_tail(rel_fname) - rel_fname);
 

@@ -707,7 +707,7 @@ static int reg_cpo_lit;  // 'cpoptions' contains 'l' flag
 
 static void get_cpo_flags(void)
 {
-  reg_cpo_lit = vim_strchr(p_cpo, CPO_LITERAL) != NULL;
+  reg_cpo_lit = vim_strchr(p_cpo, kCpoLiteral) != NULL;
 }
 
 /// Skip over a "[]" range.

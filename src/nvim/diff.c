@@ -16,6 +16,7 @@
 #include <string.h>
 
 #include "auto/config.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
@@ -70,6 +71,9 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 #include "xdiff/xdiff.h"
+
+// KeyDict_dip + KeyDict_dip_get_field, generated from the 'diffopt' schema (reusing hashy.lua).
+#include "options_keysets.generated.h"
 
 static bool diff_busy = false;         // using diff structs, don't change them
 static bool diff_need_update = false;  // ex_diffupdate needs to be called
@@ -2650,154 +2654,73 @@ int diffanchors_changed(bool buflocal)
   return result;
 }
 
-/// This is called when 'diffopt' is changed.
+/// Map the 'diffopt' keyset onto diff.c's globals. `v` is `p_dip` reified into a keyset.
 ///
-/// @return
+/// @return  FAIL only for the cross-part "horizontal" + "vertical" conflict.
 int diffopt_changed(void)
 {
-  int diff_context_new = 6;
-  int linematch_lines_new = 0;
-  int diff_flags_new = 0;
-  int diff_foldcolumn_new = 2;
-  int diff_algorithm_new = 0;
-  int diff_indent_heuristic = 0;
+  OptKeyDict_dip *v = opt_keyset(p_dip, kOptDiffopt, NULL);
 
-  char *p = p_dip;
-  while (*p != NUL) {
-    // Note: Keep this in sync with opt_dip_values.
-    if (strncmp(p, "filler", 6) == 0) {
-      p += 6;
-      diff_flags_new |= DIFF_FILLER;
-    } else if (strncmp(p, "anchor", 6) == 0) {
-      p += 6;
-      diff_flags_new |= DIFF_ANCHOR;
-    } else if ((strncmp(p, "context:", 8) == 0) && ascii_isdigit(p[8])) {
-      p += 8;
-      diff_context_new = getdigits_int(&p, false, diff_context_new);
-    } else if (strncmp(p, "iblank", 6) == 0) {
-      p += 6;
-      diff_flags_new |= DIFF_IBLANK;
-    } else if (strncmp(p, "icase", 5) == 0) {
-      p += 5;
-      diff_flags_new |= DIFF_ICASE;
-    } else if (strncmp(p, "iwhiteall", 9) == 0) {
-      p += 9;
-      diff_flags_new |= DIFF_IWHITEALL;
-    } else if (strncmp(p, "iwhiteeol", 9) == 0) {
-      p += 9;
-      diff_flags_new |= DIFF_IWHITEEOL;
-    } else if (strncmp(p, "iwhite", 6) == 0) {
-      p += 6;
-      diff_flags_new |= DIFF_IWHITE;
-    } else if (strncmp(p, "horizontal", 10) == 0) {
-      p += 10;
-      diff_flags_new |= DIFF_HORIZONTAL;
-    } else if (strncmp(p, "vertical", 8) == 0) {
-      p += 8;
-      diff_flags_new |= DIFF_VERTICAL;
-    } else if ((strncmp(p, "foldcolumn:", 11) == 0) && ascii_isdigit(p[11])) {
-      p += 11;
-      diff_foldcolumn_new = getdigits_int(&p, false, diff_foldcolumn_new);
-    } else if (strncmp(p, "hiddenoff", 9) == 0) {
-      p += 9;
-      diff_flags_new |= DIFF_HIDDEN_OFF;
-    } else if (strncmp(p, "closeoff", 8) == 0) {
-      p += 8;
-      diff_flags_new |= DIFF_CLOSE_OFF;
-    } else if (strncmp(p, "followwrap", 10) == 0) {
-      p += 10;
-      diff_flags_new |= DIFF_FOLLOWWRAP;
-    } else if (strncmp(p, "indent-heuristic", 16) == 0) {
-      p += 16;
-      diff_indent_heuristic = XDF_INDENT_HEURISTIC;
-    } else if (strncmp(p, "internal", 8) == 0) {
-      p += 8;
-      diff_flags_new |= DIFF_INTERNAL;
-    } else if (strncmp(p, "algorithm:", 10) == 0) {
-      // Note: Keep this in sync with opt_dip_algorithm_values.
-      p += 10;
-      if (strncmp(p, "myers", 5) == 0) {
-        p += 5;
-        diff_algorithm_new = 0;
-      } else if (strncmp(p, "minimal", 7) == 0) {
-        p += 7;
-        diff_algorithm_new = XDF_NEED_MINIMAL;
-      } else if (strncmp(p, "patience", 8) == 0) {
-        p += 8;
-        diff_algorithm_new = XDF_PATIENCE_DIFF;
-      } else if (strncmp(p, "histogram", 9) == 0) {
-        p += 9;
-        diff_algorithm_new = XDF_HISTOGRAM_DIFF;
-      } else {
-        return FAIL;
-      }
-    } else if (strncmp(p, "inline:", 7) == 0) {
-      // Note: Keep this in sync with opt_dip_inline_values.
-      p += 7;
-      if (strncmp(p, "none", 4) == 0) {
-        p += 4;
-        diff_flags_new &= ~(ALL_INLINE);
-        diff_flags_new |= DIFF_INLINE_NONE;
-      } else if (strncmp(p, "simple", 6) == 0) {
-        p += 6;
-        diff_flags_new &= ~(ALL_INLINE);
-        diff_flags_new |= DIFF_INLINE_SIMPLE;
-      } else if (strncmp(p, "char", 4) == 0) {
-        p += 4;
-        diff_flags_new &= ~(ALL_INLINE);
-        diff_flags_new |= DIFF_INLINE_CHAR;
-      } else if (strncmp(p, "word", 4) == 0) {
-        p += 4;
-        diff_flags_new &= ~(ALL_INLINE);
-        diff_flags_new |= DIFF_INLINE_WORD;
-      } else {
-        return FAIL;
-      }
-    } else if ((strncmp(p, "linematch:", 10) == 0) && ascii_isdigit(p[10])) {
-      p += 10;
-      linematch_lines_new = getdigits_int(&p, false, linematch_lines_new);
-      diff_flags_new |= DIFF_LINEMATCH;
-
-      // linematch does not make sense without filler set
-      diff_flags_new |= DIFF_FILLER;
-    }
-
-    if ((*p != ',') && (*p != NUL)) {
-      return FAIL;
-    }
-
-    if (*p == ',') {
-      p++;
+  int flags = (v->filler ? DIFF_FILLER : 0) | (v->anchor ? DIFF_ANCHOR : 0)
+              | (v->iblank ? DIFF_IBLANK : 0) | (v->icase ? DIFF_ICASE : 0)
+              | (v->iwhiteall ? DIFF_IWHITEALL : 0) | (v->iwhiteeol ? DIFF_IWHITEEOL : 0)
+              | (v->iwhite ? DIFF_IWHITE : 0) | (v->horizontal ? DIFF_HORIZONTAL : 0)
+              | (v->vertical ? DIFF_VERTICAL : 0) | (v->closeoff ? DIFF_CLOSE_OFF : 0)
+              | (v->hiddenoff ? DIFF_HIDDEN_OFF : 0) | (v->followwrap ? DIFF_FOLLOWWRAP : 0)
+              | (v->internal ? DIFF_INTERNAL : 0);
+  if (HAS_KEY(v, dip, linematch)) {
+    flags |= DIFF_LINEMATCH | DIFF_FILLER;  // linematch needs filler
+  }
+  if (HAS_KEY(v, dip, inline_)) {
+    flags &= ~ALL_INLINE;
+    if (strequal(v->inline_, "simple")) {
+      flags |= DIFF_INLINE_SIMPLE;
+    } else if (strequal(v->inline_, "char")) {
+      flags |= DIFF_INLINE_CHAR;
+    } else if (strequal(v->inline_, "word")) {
+      flags |= DIFF_INLINE_WORD;
+    } else {
+      flags |= DIFF_INLINE_NONE;
     }
   }
+  int algorithm = v->indent_heuristic ? XDF_INDENT_HEURISTIC : 0;
+  if (HAS_KEY(v, dip, algorithm)) {
+    if (strequal(v->algorithm, "minimal")) {
+      algorithm |= XDF_NEED_MINIMAL;
+    } else if (strequal(v->algorithm, "patience")) {
+      algorithm |= XDF_PATIENCE_DIFF;
+    } else if (strequal(v->algorithm, "histogram")) {
+      algorithm |= XDF_HISTOGRAM_DIFF;
+    }  // else "myers" -> 0
+  }
 
-  diff_algorithm_new |= diff_indent_heuristic;
-
+  int ret = OK;
   // Can't have both "horizontal" and "vertical".
-  if ((diff_flags_new & DIFF_HORIZONTAL) && (diff_flags_new & DIFF_VERTICAL)) {
-    return FAIL;
-  }
-
-  // If flags were added or removed, or the algorithm was changed, need to
-  // update the diff.
-  if (diff_flags != diff_flags_new || diff_algorithm != diff_algorithm_new) {
-    FOR_ALL_TABS(tp) {
-      tp->tp_diff_invalid = true;
+  if ((flags & DIFF_HORIZONTAL) && (flags & DIFF_VERTICAL)) {
+    ret = FAIL;
+  } else {
+    // If flags were added or removed, or the algorithm was changed, update the diff.
+    if (diff_flags != flags || diff_algorithm != algorithm) {
+      FOR_ALL_TABS(tp) {
+        tp->tp_diff_invalid = true;
+      }
     }
+
+    int context = HAS_KEY(v, dip, context) ? (int)v->context : 6;
+    diff_flags = flags;
+    diff_context = context == 0 ? 1 : context;
+    linematch_lines = HAS_KEY(v, dip, linematch) ? (int)v->linematch : 0;
+    diff_foldcolumn = HAS_KEY(v, dip, foldcolumn) ? (int)v->foldcolumn : 2;
+    diff_algorithm = algorithm;
+
+    diff_redraw(true);
+
+    // recompute the scroll binding with the new option value, may
+    // remove or add filler lines
+    check_scrollbind(0, 0);
   }
 
-  diff_flags = diff_flags_new;
-  diff_context = diff_context_new == 0 ? 1 : diff_context_new;
-  linematch_lines = linematch_lines_new;
-  diff_foldcolumn = diff_foldcolumn_new;
-  diff_algorithm = diff_algorithm_new;
-
-  diff_redraw(true);
-
-  // recompute the scroll binding with the new option value, may
-  // remove or add filler lines
-  check_scrollbind(0, 0);
-  return OK;
+  return ret;
 }
 
 /// Check that "diffopt" contains "horizontal".

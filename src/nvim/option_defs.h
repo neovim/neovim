@@ -76,6 +76,30 @@ typedef struct {
   OptValData data;
 } OptVal;
 
+/// Value kind of one key in a dict option (see "schema" in options.lua).
+typedef enum {
+  kOptSchemaFlag,   ///< bare flag, e.g. 'diffopt' "filler"
+  kOptSchemaNum,    ///< "key:N" non-negative number, e.g. 'diffopt' "context:4"
+  kOptSchemaSNum,   ///< "key:N" signed number, e.g. 'breakindentopt' "shift:-2"
+  kOptSchemaEnum,   ///< "key:val" where val is one of "enum_values", e.g. "algorithm:patience"
+  kOptSchemaStr,    ///< "key:val" where val is a free string, e.g. 'previewpopup' "highlight:Foo"
+} OptSchemaKind;
+
+/// One key of a dict option, generated from its `dict` schema in options.lua.
+/// Consumed by opt_strings_check(). A NULL "name" terminates the array.
+typedef struct {
+  const char *name;           ///< key name, without a trailing ':'
+  OptSchemaKind kind;
+  const char **enum_values;    ///< kOptSchemaEnum: NULL-terminated valid values; else NULL
+} OptSchemaItem;
+
+/// Schema for a dict option (`schema.dict` in options.lua).
+typedef struct {
+  FieldHashfn get_field;        ///< Keyset perfect-hash lookup, for opt_fill().
+  const OptSchemaItem *schema;  ///< Grammar, for opt_strings_check() validation.
+  size_t size;                  ///< sizeof the keyset, for opt_keyset() storage.
+} OptDictSchema;
+
 /// :set operator types
 typedef enum {
   OP_NONE = 0,
@@ -179,6 +203,9 @@ typedef struct {
 
   const char **values;               ///< possible values for string options
   const size_t values_len;           ///< length of values array
+
+  /// Grammar of a dict option ("schema.dict" in options.lua); NULL otherwise.
+  const OptSchemaItem *schema;
 
   /// callback function to invoke after an option is modified to validate and
   /// apply the new value.

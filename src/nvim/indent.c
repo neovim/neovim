@@ -37,6 +37,7 @@
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
+#include "nvim/optionstr.h"
 #include "nvim/os/input.h"
 #include "nvim/plines.h"
 #include "nvim/pos_defs.h"
@@ -51,6 +52,8 @@
 #include "nvim/vim_defs.h"
 
 #include "indent.c.generated.h"
+
+#include "options_keysets.generated.h"
 
 /// Set the integer values corresponding to the string setting of 'vartabstop'.
 /// "array" will be set, caller must free it if needed.
@@ -747,7 +750,7 @@ int get_number_indent(linenr_T lnum)
   pos.lnum = 0;
 
   // In format_lines() (i.e. not insert mode), fo+=q is needed too...
-  if ((State & MODE_INSERT) || has_format_option(FO_Q_COMS)) {
+  if ((State & MODE_INSERT) || has_format_option(kFoQComs)) {
     lead_len = get_leader_len(ml_get(lnum), NULL, false, true);
   }
   regmatch.regprog = vim_regcomp(curbuf->b_p_flp, RE_MAGIC);
@@ -780,59 +783,19 @@ int get_number_indent(linenr_T lnum)
 /// @param wp      when NULL: only check "briopt"
 ///
 /// @return  FAIL for failure, OK otherwise.
-bool briopt_check(char *briopt, win_T *wp)
+void briopt_check(win_T *wp)
 {
-  int bri_shift = 0;
-  int bri_min = 20;
-  bool bri_sbr = false;
-  int bri_list = 0;
-  int bri_vcol = 0;
-
-  char *p = empty_string_option;
-  if (briopt != NULL) {
-    p = briopt;
-  } else if (wp != NULL) {
-    p = wp->w_p_briopt;
-  }
-
-  while (*p != NUL) {
-    // Note: Keep this in sync with opt_briopt_values.
-    if (strncmp(p, "shift:", 6) == 0
-        && ((p[6] == '-' && ascii_isdigit(p[7])) || ascii_isdigit(p[6]))) {
-      p += 6;
-      bri_shift = getdigits_int(&p, true, 0);
-    } else if (strncmp(p, "min:", 4) == 0 && ascii_isdigit(p[4])) {
-      p += 4;
-      bri_min = getdigits_int(&p, true, 0);
-    } else if (strncmp(p, "sbr", 3) == 0) {
-      p += 3;
-      bri_sbr = true;
-    } else if (strncmp(p, "list:", 5) == 0) {
-      p += 5;
-      bri_list = (int)getdigits(&p, false, 0);
-    } else if (strncmp(p, "column:", 7) == 0) {
-      p += 7;
-      bri_vcol = (int)getdigits(&p, false, 0);
-    }
-    if (*p != ',' && *p != NUL) {
-      return false;
-    }
-    if (*p == ',') {
-      p++;
-    }
-  }
-
   if (wp == NULL) {
-    return OK;
+    return;  // Setting the global value: nothing to apply to a window.
   }
-
-  wp->w_briopt_shift = bri_shift;
-  wp->w_briopt_min = bri_min;
-  wp->w_briopt_sbr = bri_sbr;
-  wp->w_briopt_list = bri_list;
-  wp->w_briopt_vcol = bri_vcol;
-
-  return true;
+  // 'breakindentopt' is stored as its ":set" string (validated when set); reify it into a keyset and
+  // map that onto the applied per-window fields.
+  OptKeyDict_briopt *v = opt_keyset(wp->w_p_briopt, kOptBreakindentopt, NULL);
+  wp->w_briopt_shift = HAS_KEY(v, briopt, shift) ? (int)v->shift : 0;
+  wp->w_briopt_min = HAS_KEY(v, briopt, min) ? (int)v->min : 20;
+  wp->w_briopt_sbr = HAS_KEY(v, briopt, sbr);
+  wp->w_briopt_list = HAS_KEY(v, briopt, list) ? (int)v->list : 0;
+  wp->w_briopt_vcol = HAS_KEY(v, briopt, column) ? (int)v->column : 0;
 }
 
 // Return appropriate space number for breakindent, taking influencing

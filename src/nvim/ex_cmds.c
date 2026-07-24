@@ -1395,7 +1395,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
 
     if (do_in) {
       if ((cmdmod.cmod_flags & CMOD_KEEPMARKS)
-          || vim_strchr(p_cpo, CPO_REMMARK) == NULL) {
+          || vim_strchr(p_cpo, kCpoRemmark) == NULL) {
         // TODO(bfredl): Currently not active for extmarks. What would we
         // do if columns don't match, assume added/deleted bytes at the
         // end of each line?
@@ -1786,7 +1786,7 @@ void ex_file(exarg_T *eap)
   }
 
   // print file name if no argument or 'F' is not in 'shortmess'
-  if (*eap->arg == NUL || !shortmess(SHM_FILEINFO)) {
+  if (*eap->arg == NUL || !shortmess(kShmFileinfo)) {
     fileinfo(false, false, eap->forceit);
   }
 }
@@ -1875,7 +1875,7 @@ int do_write(exarg_T *eap)
 
   // If we have a new file, put its name in the list of alternate file names.
   if (other) {
-    if (vim_strchr(p_cpo, CPO_ALTWRITE) != NULL
+    if (vim_strchr(p_cpo, kCpoAltwrite) != NULL
         || eap->cmdidx == CMD_saveas) {
       alt_buf = setaltfname(ffname, fname, 1);
     } else {
@@ -2024,7 +2024,7 @@ int check_overwrite(exarg_T *eap, buf_T *buf, char *fname, char *ffname, bool ot
        || (!bt_nofilename(buf)
            && ((buf->b_flags & BF_NOTEDITED)
                || ((buf->b_flags & BF_NEW)
-                   && vim_strchr(p_cpo, CPO_OVERNEW) == NULL)
+                   && vim_strchr(p_cpo, kCpoOvernew) == NULL)
                || (buf->b_flags & BF_READERR))))
       && !p_wa
       && os_path_exists(ffname)) {
@@ -2900,7 +2900,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
 
     // Obey the 'O' flag in 'cpoptions': overwrite any previous file
     // message.
-    if (shortmess(SHM_OVERALL) && !msg_listdo_overwrite && !exiting && p_verbose == 0) {
+    if (shortmess(kShmOverall) && !msg_listdo_overwrite && !exiting && p_verbose == 0) {
       msg_scroll = false;
     }
     if (!msg_scroll) {          // wait a bit when overwriting an error msg
@@ -2910,7 +2910,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     msg_scroll = msg_scroll_save;
     msg_scrolled_ign = true;
 
-    if (!shortmess(SHM_FILEINFO)) {
+    if (!shortmess(kShmFileinfo)) {
       fileinfo(false, true, false);
     }
 
@@ -3940,7 +3940,7 @@ static int do_sub(exarg_T *eap, proftime_T tm, const int cmdpreview_ns,
 
           // When 'cpoptions' contains "u" don't sync undo when
           // asking for confirmation.
-          if (vim_strchr(p_cpo, CPO_UNDO) != NULL) {
+          if (vim_strchr(p_cpo, kCpoUndo) != NULL) {
             no_u_sync++;
           }
 
@@ -4082,7 +4082,7 @@ static int do_sub(exarg_T *eap, proftime_T tm, const int cmdpreview_ns,
           }
           State = save_State;
           setmouse();
-          if (vim_strchr(p_cpo, CPO_UNDO) != NULL) {
+          if (vim_strchr(p_cpo, kCpoUndo) != NULL) {
             no_u_sync--;
           }
 

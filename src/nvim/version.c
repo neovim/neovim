@@ -4281,7 +4281,7 @@ bool may_show_intro(void)
           && (curbuf->handle == 1)
           && (curwin->handle == LOWEST_WIN_ID)
           && one_window(curwin, NULL)
-          && (vim_strchr(p_shm, SHM_INTRO) == NULL));
+          && (vim_strchr(p_shm, kShmIntro) == NULL));
 }
 
 /// Give an introductory message about Vim.

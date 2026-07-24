@@ -159,6 +159,7 @@ static char *p_vsts_nopaste;
 // ignored and they are not printed.
 
 #include "options.generated.h"
+#include "options_keysets.generated.h"
 #include "options_map.generated.h"
 
 static int p_bin_dep_opts[] = {
@@ -1440,6 +1441,8 @@ OptVal get_option_newval(OptIndex opt_idx, int opt_flags, set_prefix_T prefix, c
     break;
   }
   case kOptValTypeString: {
+    // A dict option merges here too: its stored value is already a ":set" string, so =/+=/-= apply
+    // as for any string, and set_option() validates and canonicalizes the result.
     const char *oldval_str = oldval.data.string.data;
     // Get the new value for the option
     const char *newval_str = stropt_get_newval(opt_idx, argp, varp, oldval_str, &op);
@@ -2009,20 +2012,17 @@ bool parse_winhl_opt(const char *winhl, win_T *wp)
     }
   }
 
-  while (*p) {
-    const char *colon = strchr(p, ':');
-    if (!colon) {
-      return false;
+  const char *key, *val;
+  size_t keylen, vallen;
+  while (option_next_keyval(&p, &key, &keylen, &val, &vallen)) {
+    if (val == NULL) {
+      return false;  // every part must be "group:hl"
     }
-    size_t nlen = (size_t)(colon - p);
-    const char *hi = colon + 1;
-    const char *commap = xstrchrnul(hi, ',');
-    size_t len = (size_t)(commap - hi);
-    int hl_id = len ? syn_check_group(hi, len) : -1;
+    int hl_id = vallen ? syn_check_group(val, vallen) : -1;
     if (hl_id == 0) {
       return false;
     }
-    int hl_id_link = nlen ? syn_check_group(p, nlen) : 0;
+    int hl_id_link = keylen ? syn_check_group(key, keylen) : 0;
     if (hl_id_link == 0) {
       return false;
     }
@@ -2032,8 +2032,6 @@ bool parse_winhl_opt(const char *winhl, win_T *wp)
       attrs.rgb_ae_attr |= HL_GLOBAL;
       ns_hl_def(ns_hl, hl_id_link, attrs, hl_id, NULL);
     }
-
-    p = *commap ? commap + 1 : "";
   }
 
   if (wp != NULL) {
@@ -3338,6 +3336,13 @@ OptIndex find_option(const char *const name)
   return find_option_len(name, strlen(name));
 }
 
+/// True if `opt_idx` is a dict option (`schema.dict` in options.lua, e.g. 'diffopt'). Stored as its
+/// canonical ":set" string; reified on-demand (`opt_keyset()`) for validation and applying.
+bool is_dict_option(OptIndex opt_idx)
+{
+  return opt_dict_schema(opt_idx) != NULL;
+}
+
 /// Free an allocated OptVal.
 void optval_free(OptVal o)
 {
@@ -3503,6 +3508,81 @@ Object optval_as_object(OptVal o)
   UNREACHABLE;
 }
 
+/// Converts an option value to its structured form.
+///
+/// @return Object allocated in `arena`.
+Object optval_to_struct(OptIndex opt_idx, OptVal value, Arena *arena)
+{
+  if (value.type != kOptValTypeString) {
+    return optval_as_object(value);  // boolean/number/nil scalar
+  }
+
+  const uint32_t flags = options[opt_idx].flags;
+  const OptSchemaItem *schema = options[opt_idx].schema;
+
+  // A dict option (`schema != NULL`) parses here like any comma "key:value" map: its stored value
+  // is already the canonical ":set" string.
+  char *str = value.data.string.data != NULL ? value.data.string.data : "";
+
+  Object rv;
+  // Plain string option: no list/map structure.
+  if (!(flags & (kOptFlagComma | kOptFlagFlagList))) {
+    rv = STRING_OBJ(CSTR_TO_ARENA_STR(arena, str));
+  } else if ((flags & kOptFlagFlagList) && !(flags & kOptFlagComma)) {
+    // Single-char flag list, e.g. 'shortmess': each character is a flag.
+    size_t n = strlen(str);
+    Dict d = arena_dict(arena, n);
+    for (size_t i = 0; i < n; i++) {
+      PUT_C(d, arena_memdupz(arena, &str[i], 1), BOOLEAN_OBJ(true));
+    }
+    rv = DICT_OBJ(d);
+  } else {
+    // Comma-separated list/map/set. Upper-bound the item count for arena sizing.
+    size_t nparts = 1;
+    for (char *p = str; *p != NUL; p++) {
+      nparts += (*p == ',');
+    }
+    const bool as_map = (flags & kOptFlagColon) || (flags & kOptFlagFlagList) || schema != NULL;
+    Dict d = as_map ? arena_dict(arena, nparts) : (Dict)ARRAY_DICT_INIT;
+    Array a = as_map ? (Array)ARRAY_DICT_INIT : arena_array(arena, nparts);
+    char *item = xmalloc(strlen(str) + 1);
+    for (char *p = str; *p != NUL;) {
+      copy_option_part(&p, item, strlen(str) + 1, ",");
+      if (*item == NUL) {
+        continue;  // skip empty parts, e.g. "a,,b"
+      }
+      if (!as_map) {
+        // Note: the raw string preserves the ",," literal-comma convention (e.g. 'isfname'); the
+        // structured view splits on every comma and does not reconstruct literal commas.
+        ADD_C(a, STRING_OBJ(CSTR_TO_ARENA_STR(arena, item)));
+        continue;
+      }
+      char *colon = strchr(item, ':');
+      char *val = NULL;
+      if (colon != NULL) {
+        *colon = NUL;
+        val = colon + 1;
+      }
+      String key = CSTR_TO_ARENA_STR(arena, item);
+      Object v;
+      if (flags & kOptFlagFlagList) {
+        v = BOOLEAN_OBJ(true);  // comma flag list ('whichwrap'): each item is a flag
+      } else if (val == NULL) {
+        v = BOOLEAN_OBJ(true);  // bare flag in a typed/colon map
+      } else {
+        // A key's value stays a string, even for a num/enum key: option sub-value types are not a
+        // stable contract (Vim options are "stringly typed"), so we expose structure, not types.
+        v = STRING_OBJ(CSTR_TO_ARENA_STR(arena, val));
+      }
+      PUT_C(d, key.data, v);
+    }
+    xfree(item);
+    rv = as_map ? DICT_OBJ(d) : ARRAY_OBJ(a);
+  }
+
+  return rv;
+}
+
 /// Convert an API Object to an OptVal.
 OptVal object_as_optval(Object o, bool *error)
 {
@@ -3537,7 +3617,9 @@ OptVal object_as_optval_for(OptIndex opt_idx, Object o, set_op_T op, bool *error
 
   const uint32_t flags = options[opt_idx].flags;
   const bool is_list = flags & (kOptFlagComma | kOptFlagFlagList);
-  const bool is_map = flags & kOptFlagColon;          // "key:value" list, e.g. 'listchars'.
+  // "key:value" list, e.g. 'listchars', or a dict option, e.g. 'breakindentopt' (which
+  // accepts a Dict even without kOptFlagColon, mirroring optval_to_struct()'s `as_map`).
+  const bool is_map = (flags & kOptFlagColon) || is_dict_option(opt_idx);
   const bool is_flaglist = flags & kOptFlagFlagList;  // single-char flag list, e.g. 'shortmess'.
   const bool is_comma = flags & kOptFlagComma;
   const bool allow_dup = !(flags & kOptFlagNoDup);
@@ -3620,6 +3702,17 @@ OptVal object_as_optval_for(OptIndex opt_idx, Object o, set_op_T op, bool *error
         char *kv = concat_str(k.data, ":");
         GA_APPEND(char *, &ga, concat_str(kv, v.data.string.data));
         xfree(kv);
+      } else if (v.type == kObjectTypeInteger) {
+        // Typed map value, e.g. 'diffopt' `{ context = 4 }` -> "context:4".
+        char buf[NUMBUFLEN];
+        snprintf(buf, sizeof(buf), ":%" PRId64, (int64_t)v.data.integer);
+        char *kv = concat_str(k.data, buf);
+        GA_APPEND(char *, &ga, kv);
+      } else if (v.type == kObjectTypeBoolean || v.type == kObjectTypeNil) {
+        // Bare flag in a typed map, e.g. 'diffopt' `{ internal = true }` -> "internal".
+        if (v.type == kObjectTypeBoolean && v.data.boolean) {
+          GA_APPEND(char *, &ga, xstrdup(k.data));
+        }
       } else {
         *error = true;
         GA_DEEP_CLEAR_PTR(&ga);
@@ -4047,6 +4140,17 @@ static const char *set_option(const OptIndex opt_idx, OptVal value, int opt_flag
   assert(opt_idx != kOptInvalid);
 
   const char *errmsg = NULL;
+
+  // Every set path for a dict option (":set", the API, Vimscript, a merge) funnels through here as a
+  // ":set" string. Validate it once.
+  if (value.type == kOptValTypeString && is_dict_option(opt_idx)) {
+    errmsg = opt_strings_check(value.data.string.data, opt_dict_schema(opt_idx)->schema, errbuf,
+                               errbuflen);
+    if (errmsg != NULL) {
+      optval_free(value);
+      return errmsg;
+    }
+  }
 
   if (!direct) {
     errmsg = validate_option_value(opt_idx, &value, opt_flags, errbuf, errbuflen);
@@ -5481,7 +5585,7 @@ void didset_window_options(win_T *wp, bool valid_cursor)
     wp->w_skipcol = 0;
   }
   check_colorcolumn(NULL, wp);
-  briopt_check(NULL, wp);
+  briopt_check(wp);
   fill_culopt_flags(NULL, wp);
   set_chars_option(wp, wp->w_p_fcs, kFillchars, true, NULL, 0);
   set_chars_option(wp, wp->w_p_lcs, kListchars, true, NULL, 0);
@@ -5522,10 +5626,10 @@ void buf_copy_options(buf_T *buf, int flags)
     //     X         no          no        no      true
     //    no         yes         no         X      true
     ///
-    if ((vim_strchr(p_cpo, CPO_BUFOPTGLOB) == NULL || !(flags & BCO_ENTER))
+    if ((vim_strchr(p_cpo, kCpoBufoptglob) == NULL || !(flags & BCO_ENTER))
         && (buf->b_p_initialized
             || (!(flags & BCO_ENTER)
-                && vim_strchr(p_cpo, CPO_BUFOPT) != NULL))) {
+                && vim_strchr(p_cpo, kCpoBufopt) != NULL))) {
       should_copy = false;
     }
 
@@ -6381,7 +6485,7 @@ static void option_value2string(vimoption_T *opt, int opt_flags)
                "%" PRId64,
                (int64_t)(*(OptInt *)varp));
     }
-  } else {  // string
+  } else {  // string (including dict options, which are stored as a ":set" string)
     varp = *(char **)varp;
 
     if (opt->flags & kOptFlagExpand) {
@@ -6758,6 +6862,73 @@ size_t copy_option_part(char **option, char *buf, size_t maxlen, char *sep_chars
 
   *option = p;
   return len;
+}
+
+/// Iterates comma-separated parts of option, splitting each part at its first ':' into key/value.
+/// The returned pointers are slices into the original string: for simple "key:value" list options
+/// like 'winhighlight' and 'previewpopup', but not 'listchars'/'fillchars' whose values need
+/// decoding.
+///
+/// Slices are paired lengths; copy with xmemcpyz() if you need a NUL-terminated string.
+///
+/// A part with no ':' yields `*val == NULL`, i.e. a bare flag such as 'diffopt' "filler". An empty
+/// part (from "a,,b" or a leading ',') yields "*keylen == 0" with "*val == NULL"; the caller
+/// decides if that is an error (strict key:value options, but not 'diffopt').
+///
+/// Drive it with a loop, advancing `*p` each step:
+///
+///      const char *key, *val;
+///      size_t keylen, vallen;
+///      for (const char *p = value; option_next_keyval(&p, &key, &keylen, &val, &vallen);) {
+///        ...
+///      }
+///
+/// @param[in,out] p       Cursor into the option string; advanced past the part.
+/// @param[out] key        Start of the key slice.
+/// @param[out] keylen     Length of the key slice.
+/// @param[out] val        Start of the value slice, or NULL if the part had no ':'.
+/// @param[out] vallen     Length of the value slice (0 when "*val" is NULL).
+///
+/// @return true if a part was returned, false at the end of the string.
+bool option_next_keyval(const char **p, const char **key, size_t *keylen, const char **val,
+                        size_t *vallen)
+  FUNC_ATTR_NONNULL_ALL
+{
+  const char *s = *p;
+  if (*s == NUL) {
+    return false;
+  }
+
+  const char *comma = vim_strchr(s, ',');
+  const char *end = comma != NULL ? comma : s + strlen(s);
+  const char *colon = vim_strchr(s, ':');
+
+  *key = s;
+  if (colon != NULL && colon < end) {
+    *keylen = (size_t)(colon - s);
+    *val = colon + 1;
+    *vallen = (size_t)(end - (colon + 1));
+  } else {
+    *keylen = (size_t)(end - s);
+    *val = NULL;
+    *vallen = 0;
+  }
+
+  *p = comma != NULL ? comma + 1 : end;
+  return true;
+}
+
+/// Compare a (non-NUL-terminated) slice from option_next_keyval() against a name.
+///
+/// @param slice     Start of the slice; may be NULL (e.g. a bare flag's value).
+/// @param slicelen  Length of the slice.
+/// @param name      NUL-terminated name to match.
+///
+/// @return true if "slice[0..slicelen)" equals "name".
+bool option_slice_eq(const char *slice, size_t slicelen, const char *name)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return slice != NULL && strlen(name) == slicelen && strncmp(slice, name, slicelen) == 0;
 }
 
 /// Return true when 'shell' has "csh" in the tail.

@@ -13,6 +13,7 @@ const embedded_data = @import("embedded_data");
 
 // these are common dependencies used by many generators
 const hashy = @embedFile("gen/hashy.lua");
+const keyset = @embedFile("gen/keyset.lua");
 const c_grammar = @embedFile("gen/c_grammar.lua");
 
 const Lua = ziglua.Lua;
@@ -43,6 +44,8 @@ fn init_lua() !*Lua {
     _ = lua.getField(-1, "preload");
     try lua.loadBuffer(hashy, "hashy.lua"); // [package, preload, hashy]
     lua.setField(-2, "gen.hashy");
+    try lua.loadBuffer(keyset, "keyset.lua"); // [package, preload, keyset]
+    lua.setField(-2, "gen.keyset");
     try lua.loadBuffer(c_grammar, "c_grammar.lua"); // [package, preload, c_grammar]
     lua.setField(-2, "gen.c_grammar");
     lua.pop(2);

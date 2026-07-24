@@ -823,7 +823,7 @@ int win_col_off(win_T *wp)
 int win_col_off2(win_T *wp)
 {
   if ((wp->w_p_nu || wp->w_p_rnu || *wp->w_p_stc != NUL)
-      && vim_strchr(p_cpo, CPO_NUMCOL) != NULL) {
+      && vim_strchr(p_cpo, kCpoNumcol) != NULL) {
     return number_width(wp) + (*wp->w_p_stc == NUL);
   }
   return 0;

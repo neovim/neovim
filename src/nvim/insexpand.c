@@ -2005,7 +2005,7 @@ static void ins_compl_files(int count, char **files, bool thesaurus, int flags,
 
   for (int i = 0; i < count && !got_int && !ins_compl_interrupted(); i++) {
     FILE *fp = os_fopen(files[i], "r");  // open dictionary file
-    if (flags != DICT_EXACT && !shortmess(SHM_COMPLETIONSCAN) && !compl_autocomplete) {
+    if (flags != DICT_EXACT && !shortmess(kShmCompletionscan) && !compl_autocomplete) {
       vim_snprintf(IObuff, IOSIZE, _("Scanning dictionary: %s"), files[i]);
       msg_progress(IObuff, "nvim.completion", "running", HLF_R, false, true);
     }
@@ -2768,7 +2768,7 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
   ins_compl_free();
   compl_started = false;
   compl_matches = 0;
-  if (!shortmess(SHM_COMPLETIONMENU)) {
+  if (!shortmess(kShmCompletionmenu)) {
     msg_clr_cmdline();  // necessary for "noshowmode"
   }
   ctrl_x_mode = CTRL_X_NORMAL;
@@ -3898,7 +3898,7 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
       st->dict = st->ins_buf->b_fname;
       st->dict_f = DICT_EXACT;
     }
-    if (!shortmess(SHM_COMPLETIONSCAN) && !compl_autocomplete) {
+    if (!shortmess(kShmCompletionscan) && !compl_autocomplete) {
       vim_snprintf(IObuff, IOSIZE, _("Scanning: %s"),
                    st->ins_buf->b_fname == NULL
                    ? buf_spname(st->ins_buf)
@@ -3937,7 +3937,7 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
         compl_type = CTRL_X_BUFNAMES;
       } else if (*st->e_cpt == ']' || *st->e_cpt == 't') {
         compl_type = CTRL_X_TAGS;
-        if (!shortmess(SHM_COMPLETIONSCAN) && !compl_autocomplete) {
+        if (!shortmess(kShmCompletionscan) && !compl_autocomplete) {
           vim_snprintf(IObuff, IOSIZE, "%s", _("Scanning tags."));
           msg_progress(IObuff, "nvim.completion", "running", HLF_R, false, true);
         }
@@ -5961,7 +5961,7 @@ static int get_userdefined_compl_info(colnr_T curs_col, Callback *cb, int *start
     }
     ctrl_x_mode = CTRL_X_NORMAL;
     edit_submode = NULL;
-    if (!shortmess(SHM_COMPLETIONMENU)) {
+    if (!shortmess(kShmCompletionmenu)) {
       msg_clr_cmdline();
     }
     return FAIL;
@@ -6158,7 +6158,7 @@ static int ins_compl_start(void)
   }
 
   if (compl_status_adding()) {
-    if (!shortmess(SHM_COMPLETIONMENU)) {
+    if (!shortmess(kShmCompletionmenu)) {
       edit_submode_pre = _(" Adding");
     }
     if (ctrl_x_mode_line_or_eval()) {
@@ -6179,7 +6179,7 @@ static int ins_compl_start(void)
     compl_startpos.col = compl_col;
   }
 
-  if (!shortmess(SHM_COMPLETIONMENU) && !compl_autocomplete) {
+  if (!shortmess(kShmCompletionmenu) && !compl_autocomplete) {
     if (compl_cont_status & CONT_LOCAL) {
       edit_submode = _(ctrl_x_msgs[CTRL_X_LOCAL_MSG]);
     } else {
@@ -6213,7 +6213,7 @@ static int ins_compl_start(void)
   // showmode might reset the internal line pointers, so it must
   // be called before line = ml_get(), or when this address is no
   // longer needed.  -- Acevedo.
-  if (!shortmess(SHM_COMPLETIONMENU) && !compl_autocomplete) {
+  if (!shortmess(kShmCompletionmenu) && !compl_autocomplete) {
     edit_submode_extra = _("-- Searching...");
     edit_submode_highl = HLF_COUNT;
     showmode();
@@ -6278,7 +6278,7 @@ static void ins_compl_show_statusmsg(void)
 
   // Show a message about what (completion) mode we're in.
   redraw_mode = true;
-  if (!shortmess(SHM_COMPLETIONMENU)) {
+  if (!shortmess(kShmCompletionmenu)) {
     if (edit_submode_extra != NULL) {
       if (!p_smd) {
         msg_hist_off = true;
@@ -6360,7 +6360,7 @@ int ins_complete(int c, bool enable_pum)
     compl_cont_status &= ~CONT_S_IPOS;
   }
 
-  if (!shortmess(SHM_COMPLETIONMENU) && !compl_autocomplete) {
+  if (!shortmess(kShmCompletionmenu) && !compl_autocomplete) {
     ins_compl_show_statusmsg();
   }
 
