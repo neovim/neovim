@@ -918,7 +918,7 @@ void suggest_load_files(void)
       slang->sl_sugloaded = true;
 
       char *dotp = strrchr(slang->sl_fname, '.');
-      if (dotp == NULL || path_fnamecmp(dotp, ".spl") != 0) {
+      if (dotp == NULL || !path_equal(dotp, ".spl", kPathCmpLiteral)) {
         continue;
       }
       STRCPY(dotp, ".sug");
@@ -1840,7 +1840,7 @@ static void spell_reload_one(char *fname, bool added_word)
   bool didit = false;
 
   for (slang_T *slang = first_lang; slang != NULL; slang = slang->sl_next) {
-    if (path_full_compare(fname, slang->sl_fname, false, true) == kEqualFiles) {
+    if (path_equal(fname, slang->sl_fname, kPathCmpExpand)) {
       slang_clear(slang);
       if (spell_load_file(fname, NULL, slang, false) == NULL) {
         // reloading failed, clear the language
@@ -4876,8 +4876,7 @@ static void spell_make_sugfile(spellinfo_T *spin, char *wfname)
   // of the code for the soundfolding stuff.
   // It might have been done already by spell_reload_one().
   for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
-    if (path_full_compare(wfname, slang->sl_fname, false, true)
-        == kEqualFiles) {
+    if (path_equal(wfname, slang->sl_fname, kPathCmpExpand)) {
       break;
     }
   }

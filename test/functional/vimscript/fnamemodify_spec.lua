@@ -205,6 +205,18 @@ describe('fnamemodify()', function()
     eq('txt', fnamemodify('path/to/hello.txt', ':e'))
   end)
 
+  it(':~', function()
+    local cwd = vim.fs.normalize(fnamemodify('.', ':p'))
+    local full_path = ('%s/foo'):format(cwd)
+
+    command(([[let $HOME='%s']]):format(cwd))
+    eq('~/foo', fnamemodify(full_path, ':~'))
+
+    command(([[let $HOME='%s/']]):format(cwd)) -- a trailing slash
+    -- `init_home` calls `os_realpath` on Unix, which removes the trailing slash
+    eq(is_os('win') and full_path or '~/foo', fnamemodify(full_path, ':~'))
+  end)
+
   it('regex replacements', function()
     eq('content-there-here.txt', fnamemodify('content-here-here.txt', ':s/here/there/'))
     eq('content-there-there.txt', fnamemodify('content-here-here.txt', ':gs/here/there/'))

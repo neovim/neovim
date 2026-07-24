@@ -180,7 +180,7 @@ repeat:
 
         // Do not call shorten_fname() here since it removes the prefix
         // even though the path does not have a prefix.
-        if (path_fnamencmp(p, dirname, dirnamelen) == 0) {
+        if (path_cmp(p_fic, p, dirname, dirnamelen) == 0) {
           p += dirnamelen;
           if (vim_ispathsep(*p)) {
             while (*p && vim_ispathsep(*p)) {

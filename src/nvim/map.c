@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "auto/config.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/charset.h"
 #include "nvim/map_defs.h"
 #include "nvim/mbyte.h"
@@ -46,34 +47,38 @@ static inline uint32_t hash_cstr_t(const char *s)
 #define equal_cstr_t strequal
 
 /// Hash/equality for path strings. On case-insensitive platforms, case-fold first (via
-/// str_foldcase, the same fold used by mb_stricmp/path_fnamencmp) so the hash↔equality invariant
-/// holds.
+/// path_fold_char, the same fold used by path_cmp) so the hash↔equality invariant holds.
 ///
-/// On Windows we additionally:
-///   - fold '\\' -> '/'   (path_fnamencmp treats them as equal)
-///   - drop a leading drive letter "[A-Za-z]:" so that "C:\foo" and "\foo" land in the same bucket
-///     (path_fnamencmp considers them equal when the current drive matches the explicit drive
-///     letter). Two paths with *different* explicit drives ("C:\foo" vs "D:\foo") may now
-///     share a bucket — that's a permitted collision; equal_path_t still rejects them.
-///
-/// path_fnamencmp's non-Windows branch consults &fileignorecase, which is runtime-mutable and would
-/// break the hash invariant if flipped. So the macOS branch deliberately bypasses path_fnamencmp
-/// and uses the compile-time CASE_INSENSITIVE_FILENAME switch instead.
+/// We additionally:
+///   - drop a leading drive letter "[A-Za-z]:" on Windows, so that "C:\foo" and "\foo" land in
+///     the same bucket (path_cmp considers them equal when the current drive matches the
+///     explicit drive letter). Two paths with *different* explicit drives ("C:\foo" vs "D:\foo")
+///     may now share a bucket — that's a permitted collision; equal_path_t still rejects them.
+///   - ignore a single trailing path separator.
 static inline uint32_t hash_path_t(const char *p)
 {
-#ifdef BACKSLASH_IN_FILENAME
-  if (p[1] == ':' && ASCII_ISALPHA(p[0])) {
+  uint32_t h = 0;
+#ifdef MSWIN
+  if (ASCII_ISALPHA(*p) && p[1] == ':') {
     p += 2;
   }
 #endif
+  bool ic = false;
 #ifdef CASE_INSENSITIVE_FILENAME
-  char *folded = str_foldcase((char *)p, (int)strlen(p), NULL, 0);
-  uint32_t h = hash_cstr_t(folded);
-  xfree(folded);
-  return h;
-#else
-  return hash_cstr_t(p);
+  ic = true;
 #endif
+  const char *start = p;
+  for (int len = 0; *p; p += len) {
+    if (vim_ispathsep_nocolon(*p)
+        && p[1] == NUL
+        && start != p
+        && !vim_ispathsep(p[-1])) {
+      break;
+    }
+    int c = path_fold_char(ic, p, &len);
+    h = (h << 5) - h + (uint32_t)c;
+  }
+  return h;
 }
 
 static inline bool equal_path_t(const char *a, const char *b)
@@ -84,16 +89,11 @@ static inline bool equal_path_t(const char *a, const char *b)
   if (a == NULL || b == NULL) {
     return false;
   }
-#ifdef BACKSLASH_IN_FILENAME
-  // Inherit Windows-mode slash, drive-letter, and case folding.
-  size_t la = strlen(a);
-  size_t lb = strlen(b);
-  return path_fnamencmp(a, b, MAX(la, lb)) == 0;
-#elif defined(CASE_INSENSITIVE_FILENAME)
-  return mb_stricmp(a, b) == 0;
-#else
-  return strequal(a, b);
+  bool ic = false;
+#ifdef CASE_INSENSITIVE_FILENAME
+  ic = true;
 #endif
+  return path_cmp(ic, a, b, MAXPATHL) == 0;
 }
 
 static inline uint32_t hash_HlEntry(HlEntry ae)

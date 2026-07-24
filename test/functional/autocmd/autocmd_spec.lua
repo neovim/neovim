@@ -869,4 +869,17 @@ describe('autocmd', function()
     eq(vim.fs.normalize('~'), cmds[1].pattern)
     eq(vim.fs.normalize(path), cmds[2].pattern)
   end)
+
+  it('exists() consults &fileignorecase', function()
+    command([[autocmd User foo/bar echo]])
+    eq(0, fn.exists([[#User#foo/bar/]]))
+    eq(1, fn.exists([[#User#foo/bar]]))
+    -- Even on Windows, `/` should be used as the path sep
+    eq(0, fn.exists([[#User#foo\bar]]))
+
+    command([[set fileignorecase]])
+    eq(1, fn.exists([[#User#Foo/Bar]]))
+    command([[set nofileignorecase]])
+    eq(0, fn.exists([[#User#Foo/Bar]]))
+  end)
 end)

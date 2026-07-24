@@ -3266,7 +3266,7 @@ static bool otherfile_buf(buf_T *buf, char *ffname, FileID *file_id_p, bool file
   if (ffname == NULL || *ffname == NUL || buf->b_ffname == NULL) {
     return true;
   }
-  if (path_fnamecmp(ffname, buf->b_ffname) == 0) {
+  if (path_equal(ffname, buf->b_ffname, kPathCmpLiteral)) {
     return false;
   }
   {

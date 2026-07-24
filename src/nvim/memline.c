@@ -429,7 +429,7 @@ void ml_setname(buf_T *buf)
     }
 
     // if the file name is the same we don't have to do anything
-    if (path_fnamecmp(fname, mfp->mf_fname) == 0) {
+    if (path_equal(fname, mfp->mf_fname, kPathCmpLiteral)) {
       xfree(fname);
       success = true;
       break;
@@ -1398,7 +1398,7 @@ void recover_names(char *fname, bool skip_curbuf, list_T *ret_list)
       for (int i = 0; i < num_files; i++) {
         // Do not expand wildcards, on Windows would try to expand
         // "%tmp%" in "%tmp%file"
-        if (path_full_compare(p, files[i], true, false) & kEqualFiles) {
+        if (path_equal(p, files[i], kPathCmpFull)) {
           // Remove the name from files[i].  Move further entries
           // down.  When the array becomes empty free it here, since
           // FreeWild() won't be called below.
@@ -3479,7 +3479,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
     }
 
     // A file name equal to old_fname is OK to use.
-    if (old_fname != NULL && path_fnamecmp(fname, old_fname) == 0) {
+    if (old_fname != NULL && path_equal(fname, old_fname, kPathCmpLiteral)) {
       break;
     }
 
@@ -3505,8 +3505,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
             // buffer don't compare the directory names, they can
             // have a different mountpoint.
             if (b0.b0_flags & B0_SAME_DIR) {
-              if (path_fnamecmp(path_tail(buf->b_ffname),
-                                path_tail(b0.b0_fname)) != 0
+              if (!path_equal(path_tail(buf->b_ffname), path_tail(b0.b0_fname), kPathCmpLiteral)
                   || !same_directory(fname, buf->b_ffname)) {
                 // Symlinks may point to the same file even
                 // when the name differs, need to check the

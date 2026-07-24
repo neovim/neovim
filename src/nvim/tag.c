@@ -2982,7 +2982,7 @@ static char *expand_tag_fname(char *fname, char *const tag_fname, const bool exp
 }
 
 /// Check if we have a tag for the buffer with name "buf_ffname".
-/// This is a bit slow, because of the full path compare in path_full_compare().
+/// This is a bit slow, because of the full path compare in path_equal().
 ///
 /// @return  true if tag for file "fname" if tag file "tag_fname" is for current
 ///          file.
@@ -2997,7 +2997,7 @@ static int test_for_current(char *fname, char *fname_end, char *tag_fname, char 
       *fname_end = NUL;
     }
     char *fullname = expand_tag_fname(fname, tag_fname, true);
-    retval = (path_full_compare(fullname, buf_ffname, true, true) & kEqualFiles);
+    retval = path_equal(fullname, buf_ffname, kPathCmpExpand | kPathCmpFull);
     xfree(fullname);
     *fname_end = c;
   }

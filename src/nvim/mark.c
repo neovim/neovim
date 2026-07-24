@@ -797,7 +797,7 @@ static void fmarks_check_one(xfmark_T *fm, char *name, buf_T *buf)
 {
   if (fm->fmark.fnum == 0
       && fm->fname != NULL
-      && path_fnamecmp(name, fm->fname) == 0) {
+      && path_equal(name, fm->fname, kPathCmpLiteral)) {
     fm->fmark.fnum = buf->b_fnum;
     XFREE_CLEAR(fm->fname);
   }

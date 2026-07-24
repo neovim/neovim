@@ -257,7 +257,7 @@ static bool is_other_file(int fnum, char *ffname)
       && *curbuf->b_sfname != NUL) {
     // This occurs with unsaved buffers. In which case `ffname`
     // actually corresponds to curbuf->b_sfname
-    return path_fnamecmp(ffname, curbuf->b_sfname) != 0;
+    return !path_equal(ffname, curbuf->b_sfname, kPathCmpLiteral);
   }
 
   return otherfile(ffname);
@@ -6324,7 +6324,7 @@ bool do_chdir(char *new_dir, CdScope scope)
   // Buffer-local CWD is never "cleared" by :lcd/:tcd/:cd, so it stays in effect.
   const bool bcd_active = scope != kCdScopeBuffer && curbuf->b_localdir != NULL;
 
-  bool dir_differs = pdir == NULL || pathcmp(pdir, new_dir, -1) != 0;
+  bool dir_differs = pdir == NULL || !path_equal(pdir, new_dir, kPathCmpLiteral);
   if (dir_differs) {
     if (!bcd_active) {
       do_autocmd_dirchanged(new_dir, scope, kCdCauseManual, true);

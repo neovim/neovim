@@ -2917,7 +2917,7 @@ void ex_function(exarg_T *eap)
         p = vim_strchr(scriptname, '/');
         int plen = (int)strlen(p);
         int slen = (int)strlen(SOURCING_NAME);
-        if (slen > plen && path_fnamecmp(p, SOURCING_NAME + slen - plen) == 0) {
+        if (slen > plen && path_equal(p, SOURCING_NAME + slen - plen, kPathCmpLiteral)) {
           j = OK;
         }
         xfree(scriptname);

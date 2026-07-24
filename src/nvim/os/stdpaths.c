@@ -116,7 +116,7 @@ static char *xdg_remove_duplicate(char *ret, const char *sep)
     // Check if the directory is not already in the list
     bool is_duplicate = false;
     for (size_t i = 0; i < data.size; i++) {
-      if (path_fnamecmp(kv_A(data, i), token) == 0) {
+      if (path_equal(kv_A(data, i), token, kPathCmpLiteral)) {
         is_duplicate = true;
         break;
       }

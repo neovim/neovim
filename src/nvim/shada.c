@@ -849,7 +849,7 @@ static buf_T *find_buffer(PMap(cstr_t) *const fname_bufs, const char *const fnam
 
   FOR_ALL_BUFFERS(buf) {
     if (buf->b_ffname != NULL) {
-      if (path_fnamecmp(fname, buf->b_ffname) == 0) {
+      if (path_equal(fname, buf->b_ffname, kPathCmpLiteral)) {
         *ref = buf;
         return buf;
       }
@@ -1917,7 +1917,7 @@ static inline ShaDaWriteResult shada_read_when_writing(FileDescriptor *const sd_
           } else {
             FOR_ALL_BUFFERS(buf) {
               if (buf->b_ffname != NULL
-                  && path_fnamecmp(entry.data.filemark.fname, buf->b_ffname) == 0) {
+                  && path_equal(entry.data.filemark.fname, buf->b_ffname, kPathCmpLiteral)) {
                 fmark_T fm;
                 mark_get(buf, curwin, &fm, kMarkBufLocal, (int)entry.data.filemark.name);
                 if (fm.timestamp >= entry.timestamp) {

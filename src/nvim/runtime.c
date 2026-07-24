@@ -1102,7 +1102,7 @@ static int add_pack_dir_to_rtp(char *fname, bool is_pack)
       if (rtp_ffname == NULL) {
         goto theend;
       }
-      if (path_fnamencmp(rtp_ffname, ffname, fname_len) == 0) {
+      if (path_cmp(p_fic, rtp_ffname, ffname, fname_len) == 0) {
         // Insert "ffname" after this entry (and comma).
         insp = entry;
       }
@@ -1283,7 +1283,7 @@ static void add_pack_plugins(bool opt, int num_fnames, char **fnames, bool all, 
       const char *p = p_rtp;
       while (*p != NUL) {
         copy_option_part((char **)&p, buf, MAXPATHL, ",");
-        if (path_fnamecmp(buf, fnames[i]) == 0) {
+        if (path_equal(buf, fnames[i], kPathCmpLiteral)) {
           found = true;
           break;
         }
@@ -2519,7 +2519,7 @@ int find_script_by_name(char *name)
     // - If a script is deleted and another script is written, with a
     //   different name, the inode may be re-used.
     scriptitem_T *si = SCRIPT_ITEM(sid);
-    if (si->sn_name != NULL && path_fnamecmp(si->sn_name, name) == 0) {
+    if (si->sn_name != NULL && path_equal(si->sn_name, name, kPathCmpLiteral)) {
       return sid;
     }
   }

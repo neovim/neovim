@@ -2131,7 +2131,7 @@ static bool do_user_initialization(void)
   if (do_source(user_vimrc, true, DOSO_VIMRC, NULL) != FAIL) {
     do_exrc = p_exrc;
     if (do_exrc) {
-      do_exrc = (path_full_compare(VIMRC_FILE, user_vimrc, false, true) != kEqualFiles);
+      do_exrc = !path_equal(VIMRC_FILE, user_vimrc, kPathCmpExpand);
     }
     xfree(user_vimrc);
     return do_exrc;
@@ -2187,7 +2187,7 @@ static bool do_user_initialization(void)
       if (do_source(init_vim, true, DOSO_VIMRC, NULL) != FAIL) {
         do_exrc = p_exrc;
         if (do_exrc) {
-          do_exrc = (path_full_compare(VIMRC_FILE, init_vim, false, true) != kEqualFiles);
+          do_exrc = !path_equal(VIMRC_FILE, init_vim, kPathCmpExpand);
         }
         xfree(init_vim);
         xfree(config_dirs);
