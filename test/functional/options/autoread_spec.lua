@@ -7,6 +7,7 @@ local command = n.command
 local eq = t.eq
 local api = n.api
 local retry = t.retry
+local rmdir = n.rmdir
 local write_file = t.write_file
 local sleep = vim.uv.sleep
 
@@ -15,6 +16,13 @@ local sleep = vim.uv.sleep
 local function is_watching(bufnr)
   return n.exec_lua(function(b)
     return require('nvim.autoread')._is_watching(b or vim.api.nvim_get_current_buf())
+  end, bufnr)
+end
+
+--- Returns the autoread watcher mode for the given buffer.
+local function watching_mode(bufnr)
+  return n.exec_lua(function(b)
+    return require('nvim.autoread')._watching_mode(b or vim.api.nvim_get_current_buf())
   end, bufnr)
 end
 
@@ -126,6 +134,72 @@ describe('autoread file watcher', function()
     retry(nil, 3000, function()
       eq({ 'after reenable' }, api.nvim_buf_get_lines(0, 0, -1, true))
     end)
+  end)
+
+  it('shares one directory watcher after the default threshold', function()
+    local dir = vim.uv.fs_mkdtemp(vim.fs.dirname(t.tmpname(false)) .. '/nvim_XXXXXXXXXX')
+    finally(function()
+      rmdir(dir)
+    end)
+
+    local path1 = dir .. '/one.txt'
+    local path2 = dir .. '/two.txt'
+    local path3 = dir .. '/three.txt'
+    write_file(path1, 'one original\n')
+    write_file(path2, 'two original\n')
+    write_file(path3, 'three original\n')
+
+    command('edit ' .. path1)
+    local buf1 = api.nvim_get_current_buf()
+    eq('file', watching_mode(buf1))
+
+    command('edit ' .. path2)
+    local buf2 = api.nvim_get_current_buf()
+    eq('file', watching_mode(buf1))
+    eq('file', watching_mode(buf2))
+
+    command('edit ' .. path3)
+    local buf3 = api.nvim_get_current_buf()
+    eq('dir', watching_mode(buf1))
+    eq('dir', watching_mode(buf2))
+    eq('dir', watching_mode(buf3))
+
+    write_file(path1, 'one changed\n')
+    write_file(path2, 'two changed\n')
+    write_file(path3, 'three changed\n')
+
+    retry(nil, 3000, function()
+      eq({ 'one changed' }, api.nvim_buf_get_lines(buf1, 0, -1, true))
+      eq({ 'two changed' }, api.nvim_buf_get_lines(buf2, 0, -1, true))
+      eq({ 'three changed' }, api.nvim_buf_get_lines(buf3, 0, -1, true))
+    end)
+  end)
+
+  it('can disable shared directory watchers', function()
+    n.exec_lua([[vim.g.autoread_watch_dir = false]])
+
+    local dir = vim.uv.fs_mkdtemp(vim.fs.dirname(t.tmpname(false)) .. '/nvim_XXXXXXXXXX')
+    finally(function()
+      rmdir(dir)
+    end)
+
+    local path1 = dir .. '/one.txt'
+    local path2 = dir .. '/two.txt'
+    local path3 = dir .. '/three.txt'
+    write_file(path1, 'one original\n')
+    write_file(path2, 'two original\n')
+    write_file(path3, 'three original\n')
+
+    command('edit ' .. path1)
+    local buf1 = api.nvim_get_current_buf()
+    command('edit ' .. path2)
+    local buf2 = api.nvim_get_current_buf()
+    command('edit ' .. path3)
+    local buf3 = api.nvim_get_current_buf()
+
+    eq('file', watching_mode(buf1))
+    eq('file', watching_mode(buf2))
+    eq('file', watching_mode(buf3))
   end)
 
   it('handles file deletion gracefully', function()
