@@ -41,6 +41,23 @@ local function fill_history(buf, type)
   return true
 end
 
+--- Internal: called synchronously by C |open_cmdwin()| with a snapshot of the
+--- cmdline. Uses |vim.schedule_dispatch()| to defer the buffer creation until
+--- the cmdline reader has unwound: the synthetic `<Cmd>` keystroke fires from
+--- mode dispatch in normal mode, after our Ctrl_C return has unwound cmdline
+--- state. (Plain |vim.schedule()| would route via the event queue and could
+--- fire during typeahead, opening the cmdwin while keys are still en route to
+--- the just-unwound cmdline reader.)
+---
+--- @param firstc string  ':', '/', '?'
+--- @param content string  cmdline contents at the moment of c_CTRL-F
+--- @param pos integer  1-based cursor column
+function M._schedule_open(firstc, content, pos)
+  vim.schedule_dispatch(function()
+    M.open(firstc, content, pos)
+  end)
+end
+
 --- Open the command-line window.
 ---
 --- @param type? string  ':', '/', '?'. Default ':'.

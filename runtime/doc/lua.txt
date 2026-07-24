@@ -1439,6 +1439,45 @@ vim.print({...})                                                 *vim.print()*
       • |vim.inspect()|
       • |:=|
 
+vim.schedule_dispatch({fn})                          *vim.schedule_dispatch()*
+    Run {fn} via the input-dispatch loop (typeahead) instead of the event
+    queue.
+
+    Compare |vim.schedule()|: that runs from the event-loop pump, including
+    while |vim.wait()| is blocking, and runs OUTSIDE mode dispatch. By
+    contrast, `vim.schedule_dispatch` queues a synthetic `<Cmd>` keystroke
+    that fires {fn} from inside `state_enter`'s mode dispatch — as if the
+    user typed it. Use this when {fn} runs ex commands that print messages (so
+    "Press ENTER" works), prompts (e.g. `:confirm`), or transitions modes
+    (`startinsert`, terminal mode entry).
+
+    The keystroke is inserted at the FRONT of the typeahead, so {fn} runs
+    before any pending user keys.
+
+    Constraints:
+    • Cannot be called during an |api-fast| event (the underlying `feedkeys`
+      is not fast-context-safe). Wrap in |vim.schedule()| if needed.
+    • Will not fire while a `vim.wait()` is blocking; control must return to
+      mode dispatch first. Use |vim.schedule()| for that case.
+
+    Example: re-running an ex command from a |vim.ui.select()| `on_choice`
+    callback, where the recursive ex command may trigger "Press ENTER": >lua
+        vim.ui.select(items, opts, function(_, idx)
+          if idx then
+            vim.schedule_dispatch(function()
+              vim.cmd(('%dtag %s'):format(idx, name))
+            end)
+          end
+        end)
+<
+
+    Parameters: ~
+      • {fn}  (`fun()`)
+
+    See also: ~
+      • |vim.schedule()|
+      • |event-queues|
+
 vim.schedule_wrap({fn})                                  *vim.schedule_wrap()*
     Returns a function which calls {fn} via |vim.schedule()|.
 

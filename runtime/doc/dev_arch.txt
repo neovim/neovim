@@ -305,6 +305,67 @@ automatically route events onto the `main_loop`: >
     proc->events = events;
 
 
+DEFERRED WORK: TWO QUEUES                                       *event-queues*
+
+Two queues carry deferred work to Nvim, and they have different semantics.
+Knowing which one you're putting work on is essential when a callback runs
+ex commands, prints messages, or interacts with mode state.
+
+1. Event queue (`main_loop.events`)
+   - Producers: `vim.schedule()`, RPC handlers (deferred), `jobstart` exit/
+     stdout/stderr callbacks, libuv timer callbacks (`vim.defer_fn`,
+     `uv.new_timer`), channel events.
+   - Consumers (when these run, queued events fire):
+       - `state_enter()` between input keys, via the synthetic `K_EVENT` key
+         (so events run BETWEEN mode dispatches, not INSIDE one).
+       - Blocking pumps that explicitly drain it: `vim.wait()`,
+         `loop_poll_events()`, `wait_return()`, etc.
+   - Key property: events fire even while a Lua call is blocking on
+     `vim.wait`. This is the whole point — RPC/timer/job results MUST be
+     deliverable to a `vim.wait` predicate.
+   - Key non-property: events do NOT run inside `state_enter`'s mode
+     dispatch (`normal_execute`, `terminal_execute`, cmdline state, …).
+     Anything that needs mode-dispatch invariants — `Press ENTER` prompts,
+     `:confirm` dialogs, `startinsert`, terminal-mode entry — can hang or
+     misbehave when triggered from an event-queue callback.
+
+2. Typeahead buffer (`typebuf`)
+   - Producers: real keyboard input, `nvim_input()`, `feedkeys()`,
+     `<Cmd>…<CR>`, mappings expansion, recorded macros.
+   - Consumers:
+       - `safe_vgetc()` / `os_inchar()`, called only from `state_enter`
+         while dispatching a mode (normal/insert/cmdline/terminal/…).
+   - Key property: typeahead runs AS IF the user typed it, so message
+     overflow → `Press ENTER` works, mode transitions queued by the
+     callback take effect, and any further user keys are ordered after it.
+   - Key non-property: typeahead is NOT drained by `vim.wait` or
+     `loop_poll_events`. Typeahead queued from inside one of those is
+     stuck until the call stack unwinds back to `state_enter`.
+
+WHICH ONE TO USE
+
+- Async I/O completion (RPC reply, job exit, channel data, timer fire):
+  the producer is already on the event queue; you don't pick. From your
+  callback, if you only need to update buffer/var state and you're sure
+  no `Press ENTER` / mode dispatch is involved, do the work directly. If
+  you need to invoke an ex command that prints messages or transitions
+  modes, route it through typeahead instead — see |vim.schedule_dispatch|.
+- "Run X soon, in any safe context" → `vim.schedule(X)`. Required when
+  you're in a fast/IPC context where most APIs are unsafe.
+- "Run X as if I just typed it on the cmdline" → feedkeys with `<Cmd>`,
+  or |vim.schedule_dispatch|.
+
+FAST EVENTS
+
+`main_loop.fast_events` is a sub-queue of the event queue with one
+specific role: it's drained by `loop_poll_events()` from contexts where
+the regular event queue cannot run (no Vim API access, e.g. during the
+initial libuv poll before mode dispatch is up). Most callers don't queue
+to fast_events directly — it exists for libuv-callback-safe events that
+would otherwise miss their window. From a script author's perspective,
+treat it as an internal optimization of the event queue.
+
+
 NVIM LIFECYCLE
 
 How Nvim processes input.
