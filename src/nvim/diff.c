@@ -1574,7 +1574,7 @@ void diff_win_options(win_T *wp, bool addbuf)
     wp->w_p_fdc_save = xstrdup(wp->w_p_fdc);
   }
   free_string_option(wp->w_p_fdc);
-  wp->w_p_fdc = xstrdup("2");
+  wp->w_p_fdc = xstrdup("1");
   assert(diff_foldcolumn >= 0 && diff_foldcolumn <= 9);
   snprintf(wp->w_p_fdc, strlen(wp->w_p_fdc) + 1, "%d", diff_foldcolumn);
   wp->w_p_fen = true;
@@ -2710,7 +2710,7 @@ int diffopt_changed(void)
     diff_flags = flags;
     diff_context = context == 0 ? 1 : context;
     linematch_lines = HAS_KEY(v, dip, linematch) ? (int)v->linematch : 0;
-    diff_foldcolumn = HAS_KEY(v, dip, foldcolumn) ? (int)v->foldcolumn : 2;
+    diff_foldcolumn = HAS_KEY(v, dip, foldcolumn) ? (int)v->foldcolumn : 1;
     diff_algorithm = algorithm;
 
     diff_redraw(true);

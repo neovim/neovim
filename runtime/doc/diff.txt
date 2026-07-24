@@ -50,7 +50,7 @@ In each of the edited files these options are set:
 	'scrollopt'	includes "hor"
 	'wrap'		off, or leave as-is if 'diffopt' includes "followwrap"
 	'foldmethod'	"diff"
-	'foldcolumn'	value from 'diffopt', default is 2
+	'foldcolumn'	value from 'diffopt', default is 1
 
 These options are set local to the window.  When editing another file they are
 reset to the global value.
