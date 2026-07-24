@@ -113,6 +113,12 @@ static garray_T ga_loaded = { 0, 0, sizeof(char *), 4, NULL };
 /// last used sequence number for sourcing scripts (current_sctx.sc_seq)
 static int last_current_SID_seq = 0;
 
+/// Return the next source-context sequence number.
+int sctx_next_seq(void)
+{
+  return ++last_current_SID_seq;
+}
+
 /// Initialize the execution stack.
 void estack_init(void)
 {
@@ -2330,7 +2336,7 @@ static int do_source_ext(char *const fname, const bool check_other, const int is
   const sctx_T save_current_sctx = current_sctx;
 
   // Always use a new sequence number.
-  current_sctx.sc_seq = ++last_current_SID_seq;
+  current_sctx.sc_seq = sctx_next_seq();
 
   if (sid > 0) {
     // loading the same script again
@@ -2586,6 +2592,8 @@ char *get_scriptname(sctx_T script_ctx, bool *should_free)
     return _("error handler");
   case SID_WINLAYOUT:
     return _("changed window size");
+  case SID_DEFAULTS:
+    return _("defaults");
   case SID_LUA:
     return _("Lua");
   case SID_API_CLIENT:
