@@ -167,8 +167,7 @@ func Test_map_filter_fails()
   call assert_equal(v:_null_dict, filter(v:_null_dict, 0))
   call assert_equal(v:_null_list, map(v:_null_list, '"> " .. v:val'))
   call assert_equal(v:_null_dict, map(v:_null_dict, '"> " .. v:val'))
-  " Nvim doesn't have null functions
-  " call assert_equal([1, 2, 3], filter([1, 2, 3], test_null_function()))
+  call assert_equal([1, 2, 3], filter([1, 2, 3], v:_null_function))
   call assert_fails("let l = filter([1, 2], function('min'))", 'E118:')
   " Nvim doesn't have null partials
   " call assert_equal([1, 2, 3], filter([1, 2, 3], test_null_partial()))
