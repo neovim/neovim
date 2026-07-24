@@ -114,6 +114,8 @@ LUA
 
 • "standalone" Lua interpreter mode `nvim -ll` was removed. Use |-l| script
   mode instead.
+• |package.path| and |package.cpath| no longer contain the current directory
+  outside of |-l| script mode.
 • |vim.opt| no longer supports chaining multiple infix operators (e.g.
   `vim.opt.wildignore + '*.o' + '*.obj'`). Instead, use tables:
   `vim.opt.wildignore + {'*.o', '*.obj'}`

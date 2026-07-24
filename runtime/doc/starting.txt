@@ -246,6 +246,8 @@ argument.
                 Disables plugins unless 'loadplugins' was set.
                 Disables |shada| unless |-i| was given.
                 Disables swapfile (like |-n|).
+                Prepends `./?.lua` to |package.path| and `./?.so` to
+                |package.cpath|.
 
                                                         *-b*
 -b              Binary mode.  File I/O will only recognize <NL> to separate

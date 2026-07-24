@@ -20,6 +20,7 @@ local sleep = uv.sleep
 local M = {}
 
 M.runtime_set = 'set runtimepath^=' .. t.paths.test_build_dir .. '/lib/nvim'
+M.packagepath_set = 'lua package.path = "./?.lua;" .. package.path'
 
 M.nvim_prog = (os.getenv('NVIM_PRG') or t.paths.test_build_dir .. '/bin/nvim')
 -- Default settings for the test session.
@@ -40,6 +41,8 @@ M.nvim_argv = {
   M.runtime_set,
   '--cmd',
   M.nvim_set,
+  '--cmd',
+  M.packagepath_set,
   -- Remove default user commands and mappings.
   '--cmd',
   'comclear | mapclear | mapclear!',

@@ -1156,3 +1156,12 @@ do
     vim.o.grepformat = '%f:%l:%c:%m'
   end
 end
+
+--- Lua defaults
+do
+  -- Add current directory to package.{path,cpath} if using `nvim -l`
+  if arg[0] then
+    package.path = table.concat({ './?.lua', package.path }, ';')
+    package.cpath = table.concat({ './?.so', package.cpath }, ';')
+  end
+end
