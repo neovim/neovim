@@ -8,6 +8,7 @@
 "			2024 Dec 29 by Vim Project (improve setting shellcheck compiler)
 "			2025 Mar 09 by Vim Project (set b:match_skip)
 "			2025 Jul 22 by phanium (use :hor term #17822)
+"			2026 Jul 10 by Vim Project (pass K argument as a list, prevent shell injection)
 
 if exists("b:did_ftplugin")
   finish
@@ -54,9 +55,9 @@ let s:is_kornshell = get(b:, "is_kornshell", get(g:, "is_kornshell", 0))
 
 if s:is_bash
   if exists(':terminal') == 2
-    command! -buffer -nargs=1 ShKeywordPrg silent exe ':hor term bash -c "help "<args>" 2>/dev/null || man "<args>""'
+    command! -buffer -nargs=1 ShKeywordPrg call term_start(['bash', '-c', 'help "$1" 2>/dev/null || man "$1"', '--', <q-args>])
   else
-    command! -buffer -nargs=1 ShKeywordPrg echo system('bash -c "help <args>" 2>/dev/null || MANPAGER= man "<args>"')
+    command! -buffer -nargs=1 ShKeywordPrg echo system(['bash', '-c', 'help "$1" 2>/dev/null || MANPAGER= man "$1"', '--', <q-args>])
   endif
   setlocal keywordprg=:ShKeywordPrg
   let b:undo_ftplugin ..= " | setl kp< | sil! delc -buffer ShKeywordPrg"
