@@ -60,8 +60,25 @@ endif()
 
 # The unit test lib requires LuaJIT; it will be skipped if LuaJIT is missing.
 option(PREFER_LUA "Prefer Lua over LuaJIT in the nvim executable." OFF)
+
+# Enable PREFER_LUA  for all WASM builds.
+if(EMSCRIPTEN)
+  set(PREFER_LUA ON CACHE BOOL "" FORCE)
+endif()
+
 if(PREFER_LUA)
-  find_package(Lua 5.1 EXACT REQUIRED)
+  if(EMSCRIPTEN)
+    # Bypass FindLua.cmake,Emscripten's FIND_ROOT_PATH_MODE_LIBRARY=ONLY hides bundled liblua.a.
+    set(LUA_INCLUDE_DIR "${DEPS_PREFIX}/include")
+    set(LUA_LIBRARIES   "${DEPS_PREFIX}/lib/liblua.a")
+    if(NOT EXISTS "${LUA_LIBRARIES}")
+      message(FATAL_ERROR "Bundled liblua.a not found at ${LUA_LIBRARIES}. "
+                          "Run the deps build with emcmake first.")
+    endif()
+  else()
+    find_package(Lua 5.1 EXACT REQUIRED)
+  endif()
+
   target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LUA_INCLUDE_DIR})
   target_include_directories(nlua0 SYSTEM BEFORE PUBLIC ${LUA_INCLUDE_DIR})
   target_link_libraries(main_lib INTERFACE ${LUA_LIBRARIES})
