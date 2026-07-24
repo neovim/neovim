@@ -322,6 +322,11 @@ func Test_spellfile_format_error()
   " SN_SOFO: multi-byte characters in sofofrom and sofoto
   call Spellfile_Test(0z0600000000080002CF810002CF82FF000000000000000000000000, '')
 
+  " SN_SAL (empty) followed by SN_SOFO with two multi-byte 'from' characters
+  " sharing the same low byte.  A preceding SN_SAL poisons sl_sal_first[], so
+  " without a reset set_sofo() under-counts and writes out of bounds.
+  call Spellfile_Test(0z05000000000300000006000000000A0004CAABCEAB00024142FF000000000000000000000000, '')
+
   " SN_COMPOUND: compmax is less than 2
   call Spellfile_Test(0z08000000000101, 'E759:')
 

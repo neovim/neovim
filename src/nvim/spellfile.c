@@ -1553,7 +1553,9 @@ static int set_sofo(slang_T *lp, const char *from, const char *to)
   lp->sl_sofo = true;
 
   // First count the number of items for each list.  Temporarily use
-  // sl_sal_first[] for this.
+  // sl_sal_first[] for this.  Reset it first: a preceding SN_SAL section
+  // may have set the entries to -1 via set_sal_first().
+  memset(lp->sl_sal_first, 0, sizeof(salfirst_T) * 256);
   for (p = from, s = to; *p != NUL && *s != NUL;) {
     const int c = mb_cptr2char_adv(&p);
     s += utf_ptr2len(s);
