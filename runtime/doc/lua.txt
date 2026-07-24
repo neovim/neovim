@@ -5198,6 +5198,74 @@ vim.snippet.stop()                                        *vim.snippet.stop()*
 
 
 ==============================================================================
+Lua module: vim.submode                                          *vim.submode*
+
+WORK IN PROGRESS custom submodes! Early testing of existing features is
+appreciated, but expect breaking changes without notice.
+
+Define custom interactive submodes:
+• Repeatedly ask user for key presses via |getcharstr()|.
+• Handle each key with a dedicated function handler that acts on a persistent
+  state table. It is allowed to change |vim-modes|, text, cursor, etc.
+• Stop when handle says so or after |CTRL-C|. Return a value that was set by
+  the handler.
+
+Executes synchronously and can return value when submode is stopped. Submodes
+can be nested, but only one submode is active.
+
+
+*vim.submode.State*
+
+    Fields: ~
+      • {data}     (`table`) Any information to be reused during submode
+                   session. Handlers should not change fields that tehy don't
+                   "own".
+      • {errmsg}?  (`string`) First error message caught during submode
+                   execution.
+      • {handler}  (`vim.submode.handler`) Submode handler.
+      • {opts}     (`table`) Submode options.
+                   • {desc}? (`string`) Submode name. Default: 'Submode'.
+                   • {getchar_opts}? (`table`) Options for |getcharstr()|.
+                   • {init_keys}? (`string[]`) Keys that are emulated before
+                     asking for the user input. Using values that can be an
+                     output of |getcharstr()| should be preferred, but a key
+                     handler should work with any string. Default: `{}`.
+      • {output}?  (`any`) Value to return after submode is ended.
+      • {status}   (`"start"|"progress"|"end"|"cancel"`)
+
+
+vim.submode.get()                                          *vim.submode.get()*
+    Gets active submode state, if any
+
+    Return: ~
+        (`vim.submode.State?`) See |vim.submode.State|.
+
+vim.submode.refresh()                                  *vim.submode.refresh()*
+    Refresh active submode Calls submode's handler with `nil` key.
+
+vim.submode.start({handler}, {opts})                     *vim.submode.start()*
+
+    Parameters: ~
+      • {handler}  (`vim.submode.handler`) Submode handler. Expected to modify
+                   input state in place or return a valid state table. Must
+                   set `state.status` to "end" or "cancel" for submode to
+                   stop. Called once before the first key press, once per key
+                   press, once after the last key press.
+      • {opts}     (`table?`) A table with the following fields:
+                   • {desc}? (`string`) Submode name. Default: 'Submode'.
+                   • {getchar_opts}? (`table`) Options for |getcharstr()|.
+                   • {init_keys}? (`string[]`) Keys that are emulated before
+                     asking for the user input. Using values that can be an
+                     output of |getcharstr()| should be preferred, but a key
+                     handler should work with any string. Default: `{}`.
+
+    Return: ~
+        (`table`) A table with the following fields:
+        • {output} (`any`) Submode output as `state.output` value.
+        • {status} (`"end"|"cancel"`) status Final submode status.
+
+
+==============================================================================
 Lua module: vim.spell                                              *vim.spell*
 
 vim.spell.check({str})                                     *vim.spell.check()*
