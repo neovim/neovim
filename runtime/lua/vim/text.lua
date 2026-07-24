@@ -187,7 +187,7 @@ function M.indent(size, text, opts)
   old_indent = old_indent or 0
   prefix = prefix and prefix or ' '
 
-  if old_indent == size then
+  if not opts.expandtab and old_indent == size then
     -- Optimization: if the indent is the same, return the text unchanged.
     return text, old_indent
   end
