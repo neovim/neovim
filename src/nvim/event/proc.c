@@ -76,6 +76,8 @@ int proc_spawn(Proc *proc, bool in, bool out, bool err)
   case kProcTypePty:
     status = pty_proc_spawn((PtyProc *)proc);
     break;
+  default:
+    UNREACHABLE;
   }
 
   if (status) {
