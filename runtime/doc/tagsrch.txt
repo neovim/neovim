@@ -945,7 +945,11 @@ include the following entries and each value must be a string:
 			either relative to the current directory or a full
 			path.
 	cmd		Ex command used to locate the tag in the file.  This
-			can be either an Ex search pattern or a line number.
+			can be a line number, a search pattern or any other
+			Ex command, like in a tags file (see
+			|tags-file-format|).  A search pattern must start and
+			end with "/" or "?".  An invalid value results in
+			|E987|.
 Note that the format is similar to that of |taglist()|, which makes it possible
 to use its output to generate the result.
 The following fields are optional:
