@@ -160,9 +160,12 @@ end
 function M.indent(size, text, opts)
   vim.validate('size', size, 'number')
   vim.validate('text', text, 'string')
-  vim.validate('opts', opts, 'table', true)
+
   -- TODO(justinmk): `opts.prefix`, `predicate` like python https://docs.python.org/3/library/textwrap.html
+  vim.validate('opts', opts, 'table', true)
   opts = opts or {}
+  vim.validate('opts.expandtab', opts.expandtab, 'number', true)
+
   local tabspaces = opts.expandtab and (' '):rep(opts.expandtab) or nil
 
   --- Minimum common indent shared by all lines.
