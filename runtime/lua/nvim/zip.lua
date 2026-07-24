@@ -372,6 +372,9 @@ function M.open_parent(buf, name)
     require('nvim.dir').open(buf, name, M, { name = child, dir = true })
     return
   end
+  if name:match('^%a[%w+.-]*://') then
+    return
+  end
   require('nvim.dir.fs').open_parent_path(source)
 end
 
