@@ -2100,12 +2100,9 @@ static bool parse_border_opt(char *border_opt)
 {
   WinConfig fconfig = WIN_CONFIG_INIT;
   Error err = ERROR_INIT;
-  bool result = true;
-  if (!parse_winborder(&fconfig, border_opt, &err)) {
-    result = false;
-  }
+  bool ok = parse_winborder(&fconfig, border_opt, &err);
   api_clear_error(&err);
-  return result;
+  return ok;
 }
 
 /// The 'winborder' option is changed.
@@ -2721,7 +2718,7 @@ const char *check_chars_options(void)
 const char *did_set_previewpopup(optset_T *args)
 {
   WinConfig fconfig = WIN_CONFIG_INIT;
-  if (!win_previewpopup_config(p_pvp, &fconfig)) {
+  if (!win_previewpopup_config(&fconfig)) {
     return e_invarg;
   }
   return NULL;
@@ -2730,14 +2727,15 @@ const char *did_set_previewpopup(optset_T *args)
 int expand_set_popupoption(optexpand_T *args, int *numMatches, char ***matches)
 {
   expand_T *xp = args->oe_xp;
-  if (xp->xp_pattern - args->oe_set_arg >= 7 && strncmp(xp->xp_pattern - 7, "border:", 7) == 0) {
-    return expand_set_opt_string(args, opt_pvp_border_values, ARRAY_SIZE(opt_pvp_border_values) - 1,
-                                 numMatches, matches);
-  }
+
   if (xp->xp_pattern > args->oe_set_arg && *(xp->xp_pattern - 1) == ':') {
-    return FAIL;
+    if (completing_value_for_subopt(args, "border")) {
+      return expand_set_opt_string(args, opt_pvp_border_values,
+                                   ARRAY_SIZE(opt_pvp_border_values) - 1, numMatches, matches);
+    }
+    return FAIL;  // "height:"/"width:" = number, nothing to complete.
   }
-  return expand_set_opt_string(args, opt_pvp_values,
-                               ARRAY_SIZE(opt_pvp_values) - 1,
+
+  return expand_set_opt_string(args, opt_pvp_values, ARRAY_SIZE(opt_pvp_values) - 1,
                                numMatches, matches);
 }

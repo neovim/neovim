@@ -684,7 +684,7 @@ local function gen_keysets(output_file)
       write('')
       write(('extern const OptSchemaItem opt_%s_schema[];'):format(abbr))
       write('')
-      write(('/// %s'):format(o.full_name))
+      write(("/// '%s'"):format(o.full_name))
       write(('typedef struct %s {'):format(kd))
       write(('  OptionalKeys is_set__%s_;'):format(abbr))
       for _, item in ipairs(o.schema.dict) do

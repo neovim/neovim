@@ -4812,10 +4812,10 @@ void free_old_sub(void)
 
 /// Set up for a tagpreview.
 ///
-/// @param undo_sync        sync undo when leaving the window
-/// @param use_previewpopup use floating window if 'previewpopup' set
+/// @param undo_sync        Sync undo when leaving the window.
+/// @param use_previewpopup Use a floating window (when 'previewpopup' is set).
 ///
-/// @return           true when it was created.
+/// @return true when the preview window was created.
 bool prepare_tagpreview(bool undo_sync, bool use_previewpopup)
 {
   if (curwin->w_p_pvw) {
@@ -4828,11 +4828,8 @@ bool prepare_tagpreview(bool undo_sync, bool use_previewpopup)
       if (use_previewpopup ? wp->w_kind != kWinPreview : wp->w_floating) {
         continue;
       }
-
-      // if find a floating preview window update wantline/wantcol
       if (use_previewpopup) {
-        wp->w_wantline = curwin->w_winrow + curwin->w_wrow;
-        wp->w_wantcol = curwin->w_wincol + curwin->w_wcol;
+        win_float_anchor_preview(wp);  // Re-anchor to the new cursor position.
       }
       win_enter(wp, undo_sync);
       return false;
