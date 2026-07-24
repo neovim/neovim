@@ -4320,6 +4320,7 @@ describe('API', function()
         { width = 79, height = 31, row = 1, col = 1, relative = 'editor' }
       )
       local term = api.nvim_open_term(b, {})
+      eq(term, api.nvim_get_option_value('channel', { buf = b }))
 
       api.nvim_chan_send(term, io.open('test/functional/fixtures/smile2.cat', 'r'):read('*a'))
       screen:expect {
