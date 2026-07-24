@@ -18,6 +18,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
@@ -33,7 +34,8 @@
 #include "api/vimscript.c.generated.h"
 
 /// Executes Vimscript (multiline block of Ex commands), like anonymous
-/// |:source|.
+/// |:source|. Arguments are available through v:sarg inside the script. Values
+/// inserted into v:sresult inside the script will be returned.
 ///
 /// Unlike |nvim_command()| this function supports heredocs, script-scope (s:),
 /// etc.
@@ -48,24 +50,68 @@
 /// @param opts  Optional parameters.
 ///           - output: (boolean, default false) Whether to capture and return
 ///                     all (non-error, non-shell |:!|) output.
+/// @param args Optional arguments to pass to Vimscript via v:sarg.
 /// @param[out] err Error details (Vim error), if any
-/// @return Dict containing information about execution, with these keys:
-///       - output: (string|nil) Output if `opts.output` is true.
-Dict nvim_exec2(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *err)
+/// @return Dict containing information about execution, with these possible keys:
+///       - output: (string) Captured output if `opts.output` is true.
+///       - result: (any[]) Values returned from the script via v:sresult, if any.
+Dict nvim_exec2(uint64_t channel_id, String src, Dict(exec_opts) *opts, Array args, Error *err)
   FUNC_API_SINCE(11) FUNC_API_RET_ALLOC
 {
-  Dict result = ARRAY_DICT_INIT;
+  Dict ret = ARRAY_DICT_INIT;
+
+  static int recursive = 0; // recursion depth
+
+  typval_T save_sarg;
+  typval_T save_sresult;
+  if (recursive++) {
+    prepare_vimvar(VV_SARG, &save_sarg);
+    prepare_vimvar(VV_SRESULT, &save_sresult);
+  }
+
+  tv_clear(get_vim_var_tv(VV_SARG));
+  tv_clear(get_vim_var_tv(VV_SRESULT));
+
+  if (args.size > 0) {
+    list_T *args_list = tv_list_alloc((ptrdiff_t)args.size);
+
+    typval_T value;
+    for (size_t i = 0; i < args.size; i++) {
+      object_to_vim(args.items[i], &value, err);
+      if (ERROR_SET(err)) {
+        tv_clear(&value);
+        tv_list_free(args_list);
+        goto theend;
+      }
+      tv_list_append_tv(args_list, &value);
+      tv_clear(&value);
+    }
+    set_vim_var_list(VV_SARG, args_list);
+  }
 
   String output = exec_impl(channel_id, src, opts, err);
-  if (ERROR_SET(err)) {
-    return result;
+
+  if (!ERROR_SET(err)) {
+    if (opts->output) {
+      PUT(ret, "output", STRING_OBJ(output));
+    }
+    typval_T *res_val = get_vim_var_tv(VV_SRESULT);
+    if (res_val->v_type == VAR_LIST && res_val->vval.v_list) {
+      Object result = vim_to_object(res_val, NULL, false);
+      PUT(ret, "result", result);
+    }
   }
 
-  if (opts->output) {
-    PUT(result, "output", STRING_OBJ(output));
+theend:
+  tv_clear(get_vim_var_tv(VV_SARG));
+  tv_clear(get_vim_var_tv(VV_SRESULT));
+
+  if (--recursive) {
+    restore_vimvar(VV_SARG, &save_sarg);
+    restore_vimvar(VV_SRESULT, &save_sresult);
   }
 
-  return result;
+  return ret;
 }
 
 String exec_impl(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *err)

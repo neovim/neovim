@@ -96,14 +96,11 @@ describe('timers', function()
   end)
 
   it('are triggered in inputlist() call #7857', function()
-    async_meths.nvim_exec2(
-      [[
+    async_meths.nvim_exec2([[
         call timer_start(5, 'MyHandler', {'repeat': -1})
         let g:val = 0
         let g:n = inputlist(['input0', 'input1'])
-      ]],
-      {}
-    )
+      ]])
     retry(nil, nil, function()
       local val = eval('g:val')
       ok(val >= 2, '>= 2', tostring(val))
@@ -115,14 +112,11 @@ describe('timers', function()
 
   it('are triggered in confirm() call', function()
     api.nvim_ui_attach(80, 24, {}) -- needed for confirm() to work
-    async_meths.nvim_exec2(
-      [[
+    async_meths.nvim_exec2([[
         call timer_start(5, 'MyHandler', {'repeat': -1})
         let g:val = 0
         let g:n = confirm('Are you sure?', "&Yes\n&No\n&Cancel")
-      ]],
-      {}
-    )
+      ]])
     retry(nil, nil, function()
       local val = eval('g:val')
       ok(val >= 2, '>= 2', tostring(val))
@@ -133,14 +127,11 @@ describe('timers', function()
   end)
 
   it('are triggered in blocking getchar() call', function()
-    async_meths.nvim_exec2(
-      [[
+    async_meths.nvim_exec2([[
         call timer_start(5, 'MyHandler', {'repeat': -1})
         let g:val = 0
         let g:c = getchar()
-      ]],
-      {}
-    )
+      ]])
     retry(nil, nil, function()
       local val = eval('g:val')
       ok(val >= 2, '>= 2', tostring(val))

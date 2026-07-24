@@ -897,7 +897,7 @@ function M.rmdir(path)
 end
 
 function M.exec(code)
-  M.api.nvim_exec2(code, {})
+  M.api.nvim_exec2(code)
 end
 
 --- @param code string
