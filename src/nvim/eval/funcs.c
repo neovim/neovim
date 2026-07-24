@@ -3395,6 +3395,7 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   bool clear_env = false;
   bool overlapped = false;
   ChannelStdinMode stdin_mode = kChannelStdinPipe;
+  bool stdout_fd = false;  // pty: capture clean stdout (fd 1) on a separate pipe. #40407
   CallbackReader on_stdout = CALLBACK_READER_INIT;
   CallbackReader on_stderr = CALLBACK_READER_INIT;
   Callback on_exit = CALLBACK_NONE;
@@ -3416,8 +3417,28 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         stdin_mode = kChannelStdinNull;
       } else if (!strncmp(s, "pipe", NUMBUFLEN)) {
         // Nothing to do, default value
+      } else if (!strncmp(s, "fd", NUMBUFLEN)) {
+        // pty only: stdin (fd 0) is a separate pipe, not the tty. For a non-pty job stdin is
+        // already a pipe, so "fd" is equivalent to "pipe" there.
+        stdin_mode = kChannelStdinFd;
       } else {
         semsg(_(e_invargNval), "stdin", s);
+      }
+    }
+
+    // Only a string "stdout" is the option; a non-string value (e.g. the List that
+    // 'stdout_buffered' stores back into the opts dict) is not ours, so ignore it. #40407
+    dictitem_T *const so_di = tv_dict_find(job_opts, S_LEN("stdout"));
+    if (so_di != NULL && so_di->di_tv.v_type == VAR_STRING) {
+      const char *so = so_di->di_tv.vval.v_string;
+      if (so == NULL || !strncmp(so, "pipe", NUMBUFLEN)) {
+        // Nothing to do, default value.
+      } else if (!strncmp(so, "fd", NUMBUFLEN)) {
+        // pty only: capture clean stdout (fd 1) on a separate pipe; the pty (display) stays on
+        // fd 2 + /dev/tty. For a non-pty job stdout is already a pipe, so "fd" == "pipe" there.
+        stdout_fd = true;
+      } else {
+        semsg(_(e_invargNval), "stdout", so);
       }
     }
 
@@ -3439,6 +3460,15 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (pty && overlapped) {
       semsg(_(e_invarg2),
             "job cannot have both 'pty' and 'overlapped' options set");
+      shell_free_argv(argv);
+      return;
+    }
+    // TODO(#40407): stdin/stdout="fd" (separate fd 0/1 pipe for a pty job) is unimplemented on
+    // Windows: ConPTY owns the child's std handles, so they can't be split off the console. A future
+    // port could use a tempfile + shell redirect (as Vim's make_filter_cmd() does), or study the
+    // ConPTY/handle plumbing from #40074 (note: that is the non-pty path, so not a drop-in).
+    if (pty && (stdin_mode == kChannelStdinFd || stdout_fd)) {
+      semsg(_(e_invarg2), "stdin/stdout='fd' is not supported for pty/terminal jobs on Windows");
       shell_free_argv(argv);
       return;
     }
@@ -3501,7 +3531,8 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     cwd = cwd ? cwd : ".";
     overlapped = false;
     detach = false;
-    stdin_mode = kChannelStdinPipe;
+    // term needs a connected stdin; keep an explicit "fd" (separate stdin pipe), else use the tty.
+    stdin_mode = stdin_mode == kChannelStdinFd ? kChannelStdinFd : kChannelStdinPipe;
     width = width ? width : (uint16_t)MAX(0, curwin->w_view_width - win_col_off(curwin));
     height = height ? height : (uint16_t)curwin->w_view_height;
   }
@@ -3514,7 +3545,7 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   dict_T *env = create_environment(job_env, clear_env, pty, true, term_name);
   Channel *chan = channel_job_start(argv, NULL, on_stdout, on_stderr, on_exit, pty,
-                                    rpc, overlapped, detach, stdin_mode, cwd,
+                                    rpc, overlapped, detach, stdin_mode, stdout_fd, cwd,
                                     width, height, env, &rettv->vval.v_number);
   if (!chan) {
     return;

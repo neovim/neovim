@@ -670,6 +670,8 @@ EXTERN bool km_startsel INIT( = false);
 
 EXTERN int cmdwin_type INIT( = 0);  ///< |cmdwin| type (':', '/', '?') or 0.
 EXTERN buf_T *cmdwin_buf INIT( = NULL);  ///< |cmdwin| scratch buffer, or NULL.
+EXTERN bool expr_reg_from_insert INIT( = false);  ///< reading a `=` register expr hosted by Insert mode (enables c_CTRL-F cmdwin). #40407
+EXTERN bool cmdwin_from_expr_reg INIT( = false);  ///< c_CTRL-F opened cmdwin from a `=` register; ins_reg() bails without beeping. #40407
 EXTERN win_T *cmdline_win INIT( = NULL);  ///< window in use by ext_cmdline
 
 EXTERN char no_lines_msg[] INIT( = N_("--No lines in buffer--"));

@@ -188,6 +188,13 @@ function vim.api.nvim__stats() end
 
 --- WARNING: This feature is experimental/unstable.
 ---
+--- Enters Terminal-mode for the current buffer's terminal and blocks until Terminal-mode is left
+--- (e.g. the job exits and a TermClose autocmd closes/leaves the buffer). The synchronous primitive
+--- under `vim._core.run_in_terminal`. EXPERIMENTAL. #40407
+function vim.api.nvim__terminal_enter() end
+
+--- WARNING: This feature is experimental/unstable.
+---
 --- @param str string
 --- @return any
 function vim.api.nvim__unpack(str) end

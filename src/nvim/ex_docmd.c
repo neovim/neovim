@@ -2022,6 +2022,28 @@ static bool skip_cmd(const exarg_T *eap)
   return false;
 }
 
+/// Checks whether `*argp` begins with a ":term[inal]" target, i.e. the ":w :term cmd" / ":r :term cmd" form.
+///
+/// TODO(justinmk): revisit after: https://github.com/neovim/neovim/pull/30628
+///
+/// @param[in,out] argp  On success, advanced past ":term" to the command argument.
+/// @return true if the argument begins with a bare ":term[inal] <cmd>" sigil.
+static bool check_cmd_term_arg(char **argp)
+{
+  if (**argp != ':') {
+    return false;
+  }
+  exarg_T ea = { .cmd = skip_colon_white(*argp, true) };
+  /// Range/modifier prefix (e.g. ":1term") is not stripped, so won't resolve to CMD_terminal;
+  /// that's good, bc we don't support ":[range]write [range]:term …".
+  char *p = find_ex_command(&ea, NULL);
+  if (p == NULL || ea.cmdidx != CMD_terminal || !ascii_iswhite(*p)) {  // need ":term", then the cmd
+    return false;
+  }
+  *argp = skipwhite(p);
+  return true;
+}
+
 /// Execute one Ex command.
 ///
 /// If "flags" has DOCMD_VERBOSE, the command will be included in the error
@@ -2328,6 +2350,9 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
     } else if (*ea.arg == '!' && ea.cmdidx == CMD_write) {  // :w !filter
       ea.arg++;
       ea.usefilter = true;
+    } else if (ea.cmdidx == CMD_write && check_cmd_term_arg(&ea.arg)) {  // :w :term cmd #40407
+      ea.usefilter = true;
+      ea.useterm = true;
     }
   } else if (ea.cmdidx == CMD_read) {
     if (ea.forceit) {
@@ -2336,6 +2361,9 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
     } else if (*ea.arg == '!') {              // :r !filter
       ea.arg++;
       ea.usefilter = true;
+    } else if (check_cmd_term_arg(&ea.arg)) {  // :r :term cmd #40407
+      ea.usefilter = true;
+      ea.useterm = true;
     }
   } else if (ea.cmdidx == CMD_lshift || ea.cmdidx == CMD_rshift) {
     ea.amount = 1;
@@ -5093,7 +5121,7 @@ static void ex_restart(exarg_T *eap)
 
   Channel *channel = channel_job_start(argv, exepath,
                                        CALLBACK_READER_INIT, on_err, CALLBACK_NONE,
-                                       false, true, true, detach, kChannelStdinPipe,
+                                       false, true, true, detach, kChannelStdinPipe, false,
                                        NULL, 0, 0, env, &exit_status);
   if (!channel) {
     emsg("cannot create a channel job");

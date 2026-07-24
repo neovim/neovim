@@ -982,6 +982,19 @@ Note: When the 'write' option is off, you are not able to write any file.
 			executed like with ":!{cmd}", any '!' is replaced with
 			the previous command |:!|.
 
+							*:write-term*
+:[range]w[rite] :term {cmd}
+			Like ":w !{cmd}", but run {cmd} in a |terminal| with
+			[range] piped to its stdin.  {cmd} can then be
+			interactive: it can prompt on the tty (e.g. for a
+			password) and you can keep typing while [range] is
+			piped, because stdin is a separate pipe from the tty
+			(see |jobstart()| stdin="fd").  Example: >
+				:%w :term sudo tee % >/dev/null
+<			(Unix only; see |jobstart()| for the Windows caveat.)
+			See also |:terminal| (run with [range] as input) and
+			|:read-term| (capture a command's stdout).
+
 The default [range] for the ":w" command is the whole buffer (1,$).  The |'[|
 and |']| marks will be set to the [range] being used for the write command.
 If you write the whole buffer, it is no longer considered changed.  When you

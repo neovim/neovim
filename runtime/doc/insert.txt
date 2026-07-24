@@ -2095,6 +2095,21 @@ NOTE: These commands cannot be used with |:global| or |:vglobal|.
 			any '!' is replaced with the previous command |:!|.
 			See |++opt| for the possible values of [++opt].
 
+							*:read-term*
+:[range]r[ead] :term {cmd}
+			Like ":r !{cmd}", but run {cmd} in a |terminal| so it can
+			be interactive: it draws on the tty while its standard
+			output (the "result") is captured and inserted after the
+			line. Use it to insert the result of an interactive
+			picker (TUI on the tty, selection on stdout). Examples: >
+				:r :term fzf
+				:r :term git log --oneline | fzf | cut -d' ' -f1
+				:r :term gum choose feat fix chore docs
+<			Output is inserted when {cmd} exits (the command runs
+			asynchronously). Unix only (see |jobstart()| stdout="fd").
+			See also |:terminal| (run with [range] as input) and
+			|:write-term| (pipe the buffer to a command's stdin).
+
 These commands insert the contents of a file, or the output of a command,
 into the buffer.  They can be undone.  They cannot be repeated with the "."
 command.  They work on a line basis, insertion starts below the line in which

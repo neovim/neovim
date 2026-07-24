@@ -4484,29 +4484,35 @@ const char *did_set_cedit(optset_T *args)
 }
 
 typedef struct {
-  int firstc;     ///< ':'/'/'/'?'.
+  int firstc;     ///< ':'/'/'/'?'/'='.
   char *content;  ///< Initial cmdline (owned).
   int pos;        ///< Cursor column.
+  linenr_T host_lnum;  ///< For '=': caller cursor line (where to insert the result). #40407
+  colnr_T host_col;    ///< For '=': caller cursor column (0-based byte).
 } CmdwinOpenArgs;
 
 /// Synchronously calls `vim._core.cmdwin.<action>(...)`.
-static void cmdwin_invoke(const char *action, int firstc, char *content, int pos)
+static void cmdwin_invoke(const char *action, int firstc, char *content, int pos,
+                          linenr_T host_lnum, colnr_T host_col)
 {
   char fc[2] = { (char)firstc, 0 };
   typval_T tv_args[] = {
     { .v_type = VAR_STRING, .vval.v_string = fc },
     { .v_type = VAR_STRING, .vval.v_string = content ? content : "" },
     { .v_type = VAR_NUMBER, .vval.v_number = pos + 1 },
+    { .v_type = VAR_NUMBER, .vval.v_number = host_lnum },
+    { .v_type = VAR_NUMBER, .vval.v_number = host_col },
     { .v_type = VAR_UNKNOWN },
   };
-  nlua_call_typval("vim._core.cmdwin", action, firstc ? tv_args : tv_args + 3, NULL);
+  // "open" passes (firstc, content, pos, host_lnum, host_col); "confirm"/"cancel" take no args.
+  nlua_call_typval("vim._core.cmdwin", action, firstc ? tv_args : tv_args + 5, NULL);
   xfree(content);
 }
 
 /// Calls `vim._core.cmdwin.<action>()`, synchronously.
 void cmdwin_do_action(const char *action)
 {
-  cmdwin_invoke(action, 0, NULL, 0);
+  cmdwin_invoke(action, 0, NULL, 0, 0, 0);
 }
 
 /// Deferred event: opens cmdwin after the cmdline-reader unwinds. Can't run synchronously (cmdline
@@ -4514,8 +4520,42 @@ void cmdwin_do_action(const char *action)
 static void open_cmdwin_event(void **argv)
 {
   CmdwinOpenArgs *a = argv[0];
-  cmdwin_invoke("open", a->firstc, a->content, a->pos);  // frees a->content
+  cmdwin_invoke("open", a->firstc, a->content, a->pos, a->host_lnum, a->host_col);  // frees content
   xfree(a);
+}
+
+/// For blocking prompts (|input()|): synchronously edits the cmdline in a child Nvim hosted in a
+/// `:terminal` (see `vim._core.run_in_terminal.run_nvim`). Unlike the `:`/`/`/`?` cmdwin (deferred,
+/// non-blocking), input() has a C-stack caller waiting for a value, so it cannot unwind; instead we
+/// block here until the child exits.
+/// @return CAR if confirmed (cmdline replaced with the edited text, ready to submit), else K_IGNORE
+///         (cancelled: keep editing the current cmdline). #40407
+static int cmdwin_run_blocking(void)
+{
+  char *content = ccline.cmdbuff ? xstrnsave(ccline.cmdbuff, (size_t)ccline.cmdlen) : xstrdup("");
+
+  char histname[] = "input";  // input() history, shown in the hosted cmdwin
+  typval_T argvars[3];
+  argvars[0].v_type = VAR_STRING;
+  argvars[0].vval.v_string = content;
+  argvars[1].v_type = VAR_STRING;
+  argvars[1].vval.v_string = histname;
+  argvars[2].v_type = VAR_UNKNOWN;
+
+  typval_T rettv;
+  nlua_call_typval("vim._core.run_in_terminal", "run_nvim", argvars, &rettv);
+  xfree(content);
+
+  // The child's <C-c> (cancel) interrupts via :cquit; don't let that abort the parent's prompt.
+  got_int = false;
+
+  int c = K_IGNORE;
+  if (rettv.v_type == VAR_STRING && rettv.vval.v_string != NULL) {
+    set_cmdline_str(rettv.vval.v_string, -1);  // confirmed: replace cmdline, caller submits on CAR
+    c = CAR;
+  }
+  tv_clear(&rettv);
+  return c;
 }
 
 /// Schedules cmdwin to open after the current cmdline-reader returns. Returns Ctrl_C so the cmdline
@@ -4534,7 +4574,20 @@ static int open_cmdwin(void)
   }
   // Disallow for expr-register and input()/inputlist(): no reentrant return path. #40407
   int ft = get_cmdline_type();
-  if (ft != ':' && ft != '/' && ft != '?') {
+  if (ft == '=' && expr_reg_from_insert) {
+    // Expr register (i_CTRL-R =) hosted by Insert mode: supported. On confirm the cmdwin evaluates
+    // the line and inserts the result at the saved cursor. Leave Insert mode (the cmdwin runs in
+    // Normal mode) via <C-\><C-N>, and tell ins_reg() to bail without beeping. #40407
+    cmdwin_from_expr_reg = true;
+    stuffcharReadbuff(Ctrl_BSL);
+    stuffcharReadbuff(Ctrl_N);
+  } else if (ft == '@') {
+    // input(): a blocking prompt with a C-stack caller. Edit synchronously in a child Nvim hosted
+    // in a `:terminal`, then submit the result (or keep editing on cancel). #40407
+    return cmdwin_run_blocking();
+  } else if (ft != ':' && ft != '/' && ft != '?') {
+    // Disallow other cmdline-hosted prompts (expr-register, confirm-style `-`): no reentrant return
+    // path (the host editing context can't be reconstructed from buf/win/cursor). #40407
     beep_flush();
     return K_IGNORE;
   }
@@ -4542,6 +4595,9 @@ static int open_cmdwin(void)
   CmdwinOpenArgs *a = xmalloc(sizeof(*a));
   a->firstc = ft;
   a->pos = ccline.cmdpos;
+  // For '=' (expr register): caller cursor = the Insert-mode position to insert the result at.
+  a->host_lnum = curwin->w_cursor.lnum;
+  a->host_col = curwin->w_cursor.col;
 
   // Capture the cmdline; will append to end of cmdwin.
   a->content = ccline.cmdbuff ? xstrnsave(ccline.cmdbuff, (size_t)ccline.cmdlen) : NULL;

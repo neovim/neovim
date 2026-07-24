@@ -238,10 +238,19 @@ function M.log_complete()
   return names
 end
 
---- `:terminal [cmd]`
+--- `:[range]terminal [cmd]`
 --- @param eap vim._core.ExCmdArgs
 --- @param shell_argv? string[] Tokenized 'shell' from C (shell_build_argv), for the no-cmd case.
 function M.ex_terminal(eap, shell_argv)
+  -- `:[range]term`: pipe [range] lines to the job's stdin (a separate pipe, see |jobstart()|
+  -- stdin="fd"), so the command reads them while the terminal stays interactive. Capture the lines
+  -- BEFORE switching to the new terminal buffer. #40407
+  local feed --- @type string?
+  if (eap.range or 0) > 0 then
+    feed = table.concat(vim.api.nvim_buf_get_lines(0, eap.line1 - 1, eap.line2, false), '\n')
+      .. '\n'
+  end
+
   local smods = eap.smods
   local has_mods = (smods.tab or 0) > 0
     or (smods.split or '') ~= ''
@@ -254,10 +263,14 @@ function M.ex_terminal(eap, shell_argv)
     vim.cmd.enew { bang = eap.bang }
   end
 
-  if shell_argv then -- No `cmd`, run 'shell'.
-    vim.fn.jobstart(shell_argv, { term = true })
-  else -- Run [cmd] in 'shell'.
-    vim.fn.jobstart(eap.args, { term = true })
+  local opts = { term = true } --- @type table
+  if feed ~= nil then
+    opts.stdin = 'fd'
+  end
+  local job = vim.fn.jobstart(shell_argv or eap.args, opts)
+  if feed ~= nil and job > 0 then
+    vim.fn.chansend(job, feed)
+    vim.fn.chanclose(job, 'stdin') -- EOF on fd 0
   end
 end
 

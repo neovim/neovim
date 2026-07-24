@@ -5837,9 +5837,36 @@ jobstart({cmd} [, {opts}])                                          *jobstart()*
 			      before invoking `on_stderr`. |channel-buffered|
 		  stdout_buffered: (boolean) Collect data until EOF (stream
 			      closed) before invoking `on_stdout`. |channel-buffered|
-		  stdin:      (string) Either "pipe" (default) to connect the
-			      job's stdin to a channel or "null" to disconnect
-			      stdin.
+		  stdin:      (string) What the job's stdin (fd 0) is connected
+			      to. One of "pipe" (default), "null", or "fd".
+			        - "pipe": a channel; write to it with |chansend()|.
+			          But for a "pty"/"term" job stdin IS the terminal, so
+			          |chansend()| sends keys (as if typed), not a separate
+			          stream.
+			        - "null": disconnected.
+			        - "fd" ("pty"/"term" only): a separate pipe, even
+			          though it is a pty. The pty stays the controlling
+			          terminal (output, and /dev/tty for prompts) while
+			          |chansend()|/|chanclose()| feed fd 0. Because stdin is
+			          split from the tty, the terminal stays interactive
+			          while data is piped: you can still type (e.g. a
+			          password), so e.g. `:w !sudo tee` works. (Feeding a
+			          pty's own stdin can't do both at once — this is why
+			          Vim's `:[range]terminal` disables typing when a range
+			          is piped; Nvim's "fd" has no such restriction.) For a
+			          non-pty job, where stdin is already a pipe, "fd" is the
+			          same as "pipe".
+			          Unix only: errors on Windows (TODO), where ConPTY
+			          owns the child's handles so fd 0 can't be split off
+			          the console.
+		  stdout:     (string) "pipe" (default) or "fd". For a "pty"/"term"
+			      job, "fd" captures the child's stdout (fd 1) on a
+			      separate pipe (delivered to |on_stdout|), while the
+			      terminal display stays on fd 2 + /dev/tty. Use it to
+			      capture a command's output while its TUI still renders
+			      (e.g. a picker that writes a selection to stdout). For a
+			      non-pty job, where stdout is already a pipe, "fd" is the
+			      same as "pipe". Unix only (same Windows caveat as stdin).
 		  term:       (boolean) Spawns {cmd} in a new pseudo-terminal
 			      session connected to the current (unmodified) buffer.
 			      Implies "pty". Defaults "height" and "width" to the

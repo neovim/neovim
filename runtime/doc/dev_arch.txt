@@ -504,5 +504,57 @@ returns when leaving Insert mode.
 
 
 ==============================================================================
+Terminal: buffer-connected commands                            *dev-terminal*
+
+Running an interactive command that also exchanges buffer text (`:[range]term`,
+`:w :term`, the command-line window hosted for |input()|, future interactive
+`:!`) is built on a pseudo-terminal, with these decisions:
+
+WHY A PTY (not Vim's tty handoff): Nvim's core has no controlling terminal (the
+UI is decoupled: a separate TUI process, or remote/GUI clients). So unlike Vim
+it cannot `stoptermcap` and hand its own tty to a child. It must spawn the
+command in an in-process pty. (Vim reaches the same conclusion in its GUI, where
+it too uses a terminal window.)
+
+BLOCKING vs NON-BLOCKING: prefer non-blocking. `:[range]term` opens a normal
+terminal window and does its writeback on |TermClose|; nothing is suspended. The
+blocking primitive `nvim__terminal_enter()` (a nested terminal-mode state loop)
+is only for callers that need a result synchronously mid-eval, e.g. c_CTRL-F
+from |input()|. It is terminal-mode-only on purpose: denying the normal-mode
+escape means the suspended eval layer cannot be re-entered. When the host is a
+child Nvim, the process boundary is the eval-reentrancy boundary.
+
+stdin="fd" (see |jobstart()|): for a pty job, fd 0 is a SEPARATE pipe, not the
+tty, while the pty stays the controlling terminal. So a command can read piped
+data on stdin AND stay interactive: typed keys go to the master (the child reads
+them via /dev/tty, e.g. a sudo password). Vim's `:[range]terminal` feeds the
+pty's own stdin and must therefore DISABLE typing; the separate pipe removes
+that restriction. Keystrokes are written to the master directly (`term_write`),
+since `proc->in` now carries the piped data.
+
+ALWAYS FEED VIA wstream: write the piped lines with `chansend()` (→
+`channel_send` → `wstream_write`, a WBuffer over libuv), never a raw write() to
+the pipe. A buffer larger than the pipe capacity would otherwise block the main
+thread indefinitely.
+
+stdout="fd" (capture): to capture a command's clean stdout while its TUI still
+renders, route fd 1 through the otherwise-unused `proc->err` and leave
+`proc->out` = the pty master (the display) unchanged; `on_channel_output` sends
+that stream to the stdout reader and skips `terminal_receive`. Chosen over
+swapping `proc->out`/`proc->err` (display on err, capture on out) because
+reusing `err` leaves the display path unchanged (additive, not a reroute) and
+reuses `err`'s existing rstream lifecycle.
+
+RETURNING A RESULT: a hosted child Nvim hands its result back over the parent's
+|$NVIM| RPC channel, not via stdout (which is the pty) nor a tempfile.
+
+NO TEMPFILES: per the 'shelltemp'-off direction, buffer I/O uses pipes
+(stdin/stdout="fd"), not temp files nor a shell redirect like `(cmd) < tmp`
+(which is shell-specific).
+
+WINDOWS: ConPTY owns the child's std handles, so fd 0/1 cannot be split off the
+console; stdin/stdout="fd" error there (TODO).
+
+==============================================================================
 
 vim:tw=78:ts=8:sw=4:et:ft=help:norl:
