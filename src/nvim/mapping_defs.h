@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 #include "nvim/eval/typval_defs.h"
+#include "nvim/ex_cmds_defs.h"
 
 enum { MAXMAPLEN = 50, };  ///< Maximum length of key sequence to be mapped.
 
@@ -27,4 +28,6 @@ struct mapblock {
   sctx_T m_script_ctx;      ///< SCTX where map was defined
   char *m_desc;             ///< description of mapping
   bool m_replace_keycodes;  ///< replace keycodes in result of expression
+  bool is_cmd_abbr;         ///< if this abbr is for cmdline
+  cmdidx_T cmdidx;          ///< cmdidx for rhs
 };
