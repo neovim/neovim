@@ -283,6 +283,20 @@ describe('nvim.zip', function()
     eq({ '' }, lines())
   end)
 
+  it('lists a valid empty archive as empty', function()
+    local archive = vim.fs.joinpath(root, 'empty.zip')
+    local file = assert(io.open(archive, 'wb'))
+    file:write('PK\5\6' .. string.rep('\0', 18))
+    file:close()
+    clear_zip()
+
+    edit(archive)
+
+    eq({ '' }, lines())
+    eq('zip', api.nvim_get_option_value('filetype', { buf = 0 }))
+    eq(true, exec_lua('return vim.b.nvim_zip ~= nil'))
+  end)
+
   it('treats archive glob characters literally', function()
     t.skip(t.is_os('win'), 'N/A: Windows filenames cannot contain these characters')
     local archive = vim.fs.joinpath(root, 'archive::[*?].zip')

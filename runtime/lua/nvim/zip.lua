@@ -45,6 +45,9 @@ local function list_archive(source)
   end
   local result = system:wait()
   if result.code ~= 0 then
+    if vim.trim(result.stdout or '') == 'Empty zipfile.' then
+      return {}
+    end
     return nil, vim.trim(result.stderr or ''), true
   end
   return vim.split(result.stdout or '', '\n', { plain = true, trimempty = true })
