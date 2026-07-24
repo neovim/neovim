@@ -1,4 +1,5 @@
 local N_ = vim.fn.gettext
+local api = vim.api
 
 local M = {}
 
@@ -17,6 +18,9 @@ local M = {}
 --- @param items vim._core.spell.Suggestion[]
 --- @param bad string The misspelled word being replaced.
 function M.select_suggest(items, bad)
+  local win = api.nvim_get_current_win()
+  local buf = api.nvim_get_current_buf()
+
   vim.ui.select(items, {
     prompt = N_('Change "%s" to:'):format(bad),
     kind = 'spell',
@@ -36,7 +40,27 @@ function M.select_suggest(items, bad)
     end
     -- Queue ":normal! [idx]z=" as user input, so the recursive spell_suggest runs via the normal
     -- input-dispatch loop. Using vim.schedule + vim.cmd can hang bc of "Press ENTER".
-    vim.fn.feedkeys(vim.keycode(('<Cmd>normal! %dz=<CR>'):format(idx)), 'in')
+    vim.fn.feedkeys(
+      vim.keycode(
+        ('<Cmd>lua require("vim._core.spell")._apply_suggest(%d, %d, %d)<CR>'):format(win, buf, idx)
+      ),
+      'in'
+    )
+  end)
+end
+
+--- Applies a queued spell suggestion in the original window, if it still shows the original buffer.
+---
+--- @param win integer
+--- @param buf integer
+--- @param idx integer
+function M._apply_suggest(win, buf, idx)
+  if not api.nvim_win_is_valid(win) or api.nvim_win_get_buf(win) ~= buf then
+    return
+  end
+
+  api.nvim_win_call(win, function()
+    vim.cmd.normal({ ('%dz='):format(idx), bang = true })
   end)
 end
 
