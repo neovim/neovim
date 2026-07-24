@@ -382,13 +382,7 @@ bool dir_of_file_exists(char *fname)
 int path_fnamecmp(const char *fname1, const char *fname2)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-#ifdef BACKSLASH_IN_FILENAME
-  const size_t len1 = strlen(fname1);
-  const size_t len2 = strlen(fname2);
-  return path_fnamencmp(fname1, fname2, MAX(len1, len2));
-#else
   return pathcmp(fname1, fname2, -1);
-#endif
 }
 
 /// Compare two file names
@@ -403,65 +397,7 @@ int path_fnamecmp(const char *fname1, const char *fname2)
 int path_fnamencmp(const char *const fname1, const char *const fname2, size_t len)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-#ifdef BACKSLASH_IN_FILENAME
-  int c1 = NUL;
-  int c2 = NUL;
-
-  const char *p1 = fname1;
-  const char *p2 = fname2;
-
-# ifdef MSWIN
-  // To allow proper comparison of absolute paths:
-  //   - one with explicit drive letter C:\xxx
-  //   - another with implicit drive letter \xxx
-  // advance the pointer, of the explicit one, to skip the drive
-  for (int swap = 0, drive = NUL; swap < 2; swap++) {
-    // Handle absolute paths with implicit drive letter
-    c1 = utf_ptr2char(p1);
-    c2 = utf_ptr2char(p2);
-
-    if ((c1 == '/' || c1 == '\\') && ASCII_ISALPHA(c2)) {
-      drive = mb_toupper(c2) - 'A' + 1;
-
-      // Check for the colon
-      p2 += utfc_ptr2len(p2);
-      c2 = utf_ptr2char(p2);
-      if (c2 == ':' && drive == _getdrive()) {  // skip the drive for comparison
-        p2 += utfc_ptr2len(p2);
-        break;
-      } else {  // ignore
-        p2 -= utfc_ptr2len(p2);
-      }
-    }
-
-    // swap pointers
-    const char *tmp = p1;
-    p1 = p2;
-    p2 = tmp;
-  }
-# endif
-
-  while (len > 0) {
-    c1 = utf_ptr2char(p1);
-    c2 = utf_ptr2char(p2);
-    if (c1 == NUL
-        || c2 == NUL
-        || (c1 != c2
-            && ((c1 != '/' && c1 != '\\') || (c2 != '/' && c2 != '\\'))
-            && (!p_fic || utf_fold(c1) != utf_fold(c2)))) {
-      break;
-    }
-    len -= (size_t)utfc_ptr2len(p1);
-    p1 += utfc_ptr2len(p1);
-    p2 += utfc_ptr2len(p2);
-  }
-  return p_fic ? utf_fold(c1) - utf_fold(c2) : c1 - c2;
-#else
-  if (p_fic) {
-    return mb_strnicmp(fname1, fname2, len);
-  }
-  return strncmp(fname1, fname2, len);
-#endif
+  return pathcmp(fname1, fname2, (int)len);
 }
 
 /// Append fname2 to fname1
@@ -2014,6 +1950,16 @@ bool same_directory(char *f1, char *f2)
          && pathcmp(ffname, f2, (int)(t1 - ffname)) == 0;
 }
 
+static int path_fold_char(const char *p, int *len)
+{
+  if (vim_ispathsep_nocolon(*p)) {
+    *len = 1;
+    return PATHSEP;
+  }
+  *len = p_fic ? utfc_ptr2len(p) : 1;
+  return p_fic ? utf_fold(utf_ptr2char(p)) : *p;
+}
+
 // Compare path "p[]" to "q[]".
 // If `maxlen` >= 0 compare `p[maxlen]` to `q[maxlen]`
 // Return value like strcmp(p, q), but consider path separators.
@@ -2021,71 +1967,60 @@ bool same_directory(char *f1, char *f2)
 // See also `path_full_compare`.
 int pathcmp(const char *p, const char *q, int maxlen)
 {
-  int i, j;
   const char *s = NULL;
+  int c1 = NUL;
+  int c2 = NUL;
+  int len = 0;
 
-  for (i = 0, j = 0; maxlen < 0 || (i < maxlen && j < maxlen);) {
-    int c1 = utf_ptr2char(p + i);
-    int c2 = utf_ptr2char(q + j);
-
-    // End of "p": check if "q" also ends or just has a slash.
-    if (c1 == NUL) {
-      if (c2 == NUL) {      // full match
-        return 0;
-      }
-      s = q;
-      i = j;
-      break;
-    }
-
-    // End of "q": check if "p" just has a slash.
-    if (c2 == NUL) {
-      s = p;
-      break;
-    }
-
-    if ((p_fic ? mb_toupper(c1) != mb_toupper(c2) : c1 != c2)
-#ifdef BACKSLASH_IN_FILENAME
-        // consider '/' and '\\' to be equal
-        && !((c1 == '/' && c2 == '\\')
-             || (c1 == '\\' && c2 == '/'))
-#endif
-        ) {
-      if (vim_ispathsep(c1)) {
-        return -1;
-      }
-      if (vim_ispathsep(c2)) {
-        return 1;
-      }
-      return p_fic ? mb_toupper(c1) - mb_toupper(c2)
-                   : c1 - c2;  // no match
-    }
-
-    i += utfc_ptr2len(p + i);
-    j += utfc_ptr2len(q + j);
+#ifdef MSWIN
+  // To allow proper comparison of absolute paths:
+  //   - one with explicit drive letter C:\xxx
+  //   - another with implicit drive letter \xxx
+  // advance the pointer, of the explicit one, to skip the drive
+  const char **pp = NULL;
+  if (vim_ispathsep_nocolon(*p) && ASCII_ISALPHA(*q) && q[1] == ':') {
+    pp = &q;
+  } else if (vim_ispathsep_nocolon(*q) && ASCII_ISALPHA(*p) && p[1] == ':') {
+    pp = &p;
   }
-  if (s == NULL) {  // "i" or "j" ran into "maxlen"
+  if (pp && TOLOWER_ASC(**pp) == _getdrive() + 'a' - 1) {
+    *pp += 2;
+  }
+#endif
+
+  for (int i = 0, j = 0; maxlen < 0 || len < maxlen; len += i) {
+    c1 = path_fold_char(p, &i);
+    c2 = path_fold_char(q, &j);
+    if (c1 == NUL || c2 == NUL || c1 != c2) {
+      break;
+    }
+    p += i;
+    q += j;
+  }
+
+  if ((c1 == NUL && c2 == NUL) || (maxlen > 0 && len >= maxlen)) {
     return 0;
   }
 
-  int c1 = utf_ptr2char(s + i);
-  int c2 = utf_ptr2char(s + i + utfc_ptr2len(s + i));
-  // ignore a trailing slash, but not "//" or ":/"
-  if (c2 == NUL
-      && i > 0
-      && !after_pathsep(s, s + i)
-#ifdef BACKSLASH_IN_FILENAME
-      && (c1 == '/' || c1 == '\\')
-#else
-      && c1 == '/'
-#endif
-      ) {
-    return 0;       // match with trailing slash
+  if (c1 != NUL && c2 != NUL) {
+    if (vim_ispathsep(c1)) {
+      return -1;
+    }
+    if (vim_ispathsep(c2)) {
+      return 1;
+    }
+    return c1 - c2;
   }
-  if (s == q) {
-    return -1;      // no match
+
+  s = c1 == NUL ? q : p;
+  // match with trailing slash, but not "//" or ":/"
+  if (vim_ispathsep_nocolon(*s)
+      && s[1] == NUL
+      && len > 0
+      && !vim_ispathsep(s[-1])) {
+    return 0;
   }
-  return 1;
+  return s == q ? -1 : 1;
 }
 
 /// Try to find a shortname by comparing the fullname with the current

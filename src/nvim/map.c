@@ -86,9 +86,7 @@ static inline bool equal_path_t(const char *a, const char *b)
   }
 #ifdef BACKSLASH_IN_FILENAME
   // Inherit Windows-mode slash, drive-letter, and case folding.
-  size_t la = strlen(a);
-  size_t lb = strlen(b);
-  return path_fnamencmp(a, b, MAX(la, lb)) == 0;
+  return path_fnamecmp(a, b) == 0;
 #elif defined(CASE_INSENSITIVE_FILENAME)
   return mb_stricmp(a, b) == 0;
 #else

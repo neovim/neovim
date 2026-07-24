@@ -1064,7 +1064,6 @@ static int add_pack_dir_to_rtp(char *fname, bool is_pack)
 
   // Find "ffname" in "p_rtp", ignoring '/' vs '\' differences
   // Also stop at the first "after" directory
-  size_t fname_len = strlen(ffname);
   char buf_data[MAXPATHL];
   String buf;
   buf.data = buf_data;
@@ -1102,7 +1101,7 @@ static int add_pack_dir_to_rtp(char *fname, bool is_pack)
       if (rtp_ffname == NULL) {
         goto theend;
       }
-      if (path_fnamencmp(rtp_ffname, ffname, fname_len) == 0) {
+      if (path_fnamecmp(rtp_ffname, ffname) == 0) {
         // Insert "ffname" after this entry (and comma).
         insp = entry;
       }
