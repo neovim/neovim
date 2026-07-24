@@ -281,19 +281,18 @@ vim.o.bs = vim.o.backspace
 vim.go.backspace = vim.o.backspace
 vim.go.bs = vim.go.backspace
 
---- Make a backup before overwriting a file.  Leave it around after the
---- file has been successfully written.  If you do not want to keep the
---- backup file, but you do want a backup while the file is being
---- written, reset this option and set the 'writebackup' option (this is
---- the default).  If you do not want a backup file at all reset both
---- options (use this if your file system is almost full).  See the
---- `backup-table` for more explanations.
+--- After overwriting a file, make a backup to be used as an anchor for
+--- undo data retrieval if the file is then changed externally. Despite
+--- similar names, this option behaves differently from 'writebackup'.
+--- See the `backup-table` for more explanations.  If your file system
+--- is almost full, consider disabling both options.
+---
 --- When the 'backupskip' pattern matches, a backup is not made anyway.
 --- When 'patchmode' is set, the backup may be renamed to become the
 --- oldest version of a file.
 ---
 --- @type boolean
-vim.o.backup = false
+vim.o.backup = true
 vim.o.bk = vim.o.backup
 vim.go.backup = vim.o.backup
 vim.go.bk = vim.go.backup
@@ -8552,8 +8551,7 @@ vim.go.writeany = vim.o.writeany
 vim.go.wa = vim.go.writeany
 
 --- Make a backup before overwriting a file.  The backup is removed after
---- the file was successfully written, unless the 'backup' option is
---- also on.
+--- the file was successfully written.
 --- WARNING: Switching this option off means that when Vim fails to write
 --- your buffer correctly and then, for whatever reason, Vim exits, you
 --- lose both the original file and what you were writing.  Only reset
