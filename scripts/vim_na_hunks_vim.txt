@@ -21,3 +21,4 @@
 ^test_settime(.\+test_settime(
 ^test_srand_seed(.\+test_srand_seed(
 ^test_void(.\+test_void(
+\*patches-\(after-\)\?[0-9].*\*
