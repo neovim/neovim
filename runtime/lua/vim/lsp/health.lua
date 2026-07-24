@@ -24,7 +24,7 @@ local function check_log()
   local log = vim.lsp.log
   local current_log_level = log.get_level()
   local log_level_string = log.levels[current_log_level] ---@type string
-  report_info(string.format('LSP log level : %s', log_level_string))
+  report_info(string.format('LSP log level: %s', log_level_string))
 
   if current_log_level < log.levels.WARN then
     report_warn(

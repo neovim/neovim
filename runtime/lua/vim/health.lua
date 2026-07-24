@@ -459,7 +459,6 @@ function M._check(eap)
   for _, name in ipairs(names) do
     local value = healthchecks[name]
     progress_msg('running', check_idx, 'checking %s', name)
-    check_idx = check_idx + 1
     local func = value[1]
     local type = value[2]
     s_output = {}
@@ -508,7 +507,9 @@ function M._check(eap)
     end
     s_output[#s_output + 1] = ''
     s_output = vim.list_extend(header, s_output)
-    vim.fn.append(vim.fn.line('$'), s_output)
+    vim.api.nvim_buf_set_lines(0, check_idx == 1 and 0 or -1, -1, true, s_output)
+
+    check_idx = check_idx + 1
   end
 
   progress_msg('success', nil, 'checks done')

@@ -158,7 +158,6 @@ describe('vim.health', function()
     it('report_xx() renders correctly', function()
       command('checkhealth full_render')
       n.expect([[
-
       ==============================================================================
       test_plug.full_render:                                              1 ⚠️  1 ❌
 
@@ -185,7 +184,6 @@ describe('vim.health', function()
         checkhealth full_render
       ]]
       n.expect([[
-
       ==============================================================================
       test_plug.full_render:                                              1  1
 
@@ -208,7 +206,6 @@ describe('vim.health', function()
     it('concatenates multiple reports', function()
       command('checkhealth success1 success2 test_plug')
       n.expect([[
-
         ==============================================================================
         test_plug:                                                                  ✅
 
@@ -238,7 +235,6 @@ describe('vim.health', function()
     it('lua plugins submodules', function()
       command('checkhealth test_plug.submodule')
       n.expect([[
-
         ==============================================================================
         test_plug.submodule:                                                        ✅
 
@@ -253,7 +249,6 @@ describe('vim.health', function()
     it('... including empty reports', function()
       command('checkhealth test_plug.submodule_empty')
       n.expect([[
-
       ==============================================================================
       test_plug.submodule_empty:                                                1 ❌
 
@@ -262,7 +257,7 @@ describe('vim.health', function()
     end)
 
     it('highlights OK, ERROR', function()
-      local screen = Screen.new(50, 12)
+      local screen = Screen.new(50, 11)
       screen:set_default_attr_ids({
         h1 = { reverse = true },
         h2 = { foreground = tonumber('0x6a0dad') },
@@ -275,8 +270,7 @@ describe('vim.health', function()
       command('set nofoldenable nowrap laststatus=0')
       screen:expect {
         grid = [[
-        ^                                                  |
-        {Bar:                                                  }|
+        {Bar:^                                                  }|
         {h1:foo:                                              }|
                                                           |
         - ❌ {Error:ERROR} No healthcheck found for "foo" plugin. |
@@ -295,7 +289,6 @@ describe('vim.health', function()
       command('checkhealth non_existent_healthcheck')
       -- luacheck: ignore 613
       n.expect([[
-
         ==============================================================================
         non_existent_healthcheck:                                                 1 ❌
 
@@ -313,7 +306,6 @@ describe('vim.health', function()
     it('nested lua/ directory', function()
       command('checkhealth lua')
       n.expect([[
-
       ==============================================================================
       test_plug.lua:                                                              ✅
 
@@ -331,7 +323,6 @@ describe('vim.health', function()
       command('packadd healthy')
       command('checkhealth nest')
       n.expect([[
-
       ==============================================================================
       nest:                                                                       ✅
 
@@ -349,7 +340,7 @@ describe(':checkhealth window', function()
   end)
 
   it('opens directly if no buffer created', function()
-    local screen = Screen.new(50, 12, { ext_multigrid = true })
+    local screen = Screen.new(50, 11, { ext_multigrid = true })
     screen:set_default_attr_ids {
       h1 = { reverse = true },
       h2 = { foreground = tonumber('0x6a0dad') },
@@ -362,11 +353,10 @@ describe(':checkhealth window', function()
     screen:expect {
       grid = [[
     ## grid 1
-      [2:--------------------------------------------------]|*11
+      [2:--------------------------------------------------]|*10
       [3:--------------------------------------------------]|
     ## grid 2
-      ^                                                  |
-      {14:                                                  }|
+      {14:^                                                  }|
       {14:                            }                      |
       {h1:test_plug.                                        }|
       {h1:success1:                                         }|
@@ -383,7 +373,7 @@ describe(':checkhealth window', function()
   end)
 
   local function test_health_vsplit(left, emptybuf, mods)
-    local screen = Screen.new(50, 20, { ext_multigrid = true })
+    local screen = Screen.new(50, 19, { ext_multigrid = true })
     screen:set_default_attr_ids {
       h1 = { reverse = true },
       h2 = { foreground = tonumber('0x6a0dad') },
@@ -403,12 +393,12 @@ describe(':checkhealth window', function()
       [3:--------------------------------------------------]|
     ## grid 2
       %s                   |
-      {1:~                       }|*18
+      {1:~                       }|*17
     ## grid 3
       {Done:checkhealth}: checks done                          |
     ## grid 4
-      ^                         |
-      {14:                         }|*3
+      {14:^                         }|
+      {14:                         }|*2
       {14:   }                      |
       {h1:test_plug.               }|
       {h1:success1:                }|
@@ -425,8 +415,8 @@ describe(':checkhealth window', function()
                                |
       {1:~                        }|
     ]]):format(
-        left and '[4:-------------------------]│[2:------------------------]|*19'
-          or '[2:------------------------]│[4:-------------------------]|*19',
+        left and '[4:-------------------------]│[2:------------------------]|*18'
+          or '[2:------------------------]│[4:-------------------------]|*18',
         emptybuf and '     ' or 'hello'
       )
     )
@@ -469,7 +459,7 @@ describe(':checkhealth window', function()
       checkhealth: checks done                          |
     ## grid 4
       ^                                                  |
-                                                        |*2
+                                                        |
       test_plug.                                        |
       success1:                                         |
                       ✅                                |
@@ -479,6 +469,7 @@ describe(':checkhealth window', function()
                                                         |
       report 2                                          |
       - ✅ OK nothing to see here                       |
+                                                        |
     ]]):format(
         top
             and [[
