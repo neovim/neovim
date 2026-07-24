@@ -58,7 +58,7 @@ jobs:
     outputs:
       version: ${{ steps.build.outputs.version }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           # Perform a full checkout #13471
           fetch-depth: 0
@@ -113,7 +113,7 @@ jobs:
       CMAKE_BUILD_TYPE: ${{ needs.setup.outputs.build_type }}
       MACOSX_DEPLOYMENT_TARGET: 11.0
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           # Perform a full checkout #13471
           fetch-depth: 0
@@ -158,7 +158,7 @@ jobs:
     env:
       CMAKE_BUILD_TYPE: ${{ needs.setup.outputs.build_type }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           # Perform a full checkout #13471
           fetch-depth: 0
@@ -201,7 +201,7 @@ jobs:
     steps:
       # Must perform checkout first, since it deletes the target directory
       # before running, and would therefore delete the downloaded artifacts
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 

@@ -19,7 +19,7 @@ jobs:
         github.event.label.name == 'ci:skip-news'
       )
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}

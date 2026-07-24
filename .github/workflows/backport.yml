@@ -14,13 +14,13 @@ jobs:
     if: github.event.pull_request.merged
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: true
           # Check out the merged-into base branch by name. Without an explicit
           # ref, checkout resolves to the base tip SHA, which for a _merged_ PR
           # equals pull_request.merge_commit_sha and trips the
-          # actions/checkout@v7 `allow-unsafe-pr-checkout` guard (false
+          # actions/checkout@v7.0.1 `allow-unsafe-pr-checkout` guard (false
           # positive: this is trusted base code, not fork PR code).
           ref: ${{ github.event.pull_request.base.ref }}
 
