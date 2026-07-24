@@ -2355,7 +2355,7 @@ void *opt_keyset(const char *value, OptIndex opt_idx, void *keyset)
   if (keyset == NULL) {
     keyset = &shared;
   }
-  const OptDictInfo *si = opt_dict_info(opt_idx);
+  const OptDictSchema *si = opt_dict_schema(opt_idx);
   memset(keyset, 0, si->size);
   if (value != NULL) {
     opt_fill(value, si->get_field, keyset);

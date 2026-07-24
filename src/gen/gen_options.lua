@@ -729,19 +729,15 @@ local function gen_keysets(output_file)
   end
   write('} OptKeyDict;')
 
-  -- Dispatch from option index to its keyset handle (opt_dict_info); NULL for non-dict options.
+  -- Dispatch from option index to its dict schema (opt_dict_schema); NULL for non-dict options.
   write('')
-  write('static inline const OptDictInfo *opt_dict_info(OptIndex opt_idx)')
+  write('static inline const OptDictSchema *opt_dict_schema(OptIndex opt_idx)')
   write('{')
   write('  switch (opt_idx) {')
   for _, s in ipairs(struct_opts) do
     write(('  case %s: {'):format(s.enum))
     write(
-      ('    static const OptDictInfo info = { %s_get_field, %s_table, opt_%s_schema,'):format(
-        s.kd,
-        s.abbr,
-        s.abbr
-      )
+      ('    static const OptDictSchema info = { %s_get_field, opt_%s_schema,'):format(s.kd, s.abbr)
     )
     write(('                                        sizeof(%s) };'):format(s.kd))
     write('    return &info;')

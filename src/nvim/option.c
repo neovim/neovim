@@ -3340,7 +3340,7 @@ OptIndex find_option(const char *const name)
 /// canonical ":set" string; reified on-demand (`opt_keyset()`) for validation and applying.
 bool is_dict_option(OptIndex opt_idx)
 {
-  return opt_dict_info(opt_idx) != NULL;
+  return opt_dict_schema(opt_idx) != NULL;
 }
 
 /// Free an allocated OptVal.
@@ -4144,7 +4144,7 @@ static const char *set_option(const OptIndex opt_idx, OptVal value, int opt_flag
   // Every set path for a dict option (":set", the API, Vimscript, a merge) funnels through here as a
   // ":set" string. Validate it once.
   if (value.type == kOptValTypeString && is_dict_option(opt_idx)) {
-    errmsg = opt_strings_check(value.data.string.data, opt_dict_info(opt_idx)->schema, errbuf,
+    errmsg = opt_strings_check(value.data.string.data, opt_dict_schema(opt_idx)->schema, errbuf,
                                errbuflen);
     if (errmsg != NULL) {
       optval_free(value);
