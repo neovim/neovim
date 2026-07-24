@@ -239,6 +239,15 @@ describe('nvim.zip', function()
 
       feed('gf')
       poke_eventloop()
+      if not lua then
+        eq(archive, api.nvim_buf_get_name(0))
+        eq([[folder\/root.java]], fn.getreg('/'))
+        feed('n')
+        poke_eventloop()
+        eq('folder/root.java', api.nvim_get_current_line())
+        feed('<CR>')
+        poke_eventloop()
+      end
 
       eq(('zipfile://%s::folder/root.java'):format(archive), api.nvim_buf_get_name(0))
       eq({ 'class root {}' }, lines())
