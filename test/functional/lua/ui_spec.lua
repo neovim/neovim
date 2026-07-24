@@ -183,5 +183,73 @@ describe('vim.ui', function()
       local tags = n.api.nvim_buf_get_extmarks(buf, link_ns, 0, -1, {})
       eq(#tags, 0)
     end)
+
+    it('gx on URL opens the full URL including query string and hashtag', function()
+      -- do not remove default keymappings defined in vim._core.defaults
+      clear({ args_rm = { '--cmd' } })
+
+      ---@type { line: string, expected: string? }[]
+      local urls = {
+        { line = 'https://neovim.io/doc/user/helptag/?tag=nvim.txt#_top' },
+        { line = 'https://hachyderm.io/@neovim' },
+        { line = 'https://en.wikipedia.org:443/wiki/C++' },
+        { line = 'https://non-unicode.org/한글' },
+        { line = 'https://neovim.io/?' },
+        -- URL enclosed in surrounding punctuation
+        {
+          line = [['http://localhost:3000/@neovim/?query#!hash']],
+          expected = 'http://localhost:3000/@neovim/?query#!hash',
+        },
+        {
+          line = [[(https://foo.bar/@neovim)]],
+          expected = 'https://foo.bar/@neovim',
+        },
+        -- should strip trailing non-URL characters as <cfile> would do
+        { line = 'https://example.com.', expected = 'https://example.com' },
+        { line = 'https://example.com,', expected = 'https://example.com' },
+        { line = 'https://example.com)', expected = 'https://example.com' },
+      }
+
+      -- mock vim.ui.open() through |gx|, collect which URLs were called with
+      exec_lua([[
+        _G.gx_opened_urls = {}
+        vim.ui.open = function(path)
+          table.insert(_G.gx_opened_urls, path)
+        end
+        _G.clear_mock = function()
+          _G.gx_opened_urls = {}
+        end
+      ]])
+
+      -- make sure 'gx' mapping exists
+      eq(true, exec_lua([[return vim.fn.maparg('gx', 'n') ~= '' ]]))
+
+      -- fill in the buffer, and test each line
+      local lines = vim
+        .iter(urls)
+        :map(function(case)
+          return case.line
+        end)
+        :totable()
+      local buf = n.api.nvim_create_buf(false, true)
+      n.api.nvim_set_current_buf(buf)
+      n.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+
+      for i, case in ipairs(urls) do
+        local line = case.line
+        local url = case.expected or case.line
+        -- test at two locations: on the first and the last character
+        for _, col in ipairs({ 0, #line - 1 }) do
+          n.api.nvim_win_set_cursor(0, { i, col })
+
+          -- _get_urls() is a private API
+          eq({ url }, exec_lua [[ return vim.ui._get_urls() ]])
+
+          feed('gx')
+          eq({ url }, exec_lua [[ return _G.gx_opened_urls ]])
+          exec_lua [[ _G.clear_mock() ]]
+        end
+      end
+    end)
   end)
 end)
