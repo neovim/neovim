@@ -510,6 +510,12 @@ local function get_paths(name, sect)
     or vim.env.MANPATH
 
   if not mandirs_raw then
+    if name ~= '' then
+      local path = M._find_path(name, sect)
+      if path then
+        return { path }
+      end
+    end
     return {}, "Could not determine man directories from: 'man -w', 'manpath' or $MANPATH"
   end
 

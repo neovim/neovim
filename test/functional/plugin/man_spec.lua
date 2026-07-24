@@ -304,6 +304,39 @@ describe(':Man', function()
     )
   end)
 
+  it('uses direct manpage lookup if man directories cannot be determined #25919', function()
+    eq(
+      {
+        {
+          name = 'open',
+          filename = 'man://open(2)',
+          cmd = '1',
+        },
+      },
+      exec_lua(function()
+        local man = require('man')
+        local npcall = vim.npcall
+        local find_path = man._find_path
+
+        vim.npcall = function()
+          return nil
+        end
+        man._find_path = function(name, sect)
+          if name == 'open' and sect == '2' then
+            return '/usr/share/man/man2/open.2'
+          end
+        end
+
+        local ok, ret = pcall(man.goto_tag, 'open(2)')
+        vim.npcall = npcall
+        man._find_path = find_path
+
+        assert(ok, ret)
+        return ret
+      end)
+    )
+  end)
+
   it('tries variants with spaces, underscores #22503', function()
     eq({
       { vim.NIL, 'NAME WITH SPACES' },
