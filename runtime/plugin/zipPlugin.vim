@@ -25,6 +25,9 @@
 if &cp || exists("g:loaded_zipPlugin")
  finish
 endif
+if get(g:, "nvim_zip_plugin", 0) is# v:true || get(g:, "nvim_zip_plugin", 0) is# 1
+ finish
+endif
 let g:loaded_zipPlugin = "v33"
 let s:keepcpo          = &cpo
 set cpo&vim
