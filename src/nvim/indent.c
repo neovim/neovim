@@ -37,6 +37,7 @@
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
+#include "nvim/optionstr.h"
 #include "nvim/os/input.h"
 #include "nvim/plines.h"
 #include "nvim/pos_defs.h"
@@ -789,13 +790,12 @@ void briopt_check(win_T *wp)
   }
   // 'breakindentopt' is stored as its ":set" string (validated when set); reify it into a keyset and
   // map that onto the applied per-window fields.
-  OptKeyDict_briopt *v = opt_keyset_alloc(kOptBreakindentopt, wp->w_p_briopt);
+  OptKeyDict_briopt *v = opt_keyset(wp->w_p_briopt, kOptBreakindentopt, NULL);
   wp->w_briopt_shift = HAS_KEY(v, briopt, shift) ? (int)v->shift : 0;
   wp->w_briopt_min = HAS_KEY(v, briopt, min) ? (int)v->min : 20;
   wp->w_briopt_sbr = HAS_KEY(v, briopt, sbr);
   wp->w_briopt_list = HAS_KEY(v, briopt, list) ? (int)v->list : 0;
   wp->w_briopt_vcol = HAS_KEY(v, briopt, column) ? (int)v->column : 0;
-  opt_keyset_free(kOptBreakindentopt, v);
 }
 
 // Return appropriate space number for breakindent, taking influencing

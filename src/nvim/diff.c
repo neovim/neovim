@@ -2659,7 +2659,7 @@ int diffanchors_changed(bool buflocal)
 /// @return  FAIL only for the cross-part "horizontal" + "vertical" conflict.
 int diffopt_changed(void)
 {
-  OptKeyDict_dip *v = opt_keyset_alloc(kOptDiffopt, p_dip);
+  OptKeyDict_dip *v = opt_keyset(p_dip, kOptDiffopt, NULL);
 
   int flags = (v->filler ? DIFF_FILLER : 0) | (v->anchor ? DIFF_ANCHOR : 0)
               | (v->iblank ? DIFF_IBLANK : 0) | (v->icase ? DIFF_ICASE : 0)
@@ -2673,11 +2673,11 @@ int diffopt_changed(void)
   }
   if (HAS_KEY(v, dip, inline_)) {
     flags &= ~ALL_INLINE;
-    if (option_slice_eq(v->inline_.data, v->inline_.size, "simple")) {
+    if (strequal(v->inline_, "simple")) {
       flags |= DIFF_INLINE_SIMPLE;
-    } else if (option_slice_eq(v->inline_.data, v->inline_.size, "char")) {
+    } else if (strequal(v->inline_, "char")) {
       flags |= DIFF_INLINE_CHAR;
-    } else if (option_slice_eq(v->inline_.data, v->inline_.size, "word")) {
+    } else if (strequal(v->inline_, "word")) {
       flags |= DIFF_INLINE_WORD;
     } else {
       flags |= DIFF_INLINE_NONE;
@@ -2685,11 +2685,11 @@ int diffopt_changed(void)
   }
   int algorithm = v->indent_heuristic ? XDF_INDENT_HEURISTIC : 0;
   if (HAS_KEY(v, dip, algorithm)) {
-    if (option_slice_eq(v->algorithm.data, v->algorithm.size, "minimal")) {
+    if (strequal(v->algorithm, "minimal")) {
       algorithm |= XDF_NEED_MINIMAL;
-    } else if (option_slice_eq(v->algorithm.data, v->algorithm.size, "patience")) {
+    } else if (strequal(v->algorithm, "patience")) {
       algorithm |= XDF_PATIENCE_DIFF;
-    } else if (option_slice_eq(v->algorithm.data, v->algorithm.size, "histogram")) {
+    } else if (strequal(v->algorithm, "histogram")) {
       algorithm |= XDF_HISTOGRAM_DIFF;
     }  // else "myers" -> 0
   }
@@ -2720,7 +2720,6 @@ int diffopt_changed(void)
     check_scrollbind(0, 0);
   }
 
-  opt_keyset_free(kOptDiffopt, v);
   return ret;
 }
 

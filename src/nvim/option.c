@@ -3337,36 +3337,10 @@ OptIndex find_option(const char *const name)
 }
 
 /// True if `opt_idx` is a dict option (`schema.dict` in options.lua, e.g. 'diffopt'). Stored as its
-/// canonical ":set" string; reified on-demand (`opt_keyset_alloc()`) for validation and applying.
+/// canonical ":set" string; reified on-demand (`opt_keyset()`) for validation and applying.
 bool is_dict_option(OptIndex opt_idx)
 {
   return opt_dict_info(opt_idx) != NULL;
-}
-
-/// Parse a dict option's ":set" string to an allocated keyset (`OptKeyDict_…`). A NULL string
-/// yields an all-unset keyset. Free it with `opt_keyset_free()`.
-void *opt_keyset_alloc(OptIndex opt_idx, const char *str)
-{
-  const OptDictInfo *si = opt_dict_info(opt_idx);
-  void *keyset = xcalloc(1, si->size);
-  if (str != NULL) {
-    opt_fill(str, si->get_field, keyset);
-  }
-  return keyset;
-}
-
-/// Free a keyset from `opt_keyset_alloc()`: its owned `String` fields, then the keyset itself.
-void opt_keyset_free(OptIndex opt_idx, void *keyset)
-{
-  if (keyset == NULL) {
-    return;
-  }
-  for (const KeySetLink *f = opt_dict_info(opt_idx)->table; f->str != NULL; f++) {
-    if (f->type == kObjectTypeString) {
-      api_free_string(*(String *)((char *)keyset + f->ptr_off));
-    }
-  }
-  xfree(keyset);
 }
 
 /// Free an allocated OptVal.

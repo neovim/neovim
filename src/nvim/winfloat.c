@@ -585,7 +585,7 @@ bool win_previewpopup_config(char *value, WinConfig *config)
   FUNC_ATTR_NONNULL_ALL
 {
   // Basic validation was done by opt_strings_check; do more validation here.
-  OptKeyDict_pvp *v = opt_keyset_alloc(kOptPreviewpopup, value);
+  OptKeyDict_pvp *v = opt_keyset(value, kOptPreviewpopup, NULL);
   bool ok = true;
 
   if ((HAS_KEY(v, pvp, height) && v->height < 1) || (HAS_KEY(v, pvp, width) && v->width < 1)) {
@@ -595,14 +595,12 @@ bool win_previewpopup_config(char *value, WinConfig *config)
   bool has_border = HAS_KEY(v, pvp, border);
   if (ok && has_border) {
     Error err = ERROR_INIT;
-    ok = parse_winborder(config, v->border.data, &err);
+    ok = parse_winborder(config, v->border, &err);
     api_clear_error(&err);
   }
 
   config->height = HAS_KEY(v, pvp, height) ? (int)v->height : 0;
   config->width = HAS_KEY(v, pvp, width) ? (int)v->width : 0;
-
-  opt_keyset_free(kOptPreviewpopup, v);
 
   if (!has_border) {
     config->border = false;

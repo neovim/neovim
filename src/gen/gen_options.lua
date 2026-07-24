@@ -7,21 +7,40 @@ local options_meta = options.options
 local cstr = options.cstr
 local valid_scopes = options.valid_scopes
 local schema_values = options.schema_values
+-- Limit for a free-string (`str`) dict value; opt_strings_check() rejects anything longer.
+local keyset_str_max = 256
 
--- Object type of a `dict` key's value, for the generated KeySetLink table.
+-- Object type of a `dict` key's value, for the generated KeySetLink table. String-ish kinds
+-- (enum/str) are stored inline as fixed `char[]` (keyset_charsize); opt_fill() copies to them.
 local keyset_ctype = {
   num = 'kObjectTypeInteger',
   snum = 'kObjectTypeInteger',
   enum = 'kObjectTypeString',
   str = 'kObjectTypeString',
 }
--- C field type (an API type) for each `dict` key kind.
+-- C field type for `dict` key kinds (except enum/str, which use a fixed-size `char[]`).
 local keyset_ftype = {
   num = 'Integer',
   snum = 'Integer',
-  enum = 'String',
-  str = 'String',
 }
+
+--- Fixed `char[]` size for a string-ish dict key, to avoid allocations. An `enum` fits its longest
+--- value, a `str` is limited to `keyset_str_max`. Returns nil for non-string kinds (num/snum/flag).
+--- @param item vim.option_schema.dictkey
+--- @return integer?
+local function keyset_charsize(item)
+  local kind = type(item) == 'string' and 'flag' or item[2]
+  if kind == 'enum' then
+    local n = 0
+    for _, val in ipairs(item[3].values) do
+      n = math.max(n, #val)
+    end
+    return n + 1
+  elseif kind == 'str' then
+    return keyset_str_max
+  end
+  return nil
+end
 
 --- @param o vim.option_meta
 --- @return string
@@ -671,7 +690,12 @@ local function gen_keysets(output_file)
       for _, item in ipairs(o.schema.dict) do
         local key = type(item) == 'string' and item or item[1]
         local kind = type(item) == 'string' and 'flag' or item[2]
-        write(('  %s %s;'):format(keyset_ftype[kind] or 'Boolean', c_field_name(key)))
+        local charsize = keyset_charsize(item)
+        if charsize then
+          write(('  char %s[%d];'):format(c_field_name(key), charsize))
+        else
+          write(('  %s %s;'):format(keyset_ftype[kind] or 'Boolean', c_field_name(key)))
+        end
       end
       write(('} %s;'):format(kd))
       write('')
@@ -696,6 +720,14 @@ local function gen_keysets(output_file)
       })
     end
   end
+
+  -- Union of all keyset types, for `opt_keyset(NULL, …)`.
+  write('')
+  write('typedef union {')
+  for _, s in ipairs(struct_opts) do
+    write(('  %s %s;'):format(s.kd, s.abbr))
+  end
+  write('} OptKeyDict;')
 
   -- Dispatch from option index to its keyset handle (opt_dict_info); NULL for non-dict options.
   write('')

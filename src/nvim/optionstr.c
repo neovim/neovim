@@ -1560,14 +1560,13 @@ int expand_set_mouse(optexpand_T *args, int *numMatches, char ***matches)
 /// @return error message, NULL if it's OK.
 const char *did_set_mousescroll(optset_T *args FUNC_ATTR_UNUSED)
 {
-  OptKeyDict_mousescroll *v = opt_keyset_alloc(kOptMousescroll, p_mousescroll);
+  OptKeyDict_mousescroll *v = opt_keyset(p_mousescroll, kOptMousescroll, NULL);
   // An empty value sets no direction; reject it (mousescroll always needs at least one).
   bool has_dir = HAS_KEY(v, mousescroll, hor) || HAS_KEY(v, mousescroll, ver);
   if (has_dir) {
     p_mousescroll_hor = HAS_KEY(v, mousescroll, hor) ? (int)v->hor : MOUSESCROLL_HOR_DFLT;
     p_mousescroll_vert = HAS_KEY(v, mousescroll, ver) ? (int)v->ver : MOUSESCROLL_VERT_DFLT;
   }
-  opt_keyset_free(kOptMousescroll, v);
   return has_dir ? NULL : e_invarg;
 }
 
@@ -2295,15 +2294,21 @@ const char *opt_strings_check(const char *val, const OptSchemaItem *schema, char
       if (v == NULL) {
         return opt_schema_err(errbuf, errbuflen, N_("E474: '%s' requires a value"), key, keylen);
       }
+      if (vlen >= 256) {  // This limit must match `keyset_str_max` (gen_options.lua).
+        return opt_schema_err(errbuf, errbuflen, N_("E474: '%s' value is too long"), key, keylen);
+      }
       break;
     }
   }
   return NULL;
 }
 
-/// Parses a validated dict option ":set" string into its keyset (`OptKeyDict_…`), see also
-/// `api_dict_to_keydict()`. The keyset owns its `String` fields, so free it with `opt_keyset_free()`
-/// (which frees those fields), never a bare `xfree()`. Callers use `opt_keyset_alloc()`.
+/// Parses a validated dict option into `out`. String-ish values live in fixed `char[]` fields (not
+/// allocated), so the keyset owns nothing and needs no free.
+///
+/// @param value Option value in ":set"-string form.
+/// @param get_field Perfect-hash fn.
+/// @param out Caller-provided keyset storage (`OptKeyDict_…`).
 void opt_fill(const char *value, FieldHashfn get_field, void *out)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -2325,15 +2330,37 @@ void opt_fill(const char *value, FieldHashfn get_field, void *out)
       break;
     }
     case kObjectTypeString:
-      // A repeated key is "last wins" (e.g. 'diffopt' "inline:char,inline:word"); free the old one.
-      xfree(((String *)field)->data);
-      *(String *)field = (String){ .data = xmemdupz(v, vlen), .size = vlen };  // owned by the keyset
+      // A repeated key is "last wins" (overwritten). opt_strings_check() bounds the size.
+      memcpy(field, v, vlen);
+      ((char *)field)[vlen] = NUL;
       break;
     default:
       break;
     }
     ((OptKeySet *)out)->is_set_ |= (1ULL << (unsigned)f->opt_index);
   }
+}
+
+/// Reify a dict-option value to a keyset (`OptKeyDict_…`). String values live in fixed char[]
+/// fields (not allocated), so the keyset owns nothing and needs no free.
+///
+/// @param value   Option value in ":set"-string form.
+/// @param opt_idx Option idx.
+/// @param keyset  Caller-provided storage, or NULL to use shared static storage (only for callers
+///                that never "overlap"). Cleared first; a NUL string yields an all-unset keyset.
+/// @return  the keyset (for convenient assignment).
+void *opt_keyset(const char *value, OptIndex opt_idx, void *keyset)
+{
+  static OptKeyDict shared;
+  if (keyset == NULL) {
+    keyset = &shared;
+  }
+  const OptDictInfo *si = opt_dict_info(opt_idx);
+  memset(keyset, 0, si->size);
+  if (value != NULL) {
+    opt_fill(value, si->get_field, keyset);
+  }
+  return keyset;
 }
 
 /// @return  OK if "p" is a valid fileformat name, FAIL otherwise.
