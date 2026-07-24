@@ -12,7 +12,9 @@
 #include "nvim/charset.h"
 #include "nvim/decoration.h"
 #include "nvim/decoration_defs.h"
+#include "nvim/decoration_provider.h"
 #include "nvim/diff.h"
+#include "nvim/drawscreen.h"
 #include "nvim/fold.h"
 #include "nvim/globals.h"
 #include "nvim/indent.h"
@@ -67,7 +69,7 @@ int linetabsize_col(int startvcol, char *s)
   if (cstype == kCharsizeFast) {
     return linesize_fast(&csarg, startvcol, MAXCOL);
   } else {
-    return linesize_regular(&csarg, startvcol, MAXCOL);
+    return linesize_regular(&csarg, startvcol, MAXCOL, false);
   }
 }
 
@@ -102,6 +104,7 @@ CSType init_charsize_arg(CharsizeArg *csarg, win_T *wp, linenr_T lnum, char *lin
   csarg->virt_row = -1;
   csarg->indent_width = INT_MIN;
   csarg->use_tabstop = !wp->w_p_list || wp->w_p_lcs_chars.tab1;
+  csarg->row = lnum > 0 ? lnum - 1 : -1;
 
   if (lnum > 0) {
     if (marktree_itr_get_filter(wp->w_buffer->b_marktree, lnum - 1, 0, lnum, 0,
@@ -110,7 +113,17 @@ CSType init_charsize_arg(CharsizeArg *csarg, win_T *wp, linenr_T lnum, char *lin
     }
   }
 
-  if (csarg->virt_row >= 0
+  // A line whose cells may be hidden by conceal must use the regular path so that
+  // linesize_regular() can compute the conceal-aware screen-layout width. The cursor line reveals
+  // conceal unless 'concealcursor' applies. Conceal may come from the marktree or be materialised
+  // on demand by an `_on_conceal` decoration provider (see decor_conceal_materialise()).
+  csarg->maybe_conceal = csarg->row >= 0 && wp->w_p_cole > 0
+                         && (wp->w_buffer->b_marktree->n_keys > 0
+                             || decor_has_conceal_providers())
+                         && !(wp == curwin && lnum == wp->w_cursor.lnum
+                              && !conceal_cursor_line(wp));
+
+  if (csarg->virt_row >= 0 || csarg->maybe_conceal
       || (wp->w_p_wrap && (wp->w_p_lbr || wp->w_p_bri || *get_showbreak_value(wp) != NUL))) {
     return kCharsizeRegular;
   } else {
@@ -432,22 +445,196 @@ static bool in_win_border(win_T *wp, colnr_T vcol)
   return (vcol - width1) % width2 == width2 - 1;
 }
 
+/// Set up per-line persistent-conceal tracking for the screen-layout width.
+///
+/// Only persistent marktree conceal is considered (no decoration providers are invoked), which
+/// keeps plines_win_nofold() in sync with win_line(): win_line() only reflows non-ephemeral
+/// conceal (see decor_state.conceal_persistent).
+///
+/// @return true if conceal tracking is active for this line.
+static bool linesize_conceal_start(CharsizeArg *csarg, DecorState *state)
+{
+  if (!csarg->maybe_conceal) {
+    return false;
+  }
+  // Let `_on_conceal` providers materialise this row's conceal into the marktree first, so the
+  // scan below sees provider (e.g. tree-sitter) conceal the same way as non-provider conceal.
+  decor_conceal_materialise(csarg->win, csarg->row);
+  // The call above may invoke a decoration-provider (Lua) callback that mutates the buffer (e.g.
+  // nvim_buf_set_extmark()), which can flush memline's single-line read cache and free the line
+  // buffer that "csarg->line" (fetched by the caller before this ran) points into. Refresh it so
+  // callers that read csarg->line only after this returns (see linesize_regular(),
+  // conceal_off_before(), scol_to_col()) don't read freed memory. ml_get_buf() is a cheap no-op
+  // re-read when the row is still the cached one.
+  csarg->line = ml_get_buf(csarg->win->w_buffer, csarg->row + 1);
+  *state = (DecorState){ 0 };
+  if (decor_redraw_reset(csarg->win, state) == 0) {
+    return false;
+  }
+  decor_redraw_line(csarg->win, csarg->row, state);
+  return true;
+}
+
+/// @return number of cells at buffer column "col" hidden by persistent conceal (0 if visible).
+static int linesize_conceal_hidden(CharsizeArg *csarg, DecorState *state, int col, int width)
+{
+  decor_redraw_col(csarg->win, col, -1, false, state, MAXCOL);
+  if (state->conceal == 0) {
+    return 0;
+  }
+  // Mirror win_line()'s fully-hidden ("is_concealing") chars: a concealed cell is hidden unless it
+  // is the region start showing a replacement char. At 'conceallevel' 1 a replacement (the custom
+  // cchar, or else a default space) is always shown; at level 2 only a custom cchar is shown;
+  // level 3 always hides.
+  bool const replacement = state->conceal == 2
+                           && (state->conceal_char != 0 || csarg->win->w_p_cole == 1)
+                           && csarg->win->w_p_cole != 3;
+  return replacement ? 0 : width;
+}
+
+static void linesize_conceal_end(DecorState *state)
+{
+  kv_destroy(state->ranges_i);
+  kv_destroy(state->slots);
+}
+
+/// Number of screen cells hidden by persistent conceal strictly before buffer byte "len" on line
+/// "lnum" of window "wp". This is the offset between a position's virtual column and its
+/// screen-layout column: screen_col = virtual_col - conceal_off_before().
+///
+/// Returns 0 when conceal cannot apply to the line (no 'conceallevel', no conceal marks, or the
+/// line is the cursor line revealed by 'concealcursor'), so callers degrade to conceal-neutral
+/// behavior. Only persistent (marktree) conceal is considered, matching win_line()'s reflow and
+/// plines_win_nofold()'s screen width.
+int conceal_off_before(win_T *wp, linenr_T lnum, colnr_T len)
+{
+  CharsizeArg csarg;
+  init_charsize_arg(&csarg, wp, lnum, ml_get_buf(wp->w_buffer, lnum));
+
+  DecorState conceal_state;
+  if (!linesize_conceal_start(&csarg, &conceal_state)) {
+    return 0;
+  }
+  // Read csarg.line only now: linesize_conceal_start() may have run decor_conceal_materialise(),
+  // which can invoke a Lua callback that frees the line buffer a pointer captured before that
+  // call would point into; linesize_conceal_start() refreshes csarg.line when this happens.
+  char *const line = csarg.line;
+
+  int hidden = 0;
+  int vcol = 0;
+  StrCharInfo ci = utf_ptr2StrCharInfo(line);
+  while (ci.ptr - line < len && *ci.ptr != NUL) {
+    CharSize cs = charsize_regular(&csarg, ci.ptr, vcol, ci.chr.value);
+    hidden += linesize_conceal_hidden(&csarg, &conceal_state, (int)(ci.ptr - line), cs.width);
+    vcol += cs.width;
+    ci = utfc_next(ci);
+  }
+
+  linesize_conceal_end(&conceal_state);
+  return hidden;
+}
+
+/// Convert a screen-layout column "scol" to a buffer byte column on line "lnum" of window "wp",
+/// accounting for cells hidden by persistent conceal. This is the inverse of conceal_off_before()
+/// and the screen-aware analog of mouse.c's vcol2col(): it walks the line accumulating displayed
+/// (screen) width, stepping over fully-hidden characters without consuming the target.
+///
+/// When conceal cannot apply (see conceal_off_before()), this behaves exactly like the virtual
+/// walk. Sets "*coladdp" (if non-NULL) to the overshoot past the last visible column, as vcol2col()
+/// does, for 'virtualedit'.
+colnr_T scol_to_col(win_T *wp, linenr_T lnum, colnr_T scol, colnr_T *coladdp)
+{
+  CharsizeArg csarg;
+  CSType const cstype = init_charsize_arg(&csarg, wp, lnum, ml_get_buf(wp->w_buffer, lnum));
+
+  DecorState conceal_state;
+  bool const conceal = linesize_conceal_start(&csarg, &conceal_state);
+  // Read csarg.line only now: linesize_conceal_start() may have run decor_conceal_materialise(),
+  // which can invoke a Lua callback that frees the line buffer a pointer captured before that
+  // call would point into; linesize_conceal_start() refreshes csarg.line when this happens.
+  char *const line = csarg.line;
+
+  StrCharInfo ci = utf_ptr2StrCharInfo(line);
+  int cur_vcol = 0;  // virtual column, needed for TAB width
+  int cur_scol = 0;  // screen column, compared against the target
+  while (cur_scol < scol && *ci.ptr != NUL) {
+    int const w = win_charsize(cstype, cur_vcol, ci.ptr, ci.chr.value, &csarg).width;
+    int const hidden = conceal
+                       ? linesize_conceal_hidden(&csarg, &conceal_state, (int)(ci.ptr - line), w)
+                       : 0;
+    if (hidden == 0) {
+      if (cur_scol + w > scol) {
+        break;  // target falls within this visible character
+      }
+      cur_scol += w;
+    }
+    cur_vcol += w;
+    ci = utfc_next(ci);
+  }
+
+  // A hidden character has no screen column: skip past one landed on, to the next visible
+  // character (or EOL), since that is what is actually drawn at "scol".
+  while (conceal && *ci.ptr != NUL) {
+    int const w = win_charsize(cstype, cur_vcol, ci.ptr, ci.chr.value, &csarg).width;
+    if (linesize_conceal_hidden(&csarg, &conceal_state, (int)(ci.ptr - line), w) == 0) {
+      break;
+    }
+    cur_vcol += w;
+    ci = utfc_next(ci);
+  }
+
+  if (conceal) {
+    linesize_conceal_end(&conceal_state);
+  }
+
+  if (coladdp != NULL) {
+    *coladdp = scol - cur_scol;
+  }
+  return (colnr_T)(ci.ptr - line);
+}
+
+/// Screen-layout width of line "lnum" in window "wp": like linetabsize(), but
+/// excluding cells hidden by persistent conceal. Equals linetabsize() when
+/// nothing on the line is concealed.
+int win_screen_linewidth(win_T *wp, linenr_T lnum)
+{
+  char *const line = ml_get_buf(wp->w_buffer, lnum);
+  CharsizeArg csarg;
+  CSType const cstype = init_charsize_arg(&csarg, wp, lnum, line);
+  if (cstype == kCharsizeFast) {
+    return linesize_fast(&csarg, 0, MAXCOL);
+  }
+  return linesize_regular(&csarg, 0, MAXCOL, true);
+}
+
 /// Calculate virtual column until the given "len".
 ///
 /// @param csarg    Argument to charsize functions.
 /// @param vcol_arg Starting virtual column.
 /// @param len      First byte of the end character, or MAXCOL.
+/// @param screen   When true, exclude concealed cells to get the screen-layout width.
 ///
 /// @return virtual column before the character at "len",
 ///         or full size of the line if "len" is MAXCOL.
-int linesize_regular(CharsizeArg *const csarg, int vcol_arg, colnr_T const len)
+int linesize_regular(CharsizeArg *const csarg, int vcol_arg, colnr_T const len, bool screen)
 {
-  char *const line = csarg->line;
   int64_t vcol = vcol_arg;
+
+  DecorState conceal_state;
+  bool const conceal = screen && linesize_conceal_start(csarg, &conceal_state);
+  // Read csarg->line only now: linesize_conceal_start() may have run decor_conceal_materialise(),
+  // which can invoke a Lua callback that frees the line buffer a pointer captured before that
+  // call would point into; linesize_conceal_start() refreshes csarg->line when this happens.
+  char *const line = csarg->line;
 
   StrCharInfo ci = utf_ptr2StrCharInfo(line);
   while (ci.ptr - line < len && *ci.ptr != NUL) {
-    vcol += charsize_regular(csarg, ci.ptr, vcol_arg, ci.chr.value).width;
+    CharSize cs = charsize_regular(csarg, ci.ptr, vcol_arg, ci.chr.value);
+    int const hidden = conceal
+                       ? linesize_conceal_hidden(csarg, &conceal_state,
+                                                 (int)(ci.ptr - line), cs.width)
+                       : 0;
+    vcol += cs.width - hidden;
     ci = utfc_next(ci);
     if (vcol > MAXCOL) {
       vcol_arg = MAXCOL;
@@ -455,6 +642,10 @@ int linesize_regular(CharsizeArg *const csarg, int vcol_arg, colnr_T const len)
     } else {
       vcol_arg = (int)vcol;
     }
+  }
+
+  if (conceal) {
+    linesize_conceal_end(&conceal_state);
   }
 
   // Check for inline virtual text after the end of the line.
@@ -775,6 +966,24 @@ int plines_win_nofill(win_T *wp, linenr_T lnum, bool limit_winheight)
   return lines;
 }
 
+/// Number of screen rows that "col" screen cells of text occupy in window "wp"
+/// under 'wrap', accounting for the 'number'/'foldcolumn' offsets on the first
+/// and subsequent screen rows.
+static int win_text_width_to_plines(win_T *wp, int64_t col)
+{
+  int width = wp->w_view_width - win_col_off(wp);
+  if (width <= 0) {
+    return 32000;  // bigger than the number of screen lines
+  }
+  if (col <= width) {
+    return 1;
+  }
+  col -= width;
+  width += win_col_off2(wp);
+  const int64_t lines = (col + (width - 1)) / width + 1;
+  return (lines > 0 && lines <= INT_MAX) ? (int)lines : INT_MAX;
+}
+
 /// Get number of window lines physical line "lnum" will occupy in window "wp".
 /// Does not care about folding, 'wrap' or filler lines.
 int plines_win_nofold(win_T *wp, linenr_T lnum)
@@ -790,7 +999,7 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
   if (cstype == kCharsizeFast) {
     col = linesize_fast(&csarg, 0, MAXCOL);
   } else {
-    col = linesize_regular(&csarg, 0, MAXCOL);
+    col = linesize_regular(&csarg, 0, MAXCOL, true);
   }
 
   // If list mode is on, then the '$' at the end of the line may take up one
@@ -799,18 +1008,45 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
     col += 1;
   }
 
-  // Add column offset for 'number', 'relativenumber' and 'foldcolumn'.
-  int width = wp->w_view_width - win_col_off(wp);
-  if (width <= 0) {
-    return 32000;  // bigger than the number of screen lines
+  return win_text_width_to_plines(wp, col);
+}
+
+/// Whether buffer line "lnum" occupies a different number of screen rows in
+/// window "wp" when its intra-line conceal is applied versus revealed. Moving
+/// the cursor onto/off such a line reveals or conceals it (unless
+/// 'concealcursor' applies), which shifts the layout of the lines below, so the
+/// whole window must be redrawn instead of incrementally scrolled (otherwise
+/// the TUI's scroll optimisation leaves stale cells). Only meaningful with
+/// 'wrap' and 'conceallevel' >= 2; whole-line conceal ('conceal_lines') is
+/// handled separately via decor_conceal_line().
+bool conceal_line_changes_height(win_T *wp, linenr_T lnum)
+{
+  if (!wp->w_p_wrap || wp->w_p_cole < 2 || wp->w_view_width == 0
+      || lnum < 1 || lnum > wp->w_buffer->b_ml.ml_line_count) {
+    return false;
   }
-  if (col <= width) {
-    return 1;
+  if (!(wp->w_buffer->b_marktree->n_keys > 0 || decor_has_conceal_providers())) {
+    return false;
   }
-  col -= width;
-  width += win_col_off2(wp);
-  const int64_t lines = (col + (width - 1)) / width + 1;
-  return (lines > 0 && lines <= INT_MAX) ? (int)lines : INT_MAX;
+
+  char *const line = ml_get_buf(wp->w_buffer, lnum);
+  int const extra = (wp->w_p_list && wp->w_p_lcs_chars.eol != NUL) ? 1 : 0;
+
+  // Revealed width: screen == false ignores conceal entirely (conceal-neutral).
+  CharsizeArg csarg;
+  init_charsize_arg(&csarg, wp, lnum, line);
+  int64_t const revealed = linesize_regular(&csarg, 0, MAXCOL, false) + extra;
+
+  // Concealed width: force conceal evaluation regardless of whether this is
+  // the revealed cursor line, so we compare the two states of the same line.
+  init_charsize_arg(&csarg, wp, lnum, line);
+  csarg.maybe_conceal = true;
+  int64_t const concealed = linesize_regular(&csarg, 0, MAXCOL, true) + extra;
+
+  if (revealed == concealed) {
+    return false;  // nothing on the line is actually concealed
+  }
+  return win_text_width_to_plines(wp, revealed) != win_text_width_to_plines(wp, concealed);
 }
 
 /// Like plines_win(), but only reports the number of physical screen lines

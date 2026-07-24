@@ -149,8 +149,12 @@ void conceal_check_cursor_line(void)
 
   redrawWinline(curwin, curwin->w_cursor.lnum);
 
-  // Concealed line visibility toggled.
-  if (decor_conceal_line(curwin, curwin->w_cursor.lnum - 1, true)) {
+  // Concealed line visibility toggled. A line whose height changes when
+  // revealed/concealed shifts the lines below it, so redraw the whole window
+  // (see conceal_line_changes_height()); whole-line conceal ('conceal_lines')
+  // is covered by decor_conceal_line().
+  if (decor_conceal_line(curwin, curwin->w_cursor.lnum - 1, true)
+      || conceal_line_changes_height(curwin, curwin->w_cursor.lnum)) {
     changed_window_setting(curwin);
   }
   // Need to recompute cursor column, e.g., when starting Visual mode
@@ -2249,6 +2253,13 @@ static void win_update(win_T *wp)
         }
 
         bool display_buf_line = !concealed && (foldinfo.fi_lines == 0 || *wp->w_p_fdt == NUL);
+
+        // Materialise intra-line conceal for this row (e.g. tree-sitter
+        // @conceal) into the marktree before drawing, so win_line() reflows it
+        // the same way plines()/geometry does.
+        if (display_buf_line) {
+          decor_conceal_materialise(wp, lnum - 1);
+        }
 
         // Display one line
         spellvars_T zero_spv = { 0 };

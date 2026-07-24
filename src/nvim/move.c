@@ -542,11 +542,16 @@ void check_cursor_moved(win_T *wp)
     wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL
                      |VALID_CHEIGHT|VALID_CROW|VALID_TOPLINE);
 
-    // Concealed line visibility toggled.
+    // Concealed line visibility toggled: a line whose height changes when it is
+    // revealed or concealed shifts the layout of the lines below, so the whole
+    // window must be redrawn (see conceal_line_changes_height()). Whole-line
+    // conceal ('conceal_lines') is covered by decor_conceal_line().
     if (wp == curwin && wp->w_valid_cursor.lnum > 0 && wp->w_p_cole >= 2
         && !conceal_cursor_line(wp)
         && (decor_conceal_line(wp, wp->w_cursor.lnum - 1, true)
-            || decor_conceal_line(wp, wp->w_valid_cursor.lnum - 1, true))) {
+            || decor_conceal_line(wp, wp->w_valid_cursor.lnum - 1, true)
+            || conceal_line_changes_height(wp, wp->w_cursor.lnum)
+            || conceal_line_changes_height(wp, wp->w_valid_cursor.lnum))) {
       changed_window_setting(wp);
     }
     wp->w_valid_cursor = wp->w_cursor;
@@ -882,6 +887,14 @@ void curs_columns(win_T *wp, int may_scroll)
   } else if (wp->w_p_wrap && wp->w_view_width != 0) {
     width2 = width1 + win_col_off2(wp);
 
+    // On a concealed cursor line, subtract cells hidden by conceal so w_wcol and the screen row
+    // computed below are in screen-layout columns, matching win_line()'s reflow. This also keeps
+    // winline()/wincol() correct without relying on a redraw. Zero when nothing is concealed.
+    if (wp->w_p_cole > 0) {
+      int coff = conceal_off_before(wp, wp->w_cursor.lnum, wp->w_cursor.col);
+      wp->w_wcol -= MIN(wp->w_wcol, coff);
+    }
+
     // skip columns that are not visible
     if (wp->w_cursor.lnum == wp->w_topline
         && wp->w_skipcol > 0
@@ -1112,6 +1125,15 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
     } else {
       assert(lnum == pos->lnum);
       getvcol(wp, pos, &scol, &ccol, &ecol, 0);
+
+      // Convert the virtual columns to screen-layout columns when conceal hides cells on this
+      // line, so screenpos() reflects the reflowed (displayed) position, not the pre-conceal one.
+      colnr_T coff = (colnr_T)conceal_off_before(wp, pos->lnum, pos->col);
+      if (coff > 0) {
+        scol -= MIN(scol, coff);
+        ccol -= MIN(ccol, coff);
+        ecol -= MIN(ecol, coff);
+      }
 
       // similar to what is done in validate_cursor_col()
       colnr_T col = scol;

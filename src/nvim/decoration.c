@@ -768,6 +768,7 @@ next_mark:
 
   int attr = 0;
   int conceal = 0;
+  bool conceal_persistent = false;
   schar_T conceal_char = 0;
   int conceal_attr = 0;
   TriState spell = kNone;
@@ -793,6 +794,9 @@ next_mark:
 
       if (r->kind == kDecorKindHighlight && (r->data.sh.flags & kSHConceal)) {
         conceal = 1;
+        if (!r->owned) {
+          conceal_persistent = true;
+        }
         if (r->start_row == row && r->start_col == col) {
           DecorSignHighlight *sh = &r->data.sh;
           conceal = 2;
@@ -853,6 +857,7 @@ next_mark:
 
   state->current = attr;
   state->conceal = conceal;
+  state->conceal_persistent = conceal_persistent;
   state->conceal_char = conceal_char;
   state->conceal_attr = conceal_attr;
   state->spell = spell;
@@ -907,6 +912,19 @@ bool decor_conceal_line(win_T *wp, int row, bool check_cursor)
   }
 
   return decor_providers_invoke_conceal_line(wp, row);
+}
+
+/// Converts buffer row "row" of window "wp"'s intra-line conceal into ordinary marktree extmarks by
+/// invoking `_on_conceal` decoration provider callbacks registered for it. This lets off-draw
+/// geometry (screenpos, mouse, gj/gk, plines) and drawing read the conceal from the marktree just
+/// like non-provider conceal. Providers cache their own per-row work, so repeated calls are cheap.
+/// No-op unless 'conceallevel' is set and an `_on_conceal` provider exists.
+void decor_conceal_materialise(win_T *wp, int row)
+{
+  if (row < 0 || wp->w_p_cole < 1 || !decor_has_conceal_providers()) {
+    return;
+  }
+  decor_providers_invoke_conceal(wp, row);
 }
 
 /// @return whether a window may have folded or concealed lines

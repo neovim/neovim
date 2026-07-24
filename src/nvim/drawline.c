@@ -3080,6 +3080,15 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       wlv.col++;
     } else if (wp->w_p_cole > 0 && is_concealing) {
       bool concealed_wide = schar_cells(mb_schar) > 1;
+      // Conceal-aware wrapping: reflow (drop the boguscols padding) so the line wraps at its
+      // displayed width, but only for persistent extmark conceal. Syntax conceal, match
+      // (matchadd()) conceal, and ephemeral (decoration provider) conceal keep the historical
+      // boguscols behavior, because plines_win_nofold() (and the rest of the off-draw geometry:
+      // conceal_off_before(), scol_to_col(), win_screen_linewidth()) only account for
+      // persistent-marktree conceal. Reflowing here without also updating those would make the
+      // drawn line disagree with its computed height/cursor/mouse geometry.
+      bool reflow = wp->w_p_cole >= 2
+                    && decor_conceal > 0 && decor_state.conceal_persistent;
 
       wlv.skip_cells--;
       wlv.vcol_off_co++;
@@ -3094,7 +3103,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         wlv.vcol_off_co += wlv.n_extra;
       }
 
-      if (is_wrapped) {
+      if (is_wrapped && !reflow) {
         // Special voodoo required if 'wrap' is on.
         //
         // Advance the column indicator to force the line
