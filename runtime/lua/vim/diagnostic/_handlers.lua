@@ -762,4 +762,89 @@ function M.virtual_lines.hide(namespace, bufnr)
   end
 end
 
+
+--- @param d vim.Diagnostic
+--- @return [string, string?][]
+local function format_ui2(d)
+  local sev = vim.diagnostic.severity[d.severity]
+  local severity_name = sev
+  local src = d.source or 'unknown'
+  return {
+    { severity_name, string.format('Diagnostic%s', severity_name) },
+    { ': ' },
+    { d.message:match('^(.-)\n') or d.message },
+    { string.format(' (%s)', src), 'LineNr' },
+  }
+end
+
+M.ui2 = {}
+
+--- @param namespace integer
+--- @param bufnr integer
+--- @param diagnostics vim.Diagnostic[]
+--- @param opts? vim.diagnostic.OptsResolved
+function M.ui2.show(namespace, bufnr, diagnostics, opts)
+  vim.validate('namespace', namespace, 'number')
+  vim.validate('bufnr', bufnr, 'number')
+  vim.validate('diagnostics', diagnostics, vim.islist, 'a list of diagnostics')
+  vim.validate('opts', opts, 'table', true)
+
+  bufnr = vim._resolve_bufnr(bufnr)
+  local ui2opts = opts and opts.ui2 or {}
+
+  local ns = diagnostic.get_namespace(namespace)
+  show_once_loaded('ui2_show_autocmd', ns, bufnr, function()
+    if not ns.user_data.ui2_ns then
+      ns.user_data.ui2_ns =
+        api.nvim_create_namespace(string.format('nvim.%s.diagnostic.ui2', ns.name))
+    end
+    if not ns.user_data.ui2_augroup then
+      ns.user_data.ui2_augroup = api.nvim_create_augroup(
+        string.format('nvim.%s.diagnostic.ui2', ns.name),
+        { clear = true }
+      )
+    end
+
+    api.nvim_clear_autocmds({ group = ns.user_data.ui2_augroup, buf = bufnr })
+
+    -- Create a mapping from line -> diagnostics so that we can quickly get the
+    -- diagnostics we need when the cursor line doesn't change.
+    local line_diagnostics = diagnostic_shared.diagnostic_lines(diagnostics, true)
+
+    api.nvim_create_autocmd('CursorMoved', {
+      buf = bufnr,
+      group = ns.user_data.ui2_augroup,
+      callback = function()
+        diagnostics = diagnostic_shared.diagnostics_at_cursor(line_diagnostics)
+        if #diagnostics == 0 then
+          vim.api.nvim_echo({ { '' } }, false, { kind = 'diagnostic' })
+          return
+        end
+
+        -- TODO: severity_sort
+        table.sort(diagnostics, function(a, b)
+          return diagnostic_shared.diagnostic_cmp(a, b, 'severity', false)
+        end)
+
+        local fmt = ui2opts.format or format_ui2
+        local chunks = fmt(diagnostics[1]) -- TODO: join with { '\n' }
+        vim.api.nvim_echo(chunks, false, { kind = 'diagnostic' })
+      end,
+    })
+  end)
+end
+
+--- @param namespace integer
+--- @param bufnr integer
+function M.ui2.hide(namespace, bufnr)
+  local ns = diagnostic.get_namespace(namespace)
+  cleanup_show_autocmd('ui2_show_autocmd', ns)
+  if ns.user_data.ui2_ns then
+    if api.nvim_buf_is_valid(bufnr) then
+      api.nvim_clear_autocmds({ group = ns.user_data.ui2_augroup, buf = bufnr })
+    end
+  end
+  vim.api.nvim_echo({ { '' } }, false, { kind = 'diagnostic' })
+end
+
 return M

@@ -36,7 +36,7 @@ local M = {
     msg = { {}, {} }, ---@type MsgContent[] [(x)] indicators in msg window.
     top = { {} }, ---@type MsgContent[] [+x] top indicator in dialog window.
     bot = { {} }, ---@type MsgContent[] [+x] bottom indicator in dialog window.
-    idx = { mode = 1, search = 2, cmd = 3, ruler = 4, spill = 1, dupe = 2 },
+    idx = { mode = 1, search = 2, cmd = 3, ruler = 4, diagnostic = 5, spill = 1, dupe = 2 },
     ids = {}, ---@type { ['last'|'cmd'|'msg'|'top'|'bot']: integer? } Table of mark IDs.
     delayed = false, -- Whether placement of 'last' virt_text is delayed.
   },
@@ -460,6 +460,9 @@ function M.msg_show(kind, content, replace_last, _, append, id, trigger)
     M.virt.last[M.virt.idx.search] = content
     M.virt.last[M.virt.idx.cmd] = { { 0, (' '):rep(11) } }
     set_virttext('last', 'cmd')
+  elseif kind == 'diagnostic' then
+    M.virt.last[M.virt.idx.diagnostic] = (content[1] and content[1][2] ~= '') and content or {}
+    set_virttext('last', 'cmd')
   elseif (ui.cmd.prompt or (ui.cmd.level > 0 and tgt == 'cmd')) and ui.cmd.srow == 0 then
     -- Route to dialog when a prompt is active, or message would overwrite active cmdline.
     replace_last = api.nvim_win_get_config(ui.wins.dialog).hide or kind == 'wildlist'
@@ -518,6 +521,7 @@ end
 function M.msg_clear()
   M.cmd:clear()
   M.msg:clear()
+  M.virt.last[M.virt.idx.diagnostic] = {}
 end
 
 --- Place the mode text in the cmdline.
