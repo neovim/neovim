@@ -1650,6 +1650,8 @@ function vim.api.nvim_list_tabpages() end
 --- - "height"  Requested height of the UI
 --- - "width"   Requested width of the UI
 --- - "rgb"     true if the UI uses RGB colors (false implies |cterm-colors|)
+--- - "detected_background" Terminal background detected from OSC 11: "dark",
+---   "light", or ""
 --- - "ext_..." Requested UI extensions, see |ui-option|
 --- - "chan"    |channel-id| of remote UI
 function vim.api.nvim_list_uis() end

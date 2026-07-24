@@ -1236,6 +1236,8 @@ TermResponse			When Nvim receives a DA1, OSC, DCS, or APC response from
 				The |event-data| has these keys (type: `vim.event.termresponse.data`):
 				- chan: the source channel id
 				- sequence: the received sequence
+				- detected_background: "dark" or "light" for OSC 11
+				  background responses
 
 				This is triggered even when inside an
 				autocommand defined without |autocmd-nested|.

@@ -2726,6 +2726,7 @@ describe('TUI', function()
     local expected = {
       {
         chan = ui_chan,
+        detected_background = 'light',
         ext_cmdline = false,
         ext_hlstate = false,
         ext_linegrid = true,
@@ -3243,6 +3244,28 @@ describe('TUI', function()
     eq(vim.NIL, child_exec_lua('return _G.data'))
     child_exec_lua('require("ffi").C.unblock_autocmds()')
     eq({ sequence = '\027P0$r', chan = chan }, child_exec_lua('return _G.data'))
+
+    local _, bg_chan = child_session:request('nvim_get_chan_info', 0)
+    child_exec_lua([[
+      require('ffi').C.block_autocmds()
+      _G.data = nil
+      vim.api.nvim_create_autocmd('TermResponse', {
+        once = true,
+        callback = function(ev)
+          _G.data = ev.data
+        end,
+      })
+    ]])
+    local bg_response = '\027]11;rgb:0000/0000/0000'
+    child_session:request('nvim_ui_term_event', 'termresponse', bg_response)
+    eq(bg_response, child_exec_lua('return vim.v.termresponse'))
+    eq(vim.NIL, child_exec_lua('return _G.data'))
+    child_exec_lua('require("ffi").C.unblock_autocmds()')
+    eq({
+      sequence = bg_response,
+      chan = bg_chan.id,
+      detected_background = 'dark',
+    }, child_exec_lua('return _G.data'))
 
     -- If TermResponse during TermResponse changes v:termresponse, data.sequence contains the actual
     -- response that triggered the autocommand.
@@ -4731,6 +4754,13 @@ describe('TUI bg color', function()
     retry(nil, nil, function()
       eq({ true, true }, { session:request('nvim_exec_lua', 'return _G.osc11 > 0', {}) })
     end)
+    eq({ true, 'light' }, {
+      session:request(
+        'nvim_exec_lua',
+        'return vim.api.nvim_list_uis()[1].detected_background',
+        {}
+      ),
+    })
     eq({ true, 'dark' }, { session:request('nvim_eval', '&background') })
   end)
 
@@ -4743,11 +4773,25 @@ describe('TUI bg color', function()
     screen:expect({ any = '%[No Name%]' })
     retry(nil, nil, function()
       eq({ true, 'light' }, { session:request('nvim_eval', '&background') })
+      eq({ true, 'light' }, {
+        session:request(
+          'nvim_exec_lua',
+          'return vim.api.nvim_list_uis()[1].detected_background',
+          {}
+        ),
+      })
     end)
     command('highlight clear Normal')
     command('set background=dark') -- flip the outer terminal at runtime
     retry(nil, nil, function()
       eq({ true, 'dark' }, { session:request('nvim_eval', '&background') })
+      eq({ true, 'dark' }, {
+        session:request(
+          'nvim_exec_lua',
+          'return vim.api.nvim_list_uis()[1].detected_background',
+          {}
+        ),
+      })
     end)
   end)
 end)

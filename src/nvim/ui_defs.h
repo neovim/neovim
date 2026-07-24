@@ -30,6 +30,13 @@ enum {
 
 typedef int LineFlags;
 
+typedef enum {
+  // No OSC 11 response recorded.
+  kUIBackgroundUnknown = 0,
+  kUIBackgroundDark,
+  kUIBackgroundLight,
+} UIBackground;
+
 typedef struct {
   bool rgb;
   bool override;  ///< Force highest-requested UI capabilities.
@@ -51,6 +58,7 @@ typedef struct {
   int term_colors;
   bool stdin_tty;
   bool stdout_tty;
+  UIBackground detected_background;
 
   uint64_t channel_id;
 

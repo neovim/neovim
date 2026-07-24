@@ -13,11 +13,13 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/validate.h"
 #include "nvim/api/ui.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/assert_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
 #include "nvim/channel.h"
 #include "nvim/channel_defs.h"
+#include "nvim/charset.h"
 #include "nvim/eval/vars.h"
 #include "nvim/globals.h"
 #include "nvim/main.h"
@@ -30,6 +32,81 @@
 #include "nvim/msgpack_rpc/packer_defs.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
+
+/// Parse 1 to 4 hex digits as an OSC 11 color component.
+///
+/// Returns the component scaled to [0.0, 1.0] and advances `p` past the hex
+/// digits.
+static bool parse_color_component(const char **p, const char *end, double *color)
+{
+  int val = 0;
+  int len = 0;
+  while (*p < end && ascii_isxdigit((uint8_t)(**p))) {
+    if (++len > 4) {
+      return false;
+    }
+    val = (val << 4) + hex2nr((uint8_t)(**p));
+    (*p)++;
+  }
+
+  if (len == 0) {
+    return false;
+  }
+
+  *color = (double)val / (double)((1 << (4 * len)) - 1);
+  return true;
+}
+
+/// Consume `c` and advance `p`.
+static bool parse_char(const char **p, const char *end, char c)
+{
+  if (*p == end || **p != c) {
+    return false;
+  }
+  (*p)++;
+  return true;
+}
+
+/// Classify an OSC 11 response as a terminal background.
+static UIBackground detect_background(String resp)
+{
+  if (resp.size == 0 || resp.data == NULL) {
+    return kUIBackgroundUnknown;
+  }
+
+  const char rgb_prefix[] = "\033]11;rgb:";
+  const char rgba_prefix[] = "\033]11;rgba:";
+  const char *p = resp.data;
+  const char *end = resp.data + resp.size;
+  bool rgba = false;
+  if (resp.size >= sizeof(rgb_prefix) - 1
+      && memcmp(p, rgb_prefix, sizeof(rgb_prefix) - 1) == 0) {
+    p += sizeof(rgb_prefix) - 1;
+  } else if (resp.size >= sizeof(rgba_prefix) - 1
+             && memcmp(p, rgba_prefix, sizeof(rgba_prefix) - 1) == 0) {
+    p += sizeof(rgba_prefix) - 1;
+    rgba = true;
+  } else {
+    return kUIBackgroundUnknown;
+  }
+
+  double r = 0;
+  double g = 0;
+  double b = 0;
+  double a = 0;
+  if (!parse_color_component(&p, end, &r)
+      || !parse_char(&p, end, '/')
+      || !parse_color_component(&p, end, &g)
+      || !parse_char(&p, end, '/')
+      || !parse_color_component(&p, end, &b)
+      || (rgba && (!parse_char(&p, end, '/') || !parse_color_component(&p, end, &a)))
+      || p != end) {
+    return kUIBackgroundUnknown;
+  }
+
+  double luminance = (0.299 * r) + (0.587 * g) + (0.114 * b);
+  return luminance < 0.5 ? kUIBackgroundDark : kUIBackgroundLight;
+}
 
 /// Emitted on the client channel if an async API request responds with an error.
 ///
@@ -65,7 +142,14 @@ void nvim_ui_term_event(uint64_t channel_id, String event, Object value, Error *
     });
 
     const String termresponse = value.data.string;
+    UIBackground background = detect_background(termresponse);
+    if (background != kUIBackgroundUnknown) {
+      Channel *chan = find_channel(channel_id);
+      if (chan && chan->rpc.ui) {
+        chan->rpc.ui->detected_background = background;
+      }
+    }
     set_vim_var_string(VV_TERMRESPONSE, termresponse.data, (ptrdiff_t)termresponse.size);
-    do_termresponse_autocmd(termresponse, channel_id);
+    do_termresponse_autocmd(termresponse, channel_id, background);
   }
 }

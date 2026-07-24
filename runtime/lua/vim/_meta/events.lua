@@ -62,3 +62,4 @@ error('Cannot require a meta file')
 --- @class vim.event.termresponse.data
 --- @field chan integer
 --- @field sequence string
+--- @field detected_background? 'dark'|'light'

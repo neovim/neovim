@@ -726,7 +726,7 @@ Array ui_array(Arena *arena)
   Array all_uis = arena_array(arena, ui_count);
   for (size_t i = 0; i < ui_count; i++) {
     RemoteUI *ui = uis[i];
-    Dict info = arena_dict(arena, 10 + kUIExtCount);
+    Dict info = arena_dict(arena, 11 + kUIExtCount);
     PUT_C(info, "width", INTEGER_OBJ(ui->width));
     PUT_C(info, "height", INTEGER_OBJ(ui->height));
     PUT_C(info, "rgb", BOOLEAN_OBJ(ui->rgb));
@@ -741,6 +741,13 @@ Array ui_array(Arena *arena)
     PUT_C(info, "term_colors", INTEGER_OBJ(ui->term_colors));
     PUT_C(info, "stdin_tty", BOOLEAN_OBJ(ui->stdin_tty));
     PUT_C(info, "stdout_tty", BOOLEAN_OBJ(ui->stdout_tty));
+    if (ui->detected_background == kUIBackgroundDark) {
+      PUT_C(info, "detected_background", STATIC_CSTR_AS_OBJ("dark"));
+    } else if (ui->detected_background == kUIBackgroundLight) {
+      PUT_C(info, "detected_background", STATIC_CSTR_AS_OBJ("light"));
+    } else {
+      PUT_C(info, "detected_background", STATIC_CSTR_AS_OBJ(""));
+    }
 
     for (UIExtension j = 0; j < kUIExtCount; j++) {
       if (ui_ext_names[j][0] != '_' || ui->ui_ext[j]) {

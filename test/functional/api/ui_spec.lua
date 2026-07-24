@@ -260,17 +260,23 @@ describe('UI event channels', function()
 
     request('nvim_ui_term_event', 'termresponse', 'main')
     session2:request('nvim_ui_term_event', 'termresponse', 'other')
+    request('nvim_ui_term_event', 'termresponse', '\027]11;rgb:0000/0000/0000')
 
     eq({
       { sequence = 'main', chan = main_chan },
       { sequence = 'other', chan = chan2.id },
+      {
+        sequence = '\027]11;rgb:0000/0000/0000',
+        chan = main_chan,
+        detected_background = 'dark',
+      },
     }, exec_lua('return _G.responses'))
 
     exec_lua(
       [[
       _G.filtered = {}
-      vim.tty.request('', { timeout = 0, chan = ... }, function(resp)
-        table.insert(_G.filtered, resp)
+      vim.tty.request('', { timeout = 0, chan = ... }, function(resp, data)
+        table.insert(_G.filtered, { resp, data.detected_background })
         return true
       end)
     ]],
@@ -278,10 +284,59 @@ describe('UI event channels', function()
     )
 
     request('nvim_ui_term_event', 'termresponse', 'ignored')
-    session2:request('nvim_ui_term_event', 'termresponse', 'accepted')
-    eq({ 'accepted' }, exec_lua('return _G.filtered'))
+    session2:request('nvim_ui_term_event', 'termresponse', '\027]11;rgb:ffff/ffff/ffff')
+    eq(
+      { { '\027]11;rgb:ffff/ffff/ffff', 'light' } },
+      exec_lua('return _G.filtered')
+    )
 
     session2:close()
+  end)
+
+  it('tracks detected background metadata per stdout_tty UI channel', function()
+    clear()
+    local server = api.nvim_get_vvar('servername')
+    local session2 = n.connect(server)
+    local status2, chan2 = session2:request('nvim_get_chan_info', 0)
+    t.ok(status2)
+    local screen2 = Screen.new(20, 4, { stdout_tty = true }, false)
+    screen2.rpc_async = true
+    screen2:attach(session2)
+
+    local session3 = n.connect(server)
+    local status3, chan3 = session3:request('nvim_get_chan_info', 0)
+    t.ok(status3)
+    local screen3 = Screen.new(20, 4, { stdout_tty = true }, false)
+    screen3.rpc_async = true
+    screen3:attach(session3)
+
+    finally(function()
+      screen2:detach()
+      screen3:detach()
+      session2:close()
+      session3:close()
+    end)
+
+    t.retry(nil, 1000, function()
+      local seen = {}
+      for _, ui in ipairs(api.nvim_list_uis()) do
+        seen[ui.chan] = ui.stdout_tty
+      end
+      eq(true, seen[chan2.id])
+      eq(true, seen[chan3.id])
+    end)
+
+    session2:notify('nvim_ui_term_event', 'termresponse', '\027]11;rgb:ffff/ffff/ffff')
+    session3:notify('nvim_ui_term_event', 'termresponse', '\027]11;rgb:0000/0000/0000')
+
+    t.retry(nil, 1000, function()
+      local seen = {}
+      for _, ui in ipairs(api.nvim_list_uis()) do
+        seen[ui.chan] = ui.detected_background
+      end
+      eq('light', seen[chan2.id])
+      eq('dark', seen[chan3.id])
+    end)
   end)
 end)
 

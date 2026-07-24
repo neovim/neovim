@@ -541,7 +541,7 @@ void nvim_ui_pum_set_height(uint64_t channel_id, Integer height, Error *err)
 /// @param width   Popupmenu width.
 /// @param height  Popupmenu height.
 /// @param row     Popupmenu row.
-/// @param col     Popupmenu height.
+/// @param col     Popupmenu column.
 /// @param[out] err Error details, if any.
 void nvim_ui_pum_set_bounds(uint64_t channel_id, Float width, Float height, Float row, Float col,
                             Error *err)

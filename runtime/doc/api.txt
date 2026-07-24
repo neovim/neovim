@@ -1236,6 +1236,8 @@ nvim_list_uis()                                              *nvim_list_uis()*
         • "height" Requested height of the UI
         • "width" Requested width of the UI
         • "rgb" true if the UI uses RGB colors (false implies |cterm-colors|)
+        • "detected_background" Terminal background detected from OSC 11:
+          "dark", "light", or ""
         • "ext_..." Requested UI extensions, see |ui-option|
         • "chan" |channel-id| of remote UI
 
@@ -3788,7 +3790,7 @@ nvim_ui_pum_set_bounds({width}, {height}, {row}, {col})
       • {width}   (`number`) Popupmenu width.
       • {height}  (`number`) Popupmenu height.
       • {row}     (`number`) Popupmenu row.
-      • {col}     (`number`) Popupmenu height.
+      • {col}     (`number`) Popupmenu column.
 
 nvim_ui_pum_set_height({height})                    *nvim_ui_pum_set_height()*
     Tells Nvim the number of elements displaying in the popupmenu, to decide
