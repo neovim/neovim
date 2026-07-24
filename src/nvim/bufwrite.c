@@ -1,5 +1,6 @@
 // bufwrite.c: functions for writing a buffer
 
+#include <errno.h>
 #include <fcntl.h>
 #include <iconv.h>
 #include <inttypes.h>
@@ -56,6 +57,12 @@
 static const char *err_readonly = "is read-only (cannot override: \"W\" in 'cpoptions')";
 static const char e_patchmode_cant_touch_empty_original_file[]
   = N_("E206: Patchmode: can't touch empty original file");
+static const char e_cant_write_to_backup_file_add_bang_to_override[]
+  = N_("E506: Can't write to backup file (add ! to override)");
+static const char e_close_error_for_backup_file_add_bang_to_override[]
+  = N_("E507: Close error for backup file (add ! to override): %s");
+static const char e_cant_read_file_for_backup_add_bang_to_override[]
+  = N_("E508: Can't read file for backup (add ! to override)");
 static const char e_write_error_conversion_failed_make_fenc_empty_to_override[]
   = N_("E513: Write error, conversion failed (make 'fenc' empty to override)");
 static const char e_write_error_conversion_failed_in_line_nr_make_fenc_empty_to_override[]
@@ -72,6 +79,12 @@ typedef struct {
   int arg;
   bool alloc;
 } Error_T;
+
+typedef enum {
+  kBufWriteCopyOk = 0,
+  kBufWriteCopyReadError,
+  kBufWriteCopyWriteError,
+} BufWriteCopyResult;
 
 #define SMALLBUFSIZE 256     // size of emergency write buffer
 
@@ -683,6 +696,97 @@ static int get_fileinfo(buf_T *buf, char *fname, bool overwriting, bool forceit,
   return OK;
 }
 
+static bool buf_write_backup_id_valid(const FileID *file_id)
+{
+  return file_id->inode != 0 || file_id->device_id != 0;
+}
+
+static bool buf_write_backup_path_valid(const char *path, const FileID *file_id)
+{
+  if (!buf_write_backup_id_valid(file_id)) {
+    return true;
+  }
+  FileInfo actual_info;
+  return os_fileinfo_link(path, &actual_info)
+         && os_fileid_equal_fileinfo(file_id, &actual_info);
+}
+
+static BufWriteCopyResult buf_write_copy_fd(int from_fd, int to_fd, int *error)
+{
+  *error = 0;
+  char copybuf[WRITEBUFSIZE];
+
+  while (true) {
+    errno = 0;
+    ssize_t nread = read_eintr(from_fd, copybuf, sizeof(copybuf));
+    if (nread < 0) {
+      *error = os_translate_sys_error(errno != 0 ? errno : EIO);
+      return kBufWriteCopyReadError;
+    }
+    if (nread == 0) {
+      return kBufWriteCopyOk;
+    }
+
+    size_t written = 0;
+    while (written < (size_t)nread) {
+      errno = 0;
+      ssize_t nwritten = write_eintr(to_fd, copybuf + written, (size_t)nread - written);
+      if (nwritten <= 0) {
+        *error = os_translate_sys_error(errno != 0 ? errno : EIO);
+        return kBufWriteCopyWriteError;
+      }
+      written += (size_t)nwritten;
+    }
+  }
+}
+
+static int buf_write_restore_backup(const char *backup, const FileID *backup_id, const char *fname,
+                                    int mode)
+{
+  int backup_fd_flags = O_RDONLY | O_NOFOLLOW;
+#ifdef MSWIN
+  backup_fd_flags |= O_BINARY;
+#endif
+  int backup_fd = os_open(backup, backup_fd_flags, 0);
+  if (backup_fd < 0) {
+    return backup_fd;
+  }
+
+  int error = 0;
+  if (buf_write_backup_id_valid(backup_id)) {
+    FileInfo backup_file_info;
+    if (!os_fileinfo_fd(backup_fd, &backup_file_info)
+        || !os_fileid_equal_fileinfo(backup_id, &backup_file_info)) {
+      error = UV_EPERM;
+    }
+  }
+
+  if (error == 0) {
+    int write_fd_flags = O_CREAT | O_WRONLY | O_TRUNC;
+#ifdef MSWIN
+    write_fd_flags |= O_BINARY;
+#endif
+    int write_fd = os_open(fname, write_fd_flags, mode);
+    if (write_fd < 0) {
+      error = write_fd;
+    } else {
+      int copy_error = 0;
+      BufWriteCopyResult copy_result = buf_write_copy_fd(backup_fd, write_fd, &copy_error);
+      error = copy_result == kBufWriteCopyOk ? 0 : copy_error;
+      int close_error = os_close(write_fd);
+      if (error == 0 && close_error != 0) {
+        error = close_error;
+      }
+    }
+  }
+
+  int close_error = os_close(backup_fd);
+  if (error == 0 && close_error != 0) {
+    error = close_error;
+  }
+  return error;
+}
+
 /// @return The backup file name
 char *buf_get_backup_name(char *fname, char **dirp, bool no_prepend_dot, char *backup_ext)
 {
@@ -719,10 +823,12 @@ char *buf_get_backup_name(char *fname, char **dirp, bool no_prepend_dot, char *b
 
 static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_old, vim_acl_T acl,
                                  int perm, unsigned bkc, bool file_readonly, bool forceit,
-                                 bool *backup_copyp, char **backupp, Error_T *err)
+                                 bool *backup_copyp, char **backupp, FileID *backup_idp,
+                                 Error_T *err)
 {
   FileInfo file_info;
   const bool no_prepend_dot = false;
+  *backup_idp = FILE_ID_EMPTY;
 
   if ((bkc & kOptBkcFlagYes) || append) {       // "yes"
     *backup_copyp = true;
@@ -799,6 +905,15 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
 
   if (*backup_copyp) {
     bool some_error = false;
+    int read_fd_flags = O_RDONLY;
+#ifdef MSWIN
+    read_fd_flags |= O_BINARY;
+#endif
+    int read_fd = os_open(fname, read_fd_flags, 0);
+    if (read_fd < 0) {
+      *err = set_err(_("E509: Cannot create backup file (add ! to override)"));
+      goto nobackup;
+    }
 
     // Try to make the backup in each directory in the 'bdir' option.
     //
@@ -851,44 +966,85 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
 
       // Try to create the backup file
       if (*backupp != NULL) {
+        int backup_fd_flags = O_CREAT | O_WRONLY | O_EXCL | O_NOFOLLOW;
+#ifdef MSWIN
+        backup_fd_flags |= O_BINARY;
+#endif
         // remove old backup, if present
         os_remove(*backupp);
 
-        // copy the file
-        if (os_copy(fname, *backupp, UV_FS_COPYFILE_FICLONE) != 0) {
-          *err = set_err(_("E509: Cannot create backup file (add ! to override)"));
+        int backup_fd = os_open(*backupp, backup_fd_flags, perm & 0777);
+        if (backup_fd < 0) {
           XFREE_CLEAR(*backupp);
-          *backupp = NULL;
           continue;
         }
 
+        FileInfo backup_file_info;
+        if (!os_fileinfo_fd(backup_fd, &backup_file_info)) {
+          os_close(backup_fd);
+          os_remove(*backupp);
+          XFREE_CLEAR(*backupp);
+          continue;
+        }
+        os_fileinfo_id(&backup_file_info, backup_idp);
+
         // set file protection same as original file, but
         // strip s-bit.
-        os_setperm(*backupp, perm & 0777);
+        os_fchmod(backup_fd, perm & 0777);
 
 #ifdef UNIX
         // Try to set the group of the backup same as the original file. If
         // this fails, set the protection bits for the group same as the
         // protection bits for others.
-        if (file_info_new.stat.st_gid != file_info_old->stat.st_gid
-            && os_chown(*backupp, (uv_uid_t)-1, (uv_gid_t)file_info_old->stat.st_gid) != 0) {
-          os_setperm(*backupp, (perm & 0707) | ((perm & 07) << 3));
+        if (backup_file_info.stat.st_gid != file_info_old->stat.st_gid
+            && os_fchown(backup_fd, (uv_uid_t)-1, (uv_gid_t)file_info_old->stat.st_gid) != 0) {
+          os_fchmod(backup_fd, (perm & 0707) | ((perm & 07) << 3));
         }
-        os_file_settime(*backupp,
-                        (double)file_info_old->stat.st_atim.tv_sec,
-                        (double)file_info_old->stat.st_mtim.tv_sec);
 #endif
 
-        os_set_acl(*backupp, acl);
+        // copy the file
+        int copy_error = 0;
+        BufWriteCopyResult copy_result = buf_write_copy_fd(read_fd, backup_fd, &copy_error);
+        if (copy_result != kBufWriteCopyOk) {
+          os_close(backup_fd);
+          os_remove(*backupp);
+          XFREE_CLEAR(*backupp);
+          *backup_idp = FILE_ID_EMPTY;
+          if (copy_result == kBufWriteCopyReadError) {
+            *err = set_err(_(e_cant_read_file_for_backup_add_bang_to_override));
+          } else {
+            *err = set_err(_(e_cant_write_to_backup_file_add_bang_to_override));
+          }
+          goto nobackup;
+        }
+
 #ifdef HAVE_XATTR
-        os_copy_xattr(fname, *backupp);
+        os_copy_xattr_fd(fname, backup_fd);
 #endif
+#ifdef UNIX
+        os_file_settime_fd(backup_fd, (double)file_info_old->stat.st_atim.tv_sec,
+                           (double)file_info_old->stat.st_mtim.tv_sec);
+#endif
+        int backup_close_error = os_close(backup_fd);
+        if (backup_close_error != 0) {
+          os_remove(*backupp);
+          *err = set_err_arg(_(e_close_error_for_backup_file_add_bang_to_override),
+                             backup_close_error);
+          XFREE_CLEAR(*backupp);
+          *backupp = NULL;
+          *backup_idp = FILE_ID_EMPTY;
+          goto nobackup;
+        }
+        os_set_acl(*backupp, acl);
         *err = set_err(NULL);
         break;
       }
     }
 
 nobackup:
+    if (read_fd >= 0) {
+      os_close(read_fd);
+    }
     if (*backupp == NULL && err->msg == NULL) {
       *err = set_err(_("E509: Cannot create backup file (add ! to override)"));
     }
@@ -1134,6 +1290,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   }
 
   bool backup_copy = false;  // copy the original file?
+  FileID backup_id = FILE_ID_EMPTY;
 
   // Save the value of got_int and reset it.  We don't want a previous
   // interruption cancel writing, only hitting CTRL-C while writing should
@@ -1152,7 +1309,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   // off.  This helps when editing large files on almost-full disks.
   if (!(append && *p_pm == NUL) && !filtering && perm >= 0 && dobackup) {
     if (buf_write_make_backup(fname, append, &file_info_old, acl, perm, bkc, file_readonly, forceit,
-                              &backup_copy, &backup, &err) == FAIL) {
+                              &backup_copy, &backup, &backup_id, &err) == FAIL) {
       retval = FAIL;
       goto fail;
     }
@@ -1368,7 +1525,7 @@ restore_backup:
               // This may not work if the vim_rename() fails.
               // In that case we leave the copy around.
               // If file does not exist, put the copy in its place
-              if (!os_path_exists(fname)) {
+              if (!os_path_exists(fname) && buf_write_backup_path_valid(backup, &backup_id)) {
                 vim_rename(backup, fname);
               }
               // if original file does exist throw away the copy
@@ -1649,8 +1806,8 @@ restore_backup:
         }
 
         // copy the file.
-        if (os_copy(backup, fname, UV_FS_COPYFILE_FICLONE)
-            == 0) {
+        if (buf_write_restore_backup(backup, &backup_id, fname,
+                                     perm < 0 ? 0666 : (perm & 0777)) == 0) {
           end = 1;  // success
         }
       } else {
@@ -1754,7 +1911,8 @@ restore_backup:
       // the current backup file becomes the original file
       if (org == NULL) {
         emsg(_("E205: Patchmode: can't save original file"));
-      } else if (!os_path_exists(org)) {
+      } else if (!os_path_exists(org)
+                 && (!backup_copy || buf_write_backup_path_valid(backup, &backup_id))) {
         vim_rename(backup, org);
         XFREE_CLEAR(backup);                   // don't delete the file
 #ifdef UNIX
