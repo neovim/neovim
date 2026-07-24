@@ -1290,43 +1290,16 @@ Examples: >
 
 If you want to always use ":confirm", set the 'confirm' option.
 
-					*:browse* *:bro* *E338* *E614* *E615* *E616*
-:bro[wse] {command}	Open a file selection dialog for an argument to
-			{command}.  At present this works for |:e|, |:w|,
-			|:wall|, |:wq|, |:wqall|, |:x|, |:xall|, |:exit|,
-			|:view|, |:sview|, |:r|, |:saveas|, |:sp|, |:mkexrc|,
-			|:mkvimrc|, |:mksession|, |:mkview|, |:split|,
-			|:vsplit|, |:tabe|, |:tabnew|, |:cfile|, |:cgetfile|,
-			|:caddfile|, |:lfile|, |:lgetfile|, |:laddfile|,
-			|:diffsplit|, |:diffpatch|, |:pedit|, |:redir|,
-			|:source|, |:update|, |:visual|, |:vsplit|,
-			and |:qall| if 'confirm' is set.
-			Note: only in Win32 GUI; in console `:browse edit`
-			works if the FileExplorer autocommand group exists.
-			When ":browse" is not possible you get an error
-			message.  If {command} doesn't support browsing, the
-			{command} is executed without a dialog.
-			":browse set" works like |:options|.
-			See also |:oldfiles| for ":browse oldfiles".
+							*:browse* *:bro*
+:bro[wse] {command}	For |:edit|, |:split|, |:vsplit|, |:tabedit|, and
+			|:tabnew| without a file argument, open the current
+			directory with the |dir| browser.  A third-party directory
+			browser may handle it instead; see |dir-disable|.
 
-The syntax is best shown via some examples: >
-	:browse e $vim/foo
-<		Open the browser in the $vim/foo directory, and edit the
-		file chosen. >
-	:browse e
-<		Open the browser in the directory specified with 'browsedir',
-		and edit the file chosen. >
-	:browse w
-<		Open the browser in the directory of the current buffer,
-		with the current buffer filename as default, and save the
-		buffer under the filename chosen. >
-	:browse w C:/bar
-<		Open the browser in the C:/bar directory, with the current
-		buffer filename as default, and save the buffer under the
-		filename chosen.
-Also see the 'browsedir' option.
-For versions of Vim where browsing is not supported, the command is executed
-unmodified.
+			With a file argument, or when {command} does not support
+			browsing, execute {command} unmodified.
+
+			See |:oldfiles| for ":browse oldfiles".
 
 							*browsefilter*
 For MS-Windows you can modify the filters that are used in the browse

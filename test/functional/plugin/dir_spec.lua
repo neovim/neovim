@@ -683,19 +683,29 @@ describe('nvim.dir', function()
     eq('netrw', api.nvim_get_option_value('filetype', { buf = 0 }))
   end)
 
-  it('supports the FileExplorer browse contract', function()
-    if t.is_zig_build() then
-      return pending('broken with build.zig: TMPDIR relative cwd')
-    end
-    make_fixture()
-    n.clear({ args_rm = { '-u' } })
-    local cwd = fn.getcwd()
+  for _, case in ipairs({
+    { command = 'edit', windows = 1, tabs = 1 },
+    { command = 'split', windows = 2, tabs = 1 },
+    { command = 'vsplit', windows = 2, tabs = 1 },
+    { command = 'tabedit', windows = 1, tabs = 2 },
+    { command = 'tabnew', windows = 1, tabs = 2 },
+  }) do
+    it(('supports :browse %s with the directory browser'):format(case.command), function()
+      if t.is_zig_build() then
+        return pending('broken with build.zig: TMPDIR relative cwd')
+      end
+      make_fixture()
+      n.clear({ args_rm = { '-u' } })
+      local cwd = fn.getcwd()
 
-    cd(root)
-    command('browse edit .')
-    cd(cwd)
+      cd(root)
+      command('browse ' .. case.command)
+      cd(cwd)
 
-    assert_directory(root)
-    line_of('alpha.txt')
-  end)
+      eq(case.windows, #api.nvim_tabpage_list_wins(0))
+      eq(case.tabs, #api.nvim_list_tabpages())
+      assert_directory(root)
+      line_of('alpha.txt')
+    end)
+  end
 end)
