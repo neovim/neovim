@@ -55,7 +55,10 @@ To disable the built-in directory browser, set this before startup: >lua
 
 Mappings:                                                       *dir-mappings*
 >
-	-	Open the parent directory of the current file or directory.
+	-		Open the parent directory of the current file or directory.
+	{count}-	Like "-", but with a count of 1 open the current working
+			directory. If the count is higher than 1, open that many
+			parent directories.
 <
 
 Directory buffer mappings:                                *dir-buffer-mappings*

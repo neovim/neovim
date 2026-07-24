@@ -11,6 +11,10 @@ vim.keymap.set('n', '<Plug>(nvim-dir-open)', function()
 end, { silent = true, desc = 'Open directory entry' })
 
 vim.keymap.set('n', '<Plug>(nvim-dir-up)', function()
+  if vim.v.count == 1 then
+    api.nvim_cmd({ cmd = 'edit', args = { '.' }, magic = { file = false, bar = false } }, {})
+    return
+  end
   local dir = require('nvim.dir')
   for _ = 1, vim.v.count1 do
     dir._open_parent()
