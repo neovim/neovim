@@ -2608,6 +2608,45 @@ describe('vim.diagnostic', function()
       )
     end)
 
+    it('does not accumulate BufRead autocmds for unloaded buffers', function()
+      local counts = exec_lua(function()
+        local bufnr = vim.fn.bufadd(vim.fn.tempname())
+        local function count_autocmds()
+          return #vim.api.nvim_get_autocmds({ event = 'BufRead', buffer = bufnr })
+        end
+        vim.diagnostic.set(_G.diagnostic_ns, bufnr, { _G.make_error('Error 1', 0, 0, 0, 0) })
+        local first = count_autocmds()
+        for i = 2, 5 do
+          vim.diagnostic.set(_G.diagnostic_ns, bufnr, { _G.make_error('Error ' .. i, 0, 0, 0, 0) })
+        end
+        return { first = first, last = count_autocmds() }
+      end)
+      eq(counts.first, counts.last)
+    end)
+
+    it('computes positions from the last set() when the buffer loads', function()
+      eq(
+        { autocmds = 0, extmarks = { { 2, 1 } } },
+        exec_lua(function()
+          local path = vim.fn.tempname()
+          vim.fn.writefile({ 'one', 'two', 'three' }, path)
+          local bufnr = vim.fn.bufadd(path)
+          vim.diagnostic.set(_G.diagnostic_ns, bufnr, { _G.make_error('Old', 0, 0, 0, 0) })
+          vim.diagnostic.set(_G.diagnostic_ns, bufnr, { _G.make_error('New', 2, 1, 2, 2) })
+          vim.fn.bufload(bufnr)
+          local location_ns = vim.diagnostic.get_namespace(_G.diagnostic_ns).user_data.location_ns
+          local extmarks = {} --- @type [integer, integer][]
+          for _, m in ipairs(vim.api.nvim_buf_get_extmarks(bufnr, location_ns, 0, -1, {})) do
+            extmarks[#extmarks + 1] = { m[2], m[3] }
+          end
+          return {
+            autocmds = #vim.api.nvim_get_autocmds({ event = 'BufRead', buffer = bufnr }),
+            extmarks = extmarks,
+          }
+        end)
+      )
+    end)
+
     it('can perform updates after insert_leave', function()
       exec_lua(function()
         vim.diagnostic.config({ virtual_text = true })
