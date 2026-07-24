@@ -304,6 +304,7 @@ LUA
   `opts.parents=true`.
 • |vim.filetype.inspect()| returns a copy of the internal tables used for
   filetype detection.
+• |vim.fs.find()| supports glob matching on filenames.
 • Added `__eq` metamethod to |vim.VersionRange|. 2 distinct but representing
   the same range instances now compare equal.
 • Documentation for |vim.fn| now points to preferred Lua alternatives when
