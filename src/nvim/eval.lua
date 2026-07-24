@@ -4612,6 +4612,7 @@ M.funcs = {
       		not present.  See |quickfix-buffer|.
       	size	number of entries in the quickfix list
       	title	get the list title |quickfix-title|
+      	total	get the count of each error type
       	winid	get the quickfix |window-ID|
       	all	all of the above quickfix properties
       Non-string items in {what} are ignored.  To get the value of a
@@ -4623,8 +4624,9 @@ M.funcs = {
       "$" in {what}.  The "nr" value in the returned dictionary
       contains the quickfix stack size.
       When "lines" is specified, all the other items except "efm"
-      are ignored.  The returned dictionary contains the entry
-      "items" with the list of entries.
+      and "total" are ignored.  The returned dictionary contains
+      the entry "items" with the list of entries and/or "total"
+      with the type counts.
 
       The returned dictionary contains the following entries:
       	changedtick	total number of changes made to the
@@ -4645,6 +4647,8 @@ M.funcs = {
       		not present, set to 0.
       	title	quickfix list title text.  If not present, set
       		to "".
+      	total	count of each error type.  If not present, set
+      		to an empty dictionary.
       	winid	quickfix |window-ID|.  If not present, set to 0
 
       Examples (See also |getqflist-examples|): >vim
