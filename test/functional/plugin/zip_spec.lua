@@ -136,10 +136,15 @@ describe('nvim.zip', function()
 
     edit(archive)
 
-    eq(
-      { 'folder/', 'inner.zip', '../escape.txt', '/absolute.txt', 'crlf.txt', 'noeol.txt' },
-      lines()
-    )
+    eq({
+      'folder/',
+      'inner.zip',
+      '../escape.txt',
+      '/absolute.txt',
+      'crlf.txt',
+      'noeol.txt',
+      'names/',
+    }, lines())
     eq('zip', api.nvim_get_option_value('filetype', { buf = 0 }))
     eq(true, exec_capture('syntax list zipDirectory'):find('zipDirectory', 1, true) ~= nil)
 
@@ -268,6 +273,53 @@ describe('nvim.zip', function()
     for _, case in ipairs(cases) do
       edit(('zipfile://%s::%s'):format(archive, case[1]))
       eq({ case[2] }, lines())
+    end
+  end)
+
+  it('lists and opens entries with difficult names', function()
+    t.skip(t.is_os('win'), 'N/A: Windows filenames cannot contain these characters')
+    local archive = vim.fs.joinpath(root, 'browser.zip')
+    copy_fixture(vim.fs.joinpath(fixtures, 'browser.zip'), archive)
+    clear_zip()
+
+    local names = {
+      'space name.txt',
+      'two  spaces.txt',
+      ' leading.txt',
+      'trailing .txt',
+      [[back\slash.txt]],
+      [[single'quote.txt]],
+      'double"quote.txt',
+      'dollar$name.txt',
+      'backtick`name.txt',
+      'semi;name.txt',
+      'pipe|name.txt',
+      'amp&name.txt',
+      'paren(name).txt',
+      'bang!name.txt',
+      'hash#name.txt',
+      'percent%name.txt',
+      'star*.txt',
+      'question?.txt',
+      '[bracket].txt',
+      '-dash.txt',
+    }
+
+    edit(archive)
+    api.nvim_win_set_cursor(0, { line_of('names/'), 0 })
+    feed('<CR>')
+    poke_eventloop()
+    eq(names, lines())
+
+    api.nvim_win_set_cursor(0, { line_of('star*.txt'), 0 })
+    feed('<CR>')
+    poke_eventloop()
+    eq(('zipfile://%s::names/star*.txt'):format(archive), api.nvim_buf_get_name(0))
+    eq({ 'content of star*.txt' }, lines())
+
+    for _, name in ipairs(names) do
+      edit(('zipfile://%s::names/%s'):format(archive, name))
+      eq({ 'content of ' .. name }, lines())
     end
   end)
 
