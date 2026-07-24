@@ -201,6 +201,7 @@ void win_config_float(win_T *wp, WinConfig fconfig)
   wp->w_height = MAX(fconfig.height, 1);
 
   if (fconfig.relative == kFloatRelativeCursor) {
+    validate_cursor(curwin);
     fconfig.relative = kFloatRelativeWindow;
     fconfig.row += curwin->w_wrow;
     fconfig.col += curwin->w_wcol;
