@@ -3943,6 +3943,7 @@ static bool ins_tab(void)
 
   // When nothing special, insert TAB like a normal character.
   if (!curbuf->b_p_et
+      && !(curbuf->b_p_eta && !ind)
       && !(
            p_sta
            && ind
@@ -3999,9 +4000,11 @@ static bool ins_tab(void)
   }
 
   // When 'expandtab' not set: Replace spaces by TABs where possible.
-  if (!curbuf->b_p_et && (tabstop_count(curbuf->b_p_vsts_array) > 0
-                          || get_sts_value() > 0
-                          || (p_sta && ind))) {
+  // When 'expandtabalign' is set: Keep spaces in non indentation region.
+  if (!curbuf->b_p_et && !(curbuf->b_p_eta && !ind)
+      && (tabstop_count(curbuf->b_p_vsts_array) > 0
+          || get_sts_value() > 0
+          || (p_sta && ind))) {
     char *ptr;
     char *saved_line = NULL;         // init for GCC
     pos_T pos;

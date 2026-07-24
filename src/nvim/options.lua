@@ -758,10 +758,11 @@ local options = {
         This option should be set before editing a binary file.  You can also
         use the |-b| Vim argument.  When this option is switched on a few
         options will be changed (also when it already was on):
-        	'textwidth'  will be set to 0
-        	'wrapmargin' will be set to 0
-        	'modeline'   will be off
-        	'expandtab'  will be off
+        	'textwidth'      will be set to 0
+        	'wrapmargin'     will be set to 0
+        	'modeline'       will be off
+        	'expandtab'      will be off
+        	'expandtabalign' will be off
         Also, 'fileformat' and 'fileformats' options will not be used, the
         file is read and written like 'fileformat' was "unix" (a single <NL>
         separates lines).
@@ -2998,6 +2999,22 @@ local options = {
       short_desc = N_('use spaces when <Tab> is inserted'),
       type = 'boolean',
       varname = 'p_et',
+    },
+    {
+      abbreviation = 'eta',
+      defaults = false,
+      desc = [=[
+        In Insert mode: Indent with tabs, but use the appropriate number of
+        spaces to insert a non-leading <Tab>. Indent operations are not
+        affected.  Has no effect when 'expandtab' is on.  To insert a real tab
+        in non-indentation region when 'expandtabalign' is on, use CTRL-V<Tab>.
+        See also |ins-expandtabalign|.
+      ]=],
+      full_name = 'expandtabalign',
+      scope = { 'buf' },
+      short_desc = N_('expand tabs to spaces only after indent'),
+      type = 'boolean',
+      varname = 'p_eta',
     },
     {
       abbreviation = 'ex',
