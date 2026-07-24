@@ -81,11 +81,7 @@ if exists("g:ftplugin_java_source_path") &&
 	    function! JavaFileTypeZipFile() abort
 		let l:member = substitute(v:fname, '\.', '/', 'g') . '.java'
 		let l:archive = get(s:zip_files, bufnr('%'), s:zip_files[0])
-		if get(g:, "loaded_nvim_zip_plugin", 0)
-		    return 'zipfile://' . l:archive . '::' . l:member
-		endif
-		let @/ = escape(l:member, '/')
-		return l:archive
+		return 'zipfile://' . l:archive . '::' . l:member
 	    endfunction
 
 	    " E120 for "inex=s:JavaFileTypeZipFile()" before v8.2.3900.
@@ -396,11 +392,7 @@ if exists("s:zip_func_upgradable")
     def! s:JavaFileTypeZipFile(): string
 	const member: string = substitute(v:fname, '\.', '/', 'g') .. '.java'
 	const archive: string = get(zip_files, bufnr('%'), zip_files[0])
-	if get(g:, "loaded_nvim_zip_plugin", 0)
-	    return 'zipfile://' .. archive .. '::' .. member
-	endif
-	@/ = escape(member, '/')
-	return archive
+	return 'zipfile://' .. archive .. '::' .. member
     enddef
 
     setlocal includeexpr=s:JavaFileTypeZipFile()

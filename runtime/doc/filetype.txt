@@ -792,9 +792,8 @@ is a filename whose extension is either ".jar" or ".zip", e.g.: >
 	let g:ftplugin_java_source_path = '/path/to/src.zip'
 <
 and the |zip| plugin has already been sourced, the |gf| command can be used to
-open the selected type. The legacy Zip plugin opens the archive listing, where
-|n| finds the selected type and <Return> loads it. When |nvim-zip| is enabled,
-`gf` opens the archive member directly as a read-only buffer.
+open the selected type directly from the archive. When |nvim-zip| is enabled,
+the archive member is read-only.
 
 Note that the effect of using the "gf" command WITHIN a buffer loaded with the
 Zip plugin depends on the version of the Zip plugin.  For the Zip plugin
