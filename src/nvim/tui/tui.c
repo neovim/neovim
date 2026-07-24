@@ -23,6 +23,7 @@
 #include "nvim/event/stream.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
+#include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/log.h"
 #include "nvim/lua/executor.h"
@@ -137,6 +138,7 @@ struct TUIData {
   bool can_set_title;
   bool can_set_underline_color;
   bool can_resize_screen;
+  bool kitty_text_sizing;
   bool stopped;
   int width;
   int height;
@@ -541,6 +543,9 @@ static void terminfo_start(TUIData *tui)
   const char *weztermv = wezterm ? term_program_version_env : NULL;
   bool screen = terminfo_is_term_family(term, "screen");
   bool tmux = terminfo_is_term_family(term, "tmux") || os_env_exists("TMUX", true);
+  bool kitty = terminfo_is_term_family(term, "xterm-kitty")
+               || os_env_exists("KITTY_WINDOW_ID", true);
+  tui->kitty_text_sizing = kitty && !tmux;
   tui->screen_or_tmux = screen || tmux;
 
   // truecolor support must be checked before patching/augmenting terminfo
@@ -846,6 +851,9 @@ static bool attrs_differ(TUIData *tui, int id1, int id2, bool rgb)
   if (a1.url != a2.url) {
     return true;
   }
+  if (a1.font != a2.font) {
+    return true;
+  }
 
   if (rgb) {
     return a1.rgb_fg_color != a2.rgb_fg_color
@@ -1071,7 +1079,16 @@ static void print_cell(TUIData *tui, char *buf, sattr_T attr)
     final_column_wrap(tui);
   }
   update_attrs(tui, attr);
-  out(tui, buf, strlen(buf));
+  HlAttrs attrs = kv_A(tui->attrs, (size_t)attr);
+  const char *font = hl_get_font(attrs.font);
+  const char *kitty_size_prefix = "kitty-size:";
+  if (tui->kitty_text_sizing && font != NULL && STARTS_WITH(font, kitty_size_prefix)) {
+    out_printf(tui, 128, "\x1b]66;%s;", font + strlen(kitty_size_prefix));
+    out(tui, buf, strlen(buf));
+    out(tui, S_LEN("\a"));
+  } else {
+    out(tui, buf, strlen(buf));
+  }
   grid->col++;
   if (tui->immediate_wrap_after_last_column) {
     // Printing at the right margin immediately advances the cursor.
