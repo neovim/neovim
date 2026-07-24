@@ -10,7 +10,7 @@ local navigating = false
 ---@param path string
 ---@return string
 function M.normalize(path)
-  return fs.normalize(fs.abspath(path))
+  return fs.normalize(fs.abspath(path), { expand_env = false })
 end
 
 ---@return boolean
@@ -59,11 +59,20 @@ end
 ---@param path string
 ---@param cb fun(err?: string, entries?: nvim.dir.Entry[])
 function M.list(_, path, cb)
+  local scan, err = vim.uv.fs_scandir(path)
+  if not scan then
+    cb(err)
+    return
+  end
+
   local entries = {} ---@type nvim.dir.Entry[]
-  for name, type, err in fs.dir(path, { err = true }) do
-    if err then
-      cb(err)
-      return
+  while true do
+    local name, type = vim.uv.fs_scandir_next(scan)
+    if not name then
+      break
+    end
+    if not type then
+      type = (vim.uv.fs_lstat(fs.joinpath(path, name)) or {}).type or 'unknown'
     end
     if type == 'link' and vim.fn.isdirectory(fs.joinpath(path, name)) == 1 then
       type = 'directory'
