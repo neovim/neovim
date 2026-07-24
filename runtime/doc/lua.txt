@@ -3937,12 +3937,12 @@ Lua module: vim.log                                                  *vim.log*
 
 The |vim.log| module provides file-backed logger instances.
 
-Use `vim.log.new()` to create a logger, it exposes five writer functions:
-`trace()`, `debug()`, `info()`, `warn()`, and `error()`. They are correspond
-to log levels defined by |vim.log.levels|.
+Use `vim.log.new()` to create a logger, which exposes a writer function for
+each |vim.log.levels| level: `trace()`, `debug()`, `info()`, `warn()`, and
+`error()`.
 
 Example: >lua
-    local log = vim.log.new({ name = 'my-plugin', })
+    local log = vim.log.new('my-plugin')
     -- By default, logs will be written to {name}.log under `stdpath('log')`.
 
     log.error('request failed', 'timeout')
@@ -3951,14 +3951,15 @@ Example: >lua
 
     -- Set the log level to `INFO`, otherwise the `info()` call below would be ignored,
     -- since the default level is `WARN`.
-    vim.log.set_level(log, vim.log.levels.INFO)
+    log:set_level(vim.log.levels.INFO)
     log.info('starting', { buf = vim.api.nvim_get_current_buf() })
     -- This will write a line like the following to the log file:
     --   [INFO][2024-01-01 12:01:00] source.lua:124    starting    { buf = 1 }
 <
 
-You can also provide a custom formatter function to customize the log output
-format.
+To customize the output format, override `log.fmt` directly: >lua
+    log.fmt = function(current_level, level, ...) ... end
+<
 
 
 *vim.Log*
@@ -3968,6 +3969,9 @@ format.
                  `vim.log.levels.DEBUG`.
       • {error}  (`fun(...:any): boolean?`) Writes a message at
                  `vim.log.levels.ERROR`.
+      • {fmt}    (`fun(min_level: vim.log.levels, level: vim.log.levels, ...): string?`)
+                 Function used to format a log entry. Override directly to
+                 customize output.
       • {info}   (`fun(...:any): boolean?`) Writes a message at
                  `vim.log.levels.INFO`.
       • {trace}  (`fun(...:any): boolean?`) Writes a message at
@@ -3977,7 +3981,7 @@ format.
 
 
 get_level({log})                                         *vim.log.get_level()*
-    Gets the current log level.
+    Gets the current log-level.
 
     Parameters: ~
       • {log}  (`vim.Log`) See |vim.Log|.
@@ -3985,15 +3989,18 @@ get_level({log})                                         *vim.log.get_level()*
     Return: ~
         (`vim.log.levels`)
 
-new({opts})                                                    *vim.log.new()*
+new({name}, {opts})                                            *vim.log.new()*
     Creates a logger instance.
 
     The logger writes formatted messages to a file, using a per-instance log
     level and formatting function.
 
     Parameters: ~
-      • {opts}  (`table`) A table with the following fields:
-                • {format_func}?
+      • {name}  (`string`) Display name used in notifications emitted by the
+                logger, and as the log file basename (`{name}.log` under
+                `stdpath('log')`).
+      • {opts}  (`table?`) A table with the following fields:
+                • {fmt}?
                   (`fun(min_level: vim.log.levels, level: vim.log.levels, ...): string?`)
                   Formatter used for each log entry. Receives the logger's
                   minimum level, the message level, and the values passed to
@@ -4001,27 +4008,13 @@ new({opts})                                                    *vim.log.new()*
                   skip it.
                 • {level}? (`vim.log.levels`, default: `vim.log.levels.WARN`)
                   Minimum level that will be written.
-                • {name} (`string`) Display name used in notifications emitted
-                  by the logger.
 
     Return: ~
         (`vim.Log`) See |vim.Log|.
 
-set_format_func({log}, {func})                     *vim.log.set_format_func()*
-    Sets the formatter used to produce log entries.
-
-    The formatter receives the logger's minimum level, the message level, and
-    the values passed to the writer method. Return a string to write an entry,
-    or `nil` to skip it.
-
-    Parameters: ~
-      • {log}   (`vim.Log`) See |vim.Log|.
-      • {func}  (`fun(min_level: vim.log.levels, level: vim.log.levels, ...): string?`)
-
 set_level({log}, {level})                                *vim.log.set_level()*
-    Sets the current log level.
-
-    Entries below this level are skipped.
+    Sets the current log-level. Messages below this level are skipped (not
+    logged).
 
     Parameters: ~
       • {log}    (`vim.Log`) See |vim.Log|.
@@ -4031,16 +4024,14 @@ set_level({log}, {level})                                *vim.log.set_level()*
 ==============================================================================
 Lua module: vim.lpeg                                                *vim.lpeg*
 
-LPeg is a pattern-matching library for Lua, based on Parsing Expression
-Grammars (PEGs). https://bford.info/packrat/
-
                                                    *lua-lpeg* *vim.lpeg.Pattern*
-The LPeg library for parsing expression grammars is included as `vim.lpeg`
-(https://www.inf.puc-rio.br/~roberto/lpeg/).
 
-In addition, its regex-like interface is available as |vim.re|
-(https://www.inf.puc-rio.br/~roberto/lpeg/re.html).
+LPeg is a pattern-matching library (https://www.inf.puc-rio.br/~roberto/lpeg/)
+for defining Parsing Expression Grammars (PEGs: https://bford.info/packrat/),
+included as `vim.lpeg`.
 
+Its regex-like interface (https://www.inf.puc-rio.br/~roberto/lpeg/re.html) is
+available as |vim.re|.
 
 
 Pattern:match({subject}, {init}, {...})                      *Pattern:match()*
