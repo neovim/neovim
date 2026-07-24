@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>nvim.wasm RPC client</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="bar">
+  <button id="apiInfoBtn">1. Send nvim_get_api_info</button>
+  <button id="attachBtn">2. Send nvim_ui_attach</button>
+  <button id="persistBtn">Persist now</button>
+  <span id="status">booting…</span>
+</div>
+<div id="log"></div>
+
+<!--  msgpack library -->
+<script crossorigin src="https://unpkg.com/@msgpack/msgpack@3.1.2/dist.umd/msgpack.min.js"></script>
+
+<script src="msgpack.js"></script>
+<script src="protocol.js"></script>
+<script src="rpc.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
