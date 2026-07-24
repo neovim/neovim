@@ -288,7 +288,8 @@ LUA
 • |vim.ui.img| can display images. Use `:checkhealth vim.health` to confirm
   your terminal supports it.
 • |vim.net.request()| can specify custom headers by passing `opts.headers`.
-• |vim.net.request()| can now accept  `method` param overload for multiple HTTP methods.
+• |vim.net.request()| can now accept `method` param overload for multiple HTTP methods.
+• |vim.net.request()| now returns `status` and `headers` in response callback.
 • |writefile()| treats Lua and RPC strings as |Blob|, so it can be used to
   write binary data.
 • |vim.fs.dir()| with `opts.err=true`, reports errors. An inaccessible root
