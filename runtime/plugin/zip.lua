@@ -1,7 +1,11 @@
+if vim.g.loaded_nvim_zip_plugin ~= nil then
+  return
+end
 local enabled = vim.g.nvim_zip_plugin
 if enabled ~= true and enabled ~= 1 then
   return
 end
+vim.g.loaded_nvim_zip_plugin = true
 
 local api = vim.api
 

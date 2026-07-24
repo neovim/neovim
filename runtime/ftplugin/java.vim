@@ -68,7 +68,7 @@ unlet! s:zip_func_upgradable
 if exists("g:ftplugin_java_source_path") &&
 		\ type(g:ftplugin_java_source_path) == type("")
     if filereadable(g:ftplugin_java_source_path)
-	if (exists("#zip") || exists("#nvim.zip")) &&
+	if (exists("#zip") || get(g:, "loaded_nvim_zip_plugin", 0)) &&
 		    \ g:ftplugin_java_source_path =~# '.\.\%(jar\|zip\)$'
 	    if !exists("s:zip_files")
 		let s:zip_files = {}
@@ -81,7 +81,7 @@ if exists("g:ftplugin_java_source_path") &&
 	    function! JavaFileTypeZipFile() abort
 		let l:member = substitute(v:fname, '\.', '/', 'g') . '.java'
 		let l:archive = get(s:zip_files, bufnr('%'), s:zip_files[0])
-		if exists("#nvim.zip")
+		if get(g:, "loaded_nvim_zip_plugin", 0)
 		    return 'zipfile://' . l:archive . '::' . l:member
 		endif
 		let @/ = escape(l:member, '/')
@@ -396,7 +396,7 @@ if exists("s:zip_func_upgradable")
     def! s:JavaFileTypeZipFile(): string
 	const member: string = substitute(v:fname, '\.', '/', 'g') .. '.java'
 	const archive: string = get(zip_files, bufnr('%'), zip_files[0])
-	if exists("#nvim.zip")
+	if get(g:, "loaded_nvim_zip_plugin", 0)
 	    return 'zipfile://' .. archive .. '::' .. member
 	endif
 	@/ = escape(member, '/')

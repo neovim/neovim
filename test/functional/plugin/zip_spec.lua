@@ -81,6 +81,7 @@ describe('nvim.zip', function()
       edit(archive)
 
       eq(case.lua, lines()[1] == 'folder/')
+      eq(case.lua, exec_lua('return vim.g.loaded_nvim_zip_plugin == true'))
       eq(not case.lua, exec_lua('return vim.g.loaded_zipPlugin ~= nil'))
       eq(
         case.lua and 2 or 0,
@@ -220,22 +221,38 @@ describe('nvim.zip', function()
     eq(false, api.nvim_get_option_value('endofline', { buf = 0 }))
   end)
 
-  it('opens Java sources from a configured archive', function()
+  it('integrates Java sources with both zip plugins', function()
     local archive = vim.fs.joinpath(root, 'source.jar')
     copy_fixture(vim.fs.joinpath(fixtures, 'browser.zip'), archive)
-    clear_zip()
-    exec_lua('vim.g.ftplugin_java_source_path = ...', archive)
-    api.nvim_buf_set_name(0, vim.fs.joinpath(root, 'Test.java'))
-    api.nvim_buf_set_lines(0, 0, -1, false, { 'folder.root' })
-    api.nvim_cmd({ cmd = 'setfiletype', args = { 'java' } }, {})
-    api.nvim_cmd({ cmd = 'runtime', args = { 'ftplugin/java.vim' } }, {})
 
-    feed('gf')
-    poke_eventloop()
+    for _, lua in ipairs({ false, true }) do
+      if lua then
+        clear_zip()
+      else
+        n.clear({ args_rm = { '-u' } })
+      end
+      exec_lua('vim.g.ftplugin_java_source_path = ...', archive)
+      api.nvim_buf_set_name(0, vim.fs.joinpath(root, 'Test.java'))
+      api.nvim_buf_set_lines(0, 0, -1, false, { 'folder.root' })
+      api.nvim_cmd({ cmd = 'setfiletype', args = { 'java' } }, {})
+      api.nvim_cmd({ cmd = 'runtime', args = { 'ftplugin/java.vim' } }, {})
 
-    eq(('zipfile://%s::folder/root.java'):format(archive), api.nvim_buf_get_name(0))
-    eq({ 'class root {}' }, lines())
-    eq('java', api.nvim_get_option_value('filetype', { buf = 0 }))
+      feed('gf')
+      poke_eventloop()
+      if not lua then
+        eq(archive, api.nvim_buf_get_name(0))
+        eq([[folder\/root.java]], fn.getreg('/'))
+        feed('n')
+        poke_eventloop()
+        eq('folder/root.java', api.nvim_get_current_line())
+        feed('<CR>')
+        poke_eventloop()
+      end
+
+      eq(('zipfile://%s::folder/root.java'):format(archive), api.nvim_buf_get_name(0))
+      eq({ 'class root {}' }, lines())
+      eq('java', api.nvim_get_option_value('filetype', { buf = 0 }))
+    end
   end)
 
   it('reads member selectors literally', function()
