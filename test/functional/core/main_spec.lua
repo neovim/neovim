@@ -6,6 +6,7 @@ local describe, it, before_each, after_each, finally =
 local uv = vim.uv
 
 local eq = t.eq
+local ok = t.ok
 local matches = t.matches
 local eval = n.eval
 local clear = n.clear
@@ -182,6 +183,202 @@ describe('command-line option', function()
   end)
 end)
 
+describe('nvim:// URI scheme', function()
+  local set_session = n.set_session
+  local exec_lua = n.exec_lua
+  local nvim_prog = n.nvim_prog
+  local tmp_id = 0
+
+  local function tmpname(suffix)
+    tmp_id = tmp_id + 1
+    return string.format('Xmain-uri-%d%s', tmp_id, suffix or '')
+  end
+
+  local function abspath(path)
+    return fn.fnamemodify(path, ':p')
+  end
+
+  local function run_uri(server, ...)
+    set_session(server)
+    local addr = fn.serverlist()[1]
+    local uris = { ... }
+    for i, uri in ipairs(uris) do
+      uris[i] = uri .. '&server=' .. addr
+    end
+
+    local client_starter = n.new_session(true)
+    set_session(client_starter)
+    eq(
+      { 0 },
+      exec_lua(
+        [[return vim.fn.jobwait({ vim.fn.jobstart({...}, {
+          stdout_buffered = true,
+          stderr_buffered = true,
+          on_stdout = function(_, data, _)
+            _G.stdout = table.concat(data, '\n')
+          end,
+          on_stderr = function(_, data, _)
+            _G.stderr = table.concat(data, '\n')
+          end,
+        }) })]],
+        nvim_prog,
+        '--clean',
+        '--headless',
+        unpack(uris)
+      )
+    )
+    local res = exec_lua([[return { _G.stdout, _G.stderr }]])
+    client_starter:close()
+    set_session(server)
+    return res
+  end
+
+  local function assert_no_uri_stderr(res)
+    eq('', res[2] or '')
+  end
+
+  it('opens file in existing server', function()
+    local server = n.clear()
+    finally(function()
+      server:close()
+    end)
+
+    local fname = tmpname('.txt')
+    write_file(fname, 'nvim uri test content')
+    finally(function()
+      os.remove(fname)
+    end)
+
+    local uri = 'nvim://open?file=' .. fname
+    local res = run_uri(server, uri)
+
+    assert_no_uri_stderr(res)
+    eq(abspath(fname), fn.expand('%:p'))
+    eq('nvim uri test content', fn.getline(1))
+  end)
+
+  it('uses vim.ui.edit for open behavior', function()
+    local server = n.clear()
+    finally(function()
+      server:close()
+    end)
+
+    local fname = tmpname('.txt')
+    write_file(fname, 'tabedit test content')
+    finally(function()
+      os.remove(fname)
+    end)
+
+    exec_lua(function()
+      vim.ui.edit = function(path, opts)
+        vim.cmd.tabedit(path)
+        if opts and opts.line then
+          vim.api.nvim_win_set_cursor(0, { opts.line, (opts.column or 1) - 1 })
+        end
+      end
+    end)
+
+    local uri = 'nvim://open?file=' .. fname
+    local res = run_uri(server, uri)
+
+    assert_no_uri_stderr(res)
+    eq(2, fn.tabpagenr('$'))
+    eq(abspath(fname), fn.expand('%:p'))
+  end)
+
+  it('opens file with line number', function()
+    local server = n.clear()
+    finally(function()
+      server:close()
+    end)
+
+    local fname = tmpname('.txt')
+    write_file(fname, 'line1\nline2\nline3\nline4\nline5')
+    finally(function()
+      os.remove(fname)
+    end)
+
+    local uri = 'nvim://open?file=' .. fname .. '&line=3'
+    local res = run_uri(server, uri)
+
+    assert_no_uri_stderr(res)
+    eq(abspath(fname), fn.expand('%:p'))
+    eq(3, fn.line('.'))
+  end)
+
+  it('opens file with line and column', function()
+    local server = n.clear()
+    finally(function()
+      server:close()
+    end)
+
+    local fname = tmpname('.txt')
+    write_file(fname, 'line1\nline2\nline3 with more text\nline4')
+    finally(function()
+      os.remove(fname)
+    end)
+
+    local uri = 'nvim://open?file=' .. fname .. '&line=3&column=7'
+    local res = run_uri(server, uri)
+
+    assert_no_uri_stderr(res)
+    eq(abspath(fname), fn.expand('%:p'))
+    eq(3, fn.line('.'))
+    eq(7, fn.col('.'))
+  end)
+
+  it('opens file locally when no server available', function()
+    local fname = tmpname('.txt')
+    write_file(fname, 'local open test')
+    finally(function()
+      os.remove(fname)
+    end)
+
+    -- Use isolated XDG_RUNTIME_DIR so no existing nvim sockets are discovered
+    local tmp_runtime_dir = tmpname('.d')
+    vim.uv.fs_mkdir(tmp_runtime_dir, 448) -- 0700
+    finally(function()
+      vim.uv.fs_rmdir(tmp_runtime_dir)
+    end)
+
+    local uri = 'nvim://open?file=' .. fname .. '&line=1'
+    clear({
+      args = { uri },
+      env = {
+        TMPDIR = t.paths.test_build_dir,
+        VIMRUNTIME = t.paths.test_source_path .. '/runtime',
+        XDG_RUNTIME_DIR = tmp_runtime_dir,
+      },
+    })
+
+    -- File opening is deferred, wait for it
+    t.retry(nil, 1000, function()
+      eq(abspath(fname), fn.expand('%:p'))
+    end)
+    eq('local open test', fn.getline(1))
+  end)
+
+  it('handles percent-encoded paths', function()
+    local server = n.clear()
+    finally(function()
+      server:close()
+    end)
+
+    local fname = tmpname(' with spaces')
+    write_file(fname, 'spaces in path')
+    finally(function()
+      os.remove(fname)
+    end)
+
+    local encoded_fname = fname:gsub(' ', '%%20')
+    local uri = 'nvim://open?file=' .. encoded_fname
+    local res = run_uri(server, uri)
+
+    assert_no_uri_stderr(res)
+    eq(abspath(fname), fn.expand('%:p'))
+  end)
+end)
+
 describe('vim._core', function()
   it('works with "-u NONE" and no VIMRUNTIME', function()
     clear {
@@ -221,6 +418,7 @@ describe('vim._core', function()
       'vim._core.time',
       'vim._core.ui',
       'vim._core.ui2',
+      'vim._core.uri',
       'vim._core.util',
       'vim._core.vimfn',
       'vim._init_packages',

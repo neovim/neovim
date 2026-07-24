@@ -5518,6 +5518,19 @@ vim.text.indent({size}, {text}, {opts})                    *vim.text.indent()*
 ==============================================================================
 Lua module: vim.ui                                                    *vim.ui*
 
+vim.ui.edit({path}, {opt})                                     *vim.ui.edit()*
+    Opens `path` in the current Nvim instance.
+
+    Plugins may override `vim.ui.edit` to customize how paths are opened.
+
+    Parameters: ~
+      • {path}  (`string`) Path to edit
+      • {opt}   (`table?`) Options
+                • {column}? (`integer`) 1-indexed column number to jump to
+                  after opening.
+                • {line}? (`integer`) 1-indexed line number to jump to after
+                  opening.
+
 vim.ui.input({opts}, {on_confirm})                            *vim.ui.input()*
     Prompts the user for input, allowing arbitrary (potentially asynchronous)
     work until `on_confirm`.
@@ -5739,6 +5752,30 @@ vim.ui.img.set({data_or_id}, {opts})                        *vim.ui.img.set()*
 
 ==============================================================================
 Lua module: vim.uri                                                  *vim.uri*
+
+*vim.uri.NvimUri*
+
+    Fields: ~
+      • {action}   (`string`) URI action
+      • {column}?  (`integer`) Column number
+      • {file}     (`string`) File path
+      • {line}?    (`integer`) Line number
+      • {server}?  (`string`) Server address to connect to
+
+
+vim.parse_nvim({uri})                                       *vim.parse_nvim()*
+    Parses a nvim:// URI into its components.
+
+    Format:
+    `nvim://open?file={path}[&line={n}] [&column={n}] [&server={addr}]`
+
+    Parameters: ~
+      • {uri}  (`string`) The nvim:// URI to parse
+
+    Return (multiple): ~
+        (`vim.uri.NvimUri?`) parsed The parsed URI components, or nil if
+        invalid. See |vim.uri.NvimUri|.
+        (`string?`) err Error message if parsing failed
 
 vim.uri_decode({str})                                       *vim.uri_decode()*
     URI-decodes a string containing percent escapes.
