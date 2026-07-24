@@ -18,7 +18,14 @@ end
 ---@param value string
 ---@return string
 local function literal_pattern(value)
-  return (value:gsub('\\', '\\\\'):gsub('%?', '\\?'):gsub('%*', '\\*'):gsub('%[', '[[]'))
+  return (
+    value
+      :gsub('\\', '\\\\')
+      :gsub('%?', '\\?')
+      :gsub('%*', '\\*')
+      :gsub('%[', '[[]')
+      :gsub('^%-', '[-]')
+  )
 end
 
 ---@param source string

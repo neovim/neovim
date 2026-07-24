@@ -271,6 +271,18 @@ describe('nvim.zip', function()
     end
   end)
 
+  it('keeps a leading dash in a member from becoming a backend option', function()
+    local archive = vim.fs.joinpath(root, 'poc.zip')
+    copy_fixture(vim.fs.joinpath(old_samples, 'poc.zip'), archive)
+    clear_zip()
+
+    edit(archive)
+    eq({ '-d/', 'pwned' }, lines())
+
+    edit(('zipfile://%s::-d/tmp'):format(archive))
+    eq({ '' }, lines())
+  end)
+
   it('treats archive glob characters literally', function()
     t.skip(t.is_os('win'), 'N/A: Windows filenames cannot contain these characters')
     local archive = vim.fs.joinpath(root, 'archive::[*?].zip')
