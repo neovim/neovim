@@ -1495,6 +1495,7 @@ static void win_update(win_T *wp)
 
   // Validate w_virtcol here as it can change the redraw type.
   validate_virtcol(wp);
+  validate_cursor_col(wp);
   type = wp->w_redr_type;
 
   init_search_hl(wp, &screen_search_hl);

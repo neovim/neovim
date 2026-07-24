@@ -2890,9 +2890,13 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       }
 
       if (((wp->w_p_cuc
-            && wp->w_virtcol >= vcol_hlc(wlv) - eol_hl_off
-            && wp->w_virtcol < view_width * (ptrdiff_t)(wlv.row - startrow + 1) + start_vcol
-            && lnum != wp->w_cursor.lnum)
+            && wp->w_wcol < view_width
+            && wp->w_wcol >= wlv.col
+            && wp->w_virtcol >= start_vcol
+            && (lnum != wp->w_cursor.lnum
+                || (cul_screenline
+                    && (wlv.vcol < left_curline_col
+                        || wlv.vcol >= right_curline_col))))
            || wlv.color_cols || wlv.line_attr_lowprio || wlv.line_attr
            || wlv.diff_hlf != 0 || wp->w_buffer->terminal)) {
         int rightmost_vcol = get_rightmost_vcol(wp, wlv.color_cols);
@@ -2920,8 +2924,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
 
           int col_attr = base_attr;
 
-          if (wp->w_p_cuc && vcol_hlc(wlv) == wp->w_virtcol
-              && lnum != wp->w_cursor.lnum) {
+          if (wp->w_p_cuc && wlv.col == wp->w_wcol
+              && (lnum != wp->w_cursor.lnum
+                  || (cul_screenline
+                      && (wlv.vcol < left_curline_col
+                          || wlv.vcol >= right_curline_col)))) {
             col_attr = hl_combine_attr(col_attr, cuc_attr);
           } else if (wlv.color_cols && vcol_hlc(wlv) == *wlv.color_cols) {
             col_attr = hl_combine_attr(col_attr, mc_attr);
@@ -2998,8 +3005,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         && search_attr == 0
         && area_attr == 0
         && wlv.filler_todo <= 0) {
-      if (wp->w_p_cuc && vcol_hlc(wlv) == wp->w_virtcol
-          && lnum != wp->w_cursor.lnum) {
+      if (wp->w_p_cuc && wlv.col == wp->w_wcol
+          && (lnum != wp->w_cursor.lnum
+              || (cul_screenline
+                  && (wlv.vcol < left_curline_col
+                      || wlv.vcol >= right_curline_col)))) {
         vcol_save_attr = wlv.char_attr;
         wlv.char_attr = hl_combine_attr(win_hl_attr(wp, HLF_CUC), wlv.char_attr);
       } else if (wlv.color_cols && vcol_hlc(wlv) == *wlv.color_cols) {
