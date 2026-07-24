@@ -9,7 +9,7 @@ if exists('s:did_load')
   set diffopt=internal,filler,closeoff,indent-heuristic,inline:char
   set directory^=.
   set display=
-  set fillchars=vert:\|,foldsep:\|,fold:-
+  set fillchars=eob:~,vert:\|,foldsep:\|,fold:-
   set formatoptions=tcq
   set fsync
   set include=^\\s*#\\s*include

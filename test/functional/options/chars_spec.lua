@@ -10,18 +10,32 @@ local eq = t.eq
 local insert = n.insert
 local feed = n.feed
 local api = n.api
+local fn = n.fn
 
 describe("'fillchars'", function()
   local screen
 
   before_each(function()
     clear()
+    command('set fillchars&')
     screen = Screen.new(25, 5)
   end)
 
   describe('"eob" flag', function()
-    it("uses '~' by default", function()
+    it("uses '·' by default", function()
       eq('', eval('&fillchars'))
+      screen:expect([[
+        ^                         |
+        {1:·                        }|*3
+                                 |
+      ]])
+    end)
+
+    it("falls back to '~' when the default is not single-width", function()
+      -- Force the middle dot unicode range to have a cellwidth of 2
+      local middle_dot = fn.char2nr('·')
+      fn.setcellwidths({ { middle_dot, middle_dot, 2 } })
+
       screen:expect([[
         ^                         |
         {1:~                        }|*3
@@ -32,7 +46,7 @@ describe("'fillchars'", function()
     it('supports whitespace', function()
       screen:expect([[
         ^                         |
-        {1:~                        }|*3
+        {1:·                        }|*3
                                  |
       ]])
       command('set fillchars=eob:\\ ')
@@ -116,7 +130,7 @@ describe("'fillchars'", function()
     command('set fillchars=fold:x')
     screen:expect([[
       {13:^+--  2 lines: fooxxxxxxxx}│{13:+--  2 lines: fooxxxxxxx}|
-      {1:~                        }│{1:~                       }|*3
+      {1:·                        }│{1:·                       }|*3
                                                         |
     ]])
   end)
@@ -130,7 +144,7 @@ describe("'fillchars'", function()
     command('setl fillchars=fold:x')
     screen:expect([[
       {13:^+--  2 lines: fooxxxxxxxx}│{13:+--  2 lines: foo·······}|
-      {1:~                        }│{1:~                       }|*3
+      {1:·                        }│{1:·                       }|*3
                                                         |
     ]])
   end)
@@ -145,7 +159,7 @@ describe("'fillchars'", function()
     command('set fillchars&')
     screen:expect([[
       {13:^+--  2 lines: foo········}│{13:+--  2 lines: fooxxxxxxx}|
-      {1:~                        }│{1:~                       }|*3
+      {1:·                        }│{1:·                       }|*3
                                                         |
     ]])
   end)

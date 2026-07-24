@@ -2885,7 +2885,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 					repeated in a narrow 'foldcolumn'
 	  diff		'-'		deleted lines of the 'diff' option
 	  msgsep	' '		message separator 'display'
-	  eob		'~'		empty lines at the end of a buffer
+	  eob		'·'		empty lines at the end of a buffer
 	  lastline	'@'		'display' contains lastline/truncate
 	  trunc		'>'		truncated text in the
 					|ins-completion-menu|.

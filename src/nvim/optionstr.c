@@ -2286,7 +2286,7 @@ static const struct chars_tab fcs_tab[] = {
   CHARSTAB_ENTRY(&fcs_chars.foldinner,  "foldinner", NULL, NULL),
   CHARSTAB_ENTRY(&fcs_chars.diff,       "diff",      "-",  NULL),
   CHARSTAB_ENTRY(&fcs_chars.msgsep,     "msgsep",    " ",  NULL),
-  CHARSTAB_ENTRY(&fcs_chars.eob,        "eob",       "~",  NULL),
+  CHARSTAB_ENTRY(&fcs_chars.eob,        "eob",       "·",  "~"),
   CHARSTAB_ENTRY(&fcs_chars.lastline,   "lastline",  "@",  NULL),
   CHARSTAB_ENTRY(&fcs_chars.trunc,      "trunc",     ">",  NULL),
   CHARSTAB_ENTRY(&fcs_chars.truncrl,    "truncrl",   "<",  NULL),

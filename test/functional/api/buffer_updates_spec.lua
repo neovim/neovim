@@ -895,7 +895,7 @@ describe('API: buffer events:', function()
     ok(api.nvim_buf_attach(b, true, {}))
 
     for _ = 1, 22 do
-      table.insert(expected_lines, '~')
+      table.insert(expected_lines, '·')
     end
     expected_lines[1] = ''
     expected_lines[22] = ('tmp_terminal_nvim' .. (' '):rep(45) .. '0,0-1          All')
