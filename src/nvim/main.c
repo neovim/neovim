@@ -336,6 +336,10 @@ int main(int argc, char **argv)
   if (params.remote) {
     remote_request(&params, params.remote, params.server_addr, argc, argv,
                    use_builtin_ui);
+  } else if (params.server_addr != NULL && headless_mode) {
+    fprintf(stderr,
+            "E5432: --server without a --remote subcommand is not supported with --headless\n");
+    os_exit(1);
   }
 
   bool remote_ui = (ui_client_channel_id != 0);

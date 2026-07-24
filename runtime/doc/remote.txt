@@ -56,7 +56,7 @@ The following command line arguments are available:
    --remote-ui			Display the UI of the server in the terminal.
 				Fully interactive: keyboard and mouse input
 				are forwarded to the server.
-								*--server*
+								*--server* *E5432*
    --server {addr}		Connect to the named pipe or socket at the
 				given address for executing remote commands.
 				See |--listen| for specifying an address when
