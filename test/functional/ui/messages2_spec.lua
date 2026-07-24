@@ -1133,6 +1133,20 @@ describe('messages2', function()
     ]])
   end)
 
+  it('clears showcmd after mapping timeout #40856', function()
+    command('set showcmd timeout timeoutlen=50')
+    command('nnoremap <Space> <Nop>')
+    command('nnoremap <Space><Space> <Nop>')
+    screen:sleep(10)
+    local before = screen:get_snapshot().grid
+    feed('<Space>')
+    screen:sleep(200)
+    local after = screen:get_snapshot().grid
+    feed('<Esc>')
+    screen:sleep(10)
+    t.eq(before, after)
+  end)
+
   it('search count is cleared', function()
     command('set ruler showcmd shortmess-=S | call setline(1, ["foo", "bar"])')
     feed('/foo<CR>')
