@@ -365,6 +365,7 @@ TREESITTER
   capture.
 • |vim.treesitter.select()| starts or adjusts a visual selection at cursor,
   based on tree nodes.
+• The `diff` treesitter parser is bundled.
 
 TUI
 
