@@ -209,6 +209,50 @@ describe('treesitter highlighting (C)', function()
     eq('', eval('&syntax'))
   end)
 
+  it('start() defers disabling legacy syntax until the first parse completes', function()
+    command('setfiletype c | syntax on')
+    insert(hl_text_c)
+    feed('gg')
+
+    -- Before parse: ts highlight enabled, but legacy syntax still rendered
+    local state = exec_lua(function()
+      vim.treesitter.query.set('c', 'highlights', hl_query_c)
+      vim.treesitter.start()
+      return { syntax = vim.bo.syntax, ts_highlight = vim.b.ts_highlight}
+    end)
+    eq('c', state.syntax)
+    eq(true, state.ts_highlight)
+
+    -- After parse: treesitter takes over, legacy syntax disabled
+   screen:expect(hl_grid_ts_c)
+    exec_lua(function()
+      vim.wait(1000, function() return vim.bo.syntax == '' end)
+    end)
+   eq('', eval('&syntax'))
+
+   -- User re-enables lagacy syntax; subsequent parses must not clear it again
+   command('setlocal syntax=c')
+   screen:expect(hl_grid_ts_c)
+   eq('c', eval('&syntax'))
+  end)
+
+  it('start() does not override syntax=ON opt-in when handling off', function()
+    command('setfiletype c | syntax on')
+    insert(hl_text_c)
+    feed('gg')
+
+    exec_lua(function()
+      vim.treesitter.query.set('c', 'highlights', hl_query_c)
+      vim.treesitter.start()
+      vim.bo.syntax = 'ON' -- keep legacy syntax alongside treesitter
+    end)
+
+    -- Takeover ran but did not clear syntax=ON
+    screen:expect(hl_grid_ts_c)
+    eq('ON', eval('&syntax'))
+    eq(true, exec_lua('return vim.b.ts_highlight'))
+  end)
+
   it('is updated with edits', function()
     insert(hl_text_c)
     feed('gg')
