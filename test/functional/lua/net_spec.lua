@@ -169,10 +169,8 @@ describe('vim.net.request', function()
       args_rm = { '-u' },
       args = { '--cmd', 'let g:nvim_zip_plugin = 1' },
     })
-    local fixture = vim.fs.joinpath(
-      t.paths.test_source_path,
-      'test/functional/fixtures/zip/browser.zip'
-    )
+    local fixture =
+      vim.fs.joinpath(t.paths.test_source_path, 'test/functional/fixtures/zip/browser.zip')
     local rv = exec_lua(function(path)
       vim.net.request = function(_, opts, callback)
         assert(vim.uv.fs_copyfile(path, opts.outpath))

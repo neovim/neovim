@@ -786,6 +786,7 @@ in your vimrc: >
 
 JAVA							*ft-java-plugin*
 
+						*g:ftplugin_java_source_path*
 Whenever the variable "g:ftplugin_java_source_path" is defined and its value
 is a filename whose extension is either ".jar" or ".zip", e.g.: >
 	let g:ftplugin_java_source_path = '/path/to/src.jar'
