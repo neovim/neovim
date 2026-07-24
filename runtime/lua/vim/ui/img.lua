@@ -36,11 +36,14 @@ local M = {}
 
 ---@class vim.ui.img.Opts
 ---@inlinedoc
----@field row? integer starting row (1-indexed)
----@field col? integer starting column (1-indexed)
----@field width? integer width in cells
+---@field row? integer    starting row (1-indexed); buffer row if {buf} set
+---@field col? integer    starting column (1-indexed); buffer col if {buf} set
+---@field width? integer  width in cells
 ---@field height? integer height in cells
 ---@field zindex? integer stacking order (higher = on top)
+---@field buf? integer    buffer to anchor image inline (0 = current buffer)
+---@field pad? integer    blank cells before image in inline mode
+---@field relative? 'ui'|'editor'|'buffer'  positioning mode: "ui" = terminal-native absolute (default), "editor" = editor-relative floating window, "buffer" = inline extmark (requires {buf})
 
 --- Maps user-facing ID to internal tracking info.
 ---@type table<integer, { img_id: integer, opts: vim.ui.img.Opts }>

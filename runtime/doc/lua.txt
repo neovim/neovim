@@ -5708,9 +5708,16 @@ vim.ui.img.get({id})                                        *vim.ui.img.get()*
 
     Return: ~
         (`table?`) opts copy of image opts, or nil if not found
-        • {col}? (`integer`) starting column (1-indexed)
+        • {buf}? (`integer`) buffer to anchor image inline (0 = current
+          buffer)
+        • {col}? (`integer`) starting column (1-indexed); buffer col if {buf}
+          set
         • {height}? (`integer`) height in cells
-        • {row}? (`integer`) starting row (1-indexed)
+        • {pad}? (`integer`) blank cells before image in inline mode
+        • {relative}? (`'ui'|'editor'|'buffer'`) positioning mode: "ui" =
+          terminal-native absolute (default), "editor" = editor-relative
+          floating window, "buffer" = inline extmark (requires {buf})
+        • {row}? (`integer`) starting row (1-indexed); buffer row if {buf} set
         • {width}? (`integer`) width in cells
         • {zindex}? (`integer`) stacking order (higher = on top)
 
@@ -5727,9 +5734,19 @@ vim.ui.img.set({data_or_id}, {opts})                        *vim.ui.img.set()*
       • {data_or_id}  (`string|integer`) image bytes (string) or existing id
                       (integer)
       • {opts}        (`table?`) A table with the following fields:
-                      • {col}? (`integer`) starting column (1-indexed)
+                      • {buf}? (`integer`) buffer to anchor image inline (0 =
+                        current buffer)
+                      • {col}? (`integer`) starting column (1-indexed); buffer
+                        col if {buf} set
                       • {height}? (`integer`) height in cells
-                      • {row}? (`integer`) starting row (1-indexed)
+                      • {pad}? (`integer`) blank cells before image in inline
+                        mode
+                      • {relative}? (`'ui'|'editor'|'buffer'`) positioning
+                        mode: "ui" = terminal-native absolute (default),
+                        "editor" = editor-relative floating window, "buffer" =
+                        inline extmark (requires {buf})
+                      • {row}? (`integer`) starting row (1-indexed); buffer
+                        row if {buf} set
                       • {width}? (`integer`) width in cells
                       • {zindex}? (`integer`) stacking order (higher = on top)
 
