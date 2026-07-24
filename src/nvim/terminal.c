@@ -3352,30 +3352,6 @@ static void append_render_cell_text(Terminal *term, GhosttyRenderStateRowCells c
   }
 }
 
-static size_t fetch_ghostty_row(Terminal *term, GhosttyPointTag tag, uint32_t row, int end_col)
-  FUNC_ATTR_NONNULL_ALL
-{
-  int col = 0;
-  size_t line_len = 0;
-  char *ptr = term->textbuf;
-
-  while (col < end_col) {
-    GhosttyGridRef ref = { 0 };
-    if (!terminal_ghostty_grid_ref(term, tag, row, col, &ref)) {
-      break;
-    }
-    GhosttyCell cell = 0;
-    assert_ok(ghostty_grid_ref_cell(&ref, &cell));
-    terminal_ghostty_append_cell_text(term, &ref, cell, &ptr, &line_len);
-    GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
-    assert_ok(ghostty_cell_get(cell, GHOSTTY_CELL_DATA_WIDE, &wide));
-    col += wide == GHOSTTY_CELL_WIDE_WIDE ? 2 : 1;
-  }
-
-  term->textbuf[line_len] = NUL;
-  return line_len;
-}
-
 static size_t fetch_render_row_cells(Terminal *term, GhosttyRenderStateRowCells cells, int end_col)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -3400,14 +3376,61 @@ static size_t fetch_render_row_cells(Terminal *term, GhosttyRenderStateRowCells 
   return line_len;
 }
 
-static void fetch_screen_row(Terminal *term, size_t screen_row, int end_col)
+/// Mirrors Ghostty scrollback rows [row, end) into the buffer.
+///
+/// Scrollback rows are displayed as buffer lines, so scrolling the window does not move Ghostty's
+/// viewport. Because render states only expose the current viewport, we temporarily move it through
+/// the history in screen-sized steps, read each viewport, then restore it to the active area.
+///
+/// @param insert  Append rows if true, otherwise replace existing lines.
+static void mirror_scrollback_rows(Terminal *term, buf_T *buf, size_t row, size_t end, int width,
+                                   int height, bool insert)
+  FUNC_ATTR_NONNULL_ALL
 {
   size_t offset = term->ghostty_scrollback_rows - term->scrollback_rows;
-  size_t row = offset + screen_row;
-  if (row > UINT32_MAX
-      || fetch_ghostty_row(term, GHOSTTY_POINT_TAG_SCREEN, (uint32_t)row, end_col) == 0) {
-    term->textbuf[0] = NUL;
+  while (row < end) {
+    GhosttyTerminalScrollViewport viewport = {
+      .tag = GHOSTTY_SCROLL_VIEWPORT_ROW,
+      .value.row = offset + row,
+    };
+    ghostty_terminal_scroll_viewport(term->ghostty, viewport);
+    assert_ok(ghostty_render_state_update(term->ghostty_render_state, term->ghostty));
+    assert_ok(ghostty_render_state_get(term->ghostty_render_state,
+                                       GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR,
+                                       &term->ghostty_render_row_iterator));
+
+    size_t chunk_end = MIN(row + (size_t)height, end);
+    while (row < chunk_end) {
+      if (!ghostty_render_state_row_iterator_next(term->ghostty_render_row_iterator)) {
+        break;
+      }
+      GhosttyRenderStateRowCells cells = term->ghostty_render_row_cells;
+      assert_ok(ghostty_render_state_row_get(term->ghostty_render_row_iterator,
+                                             GHOSTTY_RENDER_STATE_ROW_DATA_CELLS,
+                                             &cells));
+      (void)fetch_render_row_cells(term, cells, width);
+      linenr_T linenr = (linenr_T)row + 1;
+      if (insert) {
+        ml_append_buf(buf, (linenr_T)row, term->textbuf, 0, false);
+        appended_lines_buf(buf, (linenr_T)row, 1);
+      } else if (linenr <= buf->b_ml.ml_line_count) {
+        ml_replace_buf(buf, linenr, term->textbuf, true, false);
+      } else {
+        ml_append_buf(buf, buf->b_ml.ml_line_count, term->textbuf, 0, false);
+        appended_lines_buf(buf, buf->b_ml.ml_line_count, 1);
+      }
+      row++;
+    }
+    if (row < chunk_end) {
+      break;
+    }
   }
+  ghostty_terminal_scroll_viewport(term->ghostty,
+                                   (GhosttyTerminalScrollViewport) {
+    .tag = GHOSTTY_SCROLL_VIEWPORT_BOTTOM,
+  });
+  // Restore the render state before refresh_screen() reads it.
+  assert_ok(ghostty_render_state_update(term->ghostty_render_state, term->ghostty));
 }
 
 // queue a terminal instance for refresh
@@ -3738,13 +3761,9 @@ static void refresh_scrollback(Terminal *term, buf_T *buf, bool resized)
   term->ghostty_scrollback_rows = ghostty_scrollback_rows;
   term->scrollback_rows = scrollback_rows;
 
-  if (!resized) {
-    while (old_scrollback_rows < scrollback_rows) {
-      fetch_screen_row(term, old_scrollback_rows, width);
-      ml_append_buf(buf, (linenr_T)old_scrollback_rows, term->textbuf, 0, false);
-      appended_lines_buf(buf, (linenr_T)old_scrollback_rows, 1);
-      old_scrollback_rows++;
-    }
+  if (!resized && old_scrollback_rows < scrollback_rows) {
+    mirror_scrollback_rows(term, buf, old_scrollback_rows, scrollback_rows, width, height, true);
+    old_scrollback_rows = scrollback_rows;
   }
 
   if (!resized) {
@@ -3777,16 +3796,7 @@ static void refresh_scrollback(Terminal *term, buf_T *buf, bool resized)
   }
 
   if (resized) {
-    for (size_t row = 0; row < scrollback_rows; row++) {
-      fetch_screen_row(term, row, width);
-      linenr_T linenr = (linenr_T)row + 1;
-      if (linenr <= buf->b_ml.ml_line_count) {
-        ml_replace_buf(buf, linenr, term->textbuf, true, false);
-      } else {
-        ml_append_buf(buf, buf->b_ml.ml_line_count, term->textbuf, 0, false);
-        appended_lines_buf(buf, buf->b_ml.ml_line_count, 1);
-      }
-    }
+    mirror_scrollback_rows(term, buf, 0, scrollback_rows, width, height, false);
     if (scrollback_rows > 0) {
       changed_lines(buf, 1, 0, (linenr_T)scrollback_rows + 1, 0, true);
     }
