@@ -348,7 +348,7 @@ describe('nvim.dir', function()
     eq('new:2', exec_lua('return vim.g.nvim_dir_provider_list'))
   end)
 
-  it('maps - to open parent directories', function()
+  it('maps [count]- to open parent directories', function()
     make_fixture()
     n.clear({ args_rm = { '-u', '--cmd' } })
 
@@ -361,6 +361,20 @@ describe('nvim.dir', function()
 
     -- Ensure the cursor stays on the entry we navigated up from.
     eq('alpha.txt', api.nvim_get_current_line())
+
+    edit(file)
+    feed('1-')
+    poke_eventloop()
+
+    assert_directory(root)
+    eq('alpha.txt', api.nvim_get_current_line())
+
+    edit(file)
+    feed('2-')
+    poke_eventloop()
+
+    assert_directory(vim.fs.dirname(root))
+    eq(vim.fs.basename(root) .. '/', api.nvim_get_current_line())
   end)
 
   it('maps - to open the current directory from an unnamed buffer', function()
