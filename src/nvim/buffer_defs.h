@@ -1208,10 +1208,11 @@ struct window_S {
   pos_save_T w_save_cursor;         // backup of cursor pos and topline
   bool w_do_win_fix_cursor;         // if true cursor may be invalid
 
-  int w_maxwidth;                   // maxwidth of 'previewpopup' window
-  int w_maxheight;                  // maxheight of 'previewpopup' window
-  int w_wantline;                   // "line" for 'previewpopup' window
-  int w_wantcol;                    // "col" for 'previewpopup' window
+  // Screen pos 'previewpopup' anchors to (original cursor pos). Separate from WinConfig because
+  // win_float_update_preview() re-autosizes as content updates, and re-decides the flip
+  // above/below. WinConfig.row/col hold the placed (offset, flipped, clamped) result.
+  int w_wantline;
+  int w_wantcol;
 
   int w_winrow_off;  ///< offset from winrow to the inner window area
   int w_wincol_off;  ///< offset from wincol to the inner window area
