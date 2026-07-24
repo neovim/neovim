@@ -826,11 +826,23 @@ void tui_free_all_mem(TUIData *tui)
 static void sigwinch_cb(SignalWatcher *watcher, int signum, void *cbdata)
 {
   TUIData *tui = cbdata;
-  if (tui_is_stopped(tui) || tui->resize_events_enabled) {
+  if (tui_is_stopped(tui)) {
     return;
   }
 
-  tui_guess_size(tui);
+  int width = 0;
+  int height = 0;
+  _tui_guess_size(tui, &width, &height);
+
+  if (tui->resize_events_enabled) {
+    if (width != tui->width || height != tui->height) {
+      // The in-band resize will report the new dimensions, so return early
+      // to avoid processing the same resize twice.
+      return;
+    }
+  }
+
+  tui_set_size(tui, width, height);
 }
 
 static bool attrs_differ(TUIData *tui, int id1, int id2, bool rgb)
@@ -1991,16 +2003,15 @@ void tui_set_size(TUIData *tui, int width, int height)
 
 /// Tries to get the user's wanted dimensions (columns and rows) for the entire
 /// application (i.e., the host terminal).
-void tui_guess_size(TUIData *tui)
+static void _tui_guess_size(TUIData *tui, int *width, int *height)
+  FUNC_ATTR_NONNULL_ALL
 {
-  int width = 0;
-  int height = 0;
-  char *lines = NULL;
-  char *columns = NULL;
+  *width = 0;
+  *height = 0;
 
   // 1 - try from a system call (ioctl/TIOCGWINSZ on unix)
   if (tui->out_isatty
-      && !uv_tty_get_winsize(&tui->output_handle.tty, &width, &height)) {
+      && !uv_tty_get_winsize(&tui->output_handle.tty, width, height)) {
     goto end;
   }
 
@@ -2008,27 +2019,31 @@ void tui_guess_size(TUIData *tui)
   const char *val;
   int advance;
   if ((val = os_getenv_noalloc("LINES"))
-      && sscanf(val, "%d%n", &height, &advance) != EOF && advance
+      && sscanf(val, "%d%n", height, &advance) != EOF && advance
       && (val = os_getenv_noalloc("COLUMNS"))
-      && sscanf(val, "%d%n", &width, &advance) != EOF && advance) {
+      && sscanf(val, "%d%n", width, &advance) != EOF && advance) {
     goto end;
   }
 
   // 3 - read from terminfo if available
-  height = tui->ti.lines;
-  width = tui->ti.columns;
+  *height = tui->ti.lines;
+  *width = tui->ti.columns;
 
   end:
-  if (width <= 0 || height <= 0) {
+  if (*width <= 0 || *height <= 0) {
     // use the defaults
-    width = DFLT_COLS;
-    height = DFLT_ROWS;
+    *width = DFLT_COLS;
+    *height = DFLT_ROWS;
   }
+}
 
+void tui_guess_size(TUIData *tui)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int width = 0;
+  int height = 0;
+  _tui_guess_size(tui, &width, &height);
   tui_set_size(tui, width, height);
-
-  xfree(lines);
-  xfree(columns);
 }
 
 static void out(TUIData *tui, const char *str, size_t len)

@@ -3075,6 +3075,11 @@ describe('TUI', function()
     -- On Windows, SIGWINCH cannot be sent as a signal with uv_kill(), while
     -- SIGWINCH handlers are only called on terminal resize.
     t.skip(is_os('win'), 'N/A for Windows')
+    -- Exercise the tui.c resize-events path (resize_events_enabled=true) by
+    -- feeding DECRPM "mode 2048 currently reset" report. This makes the child
+    -- TUI enable resize events.
+    feed_data('\027[?2048;2$y')
+    poke_both_eventloop()
     child_session:request('nvim_echo', { { 'foo' } }, false, {})
     screen:expect([[
       ^                                                  |
