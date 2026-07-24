@@ -1541,6 +1541,8 @@ static int set_sofo(slang_T *lp, const char *from, const char *to)
   const char *s;
   const char *p;
 
+  free_sal_items(&lp->sl_sal);
+
   // Use "sl_sal" as an array with 256 pointers to a list of wide
   // characters.  The index is the low byte of the character.
   // The list contains from-to pairs with a terminating NUL.
