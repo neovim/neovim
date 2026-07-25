@@ -73,3 +73,18 @@ nvim_on('VimEnter', group, {
     end
   end
 end)
+
+nvim_on('SessionLoadPost', group, {
+  pattern = '*',
+  desc = 'Open directory buffers',
+  nested = true,
+}, function()
+  for _, buf in ipairs(api.nvim_list_bufs()) do
+    local name = api.nvim_buf_get_name(buf)
+    if should_open(buf, name) then
+      api.nvim_buf_call(buf, function()
+        vim.cmd({ cmd = 'edit', args = { name } })
+      end)
+    end
+  end
+end)
