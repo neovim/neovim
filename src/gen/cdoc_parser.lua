@@ -143,25 +143,35 @@ local function process_proto(item, state)
   cur_obj.name = item.name
   cur_obj.params = cur_obj.params or {}
 
+  local documented = {} --- @type table<string,nvim.cdoc.parser.param>
+  local matched = {} --- @type table<nvim.cdoc.parser.param,true>
+  local params = {} --- @type nvim.cdoc.parser.param[]
+
+  for _, p in ipairs(cur_obj.params) do
+    documented[p.name] = documented[p.name] or p
+  end
+
   for _, p in ipairs(item.parameters) do
     local event_type = 'vim.api.keyset.events|vim.api.keyset.events[]'
     local event = (item.name == 'nvim_create_autocmd' or item.name == 'nvim_exec_autocmds')
       and p[2] == 'event'
-    local param = { name = p[2], type = event and event_type or api_type(p[1]) }
-    local added = false
-
-    for _, cp in ipairs(cur_obj.params) do
-      if cp.name == param.name then
-        cp.type = param.type
-        added = true
-        break
-      end
+    local param = documented[p[2]]
+    if param then
+      matched[param] = true
+    else
+      param = { name = p[2] } --[[@as nvim.cdoc.parser.param]]
     end
+    param.type = event and event_type or api_type(p[1])
+    params[#params + 1] = param
+  end
 
-    if not added then
-      table.insert(cur_obj.params, param)
+  for _, p in ipairs(cur_obj.params) do
+    if not matched[p] then
+      params[#params + 1] = p
     end
   end
+
+  cur_obj.params = params
 
   cur_obj.returns = cur_obj.returns or { {
     name = '',
