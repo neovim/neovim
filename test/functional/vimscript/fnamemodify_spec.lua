@@ -182,6 +182,11 @@ describe('fnamemodify()', function()
       eq('//?/UNC/server', fnamemodify('//?/UNC/server', ':h'))
       eq('//?/UNC/server/share', fnamemodify('//?/UNC/server/share', ':h'))
       eq('//?/UNC/server/share/', fnamemodify('//?/UNC/server/share/foo', ':h'))
+
+      -- relative "./" and ".\" prefixes
+      eq('./path/to', fnamemodify('./path/to/hello.txt', ':h'))
+      eq('./path', fnamemodify('./path/to/hello.txt', ':h:h'))
+      eq('./path/to', fnamemodify([[.\path\to\hello.txt]], ':h'))
     end
   end)
 
