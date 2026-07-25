@@ -348,7 +348,7 @@ static void win_redr_stl_expr(win_T *wp, bool draw_winbar, bool draw_ruler, bool
       opt_scope = ((*wp->w_p_stl != NUL) ? OPT_LOCAL : 0);
     }
 
-    attr = win_hl_attr(wp, (int)group);
+    attr = draw_ruler && !in_status_line ? HL_ATTR(group) : win_hl_attr(wp, (int)group);
     if (!wp->w_floating && in_status_line && !is_stl_global) {
       col += wp->w_wincol;
     }

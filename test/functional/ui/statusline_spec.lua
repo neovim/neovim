@@ -818,6 +818,15 @@ describe('statusline', function()
       {2:[No Name]             0,0-1          All}|
                             0,0-1         All |
     ]])
+    command('set rulerformat=%17(%l,%c%V%=%P%)')
+    screen:expect([[
+                                              |
+      {1:~}{15:^ }{1:                                      }|
+      {1:~                                       }|*4
+      {2:[No Name]              0,0-1         All}|
+                            0,0-1         All |
+    ]])
+    command('set rulerformat&')
     api.nvim_win_close(win, true)
     screen:expect([[
       ^                                        |
