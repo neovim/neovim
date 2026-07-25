@@ -362,7 +362,9 @@ STARTUP
 
 TERMINAL
 
-• todo
+• OSC 8 hyperlinks in a |:terminal| buffer are |extmarks| in the
+  "nvim.terminal.url" namespace, so their URL can be retrieved with
+  |nvim_buf_get_extmarks()|. |gx| and |:Inspect| use them.
 
 TREESITTER
 

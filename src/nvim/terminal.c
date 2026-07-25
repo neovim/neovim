@@ -42,6 +42,7 @@
 #include <string.h>
 
 #include "klib/kvec.h"
+#include "nvim/api/extmark.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
@@ -54,6 +55,8 @@
 #include "nvim/context.h"
 #include "nvim/cursor.h"
 #include "nvim/cursor_shape.h"
+#include "nvim/decoration.h"
+#include "nvim/decoration_defs.h"
 #include "nvim/drawline.h"
 #include "nvim/drawscreen.h"
 #include "nvim/eval.h"
@@ -65,6 +68,7 @@
 #include "nvim/event/multiqueue.h"
 #include "nvim/event/time.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/extmark.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
@@ -76,6 +80,7 @@
 #include "nvim/main.h"
 #include "nvim/map_defs.h"
 #include "nvim/mark.h"
+#include "nvim/marktree.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -125,6 +130,14 @@ typedef struct {
   OptInt save_w_p_so;
   OptInt save_w_p_siso;
 } TerminalState;
+
+typedef struct {
+  linenr_T linenr;
+  int start_col;
+  int end_col;
+  int idx;
+  bool to_eol;
+} TerminalUrl;
 
 #include "terminal.c.generated.h"
 
@@ -210,6 +223,10 @@ struct terminal {
 
   StringBuilder termrequest_buffer;  ///< Growable array containing unfinished request sequence
   VTermTerminator termrequest_terminator;  ///< Terminator (BEL or ST) used in the termrequest
+
+  bool saw_osc8;
+  Set(cstr_t) urls;
+  kvec_t(TerminalUrl) url_runs;
 
   size_t refcount;                  // reference count
 };
@@ -317,11 +334,11 @@ static void schedule_termrequest(Terminal *term)
                  (void *)(intptr_t)term->termrequest_terminator);
 }
 
-static int parse_osc8(const char *str, int *attr)
+static int parse_osc8(Terminal *term, const char *str, int *attr)
   FUNC_ATTR_NONNULL_ALL
 {
-  // Parse the URI from the OSC 8 sequence and add the URL to our URL set.
-  // Skip the ID, we don't use it (for now)
+  // Parse the params and the URI from the OSC 8 sequence. Of the params only
+  // "id" is used, to tell apart adjacent links pointing at the same URI.
   size_t i = 0;
   for (; str[i] != NUL; i++) {
     if (str[i] == ';') {
@@ -334,6 +351,21 @@ static int parse_osc8(const char *str, int *attr)
     return 0;
   }
 
+  const char *id = NULL;
+  size_t id_len = 0;
+  for (size_t p = 0; p < i;) {
+    size_t end = p;
+    while (end < i && str[end] != ':') {
+      end++;
+    }
+    if (end - p > STRLEN_LITERAL("id=") && strncmp(str + p, "id=", STRLEN_LITERAL("id=")) == 0) {
+      id = str + p + STRLEN_LITERAL("id=");
+      id_len = end - p - STRLEN_LITERAL("id=");
+      break;
+    }
+    p = end + 1;
+  }
+
   // Move past the semicolon
   i++;
 
@@ -343,8 +375,24 @@ static int parse_osc8(const char *str, int *attr)
     return 1;
   }
 
-  *attr = hl_add_url(0, str + i);
+  StringBuilder key = KV_INITIAL_VALUE;
+  kv_printf(key, "%.*s\1%s", (int)id_len, id ? id : "", str + i);
+
+  MHPutStatus status;
+  uint32_t k = set_put_idx(cstr_t, &term->urls, key.items, &status);
+  if (status != kMHExisting) {
+    term->urls.keys[k] = xstrdup(key.items);
+  }
+  kv_destroy(key);
+
+  *attr = (int)k + 1;
   return 1;
+}
+
+static const char *terminal_url(Terminal *term, int idx)
+{
+  const char *key = term->urls.keys[idx - 1];
+  return strchr(key, '\1') + 1;
 }
 
 static int on_osc(int command, VTermStringFragment frag, void *user)
@@ -374,7 +422,10 @@ static int on_osc(int command, VTermStringFragment frag, void *user)
       kv_push(term->termrequest_buffer, NUL);
       const size_t off = STRLEN_LITERAL("\x1b]8;");
       int attr = 0;
-      if (parse_osc8(term->termrequest_buffer.items + off, &attr)) {
+      if (parse_osc8(term, term->termrequest_buffer.items + off, &attr)) {
+        if (attr != 0) {
+          term->saw_osc8 = true;
+        }
         VTermState *state = vterm_obtain_state(term->vt);
         VTermValue value = { .number = attr };
         vterm_state_set_penattr(state, VTERM_ATTR_URI, VTERM_VALUETYPE_INT, &value);
@@ -1233,6 +1284,12 @@ void terminal_destroy(Terminal **termpp)
     xfree(term->title);
     xfree(term->selection_buffer);
     kv_destroy(term->selection);
+    const char *url = NULL;
+    set_foreach(&term->urls, url, {
+      xfree((void *)url);
+    });
+    set_destroy(cstr_t, &term->urls);
+    kv_destroy(term->url_runs);
     kv_destroy(term->termrequest_buffer);
     vterm_free(term->vt);
     multiqueue_free(term->pending.events);
@@ -1500,10 +1557,6 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *te
         .hl_blend = -1,
         .url = -1,
       });
-    }
-
-    if (cell.uri > 0) {
-      attr_id = hl_combine_attr(attr_id, cell.uri);
     }
 
     term_attrs[col] = attr_id;
@@ -2314,15 +2367,34 @@ end:
 // }}}
 // terminal buffer refresh & misc {{{
 
-static void fetch_row(Terminal *term, int row, int end_col)
+static void fetch_row(Terminal *term, int row, int end_col, linenr_T linenr)
 {
   int col = 0;
   size_t line_len = 0;
   char *ptr = term->textbuf;
+  int uri = 0;
+  bool in_run = false;
 
   while (col < end_col) {
     VTermScreenCell cell;
     fetch_cell(term, row, col, &cell);
+    if (term->saw_osc8 && cell.uri != uri) {
+      int byte_col = (int)(ptr - term->textbuf);
+      if (in_run) {
+        kv_last(term->url_runs).end_col = byte_col;
+        in_run = false;
+      }
+      if (cell.uri > 0 && (uint32_t)cell.uri <= set_size(&term->urls)) {
+        kv_push(term->url_runs, ((TerminalUrl){
+          .linenr = linenr,
+          .start_col = byte_col,
+          .end_col = byte_col,
+          .idx = cell.uri,
+        }));
+        in_run = true;
+      }
+      uri = cell.uri;
+    }
     if (cell.schar) {
       schar_get_adv(&ptr, cell.schar);
       line_len = (size_t)(ptr - term->textbuf);
@@ -2332,8 +2404,73 @@ static void fetch_row(Terminal *term, int row, int end_col)
     col += cell.width;
   }
 
+  if (in_run) {
+    kv_last(term->url_runs).end_col = (int)(ptr - term->textbuf);
+    kv_last(term->url_runs).to_eol = true;
+  }
+
   // end of line
   term->textbuf[line_len] = NUL;
+}
+
+static uint32_t terminal_url_ns(void)
+{
+  static uint32_t ns = 0;
+  if (ns == 0) {
+    ns = (uint32_t)nvim_create_namespace(STATIC_CSTR_AS_STRING("nvim.terminal.url"));
+  }
+  return ns;
+}
+
+static colnr_T clamp_to_line(buf_T *buf, linenr_T linenr, int col)
+{
+  return MIN((colnr_T)col, (colnr_T)strlen(ml_get_buf(buf, linenr)));
+}
+
+static void set_url_extmark(Terminal *term, buf_T *buf, TerminalUrl start, TerminalUrl end)
+{
+  colnr_T start_col = clamp_to_line(buf, start.linenr, start.start_col);
+  colnr_T end_col = clamp_to_line(buf, end.linenr, end.end_col);
+  if (start.linenr == end.linenr && start_col >= end_col) {
+    return;
+  }
+
+  DecorSignHighlight sh = DECOR_SIGN_HIGHLIGHT_INIT;
+  sh.url = xstrdup(terminal_url(term, start.idx));
+  DecorInline decor = { .ext = true, .data.ext = { .vt = NULL, .sh_idx = decor_put_sh(sh) } };
+  extmark_set(buf, terminal_url_ns(), NULL, start.linenr - 1, start_col, end.linenr - 1, end_col,
+              decor, MT_FLAG_DECOR_HL, true, false, true, false, NULL);
+}
+
+/// Replaces the URL extmarks on lines "first" through "last" with the runs
+/// collected by fetch_row(). A link that wraps spans several rows, so runs are
+/// merged into one extmark while they continue at the start of the next line.
+static void refresh_url_extmarks(Terminal *term, buf_T *buf, linenr_T first, linenr_T last)
+{
+  if (!term->saw_osc8) {
+    return;
+  }
+
+  extmark_clear(buf, terminal_url_ns(), (int)first - 1, 0, (int)last - 1, MAXCOL);
+
+  for (size_t i = 0; i < kv_size(term->url_runs);) {
+    TerminalUrl start = kv_A(term->url_runs, i);
+    TerminalUrl end = start;
+    size_t j = i + 1;
+    while (end.to_eol && j < kv_size(term->url_runs)) {
+      TerminalUrl next = kv_A(term->url_runs, j);
+      if (next.idx != end.idx || next.linenr != end.linenr + 1 || next.start_col != 0) {
+        break;
+      }
+      end = next;
+      j++;
+    }
+
+    set_url_extmark(term, buf, start, end);
+    i = j;
+  }
+
+  kv_size(term->url_runs) = 0;
 }
 
 static bool fetch_cell(Terminal *term, int row, int col, VTermScreenCell *cell)
@@ -2576,16 +2713,24 @@ static void refresh_scrollback(Terminal *term, buf_T *buf)
 
   // Clamp old_height in case buffer lines have been deleted by the user.
   old_height = MIN(old_height, buf->b_ml.ml_line_count);
+  linenr_T sb_first = 0;
+  linenr_T sb_last = 0;
   while (term->sb_pending > 0) {
     // This means that either the window height has decreased or the screen
     // became full and libvterm had to push all rows up. Convert the first
     // pending scrollback row into a string and append it just above the visible
     // section of the buffer.
-    fetch_row(term, -term->sb_pending, width);
     int buf_index = buf->b_ml.ml_line_count - old_height;
+    fetch_row(term, -term->sb_pending, width, buf_index + 1);
     ml_append_buf(buf, buf_index, term->textbuf, 0, false);
     appended_lines_buf(buf, buf_index, 1);
+    sb_first = sb_first ? sb_first : buf_index + 1;
+    sb_last = buf_index + 1;
     term->sb_pending--;
+  }
+
+  if (sb_first) {
+    refresh_url_extmarks(term, buf, sb_first, sb_last);
   }
 
   int max_line_count = (int)term->sb_current + height;
@@ -2619,9 +2764,11 @@ static void refresh_screen(Terminal *term, buf_T *buf)
     return;
   }
 
-  for (int r = term->invalid_start, linenr = row_to_linenr(term, r);
+  linenr_T first_linenr = row_to_linenr(term, term->invalid_start);
+  linenr_T last_linenr = first_linenr;
+  for (int r = term->invalid_start, linenr = first_linenr;
        r < term->invalid_end; r++, linenr++) {
-    fetch_row(term, r, width);
+    fetch_row(term, r, width, linenr);
 
     if (linenr <= buf->b_ml.ml_line_count) {
       ml_replace_buf(buf, linenr, term->textbuf, true, false);
@@ -2630,7 +2777,9 @@ static void refresh_screen(Terminal *term, buf_T *buf)
       ml_append_buf(buf, linenr - 1, term->textbuf, 0, false);
       added++;
     }
+    last_linenr = linenr;
   }
+  refresh_url_extmarks(term, buf, first_linenr, last_linenr);
   term->old_height = height;
 
   int change_start = row_to_linenr(term, term->invalid_start);

@@ -5,8 +5,9 @@ local tt = require('test.functional.testterm')
 
 local describe, it, before_each = t.describe, t.it, t.before_each
 local assert_alive = n.assert_alive
+local eq, retry = t.eq, t.retry
 local feed, clear = n.feed, n.clear
-local api = n.api
+local api, exec_lua = n.api, n.exec_lua
 local testprg, command = n.testprg, n.command
 local fn = n.fn
 local nvim_set = n.nvim_set
@@ -422,6 +423,143 @@ describe(':terminal', function()
       This is another {100:EXAMPLE} of a link                 |
                                                         |*5
     ]])
+  end)
+
+  it('sets extmarks for URLs #35101', function()
+    local screen = Screen.new(50, 7)
+    screen:add_extra_attr_ids({
+      [100] = { url = 'https://example.com' },
+      [101] = { url = 'https://xn--fsq.example' },
+    })
+    local chan = api.nvim_open_term(0, {})
+    api.nvim_chan_send(
+      chan,
+      'This is an \027]8;;https://example.com\027\\example\027]8;;\027\\ of a link\r\n'
+        .. 'wíde ← \027]8;;https://xn--fsq.example\027\\lînk\027]8;;\027\\ here'
+    )
+    screen:expect([[
+      ^This is an {100:example} of a link                      |
+      wíde ← {101:lînk} here                                  |
+                                                        |*5
+    ]])
+
+    local ns = api.nvim_get_namespaces()['nvim.terminal.url']
+    local marks = api.nvim_buf_get_extmarks(0, ns, 0, -1, { details = true })
+    eq(2, #marks)
+    eq({ 0, 11, 18, 'https://example.com' }, {
+      marks[1][2],
+      marks[1][3],
+      marks[1][4].end_col,
+      marks[1][4].url,
+    })
+    eq({ 1, 10, 15, 'https://xn--fsq.example' }, {
+      marks[2][2],
+      marks[2][3],
+      marks[2][4].end_col,
+      marks[2][4].url,
+    })
+    eq('example', api.nvim_buf_get_text(0, 0, 11, 0, 18, {})[1])
+    eq('lînk', api.nvim_buf_get_text(0, 1, 10, 1, 15, {})[1])
+
+    api.nvim_win_set_cursor(0, { 1, 12 })
+    eq({ 'https://example.com' }, exec_lua([[return require('vim.ui')._get_urls()]]))
+  end)
+
+  it('URL extmarks follow their text into the scrollback #35101', function()
+    local screen = Screen.new(50, 7)
+    screen:add_extra_attr_ids({ [100] = { url = 'https://example.com' } })
+    local chan = api.nvim_open_term(0, {})
+    api.nvim_chan_send(chan, 'a \027]8;;https://example.com\027\\link\027]8;;\027\\ b')
+    screen:expect([[
+      ^a {100:link} b                                          |
+                                                        |*6
+    ]])
+
+    api.nvim_chan_send(chan, ('\r\n'):rep(10))
+    local ns = api.nvim_get_namespaces()['nvim.terminal.url']
+    retry(nil, 2000, function()
+      eq(11, api.nvim_buf_line_count(0))
+      local marks = api.nvim_buf_get_extmarks(0, ns, 0, -1, { details = true })
+      eq(1, #marks)
+      eq(
+        'link',
+        api.nvim_buf_get_text(0, marks[1][2], marks[1][3], marks[1][2], marks[1][4].end_col, {})[1]
+      )
+    end)
+  end)
+
+  it('merges a wrapped URL into one extmark #35101', function()
+    local screen = Screen.new(20, 7)
+    screen:add_extra_attr_ids({ [100] = { url = 'https://example.com' } })
+    local chan = api.nvim_open_term(0, {})
+    api.nvim_chan_send(
+      chan,
+      'a \027]8;;https://example.com\027\\' .. ('W'):rep(45) .. '\027]8;;\027\\'
+    )
+    screen:expect([[
+      ^a {100:WWWWWWWWWWWWWWWWWW}|
+      {100:WWWWWWWWWWWWWWWWWWWW}|
+      {100:WWWWWWW}             |
+                          |*4
+    ]])
+
+    local ns = api.nvim_get_namespaces()['nvim.terminal.url']
+    local marks = api.nvim_buf_get_extmarks(0, ns, 0, -1, { details = true })
+    eq(1, #marks)
+    eq({ 0, 2, 2, 7, 'https://example.com' }, {
+      marks[1][2],
+      marks[1][3],
+      marks[1][4].end_row,
+      marks[1][4].end_col,
+      marks[1][4].url,
+    })
+
+    -- The URL is resolved from any row the link covers, not just the first.
+    api.nvim_win_set_cursor(0, { 2, 5 })
+    eq({ 'https://example.com' }, exec_lua([[return require('vim.ui')._get_urls()]]))
+  end)
+
+  it('keeps adjacent same-URL links apart by OSC 8 id #35101', function()
+    local screen = Screen.new(20, 7)
+    screen:add_extra_attr_ids({ [100] = { url = 'https://example.com' } })
+    local chan = api.nvim_open_term(0, {})
+    local function link(id, text)
+      return ('\027]8;id=%s;https://example.com\027\\%s\027]8;;\027\\'):format(id, text)
+    end
+    -- Two links, the first filling the row exactly, so they are adjacent.
+    api.nvim_chan_send(chan, link('a', ('A'):rep(20)) .. link('b', 'B'))
+    screen:expect([[
+      {100:^AAAAAAAAAAAAAAAAAAAA}|
+      {100:B}                   |
+                          |*5
+    ]])
+
+    local ns = api.nvim_get_namespaces()['nvim.terminal.url']
+    local marks = api.nvim_buf_get_extmarks(0, ns, 0, -1, { details = true })
+    eq(2, #marks)
+    eq({ 0, 0, 0, 20 }, { marks[1][2], marks[1][3], marks[1][4].end_row, marks[1][4].end_col })
+    eq({ 1, 0, 1, 1 }, { marks[2][2], marks[2][3], marks[2][4].end_row, marks[2][4].end_col })
+  end)
+
+  it('removes URL extmarks when the text is overwritten #35101', function()
+    local screen = Screen.new(50, 7)
+    screen:add_extra_attr_ids({ [100] = { url = 'https://example.com' } })
+    local chan = api.nvim_open_term(0, {})
+    api.nvim_chan_send(chan, 'a \027]8;;https://example.com\027\\link\027]8;;\027\\ b')
+    screen:expect([[
+      ^a {100:link} b                                          |
+                                                        |*6
+    ]])
+
+    local ns = api.nvim_get_namespaces()['nvim.terminal.url']
+    eq(1, #api.nvim_buf_get_extmarks(0, ns, 0, -1, {}))
+
+    api.nvim_chan_send(chan, '\r\027[2Kplain')
+    screen:expect([[
+      ^plain                                             |
+                                                        |*6
+    ]])
+    eq({}, api.nvim_buf_get_extmarks(0, ns, 0, -1, {}))
   end)
 
   it('zoomout with large horizontal output #30374', function()

@@ -212,6 +212,14 @@ clipboard.
 OSC 52 sequences sent from the :terminal buffer do not emit a |TermRequest|
 event. The event is handled directly by Nvim and is not forwarded to plugins.
 
+OSC 8: hyperlinks                                             *terminal-osc8*
+
+Programs can emit OSC 8 sequences to attach a URL to text. Nvim stores each
+link as an |extmark| with a `url` in the "nvim.terminal.url" namespace, so
+|nvim_buf_get_extmarks()| retrieves the URL at a position. |gx| and |:Inspect|
+use these marks. A link that wraps is one extmark spanning its rows; clearing
+the namespace unlinks the text until Nvim redraws the line.
+
 OSC 133: shell integration                    *terminal-osc133* *shell-prompt*
 
 Shells can emit semantic escape sequences (OSC 133) to mark where each prompt
