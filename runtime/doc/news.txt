@@ -432,6 +432,8 @@ These existing features changed their behavior.
 • |vim.lsp.util.open_floating_preview()| windows (e.g. |vim.lsp.buf.hover()|)
   converted to normal windows (e.g. with |CTRL-W_H|) are no longer closed
   automatically.
+• |nvim_del_keymap()|, |nvim_buf_del_keymap()| and |vim.keymap.del()| can
+  match only {lhs}, not {rhs}, with `opts.lhs=true`.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
