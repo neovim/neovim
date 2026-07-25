@@ -127,32 +127,6 @@ local function sanitize(t)
   return t
 end
 
---- Flattens a single array-like table. Errors if it attempts to flatten a
---- dict-like table
---- @param t table table which should be flattened
---- @param max_depth integer depth to which the table should be flattened
---- @param depth integer current iteration depth
---- @param result table output table that contains flattened result
---- @return table? flattened table if it can be flattened, otherwise nil
-local function flatten(t, max_depth, depth, result)
-  if depth < max_depth and type(t) == 'table' then
-    for k, v in pairs(t) do
-      if type(k) ~= 'number' or k <= 0 or math.floor(k) ~= k then
-        -- short-circuit: this is not a list like table
-        return nil
-      end
-
-      if flatten(v, max_depth, depth + 1, result) == nil then
-        return nil
-      end
-    end
-  elseif t ~= nil then
-    result[#result + 1] = t
-  end
-
-  return result
-end
-
 --- Determine if the current iterator stage should continue.
 ---
 --- If any arguments are passed to this function, then return those arguments
@@ -277,14 +251,14 @@ function Iter:unique(key)
   end)
 end
 
---- @nodoc
---- @diagnostic disable-next-line:unused-local
-function Iter:flatten(depth)
-  error('flatten() requires an array-like table')
+--- Tests if a value can be flattened by Iter:flatten()
+--- @return boolean
+local function flattenable(v)
+  local value_type = type(v)
+  return value_type == 'function' or value_type == 'table'
 end
 
---- Flattens a |list-iterator|, un-nesting nested values up to the given {depth}.
---- Errors if it attempts to flatten a dict-like value.
+--- Flattens an iterator, un-nesting nested values up to the given {depth}.
 ---
 --- Examples:
 ---
@@ -295,13 +269,52 @@ end
 --- vim.iter({1, { { a = 2 } }, { 3 } }):flatten():totable()
 --- -- { 1, { a = 2 }, 3 }
 ---
---- vim.iter({ 1, { { a = 2 } }, { 3 } }):flatten(math.huge):totable()
+--- vim.iter({ 1, { { 2 } }, { 3 } }):flatten(math.huge):totable()
 --- -- error: attempt to flatten a dict-like table
 --- ```
 ---
 --- @since 12
---- @param depth? integer Depth to which |list-iterator| should be flattened
----                        (defaults to 1)
+--- @param depth? integer Depth to which iterator should be flattened
+---                       (defaults to 1)
+--- @return vim.Iter<V1, V...>
+function Iter:flatten(depth)
+  depth = depth or 1
+  if depth > 1 then
+    return self:map(function(item)
+      return flattenable(item) and Iter.new(item):flatten(depth - 1) or item
+    end):flatten()
+  end
+
+  local next = self.next
+
+  local current_iter
+  self.next = function()
+    while true do
+      -- Change current inner iterator if exhausted
+      if current_iter == nil then
+        local next_inner = next(self)
+        if next_inner == nil then
+          return nil
+        end
+        if not flattenable(next_inner) then
+          return next_inner
+        end
+        current_iter = Iter.new(next_inner)
+      end
+
+      local item = current_iter:next()
+      if item == nil then
+        current_iter = nil
+      else
+        return item
+      end
+    end
+  end
+  return self
+end
+
+--- @nodoc
+--- @param depth? integer
 --- @return vim.IterArray<V1, V...>
 function IterArray:flatten(depth)
   depth = depth or 1
@@ -309,15 +322,17 @@ function IterArray:flatten(depth)
   local target = {}
 
   for i = self._head, self._tail - inc, inc do
-    local flattened = flatten(self._table[i], depth, 0, {})
-
-    -- exit early if we try to flatten a dict-like table
-    if flattened == nil then
-      error('flatten() requires an array-like table')
-    end
-
-    for _, v in pairs(flattened) do
-      target[#target + 1] = v
+    local item = self._table[i]
+    if flattenable(item) then
+      local inner = Iter.new(item)
+      if depth > 1 then
+        inner = inner:flatten(depth - 1)
+      end
+      for v in inner do
+        target[#target + 1] = v
+      end
+    else
+      target[#target + 1] = item
     end
   end
 
