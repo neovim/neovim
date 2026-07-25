@@ -164,7 +164,7 @@ describe('vim.net.request', function()
     t.eq(true, rv.tarfile)
   end)
 
-  it('dispatches remote zip URLs to the Lua browser', function()
+  it('dispatches remote zip URLs to zip.lua', function()
     n.clear({ args_rm = { '-u' } })
     local fixture =
       vim.fs.joinpath(t.paths.test_source_path, 'test/functional/fixtures/zip/browser.zip')
@@ -190,7 +190,7 @@ describe('vim.net.request', function()
     t.eq(true, rv.nvim_zip)
   end)
 
-  it('opens remote zip URLs with the selected browser', function()
+  it('downloads a live remote zip URL', function()
     t.skip(skip_integ, 'NVIM_TEST_INTEG not set (network integration test)')
 
     local rv = exec_lua(function()
