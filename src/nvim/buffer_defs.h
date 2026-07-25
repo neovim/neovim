@@ -972,9 +972,9 @@ typedef enum {
 } FloatRelative;
 
 typedef enum {
-  kWinNormal = 0,
-  kWinInfo,
-  kWinPreview,
+  kWinNormal = 0,  ///< Non-special window (split or float).
+  kWinInfo,        ///< Completion-menu "info" popup.
+  kWinPreview,     ///< 'previewpopup' window.
 } WinKind;
 
 /// Keep in sync with win_split_str[] in nvim_win_get_config() (api/win_config.c)
@@ -1295,8 +1295,8 @@ struct window_S {
   int w_nrwidth;                    // width of 'number' and 'relativenumber'
                                     // column being used
   int w_scwidth;                    // width of 'signcolumn'
-  int w_minscwidth;                 // minimum width or SCL_NO/SCL_NUM
-  int w_maxscwidth;                 // maximum width or SCL_NO/SCL_NUM
+  int w_minscwidth;                 // minimum 'signcolumn' width, or SCL_NO/SCL_NUM
+  int w_maxscwidth;                 // maximum 'signcolumn' width, or SCL_NO/SCL_NUM
 
   // === end of cached values ===
 

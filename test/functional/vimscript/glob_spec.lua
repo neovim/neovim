@@ -4,21 +4,20 @@ local n = require('test.functional.testnvim')()
 local describe, it, before_each, after_each = t.describe, t.it, t.before_each, t.after_each
 local clear, command, eval, eq = n.clear, n.command, n.eval, t.eq
 local mkdir = t.mkdir
-local fn = n.fn
-
-before_each(function()
-  clear()
-  mkdir('test-glob')
-
-  -- Long path might cause "Press ENTER" prompt; use :silent to avoid it.
-  command('silent cd test-glob')
-end)
-
-after_each(function()
-  vim.uv.fs_rmdir('test-glob')
-end)
 
 describe('glob()', function()
+  before_each(function()
+    clear()
+    mkdir('test-glob')
+
+    -- Long path might cause "Press ENTER" prompt; use :silent to avoid it.
+    command('silent cd test-glob')
+  end)
+
+  after_each(function()
+    vim.uv.fs_rmdir('test-glob')
+  end)
+
   it("glob('.*') returns . and .. ", function()
     eq({ '.', '..' }, eval("glob('.*', 0, 1)"))
     -- Do it again to verify scandir_next_with_dots() internal state.

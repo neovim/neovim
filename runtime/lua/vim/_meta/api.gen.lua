@@ -1212,29 +1212,24 @@ function vim.api.nvim_exec2(src, opts) end
 --- - pattern (`string|array?`, default: current file name) `autocmd-pattern`. Not allowed with {buf}.
 function vim.api.nvim_exec_autocmds(event, opts) end
 
---- Sends input-keys to Nvim, subject to various quirks controlled by `mode`
---- flags. This is a blocking call, unlike `nvim_input()`.
+--- Sends input-keys to Nvim, subject to various quirks controlled by `mode` flags. This is
+--- a blocking call, unlike `nvim_input()`.
 ---
 --- On execution error: does not fail, but updates v:errmsg.
 ---
---- To input sequences like [<C-o>] use `nvim_replace_termcodes()` (typically
---- with escape_ks=false) to replace `keycodes`, then pass the result to
---- nvim_feedkeys().
----
---- Example:
+--- To input keycodes like [<C-o>], pass the result of `nvim_replace_termcodes()`:
 ---
 --- ```vim
---- :let key = nvim_replace_termcodes("<C-o>", v:true, v:false, v:true)
+--- :let key = nvim_replace_termcodes('<C-o>', v:true, v:false, v:true)
 --- :call nvim_feedkeys(key, 'n', v:false)
 --- ```
 ---
 --- @see feedkeys()
 --- @see vim_strsave_escape_ks
---- @param keys string to be typed
---- @param mode string behavior flags, see `feedkeys()`
---- @param escape_ks boolean If true, escape K_SPECIAL bytes in `keys`.
---- This should be false if you already used
---- `nvim_replace_termcodes()`, and true otherwise.
+--- @param keys string Keys to send as input.
+--- @param mode string Behavior flags, see `feedkeys()`.
+--- @param escape_ks boolean If true, escape K_SPECIAL bytes in `keys`. Should be false if you used
+--- `nvim_replace_termcodes()`, else true.
 function vim.api.nvim_feedkeys(keys, mode, escape_ks) end
 
 --- Gets the option information for all options.
@@ -2051,12 +2046,9 @@ function vim.api.nvim_paste(data, crlf, phase) end
 --- @param follow boolean If true place cursor at end of inserted text.
 function vim.api.nvim_put(lines, type, after, follow) end
 
---- Replaces terminal codes and `keycodes` ([<CR>], [<Esc>], ...) in a string with
---- the internal representation.
+--- Converts terminal codes and `keycodes` ([<CR>], [<Esc>], …) in a key sequence, to the internal
+--- representation. See also Lua `vim.keycode()`.
 ---
----
---- Note:
---- Lua can use |vim.keycode()| instead.
 ---
 --- @see replace_termcodes
 --- @see cpoptions
