@@ -263,7 +263,7 @@ Directory, remote and archive browsing.			|netrw|
 	in the list with the usual commands and press <Enter> to go to the
 	directory or file under the cursor.
 	This also works for remote files over ftp, http, ssh, etc.
-	Zip and tar archives can also be browsed. |tar| |zip.lua|
+	Zip and tar archives can also be browsed. |tar| |zip|
 
 Edit-compile-edit speedup.				|quickfix|
 	The |:make| command can be used to run the compilation and jump to the
