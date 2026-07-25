@@ -667,6 +667,47 @@ func Test_statusline_showcmd()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_statusline_showcmd_redraw_tabline()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+    set showcmd showcmdloc=tabline showtabline=2 tabline=%S timeoutlen=0
+    nnoremap g :redraw<CR>
+    nnoremap gc <Nop>
+  END
+  call writefile(lines, 'XTest_statusline_showcmd_redraw', 'D')
+
+  let buf = RunVimInTerminal('-S XTest_statusline_showcmd_redraw', #{rows: 6, cols: 40})
+  call term_sendkeys(buf, 'g')
+  call WaitForAssert({-> assert_match(':redraw', term_getline(buf, 6))})
+  call WaitForAssert({-> assert_notmatch('^:', term_getline(buf, 1))})
+  call StopVimInTerminal(buf)
+endfunc
+
+func Test_statusline_showcmd_cmd_mapping()
+  set showcmd
+  set statusline=AAA%SBBB
+  set showcmdloc=statusline
+  try
+    let g:showcmd_statusline = ''
+    nnoremap <F3> <Cmd>let g:showcmd_statusline = <SID>get_statusline()<CR>
+    call feedkeys("\<F3>", 'xt')
+    call assert_equal('AAABBB', trim(g:showcmd_statusline))
+    let g:showcmd_statusline = ''
+    nunmap <F3>
+
+    "nnoremap <F3> <ScriptCmd>let g:showcmd_statusline = <SID>get_statusline()<CR>
+    "call feedkeys("\<F3>", 'xt')
+    "call assert_equal('AAABBB', trim(g:showcmd_statusline))
+  finally
+    silent! nunmap <F3>
+    unlet! g:showcmd_statusline
+    set showcmd&
+    set statusline&
+    set showcmdloc&
+  endtry
+endfunc
+
 func Test_statusline_highlight_group_cleared()
   CheckScreendump
 

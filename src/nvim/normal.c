@@ -1851,6 +1851,7 @@ void may_clear_cmdline(void)
 
 // Routines for displaying a partly typed command
 static char old_showcmd_buf[SHOWCMD_BUFLEN];    // For push_showcmd()
+static bool showcmd_is_clear = true;
 static bool showcmd_visual = false;
 
 void clear_showcmd(void)
@@ -2043,9 +2044,14 @@ void pop_showcmd(void)
   display_showcmd();
 }
 
-static void display_showcmd(void)
+void showcmd_update_clear_state(void)
 {
   showcmd_is_clear = (showcmd_buf[0] == NUL);
+}
+
+static void display_showcmd(void)
+{
+  showcmd_update_clear_state();
 
   if (*p_sloc == 's') {
     if (showcmd_is_clear) {
