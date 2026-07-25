@@ -166,7 +166,8 @@ end
 --- Creates a new |vim.Pos| from cursor position (see |api-indexing|).
 ---
 --- If {pos} is omitted, the first argument is treated as {win} instead of {buf},
---- and the current cursor position of {win} is used.
+--- and the current cursor position of {win} is used. If {win} is also omitted,
+--- it defaults to the current window.
 ---
 --- Example:
 --- ```lua
@@ -179,7 +180,7 @@ end
 ---@param buf integer
 ---@param pos [integer, integer] (lnum, col) tuple
 ---@return vim.Pos
----@overload fun(win: integer): vim.Pos
+---@overload fun(win?: integer): vim.Pos
 function M.cursor(buf, pos)
   validate('pos', pos, 'table', true)
 
@@ -190,8 +191,8 @@ function M.cursor(buf, pos)
     end
   else
     local win = buf
-    validate('win', win, 'number')
-    if win == 0 then
+    validate('win', win, 'number', true)
+    if win == 0 or win == nil then
       win = api.nvim_get_current_win()
     end
 
