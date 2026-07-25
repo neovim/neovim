@@ -203,7 +203,7 @@ BUILD
 
 DEFAULTS
 
-• todo
+• `]u` and `[u` jump to the next/previous URL in a |:terminal| buffer.
 
 DIAGNOSTICS
 

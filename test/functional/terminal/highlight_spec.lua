@@ -541,6 +541,63 @@ describe(':terminal', function()
     eq({ 1, 0, 1, 1 }, { marks[2][2], marks[2][3], marks[2][4].end_row, marks[2][4].end_col })
   end)
 
+  it('`]u` and `[u` jump between URLs #40896', function()
+    local screen = Screen.new(50, 7)
+    screen:add_extra_attr_ids({
+      [100] = { url = 'https://one.example' },
+      [101] = { url = 'https://two.example' },
+      [102] = { url = 'https://three.example' },
+    })
+    local chan = api.nvim_open_term(0, {})
+    local function link(url, text)
+      return ('\027]8;;%s\027\\%s\027]8;;\027\\'):format(url, text)
+    end
+    api.nvim_chan_send(
+      chan,
+      'a '
+        .. link('https://one.example', 'ONE')
+        .. ' b '
+        .. link('https://two.example', 'TWO')
+        .. '\r\nc '
+        .. link('https://three.example', 'THREE')
+    )
+    screen:expect([[
+      ^a {100:ONE} b {101:TWO}                                       |
+      c {102:THREE}                                           |
+                                                        |*5
+    ]])
+
+    local function jump(keys)
+      feed(keys)
+      return api.nvim_win_get_cursor(0)
+    end
+
+    eq({ 1, 2 }, jump(']u'))
+    eq({ 1, 8 }, jump(']u'))
+    eq({ 2, 2 }, jump(']u'))
+    eq({ 2, 2 }, jump(']u'))
+    eq({ 1, 8 }, jump('[u'))
+    eq({ 1, 2 }, jump('[u'))
+    eq({ 1, 2 }, jump('[u'))
+    eq({ 2, 2 }, jump('2]u'))
+    eq({ 1, 2 }, jump('2[u'))
+  end)
+
+  it('`]u` and `[u` do nothing without URLs #40896', function()
+    local screen = Screen.new(50, 7)
+    local chan = api.nvim_open_term(0, {})
+    api.nvim_chan_send(chan, 'no links here')
+    screen:expect([[
+      ^no links here                                     |
+                                                        |*6
+    ]])
+
+    feed(']u')
+    eq({ 1, 0 }, api.nvim_win_get_cursor(0))
+    feed('[u')
+    eq({ 1, 0 }, api.nvim_win_get_cursor(0))
+  end)
+
   it('removes URL extmarks when the text is overwritten #35101', function()
     local screen = Screen.new(50, 7)
     screen:add_extra_attr_ids({ [100] = { url = 'https://example.com' } })

@@ -209,6 +209,7 @@ nvim.terminal:
     - 'winhighlight' uses |hl-StatusLineTerm| and |hl-StatusLineTermNC| in
       place of |hl-StatusLine| and |hl-StatusLineNC|
     - |[[| and |]]| to navigate between shell prompts
+    - `[u` and `]u` to navigate between URLs, see |terminal-osc8|
 
 nvim.cmdwin:
 - |CmdwinEnter|: Limits syntax sync to maxlines=1 in the |cmdwin|.

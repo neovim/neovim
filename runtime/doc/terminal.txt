@@ -220,6 +220,9 @@ link as an |extmark| with a `url` in the "nvim.terminal.url" namespace, so
 use these marks. A link that wraps is one extmark spanning its rows; clearing
 the namespace unlinks the text until Nvim redraws the line.
 
+                                                *terminal_]u* *terminal_[u*
+The `]u` and `[u` motions jump to the next/previous URL, taking a [count].
+
 OSC 133: shell integration                    *terminal-osc133* *shell-prompt*
 
 Shells can emit semantic escape sequences (OSC 133) to mark where each prompt

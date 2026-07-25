@@ -714,6 +714,30 @@ do
     end
   end
 
+  ---@param win integer
+  ---@param buf integer
+  ---@param count integer
+  local function jump_to_url(win, buf, count)
+    local ns = vim.api.nvim_get_namespaces()['nvim.terminal.url']
+    if not ns then
+      return
+    end
+
+    local row, col = unpack(vim.api.nvim_win_get_cursor(win))
+    local start, end_ ---@type [integer,integer], [integer,integer]
+    if count > 0 then
+      start, end_ = { row - 1, col + 1 }, { -1, -1 }
+    else
+      start, end_ = { row - 1, math.max(col - 1, 0) }, { 0, 0 }
+    end
+
+    local marks = vim.api.nvim_buf_get_extmarks(buf, ns, start, end_, { limit = math.abs(count) })
+    if #marks > 0 then
+      local mark = assert(marks[math.min(#marks, math.abs(count))])
+      vim.api.nvim_win_set_cursor(win, { mark[2] + 1, mark[3] })
+    end
+  end
+
   nvim_on('TermOpen', nvim_terminal_augroup, {
     desc = 'Default settings for :terminal buffers',
   }, function(ev)
@@ -741,6 +765,13 @@ do
     vim.keymap.set({ 'n', 'x', 'o' }, ']]', function()
       jump_to_prompt(nvim_terminal_prompt_ns, 0, ev.buf, vim.v.count1)
     end, { buf = ev.buf, desc = 'Jump [count] shell prompts forward' })
+
+    vim.keymap.set({ 'n', 'x', 'o' }, '[u', function()
+      jump_to_url(0, ev.buf, -vim.v.count1)
+    end, { buf = ev.buf, desc = 'Jump [count] URLs backward' })
+    vim.keymap.set({ 'n', 'x', 'o' }, ']u', function()
+      jump_to_url(0, ev.buf, vim.v.count1)
+    end, { buf = ev.buf, desc = 'Jump [count] URLs forward' })
 
     -- If the terminal buffer is being reused, clear the previous exit msg
     vim.api.nvim_buf_clear_namespace(ev.buf, nvim_terminal_exitmsg_ns, 0, -1)
