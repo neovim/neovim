@@ -4,11 +4,12 @@
                             NVIM REFERENCE MANUAL
 
 
-Builtin plugin: zip                                                       *zip*
+Builtin plugin: zip                                                      *zip*
 
-zip.lua is the default, read-only browser for zip archives. It uses the builtin
-|dir| listing interface and requires the `unzip` executable. The module
-implementing zip.lua is private and is not a supported Lua API.
+Nvim opens a read-only listing when |:edit| is used with a zip archive. The
+listing is a |dir| buffer with 'filetype' set to "zip". It requires the
+`unzip` executable. The module implementing it is private and is not
+a supported Lua API.
 
                                                     *g:loaded_nvim_zip_plugin*
 To disable the built-in zip browser, set this before startup: >lua
@@ -21,17 +22,12 @@ Editing a zip-like file opens a read-only listing. Directory entries can be
 opened to browse that level of the archive. File entries open as read-only
 `zipfile://{archive}::{member}` buffers.
 
-Mappings:                                                   *zip-mappings*
->
-    <CR>    Open the file or directory under the cursor.
-    -       Open the parent archive directory.
-    R       Reload the current archive directory.
-<
-At the archive root, "-" opens the containing filesystem directory.
+Mappings are the standard |dir-buffer-mappings|. At the archive root, - opens
+the containing filesystem directory.
 
-zip.lua recognizes the same zip-like extensions as the legacy plugin, including
-`zip`, `jar`, `apk`, `epub`, Office/OpenDocument formats, `whl`, `xpi`, `pkpass`,
-and `cbz`.
+The same zip-like extensions as the legacy plugin are recognized, including
+zip, jar, apk, epub, Office and OpenDocument formats, whl, xpi, pkpass, and
+cbz.
 
 INTEGRATIONS                                              *zip-integrations*
 
@@ -41,16 +37,16 @@ Remote zip URLs are downloaded by |vim.net| and opened in the browser.
 
 LIMITATIONS                                                *zip-limitations*
 
-zip.lua does not update or extract archive members. It does not refetch remote
-archives on reload or support PowerShell fallback, custom backend commands, or
-the legacy `g:zip_*` configuration variables. Use |package-zip| when those
-features are required.
+Archive members cannot be updated or extracted. Remote archives are not
+refetched on reload, and there is no PowerShell fallback, no custom backend
+command, and no support for the legacy `g:zip_*` variables. Use |package-zip|
+when those features are required.
 
 ==============================================================================
-Legacy plugin: zip                                                *package-zip*
+Legacy plugin: zip                                               *package-zip*
 
-The legacy Vimscript zip plugin browses, updates, and extracts archive members.
-It is not loaded by default; use `:packadd` to activate it: >lua
+The legacy Vimscript zip plugin browses, updates, and extracts archive
+members. It is not loaded by default; use `:packadd` to activate it: >lua
 
     vim.cmd.packadd('zip')
 <
