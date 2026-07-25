@@ -344,6 +344,32 @@ describe('vim.fs', function()
       -- nil: with depth=2 we don't scan testdir/a/noaccess.
       eq(nil, result['a/noaccess'])
     end)
+
+    it('opts.normalize=false uses {path} literally', function()
+      mkdir('testdir')
+      mkdir('testdir/$XTEST_FS_DIR')
+      mkdir('testdir/expanded')
+      t.write_file('testdir/$XTEST_FS_DIR/literal.txt', '')
+      t.write_file('testdir/expanded/expanded.txt', '')
+      finally(function()
+        rmdir('testdir')
+      end)
+
+      eq(
+        { { ['expanded.txt'] = 'file' }, { ['literal.txt'] = 'file' } },
+        exec_lua(function()
+          vim.uv.os_setenv('XTEST_FS_DIR', 'expanded')
+          local out = {} ---@type table<string, string>[]
+          for i, normalize in ipairs({ true, false }) do
+            out[i] = {}
+            for name, etype in vim.fs.dir('testdir/$XTEST_FS_DIR', { normalize = normalize }) do
+              out[i][name] = etype
+            end
+          end
+          return out
+        end)
+      )
+    end)
   end)
 
   describe('find()', function()

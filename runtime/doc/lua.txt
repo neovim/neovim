@@ -2639,7 +2639,7 @@ vim.fs.dir({path}, {opts})                                      *vim.fs.dir()*
 
     Parameters: ~
       • {path}  (`string`) Directory to iterate over, normalized via
-                |vim.fs.normalize()|.
+                |vim.fs.normalize()| unless `opts.normalize=false`.
       • {opts}  (`table?`) Optional keyword arguments:
                 • {depth}? (`integer`, default: `1`) How deep to traverse.
                 • {err}? (`boolean`, default: `false`) Report errors via the
@@ -2647,6 +2647,10 @@ vim.fs.dir({path}, {opts})                                      *vim.fs.dir()*
                   skipping.
                 • {follow}? (`boolean`, default: `false`) Follow symbolic
                   links.
+                • {normalize}? (`boolean`, default: `true`) Normalize {path}
+                  via |vim.fs.normalize()|. Set `false` to use {path}
+                  literally, e.g. to list a directory whose name contains `~`
+                  or `$`.
                 • {skip}? (`fun(dir_name: string): boolean`) Predicate to
                   control traversal. Return false to stop searching the
                   current directory. Only useful when depth > 1 Return an
