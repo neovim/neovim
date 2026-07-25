@@ -6409,9 +6409,12 @@ static void nv_record(cmdarg_T *cap)
       emsg(_(e_cmdline_window_already_open));
       return;
     }
+    bool insert_range = Visual.active && cap->nchar == ':';
     char fc[2] = { (char)cap->nchar, 0 };
     typval_T tv_args[] = {
       { .v_type = VAR_STRING, .vval.v_string = fc },
+      { .v_type = VAR_STRING, .vval.v_string = insert_range ? "'<,'>" : "" },
+      { .v_type = VAR_NUMBER, .vval.v_number = insert_range ? 5 : 1 },
       { .v_type = VAR_UNKNOWN },
     };
     nlua_call_typval("vim._core.cmdwin", "open", tv_args, NULL);
