@@ -277,10 +277,6 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
   using_b_ffname = (fname == curbuf->b_ffname) || (sfname == curbuf->b_ffname);
   using_b_fname = (fname == curbuf->b_fname) || (sfname == curbuf->b_fname);
 
-  // After reading a file the cursor line changes but we don't want to
-  // display the line.
-  ex_no_reprint = true;
-
   // don't display the file info for another buffer now
   need_fileinfo = false;
 
@@ -1855,13 +1851,8 @@ failed:
 
     u_clearline(curbuf);   // cannot use "U" command after adding lines
 
-    // In Ex mode: cursor at last new line.
-    // Otherwise: cursor at first new line.
-    if (exmode_active) {
-      curwin->w_cursor.lnum = from + linecnt;
-    } else {
-      curwin->w_cursor.lnum = from + 1;
-    }
+    // Cursor at first new line.
+    curwin->w_cursor.lnum = from + 1;
     check_cursor_lnum(curwin);
     beginline(BL_WHITE | BL_FIX);           // on first non-blank
 

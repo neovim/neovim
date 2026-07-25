@@ -690,7 +690,7 @@ describe('TUI :restart', function()
       -- Assert the command-line echo so the E37 assertion below doesn't "succeed immediately".
       screen:expect({ any = vim.pesc(cmd) })
       tt.feed_data('\013')
-      screen:expect({ any = vim.pesc('Vim(qall):E37: No write since last change') })
+      screen:expect({ any = vim.pesc('E37: No write since last change') })
       assert_exitreason(('QuitPre:%s\nExitPre:%s\n'):format(exitreason, exitreason))
     end
 

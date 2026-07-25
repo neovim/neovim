@@ -30,17 +30,17 @@ describe(':global', function()
       {9:Interrupted}                                                                |
     ]])
 
-    -- Also test in Ex mode
+    -- Also test in Ex mode (keep-open cmdwin REPL)
     feed('gQg/foo/norm :<C-V>;<CR>')
     poke_eventloop() -- Wait for :sleep to start
     feed('<C-C>')
     screen:expect([[
-      {3:                                                                           }|
-      Entering Ex mode.  Type "visual" to go to Normal mode.                     |
-      :g/foo/norm :;                                                             |
-                                                                                 |
-      {9:Interrupted}                                                                |
-      :^                                                                          |
+      foo                                                                        |
+      {2:[No Name] [+]                                                              }|
+      {1::}" Keyboard interrupt                                                      |
+      {1::}^                                                                          |
+      {3:[Command Line]                                                             }|
+      {5:-- INSERT --}                                                               |
     ]])
   end)
 end)

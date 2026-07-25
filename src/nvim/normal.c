@@ -101,8 +101,6 @@ typedef struct {
   bool need_flushbuf;
   bool set_prevcount;
   bool previous_got_int;             // `got_int` was true
-  bool noexmode;                     // true if the normal mode was pushed from
-                                     // ex mode (:global or :visual for example)
   bool toplevel;                     // top-level normal mode
   oparg_T oa;                        // operator arguments
   cmdarg_T ca;                       // command arguments
@@ -502,22 +500,16 @@ bool op_pending(void)
            && current_oap->regname == NUL);
 }
 
-/// Normal state entry point. This is called on:
-///
-/// - Startup, In this case the function never returns.
-/// - The :visual command is called from :global in ex mode, `:global/PAT/visual`
-///   for example. Returns when re-entering ex mode (because ex mode recursion is
-///   not allowed)
+/// Normal state entry point: the main loop. Called on startup, never returns.
 ///
 /// This used to be called main_loop() on main.c
-void normal_enter(bool noexmode)
+void normal_enter(void)
 {
   NormalState state;
   normal_state_init(&state);
   oparg_T *prev_oap = current_oap;
   current_oap = &state.oa;
-  state.noexmode = noexmode;
-  state.toplevel = !noexmode;
+  state.toplevel = true;
   state_enter(&state.state);
   current_oap = prev_oap;
 }
@@ -1265,25 +1257,13 @@ static void normal_check_stuff_buffer(NormalState *s)
 
 static void normal_check_interrupt(NormalState *s)
 {
-  // Reset "got_int" now that we got back to the main loop.  Except when
-  // inside a ":g/pat/cmd" command, then the "got_int" needs to abort
-  // the ":g" command.
-  // For ":g/pat/vi" we reset "got_int" when used once.  When used
-  // a second time we go back to Ex mode and abort the ":g" command.
+  // Reset "got_int" now that we got back to the main loop.
   if (got_int) {
-    if (s->noexmode && global_busy && !exmode_active
-        && s->previous_got_int) {
-      // Typed two CTRL-C in a row: go back to ex mode as if "Q" was
-      // used and keep "got_int" set, so that it aborts ":g".
-      exmode_active = true;
-      State = MODE_NORMAL;
-    } else if (!global_busy || !exmode_active) {
-      if (!quit_more) {
-        // flush all buffers
-        vgetc();
-      }
-      got_int = false;
+    if (!quit_more) {
+      // flush all buffers
+      vgetc();
     }
+    got_int = false;
     s->previous_got_int = true;
   } else {
     s->previous_got_int = false;
@@ -1410,9 +1390,7 @@ static int normal_check(VimState *state)
     discard_current_exception();
   }
 
-  if (!exmode_active) {
-    msg_scroll = false;
-  }
+  msg_scroll = false;
   quit_more = false;
 
   state_no_longer_safe(NULL);
@@ -1420,7 +1398,7 @@ static int normal_check(VimState *state)
   // If skip redraw is set (for ":" in wait_return()), don't redraw now.
   // If there is nothing in the stuff_buffer or do_redraw is true,
   // update cursor and redraw.
-  if (skip_redraw || exmode_active) {
+  if (skip_redraw) {
     skip_redraw = false;
     setcursor();
   } else if (do_redraw || stuff_empty()) {
@@ -1470,20 +1448,12 @@ static int normal_check(VimState *state)
   // only at the very toplevel.  Otherwise we may be using a List or
   // Dict internally somewhere.
   // "may_garbage_collect" is reset in vgetc() which is invoked through
-  // do_exmode() and normal_cmd().
-  may_garbage_collect = !s->noexmode;
+  // normal_cmd().
+  may_garbage_collect = true;
 
   // Update w_curswant if w_set_curswant has been set.
   // Postponed until here to avoid computing w_virtcol too often.
   update_curswant();
-
-  if (exmode_active) {
-    if (s->noexmode) {
-      return 0;
-    }
-    do_exmode();
-    return -1;
-  }
 
   normal_prepare(s);
   return 1;
@@ -5706,7 +5676,13 @@ static void nv_g_cmd(cmdarg_T *cap)
   // "gQ": improved Ex mode
   case 'Q':
     if (!check_text_locked(cap->oap) && !checkclearopq(oap)) {
-      do_exmode();
+      if (ex_normal_busy > 0 || global_busy) {
+        // Ex mode cannot run inside ":normal" or ":global"; discard the rest of the command.
+        flush_buffers(FLUSH_TYPEAHEAD);
+      } else if (!silent_mode) {
+        typval_T args[] = { { .v_type = VAR_UNKNOWN } };
+        nlua_call_typval("vim._core.exmode", "open", args, NULL);
+      }
     }
     break;
 

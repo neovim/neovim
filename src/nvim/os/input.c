@@ -17,8 +17,6 @@
 #include "nvim/eval_defs.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
-#include "nvim/event/rstream.h"
-#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/input.h"
 #include "nvim/insexpand.h"
@@ -40,38 +38,15 @@
 #define READ_BUFFER_SIZE 0xfff
 #define INPUT_BUFFER_SIZE ((READ_BUFFER_SIZE * 4) + MAX_KEY_CODE_LEN)
 
-static RStream read_stream = { .s.closed = true };  // Input before UI starts.
 static char input_buffer[INPUT_BUFFER_SIZE];
 static char *input_read_pos = input_buffer;
 static char *input_write_pos = input_buffer;
 
-static bool input_eof = false;
 static bool blocking = false;
 static int cursorhold_time = 0;  ///< time waiting for CursorHold event
 static int cursorhold_tb_change_cnt = 0;  ///< tb_change_cnt when waiting started
 
 #include "os/input.c.generated.h"
-
-void input_start(void)
-{
-  if (!read_stream.s.closed) {
-    return;
-  }
-
-  used_stdin = true;
-  rstream_init_fd(&main_loop, &read_stream, STDIN_FILENO);
-  rstream_start(&read_stream, input_read_cb, NULL);
-}
-
-void input_stop(void)
-{
-  if (read_stream.s.closed) {
-    return;
-  }
-
-  rstream_stop(&read_stream);
-  rstream_may_close(&read_stream);
-}
 
 static void cursorhold_event(void **argv)
 {
@@ -83,7 +58,7 @@ static void cursorhold_event(void **argv)
 static void create_cursorhold_event(bool events_enabled)
 {
   // If events are enabled and the queue has any items, this function should not
-  // have been called (`inbuf_poll` would return `kTrue`).
+  // have been called (`inbuf_poll` would return true).
   // TODO(tarruda): Cursorhold should be implemented as a timer set during the
   // `state_check` callback for the states where it can be triggered.
   assert(!events_enabled || multiqueue_empty(main_loop.events));
@@ -139,9 +114,8 @@ int input_get(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *e
     ctrl_c_interrupts = false;
   }
 
-  TriState result;  ///< inbuf_poll result.
   if (ms >= 0) {
-    if ((result = inbuf_poll(ms, events)) == kFalse) {
+    if (!inbuf_poll(ms, events)) {
       return 0;
     }
   } else {
@@ -164,10 +138,10 @@ int input_get(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *e
       int64_t delay_left = p_acl - ins_compl_autocomplete_elapsed();
       wait_time = MIN(MAX(delay_left, 0), wait_time);
     }
-    if ((result = inbuf_poll((int)wait_time, events)) == kFalse) {
-      if (read_stream.s.closed && silent_mode) {
-        // Drained eventloop & initial input; exit silent/batch-mode (-es/-Es).
-        read_error_exit();
+    if (!inbuf_poll((int)wait_time, events)) {
+      if (silent_mode) {
+        // Ran out of input: exit silent/batch-mode (-es/-Es).
+        getout(0);
       }
       // The 'autocompletedelay' expired: trigger the popup.  When
       // 'updatetime' is shorter, fall through to CursorHold instead.
@@ -191,7 +165,7 @@ int input_get(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *e
         create_cursorhold_event(events == main_loop.events);
       } else {
         before_blocking();
-        result = inbuf_poll(-1, events);
+        inbuf_poll(-1, events);
       }
     } else {
       cursorhold_time += (int)((os_hrtime() - wait_start) / 1000000);
@@ -212,10 +186,6 @@ int input_get(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *e
     return push_event_key(buf, maxlen);
   }
 
-  if (result == kNone && ms != 0) {
-    read_error_exit();
-  }
-
   return 0;
 
 #undef TRY_READ
@@ -224,7 +194,7 @@ int input_get(uint8_t *buf, int maxlen, int ms, int tb_change_cnt, MultiQueue *e
 // Check if a character is available for reading
 bool os_char_avail(void)
 {
-  return inbuf_poll(0, NULL) == kTrue;
+  return inbuf_poll(0, NULL);
 }
 
 /// Poll for fast events. `got_int` will be set to `true` if CTRL-C was typed.
@@ -550,48 +520,31 @@ bool input_blocking(void)
 ///
 /// @param ms Timeout in milliseconds. -1 for indefinite wait, 0 for no wait.
 /// @param events (optional) Queue to check for pending events.
-/// @return TriState:
-///   - kTrue: Input/events available
-///   - kFalse: No input/events
-///   - kNone: EOF reached on the input stream
-static TriState inbuf_poll(int ms, MultiQueue *events)
+/// @return true if input or events are available.
+static bool inbuf_poll(int ms, MultiQueue *events)
 {
   if (os_input_ready(events)) {
-    return kTrue;
+    return true;
   }
 
   if (do_profiling == PROF_YES && ms) {
     prof_input_start();
   }
 
-  if ((ms == -1 || ms > 0) && events != main_loop.events && !input_eof) {
+  if ((ms == -1 || ms > 0) && events != main_loop.events) {
     // The pending input provoked a blocking wait. Do special events now. #6247
     blocking = true;
     multiqueue_process_events(ch_before_blocking_events);
   }
   DLOG("blocking... events=%s", !!events ? "true" : "false");
-  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, ms, os_input_ready(events) || input_eof);
+  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, ms, os_input_ready(events));
   blocking = false;
 
   if (do_profiling == PROF_YES && ms) {
     prof_input_end();
   }
 
-  if (os_input_ready(events)) {
-    return kTrue;
-  }
-  return input_eof ? kNone : kFalse;
-}
-
-static size_t input_read_cb(RStream *stream, const char *buf, size_t c, void *data, bool at_eof)
-{
-  if (at_eof) {
-    input_eof = true;
-  }
-
-  assert(input_space() >= c);
-  input_enqueue_raw(buf, c);
-  return c;
+  return os_input_ready(events);
 }
 
 static void process_ctrl_c(void)
@@ -643,16 +596,6 @@ bool os_input_ready(MultiQueue *events)
   return (typebuf_was_filled             // API call filled typeahead
           || input_available()           // Input buffer filled
           || pending_events(events));    // Events must be processed
-}
-
-// Exit because of an input read error.
-static void read_error_exit(void)
-  FUNC_ATTR_NORETURN
-{
-  if (silent_mode) {  // Normal way to exit for "nvim -es".
-    getout(0);
-  }
-  preserve_exit(_("Nvim: Error reading input, exiting...\n"));
 }
 
 static bool pending_events(MultiQueue *events)
