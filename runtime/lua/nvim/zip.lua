@@ -167,7 +167,7 @@ local function extract_member(command, source, member, target)
 end
 
 ---@param buf integer
-local function lock_member(buf)
+local function set_readonly(buf)
   if not api.nvim_buf_is_valid(buf) then
     return
   end
@@ -200,10 +200,10 @@ local function read_tempfile(buf, temp)
     }, {})
     api.nvim_cmd({ cmd = 'filetype', args = { 'detect' } }, {})
   end)
-  lock_member(buf)
+  set_readonly(buf)
 end
 
---- Parse the legacy member-buffer name used by quickfix and direct `:edit` callers.
+--- Parse a `zipfile://` buffer name, as used by quickfix and direct `:edit`.
 ---@param name string `zipfile://{archive}::{member}`
 ---@return string?, string? archive path and member name
 local function parse_member_name(name)
@@ -281,7 +281,7 @@ function M.browse(buf, source)
   require('nvim.dir').open(buf, name ~= '' and name or source, M)
 end
 
---- Read one archive member into a locked, read-only buffer.
+--- Read one archive member into a read-only buffer.
 ---@param buf integer Target member buffer.
 ---@param name string `zipfile://` buffer name.
 function M.read(buf, name)
@@ -292,13 +292,13 @@ function M.read(buf, name)
     source, member = parse_member_name(name)
   end
   if not source or not member then
-    lock_member(buf)
+    set_readonly(buf)
     notify(('could not parse buffer name %q'):format(name))
     return
   end
   local command, command_err = unzip()
   if not command then
-    lock_member(buf)
+    set_readonly(buf)
     notify(command_err or 'unzip executable not found')
     return
   end
@@ -306,14 +306,14 @@ function M.read(buf, name)
   local err = extract_member(command, source, member, temp)
   if err then
     vim.fn.delete(temp)
-    lock_member(buf)
+    set_readonly(buf)
     notify(('unable to read %s from %s: %s'):format(member, source, err))
     return
   end
   local ok, read_err = pcall(read_tempfile, buf, temp)
   vim.fn.delete(temp)
   if not ok then
-    lock_member(buf)
+    set_readonly(buf)
     notify(tostring(read_err))
   end
 end
