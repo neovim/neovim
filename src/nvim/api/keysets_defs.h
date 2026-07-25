@@ -95,6 +95,11 @@ typedef struct {
 } Dict(keymap);
 
 typedef struct {
+  OptionalKeys is_set__keymap_del_;
+  Boolean lhs;
+} Dict(keymap_del);
+
+typedef struct {
   Boolean builtin;
 } Dict(get_commands);
 
