@@ -44,6 +44,7 @@
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/eval/vars.h"
+#include "nvim/eval/window.h"
 #include "nvim/eval_defs.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
@@ -1147,14 +1148,24 @@ static int compute_buffer_local_count(cmd_addr_T addr_type, linenr_T lnum, int o
 
 /// @return  the window number of "win" or,
 ///          the number of windows if "win" is NULL
-static int current_win_nr(const win_T *win)
+static int current_win_nr(const win_T *win, exarg_T *cmdarg)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
+  // Whether to also match hidden / non-focusable windows (in current tab).
+  bool nonnr = cmdarg != NULL && cmdarg->cmdidx != CMD_quit;
   int nr = 0;
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    nr++;
+    // only include non-hidden and focusable windows
+    // (so ui2 windows are excluded)
+    bool include_this = nonnr || win_has_winnr(wp, curtab);
+    nr += include_this;
+
     if (wp == win) {
+      // same as in win_id2win()
+      if (!include_this) {
+        return 0;
+      }
       break;
     }
   }
@@ -1174,8 +1185,8 @@ static int current_tab_nr(tabpage_T *tab)
   return nr;
 }
 
-#define CURRENT_WIN_NR current_win_nr(curwin)
-#define LAST_WIN_NR current_win_nr(NULL)
+#define CURRENT_WIN_NR current_win_nr(curwin, NULL)
+#define LAST_WIN_NR(cmdarg) current_win_nr(NULL, (cmdarg))
 #define CURRENT_TAB_NR current_tab_nr(curtab)
 #define LAST_TAB_NR current_tab_nr(NULL)
 
@@ -1376,7 +1387,7 @@ void set_cmd_dflall_range(exarg_T *eap)
     eap->line2 = lastbuf->b_fnum;
     break;
   case ADDR_WINDOWS:
-    eap->line2 = LAST_WIN_NR;
+    eap->line2 = LAST_WIN_NR(eap);
     break;
   case ADDR_TABS:
     eap->line2 = LAST_TAB_NR;
@@ -2969,7 +2980,7 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
           if (IS_USER_CMDIDX(eap->cmdidx)) {
             eap->line1 = 1;
             eap->line2 = eap->addr_type == ADDR_WINDOWS
-                         ? LAST_WIN_NR : LAST_TAB_NR;
+                         ? LAST_WIN_NR(false) : LAST_TAB_NR;
           } else {
             // there is no Vim command which uses '%' and
             // ADDR_WINDOWS or ADDR_TABS
@@ -3544,7 +3555,7 @@ linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, bool skip, 
         lnum = curbuf->b_ml.ml_line_count;
         break;
       case ADDR_WINDOWS:
-        lnum = LAST_WIN_NR;
+        lnum = LAST_WIN_NR(eap);
         break;
       case ADDR_ARGUMENTS:
         lnum = ARGCOUNT;
@@ -3888,7 +3899,7 @@ char *invalid_range(exarg_T *eap)
       }
       break;
     case ADDR_WINDOWS:
-      if (eap->line2 > LAST_WIN_NR) {
+      if (eap->line2 > LAST_WIN_NR(eap)) {
         return _(e_invrange);
       }
       break;
@@ -5224,24 +5235,17 @@ fail_1:
 /// ":close": close current window, unless it is the last one
 static void ex_close(exarg_T *eap)
 {
-  win_T *win = NULL;
-  int winnr = 0;
   if (!text_locked() && !curbuf_locked()) {
+    win_T *win;
     if (eap->addr_count == 0) {
-      ex_win_close(eap->forceit, curwin, NULL);
+      win = curwin;
     } else {
-      FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-        winnr++;
-        if (winnr == eap->line2) {
-          win = wp;
-          break;
-        }
-      }
+      win = win_find_nr((int)eap->line2, curtab);
       if (win == NULL) {
         win = lastwin;
       }
-      ex_win_close(eap->forceit, win, NULL);
     }
+    ex_win_close(eap->forceit, win, NULL);
   }
 }
 
@@ -5469,19 +5473,11 @@ static void ex_hide(exarg_T *eap)
     return;
   }
 
-  win_T *win = NULL;
+  win_T *win;
   if (eap->addr_count == 0) {
     win = curwin;
   } else {
-    int winnr = 0;
-
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      winnr++;
-      if (winnr == eap->line2) {
-        win = wp;
-        break;
-      }
-    }
+    win = win_find_nr((int)eap->line2, curtab);
     if (win == NULL) {
       win = lastwin;
     }

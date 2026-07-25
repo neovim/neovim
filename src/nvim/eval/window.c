@@ -48,6 +48,20 @@ bool win_has_winnr(win_T *wp, tabpage_T *tp)
          || (!wp->w_config.hide && wp->w_config.focusable);
 }
 
+win_T *win_find_nr(int nr, tabpage_T *tp)
+{
+  if (tp == NULL) {
+    assert(curtab);
+    tp = curtab;
+  }
+  FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
+    if ((nr -= win_has_winnr(wp, tp)) <= 0) {
+      return wp;
+    }
+  }
+  return NULL;
+}
+
 static int win_getid(typval_T *argvars)
 {
   if (argvars[0].v_type == VAR_UNKNOWN) {
@@ -169,16 +183,17 @@ win_T *find_win_by_nr(typval_T *vp, tabpage_T *tp)
     tp = curtab;
   }
 
-  FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
-    if (nr >= LOWEST_WIN_ID) {
+  if (nr >= LOWEST_WIN_ID) {
+    // window id
+    FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
       if (wp->handle == nr) {
         return wp;
       }
-    } else if (--nr <= 0) {
-      return wp;
     }
+    return NULL;
   }
-  return NULL;
+
+  return win_find_nr(nr, tp);
 }
 
 /// Find a window: When using a Window ID in any tab page, when using a number
