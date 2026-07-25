@@ -188,7 +188,8 @@ describe('messages2', function()
       foo                                                  |*6
       foo [+9]                                             |
     ]])
-    -- Do enter the pager in normal mode.
+    -- Do enter the pager in normal mode (with keybinding setup).
+    exec_lua([[require('vim._core.ui2').cfg.pager_char = '<CR>']])
     command('nmap <Esc> <Cmd>fclose<CR>')
     feed('<CR>')
     screen:expect([[
@@ -196,6 +197,7 @@ describe('messages2', function()
       foo                                                  |*12
                                          1,1            Top|
     ]])
+    exec_lua([[require('vim._core.ui2').cfg.pager_char = nil]])
     -- Changing 'laststatus' reveals the global statusline with a pager height
     -- exceeding the available lines: #38008.
     command('set laststatus=3')

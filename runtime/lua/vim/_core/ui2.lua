@@ -28,6 +28,7 @@
 ---     pager = { -- Options related to message window.
 ---       height = 0.999, -- Maximum height.
 ---     },
+---     pager_char = nil, -- Key checked after interactive messages.
 ---   },
 --- })
 --- ```
@@ -47,6 +48,10 @@
 --- indicates the spilled lines. To see the full messages, do either:
 --- - ENTER immediately after interactive |:| cmdline shows a message and returns to |Normal-mode|.
 --- - |g<| at any time.
+---
+--- If you'd like behavior similar to the old hit-enter prompt, pass `pager_char = "<CR>"` on
+--- the `cfg` table. When the pager is shown, hitting `<CR>` (in this example) will enter the
+--- pager.
 
 local api = vim.api
 local nvim_on = require('vim._core.util').nvim_on

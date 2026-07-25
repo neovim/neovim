@@ -64,6 +64,8 @@ TREESITTER
 UI
 
 • Healthchecks for |vim.ui.img| were moved to `:checkhealth vim.health`.
+• |ui2| messages pager no longer uses <CR> by default; use |g<| or set
+  the `pager_char` field when enabling ui2.
 
 VIMSCRIPT
 
