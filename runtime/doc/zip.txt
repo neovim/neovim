@@ -48,7 +48,7 @@ Legacy plugin: zip                                               *package-zip*
 The legacy Vimscript zip plugin browses, updates, and extracts archive
 members. It is not loaded by default; use `:packadd` to activate it: >lua
 
-    vim.cmd.packadd('zip')
+    vim.cmd.packadd('vim-zip')
 <
 This can be done at any time. Its manual is then available as
 `:help pi_zip.txt`.

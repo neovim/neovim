@@ -66,7 +66,7 @@ describe('nvim.zip', function()
   it('defers to zipPlugin.vim loaded before startup plugins', function()
     local archive = vim.fs.joinpath(root, 'legacy.zip')
     copy_fixture(vim.fs.joinpath(old_samples, 'test.zip'), archive)
-    n.clear({ args_rm = { '-u' }, args = { '--cmd', 'packadd zip' } })
+    n.clear({ args_rm = { '-u' }, args = { '--cmd', 'packadd vim-zip' } })
 
     edit(archive)
 
@@ -79,7 +79,7 @@ describe('nvim.zip', function()
     local archive = vim.fs.joinpath(root, 'legacy.zip')
     copy_fixture(vim.fs.joinpath(old_samples, 'test.zip'), archive)
     clear_zip()
-    exec_lua([[vim.cmd.packadd('zip')]])
+    exec_lua([[vim.cmd.packadd('vim-zip')]])
 
     edit(archive)
 
@@ -234,7 +234,7 @@ describe('nvim.zip', function()
       if legacy then
         n.clear({
           args_rm = { '-u' },
-          args = { '--cmd', 'packadd zip' },
+          args = { '--cmd', 'packadd vim-zip' },
         })
       else
         clear_zip()
