@@ -667,6 +667,49 @@ func Test_statusline_showcmd()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_statusline_showcmd_cmd_mapping()
+  set showcmd
+  set statusline=AAA%SBBB
+  set showcmdloc=statusline
+  try
+    let g:showcmd_statusline = ''
+    nnoremap <F3> <Cmd>let g:showcmd_statusline = <SID>get_statusline()<CR>
+    call feedkeys("\<F3>", 'xt')
+    call assert_equal('AAABBB', trim(g:showcmd_statusline))
+    let g:showcmd_statusline = ''
+    nunmap <F3>
+
+    "nnoremap <F3> <ScriptCmd>let g:showcmd_statusline = <SID>get_statusline()<CR>
+    "call feedkeys("\<F3>", 'xt')
+    "call assert_equal('AAABBB', trim(g:showcmd_statusline))
+  finally
+    silent! nunmap <F3>
+    unlet! g:showcmd_statusline
+    set showcmd&
+    set statusline&
+    set showcmdloc&
+  endtry
+endfunc
+
+func Test_statusline_showcmd_nop_map()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+    set timeoutlen=500 showcmdloc=statusline laststatus=2
+    nnoremap <space> <nop>
+    nnoremap <space><space> <nop>
+  END
+  call writefile(lines, 'XTest_statusline_showcmd_nop', 'D')
+
+  let buf = RunVimInTerminal('-S XTest_statusline_showcmd_nop', {'rows': 6})
+  call term_sendkeys(buf, ' ')
+  call WaitForAssert({-> assert_match('<20>', term_getline(buf, 5))}, 400)
+  sleep 500m
+  call WaitForAssert({-> assert_notmatch('<20>', term_getline(buf, 5))}, 400)
+
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_statusline_highlight_group_cleared()
   CheckScreendump
 

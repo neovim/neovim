@@ -136,4 +136,17 @@ describe('statusline', function()
       :                                                 |
     ]])
   end)
+
+  -- oldtest: Test_statusline_showcmd_nop_map()
+  it('showcmdloc=statusline is redrawn with timeout and <Nop> mapping', function()
+    exec([[
+      set timeoutlen=500 showcmd showcmdloc=statusline laststatus=2
+      nnoremap <space> <nop>
+      nnoremap <space><space> <nop>
+    ]])
+    feed(' ')
+    screen:expect({ any = '<20>', timeout = 400 })
+    vim.uv.sleep(500)
+    screen:expect({ none = '<20>', timeout = 400 })
+  end)
 end)
