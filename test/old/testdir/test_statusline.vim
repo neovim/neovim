@@ -667,23 +667,6 @@ func Test_statusline_showcmd()
   call StopVimInTerminal(buf)
 endfunc
 
-func Test_statusline_showcmd_redraw_tabline()
-  CheckRunVimInTerminal
-
-  let lines =<< trim END
-    set showcmd showcmdloc=tabline showtabline=2 tabline=%S timeoutlen=0
-    nnoremap g :redraw<CR>
-    nnoremap gc <Nop>
-  END
-  call writefile(lines, 'XTest_statusline_showcmd_redraw', 'D')
-
-  let buf = RunVimInTerminal('-S XTest_statusline_showcmd_redraw', #{rows: 6, cols: 40})
-  call term_sendkeys(buf, 'g')
-  call WaitForAssert({-> assert_match(':redraw', term_getline(buf, 6))})
-  call WaitForAssert({-> assert_notmatch('^:', term_getline(buf, 1))})
-  call StopVimInTerminal(buf)
-endfunc
-
 func Test_statusline_showcmd_cmd_mapping()
   set showcmd
   set statusline=AAA%SBBB
@@ -706,6 +689,25 @@ func Test_statusline_showcmd_cmd_mapping()
     set statusline&
     set showcmdloc&
   endtry
+endfunc
+
+func Test_statusline_showcmd_nop_map()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+    set timeoutlen=500 showcmdloc=statusline laststatus=2
+    nnoremap <space> <nop>
+    nnoremap <space><space> <nop>
+  END
+  call writefile(lines, 'XTest_statusline_showcmd_nop', 'D')
+
+  let buf = RunVimInTerminal('-S XTest_statusline_showcmd_nop', {'rows': 6})
+  call term_sendkeys(buf, ' ')
+  call WaitForAssert({-> assert_match('<20>', term_getline(buf, 5))}, 400)
+  sleep 500m
+  call WaitForAssert({-> assert_notmatch('<20>', term_getline(buf, 5))}, 400)
+
+  call StopVimInTerminal(buf)
 endfunc
 
 func Test_statusline_highlight_group_cleared()

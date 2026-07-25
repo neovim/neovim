@@ -2054,7 +2054,7 @@ static void display_showcmd(void)
   showcmd_update_clear_state();
 
   if (*p_sloc == 's') {
-    if (showcmd_is_clear) {
+    if (showcmd_is_clear && !vgetc_busy) {
       curwin->w_redr_status = true;
     } else {
       win_redr_status(curwin);
@@ -2063,7 +2063,7 @@ static void display_showcmd(void)
     return;
   }
   if (*p_sloc == 't') {
-    if (showcmd_is_clear) {
+    if (showcmd_is_clear && !vgetc_busy) {
       redraw_tabline = true;
     } else {
       draw_tabline();

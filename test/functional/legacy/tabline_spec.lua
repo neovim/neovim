@@ -85,4 +85,16 @@ describe('tabline', function()
       :                                                 |
     ]])
   end)
+
+  -- oldtest: Test_tabline_showcmd_redraw_tabline()
+  it('clears showcmd rendered by tabline redraw', function()
+    exec([[
+      set showcmd showcmdloc=tabline showtabline=2 tabline=%S timeoutlen=0
+      nnoremap g :redraw<CR>
+      nnoremap gc <Nop>
+    ]])
+    feed('g')
+    screen:expect({ any = ':redraw', none = '{2::' })
+    t.eq('', n.api.nvim_eval_statusline('%S', {}).str)
+  end)
 end)
