@@ -2518,6 +2518,10 @@ M.funcs = {
       like with |expand()|, and environment variables, anywhere in
       {string}.  "~user" and "~/path" are only expanded at the
       start.
+      The expansion is done in two steps: the special keywords are
+      evaluated first, then "~" and environment variables are
+      expanded in the result.  Thus `expand('%:~')` keeps the "~",
+      while `expandcmd('%:~')` returns the full path.
 
       The following items are supported in the {options} Dict
       argument:
