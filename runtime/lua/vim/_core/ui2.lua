@@ -102,7 +102,10 @@ function M.check_targets()
       cfg.hide = type ~= 'cmd' or M.cmdheight == 0 or nil
       -- kZIndexMessages < cmd zindex < kZIndexCmdlinePopupMenu (grid_defs.h), pager below others.
       cfg.zindex = 201 - i
-      M.wins[type] = api.nvim_open_win(M.bufs[type], false, cfg)
+      -- Open the window without fileinfo notifications
+      vim._with({ silent = true }, function()
+        M.wins[type] = api.nvim_open_win(M.bufs[type], false, cfg)
+      end)
     elseif api.nvim_win_get_tabpage(M.wins[type]) ~= curtab then
       api.nvim_win_set_config(M.wins[type], { win = api.nvim_tabpage_get_win(curtab) })
     end
