@@ -210,10 +210,10 @@ The 'spellsuggest' option influences how the list of suggestions is generated
 and sorted.  See 'spellsuggest'.
 
 The 'spellcapcheck' option is used to check the first word of a sentence
-starts with a capital.  This doesn't work for the first word in the file.
-When there is a line break right after a sentence the highlighting of the next
-line may be postponed.  Use |CTRL-L| when needed.  Also see |set-spc-auto| for
-how it can be set automatically when 'spelllang' is set.
+starts with a capital.  When there is a line break right after a sentence the
+highlighting of the next line may be postponed.  Use |CTRL-L| when needed.
+Also see |set-spc-auto| for how it can be set automatically when 'spelllang'
+is set.
 
 The 'spelloptions' option has a few more flags that influence the way spell
 checking works.  For example, "camel" splits CamelCased words so that each
