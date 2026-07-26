@@ -2378,11 +2378,10 @@ void shorten_buf_fname(buf_T *buf, char *dirname, int force)
       XFREE_CLEAR(buf->b_sfname);
     }
     char *p = path_shorten_fname(buf->b_ffname, dirname);
-    if (p != NULL) {
+    if (p != NULL && *p != NUL) {
       buf->b_sfname = xstrdup(p);
       buf->b_fname = buf->b_sfname;
-    }
-    if (p == NULL) {
+    } else {
       buf->b_fname = buf->b_ffname;
     }
   }
