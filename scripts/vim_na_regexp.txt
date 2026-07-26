@@ -96,6 +96,7 @@ _example\.vim$
 /tags$
 README_[a-z]\+\.txt$
 [_.]cp125[0-1]
+helptoc
 netbeans
 textprop
 vimtutor
