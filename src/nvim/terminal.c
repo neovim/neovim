@@ -2367,7 +2367,7 @@ static void invalidate_terminal(Terminal *term, int start_row, int end_row)
 
   // During synchronized output (mode 2026), accumulate damage but defer
   // the actual refresh until the synchronized update ends.
-  if (term->synchronized_output) {
+  if (term->synchronized_output && !term->pending.resize) {
     return;
   }
 
@@ -2395,7 +2395,7 @@ static void refresh_terminal(Terminal *term)
   }
   linenr_T ml_before = buf->b_ml.ml_line_count;
 
-  bool resized = refresh_size(term, buf);
+  bool resized = refresh_size(term);
   refresh_scrollback(term, buf);
   refresh_screen(term, buf);
 
@@ -2486,6 +2486,8 @@ static void refresh_timer_cb(TimeWatcher *watcher, void *data)
     // when the synchronized update ends (mode 2026 reset).
     if (!term->synchronized_output) {
       refresh_terminal(term);
+    } else {
+      refresh_size(term);
     }
   });
 
@@ -2493,7 +2495,7 @@ static void refresh_timer_cb(TimeWatcher *watcher, void *data)
   unblock_autocmds();
 }
 
-static bool refresh_size(Terminal *term, buf_T *buf)
+static bool refresh_size(Terminal *term)
 {
   if (!term->pending.resize || term->closed) {
     return false;
