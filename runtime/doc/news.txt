@@ -315,6 +315,7 @@ LUA
   write binary data.
 • |vim.fs.dir()| with `opts.err=true`, reports errors. An inaccessible root
   dir yields a single (name, nil, err) item.
+• |vim.fs.dir()| gained a `normalize` parameter.
 • |vim.fs.find()| returns a list of errors as its second return value.
 • |vim.fs.mkdir()| creates directories, including parent directories with
   `opts.parents=true`.
