@@ -34,7 +34,6 @@ describe('shell command :!', function()
       '--cmd',
       n.nvim_set .. ' notermguicolors',
     })
-    tt.override_screen_expect_for_conpty(screen)
     screen:expect([[
       ^                                                  |
       {100:~}                                                 |*4

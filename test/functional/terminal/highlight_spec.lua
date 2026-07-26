@@ -130,6 +130,7 @@ it(':terminal highlight has lower precedence than editor #9964', function()
   clear()
   local screen = Screen.new(30, 4, { rgb = true })
   local child_blank_attr = is_os('win') and 'N_child' or 'N_child_blank'
+  local child_blank_sep = is_os('win') and '' or '}{N_child_blank:'
   screen:set_default_attr_ids({
     -- "Normal" highlight emitted by the child nvim process.
     N_child = {
@@ -173,26 +174,26 @@ it(':terminal highlight has lower precedence than editor #9964', function()
     },
   })
   screen:expect(([[
-    {N_child:^child nvim}{%s:                    }|
-    {N_child:line 2}{%s:                        }|
+    {N_child:^child nvim%s                    }|
+    {N_child:line 2%s                        }|
     {%s:                              }|
                                   |
-  ]]):format(child_blank_attr, child_blank_attr, child_blank_attr))
+  ]]):format(child_blank_sep, child_blank_sep, child_blank_attr))
   command('hi Search gui=italic guifg=Red guibg=Green cterm=italic ctermfg=Red ctermbg=Green')
   feed('/nvim<cr>')
   screen:expect(([[
     {N_child:child }{S:^nvim}{%s:                    }|
-    {N_child:line 2}{%s:                        }|
+    {N_child:line 2%s                        }|
     {%s:                              }|
     /nvim                         |
-  ]]):format(child_blank_attr, child_blank_attr, child_blank_attr))
+  ]]):format(child_blank_attr, child_blank_sep, child_blank_attr))
   command('syntax keyword Question line')
   screen:expect(([[
     {N_child:child }{S:^nvim}{%s:                    }|
-    {Q:line}{N_child: 2}{%s:                        }|
+    {Q:line}{N_child: 2%s                        }|
     {%s:                              }|
     /nvim                         |
-  ]]):format(child_blank_attr, child_blank_attr, child_blank_attr))
+  ]]):format(child_blank_attr, child_blank_sep, child_blank_attr))
 end)
 
 it('CursorLine and CursorColumn work in :terminal buffer in Normal mode', function()

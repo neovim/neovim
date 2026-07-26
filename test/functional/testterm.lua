@@ -210,7 +210,11 @@ function M.setup_child_nvim(args, opts)
   -- Child servers need the socket dir set by runner.lua.
   env.XDG_RUNTIME_DIR = env.XDG_RUNTIME_DIR or os.getenv('XDG_RUNTIME_DIR')
 
-  return M.setup_screen(opts.extra_rows, argv, opts.cols, env)
+  local screen = M.setup_screen(opts.extra_rows, argv, opts.cols, env)
+  if t.is_os('win') then
+    M.override_screen_expect_for_conpty(screen)
+  end
+  return screen
 end
 
 --- FIXME: On Windows spaces at the end of a screen line may have wrong attrs.
@@ -218,14 +222,17 @@ end
 ---
 --- @param screen test.functional.ui.screen
 function M.override_screen_expect_for_conpty(screen)
-  if not t.is_os('win') then
-    return
-  end
   local orig_screen_expect = screen.expect
   function screen.expect(self, expected, attr_ids, ...)
     if type(expected) == 'string' then
-      expected = expected:gsub(' *%} +%|\n', '{MATCH: *}}{MATCH: *}|\n')
-      expected = expected:gsub('%}%^ +%|\n', '{MATCH:[ ^]*}}{MATCH:[ ^]*}|\n')
+      -- Ignore attribute groups that contain only blank cells. ConPTY may
+      -- merge them into either adjacent group, so retaining the group itself
+      -- makes the patterns below require a boundary that may not exist.
+      expected = expected:gsub('(\n[ \t]*){[^{}\n]-: +}(%|%*?%d*)', '%1{MATCH:[^|]*}%2')
+      expected = expected:gsub('{[^{}\n]-: +}', ' ')
+      expected = expected:gsub('%}%^ +', '{MATCH:[^|]*%%^[^|]*}')
+      expected = expected:gsub(' +%} *', '{MATCH: *}}{MATCH:[^|]*}')
+      expected = expected:gsub('%} +', '{MATCH: *}}{MATCH:[^|]*}')
     end
     orig_screen_expect(self, expected, attr_ids, ...)
   end
