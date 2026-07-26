@@ -946,12 +946,10 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   const size_t ghostty_row_size = (size_t)ghostty_cols * 64;
   size_t ghostty_max_scrollback = SB_MAX > SIZE_MAX / ghostty_row_size
                                   ? SIZE_MAX : SB_MAX * ghostty_row_size;
-  GhosttyTerminalOptions ghostty_opts = {
-    .cols = ghostty_cols,
-    .rows = ghostty_rows,
-    .max_scrollback = ghostty_max_scrollback,
-  };
-  assert_ok(ghostty_terminal_new(NULL, &term->ghostty, ghostty_opts));
+  assert_ok(ghostty_terminal_new(NULL, &term->ghostty, ghostty_cols, ghostty_rows));
+  assert_ok(ghostty_terminal_set(term->ghostty,
+                                 GHOSTTY_TERMINAL_OPT_SCROLLBACK_MAX_BYTES,
+                                 &ghostty_max_scrollback));
   assert_ok(ghostty_terminal_mode_set(term->ghostty,
                                       GHOSTTY_MODE_GRAPHEME_CLUSTER,
                                       true));

@@ -10,8 +10,8 @@
             .hash = "zlua-0.1.0-hGRpC1mUBQCNQf4CnmRTM4I7gxE3YpCvZ-p2EarlcyER",
         },
         .ghostty = .{
-            .url = "https://github.com/noib3/ghostty/archive/c00bbafb6fd887bd088d9aee729285c880d29636.tar.gz",
-            .hash = "ghostty-1.3.2-dev-5UdBCxXsJAU7kjcwUYPr5pjZpAXe0JoKnvxrkoWe2Jr9",
+            .url = "https://github.com/ghostty-org/ghostty/archive/4133c6e48c4b99d19f5885478a19db4868994d07.tar.gz",
+            .hash = "ghostty-1.3.2-dev-5UdBC3iCJgWjJ0A5ilLHfKkkcNoWp4AkvwXNh8hJdA09",
         },
         .luv = .{
             .url = "git+https://github.com/luvit/luv?ref=1.52.1-0#f65fe9d7616f9fbcd20227fc7a73b38d1c5c180d",
