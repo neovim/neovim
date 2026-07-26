@@ -23,7 +23,7 @@ function s:SearchBracket(fromlnum, flags)
   " VIM_INDENT_TEST_TRACE_START
   return searchpairpos('[[({]', '', '[])}]', a:flags,
           \ {-> synstack('.', col('.'))
-          \ ->indexof({_, id -> synIDattr(id, 'name') =~ '\%(Comment\|Todo\|String\)$'}) >= 0},
+          \ ->indexof({_, id -> synIDattr(id, 'name') =~ '\%(Comment\|Todo\|String\|Bytes\)$'}) >= 0},
           \ [0, a:fromlnum - s:maxoff]->max(), g:python_indent.searchpair_timeout)
   " VIM_INDENT_TEST_TRACE_END python#s:SearchBracket
 endfunction
