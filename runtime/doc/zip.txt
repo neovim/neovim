@@ -20,7 +20,7 @@ ARCHIVE LISTINGS                                                *zip-listing*
 
 Editing a zip-like file opens a read-only listing. Directory entries can be
 opened to browse that level of the archive. File entries open as read-only
-`zipfile://{archive}::{member}` buffers.
+`zipfile://{archive}::{path}` buffers.
 
 Mappings are the standard |dir-buffer-mappings|. At the archive root, - opens
 the containing filesystem directory.
@@ -33,11 +33,11 @@ INTEGRATIONS                                              *zip-integrations*
 
 Remote zip URLs are downloaded by |vim.net| and opened in the browser.
 
-|g:ftplugin_java_source_path| opens the selected member with |gf|.
+|g:ftplugin_java_source_path| opens the selected entry with |gf|.
 
 LIMITATIONS                                                *zip-limitations*
 
-Archive members cannot be updated or extracted. Remote archives are not
+Archive entries cannot be updated or extracted. Remote archives are not
 refetched on reload, and there is no PowerShell fallback, no custom backend
 command, and no support for the legacy `g:zip_*` variables. Use |package-zip|
 when those features are required.
@@ -46,7 +46,7 @@ when those features are required.
 Legacy plugin: zip                                               *package-zip*
 
 The legacy Vimscript zip plugin browses, updates, and extracts archive
-members. It is not loaded by default; use `:packadd` to activate it: >lua
+entries. It is not loaded by default; use `:packadd` to activate it: >lua
 
     vim.cmd.packadd('vim-zip')
 <

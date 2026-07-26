@@ -83,7 +83,7 @@ end
 api.nvim_create_autocmd('BufReadCmd', {
   group = group,
   pattern = 'zipfile://*',
-  desc = 'Read zip archive member',
+  desc = 'Read zip archive entry',
   callback = function(ev)
     if legacy_loaded() then
       return

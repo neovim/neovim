@@ -50,14 +50,14 @@ local function list_archive(source)
   return vim.split(result.stdout or '', '\n', { plain = true, trimempty = true })
 end
 
---- Keep absolute and dot-segment members visible without treating them as UI navigation.
----@param member string
+--- Keep absolute and dot-segment entries visible without treating them as UI navigation.
+---@param path string
 ---@return boolean
-local function opaque_member(member)
-  if member:sub(1, 1) == '/' or member:match('^%a:[/\\]') then
+local function opaque_path(path)
+  if path:sub(1, 1) == '/' or path:match('^%a:[/\\]') then
     return true
   end
-  for component in member:gmatch('[^/]+') do
+  for component in path:gmatch('[^/]+') do
     if component == '.' or component == '..' then
       return true
     end
@@ -65,28 +65,28 @@ local function opaque_member(member)
   return false
 end
 
---- Project the flat archive-member list into one navigable directory level.
----@param members string[] Raw member names from the archive.
+--- Project the flat archive path list into one navigable directory level.
+---@param paths string[] Raw entry paths from the archive.
 ---@param prefix string Raw archive-directory prefix, including its trailing slash.
 ---@return nvim.dir.Entry[]
-local function entries_at(members, prefix)
+local function entries_at(paths, prefix)
   local entries = {} ---@type nvim.dir.Entry[]
   local seen = {} ---@type table<string,true>
-  for _, member in ipairs(members) do
-    if prefix == '' and opaque_member(member) then
-      local key = 'opaque:' .. member
+  for _, path in ipairs(paths) do
+    if prefix == '' and opaque_path(path) then
+      local key = 'opaque:' .. path
       if not seen[key] then
         seen[key] = true
-        entries[#entries + 1] = { name = member, dir = false }
+        entries[#entries + 1] = { name = path, dir = false }
       end
-    elseif vim.startswith(member, prefix) then
-      local rest = member:sub(#prefix + 1)
+    elseif vim.startswith(path, prefix) then
+      local rest = path:sub(#prefix + 1)
       local separator = rest:find('/', 1, true)
       local name = separator and rest:sub(1, separator - 1) or rest
       if name ~= '' then
         local dir = separator ~= nil
-        local path = ('%s%s%s'):format(prefix, name, dir and '/' or '')
-        local key = (dir and 'dir:' or 'file:') .. path
+        local entry_path = ('%s%s%s'):format(prefix, name, dir and '/' or '')
+        local key = (dir and 'dir:' or 'file:') .. entry_path
         if not seen[key] then
           seen[key] = true
           entries[#entries + 1] = { name = name, dir = dir }
@@ -127,10 +127,10 @@ end
 
 ---@param command string
 ---@param source string
----@param member string
+---@param path string
 ---@param target string
 ---@return string?
-local function extract_member(command, source, member, target)
+local function extract_path(command, source, path, target)
   local file, err = io.open(target, 'wb')
   if not file then
     return err
@@ -138,7 +138,7 @@ local function extract_member(command, source, member, target)
   local write_err ---@type string?
   local ok, system = pcall(
     vim.system,
-    { command, '-p', '--', literal_pattern(source), literal_pattern(member) },
+    { command, '-p', '--', literal_pattern(source), literal_pattern(path) },
     {
       stdout = function(pipe_err, data)
         if pipe_err then
@@ -179,7 +179,7 @@ local function set_readonly(buf)
 end
 
 --- Read extracted bytes through Nvim's normal reader to preserve encoding, EOL, and binary behavior.
----@param buf integer Target archive-member buffer.
+---@param buf integer Target archive entry buffer.
 ---@param temp string Temporary file containing the extracted bytes.
 local function read_tempfile(buf, temp)
   api.nvim_buf_call(buf, function()
@@ -204,9 +204,9 @@ local function read_tempfile(buf, temp)
 end
 
 --- Parse a `zipfile://` buffer name, as used by quickfix and direct `:edit`.
----@param name string `zipfile://{archive}::{member}`
----@return string?, string? archive path and member name
-local function parse_member_name(name)
+---@param name string `zipfile://{archive}::{path}`
+---@return string?, string? archive and entry path
+local function parse_uri(name)
   if not vim.startswith(name, 'zipfile://') then
     return
   end
@@ -229,8 +229,8 @@ end
 
 ---@class (private) nvim.zip.State
 ---@field source string Path to the archive.
----@field member? string Member shown by a `zipfile://` buffer.
----@field members? string[] Member list carried over from the initial listing.
+---@field path? string Archive path shown by a `zipfile://` buffer.
+---@field paths? string[] Entry paths carried over from the initial listing.
 ---@field prefix? string Archive directory currently listed.
 ---@field pending_prefix? string Prefix to commit once the backend succeeds.
 
@@ -263,8 +263,8 @@ function M.browse(buf, source)
     read_normally(buf, source)
     return
   end
-  local members, err, fallback = list_archive(source)
-  if not members then
+  local paths, err, fallback = list_archive(source)
+  if not paths then
     if err then
       notify(
         fallback and ('%s is not a zip file: %s'):format(source, err) or err,
@@ -276,22 +276,22 @@ function M.browse(buf, source)
     end
     return
   end
-  set_state(buf, { source = source, members = members, prefix = '' })
+  set_state(buf, { source = source, paths = paths, prefix = '' })
   local name = vim.fn.bufname(buf)
   require('nvim.dir').open(buf, name ~= '' and name or source, M)
 end
 
---- Read one archive member into a read-only buffer.
----@param buf integer Target member buffer.
+--- Read one archive entry into a read-only buffer.
+---@param buf integer Target entry buffer.
 ---@param name string `zipfile://` buffer name.
 function M.read(buf, name)
   buf = vim._resolve_bufnr(buf)
   local state = get_state(buf)
-  local source, member = state and state.source, state and state.member
-  if not source or not member then
-    source, member = parse_member_name(name)
+  local source, path = state and state.source, state and state.path
+  if not source or not path then
+    source, path = parse_uri(name)
   end
-  if not source or not member then
+  if not source or not path then
     set_readonly(buf)
     notify(('could not parse buffer name %q'):format(name))
     return
@@ -303,11 +303,11 @@ function M.read(buf, name)
     return
   end
   local temp = vim.fn.tempname()
-  local err = extract_member(command, source, member, temp)
+  local err = extract_path(command, source, path, temp)
   if err then
     vim.fn.delete(temp)
     set_readonly(buf)
-    notify(('unable to read %s from %s: %s'):format(member, source, err))
+    notify(('unable to read %s from %s: %s'):format(path, source, err))
     return
   end
   local ok, read_err = pcall(read_tempfile, buf, temp)
@@ -328,13 +328,13 @@ function M.list(buf, _, cb)
     cb('zip source is not set')
     return
   end
-  local members = state.members
-  state.members = nil
+  local paths = state.paths
+  state.paths = nil
   local err ---@type string?
-  if not members then
-    members, err = list_archive(state.source)
+  if not paths then
+    paths, err = list_archive(state.source)
   end
-  if not members then
+  if not paths then
     state.pending_prefix = nil
     set_state(buf, state)
     cb(err)
@@ -343,7 +343,7 @@ function M.list(buf, _, cb)
   state.prefix = state.pending_prefix or state.prefix or ''
   state.pending_prefix = nil
   set_state(buf, state)
-  cb(nil, entries_at(members, state.prefix))
+  cb(nil, entries_at(paths, state.prefix))
 end
 
 ---@param buf integer
@@ -354,16 +354,16 @@ function M.open(buf, name, entry)
   if not state then
     return
   end
-  local member = (state.prefix or '') .. entry.name .. (entry.dir and '/' or '')
+  local path = (state.prefix or '') .. entry.name .. (entry.dir and '/' or '')
   if entry.dir then
-    state.pending_prefix = member
+    state.pending_prefix = path
     set_state(buf, state)
     require('nvim.dir').open(buf, name, M)
     return
   end
-  local uri = ('zipfile://%s::%s'):format(state.source, member)
-  local member_buf = vim.fn.bufadd(uri)
-  set_state(member_buf, { source = state.source, member = member })
+  local uri = ('zipfile://%s::%s'):format(state.source, path)
+  local entry_buf = vim.fn.bufadd(uri)
+  set_state(entry_buf, { source = state.source, path = path })
   api.nvim_cmd({
     cmd = 'edit',
     args = { uri },

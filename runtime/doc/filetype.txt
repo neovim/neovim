@@ -793,7 +793,7 @@ is a filename whose extension is either ".jar" or ".zip", e.g.: >
 	let g:ftplugin_java_source_path = '/path/to/src.zip'
 <
 and a zip plugin has already been sourced, the |gf| command can be used to open
-the selected member.
+the selected entry.
 
 Note that the effect of using the "gf" command WITHIN a buffer loaded with the
 Zip plugin depends on the version of the Zip plugin.  For the Zip plugin
