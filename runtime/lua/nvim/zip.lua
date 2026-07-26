@@ -1,15 +1,8 @@
 local api = vim.api
 local uv = vim.uv
+local notify = require('vim._core.util').notify
 
 local M = {}
-
----@param msg string
----@param level? integer
-local function notify(msg, level)
-  vim.schedule(function()
-    vim.notify(('zip: %s'):format(msg), level or vim.log.levels.ERROR)
-  end)
-end
 
 ---@return string?, string?
 local function unzip()
@@ -256,7 +249,7 @@ function M.browse(buf, source)
   end
   local magic, magic_err = has_magic(source)
   if magic == nil then
-    notify(('File not readable <%s>: %s'):format(source, magic_err))
+    notify('zip', ('File not readable <%s>: %s'):format(source, magic_err))
     return
   end
   if not magic then
@@ -267,6 +260,7 @@ function M.browse(buf, source)
   if not paths then
     if err then
       notify(
+        'zip',
         fallback and ('%s is not a zip file: %s'):format(source, err) or err,
         fallback and vim.log.levels.WARN or vim.log.levels.ERROR
       )
@@ -293,13 +287,13 @@ function M.read(buf, name)
   end
   if not source or not path then
     set_readonly(buf)
-    notify(('could not parse buffer name %q'):format(name))
+    notify('zip', ('could not parse buffer name %q'):format(name))
     return
   end
   local command, command_err = unzip()
   if not command then
     set_readonly(buf)
-    notify(command_err or 'unzip executable not found')
+    notify('zip', command_err or 'unzip executable not found')
     return
   end
   local temp = vim.fn.tempname()
@@ -307,14 +301,14 @@ function M.read(buf, name)
   if err then
     vim.fn.delete(temp)
     set_readonly(buf)
-    notify(('unable to read %s from %s: %s'):format(path, source, err))
+    notify('zip', ('unable to read %s from %s: %s'):format(path, source, err))
     return
   end
   local ok, read_err = pcall(read_tempfile, buf, temp)
   vim.fn.delete(temp)
   if not ok then
     set_readonly(buf)
-    notify(tostring(read_err))
+    notify('zip', tostring(read_err))
   end
 end
 
