@@ -1227,7 +1227,7 @@ bool os_fileinfo2(const char *path, FileInfo *info)
     info->rest_off = (size_t)(p - path);
     return true;
   }
-  if (p[0] == '?' || p[0] == '.') {
+  if (leading_slashes >= 2 && (p[0] == '?' || p[0] == '.')) {
     if (!vim_ispathsep_nocolon(p[1])) {
       return true;
     }
