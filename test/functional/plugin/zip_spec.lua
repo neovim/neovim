@@ -22,7 +22,7 @@ local function edit(path)
 end
 
 local function clear_zip()
-  n.clear({ args_rm = { '-u' } })
+  n.clear({ args = { '--clean' } })
 end
 
 local function copy_fixture(source, target)
@@ -66,7 +66,7 @@ describe('nvim.zip', function()
   it('defers to zipPlugin.vim loaded before startup plugins', function()
     local archive = vim.fs.joinpath(root, 'legacy.zip')
     copy_fixture(vim.fs.joinpath(old_samples, 'test.zip'), archive)
-    n.clear({ args_rm = { '-u' }, args = { '--cmd', 'packadd old-zip' } })
+    n.clear({ args = { '--clean', '--cmd', 'packadd old-zip' } })
 
     edit(archive)
 
@@ -92,8 +92,7 @@ describe('nvim.zip', function()
     local archive = vim.fs.joinpath(root, 'browser.zip')
     copy_fixture(vim.fs.joinpath(fixtures, 'browser.zip'), archive)
     n.clear({
-      args_rm = { '-u' },
-      args = { '--cmd', 'let g:loaded_nvim_zip_plugin = 1' },
+      args = { '--clean', '--cmd', 'let g:loaded_nvim_zip_plugin = 1' },
     })
 
     edit(archive)
@@ -233,8 +232,7 @@ describe('nvim.zip', function()
     for _, legacy in ipairs({ false, true }) do
       if legacy then
         n.clear({
-          args_rm = { '-u' },
-          args = { '--cmd', 'packadd old-zip' },
+          args = { '--clean', '--cmd', 'packadd old-zip' },
         })
       else
         clear_zip()
