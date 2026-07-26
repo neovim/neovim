@@ -10,7 +10,7 @@ local navigating = false
 ---@param path string
 ---@return string
 function M.normalize(path)
-  return fs.normalize(fs.abspath(path))
+  return fs.normalize(fs.abspath(path), { expand_env = false })
 end
 
 ---@return boolean
@@ -60,7 +60,7 @@ end
 ---@param cb fun(err?: string, entries?: nvim.dir.Entry[])
 function M.list(_, path, cb)
   local entries = {} ---@type nvim.dir.Entry[]
-  for name, type, err in fs.dir(path, { err = true }) do
+  for name, type, err in fs.dir(path, { err = true, normalize = false }) do
     if err then
       cb(err)
       return

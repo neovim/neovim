@@ -465,11 +465,15 @@ describe('nvim.dir', function()
 
   it('normalizes edited directory names', function()
     make_fixture()
+    local literal = root .. '/$HOME'
+    t.mkdir(literal)
     n.clear({ args_rm = { '-u' } })
 
-    edit(root .. '///')
+    edit(literal .. '///')
 
-    assert_directory(root)
+    eq(literal .. '/', api.nvim_buf_get_name(0))
+    eq('directory', bufopt('filetype'))
+    eq({ '' }, lines())
   end)
 
   it('does not show a parent entry at the filesystem root', function()

@@ -190,6 +190,11 @@ end
 --- Follow symbolic links.
 --- (default: `false`)
 --- @field follow? boolean
+---
+--- Normalize {path} via |vim.fs.normalize()|. Set `false` to use {path} literally, e.g. to list a
+--- directory whose name contains `~` or `$`.
+--- (default: `true`)
+--- @field normalize? boolean
 
 --- Gets an iterator over items found in `path` (normalized via |vim.fs.normalize()|).
 ---
@@ -204,7 +209,8 @@ end
 --- ```
 ---
 ---@since 10
----@param path (string) Directory to iterate over, normalized via |vim.fs.normalize()|.
+---@param path (string) Directory to iterate over, normalized via |vim.fs.normalize()| unless
+---            `opts.normalize=false`.
 ---@param opts? vim.fs.dir.Opts Optional keyword arguments:
 ---@return fun(): string?, string?, string? # Iterator over items in {path}, yielding (name, type, err):
 ---        - name: Basename of the item relative to {path}.
@@ -219,8 +225,11 @@ function M.dir(path, opts)
   vim.validate('err', opts.err, 'boolean', true)
   vim.validate('follow', opts.follow, 'boolean', true)
   vim.validate('skip', opts.skip, 'function', true)
+  vim.validate('normalize', opts.normalize, 'boolean', true)
 
-  path = M.normalize(path)
+  if opts.normalize ~= false then
+    path = M.normalize(path)
+  end
 
   local rootfs, rooterr = uv.fs_scandir(path)
 
