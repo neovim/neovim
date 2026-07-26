@@ -82,7 +82,7 @@ local function runnables()
       (language) @_lang
       .
       (code) @code
-      (#any-of? @_lang "lua" "vim")
+      (#any-of? @_lang "lua\n" "vim\n")
       (#set! @code lang @_lang))
   ]]
   )
@@ -110,9 +110,9 @@ local function runnables()
     local code_block = code_blocks[pos]
     if not code_block then
       vim.print('No code block found')
-    elseif code_block.lang == 'lua' then
+    elseif code_block.lang == 'lua\n' then
       vim.cmd.lua(code_block.code)
-    elseif code_block.lang == 'vim' then
+    elseif code_block.lang == 'vim\n' then
       vim.cmd(code_block.code)
     end
   end, { buf = 0 })
