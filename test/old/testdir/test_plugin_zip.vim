@@ -7,7 +7,7 @@ if 0 " Find uncovered line
   profile! file */zip*.vim
 endif
 
-packadd vim-zip
+packadd old-zip
 
 func s:CopyZipFile(source)
   if !filecopy($"samples/{a:source}", "X.zip")

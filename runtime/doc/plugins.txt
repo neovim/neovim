@@ -41,7 +41,7 @@ Help-link		Loaded	Short description ~
 |pi_swapmouse|		No	Swap meaning of left and right mouse buttons
 |pi_tar.txt|		Yes	Tar file explorer
 |pi_tutor.txt|		Yes	Interactive tutorial
-|package-zip|		No	Legacy zip archive explorer
+|old-zip|		No	Legacy zip archive explorer
 
 ==============================================================================
 Builtin plugin: dir                                                      *dir*
