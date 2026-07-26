@@ -122,8 +122,8 @@ end)
 
 describe('editorconfig', function()
   before_each(function()
-    -- Remove -u NONE so that plugins (i.e. editorconfig.lua) are loaded
-    clear({ args_rm = { '-u' } })
+    -- Use --clean so that plugins (i.e. editorconfig.lua) are loaded
+    clear({ args = { '--clean' } })
   end)
 
   it('sets indent options', function()
