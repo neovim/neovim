@@ -54,16 +54,16 @@ To disable the built-in directory browser, set this before startup: >lua
 <
 
 Mappings:                                                       *dir-mappings*
->
-	-	Open the parent directory of the current file or directory.
-<
+
+• - opens the parent directory of the current file or directory.
+• {count}- is like -, but a count of 1 opens the current working directory,
+  and a higher count goes up that many levels.
 
 Directory buffer mappings:                                *dir-buffer-mappings*
->
-	<CR>	Open the file or directory under the cursor.
-	-	Open the parent directory.
-	R	Reload the directory listing.
-<
+
+• <CR> opens the file or directory under the cursor.
+• - opens the parent directory.
+• R reloads the directory listing.
 
 These keys map to <Plug>(nvim-dir-open), <Plug>(nvim-dir-up), and
 <Plug>(nvim-dir-reload); map those to use different keys. Default mappings are

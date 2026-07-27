@@ -347,9 +347,10 @@ describe('nvim.dir', function()
     eq('new:2', exec_lua('return vim.g.nvim_dir_provider_list'))
   end)
 
-  it('maps [count]- to open parent directories', function()
+  it('maps [count]- to open directories', function()
     make_fixture()
     n.clear({ args_rm = { '--cmd' }, args = { '--clean' } })
+    local cwd = vim.fs.normalize(fn.getcwd())
 
     edit(file)
     feed('-')
@@ -365,8 +366,7 @@ describe('nvim.dir', function()
     feed('1-')
     poke_eventloop()
 
-    assert_directory(root)
-    eq('alpha.txt', api.nvim_get_current_line())
+    assert_directory(cwd)
 
     edit(file)
     feed('2-')
