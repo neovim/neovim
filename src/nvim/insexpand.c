@@ -1617,6 +1617,7 @@ static int ins_compl_build_pum(void)
   }
 
   bool did_find_shown_match = false;
+  bool preselect_ok = false;
   compl_T *comp;
   compl_T *shown_compl = NULL;
   int i = 0;
@@ -1689,10 +1690,11 @@ static int ins_compl_build_pum(void)
             shown_match_ok = true;
           }
         }
-        if (comp == compl_preselect_match) {
+        if (compl_preselect_match != NULL && comp->cp_preselect && !preselect_ok) {
           cur = i;
           compl_shown_match = comp;
           shown_match_ok = true;
+          preselect_ok = true;
         }
         i++;
       }
@@ -3530,7 +3532,7 @@ static void set_completion(colnr_T startcol, list_T *list)
   bool no_select = compl_no_select || compl_longest;
   if (compl_preselect_match && !no_select) {
     compl_curr_match = compl_preselect_match->cp_prev;
-    ins_complete(Ctrl_N, false);
+    ins_complete(compl_no_insert ? K_DOWN : Ctrl_N, false);
   } else if (compl_no_insert || no_select) {
     ins_complete(K_DOWN, false);
     if (no_select) {
