@@ -82,6 +82,7 @@
 \*:scriptversion\*
 \*:shell\*
 \*:smile\*
+\*:version\*
 \*HelpToc-mappings\*
 \*SafeStateAgain\*
 \*SigUSR1\*
