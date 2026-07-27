@@ -86,7 +86,7 @@ api.nvim_create_autocmd('BufReadCmd', {
   desc = 'Read zip archive entry',
   callback = function(ev)
     if legacy_loaded() then
-      return
+      return true
     end
     require('nvim.zip').read(ev.buf, ev.match)
   end,
@@ -97,7 +97,10 @@ api.nvim_create_autocmd('BufReadCmd', {
   pattern = archive_patterns,
   desc = 'Browse zip archives',
   callback = function(ev)
-    if legacy_loaded() or ev.match:match('^%a[%w+.-]*://') then
+    if legacy_loaded() then
+      return true
+    end
+    if ev.match:match('^%a[%w+.-]*://') then
       return
     end
     require('nvim.zip').browse(ev.buf, ev.match)
