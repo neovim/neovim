@@ -25,9 +25,8 @@ opened to browse that level of the archive. File entries open as read-only
 Mappings are the standard |dir-buffer-mappings|. At the archive root, - opens
 the containing filesystem directory.
 
-The same zip-like extensions as the legacy plugin are recognized, including
-zip, jar, apk, epub, Office and OpenDocument formats, whl, xpi, pkpass, and
-cbz.
+Recognized extensions include zip, jar, apk, epub, Office and OpenDocument
+formats, whl, xpi, pkpass, and cbz.
 
 INTEGRATIONS                                              *zip-integrations*
 
