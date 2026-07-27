@@ -195,7 +195,8 @@ struct terminal {
   // Buffer used to fetch Ghostty rows.
   char textbuf[TEXTBUF_SIZE];
 
-  size_t ghostty_scrollback_rows;  ///< Rows in Ghostty's full history.
+  /// Previous active-screen origin, used to detect history added while Ghostty prunes old pages.
+  GhosttyTrackedGridRef ghostty_scrollback_anchor;
   size_t scrollback_rows;          ///< Ghostty history rows mirrored in the nvim buffer.
   size_t scrollback_deleted;       ///< Mirrored history rows deleted from the buffer top.
   bool scrollback_clear_pending;   ///< Ghostty processed CSI 3 J since the last refresh.
@@ -796,10 +797,7 @@ static void terminal_scrollback_clear_record(Terminal *term)
   size_t history_rows = terminal_ghostty_scrollback_rows_get(term);
   size_t clear_rows = history_rows;
   if (!term->scrollback_clear_pending) {
-    clear_rows = term->scrollback_rows;
-    if (history_rows > term->ghostty_scrollback_rows) {
-      clear_rows += history_rows - term->ghostty_scrollback_rows;
-    }
+    clear_rows = MAX(term->scrollback_rows, history_rows);
   }
 
   term->scrollback_clear_pending = true;
@@ -946,10 +944,17 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
                                  GHOSTTY_TERMINAL_OPT_SCROLLBACK_MAX_BYTES,
                                  NULL));
   // Ghostty has no scrollback line limit by default, so we initially set it to the max value of the
-  // 'scrollback' option.
+  // 'scrollback' option. The real value will be set when processing TermOpen.
   assert_ok(ghostty_terminal_set(term->ghostty,
                                  GHOSTTY_TERMINAL_OPT_SCROLLBACK_MAX_LINES,
                                  &(size_t){ SB_MAX }));
+  GhosttyPoint scrollback_anchor = {
+    .tag = GHOSTTY_POINT_TAG_ACTIVE,
+    .value.coordinate = { .x = 0, .y = 0 },
+  };
+  assert_ok(ghostty_terminal_grid_ref_track(term->ghostty,
+                                            scrollback_anchor,
+                                            &term->ghostty_scrollback_anchor));
   assert_ok(ghostty_terminal_mode_set(term->ghostty,
                                       GHOSTTY_MODE_GRAPHEME_CLUSTER,
                                       true));
@@ -1049,7 +1054,10 @@ void terminal_open(Terminal **termpp, buf_T *buf)
     return;  // Terminal has already been destroyed.
   }
 
-  (void)terminal_scrollback_limit(buf);
+  size_t scrollback_limit = terminal_scrollback_limit(buf);
+  assert_ok(ghostty_terminal_set(term->ghostty,
+                                 GHOSTTY_TERMINAL_OPT_SCROLLBACK_MAX_LINES,
+                                 &scrollback_limit));
 
   GhosttyColorRgb palette[256];
   assert_ok(ghostty_terminal_get(term->ghostty,
@@ -1671,6 +1679,7 @@ void terminal_destroy(Terminal **termpp)
     ghostty_render_state_row_cells_free(term->ghostty_render_row_cells);
     ghostty_render_state_row_iterator_free(term->ghostty_render_row_iterator);
     ghostty_render_state_free(term->ghostty_render_state);
+    ghostty_tracked_grid_ref_free(term->ghostty_scrollback_anchor);
     ghostty_terminal_free(term->ghostty);
     xfree(term);
     *termpp = NULL;  // coverity[dead-store]
@@ -2536,8 +2545,7 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *te
   uint32_t row = 0;
   if (screen_row < term->scrollback_rows) {
     tag = GHOSTTY_POINT_TAG_SCREEN;
-    size_t offset = term->ghostty_scrollback_rows - term->scrollback_rows;
-    row = (uint32_t)(offset + screen_row);
+    row = (uint32_t)screen_row;
   } else {
     row = (uint32_t)(screen_row - term->scrollback_rows);
   }
@@ -3387,11 +3395,10 @@ static void mirror_scrollback_rows(Terminal *term, buf_T *buf, size_t row, size_
                                    int height, bool insert)
   FUNC_ATTR_NONNULL_ALL
 {
-  size_t offset = term->ghostty_scrollback_rows - term->scrollback_rows;
   while (row < end) {
     GhosttyTerminalScrollViewport viewport = {
       .tag = GHOSTTY_SCROLL_VIEWPORT_ROW,
-      .value.row = offset + row,
+      .value.row = row,
     };
     ghostty_terminal_scroll_viewport(term->ghostty, viewport);
     assert_ok(ghostty_render_state_update(term->ghostty_render_state, term->ghostty));
@@ -3657,9 +3664,14 @@ static bool refresh_size(Terminal *term, buf_T *buf)
   return true;
 }
 
-void on_scrollback_option_changed(Terminal *term)
+void on_scrollback_option_changed(Terminal *term, size_t limit, bool force_refresh)
 {
-  refresh_terminal(term);
+  assert_ok(ghostty_terminal_set(term->ghostty,
+                                 GHOSTTY_TERMINAL_OPT_SCROLLBACK_MAX_LINES,
+                                 &limit));
+  if (force_refresh) {
+    refresh_terminal(term);
+  }
 }
 
 // Refresh the scrollback of an invalidated terminal.
@@ -3695,24 +3707,31 @@ static void refresh_scrollback(Terminal *term, buf_T *buf, bool resized)
     return;
   }
 
-  size_t ghostty_scrollback_rows = terminal_ghostty_scrollback_rows_get(term);
-  size_t scrollback_limit = terminal_scrollback_limit(buf);
-  size_t scrollback_rows = MIN(ghostty_scrollback_rows, scrollback_limit);
-
-  // Increasing 'scrollback' does not resurrect lines that were not mirrored in
-  // the nvim buffer before the option changed. This matches the old terminal
-  // behavior while still allowing Ghostty to retain enough history for reflow.
-  if (ghostty_scrollback_rows <= term->ghostty_scrollback_rows
-      && scrollback_rows > term->scrollback_rows) {
-    scrollback_rows = term->scrollback_rows;
-  }
+  size_t scrollback_rows = terminal_ghostty_scrollback_rows_get(term);
 
   size_t old_scrollback_rows = term->scrollback_rows;
-  size_t old_ghostty_scrollback_rows = term->ghostty_scrollback_rows;
   bool scrollback_cleared = term->scrollback_clear_pending;
   size_t scrollback_clear_rows = term->scrollback_clear_rows;
   term->scrollback_clear_pending = false;
   term->scrollback_clear_rows = 0;
+
+  size_t scrollback_added = 0;
+  if (!resized) {
+    GhosttyPointCoordinate anchor = { 0 };
+    GhosttyResult result = ghostty_tracked_grid_ref_point(term->ghostty_scrollback_anchor,
+                                                          GHOSTTY_POINT_TAG_SCREEN,
+                                                          &anchor);
+    if (result == GHOSTTY_SUCCESS) {
+      if (anchor.y <= scrollback_rows) {
+        scrollback_added = scrollback_rows - anchor.y;
+      }
+    } else if (result == GHOSTTY_NO_VALUE) {
+      // The anchor was pruned or reset, so none of the old mirrored history remains.
+      scrollback_added = SIZE_MAX;
+    } else {
+      assert_ok(result);
+    }
+  }
 
   if (!resized && scrollback_cleared) {
     size_t max_deleted = buf->b_ml.ml_line_count > 1 ? (size_t)buf->b_ml.ml_line_count - 1 : 0;
@@ -3728,11 +3747,13 @@ static void refresh_scrollback(Terminal *term, buf_T *buf, bool resized)
       deleted--;
     }
     old_scrollback_rows = 0;
-  } else if (old_ghostty_scrollback_rows <= ghostty_scrollback_rows) {
-    size_t ghostty_delta = ghostty_scrollback_rows - old_ghostty_scrollback_rows;
-    size_t mirrored_delta = scrollback_rows > old_scrollback_rows
-                            ? scrollback_rows - old_scrollback_rows : 0;
-    size_t deleted = ghostty_delta > mirrored_delta ? ghostty_delta - mirrored_delta : 0;
+  } else if (!resized) {
+    size_t total_rows = scrollback_added == SIZE_MAX
+                        ? SIZE_MAX
+                        : scrollback_added + old_scrollback_rows;
+    size_t deleted = total_rows > scrollback_rows
+                     ? total_rows - scrollback_rows
+                     : 0;
     if (deleted > 0) {
       mark_adjust_buf(buf, 1, (linenr_T)deleted, MAXLNUM, -(linenr_T)deleted, true,
                       kMarkAdjustTerm, kExtmarkUndo);
@@ -3745,20 +3766,8 @@ static void refresh_scrollback(Terminal *term, buf_T *buf, bool resized)
       old_scrollback_rows--;
       deleted--;
     }
-  } else if (!resized && scrollback_rows < old_scrollback_rows) {
-    size_t deleted = old_scrollback_rows - scrollback_rows;
-    mark_adjust_buf(buf, 1, (linenr_T)deleted, MAXLNUM, -(linenr_T)deleted, true,
-                    kMarkAdjustTerm, kExtmarkUndo);
-    term->scrollback_deleted += deleted;
-    while (deleted > 0 && buf->b_ml.ml_line_count > 1) {
-      ml_delete_buf(buf, 1, false);
-      deleted_lines_buf(buf, 1, 1);
-      old_scrollback_rows--;
-      deleted--;
-    }
   }
 
-  term->ghostty_scrollback_rows = ghostty_scrollback_rows;
   term->scrollback_rows = scrollback_rows;
 
   if (!resized && old_scrollback_rows < scrollback_rows) {
@@ -3801,6 +3810,14 @@ static void refresh_scrollback(Terminal *term, buf_T *buf, bool resized)
       changed_lines(buf, 1, 0, (linenr_T)scrollback_rows + 1, 0, true);
     }
   }
+
+  GhosttyPoint scrollback_anchor = {
+    .tag = GHOSTTY_POINT_TAG_ACTIVE,
+    .value.coordinate = { .x = 0, .y = 0 },
+  };
+  assert_ok(ghostty_tracked_grid_ref_set(term->ghostty_scrollback_anchor,
+                                         term->ghostty,
+                                         scrollback_anchor));
 
   term->opts.read_pause_cb(false, term->opts.data);
 }

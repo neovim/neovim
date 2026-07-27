@@ -2684,9 +2684,12 @@ static const char *did_set_scrollback(optset_T *args)
   OptInt old_value = args->os_oldval.data.integer;
   OptInt value = args->os_newval.data.integer;
 
-  if (buf->terminal && value < old_value) {
-    // Force the scrollback to take immediate effect only when decreasing it.
-    on_scrollback_option_changed(buf->terminal);
+  if (buf->terminal && !(args->os_flags & OPT_GLOBAL)) {
+    size_t old_limit = old_value < 1 ? SB_MAX : (size_t)old_value;
+    size_t limit = value < 1 ? SB_MAX : (size_t)value;
+    buf->b_p_scbk = (OptInt)limit;
+    // Force a terminal refresh when the value decreases.
+    on_scrollback_option_changed(buf->terminal, limit, limit < old_limit);
   }
   return NULL;
 }
