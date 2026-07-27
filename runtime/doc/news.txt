@@ -448,7 +448,7 @@ STARTUP
 TERMINAL
 
 • The terminal emulator now uses libghostty-vt instead of libvterm. Lines in
-  the terminal scrollback region are now reflown on resize like lines in the
+  the terminal scrollback region are now reflowed on resize like lines in the
   visible area.
 
 TREESITTER
