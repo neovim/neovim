@@ -15,6 +15,7 @@ before_each(clear)
 describe(':normal!', function()
   it('can get out of Insert mode if called from Ex mode #17924', function()
     feed('gQnormal! Ifoo<CR>')
+    feed('visual<CR>')
     expect('foo')
   end)
 

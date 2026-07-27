@@ -203,6 +203,13 @@ function vim._core.ui_flush() end
 function vim._core.check_interrupt() end
 
 --- @nodoc
+--- Executes one Ex command line obtained from `getline`, which is also called for any
+--- continuation lines (`:append` text, `:function` body, heredoc, …). See `vim._core.exmode`.
+--- @param getline fun(): string?
+--- @return boolean # false if {getline} returned nil before any line was read (EOF).
+function vim._core.ex_docmd(getline) end
+
+--- @nodoc
 --- Parses `keys` (internal representation) into a list of key chords. See |vim.keycode()|.
 --- @param keys string
 --- @return vim.keycode.chord[]

@@ -204,6 +204,7 @@ describe('vim._core', function()
       'vim._core.defaults',
       'vim._core.editor',
       'vim._core.ex_cmd',
+      'vim._core.exmode',
       'vim._core.exrc',
       'vim._core.help',
       'vim._core.log',

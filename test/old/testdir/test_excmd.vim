@@ -578,9 +578,11 @@ func Test_read_cmd()
   new
   read Xcmdfile
   call assert_equal(['', 'one'], getline(1, '$'))
-  call deletebufline('', 1, '$')
-  call feedkeys("Qr Xcmdfile\<CR>visual\<CR>", 'xt')
-  call assert_equal(['one'], getline(1, '$'))
+  " Nvim: Ex mode is a cmdwin wrapper; cannot run inside feedkeys('x'), and
+  " ":read" no longer deletes the empty first line in Ex mode.
+  "call deletebufline('', 1, '$')
+  "call feedkeys("Qr Xcmdfile\<CR>visual\<CR>", 'xt')
+  "call assert_equal(['one'], getline(1, '$'))
   bw!
 endfunc
 

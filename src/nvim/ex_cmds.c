@@ -2881,10 +2881,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
       } else {
         beginline(BL_SOL | BL_FIX);
       }
-    } else {                  // no line number, go to last line in Ex mode
-      if (exmode_active) {
-        curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
-      }
+    } else {
       beginline(BL_WHITE | BL_FIX);
     }
   }
@@ -3001,6 +2998,7 @@ void ex_append(exarg_T *eap)
     lnum = 0;
   }
 
+  const int save_State = State;
   State = MODE_INSERT;                   // behave like in Insert mode
   if (curbuf->b_p_iminsert == B_IMODE_LMAP) {
     State |= MODE_LANGMAP;
@@ -3039,13 +3037,13 @@ void ex_append(exarg_T *eap)
       }
       eap->nextcmd = p;
     } else {
-      int save_State = State;
+      int getline_State = State;
       // Set State to avoid the cursor shape to be set to MODE_INSERT
       // state when getline() returns.
       State = MODE_CMDLINE;
       theline = eap->ea_getline(eap->cstack->cs_looplevel > 0 ? -1 : NUL,
                                 eap->cookie, indent, true);
-      State = save_State;
+      State = getline_State;
     }
     lines_left = Rows - 1;
     if (theline == NULL) {
@@ -3092,7 +3090,7 @@ void ex_append(exarg_T *eap)
       empty = false;
     }
   }
-  State = MODE_NORMAL;
+  State = save_State;
   ui_cursor_shape();
 
   if (eap->forceit) {
@@ -3117,7 +3115,6 @@ void ex_append(exarg_T *eap)
   beginline(BL_SOL | BL_FIX);
 
   need_wait_return = false;     // don't use wait_return() now
-  ex_no_reprint = true;
 }
 
 /// ":change"
@@ -3268,7 +3265,6 @@ void ex_z(exarg_T *eap)
     curwin->w_cursor.lnum = curs;
     curwin->w_cursor.col = 0;
   }
-  ex_no_reprint = true;
 }
 
 /// @return  true if the secure flag is set and also give an error message.
@@ -3946,111 +3942,72 @@ static int do_sub(exarg_T *eap, proftime_T tm, const int cmdpreview_ns,
 
           // Loop until 'y', 'n', 'q', CTRL-E or CTRL-Y typed.
           while (subflags.do_ask) {
-            if (exmode_active) {
-              print_line_no_prefix(lnum, subflags.do_number, subflags.do_list);
+            String orig_line = STRING_INIT;
+            int len_change = 0;
+            const bool save_p_lz = p_lz;
+            int save_p_fen = curwin->w_p_fen;
 
-              colnr_T sc, ec;
-              getvcol(curwin, &curwin->w_cursor, &sc, NULL, NULL, 0);
-              curwin->w_cursor.col = MAX(regmatch.endpos[0].col - 1, 0);
+            curwin->w_p_fen = false;
+            // Invert the matched string.
+            // Remove the inversion afterwards.
+            int temp = RedrawingDisabled;
+            RedrawingDisabled = 0;
 
-              getvcol(curwin, &curwin->w_cursor, NULL, NULL, &ec, 0);
-              curwin->w_cursor.col = regmatch.startpos[0].col;
-              if (subflags.do_number || curwin->w_p_nu) {
-                int numw = number_width(curwin) + 1;
-                sc += numw;
-                ec += numw;
-              }
+            // avoid calling update_screen() in vgetorpeek()
+            p_lz = false;
 
-              char *prompt = xmallocz((size_t)ec + 1);
-              memset(prompt, ' ', (size_t)sc);
-              memset(prompt + sc, '^', (size_t)(ec - sc) + 1);
-              char *resp = getcmdline_prompt(-1, prompt, 0, EXPAND_NOTHING, NULL,
-                                             CALLBACK_NONE, false, NULL);
-              if (!ui_has(kUIMessages)) {
-                msg_putchar('\n');
-              }
-              xfree(prompt);
-              if (resp != NULL) {
-                typed = (uint8_t)(*resp);
-                xfree(resp);
-              } else {
-                // getcmdline_prompt() returns NULL if there is no command line to return.
-                typed = NUL;
-              }
-              // When ":normal" runs out of characters we get
-              // an empty line.  Use "q" to get out of the
-              // loop.
-              if (ex_normal_busy && typed == NUL) {
-                typed = 'q';
-              }
-            } else {
-              String orig_line = STRING_INIT;
-              int len_change = 0;
-              const bool save_p_lz = p_lz;
-              int save_p_fen = curwin->w_p_fen;
+            if (new_start.data != NULL) {
+              // There already was a substitution, we would
+              // like to show this to the user.  We cannot
+              // really update the line, it would change
+              // what matches.  Temporarily replace the line
+              // and change it back afterwards.
+              orig_line = cbuf_to_string(ml_get(lnum), (size_t)ml_get_len(lnum));
+              String new_line = {
+                .data = concat_str(new_start.data, sub_firstline.data + copycol),
+                .size = new_start.size + (sub_firstline.size - (size_t)copycol),
+              };
 
-              curwin->w_p_fen = false;
-              // Invert the matched string.
-              // Remove the inversion afterwards.
-              int temp = RedrawingDisabled;
-              RedrawingDisabled = 0;
+              // Position the cursor relative to the end of the line, the
+              // previous substitute may have inserted or deleted characters
+              // before the cursor.
+              len_change = (int)new_line.size - (int)orig_line.size;
+              curwin->w_cursor.col += len_change;
+              ml_replace(lnum, new_line.data, false);
+            }
 
-              // avoid calling update_screen() in vgetorpeek()
-              p_lz = false;
+            Search.match_lines = regmatch.endpos[0].lnum - regmatch.startpos[0].lnum;
+            Search.match_endcol = regmatch.endpos[0].col + len_change;
+            if (Search.match_lines == 0 && Search.match_endcol == 0) {
+              // highlight at least one character for /^/
+              Search.match_endcol = 1;
+            }
+            Search.hl_match = true;
 
-              if (new_start.data != NULL) {
-                // There already was a substitution, we would
-                // like to show this to the user.  We cannot
-                // really update the line, it would change
-                // what matches.  Temporarily replace the line
-                // and change it back afterwards.
-                orig_line = cbuf_to_string(ml_get(lnum), (size_t)ml_get_len(lnum));
-                String new_line = {
-                  .data = concat_str(new_start.data, sub_firstline.data + copycol),
-                  .size = new_start.size + (sub_firstline.size - (size_t)copycol),
-                };
+            update_topline(curwin);
+            validate_cursor(curwin);
+            redraw_later(curwin, UPD_SOME_VALID);
+            show_cursor_info_later(true);
+            update_screen();
+            redraw_later(curwin, UPD_SOME_VALID);
 
-                // Position the cursor relative to the end of the line, the
-                // previous substitute may have inserted or deleted characters
-                // before the cursor.
-                len_change = (int)new_line.size - (int)orig_line.size;
-                curwin->w_cursor.col += len_change;
-                ml_replace(lnum, new_line.data, false);
-              }
+            curwin->w_p_fen = save_p_fen;
 
-              Search.match_lines = regmatch.endpos[0].lnum - regmatch.startpos[0].lnum;
-              Search.match_endcol = regmatch.endpos[0].col + len_change;
-              if (Search.match_lines == 0 && Search.match_endcol == 0) {
-                // highlight at least one character for /^/
-                Search.match_endcol = 1;
-              }
-              Search.hl_match = true;
+            char *p = _("replace with %s? (y)es/(n)o/(a)ll/(q)uit/(l)ast/scroll up(^E)/down(^Y)");
+            snprintf(IObuff, IOSIZE, p, sub);
+            p = xstrdup(IObuff);
+            typed = prompt_for_input(p, HLF_R, true, NULL);
+            Search.hl_match = false;
+            xfree(p);
 
-              update_topline(curwin);
-              validate_cursor(curwin);
-              redraw_later(curwin, UPD_SOME_VALID);
-              show_cursor_info_later(true);
-              update_screen();
-              redraw_later(curwin, UPD_SOME_VALID);
+            msg_didout = false;                 // don't scroll up
+            gotocmdline(true);
+            p_lz = save_p_lz;
+            RedrawingDisabled = temp;
 
-              curwin->w_p_fen = save_p_fen;
-
-              char *p = _("replace with %s? (y)es/(n)o/(a)ll/(q)uit/(l)ast/scroll up(^E)/down(^Y)");
-              snprintf(IObuff, IOSIZE, p, sub);
-              p = xstrdup(IObuff);
-              typed = prompt_for_input(p, HLF_R, true, NULL);
-              Search.hl_match = false;
-              xfree(p);
-
-              msg_didout = false;                 // don't scroll up
-              gotocmdline(true);
-              p_lz = save_p_lz;
-              RedrawingDisabled = temp;
-
-              // restore the line
-              if (orig_line.data != NULL) {
-                ml_replace(lnum, orig_line.data, false);
-              }
+            // restore the line
+            if (orig_line.data != NULL) {
+              ml_replace(lnum, orig_line.data, false);
             }
 
             need_wait_return = false;             // no hit-return prompt

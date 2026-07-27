@@ -860,7 +860,7 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
 
   // Redraw the statusline in case it uses the current mode using the mode()
   // function.
-  if (!cmd_silent && !exmode_active) {
+  if (!cmd_silent) {
     bool found_one = false;
 
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
@@ -1000,10 +1000,6 @@ theend:
   char *p = ccline.cmdbuff;
 
   if (ui_has(kUICmdline)) {
-    // Emit cmdline_block in Ex mode unless cmdbuff is NULL (happens with <C-\><C-N> #39021).
-    if (exmode_active && p != NULL) {
-      ui_ext_cmdline_block_append(0, p);
-    }
     ui_ext_cmdline_hide(s->gotesc);
   }
   if (!cmd_silent) {
@@ -1374,8 +1370,7 @@ static int command_line_execute(VimState *state, int key)
   // Don't ignore it for the input() function.
   if ((s->c == Ctrl_C)
       && s->firstc != '@'
-      // do clear got_int in Ex mode to avoid infinite Ctrl-C loop
-      && (!s->break_ctrl_c || exmode_active)
+      && !s->break_ctrl_c
       && !global_busy) {
     got_int = false;
   }
@@ -1481,30 +1476,19 @@ static int command_line_execute(VimState *state, int key)
       || s->c == K_KENTER
       || (s->c == ESC
           && (!KeyTyped || vim_strchr(p_cpo, kCpoEsc) != NULL))) {
-    // In Ex mode a backslash escapes a newline.
-    if (exmode_active
-        && s->c != ESC
-        && ccline.cmdpos == ccline.cmdlen
-        && ccline.cmdpos > 0
-        && ccline.cmdbuff[ccline.cmdpos - 1] == '\\') {
-      if (s->c == K_KENTER) {
-        s->c = '\n';
-      }
-    } else {
-      s->gotesc = false;         // Might have typed ESC previously, don't
-                                 // truncate the cmdline now.
-      if (ccheck_abbr(s->c + ABBR_OFF)) {
-        return command_line_changed(s);
-      }
-
-      if (!cmd_silent) {
-        if (!ui_has(kUICmdline)) {
-          msg_cursor_goto(msg_row, 0);
-        }
-        ui_flush();
-      }
-      return 0;
+    s->gotesc = false;         // Might have typed ESC previously, don't
+                               // truncate the cmdline now.
+    if (ccheck_abbr(s->c + ABBR_OFF)) {
+      return command_line_changed(s);
     }
+
+    if (!cmd_silent) {
+      if (!ui_has(kUICmdline)) {
+        msg_cursor_goto(msg_row, 0);
+      }
+      ui_flush();
+    }
+    return 0;
   }
 
   // Completion for 'wildchar', 'wildcharm', and wildtrigger()
@@ -1752,8 +1736,8 @@ static int command_line_erase_chars(CommandLineState *s)
     redrawcmd();
   } else if (ccline.cmdlen == 0 && s->c != Ctrl_W
              && ccline.cmdprompt == NULL && s->indent == 0) {
-    // In ex and debug mode it doesn't make sense to return.
-    if (exmode_active || ccline.cmdfirstc == '>') {
+    // In debug mode it doesn't make sense to return.
+    if (ccline.cmdfirstc == '>') {
       return CMDLINE_NOT_CHANGED;
     }
 
@@ -2085,11 +2069,8 @@ static int command_line_handle_key(CommandLineState *s)
 
   case ESC:           // get here if p_wc != ESC or when ESC typed twice
   case Ctrl_C:
-    // In exmode it doesn't make sense to return.  Except when
-    // ":normal" runs out of characters. Also when highlight callback is active
-    // <C-c> should interrupt only it.
-    if ((exmode_active && (ex_normal_busy == 0 || typebuf.tb_len > 0))
-        || (getln_interrupted_highlight && s->c == Ctrl_C)) {
+    // When the highlight callback is active <C-c> should interrupt only it.
+    if (getln_interrupted_highlight && s->c == Ctrl_C) {
       getln_interrupted_highlight = false;
       return command_line_not_changed(s);
     }
@@ -2824,7 +2805,6 @@ static int command_line_changed(CommandLineState *s)
   if (s->firstc == ':'
       && current_sctx.sc_sid == 0    // only if interactive
       && *p_icm != NUL       // 'inccommand' is set
-      && !exmode_active      // not in ex mode
       && cmdline_star == 0   // not typing a password
       && !vpeekc_any()
       && cmdpreview_may_show(s)) {
@@ -4013,7 +3993,7 @@ void redrawcmd(void)
 
 void compute_cmdrow(void)
 {
-  if (exmode_active || msg_scrolled != 0) {
+  if (msg_scrolled != 0) {
     cmdline_row = Rows - 1;
   } else {
     win_T *wp = lastwin_nofloating(NULL);

@@ -5022,7 +5022,6 @@ void timer_due_cb(TimeWatcher *tw, void *data)
   timer_T *timer = (timer_T *)data;
   int save_did_emsg = did_emsg;
   const int called_emsg_before = called_emsg;
-  const bool save_ex_pressedreturn = get_pressedreturn();
 
   if (timer->stopped || timer->paused) {
     return;
@@ -5049,7 +5048,6 @@ void timer_due_cb(TimeWatcher *tw, void *data)
     }
   }
   did_emsg = save_did_emsg;
-  set_pressedreturn(save_ex_pressedreturn);
 
   if (timer->emsg_count >= 3) {
     timer_stop(timer);
