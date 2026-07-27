@@ -85,6 +85,7 @@
 \*HelpToc-mappings\*
 \*SafeStateAgain\*
 \*SigUSR1\*
+\*builtin-function-list\*
 \*emacs[_-]tags\*
 \*help-toc-install\*
 \*patches-\(after-\)\?[0-9].*\*
