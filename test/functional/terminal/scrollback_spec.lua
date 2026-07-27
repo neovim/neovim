@@ -1175,7 +1175,7 @@ describe('pending scrollback line handling', function()
   end)
 end)
 
-describe('wrapped lines in scrollback are reflown on resize', function()
+describe('wrapped lines in scrollback are reflowed on resize', function()
   local screen --- @type test.functional.ui.screen
   local buf --- @type integer
   local chan --- @type integer
