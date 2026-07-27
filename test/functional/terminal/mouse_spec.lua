@@ -157,12 +157,12 @@ describe(':terminal mouse', function()
         skip(is_os('win'))
         command('set number')
         screen:expect([[
-          {121: 11 }line28                                        |
-          {121: 12 }line29                                        |
-          {121: 13 }line30                                        |
-          {121: 14 }mouse enabled                                 |
-          {121: 15 }rows: 6, cols: 46                             |
-          {121: 16 }^                                              |
+          {121: 29 }line28                                        |
+          {121: 30 }line29                                        |
+          {121: 31 }line30                                        |
+          {121: 32 }mouse enabled                                 |
+          {121: 33 }rows: 6, cols: 46                             |
+          {121: 34 }^                                              |
           {5:-- TERMINAL --}                                    |
         ]])
         -- When the display area such as a number is clicked, it returns to the
@@ -170,24 +170,24 @@ describe(':terminal mouse', function()
         feed('<LeftMouse><3,0>')
         eq('nt', eval('mode(1)'))
         screen:expect([[
-          {121: 11 }^line28                                        |
-          {121: 12 }line29                                        |
-          {121: 13 }line30                                        |
-          {121: 14 }mouse enabled                                 |
-          {121: 15 }rows: 6, cols: 46                             |
-          {121: 16 }                                              |
+          {121: 29 }^line28                                        |
+          {121: 30 }line29                                        |
+          {121: 31 }line30                                        |
+          {121: 32 }mouse enabled                                 |
+          {121: 33 }rows: 6, cols: 46                             |
+          {121: 34 }                                              |
                                                             |
         ]])
         -- If click on the coordinate (0,1) of the region of the terminal
         -- (i.e. the coordinate (4,1) of vim), 'CSI !"' is sent to the terminal.
         feed('i<LeftMouse><4,1>')
         screen:expect([[
-          {121: 11 }line28                                        |
-          {121: 12 }line29                                        |
-          {121: 13 }line30                                        |
-          {121: 14 }mouse enabled                                 |
-          {121: 15 }rows: 6, cols: 46                             |
-          {121: 16 } !"^                                           |
+          {121: 29 }line28                                        |
+          {121: 30 }line29                                        |
+          {121: 31 }line30                                        |
+          {121: 32 }mouse enabled                                 |
+          {121: 33 }rows: 6, cols: 46                             |
+          {121: 34 } !"^                                           |
           {5:-- TERMINAL --}                                    |
         ]])
       end)
