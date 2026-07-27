@@ -38,7 +38,7 @@ if exists('s:did_load')
   if g:testname !~ 'test_mapping\.vim$'
     " Make "Q" switch to Ex mode.
     " This does not work for all tests as Nvim only supports Vim Ex mode.
-    nnoremap Q gQ<Cmd>call<SID>ExStart()<CR>
+    nnoremap Q 1q:<Cmd>call<SID>ExStart()<CR>
   endif
 endif
 

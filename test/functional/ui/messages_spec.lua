@@ -2091,7 +2091,7 @@ describe('ui/builtin messages', function()
     command('set number')
     api.nvim_buf_set_lines(0, 0, 0, true, { 'aaa', 'bbb', 'ccc' })
     -- Empty lines advance the cursor and print; a bare address moves and prints.
-    feed('gggQ<CR><CR>1<CR><CR>')
+    feed('gg1q:<CR><CR>1<CR><CR>')
     screen:expect({ any = vim.pesc('" bbb') })
     feed('vi<CR>')
     screen:expect([[

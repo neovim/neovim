@@ -4846,6 +4846,21 @@ static void ex_quitall(exarg_T *eap)
   not_exiting(save_exiting);
 }
 
+/// ":exmode": Enter interactive Ex mode.
+static void ex_exmode(exarg_T *eap)
+{
+  if (silent_mode) {
+    return;
+  }
+  if (ex_normal_busy > 0 || global_busy) {
+    // Ex mode cannot run inside ":normal" or ":global"; discard the rest of the command.
+    flush_buffers(FLUSH_TYPEAHEAD);
+    return;
+  }
+  typval_T args[] = { { .v_type = VAR_UNKNOWN } };
+  nlua_call_typval("vim._core.exmode", "open", args, NULL);
+}
+
 /// ":restart": restart the Nvim server (using ":qall!").
 /// ":restart +cmd": restart the Nvim server using ":cmd".
 /// ":restart +cmd <command>": restart the Nvim server using ":cmd" and runs <command> in the new server.

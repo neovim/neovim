@@ -11,18 +11,18 @@ local fn = n.fn
 
 before_each(clear)
 
--- Interactive Ex mode (gQ) is a keep-open |cmdwin| REPL. #40962
+-- Interactive Ex mode ([count]q:) is a keep-open |cmdwin| REPL. #40962
 describe('Ex mode', function()
   it('executes commands against the caller window, auto-prints, records history', function()
     local screen = Screen.new(60, 10)
     command([[call setline(1, ['line1', 'line2', 'line3'])]])
-    feed('gQ')
+    feed('1q:')
     screen:expect([[
       line1                                                       |
       {2:[No Name] [+]                                               }|
       {1::}^                                                           |
       {1:~                                                           }|*5
-      {3:[Command Line]                                              }|
+      {3:[Ex mode]                                                   }|
       {5:-- INSERT --}                                                |
     ]])
     t.matches('Entering Ex mode%.', n.exec_capture('messages'))
@@ -32,12 +32,24 @@ describe('Ex mode', function()
     eq({ 'line1', 'inserted', 'line2', 'line3' }, fn.getline(1, '$'))
     eq('visual', fn.histget('cmd', -1))
     eq("put ='inserted'", fn.histget('cmd', -2))
+    -- Ex mode can be re-entered (the "[Ex mode]" buffer name is not duplicated).
+    feed('1q:')
+    screen:expect({ any = vim.pesc('{3:[Ex mode]') })
+    feed('visual<CR>')
+    eq('n', fn.mode(1))
+    -- ":exmode" (but not ":ex", which is ":edit") also enters Ex mode.
+    eq('ex', fn.fullcommand('ex'))
+    eq('exmode', fn.fullcommand('exm'))
+    command('exmode')
+    screen:expect({ any = vim.pesc('{3:[Ex mode]') })
+    feed('visual<CR>')
+    eq('n', fn.mode(1))
   end)
 
   it('bare address and empty line move the cursor and auto-print', function()
     local screen = Screen.new(60, 8)
     command([[call setline(1, ['line1', 'line2'])]])
-    feed('gQ')
+    feed('1q:')
     feed('1<CR>') -- Bare address: move and auto-print.
     screen:expect({ any = vim.pesc('" line1') })
     feed('<CR>') -- Empty line: advance and auto-print (POSIX ex "+").
@@ -50,7 +62,7 @@ describe('Ex mode', function()
 
   it('explicit :print is not doubled by auto-print', function()
     command([[call setline(1, ['line1', 'line2'])]])
-    feed('gQ')
+    feed('1q:')
     feed('1,2print<CR>')
     -- Transcript records each printed line once, not the cursor line again.
     eq({ '1,2print', '" line1', '" line2', '' }, n.api.nvim_buf_get_lines(0, 0, -1, false))
@@ -61,7 +73,7 @@ describe('Ex mode', function()
     local screen = Screen.new(60, 8)
     command('set inccommand=')
     command([[call setline(1, repeat(['foo foo'], 2))]])
-    feed('gQ')
+    feed('1q:')
     feed('%s/foo/bar/gc<CR>')
     screen:expect({ any = vim.pesc('replace with bar? (y)es/(n)o/(a)ll') })
     feed('y') -- Replace the first match ...
@@ -73,7 +85,7 @@ describe('Ex mode', function()
 
   it('collects multi-line commands until the block is complete', function()
     local screen = Screen.new(60, 10)
-    feed('gQ')
+    feed('1q:')
     feed('append<CR>')
     -- Continuation lines should not have ":" prefix in 'statuscolumn'.
     screen:expect([[
@@ -82,7 +94,7 @@ describe('Ex mode', function()
       {1::}append                                                     |
       {1: }^                                                           |
       {1:~                                                           }|*4
-      {3:[Command Line]                                              }|
+      {3:[Ex mode]                                                   }|
       {5:-- INSERT --}                                                |
     ]])
     feed('x1<CR>x2<CR>.<CR>')
@@ -102,7 +114,7 @@ describe('Ex mode', function()
       {1::}let g:x = 0                                                |
       {1::}if 1                                                       |
       {1: }^                                                           |
-      {3:[Command Line]                                              }|
+      {3:[Ex mode]                                                   }|
       {5:-- INSERT --}                                                |
     ]])
     feed('let g:x = 1<CR>endif<CR>')
@@ -116,7 +128,7 @@ describe('Ex mode', function()
   end)
 
   it('pressing Ctrl-C in :append inside a loop does not hang', function()
-    feed('gQ')
+    feed('1q:')
     feed('for i in range(1)<CR>')
     feed('append<CR>')
     -- CTRL-C cancels the cmdwin (ends Ex mode): back to the ":" cmdline, like |q:|.

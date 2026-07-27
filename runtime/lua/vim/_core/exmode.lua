@@ -1,6 +1,6 @@
 --- Ex mode.
 --- - `run()`: non-interactive (`nvim -es`): executes stdin as Ex commands.
---- - `open()`: interactive (`gQ`, `nvim -e`), a keep-open "cmdwin" REPL.
+--- - `open()`: interactive (`[count]q:`, `nvim -e`), a keep-open "cmdwin" REPL.
 
 local api = vim.api
 local N_ = vim.fn.gettext
@@ -101,6 +101,7 @@ function M.open()
     return -- cmdwin failed to open (E1292 already echoed).
   end
   local buf = api.nvim_get_current_buf()
+  api.nvim_buf_set_name(buf, N_('[Ex mode]'))
   local block_start = api.nvim_buf_line_count(buf)
   cont_lines = {}
   vim.wo[0][0].statuscolumn = '%#NonText#%{v:lua.require("vim._core.exmode")._statuscolumn()}'
@@ -216,7 +217,7 @@ function M.open()
 
   vim.keymap.set({ 'n', 'i' }, '<CR>', run, { buffer = buf })
   vim.keymap.set({ 'n', 'i' }, '<NL>', run, { buffer = buf })
-  -- Enter Insert mode before any already-typed keys, so `gQcmd<CR>` types "cmd" into the REPL.
+  -- Enter Insert mode before any already-typed keys, so `1q:cmd<CR>` types "cmd" into the REPL.
   api.nvim_feedkeys('i', 'ni', false)
 end
 

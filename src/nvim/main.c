@@ -687,8 +687,7 @@ int main(int argc, char **argv)
 
   if (params.exmode) {
     // Interactive Ex mode (-e/-E): cmdwin REPL. #40962
-    typval_T args[] = { { .v_type = VAR_UNKNOWN } };
-    nlua_call_typval("vim._core.exmode", "open", args, NULL);
+    do_cmdline_cmd("exmode");
   }
 
   TIME_MSG("before starting main loop");
