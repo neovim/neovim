@@ -4659,16 +4659,79 @@ describe('TUI bg color', function()
 
   -- Start a headless server (the outer Nvim is its OSC-11-answering terminal),
   -- cleaned up when the test ends, and return its address and a client session.
-  local function start_headless(extra)
+  local function start_headless(extra, opts)
     local server = new_pipename()
     local argv = { nvim_prog, '--clean', '--headless', '--listen', server }
-    local job = fn.jobstart(vim.list_extend(argv, extra or {}))
+    local argv_extra = vim.list_extend(argv, extra or {})
+    local job = opts and fn.jobstart(argv_extra, opts) or fn.jobstart(argv_extra)
     finally(function()
       pcall(fn.jobstop, job)
     end)
     local session
     retry(nil, nil, function()
       session = n.connect(server)
+    end)
+    return server, session
+  end
+
+  local function watch_osc11_responses(session)
+    session:request(
+      'nvim_exec_lua',
+      [[
+        _G.osc11 = 0
+        vim.api.nvim_create_autocmd('TermResponse', { callback = function(ev)
+          if ev.data.sequence:find(']11;rgb', 1, true) then
+            _G.osc11 = _G.osc11 + 1
+          end
+        end })
+      ]],
+      {}
+    )
+  end
+
+  local function expect_osc11_response(session)
+    retry(nil, nil, function()
+      eq({ true, true }, { session:request('nvim_exec_lua', 'return _G.osc11 > 0', {}) })
+    end)
+  end
+
+  local function start_headless_viminit(viminit)
+    local server = new_pipename()
+    local xdg = t.tmpname(false)
+    local env = {
+      VIMINIT = viminit,
+      XDG_CACHE_HOME = xdg .. '/cache',
+      XDG_CONFIG_HOME = xdg .. '/config',
+      XDG_DATA_HOME = xdg .. '/data',
+      XDG_STATE_HOME = xdg .. '/state',
+    }
+    for _, dir in ipairs({
+      env.XDG_CACHE_HOME,
+      env.XDG_CONFIG_HOME,
+      env.XDG_DATA_HOME,
+      env.XDG_STATE_HOME,
+    }) do
+      n.mkdir_p(dir)
+    end
+    local session = n.new_session(true, {
+      merge = false,
+      env = env,
+      args = {
+        '--embed',
+        '--headless',
+        '--listen',
+        server,
+        '--noplugin',
+        '-i',
+        'NONE',
+        '--cmd',
+        'set noswapfile',
+        '--cmd',
+        'colorscheme vim',
+      },
+    })
+    finally(function()
+      session:close()
     end)
     return server, session
   end
@@ -4683,6 +4746,13 @@ describe('TUI bg color', function()
     retry(nil, nil, function()
       eq({ true, 'light' }, { session:request('nvim_eval', '&background') })
     end)
+    eq({ true, -11 }, {
+      session:request(
+        'nvim_exec_lua',
+        [[return vim.api.nvim_get_option_info2('background', {}).last_set_sid]],
+        {}
+      ),
+    })
   end)
 
   it('enables termguicolors on remote-ui attach to a headless server #30320', function()
@@ -4714,25 +4784,107 @@ describe('TUI bg color', function()
     })
     -- Count OSC 11 responses so we can wait for the attach round-trip to finish
     -- (a deterministic barrier) before asserting the user's value held.
-    session:request(
-      'nvim_exec_lua',
-      [[
-        _G.osc11 = 0
-        vim.api.nvim_create_autocmd('TermResponse', { callback = function(ev)
-          if ev.data.sequence:find(']11;rgb', 1, true) then
-            _G.osc11 = _G.osc11 + 1
-          end
-        end })
-      ]],
-      {}
-    )
+    watch_osc11_responses(session)
     local screen = tt.setup_child_nvim({ '--remote-ui', '--server', server })
     screen:expect({ any = '%[No Name%]' })
-    retry(nil, nil, function()
-      eq({ true, true }, { session:request('nvim_exec_lua', 'return _G.osc11 > 0', {}) })
-    end)
+    expect_osc11_response(session)
     eq({ true, 'dark' }, { session:request('nvim_eval', '&background') })
   end)
+
+  for _, test_case in ipairs({
+    {
+      desc = 'Lua VIMINIT',
+      expected_sid = -4,
+      start = function()
+        return start_headless_viminit([[lua vim.opt.background = 'dark']])
+      end,
+    },
+    {
+      desc = 'Lua --cmd',
+      expected_sid = -2,
+      start = function()
+        return start_headless({
+          '--cmd',
+          [[lua vim.opt.background = 'dark']],
+          '--cmd',
+          'colorscheme vim',
+          '--cmd',
+          'set noswapfile',
+        })
+      end,
+    },
+    {
+      desc = 'Lua -c',
+      expected_sid = -3,
+      start = function()
+        return start_headless({
+          '--cmd',
+          'colorscheme vim',
+          '--cmd',
+          'set noswapfile',
+          '-c',
+          [[lua vim.opt.background = 'dark']],
+        })
+      end,
+    },
+    {
+      desc = 'nvim_exec_lua',
+      expected_sid = -8,
+      start = function()
+        local server, session = start_headless({
+          '--cmd',
+          'colorscheme vim',
+          '--cmd',
+          'set noswapfile',
+        })
+        session:request('nvim_exec_lua', [[vim.opt.background = 'dark']], {})
+        return server, session
+      end,
+    },
+    {
+      desc = ':luafile',
+      expected_sid = 'script',
+      start = function()
+        local luafile = t.tmpname()
+        write_file(luafile, [[vim.opt.background = 'dark']])
+        return start_headless({
+          '--cmd',
+          'colorscheme vim',
+          '--cmd',
+          'set noswapfile',
+          '-c',
+          'luafile ' .. luafile,
+        })
+      end,
+    },
+  }) do
+    it(
+      ('does not override an explicit user background from %s on remote-ui attach'):format(
+        test_case.desc
+      ),
+      function()
+        command('highlight clear Normal')
+        command('set background=light')
+        local server, session = test_case.start()
+        watch_osc11_responses(session)
+        local screen = tt.setup_child_nvim({ '--remote-ui', '--server', server })
+        screen:expect({ any = '%[No Name%]' })
+        expect_osc11_response(session)
+        eq({ true, 'dark' }, { session:request('nvim_eval', '&background') })
+        local ok_, sid = session:request(
+          'nvim_exec_lua',
+          [[return vim.api.nvim_get_option_info2('background', {}).last_set_sid]],
+          {}
+        )
+        eq(true, ok_)
+        if test_case.expected_sid == 'script' then
+          ok(sid > 0)
+        else
+          eq(test_case.expected_sid, sid)
+        end
+      end
+    )
+  end
 
   it('reacts to a runtime theme change over remote-ui', function()
     command('highlight clear Normal')

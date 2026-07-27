@@ -295,6 +295,7 @@ EXTERN bool garbage_collect_at_exit INIT( = false);
 #define SID_LUA         (-8)      // for Lua scripts/chunks
 #define SID_API_CLIENT  (-9)      // for API clients
 #define SID_STR         (-10)     // for sourcing a string with no script item
+#define SID_DEFAULTS    (-11)     // for automatic defaults that may be reapplied
 
 // Script CTX being sourced or was sourced to define the current function.
 EXTERN sctx_T current_sctx INIT( = { 0, 0, 0, 0 });

@@ -93,7 +93,7 @@ end)()
 
   local function get_last_set_location(linenr)
     return ('%s %s'):format(
-      (cmd == 'source' or v1) and script_location or 'Lua',
+      (cmd == 'source' or cmd == 'luafile' or v1) and script_location or 'Lua',
       v1 and ('line %d'):format(linenr) or '(run Nvim with -V1 for more details)'
     )
   end
@@ -212,9 +212,6 @@ TestHL2        xxx guibg=Green
   end)
 
   it('for command defined by nvim_command', function()
-    if cmd == 'luafile' then
-      pending('nvim_command does not set the script context')
-    end
     local result = exec_capture(':verbose command Bdelete')
     eq(
       string.format(
@@ -316,7 +313,7 @@ describe('lua :verbose without -V1', function()
     last_set_lua_verbose_tests('source', false)
   end)
 
-  describe('"Last set" suggests -V1 when using :luafile', function()
+  describe('"Last set" shows file name using :luafile', function()
     last_set_lua_verbose_tests('luafile', false)
   end)
 end)

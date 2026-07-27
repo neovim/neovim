@@ -1926,6 +1926,33 @@ describe('API', function()
       eq('  equalalways\n\tLast set from Lua (run Nvim with -V1 for more details)', rv)
     end)
 
+    it('preserves source context for Lua option API calls', function()
+      local function last_set_sid()
+        return api.nvim_get_option_info2('equalalways', {}).last_set_sid
+      end
+
+      clear({ args = { '--cmd', [[lua vim.opt.equalalways = false]] } })
+      eq(-2, last_set_sid())
+
+      clear({ args = { '-c', [[lua vim.opt.equalalways = false]] } })
+      eq(-3, last_set_sid())
+
+      clear()
+      api.nvim_exec_lua('vim.opt.equalalways = false', {})
+      eq(-8, last_set_sid())
+
+      local source_file = tmpname(false) .. '.lua'
+      write_file(source_file, [[vim.opt.equalalways = false]])
+
+      clear()
+      command('source ' .. source_file)
+      ok(last_set_sid() > 0)
+
+      clear()
+      command('luafile ' .. source_file)
+      ok(last_set_sid() > 0)
+    end)
+
     it('updates whether the option has ever been set #25025', function()
       eq(false, api.nvim_get_option_info2('autochdir', {}).was_set)
       api.nvim_set_option_value('autochdir', true, {})
