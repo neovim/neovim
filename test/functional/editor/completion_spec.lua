@@ -270,30 +270,25 @@ describe('completion', function()
     end)
 
     describe('"preselect"', function()
-      it('selects first item.preselect item', function()
+      it('respects "preselect" of complete items', function()
         source([[
           function! TestComplete() abort
-            call complete(1, [
-              \ {'word': 'aaa'},
-              \ {'word': 'bbb'},
-              \ {'word': 'ccc', 'preselect': v:true},
-              \ {'word': 'ddd'},
-              \ ])
-            return ''
-          endfunction
-          function! TestCompleteMany() abort
-            let items = []
-            for i in range(20)
-              call add(items, {'word': 'item' .. i})
-            endfor
-            let items[15].preselect = v:true
-            call complete(1, items)
+            call complete(1, g:comp_items)
             return ''
           endfunction
         ]])
-
+        local function complete(items)
+          api.nvim_set_var('comp_items', items)
+          feed('<Esc>S<C-r>=TestComplete()<CR>')
+        end
+        local items = {
+          { word = 'aaa' },
+          { word = 'bbb' },
+          { word = 'ccc', preselect = true },
+          { word = 'ddd' },
+        }
         command('set completeopt=menuone,preselect')
-        feed('i<C-r>=TestComplete()<CR>')
+        complete(items)
         screen:expect([[
           ccc^                                                         |
           {4:aaa            }{1:                                             }|
@@ -304,10 +299,14 @@ describe('completion', function()
           {5:-- INSERT --}                                                |
         ]])
 
-        -- scrolls pum when preselect item is far down
-        feed('<Esc>S')
+        -- scrolls pum when preselected item is far down
         command('set pumheight=5')
-        feed('<C-r>=TestCompleteMany()<CR>')
+        local many = {} ---@type table[]
+        for i = 0, 19 do
+          many[i + 1] = { word = 'item' .. i }
+        end
+        many[16].preselect = true ---@type boolean
+        complete(many)
         screen:expect([[
           item15^                                                      |
           {4:item13         }{12: }{1:                                            }|
@@ -319,9 +318,9 @@ describe('completion', function()
           {5:-- INSERT --}                                                |
         ]])
 
-        feed('<Esc>S')
+        -- preselected item is selected but not inserted with "noselect"
         command('set completeopt=menuone,noselect,preselect pumheight=0')
-        feed('<C-r>=TestComplete()<CR>')
+        complete(items)
         screen:expect([[
           ^                                                            |
           {4:aaa            }{1:                                             }|
@@ -332,11 +331,32 @@ describe('completion', function()
           {5:-- INSERT --}                                                |
         ]])
 
-        -- without "preselect" in completeopt, preselect attribute is ignored
-        feed('<Esc>S')
+        -- selects the first preselected item that still matches
+        complete({
+          { word = 'aaa', preselect = true },
+          { word = 'abb' },
+          { word = 'abc', preselect = true },
+        })
+        feed('ab<C-Y>')
+        eq('abc', api.nvim_get_current_line())
+
+        -- without "preselect" in 'completeopt' the attribute is ignored
         command('set completeopt-=preselect')
-        feed('<C-r>=TestComplete()<CR><C-N><C-Y>')
+        complete(items)
+        feed('<C-N><C-Y>')
         eq('aaa', api.nvim_get_current_line())
+      end)
+
+      it('does not insert text if noinsert', function()
+        source([[
+          function! TestComplete() abort
+            call complete(1, [{'word': 'aaa', 'preselect': v:true}, {'word': 'bbb'}])
+            return ''
+          endfunction
+        ]])
+        command('set completeopt=menuone,noinsert,preselect')
+        feed('i<C-r>=TestComplete()<CR>')
+        eq('', api.nvim_get_current_line())
       end)
     end)
   end)
