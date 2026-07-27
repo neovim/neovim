@@ -403,7 +403,8 @@ Tag		Char	      Note Normal-mode action	~
 				   {0-9a-zA-Z"} (uppercase to append)
 |q|		q		   (while recording) stops recording
 |Q|		Q		2  replay last recorded register
-|q:|		q:		   edit : command-line in command-line window
+|q:|		[count]q:	   edit : command-line in command-line window,
+				   with [count]: switch to |Ex-mode|
 |q/|		q/		   edit / command-line in command-line window
 |q?|		q?		   edit ? command-line in command-line window
 |r|		r{char}		2  replace N chars with {char}
@@ -743,7 +744,6 @@ Tag		Char	      Note Normal-mode action	~
 				   search pattern and Visually select it
 |gP|		["x]gP		2  put the text [from register x] before the
 				   cursor N times, leave the cursor after it
-|gQ|		gQ		   switch to "Ex" mode with Vim editing
 |gR|		gR		2  enter Virtual Replace mode
 |gT|		gT		   go to the previous tabpage
 |gU|		gU{motion}	2  make Nmove text uppercase
@@ -1312,6 +1312,7 @@ Tag		Command		Action ~
 |:ex|		:ex		same as ":edit"
 |:execute|	:exe[cute]	execute result of expressions
 |:exit|		:exi[t]		same as ":xit"
+|:exmode|	:exm[ode]	switch to |Ex-mode|
 |:exusage|	:exu[sage]	overview of Ex commands
 |:fclose|	:fc[lose]	close floating window
 |:file|		:f[ile]		show or set the current file name

@@ -93,10 +93,11 @@ DIAGNOSTICS
 
 EDITOR
 
-• Interactive |Ex-mode| (|gQ|, `nvim -e`) is a persistent |cmdwin|. This is much
+• Interactive |Ex-mode| (|:exmode|, `nvim -e`) is a persistent |cmdwin|. This is much
   more flexible and makes "Ex mode" more useful as a kind of "cmdline REPL",
   with the tradeoff of dropping some POSIX Ex-mode quirks.
   • |mode()| returns "n" or "i"; "cv" indicates |-es| (script mode) only.
+  • Ex mode is entered with "1q:" or |:exmode|, not "gQ".
   • ":global/pat/visual" no longer switches to Normal mode per matching line.
 • Non-interactive Ex-mode (|-es|, "script mode") executes stdin as Ex commands
   directly. It is a "script host", not "POSIX Ex mode".

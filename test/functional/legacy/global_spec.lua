@@ -31,7 +31,7 @@ describe(':global', function()
     ]])
 
     -- Also test in Ex mode (keep-open cmdwin REPL)
-    feed('gQg/foo/norm :<C-V>;<CR>')
+    feed('1q:g/foo/norm :<C-V>;<CR>')
     poke_eventloop() -- Wait for :sleep to start
     feed('<C-C>')
     screen:expect([[
@@ -39,7 +39,7 @@ describe(':global', function()
       {2:[No Name] [+]                                                              }|
       {1::}" Keyboard interrupt                                                      |
       {1::}^                                                                          |
-      {3:[Command Line]                                                             }|
+      {3:[Ex mode]                                                                  }|
       {5:-- INSERT --}                                                               |
     ]])
   end)

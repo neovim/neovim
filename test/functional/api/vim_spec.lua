@@ -5321,7 +5321,7 @@ describe('API', function()
       insert([[
         foo
         bar]])
-      feed('gQ1')
+      feed('1q:1')
       screen:expect({ any = vim.pesc('{1::}1^') })
       eq('Parsing command-line', pcall_err(api.nvim_parse_cmd, '', {}))
       -- Executing the line still auto-prints it.

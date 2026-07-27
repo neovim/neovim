@@ -279,7 +279,7 @@ static const struct nv_cmd {
   { 'n',       nv_next,        0,                      0 },
   { 'o',       nv_open,        0,                      0 },
   { 'p',       nv_put,         0,                      0 },
-  { 'q',       nv_record,      NV_NCH,                 0 },
+  { 'q',       nv_q,      NV_NCH,                 0 },
   { 'r',       nv_replace,     NV_NCH_NOP|NV_LANG,     0 },
   { 's',       nv_subst,       NV_KEEPREG,             0 },
   { 't',       nv_csearch,     NV_NCH_ALW|NV_LANG,     FORWARD },
@@ -5673,19 +5673,6 @@ static void nv_g_cmd(cmdarg_T *cap)
     goto_byte(cap->count0);
     break;
 
-  // "gQ": improved Ex mode
-  case 'Q':
-    if (!check_text_locked(cap->oap) && !checkclearopq(oap)) {
-      if (ex_normal_busy > 0 || global_busy) {
-        // Ex mode cannot run inside ":normal" or ":global"; discard the rest of the command.
-        flush_buffers(FLUSH_TYPEAHEAD);
-      } else if (!silent_mode) {
-        typval_T args[] = { { .v_type = VAR_UNKNOWN } };
-        nlua_call_typval("vim._core.exmode", "open", args, NULL);
-      }
-    }
-    break;
-
   case ',':
     nv_pcmark(cap);
     break;
@@ -6370,9 +6357,10 @@ static void nv_object(cmdarg_T *cap)
   curwin->w_set_curswant = true;
 }
 
-/// "q" command: Start/stop recording.
+/// "q" command: Start/stop macro recording.
 /// "q:", "q/", "q?": cmdwin.
-static void nv_record(cmdarg_T *cap)
+/// "[count]q:": interactive Ex-mode.
+static void nv_q(cmdarg_T *cap)
 {
   if (cap->oap->op_type == OP_FORMAT) {
     // "gqq" is the same as "gqgq": format line
@@ -6389,6 +6377,11 @@ static void nv_record(cmdarg_T *cap)
   if (cap->nchar == ':' || cap->nchar == '/' || cap->nchar == '?') {
     if (cmdwin_buf != NULL) {
       emsg(_(e_cmdline_window_already_open));
+      return;
+    }
+    if (cap->nchar == ':' && cap->count0 > 0) {
+      // "[count]q:": interactive Ex mode. E565 on textlock.
+      do_cmdline_cmd("exmode");
       return;
     }
     bool insert_range = Visual.active && cap->nchar == ':';

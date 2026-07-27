@@ -870,7 +870,7 @@ describe('startup', function()
       {1:~                                       }|*6
       {2:[No Name] [+]                           }|
       {1::}^                                       |
-      {3:[Command Line]                          }|
+      {3:[Ex mode]                               }|
       {5:-- INSERT --}                            |
     ]])
 
@@ -883,7 +883,7 @@ describe('startup', function()
       {1:~                                       }|*6
       {2:[No Name] [+]                           }|
       {1::}^                                       |
-      {3:[Command Line]                          }|
+      {3:[Ex mode]                               }|
       {5:-- INSERT --}                            |
     ]])
   end)
@@ -892,7 +892,7 @@ describe('startup', function()
     clear('-e')
     local screen = Screen.new(40, 12)
     -- The keep-open cmdwin REPL is focused, in Insert mode. #40962
-    screen:expect({ any = vim.pesc('[Command Line]') })
+    screen:expect({ any = vim.pesc('[Ex mode]') })
     eq(':', fn.getcmdwintype())
     feed('visual<CR>')
     eq('n', fn.mode(1))

@@ -963,6 +963,12 @@ M.cmds = {
     func = 'ex_exit',
   },
   {
+    command = 'exmode',
+    flags = bit.bor(TRLBAR),
+    addr_type = 'ADDR_NONE',
+    func = 'ex_exmode',
+  },
+  {
     command = 'exusage',
     flags = bit.bor(TRLBAR),
     addr_type = 'ADDR_NONE',

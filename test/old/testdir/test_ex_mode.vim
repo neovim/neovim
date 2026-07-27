@@ -71,7 +71,7 @@ func Test_Ex_substitute()
 
   call term_sendkeys(buf, ":call setline(1, repeat(['foo foo'], 4))\<CR>")
   call term_sendkeys(buf, ":set number\<CR>")
-  call term_sendkeys(buf, "gQ")
+  call term_sendkeys(buf, "1q:")
   call WaitForAssert({-> assert_match(':', term_getline(buf, 6))}, 1000)
 
   call term_sendkeys(buf, "%s/foo/bar/gc\<CR>")
@@ -217,7 +217,7 @@ func Test_Ex_append_in_loop()
   CheckRunVimInTerminal
   let buf = RunVimInTerminal('', {'rows': 6})
 
-  call term_sendkeys(buf, "gQ")
+  call term_sendkeys(buf, "1q:")
   call term_sendkeys(buf, "for i in range(1)\<CR>")
   call term_sendkeys(buf, "append\<CR>")
   call WaitForAssert({-> assert_match(':  append', term_getline(buf, 5))}, 1000)
@@ -260,7 +260,7 @@ endfunc
 
 func Test_ex_mode_errors()
   " Not allowed to enter ex mode when text is locked
-  au InsertCharPre <buffer> normal! gQ<CR>
+  au InsertCharPre <buffer> normal! 1q:<CR>
   let caught_e565 = 0
   try
     call feedkeys("ix\<esc>", 'xt')
@@ -275,13 +275,13 @@ func Test_ex_mode_errors()
   func ExEnterFunc()
 
   endfunc
-  call feedkeys("gQvi\r", 'xt')
+  call feedkeys("1q:vi\r", 'xt')
 
   au! CmdLineEnter
   delfunc ExEnterFunc
 
   au CmdlineEnter * :
-  call feedkeys("gQecho 1\r", 'xt')
+  call feedkeys("1q:echo 1\r", 'xt')
 
   au! CmdlineEnter
 
@@ -298,7 +298,7 @@ func Test_ex_mode_with_global()
     " call ch_logfile('logfile', 'w')
     pedit
     func FeedQ(id)
-      call feedkeys('gQ', 't')
+      call feedkeys('1q:', 't')
     endfunc
     call timer_start(10, 'FeedQ')
     g/^/vi|HJ
@@ -320,7 +320,7 @@ func Test_ex_mode_count_overflow()
 
   " this used to cause a crash
   let lines =<< trim END
-    call feedkeys("\<Esc>gQ\<CR>")
+    call feedkeys("\<Esc>1q:\<CR>")
     v9|9silent! vi|333333233333y32333333%O
     call writefile(['done'], 'Xdidexmode')
     qall!
@@ -337,7 +337,7 @@ func Test_ex_mode_large_indent()
   new
   set ts=500 ai
   call setline(1, "\t")
-  exe "normal gQi\<CR>."
+  exe "normal 1q:i\<CR>."
   set ts=8 noai
   bwipe!
 endfunc

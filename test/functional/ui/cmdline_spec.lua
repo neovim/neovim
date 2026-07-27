@@ -783,14 +783,14 @@ local function test_cmdline(linegrid)
 
   it('works with exmode', function()
     screen:try_resize(60, 12)
-    feed('gQ')
+    feed('1q:')
     screen:expect([[
                                                                   |
       {1:~                                                           }|
       {2:[No Name]                                                   }|
       {1::}^                                                           |
       {1:~                                                           }|*6
-      {3:[Command Line]                                              }|
+      {3:[Ex mode]                                                   }|
       {5:-- INSERT --}                                                |
     ]])
     feed('echo "foo"<CR>')
@@ -802,7 +802,7 @@ local function test_cmdline(linegrid)
       {1::}" foo                                                      |
       {1::}^                                                           |
       {1:~                                                           }|*4
-      {3:[Command Line]                                              }|
+      {3:[Ex mode]                                                   }|
       {5:-- INSERT --}                                                |
     ]])
     feed('<C-\\><C-N>vis<CR>')
@@ -1229,14 +1229,14 @@ it('tabline is not redrawn in Ex mode #24122', function()
     endfunction
   ]])
 
-  feed('gQ')
+  feed('1q:')
   screen:expect([[
     {2:foo                                                         }|
                                                                 |
     {2:[No Name]                                                   }|
     {1::}^                                                           |
     {1:~                                                           }|*2
-    {3:[Command Line]                                              }|
+    {3:[Ex mode]                                                   }|
     {5:-- INSERT --}                                                |
   ]])
   feed('echo 1<CR>')
@@ -1247,7 +1247,7 @@ it('tabline is not redrawn in Ex mode #24122', function()
     {1::}echo 1                                                     |
     {1::}" 1                                                        |
     {1::}^                                                           |
-    {3:[Command Line]                                              }|
+    {3:[Ex mode]                                                   }|
     {5:-- INSERT --}                                                |
   ]])
 end)
