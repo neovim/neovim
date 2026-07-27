@@ -5033,8 +5033,10 @@ vim.re.updatelocale()                                  *vim.re.updatelocale()*
 ==============================================================================
 Lua module: vim.regex                                              *vim.regex*
 
-Vim regexes can be used directly from Lua. Currently they only allow matching
-within a single line.
+The `vim.regex` interface allows Lua code to use Vim regexes.
+• Matches within a single line.
+• Does not check for interrupts (CTRL-C), so can be used from an |api-fast|
+  context.
 
 
                                                           *regex:match_line()*
