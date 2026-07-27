@@ -364,7 +364,7 @@ local function visual_select(range)
     ecol = #vim.fn.getline(erow + 1) + 1
   end
 
-  if vim.api.nvim_get_mode().mode ~= 'v' then
+  if vim.fn.visualmode() ~= 'v' then
     -- reset visualmode() to 'v'
     vim.cmd.normal({ 'v\27', bang = true })
   end
