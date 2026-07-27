@@ -5531,8 +5531,9 @@ vim.o.scr = vim.o.scroll
 vim.wo.scroll = vim.o.scroll
 vim.wo.scr = vim.wo.scroll
 
---- Maximum number of lines kept beyond the visible screen. Lines at the
---- top are deleted if new lines exceed this limit.
+--- Requested maximum number of lines kept beyond the visible screen.
+--- The actual number may differ because the terminal emulator stores and
+--- discards scrollback in larger chunks.
 --- Minimum is 1, maximum is 1000000.
 --- Only in `terminal` and `prompt-buffer` buffers.
 ---
