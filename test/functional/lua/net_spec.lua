@@ -192,6 +192,7 @@ describe('vim.net.request', function()
 
   it('downloads a live remote zip URL', function()
     t.skip(skip_integ, 'NVIM_TEST_INTEG not set (network integration test)')
+    n.clear({ args = { '--clean' } })
 
     local rv = exec_lua(function()
       vim.cmd('edit https://github.com/neovim/neovim/releases/download/nightly/nvim-win-arm64.zip')
