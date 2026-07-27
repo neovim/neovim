@@ -115,9 +115,7 @@ describe(':terminal', function()
   end)
 
   it('forwards resize request during synchronized output (mode 2026)', function()
-    if is_os('win') then
-      pending('SIGWINCH is unreliable on Windows #7506')
-    end
+    t.skip(is_os('win'), 'SIGWINCH is unreliable on Windows #7506')
     feed([[<C-\><C-N>G]])
     local w1, h1 = screen._width - 3, screen._height - 2
     local w2, h2 = w1 - 6, h1 - 3
