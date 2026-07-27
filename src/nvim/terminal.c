@@ -940,16 +940,16 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   // Create Ghostty
   uint16_t ghostty_cols = MAX(opts.width, 1);
   uint16_t ghostty_rows = MAX(opts.height, 1);
-  // Ghostty's public C API documents max_scrollback as a line count, but the
-  // current implementation treats it as a byte limit. Convert Nvim's row limit
-  // to a conservative byte budget until Ghostty accepts rows here.
-  const size_t ghostty_row_size = (size_t)ghostty_cols * 64;
-  size_t ghostty_max_scrollback = SB_MAX > SIZE_MAX / ghostty_row_size
-                                  ? SIZE_MAX : SB_MAX * ghostty_row_size;
   assert_ok(ghostty_terminal_new(NULL, &term->ghostty, ghostty_cols, ghostty_rows));
+  // Ghostty has a default scrollback byte limit of 10k bytes, so we set it to NULL to disable it.
   assert_ok(ghostty_terminal_set(term->ghostty,
                                  GHOSTTY_TERMINAL_OPT_SCROLLBACK_MAX_BYTES,
-                                 &ghostty_max_scrollback));
+                                 NULL));
+  // Ghostty has no scrollback line limit by default, so we initially set it to the max value of the
+  // 'scrollback' option.
+  assert_ok(ghostty_terminal_set(term->ghostty,
+                                 GHOSTTY_TERMINAL_OPT_SCROLLBACK_MAX_LINES,
+                                 &(size_t){ SB_MAX }));
   assert_ok(ghostty_terminal_mode_set(term->ghostty,
                                       GHOSTTY_MODE_GRAPHEME_CLUSTER,
                                       true));
