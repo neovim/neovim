@@ -58,7 +58,7 @@ typedef struct {
   int term_colors;
   bool stdin_tty;
   bool stdout_tty;
-  UIBackground detected_background;
+  UIBackground bg;
 
   uint64_t channel_id;
 

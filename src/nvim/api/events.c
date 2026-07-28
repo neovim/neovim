@@ -146,7 +146,7 @@ void nvim_ui_term_event(uint64_t channel_id, String event, Object value, Error *
     if (background != kUIBackgroundUnknown) {
       Channel *chan = find_channel(channel_id);
       if (chan && chan->rpc.ui) {
-        chan->rpc.ui->detected_background = background;
+        chan->rpc.ui->bg = background;
       }
     }
     set_vim_var_string(VV_TERMRESPONSE, termresponse.data, (ptrdiff_t)termresponse.size);

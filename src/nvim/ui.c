@@ -741,9 +741,9 @@ Array ui_array(Arena *arena)
     PUT_C(info, "term_colors", INTEGER_OBJ(ui->term_colors));
     PUT_C(info, "stdin_tty", BOOLEAN_OBJ(ui->stdin_tty));
     PUT_C(info, "stdout_tty", BOOLEAN_OBJ(ui->stdout_tty));
-    if (ui->detected_background == kUIBackgroundDark) {
+    if (ui->bg == kUIBackgroundDark) {
       PUT_C(info, "detected_background", STATIC_CSTR_AS_OBJ("dark"));
-    } else if (ui->detected_background == kUIBackgroundLight) {
+    } else if (ui->bg == kUIBackgroundLight) {
       PUT_C(info, "detected_background", STATIC_CSTR_AS_OBJ("light"));
     } else {
       PUT_C(info, "detected_background", STATIC_CSTR_AS_OBJ(""));
