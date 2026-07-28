@@ -3896,12 +3896,12 @@ static int qf_goto_cwindow(const qf_info_T *qi, bool resize, int sz, bool vertsp
 static void qf_set_cwindow_options(void)
 {
   // switch off 'swapfile'
-  set_option_value_give_err(kOptSwapfile, BOOLEAN_OPTVAL(false), OPT_LOCAL);
-  set_option_value_give_err(kOptBuftype, STATIC_CSTR_AS_OPTVAL("quickfix"), OPT_LOCAL);
-  set_option_value_give_err(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("hide"), OPT_LOCAL);
+  set_option_value_give_err(kOptSwapfile, BOOLEAN_OBJ(false), OPT_LOCAL);
+  set_option_value_give_err(kOptBuftype, STATIC_CSTR_AS_OBJ("quickfix"), OPT_LOCAL);
+  set_option_value_give_err(kOptBufhidden, STATIC_CSTR_AS_OBJ("hide"), OPT_LOCAL);
   RESET_BINDING(curwin);
   curwin->w_p_diff = false;
-  set_option_value_give_err(kOptFoldmethod, STATIC_CSTR_AS_OPTVAL("manual"), OPT_LOCAL);
+  set_option_value_give_err(kOptFoldmethod, STATIC_CSTR_AS_OBJ("manual"), OPT_LOCAL);
 }
 
 // Open a new quickfix or location list window, load the quickfix buffer and
@@ -4495,7 +4495,7 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int q
     // resembles reading a file into a buffer, it's more logical when using
     // autocommands.
     curbuf->b_ro_locked++;
-    set_option_value_give_err(kOptFiletype, STATIC_CSTR_AS_OPTVAL("qf"), OPT_LOCAL);
+    set_option_value_give_err(kOptFiletype, STATIC_CSTR_AS_OBJ("qf"), OPT_LOCAL);
     curbuf->b_p_ma = false;
 
     curbuf->b_keep_filetype = true;  // don't detect 'filetype'
@@ -5376,7 +5376,7 @@ void ex_cfile(exarg_T *eap)
     }
   }
   if (*eap->arg != NUL) {
-    set_option_direct(kOptErrorfile, CSTR_AS_OPTVAL(eap->arg), 0, 0);
+    set_option_direct(kOptErrorfile, CSTR_AS_OBJ(eap->arg), 0, 0);
   }
 
   char *enc = (*curbuf->b_p_menc != NUL) ? curbuf->b_p_menc : p_menc;
@@ -7656,7 +7656,7 @@ void ex_helpgrep(exarg_T *eap)
     // Darn, some plugin changed the value.  If it's still empty it was
     // changed and restored, need to restore in the complicated way.
     if (*p_cpo == NUL) {
-      set_option_value_give_err(kOptCpoptions, CSTR_AS_OPTVAL(save_cpo), 0);
+      set_option_value_give_err(kOptCpoptions, CSTR_AS_OBJ(save_cpo), 0);
     }
     free_string_option(save_cpo);
   }

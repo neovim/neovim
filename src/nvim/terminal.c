@@ -600,7 +600,7 @@ void terminal_open(Terminal **termpp, buf_T *buf)
   }
   refresh_screen(term, buf);
   buf->b_locked++;
-  set_option_value(kOptBuftype, STATIC_CSTR_AS_OPTVAL("terminal"), OPT_LOCAL);
+  set_option_value(kOptBuftype, STATIC_CSTR_AS_OBJ("terminal"), OPT_LOCAL);
   buf->b_locked--;
 
   if (buf->b_ffname != NULL) {

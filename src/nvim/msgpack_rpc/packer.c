@@ -213,6 +213,7 @@ void mpack_object_inner(Object *current, Object *container, size_t container_idx
       api_free_luaref(current->data.luaref);
       current->data.luaref = LUA_NOREF;
       FALLTHROUGH;
+    case kObjectTypeUnset:
     case kObjectTypeNil:
       mpack_nil(&packer->ptr);
       break;

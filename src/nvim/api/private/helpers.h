@@ -62,6 +62,7 @@
     .data.luaref = r })
 
 #define NIL ((Object)OBJECT_INIT)
+#define UNSET ((Object) { .type = kObjectTypeUnset })
 #define NULL_STRING ((String)STRING_INIT)
 
 #define HAS_KEY(d, typ, key) (((d)->is_set__##typ##_ & (1ULL << KEYSET_OPTIDX_##typ##__##key)) != 0)

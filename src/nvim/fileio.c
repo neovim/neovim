@@ -1681,7 +1681,7 @@ failed:
     save_file_ff(curbuf);
     // If editing a new file: set 'fenc' for the current buffer.
     // Also for ":read ++edit file".
-    set_option_direct(kOptFileencoding, CSTR_AS_OPTVAL(fenc), OPT_LOCAL, 0);
+    set_option_direct(kOptFileencoding, CSTR_AS_OBJ(fenc), OPT_LOCAL, 0);
   }
   if (fenc_alloced) {
     xfree(fenc);
@@ -2023,7 +2023,7 @@ void set_forced_fenc(exarg_T *eap)
   }
 
   char *fenc = enc_canonize(eap->cmd + eap->force_enc);
-  set_option_direct(kOptFileencoding, CSTR_AS_OPTVAL(fenc), OPT_LOCAL, 0);
+  set_option_direct(kOptFileencoding, CSTR_AS_OBJ(fenc), OPT_LOCAL, 0);
   xfree(fenc);
 }
 

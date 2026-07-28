@@ -703,7 +703,7 @@ char *au_event_disable(char *what)
   } else {
     STRCPY(new_ei + p_ei_len, what);
   }
-  set_option_direct(kOptEventignore, CSTR_AS_OPTVAL(new_ei), 0, SID_NONE);
+  set_option_direct(kOptEventignore, CSTR_AS_OBJ(new_ei), 0, SID_NONE);
   xfree(new_ei);
   return save_ei;
 }
@@ -711,7 +711,7 @@ char *au_event_disable(char *what)
 void au_event_restore(char *old_ei)
 {
   if (old_ei != NULL) {
-    set_option_direct(kOptEventignore, CSTR_AS_OPTVAL(old_ei), 0, SID_NONE);
+    set_option_direct(kOptEventignore, CSTR_AS_OBJ(old_ei), 0, SID_NONE);
     xfree(old_ei);
   }
 }
@@ -1316,8 +1316,8 @@ static void deferred_optionset_modified(void **argv)
   api_clear_error(&err);
   if (buf) {
     bool new_val = (bool)(uintptr_t)argv[1];
-    OptVal old = BOOLEAN_OPTVAL(!new_val);
-    OptVal new = BOOLEAN_OPTVAL(new_val);
+    Object old = BOOLEAN_OBJ(!new_val);
+    Object new = BOOLEAN_OBJ(new_val);
     CtxSwitch aco = { 0 };
     ctx_switch(&aco, NULL, NULL, buf, 0);
     apply_optionset_autocmd_now(kOptModified, OPT_LOCAL, old, old, old, new, NULL);

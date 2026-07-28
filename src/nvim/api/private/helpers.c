@@ -540,6 +540,7 @@ Array arena_take_arraybuilder(Arena *arena, ArrayBuilder *arr)
 void api_free_object(Object value)
 {
   switch (value.type) {
+  case kObjectTypeUnset:
   case kObjectTypeNil:
   case kObjectTypeBoolean:
   case kObjectTypeInteger:
@@ -659,6 +660,7 @@ Dict copy_dict(Dict dict, Arena *arena)
 Object copy_object(Object obj, Arena *arena)
 {
   switch (obj.type) {
+  case kObjectTypeUnset:
   case kObjectTypeBuffer:
   case kObjectTypeTabpage:
   case kObjectTypeWindow:
@@ -740,6 +742,8 @@ int object_to_hl_id(Object obj, const char *what, Error *err)
 char *api_typename(ObjectType t)
 {
   switch (t) {
+  case kObjectTypeUnset:
+    return "unset";
   case kObjectTypeNil:
     return "nil";
   case kObjectTypeBoolean:

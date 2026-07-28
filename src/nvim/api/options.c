@@ -125,9 +125,8 @@ static int validate_option_value_args(Dict(option) *opts, char *name, bool allow
       });
     }
 
-    VALIDATE_CON(*operation == OP_NONE || option_has_type(*opt_idxp,
-                                                          kOptValTypeString)
-                 || option_has_type(*opt_idxp, kOptValTypeNumber),
+    VALIDATE_CON(*operation == OP_NONE || option_has_type(*opt_idxp, kObjectTypeString)
+                 || option_has_type(*opt_idxp, kObjectTypeInteger),
                  opts->operation.data,
                  "boolean options", {
       return FAIL;
@@ -188,8 +187,8 @@ static buf_T *do_ft_buf(const char *filetype, CtxSwitch *aco, Error *err)
   // Set curwin/curbuf to buf and save a few things.
   ctx_switch(aco, NULL, NULL, ftbuf, 0);
 
-  set_option_direct(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("hide"), OPT_LOCAL, SID_NONE);
-  set_option_direct(kOptBuftype, STATIC_CSTR_AS_OPTVAL("nofile"), OPT_LOCAL, SID_NONE);
+  set_option_direct(kOptBufhidden, STATIC_CSTR_AS_OBJ("hide"), OPT_LOCAL, SID_NONE);
+  set_option_direct(kOptBuftype, STATIC_CSTR_AS_OBJ("nofile"), OPT_LOCAL, SID_NONE);
   assert(ftbuf->b_ml.ml_mfp->mf_fd < 0);  // ml_open() should not have opened swapfile already
   ftbuf->b_p_swf = false;
   ftbuf->b_p_ml = false;
@@ -289,7 +288,7 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
     from = ftbuf;
   }
 
-  OptVal value = get_option_value_for(opt_idx, opt_flags, scope, from, err);
+  Object value = get_option_value_for(opt_idx, opt_flags, scope, from, err);
 
   // Restore curwin/curbuf and a few other things.
   ctx_restore(&aco);
@@ -298,17 +297,11 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
   }
 
   if (ERROR_SET(err)) {
-    goto err;
+    api_free_object(value);
+    return (Object)OBJECT_INIT;
   }
 
-  VALIDATE_S(value.type != kOptValTypeNil, "option", name.data, {
-    goto err;
-  });
-
-  return optval_as_object(value);
-err:
-  optval_free(value);
-  return (Object)OBJECT_INIT;
+  return value;
 }
 
 /// Sets the value of an option. The behavior of this function matches that of
@@ -361,15 +354,15 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
     }
   }
 
-  // Convert the incoming value into an OptVal.
+  // Convert the incoming value into an Object.
   bool error = false;
-  OptVal optval_right = object_as_optval_for(opt_idx, value, operation, &error);
+  Object optval_right = object_as_optval(opt_idx, value, operation, &error);
 
   VALIDATE_EXP(!error, name.data, "a valid type", api_typename(value.type), {
     return NIL;
   });
 
-  OptVal merged_val = NIL_OPTVAL;
+  Object merged_val = NIL;
   const char *errmsg = NULL;
   vimoption_T *option = get_option(opt_idx);
 
@@ -381,9 +374,10 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
   char *argp = NULL;
 
   switch (optval_right.type) {
-  case kOptValTypeNil:
+  case kObjectTypeUnset:
+  case kObjectTypeNil:
     break;
-  case kOptValTypeString: {
+  case kObjectTypeString: {
     char *optval_escaped = escape_option_str_cmdline(optval_right.data.string.data);
     // We need a leading equal sign because get_option_newval is used for
     // cmdline stuff and expects an =
@@ -391,18 +385,20 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
     XFREE_CLEAR(optval_escaped);
     break;
   }
-  case kOptValTypeNumber:
-    argp = arena_printf(arena, "=%" PRId64, optval_right.data.number).data;
+  case kObjectTypeInteger:
+    argp = arena_printf(arena, "=%" PRId64, optval_right.data.integer).data;
     break;
-  case kOptValTypeBoolean:
+  case kObjectTypeBoolean:
     merged_val = optval_right;
     break;
+  default:
+    abort();
   }
 
   optval_free(optval_right);
 
-  if (optval_right.type == kOptValTypeNumber || optval_right.type == kOptValTypeString) {
-    OptVal oldval = optval_from_varp(opt_idx, varp);
+  if (optval_right.type == kObjectTypeInteger || optval_right.type == kObjectTypeString) {
+    Object oldval = opt_from_varp(opt_idx, varp);
     merged_val = get_option_newval(opt_idx, opt_flags, PREFIX_NONE, &argp, 0, operation,
                                    option->flags, varp, &oldval, NULL, 0, &errmsg);
     VALIDATE(errmsg == NULL, "%s", errmsg, {

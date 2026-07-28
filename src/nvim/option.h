@@ -40,31 +40,19 @@ typedef enum {
   PREFIX_INV,     ///< "inv" prefix
 } set_prefix_T;
 
-/// Get name of OptValType as a string.
-static inline const char *optval_type_get_name(const OptValType type)
+/// Gets the option-domain name of an option's type.
+static inline const char *optval_type_name(const ObjectType type)
 {
   switch (type) {
-  case kOptValTypeNil:
-    return "nil";
-  case kOptValTypeBoolean:
+  case kObjectTypeBoolean:
     return "boolean";
-  case kOptValTypeNumber:
+  case kObjectTypeInteger:
     return "number";
-  case kOptValTypeString:
+  case kObjectTypeString:
     return "string";
+  default:
+    abort();
   }
-  UNREACHABLE;
 }
-
-// OptVal helper macros.
-#define NIL_OPTVAL ((OptVal) { .type = kOptValTypeNil })
-#define BOOLEAN_OPTVAL(b) ((OptVal) { .type = kOptValTypeBoolean, .data.boolean = b })
-#define NUMBER_OPTVAL(n) ((OptVal) { .type = kOptValTypeNumber, .data.number = n })
-#define STRING_OPTVAL(s) ((OptVal) { .type = kOptValTypeString, .data.string = s })
-
-#define CSTR_AS_OPTVAL(s) STRING_OPTVAL(cstr_as_string(s))
-#define CSTR_TO_OPTVAL(s) STRING_OPTVAL(cstr_to_string(s))
-#define STATIC_CSTR_AS_OPTVAL(s) STRING_OPTVAL(STATIC_CSTR_AS_STRING(s))
-#define STATIC_CSTR_TO_OPTVAL(s) STRING_OPTVAL(STATIC_CSTR_TO_STRING(s))
 
 #include "option.h.generated.h"
