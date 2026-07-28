@@ -1807,7 +1807,8 @@ describe('vim.lsp.completion: integration', function()
       isIncomplete = false,
       items = {
         {
-          commitCharacters = { '.', ',', ';', '(' },
+          -- Only whole characters are kept: '\0' and '\169x' are dropped, '=>' becomes '='.
+          commitCharacters = { '.', ',', ';', '\0', '(', '=>', '\169x' },
           data = {
             cacheId = 1,
           },
@@ -1842,6 +1843,18 @@ describe('vim.lsp.completion: integration', function()
     wait_for_pum()
     feed('(')
     eq('f.(', n.api.nvim_get_current_line())
+
+    -- Test that a dropped fragment did not leak: 'x' must not commit, '=' must.
+    n.command('set completeopt=menuone,menu,noinsert')
+    feed('<ESC>Sf.')
+    wait_for_pum()
+    feed('x')
+    eq('f.x', n.api.nvim_get_current_line())
+
+    feed('<ESC>Sf.')
+    wait_for_pum()
+    feed('=')
+    eq('f.bar=', n.api.nvim_get_current_line())
   end)
 end)
 

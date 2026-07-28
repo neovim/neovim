@@ -377,7 +377,7 @@ local function generate_kind(item)
 
   hex = hex:lower()
   local group = ('@lsp.color.%s'):format(hex)
-  if #api.nvim_get_hl(0, { name = group }) == 0 then
+  if next(api.nvim_get_hl(0, { name = group })) == nil then
     api.nvim_set_hl(0, group, { fg = '#' .. hex })
   end
 
@@ -435,9 +435,12 @@ local function commit_chars_str(chars)
     -- commit characters "should have `length=1`" and superfluous
     -- characters are ignored.  Keep the first codepoint.
     local b = type(ch) == 'string' and ch:byte(1)
-    if b then
-      local len = b < 0x80 and 1 or b < 0xe0 and 2 or b < 0xf0 and 3 or 4
-      result[#result + 1] = ch:sub(1, len)
+    if b and b ~= 0 then
+      local n = vim.str_utf_end(ch, 1)
+      -- Only whole characters: multibyte fragments pair up across entries, NUL truncates.
+      if b < 0x80 or n > 0 then
+        result[#result + 1] = ch:sub(1, 1 + n)
+      end
     end
   end
   return table.concat(result)
