@@ -1497,7 +1497,9 @@ M.funcs = {
          items	List of all completion candidates.  Each item
       		is a dictionary containing the entries "word",
       		"abbr", "menu", "kind", "info" and
-      		"user_data".
+      		"user_data".  "equal", "preselect" and
+      		"commit_chars" are included only for items that
+      		set them.
       		See |complete-items|.
          matches	Same as "items", but only returns items that
       		are matching current query.  If both "matches"
