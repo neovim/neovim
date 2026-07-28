@@ -47,7 +47,7 @@ end
 
 ---@param path string
 function M.open_parent_path(path)
-  if path == '' then
+  if path == '' or path:find('^%a[%w+.-]*://') then
     navigate('.')
     return
   end
