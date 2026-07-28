@@ -1,6 +1,7 @@
 #include <emscripten.h>
 #include <emscripten/threading.h>
 #include <math.h>
+#include <poll.h>
 #include <pthread.h>
 #include <stdatomic.h>
 #include <stddef.h>
@@ -11,19 +12,6 @@
 #include <sys/time.h>
 #include <time.h>
 #include <uv.h>
-
-#ifndef POLLIN
-# define POLLIN  0x001
-#endif
-#ifndef POLLOUT
-# define POLLOUT 0x004
-#endif
-#ifndef POLLERR
-# define POLLERR 0x008
-#endif
-#ifndef POLLHUP
-# define POLLHUP 0x010
-#endif
 
 void uv__io_cb(uv_loop_t *loop, uv__io_t *w, unsigned events);
 
@@ -87,7 +75,7 @@ int uv_exepath(char *buffer, size_t *size)
 }
 
 // Browsers have no native CPU information. So return a single virtual CPU
-int uv_cpu_info(uv_cpu_info_t **cpu_infos, int *count)
+int uv_cpu_info(uv_cpu_info_t * *cpu_infos, int *count)
 {
   if (!cpu_infos || !count) {
     return UV_EINVAL;
@@ -107,7 +95,7 @@ int uv_cpu_info(uv_cpu_info_t **cpu_infos, int *count)
 }
 
 // Browsers do not expose host network interfaces. Report only loopback.
-int uv_interface_addresses(uv_interface_address_t **addresses, int *count)
+int uv_interface_addresses(uv_interface_address_t * *addresses, int *count)
 {
   if (!addresses || !count) {
     return UV_EINVAL;

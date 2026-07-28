@@ -590,7 +590,7 @@ pub fn build(b: *std.Build) !void {
 
     if (is_wasm) {
         nvim_mod.addCSourceFiles(.{ .files = &.{
-            "src/wasm_stubs.c",
+            "src/wasm/wasm_stubs.c",
             "src/static_ts_registry.c",
         }, .flags = &flags });
     }

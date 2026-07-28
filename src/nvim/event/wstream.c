@@ -82,11 +82,10 @@ int wstream_write(Stream *stream, WBuffer *buffer)
     // Synchronous write
 
 #ifdef __EMSCRIPTEN__
-// Pass -1 so the write uses the current file position.
+    // Pass -1 so the write uses the current file position.
     err = uv_fs_write(stream->uv.idle.loop, &req, stream->fd, &uvbuf, 1, -1, NULL);
 #else
-    err = uv_fs_write(stream->uv.idle.loop, &req, stream->fd, &
-                      uvbuf, 1, stream->fpos, NULL);
+    err = uv_fs_write(stream->uv.idle.loop, &req, stream->fd, &uvbuf, 1, stream->fpos, NULL);
 #endif
     uv_fs_req_cleanup(&req);
 
@@ -94,9 +93,7 @@ int wstream_write(Stream *stream, WBuffer *buffer)
 
     assert(stream->write_cb == NULL);
 
-#ifndef __EMSCRIPTEN__
     stream->fpos += MAX(req.result, 0);
-#endif
     return req.result > 0 ? 0 : err != 0 ? err : UV_UNKNOWN;
   }
 
