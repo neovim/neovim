@@ -293,7 +293,7 @@ describe('UI event channels', function()
     session2:close()
   end)
 
-  it('tracks detected background metadata per stdout_tty UI channel', function()
+  it('tracks detected background metadata per-UI channel', function()
     clear()
     local server = api.nvim_get_vvar('servername')
     local session2 = n.connect(server)
