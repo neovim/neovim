@@ -2606,7 +2606,7 @@ func Test_cmdwin_ex_mode_with_modifier()
   " this was accessing memory after allocated text in Ex mode
   new
   call setline(1, ['some', 'text', 'lines'])
-  silent! call feedkeys("1q:normal vq:atopleft\<C-V>\<CR>\<CR>", 'xt')
+  silent! call feedkeys("gQnormal vq:atopleft\<C-V>\<CR>\<CR>", 'xt')
   bwipe!
 endfunc
 
