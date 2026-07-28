@@ -1900,4 +1900,28 @@ describe('completion', function()
     feed('(')
     eq('foobar(', n.api.nvim_get_current_line())
   end)
+
+  it('complete_info() reports equal, preselect and commit_chars', function()
+    command('set completeopt=menuone,noinsert')
+    source([[
+      function! TestComplete() abort
+        call complete(1, [
+              \ {'word': 'foo', 'equal': 1},
+              \ {'word': 'bar', 'preselect': v:true},
+              \ {'word': 'baz', 'commit_chars': '('},
+              \ {'word': 'qux'},
+              \ ])
+        return ''
+      endfunction
+    ]])
+    feed('i<C-r>=TestComplete()<CR>')
+    poke_eventloop()
+
+    local items = fn.complete_info({ 'items' }).items
+    eq(4, #items)
+    eq({ 1, nil }, { items[1].equal, items[1].preselect })
+    eq(1, items[2].preselect)
+    eq('(', items[3].commit_chars)
+    eq({ nil, nil, nil }, { items[4].equal, items[4].preselect, items[4].commit_chars })
+  end)
 end)

@@ -3663,6 +3663,15 @@ static void fill_complete_info_dict(dict_T *di, compl_T *match, bool add_match)
   if (add_match) {
     tv_dict_add_bool(di, S_LEN("match"), match->cp_in_match_array);
   }
+  if (match->cp_flags & CP_EQUAL) {
+    tv_dict_add_nr(di, S_LEN("equal"), 1);
+  }
+  if (match->cp_preselect) {
+    tv_dict_add_nr(di, S_LEN("preselect"), 1);
+  }
+  if (match->cp_commit_chars != NULL) {
+    tv_dict_add_str(di, S_LEN("commit_chars"), match->cp_commit_chars);
+  }
   if (match->cp_user_data.v_type == VAR_UNKNOWN) {
     // Add an empty string for backwards compatibility
     tv_dict_add_str_len(di, S_LEN("user_data"), "", 0);
