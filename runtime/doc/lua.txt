@@ -4582,7 +4582,8 @@ cursor({buf}, {pos})                                        *vim.pos.cursor()*
     Creates a new |vim.Pos| from cursor position (see |api-indexing|).
 
     If {pos} is omitted, the first argument is treated as {win} instead of
-    {buf}, and the current cursor position of {win} is used.
+    {buf}, and the current cursor position of {win} is used. If {win} is also
+    omitted, it defaults to the current window.
 
     Example: >lua
         local buf = vim.api.nvim_win_get_buf(0)
@@ -4597,7 +4598,7 @@ cursor({buf}, {pos})                                        *vim.pos.cursor()*
       • {pos}  (`[integer, integer]`) (lnum, col) tuple
 
     Overloads: ~
-      • `fun(win: integer): vim.Pos`
+      • `fun(win?: integer): vim.Pos`
 
     Return: ~
         (`vim.Pos`) See |vim.Pos|.
