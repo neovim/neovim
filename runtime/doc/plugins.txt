@@ -76,7 +76,9 @@ Directory buffers follow the global 'hidden' option by default. To delete them
 after use: >vim
 	autocmd FileType directory setlocal bufhidden=delete
 <
-Use "wipe" to discard all buffer state; see 'bufhidden'.
+A discarded listing is rebuilt on the next visit, so the cursor starts at the
+first entry instead of the one it was left on. "wipe" discards the buffer
+itself, leaving no |alternate-file|; see 'bufhidden'.
 
 
 Replacing the directory browser                                  *dir-disable*
