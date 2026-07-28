@@ -1323,6 +1323,7 @@ local extension = {
   itcl = 'tcl',
   tk = 'tcl',
   jacl = 'tcl',
+  xdc = 'tcl',
   tl = 'teal',
   templ = 'templ',
   tmpl = 'template',

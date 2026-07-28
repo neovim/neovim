@@ -890,7 +890,7 @@ func s:GetFilenameChecks() abort
     \ 'taskdata': ['pending.data', 'completed.data', 'undo.data'],
     \ 'taskedit': ['file.task'],
     \ 'tcl': ['file.tcl', 'file.tm', 'file.tk', 'file.itcl', 'file.itk', 'file.jacl', '.tclshrc', 'tclsh.rc', '.wishrc', '.tclsh-history',
-    \         '.xsctcmdhistory', '.xsdbcmdhistory', 'vivado.jou', 'vivado.log'],
+    \         '.xsctcmdhistory', '.xsdbcmdhistory', 'vivado.jou', 'vivado.log', 'file.xdc'],
     \ 'teal': ['file.tl'],
     \ 'templ': ['file.templ'],
     \ 'template': ['file.tmpl'],
