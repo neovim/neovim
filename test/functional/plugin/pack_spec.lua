@@ -623,10 +623,13 @@ describe('vim.pack', function()
       mock_confirm(1)
       -- Should use revision from lockfile (pointing at latest 'feat-branch'
       -- commit) and not use latest `main` commit. Although should report
-      -- `version = 'main'` inside event data to preserve user input as much as possible.
+      -- `version = 'main'` inside event data and write it to the lockfile as
+      -- to preserve user input as much as possible.
       -- Should also preserve `data` field in event data.
       vim_pack_add({ { src = repos_src.basic, version = 'main', data = { 'd' } } })
       pack_assert_content('basic', 'return "basic feat-branch"')
+      ref_lockfile.plugins.basic.version = "'main'"
+      eq(ref_lockfile, get_lock_tbl())
 
       local confirm_log = exec_lua('return _G.confirm_log')
       eq(1, #confirm_log)
@@ -662,6 +665,13 @@ describe('vim.pack', function()
       pcall_err(vim_pack_add, { repos_src.basic, 1 })
       eq(true, pack_exists('basic'))
       eq(true, pack_exists('defbranch'))
+
+      -- Direct install from the lockfile should not write to it
+      n.rmdir(pack_get_dir())
+      n.clear()
+      local lockfile_fs_stat = vim.uv.fs_stat(get_lock_path())
+      vim_pack_add({})
+      eq(lockfile_fs_stat, vim.uv.fs_stat(get_lock_path()))
     end)
 
     it('handles lockfile during install errors', function()
