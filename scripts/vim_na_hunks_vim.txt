@@ -1,3 +1,4 @@
+^balloon_[a-zA-Z0-9_]\+(.\+balloon_[a-zA-Z0-9_]\+(
 ^cscope_connection(.\+cscope_connection(
 ^js_decode(.\+js_decode(
 ^js_encode(.\+js_encode(
@@ -82,6 +83,7 @@
 \*:scriptversion\*
 \*:shell\*
 \*:smile\*
+\*:version\*
 \*HelpToc-mappings\*
 \*SafeStateAgain\*
 \*SigUSR1\*
