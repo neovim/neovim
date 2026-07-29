@@ -557,6 +557,7 @@ struct file_buffer {
 #ifdef BACKSLASH_IN_FILENAME
   char *b_p_csl;                ///< 'completeslash'
 #endif
+  uint32_t b_p_cpt_flags;       ///< flags for 'complete'
   Callback *b_p_cpt_cb;         ///< F{func} in 'complete' callback
   int b_p_cpt_count;            ///< Count of values in 'complete'
   char *b_p_cfu;                ///< 'completefunc'
