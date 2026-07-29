@@ -1800,13 +1800,15 @@ bool tv_callback_equal(const Callback *cb1, const Callback *cb2)
   }
   switch (cb1->type) {
   case kCallbackFuncref:
-    return strcmp(cb1->data.funcref, cb2->data.funcref) == 0;
+    return strequal(cb1->data.funcref, cb2->data.funcref);
   case kCallbackPartial:
     // FIXME: this is inconsistent with tv_equal but is needed for precision
     // maybe change dictwatcheradd to return a watcher id instead?
     return cb1->data.partial == cb2->data.partial;
   case kCallbackLua:
     return cb1->data.luaref == cb2->data.luaref;
+  case kCallbackExpr:
+    return strequal(cb1->data.expr, cb2->data.expr);
   case kCallbackNone:
     return true;
   }
@@ -1828,6 +1830,9 @@ void callback_free(Callback *callback)
     break;
   case kCallbackLua:
     NLUA_CLEAR_REF(callback->data.luaref);
+    break;
+  case kCallbackExpr:
+    xfree(callback->data.expr);
     break;
   case kCallbackNone:
     break;
@@ -1879,6 +1884,9 @@ void callback_copy(Callback *dest, Callback *src)
     break;
   case kCallbackLua:
     dest->data.luaref = api_new_luaref(src->data.luaref);
+    break;
+  case kCallbackExpr:
+    dest->data.expr = xstrdup(src->data.expr);
     break;
   default:
     dest->data.funcref = NULL;

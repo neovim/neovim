@@ -122,9 +122,9 @@ typedef struct {
 #define w_p_fml w_onebuf_opt.wo_fml    // 'foldminlines'
   OptInt wo_fdn;
 #define w_p_fdn w_onebuf_opt.wo_fdn    // 'foldnestmax'
-  char *wo_fde;
+  Callback wo_fde;
 #define w_p_fde w_onebuf_opt.wo_fde    // 'foldexpr'
-  char *wo_fdt;
+  Callback wo_fdt;
 #define w_p_fdt w_onebuf_opt.wo_fdt   // 'foldtext'
   char *wo_fmr;
 #define w_p_fmr w_onebuf_opt.wo_fmr    // 'foldmarker'
@@ -560,14 +560,10 @@ struct file_buffer {
   uint32_t b_p_cpt_flags;       ///< flags for 'complete'
   Callback *b_p_cpt_cb;         ///< F{func} in 'complete' callback
   int b_p_cpt_count;            ///< Count of values in 'complete'
-  char *b_p_cfu;                ///< 'completefunc'
-  Callback b_cfu_cb;            ///< 'completefunc' callback
-  char *b_p_ofu;                ///< 'omnifunc'
-  Callback b_ofu_cb;            ///< 'omnifunc' callback
-  char *b_p_tfu;                ///< 'tagfunc' option value
-  Callback b_tfu_cb;            ///< 'tagfunc' callback
-  char *b_p_ffu;                ///< 'findfunc' option value
-  Callback b_ffu_cb;            ///< 'findfunc' callback
+  Callback b_p_cfu;             ///< 'completefunc'
+  Callback b_p_ofu;             ///< 'omnifunc'
+  Callback b_p_tfu;             ///< 'tagfunc'
+  Callback b_p_ffu;             ///< 'findfunc'
   int b_p_eof;                  ///< 'endoffile'
   int b_p_eol;                  ///< 'endofline'
   int b_p_fixeol;               ///< 'fixendofline'
@@ -583,13 +579,13 @@ struct file_buffer {
   char *b_p_isk;                ///< 'iskeyword'
   char *b_p_def;                ///< 'define' local value
   char *b_p_inc;                ///< 'include'
-  char *b_p_inex;               ///< 'includeexpr'
+  Callback b_p_inex;            ///< 'includeexpr'
   uint32_t b_p_inex_flags;      ///< flags for 'includeexpr'
-  char *b_p_inde;               ///< 'indentexpr'
+  Callback b_p_inde;            ///< 'indentexpr'
   uint32_t b_p_inde_flags;      ///< flags for 'indentexpr'
   char *b_p_indk;               ///< 'indentkeys'
   char *b_p_fp;                 ///< 'formatprg'
-  char *b_p_fex;                ///< 'formatexpr'
+  Callback b_p_fex;             ///< 'formatexpr'
   uint32_t b_p_fex_flags;       ///< flags for 'formatexpr'
   int b_p_fs;                   ///< 'fsync'
   char *b_p_kp;                 ///< 'keywordprg'
@@ -641,8 +637,7 @@ struct file_buffer {
   char *b_p_dict;               ///< 'dictionary' local value
   char *b_p_dia;                ///< 'diffanchors' local value
   char *b_p_tsr;                ///< 'thesaurus' local value
-  char *b_p_tsrfu;              ///< 'thesaurusfunc' local value
-  Callback b_tsrfu_cb;          ///< 'thesaurusfunc' callback
+  Callback b_p_tsrfu;           ///< 'thesaurusfunc' local value
   OptInt b_p_ul;                ///< 'undolevels' local value
   int b_p_udf;                  ///< 'undofile'
   char *b_p_lw;                 ///< 'lispwords' local value

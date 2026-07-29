@@ -768,7 +768,7 @@ function M.open_page(count, smods, args)
   end
   local buf = api.nvim_get_current_buf()
   local save_tfu = vim.bo[buf].tagfunc
-  vim.bo[buf].tagfunc = "v:lua.require'man'.goto_tag"
+  vim.bo[buf].tagfunc = M.goto_tag
 
   local target = ('%s(%s)'):format(name, sect)
 

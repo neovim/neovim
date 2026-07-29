@@ -2023,7 +2023,8 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
   case CMD_sfind:
   case CMD_tabfind:
     if (xp->xp_context == EXPAND_FILES) {
-      xp->xp_context = *get_findfunc() != NUL ? EXPAND_FINDFUNC : EXPAND_FILES_IN_PATH;
+      xp->xp_context = get_findfunc()->type !=
+                       kCallbackNone ? EXPAND_FINDFUNC : EXPAND_FILES_IN_PATH;
     }
     break;
   case CMD_cd:

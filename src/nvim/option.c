@@ -49,8 +49,10 @@
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
 #include "nvim/eval.h"
+#include "nvim/eval/encode.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/userfunc.h"
 #include "nvim/eval/vars.h"
 #include "nvim/eval/window.h"
 #include "nvim/ex_cmds_defs.h"
@@ -1438,6 +1440,13 @@ Object get_option_newval(OptIndex opt_idx, int opt_flags, set_prefix_T prefix, c
     const char *oldval_str = oldval.data.string.data;
     // Get the new value for the option
     const char *newval_str = stropt_get_newval(opt_idx, argp, varp, oldval_str, &op);
+    newval = CSTR_AS_OBJ(newval_str);
+    break;
+  }
+  case kObjectTypeLuaRef: {
+    // "Callback" option (e.g. 'omnifunc') whose current value is a Lua function. The new value is
+    // a plain string (funcname/expr); ":set"-style +=/-= don't apply, so use an empty old value.
+    const char *newval_str = stropt_get_newval(opt_idx, argp, varp, "", &op);
     newval = CSTR_AS_OBJ(newval_str);
     break;
   }
@@ -3342,12 +3351,15 @@ bool is_dict_option(OptIndex opt_idx)
 /// Free an allocated option value.
 void optval_free(Object o)
 {
-  // Only strings own memory; don't free the shared empty-string-option sentinel.
+  // Only strings and Lua callbacks own memory.
   switch (o.type) {
   case kObjectTypeString:
     if (o.data.string.data != empty_string_option) {
-      api_free_string(o.data.string);
+      api_free_string(o.data.string);  // Don't free the shared empty-string-option sentinel
     }
+    return;
+  case kObjectTypeLuaRef:
+    api_free_luaref(o.data.luaref);
     return;
   case kObjectTypeUnset:
   case kObjectTypeNil:
@@ -3378,6 +3390,8 @@ bool option_equal(Object o1, Object o2)
     return o1.data.string.size == o2.data.string.size
            && (o1.data.string.data == o2.data.string.data
                || strnequal(o1.data.string.data, o2.data.string.data, o1.data.string.size));
+  case kObjectTypeLuaRef:
+    return false;  // Callbacks compare unequal: setting one always counts as a change.
   default:
     abort();  // Should not happen.
   }
@@ -3403,9 +3417,77 @@ static ObjectType optval_type(Object o)
     return kObjectTypeInteger;
   case kObjectTypeString:
     return kObjectTypeString;
+  case kObjectTypeLuaRef:
+    return kObjectTypeLuaRef;
   default:
     abort();  // Should not happen.
   }
+}
+
+/// True for a "callback option" (varp stores `Callback`): func option (kOptFlagFunc, e.g.
+/// 'operatorfunc') or expr option (kOptFlagExpr, e.g. 'foldexpr').
+static bool is_callback_option(uint32_t flags)
+{
+  return (flags & (kOptFlagFunc | kOptFlagExpr)) != 0;
+}
+
+/// Converts a callback option's stored Callback to an option value Object.
+///
+/// - Lua callback => `LuaRef` (owned by the caller)
+/// - named funcref => name
+/// - partial => name
+/// - expr option => expression string
+/// - an unset callback => empty string
+static Object opt_from_callback(Callback *cb)
+{
+  switch (cb->type) {
+  case kCallbackLua:
+    return LUAREF_OBJ(api_new_luaref(cb->data.luaref));
+  case kCallbackExpr:
+    return CSTR_TO_OBJ(cb->data.expr);
+  case kCallbackFuncref:
+    return CSTR_TO_OBJ(cb->data.funcref);
+  case kCallbackPartial: {
+    // Serialize with bound args so the value round-trips losslessly, e.g. `function('F', [10])`.
+    typval_T tv;
+    callback_put(cb, &tv);
+    char *str = encode_tv2string(&tv, NULL);
+    tv_clear(&tv);
+    return CSTR_AS_OBJ(str);
+  }
+  case kCallbackNone:
+    break;
+  }
+  return STATIC_CSTR_TO_OBJ("");
+}
+
+/// Builds a callback option's Callback from an option value Object.
+///
+/// - `LuaRef` yields a Lua callback.
+/// - func option (`is_expr=false`) => string parsed as a function name or lambda
+/// - expr option (non-empty) string => expression string
+///   - leading `<SID>`/`s:` resolves to the current script `<SNR>`
+static Callback opt_to_callback(Object value, bool is_expr)
+{
+  Callback cb = CALLBACK_NONE;
+  switch (value.type) {
+  case kObjectTypeLuaRef:
+    cb.type = kCallbackLua;
+    cb.data.luaref = api_new_luaref(value.data.luaref);
+    break;
+  case kObjectTypeString:
+    if (!is_expr) {
+      option_set_callback_func(value.data.string.data, &cb);
+    } else if (value.data.string.size > 0) {
+      cb.type = kCallbackExpr;
+      char *name = get_scriptlocal_funcname(value.data.string.data);
+      cb.data.expr = name != NULL ? name : xstrdup(value.data.string.data);
+    }
+    break;
+  default:
+    break;
+  }
+  return cb;
 }
 
 /// Creates Object from var pointer.
@@ -3421,6 +3503,11 @@ Object opt_from_varp(OptIndex opt_idx, void *varp)
   // changed.
   if ((int *)varp == &curbuf->b_changed) {
     return BOOLEAN_OBJ(curbufIsChanged());
+  }
+
+  // Callback options (e.g. 'operatorfunc', 'foldexpr') store a Callback, not a scalar.
+  if (is_callback_option(options[opt_idx].flags)) {
+    return opt_from_callback((Callback *)varp);
   }
 
   switch (options[opt_idx].type) {
@@ -3445,6 +3532,16 @@ Object opt_from_varp(OptIndex opt_idx, void *varp)
 static void set_option_varp(OptIndex opt_idx, void *varp, Object value, bool free_oldval)
   FUNC_ATTR_NONNULL_ARG(2)
 {
+  // Callback options (e.g. 'operatorfunc', 'foldexpr') store a Callback, not a scalar.
+  if (is_callback_option(options[opt_idx].flags)) {
+    Callback *cb = (Callback *)varp;
+    if (free_oldval) {
+      callback_free(cb);
+    }
+    *cb = opt_to_callback(value, options[opt_idx].flags & kOptFlagExpr);
+    return;
+  }
+
   if (free_oldval) {
     optval_free(opt_from_varp(opt_idx, varp));
   }
@@ -3491,6 +3588,8 @@ static char *optval_to_cstr(Object o)
     snprintf(buf, o.data.string.size + 3, "\"%s\"", o.data.string.data);
     return buf;
   }
+  case kObjectTypeLuaRef:
+    return xstrdup("v:lua");  // A Lua callback has no name; show a stable handle.
   default:
     abort();  // Should not happen.
   }
@@ -3501,6 +3600,10 @@ static char *optval_to_cstr(Object o)
 /// @return Object allocated in `arena` (scalar values are returned unchanged).
 Object optval_to_obj(OptIndex opt_idx, Object value, Arena *arena)
 {
+  if (value.type == kObjectTypeLuaRef) {
+    // Callback option: return an independent ref so it outlives the source value.
+    return LUAREF_OBJ(api_new_luaref(value.data.luaref));
+  }
   if (value.type != kObjectTypeString) {
     return value;  // boolean/number/nil/unset scalar; already an Object.
   }
@@ -3611,6 +3714,9 @@ Object optval_from_obj(OptIndex opt_idx, Object o, set_op_T op, bool *error)
   case kObjectTypeDict:
     type_ok = is_map || is_flaglist;
     break;
+  case kObjectTypeLuaRef:
+    type_ok = is_callback_option(flags);  // A callback option accepts a funcref.
+    break;
   default:
     type_ok = false;
   }
@@ -3623,6 +3729,8 @@ Object optval_from_obj(OptIndex opt_idx, Object o, set_op_T op, bool *error)
   case kObjectTypeBoolean:
   case kObjectTypeInteger:
     return o;  // Scalar; already type-checked above.
+  case kObjectTypeLuaRef:
+    return LUAREF_OBJ(api_new_luaref(o.data.luaref));  // Funcref; stored as a Callback.
   default:
     break;  // String/Array/Dict are serialized below.
   }
@@ -3973,9 +4081,13 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, Object old_value
       Object local_unset_value = get_option_unset_value(opt_idx);
       set_option_varp(opt_idx, varp_local, copy_object(local_unset_value, NULL), true);
     } else {
-      // May set global value for local option.
+      // May set global value for a buffer/window-local option. Skip when varp already is the
+      // global (a purely-global option): re-storing there is redundant, and for a callback option
+      // it would free the callback and then fail to re-parse an anonymous lambda's `<lambda>N`.
       void *varp_global = get_varp_scope(opt, OPT_GLOBAL);
-      set_option_varp(opt_idx, varp_global, copy_object(new_value, NULL), true);
+      if (varp_global != varp) {
+        set_option_varp(opt_idx, varp_global, copy_object(new_value, NULL), true);
+      }
     }
   }
 
@@ -4047,7 +4159,7 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, Object old_value
   return errmsg;
 }
 
-/// Validate the new value for an option.
+/// Validates an option value (internal scalar/:set-style form).
 ///
 /// @param  opt_idx         Index in options[] table. Must not be kOptInvalid.
 /// @param  newval[in,out]  New option value. Might be modified.
@@ -4072,6 +4184,9 @@ static const char *validate_option_value(const OptIndex opt_idx, Object *newval,
     } else {
       *newval = copy_object(get_option_unset_value(opt_idx), NULL);
     }
+  } else if (newval->type == kObjectTypeLuaRef) {
+    // A callback option accepts a funcref; scalar validation doesn't apply.
+    assert(is_callback_option(opt->flags));
   } else if (!option_has_type(opt_idx, optval_type(*newval))) {
     char *rep = optval_to_cstr(*newval);
     const char *type_str = optval_type_name(opt->type);
@@ -4079,6 +4194,14 @@ static const char *validate_option_value(const OptIndex opt_idx, Object *newval,
              opt->fullname, type_str, optval_type_name(optval_type(*newval)), rep);
     xfree(rep);
     errmsg = errbuf;
+  } else if ((opt->flags & kOptFlagFunc) && newval->data.string.size > 0) {
+    // Callback option: the string must parse to a valid function reference or lambda. Validate
+    // here (before storing) so an invalid value leaves the old callback intact.
+    Callback cb = CALLBACK_NONE;
+    if (option_set_callback_func(newval->data.string.data, &cb) == FAIL) {
+      errmsg = e_invarg;
+    }
+    callback_free(&cb);
   } else if (newval->type == kObjectTypeInteger) {
     // Validate and bound check num option values.
     errmsg = validate_num_option(opt_idx, &newval->data.integer, errbuf, errbuflen);
@@ -5095,13 +5218,13 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
   case kOptThesaurus:
     return *buf->b_p_tsr != NUL ? &(buf->b_p_tsr) : p->var;
   case kOptThesaurusfunc:
-    return *buf->b_p_tsrfu != NUL ? &(buf->b_p_tsrfu) : p->var;
+    return buf->b_p_tsrfu.type != kCallbackNone ? &(buf->b_p_tsrfu) : p->var;
   case kOptFormatprg:
     return *buf->b_p_fp != NUL ? &(buf->b_p_fp) : p->var;
   case kOptFsync:
     return buf->b_p_fs >= 0 ? &(buf->b_p_fs) : p->var;
   case kOptFindfunc:
-    return *buf->b_p_ffu != NUL ? &(buf->b_p_ffu) : p->var;
+    return buf->b_p_ffu.type != kCallbackNone ? &(buf->b_p_ffu) : p->var;
   case kOptErrorformat:
     return *buf->b_p_efm != NUL ? &(buf->b_p_efm) : p->var;
   case kOptGrepformat:
@@ -5384,12 +5507,10 @@ char *get_equalprg(void)
 }
 
 /// Get the value of 'findfunc', either the buffer-local one or the global one.
-char *get_findfunc(void)
+/// Returns the effective 'findfunc' callback: the buffer-local one if set, else the global one.
+Callback *get_findfunc(void)
 {
-  if (*curbuf->b_p_ffu == NUL) {
-    return p_ffu;
-  }
-  return curbuf->b_p_ffu;
+  return curbuf->b_p_ffu.type != kCallbackNone ? &curbuf->b_p_ffu : &p_ffu;
 }
 
 /// Copy options from one window to another.
@@ -5463,8 +5584,8 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_fdm = copy_option_val(from->wo_fdm);
   to->wo_fdm_save = from->wo_diff_saved ? xstrdup(from->wo_fdm_save) : empty_string_option;
   to->wo_fdn = from->wo_fdn;
-  to->wo_fde = copy_option_val(from->wo_fde);
-  to->wo_fdt = copy_option_val(from->wo_fdt);
+  callback_copy(&to->wo_fde, &from->wo_fde);
+  callback_copy(&to->wo_fdt, &from->wo_fdt);
   to->wo_fmr = copy_option_val(from->wo_fmr);
   to->wo_scl = copy_option_val(from->wo_scl);
   to->wo_lhi = from->wo_lhi;
@@ -5498,8 +5619,6 @@ static void check_winopt(winopt_T *wop)
   check_string_option(&wop->wo_fdi);
   check_string_option(&wop->wo_fdm);
   check_string_option(&wop->wo_fdm_save);
-  check_string_option(&wop->wo_fde);
-  check_string_option(&wop->wo_fdt);
   check_string_option(&wop->wo_fmr);
   check_string_option(&wop->wo_eiw);
   check_string_option(&wop->wo_scl);
@@ -5526,8 +5645,8 @@ void clear_winopt(winopt_T *wop)
   clear_string_option(&wop->wo_fdi);
   clear_string_option(&wop->wo_fdm);
   clear_string_option(&wop->wo_fdm_save);
-  clear_string_option(&wop->wo_fde);
-  clear_string_option(&wop->wo_fdt);
+  callback_free(&wop->wo_fde);
+  callback_free(&wop->wo_fdt);
   clear_string_option(&wop->wo_fmr);
   clear_string_option(&wop->wo_eiw);
   clear_string_option(&wop->wo_scl);
@@ -5685,15 +5804,12 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_csl = xstrdup(p_csl);
       COPY_OPT_SCTX(buf, kBufOptCompleteslash);
 #endif
-      buf->b_p_cfu = xstrdup(p_cfu);
+      callback_copy(&buf->b_p_cfu, &p_cfu);
       COPY_OPT_SCTX(buf, kBufOptCompletefunc);
-      set_buflocal_cfu_callback(buf);
-      buf->b_p_ofu = xstrdup(p_ofu);
+      callback_copy(&buf->b_p_ofu, &p_ofu);
       COPY_OPT_SCTX(buf, kBufOptOmnifunc);
-      set_buflocal_ofu_callback(buf);
-      buf->b_p_tfu = xstrdup(p_tfu);
+      callback_copy(&buf->b_p_tfu, &p_tfu);
       COPY_OPT_SCTX(buf, kBufOptTagfunc);
-      set_buflocal_tfu_callback(buf);
       buf->b_p_sts = p_sts;
       COPY_OPT_SCTX(buf, kBufOptSofttabstop);
       buf->b_p_sts_nopaste = p_sts_nopaste;
@@ -5757,13 +5873,13 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_s.b_p_spo = xstrdup(p_spo);
       COPY_OPT_SCTX(buf, kBufOptSpelloptions);
       buf->b_s.b_p_spo_flags = spo_flags;
-      buf->b_p_inde = xstrdup(p_inde);
+      callback_copy(&buf->b_p_inde, &p_inde);
       COPY_OPT_SCTX(buf, kBufOptIndentexpr);
       COPY_OPT_INSECURE(buf->b_p_inde_flags, kBufOptIndentexpr);
       buf->b_p_indk = xstrdup(p_indk);
       COPY_OPT_SCTX(buf, kBufOptIndentkeys);
       buf->b_p_fp = empty_string_option;
-      buf->b_p_fex = xstrdup(p_fex);
+      callback_copy(&buf->b_p_fex, &p_fex);
       COPY_OPT_SCTX(buf, kBufOptFormatexpr);
       COPY_OPT_INSECURE(buf->b_p_fex_flags, kBufOptFormatexpr);
       buf->b_p_sua = xstrdup(p_sua);
@@ -5791,7 +5907,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_mp = empty_string_option;
       buf->b_p_efm = empty_string_option;
       buf->b_p_ep = empty_string_option;
-      buf->b_p_ffu = empty_string_option;
+      buf->b_p_ffu = CALLBACK_NONE;
       buf->b_p_kp = empty_string_option;
       buf->b_p_path = empty_string_option;
       buf->b_p_tags = empty_string_option;
@@ -5799,7 +5915,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_tc_flags = 0;
       buf->b_p_def = empty_string_option;
       buf->b_p_inc = empty_string_option;
-      buf->b_p_inex = xstrdup(p_inex);
+      callback_copy(&buf->b_p_inex, &p_inex);
       COPY_OPT_SCTX(buf, kBufOptIncludeexpr);
       COPY_OPT_INSECURE(buf->b_p_inex_flags, kBufOptIncludeexpr);
       buf->b_p_cot = empty_string_option;
@@ -5807,7 +5923,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_dict = empty_string_option;
       buf->b_p_dia = empty_string_option;
       buf->b_p_tsr = empty_string_option;
-      buf->b_p_tsrfu = empty_string_option;
+      buf->b_p_tsrfu = CALLBACK_NONE;
       buf->b_p_qe = xstrdup(p_qe);
       COPY_OPT_SCTX(buf, kBufOptQuoteescape);
       buf->b_p_udf = p_udf;
@@ -6447,6 +6563,14 @@ static void option_value2string(vimoption_T *opt, int opt_flags)
 {
   void *varp = get_varp_scope(opt, opt_flags);
   assert(varp != NULL);
+
+  if (is_callback_option(opt->flags)) {
+    // Callback option: render via its option value (funcref name, expression, or Lua handle).
+    Object o = opt_from_varp(get_opt_idx(opt), varp);
+    xstrlcpy(NameBuff, o.type == kObjectTypeString ? o.data.string.data : "v:lua", MAXPATHL);
+    api_free_object(o);
+    return;
+  }
 
   if (option_has_type(get_opt_idx(opt), kObjectTypeInteger)) {
     OptInt wc = 0;

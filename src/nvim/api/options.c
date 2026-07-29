@@ -391,6 +391,10 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
   case kObjectTypeBoolean:
     merged_val = optval_right;
     break;
+  case kObjectTypeLuaRef:
+    // Callback option: no ":set"-style merge; take an independent ref for the set below.
+    merged_val = copy_object(optval_right, NULL);
+    break;
   default:
     abort();
   }

@@ -1743,9 +1743,13 @@ static char *eval_includeexpr(const char *const ptr, const size_t len)
   set_vim_var_string(VV_FNAME, ptr, (ptrdiff_t)len);
   current_sctx = curbuf->b_p_script_ctx[kBufOptIncludeexpr];
 
-  char *res = eval_to_string_safe(curbuf->b_p_inex,
-                                  was_set_insecurely(curwin, kOptIncludeexpr, OPT_LOCAL),
-                                  true);
+  const bool use_sandbox = was_set_insecurely(curwin, kOptIncludeexpr, OPT_LOCAL);
+  typval_T tv;
+  char *res = NULL;
+  if (eval_expr_option_tv(&curbuf->b_p_inex, use_sandbox, &tv)) {
+    res = xstrdup(tv_get_string(&tv));
+    tv_clear(&tv);
+  }
 
   set_vim_var_string(VV_FNAME, NULL, 0);
   current_sctx = save_sctx;
@@ -1772,7 +1776,7 @@ char *find_file_name_in_path(char *ptr, size_t len, int options, long count, cha
     len -= off;
   }
 
-  if ((options & FNAME_INCL) && *curbuf->b_p_inex != NUL) {
+  if ((options & FNAME_INCL) && curbuf->b_p_inex.type != kCallbackNone) {
     tofree = eval_includeexpr(ptr, len);
     if (tofree != NULL) {
       ptr = tofree;
@@ -1790,7 +1794,7 @@ char *find_file_name_in_path(char *ptr, size_t len, int options, long count, cha
     // If the file could not be found in a normal way, try applying
     // 'includeexpr' (unless done already).
     if (file_name == NULL
-        && !(options & FNAME_INCL) && *curbuf->b_p_inex != NUL) {
+        && !(options & FNAME_INCL) && curbuf->b_p_inex.type != kCallbackNone) {
       tofree = eval_includeexpr(ptr, len);
       if (tofree != NULL) {
         ptr = tofree;

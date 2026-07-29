@@ -1685,7 +1685,7 @@ omnifunc({findstart}, {base})                *vim.treesitter.query.omnifunc()*
     Omnifunc for completing node names and predicates in treesitter queries.
 
     Use via >lua
-        vim.bo.omnifunc = 'v:lua.vim.treesitter.query.omnifunc'
+        vim.bo.omnifunc = vim.treesitter.query.omnifunc
 <
 
     Parameters: ~

@@ -1249,7 +1249,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
       // When the file needs to be converted with 'charconvert' after
       // writing, write to a temp file instead and let the conversion
       // overwrite the original file.
-      if (*p_ccv != NUL) {
+      if (p_ccv.type != kCallbackNone) {
         wfname = vim_tempname();
         if (wfname == NULL) {  // Can't write without a tempfile!
           err = set_err(_("E214: Can't find temp file for writing"));

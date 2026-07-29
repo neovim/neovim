@@ -1448,10 +1448,10 @@ end
 --- Reset defaults set by `set_defaults`.
 --- Must only be called if the last client attached to a buffer exits.
 local function reset_defaults(bufnr)
-  if vim.bo[bufnr].tagfunc == 'v:lua.vim.lsp.tagfunc' then
+  if vim.bo[bufnr].tagfunc == vim.lsp.tagfunc then
     vim.bo[bufnr].tagfunc = nil
   end
-  if vim.bo[bufnr].omnifunc == 'v:lua.vim.lsp.omnifunc' then
+  if vim.bo[bufnr].omnifunc == vim.lsp.omnifunc then
     vim.bo[bufnr].omnifunc = nil
   end
   if vim.bo[bufnr].formatexpr == 'v:lua.vim.lsp.formatexpr()' then

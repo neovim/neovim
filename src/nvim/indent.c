@@ -1035,7 +1035,7 @@ bool preprocs_left(void)
 /// @return  true if the conditions are OK for smart indenting.
 bool may_do_si(void)
 {
-  return curbuf->b_p_si && !curbuf->b_p_cin && *curbuf->b_p_inde == NUL && !p_paste;
+  return curbuf->b_p_si && !curbuf->b_p_cin && curbuf->b_p_inde.type == kCallbackNone && !p_paste;
 }
 
 // Try to do some very smart auto-indenting.
@@ -1629,21 +1629,11 @@ int get_expr_indent(void)
   bool save_set_curswant = curwin->w_set_curswant;
   set_vim_var_nr(VV_LNUM, (varnumber_T)curwin->w_cursor.lnum);
 
-  if (use_sandbox) {
-    sandbox++;
-  }
   textlock++;
   current_sctx = curbuf->b_p_script_ctx[kBufOptIndentexpr];
 
-  // Need to make a copy, the 'indentexpr' option could be changed while
-  // evaluating it.
-  char *inde_copy = xstrdup(curbuf->b_p_inde);
-  int indent = (int)eval_to_number(inde_copy, true);
-  xfree(inde_copy);
+  int indent = eval_expr_option_number(&curbuf->b_p_inde, use_sandbox);
 
-  if (use_sandbox) {
-    sandbox--;
-  }
   textlock--;
   current_sctx = save_sctx;
 
@@ -1893,7 +1883,7 @@ void fixthisline(IndentGetter get_the_indent)
 bool use_indentexpr_for_lisp(void)
 {
   return curbuf->b_p_lisp
-         && *curbuf->b_p_inde != NUL
+         && curbuf->b_p_inde.type != kCallbackNone
          && strcmp(curbuf->b_p_lop, "expr:1") == 0;
 }
 
