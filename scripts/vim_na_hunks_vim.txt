@@ -1,3 +1,4 @@
+^:vim9.\+ .\+\*:vim9.\+\*
 ^balloon_[a-zA-Z0-9_]\+(.\+balloon_[a-zA-Z0-9_]\+(
 ^cscope_connection(.\+cscope_connection(
 ^js_decode(.\+js_decode(
@@ -87,6 +88,8 @@
 \*:shell\*
 \*:smile\*
 \*:version\*
+\*E984\*
+\*E999\*
 \*HelpToc-mappings\*
 \*SafeStateAgain\*
 \*SigUSR1\*
