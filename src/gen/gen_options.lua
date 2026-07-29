@@ -290,7 +290,8 @@ local function dump_option(i, o, write)
   elseif o.defaults.condition then
     write(('#if defined(%s)'):format(o.defaults.condition))
     write('    .def_val=', get_defaults(o.defaults.if_true, o.full_name))
-    if o.defaults.if_false then
+    -- Check against nil: `if_false=false` is a valid default and must still emit the `#else`.
+    if o.defaults.if_false ~= nil then
       write('#else')
       write('    .def_val=', get_defaults(o.defaults.if_false, o.full_name))
     end
