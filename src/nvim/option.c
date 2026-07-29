@@ -3343,8 +3343,19 @@ bool is_dict_option(OptIndex opt_idx)
 void optval_free(Object o)
 {
   // Only strings own memory; don't free the shared empty-string-option sentinel.
-  if (o.type == kObjectTypeString && o.data.string.data != empty_string_option) {
-    api_free_string(o.data.string);
+  switch (o.type) {
+  case kObjectTypeString:
+    if (o.data.string.data != empty_string_option) {
+      api_free_string(o.data.string);
+    }
+    return;
+  case kObjectTypeUnset:
+  case kObjectTypeNil:
+  case kObjectTypeBoolean:
+  case kObjectTypeInteger:
+    return;
+  default:
+    abort();  // Should not happen.
   }
 }
 
@@ -3487,8 +3498,8 @@ static char *optval_to_cstr(Object o)
 
 /// Converts an option value to its structured form.
 ///
-/// @return Object allocated in `arena`.
-Object optval_to_struct(OptIndex opt_idx, Object value, Arena *arena)
+/// @return Object allocated in `arena` (scalar values are returned unchanged).
+Object optval_to_obj(OptIndex opt_idx, Object value, Arena *arena)
 {
   if (value.type != kObjectTypeString) {
     return value;  // boolean/number/nil/unset scalar; already an Object.
@@ -3560,15 +3571,13 @@ Object optval_to_struct(OptIndex opt_idx, Object value, Arena *arena)
   return rv;
 }
 
-/// Converts a structured option (API Object) to a scalar option value (stringly-typed ":set"
-/// string, for string options). Each
-/// option impl internally expects a ":set" string (unfortunately).
+/// Converts a structured option (non-scalar Object) to the internal scalar (:set-style) form.
 ///
 /// Example: 'listchars' `{ eol = "~" }` => "eol:~".
 ///
 /// @param op  The :set operation; "key:value" removals are normalized to match by key.
 /// @return Object (owned; free with optval_free).
-Object object_as_optval(OptIndex opt_idx, Object o, set_op_T op, bool *error)
+Object optval_from_obj(OptIndex opt_idx, Object o, set_op_T op, bool *error)
 {
   if (o.type == kObjectTypeNil) {
     return NIL;
@@ -3576,8 +3585,8 @@ Object object_as_optval(OptIndex opt_idx, Object o, set_op_T op, bool *error)
 
   const uint32_t flags = options[opt_idx].flags;
   const bool is_list = flags & (kOptFlagComma | kOptFlagFlagList);
-  // "key:value" list, e.g. 'listchars', or a dict option, e.g. 'breakindentopt' (which
-  // accepts a Dict even without kOptFlagColon, mirroring optval_to_struct()'s `as_map`).
+  // "key:value" list, e.g. 'listchars', or a dict option, e.g. 'breakindentopt' (which accepts
+  // a Dict even without kOptFlagColon, mirroring `as_map` in optval_to_obj()).
   const bool is_map = (flags & kOptFlagColon) || is_dict_option(opt_idx);
   const bool is_flaglist = flags & kOptFlagFlagList;  // single-char flag list, e.g. 'shortmess'.
   const bool is_comma = flags & kOptFlagComma;
@@ -6959,27 +6968,30 @@ int64_t get_sidescrolloff_value(win_T *wp)
   return wp->w_p_siso < 0 ? p_siso : wp->w_p_siso;
 }
 
-Dict get_vimoption(String name, int opt_flags, buf_T *buf, win_T *win, Arena *arena, Error *err)
+/// Metadata Dict for option `name`; errors if `name` is unknown.
+Dict get_option_info(String name, int opt_flags, buf_T *buf, win_T *win, Arena *arena, Error *err)
 {
   OptIndex opt_idx = find_option_len(name.data, name.size);
   VALIDATE_S(opt_idx != kOptInvalid, "option (not found)", name.data, {
     return (Dict)ARRAY_DICT_INIT;
   });
 
-  return vimoption2dict(&options[opt_idx], opt_flags, buf, win, arena);
+  return option_info_dict(&options[opt_idx], opt_flags, buf, win, arena);
 }
 
-Dict get_all_vimoptions(Arena *arena)
+/// Metadata Dict for every option, keyed by full name.
+Dict get_all_options_info(Arena *arena)
 {
   Dict retval = arena_dict(arena, kOptCount);
   for (OptIndex opt_idx = 0; opt_idx < kOptCount; opt_idx++) {
-    Dict opt_dict = vimoption2dict(&options[opt_idx], OPT_GLOBAL, curbuf, curwin, arena);
+    Dict opt_dict = option_info_dict(&options[opt_idx], OPT_GLOBAL, curbuf, curwin, arena);
     PUT_C(retval, options[opt_idx].fullname, DICT_OBJ(opt_dict));
   }
   return retval;
 }
 
-static Dict vimoption2dict(vimoption_T *opt, int opt_flags, buf_T *buf, win_T *win, Arena *arena)
+/// Gets option metadata, in the shape of `DictAs(get_option_info)`.
+static Dict option_info_dict(vimoption_T *opt, int opt_flags, buf_T *buf, win_T *win, Arena *arena)
 {
   OptIndex opt_idx = get_opt_idx(opt);
   Dict dict = arena_dict(arena, 13);

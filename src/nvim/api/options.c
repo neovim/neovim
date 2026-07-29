@@ -356,7 +356,7 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
 
   // Convert the incoming value into an Object.
   bool error = false;
-  Object optval_right = object_as_optval(opt_idx, value, operation, &error);
+  Object optval_right = optval_from_obj(opt_idx, value, operation, &error);
 
   VALIDATE_EXP(!error, name.data, "a valid type", api_typename(value.type), {
     return NIL;
@@ -413,7 +413,7 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
   }
 
   // Return the value in its structured (list/map/set) form.
-  Object rv = optval_to_struct(opt_idx, merged_val, arena);
+  Object rv = optval_to_obj(opt_idx, merged_val, arena);
   optval_free(merged_val);
   return rv;
 }
@@ -429,7 +429,7 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
 Dict nvim_get_all_options_info(Arena *arena, Error *err)
   FUNC_API_SINCE(7)
 {
-  return get_all_vimoptions(arena);
+  return get_all_options_info(arena);
 }
 
 /// Gets the option information for one option from arbitrary buffer or window
@@ -482,5 +482,5 @@ DictAs(get_option_info) nvim_get_option_info2(String name, Dict(option) *opts, A
   buf_T *buf = (scope == kOptScopeBuf) ? (buf_T *)from : curbuf;
   win_T *win = (scope == kOptScopeWin) ? (win_T *)from : curwin;
 
-  return get_vimoption(name, opt_flags, buf, win, arena, err);
+  return get_option_info(name, opt_flags, buf, win, arena, err);
 }

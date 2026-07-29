@@ -607,7 +607,7 @@ DictAs(get_option_info) nvim_get_option_info(String name, Arena *arena, Error *e
   FUNC_API_SINCE(7)
   FUNC_API_DEPRECATED_SINCE(11)
 {
-  return get_vimoption(name, OPT_GLOBAL, curbuf, curwin, arena, err);
+  return get_option_info(name, OPT_GLOBAL, curbuf, curwin, arena, err);
 }
 
 /// Sets the global value of an option.
