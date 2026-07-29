@@ -7,6 +7,9 @@
 ^err_teapot(.\+err_teapot(
 ^listener_[a-zA-Z0-9]\+(.\+listener_[a-zA-Z0-9]\+(
 ^redraw_listener_[a-zA-Z0-9]\+(.\+redraw_listener_[a-zA-Z0-9]\+(
+^remote_[a-z]\+(.\+remote_[a-z]\+(
+^server2client(.\+server2client(
+^serverlist(.\+serverlist(
 ^test_alloc_fail(.\+test_alloc_fail(
 ^test_autochdir(.\+test_autochdir(
 ^test_feedinput(.\+test_feedinput(
