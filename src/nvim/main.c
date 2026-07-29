@@ -1189,7 +1189,7 @@ static void command_line_scan(mparm_T *parmp)
         } else if (STRNICMP(argv[0] + argv_idx, "clean", 5) == 0) {
           parmp->use_vimrc = "NONE";
           parmp->clean = true;
-          set_option_value_give_err(kOptShadafile, STATIC_CSTR_AS_OPTVAL("NONE"), 0);
+          set_option_value_give_err(kOptShadafile, STATIC_CSTR_AS_OBJ("NONE"), 0);
         } else if (STRNICMP(argv[0] + argv_idx, "luamod-dev", 9) == 0) {
           nlua_disable_preload = true;
         } else {
@@ -1203,7 +1203,7 @@ static void command_line_scan(mparm_T *parmp)
         }
         break;
       case 'A':    // "-A" start in Arabic mode.
-        set_option_value_give_err(kOptArabic, BOOLEAN_OPTVAL(true), 0);
+        set_option_value_give_err(kOptArabic, BOOLEAN_OBJ(true), 0);
         break;
       case 'b':    // "-b" binary mode.
         // Needs to be effective before expanding file names, because
@@ -1233,8 +1233,8 @@ static void command_line_scan(mparm_T *parmp)
         usage();
         os_exit(0);
       case 'H':    // "-H" start in Hebrew mode: rl + keymap=hebrew set.
-        set_option_value_give_err(kOptKeymap, STATIC_CSTR_AS_OPTVAL("hebrew"), 0);
-        set_option_value_give_err(kOptRightleft, BOOLEAN_OPTVAL(true), 0);
+        set_option_value_give_err(kOptKeymap, STATIC_CSTR_AS_OBJ("hebrew"), 0);
+        set_option_value_give_err(kOptRightleft, BOOLEAN_OBJ(true), 0);
         break;
       case 'M':    // "-M"  no changes or writing of files
         reset_modifiable();
@@ -1293,7 +1293,7 @@ static void command_line_scan(mparm_T *parmp)
           exmode_active = true;
           parmp->no_swap_file = true;
           if (p_shadafile == NULL || *p_shadafile == NUL) {
-            set_option_value_give_err(kOptShadafile, STATIC_CSTR_AS_OPTVAL("NONE"), 0);
+            set_option_value_give_err(kOptShadafile, STATIC_CSTR_AS_OBJ("NONE"), 0);
           }
         } else {                // "-s {scriptin}" read from script file
           want_argument = true;
@@ -1318,7 +1318,7 @@ static void command_line_scan(mparm_T *parmp)
         // default is 10: a little bit verbose
         p_verbose = get_number_arg(argv[0], &argv_idx, 10);
         if (argv[0][argv_idx] != NUL) {
-          set_option_value_give_err(kOptVerbosefile, CSTR_AS_OPTVAL(argv[0] + argv_idx), 0);
+          set_option_value_give_err(kOptVerbosefile, CSTR_AS_OBJ(argv[0] + argv_idx), 0);
           argv_idx = (int)strlen(argv[0]);
         }
         break;
@@ -1326,7 +1326,7 @@ static void command_line_scan(mparm_T *parmp)
         // "-w {scriptout}" write to script
         if (ascii_isdigit((argv[0])[argv_idx])) {
           n = get_number_arg(argv[0], &argv_idx, 10);
-          set_option_value_give_err(kOptWindow, NUMBER_OPTVAL((OptInt)n), 0);
+          set_option_value_give_err(kOptWindow, INTEGER_OBJ((OptInt)n), 0);
           break;
         }
         want_argument = true;
@@ -1424,7 +1424,7 @@ static void command_line_scan(mparm_T *parmp)
           break;
 
         case 'i':    // "-i {shada}" use for shada
-          set_option_value_give_err(kOptShadafile, CSTR_AS_OPTVAL(argv[0]), 0);
+          set_option_value_give_err(kOptShadafile, CSTR_AS_OBJ(argv[0]), 0);
           break;
 
         case 'l':    // "-l" Lua script: args after "-l".
@@ -1434,7 +1434,7 @@ static void command_line_scan(mparm_T *parmp)
           parmp->no_swap_file = true;
           parmp->use_vimrc = parmp->use_vimrc ? parmp->use_vimrc : "NONE";
           if (p_shadafile == NULL || *p_shadafile == NUL) {
-            set_option_value_give_err(kOptShadafile, STATIC_CSTR_AS_OPTVAL("NONE"), 0);
+            set_option_value_give_err(kOptShadafile, STATIC_CSTR_AS_OBJ("NONE"), 0);
           }
           parmp->luaf = argv[0];
           argc--;
@@ -1471,7 +1471,7 @@ scripterror:
           if (ascii_isdigit(*(argv[0]))) {
             argv_idx = 0;
             n = get_number_arg(argv[0], &argv_idx, 10);
-            set_option_value_give_err(kOptWindow, NUMBER_OPTVAL((OptInt)n), 0);
+            set_option_value_give_err(kOptWindow, INTEGER_OBJ((OptInt)n), 0);
             argv_idx = -1;
             break;
           }
@@ -1658,7 +1658,7 @@ static void handle_quickfix(mparm_T *paramp)
 {
   if (paramp->edit_type == EDIT_QF) {
     if (paramp->use_ef != NULL) {
-      set_option_direct(kOptErrorfile, CSTR_AS_OPTVAL(paramp->use_ef), 0, SID_CARG);
+      set_option_direct(kOptErrorfile, CSTR_AS_OBJ(paramp->use_ef), 0, SID_CARG);
     }
     vim_snprintf(IObuff, IOSIZE, "cfile %s", p_ef);
     if (qf_init(NULL, p_ef, p_efm, true, IObuff, p_menc) < 0) {
@@ -1906,7 +1906,7 @@ static void edit_buffers(mparm_T *parmp)
 
           p_shm_save = xstrdup(p_shm);
           snprintf(buf, sizeof(buf), "F%s", p_shm);
-          set_option_value_give_err(kOptShortmess, CSTR_AS_OPTVAL(buf), 0);
+          set_option_value_give_err(kOptShortmess, CSTR_AS_OBJ(buf), 0);
         }
       } else {
         if (curwin->w_next == NULL) {           // just checking
@@ -1951,7 +1951,7 @@ static void edit_buffers(mparm_T *parmp)
   }
 
   if (p_shm_save != NULL) {
-    set_option_value_give_err(kOptShortmess, CSTR_AS_OPTVAL(p_shm_save), 0);
+    set_option_value_give_err(kOptShortmess, CSTR_AS_OBJ(p_shm_save), 0);
     xfree(p_shm_save);
   }
 

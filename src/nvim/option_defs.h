@@ -42,16 +42,6 @@ typedef enum {
   kOptFlagColon     = 1 << 25,  ///< Values use colons to create sublists.
 } OptFlags;
 
-/// Option value type.
-/// These types are also used as type flags by using the type value as an index for the type_flags
-/// bit field (@see option_has_type()).
-typedef enum {
-  kOptValTypeNil = -1,  // Make sure Nil can't be bitshifted and used as an option type flag.
-  kOptValTypeBoolean,
-  kOptValTypeNumber,
-  kOptValTypeString,
-} OptValType;
-
 /// Scopes that an option can support.
 typedef enum {
   kOptScopeGlobal = 0,  ///< Request global option value
@@ -62,19 +52,6 @@ typedef enum {
 /// Always update this whenever a new option scope is added.
 #define kOptScopeSize (kOptScopeTab + 1)
 typedef uint8_t OptScopeFlags;
-
-typedef union {
-  // boolean options are actually tri-states because they have a third "None" value.
-  TriState boolean;
-  OptInt number;
-  String string;
-} OptValData;
-
-/// Option value
-typedef struct {
-  OptValType type;
-  OptValData data;
-} OptVal;
 
 /// Value kind of one key in a dict option (see "schema" in options.lua).
 typedef enum {
@@ -118,9 +95,9 @@ typedef struct {
   int os_flags;
 
   /// Old value of the option.
-  OptValData os_oldval;
+  Object os_oldval;
   /// New value of the option.
-  OptValData os_newval;
+  Object os_newval;
 
   /// Option value was checked to be safe, no need to set kOptFlagInsecure
   /// Used for the 'keymap', 'filetype' and 'syntax' options.
@@ -192,7 +169,7 @@ typedef struct {
   char *fullname;                    ///< full option name
   char *shortname;                   ///< permissible abbreviation
   uint32_t flags;                    ///< see above
-  OptValType type;                   ///< option type
+  ObjectType type;                   ///< option type
   OptScopeFlags scope_flags;         ///< option scope flags, see OptScope
   void *var;                         ///< global option: pointer to variable;
                                      ///< window-local option: NULL;
@@ -215,6 +192,6 @@ typedef struct {
   /// cmdline. Only useful for string options.
   opt_expand_cb_T opt_expand_cb;
 
-  OptVal def_val;                    ///< default value
+  Object def_val;                    ///< default value
   sctx_T script_ctx;                 ///< script in which the option was last set
 } vimoption_T;

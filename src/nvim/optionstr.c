@@ -574,7 +574,7 @@ const char *did_set_background(optset_T *args)
     return errmsg;
   }
 
-  if (args->os_oldval.string.data[0] == *p_bg) {
+  if (args->os_oldval.data.string.data[0] == *p_bg) {
     // Value was not changed
     return NULL;
   }
@@ -621,7 +621,7 @@ const char *did_set_backspace(optset_T *args FUNC_ATTR_UNUSED)
 const char *did_set_backupcopy(optset_T *args)
 {
   buf_T *buf = (buf_T *)args->os_buf;
-  const char *oldval = args->os_oldval.string.data;
+  const char *oldval = args->os_oldval.data.string.data;
   int opt_flags = args->os_flags;
   char *bkc = p_bkc;
   unsigned *flags = &bkc_flags;
@@ -725,7 +725,7 @@ const char *did_set_buftype(optset_T *args)
   // buftype=prompt:
   if (buf->b_p_bt[0] == 'p') {
     // Set default value for 'comments'
-    set_option_direct(kOptComments, STATIC_CSTR_AS_OPTVAL(""), OPT_LOCAL, SID_NONE);
+    set_option_direct(kOptComments, STATIC_CSTR_AS_OBJ(""), OPT_LOCAL, SID_NONE);
     // set the prompt start position to lastline.
     pos_T next_prompt = { .lnum = buf->b_ml.ml_line_count, .col = buf->b_prompt_start.mark.col,
                           .coladd = 0 };
@@ -1202,7 +1202,7 @@ int expand_set_eventignore(optexpand_T *args, int *numMatches, char ***matches)
 const char *did_set_fileformat(optset_T *args)
 {
   buf_T *buf = (buf_T *)args->os_buf;
-  const char *oldval = args->os_oldval.string.data;
+  const char *oldval = args->os_oldval.data.string.data;
   int opt_flags = args->os_flags;
   if (!MODIFIABLE(buf) && !(opt_flags & OPT_GLOBAL)) {
     return e_modifiable;
@@ -1244,7 +1244,7 @@ const char *did_set_filetype_or_syntax(optset_T *args)
     return e_invarg;
   }
 
-  args->os_value_changed = strcmp(args->os_oldval.string.data, *varp) != 0;
+  args->os_value_changed = strcmp(args->os_oldval.data.string.data, *varp) != 0;
 
   // Since we check the value, there is no need to set kOptFlagInsecure,
   // even when the value comes from a modeline.
@@ -1615,7 +1615,7 @@ const char *did_set_sessionoptions(optset_T *args)
   }
   if ((ssop_flags & kOptSsopFlagCurdir) && (ssop_flags & kOptSsopFlagSesdir)) {
     // Don't allow both "sesdir" and "curdir".
-    const char *oldval = args->os_oldval.string.data;
+    const char *oldval = args->os_oldval.data.string.data;
     opt_strings_flags(oldval, opt_ssop_values, &ssop_flags, true, NULL, 0);
     return e_invarg;
   }
@@ -1676,7 +1676,7 @@ const char *did_set_shellpipe_redir(optset_T *args)
 {
   bool seen = false;
 
-  for (char *p = args->os_newval.string.data; *p != NUL; p++) {
+  for (char *p = args->os_newval.data.string.data; *p != NUL; p++) {
     if (*p != '%') {
       continue;
     }
@@ -1745,7 +1745,7 @@ const char *did_set_signcolumn(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
   char **varp = (char **)args->os_varp;
-  const char *oldval = args->os_oldval.string.data;
+  const char *oldval = args->os_oldval.data.string.data;
   if (check_signcolumn(*varp, varp == &win->w_p_scl ? win : NULL) != OK) {
     return e_invarg;
   }
@@ -1796,7 +1796,7 @@ const char *did_set_spelloptions(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
   int opt_flags = args->os_flags;
-  const char *val = args->os_newval.string.data;
+  const char *val = args->os_newval.data.string.data;
 
   if (!(opt_flags & OPT_LOCAL)) {
     const char *errmsg = opt_strings_flags(val, opt_spo_values, &spo_flags, true, args->os_errbuf,
@@ -2056,7 +2056,7 @@ const char *did_set_virtualedit(optset_T *args)
                                            args->os_errbuflen);
     if (errmsg != NULL) {
       return errmsg;
-    } else if (strcmp(ve, args->os_oldval.string.data) != 0) {
+    } else if (strcmp(ve, args->os_oldval.data.string.data) != 0) {
       // Recompute cursor position in case the new 've' setting
       // changes something.
       validate_virtcol(win);

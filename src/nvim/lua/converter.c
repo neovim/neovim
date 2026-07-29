@@ -741,6 +741,7 @@ void nlua_push_Object(lua_State *lstate, Object *obj, int flags)
   FUNC_ATTR_NONNULL_ALL
 {
   switch (obj->type) {
+  case kObjectTypeUnset:
   case kObjectTypeNil:
     if (flags & kNluaPushSpecial) {
       lua_pushnil(lstate);
