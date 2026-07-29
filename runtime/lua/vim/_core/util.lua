@@ -184,6 +184,18 @@ function M.echo_err(msg)
   vim.api.nvim_echo({ { msg } }, true, { err = true })
 end
 
+--- Shows a message from a builtin plugin, prefixed with the plugin name.
+---
+--- Scheduled, so it is safe to call from |api-fast| contexts.
+--- @param name string Plugin name, e.g. "zip".
+--- @param msg string
+--- @param level? integer Level from |vim.log.levels|. Defaults to ERROR.
+function M.notify(name, msg, level)
+  vim.schedule(function()
+    vim.notify(('%s: %s'):format(name, msg), level or vim.log.levels.ERROR)
+  end)
+end
+
 --- Define event-handlers (autocmds) ergonomically.
 ---
 --- Examples:

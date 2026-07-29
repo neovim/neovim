@@ -1,0 +1,55 @@
+*zip.txt*    Nvim
+
+
+                            NVIM REFERENCE MANUAL
+
+
+Builtin plugin: zip                                                      *zip*
+
+Nvim opens a read-only listing when |:edit| is used with a zip archive. The
+listing is a |dir| buffer with 'filetype' set to "zip". It requires the
+`unzip` executable. The module implementing it is private and is not
+a supported Lua API.
+
+                                                    *g:loaded_nvim_zip_plugin*
+To disable the built-in zip browser, set this before startup: >lua
+
+    vim.g.loaded_nvim_zip_plugin = 1
+<
+ARCHIVE LISTINGS                                                *zip-listing*
+
+Editing a zip-like file opens a read-only listing. Directory entries can be
+opened to browse that level of the archive. File entries open as read-only
+`zipfile://{archive}::{path}` buffers.
+
+Mappings are the standard |dir-buffer-mappings|. At the archive root, - opens
+the containing filesystem directory.
+
+Recognized extensions include zip, jar, apk, epub, Office and OpenDocument
+formats, whl, xpi, pkpass, and cbz.
+
+INTEGRATIONS                                              *zip-integrations*
+
+Remote zip URLs are downloaded by |vim.net| and opened in the browser.
+
+|g:ftplugin_java_source_path| opens the selected entry with |gf|.
+
+LIMITATIONS                                                *zip-limitations*
+
+Archive entries cannot be updated or extracted. Remote archives are not
+refetched on reload, and there is no PowerShell fallback, no custom backend
+command, and no support for the legacy `g:zip_*` variables. Use |old-zip|
+when those features are required.
+
+==============================================================================
+Legacy plugin: zip                                                   *old-zip*
+
+The legacy Vimscript zip plugin browses, updates, and extracts archive
+entries. It is not loaded by default; use `:packadd` to activate it: >lua
+
+    vim.cmd.packadd('old-zip')
+<
+This can be done at any time. Its manual is then available as
+`:help pi_zip.txt`.
+
+vim:tw=78:ts=8:noet:ft=help

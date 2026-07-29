@@ -61,7 +61,11 @@ vim.api.nvim_create_autocmd('BufReadCmd', {
           end
 
           if archive_kind == 'zip' then
-            vim.fn['zip#Browse'](tmpfile)
+            if vim.fn.exists('#zip') == 1 then
+              vim.fn['zip#Browse'](tmpfile)
+            elseif vim.fn.exists('#nvim.zip') == 1 then
+              require('nvim.zip').browse(ev.buf, tmpfile)
+            end
           else
             vim.fn['tar#Browse'](tmpfile)
           end

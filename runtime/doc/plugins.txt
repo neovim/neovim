@@ -26,6 +26,7 @@ Help-link		Loaded	Short description ~
 |matchit|		Yes	Extended |%| matching
 |matchparen|		Yes	Highlight matching pairs
 |netrw|			Yes	Reading and writing files over a network
+|zip|			Yes	Read-only zip archive browser
 |package-cfilter|	No	Filtering quickfix/location list
 |package-justify|	No	Justify text
 |package-nohlsearch|	No	Automatically run :nohlsearch
@@ -40,7 +41,7 @@ Help-link		Loaded	Short description ~
 |pi_swapmouse|		No	Swap meaning of left and right mouse buttons
 |pi_tar.txt|		Yes	Tar file explorer
 |pi_tutor.txt|		Yes	Interactive tutorial
-|pi_zip.txt|		Yes	Zip archive explorer
+|old-zip|		No	Legacy zip archive explorer
 
 ==============================================================================
 Builtin plugin: dir                                                      *dir*
