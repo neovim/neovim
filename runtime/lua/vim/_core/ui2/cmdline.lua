@@ -154,8 +154,8 @@ function M.cmdline_hide(level, abort)
 
   fn.clearmatches(ui.wins.cmd) -- Clear matchparen highlights.
   api.nvim_win_set_cursor(ui.wins.cmd, { 1, 0 })
-  if M.prompt or abort then
-    -- Clear cmd buffer prompt or aborted command (non-abort is left visible).
+  if M.prompt or abort or cmdbuff == '' then
+    -- Clear cmd buffer prompt or aborted/empty command (non-abort is left visible).
     api.nvim_buf_set_lines(ui.bufs.cmd, 0, -1, false, {})
   end
 
