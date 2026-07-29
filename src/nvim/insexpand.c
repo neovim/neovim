@@ -1597,7 +1597,7 @@ static int ins_compl_build_pum(void)
   // If it's user complete function and refresh_always,
   // do not use "compl_leader" as prefix filter.
   if (ins_compl_need_restart()) {
-    XFREE_CLEAR(compl_leader);
+    API_CLEAR_STRING(compl_leader);
   }
 
   bool compl_no_select = (get_cot_flags() & kOptCotFlagNoselect) != 0
