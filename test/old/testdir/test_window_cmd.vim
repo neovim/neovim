@@ -2436,6 +2436,23 @@ func Test_winfixheight_resize_wmh_zero()
   set winminheight& laststatus&
 endfunc
 
+" Splitting the only window while it has 'winfixheight' set and 'laststatus' is
+" one must not leave a screen line unused.
+func Test_winfixheight_split_only_window()
+  set laststatus=1
+  new
+  only!
+  setlocal winfixheight
+  split
+  " Two windows, both with a status line, and the command line.
+  call assert_equal(&lines - &cmdheight - 2, winheight(1) + winheight(2))
+
+  only!
+  setlocal winfixheight&
+  set laststatus&
+  bwipe!
+endfunc
+
 func Test_window_w_locked_bypass()
   split Xfoo
   let s:win = win_getid()
