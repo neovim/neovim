@@ -1926,6 +1926,8 @@ uint32_t *insecure_flag(win_T *const wp, OptIndex opt_idx, int opt_flags)
       return &wp->w_buffer->b_p_fex_flags;
     case kOptIncludeexpr:
       return &wp->w_buffer->b_p_inex_flags;
+    case kOptComplete:
+      return &wp->w_buffer->b_p_cpt_flags;
     default:
       break;
     }
@@ -5597,6 +5599,8 @@ void didset_window_options(win_T *wp, bool valid_cursor)
 }
 
 #define COPY_OPT_SCTX(buf, bv) buf->b_p_script_ctx[bv] = options[buf_opt_idx[bv]].script_ctx
+#define COPY_OPT_INSECURE(flagsfield, bv) \
+  (flagsfield) = (options[buf_opt_idx[bv]].flags & kOptFlagInsecure)
 
 /// Copy global option values to local options for one buffer.
 /// Used when creating a new buffer and sometimes when entering a buffer.
@@ -5707,6 +5711,7 @@ void buf_copy_options(buf_T *buf, int flags)
       }
       buf->b_p_cpt = xstrdup(p_cpt);
       COPY_OPT_SCTX(buf, kBufOptComplete);
+      COPY_OPT_INSECURE(buf->b_p_cpt_flags, kBufOptComplete);
       set_buflocal_cpt_callbacks(buf);
 #ifdef BACKSLASH_IN_FILENAME
       buf->b_p_csl = xstrdup(p_csl);
@@ -5786,11 +5791,13 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_s.b_p_spo_flags = spo_flags;
       buf->b_p_inde = xstrdup(p_inde);
       COPY_OPT_SCTX(buf, kBufOptIndentexpr);
+      COPY_OPT_INSECURE(buf->b_p_inde_flags, kBufOptIndentexpr);
       buf->b_p_indk = xstrdup(p_indk);
       COPY_OPT_SCTX(buf, kBufOptIndentkeys);
       buf->b_p_fp = empty_string_option;
       buf->b_p_fex = xstrdup(p_fex);
       COPY_OPT_SCTX(buf, kBufOptFormatexpr);
+      COPY_OPT_INSECURE(buf->b_p_fex_flags, kBufOptFormatexpr);
       buf->b_p_sua = xstrdup(p_sua);
       COPY_OPT_SCTX(buf, kBufOptSuffixesadd);
       buf->b_p_keymap = xstrdup(p_keymap);
@@ -5826,6 +5833,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_inc = empty_string_option;
       buf->b_p_inex = xstrdup(p_inex);
       COPY_OPT_SCTX(buf, kBufOptIncludeexpr);
+      COPY_OPT_INSECURE(buf->b_p_inex_flags, kBufOptIncludeexpr);
       buf->b_p_cot = empty_string_option;
       buf->b_cot_flags = 0;
       buf->b_p_dict = empty_string_option;
