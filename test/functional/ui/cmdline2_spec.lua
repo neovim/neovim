@@ -275,6 +275,22 @@ describe('cmdline2', function()
       {16::}%{15:s}{16:/.\{//}^ }                                          |
     ]])
   end)
+
+  it('is empty after backspace', function()
+    feed(':')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*12
+      {16::}^                                                    |
+    ]])
+
+    feed('<BS>')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+                                                           |
+    ]])
+  end)
 end)
 
 describe('cmdline2', function()
