@@ -13,7 +13,13 @@ local function unzip()
   return command
 end
 
---- Escape a path passed to Info-ZIP, which expands glob patterns even without a shell.
+--- Escape a path so that Info-ZIP matches it literally.
+---
+--- Info-ZIP matches `*`, `?`, and `[]` in a member selector itself, so this is not shell
+--- quoting: passing argv already avoids the shell. For example, unescaped `a[a].txt`
+--- silently reads `aa.txt`, and `a?.txt` matches every four-character name. A literal `[`
+--- cannot be backslash-escaped, so it is wrapped in a class instead, as is a leading `-`,
+--- which would otherwise parse as an option.
 --- https://github.com/neovim/neovim/blob/7ba955fe079d4aa2554fea8e7235651fafd40efb/runtime/autoload/zip.vim#L316-L339
 ---@param value string
 ---@return string
