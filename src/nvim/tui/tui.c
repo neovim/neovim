@@ -145,6 +145,7 @@ struct TUIData {
   int url;  ///< Index of URL currently being printed, if any
   StringBuilder urlbuf;  ///< Re-usable buffer for writing OSC 8 control sequences
   Arena ti_arena;
+  char saved_cursor_style[6];
 };
 
 typedef enum {
@@ -503,6 +504,34 @@ static void terminfo_start(TUIData *tui)
     os_setenv("TERM", guessed_term, 1);
   }
 #endif
+
+  if (tui->out_isatty) {
+    struct termios oldterm, newterm;
+    tcgetattr(tui->out_fd, &oldterm);
+    memcpy(&newterm, &oldterm, sizeof(struct termios));
+    newterm.c_lflag &= ~(ICANON|ECHO);
+    tcsetattr(tui->out_fd, TCSANOW, &newterm);
+
+    char * DECRQSS =  "\x1bP$q q\x1b\\\n";
+    write (tui->out_fd, DECRQSS, 10);
+    unsigned char DECRPSS[11];
+    size_t DECRPSSlen = read (tui->out_fd, DECRPSS, 10);
+    DECRPSS[DECRPSSlen] = '\0';
+
+    tcsetattr(tui->out_fd, TCSANOW, &oldterm);
+
+    char * DECRPSS_start = "\x1BP1$r";
+    char * DECRPSS_end = " q\x1B\\";
+    if (memcmp(DECRPSS_start, DECRPSS, 5) == 0 && memcmp(DECRPSS_end, DECRPSS + 6, 4) == 0) {
+      char cursor = DECRPSS[5];
+      if (!isdigit(cursor)) {
+        WLOG("TUI: terminal DECRQSS did not return a valid reply: %c should be a number", cursor);
+        cursor = '0';
+      }
+      strcpy(tui->saved_cursor_style, "\x1b[0 q");
+      tui->saved_cursor_style[2] = cursor;
+    }
+  }
 
   // Set up terminfo.
   tui->terminfo_found_in_db = false;
@@ -2388,7 +2417,7 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
           || (linuxvt
               && (xterm_version || colorterm)))) {
     terminfo_set_str(tui, kTerm_set_cursor_style, "\x1b[%p1%d q");
-    terminfo_set_str(tui, kTerm_reset_cursor_style, "\x1b[0 q");
+    terminfo_set_str(tui, kTerm_reset_cursor_style, tui->saved_cursor_style);
   } else if (linuxvt) {
     // Linux uses an idiosyncratic escape code to set the cursor shape and
     // does not support DECSCUSR.
