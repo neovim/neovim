@@ -942,11 +942,25 @@ is_na_patch() {
         fi
         ;;
       *.h)
-        HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 '-I^#\s*(else|endif)' '-I^#\s*(ifdef|if.*defined\().*FEAT_' "$patch" -- "${file}")
+        HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
+          '-I^\s+$' \
+          '-I^#\s*(ifdef|if.*defined\().*FEAT_' \
+          '-I^#\s*(else|endif)' \
+          '-I^EXTERN char e_.*vim9' \
+          '-I^\s*INIT\(= .+"E[0-9]+: .*[vV]im9' \
+          "$patch" -- "$file")
         test -n "${HUNKS}" && return 1
         ;;
       *.c)
-        HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 '-I^#\s*(else|endif)' '-I^#\s*(ifdef|if.*defined\().*FEAT_' "$patch" -- "$file" | grep -P '^@@ .* @@')
+        HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
+          '-I^\s+$' \
+          '-I^#\s*(ifdef|if.*defined\().*FEAT_' \
+          '-I^#\s*(else|endif)' \
+          '-I#\s*define.*ex_ni$' \
+          '-I[_.>]sc_version = ' \
+          '-I[_.>]uf_script_ctx_version = ' \
+          "$patch" -- "${file}" |
+          grep '^@@ .* @@')
         if test -n "$HUNKS"; then
           HUNK_NUM_FINAL=$(echo "$HUNKS" | sed 's/^@@ .* @@ \?//' | grep -cv -f "$NA_HUNKS_C")
           test "$HUNK_NUM_FINAL" -ne 0 && return 1

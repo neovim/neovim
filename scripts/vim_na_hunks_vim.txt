@@ -1,3 +1,4 @@
+^:vim9.\+ .\+\*:vim9.\+\*
 ^balloon_[a-zA-Z0-9_]\+(.\+balloon_[a-zA-Z0-9_]\+(
 ^cscope_connection(.\+cscope_connection(
 ^js_decode(.\+js_decode(
@@ -7,6 +8,9 @@
 ^err_teapot(.\+err_teapot(
 ^listener_[a-zA-Z0-9]\+(.\+listener_[a-zA-Z0-9]\+(
 ^redraw_listener_[a-zA-Z0-9]\+(.\+redraw_listener_[a-zA-Z0-9]\+(
+^remote_[a-z]\+(.\+remote_[a-z]\+(
+^server2client(.\+server2client(
+^serverlist(.\+serverlist(
 ^test_alloc_fail(.\+test_alloc_fail(
 ^test_autochdir(.\+test_autochdir(
 ^test_feedinput(.\+test_feedinput(
@@ -84,6 +88,8 @@
 \*:shell\*
 \*:smile\*
 \*:version\*
+\*E984\*
+\*E999\*
 \*HelpToc-mappings\*
 \*SafeStateAgain\*
 \*SigUSR1\*
