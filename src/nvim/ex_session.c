@@ -1008,6 +1008,11 @@ void ex_mkrc(exarg_T *eap)
       }
     }
 
+    if (fprintf(fd,
+                "if winwidth(0) == 80\n  set columns=%i\nendif\n", Columns) < 0) {
+      failed = true;
+    }
+
     if (!view_session || (eap->cmdidx == CMD_mksession
                           && (*flagp & kOptSsopFlagOptions))) {
       int flags = OPT_GLOBAL;
