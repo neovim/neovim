@@ -1319,10 +1319,8 @@ win_T *win_split_ins(int size, int flags, win_T *new_wp, int dir, frame_T *to_fl
 
       win_setheight_win(oldwin->w_height + new_size + STATUS_HEIGHT,
                         oldwin, true);
+      // w_height now excludes the status line
       oldwin_height = oldwin->w_height;
-      if (need_status) {
-        oldwin_height -= STATUS_HEIGHT;
-      }
     }
 
     // Only make all windows the same height if one of them (except oldwin)
@@ -3791,7 +3789,7 @@ void frame_new_height(frame_T *topfrp, int height, bool topfirst, bool wfh, bool
     OptInt new_ch = MAX(min_set_ch, p_ch + topfrp->fr_height - height);
     if (new_ch != p_ch) {
       const OptInt save_ch = min_set_ch;
-      set_option_value(kOptCmdheight, NUMBER_OPTVAL(new_ch), 0);
+      set_option_value(kOptCmdheight, INTEGER_OBJ(new_ch), 0);
       min_set_ch = save_ch;
     }
     height = (int)MIN(ROWS_AVAIL, height);
@@ -4777,7 +4775,7 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, bool trigger_enter_a
     OptInt new_ch = p_ch;
     p_ch = prev_p_ch;
     command_frame_height = false;
-    set_option_value(kOptCmdheight, NUMBER_OPTVAL(new_ch), 0);
+    set_option_value(kOptCmdheight, INTEGER_OBJ(new_ch), 0);
     command_frame_height = true;
   } else if (old_curtab != curtab) {
     tabpage_check_windows(old_curtab);

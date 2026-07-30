@@ -681,6 +681,43 @@ describe('startup', function()
     )
     -- without `-u`
     eq('  encoding=utf-8\n', fn.system({ nvim_prog, '-n', '-es' }, { 'set encoding', '' }))
+    -- CRLF input (e.g. Windows pipes) works like LF.
+    eq('  encoding=utf-8\n', fn.system({ nvim_prog, '-n', '-es' }, 'set encoding\r\n'))
+    -- Stdin is not consumed as typeahead: `:lua` can read the next stdin line as data.
+    eq(
+      'thedata\n',
+      fn.system(
+        { nvim_prog, '-n', '-u', 'NONE', '-i', 'NONE', '-es' },
+        { 'lua vim.g.d = io.read()', 'thedata', 'put =g:d', 'print', '' }
+      )
+    )
+
+    -- Cursor starts at the last line (POSIX ex): ed-style "a" appends at end-of-file.
+    write_file('Xesfile', 'L1\nL2\n')
+    finally(function()
+      os.remove('Xesfile')
+    end)
+    eq(
+      'L1\nL2\nX\n',
+      fn.system(
+        { nvim_prog, '-n', '-u', 'NONE', '-i', 'NONE', '-es', 'Xesfile' },
+        { 'a', 'X', '.', '%print', '' }
+      )
+    )
+
+    -- In a terminal, "-es" executes +cmds and exits; it doesn't wait for input.
+    local screen = Screen.new(60, 6)
+    fn.jobstart({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '-es', '-V1', '+echo "hello"' }, {
+      term = true,
+      env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
+    })
+    -- "nvim -es" output ends with a final newline.
+    screen:expect([[
+      ^hello                                                       |
+                                                                  |
+      [Process exited 0]                                          |
+                                                                  |*3
+    ]])
   end)
 
   it('-es/-Es disables swapfile/shada/config #8540', function()
@@ -731,14 +768,10 @@ describe('startup', function()
       '--clean',
       '-es',
       '-c',
-      -- 'showcmd' leads to a char_avail() call just after the 'Q' (no more input).
-      [[set showcmd | exe "g/^/vi|Vgg:w>>Xoutput.txt\rgQ"]],
+      [[g/^/.w >>Xoutput.txt]],
       'Xinput.txt',
     })
-    eq(
-      'OUT\nline1\nline1\nline2\nline1\nline2\nline3\nline1\nline2\nline3\nline4\n',
-      read_file('Xoutput.txt')
-    )
+    eq('OUT\nline1\nline2\nline3\nline4\n', read_file('Xoutput.txt'))
   end)
 
   it('ENTER dismisses early message #7967', function()
@@ -829,35 +862,43 @@ end)
 describe('startup', function()
   it('-e/-E interactive #7679', function()
     clear('-e')
-    local screen = Screen.new(25, 3)
+    local screen = Screen.new(40, 12)
     feed("put ='from -e'<CR>")
     screen:expect([[
-      :put ='from -e'          |
-      from -e                  |
-      :^                        |
+                                              |
+      from -e                                 |
+      {1:~                                       }|*6
+      {2:[No Name] [+]                           }|
+      {1::}^                                       |
+      {3:[Ex mode]                               }|
+      {5:-- INSERT --}                            |
     ]])
 
     clear('-E')
-    screen = Screen.new(25, 3)
+    screen = Screen.new(40, 12)
     feed("put ='from -E'<CR>")
     screen:expect([[
-      :put ='from -E'          |
-      from -E                  |
-      :^                        |
+                                              |
+      from -E                                 |
+      {1:~                                       }|*6
+      {2:[No Name] [+]                           }|
+      {1::}^                                       |
+      {3:[Ex mode]                               }|
+      {5:-- INSERT --}                            |
     ]])
   end)
 
-  it('-e sets ex mode', function()
+  it('-e enters Ex mode at startup', function()
     clear('-e')
-    local screen = Screen.new(25, 3)
-    -- Verify we set the proper mode both before and after :vi.
-    feed('put =mode(1)<CR>vi<CR>:put =mode(1)<CR>')
-    screen:expect([[
-      cv                       |
-      ^n                        |
-      :put =mode(1)            |
-    ]])
+    local screen = Screen.new(40, 12)
+    -- The keep-open cmdwin REPL is focused, in Insert mode. #40962
+    screen:expect({ any = vim.pesc('[Ex mode]') })
+    eq(':', fn.getcmdwintype())
+    feed('visual<CR>')
+    eq('n', fn.mode(1))
+    eq('', fn.getcmdwintype())
 
+    -- Scripts can detect batch mode ("-es"): mode() is "cv".
     eq('cv\n', fn.system({ nvim_prog, '-n', '-es' }, { 'put =mode(1)', 'print', '' }))
   end)
 
@@ -1853,46 +1894,5 @@ describe('user session', function()
   it('loads session from the provided lua file', function()
     clear { args = { '-S', session_file }, env = { HOME = xhome } }
     eq(1, eval('g:lua_session'))
-  end)
-end)
-
-describe('inccommand on ex mode', function()
-  it('should not preview', function()
-    clear()
-    local screen
-    screen = Screen.new(60, 10)
-    local id = fn.jobstart({
-      nvim_prog,
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
-      '-c',
-      'set termguicolors background=dark',
-      '-E',
-      'README.md',
-    }, {
-      term = true,
-      env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
-    })
-    fn.chansend(id, '%s/N')
-    screen:add_extra_attr_ids({
-      [101] = {
-        background = Screen.colors.NvimDarkGrey4,
-        foreground = Screen.colors.NvimLightGray2,
-      },
-      [102] = {
-        background = Screen.colors.NvimDarkGray2,
-        foreground = Screen.colors.NvimLightGray2,
-      },
-    })
-    screen:expect([[
-      {102:^                                                            }|
-      {102:                                                            }|*5
-      {101:                                                            }|
-      {102:Entering Ex mode.  Type "visual" to go to Normal mode.      }|
-      {102::%s/N                                                       }|
-                                                                  |
-    ]])
   end)
 end)

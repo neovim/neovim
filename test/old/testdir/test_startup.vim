@@ -1188,7 +1188,8 @@ endfunc
 " Test for the "-E" (improved Ex mode) argument
 func Test_E_arg()
   let after =<< trim [CODE]
-    call assert_equal('cv', mode(1))
+    " Nvim: "-E" enters the cmdwin REPL after startup scripts; mode()="n".
+    call assert_equal('n', mode(1))
     call writefile(v:errors, 'Xtestout')
     qall
   [CODE]

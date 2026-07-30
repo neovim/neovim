@@ -1597,7 +1597,7 @@ static int ins_compl_build_pum(void)
   // If it's user complete function and refresh_always,
   // do not use "compl_leader" as prefix filter.
   if (ins_compl_need_restart()) {
-    XFREE_CLEAR(compl_leader);
+    API_CLEAR_STRING(compl_leader);
   }
 
   bool compl_no_select = (get_cot_flags() & kOptCotFlagNoselect) != 0
@@ -1617,6 +1617,7 @@ static int ins_compl_build_pum(void)
   }
 
   bool did_find_shown_match = false;
+  bool preselect_ok = false;
   compl_T *comp;
   compl_T *shown_compl = NULL;
   int i = 0;
@@ -1689,10 +1690,11 @@ static int ins_compl_build_pum(void)
             shown_match_ok = true;
           }
         }
-        if (comp == compl_preselect_match) {
+        if (compl_preselect_match != NULL && comp->cp_preselect && !preselect_ok) {
           cur = i;
           compl_shown_match = comp;
           shown_match_ok = true;
+          preselect_ok = true;
         }
         i++;
       }
@@ -3034,9 +3036,9 @@ const char *did_set_completefunc(optset_T *args)
   int retval;
 
   if (args->os_flags & OPT_LOCAL) {
-    retval = option_set_callback_func(args->os_newval.string.data, &buf->b_cfu_cb);
+    retval = option_set_callback_func(args->os_newval.data.string.data, &buf->b_cfu_cb);
   } else {
-    retval = option_set_callback_func(args->os_newval.string.data, &cfu_cb);
+    retval = option_set_callback_func(args->os_newval.data.string.data, &cfu_cb);
     if (retval == OK && !(args->os_flags & OPT_GLOBAL)) {
       set_buflocal_cfu_callback(buf);
     }
@@ -3062,9 +3064,9 @@ const char *did_set_omnifunc(optset_T *args)
   int retval;
 
   if (args->os_flags & OPT_LOCAL) {
-    retval = option_set_callback_func(args->os_newval.string.data, &buf->b_ofu_cb);
+    retval = option_set_callback_func(args->os_newval.data.string.data, &buf->b_ofu_cb);
   } else {
-    retval = option_set_callback_func(args->os_newval.string.data, &ofu_cb);
+    retval = option_set_callback_func(args->os_newval.data.string.data, &ofu_cb);
     if (retval == OK && !(args->os_flags & OPT_GLOBAL)) {
       set_buflocal_ofu_callback(buf);
     }
@@ -3530,7 +3532,7 @@ static void set_completion(colnr_T startcol, list_T *list)
   bool no_select = compl_no_select || compl_longest;
   if (compl_preselect_match && !no_select) {
     compl_curr_match = compl_preselect_match->cp_prev;
-    ins_complete(Ctrl_N, false);
+    ins_complete(compl_no_insert ? K_DOWN : Ctrl_N, false);
   } else if (compl_no_insert || no_select) {
     ins_complete(K_DOWN, false);
     if (no_select) {
@@ -3660,6 +3662,15 @@ static void fill_complete_info_dict(dict_T *di, compl_T *match, bool add_match)
   tv_dict_add_str(di, S_LEN("info"), match->cp_text[CPT_INFO]);
   if (add_match) {
     tv_dict_add_bool(di, S_LEN("match"), match->cp_in_match_array);
+  }
+  if (match->cp_flags & CP_EQUAL) {
+    tv_dict_add_nr(di, S_LEN("equal"), 1);
+  }
+  if (match->cp_preselect) {
+    tv_dict_add_nr(di, S_LEN("preselect"), 1);
+  }
+  if (match->cp_commit_chars != NULL) {
+    tv_dict_add_str(di, S_LEN("commit_chars"), match->cp_commit_chars);
   }
   if (match->cp_user_data.v_type == VAR_UNKNOWN) {
     // Add an empty string for backwards compatibility

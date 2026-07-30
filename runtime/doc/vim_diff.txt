@@ -334,6 +334,7 @@ Commands:
 - |:uptime|
 
 Editor:
+- Interactive |Ex-mode| is implemented as persistent, insert-mode |cmdwin|.
 - |prompt-buffer| supports multiline input/paste, undo/redo, and o/O normal
   commands.
 - |i_CTRL-R| inserts named/clipboard registers (A-Z,a-z,0-9+) literally, like
@@ -400,7 +401,8 @@ Input/Mappings:
 
 Normal commands:
 - |gO| shows a filetype-defined "outline" of the current buffer.
-- |Q| replays the last recorded macro instead of switching to Ex mode (|gQ|).
+- |Q| replays the last recorded macro instead of switching to Ex mode.
+- [count]q: enters |Ex-mode|.
 - |ZR| performs |:restart|
 - |v_al| selects the whole buffer; |v_il| selects the current line without
   leading or trailing white space.
@@ -482,10 +484,11 @@ Signs:
 Startup:
 - |-e| and |-es| invoke the same "improved Ex mode" as -E and -Es.
 - |-E| and |-Es| read stdin as text (into buffer 1).
-- |-es| and |-Es| have improved behavior:
-    - Quits automatically, don't need "-c qa!".
+- |-es| and |-Es| act as a generic "script mode":
+    - Exits automatically, don't need "-c qa!".
     - Skips swap-file dialog.
-    - Optimized for non-interactive scripts: disables swapfile, shada.
+    - Disables swapfile, shada.
+    - Various "POSIX Ex" quirks were dropped.
 - |-l| Executes Lua scripts non-interactively.
 - |-s| reads Normal commands from stdin if the script name is "-".
 - Reading text (instead of commands) from stdin |--|:

@@ -2,7 +2,7 @@
 " Language: Fanuc Karel
 " Maintainer: Patrick Meiser-Knosowski <knosowski@graeffrobotics.de>
 " Version: 1.0.0
-" Last Change: 28. May 2026
+" Last Change: 29. Jul 2026
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -64,7 +64,7 @@ function GetKarelIndent() abort
   let addShiftwidthPattern   ..=               '|type>'
   let addShiftwidthPattern   ..=               '|var>'
   let addShiftwidthPattern   ..=               '|begin>'
-  let addShiftwidthPattern   ..=               '|routine>'
+  let addShiftwidthPattern   ..=               '|%(routine\s+\w+>)%(.*<from\s+\w+>\s*$)@!'
   if get(g:, 'karelIndentBetweenPrg', 1)
     let addShiftwidthPattern ..=               '|program>'
   endif

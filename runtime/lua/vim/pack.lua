@@ -967,7 +967,6 @@ local function lock_sync(confirm, specs)
     end)
     git_ensure_exec()
     install_list(to_install, confirm)
-    lock_write()
   end
 
   if #to_repair > 0 then

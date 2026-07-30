@@ -814,10 +814,12 @@ func Test_mode()
   call assert_equal('c-c', g:current_modes)
   call feedkeys(":\<Insert>\<F2>\<CR>", 'xt')
   call assert_equal("c-cr", g:current_modes)
-  call feedkeys("gQ\<F2>vi\<CR>", 'xt')
-  call assert_equal('c-cv', g:current_modes)
-  call feedkeys("gQ\<Insert>\<F2>vi\<CR>", 'xt')
-  call assert_equal("c-cvr", g:current_modes)
+  " Nvim: interactive Ex mode is a cmdwin wrapper: mode()=n/i ("cv" means
+  " -es); cannot run inside :normal/feedkeys('x').
+  "call feedkeys("gQ\<F2>vi\<CR>", 'xt')
+  "call assert_equal('c-cv', g:current_modes)
+  "call feedkeys("gQ\<Insert>\<F2>vi\<CR>", 'xt')
+  "call assert_equal("c-cvr", g:current_modes)
 
   " Commandline mode in Visual mode should return "c-c", never "v-v".
   call feedkeys("v\<Cmd>call input('')\<CR>\<F2>\<CR>\<Esc>", 'xt')
@@ -825,10 +827,10 @@ func Test_mode()
 
   " Executing commands in Vim Ex mode should return "cv", never "cvr",
   " as Cmdline editing has already ended.
-  call feedkeys("gQcall Save_mode()\<CR>vi\<CR>", 'xt')
-  call assert_equal('c-cv', g:current_modes)
-  call feedkeys("gQ\<Insert>call Save_mode()\<CR>vi\<CR>", 'xt')
-  call assert_equal('c-cv', g:current_modes)
+  "call feedkeys("gQcall Save_mode()\<CR>vi\<CR>", 'xt')
+  "call assert_equal('c-cv', g:current_modes)
+  "call feedkeys("gQ\<Insert>call Save_mode()\<CR>vi\<CR>", 'xt')
+  "call assert_equal('c-cv', g:current_modes)
 
   " call feedkeys("Qcall Save_mode()\<CR>vi\<CR>", 'xt')
   " call assert_equal('c-ce', g:current_modes)

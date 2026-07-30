@@ -502,7 +502,7 @@ char *msg_strtrunc(const char *s, int force)
 
   // May truncate message to avoid a hit-return prompt
   if ((!msg_scroll && !need_wait_return && shortmess(kShmTruncall)
-       && !exmode_active && msg_silent == 0 && !ui_has(kUIMessages))
+       && msg_silent == 0 && !ui_has(kUIMessages))
       || force) {
     int room;
     int len = vim_strsize(s);
@@ -1072,7 +1072,7 @@ char *msg_may_trunc(bool force, char *s)
   // just in case.
   int room = (Rows - cmdline_row - 1) * Columns + sc_col - 1;
   if (room > 0
-      && (force || (shortmess(kShmTrunc) && !exmode_active))
+      && (force || shortmess(kShmTrunc))
       && (int)strlen(s) - room > 0) {
     int size = vim_strsize(s);
 
@@ -1436,9 +1436,7 @@ void wait_return(int redraw)
   }
   need_wait_return = true;
   if (no_wait_return) {
-    if (!exmode_active) {
-      cmdline_row = msg_row;
-    }
+    cmdline_row = msg_row;
     return;
   }
 
@@ -1447,10 +1445,6 @@ void wait_return(int redraw)
   if (quit_more) {
     c = CAR;                    // just pretend CR was hit
     quit_more = false;
-    got_int = false;
-  } else if (exmode_active) {
-    msg_puts(" ");              // make sure the cursor is on the right line
-    c = CAR;                    // no need for a return in ex mode
     got_int = false;
   } else if (!stuff_empty()) {
     // When there are stuffed characters, the next stuffed character will
@@ -1567,9 +1561,7 @@ void wait_return(int redraw)
   // If the user hits ':', '?' or '/' we get a command line from the next
   // line.
   if (c == ':' || c == '?' || c == '/') {
-    if (!exmode_active) {
-      cmdline_row = msg_row;
-    }
+    cmdline_row = msg_row;
     skip_redraw = true;  // skip redraw once
     do_redraw = false;
   }
@@ -2539,7 +2531,7 @@ static void msg_puts_display(const char *str, int maxlen, int hl_id, int recurse
         inc_msg_scrolled();
         need_wait_return = true;       // may need wait_return() in main()
         redraw_cmdline = true;
-        if (cmdline_row > 0 && !exmode_active) {
+        if (cmdline_row > 0) {
           cmdline_row--;
         }
 
@@ -2550,7 +2542,7 @@ static void msg_puts_display(const char *str, int maxlen, int hl_id, int recurse
         }
 
         if (p_more && lines_left == 0 && State != MODE_HITRETURN
-            && !msg_no_more && !exmode_active) {
+            && !msg_no_more) {
           if (do_more_prompt(NUL)) {
             s = confirm_buttons;
           }
@@ -3317,7 +3309,7 @@ static void msg_moremsg(bool full)
 }
 
 /// Repeat the message for the current mode: MODE_ASKMORE, MODE_EXTERNCMD,
-/// confirm() prompt or exmode_active.
+/// or confirm() prompt.
 void repeat_message(void)
 {
   if (ui_has(kUIMessages)) {

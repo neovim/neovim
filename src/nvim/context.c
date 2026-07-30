@@ -131,8 +131,8 @@ void ctx_save(Context *ctx, const int flags)
 void ctx_load(Context *ctx, const int flags)
   FUNC_ATTR_NONNULL_ALL
 {
-  OptVal op_shada = get_option_value(kOptShada, OPT_GLOBAL);
-  set_option_value(kOptShada, STATIC_CSTR_AS_OPTVAL("!,'100,%"), OPT_GLOBAL);
+  Object op_shada = get_option_value(kOptShada, OPT_GLOBAL);
+  set_option_value(kOptShada, STATIC_CSTR_AS_OBJ("!,'100,%"), OPT_GLOBAL);
 
   if (flags & kCtxRegs) {
     shada_read_string(ctx->regs, kShaDaWantInfo | kShaDaForceit);

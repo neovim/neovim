@@ -16,6 +16,7 @@ local eval = n.eval
 local skip = t.skip
 local is_os = t.is_os
 local testprg = n.testprg
+local api = n.api
 
 describe(':terminal window', function()
   before_each(clear)
@@ -34,6 +35,33 @@ describe(':terminal window', function()
     command('new')
     eq({ 1, 1, 1 }, eval('[&l:wrap, &wrap, &g:wrap]'))
     eq({ 1, 1, 1 }, eval('[&l:list, &list, &g:list]'))
+  end)
+
+  it('keeps the cursor put on resize when the line above it is full width', function()
+    local screen = Screen.new(50, 7)
+    local buf = api.nvim_create_buf(true, true)
+    local chan = api.nvim_open_term(buf, {})
+    api.nvim_win_set_buf(0, buf)
+    feed('i')
+    api.nvim_chan_send(chan, 'l1\r\nl2\r\nl3\r\nl4\r\n' .. ('A'):rep(50) .. '\r\nX')
+    screen:expect([[
+      l1                                                |
+      l2                                                |
+      l3                                                |
+      l4                                                |
+      AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA|
+      X^                                                 |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    screen:try_resize(50, 6)
+    screen:expect([[
+      l2                                                |
+      l3                                                |
+      l4                                                |
+      AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA|
+      X^                                                 |
+      {5:-- TERMINAL --}                                    |
+    ]])
   end)
 
   it('resets horizontal scroll on resize #35331', function()

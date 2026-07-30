@@ -1814,6 +1814,29 @@ describe('lua stdlib', function()
     -- vim.regex() error inside :silent! should not crash. #20546
     command([[silent! lua vim.regex('\\z')]])
     assert_alive()
+
+    -- match_str() in a fast (luv) callback does not abort. #18111
+    eq(
+      { true, true },
+      exec_lua(function()
+        local re = vim.regex('^.*\\.go$')
+        local res
+        local timer = assert(vim.uv.new_timer())
+        timer:start(10, 0, function()
+          -- Enough matches to reach BREAKCHECK_SKIP, which would abort (reentrant event loop).
+          local ok = true
+          for _ = 1, 3000 do
+            ok = ok and re:match_str('internal/config/config.go') ~= nil
+          end
+          res = { ok, vim.in_fast_event() }
+          timer:close()
+        end)
+        vim.wait(1000, function()
+          return res ~= nil
+        end)
+        return res
+      end)
+    )
   end)
 
   it('vim.defer_fn', function()

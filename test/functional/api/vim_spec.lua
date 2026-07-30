@@ -5317,30 +5317,16 @@ describe('API', function()
       )
     end)
     it('does not interfere with printing line in Ex mode #19400', function()
-      local screen = Screen.new(60, 7)
+      local screen = Screen.new(60, 12)
       insert([[
         foo
         bar]])
-      feed('gQ1')
-      screen:expect([[
-        foo                                                         |
-        bar                                                         |
-        {1:~                                                           }|*2
-        {3:                                                            }|
-        Entering Ex mode.  Type "visual" to go to Normal mode.      |
-        :1^                                                          |
-      ]])
+      feed('1q:1')
+      screen:expect({ any = vim.pesc('{1::}1^') })
       eq('Parsing command-line', pcall_err(api.nvim_parse_cmd, '', {}))
+      -- Executing the line still auto-prints it.
       feed('<CR>')
-      screen:expect([[
-        foo                                                         |
-        bar                                                         |
-        {3:                                                            }|
-        Entering Ex mode.  Type "visual" to go to Normal mode.      |
-        :1                                                          |
-        foo                                                         |
-        :^                                                           |
-      ]])
+      screen:expect({ any = vim.pesc('" foo') })
     end)
     it('does not move cursor or change search history/pattern #19878 #19890', function()
       api.nvim_buf_set_lines(0, 0, -1, true, { 'foo', 'bar', 'foo', 'bar' })

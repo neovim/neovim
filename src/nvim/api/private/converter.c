@@ -278,6 +278,7 @@ void object_to_vim_take_luaref(Object *obj, typval_T *tv, bool take_luaref, Erro
   tv->v_lock = VAR_UNLOCKED;
 
   switch (obj->type) {
+  case kObjectTypeUnset:
   case kObjectTypeNil:
     tv->v_type = VAR_SPECIAL;
     tv->vval.v_special = kSpecialVarNull;

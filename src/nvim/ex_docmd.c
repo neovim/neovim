@@ -145,7 +145,6 @@ static const char e_no_script_file_name_to_substitute_for_script[]
   = N_("E1274: No script file name to substitute for \"<script>\"");
 
 static int quitmore = 0;
-static bool ex_pressedreturn = false;
 
 // Struct for storing a line inside a while/for loop
 typedef struct {
@@ -261,77 +260,6 @@ static bool is_other_file(int fnum, char *ffname)
   }
 
   return otherfile(ffname);
-}
-
-/// Repeatedly get commands for Ex mode, until the ":vi" command is given.
-void do_exmode(void)
-{
-  exmode_active = true;
-  State = MODE_NORMAL;
-  may_trigger_modechanged();
-
-  // When using ":global /pat/ visual" and then "Q" we return to continue
-  // the :global command.
-  if (global_busy) {
-    return;
-  }
-
-  int save_msg_scroll = msg_scroll;
-  RedrawingDisabled++;  // don't redisplay the window
-  no_wait_return++;  // don't wait for return
-
-  msg(_("Entering Ex mode.  Type \"visual\" to go to Normal mode."), 0);
-  while (exmode_active) {
-    // Check for a ":normal" command and no more characters left.
-    if (ex_normal_busy > 0 && typebuf.tb_len == 0) {
-      exmode_active = false;
-      break;
-    }
-    msg_scroll = true;
-    need_wait_return = false;
-    ex_pressedreturn = false;
-    ex_no_reprint = false;
-    varnumber_T changedtick = buf_get_changedtick(curbuf);
-    int prev_msg_row = msg_row;
-    linenr_T prev_line = curwin->w_cursor.lnum;
-    cmdline_row = msg_row;
-    do_cmdline(NULL, getexline, NULL, 0);
-    lines_left = Rows - 1;
-
-    if ((prev_line != curwin->w_cursor.lnum
-         || changedtick != buf_get_changedtick(curbuf)) && !ex_no_reprint) {
-      if (curbuf->b_ml.ml_flags & ML_EMPTY) {
-        emsg(_(e_empty_buffer));
-      } else {
-        if (ex_pressedreturn) {
-          // Make sure the message overwrites the right line and isn't throttled.
-          msg_scroll_flush();
-          // go up one line, to overwrite the ":<CR>" line, so the
-          // output doesn't contain empty lines.
-          msg_row = prev_msg_row;
-          if (prev_msg_row == Rows - 1) {
-            msg_row--;
-          }
-        }
-        msg_col = 0;
-        print_line_no_prefix(curwin->w_cursor.lnum, false, false);
-        msg_clr_eos();
-      }
-    } else if (ex_pressedreturn && !ex_no_reprint) {  // must be at EOF
-      if (curbuf->b_ml.ml_flags & ML_EMPTY) {
-        emsg(_(e_empty_buffer));
-      } else {
-        emsg(_("E501: At end-of-file"));
-      }
-    }
-  }
-
-  RedrawingDisabled--;
-  no_wait_return--;
-  redraw_all_later(UPD_NOT_VALID);
-  update_screen();
-  need_wait_return = false;
-  msg_scroll = save_msg_scroll;
 }
 
 /// Print the executed command for when 'verbose' is set.
@@ -1545,8 +1473,6 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, cmdmod_T *cmod, const char **er
 {
   char *after_modifier = NULL;
   bool retval = false;
-  // parsing the command modifiers may set ex_pressedreturn
-  const bool save_ex_pressedreturn = ex_pressedreturn;
   // parsing the command range may require moving the cursor
   const pos_T save_cursor = curwin->w_cursor;
   // parsing the command range may set the last search pattern
@@ -1694,7 +1620,6 @@ end:
   if (!retval) {
     undo_cmdmod(cmod);
   }
-  ex_pressedreturn = save_ex_pressedreturn;
   curwin->w_cursor = save_cursor;
   restore_last_search_pattern();
   return retval;
@@ -2258,7 +2183,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
     // When global command is busy, don't ask, will fail below.
     if (!global_busy && ea.line1 > ea.line2) {
       if (msg_silent == 0) {
-        if ((flags & DOCMD_VERBOSE) || exmode_active) {
+        if ((flags & DOCMD_VERBOSE) || silent_mode) {
           errormsg = _("E493: Backwards range given");
           goto doend;
         }
@@ -2480,17 +2405,13 @@ char *ex_errmsg(const char *const msg, ...)
   return ex_error_buf;
 }
 
-/// The "+" string used in place of an empty command in Ex mode.
-/// This string is used in pointer comparison.
-static const char exmode_plus[] = "+";
-
 /// Handle a range without a command.
 /// Returns an error message on failure.
 static char *ex_range_without_command(exarg_T *eap)
 {
   char *errormsg = NULL;
 
-  if (*eap->cmd == '|' || (exmode_active && eap->cmd != exmode_plus + 1)) {
+  if (*eap->cmd == '|') {
     eap->cmdidx = CMD_print;
     eap->argt = EX_RANGE | EX_COUNT | EX_TRLBAR;
     if ((errormsg = invalid_range(eap)) == NULL) {
@@ -2517,11 +2438,9 @@ static char *ex_range_without_command(exarg_T *eap)
 /// Parse and skip over command modifiers:
 /// - update eap->cmd
 /// - store flags in "cmod".
-/// - Set ex_pressedreturn for an empty command line.
 ///
 /// @param skip_only      if false, undo_cmdmod() must be called later to free
-///                       any cmod_filter_pat and cmod_filter_regmatch.regprog,
-///                       and ex_pressedreturn may be set.
+///                       any cmod_filter_pat and cmod_filter_regmatch.regprog.
 /// @param[out] errormsg  potential error message.
 ///
 /// Call apply_cmdmod() to get the side effects of the modifiers:
@@ -2535,7 +2454,6 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
 {
   char *orig_cmd = eap->cmd;
   char *cmd_start = NULL;
-  bool use_plus_cmd = false;
   bool has_visual_range = false;
   CLEAR_POINTER(cmod);
 
@@ -2561,18 +2479,6 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
       eap->cmd++;
     }
 
-    // in ex mode, an empty command (after modifiers) works like :+
-    if (*eap->cmd == NUL && exmode_active
-        && getline_equal(eap->ea_getline, eap->cookie, getexline)
-        && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
-      eap->cmd = (char *)exmode_plus;
-      use_plus_cmd = true;
-      if (!skip_only) {
-        ex_pressedreturn = true;
-      }
-      break;  // no modifiers following
-    }
-
     // ignore comment and empty lines
     if (*eap->cmd == '"') {
       // a comment ends at a NL
@@ -2587,9 +2493,6 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
       return FAIL;
     }
     if (*eap->cmd == NUL) {
-      if (!skip_only) {
-        ex_pressedreturn = true;
-      }
       return FAIL;
     }
 
@@ -2798,31 +2701,13 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
       // Since the modifiers have been parsed put the colon on top of the
       // space: "'<,'>mod cmd" -> "mod:'<,'>cmd
       // Put eap->cmd after the colon.
-      if (use_plus_cmd) {
-        size_t len = strlen(cmd_start);
-
-        // Special case: empty command uses "+":
-        //  "'<,'>mods" -> "mods *+
-        //  Use "*" instead of "'<,'>" to avoid the command getting
-        //  longer, in case is was allocated.
-        memmove(orig_cmd, cmd_start, len);
-        xmemcpyz(orig_cmd + len, S_LEN(" *+"));
-      } else {
-        memmove(cmd_start - 5, cmd_start, (size_t)(eap->cmd - cmd_start));
-        eap->cmd -= 5;
-        memmove(eap->cmd - 1, ":'<,'>", 6);
-      }
+      memmove(cmd_start - 5, cmd_start, (size_t)(eap->cmd - cmd_start));
+      eap->cmd -= 5;
+      memmove(eap->cmd - 1, ":'<,'>", 6);
     } else {
       // No modifiers, move the pointer back.
-      // Special case: change empty command to "+".
-      if (use_plus_cmd) {
-        eap->cmd = "'<,'>+";
-      } else {
-        eap->cmd = orig_cmd;
-      }
+      eap->cmd = orig_cmd;
     }
-  } else if (use_plus_cmd) {
-    eap->cmd = (char *)exmode_plus;
   }
 
   return OK;
@@ -2864,7 +2749,7 @@ void apply_cmdmod(cmdmod_T *cmod)
     // Set 'eventignore' to "all".
     // First save the existing option value for restoring it later.
     cmod->cmod_save_ei = xstrdup(p_ei);
-    set_option_direct(kOptEventignore, STATIC_CSTR_AS_OPTVAL("all"), 0, SID_NONE);
+    set_option_direct(kOptEventignore, STATIC_CSTR_AS_OBJ("all"), 0, SID_NONE);
   }
 }
 
@@ -2884,7 +2769,7 @@ void undo_cmdmod(cmdmod_T *cmod)
 
   if (cmod->cmod_save_ei != NULL) {
     // Restore 'eventignore' to the value before ":noautocmd".
-    set_option_direct(kOptEventignore, CSTR_AS_OPTVAL(cmod->cmod_save_ei), 0, SID_NONE);
+    set_option_direct(kOptEventignore, CSTR_AS_OBJ(cmod->cmod_save_ei), 0, SID_NONE);
     free_string_option(cmod->cmod_save_ei);
     cmod->cmod_save_ei = NULL;
   }
@@ -4961,6 +4846,21 @@ static void ex_quitall(exarg_T *eap)
   not_exiting(save_exiting);
 }
 
+/// ":exmode": Enter interactive Ex mode.
+static void ex_exmode(exarg_T *eap)
+{
+  if (silent_mode) {
+    return;
+  }
+  if (ex_normal_busy > 0 || global_busy) {
+    // Ex mode cannot run inside ":normal" or ":global"; discard the rest of the command.
+    flush_buffers(FLUSH_TYPEAHEAD);
+    return;
+  }
+  typval_T args[] = { { .v_type = VAR_UNKNOWN } };
+  nlua_call_typval("vim._core.exmode", "open", args, NULL);
+}
+
 /// ":restart": restart the Nvim server (using ":qall!").
 /// ":restart +cmd": restart the Nvim server using ":cmd".
 /// ":restart +cmd <command>": restart the Nvim server using ":cmd" and runs <command> in the new server.
@@ -5557,8 +5457,6 @@ static void ex_print(exarg_T *eap)
     curwin->w_cursor.lnum = eap->line2;
     beginline(BL_SOL | BL_FIX);
   }
-
-  ex_no_reprint = true;
 }
 
 static void ex_goto(exarg_T *eap)
@@ -6149,43 +6047,6 @@ static void ex_edit(exarg_T *eap)
 /// @param old_curwin  curwin before doing a split or NULL
 void do_exedit(exarg_T *eap, win_T *old_curwin)
 {
-  // ":vi" command ends Ex mode.
-  if (exmode_active && (eap->cmdidx == CMD_visual
-                        || eap->cmdidx == CMD_view)) {
-    exmode_active = false;
-    ex_pressedreturn = false;
-    if (ui_has(kUICmdline)) {
-      ui_ext_cmdline_block_leave();
-    }
-    if (*eap->arg == NUL) {
-      // Special case:  ":global/pat/visual\NLvi-commands"
-      if (global_busy) {
-        if (eap->nextcmd != NULL) {
-          stuffReadbuff(eap->nextcmd);
-          eap->nextcmd = NULL;
-        }
-
-        const int save_rd = RedrawingDisabled;
-        RedrawingDisabled = 0;
-        const int save_nwr = no_wait_return;
-        no_wait_return = 0;
-        need_wait_return = false;
-        const int save_ms = msg_scroll;
-        msg_scroll = 0;
-        redraw_all_later(UPD_NOT_VALID);
-        pending_exmode_active = true;
-
-        normal_enter(true);
-
-        pending_exmode_active = false;
-        RedrawingDisabled = save_rd;
-        no_wait_return = save_nwr;
-        msg_scroll = save_ms;
-      }
-      return;
-    }
-  }
-
   if ((eap->cmdidx == CMD_new
        || eap->cmdidx == CMD_tabnew
        || eap->cmdidx == CMD_tabedit
@@ -6267,8 +6128,6 @@ void do_exedit(exarg_T *eap, win_T *old_curwin)
       && (cmdmod.cmod_flags & CMOD_KEEPALT) == 0) {
     old_curwin->w_alt_fnum = curbuf->b_fnum;
   }
-
-  ex_no_reprint = true;
 }
 
 /// ":gui" and ":gvim" when there is no GUI.
@@ -6348,8 +6207,6 @@ static void ex_syncbind(exarg_T *eap)
 
 static void ex_read(exarg_T *eap)
 {
-  int empty = (curbuf->b_ml.ml_flags & ML_EMPTY);
-
   if (eap->usefilter) {  // :r!cmd
     do_bang(1, eap, false, false, true);
     return;
@@ -6378,24 +6235,6 @@ static void ex_read(exarg_T *eap)
       semsg(_(e_notopen), eap->arg);
     }
   } else {
-    if (empty && exmode_active) {
-      // Delete the empty line that remains.  Historically ex does
-      // this but vi doesn't.
-      linenr_T lnum;
-      if (eap->line2 == 0) {
-        lnum = curbuf->b_ml.ml_line_count;
-      } else {
-        lnum = 1;
-      }
-      if (*ml_get(lnum) == NUL && u_savedel(lnum, 1) == OK) {
-        ml_delete(lnum);
-        if (curwin->w_cursor.lnum > 1
-            && curwin->w_cursor.lnum >= lnum) {
-          curwin->w_cursor.lnum--;
-        }
-        deleted_lines_mark(lnum, 1);
-      }
-    }
     redraw_curbuf_later(UPD_VALID);
   }
 }
@@ -6817,7 +6656,6 @@ void ex_may_print(exarg_T *eap)
   if (eap->flags != 0) {
     print_line(curwin->w_cursor.lnum, (eap->flags & EXFLAG_NR),
                (eap->flags & EXFLAG_LIST), true);
-    ex_no_reprint = true;
   }
 }
 
@@ -8169,7 +8007,7 @@ static void ex_setfiletype(exarg_T *eap)
     arg += 9;
   }
 
-  set_option_value_give_err(kOptFiletype, CSTR_AS_OPTVAL(arg), OPT_LOCAL);
+  set_option_value_give_err(kOptFiletype, CSTR_AS_OBJ(arg), OPT_LOCAL);
   if (arg != eap->arg) {
     curbuf->b_did_filetype = false;
   }
@@ -8235,17 +8073,6 @@ bool is_loclist_cmd(int cmdidx)
     return false;
   }
   return cmdnames[cmdidx].cmd_name[0] == 'l';
-}
-
-bool get_pressedreturn(void)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  return ex_pressedreturn;
-}
-
-void set_pressedreturn(bool val)
-{
-  ex_pressedreturn = val;
 }
 
 /// ":checkhealth [plugins]"

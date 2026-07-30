@@ -93,6 +93,22 @@ DIAGNOSTICS
 
 EDITOR
 
+• Interactive |Ex-mode| (|:exmode|, `nvim -e`) is a persistent |cmdwin|. This is much
+  more flexible and makes "Ex mode" more useful as a kind of "cmdline REPL",
+  with the tradeoff of dropping some POSIX Ex-mode quirks.
+  • |mode()| returns "n" or "i"; "cv" indicates |-es| (script mode) only.
+  • Ex mode is entered with "1q:" or |:exmode|, not "gQ".
+  • ":global/pat/visual" no longer switches to Normal mode per matching line.
+• Non-interactive Ex-mode (|-es|, "script mode") executes stdin as Ex commands
+  directly. It is a "script host", not "POSIX Ex mode".
+  • Output ends with a final newline.
+  • |:visual| is |:edit|: it does not switch to reading stdin as Normal-mode
+    commands, and ":global/pat/visual" does not enter Normal mode per
+    matching line.
+  • Commands that wait for typed input (|input()|, |getchar()|, …) stop Nvim
+    at end-of-input instead of consuming the next stdin line.
+  • An empty line is a no-op instead of advancing the cursor (or failing
+    with |E501| at end-of-file).
 • On Windows, the |trust| db now stores paths with "/" slashes. This means the
   trust store will be reset (one time).
 • `stdpath("log")` moved to `stdpath("state")/logs`.
@@ -242,7 +258,7 @@ EDITOR
   real-time, instead of only on |FocusGained| or |:checktime|.
 • During |complete()|-triggered completion, CTRL-N and CTRL-P are now subject
   to insert-mode mappings.
-• Multi-byte characters, translated by 'langmap', now invoke correct
+• Multibyte characters, translated by 'langmap', now invoke correct
   mappings.
   Example: >vim
     set langmap=õ]
@@ -316,6 +332,8 @@ LUA
   but returns `nil` on error.
 • |vim.pos| can now convert between positions and buffer offsets.
 • |vim.pos| and |vim.range| can now convert between mark positions.
+• |vim.pos.cursor()| without arguments returns the cursor position of the
+  current window.
 • |vim.ui.input()| now allows setting input scope.
 • |vim.log| provides a logging interface.
 • |vim.pack.get()| output includes revision of a pending update.
@@ -354,6 +372,10 @@ PERFORMANCE
 
 PLUGINS
 
+• The zip plugin is now |zip|, a read-only archive browser built on |dir|.
+  To use the legacy plugin instead: >
+  :packadd old-zip
+<
 • provider: add bun support for Node.js plugins
 
 STARTUP

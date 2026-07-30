@@ -99,6 +99,11 @@ typedef struct {
   size_t size;
 } ModuleDef;
 
+typedef struct {
+  LuaRef getline;  ///< Lua function returning the next input line, or nil at EOF.
+  bool got_line;   ///< True if at least one line was read.
+} ExDocmdCookie;
+
 #include "lua/executor.c.generated.h"
 #include "lua/vim_module.generated.h"
 
@@ -598,6 +603,44 @@ static int nlua_check_interrupt(lua_State *lstate)
   return 1;
 }
 
+/// LineGetter for nlua_ex_docmd(): calls the Lua `getline` function.
+static char *nlua_ex_getline(int c, void *cookie, int indent, bool do_concat)
+{
+  ExDocmdCookie *ecd = cookie;
+  lua_State *lstate = global_lstate;
+  nlua_pushref(lstate, ecd->getline);
+  if (nlua_pcall(lstate, 0, 1)) {
+    nlua_error(lstate, _("Error executing Ex-mode line getter: %.*s"));
+    return NULL;
+  }
+  if (lua_type(lstate, -1) != LUA_TSTRING) {  // nil: EOF.
+    lua_pop(lstate, 1);
+    return NULL;
+  }
+  char *line = xstrdup(lua_tostring(lstate, -1));
+  lua_pop(lstate, 1);
+  ecd->got_line = true;
+  return line;
+}
+
+/// For exmode.lua: Executes one cmdline obtained from `getline`, which is also called for any
+/// continuation lines (`:append` text, `:function` body, heredoc, …). Unlike `nvim_exec2()`, errors
+/// are emitted (not thrown), so the caller can continue with the next command. #40966
+static int nlua_ex_docmd(lua_State *lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  luaL_checktype(lstate, 1, LUA_TFUNCTION);
+  ExDocmdCookie cookie = { .getline = nlua_ref_global(lstate, 1) };
+  msg_scroll = true;
+  need_wait_return = false;
+  no_wait_return++;  // Don't wait for return, e.g. after "-V1" messages.
+  do_cmdline(NULL, nlua_ex_getline, &cookie, 0);
+  no_wait_return--;
+  nlua_unref_global(lstate, cookie.getline);
+  lua_pushboolean(lstate, cookie.got_line);
+  return 1;
+}
+
 static int nlua_os_exit(lua_State *lstate)
 {
   if (in_fast_callback > 0) {
@@ -900,7 +943,7 @@ static bool nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
   nlua_common_vim_init(lstate, false);
 
-  // vim._core wait helpers
+  // Bindings for `vim.wait()`.
   lua_getfield(lstate, -1, "_core");
   lua_pushcfunction(lstate, &nlua_loop_poll);
   lua_setfield(lstate, -2, "loop_poll");
@@ -908,6 +951,10 @@ static bool nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_setfield(lstate, -2, "ui_flush");
   lua_pushcfunction(lstate, &nlua_check_interrupt);
   lua_setfield(lstate, -2, "check_interrupt");
+
+  // Misc vim._core bindings.
+  lua_pushcfunction(lstate, &nlua_ex_docmd);
+  lua_setfield(lstate, -2, "ex_docmd");
   lua_pop(lstate, 1);
 
   // patch require() (only for --startuptime)

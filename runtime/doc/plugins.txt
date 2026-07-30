@@ -26,6 +26,7 @@ Help-link		Loaded	Short description ~
 |matchit|		Yes	Extended |%| matching
 |matchparen|		Yes	Highlight matching pairs
 |netrw|			Yes	Reading and writing files over a network
+|zip|			Yes	Read-only zip archive browser
 |package-cfilter|	No	Filtering quickfix/location list
 |package-justify|	No	Justify text
 |package-nohlsearch|	No	Automatically run :nohlsearch
@@ -40,7 +41,7 @@ Help-link		Loaded	Short description ~
 |pi_swapmouse|		No	Swap meaning of left and right mouse buttons
 |pi_tar.txt|		Yes	Tar file explorer
 |pi_tutor.txt|		Yes	Interactive tutorial
-|pi_zip.txt|		Yes	Zip archive explorer
+|old-zip|		No	Legacy zip archive explorer
 
 ==============================================================================
 Builtin plugin: dir                                                      *dir*
@@ -54,16 +55,16 @@ To disable the built-in directory browser, set this before startup: >lua
 <
 
 Mappings:                                                       *dir-mappings*
->
-	-	Open the parent directory of the current file or directory.
-<
+
+• - opens the parent directory of the current file or directory.
+• {count}- is like -, but a count of 1 opens the current working directory,
+  and a higher count goes up that many levels.
 
 Directory buffer mappings:                                *dir-buffer-mappings*
->
-	<CR>	Open the file or directory under the cursor.
-	-	Open the parent directory.
-	R	Reload the directory listing.
-<
+
+• <CR> opens the file or directory under the cursor.
+• - opens the parent directory.
+• R reloads the directory listing.
 
 These keys map to <Plug>(nvim-dir-open), <Plug>(nvim-dir-up), and
 <Plug>(nvim-dir-reload); map those to use different keys. Default mappings are
@@ -76,7 +77,9 @@ Directory buffers follow the global 'hidden' option by default. To delete them
 after use: >vim
 	autocmd FileType directory setlocal bufhidden=delete
 <
-Use "wipe" to discard all buffer state; see 'bufhidden'.
+A discarded listing is rebuilt on the next visit, so the cursor starts at the
+first entry instead of the one it was left on. "wipe" discards the buffer
+itself, leaving no |alternate-file|; see 'bufhidden'.
 
 
 Replacing the directory browser                                  *dir-disable*

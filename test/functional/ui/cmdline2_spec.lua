@@ -287,6 +287,22 @@ describe('cmdline2', function()
     ]])
   end)
 
+  it('is empty after backspace', function()
+    feed(':')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*12
+      {16::}^                                                    |
+    ]])
+
+    feed('<BS>')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+                                                           |
+    ]])
+  end)
+
   it('matchparen highlights', function()
     exec('source $VIMRUNTIME/plugin/matchparen.lua')
     feed(':call foo(bar())')

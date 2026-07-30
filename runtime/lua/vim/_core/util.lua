@@ -166,10 +166,34 @@ function M.get_forge_url(repo, target, target_type)
   return ('%s/%s/%s'):format(repo, middle, target)
 end
 
+--- Gets a scrubbed message from a pcall'd command error (drops Lua context/traceback):
+--- "…/editor.lua:123: Vim(put):E484: xx" => "E484: xx"
+---
+--- @param err string
+--- @return string
+function M.cmd_errmsg(err)
+  err = err:match('^[^\n]*') or err
+  --- @type string
+  err = err:match('Vim%b():%s*(.*)') or err:match('Vim:%s*(.*)') or (err:gsub('^.-:%d+:%s*', ''))
+  return (err:gsub('^Lua:%s*', ''))
+end
+
 --- Utility function for displaying vim error codes (EXX)
 --- @param msg string
 function M.echo_err(msg)
   vim.api.nvim_echo({ { msg } }, true, { err = true })
+end
+
+--- Shows a message from a builtin plugin, prefixed with the plugin name.
+---
+--- Scheduled, so it is safe to call from |api-fast| contexts.
+--- @param name string Plugin name, e.g. "zip".
+--- @param msg string
+--- @param level? integer Level from |vim.log.levels|. Defaults to ERROR.
+function M.notify(name, msg, level)
+  vim.schedule(function()
+    vim.notify(('%s: %s'):format(name, msg), level or vim.log.levels.ERROR)
+  end)
 end
 
 --- Define event-handlers (autocmds) ergonomically.

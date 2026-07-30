@@ -72,6 +72,11 @@ in the health report: >vim
     autocmd FileType checkhealth :set modifiable | silent! %s/\v( ?[^\x00-\x7F])//g
 <
 
+Sometimes you might need to suppress filetype warnings if you have specified
+them dynamically. For example with the yaml.ansible filetype: >vim
+    autocmd FileType checkhealth :set modifiable | silent! g/Unknown filetype 'yaml\.ansible'/d
+<
+
 --------------------------------------------------------------------------------
 Create a healthcheck                                              *health-dev*
 

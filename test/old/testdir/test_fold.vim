@@ -1935,4 +1935,42 @@ func Test_cursor_fold_marker_undo()
   bwipe!
 endfunc
 
+" The fold size must be compared against 'foldminlines' of the window that
+" contains the fold, not of the current window.
+func Test_foldminlines_per_window()
+  " Window with 'foldminlines'=5: its two-line fold stays displayed open.
+  new
+  setlocal foldenable foldmethod=manual foldminlines=5
+  call setline(1, ['one', 'two', 'three', 'four'])
+  2,3fold
+  call assert_equal(-1, foldclosed(2))
+  let winid = win_getid()
+
+  " Split; only the new current window gets 'foldminlines'=0.  setline()
+  " invalidates the fold sizes of both windows and measures them again right
+  " away, the other window's while this window is current.  win_execute()
+  " below only reads that cached verdict, without measuring again.
+  split
+  setlocal foldminlines=0
+  call setline(2, 'changed')
+  call assert_equal(2, foldclosed(2))
+  call win_execute(winid, 'call assert_equal(-1, foldclosed(2))')
+  bwipe!
+
+  " The same the other way around: 'foldminlines'=0 in the other window, so
+  " its fold must remain closed while the current window has a higher value.
+  new
+  setlocal foldenable foldmethod=manual foldminlines=0
+  call setline(1, ['one', 'two', 'three', 'four'])
+  2,3fold
+  call assert_equal(2, foldclosed(2))
+  let winid = win_getid()
+  split
+  setlocal foldminlines=5
+  call setline(2, 'changed')
+  call assert_equal(-1, foldclosed(2))
+  call win_execute(winid, 'call assert_equal(2, foldclosed(2))')
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

@@ -510,6 +510,11 @@ local function get_paths(name, sect)
     or vim.env.MANPATH
 
   if not mandirs_raw then
+    -- Fall back to direct lookup ("man -w [sect] name"). NetBSD man lacks "-w". #25919
+    local ok, path = pcall(M._find_path, name, sect)
+    if ok and path then
+      return { path }
+    end
     return {}, "Could not determine man directories from: 'man -w', 'manpath' or $MANPATH"
   end
 

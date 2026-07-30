@@ -1013,10 +1013,6 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   write_info.bw_conv_error_lnum = 0;
   write_info.bw_iconv_fd = (iconv_t)-1;
 
-  // After writing a file changedtick changes but we don't want to display
-  // the line.
-  ex_no_reprint = true;
-
   // If there is no file name yet, use the one for the written file.
   // BF_NOTEDITED is set to reflect this (in case the write fails).
   // Don't do this when the write is for a filter command.

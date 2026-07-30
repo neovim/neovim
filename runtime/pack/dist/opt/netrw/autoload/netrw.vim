@@ -2278,7 +2278,12 @@ function s:NetrwGetFile(readcmd, tfile, method)
 
         " edit temporary file (ie. read the temporary file in)
         if     rfile =~ '\.zip$'
-            call zip#Browse(tfile)
+            if exists("#zip")
+                call zip#Browse(tfile)
+            elseif exists("#nvim.zip")
+                call s:NetrwBufRename(rfile)
+                call luaeval("require('nvim.zip').browse(_A[1], _A[2])", [bufnr(), tfile])
+            endif
         elseif rfile =~ '\.tar$'
             call tar#Browse(tfile)
         elseif rfile =~ '\.tar\.gz$'

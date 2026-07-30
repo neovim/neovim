@@ -1019,7 +1019,7 @@ Short explanation of each option:		*option-list*
 |:version|	:ve[rsion]	show version information
 |:normal|	:norm[al][!] {commands}
 				execute Normal mode commands
-|gQ|		   gQ		switch to "Ex" mode
+|:exmode|	1q:		switch to |Ex-mode|
 
 |:redir|	:redir >{file}		redirect messages to {file}
 |:silent|	:silent[!] {command}	execute {command} silently
@@ -1144,7 +1144,7 @@ Context-sensitive completion on the command-line:
 |-+|	+[num]		    put the cursor at line [num] (default: last line)
 |-+c|	+{command}	    execute {command} after loading the file
 |-+/|	+/{pat} {file} ..   put the cursor at the first occurrence of {pat}
-|-e|	-e		    Ex mode, start vim in Ex mode
+|-e|	-e		    |Ex-mode|
 |-R|	-R		    Read-only mode, implies -n
 |-m|	-m		    modifications not allowed (resets 'write' option)
 |-d|	-d		    |diff-mode|

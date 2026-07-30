@@ -5686,7 +5686,7 @@ static void init_spellfile(void)
     (fname != NULL && strstr(path_tail(fname), ".ascii.") != NULL) ? "ascii" : spell_enc();
   vim_snprintf(buf + strlen(buf), buf_len - strlen(buf), ".%s.add", enc_suffix);
 
-  set_option_value_give_err(kOptSpellfile, CSTR_AS_OPTVAL(buf), OPT_LOCAL);
+  set_option_value_give_err(kOptSpellfile, CSTR_AS_OBJ(buf), OPT_LOCAL);
   xfree(buf);
 }
 

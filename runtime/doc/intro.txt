@@ -276,8 +276,7 @@ Vim has seven BASIC modes:
                         "!".  |Cmdline-mode|
 
 - Ex mode:              Like Command-line mode, but after entering a command
-                        you remain in Ex mode.  Very limited editing of the
-                        command line.  |Ex-mode|
+                        you remain in |Ex-mode|.
 
                                                         *Terminal-mode*
 - Terminal mode:        In Terminal mode all input (except CTRL-\) is sent to
@@ -341,7 +340,7 @@ CTRL-O in Insert mode you get a beep but you are still in Insert mode, type
  >
  FROM mode      TO mode
                 Normal  Visual  Select  Insert    Replace   Cmd-line  Ex >
- Normal                 v V ^V    *4     *1        R gR     : / ? !   gQ
+ Normal                 v V ^V    *4     *1        R gR     : / ? !   1q:
  Visual          *2               ^G     c C        --        :       --
  Select          *5     ^O ^G            *6         --        --      --
  Insert          <Esc>    --      --              <Insert>    --      --
@@ -380,19 +379,28 @@ CTRL-O in Insert mode you get a beep but you are still in Insert mode, type
                                       *v_CTRL-\_CTRL-N* *t_CTRL-\_CTRL-N*
 Additionally the command CTRL-\ CTRL-N or <C-\><C-N> can be used to go to
 Normal mode from any other mode.  This can be used to make sure Vim is in
-Normal mode, without causing a beep like <Esc> would.  However, this does not
-work in Ex mode.  When used after a command that takes an argument, such as
-|f| or |m|, the timeout set with 'ttimeoutlen' applies.
+Normal mode, without causing a beep like <Esc> would. When used after
+a command that takes an argument, such as |f| or |m|, the timeout set with
+'ttimeoutlen' applies.
 
         *CTRL-\_CTRL-G* *i_CTRL-\_CTRL-G* *c_CTRL-\_CTRL-G* *v_CTRL-\_CTRL-G*
 CTRL-\ CTRL-G works the same as |CTRL-\_CTRL-N| for backward compatibility.
 
-                                *gQ* *mode-Ex* *Ex-mode* *Ex* *EX* *E501*
-gQ                      Switch to Ex mode.  This is like typing ":" commands
-                        one after another, except:
-                        - You don't have to keep pressing ":".
-                        - The screen doesn't get updated after each command.
-                        Use the `:vi` command (|:visual|) to exit this mode.
+                                *:exm* *:exmode* *gQ* *mode-Ex* *Ex-mode* *Ex* *EX* *E501*
+:exm[ode]
+[count]q:               Switch to Ex mode.  This is like typing ":" commands
+                        one after another, except you don't have to keep
+                        pressing ":". Use |:visual| to exit this mode.
+                        Without [count], "q:" opens the regular |cmdwin|.
+
+                        Implementation details: a persistent |cmdwin| where
+                        <Enter> executes the current line as a command
+                        (against the window from which Ex mode was entered)
+                        and stays open, in insert-mode.  Command output is
+                        presented as comment (") lines.  After a command that
+                        moves the cursor or changes the buffer, the current
+                        line is printed.  An empty line moves to (and prints)
+                        the next line.
 
 ==============================================================================
 Window contents                                         *window-contents*

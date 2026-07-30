@@ -56,7 +56,7 @@ describe('exit:', function()
 
   it('v:exiting=0, v:exitreason=quit on exit from Ex mode try-catch vim-patch:8.0.0184', function()
     test_exiting(function()
-      feed('gQ')
+      feed('1q:')
       feed_command('try', 'call NoFunction()', 'catch', 'echo "bye"', 'endtry', 'quit')
     end)
   end)

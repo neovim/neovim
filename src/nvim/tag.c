@@ -239,9 +239,9 @@ const char *did_set_tagfunc(optset_T *args)
   int retval;
 
   if (args->os_flags & OPT_LOCAL) {
-    retval = option_set_callback_func(args->os_newval.string.data, &buf->b_tfu_cb);
+    retval = option_set_callback_func(args->os_newval.data.string.data, &buf->b_tfu_cb);
   } else {
-    retval = option_set_callback_func(args->os_newval.string.data, &tfu_cb);
+    retval = option_set_callback_func(args->os_newval.data.string.data, &tfu_cb);
     if (retval == OK && !(args->os_flags & OPT_GLOBAL)) {
       set_buflocal_tfu_callback(buf);
     }

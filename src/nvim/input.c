@@ -2956,11 +2956,6 @@ static int vgetorpeek(bool advance)
             typebuf_was_empty = true;
           }
 
-          // return 0 in normal_check()
-          if (pending_exmode_active) {
-            exmode_active = true;
-          }
-
           // no chars to block abbreviations for
           typebuf.tb_no_abbr_cnt = 0;
 
@@ -2987,7 +2982,7 @@ static int vgetorpeek(bool advance)
         // to the user with showcmd.
         int showcmd_idx = 0;
         bool showing_partial = false;
-        if (typebuf.tb_len > 0 && advance && !exmode_active) {
+        if (typebuf.tb_len > 0 && advance) {
           if (((State & (MODE_NORMAL | MODE_INSERT)) || State == MODE_LANGMAP)
               && State != MODE_HITRETURN) {
             // this looks nice when typing a dead character map

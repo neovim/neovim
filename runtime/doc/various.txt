@@ -232,8 +232,8 @@ gx			Opens the current filepath, URL (decided by
 			will be aborted as if <Esc> or <C-C> was typed.
 			This implies that an insert command must be completed
 			(to start Insert mode, see |:startinsert|).  A ":"
-			command must be completed as well.  And you can't use
-			"gQ" to start Ex mode.
+			command must be completed as well.  And you can't
+			start |Ex-mode|.
 
 			The display is not updated while ":normal" is busy.
 

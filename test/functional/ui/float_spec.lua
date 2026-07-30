@@ -357,12 +357,23 @@ describe('float window', function()
 
   it('opened with correct position relative to the cursor', function()
     local pos = exec_lua([[
+      local lines = {}
+      for _ = 1, 100 do lines[#lines + 1] = 'foo' end
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
+      vim.api.nvim_win_set_cursor(0, { 50, 0 })
+      vim.cmd('normal! zz')
+
+      local view = vim.fn.winsaveview()
+      vim.api.nvim_win_set_cursor(0, { 1, 0 })
+      vim.fn.winrestview(view)
+
       local bufnr = vim.api.nvim_create_buf(false, true)
       local opts = { width = 10, height = 10, col = 7, row = 9, relative = 'cursor', style = 'minimal' }
       local win_id = vim.api.nvim_open_win(bufnr, false, opts)
-      return vim.api.nvim_win_get_position(win_id)
+      return { vim.api.nvim_win_get_position(win_id), vim.fn.winline() - 1 }
     ]])
-    eq({ 9, 7 }, { pos[1], pos[2] })
+    eq(pos[2] + 9, pos[1][1])
+    eq(7, pos[1][2])
   end)
 
   it('opened with correct position relative to another window', function()

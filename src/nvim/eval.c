@@ -3405,10 +3405,10 @@ int eval_option(const char **const arg, typval_T *const rettv, const bool evalua
 
     ret = FAIL;
   } else if (rettv != NULL) {
-    OptVal value = is_tty_opt ? get_tty_option(*arg) : get_option_value(opt_idx, opt_flags);
-    assert(value.type != kOptValTypeNil);
+    Object value = is_tty_opt ? get_tty_option(*arg) : get_option_value(opt_idx, opt_flags);
+    assert(value.type != kObjectTypeNil);
 
-    *rettv = optval_as_tv(value, true);
+    *rettv = opt_to_tv(value, true);
   } else if (working && !is_tty_opt && is_option_hidden(opt_idx)) {
     ret = FAIL;
   }
@@ -5022,7 +5022,6 @@ void timer_due_cb(TimeWatcher *tw, void *data)
   timer_T *timer = (timer_T *)data;
   int save_did_emsg = did_emsg;
   const int called_emsg_before = called_emsg;
-  const bool save_ex_pressedreturn = get_pressedreturn();
 
   if (timer->stopped || timer->paused) {
     return;
@@ -5049,7 +5048,6 @@ void timer_due_cb(TimeWatcher *tw, void *data)
     }
   }
   did_emsg = save_did_emsg;
-  set_pressedreturn(save_ex_pressedreturn);
 
   if (timer->emsg_count >= 3) {
     timer_stop(timer);
@@ -6461,7 +6459,7 @@ char *do_string_sub(char *str, size_t len, char *pat, char *sub, typval_T *expr,
     // If it's still empty it was changed and restored, need to restore in
     // the complicated way.
     if (*p_cpo == NUL) {
-      set_option_value_give_err(kOptCpoptions, CSTR_AS_OPTVAL(save_cpo), 0);
+      set_option_value_give_err(kOptCpoptions, CSTR_AS_OBJ(save_cpo), 0);
     }
     free_string_option(save_cpo);
   }

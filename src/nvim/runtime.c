@@ -1183,7 +1183,7 @@ static int add_pack_dir_to_rtp(char *fname, bool is_pack)
   }
 
   bool was_valid = runtime_search_path_valid;
-  set_option_value_give_err(kOptRuntimepath, STRING_OPTVAL(new_rtp), 0);
+  set_option_value_give_err(kOptRuntimepath, STRING_OBJ(new_rtp), 0);
 
   assert(!runtime_search_path_valid);
   // If this is the result of "packadd opt_pack", rebuilding runtime_search_pat

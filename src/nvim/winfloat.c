@@ -202,6 +202,7 @@ void win_config_float(win_T *wp, WinConfig fconfig)
   wp->w_height = MAX(fconfig.height, 1);
 
   if (fconfig.relative == kFloatRelativeCursor) {
+    validate_cursor(curwin);
     fconfig.relative = kFloatRelativeWindow;
     fconfig.row += curwin->w_wrow;
     fconfig.col += curwin->w_wcol;
@@ -475,7 +476,7 @@ win_T *win_float_special(bool enter, bool new_buf, WinKind kind)
       return win_float_special_fail(wp, &err);
     }
     buf->b_p_bl = false;  // unlist
-    set_option_direct_for(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("wipe"), OPT_LOCAL, 0,
+    set_option_direct_for(kOptBufhidden, STATIC_CSTR_AS_OBJ("wipe"), OPT_LOCAL, 0,
                           kOptScopeBuf, buf);
     win_set_buf(wp, buf, &err);
     if (ERROR_SET(&err)) {

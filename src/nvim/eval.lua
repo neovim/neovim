@@ -1497,7 +1497,9 @@ M.funcs = {
          items	List of all completion candidates.  Each item
       		is a dictionary containing the entries "word",
       		"abbr", "menu", "kind", "info" and
-      		"user_data".
+      		"user_data".  "equal", "preselect" and
+      		"commit_chars" are included only for items that
+      		set them.
       		See |complete-items|.
          matches	Same as "items", but only returns items that
       		are matching current query.  If both "matches"
@@ -4487,7 +4489,7 @@ M.funcs = {
           'x	    Position of mark x (if the mark is not set, 0 is
       	    returned for all values).
           w0	    First line visible in current window (one if the
-      	    display isn't updated, e.g. in silent Ex mode).
+      	    display isn't updated, e.g. in |silent-mode|).
           w$	    Last line visible in current window (this is one
       	    less than "w0" if no lines are visible).
           v	    End of the current Visual selection (unlike |'<|
@@ -7943,8 +7945,7 @@ M.funcs = {
          Rvx	    Virtual Replace mode |i_CTRL-X| completion
          c	    Command-line editing
          cr	    Command-line editing overstrike mode |c_<Insert>|
-         cv	    Vim Ex mode |gQ|
-         cvr	    Vim Ex mode while in overstrike mode |c_<Insert>|
+         cv	    Non-interactive Ex mode |-es|
          r	    Hit-enter prompt
          rm	    The -- more -- prompt
          r?	    A |:confirm| query of some sort

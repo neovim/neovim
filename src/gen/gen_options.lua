@@ -144,7 +144,9 @@ end
 --- @param opt_type vim.option_type
 --- @return string
 local function opt_type_enum(opt_type)
-  return ('kOptValType%s'):format(lowercase_to_titlecase(opt_type))
+  return ('kObjectType%s'):format(
+    ({ boolean = 'Boolean', number = 'Integer', string = 'String' })[opt_type]
+  )
 end
 
 --- @param scope vim.option_scope
@@ -213,7 +215,10 @@ local function get_opt_val(v)
     end
   end
 
-  return ('{ .type = %s, .data.%s = %s }'):format(opt_type_enum(v_type), v_type, v)
+  -- def_val is stored as an API Object.
+  local obj_type = ({ boolean = 'Boolean', number = 'Integer', string = 'String' })[v_type]
+  local obj_field = ({ boolean = 'boolean', number = 'integer', string = 'string' })[v_type]
+  return ('{ .type = kObjectType%s, .data.%s = %s }'):format(obj_type, obj_field, v)
 end
 
 --- @param d vim.option_value|function
@@ -281,11 +286,12 @@ local function dump_option(i, o, write)
   end
 
   if not o.defaults then
-    write('    .def_val=NIL_OPTVAL')
+    write('    .def_val={ .type = kObjectTypeNil }')
   elseif o.defaults.condition then
     write(('#if defined(%s)'):format(o.defaults.condition))
     write('    .def_val=', get_defaults(o.defaults.if_true, o.full_name))
-    if o.defaults.if_false then
+    -- Check against nil: `if_false=false` is a valid default and must still emit the `#else`.
+    if o.defaults.if_false ~= nil then
       write('#else')
       write('    .def_val=', get_defaults(o.defaults.if_false, o.full_name))
     end

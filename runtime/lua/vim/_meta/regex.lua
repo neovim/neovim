@@ -4,8 +4,9 @@ error('Cannot require a meta file')
 
 -- luacheck: no unused args
 
---- @brief Vim regexes can be used directly from Lua. Currently they only allow
---- matching within a single line.
+--- @brief The `vim.regex` interface allows Lua code to use Vim regexes.
+--- - Matches within a single line.
+--- - Does not check for interrupts (CTRL-C), so can be used from an |api-fast| context.
 
 --- Parses the Vim regex `re` and returns a regex object. Regexes are "magic" and case-sensitive by
 --- default, regardless of 'magic' and 'ignorecase'. They can be controlled with flags, see |/magic|

@@ -210,9 +210,8 @@ function M.ex_session_restart(eap, extra)
     vim.fs.rm(session, { force = true })
 
     -- Trim error message to be equivalent to `:restart!`
-    local trimmed_msg = msg:match('Vim:.*$')
-    if trimmed_msg then
-      util.echo_err(trimmed_msg:sub(5))
+    if msg:find('Vim:') then
+      util.echo_err(util.cmd_errmsg(msg))
     else
       error(msg)
     end

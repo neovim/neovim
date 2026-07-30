@@ -2090,23 +2090,15 @@ describe('ui/builtin messages', function()
   it('prints lines in Ex mode correctly with a burst of carriage returns #19341', function()
     command('set number')
     api.nvim_buf_set_lines(0, 0, 0, true, { 'aaa', 'bbb', 'ccc' })
-    feed('gggQ<CR><CR>1<CR><CR>vi')
+    -- Empty lines advance the cursor and print; a bare address moves and prints.
+    feed('gg1q:<CR><CR>1<CR><CR>')
+    screen:expect({ any = vim.pesc('" bbb') })
+    feed('vi<CR>')
     screen:expect([[
-      Entering Ex mode.  Type "visual" to go to Normal mode.      |
-      {8:  2 }bbb                                                     |
-      {8:  3 }ccc                                                     |
-      :1                                                          |
-      {8:  1 }aaa                                                     |
-      {8:  2 }bbb                                                     |
-      :vi^                                                         |
-    ]])
-    feed('<CR>')
-    screen:expect([[
-      {8:  1 }aaa                                                     |
       {8:  2 }^bbb                                                     |
       {8:  3 }ccc                                                     |
       {8:  4 }                                                        |
-      {1:~                                                           }|*2
+      {1:~                                                           }|*3
                                                                   |
     ]])
   end)
@@ -2600,11 +2592,20 @@ describe('ui/msg_puts_printf', function()
 
     fn.mkdir(locale_dir, 'p')
     fn.filecopy(build_dir .. '/src/nvim/po/ja.mo', locale_dir .. '/nvim.mo')
+    -- "-Es" doesn't read stdin as commands, and the "Entering Ex mode" banner was removed, so
+    -- ":print" a translated message via "-S" (silent mode suppresses ":echo" output). #40966
+    t.write_file(
+      'Xes_ja.vim',
+      [[call setline(1, gettext("Entering Ex mode.  Type \"visual\" to go to Normal mode."))]]
+        .. '\n'
+        .. '.print\n'
+    )
     finally(function()
+      os.remove('Xes_ja.vim')
       n.rmdir(vim.fs.dirname(locale_dir))
     end)
 
-    cmd = cmd .. '"' .. nvim_prog .. '" -u NONE -i NONE -Es -V1'
+    cmd = cmd .. '"' .. nvim_prog .. '" -u NONE -i NONE -Es -S Xes_ja.vim'
     command([[call jobstart(']] .. cmd .. [[',{'term':v:true})]])
     screen:expect([[
       ^Exモードに入ります。ノー |

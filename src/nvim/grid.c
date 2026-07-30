@@ -644,7 +644,6 @@ static int grid_char_needs_redraw(ScreenGrid *grid, int col, size_t off_to, int 
                || linebuf_attr[col] != grid->attrs[off_to]
                || (cols > 1 && linebuf_char[col + 1] == 0
                    && linebuf_char[col + 1] != grid->chars[off_to + 1]))
-              || exmode_active  // TODO(bfredl): what in the actual fuck
               || rdb_flags & kOptRdbFlagNodelta));
 }
 

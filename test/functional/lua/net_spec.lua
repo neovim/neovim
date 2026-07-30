@@ -164,29 +164,60 @@ describe('vim.net.request', function()
     t.eq(true, rv.tarfile)
   end)
 
-  it('opens remote zip URLs as zip archives', function()
+  it('dispatches remote zip URLs to zip.lua', function()
+    n.clear({ args_rm = { '-u' } })
+    local fixture =
+      vim.fs.joinpath(t.paths.test_source_path, 'test/functional/fixtures/zip/browser.zip')
+    local rv = exec_lua(function(path)
+      vim.net.request = function(_, opts, callback)
+        assert(vim.uv.fs_copyfile(path, opts.outpath))
+        callback(nil)
+      end
+      vim.cmd.edit('https://example.com/browser.zip')
+      vim.wait(1000, function()
+        return vim.b.nvim_zip ~= nil
+      end)
+      require('nvim.zip').open_parent(0, vim.api.nvim_buf_get_name(0))
+      return {
+        legacy = vim.g.loaded_zip ~= nil,
+        name = vim.api.nvim_buf_get_name(0),
+        nvim_zip = vim.b.nvim_zip ~= nil,
+      }
+    end, fixture)
+
+    t.eq(false, rv.legacy)
+    t.eq('https://example.com/browser.zip', rv.name)
+    t.eq(true, rv.nvim_zip)
+  end)
+
+  it('downloads a live remote zip URL', function()
     t.skip(skip_integ, 'NVIM_TEST_INTEG not set (network integration test)')
+    n.clear({ args = { '--clean' } })
 
     local rv = exec_lua(function()
-      vim.cmd('runtime! plugin/net.lua')
-      vim.cmd('runtime! plugin/zipPlugin.vim')
-
       vim.cmd('edit https://github.com/neovim/neovim/releases/download/nightly/nvim-win-arm64.zip')
 
       vim.wait(2500, function()
         return vim.bo.filetype == 'zip' or vim.b.zipfile ~= nil
       end)
 
+      require('nvim.zip').open_parent(0, vim.api.nvim_buf_get_name(0))
       return {
         filetype = vim.bo.filetype,
+        legacy = vim.g.loaded_zip ~= nil,
         modified = vim.bo.modified,
+        name = vim.api.nvim_buf_get_name(0),
+        nvim_zip = vim.b.nvim_zip ~= nil,
         zipfile = vim.b.zipfile ~= nil,
       }
     end)
 
     t.eq('zip', rv.filetype)
+    t.eq(false, rv.legacy)
     t.eq(false, rv.modified)
-    t.eq(true, rv.zipfile)
+    t.eq('https://github.com/neovim/neovim/releases/download/nightly/nvim-win-arm64.zip', rv.name)
+    t.eq(true, rv.nvim_zip)
+    t.eq(false, rv.zipfile)
   end)
 
   it('accepts custom headers', function()

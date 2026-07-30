@@ -302,7 +302,7 @@ do
   local function cmd(opts)
     local ok, err = pcall(vim.api.nvim_cmd, opts, {})
     if not ok then
-      vim.api.nvim_echo({ { err:sub(#'Vim:' + 1) } }, true, { err = true })
+      vim.api.nvim_echo({ { require('vim._core.util').cmd_errmsg(err) } }, true, { err = true })
     end
   end
 
