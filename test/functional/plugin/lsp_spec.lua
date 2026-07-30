@@ -3274,6 +3274,7 @@ describe('LSP', function()
                   {
                     pattern = root_dir .. '/*.foo',
                   },
+                  { pattern = '**/**.foo' },
                 },
               },
             },
