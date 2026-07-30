@@ -1843,7 +1843,9 @@ static const char *did_set_statustabline_rulerformat(optset_T *args, bool rulerf
       && ((args->os_flags & OPT_GLOBAL) || !(args->os_flags & OPT_LOCAL))
       && s[0] == NUL) {
     xfree(*varp);
-    *varp = xstrdup(get_option_default(args->os_idx, args->os_flags).data.string.data);
+    Object def = get_option_default(args->os_idx, args->os_flags);
+    *varp = xstrdup(def.data.string.data);
+    optval_free_read(get_option_flags(args->os_idx), def);
     s = *varp;
   }
 

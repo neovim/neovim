@@ -3260,7 +3260,7 @@ static Object opt_from_tv(typval_T *tv, OptIndex opt_idx, const char *option, bo
   return value;
 }
 
-/// Converts an option value to typval.
+/// Converts an option value to typval. Caller must tv_clear() the result.
 ///
 /// @param[in]  value    Option value to convert.
 /// @param      numbool  Whether to convert boolean values to number.
@@ -3297,7 +3297,7 @@ typval_T opt_to_tv(Object value, bool numbool)
     break;
   case kObjectTypeString:
     rettv.v_type = VAR_STRING;
-    rettv.vval.v_string = value.data.string.data;
+    rettv.vval.v_string = value.data.string.data != NULL ? xstrdup(value.data.string.data) : NULL;
     break;
   case kObjectTypeLuaRef:
     // Lua callback option (e.g. 'operatorfunc'): show a human-readable hint (same as `:map` does).

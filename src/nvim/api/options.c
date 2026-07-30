@@ -402,9 +402,10 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
   optval_free(optval_right);
 
   if (optval_right.type == kObjectTypeInteger || optval_right.type == kObjectTypeString) {
-    Object oldval = opt_from_varp(opt_idx, varp);
+    Object oldval = optval_own(option->flags, opt_from_varp(opt_idx, varp));
     merged_val = get_option_newval(opt_idx, opt_flags, PREFIX_NONE, &argp, 0, operation,
                                    option->flags, varp, &oldval, NULL, 0, &errmsg);
+    optval_free(oldval);
     VALIDATE(errmsg == NULL, "%s", errmsg, {
       return NIL;
     });

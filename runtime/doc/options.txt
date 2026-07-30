@@ -395,7 +395,7 @@ Note: In the future more global options can be made |global-local|.  Using
 						*option-value-function*
 Some options ('completefunc', 'findfunc', 'omnifunc', 'operatorfunc',
 'quickfixtextfunc', 'tagfunc' and 'thesaurusfunc') can be set to a function
-name, a |Funcref|, a |lambda|, or (from Lua) a Lua function.
+name, a |Funcref|, a |lambda|, or a Lua function.
 Examples:
 >
 	set opfunc=MyOpFunc
@@ -428,6 +428,8 @@ The value read back from the option reflects how it was set:
 - A |script-local| ("s:") name is expanded to `<SNR>` form.
 - A Lua function is returned as itself from Lua, or as a `"<Lua …>"` hint
   from Vimscript/RPC.
+  - Note: Lua functions cannot be serialized, so it cannot be saved/restored
+    by |:mksession| |:mkview| |:mkvimrc|.
 
 Calling a function in an expr option			*expr-option-function*
 
@@ -5488,7 +5490,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   localoptions	options and mappings local to a window or buffer (not
 			global values for local options)
 	   options	all options and mappings (also global values for local
-			options)
+			options), except Lua functions |option-value-function|.
 	   skiprtp	exclude 'runtimepath' and 'packpath' from the options
 	   resize	size of the Vim window: 'lines' and 'columns'
 	   sesdir	the directory in which the session file is located
@@ -7307,7 +7309,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   folds	manually created folds, opened/closed folds and local
 			fold options
 	   options	options and mappings local to a window or buffer (not
-			global values for local options)
+	                global values for local options), except Lua functions
+			|option-value-function|.
 	   localoptions same as "options"
 	   slash	|deprecated| Always enabled. Uses "/" in filenames.
 	   unix		|deprecated| Always enabled. Uses "\n" line endings.

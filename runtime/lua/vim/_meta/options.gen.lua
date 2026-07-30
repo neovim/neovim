@@ -5718,7 +5718,7 @@ vim.go.slm = vim.go.selectmode
 ---    localoptions	options and mappings local to a window or buffer (not
 --- 		global values for local options)
 ---    options	all options and mappings (also global values for local
---- 		options)
+--- 		options), except Lua functions `option-value-function`.
 ---    skiprtp	exclude 'runtimepath' and 'packpath' from the options
 ---    resize	size of the Vim window: 'lines' and 'columns'
 ---    sesdir	the directory in which the session file is located
@@ -7885,7 +7885,8 @@ vim.go.vdir = vim.go.viewdir
 ---    folds	manually created folds, opened/closed folds and local
 --- 		fold options
 ---    options	options and mappings local to a window or buffer (not
---- 		global values for local options)
+---                 global values for local options), except Lua functions
+--- 		`option-value-function`.
 ---    localoptions same as "options"
 ---    slash	`deprecated` Always enabled. Uses "/" in filenames.
 ---    unix		`deprecated` Always enabled. Uses "\n" line endings.

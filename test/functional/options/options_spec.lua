@@ -129,7 +129,7 @@ describe('callback (func/expr) options', function()
   it('accept a Lua function, preserving identity and captured upvalues', function()
     -- 'operatorfunc' is global; 'tagfunc' is buffer-local: exercise both storage paths.
     eq(
-      { identity = true, captured = 'CAP', kind = 'function' },
+      { identity = true, captured = 'CAP', kind = 'function', optset_old = '', optset_new = true },
       exec_lua(function()
         vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'abcdef' })
         local captured = 'CAP'
@@ -137,12 +137,22 @@ describe('callback (func/expr) options', function()
         local fn = function(_)
           _G.seen = captured
         end
+        -- OptionSet emits with Lua function as "<Lua …>".
+        local optset
+        vim.api.nvim_create_autocmd('OptionSet', {
+          pattern = 'operatorfunc',
+          callback = function()
+            optset = { old = vim.v.option_old, new = vim.v.option_new }
+          end,
+        })
         vim.o.operatorfunc = fn
         vim.cmd('normal! g@l')
         return {
           identity = vim.o.operatorfunc == fn,
           captured = _G.seen,
           kind = type(vim.o.operatorfunc),
+          optset_old = optset.old,
+          optset_new = tostring(optset.new):match('^<Lua ') ~= nil,
         }
       end)
     )
