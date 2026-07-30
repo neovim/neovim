@@ -5377,6 +5377,10 @@ local options = {
         	1: only if there are at least two windows
         	2: always
         	3: always and ONLY the last window
+
+        Here "last window" means the last window in a column, i.e. the bottom-
+        most one, just above the command line.
+
         The screen looks nicer with a status line if you have several
         windows, but it takes another screen line. |status-line|
       ]=],
