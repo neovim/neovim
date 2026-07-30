@@ -189,10 +189,16 @@ If your terminal emulator responds with >
         CSI ? <flags> u
 this means your terminal supports the "CSI u" encoding and Nvim will tell your
 terminal to enable it by writing the sequence >
-        CSI > 1 u
+        CSI > 3 u
 If your terminal does not support "CSI u" then Nvim will instead enable the
 "modifyOtherKeys" encoding by writing the sequence >
         CSI > 4 ; 2 m
+
+The "3" requests the kitty keyboard protocol "progressive enhancement" flags
+1 (disambiguate escape codes) and 2 (report event types). Nvim does not
+request 8 (report all keys as escape codes) nor 16 (report associated text),
+which are needed to distinguish keys that produce the same text as their
+unmodified counterpart, such as <S-Space> and <Space>.
 
 When Nvim exits cleanly it will send the corresponding sequence to disable the
 special key encoding. If Nvim does not exit cleanly then your terminal
