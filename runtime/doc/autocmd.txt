@@ -1401,10 +1401,13 @@ VimLeavePre			Before exiting Vim, just before writing the
 				Not triggered if |v:dying| is 2 or more.
 
 							*VimResized*
-VimResized			After the Vim window was resized, thus 'lines'
-				and/or 'columns' changed.  Not when starting
-				up though.
+VimResized			After Nvim itself was resized: 'lines' and/or
+				'columns' changed.  But not during |startup|.
 
+				To ensure the window layout is always
+				"equalized" on resize: >
+				    :autocmd VimResized * wincmd =
+<
 							*VimResume*
 VimResume			After Nvim resumes from |suspend| state.
 

@@ -2647,10 +2647,8 @@ vim.fs.dir({path}, {opts})                                      *vim.fs.dir()*
                   skipping.
                 • {follow}? (`boolean`, default: `false`) Follow symbolic
                   links.
-                • {normalize}? (`boolean`, default: `true`) Normalize {path}
-                  via |vim.fs.normalize()|. Set `false` to use {path}
-                  literally, e.g. to list a directory whose name contains `~`
-                  or `$`.
+                • {normalize}? (`boolean`, default: `true`) Expand "~" and "$"
+                  in {path} before scanning the directory.
                 • {skip}? (`fun(dir_name: string): boolean`) Predicate to
                   control traversal. Return false to stop searching the
                   current directory. Only useful when depth > 1 Return an
@@ -2797,11 +2795,10 @@ vim.fs.mkdir({path}, {opts})                                  *vim.fs.mkdir()*
                   directories as necessary.
 
 vim.fs.normalize({path}, {opts})                          *vim.fs.normalize()*
-    Normalize a path to a standard format. A tilde (~) character at the
-    beginning of the path is expanded to the user's home directory and
-    environment variables are also expanded. "." and ".." components are also
-    resolved, except when the path is relative and trying to resolve it would
-    result in an absolute path.
+    Normalize a path to a standard format. Expands environment variables, and
+    tilde "~" at the beginning of the path. Resolves "." and ".." components,
+    except when the path is relative and resolving it would produce an
+    absolute path.
     • "." as the only part in a relative path:
       • "." => "."
       • "././" => "."
@@ -2811,19 +2808,19 @@ vim.fs.normalize({path}, {opts})                          *vim.fs.normalize()*
     • ".." in the root directory returns the root directory.
       • "/../../" => "/"
 
-    On Windows, backslash (\) characters are converted to forward slashes (/).
+    On Windows, backslashes (`\`) are converted to forward slashes (`/`).
 
-    Examples: >
-        [[C:\Users\jdoe]]                         => "C:/Users/jdoe"
-        "~/src/neovim"                            => "/home/jdoe/src/neovim"
-        "$XDG_CONFIG_HOME/nvim/init.vim"          => "/Users/jdoe/.config/nvim/init.vim"
-        "~/src/nvim/api/../tui/./tui.c"           => "/home/jdoe/src/nvim/tui/tui.c"
-        "./foo/bar"                               => "foo/bar"
-        "foo/../../../bar"                        => "../../bar"
-        "/home/jdoe/../../../bar"                 => "/bar"
-        "C:foo/../../baz"                         => "C:../baz"
-        "C:/foo/../../baz"                        => "C:/baz"
-        [[\\?\UNC\server\share\foo\..\..\..\bar]] => "//?/UNC/server/share/bar"
+    Examples: >lua
+        [[C:\Users\jdoe]]                         --> "C:/Users/jdoe"
+        "~/src/neovim"                            --> "/home/jdoe/src/neovim"
+        "$XDG_CONFIG_HOME/nvim/init.vim"          --> "/Users/jdoe/.config/nvim/init.vim"
+        "~/src/nvim/api/../tui/./tui.c"           --> "/home/jdoe/src/nvim/tui/tui.c"
+        "./foo/bar"                               --> "foo/bar"
+        "foo/../../../bar"                        --> "../../bar"
+        "/home/jdoe/../../../bar"                 --> "/bar"
+        "C:foo/../../baz"                         --> "C:../baz"
+        "C:/foo/../../baz"                        --> "C:/baz"
+        [[\\?\UNC\server\share\foo\..\..\..\bar]] --> "//?/UNC/server/share/bar"
 <
 
     Attributes: ~
