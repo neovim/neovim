@@ -114,22 +114,17 @@ endfun
 " sanity checks
 " s:SafeExecutable: {{{2
 fun! s:SafeExecutable(exe)
-  if !executable(a:exe) && !s:isPS()
-    call s:Mess('Error', "***error*** (zip) '".a:exe."' not available on your system")
+  " fails when exe is a full path with spaces
+  let exe = substitute(a:exe, '\s\+.*$', '', '')
+  if !executable(exe) && !s:isPS()
     return v:false
   endif
-  if !dist#vim#IsSafeExecutable('zip', a:exe) && !s:isPS()
-    call s:Mess('Error', "Warning: NOT executing " .. a:exe .. " from current directory!")
+  if !dist#vim#IsSafeExecutable('zip', exe) && !s:isPS()
+    call s:Mess('Error', "Warning: NOT executing " .. a:exe .. " from current directory!") 
     return v:false
   endif
   return v:true
 endfun
-" guarantee default command is exist and not be injected by environment
-" every default command should be checked
-if !s:SafeExecutable(g:zip_zipcmd)  | finish | endif
-if !s:SafeExecutable(g:zip_unzipcmd)  | finish | endif
-if !s:SafeExecutable(g:zip_extractcmd)  | finish | endif
-
 " ----------------
 "  PowerShell: {{{1
 " ----------------
@@ -260,8 +255,8 @@ fun! zip#Browse(zipfile)
   defer s:RestoreOpts(dict)
 
   " sanity checks
-  if !executable(g:zip_unzipcmd) && !s:isPS()
-   call s:Mess('Error', "***error*** (zip#Browse) unzip not available on your system")
+  if !s:SafeExecutable(g:zip_unzipcmd)
+   call s:Mess('Error', "***error*** (zip#Browse) sorry, your system doesn't appear to have the ".g:zip_unzipcmd." program")
    return
   endif
   if !filereadable(a:zipfile)
@@ -368,7 +363,7 @@ fun! zip#Read(fname,mode)
   endif
   let fname    = fname->substitute('[', '[[]', 'g')->escape('?*\\')
   " sanity check
-  if !executable(substitute(g:zip_unzipcmd,'\s\+.*$','',''))  && !s:isPS()
+  if !s:SafeExecutable(g:zip_unzipcmd)
    call s:Mess('Error', "***error*** (zip#Read) sorry, your system doesn't appear to have the ".g:zip_unzipcmd." program")
    return
   endif
@@ -404,7 +399,7 @@ fun! zip#Write(fname)
   defer s:RestoreOpts(dict)
 
   " sanity checks
-  if !executable(substitute(g:zip_zipcmd,'\s\+.*$','','')) && &shell !~ 'pwsh'
+  if !s:SafeExecutable(g:zip_zipcmd)
     call s:Mess('Error', "***error*** (zip#Write) sorry, your system doesn't appear to have the ".g:zip_zipcmd." program")
     return
   endif
@@ -532,6 +527,13 @@ fun! zip#Extract()
 
   let dict = s:SetSaneOpts()
   defer s:RestoreOpts(dict)
+
+  " sanity checks
+  if !s:SafeExecutable(g:zip_extractcmd)
+    call s:Mess('Error', "***error*** (zip#Extract) sorry, your system doesn't appear to have the ".g:zip_extractcmd." program")
+    return
+  endif
+
   let fname= getline(".")
 
   " sanity check
