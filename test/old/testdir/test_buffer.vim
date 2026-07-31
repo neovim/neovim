@@ -937,6 +937,13 @@ func Test_split_window_in_BufLeave_from_switching_buffer()
   bwipe! Xb
 endfunc
 
+func Test_wipe_other_buffers_in_WinLeave_from_bwipe()
+  tabnew
+  autocmd WinLeave * ++once 1,$-1bwipe!
+  " This should not crash
+  $bwipe!
+endfunc
+
 " Switch to a buffer whose name contains '%' via completion (#20529).
 func Test_buffer_switch_to_name_with_percent()
   CheckMSWindows
