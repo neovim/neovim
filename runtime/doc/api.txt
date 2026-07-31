@@ -60,30 +60,41 @@ which can be done through any msgpack-rpc client library or full-featured
 Nvim instance:
 >ruby
     #!/usr/bin/env ruby
-    # Requires msgpack-rpc: gem install msgpack-rpc
+    # Requires msgpack: gem install msgpack
     #
     # To run this script, use Nvim's built-in terminal emulator:
     #
-    #   :term ./hello.rb
+    #   :term ruby hello.rb
     #
     # Or from another shell by setting NVIM:
-    # $ NVIM=[address] ./hello.rb
+    # :echo v:servername -- this is the unix socket path address
+    # $ NVIM=[unix_socket_path_address] ruby ./hello.rb
+    # or if you run the command above: nvim --listen 127.0.0.1:6666 -- tcp socket address
+    # $ NVIM=127.0.0.1:6666 ruby hello.rb
 
-    require 'msgpack/rpc'
-    require 'msgpack/rpc/transport/unix'
+    require 'msgpack'
+    require 'socket'
 
-    nvim = MessagePack::RPC::Client.new(MessagePack::RPC::UNIXTransport.new, ENV['NVIM'])
-    result = nvim.call(:nvim_command, 'echo "hello world!"')
+    sock =
+    if ENV['NVIM'] =~ /:\d+$/
+        host, port = ENV['NVIM'].split(':')
+        TCPSocket.new(host, port)
+    else
+        UNIXSocket.new(ENV['NVIM'])
+    end
+    sock.write([0, 0, 'nvim_command', ['echo "hello world!"']].to_msgpack)
+    p MessagePack::Unpacker.new(sock).read.last
 <
-A better way is to use the Python REPL with the "pynvim" package, where API
-functions can be called interactively:
+Another way is to use the Python REPL with the "pynvim" package,
+where API functions can be called interactively, or create a script:
+(requires `pip install pynvim` or `uv add pynvim` or another python package manager)
 >
     >>> from pynvim import attach
     >>> nvim = attach('socket', path='[address]')
     >>> nvim.command('echo "hello world!"')
 <
 You can also embed Nvim via |jobstart()|, and communicate using |rpcrequest()|
-and |rpcnotify()|:
+and |rpcnotify()| in Vimscript :e hello.vim, copy below content and then :so %:
 >vim
     let nvim = jobstart(['nvim', '--embed'], {'rpc': v:true})
     echo rpcrequest(nvim, 'nvim_eval', '"Hello " . "world!"')
