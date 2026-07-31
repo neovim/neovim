@@ -1626,7 +1626,7 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
     }
     if (buf == NULL) {          // Still no buffer, just take one
       buf = curbuf->b_next != NULL ? curbuf->b_next : curbuf->b_prev;
-      if (bt_quickfix(buf) || (buf != curbuf && buf->b_locked_split)) {
+      if (bt_quickfix(buf) || (buf != NULL && buf != curbuf && buf->b_locked_split)) {
         buf = NULL;
       }
     }
