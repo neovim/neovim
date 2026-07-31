@@ -110,8 +110,10 @@ function M.watch(path, opts, callback)
       local _, staterr, staterrname = uv.fs_stat(fullpath)
       if staterrname == 'ENOENT' then
         change_type = M.FileChangeType.Deleted
+      elseif staterr then
+        -- The event cannot be classified while the path is inaccessible.
+        return
       else
-        assert(not staterr, staterr)
         change_type = M.FileChangeType.Created
       end
     elseif events.change then
