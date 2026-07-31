@@ -365,6 +365,9 @@ terminals)
 		history and, in case of |:s| or |:&|, without modifying the
 		last substitute pattern or substitute string.
 
+:async {command}					*:async*
+		Schedule {command} to run later and return immediately.
+
 ==============================================================================
 2. Command-line completion				*cmdline-completion*
 
