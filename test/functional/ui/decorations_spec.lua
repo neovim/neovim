@@ -767,6 +767,63 @@ describe('decorations providers', function()
     }
   end)
 
+  it("'hl_eol' and plain highlights extend into 'linebreak'/'breakindent'/'showbreak' gaps", function()
+    command('set wrap linebreak breakindent breakindentopt=shift:2')
+    api.nvim_buf_set_lines(0, 0, -1, false, {
+      '  if vim.g.colors_name == "ferricferric" then',
+    })
+    local ns = api.nvim_create_namespace('code_bg')
+    local id = api.nvim_buf_set_extmark(0, ns, 0, 0, { end_row = 1, hl_group = 'DiffAdd', hl_eol = true })
+    screen:expect([[
+      {13:^  if vim.g.colors_name ==               }|
+      {13:    "ferricferric" then                 }|
+      {1:~                                       }|*5
+                                              |
+    ]])
+
+    -- Extends across the 'showbreak' character too.
+    command('set showbreak=>')
+    screen:add_extra_attr_ids({
+      [100] = { background = Screen.colors.LightBlue },
+      [101] = { bold = true, foreground = Screen.colors.Blue1, background = Screen.colors.LightBlue },
+    })
+    screen:expect([[
+      {100:^  if vim.g.colors_name ==               }|
+      {100:    }{101:>}{100:"ferricferric" then                }|
+      {1:~                                       }|*5
+                                              |
+    ]])
+
+    -- No hl_eol here: these gaps have no real text, but the highlight is still active, not
+    -- ending, so it must show through regardless.
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { id = id, end_row = 1, hl_group = 'DiffAdd' })
+    screen:expect([[
+      {100:^  if vim.g.colors_name ==               }|
+      {100:    }{101:>}{100:"ferricferric" then}                |
+      {1:~                                       }|*5
+                                              |
+    ]])
+  end)
+
+  it('breakindent keeps the highlight after a real linebreak word-push', function()
+    -- The word pushed down by 'linebreak' resets decor_attr (it hides real word text, see listlbr_spec.lua), which must not then leak into
+    -- 'breakindent's own gap on the row the word lands on.
+    screen:try_resize(30, 5)
+    screen:add_extra_attr_ids({ [100] = { background = Screen.colors.LightBlue } })
+    command('set wrap linebreak breakindent')
+    local line = '      This is a long indented line of plain text that will wrap nicely.'
+    api.nvim_buf_set_lines(0, 0, -1, false, { line })
+    local ns = api.nvim_create_namespace('code_bg2')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { end_row = 0, end_col = #line, hl_group = 'DiffAdd' })
+    screen:expect([[
+      {100:^      This is a long indented }|
+      {100:      line of plain text that }|
+      {100:      will wrap nicely.}       |
+      {1:~                             }|
+                                    |
+    ]])
+  end)
+
   it('can create and remove signs when CursorMoved autocommand validates botline #18661', function()
     exec_lua([[
       local lines = {}
