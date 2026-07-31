@@ -1310,6 +1310,30 @@ func Test_smoothscroll_next_topline()
   bwipe!
 endfunc
 
+func Test_smoothscroll_keep_skipcol()
+  call NewWindow(10, 40)
+  setlocal smoothscroll
+  call setline(1, ['abcde '->repeat(150)]->repeat(2))
+
+  exe "norm! 10\<C-E>"
+  redraw
+  let skipcol = winsaveview().skipcol
+  call assert_notequal(0, skipcol)
+
+  " Changing the height of the window must not reset the scroll position.
+  resize -3
+  resize +3
+  redraw
+  call assert_equal(skipcol, winsaveview().skipcol)
+
+  " Using the autocommand window changes the height as well.
+  call bufload(bufadd(''))
+  redraw
+  call assert_equal(skipcol, winsaveview().skipcol)
+
+  bwipe!
+endfunc
+
 func Test_smoothscroll_long_line_zb()
   call NewWindow(10, 40)
   call setline(1, 'abcde '->repeat(150))
