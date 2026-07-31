@@ -946,7 +946,13 @@ is_na_patch() {
           '-I^\s+$' \
           '-I^#\s*(ifdef|if.*defined\().*FEAT_' \
           '-I^#\s*(else|endif)' \
+          '-I^EXTERN char e_(abstract|class|enum|interface|type)_' \
+          '-I^EXTERN char e_.*def_function' \
+          '-I^EXTERN char e_.*enddef' \
           '-I^EXTERN char e_.*vim9' \
+          '-I^\s*INIT\(= .+"E[0-9]+: (Abstract|Class|Enum|Interface|Type) ' \
+          '-I^\s*INIT\(= .+"E[0-9]+: .*:def ' \
+          '-I^\s*INIT\(= .+"E[0-9]+: .*enddef"' \
           '-I^\s*INIT\(= .+"E[0-9]+: .*[vV]im9' \
           "$patch" -- "$file")
         test -n "${HUNKS}" && return 1
