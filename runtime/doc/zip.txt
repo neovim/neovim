@@ -22,8 +22,12 @@ Editing a zip-like file opens a read-only listing. Directory entries can be
 opened to browse that level of the archive. File entries open as read-only
 `zipfile://{archive}::{path}` buffers.
 
-Mappings are the standard |dir-buffer-mappings|. At the archive root, - opens
-the containing filesystem directory.
+Mappings are the standard |dir-buffer-mappings|, plus:
+
+• x extracts the entry under the cursor into the current directory, discarding
+  its path inside the archive. It never overwrites an existing file.
+
+At the archive root, - opens the containing filesystem directory.
 
 Recognized extensions include zip, jar, apk, epub, Office and OpenDocument
 formats, whl, xpi, pkpass, and cbz.
@@ -36,10 +40,10 @@ Remote zip URLs are downloaded by |vim.net| and opened in the browser.
 
 LIMITATIONS                                                *zip-limitations*
 
-Archive entries cannot be updated or extracted. Remote archives are not
-refetched on reload, and there is no PowerShell fallback, no custom backend
-command, and no support for the legacy `g:zip_*` variables. Use |old-zip|
-when those features are required.
+Archive entries cannot be updated. Remote archives are not refetched on
+reload, and there is no PowerShell fallback, no custom backend command, and no
+support for the legacy `g:zip_*` variables. Use |old-zip| when those features
+are required.
 
 ==============================================================================
 Legacy plugin: zip                                                   *old-zip*
