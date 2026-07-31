@@ -551,7 +551,7 @@ bool check_compl_option(bool dict_opt)
   if (dict_opt
       ? (*curbuf->b_p_dict == NUL && *p_dict == NUL && !curwin->w_p_spell)
       : (*curbuf->b_p_tsr == NUL && *p_tsr == NUL
-         && *curbuf->b_p_tsrfu == NUL && *p_tsrfu == NUL)) {
+         && curbuf->b_p_tsrfu.type == kCallbackNone && p_tsrfu.type == kCallbackNone)) {
     ctrl_x_mode = CTRL_X_NORMAL;
     edit_submode = NULL;
     emsg(dict_opt ? _("'dictionary' option is empty") : _("'thesaurus' option is empty"));
@@ -3011,76 +3011,8 @@ static int get_cpt_sources_count(void)
   return count;
 }
 
-static Callback cfu_cb;    ///< 'completefunc' callback function
-static Callback ofu_cb;    ///< 'omnifunc' callback function
-static Callback tsrfu_cb;  ///< 'thesaurusfunc' callback function
 static Callback *cpt_cb;   ///< Callback functions associated with F{func}
 static int cpt_cb_count;   ///< Number of cpt callbacks
-
-/// Copy a global callback function to a buffer local callback.
-static void copy_global_to_buflocal_cb(Callback *globcb, Callback *bufcb)
-{
-  callback_free(bufcb);
-  if (globcb->type != kCallbackNone) {
-    callback_copy(bufcb, globcb);
-  }
-}
-
-/// Parse the 'completefunc' option value and set the callback function.
-/// Invoked when the 'completefunc' option is set. The option value can be a
-/// name of a function (string), or function(<name>) or funcref(<name>) or a
-/// lambda expression.
-const char *did_set_completefunc(optset_T *args)
-{
-  buf_T *buf = (buf_T *)args->os_buf;
-  int retval;
-
-  if (args->os_flags & OPT_LOCAL) {
-    retval = option_set_callback_func(args->os_newval.data.string.data, &buf->b_cfu_cb);
-  } else {
-    retval = option_set_callback_func(args->os_newval.data.string.data, &cfu_cb);
-    if (retval == OK && !(args->os_flags & OPT_GLOBAL)) {
-      set_buflocal_cfu_callback(buf);
-    }
-  }
-
-  return retval == FAIL ? e_invarg : NULL;
-}
-
-/// Copy the global 'completefunc' callback function to the buffer-local
-/// 'completefunc' callback for "buf".
-void set_buflocal_cfu_callback(buf_T *buf)
-{
-  copy_global_to_buflocal_cb(&cfu_cb, &buf->b_cfu_cb);
-}
-
-/// Parse the 'omnifunc' option value and set the callback function.
-/// Invoked when the 'omnifunc' option is set. The option value can be a
-/// name of a function (string), or function(<name>) or funcref(<name>) or a
-/// lambda expression.
-const char *did_set_omnifunc(optset_T *args)
-{
-  buf_T *buf = (buf_T *)args->os_buf;
-  int retval;
-
-  if (args->os_flags & OPT_LOCAL) {
-    retval = option_set_callback_func(args->os_newval.data.string.data, &buf->b_ofu_cb);
-  } else {
-    retval = option_set_callback_func(args->os_newval.data.string.data, &ofu_cb);
-    if (retval == OK && !(args->os_flags & OPT_GLOBAL)) {
-      set_buflocal_ofu_callback(buf);
-    }
-  }
-
-  return retval == FAIL ? e_invarg : NULL;
-}
-
-/// Copy the global 'omnifunc' callback function to the buffer-local 'omnifunc'
-/// callback for "buf".
-void set_buflocal_ofu_callback(buf_T *buf)
-{
-  copy_global_to_buflocal_cb(&ofu_cb, &buf->b_ofu_cb);
-}
 
 /// Free an array of 'complete' F{func} callbacks and set the pointer to NULL.
 void clear_cpt_callbacks(Callback **callbacks, int count)
@@ -3177,30 +3109,6 @@ int set_cpt_callbacks(optset_T *args)
   return OK;
 }
 
-/// Parse the 'thesaurusfunc' option value and set the callback function.
-/// Invoked when the 'thesaurusfunc' option is set. The option value can be a
-/// name of a function (string), or function(<name>) or funcref(<name>) or a
-/// lambda expression.
-const char *did_set_thesaurusfunc(optset_T *args FUNC_ATTR_UNUSED)
-{
-  buf_T *buf = (buf_T *)args->os_buf;
-  int retval;
-
-  if (args->os_flags & OPT_LOCAL) {
-    // buffer-local option set
-    retval = option_set_callback_func(buf->b_p_tsrfu, &buf->b_tsrfu_cb);
-  } else {
-    // global option set
-    retval = option_set_callback_func(p_tsrfu, &tsrfu_cb);
-    // when using :set, free the local callback
-    if (!(args->os_flags & OPT_GLOBAL)) {
-      callback_free(&buf->b_tsrfu_cb);
-    }
-  }
-
-  return retval == FAIL ? e_invarg : NULL;
-}
-
 /// Mark "copyID" references in an array of F{func} callbacks so that they are
 /// not garbage collected.
 bool set_ref_in_cpt_callbacks(Callback *callbacks, int count, int copyID)
@@ -3221,40 +3129,26 @@ bool set_ref_in_cpt_callbacks(Callback *callbacks, int count, int copyID)
 /// "copyID" so that they are not garbage collected.
 bool set_ref_in_insexpand_funcs(int copyID)
 {
-  bool abort = set_ref_in_callback(&cfu_cb, copyID, NULL, NULL);
-  abort = abort || set_ref_in_callback(&ofu_cb, copyID, NULL, NULL);
-  abort = abort || set_ref_in_callback(&tsrfu_cb, copyID, NULL, NULL);
+  bool abort = set_ref_in_callback(&p_cfu, copyID, NULL, NULL);
+  abort = abort || set_ref_in_callback(&p_ofu, copyID, NULL, NULL);
+  abort = abort || set_ref_in_callback(&p_tsrfu, copyID, NULL, NULL);
   abort = abort || set_ref_in_cpt_callbacks(cpt_cb, cpt_cb_count, copyID);
 
   return abort;
 }
 
-/// Get the user-defined completion function name for completion "type"
-static char *get_complete_funcname(int type)
-{
-  switch (type) {
-  case CTRL_X_FUNCTION:
-    return curbuf->b_p_cfu;
-  case CTRL_X_OMNI:
-    return curbuf->b_p_ofu;
-  case CTRL_X_THESAURUS:
-    return *curbuf->b_p_tsrfu == NUL ? p_tsrfu : curbuf->b_p_tsrfu;
-  default:
-    return "";
-  }
-}
-
-/// Get the callback to use for insert mode completion.
+/// Get the callback to use for insert mode completion of "type": 'completefunc', 'omnifunc', or
+/// 'thesaurusfunc'. Returns `kCallbackNone` if the option is empty.
 static Callback *get_insert_callback(int type)
 {
   if (type == CTRL_X_FUNCTION) {
-    return &curbuf->b_cfu_cb;
+    return &curbuf->b_p_cfu;
   }
   if (type == CTRL_X_OMNI) {
-    return &curbuf->b_ofu_cb;
+    return &curbuf->b_p_ofu;
   }
   // CTRL_X_THESAURUS
-  return (*curbuf->b_p_tsrfu != NUL) ? &curbuf->b_tsrfu_cb : &tsrfu_cb;
+  return curbuf->b_p_tsrfu.type != kCallbackNone ? &curbuf->b_p_tsrfu : &p_tsrfu;
 }
 
 /// Execute user defined complete function 'completefunc', 'omnifunc' or
@@ -3274,11 +3168,10 @@ static void expand_by_function(int type, char *base, Callback *cb)
   const bool is_cpt_function = (cb != NULL);
   const bool use_sandbox = is_cpt_function && was_set_insecurely(curwin, kOptComplete, OPT_LOCAL);
   if (!is_cpt_function) {
-    char *funcname = get_complete_funcname(type);
-    if (*funcname == NUL) {
+    cb = get_insert_callback(type);
+    if (cb->type == kCallbackNone) {
       return;
     }
-    cb = get_insert_callback(type);
   }
 
   // Call 'completefunc' to obtain the list of matches.
@@ -3814,7 +3707,7 @@ void f_complete_info(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 static bool thesaurus_func_complete(int type)
 {
   return type == CTRL_X_THESAURUS
-         && (*curbuf->b_p_tsrfu != NUL || *p_tsrfu != NUL);
+         && (curbuf->b_p_tsrfu.type != kCallbackNone || p_tsrfu.type != kCallbackNone);
 }
 
 /// Check if 'cpt' list index can be advanced to the next completion source.
@@ -4596,7 +4489,7 @@ static void get_register_completion(void)
 static Callback *get_callback_if_cpt_func(char *p, int idx)
 {
   if (*p == 'o') {
-    return &curbuf->b_ofu_cb;
+    return &curbuf->b_p_ofu;
   }
 
   if (*p == 'F') {
@@ -4605,7 +4498,7 @@ static Callback *get_callback_if_cpt_func(char *p, int idx)
       return curbuf->b_p_cpt_cb[idx].type != kCallbackNone
              ? &curbuf->b_p_cpt_cb[idx] : NULL;
     } else {
-      return &curbuf->b_cfu_cb;  // 'cfu'
+      return &curbuf->b_p_cfu;  // 'cfu'
     }
   }
 
@@ -5917,14 +5810,11 @@ static int get_userdefined_compl_info(colnr_T curs_col, Callback *cb, int *start
   const bool is_cpt_function = (cb != NULL);
   const bool use_sandbox = is_cpt_function && was_set_insecurely(curwin, kOptComplete, OPT_LOCAL);
   if (!is_cpt_function) {
-    // Call 'completefunc' or 'omnifunc' or 'thesaurusfunc' and get pattern
-    // length as a string
-    char *funcname = get_complete_funcname(ctrl_x_mode);
-    if (*funcname == NUL) {
+    cb = get_insert_callback(ctrl_x_mode);
+    if (cb->type == kCallbackNone) {
       semsg(_(e_notset), ctrl_x_mode_function() ? "completefunc" : "omnifunc");
       return FAIL;
     }
-    cb = get_insert_callback(ctrl_x_mode);
   }
 
   typval_T args[3];
@@ -6503,9 +6393,9 @@ void free_insexpand_stuff(void)
 {
   API_CLEAR_STRING(compl_orig_text);
   kv_destroy(compl_orig_extmarks);
-  callback_free(&cfu_cb);
-  callback_free(&ofu_cb);
-  callback_free(&tsrfu_cb);
+  callback_free(&p_cfu);
+  callback_free(&p_ofu);
+  callback_free(&p_tsrfu);
   clear_cpt_callbacks(&cpt_cb, cpt_cb_count);
 }
 #endif

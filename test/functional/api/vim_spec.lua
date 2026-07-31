@@ -1898,6 +1898,11 @@ describe('API', function()
       ok(not api.nvim_get_option_value('equalalways', {}))
     end)
 
+    it('Lua funcref RPC value is a `:map`-style "<Lua …>" string', function()
+      exec_lua('vim.o.operatorfunc = function() end')
+      matches('^<Lua %d+.*>$', api.nvim_get_option_value('operatorfunc', {}))
+    end)
+
     it('works to get global value of local options', function()
       eq(false, api.nvim_get_option_value('lisp', {}))
       eq(8, api.nvim_get_option_value('shiftwidth', {}))

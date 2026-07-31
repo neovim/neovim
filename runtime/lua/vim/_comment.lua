@@ -221,7 +221,7 @@ local function operator(mode)
   -- Used without arguments as part of expression mapping. Otherwise it is
   -- called as 'operatorfunc'.
   if mode == nil then
-    vim.o.operatorfunc = "v:lua.require'vim._comment'.operator"
+    vim.o.operatorfunc = operator
     return 'g@'
   end
 

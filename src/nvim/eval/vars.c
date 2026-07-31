@@ -440,8 +440,15 @@ int eval_charconvert(const char *const enc_from, const char *const enc_to,
   }
 
   bool err = false;
-  if (eval_to_bool(p_ccv, &err, NULL, false, true)) {
+  typval_T tv;
+  typval_T argv[1];
+  if (!callback_call(&p_ccv, 0, argv, &tv)) {
     err = true;
+  } else {
+    if (tv_get_number_chk(&tv, NULL) != 0) {
+      err = true;
+    }
+    tv_clear(&tv);
   }
 
   set_vim_var_string(VV_CC_FROM, NULL, -1);
@@ -469,8 +476,11 @@ void eval_diff(const char *const origfile, const char *const newfile, const char
   }
 
   // errors are ignored
-  typval_T *tv = eval_expr_ext(p_dex, NULL, true);
-  tv_free(tv);
+  typval_T tv;
+  typval_T argv[1];
+  if (callback_call(&p_dex, 0, argv, &tv)) {
+    tv_clear(&tv);
+  }
 
   set_vim_var_string(VV_FNAME_IN, NULL, -1);
   set_vim_var_string(VV_FNAME_NEW, NULL, -1);
@@ -491,8 +501,11 @@ void eval_patch(const char *const origfile, const char *const difffile, const ch
   }
 
   // errors are ignored
-  typval_T *tv = eval_expr_ext(p_pex, NULL, true);
-  tv_free(tv);
+  typval_T tv;
+  typval_T argv[1];
+  if (callback_call(&p_pex, 0, argv, &tv)) {
+    tv_clear(&tv);
+  }
 
   set_vim_var_string(VV_FNAME_IN, NULL, -1);
   set_vim_var_string(VV_FNAME_DIFF, NULL, -1);
@@ -3247,7 +3260,8 @@ static Object opt_from_tv(typval_T *tv, OptIndex opt_idx, const char *option, bo
   return value;
 }
 
-/// Converts an option value to typval.
+/// Converts an option value to typval. The result is independent of `value` (which is neither
+/// consumed nor aliased): tv_clear() the result, and release `value` per its own ownership.
 ///
 /// @param[in]  value    Option value to convert.
 /// @param      numbool  Whether to convert boolean values to number.
@@ -3284,7 +3298,12 @@ typval_T opt_to_tv(Object value, bool numbool)
     break;
   case kObjectTypeString:
     rettv.v_type = VAR_STRING;
-    rettv.vval.v_string = value.data.string.data;
+    rettv.vval.v_string = value.data.string.data != NULL ? xstrdup(value.data.string.data) : NULL;
+    break;
+  case kObjectTypeLuaRef:
+    // Lua callback option (e.g. 'operatorfunc'): show a human-readable hint (same as `:map` does).
+    rettv.v_type = VAR_STRING;
+    rettv.vval.v_string = nlua_funcref_str(value.data.luaref, NULL);
     break;
   default:
     abort();  // Should never happen.

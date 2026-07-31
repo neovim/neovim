@@ -38,8 +38,9 @@ typedef enum {
   kOptFlagNDname    = 1 << 21,  ///< Only normal directory name chars allowed.
   kOptFlagHLOnly    = 1 << 22,  ///< Option only changes highlight, not text.
   kOptFlagMLE       = 1 << 23,  ///< Under control of 'modelineexpr'.
-  kOptFlagFunc      = 1 << 24,  ///< Accept a function reference or a lambda.
+  kOptFlagFunc      = 1 << 24,  ///< Callback option: Lua function, or Vimscript funcref.
   kOptFlagColon     = 1 << 25,  ///< Values use colons to create sublists.
+  kOptFlagExpr      = 1 << 26,  ///< Callback option: Vimscript expr, e.g. 'foldexpr'.
 } OptFlags;
 
 /// Scopes that an option can support.

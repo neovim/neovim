@@ -5493,14 +5493,6 @@ static void ex_wrongmodifier(exarg_T *eap)
   eap->errmsg = _(e_invcmd);
 }
 
-/// callback function for 'findfunc'
-static Callback ffu_cb;
-
-static Callback *get_findfunc_callback(void)
-{
-  return *curbuf->b_p_ffu != NUL ? &curbuf->b_ffu_cb : &ffu_cb;
-}
-
 /// Call 'findfunc' to obtain a list of file names.
 static list_T *call_findfunc(char *pat, BoolVarValue cmdcomplete)
 {
@@ -5523,7 +5515,7 @@ static list_T *call_findfunc(char *pat, BoolVarValue cmdcomplete)
     current_sctx = *ctx;
   }
 
-  Callback *cb = get_findfunc_callback();
+  Callback *cb = get_findfunc();
   typval_T rettv;
   int retval = callback_call(cb, 2, args, &rettv);
 
@@ -5611,53 +5603,16 @@ static char *findfunc_find_file(char *findarg, size_t findarg_len, int count)
   return ret_fname;
 }
 
-/// Process the 'findfunc' option value.
-/// Returns NULL on success and an error message on failure.
-const char *did_set_findfunc(optset_T *args)
-{
-  buf_T *buf = (buf_T *)args->os_buf;
-  int retval;
-
-  if (args->os_flags & OPT_LOCAL) {
-    // buffer-local option set
-    retval = option_set_callback_func(buf->b_p_ffu, &buf->b_ffu_cb);
-  } else {
-    // global option set
-    retval = option_set_callback_func(p_ffu, &ffu_cb);
-    // when using :set, free the local callback
-    if (!(args->os_flags & OPT_GLOBAL)) {
-      callback_free(&buf->b_ffu_cb);
-    }
-  }
-
-  if (retval == FAIL) {
-    return e_invarg;
-  }
-
-  // If the option value starts with <SID> or s:, then replace that with
-  // the script identifier.
-  char **varp = (char **)args->os_varp;
-  char *name = get_scriptlocal_funcname(*varp);
-  if (name != NULL) {
-    free_string_option(*varp);
-    *varp = name;
-  }
-
-  return NULL;
-}
-
 void free_findfunc_option(void)
 {
-  callback_free(&ffu_cb);
+  callback_free(&p_ffu);
 }
 
 /// Mark the global 'findfunc' callback with "copyID" so that it is not
 /// garbage collected.
 bool set_ref_in_findfunc(int copyID)
 {
-  bool abort = false;
-  abort = set_ref_in_callback(&ffu_cb, copyID, NULL, NULL);
-  return abort;
+  return set_ref_in_callback(&p_ffu, copyID, NULL, NULL);
 }
 
 static void set_browse_edit_arg(exarg_T *eap)
@@ -5704,7 +5659,7 @@ void ex_splitview(exarg_T *eap)
   }
 
   if (eap->cmdidx == CMD_sfind || eap->cmdidx == CMD_tabfind) {
-    if (*get_findfunc() != NUL) {
+    if (get_findfunc()->type != kCallbackNone) {
       fname = findfunc_find_file(eap->arg, strlen(eap->arg),
                                  eap->addr_count > 0 ? eap->line2 : 1);
     } else {
@@ -5988,7 +5943,7 @@ static void ex_find(exarg_T *eap)
   }
 
   char *fname = NULL;
-  if (*get_findfunc() != NUL) {
+  if (get_findfunc()->type != kCallbackNone) {
     fname = findfunc_find_file(eap->arg, strlen(eap->arg),
                                eap->addr_count > 0 ? eap->line2 : 1);
   } else {

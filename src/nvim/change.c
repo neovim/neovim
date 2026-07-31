@@ -1226,7 +1226,7 @@ bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   }
 
   // May do indenting after opening a new line.
-  bool do_cindent = !p_paste && (curbuf->b_p_cin || *curbuf->b_p_inde != NUL)
+  bool do_cindent = !p_paste && (curbuf->b_p_cin || curbuf->b_p_inde.type != kCallbackNone)
                     && in_cinkeys(dir == FORWARD ? KEY_OPEN_FORW : KEY_OPEN_BACK,
                                   ' ', linewhite(curwin->w_cursor.lnum))
                     && !(flags & OPENLINE_FORCE_INDENT);

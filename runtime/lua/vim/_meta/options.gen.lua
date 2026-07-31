@@ -840,7 +840,7 @@ vim.bo.channel = vim.o.channel
 --- Otherwise the expression is evaluated in the context of the script
 --- where the option was set, thus script-local items are available.
 ---
---- @type string
+--- @type string|function
 vim.o.charconvert = ""
 vim.o.ccv = vim.o.charconvert
 vim.go.charconvert = vim.o.charconvert
@@ -1125,7 +1125,7 @@ vim.bo.cpt = vim.bo.complete
 --- function, a `lambda` or a `Funcref`.  See `option-value-function` for
 --- more information.
 ---
---- @type string
+--- @type string|function
 vim.o.completefunc = ""
 vim.o.cfu = vim.o.completefunc
 vim.bo.completefunc = vim.o.completefunc
@@ -1791,7 +1791,7 @@ vim.go.dia = vim.go.diffanchors
 --- Expression which is evaluated to obtain a diff file (either ed-style
 --- or unified-style) from two versions of a file.  See `diff-diffexpr`.
 ---
---- @type string
+--- @type string|function
 vim.o.diffexpr = ""
 vim.o.dex = vim.o.diffexpr
 vim.go.diffexpr = vim.o.diffexpr
@@ -2672,7 +2672,7 @@ vim.go.fcs = vim.go.fillchars
 --- ```
 ---
 ---
---- @type string
+--- @type string|function
 vim.o.findfunc = ""
 vim.o.ffu = vim.o.findfunc
 vim.bo.findfunc = vim.o.findfunc
@@ -2745,7 +2745,7 @@ vim.wo.fen = vim.wo.foldenable
 --- It is not allowed to change text or jump to another window while
 --- evaluating 'foldexpr' `textlock`.
 ---
---- @type string
+--- @type string|function
 vim.o.foldexpr = "0"
 vim.o.fde = vim.o.foldexpr
 vim.wo.foldexpr = vim.o.foldexpr
@@ -2891,7 +2891,7 @@ vim.go.fdo = vim.go.foldopen
 --- When set to an empty string, foldtext is disabled, and the line
 --- is displayed normally with highlighting and no line wrapping.
 ---
---- @type string
+--- @type string|function
 vim.o.foldtext = "foldtext()"
 vim.o.fdt = vim.o.foldtext
 vim.wo.foldtext = vim.o.foldtext
@@ -2943,7 +2943,7 @@ vim.wo.fdt = vim.wo.foldtext
 --- since changing the buffer text is not allowed.
 --- This option cannot be set in a modeline when 'modelineexpr' is off.
 ---
---- @type string
+--- @type string|function
 vim.o.formatexpr = ""
 vim.o.fex = vim.o.formatexpr
 vim.bo.formatexpr = vim.o.formatexpr
@@ -3522,7 +3522,7 @@ vim.go.inc = vim.go.include
 --- It is not allowed to change text or jump to another window while
 --- evaluating 'includeexpr' `textlock`.
 ---
---- @type string
+--- @type string|function
 vim.o.includeexpr = ""
 vim.o.inex = vim.o.includeexpr
 vim.bo.includeexpr = vim.o.includeexpr
@@ -3617,7 +3617,7 @@ vim.go.is = vim.go.incsearch
 --- It is not allowed to change text or jump to another window while
 --- evaluating 'indentexpr' `textlock`.
 ---
---- @type string
+--- @type string|function
 vim.o.indentexpr = ""
 vim.o.inde = vim.o.indentexpr
 vim.bo.indentexpr = vim.o.indentexpr
@@ -4875,7 +4875,7 @@ vim.wo.nuw = vim.wo.numberwidth
 --- This option is usually set by a filetype plugin:
 --- `:filetype-plugin-on`
 ---
---- @type string
+--- @type string|function
 vim.o.omnifunc = ""
 vim.o.ofu = vim.o.omnifunc
 vim.bo.omnifunc = vim.o.omnifunc
@@ -4886,7 +4886,7 @@ vim.bo.ofu = vim.bo.omnifunc
 --- the name of a function, a `lambda` or a `Funcref`.  See
 --- `option-value-function` for more information.
 ---
---- @type string
+--- @type string|function
 vim.o.operatorfunc = ""
 vim.o.opfunc = vim.o.operatorfunc
 vim.go.operatorfunc = vim.o.operatorfunc
@@ -4923,7 +4923,7 @@ vim.go.para = vim.go.paragraphs
 --- Expression which is evaluated to apply a patch to a file and generate
 --- the resulting new version of the file.  See `diff-patchexpr`.
 ---
---- @type string
+--- @type string|function
 vim.o.patchexpr = ""
 vim.o.pex = vim.o.patchexpr
 vim.go.patchexpr = vim.o.patchexpr
@@ -5191,7 +5191,7 @@ vim.go.pyx = vim.go.pyxversion
 --- It is not allowed to change text or jump to another window while
 --- evaluating 'qftf' `textlock`.
 ---
---- @type string
+--- @type string|function
 vim.o.quickfixtextfunc = ""
 vim.o.qftf = vim.o.quickfixtextfunc
 vim.go.quickfixtextfunc = vim.o.quickfixtextfunc
@@ -5718,7 +5718,7 @@ vim.go.slm = vim.go.selectmode
 ---    localoptions	options and mappings local to a window or buffer (not
 --- 		global values for local options)
 ---    options	all options and mappings (also global values for local
---- 		options)
+--- 		options), except Lua functions `option-value-function`.
 ---    skiprtp	exclude 'runtimepath' and 'packpath' from the options
 ---    resize	size of the Vim window: 'lines' and 'columns'
 ---    sesdir	the directory in which the session file is located
@@ -7324,7 +7324,7 @@ vim.go.tc = vim.go.tagcase
 --- `lambda` or a `Funcref`.  See `option-value-function` for more
 --- information.
 ---
---- @type string
+--- @type string|function
 vim.o.tagfunc = ""
 vim.o.tfu = vim.o.tagfunc
 vim.bo.tagfunc = vim.o.tagfunc
@@ -7492,7 +7492,7 @@ vim.go.tsr = vim.go.thesaurus
 --- The value can be the name of a function, a `lambda` or a `Funcref`.
 --- See `option-value-function` for more information.
 ---
---- @type string
+--- @type string|function
 vim.o.thesaurusfunc = ""
 vim.o.tsrfu = vim.o.thesaurusfunc
 vim.bo.thesaurusfunc = vim.o.thesaurusfunc
@@ -7885,7 +7885,8 @@ vim.go.vdir = vim.go.viewdir
 ---    folds	manually created folds, opened/closed folds and local
 --- 		fold options
 ---    options	options and mappings local to a window or buffer (not
---- 		global values for local options)
+---                 global values for local options), except Lua functions
+--- 		`option-value-function`.
 ---    localoptions same as "options"
 ---    slash	`deprecated` Always enabled. Uses "/" in filenames.
 ---    unix		`deprecated` Always enabled. Uses "\n" line endings.

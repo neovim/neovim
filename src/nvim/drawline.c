@@ -1111,7 +1111,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
 
   const bool in_curline = wp == curwin && lnum == curwin->w_cursor.lnum;
   const bool has_fold = foldinfo.fi_level != 0 && foldinfo.fi_lines > 0;
-  const bool has_foldtext = has_fold && *wp->w_p_fdt != NUL;
+  const bool has_foldtext = has_fold && wp->w_p_fdt.type != kCallbackNone;
 
   const bool is_wrapped = wp->w_p_wrap
                           && !has_fold;       // Never wrap folded lines

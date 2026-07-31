@@ -3121,22 +3121,10 @@ static void op_colon(oparg_T *oap)
   // do_cmdline() does the rest
 }
 
-/// callback function for 'operatorfunc'
-static Callback opfunc_cb;
-
-/// Process the 'operatorfunc' option value.
-const char *did_set_operatorfunc(optset_T *args FUNC_ATTR_UNUSED)
-{
-  if (option_set_callback_func(p_opfunc, &opfunc_cb) == FAIL) {
-    return e_invarg;
-  }
-  return NULL;
-}
-
 #ifdef EXITFREE
 void free_operatorfunc_option(void)
 {
-  callback_free(&opfunc_cb);
+  callback_free(&p_opfunc);
 }
 #endif
 
@@ -3144,7 +3132,7 @@ void free_operatorfunc_option(void)
 /// garbage collected.
 bool set_ref_in_opfunc(int copyID)
 {
-  return set_ref_in_callback(&opfunc_cb, copyID, NULL, NULL);
+  return set_ref_in_callback(&p_opfunc, copyID, NULL, NULL);
 }
 
 /// Handle the "g@" operator: call 'operatorfunc'.
@@ -3154,7 +3142,7 @@ static void op_function(const oparg_T *oap)
   const pos_T orig_start = curbuf->b_op_start;
   const pos_T orig_end = curbuf->b_op_end;
 
-  if (*p_opfunc == NUL) {
+  if (p_opfunc.type == kCallbackNone) {
     emsg(_("E774: 'operatorfunc' is empty"));
   } else {
     // Set '[ and '] marks to text to be operated on.
@@ -3185,7 +3173,7 @@ static void op_function(const oparg_T *oap)
     finish_op = false;
 
     typval_T rettv;
-    if (callback_call(&opfunc_cb, 1, argv, &rettv)) {
+    if (callback_call(&p_opfunc, 1, argv, &rettv)) {
       tv_clear(&rettv);
     }
 
@@ -3744,9 +3732,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
           }
           break;
         }
-        op_reindent(oap,
-                    *curbuf->b_p_inde != NUL ? get_expr_indent
-                                             : get_c_indent);
+        op_reindent(oap, curbuf->b_p_inde.type != kCallbackNone ? get_expr_indent : get_c_indent);
         break;
       }
 
@@ -3767,7 +3753,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       break;
 
     case OP_FORMAT:
-      if (*curbuf->b_p_fex != NUL) {
+      if (curbuf->b_p_fex.type != kCallbackNone) {
         op_formatexpr(oap);             // use expression
       } else {
         if (*p_fp != NUL || *curbuf->b_p_fp != NUL) {

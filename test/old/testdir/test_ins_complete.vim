@@ -3315,12 +3315,14 @@ func Test_thesaurusfunc_callback()
   set thesaurusfunc=
   setlocal thesaurusfunc=NoSuchFunc
   setglobal thesaurusfunc=s:TsrFunc3
+  " A callback-option (e.g. 'findfunc') stores funcref as its unambiguous <SNR> form.
+  let tsrfunc3 = expand('<SID>') .. 'TsrFunc3'
   call assert_equal('NoSuchFunc', &thesaurusfunc)
   call assert_equal('NoSuchFunc', &l:thesaurusfunc)
-  call assert_equal('s:TsrFunc3', &g:thesaurusfunc)
+  call assert_equal(tsrfunc3, &g:thesaurusfunc)
   new | only
-  call assert_equal('s:TsrFunc3', &thesaurusfunc)
-  call assert_equal('s:TsrFunc3', &g:thesaurusfunc)
+  call assert_equal(tsrfunc3, &thesaurusfunc)
+  call assert_equal(tsrfunc3, &g:thesaurusfunc)
   call assert_equal('', &l:thesaurusfunc)
   call setline(1, 'script1')
   let g:TsrFunc3Args = []
@@ -3332,8 +3334,8 @@ func Test_thesaurusfunc_callback()
   set thesaurusfunc=
   setlocal thesaurusfunc=NoSuchFunc
   set thesaurusfunc=s:TsrFunc3
-  call assert_equal('s:TsrFunc3', &thesaurusfunc)
-  call assert_equal('s:TsrFunc3', &g:thesaurusfunc)
+  call assert_equal(tsrfunc3, &thesaurusfunc)
+  call assert_equal(tsrfunc3, &g:thesaurusfunc)
   call assert_equal('', &l:thesaurusfunc)
   call setline(1, 'script1')
   let g:TsrFunc3Args = []
@@ -3341,8 +3343,8 @@ func Test_thesaurusfunc_callback()
   call assert_equal([[1, ''], [0, 'script1']], g:TsrFunc3Args)
   setlocal bufhidden=wipe
   new | only!
-  call assert_equal('s:TsrFunc3', &thesaurusfunc)
-  call assert_equal('s:TsrFunc3', &g:thesaurusfunc)
+  call assert_equal(tsrfunc3, &thesaurusfunc)
+  call assert_equal(tsrfunc3, &g:thesaurusfunc)
   call assert_equal('', &l:thesaurusfunc)
   call setline(1, 'script1')
   let g:TsrFunc3Args = []

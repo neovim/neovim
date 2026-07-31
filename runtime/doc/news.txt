@@ -77,6 +77,10 @@ These changes may require adaptations in your config or plugins.
 
 API
 
+• API results containing a Lua function reference (e.g. a "callback" reported
+  by |nvim_get_keymap()| or |nvim_get_autocmds()|, or a "callback" option
+  value) are serialized over RPC as a human-readable `"<Lua …>"` hint string,
+  instead of nil.
 • |nvim_create_autocmd()|, |nvim_exec_autocmds()| and |nvim_clear_autocmds()|
   no longer treat an empty non-nil pattern as nil.
 • |nvim_clear_autocmds()| no longer treats an empty array event as nil.
@@ -345,6 +349,11 @@ LUA
 
 OPTIONS
 
+• Lua functions/closures can be assigned to "func" and "expr" options:
+  |option-value-function| (e.g. `vim.o.operatorfunc`), |expr-option-function|
+  (e.g. `vim.wo.foldexpr`, `vim.bo.indentexpr`). Reading such an option:
+  • ...from Lua, gets the function itself.
+  • ...from Vimscript/RPC, gets a human-readable `"<Lua …>"` hint string.
 • 'ttyfast' can be disabled during startup by setting |$NVIM_NOTTYFAST|.
 • 'scrolloffpad' allows vertically centering cursor at the end of file.
 • 'shortmess' flag |shm-u| silences undo/redo messages.

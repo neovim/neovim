@@ -187,9 +187,10 @@ describe('nvim_get_commands', function()
       addr = NIL,
       bang = false,
       bar = false,
-      callback = NIL, -- RPC serializes Lua callback as NIL.
-      complete = NIL, -- RPC serializes Lua callback as NIL.
-      preview = NIL, -- RPC serializes Lua callback as NIL.
+      -- RPC serializes Lua func as "<Lua N>" (normalized below).
+      callback = '<Lua ?>',
+      complete = '<Lua ?>',
+      preview = '<Lua ?>',
       complete_arg = NIL,
       count = NIL,
       definition = '',
@@ -268,6 +269,10 @@ describe('nvim_get_commands', function()
     ]])
     -- TODO(justinmk): Order is stable but undefined. Sort before return?
     local commands = api.nvim_get_commands({ builtin = false })
+    -- Normalize the volatile ref id in the "<Lua N>" funcref hints.
+    for _, k in ipairs({ 'callback', 'complete', 'preview' }) do
+      commands.PreviewLuaCmd[k] = (commands.PreviewLuaCmd[k]:gsub('<Lua %d+.->', '<Lua ?>'))
+    end
     eq({
       Cmd2 = cmd2,
       Cmd3 = cmd3,

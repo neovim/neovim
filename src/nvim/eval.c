@@ -710,6 +710,59 @@ void *call_func_retlist(const char *func, int argc, typval_T *argv)
   return rettv.vval.v_list;
 }
 
+/// Evaluate a number-valued "expr" option ('indentexpr'/'formatexpr') via its callback.
+///
+/// Copies the callback first (the option could be changed while evaluating it) and suppresses
+/// errors; evaluates in the sandbox when `use_sandbox`. `v:` context, `current_sctx` and any
+/// textlock are the caller's responsibility.
+///
+/// @return  The number result, or -1 on failure.
+int eval_expr_option_number(Callback *cb, bool use_sandbox)
+{
+  Callback copy;
+  callback_copy(&copy, cb);
+  if (use_sandbox) {
+    sandbox++;
+  }
+  emsg_off++;
+  typval_T tv;
+  typval_T argv[1];
+  int retval = -1;
+  if (callback_call(&copy, 0, argv, &tv)) {
+    retval = (int)tv_get_number_chk(&tv, NULL);
+    tv_clear(&tv);
+  }
+  emsg_off--;
+  if (use_sandbox) {
+    sandbox--;
+  }
+  callback_free(&copy);
+  return retval;
+}
+
+/// Evaluate a "expr" option ('foldtext'/'includeexpr') via its callback, under |textlock| and an
+/// isolated funccal stack; evaluates in the |sandbox| when `use_sandbox`. The caller sets up `v:`
+/// context and interprets `*ret_tv` (which it must clear on success).
+///
+/// @return  Whether the callback was called (result in `*ret_tv`).
+bool eval_expr_option_tv(Callback *cb, bool use_sandbox, typval_T *ret_tv)
+{
+  funccal_entry_T funccal_entry;
+  save_funccal(&funccal_entry);
+  if (use_sandbox) {
+    sandbox++;
+  }
+  textlock++;
+  typval_T argv[1];
+  bool ok = callback_call(cb, 0, argv, ret_tv);
+  textlock--;
+  if (use_sandbox) {
+    sandbox--;
+  }
+  restore_funccal();
+  return ok;
+}
+
 /// Evaluate 'foldexpr'.  Returns the foldlevel, and any character preceding
 /// it in "*cp".  Doesn't give error messages.
 int eval_foldexpr(win_T *wp, int *cp)
@@ -717,7 +770,7 @@ int eval_foldexpr(win_T *wp, int *cp)
   const sctx_T saved_sctx = current_sctx;
   const bool use_sandbox = was_set_insecurely(wp, kOptFoldexpr, OPT_LOCAL);
 
-  char *arg = skipwhite(wp->w_p_fde);
+  // 'foldexpr' (string) evaluates in the script where it was set; current line is v:lnum.
   current_sctx = wp->w_p_script_ctx[kWinOptFoldexpr];
 
   emsg_off++;
@@ -728,10 +781,9 @@ int eval_foldexpr(win_T *wp, int *cp)
   *cp = NUL;
 
   typval_T tv;
+  typval_T argv[1];  // Unused: func 'foldexpr' takes no args (v:lnum legacy).
   varnumber_T retval;
-  // Evaluate the expression.  If the expression is "FuncName()" call the
-  // function directly.
-  if (eval0_simple_funccal(arg, &tv, NULL, &EVALARG_EVALUATE) == FAIL) {
+  if (!callback_call(&wp->w_p_fde, 0, argv, &tv)) {
     retval = 0;
   } else {
     // If the result is a number, just return the number.
@@ -756,7 +808,6 @@ int eval_foldexpr(win_T *wp, int *cp)
     sandbox--;
   }
   textlock--;
-  clear_evalarg(&EVALARG_EVALUATE, NULL);
   current_sctx = saved_sctx;
 
   return (int)retval;
@@ -766,18 +817,9 @@ int eval_foldexpr(win_T *wp, int *cp)
 Object eval_foldtext(win_T *wp)
 {
   const bool use_sandbox = was_set_insecurely(wp, kOptFoldtext, OPT_LOCAL);
-  char *arg = wp->w_p_fdt;
-  funccal_entry_T funccal_entry;
-
-  save_funccal(&funccal_entry);
-  if (use_sandbox) {
-    sandbox++;
-  }
-  textlock++;
-
   typval_T tv;
   Object retval;
-  if (eval0_simple_funccal(arg, &tv, NULL, &EVALARG_EVALUATE) == FAIL) {
+  if (!eval_expr_option_tv(&wp->w_p_fdt, use_sandbox, &tv)) {
     retval = STRING_OBJ(NULL_STRING);
   } else {
     if (tv.v_type == VAR_LIST) {
@@ -787,14 +829,6 @@ Object eval_foldtext(win_T *wp)
     }
     tv_clear(&tv);
   }
-  clear_evalarg(&EVALARG_EVALUATE, NULL);
-
-  if (use_sandbox) {
-    sandbox--;
-  }
-  textlock--;
-  restore_funccal();
-
   return retval;
 }
 
@@ -3409,6 +3443,7 @@ int eval_option(const char **const arg, typval_T *const rettv, const bool evalua
     assert(value.type != kObjectTypeNil);
 
     *rettv = opt_to_tv(value, true);
+    optval_free(value);
   } else if (working && !is_tty_opt && is_option_hidden(opt_idx)) {
     ret = FAIL;
   }
@@ -4044,11 +4079,11 @@ bool garbage_collect(bool testing)
     // buffer callback functions
     ABORTING(set_ref_in_callback)(&buf->b_prompt_callback, copyID, NULL, NULL);
     ABORTING(set_ref_in_callback)(&buf->b_prompt_interrupt, copyID, NULL, NULL);
-    ABORTING(set_ref_in_callback)(&buf->b_cfu_cb, copyID, NULL, NULL);
-    ABORTING(set_ref_in_callback)(&buf->b_ofu_cb, copyID, NULL, NULL);
-    ABORTING(set_ref_in_callback)(&buf->b_tsrfu_cb, copyID, NULL, NULL);
-    ABORTING(set_ref_in_callback)(&buf->b_tfu_cb, copyID, NULL, NULL);
-    ABORTING(set_ref_in_callback)(&buf->b_ffu_cb, copyID, NULL, NULL);
+    ABORTING(set_ref_in_callback)(&buf->b_p_cfu, copyID, NULL, NULL);
+    ABORTING(set_ref_in_callback)(&buf->b_p_ofu, copyID, NULL, NULL);
+    ABORTING(set_ref_in_callback)(&buf->b_p_tsrfu, copyID, NULL, NULL);
+    ABORTING(set_ref_in_callback)(&buf->b_p_tfu, copyID, NULL, NULL);
+    ABORTING(set_ref_in_callback)(&buf->b_p_ffu, copyID, NULL, NULL);
     if (!abort && buf->b_p_cpt_cb != NULL) {
       ABORTING(set_ref_in_cpt_callbacks)(buf->b_p_cpt_cb, buf->b_p_cpt_count, copyID);
     }
@@ -4897,8 +4932,6 @@ bool callback_call(Callback *const callback, const int argcount_in, typval_T *co
 
   partial_T *partial;
   char *name;
-  Array args = ARRAY_DICT_INIT;
-  Object rv;
   switch (callback->type) {
   case kCallbackFuncref:
     name = callback->data.funcref;
@@ -4920,9 +4953,37 @@ bool callback_call(Callback *const callback, const int argcount_in, typval_T *co
     name = partial_name(partial);
     break;
 
-  case kCallbackLua:
-    rv = nlua_call_ref(callback->data.luaref, NULL, args, kRetNilBool, NULL, NULL);
-    return LUARET_TRUTHY(rv);
+  case kCallbackLua: {
+    // Call the Lua function with the given args and return its result via rettv.
+    Arena arena = ARENA_EMPTY;
+    Array luaargs = arena_array(&arena, (size_t)argcount_in);
+    for (int i = 0; i < argcount_in; i++) {
+      ADD_C(luaargs, vim_to_object(&argvars_in[i], &arena, false));
+    }
+    Error err = ERROR_INIT;
+    callback_depth++;
+    Object result = nlua_call_ref(callback->data.luaref, NULL, luaargs, kRetObject, &arena, &err);
+    callback_depth--;
+    const bool ok = !ERROR_SET(&err);
+    if (!ok) {
+      semsg_multiline("emsg", "E5108: %s", err.msg);
+      api_clear_error(&err);
+    } else {
+      object_to_vim(result, rettv, NULL);
+    }
+    arena_mem_free(arena_finish(&arena));
+    return ok;
+  }
+
+  case kCallbackExpr: {
+    // Evaluate Vimscript expression ("expr" options).
+    // Optimization: If the expression is "FuncName()" call the function directly.
+    callback_depth++;
+    int r = eval0_simple_funccal(skipwhite(callback->data.expr), rettv, NULL, &EVALARG_EVALUATE);
+    callback_depth--;
+    clear_evalarg(&EVALARG_EVALUATE, NULL);
+    return r == OK;
+  }
 
   case kCallbackNone:
     return false;
@@ -4946,18 +5007,19 @@ bool set_ref_in_callback(Callback *callback, int copyID, ht_stack_T **ht_stack,
 {
   typval_T tv;
   switch (callback->type) {
+  case kCallbackExpr:
   case kCallbackFuncref:
   case kCallbackNone:
+    break;
+
+  case kCallbackLua:
+    // LuaRef is owned by the Lua registry, not traced by Vimscript's mark-sweep; nothing to mark.
     break;
 
   case kCallbackPartial:
     tv.v_type = VAR_PARTIAL;
     tv.vval.v_partial = callback->data.partial;
     return set_ref_in_item(&tv, copyID, ht_stack, list_stack);
-    break;
-
-  case kCallbackLua:
-    abort();
   }
   return false;
 }

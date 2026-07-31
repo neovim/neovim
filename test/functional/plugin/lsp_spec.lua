@@ -42,6 +42,14 @@ local function get_buf_option(name, bufnr)
   end)
 end
 
+--- True if buf-local option (func option like 'tagfunc') holds `vim.lsp[name]`.
+local function buf_option_is_lsp(name, bufnr)
+  return exec_lua(function()
+    bufnr = bufnr or _G.BUFFER
+    return vim.api.nvim_get_option_value(name, { buf = bufnr }) == vim.lsp[name]
+  end)
+end
+
 local function make_edit(y_0, x_0, y_1, x_1, text)
   return {
     range = {
@@ -459,8 +467,8 @@ describe('LSP', function()
         end,
         on_handler = function(_, _, ctx)
           if ctx.method == 'test' then
-            eq('v:lua.vim.lsp.tagfunc', get_buf_option('tagfunc'))
-            eq('v:lua.vim.lsp.omnifunc', get_buf_option('omnifunc'))
+            eq(true, buf_option_is_lsp('tagfunc'))
+            eq(true, buf_option_is_lsp('omnifunc'))
             eq('v:lua.vim.lsp.formatexpr()', get_buf_option('formatexpr'))
             eq('', get_buf_option('keywordprg'))
             eq(
@@ -529,8 +537,8 @@ describe('LSP', function()
         end,
         on_handler = function(_, _, ctx)
           if ctx.method == 'test' then
-            eq('v:lua.vim.lsp.tagfunc', get_buf_option('tagfunc', BUFFER_1))
-            eq('v:lua.vim.lsp.omnifunc', get_buf_option('omnifunc', BUFFER_2))
+            eq(true, buf_option_is_lsp('tagfunc', BUFFER_1))
+            eq(true, buf_option_is_lsp('omnifunc', BUFFER_2))
             eq('v:lua.vim.lsp.formatexpr()', get_buf_option('formatexpr', BUFFER_2))
             client:stop()
           end

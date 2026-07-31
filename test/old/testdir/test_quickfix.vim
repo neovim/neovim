@@ -5748,7 +5748,9 @@ func Xtest_qftextfunc(cchar)
   Xwindow
   call assert_equal(['green', 'blue'], getline(1, '$'))
   Xclose
-  call assert_equal("{d -> map(g:Xgetlist({'id' : d.id, 'items' : 1}).items[d.start_idx-1:d.end_idx-1], 'v:val.text')}", &quickfixtextfunc)
+  " A callback option stores the resolved funcref, so a lambda reads back as its <lambda> handle
+  " (consistent with the per-list 'quickfixtextfunc' below).
+  call assert_match("function('<lambda>\\d\\+')", &quickfixtextfunc)
   set quickfixtextfunc&
 
   " use a lambda function that returns an empty list
