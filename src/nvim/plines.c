@@ -814,7 +814,7 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
 }
 
 /// Like plines_win(), but only reports the number of physical screen lines
-/// used from the start of the line to the given column number.
+/// used from the start of the line to the given byte column.
 int plines_win_col(win_T *wp, linenr_T lnum, long column)
 {
   // Check for filler lines above this buffer line.
@@ -837,12 +837,12 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
   StrCharInfo ci = utf_ptr2StrCharInfo(line);
   if (cstype == kCharsizeFast) {
     bool const use_tabstop = csarg.use_tabstop;
-    while (*ci.ptr != NUL && --column >= 0) {
+    while (*ci.ptr != NUL && ci.ptr < line + column) {
       vcol += charsize_fast_impl(wp, ci.ptr, use_tabstop, vcol, ci.chr.value).width;
       ci = utfc_next(ci);
     }
   } else {
-    while (*ci.ptr != NUL && --column >= 0) {
+    while (*ci.ptr != NUL && ci.ptr < line + column) {
       vcol += charsize_regular(&csarg, ci.ptr, vcol, ci.chr.value).width;
       ci = utfc_next(ci);
     }
