@@ -2174,7 +2174,7 @@ stcsign:
   if (opt_idx != kOptInvalid && did_emsg > did_emsg_before) {
     Object def = get_option_default(opt_idx, opt_scope);
     set_option_direct(opt_idx, def, opt_scope, SID_ERROR);
-    optval_free_read(get_option_flags(opt_idx), def);
+    optval_free_read(opt_idx, def);
   }
 
   // A user function may reset KeyTyped, restore it.

@@ -3260,7 +3260,8 @@ static Object opt_from_tv(typval_T *tv, OptIndex opt_idx, const char *option, bo
   return value;
 }
 
-/// Converts an option value to typval. Caller must tv_clear() the result.
+/// Converts an option value to typval. The result is independent of `value` (which is neither
+/// consumed nor aliased): tv_clear() the result, and release `value` per its own ownership.
 ///
 /// @param[in]  value    Option value to convert.
 /// @param      numbool  Whether to convert boolean values to number.

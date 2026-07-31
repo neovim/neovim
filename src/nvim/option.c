@@ -457,8 +457,8 @@ Object get_option_default(const OptIndex opt_idx, int opt_flags)
 #endif
 
   if ((opt_flags & OPT_LOCAL) && is_global_local_option) {
-    // Use unset local value instead of default value for local scope of global-local options.
-    return get_option_unset_value(opt_idx);
+    // Local scope of a global-local option defaults to "unset" (optval_is_unset_local()).
+    return UNSET;
   }
 
   Object def_val = opt->def_val;
@@ -470,7 +470,7 @@ Object get_option_default(const OptIndex opt_idx, int opt_flags)
       def_val = CSTR_AS_OBJ(s);
     }
   }
-  return optval_is_owned(opt->flags) ? copy_object(def_val, NULL) : def_val;
+  return optval_is_owned(opt_idx) ? copy_object(def_val, NULL) : def_val;
 }
 
 /// Allocate the default values for all options by copying them from the stack.
@@ -502,7 +502,7 @@ static void set_option_default(const OptIndex opt_idx, int opt_flags)
   bool both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
   Object def_val = get_option_default(opt_idx, opt_flags);
   set_option_direct(opt_idx, def_val, opt_flags, current_sctx.sc_sid);
-  optval_free_read(options[opt_idx].flags, def_val);
+  optval_free_read(opt_idx, def_val);
 
   if (opt_idx == kOptScroll) {
     win_comp_scroll(curwin);
@@ -1349,7 +1349,7 @@ Object get_option_newval(OptIndex opt_idx, int opt_flags, set_prefix_T prefix, c
     // ":set opt&": Reset to default value.
     // NOTE: Use OPT_GLOBAL instead of opt_flags to ensure we don't use the unset local value for
     // global-local options when OPT_LOCAL is used.
-    return optval_own(flags, get_option_default(opt_idx, OPT_GLOBAL));
+    return optval_own(opt_idx, get_option_default(opt_idx, OPT_GLOBAL));
   } else if (nextchar == '<') {
     // ":set opt<": Reset to global value.
     // ":setlocal opt<": Copy global value to local value.
@@ -1369,7 +1369,7 @@ Object get_option_newval(OptIndex opt_idx, int opt_flags, set_prefix_T prefix, c
   } else {
     // When setting the local value of a global option, the old value may be the global value.
     const bool oldval_is_global = option_is_global_local(opt_idx) && (opt_flags & OPT_LOCAL);
-    oldval = optval_own(flags, opt_from_varp(opt_idx, oldval_is_global ? get_varp(opt) : varp));
+    oldval = optval_own(opt_idx, opt_from_varp(opt_idx, oldval_is_global ? get_varp(opt) : varp));
   }
 
   switch (oldval.type) {
@@ -3365,9 +3365,9 @@ bool is_dict_option(OptIndex opt_idx)
 }
 
 /// Release an option value read from opt_from_varp() (and similar).
-void optval_free_read(uint32_t flags, Object value)
+void optval_free_read(OptIndex opt_idx, Object value)
 {
-  if (optval_is_owned(flags)) {
+  if (optval_is_owned(opt_idx)) {
     optval_free(value);
   }
 }
@@ -3450,22 +3450,22 @@ static ObjectType optval_type(Object o)
 
 /// True for a "callback option" (varp stores `Callback`): func option (kOptFlagFunc, e.g.
 /// 'operatorfunc') or expr option (kOptFlagExpr, e.g. 'foldexpr').
-static bool is_callback_option(uint32_t flags)
+static bool is_callback_option(OptIndex opt_idx)
 {
-  return (flags & (kOptFlagFunc | kOptFlagExpr)) != 0;
+  return (options[opt_idx].flags & (kOptFlagFunc | kOptFlagExpr)) != 0;
 }
 
 /// Returns true if _reading_ the option value (opt_from_varp(), etc.) returns an owned Object
 /// (release with optval_free_read()), or false if it borrows the stored value.
-static bool optval_is_owned(uint32_t flags)
+static bool optval_is_owned(OptIndex opt_idx)
 {
-  return is_callback_option(flags);
+  return is_callback_option(opt_idx);
 }
 
-/// Ensures an option value is "owned", i.e. the caller decides when to free it.
-Object optval_own(uint32_t flags, Object value)
+/// Ensures an option value read is "owned", i.e. the caller decides when to free it.
+Object optval_own(OptIndex opt_idx, Object value)
 {
-  return optval_is_owned(flags) ? value : copy_object(value, NULL);
+  return optval_is_owned(opt_idx) ? value : copy_object(value, NULL);
 }
 
 /// Copies an option value for OptionSet/UI reporting. Lua function is reported as "<Lua N>".
@@ -3482,7 +3482,7 @@ static Object optval_snapshot_varp(OptIndex opt_idx, void *varp)
 {
   Object value = opt_from_varp(opt_idx, varp);
   Object snapshot = optval_snapshot(value);
-  optval_free_read(options[opt_idx].flags, value);
+  optval_free_read(opt_idx, value);
   return snapshot;
 }
 
@@ -3517,12 +3517,13 @@ static Object opt_from_callback(Callback *cb)
   return STATIC_CSTR_TO_OBJ("");
 }
 
-/// Builds a callback option's Callback from an option value Object.
+/// Builds a callback option's Callback from an option value Object. Borrows `value` (copies its
+/// string/ref; the caller retains ownership).
 ///
-/// - `LuaRef` yields a Lua callback.
-/// - func option (`is_expr=false`) => string parsed as a function name or lambda
-/// - expr option (non-empty) string => expression string
-///   - leading `<SID>`/`s:` resolves to the current script `<SNR>`
+/// - `LuaRef` ("func" or "expr" option)    => Lua callback
+/// - func option with `is_expr=false`      => string parsed as a function name or lambda
+/// - expr option with non-empty string     => expression string (`<SID>`/`s:` resolves to `<SNR>`)
+/// - anything else (empty string, `Unset`) => `CALLBACK_NONE`
 static Callback opt_to_callback(Object value, bool is_expr)
 {
   Callback cb = CALLBACK_NONE;
@@ -3562,7 +3563,7 @@ Object opt_from_varp(OptIndex opt_idx, void *varp)
   }
 
   // Callback options (e.g. 'operatorfunc', 'foldexpr') store a Callback, not a scalar.
-  if (is_callback_option(options[opt_idx].flags)) {
+  if (is_callback_option(opt_idx)) {
     return opt_from_callback((Callback *)varp);
   }
 
@@ -3585,7 +3586,7 @@ static void set_option_varp(OptIndex opt_idx, void *varp, Object value)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   // Callback options (e.g. 'operatorfunc', 'foldexpr') store a Callback, not a scalar.
-  if (is_callback_option(options[opt_idx].flags)) {
+  if (is_callback_option(opt_idx)) {
     Callback *cb = (Callback *)varp;
     callback_free(cb);
     *cb = opt_to_callback(value, options[opt_idx].flags & kOptFlagExpr);
@@ -3594,9 +3595,20 @@ static void set_option_varp(OptIndex opt_idx, void *varp, Object value)
 
   switch (value.type) {
   case kObjectTypeUnset:
-    // Unset local value of a global-local boolean: store the kNone sentinel.
-    assert(option_has_type(opt_idx, kObjectTypeBoolean));
-    *(int *)varp = kNone;
+    // Unset the local value of a global-local option: store its unset sentinel.
+    assert(option_is_global_local(opt_idx));
+    if (option_has_type(opt_idx, kObjectTypeBoolean)) {
+      *(int *)varp = kNone;
+    } else if (option_has_type(opt_idx, kObjectTypeString)) {
+      free_string_option(*(char **)varp);
+      *(char **)varp = empty_string_option;
+    } else if (opt_idx == kOptUndolevels) {
+      *(OptInt *)varp = NO_LOCAL_UNDOLEVEL;
+    } else {
+      assert(opt_idx == kOptScrolloff || opt_idx == kOptScrolloffpad
+             || opt_idx == kOptSidescrolloff);
+      *(OptInt *)varp = -1;
+    }
     return;
   case kObjectTypeBoolean:
     assert(option_has_type(opt_idx, kObjectTypeBoolean));
@@ -3616,8 +3628,10 @@ static void set_option_varp(OptIndex opt_idx, void *varp, Object value)
   }
 }
 
-/// Return C-string representation of an option. Caller must free the returned C-string.
-static char *optval_to_cstr(Object o)
+/// Gets the string form of an option value. Caller must free the result.
+///
+/// @param  quote  Wrap a String value in double-quotes (error-message style).
+static char *optval_to_cstr(Object o, bool quote)
 {
   switch (o.type) {
   case kObjectTypeUnset:
@@ -3631,6 +3645,9 @@ static char *optval_to_cstr(Object o)
     return buf;
   }
   case kObjectTypeString: {
+    if (!quote) {
+      return xmemdupz(o.data.string.data, o.data.string.size);
+    }
     char *buf = xmalloc(o.data.string.size + 3);
     snprintf(buf, o.data.string.size + 3, "\"%s\"", o.data.string.data);
     return buf;
@@ -3762,7 +3779,7 @@ Object optval_from_obj(OptIndex opt_idx, Object o, set_op_T op, bool *error)
     type_ok = is_map || is_flaglist;
     break;
   case kObjectTypeLuaRef:
-    type_ok = is_callback_option(flags);  // A callback option accepts a funcref.
+    type_ok = is_callback_option(opt_idx);  // A callback option accepts a funcref.
     break;
   default:
     type_ok = false;
@@ -3956,7 +3973,7 @@ Object get_option_value(OptIndex opt_idx, int opt_flags)
   }
 
   vimoption_T *opt = &options[opt_idx];
-  return optval_own(opt->flags, opt_from_varp(opt_idx, get_varp_scope(opt, opt_flags)));
+  return optval_own(opt_idx, opt_from_varp(opt_idx, get_varp_scope(opt, opt_flags)));
 }
 
 /// Return information for option at 'opt_idx'
@@ -3966,65 +3983,47 @@ vimoption_T *get_option(OptIndex opt_idx)
   return &options[opt_idx];
 }
 
-/// Get option value representing an unset local option. Release with optval_free_read().
-/// TODO(famiu): Remove this once we have a dedicated Object type for unset local options.
-///
-///
-/// @param  opt_idx  Option index in options[] table.
-///
-/// @return Option value equal to the unset value for the option.
-static Object get_option_unset_value(OptIndex opt_idx)
+/// True if `value` unsets the local value of global-local option: kObjectTypeUnset, or the
+/// option-specific (legacy) sentinel stored by set_option_varp(). Always false for
+/// a non-global-local option.
+static bool optval_is_unset_local(OptIndex opt_idx, Object value)
 {
-  assert(opt_idx != kOptInvalid);
-  vimoption_T *opt = &options[opt_idx];
-
-  // For global-local options, use the unset value of the local value.
-  if (option_is_global_local(opt_idx)) {
-    // String global-local options always use an empty string for the unset value.
-    if (option_has_type(opt_idx, kObjectTypeString)) {
-      return optval_is_owned(opt->flags) ? STATIC_CSTR_TO_OBJ("") : STATIC_CSTR_AS_OBJ("");
-    }
-
-    switch (opt_idx) {
-    case kOptAutocomplete:
-    case kOptAutoread:
-    case kOptFsync:
-      return UNSET;
-    case kOptScrolloff:
-    case kOptScrolloffpad:
-    case kOptSidescrolloff:
-      return INTEGER_OBJ(-1);
-    case kOptUndolevels:
-      return INTEGER_OBJ(NO_LOCAL_UNDOLEVEL);
-    default:
-      abort();
-    }
+  if (!option_is_global_local(opt_idx)) {
+    return false;
   }
-
-  // For options that aren't global-local, use the global value to represent an unset local value.
-  return opt_from_varp(opt_idx, get_varp_scope(opt, OPT_GLOBAL));
+  if (value.type == kObjectTypeUnset) {
+    return true;
+  }
+  // String (including callback) global-local options use an empty string for the unset value.
+  if (option_has_type(opt_idx, kObjectTypeString)) {
+    return value.type == kObjectTypeString && value.data.string.size == 0;
+  }
+  if (option_has_type(opt_idx, kObjectTypeBoolean) || value.type != kObjectTypeInteger) {
+    return false;  // Unset local boolean (kNone) reads as kObjectTypeUnset, handled above.
+  }
+  switch (opt_idx) {  // Integer global-local options and their unset sentinels.
+  case kOptScrolloff:
+  case kOptScrolloffpad:
+  case kOptSidescrolloff:
+    return value.data.integer == -1;
+  case kOptUndolevels:
+    return value.data.integer == NO_LOCAL_UNDOLEVEL;
+  default:
+    abort();
+  }
 }
 
 /// Check if local value of global-local option is unset for current buffer / window.
 /// Always returns false for options that aren't global-local.
-///
-/// TODO(famiu): Remove this once we have an Object type to indicate an unset local value.
 static bool is_option_local_value_unset(OptIndex opt_idx)
 {
-  vimoption_T *opt = get_option(opt_idx);
-
-  // Local value of option that isn't global-local is always considered set.
   if (!option_is_global_local(opt_idx)) {
     return false;
   }
-
-  void *varp_local = get_varp_scope(opt, OPT_LOCAL);
-  Object local_value = opt_from_varp(opt_idx, varp_local);
-  Object unset_local_value = get_option_unset_value(opt_idx);
-
-  bool is_unset = option_equal(local_value, unset_local_value);
-  optval_free_read(opt->flags, local_value);
-  optval_free_read(opt->flags, unset_local_value);
+  vimoption_T *opt = get_option(opt_idx);
+  Object local_value = opt_from_varp(opt_idx, get_varp_scope(opt, OPT_LOCAL));
+  bool is_unset = optval_is_unset_local(opt_idx, local_value);
+  optval_free_read(opt_idx, local_value);
   return is_unset;
 }
 
@@ -4110,7 +4109,7 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, Object old_value
   }
 
   // Re-assign the new value as its value may get freed or modified by the option callback.
-  new_value = optval_own(opt->flags, opt_from_varp(opt_idx, varp));
+  new_value = optval_own(opt_idx, opt_from_varp(opt_idx, varp));
 
   if (set_sid != SID_NONE) {
     sctx_T script_ctx = set_sid == 0 ? current_sctx : (sctx_T){ .sc_sid = set_sid };
@@ -4126,10 +4125,7 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, Object old_value
     if (option_is_global_local(opt_idx)) {
       // Global option with local value set to use global value.
       // Free the local value and clear it.
-      void *varp_local = get_varp_scope(opt, OPT_LOCAL);
-      Object unset = get_option_unset_value(opt_idx);
-      set_option_varp(opt_idx, varp_local, unset);
-      optval_free_read(opt->flags, unset);
+      set_option_varp(opt_idx, get_varp_scope(opt, OPT_LOCAL), UNSET);
     } else {
       // May set global value for a buffer/window-local option. Skip when varp already is the
       // global (a purely-global option): re-storing there is redundant, and for a callback option
@@ -4222,13 +4218,8 @@ static const char *validate_option_value(const OptIndex opt_idx, Object *newval,
   vimoption_T *opt = &options[opt_idx];
 
   // Always allow unsetting local value of global-local option.
-  if (option_is_global_local(opt_idx) && (opt_flags & OPT_LOCAL)) {
-    Object unset = get_option_unset_value(opt_idx);
-    bool is_unset = option_equal(*newval, unset);
-    optval_free_read(opt->flags, unset);
-    if (is_unset) {
-      return NULL;
-    }
+  if ((opt_flags & OPT_LOCAL) && optval_is_unset_local(opt_idx, *newval)) {
+    return NULL;
   }
 
   if (newval->type == kObjectTypeNil) {
@@ -4238,15 +4229,15 @@ static const char *validate_option_value(const OptIndex opt_idx, Object *newval,
     if (opt_flags == OPT_GLOBAL) {
       errmsg = _("Cannot unset global option value");
     } else {
-      Object unset = get_option_unset_value(opt_idx);
-      *newval = copy_object(unset, NULL);
-      optval_free_read(opt->flags, unset);
+      // Unset the local value of a global-local option; for other options, an unset local value
+      // means the global value.
+      *newval = option_is_global_local(opt_idx) ? UNSET : get_option_value(opt_idx, OPT_GLOBAL);
     }
   } else if (newval->type == kObjectTypeLuaRef) {
     // A callback option accepts a funcref; scalar validation doesn't apply.
-    assert(is_callback_option(opt->flags));
+    assert(is_callback_option(opt_idx));
   } else if (!option_has_type(opt_idx, optval_type(*newval))) {
-    char *rep = optval_to_cstr(*newval);
+    char *rep = optval_to_cstr(*newval, true);
     const char *type_str = optval_type_name(opt->type);
     snprintf(errbuf, IOSIZE, _("Invalid value for option '%s': expected %s, got %s %s"),
              opt->fullname, type_str, optval_type_name(optval_type(*newval)), rep);
@@ -4313,7 +4304,8 @@ static const char *set_option(const OptIndex opt_idx, Object value, int opt_flag
 #ifdef BACKSLASH_IN_FILENAME
   // Ensure "/" slashes in various options.
   uint32_t flags = options[opt_idx].flags;
-  if ((flags & kOptFlagExpand)
+  if (value.type == kObjectTypeString
+      && (flags & kOptFlagExpand)
       && opt_idx != kOptEqualprg
       && opt_idx != kOptFormatprg
       && opt_idx != kOptGrepprg
@@ -4349,7 +4341,7 @@ static const char *set_option(const OptIndex opt_idx, Object value, int opt_flag
   void *varp_global = get_varp_scope(opt, OPT_GLOBAL);
 
   // All values on the set path are owned.
-  Object old_value = optval_own(opt->flags, opt_from_varp(opt_idx, varp));
+  Object old_value = optval_own(opt_idx, opt_from_varp(opt_idx, varp));
 
   // Snapshots for OptionSet/UI reporting, taken before the store since it changes varp (and
   // autocommands may even close the buffer). Skipped when not reporting (direct set).
@@ -4369,7 +4361,6 @@ static const char *set_option(const OptIndex opt_idx, Object value, int opt_flag
     saved_used_value = (scope_local && is_opt_local_unset)
                        ? optval_snapshot_varp(opt_idx, get_varp(opt))
                        : optval_snapshot(old_value);
-    saved_new_value = optval_snapshot(value);
   }
 
   uint32_t *p = insecure_flag(curwin, opt_idx, opt_flags);
@@ -4384,6 +4375,15 @@ static const char *set_option(const OptIndex opt_idx, Object value, int opt_flag
 
   // Store the new value (copied) at varp.
   set_option_varp(opt_idx, varp, value);
+  if (value.type == kObjectTypeUnset) {
+    // Re-read the "unset" sentinel ("", -1, …; see optval_is_unset_local()), so did_set callbacks
+    // and OptionSet reporting get that concrete sentinel, not the global value.
+    value = optval_own(opt_idx, opt_from_varp(opt_idx, varp));
+  }
+  if (!direct) {
+    // New value (and varp) may become invalid if the buffer is closed by autocommands.
+    saved_new_value = optval_snapshot(value);
+  }
   // Process any side effects.
   errmsg = did_set_option(opt_idx, varp, old_value, value, opt_flags, set_sid, direct,
                           value_replaced, errbuf, errbuflen);
@@ -4506,10 +4506,7 @@ const char *set_option_value(const OptIndex opt_idx, const Object value, int opt
 static inline const char *unset_option_local_value(const OptIndex opt_idx)
 {
   assert(option_is_global_local(opt_idx));
-  Object unset = get_option_unset_value(opt_idx);
-  const char *errmsg = set_option_value(opt_idx, unset, OPT_LOCAL);
-  optval_free_read(options[opt_idx].flags, unset);
-  return errmsg;
+  return set_option_value(opt_idx, UNSET, OPT_LOCAL);
 }
 
 /// Set the value of an option. Supports TTY options, unlike set_option_value().
@@ -4769,7 +4766,7 @@ static void showoptions(bool all, int opt_flags)
         } else if (option_has_type(opt_idx, kObjectTypeBoolean)) {
           len = 1;                      // a toggle option fits always
         } else {
-          option_value2string(opt, opt_flags);
+          optval_fmt(opt_idx, opt_flags);
           len = (int)strlen(opt->fullname) + vim_strsize(NameBuff) + 1;
         }
         if ((len <= INC - GAP && run == 1)
@@ -4826,7 +4823,7 @@ static int optval_default(OptIndex opt_idx, void *varp)
   Object default_val = opt->def_val;
 
   bool is_default = option_equal(current_val, default_val);
-  optval_free_read(opt->flags, current_val);
+  optval_free_read(opt_idx, current_val);
   return is_default;
 }
 
@@ -4874,7 +4871,7 @@ static void showoneopt(vimoption_T *opt, int opt_flags)
   if (!(option_has_type(opt_idx, kObjectTypeBoolean))) {
     msg_putchar('=');
     // put value string in NameBuff
-    option_value2string(opt, opt_flags);
+    optval_fmt(opt_idx, opt_flags);
     if (*NameBuff != NUL) {
       msg_outtrans(NameBuff, 0, false);
     }
@@ -5033,14 +5030,9 @@ static int put_set_value(FILE *fd, char *cmd, OptIndex opt_idx, void *varp, Obje
   char *name = opt->fullname;
   uint64_t flags = opt->flags;
 
-  if (option_is_global_local(opt_idx) && varp != opt->var) {
-    Object unset = get_option_unset_value(opt_idx);
-    bool is_unset = option_equal(value, unset);
-    optval_free_read(opt->flags, unset);
-    if (is_unset) {
-      // Processing unset local value of global-local option. Do nothing.
-      return OK;
-    }
+  if (varp != opt->var && optval_is_unset_local(opt_idx, value)) {
+    // Processing unset local value of global-local option. Do nothing.
+    return OK;
   }
 
   switch (value.type) {
@@ -5139,14 +5131,13 @@ static int put_set_value(FILE *fd, char *cmd, OptIndex opt_idx, void *varp, Obje
   return OK;
 }
 
-/// Print the ":set" command for one option to a file, then release the read value (owned for a
-/// callback option; see optval_free_read()).
+/// Print the ":set" command for one option to a file, then release the read value.
 static int put_set(FILE *fd, char *cmd, OptIndex opt_idx, void *varp)
 {
   Object value = opt_from_varp(opt_idx, varp);
   // Skip func-option set to a Lua function (omit from :mksession/etc.).
   int ret = value.type == kObjectTypeLuaRef ? OK : put_set_value(fd, cmd, opt_idx, varp, value);
-  optval_free_read(options[opt_idx].flags, value);
+  optval_free_read(opt_idx, value);
   return ret;
 }
 
@@ -6485,7 +6476,7 @@ int ExpandOldSetting(int *numMatches, char ***matches)
 
   if (expand_option_idx != kOptInvalid) {
     // Put string of option value in NameBuff.
-    option_value2string(&options[expand_option_idx], expand_option_flags);
+    optval_fmt(expand_option_idx, expand_option_flags);
     var = NameBuff;
   } else {
     var = "";
@@ -6520,7 +6511,7 @@ int ExpandStringSetting(expand_T *xp, regmatch_T *regmatch, int *numMatches, cha
   // Retrieve the existing value, but escape it as a reverse of setting it.
   // We technically only need to do this when oe_append or
   // oe_include_orig_val is true.
-  option_value2string(&options[expand_option_idx], expand_option_flags);
+  optval_fmt(expand_option_idx, expand_option_flags);
   char *var = NameBuff;
   char *buf = escape_option_str_cmdline(var);
   args.oe_opt_value = buf;
@@ -6636,47 +6627,38 @@ int ExpandSettingSubtract(expand_T *xp, regmatch_T *regmatch, int *numMatches, c
   return ExpandOldSetting(numMatches, matches);
 }
 
-/// Get the value for the numeric or string option///opp in a nice format into
-/// NameBuff[].  Must not be called with a hidden option!
+/// Writes an option value into `NameBuff` in ":set" display form ('wildchar' as a key name,
+/// kOptFlagExpand paths with "~"). Must not be called with a hidden or boolean option!
 ///
 /// @param  opt_flags  Option flags (can be OPT_LOCAL, OPT_GLOBAL or a combination).
-///
-/// TODO(famiu): Replace this with optval_to_cstr() if possible.
-static void option_value2string(vimoption_T *opt, int opt_flags)
+static void optval_fmt(OptIndex opt_idx, int opt_flags)
 {
+  vimoption_T *opt = &options[opt_idx];
   void *varp = get_varp_scope(opt, opt_flags);
   assert(varp != NULL);
 
-  if (is_callback_option(opt->flags)) {
-    // Callback option: render via its option value (funcref name, expression, or Lua handle).
-    Object o = opt_from_varp(get_opt_idx(opt), varp);
-    xstrlcpy(NameBuff, o.type == kObjectTypeString ? o.data.string.data : "v:lua", MAXPATHL);
-    api_free_object(o);
+  // Display-only forms, not value renderings: 'wildchar'/'wildcharm' shown as a key name, and
+  // kOptFlagExpand (path) options with "~" abbreviation.
+  OptInt wc = 0;
+  if (wc_use_keyname(varp, &wc)) {
+    xstrlcpy(NameBuff, get_special_key_name((int)wc, 0), MAXPATHL);
+    return;
+  }
+  if (wc != 0) {
+    xstrlcpy(NameBuff, transchar((int)wc), MAXPATHL);
+    return;
+  }
+  if ((opt->flags & kOptFlagExpand) && !is_callback_option(opt_idx)
+      && option_has_type(opt_idx, kObjectTypeString)) {
+    home_replace(NULL, *(char **)varp, NameBuff, MAXPATHL, false);
     return;
   }
 
-  if (option_has_type(get_opt_idx(opt), kObjectTypeInteger)) {
-    OptInt wc = 0;
-
-    if (wc_use_keyname(varp, &wc)) {
-      xstrlcpy(NameBuff, get_special_key_name((int)wc, 0), sizeof(NameBuff));
-    } else if (wc != 0) {
-      xstrlcpy(NameBuff, transchar((int)wc), sizeof(NameBuff));
-    } else {
-      snprintf(NameBuff,
-               sizeof(NameBuff),
-               "%" PRId64,
-               (int64_t)(*(OptInt *)varp));
-    }
-  } else {  // string (including dict options, which are stored as a ":set" string)
-    varp = *(char **)varp;
-
-    if (opt->flags & kOptFlagExpand) {
-      home_replace(NULL, varp, NameBuff, MAXPATHL, false);
-    } else {
-      xstrlcpy(NameBuff, varp, MAXPATHL);
-    }
-  }
+  Object o = opt_from_varp(opt_idx, varp);
+  char *s = optval_to_cstr(o, false);
+  xstrlcpy(NameBuff, s, MAXPATHL);
+  xfree(s);
+  optval_free_read(opt_idx, o);
 }
 
 /// Return true if "varp" points to 'wildchar' or 'wildcharm' and it can be
@@ -7144,7 +7126,7 @@ dict_T *get_winbuf_options(const int bufopt)
         typval_T opt_tv = opt_to_tv(ov, true);
         tv_dict_add_tv(d, opt->fullname, strlen(opt->fullname), &opt_tv);
         tv_clear(&opt_tv);
-        optval_free_read(opt->flags, ov);
+        optval_free_read(opt_idx, ov);
       }
     }
   }
