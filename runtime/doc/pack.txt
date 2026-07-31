@@ -423,6 +423,35 @@ These events can be used to execute plugin hooks. For example: >lua
     vim.api.nvim_create_autocmd('PackChanged', { callback = hooks })
 <
 
+                                                           *vim.pack-manifest*
+
+Plugins can come with a special top level `pkg.json` manifest file with extra
+information. If present, `vim.pack` uses it for improved user experience:
+• Running |:checkhealth| for `vim.pack` will perform extra checks to ensure
+  healthy plugin installation.
+
+Full specification see at https://packspec.org/. See also |vim.pack.Manifest|.
+A simple example: >json
+    {
+     "name": "best-plugin.nvim",
+     "description": "The best plugin for Neovim",
+     "engines": {
+         "nvim": ">=0.13.0",
+         "vim": ">=9.1.0"
+     }
+    }
+<
+
+
+*vim.pack.Manifest*
+
+    Fields: ~
+      • {description}?  (`string`) Plugin description
+      • {engines}?      (`table`) Supported engine versions. Values should be
+                        |vim.version.range()| compatible specs.
+                        • {nvim}? (`string`) Version range for Nvim.
+                        • {vim}? (`string`) Version range for Vim.
+      • {name}?         (`string`) Plugin name
 
 *vim.pack.Spec*
 
@@ -506,6 +535,9 @@ get({names}, {opts})                                          *vim.pack.get()*
           to current session.
         • {branches}? (`string[]`) Available Git branches (first is default).
           Missing if `info=false`.
+        • {manifest}? (`vim.pack.Manifest`) Data from the |vim.pack-manifest|.
+          Empty in case of reading error. Missing if `info=false`. See
+          |vim.pack.Manifest|.
         • {path} (`string`) Plugin's path on disk.
         • {rev} (`string`) Current Git revision. Taken from
           |vim.pack-lockfile| if `info=false`.

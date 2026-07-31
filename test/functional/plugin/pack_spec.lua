@@ -244,6 +244,21 @@ function repos_setup.with_subs()
   git_add_commit('Second commit for "with_subs"', 'with_subs')
 end
 
+function repos_setup.with_manifest()
+  init_test_repo('manifest')
+
+  repo_write_file('manifest', 'lua/manifest.lua', 'return "manifest init"')
+
+  local manifest_tbl = {
+    name = 'plug',
+    description = 'Nvim plugin',
+    engine = { nvim = '>=0.12.0', vim = '>=9.1.0' },
+  }
+  repo_write_file('manifest', 'pkg.json', vim.json.encode(manifest_tbl))
+
+  git_add_commit('Initial commit', 'manifest')
+end
+
 -- Utility --------------------------------------------------------------------
 
 --- Execute `vim.pack.add()` inside `testnvim` instance
@@ -2227,6 +2242,15 @@ describe('vim.pack', function()
       )
       eq({ basic_data }, exec_lua('return vim.pack.get({ "basic" }, { info = false })'))
       eq({ defbranch_data }, exec_lua('return vim.pack.get({ "defbranch" }, { info = false })'))
+
+      -- Reports manifest
+      vim_pack_add({ repos_src.manifest })
+      local manifest_tbl = {
+        name = 'plug',
+        description = 'Nvim plugin',
+        engine = { nvim = '>=0.12.0', vim = '>=9.1.0' },
+      }
+      eq(manifest_tbl, exec_lua('return vim.pack.get({ "manifest" })[1].manifest'))
     end)
 
     it('reports potential revision after update', function()
