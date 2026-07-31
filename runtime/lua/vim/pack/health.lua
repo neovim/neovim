@@ -200,7 +200,8 @@ local function check_lockfile()
   end
 end
 
-local function check_manifest(manifest, plug_name)
+--- @param manifest vim.pack.Manifest
+local function check_manifest(manifest, plug_name, plug_path)
   local name_str = vim.inspect(plug_name)
   if vim.tbl_count(manifest) == 0 then
     health.warn(('Plugin %s has empty or malformed manifest file'):format(name_str))
@@ -219,6 +220,18 @@ local function check_manifest(manifest, plug_name)
       ('Plugin %s Nvim version requirement %s'):format(name_str, tostring(nvim_version_range))
         .. (' does not match current version %s'):format(tostring(vim.version()))
     )
+    return false
+  end
+
+  local ok_scripts = true
+  ---@diagnostic disable-next-line: no-unknown
+  for name, script_path in pairs(manifest.scripts or {}) do
+    if vim.fn.filereadable(vim.fs.joinpath(plug_path, script_path)) == 0 then
+      health.warn(('Plugin %s has no %s script at %s path'):format(name_str, name, script_path))
+      ok_scripts = false
+    end
+  end
+  if not ok_scripts then
     return false
   end
 
@@ -275,7 +288,7 @@ local function check_installed_plugin(plug_name)
 
   -- Manifest
   if info[1].manifest then
-    return check_manifest(info[1].manifest, plug_name)
+    return check_manifest(info[1].manifest, plug_name, plug_path)
   end
 
   return true
