@@ -21,57 +21,6 @@ describe('vim._watch', function()
     clear()
   end)
 
-  it('watch() continues after fs_stat errors on rename events', function()
-    eq(
-      { callback_count = 1, success = true },
-      exec_lua [[
-      local uv = vim.uv
-      local original_new_fs_event = uv.new_fs_event
-      local original_fs_stat = uv.fs_stat
-      local on_change
-      local callback_count = 0
-      local stat_calls = 0
-
-      local handle = {
-        start = function(_, _, _, callback)
-          on_change = callback
-          return 0
-        end,
-        stop = function()
-          return 0
-        end,
-        is_closing = function()
-          return false
-        end,
-        close = function() end,
-      }
-
-      uv.new_fs_event = function()
-        return handle
-      end
-      uv.fs_stat = function()
-        stat_calls = stat_calls + 1
-        if stat_calls ~= 2 then
-          return { type = 'file' }
-        end
-        return nil, 'EPERM: operation not permitted', 'EPERM'
-      end
-
-      local stop_watch = vim._watch.watch('Xwatch-file', {}, function()
-        callback_count = callback_count + 1
-      end)
-      local success = pcall(on_change, nil, 'Xwatch-file', { rename = true })
-      on_change(nil, 'Xwatch-file', { rename = true })
-      stop_watch()
-
-      uv.new_fs_event = original_new_fs_event
-      uv.fs_stat = original_fs_stat
-
-      return { callback_count = callback_count, success = success }
-    ]]
-    )
-  end)
-
   local function run(watchfunc)
     -- Monkey-patches vim.notify_once so we can "spy" on it.
     local function spy_notify_once()
@@ -108,6 +57,84 @@ describe('vim._watch', function()
         root_dir,
         watchfunc_
       )
+    end
+
+    if watchfunc == 'watch' then
+      it('watch() ignores only EPERM errors after rename events', function()
+        exec_lua [[
+          local uv = vim.uv
+          _G.__watch_original_new_fs_event = uv.new_fs_event
+          _G.__watch_original_fs_stat = uv.fs_stat
+
+          uv.new_fs_event = function()
+            return {
+              start = function(_, _, _, callback)
+                _G.__watch_on_change = callback
+                return 0
+              end,
+              stop = function()
+                return 0
+              end,
+              is_closing = function()
+                return false
+              end,
+              close = function() end,
+            }
+          end
+          uv.fs_stat = function()
+            local staterrname = _G.__watch_staterrname
+            if staterrname then
+              return nil, staterrname .. ': stat failed', staterrname
+            end
+            return { type = 'file' }
+          end
+        ]]
+
+        do_watch('Xwatch-file', watchfunc)
+
+        eq(
+          {
+            eio_error = 'EIO: stat failed',
+            eio_success = false,
+            eperm_events = 0,
+            eperm_success = true,
+            events = {
+              {
+                change_type = exec_lua [[return vim._watch.FileChangeType.Created]],
+                path = 'Xwatch-file',
+              },
+            },
+          },
+          exec_lua [[
+          _G.__watch_staterrname = 'EPERM'
+          local eperm_success = pcall(_G.__watch_on_change, nil, 'ignored', { rename = true })
+          local eperm_events = #_G.events
+
+          _G.__watch_staterrname = nil
+          _G.__watch_on_change(nil, 'created', { rename = true })
+
+          _G.__watch_staterrname = 'EIO'
+          local eio_success, eio_error = pcall(
+            _G.__watch_on_change,
+            nil,
+            'failed',
+            { rename = true }
+          )
+
+          _G.stop_watch()
+          vim.uv.new_fs_event = _G.__watch_original_new_fs_event
+          vim.uv.fs_stat = _G.__watch_original_fs_stat
+
+          return {
+            eio_error = tostring(eio_error):match('EIO: stat failed'),
+            eio_success = eio_success,
+            eperm_events = eperm_events,
+            eperm_success = eperm_success,
+            events = _G.events,
+          }
+        ]]
+        )
+      end)
     end
 
     it(watchfunc .. '() ignores nonexistent paths', function()
