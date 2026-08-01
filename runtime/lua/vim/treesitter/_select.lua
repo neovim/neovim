@@ -357,6 +357,10 @@ local function get_selection()
     pos1, pos2 = pos2, pos1
   end
 
+  if vim.o.selection == 'exclusive' then
+    pos2[3] = pos2[3] - 1
+  end
+
   if pos2[3] == #vim.fn.getline(pos2[2]) + 1 then
     pos2[2] = pos2[2] + 1
     pos2[3] = 0

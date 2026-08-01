@@ -194,6 +194,10 @@ function M.visual_select(range)
     cursor_other_end_of_selection = true
   end
 
+  if vim.o.selection == 'exclusive' then
+    end_col = end_col + 1
+  end
+
   vim.fn.setpos("'<", { 0, start_row + 1, start_col + 1, 0 })
   vim.fn.setpos("'>", { 0, end_row + 1, end_col, 0 })
 
