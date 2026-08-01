@@ -409,16 +409,35 @@ describe('nvim.zip', function()
     end)
   end)
 
-  it('lists an encrypted archive but reports unreadable entries', function()
+  it('prompts for the password of an encrypted archive', function()
     local archive = stage(fixtures, 'encrypted.zip')
     clear_zip()
 
     edit(archive)
     eq({ 'secret.txt' }, lines())
 
-    edit(('zip://%s/secret.txt'):format(archive))
+    -- The password is queued first, so that the prompt consumes it from typeahead.
+    exec_lua(function(uri)
+      vim.api.nvim_input('hunter2<CR>')
+      vim.api.nvim_cmd({ cmd = 'edit', args = { uri }, magic = { file = false, bar = false } }, {})
+    end, ('zip://%s/secret.txt'):format(archive))
     poke_eventloop()
-    eq(true, exec_capture('messages'):find('entry is encrypted', 1, true) ~= nil)
+
+    eq({ 'secret content' }, lines())
+  end)
+
+  it('reports an incorrect archive password', function()
+    local archive = stage(fixtures, 'encrypted.zip')
+    clear_zip()
+
+    -- Info-ZIP allows three attempts before giving up.
+    exec_lua(function(uri)
+      vim.api.nvim_input('no1<CR>no2<CR>no3<CR>')
+      vim.api.nvim_cmd({ cmd = 'edit', args = { uri }, magic = { file = false, bar = false } }, {})
+    end, ('zip://%s/secret.txt'):format(archive))
+    poke_eventloop()
+
+    eq(true, exec_capture('messages'):find('incorrect password', 1, true) ~= nil)
   end)
 
   -- unicode.zip was made with:

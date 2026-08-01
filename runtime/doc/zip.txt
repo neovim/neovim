@@ -14,6 +14,8 @@ executable.
 Recognized extensions include zip, jar, apk, epub, Office and OpenDocument
 formats, whl, xpi, pkpass, and cbz. Remote archives are fetched by |vim.net|.
 
+Reading an entry from an encrypted archive prompts for its password.
+
                                                     *g:loaded_nvim_zip_plugin*
 To disable the built-in zip browser, set this before startup: >lua
 
@@ -35,8 +37,7 @@ reload, and there is no PowerShell fallback, no custom backend command, and no
 support for the legacy `g:zip_*` variables. Use |old-zip| when those features
 are required.
 
-Encrypted entries are listed but cannot be read: `unzip` takes a password only
-from a terminal, or in its arguments where other processes could read it.
+Only the original zip encryption is supported, not AES.
 
 An entry path that literally contains "#U" followed by four hex digits is read
 as a non-ASCII escape, and is shown decoded.
