@@ -1,8 +1,8 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
-local describe, it, before_each, after_each, setup, pending, finally =
-  t.describe, t.it, t.before_each, t.after_each, t.setup, t.pending, t.finally
+local describe, it, before_each, after_each, setup, finally =
+  t.describe, t.it, t.before_each, t.after_each, t.setup, t.finally
 local clear = n.clear
 local exec_lua = n.exec_lua
 local eq = t.eq
@@ -384,59 +384,44 @@ describe('vim.fs', function()
       eq({ nvim_dir }, vim.fs.find(name, { path = parent, upward = true, type = 'directory' }))
     end)
 
-    local function filter_zig_cache(list)
-      return vim.tbl_filter(function(val)
-        return not vim.startswith(val, test_source_path .. '/.zig-cache/')
-      end, list)
-    end
-
+    -- Isolated scratch tree (not the repo) so the result is deterministic regardless of what else
+    -- sits under the source path (e.g. extra "build*/" dirs).
     it('follows symlinks', function()
-      local build_dir = test_build_dir ---@type string
-      local symlink = test_source_path .. '/build_link' ---@type string
-      vim.uv.fs_symlink(build_dir, symlink, { junction = true, dir = true })
+      local root = t.tmpname(false)
+      mkdir(root)
+      -- realpath() so a symlinked tmpdir (macOS /tmp -> /private/tmp) doesn't consume a hop.
+      root = vim.fs.normalize(assert(vim.uv.fs_realpath(root)))
+      mkdir(root .. '/real')
+      t.write_file(root .. '/real/target', '')
+      -- Directory symlink: follow=true descends into it, follow=false does not.
+      vim.uv.fs_symlink(root .. '/real', root .. '/lnk', { junction = true, dir = true })
 
-      finally(function()
-        vim.uv.fs_unlink(symlink)
-      end)
-
-      local cases = { nvim_prog, symlink .. '/bin/' .. nvim_prog_basename }
-      table.sort(cases)
-
-      eq(
-        cases,
-        vim.fs.find(nvim_prog_basename, {
-          path = test_source_path,
+      local function find(follow)
+        local r = vim.fs.find('target', {
+          path = root,
           type = 'file',
-          limit = 2,
-          follow = true,
+          limit = math.huge,
+          follow = follow,
         })
-      )
+        table.sort(r)
+        return r
+      end
 
-      eq(
-        { nvim_prog },
-        filter_zig_cache(vim.fs.find(nvim_prog_basename, {
-          path = test_source_path,
-          type = 'file',
-          limit = 2,
-          follow = false,
-        }))
-      )
+      eq({ root .. '/lnk/target', root .. '/real/target' }, find(true))
+      eq({ root .. '/real/target' }, find(false))
     end)
 
     it('follow=true handles symlink loop', function()
-      if t.is_zig_build() then
-        return pending('broken/slow with build.zig')
-      end
-      local cwd = vim.uv.fs_realpath(test_source_path) ---@type string
-      local symlink = cwd .. '/loop_link' ---@type string
-      vim.uv.fs_symlink(cwd, symlink, { junction = true, dir = true })
+      local root = t.tmpname(false)
+      mkdir(root)
+      root = assert(vim.uv.fs_realpath(root))
+      t.write_file(root .. '/target', '')
+      -- Self-referential loop: follow=true must terminate at the OS symlink-follow limit,
+      -- yielding one hit per loop level.
+      vim.uv.fs_symlink(root, root .. '/loop', { junction = true, dir = true })
 
-      finally(function()
-        vim.uv.fs_unlink(symlink)
-      end)
-
-      eq(link_limit, #vim.fs.find(nvim_prog_basename, {
-        path = cwd,
+      eq(link_limit, #vim.fs.find('target', {
+        path = root,
         type = 'file',
         limit = math.huge,
         follow = true,
