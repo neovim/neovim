@@ -1898,7 +1898,7 @@ void callback_copy(Callback *dest, Callback *src)
 char *callback_to_string(Callback *cb, Arena *arena)
 {
   if (cb->type == kCallbackLua) {
-    return nlua_funcref_str(cb->data.luaref, arena);
+    return nlua_funcref_str(cb->data.luaref, arena, true);
   }
 
   const size_t msglen = 100;

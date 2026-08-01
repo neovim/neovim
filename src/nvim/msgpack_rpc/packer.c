@@ -212,7 +212,7 @@ void mpack_object_inner(Object *current, Object *container, size_t container_idx
       // see nlua_pop_Object.
 
       // Human-readable hint string (`:map`-style "<Lua …>" string).
-      char *repr = nlua_funcref_str(current->data.luaref, NULL);
+      char *repr = nlua_funcref_str(current->data.luaref, NULL, true);
       api_free_luaref(current->data.luaref);
       current->data.luaref = LUA_NOREF;
       mpack_str(cstr_as_string(repr), packer);

@@ -3303,7 +3303,7 @@ typval_T opt_to_tv(Object value, bool numbool)
   case kObjectTypeLuaRef:
     // Lua callback option (e.g. 'operatorfunc'): show a human-readable hint (same as `:map` does).
     rettv.v_type = VAR_STRING;
-    rettv.vval.v_string = nlua_funcref_str(value.data.luaref, NULL);
+    rettv.vval.v_string = nlua_funcref_str(value.data.luaref, NULL, true);
     break;
   default:
     abort();  // Should never happen.
