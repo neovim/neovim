@@ -1,3 +1,4 @@
+^build_argv_from_[a-zA-Z0-9_]\+(
 ^change_compatible(
 ^check_restricted(
 ^compatible_set(void)
