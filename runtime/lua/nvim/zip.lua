@@ -429,55 +429,79 @@ function M.browse(buf, source)
   require('nvim.dir').open(buf, name ~= '' and name or source, M)
 end
 
---- Read one archive entry into a read-only buffer.
----@param buf integer Target entry buffer.
----@param name string `zip://` buffer name.
-function M.read(buf, name)
-  buf = vim._resolve_bufnr(buf)
+--- Extract the entry addressed by `buf` or `name` to a temporary file.
+---@param buf integer
+---@param name string
+---@return string?, string? temporary file, or an error message
+local function extract_to_temp(buf, name)
   local state = get_state(buf)
   local source, path = state and state.source, state and state.path
   if not source or not path then
     source, path = resolve_uri(name)
   end
   if not source or not path then
-    set_readonly(buf)
-    notify('zip', ('could not parse buffer name %q'):format(name))
-    return
+    return nil, ('no archive found in %s'):format(name)
   end
   local command, command_err = unzip()
   if not command then
-    set_readonly(buf)
-    notify('zip', command_err or 'unzip executable not found')
-    return
+    return nil, command_err or 'unzip executable not found'
   end
   local temp = vim.fn.tempname()
-  local dir ---@type string?
   local err = extract_path(command, source, path, temp)
   if err == ENCRYPTED then
     vim.fn.delete(temp)
-    dir = vim.fn.tempname()
+    local dir = vim.fn.tempname()
     vim.fn.mkdir(dir, 'p')
     err = extract_with_password(command, source, path, dir)
     -- `-j` discards the archive path, so the directory holds exactly the extracted entry.
     local entry = not err and vim.iter(vim.fs.dir(dir)):next() or nil
     if entry then
-      temp = vim.fs.joinpath(dir, entry)
-    else
-      err = err or 'no entry was extracted'
+      return vim.fs.joinpath(dir, entry)
     end
+    vim.fn.delete(dir, 'rf')
+    return nil,
+      ('unable to read %s from %s: %s'):format(path, source, err or 'no entry was extracted')
   end
   if err then
-    vim.fn.delete(dir or temp, dir and 'rf' or '')
+    vim.fn.delete(temp)
+    return nil, ('unable to read %s from %s: %s'):format(path, source, err)
+  end
+  return temp
+end
+
+function M.read(buf, name)
+  buf = vim._resolve_bufnr(buf)
+  local temp, err = extract_to_temp(buf, name)
+  if not temp then
     set_readonly(buf)
-    notify('zip', ('unable to read %s from %s: %s'):format(path, source, err))
+    notify('zip', err or '')
     return
   end
   local ok, read_err = pcall(read_tempfile, buf, temp)
-  vim.fn.delete(dir or temp, dir and 'rf' or '')
+  vim.fn.delete(temp)
   if not ok then
     set_readonly(buf)
     notify('zip', tostring(read_err))
   end
+end
+
+--- Insert one archive entry into an existing buffer, for `:read`.
+---@param buf integer Buffer to insert into.
+---@param name string `zip://` name being read.
+function M.read_into(buf, name)
+  buf = vim._resolve_bufnr(buf)
+  local temp, err = extract_to_temp(buf, name)
+  if not temp then
+    notify('zip', err or '')
+    return
+  end
+  api.nvim_buf_call(buf, function()
+    -- FIXME: Doesn't work for :0read as '[ is set to 1. See #7177 for possible solutions.
+    vim.cmd(
+      ('silent %dread%s %s'):format(vim.fn.line("'["), vim.v.cmdarg, vim.fn.fnameescape(temp))
+    )
+  end)
+  vim.fn.delete(temp)
 end
 
 --- List the requested archive level and commit its prefix only after the backend succeeds.

@@ -96,6 +96,18 @@ api.nvim_create_autocmd('BufReadCmd', {
   end,
 })
 
+api.nvim_create_autocmd('FileReadCmd', {
+  group = group,
+  pattern = 'zip://*',
+  desc = 'Read zip archive entry into the current buffer',
+  callback = function(ev)
+    if legacy_loaded() then
+      return true
+    end
+    require('nvim.zip').read_into(ev.buf, ev.match)
+  end,
+})
+
 api.nvim_create_autocmd('BufReadCmd', {
   group = group,
   pattern = archive_patterns,
