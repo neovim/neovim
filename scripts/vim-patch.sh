@@ -963,6 +963,7 @@ is_na_patch() {
           '-I^\s+$' \
           '-I^#\s*(ifdef|if.*defined\().*FEAT_' \
           '-I^#\s*(else|endif)' \
+          '-I^\s+\{"prop_[a-z]+",.*f_prop_[a-z]+},$' \
           '-I#\s*define.*ex_ni$' \
           '-I[_.>]sc_version = ' \
           '-I[_.>]uf_script_ctx_version = ' \
