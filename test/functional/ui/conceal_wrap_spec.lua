@@ -1151,6 +1151,188 @@ describe('conceal-aware wrapping (#14409)', function()
     eq(2, api.nvim_win_text_height(0, {}).all)
   end)
 
+  it('_on_conceal provider conceal reflows (added to the marktree)', function()
+    -- A provider that adds intra-line conceal on demand via the _on_conceal callback (as an
+    -- ordinary marktree extmark) reflows because geometry can read it.
+    api.nvim_buf_set_lines(0, 0, -1, true, { ('a'):rep(10) .. 'HIDDEN' .. ('b'):rep(30) })
+    exec_lua(function(nsid)
+      local added = {}
+      _G.conceal_ns = vim.api.nvim_create_namespace('conceal_wrap_provider_marks')
+      _G.conceal_calls = {}
+      vim.api.nvim_set_decoration_provider(nsid, {
+        _on_conceal = function(_, _, buf, row)
+          _G.conceal_calls[buf] = (_G.conceal_calls[buf] or 0) + 1
+          if row == 0 and not added[buf] then
+            added[buf] = true
+            vim.api.nvim_buf_set_extmark(buf, _G.conceal_ns, 0, 10, {
+              end_col = 16,
+              conceal = '',
+            })
+          end
+        end,
+      })
+      vim.api.nvim__buf_set_conceal_provider(0, nsid, _G.conceal_ns, true)
+    end, ns)
+
+    -- 46 raw -> hide 6 -> 40 cells -> 2 rows (would be 3 without the provider's conceal).
+    eq(2, api.nvim_win_text_height(0, {}).all)
+    -- Geometry follows: first 'b' of visual row 2 (buffer col 26) is at row 2, col 1.
+    eq({ row = 2, col = 1, curscol = 1, endcol = 1 }, fn.screenpos(0, 1, 27))
+    -- gj follows the reflowed layout.
+    eq(26, col_after(0, 'gj'))
+
+    -- A provider enabled for this buffer must not activate conceal geometry in another buffer.
+    eq(
+      0,
+      exec_lua(function()
+        local original = vim.api.nvim_get_current_buf()
+        local other = vim.api.nvim_create_buf(false, true)
+        vim.api.nvim_buf_set_lines(other, 0, -1, true, { ('x'):rep(30) })
+        vim.api.nvim_win_set_buf(0, other)
+        vim.api.nvim_win_text_height(0, {})
+        local calls = _G.conceal_calls[other] or 0
+        vim.api.nvim_win_set_buf(0, original)
+        return calls
+      end)
+    )
+    eq(
+      { 3, 1, 1 },
+      exec_lua(function(nsid)
+        local buf = vim.api.nvim_get_current_buf()
+        _G.conceal_calls[buf] = 0
+        vim.api.nvim_set_decoration_provider(nsid, {
+          _on_conceal = function(_, _, callback_buf, row)
+            _G.conceal_calls[callback_buf] = _G.conceal_calls[callback_buf] + 1
+            vim.api.nvim_buf_set_extmark(callback_buf, _G.conceal_ns, row, 16, {
+              end_col = 17,
+              conceal = '',
+            })
+          end,
+        })
+        local height = vim.api.nvim_win_text_height(0, {}).all
+        return {
+          height,
+          _G.conceal_calls[buf],
+          #vim.api.nvim_buf_get_extmarks(0, _G.conceal_ns, 0, -1, {}),
+        }
+      end, ns)
+    )
+    eq(
+      { 0, 0 },
+      exec_lua(function(nsid)
+        vim.api.nvim_set_decoration_provider(nsid, {})
+        return {
+          vim.api.nvim__buf_stats(0).conceal_providers,
+          #vim.api.nvim_buf_get_extmarks(0, _G.conceal_ns, 0, -1, {}),
+        }
+      end, ns)
+    )
+  end)
+
+  it('_on_conceal registration does not survive a reused buffer', function()
+    local bufnr = api.nvim_get_current_buf()
+    exec_lua(function(nsid)
+      local conceal_ns = vim.api.nvim_create_namespace('conceal_wrap_reuse_marks')
+      vim.api.nvim_set_decoration_provider(nsid, {
+        _on_conceal = function() end,
+      })
+      vim.api.nvim__buf_set_conceal_provider(0, nsid, conceal_ns, true)
+    end, ns)
+    command('edit Xconceal_provider_reuse')
+    eq(bufnr, api.nvim_get_current_buf())
+    eq(0, api.nvim__buf_stats(0).conceal_providers)
+  end)
+
+  it('_on_conceal runs once before a linebreak geometry walk', function()
+    command('set linebreak')
+    api.nvim_buf_set_lines(0, 0, -1, true, {
+      'alpha HIDDEN bravo charlie delta echo foxtrot golf hotel india juliet',
+      ('Q'):rep(200),
+    })
+
+    eq(
+      { 1, 1 },
+      exec_lua(function(nsid)
+        local calls = 0
+        local conceal_ns = vim.api.nvim_create_namespace('conceal_linebreak_provider_marks')
+        vim.api.nvim_set_decoration_provider(nsid, {
+          _on_conceal = function(_, _, buf, row)
+            calls = calls + 1
+            if row == 0 then
+              vim.api.nvim_buf_set_extmark(buf, conceal_ns, row, 6, {
+                id = 1,
+                end_row = 1,
+                end_col = 1,
+                conceal = '',
+              })
+            end
+          end,
+        })
+        vim.api.nvim__buf_set_conceal_provider(0, nsid, conceal_ns, true)
+        local height = vim.api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all
+        return { height, calls }
+      end, ns)
+    )
+
+    api.nvim_win_set_cursor(0, { 1, 0 })
+    feed('20|')
+    eq(1, api.nvim_win_get_cursor(0)[1])
+  end)
+
+  it('_on_conceal is not queried by raw virtual-column motions', function()
+    command('set nowrap')
+    eq(
+      0,
+      exec_lua(function(nsid)
+        vim.api.nvim_buf_set_lines(0, 0, -1, true, { ('a'):rep(40) })
+        local calls = 0
+        vim.api.nvim_set_decoration_provider(nsid, {
+          _on_conceal = function()
+            calls = calls + 1
+          end,
+        })
+        local marks = vim.api.nvim_create_namespace('raw_conceal')
+        vim.api.nvim__buf_set_conceal_provider(0, nsid, marks, true)
+        vim.fn.virtcol({ 1, 25 })
+        vim.cmd('normal! 25|')
+        return calls
+      end, ns)
+    )
+  end)
+
+  it('_on_conceal keeps the inline virtual text iterator valid', function()
+    api.nvim_buf_set_lines(0, 0, -1, true, { ('a'):rep(210) })
+    api.nvim_buf_set_extmark(0, ns, 0, 180, {
+      virt_text = { { 'INLINE', 'Comment' } },
+      virt_text_pos = 'inline',
+    })
+
+    eq(
+      11,
+      exec_lua(function(nsid)
+        local done = false
+        local conceal_ns = vim.api.nvim_create_namespace('conceal_iterator_provider_marks')
+        vim.api.nvim_set_decoration_provider(nsid, {
+          _on_conceal = function(_, _, buf, row)
+            if row ~= 0 or done then
+              return
+            end
+            done = true
+            -- Add enough marks before the inline mark to split its marktree node.
+            for col = 0, 159 do
+              vim.api.nvim_buf_set_extmark(buf, conceal_ns, row, col, {
+                end_col = col + 1,
+                conceal = col == 0 and '' or false,
+              })
+            end
+          end,
+        })
+        vim.api.nvim__buf_set_conceal_provider(0, nsid, conceal_ns, true)
+        return vim.api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all
+      end, ns)
+    )
+  end)
+
   it('insert-mode Up/Down move past a reflowed line as a single logical line', function()
     -- concealcursor= reveals the cursor line, so line 1's height changes as the cursor enters it.
     command('setlocal concealcursor=')
