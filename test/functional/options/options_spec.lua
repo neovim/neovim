@@ -218,7 +218,7 @@ describe('callback (func/expr) options', function()
     eq('GoodFunc', eval('&operatorfunc'))
   end)
 
-  it('with ":set all"', function()
+  it(':set', function()
     command('set operatorfunc=SomeFunc')
     command('set quickfixtextfunc={\\ d\\ ->\\ []\\ }')
     exec_lua(function()
@@ -227,6 +227,20 @@ describe('callback (func/expr) options', function()
     end)
     command('set all')
     n.assert_alive()
+
+    -- ":set opt?" shows funcref/lambda name, or "<Lua …>".
+    local function set_q(opt)
+      return n.api.nvim_exec2(('set %s?'):format(opt), { output = true }).output
+    end
+    eq('  operatorfunc=SomeFunc', set_q('operatorfunc'))
+    matches("^  quickfixtextfunc=function%('<lambda>%d+'%)$", set_q('quickfixtextfunc'))
+    matches('^  omnifunc=<Lua .+:%d+>$', set_q('omnifunc'))
+    matches('^  foldexpr=<Lua .+:%d+>$', set_q('foldexpr'))
+    eq(set_q('omnifunc'), set_q('omnifunc')) -- Stable: no per-read ref id.
+
+    -- ":set opt=<Tab>" completes a funcref value, but not a Lua function.
+    eq({ 'SomeFunc' }, n.fn.getcompletion('set operatorfunc=', 'cmdline'))
+    eq({}, n.fn.getcompletion('set omnifunc=', 'cmdline'))
   end)
 
   it("expr option ('foldexpr') accepts string, reads back string", function()

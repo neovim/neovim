@@ -3448,8 +3448,8 @@ static ObjectType optval_type(Object o)
   }
 }
 
-/// True for a "callback option" (varp stores `Callback`): func option (kOptFlagFunc, e.g.
-/// 'operatorfunc') or expr option (kOptFlagExpr, e.g. 'foldexpr').
+/// True for a "callback option" (varp stores `Callback`): func option (e.g. 'operatorfunc') or expr
+/// option (e.g. 'foldexpr').
 static bool is_callback_option(OptIndex opt_idx)
 {
   return (options[opt_idx].flags & (kOptFlagFunc | kOptFlagExpr)) != 0;
@@ -3472,7 +3472,7 @@ Object optval_own(OptIndex opt_idx, Object value)
 static Object optval_snapshot(Object value)
 {
   if (value.type == kObjectTypeLuaRef) {
-    return CSTR_AS_OBJ(nlua_funcref_str(value.data.luaref, NULL));
+    return CSTR_AS_OBJ(nlua_funcref_str(value.data.luaref, NULL, true));
   }
   return copy_object(value, NULL);
 }
@@ -3486,14 +3486,14 @@ static Object optval_snapshot_varp(OptIndex opt_idx, void *varp)
   return snapshot;
 }
 
-/// Converts a callback option's stored Callback to an option value Object.
-/// Always OWNED (a copied name/expr string, or a fresh LuaRef): free with optval_free().
+/// Converts a callback option's stored Callback to an optval Object.
+/// Always OWNED (a copied name/expr string, or a new LuaRef): free with optval_free().
 ///
-/// - Lua callback => `LuaRef`
-/// - named funcref => name
-/// - partial => name
-/// - expr option => expression string
-/// - an unset callback => empty string
+/// - Lua callback   => `LuaRef`
+/// - named funcref  => name
+/// - partial        => name
+/// - expr option    => expression string
+/// - unset callback => empty string
 static Object opt_from_callback(Callback *cb)
 {
   switch (cb->type) {
@@ -3520,10 +3520,10 @@ static Object opt_from_callback(Callback *cb)
 /// Builds a callback option's Callback from an option value Object. Borrows `value` (copies its
 /// string/ref; the caller retains ownership).
 ///
-/// - `LuaRef` ("func" or "expr" option)    => Lua callback
-/// - func option with `is_expr=false`      => string parsed as a function name or lambda
-/// - expr option with non-empty string     => expression string (`<SID>`/`s:` resolves to `<SNR>`)
-/// - anything else (empty string, `Unset`) => `CALLBACK_NONE`
+/// - `LuaRef` ("func"/"expr" options)   => Lua callback
+/// - func option with `is_expr=false`   => string parsed as a function name or lambda
+/// - expr option with non-empty string  => expression string (`<SID>`/`s:` resolves to `<SNR>`)
+/// - other (empty string, `Unset`)      => `CALLBACK_NONE`
 static Callback opt_to_callback(Object value, bool is_expr)
 {
   Callback cb = CALLBACK_NONE;
@@ -3653,7 +3653,7 @@ static char *optval_to_cstr(Object o, bool quote)
     return buf;
   }
   case kObjectTypeLuaRef:
-    return xstrdup("v:lua");  // A Lua callback has no name; show a stable handle.
+    return nlua_funcref_str(o.data.luaref, NULL, false);  // show_ref=false: ref changes every time.
   default:
     abort();  // Should not happen.
   }
@@ -6467,7 +6467,7 @@ int ExpandOldSetting(int *numMatches, char ***matches)
   char *var = NULL;
 
   *numMatches = 0;
-  *matches = xmalloc(sizeof(char *));
+  *matches = NULL;
 
   // For a terminal key code expand_option_idx is kOptInvalid.
   if (expand_option_idx == kOptInvalid) {
@@ -6475,6 +6475,14 @@ int ExpandOldSetting(int *numMatches, char ***matches)
   }
 
   if (expand_option_idx != kOptInvalid) {
+    Object o = opt_from_varp(expand_option_idx,
+                             get_varp_scope(&options[expand_option_idx], expand_option_flags));
+    bool is_luafn = o.type == kObjectTypeLuaRef;
+    optval_free_read(expand_option_idx, o);
+    if (is_luafn) {
+      // Special case: ":set x=<tab>" cannot meaningfully complete a Lua function.
+      return OK;
+    }
     // Put string of option value in NameBuff.
     optval_fmt(expand_option_idx, expand_option_flags);
     var = NameBuff;
@@ -6484,6 +6492,7 @@ int ExpandOldSetting(int *numMatches, char ***matches)
 
   char *buf = escape_option_str_cmdline(var);
 
+  *matches = xmalloc(sizeof(char *));
   (*matches)[0] = buf;
   *numMatches = 1;
   return OK;
