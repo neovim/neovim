@@ -182,6 +182,19 @@ describe('treesitter highlighting (C)', function()
     -- treesitter highlighting is used
     screen:expect(hl_grid_ts_c)
 
+    -- A second start() on an already-highlighted buffer is a no-op: it returns the existing
+    -- highlighter instead of replacing it (replacing it would leak the old instance's
+    -- on_bytes/on_changedtree callbacks, since destroy() is never called on it).
+    eq(
+      true,
+      exec_lua(function()
+        local buf = vim.api.nvim_get_current_buf()
+        local first = vim.treesitter.highlighter.active[buf]
+        vim.treesitter.start()
+        return first == vim.treesitter.highlighter.active[buf]
+      end)
+    )
+
     exec_lua(function()
       vim.treesitter.stop()
     end)
