@@ -78,6 +78,39 @@ describe('conceal-aware wrapping (#14409): real terminal', function()
     screen:expect({ none = 'HIDDEN' })
   end)
 
+  it('tree-sitter @conceal survives edit + undo while scrolled', function()
+    local screen = start_conceal('concealcursor=nvic', 30)
+
+    feed_data(
+      ':lua local l={} for i=1,30 do '
+        .. 'l[i]="int HIDDENIDENTIFIER0 = "..i..";" end '
+        .. 'vim.api.nvim_buf_set_lines(0,0,-1,true,l)\r'
+    )
+    feed_data(
+      [[:lua vim.treesitter.highlighter.new(vim.treesitter.get_parser(0,'c'),{queries={c=[==[((identifier) @conceal (#eq? @conceal "HIDDENIDENTIFIER0") (#set! conceal ""))]==]}})]]
+        .. '\r'
+    )
+    screen:expect({ any = 'int' })
+
+    feed_data(':15\r')
+    screen:expect({ any = 'int  = 15;' })
+    screen:expect({ none = 'HIDDENIDENTIFIER0' })
+
+    -- Flip several lines out of conceal (edit no longer matches #eq?), then undo, all while the
+    -- view stays scrolled mid-buffer.
+    for i = 10, 20 do
+      feed_data(':' .. i .. 's/HIDDENIDENTIFIER0/VISIBLEIDENTIFIER0/\r')
+    end
+    screen:expect({ any = 'int VISIBLEIDENTIFIER0 = 15;' })
+    screen:expect({ any = 'int  = 9;' }) -- unedited line above stays concealed
+
+    for _ = 10, 20 do
+      feed_data('u')
+    end
+    screen:expect({ any = 'int  = 15;' })
+    screen:expect({ none = 'VISIBLEIDENTIFIER0' })
+  end)
+
   it('independent windows on the same buffer do not bleed conceal/cursor state', function()
     local screen = start_conceal('concealcursor=n', 30, 16)
 

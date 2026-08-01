@@ -758,12 +758,22 @@ end
 --- @param kind? string
 local function update_popup_window(winid, bufnr, kind)
   if winid and api.nvim_win_is_valid(winid) and bufnr and api.nvim_buf_is_valid(bufnr) then
+    local function resize()
+      if api.nvim_win_is_valid(winid) and api.nvim_win_get_buf(winid) == bufnr then
+        local all = api.nvim_win_text_height(winid).all
+        api.nvim_win_resize(winid, -1, all)
+      end
+    end
     if kind == lsp.protocol.MarkupKind.Markdown then
       vim.wo[winid].conceallevel = 2
       vim.treesitter.start(bufnr, kind)
+      vim.treesitter.get_parser(bufnr):parse(true, function(_, trees)
+        if trees then
+          resize()
+        end
+      end)
     end
-    local all = api.nvim_win_text_height(winid).all
-    api.nvim_win_resize(winid, -1, all)
+    resize()
   end
 end
 

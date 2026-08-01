@@ -53,6 +53,18 @@ describe('conceal-aware wrapping (#14409)', function()
     return api.nvim_win_get_cursor(0)[2]
   end
 
+  local function ts_parse_visible()
+    exec_lua(function()
+      local force_sync = vim.g._ts_force_sync_parsing
+      vim.g._ts_force_sync_parsing = true
+      local ok, err = xpcall(vim.treesitter.highlighter._on_start, debug.traceback)
+      vim.g._ts_force_sync_parsing = force_sync
+      if not ok then
+        error(err)
+      end
+    end)
+  end
+
   --- Attaches a tree-sitter highlighter concealing the "HIDDENIDENTIFIER" identifier.
   local function ts_conceal_identifier()
     exec_lua(function()
@@ -66,6 +78,7 @@ describe('conceal-aware wrapping (#14409)', function()
         },
       })
     end)
+    ts_parse_visible()
   end
 
   it('fully hidden extmark conceal reflows a wrapped line', function()
@@ -1150,6 +1163,232 @@ describe('conceal-aware wrapping (#14409)', function()
     )
   end)
 
+  it('tree-sitter @conceal reflows a wrapped line and updates on edit', function()
+    -- End-to-end through the tree-sitter highlighter: intra-line @conceal is ephemeral, but the
+    -- highlighter also adds it on demand (via _on_conceal) as a marktree mark, so geometry sees it.
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'int HIDDENIDENTIFIER = b;' })
+    ts_conceal_identifier()
+    eq(
+      1,
+      exec_lua(function()
+        return vim.api.nvim__buf_stats(0).conceal_providers
+      end)
+    )
+
+    -- The 16-char identifier is concealed to nothing: 25 - 16 = 9 displayed cells -> one row.
+    eq(1, api.nvim_win_text_height(0, {}).all)
+    -- Geometry follows the reflow: buffer col 21 (space before '=') sits at screen col 5 (4 visible
+    -- cells of "int " + 0 for the concealed identifier), still on row 1.
+    eq({ row = 1, col = 5, curscol = 5, endcol = 5 }, fn.screenpos(0, 1, 21))
+    eq({ row = 1, col = 9, curscol = 9, endcol = 9 }, fn.screenpos(0, 1, 25))
+
+    -- Edit the identifier so it no longer matches the #eq? predicate. Same raw width (25), but now
+    -- nothing is concealed, so the conceal marks must be invalidated and the line re-wraps.
+    api.nvim_buf_set_lines(0, 0, 1, true, { 'int VISIBLEIDENTIFIE = b;' })
+    ts_parse_visible()
+    eq(2, api.nvim_win_text_height(0, {}).all)
+
+    -- Undo restores the concealed identifier and its one-row reflow; redo returns to two rows.
+    -- Conceal marks are cached per row and rebuilt on edits, so the cache must follow.
+    command('undo')
+    ts_parse_visible()
+    eq({ 'int HIDDENIDENTIFIER = b;' }, api.nvim_buf_get_lines(0, 0, -1, true))
+    eq(1, api.nvim_win_text_height(0, {}).all)
+
+    command('redo')
+    ts_parse_visible()
+    eq({ 'int VISIBLEIDENTIFIE = b;' }, api.nvim_buf_get_lines(0, 0, -1, true))
+    eq(2, api.nvim_win_text_height(0, {}).all)
+    eq(
+      0,
+      exec_lua(function()
+        vim.treesitter.stop(0)
+        return vim.api.nvim__buf_stats(0).conceal_providers
+      end)
+    )
+    eq(
+      0,
+      exec_lua(function()
+        vim.treesitter.start(0, 'c')
+        local providers = vim.api.nvim__buf_stats(0).conceal_providers
+        vim.treesitter.stop(0)
+        return providers
+      end)
+    )
+    eq(
+      { 0, 1, 0, 0, true, true },
+      exec_lua(function()
+        local parser = vim.treesitter.get_parser(0, 'c')
+        local highlighter = vim.treesitter.highlighter.new(parser, {
+          queries = {
+            c = '((identifier) @variable)',
+            lua = '((identifier) @conceal (#set! conceal ""))',
+          },
+        })
+        local counts = { vim.api.nvim__buf_stats(0).conceal_providers }
+        parser:add_child('lua')
+        counts[#counts + 1] = vim.api.nvim__buf_stats(0).conceal_providers
+        highlighter._conceal_checked[0] = true
+        local conceal_ns = vim.api.nvim_get_namespaces()['nvim.treesitter.highlighter.conceal']
+        vim.api.nvim_buf_set_extmark(0, conceal_ns, 0, 0, { end_col = 1, conceal = '' })
+        parser:remove_child('lua')
+        counts[#counts + 1] = vim.api.nvim__buf_stats(0).conceal_providers
+        counts[#counts + 1] = #vim.api.nvim_buf_get_extmarks(0, conceal_ns, 0, -1, {})
+        counts[#counts + 1] = next(highlighter._conceal_checked) == nil
+        highlighter._conceal_checked[0] = true
+        parser:add_child('lua')
+        counts[#counts + 1] = next(highlighter._conceal_checked) == nil
+        highlighter:destroy()
+        return counts
+      end)
+    )
+  end)
+
+  it('tree-sitter conceal geometry never requests a full parse', function()
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'int HIDDENIDENTIFIER = b;' })
+    eq(
+      { 2, 1, 2, 1, 0 },
+      exec_lua(function()
+        local parser = vim.treesitter.get_parser(0, 'c')
+        local parse = parser.parse
+        local calls = {}
+        parser.parse = function(self, range, ...)
+          calls[#calls + 1] = range
+          return parse(self, range, ...)
+        end
+        local highlighter = vim.treesitter.highlighter.new(parser, {
+          queries = {
+            c = [[
+              ((identifier) @conceal
+               (#eq? @conceal "HIDDENIDENTIFIER")
+               (#set! conceal ""))
+            ]],
+          },
+        })
+
+        local before = vim.api.nvim_win_text_height(0, {}).all
+        local force_sync = vim.g._ts_force_sync_parsing
+        vim.g._ts_force_sync_parsing = true
+        vim.treesitter.highlighter._on_start()
+        vim.g._ts_force_sync_parsing = force_sync
+        local after = vim.api.nvim_win_text_height(0, {}).all
+
+        vim.api.nvim_buf_set_lines(0, 0, 1, true, { 'int VISIBLEIDENTIFIE = b;' })
+        local invalid = vim.api.nvim_win_text_height(0, {}).all
+        local full = 0
+        for _, range in ipairs(calls) do
+          full = full + (range == true and 1 or 0)
+        end
+        parser.parse = parse
+        highlighter:destroy()
+        return { before, after, invalid, #calls, full }
+      end)
+    )
+  end)
+
+  it('tree-sitter clips multiline conceal marks to each checked row', function()
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'int a;', 'int b;', 'int c;' })
+    eq(
+      { { 0, 0, 0, 6 }, { 1, 0, 1, 6 }, { 2, 0, 2, 6 } },
+      exec_lua(function()
+        vim.treesitter.highlighter.new(vim.treesitter.get_parser(0, 'c'), {
+          queries = { c = '((translation_unit) @conceal (#set! conceal ""))' },
+        })
+        local force_sync = vim.g._ts_force_sync_parsing
+        vim.g._ts_force_sync_parsing = true
+        vim.treesitter.highlighter._on_start()
+        vim.g._ts_force_sync_parsing = force_sync
+        for row = 0, 2 do
+          vim.api.nvim_win_text_height(0, { start_row = row, end_row = row })
+        end
+
+        local ns = vim.api.nvim_get_namespaces()['nvim.treesitter.highlighter.conceal']
+        local ranges = {}
+        for _, mark in ipairs(vim.api.nvim_buf_get_extmarks(0, ns, 0, -1, { details = true })) do
+          local details = mark[4]
+          ranges[#ranges + 1] = { mark[2], mark[3], details.end_row, details.end_col }
+        end
+        return ranges
+      end)
+    )
+  end)
+
+  it('tree-sitter rebuilds checked rows when a conceal-capable injection is added', function()
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'HIDDENIDENTIFIER = value' })
+    exec_lua(function()
+      _G.conceal_injection_parser = vim.treesitter.get_parser(0, 'c')
+      _G.conceal_injection_highlighter =
+        vim.treesitter.highlighter.new(_G.conceal_injection_parser, {
+          queries = {
+            c = [[
+                ((identifier) @conceal
+                 (#eq? @conceal "NEVER")
+                 (#set! conceal ""))
+              ]],
+            lua = [[
+                ((identifier) @conceal
+                 (#eq? @conceal "HIDDENIDENTIFIER")
+                 (#set! conceal ""))
+              ]],
+          },
+        })
+    end)
+    ts_parse_visible()
+    eq(2, api.nvim_win_text_height(0, {}).all)
+    exec_lua(function()
+      _G.conceal_injection_parser:add_child('lua')
+    end)
+    ts_parse_visible()
+    eq(1, api.nvim_win_text_height(0, {}).all)
+    exec_lua(function()
+      _G.conceal_injection_highlighter:destroy()
+    end)
+  end)
+
+  it(
+    'repeated undo/redo across multiple lines does not leave a stale or duplicated height',
+    function()
+      api.nvim_buf_set_lines(0, 0, -1, true, {
+        'int HIDDENIDENTIFIER = a;',
+        'int HIDDENIDENTIFIER = b;',
+        'int HIDDENIDENTIFIER = c;',
+      })
+      ts_conceal_identifier()
+      local function heights()
+        ts_parse_visible()
+        return {
+          api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all,
+          api.nvim_win_text_height(0, { start_row = 1, end_row = 1 }).all,
+          api.nvim_win_text_height(0, { start_row = 2, end_row = 2 }).all,
+        }
+      end
+      eq({ 1, 1, 1 }, heights())
+
+      -- Edit each line in sequence to break the match (3 separate undoable changes).
+      api.nvim_buf_set_lines(0, 0, 1, true, { 'int VISIBLEIDENTIFIE = a;' })
+      api.nvim_buf_set_lines(0, 1, 2, true, { 'int VISIBLEIDENTIFIE = b;' })
+      api.nvim_buf_set_lines(0, 2, 3, true, { 'int VISIBLEIDENTIFIE = c;' })
+      eq({ 2, 2, 2 }, heights())
+
+      -- Undo one edit at a time: only the most recently edited line reverts each time.
+      command('undo')
+      eq({ 2, 2, 1 }, heights())
+      command('undo')
+      eq({ 2, 1, 1 }, heights())
+      command('undo')
+      eq({ 1, 1, 1 }, heights())
+
+      -- A full undo/redo round trip must be stable (no stale or accumulated duplicate marks).
+      command('redo | redo | redo')
+      eq({ 2, 2, 2 }, heights())
+      command('undo | undo | undo')
+      command('redo | redo | redo')
+      eq({ 2, 2, 2 }, heights())
+    end
+  )
+
+  -- Insert-mode Up/Down move by logical line (cursor_up()/cursor_down()), unlike gj/gk's screen-row
+  -- motion. A reflowed line's extra rows must not count as lines.
   it('insert-mode Up/Down move past a reflowed line as a single logical line', function()
     -- concealcursor= reveals the cursor line, so line 1's height changes as the cursor enters it.
     command('setlocal concealcursor=')

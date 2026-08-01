@@ -1653,12 +1653,25 @@ function M.open_floating_preview(contents, syntax, opts)
     vim.bo[floating_bufnr].filetype = 'markdown'
     vim.treesitter.start(floating_bufnr)
     if not opts.height then
-      -- Reduce window height if TS highlighter conceals code block backticks.
-      local win_height = api.nvim_win_get_height(floating_winnr)
-      local text_height = api.nvim_win_text_height(floating_winnr, { max_height = win_height }).all
-      if text_height < win_height then
-        api.nvim_win_resize(floating_winnr, -1, text_height)
+      local function resize()
+        if
+          api.nvim_win_is_valid(floating_winnr)
+          and api.nvim_win_get_buf(floating_winnr) == floating_bufnr
+        then
+          local win_height = api.nvim_win_get_height(floating_winnr)
+          local text_height =
+            api.nvim_win_text_height(floating_winnr, { max_height = win_height }).all
+          if text_height < win_height then
+            api.nvim_win_resize(floating_winnr, -1, text_height)
+          end
+        end
       end
+      vim.treesitter.get_parser(floating_bufnr):parse(true, function(_, trees)
+        if trees then
+          resize()
+        end
+      end)
+      resize()
     end
   end
 
