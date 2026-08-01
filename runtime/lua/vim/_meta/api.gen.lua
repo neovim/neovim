@@ -21,6 +21,14 @@ function vim.api.nvim__buf_debug_extmarks(buf, keys, dot) end
 --- WARNING: This feature is experimental/unstable.
 ---
 --- @param buf integer
+--- @param ns_id integer
+--- @param conceal_ns_id integer
+--- @param enabled boolean
+function vim.api.nvim__buf_set_conceal_provider(buf, ns_id, conceal_ns_id, enabled) end
+
+--- WARNING: This feature is experimental/unstable.
+---
+--- @param buf integer
 --- @return table<string,any>
 function vim.api.nvim__buf_stats(buf) end
 

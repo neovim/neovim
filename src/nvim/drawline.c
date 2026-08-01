@@ -1187,7 +1187,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
   bool has_decor = false;               // this buffer has decoration
   // Resume point shared by this line's extconceal_off_before() queries: the 'linebreak' lookahead
   // below runs at every word break, so each resumes instead of remeasuring from the line start.
-  ConcealOffState conceal_off = { 0 };
+  ConcealOffState conceal_off = { .provider_ready = true };
   LinebreakState linebreak_state = { 0 };
 
   int saved_search_attr = 0;            // search_attr to be used when n_extra goes to zero
@@ -2461,7 +2461,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           // next screen line. Look past any concealed run for the real boundary. Nothing can be
           // concealed on a row carrying no decoration, so skip the lookahead entirely there.
           bool const may_conceal = (has_decor
-                                    && buf_meta_total(wp->w_buffer, kMTMetaConceal) > 0);
+                                    && buf_meta_total(wp->w_buffer, kMTMetaConceal) > 0)
+                                   || decor_has_conceal_providers(wp->w_buffer);
           if (may_conceal || !vim_isbreak((uint8_t)(*ptr))) {
             CharsizeArg csarg;
             CSType cstype = init_charsize_arg_skip_cur_text(&csarg, wp, lnum, line);

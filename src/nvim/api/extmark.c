@@ -1066,6 +1066,9 @@ void nvim_set_decoration_provider(Integer ns_id, Dict(set_decoration_provider) *
 {
   DecorProvider *p = get_decor_provider((NS)ns_id, true);
   assert(p != NULL);
+  if (p->conceal != LUA_NOREF) {
+    decor_provider_clear_conceal_marks(p->ns_id);
+  }
   decor_provider_clear(p);
 
   // regardless of what happens, it seems good idea to redraw
@@ -1085,6 +1088,7 @@ void nvim_set_decoration_provider(Integer ns_id, Dict(set_decoration_provider) *
     { "_on_hl_def", &opts->_on_hl_def, &p->hl_def },
     { "_on_spell_nav", &opts->_on_spell_nav, &p->spell_nav },
     { "_on_conceal_line", &opts->_on_conceal_line, &p->conceal_line },
+    { "_on_conceal", &opts->_on_conceal, &p->conceal },
     { NULL, NULL, NULL },
   };
 
@@ -1101,6 +1105,49 @@ void nvim_set_decoration_provider(Integer ns_id, Dict(set_decoration_provider) *
   p->state = kDecorProviderActive;
   p->hl_valid++;
   p->hl_cached = false;
+  if (p->conceal == LUA_NOREF) {
+    decor_provider_clear_conceal_bufs(p->ns_id);
+  }
+}
+
+/// @nodoc
+/// "conceal_ns_id" must identify a dedicated namespace for conceal marks added by this provider.
+void nvim__buf_set_conceal_provider(Buffer buf, Integer ns_id, Integer conceal_ns_id,
+                                    Boolean enabled, Error *err)
+  FUNC_API_LUA_ONLY
+{
+  buf_T *b = find_buffer_by_handle(buf, err);
+  if (b == NULL) {
+    return;
+  }
+  VALIDATE(ns_id > 0, "%s", "namespace id must be positive", {
+    return;
+  });
+  VALIDATE(!enabled || conceal_ns_id > 0, "%s",
+           "conceal namespace id must be positive", {
+    return;
+  });
+  VALIDATE(!enabled || conceal_ns_id != ns_id, "%s",
+           "conceal namespace must differ from provider namespace", {
+    return;
+  });
+  bool namespace_in_use = false;
+  uint32_t provider_ns;
+  uint32_t conceal_ns;
+  map_foreach(b->b_conceal_providers, provider_ns, conceal_ns, {
+    namespace_in_use |= provider_ns != (uint32_t)ns_id
+                        && conceal_ns == (uint32_t)conceal_ns_id;
+  });
+  VALIDATE(!enabled || !namespace_in_use, "%s",
+           "conceal namespace is already in use", {
+    return;
+  });
+  DecorProvider *provider = get_decor_provider((NS)ns_id, false);
+  VALIDATE(!enabled || (provider != NULL && provider->conceal != LUA_NOREF),
+           "%s", "namespace has no _on_conceal provider", {
+    return;
+  });
+  decor_provider_set_conceal_buf(b, (NS)ns_id, (NS)conceal_ns_id, enabled);
 }
 
 /// Gets the line and column of an |extmark|.
