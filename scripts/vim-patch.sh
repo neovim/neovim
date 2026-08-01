@@ -946,6 +946,7 @@ is_na_patch() {
           '-I^\s+$' \
           '-I^#\s*(ifdef|if.*defined\().*FEAT_' \
           '-I^#\s*(else|endif)' \
+          '-I^EXTERN type_T t_.* INIT[2-9]\(' \
           '-I^EXTERN char e_(abstract|class|enum|interface|type)_' \
           '-I^EXTERN char e_.*def_function' \
           '-I^EXTERN char e_.*enddef' \
