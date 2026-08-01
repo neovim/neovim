@@ -696,16 +696,16 @@ had been typed.
 
 For example, the following will map <Tab> to either actually insert a <Tab> if
 the current line is currently only whitespace, or start/continue a CTRL-N
-completion operation: >
+completion operation: >lua
 
-	function! CleverTab()
-	   if strpart( getline('.'), 0, col('.')-1 ) =~ '^\s*$'
-	      return "\<Tab>"
-	   else
-	      return "\<C-N>"
-	   endif
-	endfunction
-	inoremap <Tab> <C-R>=CleverTab()<CR>
+    function _G.clever_tab()
+      if vim.fn.getline('.'):sub(1, vim.fn.col('.') - 1):match('^%s*$') then
+        return vim.keycode('<Tab>')
+      else
+        return vim.keycode('<C-N>')
+      end
+    end
+    vim.keymap.set('i', '<Tab>', '<C-R>=v:lua.clever_tab()<CR>')
 
 
 
@@ -876,29 +876,29 @@ not used.  See |complete-functions| for an explanation of how the function is
 invoked and what it should return.
 
 Here is an example that uses the "aiksaurus" command (provided by Magnus
-Groß): >
+Groß): >lua
 
-    func Thesaur(findstart, base)
-      if a:findstart
-	return searchpos('\<', 'bnW', line('.'))[1] - 1
-      endif
-      let res = []
-      let h = ''
-      for l in systemlist('aiksaurus ' .. shellescape(a:base))
-	if l[:3] == '=== '
-	  let h = '(' .. substitute(l[4:], ' =*$', ')', '')
-	elseif l ==# 'Alphabetically similar known words are: '
-	  let h = "\U0001f52e"
-	elseif l[0] =~ '\a' || (h ==# "\U0001f52e" && l[0] ==# "\t")
-	  call extend(res, map(split(substitute(l, '^\t', '', ''), ', '), {_, val -> {'word': val, 'menu': h}}))
-	endif
-      endfor
+    vim.o.thesaurusfunc = function(findstart, base)
+      if findstart == 1 then
+	return vim.fn.searchpos('\\<', 'bnW', vim.fn.line('.'))[2] - 1
+      end
+      local res = {}
+      local h = ''
+      for _, l in ipairs(vim.fn.systemlist('aiksaurus '
+					   .. vim.fn.shellescape(base))) do
+	if l:sub(1, 4) == '=== ' then
+	  h = ('(%s)'):format((l:sub(5):gsub(' =*$', '')))
+	elseif l == 'Alphabetically similar known words are: ' then
+	  h = '🔮'
+	elseif l:match('^%a') or (h == '🔮' and l:sub(1, 1) == '\t') then
+	  local words = (l:gsub('^\t', ''))
+	  for _, val in ipairs(vim.split(words, ', ', { plain = true })) do
+	    table.insert(res, { word = val, menu = h })
+	  end
+	end
+      end
       return res
-    endfunc
-
-    if exists('+thesaurusfunc')
-      set thesaurusfunc=Thesaur
-    endif
+    end
 
 
 Completing keywords in the current and included files	*compl-keyword*
@@ -1291,54 +1291,50 @@ while still searching for matches.  Stop searching when it returns non-zero.
 The function is allowed to move the cursor, it is restored afterwards.
 The function is not allowed to move to another window or delete text.
 
-An example that completes the names of the months: >
-	fun! CompleteMonths(findstart, base)
-	  if a:findstart
-	    " locate the start of the word
-	    let line = getline('.')
-	    let start = col('.') - 1
-	    while start > 0 && line[start - 1] =~ '\a'
-	      let start -= 1
-	    endwhile
-	    return start
-	  else
-	    " find months matching with "a:base"
-	    let res = []
-	    for m in split("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec")
-	      if m =~ '^' .. a:base
-		call add(res, m)
-	      endif
-	    endfor
-	    return res
-	  endif
-	endfun
-	set completefunc=CompleteMonths
+An example that completes the names of the months: >lua
+    vim.o.completefunc = function(findstart, base)
+      if findstart == 1 then -- Locate the start of the word.
+        local line = vim.fn.getline('.')
+        local start = vim.fn.col('.') - 1
+        while start > 0 and line:sub(start, start):match('%a') do
+          start = start - 1
+        end
+        return start
+      else -- Find months matching with "base".
+        local res = {}
+        local months = 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'
+        for m in months:gmatch('%a+') do
+          if vim.startswith(m, base) then
+            table.insert(res, m)
+          end
+        end
+        return res
+      end
+    end
 <
-The same, but now pretending searching for matches is slow: >
-	fun! CompleteMonths(findstart, base)
-	  if a:findstart
-	    " locate the start of the word
-	    let line = getline('.')
-	    let start = col('.') - 1
-	    while start > 0 && line[start - 1] =~ '\a'
-	      let start -= 1
-	    endwhile
-	    return start
-	  else
-	    " find months matching with "a:base"
-	    for m in split("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec")
-	      if m =~ '^' .. a:base
-		call complete_add(m)
-	      endif
-	      sleep 300m	" simulate searching for next match
-	      if complete_check()
-		break
-	      endif
-	    endfor
-	    return []
-	  endif
-	endfun
-	set completefunc=CompleteMonths
+The same, but now pretending searching for matches is slow: >lua
+    vim.o.completefunc = function(findstart, base)
+      if findstart == 1 then -- Locate the start of the word.
+        local line = vim.fn.getline('.')
+        local start = vim.fn.col('.') - 1
+        while start > 0 and line:sub(start, start):match('%a') do
+          start = start - 1
+        end
+        return start
+      else -- Find months matching with "base".
+        local months = 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'
+        for m in months:gmatch('%a+') do
+          if vim.startswith(m, base) then
+            vim.fn.complete_add(m)
+          end
+          vim.uv.sleep(300) -- Simulate searching for next match.
+          if vim.fn.complete_check() ~= 0 then
+            break
+          end
+        end
+        return {}
+      end
+    end
 <
 
 INSERT COMPLETION POPUP MENU				*ins-completion-menu*

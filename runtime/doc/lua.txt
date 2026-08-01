@@ -1315,7 +1315,7 @@ vim.lua_omnifunc({find_start})                            *vim.lua_omnifunc()*
     Omnifunc for completing Lua values from the runtime Lua interpreter,
     similar to the builtin completion for the `:lua` command.
 
-    Activate using `set omnifunc=v:lua.vim.lua_omnifunc` in a Lua buffer.
+    Activate using `vim.bo.omnifunc = vim.lua_omnifunc` in a Lua buffer.
 
     Parameters: ~
       • {find_start}  (`1|0`)
@@ -2644,15 +2644,15 @@ vim.fs.dir({path}, {opts})                                      *vim.fs.dir()*
     Parameters: ~
       • {path}  (`string`) Directory to iterate over, normalized via
                 |vim.fs.normalize()| unless `opts.normalize=false`.
-      • {opts}  (`table?`) Optional keyword arguments:
+      • {opts}  (`table?`) A table with the following fields:
                 • {depth}? (`integer`, default: `1`) How deep to traverse.
                 • {err}? (`boolean`, default: `false`) Report errors via the
                   iterator's third value ("err"), instead of silently
                   skipping.
                 • {follow}? (`boolean`, default: `false`) Follow symbolic
                   links.
-                • {normalize}? (`boolean`, default: `true`) Expand "~" and "$"
-                  in {path} before scanning the directory.
+                • {plain}? (`boolean`, default: `false`) Do not expand special
+                  forms like "~" and "$" in {path}.
                 • {skip}? (`fun(dir_name: string): boolean`) Predicate to
                   control traversal. Return false to stop searching the
                   current directory. Only useful when depth > 1 Return an

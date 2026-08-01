@@ -511,28 +511,22 @@ Additionally, 'diffexpr' should take care of "icase" and "iwhite" in the
 The advantage of using a function call without arguments is that it is faster,
 see |expr-option-function|.
 
-Example (this does almost the same as 'diffexpr' being empty): >
+Example (this does almost the same as 'diffexpr' being empty): >lua
 
-	set diffexpr=MyDiff()
-	function MyDiff()
-	   let opt = ""
-	   if &diffopt =~ "icase"
-	     let opt = opt .. "-i "
-	   endif
-	   if &diffopt =~ "iwhite"
-	     let opt = opt .. "-b "
-	   endif
-	   silent execute "!diff -a --binary " .. opt .. v:fname_in .. " " .. v:fname_new ..
-		\  " > " .. v:fname_out
-	   redraw!
-	endfunction
+	vim.o.diffexpr = function()
+	  local opt = ''
+	  if vim.o.diffopt:find('icase') then
+	    opt = opt .. '-i '
+	  end
+	  if vim.o.diffopt:find('iwhite') then
+	    opt = opt .. '-b '
+	  end
+	  vim.fn.system(('diff -a %s%s %s > %s'):format(
+	    opt, vim.v.fname_in, vim.v.fname_new, vim.v.fname_out))
+	end
 
 The "-a" argument is used to force comparing the files as text, comparing as
-binaries isn't useful.  The "--binary" argument makes the files read in binary
-mode, so that a CTRL-Z doesn't end the text on DOS.
-
-The `redraw!` command may not be needed, depending on whether executing a
-shell command shows something on the display or not.
+binaries isn't useful.
 
 If the 'diffexpr' expression starts with s: or |<SID>|, then it is replaced
 with the script ID (|local-function|).  Example: >
@@ -579,13 +573,12 @@ will have the same effect.  These variables are set to the file names used:
 The advantage of using a function call without arguments is that it is faster,
 see |expr-option-function|.
 
-Example (this does the same as 'patchexpr' being empty): >
+Example (this does the same as 'patchexpr' being empty): >lua
 
-	set patchexpr=MyPatch()
-	function MyPatch()
-	   :call system("patch -o " .. v:fname_out .. " " .. v:fname_in ..
-	   \  " < " .. v:fname_diff)
-	endfunction
+	vim.o.patchexpr = function()
+	  vim.fn.system(('patch -o %s %s < %s'):format(
+	    vim.v.fname_out, vim.v.fname_in, vim.v.fname_diff))
+	end
 
 Make sure that using the "patch" program doesn't have unwanted side effects.
 For example, watch out for additionally generated files, which should be

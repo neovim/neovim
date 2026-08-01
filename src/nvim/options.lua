@@ -1195,14 +1195,13 @@ local options = {
         Conversion between "latin1", "unicode", "ucs-2", "ucs-4" and "utf-8"
         is done internally by Vim, 'charconvert' is not used for this.
         Also used for Unicode conversion.
-        Example: >vim
-        	set charconvert=CharConvert()
-        	fun CharConvert()
-        	  system("recode "
-        		\ .. v:charconvert_from .. ".." .. v:charconvert_to
-        		\ .. " <" .. v:fname_in .. " >" .. v:fname_out)
-        	  return v:shell_error
-        	endfun
+        Example: >lua
+        	vim.o.charconvert = function()
+        	  vim.fn.system(('recode %s..%s <%s >%s'):format(
+        	    vim.v.charconvert_from, vim.v.charconvert_to,
+        	    vim.v.fname_in, vim.v.fname_out))
+        	  return vim.v.shell_error
+        	end
         <	The related Vim variables are:
         	v:charconvert_from	name of the current encoding
         	v:charconvert_to	name of the desired encoding
@@ -3449,20 +3448,20 @@ local options = {
 
 
         Examples:
-        >vim
-            " Use glob()
-            func FindFuncGlob(cmdarg, cmdcomplete)
-        	let pat = a:cmdcomplete ? $'{a:cmdarg}*' : a:cmdarg
-        	return glob(pat, v:false, v:true)
-            endfunc
-            set findfunc=FindFuncGlob
+        >lua
+            -- Use vim.fn.glob()
+            vim.o.findfunc = function(cmdarg, cmdcomplete)
+              local pat = cmdcomplete and (cmdarg .. '*') or cmdarg
+              return vim.fn.glob(pat, false, true)
+            end
 
-            " Use the 'git ls-files' output
-            func FindGitFiles(cmdarg, cmdcomplete)
-        	let fnames = systemlist('git ls-files')
-        	return fnames->filter('v:val =~? a:cmdarg')
-            endfunc
-            set findfunc=FindGitFiles
+            -- Use the "git ls-files" output
+            vim.o.findfunc = function(cmdarg, cmdcomplete)
+              local fnames = vim.fn.systemlist('git ls-files')
+              return vim.tbl_filter(function(v)
+                return v:lower():find(cmdarg:lower(), 1, true) ~= nil
+              end, fnames)
+            end
         <
       ]=],
       full_name = 'findfunc',

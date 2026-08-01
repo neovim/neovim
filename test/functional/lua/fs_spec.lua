@@ -345,7 +345,7 @@ describe('vim.fs', function()
       eq(nil, result['a/noaccess'])
     end)
 
-    it('opts.normalize=false uses {path} literally', function()
+    it('plain=true', function()
       mkdir('testdir')
       mkdir('testdir/$XTEST_FS_DIR')
       mkdir('testdir/expanded')
@@ -360,9 +360,9 @@ describe('vim.fs', function()
         exec_lua(function()
           vim.uv.os_setenv('XTEST_FS_DIR', 'expanded')
           local out = {} ---@type table<string, string>[]
-          for i, normalize in ipairs({ true, false }) do
+          for i, plain in ipairs({ false, true }) do
             out[i] = {}
-            for name, etype in vim.fs.dir('testdir/$XTEST_FS_DIR', { normalize = normalize }) do
+            for name, etype in vim.fs.dir('testdir/$XTEST_FS_DIR', { plain = plain }) do
               out[i][name] = etype
             end
           end
