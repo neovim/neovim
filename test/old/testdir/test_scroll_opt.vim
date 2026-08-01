@@ -1334,6 +1334,25 @@ func Test_smoothscroll_keep_skipcol()
   bwipe!
 endfunc
 
+func Test_smoothscroll_cursor_back_in_line()
+  call NewWindow(10, 40)
+  setlocal smoothscroll
+  call setline(1, ['abcde '->repeat(150)]->repeat(2))
+
+  exe "norm! 10\<C-E>"
+  redraw
+  call assert_equal(400, winsaveview().skipcol)
+
+  " Moving to an earlier column in the same line scrolls back only as far as
+  " needed, not all the way to the start of the line.
+  norm! 240|
+  redraw
+  call assert_equal(200, winsaveview().skipcol)
+  call assert_equal(1, winline())
+
+  bwipe!
+endfunc
+
 func Test_smoothscroll_long_line_zb()
   call NewWindow(10, 40)
   call setline(1, 'abcde '->repeat(150))
