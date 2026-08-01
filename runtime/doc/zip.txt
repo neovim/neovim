@@ -38,6 +38,9 @@ are required.
 Encrypted entries are listed but cannot be read: `unzip` takes a password only
 from a terminal, or in its arguments where other processes could read it.
 
+An entry path that literally contains "#U" followed by four hex digits is read
+as a non-ASCII escape, and is shown decoded.
+
 ==============================================================================
 Legacy plugin: zip                                                   *old-zip*
 
