@@ -1,0 +1,64 @@
+name: bsd
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'release-[0-9]+.[0-9]+'
+  pull_request:
+    branches:
+      - 'master'
+      - 'release-[0-9]+.[0-9]+'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  freebsd:
+    name: FreeBSD
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build
+        uses: vmactions/freebsd-vm@v1
+        with:
+          usesh: true
+          cache-after-prepare: true
+          prepare: |
+            pkg install -y cmake gmake ninja unzip wget gettext python git
+          run: |
+            set -e
+            gmake deps
+            gmake CMAKE_EXTRA_FLAGS="-DCI_BUILD=ON" nvim
+            ./build/bin/nvim --version
+
+  openbsd:
+    name: OpenBSD
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build
+        uses: vmactions/openbsd-vm@v1
+        with:
+          usesh: true
+          cache-after-prepare: true
+          prepare: |
+            pkg_add -I cmake gmake ninja gettext-tools gettext-runtime git
+          run: |
+            set -e
+            gmake deps
+            gmake CMAKE_EXTRA_FLAGS="-DCI_BUILD=ON" nvim
+            ./build/bin/nvim --version
