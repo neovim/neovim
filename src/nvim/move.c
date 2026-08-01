@@ -1896,9 +1896,19 @@ void scroll_cursor_top(win_T *wp, int min_scroll, int always)
     } else if (wp->w_topline == wp->w_cursor.lnum) {
       validate_virtcol(wp);
       if (wp->w_skipcol >= wp->w_virtcol) {
-        // TODO(vim): if the line doesn't fit may optimize w_skipcol instead
-        // of making it zero
-        reset_skipcol(wp);
+        // Skip up to the screen line the cursor is in, so that the
+        // position in the line is kept.
+        int width1 = wp->w_width - win_col_off(wp);
+        int width2 = width1 + win_col_off2(wp);
+        int plines_off = 0;
+        if (width2 > 0 && wp->w_virtcol >= width1) {
+          plines_off = (wp->w_virtcol - width1) / width2 + 1;
+        }
+        int skipcol = skipcol_from_plines(wp, plines_off);
+        if (skipcol != wp->w_skipcol) {
+          wp->w_skipcol = skipcol;
+          redraw_later(wp, UPD_SOME_VALID);
+        }
       }
     }
     if (wp->w_topline != old_topline
