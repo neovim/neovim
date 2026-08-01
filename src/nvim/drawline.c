@@ -2434,7 +2434,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           // handling below), so it can't anchor the padding that pushes the following word to the
           // next screen line. Look past any concealed run for the real boundary. Nothing can be
           // concealed on a row carrying no decoration, so skip the lookahead entirely there.
-          bool const may_conceal = has_decor;
+          bool const may_conceal = has_decor || decor_has_conceal_providers();
           int next_c = (uint8_t)(*ptr);
           bool const anchor_ok = !may_conceal
                                  || extconceal_lbr_anchor_ok(wp, lnum, line, (int)(p - line),

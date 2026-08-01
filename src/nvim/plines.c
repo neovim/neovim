@@ -12,6 +12,7 @@
 #include "nvim/charset.h"
 #include "nvim/decoration.h"
 #include "nvim/decoration_defs.h"
+#include "nvim/decoration_provider.h"
 #include "nvim/diff.h"
 #include "nvim/drawscreen.h"
 #include "nvim/fold.h"
@@ -90,10 +91,10 @@ int linetabsize_eol(win_T *wp, linenr_T lnum)
 static const uint32_t inline_filter[kMTMetaCount] = {[kMTMetaInline] = kMTFilterSelect };
 
 /// Whether persistent conceal may hide cells on line "lnum" of window "wp": 'conceallevel' is set
-/// and there are marktree conceal marks, unless this is the cursor line and 'concealcursor' reveals
-/// it. This is CharsizeArg::maybe_conceal's formula, extracted so callers can cheaply check it (no
-/// marktree walk, unlike init_charsize_arg()) before deciding whether a conceal-aware walk is worth
-/// setting up at all.
+/// and there are marktree or decoration-provider conceal marks, unless this is the cursor line and
+/// 'concealcursor' reveals it. This is CharsizeArg::maybe_conceal's formula, extracted so callers
+/// can cheaply check it (no marktree walk, unlike init_charsize_arg()) before deciding whether a
+/// conceal-aware walk is worth setting up at all.
 bool maybe_extconceal_line(win_T *wp, linenr_T lnum)
 {
   return lnum > 0 && maybe_extconceal_buf(wp)
@@ -106,7 +107,8 @@ bool maybe_extconceal_line(win_T *wp, linenr_T lnum)
 /// column across every line they visit.
 bool maybe_extconceal_buf(win_T *wp)
 {
-  return wp->w_p_cole > 0 && wp->w_buffer->b_marktree->n_keys > 0;
+  return wp->w_p_cole > 0
+         && (wp->w_buffer->b_marktree->n_keys > 0 || decor_has_conceal_providers());
 }
 
 /// Prepare the structure passed to charsize functions.
@@ -133,9 +135,10 @@ CSType init_charsize_arg(CharsizeArg *csarg, win_T *wp, linenr_T lnum, char *lin
     }
   }
 
-  // A line whose cells may be hidden by persistent conceal must use the regular path so that
-  // linesize_regular() can compute the conceal-aware screen-layout width. The cursor line reveals
-  // conceal unless 'concealcursor' applies.
+  // A line whose cells may be hidden by conceal must use the regular path so that
+  // linesize_regular() can compute the conceal-aware screen-layout width. Conceal may come from the
+  // marktree or be materialised on demand by an `_on_conceal` decoration provider (see
+  // decor_conceal_materialise()).
   csarg->maybe_conceal = maybe_extconceal_line(wp, lnum);
 
   if (csarg->virt_row >= 0 || csarg->maybe_conceal
@@ -550,6 +553,13 @@ bool linesize_conceal_start(CharsizeArg *csarg, DecorState *state)
   if (!csarg->maybe_conceal) {
     return false;
   }
+  // Let `_on_conceal` providers materialise this row's conceal into the marktree first, so the scan
+  // below sees provider (e.g. tree-sitter) conceal the same way as non-provider conceal.
+  decor_conceal_materialise(csarg->win, csarg->row);
+  // That callback can mutate the buffer (e.g. nvim_buf_set_extmark()), flushing memline's read
+  // cache and freeing the line buffer "csarg->line" points into. ml_get_buf() is a cheap no-op
+  // re-read when the row is still the cached one.
+  csarg->line = ml_get_buf(csarg->win->w_buffer, csarg->row + 1);
   *state = (DecorState){ 0 };
   if (decor_redraw_reset(csarg->win, state) == 0) {
     return false;
@@ -1229,7 +1239,7 @@ bool extconceal_line_changes_height(win_T *wp, linenr_T lnum)
       || lnum < 1 || lnum > wp->w_buffer->b_ml.ml_line_count) {
     return false;
   }
-  if (wp->w_buffer->b_marktree->n_keys == 0) {
+  if (!(wp->w_buffer->b_marktree->n_keys > 0 || decor_has_conceal_providers())) {
     return false;
   }
 

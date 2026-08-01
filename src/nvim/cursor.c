@@ -104,6 +104,11 @@ static int coladvance2(win_T *wp, pos_T *pos, bool addspaces, bool finetune, col
                  || (Visual.active && *p_sel != 'o')
                  || ((get_ve_flags(wp) & kOptVeFlagOnemore) && wcol < MAXCOL);
 
+  // Materialise conceal before reading "line" below: decor_conceal_materialise() may run an
+  // `_on_conceal` Lua callback that mutates the buffer, which would otherwise invalidate "line"
+  // partway through this function. A no-op unless 'conceallevel' and a conceal provider are set.
+  decor_conceal_materialise(wp, pos->lnum - 1);
+
   char *line = ml_get_buf(wp->w_buffer, pos->lnum);
   int linelen = ml_get_buf_len(wp->w_buffer, pos->lnum);
 

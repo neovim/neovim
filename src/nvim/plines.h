@@ -94,6 +94,9 @@ static inline CharSize win_charsize(CSType cstype, int vcol, char *ptr, int32_t 
   }
 }
 
+/// May run decor_conceal_materialise(), whose Lua callback can free the line buffer, so re-read
+/// csarg->line after this call; it is refreshed here.
+///
 /// @return true if conceal tracking is active for csarg's line (csarg->maybe_conceal).
 static inline bool conceal_walk_start(CharsizeArg *csarg, ConcealWalk *walk)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
