@@ -1006,12 +1006,10 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
     return FAIL;
   }
 
-  // must init bw_conv_buf and bw_iconv_fd before jumping to "fail"
-  struct bw_info write_info;            // info for buf_write_bytes()
-  write_info.bw_conv_buf = NULL;
-  write_info.bw_conv_error = false;
-  write_info.bw_conv_error_lnum = 0;
-  write_info.bw_iconv_fd = (iconv_t)-1;
+  // Ensure all fields are initialized (zeroed, or else specified here).
+  struct bw_info write_info = {          // info for buf_write_bytes()
+    .bw_iconv_fd = (iconv_t)-1,
+  };
 
   // If there is no file name yet, use the one for the written file.
   // BF_NOTEDITED is set to reflect this (in case the write fails).
