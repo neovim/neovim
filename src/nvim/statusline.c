@@ -482,6 +482,7 @@ void win_redr_winbar(win_T *wp)
 
 void redraw_ruler(void)
 {
+  static bool did_show_ruler = false;
   static int did_ruler_col = -1;
   win_T *wp = !curwin->w_config.hide
               && curwin->w_status_height == 0 ? curwin : lastwin_nofloating(NULL);
@@ -495,8 +496,11 @@ void redraw_ruler(void)
     } else if (did_ruler_col > 0) {
       msg_col = did_ruler_col;
       msg_row = Rows - 1;
+    }
+    if (did_show_ruler && !ui_has(kUIMessages)) {
       msg_clr_eos();
     }
+    did_show_ruler = false;
     did_ruler_col = -1;
     return;
   }
@@ -516,6 +520,7 @@ void redraw_ruler(void)
   bool part_of_status = wp->w_status_height || is_stl_global;
   if (*p_ruf && (p_ch > 0 || (ui_has(kUIMessages) && !part_of_status))) {
     win_redr_stl_expr(wp, false, true, ui_has(kUIMessages));
+    did_show_ruler = !ui_has(kUIMessages);
     return;
   }
 
@@ -605,6 +610,7 @@ void redraw_ruler(void)
     }
 
     grid_line_start(&msg_grid_adj, Rows - 1);
+    did_show_ruler = true;
     did_ruler_col = off + this_ru_col;
     int w = grid_line_puts(did_ruler_col, buffer, -1, attr);
     grid_line_fill(did_ruler_col + w, off + width, fillchar, attr);

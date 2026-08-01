@@ -1890,7 +1890,22 @@ describe('ui/builtin messages', function()
   end)
 
   it('supports ruler with laststatus=0', function()
-    command('set ruler laststatus=0')
+    command('set laststatus=0 ruler rulerformat=%-15(%c%V\\ %p%%%)')
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*5
+                                                  0-1 100%        |
+    ]])
+
+    -- Ruler is cleared when it is no longer drawn.
+    command('set noruler')
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*5
+                                                                  |
+    ]])
+
+    command('set ruler rulerformat&')
     screen:expect([[
       ^                                                            |
       {1:~                                                           }|*5
@@ -1902,21 +1917,6 @@ describe('ui/builtin messages', function()
       ^                                                            |
       {1:~                                                           }|*5
       {101:                                          0,0-1         All }|
-    ]])
-
-    command('set rulerformat=%15(%c%V\\ %p%%%)')
-    screen:expect([[
-      ^                                                            |
-      {1:~                                                           }|*5
-      {101:                                          0,0-1 100%        }|
-    ]])
-
-    -- Ruler is cleared when it is no longer drawn.
-    command('set noruler')
-    screen:expect([[
-      ^                                                            |
-      {1:~                                                           }|*5
-      {101:                                                            }|
     ]])
   end)
 
