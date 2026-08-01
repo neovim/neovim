@@ -330,6 +330,9 @@ g<Down>			[count] display lines downward.  |exclusive| motion.
 							*-*
 `-`  <minus>		[count] lines upward, on the first non-blank
 			character |linewise|.
+							*-_default*
+			By default "-" is mapped to open the parent directory
+			of the current buffer. |dir-mappings| |default-mappings|
 
 `+`		or					*+*
 CTRL-M		or					*CTRL-M* *<CR>*

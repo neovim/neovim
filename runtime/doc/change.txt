@@ -1494,25 +1494,24 @@ $VIMRUNTIME/ftplugin directory, sets the 'formatexpr' option to: >
 That means, you will find the corresponding script, defining the
 xmlformat#Format() function, in the file `$VIMRUNTIME/autoload/xmlformat.vim`
 
-Here is an example script that removes trailing whitespace from the selected
-text.  Put it in your autoload directory, e.g. ~/.vim/autoload/format.vim:
->vim
-  func! format#Format()
-    " only reformat on explicit gq command
-    if mode() != 'n'
-      " fall back to Vim's internal reformatting
+Here is an example that removes trailing whitespace from the selected text.
+Put it in your |ftplugin|:
+>lua
+  vim.bo.formatexpr = function()
+    -- only reformat on explicit gq command
+    if vim.fn.mode() ~= 'n' then
+      -- fall back to the internal reformatting
       return 1
-    endif
-    let lines = getline(v:lnum, v:lnum + v:count - 1)
-    call map(lines, {key, val -> substitute(val, '\s\+$', '', 'g')})
-    call setline('.', lines)
+    end
+    local lines = vim.fn.getline(vim.v.lnum, vim.v.lnum + vim.v.count - 1)
+    for i, val in ipairs(lines) do
+      lines[i] = (val:gsub('%s+$', ''))
+    end
+    vim.fn.setline('.', lines)
 
-    " do not run internal formatter!
+    -- do not run internal formatter!
     return 0
-  endfunc
-
-You can then enable the formatting by executing: >
-  setlocal formatexpr=format#Format()
+  end
 
 Note: this function explicitly returns non-zero when called from insert mode
 (which basically means, text is inserted beyond the 'textwidth' limit).  This

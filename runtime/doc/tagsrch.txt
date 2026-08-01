@@ -967,20 +967,14 @@ It is not allowed to close a window or change window from inside 'tagfunc'.
 The following is a hypothetical example of a function used for 'tagfunc'.  It
 uses the output of |taglist()| to generate the result: a list of tags in the
 inverse order of file names.
->vim
-	function CompareFilenames(item1, item2)
-	  let f1 = a:item1['filename']
-	  let f2 = a:item2['filename']
-	  return f1 >=# f2 ? -1 : f1 <=# f2 ? 1 : 0
-	endfunction
-
-	function TagFunc(pattern, flags, info)
-	  let result = taglist(a:pattern)
-	  call sort(result, "CompareFilenames")
-
+>lua
+	vim.bo.tagfunc = function(pattern, flags, info)
+	  local result = vim.fn.taglist(pattern)
+	  table.sort(result, function(item1, item2)
+	    return item1.filename > item2.filename
+	  end)
 	  return result
-	endfunc
-	set tagfunc=TagFunc
+	end
 <
 Note: When executing |taglist()| the 'tagfunc' function won't be called
 recursively.

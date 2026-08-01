@@ -502,7 +502,7 @@ end
 --- Returns the fold level for {lnum} in the current buffer. Can be set directly to 'foldexpr':
 ---
 --- ```lua
---- vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+--- vim.wo.foldexpr = vim.treesitter.foldexpr
 --- ```
 ---
 ---@since 11

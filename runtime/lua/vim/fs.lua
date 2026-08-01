@@ -191,9 +191,9 @@ end
 --- (default: `false`)
 --- @field follow? boolean
 ---
---- Expand "~" and "$" in {path} before scanning the directory.
---- (default: `true`)
---- @field normalize? boolean
+--- Do not expand special forms like "~" and "$" in {path}.
+--- (default: `false`)
+--- @field plain? boolean
 
 --- Gets an iterator over items found in `path` (normalized via |vim.fs.normalize()|).
 ---
@@ -210,7 +210,7 @@ end
 ---@since 10
 ---@param path (string) Directory to iterate over, normalized via |vim.fs.normalize()| unless
 ---            `opts.normalize=false`.
----@param opts? vim.fs.dir.Opts Optional keyword arguments:
+---@param opts? vim.fs.dir.Opts
 ---@return fun(): string?, string?, string? # Iterator over items in {path}, yielding (name, type, err):
 ---        - name: Basename of the item relative to {path}.
 ---        - type: One of: "file", "directory", "link", "fifo", "socket", "char", "block", "unknown".
@@ -224,9 +224,9 @@ function M.dir(path, opts)
   vim.validate('err', opts.err, 'boolean', true)
   vim.validate('follow', opts.follow, 'boolean', true)
   vim.validate('skip', opts.skip, 'function', true)
-  vim.validate('normalize', opts.normalize, 'boolean', true)
+  vim.validate('plain', opts.plain, 'boolean', true)
 
-  if opts.normalize ~= false then
+  if opts.plain ~= true then
     path = M.normalize(path)
   end
 

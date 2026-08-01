@@ -1374,8 +1374,13 @@ end
 --- Provides an interface between the built-in client and a `formatexpr` function.
 ---
 --- Currently only supports a single client. This can be set via
---- `setlocal formatexpr=v:lua.vim.lsp.formatexpr()` or (more typically) in `on_attach`
---- via `vim.bo[bufnr].formatexpr = 'v:lua.vim.lsp.formatexpr(#{timeout_ms:250})'`.
+--- `vim.bo[bufnr].formatexpr = vim.lsp.formatexpr`, or with a wrapper to pass options:
+---
+--- ```lua
+--- vim.bo[bufnr].formatexpr = function()
+---   return vim.lsp.formatexpr({ timeout_ms = 250 })
+--- end
+--- ```
 ---
 ---@param opts? vim.lsp.formatexpr.Opts
 function lsp.formatexpr(opts)
@@ -1445,7 +1450,7 @@ end
 ---
 --- ```lua
 --- vim.o.foldmethod = 'expr'
---- vim.o.foldexpr = 'v:lua.vim.lsp.foldexpr()'
+--- vim.o.foldexpr = vim.lsp.foldexpr
 --- ```
 ---
 --- Or use it only when supported by checking for the "textDocument/foldingRange"
@@ -1454,14 +1459,14 @@ end
 --- ```lua
 --- vim.o.foldmethod = 'expr'
 --- -- Default to treesitter folding
---- vim.o.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+--- vim.o.foldexpr = vim.treesitter.foldexpr
 --- -- Prefer LSP folding if client supports it
 --- vim.api.nvim_create_autocmd('LspAttach', {
 ---   callback = function(ev)
 ---     local client = vim.lsp.get_client_by_id(ev.data.client_id)
 ---     if client:supports_method('textDocument/foldingRange') then
 ---       local win = vim.api.nvim_get_current_win()
----       vim.wo[win][0].foldexpr = 'v:lua.vim.lsp.foldexpr()'
+---       vim.wo[win][0].foldexpr = vim.lsp.foldexpr
 ---     end
 ---   end,
 --- })

@@ -1217,7 +1217,7 @@ do
   --- Omnifunc for completing Lua values from the runtime Lua interpreter,
   --- similar to the builtin completion for the `:lua` command.
   ---
-  --- Activate using `set omnifunc=v:lua.vim.lua_omnifunc` in a Lua buffer.
+  --- Activate using `vim.bo.omnifunc = vim.lua_omnifunc` in a Lua buffer.
   --- @param find_start 1|0
   function vim.lua_omnifunc(find_start, _)
     if find_start == 1 then
