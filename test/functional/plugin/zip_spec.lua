@@ -111,7 +111,7 @@ describe('nvim.zip', function()
 
       -- Re-sourcing must reuse the augroup rather than stack duplicate autocmds.
       eq(
-        2,
+        3,
         exec_lua(function()
           vim.cmd.runtime('plugin/zip.lua')
           vim.cmd.runtime('plugin/zip.lua')
@@ -440,6 +440,25 @@ describe('nvim.zip', function()
       edit(('zip://%s/%s'):format(archive, name))
       eq({ content }, lines())
     end
+  end)
+
+  it('reads an entry into the current buffer', function()
+    local archive = stage(fixtures, 'browser.zip')
+    clear_zip()
+
+    api.nvim_buf_set_lines(0, 0, -1, false, { 'a', 'b', 'c' })
+    api.nvim_cmd({
+      cmd = 'read',
+      args = { ('zip://%s/crlf.txt'):format(archive) },
+      range = { 2 },
+      magic = { file = false, bar = false },
+    }, {})
+    poke_eventloop()
+
+    eq({ 'a', 'b', 'one', 'two', 'c' }, lines())
+    -- The entry is inserted into the user's buffer, which stays writable.
+    eq(true, api.nvim_get_option_value('modifiable', { buf = 0 }))
+    eq(false, api.nvim_get_option_value('readonly', { buf = 0 }))
   end)
 
   describe('extract', function()
