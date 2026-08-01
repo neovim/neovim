@@ -134,6 +134,92 @@ local function read_normally(buf, source)
   end)
 end
 
+--- Describe an Info-ZIP failure. It reports some conditions only through the exit code, and
+--- says nothing on stderr, so the code is preferred where it is meaningful.
+---@param code integer
+---@param stderr string
+---@return string
+local function unzip_error(code, stderr)
+  if code == 81 then
+    return 'unsupported compression or encryption'
+  elseif code == 82 then
+    return 'incorrect password'
+  end
+  return stderr ~= '' and stderr or ('unzip exited with %d'):format(code)
+end
+
+--- Returned when Info-ZIP wants a password. It only reads one from a terminal, never from a
+--- pipe, and `-P` would expose it in the process arguments, so this is retried on a pty.
+local ENCRYPTED = 'zip:encrypted'
+
+--- Extract one entry into `dir`, prompting for the archive password on a pty.
+---
+--- Info-ZIP writes the prompt to the terminal and re-prompts on a wrong password, so the
+--- exchange is driven until it extracts, gives up, or the user cancels. The password reaches
+--- it over the pty and never appears in the process arguments.
+---@param command string
+---@param source string
+---@param path string
+---@param dir string Empty directory to extract into.
+---@return string? error
+local function extract_with_password(command, source, path, dir)
+  local buffered, exited = '', nil ---@type string, integer?
+  local ok, job = pcall(vim.fn.jobstart, {
+    command,
+    '-o',
+    '-j',
+    '-d',
+    dir,
+    '--',
+    literal_pattern(source),
+    literal_pattern(path),
+  }, {
+    pty = true,
+    env = { LC_ALL = 'C' },
+    on_stdout = function(_, data)
+      buffered = buffered .. table.concat(data, '')
+    end,
+    on_exit = function(_, code)
+      exited = code
+    end,
+  })
+  if not ok or job <= 0 then
+    return 'could not start unzip'
+  end
+
+  local function wanted()
+    return exited ~= nil
+      or buffered:find('password: $') ~= nil
+      or buffered:find('reenter: $') ~= nil
+  end
+
+  local reenter = false
+  while exited == nil do
+    local ready, reason = vim.wait(10000, wanted, 50)
+    if not ready then
+      vim.fn.jobstop(job)
+      -- -2 is CTRL-C.
+      return reason == -2 and 'cancelled' or 'timed out waiting for unzip'
+    end
+    if exited ~= nil then
+      break
+    end
+    local label = reenter and 'Password incorrect, try again: '
+      or ('Password for %s: '):format(path)
+    local password = vim.fn.inputsecret(label)
+    if password == '' then
+      vim.fn.jobstop(job)
+      return 'cancelled'
+    end
+    reenter, buffered = true, ''
+    vim.fn.chansend(job, password .. '\r')
+  end
+
+  if exited ~= 0 then
+    return unzip_error(exited, '')
+  end
+end
+
 ---@param command string
 ---@param source string
 ---@param path string
@@ -171,7 +257,11 @@ local function extract_path(command, source, path, target)
     return write_err
   end
   if result.code ~= 0 then
-    return vim.trim(result.stderr or '')
+    local stderr = vim.trim(result.stderr or '')
+    if stderr:find('unable to get password', 1, true) then
+      return ENCRYPTED
+    end
+    return unzip_error(result.code, stderr)
   end
 end
 
@@ -313,15 +403,29 @@ function M.read(buf, name)
     return
   end
   local temp = vim.fn.tempname()
+  local dir ---@type string?
   local err = extract_path(command, source, path, temp)
-  if err then
+  if err == ENCRYPTED then
     vim.fn.delete(temp)
+    dir = vim.fn.tempname()
+    vim.fn.mkdir(dir, 'p')
+    err = extract_with_password(command, source, path, dir)
+    -- `-j` discards the archive path, so the directory holds exactly the extracted entry.
+    local entry = not err and vim.iter(vim.fs.dir(dir)):next() or nil
+    if entry then
+      temp = vim.fs.joinpath(dir, entry)
+    else
+      err = err or 'no entry was extracted'
+    end
+  end
+  if err then
+    vim.fn.delete(dir or temp, dir and 'rf' or '')
     set_readonly(buf)
     notify('zip', ('unable to read %s from %s: %s'):format(path, source, err))
     return
   end
   local ok, read_err = pcall(read_tempfile, buf, temp)
-  vim.fn.delete(temp)
+  vim.fn.delete(dir or temp, dir and 'rf' or '')
   if not ok then
     set_readonly(buf)
     notify('zip', tostring(read_err))
