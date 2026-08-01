@@ -2594,18 +2594,22 @@ Example: >lua
 <
 
 
-vim.fs.abspath({path})                                      *vim.fs.abspath()*
+vim.fs.abspath({path}, {opts})                              *vim.fs.abspath()*
     Converts `path` to an absolute path. Expands tilde (~) at the beginning of
-    the path to the user's home directory. Does not check if the path exists,
-    normalize the path, resolve symlinks or hardlinks (including `.` and
-    `..`), or expand environment variables. If the path is already absolute,
-    it is returned unchanged. Also converts `\` path separators to `/`.
+    the path (unless plain=true). Does not check if the path exists, normalize
+    the path, resolve symlinks or hardlinks (including "." and ".."), or
+    expand environment variables. If the path is already absolute, it is
+    returned unchanged. Converts `\` path separators to `/`.
 
     Attributes: ~
         Since: 0.11.0
 
     Parameters: ~
       • {path}  (`string`) Path
+      • {opts}  (`table?`) A table with the following fields:
+                • {cwd}? (`string`) Resolve the path relative to this
+                  directory.
+                • {plain}? (`boolean`) Do not expand tilde (~).
 
     Return: ~
         (`string`) Absolute path

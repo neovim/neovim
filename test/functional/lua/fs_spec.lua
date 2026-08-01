@@ -852,15 +852,29 @@ describe('vim.fs', function()
         eq([[C:/foo]], vim.fs.abspath([[C:\foo]]))
         eq([[C:/foo/../.]], vim.fs.abspath([[C:\foo\..\.]]))
         eq('//foo/bar', vim.fs.abspath('\\\\foo\\bar'))
+        eq('//foo/bar', vim.fs.abspath('\\\\foo\\bar'))
       else
         eq('/foo/../.', vim.fs.abspath('/foo/../.'))
         eq('/foo/bar', vim.fs.abspath('/foo/bar'))
       end
     end)
 
+    it('with `cwd`', function()
+      local parent_cwd = vim.fs.dirname(cwd)
+      eq(parent_cwd, vim.fs.abspath('.', { cwd = parent_cwd }))
+      eq(parent_cwd .. '/foo', vim.fs.abspath('foo', { cwd = parent_cwd }))
+      eq(parent_cwd .. '/.././../foo', vim.fs.abspath('.././../foo', { cwd = parent_cwd }))
+      eq('/foo/bar', vim.fs.abspath('/foo/bar', { cwd = parent_cwd }))
+    end)
+
     it('expands ~', function()
       eq(home .. '/foo', vim.fs.abspath('~/foo'))
       eq(home .. '/./.././foo', vim.fs.abspath('~/./.././foo'))
+    end)
+
+    it('does not expand ~ if plain=true', function()
+      eq(cwd .. '/~/foo', vim.fs.abspath('~/foo', { plain = true }))
+      eq(cwd .. '/~/./.././foo', vim.fs.abspath('~/./.././foo', { plain = true }))
     end)
 
     if is_os('win') then
