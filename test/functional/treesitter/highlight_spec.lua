@@ -909,6 +909,234 @@ describe('treesitter highlighting (C)', function()
     })
   end)
 
+  describe('conceal geometry', function()
+    local text = 'int HIDDENIDENTIFIER = b;'
+    local conceal_query = [[
+      ((identifier) @conceal
+        (#eq? @conceal "HIDDENIDENTIFIER")
+        (#set! conceal ""))
+    ]]
+
+    before_each(function()
+      screen:try_resize(20, 8)
+      command('set conceallevel=3 concealcursor=nvic')
+    end)
+
+    for _, disabled in ipairs({ 'capture', 'pattern' }) do
+      it('updates after disabling a ' .. disabled, function()
+        exec_lua(function(query_text, line)
+          vim.api.nvim_buf_set_lines(0, 0, -1, false, { line })
+          vim.treesitter.query.set('c', 'highlights', query_text)
+          vim.treesitter.start(0, 'c')
+          vim.treesitter.get_parser():parse(true)
+        end, conceal_query, text)
+        eq(1, api.nvim_win_text_height(0, {}).all)
+        screen:expect([[
+          ^int  = b;           |
+          {1:~                   }|*6
+                              |
+        ]])
+        exec_lua(function()
+          local ns = vim.api.nvim_get_namespaces()['nvim.treesitter.highlighter.conceal']
+          local marks = vim.api.nvim_buf_get_extmarks(0, ns, 0, -1, {})
+          vim.cmd('redraw!')
+          assert(vim.deep_equal(marks, vim.api.nvim_buf_get_extmarks(0, ns, 0, -1, {})))
+        end)
+
+        eq(
+          2,
+          exec_lua(function(kind)
+            local q = vim.treesitter.query.get('c', 'highlights')
+            if kind == 'capture' then
+              q.query:disable_capture('conceal')
+            else
+              q.query:disable_pattern(1)
+            end
+            vim.treesitter.get_parser():parse(true)
+            return vim.api.nvim_win_text_height(0, {}).all
+          end, disabled)
+        )
+        screen:expect([[
+          ^int HIDDENIDENTIFIER|
+           = b;               |
+          {1:~                   }|*5
+                              |
+        ]])
+      end)
+    end
+
+    it('invalidates all buffers using a mutated query', function()
+      eq(
+        { { 1, 1 }, { 2, 2 } },
+        exec_lua(function(query_text, line)
+          vim.treesitter.query.set('c', 'highlights', query_text)
+          local first = vim.api.nvim_get_current_win()
+          vim.api.nvim_buf_set_lines(0, 0, -1, false, { line })
+          vim.treesitter.start(0, 'c')
+          vim.treesitter.get_parser():parse(true)
+          vim.cmd('new')
+          local second = vim.api.nvim_get_current_win()
+          vim.wo.conceallevel = 3
+          vim.wo.concealcursor = 'nvic'
+          vim.api.nvim_buf_set_lines(0, 0, -1, false, { line })
+          vim.treesitter.start(0, 'c')
+          vim.treesitter.get_parser():parse(true)
+          local before = {
+            vim.api.nvim_win_text_height(first, {}).all,
+            vim.api.nvim_win_text_height(second, {}).all,
+          }
+          vim.treesitter.query.get('c', 'highlights').query:disable_capture('conceal')
+          return {
+            before,
+            {
+              vim.api.nvim_win_text_height(first, {}).all,
+              vim.api.nvim_win_text_height(second, {}).all,
+            },
+          }
+        end, conceal_query, text)
+      )
+    end)
+
+    it('does not retain destroyed highlighters through cached queries', function()
+      eq(
+        { true, true },
+        exec_lua(function(query_text)
+          local q = vim.treesitter.query.parse('c', query_text)
+          local refs = setmetatable({}, { __mode = 'v' })
+          do
+            local tree = vim.treesitter.languagetree.new(vim.api.nvim_get_current_buf(), 'c')
+            local highlighter = vim.treesitter.highlighter.new(tree, {
+              queries = { c = query_text },
+            })
+            refs[1], refs[2] = tree, highlighter
+            highlighter:destroy()
+          end
+          collectgarbage('collect')
+          collectgarbage('collect')
+          q.query:disable_capture('conceal')
+          return { refs[1] == nil, refs[2] == nil }
+        end, conceal_query)
+      )
+    end)
+
+    it('ignores callbacks from a stopped highlighter', function()
+      exec_lua(function(line)
+        local q = vim.treesitter.query
+        vim.api.nvim_buf_set_lines(0, 0, -1, false, { '/* hidden */', line })
+        q.set(
+          'c',
+          'injections',
+          [[
+            ((comment) @injection.content
+              (#set! injection.language "lua")
+              (#offset! @injection.content 0 3 0 -3))
+          ]]
+        )
+        q.set('lua', 'injections', '')
+        q.set('c', 'highlights', '(identifier) @variable')
+        q.set('lua', 'highlights', '((identifier) @conceal (#set! conceal ""))')
+        vim.treesitter.start(0, 'c')
+        vim.treesitter.get_parser():parse(true)
+      end, text)
+
+      eq(
+        1,
+        exec_lua(function(query_text)
+          vim.treesitter.stop()
+          vim.treesitter.query.set('c', 'highlights', query_text)
+          vim.treesitter.query.set('lua', 'highlights', '(identifier) @variable')
+          vim.treesitter.start(0, 'c')
+          vim.treesitter.get_parser():parse(true)
+          vim.api.nvim_buf_set_lines(0, 0, 1, false, {})
+          vim.treesitter.get_parser():parse(true)
+          return vim.api.nvim_win_text_height(0, {}).all
+        end, conceal_query)
+      )
+      screen:expect([[
+        ^int  = b;           |
+        {1:~                   }|*6
+                            |
+      ]])
+    end)
+
+    for _, override in ipairs({ '@noconceal', 'pattern metadata', 'capture metadata' }) do
+      it('uses ' .. override .. ' without another concealing pattern', function()
+        exec_lua(function(kind, line)
+          vim.api.nvim_buf_set_lines(0, 0, -1, false, { line })
+          vim.api.nvim_buf_set_extmark(0, vim.api.nvim_create_namespace('test'), 0, 4, {
+            end_col = 20,
+            conceal = '',
+            priority = 100,
+          })
+          local query_text = '(identifier) @noconceal'
+          if kind ~= '@noconceal' then
+            vim.treesitter.query.add_directive('test-conceal!', function(_, _, _, pred, metadata)
+              if kind == 'pattern metadata' then
+                metadata.conceal = false
+                metadata[pred[2]] = { conceal = 'X' }
+              else
+                metadata[pred[2]] = { conceal = false }
+              end
+            end, {})
+            query_text = '((identifier) @Normal (#test-conceal! @Normal))'
+          end
+          vim.treesitter.query.set('c', 'highlights', query_text)
+          vim.treesitter.start(0, 'c')
+          vim.treesitter.get_parser():parse(true)
+        end, override, text)
+        screen:expect([[
+          ^int HIDDENIDENTIFIER|
+           = b;               |
+          {1:~                   }|*5
+                              |
+        ]])
+        eq(2, api.nvim_win_text_height(0, {}).all)
+        eq({ row = 2, col = 5, endcol = 5, curscol = 5 }, fn.screenpos(0, 1, 25))
+        eq(
+          1,
+          exec_lua(function(capture)
+            vim.treesitter.query.get('c', 'highlights').query:disable_capture(capture)
+            return vim.api.nvim_win_text_height(0, {}).all
+          end, override == '@noconceal' and 'noconceal' or 'Normal')
+        )
+      end)
+    end
+
+    it('keeps conceal_lines ranges when measuring intra-line conceal first', function()
+      eq(
+        { 0, 2, 1, 1 },
+        exec_lua(function()
+          vim.api.nvim_buf_set_lines(
+            0,
+            0,
+            -1,
+            false,
+            { '/* one', 'two', 'three */', 'int identifier;' }
+          )
+          vim.treesitter.query.set(
+            'c',
+            'highlights',
+            [[
+              ((comment) @comment (#set! conceal_lines ""))
+              ((identifier) @conceal (#set! conceal ""))
+            ]]
+          )
+          vim.treesitter.start(0, 'c')
+          vim.treesitter.get_parser():parse(true)
+          vim.fn.screenpos(0, 1, 3)
+          local ns = vim.api.nvim_get_namespaces()['nvim.treesitter.highlighter']
+          local mark = vim.api.nvim_buf_get_extmarks(0, ns, 0, -1, { details = true })[1]
+          return {
+            mark[2],
+            mark[4].end_row,
+            vim.api.nvim_win_text_height(0, {}).all,
+            vim.api.nvim_win_text_height(0, {}).all,
+          }
+        end)
+      )
+    end)
+  end)
+
   it('@foo.bar groups has the correct fallback behavior', function()
     local get_hl = function(name)
       return api.nvim_get_hl_by_name(name, 1).foreground
