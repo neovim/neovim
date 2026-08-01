@@ -2332,16 +2332,6 @@ void cursor_correct(win_T *wp)
     return;
   }
 
-  if (wp->w_p_sms && !wp->w_p_wrap) {
-    // 'smoothscroll' is active
-    if (wp->w_cline_height == wp->w_view_height) {
-      // The cursor line just fits in the window, don't scroll.
-      reset_skipcol(wp);
-      return;
-    }
-    // TODO(vim): If the cursor line doesn't fit in the window then only adjust w_skipcol.
-  }
-
   // Narrow down the area where the cursor can be put by taking lines from
   // the top and the bottom until:
   // - the desired context lines are found
