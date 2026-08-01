@@ -407,6 +407,18 @@ describe('nvim.zip', function()
     end)
   end)
 
+  it('lists an encrypted archive but reports unreadable entries', function()
+    local archive = stage(fixtures, 'encrypted.zip')
+    clear_zip()
+
+    edit(archive)
+    eq({ 'secret.txt' }, lines())
+
+    edit(('zipfile://%s::secret.txt'):format(archive))
+    poke_eventloop()
+    eq(true, exec_capture('messages'):find('entry is encrypted', 1, true) ~= nil)
+  end)
+
   describe('extract', function()
     --- Stage an archive, restart with the cwd inside the test directory, and open it.
     local function open_in_cwd(source_dir, source)

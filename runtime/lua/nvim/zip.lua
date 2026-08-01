@@ -171,7 +171,13 @@ local function extract_path(command, source, path, target)
     return write_err
   end
   if result.code ~= 0 then
-    return vim.trim(result.stderr or '')
+    local stderr = vim.trim(result.stderr or '')
+    -- Info-ZIP only accepts a password from a terminal or from `-P`, which would expose it
+    -- in the process arguments, so encrypted entries cannot be read.
+    if stderr:find('unable to get password', 1, true) then
+      return 'entry is encrypted'
+    end
+    return stderr
   end
 end
 
