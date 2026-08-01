@@ -1898,7 +1898,7 @@ void scroll_cursor_top(win_T *wp, int min_scroll, int always)
       if (wp->w_skipcol >= wp->w_virtcol) {
         // Skip up to the screen line the cursor is in, so that the
         // position in the line is kept.
-        int width1 = wp->w_width - win_col_off(wp);
+        int width1 = wp->w_view_width - win_col_off(wp);
         int width2 = width1 + win_col_off2(wp);
         int plines_off = 0;
         if (width2 > 0 && wp->w_virtcol >= width1) {
