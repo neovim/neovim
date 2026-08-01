@@ -298,7 +298,7 @@ bool cin_is_cinword(const char *line)
 bool cindent_on(void)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return !p_paste && (curbuf->b_p_cin || *curbuf->b_p_inde != NUL);
+  return !p_paste && (curbuf->b_p_cin || curbuf->b_p_inde.type != kCallbackNone);
 }
 
 // Skip over white space and C comments within the line.
@@ -3854,7 +3854,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
     return false;
   }
 
-  if (*curbuf->b_p_inde != NUL) {
+  if (curbuf->b_p_inde.type != kCallbackNone) {
     look = curbuf->b_p_indk;            // 'indentexpr' set: use 'indentkeys'
   } else {
     look = curbuf->b_p_cink;            // 'indentexpr' empty: use 'cinkeys'
@@ -4051,7 +4051,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
 // Do C or expression indenting on the current line.
 void do_c_expr_indent(void)
 {
-  if (*curbuf->b_p_inde != NUL) {
+  if (curbuf->b_p_inde.type != kCallbackNone) {
     fixthisline(get_expr_indent);
   } else {
     fixthisline(get_c_indent);

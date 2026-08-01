@@ -11,7 +11,7 @@ end
 vim.treesitter.start()
 
 -- set omnifunc
-vim.bo.omnifunc = 'v:lua.vim.treesitter.query.omnifunc'
+vim.bo.omnifunc = vim.treesitter.query.omnifunc
 
 vim.api.nvim_set_option_value('iskeyword', '.', { scope = 'local', operation = 'append' })
 

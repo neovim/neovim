@@ -394,9 +394,8 @@ Note: In the future more global options can be made |global-local|.  Using
 
 						*option-value-function*
 Some options ('completefunc', 'findfunc', 'omnifunc', 'operatorfunc',
-'quickfixtextfunc', 'tagfunc' and 'thesaurusfunc') are set to a function name
-or a function reference or a lambda function.  When using a lambda it will be
-converted to the name, e.g. "<lambda>123".
+'quickfixtextfunc', 'tagfunc' and 'thesaurusfunc') can be set to a function
+name, a |Funcref|, a |lambda|, or a Lua function.
 Examples:
 >
 	set opfunc=MyOpFunc
@@ -419,13 +418,30 @@ Set using a variable with lambda expression: >
 	let L = {a, b, c -> MyTagFunc(a, b , c)}
 	let &tagfunc = L
 
+Set to a Lua function (from Lua): >lua
+	vim.o.operatorfunc = function(motion) … end
+<
+The value read back from the option reflects how it was set:
+- A Function name or |Funcref| reads back as the function name.
+- A Vimscript |lambda| or partial reads back as an evaluatable string, e.g.
+  `function('<lambda>2')` or `function('MyFunc', [10])`.
+- A |script-local| ("s:") name is expanded to `<SNR>` form.
+- A Lua function is returned as itself from Lua, or as a `"<Lua …>"` hint
+  from Vimscript/RPC.
+  - Note: Lua functions cannot be serialized, so it cannot be saved/restored
+    by |:mksession| |:mkview| |:mkvimrc|.
+
 Calling a function in an expr option			*expr-option-function*
 
-The value of a few options, such as 'foldexpr', is an expression that is
-evaluated to get a value.  The evaluation can have quite a bit of overhead.
-One way to minimize the overhead, and also to keep the option value very
-simple, is to define a function and set the option to call it without
-arguments.  A |v:lua-call| can also be used.  Example: >vim
+The value of an "expr" option ('charconvert', 'diffexpr', 'foldexpr',
+'foldtext', 'formatexpr', 'includeexpr', 'indentexpr', 'patchexpr') is a
+Vimscript expression that is evaluated to get a value.  Context is passed in
+|v:| variables, e.g. 'foldexpr' is evaluated for each line with |v:lnum| set.
+
+The evaluation can have quite a bit of overhead.  One way to minimize the
+overhead, and also to keep the option value very simple, is to define a
+function and set the option to call it without arguments.  A |v:lua-call| can
+also be used.  Example: >vim
 	lua << EOF
 	  function _G.MyFoldFunc()
 	    -- ... compute fold level for line v:lnum
@@ -433,6 +449,14 @@ arguments.  A |v:lua-call| can also be used.  Example: >vim
 	  end
 	EOF
 	set foldexpr=v:lua.MyFoldFunc()
+
+From Lua the option can also be set directly to a function, which is called
+with no arguments (read the context from |v:| variables): >lua
+	vim.wo.foldexpr = function() return vim.v.lnum == 1 and '>1' or '1' end
+<
+The value read back from the option follows the same rules as
+|option-value-function|: a string reads back as itself, and a Lua function
+reads back as the function (from Lua) or a `"<Lua …>"` hint (Vimscript/RPC).
 
 
 Setting the filetype
@@ -5466,7 +5490,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   localoptions	options and mappings local to a window or buffer (not
 			global values for local options)
 	   options	all options and mappings (also global values for local
-			options)
+			options), except Lua functions |option-value-function|.
 	   skiprtp	exclude 'runtimepath' and 'packpath' from the options
 	   resize	size of the Vim window: 'lines' and 'columns'
 	   sesdir	the directory in which the session file is located
@@ -7285,7 +7309,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   folds	manually created folds, opened/closed folds and local
 			fold options
 	   options	options and mappings local to a window or buffer (not
-			global values for local options)
+	                global values for local options), except Lua functions
+			|option-value-function|.
 	   localoptions same as "options"
 	   slash	|deprecated| Always enabled. Uses "/" in filenames.
 	   unix		|deprecated| Always enabled. Uses "\n" line endings.

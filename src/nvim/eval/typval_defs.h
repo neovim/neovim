@@ -60,6 +60,7 @@ typedef enum {
   kCallbackFuncref,
   kCallbackPartial,
   kCallbackLua,
+  kCallbackExpr,   ///< Vimscript expression, for "expr" options.
 } CallbackType;
 
 typedef struct {
@@ -67,6 +68,7 @@ typedef struct {
     char *funcref;
     partial_T *partial;
     LuaRef luaref;
+    char *expr;    ///< kCallbackExpr: Vimscript, for "expr" options.
   } data;
   CallbackType type;
 } Callback;

@@ -846,12 +846,12 @@ function lsp._set_defaults(client, bufnr)
   if
     client:supports_method('textDocument/definition') and is_empty_or_default(bufnr, 'tagfunc')
   then
-    vim.bo[bufnr].tagfunc = 'v:lua.vim.lsp.tagfunc'
+    vim.bo[bufnr].tagfunc = lsp.tagfunc
   end
   if
     client:supports_method('textDocument/completion') and is_empty_or_default(bufnr, 'omnifunc')
   then
-    vim.bo[bufnr].omnifunc = 'v:lua.vim.lsp.omnifunc'
+    vim.bo[bufnr].omnifunc = lsp.omnifunc
   end
   if
     client:supports_method('textDocument/rangeFormatting')

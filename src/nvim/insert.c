@@ -1981,7 +1981,7 @@ void insertchar(int c, int flags, int second_indent)
     colnr_T virtcol = get_nolist_virtcol()
                       + char2cells(c != NUL ? c : gchar_cursor());
 
-    if (*curbuf->b_p_fex != NUL && (flags & INSCHAR_NO_FEX) == 0
+    if (curbuf->b_p_fex.type != kCallbackNone && (flags & INSCHAR_NO_FEX) == 0
         && (force_format || virtcol > (colnr_T)textwidth)) {
       do_internal = (fex_format(curwin->w_cursor.lnum, 1, c) != 0);
       // It may be required to save for undo again, e.g. when setline()

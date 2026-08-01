@@ -1,40 +1,36 @@
 -- vim: tw=78
 
 --- @class vim.option_meta
---- @field full_name string
---- @field desc? string
 --- @field abbreviation? string
 --- @field alias? string|string[]
---- @field short_desc? string|fun(): string
---- @field varname? string
---- @field flags_varname? string
---- @field type vim.option_type
---- @field immutable? boolean
---- @field list? 'comma'|'onecomma'|'commacolon'|'onecommacolon'|'flags'|'flagscomma'
---- @field scope vim.option_scope[]
---- @field deny_duplicates? boolean
---- @field enable_if? string
---- @field defaults? vim.option_defaults|vim.option_value|fun(): string
---- @field schema? vim.option_schema
---- @field secure? true
---- @field noglob? true
---- @field normal_fname_chars? true
---- @field pri_mkrc? true
---- @field normal_dname_chars? true
---- @field modelineexpr? true
---- @field func? true
---- @field expand? string|true
---- @field nodefault? true
---- @field no_mkrc? true
---- @field alloced? true
---- @field redraw? vim.option_redraw[]
----
 --- If not provided and `values` is present, then is set to 'did_set_str_generic'
 --- @field cb? string
----
+--- @field defaults? vim.option_defaults|vim.option_value|fun(): string
+--- @field deny_duplicates? boolean
+--- @field desc? string
+--- @field enable_if? string
+--- @field expand? string|true
 --- If not provided and `values` is present, then is set to 'expand_set_str_generic'
 --- @field expand_cb? string
+--- @field flags_varname? string
+--- @field full_name string
+--- @field immutable? boolean
+--- @field list? 'comma'|'onecomma'|'commacolon'|'onecommacolon'|'flags'|'flagscomma'
+--- @field modelineexpr? true
+--- @field no_mkrc? true
+--- @field nodefault? true
+--- @field noglob? true
+--- @field normal_dname_chars? true
+--- @field normal_fname_chars? true
+--- @field pri_mkrc? true
+--- @field redraw? vim.option_redraw[]
+--- @field schema? vim.option_schema
+--- @field scope vim.option_scope[]
+--- @field secure? true
+--- @field short_desc? string|fun(): string
 --- @field tags? string[]
+--- @field type vim.option_type
+--- @field varname? string
 
 --- @class vim.option_defaults
 --- @field condition? string
@@ -45,8 +41,10 @@
 --- @field doc? string Default to show in options.txt
 --- @field meta? string Default to use in Lua meta files
 
---- @alias vim.option_scope 'global'|'buf'|'win'
---- @alias vim.option_type 'boolean'|'number'|'string'
+--- @alias vim.option_scope 'global'|'buf'|'win'|'tab'
+--- Option value type. `func` ('omnifunc') and `expr` ('foldexpr') are "callback" options: stored
+--- as a `Callback`, accepting a function name/expression string or a Lua function.
+--- @alias vim.option_type 'boolean'|'number'|'string'|'func'|'expr'
 --- @alias vim.option_value boolean|integer|string
 
 --- Options for a `char`/`chars` schema key.
@@ -1179,7 +1177,6 @@ local options = {
     },
     {
       abbreviation = 'ccv',
-      cb = 'did_set_optexpr',
       defaults = '',
       desc = [=[
         An expression that is used for character encoding conversion.  It is
@@ -1227,7 +1224,7 @@ local options = {
       scope = { 'global' },
       secure = true,
       short_desc = N_('expression for character encoding conversion'),
-      type = 'string',
+      type = 'expr',
       tags = { 'E202', 'E214', 'E513' },
       varname = 'p_ccv',
     },
@@ -1600,7 +1597,6 @@ local options = {
     },
     {
       abbreviation = 'cfu',
-      cb = 'did_set_completefunc',
       defaults = '',
       desc = [=[
         This option specifies a function to be used for Insert mode completion
@@ -1611,11 +1607,10 @@ local options = {
         more information.
       ]=],
       full_name = 'completefunc',
-      func = true,
       scope = { 'buf' },
       secure = true,
       short_desc = N_('function to be used for Insert mode completion'),
-      type = 'string',
+      type = 'func',
       varname = 'p_cfu',
     },
     {
@@ -2442,7 +2437,6 @@ local options = {
     },
     {
       abbreviation = 'dex',
-      cb = 'did_set_optexpr',
       defaults = '',
       desc = [=[
         Expression which is evaluated to obtain a diff file (either ed-style
@@ -2453,7 +2447,7 @@ local options = {
       scope = { 'global' },
       secure = true,
       short_desc = N_('expression used to obtain a diff file'),
-      type = 'string',
+      type = 'expr',
       varname = 'p_dex',
     },
     {
@@ -3424,7 +3418,6 @@ local options = {
     },
     {
       abbreviation = 'ffu',
-      cb = 'did_set_findfunc',
       defaults = '',
       desc = [=[
         Function that is called to obtain the filename(s) for the |:find|
@@ -3473,12 +3466,11 @@ local options = {
         <
       ]=],
       full_name = 'findfunc',
-      func = true,
       scope = { 'global', 'buf' },
       secure = true,
       short_desc = N_('function called for :find'),
       tags = { 'E1514' },
-      type = 'string',
+      type = 'func',
       varname = 'p_ffu',
     },
     {
@@ -3604,7 +3596,7 @@ local options = {
       redraw = { 'current_window' },
       scope = { 'win' },
       short_desc = N_('expression used when \'foldmethod\' is "expr"'),
-      type = 'string',
+      type = 'expr',
     },
     {
       abbreviation = 'fdi',
@@ -3797,7 +3789,6 @@ local options = {
     },
     {
       abbreviation = 'fdt',
-      cb = 'did_set_optexpr',
       defaults = 'foldtext()',
       desc = [=[
         An expression which is used to specify the text displayed for a closed
@@ -3820,11 +3811,10 @@ local options = {
       redraw = { 'current_window' },
       scope = { 'win' },
       short_desc = N_('expression used to display for a closed fold'),
-      type = 'string',
+      type = 'expr',
     },
     {
       abbreviation = 'fex',
-      cb = 'did_set_optexpr',
       defaults = '',
       desc = [=[
         Expression which is evaluated to format a range of lines for the |gq|
@@ -3871,7 +3861,7 @@ local options = {
       modelineexpr = true,
       scope = { 'buf' },
       short_desc = N_('expression used with "gq" command'),
-      type = 'string',
+      type = 'expr',
       varname = 'p_fex',
     },
     {
@@ -4782,7 +4772,6 @@ local options = {
     },
     {
       abbreviation = 'inex',
-      cb = 'did_set_optexpr',
       defaults = '',
       desc = [=[
         Expression to be used to transform the string found with the 'include'
@@ -4819,7 +4808,7 @@ local options = {
       modelineexpr = true,
       scope = { 'buf' },
       short_desc = N_('expression used to process an include line'),
-      type = 'string',
+      type = 'expr',
       varname = 'p_inex',
     },
     {
@@ -4867,7 +4856,6 @@ local options = {
     },
     {
       abbreviation = 'inde',
-      cb = 'did_set_optexpr',
       defaults = '',
       desc = [=[
         Expression which is evaluated to obtain the proper indent for a line.
@@ -4915,7 +4903,7 @@ local options = {
       modelineexpr = true,
       scope = { 'buf' },
       short_desc = N_('expression used to obtain the indent of a line'),
-      type = 'string',
+      type = 'expr',
       varname = 'p_inde',
     },
     {
@@ -6578,7 +6566,6 @@ local options = {
     },
     {
       abbreviation = 'ofu',
-      cb = 'did_set_omnifunc',
       defaults = '',
       desc = [=[
         This option specifies a function to be used for Insert mode omni
@@ -6591,11 +6578,10 @@ local options = {
         |:filetype-plugin-on|
       ]=],
       full_name = 'omnifunc',
-      func = true,
       scope = { 'buf' },
       secure = true,
       short_desc = N_('function for filetype-specific completion'),
-      type = 'string',
+      type = 'func',
       varname = 'p_ofu',
     },
     {
@@ -6617,7 +6603,6 @@ local options = {
     },
     {
       abbreviation = 'opfunc',
-      cb = 'did_set_operatorfunc',
       defaults = '',
       desc = [=[
         This option specifies a function to be called by the |g@| operator.
@@ -6626,11 +6611,10 @@ local options = {
         |option-value-function| for more information.
       ]=],
       full_name = 'operatorfunc',
-      func = true,
       scope = { 'global' },
       secure = true,
       short_desc = N_('function to be called for |g@| operator'),
-      type = 'string',
+      type = 'func',
       varname = 'p_opfunc',
     },
     {
@@ -6706,7 +6690,6 @@ local options = {
     },
     {
       abbreviation = 'pex',
-      cb = 'did_set_optexpr',
       defaults = '',
       desc = [=[
         Expression which is evaluated to apply a patch to a file and generate
@@ -6716,7 +6699,7 @@ local options = {
       scope = { 'global' },
       secure = true,
       short_desc = N_('expression used to patch a file'),
-      type = 'string',
+      type = 'expr',
       varname = 'p_pex',
     },
     {
@@ -7023,7 +7006,6 @@ local options = {
     },
     {
       abbreviation = 'qftf',
-      cb = 'did_set_quickfixtextfunc',
       defaults = '',
       desc = [=[
         This option specifies a function to be used to get the text to display
@@ -7039,11 +7021,10 @@ local options = {
         evaluating 'qftf' |textlock|.
       ]=],
       full_name = 'quickfixtextfunc',
-      func = true,
       scope = { 'global' },
       secure = true,
       short_desc = N_('customize the quickfix window'),
-      type = 'string',
+      type = 'func',
       varname = 'p_qftf',
     },
     {
@@ -7760,7 +7741,7 @@ local options = {
            localoptions	options and mappings local to a window or buffer (not
         		global values for local options)
            options	all options and mappings (also global values for local
-        		options)
+        		options), except Lua functions |option-value-function|.
            skiprtp	exclude 'runtimepath' and 'packpath' from the options
            resize	size of the Vim window: 'lines' and 'columns'
            sesdir	the directory in which the session file is located
@@ -9694,7 +9675,6 @@ local options = {
     },
     {
       abbreviation = 'tfu',
-      cb = 'did_set_tagfunc',
       defaults = '',
       desc = [=[
         This option specifies a function to be used to perform tag searches
@@ -9706,11 +9686,10 @@ local options = {
         information.
       ]=],
       full_name = 'tagfunc',
-      func = true,
       scope = { 'buf' },
       secure = true,
       short_desc = N_('function used to perform tag searches'),
-      type = 'string',
+      type = 'func',
       varname = 'p_tfu',
     },
     {
@@ -9943,7 +9922,6 @@ local options = {
     },
     {
       abbreviation = 'tsrfu',
-      cb = 'did_set_thesaurusfunc',
       defaults = '',
       desc = [=[
         This option specifies a function to be used for thesaurus completion
@@ -9952,11 +9930,10 @@ local options = {
         See |option-value-function| for more information.
       ]=],
       full_name = 'thesaurusfunc',
-      func = true,
       scope = { 'global', 'buf' },
       secure = true,
       short_desc = N_('function used for thesaurus completion'),
-      type = 'string',
+      type = 'func',
       varname = 'p_tsrfu',
     },
     {
@@ -10442,7 +10419,8 @@ local options = {
            folds	manually created folds, opened/closed folds and local
         		fold options
            options	options and mappings local to a window or buffer (not
-        		global values for local options)
+                        global values for local options), except Lua functions
+        		|option-value-function|.
            localoptions same as "options"
            slash	|deprecated| Always enabled. Uses "/" in filenames.
            unix		|deprecated| Always enabled. Uses "\n" line endings.
@@ -11328,7 +11306,7 @@ local function preprocess(o)
 
   if type(o.defaults) ~= 'table' then
     o.defaults = {
-      if_true = o.defaults --[[@as string|boolean|number ]],
+      if_true = o.defaults --[[@as any]],
     }
   end
 end

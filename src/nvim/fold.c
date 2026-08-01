@@ -1708,7 +1708,7 @@ char *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldinfo
     did_emsg = false;
   }
 
-  if (*wp->w_p_fdt != NUL) {
+  if (wp->w_p_fdt.type != kCallbackNone) {
     char dashes[MAX_LEVEL + 2];
 
     // Set "v:foldstart" and "v:foldend".

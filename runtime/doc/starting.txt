@@ -800,7 +800,7 @@ The output of ":mksession" is like ":mkvimrc", but additional commands are
 added to the file.  Which ones depends on the 'sessionoptions' option.  The
 resulting file, when executed with a ":source" command:
 1. Restores global mappings and options, if 'sessionoptions' contains
-   "options".  Script-local mappings will not be written.
+   "options".  Lua functions, and script-local mappings, will not be written.
 2. Restores global variables that start with an uppercase letter and contain
    at least one lowercase letter, if 'sessionoptions' contains "globals".
 3. Closes all windows in the current tabpage, except the current one; closes
@@ -872,6 +872,7 @@ The output of ":mkview" contains these items:
    that are local to the current buffer and the current window are restored.
    When storing the view as part of a session and "options" is in
    'sessionoptions', global values for local options will be stored too.
+   Lua functions are not restored.
 4. Restore folds when using manual folding and 'viewoptions' contains
    "folds".  Restore manually opened and closed folds.
 5. The scroll position and the cursor position in the file.  Doesn't work very

@@ -13,12 +13,25 @@ local function unzip()
   return command
 end
 
---- Escape a path passed to Info-ZIP, which expands glob patterns even without a shell.
+--- Escape a path so that Info-ZIP matches it literally.
+---
+--- Info-ZIP matches `*`, `?`, and `[]` in a member selector itself, so this is not shell
+--- quoting: passing argv already avoids the shell. For example, unescaped `a[a].txt`
+--- silently reads `aa.txt`, and `a?.txt` matches every four-character name. A literal `[`
+--- cannot be backslash-escaped, so it is wrapped in a class instead, as is a leading `-`,
+--- which would otherwise parse as an option.
 --- https://github.com/neovim/neovim/blob/7ba955fe079d4aa2554fea8e7235651fafd40efb/runtime/autoload/zip.vim#L316-L339
 ---@param value string
 ---@return string
 local function literal_pattern(value)
-  return (value:gsub('\\', '\\\\'):gsub('%?', '\\?'):gsub('%*', '\\*'):gsub('%[', '[[]'))
+  return (
+    value
+      :gsub('\\', '\\\\')
+      :gsub('%?', '\\?')
+      :gsub('%*', '\\*')
+      :gsub('%[', '[[]')
+      :gsub('^%-', '[-]')
+  )
 end
 
 ---@param source string
@@ -38,6 +51,9 @@ local function list_archive(source)
   end
   local result = system:wait()
   if result.code ~= 0 then
+    if vim.trim(result.stdout or '') == 'Empty zipfile.' then
+      return {}
+    end
     return nil, vim.trim(result.stderr or ''), true
   end
   return vim.split(result.stdout or '', '\n', { plain = true, trimempty = true })
@@ -388,9 +404,64 @@ function M.open_parent(buf, name)
   require('nvim.dir.fs').open_parent_path(state.source)
 end
 
+--- Extract the entry under the cursor into the current directory.
+--- `-j` discards the archive path, so the destination is always a name in the
+--- current directory and cannot be redirected by a hostile entry.
+function M._extract()
+  local buf = api.nvim_get_current_buf()
+  local state = get_state(buf)
+  if not state then
+    return
+  end
+  local command, command_err = unzip()
+  if not command then
+    notify('zip', command_err or 'unzip executable not found')
+    return
+  end
+  local line = api.nvim_get_current_line()
+  if line == '' then
+    return
+  end
+  if line:sub(-1) == '/' then
+    notify('zip', 'please specify a file, not a directory')
+    return
+  end
+  local path = (state.prefix or '') .. line
+  local directory = vim.fn.getcwd()
+  local target = vim.fs.joinpath(directory, vim.fs.basename(path))
+  if uv.fs_stat(target) then
+    notify('zip', ('%s already exists, not overwriting'):format(target))
+    return
+  end
+  local ok, system = pcall(vim.system, {
+    command,
+    '-o',
+    '-j',
+    '--',
+    literal_pattern(state.source),
+    literal_pattern(path),
+  }, { cwd = directory, text = true })
+  if not ok then
+    notify('zip', tostring(system))
+    return
+  end
+  local result = system:wait()
+  if not uv.fs_stat(target) then
+    notify(
+      'zip',
+      ('unable to extract %s from %s: %s'):format(path, state.source, vim.trim(result.stderr or ''))
+    )
+    return
+  end
+  notify('zip', ('extracted %s'):format(target), vim.log.levels.INFO)
+end
+
 ---@param buf integer
 function M.init(buf)
   api.nvim_set_option_value('filetype', 'zip', { buf = buf })
+  if vim.fn.hasmapto('<Plug>(nvim-zip-extract)', 'n') == 0 then
+    vim.keymap.set('n', 'x', '<Plug>(nvim-zip-extract)', { buffer = buf, silent = true })
+  end
   api.nvim_buf_call(buf, function()
     vim.wo.wrap = false
   end)

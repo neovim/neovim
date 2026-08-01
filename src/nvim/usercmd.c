@@ -613,7 +613,7 @@ static void uc_list(char *name, size_t name_len)
       msg_outtrans(IObuff, 0, false);
 
       if (cmd->uc_luaref != LUA_NOREF) {
-        char *fn = nlua_funcref_str(cmd->uc_luaref, NULL);
+        char *fn = nlua_funcref_str(cmd->uc_luaref, NULL, true);
         msg_puts_hl(fn, HLF_8, false);
         xfree(fn);
         // put the description on a new line

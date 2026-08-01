@@ -1989,6 +1989,24 @@ func Test_splitkeep_cmdheight()
   set splitkeep& cmdheight&
 endfunc
 
+func Test_aucmd_win_scroll_multibyte()
+  " Using the autocommand window must not scroll the current window when the
+  " cursor is behind multi-byte characters.
+  set splitkeep=cursor
+  call setline(1, repeat([repeat(nr2char(0x3042), 200)], 20))
+  normal! G0100l
+  redraw
+  let topline = line('w0')
+
+  for i in range(3)
+    call bufload(bufadd(''))
+  endfor
+  call assert_equal(topline, line('w0'))
+
+  %bwipeout!
+  set splitkeep&
+endfunc
+
 func Test_splitkeep_cursor()
   CheckScreendump
   let lines =<< trim END

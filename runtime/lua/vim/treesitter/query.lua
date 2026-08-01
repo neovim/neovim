@@ -1131,7 +1131,7 @@ end
 --- Use via
 ---
 --- ```lua
---- vim.bo.omnifunc = 'v:lua.vim.treesitter.query.omnifunc'
+--- vim.bo.omnifunc = vim.treesitter.query.omnifunc
 --- ```
 ---
 --- @param findstart 0|1

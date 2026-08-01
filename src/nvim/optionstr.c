@@ -137,11 +137,8 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_ff);
   check_string_option(&buf->b_p_def);
   check_string_option(&buf->b_p_inc);
-  check_string_option(&buf->b_p_inex);
-  check_string_option(&buf->b_p_inde);
   check_string_option(&buf->b_p_indk);
   check_string_option(&buf->b_p_fp);
-  check_string_option(&buf->b_p_fex);
   check_string_option(&buf->b_p_kp);
   check_string_option(&buf->b_p_mps);
   check_string_option(&buf->b_p_fo);
@@ -167,8 +164,6 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_cinsd);
   check_string_option(&buf->b_p_cot);
   check_string_option(&buf->b_p_cpt);
-  check_string_option(&buf->b_p_cfu);
-  check_string_option(&buf->b_p_ofu);
   check_string_option(&buf->b_p_keymap);
   check_string_option(&buf->b_p_gefm);
   check_string_option(&buf->b_p_gp);
@@ -177,13 +172,10 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_ep);
   check_string_option(&buf->b_p_path);
   check_string_option(&buf->b_p_tags);
-  check_string_option(&buf->b_p_ffu);
-  check_string_option(&buf->b_p_tfu);
   check_string_option(&buf->b_p_tc);
   check_string_option(&buf->b_p_dict);
   check_string_option(&buf->b_p_dia);
   check_string_option(&buf->b_p_tsr);
-  check_string_option(&buf->b_p_tsrfu);
   check_string_option(&buf->b_p_lw);
   check_string_option(&buf->b_p_bkc);
   check_string_option(&buf->b_p_menc);
@@ -1257,7 +1249,6 @@ const char *did_set_filetype_or_syntax(optset_T *args)
 const char *did_set_foldexpr(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
-  did_set_optexpr(args);
   if (foldmethodIsExpr(win)) {
     foldUpdateAll(win);
   }
@@ -1570,22 +1561,6 @@ const char *did_set_mousescroll(optset_T *args FUNC_ATTR_UNUSED)
   return has_dir ? NULL : e_invarg;
 }
 
-/// One of the '*expr' options is changed:, 'diffexpr', 'foldexpr', 'foldtext',
-/// 'formatexpr', 'includeexpr', 'indentexpr', 'patchexpr' and 'charconvert'.
-const char *did_set_optexpr(optset_T *args)
-{
-  char **varp = (char **)args->os_varp;
-
-  // If the option value starts with <SID> or s:, then replace that with
-  // the script identifier.
-  char *name = get_scriptlocal_funcname(*varp);
-  if (name != NULL) {
-    free_string_option(*varp);
-    *varp = name;
-  }
-  return NULL;
-}
-
 /// The 'rulerformat' option is changed.
 const char *did_set_rulerformat(optset_T *args)
 {
@@ -1868,7 +1843,9 @@ static const char *did_set_statustabline_rulerformat(optset_T *args, bool rulerf
       && ((args->os_flags & OPT_GLOBAL) || !(args->os_flags & OPT_LOCAL))
       && s[0] == NUL) {
     xfree(*varp);
-    *varp = xstrdup(get_option_default(args->os_idx, args->os_flags).data.string.data);
+    Object def = get_option_default(args->os_idx, args->os_flags);
+    *varp = xstrdup(def.data.string.data);
+    optval_free_read(args->os_idx, def);
     s = *varp;
   }
 

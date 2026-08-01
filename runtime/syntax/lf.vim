@@ -3,10 +3,10 @@
 " Maintainer: Andis Sprinkis <andis@sprinkis.com>, @CatsDeservePets
 " Former Maintainer: Cameron Wright
 " URL: https://github.com/andis-sprinkis/lf-vim
-" Last Change: 4 Feb 2026
+" Last Change: 31 Jul 2026
 "
 " The shell syntax highlighting is configurable. See $VIMRUNTIME/doc/syntax.txt
-" lf version: 41
+" lf version: 42
 
 if exists("b:current_syntax") | finish | endif
 
@@ -34,6 +34,7 @@ syn keyword lfOptions
   \ anchorfind
   \ autoquit
   \ borderfmt
+  \ borderstyle
   \ bottom
   \ calcdirsize
   \ cd
@@ -135,6 +136,7 @@ syn keyword lfOptions
   \ mouse
   \ nmaps
   \ number
+  \ numbercursorfmt
   \ numberfmt
   \ on-cd
   \ on-focus-gained
@@ -164,7 +166,6 @@ syn keyword lfOptions
   \ reload
   \ rename
   \ reverse
-  \ roundbox
   \ rulerfile
   \ rulerfmt
   \ scroll-down
@@ -190,6 +191,8 @@ syn keyword lfOptions
   \ smartcase
   \ smartdia
   \ sortby
+  \ sortignorecase
+  \ sortignoredia
   \ source
   \ statfmt
   \ sync
@@ -198,6 +201,7 @@ syn keyword lfOptions
   \ tag-toggle
   \ tagfmt
   \ tempmarks
+  \ terminalcursor
   \ timefmt
   \ toggle
   \ top

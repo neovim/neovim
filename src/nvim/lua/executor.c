@@ -2453,7 +2453,7 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
 /// String representation of a Lua function reference
 ///
 /// @return Allocated string
-char *nlua_funcref_str(LuaRef ref, Arena *arena)
+char *nlua_funcref_str(LuaRef ref, Arena *arena, bool show_ref)
 {
   lua_State *const lstate = global_lstate;
 
@@ -2469,13 +2469,14 @@ char *nlua_funcref_str(LuaRef ref, Arena *arena)
   lua_Debug ar;
   if (lua_getinfo(lstate, ">S", &ar) && *ar.source == '@' && ar.linedefined >= 0) {
     char *src = home_replace_save(NULL, ar.source + 1);
-    String str = arena_printf(arena, "<Lua %d: %s:%d>", ref, src, ar.linedefined);
+    String str = show_ref ? arena_printf(arena, "<Lua %d: %s:%d>", ref, src, ar.linedefined)
+                          : arena_printf(arena, "<Lua %s:%d>", src, ar.linedefined);
     xfree(src);
     return str.data;
   }
 
 plain: {}
-  return arena_printf(arena, "<Lua %d>", ref).data;
+  return show_ref ? arena_printf(arena, "<Lua %d>", ref).data : arena_printf(arena, "<Lua>").data;
 }
 
 /// Execute the vim._core.defaults module to set up default mappings and autocommands

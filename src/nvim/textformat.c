@@ -11,6 +11,7 @@
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
 #include "nvim/eval.h"
+#include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/vars.h"
 #include "nvim/ex_cmds_defs.h"
@@ -875,21 +876,12 @@ int fex_format(linenr_T lnum, long count, int c)
   set_vim_var_nr(VV_COUNT, (varnumber_T)count);
   set_vim_var_char(c);
 
-  // Make a copy, the option could be changed while calling it.
-  char *fex = xstrdup(curbuf->b_p_fex);
   current_sctx = curbuf->b_p_script_ctx[kBufOptFormatexpr];
 
-  // Evaluate the function.
-  if (use_sandbox) {
-    sandbox++;
-  }
-  int r = (int)eval_to_number(fex, true);
-  if (use_sandbox) {
-    sandbox--;
-  }
+  // 'formatexpr' may modify the buffer, so it runs without textlock.
+  int r = eval_expr_option_number(&curbuf->b_p_fex, use_sandbox);
 
   set_vim_var_string(VV_CHAR, NULL, -1);
-  xfree(fex);
   current_sctx = save_sctx;
 
   return r;
@@ -1044,7 +1036,7 @@ void format_lines(linenr_T line_count, bool avoid_fex)
             indent = get_lisp_indent();
           } else {
             if (cindent_on()) {
-              indent = *curbuf->b_p_inde != NUL ? get_expr_indent() : get_c_indent();
+              indent = curbuf->b_p_inde.type != kCallbackNone ? get_expr_indent() : get_c_indent();
             } else {
               indent = get_indent();
             }

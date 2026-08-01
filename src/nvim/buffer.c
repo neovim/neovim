@@ -1626,7 +1626,7 @@ static int do_buffer_ext(int action, int start, int dir, int count, int flags)
     }
     if (buf == NULL) {          // Still no buffer, just take one
       buf = curbuf->b_next != NULL ? curbuf->b_next : curbuf->b_prev;
-      if (bt_quickfix(buf) || (buf != curbuf && buf->b_locked_split)) {
+      if (bt_quickfix(buf) || (buf != NULL && buf != curbuf && buf->b_locked_split)) {
         buf = NULL;
       }
     }
@@ -2170,11 +2170,11 @@ void free_buf_options(buf_T *buf, bool free_p_ff)
   }
   clear_string_option(&buf->b_p_def);
   clear_string_option(&buf->b_p_inc);
-  clear_string_option(&buf->b_p_inex);
-  clear_string_option(&buf->b_p_inde);
+  callback_free(&buf->b_p_inex);
+  callback_free(&buf->b_p_inde);
   clear_string_option(&buf->b_p_indk);
   clear_string_option(&buf->b_p_fp);
-  clear_string_option(&buf->b_p_fex);
+  callback_free(&buf->b_p_fex);
   clear_string_option(&buf->b_p_kp);
   clear_string_option(&buf->b_p_mps);
   clear_string_option(&buf->b_p_fo);
@@ -2208,12 +2208,9 @@ void free_buf_options(buf_T *buf, bool free_p_ff)
   clear_string_option(&buf->b_p_cinw);
   clear_string_option(&buf->b_p_cot);
   clear_string_option(&buf->b_p_cpt);
-  clear_string_option(&buf->b_p_cfu);
-  callback_free(&buf->b_cfu_cb);
-  clear_string_option(&buf->b_p_ofu);
-  callback_free(&buf->b_ofu_cb);
-  clear_string_option(&buf->b_p_tsrfu);
-  callback_free(&buf->b_tsrfu_cb);
+  callback_free(&buf->b_p_cfu);
+  callback_free(&buf->b_p_ofu);
+  callback_free(&buf->b_p_tsrfu);
   clear_cpt_callbacks(&buf->b_p_cpt_cb, buf->b_p_cpt_count);
   buf->b_p_cpt_count = 0;
   clear_string_option(&buf->b_p_gefm);
@@ -2224,10 +2221,8 @@ void free_buf_options(buf_T *buf, bool free_p_ff)
   clear_string_option(&buf->b_p_path);
   clear_string_option(&buf->b_p_tags);
   clear_string_option(&buf->b_p_tc);
-  clear_string_option(&buf->b_p_tfu);
-  callback_free(&buf->b_tfu_cb);
-  clear_string_option(&buf->b_p_ffu);
-  callback_free(&buf->b_ffu_cb);
+  callback_free(&buf->b_p_tfu);
+  callback_free(&buf->b_p_ffu);
   clear_string_option(&buf->b_p_dict);
   clear_string_option(&buf->b_p_dia);
   clear_string_option(&buf->b_p_tsr);

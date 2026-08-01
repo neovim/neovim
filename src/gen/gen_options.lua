@@ -118,18 +118,24 @@ local function get_flags(o)
     end
   end
 
+  -- Callback option: `type='func'` (funcref/lambda/Lua fn) or `type='expr'` (Vimscript expr).
+  if o.type == 'func' then
+    add_flag('kOptFlagFunc')
+  elseif o.type == 'expr' then
+    add_flag('kOptFlagExpr')
+  end
+
   for _, flag_desc in ipairs({
-    { 'nodefault', 'NoDefault' },
-    { 'no_mkrc', 'NoMkrc' },
-    { 'secure' },
-    { 'gettext' },
-    { 'noglob', 'NoGlob' },
-    { 'normal_fname_chars', 'NFname' },
-    { 'normal_dname_chars', 'NDname' },
-    { 'pri_mkrc', 'PriMkrc' },
     { 'deny_duplicates', 'NoDup' },
+    { 'gettext' },
     { 'modelineexpr', 'MLE' },
-    { 'func' },
+    { 'no_mkrc', 'NoMkrc' },
+    { 'nodefault', 'NoDefault' },
+    { 'noglob', 'NoGlob' },
+    { 'normal_dname_chars', 'NDname' },
+    { 'normal_fname_chars', 'NFname' },
+    { 'pri_mkrc', 'PriMkrc' },
+    { 'secure' },
   }) do
     local key_name, flag_suffix = flag_desc[1], flag_desc[2]
     if o[key_name] then
@@ -144,9 +150,13 @@ end
 --- @param opt_type vim.option_type
 --- @return string
 local function opt_type_enum(opt_type)
-  return ('kObjectType%s'):format(
-    ({ boolean = 'Boolean', number = 'Integer', string = 'String' })[opt_type]
-  )
+  return ('kObjectType%s'):format(({
+    boolean = 'Boolean',
+    number = 'Integer',
+    string = 'String',
+    func = 'String',
+    expr = 'String',
+  })[opt_type])
 end
 
 --- @param scope vim.option_scope

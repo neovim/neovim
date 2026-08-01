@@ -1310,6 +1310,70 @@ func Test_smoothscroll_next_topline()
   bwipe!
 endfunc
 
+func Test_smoothscroll_keep_skipcol()
+  call NewWindow(10, 40)
+  setlocal smoothscroll
+  call setline(1, ['abcde '->repeat(150)]->repeat(2))
+
+  exe "norm! 10\<C-E>"
+  redraw
+  let skipcol = winsaveview().skipcol
+  call assert_notequal(0, skipcol)
+
+  " Changing the height of the window must not reset the scroll position.
+  resize -3
+  resize +3
+  redraw
+  call assert_equal(skipcol, winsaveview().skipcol)
+
+  " Using the autocommand window changes the height as well.
+  call bufload(bufadd(''))
+  redraw
+  call assert_equal(skipcol, winsaveview().skipcol)
+
+  bwipe!
+endfunc
+
+func Test_smoothscroll_cursor_back_in_line()
+  call NewWindow(10, 40)
+  setlocal smoothscroll
+  call setline(1, ['abcde '->repeat(150)]->repeat(2))
+
+  exe "norm! 10\<C-E>"
+  redraw
+  call assert_equal(400, winsaveview().skipcol)
+
+  " Moving to an earlier column in the same line scrolls back only as far as
+  " needed, not all the way to the start of the line.
+  norm! 240|
+  redraw
+  call assert_equal(200, winsaveview().skipcol)
+  call assert_equal(1, winline())
+
+  bwipe!
+endfunc
+
+func Test_smoothscroll_squeezed_window()
+  setlocal smoothscroll
+  call setline(1, [repeat('x', 3000)] + repeat(['line'], 10))
+  exe "norm! gg10\<C-E>"
+  redraw
+  let skipcol = winsaveview().skipcol
+  call assert_notequal(0, skipcol)
+  let virtcol = virtcol('.')
+
+  " Squeezing the window to one line and restoring it must not scroll back to
+  " the start of the line.
+  new
+  wincmd _
+  close
+  redraw
+  call assert_notequal(0, winsaveview().skipcol)
+  call assert_equal(virtcol, virtcol('.'))
+
+  bwipe!
+endfunc
+
 func Test_smoothscroll_long_line_zb()
   call NewWindow(10, 40)
   call setline(1, 'abcde '->repeat(150))

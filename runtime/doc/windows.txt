@@ -562,13 +562,18 @@ CTRL-W T	Move the current window to a new tabpage.  This fails if
 
 						*CTRL-W_=*
 CTRL-W =	Make all windows (almost) equally high and wide, but use
-		'winheight' and 'winwidth' for the current window.
-		Windows with 'winfixheight' set keep their height and windows
-		with 'winfixwidth' set keep their width.
-		To equalize only vertically (make window equally high) use
-		`vertical wincmd =` .
-		To equalize only horizontally (make window equally wide) use
-		`horizontal wincmd =` .
+		'winheight' and 'winwidth' for the current window. Windows
+		with 'winfixheight' set keep their height, and windows with
+		'winfixwidth' set keep their width.
+
+		To equalize only vertically (each window equally high) use: >
+		    :vertical wincmd =
+<
+		To equalize only horizontally (each window equally wide) use: >
+		    :horizontal wincmd =
+<
+		To equalize windows when Nvim itself is resized, see
+		|VimResized|.
 
 :res[ize] -N					*:res* *:resize* *CTRL-W_-*
 CTRL-W -	Decrease current window height by N (default 1).

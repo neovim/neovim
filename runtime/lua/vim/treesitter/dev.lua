@@ -639,7 +639,7 @@ function M.edit_query(lang)
   local query_buf = api.nvim_win_get_buf(query_win)
 
   vim.b[buf].dev_edit = query_win
-  vim.bo[query_buf].omnifunc = 'v:lua.vim.treesitter.query.omnifunc'
+  vim.bo[query_buf].omnifunc = vim.treesitter.query.omnifunc
   set_dev_options(query_win, query_buf)
 
   -- Note that omnifunc guesses the language based on the containing folder,

@@ -73,6 +73,10 @@ local archive_patterns = {}
 for _, extension in ipairs(extensions) do
   archive_patterns[#archive_patterns + 1] = ('*.%s'):format(extension)
 end
+vim.keymap.set('n', '<Plug>(nvim-zip-extract)', function()
+  require('nvim.zip')._extract()
+end, { silent = true, desc = 'Extract zip archive entry' })
+
 local group = api.nvim_create_augroup('nvim.zip', { clear = true })
 
 ---@return boolean

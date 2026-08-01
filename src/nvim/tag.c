@@ -225,35 +225,14 @@ static char *tagmatchname = NULL;   // name of last used tag
 static taggy_T ptag_entry = { NULL, INIT_FMARK, 0, 0, NULL };
 
 static bool tfu_in_use = false;  // disallow recursive call of tagfunc
-static Callback tfu_cb;          // 'tagfunc' callback function
 
 // Used instead of NUL to separate tag fields in the growarrays.
 #define TAG_SEP 0x02
 
-/// Reads the 'tagfunc' option value and convert that to a callback value.
-/// Invoked when the 'tagfunc' option is set. The option value can be a name of
-/// a function (string), or function(<name>) or funcref(<name>) or a lambda.
-const char *did_set_tagfunc(optset_T *args)
-{
-  buf_T *buf = (buf_T *)args->os_buf;
-  int retval;
-
-  if (args->os_flags & OPT_LOCAL) {
-    retval = option_set_callback_func(args->os_newval.data.string.data, &buf->b_tfu_cb);
-  } else {
-    retval = option_set_callback_func(args->os_newval.data.string.data, &tfu_cb);
-    if (retval == OK && !(args->os_flags & OPT_GLOBAL)) {
-      set_buflocal_tfu_callback(buf);
-    }
-  }
-
-  return retval == FAIL ? e_invarg : NULL;
-}
-
 #ifdef EXITFREE
 void free_tagfunc_option(void)
 {
-  callback_free(&tfu_cb);
+  callback_free(&p_tfu);
 }
 #endif
 
@@ -261,17 +240,7 @@ void free_tagfunc_option(void)
 /// collected.
 bool set_ref_in_tagfunc(int copyID)
 {
-  return set_ref_in_callback(&tfu_cb, copyID, NULL, NULL);
-}
-
-/// Copy the global 'tagfunc' callback function to the buffer-local 'tagfunc'
-/// callback for 'buf'.
-void set_buflocal_tfu_callback(buf_T *buf)
-{
-  callback_free(&buf->b_tfu_cb);
-  if (tfu_cb.type != kCallbackNone) {
-    callback_copy(&buf->b_tfu_cb, &tfu_cb);
-  }
+  return set_ref_in_callback(&p_tfu, copyID, NULL, NULL);
 }
 
 /// Jump to tag; handling of tag commands and tag stack
@@ -1114,7 +1083,7 @@ static int find_tagfunc_tags(char *pat, garray_T *ga, int *match_count, int flag
     }
   }
 
-  if (*curbuf->b_p_tfu == NUL || curbuf->b_tfu_cb.type == kCallbackNone) {
+  if (curbuf->b_p_tfu.type == kCallbackNone) {
     return FAIL;
   }
 
@@ -1145,7 +1114,7 @@ static int find_tagfunc_tags(char *pat, garray_T *ga, int *match_count, int flag
                flags & TAG_REGEXP ? "r" : "");
 
   pos_T save_pos = curwin->w_cursor;
-  int result = callback_call(&curbuf->b_tfu_cb, 3, args, &rettv);
+  int result = callback_call(&curbuf->b_p_tfu, 3, args, &rettv);
   curwin->w_cursor = save_pos;  // restore the cursor position
   check_cursor(curwin);         // make sure cursor position is valid
   d->dv_refcount--;
@@ -1416,7 +1385,7 @@ static int findtags_apply_tfu(findtags_state_T *st, char *pat, char *buf_ffname)
 {
   const bool use_tfu = ((st->flags & TAG_NO_TAGFUNC) == 0);
 
-  if (!use_tfu || tfu_in_use || *curbuf->b_p_tfu == NUL) {
+  if (!use_tfu || tfu_in_use || curbuf->b_p_tfu.type == kCallbackNone) {
     return NOTDONE;
   }
 

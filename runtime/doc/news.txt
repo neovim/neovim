@@ -77,6 +77,10 @@ These changes may require adaptations in your config or plugins.
 
 API
 
+• API results containing a Lua function reference (e.g. a "callback" reported
+  by |nvim_get_keymap()| or |nvim_get_autocmds()|, or a "callback" option
+  value) are serialized over RPC as a human-readable `"<Lua …>"` hint string,
+  instead of nil.
 • |nvim_create_autocmd()|, |nvim_exec_autocmds()| and |nvim_clear_autocmds()|
   no longer treat an empty non-nil pattern as nil.
 • |nvim_clear_autocmds()| no longer treats an empty array event as nil.
@@ -313,8 +317,10 @@ LUA
 • |vim.net.request()| can now accept  `method` param overload for multiple HTTP methods.
 • |writefile()| treats Lua and RPC strings as |Blob|, so it can be used to
   write binary data.
+• |vim.fs.abspath()| gained `cwd` and `plain` parameters.
 • |vim.fs.dir()| with `opts.err=true`, reports errors. An inaccessible root
   dir yields a single (name, nil, err) item.
+• |vim.fs.dir()| gained a `normalize` parameter.
 • |vim.fs.find()| returns a list of errors as its second return value.
 • |vim.fs.mkdir()| creates directories, including parent directories with
   `opts.parents=true`.
@@ -344,6 +350,11 @@ LUA
 
 OPTIONS
 
+• Lua functions/closures can be assigned to "func" and "expr" options:
+  |option-value-function| (e.g. `vim.o.operatorfunc`), |expr-option-function|
+  (e.g. `vim.wo.foldexpr`, `vim.bo.indentexpr`). Reading such an option:
+  • ...from Lua, gets the function itself.
+  • ...from Vimscript/RPC, gets a human-readable `"<Lua …>"` hint string.
 • 'ttyfast' can be disabled during startup by setting |$NVIM_NOTTYFAST|.
 • 'scrolloffpad' allows vertically centering cursor at the end of file.
 • 'shortmess' flag |shm-u| silences undo/redo messages.

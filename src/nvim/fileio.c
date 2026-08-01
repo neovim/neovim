@@ -844,7 +844,7 @@ retry:
 
     // Use the 'charconvert' expression when conversion is required
     // and we can't do it internally or with iconv().
-    if (fio_flags == 0 && !read_stdin && !read_buffer && *p_ccv != NUL
+    if (fio_flags == 0 && !read_stdin && !read_buffer && p_ccv.type != kCallbackNone
         && !read_fifo && iconv_fd == (iconv_t)-1) {
       did_iconv = false;
       // Skip conversion when it's already done (retry for wrong
@@ -1433,7 +1433,7 @@ retry:
           // Detected a UTF-8 error.
 rewind_retry:
           // Retry reading with another conversion.
-          if (*p_ccv != NUL && iconv_fd != (iconv_t)-1) {
+          if (p_ccv.type != kCallbackNone && iconv_fd != (iconv_t)-1) {
             // iconv() failed, try 'charconvert'
             did_iconv = true;
           } else {
