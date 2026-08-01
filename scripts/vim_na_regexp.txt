@@ -65,6 +65,7 @@
 ^src/po/.*\.desktop
 ^src/po/.*sjis
 ^src/proto
+^src/testdir/.*_ramp.vim
 ^src/testdir/dumps/
 ^src/testdir/keycode_check\.
 ^src/testdir/python
