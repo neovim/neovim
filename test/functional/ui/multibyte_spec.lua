@@ -303,35 +303,35 @@ describe('multibyte rendering', function()
     screen:expect([[
       ^🏳️‍⚧️                                                          |
       {1:~                                                           }|*4
-                                                1,1           All |
+                                                1,1            All|
     ]])
 
     feed('a word<esc>')
     screen:expect([[
       🏳️‍⚧️ wor^d                                                     |
       {1:~                                                           }|*4
-                                                1,21-7        All |
+                                                1,21-7         All|
     ]])
 
     feed('0')
     screen:expect([[
       ^🏳️‍⚧️ word                                                     |
       {1:~                                                           }|*4
-                                                1,1           All |
+                                                1,1            All|
     ]])
 
     feed('l')
     screen:expect([[
         🏳️‍⚧️^ word                                                     |
         {1:~                                                           }|*4
-                                                  1,17-3        All |
+                                                  1,17-3         All|
     ]])
 
     feed('h')
     screen:expect([[
       ^🏳️‍⚧️ word                                                     |
       {1:~                                                           }|*4
-                                                1,1           All |
+                                                1,1            All|
     ]])
 
     feed('o❤️ variant selected<esc>')
@@ -339,7 +339,7 @@ describe('multibyte rendering', function()
       🏳️‍⚧️ word                                                     |
       ❤️ variant selecte^d                                         |
       {1:~                                                           }|*3
-                                                2,23-19       All |
+                                                2,23-19        All|
     ]])
 
     feed('0')
@@ -347,7 +347,7 @@ describe('multibyte rendering', function()
       🏳️‍⚧️ word                                                     |
       ^❤️ variant selected                                         |
       {1:~                                                           }|*3
-                                                2,1           All |
+                                                2,1            All|
     ]])
 
     feed('l')
@@ -355,7 +355,7 @@ describe('multibyte rendering', function()
       🏳️‍⚧️ word                                                     |
       ❤️^ variant selected                                         |
       {1:~                                                           }|*3
-                                                2,7-3         All |
+                                                2,7-3          All|
     ]])
 
     feed('h')
@@ -363,7 +363,7 @@ describe('multibyte rendering', function()
       🏳️‍⚧️ word                                                     |
       ^❤️ variant selected                                         |
       {1:~                                                           }|*3
-                                                2,1           All |
+                                                2,1            All|
     ]])
 
     -- without selector: single width (note column 18 and not 19)
@@ -373,7 +373,7 @@ describe('multibyte rendering', function()
       ❤️ variant selected                                         |
       ❤ variant selecte^d                                          |
       {1:~                                                           }|*2
-                                                3,20-18       All |
+                                                3,20-18        All|
     ]])
   end)
 end)

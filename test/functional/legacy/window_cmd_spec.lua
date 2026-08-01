@@ -31,7 +31,7 @@ it('scrolling with laststatus=0 and :botright split', function()
     98                                      |
     99                                      |
     ^100                                     |
-                          100,1         Bot |
+                          100,1          Bot|
   ]])
 end)
 

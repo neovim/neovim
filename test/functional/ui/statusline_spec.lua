@@ -346,7 +346,7 @@ describe('global statusline', function()
     screen:expect([[
       ^                                                            |
       {1:~                                                           }|*14
-                                                0,0-1         All |
+                                                0,0-1          All|
     ]])
 
     command('set laststatus=3')
@@ -402,7 +402,7 @@ describe('global statusline', function()
       {2:< 0,0-1          All <-1          All <}│{1:~                   }|
                                              │{1:~                   }|
       {1:~                                      }│{1:~                   }|*4
-                                                0,0-1         All |
+                                                0,0-1          All|
     ]])
 
     command('set laststatus=3')
@@ -816,16 +816,10 @@ describe('statusline', function()
       {1:~}{15:^ }{1:                                      }|
       {1:~                                       }|*4
       {2:[No Name]             0,0-1          All}|
-                            0,0-1         All |
+                            0,0-1          All|
     ]])
-    command('set rulerformat=%17(%l,%c%V%=%P%)')
-    screen:expect([[
-                                              |
-      {1:~}{15:^ }{1:                                      }|
-      {1:~                                       }|*4
-      {2:[No Name]              0,0-1         All}|
-                            0,0-1         All |
-    ]])
+    command('set rulerformat=%18(%l,%c%V%=%P%)')
+    screen:expect_unchanged()
     command('set rulerformat&')
     api.nvim_win_close(win, true)
     screen:expect([[

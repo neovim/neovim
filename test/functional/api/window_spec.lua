@@ -2337,7 +2337,7 @@ describe('API/win', function()
       screen:expect([[
                                  │^                        |
         ~                        │~                       |*4
-                                        0,0-1         All |
+                                        0,0-1          All|
         {5:-- TERMINAL --}                                    |
       ]])
       screen:detach()
@@ -2351,7 +2351,7 @@ describe('API/win', function()
       screen:expect([[
         ^                         │                        |
         ~                        │~                       |*4
-                                        0,0-1         All |
+                                        0,0-1          All|
         {5:-- TERMINAL --}                                    |
       ]])
     end)

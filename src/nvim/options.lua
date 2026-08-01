@@ -7312,7 +7312,7 @@ local options = {
         The format of this option is like that of 'statusline'.
         This option cannot be set in a modeline when 'modelineexpr' is off.
 
-        The default ruler width is 17 characters.  To make the ruler 15
+        The default ruler width is 18 characters.  To make the ruler 15
         characters wide, put "%15(" at the start and "%)" at the end.
         Example: >vim
         	set rulerformat=%15(%c%V\ %p%%%)

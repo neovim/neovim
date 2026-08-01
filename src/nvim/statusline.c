@@ -338,7 +338,6 @@ static void win_redr_stl_expr(win_T *wp, bool draw_winbar, bool draw_ruler, bool
       if (!in_status_line) {
         row = Rows - 1;
         grid = grid_adjust(&msg_grid_adj, &row, &col);
-        maxwidth--;  // writing in last column may cause scrolling
         fillchar = schar_from_ascii(' ');
         group = HLF_MSG;
       }
@@ -557,14 +556,9 @@ void redraw_ruler(void)
                          (int)virtcol + 1);
 
   // Add a "50%" if there is room for it.
-  // On the last line, don't print in the last column (scrolls the
-  // screen up on some terminals).
   char rel_pos[RULER_BUF_LEN];
   int rel_poslen = get_rel_pos(wp, rel_pos, RULER_BUF_LEN);
   int n1 = bufferlen + vim_strsize(rel_pos);
-  if (wp->w_status_height == 0 && !is_stl_global && !ui_has(kUIMessages)) {
-    n1++;  // can't use last char of screen
-  }
 
   int this_ru_col = ru_col - (Columns - width);
   // Never use more than half the window/screen width, leave the other half

@@ -163,6 +163,12 @@ TREESITTER
 
 • todo
 
+UI
+
+• The bottom right cell of the screen is no longer left empty when the ruler
+  is shown. This was originally intended to prevent unwanted scrolling on
+  quirky terminals.
+
 VIMSCRIPT
 
 • Removed: ctxget(), ctxpop(), ctxpush(), ctxset(), ctxsize(). Use

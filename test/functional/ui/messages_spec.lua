@@ -1894,7 +1894,7 @@ describe('ui/builtin messages', function()
     screen:expect([[
       ^                                                            |
       {1:~                                                           }|*5
-                                                  0-1 100%        |
+                                                   0-1 100%       |
     ]])
 
     -- Ruler is cleared when it is no longer drawn.
@@ -1909,14 +1909,14 @@ describe('ui/builtin messages', function()
     screen:expect([[
       ^                                                            |
       {1:~                                                           }|*5
-                                                0,0-1         All |
+                                                0,0-1          All|
     ]])
 
     command('hi MsgArea guibg=#333333')
     screen:expect([[
       ^                                                            |
       {1:~                                                           }|*5
-      {101:                                          0,0-1         All }|
+      {101:                                          0,0-1          All}|
     ]])
   end)
 

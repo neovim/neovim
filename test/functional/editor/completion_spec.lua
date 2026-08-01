@@ -1507,7 +1507,7 @@ describe('completion', function()
       {12:hello          }{1:                                             }|
       {4:hullo          }{1:                                             }|
       {4:heee           }{1:                                             }|
-      {5:-- INSERT --}                              4,6           All |
+      {5:-- INSERT --}                              4,6            All|
     ]])
   end)
 

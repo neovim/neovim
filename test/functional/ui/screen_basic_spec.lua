@@ -366,7 +366,7 @@ local function screen_tests(linegrid)
         0123^456                                              |
         789                                                  |
         {1:~                                                    }|*11
-                                           1,5           All |
+                                           1,5            All|
       ]])
     end)
   end)

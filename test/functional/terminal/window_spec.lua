@@ -423,7 +423,7 @@ describe(':terminal window', function()
       cool line 8                                       |
       cool line 9                                       |
       cool line 10                                      |
-      {5:-- TERMINAL --}                  6,1           Bot |
+      {5:-- TERMINAL --}                  6,1            Bot|
     ]])
     command('call nvim_win_set_cursor(0, [1, 0])')
     screen:expect_unchanged()
@@ -436,7 +436,7 @@ describe(':terminal window', function()
       cool line 8                                       |
       cool line 9                                       |
       cool line 10                                      |
-      {5:-- TERMINAL --}                  7,5           Bot |
+      {5:-- TERMINAL --}                  7,5            Bot|
     ]])
     -- Check topline correct after leaving terminal mode.
     -- The new cursor position is one column left of the terminal's actual cursor position.
@@ -448,7 +448,7 @@ describe(':terminal window', function()
       cool line 8                                       |
       cool line 9                                       |
       cool line 10                                      |
-                                      7,4           Bot |
+                                      7,4            Bot|
     ]])
   end)
 

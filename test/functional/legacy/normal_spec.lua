@@ -158,7 +158,7 @@ describe('normal', function()
       ^4                                       |
       5                                       |
       6                                       |
-      40 more lines         5,1            %8 |
+      40 more lines         5,1             %8|
     ]])
   end)
 end)
