@@ -1558,6 +1558,8 @@ them to parse text. See |vim.treesitter.query.parse()| for a working example.
                                    defined in query
       • {has_combined_injections}  (`boolean`) whether the query contains
                                    combined injections
+      • {has_conceal}              (`boolean`) whether the query sets
+                                   intra-line conceal metadata
       • {has_conceal_line}         (`boolean`) whether the query sets
                                    conceal_lines metadata
       • {info}                     (`vim.treesitter.QueryInfo`) query context

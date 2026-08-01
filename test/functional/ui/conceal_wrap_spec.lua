@@ -53,6 +53,21 @@ describe('conceal-aware wrapping (#14409)', function()
     return api.nvim_win_get_cursor(0)[2]
   end
 
+  --- Attaches a tree-sitter highlighter concealing the "HIDDENIDENTIFIER" identifier.
+  local function ts_conceal_identifier()
+    exec_lua(function()
+      vim.treesitter.highlighter.new(vim.treesitter.get_parser(0, 'c'), {
+        queries = {
+          c = [[
+            ((identifier) @conceal
+             (#eq? @conceal "HIDDENIDENTIFIER")
+             (#set! conceal ""))
+          ]],
+        },
+      })
+    end)
+  end
+
   it('fully hidden extmark conceal reflows a wrapped line', function()
     -- 25 raw cells: without conceal this wraps to two screen rows at width 20.
     api.nvim_buf_set_lines(0, 0, -1, true, { ('a'):rep(10) .. 'HIDDEN' .. ('b'):rep(9) })
@@ -710,6 +725,78 @@ describe('conceal-aware wrapping (#14409)', function()
     -- gj follows the reflowed layout.
     eq(26, col_after(0, 'gj'))
   end)
+
+  it('tree-sitter @conceal reflows a wrapped line and updates on edit', function()
+    -- End-to-end through the tree-sitter highlighter: intra-line @conceal is ephemeral, but the
+    -- highlighter now also materializes it on demand (via _on_conceal) as a marktree mark, so the
+    -- off-draw geometry can see it and the wrapped line reflows.
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'int HIDDENIDENTIFIER = b;' })
+    ts_conceal_identifier()
+
+    -- The 16-char identifier is concealed to nothing: 25 - 16 = 9 displayed cells -> one row.
+    eq(1, api.nvim_win_text_height(0, {}).all)
+    -- Geometry follows the reflow: buffer col 21 (space before '=') sits at screen col 5 (4 visible
+    -- cells of "int " + 0 for the concealed identifier), still on row 1.
+    eq({ row = 1, col = 5, curscol = 5, endcol = 5 }, fn.screenpos(0, 1, 21))
+    eq({ row = 1, col = 9, curscol = 9, endcol = 9 }, fn.screenpos(0, 1, 25))
+
+    -- Edit the identifier so it no longer matches the #eq? predicate. Same raw width (25), but now
+    -- nothing is concealed, so the materialized conceal must be invalidated and the line re-wraps.
+    api.nvim_buf_set_lines(0, 0, 1, true, { 'int VISIBLEIDENTIFIE = b;' })
+    eq(2, api.nvim_win_text_height(0, {}).all)
+
+    -- Undo restores the concealed identifier and its one-row reflow; redo returns to two rows.
+    -- Materialized conceal marks are cached per row and rebuilt on edits (see
+    -- decor_conceal_materialise()), so the cache must follow.
+    command('undo')
+    eq({ 'int HIDDENIDENTIFIER = b;' }, api.nvim_buf_get_lines(0, 0, -1, true))
+    eq(1, api.nvim_win_text_height(0, {}).all)
+
+    command('redo')
+    eq({ 'int VISIBLEIDENTIFIE = b;' }, api.nvim_buf_get_lines(0, 0, -1, true))
+    eq(2, api.nvim_win_text_height(0, {}).all)
+  end)
+
+  it(
+    'repeated undo/redo across multiple lines does not leave a stale or duplicated height',
+    function()
+      api.nvim_buf_set_lines(0, 0, -1, true, {
+        'int HIDDENIDENTIFIER = a;',
+        'int HIDDENIDENTIFIER = b;',
+        'int HIDDENIDENTIFIER = c;',
+      })
+      ts_conceal_identifier()
+      local function heights()
+        return {
+          api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all,
+          api.nvim_win_text_height(0, { start_row = 1, end_row = 1 }).all,
+          api.nvim_win_text_height(0, { start_row = 2, end_row = 2 }).all,
+        }
+      end
+      eq({ 1, 1, 1 }, heights())
+
+      -- Edit each line in sequence to break the match (3 separate undoable changes).
+      api.nvim_buf_set_lines(0, 0, 1, true, { 'int VISIBLEIDENTIFIE = a;' })
+      api.nvim_buf_set_lines(0, 1, 2, true, { 'int VISIBLEIDENTIFIE = b;' })
+      api.nvim_buf_set_lines(0, 2, 3, true, { 'int VISIBLEIDENTIFIE = c;' })
+      eq({ 2, 2, 2 }, heights())
+
+      -- Undo one edit at a time: only the most recently edited line reverts each time.
+      command('undo')
+      eq({ 2, 2, 1 }, heights())
+      command('undo')
+      eq({ 2, 1, 1 }, heights())
+      command('undo')
+      eq({ 1, 1, 1 }, heights())
+
+      -- A full undo/redo round trip must be stable (no stale or accumulated duplicate marks).
+      command('redo | redo | redo')
+      eq({ 2, 2, 2 }, heights())
+      command('undo | undo | undo')
+      command('redo | redo | redo')
+      eq({ 2, 2, 2 }, heights())
+    end
+  )
 
   -- Insert-mode Up/Down move by logical line (cursor_up()/cursor_down()), unlike gj/gk's screen-row
   -- motion. A reflowed line's extra rows must not count as lines.
