@@ -8,7 +8,7 @@ Builtin plugin: zip                                                      *zip*
 
 Nvim opens a read-only listing when |:edit| is used with a zip archive. The
 listing is a |dir| buffer with 'filetype' set to "zip"; entries open as
-read-only `zipfile://{archive}::{path}` buffers. Requires the `unzip`
+read-only `zip://{archive}/{path}` buffers. Requires the `unzip`
 executable.
 
 Recognized extensions include zip, jar, apk, epub, Office and OpenDocument
