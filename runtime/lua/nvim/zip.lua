@@ -10,6 +10,11 @@ local function unzip()
   if command == '' then
     return nil, 'unzip executable not found'
   end
+  -- Windows searches the current directory before $PATH, so an archive could be opened with an
+  -- `unzip` shipped next to it.
+  if vim.fs.dirname(vim.fs.normalize(command)) == vim.fs.normalize(vim.fn.getcwd()) then
+    return nil, 'refusing to run unzip from the current directory'
+  end
   return command
 end
 
