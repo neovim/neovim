@@ -7,36 +7,28 @@
 Builtin plugin: zip                                                      *zip*
 
 Nvim opens a read-only listing when |:edit| is used with a zip archive. The
-listing is a |dir| buffer with 'filetype' set to "zip". It requires the
-`unzip` executable. The module implementing it is private and is not
-a supported Lua API.
+listing is a |dir| buffer with 'filetype' set to "zip"; entries open as
+read-only `zipfile://{archive}::{path}` buffers. Requires the `unzip`
+executable.
+
+Recognized extensions include zip, jar, apk, epub, Office and OpenDocument
+formats, whl, xpi, pkpass, and cbz. Remote archives are fetched by |vim.net|.
+
+Reading an entry from an encrypted archive prompts for its password.
 
                                                     *g:loaded_nvim_zip_plugin*
 To disable the built-in zip browser, set this before startup: >lua
 
     vim.g.loaded_nvim_zip_plugin = 1
 <
-ARCHIVE LISTINGS                                                *zip-listing*
+MAPPINGS                                                       *zip-mappings*
 
-Editing a zip-like file opens a read-only listing. Directory entries can be
-opened to browse that level of the archive. File entries open as read-only
-`zipfile://{archive}::{path}` buffers.
-
-Mappings are the standard |dir-buffer-mappings|, plus:
+The standard |dir-buffer-mappings|, plus:
 
 • x extracts the entry under the cursor into the current directory, discarding
   its path inside the archive. It never overwrites an existing file.
 
 At the archive root, - opens the containing filesystem directory.
-
-Recognized extensions include zip, jar, apk, epub, Office and OpenDocument
-formats, whl, xpi, pkpass, and cbz.
-
-INTEGRATIONS                                              *zip-integrations*
-
-Remote zip URLs are downloaded by |vim.net| and opened in the browser.
-
-|g:ftplugin_java_source_path| opens the selected entry with |gf|.
 
 LIMITATIONS                                                *zip-limitations*
 
@@ -44,6 +36,8 @@ Archive entries cannot be updated. Remote archives are not refetched on
 reload, and there is no PowerShell fallback, no custom backend command, and no
 support for the legacy `g:zip_*` variables. Use |old-zip| when those features
 are required.
+
+Only the original zip encryption is supported, not AES.
 
 ==============================================================================
 Legacy plugin: zip                                                   *old-zip*

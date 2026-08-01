@@ -407,6 +407,37 @@ describe('nvim.zip', function()
     end)
   end)
 
+  it('prompts for the password of an encrypted archive', function()
+    local archive = stage(fixtures, 'encrypted.zip')
+    clear_zip()
+
+    edit(archive)
+    eq({ 'secret.txt' }, lines())
+
+    -- The password is queued first, so that the prompt consumes it from typeahead.
+    exec_lua(function(uri)
+      vim.api.nvim_input('hunter2<CR>')
+      vim.api.nvim_cmd({ cmd = 'edit', args = { uri }, magic = { file = false, bar = false } }, {})
+    end, ('zipfile://%s::secret.txt'):format(archive))
+    poke_eventloop()
+
+    eq({ 'secret content' }, lines())
+  end)
+
+  it('reports an incorrect archive password', function()
+    local archive = stage(fixtures, 'encrypted.zip')
+    clear_zip()
+
+    -- Info-ZIP allows three attempts before giving up.
+    exec_lua(function(uri)
+      vim.api.nvim_input('no1<CR>no2<CR>no3<CR>')
+      vim.api.nvim_cmd({ cmd = 'edit', args = { uri }, magic = { file = false, bar = false } }, {})
+    end, ('zipfile://%s::secret.txt'):format(archive))
+    poke_eventloop()
+
+    eq(true, exec_capture('messages'):find('incorrect password', 1, true) ~= nil)
+  end)
+
   describe('extract', function()
     --- Stage an archive, restart with the cwd inside the test directory, and open it.
     local function open_in_cwd(source_dir, source)
