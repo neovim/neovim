@@ -22,6 +22,7 @@ local function check_backend()
   end
 end
 
+--- @return boolean Whether an implementation that needs the backend is handling archives.
 local function check_active()
   health.start('nvim.zip: active implementation')
 
@@ -31,7 +32,8 @@ local function check_active()
   if legacy then
     health.info('`old-zip` is loaded, so it handles archives instead of zip.lua')
     health.info('zip.lua yields to it and removes its own autocommands')
-    return
+    -- `old-zip` shells out to the same backend.
+    return true
   end
 
   if not builtin then
@@ -42,15 +44,19 @@ local function check_active()
     else
       health.warn('No zip plugin is active')
     end
-    return
+    return false
   end
 
   health.ok('zip.lua is active')
+  return true
 end
 
 function M.check()
-  check_backend()
-  check_active()
+  -- Report the backend only when something is actually going to run it, so that disabling the
+  -- plugin does not report a missing `unzip` as an error.
+  if check_active() then
+    check_backend()
+  end
 end
 
 return M
