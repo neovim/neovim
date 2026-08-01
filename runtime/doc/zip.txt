@@ -39,6 +39,9 @@ are required.
 
 Only the original zip encryption is supported, not AES.
 
+An entry path that literally contains "#U" followed by four hex digits is read
+as a non-ASCII escape, and is shown decoded.
+
 ==============================================================================
 Legacy plugin: zip                                                   *old-zip*
 

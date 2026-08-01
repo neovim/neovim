@@ -440,6 +440,27 @@ describe('nvim.zip', function()
     eq(true, exec_capture('messages'):find('incorrect password', 1, true) ~= nil)
   end)
 
+  -- unicode.zip was made with:
+  --   zip unicode.zip 'café.txt' '日本語.txt' 'Привет.txt' '🎉.txt'
+  -- each containing "accented", "japanese", "cyrillic", and "emoji" respectively.
+  it('lists and opens entries with non-ASCII paths', function()
+    local archive = stage(fixtures, 'unicode.zip')
+    clear_zip()
+
+    edit(archive)
+    eq({ 'café.txt', '日本語.txt', 'Привет.txt', '🎉.txt' }, lines())
+
+    for name, content in pairs({
+      ['café.txt'] = 'accented',
+      ['日本語.txt'] = 'japanese',
+      ['Привет.txt'] = 'cyrillic',
+      ['🎉.txt'] = 'emoji',
+    }) do
+      edit(('zip://%s/%s'):format(archive, name))
+      eq({ content }, lines())
+    end
+  end)
+
   describe('extract', function()
     --- Stage an archive, restart with the cwd inside the test directory, and open it.
     local function open_in_cwd(source_dir, source)

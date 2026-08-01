@@ -18,6 +18,42 @@ local function unzip()
   return command
 end
 
+--- Info-ZIP writes non-ASCII entry paths as escapes under LC_ALL=C, and replaces them with "?"
+--- under a UTF-8 locale, which is lossy. We therefore always run it under LC_ALL=C and convert.
+--- A path that literally contains "#U" followed by four hex digits is indistinguishable from an
+--- escape and is decoded as one.
+---@param value string
+---@return string
+local function decode_escapes(value)
+  return (
+    value
+      :gsub('#U(%x%x%x%x)', function(hex)
+        return vim.fn.nr2char(tonumber(hex, 16), true)
+      end)
+      :gsub('#L(%x%x%x%x%x%x)', function(hex)
+        return vim.fn.nr2char(tonumber(hex, 16), true)
+      end)
+  )
+end
+
+--- Inverse of decode_escapes(), for paths passed back to Info-ZIP as selectors.
+---@param value string
+---@return string
+local function encode_escapes(value)
+  local out = {} ---@type string[]
+  local codes = vim.fn.str2list(value, true) ---@type integer[]
+  for _, code in ipairs(codes) do
+    if code < 0x80 then
+      out[#out + 1] = string.char(code)
+    elseif code <= 0xFFFF then
+      out[#out + 1] = ('#U%04x'):format(code)
+    else
+      out[#out + 1] = ('#L%06x'):format(code)
+    end
+  end
+  return table.concat(out)
+end
+
 --- Escape a path so that Info-ZIP matches it literally.
 ---
 --- Info-ZIP matches `*`, `?`, and `[]` in a member selector itself, so this is not shell
@@ -49,7 +85,7 @@ local function list_archive(source)
   local ok, system = pcall(
     vim.system,
     { command, '-Z1', '--', literal_pattern(source) },
-    { text = true }
+    { text = true, env = { LC_ALL = 'C' } }
   )
   if not ok then
     return nil, tostring(system), false
@@ -61,7 +97,10 @@ local function list_archive(source)
     end
     return nil, vim.trim(result.stderr or ''), true
   end
-  return vim.split(result.stdout or '', '\n', { plain = true, trimempty = true })
+  return vim
+    .iter(vim.split(result.stdout or '', '\n', { plain = true, trimempty = true }))
+    :map(decode_escapes)
+    :totable()
 end
 
 --- Keep absolute and dot-segment entries visible without treating them as UI navigation.
@@ -177,7 +216,7 @@ local function extract_with_password(command, source, path, dir)
     dir,
     '--',
     literal_pattern(source),
-    literal_pattern(path),
+    literal_pattern(encode_escapes(path)),
   }, {
     pty = true,
     env = { LC_ALL = 'C' },
@@ -238,8 +277,9 @@ local function extract_path(command, source, path, target)
   local write_err ---@type string?
   local ok, system = pcall(
     vim.system,
-    { command, '-p', '--', literal_pattern(source), literal_pattern(path) },
+    { command, '-p', '--', literal_pattern(source), literal_pattern(encode_escapes(path)) },
     {
+      env = { LC_ALL = 'C' },
       stdout = function(pipe_err, data)
         if pipe_err then
           write_err = pipe_err
