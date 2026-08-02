@@ -348,36 +348,6 @@ local function node_normalize_down(node)
   return node
 end
 
-local function visual_select(range)
-  assert(type(range) == 'table')
-  local srow, scol, erow, ecol = Range.unpack4(range)
-  local cursor_other_end_of_visual = false
-
-  local vcol, vrow = vim.fn.col('v'), vim.fn.line('v')
-  local ccol, cline = vim.fn.col('.'), vim.fn.line('.')
-  if vrow > cline or (vrow == cline and vcol > ccol) then
-    cursor_other_end_of_visual = true
-  end
-
-  if ecol == 0 then
-    erow = erow - 1
-    ecol = #vim.fn.getline(erow + 1) + 1
-  end
-
-  if vim.fn.visualmode() ~= 'v' then
-    -- reset visualmode() to 'v'
-    vim.cmd.normal({ 'v\27', bang = true })
-  end
-
-  vim.fn.setpos("'<", { 0, srow + 1, scol + 1, 0 })
-  vim.fn.setpos("'>", { 0, erow + 1, ecol, 0 })
-  if cursor_other_end_of_visual then
-    vim.cmd.normal({ 'gvo', bang = true })
-  else
-    vim.cmd.normal({ 'gv', bang = true })
-  end
-end
-
 --- @return Range4
 local function get_selection()
   local pos1 = vim.fn.getpos('v')
@@ -385,6 +355,10 @@ local function get_selection()
   if pos1[2] > pos2[2] or (pos1[2] == pos2[2] and pos1[3] > pos2[3]) then
     --- @type Range4,Range4
     pos1, pos2 = pos2, pos1
+  end
+
+  if vim.o.selection == 'exclusive' then
+    pos2[3] = pos2[3] - 1
   end
 
   if pos2[3] == #vim.fn.getline(pos2[2]) + 1 then
@@ -596,7 +570,7 @@ local function repeate_apply_range(count, fn)
   end
 
   if range and count ~= 0 then
-    visual_select(range)
+    Range.visual_select(range)
   end
 end
 

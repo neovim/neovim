@@ -48,7 +48,7 @@ describe('vim.lsp.selection_range', function()
                   parent = {
                     range = {
                       start = { line = 0, character = 0 },
-                      ['end'] = { line = 5, character = 5 },
+                      ['end'] = { line = 4, character = 5 },
                     },
                     parent = nil,
                   },

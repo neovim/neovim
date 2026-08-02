@@ -172,4 +172,40 @@ function M.add_bytes(source, range)
   return { start_row, start_col, start_byte, end_row, end_col, end_byte }
 end
 
+---@param range Range
+function M.visual_select(range)
+  local start_row, start_col, end_row, end_col = M.unpack4(range)
+
+  -- If the selection ends at column 0, adjust the position to the end of the previous line.
+  if end_col == 0 then
+    end_row = end_row - 1
+    end_col = #vim.fn.getline(end_row + 1) + 1
+  end
+
+  if vim.fn.visualmode() ~= 'v' then
+    -- Reset visualmode() to 'v'
+    vim.cmd.normal({ 'v\27', bang = true })
+  end
+
+  local cursor_other_end_of_selection = false
+  local visual_col, visual_row = vim.fn.col('v'), vim.fn.line('v')
+  local cursor_col, cursor_row = vim.fn.col('.'), vim.fn.line('.')
+  if M.cmp_pos.gt(visual_row, visual_col, cursor_row, cursor_col) then
+    cursor_other_end_of_selection = true
+  end
+
+  if vim.o.selection == 'exclusive' then
+    end_col = end_col + 1
+  end
+
+  vim.fn.setpos("'<", { 0, start_row + 1, start_col + 1, 0 })
+  vim.fn.setpos("'>", { 0, end_row + 1, end_col, 0 })
+
+  if cursor_other_end_of_selection then
+    vim.cmd.normal({ 'gvo', bang = true })
+  else
+    vim.cmd.normal({ 'gv', bang = true })
+  end
+end
+
 return M

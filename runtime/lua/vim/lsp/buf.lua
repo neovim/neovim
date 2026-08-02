@@ -7,6 +7,7 @@ local lsp = vim.lsp
 local validate = vim.validate
 local util = require('vim.lsp.util')
 local npcall = vim.npcall
+local Range = require('vim.treesitter._range')
 
 local M = {}
 
@@ -1432,22 +1433,13 @@ local selection_ranges = nil
 
 ---@param range lsp.Range
 local function select_range(range)
-  local start_line = range.start.line + 1
-  local end_line = range['end'].line + 1
+  local start_line = range.start.line
+  local end_line = range['end'].line
 
   local start_col = range.start.character
   local end_col = range['end'].character
 
-  -- If the selection ends at column 0, adjust the position to the end of the previous line.
-  if end_col == 0 then
-    end_line = end_line - 1
-    local end_line_text = api.nvim_buf_get_lines(0, end_line - 1, end_line, true)[1]
-    end_col = #end_line_text
-  end
-
-  vim.fn.setpos("'<", { 0, start_line, start_col + 1, 0 })
-  vim.fn.setpos("'>", { 0, end_line, end_col, 0 })
-  vim.cmd.normal({ 'gv', bang = true })
+  Range.visual_select({ start_line, start_col, end_line, end_col })
 end
 
 ---@param range lsp.Range
