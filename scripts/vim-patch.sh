@@ -952,10 +952,12 @@ is_na_patch() {
           '-I^EXTERN char e_.*def_function' \
           '-I^EXTERN char e_.*enddef' \
           '-I^EXTERN char e_.*vim9' \
+          '-I^EXTERN char e_cannot_declare_.*variable_str' \
           '-I^\s*INIT\(= .+"E[0-9]+: (Abstract|Class|Enum|Interface|Type) ' \
           '-I^\s*INIT\(= .+"E[0-9]+: .*:def ' \
           '-I^\s*INIT\(= .+"E[0-9]+: .*enddef"' \
           '-I^\s*INIT\(= .+"E[0-9]+: .*[vV]im9' \
+          '-I^\s*INIT\(= .+"E1016: Cannot declare .* variable: ' \
           "$patch" -- "${file}" |
           grep '^@@ .* @@')
         if test -n "$HUNKS"; then
