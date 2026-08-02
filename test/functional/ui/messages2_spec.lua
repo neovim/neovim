@@ -514,45 +514,41 @@ describe('messages2', function()
       {1:~                                                    }|*12
       {16::}{15:call} {25:setline}{16:(}{26:1}{16:,} {26:"foo"}{16:)}                              |
     ]])
-    -- If command emits another message we enter the pager to closely mimic useful UI1 behavior.
+    -- If command emits another message it is opened in the pager without focusing
+    -- it, to closely mimic useful UI1 behavior. #41061
     command('echo "foo\nbar"')
     feed(':echo "baz"<CR>')
     screen:expect([[
-      foo                                                  |
+      ^foo                                                  |
       {1:~                                                    }|*8
       {3:                                                     }|
       foo                                                  |
       bar                                                  |
-      ^baz                                                  |
+      baz                                                  |
       {16::}{15:echo} {26:"baz"}                                          |
     ]])
     -- Subsequent typed commands are appended to the pager.
     feed(':echo "typed append"<CR>')
     screen:expect([[
-      foo                                                  |
+      ^foo                                                  |
       {1:~                                                    }|*7
       {3:                                                     }|
       foo                                                  |
       bar                                                  |
       baz                                                  |
-      ^typed append                                         |
+      typed append                                         |
       {16::}{15:echo} {26:"typed append"}                                 |
     ]])
-    -- Other messages that fit 'cmdheight' are not.
+    -- Any other typed key dismisses the pager.
     feed('n')
     screen:expect([[
-      foo                                                  |
-      {1:~                                                    }|*7
-      {3:                                                     }|
-      foo                                                  |
-      bar                                                  |
-      baz                                                  |
-      ^typed append                                         |
+      ^foo                                                  |
+      {1:~                                                    }|*12
       {9:E35: No previous regular expression}                  |
     ]])
     -- Non-typed key doesn't dismiss expanded cmdline #39221
     command('nnoremap b :ls!<cr>:b<space>')
-    feed('qb')
+    feed('b')
     screen:expect([[
       foo                                                  |
       {1:~                                                    }|*6
@@ -565,6 +561,7 @@ describe('messages2', function()
       {16::}{15:b} ^                                                  |
     ]])
   end)
+
 
   it('paging prompt dialog #35191', function()
     screen:try_resize(71, screen._height)
@@ -1045,27 +1042,30 @@ describe('messages2', function()
       vim.cmd.highlight('VisualNC') -- "list_cmd" kind goes to pager
     end)
     screen:expect([[
-                                                           |
+      ^                                                     |
       {1:~                                                    }|*10
       {3:                                                     }|
-      ^VisualNC       xxx cleared                        {4:bar}|
+      VisualNC       xxx cleared                        {4:bar}|
       foo                                                  |
     ]])
-    command('hi VisualNC') -- cursor moved to last message in pager
+    command('hi VisualNC') -- appended to the pager without focusing it
     screen:expect([[
-                                                           |
+      ^                                                     |
       {1:~                                                    }|*9
       {3:                                                     }|
       VisualNC       xxx cleared                           |
-      ^VisualNC       xxx cleared                        {4:bar}|
+      VisualNC       xxx cleared                        {4:bar}|
       foo                                                  |
     ]])
+    -- Any typed key dismisses the unfocused pager.
+    feed('<Esc>')
     -- Duplicate indicator in msg and cmd target simultaneously
-    command('close | echo "bar" | lua print("foo")')
+    command('echo "bar" | lua print("foo")')
+    command('echo "bar" | lua print("foo")')
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*11
-      {1:~                                              }{4:bar(1)}|
+      {1:~                                              }{4:bar(2)}|
       foo(1)                                               |
     ]])
     finally(function()
@@ -1076,7 +1076,7 @@ describe('messages2', function()
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*11
-      {1:~                                              }{4:bar(1)}|
+      {1:~                                              }{4:bar(2)}|
       "Xfile" [New] 0L, 0B written                         |
     ]])
   end)
