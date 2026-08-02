@@ -1453,6 +1453,24 @@ describe('CursorColumn highlight', function()
     ]])
   end)
 
+  -- oldtest: Test_cursorcolumn_virtualedit()
+  it('is correct with operator on empty line and virtualedit', function()
+    exec([[
+      set virtualedit=all
+      set cursorcolumn
+      call setline(1, ['', '', ''])
+      call cursor(3, 1)
+    ]])
+    screen:expect([[
+      {21: }                                                 |*2
+      ^                                                  |
+      {1:~                                                 }|*4
+                                                        |
+    ]])
+    feed('<Del>')
+    screen:expect_unchanged()
+  end)
+
   -- oldtest: Test_cursorcolumn_callback()
   it('is updated if cursor is moved from timer', function()
     exec([[

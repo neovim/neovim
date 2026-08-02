@@ -658,7 +658,7 @@ func Test_cursorcolumn_insert_on_tab()
     set cursorcolumn
     call cursor(2, 2)
   END
-  call writefile(lines, 'Xcuc_insert_on_tab')
+  call writefile(lines, 'Xcuc_insert_on_tab', 'D')
 
   let buf = RunVimInTerminal('-S Xcuc_insert_on_tab', #{rows: 8})
   call TermWait(buf)
@@ -677,7 +677,30 @@ func Test_cursorcolumn_insert_on_tab()
   call VerifyScreenDump(buf, 'Test_cursorcolumn_insert_on_tab_2', {})
 
   call StopVimInTerminal(buf)
-  call delete('Xcuc_insert_on_tab')
+endfunc
+
+" The column highlighted with 'cursorcolumn' must be the column of the cursor,
+" also after a command that moved the cursor into virtual space and back.
+func Test_cursorcolumn_virtualedit()
+  CheckScreendump
+
+  let lines =<< trim END
+    set virtualedit=all
+    set cursorcolumn
+    call setline(1, ['', '', ''])
+    call cursor(3, 1)
+  END
+  call writefile(lines, 'Xcuc_virtualedit', 'D')
+
+  let buf = RunVimInTerminal('-S Xcuc_virtualedit', #{rows: 8})
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_cursorcolumn_virtualedit_1', {})
+
+  call term_sendkeys(buf, "\<Del>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_cursorcolumn_virtualedit_1', {})
+
+  call StopVimInTerminal(buf)
 endfunc
 
 func Test_cursorcolumn_callback()
