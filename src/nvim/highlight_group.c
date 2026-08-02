@@ -145,6 +145,7 @@ static const char e_missing_argument_str[]
 static const char *highlight_init_both[] = {
   "Cursor            guifg=bg      guibg=fg",
   "CursorLineNr      gui=bold      cterm=bold",
+  "Ignore            guifg=bg      ctermfg=0",
   "PmenuMatch        gui=bold      cterm=bold",
   "PmenuMatchSel     gui=bold      cterm=bold",
   "PmenuSel          gui=reverse   cterm=reverse,underline blend=0",
@@ -219,7 +220,6 @@ static const char *highlight_init_both[] = {
   // Used by HLF_8 (very common). None of the HLF_* things use the other Special* groups.
   "default link SpecialKey     Special",
   "default link Dimmed         Comment",
-  "default link Ignore         Normal",
 
   // Built-in LSP
   "default link LspCodeLens                 NonText",
