@@ -966,6 +966,7 @@ is_na_patch() {
       *.c)
         HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
           '-I^\s+$' \
+          '-I^#\s*include\s+<proto/' \
           '-I^#\s*(ifdef|if.*defined\().*FEAT_' \
           '-I^#\s*(else|endif)' \
           '-I^\s+\{"prop_[a-z]+",.*f_prop_[a-z]+},$' \
