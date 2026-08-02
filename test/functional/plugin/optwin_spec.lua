@@ -52,6 +52,8 @@ describe('optwin.lua', function()
     neq(line, api.nvim_get_current_line())
     command 'wincmd o'
     feed('<CR>')
+    eq(line, api.nvim_get_current_line())
+    feed('<CR>')
     neq(line, api.nvim_get_current_line())
   end)
 

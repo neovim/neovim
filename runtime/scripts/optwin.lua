@@ -557,7 +557,7 @@ local function line_get_type(line)
   return 'other'
 end
 
----@return integer|false
+---@return integer
 local function find_window_to_have_options_in()
   local thiswin = vim.fn.winnr()
   local altwin = vim.fn.winnr('#')
@@ -572,11 +572,10 @@ local function find_window_to_have_options_in()
   if
     altwin == 0
     or altwin == thiswin
-    or vim.bo[vim.fn.winbufnr(altwin)].filetype == 'help'
     or vim.fn.winnr('$') < altwin
+    or vim.bo[vim.fn.winbufnr(altwin)].filetype == 'help'
   then
-    vim.notify("Don't know in which window")
-    return false
+    return vim.fn.win_getid(thiswin)
   end
 
   return vim.fn.win_getid(altwin)
@@ -604,9 +603,6 @@ local function update_current_line()
     value = vim.o[name] --[[@as any]]
   else
     local win = find_window_to_have_options_in()
-    if not win then
-      return
-    end
 
     value = vim._with({
       win = win,
@@ -655,9 +651,6 @@ local function current_line_set_option()
     vim.o[name] = value
   else
     local win = find_window_to_have_options_in()
-    if not win then
-      return
-    end
 
     vim._with({
       win = win,
