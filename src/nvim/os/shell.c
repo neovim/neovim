@@ -813,7 +813,6 @@ char *get_cmd_output(char *cmd, char *infile, int flags, size_t *ret_len)
   buffer = xmalloc(len + 1);
   size_t i = fread(buffer, 1, len, fd);
   fclose(fd);
-  os_remove(tempname);
   if (i != len) {
     semsg(_(e_cant_read_file_str), tempname);
     XFREE_CLEAR(buffer);
@@ -831,6 +830,7 @@ char *get_cmd_output(char *cmd, char *infile, int flags, size_t *ret_len)
   }
 
 done:
+  os_remove(tempname);
   xfree(tempname);
   return buffer;
 }
