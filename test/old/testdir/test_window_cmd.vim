@@ -1993,8 +1993,11 @@ func Test_aucmd_win_scroll_multibyte()
   " Using the autocommand window must not scroll the current window when the
   " cursor is behind multi-byte characters.
   set splitkeep=cursor
-  call setline(1, repeat([repeat(nr2char(0x3042), 200)], 20))
-  normal! G0100l
+  " Use a window with a fixed size, the size of the screen may change while
+  " the test is running.
+  call NewWindow(11, 40)
+  call setline(1, repeat([repeat(nr2char(0x3042), 100)], 20))
+  normal! G050l
   redraw
   let topline = line('w0')
 
@@ -2004,6 +2007,7 @@ func Test_aucmd_win_scroll_multibyte()
   call assert_equal(topline, line('w0'))
 
   %bwipeout!
+  only!
   set splitkeep&
 endfunc
 
