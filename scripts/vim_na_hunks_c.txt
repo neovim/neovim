@@ -1,3 +1,4 @@
+^build_argv_from_[a-zA-Z0-9_]\+(
 ^change_compatible(
 ^check_restricted(
 ^compatible_set(void)
@@ -43,6 +44,7 @@
 ^f_test_void(
 ^l\?alloc(size_t
 ^l\?alloc[a-zA-Z0-9_]\+(size_t
+^mch_job_[a-z]\+(
 ^mem_[a-zA-Z0-9_]\+(
 ^restore_buffer(bufref_T
 ^static int included_patches\[\] =
