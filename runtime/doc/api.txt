@@ -85,16 +85,16 @@ Nvim instance:
     sock.write([0, 0, 'nvim_command', ['echo "hello world!"']].to_msgpack)
     p MessagePack::Unpacker.new(sock).read.last
 <
-Another way is to use the Python REPL with the "pynvim" package,
-where API functions can be called interactively, or create a script:
-(requires `pip install pynvim` or `uv add pynvim` or another python package manager)
->
+Another way is to use the Python REPL with the "pynvim" package, where API
+functions can be called interactively (requires `pip install pynvim` or
+`uv add pynvim`): >
+
     >>> from pynvim import attach
     >>> nvim = attach('socket', path='[address]')
     >>> nvim.command('echo "hello world!"')
 <
 You can also embed Nvim via |jobstart()|, and communicate using |rpcrequest()|
-and |rpcnotify()| in Vimscript :e hello.vim, copy below content and then :so %:
+and |rpcnotify()|:
 >vim
     let nvim = jobstart(['nvim', '--embed'], {'rpc': v:true})
     echo rpcrequest(nvim, 'nvim_eval', '"Hello " . "world!"')
@@ -4048,10 +4048,15 @@ nvim_open_win({buf}, {enter}, {config})                      *nvim_open_win()*
         (`integer`) |window-ID|, or 0 on error
 
 nvim_win_get_config({win})                             *nvim_win_get_config()*
-    Gets window configuration in the form of a dict which can be passed as the
-    `config` parameter of |nvim_open_win()|.
+    Gets window config as a dict which can be passed to |nvim_open_win()| as
+    the `config` parameter.
 
-    For non-floating windows, `relative` is empty.
+    For non-floating windows, `relative` is empty, thus you can check that
+    field to detect if a window is a floatwin: >lua
+        vim.print(vim.api.nvim_win_get_config(0).relative == '' and 'non-float' or 'float')
+        -- Or use win_gettype().
+        vim.print(vim.fn.win_gettype())
+<
 
     Attributes: ~
         Since: 0.4.0

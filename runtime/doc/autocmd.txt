@@ -1989,7 +1989,7 @@ and "++ff=" argument that are effective.  These should be used for the command
 that reads/writes the file.  The |v:cmdbang| variable is one when "!" was
 used, zero otherwise.
 
-See the $VIMRUNTIME/pack/dist/opt/netrw/plugin/netrwPlugin.vim for examples.
+See $VIMRUNTIME/plugin/net.lua for examples.
 
 ==============================================================================
 11. Disabling autocommands				*autocmd-disable*

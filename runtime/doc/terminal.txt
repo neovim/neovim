@@ -170,10 +170,10 @@ To configure bash to emit OSC 7: >bash
   PROMPT_COMMAND='print_osc7'
 
 Having ensured that your shell emits OSC 7, you can now handle it in Nvim. The
-following code will run :lcd whenever your shell CWD changes in a :terminal
-buffer: >lua
+following code runs |:bcd| whenever your shell CWD changes, so the :terminal
+buffer-local directory always follows the shell: >lua
 
-  vim.api.nvim_create_autocmd({ 'TermRequest' }, {
+  vim.api.nvim_create_autocmd('TermRequest', {
     desc = 'Handles OSC 7 dir change requests',
     callback = function(ev)
       local val, n = string.gsub(ev.data.sequence, '\027]7;file://[^/]*', '')
@@ -184,10 +184,7 @@ buffer: >lua
           vim.notify('invalid dir: '..dir)
           return
         end
-        vim.b[ev.buf].osc7_dir = dir
-        if vim.api.nvim_get_current_buf() == ev.buf then
-          vim.cmd.lcd(dir)
-        end
+        vim.cmd.bcd(dir)
       end
     end
   })

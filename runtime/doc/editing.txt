@@ -275,8 +275,8 @@ CTRL-^			Edit the alternate file.  Mostly the alternate file is
 			  'includeexpr' to the filename.
 			- If a [count] is given, the count'th file that is
 			  found in the 'path' is edited.
-			- If the name is a URL ("type://machine/path"), you
-			  need the |netrw| plugin.
+			- If the name is a URL ("type://machine/path"), it is
+			  handled by $VIMRUNTIME/plugin/net.lua
 			- Environment variables are expanded. |expand-env|.
 			- On unix: "~" is expanded.
 
@@ -1487,6 +1487,28 @@ directory a:vim the commands ":e test" ":cd vim" ":w" will overwrite the file
 a:test and not write a:vim/test.  But if you do ":w test" the file a:vim/test
 will be written, because you gave a new file name and did not refer to a
 filename before the ":cd".
+
+
+PROJECT DIRECTORY				       *project-dir* *workspace-dir*
+
+You can use |:bcd| to assign a "workspace" (or "project directory") to each
+buffer, so commands like |:make|, |:grep| and |:terminal| always run relative
+to the buffer's "workspace".
+
+Example: change to the project root (found by |vim.fs.root()|) of each buffer: >lua
+
+	vim.api.nvim_create_autocmd('BufReadPost', {
+	  callback = function(ev)
+	    local root = vim.fs.root(ev.buf, { '.git', 'Makefile' })
+	    if root then
+	      vim.cmd.bcd(root)
+	    end
+	  end,
+	})
+<
+See also:
+- |lsp-buf-working-dir|
+- |terminal-osc7|
 
 ==============================================================================
 8. Editing binary files					*edit-binary*

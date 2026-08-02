@@ -405,6 +405,7 @@ These existing features changed their behavior.
 • Editor:
   • |gx| now uses |vim.ui.open()| and not netrw. To customize, you can redefine
     `vim.ui.open` or remap `gx`. To continue using netrw (deprecated): >vim
+    :packadd netrw
     :call netrw#BrowseX(expand(exists("g:netrw_gx") ? g:netrw_gx : '<cfile>'), netrw#CheckIfRemote())<CR>
 
 • LSP:

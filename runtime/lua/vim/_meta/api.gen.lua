@@ -2415,10 +2415,15 @@ function vim.api.nvim_win_del_var(win, name) end
 --- @return integer # Buffer id
 function vim.api.nvim_win_get_buf(win) end
 
---- Gets window configuration in the form of a dict which can be passed as the `config` parameter of
---- `nvim_open_win()`.
+--- Gets window config as a dict which can be passed to `nvim_open_win()` as the `config` parameter.
 ---
---- For non-floating windows, `relative` is empty.
+--- For non-floating windows, `relative` is empty, thus you can check that field to detect if
+--- a window is a floatwin:
+--- ```lua
+--- vim.print(vim.api.nvim_win_get_config(0).relative == '' and 'non-float' or 'float')
+--- -- Or use win_gettype().
+--- vim.print(vim.fn.win_gettype())
+--- ```
 ---
 --- @param win integer `window-ID`, or 0 for current window
 --- @return vim.api.keyset.win_config_ret # Map defining the window configuration, see |nvim_open_win()|

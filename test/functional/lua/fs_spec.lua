@@ -678,13 +678,12 @@ describe('vim.fs', function()
       eq('a-ca978112', vim.fs.slug('a/.'))
     end)
 
-    it('works without args', function()
+    it('works', function()
       -- `=special`
       eq('=special-8a5edab2', vim.fs.slug('/'))
       eq('=special-ab5df625', vim.fs.slug('...'))
       eq('=special-11d925ec', vim.fs.slug('-------'))
       eq('src-foo-init.lua-cf05d2fe', vim.fs.slug('/src/foo/init.lua'))
-      -- Windows paths normalize differently on Windows vs Unix
       eq('C--src-project-main.c-3b0eb5f5', vim.fs.slug('C:/src/project/main.c'))
       eq('con.txt-d3bde286', vim.fs.slug('con.txt'))
       -- Windows reserved names.
@@ -699,11 +698,23 @@ describe('vim.fs', function()
       local p = vim.uv.os_homedir() .. '/my-project'
       local hash8_2 = vim.fn.sha256(vim.fs.normalize(p)):sub(1, 8)
       eq('~-my-project-' .. hash8_2, vim.fs.slug(p))
+
+      -- Windows-only cases.
+      if is_os('win') then
+        eq('=unc-foo-dir-file-549fb6e7', vim.fs.slug([[\\foo\dir\file]]))
+        -- `\\?\` and `\\.\`
+        eq(
+          '---Volume{a1b2c3d4-aa00-4000-a111-1a2b3c4d5e6f}-dir-file-cfda6a98',
+          vim.fs.slug([[\\?\Volume{a1b2c3d4-aa00-4000-a111-1a2b3c4d5e6f}\dir\file]])
+        )
+        eq('---C--dir-file-e8f30888', vim.fs.slug([[\\?\C:\dir\file]]))
+        eq('-.-COM1-e0e5710d', vim.fs.slug([[\\.\COM1]]))
+      end
     end)
 
-    it('works with `opt.maxlen`', function()
+    it('`opts.maxlen`', function()
       -- maxlen < 8 is an error
-      t.matches('`opt.maxlen` must be at least 8', t.pcall_err(vim.fs.slug, 'foo', { maxlen = 7 }))
+      t.matches('`opts.maxlen` must be >= 8', t.pcall_err(vim.fs.slug, 'foo', { maxlen = 7 }))
 
       eq('2c26b46b', vim.fs.slug('foo', { maxlen = 8 }))
       eq('2c26b46b', vim.fs.slug('foo', { maxlen = 11 }))
@@ -722,20 +733,6 @@ describe('vim.fs', function()
       eq('~~~试abc-ab138cd6', vim.fs.slug('测试abc测试abc', { maxlen = 18 }))
       eq('~~~d-473a1da7', vim.fs.slug('foo/bar/longlonglong.md', { maxlen = 13 }))
       eq('f~~~md-473a1da7', vim.fs.slug('foo/bar/longlonglong.md', { maxlen = 15 }))
-    end)
-
-    it('works on Windows', function()
-      if t.skip(not is_os('win'), 'N/A Windows only') then
-        return
-      end
-      eq('=unc-foo-dir-file-549fb6e7', vim.fs.slug([[\\foo\dir\file]]))
-      -- `\\?\` and `\\.\`
-      eq(
-        '---Volume{a1b2c3d4-aa00-4000-a111-1a2b3c4d5e6f}-dir-file-cfda6a98',
-        vim.fs.slug([[\\?\Volume{a1b2c3d4-aa00-4000-a111-1a2b3c4d5e6f}\dir\file]])
-      )
-      eq('---C--dir-file-e8f30888', vim.fs.slug([[\\?\C:\dir\file]]))
-      eq('-.-COM1-e0e5710d', vim.fs.slug([[\\.\COM1]]))
     end)
   end)
 

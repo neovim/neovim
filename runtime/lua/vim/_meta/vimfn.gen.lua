@@ -827,7 +827,7 @@ function vim.fn.chanclose(id, stream) end
 --- @return integer
 function vim.fn.changenr() end
 
---- Lua: Prefer |nvim_chan_send()| for string data; list input and the return value differ.
+--- Lua: Prefer |nvim_chan_send()| for string (binary) data.
 ---
 --- Send data to channel {id}. For a job, it writes it to the
 --- stdin of the process. For the stdio channel |channel-stdio|,
@@ -836,9 +836,12 @@ function vim.fn.changenr() end
 --- See |channel-bytes| for more information.
 ---
 --- {data} may be a string, string convertible, |Blob|, or a list.
+---
 --- If {data} is a list, the items will be joined by newlines; any
---- newlines in an item will be sent as NUL. To send a final
---- newline, include a final empty string. Example: >vim
+--- newlines in an item will be sent as NUL; to send a final
+--- newline, include a final empty string. |NL-used-for-Nul|
+---
+--- Example: >vim
 ---   call chansend(id, ["abc", "123\n456", ""])
 --- <will send "abc<NL>123<NUL>456<NL>".
 ---
@@ -848,7 +851,7 @@ function vim.fn.changenr() end
 ---
 --- @param id number
 --- @param data string|string[]
---- @return 0|1
+--- @return integer
 function vim.fn.chansend(id, data) end
 
 --- Lua: Prefer |string.byte()|: only works with ASCII.
@@ -11355,22 +11358,18 @@ function vim.fn.win_findbuf(bufnr) end
 --- @return integer
 function vim.fn.win_getid(win, tab) end
 
---- Return the type of the window:
----   "autocmd"  autocommand window.  Temporary window
----       used to execute autocommands.
----   "command"  command-line window |cmdwin|
----   (empty)    normal window
----   "loclist"  |location-list-window|
----   "popup"    floating window |api-floatwin|
----   "preview"  preview window |preview-window|
----   "quickfix"  |quickfix-window|
----   "unknown"  window {nr} not found
+--- Gets the type of the given window, or current window if {nr}
+--- is omitted:
+--- - (empty)     Normal window
+--- - "autocmd"   Internal "context-switch" window.
+--- - "command"   Command-line window |cmdwin|
+--- - "loclist"   |location-list-window|
+--- - "popup"     Floating window |api-floatwin|
+--- - "preview"   Preview window |preview-window|
+--- - "quickfix"  |quickfix-window|
+--- - "unknown"   Window {nr} not found
 ---
---- When {nr} is omitted return the type of the current window.
---- When {nr} is given (|window-number| or |window-ID|) return the
---- type of that window.
----
---- Also see the 'buftype' option.
+--- See also the 'buftype' option.
 ---
 --- @param nr? integer
 --- @return 'autocmd'|'command'|''|'loclist'|'popup'|'preview'|'quickfix'|'unknown'

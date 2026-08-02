@@ -25,7 +25,7 @@ Help-link		Loaded	Short description ~
 |man.lua|		Yes	View manpages in Nvim
 |matchit|		Yes	Extended |%| matching
 |matchparen|		Yes	Highlight matching pairs
-|netrw|			Yes	Reading and writing files over a network
+|netrw|			No	Reading and writing files over a network
 |zip|			Yes	Read-only zip archive browser
 |package-cfilter|	No	Filtering quickfix/location list
 |package-justify|	No	Justify text
@@ -46,21 +46,28 @@ Help-link		Loaded	Short description ~
 ==============================================================================
 Builtin plugin: dir                                                      *dir*
 
-Nvim opens a directory listing when |:edit| is used with a directory path.  The
-listing is a buffer with 'filetype' set to "directory".
+Nvim opens a directory listing when you |:edit| a directory path, handled by
+the builtin "dir" plugin.  The listing is read-only, dir.lua does not provide
+actions which modify the filesystem.
+
+Each "dir" buffer is initialized as follows:
+- Sets 'filetype' to "directory".
+- Sets |current-directory| via |:bcd|, so |gf|, |:!| and friends work as
+  expected.
+- Keeps |alternate-file|, so |CTRL-^| returns to the buffer you came from.
 
                                                     *g:loaded_nvim_dir_plugin*
 To disable the built-in directory browser, set this before startup: >lua
-	vim.g.loaded_nvim_dir_plugin = 1
+    vim.g.loaded_nvim_dir_plugin = 1
 <
 
-Mappings:                                                       *dir-mappings*
+GLOBAL MAPPINGS                                                 *dir-mappings*
 
 • - opens the parent directory of the current file or directory.
 • {count}- is like -, but a count of 1 opens the current working directory,
   and a higher count goes up that many levels.
 
-Directory buffer mappings:                                *dir-buffer-mappings*
+BUFFER-LOCAL MAPPINGS                                    *dir-buffer-mappings*
 
 • <CR> opens the file or directory under the cursor.
 • - opens the parent directory.
@@ -71,18 +78,10 @@ These keys map to <Plug>(nvim-dir-open), <Plug>(nvim-dir-up), and
 skipped when the target <Plug> mapping is already mapped. The default global and
 directory-buffer "-" mappings are also skipped when "-" is already mapped.
 
-The listing is read-only and does not modify the filesystem.
-
-Opening an entry leaves the |alternate-file| on the buffer you came from, so
-that |CTRL-^| returns to it rather than to the listing.
-
-The listed directory is the buffer's directory (|:bcd|), so entry names resolve
-without a prefix for |gf|, |:!|, and friends.  Being buffer-local it is not
-"sticky": it does not follow you out of the listing.
-
+                                                                 *dir-config*
 Directory buffers follow the global 'hidden' option by default. To delete them
 after use: >vim
-	autocmd FileType directory setlocal bufhidden=delete
+    autocmd FileType directory setlocal bufhidden=delete
 <
 A discarded listing is rebuilt on the next visit, so the cursor starts at the
 first entry instead of the one it was left on. "wipe" discards the buffer
@@ -92,23 +91,28 @@ itself, leaving no |alternate-file|; see 'bufhidden'.
 Replacing the directory browser                                  *dir-disable*
 
 To use another directory browser for the current session, delete the
-`nvim.dir` autocommand group on or after |VimEnter| and handle |FileType| "directory":
->lua
-	vim.api.nvim_del_augroup_by_name('nvim.dir')
-	vim.api.nvim_create_autocmd('FileType', {
-	  pattern = 'directory',
-	  callback = function(args)
-	    require('my_browser').open(args.buf, vim.api.nvim_buf_get_name(args.buf))
-	  end,
-	})
-<
-This stops the built-in directory-opening autocommands. The plugin and its
-mappings remain loaded.
+`nvim.dir` autocommand group on or after |VimEnter| and handle |FileType| "directory".
+This clears the built-in directory-opening autocommands. >lua
 
-Define replacement keymaps explicitly, for example: >lua
-	vim.keymap.set('n', '-', function()
-	  require('my_browser').open_parent()
-	end)
+    vim.api.nvim_del_augroup_by_name('nvim.dir')
+    vim.api.nvim_create_autocmd('FileType', {
+      pattern = 'directory',
+      callback = function(args)
+        require('my_browser').open(args.buf, vim.api.nvim_buf_get_name(args.buf))
+      end,
+    })
+<
+To enable the legacy "netrw" plugin: >vim
+
+    :packadd netrw
+
+The plugin and its mappings remain loaded (it is a core component used by
+other features such as |zip|). Define replacement keymaps explicitly, for
+example: >lua
+
+    vim.keymap.set('n', '-', function()
+      require('my_browser').open_parent()
+    end)
 <
 
 ==============================================================================

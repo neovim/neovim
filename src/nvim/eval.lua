@@ -1113,9 +1113,12 @@ M.funcs = {
       See |channel-bytes| for more information.
 
       {data} may be a string, string convertible, |Blob|, or a list.
+
       If {data} is a list, the items will be joined by newlines; any
-      newlines in an item will be sent as NUL. To send a final
-      newline, include a final empty string. Example: >vim
+      newlines in an item will be sent as NUL; to send a final
+      newline, include a final empty string. |NL-used-for-Nul|
+
+      Example: >vim
       	call chansend(id, ["abc", "123\n456", ""])
       <will send "abc<NL>123<NUL>456<NL>".
 
@@ -1125,9 +1128,9 @@ M.funcs = {
     ]=],
     name = 'chansend',
     params = { { 'id', 'number' }, { 'data', 'string|string[]' } },
-    returns = '0|1',
+    returns = 'integer',
     signature = 'chansend({id}, {data})',
-    see_lua = { '|nvim_chan_send()| for string data; list input and the return value differ' },
+    see_lua = { '|nvim_chan_send()| for string (binary) data' },
   },
   char2nr = {
     args = { 1, 2 },
@@ -13629,22 +13632,18 @@ M.funcs = {
     args = { 0, 1 },
     base = 1,
     desc = [=[
-      Return the type of the window:
-      	"autocmd"	autocommand window.  Temporary window
-      			used to execute autocommands.
-      	"command"	command-line window |cmdwin|
-      	(empty)		normal window
-      	"loclist"	|location-list-window|
-      	"popup"		floating window |api-floatwin|
-      	"preview"	preview window |preview-window|
-      	"quickfix"	|quickfix-window|
-      	"unknown"	window {nr} not found
+      Gets the type of the given window, or current window if {nr}
+      is omitted:
+      - (empty)     Normal window
+      - "autocmd"   Internal "context-switch" window.
+      - "command"   Command-line window |cmdwin|
+      - "loclist"   |location-list-window|
+      - "popup"     Floating window |api-floatwin|
+      - "preview"   Preview window |preview-window|
+      - "quickfix"  |quickfix-window|
+      - "unknown"   Window {nr} not found
 
-      When {nr} is omitted return the type of the current window.
-      When {nr} is given (|window-number| or |window-ID|) return the
-      type of that window.
-
-      Also see the 'buftype' option.
+      See also the 'buftype' option.
 
     ]=],
     name = 'win_gettype',

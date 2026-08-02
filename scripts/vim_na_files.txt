@@ -5,6 +5,7 @@ LICENSE
 Makefile
 SECURITY.md
 configure
+runtime/autoload/README.txt
 runtime/bugreport.vim
 runtime/defaults.vim
 runtime/doc/channel.txt
