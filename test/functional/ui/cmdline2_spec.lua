@@ -324,6 +324,16 @@ describe('cmdline2', function()
       {16::}{15:call} {25:foo}{16:(}{25:bar}{16:(}^                                       |
     ]])
   end)
+
+  it("doesn't interfere with :$q", function()
+    exec('split b')
+    exec('wincmd J')
+    exec('wincmd p')
+    exec('$q') -- this would close a ui2 window, not the second visible window
+
+    local nwins = vim.fn.winnr('$')
+    assert(nwins == 1)
+  end)
 end)
 
 describe('cmdline2', function()
