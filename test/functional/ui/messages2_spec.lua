@@ -562,6 +562,53 @@ describe('messages2', function()
     ]])
   end)
 
+  it('pager for consecutive command messages is not focused #41061', function()
+    local win = api.nvim_get_current_win()
+    command('echo "foo\nbar"')
+    feed(':echo "baz"<CR>')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*8
+      {3:                                                     }|
+      foo                                                  |
+      bar                                                  |
+      baz                                                  |
+      {16::}{15:echo} {26:"baz"}                                          |
+    ]])
+    t.eq(win, api.nvim_get_current_win())
+    -- "g<" enters the pager (showing the previous command output).
+    feed('g<lt>')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*10
+      {3:                                                     }|
+      ^baz                                                  |
+                                                           |
+    ]])
+    t.neq(win, api.nvim_get_current_win())
+    -- "q" closes the entered pager.
+    feed('q')
+    t.eq(win, api.nvim_get_current_win())
+    -- A typed command that emits no message keeps the pager; the next key dismisses it.
+    command('echo "foo\nbar"')
+    feed(':echo "baz"<CR>')
+    feed(':let g:x = 1<CR>')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*8
+      {3:                                                     }|
+      foo                                                  |
+      bar                                                  |
+      baz                                                  |
+      {16::}{15:let} {25:g:x} {15:=} {26:1}                                         |
+    ]])
+    feed('j')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      {16::}{15:let} {25:g:x} {15:=} {26:1}                                         |
+    ]])
+  end)
 
   it('paging prompt dialog #35191', function()
     screen:try_resize(71, screen._height)
