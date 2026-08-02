@@ -474,6 +474,7 @@ local extension = {
   e = detect.e,
   E = detect.e,
   ecd = 'ecd',
+  ed = 'ed',
   edf = 'edif',
   edif = 'edif',
   edo = 'edif',

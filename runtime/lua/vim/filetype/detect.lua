@@ -2134,6 +2134,7 @@ local patterns_hashbang = {
   ['^execlineb\\>'] = { 'execline', { vim_regex = true } },
   ['^bpftrace\\>'] = { 'bpftrace', { vim_regex = true } },
   ['^vim\\>'] = { 'vim', { vim_regex = true } },
+  ['^ed\\>'] = { 'ed', { vim_regex = true } },
 }
 
 --- File starts with "#!".

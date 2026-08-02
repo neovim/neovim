@@ -271,6 +271,7 @@ func s:GetFilenameChecks() abort
     \ 'dylanlid': ['file.lid'],
     \ 'earthfile': ['Earthfile'],
     \ 'ecd': ['file.ecd'],
+    \ 'ed': ['file.ed'],
     \ 'edif': ['file.edf', 'file.edif', 'file.edo'],
     \ 'editorconfig': ['.editorconfig'],
     \ 'eelixir': ['file.eex', 'file.leex'],
@@ -1156,7 +1157,8 @@ func s:GetScriptChecks() abort
       \ 'janet':  [['#!/path/janet']],
       \ 'dart':   [['#!/path/dart']],
       \ 'bpftrace':  [['#!/path/bpftrace']],
-      \ 'vim':   [['#!/path/vim']],
+      \ 'vim':    [['#!/path/vim']],
+      \ 'ed':     [['#!/usr/bin/ed -f']],
       \ }
 endfunc
 
