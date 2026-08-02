@@ -1,4 +1,4 @@
-name: bsd
+name: test-bsd
 
 on:
   push:
