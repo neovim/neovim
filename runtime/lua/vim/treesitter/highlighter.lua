@@ -90,11 +90,25 @@ TSHighlighter.__index = TSHighlighter
 ---           - queries table overwrite queries used by the highlighter
 ---@return vim.treesitter.highlighter Created highlighter object
 function TSHighlighter.new(tree, opts)
-  local self = setmetatable({}, TSHighlighter)
-
-  if type(tree:source()) ~= 'number' then
+  local source = tree:source()
+  if type(source) ~= 'number' then
     error('TSHighlighter can not be used with a string parser source.')
   end
+
+  -- Calling start() again on an already-highlighted buffer must be a no-op: a second instance
+  -- would register duplicate on_bytes/on_changedtree/on_detach callbacks that destroy() never
+  -- unregisters, leaking callbacks that keep firing for the orphaned instance.
+  local existing = TSHighlighter.active[source]
+  if existing then
+    if existing.tree == tree then
+      return existing
+    end
+    -- Different tree (e.g. a language switch): the old instance would otherwise be silently
+    -- orphaned with the same leaked callbacks, so destroy() it first, matching stop() semantics.
+    existing:destroy()
+  end
+
+  local self = setmetatable({}, TSHighlighter)
 
   opts = opts or {} ---@type { queries: table<string,string> }
   self.tree = tree
@@ -135,9 +149,6 @@ function TSHighlighter.new(tree, opts)
       end)
     end,
   }, true)
-
-  local source = tree:source()
-  assert(type(source) == 'number')
 
   self.bufnr = source
   self.redraw_count = 0
