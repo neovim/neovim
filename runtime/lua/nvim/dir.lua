@@ -268,6 +268,10 @@ function load(buf, name, provider, restore_view, setup, select)
 
   local ok, call_err = pcall(provider.list, buf, name, on_list) ---@type boolean, any
   if not ok then
+    if done then
+      -- The handler already ran and would ignore this error: propagate it.
+      error(call_err, 0)
+    end
     -- Route provider exceptions through the list handler so failures share one cleanup path.
     on_list(tostring(call_err), nil)
   end

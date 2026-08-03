@@ -294,6 +294,24 @@ describe('nvim.dir', function()
     eq({ 'inside.txt' }, lines())
   end)
 
+  it('does not swallow errors raised after the list callback', function()
+    n.clear({ args = { '--clean' } })
+
+    local err = exec_lua(function()
+      local ok_open, e = pcall(require('nvim.dir').open, 0, 'custom://late-error', {
+        list = function(_, _, cb)
+          cb(nil, { { name = 'file.txt', dir = false } })
+          error('late provider error')
+        end,
+        open = function() end,
+        open_parent = function() end,
+      })
+      return not ok_open and tostring(e) or nil
+    end)
+    ok(err ~= nil and err:find('late provider error', 1, true) ~= nil)
+    eq({ 'file.txt' }, lines())
+  end)
+
   it('reloads custom listing providers', function()
     n.clear({ args = { '--clean' } })
 
