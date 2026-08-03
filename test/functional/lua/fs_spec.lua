@@ -748,6 +748,7 @@ describe('vim.fs', function()
     end)
     it('works with ~', function()
       eq(vim.fs.normalize(assert(vim.uv.os_homedir())) .. '/src/foo', vim.fs.normalize('~/src/foo'))
+      eq('~/src/foo', vim.fs.normalize('~/src/foo', { plain = true }))
     end)
     it('works with environment variables', function()
       local xdg_config_home = test_build_dir .. '/.config'
@@ -759,6 +760,7 @@ describe('vim.fs', function()
           end)
         end)
       )
+      eq('$XDG_CONFIG_HOME/nvim', vim.fs.normalize('$XDG_CONFIG_HOME/nvim', { plain = true }))
     end)
 
     -- Opts required for testing posix paths and win paths

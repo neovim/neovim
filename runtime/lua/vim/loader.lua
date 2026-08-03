@@ -79,7 +79,7 @@ local function fs_stat_cached(path)
 end
 
 local function normalize(path)
-  return fs.normalize(path, { expand_env = false, _fast = true })
+  return fs.normalize(path, { plain = true, _fast = true })
 end
 
 local rtp_cached = {} --- @type string[]

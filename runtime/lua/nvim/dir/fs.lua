@@ -10,7 +10,7 @@ local navigating = false
 ---@param path string
 ---@return string
 function M.normalize(path)
-  return fs.normalize(fs.abspath(path), { expand_env = false })
+  return fs.normalize(fs.abspath(path), { plain = true })
 end
 
 ---@return boolean
