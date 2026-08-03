@@ -270,7 +270,7 @@ static void win_redr_stl_expr(win_T *wp, bool draw_winbar, bool draw_ruler, bool
     stl = p_tal;
     row = 0;
     fillchar = schar_from_ascii(' ');
-    group = HLF_TPF;
+    group = HLF_TPB;
     attr = HL_ATTR(group);
     maxwidth = Columns;
     opt_idx = kOptTabline;
@@ -574,11 +574,6 @@ static void ui_ext_tabline_update(void)
 /// Draw the tab pages line at the top of the Vim window.
 void draw_tabline(void)
 {
-  win_T *wp;
-  int attr_nosel = HL_ATTR(HLF_TP);
-  int attr_fill = HL_ATTR(HLF_TPF);
-  bool use_sep_chars = (t_colors < 8);
-
   if (default_grid.chars == NULL) {
     return;
   }
@@ -597,146 +592,7 @@ void draw_tabline(void)
   assert(tab_page_click_defs_size >= (size_t)Columns);
   stl_clear_click_defs(tab_page_click_defs, tab_page_click_defs_size);
 
-  // Use the 'tabline' option if it's set.
-  if (*p_tal != NUL) {
-    win_redr_stl_expr(NULL, false, false, false);
-  } else {
-    int tabcount = 0;
-    int col = 0;
-    win_T *cwp;
-    int wincount;
-    grid_line_start(&default_gridview, 0);
-    FOR_ALL_TABS(tp) {
-      tabcount++;
-    }
-
-    int tabwidth = MAX(tabcount > 0 ? (Columns - 1 + tabcount / 2) / tabcount : 0, 6);
-
-    int attr = attr_nosel;
-    tabcount = 0;
-
-    FOR_ALL_TABS(tp) {
-      if (col >= Columns - 4) {
-        break;
-      }
-
-      int scol = col;
-
-      if (tp == curtab) {
-        cwp = curwin;
-        wp = firstwin;
-      } else {
-        cwp = tp->tp_curwin;
-        wp = tp->tp_firstwin;
-      }
-
-      if (tp->tp_topframe == topframe) {
-        attr = win_hl_attr(cwp, HLF_TPS);
-      }
-      if (use_sep_chars && col > 0) {
-        grid_line_put_schar(col++, schar_from_ascii('|'), attr);
-      }
-
-      if (tp->tp_topframe != topframe) {
-        attr = win_hl_attr(cwp, HLF_TP);
-      }
-
-      grid_line_put_schar(col++, schar_from_ascii(' '), attr);
-
-      bool modified = false;
-
-      for (wincount = 0; wp != NULL; wp = wp->w_next, wincount++) {
-        if (!wp->w_config.focusable || wp->w_config.hide) {
-          wincount--;
-        } else if (bufIsChanged(wp->w_buffer)) {
-          modified = true;
-        }
-      }
-
-      if (modified || wincount > 1) {
-        if (wincount > 1) {
-          int len = vim_snprintf(NameBuff, MAXPATHL, "%d", wincount);
-          if (col + len >= Columns - 3) {
-            break;
-          }
-          grid_line_puts(col, NameBuff, len,
-                         hl_combine_attr(attr, win_hl_attr(cwp, HLF_T)));
-          col += len;
-        }
-        if (modified) {
-          grid_line_put_schar(col++, schar_from_ascii('+'), attr);
-        }
-        grid_line_put_schar(col++, schar_from_ascii(' '), attr);
-      }
-
-      int room = scol - col + tabwidth - 1;
-      if (room > 0) {
-        // Get buffer name in NameBuff[]
-        get_trans_bufname(cwp->w_buffer);
-        shorten_dir(NameBuff);
-        int len = vim_strsize(NameBuff);
-        char *p = NameBuff;
-        while (len > room) {
-          len -= ptr2cells(p);
-          MB_PTR_ADV(p);
-        }
-        int n = Columns - col - 1;
-        len = MIN(len, n);
-
-        grid_line_puts(col, p, -1, attr);
-        col += len;
-      }
-      grid_line_put_schar(col++, schar_from_ascii(' '), attr);
-
-      // Store the tab page number in tab_page_click_defs[], so that
-      // jump_to_mouse() knows where each one is.
-      tabcount++;
-      while (scol < col) {
-        tab_page_click_defs[scol++] = (StlClickDefinition) {
-          .type = kStlClickTabSwitch,
-          .tabnr = tabcount,
-          .func = NULL,
-        };
-      }
-    }
-
-    for (int scol = col; scol < Columns; scol++) {
-      // Use 0 as tabpage number here, so that double-click opens a tabpage
-      // after the last one, and single-click goes to the next tabpage.
-      tab_page_click_defs[scol] = (StlClickDefinition) {
-        .type = kStlClickTabSwitch,
-        .tabnr = 0,
-        .func = NULL,
-      };
-    }
-
-    char c = use_sep_chars ? '_' : ' ';
-    grid_line_fill(col, Columns, schar_from_ascii(c), attr_fill);
-
-    // Draw the 'showcmd' information if 'showcmdloc' == "tabline".
-    if (p_sc && *p_sloc == 't') {
-      int n = Columns - col - (tabcount > 1) * 3;
-      const int sc_width = MIN(10, n);
-
-      if (sc_width > 0) {
-        grid_line_puts(Columns - sc_width - (tabcount > 1) * 2,
-                       showcmd_buf, sc_width, attr_nosel);
-      }
-      showcmd_update_clear_state();
-    }
-
-    // Put an "X" for closing the current tab if there are several.
-    if (tabcount > 1) {
-      grid_line_put_schar(Columns - 1, schar_from_ascii('X'), attr_nosel);
-      tab_page_click_defs[Columns - 1] = (StlClickDefinition) {
-        .type = kStlClickTabClose,
-        .tabnr = 999,
-        .func = NULL,
-      };
-    }
-
-    grid_line_flush();
-  }
+  win_redr_stl_expr(NULL, false, false, false);
 
   // Reset the flag here again, in case evaluating 'tabline' causes it to be
   // set.
@@ -1337,6 +1193,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
       stl_items[curitem].type = TabPage;
       stl_items[curitem].start = out_p;
       stl_items[curitem].minwid = minwid;
+      stl_items[curitem].tabpage_fill = zeropad && minwid == 0 && *fmt_p == STL_TABPAGENR;
       fmt_p++;
       curitem++;
       continue;
@@ -2033,12 +1890,12 @@ stcsign:
     for (int l = evalstart; l < curitem; l++) {
       if (stl_items[l].type == TabPage) {
         cur_tab_rec->start = stl_items[l].start;
-        if (stl_items[l].minwid == 0) {
+        if (stl_items[l].minwid == 0 && !stl_items[l].tabpage_fill) {
           cur_tab_rec->def.type = kStlClickDisabled;
           cur_tab_rec->def.tabnr = 0;
         } else {
           int tabnr = stl_items[l].minwid;
-          if (stl_items[l].minwid > 0) {
+          if (stl_items[l].minwid > 0 || stl_items[l].tabpage_fill) {
             cur_tab_rec->def.type = kStlClickTabSwitch;
           } else {
             cur_tab_rec->def.type = kStlClickTabClose;

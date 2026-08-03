@@ -352,7 +352,7 @@ describe(':terminal mouse', function()
         ]])
         command('set showtabline=2 tabline=TABLINE | startinsert')
         screen:expect([[
-          {2:TABLINE                                           }|
+          TABLINE                                           |
           {5:WINBAR                                            }|
           mouse enabled                                     |
           rows: 5, cols: 50                                 |
@@ -362,7 +362,7 @@ describe(':terminal mouse', function()
         ]])
         feed('<LeftMouse><0,0>')
         screen:expect([[
-          {2:TABLINE                                           }|
+          TABLINE                                           |
           {5:WINBAR                                            }|
           mouse enabled                                     |
           rows: 5, cols: 50                                 |
@@ -372,7 +372,7 @@ describe(':terminal mouse', function()
         ]])
         command('setlocal winbar= | startinsert')
         screen:expect([[
-          {2:TABLINE                                           }|
+          TABLINE                                           |
           mouse enabled                                     |
           rows: 5, cols: 50                                 |
           rows: 4, cols: 50                                 |
@@ -382,7 +382,7 @@ describe(':terminal mouse', function()
         ]])
         feed('<LeftMouse><0,0>')
         screen:expect([[
-          {2:TABLINE                                           }|
+          TABLINE                                           |
           mouse enabled                                     |
           rows: 5, cols: 50                                 |
           rows: 4, cols: 50                                 |

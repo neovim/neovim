@@ -4681,8 +4681,8 @@ describe('API', function()
             str = 'TextWithNoHighlightTextWithWarningHighlight',
             width = 43,
             highlights = {
-              { start = 0, group = 'TabLineFill', groups = { 'TabLineFill' } },
-              { start = 19, group = 'WarningMsg', groups = { 'TabLineFill', 'WarningMsg' } },
+              { start = 0, group = 'TabLineBase', groups = { 'TabLineBase' } },
+              { start = 19, group = 'WarningMsg', groups = { 'TabLineBase', 'WarningMsg' } },
             },
           },
           api.nvim_eval_statusline(
@@ -6257,7 +6257,7 @@ describe('API', function()
     api.nvim__redraw({ tabline = true })
     screen:expect({
       grid = [[
-        {2:^tabline                                                     }|
+        ^tabline                                                     |
         {5:winbar                        }│{8:statuscolumn}foobar           |
         foobaz                        │{1:~                            }|
         {3:statusline3                    }{2:statusline3                  }|
@@ -6270,7 +6270,7 @@ describe('API', function()
     api.nvim__redraw({ statusline = true, tabline = true })
     screen:expect({
       grid = [[
-        {2:^tabline2                                                    }|
+        ^tabline2                                                    |
         {5:winbar                        }│{8:statuscolumn}foobar           |
         foobaz                        │{1:~                            }|
         {3:statusline4                    }{2:statusline4                  }|
@@ -6285,7 +6285,7 @@ describe('API', function()
     api.nvim__redraw({ statuscolumn = true, statusline = true, tabline = true, winbar = true })
     screen:expect({
       grid = [[
-        {2:^tabline3                                                    }|
+        ^tabline3                                                    |
         {5:winbar2                       }│{5:winbar2                      }|
         {8:statuscolumn2}foobaz           │{8:statuscolumn}foobar           |
         {3:statusline5                    }{2:statusline5                  }|
@@ -6299,7 +6299,7 @@ describe('API', function()
     command('vsplit')
     screen:expect({
       grid = [[
-        {2:tabline3                                                    }|
+        tabline3                                                    |
         {5:winbar2             }│{5:winbar2            }│{5:winbar2            }|
         {8:statuscolumn2}^foobaz │{8:statuscolumn2}foobaz│{8:statuscolumn}foobar |
         {3:0                    }{2:0                   statusline5        }|
@@ -6310,7 +6310,7 @@ describe('API', function()
     api.nvim__redraw({ win = 0, statusline = true })
     screen:expect({
       grid = [[
-        {2:tabline3                                                    }|
+        tabline3                                                    |
         {5:winbar2             }│{5:winbar2            }│{5:winbar2            }|
         {8:statuscolumn2}^foobaz │{8:statuscolumn2}foobaz│{8:statuscolumn}foobar |
         {3:1                    }{2:0                   statusline5        }|
@@ -6322,7 +6322,7 @@ describe('API', function()
     api.nvim__redraw({ buf = 0, statusline = true })
     screen:expect({
       grid = [[
-        {2:tabline3                                                    }|
+        tabline3                                                    |
         {5:winbar2             }│{5:winbar2            }│{5:winbar2            }|
         {8:statuscolumn2}^foobaz │{8:statuscolumn2}foobaz│{8:statuscolumn}foobar |
         {3:2                    }{2:2                   statusline5        }|
@@ -6355,7 +6355,7 @@ describe('API', function()
     api.nvim__redraw({ buf = 0, valid = true, flush = true })
     screen:expect({
       grid = [[
-        {2:tabline3                                                    }|
+        tabline3                                                    |
         {5:winbar2             }│{5:winbar2            }│{5:winbar2            }|
         {8:statuscolumn2}{2:^foobaz} │{8:statuscolumn2}{2:foobaz}│{8:statuscolumn}foobar |
         {3:2                    }{2:2                   statusline5        }|

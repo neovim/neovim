@@ -5477,6 +5477,8 @@ StatusLineTerm	Status line of |terminal| window.
 							*hl-StatusLineTermNC*
 StatusLineTermNC
 		Status line of non-current |terminal| windows.
+							*hl-TabLineBase*
+TabLineBase	Base highlighting of the tabpages line.
 							*hl-TabLine*
 TabLine		Tabpages line, not active tabpage label.
 							*hl-TabLineFill*

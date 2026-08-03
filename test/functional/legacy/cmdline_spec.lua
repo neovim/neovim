@@ -109,7 +109,7 @@ describe('cmdline', function()
     ]])
     feed(':')
     screen:expect([[
-      {2:foo                           }|
+      foo                           |
                                     |
       {1:~                             }|*3
       :^                             |

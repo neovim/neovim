@@ -1140,7 +1140,7 @@ describe('float window', function()
     ]])
     command('tabnew | tabnext')
     screen:expect([[
-      {5: }{100:3}{5:  Name] }{24: No Name]X}|
+      {5:< Name] }{24: [No Name] X}|
       ^             {31:┌─────┐}|
       {1:~            }{31:│}{4:     }{31:│}|
       {1:~            }{31:└─────┘}|
@@ -1152,7 +1152,7 @@ describe('float window', function()
     ]])
     command('vsplit')
     screen:expect([[
-      {5: }{100:4}{5:  Name] }{24: No Name]X}|
+      {5:< Name] }{24: [No Name] X}|
       ^             {31:┌─────┐}|
       {1:~            }{31:│}{4:     }{31:│}|
       {1:~            }{31:└─────┘}|
@@ -1166,7 +1166,7 @@ describe('float window', function()
     command('quit')
     api.nvim_win_set_config(tabwin, { relative = 'tabline', border = 'single', width = 5, height = 1, row = 1, col = 0 })
     screen:expect([[
-      {5: }{100:3}{5:  Name] }{24: No Name]X}|
+      {5:< Name] }{24: [No Name] X}|
       ^                    |
       {31:┌─────┐}{1:             }|
       {31:│}{4:     }{31:│}{1:             }|
@@ -12266,7 +12266,7 @@ describe('float window', function()
         screen:expect({
           grid = [[
           ## grid 1
-            {9: }{10:2}{9:+ No Name] }{3: [No Name] }{9: + [No Name] }{5:  }{9:X}|
+            {9: }{10:2}{9:+ [No Name] }{3: [No Name] }{9: + [No Name] }{5: }{9:X}|
             [6:----------------------------------------]|*5
             [3:----------------------------------------]|
           ## grid 2 (hidden)
@@ -12287,7 +12287,7 @@ describe('float window', function()
         })
       else
         screen:expect([[
-          {9: }{10:2}{9:+ No Name] }{3: [No Name] }{9: + [No Name] }{5:  }{9:X}|
+          {9: }{10:2}{9:+ [No Name] }{3: [No Name] }{9: + [No Name] }{5: }{9:X}|
                                                  ^ |
           {0:                                       ~}|*4
                                                   |
@@ -12299,7 +12299,7 @@ describe('float window', function()
         screen:expect({
           grid = [[
           ## grid 1
-            {9: + [No Name] }{3: [No Name] }{9: }{10:2}{9:+ No Name] }{5:  }{9:X}|
+            {9: + [No Name] }{3: [No Name] }{9: }{10:2}{9:+ [No Name] }{5: }{9:X}|
             [6:----------------------------------------]|*5
             [3:----------------------------------------]|
           ## grid 2 (hidden)
@@ -12320,7 +12320,7 @@ describe('float window', function()
         })
       else
         screen:expect([[
-          {9: + [No Name] }{3: [No Name] }{9: }{10:2}{9:+ No Name] }{5:  }{9:X}|
+          {9: + [No Name] }{3: [No Name] }{9: }{10:2}{9:+ [No Name] }{5: }{9:X}|
                                                  ^ |
           {0:                                       ~}|*4
                                                   |
@@ -12335,7 +12335,7 @@ describe('float window', function()
         screen:expect({
           grid = [[
           ## grid 1
-            {9: }{10:2}{9:+ No Name] }{3: [No Name] }{9: }{10:2}{9:+ No Name] }{5:  }{9:X}|
+            {9: }{10:2}{9:+ [No Name] }{3: [No Name] }{9: }{10:2}{9:+ [No Name] X}|
             [6:----------------------------------------]|*5
             [3:----------------------------------------]|
           ## grid 2 (hidden)
@@ -12359,7 +12359,7 @@ describe('float window', function()
         })
       else
         screen:expect([[
-          {9: }{10:2}{9:+ No Name] }{3: [No Name] }{9: }{10:2}{9:+ No Name] }{5:  }{9:X}|
+          {9: }{10:2}{9:+ [No Name] }{3: [No Name] }{9: }{10:2}{9:+ [No Name] X}|
           ^                                        |
           {0:~                                       }|*4
                                                   |
@@ -12371,7 +12371,7 @@ describe('float window', function()
         screen:expect({
           grid = [[
           ## grid 1
-            {3: }{34:2}{3:+ No Name] }{9: [No Name]  }{10:2}{9:+ No Name] }{5:  }{9:X}|
+            {3: }{34:2}{3:+ [No Name] }{9: [No Name]  }{10:2}{9:+ [No Name] X}|
             [2:----------------------------------------]|*5
             [3:----------------------------------------]|
           ## grid 2
@@ -12399,7 +12399,7 @@ describe('float window', function()
         })
       else
         screen:expect([[
-          {3: }{34:2}{3:+ No Name] }{9: [No Name]  }{10:2}{9:+ No Name] }{5:  }{9:X}|
+          {3: }{34:2}{3:+ [No Name] }{9: [No Name]  }{10:2}{9:+ [No Name] X}|
              {1:floaty mcfloatf}                 olle^h|
           {0:   }{1:ace            }{0:                     ~}|
           {0:   }{2:~              }{0:                     ~}|*3
@@ -12414,7 +12414,7 @@ describe('float window', function()
         screen:expect({
           grid = [[
           ## grid 1
-            {3: }{34:2}{3:+ No Name] }{9: [No Name]  }{10:3}{9:+ No Name] }{5:  }{9:X}|
+            {3: }{34:2}{3:+ [No Name] }{9: [No Name]  }{10:3}{9:+ [No Name] X}|
             [2:----------------------------------------]|*5
             [3:----------------------------------------]|
           ## grid 2
@@ -12442,7 +12442,7 @@ describe('float window', function()
         })
       else
         screen:expect([[
-          {3: }{34:2}{3:+ No Name] }{9: [No Name]  }{10:3}{9:+ No Name] }{5:  }{9:X}|
+          {3: }{34:2}{3:+ [No Name] }{9: [No Name]  }{10:3}{9:+ [No Name] X}|
              {1:floaty mcfloatf}                 olle^h|
           {0:   }{1:ace            }{0:                     ~}|
           {0:   }{2:~              }{0:                     ~}|*3
@@ -12455,7 +12455,7 @@ describe('float window', function()
         screen:expect({
           grid = [[
           ## grid 1
-            {9: }{10:2}{9:+ No Name] }{3: [No Name] }{9: }{10:3}{9:+ No Name] }{5:  }{9:X}|
+            {9: }{10:2}{9:+ [No Name] }{3: [No Name] }{9: }{10:3}{9:+ [No Name] X}|
             [6:----------------------------------------]|*5
             [3:----------------------------------------]|
           ## grid 2 (hidden)
@@ -12480,7 +12480,7 @@ describe('float window', function()
         })
       else
         screen:expect([[
-          {9: }{10:2}{9:+ No Name] }{3: [No Name] }{9: }{10:3}{9:+ No Name] }{5:  }{9:X}|
+          {9: }{10:2}{9:+ [No Name] }{3: [No Name] }{9: }{10:3}{9:+ [No Name] X}|
           ^                                        |
           {0:~                                       }|*4
                                                   |
@@ -12492,7 +12492,7 @@ describe('float window', function()
         screen:expect({
           grid = [[
           ## grid 1
-            {9: }{10:2}{9:+ No Name]  [No Name] }{3: }{34:3}{3:+ No Name] }{5:  }{9:X}|
+            {9: }{10:2}{9:+ [No Name]  [No Name] }{3: }{34:3}{3:+ [No Name] }{9:X}|
             [4:----------------------------------------]|*5
             [3:----------------------------------------]|
           ## grid 2 (hidden)
@@ -12527,7 +12527,7 @@ describe('float window', function()
         })
       else
         screen:expect([[
-          {9: }{10:2}{9:+ No }{33:┌────┐}{9: [No Name] }{3: }{34:3}{3:+ No Name] }{5:  }{9:X}|
+          {9: }{10:2}{9:+ [No}{33:┌────┐}{9:  [No Name] }{3: }{34:3}{3:+ [No Name] }{9:X}|
           {1:^hello  }{33:│}{1:lleh}{33:│}                           |
           {2:~      }{33:│}{1:   o}{33:│}{0:                           }|
           {2:~      }{33:│}{2:   ~}{33:│}{0:                           }|*2
@@ -12543,7 +12543,7 @@ describe('float window', function()
         screen:expect({
           grid = [[
           ## grid 1
-            {9: }{10:2}{9:+ No Name]  [No Name] }{3: }{34:4}{3:+ No Name] }{5:  }{9:X}|
+            {9: }{10:2}{9:+ [No Name]  [No Name] }{3: }{34:4}{3:+ [No Name] }{9:X}|
             [9:--------------------]{5:│}[4:-------------------]|*4
             {4:[No Name] [+]        }{5:[No Name] [+]      }|
             [3:----------------------------------------]|
@@ -12582,7 +12582,7 @@ describe('float window', function()
         })
       else
         screen:expect([[
-          {9: }{10:2}{9:+ No Name]  [No Name] }{3: }{34:4}{3:+ }{33:┌────┐}{3:e] }{5:  }{9:X}|
+          {9: }{10:2}{9:+ [No Name]  [No Name] }{3: }{34:4}{3:+}{33:┌────┐}{3:ame] }{9:X}|
           ^hello               {5:│}{1:hello  }{33:│}{1:lleh}{33:│}      |
           {0:~                   }{5:│}{2:~      }{33:│}{1:   o}{33:│}{0:      }|
           {0:~                   }{5:│}{2:~      }{33:│}{2:   ~}{33:│}{0:      }|*2

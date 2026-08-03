@@ -43,6 +43,7 @@ func Test_tabline_will_be_disabled_with_error()
   let showtabline_save = &showtabline
   set showtabline=2
   let s:func_in_tabline_called = 0
+  let default_tabline = &tabline
   let tabline = '%{TablineWithError()}'
   try
     let &tabline = tabline
@@ -50,7 +51,7 @@ func Test_tabline_will_be_disabled_with_error()
   catch
   endtry
   call assert_true(s:func_in_tabline_called)
-  call assert_equal('', &tabline)
+  call assert_equal(default_tabline, &tabline)
   set tabline=
   let &showtabline = showtabline_save
 endfunc
@@ -238,10 +239,14 @@ func Test_tabline_truncated_double_width()
   let attr_TabLine = screenattr(1, &columns)
   call assert_notequal(attr_TabLine, attr_TabLineFill)
 
+  set tabline=%#TabLineBase#x
+  redraw
+  let attr_TabLineBase = screenattr(1, 1)
+
   set tabline=%!TruncTabLine()
   redraw
   call assert_equal('<a' .. repeat('b', &columns - 4) .. 'c', Screenline(1))
-  call assert_equal(attr_TabLineFill, screenattr(1, &columns - 2))
+  call assert_equal(attr_TabLineBase, screenattr(1, &columns - 2))
   call assert_equal(attr_TabLine, screenattr(1, &columns - 1))
   call assert_equal(attr_TabLine, screenattr(1, &columns))
 

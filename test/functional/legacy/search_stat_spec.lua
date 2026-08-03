@@ -130,7 +130,7 @@ describe('search stat', function()
 
     feed('/abc')
     screen:expect([[
-      {2:                              }|
+                                    |
       {10:abc}--c                        |
       --------{2:abc}                   |
       --{10:abc}                         |
@@ -140,7 +140,7 @@ describe('search stat', function()
 
     feed('<C-G>')
     screen:expect([[
-      {2:3/3                           }|
+      3/3                           |
       {10:abc}--c                        |
       --------{10:abc}                   |
       --{2:abc}                         |
@@ -150,7 +150,7 @@ describe('search stat', function()
 
     feed('<C-G>')
     screen:expect([[
-      {2:1/3                           }|
+      1/3                           |
       {2:abc}--c                        |
       --------{10:abc}                   |
       --{10:abc}                         |

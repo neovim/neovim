@@ -1,5 +1,4 @@
 #include <stdbool.h>
-#include <stdlib.h>
 
 #include "nvim/api/keysets_defs.h"
 #include "nvim/api/private/defs.h"
@@ -117,13 +116,7 @@ Window nvim_tabpage_get_win(Tabpage tabpage, Error *err)
   if (tab == curtab) {
     return nvim_get_current_win();
   }
-  FOR_ALL_WINDOWS_IN_TAB(wp, tab) {
-    if (wp == tab->tp_curwin) {
-      return wp->handle;
-    }
-  }
-  // There should always be a current window for a tabpage
-  abort();
+  return tab->tp_curwin->handle;
 }
 
 /// Sets the current window in a tabpage

@@ -89,6 +89,7 @@ struct stl_item {
   char *cmd;               ///< Function to run for ClickFunc items
   int minwid;              ///< The minimum width of the item
   int maxwid;              ///< The maximum width of the item
+  bool tabpage_fill;       ///< The item is an explicit %0T tabline filler region
   enum {
     Normal,
     Empty,

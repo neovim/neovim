@@ -65,6 +65,7 @@ EXTERN const char *hlf_names[] INIT( = {
   [HLF_PSX] = "PmenuExtraSel",
   [HLF_PSB] = "PmenuSbar",
   [HLF_PST] = "PmenuThumb",
+  [HLF_TPB] = "TabLineBase",
   [HLF_TP] = "TabLine",
   [HLF_TPS] = "TabLineSel",
   [HLF_TPF] = "TabLineFill",

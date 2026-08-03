@@ -357,8 +357,10 @@ You can use the 'showtabline' option to specify when you want the line with
 tabpage labels to appear: never, when there is more than one tabpage or
 always.
 
-The highlighting of the tabpages line is set with the groups TabLine
-TabLineSel and TabLineFill.  |hl-TabLine| |hl-TabLineSel| |hl-TabLineFill|
+The base highlighting of the tabpages line is set with TabLineBase.  TabLine,
+TabLineSel and TabLineFill are combined with it for inactive labels, the active
+label and the area without labels, respectively.  |hl-TabLineBase|
+|hl-TabLine| |hl-TabLineSel| |hl-TabLineFill|
 
 A "+" will be shown for a tabpage that has a modified window.  The number of
 windows in a tabpage is also shown.  Thus "3+" means three windows and one of
@@ -420,6 +422,32 @@ resembles the default, but without adding a + for a modified buffer or
 truncating the names.  You will want to reduce the width of labels in a
 clever way when there is not enough room.  Check the 'columns' option for the
 space available.
+
+The default tabline generator accepts an optional Lua function for formatting
+each tab item.  The function receives `current`, `tabnr`, `tabpage`, and
+`winid` fields, and must return a string.  Other values can be derived from
+these fields as needed.  For example: >lua
+
+	local function tabitem(info)
+	  local wincount = vim.fn.tabpagewinnr(info.tabnr, '$')
+	  local bufnr = vim.api.nvim_win_get_buf(info.winid)
+	  local cwd = vim.fn.getcwd(-1, info.tabnr)
+	  local path = vim.api.nvim_buf_get_name(bufnr)
+	  local name = vim.fs.relpath(cwd, path)
+	    or vim.api.nvim_eval_statusline('%t', { winid = info.winid, maxwidth = 9999 }).str
+	  local flags = (wincount > 1 and wincount or '')
+	    .. (vim.fn.getbufvar(bufnr, '&modified') == 1 and '+' or '')
+	  return ('%d:%s [%s] %s'):format(info.tabnr, flags, vim.fs.basename(cwd), name)
+	end
+
+	_G.MyTabline = function()
+	  return require('vim._core.tabline').default(tabitem)
+	end
+
+	vim.o.tabline = '%!v:lua.MyTabline()'
+<
+The default expression handles escaping, truncation, highlighting, and click
+regions.
 
 ==============================================================================
 5. Setting 'guitablabel'				*setting-guitablabel*

@@ -35,7 +35,7 @@ describe('tabline', function()
 
     feed('g')
     screen:expect([[
-      {2:g                                                 }|
+      g                                                 |
       {13:+--  2 lines: a···································}|
       ^c                                                 |
       {1:~                                                 }|*3
@@ -45,7 +45,7 @@ describe('tabline', function()
     -- typing "gg" should open the fold
     feed('g')
     screen:expect([[
-      {2:                                                  }|
+                                                        |
       ^a                                                 |
       b                                                 |
       c                                                 |
@@ -55,7 +55,7 @@ describe('tabline', function()
 
     feed('<C-V>Gl')
     screen:expect([[
-      {2:3x2                                               }|
+      3x2                                               |
       {17:a}                                                 |
       {17:b}                                                 |
       {17:c}^                                                 |
@@ -65,7 +65,7 @@ describe('tabline', function()
 
     feed('<Esc>1234')
     screen:expect([[
-      {2:1234                                              }|
+      1234                                              |
       a                                                 |
       b                                                 |
       ^c                                                 |

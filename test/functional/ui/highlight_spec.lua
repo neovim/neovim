@@ -2275,14 +2275,14 @@ describe("'winhighlight' highlight", function()
     command('set winhl=TabLine:Background1,TabLineSel:ErrorMsg')
 
     screen:expect([[
-      {20: No Name] }{15: No Name]}{20:X}|
+      {20:< Name] }{15: [No Name] }{20:X}|
       ^                    |
       {0:~                   }|*5
                           |
     ]])
     command('tabnext')
     screen:expect([[
-      {21: No Name] }{1: No Name]}{20:X}|
+      {21:< Name] }{1: [No Name] }{20:X}|
       ^                    |
       {0:~                   }|*5
                           |

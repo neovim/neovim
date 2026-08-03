@@ -74,7 +74,7 @@ describe('TabMoved', function()
 
   it('handles mouse interactions on the tabline', function()
     local function setup()
-      Screen.new(25, 5)
+      Screen.new(80, 5)
       command('set mouse=a')
       command('tabnew')
       command('tabnew')

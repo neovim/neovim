@@ -1231,7 +1231,7 @@ it('tabline is not redrawn in Ex mode #24122', function()
 
   feed('1q:')
   screen:expect([[
-    {2:foo                                                         }|
+    foo                                                         |
                                                                 |
     {2:[No Name]                                                   }|
     {1::}^                                                           |
@@ -1241,7 +1241,7 @@ it('tabline is not redrawn in Ex mode #24122', function()
   ]])
   feed('echo 1<CR>')
   screen:expect([[
-    {2:foo                                                         }|
+    foo                                                         |
                                                                 |
     {2:[No Name]                                                   }|
     {1::}echo 1                                                     |

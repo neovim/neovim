@@ -463,7 +463,7 @@ describe('ui/mouse/input', function()
         feed('<2-LeftMouse><4,0>')
         screen:expect({
           any = {
-            '{5:  Name] }{24: %+ foo  %+ bar }{2:  }{24:X}|',
+            '{5:<No Name] }{24: %+ foo  %+ bar X}|',
             '{1:%^$}',
           },
         })
@@ -477,7 +477,7 @@ describe('ui/mouse/input', function()
         feed('<2-LeftMouse><20,0>')
         screen:expect({
           any = {
-            '{24: %+ foo  %+ bar }{5:  Name] }{2:  }{24:X}',
+            '{24:< foo  %+ bar }{5: %[No Name%] }{24:X}|',
             '{1:%^$}',
           },
         })
@@ -491,7 +491,7 @@ describe('ui/mouse/input', function()
         feed('<2-LeftMouse><10,0>')
         screen:expect({
           any = {
-            '{24: %+ foo }{5:  Name] }{24: %+ bar }{2:  }{24:X}',
+            '{24:< foo }{5: %[No Name%] }{24: %+ bar X}|',
             '{1:%^$}',
           },
         })
@@ -514,7 +514,7 @@ describe('ui/mouse/input', function()
           api.nvim_set_option_value('showtabline', 2, {})
           screen:expect({
             any = {
-              '{2:test%-test2               }',
+              'test%-test2               ',
               'testing',
               'mouse',
               'support and selectio%^n',

@@ -6897,7 +6897,9 @@ vim.wo.stc = vim.wo.statuscolumn
 --- T N   For 'tabline': start of tabpage N label.  Use %T or %X to end
 ---       the label.  Clicking this label with left mouse button switches
 ---       to the specified tabpage, while clicking it with middle mouse
----       button closes the specified tabpage.
+---       button closes the specified tabpage. %0T starts a region where
+---       a left click selects the next tabpage and a double click creates
+---       a new tabpage.
 --- X N   For 'tabline': start of close tab N label.  Use %X or %T to end
 ---       the label, e.g.: %3Xclose%X.  Use %999X for a "close current
 ---       tab" label.  Clicking this label with left mouse button closes
@@ -7238,7 +7240,7 @@ vim.go.tcl = vim.go.tabclose
 --- are invisible and you can't jump to their windows.
 ---
 --- @type string
-vim.o.tabline = ""
+vim.o.tabline = "%!v:lua.require('vim._core.tabline').default()"
 vim.o.tal = vim.o.tabline
 vim.go.tabline = vim.o.tabline
 vim.go.tal = vim.go.tabline

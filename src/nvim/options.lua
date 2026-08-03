@@ -9215,7 +9215,9 @@ local options = {
         T N   For 'tabline': start of tabpage N label.  Use %T or %X to end
               the label.  Clicking this label with left mouse button switches
               to the specified tabpage, while clicking it with middle mouse
-              button closes the specified tabpage.
+              button closes the specified tabpage. %0T starts a region where
+              a left click selects the next tabpage and a double click creates
+              a new tabpage.
         X N   For 'tabline': start of close tab N label.  Use %X or %T to end
               the label, e.g.: %3Xclose%X.  Use %999X for a "close current
               tab" label.  Clicking this label with left mouse button closes
@@ -9547,7 +9549,10 @@ local options = {
     {
       abbreviation = 'tal',
       cb = 'did_set_tabline',
-      defaults = '',
+      defaults = {
+        if_true = "%!v:lua.require('vim._core.tabline').default()",
+        doc = 'is very long',
+      },
       desc = [=[
         When non-empty, this option determines the content of the tabpages
         line at the top of the Vim window.  When empty Vim will use a default

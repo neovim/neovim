@@ -102,12 +102,91 @@ describe('tabline', function()
     screen = Screen.new(42, 5)
   end)
 
+  it("uses and restores the default 'tabline' expression", function()
+    local default = "%!v:lua.require('vim._core.tabline').default()"
+    eq(default, n.eval('&tabline'))
+
+    command('set tabline=custom')
+    eq('custom', n.eval('&tabline'))
+
+    command('set tabline=')
+    eq(default, n.eval('&tabline'))
+  end)
+
+  it('escapes item labels', function()
+    api.nvim_buf_set_name(0, 'current%tab')
+    local rendered = n.exec_lua [[
+      local tabline = require('vim._core.tabline').default()
+      return vim.api.nvim_eval_statusline(tabline, { use_tabline = true, maxwidth = 42 }).str
+    ]]
+    eq(true, rendered:find('current%tab', 1, true) ~= nil)
+  end)
+
+  it('accepts a local item formatter through a Lua wrapper', function()
+    api.nvim_buf_set_name(0, '/projects/alpha/init.lua')
+    api.nvim_buf_set_lines(0, 0, -1, false, { 'modified' })
+    command('vsplit')
+    api.nvim_open_win(0, false, {
+      relative = 'editor',
+      width = 1,
+      height = 1,
+      row = 0,
+      col = 0,
+      focusable = false,
+    })
+    command('tabedit /projects/beta/main.lua')
+
+    local rendered = n.exec_lua [[
+      local function tabitem(info)
+        local wincount = vim.fn.tabpagewinnr(info.tabnr, '$')
+        local bufnr = vim.api.nvim_win_get_buf(info.winid)
+        local path = vim.api.nvim_buf_get_name(bufnr)
+        local name = vim.fs.relpath(vim.fn.getcwd(-1, info.tabnr), path)
+          or vim.api.nvim_eval_statusline('%t', { winid = info.winid, maxwidth = 9999 }).str
+        return ('%d:%d%s %s'):format(
+          info.tabnr,
+          wincount,
+          vim.fn.getbufvar(bufnr, '&modified') == 1 and '+' or '',
+          name
+        )
+      end
+
+      _G.MyTabline = function()
+        return require('vim._core.tabline').default(tabitem)
+      end
+
+      vim.o.tabline = '%!v:lua.MyTabline()'
+      return vim.api.nvim_eval_statusline(vim.o.tabline, { use_tabline = true, maxwidth = 42 }).str
+    ]]
+
+    local expected = ' 1:2+ init.lua  2:1 main.lua '
+    eq(expected, rendered:sub(1, #expected))
+  end)
+
+  it('keeps the current tab visible when truncated', function()
+    api.nvim_buf_set_name(0, 'CURRENT')
+    for i = 2, 10 do
+      command('tabnew')
+      api.nvim_buf_set_name(0, 'long-tab-name-' .. i)
+    end
+    command('tabfirst')
+
+    local rendered = n.exec_lua [[
+      local tabline = require('vim._core.tabline').default()
+      return vim.api.nvim_eval_statusline(tabline, {
+        use_tabline = true,
+        maxwidth = vim.o.columns,
+      }).str
+    ]]
+    eq(true, rendered:find('CURRENT', 1, true) ~= nil)
+  end)
+
   it('redraws when tabline option is set', function()
     command('set tabline=asdf')
     command('set showtabline=2')
     screen:expect {
       grid = [[
-      {2:asdf                                      }|
+      asdf                                      |
       ^                                          |
       {1:~                                         }|*2
                                                 |
@@ -116,7 +195,7 @@ describe('tabline', function()
     command('set tabline=jkl')
     screen:expect {
       grid = [[
-      {2:jkl                                       }|
+      jkl                                       |
       ^                                          |
       {1:~                                         }|*2
                                                 |
@@ -130,7 +209,7 @@ describe('tabline', function()
       [2] = { bold = true, italic = true }, -- StatusLine
       [3] = { bold = true, italic = true, foreground = Screen.colors.Red }, -- NonText combined with StatusLine
     })
-    command('hi TabLineFill gui=bold,italic')
+    command('hi TabLineBase gui=bold,italic')
     command('hi Identifier guifg=red')
     command('set tabline=Test%#Identifier#here')
     command('set showtabline=2')
@@ -158,7 +237,7 @@ describe('tabline', function()
     api.nvim_set_option_value('tabline', '%1T口口%2Ta' .. ('b'):rep(38) .. '%999Xc', {})
     screen:expect {
       grid = [[
-      {2:<abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc }|
+      <abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc |
       tab^1                                      |
       {1:~                                         }|*2
                                                 |
@@ -168,7 +247,7 @@ describe('tabline', function()
     api.nvim_input_mouse('left', 'press', '', 0, 0, 1)
     screen:expect {
       grid = [[
-      {2:<abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc }|
+      <abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc |
       tab^2                                      |
       {1:~                                         }|*2
                                                 |
@@ -177,7 +256,7 @@ describe('tabline', function()
     api.nvim_input_mouse('left', 'press', '', 0, 0, 0)
     screen:expect {
       grid = [[
-      {2:<abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc }|
+      <abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc |
       tab^1                                      |
       {1:~                                         }|*2
                                                 |
@@ -186,7 +265,7 @@ describe('tabline', function()
     api.nvim_input_mouse('left', 'press', '', 0, 0, 39)
     screen:expect {
       grid = [[
-      {2:<abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc }|
+      <abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc |
       tab^2                                      |
       {1:~                                         }|*2
                                                 |
