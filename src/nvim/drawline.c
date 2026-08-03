@@ -800,6 +800,16 @@ static void draw_statuscol(win_T *wp, winlinevars_T *wlv, int col_rows, statusco
   draw_col_fill(wlv, schar_from_ascii(' '), stcp->width - width, cur_attr);
 }
 
+/// Whether "attr" draws an underline, undercurl, strikethrough, or overline: a line tied to text
+/// glyphs that looks broken drawn over blank filler cells, unlike a plain background/reverse-video
+/// highlight.
+static bool attr_has_line_deco(int attr)
+{
+  HlAttrs ae = syn_attr2entry(attr);
+  int32_t const mask = HL_UNDERLINE_MASK | HL_STRIKETHROUGH | HL_OVERLINE;
+  return (ae.rgb_ae_attr & mask) != 0 || (ae.cterm_ae_attr & mask) != 0;
+}
+
 static void handle_breakindent(win_T *wp, winlinevars_T *wlv)
 {
   // draw 'breakindent': indent wrapped text accordingly
@@ -2403,11 +2413,21 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           wlv.n_extra = win_charsize(cstype, wlv.vcol, p, utf_ptr2CharInfo(p).value,
                                      &csarg).width - 1;
 
-          if (on_last_col && mb_c != TAB) {
-            // Do not continue search/match highlighting over the
-            // line break, but for TABs the highlighting should
-            // include the complete width of the character
-            search_attr = 0;
+          // Do not bleed an underline/strikethrough/overline into the filler for the pushed-down
+          // word (TABs keep their own full-width highlight): drawn over blank cells, they look like
+          // a broken line. A plain background/reverse-video highlight does not have this problem,
+          // so leave it be. search_attr also resets when the search/match's own span ends exactly
+          // here (on_last_col), matching its pre-existing semantics.
+          if (mb_c != TAB) {
+            if (on_last_col || attr_has_line_deco(search_attr)) {
+              search_attr = 0;
+            }
+            if (attr_has_line_deco(decor_attr)) {
+              decor_attr = 0;
+            }
+            if (attr_has_line_deco(area_attr)) {
+              area_attr = 0;
+            }
           }
 
           if (mb_c == TAB && wlv.n_extra + wlv.col > view_width) {
