@@ -201,6 +201,24 @@ describe('cmdline2', function()
     screen:expect_unchanged(true)
   end)
 
+  it('keeps the confirmation match highlighted with nohlsearch #41039', function()
+    exec('call setline(1, "test test") | set nohlsearch')
+    feed('/te<CR>')
+    screen:expect([[
+      test ^test                                            |
+      {1:~                                                    }|*12
+      /te                                                  |
+    ]])
+
+    feed(':%s/te/t/gc<CR>')
+    screen:expect([[
+      {2:te}st test                                            |
+      {1:~                                                    }|*11
+      {6:replace with t? (y)es/(n)o/(a)ll/(q)uit/(l)ast/scroll}|
+      {6: up(^E)/down(^Y)}^                                     |
+    ]])
+  end)
+
   it('dialog position is adjusted for toggled non-pum wildmenu', function()
     exec([[
       set wildmode=list:full,full wildoptions-=pum

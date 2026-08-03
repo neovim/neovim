@@ -142,8 +142,10 @@ void changed(buf_T *buf)
   }
   buf_inc_changedtick(buf);
 
-  // If a pattern is highlighted, the position may now be invalid.
-  Search.hl_match = false;
+  // A match highlight can only be invalidated by changes to the current buffer.
+  if (buf == curbuf) {
+    Search.hl_match = false;
+  }
 }
 
 /// Internal part of changed(), no user interaction.
