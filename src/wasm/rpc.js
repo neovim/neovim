@@ -1,4 +1,5 @@
-// Transport: owns the worker + SharedArrayBuffer
+// TODO: Add a fallback when SharedArrayBuffer is unavailable.
+// Transport: owns the worker and SharedArrayBuffer
 class WorkerTransport {
   constructor(workerPath, { cols = 80, rows = 24, cap = 1 << 16 } = {}) {
     this.CAP = cap;
