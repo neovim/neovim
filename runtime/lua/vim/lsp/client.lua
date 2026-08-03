@@ -261,7 +261,10 @@ end
 ---
 --- @field private registrations table<string,lsp.Registration[]>
 --- @field private _log_prefix string
+---
+--- Caches compiled documentSelector globs and logs each invalid pattern only once per client.
 --- @field private _glob_cache table<string,vim.lpeg.Pattern|false>
+---
 --- @field private _before_init_cb? vim.lsp.client.before_init_cb
 --- @field private _on_attach_cbs vim.lsp.client.on_attach_cb[]
 --- @field private _on_init_cbs vim.lsp.client.on_init_cb[]
