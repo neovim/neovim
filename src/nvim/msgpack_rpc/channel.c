@@ -33,6 +33,10 @@
 #include "nvim/ui.h"
 #include "nvim/ui_client.h"
 
+#ifdef MSWIN
+# include "nvim/os/os_win_console.h"
+#endif
+
 #include "msgpack_rpc/channel.c.generated.h"
 
 #ifdef NVIM_LOG_DEBUG
@@ -494,6 +498,13 @@ static void rpc_close_event(void **argv)
 
   channel_decref(channel);
 
+#ifdef MSWIN
+  // For ":detach!": unexpected disconnect does not call ui_detach_channel, unlike the normal
+  // ":detach" case, so we need to do some cleanup here.
+  bool detached_ui_stdio = channel->streamtype == kChannelStreamStdio
+                           && channel->detach && channel->rpc.ui != NULL;
+#endif
+
   // No more I/O can happen on this channel. Remove UI if there is one attached.
   // Do this here instead of in rpc_free() which isn't always called on exit, so that
   // UILeave events behave consistently.
@@ -517,6 +528,12 @@ static void rpc_close_event(void **argv)
   } else if (channel->streamtype == kChannelStreamStdio && !channel->detach) {
     exit_on_closed_chan(0);
   }
+#ifdef MSWIN
+  else if (detached_ui_stdio) {
+    // Move this server off the now-dead console so it keeps working (CONIN$/CONOUT$).
+    os_swap_to_hidden_console();
+  }
+#endif
 }
 
 void rpc_free(Channel *channel)

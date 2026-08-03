@@ -12,6 +12,7 @@
   },
   "diagnostics": {
     "disable": [
+      "preferred-local-alias",
       "unnecessary-if"
     ]
   },

@@ -60,27 +60,35 @@ Use cases:
 Stop or detach the current UI
 
                                                              *:detach* *E5768*
-:[range]detach
-                Detaches the current UI. Other UIs (if any) remain attached.
-                Fails with "E5768" if no UI is attached. If [range] is "%",
-                all UIs _except_ the current UI are detached: >vim
+:[range]detach  Detaches the current UI. Other UIs (if any) remain attached,
+                unless [range] was given. If [range] is "%", all UIs _except_
+                the current UI are detached: >vim
 
                     :%detach
 
 <                The server (typically `nvim --embed`) continues running as
-                a background process, and you can reattach to it later.
-                Before detaching, you may want to note the server address:
+                a background process. Use |:connect| or |--remote-ui| to
+                reattach. Before detaching, you may want to note the server
+                address:
                 >vim
                     :echo v:servername
 <
-                When [range] covers the entire buffer (`%`, as in `:%detach`),
-                all other UIs are detached, keeping only the current one. The
-                command fails with |E16| for any other range. No-op if only
-                one UI is attached.
-
                 Note: The server closes the UI RPC channel, so :detach works
-                for any UI client. But if the client isn't expecting this, it
-                may (incorrectly) report an error.
+                for any GUI/UI; but if the client isn't expecting this, it may
+                (incorrectly) report an error.
+
+                                                                    *:detach!*
+:detach!        Marks the current UI as "detachable" without detaching it now:
+                the UI stays attached, but if it later disconnects
+                unexpectedly (e.g. host terminal closed, ssh disconnect,
+                etc.), the server keeps running in the background.
+                Use |:connect| or |--remote-ui| to reattach.
+
+                If you always want Nvim to survive accidental disconnect, put
+                this in your config: >vim
+
+                    silent detach!
+<
 
 ------------------------------------------------------------------------------
 Restart Nvim
@@ -118,8 +126,8 @@ Connect UI to a different server
 
                                                 *:connect*
 :connect {address}
-                Detaches the UI from the server it is currently attached to
-                and attaches it to the server at {address} instead.
+                Attaches the UI to another Nvim instance: detaches from the
+                current server, then attaches to {address}.
 
                 Note: If the current UI hasn't implemented the "connect" UI
                 event, this command is equivalent to |:detach|.
