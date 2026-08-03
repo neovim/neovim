@@ -914,7 +914,6 @@ typedef struct {
   linenr_T first_lnum;  // first lnum to search for multi-line pat
   colnr_T startcol;     // in win_line() points to char where HL starts
   colnr_T endcol;       // in win_line() points to char where HL ends
-  bool is_addpos;       // position specified directly by matchaddpos()
   bool has_cursor;      // true if the cursor is inside the match, used for CurSearch
   proftime_T tm;        // for a time limit
 } match_T;
@@ -941,7 +940,6 @@ struct matchitem {
 
   llpos_T *mit_pos_array;  ///< array of positions
   int mit_pos_count;       ///< nr of entries in mit_pos
-  int mit_pos_cur;         ///< internal position counter
   linenr_T mit_toplnum;    ///< top buffer line
   linenr_T mit_botlnum;    ///< bottom buffer line
 
