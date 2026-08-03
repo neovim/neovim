@@ -88,6 +88,42 @@ first entry instead of the one it was left on. "wipe" discards the buffer
 itself, leaving no |alternate-file|; see 'bufhidden'.
 
 
+Reshaping the listing                                             *dir-render*
+
+                                                                 *DirReadPost*
+A |User| autocommand fired after each listing is rendered, including reloads.
+The buffer is writable for the duration, so a handler can sort or filter it
+with ordinary commands, and the cursor is placed afterwards.
+
+Handlers may reorder or remove lines, but each remaining line must still be an
+entry name: |dir-buffer-mappings| resolve the line under the cursor against the
+buffer name, so rewriting line text makes <CR> open a nonexistent path.
+
+Sort directories last: >vim
+	autocmd User DirReadPost silent keeppatterns sort r /\/$/
+<
+Hide dot-prefixed entries: >vim
+	autocmd User DirReadPost silent keeppatterns g/^\./d _
+<
+Sort by modification time, newest first: >lua
+	vim.api.nvim_create_autocmd('User', {
+	  pattern = 'DirReadPost',
+	  callback = function(args)
+	    local dir = vim.api.nvim_buf_get_name(args.buf)
+	    local names = vim.api.nvim_buf_get_lines(args.buf, 0, -1, true)
+	    local mtime = {} --- @type table<string, integer>
+	    for _, name in ipairs(names) do
+	      local stat = vim.uv.fs_stat(vim.fs.joinpath(dir, name))
+	      mtime[name] = stat and stat.mtime.sec or 0
+	    end
+	    table.sort(names, function(a, b)
+	      return mtime[a] > mtime[b]
+	    end)
+	    vim.api.nvim_buf_set_lines(args.buf, 0, -1, true, names)
+	  end,
+	})
+<
+
 Replacing the directory browser                                  *dir-disable*
 
 To use another directory browser for the current session, delete the

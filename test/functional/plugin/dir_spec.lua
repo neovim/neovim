@@ -332,6 +332,83 @@ describe('nvim.dir', function()
     eq({ 'file2.txt' }, lines())
   end)
 
+  it('fires DirReadPost for every listing', function()
+    make_fixture()
+    n.clear({ args = { '--clean' } })
+    exec_lua(function()
+      vim.g.renders = 0
+      vim.api.nvim_create_autocmd('User', {
+        pattern = 'DirReadPost',
+        callback = function(args)
+          vim.g.renders = vim.g.renders + 1
+          vim.g.render_lines = vim.api.nvim_buf_get_lines(args.buf, 0, -1, true)
+          vim.g.render_writable = vim.bo[args.buf].modifiable and not vim.bo[args.buf].readonly
+        end,
+      })
+    end)
+
+    edit(root)
+    eq(1, exec_lua('return vim.g.renders'))
+    eq({ 'subdir/', '.hidden', 'alpha.txt' }, exec_lua('return vim.g.render_lines'))
+    -- Writable while handlers run, locked again afterwards.
+    eq(true, exec_lua('return vim.g.render_writable'))
+    eq(false, bufopt('modifiable'))
+    eq(true, bufopt('readonly'))
+    eq(false, bufopt('modified'))
+
+    feed('R')
+    poke_eventloop()
+    eq(2, exec_lua('return vim.g.renders'))
+
+    edit(root)
+    eq(3, exec_lua('return vim.g.renders'))
+
+    api.nvim_win_set_cursor(0, { line_of('subdir/'), 0 })
+    feed('<CR>')
+    poke_eventloop()
+    assert_directory(subdir)
+    eq(4, exec_lua('return vim.g.renders'))
+  end)
+
+  it('keeps the listing readonly when a handler errors', function()
+    make_fixture()
+    n.clear({ args = { '--clean' } })
+    exec_lua(function()
+      vim.api.nvim_create_autocmd('User', {
+        pattern = 'DirReadPost',
+        callback = function()
+          error('handler error')
+        end,
+      })
+    end)
+
+    edit(root)
+
+    eq({ 'subdir/', '.hidden', 'alpha.txt' }, lines())
+    eq(false, bufopt('modifiable'))
+    eq(true, bufopt('readonly'))
+  end)
+
+  it('selects the origin entry after a handler reorders', function()
+    make_fixture()
+    n.clear({ args = { '--clean' } })
+    exec_lua(function()
+      vim.api.nvim_create_autocmd('User', {
+        pattern = 'DirReadPost',
+        callback = function()
+          vim.cmd('silent keeppatterns sort!')
+        end,
+      })
+    end)
+
+    edit(subdir)
+    feed('-')
+    poke_eventloop()
+
+    eq({ 'subdir/', 'alpha.txt', '.hidden' }, lines())
+    eq('subdir/', api.nvim_get_current_line())
+  end)
+
   it('ignores callbacks from replaced listings', function()
     n.clear({ args = { '--clean' } })
 
