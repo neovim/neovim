@@ -31,16 +31,14 @@ local function check_active()
 
   if legacy then
     health.info('`old-zip` is loaded, so it handles archives instead of zip.lua')
-    health.info('zip.lua yields to it and removes its own autocommands')
+    health.info('zip.lua defers to it while it is loaded')
     -- `old-zip` shells out to the same backend.
     return true
   end
 
   if not builtin then
     if vim.g.loaded_nvim_zip_plugin ~= nil then
-      health.warn('zip.lua is disabled by `g:loaded_nvim_zip_plugin`', {
-        'Unset it before startup to enable the builtin zip plugin.',
-      })
+      health.info('Disabled (`g:loaded_nvim_zip_plugin` is set).')
     else
       health.warn('No zip plugin is active')
     end
