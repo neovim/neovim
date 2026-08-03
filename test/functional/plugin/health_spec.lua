@@ -44,7 +44,7 @@ describe(':checkhealth', function()
   it('getcompletion()', function()
     clear { args = { '-u', 'NORC', '+set runtimepath+=test/functional/fixtures' } }
 
-    eq('vim.deprecated', getcompletion('vim', 'checkhealth')[1])
+    eq('nvim.zip', getcompletion('vim', 'checkhealth')[1])
     eq('vim.provider', getcompletion('vim.prov', 'checkhealth')[1])
     eq('vim.lsp', getcompletion('vim.ls', 'checkhealth')[1])
 
