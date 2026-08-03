@@ -330,6 +330,19 @@ describe('nvim.zip', function()
       end
     end)
 
+    it('runs the backend when the cwd is its directory', function()
+      t.skip(t.is_os('win'), 'N/A: Windows searches the cwd before $PATH')
+      local archive = stage(fixtures, 'browser.zip')
+      local bin = vim.fs.joinpath(assert(vim.uv.fs_realpath(root)), 'bin')
+      t.mkdir(bin)
+      assert(vim.uv.fs_symlink(vim.fn.exepath('unzip'), vim.fs.joinpath(bin, 'unzip')))
+      n.clear({ args = { '--clean' }, env = { PATH = bin .. ':' .. os.getenv('PATH') } })
+
+      api.nvim_set_current_dir(bin)
+      edit(archive)
+      eq('folder/', lines()[1])
+    end)
+
     it('keeps a leading dash in a path from becoming a backend option', function()
       local archive = stage(old_samples, 'poc.zip')
       clear_zip()

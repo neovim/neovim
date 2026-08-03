@@ -12,8 +12,12 @@ local function unzip()
   end
   -- Windows searches the current directory before $PATH, so an archive could be opened with an
   -- `unzip` shipped next to it.
-  if vim.fs.dirname(vim.fs.normalize(command)) == vim.fs.normalize(vim.fn.getcwd()) then
-    return nil, 'refusing to run unzip from the current directory'
+  if vim.fn.has('win32') == 1 then
+    local dir = uv.fs_realpath(vim.fs.dirname(vim.fs.normalize(command)))
+    local cwd = uv.fs_realpath(vim.fn.getcwd())
+    if dir and cwd and dir == cwd then
+      return nil, 'refusing to run unzip from the current directory'
+    end
   end
   return command
 end
