@@ -1,6 +1,6 @@
 " Script to define the syntax menu in synmenu.vim
 " Maintainer:		The Vim Project <https://github.com/vim/vim>
-" Last Change:		2026 Jul 30
+" Last Change:		2026 Aug 03
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " This is used by "make menu" in the src directory.
@@ -618,6 +618,7 @@ SynMenu T.TF\ mud\ client:tf
 SynMenu T.Tidy\ configuration:tidy
 SynMenu T.Tilde:tilde
 SynMenu T.Tmux\ configuration:tmux
+SynMenu T.TOML:toml
 SynMenu T.TPP:tpp
 SynMenu T.Trasys\ input:trasys
 SynMenu T.Treetop:treetop
