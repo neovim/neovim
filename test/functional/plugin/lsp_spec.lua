@@ -822,23 +822,32 @@ describe('LSP', function()
       }
     end)
 
-    it('saveas sends didOpen to multiple attached servers if filename changed', function()
+    it('saveas sends didOpen to all attached servers only, if filename changed', function()
       local tmpfile_new = tmpname(false)
       exec_lua(create_server_definition)
       local messages = exec_lua(function()
         local server1 = _G._create_server()
         local server2 = _G._create_server()
+        local server3 = _G._create_server()
         local client1_id = assert(vim.lsp.start({ name = 'dummy1', cmd = server1.cmd }))
         local client2_id = assert(vim.lsp.start({ name = 'dummy2', cmd = server2.cmd }))
+        -- Attached to another buffer, so it must not be notified about this one.
+        local other_buf = vim.api.nvim_create_buf(true, false)
+        local client3_id =
+          assert(vim.lsp.start({ name = 'dummy3', cmd = server3.cmd }, { bufnr = other_buf }))
 
         vim.cmd('saveas ' .. tmpfile_new)
 
         vim.lsp.get_client_by_id(client1_id):stop()
         vim.lsp.get_client_by_id(client2_id):stop()
+        vim.lsp.get_client_by_id(client3_id):stop()
 
         return {
           server1 = server1.messages,
           server2 = server2.messages,
+          server3 = vim.tbl_map(function(m)
+            return m.method
+          end, server3.messages),
         }
       end)
       eq('textDocument/didClose', messages.server1[3].method)
@@ -848,6 +857,8 @@ describe('LSP', function()
       eq('textDocument/didClose', messages.server2[3].method)
       eq('textDocument/didOpen', messages.server2[4].method)
       eq('textDocument/didSave', messages.server2[5].method)
+
+      eq({ 'initialize', 'initialized', 'shutdown', 'exit' }, messages.server3)
     end)
 
     it('BufWritePre does not send notifications if server lacks willSave capabilities', function()
