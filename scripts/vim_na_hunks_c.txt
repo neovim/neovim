@@ -42,6 +42,7 @@
 ^f_test_settime(
 ^f_test_srand_seed(
 ^f_test_void(
+^init_longVersion(
 ^l\?alloc(size_t
 ^l\?alloc[a-zA-Z0-9_]\+(size_t
 ^mch_job_[a-z]\+(

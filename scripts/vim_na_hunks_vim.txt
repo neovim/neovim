@@ -96,6 +96,7 @@
 \*builtin-function-list\*
 \*emacs[_-]tags\*
 \*help-toc-install\*
+\*os-support\*
 \*patches-\(after-\)\?[0-9].*\*
 \*test_gui_[a-zA-Z0-9_]\+()\*
 \*v:none\*
