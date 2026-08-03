@@ -850,6 +850,39 @@ describe('LSP', function()
       eq('textDocument/didSave', messages.server2[5].method)
     end)
 
+    it('BufWritePost only sends didSave to attached clients', function()
+      exec_lua(create_server_definition)
+      local messages = exec_lua(function()
+        local capabilities = { textDocumentSync = { openClose = true, change = 2, save = true } }
+        local server1 = _G._create_server({ capabilities = capabilities })
+        local server2 = _G._create_server({ capabilities = capabilities })
+
+        local client1_id = assert(vim.lsp.start({ name = 'dummy1', cmd = server1.cmd }))
+
+        local buf2 = vim.api.nvim_create_buf(true, false)
+        vim.api.nvim_set_current_buf(buf2)
+        local client2_id =
+          assert(vim.lsp.start({ name = 'dummy2', cmd = server2.cmd, bufnr = buf2 }))
+
+        vim.api.nvim_exec_autocmds('BufWritePost', { buf = buf2, modeline = false })
+
+        vim.lsp.get_client_by_id(client1_id):stop()
+        vim.lsp.get_client_by_id(client2_id):stop()
+
+        return {
+          server1 = vim.tbl_map(function(m)
+            return m.method
+          end, server1.messages),
+          server2 = vim.tbl_map(function(m)
+            return m.method
+          end, server2.messages),
+        }
+      end)
+      -- server1 is not attached to buf2, so it must not receive didSave for it.
+      eq(false, vim.tbl_contains(messages.server1, 'textDocument/didSave'))
+      eq(true, vim.tbl_contains(messages.server2, 'textDocument/didSave'))
+    end)
+
     it('BufWritePre does not send notifications if server lacks willSave capabilities', function()
       exec_lua(create_server_definition)
       local messages = exec_lua(function()
