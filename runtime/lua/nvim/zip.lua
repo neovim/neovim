@@ -311,18 +311,18 @@ local function read_tempfile(buf, temp)
   set_readonly(buf)
 end
 
---- Resolve a `zip://` buffer name, as used by quickfix and direct `:edit`.
+--- Resolve a `nvim-zip://` buffer name, as used by quickfix and direct `:edit`.
 ---
 --- The archive path and the entry path are simply joined, so the split is found by walking
 --- components: the first one that is a regular file is the archive, because a regular file
 --- cannot have children on disk. Entry paths may therefore contain any character.
----@param name string `zip://{archive}/{path}`
+---@param name string `nvim-zip://{archive}/{path}`
 ---@return string?, string? archive and entry path
 local function resolve_uri(name)
-  if not vim.startswith(name, 'zip://') then
+  if not vim.startswith(name, 'nvim-zip://') then
     return
   end
-  local value = name:sub(7)
+  local value = name:sub(12)
   local offset = 1
   while true do
     local separator = value:find('/', offset + 1, true)
@@ -340,7 +340,7 @@ end
 
 ---@class (private) nvim.zip.State
 ---@field source string Path to the archive.
----@field path? string Archive path shown by a `zip://` buffer.
+---@field path? string Archive path shown by a `nvim-zip://` buffer.
 ---@field paths? string[] Entry paths carried over from the initial listing.
 ---@field prefix? string Archive directory currently listed.
 ---@field pending_prefix? string Prefix to commit once the backend succeeds.
@@ -395,7 +395,7 @@ end
 
 --- Read one archive entry into a read-only buffer.
 ---@param buf integer Target entry buffer.
----@param name string `zip://` buffer name.
+---@param name string `nvim-zip://` buffer name.
 function M.read(buf, name)
   buf = vim._resolve_bufnr(buf)
   local state = get_state(buf)
@@ -487,7 +487,7 @@ function M.open(buf, name, entry)
     require('nvim.dir').open(buf, name, M)
     return
   end
-  local uri = ('zip://%s/%s'):format(state.source, path)
+  local uri = ('nvim-zip://%s/%s'):format(state.source, path)
   local entry_buf = vim.fn.bufadd(uri)
   set_state(entry_buf, { source = state.source, path = path })
   api.nvim_cmd({

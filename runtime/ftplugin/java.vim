@@ -83,7 +83,7 @@ if exists("g:ftplugin_java_source_path") &&
 		let l:archive = get(s:zip_files, bufnr('%'), s:zip_files[0])
 		" The builtin plugin joins the paths; zipPlugin.vim separates them with "::".
 		return exists('#nvim.zip')
-			    \ ? 'zip://' . l:archive . '/' . l:member
+			    \ ? 'nvim-zip://' . l:archive . '/' . l:member
 			    \ : 'zipfile://' . l:archive . '::' . l:member
 	    endfunction
 
@@ -397,7 +397,7 @@ if exists("s:zip_func_upgradable")
 	const archive: string = get(zip_files, bufnr('%'), zip_files[0])
 	# The builtin plugin joins the paths; zipPlugin.vim separates them with "::".
 	return exists('#nvim.zip')
-		? 'zip://' .. archive .. '/' .. member
+		? 'nvim-zip://' .. archive .. '/' .. member
 		: 'zipfile://' .. archive .. '::' .. member
     enddef
 
