@@ -180,7 +180,7 @@ static void log_frame_layout(frame_T *frame)
        frame->fr_height,
        frame->fr_win == NULL ? -1 : frame->fr_win->w_width,
        frame->fr_win == NULL ? -1 : frame->fr_win->w_height,
-       frame->fr_win == NULL ? -1 : frame->fr_win->w_id);
+       frame->fr_win == NULL ? -1 : frame->fr_win->handle);
   if (frame->fr_child != NULL) {
     DLOG("children");
     log_frame_layout(frame->fr_child);
