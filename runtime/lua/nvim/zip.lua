@@ -10,6 +10,15 @@ local function unzip()
   if command == '' then
     return nil, 'unzip executable not found'
   end
+  -- Windows searches the current directory before $PATH, so an archive could be opened with an
+  -- `unzip` shipped next to it.
+  if vim.fn.has('win32') == 1 then
+    local dir = uv.fs_realpath(vim.fs.dirname(vim.fs.normalize(command)))
+    local cwd = uv.fs_realpath(vim.fn.getcwd())
+    if dir and cwd and dir == cwd then
+      return nil, 'refusing to run unzip from the current directory'
+    end
+  end
   return command
 end
 
@@ -302,33 +311,36 @@ local function read_tempfile(buf, temp)
   set_readonly(buf)
 end
 
---- Parse a `zipfile://` buffer name, as used by quickfix and direct `:edit`.
----@param name string `zipfile://{archive}::{path}`
+--- Resolve a `zip://` buffer name, as used by quickfix and direct `:edit`.
+---
+--- The archive path and the entry path are simply joined, so the split is found by walking
+--- components: the first one that is a regular file is the archive, because a regular file
+--- cannot have children on disk. Entry paths may therefore contain any character.
+---@param name string `zip://{archive}/{path}`
 ---@return string?, string? archive and entry path
-local function parse_uri(name)
-  if not vim.startswith(name, 'zipfile://') then
+local function resolve_uri(name)
+  if not vim.startswith(name, 'zip://') then
     return
   end
-  local value = name:sub(11)
-  local separator ---@type integer?
+  local value = name:sub(7)
   local offset = 1
   while true do
-    local next_separator = value:find('::', offset, true)
-    if not next_separator then
-      break
+    local separator = value:find('/', offset + 1, true)
+    if not separator then
+      return
     end
-    separator = next_separator
-    offset = next_separator + 2
+    local archive = value:sub(1, separator - 1)
+    local stat = uv.fs_stat(archive)
+    if stat and stat.type == 'file' then
+      return archive, value:sub(separator + 1)
+    end
+    offset = separator
   end
-  if not separator then
-    return
-  end
-  return value:sub(1, separator - 1), value:sub(separator + 2)
 end
 
 ---@class (private) nvim.zip.State
 ---@field source string Path to the archive.
----@field path? string Archive path shown by a `zipfile://` buffer.
+---@field path? string Archive path shown by a `zip://` buffer.
 ---@field paths? string[] Entry paths carried over from the initial listing.
 ---@field prefix? string Archive directory currently listed.
 ---@field pending_prefix? string Prefix to commit once the backend succeeds.
@@ -383,13 +395,13 @@ end
 
 --- Read one archive entry into a read-only buffer.
 ---@param buf integer Target entry buffer.
----@param name string `zipfile://` buffer name.
+---@param name string `zip://` buffer name.
 function M.read(buf, name)
   buf = vim._resolve_bufnr(buf)
   local state = get_state(buf)
   local source, path = state and state.source, state and state.path
   if not source or not path then
-    source, path = parse_uri(name)
+    source, path = resolve_uri(name)
   end
   if not source or not path then
     set_readonly(buf)
@@ -475,7 +487,7 @@ function M.open(buf, name, entry)
     require('nvim.dir').open(buf, name, M)
     return
   end
-  local uri = ('zipfile://%s::%s'):format(state.source, path)
+  local uri = ('zip://%s/%s'):format(state.source, path)
   local entry_buf = vim.fn.bufadd(uri)
   set_state(entry_buf, { source = state.source, path = path })
   api.nvim_cmd({
