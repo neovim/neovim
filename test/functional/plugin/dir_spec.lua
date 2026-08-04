@@ -235,8 +235,13 @@ describe('nvim.dir', function()
 
     exec_lua(function()
       require('nvim.dir').open(0, 'custom://error', {
-        list = function(_, _, cb)
-          cb('simulated error')
+        list = function(buf, _, cb)
+          vim.b[buf].custom_fail = (vim.b[buf].custom_fail or 0) + 1
+          if vim.b[buf].custom_fail == 1 then
+            cb('simulated error')
+          else
+            cb(nil, { { name = 'recovered.txt', dir = false } })
+          end
         end,
         open = function() end,
         open_parent = function() end,
@@ -244,7 +249,67 @@ describe('nvim.dir', function()
     end)
 
     ok(exec_capture('messages'):find('simulated error', 1, true) ~= nil)
-    eq(false, exec_lua([[return vim.b.nvim_dir ~= nil]]))
+    -- A failed initial load renders an empty listing that "R" can retry.
+    eq('simulated error', exec_lua([[return vim.b.nvim_dir.err]]))
+    eq({ '' }, lines())
+    eq('nowrite', bufopt('buftype'))
+    eq(false, bufopt('modifiable'))
+    feed('R')
+    poke_eventloop()
+    eq({ 'recovered.txt' }, lines())
+    eq(vim.NIL, exec_lua([[return vim.b.nvim_dir.err]]))
+  end)
+
+  it('failed directory open does not repeat the error on every BufEnter', function()
+    t.skip(t.is_os('win'), 'directory permissions are POSIX-only')
+    t.skip(vim.uv.getuid() == 0, 'root ignores directory permissions')
+    n.clear({ args = { '--clean' } })
+    make_fixture()
+    local locked = root .. '/locked'
+    t.mkdir(locked)
+    finally(function()
+      vim.uv.fs_chmod(locked, tonumber('755', 8))
+    end)
+    vim.uv.fs_chmod(locked, 0)
+
+    edit(root)
+    api.nvim_win_set_cursor(0, { line_of('locked/'), 0 })
+    feed('<CR>')
+    poke_eventloop()
+    local function count_errors()
+      local _, n_errors = exec_capture('messages'):gsub('EACCES', '')
+      return n_errors
+    end
+    eq(1, count_errors())
+    ok(exec_lua([[return vim.b.nvim_dir.err]]):find('EACCES', 1, true) ~= nil)
+    eq('nowrite', bufopt('buftype'))
+    edit(file)
+    feed('<C-^>')
+    poke_eventloop()
+    eq(1, count_errors())
+    vim.uv.fs_chmod(locked, tonumber('755', 8))
+    t.write_file(locked .. '/inside.txt', 'inside', true)
+    feed('R')
+    poke_eventloop()
+    eq({ 'inside.txt' }, lines())
+  end)
+
+  it('does not swallow errors raised after the list callback', function()
+    n.clear({ args = { '--clean' } })
+
+    local err = exec_lua(function()
+      local ok_open, e = pcall(require('nvim.dir').open, 0, 'custom://late-error', {
+        list = function(_, _, cb)
+          cb(nil, { { name = 'file.txt', dir = false } })
+          error('late provider error')
+        end,
+        open = function() end,
+        open_parent = function() end,
+      })
+      return not ok_open and tostring(e) or nil
+    end)
+    ok(err ~= nil and err:find('late provider error', 1, true) ~= nil)
+    eq({ 'file.txt' }, lines())
   end)
 
   it('reloads custom listing providers', function()
@@ -587,6 +652,7 @@ describe('nvim.dir', function()
     poke_eventloop()
 
     ok(exec_capture('messages'):find('ENOENT', 1, true) ~= nil)
+    ok(exec_lua([[return vim.b.nvim_dir.err]]):find('ENOENT', 1, true) ~= nil)
     assert_directory(subdir)
   end)
 

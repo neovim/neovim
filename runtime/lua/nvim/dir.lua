@@ -26,6 +26,7 @@ local M = {}
 
 ---@class (private) nvim.dir.State
 ---@field gen integer
+---@field err? string
 ---@field provider? nvim.dir.Provider
 
 local listing_group = api.nvim_create_augroup('nvim.dir.listing', { clear = false })
@@ -212,7 +213,8 @@ function load(buf, name, provider, restore_view, setup, select)
   local list_gen = state.gen + 1
   state.gen = list_gen
   vim.b[buf].nvim_dir = state
-  -- Discard the listing state if the initial load fails, but preserve an existing listing on reload failure.
+  -- Render an empty listing (retried by "R" or :edit) if the initial load fails,
+  -- but preserve an existing listing on reload failure.
   local first_render = state.provider == nil
   local done = false
 
@@ -229,10 +231,12 @@ function load(buf, name, provider, restore_view, setup, select)
     end
     if err ~= nil then
       notify_error(err)
-      if first_render then
-        close_listing(buf)
+      if not first_render then
+        current_state.err = err
+        vim.b[buf].nvim_dir = current_state
+        return
       end
-      return
+      entries = {}
     end
     ---@cast entries nvim.dir.Entry[]
 
@@ -248,7 +252,7 @@ function load(buf, name, provider, restore_view, setup, select)
     if select and api.nvim_get_current_buf() == buf then
       select_entry(select)
     end
-    current_state.provider = provider
+    current_state.err, current_state.provider = err, provider
     vim.b[buf].nvim_dir = current_state
 
     if not setup then
@@ -264,6 +268,10 @@ function load(buf, name, provider, restore_view, setup, select)
 
   local ok, call_err = pcall(provider.list, buf, name, on_list) ---@type boolean, any
   if not ok then
+    if done then
+      -- The handler already ran and would ignore this error: propagate it.
+      error(call_err, 0)
+    end
     -- Route provider exceptions through the list handler so failures share one cleanup path.
     on_list(tostring(call_err), nil)
   end
