@@ -239,7 +239,7 @@ static void win_redr_stl_expr(win_T *wp, bool draw_winbar, bool draw_ruler, bool
   OptIndex opt_idx = kOptInvalid;
   int opt_scope = 0;
   stl_hlrec_t *hltab;
-  StlClickRecord *tabtab;
+  StlClickDefinition *click_defs;
   bool is_stl_global = global_stl_height() > 0;
 
   ScreenGrid *grid = wp && wp->w_floating && !is_stl_global ? &wp->w_grid_alloc : &default_grid;
@@ -274,6 +274,7 @@ static void win_redr_stl_expr(win_T *wp, bool draw_winbar, bool draw_ruler, bool
     attr = HL_ATTR(group);
     maxwidth = Columns;
     opt_idx = kOptTabline;
+    click_defs = tab_page_click_defs;
   } else if (draw_winbar) {
     opt_idx = kOptWinbar;
     stl = ((*wp->w_p_wbr != NUL) ? wp->w_p_wbr : p_wbr);
@@ -293,65 +294,66 @@ static void win_redr_stl_expr(win_T *wp, bool draw_winbar, bool draw_ruler, bool
     stl_clear_click_defs(wp->w_winbar_click_defs, wp->w_winbar_click_defs_size);
     wp->w_winbar_click_defs = stl_alloc_click_defs(wp->w_winbar_click_defs, maxwidth,
                                                    &wp->w_winbar_click_defs_size);
+    click_defs = wp->w_winbar_click_defs;
+  } else if (draw_ruler && ui_event) {
+    stl = p_ruf;
+    opt_idx = kOptRulerformat;
+    maxwidth = Columns / 2;
+    fillchar = schar_from_ascii(' ');
+    group = HLF_MSG;
+    attr = HL_ATTR(group);
+    click_defs = NULL;
+  } else if (draw_ruler) {
+    stl = p_ruf;
+    opt_idx = kOptRulerformat;
+    // advance past any leading group spec - implicit in ru_col
+    if (*stl == '%') {
+      if (*++stl == '-') {
+        stl++;
+      }
+      if (atoi(stl)) {
+        while (ascii_isdigit(*stl)) {
+          stl++;
+        }
+      }
+      if (*stl++ != '(') {
+        stl = p_ruf;
+      }
+    }
+    row = Rows - 1;
+    col = MAX(ru_col, Columns / 2);
+    grid = grid_adjust(&msg_grid_adj, &row, &col);
+    maxwidth = Columns - col;
+    fillchar = schar_from_ascii(' ');
+    group = HLF_MSG;
+    attr = HL_ATTR(group);
+    click_defs = NULL;
   } else {
-    const bool in_status_line = wp->w_status_height != 0 || is_stl_global;
-    if (wp->w_floating && !is_stl_global && !draw_ruler) {
+    // statusline
+    stl = ((*wp->w_p_stl != NUL) ? wp->w_p_stl : p_stl);
+    opt_idx = kOptStatusline;
+    opt_scope = ((*wp->w_p_stl != NUL) ? OPT_LOCAL : 0);
+    if (is_stl_global) {
+      row = Rows - (int)p_ch - 1;
+      col = 0;
+      maxwidth = Columns;
+    } else if (wp->w_status_height == 0) {
+      goto theend;
+    } else if (wp->w_floating) {
       row = wp->w_winrow_off + wp->w_view_height;
       col = wp->w_wincol_off;
       maxwidth = wp->w_view_width;
     } else {
-      row = is_stl_global ? (Rows - (int)p_ch - 1) : W_ENDROW(wp);
-      maxwidth = in_status_line && !is_stl_global ? wp->w_width : Columns;
+      row = W_ENDROW(wp);
+      col = wp->w_wincol;
+      maxwidth = wp->w_width;
     }
     fillchar = fillchar_status(&group, wp);
+    attr = win_hl_attr(wp, (int)group);
     stl_clear_click_defs(wp->w_status_click_defs, wp->w_status_click_defs_size);
     wp->w_status_click_defs = stl_alloc_click_defs(wp->w_status_click_defs, maxwidth,
                                                    &wp->w_status_click_defs_size);
-
-    if (draw_ruler && ui_event) {
-      stl = p_ruf;
-      opt_idx = kOptRulerformat;
-      maxwidth = Columns / 2;
-      if (!in_status_line) {
-        fillchar = schar_from_ascii(' ');
-        group = HLF_MSG;
-      }
-    } else if (draw_ruler) {
-      stl = p_ruf;
-      opt_idx = kOptRulerformat;
-      // advance past any leading group spec - implicit in ru_col
-      if (*stl == '%') {
-        if (*++stl == '-') {
-          stl++;
-        }
-        if (atoi(stl)) {
-          while (ascii_isdigit(*stl)) {
-            stl++;
-          }
-        }
-        if (*stl++ != '(') {
-          stl = p_ruf;
-        }
-      }
-      col = MAX(ru_col - (Columns - maxwidth), (maxwidth + 1) / 2);
-      maxwidth -= col;
-      if (!in_status_line) {
-        row = Rows - 1;
-        grid = grid_adjust(&msg_grid_adj, &row, &col);
-        maxwidth--;  // writing in last column may cause scrolling
-        fillchar = schar_from_ascii(' ');
-        group = HLF_MSG;
-      }
-    } else {
-      opt_idx = kOptStatusline;
-      stl = ((*wp->w_p_stl != NUL) ? wp->w_p_stl : p_stl);
-      opt_scope = ((*wp->w_p_stl != NUL) ? OPT_LOCAL : 0);
-    }
-
-    attr = win_hl_attr(wp, (int)group);
-    if (!wp->w_floating && in_status_line && !is_stl_global) {
-      col += wp->w_wincol;
-    }
+    click_defs = wp->w_status_click_defs;
   }
 
   if (maxwidth <= 0) {
@@ -367,8 +369,11 @@ static void win_redr_stl_expr(win_T *wp, bool draw_winbar, bool draw_ruler, bool
   // Make a copy, because the statusline may include a function call that
   // might change the option value and free the memory.
   stl = xstrdup(stl);
+
+  StlClickRecord *tabtab = NULL;
   build_stl_str_hl(ewp, buf, sizeof(buf), stl, opt_idx, opt_scope,
-                   fillchar, maxwidth, &hltab, NULL, &tabtab, NULL);
+                   fillchar, maxwidth, &hltab, NULL, click_defs ? &tabtab : NULL, NULL);
+  stl_fill_click_defs(click_defs, tabtab, buf, maxwidth, wp == NULL);
 
   xfree(stl);
   ewp->w_p_crb = p_crb_save;
@@ -443,14 +448,6 @@ static void win_redr_stl_expr(win_T *wp, bool draw_winbar, bool draw_ruler, bool
   grid_line_fill(col, maxcol, fillchar, curattr);
   grid_line_flush();
 
-  // Fill the tab_page_click_defs, w_status_click_defs or w_winbar_click_defs array for clicking
-  // in the tab page line, status line or window bar
-  StlClickDefinition *click_defs = (wp == NULL) ? tab_page_click_defs
-                                                : draw_winbar ? wp->w_winbar_click_defs
-                                                              : wp->w_status_click_defs;
-
-  stl_fill_click_defs(click_defs, tabtab, buf, maxwidth, wp == NULL);
-
 theend:
   entered = false;
 
@@ -482,22 +479,21 @@ void win_redr_winbar(win_T *wp)
 
 void redraw_ruler(void)
 {
-  static int did_ruler_col = -1;
+  static bool did_show_ruler = false;
   win_T *wp = !curwin->w_config.hide
               && curwin->w_status_height == 0 ? curwin : lastwin_nofloating(NULL);
   bool is_stl_global = global_stl_height() > 0;
 
   // Check if ruler should be drawn, clear if it was drawn before.
-  if (!p_ru || wp->w_status_height > 0 || is_stl_global || (p_ch == 0 && !ui_has(kUIMessages))) {
+  bool part_of_status = wp->w_status_height != 0 || is_stl_global;
+  if (!p_ru || part_of_status || (p_ch == 0 && !ui_has(kUIMessages))) {
     if (did_show_ext_ruler && ui_has(kUIMessages)) {
       ui_call_msg_ruler((Array)ARRAY_DICT_INIT);
       did_show_ext_ruler = false;
-    } else if (did_ruler_col > 0) {
-      msg_col = did_ruler_col;
-      msg_row = Rows - 1;
+    } else if (did_show_ruler && !ui_has(kUIMessages)) {
       msg_clr_eos();
     }
-    did_ruler_col = -1;
+    did_show_ruler = false;
     return;
   }
 
@@ -513,103 +509,8 @@ void redraw_ruler(void)
     return;
   }
 
-  bool part_of_status = wp->w_status_height || is_stl_global;
-  if (*p_ruf && (p_ch > 0 || (ui_has(kUIMessages) && !part_of_status))) {
-    win_redr_stl_expr(wp, false, true, ui_has(kUIMessages));
-    return;
-  }
-
-  hlf_T group = HLF_MSG;
-  int off = wp->w_status_height ? wp->w_wincol : 0;
-  int width = wp->w_status_height ? wp->w_width : Columns;
-  schar_T fillchar = part_of_status ? fillchar_status(&group, wp) : schar_from_ascii(' ');
-  int attr = part_of_status ? win_hl_attr(wp, (int)group) : HL_ATTR(group);
-
-  // In list mode virtcol needs to be recomputed
-  colnr_T virtcol = wp->w_virtcol;
-  if (wp->w_p_list && wp->w_p_lcs_chars.tab1 == NUL) {
-    wp->w_p_list = false;
-    getvvcol(wp, &wp->w_cursor, NULL, &virtcol, NULL, 0);
-    wp->w_p_list = true;
-  }
-
-  // Check if not in Insert mode and the line is empty (will show "0-1").
-  int empty_line = (State & MODE_INSERT) == 0
-                   && *ml_get_buf(wp->w_buffer, wp->w_cursor.lnum) == NUL;
-
-#define RULER_BUF_LEN 70
-  char buffer[RULER_BUF_LEN];
-
-  // row number, column number is appended
-  // l10n: leave as-is unless a space after the comma is preferred
-  // l10n: do not add any row/column label, due to the limited space
-  int bufferlen = vim_snprintf(buffer, RULER_BUF_LEN, _("%" PRId64 ","),
-                               (wp->w_buffer->b_ml.ml_flags & ML_EMPTY)
-                               ? 0
-                               : (int64_t)wp->w_cursor.lnum);
-  bufferlen += col_print(buffer + bufferlen, RULER_BUF_LEN - (size_t)bufferlen,
-                         empty_line ? 0 : (int)wp->w_cursor.col + 1,
-                         (int)virtcol + 1);
-
-  // Add a "50%" if there is room for it.
-  // On the last line, don't print in the last column (scrolls the
-  // screen up on some terminals).
-  char rel_pos[RULER_BUF_LEN];
-  int rel_poslen = get_rel_pos(wp, rel_pos, RULER_BUF_LEN);
-  int n1 = bufferlen + vim_strsize(rel_pos);
-  if (wp->w_status_height == 0 && !is_stl_global && !ui_has(kUIMessages)) {
-    n1++;  // can't use last char of screen
-  }
-
-  int this_ru_col = ru_col - (Columns - width);
-  // Never use more than half the window/screen width, leave the other half
-  // for the filename.
-  int n2 = (width + 1) / 2;
-  this_ru_col = MAX(this_ru_col, n2);
-  if (this_ru_col + n1 < width) {
-    // need at least space for rel_pos + NUL
-    while (this_ru_col + n1 < width
-           && RULER_BUF_LEN > bufferlen + rel_poslen + 1) {  // +1 for NUL
-      bufferlen += (int)schar_get(buffer + bufferlen, fillchar);
-      n1++;
-    }
-    bufferlen += vim_snprintf(buffer + bufferlen, RULER_BUF_LEN - (size_t)bufferlen,
-                              "%s", rel_pos);
-  }
-  (void)bufferlen;
-
-  if (ui_has(kUIMessages) && !part_of_status) {
-    MAXSIZE_TEMP_ARRAY(content, 1);
-    MAXSIZE_TEMP_ARRAY(chunk, 3);
-    ADD_C(chunk, INTEGER_OBJ(attr));
-    ADD_C(chunk, CSTR_AS_OBJ(buffer));
-    ADD_C(chunk, INTEGER_OBJ(HLF_MSG));
-    assert(attr == HL_ATTR(HLF_MSG));
-    ADD_C(content, ARRAY_OBJ(chunk));
-    ui_call_msg_ruler(content);
-    did_show_ext_ruler = true;
-    did_ruler_col = 1;
-  } else {
-    if (did_show_ext_ruler) {
-      ui_call_msg_ruler((Array)ARRAY_DICT_INIT);
-      did_show_ext_ruler = false;
-    }
-    // Truncate at window boundary.
-    for (n1 = 0, n2 = 0; buffer[n1] != NUL; n1 += utfc_ptr2len(buffer + n1)) {
-      n2 += utf_ptr2cells(buffer + n1);
-      if (this_ru_col + n2 > width) {
-        bufferlen = n1;
-        buffer[bufferlen] = NUL;
-        break;
-      }
-    }
-
-    grid_line_start(&msg_grid_adj, Rows - 1);
-    did_ruler_col = off + this_ru_col;
-    int w = grid_line_puts(did_ruler_col, buffer, -1, attr);
-    grid_line_fill(did_ruler_col + w, off + width, fillchar, attr);
-    grid_line_flush();
-  }
+  win_redr_stl_expr(wp, false, true, ui_has(kUIMessages));
+  did_show_ruler = !ui_has(kUIMessages);
 }
 
 /// Get the character to use in a status line.  Get its attributes in "*attr".

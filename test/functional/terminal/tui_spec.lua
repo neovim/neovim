@@ -853,7 +853,7 @@ describe('TUI :restart', function()
     screen:expect([[
       ^                                                  |
       ~                                                 |*4
-                                      0,0-1         All |
+                                      0,0-1          All|
       {5:-- TERMINAL --}                                    |
     ]])
 
@@ -865,7 +865,7 @@ describe('TUI :restart', function()
       0002;<control>;Cc;0;BN;;;;;N;START OF TEXT;;;;    |
       0003;<control>;Cc;0;BN;;;;;N;END OF TEXT;;;;      |
       0004;<control>;Cc;0;BN;;;;;N;END OF TRANSMISSION;;|
-      TRIGGERED: 1                    1,1           Top |
+      TRIGGERED: 1                    1,1            Top|
       {5:-- TERMINAL --}                                    |
     ]])
 

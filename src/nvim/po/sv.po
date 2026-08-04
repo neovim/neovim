@@ -460,13 +460,6 @@ msgstr "Katakana"
 msgid "Bopomofo"
 msgstr "Bopomofo"
 
-#. row number, column number is appended
-#. l10n: leave as-is unless a space after the comma is preferred
-#. l10n: do not add any row/column label, due to the limited space
-#, c-format
-msgid "%ld,"
-msgstr "%ld,"
-
 msgid ""
 "\n"
 "\tLast set from "

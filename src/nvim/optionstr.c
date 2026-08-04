@@ -1838,8 +1838,8 @@ static const char *did_set_statustabline_rulerformat(optset_T *args, bool rulerf
   char *s = *varp;
   bool is_stl = args->os_idx == kOptStatusline;
 
-  // reset statusline to default when setting global option and empty string is being set
-  if (is_stl
+  // reset global statusline/rulerformat option to default when it is being set to an empty string
+  if ((is_stl || rulerformat)
       && ((args->os_flags & OPT_GLOBAL) || !(args->os_flags & OPT_LOCAL))
       && s[0] == NUL) {
     xfree(*varp);

@@ -561,14 +561,14 @@ describe('API/win', function()
       api.nvim_set_option_value('statusline', 'window-status', { win = 0 })
       eq('window-status', api.nvim_get_option_value('statusline', { win = 0 }))
       eq(
-        "%<%f %{%nvim_eval_statusline('%h%w%m%r', {'maxwidth': 30}).width > 0 ? '%h%w%m%r ' : ''%}%=%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}",
+        "%<%f %{%nvim_eval_statusline('%h%w%m%r', {'maxwidth': 30}).width > 0 ? '%h%w%m%r ' : ''%}%=%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}%{% &ruler ? &rulerformat : '' %}",
         api.nvim_get_option_value('statusline', { scope = 'global' })
       )
       command('set modified')
       command('enew') -- global-local: not preserved in new buffer
       -- confirm local value was not copied
       eq(
-        "%<%f %{%nvim_eval_statusline('%h%w%m%r', {'maxwidth': 30}).width > 0 ? '%h%w%m%r ' : ''%}%=%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}",
+        "%<%f %{%nvim_eval_statusline('%h%w%m%r', {'maxwidth': 30}).width > 0 ? '%h%w%m%r ' : ''%}%=%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}%{% &ruler ? &rulerformat : '' %}",
         api.nvim_get_option_value('statusline', { win = 0 })
       )
       eq('', eval('&l:statusline'))
@@ -2337,7 +2337,7 @@ describe('API/win', function()
       screen:expect([[
                                  │^                        |
         ~                        │~                       |*4
-                                        0,0-1         All |
+                                        0,0-1          All|
         {5:-- TERMINAL --}                                    |
       ]])
       screen:detach()
@@ -2351,7 +2351,7 @@ describe('API/win', function()
       screen:expect([[
         ^                         │                        |
         ~                        │~                       |*4
-                                        0,0-1         All |
+                                        0,0-1          All|
         {5:-- TERMINAL --}                                    |
       ]])
     end)

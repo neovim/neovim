@@ -936,7 +936,7 @@ describe('ui/ext_messages', function()
   end)
 
   it("supports 'showcmd' and 'ruler(format)'", function()
-    command('set showcmd ruler')
+    command('set showcmd ruler rulerformat=%12(%l,%c%V%=%P%)')
     command('hi link MsgArea ErrorMsg')
     screen:expect({
       grid = [[
@@ -1890,25 +1890,11 @@ describe('ui/builtin messages', function()
   end)
 
   it('supports ruler with laststatus=0', function()
-    command('set ruler laststatus=0')
+    command('set laststatus=0 ruler rulerformat=%-15(%c%V\\ %p%%%)')
     screen:expect([[
       ^                                                            |
       {1:~                                                           }|*5
-                                                0,0-1         All |
-    ]])
-
-    command('hi MsgArea guibg=#333333')
-    screen:expect([[
-      ^                                                            |
-      {1:~                                                           }|*5
-      {101:                                          0,0-1         All }|
-    ]])
-
-    command('set rulerformat=%15(%c%V\\ %p%%%)')
-    screen:expect([[
-      ^                                                            |
-      {1:~                                                           }|*5
-      {101:                                          0,0-1 100%        }|
+                                                   0-1 100%       |
     ]])
 
     -- Ruler is cleared when it is no longer drawn.
@@ -1916,7 +1902,21 @@ describe('ui/builtin messages', function()
     screen:expect([[
       ^                                                            |
       {1:~                                                           }|*5
-      {101:                                                            }|
+                                                                  |
+    ]])
+
+    command('set ruler rulerformat&')
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*5
+                                                0,0-1          All|
+    ]])
+
+    command('hi MsgArea guibg=#333333')
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*5
+      {101:                                          0,0-1          All}|
     ]])
   end)
 

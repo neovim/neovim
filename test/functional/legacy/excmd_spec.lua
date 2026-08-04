@@ -263,7 +263,7 @@ describe(':confirm command dialog', function()
       fooba^r                                                                     |
       {1:~                                                                          }|*5
                                                                                  |
-                                                               1,6           All |
+                                                               1,6            All|
     ]])
     eq('foo\n', read_file('Xconfirm_write_ro'))
 
@@ -377,7 +377,7 @@ describe(':confirm command dialog', function()
       d                                                                          |
       {1:~                                                                          }|*2
                                                                                  |
-                                                               1,1           All |
+                                                               1,1            All|
     ]])
     eq('a\nb\nc\nd\n', read_file('Xwrite_partial'))
     os.remove('Xwrite_partial')

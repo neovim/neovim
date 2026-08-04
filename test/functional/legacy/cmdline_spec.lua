@@ -386,7 +386,7 @@ describe('cmdline', function()
     api.nvim_set_option_value('rulerformat', '%!TestRulerFn()', {})
     screen:expect([[
       ^                                        |
-                            10,20         30% |
+                            10,20          30%|
     ]])
   end)
 

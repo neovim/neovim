@@ -3578,7 +3578,7 @@ describe('float window', function()
                                                   |
           {0:~                                       }|*5
         ## grid 3
-                                1,1           All |
+                                1,1            All|
         ## grid 4
           {1:^aaa aab  }|
           {1:abb acc  }|
@@ -3597,7 +3597,7 @@ describe('float window', function()
           {0:~    }{1:abb acc  }{0:                          }|
           {0:~    }{2:~        }{0:                          }|
           {0:~                                       }|*3
-                                1,1           All |
+                                1,1            All|
         ]],
         }
       end
@@ -3613,7 +3613,7 @@ describe('float window', function()
                                                   |
           {0:~                                       }|*5
         ## grid 3
-                                1,5           All |
+                                1,5            All|
         ## grid 4
           {1:aaa ^aab  }|
           {1:abb acc  }|
@@ -3632,7 +3632,7 @@ describe('float window', function()
           {0:~    }{1:abb acc  }{0:                          }|
           {0:~    }{2:~        }{0:                          }|
           {0:~                                       }|*3
-                                1,5           All |
+                                1,5            All|
         ]],
         }
       end
@@ -3692,7 +3692,7 @@ describe('float window', function()
                                                             |
           {0:~                                                 }|*7
         ## grid 3
-                                          0,0-1         All |
+                                          0,0-1          All|
         ## grid 4
           {1:   }|
           {2:~  }|*2
@@ -3716,7 +3716,7 @@ describe('float window', function()
           {1:   }  {1:^   }                                          |
           {2:~  }{0:  }{2:~  }{0:                                          }|*2
           {0:~                                                 }|*5
-                                          0,0-1         All |
+                                          0,0-1          All|
         ]],
         }
       end

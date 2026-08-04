@@ -154,6 +154,8 @@ OPTIONS
   To restore the previous truncation from the left, add a `%<` to the start.
   The same applies to 'rulerformat', 'statuscolumn', 'tabline', 'winbar',
   'titlestring', and 'iconstring'.
+• 'rulerformat' can no longer be set empty, the new default expression will be
+  restored instead.
 
 PLUGINS
 
@@ -162,6 +164,12 @@ PLUGINS
 TREESITTER
 
 • todo
+
+UI
+
+• The bottom right cell of the screen is no longer left empty when the ruler
+  is shown. This was originally intended to prevent unwanted scrolling on
+  quirky terminals.
 
 VIMSCRIPT
 
@@ -227,7 +235,8 @@ BUILD
 
 DEFAULTS
 
-• todo
+• 'rulerformat' default is exposed as a statusline expression (previously it
+  was implemented as an internal C routine).
 
 DIAGNOSTICS
 

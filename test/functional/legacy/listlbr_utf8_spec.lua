@@ -249,7 +249,7 @@ describe('linebreak', function()
       {17:foo}^                 │{1:~                                      }|
       xxxxxxxxxxxxxxxxxxxx│{1:~                                      }|
       {1:~                   }│{1:~                                      }|*2
-      {5:-- VISUAL BLOCK --}              2x4       2,4           All |
+      {5:-- VISUAL BLOCK --}              2x4       2,4            All|
     ]])
 
     -- TAB as end char: 'linebreak' shouldn't break Visual block hl
@@ -264,7 +264,7 @@ describe('linebreak', function()
       f{17:oo12345}bar                                                 |
       f^o{17:o     }bar                                                 |
       {1:~                                                           }|*2
-      {5:-- VISUAL BLOCK --}              3x7       3,2           All |
+      {5:-- VISUAL BLOCK --}              3x7       3,2            All|
     ]])
     feed('<Esc>:setlocal linebreak<CR>gv')
     screen:expect_unchanged(true)
@@ -281,7 +281,7 @@ describe('linebreak', function()
       f{17:oo123456}bar                                                |
       f^o{17:o<ffff>}bar                                                |
       {1:~                                                           }|*2
-      {5:-- VISUAL BLOCK --}              3x8       3,2           All |
+      {5:-- VISUAL BLOCK --}              3x8       3,2            All|
     ]])
     feed('<Esc>:setlocal linebreak<CR>gv')
     screen:expect_unchanged(true)
@@ -303,7 +303,7 @@ describe('linebreak', function()
       xx{17:xx}foo: {17:x}xxxxx                                             |
       xx{17:xx}bar: ^xxxxxx                                             |
       {1:~                                                           }|*2
-      {5:-- VISUAL BLOCK --}              3x8       3,5-10        All |
+      {5:-- VISUAL BLOCK --}              3x8       3,5-10         All|
     ]])
     feed('<Esc>:setlocal linebreak<CR>gv')
     screen:expect_unchanged(true)

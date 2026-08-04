@@ -346,7 +346,7 @@ describe('global statusline', function()
     screen:expect([[
       ^                                                            |
       {1:~                                                           }|*14
-                                                0,0-1         All |
+                                                0,0-1          All|
     ]])
 
     command('set laststatus=3')
@@ -402,7 +402,7 @@ describe('global statusline', function()
       {2:< 0,0-1          All <-1          All <}│{1:~                   }|
                                              │{1:~                   }|
       {1:~                                      }│{1:~                   }|*4
-                                                0,0-1         All |
+                                                0,0-1          All|
     ]])
 
     command('set laststatus=3')
@@ -816,7 +816,7 @@ describe('statusline', function()
       {1:~}{15:^ }{1:                                      }|
       {1:~                                       }|*4
       {2:[No Name]             0,0-1          All}|
-                            0,0-1         All |
+                            0,0-1          All|
     ]])
     api.nvim_win_close(win, true)
     screen:expect([[
@@ -1142,7 +1142,7 @@ describe('default statusline', function()
       "%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}",
       "%{% &busy > 0 ? '◐ ' : '' %}",
       "%{% luaeval('(package.loaded[''vim.diagnostic''] and next(vim.diagnostic.count()) and vim.diagnostic.status() .. '' '') or '''' ') %}",
-      "%{% &ruler ? ( &rulerformat == '' ? '%-14.(%l,%c%V%) %P' : &rulerformat ) : '' %}",
+      "%{% &ruler ? &rulerformat : '' %}",
     })
 
     exec_lua("vim.o.statusline = ''")
@@ -1291,6 +1291,48 @@ describe('default statusline', function()
       {1:~                                                           }|*5
       {3:[No Name]                          20%(1) 0,0-1          All}|
       {131:terminal(ripgrep)}: {19:100% }searching                           |
+    ]])
+  end)
+end)
+
+describe('default rulerformat', function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(60, 16)
+    command('set ruler')
+  end)
+
+  it('setting rulerformat to empty string sets default rulerformat', function()
+    exec_lua("vim.o.rulerformat = 'hjkl'")
+    eq('hjkl', eval('&rulerformat'))
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*14
+                                                hjkl              |
+    ]])
+
+    local default_rulerformat = '%18(%l,%c%V%= %P%)%<'
+
+    exec_lua("vim.o.rulerformat = ''")
+    eq(default_rulerformat, eval('&rulerformat'))
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*14
+                                                0,0-1          All|
+    ]])
+
+    -- Reset to default if there's an error.
+    command('set rulerformat=%{a%}')
+    eq(default_rulerformat, eval('&rulerformat'))
+    eq(default_rulerformat, eval('&g:rulerformat'))
+    eq(default_rulerformat, eval('&l:rulerformat'))
+    command('redrawstatus') -- like Vim, rulerformat isn't immediately redrawn after an error
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*14
+      {9:E121: Undefined variable: a}               0,0-1          All|
     ]])
   end)
 end)
