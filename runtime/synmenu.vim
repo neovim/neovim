@@ -2,7 +2,7 @@
 " This file is normally sourced from menu.vim.
 "
 " Maintainer:		The Vim Project <https://github.com/vim/vim>
-" Last Change:		2024 Jan 04
+" Last Change:		2025 Aug 03
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Define the SetSyn function, used for the Syntax menu entries.
@@ -597,15 +597,16 @@ an 50.150.310 &Syntax.T.TF\ mud\ client :cal SetSyn("tf")<CR>
 an 50.150.320 &Syntax.T.Tidy\ configuration :cal SetSyn("tidy")<CR>
 an 50.150.330 &Syntax.T.Tilde :cal SetSyn("tilde")<CR>
 an 50.150.340 &Syntax.T.Tmux\ configuration :cal SetSyn("tmux")<CR>
-an 50.150.350 &Syntax.T.TPP :cal SetSyn("tpp")<CR>
-an 50.150.360 &Syntax.T.Trasys\ input :cal SetSyn("trasys")<CR>
-an 50.150.370 &Syntax.T.Treetop :cal SetSyn("treetop")<CR>
-an 50.150.380 &Syntax.T.Trustees :cal SetSyn("trustees")<CR>
-an 50.150.390 &Syntax.T.TSS.Command\ Line :cal SetSyn("tsscl")<CR>
-an 50.150.400 &Syntax.T.TSS.Geometry :cal SetSyn("tssgm")<CR>
-an 50.150.410 &Syntax.T.TSS.Optics :cal SetSyn("tssop")<CR>
-an 50.150.420 &Syntax.T.Typescript :cal SetSyn("typescript")<CR>
-an 50.150.430 &Syntax.T.TypescriptReact :cal SetSyn("typescriptreact")<CR>
+an 50.150.350 &Syntax.T.TOML :cal SetSyn("toml")<CR>
+an 50.150.360 &Syntax.T.TPP :cal SetSyn("tpp")<CR>
+an 50.150.370 &Syntax.T.Trasys\ input :cal SetSyn("trasys")<CR>
+an 50.150.380 &Syntax.T.Treetop :cal SetSyn("treetop")<CR>
+an 50.150.390 &Syntax.T.Trustees :cal SetSyn("trustees")<CR>
+an 50.150.400 &Syntax.T.TSS.Command\ Line :cal SetSyn("tsscl")<CR>
+an 50.150.410 &Syntax.T.TSS.Geometry :cal SetSyn("tssgm")<CR>
+an 50.150.420 &Syntax.T.TSS.Optics :cal SetSyn("tssop")<CR>
+an 50.150.430 &Syntax.T.Typescript :cal SetSyn("typescript")<CR>
+an 50.150.440 &Syntax.T.TypescriptReact :cal SetSyn("typescriptreact")<CR>
 an 50.160.100 &Syntax.UV.Udev\ config :cal SetSyn("udevconf")<CR>
 an 50.160.110 &Syntax.UV.Udev\ permissions :cal SetSyn("udevperm")<CR>
 an 50.160.120 &Syntax.UV.Udev\ rules :cal SetSyn("udevrules")<CR>
