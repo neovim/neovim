@@ -1,7 +1,7 @@
 " Vim compiler file
 " Compiler:	Dart Documentation Generator
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:	2024 Apr 03
+" Last Change:	2026 Aug 04
 
 if exists("current_compiler")
   finish
@@ -11,7 +11,7 @@ let current_compiler = "dartdoc"
 let s:cpo_save = &cpo
 set cpo&vim
 
-CompilerSet makeprg=dartdoc
+CompilerSet makeprg=dart\ doc
 CompilerSet errorformat=\ \ %tarning:\ %m,
 		       \\ \ %trror:\ %m,
 		       \%+EGeneration\ failed:\ %m,
