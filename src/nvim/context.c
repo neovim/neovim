@@ -491,6 +491,8 @@ bool ctx_switch(CtxSwitch *cs, win_T *wp, tabpage_T *tp, buf_T *buf, CtxSwitchFl
       wp = ctx_win_prep(cs, buf);
       // Leave the window we entered "from".
       leaving_window(curwin);
+      // We will soon enter "buf" and may have to copy buffer options.
+      buf_copy_options(buf, BCO_ENTER | BCO_NOHELP);
       prevwin = curwin;
     }
     assert(win_valid(wp));
