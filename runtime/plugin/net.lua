@@ -66,8 +66,10 @@ vim.api.nvim_create_autocmd('BufReadCmd', {
             elseif vim.fn.exists('#nvim.zip') == 1 then
               require('nvim.zip').browse(ev.buf, tmpfile)
             end
-          else
+          elseif vim.fn.exists('#tar') == 1 then
             vim.fn['tar#Browse'](tmpfile)
+          elseif vim.fn.exists('#nvim.tar') == 1 then
+            require('nvim.tar').browse(ev.buf, tmpfile)
           end
 
           vim.bo[ev.buf].modified = false

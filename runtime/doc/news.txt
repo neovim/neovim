@@ -400,6 +400,10 @@ PERFORMANCE
 
 PLUGINS
 
+• The tar plugin is now |tar|, a read-only archive browser built on |dir|.
+  To use the legacy plugin instead: >
+  :packadd old-tar
+<
 • The zip plugin is now |zip|, a read-only archive browser built on |dir|.
   To use the legacy plugin instead: >
   :packadd old-zip

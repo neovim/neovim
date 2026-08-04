@@ -2,7 +2,7 @@
 CheckExecutable tar
 CheckNotMSWindows
 
-runtime plugin/tarPlugin.vim
+packadd old-tar
 
 func s:CopyFile(source)
   if !filecopy($"samples/{a:source}", "X.tar")

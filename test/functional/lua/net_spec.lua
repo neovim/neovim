@@ -142,7 +142,7 @@ describe('vim.net.request', function()
 
     local rv = exec_lua(function()
       vim.cmd('runtime! plugin/net.lua')
-      vim.cmd('runtime! plugin/tarPlugin.vim')
+      vim.cmd('packadd old-tar')
 
       vim.cmd(
         'edit https://github.com/neovim/neovim/releases/download/nightly/nvim-macos-x86_64.tar.gz'
