@@ -1357,7 +1357,7 @@ Use |getcwd()| to get the effective directory from the current scope.  The
 window-local working directory takes precedence over the buffer-local working
 directory, which takes precedence over the tab-local working directory, which
 in turn takes precedence over the global working directory.  If a local
-working directory (window, buffer or tab) does not exist, the next-higher
+working directory (tab, window or buffer) does not exist, the next-higher
 scope in the hierarchy applies.
 
 							*:cd* *E747* *E472*
@@ -1388,7 +1388,7 @@ scope in the hierarchy applies.
 
 							*:tc* *:tcd*
 :tc[d][!] {path}	Like |:cd|, but only set the directory for the current
-			tab.  The current buffer and window will also use this
+			tab.  The current window and buffer will also use this
 			directory. The current directory is not changed for
 			windows in other tabs and for windows in the current
 			tab that have their own window-local directory, or for
@@ -1401,15 +1401,10 @@ scope in the hierarchy applies.
 							*:tch* *:tchdir*
 :tch[dir][!]		Same as |:tcd|.
 
-							*:bc* *:bcd*
-:bc[d][!] {path}	Like |:cd|, but only set the current directory for the
-			current buffer.  The current directory for other
-			windows or buffers or tabs is not changed.
-
 							*:lc* *:lcd*
 :lc[d][!] {path}	Like |:cd|, but only set the current directory for the
 			current window.  The current directory for other
-			windows, tabs, or buffers is not changed.
+			tabs, windows, or buffers is not changed.
 
 							*:lch* *:lchdir*
 :lch[dir][!]		Same as |:lcd|.
@@ -1417,6 +1412,18 @@ scope in the hierarchy applies.
 							*:lcd-*
 :lc[d][!] -		Change to the previous current directory (before the
 			previous ":lcd {path}" command).
+
+							*:bc* *:bcd*
+:bc[d][!] [path]	Like |:cd|, but only set the current directory for the
+			current buffer.  The current directory for other
+			tabs, windows, or buffers is not changed.
+
+							*:bcd-*
+:bc[d][!] -		Change to the previous buffer-local current directory
+			(before the last ":bcd [path]" command).
+
+							*:bch* *:bchdir*
+:bch[dir][!]		Same as |:bcd|.
 
 							*:pw* *:pwd* *E187*
 :pw[d]			Print the current directory name.
@@ -1429,24 +1436,34 @@ scope in the hierarchy applies.
 				:verbose pwd
 				[global] /path/to/current
 
-				" Set by :lcd
-				:verbose pwd
-				[window] /path/to/current
-
 				" Set by :tcd
 				:verbose pwd
 				[tabpage] /path/to/current
 
-So long as no |:lcd| or |:tcd| command has been used, all windows share the
-same current directory.  Using a command to jump to another window doesn't
-change anything for the current directory.
+				" Set by :lcd
+				:verbose pwd
+				[window] /path/to/current
+
+				" Set by :bcd
+				:verbose pwd
+				[buffer] /path/to/current
+
+So long as no |:tcd|, |:lcd| or |:bcd| command has been used, all windows
+share the same current directory.  Using a command to jump to another window
+doesn't change anything for the current directory.
 
 When |:lcd| has been used for a window, the specified directory becomes the
 current directory for that window.  Windows where the |:lcd| command has not
-been used stick to the global or tab-local directory.  When jumping to another
-window the current directory is changed to the last specified local current
-directory.  If none was specified, the global or tab-local directory is used.
-When creating a new window it inherits the local directory of the current window.
+been used stick to the buffer-local, tab-local or global directory.  When
+jumping to another window the current directory is changed to the last
+specified local current directory.  If none was specified, the buffer-local,
+tab-local or global directory is used.  When creating a new window it
+inherits the local directory of the current window.
+
+When |:bcd| has been used for a buffer, the specified directory becomes the
+current directory whenever that buffer is entered, unless the window has its
+own window-local directory.  A new buffer created with |:edit| or |:enew|
+inherits the buffer-local directory of the previous current buffer.
 
 When changing tabs the same behaviour applies.  If the current tab has no
 local working directory the global working directory is used.

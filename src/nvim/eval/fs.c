@@ -681,6 +681,16 @@ static bool getcwd_scope_args(typval_T *argvars, CdScope default_scope, CdScope 
     }
   }
 
+  // An argument may only be -1 if all preceding arguments are -1: `(2, 3, -1)` is an error.
+  bool explicit_scope = false;
+  for (int i = 0; i < argc; i++) {
+    explicit_scope = explicit_scope || argv[i] >= 0;
+    if (explicit_scope && argv[i] < 0) {
+      emsg(_("E5001: Higher scope cannot be -1 if lower scope is >= 0."));
+      return false;
+    }
+  }
+
   // Narrowest requested scope. Imagine X >= 0:
   switch (argc) {
   case 0:
@@ -705,7 +715,7 @@ static bool getcwd_scope_args(typval_T *argvars, CdScope default_scope, CdScope 
     if (argv[kBufArg] >= 0) {
       *scope = kCdScopeBuffer;  // (-1, -1, X)
     } else {
-      *scope = kCdScopeGlobal;  // (..., ..., -1)
+      *scope = kCdScopeGlobal;  // (-1, -1, -1)
     }
     break;
   }
@@ -737,10 +747,6 @@ static bool getcwd_scope_args(typval_T *argvars, CdScope default_scope, CdScope 
 
   // Find the window in `tp` by number.
   if (argv[kWinArg] >= 0) {
-    if (argv[kTabArg] < 0) {
-      emsg(_("E5001: Higher scope cannot be -1 if lower scope is >= 0."));
-      return false;
-    }
     if (argv[kWinArg] > 0) {
       *win = find_win_by_nr(&argvars[0], *tp);
       if (*win == NULL) {

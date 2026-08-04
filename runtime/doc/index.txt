@@ -1181,6 +1181,8 @@ Tag		Command		Action ~
 |:ball|		:ba[ll]		open a window for each buffer in the buffer list
 |:badd|		:bad[d]		add buffer to the buffer list
 |:balt|		:balt		like ":badd" but also set the alternate file
+|:bcd|		:bc[d]		change directory for buffer
+|:bchdir|	:bch[dir]	change directory for buffer
 |:bdelete|	:bd[elete]	remove a buffer from the buffer list
 |:belowright|	:bel[owright]	make split window appear right or below
 |:bfirst|	:bf[irst]	go to first buffer in the buffer list

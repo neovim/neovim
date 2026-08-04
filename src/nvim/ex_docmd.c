@@ -6222,7 +6222,7 @@ static char **get_prevdir(CdScope scope)
 
 /// Deal with the side effects of changing the current directory.
 ///
-/// @param scope  Scope of the function call (global, tab, buffer or window).
+/// @param scope  Scope of the function call (global, tab, window or buffer).
 static void post_chdir(CdScope scope, bool trigger_dirchanged)
 {
   // Always overwrite the window-local CWD.
@@ -6275,9 +6275,9 @@ static void post_chdir(CdScope scope, bool trigger_dirchanged)
   }
 }
 
-/// Change directory function used by :cd/:tcd/:bcd/:lcd Ex commands and the chdir() function.
+/// Change directory function used by :cd/:tcd/:lcd/:bcd Ex commands and the chdir() function.
 /// @param new_dir  The directory to change to.
-/// @param scope    Scope of the function call (global, tab, buffer or window).
+/// @param scope    Scope of the function call (global, tab, window or buffer).
 /// @return true if the directory is successfully changed.
 bool changedir_func(char *new_dir, CdScope scope)
 {
@@ -6333,7 +6333,7 @@ bool changedir_func(char *new_dir, CdScope scope)
   return true;
 }
 
-/// ":cd", ":tcd", ":bcd", ":lcd", ":chdir", "tchdir", ":bchdir", and ":lchdir".
+/// ":cd", ":tcd", ":lcd", ":bcd", ":chdir", ":tchdir", ":lchdir", and ":bchdir".
 void ex_cd(exarg_T *eap)
 {
   char *new_dir = eap->arg;

@@ -3341,9 +3341,8 @@ function vim.fn.getcursorcharpos(winid) end
 --- directory of the window indicated by {winnr}.
 ---
 --- If {bufnr} is provided, {winnr} and {tabnr} must be -1 and the
---- working directory of that buffer is returned. If {bufnr} is
---- -1, it is ignored, and the global working directory is
---- returned.
+--- working directory of that buffer is returned. An argument may
+--- be -1 only if all preceding arguments are -1.
 --- Examples of buffer usage: >vim
 ---       getcwd(-1, -1, 0)  " Get current buffer's directory
 ---       getcwd(-1, -1, 3)  " Get directory of buffer #3
@@ -4462,15 +4461,15 @@ function vim.fn.has(feature) end
 --- @return 0|1
 function vim.fn.has_key(dict, key) end
 
---- Checks whether the window, tabpage or buffer has set a local
+--- Checks whether the tabpage, window or buffer has set a local
 --- working directory.  Returns 1 when the window has set a local
 --- path via |:lcd|, or when {winnr} is -1 and the tabpage has set
 --- a local path via |:tcd|, or when {winnr} and {tabnr} are -1
 --- and {bufnr} has set a local path via |:bcd|, otherwise 0.
 ---
 --- Tabs, windows and buffers are identified by their respective
---- numbers, 0 means current tab or window. Missing argument
---- implies 0. Thus the following are equivalent: >vim
+--- numbers, 0 means current tab, window or buffer. Missing
+--- argument implies 0. Thus the following are equivalent: >vim
 ---   echo haslocaldir()
 ---   echo haslocaldir(0)
 ---   echo haslocaldir(0, 0)
@@ -4479,7 +4478,8 @@ function vim.fn.has_key(dict, key) end
 --- {winnr} is a |window-number| or |window-ID|.
 --- If {winnr} is -1 it is ignored, only the tab is resolved.
 --- If {bufnr} is provided, {winnr} and {tabnr} must be -1 and
---- only the buffer is resolved.
+--- only the buffer is resolved.  An argument may be -1 only if
+--- all preceding arguments are -1.
 --- Examples of buffer usage: >vim
 ---   haslocaldir(-1, -1, 0) " Current buf has a local directory?
 ---   haslocaldir(-1, -1, 3) " Buf #3 has a local directory?

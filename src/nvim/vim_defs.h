@@ -45,7 +45,7 @@ typedef enum {
 /// What caused the current directory to change.
 typedef enum {
   kCdCauseOther = -1,
-  kCdCauseManual,  ///< Using `:cd`, `:bcd`, `:tcd`, `:lcd` or `chdir()`.
+  kCdCauseManual,  ///< Using `:cd`, `:tcd`, `:lcd`, `:bcd` or `chdir()`.
   kCdCauseWindow,  ///< Switching to another window.
   kCdCauseBuffer,  ///< Switching to another buffer.
   kCdCauseAuto,    ///< On 'autochdir'.

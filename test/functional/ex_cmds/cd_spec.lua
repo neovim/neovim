@@ -438,32 +438,32 @@ for _, cmd in ipairs { 'getcwd', 'haslocaldir' } do
     end)
 
     it('validation', function()
-      local err474 = 'Vim(call):E474: Invalid argument'
-      eq(err474, pcall_err(command, ('call %s("some string")'):format(cmd)))
-      eq(err474, pcall_err(command, ('call %s(1.0)'):format(cmd)))
-      eq(err474, pcall_err(command, ('call %s([1, 2])'):format(cmd)))
-      eq(err474, pcall_err(command, ('call %s({"key": "value"})'):format(cmd)))
-      eq(err474, pcall_err(command, ('call %s(function("tr"))'):format(cmd)))
-      eq(err474, pcall_err(command, ('call %s(-2)'):format(cmd)))
+      local err474 = 'Vim:E474: Invalid argument'
+      eq(err474, pcall_err(call, cmd, 'some string'))
+      eq(err474, pcall_err(call, cmd, 1.5))
+      eq(err474, pcall_err(call, cmd, { 1, 2 }))
+      eq(err474, pcall_err(call, cmd, { key = 'value' }))
+      eq(err474, pcall_err(call, cmd, -2))
+      -- Funcref is not representable over RPC.
+      eq(
+        'Vim(call):E474: Invalid argument',
+        pcall_err(command, ('call %s(function("tr"))'):format(cmd))
+      )
 
       -- -1 preceded by an argument >= 0
+      local err5001 = 'Vim:E5001: Higher scope cannot be -1 if lower scope is >= 0.'
+      eq(err5001, pcall_err(call, cmd, 0, -1))
+      eq(err5001, pcall_err(call, cmd, 2, 3, -1))
+      eq(err5001, pcall_err(call, cmd, -1, 0, -1))
+      eq(err5001, pcall_err(call, cmd, 0, -1, 0))
+      -- Buffer scope requires window and tab args to be -1.
+      local err5006 = 'Vim:E5006: Window and tab scope must be -1 when using buffer scope'
+      eq(err5006, pcall_err(call, cmd, 0, 0, 0))
+      eq(err5006, pcall_err(call, cmd, 1, 2, 3))
+      eq('Vim:E5007: Cannot find buffer number.', pcall_err(call, cmd, -1, -1, 99999))
       eq(
-        'Vim(call):E5001: Higher scope cannot be -1 if lower scope is >= 0.',
-        pcall_err(command, ('call %s(0, -1)'):format(cmd))
-      )
-      -- Buffer scope requires window and tab arguments of -1.
-      local err5006 = 'Vim(call):E5006: Window and tab scope must be -1 when using buffer scope'
-      eq(err5006, pcall_err(command, ('call %s(0, 0, 0)'):format(cmd)))
-      eq(err5006, pcall_err(command, ('call %s(1, 2, 3)'):format(cmd)))
-      -- Nonexistent buffer.
-      eq(
-        'Vim(call):E5007: Cannot find buffer number.',
-        pcall_err(command, ('call %s(-1, -1, 99999)'):format(cmd))
-      )
-      -- Too many arguments.
-      eq(
-        ('Vim(call):E118: Too many arguments for function: %s'):format(cmd),
-        pcall_err(command, ('call %s(0, 0, 0, 0)'):format(cmd))
+        ('Vim:E118: Too many arguments for function: %s'):format(cmd),
+        pcall_err(call, cmd, 0, 0, 0, 0)
       )
     end)
   end)

@@ -312,6 +312,7 @@ Command-line:
   is open. The |cmdwin-char| is shown via 'statuscolumn'.
 
 Commands:
+- |:bcd|
 - |:checkhealth|
 - |:connect|
 - |:detach|
