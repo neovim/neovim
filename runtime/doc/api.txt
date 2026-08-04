@@ -146,7 +146,8 @@ Special types (msgpack EXT) ~
 
                                                         *api-indexing*
 Most of the API uses 0-based indices, and ranges are end-exclusive. For the
-end of a range, -1 denotes the last line/column. See |vim.pos|, |vim.range|
+end of a range, -1 denotes the last line/column. A column in buffer text is a
+byte index, not a character index or screen cell. See |vim.pos|, |vim.range|
 for representing and converting positions.
 
 Exception: the following API functions use "mark-like" indexing (1-based

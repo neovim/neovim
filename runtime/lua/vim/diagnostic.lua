@@ -14,7 +14,7 @@ local M = vim._defer_require('vim.diagnostic', {
 })
 
 --- Diagnostics use the same indexing as the rest of the Nvim API (i.e. 0-based
---- rows and columns). |api-indexing|
+--- rows, and columns given as 0-based byte indices). |api-indexing|
 --- @class vim.Diagnostic.Set
 ---
 --- The starting line of the diagnostic (0-indexed)
@@ -52,8 +52,8 @@ local M = vim._defer_require('vim.diagnostic', {
 
 --- [diagnostic-structure]()
 ---
---- Diagnostics use |api-indexing| (i.e. 0-based rows and columns). See also |vim.pos| and
---- |vim.range| to convert positions from other systems.
+--- Diagnostics use |api-indexing| (i.e. 0-based rows, and columns given as 0-based byte
+--- indices). See also |vim.pos| and |vim.range| to convert positions from other systems.
 ---
 --- @class vim.Diagnostic : vim.Diagnostic.Set
 --- @field bufnr integer Buffer number
