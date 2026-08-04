@@ -3246,7 +3246,7 @@ static Object opt_from_tv(typval_T *tv, OptIndex opt_idx, const char *option, bo
       const char *strval = tv_get_string_buf_chk(tv, nbuf);
       err = strval == NULL;
       value = CSTR_TO_OBJ(strval);
-    } else if (!is_tty_opt) {
+    } else {
       err = true;
       emsg(_(e_string_required));
     }

@@ -114,6 +114,15 @@ describe(':let', function()
     command('let &equalalways %= 1')
     eq(false, api.nvim_get_option_value('equalalways', {}))
   end)
+
+  it('assigning bool/special to a string option gives E928, not a crash', function()
+    for _, v in ipairs({ 'v:true', 'v:false', 'v:null' }) do
+      -- Regular string option.
+      eq('Vim(let):E928: String required', t.pcall_err(command, 'let &makeprg = ' .. v))
+      -- TTY option ("t_" pseudo-option).
+      eq('Vim(let):E928: String required', t.pcall_err(command, 'let &t_Co = ' .. v))
+    end
+  end)
 end)
 
 describe(':let and :const', function()
