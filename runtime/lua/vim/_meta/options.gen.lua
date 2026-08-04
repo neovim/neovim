@@ -734,7 +734,7 @@ vim.o.cmp = vim.o.casemap
 vim.go.casemap = vim.o.casemap
 vim.go.cmp = vim.go.casemap
 
---- When on, `:cd`, `:tcd` and `:lcd` without an argument changes the
+--- When on, `:cd`, `:tcd`, `:lcd` and `:bcd` without an argument changes the
 --- current working directory to the `$HOME` directory like in Unix.
 --- When off, those commands just print the current directory name.
 ---
@@ -745,7 +745,7 @@ vim.go.cdhome = vim.o.cdhome
 vim.go.cdh = vim.go.cdhome
 
 --- This is a list of directories which will be searched when using the
---- `:cd`, `:tcd` and `:lcd` commands, provided that the directory being
+--- `:cd`, `:tcd`, `:lcd` and `:bcd` commands, provided that the directory being
 --- searched for has a relative path, not an absolute part starting with
 --- "/", "./" or "../", the 'cdpath' option is not used then.
 --- The 'cdpath' option's value has the same form and semantics as
@@ -1572,7 +1572,7 @@ vim.bo.ci = vim.bo.copyindent
 --- 		following occurrence.
 --- 							*cpo-~*
 --- 	~	When included, don't resolve symbolic links when
---- 		changing directory with `:cd`, `:lcd`, or `:tcd`.
+--- 		changing directory with `:cd`, `:tcd`, `:lcd`, or `:bcd`.
 --- 		This preserves the symbolic link path in buffer names
 --- 		and when displaying the current directory.  When
 --- 		excluded (default), symbolic links are resolved to

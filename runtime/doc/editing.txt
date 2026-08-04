@@ -1348,15 +1348,16 @@ use has("browsefilter"): >
 ==============================================================================
 7. The current directory				*current-directory*
 
-There are three current-directory "scopes": global, tab and window. You can
-use |:cd|, |:tcd| and |:lcd| to change to another directory.  This affects
-anything that operates on relative paths, e.g. ":edit ./foo.txt" or shell
-commands like ":!ls" or ":te ls".
+There are four current-directory "scopes": global, tab, window and buffer.
+You can use |:cd|, |:tcd|, |:lcd| and |:bcd| to change to another directory.
+This affects anything that operates on relative paths, e.g. ":edit ./foo.txt"
+or shell commands like ":!ls" or ":te ls".
 
 Use |getcwd()| to get the effective directory from the current scope.  The
-window-local working directory takes precedence over the tab-local working
-directory, which in turn takes precedence over the global working directory.
-If a local working directory (tab or window) does not exist, the next-higher
+window-local working directory takes precedence over the buffer-local working
+directory, which takes precedence over the tab-local working directory, which
+in turn takes precedence over the global working directory.  If a local
+working directory (tab, window or buffer) does not exist, the next-higher
 scope in the hierarchy applies.
 
 							*:cd* *E747* *E472*
@@ -1387,10 +1388,11 @@ scope in the hierarchy applies.
 
 							*:tc* *:tcd*
 :tc[d][!] {path}	Like |:cd|, but only set the directory for the current
-			tab.  The current window will also use this directory.
-			The current directory is not changed for windows in
-			other tabs and for windows in the current tab that
-			have their own window-local directory.
+			tab.  The current window and buffer will also use this
+			directory. The current directory is not changed for
+			windows in other tabs and for windows in the current
+			tab that have their own window-local directory, or for
+			buffers that have their own buffer-local directory.
 
 							*:tcd-*
 :tc[d][!] -		Change to the previous current directory (before the
@@ -1402,7 +1404,7 @@ scope in the hierarchy applies.
 							*:lc* *:lcd*
 :lc[d][!] {path}	Like |:cd|, but only set the current directory for the
 			current window.  The current directory for other
-			windows or tabs is not changed.
+			tabs, windows, or buffers is not changed.
 
 							*:lch* *:lchdir*
 :lch[dir][!]		Same as |:lcd|.
@@ -1410,6 +1412,22 @@ scope in the hierarchy applies.
 							*:lcd-*
 :lc[d][!] -		Change to the previous current directory (before the
 			previous ":lcd {path}" command).
+
+							*:bc* *:bcd*
+:bc[d][!] [path]	Like |:cd|, but only set the current directory for the
+			current buffer.  The current directory for other
+			tabs, windows, or buffers is not changed.
+
+			Unlike :lcd and :tcd, this is not "sticky": a new
+			buffer or window will not "inherit" a buffer-local
+			directory.
+
+							*:bcd-*
+:bc[d][!] -		Change to the previous buffer-local current directory
+			(before the last ":bcd [path]" command).
+
+							*:bch* *:bchdir*
+:bch[dir][!]		Same as |:bcd|.
 
 							*:pw* *:pwd* *E187*
 :pw[d]			Print the current directory name.
@@ -1422,24 +1440,36 @@ scope in the hierarchy applies.
 				:verbose pwd
 				[global] /path/to/current
 
-				" Set by :lcd
-				:verbose pwd
-				[window] /path/to/current
-
 				" Set by :tcd
 				:verbose pwd
 				[tabpage] /path/to/current
 
-So long as no |:lcd| or |:tcd| command has been used, all windows share the
-same current directory.  Using a command to jump to another window doesn't
+				" Set by :lcd
+				:verbose pwd
+				[window] /path/to/current
+
+				" Set by :bcd
+				:verbose pwd
+				[buffer] /path/to/current
+
+So long as |:tcd|, |:lcd| or |:bcd| has not been used, all buffers and windows
+share the same directory.  Using a command to jump to another window doesn't
 change anything for the current directory.
 
 When |:lcd| has been used for a window, the specified directory becomes the
 current directory for that window.  Windows where the |:lcd| command has not
-been used stick to the global or tab-local directory.  When jumping to another
-window the current directory is changed to the last specified local current
-directory.  If none was specified, the global or tab-local directory is used.
-When creating a new window it inherits the local directory of the current window.
+been used stick to the buffer-local, tab-local or global directory.  When
+jumping to another window the current directory is changed to the last
+specified window-local directory.  If none was specified, the buffer-local,
+tab-local or global directory is used.  When creating a new window it inherits
+the current window-local directory ("sticky" behavior).
+
+When |:bcd| has been used for a buffer, the specified directory becomes the
+current directory whenever that buffer is entered, unless the window has its
+own window-local directory.  The buffer-local directory is never inherited
+(not "sticky"): a buffer created with |:edit|, |:enew|, etc., ignores the
+current buffer-local (:bcd) directory, if any. Use |:lcd| if you want "sticky"
+behavior.
 
 When changing tabs the same behaviour applies.  If the current tab has no
 local working directory the global working directory is used.

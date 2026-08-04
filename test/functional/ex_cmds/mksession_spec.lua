@@ -23,16 +23,19 @@ local file_prefix = 'Xtest-functional-ex_cmds-mksession_spec'
 
 describe(':mksession', function()
   local session_file = file_prefix .. '.vim'
-  local tab_dir = file_prefix .. '.d'
+  local tab_dir = file_prefix .. '.tab.d'
+  local buf_dir = file_prefix .. '.buf.d'
 
   before_each(function()
     clear()
     mkdir(tab_dir)
+    mkdir(buf_dir)
   end)
 
   after_each(function()
     os.remove(session_file)
     rmdir(tab_dir)
+    rmdir(buf_dir)
   end)
 
   it('restores same :terminal buf in splits', function()
@@ -361,5 +364,70 @@ describe(':mksession', function()
     command('source ' .. session_file)
     -- contains all splits
     eq(3, #api.nvim_tabpage_list_wins(0))
+  end)
+
+  it('restores buffer-local working directories', function()
+    -- "'" and " " in the names must survive the session file's string quoting and escaping.
+    local tmpfile_base = file_prefix .. "-tmp'file"
+    local quote_dir = file_prefix .. ".b'uf d"
+    local session_file2 = session_file .. '2'
+    local cwd_dir = fn.getcwd()
+    mkdir(quote_dir)
+    finally(function()
+      rmdir(quote_dir)
+      os.remove(session_file2)
+    end)
+
+    command(('edit %s1'):format(tmpfile_base))
+    command(('edit %s2'):format(tmpfile_base))
+    command('bcd ' .. fn.fnameescape(quote_dir))
+    command('b# ')
+    command('mksession ' .. session_file)
+    command('set sessionoptions-=curdir')
+    command('mksession ' .. session_file2)
+
+    -- Create a new test instance of Nvim.
+    clear()
+
+    command('silent source ' .. session_file)
+    command(('b %s%s2'):format(get_pathsep(), tmpfile_base))
+    eq(('%s%s%s'):format(cwd_dir, get_pathsep(), quote_dir), fn.getcwd())
+
+    -- Without "curdir" in 'sessionoptions' no buffer-local directory is restored.
+    clear()
+    command('silent source ' .. session_file2)
+    command(('b %s%s2'):format(get_pathsep(), tmpfile_base))
+    eq(cwd_dir, fn.getcwd())
+    eq(0, fn.haslocaldir(-1, -1, 0))
+  end)
+
+  it('restores buffer-local working directories when used with tabs', function()
+    local tmpfile_base = file_prefix .. '-tmpfile'
+    local cwd_dir = fn.getcwd()
+
+    command(('edit %s1'):format(tmpfile_base))
+    command('tabnew ')
+    command(('edit %s2'):format(tmpfile_base))
+    command('tcd ' .. tab_dir)
+    command('bcd ..')
+    command('bcd ' .. buf_dir)
+    command('tabfirst')
+    command('mksession ' .. session_file)
+
+    -- Create a new test instance of Nvim.
+    clear()
+
+    command('source ' .. session_file)
+    -- The ":tcd" during restore must not clear the buffer-local directory of the tab's
+    -- first-loaded buffer: it must be set before that tab is ever (re)visited.
+    eq(1, fn.haslocaldir(-1, -1, fn.bufnr(('%s2'):format(tmpfile_base))))
+    -- First tab should have the original working directory.
+    command('tabnext 1')
+    eq(cwd_dir, fn.getcwd())
+    -- Second tab should have the tab-local working directory.
+    command('tabnext 2')
+    eq(('%s%s%s'):format(cwd_dir, get_pathsep(), tab_dir), fn.getcwd(-1, 0))
+    -- Buffer in second tab should have buffer-local working directory
+    eq(('%s%s%s'):format(cwd_dir, get_pathsep(), buf_dir), fn.getcwd(-1, -1, 0))
   end)
 end)

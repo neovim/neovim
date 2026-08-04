@@ -2937,6 +2937,9 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     redraw_curbuf_later(UPD_NOT_VALID);  // redraw this buffer later
   }
 
+  // Update to the working directory of the new current buffer.
+  update_cwd(kCdCauseBuffer);
+
   // Change directories when the 'acd' option is set.
   do_autochdir();
 

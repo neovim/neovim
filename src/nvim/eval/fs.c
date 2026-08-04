@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 
 #include "auto/config.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/cmdexpand.h"
@@ -419,6 +420,8 @@ void f_chdir(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
   } else if (curwin->w_localdir != NULL) {
     scope = kCdScopeWindow;
+  } else if (curbuf->b_localdir != NULL) {
+    scope = kCdScopeBuffer;
   } else if (curtab->tp_localdir != NULL) {
     scope = kCdScopeTabpage;
   }
@@ -641,98 +644,164 @@ void f_fnamemodify(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   xfree(fbuf);
 }
 
-/// `getcwd([{win}[, {tab}]])` function
+/// Resolves the `[{winnr}[, {tabnr}[, {bufnr}]]]` arguments of `getcwd()`/`haslocaldir()` to the
+/// requested scope and the scope objects to inspect. In an argument, `0` means the current object
+/// and `-1` skips the scope (requesting the next broader one). Note that the argument order
+/// differs from the `CdScope` order.
+///
+/// @param default_scope  Scope when no arguments were given.
+///
+/// @return  false if an error message was emitted.
+static bool getcwd_scope_args(typval_T *argvars, CdScope default_scope, CdScope *scope, win_T **win,
+                              tabpage_T **tp, buf_T **buf)
+{
+  enum { kWinArg, kTabArg, kBufArg, };
+  int argv[] = { 0, 0, 0 };
+  int argc = 0;
+
+  *scope = default_scope;
+  *win = curwin;
+  *tp = curtab;
+  *buf = curbuf;
+
+  for (; argc < 3; argc++) {
+    // If there is no argument there are no more scopes after it, break out.
+    if (argvars[argc].v_type == VAR_UNKNOWN) {
+      break;
+    }
+    if (argvars[argc].v_type != VAR_NUMBER) {
+      emsg(_(e_invarg));
+      return false;
+    }
+    argv[argc] = (int)argvars[argc].vval.v_number;
+    // It is an error for the scope number to be less than `-1`.
+    if (argv[argc] < -1) {
+      emsg(_(e_invarg));
+      return false;
+    }
+  }
+
+  // An argument may only be -1 if all preceding arguments are -1: `(2, 3, -1)` is an error.
+  bool explicit_scope = false;
+  for (int i = 0; i < argc; i++) {
+    explicit_scope = explicit_scope || argv[i] >= 0;
+    if (explicit_scope && argv[i] < 0) {
+      emsg(_("E5001: Higher scope cannot be -1 if lower scope is >= 0."));
+      return false;
+    }
+  }
+
+  // Narrowest requested scope. Imagine X >= 0:
+  switch (argc) {
+  case 0:
+    break;
+  case 1:
+    if (argv[kWinArg] >= 0) {
+      *scope = kCdScopeWindow;  // (X)
+    } else {
+      *scope = kCdScopeTabpage;  // (-1)
+    }
+    break;
+  case 2:
+    if (argv[kWinArg] >= 0) {
+      *scope = kCdScopeWindow;  // (X, ...)
+    } else if (argv[kTabArg] >= 0) {
+      *scope = kCdScopeTabpage;  // (-1, X)
+    } else {
+      *scope = kCdScopeGlobal;  // (-1, -1)
+    }
+    break;
+  case 3:
+    if (argv[kBufArg] >= 0) {
+      *scope = kCdScopeBuffer;  // (-1, -1, X)
+    } else {
+      *scope = kCdScopeGlobal;  // (-1, -1, -1)
+    }
+    break;
+  }
+
+  if (*scope == kCdScopeBuffer) {
+    if (argv[kWinArg] >= 0 || argv[kTabArg] >= 0) {
+      emsg(_("E5006: Window and tab scope must be -1 when using buffer scope"));
+      return false;
+    }
+    if (argv[kBufArg] > 0) {
+      Error err = ERROR_INIT;
+      *buf = find_buffer_by_handle(argv[kBufArg], &err);
+      if (ERROR_SET(&err)) {
+        emsg(_("E5007: Cannot find buffer number."));
+        xfree(err.msg);
+        return false;
+      }
+    }
+  }
+
+  // Find the tabpage by number.
+  if (argv[kTabArg] > 0) {
+    *tp = find_tabpage(argv[kTabArg]);
+    if (*tp == NULL) {
+      emsg(_("E5000: Cannot find tab number."));
+      return false;
+    }
+  }
+
+  // Find the window in `tp` by number.
+  if (argv[kWinArg] >= 0) {
+    if (argv[kWinArg] > 0) {
+      *win = find_win_by_nr(&argvars[0], *tp);
+      if (*win == NULL) {
+        emsg(_("E5002: Cannot find window number."));
+        return false;
+      }
+    }
+    // Window scope may fall through to the buffer shown in that window.
+    *buf = (*win)->w_buffer;
+  }
+
+  return true;
+}
+
+/// `getcwd([{win}[, {tab}[, {buf}]]])` function
 ///
 /// Every scope not specified implies the currently selected scope object.
 ///
 /// @pre  The arguments must be of type number.
-/// @pre  There may not be more than two arguments.
+/// @pre  There may not be more than three arguments.
 /// @pre  An argument may not be -1 if preceding arguments are not all -1.
 ///
 /// @post  The return value will be a string.
 void f_getcwd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  // Possible scope of working directory to return.
-  CdScope scope = kCdScopeInvalid;
-
-  // Numbers of the scope objects (window, tab) we want the working directory
-  // of. A `-1` means to skip this scope, a `0` means the current object.
-  int scope_number[] = {
-    [kCdScopeWindow] = 0,   // Number of window to look at.
-    [kCdScopeTabpage] = 0,  // Number of tab to look at.
-  };
-
-  char *cwd = NULL;    // Current working directory to print
-  char *from = NULL;    // The original string to copy
-
-  tabpage_T *tp = curtab;  // The tabpage to look at.
-  win_T *win = curwin;     // The window to look at.
+  CdScope scope;
+  win_T *win;
+  tabpage_T *tp;
+  buf_T *buf;
 
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
 
-  // Pre-conditions and scope extraction together
-  for (int i = MIN_CD_SCOPE; i < MAX_CD_SCOPE; i++) {
-    // If there is no argument there are no more scopes after it, break out.
-    if (argvars[i].v_type == VAR_UNKNOWN) {
-      break;
-    }
-    if (argvars[i].v_type != VAR_NUMBER) {
-      emsg(_(e_invarg));
-      return;
-    }
-    scope_number[i] = (int)argvars[i].vval.v_number;
-    // It is an error for the scope number to be less than `-1`.
-    if (scope_number[i] < -1) {
-      emsg(_(e_invarg));
-      return;
-    }
-    // Use the narrowest scope the user requested
-    if (scope_number[i] >= 0 && scope == kCdScopeInvalid) {
-      // The scope is the current iteration step.
-      scope = i;
-    } else if (scope_number[i] < 0) {
-      scope = i + 1;
-    }
+  // Without arguments (kCdScopeInvalid), the effective working directory is returned.
+  if (!getcwd_scope_args(argvars, kCdScopeInvalid, &scope, &win, &tp, &buf)) {
+    return;
   }
 
-  // Find the tabpage by number
-  if (scope_number[kCdScopeTabpage] > 0) {
-    tp = find_tabpage(scope_number[kCdScopeTabpage]);
-    if (!tp) {
-      emsg(_("E5000: Cannot find tab number."));
-      return;
-    }
-  }
-
-  // Find the window in `tp` by number, `NULL` if none.
-  if (scope_number[kCdScopeWindow] >= 0) {
-    if (scope_number[kCdScopeTabpage] < 0) {
-      emsg(_("E5001: Higher scope cannot be -1 if lower scope is >= 0."));
-      return;
-    }
-
-    if (scope_number[kCdScopeWindow] > 0) {
-      win = find_win_by_nr(&argvars[0], tp);
-      if (!win) {
-        emsg(_("E5002: Cannot find window number."));
-        return;
-      }
-    }
-  }
-
-  cwd = xmalloc(MAXPATHL);
+  char *from = NULL;  // The local directory to copy.
+  char *cwd = xmalloc(MAXPATHL);
 
   switch (scope) {
   case kCdScopeWindow:
-    assert(win);
     from = win->w_localdir;
     if (from) {
       break;
     }
     FALLTHROUGH;
+  case kCdScopeBuffer:
+    from = buf->b_localdir;
+    if (from) {
+      break;
+    }
+    FALLTHROUGH;
   case kCdScopeTabpage:
-    assert(tp);
     from = tp->tp_localdir;
     if (from) {
       break;
@@ -959,96 +1028,40 @@ void f_glob2regpat(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   rettv->vval.v_string = pat == NULL ? NULL : file_pat_to_reg_pat(pat, NULL, NULL, false);
 }
 
-/// `haslocaldir([{win}[, {tab}]])` function
+/// `haslocaldir([{win}[, {tab}[, {buf}]]])` function
 ///
 /// Returns `1` if the scope object has a local directory, `0` otherwise. If a
-/// scope object is not specified the current one is implied. This function
-/// share a lot of code with `f_getcwd`.
+/// scope object is not specified the current one is implied.
 ///
 /// @pre  The arguments must be of type number.
-/// @pre  There may not be more than two arguments.
+/// @pre  There may not be more than three arguments.
 /// @pre  An argument may not be -1 if preceding arguments are not all -1.
 ///
 /// @post  The return value will be either the number `1` or `0`.
 void f_haslocaldir(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  // Possible scope of working directory to return.
-  CdScope scope = kCdScopeInvalid;
-
-  // Numbers of the scope objects (window, tab) we want the working directory
-  // of. A `-1` means to skip this scope, a `0` means the current object.
-  int scope_number[] = {
-    [kCdScopeWindow] = 0,  // Number of window to look at.
-    [kCdScopeTabpage] = 0,  // Number of tab to look at.
-  };
-
-  tabpage_T *tp = curtab;  // The tabpage to look at.
-  win_T *win = curwin;  // The window to look at.
+  CdScope scope;
+  win_T *win;
+  tabpage_T *tp;
+  buf_T *buf;
 
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
 
-  // Pre-conditions and scope extraction together
-  for (int i = MIN_CD_SCOPE; i < MAX_CD_SCOPE; i++) {
-    if (argvars[i].v_type == VAR_UNKNOWN) {
-      break;
-    }
-    if (argvars[i].v_type != VAR_NUMBER) {
-      emsg(_(e_invarg));
-      return;
-    }
-    scope_number[i] = (int)argvars[i].vval.v_number;
-    if (scope_number[i] < -1) {
-      emsg(_(e_invarg));
-      return;
-    }
-    // Use the narrowest scope the user requested
-    if (scope_number[i] >= 0 && scope == kCdScopeInvalid) {
-      // The scope is the current iteration step.
-      scope = i;
-    } else if (scope_number[i] < 0) {
-      scope = i + 1;
-    }
-  }
-
-  // If the user didn't specify anything, default to window scope
-  if (scope == kCdScopeInvalid) {
-    scope = MIN_CD_SCOPE;
-  }
-
-  // Find the tabpage by number
-  if (scope_number[kCdScopeTabpage] > 0) {
-    tp = find_tabpage(scope_number[kCdScopeTabpage]);
-    if (!tp) {
-      emsg(_("E5000: Cannot find tab number."));
-      return;
-    }
-  }
-
-  // Find the window in `tp` by number, `NULL` if none.
-  if (scope_number[kCdScopeWindow] >= 0) {
-    if (scope_number[kCdScopeTabpage] < 0) {
-      emsg(_("E5001: Higher scope cannot be -1 if lower scope is >= 0."));
-      return;
-    }
-
-    if (scope_number[kCdScopeWindow] > 0) {
-      win = find_win_by_nr(&argvars[0], tp);
-      if (!win) {
-        emsg(_("E5002: Cannot find window number."));
-        return;
-      }
-    }
+  // Without arguments, default to window scope.
+  if (!getcwd_scope_args(argvars, kCdScopeWindow, &scope, &win, &tp, &buf)) {
+    return;
   }
 
   switch (scope) {
   case kCdScopeWindow:
-    assert(win);
-    rettv->vval.v_number = win->w_localdir ? 1 : 0;
+    rettv->vval.v_number = win->w_localdir != NULL;
+    break;
+  case kCdScopeBuffer:
+    rettv->vval.v_number = buf->b_localdir != NULL;
     break;
   case kCdScopeTabpage:
-    assert(tp);
-    rettv->vval.v_number = tp->tp_localdir ? 1 : 0;
+    rettv->vval.v_number = tp->tp_localdir != NULL;
     break;
   case kCdScopeGlobal:
     // The global scope never has a local directory

@@ -615,13 +615,14 @@ DiffUpdated			After diffs have been updated.  Depending on
 							*DirChanged*
 DirChanged			After the |current-directory| was changed.
 				The pattern can be:
-					"window"  to trigger on `:lcd`
-					"tabpage" to trigger on `:tcd`
-					"global"  to trigger on `:cd`
-					"auto"    to trigger on 'autochdir'.
+					"auto"    triggered on 'autochdir'.
+					"buffer"  triggered on `:bcd`.
+					"global"  triggered on `:cd`.
+					"tabpage" triggered on `:tcd`.
+					"window"  triggered on `:lcd`.
 				Sets these |v:event| keys:
 				    cwd:            current working directory
-				    scope:          "global", "tabpage", "window"
+				    scope:          "global", "tabpage", "window", "buffer"
 				    changed_window: v:true if we fired the event
 				                    switching window (or tab)
 				<afile> is set to the new directory name.
@@ -633,7 +634,7 @@ DirChangedPre			When the |current-directory| is going to be
 				The pattern is like with |DirChanged|.
 				Sets these |v:event| keys:
 				    directory:      new working directory
-				    scope:          "global", "tabpage", "window"
+				    scope:          "global", "tabpage", "window", "buffer"
 				    changed_window: v:true if we fired the event
 				                    switching window (or tab)
 				<afile> is set to the new directory name.

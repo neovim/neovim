@@ -6205,24 +6205,24 @@ void free_cd_dir(void)
 
 #endif
 
-/// Get the previous directory for the given chdir scope.
-static char *get_prevdir(CdScope scope)
+/// Gets the previous-directory slot for the given chdir scope.
+static char **get_prevdir(CdScope scope)
 {
   switch (scope) {
   case kCdScopeTabpage:
-    return curtab->tp_prevdir;
-    break;
+    return &curtab->tp_prevdir;
+  case kCdScopeBuffer:
+    return &curbuf->b_prevdir;
   case kCdScopeWindow:
-    return curwin->w_prevdir;
-    break;
+    return &curwin->w_prevdir;
   default:
-    return prev_dir;
+    return &prev_dir;
   }
 }
 
 /// Deal with the side effects of changing the current directory.
 ///
-/// @param scope  Scope of the function call (global, tab or window).
+/// @param scope  Scope of the function call (global, tab, window or buffer).
 static void post_chdir(CdScope scope, bool trigger_dirchanged)
 {
   // Always overwrite the window-local CWD.
@@ -6233,8 +6233,12 @@ static void post_chdir(CdScope scope, bool trigger_dirchanged)
     XFREE_CLEAR(curtab->tp_localdir);
   }
 
+  if (scope >= kCdScopeBuffer) {
+    XFREE_CLEAR(curbuf->b_localdir);
+  }
+
   if (scope < kCdScopeGlobal) {
-    char *pdir = get_prevdir(scope);
+    char *pdir = *get_prevdir(scope);
     // If still in global directory, set CWD as the global directory.
     if (globaldir == NULL && pdir != NULL) {
       globaldir = xstrdup(pdir);
@@ -6253,6 +6257,9 @@ static void post_chdir(CdScope scope, bool trigger_dirchanged)
   case kCdScopeTabpage:
     curtab->tp_localdir = xstrdup(cwd);
     break;
+  case kCdScopeBuffer:
+    curbuf->b_localdir = xstrdup(cwd);
+    break;
   case kCdScopeWindow:
     curwin->w_localdir = xstrdup(cwd);
     break;
@@ -6268,9 +6275,9 @@ static void post_chdir(CdScope scope, bool trigger_dirchanged)
   }
 }
 
-/// Change directory function used by :cd/:tcd/:lcd Ex commands and the chdir() function.
+/// Change directory function used by :cd/:tcd/:lcd/:bcd Ex commands and the chdir() function.
 /// @param new_dir  The directory to change to.
-/// @param scope    Scope of the function call (global, tab or window).
+/// @param scope    Scope of the function call (global, tab, window or buffer).
 /// @return true if the directory is successfully changed.
 bool changedir_func(char *new_dir, CdScope scope)
 {
@@ -6281,7 +6288,7 @@ bool changedir_func(char *new_dir, CdScope scope)
   char *pdir = NULL;
   // ":cd -": Change to previous directory
   if (strcmp(new_dir, "-") == 0) {
-    pdir = get_prevdir(scope);
+    pdir = *get_prevdir(scope);
     if (pdir == NULL) {
       emsg(_("E186: No previous directory"));
       return false;
@@ -6317,17 +6324,7 @@ bool changedir_func(char *new_dir, CdScope scope)
   }
   xfree(new_dir);
 
-  char **pp;
-  switch (scope) {
-  case kCdScopeTabpage:
-    pp = &curtab->tp_prevdir;
-    break;
-  case kCdScopeWindow:
-    pp = &curwin->w_prevdir;
-    break;
-  default:
-    pp = &prev_dir;
-  }
+  char **pp = get_prevdir(scope);
   xfree(*pp);
   *pp = pdir;
 
@@ -6336,7 +6333,7 @@ bool changedir_func(char *new_dir, CdScope scope)
   return true;
 }
 
-/// ":cd", ":tcd", ":lcd", ":chdir", "tchdir" and ":lchdir".
+/// ":cd", ":tcd", ":lcd", ":bcd", ":chdir", ":tchdir", ":lchdir", and ":bchdir".
 void ex_cd(exarg_T *eap)
 {
   char *new_dir = eap->arg;
@@ -6351,6 +6348,10 @@ void ex_cd(exarg_T *eap)
   case CMD_tcd:
   case CMD_tchdir:
     scope = kCdScopeTabpage;
+    break;
+  case CMD_bcd:
+  case CMD_bchdir:
+    scope = kCdScopeBuffer;
     break;
   case CMD_lcd:
   case CMD_lchdir:
@@ -6380,6 +6381,8 @@ static void ex_pwd(exarg_T *eap)
         context = last_chdir_reason;
       } else if (curwin->w_localdir != NULL) {
         context = "window";
+      } else if (curbuf->b_localdir != NULL) {
+        context = "buffer";
       } else if (curtab->tp_localdir != NULL) {
         context = "tabpage";
       }

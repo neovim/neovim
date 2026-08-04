@@ -938,6 +938,9 @@ bool buf_freeall(buf_T *buf, int flags)
   }
   syntax_clear(&buf->b_s);          // reset syntax info
   buf->b_flags &= ~BF_READERR;      // a read error is no longer relevant
+
+  XFREE_CLEAR(buf->b_localdir);
+  XFREE_CLEAR(buf->b_prevdir);
   return true;
 }
 
@@ -1023,6 +1026,8 @@ static void free_buffer_stuff(buf_T *buf, int free_flags)
   map_clear_mode(buf, MAP_ALL_MODES, true, false);  // clear local mappings
   map_clear_mode(buf, MAP_ALL_MODES, true, true);   // clear local abbrevs
   XFREE_CLEAR(buf->b_start_fenc);
+  XFREE_CLEAR(buf->b_localdir);
+  XFREE_CLEAR(buf->b_prevdir);
 
   buf_free_callbacks(buf);
 }
@@ -1771,6 +1776,9 @@ void set_curbuf(buf_T *buf, int action, bool update_jumplist)
   if (bufref_valid(&prevbufref) && prevbuf->terminal != NULL) {
     terminal_check_size(prevbuf->terminal);
   }
+
+  // Maybe cd to buffer-local directory
+  update_cwd(kCdCauseBuffer);
 }
 
 /// Enter a new current buffer.

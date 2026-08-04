@@ -82,6 +82,7 @@ typedef struct {
   handle_T cs_target_win;         ///< the window switched to
   pos_T cs_target_old_pos;        ///< its cursor before the switch
   // State kept across the switch:
+  char *cs_b_localdir;            ///< saved b_localdir of the target buffer (autocmd window)
   char *cs_tp_localdir;           ///< saved tp_localdir (autocmd window)
   char *cs_globaldir;             ///< saved globaldir (autocmd window)
   char *cs_cwd;                   ///< saved cwd (kCtxKeepCwd; allocated on demand)

@@ -675,6 +675,31 @@ static int makeopens(FILE *fd, char *dirnow)
     return FAIL;
   }
 
+  // Restore buffer-local CWD (:bcd) via one-shot BufEnter handlers: there is no reliable point
+  // during session-load where all buffers are entered. Each buffer's directory is applied when the
+  // buffer is first entered, which may happen after session-load for buffers that stay hidden.
+  if (ssop_flags & kOptSsopFlagCurdir) {
+    FOR_ALL_BUFFERS(buf) {
+      if (buf->b_localdir == NULL || buf->b_fname == NULL || !buf->b_p_bl
+          || (only_save_windows && buf->b_nwindows == 0)
+          || (buf->b_help && !(ssop_flags & kOptSsopFlagHelp))
+          || (bt_terminal(buf) && !(ssop_flags & kOptSsopFlagTerminal))) {
+        continue;
+      }
+      // `bufadd()` finds the buffer by exact (literal) name.
+      if (fputs("lua vim.api.nvim_create_autocmd('BufEnter', { once = true, "
+                "buffer = vim.fn.bufadd([==[", fd) < 0
+          || fputs(ses_get_fname(buf, &ssop_flags), fd) < 0
+          || fputs("]==]), callback = function() vim.cmd.bcd({ [==[", fd) < 0
+          || fputs(buf->b_localdir, fd) < 0
+          || fputs("]==], magic = { file = false, bar = false } }) end })\n", fd) < 0) {
+        return FAIL;
+      }
+      // Cwd may change when a handler fires: filenames must be written absolute from here on.
+      did_lcd = true;
+    }
+  }
+
   if (ssop_flags & kOptSsopFlagResize) {
     // Note: after the restore we still check it worked!
     if (fprintf(fd, "set lines=%" PRId64 " columns=%" PRId64 "\n",
@@ -737,6 +762,23 @@ static int makeopens(FILE *fd, char *dirnow)
       tp = curtab;
       tab_firstwin = firstwin;
       tab_topframe = topframe;
+    }
+
+    // Restore the tab-local working directory while the tab still shows its empty "placeholder"
+    // buffer: ":tcd" clears the b_localdir of the current buffer, so emitting it before any file is
+    // loaded keeps it away from directories restored by the ":bcd" handlers above. Do this before
+    // the windows and buffers, so the win-local / buf-local dir can override the tab-local dir.
+    if ((ssop_flags & kOptSsopFlagCurdir) && tp->tp_localdir != NULL) {
+      if (need_tabnext && put_line(fd, "tabnext") == FAIL) {
+        return FAIL;
+      }
+      need_tabnext = false;
+      if (fputs("tcd ", fd) < 0
+          || ses_put_fname(fd, tp->tp_localdir, &ssop_flags) == FAIL
+          || put_eol(fd) == FAIL) {
+        return FAIL;
+      }
+      did_lcd = true;
     }
 
     // Before creating the window layout, try loading one file.  If this
@@ -820,18 +862,6 @@ static int makeopens(FILE *fd, char *dirnow)
     }
     if (nr > 1 && ses_winsizes(fd, restore_size, tab_firstwin) == FAIL) {
       return FAIL;
-    }
-
-    // Restore the tab-local working directory if specified
-    // Do this before the windows, so that the window-local directory can
-    // override the tab-local directory.
-    if ((ssop_flags & kOptSsopFlagCurdir) && tp->tp_localdir != NULL) {
-      if (fputs("tcd ", fd) < 0
-          || ses_put_fname(fd, tp->tp_localdir, &ssop_flags) == FAIL
-          || put_eol(fd) == FAIL) {
-        return FAIL;
-      }
-      did_lcd = true;
     }
 
     // Restore the view of the window (options, file, cursor, etc.).
