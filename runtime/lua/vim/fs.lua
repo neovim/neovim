@@ -147,6 +147,124 @@ function M.joinpath(...)
   return (path:gsub(iswin and '[/\\][/\\]*' or '//+', '/'))
 end
 
+--- Generates a bounded, filesystem-safe filename from an arbitrary identity string.
+---
+--- - The input is normalized via |vim.fs.normalize()| so that equivalent paths produce the same
+---   result (e.g., `~/foo` and `/home/username/foo`).
+--- - `$HOME` is replaced with `~`. On Windows, UNC paths are replaced with `=unc-`.
+--- - An 8-character hex hash (|sha256()|) of the normalized input is appended to prevent
+---   collisions.
+--- - Unsafe characters (`/ \ : * ? " < > |`, whitespace, control characters) are replaced with
+---   `-`, and trailing `-` and `.` are stripped.
+--- - If `opts.maxlen` is exceeded, the result will be truncated to `{head}~~~{tail}-{hash8}`.
+--- - If the sanitized name is empty, the reserved label `=special` will be used.
+---
+--- Examples:
+---
+--- ```lua
+--- vim.fs.slug('/tmp/test/foo.md')
+---    --> "tmp-test-foo.md-{hash}"
+---
+--- vim.fs.slug('C:/src/project/main.c')
+---    --> "C--src-project-main.c-{hash}"
+---
+--- vim.fs.slug(('/a/very/long/path'):rep(10) .. '/file.txt', { maxlen = 60 })
+---    --> "a-very-long-~~~-path-a-very-long-path-file.txt-{hash}"
+---
+--- vim.fs.slug('home/username/file.txt')
+---    --> "~-file.txt-{hash}"
+--- ```
+---
+---@since 15
+---@param path string a string that is not filesystem-safe.
+---@param opts? table Optional parameters:
+---  - maxlen: (integer) Max byte length of the result. Default is 180. Value must be at least 8.
+---@return string # Filesystem-safe file name
+function M.slug(path, opts)
+  vim.validate('path', path, 'string')
+  opts = opts or {}
+  vim.validate('maxlen', opts.maxlen, function(v)
+    if v == nil then
+      return true
+    end
+    return type(v) == 'number' and v >= 8
+  end, '`opt.maxlen` must be at least 8')
+  opts.maxlen = opts.maxlen or 180
+
+  -- Normalize before computing the hash so equivalent paths produce the same result
+  path = vim.fs.normalize(path, { expand_env = false })
+  local s = path
+
+  -- Replace $HOME with `~`
+  -- `fnamemodify` resolves relative paths against CWD, so only call it on absolute paths
+  if vim.startswith(s, '/') or (iswin and s:match('^%w:/')) then
+    s = vim.fn.fnamemodify(s, ':~')
+  end
+
+  -- Replace UNC `//...` (Windows only) with `=unc-`
+  -- `//?/` and `//./` are NT namespace prefixes, not UNC
+  if
+    iswin
+    and vim.startswith(s, '//')
+    and not vim.startswith(s, '//?/')
+    and not vim.startswith(s, '//./')
+  then
+    s = '=unc-' .. s:sub(3)
+  end
+
+  -- Sanitize unsafe chars and trim trailing "-" and "."
+  s = s:gsub('[%c%s/\\:*?"<>|]', '-')
+  s = s:gsub('[.-]+$', '')
+  -- Strip the leading "-" from an absolute path
+  s = s:gsub('^-', '')
+
+  -- Always compute the hash to prevent collisions
+  local hash8 = vim.fn.sha256(path):sub(1, 8)
+
+  -- Fully scrubbed path uses the reserved prefix
+  if s == '' then
+    s = '=special'
+  end
+
+  -- Within maxlen: "{name}-{hash8}"
+  local maxlen = opts.maxlen
+  if #s + 1 + #hash8 <= maxlen then
+    return s .. '-' .. hash8
+  end
+
+  -- "{head}~~~{tail}-{hash8}"
+  local budget = maxlen - 12 -- 3 for "~~~", 1 for "-", 8 for hash
+  if budget < 1 then
+    -- No room for a readable form: degrade to a plain hash
+    return hash8:sub(1, maxlen)
+  end
+  local head_len = math.floor(budget / 3)
+  local h = s:sub(1, head_len):match('^.*()-') or head_len -- byte position where {head} ends
+  if h == head_len and h >= 1 then
+    -- No "-" found in prefix: ensure we don't split a UTF-8 character.
+    -- `vim.str_utf_start` returns an offset (<= 0) from the byte position to the character start.
+    -- `vim.str_utf_end` returns an offset (>= 0) to the character's last byte.
+    local char_start = h + vim.str_utf_start(s, h) ---@type integer
+    if char_start + vim.str_utf_end(s, char_start) > h then
+      h = char_start - 1
+    end
+  end
+  local tail_start = #s - budget + h + 1
+  if tail_start < 1 then
+    tail_start = 1
+  end
+  local t = s:find('-', tail_start, true) or tail_start -- byte position where {tail} starts
+  -- If we fall back to a byte position, step forward past a split character
+  if t == tail_start and t <= #s then
+    local offset_start = vim.str_utf_start(s, t)
+    if offset_start < 0 then
+      local char_start = t + offset_start ---@type integer
+      t = char_start + vim.str_utf_end(s, char_start) + 1
+    end
+  end
+  return s:sub(1, h) .. '~~~' .. s:sub(t) .. '-' .. hash8
+end
+
 --- Wrapper around `uv.fs_scandir_next()` that ensures a file type is returned.
 ---
 --- @param fs uv.uv_fs_t

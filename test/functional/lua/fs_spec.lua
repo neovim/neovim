@@ -666,6 +666,79 @@ describe('vim.fs', function()
     end)
   end)
 
+  describe('slug()', function()
+    it('replaces unsafe characters with "-"', function()
+      -- `\` is normalized to `/` on Windows, so the hash differs per platform
+      eq(
+        'a-b-c-d-e-f-g-h-i-j-k-l-'
+          .. vim.fn.sha256(vim.fs.normalize('a/b\\c:d*e?f"g<h>i|j k\tl')):sub(1, 8),
+        vim.fs.slug('a/b\\c:d*e?f"g<h>i|j k\tl')
+      )
+      eq('a-16b8a9f5', vim.fs.slug('a/ '))
+      eq('a-ca978112', vim.fs.slug('a/.'))
+    end)
+
+    it('works without args', function()
+      -- `=special`
+      eq('=special-8a5edab2', vim.fs.slug('/'))
+      eq('=special-ab5df625', vim.fs.slug('...'))
+      eq('=special-11d925ec', vim.fs.slug('-------'))
+      eq('src-foo-init.lua-cf05d2fe', vim.fs.slug('/src/foo/init.lua'))
+      -- Windows paths normalize differently on Windows vs Unix
+      eq('C--src-project-main.c-3b0eb5f5', vim.fs.slug('C:/src/project/main.c'))
+      eq('con.txt-d3bde286', vim.fs.slug('con.txt'))
+      -- Windows reserved names.
+      eq('con-1143da2b', vim.fs.slug('con'))
+      eq('com¹-bdcbdc69', vim.fs.slug('com¹'))
+      eq('NUL-ae6de182', vim.fs.slug('NUL'))
+      eq('Prn-0d399452', vim.fs.slug('Prn'))
+      eq('aux-321f6814', vim.fs.slug('aux'))
+      eq('con.foo.bar-f386c405', vim.fs.slug('con.foo.bar'))
+      eq('con-.-txt-48f98581', vim.fs.slug('con . txt'))
+      -- $HOME is replaced with `~`
+      local p = vim.uv.os_homedir() .. '/my-project'
+      local hash8_2 = vim.fn.sha256(vim.fs.normalize(p)):sub(1, 8)
+      eq('~-my-project-' .. hash8_2, vim.fs.slug(p))
+    end)
+
+    it('works with `opt.maxlen`', function()
+      -- maxlen < 8 is an error
+      t.matches('`opt.maxlen` must be at least 8', t.pcall_err(vim.fs.slug, 'foo', { maxlen = 7 }))
+
+      eq('2c26b46b', vim.fs.slug('foo', { maxlen = 8 }))
+      eq('2c26b46b', vim.fs.slug('foo', { maxlen = 11 }))
+      eq('foo-2c26b46b', vim.fs.slug('foo', { maxlen = 12 }))
+      eq('ddab29ff', vim.fs.slug('foo.txt', { maxlen = 12 }))
+      eq('foo-2c26b46b', vim.fs.slug('foo', { maxlen = 13 }))
+
+      -- truncates to "{head}~~~{tail}-{hash8}"
+      eq(
+        'aaaa-~~~-ffff-gggg-file.txt-7bd52057',
+        vim.fs.slug('/aaaa/bbbb/cccc/dddd/eeee/ffff/gggg/file.txt', { maxlen = 40 })
+      )
+      eq('测~~~-测试3-58cf4a70', vim.fs.slug('/测试1/测试测试2/测试3', { maxlen = 25 }))
+      eq('ab~~~uvwxyz-71c480df', vim.fs.slug('abcdefghijklmnopqrstuvwxyz', { maxlen = 20 }))
+      eq('dir~~~试.md-d4141f20', vim.fs.slug(('dir/'):rep(20) .. '测试.md', { maxlen = 22 }))
+      eq('~~~试abc-ab138cd6', vim.fs.slug('测试abc测试abc', { maxlen = 18 }))
+      eq('~~~d-473a1da7', vim.fs.slug('foo/bar/longlonglong.md', { maxlen = 13 }))
+      eq('f~~~md-473a1da7', vim.fs.slug('foo/bar/longlonglong.md', { maxlen = 15 }))
+    end)
+
+    it('works on Windows', function()
+      if t.skip(not is_os('win'), 'N/A Windows only') then
+        return
+      end
+      eq('=unc-foo-dir-file-549fb6e7', vim.fs.slug([[\\foo\dir\file]]))
+      -- `\\?\` and `\\.\`
+      eq(
+        '---Volume{a1b2c3d4-aa00-4000-a111-1a2b3c4d5e6f}-dir-file-cfda6a98',
+        vim.fs.slug([[\\?\Volume{a1b2c3d4-aa00-4000-a111-1a2b3c4d5e6f}\dir\file]])
+      )
+      eq('---C--dir-file-e8f30888', vim.fs.slug([[\\?\C:\dir\file]]))
+      eq('-.-COM1-e0e5710d', vim.fs.slug([[\\.\COM1]]))
+    end)
+  end)
+
   describe('normalize()', function()
     it('removes trailing /', function()
       eq('/home/user', vim.fs.normalize('/home/user/'))
