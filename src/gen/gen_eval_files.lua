@@ -98,7 +98,7 @@ local function split(x, sep)
 end
 
 --- @param f string
---- @param params [string,string][]|true
+--- @param params [string,string,string?][]|true
 --- @return string
 local function render_fun_sig(f, params)
   local param_str --- @type string
@@ -107,7 +107,7 @@ local function render_fun_sig(f, params)
   else
     param_str = table.concat(
       vim.tbl_map(
-        --- @param v [string,string]
+        --- @param v [string,string,string?]
         --- @return string
         function(v)
           return luaescape(v[1])
@@ -126,8 +126,8 @@ local function render_fun_sig(f, params)
 end
 
 --- Uniquify names
---- @param params [string,string,string][]
---- @return [string,string,string][]
+--- @param params [string,string,string?][]
+--- @return [string,string,string?][]
 local function process_params(params)
   local seen = {} --- @type table<string,true>
   local sfx = 1
@@ -192,7 +192,7 @@ local function get_api_meta()
       sees[#sees + 1] = see.desc
     end
 
-    local params = {} --- @type [string,string][]
+    local params = {} --- @type [string,string,string?][]
     for _, p in ipairs(fun.params) do
       params[#params + 1] = {
         p.name,

@@ -14,7 +14,7 @@
 --- @field generics? string[] Used to write `---@generic` annotations over a function.
 --- @field signature? string
 --- @field desc? string
---- @field params [string, string, string][]
+--- @field params [string, string, string?][] Each entry is `{name, type, desc?}`; `desc` is only present in API-meta entries.
 --- @field notes? string[]
 --- @field see? string[]
 ---
