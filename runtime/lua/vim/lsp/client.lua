@@ -261,6 +261,10 @@ end
 ---
 --- @field private registrations table<string,lsp.Registration[]>
 --- @field private _log_prefix string
+---
+--- Caches compiled documentSelector globs and logs each invalid pattern only once per client.
+--- @field private _glob_cache table<string,vim.lpeg.Pattern|false>
+---
 --- @field private _before_init_cb? vim.lsp.client.before_init_cb
 --- @field private _on_attach_cbs vim.lsp.client.on_attach_cb[]
 --- @field private _on_init_cbs vim.lsp.client.on_init_cb[]
@@ -420,6 +424,7 @@ function Client.create(config)
     offset_encoding = validate_encoding(config.offset_encoding),
     name = name,
     _log_prefix = string.format('LSP[%s]', name),
+    _glob_cache = {},
     requests = {},
     attached_buffers = {},
     server_capabilities = {},
@@ -1058,6 +1063,23 @@ function Client:_get_language_id(bufnr)
   return self.get_language_id(bufnr, vim.bo[bufnr].filetype)
 end
 
+--- @private
+--- @param pattern string
+--- @param fname string
+--- @return boolean
+function Client:_glob_matches(pattern, fname)
+  local pat = self._glob_cache[pattern]
+  if pat == nil then
+    local ok, res = pcall(vim.glob.to_lpeg, pattern)
+    pat = ok and res or false
+    self._glob_cache[pattern] = pat
+    if not ok then
+      log.error(self._log_prefix, 'skipping invalid documentSelector pattern', pattern, res)
+    end
+  end
+  return pat ~= false and pat:match(fname) ~= nil
+end
+
 --- @param provider string
 --- @param bufnr? integer
 --- @return lsp.Registration[]?
@@ -1082,7 +1104,7 @@ function Client:_get_registrations(provider, bufnr)
         if
           not (flang and language ~= flang)
           and not (fscheme and not vim.startswith(uri, fscheme .. ':'))
-          and not (type(fpat) == 'string' and not vim.glob.to_lpeg(fpat):match(fname))
+          and not (type(fpat) == 'string' and not self:_glob_matches(fpat, fname))
         then
           matched_regs[#matched_regs + 1] = reg
         end
