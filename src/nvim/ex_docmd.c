@@ -5825,11 +5825,15 @@ static void ex_tabs(exarg_T *eap)
 /// ":%detach" detaches all UIs _except_ the current UI.
 static void ex_detach(exarg_T *eap)
 {
-  if (!current_ui) {
+  Channel *chan = find_channel(current_ui);
+  if (!chan) {
     emsg(_(e_noui));
     return;
-  } else if (eap && eap->forceit) {
-    emsg("bang (!) not supported yet");
+  }
+
+  if (eap && eap->forceit) {
+    chan->detach = true;
+    msg(_("Nvim will continue running if the UI disconnects"), 0);
     return;
   }
 

@@ -153,7 +153,8 @@ end)
 describe('TUI :detach', function()
   local child_server, screen
 
-  local function setup_detach_child()
+  local function setup_detach_child(opts)
+    opts = opts or {}
     n.clear()
     finally(function()
       n.check_close()
@@ -171,7 +172,7 @@ describe('TUI :detach', function()
       'colorscheme vim',
       '--cmd',
       nvim_set .. ' laststatus=2 background=dark',
-    }, { env = env_notermguicolors })
+    }, { env = env_notermguicolors, cols = opts.cols })
     tt.override_screen_expect_for_conpty(screen)
   end
 
@@ -196,10 +197,6 @@ describe('TUI :detach', function()
     assert(status)
     eq(1, #child_uis)
 
-    eq(
-      { false, { 0, 'Vim(detach):E477: No ! allowed: detach!' } },
-      { child_session:request('nvim_command', 'detach!') }
-    )
     eq(
       { false, { 0, 'Vim(detach):E16: Invalid range' } },
       { child_session:request('nvim_command', '2detach') }
@@ -241,6 +238,41 @@ describe('TUI :detach', function()
                                                         |
       {5:-- TERMINAL --}                                    |
     ]])
+  end)
+
+  it('detach! keeps the UI attached but survives client disconnect', function()
+    -- Wide enough that the confirmation message doesn't trigger a |hit-enter| prompt.
+    setup_detach_child({ cols = 80 })
+    -- Capture the client (foreground TUI) job so we can kill it below.
+    local term_job = n.api.nvim_buf_get_var(0, 'terminal_job_id')
+
+    -- Wait for the child server to come up (its socket to exist), then connect.
+    local child_session ---@type test.Session
+    retry(nil, nil, function()
+      child_session = n.connect(child_server)
+    end)
+    finally(function()
+      -- Stop the (surviving) server so it doesn't dangle.
+      pcall(function()
+        n.connect(child_server):request('nvim_command', 'qall!')
+      end)
+    end)
+
+    feed_data('\027\027:detach!\013')
+    screen:expect({ any = vim.pesc('Nvim will continue running') })
+
+    -- Unlike ":detach", the UI is still attached.
+    eq(1, #({ child_session:request('nvim_list_uis') })[2])
+
+    -- Simulate the host terminal disconnecting: SIGKILL the client so it can't shut down cleanly.
+    -- On Windows this also exercises the console hand-off in rpc_close_event().
+    n.exec_lua(function(pid)
+      vim.uv.kill(pid, 'sigkill')
+    end, n.fn.jobpid(term_job))
+
+    retry(nil, 4000, function()
+      eq(2, ({ child_session:request('nvim_eval', '1+1') })[2])
+    end)
   end)
 
   it('% detaches other UIs', function()
@@ -479,9 +511,9 @@ describe('TUI :restart', function()
     tt.feed_data('ifoo\027')
     tt.feed_data('ZR')
     screen:expect({ any = 'E37:' })
-    -- Dismiss hit-enter so the next "E37" assertion below doesn't match this one immediately.
-    tt.feed_data('\013')
-    screen:expect({ any = vim.pesc('[No Name]') })
+    -- Overwrite the message so the next "E37" is a real transition, not a stale immediate match.
+    tt.feed_data(':echo "cleared"\r')
+    screen:expect({ any = 'cleared', none = 'E37:' })
     tt.feed_data('1ZR')
     screen:expect({ any = 'E37:' })
 
