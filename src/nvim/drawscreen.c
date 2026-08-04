@@ -1444,6 +1444,8 @@ static void win_update(win_T *wp)
 
   // Window is zero-height: Only need to draw the separator
   if (wp->w_view_height == 0) {
+    // draw the vertical separator right of this window
+    draw_vsep_win(wp);
     // draw the horizontal separator below this window
     draw_hsep_win(wp);
     wp->w_redr_type = 0;
