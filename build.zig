@@ -590,7 +590,7 @@ pub fn build(b: *std.Build) !void {
 
     if (is_wasm) {
         nvim_mod.addCSourceFiles(.{ .files = &.{
-            "src/wasm_stubs.c",
+            "src/wasm/wasm_stubs.c",
             "src/static_ts_registry.c",
         }, .flags = &flags });
     }
@@ -637,14 +637,12 @@ pub fn build(b: *std.Build) !void {
         emcc.addArgs(&.{
             b.fmt("--sysroot={s}", .{s}),
             "-lidbfs.js",
-            "-sALLOW_MEMORY_GROWTH=1",
             "--profiling-funcs",
             "-sEXPORTED_FUNCTIONS=_nvim_main,_malloc,_free",
             "-Wno-undefined",
-            "-sEXPORTED_RUNTIME_METHODS=stringToUTF8,lengthBytesUTF8,setValue,getValue,UTF8ToString,ENV,FS,HEAPU8,IDBFS",
+            "-sEXPORTED_RUNTIME_METHODS=stringToUTF8,lengthBytesUTF8,setValue,getValue,UTF8ToString,ENV,FS,HEAPU8,IDBFS,ccall,cwrap",
             "-sSTACK_SIZE=8388608",
             "-sINITIAL_MEMORY=268435456",
-            "-sMAXIMUM_MEMORY=2147483648",
             "-sFORCE_FILESYSTEM=1",
             "-sNODERAWFS=0",
             "-sERROR_ON_UNDEFINED_SYMBOLS=1",
@@ -657,8 +655,8 @@ pub fn build(b: *std.Build) !void {
             "-flto",
             "-sSTACK_OVERFLOW_CHECK=2",
             "-sASSERTIONS=1",
-            "-sASYNCIFY=1",
-            "-sASYNCIFY_STACK_SIZE=65536",
+            "-pthread",
+            "-sSHARED_MEMORY=1",
             b.fmt("--preload-file={s}@/runtime", .{merged_path}),
         });
 

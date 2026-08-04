@@ -445,7 +445,7 @@ list(APPEND UNCRUSTIFY_NVIM_SOURCES ${NVIM_SOURCES} ${NVIM_HEADERS})
 list(APPEND UNCRUSTIFY_NVIM_SOURCES
   ${PROJECT_SOURCE_DIR}/src/tee/tee.c
   ${PROJECT_SOURCE_DIR}/src/xxd/xxd.c
-  ${PROJECT_SOURCE_DIR}/src/wasm_stubs.c
+  ${PROJECT_SOURCE_DIR}/src/wasm/wasm_stubs.c
   ${PROJECT_SOURCE_DIR}/src/static_ts_registry.c
 )
 

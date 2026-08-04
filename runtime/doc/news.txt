@@ -220,6 +220,10 @@ BUILD
   (empty string) to assume that target binaries can run on the host during the
   build process (e.g. if target is x86 on a x86_64 system, or if emulation set
   up with binfmt or similar).
+• zig build: Nvim can now be built to produce a WebAssembly binary via
+  "-Dtarget=wasm32-emscripten", which can run inside a web browser. A basic
+  browser-based demo for running it is also included. Still very
+  experimental.
 
 DEFAULTS
 
