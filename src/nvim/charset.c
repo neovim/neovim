@@ -353,7 +353,7 @@ size_t transstr_buf(const char *const s, const ssize_t slen, char *const buf, co
   FUNC_ATTR_NONNULL_ALL
 {
   const char *p = s;
-  char *buf_p = buf;
+  char *buf_p = buf;  // Keep a tail pointer to append to.
   char *const buf_e = buf_p + buflen - 1;
 
   while ((slen < 0 || (p - s) < slen) && *p != NUL && buf_p < buf_e) {
@@ -364,7 +364,7 @@ size_t transstr_buf(const char *const s, const ssize_t slen, char *const buf, co
       }
 
       if (vim_isprintc(utf_ptr2char(p))) {
-        memmove(buf_p, p, l);
+        memmove(buf_p, p, l);  // Append printable multi-byte char.
         buf_p += l;
       } else {
         for (size_t off = 0; off < l; off += (size_t)utf_ptr2len(p + off)) {

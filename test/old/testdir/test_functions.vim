@@ -186,6 +186,56 @@ func Test_strwidth()
   set ambiwidth&
 endfunc
 
+func Test_strtrans()
+  " The default of 'isprint' is platform-dependent: 0x7f and 0x9f are
+  " printable on Win32 and VMS.  Set it so the expectations below hold
+  " everywhere.
+  let save_isprint = &isprint
+  set isprint=@,161-255
+
+  " printable ASCII is unchanged
+  call assert_equal('', strtrans(''))
+  call assert_equal('abc', strtrans('abc'))
+
+  " control characters are displayed as ^X
+  call assert_equal('^I', strtrans("\t"))
+  call assert_equal('a^Mb^[c', strtrans("a\rb\ec"))
+  call assert_equal('^A^_^?', strtrans("\x01\x1f\x7f"))
+
+  " printable multibyte characters are unchanged, including composing
+  " characters and characters above 0xffff
+  call assert_equal('héllo 你好', strtrans('héllo 你好'))
+  let s = 'e' .. nr2char(0x301) .. 'x'
+  call assert_equal(s, strtrans(s))
+  call assert_equal(nr2char(0x1d11e), strtrans(nr2char(0x1d11e)))
+
+  " unprintable multibyte characters are displayed in <xx> hex form
+  call assert_equal('<9f>', strtrans(nr2char(0x9f)))
+  call assert_equal('<200b>', strtrans(nr2char(0x200b)))
+  call assert_equal('<feff>', strtrans(nr2char(0xfeff)))
+
+  " illegal bytes are displayed in <xx> hex form
+  call assert_equal('A<ff>B', strtrans("A\xffB"))
+
+  " a long string mixing all kinds of characters
+  call assert_equal(repeat('a^Bé<9f>', 100),
+        \ strtrans(repeat("a\x02é" .. nr2char(0x9f), 100)))
+
+  " the non-multi-byte code path
+  "set encoding=latin1
+  set isprint=@,161-255
+  call assert_equal('a^Mb^[c', strtrans("a\rb\ec"))
+  call assert_equal('^A^_^?', strtrans("\x01\x1f\x7f"))
+  " an unprintable byte above 0x7f uses the meta notation
+  "call assert_equal('| ', strtrans("\xa0"))
+  " a printable high byte is unchanged
+  "call assert_equal("\xe9", strtrans("\xe9"))
+  "call assert_equal("x^B\xe9| y", strtrans("x\x02\xe9\xa0y"))
+  set encoding=utf-8
+
+  let &isprint = save_isprint
+endfunc
+
 func Test_str2nr()
   call assert_equal(0, str2nr(''))
   call assert_equal(1, str2nr('1'))
