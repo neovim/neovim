@@ -115,12 +115,23 @@ describe(':let', function()
     eq(false, api.nvim_get_option_value('equalalways', {}))
   end)
 
-  it('assigning bool/special to a string option gives E928, not a crash', function()
+  it('no crash: assigning bool/special to a string option gives E928', function()
     for _, v in ipairs({ 'v:true', 'v:false', 'v:null' }) do
       -- Regular string option.
       eq('Vim(let):E928: String required', t.pcall_err(command, 'let &makeprg = ' .. v))
       -- TTY option ("t_" pseudo-option).
       eq('Vim(let):E928: String required', t.pcall_err(command, 'let &t_Co = ' .. v))
+    end
+  end)
+
+  it('no crash: assigning to local value of a global-local option', function()
+    -- Unset local reads as Unset, and -1 unsets it again, so curval/newval types may differ.
+    for _, o in ipairs({ 'autoread', 'autocomplete', 'fsync' }) do
+      command(('setglobal %s'):format(o)) -- global = on
+      command(('let &l:%s = v:false'):format(o)) -- unset local <- bool: sets local off
+      eq(false, api.nvim_get_option_value(o, {}))
+      command(('let &l:%s = -1'):format(o)) -- set local <- -1: unsets local, inheriting global
+      eq(true, api.nvim_get_option_value(o, {}))
     end
   end)
 end)
