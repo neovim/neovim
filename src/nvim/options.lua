@@ -1093,7 +1093,7 @@ local options = {
         doc = [[on on Unix, off on Windows]],
       },
       desc = [=[
-        When on, |:cd|, |:tcd| and |:lcd| without an argument changes the
+        When on, |:cd|, |:tcd|, |:lcd| and |:bcd| without an argument changes the
         current working directory to the |$HOME| directory like in Unix.
         When off, those commands just print the current directory name.
       ]=],
@@ -1113,7 +1113,7 @@ local options = {
       deny_duplicates = true,
       desc = [=[
         This is a list of directories which will be searched when using the
-        |:cd|, |:tcd| and |:lcd| commands, provided that the directory being
+        |:cd|, |:tcd|, |:lcd| and |:bcd| commands, provided that the directory being
         searched for has a relative path, not an absolute part starting with
         "/", "./" or "../", the 'cdpath' option is not used then.
         The 'cdpath' option's value has the same form and semantics as
@@ -2119,7 +2119,7 @@ local options = {
         		following occurrence.
         							*cpo-~*
         	~	When included, don't resolve symbolic links when
-        		changing directory with |:cd|, |:lcd|, or |:tcd|.
+        		changing directory with |:cd|, |:tcd|, |:lcd|, or |:bcd|.
         		This preserves the symbolic link path in buffer names
         		and when displaying the current directory.  When
         		excluded (default), symbolic links are resolved to

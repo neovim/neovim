@@ -179,13 +179,9 @@ for _, cmd in ipairs { 'cd', 'chdir' } do
         eq(globalDir, cwd())
         eq(0, blwd())
 
-        -- A new buffer created with :edit inherits the buffer-local directory; editing an
-        -- existing buffer keeps that buffer's own directory.
+        -- A new buffer created with :edit does not inherit the buffer-local directory.
         command('b# ')
         command(('e %s3'):format(tmpfile))
-        eq(1, blwd())
-        eq(join(globalDir, directories.buffer), cwd())
-        command(('e ..%s%s1'):format(pathsep, tmpfile))
         eq(0, blwd())
         eq(globalDir, cwd())
 
@@ -406,26 +402,32 @@ for _, cmd in ipairs { 'bcd', 'bchdir' } do
       command('bd') -- delete buffer
     end)
 
-    it('makes :new/:vnew/:enew use the buffer-local directory', function()
+    it('buffer-local directory is NOT sticky/inherited', function()
       local bufdir = join(directories.start, directories.buffer)
+
+      command('edit ' .. tmpfile)
       command(('%s %s'):format(cmd, directories.buffer))
-
-      command(':new')
-      eq(bufdir, cwd())
-      command('wincmd x') -- close :new window
-
-      command(':vnew')
-      eq(bufdir, cwd())
-      command('wincmd x') -- close :vnew window
-
-      command(':enew')
       eq(bufdir, cwd())
 
-      -- Also in a split.
-      command(':vsplit')
+      -- A new buffer starts without a buffer-local directory.
+      command('new')
+      eq(directories.start, cwd())
+      eq(0, blwd())
+      command('close')
       eq(bufdir, cwd())
-      command(':enew')
+      command('enew')
+      eq(directories.start, cwd())
+      eq(0, blwd())
+      command('b# ')
       eq(bufdir, cwd())
+
+      -- Recycling an empty unnamed buffer (:edit) drops its directory with it.
+      command('enew')
+      command(('%s %s'):format(cmd, directories.buffer))
+      eq(bufdir, cwd())
+      command('edit ' .. tmpfile .. '2')
+      eq(directories.start, cwd())
+      eq(0, blwd())
     end)
   end)
 end

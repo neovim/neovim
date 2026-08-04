@@ -5300,7 +5300,7 @@ static void win_enter_ext(win_T *const wp, const int flags)
     win_fix_cursor(get_real_state() & (MODE_NORMAL|MODE_CMDLINE|MODE_TERMINAL));
   }
 
-  fix_current_dir(true);
+  update_cwd(kCdCauseWindow);
 
   entering_window(curwin);
   // Careful: autocommands may close the window and make "wp" invalid
@@ -5352,11 +5352,12 @@ static void win_enter_ext(win_T *const wp, const int flags)
   do_autochdir();
 }
 
-/// Used after making another window or buffer the current one: change directory if needed.
-void fix_current_dir(bool caused_by_win)
+/// Applies the effective current-directory of the current window (its window-local, buffer-local,
+/// tab-local or the global directory). Called after setting curbuf/curwin.
+///
+/// @param cause What caused the switch, reported by the DirChanged event.
+void update_cwd(CdCause cause)
 {
-  CdCause cause = caused_by_win ? kCdCauseWindow : kCdCauseBuffer;
-
   // New directory is either the local directory of the window, buffer, tab or NULL.
   char *new_dir;
   CdScope scope;

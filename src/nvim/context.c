@@ -583,7 +583,7 @@ void ctx_restore(CtxSwitch *cs)
     // If :lcd has been used in the autocommand window, correct current
     // directory before restoring b_localdir, tp_localdir and globaldir.
     if (cwp->w_localdir != NULL) {
-      fix_current_dir(true);
+      update_cwd(kCdCauseWindow);
     }
     if (bufref_valid(&cs->cs_new_curbuf)) {
       xfree(cs->cs_new_curbuf.br_buf->b_localdir);

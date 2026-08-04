@@ -6,7 +6,6 @@ local describe, it, before_each, setup, teardown =
 local clear = n.clear
 local command = n.command
 local eq = t.eq
-local pcall_err = t.pcall_err
 local eval = n.eval
 local request = n.request
 local is_os = t.is_os
@@ -162,7 +161,7 @@ describe('autocmd DirChanged and DirChangedPre', function()
     eq('E344:', string.match(err3, 'E%d*:'))
   end)
 
-  it("are triggered by 'autochdir'", function()
+  it("triggered by 'autochdir'", function()
     command('set autochdir')
 
     command('split ' .. dirs[1] .. '/foo')
@@ -181,7 +180,7 @@ describe('autocmd DirChanged and DirChangedPre', function()
     eq(2, eval('g:cdcount'))
   end)
 
-  it('do not trigger if directory has not changed', function()
+  it('not triggered if directory has not changed', function()
     command('lcd ' .. dirs[1])
     eq({ directory = dirs[1], scope = 'window', changed_window = false }, eval('g:evpre'))
     eq({ cwd = dirs[1], scope = 'window', changed_window = false }, eval('g:ev'))
@@ -299,7 +298,7 @@ describe('autocmd DirChanged and DirChangedPre', function()
     end
   end)
 
-  it('are triggered by switching to win/tab with different CWD #6054', function()
+  it('triggered by switching to win/tab with different CWD #6054', function()
     command('lcd ' .. dirs[3]) -- window 3
     command('split ' .. dirs[2] .. '/foo') -- window 2
     command('lcd ' .. dirs[2])
@@ -376,7 +375,7 @@ describe('autocmd DirChanged and DirChangedPre', function()
     end
   end)
 
-  it('are triggered by switching to buf/tab with different CWD', function()
+  it('triggered by switching to buf/tab with different CWD', function()
     local files = {
       dirs[1] .. '/file',
       dirs[2] .. '/file',
@@ -400,9 +399,10 @@ describe('autocmd DirChanged and DirChangedPre', function()
 
     eq(5, eval('g:cdprecount'))
     eq(5, eval('g:cdcount'))
-    command('tabnew') -- tab 2 (tab-local CWD)
-    eq(5, eval('g:cdprecount')) -- same CWD, no DirChangedPre event
-    eq(5, eval('g:cdcount')) -- same CWD, no DirChanged event
+    command('tabnew') -- tab 2: its new empty buffer has no local CWD, reverts to global
+    eq({ cwd = curdir, scope = 'global', changed_window = false }, eval('g:ev'))
+    eq(6, eval('g:cdprecount'))
+    eq(6, eval('g:cdcount'))
     command('tcd ' .. dirs[2])
     command('tabnext') -- tab 1 (no tab-local CWD)
     eq({ directory = dirs[3], scope = 'buffer', changed_window = true }, eval('g:evpre'))
@@ -414,55 +414,55 @@ describe('autocmd DirChanged and DirChangedPre', function()
     eq({ cwd = dirs[2], scope = 'tabpage', changed_window = true }, eval('g:ev'))
     eq('tabpage', eval('g:amatchpre'))
     eq('tabpage', eval('g:amatch'))
-    eq(8, eval('g:cdprecount'))
-    eq(8, eval('g:cdcount'))
+    eq(9, eval('g:cdprecount'))
+    eq(9, eval('g:cdcount'))
 
     command('tabnext') -- tab 1
     command('b ' .. files[2]) -- buffer 2
-    eq(10, eval('g:cdprecount'))
-    eq(10, eval('g:cdcount'))
+    eq(11, eval('g:cdprecount'))
+    eq(11, eval('g:cdcount'))
     command('tabnext') -- tab 2 (has the *same* CWD)
-    eq(10, eval('g:cdprecount')) -- same CWD, no DirChangedPre event
-    eq(10, eval('g:cdcount')) -- same CWD, no DirChanged event
+    eq(11, eval('g:cdprecount')) -- same CWD, no DirChangedPre event
+    eq(11, eval('g:cdcount')) -- same CWD, no DirChanged event
 
     if is_os('win') then
       command('tabnew') -- tab 3
-      eq(10, eval('g:cdprecount')) -- same CWD, no DirChangedPre event
-      eq(10, eval('g:cdcount')) -- same CWD, no DirChanged event
+      eq(11, eval('g:cdprecount')) -- same CWD, no DirChangedPre event
+      eq(11, eval('g:cdcount')) -- same CWD, no DirChanged event
       command('tcd ' .. dirs[2])
-      eq(10, eval('g:cdprecount')) -- same CWD, no DirChangedPre event
-      eq(10, eval('g:cdcount')) -- same CWD, no DirChanged event
+      eq(11, eval('g:cdprecount')) -- same CWD, no DirChangedPre event
+      eq(11, eval('g:cdcount')) -- same CWD, no DirChanged event
       command('tabnext') -- tab 1
-      eq(10, eval('g:cdprecount')) -- same CWD, no DirChangedPre event
-      eq(10, eval('g:cdcount')) -- same CWD, no DirChanged event
+      eq(11, eval('g:cdprecount')) -- same CWD, no DirChangedPre event
+      eq(11, eval('g:cdcount')) -- same CWD, no DirChanged event
       command('tabprevious') -- tab 3
-      eq(10, eval('g:cdprecount')) -- same CWD, no DirChangedPre event
-      eq(10, eval('g:cdcount')) -- same CWD, no DirChanged event
+      eq(11, eval('g:cdprecount')) -- same CWD, no DirChangedPre event
+      eq(11, eval('g:cdcount')) -- same CWD, no DirChanged event
       command('tabprevious') -- tab 2
-      eq(10, eval('g:cdprecount')) -- same CWD, no DirChangedPre event
-      eq(10, eval('g:cdcount')) -- same CWD, no DirChanged event
+      eq(11, eval('g:cdprecount')) -- same CWD, no DirChangedPre event
+      eq(11, eval('g:cdcount')) -- same CWD, no DirChanged event
       command('tabprevious') -- tab 1
-      eq(10, eval('g:cdprecount')) -- same CWD, no DirChangedPre event
-      eq(10, eval('g:cdcount')) -- same CWD, no DirChanged event
+      eq(11, eval('g:cdprecount')) -- same CWD, no DirChangedPre event
+      eq(11, eval('g:cdcount')) -- same CWD, no DirChanged event
       command('bcd ' .. dirs[2]) -- buffer 2
-      eq(10, eval('g:cdprecount')) -- same CWD, no DirChangedPre event
-      eq(10, eval('g:cdcount')) -- same CWD, no DirChanged event
+      eq(11, eval('g:cdprecount')) -- same CWD, no DirChangedPre event
+      eq(11, eval('g:cdcount')) -- same CWD, no DirChanged event
       command('tabnext') -- tab 2
-      eq(10, eval('g:cdprecount')) -- same CWD, no DirChangedPre event
-      eq(10, eval('g:cdcount')) -- same CWD, no DirChanged event
+      eq(11, eval('g:cdprecount')) -- same CWD, no DirChangedPre event
+      eq(11, eval('g:cdcount')) -- same CWD, no DirChanged event
       command('tabnext') -- tab 3
-      eq(10, eval('g:cdprecount')) -- same CWD, no DirChangedPre event
-      eq(10, eval('g:cdcount')) -- same CWD, no DirChanged event
+      eq(11, eval('g:cdprecount')) -- same CWD, no DirChangedPre event
+      eq(11, eval('g:cdcount')) -- same CWD, no DirChanged event
       command('tabnext') -- tab 1
-      eq(10, eval('g:cdprecount')) -- same CWD, no DirChangedPre event
-      eq(10, eval('g:cdcount')) -- same CWD, no DirChanged event
+      eq(11, eval('g:cdprecount')) -- same CWD, no DirChangedPre event
+      eq(11, eval('g:cdcount')) -- same CWD, no DirChanged event
       command('tabprevious') -- tab 3
-      eq(10, eval('g:cdprecount')) -- same CWD, no DirChangedPre event
-      eq(10, eval('g:cdcount')) -- same CWD, no DirChanged event
+      eq(11, eval('g:cdprecount')) -- same CWD, no DirChangedPre event
+      eq(11, eval('g:cdcount')) -- same CWD, no DirChanged event
     end
   end)
 
-  it('are triggered by switching to buf/win with different CWD', function()
+  it('triggered by switching to buf/win with different CWD', function()
     command('lcd ' .. dirs[3]) -- window 3
     command(('split %s/file'):format(dirs[2])) -- window 2
     command('lcd ' .. dirs[2])
@@ -511,7 +511,7 @@ describe('autocmd DirChanged and DirChangedPre', function()
     eq(8, eval('g:cdcount')) -- no DirChanged event, window-local CWD has higher priority
   end)
 
-  it('are triggered by nvim_set_current_dir()', function()
+  it('triggered by nvim_set_current_dir()', function()
     request('nvim_set_current_dir', dirs[1])
     eq({ directory = dirs[1], scope = 'global', changed_window = false }, eval('g:evpre'))
     eq({ cwd = dirs[1], scope = 'global', changed_window = false }, eval('g:ev'))

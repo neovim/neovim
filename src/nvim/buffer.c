@@ -1778,7 +1778,7 @@ void set_curbuf(buf_T *buf, int action, bool update_jumplist)
   }
 
   // Maybe cd to buffer-local directory
-  fix_current_dir(false);
+  update_cwd(kCdCauseBuffer);
 }
 
 /// Enter a new current buffer.
@@ -2031,8 +2031,6 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
     trigger_undo_ftplugin(buf, curwin);
     // It's like this buffer is deleted.  Watch out for autocommands that
     // change curbuf!  If that happens, allocate a new buffer anyway.
-    // We also ask it to not free the buffer-local directory so we can reuse
-    // it.
     buf_freeall(buf, BFA_WIPE | BFA_DEL);
     if (aborting()) {           // autocmds may abort script processing
       xfree(ffname);
@@ -2162,8 +2160,6 @@ bool curbuf_reusable(void)
           && curbuf->b_ffname == NULL
           && curbuf->b_nwindows <= 1
           && !curbuf->terminal
-          && curbuf->b_localdir == NULL
-          && curbuf->b_prevdir == NULL
           && (curbuf->b_ml.ml_mfp == NULL || buf_is_empty(curbuf))
           && !bt_quickfix(curbuf)
           && !curbufIsChanged());

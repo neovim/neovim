@@ -1265,8 +1265,8 @@ M.funcs = {
 
       If {scope} is present, changes the current working directory
       for the specified scope:
-          "window"	Changes the window local directory.  |:lcd|
           "buffer"	Changes the buffer local directory.  |:bcd|
+          "window"	Changes the window local directory.  |:lcd|
           "tabpage"	Changes the tabpage local directory.  |:tcd|
           "global"	Changes the global directory.  |:cd|
 
@@ -4101,23 +4101,27 @@ M.funcs = {
       is ignored.
 
       Tabs, windows and buffers are identified by their respective
-      numbers, 0 means current tab or window or buffer. Missing tab
-      number
-      implies 0. Thus the following are equivalent: >vim
+      numbers, 0 means current tab/window/buffer. Missing {tabnr}
+      implies 0 (missing {bufnr} does not; see below). Thus the
+      following are equivalent: >vim
       	getcwd(0)
       	getcwd(0, 0)
       <If {winnr} is -1 it is ignored, only the tab is resolved.
       {winnr} is a |window-number| or |window-ID|.
+
       If both {winnr} and {tabnr} are -1 and {bufnr} is missing the
       global working directory is returned.
+
       Note: When {tabnr} is -1 Vim returns an empty string to
       signal that it is invalid, whereas Nvim returns either the
       global working directory if {winnr} is -1 or the working
       directory of the window indicated by {winnr}.
 
-      If {bufnr} is provided, {winnr} and {tabnr} must be -1 and the
-      working directory of that buffer is returned. An argument may
-      be -1 only if all preceding arguments are -1.
+      If {bufnr} is provided, {winnr} and {tabnr} must be -1, then
+      the buffer-local working directory is returned.
+
+      An argument may be -1 only if all preceding arguments are -1.
+
       Examples of buffer usage: >vim
             getcwd(-1, -1, 0)  " Get current buffer's directory
             getcwd(-1, -1, 3)  " Get directory of buffer #3
@@ -5435,8 +5439,9 @@ M.funcs = {
       and {bufnr} has set a local path via |:bcd|, otherwise 0.
 
       Tabs, windows and buffers are identified by their respective
-      numbers, 0 means current tab, window or buffer. Missing
-      argument implies 0. Thus the following are equivalent: >vim
+      numbers, 0 means current tab/window/buffer. Missing {winnr}
+      or {tabnr} implies 0 (missing {bufnr} does not; see below).
+      Thus the following are equivalent: >vim
       	echo haslocaldir()
       	echo haslocaldir(0)
       	echo haslocaldir(0, 0)
