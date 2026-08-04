@@ -418,6 +418,9 @@ describe(':mksession', function()
     clear()
 
     command('source ' .. session_file)
+    -- The ":tcd" during restore must not clear the buffer-local directory of the tab's
+    -- first-loaded buffer: it must be set before that tab is ever (re)visited.
+    eq(1, fn.haslocaldir(-1, -1, fn.bufnr(('%s2'):format(tmpfile_base))))
     -- First tab should have the original working directory.
     command('tabnext 1')
     eq(cwd_dir, fn.getcwd())

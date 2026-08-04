@@ -5355,12 +5355,7 @@ static void win_enter_ext(win_T *const wp, const int flags)
 /// Used after making another window or buffer the current one: change directory if needed.
 void fix_current_dir(bool caused_by_win)
 {
-  CdCause cause;
-  if (caused_by_win) {
-    cause = kCdCauseWindow;
-  } else {
-    cause = kCdCauseBuffer;
-  }
+  CdCause cause = caused_by_win ? kCdCauseWindow : kCdCauseBuffer;
 
   // New directory is either the local directory of the window, buffer, tab or NULL.
   char *new_dir;

@@ -1348,15 +1348,16 @@ use has("browsefilter"): >
 ==============================================================================
 7. The current directory				*current-directory*
 
-There are three current-directory "scopes": global, tab and window. You can
-use |:cd|, |:tcd| and |:lcd| to change to another directory.  This affects
-anything that operates on relative paths, e.g. ":edit ./foo.txt" or shell
-commands like ":!ls" or ":te ls".
+There are four current-directory "scopes": global, tab, window and buffer.
+You can use |:cd|, |:tcd|, |:lcd| and |:bcd| to change to another directory.
+This affects anything that operates on relative paths, e.g. ":edit ./foo.txt"
+or shell commands like ":!ls" or ":te ls".
 
 Use |getcwd()| to get the effective directory from the current scope.  The
-window-local working directory takes precedence over the tab-local working
-directory, which in turn takes precedence over the global working directory.
-If a local working directory (tab or window) does not exist, the next-higher
+window-local working directory takes precedence over the buffer-local working
+directory, which takes precedence over the tab-local working directory, which
+in turn takes precedence over the global working directory.  If a local
+working directory (window, buffer or tab) does not exist, the next-higher
 scope in the hierarchy applies.
 
 							*:cd* *E747* *E472*

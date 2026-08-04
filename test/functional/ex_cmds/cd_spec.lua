@@ -24,6 +24,10 @@ local directories = {
 
 local tmpfile = 'Xtest-functional-ex_cmds-cd_spec-tmpfile'
 
+local function join(...)
+  return table.concat({ ... }, pathsep)
+end
+
 -- Shorthand writing to get the current working directory
 local cwd = function(...)
   return call('getcwd', ...)
@@ -53,22 +57,25 @@ local tlwd = function()
 end -- tab dir
 --local glwd = function() return eval('haslocaldir(-1, -1)') end  -- global dir
 
+local function before_test()
+  clear()
+  for _, d in pairs(directories) do
+    mkdir(d)
+  end
+  directories.start = cwd()
+end
+
+local function remove_dirs()
+  for _, d in pairs(directories) do
+    vim.uv.fs_rmdir(d)
+  end
+end
+
 -- Test both the `cd` and `chdir` variants
 for _, cmd in ipairs { 'cd', 'chdir' } do
   describe(':' .. cmd, function()
-    before_each(function()
-      clear()
-      for _, d in pairs(directories) do
-        mkdir(d)
-      end
-      directories.start = cwd()
-    end)
-
-    after_each(function()
-      for _, d in pairs(directories) do
-        vim.uv.fs_rmdir(d)
-      end
-    end)
+    before_each(before_test)
+    after_each(remove_dirs)
 
     describe('using explicit scope', function()
       it('for window', function()
@@ -156,7 +163,15 @@ for _, cmd in ipairs { 'cd', 'chdir' } do
 
         -- Change buffer-local directory to subdirectory
         command('bcd ' .. directories.buffer)
-        eq(('%s%s%s'):format(globalDir, pathsep, directories.buffer), cwd())
+        eq(join(globalDir, directories.buffer), cwd())
+        eq(1, blwd())
+
+        -- ":bcd -" changes to the previous directory, still buffer-scoped.
+        command('bcd -')
+        eq(globalDir, cwd())
+        eq(1, blwd())
+        command('bcd -')
+        eq(join(globalDir, directories.buffer), cwd())
         eq(1, blwd())
 
         -- Verify Other buffer is unchanged
@@ -169,7 +184,7 @@ for _, cmd in ipairs { 'cd', 'chdir' } do
         command('b# ')
         command(('e %s3'):format(tmpfile))
         eq(1, blwd())
-        eq(('%s%s%s'):format(globalDir, pathsep, directories.buffer), cwd())
+        eq(join(globalDir, directories.buffer), cwd())
         command(('e ..%s%s1'):format(pathsep, tmpfile))
         eq(0, blwd())
         eq(globalDir, cwd())
@@ -179,7 +194,7 @@ for _, cmd in ipairs { 'cd', 'chdir' } do
         command(('split %s%s%s2'):format(directories.buffer, pathsep, tmpfile))
         command('wincmd p')
         eq(globalDir, cwd())
-        eq(('%s%s%s'):format(globalDir, pathsep, directories.buffer), cwd(1))
+        eq(join(globalDir, directories.buffer), cwd(1))
         eq(globalDir, cwd(2))
       end)
     end)
@@ -315,7 +330,7 @@ for _, cmd in ipairs { 'cd', 'chdir' } do
 
       -- Change tab-local working directory and verify it is different
       command(('silent t%s %s'):format(cmd, directories.tab))
-      eq(('%s%s%s'):format(globalDir, pathsep, directories.tab), cwd())
+      eq(join(globalDir, directories.tab), cwd())
       eq(cwd(), tcwd()) -- Working directory matches tab directory
       eq(1, tlwd())
       eq(cwd(), bcwd()) -- Still no buffer-directory
@@ -323,8 +338,8 @@ for _, cmd in ipairs { 'cd', 'chdir' } do
 
       -- Change buffer 2's buffer-local directory
       command(('silent b%s ..%s%s'):format(cmd, pathsep, directories.buffer))
-      eq(('%s%s%s'):format(globalDir, pathsep, directories.buffer), cwd())
-      eq(('%s%s%s'):format(globalDir, pathsep, directories.tab), tcwd())
+      eq(join(globalDir, directories.buffer), cwd())
+      eq(join(globalDir, directories.tab), tcwd())
       eq(cwd(), bcwd()) -- Has no buffer-directory
       eq(1, blwd())
 
@@ -334,7 +349,7 @@ for _, cmd in ipairs { 'cd', 'chdir' } do
 
       -- Verify buffer 2 has buffer-local directory even in first tab
       command(('b %s2'):format(tmpfile)) -- Switch to buffer 2
-      eq(('%s%s%s'):format(globalDir, pathsep, directories.buffer), bcwd())
+      eq(join(globalDir, directories.buffer), bcwd())
       eq(0, tlwd()) -- Still no tab-local directory
 
       -- Verify buffer 1 did not have its directory changed
@@ -357,7 +372,7 @@ for _, cmd in ipairs { 'cd', 'chdir' } do
 
       -- Change buffer-local working directory and verify it is different
       command(('silent b%s %s'):format(cmd, directories.buffer))
-      eq(('%s%s%s'):format(globalDir, pathsep, directories.buffer), cwd())
+      eq(join(globalDir, directories.buffer), cwd())
       eq(cwd(), bcwd()) -- Working directory matches buffer directory
       eq(1, blwd())
       eq(cwd(), wcwd()) -- Still no window-directory
@@ -365,68 +380,52 @@ for _, cmd in ipairs { 'cd', 'chdir' } do
 
       -- Change window-local directory to test `:lcd`
       command(('silent l%s ../%s'):format(cmd, directories.window))
-      eq(('%s%s%s'):format(globalDir, pathsep, directories.window), cwd())
-      eq(('%s%s%s'):format(globalDir, pathsep, directories.buffer), bcwd())
+      eq(join(globalDir, directories.window), cwd())
+      eq(join(globalDir, directories.buffer), bcwd())
       eq(1, blwd())
 
       -- Verify buffer has buffer-local directory in original window
       command('wincmd w')
       command('b ' .. tmpfile)
-      eq(('%s%s%s'):format(globalDir, pathsep, directories.buffer), cwd())
+      eq(join(globalDir, directories.buffer), cwd())
 
       -- Verify going to second window uses window-local directory
       command('wincmd w')
-      eq(('%s%s%s'):format(globalDir, pathsep, directories.window), cwd())
+      eq(join(globalDir, directories.window), cwd())
     end)
   end)
 end
 
 for _, cmd in ipairs { 'bcd', 'bchdir' } do
   describe(':' .. cmd, function()
-    before_each(function()
-      clear()
-      for _, d in pairs(directories) do
-        mkdir(d)
-      end
-      directories.start = cwd()
-    end)
-
-    after_each(function()
-      for _, d in pairs(directories) do
-        vim.uv.fs_rmdir(d)
-      end
-    end)
+    before_each(before_test)
+    after_each(remove_dirs)
 
     it('works after deleting the only buffer', function()
       command(('%s %s'):format(cmd, directories.buffer))
       command('bd') -- delete buffer
     end)
 
-    it('makes :new use the buffer-local directory', function()
-      local globalDir = directories.start
+    it('makes :new/:vnew/:enew use the buffer-local directory', function()
+      local bufdir = join(directories.start, directories.buffer)
       command(('%s %s'):format(cmd, directories.buffer))
 
       command(':new')
-      eq(('%s%s%s'):format(globalDir, pathsep, directories.buffer), cwd())
+      eq(bufdir, cwd())
       command('wincmd x') -- close :new window
 
       command(':vnew')
-      eq(('%s%s%s'):format(globalDir, pathsep, directories.buffer), cwd())
+      eq(bufdir, cwd())
       command('wincmd x') -- close :vnew window
 
       command(':enew')
-      eq(('%s%s%s'):format(globalDir, pathsep, directories.buffer), cwd())
-    end)
+      eq(bufdir, cwd())
 
-    it('makes :enew use the buffer-local directory in a split', function()
-      local globalDir = directories.start
-      command(('%s %s'):format(cmd, directories.buffer))
-
+      -- Also in a split.
       command(':vsplit')
-      eq(('%s%s%s'):format(globalDir, pathsep, directories.buffer), cwd())
-
+      eq(bufdir, cwd())
       command(':enew')
-      eq(('%s%s%s'):format(globalDir, pathsep, directories.buffer), cwd())
+      eq(bufdir, cwd())
     end)
   end)
 end
@@ -438,46 +437,34 @@ for _, cmd in ipairs { 'getcwd', 'haslocaldir' } do
       clear()
     end)
 
-    -- Test invalid argument types
-    local err474 = 'Vim(call):E474: Invalid argument'
-    it('fails on string', function()
-      eq(err474, pcall_err(command, 'call ' .. cmd .. '("some string")'))
-    end)
-    it('fails on float', function()
-      eq(err474, pcall_err(command, 'call ' .. cmd .. '(1.0)'))
-    end)
-    it('fails on list', function()
-      eq(err474, pcall_err(command, 'call ' .. cmd .. '([1, 2])'))
-    end)
-    it('fails on dictionary', function()
-      eq(err474, pcall_err(command, 'call ' .. cmd .. '({"key": "value"})'))
-    end)
-    it('fails on funcref', function()
-      eq(err474, pcall_err(command, 'call ' .. cmd .. '(function("tr"))'))
-    end)
+    it('validation', function()
+      local err474 = 'Vim(call):E474: Invalid argument'
+      eq(err474, pcall_err(command, ('call %s("some string")'):format(cmd)))
+      eq(err474, pcall_err(command, ('call %s(1.0)'):format(cmd)))
+      eq(err474, pcall_err(command, ('call %s([1, 2])'):format(cmd)))
+      eq(err474, pcall_err(command, ('call %s({"key": "value"})'):format(cmd)))
+      eq(err474, pcall_err(command, ('call %s(function("tr"))'):format(cmd)))
+      eq(err474, pcall_err(command, ('call %s(-2)'):format(cmd)))
 
-    -- Test invalid numbers
-    it('fails on number less than -1', function()
-      eq(err474, pcall_err(command, 'call ' .. cmd .. '(-2)'))
-    end)
-    local err5001 = 'Vim(call):E5001: Higher scope cannot be -1 if lower scope is >= 0.'
-    local err5006 = 'Vim(call):E5006: Window and tab scope must be -1 when using buffer scope'
-    local err5007 = 'Vim(call):E5007: Cannot find buffer number.'
-    it('fails on -1 if previous arg is >=0', function()
-      eq(err5001, pcall_err(command, 'call ' .. cmd .. '(0, -1)'))
-    end)
-    it('fails when 1st and 2nd args != -1 when 3rd arg > -1', function()
+      -- -1 preceded by an argument >= 0
+      eq(
+        'Vim(call):E5001: Higher scope cannot be -1 if lower scope is >= 0.',
+        pcall_err(command, ('call %s(0, -1)'):format(cmd))
+      )
+      -- Buffer scope requires window and tab arguments of -1.
+      local err5006 = 'Vim(call):E5006: Window and tab scope must be -1 when using buffer scope'
       eq(err5006, pcall_err(command, ('call %s(0, 0, 0)'):format(cmd)))
       eq(err5006, pcall_err(command, ('call %s(1, 2, 3)'):format(cmd)))
-    end)
-    it('fails when passing a bufnr that does not exist', function()
-      eq(err5007, pcall_err(command, ('call %s(-1, -1, 99999)'):format(cmd)))
-    end)
-
-    -- Test wrong number of arguments
-    local err118 = 'Vim(call):E118: Too many arguments for function: ' .. cmd
-    it('fails to parse more than one argument', function()
-      eq(err118, pcall_err(command, ('call %s(0, 0, 0, 0)'):format(cmd)))
+      -- Nonexistent buffer.
+      eq(
+        'Vim(call):E5007: Cannot find buffer number.',
+        pcall_err(command, ('call %s(-1, -1, 99999)'):format(cmd))
+      )
+      -- Too many arguments.
+      eq(
+        ('Vim(call):E118: Too many arguments for function: %s'):format(cmd),
+        pcall_err(command, ('call %s(0, 0, 0, 0)'):format(cmd))
+      )
     end)
   end)
 end

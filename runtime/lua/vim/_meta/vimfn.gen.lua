@@ -3350,7 +3350,6 @@ function vim.fn.getcursorcharpos(winid) end
 ---       getcwd(-1, -1, -1) " Get global directory
 ---       getcwd(-1, -1)     " Get global directory
 --- <Throw error if the arguments are invalid.
---- |E5000| |E5001| |E5002| |E5006| |E5007|
 ---
 --- @param winnr? integer
 --- @param tabnr? integer

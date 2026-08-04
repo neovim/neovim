@@ -3748,7 +3748,8 @@ getcursorcharpos([{winid}])                                 *getcursorcharpos()*
                 Return: ~
                   (`any`)
 
-getcwd([{winnr} [, {tabnr} [, {bufnr}]]])                             *getcwd()*
+                                        *getcwd()* *E5000* *E5001* *E5002* *E5006* *E5007*
+getcwd([{winnr} [, {tabnr} [, {bufnr}]]])
 		Lua: Prefer |uv.cwd()| for the global working directory;
 		tab-local and window-local scopes differ.
 
@@ -3782,7 +3783,6 @@ getcwd([{winnr} [, {tabnr} [, {bufnr}]]])                             *getcwd()*
 		      getcwd(-1, -1, -1) " Get global directory
 		      getcwd(-1, -1)     " Get global directory
 <		Throw error if the arguments are invalid.
-		|E5000| |E5001| |E5002| |E5006| |E5007|
 
                 Parameters: ~
                   • {winnr} (`integer?`)

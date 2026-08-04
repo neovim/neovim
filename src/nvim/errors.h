@@ -20,8 +20,6 @@ EXTERN const char e_invalid_buffer_name_str[] INIT(= N_("E158: Invalid buffer na
 EXTERN const char e_command_too_recursive[] INIT(= N_("E169: Command too recursive"));
 EXTERN const char e_buffer_nr_invalid_buffer_number[] INIT(= N_("E680: <buffer=%d>: invalid buffer number"));
 EXTERN const char e_buffer_is_not_loaded[] INIT(= N_("E681: Buffer is not loaded"));
-EXTERN const char e_getcwd_buffer_scope_requires_minus_one[] INIT(= N_("E5006: Window and tab scope must be -1 when using buffer scope"));
-EXTERN const char e_cannot_find_buffer_number[] INIT(= N_("E5007: Cannot find buffer number."));
 EXTERN const char e_endif[] INIT(= N_("E171: Missing :endif"));
 EXTERN const char e_endtry[] INIT(= N_("E600: Missing :endtry"));
 EXTERN const char e_endwhile[] INIT(= N_("E170: Missing :endwhile"));

@@ -4125,12 +4125,12 @@ M.funcs = {
             getcwd(-1, -1, -1) " Get global directory
             getcwd(-1, -1)     " Get global directory
       <Throw error if the arguments are invalid.
-      |E5000| |E5001| |E5002| |E5006| |E5007|
     ]=],
     name = 'getcwd',
     params = { { 'winnr', 'integer' }, { 'tabnr', 'integer' }, { 'bufnr', 'integer' } },
     returns = 'string',
     signature = 'getcwd([{winnr} [, {tabnr} [, {bufnr}]]])',
+    tags = { 'E5000', 'E5001', 'E5002', 'E5006', 'E5007' },
     see_lua = {
       '|uv.cwd()| for the global working directory; tab-local and window-local scopes differ',
     },
