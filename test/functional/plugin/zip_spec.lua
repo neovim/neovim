@@ -443,14 +443,18 @@ describe('nvim.zip', function()
     local archive = stage(fixtures, 'encrypted.zip')
     clear_zip()
 
-    -- Info-ZIP allows three attempts before giving up.
-    exec_lua(function(uri)
+    -- Info-ZIP allows three attempts before giving up. Failure msg is scheduled, so wait() for it.
+    local reported = exec_lua(function(uri)
       vim.api.nvim_input('no1<CR>no2<CR>no3<CR>')
       vim.api.nvim_cmd({ cmd = 'edit', args = { uri }, magic = { file = false, bar = false } }, {})
+      return vim.wait(1000, function()
+        return vim.api
+          .nvim_exec2('messages', { output = true }).output
+          :find('incorrect password', 1, true) ~= nil
+      end)
     end, ('zip://%s/secret.txt'):format(archive))
-    poke_eventloop()
 
-    eq(true, exec_capture('messages'):find('incorrect password', 1, true) ~= nil)
+    eq(true, reported)
   end)
 
   describe('extract', function()
