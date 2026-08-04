@@ -1404,10 +1404,11 @@ static char *ex_let_option(char *arg, typval_T *const tv, const bool is_const,
     goto theend;
   }
 
-  // Current value and new value must have the same type.
-  assert(curval.type == newval.type);
-  const bool is_num = curval.type == kObjectTypeInteger || curval.type == kObjectTypeBoolean;
-  const bool is_string = curval.type == kObjectTypeString;
+  // Global-local w/ unset local: assigning -1 unsets it again, so `curval` and `newval` may differ.
+  // in type. Apply a compound operator only to concrete same-kind values.
+  const bool is_num = (curval.type == kObjectTypeInteger || curval.type == kObjectTypeBoolean)
+                      && (newval.type == kObjectTypeInteger || newval.type == kObjectTypeBoolean);
+  const bool is_string = curval.type == kObjectTypeString && newval.type == kObjectTypeString;
 
   if (op != NULL && *op != '=') {
     if (!hidden && is_num) {  // number or bool
