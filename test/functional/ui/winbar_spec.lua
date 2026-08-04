@@ -546,9 +546,29 @@ describe('winbar', function()
     screen:try_resize(screen._width, 20)
     command('botright split | belowright vsplit | 2wincmd w')
     api.nvim_set_option_value('winfixheight', true, { scope = 'local', win = 0 })
-    api.nvim_win_set_height(0, 8)
+    api.nvim_win_resize(0, -1, 8, {})
     feed('q:')
     n.assert_alive()
+  end)
+
+  it('draws vertical separator of a window that only has a winbar #41142', function()
+    n.exec([[
+      set laststatus=3 winminheight=0
+      topleft vsplit
+      setlocal winbar=bottom
+      aboveleft split
+      setlocal winbar=top
+      resize 1000
+    ]])
+    screen:expect([[
+      {1:top                           }│{1:Set Up The Bars              }|
+      ^                              │                             |
+      {3:~                             }│{3:~                            }|*7
+      ──────────────────────────────┤{3:~                            }|
+      {1:bottom                        }│{3:~                            }|
+      {4:[No Name]                                                   }|
+                                                                  |
+    ]])
   end)
 end)
 
