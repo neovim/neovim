@@ -493,7 +493,7 @@ function M.open(buf, name, entry)
   api.nvim_cmd({
     cmd = 'edit',
     args = { uri },
-    mods = { noswapfile = true },
+    mods = { noswapfile = true, keepalt = true },
     magic = { file = false, bar = false },
   }, {})
 end
