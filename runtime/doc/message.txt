@@ -852,7 +852,10 @@ This message is given when the |ui2| modal dialog is active.
 Only when the 'more' option is on.
 Highlighted with the |hl-MoreMsg| group.
 
-With |ui2|: use "g<" to show messages in the pager.
+With |ui2|: use "g<" to show messages in the pager.  When a command emits a
+message while a previous message is still displayed, the messages are
+collected in the pager window without focusing it: use "g<" to enter the
+pager, any other typed key dismisses it.
 
      Type					Effect ~
      <CR> or <NL> or j or <Down>		one more line

@@ -413,6 +413,12 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
 end
 
 local in_pager = false -- Whether the pager is or will be the current window.
+local pager_focus = false -- Whether the pager was explicitly requested (|g<|, :messages).
+
+local function pager_shown()
+  return not api.nvim_win_get_config(ui.wins.pager).hide
+end
+
 --- Route the message to the appropriate sink.
 ---
 ---@param kind string
@@ -437,7 +443,7 @@ function M.msg_show(kind, content, replace_last, _, append, id, trigger)
     -- When the pager is open always route typed commands there. This better simulates
     -- the UI1 behavior after opening the cmdline below a previous multiline message,
     -- and seems useful enough even when the pager was entered manually.
-    or (trigger == 'typed_cmd' and in_pager and fn.getcmdwintype() == '') and 'pager'
+    or (trigger == 'typed_cmd' and pager_shown() and fn.getcmdwintype() == '') and 'pager'
     -- Otherwise route to configured target:
     or (trigger ~= '' and ui.cfg.msg.targets[trigger])
     or id_target
@@ -486,8 +492,8 @@ function M.msg_show(kind, content, replace_last, _, append, id, trigger)
     end
     ui.cmd.expand = ui.cmd.expand + (ui.cmd.expand > 0 and 1 or 0)
 
-    local enter_pager = tgt == 'pager' and not in_pager
-    M.show_msg(tgt, kind, content, replace_last or enter_pager, append, id)
+    local open_pager = tgt == 'pager' and not pager_shown()
+    M.show_msg(tgt, kind, content, replace_last or open_pager, append, id)
     if kind == 'search_cmd' then
       -- Don't remember search_cmd message as actual message.
       M.cmd.ids, M.cmd.prev_msg = {}, ''
@@ -495,7 +501,7 @@ function M.msg_show(kind, content, replace_last, _, append, id, trigger)
       -- Position cursor at start of first or last message at bottom of window.
       -- Keep Normal commands: nvim_win_set_cursor() only ensures visibility, while zb
       -- reliably places the final message at the bottom. :noautocmd avoids #40780.
-      fn.win_execute(ui.wins.pager, 'noautocmd norm! ' .. (enter_pager and 'gg0' or 'G0zb'))
+      fn.win_execute(ui.wins.pager, 'noautocmd norm! ' .. (open_pager and 'gg0' or 'G0zb'))
     end
   end
 end
@@ -567,6 +573,8 @@ function M.msg_history_show(entries, prev_cmd)
     M.show_msg('pager', entry[1], entry[2], i == 1, entry[3], 0)
   end
 
+  -- Message history was explicitly requested (e.g. |g<| or |:messages|): enter the pager.
+  pager_focus = true
   M.set_pos('pager')
 end
 
@@ -574,22 +582,29 @@ local typed_g = false
 local function cmd_on_key(key, typed)
   -- Don't dismiss for non-typed keys and mouse movement. When 'g' is passed (typed
   -- or mapped), wait until the next key to avoid flickering when the pager is opened.
-  if not typed_g and (typed == '' or typed == '<MouseMove>' or typed == 'g' or key == 'g') then
+  if typed == '' or (not typed_g and (typed == '<MouseMove>' or typed == 'g' or key == 'g')) then
     typed_g = typed == 'g' or key == 'g'
     return
   end
-  vim.on_key(nil, ui.ns)
-  if typed == ':' or ui.cmd.level > 0 then
-    return -- Keep expanded messages open until cmdline closes.
+  if typed == ':' or ui.cmd.level > 0 or fn.getcmdtype() ~= '' then
+    -- Keep expanded messages open until the cmdline closes, including for the
+    -- key that executes it. Stay armed: a command that emits no message would
+    -- otherwise leave an unfocused pager without a handler.
+    return
   end
+  vim.on_key(nil, ui.ns)
   typed = fn.keytrans(typed)
 
-  -- Check if window was entered and reopen with original config.
-  local mode = not api.nvim_get_mode().mode:match('[it]')
+  -- Check if window was entered and reopen with original config. An already open
+  -- pager is dismissed instead; "g<" passes through to reopen and enter it.
+  local mode = not api.nvim_get_mode().mode:match('[it]') and not pager_shown()
   local enter = mode and (typed == '<CR>' or typed_g and (typed == '<lt>' or key == '<'))
     or (typed:find('LeftMouse') and fn.getmousepos().winid == ui.wins.cmd)
   if enter then
+    pager_focus = true
     M.expand_msg('cmd', 'pager')
+  elseif not in_pager then
+    pcall(api.nvim_win_set_config, ui.wins.pager, { hide = true })
   end
   pcall(api.nvim_win_close, ui.wins.cmd, true)
   ui.check_targets()
@@ -732,7 +747,13 @@ function M.set_pos(tgt)
         -- reliably places the final message at the bottom. :noautocmd avoids #40780.
         fn.win_execute(ui.wins.msg, 'noautocmd norm! Gzb')
       elseif tgt == 'pager' and not in_pager then
-        enter_pager()
+        if pager_focus then
+          pager_focus = false
+          enter_pager()
+        else
+          -- Reuse only the handler: M.cmd_on_key would mark the cmdline as expanded.
+          vim.on_key(cmd_on_key, ui.ns)
+        end
       end
     end
   end
