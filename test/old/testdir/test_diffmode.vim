@@ -253,6 +253,24 @@ func Test_diffget_diffput()
   %bwipe!
 endfunc
 
+" Undo after getting lines into an empty buffer must leave it empty again
+func Test_diffget_undo_empty_buffer()
+  enew!
+  diffthis
+  new
+  call setline(1, ['1', '2'])
+  diffthis
+
+  wincmd p
+  normal do
+  call assert_equal(['1', '2'], getline(1, '$'))
+  undo
+  call assert_equal([''], getline(1, '$'))
+
+  windo diffoff
+  %bwipe!
+endfunc
+
 " Test putting two changes from one buffer to another
 func Test_diffput_two()
   new a
