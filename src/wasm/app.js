@@ -295,7 +295,7 @@ function translateKey(ev) {
   };
   if (named[ev.key]) return named[ev.key];
   if (ev.key.length === 1) {
-    let char = ev.shiftKey ? ev.key : ev.key.toLowerCase();
+    let char = ev.key;
     if (char === "<") char = "<lt>";
     if (!isCtrl && !isAlt) return char;
     let mod = "";
