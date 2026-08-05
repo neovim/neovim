@@ -178,12 +178,9 @@ function M.slug(path, opts)
   vim.validate('path', path, 'string')
   opts = opts or {}
   vim.validate('maxlen', opts.maxlen, function(v)
-    if v == nil then
-      return true
-    end
     return type(v) == 'number' and v >= 8
-  end, '`opt.maxlen` must be >= 8')
-  opts.maxlen = opts.maxlen or 180
+  end, true, '`opts.maxlen` must be >= 8')
+  local maxlen = opts.maxlen or 180
 
   -- Normalize before computing the hash so equivalent paths produce the same result
   path = vim.fs.normalize(path, { plain = true })
@@ -221,7 +218,6 @@ function M.slug(path, opts)
   end
 
   -- Within maxlen: "{name}-{hash8}"
-  local maxlen = opts.maxlen
   if #s + 1 + #hash8 <= maxlen then
     return s .. '-' .. hash8
   end
@@ -229,8 +225,8 @@ function M.slug(path, opts)
   -- "{head}~~~{tail}-{hash8}"
   local budget = maxlen - 12 -- 3 for "~~~", 1 for "-", 8 for hash
   if budget < 1 then
-    -- No room for a readable form: degrade to a plain hash
-    return hash8:sub(1, maxlen)
+    -- No room for a readable form: degrade to a plain hash (maxlen >= 8 == #hash8).
+    return hash8
   end
   local head_len = math.floor(budget / 3)
   local h = s:sub(1, head_len):match('^.*()-') or head_len -- byte position where {head} ends
@@ -243,13 +239,11 @@ function M.slug(path, opts)
       h = char_start - 1
     end
   end
+  -- Always in [h + 4, #s]: the "{name}-{hash8}" case above handled #s <= budget + 3.
   local tail_start = #s - budget + h + 1
-  if tail_start < 1 then
-    tail_start = 1
-  end
   local t = s:find('-', tail_start, true) or tail_start -- byte position where {tail} starts
   -- If we fall back to a byte position, step forward past a split character
-  if t == tail_start and t <= #s then
+  if t == tail_start then
     local offset_start = vim.str_utf_start(s, t)
     if offset_start < 0 then
       local char_start = t + offset_start ---@type integer
