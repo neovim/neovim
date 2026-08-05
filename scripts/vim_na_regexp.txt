@@ -75,6 +75,7 @@
 ^src/testdir/test_channel
 ^src/testdir/test_terminal
 ^src/testdir/test_vim9
+^src/testdir/test8[67]\.
 ^src/tool[a-z]
 ^src/vim\.[^h]
 ^src/vim9
