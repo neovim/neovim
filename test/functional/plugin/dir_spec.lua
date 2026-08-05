@@ -524,6 +524,20 @@ describe('nvim.dir', function()
     assert_directory(root)
     -- Keep the alternate buffer on the file we navigated up from.
     eq(file, api.nvim_buf_get_name(fn.bufnr('#')))
+
+    feed('-')
+    poke_eventloop()
+    assert_directory(vim.fs.dirname(root))
+    eq(file, api.nvim_buf_get_name(fn.bufnr('#')))
+
+    feed('<CR>')
+    poke_eventloop()
+    assert_directory(root)
+    eq(file, api.nvim_buf_get_name(fn.bufnr('#')))
+
+    feed('1-')
+    poke_eventloop()
+    eq(file, api.nvim_buf_get_name(fn.bufnr('#')))
   end)
 
   it('uses an absolute buffer name for a relative startup directory argument', function()

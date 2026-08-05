@@ -12,7 +12,12 @@ end, { silent = true, desc = 'Open directory entry' })
 
 vim.keymap.set('n', '<Plug>(nvim-dir-up)', function()
   if vim.v.count == 1 then
-    api.nvim_cmd({ cmd = 'edit', args = { '.' }, magic = { file = false, bar = false } }, {})
+    api.nvim_cmd({
+      cmd = 'edit',
+      args = { '.' },
+      mods = { keepalt = vim.b.nvim_dir ~= nil },
+      magic = { file = false, bar = false },
+    }, {})
     return
   end
   local dir = require('nvim.dir')

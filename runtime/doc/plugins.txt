@@ -73,6 +73,9 @@ directory-buffer "-" mappings are also skipped when "-" is already mapped.
 
 The listing is read-only and does not modify the filesystem.
 
+Opening an entry leaves the |alternate-file| on the buffer you came from, so
+that |CTRL-^| returns to it rather than to the listing.
+
 Directory buffers follow the global 'hidden' option by default. To delete them
 after use: >vim
 	autocmd FileType directory setlocal bufhidden=delete
