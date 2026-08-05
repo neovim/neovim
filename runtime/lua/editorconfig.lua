@@ -166,6 +166,10 @@ function properties.trim_trailing_whitespace(bufnr, val)
   )
   if val == 'true' then
     nvim_on('BufWritePre', 'nvim.editorconfig', { buf = bufnr }, function()
+      local mode = vim.api.nvim_get_mode().mode
+      if mode:sub(1, 1) == 'i' or mode:sub(1, 1) == 'R' or mode:sub(1, 2) == 'ni' then
+        return
+      end
       local view = vim.fn.winsaveview()
       vim.api.nvim_command('silent! undojoin')
       vim.api.nvim_command('silent keepjumps keeppatterns %s/\\s\\+$//e')
