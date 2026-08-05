@@ -24,6 +24,7 @@ local function edit(path)
   local ok, err = pcall(api.nvim_cmd, {
     cmd = 'edit',
     args = { path },
+    mods = { keepalt = vim.b.nvim_dir ~= nil },
     magic = { file = false, bar = false },
   })
   navigating = false
