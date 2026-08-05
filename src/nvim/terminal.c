@@ -1829,9 +1829,8 @@ static void term_clipboard_set(void **argv)
     break;
   }
 
-  // Split the payload into a list of lines. Passing it as a single item would
-  // corrupt the clipboard: command-line providers receive the list on stdin
-  // with any newline inside an item sent as NUL (see :h chansend()).
+  // Split the payload into readfile()-style list (:h chansend()).
+  // TODO(justinmk): drop this, support Blob in clipboard provider: #41097
   list_T *lines = tv_list_alloc(kListLenMayKnow);
   char *start = data;
   char *end;
