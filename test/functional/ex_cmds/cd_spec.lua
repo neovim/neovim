@@ -23,6 +23,7 @@ local directories = {
 }
 
 local tmpfile = 'Xtest-functional-ex_cmds-cd_spec-tmpfile'
+local startdir ---@type string `getcwd()` at session start (set by `before_each`)
 
 local function join(...)
   return table.concat({ ... }, pathsep)
@@ -57,29 +58,26 @@ local tlwd = function()
 end -- tab dir
 --local glwd = function() return eval('haslocaldir(-1, -1)') end  -- global dir
 
-local function before_test()
+before_each(function()
   clear()
   for _, d in pairs(directories) do
     mkdir(d)
   end
-  directories.start = cwd()
-end
+  startdir = cwd()
+end)
 
-local function remove_dirs()
+after_each(function()
   for _, d in pairs(directories) do
-    vim.uv.fs_rmdir(d)
+    n.rmdir(d)
   end
-end
+end)
 
 -- Test both the `cd` and `chdir` variants
 for _, cmd in ipairs { 'cd', 'chdir' } do
   describe(':' .. cmd, function()
-    before_each(before_test)
-    after_each(remove_dirs)
-
     describe('using explicit scope', function()
       it('for window', function()
-        local globalDir = directories.start
+        local globalDir = startdir
         local globalwin = call('winnr')
         local tabnr = call('tabpagenr')
 
@@ -122,7 +120,7 @@ for _, cmd in ipairs { 'cd', 'chdir' } do
       end)
 
       it('for tab page', function()
-        local globalDir = directories.start
+        local globalDir = startdir
         local globaltab = call('tabpagenr')
 
         -- Everything matches globalDir to start
@@ -152,7 +150,7 @@ for _, cmd in ipairs { 'cd', 'chdir' } do
       end)
 
       it('for buffer', function()
-        local globalDir = directories.start
+        local globalDir = startdir
         -- Create two buffers
         command(('e %s1'):format(tmpfile))
         command(('e %s%s%s2'):format(directories.buffer, pathsep, tmpfile))
@@ -197,36 +195,36 @@ for _, cmd in ipairs { 'cd', 'chdir' } do
 
     describe('getcwd(-1, -1)', function()
       it('works', function()
-        eq(directories.start, cwd(-1, -1))
+        eq(startdir, cwd(-1, -1))
         eq(0, lwd(-1, -1))
       end)
 
       it('works with tab-local pwd', function()
         command('silent t' .. cmd .. ' ' .. directories.tab)
-        eq(directories.start, cwd(-1, -1))
+        eq(startdir, cwd(-1, -1))
         eq(0, lwd(-1, -1))
       end)
 
       it('works with window-local pwd', function()
         command('silent l' .. cmd .. ' ' .. directories.window)
-        eq(directories.start, cwd(-1, -1))
+        eq(startdir, cwd(-1, -1))
         eq(0, lwd(-1, -1))
       end)
 
       it('works with buffer-local pwd', function()
         command(('silent b%s %s'):format(cmd, directories.buffer))
-        eq(directories.start, cwd(-1, -1))
+        eq(startdir, cwd(-1, -1))
         eq(0, lwd(-1, -1))
 
         -- Must behave the same if bufnr is -1
-        eq(directories.start, cwd(-1, -1, -1))
+        eq(startdir, cwd(-1, -1, -1))
         eq(0, lwd(-1, -1, -1))
       end)
     end)
 
     describe('Local directory gets inherited', function()
       it('by tabs', function()
-        local globalDir = directories.start
+        local globalDir = startdir
 
         -- Create a new tab and change directory
         command('tabnew')
@@ -246,7 +244,7 @@ for _, cmd in ipairs { 'cd', 'chdir' } do
     end)
 
     it('works', function()
-      local globalDir = directories.start
+      local globalDir = startdir
       -- Create a new tab first and verify that is has the same working dir
       command('tabnew')
       eq(globalDir, cwd())
@@ -310,7 +308,7 @@ for _, cmd in ipairs { 'cd', 'chdir' } do
     end)
 
     it('works when mixing tab-local and buffer-local directories', function()
-      local globalDir = directories.start
+      local globalDir = startdir
 
       -- Create two buffers for testing. One in each tab
       command(('e %s1'):format(tmpfile))
@@ -354,7 +352,7 @@ for _, cmd in ipairs { 'cd', 'chdir' } do
       eq(0, blwd()) -- No window-buffer directory
     end)
     it('works when mixing window local and buffer local directories', function()
-      local globalDir = directories.start
+      local globalDir = startdir
       -- Create a new window first and verify that is has the same working directory
       command('new')
       eq(globalDir, cwd())
@@ -394,16 +392,13 @@ end
 
 for _, cmd in ipairs { 'bcd', 'bchdir' } do
   describe(':' .. cmd, function()
-    before_each(before_test)
-    after_each(remove_dirs)
-
     it('works after deleting the only buffer', function()
       command(('%s %s'):format(cmd, directories.buffer))
       command('bd') -- delete buffer
     end)
 
     it('buffer-local directory is NOT sticky/inherited', function()
-      local bufdir = join(directories.start, directories.buffer)
+      local bufdir = join(startdir, directories.buffer)
 
       command('edit ' .. tmpfile)
       command(('%s %s'):format(cmd, directories.buffer))
@@ -411,12 +406,12 @@ for _, cmd in ipairs { 'bcd', 'bchdir' } do
 
       -- A new buffer starts without a buffer-local directory.
       command('new')
-      eq(directories.start, cwd())
+      eq(startdir, cwd())
       eq(0, blwd())
       command('close')
       eq(bufdir, cwd())
       command('enew')
-      eq(directories.start, cwd())
+      eq(startdir, cwd())
       eq(0, blwd())
       command('b# ')
       eq(bufdir, cwd())
@@ -426,19 +421,74 @@ for _, cmd in ipairs { 'bcd', 'bchdir' } do
       command(('%s %s'):format(cmd, directories.buffer))
       eq(bufdir, cwd())
       command('edit ' .. tmpfile .. '2')
-      eq(directories.start, cwd())
+      eq(startdir, cwd())
       eq(0, blwd())
     end)
   end)
 end
 
+describe('cd during temp context-switch', function()
+  it(':bcd/:tcd/:lcd persists in target scope, does not leak into original context', function()
+    local exec_lua = n.exec_lua
+    local bufdir = join(startdir, directories.buffer)
+    local windir = join(startdir, directories.window)
+    local tabdir = join(startdir, directories.tab)
+
+    --- Creates a loaded, hidden buffer.
+    local function hidden_buf(name)
+      local b = call('bufadd', name)
+      call('bufload', b)
+      return b
+    end
+
+    --- Runs `vim.cmd[cmd](dir)` with buffer `b` as temporary curbuf.
+    local function cd_in_buf_call(b, cmd, dir)
+      exec_lua(function(b_, cmd_, d)
+        vim.api.nvim_buf_call(b_, function()
+          vim.cmd[cmd_](d)
+        end)
+      end, b, cmd, dir)
+    end
+
+    -- :bcd on a hidden buffer via nvim_buf_call() persists; the caller's cwd is unchanged.
+    local hidden = hidden_buf('Xtest-cd-hidden')
+    cd_in_buf_call(hidden, 'bcd', bufdir)
+    eq({ 1, bufdir, startdir }, { lwd(-1, -1, hidden), cwd(-1, -1, hidden), cwd() })
+
+    -- :lcd targets the temporary window, which is discarded; the caller's cwd is unchanged.
+    cd_in_buf_call(hidden, 'lcd', windir)
+    eq({ 0, startdir }, { wlwd(), cwd() })
+
+    -- :lcd via win_execute() persists on the target window; the CWD outside it is unchanged.
+    command('split')
+    call('win_execute', call('win_getid', 2), ('lcd %s'):format(windir))
+    eq({ 1, windir, startdir }, { lwd(2), cwd(2), cwd() })
+    command('only')
+
+    -- An autocmd handler targeting a hidden buffer can set its buffer-local dir; the caller's
+    -- cwd is unchanged.
+    local hidden2 = hidden_buf('Xtest-cd-hidden2')
+    exec_lua(function(b, d)
+      vim.api.nvim_create_autocmd('TermRequest', {
+        buffer = b,
+        once = true,
+        callback = function()
+          vim.cmd.bcd(d)
+        end,
+      })
+      vim.api.nvim_exec_autocmds('TermRequest', { buffer = b, data = { sequence = 'x' } })
+    end, hidden2, bufdir)
+    eq({ 1, bufdir, startdir }, { lwd(-1, -1, hidden2), cwd(-1, -1, hidden2), cwd() })
+
+    -- :tcd via nvim_buf_call() persists, and the tab scope claims the new cwd.
+    cd_in_buf_call(hidden, 'tcd', tabdir)
+    eq({ 1, tabdir, tabdir }, { tlwd(), tcwd(), cwd() })
+  end)
+end)
+
 -- Test legal parameters for 'getcwd' and 'haslocaldir'
 for _, cmd in ipairs { 'getcwd', 'haslocaldir' } do
   describe(cmd .. '()', function()
-    before_each(function()
-      clear()
-    end)
-
     it('validation', function()
       local err474 = 'Vim:E474: Invalid argument'
       eq(err474, pcall_err(call, cmd, 'some string'))
@@ -472,15 +522,6 @@ for _, cmd in ipairs { 'getcwd', 'haslocaldir' } do
 end
 
 describe('getcwd()', function()
-  before_each(function()
-    clear()
-    mkdir(directories.global)
-  end)
-
-  after_each(function()
-    n.rmdir(directories.global)
-  end)
-
   it('returns empty string if working directory does not exist', function()
     skip(is_os('win'), 'N/A for Windows')
     command('cd ' .. directories.global)

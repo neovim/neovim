@@ -2471,7 +2471,7 @@ static buf_T *cmdpreview_open_buf(void)
 
   // Rename preview buffer.
   CtxSwitch aco = { 0 };
-  ctx_switch(&aco, NULL, NULL, cmdpreview_buf, 0);
+  ctx_switch(&aco, NULL, NULL, cmdpreview_buf, kCtxKeepDirs);
   int retv = rename_buffer("[Preview]");
   ctx_restore(&aco);
 
@@ -2480,7 +2480,7 @@ static buf_T *cmdpreview_open_buf(void)
   }
 
   // Temporarily switch to preview buffer to set it up for previewing.
-  ctx_switch(&aco, NULL, NULL, cmdpreview_buf, 0);
+  ctx_switch(&aco, NULL, NULL, cmdpreview_buf, kCtxKeepDirs);
   buf_clear();
   curbuf->b_p_ma = true;
   curbuf->b_p_ul = -1;

@@ -648,9 +648,10 @@ static int nlua_with(lua_State *L)
 
     if (win) {
       tabpage_T *tabpage = win_find_tabpage(win);
-      switched = ctx_switch(&cs, win, tabpage, NULL, kCtxNoDisplay | kCtxKeepCwd | kCtxValidate);
+      switched = ctx_switch(&cs, win, tabpage, NULL,
+                            kCtxNoDisplay | kCtxValidate | kCtxKeepDirs);
     } else if (buf) {
-      ctx_switch(&cs, NULL, NULL, buf, 0);
+      ctx_switch(&cs, NULL, NULL, buf, kCtxKeepDirs);
     }
 
     if (switched) {

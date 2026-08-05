@@ -344,6 +344,32 @@ describe('vim._with', function()
       ]])
       eq(true, out)
     end)
+
+    it('restores CWD state', function()
+      local out = exec_lua [[
+        local other_buf, cur_buf = setup_buffers()
+        local cwd = fn.getcwd()
+        local dir = vim.fs.joinpath(cwd, 'test')
+        -- ":bcd" on the target buffer is discarded: hidden target, (nested) visible target, and
+        -- when the callback errors.
+        vim._with({ buf = other_buf }, function()
+          vim.cmd.bcd(dir)
+          vim._with({ buf = cur_buf }, function()
+            vim.cmd.bcd(dir)
+          end)
+        end)
+        pcall(vim._with, { buf = other_buf }, function()
+          vim.cmd.bcd(dir)
+          error('oops')
+        end)
+        return {
+          fn.haslocaldir(-1, -1, other_buf),
+          fn.haslocaldir(-1, -1, cur_buf),
+          fn.getcwd() == cwd,
+        }
+      ]]
+      eq({ 0, 0, true }, out)
+    end)
   end)
 
   describe('`cwd` context', function()
@@ -380,6 +406,19 @@ describe('vim._with', function()
         }
       ]]
       eq({ true, true, true, true }, out)
+    end)
+
+    it('does not modify global CWD', function()
+      local out = exec_lua [[
+        local other_buf, _ = setup_buffers()
+        local cwd = fn.getcwd()
+        -- Activate a window-local dir, so that the global dir must be remembered.
+        vim.cmd.lcd(vim.fs.joinpath(cwd, 'test'))
+        local lcd_cwd = fn.getcwd() -- Not necessarily `cwd .. '/test'`: symlinks are resolved.
+        vim._with({ buf = other_buf, cwd = vim.fs.joinpath(cwd, 'src') }, function() end)
+        return { fn.getcwd() == lcd_cwd, fn.getcwd(-1, -1) == cwd }
+      ]]
+      eq({ true, true }, out)
     end)
   end)
 
@@ -1304,6 +1343,19 @@ describe('vim._with', function()
 
       exec_lua('vim._with({ win = ... }, function() vim.cmd.wincmd "J" end)', t2_move_win)
       eq({ 'col', { { 'leaf', t2_other_win }, { 'leaf', t2_move_win } } }, fn.winlayout(2))
+    end)
+
+    it('restores CWD state', function()
+      local out = exec_lua [[
+        local other_win, cur_win = setup_windows()
+        local cwd = fn.getcwd()
+        -- ":lcd" on the target window is discarded.
+        vim._with({ win = other_win }, function()
+          vim.cmd.lcd(vim.fs.joinpath(cwd, 'test'))
+        end)
+        return { fn.haslocaldir(fn.win_id2win(other_win)), fn.getcwd() == cwd }
+      ]]
+      eq({ 0, true }, out)
     end)
   end)
 

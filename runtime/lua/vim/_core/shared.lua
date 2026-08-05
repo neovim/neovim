@@ -1533,9 +1533,13 @@ local get_context_state = function(context)
   return res
 end
 
---- Executes function `f` with the given context specification.
+--- Executes function `f` with the given `context` spec: after execution, the original state
+--- indicated by the spec is restored.
 ---
 --- Notes:
+--- - If `buf`/`win` is specified, CWD state (win/buf/tab-local dirs) is restored after execution.
+---   Any :cd/:tcd/:lcd/:bcd during execution is undone.
+---   - TODO: allow opt-out? Workaround: use nvim_buf_call()/nvim_win_call().
 --- - Context `{ buf = buf }` has no guarantees about current window when
 ---   inside context.
 --- - Context `{ buf = buf, win = win }` is yet not allowed, but this seems

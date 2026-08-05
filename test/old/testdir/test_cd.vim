@@ -104,6 +104,8 @@ func Test_chdir_func()
   call assert_match('^\[global\]', trim(execute('verbose pwd')))
   call chdir('.', 'tabpage')
   call assert_match('^\[tabpage\]', trim(execute('verbose pwd')))
+  call chdir('.', 'buffer')
+  call assert_match('^\[buffer\]', trim(execute('verbose pwd')))
   call chdir('.', 'window')
   call assert_match('^\[window\]', trim(execute('verbose pwd')))
 
