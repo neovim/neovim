@@ -209,14 +209,20 @@ local function set_virttext(type, tgt)
   end
 end
 
+local function pager_shown()
+  return api.nvim_win_is_valid(ui.wins.pager) and not api.nvim_win_get_config(ui.wins.pager).hide
+end
+
 local hlopts = { undo_restore = false, invalidate = true, priority = 1 }
 --- Move messages to expanded cmdline, dialog or pager to show in full.
 --- Return updated target+buffer in case it differs from 'src'.
-function M.expand_msg(src, tgt)
+---
+---@param focus? boolean Enter the pager: it was explicitly requested.
+function M.expand_msg(src, tgt, focus)
   -- Copy and clear message from src to enlarged cmdline that is dismissed by any
   -- key press. Append to pager instead if it isn't hidden or we want to enter it
   -- after cmdline was entered during expanded cmdline.
-  local hidden = api.nvim_win_get_config(ui.wins.pager).hide
+  local hidden = not pager_shown()
   tgt = tgt or not hidden and 'pager' or 'cmd' ---@type 'cmd'|'dialog'|'msg'|'pager'
   if tgt ~= src then
     local srow = hidden and 0 or api.nvim_buf_line_count(ui.bufs.pager)
@@ -244,7 +250,7 @@ function M.expand_msg(src, tgt)
       api.nvim_buf_del_extmark(ui.bufs.cmd, ui.ns, id)
     end
   end
-  M.set_pos(tgt)
+  M.set_pos(tgt, focus)
   return tgt, ui.bufs[tgt]
 end
 
@@ -413,12 +419,6 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
 end
 
 local in_pager = false -- Whether the pager is or will be the current window.
-local pager_focus = false -- Whether the pager was explicitly requested (|g<|, :messages).
-
-local function pager_shown()
-  return not api.nvim_win_get_config(ui.wins.pager).hide
-end
-
 --- Route the message to the appropriate sink.
 ---
 ---@param kind string
@@ -573,9 +573,8 @@ function M.msg_history_show(entries, prev_cmd)
     M.show_msg('pager', entry[1], entry[2], i == 1, entry[3], 0)
   end
 
-  -- Message history was explicitly requested (e.g. |g<| or |:messages|): enter the pager.
-  pager_focus = true
-  M.set_pos('pager')
+  -- Message history was explicitly requested (|g<|, |:messages|): enter the pager.
+  M.set_pos('pager', true)
 end
 
 local typed_g = false
@@ -595,14 +594,13 @@ local function cmd_on_key(key, typed)
   vim.on_key(nil, ui.ns)
   typed = fn.keytrans(typed)
 
-  -- Check if window was entered and reopen with original config. An already open
+  -- Check if window was entered and reopen with original config. A shown (but not entered)
   -- pager is dismissed instead; "g<" passes through to reopen and enter it.
-  local mode = not api.nvim_get_mode().mode:match('[it]') and not pager_shown()
-  local enter = mode and (typed == '<CR>' or typed_g and (typed == '<lt>' or key == '<'))
+  local can_enter = not api.nvim_get_mode().mode:match('[it]') and not pager_shown()
+  local enter = can_enter and (typed == '<CR>' or typed_g and (typed == '<lt>' or key == '<'))
     or (typed:find('LeftMouse') and fn.getmousepos().winid == ui.wins.cmd)
   if enter then
-    pager_focus = true
-    M.expand_msg('cmd', 'pager')
+    M.expand_msg('cmd', 'pager', true)
   elseif not in_pager then
     pcall(api.nvim_win_set_config, ui.wins.pager, { hide = true })
   end
@@ -716,7 +714,8 @@ end
 --- Adjust visibility and dimensions of the message windows after certain events.
 ---
 ---@param tgt? 'cmd'|'dialog'|'msg'|'pager' Target window to be positioned (nil for all).
-function M.set_pos(tgt)
+---@param focus? boolean Enter the pager: it was explicitly requested.
+function M.set_pos(tgt, focus)
   for t, win in pairs(ui.wins) do
     local cfg = (t == tgt or (tgt == nil and t ~= 'cmd'))
       and api.nvim_win_is_valid(win)
@@ -747,8 +746,7 @@ function M.set_pos(tgt)
         -- reliably places the final message at the bottom. :noautocmd avoids #40780.
         fn.win_execute(ui.wins.msg, 'noautocmd norm! Gzb')
       elseif tgt == 'pager' and not in_pager then
-        if pager_focus then
-          pager_focus = false
+        if focus then
           enter_pager()
         else
           -- Reuse only the handler: M.cmd_on_key would mark the cmdline as expanded.
