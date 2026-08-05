@@ -192,7 +192,7 @@ function M.slug(path, opts)
   opts.maxlen = opts.maxlen or 180
 
   -- Normalize before computing the hash so equivalent paths produce the same result
-  path = vim.fs.normalize(path, { expand_env = false })
+  path = vim.fs.normalize(path, { plain = true })
   local s = path
 
   -- Replace $HOME with `~`
@@ -326,8 +326,8 @@ end
 --- ```
 ---
 ---@since 10
----@param path (string) Directory to iterate over, normalized via |vim.fs.normalize()| unless
----            `opts.normalize=false`.
+---@param path (string) Directory to iterate over, expanded (unless
+---                     `opts.plain=true`) and normalized.
 ---@param opts? vim.fs.dir.Opts
 ---@return fun(): string?, string?, string? # Iterator over items in {path}, yielding (name, type, err):
 ---        - name: Basename of the item relative to {path}.
@@ -344,9 +344,7 @@ function M.dir(path, opts)
   vim.validate('skip', opts.skip, 'function', true)
   vim.validate('plain', opts.plain, 'boolean', true)
 
-  if opts.plain ~= true then
-    path = M.normalize(path)
-  end
+  path = M.normalize(path, { plain = opts.plain })
 
   local rootfs, rooterr = uv.fs_scandir(path)
 
@@ -785,9 +783,13 @@ end
 --- @class vim.fs.normalize.Opts
 --- @inlinedoc
 ---
---- Expand environment variables.
+--- Expand environment variables (deprecated).
 --- (default: `true`)
---- @field expand_env? boolean
+--- @field package expand_env? boolean
+---
+--- Do not expand environment variables and leading tildes "~".
+--- (default: `false`)
+--- @field plain? boolean
 ---
 --- @field package _fast? boolean
 ---
@@ -833,7 +835,7 @@ function M.normalize(path, opts)
 
   if not opts._fast then
     vim.validate('path', path, 'string')
-    vim.validate('expand_env', opts.expand_env, 'boolean', true)
+    vim.validate('plain', opts.plain, 'boolean', true)
     vim.validate('win', opts.win, 'boolean', true)
   end
 
@@ -845,17 +847,19 @@ function M.normalize(path, opts)
     return ''
   end
 
-  -- Expand ~ to user's home directory
-  path = expand_home(path, os_sep_local)
+  if not opts.plain then
+    -- Expand ~ to user's home directory
+    path = expand_home(path, os_sep_local)
 
-  -- Expand environment variables if `opts.expand_env` isn't `false`
-  if opts.expand_env == nil or opts.expand_env then
-    path = path:gsub('%$([%w_]+)', uv.os_getenv) --- @type string
+    -- Expand environment variables
+    if opts.expand_env == nil or opts.expand_env then
+      path = path:gsub('%$([%w_]+)', uv.os_getenv) --- @type string
+    end
   end
 
   if win then
     -- Convert path separator to `/`
-    path = path:gsub(os_sep_local, '/')
+    path = path:gsub(os_sep_local, '/') --- @type string
   end
 
   -- Check for double slashes at the start of the path because they have special meaning

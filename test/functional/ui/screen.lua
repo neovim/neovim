@@ -1372,7 +1372,7 @@ function Screen:_handle_option_set(name, value)
 end
 
 function Screen:_handle_chdir(path)
-  self.pwd = vim.fs.normalize(path, { expand_env = false })
+  self.pwd = vim.fs.normalize(path, { plain = true })
 end
 
 function Screen:_handle_popupmenu_show(items, selected, row, col, grid)

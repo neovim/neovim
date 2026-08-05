@@ -2642,8 +2642,8 @@ vim.fs.dir({path}, {opts})                                      *vim.fs.dir()*
         Since: 0.8.0
 
     Parameters: ~
-      • {path}  (`string`) Directory to iterate over, normalized via
-                |vim.fs.normalize()| unless `opts.normalize=false`.
+      • {path}  (`string`) Directory to iterate over, expanded (unless
+                `opts.plain=true`) and normalized.
       • {opts}  (`table?`) A table with the following fields:
                 • {depth}? (`integer`, default: `1`) How deep to traverse.
                 • {err}? (`boolean`, default: `false`) Report errors via the
@@ -2833,8 +2833,8 @@ vim.fs.normalize({path}, {opts})                          *vim.fs.normalize()*
     Parameters: ~
       • {path}  (`string`) Path to normalize
       • {opts}  (`table?`) A table with the following fields:
-                • {expand_env}? (`boolean`, default: `true`) Expand
-                  environment variables.
+                • {plain}? (`boolean`, default: `false`) Do not expand
+                  environment variables and leading tildes "~".
                 • {win}? (`boolean`, default: `true` in Windows, `false`
                   otherwise) Path is a Windows path.
 

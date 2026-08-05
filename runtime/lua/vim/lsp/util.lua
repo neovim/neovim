@@ -419,7 +419,7 @@ local function get_writable_bufs(prefix)
       and not vim.list_contains({ 'nofile', 'nowrite' }, vim.bo[buf].buftype)
     then
       local bname = api.nvim_buf_get_name(buf)
-      local path = path_components(vim.fs.normalize(bname, { expand_env = false }))
+      local path = path_components(vim.fs.normalize(bname, { plain = true }))
       if path_under_prefix(path, prefix_parts) then
         buffers[#buffers + 1] = buf
       end
@@ -452,7 +452,7 @@ function M.rename(old_fname, new_fname, opts)
   opts = opts or {}
   local skip = not opts.overwrite or opts.ignoreIfExists
 
-  local old_fname_full = uv.fs_realpath(vim.fs.normalize(old_fname, { expand_env = false }))
+  local old_fname_full = uv.fs_realpath(vim.fs.normalize(old_fname, { plain = true }))
   if not old_fname_full then
     vim.notify('Invalid path: ' .. old_fname, vim.log.levels.ERROR)
     return
