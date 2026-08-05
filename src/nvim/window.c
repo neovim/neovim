@@ -7268,16 +7268,14 @@ static bool resize_frame_for_status(frame_T *fr)
 // @return Success or failure.
 static bool resize_frame_for_winbar(frame_T *fr)
 {
-  win_T *wp = fr->fr_win;
   frame_T *fp = find_horizontally_resizable_frame(fr);
 
   if (fp == NULL || fp == fr) {
     emsg(_(e_noroom));
     return false;
   }
-  frame_new_height(fp, fp->fr_height - 1, false, false, false);
-  win_new_height(wp, wp->w_height + 1);
-  frame_fix_height(wp);
+  frame_add_height(fp, -1);
+  frame_add_height(fr, 1);
   win_comp_pos();
 
   return true;

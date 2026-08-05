@@ -570,6 +570,26 @@ describe('winbar', function()
                                                                   |
     ]])
   end)
+
+  it('avoid pushing a window onto the global statusline #41140', function()
+    n.exec([[
+      set winbar= laststatus=3
+      vsplit
+      split
+      resize 1
+      setlocal winbar=hello
+      resize 1000
+    ]])
+    screen:expect([[
+      {1:hello                         }│                             |
+      ^                              │{3:~                            }|
+      {3:~                             }│{3:~                            }|*7
+      ──────────────────────────────┤{3:~                            }|
+                                    │{3:~                            }|
+      {4:[No Name]                                                   }|
+                                                                  |
+    ]])
+  end)
 end)
 
 describe('local winbar with tabs', function()
