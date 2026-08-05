@@ -5997,7 +5997,9 @@ func Test_completetimeout_autocompletetimeout()
   set completetimeout=1
   call feedkeys("Gof\<C-N>\<F2>\<Esc>0", 'xt!')
   let match_count = len(b:matches->mapnew('v:val.word'))
-  call assert_true(match_count < 4000)
+  " How many matches are collected in 1 msec varies with machine speed, only
+  " check the timeout truncated the collection.
+  call assert_true(match_count < 60000)
 
   set completetimeout=1000
   call feedkeys("\<Esc>Sf\<C-N>\<F2>\<Esc>0", 'xt!')
@@ -6006,9 +6008,14 @@ func Test_completetimeout_autocompletetimeout()
 
   set autocomplete
   set autocompletetimeout=81
+  " Use enough long words that collecting all of them takes well over the
+  " timeout even on a fast machine.
+  let pad = repeat('y', 60)
+  call setline(1, map(range(200000), '"foo" . v:val . pad'))
   call feedkeys("\<Esc>Sf\<F2>\<Esc>0", 'xt!')
   let match_count = len(b:matches->mapnew('v:val.word'))
-  call assert_true(match_count < 50000)
+  " The timeout must have truncated the collection.
+  call assert_true(match_count < 200000)
 
   set complete& omnifunc& autocomplete& autocompletetimeout& completetimeout&
   bwipe!
@@ -6727,6 +6734,92 @@ func Test_complete_check_mapped_typed_key()
   bwipe!
   delfunc SlowComplete
   unlet g:compl_iterations
+endfunc
+
+" Test for the duplicate check when adding completion matches
+func Test_ins_complete_dedup()
+  new
+  setl complete=.
+
+  " a word that occurs several times only results in one match
+  call setline(1, ['alpha beta alpha gamma', 'beta alpha delta beta', ''])
+  call cursor(3, 1)
+  call feedkeys("Aal\<C-N>\<C-R>=GetCompleteInfo()\<CR>\<C-E>\<Esc>", 'tx')
+  call assert_equal(['alpha'], g:compl_info.items->mapnew('v:val.word'))
+
+  " the duplicate check is case-sensitive
+  %delete _
+  call setline(1, ['Foo foo FOO fooBar Foo foo', ''])
+  call cursor(2, 1)
+  call feedkeys("Afo\<C-N>\<C-R>=GetCompleteInfo()\<CR>\<C-E>\<Esc>", 'tx')
+  call assert_equal(['foo', 'fooBar'], g:compl_info.items->mapnew('v:val.word'))
+
+  " with 'ignorecase' and 'infercase' case variants fold into one match
+  setl ignorecase infercase
+  %delete _
+  call setline(1, ['Word word WORD wordy Word', ''])
+  call cursor(2, 1)
+  call feedkeys("Awo\<C-N>\<C-R>=GetCompleteInfo()\<CR>\<C-E>\<Esc>", 'tx')
+  call assert_equal(['word', 'wordy'], g:compl_info.items->mapnew('v:val.word'))
+  setl noignorecase noinfercase
+
+  " duplicate dictionary entries only appear once; with 'ignorecase' case
+  " variants all match but stay separate matches
+  call writefile(['apple', 'apple', 'Apple', 'apricot', 'apricot', 'banana'],
+        \ 'Xcompldict', 'D')
+  setl dictionary=Xcompldict
+  set ignorecase
+  %delete _
+  call feedkeys("Aap\<C-X>\<C-K>\<C-R>=GetCompleteInfo()\<CR>\<C-E>\<Esc>", 'tx')
+  call assert_equal(['apple', 'Apple', 'apricot'], g:compl_info.items->mapnew('v:val.word'))
+  set noignorecase
+  setl dictionary&
+
+  " duplicate items passed to complete() are only added once
+  inoremap <buffer> <F5> <Cmd>call complete(1, ['dup', 'dup', 'uniq', 'dup'])<CR>
+  %delete _
+  call feedkeys("i\<F5>\<C-R>=GetCompleteInfo()\<CR>\<C-E>\<Esc>", 'tx')
+  call assert_equal(['dup', 'uniq'], g:compl_info.items->mapnew('v:val.word'))
+
+  " restarting a completion rebuilds the matches without duplicates
+  %delete _
+  call setline(1, ['echo edit eecho edit echo', ''])
+  call cursor(2, 1)
+  call feedkeys("Ae\<C-N>\<C-E>\<Esc>", 'tx')
+  call feedkeys("A\<C-N>\<C-R>=GetCompleteInfo()\<CR>\<C-E>\<Esc>", 'tx')
+  call assert_equal(['echo', 'edit', 'eecho'], g:compl_info.items->mapnew('v:val.word'))
+
+  " With "dup" matches from several sources, refreshing one source removes
+  " its duplicate but must not forget about the equal match of the other
+  " source: adding "dupword" again without "dup" is still a duplicate.
+  let g:dedup_calls = 0
+  func! DedupSrcA(findstart, base)
+    if a:findstart
+      return 0
+    endif
+    let g:dedup_calls += 1
+    if g:dedup_calls == 1
+      return #{words: [#{word: 'dupword', dup: 1}], refresh: 'always'}
+    endif
+    return #{words: [#{word: 'dupword'}], refresh: 'always'}
+  endfunc
+  func! DedupSrcB(findstart, base)
+    if a:findstart
+      return 0
+    endif
+    return #{words: [#{word: 'dupword', dup: 1}]}
+  endfunc
+  setl complete=FDedupSrcA,FDedupSrcB
+  %delete _
+  call feedkeys("Sdup\<C-N>\<BS>\<C-R>=GetCompleteInfo()\<CR>\<C-E>\<Esc>", 'tx')
+  call assert_equal(['dupword'], g:compl_info.items->mapnew('v:val.word'))
+  setl complete&
+  delfunc DedupSrcA
+  delfunc DedupSrcB
+  unlet g:dedup_calls
+
+  bwipe!
+  unlet g:compl_info
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable
