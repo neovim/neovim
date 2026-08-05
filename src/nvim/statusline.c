@@ -91,14 +91,22 @@ void win_redr_status(win_T *wp)
 
   busy = true;
   wp->w_redr_status = false;
-  if (wp->w_status_height == 0 && !(is_stl_global && wp == curwin)) {
+
+  // curwin may be temporarily switched during autocmds (ctx_switch).
+  win_T *stl_curwin = ctx_saved_curwin();
+  if (stl_curwin == NULL) {
+    stl_curwin = curwin;
+  }
+  bool is_stl_curwin = wp == stl_curwin;
+
+  if (wp->w_status_height == 0 && !(is_stl_global && is_stl_curwin)) {
     // no status line, either global statusline is enabled or the window is a last window
     redraw_cmdline = true;
   } else if (!redrawing()) {
     // Don't redraw right now, do it later. Don't update status line when
     // popup menu is visible and may be drawn over it
     wp->w_redr_status = true;
-  } else if (*wp->w_p_stl != NUL || !wp->w_floating || (is_stl_global && wp == curwin)) {
+  } else if (*wp->w_p_stl != NUL || !wp->w_floating || (is_stl_global && is_stl_curwin)) {
     win_redr_stl_expr(wp, false, false, false);
   }
 

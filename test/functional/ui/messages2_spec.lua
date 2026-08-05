@@ -1259,4 +1259,26 @@ describe('messages2', function()
       ----------------------------------------------------0|
     ]])
   end)
+
+  it('pager statusline is not clobbered by DiagnosticChanged redraw #41130', function()
+    exec_lua(function()
+      vim.o.laststatus = 3
+      vim.print('message')
+      vim.cmd.mes()
+    end)
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*9
+      {3:                                                     }|
+      ^message                                              |
+      {3:[Pager]                                              }|
+      message                                              |
+    ]])
+    exec_lua(function()
+      vim.diagnostic.config({ signs = false, virtual_text = false, underline = false })
+      local ns = vim.api.nvim_create_namespace('repro-41130')
+      vim.diagnostic.set(ns, 1, { { lnum = 0, message = 'random error' } }, {})
+    end)
+    screen:expect_unchanged()
+  end)
 end)
