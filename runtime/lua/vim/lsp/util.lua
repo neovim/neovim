@@ -452,8 +452,8 @@ function M.rename(old_fname, new_fname, opts)
   opts = opts or {}
   local skip = not opts.overwrite or opts.ignoreIfExists
 
-  local old_fname_full = uv.fs_realpath(vim.fs.normalize(old_fname, { expand_env = false }))
-  if not old_fname_full then
+  local old_fname_full = vim.fs.normalize(old_fname, { expand_env = false })
+  if not uv.fs_stat(old_fname_full) then
     vim.notify('Invalid path: ' .. old_fname, vim.log.levels.ERROR)
     return
   end
