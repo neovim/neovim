@@ -1829,8 +1829,17 @@ static void term_clipboard_set(void **argv)
     break;
   }
 
-  list_T *lines = tv_list_alloc(1);
-  tv_list_append_allocated_string(lines, data);
+  // Split the payload into readfile()-style list (:h chansend()).
+  // TODO(justinmk): drop this, support Blob in clipboard provider: #41097
+  list_T *lines = tv_list_alloc(kListLenMayKnow);
+  char *start = data;
+  char *end;
+  while ((end = strchr(start, '\n')) != NULL) {
+    tv_list_append_string(lines, start, end - start);
+    start = end + 1;
+  }
+  tv_list_append_string(lines, start, -1);
+  xfree(data);
 
   list_T *args = tv_list_alloc(3);
   tv_list_append_list(args, lines);
