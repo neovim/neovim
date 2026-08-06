@@ -7254,7 +7254,13 @@ static bool resize_frame_for_status(frame_T *fr)
     emsg(_(e_noroom));
     return false;
   } else if (fp != fr) {
-    frame_setheight(fr, fr->fr_height + 1, false);
+    int old_height = fr->fr_height;
+
+    frame_setheight(fr, old_height + 1, false);
+    if (fr->fr_height == old_height) {
+      emsg(_(e_noroom));
+      return false;
+    }
     win_comp_pos();
   } else {
     win_new_height(wp, wp->w_height - 1);
