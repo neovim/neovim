@@ -70,9 +70,9 @@ describe('API/win', function()
       })
       feed('q:')
       n.poke_eventloop()
-      -- Replacing the cmdwin's own buffer is blocked by 'winfixbuf'.
-      matches('winfixbuf', pcall_err(api.nvim_win_set_buf, 0, new_buf))
-      -- But other windows can be touched freely.
+      -- Replacing the cmdwin's own buffer is allowed.
+      api.nvim_win_set_buf(0, new_buf)
+      -- Also other windows can be touched freely.
       local next_buf = api.nvim_create_buf(true, true)
       api.nvim_win_set_buf(new_win, next_buf)
       eq(next_buf, api.nvim_win_get_buf(new_win))
