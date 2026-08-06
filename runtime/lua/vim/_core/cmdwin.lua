@@ -157,7 +157,11 @@ function M._cleanup(opts)
   if (opts == nil or opts.delbuf ~= false) and vim.api.nvim_buf_is_valid(s.buf) then
     pcall(vim.api.nvim_buf_delete, s.buf, { force = true })
   end
-  if vim.api.nvim_win_is_valid(s.caller_win) then
+  -- Only return to caller_win for the current tabpage; avoid changing the current tab during an autocmd.
+  if
+    vim.api.nvim_win_is_valid(s.caller_win)
+    and vim.api.nvim_win_get_tabpage(s.caller_win) == vim.api.nvim_get_current_tabpage()
+  then
     pcall(vim.api.nvim_set_current_win, s.caller_win)
   end
 end

@@ -57,8 +57,14 @@ describe('cmdwin', function()
 
     feed('q:')
     eq(':', fn.getcmdwintype()) -- cmdwin can reopen (internal state is correct)
+    cmdwin_buf = api.nvim_get_current_buf()
 
-    feed(':q<CR>') -- close cmdwin
+    feed(':tabedit<CR>')
+    feed(':tabonly<CR>') -- closes the cmdwin indirectly
+
+    eq('', fn.getcmdwintype()) -- Cleanup has run
+    eq(0, #fn.win_findbuf(cmdwin_buf)) -- All cmdwin windows are closed.
+    eq(1, #api.nvim_list_wins()) -- The one plain tab window
   end)
 
   it('<CR> executes when cmdwin was moved to another tabpage #40484', function()
