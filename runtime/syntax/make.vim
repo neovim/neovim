@@ -3,13 +3,14 @@
 " Maintainer:	This runtime file is looking for a new maintainer.
 " Previous Maintainer:	Claudio Fleiner <claudio@fleiner.com>, Roland Hieber <https://github.com/rohieb>
 " URL:		https://github.com/vim/vim/blob/master/runtime/syntax/make.vim
-" Last Change:	2022 Nov 06
+" Last Change:	2026 Aug 05
 " 2025 Apr 15 by Vim project: rework Make flavor detection (#17089)
 " 2025 Oct 12 by Vim project: update makeDefine highlighting (#18403)
 " 2025 Oct 25 by Vim project: update makeTargetinDefine highlighting (#18570)
 " 2025 Dec 23 by Vim project: fix too greedy match (#18938)
 " 2025 Dec 23 by Vim project: wrong highlight with paranthesis inside quotes (#18818)
 " 2026 Apr 17 by Vim project: wrong highlight $ inside quotes (#19986)
+" 2026 Aug 05 by Vim project: highlight variables in non-empty target lists
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -66,18 +67,20 @@ syn match makeConfig "@[A-Za-z0-9_]\+@"
 syn match makeImplicit		"^\.[A-Za-z0-9_./\t -]\+\s*:$"me=e-1
 syn match makeImplicit		"^\.[A-Za-z0-9_./\t -]\+\s*:[^=]"me=e-2
 
-syn region makeTargetinDefine transparent matchgroup=makeTargetinDefine
-	\ start="^[~A-Za-z0-9_./$(){}%-][A-Za-z0-9_./\t ${}()%-]*&\?:\?:\{1,2}[^:=]"rs=e-1
-	\ end="[^\\]$"
-	\ keepend
+syn match makeTargetinDefine           "^[~A-Za-z0-9_./$(){}%-][A-Za-z0-9_./\t ${}()%-]*&\?:\?:\{1,2}\ze[^:=]"
+	\ contains=makeIdent,makeSpecTarget,makeComment
 syn match makeTargetinDefine           "^[~A-Za-z0-9_./$(){}%*@-][A-Za-z0-9_./\t $(){}%*@-]*&\?::\=\s*$"
 	\ contains=makeIdent,makeSpecTarget,makeComment
 
-syn region makeTarget transparent matchgroup=makeTarget
-	\ start="^[~A-Za-z0-9_./$(){}%-][A-Za-z0-9_./\t ${}()%-]*&\?:\?:\{1,2}[^:=]"rs=e-1
+" Match prerequisites separately so identifiers can match inside target lists.
+syn region makePrerequisites contained transparent
+	\ start="."rs=e-1
 	\ end="[^\\]$"
 	\ keepend contains=makeIdent,makeSpecTarget,makeNextLine,makeComment,makeDString
 	\ skipnl nextGroup=makeCommands
+syn match makeTarget           "^[~A-Za-z0-9_./$(){}%-][A-Za-z0-9_./\t ${}()%-]*&\?:\?:\{1,2}\ze[^:=]"
+	\ contains=makeIdent,makeSpecTarget,makeComment
+	\ nextgroup=makePrerequisites skipwhite
 syn match makeTarget           "^[~A-Za-z0-9_./$(){}%*@-][A-Za-z0-9_./\t $(){}%*@-]*&\?::\=\s*$"
 	\ contains=makeIdent,makeSpecTarget,makeComment
 	\ skipnl nextgroup=makeCommands,makeCommandError
