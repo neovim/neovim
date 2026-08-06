@@ -65,9 +65,10 @@ typedef enum {
 
 /// What ctx_switch() switched (set internally).
 enum {
-  kCtxSwitchNone = 0,  ///< zero-initialized: ctx_restore() is a no-op
-  kCtxSwitchWin,       ///< window target
-  kCtxSwitchBuf,       ///< buffer target
+  kCtxSwitchNone = 0,  ///< Zero-initialized: ctx_restore() is a no-op.
+  kCtxSwitchWin,       ///< Window target.
+  kCtxSwitchBuf,       ///< Buffer target.
+  kCtxSwitchDirs,      ///< No target: only CWD state is saved.
 };
 
 /// Context before a temporary switch of current window/buffer. Undone by ctx_restore().
@@ -84,7 +85,7 @@ typedef struct {
   // Temporary location (ctx_switch()):
   handle_T cs_new_curwin;         ///< ID of new curwin
   bufref_T cs_new_curbuf;         ///< new curbuf
-  int cs_ctxwin_idx;              ///< "autocmd" window in ctx_win[], or -1.
+  int cs_ctxwin_idx;              ///< "autocmd" window in the ctx_win pool, or -1.
   // Target tracking (kCtxValidate):
   handle_T cs_target_win;         ///< the window switched to
   pos_T cs_target_old_pos;        ///< its cursor before the switch

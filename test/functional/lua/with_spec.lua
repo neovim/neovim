@@ -345,30 +345,25 @@ describe('vim._with', function()
       eq(true, out)
     end)
 
-    it('restores CWD state', function()
+    it('keeps ":bcd" on the target buffer', function()
       local out = exec_lua [[
         local other_buf, cur_buf = setup_buffers()
+        local err_buf = api.nvim_create_buf(false, true)
         local cwd = fn.getcwd()
         local dir = vim.fs.joinpath(cwd, 'test')
-        -- ":bcd" on the target buffer is discarded: hidden target, (nested) visible target, and
-        -- when the callback errors.
-        vim._with({ buf = other_buf }, function()
-          vim.cmd.bcd(dir)
-          vim._with({ buf = cur_buf }, function()
-            vim.cmd.bcd(dir)
-          end)
-        end)
-        pcall(vim._with, { buf = other_buf }, function()
+        vim._with({ buf = other_buf }, function() vim.cmd.bcd(dir) end)
+        pcall(vim._with, { buf = err_buf }, function()
           vim.cmd.bcd(dir)
           error('oops')
         end)
         return {
           fn.haslocaldir(-1, -1, other_buf),
+          fn.haslocaldir(-1, -1, err_buf),
           fn.haslocaldir(-1, -1, cur_buf),
-          fn.getcwd() == cwd,
+          fn.getcwd() == cwd,  -- Caller's CWD is unaffected: the target is not current.
         }
       ]]
-      eq({ 0, 0, true }, out)
+      eq({ 1, 1, 0, true }, out)
     end)
   end)
 
@@ -419,6 +414,55 @@ describe('vim._with', function()
         return { fn.getcwd() == lcd_cwd, fn.getcwd(-1, -1) == cwd }
       ]]
       eq({ true, true }, out)
+    end)
+  end)
+
+  describe('`keepcwd` context', function()
+    it('undoes chdir at every scope', function()
+      local out = exec_lua [[
+        local cwd = fn.getcwd()
+        local dir = vim.fs.joinpath(cwd, 'test')
+        vim._with({ keepcwd = true }, function()
+          vim.cmd.cd(dir)
+          vim.cmd.tcd(dir)
+          vim.cmd.bcd(dir)
+          vim.cmd.lcd(dir)
+        end)
+        return {
+          fn.haslocaldir(),          -- window
+          fn.haslocaldir(-1, 0),     -- tabpage
+          fn.haslocaldir(-1, -1, 0), -- buffer
+          fn.getcwd() == cwd,
+          fn.getcwd(-1, -1) == cwd,  -- global
+        }
+      ]]
+      eq({ 0, 0, 0, true, true }, out)
+    end)
+
+    it('discards ":bcd"/":lcd" that a `buf`/`win` context would keep', function()
+      local out = exec_lua [[
+        local other_buf, _ = setup_buffers()
+        local other_win, _ = setup_windows()
+        local cwd = fn.getcwd()
+        local dir = vim.fs.joinpath(cwd, 'test')
+        vim._with({ buf = other_buf, keepcwd = true }, function() vim.cmd.bcd(dir) end)
+        vim._with({ win = other_win, keepcwd = true }, function() vim.cmd.lcd(dir) end)
+        return {
+          fn.haslocaldir(-1, -1, other_buf),
+          fn.haslocaldir(fn.win_id2win(other_win)),
+          fn.getcwd() == cwd,
+        }
+      ]]
+      eq({ 0, 0, true }, out)
+    end)
+
+    it('restores nothing else: the callback may switch window', function()
+      local out = exec_lua [[
+        local other_win, _ = setup_windows()
+        vim._with({ keepcwd = true }, function() api.nvim_set_current_win(other_win) end)
+        return api.nvim_get_current_win() == other_win
+      ]]
+      eq(true, out)
     end)
   end)
 
@@ -1345,17 +1389,16 @@ describe('vim._with', function()
       eq({ 'col', { { 'leaf', t2_other_win }, { 'leaf', t2_move_win } } }, fn.winlayout(2))
     end)
 
-    it('restores CWD state', function()
+    it('keeps ":lcd" on the target window, but restores the CWD', function()
       local out = exec_lua [[
         local other_win, cur_win = setup_windows()
         local cwd = fn.getcwd()
-        -- ":lcd" on the target window is discarded.
         vim._with({ win = other_win }, function()
           vim.cmd.lcd(vim.fs.joinpath(cwd, 'test'))
         end)
         return { fn.haslocaldir(fn.win_id2win(other_win)), fn.getcwd() == cwd }
       ]]
-      eq({ 0, true }, out)
+      eq({ 1, true }, out)
     end)
   end)
 

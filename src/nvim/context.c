@@ -497,38 +497,42 @@ win_T *ctx_saved_curwin(void)
   return _ctx_saved_curwin == 0 ? NULL : win_find_by_handle(_ctx_saved_curwin);
 }
 
-/// Prepares a temporary window or buffer as a temporary execution context. ctx_restore() MUST be
-/// called afterwards, also when this returns false.
+/// Prepares a temporary execution context. ctx_restore() MUST be called afterwards, also when this
+/// returns false.
 ///
 /// - Passing `wp` makes that window the curwin (in tabpage `tp`, or NULL for current tabpage).
 ///   - (Legacy: switch_win(), switch_win_noblock(), win_execute_before().)
 /// - Passing `buf`, enters a window showing `buf` in the current tabpage, or prepares a temporary
 ///   "autocmd window" for it (never switches tabpage).
 ///   - (Legacy: aucmd_prepbuf().)
+/// - Passing neither: only CWD state is saved; flags must include `kCtxKeepDirs`.
 ///
 /// The switch itself never triggers autocommands; whether autocommands can fire _while_ switched
 /// (until ctx_restore()) is the caller's choice via kCtxNoEvents.
 ///
-/// @param wp     Target window, or NULL to target a buffer.
+/// @param wp     Target window, or NULL.
 /// @param tp     Tabpage of `wp`, or NULL to not switch tabpage.
-/// @param buf    Target buffer, or NULL to target a window.
+/// @param buf    Target buffer, or NULL.
 /// @param flags  kCtx flags.
 ///
 /// @return  false if switching failed (only possible for a window target).
 bool ctx_switch(CtxSwitch *cs, win_T *wp, tabpage_T *tp, buf_T *buf, CtxSwitchFlags flags)
 {
-  assert((wp == NULL) != (buf == NULL));
+  // Exactly one target, or none with kCtxKeepDirs (which only saves the CWD state).
+  assert(((wp == NULL) != (buf == NULL)) || (wp == NULL && (flags & kCtxKeepDirs)));
   assert(buf == NULL || tp == NULL);  // a buffer target never switches tabpage
   CLEAR_POINTER(cs);
   cs->cs_flags = flags;
-  cs->cs_mode = buf != NULL ? kCtxSwitchBuf : kCtxSwitchWin;
+  cs->cs_mode = buf != NULL ? kCtxSwitchBuf : wp != NULL ? kCtxSwitchWin : kCtxSwitchDirs;
   cs->cs_ctxwin_idx = -1;
   cs->cs_did_chdir = _ctx_did_chdir;
   _ctx_did_chdir = false;
+  if (cs->cs_mode == kCtxSwitchDirs) {
+    wp = curwin;  // No target: "switch" to curwin, i.e. stay put.
+  }
 
-  // Resolve the target window.  A buffer target prefers a window already showing "buf" in the
-  // current tabpage (least side effects, esp. if "buf" is curbuf); when there is none, an autocmd
-  // window is prepared below, after the save (entering it changes curwin and prevwin).
+  // Resolve the target window.  A buffer target prefers a window already showing it, in the current
+  // tabpage (minimizes side effects); else a ctx_win is prepared below (ctx_win_prep).
   if (buf != NULL) {
     if (buf == curbuf) {  // be quick when buf is curbuf
       wp = curwin;
@@ -546,8 +550,8 @@ bool ctx_switch(CtxSwitch *cs, win_T *wp, tabpage_T *tp, buf_T *buf, CtxSwitchFl
     cs->cs_target_win = wp->handle;
     cs->cs_target_old_pos = wp->w_cursor;
   }
-  // The CWD-state snapshot is only for targets with a real window: hidden-buffer targets are
-  // handled by the ctx_win machinery instead (see ctx_win_prep()).
+  // The CWD-state snapshot is only for a real window target; hidden-buffer target is handled by the
+  // ctx_win machinery (ctx_win_prep).
   if (buf == NULL || wp != NULL) {
     ctx_dirs_save(cs, wp, tp == NULL ? curtab : tp, buf);
   }
@@ -580,8 +584,8 @@ bool ctx_switch(CtxSwitch *cs, win_T *wp, tabpage_T *tp, buf_T *buf, CtxSwitchFl
 
   if (buf != NULL) {
     if (wp == NULL) {
-      // No window shows `buf`: prepare a temp window. Anything related to a window (e.g., setting
-      // folds) may have unexpected results.
+      // Hidden buffer (`buf` not visible in any window): prepare a temp window.
+      // Window behavior (e.g., setting folds) may have unexpected results.
       wp = ctx_win_prep(cs, buf);
       // Leave the window we entered "from".
       leaving_window(curwin);
@@ -677,7 +681,7 @@ void ctx_restore(CtxSwitch *cs)
       curwin->w_topline = curbuf->b_ml.ml_line_count;
       curwin->w_topfill = 0;
     }
-  } else {
+  } else if (cs->cs_mode == kCtxSwitchBuf) {
     // Restore the buffer previously edited by curwin.
     if (curwin->handle == cs->cs_new_curwin
         && curbuf != cs->cs_new_curbuf.br_buf
@@ -693,7 +697,7 @@ void ctx_restore(CtxSwitch *cs)
     }
 
     ctx_restore_curwin(cs, NULL);
-  }
+  }  // Else: only save CWD state.
 
   if (!cs->cs_same_win) {
     Visual.active = cs->cs_visual_active;
