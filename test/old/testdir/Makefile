@@ -147,9 +147,7 @@ nolog:
 RUN_VIMTEST = $(TOOL) $(NVIM_PRG)
 
 newtests: newtestssilent
-	@/bin/sh -c "if test -f messages && grep -q 'FAILED' messages; then \
-	                 cat messages && cat test.log;                      \
-	             fi"
+	@/bin/sh -c "if test -f messages; then cat messages; fi"
 
 newtestssilent: $(NEW_TESTS_RES)
 
