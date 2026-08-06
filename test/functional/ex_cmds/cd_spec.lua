@@ -29,7 +29,7 @@ local function join(...)
   return table.concat({ ... }, pathsep)
 end
 
--- Shorthand writing to get the current working directory
+-- Get the current working directory.
 local cwd = function(...)
   return call('getcwd', ...)
 end -- effective working dir
@@ -110,16 +110,16 @@ for _, cmd in ipairs { 'cd', 'chdir' } do
         eq(1, lwd(localwin, tabnr))
 
         command('tabnew')
-        -- From new tab page, original window reports global dir
+        -- From new tabpage, original window reports global dir
         eq(globalDir, cwd(globalwin, tabnr))
         eq(0, lwd(globalwin, tabnr))
 
-        -- From new tab page, local window reports as such
+        -- From new tabpage, local window reports as such
         eq(globalDir .. pathsep .. directories.window, cwd(localwin, tabnr))
         eq(1, lwd(localwin, tabnr))
       end)
 
-      it('for tab page', function()
+      it('for tabpage', function()
         local globalDir = startdir
         local globaltab = call('tabpagenr')
 
@@ -133,7 +133,7 @@ for _, cmd in ipairs { 'cd', 'chdir' } do
         command('silent t' .. cmd .. ' ' .. directories.tab)
         local localtab = call('tabpagenr')
 
-        -- From local tab page, original tab reports globalDir
+        -- From local tabpage, original tab reports globalDir
         eq(globalDir, cwd(-1, globaltab))
         eq(0, lwd(-1, globaltab))
 
@@ -144,7 +144,7 @@ for _, cmd in ipairs { 'cd', 'chdir' } do
         eq(1, lwd(-1, localtab))
 
         command('tabnext')
-        -- From original tab page, local reports as such
+        -- From original tabpage, local reports as such
         eq(globalDir .. pathsep .. directories.tab, cwd(-1, localtab))
         eq(1, lwd(-1, localtab))
       end)
@@ -183,13 +183,23 @@ for _, cmd in ipairs { 'cd', 'chdir' } do
         eq(0, blwd())
         eq(globalDir, cwd())
 
-        -- getcwd({winnr}) falls through to the buffer shown in that window, not the current
-        -- buffer.
+        -- getcwd({winnr}) reports the window's own scope chain: the buffer scope is separate, and
+        -- visible only via the {bufnr} form.
         command(('split %s%s%s2'):format(directories.buffer, pathsep, tmpfile))
+        local bufnr = call('winbufnr', 1)
         command('wincmd p')
         eq(globalDir, cwd())
-        eq(join(globalDir, directories.buffer), cwd(1))
-        eq(globalDir, cwd(2))
+        eq({ globalDir, globalDir }, { cwd(1), cwd(2) })
+        eq(join(globalDir, directories.buffer), cwd(-1, -1, bufnr))
+
+        -- The {bufnr} form skips window and tab: a buffer belongs to no particular window/tabpage.
+        command('lcd ' .. directories.window)
+        command('tcd ' .. join('..', directories.tab))
+        eq(
+          { join(globalDir, directories.tab), join(globalDir, directories.tab) },
+          { cwd(0), tcwd() }
+        )
+        eq(globalDir, cwd(-1, -1, 0))
       end)
     end)
 
@@ -199,19 +209,19 @@ for _, cmd in ipairs { 'cd', 'chdir' } do
         eq(0, lwd(-1, -1))
       end)
 
-      it('works with tab-local pwd', function()
+      it('with tab-local dir', function()
         command('silent t' .. cmd .. ' ' .. directories.tab)
         eq(startdir, cwd(-1, -1))
         eq(0, lwd(-1, -1))
       end)
 
-      it('works with window-local pwd', function()
+      it('with window-local dir', function()
         command('silent l' .. cmd .. ' ' .. directories.window)
         eq(startdir, cwd(-1, -1))
         eq(0, lwd(-1, -1))
       end)
 
-      it('works with buffer-local pwd', function()
+      it('with buffer-local dir', function()
         command(('silent b%s %s'):format(cmd, directories.buffer))
         eq(startdir, cwd(-1, -1))
         eq(0, lwd(-1, -1))
@@ -327,7 +337,7 @@ for _, cmd in ipairs { 'cd', 'chdir' } do
       eq(join(globalDir, directories.tab), cwd())
       eq(cwd(), tcwd()) -- Working directory matches tab directory
       eq(1, tlwd())
-      eq(cwd(), bcwd()) -- Still no buffer-directory
+      eq(globalDir, bcwd()) -- Still no buffer-directory: the buffer form skips the tab scope
       eq(0, blwd())
 
       -- Change buffer 2's buffer-local directory
@@ -369,21 +379,24 @@ for _, cmd in ipairs { 'cd', 'chdir' } do
       eq(join(globalDir, directories.buffer), cwd())
       eq(cwd(), bcwd()) -- Working directory matches buffer directory
       eq(1, blwd())
-      eq(cwd(), wcwd()) -- Still no window-directory
+      eq(globalDir, wcwd()) -- Still no window-directory
       eq(0, wlwd())
 
-      -- Change window-local directory to test `:lcd`
+      -- :lcd sets the window-local dir WITHOUT clearing the narrower buffer-local one.
       command(('silent l%s ../%s'):format(cmd, directories.window))
-      eq(join(globalDir, directories.window), cwd())
-      eq(join(globalDir, directories.buffer), bcwd())
-      eq(1, blwd())
+      eq(join(globalDir, directories.buffer), cwd())
+      eq({ 1, 1 }, { blwd(), wlwd() })
+      eq(join(globalDir, directories.window), wcwd())
 
-      -- Verify buffer has buffer-local directory in original window
+      -- Window-local dir applies if the buffer-local one is unset.
+      command(('silent b%s!'):format(cmd))
+      eq(0, blwd())
+      eq(join(globalDir, directories.window), cwd())
+
+      -- Verify other window is unaffected.
       command('wincmd w')
       command('b ' .. tmpfile)
-      eq(join(globalDir, directories.buffer), cwd())
-
-      -- Verify going to second window uses window-local directory
+      eq(globalDir, cwd())
       command('wincmd w')
       eq(join(globalDir, directories.window), cwd())
     end)
@@ -424,8 +437,67 @@ for _, cmd in ipairs { 'bcd', 'bchdir' } do
       eq(startdir, cwd())
       eq(0, blwd())
     end)
+
+    it('is not cleared or overridden by :lcd/:tcd/:cd', function()
+      local bufdir = join(startdir, directories.buffer)
+
+      command('edit ' .. tmpfile)
+      command(('%s %s'):format(cmd, directories.buffer))
+      -- Paths are relative to `bufdir`, which stays in effect throughout.
+      command('lcd ' .. join('..', directories.window))
+      eq({ 1, bufdir, join(startdir, directories.window) }, { blwd(), cwd(), wcwd() })
+
+      command('tcd ' .. join('..', directories.tab))
+      eq({ 1, bufdir, join(startdir, directories.tab) }, { blwd(), cwd(), tcwd() })
+
+      command('cd ..')
+      eq({ 1, bufdir, startdir }, { blwd(), cwd(), cwd(-1, -1) })
+
+      -- The overridden ":cd" still reset the window/tab scopes, so ":bcd!" lands on the global dir.
+      command(('%s!'):format(cmd))
+      eq({ 0, 0, 0, startdir }, { blwd(), wlwd(), tlwd(), cwd() })
+    end)
   end)
 end
+
+describe(':lcd!/:tcd!/:bcd! (bang)', function()
+  it('clear only their own scope', function()
+    local bufdir = join(startdir, directories.buffer)
+    local windir = join(startdir, directories.window)
+    local tabdir = join(startdir, directories.tab)
+
+    command('tcd ' .. directories.tab)
+    command('lcd ' .. join('..', directories.window))
+    command('bcd ' .. join('..', directories.buffer))
+    eq({ 1, 1, 1 }, { blwd(), wlwd(), tlwd() })
+    eq(bufdir, cwd())
+
+    command('bcd!') -- Buffer scope gone: the window-local dir applies.
+    eq({ 0, 1, 1 }, { blwd(), wlwd(), tlwd() })
+    eq(windir, cwd())
+
+    command('lcd!') -- Window scope gone: the tab-local dir applies.
+    eq({ 0, 0, 1 }, { blwd(), wlwd(), tlwd() })
+    eq(tabdir, cwd())
+
+    command('tcd!') -- Tab scope gone: back to the global dir.
+    eq({ 0, 0, 0 }, { blwd(), wlwd(), tlwd() })
+    eq(startdir, cwd())
+
+    command('lcd!') -- No-op when the scope has no local directory.
+    eq(startdir, cwd())
+
+    -- :cd! does not unset.
+    command('lcd ' .. directories.window)
+    command('cd! ' .. join('..', directories.global))
+    eq(join(startdir, directories.global), cwd())
+    eq(0, wlwd()) -- ":cd" cleared it, as always.
+
+    -- Legacy: bang WITH arg ":lcd! {path}" is just ":lcd {path}".
+    command('lcd! ' .. join('..', directories.window))
+    eq({ 1, join(startdir, directories.window) }, { wlwd(), cwd() })
+  end)
+end)
 
 describe('cd during temp context-switch', function()
   it(':bcd/:tcd/:lcd persists in target scope, does not leak into original context', function()
@@ -503,7 +575,7 @@ for _, cmd in ipairs { 'getcwd', 'haslocaldir' } do
       )
 
       -- -1 preceded by an argument >= 0
-      local err5001 = 'Vim:E5001: Higher scope cannot be -1 if lower scope is >= 0.'
+      local err5001 = 'Vim:E5001: Argument cannot be -1 if preceding argument is >= 0.'
       eq(err5001, pcall_err(call, cmd, 0, -1))
       eq(err5001, pcall_err(call, cmd, 2, 3, -1))
       eq(err5001, pcall_err(call, cmd, -1, 0, -1))

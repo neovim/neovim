@@ -5362,12 +5362,12 @@ void update_cwd(CdCause cause)
   char *new_dir;
   CdScope scope;
 
-  if (curwin->w_localdir) {
-    new_dir = curwin->w_localdir;
-    scope = kCdScopeWindow;
-  } else if (curbuf->b_localdir) {
+  if (curbuf->b_localdir) {
     new_dir = curbuf->b_localdir;
     scope = kCdScopeBuffer;
+  } else if (curwin->w_localdir) {
+    new_dir = curwin->w_localdir;
+    scope = kCdScopeWindow;
   } else if (curtab->tp_localdir) {
     new_dir = curtab->tp_localdir;
     scope = kCdScopeTabpage;

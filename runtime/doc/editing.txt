@@ -9,7 +9,7 @@ Editing files						*edit-files*
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-1. Introduction						*edit-intro*
+Introduction						*edit-intro*
 
 Editing a file with Vim means:
 
@@ -169,7 +169,7 @@ If you want to keep the changed buffer without saving it, switch on the
 'hidden' is not set, check the help for the command.
 
 ==============================================================================
-2. Editing a file					*edit-a-file*
+Editing a file						*edit-a-file*
 
 							*:e* *:edit* *reload*
 :e[dit][!] [++opt] [+cmd]
@@ -615,7 +615,7 @@ filename-expansion phase, so some parts of `path` are still expanded: >lua
 <
 
 ==============================================================================
-3. The argument list				*argument-list* *arglist*
+The argument list				*argument-list* *arglist*
 
 If you give more than one file name when starting Vim, this list is remembered
 as the argument list.  You can jump to each file in this list.
@@ -929,7 +929,7 @@ flag is used for the ":substitute" command to avoid an error for files where
 "my_foo" isn't used.  ":update" writes the file only if changes were made.
 
 ==============================================================================
-4. Writing					*writing* *save-file*
+Writing						*writing* *save-file*
 
 Note: When the 'write' option is off, you are not able to write any file.
 
@@ -1155,7 +1155,7 @@ For MS-Windows the device is detected by its name:
 The names can be in upper- or lowercase.
 
 ==============================================================================
-5. Writing and quitting					*write-quit*
+Writing and quitting					*write-quit*
 
 							*:q* *:quit*
 :q[uit]			Quit the current window.  Quit Vim if this is the last
@@ -1268,7 +1268,7 @@ MULTIPLE WINDOWS AND BUFFERS				*window-exit*
 		which cannot be written for another reason, Vim will not quit.
 
 ==============================================================================
-6. Dialogs						*edit-dialogs*
+Dialogs							*edit-dialogs*
 
 							*:confirm* *:conf*
 :conf[irm] {command}	Execute {command}, and use a dialog when an
@@ -1346,92 +1346,114 @@ use has("browsefilter"): >
 	endif
 
 ==============================================================================
-7. The current directory				*current-directory*
+The current directory					*current-directory*
 
-There are four current-directory "scopes": global, tab, window and buffer.
-You can use |:cd|, |:tcd|, |:lcd| and |:bcd| to change to another directory.
-This affects anything that operates on relative paths, e.g. ":edit ./foo.txt"
-or shell commands like ":!ls" or ":te ls".
+The "effective working directory" affects anything that operates on relative
+paths, e.g. ":edit ./foo.txt" or shell commands like ":!ls" or ":te ls". There
+are four current-directory "scopes": global, tab, window and buffer. You can
+use |:cd|, |:tcd|, |:lcd| and |:bcd| to change to a directory at a given scope.
 
-Use |getcwd()| to get the effective directory from the current scope.  The
-window-local working directory takes precedence over the buffer-local working
-directory, which takes precedence over the tab-local working directory, which
-in turn takes precedence over the global working directory.  If a local
-working directory (tab, window or buffer) does not exist, the next-higher
-scope in the hierarchy applies.
+The precedence of scopes is ordered from narrowest to widest: >
 
-							*:cd* *E747* *E472*
-:cd[!]			On non-Unix systems when 'cdhome' is off: Print the
-			current directory name.
-			Otherwise: Change the current directory to the home
-			directory.  Clear any window-local directory.
-			Use |:pwd| to print the current directory on all
-			systems.
+	buffer > window > tab > global
 
-:cd[!] {path}		Change the current directory to {path}.
-			If {path} is relative, it is searched for in the
-			directories listed in 'cdpath'.
-			Clear any window-local directory.
-			Does not change the meaning of an already opened file,
-			because its full path name is remembered.  Files from
-			the |arglist| may change though!
-			On MS-Windows this also changes the active drive.
+Use |getcwd()| to get the effective directory, and `:verbose pwd` to also see
+which scope it came from.
+
+Setting a directory at a higher scope clears the lower ones: |:tcd| clears the
+window-local directory and |:cd| clears both.  But the buffer-local directory
+is never cleared, except by |:bcd| or |:bcd!|.
+
+
+:chd[ir]					*:cd* *:chd* *:chdir* *E747* *E472*
+:cd			Change the current directory to the home directory,
+			unsetting the same directories as ":cd {path}".
+
+			If 'cdhome' is disabled this only prints the name.
+			Use |:pwd| to print it regardless of 'cdhome'.
+
+:cd {path}		Change the current directory to {path}, resolved
+			against 'cdpath' (if {path} is relative). On
+			MS-Windows this also changes the active drive.
+
+			Clears the window-local and tab-local directories (on
+			the current window/tab), but not the buffer-local one.
+
 			To change to the directory of the current file: >
 				:cd %:h
 <
+			Does not change the meaning of an already opened file,
+			because its full path name is remembered.  Files from
+			the |arglist| may change though!
+
 							*:cd-* *E186*
-:cd[!] -		Change to the previous current directory (before the
-			previous ":cd {path}" command).
+:cd -			Change to previous current-directory (before the last
+			":cd {path}" command).
 
-							*:chd* *:chdir*
-:chd[ir][!] [path]	Same as |:cd|.
+:tch[dir]						*:tc* *:tcd* *:tch* *:tchdir*
+:tc[d] [path]		Like |:cd|, but only set the directory for the current
+			tab. Clears the window-local directory of the current
+			window, but not the buffer-local one.
 
-							*:tc* *:tcd*
-:tc[d][!] {path}	Like |:cd|, but only set the directory for the current
-			tab.  The current window and buffer will also use this
-			directory. The current directory is not changed for
-			windows in other tabs and for windows in the current
-			tab that have their own window-local directory, or for
-			buffers that have their own buffer-local directory.
-
-							*:tcd-*
-:tc[d][!] -		Change to the previous current directory (before the
-			previous ":tcd {path}" command).
-
-							*:tch* *:tchdir*
-:tch[dir][!]		Same as |:tcd|.
-
-							*:lc* *:lcd*
-:lc[d][!] {path}	Like |:cd|, but only set the current directory for the
-			current window.  The current directory for other
-			tabs, windows, or buffers is not changed.
-
-							*:lch* *:lchdir*
-:lch[dir][!]		Same as |:lcd|.
-
-							*:lcd-*
-:lc[d][!] -		Change to the previous current directory (before the
-			previous ":lcd {path}" command).
-
-							*:bc* *:bcd*
-:bc[d][!] [path]	Like |:cd|, but only set the current directory for the
-			current buffer.  The current directory for other
-			tabs, windows, or buffers is not changed.
-
-			Unlike :lcd and :tcd, this is not "sticky": a new
-			buffer or window will not "inherit" a buffer-local
+			Does not change the current directory for other tabs,
+			nor any other window or buffer with its own local
 			directory.
 
-							*:bcd-*
-:bc[d][!] -		Change to the previous buffer-local current directory
-			(before the last ":bcd [path]" command).
+			"Sticky" behavior: a new tab inherits the current
+			tab-local directory.
 
-							*:bch* *:bchdir*
-:bch[dir][!]		Same as |:bcd|.
+							*:tcd-*
+:tc[d] -		Change to previous tab-local directory (before the
+			last ":tcd {path}" command).
+
+:lch[dir]						*:lc* *:lcd* *:lch* *:lchdir*
+:lc[d] [path]		Like |:cd|, but only set the directory for the current
+			window.  Does not change the current directory for
+			other tabs, windows or buffers.
+
+			The specified directory becomes the current directory
+			whenever that window is entered, unless its current
+			buffer has a buffer-local (:bcd) directory.
+
+			"Sticky" behavior: a new window inherits the current
+			window-local directory.
+
+
+							*:lcd-*
+:lc[d] -		Change to previous window-local directory (before the
+			last ":lcd {path}" command).
+
+:bch[dir]						*:bc* *:bcd* *:bch* *:bchdir*
+:bc[d] [path]		Like |:cd|, but only set the directory for the current
+			buffer.  Does not change the current directory for
+			tabs, windows or other buffers.
+
+			Not "sticky": unlike :lcd and :tcd, a new window or
+			buffer (|:edit|, |:enew|, …) will not "inherit" the
+			current buffer-local directory. Use |:tcd| or |:lcd|
+			if you want "sticky" behavior.
+
+			See also |project-dir|.
+
+							*:bcd-*
+:bc[d] -		Change to previous buffer-local directory (before the
+			last ":bcd {path}" command).
+
+						*:lcd!* *:tcd!* *:bcd!*
+:lc[d]!			Unset the window-local current-directory.
+:tc[d]!			Unset the tab-local current-directory.
+:bc[d]!			Unset the buffer-local current-directory.
+
+			Each unsets only its own scope, so the next-higher
+			scope takes effect. No-op if the scope has no local
+			directory.
+
+			The global directory always exists, so ":cd!" is the
+			same as |:cd|.
 
 							*:pw* *:pwd* *E187*
 :pw[d]			Print the current directory name.
-			Also see |getcwd()|.
+			See also |getcwd()|.
 							*:pwd-verbose*
 			When 'verbose' is non-zero, |:pwd| will also display
 			what scope the current directory was set.  Example: >
@@ -1444,52 +1466,9 @@ scope in the hierarchy applies.
 				:verbose pwd
 				[tabpage] /path/to/current
 
-				" Set by :lcd
-				:verbose pwd
-				[window] /path/to/current
 
-				" Set by :bcd
-				:verbose pwd
-				[buffer] /path/to/current
-
-So long as |:tcd|, |:lcd| or |:bcd| has not been used, all buffers and windows
-share the same directory.  Using a command to jump to another window doesn't
-change anything for the current directory.
-
-When |:lcd| has been used for a window, the specified directory becomes the
-current directory for that window.  Windows where the |:lcd| command has not
-been used stick to the buffer-local, tab-local or global directory.  When
-jumping to another window the current directory is changed to the last
-specified window-local directory.  If none was specified, the buffer-local,
-tab-local or global directory is used.  When creating a new window it inherits
-the current window-local directory ("sticky" behavior).
-
-When |:bcd| has been used for a buffer, the specified directory becomes the
-current directory whenever that buffer is entered, unless the window has its
-own window-local directory.  The buffer-local directory is never inherited
-(not "sticky"): a buffer created with |:edit|, |:enew|, etc., ignores the
-current buffer-local (:bcd) directory, if any. Use |:lcd| if you want "sticky"
-behavior.
-
-When changing tabs the same behaviour applies.  If the current tab has no
-local working directory the global working directory is used.
-
-When a |:cd| command is used, the current window and tab will lose their local
-current directories and will use the global current directory from now on.
-When a |:tcd| command is used, only the current window will lose its local
-working directory.
-
-After using |:cd| the full path name will be used for reading and writing
-files.  On some networked file systems this may cause problems.  The result of
-using the full path name is that the file names currently in use will remain
-referring to the same file.  Example: If you have a file a:test and a
-directory a:vim the commands ":e test" ":cd vim" ":w" will overwrite the file
-a:test and not write a:vim/test.  But if you do ":w test" the file a:vim/test
-will be written, because you gave a new file name and did not refer to a
-filename before the ":cd".
-
-
-PROJECT DIRECTORY				       *project-dir* *workspace-dir*
+------------------------------------------------------------------------------
+Project directory				       *project-dir* *workspace-dir*
 
 You can use |:bcd| to assign a "workspace" (or "project directory") to each
 buffer, so commands like |:make|, |:grep| and |:terminal| always run relative
@@ -1511,7 +1490,7 @@ See also:
 - |terminal-osc7|
 
 ==============================================================================
-8. Editing binary files					*edit-binary*
+Editing binary files					*edit-binary*
 
 Although Vim was made to edit text files, it is possible to edit binary
 files.  The |-b| Vim argument (b for binary) makes Vim do file I/O in binary
@@ -1545,7 +1524,7 @@ There are a few things to remember when editing binary files:
   in the text).
 
 ==============================================================================
-9. Encryption						*encryption*
+Encryption						*encryption*
 
 					                *:X* *E817* *E818* *E819* *E820*
 Support for editing encrypted files has been removed.
@@ -1553,7 +1532,7 @@ Support for editing encrypted files has been removed.
 	https://github.com/neovim/neovim/issues/701
 
 ==============================================================================
-10. Timestamps					*timestamp* *timestamps*
+Timestamps					*timestamp* *timestamps*
 
 Vim remembers the modification timestamp, mode and size of a file when you
 begin editing it.  This is used to avoid that you have two different versions
@@ -1669,7 +1648,7 @@ in the Win32 libraries that confuses Vim about the hour time difference.  The
 problem goes away the next day.
 
 ==============================================================================
-11. File Searching					*file-searching*
+File Searching						*file-searching*
 
 The file searching is currently used for the 'path', 'cdpath' and 'tags'
 options, for |finddir()| and |findfile()|.  Other commands use |wildcards|
@@ -1768,7 +1747,7 @@ There are three different types of searching:
    with depth limiter (/usr/**2) or upward search (;) notations.
 
 ==============================================================================
-12. Trusted Files						*trust*
+Trusted Files							*trust*
 
 Nvim executes arbitrary code found on the filesystem if 'exrc' is enabled. To
 prevent executing malicious code, only "trusted files" are executed. You can
@@ -1798,7 +1777,7 @@ mark a file as trusted or untrusted using the |:trust| command or the
 			trust or deny it.
 
 ==============================================================================
-13. Log Files							*log-files*
+Log Files							*log-files*
 
 Nvim keeps log files in `stdpath("log")`. See |standard-path| for where that
 location is on your system.

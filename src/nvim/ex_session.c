@@ -764,10 +764,8 @@ static int makeopens(FILE *fd, char *dirnow)
       tab_topframe = topframe;
     }
 
-    // Restore the tab-local working directory while the tab still shows its empty "placeholder"
-    // buffer: ":tcd" clears the b_localdir of the current buffer, so emitting it before any file is
-    // loaded keeps it away from directories restored by the ":bcd" handlers above. Do this before
-    // the windows and buffers, so the win-local / buf-local dir can override the tab-local dir.
+    // Restore the tab-local working directory before the windows and buffers, so that the
+    // win-local / buf-local dir can override the tab-local dir.
     if ((ssop_flags & kOptSsopFlagCurdir) && tp->tp_localdir != NULL) {
       if (need_tabnext && put_line(fd, "tabnext") == FAIL) {
         return FAIL;

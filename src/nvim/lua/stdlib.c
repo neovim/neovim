@@ -648,15 +648,11 @@ static int nlua_with(lua_State *L)
   TRY_WRAP(&err, {
     CtxSwitch cs = { 0 };
     bool switched = true;
-    CtxSwitchFlags dirs = keepcwd ? kCtxKeepDirs : kCtxKeepCwd;
 
-    if (win) {
-      tabpage_T *tabpage = win_find_tabpage(win);
-      switched = ctx_switch(&cs, win, tabpage, NULL, kCtxNoDisplay | kCtxValidate | dirs);
-    } else if (buf) {
-      ctx_switch(&cs, NULL, NULL, buf, dirs);
-    } else if (keepcwd) {
-      ctx_switch(&cs, NULL, NULL, NULL, kCtxKeepDirs);
+    if (win || buf || keepcwd) {
+      CtxSwitchFlags dirs = keepcwd ? kCtxKeepDirs : kCtxKeepCwd;
+      tabpage_T *tab = win ? win_find_tabpage(win) : NULL;
+      switched = ctx_switch(&cs, win, tab, buf, kCtxNoDisplay | dirs | (win ? kCtxValidate : 0));
     }
 
     if (switched) {
