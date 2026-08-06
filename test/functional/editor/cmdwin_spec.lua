@@ -47,6 +47,17 @@ describe('cmdwin', function()
     eq(1, #api.nvim_list_wins()) -- Back to the single original window.
   end)
 
+  it('treats buffer-change as cmdwin-exit', function()
+    feed('q:')
+    local cmdwin_buf = api.nvim_get_current_buf()
+    feed(':set nowinfixbuf<CR>') -- this is typed into the cmdline, not the cmdwin (so it applies to the cmdwin)
+    feed(':enew<CR>') -- likewise
+
+    eq('', fn.getcmdwintype()) -- Cleanup has run
+    eq(0, #fn.win_findbuf(cmdwin_buf)) -- All cmdwin windows are closed.
+    eq(2, #api.nvim_list_wins()) -- The two plain windows
+  end)
+
   it('<CR> executes when cmdwin was moved to another tabpage #40484', function()
     feed('q:')
     feed('ilet g:cmdwin_result = 9<Esc>')
