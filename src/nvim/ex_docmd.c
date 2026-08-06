@@ -6329,6 +6329,7 @@ bool changedir_func(char *new_dir, CdScope scope)
   *pp = pdir;
 
   post_chdir(scope, dir_differs);
+  ctx_did_chdir();
 
   return true;
 }

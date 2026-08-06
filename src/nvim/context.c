@@ -58,6 +58,9 @@ static int _ctx_switch_depth = 0;
 /// curwin saved by the outermost curwin-changing ctx_switch() (0: none).
 static handle_T _ctx_saved_curwin = 0;
 
+/// Whether an explicit :cd/:tcd/:lcd/:bcd/chdir() happened since the innermost ctx_switch().
+static bool _ctx_did_chdir = false;
+
 /// Free resources used by Context object.
 ///
 /// param[in]  ctx  pointer to Context object to free.
@@ -244,30 +247,103 @@ int ctx_from_dict(Dict dict, Context *ctx, Error *err)
   return types;
 }
 
-/// kCtxKeepCwd: remembers the cwd so that ctx_restore() can undo any directory change caused by
-/// switching to "wp" ('autochdir', win/tab-local directories).
-static void ctx_cwd_save(CtxSwitch *cs, win_T *wp, tabpage_T *tp)
+/// Moves CWD state aside, so that the temporary "autocmd window" starts clean.
+/// Undone by ctx_localdirs_restore().
+static void ctx_win_dirs_save(CtxSwitch *cs, win_T *cw_win, buf_T *buf)
 {
-  cs->cs_cwd_status = FAIL;
+  // A pooled tmp-window must not carry a stale w_localdir.
+  XFREE_CLEAR(cw_win->w_localdir);
+  cs->cs_b_localdir = buf->b_localdir;
+  buf->b_localdir = NULL;
+  cs->cs_tp_localdir = curtab->tp_localdir;
+  curtab->tp_localdir = NULL;
+  cs->cs_globaldir = globaldir;
+  globaldir = NULL;
+}
 
-  // Getting and setting directory can be slow on some systems, only do
-  // this when the current or target window/tab have a local directory or
-  // 'acd' is set.
+/// Restores the dir scopes saved in `cs`. With `persist`, a scope explicitly changed
+/// (user :bcd/:tcd/:cd) keeps its new value instead.
+///
+/// @param cwp  The discarded temp win of a hidden buf, or NULL. If given, also fix the process CWD.
+/// @param tp   Tabpage that owns cs_tp_localdir, or NULL if it no longer exists.
+static void ctx_localdirs_restore(CtxSwitch *cs, win_T *cwp, tabpage_T *tp, bool persist)
+{
+  const bool did_chdir = _ctx_did_chdir;
+  _ctx_did_chdir = persist && did_chdir;
+
+  win_T *dirs_win = win_find_by_handle(cs->cs_new_curwin);
+  if (dirs_win != NULL) {
+    xfree(dirs_win->w_localdir);
+    dirs_win->w_localdir = cs->cs_w_localdir;
+  } else {
+    xfree(cs->cs_w_localdir);
+  }
+
+  buf_T *b = bufref_valid(&cs->cs_new_curbuf) ? cs->cs_new_curbuf.br_buf : NULL;
+  if (b != NULL && !(persist && b->b_localdir != NULL)) {
+    xfree(b->b_localdir);
+    b->b_localdir = cs->cs_b_localdir;
+  } else {
+    xfree(cs->cs_b_localdir);
+  }
+
+  if (tp != NULL && !(persist && tp->tp_localdir != NULL)) {
+    xfree(tp->tp_localdir);
+    tp->tp_localdir = cs->cs_tp_localdir;
+  } else {
+    xfree(cs->cs_tp_localdir);
+  }
+
+  // Correct the directory before restoring globaldir: the first chdir during the switch saved
+  // the pre-switch cwd in `globaldir` (see `post_chdir`), which update_cwd() uses as fallback.
+  if (cwp != NULL && (did_chdir || cwp->w_localdir != NULL)) {
+    update_cwd(kCdCauseWindow);
+  }
+
+  // Keep-case: the globaldir set during the switch (pre-switch cwd, see `post_chdir`).
+  if (!(persist && cs->cs_globaldir == NULL && globaldir != NULL)) {
+    xfree(globaldir);
+    globaldir = cs->cs_globaldir;
+  }
+}
+
+/// Saves the dir state to be restored by ctx_dirs_restore():
+/// - kCtxKeepCwd or kCtxKeepDirs: the CWD, so any directory change caused by switching to `wp`
+///   ('autochdir', win/tab-local directories) can be undone.
+/// - kCtxKeepDirs: also copies of the target context's dir scopes (w/b/tp-local, global).
+static void ctx_dirs_save(CtxSwitch *cs, win_T *wp, tabpage_T *tp, buf_T *buf)
+{
+  if (!(cs->cs_flags & (kCtxKeepCwd | kCtxKeepDirs))) {
+    return;
+  }
+
+  // kCtxKeepDirs: also save copies of the target context's dir scopes.
+  if (cs->cs_flags & kCtxKeepDirs) {
+    buf_T *target_buf = buf != NULL ? buf : wp->w_buffer;
+    cs->cs_dirs_tab = tp->handle;
+    cs->cs_w_localdir = wp->w_localdir == NULL ? NULL : xstrdup(wp->w_localdir);
+    cs->cs_b_localdir = target_buf->b_localdir == NULL ? NULL : xstrdup(target_buf->b_localdir);
+    cs->cs_tp_localdir = tp->tp_localdir == NULL ? NULL : xstrdup(tp->tp_localdir);
+    cs->cs_globaldir = globaldir == NULL ? NULL : xstrdup(globaldir);
+  }
+
+  // Getting and setting directory can be slow on some systems, only do this when the current or
+  // target window/tab have a local directory or 'acd' is set, or if kCtxKeepDirs was set.
   char cwd[MAXPATHL];
-  if (curwin != wp
-      && (curwin->w_localdir != NULL || (wp != NULL && wp->w_localdir != NULL)
-          || curbuf->b_localdir != NULL || (wp != NULL && wp->w_buffer->b_localdir != NULL)
-          || (curtab != tp && (curtab->tp_localdir != NULL || tp->tp_localdir != NULL))
-          || p_acd)) {
-    cs->cs_cwd_status = os_dirname(cwd, MAXPATHL);
-    if (cs->cs_cwd_status == OK) {
+  if ((cs->cs_flags & kCtxKeepDirs)
+      || (curwin != wp
+          && (curwin->w_localdir != NULL || (wp != NULL && wp->w_localdir != NULL)
+              || curbuf->b_localdir != NULL || (wp != NULL && wp->w_buffer->b_localdir != NULL)
+              || (curtab != tp && (curtab->tp_localdir != NULL || tp->tp_localdir != NULL))
+              || p_acd))) {
+    if (os_dirname(cwd, MAXPATHL) == OK) {
       cs->cs_cwd = xstrdup(cwd);  // allocated on demand: keeps CtxSwitch small
     }
   }
 
   // If 'acd' is set, check we are using that directory.  If yes, then
   // apply 'acd' afterwards, otherwise restore the current directory.
-  if (cs->cs_cwd_status == OK && p_acd) {
+  if (cs->cs_cwd != NULL && p_acd) {
     if (curbuf->b_sfname != NULL && curbuf->b_fname == curbuf->b_sfname) {
       cs->cs_save_sfname = xstrdup(curbuf->b_sfname);
     }
@@ -279,13 +355,27 @@ static void ctx_cwd_save(CtxSwitch *cs, win_T *wp, tabpage_T *tp)
   }
 }
 
-/// kCtxKeepCwd: restores the current directory.
-static void ctx_cwd_restore(CtxSwitch *cs)
+/// Restores the dir state saved by ctx_dirs_save(), undoing any chdir made while switched. The
+/// target window/buffer/tab may have been closed meanwhile.
+static void ctx_dirs_restore(CtxSwitch *cs)
 {
+  // kCtxKeepDirs: restore the saved dir scopes. But not for hidden buf (ctx_win).
+  if ((cs->cs_flags & kCtxKeepDirs) && cs->cs_ctxwin_idx < 0) {
+    tabpage_T *dirs_tab = NULL;
+    FOR_ALL_TABS(tp) {
+      if (tp->handle == cs->cs_dirs_tab) {
+        dirs_tab = tp;
+        break;
+      }
+    }
+    ctx_localdirs_restore(cs, NULL, dirs_tab, false);
+  }
+
+  // Restore the CWD itself.
   if (cs->cs_apply_acd) {
     xfree(cs->cs_save_sfname);
     do_autochdir();
-  } else if (cs->cs_cwd_status == OK) {
+  } else if (cs->cs_cwd != NULL) {
     os_chdir(cs->cs_cwd);
     if (cs->cs_save_sfname != NULL) {
       xfree(curbuf->b_sfname);
@@ -294,6 +384,11 @@ static void ctx_cwd_restore(CtxSwitch *cs)
     }
   }
   XFREE_CLEAR(cs->cs_cwd);
+}
+
+void ctx_did_chdir(void)
+{
+  _ctx_did_chdir = true;
 }
 
 /// Return true if `win` is an active entry in ctx_win[] (the pool of temporary scratch windows).
@@ -343,16 +438,7 @@ static win_T *ctx_win_prep(CtxSwitch *cs, buf_T *buf)
   buf->b_nwindows++;
   win_init_empty(cw_win);  // set cursor and topline to safe values
 
-  // Make sure w_localdir, b_localdir, tp_localdir, globaldir are NULL: the switched-to code runs
-  // in the actual cwd (no chdir on switch), and a pooled tmp-window must not carry a stale
-  // w_localdir.
-  XFREE_CLEAR(cw_win->w_localdir);
-  cs->cs_b_localdir = buf->b_localdir;
-  buf->b_localdir = NULL;
-  cs->cs_tp_localdir = curtab->tp_localdir;
-  curtab->tp_localdir = NULL;
-  cs->cs_globaldir = globaldir;
-  globaldir = NULL;
+  ctx_win_dirs_save(cs, cw_win, buf);
 
   if (need_append) {
     win_append(lastwin, cw_win, NULL);
@@ -411,36 +497,42 @@ win_T *ctx_saved_curwin(void)
   return _ctx_saved_curwin == 0 ? NULL : win_find_by_handle(_ctx_saved_curwin);
 }
 
-/// Prepares a temporary window or buffer as a temporary execution context. ctx_restore() MUST be
-/// called afterwards, also when this returns false.
+/// Prepares a temporary execution context. ctx_restore() MUST be called afterwards, also when this
+/// returns false.
 ///
 /// - Passing `wp` makes that window the curwin (in tabpage `tp`, or NULL for current tabpage).
 ///   - (Legacy: switch_win(), switch_win_noblock(), win_execute_before().)
 /// - Passing `buf`, enters a window showing `buf` in the current tabpage, or prepares a temporary
 ///   "autocmd window" for it (never switches tabpage).
 ///   - (Legacy: aucmd_prepbuf().)
+/// - Passing neither: only CWD state is saved; flags must include `kCtxKeepDirs`.
 ///
 /// The switch itself never triggers autocommands; whether autocommands can fire _while_ switched
 /// (until ctx_restore()) is the caller's choice via kCtxNoEvents.
 ///
-/// @param wp     Target window, or NULL to target a buffer.
+/// @param wp     Target window, or NULL.
 /// @param tp     Tabpage of `wp`, or NULL to not switch tabpage.
-/// @param buf    Target buffer, or NULL to target a window.
+/// @param buf    Target buffer, or NULL.
 /// @param flags  kCtx flags.
 ///
 /// @return  false if switching failed (only possible for a window target).
 bool ctx_switch(CtxSwitch *cs, win_T *wp, tabpage_T *tp, buf_T *buf, CtxSwitchFlags flags)
 {
-  assert((wp == NULL) != (buf == NULL));
+  // Exactly one target, or none with kCtxKeepDirs (which only saves the CWD state).
+  assert(((wp == NULL) != (buf == NULL)) || (wp == NULL && (flags & kCtxKeepDirs)));
   assert(buf == NULL || tp == NULL);  // a buffer target never switches tabpage
   CLEAR_POINTER(cs);
   cs->cs_flags = flags;
-  cs->cs_mode = buf != NULL ? kCtxSwitchBuf : kCtxSwitchWin;
+  cs->cs_mode = buf != NULL ? kCtxSwitchBuf : wp != NULL ? kCtxSwitchWin : kCtxSwitchDirs;
   cs->cs_ctxwin_idx = -1;
+  cs->cs_did_chdir = _ctx_did_chdir;
+  _ctx_did_chdir = false;
+  if (cs->cs_mode == kCtxSwitchDirs) {
+    wp = curwin;  // No target: "switch" to curwin, i.e. stay put.
+  }
 
-  // Resolve the target window.  A buffer target prefers a window already showing "buf" in the
-  // current tabpage (least side effects, esp. if "buf" is curbuf); when there is none, an autocmd
-  // window is prepared below, after the save (entering it changes curwin and prevwin).
+  // Resolve the target window.  A buffer target prefers a window already showing it, in the current
+  // tabpage (minimizes side effects); else a ctx_win is prepared below (ctx_win_prep).
   if (buf != NULL) {
     if (buf == curbuf) {  // be quick when buf is curbuf
       wp = curwin;
@@ -458,8 +550,10 @@ bool ctx_switch(CtxSwitch *cs, win_T *wp, tabpage_T *tp, buf_T *buf, CtxSwitchFl
     cs->cs_target_win = wp->handle;
     cs->cs_target_old_pos = wp->w_cursor;
   }
-  if (flags & kCtxKeepCwd) {
-    ctx_cwd_save(cs, wp, tp == NULL ? curtab : tp);
+  // The CWD-state snapshot is only for a real window target; hidden-buffer target is handled by the
+  // ctx_win machinery (ctx_win_prep).
+  if (buf == NULL || wp != NULL) {
+    ctx_dirs_save(cs, wp, tp == NULL ? curtab : tp, buf);
   }
 
   // Save the current state.
@@ -490,8 +584,8 @@ bool ctx_switch(CtxSwitch *cs, win_T *wp, tabpage_T *tp, buf_T *buf, CtxSwitchFl
 
   if (buf != NULL) {
     if (wp == NULL) {
-      // No window shows `buf`: prepare a temp window. Anything related to a window (e.g., setting
-      // folds) may have unexpected results.
+      // Hidden buffer (`buf` not visible in any window): prepare a temp window.
+      // Window behavior (e.g., setting folds) may have unexpected results.
       wp = ctx_win_prep(cs, buf);
       // Leave the window we entered "from".
       leaving_window(curwin);
@@ -580,28 +674,14 @@ void ctx_restore(CtxSwitch *cs)
     vars_clear(&cwp->w_vars->dv_hashtab);         // free all w: variables
     hash_init(&cwp->w_vars->dv_hashtab);          // re-use the hashtab
 
-    // If :lcd has been used in the autocommand window, correct current
-    // directory before restoring b_localdir, tp_localdir and globaldir.
-    if (cwp->w_localdir != NULL) {
-      update_cwd(kCdCauseWindow);
-    }
-    if (bufref_valid(&cs->cs_new_curbuf)) {
-      xfree(cs->cs_new_curbuf.br_buf->b_localdir);
-      cs->cs_new_curbuf.br_buf->b_localdir = cs->cs_b_localdir;
-    } else {
-      xfree(cs->cs_b_localdir);
-    }
-    xfree(curtab->tp_localdir);
-    curtab->tp_localdir = cs->cs_tp_localdir;
-    xfree(globaldir);
-    globaldir = cs->cs_globaldir;
+    ctx_localdirs_restore(cs, cwp, curtab, !(cs->cs_flags & kCtxKeepDirs));
 
     // Buffer contents may have changed; cursor is checked below, AFTER restoring Visual state.
     if (curwin->w_topline > curbuf->b_ml.ml_line_count) {
       curwin->w_topline = curbuf->b_ml.ml_line_count;
       curwin->w_topfill = 0;
     }
-  } else {
+  } else if (cs->cs_mode == kCtxSwitchBuf) {
     // Restore the buffer previously edited by curwin.
     if (curwin->handle == cs->cs_new_curwin
         && curbuf != cs->cs_new_curbuf.br_buf
@@ -617,7 +697,7 @@ void ctx_restore(CtxSwitch *cs)
     }
 
     ctx_restore_curwin(cs, NULL);
-  }
+  }  // Else: only save CWD state.
 
   if (!cs->cs_same_win) {
     Visual.active = cs->cs_visual_active;
@@ -633,9 +713,12 @@ void ctx_restore(CtxSwitch *cs)
   if (cs->cs_flags & kCtxNoEvents) {
     unblock_autocmds();
   }
-  if (cs->cs_flags & kCtxKeepCwd) {
-    ctx_cwd_restore(cs);
+  ctx_dirs_restore(cs);  // No-op if ctx_dirs_save() saved nothing.
+  // Re-apply the restored context's effective directory.
+  if (cs->cs_ctxwin_idx < 0 && _ctx_did_chdir) {
+    update_cwd(kCdCauseWindow);
   }
+  _ctx_did_chdir = _ctx_did_chdir || cs->cs_did_chdir;
   if (cs->cs_flags & kCtxValidate) {
     // Update the status line if the cursor moved in the target window.
     win_T *const wp = win_find_by_handle(cs->cs_target_win);

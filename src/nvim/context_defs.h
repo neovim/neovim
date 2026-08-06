@@ -45,22 +45,30 @@ typedef struct {
 
 /// Flags for ctx_switch().
 typedef enum {
+  /// Restore process CWD: undo incidental chdir ('autochdir', "leaked" win/tab-local CWD).
+  ///
+  /// Note: this flag only exists for performance. Semantically every ctx-switch wants this, but the
+  /// getcwd() bookkeeping is costly for internal switches that don't run user code.
+  kCtxKeepCwd = 1,
+  /// Restore the target's full CWD state: undo all "chdir" operations on ctx_restore(), including
+  /// explicit :cd/:tcd/:bcd (which otherwise persist).
+  /// - Note: :lcd targeting a hidden buffer (temp window) is always discarded.
+  kCtxKeepDirs = 2,
   /// Don't affect the display (no redraw; limits access to another tabpage).
-  kCtxNoDisplay = 1,
+  kCtxNoDisplay = 4,
   /// Block autocommands until ctx_restore().
-  kCtxNoEvents = 2,
-  /// Undo any chdir caused by the switch ('autochdir', win/tab-local CWD) on ctx_restore().
-  kCtxKeepCwd = 4,
+  kCtxNoEvents = 8,
   /// Validate cursor/Visual around the switch; update display (statusline) if the target window's
   /// cursor moved.
-  kCtxValidate = 8,
+  kCtxValidate = 16,
 } CtxSwitchFlags;
 
 /// What ctx_switch() switched (set internally).
 enum {
-  kCtxSwitchNone = 0,  ///< zero-initialized: ctx_restore() is a no-op
-  kCtxSwitchWin,       ///< window target
-  kCtxSwitchBuf,       ///< buffer target
+  kCtxSwitchNone = 0,  ///< Zero-initialized: ctx_restore() is a no-op.
+  kCtxSwitchWin,       ///< Window target.
+  kCtxSwitchBuf,       ///< Buffer target.
+  kCtxSwitchDirs,      ///< No target: only CWD state is saved.
 };
 
 /// Context before a temporary switch of current window/buffer. Undone by ctx_restore().
@@ -77,16 +85,21 @@ typedef struct {
   // Temporary location (ctx_switch()):
   handle_T cs_new_curwin;         ///< ID of new curwin
   bufref_T cs_new_curbuf;         ///< new curbuf
-  int cs_ctxwin_idx;              ///< autocmd window in ctx_win[], or -1
+  int cs_ctxwin_idx;              ///< "autocmd" window in the ctx_win pool, or -1.
   // Target tracking (kCtxValidate):
   handle_T cs_target_win;         ///< the window switched to
   pos_T cs_target_old_pos;        ///< its cursor before the switch
   // State kept across the switch:
-  char *cs_b_localdir;            ///< saved b_localdir of the target buffer (autocmd window)
-  char *cs_tp_localdir;           ///< saved tp_localdir (autocmd window)
-  char *cs_globaldir;             ///< saved globaldir (autocmd window)
-  char *cs_cwd;                   ///< saved cwd (kCtxKeepCwd; allocated on demand)
-  int cs_cwd_status;              ///< OK if cs_cwd is valid
-  bool cs_apply_acd;              ///< re-apply 'autochdir' on ctx_restore()
-  char *cs_save_sfname;           ///< saved b_sfname (kCtxKeepCwd)
+  bool cs_did_chdir;              ///< saved `ctx_did_chdir` of the enclosing context
+  handle_T cs_dirs_tab;           ///< kCtxKeepDirs: tabpage that owns cs_tp_localdir.
+  // Saved dir state. Two users:
+  // 1. hidden-buffer target always saves b/tp/globaldir (so the temp context starts dir-neutral)
+  // 2. kCtxKeepDirs saves copies of all four.
+  char *cs_w_localdir;            ///< Saved w_localdir of the target window
+  char *cs_b_localdir;            ///< Saved b_localdir of the target buffer
+  char *cs_tp_localdir;           ///< Saved tp_localdir
+  char *cs_globaldir;             ///< Saved globaldir
+  char *cs_cwd;                   ///< Saved CWD (kCtxKeepCwd/kCtxKeepDirs).
+  bool cs_apply_acd;              ///< Re-apply 'autochdir' on ctx_restore().
+  char *cs_save_sfname;           ///< Saved b_sfname (kCtxKeepCwd/kCtxKeepDirs).
 } CtxSwitch;

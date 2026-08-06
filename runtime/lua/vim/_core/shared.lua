@@ -1480,6 +1480,7 @@ end
 --- @field go? table<string, any>
 --- @field hide? boolean
 --- @field keepalt? boolean
+--- @field keepcwd? boolean
 --- @field keepjumps? boolean
 --- @field keepmarks? boolean
 --- @field keeppatterns? boolean
@@ -1533,7 +1534,8 @@ local get_context_state = function(context)
   return res
 end
 
---- Executes function `f` with the given context specification.
+--- Executes function `f` with the given `context` spec: after execution, the original state
+--- indicated by the spec is restored.
 ---
 --- Notes:
 --- - Context `{ buf = buf }` has no guarantees about current window when
@@ -1567,6 +1569,7 @@ function vim._with(context, f)
   vim.validate('context.go', context.go, 'table', true)
   vim.validate('context.hide', context.hide, 'boolean', true)
   vim.validate('context.keepalt', context.keepalt, 'boolean', true)
+  vim.validate('context.keepcwd', context.keepcwd, 'boolean', true)
   vim.validate('context.keepjumps', context.keepjumps, 'boolean', true)
   vim.validate('context.keepmarks', context.keepmarks, 'boolean', true)
   vim.validate('context.keeppatterns', context.keeppatterns, 'boolean', true)

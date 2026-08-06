@@ -586,6 +586,7 @@ static int nlua_with(lua_State *L)
   int flags = 0;
   buf_T *buf = NULL;
   win_T *win = NULL;
+  bool keepcwd = false;
   int log_level = -1;
 
 #define APPLY_FLAG(key, flag) \
@@ -604,6 +605,8 @@ static int nlua_with(lua_State *L)
         buf = handle_get_buffer((int)luaL_checkinteger(L, -1));
       } else if (strequal("win", k)) {
         win = handle_get_window((int)luaL_checkinteger(L, -1));
+      } else if (strequal("keepcwd", k)) {
+        keepcwd = v;
       } else if (strequal("log_level", k)) {
         log_level = (int)luaL_checkinteger(L, -1);
       } else {
@@ -645,12 +648,15 @@ static int nlua_with(lua_State *L)
   TRY_WRAP(&err, {
     CtxSwitch cs = { 0 };
     bool switched = true;
+    CtxSwitchFlags dirs = keepcwd ? kCtxKeepDirs : kCtxKeepCwd;
 
     if (win) {
       tabpage_T *tabpage = win_find_tabpage(win);
-      switched = ctx_switch(&cs, win, tabpage, NULL, kCtxNoDisplay | kCtxKeepCwd | kCtxValidate);
+      switched = ctx_switch(&cs, win, tabpage, NULL, kCtxNoDisplay | kCtxValidate | dirs);
     } else if (buf) {
-      ctx_switch(&cs, NULL, NULL, buf, 0);
+      ctx_switch(&cs, NULL, NULL, buf, dirs);
+    } else if (keepcwd) {
+      ctx_switch(&cs, NULL, NULL, NULL, kCtxKeepDirs);
     }
 
     if (switched) {

@@ -414,6 +414,8 @@ void f_chdir(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       scope = kCdScopeTabpage;
     } else if (strcmp(s, "window") == 0) {
       scope = kCdScopeWindow;
+    } else if (strcmp(s, "buffer") == 0) {
+      scope = kCdScopeBuffer;
     } else {
       semsg(_(e_invargNval), "scope", s);
       return;
