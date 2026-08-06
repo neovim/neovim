@@ -65,6 +65,7 @@
 #include "nvim/event/multiqueue.h"
 #include "nvim/event/time.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/garray.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
@@ -72,6 +73,7 @@
 #include "nvim/highlight_group.h"
 #include "nvim/input.h"
 #include "nvim/keycodes.h"
+#include "nvim/log.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
 #include "nvim/map_defs.h"
@@ -1814,7 +1816,7 @@ static int term_sb_clear(void *data)
 static void term_clipboard_set(void **argv)
 {
   VTermSelectionMask mask = (VTermSelectionMask)(long)argv[0];
-  char *data = argv[1];
+  blob_T *blob = argv[1];
 
   char regname;
   switch (mask) {
@@ -1829,20 +1831,10 @@ static void term_clipboard_set(void **argv)
     break;
   }
 
-  // Split the payload into readfile()-style list (:h chansend()).
-  // TODO(justinmk): drop this, support Blob in clipboard provider: #41097
-  list_T *lines = tv_list_alloc(kListLenMayKnow);
-  char *start = data;
-  char *end;
-  while ((end = strchr(start, '\n')) != NULL) {
-    tv_list_append_string(lines, start, end - start);
-    start = end + 1;
-  }
-  tv_list_append_string(lines, start, -1);
-  xfree(data);
-
   list_T *args = tv_list_alloc(3);
-  tv_list_append_list(args, lines);
+
+  // Pass a Blob so binary data is preserved (:help NL-used-for-Nul).
+  tv_list_append_blob(args, blob);
 
   const char regtype = 'v';
   tv_list_append_string(args, &regtype, 1);
@@ -1861,8 +1853,14 @@ static int term_selection_set(VTermSelectionMask mask, VTermStringFragment frag,
   kv_concat_len(term->selection, frag.str, frag.len);
 
   if (frag.final) {
-    char *data = xmemdupz(term->selection.items, kv_size(term->selection));
-    multiqueue_put(main_loop.events, term_clipboard_set, (void *)mask, data);
+    if (kv_size(term->selection) > INT_MAX) {
+      // Blob length (ga_len) is int; drop payloads that would overflow.
+      ELOG("OSC 52: dropping selection larger than %d bytes", INT_MAX);
+      return 1;
+    }
+    blob_T *blob = tv_blob_alloc();
+    ga_concat_len(&blob->bv_ga, term->selection.items, kv_size(term->selection));
+    multiqueue_put(main_loop.events, term_clipboard_set, (void *)mask, blob);
   }
 
   return 1;

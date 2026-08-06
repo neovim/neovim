@@ -525,6 +525,23 @@ void tv_list_append_dict(list_T *const l, dict_T *const dict)
   }
 }
 
+/// Append a blob to a list
+///
+/// @param[out]  l  List to append to.
+/// @param[in,out]  blob  Blob to append. Reference count is increased.
+void tv_list_append_blob(list_T *const l, blob_T *const blob)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  tv_list_append_owned_tv(l, (typval_T) {
+    .v_type = VAR_BLOB,
+    .v_lock = VAR_UNLOCKED,
+    .vval.v_blob = blob,
+  });
+  if (blob != NULL) {
+    blob->bv_refcount++;
+  }
+}
+
 /// Make a copy of "str" and append it as an item to list "l"
 ///
 /// @param[out]  l  List to append to.
