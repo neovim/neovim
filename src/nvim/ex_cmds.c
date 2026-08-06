@@ -3367,7 +3367,7 @@ static bool sub_joining_lines(exarg_T *eap, String pat, const char *sub, const c
 
     if (save) {
       if (!keeppatterns) {
-        save_re_pat(RE_SUBST, pat.data, pat.size, magic_isset());
+        save_re_pat(RE_SUBST, pat.data, pat.size, p_magic);
       }
       // put pattern in history
       add_to_history(HIST_SEARCH, pat.data, pat.size, true, NUL);
@@ -3613,7 +3613,7 @@ static int do_sub(exarg_T *eap, proftime_T tm, const int cmdpreview_ns,
       which_pat = RE_LAST;                  // use last used regexp
       delimiter = (uint8_t)(*cmd++);                   // remember delimiter character
       pat.data = cmd;                       // remember start of search pat
-      cmd = skip_regexp_ex(cmd, delimiter, magic_isset(), &eap->arg, NULL, NULL);
+      cmd = skip_regexp_ex(cmd, delimiter, p_magic, &eap->arg, NULL, NULL);
       pat.size = (size_t)(cmd - pat.data);
       if (cmd[0] == delimiter) {            // end delimiter found
         *cmd++ = NUL;                       // replace it with a NUL
@@ -3700,8 +3700,10 @@ static int do_sub(exarg_T *eap, proftime_T tm, const int cmdpreview_ns,
     return 0;
   }
 
+  bool magic = ((eap->cmdidx == CMD_smagic)
+                ? true : ((eap->cmdidx == CMD_snomagic) ? false : p_magic));
   if (search_regcomp(pat.data, pat.size, NULL, RE_SUBST, which_pat,
-                     (cmdpreview_ns > 0 ? 0 : SEARCH_HIS), &regmatch) == FAIL) {
+                     (cmdpreview_ns > 0 ? 0 : SEARCH_HIS), magic, &regmatch) == FAIL) {
     if (subflags.do_error) {
       emsg(_(e_invcmd));
     }
@@ -3730,7 +3732,7 @@ static int do_sub(exarg_T *eap, proftime_T tm, const int cmdpreview_ns,
     xfree(sub);
     sub = p;
   } else {
-    char *p = regtilde(sub, magic_isset(), cmdpreview_ns > 0);
+    char *p = regtilde(sub, p_magic, cmdpreview_ns > 0);
     if (p != sub) {
       xfree(sub);
       sub = p;
@@ -4118,7 +4120,7 @@ static int do_sub(exarg_T *eap, proftime_T tm, const int cmdpreview_ns,
                                             sub_firstlnum - regmatch.startpos[0].lnum,
                                             sub, sub_firstline.data, 0,
                                             REGSUB_BACKSLASH
-                                            | (magic_isset() ? REGSUB_MAGIC : 0));
+                                            | (p_magic ? REGSUB_MAGIC : 0));
           textlock--;
 
           // If getting the substitute string caused an error, don't do
@@ -4171,7 +4173,7 @@ static int do_sub(exarg_T *eap, proftime_T tm, const int cmdpreview_ns,
                                               sub_firstlnum - regmatch.startpos[0].lnum,
                                               sub, new_end, (int)sublen,
                                               REGSUB_COPY | REGSUB_BACKSLASH
-                                              | (magic_isset() ? REGSUB_MAGIC : 0));
+                                              | (p_magic ? REGSUB_MAGIC : 0));
           if (n > 0) {
             new_start.size += n - 1;      // remove 1 for the NUL
           }
@@ -4656,7 +4658,7 @@ void ex_global(exarg_T *eap)
     delim = *cmd;               // get the delimiter
     cmd++;                      // skip delimiter if there is one
     pat = cmd;                  // remember start of pattern
-    cmd = skip_regexp_ex(cmd, delim, magic_isset(), &eap->arg, NULL, NULL);
+    cmd = skip_regexp_ex(cmd, delim, p_magic, &eap->arg, NULL, NULL);
     if (cmd[0] == delim) {                  // end delimiter found
       *cmd++ = NUL;                         // replace it with a NUL
     }
@@ -4665,7 +4667,7 @@ void ex_global(exarg_T *eap)
 
   char *used_pat;
   if (search_regcomp(pat, patlen, &used_pat, RE_BOTH, which_pat,
-                     SEARCH_HIS, &regmatch) == FAIL) {
+                     SEARCH_HIS, p_magic, &regmatch) == FAIL) {
     emsg(_(e_invcmd));
     return;
   }

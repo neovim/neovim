@@ -1017,7 +1017,7 @@ static void prepare_pats(pat_T *pats, bool has_re)
       pats->headlen = 0;
     } else {
       for (pats->headlen = 0; pats->head[pats->headlen] != NUL; pats->headlen++) {
-        if (vim_strchr(magic_isset() ? ".[~*\\$" : "\\$",
+        if (vim_strchr(p_magic ? ".[~*\\$" : "\\$",
                        (uint8_t)pats->head[pats->headlen]) != NULL) {
           break;
         }
@@ -1029,7 +1029,7 @@ static void prepare_pats(pat_T *pats, bool has_re)
   }
 
   if (has_re) {
-    pats->regmatch.regprog = vim_regcomp(pats->pat, magic_isset() ? RE_MAGIC : 0);
+    pats->regmatch.regprog = vim_regcomp(pats->pat, p_magic ? RE_MAGIC : 0);
   } else {
     pats->regmatch.regprog = NULL;
   }
@@ -2776,8 +2776,6 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
     curwin->w_set_curswant = true;
     postponed_split = 0;
 
-    const optmagic_T save_magic_overruled = magic_overruled;
-    magic_overruled = OPTION_MAGIC_OFF;  // always execute with 'nomagic'
     // Save no_hlsearch: jumping to a tag is not a real search
     const bool save_no_hlsearch = Search.no_hlsearch;
 
@@ -2818,7 +2816,7 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
                               : 0;
 
       if (do_search(NULL, pbuf[0], pbuf[0], pbuf + 1, pbuflen - 1, 1,
-                    search_options, NULL)) {
+                    search_options, false, NULL)) {
         retval = OK;
       } else {
         int found = 1;
@@ -2826,18 +2824,18 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
         // try again, ignore case now
         p_ic = true;
         if (!do_search(NULL, pbuf[0], pbuf[0], pbuf + 1, pbuflen - 1, 1,
-                       search_options, NULL)) {
+                       search_options, false, NULL)) {
           // Failed to find pattern, take a guess: "^func  ("
           found = 2;
           test_for_static(&tagp);
           char cc = *tagp.tagname_end;
           *tagp.tagname_end = NUL;
           pbuflen = (size_t)snprintf(pbuf, LSIZE, "^%s\\s\\*(", tagp.tagname);
-          if (!do_search(NULL, '/', '/', pbuf, pbuflen, 1, search_options, NULL)) {
+          if (!do_search(NULL, '/', '/', pbuf, pbuflen, 1, search_options, false, NULL)) {
             // Guess again: "^char * \<func  ("
             pbuflen = (size_t)snprintf(pbuf, LSIZE, "^\\[#a-zA-Z_]\\.\\*\\<%s\\s\\*(",
                                        tagp.tagname);
-            if (!do_search(NULL, '/', '/', pbuf, pbuflen, 1, search_options, NULL)) {
+            if (!do_search(NULL, '/', '/', pbuf, pbuflen, 1, search_options, false, NULL)) {
               found = 0;
             }
           }
@@ -2886,7 +2884,6 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
       sandbox--;
     }
 
-    magic_overruled = save_magic_overruled;
     // restore no_hlsearch when keeping the old search pattern
     if (search_options) {
       set_no_hlsearch(save_no_hlsearch);

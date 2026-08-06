@@ -41,13 +41,6 @@ typedef struct {
   colnr_T rmm_maxcol;  ///< when not zero: maximum column
 } regmmatch_T;
 
-/// Used for "magic_overruled".
-typedef enum {
-  OPTION_MAGIC_NOT_SET,  ///< p_magic not overruled
-  OPTION_MAGIC_ON,       ///< magic on inside regexp
-  OPTION_MAGIC_OFF,      ///< magic off inside regexp
-} optmagic_T;
-
 /// Magicness of a pattern, used by regexp code.
 /// The order and values matter:
 ///  magic <= MAGIC_OFF includes MAGIC_NONE
