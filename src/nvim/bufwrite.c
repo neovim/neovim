@@ -955,6 +955,26 @@ nobackup:
   return OK;
 }
 
+static void buf_write_progress_start(buf_T *buf, const char *fname)
+{
+  char quoted_fname[IOSIZE];
+
+  add_quoted_fname(quoted_fname, sizeof(quoted_fname), buf, fname);
+  xstrlcpy(IObuff, quoted_fname, IOSIZE);
+
+  // add_quoted_fname() adds a space at the end for display messages.
+  // Remove it when constructing the progress ID.
+  size_t len = strlen(quoted_fname);
+  if (len > 0 && quoted_fname[len - 1] == ' ') {
+    quoted_fname[len - 1] = NUL;
+  }
+
+  char msg_id[IOSIZE + 14] = "nvim.bufwrite ";
+  xstrlcat(msg_id, quoted_fname, sizeof(msg_id));
+
+  msg_progress(IObuff, msg_id, "running", 0, false, true);
+}
+
 /// buf_write() - write to file "fname" lines "start" through "end"
 ///
 /// We do our own buffering here because fwrite() is so slow.
@@ -1078,9 +1098,9 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   if (!filtering) {
     // show that we are busy
 #ifndef UNIX
-    filemess(buf, sfname, "");
+    buf_write_progress_start(buf, sfname);
 #else
-    filemess(buf, fname, "");
+    buf_write_progress_start(buf, fname);
 #endif
   }
   msg_scroll = false;               // always overwrite the file message now

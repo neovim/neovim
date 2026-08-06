@@ -3659,6 +3659,22 @@ describe('progress-message', function()
     }, 'Progress autocmd receives progress messages')
   end)
 
+  it(':read does not emit bufwrite progress', function()
+    local fname = 'Xread_progress_test'
+
+    fn.writefile({ 'hello' }, fname)
+    finally(function()
+      os.remove(fname)
+    end)
+
+    setup_autocmd('nvim.bufwrite')
+
+    command('read ' .. fname)
+
+    assert_progress_autocmd(nil,
+      ':read should not emit bufwrite progress events')
+  end)
+
   it('validation', function()
     -- throws error if title, status, percent, data is used in non progress message
     eq(
