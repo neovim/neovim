@@ -2952,46 +2952,38 @@ vim.fs.root({source}, {marker})                                *vim.fs.root()*
         if no directory was found.
 
 vim.fs.slug({path}, {opts})                                    *vim.fs.slug()*
-    Generates a bounded, filesystem-safe filename from an arbitrary identity
-    string.
-    • The input is normalized via |vim.fs.normalize()| so that equivalent
-      paths produce the same result (e.g., `~/foo` and `/home/username/foo`).
-    • `$HOME` is replaced with `~`. On Windows, UNC paths are replaced with
-      `=unc-`.
-    • An 8-character hex hash (|sha256()|) of the normalized input is appended
-      to prevent collisions.
-    • Unsafe characters (`/ \ : * ? " < > |`, whitespace, control characters)
-      are replaced with `-`, and trailing `-` and `.` are stripped.
+    Gets a filesystem-safe, mnemonic slug (readable prefix + short hash) of an
+    arbitrary filepath or other "identity string".
+    • The input is normalized so equivalent paths produce the same result.
+    • A hash of the normalized input is appended to prevent collisions.
+    • Unsafe chars are replaced with "-".
+    • `$HOME` is replaced with "~".
+    • UNC paths (Windows) are prefixed with "=unc-".
     • If `opts.maxlen` is exceeded, the result will be truncated to
       `{head}~~~{tail}-{hash8}`.
     • If the sanitized name is empty, the reserved label `=special` will be
       used.
 
     Examples: >lua
-        vim.fs.slug('/tmp/test/foo.md')
-           --> "tmp-test-foo.md-{hash}"
-
-        vim.fs.slug('C:/src/project/main.c')
-           --> "C--src-project-main.c-{hash}"
-
-        vim.fs.slug(('/a/very/long/path'):rep(10) .. '/file.txt', { maxlen = 60 })
+        vim.print(vim.fs.slug('/tmp/test/foo.md'))           --> "tmp-test-foo.md-{hash}"
+        vim.print(vim.fs.slug('C:/src/project/main.c'))      --> "C--src-project-main.c-{hash}"
+        vim.print(vim.fs.slug(vim.fn.expand('~/file.txt')))  --> "~-file.txt-{hash}"
+        vim.print(vim.fs.slug('---'))                        --> "=special-{hash}"
+        vim.print(vim.fs.slug(('/a/very/long/path'):rep(10) .. '/file.txt', { maxlen = 60 }))
            --> "a-very-long-~~~-path-a-very-long-path-file.txt-{hash}"
-
-        vim.fs.slug('home/username/file.txt')
-           --> "~-file.txt-{hash}"
 <
 
     Attributes: ~
         Since: 0.13.0
 
     Parameters: ~
-      • {path}  (`string`) a string that is not filesystem-safe.
-      • {opts}  (`table?`) Optional parameters:
-                • maxlen: (integer) Max byte length of the result. Default is
-                  180. Value must be at least 8.
+      • {path}  (`string`) Filepath (or other identity string).
+      • {opts}  (`table?`)
+                • maxlen: (integer, default: 180) Max length (bytes) of the
+                  result.
 
     Return: ~
-        (`string`) Filesystem-safe file name
+        (`string`) Filesystem-safe, mnemonic slug.
 
 
 ==============================================================================

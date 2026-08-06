@@ -829,10 +829,15 @@ static void config_put_bordertext(Dict(win_config) *config, WinConfig *fconfig,
   }
 }
 
-/// Gets window configuration in the form of a dict which can be passed as the `config` parameter of
-/// |nvim_open_win()|.
+/// Gets window config as a dict which can be passed to |nvim_open_win()| as the `config` parameter.
 ///
-/// For non-floating windows, `relative` is empty.
+/// For non-floating windows, `relative` is empty, thus you can check that field to detect if
+/// a window is a floatwin:
+/// ```lua
+/// vim.print(vim.api.nvim_win_get_config(0).relative == '' and 'non-float' or 'float')
+/// -- Or use win_gettype().
+/// vim.print(vim.fn.win_gettype())
+/// ```
 ///
 /// @param      win |window-ID|, or 0 for current window
 /// @param[out] err Error details, if any

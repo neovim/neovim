@@ -332,6 +332,22 @@ Example: Enable auto-completion and auto-formatting ("linting"): >lua
       end,
     })
 <
+                                                         *lsp-buf-working-dir*
+The LSP server decides the "workspace root" (|lsp-root_dir()|) of a buffer,
+but the Nvim |current-directory| does not follow it, so commands like |:make|,
+|:grep| and |:terminal| do not run from the workspace root. You can use |:bcd|
+to sync each buffer's directory to its LSP workspace root: >lua
+
+    vim.api.nvim_create_autocmd('LspAttach', {
+      group = vim.api.nvim_create_augroup('my.lsp.bufdir', {}),
+      callback = function(ev)
+        local client = assert(vim.lsp.get_client_by_id(ev.data.client_id))
+        if client.root_dir then
+          vim.cmd.bcd(client.root_dir)
+        end
+      end,
+    })
+<
 To see the capabilities for a given server, try this in a LSP-enabled buffer: >vim
 
     :lua =vim.lsp.get_clients()[1].server_capabilities
