@@ -10,6 +10,7 @@ class WorkerTransport {
     this._bytesHandlers = [];
     this._statusHandlers = [];
     this._readyHandlers = [];
+    this._exitHandlers = [];
 
     this.worker = new Worker(workerPath);
     this.worker.onmessage = (ev) => {
@@ -47,6 +48,10 @@ class WorkerTransport {
     } else if (msg.type === "ready") {
       console.log("[main] worker signaled ready, RPC channel should be live");
       this._readyHandlers.forEach((h) => h());
+    }
+    else if (msg.type === "exited") {
+      console.log("worker signaled nvim exited, code=", msg.code);
+      this._exitHandlers.forEach((h) => h(msg.code));
     }
   }
 
@@ -122,6 +127,9 @@ class WorkerTransport {
   }
   onReady(cb) {
     this._readyHandlers.push(cb);
+  }
+  onExit(cb) {
+    this._exitHandlers.push(cb);
   }
   persist() {
     this.worker.postMessage({ type: "persist" });

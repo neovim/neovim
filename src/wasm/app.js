@@ -368,13 +368,19 @@ function main() {
       }
     }
   });
-
+  transport.onExit((code) => {
+      setStatus(`Neovim exited (code ${code}). Refresh the page to start a new session.`);
+      gridEl.style.opacity = "0.5";
+    });
   nvim.on("redraw", (params) =>
     handleRedrawEvents(uiState, gridEl, modeEl, params),
   );
 
   gridEl.addEventListener("click", () => gridEl.focus());
   gridEl.addEventListener("keydown", (ev) => {
+    if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === "v") {
+      return;
+    }
     const keys = translateKey(ev);
     if (!keys) return;
     ev.preventDefault();
@@ -382,6 +388,15 @@ function main() {
       .request("nvim_input", [keys])
       .catch((e) => console.error("nvim_input failed", e));
   });
+  gridEl.addEventListener("paste", (ev) => {
+    ev.preventDefault();
+    const text = ev.clipboardData.getData("text/plain");
+    if (!text) return;
+    nvim
+      .request("nvim_paste", [text, true, -1])
+      .catch((e) => console.error("paste nvim_input failed", e));
+  });
+
 }
 
 if (!crossOriginIsolated) {
