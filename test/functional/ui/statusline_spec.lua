@@ -422,6 +422,24 @@ describe('global statusline', function()
     ]])
   end)
 
+  it('leaving laststatus=3 does not push a window past the last row', function()
+    command('split | wincmd j | vsplit | split')
+    command('wincmd t')
+    command('resize 1000')
+    command('set laststatus=2')
+    command('resize 1000')
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|*9
+      {3:[No Name]                                 0,0-1          All}|
+                                    │                             |
+      {2:[No Name]   0,0-1          All}│{1:~                            }|
+                                    │{1:~                            }|
+      {2:[No Name]   0,0-1          All [No Name]  0,0-1          All}|
+                                                                  |
+    ]])
+  end)
+
   it('win_move_statusline() can reduce cmdheight to 1', function()
     eq(1, api.nvim_get_option_value('cmdheight', {}))
     fn.win_move_statusline(0, -1)
