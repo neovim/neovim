@@ -982,6 +982,7 @@ is_na_patch() {
           '-I#\s*define.*ex_ni$' \
           '-I[_.>]sc_version = ' \
           '-I[_.>]uf_script_ctx_version = ' \
+          '-I = skip_type\(.+\);$' \
           "$patch" -- "${file}" |
           grep '^@@ .* @@')
         if test -n "$HUNKS"; then
