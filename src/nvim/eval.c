@@ -2785,7 +2785,7 @@ static int eval7(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
         *arg = skipwhite(*arg);
         ret = eval_func(arg, evalarg, s, len, rettv, flags, NULL);
       } else if (evaluate) {
-        // get value of variable
+        // get the value of a variable
         ret = eval_variable(s, len, rettv, NULL, true, false);
       } else {
         // skip the name
