@@ -150,7 +150,7 @@ static const char *highlight_init_both[] = {
   "PmenuMatchSel     gui=bold      cterm=bold",
   "PmenuSel          gui=reverse   cterm=reverse,underline blend=0",
   "RedrawDebugNormal gui=reverse   cterm=reverse",
-  "TabLineSel        gui=bold      cterm=NONE",
+  "TabLineSel        guifg=fg      guibg=bg                gui=bold cterm=nocombine",
   "TermCursor        gui=reverse   cterm=reverse",
   "Underlined        gui=underline cterm=underline",
   "lCursor           guifg=bg      guibg=fg",
