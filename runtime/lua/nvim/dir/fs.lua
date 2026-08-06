@@ -97,10 +97,18 @@ function M.open_parent(_, path)
 end
 
 ---@param buf integer
-function M.init(buf)
+---@param path string
+function M.init(buf, path)
   if api.nvim_get_option_value('filetype', { buf = buf }) ~= 'directory' then
     api.nvim_set_option_value('filetype', 'directory', { buf = buf })
   end
+  api.nvim_buf_call(buf, function()
+    pcall(api.nvim_cmd, {
+      cmd = 'bcd',
+      args = { path },
+      magic = { file = false, bar = false },
+    })
+  end)
 end
 
 return M
