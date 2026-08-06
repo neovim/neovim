@@ -960,11 +960,14 @@ is_na_patch() {
           '-I^EXTERN char e_.*enddef' \
           '-I^EXTERN char e_.*vim9' \
           '-I^EXTERN char e_cannot_declare_.*variable_str' \
+          '-I^EXTERN char e_dictionary_not_set' \
+          '-I^EXTERN char e_dictnull' \
           '-I\sINIT\(= .+"E[0-9]+: (Abstract|Class|Enum|Interface|Type) ' \
           '-I\sINIT\(= .+"E[0-9]+: .*:def ' \
           '-I\sINIT\(= .+"E[0-9]+: .*enddef"' \
           '-I\sINIT\(= .+"E[0-9]+: .*[vV]im9' \
           '-I\sINIT\(= .+"E1016: Cannot declare .* variable: ' \
+          '-I\s+INIT\(= .+"E1103: Dictionary not set' \
           "$patch" -- "${file}" |
           grep '^@@ .* @@')
         if test -n "$HUNKS"; then
