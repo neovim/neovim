@@ -146,10 +146,9 @@ typedef struct {
 ///
 /// @return          FAIL if failed, OK otherwise.
 int search_regcomp(char *pat, size_t patlen, char **used_pat, int pat_save, int pat_use,
-                   int options, regmmatch_T *regmatch)
+                   int options, bool magic, regmmatch_T *regmatch)
 {
   rc_did_emsg = false;
-  int magic = magic_isset();
 
   // If no pattern given, use a previously defined pattern.
   if (pat == NULL || *pat == NUL) {
@@ -409,7 +408,7 @@ bool pat_has_uppercase(char *pat)
   magic_T magic_val = MAGIC_ON;
 
   // get the magicness of the pattern
-  skip_regexp_ex(pat, NUL, magic_isset(), NULL, NULL, &magic_val);
+  skip_regexp_ex(pat, NUL, p_magic, NULL, NULL, &magic_val);
 
   while (*p != NUL) {
     const int l = utfc_ptr2len(p);
@@ -546,7 +545,7 @@ void last_pat_prog(regmmatch_T *regmatch)
     return;
   }
   emsg_off++;           // So it doesn't beep if bad expr
-  search_regcomp("", 0, NULL, 0, last_idx, SEARCH_KEEP, regmatch);
+  search_regcomp("", 0, NULL, 0, last_idx, SEARCH_KEEP, p_magic, regmatch);
   emsg_off--;
 }
 
@@ -574,7 +573,8 @@ void last_pat_prog(regmmatch_T *regmatch)
 ///                   the index of the first matching
 ///                   subpattern plus one; one if there was none.
 int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, char *pat,
-             size_t patlen, int count, int options, int pat_use, searchit_arg_T *extra_arg)
+             size_t patlen, int count, int options, int pat_use, bool magic,
+             searchit_arg_T *extra_arg)
 {
   int found;
   linenr_T lnum;                // no init to shut up Apollo cc
@@ -603,7 +603,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
   }
 
   if (search_regcomp(pat, patlen, NULL, RE_SEARCH, pat_use,
-                     (options & (SEARCH_HIS + SEARCH_KEEP)), &regmatch) == FAIL) {
+                     (options & (SEARCH_HIS + SEARCH_KEEP)), magic, &regmatch) == FAIL) {
     if ((options & SEARCH_MSG) && !rc_did_emsg) {
       semsg(_("E383: Invalid search string: %s"), mr_pattern);
     }
@@ -1056,7 +1056,7 @@ int parse_search_pattern_offset(char **pat, size_t *patlen, int search_delim, in
 
   // Find end of regular expression.
   // If there is a matching '/' or '?', toss it.
-  p = skip_regexp_ex(*pat, search_delim, magic_isset(), strcopy, NULL, NULL);
+  p = skip_regexp_ex(*pat, search_delim, p_magic, strcopy, NULL, NULL);
   if (*strcopy != ps) {
     size_t len = strlen(*strcopy);
     // made a copy of "pat" to change "\?" to "?"
@@ -1135,7 +1135,7 @@ int parse_search_pattern_offset(char **pat, size_t *patlen, int search_delim, in
 ///
 /// @return              0 for failure, 1 for found, 2 for found and line offset added.
 int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen, int count,
-              int options, searchit_arg_T *sia)
+              int options, bool magic, searchit_arg_T *sia)
 {
   char *searchstr;
   size_t searchstrlen;
@@ -1384,7 +1384,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
                      & (SEARCH_KEEP + SEARCH_PEEK + SEARCH_HIS + SEARCH_MSG
                         + SEARCH_START
                         + ((pat != NULL && *pat == ';') ? 0 : SEARCH_NOOF)))),
-                 RE_LAST, sia);
+                 RE_LAST, magic, sia);
 
     if (dircp != NULL) {
       *dircp = (char)search_delim;  // restore second '/' or '?' for normal_cmd()
@@ -2506,7 +2506,7 @@ int current_search(int count, bool forward)
     result = searchit(curwin, curbuf, &pos, &end_pos,
                       (dir ? FORWARD : BACKWARD),
                       spats[last_idx].pat, spats[last_idx].patlen, i ? count : 1,
-                      SEARCH_KEEP | flags, RE_SEARCH, NULL);
+                      SEARCH_KEEP | flags, RE_SEARCH, p_magic, NULL);
 
     p_ws = old_p_ws;
 
@@ -2594,7 +2594,7 @@ static int is_zero_width(char *pattern, size_t patternlen, bool move, pos_T *cur
   }
 
   if (search_regcomp(pattern, patternlen, NULL, RE_SEARCH, RE_SEARCH,
-                     SEARCH_KEEP, &regmatch) == FAIL) {
+                     SEARCH_KEEP, p_magic, &regmatch) == FAIL) {
     return -1;
   }
 
@@ -2609,7 +2609,7 @@ static int is_zero_width(char *pattern, size_t patternlen, bool move, pos_T *cur
     flag = SEARCH_START;
   }
   if (searchit(curwin, curbuf, &pos, NULL, direction, pattern, patternlen, 1,
-               SEARCH_KEEP + flag, RE_SEARCH, NULL) != FAIL) {
+               SEARCH_KEEP + flag, RE_SEARCH, p_magic, NULL) != FAIL) {
     int nmatched = 0;
     // Zero-width pattern should match somewhere, then we can check if
     // start and end are in the same position.
@@ -2779,7 +2779,7 @@ static void update_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, searchst
     }
     while (!got_int && searchit(curwin, curbuf, &lastpos, &endpos,
                                 FORWARD, NULL, 0, 1, SEARCH_KEEP, RE_LAST,
-                                NULL) != FAIL) {
+                                p_magic, NULL) != FAIL) {
       done_search = true;
       // Stop after passing the time limit.
       if (timeout > 0 && profile_passed_limit(start)) {
@@ -3000,7 +3000,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
     snprintf(pat, patsize, whole ? "\\<%.*s\\>" : "%.*s", (int)len, ptr);
     // ignore case according to p_ic, p_scs and pat
     regmatch.rm_ic = ignorecase(pat);
-    regmatch.regprog = vim_regcomp(pat, magic_isset() ? RE_MAGIC : 0);
+    regmatch.regprog = vim_regcomp(pat, p_magic ? RE_MAGIC : 0);
     xfree(pat);
     if (regmatch.regprog == NULL) {
       goto fpip_end;
@@ -3008,7 +3008,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
   }
   char *inc_opt = (*curbuf->b_p_inc == NUL) ? p_inc : curbuf->b_p_inc;
   if (*inc_opt != NUL) {
-    incl_regmatch.regprog = vim_regcomp(inc_opt, magic_isset() ? RE_MAGIC : 0);
+    incl_regmatch.regprog = vim_regcomp(inc_opt, p_magic ? RE_MAGIC : 0);
     if (incl_regmatch.regprog == NULL) {
       goto fpip_end;
     }
@@ -3016,7 +3016,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
   }
   if (type == FIND_DEFINE && (*curbuf->b_p_def != NUL || *p_def != NUL)) {
     def_regmatch.regprog = vim_regcomp(*curbuf->b_p_def == NUL ? p_def : curbuf->b_p_def,
-                                       magic_isset() ? RE_MAGIC : 0);
+                                       p_magic ? RE_MAGIC : 0);
     if (def_regmatch.regprog == NULL) {
       goto fpip_end;
     }

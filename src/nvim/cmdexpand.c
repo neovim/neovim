@@ -1724,7 +1724,7 @@ static const char *set_context_in_match_cmd(expand_T *xp, const char *arg)
     arg = skipwhite(skiptowhite(arg));
     if (*arg != NUL) {
       xp->xp_context = EXPAND_NOTHING;
-      arg = skip_regexp((char *)arg + 1, (uint8_t)(*arg), magic_isset());
+      arg = skip_regexp((char *)arg + 1, (uint8_t)(*arg), p_magic);
     }
   }
   return find_nextcmd(arg);
@@ -1760,7 +1760,7 @@ static const char *find_cmd_after_substitute_cmd(const char *arg)
   if (delim) {
     // Skip "from" part.
     arg++;
-    arg = skip_regexp((char *)arg, delim, magic_isset());
+    arg = skip_regexp((char *)arg, delim, p_magic);
 
     if (arg[0] != NUL && arg[0] == delim) {
       // Skip "to" part.
@@ -1993,7 +1993,8 @@ static void set_context_with_pattern(expand_T *xp)
   emsg_off++;
   int skiplen = 0;
   int dummy, patlen;
-  int retval = parse_pattern_and_range(&pre_incsearch_pos, &dummy, &skiplen, &patlen);
+  bool magic = p_magic;
+  int retval = parse_pattern_and_range(&pre_incsearch_pos, &dummy, &skiplen, &patlen, &magic);
   emsg_off--;
 
   // Check if cursor is within search pattern
@@ -3184,7 +3185,7 @@ static int ExpandFromContext(expand_T *xp, char *pat, char ***matches, int *numM
   }
 
   if (!fuzzy) {
-    regmatch.regprog = vim_regcomp(pat, magic_isset() ? RE_MAGIC : 0);
+    regmatch.regprog = vim_regcomp(pat, p_magic ? RE_MAGIC : 0);
     if (regmatch.regprog == NULL) {
       xfree(tofree);
       return FAIL;
@@ -4357,7 +4358,7 @@ static int expand_pattern_in_buf(char *pat, Direction dir, char ***matches, int 
     msg_silent++;
     int found_new_match = searchit(NULL, curbuf, &cur_match_pos,
                                    &end_match_pos, dir, pat, (size_t)pat_len, 1L,
-                                   search_flags, RE_LAST, NULL);
+                                   search_flags, RE_LAST, p_magic, NULL);
     msg_silent--;
     emsg_off--;
 
