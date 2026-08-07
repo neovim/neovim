@@ -436,6 +436,12 @@ for _, cmd in ipairs { 'bcd', 'bchdir' } do
       command('edit ' .. tmpfile .. '2')
       eq(startdir, cwd())
       eq(0, blwd())
+
+      -- But re-editing the same buffer keeps it, like any other buffer-local state. #41213
+      command(('%s %s'):format(cmd, directories.buffer))
+      command('let b:kept = 1')
+      command('edit!')
+      eq({ 1, bufdir, 1 }, { blwd(), cwd(), n.eval('get(b:, "kept", 0)') })
     end)
 
     it('is not cleared or overridden by :lcd/:tcd/:cd', function()
