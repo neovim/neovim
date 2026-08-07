@@ -163,6 +163,10 @@ local function reload(buf, provider)
     return
   end
   local restore_view = api.nvim_get_current_buf() == buf and vim.fn.winsaveview() or nil
+  -- Re-run init to reapply the `:bcd` that a re-read freed.
+  if provider.init then
+    provider.init(buf, api.nvim_buf_get_name(buf))
+  end
   load(buf, api.nvim_buf_get_name(buf), provider, restore_view)
 end
 
@@ -322,7 +326,7 @@ end
 
 --- Reload the existing listing with its current buffer name and provider.
 --- Replace the lines and restore the view only after a successful list; preserve the existing
---- listing on failure. Do not rerun provider initialization or reinstall listing handlers.
+--- listing on failure. Rerun provider initialization; do not reinstall listing handlers.
 ---@param buf? integer
 function M._reload(buf)
   buf = vim._resolve_bufnr(buf)

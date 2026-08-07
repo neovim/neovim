@@ -659,6 +659,26 @@ describe('nvim.dir', function()
     line_of('gamma.txt')
   end)
 
+  it('keeps the listing buffer-local cwd when re-reading a directory', function()
+    make_fixture()
+    n.clear({ args = { '--clean' } })
+
+    edit(root)
+    assert_directory(root)
+    eq(vim.uv.fs_realpath(root), vim.uv.fs_realpath(fn.getcwd()))
+    local buf = api.nvim_get_current_buf()
+
+    edit('.')
+    assert_directory(root)
+    eq(buf, api.nvim_get_current_buf())
+    eq(vim.uv.fs_realpath(root), vim.uv.fs_realpath(fn.getcwd()))
+
+    edit('.')
+    assert_directory(root)
+    eq(buf, api.nvim_get_current_buf())
+    eq(vim.uv.fs_realpath(root), vim.uv.fs_realpath(fn.getcwd()))
+  end)
+
   it('reports an error and keeps the buffer when reloading a removed directory', function()
     make_fixture()
     n.clear({ args = { '--clean' } })
