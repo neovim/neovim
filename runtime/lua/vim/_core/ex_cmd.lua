@@ -248,17 +248,20 @@ function M.ex_terminal(eap, shell_argv)
     or smods.horizontal
     or smods.vertical
 
+  -- Use the invocation-time CWD, before creating a new buffer.
+  local opts = { term = true, cwd = vim.fn.getcwd() }
+
   if has_mods then
     vim.cmd.new { mods = smods }
   else
     vim.cmd.enew { bang = eap.bang }
   end
 
-  if shell_argv then -- No `cmd`, run 'shell'.
-    vim.fn.jobstart(shell_argv, { term = true })
-  else -- Run [cmd] in 'shell'.
-    vim.fn.jobstart(eap.args, { term = true })
-  end
+  vim.fn.jobstart(
+    shell_argv and shell_argv -- No `cmd`, run 'shell'.
+      or eap.args, -- Run [cmd] in 'shell'.
+    opts
+  )
 end
 
 function M.ex_uptime()
