@@ -2,7 +2,7 @@
 " This file is normally sourced from menu.vim.
 "
 " Maintainer:		The Vim Project <https://github.com/vim/vim>
-" Last Change:		2025 Mar 09
+" Last Change:		2026 Aug 06
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Define the SetSyn function, used for the Syntax menu entries.
@@ -369,20 +369,21 @@ an 50.50.780 &Syntax.HIJK.JJdescription :cal SetSyn("jjdescription")<CR>
 an 50.50.790 &Syntax.HIJK.Jovial :cal SetSyn("jovial")<CR>
 an 50.50.800 &Syntax.HIJK.JQ :cal SetSyn("jq")<CR>
 an 50.50.810 &Syntax.HIJK.JSON.JSON :cal SetSyn("json")<CR>
-an 50.50.820 &Syntax.HIJK.JSON.JSON5 :cal SetSyn("json5")<CR>
-an 50.50.830 &Syntax.HIJK.JSON.JSONC :cal SetSyn("jsonc")<CR>
-an 50.50.840 &Syntax.HIJK.Julia :cal SetSyn("julia")<CR>
-an 50.50.850 &Syntax.HIJK.Just :cal SetSyn("just")<CR>
-an 50.50.870 &Syntax.HIJK.Karel :cal SetSyn("karel")<CR>
-an 50.50.880 &Syntax.HIJK.Kconfig :cal SetSyn("kconfig")<CR>
-an 50.50.890 &Syntax.HIJK.KDE\ script :cal SetSyn("kscript")<CR>
-an 50.50.900 &Syntax.HIJK.Kdl :cal SetSyn("kdl")<CR>
-an 50.50.910 &Syntax.HIJK.Kimwitu++ :cal SetSyn("kwt")<CR>
-an 50.50.920 &Syntax.HIJK.Kitty :cal SetSyn("kitty")<CR>
-an 50.50.930 &Syntax.HIJK.Kivy :cal SetSyn("kivy")<CR>
-an 50.50.940 &Syntax.HIJK.KixTart :cal SetSyn("kix")<CR>
-an 50.50.950 &Syntax.HIJK.Kotlin :cal SetSyn("kotlin")<CR>
-an 50.50.960 &Syntax.HIJK.Krl :cal SetSyn("krl")<CR>
+an 50.50.820 &Syntax.HIJK.JSON.JSON-LD :cal SetSyn("jsonld")<CR>
+an 50.50.830 &Syntax.HIJK.JSON.JSON5 :cal SetSyn("json5")<CR>
+an 50.50.840 &Syntax.HIJK.JSON.JSONC :cal SetSyn("jsonc")<CR>
+an 50.50.850 &Syntax.HIJK.Julia :cal SetSyn("julia")<CR>
+an 50.50.860 &Syntax.HIJK.Just :cal SetSyn("just")<CR>
+an 50.50.880 &Syntax.HIJK.Karel :cal SetSyn("karel")<CR>
+an 50.50.890 &Syntax.HIJK.Kconfig :cal SetSyn("kconfig")<CR>
+an 50.50.900 &Syntax.HIJK.KDE\ script :cal SetSyn("kscript")<CR>
+an 50.50.910 &Syntax.HIJK.Kdl :cal SetSyn("kdl")<CR>
+an 50.50.920 &Syntax.HIJK.Kimwitu++ :cal SetSyn("kwt")<CR>
+an 50.50.930 &Syntax.HIJK.Kitty :cal SetSyn("kitty")<CR>
+an 50.50.940 &Syntax.HIJK.Kivy :cal SetSyn("kivy")<CR>
+an 50.50.950 &Syntax.HIJK.KixTart :cal SetSyn("kix")<CR>
+an 50.50.960 &Syntax.HIJK.Kotlin :cal SetSyn("kotlin")<CR>
+an 50.50.970 &Syntax.HIJK.Krl :cal SetSyn("krl")<CR>
 an 50.60.100 &Syntax.L.Lace :cal SetSyn("lace")<CR>
 an 50.60.110 &Syntax.L.LambdaProlog :cal SetSyn("lprolog")<CR>
 an 50.60.120 &Syntax.L.Latte :cal SetSyn("latte")<CR>

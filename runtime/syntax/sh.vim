@@ -3,7 +3,7 @@
 " Maintainer:		This runtime file is looking for a new maintainer.
 " Previous Maintainers:	Charles E. Campbell
 " 		Lennart Schultz <Lennart.Schultz@ecmwf.int>
-" Last Change:		2026 Jul 25 by Vim Project
+" Last Change:		2026 Aug 06 by Vim Project
 " Version:		208
 " Former URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
@@ -258,7 +258,7 @@ syn cluster shDerefList	contains=shDeref,shDerefSimple,shDerefVar,shDerefSpecial
 syn cluster shDerefVarList	contains=shDerefOffset,shDerefOp,shDerefVarArray,shDerefOpError
 syn cluster shEchoList	contains=shArithmetic,shBracketExpr,shCommandSub,shCommandSubBQ,shDerefVarArray,shSubshare,shValsub,shDeref,shDerefSimple,shEscape,shExSingleQuote,shExDoubleQuote,shSingleQuote,shDoubleQuote,shCtrlSeq,shEchoQuote
 syn cluster shExprList1	contains=shBracketExpr,shNumber,shOperator,shExSingleQuote,shExDoubleQuote,shSingleQuote,shDoubleQuote,shExpr,shDblBrace,shDeref,shDerefSimple,shCtrlSeq
-syn cluster shExprList2	contains=@shExprList1,@shCaseList,shTest,shFunctionNameError
+syn cluster shExprList2	contains=@shExprList1,@shCaseList,shTest,shFunctionNameAssignError
 syn cluster shFunctionCmds	contains=shFor,shCaseEsac,shIf,shRepeat,shDblBrace,shDblParen
 if exists("b:is_ksh88") || exists("b:is_mksh")
     " Offer "shFunctionCmds" as is.
@@ -284,7 +284,7 @@ if exists("b:is_kornshell") || exists("b:is_bash")
 endif
 syn cluster shPPSLeftList	contains=shAlias,shArithmetic,shBracketExpr,shCmdParenRegion,shCommandSub,shSubshare,shValsub,shCtrlSeq,shDeref,shDerefSimple,shDoubleQuote,shEcho,shEscape,shExDoubleQuote,shExpr,shExSingleQuote,shHereDoc,shNumber,shOperator,shOption,shPosnParm,shHereString,shRedir,shSingleQuote,shSpecial,shStatement,shSubSh,shTest,shVariable
 syn cluster shPPSRightList	contains=shDeref,shDerefSimple,shEscape,shPosnParm
-syn cluster shSubShList	contains=shBracketExpr,@shCommandSubList,shCommandSubBQ,shSubshare,shValsub,shCaseEsac,shColon,shCommandSub,shComment,shDo,shEcho,shExpr,shFor,shIf,shHereString,shRedir,shSetList,shSource,shStatement,shVariable,shCtrlSeq,shOperator,shFunctionNameError
+syn cluster shSubShList	contains=shBracketExpr,@shCommandSubList,shCommandSubBQ,shSubshare,shValsub,shCaseEsac,shColon,shCommandSub,shComment,shDo,shEcho,shExpr,shFor,shIf,shHereString,shRedir,shSetList,shSource,shStatement,shVariable,shCtrlSeq,shOperator,shFunctionNameAssignError
 syn cluster shTestList	contains=shArithmetic,shBracketExpr,shCommandSub,shCommandSubBQ,shSubshare,shValsub,shCtrlSeq,shDeref,shDerefSimple,shDoubleQuote,shSpecialDQ,shExDoubleQuote,shExpr,shExSingleQuote,shNumber,shOperator,shSingleQuote,shTest,shTestOpr
 syn cluster shNoZSList	contains=shSpecialNoZS
 syn cluster shForList	contains=shTestOpr,shNumber,shDerefSimple,shDeref,shCommandSub,shCommandSubBQ,shSubshare,shValsub,shArithmetic
@@ -632,12 +632,13 @@ endif
 
 " KornShell namespace: {{{1
 if exists("b:is_kornshell") && !exists("b:is_ksh88") && !exists("b:is_mksh")
-    syn keyword shFunctionKey namespace	skipwhite skipnl nextgroup=shNamespaceOne
+    syn keyword shFunctionKey namespace	skipwhite nextgroup=shNamespaceOne
 endif
 
 " Functions: {{{1
 if !exists("b:is_posix")
-    syn keyword shFunctionKey function	skipwhite skipnl nextgroup=shDoError,shIfError,shFunctionTwo,shFunctionFour,shFunctionCmdTwo
+    syn match shFunctionKeyDelim "\s\+"	contained transparent nextgroup=shDoError,shIfError,shFunctionNameCommentError,shFunctionTwo,shFunctionFour,shFunctionCmdTwo
+    syn match shFunctionKey "\<function\s\@="	nextgroup=shFunctionKeyDelim
 endif
 
 ShFoldFunctions syn region shFunctionExpr	matchgroup=shFunctionExprRegion start="{"	end="}"	contains=@shFunctionList	 contained skipwhite skipnl nextgroup=shQuickComment
@@ -650,14 +651,21 @@ if exists("b:is_bash")
     syn match shFunctionCmdOne	"\%#=1^\s*\zs\%(\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\)\@>\s*()\ze\_s*\%(\%(for\|case\|select\|if\|while\|until\)\>\|\[\[\s\|((\)"	skipwhite skipnl nextgroup=@shFunctionCmds contains=shFunctionParens
     syn match shFunctionCmdTwo	"\%#=1\%(\%(\<\k\+\>\|[^()<>|&$;\t ]\+\)\+\)\@>\ze\s*\%(()\ze\)\=\_s*\%(\<\%(for\|case\|select\|if\|while\|until\)\>\|\[\[\s\|((\)"	contained skipwhite skipnl nextgroup=@shFunctionCmds contains=shFunctionParens
     syn match shFunctionOne	"\%#=1^\s*\zs\%(\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\)\@>\s*()\ze\_s*{"	skipwhite skipnl nextgroup=shFunctionExpr contains=shFunctionParens
-    syn match shFunctionTwo	"\%#=1\%(\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\)\@>\ze\s*\%(()\ze\)\=\_s*{"	contained skipwhite skipnl nextgroup=shFunctionExpr contains=shFunctionParens
     syn match shFunctionThree	"\%#=1^\s*\zs\%(\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\)\@>\s*()\ze\_s*((\@!"	skipwhite skipnl nextgroup=shFunctionSubSh contains=shFunctionParens
-    syn match shFunctionFour	"\%#=1\%(\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\)\@>\ze\s*\%(\%(()\ze\)\=\)\@>\_s*((\@!"	contained skipwhite skipnl nextgroup=shFunctionSubSh contains=shFunctionParens
+    " Proof against future changes by inducing priority-driven "backtracking"
+    " between shFunctionFour (goes before) and shFunctionTwo (goes after) so
+    " that e.g. "function f () {}" is still claimed by shFunctionTwo (observe
+    " "f[[:blank:]]()").
+    syn match shFunctionFour	"\%#=1\%(\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\)\@>\ze\%(\%(\s*()\ze\)\=\)\@>\_s*((\@!"	contained skipwhite skipnl nextgroup=shFunctionSubSh contains=shFunctionParens
+    syn match shFunctionTwo	"\%#=1\%(\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\)\@>\ze\%(\%(\s*()\ze\)\=\)\@>\_s*{"	contained skipwhite skipnl nextgroup=shFunctionExpr contains=shFunctionParens
     " Claim empty array assignments.
     syn match shArrayEmptyDecl	"\%#=1\ze\%(\<\h\w*=\)\@>()"	transparent nextgroup=shVariable
+    " Claim commented out function declaration headers.
+    syn match shFunctionComment	"^\s*\zs\ze#"	transparent nextgroup=shComment
 
     if !exists("g:sh_no_error")
-        syn match shFunctionNameError	"\%#=1\%(\%(\<\h\w*\)\@>=\)\%(\%(\w\+\)\@>=\=\)\+()" skipwhite skipnl nextgroup=shExpr,shSubSh
+        syn match shFunctionNameAssignError	"\%#=1\%(\%(\<\h\w*\)\@>=\)\%(\%(\w\+\)\@>=\=\)\+()"	skipwhite skipnl nextgroup=shExpr,shSubSh
+        syn match shFunctionNameCommentError	"#"	contained
     endif
 elseif exists("b:is_ksh88")
     " AT&T ksh88
@@ -954,7 +962,8 @@ if !exists("skip_sh_syntax_inits")
         hi def link shParenError		Error
         hi def link shTestError		Error
         if exists("b:is_bash")
-            hi def link shFunctionNameError		Error
+            hi def link shFunctionNameAssignError	Error
+            hi def link shFunctionNameCommentError	Error
         endif
         if exists("b:is_kornshell") || exists("b:is_posix")
             hi def link shDTestError		Error

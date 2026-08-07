@@ -1,6 +1,6 @@
 " Script to define the syntax menu in synmenu.vim
 " Maintainer:		The Vim Project <https://github.com/vim/vim>
-" Last Change:		2026 Aug 03
+" Last Change:		2026 Aug 06
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " This is used by "make menu" in the src directory.
@@ -382,6 +382,7 @@ SynMenu HIJK.JJdescription:jjdescription
 SynMenu HIJK.Jovial:jovial
 SynMenu HIJK.JQ:jq
 SynMenu HIJK.JSON.JSON:json
+SynMenu HIJK.JSON.JSON-LD:jsonld
 SynMenu HIJK.JSON.JSON5:json5
 SynMenu HIJK.JSON.JSONC:jsonc
 SynMenu HIJK.Julia:julia
