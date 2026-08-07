@@ -410,12 +410,13 @@ void f_bufloaded(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 void f_bufname(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   const buf_T *buf;
+  typval_T *const tv = &argvars[0];
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
-  if (argvars[0].v_type == VAR_UNKNOWN) {
+  if (tv->v_type == VAR_UNKNOWN) {
     buf = curbuf;
   } else {
-    buf = tv_get_buf_from_arg(&argvars[0]);
+    buf = tv_get_buf_from_arg(tv);
   }
   if (buf != NULL && buf->b_fname != NULL) {
     rettv->vval.v_string = xstrdup(buf->b_fname);
