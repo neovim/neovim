@@ -72,42 +72,60 @@ describe('autocmd DirChanged and DirChangedPre', function()
     eq(1, eval('g:cdprecount'))
     eq(1, eval('g:cdcount'))
 
-    command('bcd ' .. dirs[2])
-    eq({ directory = dirs[2], scope = 'buffer', changed_window = false }, eval('g:evpre'))
-    eq({ cwd = dirs[2], scope = 'buffer', changed_window = false }, eval('g:ev'))
-    eq('buffer', eval('g:amatchpre'))
-    eq('buffer', eval('g:amatch'))
+    command('tcd ' .. dirs[2])
+    eq({ directory = dirs[2], scope = 'tabpage', changed_window = false }, eval('g:evpre'))
+    eq({ cwd = dirs[2], scope = 'tabpage', changed_window = false }, eval('g:ev'))
+    eq('tabpage', eval('g:amatchpre'))
+    eq('tabpage', eval('g:amatch'))
     eq(2, eval('g:cdprecount'))
     eq(2, eval('g:cdcount'))
 
-    command('tcd ' .. dirs[3])
-    eq({ directory = dirs[3], scope = 'tabpage', changed_window = false }, eval('g:evpre'))
-    eq({ cwd = dirs[3], scope = 'tabpage', changed_window = false }, eval('g:ev'))
-    eq('tabpage', eval('g:amatchpre'))
-    eq('tabpage', eval('g:amatch'))
+    command('cd ' .. dirs[3])
+    eq({ directory = dirs[3], scope = 'global', changed_window = false }, eval('g:evpre'))
+    eq({ cwd = dirs[3], scope = 'global', changed_window = false }, eval('g:ev'))
+    eq('global', eval('g:amatchpre'))
+    eq('global', eval('g:amatch'))
     eq(3, eval('g:cdprecount'))
     eq(3, eval('g:cdcount'))
 
-    command('cd ' .. dirs[4])
-    eq({ directory = dirs[4], scope = 'global', changed_window = false }, eval('g:evpre'))
-    eq({ cwd = dirs[4], scope = 'global', changed_window = false }, eval('g:ev'))
-    eq('global', eval('g:amatchpre'))
-    eq('global', eval('g:amatch'))
+    command('bcd ' .. dirs[4])
+    eq({ directory = dirs[4], scope = 'buffer', changed_window = false }, eval('g:evpre'))
+    eq({ cwd = dirs[4], scope = 'buffer', changed_window = false }, eval('g:ev'))
+    eq('buffer', eval('g:amatchpre'))
+    eq('buffer', eval('g:amatch'))
     eq(4, eval('g:cdprecount'))
     eq(4, eval('g:cdcount'))
+
+    -- Buffer-local dir is NOT cleared by a wider scope.
+    assert_no_event('lcd ' .. dirs[1])
+    assert_no_event('tcd ' .. dirs[2])
+    assert_no_event('cd ' .. dirs[3])
+
+    -- ":bcd!" reports the scope that becomes effective, not the one that was unset.
+    -- The overridden ":cd" above still reset the window/tab scopes, so that is the global dir.
+    command('bcd!')
+    eq({ cwd = dirs[3], scope = 'global', changed_window = false }, eval('g:ev'))
+    eq('global', eval('g:amatch'))
+
+    -- Same for ":lcd!", landing on the tab-local dir.
+    command('tcd ' .. dirs[2])
+    command('lcd ' .. dirs[1])
+    command('lcd!')
+    eq({ cwd = dirs[2], scope = 'tabpage', changed_window = false }, eval('g:ev'))
+    eq('tabpage', eval('g:amatch'))
   end)
 
   it('DirChanged set getcwd() during event #6260', function()
     command('lcd ' .. dirs[1])
     eq(dirs[1], eval('g:getcwd'))
 
-    command('bcd ' .. dirs[2])
+    command('tcd ' .. dirs[2])
     eq(dirs[2], eval('g:getcwd'))
 
-    command('tcd ' .. dirs[3])
+    command('cd ' .. dirs[3])
     eq(dirs[3], eval('g:getcwd'))
 
-    command('cd ' .. dirs[4])
+    command('bcd ' .. dirs[4])
     eq(dirs[4], eval('g:getcwd'))
   end)
 
@@ -192,7 +210,8 @@ describe('autocmd DirChanged and DirChangedPre', function()
 
   it('not triggered if directory has not changed', function()
     local scopes = { lcd = 'window', bcd = 'buffer', tcd = 'tabpage', cd = 'global' }
-    for i, cmd in ipairs({ 'lcd', 'bcd', 'tcd', 'cd' }) do
+    -- ":bcd" last: a buffer-local dir overrides the other scopes.
+    for i, cmd in ipairs({ 'lcd', 'tcd', 'cd', 'bcd' }) do
       local scope = scopes[cmd]
       command(('%s %s'):format(cmd, dirs[i]))
       eq({ directory = dirs[i], scope = scope, changed_window = false }, eval('g:evpre'))
@@ -207,6 +226,7 @@ describe('autocmd DirChanged and DirChangedPre', function()
       end
     end
 
+    command('bcd!') -- 5th event: the global dir becomes effective again.
     command('set autochdir')
 
     command(('split %s/foo'):format(dirs[2]))
@@ -214,8 +234,8 @@ describe('autocmd DirChanged and DirChangedPre', function()
     eq({ cwd = dirs[2], scope = 'window', changed_window = false }, eval('g:ev'))
     eq('auto', eval('g:amatchpre'))
     eq('auto', eval('g:amatch'))
-    eq(5, eval('g:cdprecount'))
-    eq(5, eval('g:cdcount'))
+    eq(6, eval('g:cdprecount'))
+    eq(6, eval('g:cdcount'))
     assert_no_event(('split %s/bar'):format(dirs[2]))
     if is_os('win') then
       assert_no_event(('split %s/baz'):format(win_dirs[2]))

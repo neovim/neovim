@@ -1254,28 +1254,22 @@ M.funcs = {
     args = { 1, 2 },
     base = 1,
     desc = [=[
-      Changes the current working directory to {dir}.  The scope of
-      the change is determined as follows:
-      If {scope} is not present, the current working directory is
-      changed to the scope of the current directory:
-          - If the window local directory (|:lcd|) is set, it
-            changes the current working directory for that scope.
-          - If the buffer local directory (|:bcd|) is set, it
-            changes the current working directory for that scope.
-          - Otherwise, if the tabpage local directory (|:tcd|) is
-            set, it changes the current directory for that scope.
-          - Otherwise, changes the global directory for that scope.
+      Sets the |current-directory| of the given {scope}:
+          - "buffer"    Changes the buffer-local directory.  |:bcd|
+          - "window"    Changes the window-local directory.  |:lcd|
+          - "tabpage"   Changes the tabpage-local directory.  |:tcd|
+          - "global"    Changes the global directory.  |:cd|
 
-      If {scope} is present, changes the current working directory
-      for the specified scope:
-          "buffer"	Changes the buffer local directory.  |:bcd|
-          "window"	Changes the window local directory.  |:lcd|
-          "tabpage"	Changes the tabpage local directory.  |:tcd|
-          "global"	Changes the global directory.  |:cd|
+      If {scope} is not given it is decided as follows:
+          - If buffer-local directory (|:bcd|) is set, scope is
+            "buffer".
+          - If the window-local directory (|:lcd|) is set, scope is
+            "window".
+          - If the tabpage-local directory (|:tcd|) is set, scope is
+            "tabpage".
+          - Otherwise, scope is "global".
 
-      {dir} must be a String.
-      If successful, returns the previous working directory.  Pass
-      this to another chdir() to restore the directory.
+      If successful, returns the previous working directory.
       On failure, returns an empty string.
 
       Example: >vim
@@ -1291,9 +1285,6 @@ M.funcs = {
     params = { { 'dir', 'string' }, { 'scope', 'string' } },
     returns = 'string',
     signature = 'chdir({dir} [, {scope}])',
-    see_lua = {
-      '|nvim_set_current_dir()| for the global directory; tab-local, window-local, and return semantics differ',
-    },
   },
   cindent = {
     args = 1,
@@ -4098,48 +4089,43 @@ M.funcs = {
     args = { 0, 3 },
     base = 1,
     desc = [=[
-      With no arguments, returns the name of the effective
-      |current-directory|. With {winnr} or {tabnr} or {bufnr} the
-      working directory of that scope is returned, and 'autochdir'
-      is ignored.
+      Without arguments, returns the effective |current-directory|.
+      With {winnr} (|window-number| or |window-ID|), {tabnr} or
+      {bufnr} the working directory of that scope is returned,
+      ignoring 'autochdir'.
+
+      - If {winnr} is -1: gets the tabpage directory.
+      - If {winnr} and {tabnr} are both -1: gets the global
+        directory.
+        - Note: Vim returns an empty string when {tabnr} is -1.
+      - If {bufnr} is given: gets the buffer-local directory.
+        ({winnr} and {tabnr} must be -1.)
+      - An argument may be -1 only if preceding args are -1. *E5001*
 
       Tabs, windows and buffers are identified by their respective
       numbers, 0 means current tab/window/buffer. Missing {tabnr}
       implies 0 (missing {bufnr} does not; see below). Thus the
       following are equivalent: >vim
-      	getcwd(0)
-      	getcwd(0, 0)
-      <If {winnr} is -1 it is ignored, only the tab is resolved.
-      {winnr} is a |window-number| or |window-ID|.
+          getcwd(0)
+          getcwd(0, 0)
+      <
+      Each form reports its own scope or "wider", so e.g. {winnr}
+      never reports a buffer-local directory.  The {bufnr} form
+      falls back to the global directory, because a buffer belongs
+      to no particular window or tabpage.
 
-      If both {winnr} and {tabnr} are -1 and {bufnr} is missing the
-      global working directory is returned.
-
-      Note: When {tabnr} is -1 Vim returns an empty string to
-      signal that it is invalid, whereas Nvim returns either the
-      global working directory if {winnr} is -1 or the working
-      directory of the window indicated by {winnr}.
-
-      If {bufnr} is provided, {winnr} and {tabnr} must be -1, then
-      the buffer-local working directory is returned.
-
-      An argument may be -1 only if all preceding arguments are -1.
-
-      Examples of buffer usage: >vim
+      Examples: >vim
             getcwd(-1, -1, 0)  " Get current buffer's directory
-            getcwd(-1, -1, 3)  " Get directory of buffer #3
+            getcwd(-1, -1, 3)  " Get directory of buffer 3
             getcwd(-1, -1, -1) " Get global directory
             getcwd(-1, -1)     " Get global directory
-      <Throw error if the arguments are invalid.
+      <
     ]=],
     name = 'getcwd',
     params = { { 'winnr', 'integer' }, { 'tabnr', 'integer' }, { 'bufnr', 'integer' } },
     returns = 'string',
     signature = 'getcwd([{winnr} [, {tabnr} [, {bufnr}]]])',
-    tags = { 'E5000', 'E5001', 'E5002', 'E5006', 'E5007' },
-    see_lua = {
-      '|uv.cwd()| for the global working directory; tab-local and window-local scopes differ',
-    },
+    tags = { 'E5000', 'E5002', 'E5006', 'E5007' },
   },
   getenv = {
     args = 1,

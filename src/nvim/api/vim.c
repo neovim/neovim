@@ -690,7 +690,7 @@ void nvim_set_current_dir(String dir, Error *err)
   });
 
   TRY_WRAP(err, {
-    changedir_func(dir.data, kCdScopeGlobal);
+    do_chdir(dir.data, kCdScopeGlobal);
   });
 }
 

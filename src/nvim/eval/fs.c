@@ -420,15 +420,15 @@ void f_chdir(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       semsg(_(e_invargNval), "scope", s);
       return;
     }
-  } else if (curwin->w_localdir != NULL) {
-    scope = kCdScopeWindow;
   } else if (curbuf->b_localdir != NULL) {
     scope = kCdScopeBuffer;
+  } else if (curwin->w_localdir != NULL) {
+    scope = kCdScopeWindow;
   } else if (curtab->tp_localdir != NULL) {
     scope = kCdScopeTabpage;
   }
 
-  if (!changedir_func(argvars[0].vval.v_string, scope)) {
+  if (!do_chdir(argvars[0].vval.v_string, scope)) {
     // Directory change failed
     XFREE_CLEAR(rettv->vval.v_string);
   }
@@ -688,7 +688,7 @@ static bool getcwd_scope_args(typval_T *argvars, CdScope default_scope, CdScope 
   for (int i = 0; i < argc; i++) {
     explicit_scope = explicit_scope || argv[i] >= 0;
     if (explicit_scope && argv[i] < 0) {
-      emsg(_("E5001: Higher scope cannot be -1 if lower scope is >= 0."));
+      emsg(_("E5001: Argument cannot be -1 if preceding argument is >= 0."));
       return false;
     }
   }
@@ -748,16 +748,12 @@ static bool getcwd_scope_args(typval_T *argvars, CdScope default_scope, CdScope 
   }
 
   // Find the window in `tp` by number.
-  if (argv[kWinArg] >= 0) {
-    if (argv[kWinArg] > 0) {
-      *win = find_win_by_nr(&argvars[0], *tp);
-      if (*win == NULL) {
-        emsg(_("E5002: Cannot find window number."));
-        return false;
-      }
+  if (argv[kWinArg] > 0) {
+    *win = find_win_by_nr(&argvars[0], *tp);
+    if (*win == NULL) {
+      emsg(_("E5002: Cannot find window number."));
+      return false;
     }
-    // Window scope may fall through to the buffer shown in that window.
-    *buf = (*win)->w_buffer;
   }
 
   return true;
@@ -797,14 +793,16 @@ void f_getcwd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       break;
     }
     FALLTHROUGH;
-  case kCdScopeBuffer:
-    from = buf->b_localdir;
+  case kCdScopeTabpage:
+    from = tp->tp_localdir;
     if (from) {
       break;
     }
     FALLTHROUGH;
-  case kCdScopeTabpage:
-    from = tp->tp_localdir;
+  case kCdScopeBuffer:
+    // Only a buffer target reaches this with `scope` unchanged: a buffer belongs to no particular
+    // window or tabpage, so it skips those and falls back to global dir.
+    from = scope == kCdScopeBuffer ? buf->b_localdir : NULL;
     if (from) {
       break;
     }
