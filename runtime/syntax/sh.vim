@@ -651,9 +651,13 @@ if exists("b:is_bash")
     syn match shFunctionCmdOne	"\%#=1^\s*\zs\%(\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\)\@>\s*()\ze\_s*\%(\%(for\|case\|select\|if\|while\|until\)\>\|\[\[\s\|((\)"	skipwhite skipnl nextgroup=@shFunctionCmds contains=shFunctionParens
     syn match shFunctionCmdTwo	"\%#=1\%(\%(\<\k\+\>\|[^()<>|&$;\t ]\+\)\+\)\@>\ze\s*\%(()\ze\)\=\_s*\%(\<\%(for\|case\|select\|if\|while\|until\)\>\|\[\[\s\|((\)"	contained skipwhite skipnl nextgroup=@shFunctionCmds contains=shFunctionParens
     syn match shFunctionOne	"\%#=1^\s*\zs\%(\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\)\@>\s*()\ze\_s*{"	skipwhite skipnl nextgroup=shFunctionExpr contains=shFunctionParens
-    syn match shFunctionTwo	"\%#=1\%(\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\)\@>\ze\s*\%(()\ze\)\=\_s*{"	contained skipwhite skipnl nextgroup=shFunctionExpr contains=shFunctionParens
     syn match shFunctionThree	"\%#=1^\s*\zs\%(\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\)\@>\s*()\ze\_s*((\@!"	skipwhite skipnl nextgroup=shFunctionSubSh contains=shFunctionParens
-    syn match shFunctionFour	"\%#=1\%(\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\)\@>\ze\s*\%(\%(()\ze\)\=\)\@>\_s*((\@!"	contained skipwhite skipnl nextgroup=shFunctionSubSh contains=shFunctionParens
+    " Proof against future changes by inducing priority-driven "backtracking"
+    " between shFunctionFour (goes before) and shFunctionTwo (goes after) so
+    " that e.g. "function f () {}" is still claimed by shFunctionTwo (observe
+    " "f[[:blank:]]()").
+    syn match shFunctionFour	"\%#=1\%(\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\)\@>\ze\%(\%(\s*()\ze\)\=\)\@>\_s*((\@!"	contained skipwhite skipnl nextgroup=shFunctionSubSh contains=shFunctionParens
+    syn match shFunctionTwo	"\%#=1\%(\%(\<\k\+\|[^()<>|&$;\t ]\+\)\+\)\@>\ze\%(\%(\s*()\ze\)\=\)\@>\_s*{"	contained skipwhite skipnl nextgroup=shFunctionExpr contains=shFunctionParens
     " Claim empty array assignments.
     syn match shArrayEmptyDecl	"\%#=1\ze\%(\<\h\w*=\)\@>()"	transparent nextgroup=shVariable
     " Claim commented out function declaration headers.
