@@ -634,7 +634,7 @@ func s:GetFilenameChecks() abort
     \ 'pcmk': ['file.pcmk'],
     \ 'pdf': ['file.pdf'],
     \ 'pem': ['file.pem', 'file.cer', 'file.crt', 'file.csr'],
-    \ 'perl': ['file.plx', 'file.al', 'file.psgi', 'gitolite.rc', '.gitolite.rc', 'example.gitolite.rc', '.latexmkrc', 'latexmkrc'],
+    \ 'perl': ['file.plx', 'file.psgi', 'gitolite.rc', '.gitolite.rc', 'example.gitolite.rc', '.latexmkrc', 'latexmkrc'],
     \ 'pf': ['pf.conf'],
     \ 'pfmain': ['main.cf', 'main.cf.proto'],
     \ 'php': ['file.php', 'file.php9', 'file.phtml', 'file.ctp', 'file.phpt', 'file.theme'],
@@ -1263,6 +1263,37 @@ endfunc
 " Tests for specific extensions and filetypes.
 " Keep sorted.
 """""""""""""""""""""""""""""""""""""""""""""""""
+
+func Test_al_file()
+  filetype on
+
+  " AL object declaration
+  call writefile(['codeunit 50100 "My Codeunit"', '{', '}'], 'Xfile.al', 'D')
+  split Xfile.al
+  call assert_equal('al', &filetype)
+  bwipe!
+
+  " AL namespace and using declarations before the object
+  call writefile(['namespace Microsoft.Sales;', '', 'using Microsoft.Foundation;'], 'Xfile.al')
+  split Xfile.al
+  call assert_equal('al', &filetype)
+  bwipe!
+
+  " Perl AutoLoader chunk
+  call writefile(['# NOTE: Derived from blib/lib/Net/SSLeay.pm.', 'package Net::SSLeay;', 'sub do_https {'], 'Xfile.al')
+  split Xfile.al
+  call assert_equal('perl', &filetype)
+  bwipe!
+
+  let g:filetype_al = 'perl'
+  call writefile(['codeunit 50100 "My Codeunit"'], 'Xfile.al')
+  split Xfile.al
+  call assert_equal('perl', &filetype)
+  bwipe!
+  unlet g:filetype_al
+
+  filetype off
+endfunc
 
 " Since dist#ft#FTm4() looks around for configure.ac
 " the test needs to isolate itself in a fresh temporary project tree,

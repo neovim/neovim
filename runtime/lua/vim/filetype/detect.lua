@@ -31,6 +31,27 @@ local matchregex = vim.filetype._matchregex
 -- luacheck: push no unused args
 -- luacheck: push ignore 122
 
+-- AL (Dynamics 365 Business Central) or Perl AutoLoader
+--- @type vim.filetype.mapfn
+function M.al(_, bufnr)
+  if vim.g.filetype_al then
+    return vim.g.filetype_al
+  end
+  -- AL sources declare an object as `<kind> <id> <name>`, optionally preceded by
+  -- namespace and using declarations. Perl AutoLoader chunks match neither.
+  for _, line in ipairs(getlines(bufnr, 1, 200)) do
+    if
+      matchregex(
+        line,
+        [[\c^\s*\%(codeunit\|page\|pageextension\|pagecustomization\|table\|tableextension\|report\|reportextension\|xmlport\|query\|enum\|enumextension\|profile\|controladdin\|interface\|permissionset\|permissionsetextension\|entitlement\|dotnet\)\>\s]]
+      ) or matchregex(line, [[\c^\s*\%(namespace\|using\)\s\+\k]])
+    then
+      return 'al'
+    end
+  end
+  return 'perl'
+end
+
 -- Erlang Application Resource Files (*.app.src is matched by extension)
 -- See: https://erlang.org/doc/system/applications
 --- @type vim.filetype.mapfn

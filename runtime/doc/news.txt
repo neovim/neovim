@@ -291,6 +291,10 @@ EDITOR
 <    Typing õõ in |Normal-mode| now invokes a mapping bound to ]].
 • New |complete-items| field "commit_chars": characters that accept the
   selected completion item when typed.
+• `*.al` files are detected as `al` (the language of Microsoft Dynamics 365
+  Business Central) when they contain an AL object, namespace or using
+  declaration, and as `perl` (Perl's AutoLoader) otherwise. `g:filetype_al`
+  overrules the guess.
 
 EVENTS
 
