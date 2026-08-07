@@ -948,7 +948,7 @@ is_na_patch() {
           "$patch" -- "${file}")
         test -n "$HUNKS" && return 1
         ;;
-      src/testdir/Make*.mak)
+      src/testdir/Make_all.mak)
         HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
           '-I\stest8[67]\.out \\$' \
           "$patch" -- "${file}")
