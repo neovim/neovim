@@ -13,7 +13,6 @@ local fn = n.fn
 local api = n.api
 local exec_lua = n.exec_lua
 local retry = t.retry
-local pcall_err = t.pcall_err
 local ok = t.ok
 local command = n.command
 local skip = t.skip
@@ -268,6 +267,16 @@ local function test_terminal_with_fake_shell(backslash)
     ]])
   end)
 
+  it('spawns in CWD effective at time of invocation', function()
+    command('terminal')
+    local dir = fn.bufname():match('^term://(.-)//')
+    command('bcd ..') -- :terminal should use this CWD.
+    command('terminal')
+    local parent = fn.bufname():match('^term://(.-)//')
+    neq(dir, parent)
+    eq(fn.fnamemodify(dir, ':h'), parent)
+  end)
+
   it('allows quotes and slashes', function()
     command([[terminal echo 'hello' \ "world"]])
     screen:expect([[
@@ -360,7 +369,7 @@ local function test_terminal_with_fake_shell(backslash)
   end)
 end
 
-describe(':terminal (with fake shell)', function()
+describe(':terminal (fake shell)', function()
   test_terminal_with_fake_shell(false)
   if is_os('win') then
     describe("when 'shell' uses backslashes", function()
