@@ -932,7 +932,7 @@ Lua module: vim.lsp                                                 *lsp-core*
                                filetypes = { 'my_filetype1', 'my_filetype2' },
                              })
 <
-      • {reuse_client}?  (`fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean`)
+      • {reuse_client}?  (`fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig, bufnr: integer): boolean`)
                          Predicate which decides if a client should be
                          re-used. Used on all running clients. The default
                          implementation re-uses a client if name and root_dir
@@ -1407,7 +1407,7 @@ start({config}, {opts})                                      *vim.lsp.start()*
                   • {bufnr}? (`integer`) Buffer handle to attach to if
                     starting or re-using a client (0 for current).
                   • {reuse_client}?
-                    (`fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean`)
+                    (`fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig, bufnr: integer): boolean`)
                     Predicate used to decide if a client should be re-used.
                     Used on all running clients. The default implementation
                     re-uses a client if it has the same name and if the given

@@ -330,6 +330,8 @@ LSP
   while a completion item is selected accepts the item as with
   |complete_CTRL-Y|, then inserts the character. Previously
   `commitCharacters` had no effect.
+• The `reuse_client` predicate now passes the target buffer. See |vim.lsp.Config| and
+  |vim.lsp.start()|
 
 LUA
 

@@ -191,7 +191,7 @@ end
 ---
 --- Predicate which decides if a client should be re-used. Used on all running clients. The default
 --- implementation re-uses a client if name and root_dir matches.
---- @field reuse_client? fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean #
+--- @field reuse_client? fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig, bufnr: integer): boolean #
 ---
 --- [lsp-root_dir()]()
 --- Decides the workspace root: the directory where the LSP server will base its workspaceFolders,
@@ -680,7 +680,7 @@ end
 --- running clients. The default implementation re-uses a client if it has the
 --- same name and if the given workspace folders (or root_dir) are all included
 --- in the client's workspace folders.
---- @field reuse_client? fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig): boolean
+--- @field reuse_client? fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig, bufnr: integer): boolean
 ---
 --- Buffer handle to attach to if starting or re-using a client (0 for current).
 --- @field bufnr? integer
@@ -759,7 +759,7 @@ function lsp.start(config, opts)
   end
 
   for _, client in pairs(lsp.client._all) do
-    if reuse_client(client, config) then
+    if reuse_client(client, config, bufnr) then
       if opts.attach == false then
         return client.id
       end
