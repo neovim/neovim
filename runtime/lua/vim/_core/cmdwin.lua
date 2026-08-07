@@ -117,8 +117,7 @@ function M.open(type, init_line, init_col)
       if state == nil then
         return
       end
-      local is_bufwinleave = ev.event == 'BufWinLeave'
-      M._cleanup(is_bufwinleave)
+      M._cleanup()
       return true -- Last cmdwin window gone; delete this autocmd.
     end,
   })
@@ -127,10 +126,7 @@ function M.open(type, init_line, init_col)
 end
 
 --- @private
---- @param in_bufwinleave? boolean  True when called from a BufWinLeave autocmd: the buffer is
----                                 locked by close_buffer(), so deletion must be skipped;
----                                 bufhidden=wipe handles it once the lock is released.
-function M._cleanup(in_bufwinleave)
+function M._cleanup()
   if state == nil then
     return
   end
@@ -139,18 +135,10 @@ function M._cleanup(in_bufwinleave)
   pcall(vim.api.nvim__cmdwin_set, '', 0) -- Clear the C-side globals.
   pcall(vim.api.nvim_exec_autocmds, 'CmdwinLeave', { pattern = s.type, modeline = false })
 
-  if in_bufwinleave then
-    -- bufhidden=wipe will delete the buffer once close_buffer() releases its lock.
-    -- Clear winfixbuf first so the window can accept a replacement buffer
-    -- (e.g. when :%bwipe wipes the cmdwin buffer while it is the only window).
-    if vim.api.nvim_win_is_valid(s.win) then
-      vim.wo[s.win][0].winfixbuf = false
-    end
-  else
-    -- Deleting the buffer closes all windows that display it.
-    if vim.api.nvim_buf_is_valid(s.buf) then
-      pcall(vim.api.nvim_buf_delete, s.buf, { force = true })
-    end
+  -- bufhidden=wipe will delete the buffer
+  -- We just need to clear 'winfixbuf' so the window can accept a replacement buffer (e.g. :%bwipe)
+  if vim.api.nvim_win_is_valid(s.win) then
+    vim.wo[s.win][0].winfixbuf = false
   end
 
   if vim.api.nvim_win_is_valid(s.caller_win) then
