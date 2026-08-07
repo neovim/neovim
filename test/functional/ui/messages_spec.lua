@@ -3960,8 +3960,8 @@ describe('progress-message', function()
       })
     end)
     command('set shortmess-=C complete=kXdict')
-    feed('ifoo<C-n><Esc>')
-    -- Leaving completion ends the scan message, which otherwise stays "running" forever.
+    -- Ends when scanning ends, regardless of whether popupmenu is open.
+    feed('ifoo<C-n>')
     eq({ 'nvim.completion running', 'nvim.completion success' }, exec_lua('return _G.events'))
   end)
 
