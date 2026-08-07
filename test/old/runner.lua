@@ -1,14 +1,5 @@
 -- execute old style tests
 
--- when compared to the testdir/Makefile based approach, this replaces
--- all wrapper process logic:
--- Makefile
--- runnvim.sh and its library test.sh
--- runnvim.vim (wrapper which runs a nested vim inside a terminal)
-
--- it DOES NOT not replace the logic running inside the nvim-under-test
--- runtest.vim and its libraries setup.vim, shared.vim, check.vim
-
 local nvim_bin = vim.v.progpath -- must be absolute
 
 vim.api.nvim_set_current_dir('test/old/testdir/')
