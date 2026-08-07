@@ -803,7 +803,7 @@ void win_set_buf(win_T *win, buf_T *buf, Error *err)
   bool win_ok;
 
   TRY_WRAP(err, {
-    win_ok = ctx_switch(&switchwin, win, tab, NULL, kCtxNoDisplay);
+    win_ok = ctx_switch(&switchwin, win, tab, NULL, kCtxNoDisplay | kCtxKeepCwd);
     if (win_ok) {
       const int save_acd = p_acd;
       if (!switchwin.cs_same_win) {

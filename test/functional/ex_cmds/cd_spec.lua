@@ -562,6 +562,29 @@ describe('cd during temp context-switch', function()
     cd_in_buf_call(hidden, 'tcd', tabdir)
     eq({ 1, tabdir, tabdir }, { tlwd(), tcwd(), cwd() })
   end)
+
+  it("nvim_open_win / nvim_win_set_buf keep the caller's cwd", function()
+    local bufdir = join(startdir, directories.buffer)
+    command('bcd ' .. bufdir)
+    eq(bufdir, cwd())
+
+    -- A transient switch to a scratch float must not reset the caller's cwd.
+    local float = call('nvim_open_win', call('nvim_create_buf', true, true), false, {
+      relative = 'editor',
+      width = 20,
+      height = 5,
+      row = 1,
+      col = 1,
+    })
+    eq(bufdir, cwd())
+
+    call('nvim_win_set_buf', float, call('nvim_create_buf', true, true))
+    eq(bufdir, cwd())
+
+    call('nvim_win_close', float, true)
+    eq(bufdir, cwd())
+    command('bcd!')
+  end)
 end)
 
 -- Test legal parameters for 'getcwd' and 'haslocaldir'
