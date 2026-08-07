@@ -290,6 +290,8 @@ LSP
 • |vim.lsp.buf.rename()| now highlights the symbol being renamed using the
   |hl-LspReferenceTarget| highlight group.
 • Code lenses now display as virtual lines
+• The `reuse_client` predicate now passes the target buffer. See |vim.lsp.Config| and
+  |vim.lsp.start()|
 
 LUA
 
