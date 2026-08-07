@@ -6539,7 +6539,7 @@ static void f_setreg(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         pointreg = *stropt;
         regname = pointreg;
       }
-    } else if (tv_dict_get_number(d, "isunnamed")) {
+    } else if (tv_dict_get_bool(d, "isunnamed", -1) > 0) {
       pointreg = regname;
     }
   } else {
