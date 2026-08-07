@@ -1082,13 +1082,20 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   } else {
     msg_scroll = true;              // don't overwrite previous file message
   }
+  // Progress-msg id, e.g. `nvim.bufwrite "foo.txt"`.
+  char msg_id[MAXPATHL + 32];
+#ifndef UNIX
+  char *msgname = sfname;
+#else
+  char *msgname = fname;
+#endif
+  size_t id_len = xstrlcpy(msg_id, "nvim.bufwrite ", sizeof(msg_id));
+  add_quoted_fname(msg_id + id_len, sizeof(msg_id) - id_len, buf, msgname);
+  msg_id[strlen(msg_id) - 1] = NUL;  // add_quoted_fname() appends a space, for display only.
+
   if (!filtering) {
     // show that we are busy
-#ifndef UNIX
-    filemess_progress(buf, sfname);
-#else
-    filemess_progress(buf, fname);
-#endif
+    filemess_progress(buf, msgname, msg_id);
   }
   msg_scroll = false;               // always overwrite the file message now
 
@@ -1671,8 +1678,6 @@ restore_backup:
 #endif
   if (!filtering) {
     add_quoted_fname(IObuff, IOSIZE, buf, fname);
-    char msg_id[bufwrite_msg_id_size];
-    msg_id_for_bufwrite(msg_id, buf, fname);
     bool insert_space = false;
     if (write_info.bw_conv_error) {
       xstrlcat(IObuff, _(" CONVERSION ERROR"), IOSIZE);
@@ -1813,15 +1818,9 @@ nofail:
   os_free_acl(acl);
 
   if (err.msg != NULL) {
-#ifndef UNIX
-    char *errname = sfname;
-#else
-    char *errname = fname;
-#endif
     // - 100 to save some space for further error message.
-    add_quoted_fname(IObuff, IOSIZE - 100, buf, errname);
-    char msg_id[bufwrite_msg_id_size];  // End the progress-msg started by filemess_progress().
-    msg_id_for_bufwrite(msg_id, buf, errname);
+    add_quoted_fname(IObuff, IOSIZE - 100, buf, msgname);
+    // The error ends the progress-msg started by filemess_progress().
     emit_err(&err, filtering ? NULL : msg_id);
 
     retval = FAIL;

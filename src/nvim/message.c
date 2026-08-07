@@ -169,18 +169,6 @@ bool msg_id_exists(int64_t id)
   return id > 0 && id < msg_id_next;
 }
 
-/// Formats a progress-msg id for use by bufwrite.c/fileio.c.
-///
-/// @param msg_id  Buffer of `bufwrite_msg_id_size` bytes.
-void msg_id_for_bufwrite(char *msg_id, buf_T *buf, char *name)
-{
-  xstrlcpy(msg_id, "nvim.bufwrite ", bufwrite_msg_id_size);
-  size_t len = strlen(msg_id);
-  add_quoted_fname(msg_id + len, bufwrite_msg_id_size - len, buf, name);
-  // add_quoted_fname() appends a space for display; the id ends at the closing quote.
-  msg_id[strlen(msg_id) - 1] = NUL;
-}
-
 static void ui_ext_msg_set_pos(int row, bool scrolled)
 {
   char buf[MAX_SCHAR_SIZE];

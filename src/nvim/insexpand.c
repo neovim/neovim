@@ -2856,10 +2856,6 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
   ins_compl_free();
   compl_started = false;
   compl_matches = 0;
-  if (!shortmess(kShmCompletionscan) && !compl_autocomplete) {
-    // End the "Scanning..." progress-msg. ins_compl_show_statusmsg() already reported the result.
-    msg_progress(NULL, "nvim.completion", "success", 0, false, false, false);
-  }
   if (!shortmess(kShmCompletionmenu)) {
     msg_clr_cmdline();  // necessary for "noshowmode"
   }
@@ -6353,6 +6349,11 @@ int ins_complete(int c, bool enable_pum)
 
   if (!shortmess(kShmCompletionmenu) && !compl_autocomplete) {
     ins_compl_show_statusmsg();
+  }
+
+  if (!shortmess(kShmCompletionscan) && !compl_autocomplete) {
+    // End the "Scanning..." progress-msg. ins_compl_show_statusmsg() already reported the result.
+    msg_progress(NULL, "nvim.completion", "success", 0, false, false, false);
   }
 
   // Show the popup menu, unless we got interrupted.
