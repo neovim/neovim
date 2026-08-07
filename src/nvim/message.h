@@ -9,6 +9,10 @@
 #include "nvim/keycodes_defs.h"  // IWYU pragma: keep
 #include "nvim/macros_defs.h"
 #include "nvim/message_defs.h"  // IWYU pragma: keep
+#include "nvim/os/os_defs.h"
+
+/// Buffer size for msg_id_for_bufwrite().
+enum { bufwrite_msg_id_size = MAXPATHL + 32, };
 
 /// Types of dialogs passed to do_dialog().
 enum {

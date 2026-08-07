@@ -3929,6 +3929,40 @@ describe('progress-message', function()
     -- ":read" is not a write: it must not start a progress that never ends.
     command('read ' .. fname)
     assert_progress_autocmd(nil)
+
+    -- A failed write ends the progress-msg.
+    local events = exec_lua(function(f)
+      local out = {}
+      vim.api.nvim_create_autocmd('Progress', {
+        callback = function(ev)
+          table.insert(out, { id = ev.data.id, status = ev.data.status, text = ev.data.text[1] })
+        end,
+      })
+      pcall(vim.cmd.write, ('%s/nodir'):format(f))
+      return out
+    end, fname)
+    eq({ 'running', 'failed' }, { events[1].status, events[2].status })
+    eq(events[1].id, events[2].id)
+    t.matches('^E%d+:', events[2].text)
+  end)
+
+  it('emitted by ins-completion scan', function()
+    fn.writefile({ 'foobar', 'foobaz' }, 'Xdict')
+    finally(function()
+      os.remove('Xdict')
+    end)
+    exec_lua(function()
+      _G.events = {}
+      vim.api.nvim_create_autocmd('Progress', {
+        callback = function(ev)
+          table.insert(_G.events, ('%s %s'):format(ev.data.id, ev.data.status))
+        end,
+      })
+    end)
+    command('set shortmess-=C complete=kXdict')
+    feed('ifoo<C-n><Esc>')
+    -- Leaving completion ends the scan message, which otherwise stays "running" forever.
+    eq({ 'nvim.completion running', 'nvim.completion success' }, exec_lua('return _G.events'))
   end)
 
   it('tui displays progress message in proper format', function()

@@ -973,7 +973,7 @@ void op_reindent(oparg_T *oap, Indenter how)
         // Restore cursor to avoid redrawing curwin in msg_show callback.
         linenr_T save_lnum = curwin->w_cursor.lnum;
         curwin->w_cursor.lnum = start_lnum;
-        msg_progress(IObuff, "nvim.indent", "running", 0, true, false);
+        msg_progress(IObuff, "nvim.indent", "running", 0, true, false, false);
         curwin->w_cursor.lnum = save_lnum;
       }
 
@@ -1015,7 +1015,7 @@ void op_reindent(oparg_T *oap, Indenter how)
     i = oap->line_count - (i + 1);
     snprintf(IObuff, IOSIZE,
              NGETTEXT("%" PRId64 " line indented ", "%" PRId64 " lines indented ", i), (int64_t)i);
-    msg_progress(IObuff, "nvim.indent", "success", 0, true, false);
+    msg_progress(IObuff, "nvim.indent", "success", 0, true, false, false);
   }
   if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
     // set '[ and '] marks

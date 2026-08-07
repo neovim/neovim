@@ -560,18 +560,25 @@ static inline Error_T set_err_arg(const char *msg, int arg)
   return (Error_T){ .num = NULL, .msg = (char *)msg, .arg = arg };
 }
 
-static void emit_err(Error_T *e)
+/// Shows a write error msg.  IObuff must hold the quoted file name.
+///
+/// @param msg_id  Ends the progress-message with "failed" status. NULL to show a plain error msg.
+static void emit_err(Error_T *e, char *msg_id)
 {
-  if (e->num != NULL) {
-    if (e->arg != 0) {
-      semsg("%s: %s%s: %s", e->num, IObuff, e->msg, os_strerror(e->arg));
-    } else {
-      semsg("%s: %s%s", e->num, IObuff, e->msg);
-    }
+  char errmsg[IOSIZE];
+  if (e->num != NULL && e->arg != 0) {
+    vim_snprintf(errmsg, IOSIZE, "%s: %s%s: %s", e->num, IObuff, e->msg, os_strerror(e->arg));
+  } else if (e->num != NULL) {
+    vim_snprintf(errmsg, IOSIZE, "%s: %s%s", e->num, IObuff, e->msg);
   } else if (e->arg != 0) {
-    semsg(e->msg, os_strerror(e->arg));
+    vim_snprintf(errmsg, IOSIZE, e->msg, os_strerror(e->arg));
   } else {
-    emsg(e->msg);
+    xstrlcpy(errmsg, e->msg, IOSIZE);
+  }
+  if (msg_id != NULL) {
+    msg_progress(errmsg, msg_id, "failed", HLF_E, false, false, true);
+  } else {
+    emsg(errmsg);
   }
   if (e->alloc) {
     xfree(e->msg);
@@ -1664,9 +1671,8 @@ restore_backup:
 #endif
   if (!filtering) {
     add_quoted_fname(IObuff, IOSIZE, buf, fname);
-    // Append the filename (without trailing char) to the message ID.
-    char msg_id[IOSIZE + 14] = "nvim.bufwrite ";
-    xstrlcat(msg_id, IObuff, 14 + strlen(IObuff));
+    char msg_id[bufwrite_msg_id_size];
+    msg_id_for_bufwrite(msg_id, buf, fname);
     bool insert_space = false;
     if (write_info.bw_conv_error) {
       xstrlcat(IObuff, _(" CONVERSION ERROR"), IOSIZE);
@@ -1707,7 +1713,7 @@ restore_backup:
     }
     // Hide cursor while emitting "written" message, so cursor doesn't flicker in cmdline. #25974
     ui_busy_start();
-    set_keep_msg(msg_progress(IObuff, msg_id, "success", 0, true, true), 0);
+    set_keep_msg(msg_progress(IObuff, msg_id, "success", 0, true, true, false), 0);
     ui_busy_stop();
   }
 
@@ -1807,13 +1813,16 @@ nofail:
   os_free_acl(acl);
 
   if (err.msg != NULL) {
-    // - 100 to save some space for further error message
 #ifndef UNIX
-    add_quoted_fname(IObuff, IOSIZE - 100, buf, sfname);
+    char *errname = sfname;
 #else
-    add_quoted_fname(IObuff, IOSIZE - 100, buf, fname);
+    char *errname = fname;
 #endif
-    emit_err(&err);
+    // - 100 to save some space for further error message.
+    add_quoted_fname(IObuff, IOSIZE - 100, buf, errname);
+    char msg_id[bufwrite_msg_id_size];  // End the progress-msg started by filemess_progress().
+    msg_id_for_bufwrite(msg_id, buf, errname);
+    emit_err(&err, filtering ? NULL : msg_id);
 
     retval = FAIL;
     if (end == 0) {
