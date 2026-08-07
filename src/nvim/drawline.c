@@ -2666,7 +2666,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           wlv.n_attr = 1;
           mb_c = schar_get_first_codepoint(mb_schar);
         } else if (mb_schar != NUL) {
-          wlv.p_extra = transchar_buf(wp->w_buffer, mb_c);
+          xstrlcpy(wlv.extra, transchar_buf(wp->w_buffer, mb_c), sizeof(wlv.extra));
+          wlv.p_extra = wlv.extra;
           if (wlv.n_extra == 0) {
             wlv.n_extra = byte2cells(mb_c) - 1;
           }
