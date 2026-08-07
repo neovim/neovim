@@ -1078,9 +1078,9 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   if (!filtering) {
     // show that we are busy
 #ifndef UNIX
-    filemess(buf, sfname, "");
+    filemess_progress(buf, sfname);
 #else
-    filemess(buf, fname, "");
+    filemess_progress(buf, fname);
 #endif
   }
   msg_scroll = false;               // always overwrite the file message now

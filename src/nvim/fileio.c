@@ -107,7 +107,11 @@ static const char *e_auchangedbuf = N_("E812: Autocommands changed buffer or buf
 // non-ASCII bytes (high bit set) in multiple bytes at once.
 #define NONASCII_MASK (((uint64_t)(-1) / 0xFF) * 0x80)
 
-void filemess(buf_T *buf, char *name, char *s)
+/// Shows a message about file `name`, e.g. `"foo.txt" [New]`.
+///
+/// @param s Info appended to the filename, e.g. "[New]".
+/// @param progress Emit as a progress-message. Caller must emit a non-"running" status, later.
+static void filemess(buf_T *buf, char *name, char *s, bool progress)
 {
   int prev_msg_col = msg_col;
 
@@ -137,8 +141,8 @@ void filemess(buf_T *buf, char *name, char *s)
   msg_scroll = msg_scroll_save;
   msg_scrolled_ign = true;
   // may truncate the message to avoid a hit-return prompt
-  if (*s == NUL) {
-    // Append the filename (without trailing char) to the message ID.
+  if (progress) {
+    // Append the filename to the message ID.
     char msg_id[IOSIZE + 14] = "nvim.bufwrite ";
     xstrlcat(msg_id, IObuff, 14 + strlen(IObuff));
     msg_progress(IObuff, msg_id, "running", 0, false, true);
@@ -147,6 +151,13 @@ void filemess(buf_T *buf, char *name, char *s)
   }
   msg_clr_eos();
   msg_scrolled_ign = false;
+}
+
+/// Shows the "busy" message for writing file `name`, as a progress-message. #39280
+/// Caller must end the progress by emitting a non-"running" status.
+void filemess_progress(buf_T *buf, char *name)
+{
+  filemess(buf, name, "", true);
 }
 
 /// Read lines from file "fname" into the buffer after line "from".
@@ -351,7 +362,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
 
     // If the name is too long we might crash further on, quit here.
     if (fnamelen >= MAXPATHL) {
-      filemess(curbuf, fname, _("Illegal file name"));
+      filemess(curbuf, fname, _("Illegal file name"), false);
       msg_end();
       msg_scroll = msg_save;
       goto theend;
@@ -362,7 +373,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
     // swap file may destroy it!  Reported on MS-DOS and Win 95.
     if (after_pathsep(fname, fname + fnamelen)) {
       if (!silent) {
-        filemess(curbuf, fname, _(msg_is_a_directory));
+        filemess(curbuf, fname, _(msg_is_a_directory), false);
       }
       msg_end();
       msg_scroll = msg_save;
@@ -392,11 +403,11 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
       // check for it before os_open().
       if (S_ISDIR(perm)) {
         if (!silent) {
-          filemess(curbuf, fname, _(msg_is_a_directory));
+          filemess(curbuf, fname, _(msg_is_a_directory), false);
         }
         retval = NOTDONE;
       } else {
-        filemess(curbuf, fname, _("is not a file"));
+        filemess(curbuf, fname, _("is not a file"), false);
       }
       msg_end();
       msg_scroll = msg_save;
@@ -485,9 +496,9 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
       }
       if (!silent) {
         if (dir_of_file_exists(fname)) {
-          filemess(curbuf, sfname, _("[New]"));
+          filemess(curbuf, sfname, _("[New]"), false);
         } else {
-          filemess(curbuf, sfname, _("[New DIRECTORY]"));
+          filemess(curbuf, sfname, _("[New DIRECTORY]"), false);
         }
       }
       // Even though this is a new file, it might have been
@@ -508,17 +519,15 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
       goto theend;
     }
 #if defined(UNIX) && defined(EOVERFLOW)
-    filemess(curbuf, sfname, ((fd == UV_EFBIG) ? _("[File too big]")
-                                               :
-                              // libuv only returns -errno
-                              // in Unix and in Windows
-                              // open() does not set
-                              // EOVERFLOW
-                              (fd == -EOVERFLOW) ? _("[File too big]")
-                                                 : _("[Permission Denied]")));
+    filemess(curbuf, sfname,
+             ((fd == UV_EFBIG)
+              ? _("[File too big]")
+              // libuv only returns -errno in Unix; Windows open() does not set EOVERFLOW.
+              : (fd == -EOVERFLOW) ? _("[File too big]") : _("[Permission Denied]")),
+             false);
 #else
-    filemess(curbuf, sfname, ((fd == UV_EFBIG) ? _("[File too big]")
-                                               : _("[Permission Denied]")));
+    filemess(curbuf, sfname, ((fd == UV_EFBIG) ? _("[File too big]") : _("[Permission Denied]")),
+             false);
 #endif
     curbuf->b_p_ro = true;                  // must use "w!" now
 
@@ -676,7 +685,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
 
   if (!recoverymode && !filtering && !(flags & READ_DUMMY) && !silent) {
     if (!read_stdin && !read_buffer) {
-      filemess(curbuf, sfname, "");
+      filemess(curbuf, sfname, "", false);
     }
   }
 
@@ -1745,7 +1754,7 @@ failed:
 
     if (got_int) {
       if (!(flags & READ_DUMMY)) {
-        filemess(curbuf, sfname, _(e_interr));
+        filemess(curbuf, sfname, _(e_interr), false);
         if (newfile) {
           curbuf->b_p_ro = true;                // must use "w!" now
         }

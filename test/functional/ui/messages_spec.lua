@@ -3911,6 +3911,26 @@ describe('progress-message', function()
     })
   end)
 
+  it('emitted by :write, not by :read #41193', function()
+    local fname = 'Xtest_progress_bufwrite'
+    finally(function()
+      os.remove(fname)
+    end)
+    command('write ' .. fname)
+    assert_progress_autocmd({
+      data = {},
+      id = ('nvim.bufwrite "%s"'):format(fname),
+      source = 'nvim',
+      status = 'success',
+      text = { ('"%s" [New] 0L, 0B written'):format(fname) },
+      title = '',
+    })
+
+    -- ":read" is not a write: it must not start a progress that never ends.
+    command('read ' .. fname)
+    assert_progress_autocmd(nil)
+  end)
+
   it('tui displays progress message in proper format', function()
     clear()
     setup_screen(false)
