@@ -237,12 +237,17 @@ local options = {
       cb = 'did_set_autochdir',
       defaults = false,
       desc = [=[
-        When on, Vim will change the current working directory whenever you
-        open a file, switch buffers, delete a buffer or open/close a window.
-        It will change to the directory containing the file which was opened
-        or selected.  When a buffer has no name it also has no directory, thus
-        the current directory won't change when navigating to it.
+        When on, Nvim will change its global |current-directory| to the parent
+        of the current file, whenever you open a file, switch buffers, delete
+        a buffer or open/close a window.
+
+        When a buffer has no name it also has no directory, thus the current
+        directory won't change when navigating to it.
+
         Note: When this option is on some plugins may not work.
+
+        Alternatively, consider using |:bcd|, |:lcd|, or |:tcd| in an autocmd,
+        to selectively set a local (not global) directory. See |project-dir|.
       ]=],
       full_name = 'autochdir',
       scope = { 'global' },

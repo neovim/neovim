@@ -1494,14 +1494,20 @@ DictOf(Integer) nvim_get_color_map(Arena *arena)
   return colors;
 }
 
-/// Gets a map of the current editor state.
+/// Gets a map (msgpack encoding) of the current editor state:
+///
+/// - "bufs"    [buffer-list]
+/// - "funcs"   Vimscript global and [script-local] functions
+/// - "gvars"   [global-variable]s
+/// - "jumps"   [jumplist]
+/// - "regs"    [registers]
+/// - "sfuncs"  Vimscript [script-local] functions
 ///
 /// @param opts  Optional parameters.
-///               - types:  List of |context-types| ("regs", "jumps", "bufs",
-///                 "gvars", …) to gather, or empty for "all".
+///               - types:  List of context types (see above) to gather, or empty for "all".
 /// @param[out]  err  Error details, if any
 ///
-/// @return map of global |context|.
+/// @return Editor state as a msgpack-encoded map.
 Dict nvim_get_context(Dict(context) *opts, Arena *arena, Error *err)
   FUNC_API_SINCE(6)
 {
@@ -1543,9 +1549,9 @@ Dict nvim_get_context(Dict(context) *opts, Arena *arena, Error *err)
   return dict;
 }
 
-/// Sets the current editor state from the given |context| map.
+/// Sets the current editor state from the given map.
 ///
-/// @param  dict  |Context| map.
+/// @param dict  Msgpack-encoded editor state, in the form returned by [nvim_get_context()].
 Object nvim_load_context(Dict dict, Error *err)
   FUNC_API_SINCE(6)
 {

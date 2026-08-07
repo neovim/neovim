@@ -1349,12 +1349,18 @@ function vim.api.nvim_get_color_map() end
 --- @return table<string,vim.api.keyset.command_info> # Map of maps describing commands.
 function vim.api.nvim_get_commands(opts) end
 
---- Gets a map of the current editor state.
+--- Gets a map (msgpack encoding) of the current editor state:
+---
+--- - "bufs"    [buffer-list]
+--- - "funcs"   Vimscript global and [script-local] functions
+--- - "gvars"   [global-variable]s
+--- - "jumps"   [jumplist]
+--- - "regs"    [registers]
+--- - "sfuncs"  Vimscript [script-local] functions
 ---
 --- @param opts vim.api.keyset.context? Optional parameters.
---- - types:  List of `context-types` ("regs", "jumps", "bufs",
----   "gvars", …) to gather, or empty for "all".
---- @return table<string,any> # map of global |context|.
+--- - types:  List of context types (see above) to gather, or empty for "all".
+--- @return table<string,any> # Editor state as a msgpack-encoded map.
 function vim.api.nvim_get_context(opts) end
 
 --- Gets the current buffer.
@@ -1658,9 +1664,9 @@ function vim.api.nvim_list_uis() end
 --- @return integer[] # List of |window-ID|s
 function vim.api.nvim_list_wins() end
 
---- Sets the current editor state from the given `context` map.
+--- Sets the current editor state from the given map.
 ---
---- @param dict table<string,any> `Context` map.
+--- @param dict table<string,any> Msgpack-encoded editor state, in the form returned by [nvim_get_context()].
 --- @return any
 function vim.api.nvim_load_context(dict) end
 

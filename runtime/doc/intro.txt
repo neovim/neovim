@@ -388,19 +388,21 @@ CTRL-\ CTRL-G works the same as |CTRL-\_CTRL-N| for backward compatibility.
 
                                 *:exm* *:exmode* *gQ* *mode-Ex* *Ex-mode* *Ex* *EX* *E501*
 :exm[ode]
-[count]q:               Switch to Ex mode.  This is like typing ":" commands
-                        one after another, except you don't have to keep
-                        pressing ":". Use |:visual| to exit this mode.
+[count]q:               Switch to Ex mode.  This is like the |cmdwin| except
+                        it stays open, in Insert-mode, so can you keep
+                        entering ":" commands (REPL style). Use |:visual| to
+                        exit this mode.
+
+                        If a command moves the cursor or changes the buffer,
+                        the current line is printed.  An empty line moves to
+                        (and prints) the next line.
+
                         Without [count], "q:" opens the regular |cmdwin|.
 
-                        Implementation details: a persistent |cmdwin| where
-                        <Enter> executes the current line as a command
-                        (against the window from which Ex mode was entered)
-                        and stays open, in insert-mode.  Command output is
-                        presented as comment (") lines.  After a command that
-                        moves the cursor or changes the buffer, the current
-                        line is printed.  An empty line moves to (and prints)
-                        the next line.
+                        Implementation: a persistent |cmdwin| where <Enter>
+                        executes the current line as a command (against the
+                        window from which Ex mode was entered). Command output
+                        is presented as comment (") lines.
 
 ==============================================================================
 Window contents                                         *window-contents*
