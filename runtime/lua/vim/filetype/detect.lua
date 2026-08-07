@@ -31,6 +31,37 @@ local matchregex = vim.filetype._matchregex
 -- luacheck: push no unused args
 -- luacheck: push ignore 122
 
+-- AL (Microsoft Dynamics 365 Business Central) or Perl AutoLoader
+--- @type vim.filetype.mapfn
+function M.al(_, bufnr)
+  if vim.g.filetype_al then
+    return vim.g.filetype_al
+  end
+  -- AL sources declare an object as "<kind> <id> <name>" at the start of a
+  -- line, optionally preceded by namespace and using declarations.  Perl
+  -- AutoLoader chunks match neither.  Matching a bare keyword anywhere would
+  -- be wrong: table, page and report are ordinary English words, so the object
+  -- name must follow.  The match is case sensitive because AL tooling emits
+  -- lowercase keywords, while prose in Perl comments is usually capitalised.
+  for _, line in ipairs(getlines(bufnr, 1, 200)) do
+    if
+      matchregex(
+        line,
+        [[^\s*\%(codeunit\|page\|pageextension\|pagecustomization\|table\|tableextension\|]]
+          .. [[report\|reportextension\|xmlport\|query\|enum\|enumextension\|profile\|profileextension\|]]
+          .. [[controladdin\|interface\|permissionset\|permissionsetextension\|entitlement\)\>\s\+\%(\d\|"\|\u\)]]
+      )
+      or findany(
+        line,
+        { '^%s*dotnet%s*$', '^%s*namespace%s+[%w._]+%s*;', '^%s*using%s+[%w._]+%s*;' }
+      )
+    then
+      return 'al'
+    end
+  end
+  return 'perl'
+end
+
 -- Erlang Application Resource Files (*.app.src is matched by extension)
 -- See: https://erlang.org/doc/system/applications
 --- @type vim.filetype.mapfn

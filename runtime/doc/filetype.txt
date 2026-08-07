@@ -136,6 +136,7 @@ what kind of file it is.  This doesn't always work.  A number of global
 variables can be used to overrule the filetype used for certain extensions:
 
 	file name	variable ~
+	`*.al`		g:filetype_al
 	`*.app`		g:filetype_app
 	`*.as`		g:filetype_as
 	`*.asa`		g:filetype_asa		|ft-aspperl-syntax|
