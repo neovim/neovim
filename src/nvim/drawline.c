@@ -2422,8 +2422,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           char *p = ptr - (mb_off + 1);
 
           CharsizeArg csarg;
-          // lnum == 0, do not want virtual text to be counted here
-          CSType cstype = init_charsize_arg(&csarg, wp, 0, line);
+          CSType cstype = init_charsize_arg(&csarg, wp, lnum, line);
+          // Don't count virtual text for this character (vim-patch:9.0.0183), but let the
+          // 'linebreak' lookahead count it for the rest of the word.
+          csarg.skip_cur_text = true;
           // TODO(zeertzjq): consider using CharSize.tail here
           wlv.n_extra = win_charsize(cstype, wlv.vcol, p, utf_ptr2CharInfo(p).value,
                                      &csarg).width - 1;
