@@ -118,14 +118,6 @@ function M.open(type, init_line, init_col)
         return
       end
       local is_bufwinleave = ev.event == 'BufWinLeave'
-      if not is_bufwinleave then
-        local closing = tonumber(ev.match)
-        for _, w in ipairs(vim.fn.win_findbuf(buf)) do
-          if w ~= closing then
-            return -- Still visible elsewhere; keep cmdwin (and this autocmd) active.
-          end
-        end
-      end
       M._cleanup(is_bufwinleave)
       return true -- Last cmdwin window gone; delete this autocmd.
     end,
