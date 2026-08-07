@@ -1130,4 +1130,21 @@ describe('statuscolumn', function()
                                                            |
     ]])
   end)
+
+  it('does not break wrapping at unprintable chars #41198', function()
+    command([[let &statuscolumn = repeat(' ', 4)]])
+    api.nvim_buf_set_lines(0, 0, -1, true, { ('\1'):rep(100), 'foo', 'bar' })
+    command('normal! zb')
+    screen:expect([[
+      {8:    }{18:^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^}|
+      {8:    }{18:A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A}|
+      {8:    }{18:^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^}|
+      {8:    }{18:A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A^A}|
+      {8:    }{18:^A^A}                                             |
+      {8:    }foo                                              |
+      {8:    }^bar                                              |
+      {1:~                                                    }|*6
+                                                           |
+    ]])
+  end)
 end)
