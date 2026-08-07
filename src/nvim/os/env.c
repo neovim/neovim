@@ -764,7 +764,7 @@ static char *remove_tail(char *path, char *pend, char *dirname)
   char *new_tail = pend - len - 1;
 
   if (new_tail >= path
-      && path_fnamencmp(new_tail, dirname, len) == 0
+      && path_cmp(p_fic, new_tail, dirname, len) == 0
       && (new_tail == path || after_pathsep(path, new_tail))) {
     return new_tail;
   }
@@ -1063,7 +1063,7 @@ size_t home_replace(const buf_T *const buf, const char *src, char *const dst, si
     size_t len = dirlen;
     while (true) {
       if (len
-          && path_fnamencmp(src, p, len) == 0
+          && path_cmp(p_fic, src, p, len) == 0
           && (vim_ispathsep(src[len])
               || (!one && (src[len] == ',' || src[len] == ' '))
               || src[len] == NUL)) {

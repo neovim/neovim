@@ -1948,7 +1948,7 @@ static int qf_add_entry(qf_list_T *qfl, char *dir, char *fname, char *module, in
   }
   qfp->qf_fname = NULL;
   if (buf != NULL && buf->b_ffname != NULL && fullname != NULL) {
-    if (path_fnamecmp(fullname, buf->b_ffname) != 0) {
+    if (!path_equal(fullname, buf->b_ffname, kPathCmpLiteral)) {
       p = path_try_shorten_fname(fullname);
       if (p != NULL) {
         qfp->qf_fname = xstrdup(p);

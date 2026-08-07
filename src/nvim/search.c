@@ -3060,8 +3060,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
           if (i == max_path_depth) {
             break;
           }
-          if (path_full_compare(new_fname, files[i].name, true,
-                                true) & kEqualFiles) {
+          if (path_equal(new_fname, files[i].name, kPathCmpExpand | kPathCmpFull)) {
             if (type != CHECK_PATH
                 && action == ACTION_SHOW_ALL && files[i].matched) {
               msg_putchar('\n');  // cursor below last one

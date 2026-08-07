@@ -109,11 +109,11 @@ describe('path.c', function()
     end)
   end)
 
-  describe('path_full_compare', function()
-    local function path_full_compare(s1, s2, cn, ee)
+  describe('path_equal', function()
+    local function path_equal(s1, s2, flags)
       s1 = to_cstr(s1)
       s2 = to_cstr(s2)
-      return cimp.path_full_compare(s1, s2, cn or 0, ee or 1)
+      return cimp.path_equal(s1, s2, flags or cimp.kPathCmpExpand)
     end
 
     local f1 = 'f1.o'
@@ -129,26 +129,72 @@ describe('path.c', function()
       os.remove(f2)
     end)
 
-    itp('returns kEqualFiles when passed the same file', function()
-      eq(cimp.kEqualFiles, (path_full_compare(f1, f1)))
+    itp('returns true when passed the same existing file', function()
+      eq(true, path_equal(f1, f1))
+      eq(true, path_equal(f1, ('%s/%s'):format(uv.fs_realpath('.'), f1)))
     end)
 
-    itp('returns kEqualFileNames when files that dont exist and have same name', function()
-      eq(cimp.kEqualFileNames, (path_full_compare('null.txt', 'null.txt', true)))
+    itp(
+      'returns true for nonexistent same-name files via fullname fallback (kPathCmpFull)',
+      function()
+        eq(true, path_equal('null.txt', 'null.txt', cimp.kPathCmpFull))
+      end
+    )
+
+    itp('returns false for nonexistent same-name files without fullname fallback', function()
+      eq(false, path_equal('null.txt', 'null.txt'))
     end)
 
-    itp('returns kBothFilesMissing when files that dont exist', function()
-      eq(cimp.kBothFilesMissing, (path_full_compare('null.txt', 'null.txt')))
+    itp('returns false when passed different files', function()
+      eq(false, path_equal(f1, f2))
+      eq(false, path_equal(f2, f1))
     end)
 
-    itp('returns kDifferentFiles when passed different files', function()
-      eq(cimp.kDifferentFiles, (path_full_compare(f1, f2)))
-      eq(cimp.kDifferentFiles, (path_full_compare(f2, f1)))
+    itp('returns false if only one does not exist', function()
+      eq(false, path_equal(f1, 'null.txt'))
+      eq(false, path_equal('null.txt', f1))
     end)
 
-    itp('returns kOneFileMissing if only one does not exist', function()
-      eq(cimp.kOneFileMissing, (path_full_compare(f1, 'null.txt')))
-      eq(cimp.kOneFileMissing, (path_full_compare('null.txt', f1)))
+    itp('returns false if two files differ literally', function()
+      eq(false, path_equal('null1.txt', 'null2.txt', cimp.kPathCmpLiteral))
+    end)
+
+    itp("respects 'fileignorecase' option", function()
+      options.p_fic = false
+      eq(false, path_equal('Foo', 'foo', cimp.kPathCmpLiteral))
+      options.p_fic = true
+      eq(true, path_equal('Foo', 'foo', cimp.kPathCmpLiteral))
+      -- mb_toupper considers ß and ẞ equal, but not İ and i.
+      -- utf_fold keeps them as they are.
+      eq(false, path_equal('foß', 'foẞ', cimp.kPathCmpLiteral))
+      eq(false, path_equal('foİ', 'foi', cimp.kPathCmpLiteral))
+    end)
+  end)
+
+  describe('path_cmp', function()
+    local function path_cmp(a, b, maxlen)
+      return cimp.path_cmp(options.p_fic, to_cstr(a), to_cstr(b), maxlen)
+    end
+
+    itp('returns 0 when passed same paths', function()
+      eq(0, path_cmp('foo/bar', 'foo/bar', 7))
+    end)
+
+    itp('returns non-zero when passed different paths', function()
+      eq(1, path_cmp('foobar', 'foo/bar', 7))
+      eq(-1, path_cmp('foo/bar', 'foobar', 7))
+      neq(0, path_cmp('foo/bar', 'foo/baz', 7))
+    end)
+
+    itp('returns 0 when maxlen truncates to a common prefix', function()
+      eq(0, path_cmp('foo/bar', 'foo/baz', 6))
+    end)
+
+    itp('ignores a single trailing path sep', function()
+      eq(0, path_cmp('foo', 'foo/', 4))
+      neq(0, path_cmp('/', '//', 2))
+      neq(0, path_cmp('foo', 'foo//', 5))
+      neq(0, path_cmp('foo/', 'foo//', 5))
     end)
   end)
 

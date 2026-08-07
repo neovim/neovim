@@ -110,7 +110,7 @@ void ga_remove_duplicate_strings(garray_T *gap)
 
   // loop over the growing array in reverse
   for (int i = gap->ga_len - 1; i > 0; i--) {
-    if (path_fnamecmp(fnames[i - 1], fnames[i]) == 0) {
+    if (path_equal(fnames[i - 1], fnames[i], kPathCmpLiteral)) {
       xfree(fnames[i]);
 
       // close the gap (move all strings one slot lower)

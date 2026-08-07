@@ -539,7 +539,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
   // add the "help-tags" tag.
   ga_init(&ga, (int)sizeof(char *), 100);
   if (add_help_tags
-      || path_full_compare("$VIMRUNTIME/doc", dir, false, true) == kEqualFiles) {
+      || path_equal("$VIMRUNTIME/doc", dir, kPathCmpExpand)) {
     size_t s_len = 18 + strlen(tagfname);
     s = xmalloc(s_len);
     snprintf(s, s_len, "help-tags\t%s\t1\n", tagfname);

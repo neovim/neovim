@@ -466,9 +466,8 @@ bool editing_arg_idx(win_T *win)
            || (win->w_buffer->b_fnum
                != WARGLIST(win)[win->w_arg_idx].ae_fnum
                && (win->w_buffer->b_ffname == NULL
-                   || !(path_full_compare(alist_name(&WARGLIST(win)[win->w_arg_idx]),
-                                          win->w_buffer->b_ffname, true,
-                                          true) & kEqualFiles))));
+                   || !path_equal(alist_name(&WARGLIST(win)[win->w_arg_idx]),
+                                  win->w_buffer->b_ffname, kPathCmpExpand | kPathCmpFull))));
 }
 
 /// Check if window "win" is editing the w_arg_idx file in its argument list.
@@ -485,9 +484,8 @@ void check_arg_idx(win_T *win)
         && win->w_arg_idx < GARGCOUNT
         && (win->w_buffer->b_fnum == GARGLIST[GARGCOUNT - 1].ae_fnum
             || (win->w_buffer->b_ffname != NULL
-                && (path_full_compare(alist_name(&GARGLIST[GARGCOUNT - 1]),
-                                      win->w_buffer->b_ffname, true, true)
-                    & kEqualFiles)))) {
+                && path_equal(alist_name(&GARGLIST[GARGCOUNT - 1]),
+                              win->w_buffer->b_ffname, kPathCmpExpand | kPathCmpFull)))) {
       arg_had_last = true;
     }
   } else {
@@ -701,7 +699,7 @@ void ex_argdedupe(exarg_T *eap FUNC_ATTR_UNUSED)
 
     for (int j = i + 1; j < ARGCOUNT; j++) {
       char *secondFullname = FullName_save(ARGLIST[j].ae_fname, false);
-      bool areNamesDuplicate = path_fnamecmp(firstFullname, secondFullname) == 0;
+      bool areNamesDuplicate = path_equal(firstFullname, secondFullname, kPathCmpLiteral);
       xfree(secondFullname);
 
       if (areNamesDuplicate) {
@@ -868,9 +866,8 @@ static void arg_all_close_unused_windows(arg_all_state_T *aall)
         for (i = 0; i < aall->opened_len; i++) {
           if (i < aall->alist->al_ga.ga_len
               && (AARGLIST(aall->alist)[i].ae_fnum == buf->b_fnum
-                  || path_full_compare(alist_name(&AARGLIST(aall->alist)[i]),
-                                       buf->b_ffname,
-                                       true, true) & kEqualFiles)) {
+                  || path_equal(alist_name(&AARGLIST(aall->alist)[i]),
+                                buf->b_ffname, kPathCmpExpand | kPathCmpFull))) {
             int weight = 1;
 
             if (old_curtab == curtab) {

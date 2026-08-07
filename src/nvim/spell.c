@@ -1974,7 +1974,7 @@ char *parse_spelllang(win_T *wp)
     // If the name ends in ".spl" use it as the name of the spell file.
     // If there is a region name let "region" point to it and remove it
     // from the name.
-    if (len > 4 && path_fnamecmp(lang + len - 4, ".spl") == 0) {
+    if (len > 4 && path_equal(lang + len - 4, ".spl", kPathCmpLiteral)) {
       filename = true;
 
       // Locate a region and remove it from the file name.
@@ -1990,8 +1990,7 @@ char *parse_spelllang(win_T *wp)
 
       // Check if we loaded this language before.
       for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
-        if (path_full_compare(lang, slang->sl_fname, false, true)
-            == kEqualFiles) {
+        if (path_equal(lang, slang->sl_fname, kPathCmpExpand)) {
           break;
         }
       }
@@ -2039,7 +2038,7 @@ char *parse_spelllang(win_T *wp)
     // Loop over the languages, there can be several files for "lang".
     for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
       if (filename
-          ? path_full_compare(lang, slang->sl_fname, false, true) == kEqualFiles
+          ? path_equal(lang, slang->sl_fname, kPathCmpExpand)
           : STRICMP(lang, slang->sl_name) == 0) {
         int region_mask = REGION_ALL;
         if (!filename && region != NULL) {
@@ -2098,7 +2097,7 @@ char *parse_spelllang(win_T *wp)
       for (c = 0; c < ga.ga_len; c++) {
         char *p = LANGP_ENTRY(ga, c)->lp_slang->sl_fname;
         if (p != NULL
-            && path_full_compare(spf_name, p, false, true) == kEqualFiles) {
+            && path_equal(spf_name, p, kPathCmpExpand)) {
           break;
         }
       }
@@ -2111,8 +2110,7 @@ char *parse_spelllang(win_T *wp)
 
     // Check if it was loaded already.
     for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
-      if (path_full_compare(spf_name, slang->sl_fname, false, true)
-          == kEqualFiles) {
+      if (path_equal(spf_name, slang->sl_fname, kPathCmpExpand)) {
         break;
       }
     }

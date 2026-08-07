@@ -934,8 +934,8 @@ char *vim_findfile(void *search_ctx_arg)
       if (strncmp(stackp->ffs_wc_path.data, "**", 2) == 0) {
         for (int i = stackp->ffs_filearray_cur;
              i < stackp->ffs_filearray_size; i++) {
-          if (path_fnamecmp(stackp->ffs_filearray[i],
-                            stackp->ffs_fix_path.data) == 0) {
+          if (path_equal(stackp->ffs_filearray[i],
+                         stackp->ffs_fix_path.data, kPathCmpLiteral)) {
             continue;             // don't repush same directory
           }
           if (!os_isdir(stackp->ffs_filearray[i])) {
@@ -1071,7 +1071,7 @@ static ff_visited_list_hdr_T *ff_get_visited_list(char *filename, size_t filenam
   if (*list_headp != NULL) {
     retptr = *list_headp;
     while (retptr != NULL) {
-      if (path_fnamecmp(filename, retptr->ffvl_filename) == 0) {
+      if (path_equal(filename, retptr->ffvl_filename, kPathCmpLiteral)) {
 #ifdef FF_VERBOSE
         if (p_verbose >= 5) {
           verbose_enter_scroll();
@@ -1171,7 +1171,7 @@ static int ff_check_visited(ff_visited_T **visited_list, char *fname, size_t fna
 
   // check against list of already visited files
   for (vp = *visited_list; vp != NULL; vp = vp->ffv_next) {
-    if ((url && path_fnamecmp(vp->ffv_fname, ff_expand_buffer.data) == 0)
+    if ((url && path_equal(vp->ffv_fname, ff_expand_buffer.data, kPathCmpLiteral))
         || (!url && vp->file_id_valid
             && os_fileid_equal(&(vp->file_id), &file_id))) {
       // are the wildcard parts equal
@@ -1327,7 +1327,7 @@ static bool ff_path_in_stoplist(char *path, size_t path_len, String *stopdirs_v)
     // match for parent directory. So '/home' also matches
     // '/home/rks'. Check for PATHSEP in stopdirs_v[i], else
     // '/home/r' would also match '/home/rks'
-    if (path_fnamencmp(stopdirs_v[i].data, path, path_len) == 0
+    if (path_cmp(p_fic, stopdirs_v[i].data, path, path_len) == 0
         && (stopdirs_v[i].size <= path_len
             || vim_ispathsep(stopdirs_v[i].data[path_len]))) {
       return true;
@@ -1909,7 +1909,7 @@ int vim_chdirfile(char *fname, CdCause cause)
     NameBuff[0] = NUL;
   }
 
-  if (pathcmp(dir, NameBuff, -1) == 0) {
+  if (path_equal(dir, NameBuff, kPathCmpLiteral)) {
     // nothing to do
     return OK;
   }

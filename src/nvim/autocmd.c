@@ -37,6 +37,7 @@
 #include "nvim/lua/executor.h"
 #include "nvim/main.h"
 #include "nvim/map_defs.h"
+#include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option.h"
@@ -2256,7 +2257,7 @@ bool au_exists(const char *const arg)
   }
 
   // if pattern is "<buffer>", special handling is needed which uses curbuf
-  // for pattern "<buffer=N>, path_fnamecmp() will work fine
+  // for pattern "<buffer=N>, mb_strcmp_ic() will work fine
   if (pattern != NULL && STRICMP(pattern, "<buffer>") == 0) {
     buflocal_buf = curbuf;
   }
@@ -2265,12 +2266,12 @@ bool au_exists(const char *const arg)
   for (size_t i = 0; i < kv_size(*acs); i++) {
     AutoPat *const ap = kv_A(*acs, i).pat;
     // Only use a pattern when it has not been removed.
-    // For buffer-local autocommands, path_fnamecmp() works fine.
+    // Patterns are matched verbatim (like do_autocmd): mb_strcmp_ic instead of path_equal.
     if (ap != NULL
         && (group == AUGROUP_ALL || ap->group == group)
         && (pattern == NULL
             || (buflocal_buf == NULL
-                ? path_fnamecmp(ap->pat, pattern) == 0
+                ? mb_strcmp_ic(p_fic, ap->pat, pattern) == 0
                 : ap->buflocal_nr == buflocal_buf->b_fnum))) {
       retval = true;
       break;

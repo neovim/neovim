@@ -1051,7 +1051,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
 #endif
 
   // true if writing over original
-  bool overwriting = buf->b_ffname != NULL && path_fnamecmp(ffname, buf->b_ffname) == 0;
+  bool overwriting = buf->b_ffname != NULL && path_equal(ffname, buf->b_ffname, kPathCmpLiteral);
 
   no_wait_return++;                 // don't wait for return yet
 

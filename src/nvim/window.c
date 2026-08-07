@@ -5389,7 +5389,7 @@ void update_cwd(CdCause cause)
         globaldir = xstrdup(cwd);
       }
     }
-    bool dir_differs = pathcmp(new_dir, cwd, -1) != 0;
+    bool dir_differs = !path_equal(new_dir, cwd, kPathCmpLiteral);
     if (!p_acd && dir_differs) {
       do_autocmd_dirchanged(new_dir, scope, cause, true);
     }
@@ -5403,7 +5403,7 @@ void update_cwd(CdCause cause)
   } else if (globaldir != NULL) {
     // Window nor buffer have a local directory and we are not in the global
     // directory: Change to the global directory.
-    bool dir_differs = pathcmp(globaldir, cwd, -1) != 0;
+    bool dir_differs = !path_equal(globaldir, cwd, kPathCmpLiteral);
     if (!p_acd && dir_differs) {
       do_autocmd_dirchanged(globaldir, kCdScopeGlobal, cause, true);
     }

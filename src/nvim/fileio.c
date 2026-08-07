@@ -2715,7 +2715,7 @@ int vim_rename(const char *from, const char *to)
   // When the names are identical, there is nothing to do.  When they refer
   // to the same file (ignoring case and slash/backslash differences) but
   // the file name differs we need to go through a temp file.
-  if (path_fnamecmp(from, to) == 0) {
+  if (path_equal(from, to, kPathCmpLiteral)) {
     if (p_fic && (strcmp(path_tail(from), path_tail(to)) != 0)) {
       use_tmp_file = true;
     } else {
