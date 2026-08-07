@@ -2684,6 +2684,7 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf, tabpage_T *prev
   }
 
   buf_T *old_curbuf = curbuf;
+  tabpage_T *save_lastused = lastused_tabpage;
 
   Terminal *term = win->w_buffer ? win->w_buffer->terminal : NULL;
   if (term) {
@@ -2705,6 +2706,12 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf, tabpage_T *prev
   // or closed the window when jumping to the other tab page.
   if (curtab != prev_curtab && valid_tabpage(prev_curtab) && prev_curtab->tp_firstwin == win) {
     win_close_othertab(win, free_buf, prev_curtab, false);
+  }
+
+  // Entering the other tab page made the closed one the last used tab page.
+  // Restore the previous one when it is still there.
+  if (valid_tabpage(save_lastused) && save_lastused != curtab) {
+    lastused_tabpage = save_lastused;
   }
   entering_window(curwin);
 
