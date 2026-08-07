@@ -938,9 +938,6 @@ bool buf_freeall(buf_T *buf, int flags)
   }
   syntax_clear(&buf->b_s);          // reset syntax info
   buf->b_flags &= ~BF_READERR;      // a read error is no longer relevant
-
-  XFREE_CLEAR(buf->b_localdir);
-  XFREE_CLEAR(buf->b_prevdir);
   return true;
 }
 
