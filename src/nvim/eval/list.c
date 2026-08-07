@@ -540,7 +540,7 @@ void f_count(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   bool error = false;
 
   if (argvars[2].v_type != VAR_UNKNOWN) {
-    ic = (int)tv_get_number_chk(&argvars[2], &error);
+    ic = (int)tv_get_bool_chk(&argvars[2], &error);
   }
 
   if (!error && argvars[0].v_type == VAR_STRING) {
