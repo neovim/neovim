@@ -98,6 +98,8 @@ src/terminal.c
 src/termlib.c
 src/testdir/Make_amiga.mak
 src/testdir/Make_dos.mak
+src/testdir/Make_ming.mak
+src/testdir/Make_mvc.mak
 src/testdir/crash/heap_overflow3
 src/testdir/lsan-suppress.txt
 src/testdir/samples/terminal_max_combining_chars.txt
