@@ -1146,7 +1146,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
   int search_attr = 0;                  // attributes desired by 'hlsearch' or ComplMatchIns
   int vcol_save_attr = 0;               // saved attr for 'cursorcolumn'
   int decor_attr = 0;                   // attributes desired by syntax and extmarks
-  int decor_attr_save = 0;              // decor_attr saved for gap_decor_attr
+  int syntax_attr = 0;                  // syntax-only part of "decor_attr"
+  int gap_attr_save = 0;                // attr for gaps showing no buffer text
   bool has_syntax = false;              // this buffer has syntax highl.
   int folded_attr = 0;                  // attributes for folded line
   int eol_hl_off = 0;                   // 1 if highlighted char after EOL
@@ -1856,7 +1857,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
 
       // Check if 'breakindent' applies and show it. Like the 'linebreak' filler, attrs must not
       // extend into this gap either (see attr_has_line_deco()).
-      int const gap_decor_attr = attr_has_line_deco(decor_attr_save) ? 0 : decor_attr_save;
+      int const gap_decor_attr = attr_has_line_deco(gap_attr_save) ? 0 : gap_attr_save;
       if (!wp->w_briopt_sbr) {
         handle_breakindent(wp, &wlv, gap_decor_attr);
       }
@@ -2275,6 +2276,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       ptr++;
 
       decor_attr = 0;
+      syntax_attr = 0;
       if (extra_check) {
         const bool no_plain_buffer = (wp->w_s->b_p_spo_flags & kOptSpoFlagNoplainbuffer) != 0;
         bool can_spell = !no_plain_buffer;
@@ -2315,6 +2317,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
 
         if (has_decor && v > 0) {
           // extmarks take preceedence over syntax.c
+          syntax_attr = decor_attr;
           decor_attr = hl_combine_attr(decor_attr, extmark_attr);
           decor_conceal = decor_state.conceal;
           can_spell = TRISTATE_TO_BOOL(decor_state.spell, can_spell);
@@ -2397,7 +2400,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
                                           wlv.char_attr);
         }
 
-        decor_attr_save = decor_attr;  // save current attr
+        // Gaps ('linebreak' filler, 'breakindent'/'showbreak' padding) show no buffer text, so only
+        // an "hl_eol" decoration draws there.
+        gap_attr_save = has_decor ? hl_combine_attr(syntax_attr, decor_state.current_hl_eol)
+                                  : decor_attr;
 
         // we don't want linebreak to apply for lines that start with
         // leading spaces, followed by long letters (since it would add
@@ -2428,6 +2434,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           if (mb_c != TAB) {
             if (on_last_col || attr_has_line_deco(search_attr)) {
               search_attr = 0;
+            }
+            if (has_decor) {
+              decor_attr = gap_attr_save;
             }
             if (attr_has_line_deco(decor_attr)) {
               decor_attr = 0;

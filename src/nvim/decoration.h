@@ -87,6 +87,7 @@ typedef struct {
   int row;
   int col_last;
   int current;
+  int current_hl_eol;  ///< "current" limited to ranges with "hl_eol"
   int eol_col;
 
   int conceal;

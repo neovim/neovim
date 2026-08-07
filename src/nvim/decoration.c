@@ -767,6 +767,7 @@ next_mark:
   int new_cur_end = 0;
 
   int attr = 0;
+  int hl_eol_attr = 0;
   int conceal = 0;
   schar_T conceal_char = 0;
   int conceal_attr = 0;
@@ -789,6 +790,9 @@ next_mark:
 
       if (r->attr_id > 0) {
         attr = hl_combine_attr(attr, r->attr_id);
+        if (r->kind == kDecorKindHighlight && (r->data.sh.flags & kSHHlEol)) {
+          hl_eol_attr = hl_combine_attr(hl_eol_attr, r->attr_id);
+        }
       }
 
       if (r->kind == kDecorKindHighlight && (r->data.sh.flags & kSHConceal)) {
@@ -852,6 +856,7 @@ next_mark:
   state->col_last = col_last;
 
   state->current = attr;
+  state->current_hl_eol = hl_eol_attr;
   state->conceal = conceal;
   state->conceal_char = conceal_char;
   state->conceal_attr = conceal_attr;
