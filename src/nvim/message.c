@@ -169,6 +169,18 @@ bool msg_id_exists(int64_t id)
   return id > 0 && id < msg_id_next;
 }
 
+/// Formats a progress-msg id for use by bufwrite.c/fileio.c.
+///
+/// @param msg_id  Buffer of `bufwrite_msg_id_size` bytes.
+void msg_id_for_bufwrite(char *msg_id, buf_T *buf, char *name)
+{
+  xstrlcpy(msg_id, "nvim.bufwrite ", bufwrite_msg_id_size);
+  size_t len = strlen(msg_id);
+  add_quoted_fname(msg_id + len, bufwrite_msg_id_size - len, buf, name);
+  // add_quoted_fname() appends a space for display; the id ends at the closing quote.
+  msg_id[strlen(msg_id) - 1] = NUL;
+}
+
 static void ui_ext_msg_set_pos(int row, bool scrolled)
 {
   char buf[MAX_SCHAR_SIZE];
@@ -1092,14 +1104,13 @@ char *msg_may_trunc(bool force, char *s)
   return s;
 }
 
-char *msg_progress(char *s, char *id, char *status, int hl_id, bool hist, bool trunc)
+/// Shows a progress-message.  A non-"running" `status` ends the message and announces the
+/// progress task as "done".
+///
+/// @param s    Message text.  NULL ends the message without showing anything.
+/// @param err  Show as an error message.
+char *msg_progress(char *s, char *id, char *status, int hl_id, bool hist, bool trunc, bool err)
 {
-  if (hist && (!trunc || ui_has(kUIMessages))) {
-    msg_hist_add(s, -1, 0);
-  }
-  if (trunc) {
-    s = msg_may_trunc(false, s);
-  }
   bool clear = false;
   MessageData data = {
     .source = cstr_as_string("nvim"),
@@ -1107,9 +1118,17 @@ char *msg_progress(char *s, char *id, char *status, int hl_id, bool hist, bool t
     .percent = -1,
   };
   HlMessage chunks = KV_INITIAL_VALUE;
-  kv_push(chunks, ((HlMessageChunk){ cstr_as_string(s), hl_id }));
+  if (s != NULL) {
+    if (hist && (!trunc || ui_has(kUIMessages))) {
+      msg_hist_add(s, -1, 0);
+    }
+    if (trunc) {
+      s = msg_may_trunc(false, s);
+    }
+    kv_push(chunks, ((HlMessageChunk){ cstr_as_string(s), hl_id }));
+  }
   msg_ext_no_fast();
-  msg_multihl(CSTR_AS_OBJ(id), chunks, "progress", false, false, &data, &clear);
+  msg_multihl(CSTR_AS_OBJ(id), chunks, "progress", false, err, &data, &clear);
   kv_destroy(chunks);
   ui_flush();
   return s;

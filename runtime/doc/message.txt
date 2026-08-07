@@ -891,6 +891,10 @@ Create or update a progress-message by calling |nvim_echo()| with
 `nvim_echo`. You can specify the id when calling `nvim_echo` to update an
 existing progress-message.
 
+Note: To avoid a "dangling" progress-message, always emit a non-"running"
+`status`, when your task is done; otherwise consumers (including Nvim itself)
+tracking the task by its message-id cannot know when the task is done.
+
 Events: ~
     • msg_show |ui-messages| event is fired for ext-ui upon creation/update of
       a progress-message
