@@ -725,6 +725,7 @@ local extension = {
   json5 = 'json5',
   jsonc = 'jsonc',
   jsonl = 'jsonl',
+  jsonld = 'jsonld',
   jsonnet = 'jsonnet',
   libsonnet = 'jsonnet',
   jsp = 'jsp',
