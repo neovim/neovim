@@ -25,8 +25,8 @@
             .lazy = true,
         },
         .treesitter = .{
-            .url = "git+https://github.com/tree-sitter/tree-sitter#4d0f126996baf50c99a15746c582cc423bcc3910",
-            .hash = "tree_sitter-0.27.0-Tw2sRwYnDADx0VoAlaRiIwWWVcPprfpTaTR5vJfQrcAb",
+            .url = "git+https://github.com/tree-sitter/tree-sitter#308aee0c90b0527b185b3100046781d69935c5c5",
+            .hash = "tree_sitter-0.27.0-Tw2sRyInDABGKEDtbdaXPvz52f0cFYqTIuTKdsHKVA5g",
             .lazy = true,
         },
         .libuv = .{
