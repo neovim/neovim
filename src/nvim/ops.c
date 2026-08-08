@@ -3370,7 +3370,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       cap->count0 = redo_VIsual.count;
       cap->count1 = (cap->count0 == 0 ? 1 : cap->count0);
     } else if (Visual.active) {
-      if (!gui_yank) {
+      if (!gui_yank && !oap->gn_visual) {
         // Save the current Visual area for '< and '> marks, and "gv"
         curbuf->b_visual.vi_start = Visual.start;
         curbuf->b_visual.vi_end = curwin->w_cursor;

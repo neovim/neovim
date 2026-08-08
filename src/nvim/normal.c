@@ -1778,6 +1778,7 @@ void clearop(oparg_T *oap)
   oap->motion_force = NUL;
   oap->use_reg_one = false;
   oap->restore_cursor = false;
+  oap->gn_visual = false;
   motion_force = NUL;
 }
 
@@ -5448,6 +5449,9 @@ static void nv_g_cmd(cmdarg_T *cap)
   // "gN" selects previous match
   case 'N':
   case 'n':
+    // With a pending operator, Visual mode is only used to delimit the match,
+    // so it must not update the Visual marks.
+    oap->gn_visual = !Visual.active && oap->op_type != OP_NOP;
     if (!current_search(cap->count1, cap->nchar == 'n')) {
       clearopbeep(oap);
     }

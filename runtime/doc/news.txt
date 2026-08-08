@@ -122,6 +122,8 @@ EDITOR
     cmdwin via |c_CTRL-F|.
 • Behavior of |:restart| changed. Use "!" (|:restart!|) to get the old behavior.
   • |ZR| now performs |:restart|. Add a count to change the behavior.
+• |gn| and |gN| with a pending operator (e.g. "cgn") no longer change the |'<|
+  and |'>| marks, the |gv| area, or |visualmode()|.
 
 EVENTS
 
