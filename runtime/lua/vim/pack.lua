@@ -232,6 +232,39 @@
 ----- To act on install from lockfile, run before very first `vim.pack.add()`
 ---vim.api.nvim_create_autocmd('PackChanged', { callback = hooks })
 ---```
+---[vim.pack-manifest]()
+---
+---Plugins can come with a special top level `pkg.json` manifest file with extra
+---information. If present, `vim.pack` uses it for improved user experience:
+---- Apply |:source| for scripts after triggering corresponding |vim.pack-events|.
+---  This allows plugins to define hooks that will be executed during plugin's lifetime.
+---  Sourcing is done with special context:
+---    - The |current-directory| is temporarily set to plugin's root (to make
+---      it easier to run |vim.system()| commands).
+---    - Plugin's path is temporarily ensured to be inside |'runtimepath'| (so script
+---      can use |require()| with plugin's module, possibly with explicit |package.loaded|
+---      reset inside `"update"` scripts).
+---- Running |:checkhealth| for `vim.pack` will perform extra checks to ensure
+---  healthy plugin installation.
+---
+---Full specification see at https://packspec.org/. See also |vim.pack.Manifest|.
+---A simple example:
+---```json
+---{
+---  "name": "best-plugin.nvim",
+---  "description": "The best plugin for Neovim",
+---  "engines": {
+---      "nvim": ">=0.13.0",
+---      "vim": ">=9.1.0"
+---  },
+---  "scripts": {
+---    "install": "scripts/install.lua",
+---    "preupdate": "scripts/preupdate.vim",
+---    "update": "scripts/update.vim",
+---    "preuninstall": "scripts/preuninstall.lua"
+---  }
+---}
+---```
 
 local api = vim.api
 local uv = vim.uv
@@ -516,14 +549,84 @@ end
 local active_plugins = {}
 local n_active_plugins = 0
 
+--- @class vim.pack.ManifestEngines
+--- @inlinedoc
+--- @field nvim? string Version range for Nvim.
+--- @field vim? string Version range for Vim.
+
+--- @class vim.pack.ManifestScripts
+--- @inlinedoc
+--- @field install? string Post install script.
+--- @field preupdate? string Pre update script.
+--- @field update? string Post update script.
+--- @field preuninstall? string Pre delete script.
+
+--- @class vim.pack.Manifest
+--- @field name? string Plugin name
+--- @field description? string Plugin description
+--- Supported engine versions. Values should be |vim.version.range()| compatible specs.
+--- @field engines? vim.pack.ManifestEngines
+--- Script locations (relative to plugin's root) to |:source| after triggering
+--- corresponding |vim.pack-events|.
+--- @field scripts? vim.pack.ManifestScripts
+
+--- @param path string
+--- @return vim.pack.Manifest?
+local function manifest_read(path)
+  local manifest_path = vim.fs.joinpath(path, 'pkg.json')
+  local stat = uv.fs_stat(manifest_path)
+  if not stat then
+    return nil
+  end
+
+  local fd = uv.fs_open(manifest_path, 'r', 438)
+  if not fd then
+    return {}
+  end
+
+  local data = assert(uv.fs_read(fd, stat.size, 0))
+  assert(uv.fs_close(fd))
+  local ok, res = pcall(vim.json.decode, data)
+  return (ok and type(res) == 'table') and res or {}
+end
+
+--- @param p vim.pack.Plug
+--- @param name string
+local function source_manifest_script(p, name)
+  local manifest = manifest_read(p.path)
+  if not (type(manifest) == 'table' and (manifest.scripts or {})[name]) then
+    return
+  end
+
+  local script_path = vim.fs.joinpath(p.path, (manifest.scripts or {})[name])
+  vim._with({ cwd = p.path, o = { runtimepath = vim.o.runtimepath } }, function()
+    vim.cmd.packadd({ p.spec.name, bang = true })
+    ---@diagnostic disable-next-line: no-unknown
+    local ok, err = pcall(vim.cmd.source, { script_path, magic = { file = false, bar = false } })
+    if not ok then
+      notify(err, 'WARN')
+    end
+  end)
+end
+
+local manifest_script_name_map = {
+  PackChangedPre = { update = 'preupdate', delete = 'preuninstall' },
+  PackChanged = { install = 'install', update = 'update' },
+}
+
 --- @param plugs vim.pack.Plug[]
 --- @param event_name 'PackChangedPre'|'PackChanged'
 --- @param kind 'install'|'update'|'delete'
 local function trigger_events(plugs, event_name, kind)
+  local manifest_script_name = manifest_script_name_map[event_name][kind]
   for _, p in ipairs(plugs) do
     local active = active_plugins[p.path] ~= nil
     local data = { active = active, kind = kind, spec = vim.deepcopy(p.spec), path = p.path }
     api.nvim_exec_autocmds(event_name, { pattern = p.path, data = data })
+
+    if manifest_script_name then
+      source_manifest_script(p, manifest_script_name)
+    end
   end
 end
 
@@ -1468,6 +1571,8 @@ end
 --- @class vim.pack.PlugData
 --- @field active boolean Whether plugin was added via |vim.pack.add()| to current session.
 --- @field branches? string[] Available Git branches (first is default). Missing if `info=false`.
+--- Data from the |vim.pack-manifest|. Empty in case of reading error. Missing if `info=false`.
+--- @field manifest? vim.pack.Manifest
 --- @field path string Plugin's path on disk.
 --- @field rev string Current Git revision. Taken from |vim.pack-lockfile| if `info=false`.
 --- Git revision of a pending update. The same as used during |vim.pack.update()| and which
@@ -1494,6 +1599,7 @@ local function add_p_data_info(p_data_list, offline)
     funs[i] = function()
       p_data.branches = git_get_branches(path)
       p_data.tags = git_get_tags(path)
+      p_data.manifest = manifest_read(path)
 
       if not offline then
         git_fetch(path)

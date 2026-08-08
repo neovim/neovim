@@ -244,6 +244,63 @@ function repos_setup.with_subs()
   git_add_commit('Second commit for "with_subs"', 'with_subs')
 end
 
+function repos_setup.with_manifest()
+  init_test_repo('manifest')
+
+  repo_write_file('manifest', 'lua/manifest.lua', 'return "manifest init"')
+
+  local manifest_tbl = {
+    name = 'plug',
+    description = 'Nvim plugin',
+    engine = { nvim = '>=0.12.0', vim = '>=9.1.0' },
+    -- Should handle both `*.lua` and `*.vim` files
+    scripts = {
+      install = 'scripts/install.lua',
+      preupdate = 'scripts/preupdate.vim',
+      update = 'scripts/update.lua',
+      preuninstall = 'scirpts/preuninstall.vim',
+    },
+  }
+  repo_write_file('manifest', 'pkg.json', vim.json.encode(manifest_tbl))
+
+  -- Create scripts that use Lua module from the same plugin
+  local hook_module_text = [[
+    return {
+      hook = function(script_name)
+        -- NOTE: share the log with the one used for watching events to test
+        -- relative order of events and script
+        _G.event_log = _G.event_log or {}
+        local rtp = vim.api.nvim_list_runtime_paths()
+        local data = { kind = script_name, cwd = vim.fs.normalize(vim.uv.cwd()), rtp = rtp }
+        table.insert(_G.event_log, { event = 'script', data = data })
+
+        -- Should handle errors during script exectuion
+        error('Error in ' .. script_name .. ' script')
+      end
+    }
+  ]]
+  repo_write_file('manifest', 'lua/manifest-hook.lua', hook_module_text)
+
+  for name, script_path in pairs(manifest_tbl.scripts) do
+    local text = ("require('manifest-hook').hook('%s')"):format(name)
+    if vim.endswith(script_path, '.vim') then
+      text = 'lua << EOF\n' .. text .. '\nEOF'
+    end
+    repo_write_file('manifest', script_path, text)
+  end
+
+  git_add_commit('Initial commit', 'manifest')
+
+  -- Add extra branch to test script execution in `vim.pack.update()`
+  git_cmd({ 'checkout', '-b', 'other-branch' }, 'manifest')
+  repo_write_file('manifest', 'lua/manifest.lua', 'return "manifest other-branch"')
+  local other_script = "_G.other_script = true\nrequire('manifest-hook').hook('update')"
+  repo_write_file('manifest', 'scripts/update.lua', other_script)
+  git_add_commit('Other commit', 'manifest')
+
+  git_cmd({ 'checkout', 'main' }, 'manifest')
+end
+
 -- Utility --------------------------------------------------------------------
 
 --- Execute `vim.pack.add()` inside `testnvim` instance
@@ -278,6 +335,17 @@ local function assert_packchanged(log_compact)
   eq(expected, log)
 end
 
+local function assert_manifest_scripts(plug_path, ref_log_trimmed)
+  -- Should be sourced in particular order relative to `PackChanged` events
+  local log_trimmed = {} --- @type table[]
+  for i, tbl in ipairs(exec_lua('return _G.event_log')) do
+    local rtp_has_plug = tbl.data.rtp and vim.tbl_contains(tbl.data.rtp, plug_path) or nil
+    local kind, cwd = tbl.data.kind, tbl.data.cwd
+    log_trimmed[i] = { event = tbl.event, kind = kind, cwd = cwd, rtp_has_plug = rtp_has_plug }
+  end
+  eq(ref_log_trimmed, log_trimmed)
+end
+
 local function track_nvim_echo()
   exec_lua(function()
     _G.echo_log = {}
@@ -288,6 +356,17 @@ local function track_nvim_echo()
       return nvim_echo_orig(...)
     end
   end)
+end
+
+local function is_in_echo_log(chunk_substring, chunk_hl)
+  ---@diagnostic disable-next-line: no-unknown
+  for _, msg in ipairs(exec_lua('return _G.echo_log')) do
+    local chunk = msg[1][1] --- @type [string, string]
+    if chunk[1]:find(chunk_substring, 0, true) and chunk[2] == chunk_hl then
+      return true
+    end
+  end
+  return false
 end
 
 --- @param echo_log table[]?
@@ -948,6 +1027,30 @@ describe('vim.pack', function()
         { '', 'install', 'defbranch', nil, false },
         { '', 'install', 'basic', 'feat-branch', false },
       })
+    end)
+
+    it('sources relevant manifest scripts', function()
+      watch_events({ 'PackChangedPre', 'PackChanged' })
+      track_nvim_echo()
+      local cwd = fn.getcwd()
+      exec_lua(function()
+        vim.pack.add({ repos_src.manifest }, { load = function() end })
+      end)
+
+      -- Should not have side effects after executing script in special context
+      eq(cwd, fn.getcwd())
+      local plug_path = pack_get_plug_path('manifest')
+      eq(false, vim.tbl_contains(api.nvim_list_runtime_paths(), plug_path))
+
+      -- Should execute script in special context after triggering events
+      assert_manifest_scripts(plug_path, {
+        { event = 'PackChangedPre', kind = 'install' },
+        { event = 'PackChanged', kind = 'install' },
+        { event = 'script', kind = 'install', cwd = plug_path, rtp_has_plug = true },
+      })
+
+      -- Should warn on errors during script execution
+      eq(true, is_in_echo_log('Error in install script', 'WarningMsg'))
     end)
 
     it('recognizes several `version` types', function()
@@ -2016,6 +2119,40 @@ describe('vim.pack', function()
       })
     end)
 
+    it('sources relevant manifest scripts', function()
+      vim_pack_add({ repos_src.manifest })
+      n.clear()
+
+      exec_lua(function()
+        local specs = { { src = repos_src.manifest, version = 'other-branch' } }
+        vim.pack.add(specs, { load = function() end })
+      end)
+
+      watch_events({ 'PackChangedPre', 'PackChanged' })
+      track_nvim_echo()
+      local cwd = fn.getcwd()
+      exec_lua("vim.pack.update({ 'manifest' }, { force = true })")
+
+      -- Should not have side effects after executing script in special context
+      eq(cwd, fn.getcwd())
+      local plug_path = pack_get_plug_path('manifest')
+      eq(false, vim.tbl_contains(api.nvim_list_runtime_paths(), plug_path))
+
+      -- Should execute script in special context after triggering events
+      assert_manifest_scripts(plug_path, {
+        { event = 'PackChangedPre', kind = 'update' },
+        { event = 'script', kind = 'preupdate', cwd = plug_path, rtp_has_plug = true },
+        { event = 'PackChanged', kind = 'update' },
+        { event = 'script', kind = 'update', cwd = plug_path, rtp_has_plug = true },
+      })
+      -- - Should execute update script as it is *after the update*
+      eq(true, exec_lua('return _G.other_script'))
+
+      -- Should warn on errors during script execution
+      eq(true, is_in_echo_log('Error in preupdate script', 'WarningMsg'))
+      eq(true, is_in_echo_log('Error in update script', 'WarningMsg'))
+    end)
+
     it('stashes before applying changes', function()
       local fetch_lua_file = vim.fs.joinpath(pack_get_plug_path('fetch'), 'lua', 'fetch.lua')
       fn.writefile({ 'A text that will be stashed' }, fetch_lua_file)
@@ -2227,6 +2364,21 @@ describe('vim.pack', function()
       )
       eq({ basic_data }, exec_lua('return vim.pack.get({ "basic" }, { info = false })'))
       eq({ defbranch_data }, exec_lua('return vim.pack.get({ "defbranch" }, { info = false })'))
+
+      -- Reports manifest
+      vim_pack_add({ repos_src.manifest })
+      local manifest_tbl = {
+        name = 'plug',
+        description = 'Nvim plugin',
+        engine = { nvim = '>=0.12.0', vim = '>=9.1.0' },
+        scripts = {
+          install = 'scripts/install.lua',
+          preupdate = 'scripts/preupdate.vim',
+          update = 'scripts/update.lua',
+          preuninstall = 'scirpts/preuninstall.vim',
+        },
+      }
+      eq(manifest_tbl, exec_lua('return vim.pack.get({ "manifest" })[1].manifest'))
     end)
 
     it('reports potential revision after update', function()
@@ -2492,6 +2644,31 @@ describe('vim.pack', function()
       eq({ plugins = {} }, vim.json.decode(fn.readblob(other_lock_path)))
       eq(false, pack_exists('basic'))
       eq(false, vim.uv.fs_stat(get_lock_path()) ~= nil)
+    end)
+
+    it('sources relevant manifest scripts', function()
+      vim_pack_add({ repos_src.manifest })
+      n.clear()
+
+      watch_events({ 'PackChangedPre', 'PackChanged' })
+      track_nvim_echo()
+      local cwd = fn.getcwd()
+      exec_lua("vim.pack.del({ 'manifest' })")
+
+      -- Should not have side effects after executing script in special context
+      eq(cwd, fn.getcwd())
+      local plug_path = pack_get_plug_path('manifest')
+      eq(false, vim.tbl_contains(api.nvim_list_runtime_paths(), plug_path))
+
+      -- Should execute script in special context after triggering events
+      assert_manifest_scripts(plug_path, {
+        { event = 'PackChangedPre', kind = 'delete' },
+        { event = 'script', kind = 'preuninstall', cwd = plug_path, rtp_has_plug = true },
+        { event = 'PackChanged', kind = 'delete' },
+      })
+
+      -- Should warn on errors during script execution
+      eq(true, is_in_echo_log('Error in preuninstall script', 'WarningMsg'))
     end)
 
     it('validates input', function()
