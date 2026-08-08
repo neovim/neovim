@@ -436,6 +436,70 @@ describe('vim.lsp.diagnostic', function()
       neq(push_ns, pull_ns)
     end)
 
+    it('deduplicates identical push and pull diagnostics for the same client', function()
+      local push_ns_count, _pull_ns_count, all_diags_count = exec_lua(function()
+        local diagnostic = _G.make_error('Same Diagnostic', 0, 0, 0, 4)
+
+        vim.lsp.diagnostic.on_publish_diagnostics(nil, {
+          uri = fake_uri,
+          diagnostics = { diagnostic },
+        }, { client_id = client_id })
+
+        vim.lsp.diagnostic.on_diagnostic(nil, {
+          kind = 'full',
+          items = { diagnostic },
+        }, {
+          params = {
+            textDocument = { uri = fake_uri },
+          },
+          uri = fake_uri,
+          client_id = client_id,
+          bufnr = diagnostic_bufnr,
+        }, {})
+
+        local push_ns = vim.lsp.diagnostic.get_namespace(client_id, false)
+        local pull_ns = vim.lsp.diagnostic.get_namespace(client_id, true)
+
+        return #vim.diagnostic.get(diagnostic_bufnr, { namespace = push_ns }),
+          #vim.diagnostic.get(diagnostic_bufnr, { namespace = pull_ns }),
+          #vim.diagnostic.get(diagnostic_bufnr)
+      end)
+
+      eq(0, push_ns_count)
+      eq(1, all_diags_count)
+    end)
+
+    it('routes pushed diagnostics into pull when a single pull provider is active', function()
+      local push_ns_count, all_diags_count = exec_lua(function()
+        local diagnostic = _G.make_error('Same Diagnostic', 0, 0, 0, 4)
+
+        vim.lsp.diagnostic.on_diagnostic(nil, {
+          kind = 'full',
+          items = { diagnostic },
+        }, {
+          params = {
+            textDocument = { uri = fake_uri },
+          },
+          uri = fake_uri,
+          client_id = client_id,
+          bufnr = diagnostic_bufnr,
+        }, {})
+
+        vim.lsp.diagnostic.on_publish_diagnostics(nil, {
+          uri = fake_uri,
+          diagnostics = { diagnostic },
+        }, { client_id = client_id })
+
+        local push_ns = vim.lsp.diagnostic.get_namespace(client_id, false)
+
+        return #vim.diagnostic.get(diagnostic_bufnr, { namespace = push_ns }),
+          #vim.diagnostic.get(diagnostic_bufnr)
+      end)
+
+      eq(0, push_ns_count)
+      eq(1, all_diags_count)
+    end)
+
     it('uses pull_id to isolate pull diagnostic namespaces', function()
       local first_count, second_count, total_count, first_ns, second_ns = exec_lua(function()
         vim.lsp.diagnostic.on_diagnostic(nil, {
