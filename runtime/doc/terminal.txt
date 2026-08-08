@@ -303,7 +303,9 @@ Terminal state files are stored in msgpack format. Example: >
     }
   `argv`        The command argument list of the terminal job.
   `content`     ANSI escape sequences of the scrollback and screen.
-  `cwd`         Working directory of the terminal job at spawn time.
+  `cwd`         Working directory. Uses the buffer-local directory
+                (|:bcd| or an OSC 7 handler) if set; otherwise falls
+                back to the spawn-time directory of the terminal job.
   `timestamp`   When the state was saved (seconds since epoch).
 
 Note: Appending to a terminal state file (`:write >>`) is not supported.
