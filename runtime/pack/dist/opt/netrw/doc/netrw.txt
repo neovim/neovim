@@ -2607,7 +2607,7 @@ your browsing preferences.  (see also: |netrw-settings|)
 				 otherwise                     "dir"
 
   *g:netrw_glob_escape*		='[]*?`{~$'  (unix)
-				='[]*?`{$'  (windows
+				='[]*?`{$'  (windows)
 				These characters in directory names are
 				escaped before applying glob()
 
