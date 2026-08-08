@@ -401,6 +401,13 @@ describe('system()', function()
     end)
   end)
 
+  describe('input passed as Blob', function()
+    it('writes the bytes verbatim to stdin', function()
+      eq('a\nb', eval('system("cat", 0z610a62)'))
+      eq('', eval('system("cat", v:_null_blob)'))
+    end)
+  end)
+
   it("with a program that doesn't close stdout will exit properly after passing input", function()
     local out = eval(string.format("system('%s', 'clip-data')", testprg('streams-test')))
     assert(out:sub(0, 5) == 'pid: ', out)
