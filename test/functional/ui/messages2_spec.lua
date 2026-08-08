@@ -190,7 +190,7 @@ describe('messages2', function()
     ]])
     -- Do enter the pager in normal mode.
     command('nmap <Esc> <Cmd>fclose<CR>')
-    feed('<CR>')
+    feed('g<lt>')
     screen:expect([[
       ^foo                                                  |
       foo                                                  |*12
@@ -727,6 +727,38 @@ describe('messages2', function()
                                                            |
     ]])
     t.eq(5, n.eval('g:set').filetype) -- still fires for 'filetype'
+  end)
+
+  it('<Plug>(nvim-pager) mapping can be used to enter pager', function()
+    -- Map <CR> to <Plug>(nvim-pager) so Enter opens the messages pager.
+    command('nmap <CR> <Plug>(nvim-pager)')
+
+    -- expand pager
+    command('echo "second\nthird"')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*10
+      {3:                                                     }|
+      second                                               |
+      third                                                |
+    ]])
+
+    feed('<CR>')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*9
+      {3:                                                     }|
+      ^second                                               |
+      third                                                |
+                                                           |
+    ]])
+
+    feed('q')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+                                                           |
+    ]])
   end)
 
   it('Search highlights only apply to pager', function()
