@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "nvim/decoration.h"
 #include "nvim/marktree_defs.h"
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
@@ -14,6 +15,18 @@ enum {
   kCharsizeFast,
 };
 
+/// Conceal-awareness spans two column domains:
+///
+/// - "vcol" (virtual column): position in the buffer's own coordinate space, as if nothing were
+///   concealed. What most of this file computes and returns.
+/// - "screen-layout column" ("scr_vcol" in charsize_regular()): "vcol" minus the cells hidden by
+///   persistent (marktree) conceal so far on the line, tracked in "scr_vcol_offset" below.
+///   'showbreak'/'breakindent'/'linebreak' row boundaries use it; 'tabstop' width does not, since
+///   concealing text before a tab must not shrink the tab stop.
+///
+/// Callers keep "vcol" raw and let ConcealWalk maintain "scr_vcol_offset"; charsize_regular()
+/// derives scr_vcol from the two.
+///
 /// Argument for char size functions.
 typedef struct {
   win_T *win;
@@ -28,7 +41,11 @@ typedef struct {
   int cur_text_width_right;  ///< Width of virtual text right of cursor.
 
   int max_head_vcol;         ///< See charsize_regular().
+  int scr_vcol_offset;       ///< Cells hidden by conceal so far, 0 when not conceal-aware.
   MarkTreeIter iter[1];
+
+  int row;                   ///< Buffer row (lnum - 1), or -1 for a bare string.
+  bool maybe_conceal;        ///< Line may have persistent conceal hiding cells.
 } CharsizeArg;
 
 typedef struct {
@@ -36,6 +53,24 @@ typedef struct {
   int head;  ///< Size of 'breakindent' etc. before the character (included in width).
   int tail;  ///< Size of 'linebreak' after the character (included in width).
 } CharSize;
+
+/// Tracks conceal-hidden width in csarg->scr_vcol_offset while a caller walks a line's characters.
+///
+/// Usage: conceal_walk_start(), then per character (in buffer-column order): measure it, then
+/// conceal_walk_advance() with its column and width. conceal_walk_end() when done.
+typedef struct {
+  DecorState state;
+  bool active;
+} ConcealWalk;
+
+/// Resume point for extconceal_off_before(), so a caller querying one line at increasing positions
+/// measures each character once instead of once per query. Zero-initialize per line; holds no
+/// marktree iterator, so it stays valid while other conceal walks run.
+typedef struct {
+  colnr_T col;     ///< Bytes measured so far.
+  int vcol;        ///< Virtual column at "col".
+  colnr_T hidden;  ///< Cells hidden by conceal before "col".
+} ConcealOffState;
 
 #include "plines.h.generated.h"
 #include "plines.h.inline.generated.h"
@@ -56,6 +91,40 @@ static inline CharSize win_charsize(CSType cstype, int vcol, char *ptr, int32_t 
     return charsize_fast(csarg, ptr, vcol, chr);
   } else {
     return charsize_regular(csarg, ptr, vcol, chr);
+  }
+}
+
+/// May run decor_conceal_materialise(), whose Lua callback can free the line buffer, so re-read
+/// csarg->line after this call; it is refreshed here.
+///
+/// @return true if conceal tracking is active for csarg's line (csarg->maybe_conceal).
+static inline bool conceal_walk_start(CharsizeArg *csarg, ConcealWalk *walk)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
+{
+  walk->active = linesize_conceal_start(csarg, &walk->state);
+  csarg->scr_vcol_offset = 0;
+  return walk->active;
+}
+
+/// Call once per character, right after measuring it, in increasing "col" order.
+///
+/// @return cells of "width" hidden by conceal for this character (0 if visible or inactive).
+static inline int conceal_walk_advance(CharsizeArg *csarg, ConcealWalk *walk, int col, int width)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
+{
+  if (!walk->active) {
+    return 0;
+  }
+  int const hidden = linesize_conceal_hidden(csarg, &walk->state, col, width);
+  csarg->scr_vcol_offset += hidden;
+  return hidden;
+}
+
+static inline void conceal_walk_end(ConcealWalk *walk)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
+{
+  if (walk->active) {
+    linesize_conceal_end(&walk->state);
   }
 }
 
@@ -87,7 +156,7 @@ static inline int win_linetabsize(win_T *wp, linenr_T lnum, char *line, colnr_T 
   if (cstype == kCharsizeFast) {
     return linesize_fast(&csarg, 0, len);
   } else {
-    return linesize_regular(&csarg, 0, len);
+    return linesize_regular(&csarg, 0, len, false);
   }
 }
 

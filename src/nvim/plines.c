@@ -12,7 +12,9 @@
 #include "nvim/charset.h"
 #include "nvim/decoration.h"
 #include "nvim/decoration_defs.h"
+#include "nvim/decoration_provider.h"
 #include "nvim/diff.h"
+#include "nvim/drawscreen.h"
 #include "nvim/fold.h"
 #include "nvim/globals.h"
 #include "nvim/indent.h"
@@ -67,7 +69,7 @@ int linetabsize_col(int startvcol, char *s)
   if (cstype == kCharsizeFast) {
     return linesize_fast(&csarg, startvcol, MAXCOL);
   } else {
-    return linesize_regular(&csarg, startvcol, MAXCOL);
+    return linesize_regular(&csarg, startvcol, MAXCOL, false);
   }
 }
 
@@ -88,6 +90,27 @@ int linetabsize_eol(win_T *wp, linenr_T lnum)
 
 static const uint32_t inline_filter[kMTMetaCount] = {[kMTMetaInline] = kMTFilterSelect };
 
+/// Whether persistent conceal may hide cells on line "lnum" of window "wp": 'conceallevel' is set
+/// and there are marktree or decoration-provider conceal marks, unless this is the cursor line and
+/// 'concealcursor' reveals it. This is CharsizeArg::maybe_conceal's formula, extracted so callers
+/// can cheaply check it (no marktree walk, unlike init_charsize_arg()) before deciding whether a
+/// conceal-aware walk is worth setting up at all.
+bool maybe_extconceal_line(win_T *wp, linenr_T lnum)
+{
+  return lnum > 0 && maybe_extconceal_buf(wp)
+         && !(wp == curwin && lnum == wp->w_cursor.lnum && !conceal_cursor_line(wp));
+}
+
+/// Whether persistent conceal may hide cells anywhere in window "wp": maybe_extconceal_line()
+/// without the 'concealcursor' test, for callers that measure lines other than the cursor one. The
+/// screen-line motions ask this rather than about one line, since they carry a single desired
+/// column across every line they visit.
+bool maybe_extconceal_buf(win_T *wp)
+{
+  return wp->w_p_cole > 0
+         && (wp->w_buffer->b_marktree->n_keys > 0 || decor_has_conceal_providers());
+}
+
 /// Prepare the structure passed to charsize functions.
 ///
 /// "line" is the start of the line.
@@ -97,11 +120,13 @@ CSType init_charsize_arg(CharsizeArg *csarg, win_T *wp, linenr_T lnum, char *lin
   csarg->win = wp;
   csarg->line = line;
   csarg->max_head_vcol = 0;
+  csarg->scr_vcol_offset = 0;
   csarg->cur_text_width_left = 0;
   csarg->cur_text_width_right = 0;
   csarg->virt_row = -1;
   csarg->indent_width = INT_MIN;
   csarg->use_tabstop = !wp->w_p_list || wp->w_p_lcs_chars.tab1;
+  csarg->row = lnum > 0 ? lnum - 1 : -1;
 
   if (lnum > 0) {
     if (marktree_itr_get_filter(wp->w_buffer->b_marktree, lnum - 1, 0, lnum, 0,
@@ -110,12 +135,44 @@ CSType init_charsize_arg(CharsizeArg *csarg, win_T *wp, linenr_T lnum, char *lin
     }
   }
 
-  if (csarg->virt_row >= 0
+  // A line whose cells may be hidden by conceal must use the regular path so that
+  // linesize_regular() can compute the conceal-aware screen-layout width. Conceal may come from the
+  // marktree or be materialised on demand by an `_on_conceal` decoration provider (see
+  // decor_conceal_materialise()).
+  csarg->maybe_conceal = maybe_extconceal_line(wp, lnum);
+
+  if (csarg->virt_row >= 0 || csarg->maybe_conceal
       || (wp->w_p_wrap && (wp->w_p_lbr || wp->w_p_bri || *get_showbreak_value(wp) != NUL))) {
     return kCharsizeRegular;
   } else {
     return kCharsizeFast;
   }
+}
+
+/// Sum of inline virtual text widths anchored exactly at buffer column "col" of row "row",
+/// advancing "iter" as needed (call with non-decreasing "col", like charsize_regular()'s own walk
+/// below). Uses its own iterator, not csarg->iter: the 'linebreak' lookahead below peeks ahead of
+/// columns the outer per-character caller hasn't reached, so it must not advance the shared one.
+static int lbr_inline_virt_width(buf_T *buf, win_T *wp, MarkTreeIter *iter, int row, int col)
+{
+  int width = 0;
+  while (true) {
+    MTKey mark = marktree_itr_current(iter);
+    if (mark.pos.row != row || mark.pos.col > col) {
+      break;
+    } else if (mark.pos.col == col && !mt_invalid(mark) && ns_in_win(mark.ns, wp)) {
+      DecorInline decor = mt_decor(mark);
+      DecorVirtText *vt = decor.ext ? decor.data.ext.vt : NULL;
+      while (vt) {
+        if (!(vt->flags & kVTIsLines) && vt->pos == kVPosInline) {
+          width += vt->width;
+        }
+        vt = vt->next;
+      }
+    }
+    marktree_itr_next_filter(buf->b_marktree, iter, row + 1, 0, inline_filter);
+  }
+  return width;
 }
 
 /// Get the number of cells taken up on the screen for the given arguments.
@@ -137,6 +194,13 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
   char *line = csarg->line;
   bool const use_tabstop = cur_char == TAB && csarg->use_tabstop;
   int mb_added = 0;
+
+  // Screen-layout equivalent of "vcol": excludes cells hidden by persistent conceal so far on this
+  // line. Row-boundary math ('showbreak'/'breakindent'/'linebreak') must use this so a wrapped
+  // line's break points match its displayed (not pre-conceal) width; 'tabstop' width keeps using
+  // the raw "vcol" parameter (position-dependent, unaffected by conceal). Equals "vcol" whenever
+  // the caller is not conceal-aware.
+  colnr_T const scr_vcol = vcol - (colnr_T)csarg->scr_vcol_offset;
 
   bool has_lcs_eol = wp->w_p_list && wp->w_p_lcs_chars.eol != NUL;
 
@@ -191,7 +255,7 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
     }
   }
 
-  if (is_doublewidth && wp->w_p_wrap && in_win_border(wp, vcol + size - 2)) {
+  if (is_doublewidth && wp->w_p_wrap && in_win_border(wp, scr_vcol + size - 2)) {
     // Count the ">" in the last column.
     size++;
     mb_added = 1;
@@ -206,7 +270,7 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
   if (size > 0 && wp->w_p_wrap && (*sbr != NUL || wp->w_p_bri)) {
     int col_off_prev = win_col_off(wp);
     int width2 = wp->w_view_width - col_off_prev + win_col_off2(wp);
-    colnr_T wcol = vcol + col_off_prev;
+    colnr_T wcol = scr_vcol + col_off_prev;
     colnr_T max_head_vcol = csarg->max_head_vcol;
     int added = 0;
 
@@ -293,13 +357,23 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
   // If 'linebreak' set check at a blank before a non-blank if the line
   // needs a break here.
   if (wp->w_p_lbr && wp->w_p_wrap && wp->w_view_width != 0
-      && vim_isbreak((uint8_t)cur[0]) && !vim_isbreak((uint8_t)cur[1])) {
-    char *t = csarg->line;
-    while (vim_isbreak((uint8_t)t[0])) {
-      t++;
+      && vim_isbreak((uint8_t)cur[0])) {
+    int next_c = (uint8_t)cur[1];
+    // A byte hidden by persistent conceal never reaches the screen, so it can't be the anchor that
+    // ends this break-run; look past any concealed run for the real next byte instead (see
+    // extconceal_lbr_anchor_ok()'s comment for why win_line() has the same requirement).
+    bool const anchor_ok = !csarg->maybe_conceal
+                           || extconceal_lbr_anchor_ok(wp, csarg->row + 1, line,
+                                                       (int)(cur - line), (int)(cur - line) + 1,
+                                                       &next_c);
+    if (anchor_ok && !vim_isbreak((uint8_t)next_c)) {
+      char *t = csarg->line;
+      while (vim_isbreak((uint8_t)t[0])) {
+        t++;
+      }
+      // 'linebreak' is only needed when not in leading whitespace.
+      need_lbr = cur >= t;
     }
-    // 'linebreak' is only needed when not in leading whitespace.
-    need_lbr = cur >= t;
   }
   if (need_lbr) {
     char *s = cur;
@@ -308,29 +382,61 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
     int numberextra = win_col_off(wp);
     colnr_T col_adj = size - 1;
     colnr_T colmax = (colnr_T)(wp->w_view_width - numberextra - col_adj);
-    if (vcol >= colmax) {
+    if (scr_vcol >= colmax) {
       colmax += col_adj;
       int n = colmax + win_col_off2(wp);
       if (n > 0) {
-        colmax += (((vcol - colmax) / n) + 1) * n - col_adj;
+        colmax += (((scr_vcol - colmax) / n) + 1) * n - col_adj;
       }
     }
+    // Discount conceal-hidden cells so "vcol2" stays in screen-layout terms like "scr_vcol". Uses
+    // its own DecorState (not ConcealWalk/csarg's): a second, concurrent DecorState/marktree
+    // iterator over the same row a caller's own outer walk already has active corrupts and
+    // crashes that walk. This one skips materialising the row again, since the caller's own walk
+    // already did.
+    DecorState lbr_state;
+    bool lbr_conceal = false;
+    if (csarg->maybe_conceal) {
+      lbr_state = (DecorState){ 0 };
+      lbr_conceal = decor_redraw_reset(wp, &lbr_state);
+      if (lbr_conceal) {
+        decor_redraw_line(wp, csarg->row, &lbr_state);
+      }
+    }
+    // Add inline virtual text width so "vcol2" matches the true displayed width, mirroring
+    // csarg->virt_row handling at the top of this function. Uses its own iterator (not csarg->iter)
+    // since this peeks ahead of columns the outer caller hasn't reached, independent of whether
+    // csarg->virt_row was cleared for the caller's own single-character measurement.
+    MarkTreeIter lbr_iter[1];
+    bool const lbr_virt = csarg->row >= 0
+                          && marktree_itr_get_filter(buf->b_marktree, csarg->row, 0,
+                                                     csarg->row + 1, 0, inline_filter, lbr_iter);
 
-    colnr_T vcol2 = vcol;
+    colnr_T vcol2 = scr_vcol;
     while (true) {
       char *ps = s;
       MB_PTR_ADV(s);
       int c = (uint8_t)(*s);
       if (!(c != NUL
-            && (vim_isbreak(c) || vcol2 == vcol || !vim_isbreak((uint8_t)(*ps))))) {
+            && (vim_isbreak(c) || vcol2 == scr_vcol || !vim_isbreak((uint8_t)(*ps))))) {
         break;
       }
 
-      vcol2 += win_chartabsize(wp, s, vcol2);
+      int const col = (int)(s - line);
+      int const w = win_chartabsize(wp, s, vcol2);
+      int const virt_w = lbr_virt ? lbr_inline_virt_width(buf, wp, lbr_iter, csarg->row, col) : 0;
+      int const hidden = lbr_conceal
+                         ? linesize_conceal_hidden(csarg, &lbr_state, col, w)
+                         : 0;
+      vcol2 += w + virt_w - hidden;
       if (vcol2 >= colmax) {  // doesn't fit
-        size = colmax - vcol + col_adj;
+        size = colmax - scr_vcol + col_adj;
         break;
       }
+    }
+
+    if (lbr_conceal) {
+      linesize_conceal_end(&lbr_state);
     }
   }
 
@@ -432,22 +538,313 @@ static bool in_win_border(win_T *wp, colnr_T vcol)
   return (vcol - width1) % width2 == width2 - 1;
 }
 
+/// Set up per-line persistent-conceal tracking for the screen-layout width.
+///
+/// Only persistent marktree conceal is considered (no decoration providers are invoked), which
+/// keeps plines_win_nofold() in sync with win_line(): win_line() only reflows non-ephemeral conceal
+/// (see decor_state.conceal_persistent).
+///
+/// Shared by any caller that walks a line's characters itself and must keep csarg->scr_vcol_offset
+/// in sync (getvcol(), coladvance2(), extconceal_off_before()).
+///
+/// @return true if conceal tracking is active for this line.
+bool linesize_conceal_start(CharsizeArg *csarg, DecorState *state)
+{
+  if (!csarg->maybe_conceal) {
+    return false;
+  }
+  // Let `_on_conceal` providers materialise this row's conceal into the marktree first, so the scan
+  // below sees provider (e.g. tree-sitter) conceal the same way as non-provider conceal.
+  decor_conceal_materialise(csarg->win, csarg->row);
+  // That callback can mutate the buffer (e.g. nvim_buf_set_extmark()), flushing memline's read
+  // cache and freeing the line buffer "csarg->line" points into. ml_get_buf() is a cheap no-op
+  // re-read when the row is still the cached one.
+  csarg->line = ml_get_buf(csarg->win->w_buffer, csarg->row + 1);
+  *state = (DecorState){ 0 };
+  if (decor_redraw_reset(csarg->win, state) == 0) {
+    return false;
+  }
+  decor_redraw_line(csarg->win, csarg->row, state);
+  return true;
+}
+
+/// @return number of cells at buffer column "col" hidden by persistent conceal (0 if visible).
+int linesize_conceal_hidden(CharsizeArg *csarg, DecorState *state, int col, int width)
+{
+  decor_redraw_col(csarg->win, col, -1, false, state, MAXCOL);
+  if (state->conceal == 0) {
+    return 0;
+  }
+  // Agrees with win_line()'s fully-hidden ("is_concealing") chars by construction, not just by
+  // convention: a concealed cell is hidden unless it is the region start showing a replacement
+  // char, using the same decor_conceal_is_start()/decor_conceal_has_char() accessors win_line()
+  // itself does for its persistent-conceal terms. At 'conceallevel' 1 a replacement (the custom
+  // cchar, or else a default space) is always shown; at level 2 only a custom cchar is shown; level
+  // 3 always hides.
+  bool const replacement = decor_conceal_is_start(state)
+                           && (decor_conceal_has_char(state) || csarg->win->w_p_cole == 1)
+                           && csarg->win->w_p_cole != 3;
+  if (replacement) {
+    return 0;
+  }
+  // "width" may bundle in an inline virtual text mark at this column (see charsize_regular()'s top
+  // section, recorded in csarg->cur_text_width_left/right). That mark is always drawn regardless of
+  // whether the character is concealed, so only the character's own portion of "width" can be
+  // hidden.
+  return width - csarg->cur_text_width_left - csarg->cur_text_width_right;
+}
+
+void linesize_conceal_end(DecorState *state)
+{
+  kv_destroy(state->ranges_i);
+  kv_destroy(state->slots);
+}
+
+/// Offset between a position's virtual column and its screen-layout column:
+/// screen_col = virtual_col - extconceal_off_before(). Only persistent (marktree) conceal is
+/// considered, matching win_line()'s reflow and plines_win_nofold()'s screen width.
+///
+/// @param      wp     window.
+/// @param      lnum   line number.
+/// @param      len    position to measure up to (exclusive).
+/// @param[out] vcolp  if non-NULL, set to the virtual column at "len" (unlike getvcol(), agrees
+///                    with scol2col() even across a decorated row boundary).
+/// @param      state  if non-NULL, resume from and update this state instead of measuring from the
+///                    line start. Ignored if "len" is behind it.
+///
+/// @return number of cells hidden before "len"; 0 if conceal doesn't apply to the line.
+int extconceal_off_before(win_T *wp, linenr_T lnum, colnr_T len, colnr_T *vcolp,
+                          ConcealOffState *state)
+{
+  CharsizeArg csarg;
+  init_charsize_arg(&csarg, wp, lnum, ml_get_buf(wp->w_buffer, lnum));
+
+  ConcealWalk walk;
+  if (!conceal_walk_start(&csarg, &walk)) {
+    if (vcolp != NULL) {
+      pos_T tp = { .lnum = lnum, .col = len, .coladd = 0 };
+      getvcol(wp, &tp, vcolp, NULL, NULL, 0);
+    }
+    return 0;
+  }
+  char *const line = csarg.line;
+
+  int vcol = 0;
+  colnr_T startcol = 0;
+  if (state != NULL && state->col <= len) {
+    // Skipping the columns before "startcol" is safe for the same reason extconceal_lbr_anchor_ok()
+    // can jump: decor_redraw_col()'s iterator advances monotonically regardless of distance. Inline
+    // virtual text there is likewise already in "state->vcol", and charsize_regular() only adds
+    // what is anchored exactly at the column it measures.
+    startcol = state->col;
+    vcol = state->vcol;
+    csarg.scr_vcol_offset = state->hidden;
+  }
+
+  StrCharInfo ci = utf_ptr2StrCharInfo(line + startcol);
+  while (ci.ptr - line < len && *ci.ptr != NUL) {
+    CharSize cs = charsize_regular(&csarg, ci.ptr, vcol, ci.chr.value);
+    conceal_walk_advance(&csarg, &walk, (int)(ci.ptr - line), cs.width);
+    vcol += cs.width;
+    ci = utfc_next(ci);
+  }
+
+  conceal_walk_end(&walk);
+  if (state != NULL) {
+    *state = (ConcealOffState){ .col = (colnr_T)(ci.ptr - line), .vcol = vcol,
+                                .hidden = csarg.scr_vcol_offset };
+  }
+  if (vcolp != NULL) {
+    *vcolp = (colnr_T)vcol;
+  }
+  return csarg.scr_vcol_offset;
+}
+
+/// For win_line()'s 'linebreak' check: a 'breakat' run closes by testing the byte after its last
+/// character (vim_isbreak()), and the word-push padding attaches to that last byte. A byte hidden
+/// by persistent conceal never advances the screen column, so padding on a concealed byte would be
+/// lost and the word never pushed to the next row.
+///
+/// Called from charsize_regular(), so must walk raw bytes instead of calling back into it. Queries
+/// "anchor_col"/"next_col" directly via linesize_conceal_hidden() instead of replaying from line
+/// start: decor_redraw_col()'s iterator advances monotonically regardless of jump distance, so
+/// this is equivalent to a full walk without the cost.
+///
+/// @param      wp         window.
+/// @param      lnum       line number.
+/// @param      line       start of the line.
+/// @param      anchor_col column of the candidate anchor byte (the current 'breakat' character).
+/// @param      next_col   column of the byte right after the anchor.
+/// @param[out] next_c     the byte to test with vim_isbreak(): "next_col"'s own byte, or the first
+///                        visible byte after it if "next_col" is itself concealed.
+///
+/// @return false if "anchor_col" is itself hidden, so it cannot anchor the padding.
+bool extconceal_lbr_anchor_ok(win_T *wp, linenr_T lnum, char *line, int anchor_col, int next_col,
+                              int *next_c)
+{
+  if (!maybe_extconceal_line(wp, lnum)) {
+    *next_c = (uint8_t)line[next_col];
+    return true;
+  }
+
+  CharsizeArg csarg;
+  init_charsize_arg(&csarg, wp, lnum, line);
+  ConcealWalk walk;
+  bool const active = conceal_walk_start(&csarg, &walk);
+  line = csarg.line;
+  *next_c = (uint8_t)line[next_col];
+  if (!active) {
+    return true;
+  }
+
+  // "next_col" is defined as the byte right after "anchor_col", so this is its byte length without
+  // needing to decode from the start of the line to find it.
+  bool const anchor_hidden = linesize_conceal_hidden(&csarg, &walk.state, anchor_col,
+                                                     next_col - anchor_col) > 0;
+
+  bool found_next = false;
+  char *p = line + next_col;
+  int len;
+  for (; *p != NUL; p += len) {
+    int const col = (int)(p - line);
+    len = utfc_ptr2len(p);
+    // The actual width value only matters to linesize_conceal_hidden()'s return magnitude, which
+    // this function ignores (it only checks for zero vs. non-zero); the byte length is a cheap
+    // stand-in that keeps the marktree walk's column tracking correct without measuring width.
+    if (linesize_conceal_hidden(&csarg, &walk.state, col, len) == 0) {
+      *next_c = (uint8_t)(*p);
+      found_next = true;
+      break;
+    }
+  }
+  // Everything from "next_col" to end-of-line is concealed: there is no next visible character, so
+  // report NUL rather than the raw (hidden) byte that happened to be sitting at "next_col".
+  if (!found_next) {
+    *next_c = NUL;
+  }
+
+  conceal_walk_end(&walk);
+  return !anchor_hidden;
+}
+
+/// Convert a screen-layout column "scol" to a buffer byte column on line "lnum" of window "wp",
+/// accounting for cells hidden by persistent conceal. This is the inverse of
+/// extconceal_off_before() and the screen-aware analog of mouse.c's vcol2col(): it walks the line
+/// accumulating displayed (screen) width, stepping over fully-hidden characters without consuming
+/// the target.
+///
+/// When conceal cannot apply (see extconceal_off_before()), this behaves exactly like the virtual
+/// walk. Sets "*coladdp" (if non-NULL) to the overshoot past the last visible column, as vcol2col()
+/// does, for 'virtualedit'.
+colnr_T scol2col(win_T *wp, linenr_T lnum, colnr_T scol, colnr_T *coladdp)
+{
+  CharsizeArg csarg;
+  CSType const cstype = init_charsize_arg(&csarg, wp, lnum, ml_get_buf(wp->w_buffer, lnum));
+
+  ConcealWalk walk;
+  bool const conceal = conceal_walk_start(&csarg, &walk);
+  char *const line = csarg.line;
+
+  StrCharInfo ci = utf_ptr2StrCharInfo(line);
+  int cur_vcol = 0;  // virtual column, needed for TAB width
+  int cur_scol = 0;  // screen column, compared against the target
+  int head_at_target = 0;  // decoration head width of the character "scol" landed in
+  int content_at_target = 0;  // that character's own width, excluding its head and tail
+  while (cur_scol < scol && *ci.ptr != NUL) {
+    CharSize const cs = win_charsize(cstype, cur_vcol, ci.ptr, ci.chr.value, &csarg);
+    int const w = cs.width;
+    int const hidden = conceal_walk_advance(&csarg, &walk, (int)(ci.ptr - line), w);
+    // "hidden" can be a partial amount, not just 0 or "w": an inline virt_text mark anchored on a
+    // concealed character keeps its own width visible (linesize_conceal_hidden() excludes it), so
+    // that width must still advance "cur_scol" even though the character itself is hidden.
+    int const visible = w - hidden;
+    if (visible > 0) {
+      if (cur_scol + visible > scol) {
+        head_at_target = cs.head;
+        content_at_target = visible - cs.head - cs.tail;
+        break;  // target falls within this visible character
+      }
+      cur_scol += visible;
+    }
+    cur_vcol += w;
+    ci = utfc_next(ci);
+  }
+
+  // A fully hidden character has no screen column: skip past one landed on, to the next character
+  // with any visible width (or EOL), since that is what is actually drawn at "scol".
+  while (conceal && *ci.ptr != NUL) {
+    int const w = win_charsize(cstype, cur_vcol, ci.ptr, ci.chr.value, &csarg).width;
+    if (conceal_walk_advance(&csarg, &walk, (int)(ci.ptr - line), w) < w) {
+      break;
+    }
+    cur_vcol += w;
+    ci = utfc_next(ci);
+  }
+
+  conceal_walk_end(&walk);
+
+  if (coladdp != NULL) {
+    // Measure past the character's own decoration head (if any), not its raw start: landing in the
+    // head resolves to this character (coladd 0). Reduces to "scol - cur_scol" when there is no
+    // head.
+    colnr_T const content_start = (colnr_T)(cur_scol + head_at_target);
+    colnr_T coladd = scol > content_start ? scol - content_start : 0;
+    // 'linebreak' pads the character that ends a screen row with filler cells (CharSize.tail) so
+    // that the word after it can start whole on the next row. Those cells display no buffer
+    // content, so a target landing in them is still this character, not virtual space past the
+    // line: clamp the offset to the character's own width. Only a walk that ran off the end of the
+    // line (no target character, so "content_at_target" stays 0) keeps a real 'virtualedit'
+    // overshoot. With 'virtualedit' the filler is reachable, so g$ can still stop there.
+    if (content_at_target > 0 && !virtual_active(wp)) {
+      coladd = MIN(coladd, (colnr_T)(content_at_target - 1));
+    }
+    *coladdp = coladd;
+  }
+  return (colnr_T)(ci.ptr - line);
+}
+
+/// Screen-layout width of line "lnum" in window "wp": like linetabsize(), but excluding cells
+/// hidden by persistent conceal. Equals linetabsize() when nothing on the line is concealed.
+int win_screen_linewidth(win_T *wp, linenr_T lnum)
+{
+  char *const line = ml_get_buf(wp->w_buffer, lnum);
+  CharsizeArg csarg;
+  CSType const cstype = init_charsize_arg(&csarg, wp, lnum, line);
+  if (cstype == kCharsizeFast) {
+    return linesize_fast(&csarg, 0, MAXCOL);
+  }
+  return linesize_regular(&csarg, 0, MAXCOL, true);
+}
+
 /// Calculate virtual column until the given "len".
 ///
 /// @param csarg    Argument to charsize functions.
 /// @param vcol_arg Starting virtual column.
 /// @param len      First byte of the end character, or MAXCOL.
+/// @param screen   When true, exclude concealed cells to get the screen-layout width.
 ///
 /// @return virtual column before the character at "len",
 ///         or full size of the line if "len" is MAXCOL.
-int linesize_regular(CharsizeArg *const csarg, int vcol_arg, colnr_T const len)
+int linesize_regular(CharsizeArg *const csarg, int vcol_arg, colnr_T const len, bool screen)
 {
-  char *const line = csarg->line;
   int64_t vcol = vcol_arg;
+  // Raw (pre-conceal) running vcol fed to charsize_regular(), so 'tabstop' alignment matches
+  // getvcol()/scol2col(): conceal must not shrink tab stops. "vcol" above is the screen-layout
+  // accumulator this function returns.
+  int64_t raw_vcol = vcol_arg;
+
+  ConcealWalk walk;
+  bool const conceal = screen && conceal_walk_start(csarg, &walk);
+  char *const line = csarg->line;
 
   StrCharInfo ci = utf_ptr2StrCharInfo(line);
   while (ci.ptr - line < len && *ci.ptr != NUL) {
-    vcol += charsize_regular(csarg, ci.ptr, vcol_arg, ci.chr.value).width;
+    CharSize cs = charsize_regular(csarg, ci.ptr, (colnr_T)raw_vcol, ci.chr.value);
+    int const hidden = conceal
+                       ? conceal_walk_advance(csarg, &walk, (int)(ci.ptr - line), cs.width)
+                       : 0;
+    vcol += cs.width - hidden;
+    raw_vcol += cs.width;
     ci = utfc_next(ci);
     if (vcol > MAXCOL) {
       vcol_arg = MAXCOL;
@@ -457,9 +854,13 @@ int linesize_regular(CharsizeArg *const csarg, int vcol_arg, colnr_T const len)
     }
   }
 
+  if (conceal) {
+    conceal_walk_end(&walk);
+  }
+
   // Check for inline virtual text after the end of the line.
   if (len == MAXCOL && csarg->virt_row >= 0 && *ci.ptr == NUL) {
-    int head = charsize_regular(csarg, ci.ptr, vcol_arg, ci.chr.value).head;
+    int head = charsize_regular(csarg, ci.ptr, (colnr_T)raw_vcol, ci.chr.value).head;
     vcol += csarg->cur_text_width_left + csarg->cur_text_width_right + head;
     vcol_arg = vcol > MAXCOL ? MAXCOL : (int)vcol;
   }
@@ -529,13 +930,17 @@ static int virt_text_cursor_off(const CharsizeArg *csarg, bool on_NUL)
 /// @param flags
 void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *end, int flags)
 {
-  char *const line = ml_get_buf(wp->w_buffer, pos->lnum);  // start of the line
   colnr_T const end_col = pos->col;
 
   CharsizeArg csarg;
   bool on_NUL = false;
-  CSType const cstype = init_charsize_arg(&csarg, wp, pos->lnum, line);
+  CSType const cstype = init_charsize_arg(&csarg, wp, pos->lnum,
+                                          ml_get_buf(wp->w_buffer, pos->lnum));
   csarg.max_head_vcol = -1;
+
+  ConcealWalk walk;
+  conceal_walk_start(&csarg, &walk);
+  char *const line = csarg.line;
 
   colnr_T vcol = 0;
   CharSize char_size;
@@ -566,6 +971,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
         on_NUL = true;
         break;
       }
+      conceal_walk_advance(&csarg, &walk, (int)(ci.ptr - line), char_size.width);
       StrCharInfo const next = utfc_next(ci);
       if (next.ptr - line > end_col) {
         break;
@@ -574,6 +980,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
       vcol += char_size.width;
     }
   }
+  conceal_walk_end(&walk);
 
   if (*ci.ptr == NUL && end_col < MAXCOL && end_col > ci.ptr - line) {
     pos->col = (colnr_T)(ci.ptr - line);
@@ -775,6 +1182,23 @@ int plines_win_nofill(win_T *wp, linenr_T lnum, bool limit_winheight)
   return lines;
 }
 
+/// Number of screen rows that "col" screen cells of text occupy in window "wp" under 'wrap',
+/// accounting for the 'number'/'foldcolumn' offsets on the first and subsequent screen rows.
+static int win_text_width_to_plines(win_T *wp, int64_t col)
+{
+  int width = wp->w_view_width - win_col_off(wp);
+  if (width <= 0) {
+    return 32000;  // bigger than the number of screen lines
+  }
+  if (col <= width) {
+    return 1;
+  }
+  col -= width;
+  width += win_col_off2(wp);
+  const int64_t lines = (col + (width - 1)) / width + 1;
+  return (lines > 0 && lines <= INT_MAX) ? (int)lines : INT_MAX;
+}
+
 /// Get number of window lines physical line "lnum" will occupy in window "wp".
 /// Does not care about folding, 'wrap' or filler lines.
 int plines_win_nofold(win_T *wp, linenr_T lnum)
@@ -790,7 +1214,7 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
   if (cstype == kCharsizeFast) {
     col = linesize_fast(&csarg, 0, MAXCOL);
   } else {
-    col = linesize_regular(&csarg, 0, MAXCOL);
+    col = linesize_regular(&csarg, 0, MAXCOL, true);
   }
 
   // If list mode is on, then the '$' at the end of the line may take up one
@@ -799,18 +1223,73 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
     col += 1;
   }
 
-  // Add column offset for 'number', 'relativenumber' and 'foldcolumn'.
-  int width = wp->w_view_width - win_col_off(wp);
-  if (width <= 0) {
-    return 32000;  // bigger than the number of screen lines
+  return win_text_width_to_plines(wp, col);
+}
+
+/// Whether buffer line "lnum" occupies a different number of screen rows in window "wp" when its
+/// intra-line conceal is applied versus revealed. Moving the cursor onto/off such a line reveals or
+/// conceals it (unless 'concealcursor' applies), which shifts the layout of the lines below, so the
+/// whole window must be redrawn instead of incrementally scrolled (otherwise the TUI's scroll
+/// optimisation leaves stale cells). Only meaningful with 'wrap' and 'conceallevel' > 0 (any level,
+/// including 1's single-cell replacement character, can change a line's reflowed height);
+/// whole-line conceal ('conceal_lines') is handled separately via decor_conceal_line().
+bool extconceal_line_changes_height(win_T *wp, linenr_T lnum)
+{
+  if (!wp->w_p_wrap || wp->w_p_cole < 1 || wp->w_view_width == 0
+      || lnum < 1 || lnum > wp->w_buffer->b_ml.ml_line_count) {
+    return false;
   }
-  if (col <= width) {
-    return 1;
+  if (!(wp->w_buffer->b_marktree->n_keys > 0 || decor_has_conceal_providers())) {
+    return false;
   }
-  col -= width;
-  width += win_col_off2(wp);
-  const int64_t lines = (col + (width - 1)) / width + 1;
-  return (lines > 0 && lines <= INT_MAX) ? (int)lines : INT_MAX;
+
+  char *line = ml_get_buf(wp->w_buffer, lnum);
+
+  // Fast-reject: the buffer has conceal marks somewhere, but this specific line may have no
+  // decoration at all touching it (common for sparse, hand-placed conceal). Probe with the same
+  // (overlap-aware) DecorState setup linesize_regular() itself uses, without walking the line's
+  // actual text, and bail out before paying for that walk if nothing is here. Not conceal- specific
+  // (any decoration counts), so this helps less on lines already covered by unrelated decorations
+  // (e.g. treesitter highlights on every token).
+  CharsizeArg probe;
+  init_charsize_arg(&probe, wp, lnum, line);
+  probe.maybe_conceal = true;
+  DecorState state;
+  bool const has_state = linesize_conceal_start(&probe, &state);
+  bool const any_decor = has_state && decor_has_more_decorations(&state, probe.row);
+  if (has_state) {
+    linesize_conceal_end(&state);
+  }
+  if (!any_decor) {
+    return false;
+  }
+  // linesize_conceal_start() may have refreshed probe.line (a materialise callback can free the
+  // line buffer "line" still points into); carry that forward instead of the original pointer.
+  line = probe.line;
+
+  int const extra = (wp->w_p_list && wp->w_p_lcs_chars.eol != NUL) ? 1 : 0;
+
+  // Concealed width: force conceal evaluation regardless of whether this is the revealed cursor
+  // line, so we compare the two states of the same line.
+  CharsizeArg csarg;
+  init_charsize_arg(&csarg, wp, lnum, line);
+  csarg.maybe_conceal = true;
+  int64_t const concealed = linesize_regular(&csarg, 0, MAXCOL, true) + extra;
+
+  // linesize_regular() leaves the total hidden width in scr_vcol_offset; if nothing was actually
+  // hidden, the revealed width is the same by construction, so skip walking it too.
+  if (csarg.scr_vcol_offset == 0) {
+    return false;
+  }
+
+  // Revealed width: screen == false ignores conceal entirely (conceal-neutral).
+  init_charsize_arg(&csarg, wp, lnum, line);
+  int64_t const revealed = linesize_regular(&csarg, 0, MAXCOL, false) + extra;
+
+  if (revealed == concealed) {
+    return false;  // net width unchanged despite some hidden cells (e.g. padding shift)
+  }
+  return win_text_width_to_plines(wp, revealed) != win_text_width_to_plines(wp, concealed);
 }
 
 /// Like plines_win(), but only reports the number of physical screen lines
@@ -833,7 +1312,14 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
   CharsizeArg csarg;
   CSType const cstype = init_charsize_arg(&csarg, wp, lnum, line);
 
+  // Raw (pre-conceal) running vcol fed to charsize_regular()/win_charsize(), so 'tabstop' alignment
+  // matches getvcol()/scol2col() (see linesize_regular()).
+  ConcealWalk walk;
+  conceal_walk_start(&csarg, &walk);
+  line = csarg.line;
+
   colnr_T vcol = 0;
+  colnr_T raw_vcol = 0;
   StrCharInfo ci = utf_ptr2StrCharInfo(line);
   if (cstype == kCharsizeFast) {
     bool const use_tabstop = csarg.use_tabstop;
@@ -843,10 +1329,13 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
     }
   } else {
     while (*ci.ptr != NUL && ci.ptr < line + column) {
-      vcol += charsize_regular(&csarg, ci.ptr, vcol, ci.chr.value).width;
+      CharSize const cs = charsize_regular(&csarg, ci.ptr, raw_vcol, ci.chr.value);
+      vcol += cs.width - conceal_walk_advance(&csarg, &walk, (int)(ci.ptr - line), cs.width);
+      raw_vcol += cs.width;
       ci = utfc_next(ci);
     }
   }
+  conceal_walk_end(&walk);
 
   // If current char is a TAB, and the TAB is not displayed as ^I, and we're not
   // in MODE_INSERT state, then col must be adjusted so that it represents the
@@ -855,7 +1344,7 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
   // of 'ts') -- webb.
   colnr_T col = vcol;
   if (ci.chr.value == TAB && (State & MODE_NORMAL) && csarg.use_tabstop) {
-    col += win_charsize(cstype, col, ci.ptr, ci.chr.value, &csarg).width - 1;
+    col += win_charsize(cstype, raw_vcol, ci.ptr, ci.chr.value, &csarg).width - 1;
   }
 
   // Add column offset for 'number', 'relativenumber', 'foldcolumn', etc.

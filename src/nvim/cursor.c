@@ -104,6 +104,11 @@ static int coladvance2(win_T *wp, pos_T *pos, bool addspaces, bool finetune, col
                  || (Visual.active && *p_sel != 'o')
                  || ((get_ve_flags(wp) & kOptVeFlagOnemore) && wcol < MAXCOL);
 
+  // Materialise conceal before reading "line" below: decor_conceal_materialise() may run an
+  // `_on_conceal` Lua callback that mutates the buffer, which would otherwise invalidate "line"
+  // partway through this function. A no-op unless 'conceallevel' and a conceal provider are set.
+  decor_conceal_materialise(wp, pos->lnum - 1);
+
   char *line = ml_get_buf(wp->w_buffer, pos->lnum);
   int linelen = ml_get_buf_len(wp->w_buffer, pos->lnum);
 
@@ -143,15 +148,22 @@ static int coladvance2(win_T *wp, pos_T *pos, bool addspaces, bool finetune, col
 
     CharsizeArg csarg;
     CSType cstype = init_charsize_arg(&csarg, wp, pos->lnum, line);
+    // Track conceal-hidden width so 'linebreak'/'showbreak'/'breakindent' row-boundary math sees
+    // the screen-layout position on a concealed line: coladvance2() is getvcol()'s inverse and must
+    // agree with it, or a screen-column-derived target vcol can land one row short.
+    ConcealWalk walk;
+    conceal_walk_start(&csarg, &walk);
     StrCharInfo ci = utf_ptr2StrCharInfo(line);
     col = 0;
     while (col <= wcol && *ci.ptr != NUL) {
       CharSize cs = win_charsize(cstype, col, ci.ptr, ci.chr.value, &csarg);
       csize = cs.width;
       head = cs.head;
+      conceal_walk_advance(&csarg, &walk, (int)(ci.ptr - line), cs.width);
       col += cs.width;
       ci = utfc_next(ci);
     }
+    conceal_walk_end(&walk);
     idx = (int)(ci.ptr - line);
 
     // Handle all the special cases.  The virtual_active() check
