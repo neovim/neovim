@@ -13,6 +13,7 @@ local command = n.command
 local retry = t.retry
 local eq = t.eq
 local eval = n.eval
+local fn = n.fn
 local skip = t.skip
 local is_os = t.is_os
 local testprg = n.testprg
@@ -928,5 +929,180 @@ describe(':terminal with multigrid', function()
         {5:-- TERMINAL --}                                    |
       ]])
     end
+  end)
+end)
+
+describe(':terminal follow #41111', function()
+  before_each(clear)
+
+  --- Terminal window at the bottom, another window above it, focus in the terminal in
+  --- Terminal mode, with the terminal cursor parked 3 rows above the last line.
+  local function setup()
+    local screen = Screen.new(50, 10)
+    local buf = api.nvim_create_buf(true, true)
+    local chan = api.nvim_open_term(buf, {})
+    api.nvim_win_set_buf(0, buf)
+    command('new')
+    command('wincmd p')
+    feed('i')
+    api.nvim_chan_send(chan, 'l1\r\nl2\r\nl3\r\nl4\r\nl5\r\n\027[3A')
+    screen:expect([[
+                                                        |
+      {1:~                                                 }|*3
+      {2:[No Name]                                         }|
+      ^l4                                                |
+      l5                                                |
+                                                        |
+      {3:[Scratch] [-]                                     }|
+      {5:-- TERMINAL --}                                    |
+    ]])
+    return screen, chan
+  end
+
+  --- Like setup(), but the window above holds a second terminal, and focus is moved to it.
+  --- Terminal mode is never left, so terminal_enter() keeps running.
+  local function setup_two()
+    local screen = Screen.new(50, 10)
+    local buf = api.nvim_create_buf(true, true)
+    local chan = api.nvim_open_term(buf, {})
+    api.nvim_win_set_buf(0, buf)
+    command('new')
+    local buf2 = api.nvim_create_buf(true, true)
+    api.nvim_open_term(buf2, {})
+    api.nvim_win_set_buf(0, buf2)
+    command('wincmd p')
+    feed('i')
+    api.nvim_chan_send(chan, 'l1\r\nl2\r\nl3\r\nl4\r\nl5\r\n\027[3A')
+    feed('<Cmd>wincmd p<CR>')
+    return screen, chan
+  end
+
+  --- Emits two more lines, each preceded by a cursor-down and followed by a cursor-up,
+  --- like the repro script in the issue.
+  local function feed_more(chan)
+    api.nvim_chan_send(chan, '\027[3Bl6\r\n\027[3A')
+    api.nvim_chan_send(chan, '\027[3Bl7\r\n\027[3A')
+  end
+
+  --- Waits for the terminal buffer to have "n" lines, then reports whether its window follows.
+  local function following(n)
+    local termwin = fn.win_getid(2)
+    retry(nil, nil, function()
+      eq(n, fn.line('$', termwin))
+    end)
+    return api.nvim_win_get_cursor(termwin)[1] == n
+  end
+
+  it('keeps following after leaving the window with a command', function()
+    local screen, chan = setup()
+    feed('<Cmd>wincmd p<CR>')
+    feed_more(chan)
+    screen:expect([[
+      ^                                                  |
+      {1:~                                                 }|*3
+      {3:[No Name]                                         }|
+      l6                                                |
+      l7                                                |
+                                                        |
+      {2:[Scratch] [-]                                     }|
+                                                        |
+    ]])
+  end)
+
+  it('keeps following after leaving the window with a mouse click', function()
+    local _, chan = setup()
+    api.nvim_input_mouse('left', 'press', '', 0, 1, 5)
+    feed_more(chan)
+    eq(true, following(8))
+  end)
+
+  it('keeps following after switching to another terminal', function()
+    local screen, chan = setup_two()
+    feed_more(chan)
+    screen:expect([[
+      ^                                                  |
+                                                        |*3
+      {3:[Scratch] [-]                                     }|
+      l6                                                |
+      l7                                                |
+                                                        |
+      {2:[Scratch] [-]                                     }|
+      {5:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  -- Also checks that re-entering the window is not itself taken for a user cursor move.
+  it([[keeps following after <C-\><C-n>, leaving and re-entering the window]], function()
+    local _, chan = setup()
+    feed([[<C-\><C-n><C-W>p]])
+    feed_more(chan)
+    eq(true, following(8))
+    feed([[<C-W>p<C-W>p]])
+    feed_more(chan)
+    eq(true, following(10))
+  end)
+
+  it('keeps following after a ":" command', function()
+    local _, chan = setup()
+    feed([[<C-\><C-n>:echo<CR><C-W>p]])
+    feed_more(chan)
+    eq(true, following(8))
+  end)
+
+  -- The "cursor at last line" rule still decides, even after the user moved the cursor.
+  it('keeps following when the user moves the cursor to the last line', function()
+    local _, chan = setup()
+    feed([[<C-\><C-n>kG<C-W>p]])
+    feed_more(chan)
+    eq(true, following(8))
+  end)
+
+  it('stops following when the user moves the cursor away', function()
+    local _, chan = setup()
+    feed([[<C-\><C-n>k<C-W>p]])
+    feed_more(chan)
+    eq(false, following(8))
+  end)
+
+  -- Scrolling a terminal window reads history back, so the user is no longer watching the tail.
+  it('stops following when the user scrolls the window', function()
+    local _, chan = setup()
+    feed('<Cmd>wincmd p<CR>')
+    api.nvim_input_mouse('wheel', 'up', '', 0, 7, 7)
+    feed_more(chan)
+    eq(false, following(8))
+  end)
+
+  it('stops following when the user scrolls it from another terminal', function()
+    local _, chan = setup_two()
+    api.nvim_input_mouse('wheel', 'up', '', 0, 7, 7)
+    feed_more(chan)
+    eq(false, following(8))
+  end)
+
+  it('does not resume following after the user moved the cursor', function()
+    local _, chan = setup()
+    feed([[<C-\><C-n>k<C-W>p]])
+    feed_more(chan)
+    feed([[<C-W>p<C-W>p]])
+    feed_more(chan)
+    eq(false, following(10))
+  end)
+
+  it([[does not follow after <C-\><C-n> while the window is current]], function()
+    local screen, chan = setup()
+    feed([[<C-\><C-n>]])
+    feed_more(chan)
+    -- Cursor stays on the terminal cursor, so the output can be read. Unchanged behavior.
+    screen:expect([[
+                                                        |
+      {1:~                                                 }|*3
+      {2:[No Name]                                         }|
+      ^l4                                                |
+      l5                                                |
+      l6                                                |
+      {3:[Scratch] [-]                                     }|
+                                                        |
+    ]])
   end)
 end)

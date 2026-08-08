@@ -48,6 +48,7 @@
 #include "nvim/statusline.h"
 #include "nvim/statusline_defs.h"
 #include "nvim/strings.h"
+#include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"
@@ -1652,6 +1653,9 @@ void nv_mousescroll(cmdarg_T *cap)
 
   // Call the common mouse scroll function shared with other modes.
   do_mousescroll(cap);
+
+  // Scrolling reads history back; the user is no longer watching the tail, so stop following.
+  terminal_user_cursor(curwin);
 
   curwin->w_redr_status = true;
   curwin = old_curwin;

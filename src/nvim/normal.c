@@ -110,6 +110,8 @@ typedef struct {
   int c;
   int old_col;
   pos_T old_pos;
+  handle_T old_curwin;               // curwin when the command started
+  uint64_t old_term_stamp;           // terminal_cursor_stamp() when the command started
 } NormalState;
 
 static int VIsual_mode_orig = NUL;              // saved Visual mode
@@ -1067,6 +1069,8 @@ static int normal_execute(VimState *state, int key)
   s->command_finished = false;
   s->ctrl_w = false;                  // got CTRL-W command
   s->old_col = curwin->w_curswant;
+  s->old_curwin = curwin->handle;
+  s->old_term_stamp = terminal_cursor_stamp();
   s->c = key;
 
   LANGMAP_ADJUST(s->c, get_real_state() != MODE_SELECT);
@@ -1236,6 +1240,19 @@ static int normal_execute(VimState *state, int key)
 
 finish:
   normal_finish_command(s);
+
+  // The user, not the terminal, is now responsible for this window's cursor. Only for a command
+  // that stayed in the window it started in, else <C-w>w would mark the window it leaves or the
+  // one it enters. K_EVENT and K_IGNORE are not user commands, and a command that ran Terminal
+  // mode (e.g. "i") placed the cursor itself. The cursor must have actually moved: a command
+  // such as ":" or ":stopinsert" changes no cursor, so it must not stop following. #41111
+  if (curwin->handle == s->old_curwin
+      && s->ca.cmdchar != K_IGNORE && s->ca.cmdchar != K_EVENT
+      && terminal_cursor_stamp() == s->old_term_stamp
+      && !equalpos(curwin->w_cursor, s->old_pos)) {
+    terminal_user_cursor(curwin);
+  }
+
   return 1;
 }
 
