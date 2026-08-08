@@ -2327,6 +2327,13 @@ varnumber_T tv_dict_get_number_def(const dict_T *const d, const char *const key,
   return tv_get_number(&di->di_tv);
 }
 
+/// Gets a bool item from a dictionary, or a given default value.
+///
+/// @param[in]  d  Dictionary to get item from.
+/// @param[in]  key  Key to find in dictionary.
+/// @param[in]  def  Default value.
+///
+/// @return Number value, or `def` value if the item does not exist.
 varnumber_T tv_dict_get_bool(const dict_T *const d, const char *const key, const int def)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
