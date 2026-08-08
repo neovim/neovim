@@ -5650,6 +5650,23 @@ describe('decorations: inline virtual text', function()
     }
   end)
 
+  it('is counted when linebreak decides if a word fits', function()
+    screen:try_resize(20, 4)
+    exec([[
+      setlocal linebreak
+      call setline(1, repeat('a', 12) .. ' bbcc dd')
+    ]])
+    api.nvim_buf_set_extmark(0, ns, 0, 19, { virt_text = { { '[hint]' } }, virt_text_pos = 'inline' })
+    -- "dd" plus the virtual text does not fit in the 2 remaining cells, so the whole word moves
+    -- down instead of the virtual text being split across the boundary.
+    screen:expect([[
+      ^aaaaaaaaaaaa bbcc   |
+      d[hint]d            |
+      {1:~                   }|
+                          |
+    ]])
+  end)
+
   it('before double-width char that wraps', function()
     exec([[
       call setline(1, repeat('a', 40) .. '口' .. '12345')
