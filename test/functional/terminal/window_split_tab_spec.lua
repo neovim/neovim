@@ -114,6 +114,28 @@ describe(':terminal', function()
     ]])
   end)
 
+  it('forwards resize request during synchronized output (mode 2026)', function()
+    t.skip(is_os('win'), 'SIGWINCH is unreliable on Windows #7506')
+    feed([[<C-\><C-N>G]])
+    local w1, h1 = screen._width - 3, screen._height - 2
+    local w2, h2 = w1 - 6, h1 - 3
+
+    tt.feed_data('\027[?2026h')
+    sleep(100)
+    screen:try_resize(w1, h1)
+    sleep(100)
+    screen:try_resize(w2, h2)
+    sleep(100)
+    tt.feed_data('\027[?2026l')
+    screen:expect([[
+      tty ready                                |
+      rows: 7, cols: 47                        |
+      rows: 4, cols: 41                        |
+      ^                                         |
+                                               |
+    ]])
+  end)
+
   it('stays in terminal mode with <Cmd>wincmd', function()
     command('terminal')
     command('split')
