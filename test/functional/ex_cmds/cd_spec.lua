@@ -585,6 +585,18 @@ describe('cd during temp context-switch', function()
     eq(bufdir, cwd())
     command('bcd!')
   end)
+
+  it("nvim_win_set_buf keeps the caller's global cwd", function()
+    local globaldir = cwd()
+    local caller = call('nvim_get_current_win')
+    command('vsplit')
+    command('lcd ' .. join(startdir, directories.window))
+
+    call('nvim_win_set_buf', caller, call('nvim_create_buf', false, true))
+    call('nvim_set_current_win', caller)
+
+    eq({ 0, globaldir }, { call('haslocaldir'), cwd() })
+  end)
 end)
 
 -- Test legal parameters for 'getcwd' and 'haslocaldir'

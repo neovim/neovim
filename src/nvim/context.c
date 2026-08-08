@@ -308,8 +308,8 @@ static void ctx_localdirs_restore(CtxSwitch *cs, win_T *cwp, tabpage_T *tp, bool
 }
 
 /// Saves the dir state to be restored by ctx_dirs_restore():
-/// - kCtxKeepCwd or kCtxKeepDirs: the CWD, so any directory change caused by switching to `wp`
-///   ('autochdir', win/tab-local directories) can be undone.
+/// - kCtxKeepCwd or kCtxKeepDirs: the CWD and global-directory fallback, so any directory change
+///   caused by switching to `wp` ('autochdir', win/tab-local directories) can be undone.
 /// - kCtxKeepDirs: also copies of the target context's dir scopes (w/b/tp-local, global).
 static void ctx_dirs_save(CtxSwitch *cs, win_T *wp, tabpage_T *tp, buf_T *buf)
   FUNC_ATTR_NONNULL_ARG(1, 2, 3)
@@ -318,15 +318,15 @@ static void ctx_dirs_save(CtxSwitch *cs, win_T *wp, tabpage_T *tp, buf_T *buf)
     return;
   }
 
-  // kCtxKeepDirs: also save copies of the target context's dir scopes.
+  // kCtxKeepDirs: also save copies of the target context's local dir scopes.
   if (cs->cs_flags & kCtxKeepDirs) {
     buf_T *target_buf = buf != NULL ? buf : wp->w_buffer;
     cs->cs_dirs_tab = tp->handle;
     cs->cs_w_localdir = wp->w_localdir == NULL ? NULL : xstrdup(wp->w_localdir);
     cs->cs_b_localdir = target_buf->b_localdir == NULL ? NULL : xstrdup(target_buf->b_localdir);
     cs->cs_tp_localdir = tp->tp_localdir == NULL ? NULL : xstrdup(tp->tp_localdir);
-    cs->cs_globaldir = globaldir == NULL ? NULL : xstrdup(globaldir);
   }
+  cs->cs_globaldir = globaldir == NULL ? NULL : xstrdup(globaldir);
 
   // Getting and setting directory can be slow on some systems, only do this when the current or
   // target window/tab have a local directory or 'acd' is set, or if kCtxKeepDirs was set.
@@ -370,6 +370,15 @@ static void ctx_dirs_restore(CtxSwitch *cs)
       }
     }
     ctx_localdirs_restore(cs, NULL, dirs_tab, false);
+  } else if ((cs->cs_flags & kCtxKeepCwd) && cs->cs_ctxwin_idx < 0) {
+    // Switching to a context without a local directory may consume globaldir.
+    // Restore it unless an explicit :cd/:tcd/:lcd/:bcd happened while switched.
+    if (!_ctx_did_chdir) {
+      xfree(globaldir);
+      globaldir = cs->cs_globaldir;
+    } else {
+      xfree(cs->cs_globaldir);
+    }
   }
 
   // Restore the CWD itself.
