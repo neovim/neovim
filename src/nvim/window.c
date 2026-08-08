@@ -6832,6 +6832,9 @@ void win_fix_scroll(bool resize)
         int diff = (wp->w_winrow - wp->w_prev_winrow)
                    + (wp->w_height - wp->w_prev_height);
         pos_T cursor = wp->w_cursor;
+        linenr_T topline = wp->w_topline;
+        colnr_T skipcol = wp->w_skipcol;
+
         wp->w_cursor.lnum = wp->w_botline - 1;
 
         // Add difference in height and row to botline.
@@ -6846,6 +6849,10 @@ void win_fix_scroll(bool resize)
         wp->w_fraction = FRACTION_MULT;
         scroll_to_fraction(wp, wp->w_prev_height);
         wp->w_cursor = cursor;
+        // Keeping the same screen lines includes the skipped columns.
+        if (wp->w_topline == topline) {
+          wp->w_skipcol = skipcol;
+        }
         wp->w_valid &= ~VALID_WCOL;
       } else if (wp == curwin) {
         wp->w_valid &= ~VALID_CROW;
@@ -6967,13 +6974,14 @@ void scroll_to_fraction(win_T *wp, int prev_height)
       // Cursor line would go off top of screen if w_wrow was this high.
       // Make cursor line the first line in the window.  If not enough
       // room use w_skipcol;
+      int want_row = wp->w_wrow;  // where the cursor should be
       wp->w_wrow = line_size;
       if (wp->w_wrow >= wp->w_view_height
           && (wp->w_view_width - win_col_off(wp)) > 0) {
-        // The cursor must be visible, override the scroll position.
+        // Skip columns to get the cursor in the wanted row.
         colnr_T skipcol = wp->w_view_width - win_col_off(wp);
         wp->w_wrow--;
-        while (wp->w_wrow >= wp->w_view_height) {
+        while (wp->w_wrow > want_row) {
           skipcol += wp->w_view_width - win_col_off(wp) + win_col_off2(wp);
           wp->w_wrow--;
         }
