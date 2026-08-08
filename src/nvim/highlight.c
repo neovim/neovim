@@ -697,6 +697,10 @@ int hl_combine_attr(int char_attr, int prim_attr)
     new_en.hl_blend = prim_aep.hl_blend;
   }
 
+  if (prim_aep.font >= 0) {
+    new_en.font = prim_aep.font;
+  }
+
   if ((new_en.url == -1) && (prim_aep.url >= 0)) {
     new_en.url = prim_aep.url;
   }
