@@ -154,6 +154,7 @@ end
 --- - A hash of the normalized input is appended to prevent collisions.
 --- - Unsafe chars are replaced with "-".
 --- - `$HOME` is replaced with "~".
+--- - URIs (`scheme://...`) are prefixed with "=uri-{scheme}-".
 --- - UNC paths (Windows) are prefixed with "=unc-".
 --- - If `opts.maxlen` is exceeded, the result will be truncated to `{head}~~~{tail}-{hash8}`.
 --- - If the sanitized name is empty, the reserved label `=special` will be used.
@@ -165,6 +166,7 @@ end
 --- vim.print(vim.fs.slug('C:/src/project/main.c'))      --> "C--src-project-main.c-{hash}"
 --- vim.print(vim.fs.slug(vim.fn.expand('~/file.txt')))  --> "~-file.txt-{hash}"
 --- vim.print(vim.fs.slug('---'))                        --> "=special-{hash}"
+--- vim.print(vim.fs.slug('term://foo/bar//123:bash'))   --> "=uri-term-foo-bar-123-bash-{hash}"
 --- vim.print(vim.fs.slug(('/a/very/long/path'):rep(10) .. '/file.txt', { maxlen = 60 }))
 ---    --> "a-very-long-~~~-path-a-very-long-path-file.txt-{hash}"
 --- ```
@@ -182,13 +184,19 @@ function M.slug(path, opts)
   end, true, '`opts.maxlen` must be >= 8')
   local maxlen = opts.maxlen or 180
 
+  -- Capture URI scheme before normalize() collapses "://" to ":/" (which looks like "C:/")
+  local uri_scheme = path:match('^([a-zA-Z][a-zA-Z0-9.+-]*)://') ---@type string?
+
   -- Normalize before computing the hash so equivalent paths produce the same result
   path = vim.fs.normalize(path, { plain = true })
   local s = path
 
-  -- Replace $HOME with `~`
-  -- `fnamemodify` resolves relative paths against CWD, so only call it on absolute paths
-  if vim.startswith(s, '/') or (iswin and s:match('^%w:/')) then
+  if uri_scheme then
+    -- Replace scheme prefix with "=uri-{scheme}-"
+    s = '=uri-' .. uri_scheme .. '-' .. s:sub(#uri_scheme + 3) -- `+ 3` skips`:/`
+  elseif vim.startswith(s, '/') or (iswin and s:match('^%w:/')) then
+    -- Replace $HOME with `~`
+    -- `fnamemodify` resolves relative paths against CWD, so only call it on absolute paths
     s = vim.fn.fnamemodify(s, ':~')
   end
 

@@ -694,6 +694,10 @@ describe('vim.fs', function()
       eq('aux-321f6814', vim.fs.slug('aux'))
       eq('con.foo.bar-f386c405', vim.fs.slug('con.foo.bar'))
       eq('con-.-txt-48f98581', vim.fs.slug('con . txt'))
+      -- URIs are prefixed with `=uri-<scheme>-`.
+      eq('=uri-term-foo-bar-123-bash-7fd6bb99', vim.fs.slug('term://foo/bar//123:bash'))
+      eq('=uri-http-example.com-2e152ec0', vim.fs.slug('http://example.com'))
+      eq('=uri-scp-host-path-5188b9a2', vim.fs.slug('scp://host/path'))
       -- $HOME is replaced with `~`
       local p = vim.uv.os_homedir() .. '/my-project'
       local hash8_2 = vim.fn.sha256(vim.fs.normalize(p)):sub(1, 8)
