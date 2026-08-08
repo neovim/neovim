@@ -267,18 +267,34 @@ end
 
 --- Creates a new |vim.Pos| from extmark position (see |api-indexing|).
 ---
---- Example:
+--- `{row}` and `{col}` can be replaced with an `{extmark}` argument (of the
+--- type returned from [nvim_buf_get_extmarks()]).
+---
+--- Examples:
 --- ```lua
 --- local pos = vim.pos.extmark(0, 3, 5)
---- ```
+---
+--- -- Create from an extmark.
+--- local extmarks = vim.api.nvim_buf_get_extmarks(0, ...)
+--- local pos = vim.pos.extmark(0, extmarks[1])
 ---@param buf integer
 ---@param row integer
 ---@param col integer
 ---@return vim.Pos
+---@overload fun(buf: integer, extmark: vim.api.keyset.get_extmark_item): vim.Pos
 function M.extmark(buf, row, col)
   validate('buf', buf, 'number')
-  validate('row', row, 'number')
-  validate('col', col, 'number')
+
+  if col then
+    validate('row', row, 'number')
+    validate('col', col, 'number')
+  else
+    local extmark = row --[[@as vim.api.keyset.get_extmark_item]]
+    validate('extmark', extmark, 'table')
+    validate('extmark[2]', extmark[2], 'number')
+    validate('extmark[3]', extmark[3], 'number')
+    row, col = extmark[2], extmark[3]
+  end
 
   if buf == 0 then
     buf = api.nvim_get_current_buf()
