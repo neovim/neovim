@@ -75,7 +75,6 @@ describe('cmdwin', function()
     fn.histadd(':', 'let g:x = 1')
     fn.histadd(':', 'let g:y = 2')
     feed(':echo "hi"<C-F>')
-    n.poke_eventloop()
     eq(':', fn.getcmdwintype())
     -- The ":" history is presented. The in-flight cmdline must not be added to history (else it shows up twice).
     eq({ 'let g:x = 1', 'let g:y = 2', 'echo "hi"' }, api.nvim_buf_get_lines(0, 0, -1, false))
@@ -182,7 +181,9 @@ describe('cmdwin', function()
       })
     ]])
     feed('q:')
-    n.poke_eventloop() -- Ensure q: is processed before <C-C>.
+    -- When queued in typeahead, <C-C> raises got_int (instead of cmdwin's buffer-local <C-C>
+    -- mapping); poke to avoid that.
+    n.poke_eventloop()
     feed('<C-C>')
     eq({ 'enter::', 'leave::' }, exec_lua('return _G.events'))
   end)

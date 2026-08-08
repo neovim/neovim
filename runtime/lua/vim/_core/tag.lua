@@ -48,10 +48,11 @@ function M.select_tag(eap, extra)
     if not idx then
       return
     end
-    -- Queue ":[mods] [idx](s)tag {tagname}" as user input, so the recursive do_tag runs via the
-    -- normal input-dispatch loop. Using vim.schedule + vim.cmd can hang bc of "Press ENTER".
+    -- Queue ":[mods] [idx](s)tag {tagname}" via "mode dispatch". |event-queues|
     local cmd = stag and 'stag' or 'tag'
-    vim.fn.feedkeys(vim.keycode(('<Cmd>%s%d%s %s<CR>'):format(mods_str, idx, cmd, tagname)), 'in')
+    vim.schedule_dispatch(function()
+      vim.cmd(('%s%d%s %s'):format(mods_str, idx, cmd, tagname))
+    end)
   end)
 end
 
