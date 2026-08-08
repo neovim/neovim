@@ -2368,7 +2368,7 @@ bool find_decl(char *ptr, size_t len, bool locally, bool thisblock, int flags_ar
   clearpos(&found_pos);
   while (true) {
     t = searchit(curwin, curbuf, &curwin->w_cursor, NULL, FORWARD,
-                 pat, patlen, 1, searchflags, RE_LAST, NULL);
+                 pat, patlen, 1, searchflags, RE_LAST, false, NULL);
     if (curwin->w_cursor.lnum >= old_pos.lnum) {
       t = false;         // match after start is failure too
     }
@@ -3483,9 +3483,9 @@ static void nv_ident(cmdarg_T *cap)
   } else {
     char *aux_ptr;
     if (cmdchar == '*') {
-      aux_ptr = (magic_isset() ? "/.*~[^$\\" : "/^$\\");
+      aux_ptr = (p_magic ? "/.*~[^$\\" : "/^$\\");
     } else if (cmdchar == '#') {
-      aux_ptr = (magic_isset() ? "/?.*~[^$\\" : "/?^$\\");
+      aux_ptr = (p_magic ? "/?.*~[^$\\" : "/?^$\\");
     } else if (tag_cmd) {
       if (strcmp(curbuf->b_p_ft, "help") == 0) {
         // ":help" handles unescaped argument
@@ -3991,7 +3991,7 @@ static int normal_search(cmdarg_T *cap, int dir, char *pat, size_t patlen, int o
 
   CLEAR_FIELD(sia);
   int i = do_search(cap->oap, dir, dir, pat, patlen, cap->count1,
-                    opt | SEARCH_OPT | SEARCH_ECHO | SEARCH_MSG, &sia);
+                    opt | SEARCH_OPT | SEARCH_ECHO | SEARCH_MSG, p_magic, &sia);
   if (wrapped != NULL) {
     *wrapped = sia.sa_wrapped;
   }
