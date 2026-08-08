@@ -26,8 +26,15 @@ typedef struct {
   bool force_crlf;
 } TerminalOptions;
 
-/// Called once per logical line by `terminal_foreach_row()`. `cells`/`cols` are
-/// owned by the caller and valid only for the duration of the call.
-typedef void (*TerminalRowCb)(const VTermScreenCell *cells, size_t cols, void *data);
+/// Iterator over terminal logical lines
+/// Initialize with `terminal_row_iter_init()`, drive with `terminal_row_iter_next()`,
+/// release with `terminal_row_iter_clear()`.
+typedef struct {
+  Terminal *term;
+  linenr_T lnum;
+  linenr_T end;
+  int width;
+  VTermScreenCell *cells;
+} TerminalRowIter;
 
 #include "terminal.h.generated.h"
