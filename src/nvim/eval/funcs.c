@@ -4771,46 +4771,6 @@ static void f_printf(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 }
 
-/// "prompt_getprompt({buffer})" function
-static void f_prompt_getprompt(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-  FUNC_ATTR_NONNULL_ALL
-{
-  // return an empty string by default, e.g. it's not a prompt buffer
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = NULL;
-
-  buf_T *const buf = tv_get_buf_from_arg(&argvars[0]);
-  if (buf == NULL) {
-    return;
-  }
-
-  if (!bt_prompt(buf)) {
-    return;
-  }
-
-  rettv->vval.v_string = xstrdup(buf_prompt_text(buf));
-}
-
-/// "prompt_getinput({buffer})" function
-static void f_prompt_getinput(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-  FUNC_ATTR_NONNULL_ALL
-{
-  // return an empty string by default, e.g. it's not a prompt buffer
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = NULL;
-
-  buf_T *const buf = tv_get_buf_from_arg(&argvars[0]);
-  if (buf == NULL) {
-    return;
-  }
-
-  if (!bt_prompt(buf)) {
-    return;
-  }
-
-  rettv->vval.v_string = prompt_get_input(buf);
-}
-
 /// "pum_getpos()" function
 static void f_pum_getpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {

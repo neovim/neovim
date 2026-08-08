@@ -23,7 +23,7 @@
 #include "nvim/digraph.h"
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
-#include "nvim/eval.h"
+#include "nvim/eval/buffer.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/vars.h"
 #include "nvim/ex_cmds_defs.h"
@@ -1641,12 +1641,7 @@ static void init_prompt(int cmdchar_todo)
   // Insert always starts after the prompt, allow editing text after it.
   if (Ins.start_orig.lnum != curbuf->b_prompt_start.mark.lnum
       || Ins.start_orig.col != curbuf->b_prompt_start.mark.col) {
-    Ins.start.lnum = curbuf->b_prompt_start.mark.lnum;
-    Ins.start.col = curbuf->b_prompt_start.mark.col;
-    Ins.start_orig = Ins.start;
-    Ins.start_textlen = Ins.start.col;
-    Ins.start_blank_vcol = MAXCOL;
-    Ins.arrow_used = false;
+    set_insstart(curbuf->b_prompt_start.mark.lnum, curbuf->b_prompt_start.mark.col);
   }
 
   if (cmdchar_todo == 'A') {
@@ -1666,6 +1661,20 @@ bool prompt_curpos_editable(void)
   return curwin->w_cursor.lnum > curbuf->b_prompt_start.mark.lnum
          || (curwin->w_cursor.lnum == curbuf->b_prompt_start.mark.lnum
              && curwin->w_cursor.col >= curbuf->b_prompt_start.mark.col);
+}
+
+/// Set the insert start position for when using a prompt buffer.
+///
+/// @param[in]  lnum
+/// @param[in]  col
+static void set_insstart(linenr_T lnum, colnr_T col)
+{
+  Ins.start.lnum = lnum;
+  Ins.start.col = col;
+  Ins.start_orig = Ins.start;
+  Ins.start_textlen = Ins.start.col;
+  Ins.start_blank_vcol = MAXCOL;
+  Ins.arrow_used = false;
 }
 
 // Undo the previous edit_putchar().
