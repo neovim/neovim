@@ -2072,6 +2072,18 @@ void nvim__screenshot(String path)
   ui_call_screenshot(path);
 }
 
+/// Enters Terminal-mode for the current buffer's terminal and blocks until Terminal-mode is left
+/// (e.g. the job exits and a TermClose autocmd closes/leaves the buffer). The synchronous primitive
+/// under `vim._core.run_in_terminal`. EXPERIMENTAL. #40407
+void nvim__terminal_enter(Error *err)
+{
+  if (curbuf->terminal == NULL) {
+    api_set_error(err, kErrorTypeValidation, "Buffer is not a terminal");
+    return;
+  }
+  terminal_enter();
+}
+
 /// For testing. The condition in schar_cache_clear_if_full is hard to
 /// reach, so this function can be used to force a cache clear in a test.
 void nvim__invalidate_glyph_cache(void)

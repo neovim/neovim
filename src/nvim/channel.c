@@ -371,8 +371,8 @@ static void close_cb(Stream *stream, void *data)
 Channel *channel_job_start(char **argv, const char *exepath, CallbackReader on_stdout,
                            CallbackReader on_stderr, Callback on_exit, bool pty, bool rpc,
                            bool overlapped, bool detach, ChannelStdinMode stdin_mode,
-                           const char *cwd, uint16_t pty_width, uint16_t pty_height, dict_T *env,
-                           varnumber_T *status_out)
+                           bool stdout_fd, const char *cwd, uint16_t pty_width, uint16_t pty_height,
+                           dict_T *env, varnumber_T *status_out)
 {
   Channel *chan = channel_alloc(kChannelStreamProc);
   chan->on_data = on_stdout;
@@ -435,7 +435,21 @@ Channel *channel_job_start(char **argv, const char *exepath, CallbackReader on_s
 #endif
   }
 
-  bool has_in = stdin_mode == kChannelStdinPipe;
+  bool has_in = stdin_mode != kChannelStdinNull;
+
+#ifndef MSWIN
+  // pty + "fd": child stdin (fd 0) is a separate pipe rather than the tty. See kChannelStdinFd.
+  // Unix only: Windows ConPTY owns the child's std handles. #40407
+  if (proc->type == kProcTypePty && stdin_mode == kChannelStdinFd) {
+    chan->stream.pty.stdin_pipe = true;
+  }
+  // pty + stdout="fd": child stdout (fd 1) is a separate pipe (clean capture); it is carried by
+  // proc->err while proc->out stays the master (display). See on_channel_output(). #40407
+  if (proc->type == kProcTypePty && stdout_fd) {
+    chan->stream.pty.stdout_pipe = true;
+    has_err = true;  // proc->err = the capture pipe
+  }
+#endif
 
   int status = proc_spawn(proc, has_in, has_out, has_err);
   if (status) {
@@ -696,6 +710,19 @@ size_t on_job_stderr(RStream *stream, const char *buf, size_t count, void *data,
 static size_t on_channel_output(RStream *stream, Channel *chan, const char *buf, size_t count,
                                 bool eof, CallbackReader *reader)
 {
+#ifndef MSWIN
+  // pty stdout="fd": proc->err carries the child's clean stdout (fd 1) — surface it via the stdout
+  // reader (on_data) and never display it; the display stream (proc->out) must not be buffered into
+  // that capture. #40407
+  if (chan->term && chan->stream.proc.type == kProcTypePty && chan->stream.pty.stdout_pipe) {
+    if (reader == &chan->on_stderr) {
+      reader = &chan->on_data;  // the capture stream: fall through to buffering, no terminal_receive
+    } else {
+      terminal_receive(chan->term, buf, count);  // the display stream
+      return count;
+    }
+  } else  // NOLINT(readability/braces)
+#endif
   if (chan->term) {
     terminal_receive(chan->term, buf, count);
   }
@@ -907,14 +934,34 @@ static void term_read_pause(bool pause, void *data)
 static void term_write(const char *buf, size_t size, void *data)
 {
   Channel *chan = data;
-  if (chan->stream.proc.in.closed) {
+  Proc *proc = &chan->stream.proc;
+#ifndef MSWIN
+  // "fd" mode (kChannelStdinFd): proc->in is the child's stdin *pipe* (fed via chansend), so typed
+  // keys instead go to the tty (master) — that is where the child reads /dev/tty (e.g. a sudo
+  // password prompt). Best-effort direct write; keystrokes are tiny. #40407
+  if (proc->type == kProcTypePty && chan->stream.pty.stdin_pipe) {
+    int fd = chan->stream.pty.tty_fd;
+    for (size_t off = 0; fd != -1 && off < size;) {
+      ssize_t n = write(fd, buf + off, size - off);
+      if (n > 0) {
+        off += (size_t)n;
+      } else if (n == -1 && errno == EINTR) {
+        continue;
+      } else {
+        break;  // EAGAIN (tty buffer full) or error: drop the rest
+      }
+    }
+    return;
+  }
+#endif
+  if (proc->in.closed) {
     // If the backing stream was closed abruptly, there may be write events
     // ahead of the terminal close event. Just ignore the writes.
     ILOG("write failed: stream is closed");
     return;
   }
   WBuffer *wbuf = wstream_new_buffer(xmemdup(buf, size), size, 1, xfree);
-  wstream_write(&chan->stream.proc.in, wbuf);
+  wstream_write(&proc->in, wbuf);
 }
 
 static void term_resize(uint16_t width, uint16_t height, void *data)
