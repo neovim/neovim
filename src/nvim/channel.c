@@ -529,7 +529,12 @@ end:
 void channel_from_connection(SocketWatcher *watcher)
 {
   Channel *channel = channel_alloc(kChannelStreamSocket);
-  socket_watcher_accept(watcher, &channel->stream.socket);
+  int result = socket_watcher_accept(watcher, &channel->stream.socket);
+  if (result != 0) {
+    ELOG("Failed to accept connection: %s", uv_strerror(result));
+    channel_destroy_early(channel);
+    return;
+  }
   channel->stream.socket.s.internal_close_cb = close_cb;
   channel->stream.socket.s.internal_data = channel;
   wstream_init(&channel->stream.socket.s, 0);
