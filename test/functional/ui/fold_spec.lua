@@ -521,6 +521,39 @@ describe('folded lines', function()
           :set norightleft                             |
         ]])
       end
+
+      -- `foldcolumn` shows spill indicator
+      command('setlocal winbar= ')
+      feed('zE')
+      command('1,4norm zfGzo')
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:---------------------------------------------]|*7
+          [3:---------------------------------------------]|
+        ## grid 2
+          {7:▾ }aa                                         |
+          {7:│▾}bb                                         |
+          {7:2▾}cc                                         |
+          {7:3▾}^dd                                         |
+          {7:3│}ee                                         |
+          {7:3│}ff                                         |
+          {1:~                                            }|
+        ## grid 3
+          :set norightleft                             |
+        ]])
+      else
+        screen:expect([[
+          {7:▾ }aa                                         |
+          {7:│▾}bb                                         |
+          {7:2▾}cc                                         |
+          {7:3▾}^dd                                         |
+          {7:3│}ee                                         |
+          {7:3│}ff                                         |
+          {1:~                                            }|
+          :set norightleft                             |
+        ]])
+      end
     end)
 
     it('with split', function()
@@ -2312,7 +2345,7 @@ describe('folded lines', function()
           {7:││}below line 2                               |
           {7:││}above line 3                               |
           {7:2-}line 3                                     |
-          {7:23}line 4                                     |
+          {7:2│}line 4                                     |
           {1:~                                            }|
         ## grid 3
                                                        |
@@ -2324,7 +2357,7 @@ describe('folded lines', function()
           {7:││}below line 2                               |
           {7:││}above line 3                               |
           {7:2-}line 3                                     |
-          {7:23}line 4                                     |
+          {7:2│}line 4                                     |
           {1:~                                            }|
                                                        |
         ]])
