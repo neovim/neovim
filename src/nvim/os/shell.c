@@ -1151,7 +1151,7 @@ static void out_data_append_to_screen(const char *output, size_t *count, int fd,
   // 2. we don't compose chars over buffer boundaries, even if we see an
   //    incomplete UTF-8 sequence that could be composing with the last
   //    complete sequence.
-  // This will be corrected when we switch to vterm based implementation
+  // This can be corrected by handling grapheme clusters across buffer boundaries.
   while (p < end) {
     int i = *p ? utfc_ptr2len_len(p, (int)*count - (int)(p - output)) : 1;
     if (!eof && i == 1 && utf8len_tab_zero[*(uint8_t *)p] > (end - p)) {

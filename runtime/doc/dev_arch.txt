@@ -26,8 +26,8 @@ C CODE
 
 - Nvim C code lives in `src/nvim/`.
     - This includes third-party components which we have forked and fully
-      "own", meaning we no longer track the upstream. In particular: `vterm/`
-      and `tui/termkey/`.
+      "own", meaning we no longer track the upstream. In particular:
+      `tui/termkey/`.
 - Vendored third-party components live in `src/*`.
     - `src/tee/` and `src/xxd/` have their own build files. They are shipped
       with the Windows artifact to ensure those tools exists there.

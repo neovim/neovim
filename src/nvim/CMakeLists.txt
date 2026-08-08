@@ -58,6 +58,9 @@ if(ENABLE_WASMTIME)
   target_compile_definitions(nvim_bin PRIVATE HAVE_WASMTIME)
 endif()
 
+find_package(Ghostty REQUIRED)
+target_link_libraries(main_lib INTERFACE ghostty)
+
 # The unit test lib requires LuaJIT; it will be skipped if LuaJIT is missing.
 option(PREFER_LUA "Prefer Lua over LuaJIT in the nvim executable." OFF)
 if(PREFER_LUA)
@@ -419,7 +422,6 @@ foreach(subdir
         msgpack_rpc
         tui
         tui/termkey
-        vterm
         event
         eval
         lua
