@@ -164,13 +164,15 @@ local function ui_callback(redraw_msg, event, ...)
   handler(...)
   -- Cmdline mode, non-fast message and non-empty showcmd require an immediate redraw.
   if M.cmd[event] or redraw_msg or (event == 'msg_showcmd' and select(1, ...)[1]) then
-    M.redrawing = true
-    api.nvim__redraw({
-      flush = handler ~= M.cmd.cmdline_hide or nil,
-      cursor = handler == M.cmd[event] and true or nil,
-      win = handler == M.cmd[event] and M.wins.cmd or nil,
-    })
-    M.redrawing = false
+    if event ~= 'cmdline_hide' then
+      M.redrawing = true
+      api.nvim__redraw({
+        flush = handler ~= M.cmd.cmdline_hide or nil,
+        cursor = handler == M.cmd[event] and true or nil,
+        win = handler == M.cmd[event] and M.wins.cmd or nil,
+      })
+      M.redrawing = false
+    end
   end
 end
 local scheduled_ui_callback = vim.schedule_wrap(ui_callback)
