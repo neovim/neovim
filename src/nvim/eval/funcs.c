@@ -2838,7 +2838,7 @@ static void f_index(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       assert(item != NULL);
     }
     if (argvars[3].v_type != VAR_UNKNOWN) {
-      ic = !!tv_get_number_chk(&argvars[3], &error);
+      ic = !!tv_get_bool_chk(&argvars[3], &error);
       if (error) {
         item = NULL;
       }
