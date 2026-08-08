@@ -56,6 +56,25 @@ describe('vim.range', function()
     eq(success, false)
   end)
 
+  it('creates a range from an extmark', function()
+    local buf = exec_lua([[return vim.api.nvim_get_current_buf()]])
+
+    -- vim.api.keyset.get_extmark_item
+    eq(
+      { 2, 4, 3, 8, buf },
+      exec_lua [[return vim.range.extmark(0, { 1, 2, 4, { end_row = 3, end_col = 8 } })]]
+    )
+
+    -- vim.api.keyset.get_extmark_item_by_id
+    eq(
+      { 2, 4, 3, 8, buf },
+      exec_lua [[return vim.range.extmark(0, { 2, 4, { end_row = 3, end_col = 8 } })]]
+    )
+
+    -- Manual
+    eq({ 2, 4, 3, 8, buf }, exec_lua [[return vim.range.extmark(0, 2, 4, 3, 8)]])
+  end)
+
   it('converts between vim.Range and lsp.Range', function()
     local buf = exec_lua(function()
       return vim.api.nvim_get_current_buf()
