@@ -5835,14 +5835,13 @@ describe('builtin popupmenu', function()
           {n:info line 9 }|
           {n:info line 10}|
           {n:info line 11}|
-          {n:info line 12}|
         ## grid 5
           {12: apple  f fruit }|
           {n: banana f fruit }|
         ]],
           float_pos = {
             [5] = { -1, 'SW', 1, 11, 8, false, 250, 3, 9, 8 },
-            [4] = { 1001, 'NW', 1, 9, 24, true, 50, 1, 0, 24 },
+            [4] = { 1001, 'SW', 1, 11, 24, true, 50, 1, 0, 24 },
           },
         })
       else
@@ -5894,14 +5893,13 @@ describe('builtin popupmenu', function()
           {n:info line 18}|
           {n:info line 19}|
           {n:info line 20}|
-          {n:info line 21}|
         ## grid 5
           {12: apple  f fruit }|
           {n: banana f fruit }|
         ]],
           float_pos = {
             [5] = { -1, 'SW', 1, 11, 8, false, 250, 3, 9, 8 },
-            [4] = { 1001, 'NW', 1, 9, 24, true, 50, 1, 0, 24 },
+            [4] = { 1001, 'SW', 1, 11, 24, true, 50, 1, 0, 24 },
           },
         })
       else
@@ -5951,14 +5949,13 @@ describe('builtin popupmenu', function()
           {n:info line 12}|
           {n:info line 13}|
           {n:info line 14}|
-          {n:info line 15}|
         ## grid 5
           {12: apple  f fruit }|
           {n: banana f fruit }|
         ]],
           float_pos = {
             [5] = { -1, 'SW', 1, 11, 8, false, 250, 3, 9, 8 },
-            [4] = { 1001, 'NW', 1, 9, 24, true, 50, 1, 0, 24 },
+            [4] = { 1001, 'SW', 1, 11, 24, true, 50, 1, 0, 24 },
           },
         })
       else
