@@ -13,6 +13,7 @@ local fn = n.fn
 local api = n.api
 local exec_lua = n.exec_lua
 local retry = t.retry
+local pcall_err = t.pcall_err
 local ok = t.ok
 local command = n.command
 local skip = t.skip
@@ -448,9 +449,7 @@ describe(':write on terminal buffer', function()
       'term://C:/Users/me//999:bash',
       'term://foo/bar//123:bash',
       'term://foo/bar//123:echo hello',
-      'term://foo/bar//123:/usr/bin/python3',
-      'term://foo/测试//123:bash',
-      'term:///.//123:bash',
+      'term:///.//123:bash', -- cwd="/" is stored as "/."
     }
     command('terminal')
     for _, uri in ipairs(uris) do
@@ -461,12 +460,10 @@ describe(':write on terminal buffer', function()
     local files = fn.readdir(dir)
     table.sort(files)
     eq({
-      'C-Users-me--999--bash.mpack',
-      'foo-bar--123--bash.mpack',
-      'foo-bar--123--echo-hello.mpack',
-      'foo-bar--123--python3.mpack',
-      'foo-测试--123--bash.mpack',
-      'root--123--bash.mpack',
+      '=uri-term-123-bash-d7d75450.mpack',
+      '=uri-term-C--Users-me-999-bash-f4d0c15b.mpack',
+      '=uri-term-foo-bar-123-bash-7fd6bb99.mpack',
+      '=uri-term-foo-bar-123-echo-hello-2a907c66.mpack',
     }, files)
   end)
 end)

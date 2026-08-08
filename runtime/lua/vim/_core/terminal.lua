@@ -2,52 +2,6 @@ local N_ = vim.fn.gettext
 
 local M = {}
 
---- Replace unsafe filename characters and whitespace with '-'.
---- Non-ASCII characters are kept.
----
----@param s string
----@return string
-local function safe_fname(s)
-  local r = s:gsub('[%c%s/\\:*?"<>|]+', '-'):gsub('%-+', '-')
-  return (r:gsub('^%-+', ''):gsub('%-+$', ''))
-end
-
---- Convert a "term://" URI into a filename.
---- e.g. "term://~/project//12345:/bin/bash" -> "~-project--12345--bash"
----
----@param uri string
----@return string
-local function uri2fname(uri)
-  -- strip prefix
-  local s = uri:gsub('^term://', '')
-  -- split into "cwd//pid:cmd"
-  local cwd, pid, cmd = s:match('^(.-)//(%d+):(.*)$')
-  if not cmd then
-    return 'undefined_terminal'
-  end
-
-  local segments = {} ---@type string[]
-  ---@param segment string?
-  local function add(segment)
-    if segment and segment ~= '' then
-      segments[#segments + 1] = segment
-    end
-  end
-  -- "/" (root dir) -> "." and carries no information, so call it "root"
-  local dir = safe_fname(cwd)
-  if dir == '.' then
-    dir = 'root'
-  end
-  add(dir)
-  add(pid)
-  -- cmd without spaces is usually a full path: keep its basename.
-  -- Otherwise keep the whole command line ("echo hello" -> "echo-hello").
-  add(safe_fname(cmd:find('%s') and cmd or (vim.fs.basename(cmd) or cmd)))
-
-  local name = table.concat(segments, '--')
-  return name ~= '' and name or 'undefined_terminal'
-end
-
 --- Saves a terminal buffer's rendered state and metadata as a msgpack file.
 ---
 --- Called as a BufWriteCmd handler for `term://*` buffers.
@@ -61,8 +15,8 @@ function M.save(args)
   local des ---@type string
   local is_uri = vim.startswith(fname, 'term://')
   if is_uri then
-    -- `:write` without args: derive a name from the URI
-    local name = uri2fname(fname)
+    -- `:write` without args: slug() handles the URI ("term://" gets a "=uri-term-" prefix)
+    local name = vim.fs.slug(fname)
     des = vim.fs.joinpath(vim.fn.stdpath('state'), 'term', name .. '.mpack')
     vim.fn.mkdir(vim.fs.dirname(des), 'p')
   else
@@ -103,11 +57,15 @@ function M.save(args)
   -- Get metadata
   local chan = vim.bo[bufnr].channel
   local info = vim.api.nvim_get_chan_info(chan)
-  -- TODO(Willaaaaaaa): Use OSC 7 to get a real-time cwd.
-  --     Ref https://github.com/neovim/neovim/pull/40097#discussion_r3616464826
-  -- channel info in Lua has no "cwd" field, so temporarily use the cwd recorded in the "term://"
-  -- buffer name (the job's cwd at spawn time).
-  local cwd = vim.api.nvim_buf_get_name(bufnr):match('^term://(.-)//') or ''
+
+  -- Prefer buffer-local directory (set via `:bcd` or OSC 7)
+  local cwd ---@type string
+  if vim.fn.haslocaldir(-1, -1, bufnr) == 1 then
+    cwd = vim.fn.getcwd(-1, -1, bufnr)
+  else
+    -- Fallback to spawn-time cwd from the "term://" buffer name
+    cwd = vim.api.nvim_buf_get_name(bufnr):match('^term://(.-)//') or ''
+  end
   if cwd ~= '' then
     cwd = vim.fs.normalize(cwd)
   end
