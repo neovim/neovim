@@ -4642,30 +4642,6 @@ describe('TUI bg color', function()
     end)
   end)
 
-  it('does not trigger OptionSet from automatic background processing', function()
-    command('set background=light')
-    local child_server = new_pipename()
-    local screen = tt.setup_child_nvim({
-      '--clean',
-      '--listen',
-      child_server,
-      '--cmd',
-      'colorscheme vim',
-      '--cmd',
-      'set noswapfile',
-      '-c',
-      [[let g:background_optionset = 0]],
-      '-c',
-      [[autocmd OptionSet background let g:background_optionset += 1]],
-    })
-    screen:expect({ any = '%[No Name%]' })
-    local child_session = n.connect(child_server)
-    retry(nil, nil, function()
-      eq({ true, 'light' }, { child_session:request('nvim_eval', '&background') })
-    end)
-    eq({ true, 0 }, { child_session:request('nvim_eval', 'g:background_optionset') })
-  end)
-
   it('sends theme update notifications when background changes #31652', function()
     command('set background=dark') -- set outer Nvim background
     local child_server = new_pipename()
@@ -4677,6 +4653,10 @@ describe('TUI bg color', function()
       'colorscheme vim',
       '--cmd',
       'set noswapfile',
+      '-c',
+      [[autocmd OptionSet background let g:background_option_old = v:option_old]],
+      '-c',
+      [[autocmd OptionSet background let g:background_option_new = v:option_new]],
     })
     screen:expect({ any = '%[No Name%]' })
     local child_session = n.connect(child_server)
@@ -4687,6 +4667,9 @@ describe('TUI bg color', function()
     retry(nil, nil, function()
       eq({ true, 'light' }, { child_session:request('nvim_eval', '&background') })
     end)
+    -- Make sure it triggered OptionSet with v:option_* values #38551 #41146
+    eq({ true, 'dark' }, { child_session:request('nvim_eval', 'g:background_option_old') })
+    eq({ true, 'light' }, { child_session:request('nvim_eval', 'g:background_option_new') })
   end)
 
   -- Start a headless server (the outer Nvim is its OSC-11-answering terminal),
