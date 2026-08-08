@@ -187,6 +187,27 @@ local function set_maps(buf)
   map('R', '<Plug>(nvim-dir-reload)')
 end
 
+--- Let handlers reshape the rendered listing. Unlocks the buffer for the duration and
+--- restores it afterwards, so a handler can sort, filter, or delete lines with ordinary
+--- commands.
+---@param buf integer
+---@return boolean
+local function exec_render_autocmd(buf)
+  if not set_buf_options(buf, { { 'readonly', false }, { 'modifiable', true } }) then
+    return false
+  end
+  -- Errors in handlers are reported by the autocmd machinery; swallow them here so the
+  -- buffer is never left writable.
+  pcall(api.nvim_buf_call, buf, function()
+    api.nvim_exec_autocmds('User', { pattern = 'DirReadPost', modeline = false })
+  end)
+  return set_buf_options(buf, {
+    { 'modified', false },
+    { 'readonly', true },
+    { 'modifiable', false },
+  })
+end
+
 ---@param buf integer
 local function setup_render_autocmds(buf)
   api.nvim_clear_autocmds({ group = listing_group, buffer = buf })
@@ -246,14 +267,19 @@ function load(buf, name, provider, restore_view, setup, select)
       end
       return
     end
+    current_state.err, current_state.provider = err, provider
+    vim.b[buf].nvim_dir = current_state
+
+    -- Runs before the cursor is placed, so handlers may reorder entries.
+    if not exec_render_autocmd(buf) then
+      return
+    end
     if restore_view and api.nvim_get_current_buf() == buf then
       vim.fn.winrestview(restore_view)
     end
     if select and api.nvim_get_current_buf() == buf then
       select_entry(select)
     end
-    current_state.err, current_state.provider = err, provider
-    vim.b[buf].nvim_dir = current_state
 
     if not setup then
       return
