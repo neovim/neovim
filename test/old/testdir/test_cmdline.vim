@@ -767,6 +767,11 @@ func Test_getcompletiontype()
   call assert_equal('var', getcompletiontype('let v:n'))
   call assert_equal('function', getcompletiontype('call tag'))
   call assert_equal('help', getcompletiontype('help '))
+  " must not write into a read-only empty string
+  call assert_equal('command', getcompletiontype(v:_null_string))
+  call assert_equal(getcompletion('', 'cmdline'),
+    \ getcompletion(v:_null_string, 'cmdline'))
+  call assert_fails('call getcompletion([], "cmdline")', 'E730:')
 endfunc
 
 func Test_multibyte_expression()
