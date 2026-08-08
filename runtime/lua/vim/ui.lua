@@ -317,17 +317,25 @@ function M._get_urls()
     end
   end
 
-  if #urls == 0 then
-    -- If all else fails, use the filename under the cursor
-    table.insert(
-      urls,
-      vim._with({ go = { isfname = vim.o.isfname .. ',@-@' } }, function()
-        return vim.fn.expand('<cfile>')
-      end)
-    )
+  if #urls > 0 then
+    return urls
   end
 
-  return urls
+  -- fallback: extract a URL from <cWORD>, or fall back to <cfile>.
+  local cword = vim.fn.expand('<cWORD>')
+  local url = cword:match('[a-zA-Z][a-zA-Z0-9+%-.]*://[^%s]*')
+  if url then
+    -- Strip trailing punctuation (period, comma, brackets, quotes).
+    -- Use an explicit set to preserve +, _, -, =, ~, Unicode, etc.
+    url = url:match('^(.-)[.,;:!%)%]}>"\']*$') --[[@as string]]
+    return { url }
+  else
+    local cfile = vim.fn.expand('<cfile>')
+    if #cfile > 0 then
+      return { cfile }
+    end
+  end
+  return {}
 end
 
 do
