@@ -366,6 +366,8 @@ LUA
 • |vim.pos| and |vim.range| can now convert between mark positions.
 • |vim.pos.cursor()| without arguments returns the cursor position of the
   current window.
+• |vim.pos.extmark()| and |vim.range.extmark()| have alternate signatures
+  which accept `{extmark}` arguments (`vim.api.keyset.get_extmark_item`).
 • |vim.ui.input()| now allows setting input scope.
 • |vim.log| provides a logging interface.
 • |vim.pack.get()| output includes revision of a pending update.

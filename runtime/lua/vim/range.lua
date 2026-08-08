@@ -406,9 +406,18 @@ end
 
 --- Creates a new |vim.Range| from extmark range (see |api-indexing|).
 ---
---- Example:
+--- `{start_row}`, `{start_col}`, `{end_row}`, and `{end_col}` can be replaced
+--- with an `{extmark}` argument (of the type returned from
+--- [nvim_buf_get_extmarks()]).
+---
+---
+--- Examples:
 --- ```lua
 --- local range = vim.range.extmark(0, 3, 5, 4, 0)
+---
+--- -- Create from an extmark (with opts.details=true).
+--- local extmarks = vim.api.nvim_buf_get_extmarks(0, ..., { details = true })
+--- local range = vim.range.extmark(0, extmarks[1])
 --- ```
 ---@param buf integer
 ---@param start_row integer
@@ -416,17 +425,31 @@ end
 ---@param end_row integer
 ---@param end_col integer
 ---@return vim.Range
+---@overload fun(buf: integer, extmark: vim.api.keyset.get_extmark_item): vim.Range
 function M.extmark(buf, start_row, start_col, end_row, end_col)
   validate('buf', buf, 'number')
-  validate('start_row', start_row, 'number')
-  validate('start_col', start_col, 'number')
-  validate('end_row', end_row, 'number')
-  validate('end_col', end_col, 'number')
+
+  if start_col then
+    validate('start_row', start_row, 'number')
+    validate('start_col', start_col, 'number')
+    validate('end_row', end_row, 'number')
+    validate('end_col', end_col, 'number')
+  else
+    local extmark = start_row --[[@as vim.api.keyset.get_extmark_item]]
+    validate('extmark', extmark, 'table')
+    validate('extmark[2]', extmark[2], 'number')
+    validate('extmark[3]', extmark[3], 'number')
+    validate('extmark[4].end_row', (extmark[4] or {}).end_row, 'number')
+    validate('extmark[4].end_col', (extmark[4] or {}).end_row, 'number')
+    start_row, start_col = extmark[2], extmark[3]
+    end_row, end_col = extmark[4].end_row, extmark[4].end_col
+  end
 
   if buf == 0 then
     buf = api.nvim_get_current_buf()
   end
 
+  ---@diagnostic disable-next-line: param-type-mismatch
   return M.new(buf, start_row, start_col, end_row, end_col)
 end
 
