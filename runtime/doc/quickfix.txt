@@ -485,6 +485,15 @@ using the |getqflist()| and |getloclist()| functions respectively.  Examples: >
 	echo getqflist({'size' : 1})
 	echo getloclist(5, {'size' : 1})
 <
+							*quickfix-total*
+You can get the count of each error type in a quickfix and a location list
+using the |getqflist()| and |getloclist()| functions respectively.  This
+returns a dictionary where the keys are the type characters and the values are
+the counts.  Empty type characters are returned with an empty string key.
+Examples: >
+	echo getqflist({'total' : 1})
+	echo getloclist(5, {'total' : 1})
+<
 							*quickfix-context*
 Any Vim type can be associated as a context with a quickfix or location list.
 The |setqflist()| and the |setloclist()| functions can be used to associate a
@@ -793,6 +802,9 @@ using these functions are below:
     " get the number of entries in a quickfix list specified by an id
     :echo getqflist({'id' : qfid, 'size' : 0}).size
 
+    " get the count of each error type in a quickfix list specified by an id
+    :echo getqflist({'id' : qfid, 'total' : 0}).total
+
     " get the context of the third quickfix list in the stack
     :echo getqflist({'nr' : 3, 'context' : 0}).context
 
@@ -811,6 +823,9 @@ using these functions are below:
     " parse text from a List of lines and return a quickfix list
     :let myList = ["a.java:10:L10", "b.java:20:L20"]
     :echo getqflist({'lines' : myList}).items
+
+    " parse text from a List of lines and return the type counts
+    :echo getqflist({'lines' : myList, 'total' : 1}).total
 
     " parse text using a custom 'efm' and return a quickfix list
     :echo getqflist({'lines' : ['a.c#10#Line 10'], 'efm':'%f#%l#%m'}).items
