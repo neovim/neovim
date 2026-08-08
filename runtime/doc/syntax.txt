@@ -923,18 +923,20 @@ are using the "b:docbk_type" variable should be set.  Vim does this for you
 automatically if it can recognize the type.  When Vim can't guess it the type
 defaults to XML.
 You can set the type manually: >
-	:let docbk_type = "sgml"
+	:let b:docbk_type = "sgml"
 or: >
-	:let docbk_type = "xml"
+	:let b:docbk_type = "xml"
 You need to do this before loading the syntax file, which is complicated.
 Simpler is setting the filetype to "docbkxml" or "docbksgml": >
 	:set filetype=docbksgml
 or: >
 	:set filetype=docbkxml
 
-You can specify the DocBook version: >
-	:let docbk_ver = 3
-When not set 4 is used.
+You can specify the DocBook version for the current buffer: >
+	:let b:docbk_ver = 3
+When "b:docbk_ver" is not set, "g:docbk_ver" is used as a global fallback: >
+	:let g:docbk_ver = 3
+When neither variable is set, version 4 is used.
 
 
 DOSBATCH					*ft-dosbatch-syntax*
