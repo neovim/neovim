@@ -932,15 +932,15 @@ void f_glob(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   // for 'wildignore' and don't put matches for 'suffixes' at the end.
   rettv->v_type = VAR_STRING;
   if (argvars[1].v_type != VAR_UNKNOWN) {
-    if (tv_get_number_chk(&argvars[1], &error)) {
+    if (tv_get_bool_chk(&argvars[1], &error)) {
       options |= WILD_KEEP_ALL;
     }
     if (argvars[2].v_type != VAR_UNKNOWN) {
-      if (tv_get_number_chk(&argvars[2], &error)) {
+      if (tv_get_bool_chk(&argvars[2], &error)) {
         tv_list_set_ret(rettv, NULL);
       }
       if (argvars[3].v_type != VAR_UNKNOWN
-          && tv_get_number_chk(&argvars[3], &error)) {
+          && tv_get_bool_chk(&argvars[3], &error)) {
         options |= WILD_ALLLINKS;
       }
     }
@@ -981,16 +981,16 @@ void f_globpath(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (argvars[2].v_type != VAR_UNKNOWN) {
     // When the optional second argument is non-zero, don't remove matches
     // for 'wildignore' and don't put matches for 'suffixes' at the end.
-    if (tv_get_number_chk(&argvars[2], &error)) {
+    if (tv_get_bool_chk(&argvars[2], &error)) {
       flags |= WILD_KEEP_ALL;
     }
 
     if (argvars[3].v_type != VAR_UNKNOWN) {
-      if (tv_get_number_chk(&argvars[3], &error)) {
+      if (tv_get_bool_chk(&argvars[3], &error)) {
         tv_list_set_ret(rettv, NULL);
       }
       if (argvars[4].v_type != VAR_UNKNOWN
-          && tv_get_number_chk(&argvars[4], &error)) {
+          && tv_get_bool_chk(&argvars[4], &error)) {
         flags |= WILD_ALLLINKS;
       }
     }

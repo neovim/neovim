@@ -2072,7 +2072,7 @@ void f_hasmapto(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   } else {
     mode = tv_get_string_buf(&argvars[1], buf);
     if (argvars[2].v_type != VAR_UNKNOWN) {
-      abbr = tv_get_number(&argvars[2]);
+      abbr = tv_get_bool(&argvars[2]);
     }
   }
 
@@ -2164,9 +2164,9 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
   if (argvars[1].v_type != VAR_UNKNOWN) {
     which = tv_get_string_buf_chk(&argvars[1], buf);
     if (argvars[2].v_type != VAR_UNKNOWN) {
-      abbr = (bool)tv_get_number(&argvars[2]);
+      abbr = (bool)tv_get_bool(&argvars[2]);
       if (argvars[3].v_type != VAR_UNKNOWN) {
-        get_dict = (bool)tv_get_number(&argvars[3]);
+        get_dict = (bool)tv_get_bool(&argvars[3]);
       }
     }
   } else {
