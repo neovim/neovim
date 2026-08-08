@@ -18,11 +18,6 @@
 
 #include "terminal_encode.c.generated.h"
 
-typedef struct {
-  Terminal *term;
-  StringBuilder *out;
-} TeEncodeCtx;
-
 /// Check if a `VTermScreenCell` is blank (empty or space).
 ///
 /// @param cell  The cell to check.
@@ -230,13 +225,6 @@ static void te_encode_line2ansi(Terminal *term, const VTermScreenCell *cells, si
   kv_concat(*out, "\n");
 }
 
-/// Encode one row into ANSI text, as a terminal_foreach_row() callback.
-static void te_encode_row_cb(const VTermScreenCell *cells, size_t cols, void *data)
-{
-  TeEncodeCtx *ctx = data;
-  te_encode_line2ansi(ctx->term, cells, cols, ctx->out);
-}
-
 /// Export rendered terminal state (scrollback + visible screen) as ANSI escape sequences.
 ///
 /// @param term   Terminal instance to export.
@@ -247,8 +235,14 @@ String te_encode_export_ansi(Terminal *term, int start, int end)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   StringBuilder out = KV_INITIAL_VALUE;
-  TeEncodeCtx ctx = { .term = term, .out = &out };
-  terminal_foreach_row(term, (linenr_T)start, (linenr_T)end, te_encode_row_cb, &ctx);
+  TerminalRowIter it = { 0 };
+  terminal_row_iter_init(&it, term, (linenr_T)start, (linenr_T)end);
+  const VTermScreenCell *cells;
+  size_t cols;
+  while (terminal_row_iter_next(&it, &cells, &cols)) {
+    te_encode_line2ansi(term, cells, cols, &out);
+  }
+  terminal_row_iter_clear(&it);
 
   // Reset SGR so the last char's attributes (if exist) do not bleed beyond the exported content.
   kv_concat(out, "\x1b[0m");

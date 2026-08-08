@@ -1558,16 +1558,15 @@ static void terminal_focus(const Terminal *term, bool focus)
   }
 }
 
-/// Walk a terminal's logical lines [start, end] (1-based, inclusive): scrollback
+/// Start iterating a terminal's logical lines [start, end] (1-based, inclusive): scrollback
 /// (oldest first) followed by the visible screen. end == 0 means "to the last line".
 ///
+/// @param it     Iterator to initialize.
+/// @param term   Terminal to iterate.
 /// @param start  1-based line number to start from (values < 1 are clamped to 1).
 /// @param end    1-based line number to end at (inclusive), or 0 for all remaining.
-/// @param cb     Called once per logical line.
-/// @param data   User data passed to `cb`.
-void terminal_foreach_row(Terminal *term, linenr_T start, linenr_T end, TerminalRowCb cb,
-                          void *data)
-  FUNC_ATTR_NONNULL_ARG(1, 4)
+void terminal_row_iter_init(TerminalRowIter *it, Terminal *term, linenr_T start, linenr_T end)
+  FUNC_ATTR_NONNULL_ALL
 {
   int height, width;
   vterm_get_size(term->vt, &height, &width);
@@ -1575,25 +1574,54 @@ void terminal_foreach_row(Terminal *term, linenr_T start, linenr_T end, Terminal
   if (end == 0 || end > total) {
     end = total;
   }
-  start = MAX(start, 1);
 
-  VTermScreenCell *screen_row = xmalloc(sizeof(*screen_row) * (size_t)width);
-  for (linenr_T lnum = start; lnum <= end; lnum++) {
-    if (lnum <= (linenr_T)term->sb_current) {
-      // Scrollback: line 1 = oldest = sb_buffer[sb_current - 1].
-      size_t idx = term->sb_current - (size_t)lnum;
-      ScrollbackLine *line = term->sb_buffer[idx];
-      cb(line->cells, line->cols, data);
-    } else {
-      // Visible screen: line sb_current+1 = row 0.
-      int row = lnum - (linenr_T)term->sb_current - 1;
-      for (int col = 0; col < width; col++) {
-        vterm_screen_get_cell(term->vts, (VTermPos){ .row = row, .col = col }, &screen_row[col]);
-      }
-      cb(screen_row, (size_t)width, data);
-    }
+  *it = (TerminalRowIter){
+    .term = term,
+    .lnum = MAX(start, 1),
+    .end = end,
+    .width = width,
+    .cells = xmalloc(sizeof(*it->cells) * (size_t)width),
+  };
+}
+
+/// Move to and return the next logical line. The returned row is owned by the iterator and valid
+/// until the next `terminal_row_iter_next()` or `terminal_row_iter_clear()` call
+///
+/// @param it     Iterator to advance.
+/// @param cells  Set to the row's cells.
+/// @param cols   Set to the number of cells in the row.
+/// @return true if a row is returned, false if there are no more rows.
+bool terminal_row_iter_next(TerminalRowIter *it, const VTermScreenCell **cells, size_t *cols)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (it->lnum > it->end) {
+    return false;
   }
-  xfree(screen_row);
+  Terminal *term = it->term;
+  if (it->lnum <= (linenr_T)term->sb_current) {
+    // Scrollback: line 1 = oldest = sb_buffer[sb_current - 1].
+    size_t idx = term->sb_current - (size_t)it->lnum;
+    ScrollbackLine *line = term->sb_buffer[idx];
+    *cells = line->cells;
+    *cols = line->cols;
+  } else {
+    // Visible screen: line sb_current+1 = row 0.
+    int row = it->lnum - (linenr_T)term->sb_current - 1;
+    for (int col = 0; col < it->width; col++) {
+      vterm_screen_get_cell(term->vts, (VTermPos){ .row = row, .col = col }, &it->cells[col]);
+    }
+    *cells = it->cells;
+    *cols = (size_t)it->width;
+  }
+  it->lnum++;
+  return true;
+}
+
+/// Release resources held by a `TerminalRowIter`.
+void terminal_row_iter_clear(TerminalRowIter *it)
+  FUNC_ATTR_NONNULL_ALL
+{
+  XFREE_CLEAR(it->cells);
 }
 
 void terminal_convert_color_to_rgb(Terminal *term, VTermColor *color)
