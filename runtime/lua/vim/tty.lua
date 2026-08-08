@@ -15,7 +15,8 @@ local M = {}
 ---       - `on_timeout` optional fn called when the timeout fires.
 ---       - `group`: augroup for the TermResponse autocmd.
 ---       - `chan`: only handle responses from this channel.
----@param on_response fun(resp:string):boolean? Called for each TermResponse. Return `true` to stop listening.
+---@param on_response fun(resp:string,data:vim.event.termresponse.data):boolean? Called for each
+---        TermResponse. Return `true` to stop listening.
 ---@return integer # autocmd id of the TermResponse handler.
 function M.request(payload, opts, on_response)
   vim.validate('payload', payload, 'string')
@@ -38,7 +39,7 @@ function M.request(payload, opts, on_response)
       if opts.chan and ev.data.chan ~= opts.chan then
         return
       end
-      local stop = on_response(ev.data.sequence)
+      local stop = on_response(ev.data.sequence, ev.data)
       -- If on_response is done, cancel the timeout so on_timeout doesn't fire spuriously.
       if stop and timer and not timer:is_closing() then
         timer:close()

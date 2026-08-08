@@ -15,6 +15,7 @@
 #include "nvim/macros_defs.h"
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
+#include "nvim/ui_defs.h"
 
 /// For CursorMoved event
 EXTERN win_T *last_cursormoved_win INIT( = NULL);
