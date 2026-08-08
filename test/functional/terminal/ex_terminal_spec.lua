@@ -13,6 +13,7 @@ local fn = n.fn
 local api = n.api
 local exec_lua = n.exec_lua
 local retry = t.retry
+local pcall_err = t.pcall_err
 local ok = t.ok
 local command = n.command
 local skip = t.skip
@@ -376,4 +377,93 @@ describe(':terminal (fake shell)', function()
       test_terminal_with_fake_shell(true)
     end)
   end
+end)
+
+describe(':write on terminal buffer', function()
+  local xstate = 'Xtest-functional-terminal'
+
+  before_each(function()
+    clear({ env = { XDG_STATE_HOME = xstate } })
+  end)
+
+  after_each(function()
+    n.rmdir(xstate)
+  end)
+
+  it(':w without arguments saves state under stdpath("state")/term/', function()
+    command('terminal')
+    local dir = vim.fs.joinpath(fn.stdpath('state'), 'term')
+    local function has_mpack()
+      for name, ftype in vim.fs.dir(dir, { depth = 1 }) do
+        if ftype == 'file' and name:match('%.mpack$') then
+          return true
+        end
+      end
+      return false
+    end
+    eq(false, has_mpack())
+    command('write')
+    eq(true, has_mpack())
+  end)
+
+  it(':w <name> refuses to overwrite without !', function()
+    command('terminal')
+    command('write test3.mpack')
+    eq(1, fn.filereadable('test3.mpack'))
+    eq('Vim(write):E13: File exists (add ! to override)', pcall_err(command, 'write test3.mpack'))
+    command('write! test3.mpack')
+    eq(1, fn.filereadable('test3.mpack'))
+  end)
+
+  it(':w <name> onto a directory gives E17', function()
+    command('terminal')
+    n.mkdir_p('test_dir/dir')
+    local err = pcall_err(command, 'write test_dir/dir')
+    ok(err:find('E17') ~= nil)
+  end)
+
+  it(':w <name> encodes state to the requested path', function()
+    command('terminal')
+    command('write test1.mpack')
+    eq(1, fn.filereadable('test1.mpack'))
+    local data = vim.mpack.decode(t.read_file('test1.mpack') --[[@as string]])
+    eq('string', type(data.content))
+    eq('table', type(data.argv))
+    eq('string', type(data.cwd))
+    eq('number', type(data.timestamp))
+  end)
+
+  it('two terminals with same cmd get distinct files', function()
+    command('terminal')
+    command('write')
+    command('terminal')
+    command('write')
+    local dir = vim.fs.joinpath(fn.stdpath('state'), 'term')
+    local files = fn.readdir(dir)
+    eq(2, #files)
+    ok(files[1] ~= files[2])
+  end)
+
+  it('derives the filename from the buffer URI', function()
+    local uris = {
+      'term://C:/Users/me//999:bash',
+      'term://foo/bar//123:bash',
+      'term://foo/bar//123:echo hello',
+      'term:///.//123:bash', -- cwd="/" is stored as "/."
+    }
+    command('terminal')
+    for _, uri in ipairs(uris) do
+      command('file ' .. uri)
+      command('write')
+    end
+    local dir = vim.fs.joinpath(fn.stdpath('state'), 'term')
+    local files = fn.readdir(dir)
+    table.sort(files)
+    eq({
+      '123-bash-b6611a22.mpack',
+      'C--Users-me-999-bash-2166eba5.mpack',
+      'foo-bar-123-bash-8fe2deac.mpack',
+      'foo-bar-123-echo-hello-6a8793c9.mpack',
+    }, files)
+  end)
 end)
