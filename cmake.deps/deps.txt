@@ -53,8 +53,8 @@ TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/308aee0c90b052
 TREESITTER_SHA256 5cba441e72b1f01f9e84370c1615bac1771f82b92679b3bd72da22c8df9fd61a
 
 # NOTE: Also update the find_package() call if bumping the minimum.
-WASMTIME_URL https://github.com/bytecodealliance/wasmtime/archive/v36.0.12.tar.gz
-WASMTIME_SHA256 aa82e354f782125665b448997daec3d9b239c4f180887eb3035f71ab97433fa6
+WASMTIME_URL https://github.com/bytecodealliance/wasmtime/archive/v36.0.13.tar.gz
+WASMTIME_SHA256 3f8ad583c23592ad961d49e757637d69f75e2b649dd41b42333e9ec0d3f47003
 
 UNCRUSTIFY_URL https://github.com/uncrustify/uncrustify/archive/uncrustify-0.83.0.tar.gz
 UNCRUSTIFY_SHA256 1d4d3ab3a991c66eb24cb0a3e690573b4882fd98bc6ec64a01c283998c20dc87
