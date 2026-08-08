@@ -1818,6 +1818,13 @@ function vim.api.nvim_open_term(buf, opts) end
 --- - hide: Hides the floating window. `window-hidden`
 --- - mouse: (default: `focusable` value) If true, mouse events interact with the window
 ---   normally; if false, they pass through to the window behind it.
+--- - mousedrag: Table controlling mouse drag interactions with the window. Dragging a
+---   non-editor-relative float converts it to editor-relative. Fields:
+---   - title: (default: false) If true, dragging the title or footer text moves the window.
+---   - content: (default: false) If true, dragging the content area moves the window.
+---   - border: (`"none"`"move"`"resize"`, default: "none") Behavior when dragging the border or
+---     corners. "resize" resizes the window, "move" moves it, "none" ignores border drags. Has
+---     no effect without a border.
 --- - noautocmd: Block all autocommands for the duration of the call. Cannot be changed by
 ---   `nvim_win_set_config()`.
 --- - relative: Sets the window layout to "floating", placed at (row,col) coordinates relative to:
