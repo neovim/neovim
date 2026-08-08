@@ -268,13 +268,13 @@ local function test_terminal_with_fake_shell(backslash)
   end)
 
   it('spawns in CWD effective at time of invocation', function()
-    command('terminal')
+    -- Run "echo" so the default TermClose handler does not auto-delete an exitcode=0 shell.
+    command('terminal echo')
     local dir = fn.bufname():match('^term://(.-)//')
-    command('bcd ..') -- :terminal should use this CWD.
-    command('terminal')
-    local parent = fn.bufname():match('^term://(.-)//')
-    neq(dir, parent)
-    eq(fn.fnamemodify(dir, ':h'), parent)
+    local parentdir = fn.fnamemodify(fn.getcwd(), ':h') -- Absolute, so 'cdpath' cannot interfere.
+    command(('bcd %s'):format(fn.fnameescape(parentdir))) -- :terminal should use this CWD.
+    command('terminal echo')
+    eq(fn.fnamemodify(dir, ':h'), fn.bufname():match('^term://(.-)//'))
   end)
 
   it('allows quotes and slashes', function()

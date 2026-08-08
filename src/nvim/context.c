@@ -312,6 +312,7 @@ static void ctx_localdirs_restore(CtxSwitch *cs, win_T *cwp, tabpage_T *tp, bool
 ///   ('autochdir', win/tab-local directories) can be undone.
 /// - kCtxKeepDirs: also copies of the target context's dir scopes (w/b/tp-local, global).
 static void ctx_dirs_save(CtxSwitch *cs, win_T *wp, tabpage_T *tp, buf_T *buf)
+  FUNC_ATTR_NONNULL_ARG(1, 2, 3)
 {
   if (!(cs->cs_flags & (kCtxKeepCwd | kCtxKeepDirs))) {
     return;
@@ -332,8 +333,8 @@ static void ctx_dirs_save(CtxSwitch *cs, win_T *wp, tabpage_T *tp, buf_T *buf)
   char cwd[MAXPATHL];
   if ((cs->cs_flags & kCtxKeepDirs)
       || (curwin != wp
-          && (curwin->w_localdir != NULL || (wp != NULL && wp->w_localdir != NULL)
-              || curbuf->b_localdir != NULL || (wp != NULL && wp->w_buffer->b_localdir != NULL)
+          && (curwin->w_localdir != NULL || wp->w_localdir != NULL
+              || curbuf->b_localdir != NULL || wp->w_buffer->b_localdir != NULL
               || (curtab != tp && (curtab->tp_localdir != NULL || tp->tp_localdir != NULL))
               || p_acd))) {
     if (os_dirname(cwd, MAXPATHL) == OK) {
@@ -350,7 +351,7 @@ static void ctx_dirs_save(CtxSwitch *cs, win_T *wp, tabpage_T *tp, buf_T *buf)
     do_autochdir();
     char autocwd[MAXPATHL];
     if (os_dirname(autocwd, MAXPATHL) == OK) {
-      cs->cs_apply_acd = strcmp(cwd, autocwd) == 0;
+      cs->cs_apply_acd = strcmp(cs->cs_cwd, autocwd) == 0;
     }
   }
 }
@@ -552,7 +553,7 @@ bool ctx_switch(CtxSwitch *cs, win_T *wp, tabpage_T *tp, buf_T *buf, CtxSwitchFl
   }
   // The CWD-state snapshot is only for a real window target; hidden-buffer target is handled by the
   // ctx_win machinery (ctx_win_prep).
-  if (buf == NULL || wp != NULL) {
+  if (wp != NULL) {
     ctx_dirs_save(cs, wp, tp == NULL ? curtab : tp, buf);
   }
 
