@@ -2620,12 +2620,15 @@ void set_cmd_context(expand_T *xp, char *str, int len, int col, int use_ccline)
   CmdlineInfo *const ccline = get_cmdline_info();
   char old_char = NUL;
 
-  // Avoid a UMR warning from Purify, only save the character if it has been
-  // written before.
+  // Only save and overwrite the character when it is not the NUL terminator
+  // already.  "str" may be a read-only empty string: tv_get_string() falls
+  // back to a "" literal for a NULL string or on a type error, and writing
+  // at "col" would then crash.
+  // This also avoids a UMR warning from Purify.
   if (col < len) {
     old_char = str[col];
+    str[col] = NUL;
   }
-  str[col] = NUL;
   const char *nextcomm = str;
 
   if (use_ccline && ccline->cmdfirstc == '=') {
@@ -2650,7 +2653,9 @@ void set_cmd_context(expand_T *xp, char *str, int len, int col, int use_ccline)
   xp->xp_line = str;
   xp->xp_col = col;
 
-  str[col] = old_char;
+  if (col < len) {
+    str[col] = old_char;
+  }
 }
 
 /// Expand the command line "str" from context "xp".
@@ -4025,7 +4030,9 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   if (argvars[0].v_type != VAR_STRING) {
-    emsg(_(e_invarg));
+    if (tv_get_string_chk(&argvars[0]) != NULL) {
+      emsg(_(e_invarg));
+    }
     return;
   }
   const char *const pattern = tv_get_string(&argvars[0]);
