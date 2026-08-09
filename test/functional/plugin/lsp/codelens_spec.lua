@@ -418,6 +418,94 @@ describe('vim.lsp.codelens', function()
     eq('', api.nvim_get_vvar('errmsg'))
   end)
 
+  it('does not leave a blank virtual line after codeLens/resolve fails #41074', function()
+    clear_notrace()
+    exec_lua(create_server_definition)
+    screen = Screen.new(30, 5)
+
+    client_id = exec_lua(function()
+      _G.resolve_count = 0
+      _G.server = _G._create_server({
+        capabilities = {
+          textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
+          codeLensProvider = {
+            resolveProvider = true,
+          },
+        },
+        handlers = {
+          ['textDocument/codeLens'] = function(_, _, callback)
+            callback(nil, {
+              {
+                range = {
+                  ['end'] = { character = 6, line = 0 },
+                  start = { character = 0, line = 0 },
+                },
+              },
+            })
+          end,
+          ['codeLens/resolve'] = function(_, lens, callback)
+            vim.defer_fn(function()
+              _G.resolve_count = _G.resolve_count + 1
+              if _G.resolve_count == 1 then
+                callback({
+                  code = vim.lsp.protocol.ErrorCodes.ContentModified,
+                  message = 'content modified',
+                })
+              else
+                lens.command = {
+                  command = 'dummy.command',
+                  title = '1 reference',
+                }
+                callback(nil, lens)
+              end
+            end, 100)
+          end,
+        },
+      })
+
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'target', 'below' })
+      return vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
+    end)
+
+    exec_lua(function()
+      vim.lsp.codelens.enable()
+    end)
+
+    eq(
+      true,
+      exec_lua(function()
+        return vim.wait(1000, function()
+          return _G.resolve_count == 1
+        end)
+      end)
+    )
+
+    screen:expect([[
+      ^target                        |
+      below                         |
+      {1:~                             }|*2
+                                    |
+    ]])
+    eq(1, exec_lua('return _G.resolve_count'))
+
+    exec_lua(function()
+      vim.lsp.codelens.on_refresh(
+        nil,
+        nil,
+        { method = 'workspace/codeLens/refresh', client_id = client_id }
+      )
+    end)
+
+    screen:expect([[
+      {1:1 reference}                   |
+      ^target                        |
+      below                         |
+      {1:~                             }|
+                                    |
+    ]])
+    eq(2, exec_lua('return _G.resolve_count'))
+  end)
+
   it('ignores refresh responses for deleted buffer', function()
     clear_notrace()
     exec_lua(create_server_definition)

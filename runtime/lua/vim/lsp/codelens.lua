@@ -135,7 +135,6 @@ function Provider:resolve(client, unresolved_lens)
 
     if err then
       log.error('codelens/resolve', err)
-      return
     end
 
     if util.buf_versions[self.bufnr] ~= ctx.version then
@@ -152,12 +151,20 @@ function Provider:resolve(client, unresolved_lens)
     for i, lens in ipairs(row_lenses.lenses) do
       -- Only apply if this exact unresolved lens still exists; otherwise response is stale.
       if lens == unresolved_lens then
-        row_lenses.lenses[i] = resolved_lens
+        if err then
+          table.remove(row_lenses.lenses, i)
+          if #row_lenses.lenses == 0 then
+            state.row_lenses[row] = nil
+            api.nvim_buf_clear_namespace(self.bufnr, state.namespace, row, row + 1)
+          end
+        else
+          row_lenses.lenses[i] = resolved_lens
+        end
         row_lenses.version = nil
         api.nvim__redraw({
           buf = self.bufnr,
           range = { row, row + 1 },
-          valid = true,
+          valid = err == nil,
           flush = false,
         })
         return
