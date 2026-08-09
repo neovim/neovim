@@ -64,7 +64,7 @@ To disable the built-in directory browser, set this before startup: >lua
 GLOBAL MAPPINGS                                                 *dir-mappings*
 
 • - opens the parent directory of the current file or directory.
-• {count}- is like -, but a count of 1 opens the current working directory,
+• {count}- is like -, but a count of 1 opens the global working directory,
   and a higher count goes up that many levels.
 
 BUFFER-LOCAL MAPPINGS                                    *dir-buffer-mappings*
