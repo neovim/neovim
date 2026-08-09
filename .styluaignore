@@ -13,3 +13,7 @@ test/functional/fixtures/lua/syntax_error.lua
 test/functional/legacy/030_fileformats_spec.lua
 test/functional/legacy/044_099_regexp_multibyte_magic_spec.lua
 test/functional/legacy/093_mksession_cursor_cols_latin1_spec.lua
+
+# These use LuaJIT FFI syntax (-1ULL) that stylua's parser can't parse
+test/unit/os/fs_spec.lua
+test/unit/marktree_spec.lua
