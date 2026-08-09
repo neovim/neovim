@@ -4206,7 +4206,7 @@ bool tv_check_str(const typval_T *const tv)
 /// @param[in]  tv  Object to get value from.
 ///
 /// @return Number value: vim_str2nr() output for VAR_STRING objects, value
-///         for VAR_NUMBER objects, -1 for other types.
+///         for VAR_NUMBER objects, 0 for other types.
 varnumber_T tv_get_number(const typval_T *const tv)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -4223,9 +4223,11 @@ varnumber_T tv_get_number(const typval_T *const tv)
 ///                         @note Needs to be initialized to `false` to be
 ///                               useful.
 ///
-/// @return Number value: vim_str2nr() output for VAR_STRING objects, value
-///         for VAR_NUMBER objects, -1 (ret_error == NULL) or 0 (otherwise) for
-///         other types.
+/// @return Number value: vim_str2nr() output for VAR_STRING objects,
+///         value for VAR_NUMBER objects,
+///         1 (true) or 0 (false) for VAR_BOOL objects,
+///         0 for VAR_SPECIAL objects,
+///         -1 (ret_error == NULL) or 0 (otherwise) for other types.
 varnumber_T tv_get_number_chk(const typval_T *const tv, bool *const ret_error)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
 {
@@ -4261,6 +4263,15 @@ varnumber_T tv_get_number_chk(const typval_T *const tv, bool *const ret_error)
   return (ret_error == NULL ? -1 : 0);
 }
 
+/// Get the boolean value of a Vimscript object
+///
+/// @note Use tv_get_bool_chk() if you need to determine whether there was an
+///       error.
+///
+/// @param[in]  tv  Object to get value from.
+///
+/// @return Number value: vim_str2nr() output for VAR_STRING objects, value
+///         for VAR_NUMBER objects, -1 for other types.
 varnumber_T tv_get_bool(const typval_T *const tv)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
