@@ -24,6 +24,7 @@
 #include "nvim/globals.h"
 #include "nvim/insert.h"
 #include "nvim/macros_defs.h"
+#include "nvim/mark.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/move.h"
@@ -275,6 +276,102 @@ void f_appendbufline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   buf_set_append_line(argvars, rettv, true);
 }
 
+/// Trim lines above the prompt to enforce 'scrollback' limit
+static void prompt_trim_scrollback(buf_T *buf)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (buf->b_p_scbk <= 0) {
+    return;
+  }
+
+  linenr_T prompt_line = buf->b_prompt_start.mark.lnum;
+  linenr_T above_prompt = prompt_line - 1;
+  if (above_prompt <= (linenr_T)buf->b_p_scbk) {
+    return;
+  }
+
+  linenr_T to_delete = above_prompt - (linenr_T)buf->b_p_scbk;
+  for (linenr_T i = 0; i < to_delete; i++) {
+    ml_delete_buf(buf, 1, false);
+  }
+  mark_adjust_buf(buf, 1, to_delete, MAXLNUM, -to_delete, true,
+                  kMarkAdjustNormal, kExtmarkUndo);
+  deleted_lines_buf(buf, 1, to_delete);
+
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp->w_buffer == buf) {
+      wp->w_cursor.lnum = wp->w_cursor.lnum <= to_delete
+                          ? 1
+                          : wp->w_cursor.lnum - to_delete;
+      if (wp->w_cursor.lnum > wp->w_buffer->b_ml.ml_line_count) {
+        wp->w_cursor.lnum = wp->w_buffer->b_ml.ml_line_count;
+      }
+    }
+  }
+  check_cursor_col(curwin);
+}
+
+/// Invokes the user-defined callback defined for the current prompt-buffer.
+void prompt_invoke_callback(void)
+{
+  typval_T rettv;
+  typval_T argv[2];
+  linenr_T lnum = curbuf->b_ml.ml_line_count;
+
+  char *user_input = prompt_get_input(curbuf);
+
+  if (!user_input) {
+    return;
+  }
+
+  // Add a new line for the prompt before invoking the callback, so that
+  // text can always be inserted above the last line.
+  ml_append(lnum, "", 0, false);
+  appended_lines_mark(lnum, 1);
+  curwin->w_cursor.lnum = lnum + 1;
+  curwin->w_cursor.col = 0;
+  curbuf->b_prompt_start.mark.lnum = lnum + 1;
+
+  if (curbuf->b_prompt_callback.type == kCallbackNone) {
+    xfree(user_input);
+    goto theend;
+  }
+
+  argv[0].v_type = VAR_STRING;
+  argv[0].vval.v_string = user_input;
+  argv[1].v_type = VAR_UNKNOWN;
+
+  callback_call(&curbuf->b_prompt_callback, 1, argv, &rettv);
+  tv_clear(&argv[0]);
+  tv_clear(&rettv);
+
+theend:
+  // clear undo history on submit
+  u_clearallandblockfree(curbuf);
+
+  curbuf->b_prompt_start.mark.lnum = curbuf->b_ml.ml_line_count;
+  curbuf->b_prompt_append_new_line = true;
+
+  prompt_trim_scrollback(curbuf);
+}
+
+/// @return  true when the interrupt callback was invoked.
+bool invoke_prompt_interrupt(void)
+{
+  typval_T rettv;
+  typval_T argv[1];
+
+  if (curbuf->b_prompt_interrupt.type == kCallbackNone) {
+    return false;
+  }
+  argv[0].v_type = VAR_UNKNOWN;
+
+  got_int = false;  // don't skip executing commands
+  int ret = callback_call(&curbuf->b_prompt_interrupt, 0, argv, &rettv);
+  tv_clear(&rettv);
+  return ret != FAIL;
+}
+
 /// "prompt_appendbuf({buffer}, string/list)" function
 void f_prompt_appendbuf(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   FUNC_ATTR_NONNULL_ALL
@@ -450,7 +547,7 @@ void f_bufnr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   const char *name;
   if (buf == NULL
       && argvars[1].v_type != VAR_UNKNOWN
-      && tv_get_number_chk(&argvars[1], &error) != 0
+      && tv_get_bool_chk(&argvars[1], &error) != 0
       && !error
       && (name = tv_get_string_chk(&argvars[0])) != NULL) {
     buf = buflist_new((char *)name, NULL, 1, 0);
@@ -819,6 +916,46 @@ void f_prompt_setinterrupt(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
 
   callback_free(&buf->b_prompt_interrupt);
   buf->b_prompt_interrupt = interrupt_callback;
+}
+
+/// "prompt_getprompt({buffer})" function
+void f_prompt_getprompt(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // return an empty string by default, e.g. it's not a prompt buffer
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = NULL;
+
+  buf_T *const buf = tv_get_buf_from_arg(&argvars[0]);
+  if (buf == NULL) {
+    return;
+  }
+
+  if (!bt_prompt(buf)) {
+    return;
+  }
+
+  rettv->vval.v_string = xstrdup(buf_prompt_text(buf));
+}
+
+/// "prompt_getinput({buffer})" function
+void f_prompt_getinput(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // return an empty string by default, e.g. it's not a prompt buffer
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = NULL;
+
+  buf_T *const buf = tv_get_buf_from_arg(&argvars[0]);
+  if (buf == NULL) {
+    return;
+  }
+
+  if (!bt_prompt(buf)) {
+    return;
+  }
+
+  rettv->vval.v_string = prompt_get_input(buf);
 }
 
 /// "prompt_setprompt({buffer}, {text})" function
