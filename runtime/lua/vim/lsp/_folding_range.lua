@@ -60,6 +60,8 @@ function State:evaluate()
   tableclear(row_kinds)
   tableclear(row_text)
   tableclear(row_virt_text)
+  local row_starts = {} ---@type table<integer, true>
+  local row_ends = {} ---@type table<integer, integer>
 
   for client_id, ranges in pairs(self.client_state) do
     for _, range in ipairs(ranges) do
@@ -86,9 +88,17 @@ function State:evaluate()
           level[1] = level[1] + 1
           row_level[row] = level
         end
-        row_level[start_row][2] = '>'
-        row_level[end_row][2] = '<'
+        row_starts[start_row] = true
+        row_ends[end_row] = (row_ends[end_row] or 0) + 1
       end
+    end
+  end
+  for row, level in pairs(row_level) do
+    if row_starts[row] then
+      level[2] = '>'
+    elseif row_ends[row] then
+      level[2] = '<'
+      level[1] = level[1] - row_ends[row] + 1
     end
   end
 end
