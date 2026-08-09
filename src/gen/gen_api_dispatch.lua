@@ -425,7 +425,11 @@ for i = 1, #functions do
     )
     output:write('\n{')
     output:write('\n#ifdef NVIM_LOG_DEBUG')
-    output:write('\n  DLOG("RPC: ch %" PRIu64 ": invoke ' .. fn.name .. '", channel_id);')
+    -- Log only internal calls: an RPC caller is logged by log_request()/log_notify().
+    -- An internal call is always Vimscript (api_wrapper()); vim.api binds to nvim_foo() directly.
+    output:write(
+      ('\n  if (is_internal_call(channel_id)) {\n    DLOG("API: vim -> %s");\n  }'):format(fn.name)
+    )
     output:write('\n#endif')
     output:write('\n  Object ret = NIL;')
     -- Declare/initialize variables that will hold converted arguments
