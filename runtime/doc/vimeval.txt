@@ -1331,30 +1331,45 @@ number
 number			number constant			*expr-number*
 
 			*0x* *hex-number* *0o* *octal-number* *binary-number*
-Decimal, Hexadecimal (starting with 0x or 0X), Binary (starting with 0b or 0B)
-and Octal (starting with 0, 0o or 0O).
+Integer numbers can be written in multiple forms:
+
+	{N}		decimal
+	0x{N} or 0X{N}	hexadecimal
+	0o{N} or 0O{N}	octal
+	0{N}		octal
+	0b{N} or 0B{N}	binary
+
+{N} is a sequence of decimal digits (0-9), hexadecimal digits (0-9, a-f and
+A-F), octal digits (0-7) or binary digits (0 or 1).
+
+Note: A leading "-" or "+" is not part of the number, it is the unary operator
+|expr7| applied to it.
+
+Examples:
+	0xDEAD
+	57005
+	0b1101111010101101
+	0o157255
 
 						*floating-point-format*
 Floating point numbers can be written in two forms:
 
-	[-+]{N}.{M}
-	[-+]{N}.{M}[eE][-+]{exp}
+	{N}.{M}
+	{N}.{M}[eE][-+]{exp}
 
-{N} and {M} are numbers.  Both {N} and {M} must be present and can only
-contain digits.
-[-+] means there is an optional plus or minus sign.
+{N} and {M} are sequences of decimal digits  Both {N} and {M} must be present.
 {exp} is the exponent, power of 10.
 Only a decimal point is accepted, not a comma.  No matter what the current
 locale is.
 
 Examples:
 	123.456
-	+0.0001
+	0.0001
 	55.0
-	-0.123
+	0.123
 	1.234e03
 	1.0E-6
-	-3.1416e+88
+	3.1416e+88
 
 These are INVALID:
 	3.		empty {M}
