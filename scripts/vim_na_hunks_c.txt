@@ -48,6 +48,7 @@
 ^mch_create_pty_channel(
 ^mch_job_[a-z]\+(
 ^mem_[a-zA-Z0-9_]\+(
+^parse_queued_messages(
 ^restore_buffer(bufref_T
 ^static int included_patches\[\] =
 ^switch_buffer(bufref_T
