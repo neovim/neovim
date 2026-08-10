@@ -2909,7 +2909,7 @@ func Test_normal_8g8()
   " With invalid byte.
   call setline(1, "___\xff___")
   norm! 1G08g8g
-  call assert_equal([0, 1, 4, 0, 1], getcurpos())
+  call assert_equal([0, 1, 4, 0, 4], getcurpos())
 
   " With invalid byte before the cursor.
   call setline(1, "___\xff___")
@@ -2919,12 +2919,12 @@ func Test_normal_8g8()
   " With truncated sequence.
   call setline(1, "___\xE2\x82___")
   norm! 1G08g8g
-  call assert_equal([0, 1, 4, 0, 1], getcurpos())
+  call assert_equal([0, 1, 4, 0, 4], getcurpos())
 
   " With overlong sequence.
   call setline(1, "___\xF0\x82\x82\xAC___")
   norm! 1G08g8g
-  call assert_equal([0, 1, 4, 0, 1], getcurpos())
+  call assert_equal([0, 1, 4, 0, 4], getcurpos())
 
   " With valid utf8.
   call setline(1, "café")
