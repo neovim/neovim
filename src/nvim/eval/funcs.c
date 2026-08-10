@@ -3497,7 +3497,7 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       buf_close_terminal(curbuf);
     }
     assert(!rpc);
-    term_name = "xterm-256color";
+    term_name = p_tgc ? "xterm-256color" : "ansi";
     cwd = cwd ? cwd : ".";
     overlapped = false;
     detach = false;

@@ -6369,7 +6369,8 @@ M.funcs = {
       	      session connected to the current (unmodified) buffer.
       	      Implies "pty". Defaults "height" and "width" to the
       	      current window dimensions. Defaults $TERM to
-      	      "xterm-256color".
+              "xterm-256color" or "ansi", depending on the value of
+              'termguicolors'.
         width:      (number) Width of the `pty` pseudo-terminal.
 
       {opts} is passed as |self| dictionary to the callback; the
