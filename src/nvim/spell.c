@@ -2661,7 +2661,7 @@ void ex_spellrepall(exarg_T *eap)
   sub_nlines = 0;
   curwin->w_cursor.lnum = 0;
   while (!got_int) {
-    if (do_search(NULL, '/', '/', frompat, frompatlen, 1, SEARCH_KEEP, NULL) == 0
+    if (do_search(NULL, '/', '/', frompat, frompatlen, 1, SEARCH_KEEP, false, NULL) == 0
         || u_save_cursor() == FAIL) {
       break;
     }

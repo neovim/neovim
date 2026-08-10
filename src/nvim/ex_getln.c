@@ -119,7 +119,6 @@ typedef struct {
   pos_T match_end;
   bool did_incsearch;
   bool incsearch_postponed;
-  optmagic_T magic_overruled_save;
 } incsearch_state_T;
 
 typedef struct {
@@ -250,7 +249,6 @@ static void init_incsearch_state(incsearch_state_T *s)
   s->match_start = curwin->w_cursor;
   s->did_incsearch = false;
   s->incsearch_postponed = false;
-  s->magic_overruled_save = magic_overruled;
   clearpos(&s->match_end);
   s->save_cursor = curwin->w_cursor;  // may be restored later
   s->search_start = curwin->w_cursor;
@@ -273,8 +271,9 @@ static void set_search_match(pos_T *t)
 /// Parses the :[range]s/foo like commands and returns details needed for
 /// incsearch and wildmenu completion.
 /// Returns true if pattern is valid.
-/// Sets skiplen, patlen, Search.first_line, and Search.last_line.
-bool parse_pattern_and_range(pos_T *incsearch_start, int *search_delim, int *skiplen, int *patlen)
+/// Sets skiplen, patlen, Search.first_line, and Search.last_line and magic if overruled.
+bool parse_pattern_and_range(pos_T *incsearch_start, int *search_delim, int *skiplen, int *patlen,
+                             bool *is_magic)
   FUNC_ATTR_NONNULL_ALL
 {
   char *p;
@@ -317,9 +316,9 @@ bool parse_pattern_and_range(pos_T *incsearch_start, int *search_delim, int *ski
       || strncmp(cmd, "snomagic", (size_t)MAX(p - cmd, 3)) == 0
       || strncmp(cmd, "vglobal", (size_t)(p - cmd)) == 0) {
     if (*cmd == 's' && cmd[1] == 'm') {
-      magic_overruled = OPTION_MAGIC_ON;
+      *is_magic = true;
     } else if (*cmd == 's' && cmd[1] == 'n') {
-      magic_overruled = OPTION_MAGIC_OFF;
+      *is_magic = false;
     }
   } else if (strncmp(cmd, "sort", (size_t)MAX(p - cmd, 3)) == 0
              || strncmp(cmd, "uniq", (size_t)MAX(p - cmd, 3)) == 0) {
@@ -356,7 +355,7 @@ bool parse_pattern_and_range(pos_T *incsearch_start, int *search_delim, int *ski
   int delim = (delim_optional && vim_isIDc((uint8_t)(*p))) ? ' ' : *p++;
   *search_delim = delim;
 
-  char *end = skip_regexp_ex(p, delim, magic_isset(), NULL, NULL, &magic);
+  char *end = skip_regexp_ex(p, delim, *is_magic, NULL, NULL, &magic);
   bool use_last_pat = end == p && *end == delim;
 
   if (end == p && !use_last_pat) {
@@ -401,7 +400,7 @@ bool parse_pattern_and_range(pos_T *incsearch_start, int *search_delim, int *ski
 /// Sets Search.first_line and Search.last_line to the address range.
 /// May change the last search pattern.
 static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_state_T *is_state,
-                                      int *skiplen, int *patlen)
+                                      int *skiplen, int *patlen, bool *magic)
 {
   bool retval = false;
 
@@ -427,7 +426,7 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
 
   emsg_off++;
   retval = parse_pattern_and_range(&is_state->search_start, search_delim,
-                                   skiplen, patlen);
+                                   skiplen, patlen, magic);
   emsg_off--;
 
   return retval;
@@ -438,12 +437,13 @@ static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state
 {
   int skiplen, patlen;
   int search_delim;
+  bool magic = p_magic;
 
   // Parsing range may already set the last search pattern.
   // NOTE: must call restore_last_search_pattern() before returning!
   save_last_search_pattern();
 
-  if (!do_incsearch_highlighting(firstc, &search_delim, s, &skiplen, &patlen)) {
+  if (!do_incsearch_highlighting(firstc, &search_delim, s, &skiplen, &patlen, &magic)) {
     restore_last_search_pattern();
     finish_incsearch_highlighting(false, s, true);
     return;
@@ -497,7 +497,7 @@ static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state
     emsg_off++;            // So it doesn't beep if bad expr
     found = do_search(NULL, firstc == ':' ? '/' : firstc, search_delim,
                       ccline.cmdbuff + skiplen, (size_t)patlen, count,
-                      search_flags, &sia);
+                      search_flags, magic, &sia);
     emsg_off--;
     ccline.cmdbuff[skiplen + patlen] = next_char;
     if (curwin->w_cursor.lnum < Search.first_line
@@ -590,6 +590,7 @@ static int may_add_char_to_search(int firstc, int *c, incsearch_state_T *s)
 {
   int skiplen, patlen;
   int search_delim;
+  bool magic = p_magic;
 
   // Parsing range may already set the last search pattern.
   // NOTE: must call restore_last_search_pattern() before returning!
@@ -597,7 +598,7 @@ static int may_add_char_to_search(int firstc, int *c, incsearch_state_T *s)
 
   // Add a character from under the cursor for 'incsearch'
   if (!do_incsearch_highlighting(firstc, &search_delim, s, &skiplen,
-                                 &patlen)) {
+                                 &patlen, &magic)) {
     restore_last_search_pattern();
     return FAIL;
   }
@@ -615,7 +616,7 @@ static int may_add_char_to_search(int firstc, int *c, incsearch_state_T *s)
         *c = mb_tolower(*c);
       }
       if (*c == search_delim
-          || vim_strchr((magic_isset() ? "\\~^$.*[" : "\\^$"), *c) != NULL) {
+          || vim_strchr((p_magic ? "\\~^$.*[" : "\\^$"), *c) != NULL) {
         // put a backslash before special characters
         stuffcharReadbuff(*c);
         *c = '\\';
@@ -660,8 +661,6 @@ static void finish_incsearch_highlighting(bool gotesc, incsearch_state_T *s,
   // by default search all lines
   Search.first_line = 0;
   Search.last_line = MAXLNUM;
-
-  magic_overruled = s->magic_overruled_save;
 
   validate_cursor(curwin);          // needed for TAB
   status_redraw_all();
@@ -1556,13 +1555,14 @@ static int may_do_command_line_next_incsearch(int firstc, int count, incsearch_s
   FUNC_ATTR_NONNULL_ALL
 {
   int skiplen, patlen, search_delim;
+  bool magic = p_magic;
 
   // Parsing range may already set the last search pattern.
   // NOTE: must call restore_last_search_pattern() before returning!
   save_last_search_pattern();
 
   if (!do_incsearch_highlighting(firstc, &search_delim, s, &skiplen,
-                                 &patlen)) {
+                                 &patlen, &magic)) {
     restore_last_search_pattern();
     return OK;
   }
@@ -1607,7 +1607,7 @@ static int may_do_command_line_next_incsearch(int firstc, int count, incsearch_s
   int found = searchit(curwin, curbuf, &t, NULL,
                        next_match ? FORWARD : BACKWARD,
                        searchstr, searchstrlen, count, search_flags,
-                       RE_SEARCH, NULL);
+                       RE_SEARCH, magic, NULL);
   emsg_off--;
   if (dircp != NULL) {
     *dircp = (char)search_delim;
@@ -2412,7 +2412,7 @@ static bool empty_pattern(char *p, size_t len, int delim)
   magic_T magic_val = MAGIC_ON;
 
   if (len > 0) {
-    skip_regexp_ex(p, delim, magic_isset(), NULL, NULL, &magic_val);
+    skip_regexp_ex(p, delim, p_magic, NULL, NULL, &magic_val);
   } else {
     return true;
   }

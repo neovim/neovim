@@ -711,10 +711,6 @@ EXTERN bool headless_mode INIT( = false);
 /// Only filled for Win32.
 EXTERN char windowsVersion[20] INIT( = { 0 });
 
-/// While executing a regexp and set to OPTION_MAGIC_ON or OPTION_MAGIC_OFF this
-/// overrules p_magic.  Otherwise set to OPTION_MAGIC_NOT_SET.
-EXTERN optmagic_T magic_overruled INIT( = OPTION_MAGIC_NOT_SET);
-
 /// Skip win_fix_scroll() call for 'splitkeep' when closing tab page.
 EXTERN bool skip_win_fix_scroll INIT( = false);
 /// Skip update_topline() call while executing win_fix_scroll().

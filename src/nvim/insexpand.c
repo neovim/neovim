@@ -1964,7 +1964,7 @@ static void ins_compl_dictionaries(char *dict_start, char *pat, int flags, bool 
     xfree(pat_esc);
     xfree(ptr);
   } else {
-    regmatch.regprog = vim_regcomp(pat, magic_isset() ? RE_MAGIC : 0);
+    regmatch.regprog = vim_regcomp(pat, p_magic ? RE_MAGIC : 0);
     if (regmatch.regprog == NULL) {
       goto theend;
     }
@@ -4401,7 +4401,7 @@ static int get_next_default_completion(ins_compl_next_state_T *st, pos_T *start_
       found_new_match = searchit(NULL, st->ins_buf, st->cur_match_pos,
                                  NULL, compl_direction, compl_pattern.data,
                                  compl_pattern.size,
-                                 1, SEARCH_KEEP + SEARCH_NFMSG, RE_LAST, NULL);
+                                 1, SEARCH_KEEP + SEARCH_NFMSG, RE_LAST, p_magic, NULL);
     }
     msg_silent--;
     if (!compl_started || st->set_match_pos) {
@@ -6440,7 +6440,7 @@ static unsigned quote_meta(char *dest, char *src, int len)
       }
       FALLTHROUGH;
     case '~':
-      if (!magic_isset()) {  // quote these only if magic is set
+      if (!p_magic) {  // quote these only if magic is set
         break;
       }
       FALLTHROUGH;

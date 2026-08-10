@@ -362,7 +362,7 @@ static void arglist_del_files(garray_T *alist_ga)
     if (p == NULL) {
       break;
     }
-    regmatch.regprog = vim_regcomp(p, magic_isset() ? RE_MAGIC : 0);
+    regmatch.regprog = vim_regcomp(p, p_magic ? RE_MAGIC : 0);
     if (regmatch.regprog == NULL) {
       xfree(p);
       break;

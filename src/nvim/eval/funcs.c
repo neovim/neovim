@@ -5558,7 +5558,7 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
   // Repeat until {skip} returns false.
   while (true) {
     subpatnum = searchit(curwin, curbuf, &pos, NULL, dir, (char *)pat, patlen, 1,
-                         options, RE_SEARCH, &sia);
+                         options, RE_SEARCH, p_magic, &sia);
     // finding the first match again means there is no match where {skip}
     // evaluates to zero.
     if (firstpos.lnum != 0 && equalpos(pos, firstpos)) {
@@ -6069,7 +6069,7 @@ int do_searchpair(const char *spat, const char *mpat, const char *epat, int dir,
     };
 
     int n = searchit(curwin, curbuf, &pos, NULL, dir, pat, patlen, 1,
-                     options, RE_SEARCH, &sia);
+                     options, RE_SEARCH, true, &sia);
     if (n == FAIL || (firstpos.lnum != 0 && equalpos(pos, firstpos))) {
       // didn't find it or found the first match again: FAIL
       break;

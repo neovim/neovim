@@ -2558,8 +2558,8 @@ M.cmds = {
     command = 'smagic',
     flags = bit.bor(RANGE, WHOLEFOLD, EXTRA, BUFLOCK_OK, LOCK_OK, PREVIEW),
     addr_type = 'ADDR_LINES',
-    func = 'ex_submagic',
-    preview_func = 'ex_submagic_preview',
+    func = 'ex_substitute',
+    preview_func = 'ex_substitute_preview',
   },
   {
     command = 'smap',
@@ -2589,8 +2589,8 @@ M.cmds = {
     command = 'snomagic',
     flags = bit.bor(RANGE, WHOLEFOLD, EXTRA, BUFLOCK_OK, LOCK_OK, PREVIEW),
     addr_type = 'ADDR_LINES',
-    func = 'ex_submagic',
-    preview_func = 'ex_submagic_preview',
+    func = 'ex_substitute',
+    preview_func = 'ex_substitute_preview',
   },
   {
     command = 'snoremap',
