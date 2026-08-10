@@ -29,6 +29,53 @@ end
 
 before_each(clear)
 
+describe('Diff mode cursorbind', function()
+  it('updates cursorbind after undo when cursor did not move', function()
+    write_file(
+      'Xdifile1',
+      [[
+C11
+C12
+C31
+C32
+]],
+      false
+    )
+
+    write_file(
+      'Xdifile2',
+      [[
+C21
+C22
+A21
+A22
+C41
+C42
+]],
+      false
+    )
+
+    clear({
+      args = {
+        '-u',
+        'NONE',
+        '-d',
+        'Xdifile1',
+        'Xdifile2',
+      },
+    })
+
+    feed('2dd')
+    feed('j')
+    feed('k')
+    feed('u')
+
+    command('wincmd l')
+
+    eq('C21', api.nvim_get_current_line())
+  end)
+end)
+
 describe('Diff mode screen', function()
   local fname = 'Xtest-functional-diff-screen-1'
   local fname_2 = fname .. '.2'

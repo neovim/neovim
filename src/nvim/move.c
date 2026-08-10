@@ -2590,7 +2590,9 @@ void do_check_cursorbind(void)
   static win_T *prev_curwin = NULL;
   static pos_T prev_cursor = { 0, 0, 0 };
 
-  if (curwin == prev_curwin && equalpos(curwin->w_cursor, prev_cursor)) {
+  if (curwin == prev_curwin
+      && equalpos(curwin->w_cursor, prev_cursor)
+      && curtab->tp_first_diff == NULL) {
     return;
   }
   prev_curwin = curwin;
