@@ -2135,6 +2135,7 @@ void utf_find_illegal(void)
             curwin->w_cursor.col += l;
           }
         }
+        curwin->w_set_curswant = true;
         goto theend;
       }
       p += len;
