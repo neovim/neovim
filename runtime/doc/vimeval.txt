@@ -1330,7 +1330,7 @@ number
 
 number			number constant			*expr-number*
 
-			*0x* *hex-number* *0o* *octal-number* *binary-number*
+			*0x* *hex-number* *0o* *octal-number* *0b* *binary-number*
 Integer numbers can be written in multiple forms:
 
 	{N}		decimal
@@ -1342,8 +1342,8 @@ Integer numbers can be written in multiple forms:
 {N} is a sequence of decimal digits (0-9), hexadecimal digits (0-9, a-f and
 A-F), octal digits (0-7) or binary digits (0 or 1).
 
-Note: A leading "-" or "+" is not part of the number, it is the unary operator
-|expr7| applied to it.
+A leading "+" or "-" is not part of an integer literal.  E.g., -123 is an
+expression, the unary operator |expr-unary--| applied to the number 123.
 
 Examples:
 	0xDEAD
@@ -1361,6 +1361,10 @@ Floating point numbers can be written in two forms:
 {exp} is the exponent, power of 10.
 Only a decimal point is accepted, not a comma.  No matter what the current
 locale is.
+
+A leading "+" or "-" is not part of a floating point literal.  E.g., -1.0e-3
+is an expression, the unary operator |expr-unary--| applied to the float 1.0e-3.
+The "-" in the exponent is part of the literal.
 
 Examples:
 	123.456
