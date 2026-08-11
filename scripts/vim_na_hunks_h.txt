@@ -1,1 +1,2 @@
+^struct jobvar_S
 ^struct type_S {

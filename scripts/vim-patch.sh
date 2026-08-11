@@ -958,7 +958,7 @@ is_na_patch() {
         HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
           '-I^\s+$' \
           '-I^\s*/?\*/?$' \
-          '-I^\s*(//|/?\*).*\s([vV]im9|popup|sound)' \
+          '-I^\s*(//|/?\*).*\s([vV]im9|channel|job|popup|sound)' \
           '-I^#\s*((ifdef|ifndef|undef)|(if|elif)\s.*defined\().*FEAT_' \
           '-I^#\s*(else|endif)' \
           '-I^#\s*define\s+(FEAT|POPUPWIN|XDG)_' \
@@ -982,6 +982,7 @@ is_na_patch() {
           '-I\sINIT\(= .+"E1016: Cannot declare .* variable: ' \
           '-I\s+INIT\(= .+"E1103: Dictionary not set' \
           '-I\schar.*\s+\*w_popup_title;' \
+          '-I\sint\s+ch_[_a-zA-Z]+;' \
           '-I\sint\s+w_(filter_mode|firstline|popup_drag|want_scrollbar);' \
           '-I\slist_T\s+\*w_popup_mask;' \
           '-I\spopclose_T\sw_popup_close;' \
