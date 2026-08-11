@@ -3,10 +3,12 @@ local t = require('test.testutil')
 local Screen = require('test.functional.ui.screen')
 
 local describe, it, before_each = t.describe, t.it, t.before_each
+local eq = t.eq
 local clear = n.clear
 local command = n.command
 local exec = n.exec
 local feed = n.feed
+local fn = n.fn
 
 before_each(clear)
 
@@ -75,5 +77,39 @@ describe("'cursorbind'", function()
       {3:[No Name] [+]        }{2:[No Name] [+]                          }|
                                                                   |
     ]])
+  end)
+
+  it('resyncs the other diff window when undo changes the diff #41250', function()
+    exec([[
+      set diffopt+=linematch:60
+      call setline(1, ['C11', 'C12', 'C31', 'C32'])
+      diffthis
+      let g:w1 = win_getid()
+      vnew
+      call setline(1, ['C21', 'C22', 'A21', 'A22', 'C41', 'C42'])
+      diffthis
+      let g:w2 = win_getid()
+      windo set cursorbind
+      call win_gotoid(g:w1)
+    ]])
+
+    local function other_line()
+      return fn.trim(fn.win_execute(fn.eval('g:w2'), 'echo getline(".")'))
+    end
+
+    eq('C11', fn.getline('.'))
+    eq('C21', other_line())
+
+    feed('2dd')
+    eq('C31', fn.getline('.'))
+
+    feed('jk')
+    eq('C41', other_line())
+
+    -- Undo restores the deleted lines and puts the cursor back on line 1, the
+    -- same position it was memoised at, so the other window used to stay put.
+    feed('u')
+    eq('C11', fn.getline('.'))
+    eq('C21', other_line())
   end)
 end)

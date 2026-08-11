@@ -2589,12 +2589,18 @@ void do_check_cursorbind(void)
 {
   static win_T *prev_curwin = NULL;
   static pos_T prev_cursor = { 0, 0, 0 };
+  static varnumber_T prev_changedtick = 0;
 
-  if (curwin == prev_curwin && equalpos(curwin->w_cursor, prev_cursor)) {
+  // Changing the buffer can change which line the other window corresponds to,
+  // even when the cursor stays put, so the tick is part of the check.
+  varnumber_T changedtick = buf_get_changedtick(curbuf);
+  if (curwin == prev_curwin && equalpos(curwin->w_cursor, prev_cursor)
+      && changedtick == prev_changedtick) {
     return;
   }
   prev_curwin = curwin;
   prev_cursor = curwin->w_cursor;
+  prev_changedtick = changedtick;
 
   linenr_T line = curwin->w_cursor.lnum;
   colnr_T col = curwin->w_cursor.col;
