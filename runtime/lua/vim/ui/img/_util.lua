@@ -100,6 +100,7 @@ end
 M.generate_id = (function()
   local bit = require('bit')
   local nvim_pid_bits = 10
+  local cnt_mask = bit.lshift(1, 24 - nvim_pid_bits) - 1
 
   local nvim_pid = 0
   local cnt = 30
@@ -111,7 +112,8 @@ M.generate_id = (function()
       local pid = vim.fn.getpid()
       nvim_pid = bit.band(bit.bxor(pid, bit.rshift(pid, 5), bit.rshift(pid, nvim_pid_bits)), 0x3FF)
     end
-    cnt = cnt + 1
+    -- Wrap within the counter's bits so ids never bleed into the pid hash
+    cnt = bit.band(cnt + 1, cnt_mask)
     return bit.bor(bit.lshift(nvim_pid, 24 - nvim_pid_bits), cnt)
   end
 end)()
