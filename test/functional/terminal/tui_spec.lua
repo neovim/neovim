@@ -4308,6 +4308,17 @@ describe('TUI', function()
     assert_log('max_colors: ' .. terminfo.max_colors, logfile, 9999)
   end)
 
+  it('sets the title when terminfo lacks tsl/fsl #20706', function()
+    nvim_tui('+set title titlestring=hello', {
+      TERM = 'foot',
+      NVIM_TERMDEFS = '{}',
+    })
+
+    retry(nil, nil, function()
+      eq('hello', api.nvim_buf_get_var(0, 'term_title'))
+    end)
+  end)
+
   it('does not crash on large inputs #26099', function()
     nvim_tui()
 
