@@ -434,6 +434,13 @@ describe('nvim.dir', function()
     assert_directory(cwd)
 
     edit(file)
+    feed('-')
+    poke_eventloop()
+    feed('1-')
+    poke_eventloop()
+    assert_directory(cwd)
+
+    edit(file)
     feed('2-')
     poke_eventloop()
 

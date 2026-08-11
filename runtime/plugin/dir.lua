@@ -12,9 +12,10 @@ end, { silent = true, desc = 'Open directory entry' })
 
 vim.keymap.set('n', '<Plug>(nvim-dir-up)', function()
   if vim.v.count == 1 then
+    -- Edits global CWD
     api.nvim_cmd({
       cmd = 'edit',
-      args = { '.' },
+      args = { vim.fn.getcwd(-1, -1, -1) },
       mods = { keepalt = vim.b.nvim_dir ~= nil },
       magic = { file = false, bar = false },
     }, {})
