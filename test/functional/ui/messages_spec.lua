@@ -407,7 +407,7 @@ describe('ui/ext_messages', function()
           content = { { '' } },
           pos = 0,
           -- Default vim.ui.select uses this prompt.
-          prompt = 'Type number and <Enter> or click with the mouse (q or empty cancels): ',
+          prompt = 'Type number and <Enter> (q or empty cancels): ',
         },
       },
       -- Message depends on runtimepath, only test the static text...
@@ -1292,7 +1292,7 @@ stack traceback:
         {
           content = { { '' } },
           pos = 0,
-          prompt = 'Type number and <Enter> or click with the mouse (q or empty cancels): ',
+          prompt = 'Type number and <Enter> (q or empty cancels): ',
         },
       },
       messages = {
@@ -1313,7 +1313,7 @@ stack traceback:
         {
           content = { { '1' } },
           pos = 1,
-          prompt = 'Type number and <Enter> or click with the mouse (q or empty cancels): ',
+          prompt = 'Type number and <Enter> (q or empty cancels): ',
         },
       },
     })
@@ -1334,7 +1334,7 @@ stack traceback:
         {
           content = { { '' } },
           pos = 0,
-          prompt = 'Type number and <Enter> or click with the mouse (q or empty cancels): ',
+          prompt = 'Type number and <Enter> (q or empty cancels): ',
         },
       },
       messages = { { content = { { 'input0\ninput1' } }, kind = 'confirm' } },

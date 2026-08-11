@@ -163,7 +163,7 @@ describe("preserve and (R)ecover with custom 'directory'", function()
               content = { { '' } },
               pos = 0,
               -- Default vim.ui.select prompt.
-              prompt = 'Type number and <Enter> or click with the mouse (q or empty cancels): ',
+              prompt = 'Type number and <Enter> (q or empty cancels): ',
             },
           },
           condition = function()
@@ -189,7 +189,7 @@ describe("preserve and (R)ecover with custom 'directory'", function()
             '\n1:.*%.swo',
             '\n2:.*%.swp',
             'host name:',
-            vim.pesc('Type number and <Enter> or click with the mouse (q or empty cancels): ^'),
+            vim.pesc('Type number and <Enter> (q or empty cancels): ^'),
           },
           none = vim.pesc('{18:^@}'),
         })
