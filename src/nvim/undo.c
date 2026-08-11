@@ -1398,6 +1398,7 @@ void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATT
              file_name);
         verbose_leave();
       }
+      xfree(file_name);
       return;
     }
 #endif
