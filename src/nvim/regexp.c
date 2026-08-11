@@ -16253,10 +16253,15 @@ static bool vim_regexec_string(regmatch_T *rmp, const char *line, colnr_T col, b
     char *pat = xstrdup(((nfa_regprog_T *)rmp->regprog)->pattern);
 
     p_re = BACKTRACKING_ENGINE;
-    vim_regfree(rmp->regprog);
+    regprog_T *prev_prog = rmp->regprog;
     report_re_switch(pat);
     rmp->regprog = vim_regcomp(pat, re_flags);
-    if (rmp->regprog != NULL) {
+    if (rmp->regprog == NULL) {
+      // Somehow compiling the pattern failed now, put back the
+      // previous one to avoid "regprog" becoming NULL.
+      rmp->regprog = prev_prog;
+    } else {
+      vim_regfree(prev_prog);
       rmp->regprog->re_in_use = true;
       result = rmp->regprog->engine->regexec_nl(rmp, (uint8_t *)line, col, nl);
       rmp->regprog->re_in_use = false;
