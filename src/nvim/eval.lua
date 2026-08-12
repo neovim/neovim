@@ -1969,8 +1969,12 @@ M.funcs = {
       display but don't exist in the buffer.
       {lnum} is used like with |getline()|.  Thus "." is the current
       line, "'m" mark m, etc.
-      Returns 0 if the current window is not in diff mode.
 
+      To get the filler lines after the last buffer line, use: >vim
+      	echo diff_filler(line('$')+1)
+      <
+      Returns 0 if the current window is not in diff mode or filler
+      lines have been disabled using 'diffopt'.
     ]=],
     name = 'diff_filler',
     params = { { 'lnum', 'integer|string' } },
