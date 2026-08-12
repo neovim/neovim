@@ -53,6 +53,9 @@ func Test_sort_numeric()
   call assert_equal([3, 13, 28], sort([13, 28, 3], 'n'))
   " strings are not sorted
   call assert_equal(['13', '28', '3'], sort(['13', '28', '3'], 'n'))
+  " a string sorts as 0 in "n" mode, even a numeric-looking one
+  call assert_equal(['a', 0, 1], sort([1, 'a', 0], 'n'))
+  call assert_equal(['10', 2], sort([2, '10'], 'n'))
 endfunc
 
 func Test_sort_numbers()
@@ -64,6 +67,34 @@ endfunc
 func Test_sort_float()
   CheckFeature float
   call assert_equal([0.28, 3, 13.5], sort([13.5, 0.28, 3], 'f'))
+endfunc
+
+" The numeric compare modes precompute a sort key per item; exercise that on
+" larger lists (many comparisons), with mixed int/float, negatives, and
+" int64 values that do not fit in a double for 'N'.
+func Test_sort_numeric_precomputed()
+  " 'n' on a large shuffled list, compared against the known order.
+  let expected = range(500)
+  let shuffled = copy(expected)
+  " deterministic shuffle
+  let s = 7
+  for i in range(len(shuffled) - 1, 1, -1)
+    let s = (s * 1103515245 + 12345) % 2147483648
+    let j = s % (i + 1)
+    let [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  endfor
+  call assert_equal(expected, sort(shuffled, 'n'))
+
+  " 'n' with mixed integers and floats and negatives.
+  call assert_equal([-3, -1.5, 0, 0.5, 2, 7.25], sort([7.25, -1.5, 2, 0, -3, 0.5], 'n'))
+
+  " 'N' with int64 values beyond the exact range of a double: keys must not
+  " be rounded through a double.
+  call assert_equal([9007199254740992, 9007199254740993, 9007199254740994],
+        \ sort([9007199254740994, 9007199254740992, 9007199254740993], 'N'))
+
+  " uniq() uses the non-precomputed path; it must still work.
+  call assert_equal([1, 2, 3], uniq(sort([3, 1, 2, 2, 3, 1], 'n')))
 endfunc
 
 func Test_sort_nested()
