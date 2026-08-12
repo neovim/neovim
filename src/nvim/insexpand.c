@@ -228,11 +228,9 @@ static compl_T *compl_old_match = NULL;
 static compl_T *compl_preselect_match = NULL;
 
 /// Hashtab with the strings of the matches in the list above, except the
-/// original-text entries.  Used to make the duplicate check O(1) instead of
-/// a scan of the whole list.  Each entry owns a copy of the string and
-/// counts the matches with that string, so that when matches were added
-/// with "adup" the entry remains until the last match with the string is
-/// removed.
+/// original-text entries.  Each entry owns a copy of the string and counts
+/// the matches with that string, so that when matches were added with "adup"
+/// the entry remains until the last match with the string is removed.
 typedef struct {
   int cse_count;   // number of matches with this string
   char cse_str[];  // the string
@@ -244,8 +242,7 @@ typedef struct {
 static hashtab_T compl_strings_ht;
 
 /// Count the string of a new match in the duplicate-check hashtab.
-/// "hash" is the hash of "str" when it is not zero, saving hashing the
-/// string again.
+/// "hash" is the hash of "str" when it is not zero.
 static void compl_strings_add(const char *str, size_t len, hash_T hash)
 {
   if (compl_strings_ht.ht_array == NULL) {
@@ -1008,8 +1005,7 @@ static int ins_compl_add(char *const str, int len, char *const fname, char *cons
 
   // If the same match is already present, don't add it.
   if (compl_first_match != NULL && !adup && compl_strings_ht.ht_used > 0) {
-    // Use a stack buffer for the NUL-terminated key when it fits, so
-    // that rejecting a duplicate does not allocate memory.
+    // The key must be NUL terminated.
     char keybuf[128];
     char *key;
     if (len < (int)sizeof(keybuf)) {
