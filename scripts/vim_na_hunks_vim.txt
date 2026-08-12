@@ -96,8 +96,10 @@
 \*builtin-function-list\*
 \*emacs[_-]tags\*
 \*help-toc-install\*
+\*job_[a-zA-Z0-9]\+()\*
 \*os-support\*
 \*patches-\(after-\)\?[0-9].*\*
+\*popup-window-functions\*
 \*sound-functions\*
 \*sound_[a-zA-Z0-9]\+()\*
 \*test_gui_[a-zA-Z0-9_]\+()\*
