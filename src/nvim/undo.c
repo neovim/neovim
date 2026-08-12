@@ -773,6 +773,7 @@ static void u_free_uhp(u_header_T *uhp)
     u_freeentry(uep, uep->ue_size);
     uep = nuep;
   }
+  kv_destroy(uhp->uh_extmark);
   xfree(uhp);
 }
 
@@ -1365,6 +1366,38 @@ theend:
   }
 }
 
+/// Compare undo headers on the sequence number, for sorting uhp_table in
+/// u_read_undo().
+static int uhp_seq_cmp(const void *v1, const void *v2)
+{
+  const u_header_T *u1 = *(u_header_T **)v1;
+  const u_header_T *u2 = *(u_header_T **)v2;
+
+  return u1->uh_seq == u2->uh_seq ? 0 : u1->uh_seq > u2->uh_seq ? 1 : -1;
+}
+
+/// Find the header with sequence number "seq" in "uhp_table", which has
+/// "num_head" entries and is sorted on uh_seq.
+/// Return the table index of the header or -1 when not found.
+static int uhp_table_find(u_header_T **uhp_table, int num_head, int seq)
+{
+  int lo = 0;
+  int hi = num_head - 1;
+
+  while (lo <= hi) {
+    int mid = lo + (hi - lo) / 2;
+
+    if (uhp_table[mid]->uh_seq < seq) {
+      lo = mid + 1;
+    } else if (uhp_table[mid]->uh_seq > seq) {
+      hi = mid - 1;
+    } else {
+      return mid;
+    }
+  }
+  return -1;
+}
+
 /// Loads the undo tree from an undo file.
 /// If "name" is not NULL use it as the undo file name. This also means being
 /// a bit more verbose.
@@ -1549,84 +1582,62 @@ void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATT
 # define SET_FLAG(j)
 #endif
 
-  // We have put all of the headers into a table. Now we iterate through the
-  // table and swizzle each sequence number we have stored in uh_*_seq into
-  // a pointer corresponding to the header with that sequence number.
-  int16_t old_idx = -1;
-  int16_t new_idx = -1;
-  int16_t cur_idx = -1;
+  // We have put all of the headers into a table.  Each header stores the
+  // sequence numbers of the headers it links to; resolve those into
+  // pointers.  Sort the table on uh_seq once, so that every lookup is a
+  // binary search instead of a linear scan, which would be quadratic
+  // overall.  Every entry is non-NULL: a header that failed to
+  // unserialize or a count mismatch was an error above.
+  if (num_head > 0) {
+    qsort(uhp_table, (size_t)num_head, sizeof(u_header_T *), uhp_seq_cmp);
+  }
+
+  // In the sorted table two headers with the same uh_seq are neighbours.
+  for (int i = 0; i < num_head - 1; i++) {
+    if (uhp_table[i]->uh_seq == uhp_table[i + 1]->uh_seq) {
+      corruption_error("duplicate uh_seq", file_name);
+      goto error;
+    }
+  }
+
+  // Resolve the sequence number "link".seq into a pointer to the header
+  // with that number.  A number that does not match any header, including
+  // zero (written for a NULL pointer) and the own sequence number of the
+  // header "hidx", resolves to NULL.
+#define SWIZZLE_SEQ(link, hidx) \
+  do { \
+    int fidx = uhp_table_find(uhp_table, num_head, (link).seq); \
+    if (fidx >= 0 && fidx != (hidx)) { \
+      (link).ptr = uhp_table[fidx]; \
+      SET_FLAG(fidx); \
+    } else { \
+      (link).ptr = NULL; \
+    } \
+  } while (0)
+
+  int old_idx = -1;
+  int new_idx = -1;
+  int cur_idx = -1;
   for (int i = 0; i < num_head; i++) {
     u_header_T *uhp = uhp_table[i];
-    if (uhp == NULL) {
-      continue;
-    }
-    for (int j = 0; j < num_head; j++) {
-      if (uhp_table[j] != NULL && i != j
-          && uhp_table[i]->uh_seq == uhp_table[j]->uh_seq) {
-        corruption_error("duplicate uh_seq", file_name);
-        goto error;
-      }
-    }
-    {
-      const int seq = uhp->uh_next.seq;
-      uhp->uh_next.ptr = NULL;
-      for (int j = 0; j < num_head; j++) {
-        if (uhp_table[j] != NULL && i != j && uhp_table[j]->uh_seq == seq) {
-          uhp->uh_next.ptr = uhp_table[j];
-          SET_FLAG(j);
-          break;
-        }
-      }
-    }
-    {
-      const int seq = uhp->uh_prev.seq;
-      uhp->uh_prev.ptr = NULL;
-      for (int j = 0; j < num_head; j++) {
-        if (uhp_table[j] != NULL && i != j && uhp_table[j]->uh_seq == seq) {
-          uhp->uh_prev.ptr = uhp_table[j];
-          SET_FLAG(j);
-          break;
-        }
-      }
-    }
-    {
-      const int seq = uhp->uh_alt_next.seq;
-      uhp->uh_alt_next.ptr = NULL;
-      for (int j = 0; j < num_head; j++) {
-        if (uhp_table[j] != NULL && i != j && uhp_table[j]->uh_seq == seq) {
-          uhp->uh_alt_next.ptr = uhp_table[j];
-          SET_FLAG(j);
-          break;
-        }
-      }
-    }
-    {
-      const int seq = uhp->uh_alt_prev.seq;
-      uhp->uh_alt_prev.ptr = NULL;
-      for (int j = 0; j < num_head; j++) {
-        if (uhp_table[j] != NULL && i != j && uhp_table[j]->uh_seq == seq) {
-          uhp->uh_alt_prev.ptr = uhp_table[j];
-          SET_FLAG(j);
-          break;
-        }
-      }
-    }
+    SWIZZLE_SEQ(uhp->uh_next, i);
+    SWIZZLE_SEQ(uhp->uh_prev, i);
+    SWIZZLE_SEQ(uhp->uh_alt_next, i);
+    SWIZZLE_SEQ(uhp->uh_alt_prev, i);
     if (old_header_seq > 0 && old_idx < 0 && uhp->uh_seq == old_header_seq) {
-      assert(i <= INT16_MAX);
-      old_idx = (int16_t)i;
+      old_idx = i;
       SET_FLAG(i);
     }
     if (new_header_seq > 0 && new_idx < 0 && uhp->uh_seq == new_header_seq) {
-      assert(i <= INT16_MAX);
-      new_idx = (int16_t)i;
+      new_idx = i;
       SET_FLAG(i);
     }
     if (cur_header_seq > 0 && cur_idx < 0 && uhp->uh_seq == cur_header_seq) {
-      assert(i <= INT16_MAX);
-      cur_idx = (int16_t)i;
+      cur_idx = i;
       SET_FLAG(i);
     }
   }
+#undef SWIZZLE_SEQ
 
   // Now that we have read the undo info successfully, free the current undo
   // info and use the info from the file.
