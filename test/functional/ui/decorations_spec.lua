@@ -7276,6 +7276,148 @@ if (h->n_buckets < new_n_buckets) { // expand
     ]])
   end)
 
+  it('virt_lines_eol_hl with virt_lines_overflow=trunc', function()
+    insert('line1')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      virt_lines = { { { 'VIRT LINE', 'String' }, { '', 'Visual' } } },
+      virt_lines_eol_hl = true,
+    })
+    screen:expect {
+      grid = [[
+      line^1                                             |
+      {26:VIRT LINE}{17:                                         }|
+      {1:~                                                 }|*9
+                                                        |
+      ]],
+    }
+  end)
+
+  it('virt_lines_eol_hl with virt_lines_overflow=wrap', function()
+    insert('line1')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      virt_lines = { { { 'VIRT LINE', 'String' }, { string.rep('-', 50), 'Visual' } } },
+      virt_lines_overflow = 'wrap',
+      virt_lines_eol_hl = true,
+    })
+    screen:expect {
+      grid = [[
+      line^1                                             |
+      {26:VIRT LINE}{17:-----------------------------------------}|
+      {17:---------                                         }|
+      {1:~                                                 }|*8
+                                                        |
+      ]],
+    }
+  end)
+
+  it('virt_lines_eol_hl with virt_lines_overflow=scroll', function()
+    command('set nowrap')
+    insert('abcdefghijklmnopqrstuvwxyz')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      virt_lines = { { { 'VIRT LINE', 'String' }, { '', 'Visual' } } },
+      virt_lines_overflow = 'scroll',
+      virt_lines_eol_hl = true,
+    })
+    screen:expect {
+      grid = [[
+      abcdefghijklmnopqrstuvwxy^z                        |
+      {26:VIRT LINE}{17:                                         }|
+      {1:~                                                 }|*9
+                                                        |
+      ]],
+    }
+
+    feed('zl')
+    screen:expect {
+      grid = [[
+      bcdefghijklmnopqrstuvwxy^z                         |
+      {26:IRT LINE}{17:                                          }|
+      {1:~                                                 }|*9
+                                                        |
+      ]],
+    }
+
+    feed('zl')
+    screen:expect {
+      grid = [[
+      cdefghijklmnopqrstuvwxy^z                          |
+      {26:RT LINE}{17:                                           }|
+      {1:~                                                 }|*9
+                                                        |
+      ]],
+    }
+
+    feed('zl')
+    screen:expect {
+      grid = [[
+      defghijklmnopqrstuvwxy^z                           |
+      {26:T LINE}{17:                                            }|
+      {1:~                                                 }|*9
+                                                        |
+      ]],
+    }
+
+    feed('zl')
+    screen:expect {
+      grid = [[
+      efghijklmnopqrstuvwxy^z                            |
+      {26: LINE}{17:                                             }|
+      {1:~                                                 }|*9
+                                                        |
+      ]],
+    }
+
+    feed('zl')
+    screen:expect {
+      grid = [[
+      fghijklmnopqrstuvwxy^z                             |
+      {26:LINE}{17:                                              }|
+      {1:~                                                 }|*9
+                                                        |
+      ]],
+    }
+
+    feed('zl')
+    screen:expect {
+      grid = [[
+      ghijklmnopqrstuvwxy^z                              |
+      {26:INE}{17:                                               }|
+      {1:~                                                 }|*9
+                                                        |
+      ]],
+    }
+
+    feed('zl')
+    screen:expect {
+      grid = [[
+      hijklmnopqrstuvwxy^z                               |
+      {26:NE}{17:                                                }|
+      {1:~                                                 }|*9
+                                                        |
+      ]],
+    }
+
+    feed('zl')
+    screen:expect {
+      grid = [[
+      ijklmnopqrstuvwxy^z                                |
+      {26:E}{17:                                                 }|
+      {1:~                                                 }|*9
+                                                        |
+      ]],
+    }
+
+    feed('zl')
+    screen:expect {
+      grid = [[
+      jklmnopqrstuvwxy^z                                 |
+      {17:                                                  }|
+      {1:~                                                 }|*9
+                                                        |
+      ]],
+    }
+  end)
+
   it('does not show twice if end_row or end_col is specified #18622', function()
     screen:try_resize(50, 8)
     insert([[

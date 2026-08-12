@@ -12,6 +12,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/change.h"
 #include "nvim/decoration.h"
+#include "nvim/decoration_defs.h"
 #include "nvim/decoration_provider.h"
 #include "nvim/drawscreen.h"
 #include "nvim/extmark.h"
@@ -1353,6 +1354,7 @@ void decor_to_dict_legacy(Dict *dict, DecorInline decor, bool hl_name, Arena *ar
     PUT_C(*dict, "virt_lines", ARRAY_OBJ(all_chunks));
     PUT_C(*dict, "virt_lines_above", BOOLEAN_OBJ(virt_lines->flags & kVTLinesAbove));
     PUT_C(*dict, "virt_lines_leftcol", BOOLEAN_OBJ(virt_lines_flags & kVLLeftcol));
+    PUT_C(*dict, "virt_lines_eol_hl", BOOLEAN_OBJ(virt_lines_flags & kVLEolHl));
 
     char *overflow = "trunc";
     if (virt_lines_overflow == kVLOverflowScroll) {
