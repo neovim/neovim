@@ -2588,12 +2588,21 @@ int pagescroll(Direction dir, int count, bool half)
 void do_check_cursorbind(void)
 {
   static win_T *prev_curwin = NULL;
+  static buf_T *prev_curbuf = NULL;
+  static varnumber_T prev_changedtick = 0;
   static pos_T prev_cursor = { 0, 0, 0 };
 
-  if (curwin == prev_curwin && equalpos(curwin->w_cursor, prev_cursor)) {
+  assert(curwin != NULL && curbuf != NULL);
+  // Nothing to do when the cursor didn't move and the text didn't change.
+  // After a change the corresponding line in a diff may be different.
+  if (curwin == prev_curwin && curbuf == prev_curbuf
+      && buf_get_changedtick(curbuf) == prev_changedtick
+      && equalpos(curwin->w_cursor, prev_cursor)) {
     return;
   }
   prev_curwin = curwin;
+  prev_curbuf = curbuf;
+  prev_changedtick = buf_get_changedtick(curbuf);
   prev_cursor = curwin->w_cursor;
 
   linenr_T line = curwin->w_cursor.lnum;

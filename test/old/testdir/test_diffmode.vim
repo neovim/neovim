@@ -3391,4 +3391,29 @@ func Test_diffput_to_empty_buf()
   call StopVimInTerminal(buf)
 endfunc
 
+" Undo can change which lines correspond in a diff. 'cursorbind' must update
+" the other window even when the cursor here did not move.
+func Test_diff_cursorbind_after_undo()
+  call setline(1, ['x', 'y', 'c', 'd'])
+  let w1 = win_getid()
+  new
+  call setline(1, ['p', 'q', 'c', 'd'])
+  let w2 = win_getid()
+  windo diffthis
+  call win_gotoid(w1)
+
+  normal! 2dd
+  call assert_equal(1, line('.', w1))
+  call assert_equal(1, line('.', w2))
+  normal! jk
+  call assert_equal(1, line('.', w1))
+  call assert_equal(3, line('.', w2))
+
+  normal! u
+  call assert_equal(1, line('.', w1))
+  call assert_equal(1, line('.', w2))
+
+  %bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
