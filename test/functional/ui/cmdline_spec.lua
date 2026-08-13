@@ -1007,7 +1007,7 @@ describe('cmdline redraw', function()
       {3:                                                                           }|
       foo                                                                        |
       bar                                                                        |
-      Type number and <Enter> or click with the mouse (q or empty cancels): ^     |
+      Type number and <Enter> (q or empty cancels): ^                             |
     ]])
     command('redraw')
     screen:expect_unchanged()

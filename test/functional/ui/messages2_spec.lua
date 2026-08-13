@@ -654,7 +654,7 @@ describe('messages2', function()
       4                                                                      |
       5                                                                      |
       6 [+93]                                                                |
-      Type number and <Enter> or click with the mouse (q or empty cancels): ^ |
+      Type number and <Enter> (q or empty cancels): ^                         |
     ]]
     feed(':call inputlist(range(100))<CR>')
     screen:expect(top)
@@ -670,7 +670,7 @@ describe('messages2', function()
       5                                                                      |
       6                                                                      |
       7 [+92]                                                                |
-      Type number and <Enter> or click with the mouse (q or empty cancels): ^ |
+      Type number and <Enter> (q or empty cancels): ^                         |
     ]])
     feed('<Up>')
     screen:expect(top)
@@ -686,7 +686,7 @@ describe('messages2', function()
       9                                                                      |
       10                                                                     |
       11 [+88]                                                               |
-      Type number and <Enter> or click with the mouse (q or empty cancels): ^ |
+      Type number and <Enter> (q or empty cancels): ^                         |
     ]])
     feed('<PageUp>')
     screen:expect(top)
@@ -702,7 +702,7 @@ describe('messages2', function()
       97                                                                     |
       98                                                                     |
       99                                                                     |
-      Type number and <Enter> or click with the mouse (q or empty cancels): ^ |
+      Type number and <Enter> (q or empty cancels): ^                         |
     ]])
     -- No scrolling beyond end of buffer #36114
     feed('<PageDown>')

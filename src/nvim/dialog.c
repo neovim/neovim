@@ -17,6 +17,7 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/mouse.h"
+#include "nvim/option_vars.h"
 #include "nvim/os/input.h"
 #include "nvim/state_defs.h"
 #include "nvim/ui.h"
@@ -81,7 +82,7 @@ int prompt_for_input(char *prompt, int hl_id, bool one_key, bool *mouse_used)
   char *kmsg = keep_msg ? xstrdup(keep_msg) : NULL;
 
   if (prompt == NULL) {
-    if (mouse_used != NULL) {
+    if (mouse_used != NULL && ui_mouse_has(kMouseCommand)) {
       prompt = _("Type number and <Enter> or click with the mouse (q or empty cancels): ");
     } else {
       prompt = _("Type number and <Enter> (q or empty cancels): ");
