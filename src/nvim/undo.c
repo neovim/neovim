@@ -1090,6 +1090,12 @@ static u_entry_T *unserialize_uep(bufinfo_T *bi, bool *error, const char *file_n
   uep->ue_size = undo_read_4c(bi);
 
   char **array = NULL;
+  if (uep->ue_size < 0) {
+    corruption_error("entry size", file_name);
+    *error = true;
+    return uep;
+  }
+
   if (uep->ue_size > 0) {
     if ((size_t)uep->ue_size < SIZE_MAX / sizeof(char *)) {
       array = xmalloc(sizeof(char *) * (size_t)uep->ue_size);
