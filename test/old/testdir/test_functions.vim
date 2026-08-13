@@ -228,7 +228,6 @@ func Test_strtrans()
   call assert_equal('^A^_^?', strtrans("\x01\x1f\x7f"))
   " an unprintable byte above 0x7f uses the meta notation
   "call assert_equal('| ', strtrans("\xa0"))
-  " a printable high byte is unchanged
   "call assert_equal("\xe9", strtrans("\xe9"))
   "call assert_equal("x^B\xe9| y", strtrans("x\x02\xe9\xa0y"))
   set encoding=utf-8

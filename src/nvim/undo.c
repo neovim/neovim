@@ -1366,8 +1366,7 @@ theend:
   }
 }
 
-/// Compare undo headers on the sequence number, for sorting uhp_table in
-/// u_read_undo().
+/// Compare undo headers on the sequence number, for sorting uhp_table.
 static int uhp_seq_cmp(const void *v1, const void *v2)
 {
   const u_header_T *u1 = *(u_header_T **)v1;
@@ -1584,9 +1583,7 @@ void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATT
 
   // We have put all of the headers into a table.  Each header stores the
   // sequence numbers of the headers it links to; resolve those into
-  // pointers.  Sort the table on uh_seq once, so that every lookup is a
-  // binary search instead of a linear scan, which would be quadratic
-  // overall.  Every entry is non-NULL: a header that failed to
+  // pointers.  Every entry is non-NULL: a header that failed to
   // unserialize or a count mismatch was an error above.
   if (num_head > 0) {
     qsort(uhp_table, (size_t)num_head, sizeof(u_header_T *), uhp_seq_cmp);
