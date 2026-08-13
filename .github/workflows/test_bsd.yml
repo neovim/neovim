@@ -51,7 +51,7 @@ jobs:
           persist-credentials: false
 
       - name: Build
-        uses: vmactions/openbsd-vm@c941015845c0f0c429676840963dc63b226d4f69 # v1.4.5
+        uses: vmactions/openbsd-vm@e6c68b637a12e83519688d115d57d5b0b53923cd # v1.4.6
         with:
           usesh: true
           cache-after-prepare: true
