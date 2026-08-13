@@ -376,10 +376,82 @@ describe('build_stl_str_hl', function()
   )
 
   statusline_test_align(
+    'distributes separation evenly among the %= when minwid is smaller than the automatic width',
+    13,
+    'a%2=b%=c%=d',
+    'a~~~b~~~c~~~d'
+  )
+
+  statusline_test_align(
+    'at %=, adds minwid separation unconditionally, at the expense of other %=',
+    13,
+    'a%5=b%=c%3=d',
+    'a~~~~~b~c~~~d'
+  )
+
+  statusline_test_align(
+    'at %=, adds minwid separation unconditionally, at the expense of other %= (rest evenly)',
+    13,
+    'a%5=b%=c%=d',
+    'a~~~~~b~~c~~d'
+  )
+
+  statusline_test_align(
+    'at %=, adds minwid separation unconditionally, despite lack of space',
+    10,
+    '%<lorem%2=ipsum',
+    '<em~~ipsum'
+  )
+
+  statusline_test_align('ignores negative minwid of separation marker', 7, 'a%-4=b%=c', 'a~~b~~c')
+
+  statusline_test_align(
+    'at %=, adds at most maxwid separation',
+    16,
+    'a%=b%.4=c%.2=d',
+    'a~~~~~~b~~~~c~~d'
+  )
+
+  statusline_test_align(
+    "aligns item group when separation markers don't expand enough due to maxwid",
+    22,
+    '%10(a%.5=b%), %-10(a%.5=b%)',
+    '~~~a~~~~~b, a~~~~~b~~~'
+  )
+
+  statusline_test_align(
     'distributes separation as evenly as possible among the %=',
     20,
     'a%=b%=c%=d%=e',
     'a~~~b~~~~c~~~~d~~~~e'
+  )
+
+  statusline_test_align(
+    'distributes separation as evenly as possible among the %= (edge-case 1)',
+    15,
+    'a%3=b%3=c%3=d',
+    'a~~~b~~~~c~~~~d'
+  )
+
+  statusline_test_align(
+    'distributes separation as evenly as possible among the %= (edge-case 2)',
+    15,
+    'a%4=b%=c%=d',
+    'a~~~~b~~~c~~~~d'
+  )
+
+  statusline_test_align(
+    'distributes separation as evenly as possible among the %= (edge-case 3)',
+    15,
+    'a%.4=b%.4=c%.4=d',
+    'a~~~b~~~~c~~~~d'
+  )
+
+  statusline_test_align(
+    'distributes separation as evenly as possible among the %= (edge-case 4)',
+    15,
+    'a%=b%.3=c%=d',
+    'a~~~~b~~~c~~~~d'
   )
 
   -- item group testing
