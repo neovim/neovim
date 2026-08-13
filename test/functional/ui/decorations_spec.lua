@@ -7287,7 +7287,7 @@ if (h->n_buckets < new_n_buckets) { // expand
       {26:VIRT LINE}{17:                                         }|
       {1:~                                                 }|*9
                                                         |
-      ]])
+    ]])
   end)
 
   it('virt_lines_eol_hl with virt_lines_overflow=wrap', function()
@@ -7303,7 +7303,7 @@ if (h->n_buckets < new_n_buckets) { // expand
       {17:---------                                         }|
       {1:~                                                 }|*8
                                                         |
-      ]])
+    ]])
   end)
 
   it('virt_lines_eol_hl with virt_lines_overflow=scroll', function()
@@ -7319,7 +7319,7 @@ if (h->n_buckets < new_n_buckets) { // expand
       {26:VIRT LINE}{17:                                         }|
       {1:~                                                 }|*9
                                                         |
-      ]])
+    ]])
 
     feed('zl')
     screen:expect([[
@@ -7327,7 +7327,7 @@ if (h->n_buckets < new_n_buckets) { // expand
       {26:IRT LINE}{17:                                          }|
       {1:~                                                 }|*9
                                                         |
-      ]])
+    ]])
 
     feed('zl')
     screen:expect([[
@@ -7335,7 +7335,7 @@ if (h->n_buckets < new_n_buckets) { // expand
       {26:RT LINE}{17:                                           }|
       {1:~                                                 }|*9
                                                         |
-      ]])
+    ]])
 
     feed('zl')
     screen:expect([[
@@ -7343,7 +7343,7 @@ if (h->n_buckets < new_n_buckets) { // expand
       {26:T LINE}{17:                                            }|
       {1:~                                                 }|*9
                                                         |
-      ]])
+    ]])
 
     feed('zl')
     screen:expect([[
@@ -7367,7 +7367,7 @@ if (h->n_buckets < new_n_buckets) { // expand
       {26:INE}{17:                                               }|
       {1:~                                                 }|*9
                                                         |
-      ]])
+    ]])
 
     feed('zl')
     screen:expect([[
@@ -7375,7 +7375,7 @@ if (h->n_buckets < new_n_buckets) { // expand
       {26:NE}{17:                                                }|
       {1:~                                                 }|*9
                                                         |
-      ]])
+    ]])
 
     feed('zl')
     screen:expect([[
@@ -7383,7 +7383,7 @@ if (h->n_buckets < new_n_buckets) { // expand
       {26:E}{17:                                                 }|
       {1:~                                                 }|*9
                                                         |
-      ]])
+    ]])
 
     feed('zl')
     screen:expect([[
@@ -7391,7 +7391,7 @@ if (h->n_buckets < new_n_buckets) { // expand
       {17:                                                  }|
       {1:~                                                 }|*9
                                                         |
-      ]])
+    ]])
   end)
 
   it('does not show twice if end_row or end_col is specified #18622', function()
