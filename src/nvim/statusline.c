@@ -935,14 +935,14 @@ static void stl_expand(int *width, int target_width, StlPadding padding, int rem
   }
   if (num_separators > 0) {
     int standard_spaces = added_cells / num_separators;
-    int final_spaces = added_cells - standard_spaces * (num_separators - 1);
+    int remainder = added_cells % num_separators;
     int cumulated_dislocation = 0;
 
     for (int i = startitem; i < curitem; i++) {
       stl_items[i].start += cumulated_dislocation;
 
       if (stl_items[i].type == Separate) {
-        int dislocation = --num_separators > 0 ? standard_spaces : final_spaces;
+        int dislocation = standard_spaces + (++remainder <= num_separators ? 0 : 1);
         dislocation *= fillchar_bytes;
         cumulated_dislocation += dislocation;
 

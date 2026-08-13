@@ -344,7 +344,7 @@ describe('build_stl_str_hl', function()
     'quadrants the text when using 3 %=',
     41,
     'abcd%=n%=eovim%=ef',
-    'abcd~~~~~~~~~n~~~~~~~~~eovim~~~~~~~~~~~ef'
+    'abcd~~~~~~~~~n~~~~~~~~~~eovim~~~~~~~~~~ef'
   )
   statusline_test_align(
     'works well with %t',
@@ -373,6 +373,13 @@ describe('build_stl_str_hl', function()
     50,
     'aaaa%=b%=c%=d%=e%=fg%=hi%=jk%=lmnop%=qrstuv%=wxyz',
     'aaaa~~b~~c~~d~~e~~fg~~hi~~jk~~lmnop~~qrstuv~~~wxyz'
+  )
+
+  statusline_test_align(
+    'distributes separation as evenly as possible among the %=',
+    20,
+    'a%=b%=c%=d%=e',
+    'a~~~b~~~~c~~~~d~~~~e'
   )
 
   -- item group testing
