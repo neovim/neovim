@@ -2545,6 +2545,7 @@ local pattern = {
     ['/%.cargo/config$'] = 'toml',
     ['/%.bundle/config$'] = 'yaml',
     ['/%.kube/config$'] = 'yaml',
+    ['/argocd/config$'] = 'yaml',
   },
   ['/%.'] = {
     ['/%.aws/credentials$'] = 'confini',
