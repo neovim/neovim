@@ -356,7 +356,6 @@ self.onmessage = async (ev) => {
           m.ENV.TERM = "xterm-256color";
           m.ENV.HOME = "/home/user";
           m.ENV.VIMRUNTIME = "/runtime";
-          m.ENV.NVIM_LOG_FILE = "/home/user/nvim.log";
         },
       ],
     });
@@ -511,7 +510,7 @@ self.onmessage = async (ev) => {
       );
     };
 
-    const { argc, argv } = makeArgv(m, ["nvim", "--embed"]);
+    const { argc, argv } = makeArgv(m, ["nvim", "--embed", "--cmd", "set noautoread"]);
 
     let ret;
 
