@@ -447,6 +447,7 @@ error('Cannot require a meta file')
 --- @field url? string
 --- @field virt_lines? any[]
 --- @field virt_lines_above? boolean
+--- @field virt_lines_eol_hl? boolean
 --- @field virt_lines_leftcol? boolean
 --- @field virt_lines_overflow? "trunc"|"scroll"|"wrap"|"auto"
 --- @field virt_text? any[]
