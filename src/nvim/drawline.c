@@ -2914,9 +2914,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
 
       advance_color_col(&wlv, vcol_hlc(wlv));
 
-      // Make sure alignment is the same regardless
-      // if listchars=eol:X is used or not.
-      const int eol_skip = (lcs_eol_todo && eol_hl_off == 0 ? 1 : 0);
+      // Keep end-of-line virtual text separated from the line or a displayed
+      // 'listchars' eol character.
+      const bool has_listchars_eol = wp->w_p_list && lcs_eol != NUL;
+      const int eol_skip = (eol_hl_off == 0 && (lcs_eol_todo || has_listchars_eol) ? 1 : 0);
 
       if (has_decor) {
         decor_redraw_eol(wp, &decor_state, &wlv.line_attr, wlv.col + eol_skip);
