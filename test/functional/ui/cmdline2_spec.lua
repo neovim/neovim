@@ -166,6 +166,39 @@ describe('cmdline2', function()
     ]])
   end)
 
+  it('highlights vim.ui.input text', function()
+    exec([[
+    highlight UI2InputHighlight guibg=Yellow guifg=Grey0
+  ]])
+
+    exec_lua([[
+    vim.keymap.set('n', '<F5>', function()
+      vim.ui.input({
+        prompt = '>',
+        highlight = function(input)
+          local hls = {}
+          local i = 0
+
+          while i < #input do
+            hls[#hls + 1] = { i, i + 1, 'UI2InputHighlight' }
+            i = i + 1
+          end
+
+          return hls
+        end,
+      }, function() end)
+    end)
+  ]])
+
+    feed('<F5>hello')
+
+    screen:expect([[
+                                                       |
+  {1:~                                                    }|*12
+  >{101:hello}^                                               |
+]])
+  end)
+
   it('can change cmdline buffer during textlock', function()
     exec([[
       func Foo(a, b)
