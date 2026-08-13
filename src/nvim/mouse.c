@@ -866,8 +866,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
       c1 = (dir == FORWARD) ? 'p' : 'P';
       c2 = NUL;
     }
-    prep_redo(NULL, 0, false,
-              (CmdSpec){ .regname = regname, .count = count, .cmd = c1, .cmd2 = c2 });
+    prep_redo(true, false, (CmdSpec){ .regname = regname, .count = count, .cmd = c1, .cmd2 = c2 });
 
     // Remember where the paste started, so in edit() Ins.start can be set to this position
     if (restart_edit != 0) {

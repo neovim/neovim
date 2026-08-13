@@ -33,6 +33,7 @@
 #include "nvim/normal.h"
 #include "nvim/normal_defs.h"
 #include "nvim/ops.h"
+#include "nvim/option_vars.h"
 #include "nvim/register.h"
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"
@@ -506,6 +507,12 @@ static bool atom_blocked(void)
   return atom_suppressed || (vatom.state != kVatomNone && Visual.active);
 }
 
+/// Decides if the command is capturable.
+static bool atom_capturable(bool consumers, bool keytyped)
+{
+  return consumers && atom_is_user_cmd() && (keytyped || atom_composite_active());
+}
+
 /// True if anything consumes atoms from `curbuf`. For performance: skip capture if no consumers.
 static bool atom_buf_has_consumers(void)
 {
@@ -662,8 +669,8 @@ void atom_op_global_set(void)
   curcmd.op_global = true;
 }
 
-/// Claims the prepped redo as the command's atom. Only toplevel user commands (a nested redo-prep
-/// is not an atom). Declines Ex/Lua operators.
+/// Claims the prepped redo as the command's atom (prep_redo()). Only toplevel user commands (a
+/// nested redo-prep is not an atom). Declines Ex/Lua operators.
 void atom_redo_set(CmdSpec spec)
 {
   if (spec.cmd == ':' || spec.cmd == K_COMMAND || spec.cmd == K_LUA) {
@@ -778,7 +785,7 @@ static bool atom_visual_end_suffix(char *suffix, const CmdSpec *spec, bool redoa
   if (suffix == NULL || !atom_visual_replayable()) {
     bool prepped = prep && spec->op != NUL && suffix != NULL;
     if (prepped) {
-      prep_redo("1v", 2, false, (CmdSpec){ 0 });  // Equal-size fallback.
+      prep_redo_visual("1v", 2, (CmdSpec){ 0 });  // Equal-size fallback.
       redo_append_str(suffix, -1);
     }
     xfree(suffix);
@@ -791,7 +798,7 @@ static bool atom_visual_end_suffix(char *suffix, const CmdSpec *spec, bool redoa
   if (prep) {
     // Get the redo tail (register/count, op chars) from the suffix. Prevents divergence of prep vs
     // atom, and suffixes inexpressible as spec chars ("r<C-V><CR>") stay replayable.
-    prep_redo(vkeys, prefix, false, (CmdSpec){ 0 });
+    prep_redo_visual(vkeys, prefix, (CmdSpec){ 0 });
     redo_append_str(suffix, -1);
   }
   if (!atom_is_user_cmd() || vatom.state != kVatomTyped) {
@@ -830,57 +837,112 @@ bool atom_visual_end(CmdSpec spec, bool redoable)
   return atom_visual_end_suffix(atom_redo_keys(spec), &spec, redoable);
 }
 
-/// Captures a pending operator's atom before it executes. Prep-exempt commands (yank without cpo-y,
-/// "D", folds) build no redo, so atom_cmd_end() cannot derive their atom from redobuff; reconstruct
-/// it here (staged).
+/// Captures a pending operator's atom and preps its redo, before it executes. Prep-exempt commands
+/// (yank without cpo-y, "D", folds) build no redo, so atom_cmd_end() cannot derive their atom from
+/// redobuff; reconstruct it here (staged).
 ///
-/// Not for:
-/// - OP_CHANGE/OP_INSERT/OP_APPEND
+/// Not captured (prep only):
+/// - OP_CHANGE/OP_INSERT/OP_APPEND (the insert session is the atom)
 /// - motions with an interactively-typed payload (search, Ex, Lua)
 ///
 /// @param redo_yank  True when a yank builds a redo ("y" in 'cpoptions', not a GUI yank).
 void atom_capture_op(oparg_T *oap, cmdarg_T *cap, bool redo_yank)
 {
-  if (oap->op_type == OP_CHANGE || oap->op_type == OP_INSERT || oap->op_type == OP_APPEND) {
-    return;
-  }
+  const bool redoable = op_redoable(oap->op_type, redo_yank);
+  bool ins_op = oap->op_type == OP_CHANGE || oap->op_type == OP_INSERT
+                || oap->op_type == OP_APPEND;
   bool payload_motion = cap->cmdchar >= 0x100
                         || (cap->cmdchar != NUL && strchr("/?:!", cap->cmdchar) != NULL);
-  if (payload_motion) {
-    return;
+  bool excmd = cap->cmdchar == ':' || cap->cmdchar == K_COMMAND;
+  if (!ins_op && !payload_motion) {
+    bool prep_exempt = !redoable || cap->cmdchar == 'D';
+    CmdSpec spec = {
+      .regname = oap->regname, .count = cap->count0,
+      .op = get_op_char(oap->op_type), .op_extra = get_extra_op_char(oap->op_type),
+    };
+    if (prep_exempt && (!Visual.active || oap->motion_force)) {
+      // Only capture _user_ input.
+      if (atom_capturable(atom_buf_has_consumers(), KeyTyped)) {
+        bool operand = nv_nchar_is_arg(cap->cmdchar);
+        spec.motion_force = oap->motion_force;
+        spec.cmd = cap->cmdchar;
+        spec.cmd2 = operand ? NUL : cap->nchar;
+        spec.arg = operand ? cap->nchar : NUL;
+        atom_stage_set(atom_from_spec(kAOperator, spec));
+      }
+    } else if (!Visual.active || oap->motion_force) {
+      // Prepped: atom_cmd_end() derives the atom from redobuff.
+    } else if (oap->op_type == OP_REPLACE && cap->nchar <= 0) {
+      // Visual "r<C-V><CR>": `spec.arg` cannot represent the sentinel nchar (REPLACE_CR_NCHAR), so
+      // hand-compose the literal suffix keys.
+      char suffix[4] = { 'r', Ctrl_V, cap->nchar == REPLACE_CR_NCHAR ? CAR : NL, NUL };
+      atom_visual_end_suffix(xstrdup(suffix), &spec, redoable);
+    } else {
+      // Visual-mode op: complete the accumulated visual atom with the operator keys.
+      spec.arg = oap->op_type == OP_REPLACE ? cap->nchar : NUL;
+      if ((oap->op_type == OP_NR_ADD || oap->op_type == OP_NR_SUB) && cap->arg) {
+        // g<C-A>: the "g" variant is distinguished by cap->arg, not the op char: compose it back.
+        spec.op_extra = spec.op;
+        spec.op = 'g';
+      }
+      atom_visual_end(spec, redoable);
+    }
   }
-  const bool redoable = op_redoable(oap->op_type, redo_yank);
-  bool prep_exempt = !redoable || cap->cmdchar == 'D';
-  CmdSpec spec = {
-    .regname = oap->regname, .count = cap->count0,
-    .op = get_op_char(oap->op_type), .op_extra = get_extra_op_char(oap->op_type),
-  };
-  if (prep_exempt && (!Visual.active || oap->motion_force)) {
-    // Only capture _user_ input.
-    if (atom_buf_has_consumers() && atom_is_user_cmd() && (KeyTyped || atom_composite_active())) {
-      bool operand = nv_nchar_is_arg(cap->cmdchar);
-      spec.motion_force = oap->motion_force;
-      spec.cmd = cap->cmdchar;
-      spec.cmd2 = operand ? NUL : cap->nchar;
-      spec.arg = operand ? cap->nchar : NUL;
-      atom_stage_set(atom_from_spec(kAOperator, spec));
+
+  // The prep decision. Runs after the capture above: a self-selecting op's prep overrides the
+  // equal-size fallback the visual end may have prepped ("dgn").
+  if (redoable && cap->cmdchar != 'D'
+      && ((!Visual.active || oap->motion_force)
+          // Also redo Operator-pending Visual mode mappings.
+          || excmd || cap->cmdchar == K_LUA)) {
+    prep_redo(true, false, (CmdSpec){
+      .regname = oap->regname, .count = cap->count0,
+      .op = get_op_char(oap->op_type), .op_extra = get_extra_op_char(oap->op_type),
+      .motion_force = oap->motion_force, .cmd = cap->cmdchar, .cmd2 = cap->nchar,
+    });
+    if (cap->cmdchar == '/' || cap->cmdchar == '?') {     // was a search
+      // If 'cpoptions' does not contain 'r', insert the search pattern to really repeat the
+      // same command.
+      if (vim_strchr(p_cpo, kCpoRedo) == NULL) {
+        redo_append_lit(cap->searchbuf, -1);
+      }
+      redo_append_str(S_LEN(NL_STR));
+    } else if (excmd) {
+      // do_cmdline() has stored the first typed line in "repeat_cmdline". When several lines are
+      // typed repeating won't be possible.
+      if (repeat_cmdline == NULL) {
+        redo_new((CmdSpec){ 0 });
+      } else {
+        if (cap->cmdchar == ':') {
+          redo_append_lit(repeat_cmdline, -1);
+        } else {
+          redo_append_spec(repeat_cmdline);
+        }
+        redo_append_str(S_LEN(NL_STR));
+        XFREE_CLEAR(repeat_cmdline);
+      }
+    } else if (cap->cmdchar == K_LUA) {
+      redo_append_num(repeat_luaref);
+      redo_append_str(S_LEN(NL_STR));
     }
-  } else if (!Visual.active || oap->motion_force) {
-    // Prepped: atom_cmd_end() derives the atom from redobuff.
-  } else if (oap->op_type == OP_REPLACE && cap->nchar <= 0) {
-    // Visual "r<C-V><CR>": `spec.arg` cannot represent the sentinel nchar (REPLACE_CR_NCHAR), so
-    // hand-compose the literal suffix keys.
-    char suffix[4] = { 'r', Ctrl_V, cap->nchar == REPLACE_CR_NCHAR ? CAR : NL, NUL };
-    atom_visual_end_suffix(xstrdup(suffix), &spec, redoable);
-  } else {
-    // Visual-mode op: complete the accumulated visual atom with the operator keys.
-    spec.arg = oap->op_type == OP_REPLACE ? cap->nchar : NUL;
-    if ((oap->op_type == OP_NR_ADD || oap->op_type == OP_NR_SUB) && cap->arg) {
-      // g<C-A>: the "g" variant is distinguished by cap->arg, not the op char: compose it back.
-      spec.op_extra = spec.op;
-      spec.op = 'g';
+  } else if (Visual.active && redoable && oap->motion_force == NUL) {
+    if (op_self_select(cap)) {
+      prep_redo(true, false, (CmdSpec){
+        .regname = oap->regname, .count = cap->count0,
+        .op = get_op_char(oap->op_type), .op_extra = get_extra_op_char(oap->op_type),
+        .motion_force = oap->motion_force, .cmd = cap->cmdchar, .cmd2 = cap->nchar,
+      });
+    } else if (ins_op && !excmd && cap->cmdchar != K_LUA) {
+      // Visual-entered Insert: redo body opens with the selection's captured keys; appends the
+      // op+text+<Esc>. Unreplayable (void) selection falls back to "1v" (fixed-size reselect).
+      // (Ex/Lua-motion selections were already prepped above, as the motion's keys.)
+      String v = atom_visual_span();
+      prep_redo_visual(v.data != NULL ? v.data : "1v", v.data != NULL ? v.size : 2, (CmdSpec){
+        .regname = oap->regname,
+        .op = get_op_char(oap->op_type), .op_extra = get_extra_op_char(oap->op_type),
+      });
+      xfree(v.data);
     }
-    atom_visual_end(spec, redoable);
   }
 }
 
@@ -1025,10 +1087,10 @@ static void atom_capture_cmd(cmdarg_T *ca, const CmdBaseline *old, bool toplevel
     } else {
       atom_visual_reset();
     }
-  } else if (user && old->consumers && atom_pushes == old->pushes && !atom_staged()
+  } else if (atom_capturable(old->consumers, old->keytyped)
+             && atom_pushes == old->pushes && !atom_staged()
              && ca->oap->op_type == OP_NOP
-             && stuff_empty() && !ins_cascaded
-             && (old->keytyped || atom_composite_active())) {
+             && stuff_empty() && !ins_cascaded) {
     // KeyTyped survives stuffing but not macro playback; mapping/macro-fed commands are covered by
     // atom_composite_active().
     bool special_motion = (keycls & kKeyMotion) != 0;
@@ -1037,7 +1099,7 @@ static void atom_capture_cmd(cmdarg_T *ca, const CmdBaseline *old, bool toplevel
     bool jump_cmd = (keycls & kKeyJump) != 0;
     // Replayable? Register prefix ('"x') is captured as part of the command it prefixes; "@x"/"Q"
     // are translations, their resolution is the atom stream.
-    bool capturable = (ca->cmdchar > 0 && ca->cmdchar < 0x100
+    bool replayable = (ca->cmdchar > 0 && ca->cmdchar < 0x100
                        && ca->cmdchar != '"' && ca->cmdchar != '@' && ca->cmdchar != 'Q'
                        && !scroll_cmd)
                       || special_motion;
@@ -1082,7 +1144,7 @@ static void atom_capture_cmd(cmdarg_T *ca, const CmdBaseline *old, bool toplevel
       CmdAtom atom = atom_from_cmdline(kAEx, ca, curcmd.cmdline);
       atom.changed = changed;
       atom_push(false, atom);
-    } else if (capturable) {
+    } else if (replayable) {
       // Non-redoable command (u, zz, q=): never cascaded as an edit.
       CmdAtom atom = atom_from_spec(motion ? kAMotion : jump_cmd ? kAJump : kACommand,
                                     atom_cmd_spec(ca));

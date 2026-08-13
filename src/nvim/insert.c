@@ -220,17 +220,13 @@ static void insert_enter(InsertState *s)
   if (s->cmdchar != NUL && restart_edit == 0) {
     if (s->cmdchar == 'V' || s->cmdchar == 'v') {
       // "gR" or "gr" command
-      redo_new((CmdSpec){ .count = s->count, .cmd = 'g', .cmd2 = (s->cmdchar == 'v') ? 'r' : 'R' });
-      redo_append_char('g');
-      redo_append_char((s->cmdchar == 'v') ? 'r' : 'R');
+      prep_redo(false, false, (CmdSpec){ .count = s->count, .cmd = 'g',
+                                         .cmd2 = (s->cmdchar == 'v') ? 'r' : 'R' });
     } else {
-      redo_new((CmdSpec){ .count = s->count, .cmd = s->cmdchar,
-                          .cmd2 = (s->cmdchar == 'g') ? 'I' : NUL });
-      redo_append_char(s->cmdchar);
-      if (s->cmdchar == 'g') {          // "gI" command
-        redo_append_char('I');
-      } else if (s->cmdchar == 'r') {  // "r<CR>" command
-        s->count = 1;                  // insert only one <CR>
+      prep_redo(false, false, (CmdSpec){ .count = s->count, .cmd = s->cmdchar,
+                                         .cmd2 = (s->cmdchar == 'g') ? 'I' : NUL });
+      if (s->cmdchar == 'r') {  // "r<CR>" command
+        s->count = 1;           // insert only one <CR>
       }
     }
   }
@@ -2234,8 +2230,7 @@ int stop_arrow(void)
     if (jumped) {
       // Non-captured cursor-move (mouse, <PageUp>, …): restart the capture as a "1i" insertion.
       // The count is a spec field (not body bytes), so "[count]." replaces it ("3i…").
-      redo_new((CmdSpec){ .count = 1, .cmd = 'i' });
-      redo_append_char('i');
+      prep_redo(false, false, (CmdSpec){ .count = 1, .cmd = 'i' });
       Ins.new_insert_skip = 2;
     } else {
       // Cursor-move was captured (start_arrow()): the atom mc-cascade will replay it.
