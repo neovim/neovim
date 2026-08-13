@@ -212,6 +212,8 @@ API
 • |nvim_buf_set_extmark()| `virt_lines_overflow` accepts "wrap" to enable
   wrapping onto extra rows and "auto" which enables horizontal scrolling when
   'nowrap' is set and wrapping when 'wrap' is set.
+· |nvim_buf_set_extmark()| `virt_lines_eol_hl` accepts `true` to enable
+  the last `hl` in each `virt_line` till the end of the line.
 • |nvim_set_option_value()| accepts a new `operation` field to modify the
   existing option value.
 • |nvim_set_option_value()| returns the new option value.
