@@ -7282,14 +7282,12 @@ if (h->n_buckets < new_n_buckets) { // expand
       virt_lines = { { { 'VIRT LINE', 'String' }, { '', 'Visual' } } },
       virt_lines_eol_hl = true,
     })
-    screen:expect {
-      grid = [[
+    screen:expect([[
       line^1                                             |
       {26:VIRT LINE}{17:                                         }|
       {1:~                                                 }|*9
                                                         |
-      ]],
-    }
+      ]])
   end)
 
   it('virt_lines_eol_hl with virt_lines_overflow=wrap', function()
@@ -7299,15 +7297,13 @@ if (h->n_buckets < new_n_buckets) { // expand
       virt_lines_overflow = 'wrap',
       virt_lines_eol_hl = true,
     })
-    screen:expect {
-      grid = [[
+    screen:expect([[
       line^1                                             |
       {26:VIRT LINE}{17:-----------------------------------------}|
       {17:---------                                         }|
       {1:~                                                 }|*8
                                                         |
-      ]],
-    }
+      ]])
   end)
 
   it('virt_lines_eol_hl with virt_lines_overflow=scroll', function()
@@ -7318,104 +7314,84 @@ if (h->n_buckets < new_n_buckets) { // expand
       virt_lines_overflow = 'scroll',
       virt_lines_eol_hl = true,
     })
-    screen:expect {
-      grid = [[
+    screen:expect([[
       abcdefghijklmnopqrstuvwxy^z                        |
       {26:VIRT LINE}{17:                                         }|
       {1:~                                                 }|*9
                                                         |
-      ]],
-    }
+      ]])
 
     feed('zl')
-    screen:expect {
-      grid = [[
+    screen:expect([[
       bcdefghijklmnopqrstuvwxy^z                         |
       {26:IRT LINE}{17:                                          }|
       {1:~                                                 }|*9
                                                         |
-      ]],
-    }
+      ]])
 
     feed('zl')
-    screen:expect {
-      grid = [[
+    screen:expect([[
       cdefghijklmnopqrstuvwxy^z                          |
       {26:RT LINE}{17:                                           }|
       {1:~                                                 }|*9
                                                         |
-      ]],
-    }
+      ]])
 
     feed('zl')
-    screen:expect {
-      grid = [[
+    screen:expect([[
       defghijklmnopqrstuvwxy^z                           |
       {26:T LINE}{17:                                            }|
       {1:~                                                 }|*9
                                                         |
-      ]],
-    }
+      ]])
 
     feed('zl')
-    screen:expect {
-      grid = [[
+    screen:expect([[
       efghijklmnopqrstuvwxy^z                            |
       {26: LINE}{17:                                             }|
       {1:~                                                 }|*9
                                                         |
-      ]],
-    }
+      ]])
 
     feed('zl')
-    screen:expect {
-      grid = [[
+    screen:expect([[
       fghijklmnopqrstuvwxy^z                             |
       {26:LINE}{17:                                              }|
       {1:~                                                 }|*9
                                                         |
-      ]],
-    }
+      ]])
 
     feed('zl')
-    screen:expect {
-      grid = [[
+    screen:expect([[
       ghijklmnopqrstuvwxy^z                              |
       {26:INE}{17:                                               }|
       {1:~                                                 }|*9
                                                         |
-      ]],
-    }
+      ]])
 
     feed('zl')
-    screen:expect {
-      grid = [[
+    screen:expect([[
       hijklmnopqrstuvwxy^z                               |
       {26:NE}{17:                                                }|
       {1:~                                                 }|*9
                                                         |
-      ]],
-    }
+      ]])
 
     feed('zl')
-    screen:expect {
-      grid = [[
+    screen:expect([[
       ijklmnopqrstuvwxy^z                                |
       {26:E}{17:                                                 }|
       {1:~                                                 }|*9
                                                         |
-      ]],
-    }
+      ]])
 
     feed('zl')
-    screen:expect {
-      grid = [[
+    screen:expect([[
       jklmnopqrstuvwxy^z                                 |
       {17:                                                  }|
       {1:~                                                 }|*9
                                                         |
-      ]],
-    }
+      ]])
   end)
 
   it('does not show twice if end_row or end_col is specified #18622', function()
