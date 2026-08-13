@@ -459,10 +459,10 @@ ArrayOf(DictAs(get_extmark_item)) nvim_buf_get_extmarks(Buffer buf, Integer ns_i
 ///                 match the list-size (but see `virt_lines_overflow`). By default lines are placed
 ///                 below the marked line.
 ///               - virt_lines_above: Place virtual lines above instead.
-///               - virt_lines_leftcol: Place virtual lines in the leftmost column of the window,
-///                 bypassing sign and number columns.
 ///               - virt_lines_eol_hl: Make the last `hl` in each `virt_line` till the end of line(s).
 ///                 And seting the last `text_chunk` to '' can make a `hl` fill the rest of the line.
+///               - virt_lines_leftcol: Place virtual lines in the leftmost column of the window,
+///                 bypassing sign and number columns.
 ///               - virt_lines_overflow: Controls display of virtual lines exceeding the viewport:
 ///                 - "auto": Decided by the 'wrap' option.
 ///                 - "scroll": Scroll horizontally with 'nowrap', otherwise the same as "trunc".
