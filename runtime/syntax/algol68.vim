@@ -3,13 +3,11 @@
 " Version:		0.4
 " Maintainer:		Janis Papanagnou
 " Previous Maintainer:	NevilleD.ALGOL_68@sgr-a.net
-" Last Change:		2026 Jun 13
+" Last Change:		2026 Aug 12
 
 if exists("b:current_syntax")
   finish
 endif
-
-syn sync minlines=250 maxlines=500
 
 " Algol68 Final Report, unrevised
 syn keyword algol68PreProc	PRIORITY
@@ -486,6 +484,9 @@ if !exists("algol68_no_preludes")
 
 
 endif
+
+" pragment regions with matching start/end tokens necessitate a full parse
+syn sync fromstart
 
 " Define the default highlighting.
 hi def link algol68Boolean		Boolean
