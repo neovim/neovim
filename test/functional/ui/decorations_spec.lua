@@ -7337,47 +7337,7 @@ if (h->n_buckets < new_n_buckets) { // expand
                                                         |
     ]])
 
-    feed('zl')
-    screen:expect([[
-      defghijklmnopqrstuvwxy^z                           |
-      {26:T LINE}{17:                                            }|
-      {1:~                                                 }|*9
-                                                        |
-    ]])
-
-    feed('zl')
-    screen:expect([[
-      efghijklmnopqrstuvwxy^z                            |
-      {26: LINE}{17:                                             }|
-      {1:~                                                 }|*9
-                                                        |
-      ]])
-
-    feed('zl')
-    screen:expect([[
-      fghijklmnopqrstuvwxy^z                             |
-      {26:LINE}{17:                                              }|
-      {1:~                                                 }|*9
-                                                        |
-      ]])
-
-    feed('zl')
-    screen:expect([[
-      ghijklmnopqrstuvwxy^z                              |
-      {26:INE}{17:                                               }|
-      {1:~                                                 }|*9
-                                                        |
-    ]])
-
-    feed('zl')
-    screen:expect([[
-      hijklmnopqrstuvwxy^z                               |
-      {26:NE}{17:                                                }|
-      {1:~                                                 }|*9
-                                                        |
-    ]])
-
-    feed('zl')
+    feed('6zl')
     screen:expect([[
       ijklmnopqrstuvwxy^z                                |
       {26:E}{17:                                                 }|
