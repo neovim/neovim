@@ -304,15 +304,20 @@ CTRL-^			Edit the alternate file.  Mostly the alternate file is
 			character.  " line " is also recognized, like it is
 			used in the output of `:verbose command UserCmd`
 			White space between the filename, the separator and
-			the number are ignored.
+			the number is ignored.
 			Examples:
 				eval.c:10 ~
 				eval.c @ 20 ~
 				eval.c (30) ~
 				eval.c 40 ~
+				eval.c line 50 ~
 
 							*v_gF*
-{Visual}[count]gF	Same as "v_gf".
+{Visual}[count]gF	Same as "v_gf", but if a colon and a number appear
+			immediately after the end of the selected text,
+			then the cursor is positioned on that line in the
+			file.  Unlike |gF|, only a colon is recognized as
+			separator.
 
 These commands are used to start editing a single file.  This means that the
 file is read into the buffer and the current file name is set.  The file that
