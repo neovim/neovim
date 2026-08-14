@@ -29,7 +29,6 @@ typedef enum {
 /// Flags for virtual lines
 enum {
   kVLLeftcol = 1,  ///< Start at left window edge, ignoring number column, etc.
-  kVLEolHl = 2,    ///< Highlight till end of line(s) in virtual lines
 };
 
 typedef enum {

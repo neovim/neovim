@@ -1707,7 +1707,6 @@ describe('API/extmarks', function()
           { { 'stack', { 'Type', 'Search' } }, { '!!!' } },
         },
         virt_lines_above = true,
-        virt_lines_eol_hl = false,
         virt_lines_leftcol = true,
         virt_lines_overflow = 'trunc',
         virt_text = { { 'text', 'Macro' }, { '???' }, { 'stack', { 'Type', 'Search' } } },
@@ -1754,7 +1753,6 @@ describe('API/extmarks', function()
         priority = 0,
         virt_lines = { { { '', 'Macro' }, { '' }, { '', '' } } },
         virt_lines_above = false,
-        virt_lines_eol_hl = false,
         virt_lines_leftcol = false,
         virt_lines_overflow = 'scroll',
       },
@@ -1777,7 +1775,6 @@ describe('API/extmarks', function()
         priority = 0,
         virt_lines = { { { '', 'Macro' }, { '' }, { '', '' } } },
         virt_lines_above = false,
-        virt_lines_eol_hl = false,
         virt_lines_leftcol = false,
         virt_lines_overflow = 'wrap',
       },
@@ -1800,33 +1797,10 @@ describe('API/extmarks', function()
         priority = 0,
         virt_lines = { { { '', 'Macro' }, { '' }, { '', '' } } },
         virt_lines_above = false,
-        virt_lines_eol_hl = false,
         virt_lines_leftcol = false,
         virt_lines_overflow = 'auto',
       },
     }, get_extmark_by_id(ns, marks[5], { details = true }))
-
-    set_extmark(ns, marks[6], 0, 0, {
-      priority = 0,
-      ui_watched = true,
-      virt_lines = { { { '', 'Macro' }, { '' }, { '', '' } } },
-      virt_lines_eol_hl = true,
-    })
-    eq({
-      0,
-      0,
-      {
-        ns_id = ns,
-        right_gravity = true,
-        ui_watched = true,
-        priority = 0,
-        virt_lines = { { { '', 'Macro' }, { '' }, { '', '' } } },
-        virt_lines_above = false,
-        virt_lines_leftcol = false,
-        virt_lines_eol_hl = true,
-        virt_lines_overflow = 'trunc',
-      },
-    }, get_extmark_by_id(ns, marks[6], { details = true }))
 
     set_extmark(ns, marks[4], 0, 0, { cursorline_hl_group = 'Statement' })
     eq({

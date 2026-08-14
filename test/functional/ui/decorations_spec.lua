@@ -7276,26 +7276,25 @@ if (h->n_buckets < new_n_buckets) { // expand
     ]])
   end)
 
-  it('virt_lines_eol_hl with virt_lines_overflow=trunc', function()
+  it('highlight till eol with virt_lines_overflow=trunc', function()
     insert('line1')
     api.nvim_buf_set_extmark(0, ns, 0, 0, {
-      virt_lines = { { { 'VIRT LINE', 'String' }, { '', 'Visual' } } },
-      virt_lines_eol_hl = true,
+      virt_lines = { { { 'VIRT LINE1', 'String' }, { '', 'Visual' } }, { { 'VIRT LINE2', 'String' } } },
     })
     screen:expect([[
       line^1                                             |
-      {26:VIRT LINE}{17:                                         }|
-      {1:~                                                 }|*9
+      {26:VIRT LINE1}{17:                                        }|
+      {26:VIRT LINE2}                                        |
+      {1:~                                                 }|*8
                                                         |
     ]])
   end)
 
-  it('virt_lines_eol_hl with virt_lines_overflow=wrap', function()
+  it('highlight till eol with virt_lines_overflow=wrap', function()
     insert('line1')
     api.nvim_buf_set_extmark(0, ns, 0, 0, {
-      virt_lines = { { { 'VIRT LINE', 'String' }, { string.rep('-', 50), 'Visual' } } },
+      virt_lines = { { { 'VIRT LINE', 'String' }, { string.rep('-', 50), 'Visual' }, { '', 'Visual' } } },
       virt_lines_overflow = 'wrap',
-      virt_lines_eol_hl = true,
     })
     screen:expect([[
       line^1                                             |
@@ -7306,13 +7305,12 @@ if (h->n_buckets < new_n_buckets) { // expand
     ]])
   end)
 
-  it('virt_lines_eol_hl with virt_lines_overflow=scroll', function()
+  it('highlight till eol with virt_lines_overflow=scroll', function()
     command('set nowrap')
     insert('abcdefghijklmnopqrstuvwxyz')
     api.nvim_buf_set_extmark(0, ns, 0, 0, {
       virt_lines = { { { 'VIRT LINE', 'String' }, { '', 'Visual' } } },
       virt_lines_overflow = 'scroll',
-      virt_lines_eol_hl = true,
     })
     screen:expect([[
       abcdefghijklmnopqrstuvwxy^z                        |

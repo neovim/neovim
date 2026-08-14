@@ -47,7 +47,6 @@ typedef struct {
   Boolean end_right_gravity;
   Array virt_lines;
   Boolean virt_lines_above;
-  Boolean virt_lines_eol_hl;
   Boolean virt_lines_leftcol;
   Enum("trunc", "scroll", "wrap", "auto") virt_lines_overflow;
   Boolean strict;
