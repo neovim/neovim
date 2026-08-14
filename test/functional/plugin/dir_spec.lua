@@ -334,7 +334,8 @@ describe('nvim.dir', function()
 
   it('fires DirReadPost for every listing', function()
     make_fixture()
-    n.clear({ args = { '--clean' } })
+    -- Entry order is locale-dependent: PUC Lua compares strings with strcoll().
+    n.clear({ args = { '--clean' }, env = { LC_ALL = 'C' } })
     exec_lua(function()
       vim.g.renders = 0
       vim.api.nvim_create_autocmd('User', {
@@ -372,7 +373,8 @@ describe('nvim.dir', function()
 
   it('keeps the listing readonly when a handler errors', function()
     make_fixture()
-    n.clear({ args = { '--clean' } })
+    -- Entry order is locale-dependent: PUC Lua compares strings with strcoll().
+    n.clear({ args = { '--clean' }, env = { LC_ALL = 'C' } })
     exec_lua(function()
       vim.api.nvim_create_autocmd('User', {
         pattern = 'DirReadPost',
