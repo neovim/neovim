@@ -966,6 +966,7 @@ is_na_patch() {
           '-I^#\s*((ifdef|ifndef|undef)|(if|elif)\s.*defined\().*FEAT_' \
           '-I^#\s*(else|endif)' \
           '-I^#\s*define\s+(FEAT|POPUPWIN|XDG)_' \
+          '-I^#\s*define\s+POPF_CURSORLINE\s' \
           '-I^typedef enum \{$' \
           '-I^\s+POPCLOSE_[A-Z]+,?$' \
           '-I^\} popclose_T;$' \
