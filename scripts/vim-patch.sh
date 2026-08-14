@@ -1003,17 +1003,20 @@ is_na_patch() {
         HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
           '-I^\s+$' \
           '-I^\s*/?\*/?$' \
-          '-I^\s*(//|/?\*).*\s([vV]im9|sound)' \
+          '-I^\s*(//|/?\*).*\s([vV]im9|sound|terminal)' \
           '-I^#\s*((ifdef|ifndef|undef)|(if|elif)\s.*defined\().*FEAT_' \
           '-I^#\s*(else|endif)' \
           '-I^#\s*define\s+(FEAT|POPUPWIN|XDG)_' \
           '-I^#\s*include\s+<proto/' \
           '-I^\s+\{"(popup|prop|sound)_[_a-z]+",.*f_(popup|prop|sound)_[_a-z]+},$' \
+          '-I^\s*(static)?\svoid$' \
+          '-I^static\svoid\s.+\(.+\);$' \
           '-I#\s*define.*ex_ni$' \
           '-I[_.>]sc_version = ' \
           '-I[_.>]uf_script_ctx_version = ' \
           '-I = skip_type\(.+\);$' \
           '-Icheck_typval_type\(.+\)' \
+          '-I\spopup_set_firstline\(.+\);' \
           '-I\svim_free\(.*w_popup_title\);' \
           "$patch" -- "${file}" |
           grep '^@@ .* @@')
