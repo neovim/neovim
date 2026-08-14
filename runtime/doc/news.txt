@@ -316,6 +316,8 @@ EVENTS
 • |SessionWritePre| event emits just before |:mksession|.
 • |TextPutPre| and |TextPutPost| are triggered before/after putting text.
 • |TabMoved| is triggered when tabs are reordered.
+• |DirReadPost| is triggered after each |dir| listing is rendered, so it can
+  be sorted or filtered. See |dir-render|.
 
 HIGHLIGHTS
 
