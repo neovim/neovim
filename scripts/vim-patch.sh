@@ -930,9 +930,13 @@ is_na_patch() {
       runtime/doc/*.txt | runtime/pack/dist/opt/*/doc/*.txt)
         HUNKS=$(git -c core.attributesfile="$NVIM_SOURCE_DIR"/.gitattributes -c 'diff.helphelp.xfuncname=^.*\*[^*]+\*$' -C "${VIM_SOURCE_DIR}" \
           diff-tree --no-commit-id -r -b -U0 \
+          '-I^\s+$' \
+          '-I^=+$' \
+          '-I^popup_[_a-z]+\(' \
           '-I\*\s+For Vim version [0-9]\.[0-9]\.\s+Last change: [0-9]+ [A-Z][a-z]+ [0-9]+' \
           '-I compiled \(with\|without\) .*(\|.*\|) feature\.$' \
-          '-I^=+$' \
+          '-I|popup-windows|' \
+          '-I\spopup window\s' \
           "$patch" -- "${file}" |
           grep -v -e '{.\+ \(available\|compiled\) \(with\|without\) .\+}' |
           grep -Pzo '(?<=\n)@@ -[0-9][^@\n]+\+[0-9][^@\n]* @@[^@\n]*\n(?=([-+][^\n]*\n)+(@|$))' |
