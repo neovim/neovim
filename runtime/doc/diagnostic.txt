@@ -1023,6 +1023,12 @@ setloclist({opts})                               *vim.diagnostic.setloclist()*
                   after setting.
                 • {severity}? (`vim.diagnostic.SeverityFilter`) See
                   |diagnostic-severity|.
+                • {sort}?
+                  (`boolean|fun(a: vim.Diagnostic, b: vim.Diagnostic): boolean`,
+                  default: `true`) Sort by buffer number, then line, then
+                  column. `false` preserves the order of
+                  `vim.diagnostic.get()`. A function is used as the
+                  comparator; sorting is stable.
                 • {title}? (`string`) Title of the location list. Defaults to
                   "Diagnostics".
                 • {winnr}? (`integer`, default: `0`) Window number to set
@@ -1044,6 +1050,12 @@ setqflist({opts})                                 *vim.diagnostic.setqflist()*
                   after setting.
                 • {severity}? (`vim.diagnostic.SeverityFilter`) See
                   |diagnostic-severity|.
+                • {sort}?
+                  (`boolean|fun(a: vim.Diagnostic, b: vim.Diagnostic): boolean`,
+                  default: `true`) Sort by buffer number, then line, then
+                  column. `false` preserves the order of
+                  `vim.diagnostic.get()`. A function is used as the
+                  comparator; sorting is stable.
                 • {title}? (`string`) Title of quickfix list. Defaults to
                   "Diagnostics". If there's already a quickfix list with this
                   title, it's updated. If not, a new quickfix list is created.
@@ -1081,6 +1093,8 @@ status({buf})                                        *vim.diagnostic.status()*
 toqflist({diagnostics})                            *vim.diagnostic.toqflist()*
     Convert a list of diagnostics to a list of quickfix items that can be
     passed to |setqflist()| or |setloclist()|.
+
+    The order of {diagnostics} is preserved.
 
     Parameters: ~
       • {diagnostics}  (`vim.Diagnostic[]`) See |vim.Diagnostic|.
