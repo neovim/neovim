@@ -36,11 +36,7 @@ end
 describe('treesitter bundled parser: diff', function()
   before_each(clear)
 
-  it('highlights hunk content with the language of the file', function()
-    local screen = Screen.new(44, 4)
-    screen:add_extra_attr_ids({
-      [100] = { foreground = Screen.colors.SeaGreen },
-    })
+  local function hunk()
     api.nvim_buf_set_lines(0, 0, -1, false, {
       'diff --git a/foo.lua b/foo.lua',
       '--- a/foo.lua',
@@ -56,6 +52,41 @@ describe('treesitter bundled parser: diff', function()
     end)
     api.nvim_win_set_cursor(0, { 5, 0 })
     command('normal! zt')
+  end
+
+  it('highlights hunk content over the added and deleted line backgrounds', function()
+    local screen = Screen.new(44, 4)
+    local colors = Screen.colors
+    screen:add_extra_attr_ids({
+      [100] = { foreground = colors.SlateBlue, background = colors.NvimLightRed },
+      [101] = { foreground = colors.Brown, background = colors.NvimLightRed, bold = true },
+      [102] = { background = colors.NvimLightRed },
+      [103] = { foreground = colors.Cyan4, background = colors.NvimLightRed },
+      [104] = { foreground = colors.Magenta1, background = colors.NvimLightRed },
+      [105] = { foreground = colors.SlateBlue, background = colors.NvimLightGreen },
+      [106] = { foreground = colors.Brown, background = colors.NvimLightGreen, bold = true },
+      [107] = { background = colors.NvimLightGreen },
+      [108] = { foreground = colors.Cyan4, background = colors.NvimLightGreen },
+      [109] = { foreground = colors.Magenta1, background = colors.NvimLightGreen },
+    })
+    hunk()
+
+    screen:expect([[
+      ^ {15:local} {25:x} {15:=} {26:1}                                |
+      {100:-}{101:local}{102: }{103:y}{102: }{101:=}{102: }{104:2}                                |
+      {105:+}{106:local}{107: }{108:y}{107: }{106:=}{107: }{109:3}                                |
+                                                  |
+    ]])
+  end)
+
+  it('drops the backgrounds when the specialized groups are cleared', function()
+    local screen = Screen.new(44, 4)
+    screen:add_extra_attr_ids({
+      [100] = { foreground = Screen.colors.SeaGreen4 },
+    })
+    command('hi clear @diff.plus.diff')
+    command('hi clear @diff.minus.diff')
+    hunk()
 
     screen:expect([[
       ^ {15:local} {25:x} {15:=} {26:1}                                |

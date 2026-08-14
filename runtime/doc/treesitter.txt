@@ -354,6 +354,14 @@ for diff buffers: >lua
       end,
     })
 <
+Since the injected code supplies its own foreground colors, `@diff.plus` and
+`@diff.minus` are specialized as `@diff.plus.diff` and `@diff.minus.diff`
+(see |treesitter-highlight-groups|), which set only a background so that added
+and deleted lines remain distinguishable.  Clear those groups to fall back to
+the unspecialized `@diff.plus` and `@diff.minus` foregrounds: >vim
+    hi clear @diff.plus.diff
+    hi clear @diff.minus.diff
+<
                                                  *treesitter-highlight-groups*
 The capture names, prefixed with `@`, are directly usable as highlight groups.
 For many commonly used captures, the corresponding highlight groups are linked
