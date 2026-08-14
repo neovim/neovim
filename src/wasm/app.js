@@ -295,7 +295,7 @@ function translateKey(ev) {
   };
   if (named[ev.key]) return named[ev.key];
   if (ev.key.length === 1) {
-    let char = ev.shiftKey ? ev.key : ev.key.toLowerCase();
+    let char = ev.key;
     if (char === "<") char = "<lt>";
     if (!isCtrl && !isAlt) return char;
     let mod = "";
@@ -368,13 +368,22 @@ function main() {
       }
     }
   });
-
+  transport.onExit((code) => {
+      setStatus(`Neovim exited (code ${code}). Refresh the page to start a new session.`);
+      gridEl.style.opacity = "0.5";
+    });
   nvim.on("redraw", (params) =>
     handleRedrawEvents(uiState, gridEl, modeEl, params),
   );
 
   gridEl.addEventListener("click", () => gridEl.focus());
   gridEl.addEventListener("keydown", (ev) => {
+    const isPasteShortcut =
+      (ev.ctrlKey && ev.shiftKey && ev.key.toLowerCase() === "v") || // Linux/Win: Ctrl+Shift+V
+      (ev.metaKey && ev.key.toLowerCase() === "v");                  // macOS: Cmd+V
+    if (isPasteShortcut) {
+      return;
+    }
     const keys = translateKey(ev);
     if (!keys) return;
     ev.preventDefault();
@@ -382,6 +391,15 @@ function main() {
       .request("nvim_input", [keys])
       .catch((e) => console.error("nvim_input failed", e));
   });
+  gridEl.addEventListener("paste", (ev) => {
+    ev.preventDefault();
+    const text = ev.clipboardData.getData("text/plain");
+    if (!text) return;
+    nvim
+      .request("nvim_paste", [text, true, -1])
+      .catch((e) => console.error("paste nvim_input failed", e));
+  });
+
 }
 
 if (!crossOriginIsolated) {

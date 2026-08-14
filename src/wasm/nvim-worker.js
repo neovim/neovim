@@ -356,7 +356,6 @@ self.onmessage = async (ev) => {
           m.ENV.TERM = "xterm-256color";
           m.ENV.HOME = "/home/user";
           m.ENV.VIMRUNTIME = "/runtime";
-          m.ENV.NVIM_LOG_FILE = "/home/user/nvim.log";
         },
       ],
     });
@@ -511,7 +510,7 @@ self.onmessage = async (ev) => {
       );
     };
 
-    const { argc, argv } = makeArgv(m, ["nvim", "--embed", "--clean"]);
+    const { argc, argv } = makeArgv(m, ["nvim", "--embed", "--cmd", "set noautoread"]);
 
     let ret;
 
@@ -535,14 +534,38 @@ self.onmessage = async (ev) => {
       ret = await nvimPromise;
 
       console.log("NVIM EXITED");
+      postMessage({ type: "exited", code: ret });
+      try {
+        moduleRef.ccall("emscripten_force_exit", null, ["number"], [ret]);
+      } catch (e) {
+        safeStatus("force_exit failed: " + e);
+      }
       const unread = unreadCount();
       safeStatus(
         `_nvim_main RETURNED ret=${ret}, unread bytes still in buffer=${unread}`,
       );
     } catch (e) {
+          console.log('CAUGHT EXIT EXCEPTION', e, 'name=', e && e.name, 'status=', e && e.status, 'constructor=', e && e.constructor && e.constructor.name);
+
       flushAll();
-      safeStatus("EXCEPTION: " + e.message + "\nSTACK:\n" + e.stack);
-      throw e;
+    if (e && e.name === 'ExitStatus') {
+        safeStatus(`Neovim exited cleanly, code=${e.status}`);
+        ret = e.status;
+    
+    // Notify app.js so it can show a session ended state instead of
+    // leaving the UI looking frozen.
+    postMessage({ type: "exited", code: ret });
+    try {
+          moduleRef.ccall("emscripten_force_exit", null, ["number"], [ret]);
+        } catch (fe) {
+          safeStatus("force_exit failed: " + fe);
+        }
+      }
+    else 
+      {
+        safeStatus('EXCEPTION: ' + e.message + '\nSTACK:\n' + e.stack);
+        throw e;
+    }
     }
 
     flushAll();
