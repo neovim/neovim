@@ -114,7 +114,9 @@
     (v).size = (v).size + len; \
   }
 
+/// Appends a string to `v`, without its NUL.
 #define kv_concat(v, str) kv_concat_len(v, str, strlen(str))
+/// Appends all items of `v0` to `v1`.
 #define kv_splice(v1, v0) kv_concat_len(v1, (v0).items, (v0).size)
 
 #define kv_pushp(v) \
