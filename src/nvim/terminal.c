@@ -172,6 +172,11 @@ struct terminal {
   // refresh_timer_cb may be called after the buffer was freed, and there's
   // no way to know if the memory was reused.
   handle_T buf_handle;
+  /// Window whose cursor the terminal itself placed, so that it keeps following the output even
+  /// if the program moved its own cursor off the last line (e.g. ESC [ 3 A). Zero once the user
+  /// moves that cursor. At most one window: another one showing this terminal is a passive view,
+  /// which follows only by the "cursor at last line" rule. #41111
+  handle_T follow_win;
   bool in_altscreen;
   // program suspended
   bool suspended;
@@ -991,6 +996,15 @@ bool terminal_enter(void)
   return s->got_bsl_o;
 }
 
+/// Bumped whenever Terminal mode places a window's cursor, so that a caller can tell whether it did
+/// so while the caller was busy. #41111
+static uint64_t cursor_stamp = 0;
+
+uint64_t terminal_cursor_stamp(void)
+{
+  return cursor_stamp;
+}
+
 static void terminal_check_cursor(void)
 {
   Terminal *term = curbuf->terminal;
@@ -1009,6 +1023,20 @@ static void terminal_check_cursor(void)
     // Nudge cursor when returning to normal-mode.
     int off = (State & MODE_TERMINAL) ? 0 : (curwin->w_p_rl ? 1 : -1);
     coladvance(curwin, MAX(0, term->cursor.col + off));
+  }
+  // We placed the cursor, not the user, so keep following the output. #41111
+  term->follow_win = curwin->handle;
+  cursor_stamp++;
+}
+
+/// The user, not the terminal, is now responsible for "wp"'s cursor, so a terminal shown there
+/// stops following its output once the cursor leaves the last line. #41111
+void terminal_user_cursor(win_T *wp)
+  FUNC_ATTR_NONNULL_ALL
+{
+  Terminal *term = wp->w_buffer->terminal;
+  if (term != NULL && term->follow_win == wp->handle) {
+    term->follow_win = 0;
   }
 }
 
@@ -2299,6 +2327,9 @@ static bool send_mouse_event(Terminal *term, int c)
     // Call the common mouse scroll function shared with other modes.
     do_mousescroll(&cap);
 
+    // Scrolling reads history back; the user is no longer watching the tail, so stop following.
+    terminal_user_cursor(mouse_win);
+
     curwin->w_redr_status = true;
     curwin = save_curwin;
     curbuf = curwin->w_buffer;
@@ -2651,6 +2682,14 @@ static void refresh_screen(Terminal *term, buf_T *buf)
   changed_lines(buf, change_start, 0, change_end, added, true);
 }
 
+/// Puts the cursor of "wp" on the last line, so that it "follows" terminal output.
+static void terminal_follow_win(win_T *wp)
+{
+  wp->w_cursor.lnum = wp->w_buffer->b_ml.ml_line_count;
+  set_topline(wp, MAX(wp->w_cursor.lnum - wp->w_view_height + 1, 1));
+  mb_check_adjust_col(wp);
+}
+
 static void adjust_topline_cursor(Terminal *term, buf_T *buf, int added)
 {
   linenr_T ml_end = buf->b_ml.ml_line_count;
@@ -2663,16 +2702,19 @@ static void adjust_topline_cursor(Terminal *term, buf_T *buf, int added)
         continue;
       }
 
-      bool following = ml_end == wp->w_cursor.lnum + added;  // cursor at end?
+      // Cursor at end, or the terminal put it where it is and the user has left the terminal: a
+      // program moving its own cursor (e.g. ESC [ 3 A) must not stop following. While the user is
+      // still on the terminal only the cursor rule applies, so |CTRL-\_CTRL-N| can read it. #41111
+      bool following = ml_end == wp->w_cursor.lnum + added
+                       || (curwin->w_buffer != buf && wp->handle == term->follow_win);
       if (following) {
         // "Follow" the terminal output
-        wp->w_cursor.lnum = ml_end;
-        set_topline(wp, MAX(wp->w_cursor.lnum - wp->w_view_height + 1, 1));
+        terminal_follow_win(wp);
       } else {
         // Ensure valid cursor for each window displaying this terminal.
         wp->w_cursor.lnum = MIN(wp->w_cursor.lnum, ml_end);
+        mb_check_adjust_col(wp);
       }
-      mb_check_adjust_col(wp);
     }
   }
 
