@@ -3,7 +3,7 @@
 " Maintainer:		This runtime file is looking for a new maintainer.
 " Previous Maintainers:	Charles E. Campbell
 " 		Lennart Schultz <Lennart.Schultz@ecmwf.int>
-" Last Change:		2026 Aug 06 by Vim Project
+" Last Change:		2026 Aug 13 by Vim Project
 " Version:		208
 " Former URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
@@ -189,6 +189,30 @@ else
     com! -nargs=* ShFoldIfDoFor <args>
 endif
 
+" Set up syntax error commands for shell {{{1
+" ======================================
+if exists("g:sh_no_error_rules") && type(g:sh_no_error_rules) == type([])
+    fun! s:ScanAndCondExecSynErrCmd(idx, cmd) abort
+        let parts = matchlist(a:cmd, '\(\(\S\+\)\s\+\(\S\+\)\s*\)\{2}')
+        " Do nothing for matchable names listed in "g:sh_no_error_rules".
+        if len(parts) < a:idx || index(g:sh_no_error_rules, parts[a:idx]) < 0
+            exec a:cmd
+        endif
+    endfun
+elseif exists("g:sh_no_error")
+    fun! s:ScanAndCondExecSynErrCmd(_, __) abort
+    endfun
+else
+    fun! s:ScanAndCondExecSynErrCmd(_, cmd) abort
+        exec a:cmd
+    endfun
+endif
+
+" Read shFooError from "syn match shFooError '<pattern>'" etc.
+com! -nargs=+ ShDefSynErrRule call s:ScanAndCondExecSynErrCmd(2, <q-args>)
+" Read shFooError from "hi def link shFooError Error".
+com! -nargs=+ ShLinkSynErrGroup call s:ScanAndCondExecSynErrCmd(3, <q-args>)
+
 " Generate bracket expression items {{{1
 " =================================
 " Note that the following function can be invoked as many times as necessary
@@ -323,20 +347,18 @@ endif
 
 " Error Codes: {{{1
 " ============
-if !exists("g:sh_no_error")
-    syn match   shDoError "\<done\>"
-    syn match   shIfError "\<fi\>"
-    syn match   shInError "\<in\>"
-    syn match   shCaseError ";;"
-    syn match   shEsacError "\<esac\>"
-    syn match   shCurlyError "}"
-    syn match   shParenError ")"
-    syn match   shOK	'\.\(done\|fi\|in\|esac\)'
-    if exists("b:is_kornshell") || exists("b:is_bash")
-        syn match     shDTestError "]]"
-    endif
-    syn match     shTestError "]"
+ShDefSynErrRule syn match   shDoError "\<done\>"
+ShDefSynErrRule syn match   shIfError "\<fi\>"
+ShDefSynErrRule syn match   shInError "\<in\>"
+ShDefSynErrRule syn match   shCaseError ";;"
+ShDefSynErrRule syn match   shEsacError "\<esac\>"
+ShDefSynErrRule syn match   shCurlyError "}"
+ShDefSynErrRule syn match   shParenError ")"
+ShDefSynErrRule syn match   shOK	'\.\%(done\|fi\|in\|esac\)'
+if exists("b:is_kornshell") || exists("b:is_bash")
+    ShDefSynErrRule syn match     shDTestError "]]"
 endif
+ShDefSynErrRule syn match     shTestError "]"
 
 " Options: {{{1
 " ====================
@@ -427,8 +449,8 @@ ShFoldIfDoFor syn region	shCaseEsac	matchgroup=shConditional start="\<case\>" en
 syn keyword shCaseIn	contained skipwhite skipnl in			nextgroup=shCase,shCaseStart,shCaseBar,shComment,shCaseExSingleQuote,shCaseSingleQuote,shCaseDoubleQuote
 if exists("b:is_bash") || (exists("b:is_kornshell") && !exists("b:is_ksh88"))
     syn region  shCaseExSingleQuote	matchgroup=shQuote start=+\$'+ skip=+\\\\\|\\.+ end=+'+	contains=shStringSpecial,shSpecial	skipwhite skipnl nextgroup=shCaseBar	contained
-elseif !exists("g:sh_no_error")
-    syn region  shCaseExSingleQuote	matchgroup=Error start=+\$'+ skip=+\\\\\|\\.+ end=+'+	contains=shStringSpecial	skipwhite skipnl nextgroup=shCaseBar	contained
+else
+    ShDefSynErrRule syn region  shCaseExSingleQuote	matchgroup=Error start=+\$'+ skip=+\\\\\|\\.+ end=+'+	contains=shStringSpecial	skipwhite skipnl nextgroup=shCaseBar	contained
 endif
 syn region  shCaseSingleQuote	matchgroup=shQuote start=+'+ end=+'+		contains=shStringSpecial		skipwhite skipnl nextgroup=shCaseBar	contained
 syn region  shCaseDoubleQuote	matchgroup=shQuote start=+"+ skip=+\\\\\|\\.+ end=+"+	contains=@shDblQuoteList,shStringSpecial	skipwhite skipnl nextgroup=shCaseBar	contained
@@ -472,8 +494,8 @@ if exists("b:is_kornshell") || exists("b:is_bash") || exists("b:is_posix")
     syn region shArithmetic matchgroup=shArithRegion  start="\$\[" skip='\\\\\|\\.' end="\]" contains=@shArithList
     syn match  shSkipInitWS contained	"^\s\+"
     syn region shArithParen matchgroup=shArithRegion  contained start="(" end=")" contains=@shArithParenList
-elseif !exists("g:sh_no_error")
-    syn region shCommandSub matchgroup=Error start="\$(" end=")" contains=@shCommandSubList
+else
+    ShDefSynErrRule syn region shCommandSub matchgroup=Error start="\$(" end=")" contains=@shCommandSubList
 endif
 syn region shCmdParenRegion matchgroup=shCmdSubRegion start="((\@!" skip='\\\\\|\\.' end=")" contains=@shCommandSubList
 
@@ -534,9 +556,9 @@ if exists("b:is_bash") || exists("b:is_kornshell")
     syn match   shSpecial	"^\(\\\\\)*\zs\\\o\o\o\|\\x\x\x\|\\c[^"]\|\\[abefnrtv]"	contained
     syn region  shExSingleQuote	matchgroup=shQuote start=+\$'+ skip=+\\\\\|\\.+ end=+'+	contains=shStringSpecial,shSpecial		nextgroup=shSpecialNxt
     syn region  shExDoubleQuote	matchgroup=shQuote start=+\$"+ skip=+\\\\\|\\.\|\\"+ end=+"+	contains=@shDblQuoteList,shStringSpecial,shSpecial	nextgroup=shSpecialNxt
-elseif !exists("g:sh_no_error")
-    syn region  shExSingleQuote	matchGroup=Error start=+\$'+ skip=+\\\\\|\\.+ end=+'+	contains=shStringSpecial
-    syn region  shExDoubleQuote	matchGroup=Error start=+\$"+ skip=+\\\\\|\\.+ end=+"+	contains=shStringSpecial
+else
+    ShDefSynErrRule syn region  shExSingleQuote	matchgroup=Error start=+\$'+ skip=+\\\\\|\\.+ end=+'+	contains=shStringSpecial
+    ShDefSynErrRule syn region  shExDoubleQuote	matchgroup=Error start=+\$"+ skip=+\\\\\|\\.+ end=+"+	contains=shStringSpecial
 endif
 syn region  shSingleQuote	matchgroup=shQuote start=+'+ end=+'+		contains=@Spell	nextgroup=shSpecialStart,shSpecialSQ
 syn region  shDoubleQuote	matchgroup=shQuote start=+\%(\%(\\\\\)*\\\)\@<!"+ skip=+\\.+ end=+"+			contains=@shDblQuoteList,shStringSpecial,@Spell	nextgroup=shSpecialStart
@@ -662,11 +684,8 @@ if exists("b:is_bash")
     syn match shArrayEmptyDecl	"\%#=1\ze\%(\<\h\w*=\)\@>()"	transparent nextgroup=shVariable
     " Claim commented out function declaration headers.
     syn match shFunctionComment	"^\s*\zs\ze#"	transparent nextgroup=shComment
-
-    if !exists("g:sh_no_error")
-        syn match shFunctionNameAssignError	"\%#=1\%(\%(\<\h\w*\)\@>=\)\%(\%(\w\+\)\@>=\=\)\+()"	skipwhite skipnl nextgroup=shExpr,shSubSh
-        syn match shFunctionNameCommentError	"#"	contained
-    endif
+    ShDefSynErrRule syn match shFunctionNameAssignError	"\%#=1\%(\%(\<\h\w*\)\@>=\)\%(\%(\w\+\)\@>=\=\)\+()"	skipwhite skipnl nextgroup=shExpr,shSubSh
+    ShDefSynErrRule syn match shFunctionNameCommentError	"#"	contained
 elseif exists("b:is_ksh88")
     " AT&T ksh88
     syn match shFunctionCmdOne	"^\s*\zs\h\w*\s*()\ze\_s*\%(\%(for\|case\|select\|if\|while\|until\)\>\|\[\[\s\|((\)"	skipwhite skipnl nextgroup=@shFunctionCmds contains=shFunctionParens
@@ -695,17 +714,13 @@ else
     syn match shFunctionFour	"\<\h\w*\>\s*()\ze\_s*("	contained skipwhite skipnl nextgroup=shFunctionSubSh contains=shFunctionParens
 endif
 
-if !exists("g:sh_no_error")
-    syn match   shDoError "\<do\%(ne\)\=\s*()"
-    syn match   shIfError "\<then\s*()"
-    syn match   shIfError "\<else\s*()"
-endif
+ShDefSynErrRule syn match   shDoError "\<do\%(ne\)\=\s*()"
+ShDefSynErrRule syn match   shIfError "\<then\s*()"
+ShDefSynErrRule syn match   shIfError "\<else\s*()"
 
 " Parameter Dereferencing: {{{1
 " ========================
-if !exists("g:sh_no_error")
-    syn match  shDerefWordError	"[^}$[~]"	contained
-endif
+ShDefSynErrRule syn match  shDerefWordError	"[^}$[~]"	contained
 syn match  shDerefSimple	"\$\%(\h\w*\|\d\)"	nextgroup=@shNoZSList
 if exists("b:is_kornshell") && !exists("b:is_ksh88")
     if exists("b:is_mksh")
@@ -780,9 +795,7 @@ syn region  shDerefVarArray   contained	matchgroup=shDeref start="\[" end="]"	co
 "        bash : ${@:start:qty}        display command line arguments from start to start+qty-1 (inferred)
 "        bash : ${parameter@operator} transforms parameter (operator∈[uULqEPARa])
 syn cluster shDerefPatternList	contains=shDerefPattern,shDerefString
-if !exists("g:sh_no_error")
-    syn match shDerefOpError	contained	":[[:punct:]]"
-endif
+ShDefSynErrRule syn match shDerefOpError	contained	":[[:punct:]]"
 syn match  shDerefOp	contained	":\=[-=?]"	nextgroup=@shDerefPatternList
 syn match  shDerefOp	contained	":\=+"	nextgroup=@shDerefPatternList
 if exists("b:is_bash") || exists("b:is_kornshell") || exists("b:is_posix")
@@ -838,9 +851,7 @@ syn keyword shStatement bg break cd continue command eval exec exit export fc ge
 " external programs:
 syn keyword shStatement basename cat chgrp chmod chown cksum clear cmp comm cp cut date dirname du egrep expr false fgrep find fmt fold getconf grep head iconv id join kill killall less ln login logname ls md5sum mkdir mkfifo mknod mktemp mv newgrp nice nohup od paste pathchk printenv pwd readlink realpath rename rev rm rmdir sed sha1sum sha224sum sha256sum sha384sum sha512sum sleep sort strip stty sum sync tail tee test tput tr true tty uname uniq wc which xargs
 syn keyword shConditional contained elif else then
-if !exists("g:sh_no_error")
-    syn keyword shCondError elif else then
-endif
+ShDefSynErrRule syn keyword shCondError elif else then
 
 " Synchronization: {{{1
 " ================
@@ -949,25 +960,23 @@ if !exists("skip_sh_syntax_inits")
         hi def link kshStatement		shStatement
     endif
 
-    if !exists("g:sh_no_error")
-        hi def link shCaseError		Error
-        hi def link shCondError		Error
-        hi def link shCurlyError		Error
-        hi def link shDerefOpError		Error
-        hi def link shDerefWordError		Error
-        hi def link shDoError		Error
-        hi def link shEsacError		Error
-        hi def link shIfError		Error
-        hi def link shInError		Error
-        hi def link shParenError		Error
-        hi def link shTestError		Error
-        if exists("b:is_bash")
-            hi def link shFunctionNameAssignError	Error
-            hi def link shFunctionNameCommentError	Error
-        endif
-        if exists("b:is_kornshell") || exists("b:is_posix")
-            hi def link shDTestError		Error
-        endif
+    ShLinkSynErrGroup hi def link shCaseError		Error
+    ShLinkSynErrGroup hi def link shCondError		Error
+    ShLinkSynErrGroup hi def link shCurlyError		Error
+    ShLinkSynErrGroup hi def link shDerefOpError		Error
+    ShLinkSynErrGroup hi def link shDerefWordError		Error
+    ShLinkSynErrGroup hi def link shDoError		Error
+    ShLinkSynErrGroup hi def link shEsacError		Error
+    ShLinkSynErrGroup hi def link shIfError		Error
+    ShLinkSynErrGroup hi def link shInError		Error
+    ShLinkSynErrGroup hi def link shParenError		Error
+    ShLinkSynErrGroup hi def link shTestError		Error
+    if exists("b:is_bash")
+        ShLinkSynErrGroup hi def link shFunctionNameAssignError	Error
+        ShLinkSynErrGroup hi def link shFunctionNameCommentError	Error
+    endif
+    if exists("b:is_kornshell") || exists("b:is_posix")
+        ShLinkSynErrGroup hi def link shDTestError		Error
     endif
 
     hi def link shArithmetic		Special
@@ -1027,14 +1036,17 @@ if !exists("skip_sh_syntax_inits")
     hi def link shHereDoc16		shRedir
 endif
 
-" Delete shell folding commands {{{1
-" =============================
+" Delete shell commands {{{1
+" =====================
 delc ShFoldFunctions
 delc ShFoldHereDoc
 delc ShFoldIfDoFor
+delc ShLinkSynErrGroup
+delc ShDefSynErrRule
 
-" Delete the bracket expression function {{{1
-" ======================================
+" Delete shell functions {{{1
+" ======================
+delfun s:ScanAndCondExecSynErrCmd
 delfun s:GenerateBracketExpressionItems
 
 " Set Current Syntax: {{{1

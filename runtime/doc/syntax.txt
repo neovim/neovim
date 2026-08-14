@@ -3218,12 +3218,15 @@ reduce this, the "sh_maxlines" internal variable can be set.  Example: >
 The default is to use the twice sh_minlines.  Set it to a smaller number to
 speed up displaying.  The disadvantage is that highlight errors may appear.
 
-syntax/sh.vim tries to flag certain problems as errors; usually things like
-unmatched "]", "done", "fi", etc.  If you find the error handling problematic
-for your purposes, you may suppress such error highlighting by putting
-the following line in your .vimrc: >
+Unmatched "]", "done", "fi", etc., are highlighted as errors by default.  If
+you find this error handling problematic, you may suppress it with: >
 
-	let g:sh_no_error= 1
+	let g:sh_no_error = 1
+<
+As a refinement, you may suppress particular classes of errors by looking up
+their syntax rule names and listing them with: >
+
+	let g:sh_no_error_rules = ["shCurlyError", "shParenError"]
 <
 
 						*sh-embed*  *sh-awk*
