@@ -74,8 +74,8 @@
             .hash = "zig_compile_commands-0.0.1-OZg5-e_JAAAGg1WHAePtq4l4Uvjs34BexnFFCZk63EaG",
         },
         .treesitter_diff = .{
-            .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-diff?ref=v0.1.0#2520c3f934b3179bb540d23e0ef45f75304b5fed",
-            .hash = "N-V-__8AAAULEwDDBPj9cGOTHPT1iE6oZabnwo70bstgVEf_",
+            .url = "git+https://github.com/tree-sitter-grammars/tree-sitter-diff?ref=v0.2.0#ada384ac7bfc1307f32de474620120add29998fb",
+            .hash = "N-V-__8AAPUcFACL4N4XTVUilDAwPIkX8066VSaipW5tYXDT",
         },
     },
     .paths = .{
