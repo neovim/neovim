@@ -1009,7 +1009,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
   proftime_T call_start;
   bool started_profiling = false;
   bool did_save_redo = false;
-  save_redo_T save_redo;
+  RedoState save_redo;
   ESTACK_CHECK_DECLARATION;
 
   // If depth of calling is getting too high, don't execute the function
@@ -1023,7 +1023,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
   // Save search patterns and redo buffer.
   save_search_patterns();
   if (!ins_compl_active()) {
-    saveRedobuff(&save_redo);
+    save_redobuff(&save_redo);
     did_save_redo = true;
   }
   fp->uf_calls++;
@@ -1368,7 +1368,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
   }
   // restore search patterns and redo buffer
   if (did_save_redo) {
-    restoreRedobuff(&save_redo);
+    restore_redobuff(&save_redo);
   }
   restore_search_patterns();
 }

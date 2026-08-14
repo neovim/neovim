@@ -31,6 +31,7 @@
 #include "nvim/drawline.h"
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
+#include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/vars.h"
@@ -45,6 +46,7 @@
 #include "nvim/highlight_group.h"
 #include "nvim/input.h"
 #include "nvim/input_defs.h"
+#include "nvim/insert.h"
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
 #include "nvim/log.h"
@@ -1508,7 +1510,7 @@ Dict nvim_get_context(Dict(context) *opts, Arena *arena, Error *err)
     types = opts->types;
   }
 
-  int int_types = types.size > 0 ? 0 : kCtxAll;
+  CtxStateFlags int_types = types.size > 0 ? 0 : kCtxAll;
   if (types.size > 0) {
     for (size_t i = 0; i < types.size; i++) {
       if (types.items[i].type == kObjectTypeString) {
@@ -1554,7 +1556,7 @@ Object nvim_load_context(Dict dict, Error *err)
 
   ctx_from_dict(dict, &ctx, err);
   if (!ERROR_SET(err)) {
-    ctx_load(&ctx, kCtxAll);
+    ctx_load(&ctx, kCtxAll, 0);
   }
 
   ctx_free(&ctx);

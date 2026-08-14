@@ -1538,10 +1538,8 @@ void execute_menu(const exarg_T *eap, vimmenu_T *menu, int mode_idx)
       save_state_T save_state;
 
       ex_normal_busy++;
-      if (save_current_state(&save_state)) {
-        exec_normal_cmd(menu->strings[idx], menu->noremap[idx],
-                        menu->silent[idx]);
-      }
+      save_current_state(&save_state);
+      exec_normal_cmd(menu->strings[idx], menu->noremap[idx], menu->silent[idx]);
       restore_current_state(&save_state);
       ex_normal_busy--;
     } else {

@@ -426,14 +426,14 @@ describe('commenting', function()
       eq(get_lines(), { '# aa', '#  aa', '#   aa', '', '  aa', ' aa', 'aa' })
       eq(get_cursor(), { 1, 0 })
 
-      -- Dot-repeat after first application in Visual mode should apply to the same
-      -- relative region
+      -- Dot-repeat after first application in Visual mode applies to the paragraph at cursor (not
+      -- a fixed-size region).
       feed('.')
       eq(get_lines(), example_lines)
 
       set_cursor(3, 0)
       feed('.')
-      eq(get_lines(), { 'aa', ' aa', '  # aa', '  #', '  # aa', ' aa', 'aa' })
+      eq(get_lines(), { '# aa', '#  aa', '#   aa', '', '  aa', ' aa', 'aa' })
     end)
 
     it("respects 'commentstring'", function()

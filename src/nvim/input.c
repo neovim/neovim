@@ -1,9 +1,10 @@
-// input.c: the input engine.
+// input.c: The input engine "bytes layer" (input_cmdatom.c. is the "policy layer").
+//
 // - Get a character from the user, a script file, or the keybufs described below.
 // - Apply mappings and abbreviations to typed keys (the :map tables live in mapping.c; the
 //   matching loop is handle_mapping()).
 // - Assemble K_SPECIAL/multibyte byte sequences into keys (vgetc()).
-// - Record macros (recordbuff) and the redo keys (redobuff: "." capture and replay).
+// - Record macros (recordbuff); capture the redo state (redobuff: "." capture and replay).
 //
 // Concepts:
 // - "Stuffing" = when some internal logic pushes keys to execute next. This is how a cmd
@@ -21,8 +22,11 @@
 //   - TWO stuff buffers, because stuffing nests: a cmd executed FROM redo keys (readbuf2) may
 //     itself stuff a translation (readbuf1), which must be consumed before the remaining redo.
 // - `typebuf`: typeahead (see below).
-// - `redobuff`: the keys of the last change ("." stuffs them, start_redo());
-//   `old_redobuff` is the previous change, for "CTRL-O ." in Insert mode.
+// - `redobuff` (RedoState): the last change; dot-repeat "." replays it (start_redo()).
+//   - `redobuff.cur` = the last change. "." replays it IN-PLACE (start_redo()), the multicursor
+//     cascade replays it PER-CURSOR (mc_cascade()). Same keysequence, either way: a Visual-mode
+//     change re-executes its captured selection).
+//   - `redobuff.old` = the previous change; see `redo_new`.
 // - `recordbuff`: accumulates the keys of a recording ("q").
 //
 // Buffer bytes are encoded as follows:
@@ -66,6 +70,7 @@
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/input.h"
+#include "nvim/input_cmdatom.h"
 #include "nvim/insert.h"
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
@@ -118,15 +123,16 @@ static FileDescriptor scriptin[NSCRIPT] = { 0 };
 
 #define MINIMAL_SIZE 20                 // minimal size for b_str
 
-static buffheader_T redobuff = { { NULL, 0, { NUL } }, NULL, 0, 0, false };
-static buffheader_T old_redobuff = { { NULL, 0, { NUL } }, NULL, 0, 0, false };
-static buffheader_T recordbuff = { { NULL, 0, { NUL } }, NULL, 0, 0, false };
-
-/// First read ahead buffer. Used for translated commands.
-static buffheader_T readbuf1 = { { NULL, 0, { NUL } }, NULL, 0, 0, false };
-
-/// Second read ahead buffer. Used for redo.
-static buffheader_T readbuf2 = { { NULL, 0, { NUL } }, NULL, 0, 0, false };
+#define REDO_INIT { { 0 }, KV_INITIAL_VALUE }
+/// The redo state: redo_append_*() captures keys in `redobuff.cur`; "." replays it (start_redo()).
+static RedoState redobuff = { REDO_INIT, REDO_INIT };
+/// Macro recording. Perf: StringBuilder (not buffheader_T) => fewer allocs/copies.
+static StringBuilder recordbuff = KV_INITIAL_VALUE;
+/// First readahead buffer ("stuffbuf"): command translations ("x" => "dl"). Drains before readbuf2.
+static buffheader_T readbuf1 = BUFFHEADER_INIT;
+/// Second readahead buffer ("stuffbuf"): "." replay (start_redo()).
+static buffheader_T readbuf2 = BUFFHEADER_INIT;
+static UngotKey ungot = { .c = -1 };
 
 /// Buffer used to store typed characters for vim.on_key().
 static kvec_withinit_t(char, MAXMAPLEN + 1) on_key_buf = KVI_INITIAL_VALUE(on_key_buf);
@@ -187,8 +193,9 @@ static const char e_cmd_mapping_must_end_with_cr[]
 static const char e_cmd_mapping_must_end_with_cr_before_second_cmd[]
   = N_("E1136: <Cmd> mapping must end with <CR> before second <Cmd>");
 
-/// Free and clear a buffer.
+/// Frees every block; the buffer becomes empty (add_buff() re-seeds it).
 static void free_buff(buffheader_T *buf)
+  FUNC_ATTR_NONNULL_ALL
 {
   buffblock_T *np;
 
@@ -200,55 +207,15 @@ static void free_buff(buffheader_T *buf)
   buf->bh_curr = NULL;
 }
 
-/// Return the contents of a buffer as a single string.
-/// K_SPECIAL in the returned string is escaped.
-///
-/// @param dozero  count == zero is not an error
-/// @param len     the length of the returned buffer
-static char *get_buffcont(buffheader_T *buffer, int dozero, size_t *len)
-{
-  size_t count = 0;
-  char *p = NULL;
-  size_t i = 0;
-
-  // compute the total length of the string
-  for (const buffblock_T *bp = buffer->bh_first.b_next;
-       bp != NULL; bp = bp->b_next) {
-    count += bp->b_strlen;
-  }
-
-  if (count > 0 || dozero) {
-    p = xmalloc(count + 1);
-    char *p2 = p;
-    for (const buffblock_T *bp = buffer->bh_first.b_next;
-         bp != NULL; bp = bp->b_next) {
-      for (const char *str = bp->b_str; *str;) {
-        *p2++ = *str++;
-      }
-    }
-    *p2 = NUL;
-    i = (size_t)(p2 - p);
-  }
-
-  if (len != NULL) {
-    *len = i;
-  }
-
-  return p;
-}
-
 /// Return the contents of the record buffer as a single string
 /// and clear the record buffer.
 /// K_SPECIAL in the returned string is escaped.
 char *get_recorded(void)
 {
-  size_t len;
-  char *p = get_buffcont(&recordbuff, true, &len);
-  if (p == NULL) {
-    return NULL;
-  }
-
-  free_buff(&recordbuff);
+  size_t len = recordbuff.size;
+  kv_push(recordbuff, NUL);
+  char *p = recordbuff.items;  // ownership moves to the caller
+  recordbuff = (StringBuilder)KV_INITIAL_VALUE;
 
   // Remove the characters that were added the last time, these must be the
   // (possibly mapped) characters that stopped the recording.
@@ -266,21 +233,89 @@ char *get_recorded(void)
   return p;
 }
 
-/// Return the contents of the redo buffer as a single string.
-/// K_SPECIAL in the returned string is escaped.
-String get_inserted(void)
+/// Appends the composed `["x][count]` keysequence prefix of `spec` to `buf`.
+/// Every prefix emission goes through here.
+///
+/// @param replay  Composing an actual replay (start_redo()): a `"=` register spec appends <CR>,
+///                re-evaluating the last expression.
+void redo_prefix(const CmdSpec *spec, StringBuilder *buf, bool replay)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
-  size_t len = 0;
-  char *str = get_buffcont(&redobuff, false, &len);
-  return cbuf_as_string(str, len);
+  if (spec->regname != 0) {
+    sb_add_char(buf, '"');
+    sb_add_char(buf, spec->regname);
+    if (replay && spec->regname == '=') {
+      sb_add_char(buf, CAR);
+    }
+  }
+  if (spec->count != 0) {
+    kv_printf(*buf, "%d", (int)spec->count);
+  }
 }
 
-/// Add string after the current block of the given buffer
+/// Appends the composed command chars of `spec` to `buf`.
+/// Every command-char emission goes through here (see redo_prefix()).
+///
+/// @param arg_meta  Skip the `arg` byte (see prep_redo()).
+void redo_chars(const CmdSpec *spec, StringBuilder *buf, bool arg_meta)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (spec->op != NUL) {
+    sb_add_char(buf, spec->op);
+  }
+  if (spec->op_extra != NUL) {
+    sb_add_char(buf, spec->op_extra);
+  }
+  if (spec->motion_force != NUL) {
+    sb_add_char(buf, spec->motion_force);
+  }
+  if (spec->cmd != NUL) {
+    sb_add_char(buf, spec->cmd);
+  }
+  if (spec->cmd2 != NUL) {
+    sb_add_char(buf, spec->cmd2);
+  }
+  if (spec->arg != NUL && !arg_meta) {
+    sb_add_char(buf, spec->arg);
+  }
+}
+
+/// Composes a redo's full keysequence: the `["x][v][count]` prefix (from the fields) followed by
+/// the command body.
+///
+/// @return  allocated String; .data == NULL if the redo is empty.
+static String redo_compose(RedoBuf *r)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  StringBuilder buf = KV_INITIAL_VALUE;
+  redo_prefix(&r->spec, &buf, false);
+  kv_splice(buf, r->keys);
+  if (buf.size == 0) {
+    return (String)STRING_INIT;
+  }
+  kv_push(buf, NUL);
+  return cbuf_as_string(buf.items, buf.size - 1);
+}
+
+/// Gets the pending change's keysequence (redo_compose()), allocated.
+String redo_keys(void)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return redo_compose(&redobuff.cur);
+}
+
+/// Gets the pending change's CmdSpec.
+CmdSpec redo_spec(void)
+{
+  return redobuff.cur.spec;
+}
+
+/// Append string after the current block of the given buffer
 ///
 /// K_SPECIAL should have been escaped already.
 ///
-/// @param[out]  buf  Buffer to add to.
-/// @param[in]  s  String to add.
+/// @param[out]  buf  Buffer to append to.
+/// @param[in]  s  String to append.
 /// @param[in]  slen  String length or -1 for NUL-terminated string.
 static void add_buff(buffheader_T *const buf, const char *const s, ptrdiff_t slen)
 {
@@ -324,70 +359,76 @@ static void add_buff(buffheader_T *const buf, const char *const s, ptrdiff_t sle
   }
 }
 
-/// Delete "slen" bytes from the end of "buf".
-/// Only works when it was just added.
-static void delete_buff_tail(buffheader_T *buf, int slen)
-{
-  if (buf->bh_curr == NULL) {
-    return;  // nothing to delete
-  }
-  if (buf->bh_curr->b_strlen < (size_t)slen) {
-    return;
-  }
-
-  buf->bh_curr->b_str[buf->bh_curr->b_strlen - (size_t)slen] = NUL;
-  buf->bh_curr->b_strlen -= (size_t)slen;
-  buf->bh_space += (size_t)slen;
-}
-
-/// Add number "n" to buffer "buf".
+/// Append number "n" to buffer "buf".
 static void add_num_buff(buffheader_T *buf, int n)
+  FUNC_ATTR_NONNULL_ALL
 {
   char number[32];
   int numberlen = snprintf(number, sizeof(number), "%d", n);
   add_buff(buf, number, numberlen);
 }
 
-/// Add byte or special key 'c' to buffer "buf".
-/// Translates special keys, NUL and K_SPECIAL.
-static void add_byte_buff(buffheader_T *buf, int c)
+/// Encodes byte or special key `c` into `temp`: the K_SPECIAL three-byte sequence for special
+/// keys, NUL and K_SPECIAL itself; the byte otherwise.
+///
+/// @return  Encoded length.
+static ptrdiff_t key_byte_encode(int c, char temp[4])
+  FUNC_ATTR_NONNULL_ALL
 {
-  char temp[4];
-  ptrdiff_t templen;
   if (IS_SPECIAL(c) || c == K_SPECIAL || c == NUL) {
     // Translate special key code into three byte sequence.
     temp[0] = (char)K_SPECIAL;
     temp[1] = (char)K_SECOND(c);
     temp[2] = (char)K_THIRD(c);
     temp[3] = NUL;
-    templen = 3;
-  } else {
-    temp[0] = (char)c;
-    temp[1] = NUL;
-    templen = 1;
+    return 3;
   }
-  add_buff(buf, temp, templen);
+  temp[0] = (char)c;
+  temp[1] = NUL;
+  return 1;
 }
 
-/// Add character 'c' to buffer "buf".
-/// Translates special keys, NUL, K_SPECIAL and multibyte characters.
-static void add_char_buff(buffheader_T *buf, int c)
+/// Encodes char `c` into `buf` (at least `MB_MAXBYTES * 3 + 1` bytes): a special key as its
+/// K_SPECIAL sequence, a multibyte char byte-wise with K_SPECIAL escaping.
+///
+/// @return  Encoded length.
+static size_t key_char_encode(int c, char *buf)
+  FUNC_ATTR_NONNULL_ALL
 {
   uint8_t bytes[MB_MAXBYTES + 1];
-
-  int len;
-  if (IS_SPECIAL(c)) {
-    len = 1;
-  } else {
-    len = utf_char2bytes(c, (char *)bytes);
-  }
-
+  int len = IS_SPECIAL(c) ? 1 : utf_char2bytes(c, (char *)bytes);
+  size_t off = 0;
   for (int i = 0; i < len; i++) {
-    if (!IS_SPECIAL(c)) {
-      c = bytes[i];
-    }
-    add_byte_buff(buf, c);
+    off += (size_t)key_byte_encode(IS_SPECIAL(c) ? c : bytes[i], buf + off);
   }
+  return off;
+}
+
+/// Append character 'c' to buffer "buf".
+/// Translates special keys, NUL, K_SPECIAL and multibyte characters.
+static void add_char_buff(buffheader_T *buf, int c)
+  FUNC_ATTR_NONNULL_ALL
+{
+  char temp[MB_MAXBYTES * 3 + 1];
+  add_buff(buf, temp, (ptrdiff_t)key_char_encode(c, temp));
+}
+
+/// Appends byte or special key `c` to `sb`.
+static void sb_add_byte(StringBuilder *sb, int c)
+  FUNC_ATTR_NONNULL_ALL
+{
+  char temp[4];
+  size_t templen = (size_t)key_byte_encode(c, temp);
+  kv_concat_len(*sb, temp, templen);
+}
+
+/// Dual of add_char_buff(), for a StringBuilder.
+void sb_add_char(StringBuilder *sb, int c)
+  FUNC_ATTR_NONNULL_ALL
+{
+  char temp[MB_MAXBYTES * 3 + 1];
+  size_t len = key_char_encode(c, temp);
+  kv_concat_len(*sb, temp, len);
 }
 
 /// Get one byte from the read buffers.  Use readbuf1 one first, use readbuf2
@@ -404,6 +445,7 @@ static int read_readbuffers(bool advance)
 }
 
 static int read_readbuf(buffheader_T *buf, bool advance)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (buf->bh_first.b_next == NULL) {  // buffer is empty
     return NUL;
@@ -422,7 +464,7 @@ static int read_readbuf(buffheader_T *buf, bool advance)
   return c;
 }
 
-/// Prepare the read buffers for reading (if they contain something).
+/// Makes the next stuffed text be read before the existing readahead.
 static void start_stuff(void)
 {
   if (readbuf1.bh_first.b_next != NULL) {
@@ -435,7 +477,7 @@ static void start_stuff(void)
   }
 }
 
-/// @return  true if the stuff buffer is empty.
+/// @return  true if the readahead ("stuff") buffer is empty.
 bool stuff_empty(void)
   FUNC_ATTR_PURE
 {
@@ -463,8 +505,14 @@ void flush_buffers(flush_buffers_T flush_typeahead)
 {
   init_typebuf();
 
-  start_stuff();
-  while (read_readbuffers(true) != NUL) {}
+  if (typebuf.tb_maplen > 0) {
+    // Discarding a mapping's unconsumed keys: the mapping will never
+    // complete, discard its subatoms.
+    atom_composite_abort();
+  }
+
+  free_buff(&readbuf1);
+  free_buff(&readbuf2);
 
   if (flush_typeahead == FLUSH_MINIMAL) {
     // remove mapped characters at the start only,
@@ -511,88 +559,119 @@ void beep_flush(void)
   }
 }
 
-/// The previous contents of the redo buffer is kept in old_redobuffer.
-/// This is used for the CTRL-O <.> command in insert mode.
-void ResetRedobuff(void)
+/// Starts capturing a new change: stores `spec`, caller appends the body (redo_append_x). The
+/// outgoing change moves to `redobuff.old`, which may be repeated by "CTRL-O ." in Insert mode,
+/// or restored by redo_cancel() if this change aborts.
+///
+/// @param spec  Structured command fields; zeroed if the caller only appends keys.
+void redo_new(CmdSpec spec)
 {
   if (block_redo) {
     return;
   }
 
-  free_buff(&old_redobuff);
-  old_redobuff = redobuff;
-  redobuff.bh_first.b_next = NULL;
+  kv_destroy(redobuff.old.keys);
+  redobuff.old = redobuff.cur;
+  redobuff.cur = (RedoBuf)REDO_INIT;
+  redobuff.cur.spec = spec;
+}
+
+#ifdef EXITFREE
+/// Frees both redo buffers.
+void redo_free_all(void)
+{
+  kv_destroy(redobuff.cur.keys);
+  kv_destroy(redobuff.old.keys);
+  redobuff = (RedoState){ REDO_INIT, REDO_INIT };
+}
+#endif
+
+/// Prepare for redo of any command: stores `spec` and appends its command chars (redo_chars()).
+///
+/// @param keys      Visual-mode command: the body opens with the selection's captured keys, so "."
+///                  re-executes the selection at cursor. Register/count compose into the body
+///                  after them (zeroed in the stored spec, so replay doesn't also prefix them).
+///                  NULL for a plain command: register/count stay spec fields.
+/// @param arg_meta  Skip the `arg` byte: an interactively-typed operand may need CTRL-V quoting
+///                  or its composing-char string form, which the caller appends itself.
+void prep_redo(const char *keys, size_t len, bool arg_meta, CmdSpec spec)
+{
+  CmdSpec stored = spec;
+  if (keys != NULL) {  // Visual-mode command.
+    stored.regname = 0;
+    stored.count = 0;
+  }
+  atom_redo_set(stored);
+  redo_new(stored);
+  if (block_redo) {
+    return;
+  }
+  if (keys != NULL) {  // Visual-mode command.
+    kv_concat_len(redobuff.cur.keys, keys, len);
+    redo_prefix(&spec, &redobuff.cur.keys, false);
+  }
+  redo_chars(&spec, &redobuff.cur.keys, arg_meta);
 }
 
 /// Discard the contents of the redo buffer and restore the previous redo
 /// buffer.
-void CancelRedo(void)
+void redo_cancel(void)
 {
   if (block_redo) {
     return;
   }
 
-  free_buff(&redobuff);
-  redobuff = old_redobuff;
-  old_redobuff.bh_first.b_next = NULL;
-  start_stuff();
-  while (read_readbuffers(true) != NUL) {}
+  kv_destroy(redobuff.cur.keys);
+  redobuff.cur = redobuff.old;
+  redobuff.old = (RedoBuf)REDO_INIT;
+  free_buff(&readbuf1);
+  free_buff(&readbuf2);
 }
 
-/// Save redobuff and old_redobuff to save_redobuff and save_old_redobuff.
+/// Saves the redo state to "save_redo" and detaches it.
 /// Used before executing autocommands and user functions.
-void saveRedobuff(save_redo_T *save_redo)
+void save_redobuff(RedoState *save_redo)
+  FUNC_ATTR_NONNULL_ALL
 {
-  save_redo->sr_redobuff = redobuff;
-  redobuff.bh_first.b_next = NULL;
-  save_redo->sr_old_redobuff = old_redobuff;
-  old_redobuff.bh_first.b_next = NULL;
+  *save_redo = redobuff;
+  redobuff.cur.keys = (StringBuilder)KV_INITIAL_VALUE;
+  redobuff.old = (RedoBuf)REDO_INIT;
 
-  // Make a copy, so that ":normal ." in a function works.
-  size_t slen;
-  char *const s = get_buffcont(&save_redo->sr_redobuff, false, &slen);
-  if (s == NULL) {
-    return;
-  }
-
-  add_buff(&redobuff, s, (ptrdiff_t)slen);
-  xfree(s);
+  // Make a copy (the fields stayed, copy the body), so that ":normal ." in a
+  // function works.
+  kv_splice(redobuff.cur.keys, save_redo->cur.keys);
 }
 
-/// Restore redobuff and old_redobuff from save_redobuff and save_old_redobuff.
+/// Restores the redo state from "save_redo".
 /// Used after executing autocommands and user functions.
-void restoreRedobuff(save_redo_T *save_redo)
+void restore_redobuff(RedoState *save_redo)
+  FUNC_ATTR_NONNULL_ALL
 {
-  free_buff(&redobuff);
-  redobuff = save_redo->sr_redobuff;
-  free_buff(&old_redobuff);
-  old_redobuff = save_redo->sr_old_redobuff;
+  kv_destroy(redobuff.cur.keys);
+  kv_destroy(redobuff.old.keys);
+  redobuff = *save_redo;
 }
 
-/// Append "s" to the redo buffer.
+/// Append `len` bytes of `s` (-1: up to the NUL) to the redo buffer.
 /// K_SPECIAL should already have been escaped.
-void AppendToRedobuff(const char *s)
+void redo_append_str(const char *s, ptrdiff_t len)
 {
   if (!block_redo) {
-    add_buff(&redobuff, s, -1);
+    size_t slen = len < 0 ? strlen(s) : (size_t)len;
+    kv_concat_len(redobuff.cur.keys, s, slen);
   }
 }
 
-/// Append to Redo buffer literally, escaping special characters with CTRL-V.
+/// Appends `str` to `buf` literally, escaping special characters with CTRL-V.
 /// K_SPECIAL is escaped as well.
 ///
-/// @param str  String to append
+/// @param str  String to append.
 /// @param len  Length of `str` or -1 for up to the NUL.
-void AppendToRedobuffLit(const char *str, int len)
+void sb_add_lit(StringBuilder *buf, const char *str, int len)
 {
-  if (block_redo) {
-    return;
-  }
-
   const char *s = str;
   while (len < 0 ? *s != NUL : s - str < len) {
-    // Put a string of normal characters in the redo buffer (that's
-    // faster).
+    // Put a string of normal characters in the buffer (that's faster).
     const char *start = s;
     while (*s >= ' ' && *s < DEL && (len < 0 || s - str < len)) {
       s++;
@@ -604,7 +683,7 @@ void AppendToRedobuffLit(const char *str, int len)
       s--;
     }
     if (s > start) {
-      add_buff(&redobuff, start, s - start);
+      kv_concat_len(*buf, start, (size_t)(s - start));
     }
 
     if (*s == NUL || (len >= 0 && s - str >= len)) {
@@ -615,21 +694,31 @@ void AppendToRedobuffLit(const char *str, int len)
     // Composing chars separately are handled separately.
     const int c = mb_cptr2char_adv(&s);
     if (c < ' ' || c == DEL || (*s == NUL && (c == '0' || c == '^'))) {
-      add_char_buff(&redobuff, Ctrl_V);
+      sb_add_char(buf, Ctrl_V);
     }
 
     // CTRL-V '0' must be inserted as CTRL-V 048.
     if (*s == NUL && c == '0') {
-      add_buff(&redobuff, "048", 3);
+      kv_concat_len(*buf, "048", 3);
     } else {
-      add_char_buff(&redobuff, c);
+      sb_add_char(buf, c);
     }
   }
 }
 
+/// Append to RedoBuf buffer literally; no-op when `block_redo` is set; Insert dot-repeat consumes
+/// the redo buffer and must not append to it while doing so.
+void redo_append_lit(const char *str, int len)
+{
+  if (block_redo) {
+    return;
+  }
+  sb_add_lit(&redobuff.cur.keys, str, len);
+}
+
 /// Append "s" to the redo buffer, leaving 3-byte special key codes unmodified
 /// and escaping other K_SPECIAL bytes.
-void AppendToRedobuffSpec(const char *s)
+void redo_append_spec(const char *s)
 {
   if (block_redo) {
     return;
@@ -638,34 +727,35 @@ void AppendToRedobuffSpec(const char *s)
   while (*s != NUL) {
     if ((uint8_t)(*s) == K_SPECIAL && s[1] != NUL && s[2] != NUL) {
       // Insert special key literally.
-      add_buff(&redobuff, s, 3);
+      kv_concat_len(redobuff.cur.keys, s, 3);
       s += 3;
     } else {
-      add_char_buff(&redobuff, mb_cptr2char_adv(&s));
+      sb_add_char(&redobuff.cur.keys, mb_cptr2char_adv(&s));
     }
   }
 }
 
 /// Append a character to the redo buffer.
 /// Translates special keys, NUL, K_SPECIAL and multibyte characters.
-void AppendCharToRedobuff(int c)
+void redo_append_char(int c)
 {
   if (!block_redo) {
-    add_char_buff(&redobuff, c);
+    sb_add_char(&redobuff.cur.keys, c);
   }
 }
 
 // Append a number to the redo buffer.
-void AppendNumberToRedobuff(int n)
+void redo_append_num(int n)
 {
   if (!block_redo) {
-    add_num_buff(&redobuff, n);
+    kv_printf(redobuff.cur.keys, "%d", n);
   }
 }
 
 /// Append string "s" to the stuff buffer.
 /// K_SPECIAL must already have been escaped.
 void stuffReadbuff(const char *s)
+  FUNC_ATTR_NONNULL_ALL
 {
   add_buff(&readbuf1, s, -1);
 }
@@ -673,6 +763,7 @@ void stuffReadbuff(const char *s)
 /// Append string "s" to the redo stuff buffer.
 /// @remark K_SPECIAL must already have been escaped.
 void stuffRedoReadbuff(const char *s)
+  FUNC_ATTR_NONNULL_ALL
 {
   add_buff(&readbuf2, s, -1);
 }
@@ -690,6 +781,7 @@ void stuffReadbuffLen(const char *s, ptrdiff_t len)
 /// escaping other K_SPECIAL bytes.
 /// Change CR, LF and ESC into a space.
 void stuffReadbuffSpec(const char *s)
+  FUNC_ATTR_NONNULL_ALL
 {
   while (*s != NUL) {
     if ((uint8_t)(*s) == K_SPECIAL && s[1] != NUL && s[2] != NUL) {
@@ -722,6 +814,7 @@ void stuffnumReadbuff(int n)
 /// Stuff a string into the typeahead buffer, such that edit() will insert it
 /// literally ("literally" true) or interpret is as typed characters.
 void stuffescaped(const char *arg, bool literally)
+  FUNC_ATTR_NONNULL_ALL
 {
   while (*arg != NUL) {
     // Stuff a sequence of normal ASCII characters, that's fast.  Also
@@ -747,160 +840,72 @@ void stuffescaped(const char *arg, bool literally)
   }
 }
 
-/// Read a character from the redo buffer.  Translates K_SPECIAL and
-/// multibyte characters.
-/// The redo buffer is left as it is.
-/// If init is true, prepare for redo, return FAIL if nothing to redo, OK
-/// otherwise.
-/// If old_redo is true, use old_redobuff instead of redobuff.
-static int read_redo(bool init, bool old_redo)
-{
-  static buffblock_T *bp;
-  static uint8_t *p;
-  int c;
-  int n;
-  uint8_t buf[MB_MAXBYTES + 1];
-
-  if (init) {
-    bp = old_redo ? old_redobuff.bh_first.b_next : redobuff.bh_first.b_next;
-    if (bp == NULL) {
-      return FAIL;
-    }
-    p = (uint8_t *)bp->b_str;
-    return OK;
-  }
-  if ((c = *p) == NUL) {
-    return c;
-  }
-  // Reverse the conversion done by add_char_buff()
-  // For a multi-byte character get all the bytes and return the
-  // converted character.
-  if (c != K_SPECIAL || p[1] == KS_SPECIAL) {
-    n = MB_BYTE2LEN_CHECK(c);
-  } else {
-    n = 1;
-  }
-  for (int i = 0;; i++) {
-    if (c == K_SPECIAL) {  // special key or escaped K_SPECIAL
-      c = TO_SPECIAL(p[1], p[2]);
-      p += 2;
-    }
-    if (*++p == NUL && bp->b_next != NULL) {
-      bp = bp->b_next;
-      p = (uint8_t *)bp->b_str;
-    }
-    buf[i] = (uint8_t)c;
-    if (i == n - 1) {         // last byte of a character
-      if (n != 1) {
-        c = utf_ptr2char((char *)buf);
-      }
-      break;
-    }
-    c = *p;
-    if (c == NUL) {           // cannot happen?
-      break;
-    }
-  }
-
-  return c;
-}
-
-/// Copy the rest of the redo buffer into the stuff buffer (in a slow way).
-/// If old_redo is true, use old_redobuff instead of redobuff.
-/// The escaped K_SPECIAL is copied without translation.
-static void copy_redo(bool old_redo)
-{
-  int c;
-
-  while ((c = read_redo(false, old_redo)) != NUL) {
-    add_char_buff(&readbuf2, c);
-  }
-}
-
-/// Stuff the redo buffer into readbuf2.
-/// Insert the redo count into the command.
-/// If "old_redo" is true, the last but one command is repeated
-/// instead of the last command (inserting text). This is used for
-/// CTRL-O <.> in insert mode
+/// Dot-repeat "." command: repeats the last change by composing the redo (fields + body, see
+/// RedoBuf) into readbuf2. "3." replaces count; a numbered-register redo increments regname
+/// ('"1p' then "." pastes '"2'), so "." steps through the delete history. A Visual-mode change
+/// re-executes its captured selection keys (embedded in the body, see prep_redo()).
 ///
+/// @param old_redo  repeat the last-but-one change (i_CTRL-O ".": the insert
+///                  session's own prep moved the last change to redobuff.old)
 /// @return  FAIL for failure, OK otherwise
 int start_redo(int count, bool old_redo)
 {
-  // init the pointers; return if nothing to redo
-  if (read_redo(true, old_redo) == FAIL) {
-    return FAIL;
+  RedoBuf *rd = old_redo ? &redobuff.old : &redobuff.cur;
+  if (rd->keys.size == 0 && rd->spec.regname == 0 && rd->spec.count == 0) {
+    return FAIL;  // nothing to redo
   }
 
-  int c = read_redo(false, old_redo);
-
-  // copy the buffer name, if present
-  if (c == '"') {
-    add_buff(&readbuf2, "\"", 1);
-    c = read_redo(false, old_redo);
-
-    // if a numbered buffer is used, increment the number
-    if (c >= '1' && c < '9') {
-      c++;
-    }
-    add_char_buff(&readbuf2, c);
-
-    // the expression register should be re-evaluated
-    if (c == '=') {
-      add_char_buff(&readbuf2, CAR);
-      cmd_silent = true;
-    }
-
-    c = read_redo(false, old_redo);
+  // The replay's divergences from the captured spec, as explicit tweaks of a local copy:
+  CmdSpec spec = rd->spec;
+  if (spec.regname >= '1' && spec.regname < '9') {
+    spec.regname++;  // numbered register: "." steps through the delete history
+  }
+  if (count != 0) {
+    spec.count = count;  // the new count replaces the captured one
+  }
+  StringBuilder prefix = KV_INITIAL_VALUE;
+  redo_prefix(&spec, &prefix, true);
+  add_buff(&readbuf2, prefix.items, (ptrdiff_t)prefix.size);
+  kv_destroy(prefix);
+  if (spec.regname == '=') {
+    cmd_silent = true;
   }
 
-  if (c == 'v') {   // redo Visual
-    Visual.start = curwin->w_cursor;
-    Visual.active = true;
-    Visual.select = false;
-    Visual.reselect = true;
-    Visual.redo_busy = true;
-    c = read_redo(false, old_redo);
-  }
-
-  // try to enter the count (in place of a previous count)
-  if (count) {
-    while (ascii_isdigit(c)) {    // skip "old" count
-      c = read_redo(false, old_redo);
-    }
-    add_num_buff(&readbuf2, count);
-  }
-
-  // copy from the redo buffer into the stuff buffer
-  add_char_buff(&readbuf2, c);
-  copy_redo(old_redo);
+  add_buff(&readbuf2, rd->keys.items, (ptrdiff_t)rd->keys.size);
   return OK;
 }
 
-/// Repeat the last insert (R, o, O, a, A, i or I command) by stuffing
-/// the redo buffer into readbuf2.
+/// Repeats the last insert (R, o, O, a, A, i or I command) by stuffing the redo body's inserted
+/// text into readbuf2 (counted inserts: "3iZ<Esc>").
 ///
 /// @return  FAIL for failure, OK otherwise
 int start_redo_ins(void)
 {
-  int c;
-
-  if (read_redo(true, false) == FAIL) {
+  if (redobuff.cur.keys.size == 0) {
     return FAIL;
   }
   start_stuff();
 
-  // skip the count and the command character
-  while ((c = read_redo(false, false)) != NUL) {
-    if (vim_strchr("AaIiRrOo", c) != NULL) {
-      if (c == 'O' || c == 'o') {
+  // Skip to the insert command; the rest of the keys is the inserted text.
+  const char *p = redobuff.cur.keys.items;
+  const char *const end = p + redobuff.cur.keys.size;
+  while (p < end) {
+    if ((uint8_t)(*p) == K_SPECIAL && end - p >= 3) {
+      p += 3;  // a special key is never the insert command
+      continue;
+    }
+    if (vim_strchr("AaIiRrOo", (uint8_t)(*p)) != NULL) {
+      if (*p == 'O' || *p == 'o') {
         add_buff(&readbuf2, NL_STR, -1);
       }
+      p++;
       break;
     }
+    p++;
   }
 
   // copy the typed text from the redo buffer into the stuff buffer
-  copy_redo(false);
+  add_buff(&readbuf2, p, end - p);
   block_redo = true;
   return OK;
 }
@@ -929,6 +934,7 @@ static void init_typebuf(void)
 
 /// @return true when keys cannot be remapped.
 bool noremap_keys(void)
+  FUNC_ATTR_PURE
 {
   return KeyNoremap & (RM_NONE|RM_SCRIPT);
 }
@@ -950,6 +956,7 @@ bool noremap_keys(void)
 ///
 /// @return  FAIL for failure, OK otherwise
 int ins_typebuf(char *str, int noremap, int offset, bool nottyped, bool silent)
+  FUNC_ATTR_NONNULL_ALL
 {
   int val;
   int nrm;
@@ -1070,14 +1077,16 @@ int ins_typebuf(char *str, int noremap, int offset, bool nottyped, bool silent)
 /// Uses cmd_silent, KeyTyped and KeyNoremap to restore the flags belonging to the char.
 ///
 /// @param recorded  Pass false if the caller suppressed recording on the initial read.
-void requeue_key(int c, int modifiers, bool recorded)
+/// @param extra_consumed  Extra consumed bytes to un-record beyond the key itself (vgetc()'s
+///                        ALT-rewrite consumed a `K_SPECIAL KS_MODIFIER` prefix too).
+void requeue_key(int c, int modifiers, int extra_consumed, bool recorded)
 {
   char buf[MB_MAXBYTES * 3 + 4];
   unsigned len = special_to_buf(c, modifiers, true, buf);
   assert(len < sizeof(buf));
   buf[len] = NUL;
   ins_typebuf(buf, KeyNoremap, 0, !KeyTyped, cmd_silent);
-  ungetchars((int)len, recorded);
+  ungetchars((int)len + extra_consumed, recorded);
 }
 
 /// Return true if the typeahead buffer was changed (while waiting for a
@@ -1176,7 +1185,7 @@ void del_typebuf(int len, int offset)
   }
 }
 
-/// Add a single byte to a recording or 'showcmd'.
+/// Append a single byte to a recording or 'showcmd'.
 /// Return true if a full key has been received, false otherwise.
 static bool gotchars_add_byte(gotchars_state_T *state, uint8_t byte)
   FUNC_ATTR_NONNULL_ALL
@@ -1212,9 +1221,8 @@ static bool gotchars_add_byte(gotchars_state_T *state, uint8_t byte)
         state->buflen = 0;
       }
     }
-    // When receiving a multibyte character, store it until we have all
-    // the bytes, so that it won't be split between two buffer blocks,
-    // and delete_buff_tail() will work properly.
+    // When receiving a multibyte character, store it until we have all the bytes, so that
+    // whole keys reach the recording and ungetchars() removes whole keys.
     state->pending_mbyte = MB_BYTE2LEN_CHECK(c) - 1;
   }
 
@@ -1256,11 +1264,13 @@ static void gotchars(const uint8_t *chars, size_t len)
     }
 
     if (reg_recording != 0) {
-      state.buf[state.buflen] = NUL;
-      add_buff(&recordbuff, (char *)state.buf, (ptrdiff_t)state.buflen);
+      kv_concat_len(recordbuff, (char *)state.buf, state.buflen);
       // remember how many chars were last recorded
       last_recorded_len += state.buflen;
     }
+
+    // Typed keys consumed during 'operatorfunc' are the op's interactive payload.
+    atom_typed_add(state.buf, state.buflen);
 
     state.buflen = 0;
   }
@@ -1294,10 +1304,11 @@ static void ungetchars(int len, bool recorded)
   if (!KeyTyped) {
     return;  // gotchars() only sees typed keys; nothing to undo.
   }
-  if (recorded && reg_recording != 0) {
-    delete_buff_tail(&recordbuff, len);
+  if (recorded && reg_recording != 0 && recordbuff.size >= (size_t)len) {
+    recordbuff.size -= (size_t)len;
     last_recorded_len -= (size_t)len;
   }
+  atom_typed_del((size_t)len);
   size_t trim = MIN((size_t)len, on_key_buf.size);
   on_key_buf.size -= trim;
   on_key_ignore_len += (size_t)len - trim;
@@ -1311,7 +1322,7 @@ static void ungetchars(int len, bool recorded)
 /// - When no_u_sync is non-zero.
 void may_sync_undo(void)
 {
-  if ((!(State & (MODE_INSERT | MODE_CMDLINE)) || Ins.arrow_used)
+  if ((!(State & (MODE_INSERT | MODE_CMDLINE)) || Ins.moved != kInsNone)
       && curscript < 0) {
     u_sync(false);
   }
@@ -1361,29 +1372,22 @@ static void save_typebuf(void)
   alloc_typebuf();
 }
 
-static int old_char = -1;   ///< character put back by vungetc()
-static int old_mod_mask;    ///< mod_mask for ungotten character
-static int old_mouse_grid;  ///< mouse_grid related to old_char
-static int old_mouse_row;   ///< mouse_row related to old_char
-static int old_mouse_col;   ///< mouse_col related to old_char
-static int old_KeyStuffed;  ///< whether old_char was stuffed
-
-static bool can_get_old_char(void)
+static bool can_get_ungot(void)
+  FUNC_ATTR_PURE
 {
-  // If the old character was not stuffed and characters have been added to
+  // If the ungotten character was not stuffed and characters have been added to
   // the stuff buffer, need to first get the stuffed characters instead.
-  return old_char != -1 && (old_KeyStuffed || stuff_empty());
+  return ungot.c != -1 && (ungot.stuffed || stuff_empty());
 }
 
 /// Save all three kinds of typeahead, so that the user must type at a prompt.
 void save_typeahead(tasave_T *tp)
+  FUNC_ATTR_NONNULL_ALL
 {
   tp->save_typebuf = typebuf;
   alloc_typebuf();
-  tp->typebuf_valid = true;
-  tp->old_char = old_char;
-  tp->old_mod_mask = old_mod_mask;
-  old_char = -1;
+  tp->ungot = ungot;
+  ungot.c = -1;
 
   tp->save_readbuf1 = readbuf1;
   readbuf1.bh_first.b_next = NULL;
@@ -1394,14 +1398,11 @@ void save_typeahead(tasave_T *tp)
 /// Restore the typeahead to what it was before calling save_typeahead().
 /// The allocated memory is freed, can only be called once!
 void restore_typeahead(tasave_T *tp)
+  FUNC_ATTR_NONNULL_ALL
 {
-  if (tp->typebuf_valid) {
-    free_typebuf();
-    typebuf = tp->save_typebuf;
-  }
-
-  old_char = tp->old_char;
-  old_mod_mask = tp->old_mod_mask;
+  free_typebuf();
+  typebuf = tp->save_typebuf;
+  ungot = tp->ungot;
 
   free_buff(&readbuf1);
   readbuf1 = tp->save_readbuf1;
@@ -1556,6 +1557,7 @@ static void updatescript(int c)
 
 /// Merge "modifiers" into "c_arg".
 int merge_modifiers(int c_arg, int *modifiers)
+  FUNC_ATTR_NONNULL_ALL
 {
   int c = c_arg;
 
@@ -1576,7 +1578,7 @@ int merge_modifiers(int c_arg, int *modifiers)
   return c;
 }
 
-/// Add a single byte to 'showcmd' for a partially matched mapping.
+/// Append a single byte to 'showcmd' for a partially matched mapping.
 /// Call add_to_showcmd() if a full key has been received.
 static void add_byte_to_showcmd(uint8_t byte)
 {
@@ -1651,13 +1653,13 @@ int vgetc(void)
 
   // If a character was put back with vungetc, it was already processed.
   // Return it directly.
-  if (can_get_old_char()) {
-    c = old_char;
-    old_char = -1;
-    mod_mask = old_mod_mask;
-    mouse_grid = old_mouse_grid;
-    mouse_row = old_mouse_row;
-    mouse_col = old_mouse_col;
+  if (can_get_ungot()) {
+    c = ungot.c;
+    ungot.c = -1;
+    mod_mask = ungot.mod_mask;
+    mouse_grid = ungot.mouse_grid;
+    mouse_row = ungot.mouse_row;
+    mouse_col = ungot.mouse_col;
   } else {
     // number of characters recorded from the last vgetc() call
     static size_t last_vgetc_recorded_len = 0;
@@ -1728,14 +1730,9 @@ int vgetc(void)
       if (!no_mapping && KeyTyped && mod_mask == MOD_MASK_ALT
           && !(State & MODE_TERMINAL) && !is_mouse_key(c)) {
         mod_mask = 0;
-        char kbuf[MB_MAXBYTES * 3 + 4];
-        unsigned klen = special_to_buf(c, 0, true, kbuf);
-        assert(klen < sizeof(kbuf));
-        kbuf[klen] = NUL;
         // Un-record/un-report the consumed <M-x> (its K_SPECIAL KS_MODIFIER MOD_MASK_ALT prefix
         // took 3 more bytes); the rewritten <Esc>x is consumed (recorded, reported) in its place.
-        ungetchars((int)klen + 3, true);
-        ins_typebuf(kbuf, KeyNoremap, 0, !KeyTyped, cmd_silent);
+        requeue_key(c, 0, 3, true);
         ins_typebuf(ESC_STR, KeyNoremap, 0, !KeyTyped, cmd_silent);
         continue;
       }
@@ -1893,8 +1890,8 @@ int plain_vgetc(void)
 /// Returns NUL if no character is available.
 int vpeekc(void)
 {
-  if (can_get_old_char()) {
-    return old_char;
+  if (can_get_ungot()) {
+    return ungot.c;
   }
   return vgetorpeek(false);
 }
@@ -2104,7 +2101,7 @@ void f_getcharmod(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 }
 
 typedef enum {
-  map_result_fail,    // failed, break loop
+  map_result_fail,    // failed (recursion limit, OOM), break loop
   map_result_get,     // get a character from typeahead
   map_result_retry,   // try to map again
   map_result_nomatch,  // no matching mapping, get char
@@ -2114,6 +2111,7 @@ typedef enum {
 /// Remove "slen" bytes.
 /// @return  FAIL for error, OK otherwise.
 static int put_string_in_typebuf(int offset, int slen, uint8_t *string, int new_slen)
+  FUNC_ATTR_NONNULL_ALL
 {
   int extra = new_slen - slen;
   string[new_slen] = NUL;
@@ -2221,6 +2219,7 @@ static int check_simplify_modifier(int max_offset)
 ///                     - If decoding of a multi-byte character fails, returns the first byte of
 ///                       the encoded character.
 static int char_iter(const uint8_t **itp, int nomap)
+  FUNC_ATTR_NONNULL_ALL
 {
   const uint8_t *it = *itp;
   int c = *it;
@@ -2270,6 +2269,7 @@ static int char_iter(const uint8_t **itp, int nomap)
 ///   typeahead.
 /// - On failure (out of memory) return map_result_fail.
 static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   mapblock_T *mp = NULL;
   mapblock_T *mp2;
@@ -2516,6 +2516,9 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
     if (keylen > typebuf.tb_maplen && (mp->m_mode & MODE_LANGMAP) == 0) {
       gotchars(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_maplen,
                (size_t)(keylen - typebuf.tb_maplen));
+      // A typed key sequence resolved this mapping (not a nested expansion:
+      // those keys come from another mapping): open its composite.
+      atom_map_start(mp->m_keys, (size_t)mp->m_keylen);
     }
 
     cmd_silent = (typebuf.tb_silent > 0);
@@ -2652,12 +2655,14 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
 /// Otherwise vgetc() will only get it when the stuff buffer is empty.
 void vungetc(int c)
 {
-  old_char = c;
-  old_mod_mask = mod_mask;
-  old_mouse_grid = mouse_grid;
-  old_mouse_row = mouse_row;
-  old_mouse_col = mouse_col;
-  old_KeyStuffed = KeyStuffed;
+  ungot = (UngotKey){
+    .c = c,
+    .mod_mask = mod_mask,
+    .mouse_grid = mouse_grid,
+    .mouse_row = mouse_row,
+    .mouse_col = mouse_col,
+    .stuffed = KeyStuffed,
+  };
 }
 
 /// When peeking and not getting a character, reg_executing cannot be cleared
@@ -2805,6 +2810,7 @@ static int vgetorpeek(bool advance)
           }
 
           if (result == map_result_fail) {
+            atom_composite_abort();
             // failed, use the outer loop
             c = -1;
             break;
@@ -3502,12 +3508,12 @@ void paste_store(const uint64_t channel_id, const TriState state, const String s
     const int c = state == kFalse ? K_PASTE_START : K_PASTE_END;
     if (need_redo) {
       if (state == kFalse && !(State & MODE_INSERT)) {
-        ResetRedobuff();
+        redo_new((CmdSpec){ 0 });
       }
-      add_char_buff(&redobuff, c);
+      sb_add_char(&redobuff.cur.keys, c);
     }
     if (need_record) {
-      add_char_buff(&recordbuff, c);
+      sb_add_char(&recordbuff, c);
     }
     return;
   }
@@ -3524,10 +3530,10 @@ void paste_store(const uint64_t channel_id, const TriState state, const String s
 
     if (s > start) {
       if (need_redo) {
-        add_buff(&redobuff, start, s - start);
+        kv_concat_len(redobuff.cur.keys, start, (size_t)(s - start));
       }
       if (need_record) {
-        add_buff(&recordbuff, start, s - start);
+        kv_concat_len(recordbuff, start, (size_t)(s - start));
       }
     }
 
@@ -3540,10 +3546,10 @@ void paste_store(const uint64_t channel_id, const TriState state, const String s
         c = NL;
       }
       if (need_redo) {
-        add_byte_buff(&redobuff, c);
+        sb_add_byte(&redobuff.cur.keys, c);
       }
       if (need_record) {
-        add_byte_buff(&recordbuff, c);
+        sb_add_byte(&recordbuff, c);
       }
     }
   }

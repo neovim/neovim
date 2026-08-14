@@ -2570,6 +2570,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		|ChanClose|,
 		|ChanInfo|,
 		|ChanOpen|,
+		|CmdAtom|,
 		|CmdUndefined|,
 		|CmdlineChanged|,
 		|CmdlineEnter|,

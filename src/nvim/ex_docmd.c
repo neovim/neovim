@@ -7075,9 +7075,7 @@ void update_topline_cursor(void)
 }
 
 /// Save the current State and go to Normal mode.
-///
-/// @return  true if the typeahead could be saved.
-bool save_current_state(save_state_T *sst)
+void save_current_state(save_state_T *sst)
   FUNC_ATTR_NONNULL_ALL
 {
   sst->save_msg_scroll = msg_scroll;
@@ -7096,7 +7094,6 @@ bool save_current_state(save_state_T *sst)
   // from an event handler and makes sure we don't hang when the argument
   // ends with half a command.
   save_typeahead(&sst->tabuf);
-  return sst->tabuf.typebuf_valid;
 }
 
 void restore_current_state(save_state_T *sst)
@@ -7185,21 +7182,20 @@ static void ex_normal(exarg_T *eap)
 
   ex_normal_busy++;
   save_state_T save_state;
-  if (save_current_state(&save_state)) {
-    // Repeat the :normal command for each line in the range.  When no
-    // range given, execute it just once, without positioning the cursor
-    // first.
-    do {
-      if (eap->addr_count != 0) {
-        curwin->w_cursor.lnum = eap->line1++;
-        curwin->w_cursor.col = 0;
-        check_cursor_moved(curwin);
-      }
+  save_current_state(&save_state);
+  // Repeat the :normal command for each line in the range.  When no
+  // range given, execute it just once, without positioning the cursor
+  // first.
+  do {
+    if (eap->addr_count != 0) {
+      curwin->w_cursor.lnum = eap->line1++;
+      curwin->w_cursor.col = 0;
+      check_cursor_moved(curwin);
+    }
 
-      exec_normal_cmd((arg != NULL ? arg : eap->arg),
-                      eap->forceit ? REMAP_NONE : REMAP_YES, false);
-    } while (eap->addr_count > 0 && eap->line1 <= eap->line2 && !got_int);
-  }
+    exec_normal_cmd((arg != NULL ? arg : eap->arg),
+                    eap->forceit ? REMAP_NONE : REMAP_YES, false);
+  } while (eap->addr_count > 0 && eap->line1 <= eap->line2 && !got_int);
 
   // Might not return to the main loop when in an event handler.
   update_topline_cursor();

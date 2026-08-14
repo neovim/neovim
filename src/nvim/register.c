@@ -171,7 +171,7 @@ int get_default_register_name(void)
   return name;
 }
 
-/// Iterate over registers `regs`.
+/// Iterate over registers `regs` (only NUM_SAVED_REGISTERS, not clipboard "*"/"+").
 ///
 /// @param[in]   iter      Iterator. Pass NULL to start iteration.
 /// @param[in]   regs      Registers list to be iterated.
@@ -206,7 +206,7 @@ const void *op_reg_iter(const void *const iter, const yankreg_T *const regs, cha
   return NULL;
 }
 
-/// Iterate over global registers.
+/// Iterate over global registers (only NUM_SAVED_REGISTERS, not clipboard "*"/"+").
 ///
 /// @see op_register_iter
 const void *op_global_reg_iter(const void *const iter, char *const name, yankreg_T *const reg,
@@ -214,6 +214,31 @@ const void *op_global_reg_iter(const void *const iter, char *const name, yankreg
   FUNC_ATTR_NONNULL_ARG(2, 3, 4) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return op_reg_iter(iter, y_regs, name, reg, is_unnamed);
+}
+
+/// Gets the most-recent timestamp (nanoseconds) of all registers, or 0 if all are empty. Every
+/// register-write sets its timestamp, so this detects if any register changed (e.g. for caching).
+///
+/// @param clipboard  Include clipboard registers ("*"/"+").
+Timestamp reg_max_ts(bool clipboard)
+{
+  Timestamp max_ts = 0;
+  const void *iter = NULL;
+  do {
+    char name = NUL;
+    yankreg_T reg;
+    bool is_unnamed = false;
+    iter = op_global_reg_iter(iter, &name, &reg, &is_unnamed);
+    if (name == NUL) {
+      break;
+    }
+    max_ts = MAX(max_ts, reg.timestamp);
+  } while (iter != NULL);
+  if (clipboard) {
+    max_ts = MAX(max_ts, get_y_register(op_reg_index('*'))->timestamp);
+    max_ts = MAX(max_ts, get_y_register(op_reg_index('+'))->timestamp);
+  }
+  return max_ts;
 }
 
 /// Get a number of non-empty registers
@@ -424,7 +449,7 @@ static int stuff_yank(int regname, char *p)
     reg->y_size = 1;
     reg->y_type = kMTCharWise;
   }
-  reg->timestamp = os_time();
+  reg->timestamp = (Timestamp)os_realtime();
   return OK;
 }
 
@@ -786,8 +811,8 @@ int insert_reg(int regname, yankreg_T *reg, bool literally_arg)
             curwin->w_cursor = curpos;
           }
 
-          AppendCharToRedobuff(Ctrl_R);
-          AppendCharToRedobuff(regname);
+          redo_append_char(Ctrl_R);
+          redo_append_char(regname);
           do_put(regname, NULL, dir, 1, PUT_CURSEND);
         } else {
           stuffescaped(reg->y_array[i].data, literally);
@@ -1036,7 +1061,7 @@ void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
   reg->y_width = 0;
   reg->y_array = xcalloc(yanklines, sizeof(String));
   reg->additional_data = NULL;
-  reg->timestamp = os_time();
+  reg->timestamp = (Timestamp)os_realtime();
 
   size_t y_idx = 0;  // index in y_array[]
   linenr_T lnum = oap->start.lnum;  // current line number
@@ -2649,7 +2674,7 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char *str, 
   y_ptr->y_type = yank_type;
   y_ptr->y_size = lnum;
   XFREE_CLEAR(y_ptr->additional_data);
-  y_ptr->timestamp = os_time();
+  y_ptr->timestamp = (Timestamp)os_realtime();
   if (yank_type == kMTBlockWise) {
     y_ptr->y_width = (blocklen == -1 ? (colnr_T)maxlen - 1 : blocklen);
   } else {

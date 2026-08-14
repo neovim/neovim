@@ -150,7 +150,6 @@ you never want any default mappings, call |:mapclear| early in your config.
 - <C-L> |CTRL-L-default|
 - & |&-default|
 - - |dir-mappings|
-- Q |v_Q-default|
 - @ |v_@-default|
 - # |v_#-default|
 - * |v_star-default|
@@ -232,6 +231,7 @@ New Features                                                   *nvim-features*
 MAJOR COMPONENTS
 
 - API                             |API|
+- Command atoms                   |CmdAtom|
 - Job control                     |job-control|
 - LSP framework                   |lsp|
 - Lua scripting                   |lua| |-l|
@@ -335,6 +335,10 @@ Commands:
 - |:uptime|
 
 Editor:
+- |ins-repeat| replays the full Insert session, including cursor-moves:
+  "iab<Left>c<Esc>." produces "acb", not "c".
+- |visual-repeat| is "semantic" instead of "fixed-size". If you prefer Vim's
+  "fixed-size" Visual-repeat, see |visual-fixed-size|.
 - Interactive |Ex-mode| is implemented as persistent, insert-mode |cmdwin|.
 - |prompt-buffer| supports multiline input/paste, undo/redo, and o/O normal
   commands.
@@ -402,7 +406,9 @@ Input/Mappings:
 
 Normal commands:
 - |gO| shows a filetype-defined "outline" of the current buffer.
-- |Q| replays the last recorded macro instead of switching to Ex mode.
+- |gQ| restores |multicursor|s.
+- |Q| adds a |multicursor| ([count]Q: at each match; {Visual}Q: at each
+  selected line |v_Q|) instead of switching to Ex mode.
 - [count]q: enters |Ex-mode|.
 - |ZR| performs |:restart|
 - |v_al| selects the whole buffer; |v_il| selects the current line without

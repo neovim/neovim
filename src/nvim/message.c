@@ -1552,7 +1552,7 @@ void wait_return(int redraw)
       } else if (vim_strchr("\r\n ", c) == NULL && c != Ctrl_C && c != 'q') {
         // Put the character back in the typeahead buffer.  Don't use the
         // stuff buffer, because lmaps wouldn't work.
-        requeue_key(vgetc_char, vgetc_mod_mask,
+        requeue_key(vgetc_char, vgetc_mod_mask, 0,
                     // Recording was suppressed around safe_vgetc() above.
                     false);
         do_redraw = true;  // need a redraw even though there is typeahead

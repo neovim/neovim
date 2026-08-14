@@ -170,6 +170,39 @@ Other references:
 - https://github.com/neovim/neovim/pull/21605
 
 ==============================================================================
+State                                                              *dev-state*
+
+"Editor state" is represented by these (sometimes overlapping) concepts:
+
+- shada (`src/nvim/shada.c`): user data: registers, marks, …. Msgpack format.
+- sessions/views (`src/nvim/ex_session.c`): windows/layout, per-window
+  cursor/options, CWD, …. Vimscript format: commands, not merged data.
+  Overlaps shada for the buffer list and global variables.
+- context (`src/nvim/context.c`): |nvim_get_context()|.
+  Currently interfaces shada and other state. Needs more thought.
+- scoped execution ("temporary state"): `ctx_switch()`, `vim._with()`,
+  |nvim_win_call()|, |nvim_buf_call()|, `cmdmod_T`. Temporary switches, not
+  snapshots. The C mechanisms overlap with each other; `vim._with()` is the
+  unified interface.
+- reentrancy protection: save/restore around nested execution. `InsState`,
+  `RedoState`.
+  - TODO: ad hoc pairs remain for typeahead (`tasave_T`), |v:event|, view
+    state, cmdline, with inconsistent nesting semantics (stack vs refcount vs
+    single-shot).
+
+LONG-TERM VISION(?): shada is the authority on all user-data state, sessions
+on layout state? New state kinds extend the shada schema instead of adding
+a format or an in-memory sidecar. Eliminate context.c?
+
+LUA FUNCTIONS ACROSS PROCESSES
+
+The test harness transfers Lua closures between Nvim instances
+(`test/functional/testnvim/exec_lua.lua`). This works ONLY between same-build
+instances (LuaJIT bytecode not portable across versions/builds) and only for
+trusted peers. Upvalues are limited to msgpack-able values (not
+function/userdata; tables lose metatables and identity).
+
+==============================================================================
 Filesystem                                                    *dev-filesystem*
 
 https://github.com/neovim/neovim/issues/36112 Path handling, especially
@@ -502,6 +535,109 @@ When doing an `i` or `a` command, `normal_cmd()` will call the `edit()` function
 It contains a loop that waits for the next character and handles it.  It
 returns when leaving Insert mode.
 
+==============================================================================
+Multicursor                                       *dev-multicursor* *dev-cmdatom*
+
+Multicursor is essentially a bunch of extmarks that "cascade" the user action
+(|CmdAtom|) driven by the primary cursor.
+
+An "atom" is any user action, as a resolved ("elemental", post-mapping)
+keysequence, the same material ("redobuf") replayed by dot-repeat
+(|single-repeat|).  Whereas a macro is a series of meaningless characters
+whose meaning is context-dependent, assigned at the moment of execution, an
+atom scopes an input sequence to one, semantic, user action. Examples: "x" is
+captured as "dl", an insert session as `ciwfoo<Esc>`, a Visual-mode edit as
+`viweed`.
+
+CONCEPTS
+
+- ATOM: A repeatable unit of user input: the resolved keysequence, plus
+  structured fields (`CmdSpec`). Every user action emits a |CmdAtom| event.
+  - SPAN: Fragment of an Insert or Visual sequence, cascades but does not emit
+    a CmdAtom.
+- COMPOSITE: An atom composed of subatoms (`CmdAtom.atoms`): a mapping/macro's
+  commands, or a Visual sequence.
+- INSERT-SESSION: All changes from an insert-mode session, until <Esc>.
+  - INSERTION: An `Ins.start`..cursor "undo unit" within a session.
+  - INSERT-CASCADE: Replay an insert-session span-by-span as it is typed (each
+    span is packaged as a quasi-session: `i` + keys + `<Esc>`), via nested
+    `edit()`. Pending literal text is a PREVIEW until its span completes.
+- REPLAY: Execute keys (dot-repeat, or atom).
+- CASCADE: Replay queued atoms at the "clock edge" at every cursor. Visual
+  cascade "dry-runs" spans to display the selection.
+- VOID: When a pending (Visual) atom's keys were tainted/poisoned (by: mouse,
+  `gv`, a scroll that drags the cursor, …), thus not replayable.
+
+IMPLEMENTATION
+
+Capture happens at the `atom_xx()` hooks.
+- `prep_redo()` marks a redoable command (operators, `r`, `J`, `p`, …). Then
+  `atom_cmd_end()` takes the final redobuff as the atom, (including
+  payloads, e.g. `d/pat<CR>`).  Prep-exempt commands (yank, `D`, folds) are
+  reconstructed instead, in `atom_capture_op()`.
+- `atom_cmd_start()` delimits a command in `normal_execute()`.  Everything not
+  covered above is decided here (motions, jumps, scrolls, mouse).
+- `atom_ins_start()` delimits an insert session.
+- `atom_map_start()`, `atom_macro_start()` delimits a composite.
+- `atom_visual_end()` completes the pending Visual atom, `viweex` => `viweed`.
+  <Esc> discards it; non-replayable commands VOID it.
+- `atom_cmdline_set()` gets an invoked cmdline payload (e.g. `/pat<CR>` is
+  a motion atom, `:cnext<CR>` is an "ex" atom.)
+
+DOT-REPEAT
+
+The redo buffer itself is the pending change atom (`RedoBuf`); the register,
+Visual flag and count are FIELDS, and the command body is bytes appended
+during execution by the `redo_append_xx()` family (Vim's `AppendToRedobuff*`).
+The old `["x][v][count]body` byte encoding no longer exists; `prep_redo()`
+stores the prefix structurally, and consumers recompose it at the boundaries
+(`redo_keys()`, `start_redo()`, `atom_from_redo()`).
+
+THE CASCADE
+
+Cursors are `Context` entries in `mc_cursors`, tracked as extmarks. The
+extmark is authoritative: it follows edits, and user code may delete cursors
+by deleting their extmarks. Cursor-local state is swapped in on replay, so
+e.g. each cursor reads/writes its own registers.
+
+CmdAtoms queued for cascade (`g_atoms`) are replayed at every cursor on the
+"clock edge": the completion of a toplevel `normal_execute()`.  While
+a mapping is executing (its keys are still in typebuf) the edge is deferred
+(subatoms queue/accumulate).
+
+Undo is buffer-global and applied in bulk.  Each cascade adds exactly one undo
+state, and undo/redo is itself never cascaded (`u_doit()` calls `atom_op_global_set()`).
+
+The insert-cascade PREVIEW/COMMIT model (why text is previewed instead of
+replayed) is documented at `mc_ins_span`.  Sessions that cannot insert-cascade
+(count `3iZ`, Replace mode, blockwise `CTRL-V c`) are captured at <Esc>.
+- See `CmdAtomType` and `atom_key_class()` to understand how input is
+  classified to decide whether and how it can be replayed.
+
+RENDERING
+
+Display is owned by `runtime/lua/vim/_core/mcursor.lua`. the C core maintains
+the model, as extmarks:
+
+- "nvim.multicursor": the tracking marks (cursor positions).
+- "nvim.multicursor.cursor": selection-END display cursors, during Visual mode
+  (each cursor displays at its own selection end).  Consumers (UIs) that
+  display cursors use these positions
+  while any exist, instead of the tracking marks.
+- "nvim.multicursor.visual": the pending selection ranges.
+
+GUI SUPPORT
+
+A GUI gets a working display for free, via cell highlights. If it wants to
+draw "real" cursors, it is expected to:
+- receive positions via the `win_extmark` UI event: the tracking marks are
+  ui_watched, so visible cursor positions are pushed per-redraw.  (Known
+  issue: win_extmark does not give a removal signal; re-query when in doubt.)
+- or query the namespaces above with |nvim_buf_get_extmarks()|; prefer the
+  "nvim.multicursor.cursor" positions while any exist (in-progress Visual
+  selection).
+- render selections from "nvim.multicursor.visual", or simply keep their
+  "hl-MultiCursorVisual" grid highlights.
 
 ==============================================================================
 

@@ -2781,7 +2781,7 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
     }
 
     // only format when something was inserted
-    if (!Ins.arrow_used && !ins_need_undo_get() && c != Ctrl_E) {
+    if (Ins.moved == kInsNone && !Ins.need_undo && c != Ctrl_E) {
       insertchar(NUL, 0, -1);
     }
 
@@ -3012,10 +3012,10 @@ static void ins_compl_fixRedoBufForLeader(char *ptr_arg)
     }
     // Add backspace characters for each remaining character in original text
     for (p += len; *p != NUL; MB_PTR_ADV(p)) {
-      AppendCharToRedobuff(K_BS);
+      redo_append_char(K_BS);
     }
   }
-  AppendToRedobuffLit(ptr + len, -1);
+  redo_append_lit(ptr + len, -1);
 }
 
 /// Loops through the list of windows, loaded-buffers or non-loaded-buffers
@@ -6494,7 +6494,7 @@ static void spell_back_to_badword(void)
   pos_T tpos = curwin->w_cursor;
   spell_bad_len = spell_move_to(curwin, BACKWARD, SMT_ALL, true, NULL);
   if (curwin->w_cursor.col != tpos.col) {
-    start_arrow(&tpos);
+    start_arrow(&tpos, true, NUL);
   }
 }
 

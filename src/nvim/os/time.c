@@ -48,7 +48,7 @@ int64_t os_realtime(void)
     ELOG("uv_clock_gettime failed: %d %s", error_number, uv_err_name(error_number));
     return 0;
   }
-  return ts.tv_sec * 1000000000L + ts.tv_nsec;
+  return ts.tv_sec * NS_PER_SEC + ts.tv_nsec;
 }
 
 /// Gets a millisecond-resolution, monotonically-increasing time relative to an

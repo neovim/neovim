@@ -910,17 +910,18 @@ static void shada_read(FileDescriptor *const sd_reader, const int flags)
   const bool get_old_files = (flags & (kShaDaGetOldfiles | kShaDaForceit)
                               && (force || tv_list_len(oldfiles_list) == 0));
   const bool want_marks = flags & kShaDaWantMarks;
+  const bool no_opt = flags & kShaDaNoOpt;
   const unsigned srni_flags =
     (unsigned)(
                (flags & kShaDaWantInfo
                 ? (kSDReadUndisableableData
                    | kSDReadRegisters
                    | kSDReadGlobalMarks
-                   | (p_hi ? kSDReadHistory : 0)
-                   | (find_shada_parameter('!') != NULL
+                   | (p_hi && !(flags & kShaDaNoHistory) ? kSDReadHistory : 0)
+                   | (no_opt || find_shada_parameter('!') != NULL
                       ? kSDReadVariables
                       : 0)
-                   | (find_shada_parameter('%') != NULL
+                   | ((no_opt || find_shada_parameter('%') != NULL)
                       && ARGCOUNT == 0
                       ? kSDReadBufferList
                       : 0))
@@ -1042,32 +1043,36 @@ static void shada_read(FileDescriptor *const sd_reader, const int flags)
       hms_insert(hms + cur_entry.data.history_item.histtype, cur_entry, true);
       // Do not free shada entry: its allocated memory was saved above.
       break;
-    case kSDItemRegister:
+    case kSDItemRegister: {
       if (cur_entry.data.reg.type != kMTCharWise
           && cur_entry.data.reg.type != kMTLineWise
           && cur_entry.data.reg.type != kMTBlockWise) {
         shada_free_shada_entry(&cur_entry);
         break;
       }
+      // reg are ns; shada stores seconds; Context/multicursor wants high-precision comparison.
+      const Timestamp reg_ts = (flags & kShaDaNanos)
+                               ? cur_entry.timestamp : cur_entry.timestamp * NS_PER_SEC;
       if (!force) {
         const yankreg_T *const reg = op_reg_get(cur_entry.data.reg.name);
-        if (reg == NULL || reg->timestamp >= cur_entry.timestamp) {
+        if (reg == NULL || reg->timestamp >= reg_ts) {
           shada_free_shada_entry(&cur_entry);
           break;
         }
       }
       if (!op_reg_set(cur_entry.data.reg.name, (yankreg_T) {
-        .y_array = cur_entry.data.reg.contents,
-        .y_size = cur_entry.data.reg.contents_size,
-        .y_type = cur_entry.data.reg.type,
-        .y_width = (colnr_T)cur_entry.data.reg.width,
-        .timestamp = cur_entry.timestamp,
-        .additional_data = cur_entry.additional_data,
-      }, cur_entry.data.reg.is_unnamed)) {
+          .y_array = cur_entry.data.reg.contents,
+          .y_size = cur_entry.data.reg.contents_size,
+          .y_type = cur_entry.data.reg.type,
+          .y_width = (colnr_T)cur_entry.data.reg.width,
+          .timestamp = reg_ts,
+          .additional_data = cur_entry.additional_data,
+        }, cur_entry.data.reg.is_unnamed)) {
         shada_free_shada_entry(&cur_entry);
       }
       // Do not free shada entry: its allocated memory was saved above.
       break;
+    }
     case kSDItemVariable:
       var_set_global(cur_entry.data.global_var.name,
                      cur_entry.data.global_var.value);
@@ -1803,7 +1808,7 @@ static inline ShaDaWriteResult shada_read_when_writing(FileDescriptor *const sd_
       }
       if (wms->registers[idx].type == kSDItemMissing) {
         const yankreg_T *const reg = op_reg_get(entry.data.reg.name);
-        if (reg != NULL && reg_empty(reg) && reg->timestamp >= entry.timestamp) {
+        if (reg != NULL && reg_empty(reg) && reg->timestamp / NS_PER_SEC >= entry.timestamp) {
           shada_free_shada_entry(&entry);
           break;
         }
@@ -2108,7 +2113,9 @@ static inline void add_search_pattern(ShadaEntry *const ret_pse,
 ///
 /// @param[in]  wms  The WriteMergerState used when writing.
 /// @param[in]  max_reg_lines  The maximum number of register lines.
-static inline void shada_initialize_registers(WriteMergerState *const wms, int max_reg_lines)
+/// @param scale_ts  Downscale the timestamp to seconds (shada legacy).
+static inline void shada_initialize_registers(WriteMergerState *const wms, int max_reg_lines,
+                                              bool scale_ts)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
 {
   const void *reg_iter = NULL;
@@ -2127,7 +2134,7 @@ static inline void shada_initialize_registers(WriteMergerState *const wms, int m
     wms->registers[op_reg_index(name)] = (ShadaEntry) {
       .can_free_entry = false,
       .type = kSDItemRegister,
-      .timestamp = reg.timestamp,
+      .timestamp = scale_ts ? reg.timestamp / NS_PER_SEC : reg.timestamp,
       .data = {
         .reg = {
           .contents = reg.y_array,
@@ -2483,7 +2490,7 @@ static ShaDaWriteResult shada_write(FileDescriptor *const sd_writer,
 
   // Initialize registers
   if (dump_registers) {
-    shada_initialize_registers(wms, max_reg_lines);
+    shada_initialize_registers(wms, max_reg_lines, true);
   }
 
   // Initialize buffers
@@ -3609,14 +3616,17 @@ static inline size_t shada_init_jumps(ShadaEntry *jumps, Set(ptr_t) *const remov
 }
 
 /// Gets registers as a msgpack-encoded string, in shada format.
-String shada_encode_regs(void)
+///
+/// @param scale_ts  Downscale the timestamp to seconds (shada legacy).
+/// @param since     Only registers modified => this time (0: all). Nanoseconds, unless `scale_ts`.
+String shada_encode_regs(bool scale_ts, Timestamp since)
   FUNC_ATTR_NONNULL_ALL
 {
   WriteMergerState *const wms = xcalloc(1, sizeof(*wms));
-  shada_initialize_registers(wms, -1);
+  shada_initialize_registers(wms, -1, scale_ts);
   PackerBuffer packer = packer_string_buffer();
   for (size_t i = 0; i < ARRAY_SIZE(wms->registers); i++) {
-    if (wms->registers[i].type == kSDItemRegister) {
+    if (wms->registers[i].type == kSDItemRegister && wms->registers[i].timestamp >= since) {
       if (kSDWriteFailed
           == shada_pack_pfreed_entry(&packer, wms->registers[i], 0)) {
         abort();

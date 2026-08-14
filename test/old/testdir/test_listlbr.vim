@@ -268,11 +268,13 @@ endfunc
 func Test_undo_after_block_visual()
   call s:test_windows()
   call setline(1, ["aaa", "aaa", "a"])
+  " Nvim: "." re-executes the captured keysequence ("<C-V>2jg~"), not an
+  " equal-size reselect (|visual-repeat|).
   exe "norm! gg\<C-V>2j~e."
   let lines = s:screen_lines([1, 3], winwidth(0))
   let expect = [
-\ "AaA                 ",
-\ "AaA                 ",
+\ "AAA                 ",
+\ "AAA                 ",
 \ "A                   ",
 \ ]
   call s:compare_lines(expect, lines)

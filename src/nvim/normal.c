@@ -14,7 +14,10 @@
 #include <string.h>
 #include <time.h>
 
+#include "nvim/api/buffer.h"
+#include "nvim/api/extmark.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/vim.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
@@ -22,6 +25,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/change.h"
 #include "nvim/charset.h"
+#include "nvim/clipboard.h"
 #include "nvim/cmdhist.h"
 #include "nvim/cursor.h"
 #include "nvim/decoration.h"
@@ -29,13 +33,16 @@
 #include "nvim/digraph.h"
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
+#include "nvim/eval.h"
 #include "nvim/eval/buffer.h"
+#include "nvim/eval/typval.h"
 #include "nvim/eval/vars.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
 #include "nvim/ex_getln.h"
+#include "nvim/extmark.h"
 #include "nvim/file_search.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
@@ -45,15 +52,19 @@
 #include "nvim/help.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
+#include "nvim/highlight_group.h"
 #include "nvim/indent_c.h"
 #include "nvim/input.h"
+#include "nvim/input_cmdatom.h"
 #include "nvim/insert.h"
+#include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
 #include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mapping.h"
 #include "nvim/mark.h"
 #include "nvim/mark_defs.h"
+#include "nvim/marktree.h"
 #include "nvim/math.h"
 #include "nvim/mbyte.h"
 #include "nvim/mbyte_defs.h"
@@ -100,10 +111,14 @@ typedef struct {
   bool ctrl_w;
   bool need_flushbuf;
   bool set_prevcount;
-  bool previous_got_int;             // `got_int` was true
-  bool toplevel;                     // top-level normal mode
-  oparg_T oa;                        // operator arguments
-  cmdarg_T ca;                       // command arguments
+  bool previous_got_int;  ///< `got_int` was true.
+  bool toplevel;          ///< This is a (poorly-named) _behavior_ opt-in, not a state indicator.
+                          ///< It enables "full interactive-command treatment":
+                          ///< - count prep, v:count publication.
+                          ///< - scrollbind/cursorbind syncing after the command.
+                          ///< - callers pair it with readbuf1_empty() to exclude stuffed keys.
+  oparg_T oa;             ///< Operator arguments.
+  cmdarg_T ca;            ///< Command arguments.
   int mapped_len;
   int old_mapped_len;
   int idx;
@@ -147,6 +162,8 @@ typedef void (*nv_func_T)(cmdarg_T *cap);
 #define NV_RL       0x80        // 'rightleft' modifies command
 #define NV_KEEPREG  0x100       // don't clear regname
 #define NV_NCW      0x200       // not allowed in command-line window
+#define NV_NCH_ARG  0x400       // second char is a typed operand (mark/register name),
+                                // not part of the command name (see NV_LANG for f/t/r)
 
 // Generally speaking, every Normal mode command should either clear any
 // pending operator (with *clearop*()), or set the motion type variable
@@ -201,12 +218,12 @@ static const struct nv_cmd {
   { Ctrl__,    nv_error,       0,                      0 },
   { ' ',       nv_right,       0,                      0 },
   { '!',       nv_operator,    0,                      0 },
-  { '"',       nv_regname,     NV_NCH_NOP|NV_KEEPREG,  0 },
+  { '"',       nv_regname,     NV_NCH_NOP|NV_NCH_ARG|NV_KEEPREG, 0 },
   { '#',       nv_ident,       0,                      0 },
   { '$',       nv_dollar,      0,                      0 },
   { '%',       nv_percent,     0,                      0 },
   { '&',       nv_optrans,     0,                      0 },
-  { '\'',      nv_gomark,      NV_NCH_ALW,             true },
+  { '\'',      nv_gomark,      NV_NCH_ALW|NV_NCH_ARG,  true },
   { '(',       nv_brace,       0,                      BACKWARD },
   { ')',       nv_brace,       0,                      FORWARD },
   { '*',       nv_ident,       0,                      0 },
@@ -231,7 +248,7 @@ static const struct nv_cmd {
   { '=',       nv_operator,    0,                      0 },
   { '>',       nv_operator,    NV_RL,                  0 },
   { '?',       nv_search,      0,                      false },
-  { '@',       nv_at,          NV_NCH_NOP,             false },
+  { '@',       nv_at,          NV_NCH_NOP|NV_NCH_ARG,  false },
   { 'A',       nv_edit,        0,                      0 },
   { 'B',       nv_bck_word,    0,                      1 },
   { 'C',       nv_abbrev,      NV_KEEPREG,             0 },
@@ -262,7 +279,7 @@ static const struct nv_cmd {
   { ']',       nv_brackets,    NV_NCH_ALW,             FORWARD },
   { '^',       nv_beginline,   0,                      BL_WHITE | BL_FIX },
   { '_',       nv_lineop,      0,                      0 },
-  { '`',       nv_gomark,      NV_NCH_ALW,             false },
+  { '`',       nv_gomark,      NV_NCH_ALW|NV_NCH_ARG,  false },
   { 'a',       nv_edit,        NV_NCH,                 0 },
   { 'b',       nv_bck_word,    0,                      0 },
   { 'c',       nv_operator,    0,                      0 },
@@ -275,11 +292,11 @@ static const struct nv_cmd {
   { 'j',       nv_down,        0,                      false },
   { 'k',       nv_up,          0,                      false },
   { 'l',       nv_right,       NV_RL,                  0 },
-  { 'm',       nv_mark,        NV_NCH_NOP,             0 },
+  { 'm',       nv_mark,        NV_NCH_NOP|NV_NCH_ARG,  0 },
   { 'n',       nv_next,        0,                      0 },
   { 'o',       nv_open,        0,                      0 },
   { 'p',       nv_put,         0,                      0 },
-  { 'q',       nv_q,      NV_NCH,                 0 },
+  { 'q',       nv_q,           NV_NCH|NV_NCH_ARG,      0 },
   { 'r',       nv_replace,     NV_NCH_NOP|NV_LANG,     0 },
   { 's',       nv_subst,       NV_KEEPREG,             0 },
   { 't',       nv_csearch,     NV_NCH_ALW|NV_LANG,     FORWARD },
@@ -406,6 +423,14 @@ void init_normal_cmds(void)
   nv_max_linear = i - 1;
 }
 
+/// True if a command's second char (cmdarg_T.nchar) is a typed operand ("fx", "ma") rather than
+/// the second char of its name ("gJ", "iw").
+bool nv_nchar_is_arg(int cmdchar)
+{
+  int idx = find_command(cmdchar);
+  return idx >= 0 && (nv_cmds[idx].cmd_flags & (NV_LANG|NV_NCH_ARG)) != 0;
+}
+
 /// Search for a command in the commands table.
 ///
 /// @return  -1 for invalid command.
@@ -500,9 +525,7 @@ bool op_pending(void)
            && current_oap->regname == NUL);
 }
 
-/// Normal state entry point: the main loop. Called on startup, never returns.
-///
-/// This used to be called main_loop() on main.c
+/// Normal state entry point: the main loop. Never returns.
 void normal_enter(void)
 {
   NormalState state;
@@ -1018,7 +1041,6 @@ normal_end:
   }
 
   checkpcmark();                // check if we moved since setting pcmark
-  xfree(s->ca.searchbuf);
 
   mb_check_adjust_col(curwin);  // #6203
 
@@ -1063,6 +1085,18 @@ normal_end:
 
 static int normal_execute(VimState *state, int key)
 {
+  // Like most things in Vim, `toplevel` is a lie: exec_normal() happily sets it to true (inherited
+  // from Vim). So we track `depth` instead.
+  // - depth=0: No command executing (idle, between commands, sitting in vgetc()).
+  // - depth=1: Outermost command-frame.
+  // - depth=2: First nested frame (e.g. the "dd" inside ":normal! dd").
+  // - depth=n: And so on...
+  static int depth = 0;
+  depth++;
+
+  CmdBaseline atom_old;
+  atom_cmd_start(&atom_old);
+
   NormalState *s = (NormalState *)state;
   s->command_finished = false;
   s->ctrl_w = false;                  // got CTRL-W command
@@ -1092,7 +1126,7 @@ static int normal_execute(VimState *state, int key)
     // When "restart_edit" is set fake a "d"elete command, Insert mode will restart automatically.
     // Insert the typed character in the typeahead buffer, so that it can
     // be mapped in Insert mode.  Required for ":lmap" to work.
-    requeue_key(vgetc_char, vgetc_mod_mask, true);
+    requeue_key(vgetc_char, vgetc_mod_mask, 0, true);
 
     if (restart_edit != 0) {
       s->c = 'd';
@@ -1133,12 +1167,11 @@ static int normal_execute(VimState *state, int key)
 
   // Always remember the count.  It will be set to zero (on the next call,
   // above) when there is no pending operator.
-  // When called from main(), save the count for use by the "count" built-in
-  // variable.
+  // When called from toplevel, save the count for use by v:count.
   s->ca.opcount = s->ca.count0;
   s->ca.count1 = (s->ca.count0 == 0 ? 1 : s->ca.count0);
 
-  // Only set v:count when called from main() and not a stuffed command.
+  // Only set v:count when called from toplevel and not a stuffed command.
   // Do set it for redo.
   if (s->toplevel && readbuf1_empty()) {
     set_vcount(s->ca.count0, s->ca.count1, s->set_prevcount);
@@ -1236,6 +1269,9 @@ static int normal_execute(VimState *state, int key)
 
 finish:
   normal_finish_command(s);
+  atom_cmd_end(&s->ca, &atom_old, depth == 1);
+  xfree(s->ca.searchbuf);
+  depth--;
   return 1;
 }
 
@@ -1699,51 +1735,11 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol, char **text
 /// Prepare for redo of a normal command.
 static void prep_redo_cmd(cmdarg_T *cap)
 {
-  prep_redo(cap->oap->regname, cap->count0,
-            NUL, cap->cmdchar, NUL, NUL, NUL);
-  if (cap->nchar_len > 0) {
-    AppendToRedobuff(cap->nchar_composing);
-  } else {
-    AppendCharToRedobuff(cap->nchar);
-  }
-}
-
-/// Prepare for redo of any command.
-/// Note that only the last argument can be a multi-byte char.
-void prep_redo(int regname, int num, int cmd1, int cmd2, int cmd3, int cmd4, int cmd5)
-{
-  prep_redo_num2(regname, num, cmd1, cmd2, 0, cmd3, cmd4, cmd5);
-}
-
-/// Prepare for redo of any command with extra count after "cmd2".
-void prep_redo_num2(int regname, int num1, int cmd1, int cmd2, int num2, int cmd3, int cmd4,
-                    int cmd5)
-{
-  ResetRedobuff();
-  if (regname != 0) {   // yank from specified buffer
-    AppendCharToRedobuff('"');
-    AppendCharToRedobuff(regname);
-  }
-  if (num1 != 0) {
-    AppendNumberToRedobuff(num1);
-  }
-  if (cmd1 != NUL) {
-    AppendCharToRedobuff(cmd1);
-  }
-  if (cmd2 != NUL) {
-    AppendCharToRedobuff(cmd2);
-  }
-  if (num2 != 0) {
-    AppendNumberToRedobuff(num2);
-  }
-  if (cmd3 != NUL) {
-    AppendCharToRedobuff(cmd3);
-  }
-  if (cmd4 != NUL) {
-    AppendCharToRedobuff(cmd4);
-  }
-  if (cmd5 != NUL) {
-    AppendCharToRedobuff(cmd5);
+  // Composing chars: the operand's byte form is the composed string, not the single char.
+  bool composing = cap->nchar_len > 0;
+  prep_redo(NULL, 0, composing, atom_cmd_spec(cap));
+  if (composing) {
+    redo_append_str(cap->nchar_composing, -1);
   }
 }
 
@@ -1759,7 +1755,7 @@ static bool checkclearop(oparg_T *oap)
   return true;
 }
 
-/// Check for operator or Visual active.  Clear active operator.
+/// Checks for operator or Visual active, and clears active operator.
 ///
 /// Beep and return true if an operator or Visual was active.
 static bool checkclearopq(oparg_T *oap)
@@ -1925,7 +1921,9 @@ bool add_to_showcmd(int c)
     0
   };
 
-  if (!p_sc || msg_silent != 0 || ex_normal_busy) {
+  // Not for stuffed (replay): "." executes as atomic unit; displaying the keys would churn
+  // 'showcmd' mid-replay, redrawing transient states (e.g. selection of a replayed visual op).
+  if (!p_sc || msg_silent != 0 || ex_normal_busy || KeyStuffed) {
     return false;
   }
 
@@ -2019,7 +2017,8 @@ void showcmd_update_clear_state(void)
   showcmd_is_clear = (showcmd_buf[0] == NUL);
 }
 
-static void display_showcmd(void)
+/// Displays 'showcmd' info, and a ("2×") hint if multicursor is active.
+void display_showcmd(void)
 {
   showcmd_update_clear_state();
 
@@ -2066,8 +2065,10 @@ static void display_showcmd(void)
 
   int len = 0;
   if (!showcmd_is_clear) {
-    len = grid_line_puts(sc_col, showcmd_buf, -1, HL_ATTR(HLF_MSG));
+    len += grid_line_puts(sc_col + len, showcmd_buf, -1, HL_ATTR(HLF_MSG));
   }
+  // Clamp so the padding arithmetic below stays in bounds.
+  len = MIN(len, (int)SHOWCMD_COLS);
 
   // clear the rest of an old message by outputting up to SHOWCMD_COLS spaces
   grid_line_puts(sc_col + len, (char *)"          " + len, -1, HL_ATTR(HLF_MSG));
@@ -3111,12 +3112,16 @@ static void nv_regreplay(cmdarg_T *cap)
     return;
   }
 
+  if (reg_recorded != 0) {
+    // The macro's commands are captured as one "@x"-labeled atom (see
+    // atom_macro_start()).
+    atom_macro_start(reg_recorded);
+  }
   while (cap->count1-- && !got_int) {
     if (do_execreg(reg_recorded, false, false, false) == false) {
       clearopbeep(cap->oap);
       break;
     }
-    line_breakcheck();
   }
 }
 
@@ -4579,15 +4584,19 @@ static void nv_replace(cmdarg_T *cap)
     // Give 'r' to edit(), to get the redo command right.
     invoke_edit(cap, true, 'r', false);
   } else {
-    prep_redo(cap->oap->regname, cap->count1, NUL, 'r', NUL, had_ctrl_v, 0);
+    prep_redo(NULL, 0, true, (CmdSpec){ .regname = cap->oap->regname, .count = cap->count1,
+                                        .cmd = 'r', .arg = cap->nchar });
+    if (had_ctrl_v != NUL) {
+      redo_append_char(had_ctrl_v);
+    }
 
     curbuf->b_op_start = curwin->w_cursor;
     const int old_State = State;
 
     if (cap->nchar_len > 0) {
-      AppendToRedobuff(cap->nchar_composing);
+      redo_append_str(cap->nchar_composing, -1);
     } else {
-      AppendCharToRedobuff(cap->nchar);
+      redo_append_char(cap->nchar);
     }
 
     // This is slow, but it handles replacing a single-byte with a
@@ -5637,11 +5646,17 @@ static void nv_g_cmd(cmdarg_T *cap)
     nv_gd(oap, cap->nchar, cap->count0);
     break;
 
+  // g<LeftMouse>: jump to mouse-clicked tag, like "CTRL-]".
+  case K_LEFTMOUSE:
+    if (do_mouse(oap, cap->nchar, BACKWARD, cap->count1, 0)) {
+      stuffcharReadbuff(Ctrl_RSB);
+    }
+    break;
+
   // g<*Mouse> : <C-*mouse>
   case K_MIDDLEMOUSE:
   case K_MIDDLEDRAG:
   case K_MIDDLERELEASE:
-  case K_LEFTMOUSE:
   case K_LEFTDRAG:
   case K_LEFTRELEASE:
   case K_MOUSEMOVE:
@@ -5754,7 +5769,7 @@ static void nv_dot(cmdarg_T *cap)
   // If "restart_edit" is true, the last but one command is repeated
   // instead of the last command (inserting text). This is used for
   // CTRL-O <.> in insert mode.
-  if (start_redo(cap->count0, restart_edit != 0 && !Ins.arrow_used) == false) {
+  if (start_redo(cap->count0, restart_edit != 0 && Ins.moved == kInsNone) == false) {
     clearopbeep(cap->oap);
   }
 }
@@ -5833,7 +5848,7 @@ static void nv_operator(cmdarg_T *cap)
     return;
   }
 
-  if (op_type == cap->oap->op_type) {       // double operator works on lines
+  if (op_type == cap->oap->op_type) {  // double operator ("dd") works on lines
     nv_lineop(cap);
   } else if (!checkclearop(cap->oap)) {
     cap->oap->start = curwin->w_cursor;
@@ -6274,13 +6289,17 @@ static void invoke_edit(cmdarg_T *cap, int repl, int cmd, int startln)
   if (cap->cmdchar != 'O' && cap->cmdchar != 'o') {
     curbuf->b_last_changedtick_i = buf_get_changedtick(curbuf);
   }
-  if (edit(cmd, startln, cap->count1)) {
+  InsSession session = atom_ins_start(cmd, cap->count1, kVInsNone, false);
+  bool busy = edit(cmd, startln, cap->count1);
+  if (busy) {
     cap->retval |= CA_COMMAND_BUSY;
   }
 
   if (restart_edit == 0) {
     restart_edit = restart_edit_save;
   }
+
+  atom_ins_end(&session, busy);
 }
 
 /// "a" or "i" while an operator is pending or in Visual mode: object motion.
@@ -6417,6 +6436,7 @@ static void nv_at(cmdarg_T *cap)
       return;
     }
   }
+  atom_macro_start(cap->nchar);
   while (cap->count1-- && !got_int) {
     if (do_execreg(cap->nchar, false, false, false) == false) {
       clearopbeep(cap->oap);
@@ -6458,8 +6478,7 @@ static void nv_join(cmdarg_T *cap)
     cap->count0 = curbuf->b_ml.ml_line_count - curwin->w_cursor.lnum + 1;
   }
 
-  prep_redo(cap->oap->regname, cap->count0,
-            NUL, cap->cmdchar, NUL, NUL, cap->nchar);
+  prep_redo_cmd(cap);
   do_join((size_t)cap->count0, cap->nchar == NUL, true, true, true);
 }
 
@@ -6514,7 +6533,15 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
            || ((cap->cmdchar == 'g' || cap->cmdchar == 'z')
                && cap->nchar == 'P')) ? BACKWARD : FORWARD;
   }
-  prep_redo_cmd(cap);
+  bool vatom_prepped = false;
+  if (Visual.active) {
+    // Visual-mode put: complete the visual atom ("viw" + "p").
+    vatom_prepped = atom_visual_end((CmdSpec){ .regname = cap->oap->regname, .count = cap->count0,
+                                               .cmd = cap->cmdchar, .cmd2 = cap->nchar }, true);
+  }
+  if (!vatom_prepped) {
+    prep_redo_cmd(cap);
+  }
   if (cap->cmdchar == 'g') {
     flags |= PUT_CURSEND;
   } else if (cap->cmdchar == 'z') {
@@ -6552,8 +6579,10 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
       cap->nchar = NUL;
       cap->oap->regname = keep_registers ? '_' : NUL;
       msg_silent++;
+      atom_suppress(true);  // internal op: the put atom already cascades
       nv_operator(cap);
       do_pending_operator(cap, 0, false);
+      atom_suppress(false);
       empty = (curbuf->b_ml.ml_flags & ML_EMPTY);
       msg_silent--;
 

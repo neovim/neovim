@@ -6778,7 +6778,7 @@ static void f_reltimefloat(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
   rettv->v_type = VAR_FLOAT;
   rettv->vval.v_float = 0;
   if (list2proftime(&argvars[0], &tm) == OK) {
-    rettv->vval.v_float = (float_T)profile_signed(tm) / 1000000000.0;
+    rettv->vval.v_float = (float_T)profile_signed(tm) / NS_PER_SEC;
   }
 }
 

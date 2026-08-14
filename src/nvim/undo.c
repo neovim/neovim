@@ -107,6 +107,7 @@
 #include "nvim/globals.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/input.h"
+#include "nvim/input_cmdatom.h"
 #include "nvim/insert.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mark.h"
@@ -1873,6 +1874,7 @@ static void u_doit(int startcount, bool quiet, bool do_buf_event)
   if (!undo_allowed(curbuf)) {
     return;
   }
+  atom_op_global_set();  // multicursor: undo/redo must not cascade (global, not per-cursor).
 
   u_newcount = 0;
   u_oldcount = 0;

@@ -22,6 +22,7 @@
 #include "nvim/grid.h"
 #include "nvim/grid_defs.h"
 #include "nvim/input.h"
+#include "nvim/input_cmdatom.h"
 #include "nvim/insert.h"
 #include "nvim/keycodes.h"
 #include "nvim/macros_defs.h"
@@ -518,9 +519,9 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
                  (fixindent ? PUT_FIXINDENT : 0) | PUT_CURSEND);
 
           // Repeat it with CTRL-R CTRL-O r or CTRL-R CTRL-P r
-          AppendCharToRedobuff(Ctrl_R);
-          AppendCharToRedobuff(fixindent ? Ctrl_P : Ctrl_O);
-          AppendCharToRedobuff(regname == 0 ? '"' : regname);
+          redo_append_char(Ctrl_R);
+          redo_append_char(fixindent ? Ctrl_P : Ctrl_O);
+          redo_append_char(regname == 0 ? '"' : regname);
         }
       }
       return false;
@@ -865,7 +866,8 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
       c1 = (dir == FORWARD) ? 'p' : 'P';
       c2 = NUL;
     }
-    prep_redo(regname, count, NUL, c1, NUL, c2, NUL);
+    prep_redo(NULL, 0, false,
+              (CmdSpec){ .regname = regname, .count = count, .cmd = c1, .cmd2 = c2 });
 
     // Remember where the paste started, so in edit() Ins.start can be set to this position
     if (restart_edit != 0) {
@@ -1023,7 +1025,7 @@ void ins_mouse(int c)
         curbuf->b_prompt_insert = 'A';
       }
     }
-    start_arrow(curwin == old_curwin ? &tpos : NULL);
+    start_arrow(curwin == old_curwin ? &tpos : NULL, true, NUL);
     if (curwin != new_curwin && win_valid(new_curwin)) {
       curwin = new_curwin;
       curbuf = curwin->w_buffer;
@@ -1137,7 +1139,7 @@ void ins_mousescroll(int dir)
   curbuf = curwin->w_buffer;
 
   if (!equalpos(curwin->w_cursor, orig_cursor)) {
-    start_arrow(&orig_cursor);
+    start_arrow(&orig_cursor, true, NUL);
     set_can_cindent(true);
   }
 }

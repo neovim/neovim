@@ -122,6 +122,20 @@ EDITOR
     cmdwin via |c_CTRL-F|.
 • Behavior of |:restart| changed. Use "!" (|:restart!|) to get the old behavior.
   • |ZR| now performs |:restart|. Add a count to change the behavior.
+• |ins-repeat| replays the full Insert session, including cursor-moves.
+  Undo and |quote.| still restart at each cursor-move. Use |i_CTRL-O| to get
+  the old behavior: >vim
+    inoremap <Left>  <C-o><Left>
+    inoremap <Right> <C-o><Right>
+• |visual-repeat| is "semantic" instead of "fixed-size". See
+  |visual-fixed-size| if you prefer Vim's "fixed-size" Visual-repeat.
+• |Q| adds a |multicursor| instead of replaying the last recorded register.
+  To get the old behavior: >lua
+    vim.keymap.set('n', 'Q', function()
+      local reg = vim.fn.reg_recorded()
+      return reg == '' and '' or ('@' .. reg)
+    end, { expr = true })
+<
 
 EVENTS
 
@@ -297,6 +311,8 @@ EVENTS
 • |:delmarks| now triggers the |MarkSet| autocommand with line==col==0, same
   as |nvim_buf_del_mark()|
 • |ChanClose| is triggered after a channel is closed, before it is removed.
+• |CmdAtom| fires after each atomic user action (motion, mapping, operator,
+  insert session, visual, Ex command, …).
 • |SessionWritePre| event emits just before |:mksession|.
 • |TextPutPre| and |TextPutPost| are triggered before/after putting text.
 • |TabMoved| is triggered when tabs are reordered.

@@ -505,8 +505,10 @@ func Test_visual_mode_op()
 
   call setline(1, 'apple banana cherry')
   call cursor(1, 1)
+  " Nvim: "." re-executes the captured keysequence (|visual-repeat|): the final
+  " "." replays "3vd", multiplying the previous (grown) selection again.
   normal lvld.l3vd.
-  call assert_equal('a y', getline(1))
+  call assert_equal('a ', getline(1))
 
   call setline(1, ['line 1 line 1', 'line 2 line 2', 'line 3 line 3',
         \ 'line 4 line 4', 'line 5 line 5', 'line 6 line 6'])
@@ -518,10 +520,10 @@ func Test_visual_mode_op()
   call setline(1, ['xxxxxxxxxxxxx', 'xxxxxxxxxxxxx', 'xxxxxxxxxxxxx',
         \ 'xxxxxxxxxxxxx'])
   exe "normal \<C-V>jlc  \<Esc>l.l2\<C-V>c----\<Esc>l."
-  call assert_equal(['    --------x',
-        \ '    --------x',
-        \ 'xxxx--------x',
-        \ 'xxxx--------x'], getline(1, '$'))
+  call assert_equal(['    --------',
+        \ '    --------',
+        \ 'xxxx--------',
+        \ 'xxxx--------'], getline(1, '$'))
 
   bwipe!
 endfunc
@@ -545,15 +547,18 @@ func Test_visual_mode_maps()
   vnoremap W /\u/s-1<CR>
   vnoremap iW :<C-U>call SelectInCaps()<CR>
 
+  " Nvim: a selection extended by a search or Ex motion is not replayable:
+  " "." falls back to an equal-size reselect ("1v"), like Vim. But "." after
+  " "2vd" re-executes "2vd", multiplying the previous (grown) area again.
   call setline(1, 'KiwiRaspberryDateWatermelonPeach')
   call cursor(1, 1)
   exe "normal vWcNo\<Esc>l.fD2vd."
-  call assert_equal('NoNoberryach', getline(1))
+  call assert_equal('NoNoberry', getline(1))
 
   call setline(1, 'JambuRambutanBananaTangerineMango')
   call cursor(1, 1)
   exe "normal llviWc-\<Esc>l.l2vdl."
-  call assert_equal('--ago', getline(1))
+  call assert_equal('--a', getline(1))
 
   vunmap W
   vunmap iW

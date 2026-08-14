@@ -2316,7 +2316,7 @@ end:
     return false;
   }
 
-  requeue_key(vgetc_char, vgetc_mod_mask, true);
+  requeue_key(vgetc_char, vgetc_mod_mask, 0, true);
   return true;
 }
 

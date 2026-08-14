@@ -49,7 +49,6 @@
 #include "nvim/ui.h"
 #include "nvim/vim_defs.h"
 
-#define NS_1_SECOND         1000000000U     // 1 second, in nanoseconds
 #define OUT_DATA_THRESHOLD  1024 * 10U      // 10KB, "a few screenfuls" of data.
 
 #define SHELL_SPECIAL "\t \"&'$;<>()\\|\n"
@@ -1049,10 +1048,10 @@ static bool out_data_decide_throttle(size_t size)
     started = os_hrtime();
   } else {
     uint64_t since = os_hrtime() - started;
-    if (since < (visit * (NS_1_SECOND / 10))) {
+    if (since < (visit * (NS_PER_SEC / 10))) {
       return true;
     }
-    if (since > (3 * NS_1_SECOND)) {
+    if (since > (3 * NS_PER_SEC)) {
       received = visit = 0;
       return false;
     }

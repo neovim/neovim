@@ -1,11 +1,10 @@
 #pragma once
 
 #include <stddef.h>  // IWYU pragma: keep
+#include <stdint.h>
 
 #include "nvim/context_defs.h"  // IWYU pragma: export
 #include "nvim/macros_defs.h"
-
-extern int kCtxAll;
 
 /// Pool of temporary scratch windows (fka "autocmd windows"), for ctx_switch().
 EXTERN kvec_t(CtxWin) ctx_win_vec INIT( = KV_INITIAL_VALUE);

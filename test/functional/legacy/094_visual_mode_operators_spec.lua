@@ -55,67 +55,63 @@ describe('Visual mode and operator', function()
   end)
 
   it('simple change in Visual mode', function()
-    insert([[
-      apple banana cherry
+    -- Nvim: visual-repeat re-executes the visual operation, not a fixed-size reselect.
 
+    -- Exercise characterwise Visual mode plus operator, with count and repeat.
+    insert('apple banana cherry')
+    feed_command('/^apple')
+    feed('lvld.l3vd.')
+    expect('a ')
+
+    -- Same in linewise Visual mode.
+    feed_command('%delete _')
+    insert([[
       line 1 line 1
       line 2 line 2
       line 3 line 3
       line 4 line 4
       line 5 line 5
-      line 6 line 6
+      line 6 line 6]])
+    feed_command('/^line 1')
+    feed('Vcnewline<esc>j.j2Vd.')
+    expect([[
+      newline
+      newline]])
 
+    -- Same in blockwise Visual mode.
+    feed_command('%delete _')
+    insert([[
       xxxxxxxxxxxxx
       xxxxxxxxxxxxx
       xxxxxxxxxxxxx
       xxxxxxxxxxxxx]])
-
-    -- Exercise characterwise Visual mode plus operator, with count and repeat.
-    feed_command('/^apple')
-    feed('lvld.l3vd.')
-
-    -- Same in linewise Visual mode.
-    feed_command('/^line 1')
-    feed('Vcnewline<esc>j.j2Vd.')
-
-    -- Same in blockwise Visual mode.
     feed_command('/^xxxx')
     feed('<c-v>jlc  <esc>l.l2<c-v>c----<esc>l.')
-
-    -- Assert buffer contents.
     expect([[
-      a y
-
-      newline
-      newline
-
-          --------x
-          --------x
-      xxxx--------x
-      xxxx--------x]])
+          --------
+          --------
+      xxxx--------
+      xxxx--------]])
   end)
 
   it('Visual mode mapping', function()
-    insert([[
-      KiwiRaspberryDateWatermelonPeach
-      JambuRambutanBananaTangerineMango]])
+    -- Nvim: visual-repeat re-executes the visual operation, not a fixed-size reselect.
 
     -- Set up Visual mode mappings.
     feed_command('vnoremap W /\\u/s-1<CR>')
     feed_command('vnoremap iW :<C-U>call SelectInCaps()<CR>')
 
     -- Do a simple change using the simple vmap, also with count and repeat.
+    feed_command([[call setline(1, 'KiwiRaspberryDateWatermelonPeach')]])
     feed_command('/^Kiwi')
     feed('vWcNo<esc>l.fD2vd.')
+    expect('NoNoberry')
 
     -- Same, using the vmap that maps to an Ex command.
+    feed_command([[call setline(1, 'JambuRambutanBananaTangerineMango')]])
     feed_command('/^Jambu')
     feed('llviWc-<esc>l.l2vdl.')
-
-    -- Assert buffer contents.
-    expect([[
-      NoNoberryach
-      --ago]])
+    expect('--a')
   end)
 
   it('Operator-pending mode mapping', function()

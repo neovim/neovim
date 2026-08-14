@@ -1,7 +1,7 @@
 *repeat.txt*    Nvim
 
 
-		  VIM REFERENCE MANUAL	  by Bram Moolenaar
+                            NVIM REFERENCE MANUAL
 
 
 Repeating commands, Vim scripts and debugging			*repeating*
@@ -19,6 +19,9 @@ Single repeats						*single-repeat*
 			included in 'cpoptions'.  Does not repeat a
 			command-line command.
 
+							*@:*
+@:			Repeat last command-line [count] times.
+
 Simple changes can be repeated with the "." command.  Without a count, the
 count of the last change is used.  If you enter a count, it will replace the
 last one.  |v:count| and |v:count1| will be set.
@@ -27,12 +30,34 @@ If the last change included a specification of a numbered register, the
 register number will be incremented.  See |redo-register| for an example how
 to use this.
 
-Note that when repeating a command that used a Visual selection, the same SIZE
-of area is used, see |visual-repeat|.
+Repeating an insert |ins-repeat| re-executes the whole session, including
+non-jump cursor-moves: "iab<Left>c<Esc>." produces "acb", not "c".  Note that
+jumps (mouse, |i_<PageUp>|, …) split an insert session.
 
-							*@:*
-@:			Repeat last command-line [count] times.
+Repeating a Visual-mode command re-executes the captured keysequence,
+selection included.  See |visual-repeat|.
 
+							*motion-repeat*
+Example: a "," mapping that repeats the last motion, like |;| but for any
+motion ("3w", "fx", "/pat<CR>"): remember the last "motion" |CmdAtom| and
+replay its keys: >lua
+    local last ---@type string?
+    vim.api.nvim_create_autocmd('CmdAtom', {
+      pattern = 'motion',
+      callback = function(ev)
+        last = ev.data.keys
+      end,
+    })
+    vim.keymap.set('n', ',', function()
+      -- CmdAtom is deferred: schedule the replay after any pending event,
+      -- so `last` is fresh when "," follows a motion.
+      vim.schedule(function()
+        if last then
+          vim.api.nvim_feedkeys(last, 'n', false)  -- "n": already resolved
+        end
+      end)
+    end)
+<
 
 ==============================================================================
 Multiple repeats					*multi-repeat*
@@ -156,6 +181,9 @@ Q			Repeat the last recorded register [count] times.
 			register for each selected line.
 			See |visual-repeat|, |default-mappings|.
 
+							*v_Q*
+{Visual}Q		Place a cursor on each line of the Visual selection.
+
 							*:@*
 :[addr]@{0-9a-z".=*+}	Execute the contents of register {0-9a-z".=*+} as an
 			Ex command.  First set cursor at line [addr] (default
@@ -179,6 +207,11 @@ Q			Repeat the last recorded register [count] times.
 :[addr]@						*:@@*
 :[addr]@@		Repeat the previous :@{register}.  First set cursor at
 			line [addr] (default is current line).
+
+==============================================================================
+Multiple cursors					*mcursor* *multicursor*
+
+todo
 
 ==============================================================================
 Using Vim scripts					*using-scripts*

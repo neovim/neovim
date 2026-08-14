@@ -105,6 +105,7 @@ error('Cannot require a meta file')
 --- |'ChanClose'
 --- |'ChanInfo'
 --- |'ChanOpen'
+--- |'CmdAtom'
 --- |'CmdUndefined'
 --- |'CmdlineChanged'
 --- |'CmdlineEnter'
