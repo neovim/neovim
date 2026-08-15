@@ -437,8 +437,6 @@ vim.funcref = function(viml_func_name)
   return vim.fn[viml_func_name]
 end
 
-local VIM_CMD_ARG_MAX = 20
-
 --- Executes Vimscript (|Ex-command|s).
 ---
 --- Can be indexed with a command name to get a function, thus you can write `vim.cmd.echo(…)`
@@ -502,7 +500,7 @@ vim.cmd = setmetatable({}, {
         -- Move indexed positions in opts to opt.args
         if opts[1] and not opts.args then
           opts.args = {}
-          for i = 1, VIM_CMD_ARG_MAX do
+          for i = 1, #opts do
             if not opts[i] then
               break
             end

@@ -1792,6 +1792,22 @@ describe('lua stdlib', function()
     ]]
 
     eq(2, fn.luaeval 'vim.g.var')
+
+    -- Passing many arguments to indexed vim.cmd (#41314)
+    local props = exec_lua [[
+      local props = {}
+      for i = 1, 300 do
+        props[i] = ('custom_property_%03d'):format(i)
+      end
+      vim.cmd.syntax { 'keyword', 'editorconfigProperty', unpack(props) }
+      return props
+    ]]
+
+    local output = n.exec_capture('syntax list editorconfigProperty')
+    output = output:match('^%-%-%- Syntax items %-%-%-\neditorconfigProperty xxx (.*)')
+    local output_list = vim.split(output, ' ')
+    table.sort(output_list)
+    eq(props, output_list)
   end)
 
   it('vim.regex', function()
