@@ -311,19 +311,23 @@ static void ctx_localdirs_restore(CtxSwitch *cs, win_T *cwp, tabpage_T *tp, bool
   if (!(persist && cs->cs_globaldir == NULL && globaldir != NULL)) {
     xfree(globaldir);
     globaldir = cs->cs_globaldir;
+    cs->cs_globaldir = NULL;
   }
 }
 
 /// Saves the dir state to be restored by ctx_dirs_restore():
-/// - kCtxKeepCwd or kCtxKeepDirs: the CWD, so any directory change caused by switching to `wp`
-///   ('autochdir', win/tab-local directories) can be undone.
-/// - kCtxKeepDirs: also copies of the target context's dir scopes (w/b/tp-local, global).
+/// - kCtxKeepCwd or kCtxKeepDirs: the CWD and `globaldir`, so any directory change caused by
+///   switching to `wp` ('autochdir', win/tab-local directories) can be undone.
+/// - kCtxKeepDirs: also copies of the target context's dir scopes (w/b/tp-local).
 static void ctx_dirs_save(CtxSwitch *cs, win_T *wp, tabpage_T *tp, buf_T *buf)
   FUNC_ATTR_NONNULL_ARG(1, 2, 3)
 {
   if (!(cs->cs_flags & (kCtxKeepCwd | kCtxKeepDirs))) {
     return;
   }
+
+  // `globaldir` is where to return when no local dir applies (NULL: the CWD is already there).
+  cs->cs_globaldir = globaldir == NULL ? NULL : xstrdup(globaldir);
 
   // kCtxKeepDirs: also save copies of the target context's dir scopes.
   if (cs->cs_flags & kCtxKeepDirs) {
@@ -332,7 +336,6 @@ static void ctx_dirs_save(CtxSwitch *cs, win_T *wp, tabpage_T *tp, buf_T *buf)
     cs->cs_w_localdir = wp->w_localdir == NULL ? NULL : xstrdup(wp->w_localdir);
     cs->cs_b_localdir = target_buf->b_localdir == NULL ? NULL : xstrdup(target_buf->b_localdir);
     cs->cs_tp_localdir = tp->tp_localdir == NULL ? NULL : xstrdup(tp->tp_localdir);
-    cs->cs_globaldir = globaldir == NULL ? NULL : xstrdup(globaldir);
   }
 
   // Getting and setting directory can be slow on some systems, only do this when the current or
@@ -367,8 +370,12 @@ static void ctx_dirs_save(CtxSwitch *cs, win_T *wp, tabpage_T *tp, buf_T *buf)
 /// target window/buffer/tab may have been closed meanwhile.
 static void ctx_dirs_restore(CtxSwitch *cs)
 {
-  // kCtxKeepDirs: restore the saved dir scopes. But not for hidden buf (ctx_win).
-  if ((cs->cs_flags & kCtxKeepDirs) && cs->cs_ctxwin_idx < 0) {
+  if (cs->cs_ctxwin_idx >= 0) {
+    return;  // Hidden-buffer target: ctx_localdirs_restore() already restored dirs.
+  }
+
+  // kCtxKeepDirs: restore the saved dir scopes.
+  if (cs->cs_flags & kCtxKeepDirs) {
     tabpage_T *dirs_tab = NULL;
     FOR_ALL_TABS(tp) {
       if (tp->handle == cs->cs_dirs_tab) {
@@ -377,7 +384,13 @@ static void ctx_dirs_restore(CtxSwitch *cs)
       }
     }
     ctx_localdirs_restore(cs, NULL, dirs_tab, false);
+  } else if (cs->cs_cwd != NULL && !_ctx_did_chdir) {
+    // Pairs with the CWD restore below.
+    xfree(globaldir);
+    globaldir = cs->cs_globaldir;
+    cs->cs_globaldir = NULL;
   }
+  XFREE_CLEAR(cs->cs_globaldir);
 
   // Restore the CWD itself.
   if (cs->cs_apply_acd) {

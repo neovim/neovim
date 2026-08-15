@@ -106,9 +106,10 @@ typedef struct {
   // State kept across the switch:
   bool cs_did_chdir;              ///< saved `ctx_did_chdir` of the enclosing context
   handle_T cs_dirs_tab;           ///< kCtxKeepDirs: tabpage that owns cs_tp_localdir.
-  // Saved dir state. Two users:
+  // Saved dir state. Three users:
   // 1. hidden-buffer target always saves b/tp/globaldir (so the temp context starts dir-neutral)
-  // 2. kCtxKeepDirs saves copies of all four.
+  // 2. kCtxKeepCwd saves globaldir.
+  // 3. kCtxKeepDirs also saves w/b/tp-localdir.
   char *cs_w_localdir;            ///< Saved w_localdir of the target window
   char *cs_b_localdir;            ///< Saved b_localdir of the target buffer
   char *cs_tp_localdir;           ///< Saved tp_localdir
