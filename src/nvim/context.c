@@ -338,15 +338,8 @@ static void ctx_dirs_save(CtxSwitch *cs, win_T *wp, tabpage_T *tp, buf_T *buf)
     cs->cs_tp_localdir = tp->tp_localdir == NULL ? NULL : xstrdup(tp->tp_localdir);
   }
 
-  // Getting and setting directory can be slow on some systems, only do this when the current or
-  // target window/tab have a local directory or 'acd' is set, or if kCtxKeepDirs was set.
   char cwd[MAXPATHL];
-  if ((cs->cs_flags & kCtxKeepDirs)
-      || (curwin != wp
-          && (curwin->w_localdir != NULL || wp->w_localdir != NULL
-              || curbuf->b_localdir != NULL || wp->w_buffer->b_localdir != NULL
-              || (curtab != tp && (curtab->tp_localdir != NULL || tp->tp_localdir != NULL))
-              || p_acd))) {
+  if ((cs->cs_flags & kCtxKeepDirs) || curwin != wp) {
     if (os_dirname(cwd, MAXPATHL) == OK) {
       cs->cs_cwd = xstrdup(cwd);  // allocated on demand: keeps CtxSwitch small
     }
@@ -392,17 +385,19 @@ static void ctx_dirs_restore(CtxSwitch *cs)
   }
   XFREE_CLEAR(cs->cs_globaldir);
 
-  // Restore the CWD itself.
+  // Restore the CWD itself. After an explicit chdir, ctx_restore() re-derives it instead.
   if (cs->cs_apply_acd) {
     xfree(cs->cs_save_sfname);
     do_autochdir();
-  } else if (cs->cs_cwd != NULL) {
+  } else if (cs->cs_cwd != NULL && ((cs->cs_flags & kCtxKeepDirs) || !_ctx_did_chdir)) {
     os_chdir(cs->cs_cwd);
     if (cs->cs_save_sfname != NULL) {
       xfree(curbuf->b_sfname);
       curbuf->b_sfname = cs->cs_save_sfname;
       curbuf->b_fname = curbuf->b_sfname;
     }
+  } else {
+    xfree(cs->cs_save_sfname);
   }
   XFREE_CLEAR(cs->cs_cwd);
 }

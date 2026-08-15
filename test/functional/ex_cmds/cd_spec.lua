@@ -603,6 +603,18 @@ describe('cd during temp context-switch', function()
     command('wincmd w')
     eq({ startdir, startdir }, { cwd(), cwd(-1, -1) })
     command('only')
+
+    -- Setting a :bcd buffer into another window, should not modify the caller's CWD.
+    local bcdbuf = call('nvim_create_buf', true, true)
+    n.exec_lua(function(b, d)
+      vim.api.nvim_buf_call(b, function()
+        vim.cmd.bcd(d)
+      end)
+    end, bcdbuf, bufdir)
+    command('split')
+    call('nvim_win_set_buf', call('win_getid', 2), bcdbuf)
+    eq({ bufdir, startdir, startdir }, { cwd(-1, -1, bcdbuf), cwd(), cwd(-1, -1) })
+    command('only')
   end)
 end)
 
