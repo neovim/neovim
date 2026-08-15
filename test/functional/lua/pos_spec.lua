@@ -41,6 +41,17 @@ describe('vim.pos', function()
     eq({ 1, 3, buf }, pos_default)
   end)
 
+  it('is modifiable', function()
+    local pos, buf = exec_lua(function()
+      local pos = vim.pos(-1, 5, 5)
+      pos.buf = 0
+      pos.row = 4
+      pos.col = 2
+      return pos, vim.api.nvim_get_current_buf()
+    end)
+    eq({ 4, 2, buf }, pos)
+  end)
+
   it('comparisons by overloaded operators', function()
     local buf = exec_lua(function()
       return vim.api.nvim_create_buf(false, true)
