@@ -934,8 +934,8 @@ is_na_patch() {
           '-I^=+$' \
           '-I^popup_[_a-z]+\(' \
           '-I\*\s+For Vim version [0-9]\.[0-9]\.\s+Last change: [0-9]+ [A-Z][a-z]+ [0-9]+' \
-          '-I compiled \(with\|without\) .*(\|.*\|) feature\.$' \
-          '-I|popup-windows|' \
+          '-I compiled (with|without) .*\(\|.+\|\) feature\.$' \
+          '-I\|popup-windows\|' \
           '-I\spopup window\s' \
           "$patch" -- "${file}" |
           grep -v -e '{.\+ \(available\|compiled\) \(with\|without\) .\+}' |
