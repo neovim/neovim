@@ -498,6 +498,10 @@ pub fn build(b: *std.Build) !void {
         .root_module = nvim_mod,
     }) else b.addExecutable(.{ .name = "nvim", .root_module = nvim_mod });
     nvim_exe.rdynamic = true; // -E
+    // Native Lua modules resolve Lua C API symbols from the nvim executable, so
+    // symbols must be kept even when nothing inside nvim references them. On
+    // macOS the linker dead-strips them before rdynamic exports them. #40622
+    nvim_exe.link_gc_sections = false;
     if (emscripten_libc_path) |lp| nvim_exe.setLibCFile(lp);
     if (is_wasm) nvim_exe.entry = .disabled;
     if (is_wasm) nvim_exe.linker_allow_shlib_undefined = true;
