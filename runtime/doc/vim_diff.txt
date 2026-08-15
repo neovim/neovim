@@ -682,6 +682,12 @@ Mappings:
 - "#" followed by a digit doesn't stand for a function key at the start of the
   lhs of a mapping.
 
+Marks:
+- |undo| does not restore a mark that you moved (|m|, |:mark|) after the change
+  being undone; the mark shifts with the text it was moved to, the same as a
+  mark the change never touched. Vim restores its old (wrong) position. Marks
+  moved by the change itself are still restored.
+
 Motion:
 - The |jumplist| avoids useless/phantom jumps.
 
