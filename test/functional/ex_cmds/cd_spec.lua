@@ -543,6 +543,14 @@ describe('cd during temp context-switch', function()
     eq({ 1, windir, startdir }, { lwd(2), cwd(2), cwd() })
     command('only')
 
+    -- Entering a hidden buffer must not consume the global dir.
+    command('lcd ' .. windir)
+    exec_lua(function(b)
+      vim.api.nvim_buf_call(b, function() end)
+    end, hidden)
+    eq({ windir, startdir }, { cwd(), cwd(-1, -1) })
+    command('lcd!')
+
     -- An autocmd handler targeting a hidden buffer can set its buffer-local dir; the caller's
     -- cwd is unchanged.
     local hidden2 = hidden_buf('Xtest-cd-hidden2')
@@ -558,9 +566,10 @@ describe('cd during temp context-switch', function()
     end, hidden2, bufdir)
     eq({ 1, bufdir, startdir }, { lwd(-1, -1, hidden2), cwd(-1, -1, hidden2), cwd() })
 
-    -- :tcd via nvim_buf_call() persists, and the tab scope claims the new cwd.
+    -- :tcd targets the tabpage, shared with the temp context: it persists and changes the caller's
+    -- cwd. `globaldir` (the pre-switch cwd, set by :tcd) is kept, so :tcd! can return to it.
     cd_in_buf_call(hidden, 'tcd', tabdir)
-    eq({ 1, tabdir, tabdir }, { tlwd(), tcwd(), cwd() })
+    eq({ 1, tabdir, tabdir, startdir }, { tlwd(), tcwd(), cwd(), cwd(-1, -1) })
   end)
 
   it("nvim_open_win / nvim_win_set_buf keep the caller's cwd", function()
@@ -584,6 +593,16 @@ describe('cd during temp context-switch', function()
     call('nvim_win_close', float, true)
     eq(bufdir, cwd())
     command('bcd!')
+
+    -- Switching to a window with no local dir must not consume the global dir. #41238
+    local windir = join(startdir, directories.window)
+    command('split')
+    command('lcd ' .. windir)
+    call('nvim_win_set_buf', call('win_getid', 2), call('nvim_create_buf', true, true))
+    eq({ windir, startdir }, { cwd(), cwd(-1, -1) })
+    command('wincmd w')
+    eq({ startdir, startdir }, { cwd(), cwd(-1, -1) })
+    command('only')
   end)
 end)
 
