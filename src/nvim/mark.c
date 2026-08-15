@@ -50,6 +50,7 @@
 #include "nvim/tag.h"
 #include "nvim/textobject.h"
 #include "nvim/types_defs.h"
+#include "nvim/undo.h"
 #include "nvim/vim_defs.h"
 
 // This file contains routines to maintain and manipulate marks.
@@ -184,6 +185,8 @@ int setmark_pos(int c, pos_T *pos, int fnum, fmarkv_T *view_pt)
   if (ASCII_ISLOWER(c)) {
     i = c - 'a';
     RESET_FMARK(buf->b_namedm + i, *pos, fnum, view);
+    // Moving a mark is not part of the pending change, so undo must not revert it. #5754
+    u_update_named_mark(buf, i);
     do_markset_autocmd((char)c, pos, buf);
     return OK;
   }

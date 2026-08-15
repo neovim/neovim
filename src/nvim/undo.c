@@ -3235,6 +3235,19 @@ void f_undotree(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   tv_dict_add_list(dict, S_LEN("entries"), u_eval_tree(buf, buf->b_u_oldhead));
 }
 
+/// Drops named mark `idx` from the pending undo snapshot (if the user moved that mark after the
+/// change was recorded, undo must not put it back).
+///
+/// The mark is then left to mark_adjust(), so undo shifts it with its text, like other marks not
+/// touched by the change.
+void u_update_named_mark(buf_T *buf, int idx)
+{
+  u_header_T *uhp = buf->b_u_curhead != NULL ? buf->b_u_curhead : buf->b_u_newhead;
+  if (uhp != NULL) {
+    uhp->uh_namedm[idx].mark.lnum = 0;
+  }
+}
+
 // Given the buffer, Return the undo header. If none is set, set one first.
 // NULL will be returned if e.g undolevels = -1 (undo disabled)
 u_header_T *u_force_get_undo_header(buf_T *buf)
