@@ -344,5 +344,53 @@ describe('default', function()
         end)
       end)
     end)
+
+    describe('<Plug>(nvim-closewin) (<M-q>)', function()
+      it('is mapped by default', function()
+        n.clear({ args_rm = { '--cmd' } })
+        t.neq('', n.fn.maparg('<Plug>(nvim-closewin)', 'n'))
+        t.neq('', n.fn.maparg('<M-q>', 'n'))
+      end)
+
+      it('closes the current window in a multi-window layout', function()
+        n.clear({ args_rm = { '--cmd' } })
+        n.command('split')
+        t.eq(2, #n.api.nvim_list_wins())
+        n.feed('<M-q>')
+        n.poke_eventloop()
+        t.eq(1, #n.api.nvim_list_wins())
+      end)
+
+      it('closes a special-purpose last-window buffer without E444', function()
+        n.clear({ args_rm = { '--cmd' } })
+        -- Show a special-purpose scratch buffer (buftype ~= '') in the only
+        -- window of the only tabpage, like :checkhealth / :Man do. The original
+        -- buffer stays in the buffer list to fall back to.
+        local special = n.api.nvim_create_buf(true, true)
+        t.neq('', n.api.nvim_get_option_value('buftype', { buf = special }))
+        n.api.nvim_set_current_buf(special)
+        t.eq(1, #n.api.nvim_list_wins())
+        n.feed('<M-q>')
+        n.poke_eventloop()
+        -- The special buffer was removed (:bdelete unloads it); if E444 had
+        -- blocked the close, the buffer would still be loaded and current.
+        -- The window survives, falling back to the original buffer.
+        t.eq(false, n.api.nvim_buf_is_loaded(special))
+        t.neq(special, n.api.nvim_get_current_buf())
+        t.eq(1, #n.api.nvim_list_wins())
+      end)
+
+      it('does not quit or discard changes for a normal file last window', function()
+        n.clear({ args_rm = { '--cmd' } })
+        n.insert('unsaved change')
+        local bufnr = n.api.nvim_get_current_buf()
+        n.feed('<M-q>')
+        n.poke_eventloop()
+        -- No-op: Nvim is still running with the modified buffer intact.
+        t.eq(true, n.api.nvim_buf_is_valid(bufnr))
+        t.eq(true, n.api.nvim_get_option_value('modified', { buf = bufnr }))
+        t.eq('unsaved change', n.api.nvim_get_current_line())
+      end)
+    end)
   end)
 end)

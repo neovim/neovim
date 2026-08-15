@@ -373,6 +373,26 @@ CTRL-W CTRL-C						*CTRL-W_CTRL-C*
 		window, but that does not work, because the CTRL-C cancels the
 		command.
 
+<Plug>(nvim-closewin)					*nvim-closewin*
+		Closes the current window, like |:close|. But for
+		special-purpose buffers (buffers with a non-empty 'buftype',
+		e.g. |:checkhealth|, |:Man|, |vim.pack| confirm), it closes the
+		buffer even when it is the last window in the last tabpage,
+		instead of failing with |E444|.
+
+		When the current buffer is a normal editable file ('buftype' is
+		empty) and its window is the last window, this is a no-op: it
+		does not quit Nvim and does not discard unsaved changes.
+
+		This is a |<Plug>| mapping. By default it is bound to
+		|M-q-default|. To bind it to a different key: >vim
+		    nmap <C-q> <Plug>(nvim-closewin)
+<
+							*M-q-default*
+<M-q>		Mapped by default to |nvim-closewin|. Like all
+		|default-mappings|, remove it in your config to disable it,
+		e.g. ":nunmap <M-q>".
+
 							*:hide*
 :hid[e]
 :{count}hid[e]

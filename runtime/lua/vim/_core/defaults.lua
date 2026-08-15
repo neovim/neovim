@@ -297,6 +297,30 @@ do
     )
   end
 
+  --- Close the current window. For special-purpose buffers (non-empty 'buftype',
+  --- e.g. |:checkhealth|, |:Man|, |vim.pack| confirm), close even when it is the
+  --- last window/tabpage. A normal file as the last window is left untouched, to
+  --- avoid silently discarding unsaved changes.
+  ---
+  --- See |nvim-closewin| and |M-q-default|.
+  do
+    vim.keymap.set('n', '<Plug>(nvim-closewin)', function()
+      -- Normal case: close the window if it isn't the last one.
+      if pcall(vim.cmd.close) then
+        return
+      end
+      -- Last window: try to remove special-purpose buffers, never a real file.
+      -- pcall keeps modified/terminal buffers (E89/E947) from throwing; they
+      -- no-op instead of force-discarding (a bang is left for the maintainer).
+      if vim.bo.buftype ~= '' then
+        pcall(vim.cmd.bdelete)
+      end
+      -- else: normal file as last window → no-op (preserve unsaved changes).
+    end, { desc = ':help nvim-closewin' })
+
+    vim.keymap.set('n', '<M-q>', '<Plug>(nvim-closewin)', { desc = ':help M-q-default' })
+  end
+
   --- Execute a command and print errors without a stacktrace.
   --- @param opts vim.api.keyset.cmd Arguments to |nvim_cmd()|
   local function cmd(opts)
