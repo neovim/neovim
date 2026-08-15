@@ -5558,6 +5558,41 @@ describe('API', function()
         "Invalid key: 'bogus'$",
         pcall_err(exec_lua, [[return vim.cmd{ cmd = "set", args = {}, mods = { bogus = true } }]])
       )
+
+      matches(
+        'Invalid range element',
+        pcall_err(api.nvim_cmd, { cmd = 'delete', range = { '$\0x' } }, {})
+      )
+      api.nvim_buf_set_lines(0, 0, -1, false, { 'a', 'b', 'c', 'd', 'e' })
+      matches(
+        'Invalid range element',
+        pcall_err(api.nvim_cmd, { cmd = 'delete', range = { '1,3' } }, {})
+      )
+      matches(
+        'Invalid range element',
+        pcall_err(api.nvim_cmd, { cmd = 'delete', range = { '1;3' } }, {})
+      )
+      eq({ 'a', 'b', 'c', 'd', 'e' }, api.nvim_buf_get_lines(0, 0, -1, false))
+
+      matches(
+        'E20: Mark not set',
+        pcall_err(api.nvim_cmd, { cmd = 'delete', range = { "'q" } }, {})
+      )
+      matches(
+        "'args' requires",
+        pcall_err(api.nvim_cmd, { cmd = '', range = { 1 }, args = { 'x' } }, {})
+      )
+
+      matches(
+        'Invalid range element',
+        pcall_err(api.nvim_cmd, { cmd = 'delete', range = { '/cc' } }, {})
+      )
+      matches("Invalid 'range'", pcall_err(api.nvim_cmd, { cmd = '', range = { 999 } }, {}))
+
+      matches(
+        'E492: Not an editor command: Foobar',
+        pcall_err(api.nvim_cmd, { cmd = 'Foobar', range = { 1 } }, {})
+      )
     end)
 
     it('captures output', function()
