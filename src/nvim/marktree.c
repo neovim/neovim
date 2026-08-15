@@ -332,36 +332,44 @@ static bool intersection_has(Intersection *x, uint64_t id)
   return false;
 }
 
+/// Finds the one position `id` can occupy in the ascending "intersect" array of `x`.
+///
+/// @return Index of `id`, or the index it would be inserted at if absent.
+static size_t intersect_item_pos(MTNode *x, uint64_t id)
+{
+  size_t lo = 0;
+  size_t hi = kv_size(x->intersect);
+  while (lo < hi) {
+    size_t mid = lo + (hi - lo) / 2;
+    if (kv_A(x->intersect, mid) < id) {
+      lo = mid + 1;
+    } else {
+      hi = mid;
+    }
+  }
+  return lo;
+}
+
 static void intersect_node(MarkTree *b, MTNode *x, uint64_t id)
 {
   assert(!(id & MARKTREE_END_FLAG));
-  kvi_pushp(x->intersect);
-  // optimized for the common case: new key is always in the end
-  for (ssize_t i = (ssize_t)kv_size(x->intersect) - 1; i >= 0; i--) {
-    if (i > 0 && kv_A(x->intersect, i - 1) > id) {
-      kv_A(x->intersect, i) = kv_A(x->intersect, i - 1);
-    } else {
-      kv_A(x->intersect, i) = id;
-      break;
-    }
+  // Common case: ids arrive in ascending order, so the new key belongs at the end.
+  if (kv_size(x->intersect) == 0 || kv_A(x->intersect, kv_size(x->intersect) - 1) < id) {
+    kvi_push(x->intersect, id);
+    return;
   }
+  size_t i = intersect_item_pos(x, id);
+  kvi_pushp(x->intersect);
+  memmove(&kv_A(x->intersect, i + 1), &kv_A(x->intersect, i),
+          (kv_size(x->intersect) - i - 1) * sizeof(kv_A(x->intersect, 0)));
+  kv_A(x->intersect, i) = id;
 }
 
 static void unintersect_node(MarkTree *b, MTNode *x, uint64_t id, bool strict)
 {
   assert(!(id & MARKTREE_END_FLAG));
-  bool seen = false;
-  size_t i;
-  for (i = 0; i < kv_size(x->intersect); i++) {
-    if (kv_A(x->intersect, i) < id) {
-      continue;
-    } else if (kv_A(x->intersect, i) == id) {
-      seen = true;
-      break;
-    } else {  // (kv_A(x->intersect, i) > id)
-      break;
-    }
-  }
+  size_t i = intersect_item_pos(x, id);
+  bool seen = i < kv_size(x->intersect) && kv_A(x->intersect, i) == id;
   if (strict) {
 #ifndef RELDEBUG
     // TODO(bfredl): This assert has been seen to fail for end users
