@@ -88,6 +88,8 @@
 \*:shell\*
 \*:smile\*
 \*:version\*
+\*DirChanged\*
+\*DirChangedPre\*
 \*E984\*
 \*E999\*
 \*HelpToc-mappings\*
