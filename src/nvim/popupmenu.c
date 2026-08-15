@@ -1128,7 +1128,7 @@ static bool pum_set_selected(int n, int repeat)
     pum_first = MIN(pum_first, pum_size - pum_height);
 
     // Show extra info in the preview window if there is something and
-    // 'completeopt' contains "preview".
+    // 'completeopt' contains "preview" or "popup".
     // Skip this when tried twice already.
     // Skip this also when there is not much room.
     // Skip this for command-window when 'completeopt' contains "preview".
