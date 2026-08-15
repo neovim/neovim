@@ -297,6 +297,15 @@ do
     )
   end
 
+  -- Close the current window (like |:close|); if it is the last window and the
+  -- buffer has a non-empty 'buftype', close the buffer instead. See |nvim-closewin|.
+  vim.keymap.set('n', '<Plug>(nvim-closewin)', function()
+    if not pcall(vim.cmd.close) and vim.bo.buftype ~= '' then
+      pcall(vim.cmd.bdelete)
+    end
+  end, { desc = ':help nvim-closewin' })
+  vim.keymap.set('n', '<M-q>', '<Plug>(nvim-closewin)', { desc = ':help M-q-default' })
+
   --- Execute a command and print errors without a stacktrace.
   --- @param opts vim.api.keyset.cmd Arguments to |nvim_cmd()|
   local function cmd(opts)

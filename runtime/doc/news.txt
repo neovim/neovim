@@ -253,6 +253,9 @@ DEFAULTS
 
 • 'rulerformat' default is exposed as a statusline expression (previously it
   was implemented as an internal C routine).
+• |nvim-closewin| (bound to <M-q>) closes the current window, and closes
+  special-purpose buffers (|:checkhealth|, |:Man|) even when they are the
+  last window.
 
 DIAGNOSTICS
 

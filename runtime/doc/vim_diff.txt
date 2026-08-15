@@ -167,6 +167,7 @@ you never want any default mappings, call |:mapclear| early in your config.
 - |[a| |]a| |[A| |]A|
 - |[b| |]b| |[B| |]B|
 - |[<Space>| |]<Space>|
+- <M-q> |nvim-closewin| |M-q-default|
 - LSP defaults |lsp-defaults|
   - K |K-lsp-default|
   - gr prefix |gr-default|
