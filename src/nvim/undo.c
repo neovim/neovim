@@ -140,6 +140,7 @@
 typedef struct {
   buf_T *bi_buf;
   FILE *bi_fp;
+  off_T bi_fsize;  ///< Size of `bi_fp` when reading, 0 if unknown.
 } bufinfo_T;
 
 #include "undo.c.generated.h"
@@ -959,7 +960,7 @@ static u_header_T *unserialize_uhp(bufinfo_T *bi, const char *file_name)
       last_uep->ue_next = uep;
     }
     last_uep = uep;
-    if (uep == NULL || error) {
+    if (error) {
       u_free_uhp(uhp);
       return NULL;
     }
@@ -977,8 +978,8 @@ static u_header_T *unserialize_uhp(bufinfo_T *bi, const char *file_name)
     bool error = false;
     ExtmarkUndoObject *extup = unserialize_extmark(bi, &error, file_name);
     if (error) {
-      kv_destroy(uhp->uh_extmark);
       xfree(extup);
+      u_free_uhp(uhp);
       return NULL;
     }
     kv_push(uhp->uh_extmark, *extup);
@@ -1079,6 +1080,7 @@ static bool serialize_uep(bufinfo_T *bi, u_entry_T *uep)
 }
 
 static u_entry_T *unserialize_uep(bufinfo_T *bi, bool *error, const char *file_name)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   u_entry_T *uep = xmalloc(sizeof(u_entry_T));
   CLEAR_POINTER(uep);
@@ -1088,26 +1090,26 @@ static u_entry_T *unserialize_uep(bufinfo_T *bi, bool *error, const char *file_n
   uep->ue_top = undo_read_4c(bi);
   uep->ue_bot = undo_read_4c(bi);
   uep->ue_lcount = undo_read_4c(bi);
-  uep->ue_size = undo_read_4c(bi);
-
-  char **array = NULL;
-  if (uep->ue_size > 0) {
-    if ((size_t)uep->ue_size < SIZE_MAX / sizeof(char *)) {
-      array = xmalloc(sizeof(char *) * (size_t)uep->ue_size);
-      memset(array, 0, sizeof(char *) * (size_t)uep->ue_size);
-    }
+  if (uep->ue_top < 0 || uep->ue_bot < 0 || uep->ue_lcount < 0) {
+    // Fail early; u_undoredo() takes these as line numbers.
+    corruption_error("entry lnum", file_name);
+    *error = true;
+    return uep;
   }
+
+  uep->ue_size = undo_read_len(bi, "entry size", file_name);
+  if (uep->ue_size < 0) {
+    uep->ue_size = 0;  // u_freeentry() must not walk ue_array.
+    *error = true;
+    return uep;
+  }
+
+  char **array = uep->ue_size > 0 ? xcalloc((size_t)uep->ue_size, sizeof(char *)) : NULL;
   uep->ue_array = array;
 
   for (size_t i = 0; i < (size_t)uep->ue_size; i++) {
-    int line_len = undo_read_4c(bi);
-    char *line;
-    if (line_len >= 0) {
-      line = undo_read_string(bi, (size_t)line_len);
-    } else {
-      line = NULL;
-      corruption_error("line length", file_name);
-    }
+    int line_len = undo_read_len(bi, "line length", file_name);
+    char *line = line_len < 0 ? NULL : undo_read_string(bi, (size_t)line_len);
     if (line == NULL) {
       *error = true;
       return uep;
@@ -1453,9 +1455,11 @@ void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATT
     goto error;
   }
 
+  FileInfo file_info;
   bufinfo_T bi = {
     .bi_buf = curbuf,
     .bi_fp = fp,
+    .bi_fsize = os_fileinfo_fd(fileno(fp), &file_info) ? (off_T)os_fileinfo_size(&file_info) : 0,
   };
 
   // Read the undo file header.
@@ -1492,13 +1496,17 @@ void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATT
   }
 
   // Read undo data for "U" command.
-  int str_len = undo_read_4c(&bi);
+  int str_len = undo_read_len(&bi, "line length", file_name);
   if (str_len < 0) {
     goto error;
   }
 
   if (str_len > 0) {
     line_ptr = undo_read_string(&bi, (size_t)str_len);
+    if (line_ptr == NULL) {
+      corruption_error("truncated", file_name);
+      goto error;
+    }
   }
   linenr_T line_lnum = (linenr_T)undo_read_4c(&bi);
   colnr_T line_colnr = (colnr_T)undo_read_4c(&bi);
@@ -1511,7 +1519,10 @@ void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATT
   int old_header_seq = undo_read_4c(&bi);
   int new_header_seq = undo_read_4c(&bi);
   int cur_header_seq = undo_read_4c(&bi);
-  int num_head = undo_read_4c(&bi);
+  int num_head = undo_read_len(&bi, "num_head", file_name);
+  if (num_head < 0) {
+    goto error;
+  }
   int seq_last = undo_read_4c(&bi);
   int seq_cur = undo_read_4c(&bi);
   time_t seq_time = undo_read_time(&bi);
@@ -1543,9 +1554,7 @@ void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATT
   // sequence numbers of the headers.
   // When there are no headers uhp_table is NULL.
   if (num_head > 0) {
-    if ((size_t)num_head < SIZE_MAX / sizeof(*uhp_table)) {
-      uhp_table = xmalloc((size_t)num_head * sizeof(*uhp_table));
-    }
+    uhp_table = xcalloc((size_t)num_head, sizeof(*uhp_table));
   }
 
   int num_read_uhps = 0;
@@ -1737,6 +1746,24 @@ static void put_header_ptr(bufinfo_T *bi, u_header_T *uhp)
 static int undo_read_4c(bufinfo_T *bi)
 {
   return get4c(bi->bi_fp);
+}
+
+/// Reads a 4-byte count/length field. A corrupted file can hold any value here, so reject negative
+/// or if it exceeds the bytes left in the file.
+///
+/// @param what  Name of the field, for the error message.
+/// @return  The value, or -1 if invalid (reported).
+static int undo_read_len(bufinfo_T *bi, const char *what, const char *file_name)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int len = undo_read_4c(bi);
+  off_T pos = vim_ftell(bi->bi_fp);
+  if (len < 0 || (bi->bi_fsize > 0 && (pos < 0 || len > bi->bi_fsize - pos))) {
+    // get4c() also returns -1 for a file that ends here.
+    corruption_error(feof(bi->bi_fp) ? "truncated" : what, file_name);
+    return -1;
+  }
+  return len;
 }
 
 static int undo_read_2c(bufinfo_T *bi)
