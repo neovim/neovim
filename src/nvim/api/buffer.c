@@ -148,7 +148,8 @@ Integer nvim_buf_line_count(Buffer buf, Error *err)
 ///               - the string "changedtick"
 ///               - buffer id
 ///               - b:changedtick
-///             - on_detach: Called on detach. Args:
+///             - on_detach: Called when the buffer is unloaded or deleted. Not called when a
+///               callback returns a [lua-truthy] value to detach. Args:
 ///               - the string "detach"
 ///               - buffer id
 ///             - on_lines: Called on linewise changes. Not called on buffer reload (`:checktime`,

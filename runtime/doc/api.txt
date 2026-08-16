@@ -391,7 +391,8 @@ was changed. The parameters received are ("changedtick", {buf}, {changedtick}).
 
                                                         *api-lua-detach*
 In-process Lua callbacks can detach by returning `true`. This will detach all
-callbacks attached with the same |nvim_buf_attach()| call.
+callbacks attached with the same |nvim_buf_attach()| call without invoking the
+"on_detach" callback.
 
 
 ==============================================================================
@@ -2402,7 +2403,9 @@ nvim_buf_attach({buf}, {send_buffer}, {opts})              *nvim_buf_attach()*
                          • the string "changedtick"
                          • buffer id
                          • b:changedtick
-                       • on_detach: Called on detach. Args:
+                       • on_detach: Called when the buffer is unloaded or
+                         deleted. Not called when a callback returns a
+                         |lua-truthy| value to detach. Args:
                          • the string "detach"
                          • buffer id
                        • on_lines: Called on linewise changes. Not called on
