@@ -2958,6 +2958,7 @@ vim.fs.slug({path}, {opts})                                    *vim.fs.slug()*
     • A hash of the normalized input is appended to prevent collisions.
     • Unsafe chars are replaced with "-".
     • `$HOME` is replaced with "~".
+    • URIs (`scheme://...`) are prefixed with "=uri-{scheme}-".
     • UNC paths (Windows) are prefixed with "=unc-".
     • If `opts.maxlen` is exceeded, the result will be truncated to
       `{head}~~~{tail}-{hash8}`.
@@ -2969,6 +2970,7 @@ vim.fs.slug({path}, {opts})                                    *vim.fs.slug()*
         vim.print(vim.fs.slug('C:/src/project/main.c'))      --> "C--src-project-main.c-{hash}"
         vim.print(vim.fs.slug(vim.fn.expand('~/file.txt')))  --> "~-file.txt-{hash}"
         vim.print(vim.fs.slug('---'))                        --> "=special-{hash}"
+        vim.print(vim.fs.slug('term://foo/bar//123:bash'))   --> "=uri-term-foo-bar-123-bash-{hash}"
         vim.print(vim.fs.slug(('/a/very/long/path'):rep(10) .. '/file.txt', { maxlen = 60 }))
            --> "a-very-long-~~~-path-a-very-long-path-file.txt-{hash}"
 <
