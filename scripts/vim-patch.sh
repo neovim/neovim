@@ -1014,8 +1014,8 @@ is_na_patch() {
           '-IEVENT_TERMINALWINOPEN' \
           '-I^#\s*include\s+<proto/' \
           '-I^\s+\{"(popup|prop|sound)_[_a-z]+",.*f_(popup|prop|sound)_[_a-z]+},$' \
-          '-I^\s*(static)?\svoid$' \
-          '-I^static\svoid\s.+\(.+\);$' \
+          '-I^\s*(static)?\s(char_u|hashtab_T|int|void)( \*)?$' \
+          '-I^static\s(char_u|hashtab_T|int|void)\s\*?[^*]+\(.+\);$' \
           '-I#\s*define.*ex_ni$' \
           '-I[_.>]sc_version = ' \
           '-I[_.>]uf_script_ctx_version = ' \
