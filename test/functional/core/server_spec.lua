@@ -452,11 +452,16 @@ it(':restart! works in headless server (no UI)', function()
 
   local nvim0 = clear()
   local server_pipe = n.new_pipename()
+  local dir = vim.fs.normalize(t.tmpname(false))
+  local subdir = dir .. '/subdir'
+  mkdir(dir)
+  mkdir(subdir)
 
   finally(function()
     n.expect_exit(n.command, 'qall!')
     nvim0:close()
     n.set_session(nil)
+    rmdir(dir)
   end)
 
   fn.jobstart({
@@ -473,11 +478,17 @@ it(':restart! works in headless server (no UI)', function()
   end)
   n.set_session(n.connect(server_pipe))
 
+  api.nvim_set_current_dir(dir)
+  n.command('bcd ' .. fn.fnameescape(subdir))
+  eq(subdir, fn.getcwd())
+  eq(dir, fn.getcwd(-1, -1, -1))
+
   n.expect_exit(n.command, 'restart!')
   n.set_session(n.connect(server_pipe))
   eq(1, api.nvim_get_vvar('vim_did_enter'))
   eq('restart!', api.nvim_get_vvar('startreason'))
   eq('restart!', n.eval('g:early_startreason'))
+  eq(dir, fn.getcwd())
 
   -- TODO: [command] is currently not executed without UI
   -- n.expect_exit(n.command, 'restart! lua _G.new_server = 1')
