@@ -79,13 +79,13 @@ describe('treesitter bundled parser: diff', function()
     ]])
   end)
 
-  it('drops the backgrounds when the specialized groups are cleared', function()
+  it('drops the backgrounds when the specializations are linked away', function()
     local screen = Screen.new(44, 4)
     screen:add_extra_attr_ids({
       [100] = { foreground = Screen.colors.SeaGreen4 },
     })
-    command('hi clear @diff.plus.diff')
-    command('hi clear @diff.minus.diff')
+    command('hi! link @diff.plus.diff @diff.plus')
+    command('hi! link @diff.minus.diff @diff.minus')
     hunk()
 
     screen:expect([[

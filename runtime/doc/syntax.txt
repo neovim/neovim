@@ -244,8 +244,12 @@ Todo		anything that needs extra attention; mostly the
 		keywords TODO FIXME and XXX
 
 Added		added line in a diff
+AddedLine	background of an added line in a diff, so that its text stays
+		readable when highlighted by an injected language
 Changed		changed line in a diff
 Removed		removed line in a diff
+RemovedLine	background of a removed line in a diff, so that its text stays
+		readable when highlighted by an injected language
 
 Note that highlight group names are not case sensitive.  "String" and "string"
 can be used for the same group.
