@@ -160,56 +160,55 @@ CmdSpec atom_cmd_spec(const cmdarg_T *cap)
   };
 }
 
-/// Composes "redo keys" (allocated) from `spec`, as prep_redo() + "." would: for commands
-/// that never prep (motions, "u", "zz"). NULL during a cascade.
-static char *atom_compose_keys(CmdSpec spec)
+/// Composes a CmdSpec into `redo_keys` format.
+/// @return Allocated key sequence.
+static char *atom_redo_keys(CmdSpec spec)
 {
-  StringBuilder sb = KV_INITIAL_VALUE;
-  redo_prefix(&spec, &sb, false);
-  redo_chars(&spec, &sb, false);
-  if (sb.size == 0) {
-    return NULL;
-  }
-  assert(sb.items != NULL);  // Coverity false-positive (already checked `size` above).
-  kv_push(sb, NUL);
-  return sb.items;
+  StringBuilder buf = KV_INITIAL_VALUE;
+  redo_prefix(&spec, &buf, false);
+  redo_chars(&spec, &buf, false);
+  char *keys = sb_take_string(&buf).data;
+  assert(keys != NULL);  // A spec with no chars/count/reg composes to nothing.
+  return keys;
 }
 
-/// The pending change as a CmdAtom: the composed keysequence plus the structured fields.
-/// Caller owns `keys`.
+/// Gets the pending change as a CmdAtom. Caller owns `keys`.
 static CmdAtom atom_from_redo(CmdAtomType type)
 {
   String keys = redo_keys();
   return (CmdAtom){ .type = type, .spec = redo_spec(), .keys = keys.data };
 }
 
-/// Builds a CmdAtom whose `keys` (atom_compose_keys()) and fields both come from `spec`.
+/// Gets a CmdAtom from a CmdSpec.
 static CmdAtom atom_from_spec(CmdAtomType type, CmdSpec spec)
 {
-  return (CmdAtom){ .type = type, .spec = spec, .keys = atom_compose_keys(spec) };
+  return (CmdAtom){ .type = type, .spec = spec, .keys = atom_redo_keys(spec) };
 }
 
-/// Builds the atom of a typed cmdline:
+/// Gets a typed cmdline as a CmdAtom.
 ///   ":cnext<CR>" => CmdAtom{ kAEx, keys=":cnext<NL>", text="cnext" }
-static CmdAtom atom_from_cmdline(CmdAtomType type, cmdarg_T *ca, const char *line)
+static CmdAtom atom_from_cmdline(CmdAtomType type, cmdarg_T *ca, const char *cmdline)
 {
   StringBuilder sb = KV_INITIAL_VALUE;
   if (type != kAEx && ca->count0 != 0) {
     kv_printf(sb, "%d", ca->count0);
   }
   sb_add_char(&sb, ca->cmdchar);
-  sb_add_lit(&sb, line, -1);
+  sb_add_lit(&sb, cmdline, -1);
   sb_add_char(&sb, NL);
   kv_push(sb, NUL);
   return (CmdAtom){
     .type = type,
     .spec = { .count = ca->count0, .cmd = ca->cmdchar },
     .keys = sb.items,
-    .text = xstrdup(line),
+    .text = xstrdup(cmdline),
   };
 }
 
-/// Concatenates the keys of multiple atoms into one (allocated) string.
+/// Joins the `keys` of a list of (composite) subatoms. This is a plain concat (the `keys` field of
+/// each subatom is assumed to be in `redo_keys` format).
+///
+/// @return Allocated keysequence, "" if `atoms` is empty (never NULL).
 static String atoms_concat_keys(CmdAtomVec atoms)
 {
   StringBuilder keys = KV_INITIAL_VALUE;
@@ -755,11 +754,7 @@ static void atom_capture_visual(cmdarg_T *ca, const CmdBaseline *old)
   // Omit `regname`, it would prefix '"x' to every command captured after a register spec.
   CmdSpec spec = { .count = ca->count0, .cmd = ca->cmdchar,
                    .cmd2 = operand ? NUL : ca->nchar, .arg = operand ? ca->nchar : NUL };
-  char *keys = atom_compose_keys(spec);
-  if (keys == NULL) {
-    return;
-  }
-  kv_push(vatom.atoms, ((CmdAtom){ .type = kAMotion, .spec = spec, .keys = keys }));
+  kv_push(vatom.atoms, ((CmdAtom){ .type = kAMotion, .spec = spec, .keys = atom_redo_keys(spec) }));
 }
 
 /// Ends the pending visual atom, appends `suffix`, and stages it. Or discards it if selection is
@@ -830,7 +825,7 @@ static bool atom_visual_end_suffix(char *suffix, const CmdSpec *spec, bool redoa
 /// @return  True if the redo was prepped.
 bool atom_visual_end(CmdSpec spec, bool redoable)
 {
-  return atom_visual_end_suffix(atom_compose_keys(spec), &spec, redoable);
+  return atom_visual_end_suffix(atom_redo_keys(spec), &spec, redoable);
 }
 
 /// Captures a pending operator's atom before it executes. Prep-exempt commands (yank without cpo-y,

@@ -32,8 +32,8 @@ typedef struct {
 /// Structured decomposition of a normal-mode command, used two ways:
 /// - Capture (prep_redo()): the command appends its own bytes to the redo body; only `regname`
 ///   and `count` are functional (the `["x][count]` prefix), the rest is CmdAtom metadata.
-/// - Reconstruction (atom_from_spec()): a command that never preps ("u", motions) has no body, so
-///   atom_compose_keys() composes the whole keysequence from the spec.
+/// - Reconstruction (atom_from_spec()): a "non-prepped" command ("u", motions) has no body, so
+///   atom_redo_keys() composes the keysequence fully from the spec.
 typedef struct {
   long count;        ///< Effective count (0 = none)
   int regname;       ///< Register (`"x` prefix; 0 = none)
@@ -45,10 +45,10 @@ typedef struct {
   int arg;           ///< Operand ("fx" => 'x', "ma" => 'a'; 0 = none)
 } CmdSpec;
 
-/// The last change: structured fields plus the command body, filled as the command executes
-/// (redo_append_xx()). "." (start_redo()) composes the `["x][count]` prefix around the body.
+/// The last change. Updated as the command executes (redo_append_xx). redo_keys() treats `keys` as
+/// the command "body", but gets the "prefix" `["x][count]` from `spec`.
 typedef struct {
-  CmdSpec spec;        ///< Structured command fields.
+  CmdSpec spec;        ///< "Metadata", except reg/count provide the "prefix".
   StringBuilder keys;  ///< Cmd body. Perf: StringBuilder (not buffheader_T) => fewer allocs/copies.
 } RedoBuf;
 
