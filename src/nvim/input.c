@@ -293,6 +293,7 @@ static String redo_compose(RedoBuf *r)
   if (buf.size == 0) {
     return (String)STRING_INIT;
   }
+  assert(buf.items != NULL);  // Coverity false-positive (already checked `size` above).
   kv_push(buf, NUL);
   return cbuf_as_string(buf.items, buf.size - 1);
 }
@@ -865,6 +866,7 @@ int start_redo(int count, bool old_redo)
   }
   StringBuilder prefix = KV_INITIAL_VALUE;
   redo_prefix(&spec, &prefix, true);
+  // coverity[var_deref_model] `items` is NULL only when size=0, which add_buff() ignores.
   add_buff(&readbuf2, prefix.items, (ptrdiff_t)prefix.size);
   kv_destroy(prefix);
   if (spec.regname == '=') {

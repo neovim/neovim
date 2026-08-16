@@ -170,6 +170,7 @@ static char *atom_compose_keys(CmdSpec spec)
   if (sb.size == 0) {
     return NULL;
   }
+  assert(sb.items != NULL);  // Coverity false-positive (already checked `size` above).
   kv_push(sb, NUL);
   return sb.items;
 }

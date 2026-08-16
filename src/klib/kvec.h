@@ -108,6 +108,8 @@
   if (len > 0) { \
     kv_ensure_space(v, len); \
     assert((v).items); \
+    /* kv_roundup32() only ORs bits in, so kv_ensure_space() leaves capacity >= size+len. */ \
+    /* coverity[overrun-buffer-arg] */ \
     memcpy((v).items + (v).size, data, sizeof((v).items[0]) * len); \
     (v).size = (v).size + len; \
   }
