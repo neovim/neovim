@@ -238,3 +238,69 @@ describe("opening file when 'undofile' is on", function()
     n.assert_alive()
   end)
 end)
+
+describe('undo file', function()
+  before_each(clear)
+
+  --- Offset of the first undo entry in `blob`: magic bytes 0xf5 0x18, followed by 4-byte ue_top,
+  --- ue_bot, ue_lcount, ue_size.
+  local function find_entry(blob)
+    for i = 1, #blob - 18 do
+      if blob:byte(i) == 0xf5 and blob:byte(i + 1) == 0x18 then
+        local ok = true
+        -- This expects the ue_xx values to be small, so other data (e.g. a timestamp) containing
+        -- the magic bytes is not mistaken for an entry.
+        for field = 0, 3 do
+          local off = i + 2 + field * 4
+          ok = ok
+            and blob:byte(off) == 0
+            and blob:byte(off + 1) == 0
+            and blob:byte(off + 2) == 0
+            and blob:byte(off + 3) <= 8
+        end
+        if ok then
+          return i
+        end
+      end
+    end
+  end
+
+  -- If a corrupted entry is not rejected on load, it would be linked into the undo tree, then
+  -- u_undoredo() acts on its line numbers and u_freeentry() walks ue_array.
+  it('rejects corrupted entry (E825)', function()
+    local txt = t.tmpname()
+    local undo = txt .. '.undo'
+
+    t.write_file(txt, 'one\ntwo\n')
+    command('edit ' .. txt)
+    command('set undolevels=100')
+    command("call setline(1, ['three', 'four'])")
+    command('write')
+    command('wundo! ' .. undo)
+
+    local blob = assert(t.read_file(undo))
+    local entry = assert(find_entry(blob))
+
+    --- Writes `bytes` over `blob` at `pos` and reads it via :rundo.
+    local function rundo(pos, bytes)
+      t.write_file(undo, blob:sub(1, pos - 1) .. bytes .. blob:sub(pos + #bytes))
+      return pcall_err(command, 'rundo ' .. undo)
+    end
+
+    -- ue_size larger than the file can hold.
+    for _, bad in ipairs({ '\127\255\255\240', '\255\255\255\255' }) do
+      eq(
+        ('Vim(rundo):E825: Corrupted undo file (entry size): %s'):format(undo),
+        rundo(entry + 14, bad)
+      )
+    end
+
+    -- Negative ue_top/ue_bot/ue_lcount.
+    for field = 0, 2 do
+      eq(
+        ('Vim(rundo):E825: Corrupted undo file (entry lnum): %s'):format(undo),
+        rundo(entry + 2 + field * 4, '\255\255\255\251')
+      )
+    end
+  end)
+end)
