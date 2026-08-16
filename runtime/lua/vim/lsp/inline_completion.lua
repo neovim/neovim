@@ -247,6 +247,12 @@ function Completor:show(hint)
   col = col + skip - 1
 
   local virt_lines = { unpack(lines, 2) }
+  for i, s in ipairs(virt_lines) do
+    if #s == 1 and s[1][1] == '' then
+      virt_lines[i] = {}
+    end
+  end
+
   api.nvim_buf_set_extmark(self.bufnr, namespace, row, col, {
     virt_text = virt_text,
     virt_lines = virt_lines,
