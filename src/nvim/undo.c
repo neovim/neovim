@@ -3240,6 +3240,10 @@ void f_undotree(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 ///
 /// The mark is then left to mark_adjust(), so undo shifts it with its text, like other marks not
 /// touched by the change.
+///
+/// TODO(justinmk): could drop this and use a more "architectural" approach: compare
+/// `fmark_T.timestamp` vs `uh_time` and skip the restore if the mark is newer. But that requires
+/// changing the timestamps to nanosecond precision.
 void u_update_named_mark(buf_T *buf, int idx)
 {
   u_header_T *uhp = buf->b_u_curhead != NULL ? buf->b_u_curhead : buf->b_u_newhead;
