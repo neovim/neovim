@@ -190,7 +190,8 @@ static CmdAtom atom_from_spec(CmdAtomType type, CmdSpec spec)
 static CmdAtom atom_from_cmdline(CmdAtomType type, cmdarg_T *ca, const char *cmdline)
 {
   StringBuilder sb = KV_INITIAL_VALUE;
-  if (type != kAEx && ca->count0 != 0) {
+  if (ca->cmdchar != ':' && ca->count0 != 0) {
+    // Not for ":", its count already prefilled (":.,.+1"). But "<Cmd>" needs count in the keys.
     kv_printf(sb, "%d", ca->count0);
   }
   sb_add_char(&sb, ca->cmdchar);
@@ -525,9 +526,10 @@ unsigned atom_key_class(int cmd, int arg)
   switch (cmd) {
   case K_EVENT:
   case K_IGNORE:
+    return kKeyOpaque | kKeySynthetic;
   case K_COMMAND:
   case K_LUA:
-    return kKeySynthetic;
+    return kKeyOpaque;
   case '/':
   case '?':
   case ':':
@@ -591,12 +593,12 @@ unsigned atom_key_class(int cmd, int arg)
   }
 }
 
-/// Captures an accepted ":" cmdline payload.
+/// Captures an accepted ":" or "<Cmd>" cmdline payload.
 void atom_cmdline_set(int firstc, const char *line, size_t len)
 {
   // Not for nested cmdlines opened by a command's own execution (":normal", macros): they would
   // overwrite the user command's payload, e.g. `:exe "normal! :echo 1\r"`.
-  if (!atom_is_user_cmd() || firstc != ':') {
+  if (!atom_is_user_cmd() || (firstc != ':' && firstc != K_COMMAND)) {
     return;
   }
   xfree(curcmd.cmdline);
@@ -977,11 +979,12 @@ static void atom_capture_cmd(cmdarg_T *ca, const CmdBaseline *old, bool toplevel
   // so its operator can prep a redo: ":normal! vjd" is dot-repeatable.
   const bool user = atom_is_user_cmd();
   const unsigned keycls = atom_key_class(ca->cmdchar, ca->nchar);
-  // Synthetic commands (timers, RPC, plugin callbacks) are not user-input: one that changes
-  // nothing is invisible; one that changes the buffer/selection voids the pending visual atom.
+  // Opaque cmd that changed nothing is invisible; one that changed the buffer/selection voids the
+  // pending visual atom (see `kKeyOpaque`).
   //
   // XXX: This "state diff" is ad hoc: a synthetic change to unobserved state (e.g. only w_curswant)
   // counts as no-op. Extend this (or atom_key_class()) when such a case is reported...
+  bool opaque = (keycls & kKeyOpaque) != 0;
   bool synthetic = (keycls & kKeySynthetic) != 0;
   bool unchanged = curbuf == old->buf
                    && equalpos(old->pos, curwin->w_cursor)
@@ -990,7 +993,7 @@ static void atom_capture_cmd(cmdarg_T *ca, const CmdBaseline *old, bool toplevel
                    && (!Visual.active
                        || (equalpos(old->visual.start, Visual.start)
                            && old->visual.mode == Visual.mode));
-  if (synthetic && unchanged) {
+  if (opaque && unchanged) {
     return;
   }
   bool ins_cascaded = user && curcmd.ins_cascaded;
@@ -1074,8 +1077,8 @@ static void atom_capture_cmd(cmdarg_T *ca, const CmdBaseline *old, bool toplevel
       CmdAtom atom = atom_from_cmdline(kAMotion, ca, ca->searchbuf);
       atom.changed = changed;
       atom_push(false, atom);
-    } else if (curcmd.cmdline != NULL && ca->cmdchar == ':') {
-      // Same for ":cnext<CR>".
+    } else if (curcmd.cmdline != NULL && (ca->cmdchar == ':' || ca->cmdchar == K_COMMAND)) {
+      // Same for ":cnext<CR>" or "<Cmd>cnext<CR>".
       CmdAtom atom = atom_from_cmdline(kAEx, ca, curcmd.cmdline);
       atom.changed = changed;
       atom_push(false, atom);

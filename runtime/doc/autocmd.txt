@@ -471,7 +471,7 @@ CmdAtom				After a user action (an input "atom"): any
 				  |nvim_feedkeys()| (mode "n") to replay. Use
 				  |keytrans()| to key-notation. Empty for
 				  a mapping whose commands have no replayable
-				  keys (|<Cmd>|/Lua commands).
+				  keys (Lua callbacks).
 				- lhs: LHS (user input). Raw bytes, like `keys`.
 				- motionforce |forced-motion|: "v", "V", or
 				  "<C-V>" (|key-notation|).
@@ -486,6 +486,7 @@ CmdAtom				After a user action (an input "atom"): any
 				  Literal text, not key encoding.  Examples:
 				    - typed "iab<Esc>" → text="ab"
 				    - typed ":cnext<CR>" → text="cnext"
+				    - typed "<Cmd>cnext<CR>" → text="cnext"
 				    - typed "iab<Left>c<Esc>" → text="c"
 				- type: "command", "ex", "insert", "jump",
 				  "mapping", "motion", "mouse", "operator",

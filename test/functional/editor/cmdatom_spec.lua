@@ -105,7 +105,7 @@ describe('CmdAtom', function()
       pick(atom_last(), 'type', 'lhs', 'keys', 'changed')
     )
     -- An empty-keys mapping that DOES edit still reports it: `changed` is
-    -- the only informative payload of a <Cmd>/Lua-callback edit.
+    -- the only informative payload of a Lua-callback edit.
     n.exec_lua([[
       vim.keymap.set('n', ',e', function()
         vim.api.nvim_buf_set_lines(0, 0, 0, false, { 'NEW' })
@@ -113,6 +113,32 @@ describe('CmdAtom', function()
     ]])
     feed(',e')
     eq({ keys = '', changed = true }, pick(atom_last(), 'keys', 'changed'))
+
+    -- "<Cmd>" is opaque too, but unlike a Lua callback its command is text (like a ":" mapping).
+    command('nnoremap ,c <Cmd>call setline(1, "N" . v:count)<CR>')
+    feed('3,c')
+    local cmdev = atom_last()
+    eq({
+      type = 'ex',
+      lhs = ',c',
+      keys = k('3<Cmd>call setline(1, "N" . v:count)<NL>'),
+      text = 'call setline(1, "N" . v:count)',
+      count = 3,
+      changed = true,
+    }, pick(cmdev, 'type', 'lhs', 'keys', 'text', 'count', 'changed'))
+    -- Those keys replay: the count must survive, since "<Cmd>" reads v:count.
+    eq('N3', fn.getline(1))
+    fn.setline(1, 'reset')
+    n.exec_lua(([[vim.api.nvim_feedkeys(%q, 'nx', false)]]):format(cmdev.keys))
+    eq('N3', fn.getline(1))
+
+    -- Opaque key that changes nothing is invisible: mid-selection it must not void the pending
+    -- visual atom, which would void its per-cursor extents.
+    command('vnoremap ,n <Cmd>call execute("")<CR>')
+    fn.setline(1, { 'aaa bbb' })
+    feed('gg0viw,nd')
+    eq(' bbb', fn.getline(1))
+    eq({ type = 'visual', keys = 'viwd' }, pick(atom_last(), 'type', 'keys'))
   end)
 
   it('motions, search, Ex emit without an edit', function()

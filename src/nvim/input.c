@@ -3430,6 +3430,9 @@ char *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
 
   if (aborted) {
     ga_clear(&line_ga);
+  } else if (promptc == ':') {
+    // Executing (do_cmdline()), not discarding (vim.on_key()): capture the payload.
+    atom_cmdline_set(K_COMMAND, line_ga.ga_data, (size_t)line_ga.ga_len);
   }
 
   return line_ga.ga_data;
