@@ -109,3 +109,40 @@ describe("ftplugin: Lua 'includeexpr'", function()
     command('cd -')
   end)
 end)
+
+describe('ftplugin: markdown respects g:markdown_fenced_languages', function()
+  before_each(function()
+    n.clear()
+    command('filetype plugin on')
+  end)
+
+  it('starts treesitter by default', function()
+    exec_lua([[vim.g.markdown_fenced_languages = nil]])
+    command('edit markdown-default.md')
+    eq(true, exec_lua([[return vim.b.ts_highlight ~= nil]]))
+  end)
+
+  it('uses classic syntax when g:markdown_fenced_languages is set', function()
+    exec_lua([[vim.g.markdown_fenced_languages = { 'csv' }]])
+    command('edit markdown-fenced.md')
+    eq(false, exec_lua([[return vim.b.ts_highlight ~= nil]]))
+  end)
+
+  it('highlights csv fences via classic syntax', function()
+    exec_lua([[vim.g.markdown_fenced_languages = { 'csv' }]])
+    command('syntax on')
+    local file = exec_lua([[
+      local f = vim.fn.tempname() .. '.md'
+      vim.fn.writefile({ '```csv', 'item,col1,col2', '```' }, f)
+      return f
+    ]])
+    command('edit ' .. file)
+    eq(
+      'csvCol0',
+      exec_lua([[
+        local id = vim.fn.synID(2, 1, 1)
+        return id ~= 0 and vim.fn.synIDattr(id, 'name') or ''
+      ]])
+    )
+  end)
+end)
