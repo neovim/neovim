@@ -1737,7 +1737,7 @@ static void prep_redo_cmd(cmdarg_T *cap)
 {
   // Composing chars: the operand's byte form is the composed string, not the single char.
   bool composing = cap->nchar_len > 0;
-  prep_redo(NULL, 0, composing, atom_cmd_spec(cap));
+  prep_redo(true, composing, atom_cmd_spec(cap));
   if (composing) {
     redo_append_str(cap->nchar_composing, -1);
   }
@@ -4584,8 +4584,8 @@ static void nv_replace(cmdarg_T *cap)
     // Give 'r' to edit(), to get the redo command right.
     invoke_edit(cap, true, 'r', false);
   } else {
-    prep_redo(NULL, 0, true, (CmdSpec){ .regname = cap->oap->regname, .count = cap->count1,
-                                        .cmd = 'r', .arg = cap->nchar });
+    prep_redo(true, true, (CmdSpec){ .regname = cap->oap->regname, .count = cap->count1,
+                                     .cmd = 'r', .arg = cap->nchar });
     if (had_ctrl_v != NUL) {
       redo_append_char(had_ctrl_v);
     }

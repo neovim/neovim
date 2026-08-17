@@ -625,8 +625,7 @@ void spell_suggest(int count)
     strcat(p, sug.su_badptr + stp->st_orglen);
 
     // For redo we use a change-word command.
-    redo_new((CmdSpec){ 0 });
-    redo_append_str(S_LEN("ciw"));
+    prep_redo(false, false, (CmdSpec){ .op = 'c', .cmd = 'i', .cmd2 = 'w' });
     redo_append_lit(p + c, stp->st_wordlen + sug.su_badlen - stp->st_orglen);
     redo_append_char(ESC);
 

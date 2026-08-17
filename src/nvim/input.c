@@ -591,31 +591,41 @@ void redo_free_all(void)
 }
 #endif
 
-/// Prepare for redo of any command: stores `spec` and appends its command chars (redo_chars()).
+/// Prepare for redo of any command: stores `spec` and appends its command chars.
 ///
-/// @param keys      Visual-mode command: the body opens with the selection's captured keys, so "."
-///                  re-executes the selection at cursor. Register/count compose into the body
-///                  after them (zeroed in the stored spec, so replay doesn't also prefix them).
-///                  NULL for a plain command: register/count stay spec fields.
+/// @param claim     Claim it as the atom. False if the atom is captured by other means
+///                  (insert-session entry/restart, "z=").
 /// @param arg_meta  Skip the `arg` byte: an interactively-typed operand may need CTRL-V quoting
 ///                  or its composing-char string form, which the caller appends itself.
-void prep_redo(const char *keys, size_t len, bool arg_meta, CmdSpec spec)
+void prep_redo(bool claim, bool arg_meta, CmdSpec spec)
+{
+  if (claim) {
+    atom_redo_set(spec);
+  }
+  redo_new(spec);
+  if (block_redo) {
+    return;
+  }
+  redo_chars(&spec, &redobuff.cur.keys, arg_meta);
+}
+
+/// Prepare for redo of a Visual-mode command: the body opens with `keys` (the captured selection),
+/// so "." re-executes the selection at cursor; the `["x][count]` prefix and command chars of
+/// `spec` compose into the body after them (zeroed in the stored spec, so replay doesn't also
+/// prefix them). Always claims (see prep_redo()).
+void prep_redo_visual(const char *keys, size_t len, CmdSpec spec)
 {
   CmdSpec stored = spec;
-  if (keys != NULL) {  // Visual-mode command.
-    stored.regname = 0;
-    stored.count = 0;
-  }
+  stored.regname = 0;
+  stored.count = 0;
   atom_redo_set(stored);
   redo_new(stored);
   if (block_redo) {
     return;
   }
-  if (keys != NULL) {  // Visual-mode command.
-    kv_concat_len(redobuff.cur.keys, keys, len);
-    redo_prefix(&spec, &redobuff.cur.keys, false);
-  }
-  redo_chars(&spec, &redobuff.cur.keys, arg_meta);
+  kv_concat_len(redobuff.cur.keys, keys, len);
+  redo_prefix(&spec, &redobuff.cur.keys, false);
+  redo_chars(&spec, &redobuff.cur.keys, false);
 }
 
 /// Discard the contents of the redo buffer and restore the previous redo

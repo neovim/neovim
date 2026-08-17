@@ -3256,16 +3256,22 @@ static bool is_ex_cmdchar(cmdarg_T *cap)
   return cap->cmdchar == ':' || cap->cmdchar == K_COMMAND;
 }
 
+/// True for an operator whose motion selects its own region (gn/gN/gv): the redo replays the
+/// motion's own keys ("dgn" re-searches, "dgv" reselects).
+bool op_self_select(const cmdarg_T *cap)
+{
+  return cap->cmdchar == 'g' && (cap->nchar == 'n' || cap->nchar == 'N' || cap->nchar == 'v');
+}
+
 /// How an Insert-entering operator (OP_CHANGE/OP_INSERT/OP_APPEND) was entered from Visual mode:
-/// decides the session's redo/publish handling (atom_ins_start()).
+/// decides the session's redo/capture handling (atom_ins_start()).
 static VisualIns op_ins_visual(oparg_T *oap, cmdarg_T *cap)
 {
   if (!oap->is_VIsual) {
     return kVInsNone;
   }
   if (is_ex_cmdchar(cap) || cap->cmdchar == K_LUA || oap->motion_force != NUL
-      || (cap->cmdchar == 'g'
-          && (cap->nchar == 'n' || cap->nchar == 'N' || cap->nchar == 'v'))) {
+      || op_self_select(cap)) {
     // The selection came from a self-selecting motion (gn/gN/gv, an omap running ":normal", a Lua
     // motion) or a forced-motion operator: the redo replays the motion's own keys instead.
     return kVInsOther;
@@ -3321,43 +3327,6 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     }
 
     atom_capture_op(oap, cap, redo_yank);
-    if (op_redoable(oap->op_type, redo_yank)
-        && ((!Visual.active || oap->motion_force)
-            // Also redo Operator-pending Visual mode mappings.
-            || is_ex_cmdchar(cap) || cap->cmdchar == K_LUA)
-        && cap->cmdchar != 'D') {
-      prep_redo(NULL, 0, false, (CmdSpec){
-        .regname = oap->regname, .count = cap->count0,
-        .op = get_op_char(oap->op_type), .op_extra = get_extra_op_char(oap->op_type),
-        .motion_force = oap->motion_force, .cmd = cap->cmdchar, .cmd2 = cap->nchar,
-      });
-      if (cap->cmdchar == '/' || cap->cmdchar == '?') {     // was a search
-        // If 'cpoptions' does not contain 'r', insert the search
-        // pattern to really repeat the same command.
-        if (vim_strchr(p_cpo, kCpoRedo) == NULL) {
-          redo_append_lit(cap->searchbuf, -1);
-        }
-        redo_append_str(S_LEN(NL_STR));
-      } else if (is_ex_cmdchar(cap)) {
-        // do_cmdline() has stored the first typed line in
-        // "repeat_cmdline".  When several lines are typed repeating
-        // won't be possible.
-        if (repeat_cmdline == NULL) {
-          redo_new((CmdSpec){ 0 });
-        } else {
-          if (cap->cmdchar == ':') {
-            redo_append_lit(repeat_cmdline, -1);
-          } else {
-            redo_append_spec(repeat_cmdline);
-          }
-          redo_append_str(S_LEN(NL_STR));
-          XFREE_CLEAR(repeat_cmdline);
-        }
-      } else if (cap->cmdchar == K_LUA) {
-        redo_append_num(repeat_luaref);
-        redo_append_str(S_LEN(NL_STR));
-      }
-    }
 
     if (Visual.active) {
       if (!gui_yank) {
@@ -3463,32 +3432,6 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
           }
         }
         Visual.resel.line_count = oap->line_count;
-      }
-
-      if (op_redoable(oap->op_type, redo_yank) && oap->motion_force == NUL) {
-        // Prepare for redoing. "gn"/"gN"/"gv" motions select their own region: the
-        // redo replays the motion itself ("dgn" re-searches, "dgv" reselects).
-        if (cap->cmdchar == 'g' && (cap->nchar == 'n'
-                                    || cap->nchar == 'N'
-                                    || cap->nchar == 'v')) {
-          prep_redo(NULL, 0, false, (CmdSpec){
-            .regname = oap->regname, .count = cap->count0,
-            .op = get_op_char(oap->op_type), .op_extra = get_extra_op_char(oap->op_type),
-            .motion_force = oap->motion_force, .cmd = cap->cmdchar, .cmd2 = cap->nchar,
-          });
-        } else if ((oap->op_type == OP_CHANGE || oap->op_type == OP_INSERT
-                    || oap->op_type == OP_APPEND)
-                   && !is_ex_cmdchar(cap) && cap->cmdchar != K_LUA) {
-          // Visual-entered Insert: redo body opens with the selection's captured keys; appends the
-          // op+text+<Esc>. Unreplayable (void) selection falls back to "1v" (fixed-size reselect).
-          // (Ex/Lua-motion selections were already prepped above, as the motion's keys.)
-          String v = atom_visual_span();
-          prep_redo(v.data != NULL ? v.data : "1v", v.data != NULL ? v.size : 2, false, (CmdSpec){
-            .regname = oap->regname,
-            .op = get_op_char(oap->op_type), .op_extra = get_extra_op_char(oap->op_type),
-          });
-          xfree(v.data);
-        }
       }
 
       // oap->inclusive defaults to true.
