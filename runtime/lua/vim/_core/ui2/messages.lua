@@ -597,7 +597,8 @@ local function cmd_on_key(key, typed)
   -- Check if window was entered and reopen with original config. A shown (but not entered)
   -- pager is dismissed instead; "g<" passes through to reopen and enter it.
   local can_enter = not api.nvim_get_mode().mode:match('[it]') and not pager_shown()
-  local enter = can_enter and (typed == '<CR>' or typed_g and (typed == '<lt>' or key == '<'))
+  local enter = can_enter
+      and (typed == ui.cfg.pager_char or typed_g and (typed == '<lt>' or key == '<'))
     or (typed:find('LeftMouse') and fn.getmousepos().winid == ui.wins.cmd)
   if enter then
     M.expand_msg('cmd', 'pager', true)

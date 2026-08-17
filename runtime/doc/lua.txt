@@ -6123,6 +6123,7 @@ To enable this feature (default opts shown): >lua
         pager = { -- Options related to message window.
           height = 0.999, -- Maximum height.
         },
+        pager_char = nil, -- Key checked after interactive messages.
       },
     })
 <
@@ -6145,5 +6146,9 @@ indicates the spilled lines. To see the full messages, do either:
 • ENTER immediately after interactive |:| cmdline shows a message and returns
   to |Normal-mode|.
 • |g<| at any time.
+
+If you'd like behavior similar to the old hit-enter prompt, pass
+`pager_char = "<CR>"` on the `cfg` table. When the pager is shown, hitting
+`<CR>` (in this example) will enter the pager.
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
