@@ -95,6 +95,9 @@
 \*HelpToc-mappings\*
 \*SafeStateAgain\*
 \*SigUSR1\*
+\*TerminalOpen\*
+\*TerminalWinOpen\*
+\*autocommand-events\*
 \*builtin-function-list\*
 \*emacs[_-]tags\*
 \*help-toc-install\*
