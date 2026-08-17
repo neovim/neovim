@@ -1,6 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
+local tt = require('test.functional.testterm')
 
 local describe, it, before_each, after_each, finally =
   t.describe, t.it, t.before_each, t.after_each, t.finally
@@ -465,5 +466,183 @@ describe(':write on terminal buffer', function()
       '=uri-term-foo-bar-123-bash-7fd6bb99.mpack',
       '=uri-term-foo-bar-123-echo-hello-2a907c66.mpack',
     }, files)
+  end)
+end)
+
+describe('nvim__term_capture()', function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = tt.setup_screen()
+  end)
+
+  it('returns an empty string for a non-terminal buffer', function()
+    command('enew')
+    eq('<>', '<' .. api.nvim__term_capture(0, 1, 0) .. '>')
+  end)
+
+  it('returns an error for an invalid buffer', function()
+    eq('Invalid buffer id: 999', pcall_err(api.nvim__term_capture, 999, 1, 0))
+  end)
+
+  it('fails while the alternate screen is active', function()
+    tt.enter_altscreen()
+    screen:expect([[
+                                                        |
+      ^                                                  |
+                                                        |*4
+      {5:-- TERMINAL --}                                    |
+    ]])
+    eq(
+      'Cannot capture terminal state while the alternate screen is active',
+      pcall_err(api.nvim__term_capture, 0, 1, 0)
+    )
+  end)
+
+  it('captures plain text and drops trailing empty screen lines', function()
+    tt.feed_data('foo')
+    screen:expect([[
+      tty ready                                         |
+      foo^                                               |
+                                                        |*4
+      {5:-- TERMINAL --}                                    |
+    ]])
+    eq('\27[0mtty ready\n\27[0mfoo\n\27[0m', api.nvim__term_capture(0, 1, 0))
+  end)
+
+  it('encodes SGR attributes and colors', function()
+    screen:set_default_attr_ids({
+      b = { bold = true },
+      i = { italic = true },
+      u = { underline = true },
+      uu = { underdouble = true },
+      uc = { undercurl = true },
+      r = { reverse = true },
+      s = { strikethrough = true },
+      fg = { foreground = 1 }, -- red
+      bg = { background = 2 }, -- green
+      mix = {
+        bold = true,
+        italic = true,
+        underline = true,
+        strikethrough = true,
+        foreground = 1, -- red
+        background = 2, -- green
+      },
+    })
+    tt.feed_data({
+      '\27[0m\27[1mbold\27[0m\27[2mdim\27[0m\27[3mitalic\27[0m\27[4munderline',
+      '\27[0m\27[21mdouble underline\27[0m\27[4:3mcurly underline',
+      '\27[0m\27[5mblink\27[0m\27[7mreverse\27[0m\27[8mconceal'
+        .. '\27[0m\27[9mstrikethrough\27[0m\27[53moverline',
+      '\27[0m\27[38;5;1mindexed foreground\27[0m\27[48;5;2mindexed background',
+      '\27[0m\27[38;2;10;20;30mRGB foreground\27[0m\27[48;2;10;20;30mRGB background'
+        .. '\27[0m\27[1;3;4;9;38;5;1;48;5;2mmix',
+    })
+    screen:expect([[
+      tty ready                                         |
+      {b:bold}dim{i:italic}{u:underline}                            |
+      {uu:double underline}{uc:curly underline}                   |
+      blink{r:reverse}conceal{s:strikethrough}overline          |
+      {fg:indexed foreground}{bg:indexed background}              |
+      RGB foregroundRGB background{mix:mix}^                   |
+      {b:-- TERMINAL --}                                    |
+    ]])
+    eq({
+      '\27[0mtty ready',
+      '\27[0;1mbold\27[0;2mdim\27[0;3mitalic\27[0;4munderline',
+      '\27[0;21mdouble underline\27[0;4:3mcurly underline',
+      '\27[0;5mblink\27[0;7mreverse\27[0;8mconceal' .. '\27[0;9mstrikethrough\27[0;53moverline',
+      '\27[0;38;5;1mindexed foreground\27[0;48;5;2mindexed background',
+      '\27[0;38;2;10;20;30mRGB foreground'
+        .. '\27[0;48;2;10;20;30mRGB background'
+        .. '\27[0;1;3;4;9;38;5;1;48;5;2mmix',
+      '\27[0m',
+    }, vim.split(api.nvim__term_capture(0, 1, 0), '\n', { plain = true }))
+  end)
+
+  it('captures wide chars without their padding cells', function()
+    tt.feed_data('测试')
+    screen:expect([[
+      tty ready                                         |
+      测试^                                              |
+                                                        |*4
+      {5:-- TERMINAL --}                                    |
+    ]])
+    eq('\27[0mtty ready\n\27[0m测试\n\27[0m', api.nvim__term_capture(0, 1, 0))
+  end)
+
+  it('preserves empty lines', function()
+    tt.feed_data('foo\n\n\nbar')
+    screen:expect([[
+      tty ready                                         |
+      foo                                               |
+                                                        |*2
+      bar^                                               |
+                                                        |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    eq(
+      '\27[0mtty ready\n\27[0mfoo\n\27[0m\n\27[0m\n\27[0mbar\n\27[0m',
+      api.nvim__term_capture(0, 1, 0)
+    )
+  end)
+
+  it('captures a line range as-is, without trimming empty lines', function()
+    tt.feed_data('foo\n\nbar')
+    screen:expect([[
+      tty ready                                         |
+      foo                                               |
+                                                        |
+      bar^                                               |
+                                                        |*2
+      {5:-- TERMINAL --}                                    |
+    ]])
+    eq('\27[0mfoo\n\27[0m\n\27[0m', api.nvim__term_capture(0, 2, 3))
+    eq('\27[0mbar\n\27[0m', api.nvim__term_capture(0, 4, 4))
+    -- Trailing empty lines inside the range are kept
+    eq('\27[0mfoo\n\27[0m\n\27[0mbar\n\27[0m\n\27[0m', api.nvim__term_capture(0, 2, 5))
+    -- `end = 0` clamps to the last non-empty line
+    eq('\27[0mfoo\n\27[0m\n\27[0mbar\n\27[0m', api.nvim__term_capture(0, 2, 0))
+  end)
+
+  it('captures scrollback before the visible screen', function()
+    tt.feed_data({
+      'line1',
+      'line2',
+      'line3',
+      'line4',
+      'line5',
+      'line6',
+      'line7',
+      'line8',
+    })
+    screen:expect([[
+      line3                                             |
+      line4                                             |
+      line5                                             |
+      line6                                             |
+      line7                                             |
+      line8^                                             |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    eq(9, api.nvim_buf_line_count(0)) -- 1 ("tty ready") + 8 (line1-8)
+
+    -- Everything (scrollback + visible screen)
+    local all = { '\27[0mtty ready' }
+    for i = 1, 8 do
+      table.insert(all, ('\27[0mline%d'):format(i))
+    end
+    eq(table.concat(all, '\n') .. '\n\27[0m', api.nvim__term_capture(0, 1, 0))
+
+    -- Scrollback only, screen only, and a range spanning the boundary
+    eq('\27[0mtty ready\n\27[0mline1\n\27[0mline2\n\27[0m', api.nvim__term_capture(0, 1, 3))
+    eq('\27[0mline2\n\27[0mline3\n\27[0m', api.nvim__term_capture(0, 3, 4))
+    local visible = {}
+    for i = 3, 8 do
+      table.insert(visible, ('\27[0mline%d'):format(i))
+    end
+    eq(table.concat(visible, '\n') .. '\n\27[0m', api.nvim__term_capture(0, 4, 0))
   end)
 end)
