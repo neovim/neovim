@@ -318,9 +318,6 @@ static const char *highlight_init_both[] = {
   "default link @diff.minus Removed",
   "default link @diff.delta Changed",
 
-  "default link @diff.plus.diff  AddedLine",
-  "default link @diff.minus.diff RemovedLine",
-
   "default link @tag         Tag",
   "default link @tag.builtin Special",
 
@@ -365,7 +362,6 @@ static const char *highlight_init_light[] = {
 
   // UI
   "Added                guifg=NvimDarkGreen                                  ctermfg=2",
-  "AddedLine                                 guibg=NvimLightGreen            ctermbg=2",
   "Changed              guifg=NvimDarkCyan                                   ctermfg=6",
   "ColorColumn                               guibg=NvimLightGrey4            cterm=reverse",
   "Conceal              guifg=NvimLightGrey4",
@@ -396,7 +392,6 @@ static const char *highlight_init_light[] = {
   "RedrawDebugComposed                       guibg=NvimLightGreen            ctermfg=15 ctermbg=2",
   "RedrawDebugRecompose                      guibg=NvimLightRed              ctermfg=15 ctermbg=1",
   "Removed              guifg=NvimDarkRed                                    ctermfg=1",
-  "RemovedLine                               guibg=NvimLightRed              ctermbg=1",
   "Search               guifg=NvimDarkGrey1  guibg=NvimLightYellow           ctermfg=15 ctermbg=3",
   "SignColumn           guifg=NvimLightGrey4",
   "SpellBad             guisp=NvimDarkRed    gui=undercurl                   cterm=undercurl",
@@ -442,6 +437,10 @@ static const char *highlight_init_light[] = {
 
   // Treesitter standard groups
   "@variable guifg=NvimDarkGrey2",
+
+  // Background for diff hunk lines, so injected syntax keeps its foreground.
+  "@diff.plus.diff  guibg=NvimLightGreen ctermbg=2",
+  "@diff.minus.diff guibg=NvimLightRed   ctermbg=1",
   NULL
 };
 
@@ -451,7 +450,6 @@ static const char *highlight_init_dark[] = {
 
   // UI
   "Added                guifg=NvimLightGreen                                ctermfg=10",
-  "AddedLine                                  guibg=NvimDarkGreen           ctermbg=10",
   "Changed              guifg=NvimLightCyan                                 ctermfg=14",
   "ColorColumn                                guibg=NvimDarkGrey4           cterm=reverse",
   "Conceal              guifg=NvimDarkGrey4",
@@ -482,7 +480,6 @@ static const char *highlight_init_dark[] = {
   "RedrawDebugComposed                        guibg=NvimDarkGreen           ctermfg=0 ctermbg=10",
   "RedrawDebugRecompose                       guibg=NvimDarkRed             ctermfg=0 ctermbg=9",
   "Removed              guifg=NvimLightRed                                  ctermfg=9",
-  "RemovedLine                                guibg=NvimDarkRed             ctermbg=9",
   "Search               guifg=NvimLightGrey1  guibg=NvimDarkYellow          ctermfg=0 ctermbg=11",
   "SignColumn           guifg=NvimDarkGrey4",
   "SpellBad             guisp=NvimLightRed    gui=undercurl                 cterm=undercurl",
@@ -528,6 +525,10 @@ static const char *highlight_init_dark[] = {
 
   // Treesitter standard groups
   "@variable guifg=NvimLightGrey2",
+
+  // Background for diff hunk lines, so injected syntax keeps its foreground.
+  "@diff.plus.diff  guibg=NvimDarkGreen ctermbg=10",
+  "@diff.minus.diff guibg=NvimDarkRed   ctermbg=9",
   NULL
 };
 

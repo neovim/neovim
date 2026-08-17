@@ -365,6 +365,11 @@ instance, to highlight comments differently per language: >vim
     hi @comment.lua guifg=DarkBlue
     hi link @comment.documentation.java String
 <
+`@diff.plus.diff` and `@diff.minus.diff` set only a background, so that
+injected code keeps its own foreground.  To disable this, clear the groups: >vim
+    hi clear @diff.plus.diff
+    hi clear @diff.minus.diff
+<
 The following is a list of standard captures used in queries for Nvim,
 highlighted according to the current colorscheme (use |:Inspect| on one to see
 the exact definition):
