@@ -6,8 +6,7 @@
 //
 // Every "user action" is an atom (emits CmdAtom event), but not every atom is "replayable".
 // - Replayable (cascade, dot-repeat) requires the full command grammar.
-// - No atoms for: mouse drag/release (TODO(justinmk)?), terminal-mode input, aborted operations,
-//   command fragments (counts, register prefixes).
+// - No atoms for: mouse drag/release (TODO(justinmk)?), terminal-mode input, aborted operations.
 
 #include <assert.h>
 #include <stdint.h>
@@ -41,9 +40,19 @@
 
 #include "input_cmdatom.c.generated.h"
 
+static bool mc_replaying(void)
+{
+  return false;
+}
+
+static void mc_vsel_refresh(void)
+{
+}
+
 CmdAtomVec g_atoms = KV_INITIAL_VALUE;
-/// Total atoms ever pushed: so atom_cmd_start() can detect if a cmd already pushed its own atom.
-static uint64_t atom_pushes = 0;
+/// Capture clock: ticks on any kind of capture (atom push, Visual subatom). Used to answer "was
+/// anything captured during this command (including its nested frames)?".
+static uint64_t atom_captures = 0;
 /// Suppresses atom pushes.
 static bool atom_suppressed = false;
 /// Mapping edited the buffer, or its insert-session cascaded: cascades as one unit, incl. motions.
@@ -59,17 +68,14 @@ static struct {
   varnumber_T tick;   ///< b:changedtick at start.
 } composite;
 
-/// Staged atom, will be pushed at command end.
-static struct {
-  CmdAtom atom;      ///< One is staged when `keys` is non-NULL.
-  varnumber_T tick;  ///< b:changedtick when the atom was staged
-} stage;
+/// The executing command's frame; its `parent` chain spans nested `normal_execute()`.
+static CmdFrame *cur_frame = NULL;
 
 /// State of a Visual composite atom.
 typedef enum {
   // Nothing to replay:
-  kVatomNone,      ///< No pending visual atom.
-  kVatomVoid,      ///< Visual keyseq was tainted/poisoned (by mouse, gv, …), not replayable.
+  kVatomNone,      ///< No pending Visual atom.
+  kVatomVoid,      ///< Not replayable: tainted/poisoned (by mouse, gv, …). But may emit CmdAtom.
 
   // Accumulating, replayable:
   kVatomTyped,     ///< User input (typed, or mapping/macro): emitted/cascaded at end.
@@ -138,7 +144,10 @@ void atom_free_all(void)
 {
   atoms_free(&g_atoms);
   kv_destroy(g_atoms);
-  atom_stage_drop();
+  // A mid-command exit (e.g. ":qa!" from an option-expr) leaves live frames with staged atoms.
+  for (CmdFrame *frame = cur_frame; frame != NULL; frame = frame->parent) {
+    atom_free(&frame->staged);
+  }
   atom_composite_abort();
   kv_destroy(composite.atoms);
   XFREE_CLEAR(curcmd.cmdline);
@@ -330,7 +339,16 @@ static void atom_emit(const CmdAtom *atom, const char *pending, bool cascade)
 void atom_push_raw(bool cascade, CmdAtom atom)
 {
   assert(atom.keys != NULL);
-  atom_pushes++;
+  if (Visual.active && atom_visual_replayable()) {
+    // Collecting the Visual composite: subatom of the pending visual atom.
+    if (vatom.state == kVatomTyped) {
+      // Not for kVatomFed: redo-prep must not mark the enclosing span as captured.
+      atom_captures++;
+    }
+    kv_push(vatom.atoms, atom);
+    return;
+  }
+  atom_captures++;
   if (atom.type == kAVisual && kv_size(atom.atoms) > 0) {
     // The completing operator is the only subatom that could have edited.
     CmdAtom *last = &kv_A(atom.atoms, kv_size(atom.atoms) - 1);
@@ -364,42 +382,36 @@ static void atom_push(bool cascade, CmdAtom atom)
 }
 
 /// Stages an atom built before its command executes (do_pending_operator() prep-exempt, Visual
-/// ops); will be pushed at command end, once `changed` is known.
+/// ops), in the command's frame; pushed at frame end, once `changed` is known.
 static void atom_stage_set(CmdAtom atom)
 {
-  assert(!atom_staged());  // If this happens, the stage may need to become a stack...
-  atom_stage_drop();
+  assert(cur_frame != NULL);
+  assert(!atom_staged());  // One stage per frame: a second would discard a captured command.
+  atom_free(&cur_frame->staged);
   if (atom_blocked()) {
     // Now, not at flush: drop the atom of an internal operator (atom_suppress()).
     atom_free(&atom);
     return;
   }
   assert(atom.keys != NULL);
-  stage.atom = atom;
-  stage.tick = buf_get_changedtick(curbuf);
+  cur_frame->staged = atom;
 }
 
-/// True if an atom is staged for the current command.
+/// True if an atom is staged for the current command (frame).
 static bool atom_staged(void)
 {
-  return stage.atom.keys != NULL;
+  return cur_frame != NULL && cur_frame->staged.keys != NULL;
 }
 
-/// Discards the staged atom.
-static void atom_stage_drop(void)
+/// Pushes the frame's staged atom (no-op if none).
+static void atom_stage_flush(CmdFrame *frame)
 {
-  atom_free(&stage.atom);  // `keys=NULL` means "nothing staged".
-}
-
-/// Pushes the staged atom (no-op if none).
-static void atom_stage_flush(void)
-{
-  if (!atom_staged()) {
+  if (frame->staged.keys == NULL) {
     return;
   }
-  stage.atom.changed = buf_get_changedtick(curbuf) != stage.tick;
-  atom_push(true, stage.atom);  // Staged commands are always edits (cascadable).
-  stage.atom = (CmdAtom){ 0 };
+  frame->staged.changed = buf_get_changedtick(curbuf) != frame->tick;
+  atom_push(true, frame->staged);  // Staged commands are always edits (cascadable).
+  frame->staged = (CmdAtom){ 0 };
 }
 
 /// Queues an LHS-replay atom: a mapping that edited invisibly (:normal/:call, "ds'") re-runs
@@ -498,10 +510,10 @@ void atom_suppress(bool suppress)
   atom_suppressed = suppress;
 }
 
-/// Block atom pushes if: cascade in-progress, internal op is executing, or vatom is accumulating.
+/// Block atom pushes if: cascade in-progress, internal op is executing, or vatom is voided.
 static bool atom_blocked(void)
 {
-  return atom_suppressed || (vatom.state != kVatomNone && Visual.active);
+  return mc_replaying() || atom_suppressed || (vatom.state == kVatomVoid && Visual.active);
 }
 
 /// Decides if the command is capturable.
@@ -725,42 +737,6 @@ String atom_visual_span(void)
     return (String)STRING_INIT;
   }
   return atoms_concat_keys(vatom.atoms);
-}
-
-/// Captures a typed Visual-mode command into the pending visual atom (vatom): one subatom of
-/// the accumulating "viwee"-style keysequence.
-static void atom_capture_visual(cmdarg_T *ca, const CmdBaseline *old)
-{
-  if (!atom_visual_replayable()) {
-    return;
-  }
-  unsigned keycls = atom_key_class(ca->cmdchar, ca->nchar);
-  if (Visual.select || ca->cmdchar >= 0x100
-      || (keycls & (kKeyPayload | kKeyScrollMove)) != 0
-      || (ca->cmdchar == 'g' && ca->nchar == 'v')) {
-    // Not replayable: mouse/special keys, motions with an interactively-typed payload, Select mode,
-    // "gv" (an absolute region), scrolling that moves the cursor (viewport-dependent extents).
-    vatom.state = kVatomVoid;
-    return;
-  }
-  if ((keycls & kKeyScrollView) != 0) {
-    // A viewport scroll (C-E/C-Y) does not change the selection, UNLESS it dragged the cursor along
-    // (viewport edge, 'scrolloff'), which moved the selection end.
-    if (!equalpos(old->pos, curwin->w_cursor)) {
-      vatom.state = kVatomVoid;
-    }
-    return;
-  }
-  if (ca->cmdchar == 'Q' || ca->cmdchar == 'q' || ca->cmdchar == '"') {
-    // Skip: recording/replay commands are meta (not part of the edit); a register spec ('"x') is
-    // re-added by the operator that ends the selection (redo_prefix()).
-    return;
-  }
-  bool operand = nv_nchar_is_arg(ca->cmdchar);
-  // Omit `regname`, it would prefix '"x' to every command captured after a register spec.
-  CmdSpec spec = { .count = ca->count0, .cmd = ca->cmdchar,
-                   .cmd2 = operand ? NUL : ca->nchar, .arg = operand ? ca->nchar : NUL };
-  kv_push(vatom.atoms, ((CmdAtom){ .type = kAMotion, .spec = spec, .keys = atom_redo_keys(spec) }));
 }
 
 /// Ends the pending visual atom, appends `suffix`, and stages it. Or discards it if selection is
@@ -1005,37 +981,37 @@ static void atom_ins_push(const InsSession *session, bool cascade)
 }
 
 /// Samples the pre-command state at normal_execute() entry; atom_cmd_end() diffs against it to
-/// classify the command (motion, Visual-mode transition, edit).
-void atom_cmd_start(CmdBaseline *old)
+/// classify the command (motion, Visual-mode transition, edit). Pushes the frame (`cur_frame`).
+void atom_cmd_start(CmdFrame *old)
 {
   old->pos = curwin->w_cursor;
   old->buf = curbuf;
   old->tick = buf_get_changedtick(curbuf);
   old->visual = Visual;
   old->keytyped = KeyTyped;
-  old->pushes = atom_pushes;
+  old->captures = atom_captures;
   // Sampled: "q=" toggled DURING a command must not apply to it retroactively.
   old->follow = false;
   old->consumers = atom_buf_has_consumers();
   // Diffed at command end: detects a register-write (yank).
   old->reg_ts = old->consumers ? reg_max_ts(true) : 0;
-  old->staged = atom_staged();
+  old->staged = (CmdAtom){ 0 };
+  old->parent = cur_frame;
+  cur_frame = old;
   curcmd.op_global = false;
   atom_redo_reset();
 }
 
-/// Captures the typed command's atom: in Visual mode into `vatom`, else one atom per command.
+/// Captures the typed command's atom: one atom per command, produced from the CmdFrame diff and
+/// routed by atom_push_raw() (emit, or collect as a mapping/Visual subatom).
 ///
 /// Skipped for a command that stuffed keys ("x" stuffs "dl": its resolution is the atom), or that
 /// already captured its own atom (do_pending_operator(), insert spans).
-static void atom_capture_cmd(cmdarg_T *ca, const CmdBaseline *old, bool toplevel)
+static void atom_capture_cmd(cmdarg_T *ca, const CmdFrame *old, bool toplevel)
 {
-  // Not atom_blocked(): Visual capture must run while the vatom accumulates.
-  if (atom_suppressed) {
+  if (mc_replaying() || atom_suppressed) {
     return;
   }
-  // Non-user input (":normal", scripted macro) pushes no atoms, but still accumulates the vatom,
-  // so its operator can prep a redo: ":normal! vjd" is dot-repeatable.
   const bool user = atom_is_user_cmd();
   const unsigned keycls = atom_key_class(ca->cmdchar, ca->nchar);
   // Opaque cmd that changed nothing is invisible; one that changed the buffer/selection voids the
@@ -1068,13 +1044,25 @@ static void atom_capture_cmd(cmdarg_T *ca, const CmdBaseline *old, bool toplevel
            && buf_get_changedtick(curbuf) != old->tick) || ins_cascaded)) {
     map_edit = true;
   }
+  bool vis = false;
   if (Visual.active) {
     if (!old->visual.active) {
       atom_visual_reset();
       // Decided once, at session start.
       vatom.state = (old->keytyped || atom_composite_active()) ? kVatomTyped : kVatomFed;
     }
-    atom_capture_visual(ca, old);
+    // Collecting the Visual composite: gated on the session (not atom_capturable()), so fed
+    // selections (":normal! vjd") still accumulate for redo-prep.
+    vis = atom_visual_replayable();
+    if (vis && (Visual.select || (ca->cmdchar == 'g' && ca->nchar == 'v'))) {
+      // Not replayable: Select-mode input; "gv" (absolute region).
+      vatom.state = kVatomVoid;
+      vis = false;
+    }
+    if (vis && (ca->cmdchar == 'Q' || ca->cmdchar == 'q')) {
+      // Recording/replay commands are meta (not part of the edit): skip, no void.
+      vis = false;
+    }
   } else if (old->visual.active) {
     if (user && old->follow && atom_visual_replayable() && kv_size(vatom.atoms) > 0) {
       // Follow-motion ("q="): a selection abandoned without an operator (<Esc>, "v" toggle) still
@@ -1084,10 +1072,17 @@ static void atom_capture_cmd(cmdarg_T *ca, const CmdBaseline *old, bool toplevel
     } else {
       atom_visual_reset();
     }
-  } else if (atom_capturable(old->consumers, old->keytyped)
-             && atom_pushes == old->pushes && !atom_staged()
-             && ca->oap->op_type == OP_NOP
-             && stuff_empty() && !ins_cascaded) {
+  }
+  if ((vis && atom_captures == old->captures && ca->oap->op_type == OP_NOP)
+      || (!Visual.active
+          && !old->visual.active
+          && atom_capturable(old->consumers, old->keytyped)
+          && atom_captures == old->captures
+          && !atom_staged()
+          && ca->oap->op_type == OP_NOP
+          && stuff_empty()
+          && !ins_cascaded)) {
+    const size_t collected = kv_size(vatom.atoms);
     // KeyTyped survives stuffing but not macro playback; mapping/macro-fed commands are covered by
     // atom_composite_active().
     bool special_motion = (keycls & kKeyMotion) != 0;
@@ -1131,23 +1126,29 @@ static void atom_capture_cmd(cmdarg_T *ca, const CmdBaseline *old, bool toplevel
       } else {
         atom_free(&atom);
       }
-    } else if (ca->searchbuf != NULL && (ca->cmdchar == '/' || ca->cmdchar == '?')) {
-      // Payload typed in the cmdline ("/pat<CR>"). Emit-only.
+    } else if (ca->searchbuf != NULL && (ca->cmdchar == '/' || ca->cmdchar == '?')
+               && !(vis && unchanged)) {
+      // Payload typed in the cmdline ("/pat<CR>"). Emit-only. Not if pattern was not found.
       CmdAtom atom = atom_from_cmdline(kAMotion, ca, ca->searchbuf);
       atom.changed = changed;
       atom_push(false, atom);
-    } else if (curcmd.cmdline != NULL && (ca->cmdchar == ':' || ca->cmdchar == K_COMMAND)) {
-      // Same for ":cnext<CR>" or "<Cmd>cnext<CR>".
+    } else if (!vis && curcmd.cmdline != NULL
+               && (ca->cmdchar == ':' || ca->cmdchar == K_COMMAND)) {
+      // Same for ":cnext<CR>" or "<Cmd>cnext<CR>". Never a Visual subatom.
       CmdAtom atom = atom_from_cmdline(kAEx, ca, curcmd.cmdline);
       atom.changed = changed;
       atom_push(false, atom);
-    } else if (replayable) {
+    } else if (replayable && (!vis || (keycls & kKeyPayload) == 0)) {
       // Non-redoable command (u, zz, q=): never cascaded as an edit.
-      CmdAtom atom = atom_from_spec(motion ? kAMotion : jump_cmd ? kAJump : kACommand,
-                                    atom_cmd_spec(ca));
+      CmdSpec spec = atom_cmd_spec(ca);
+      if (vis) {
+        // Omit `regname`: would prefix '"x' to every command collected; op-end re-adds it later.
+        spec.regname = 0;
+      }
+      CmdAtom atom = atom_from_spec(motion ? kAMotion : jump_cmd ? kAJump : kACommand, spec);
       atom.changed = changed;
       atom_push(follow, atom);
-    } else if ((scroll_cmd || mouse_cmd) && !atom_composite_active()) {
+    } else if (!vis && (scroll_cmd || mouse_cmd) && !atom_composite_active()) {
       // Emit-only (viewport-dependent), and never a subatom. Composite keys must stay replayable.
       CmdSpec spec = atom_cmd_spec(ca);
       if (IS_SPECIAL(ca->cmdchar)) {
@@ -1158,18 +1159,26 @@ static void atom_capture_cmd(cmdarg_T *ca, const CmdBaseline *old, bool toplevel
       atom.changed = changed;
       atom_push(false, atom);
     }
+    if (vis && kv_size(vatom.atoms) == collected && !unchanged) {
+      // Not replayable: moved the selection by non-collectible keys.
+      vatom.state = kVatomVoid;
+    }
+  }
+  if (vis && (curbuf != old->buf || buf_get_changedtick(curbuf) != old->tick)) {
+    // Not replayable: edited buffer during selection, so the keys do not describe the change.
+    vatom.state = kVatomVoid;
+  }
+  if (Visual.active && user && toplevel) {
+    mc_vsel_refresh();
   }
 }
 
-/// Completes a cmd at normal_execute() exit: captures its atom, pushes the staged one, ends the
-/// composite.
-void atom_cmd_end(cmdarg_T *ca, const CmdBaseline *old, bool toplevel)
+/// Completes a cmd at normal_execute() exit: captures its atom, pushes its staged one, ends the
+/// composite. Pops the frame.
+void atom_cmd_end(cmdarg_T *ca, CmdFrame *old, bool toplevel)
 {
   atom_capture_cmd(ca, old, toplevel);
-  if (!old->staged) {
-    // Flush only what this cmd staged. In case of nested :norm (e.g. 'indentexpr' during "gq").
-    atom_stage_flush();
-  }
+  atom_stage_flush(old);
 
   // The clock edge. Only at toplevel: cascading from a nested normal_execute() would recurse.
   // Deferred while a mapping executes (its keys are still in typebuf), so its commands collapse as
@@ -1178,4 +1187,5 @@ void atom_cmd_end(cmdarg_T *ca, const CmdBaseline *old, bool toplevel)
     map_edit = false;
     atom_composite_end(ca->oap->op_type != OP_NOP ? "operator" : Visual.active ? "visual" : "");
   }
+  cur_frame = old->parent;
 }

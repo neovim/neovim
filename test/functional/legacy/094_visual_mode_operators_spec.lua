@@ -105,7 +105,7 @@ describe('Visual mode and operator', function()
     feed_command([[call setline(1, 'KiwiRaspberryDateWatermelonPeach')]])
     feed_command('/^Kiwi')
     feed('vWcNo<esc>l.fD2vd.')
-    expect('NoNoberry')
+    expect('NoNo')
 
     -- Same, using the vmap that maps to an Ex command.
     feed_command([[call setline(1, 'JambuRambutanBananaTangerineMango')]])

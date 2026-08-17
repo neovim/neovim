@@ -1094,8 +1094,8 @@ static int normal_execute(VimState *state, int key)
   static int depth = 0;
   depth++;
 
-  CmdBaseline atom_old;
-  atom_cmd_start(&atom_old);
+  CmdFrame frame;
+  atom_cmd_start(&frame);
 
   NormalState *s = (NormalState *)state;
   s->command_finished = false;
@@ -1269,7 +1269,7 @@ static int normal_execute(VimState *state, int key)
 
 finish:
   normal_finish_command(s);
-  atom_cmd_end(&s->ca, &atom_old, depth == 1);
+  atom_cmd_end(&s->ca, &frame, depth == 1);
   xfree(s->ca.searchbuf);
   depth--;
   return 1;
