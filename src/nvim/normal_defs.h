@@ -74,8 +74,7 @@ typedef struct {
   colnr_T vcol;         ///< number of cols or end column (MAXCOL: to end of line)
 } VisualExtent;
 
-/// Visual/Select mode state, as one global "group" (Visual). Previously these were bare EXTERN
-/// symbols in globals.h; grouped here to make subsystem ownership explicit.
+/// Visual/Select mode state, as one global "group" (Visual).
 typedef struct {
   pos_T start;            ///< Start position of the active Visual selection.
   bool active;            ///< Whether Visual mode is active.
