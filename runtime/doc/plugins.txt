@@ -138,6 +138,7 @@ This clears the built-in directory-opening autocommands. >lua
       end,
     })
 <
+                                                                       *netrw*
 To enable the legacy "netrw" plugin: >vim
 
     :packadd netrw
