@@ -7,27 +7,14 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/types_defs.h"
 
-/// structure used to store one block of the stuff/redo/recording buffers
-typedef struct buffblock {
-  struct buffblock *b_next;  ///< pointer to next buffblock
-  size_t b_strlen;      ///< length of b_str, excluding the NUL
-  char b_str[1];        ///< contents (actually longer)
-} buffblock_T;
-
-/// Consumable byte queue (linked list of buffblock_T) of keys in typeahead encoding (K_SPECIAL
-/// escaped). Appends (add_buff()) fill the spare space of the last block, allocating a new block
-/// when full; reads consume from the front (read_readbuf()).
-///
-/// Note: Append-only key accumulation (redo capture, macro recording) uses StringBuilder instead.
+/// Readahead ("stuff") buffer: consumable queue of keys in typeahead encoding (K_SPECIAL
+/// escaped). add_buff() writes at `insert`, read_readbuf() consumes from `read`.
 typedef struct {
-  buffblock_T bh_first;  ///< empty sentinel: bh_first.b_next holds the first content
-  buffblock_T *bh_curr;  ///< buffblock for appending
-  size_t bh_index;       ///< read position in the first block's b_str
-  size_t bh_space;       ///< space in bh_curr for appending
-  bool bh_create_newblock;  ///< create a new block?
-} buffheader_T;
-
-#define BUFFHEADER_INIT { { NULL, 0, { NUL } }, NULL, 0, 0, false }
+  StringBuilder keys;  ///< Bytes; `[read, keys.size)` is unread.
+  size_t read;         ///< Read position: consumed up to here. Reset (keeping capacity) on drain.
+  size_t insert;       ///< Write position: `keys.size`, or the read position as of start_stuff()
+                       ///< (newly stuffed keys drain before older readahead).
+} StuffBuf;
 
 /// Represents any command. Projection of (`cmdarg_T`, `oparg_T`), which are stack-transient.
 ///
@@ -86,8 +73,8 @@ typedef struct {
 typedef struct {
   typebuf_T save_typebuf;
   UngotKey ungot;
-  buffheader_T save_readbuf1;
-  buffheader_T save_readbuf2;
+  StuffBuf save_readbuf1;
+  StuffBuf save_readbuf2;
 } tasave_T;
 
 /// Values for "noremap" argument of ins_typebuf()

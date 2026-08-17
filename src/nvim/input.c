@@ -25,7 +25,7 @@
 // - `redobuff` (RedoState): the current + previous change.
 // - `recordbuff`: accumulates the keys of a recording ("q").
 //
-// Buffer bytes are encoded as follows:
+// Buffer bytes use "typeahead encoding":
 // - K_SPECIAL introduces a special key (two more bytes follow).
 //   A literal K_SPECIAL is stored as K_SPECIAL KS_SPECIAL KE_FILLER.
 // - These translations are also done on multi-byte characters!
@@ -117,16 +117,14 @@ static int curscript = -1;
 /// Streams to read script from
 static FileDescriptor scriptin[NSCRIPT] = { 0 };
 
-#define MINIMAL_SIZE 20                 // minimal size for b_str
-
 /// The current + previous change. redo_append_xx() captures in `redobuff.cur`; "." replays it.
 static RedoState redobuff;
-/// Macro recording. Perf: StringBuilder (not buffheader_T) => fewer allocs/copies.
+/// Macro recording.
 static StringBuilder recordbuff = KV_INITIAL_VALUE;
 /// First readahead buffer ("stuffbuf"): command translations ("x" => "dl"). Drains before readbuf2.
-static buffheader_T readbuf1 = BUFFHEADER_INIT;
+static StuffBuf readbuf1;
 /// Second readahead buffer ("stuffbuf"): "." replay (start_redo()).
-static buffheader_T readbuf2 = BUFFHEADER_INIT;
+static StuffBuf readbuf2;
 static UngotKey ungot = { .c = -1 };
 
 /// Buffer used to store typed characters for vim.on_key().
@@ -188,23 +186,15 @@ static const char e_cmd_mapping_must_end_with_cr[]
 static const char e_cmd_mapping_must_end_with_cr_before_second_cmd[]
   = N_("E1136: <Cmd> mapping must end with <CR> before second <Cmd>");
 
-/// Frees every block; the buffer becomes empty (add_buff() re-seeds it).
-static void free_buff(buffheader_T *buf)
+/// Frees the buffer's memory; it becomes empty.
+static void free_buff(StuffBuf *buf)
   FUNC_ATTR_NONNULL_ALL
 {
-  buffblock_T *np;
-
-  for (buffblock_T *p = buf->bh_first.b_next; p != NULL; p = np) {
-    np = p->b_next;
-    xfree(p);
-  }
-  buf->bh_first.b_next = NULL;
-  buf->bh_curr = NULL;
+  kv_destroy(buf->keys);
+  *buf = (StuffBuf){ 0 };
 }
 
-/// Return the contents of the record buffer as a single string
-/// and clear the record buffer.
-/// K_SPECIAL in the returned string is escaped.
+/// Gets the contents of the record buffer as a string (typeahead encoding) and clears the buffer.
 char *get_recorded(void)
 {
   size_t len = recordbuff.size;
@@ -320,14 +310,12 @@ CmdSpec redo_spec(void)
   return spec;
 }
 
-/// Append string after the current block of the given buffer
+/// Inserts string `s` at `buf.insert`: the end, or ahead of not-yet-read keys (see start_stuff()).
 ///
-/// K_SPECIAL should have been escaped already.
+/// `s` must be in typeahead encoding, and must not point into `buf->keys`.
 ///
-/// @param[out]  buf  Buffer to append to.
-/// @param[in]  s  String to append.
-/// @param[in]  slen  String length or -1 for NUL-terminated string.
-static void add_buff(buffheader_T *const buf, const char *const s, ptrdiff_t slen)
+/// @param slen  String length, or -1 for a NUL-terminated string.
+static void add_buff(StuffBuf *const buf, const char *const s, ptrdiff_t slen)
 {
   if (slen < 0) {
     slen = (ptrdiff_t)strlen(s);
@@ -336,41 +324,16 @@ static void add_buff(buffheader_T *const buf, const char *const s, ptrdiff_t sle
     return;
   }
 
-  if (buf->bh_first.b_next == NULL) {  // first add to list
-    buf->bh_curr = &(buf->bh_first);
-    buf->bh_create_newblock = true;
-  } else if (buf->bh_curr == NULL) {  // buffer has already been read
-    iemsg(_("E222: Add to read buffer"));
-    return;
-  } else if (buf->bh_index != 0) {
-    memmove(buf->bh_first.b_next->b_str,
-            buf->bh_first.b_next->b_str + buf->bh_index,
-            (buf->bh_first.b_next->b_strlen - buf->bh_index) + 1);
-    buf->bh_first.b_next->b_strlen -= buf->bh_index;
-    buf->bh_space += buf->bh_index;
-  }
-  buf->bh_index = 0;
-
-  if (!buf->bh_create_newblock && buf->bh_space >= (size_t)slen) {
-    xmemcpyz(buf->bh_curr->b_str + buf->bh_curr->b_strlen, s, (size_t)slen);
-    buf->bh_curr->b_strlen += (size_t)slen;
-    buf->bh_space -= (size_t)slen;
-  } else {
-    size_t len = MAX(MINIMAL_SIZE, (size_t)slen);
-    buffblock_T *p = xmalloc(offsetof(buffblock_T, b_str) + len + 1);
-    xmemcpyz(p->b_str, s, (size_t)slen);
-    p->b_strlen = (size_t)slen;
-    buf->bh_space = len - (size_t)slen;
-    buf->bh_create_newblock = false;
-
-    p->b_next = buf->bh_curr->b_next;
-    buf->bh_curr->b_next = p;
-    buf->bh_curr = p;
-  }
+  kv_ensure_space(buf->keys, (size_t)slen);
+  char *at = buf->keys.items + buf->insert;
+  memmove(at + slen, at, buf->keys.size - buf->insert);
+  memcpy(at, s, (size_t)slen);
+  buf->keys.size += (size_t)slen;
+  buf->insert += (size_t)slen;
 }
 
 /// Append number "n" to buffer "buf".
-static void add_num_buff(buffheader_T *buf, int n)
+static void add_num_buff(StuffBuf *buf, int n)
   FUNC_ATTR_NONNULL_ALL
 {
   char number[32];
@@ -414,9 +377,8 @@ static size_t key_char_encode(int c, char *buf)
   return off;
 }
 
-/// Append character 'c' to `buf`.
-/// Translates special keys, NUL, K_SPECIAL and multibyte characters.
-static void add_char_buff(buffheader_T *buf, int c)
+/// Append character `c` to `buf`, translated to typeahead encoding.
+static void add_char_buff(StuffBuf *buf, int c)
   FUNC_ATTR_NONNULL_ALL
 {
   char temp[MB_MAXBYTES * 3 + 1];
@@ -441,10 +403,10 @@ void sb_add_char(StringBuilder *sb, int c)
   kv_concat_len(*sb, temp, len);
 }
 
-/// Get one byte from the read buffers.  Use readbuf1 one first, use readbuf2
-/// if that one is empty.
-/// If advance == true go to the next char.
-/// No translation is done K_SPECIAL is escaped.
+/// Gets one byte (typeahead encoding, no translation) from the read buffers.  Uses `readbuf1` one
+/// first, or `readbuf2` if that one is empty.
+///
+/// @param advance Go to the next char.
 static int read_readbuffers(bool advance)
 {
   int c = read_readbuf(&readbuf1, advance);
@@ -454,21 +416,23 @@ static int read_readbuffers(bool advance)
   return c;
 }
 
-static int read_readbuf(buffheader_T *buf, bool advance)
+static int read_readbuf(StuffBuf *buf, bool advance)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (buf->bh_first.b_next == NULL) {  // buffer is empty
+  if (buf->read == buf->keys.size) {  // buffer is empty
     return NUL;
   }
 
-  buffblock_T *const curr = buf->bh_first.b_next;
-  uint8_t c = (uint8_t)curr->b_str[buf->bh_index];
+  uint8_t c = (uint8_t)buf->keys.items[buf->read];
 
   if (advance) {
-    if (curr->b_str[++buf->bh_index] == NUL) {
-      buf->bh_first.b_next = curr->b_next;
-      xfree(curr);
-      buf->bh_index = 0;
+    buf->read++;
+    if (buf->read == buf->keys.size) {  // drained: reset positions, keep capacity for reuse
+      buf->keys.size = 0;
+      buf->read = 0;
+      buf->insert = 0;
+    } else {
+      buf->insert = MAX(buf->insert, buf->read);
     }
   }
   return c;
@@ -477,21 +441,15 @@ static int read_readbuf(buffheader_T *buf, bool advance)
 /// Makes the next stuffed text be read before the existing readahead.
 static void start_stuff(void)
 {
-  if (readbuf1.bh_first.b_next != NULL) {
-    readbuf1.bh_curr = &(readbuf1.bh_first);
-    readbuf1.bh_create_newblock = true;  // force a new block to be created (see add_buff())
-  }
-  if (readbuf2.bh_first.b_next != NULL) {
-    readbuf2.bh_curr = &(readbuf2.bh_first);
-    readbuf2.bh_create_newblock = true;  // force a new block to be created (see add_buff())
-  }
+  readbuf1.insert = readbuf1.read;
+  readbuf2.insert = readbuf2.read;
 }
 
 /// @return  true if the readahead ("stuff") buffer is empty.
 bool stuff_empty(void)
   FUNC_ATTR_PURE
 {
-  return (readbuf1.bh_first.b_next == NULL && readbuf2.bh_first.b_next == NULL);
+  return readbuf1.keys.size == 0 && readbuf2.keys.size == 0;
 }
 
 /// @return  true if readbuf1 is empty.  There may still be redo characters in
@@ -499,7 +457,7 @@ bool stuff_empty(void)
 bool readbuf1_empty(void)
   FUNC_ATTR_PURE
 {
-  return (readbuf1.bh_first.b_next == NULL);
+  return readbuf1.keys.size == 0;
 }
 
 /// Set a typeahead character that won't be flushed.
@@ -508,9 +466,10 @@ void typeahead_noflush(int c)
   typeahead_char = c;
 }
 
-/// Remove the contents of the stuff buffer and the mapped characters in the
-/// typeahead buffer (used in case of an error).  If "flush_typeahead" is true,
-/// flush all typeahead characters (used when interrupted by a CTRL-C).
+/// Remove the contents of the stuff buffer and the mapped characters in the typeahead buffer (used
+/// in case of an error).
+///
+/// @param flush_typeahead Flush all typeahead characters (used when interrupted by CTRL-C).
 void flush_buffers(flush_buffers_T flush_typeahead)
 {
   init_typebuf();
@@ -673,7 +632,7 @@ void restore_redobuff(RedoState *save_redo)
 }
 
 /// Append `len` bytes of `s` (-1: up to the NUL) to the redo buffer.
-/// K_SPECIAL should already have been escaped.
+/// `s` must be in typeahead encoding.
 void redo_append_str(const char *s, ptrdiff_t len)
 {
   if (!block_redo) {
@@ -755,8 +714,7 @@ void redo_append_spec(const char *s)
   }
 }
 
-/// Append a character to the redo buffer.
-/// Translates special keys, NUL, K_SPECIAL and multibyte characters.
+/// Appends character `c` to the redo buffer, translated to typeahead encoding.
 void redo_append_char(int c)
 {
   if (!block_redo) {
@@ -772,16 +730,14 @@ void redo_append_num(int n)
   }
 }
 
-/// Append string "s" to the stuff buffer.
-/// K_SPECIAL must already have been escaped.
+/// Appends string `s` (must be typeahead encoding) to the stuff buffer.
 void stuffReadbuff(const char *s)
   FUNC_ATTR_NONNULL_ALL
 {
   add_buff(&readbuf1, s, -1);
 }
 
-/// Append string "s" to the redo stuff buffer.
-/// @remark K_SPECIAL must already have been escaped.
+/// Appends string `s` (must be typeahead encoding) to the redo stuff buffer.
 void stuffRedoReadbuff(const char *s)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -818,8 +774,7 @@ void stuffReadbuffSpec(const char *s)
   }
 }
 
-/// Append a character to the stuff buffer.
-/// Translates special keys, NUL, K_SPECIAL and multibyte characters.
+/// Appends character `c` to the stuff buffer, translated to typeahead encoding.
 void stuffcharReadbuff(int c)
 {
   add_char_buff(&readbuf1, c);
@@ -1412,9 +1367,9 @@ void save_typeahead(tasave_T *tp)
   ungot.c = -1;
 
   tp->save_readbuf1 = readbuf1;
-  readbuf1.bh_first.b_next = NULL;
+  readbuf1 = (StuffBuf){ 0 };
   tp->save_readbuf2 = readbuf2;
-  readbuf2.bh_first.b_next = NULL;
+  readbuf2 = (StuffBuf){ 0 };
 }
 
 /// Restore the typeahead to what it was before calling save_typeahead().
