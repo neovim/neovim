@@ -817,6 +817,14 @@ For example, to profile the one_script.vim script file: >
 		"~/" and environment variables in {fname} will be expanded.
 		If {fname} already exists it will be silently overwritten.
 		The variable |v:profiling| is set to one.
+		While profiling runs, {fname} is also updated eagerly
+		(at most once per second) as profiled script and function
+		lines are executed, instead of only being written when
+		profiling stops.  This means a profile is still available
+		for inspection if Nvim hangs before ":profile stop" or
+		":profile dump" can run.  Note this only happens while
+		Vimscript lines are being executed: a hang inside C or Lua
+		code produces no further updates.
 
 :prof[ile] stop
 		Write the collected profiling information to the logfile and

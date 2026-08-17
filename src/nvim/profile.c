@@ -226,6 +226,15 @@ int profile_cmp(proftime_T tm1, proftime_T tm2) FUNC_ATTR_CONST
 
 static char *profile_fname = NULL;
 
+/// Time of the last eager profile dump written by profile_may_dump(), or
+/// zero if nothing has been dumped yet since profiling started.
+static proftime_T profile_dump_time = 0;
+
+/// Minimum time between eager profile dumps.  Keeps the overhead of
+/// streaming the profile to disk small while still bounding how much data
+/// could be lost if Nvim hangs before ":profile stop" runs.
+#define PROFILE_DUMP_INTERVAL_NS 1000000000ULL  // 1 second
+
 /// Reset all profiling information.
 void profile_reset(void)
 {
@@ -282,6 +291,7 @@ void profile_reset(void)
   }
 
   XFREE_CLEAR(profile_fname);
+  profile_dump_time = 0;
 }
 
 /// ":profile cmd args"
@@ -298,6 +308,7 @@ void ex_profile(exarg_T *eap)
     profile_fname = expand_env_save_opt(e, true, NULL);
     do_profiling = PROF_YES;
     profile_set_wait(profile_zero());
+    profile_dump_time = 0;
     set_vim_var_nr(VV_PROFILING, 1);
   } else if (do_profiling == PROF_NONE) {
     emsg(_("E750: First use \":profile start {fname}\""));
@@ -582,6 +593,7 @@ void func_line_end(void *cookie)
       fp->uf_tml_self[fp->uf_tml_idx] =
         profile_self(fp->uf_tml_self[fp->uf_tml_idx], fp->uf_tml_start,
                      fp->uf_tml_children);
+      profile_may_dump();
     }
     fp->uf_tml_idx = -1;
   }
@@ -782,6 +794,28 @@ void profile_dump(void)
   }
 }
 
+/// Eagerly write out the profile gathered so far, if profiling is active
+/// and enough time has passed since the last write.
+///
+/// Called from the per-line profiling hooks (script_line_end(),
+/// func_line_end()) so the profile file keeps getting updated while Nvim
+/// runs, instead of only being written by ":profile stop".  This way a
+/// profile is available for debugging even if execution never returns,
+/// e.g. because of a non-recoverable hang.
+void profile_may_dump(void)
+{
+  if (profile_fname == NULL || do_profiling != PROF_YES) {
+    return;
+  }
+  proftime_T now = profile_start();
+  if (profile_dump_time != 0
+      && profile_signed(profile_sub(now, profile_dump_time)) < (int64_t)PROFILE_DUMP_INTERVAL_NS) {
+    return;
+  }
+  profile_dump_time = now;
+  profile_dump();
+}
+
 /// Called when starting to read a script line.
 /// "sourcing_lnum" must be correct!
 /// When skipping lines it may not actually be executed, but we won't find out
@@ -842,6 +876,7 @@ void script_line_end(void)
       pp->sn_prl_total = profile_add(pp->sn_prl_total, si->sn_prl_start);
       pp->sn_prl_self = profile_self(pp->sn_prl_self, si->sn_prl_start,
                                      si->sn_prl_children);
+      profile_may_dump();
     }
     si->sn_prl_idx = -1;
   }
