@@ -962,10 +962,11 @@ is_na_patch() {
         HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
           '-I^\s+$' \
           '-I^\s*/?\*/?$' \
-          '-I^\s*(//|/?\*).*\s([vV]im9|E[0-9]{4} - |channel|job|popup|sound|terminal)' \
+          '-I^\s*(//|/?\*).*\s([vV]im9|E[0-9]{4} - |FEAT_|channel|job|popup|sound|terminal)' \
           '-I^#\s*((ifdef|ifndef|undef)|(if|elif)\s.*defined\().*FEAT_[^_]' \
           '-I^#\s*(else|endif)' \
           '-I^#\s*define\s+(FEAT|POPUPWIN|XDG|t)_[^_]' \
+          '-I^\s+(&&|\|\|)\s.*defined\(.*FEAT_[^_]' \
           '-IEVENT_TERMINALWINOPEN' \
           '-I^#\s*define\s+POPF_CURSORLINE\s' \
           '-I^typedef enum \{$' \
@@ -1007,10 +1008,11 @@ is_na_patch() {
         HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
           '-I^\s+$' \
           '-I^\s*/?\*/?$' \
-          '-I^\s*(//|/?\*).*\s([vV]im9|channel|job|popup|sound|terminal)' \
-          '-I^#\s*((ifdef|ifndef|undef)|(if|elif)\s.*defined\().*FEAT_' \
+          '-I^\s*(//|/?\*).*\s([vV]im9|E[0-9]{4} - |FEAT_|channel|job|popup|sound|terminal)' \
+          '-I^#\s*((ifdef|ifndef|undef)|(if|elif)\s.*defined\().*FEAT_[^_]' \
           '-I^#\s*(else|endif)' \
-          '-I^#\s*define\s+(FEAT|POPUPWIN|XDG)_' \
+          '-I^#\s*define\s+(FEAT|POPUPWIN|XDG|t)_[^_]' \
+          '-I^\s+(&&|\|\|)\s.*defined\(.*FEAT_[^_]' \
           '-IEVENT_TERMINALWINOPEN' \
           '-I^#\s*include\s+<proto/' \
           '-I^\s+\{"(popup|prop|sound)_[_a-z]+",.*f_(popup|prop|sound)_[_a-z]+},$' \
