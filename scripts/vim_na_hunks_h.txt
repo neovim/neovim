@@ -1,2 +1,3 @@
+^EXTERN type_T static_types\[
 ^struct jobvar_S
-^struct type_S {
+^struct \(channel\|type\)_S {

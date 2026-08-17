@@ -46,6 +46,7 @@
 ^src/config\.[a-z]
 ^src/configure
 ^src/crypt
+^src/glbl_ime\.
 ^src/gui[_.]
 ^src/gvim
 ^src/if_
@@ -89,6 +90,7 @@
 \.desktop$
 \.diff$
 \.ico$
+\.idl$
 \.info$
 \.man$
 \.mms$

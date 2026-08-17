@@ -53,6 +53,7 @@
 ^restore_buffer(bufref_T
 ^static int included_patches\[\] =
 ^switch_buffer(bufref_T
+^typedef struct ss_pending_cmd_S
 ^vim_free(
 ^vim_isNormalIDc(
 ^vim_isalpha(

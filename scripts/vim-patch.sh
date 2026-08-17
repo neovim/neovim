@@ -962,16 +962,18 @@ is_na_patch() {
         HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
           '-I^\s+$' \
           '-I^\s*/?\*/?$' \
-          '-I^\s*(//|/?\*).*\s([vV]im9|channel|job|popup|sound|terminal)' \
-          '-I^#\s*((ifdef|ifndef|undef)|(if|elif)\s.*defined\().*FEAT_' \
+          '-I^\s*(//|/?\*).*\s([vV]im9|E[0-9]{4} - |FEAT_|channel|job|popup|sound|terminal)' \
+          '-I^#\s*((ifdef|ifndef|undef)|(if|elif)\s.*defined\().*FEAT_[^_]' \
           '-I^#\s*(else|endif)' \
-          '-I^#\s*define\s+(FEAT|POPUPWIN|XDG)_' \
+          '-I^#\s*define\s+(FEAT|POPUPWIN|XDG|t)_[^_]' \
+          '-I^\s+(&&|\|\|)\s.*defined\(.*FEAT_[^_]' \
           '-IEVENT_TERMINALWINOPEN' \
           '-I^#\s*define\s+POPF_CURSORLINE\s' \
           '-I^typedef enum \{$' \
           '-I^\s+POPCLOSE_[A-Z]+,?$' \
           '-I^\} popclose_T;$' \
           '-I^EXTERN\schar\s+\*popup_transparent' \
+          '-I^EXTERN type_T static_types\[' \
           '-I^EXTERN type_T t_.* INIT[2-9]\(' \
           '-I^EXTERN\swin_T\s+\*popup_dragwin' \
           '-I^EXTERN char e_(abstract|class|enum|interface|type)_' \
@@ -979,14 +981,16 @@ is_na_patch() {
           '-I^EXTERN char e_.*enddef' \
           '-I^EXTERN char e_.*vim9' \
           '-I^EXTERN char e_cannot_declare_.*variable_str' \
+          '-I^EXTERN char e_cannot_define_new_.+_as_static' \
           '-I^EXTERN char e_dictionary_not_set' \
           '-I^EXTERN char e_dictnull' \
           '-I\sINIT\(= .+"E[0-9]+: (Abstract|Class|Enum|Interface|Type) ' \
           '-I\sINIT\(= .+"E[0-9]+: .*:def ' \
           '-I\sINIT\(= .+"E[0-9]+: .*enddef"' \
-          '-I\sINIT\(= .+"E[0-9]+: .*[vV]im9' \
+          '-I\sINIT\(= .+"E[0-9]+: .*([vV]im9|interface)' \
           '-I\sINIT\(= .+"E1016: Cannot declare .* variable: ' \
           '-I\s+INIT\(= .+"E1103: Dictionary not set' \
+          '-I\s+INIT\(= .+"E1370: Cannot define a .+ as static' \
           '-I\schar.*\s+\*w_popup_title;' \
           '-I\sint\s+ch_[_a-zA-Z]+;' \
           '-I\sint\s+w_(filter_mode|firstline|popup_drag|want_scrollbar);' \
@@ -1004,15 +1008,16 @@ is_na_patch() {
         HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
           '-I^\s+$' \
           '-I^\s*/?\*/?$' \
-          '-I^\s*(//|/?\*).*\s([vV]im9|channel|job|popup|sound|terminal)' \
-          '-I^#\s*((ifdef|ifndef|undef)|(if|elif)\s.*defined\().*FEAT_' \
+          '-I^\s*(//|/?\*).*\s([vV]im9|E[0-9]{4} - |FEAT_|channel|job|popup|sound|terminal)' \
+          '-I^#\s*((ifdef|ifndef|undef)|(if|elif)\s.*defined\().*FEAT_[^_]' \
           '-I^#\s*(else|endif)' \
-          '-I^#\s*define\s+(FEAT|POPUPWIN|XDG)_' \
+          '-I^#\s*define\s+(FEAT|POPUPWIN|XDG|t)_[^_]' \
+          '-I^\s+(&&|\|\|)\s.*defined\(.*FEAT_[^_]' \
           '-IEVENT_TERMINALWINOPEN' \
           '-I^#\s*include\s+<proto/' \
           '-I^\s+\{"(popup|prop|sound)_[_a-z]+",.*f_(popup|prop|sound)_[_a-z]+},$' \
-          '-I^\s*(static)?\svoid$' \
-          '-I^static\svoid\s.+\(.+\);$' \
+          '-I^\s*(static)?\s(char_u|hashtab_T|int|void)( \*)?$' \
+          '-I^static\s(char_u|hashtab_T|int|void)\s\*?[^*]+\(.+\);$' \
           '-I#\s*define.*ex_ni$' \
           '-I[_.>]sc_version = ' \
           '-I[_.>]uf_script_ctx_version = ' \
