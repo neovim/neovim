@@ -104,6 +104,7 @@
 \*popup-window-functions\*
 \*sound-functions\*
 \*sound_[a-zA-Z0-9]\+()\*
+\*term++\(close\|open\)\*
 \*test_gui_[a-zA-Z0-9_]\+()\*
 \*v:none\*
 \*v:sizeof[a-z]\+\*
