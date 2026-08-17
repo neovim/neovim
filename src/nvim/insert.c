@@ -334,7 +334,7 @@ static void insert_enter(InsertState *s)
 
   // Get the current length of the redo buffer, those characters have to be
   // skipped if we want to get to the inserted characters.
-  String redo = redo_keys();
+  String redo = redo_keys(NULL);
   Ins.new_insert_skip = (int)redo.size;
   if (redo.data != NULL) {
     xfree(redo.data);
@@ -2235,7 +2235,7 @@ int stop_arrow(void)
     } else {
       // Cursor-move was captured (start_arrow()): the atom mc-cascade will replay it.
       // Only `last_insert` (the ". register, i_CTRL-A) restarts here, like Vim.
-      String redo = redo_keys();
+      String redo = redo_keys(NULL);
       Ins.new_insert_skip = (int)redo.size;
       xfree(redo.data);
     }
@@ -2274,7 +2274,7 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
   // Save the inserted text for later redo with ^@ and CTRL-A.
   // Don't do it when "restart_edit" was set and nothing was inserted,
   // otherwise CTRL-O w and then <Left> will clear "last_insert".
-  String redo = redo_keys();
+  String redo = redo_keys(NULL);
   int added = redo.data == NULL ? 0 : (int)redo.size - Ins.new_insert_skip;
   if (Ins.did_restart_edit == 0 || added > 0) {
     xfree(last_insert.data);

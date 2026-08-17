@@ -165,10 +165,7 @@ CmdSpec atom_cmd_spec(const cmdarg_T *cap)
 /// @return Allocated key sequence.
 static char *atom_redo_keys(CmdSpec spec)
 {
-  StringBuilder buf = KV_INITIAL_VALUE;
-  redo_prefix(&spec, &buf, false);
-  redo_chars(&spec, &buf, false);
-  char *keys = sb_take_string(&buf).data;
+  char *keys = redo_keys(&spec).data;
   assert(keys != NULL);  // A spec with no chars/count/reg composes to nothing.
   return keys;
 }
@@ -176,7 +173,7 @@ static char *atom_redo_keys(CmdSpec spec)
 /// Gets the pending change as a CmdAtom. Caller owns `keys`.
 static CmdAtom atom_from_redo(CmdAtomType type)
 {
-  String keys = redo_keys();
+  String keys = redo_keys(NULL);
   return (CmdAtom){ .type = type, .spec = redo_spec(), .keys = keys.data };
 }
 

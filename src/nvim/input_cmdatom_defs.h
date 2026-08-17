@@ -53,7 +53,7 @@ struct CmdAtom {
   CmdAtomVec atoms;  ///< Composite (multi-command mapping, Visual sequence): its subatoms,
                      ///< in order; their keys concatenate to `keys`. Empty for non-composite.
   char *keys;     ///< Resolved keysequence (typeahead encoding), including `["x][count]` prefix
-                  ///< (unlike `RedoBuf.keys`).
+                  ///< (unlike `CmdSpec.body`, the raw unprefixed form).
   char *text;     ///< Payload: insert-session text, or Ex or search cmdline.
   char *lhs;      ///< Mapping LHS or macro register ("gj", "@q") that produced this atom, or NULL.
                   ///< Label/hint, not replayed.
