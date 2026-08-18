@@ -897,6 +897,8 @@ void preserve_exit(const char *errmsg)
   }
 
   really_exiting = true;
+  // Set this now, to neuter a stray `exit_event` on the event-loop. #39675
+  exiting = true;
   // Ignore SIGHUP while we are already exiting. #9274
   signal_reject_deadly();
 
