@@ -3047,17 +3047,6 @@ describe('TUI', function()
     screen:expect({ any = vim.pesc('[Process exited 1]') })
   end)
 
-  it('exits immediately when stdin is closed #35744', function()
-    local chan = api.nvim_get_option_value('channel', { buf = 0 })
-    local pid = fn.jobpid(chan)
-    fn.chanclose(chan)
-    retry(nil, 50, function()
-      eq(vim.NIL, api.nvim_get_proc(pid))
-    end)
-    -- FIXME: SIGHUP sometimes isn't caught with ASAN.
-    screen:expect({ any = t.is_asan() and '%[Process exited %d+%]' or '%[Process exited 1%]' })
-  end)
-
   it('exits properly when :quit non-last window in event handler #14379', function()
     local code = [[
       vim.defer_fn(function()
@@ -3662,6 +3651,28 @@ describe('TUI', function()
         )
       end
     end)
+  end)
+
+  it('exits immediately when stdin is closed #35744', function()
+    local screen = tt.setup_child_nvim(
+      { '--clean', '--cmd', 'set laststatus=2' },
+      { env = vim.tbl_extend('force', env_notermguicolors, { NVIM_LOG_FILE = testlog }) }
+    )
+    finally(function()
+      os.remove(testlog)
+    end)
+    screen:expect({ any = '%[No Name%]' })
+
+    local chan = api.nvim_get_option_value('channel', { buf = 0 })
+    local pid = fn.jobpid(chan)
+    fn.chanclose(chan)
+    retry(nil, 2000, function()
+      eq(vim.NIL, api.nvim_get_proc(pid))
+    end)
+    -- FIXME: SIGHUP sometimes isn't caught with ASAN.
+    screen:expect({ any = t.is_asan() and '%[Process exited %d+%]' or '%[Process exited 1%]' })
+    -- Closing stdin must skip the DA1 wait.
+    t.assert_nolog('timed out waiting for DA1 response', testlog, 100)
   end)
 end)
 

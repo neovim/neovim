@@ -35,6 +35,7 @@
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
+#include "nvim/os/time.h"
 #include "nvim/strings.h"
 #include "nvim/tui/input.h"
 #include "nvim/tui/termdef_field_defs.h"
@@ -765,9 +766,10 @@ void tui_stop(TUIData *tui)
   terminfo_disable(tui);
 
   // Wait until DA1 response is received, or stdin is closed (#35744).
+  uint64_t wait_start = os_hrtime();
   LOOP_PROCESS_EVENTS_UNTIL(tui->loop, tui->loop->events, EXIT_TIMEOUT_MS,
                             tui->stopped || tui->input.read_stream.did_eof);
-  if (!tui->stopped && !tui->input.read_stream.did_eof) {
+  if (!tui->stopped && (os_hrtime() - wait_start) / 1000000 >= EXIT_TIMEOUT_MS) {
     WLOG("TUI: timed out waiting for DA1 response");
   }
   tui->stopped = true;
