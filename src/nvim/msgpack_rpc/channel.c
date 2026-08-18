@@ -512,7 +512,7 @@ static void rpc_close_event(void **argv)
 
   bool is_ui_client = ui_client_channel_id && channel->id == ui_client_channel_id;
   if (is_ui_client) {
-    if (channel->streamtype != kChannelStreamProc) {
+    if (!exiting && channel->streamtype != kChannelStreamProc) {
       ui_client_attach_to_restarted_server(false);
     }
     if (ui_client_channel_id != channel->id) {
