@@ -4,9 +4,8 @@ local n = require('test.functional.testnvim')()
 
 local m = {}
 
---- Get buffer lines as a table.
 function m.get_lines()
-  return n.api.nvim_buf_get_lines(0, 0, -1, true)
+  return n.buf_lines(0)
 end
 
 --- vim.keycode(): |key-notation| => the raw bytes of the CmdAtom event's keys/lhs.
@@ -26,10 +25,9 @@ function m.atoms_start()
   ]])
 end
 
---- Gets the collected CmdAtom event-data (the events are deferred: drain
---- the event loop first).
+--- Gets the collected CmdAtom event-data.
 function m.atoms()
-  n.poke_eventloop()
+  n.poke_eventloop() -- CmdAtom is deferred, so drain the event loop first.
   return n.exec_lua('return _G.atoms')
 end
 

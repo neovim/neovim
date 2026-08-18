@@ -553,7 +553,7 @@ func Test_visual_mode_maps()
   call setline(1, 'KiwiRaspberryDateWatermelonPeach')
   call cursor(1, 1)
   exe "normal vWcNo\<Esc>l.fD2vd."
-  call assert_equal('NoNoberry', getline(1))
+  call assert_equal('NoNo', getline(1))
 
   call setline(1, 'JambuRambutanBananaTangerineMango')
   call cursor(1, 1)

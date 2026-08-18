@@ -420,10 +420,10 @@ ChanOpen			Just after a channel was opened.
 				    info	as from |nvim_get_chan_info()|
 
 							*CmdAtom*
-CmdAtom				After a user action (an input "atom"): any
+CmdAtom				After a user action (an "atom" of input): any
 				motion, operator, insert session, Visual-mode
 				keysequence, Ex cmdline (":cnext<CR>"),
-				mapping (and its sub-atoms), or scroll/mouse.
+				mapping (and its subatoms), or scroll/mouse.
 
 				Only for user input, not programmatic input:
 					INPUT			ATOM ~

@@ -258,7 +258,7 @@ describe('CmdAtom', function()
     )
   end)
 
-  it('fires for typed input, never for programmatic sources', function()
+  it('fires for user input, not programmatic sources', function()
     atoms_start()
     -- Drain deferred CmdAtom events, then return + clear the collected list.
     local function take()
@@ -334,7 +334,7 @@ describe('CmdAtom', function()
     eq(1, #take())
   end)
 
-  it('visual atom keys re-execute on replay; unreplayable ops fall back to equal-size', function()
+  it('visual atom replay; fallback to equal-size if unreplayable', function()
     -- The core use-case for a plugin: observe CmdAtom, capture a Visual-mode
     -- operation's resolved `keys`, and replay them verbatim to re-execute it.
     fn.setline(1, { 'foo bar', 'longword bar' })
@@ -344,19 +344,20 @@ describe('CmdAtom', function()
     eq({ ' bar', 'longword bar' }, get_lines())
     local ev = atom_last()
     eq('visual', ev.type)
-    -- Replay the captured keys at line 2. The keysequence RE-EXECUTES (not an
-    -- equal-size reselect): "iw" selects THAT line's word (the longer one),
-    -- so the delete adapts to the new context.
+
+    -- Replay the captured keys at line 2. The keysequence RE-EXECUTES (not an equal-size reselect):
+    -- "iw" selects THAT line's word (the longer one), so the delete adapts to the new context.
     feed('j0')
     n.exec_lua(([[vim.api.nvim_feedkeys(%q, 'nx', false)]]):format(ev.keys))
     eq({ ' bar', ' bar' }, get_lines())
-    -- Builtin |.| replays the same keysequence: own-sized re-execution, not
-    -- Vim's equal-size reselect (|visual-repeat|).
+
+    -- Builtin "." replays the same keysequence, not Vim's equal-size reselect.
     api.nvim_buf_set_lines(0, 0, -1, true, { 'foo bar', 'longword bar' })
     feed('gg0viwd')
     eq({ ' bar', 'longword bar' }, get_lines())
     feed('j0.')
     eq({ ' bar', ' bar' }, get_lines())
+
     -- A viewport scroll that drags the cursor along (edge/'scrolloff') grows
     -- the selection by a viewport-dependent amount: void, no atom.
     local lines = {}
@@ -372,11 +373,13 @@ describe('CmdAtom', function()
     feed('d')
     eq(before, #atoms()) -- not replayable: no atom published for the edit
     eq('l3', fn.getline(1)) -- the edit itself deleted both selected lines
+
     -- "." on the unreplayable operation falls back to an equal-size reselect
     -- ("1v" + operator): it deletes the same number of lines at the cursor.
     feed('.')
     eq('l5', fn.getline(1))
-    -- A fed (":normal!") Visual put preps the selection keysequence, like any fed visual
+
+    -- A fed (":normal!") Visual-put preps the selection keysequence, like any fed visual
     -- operator (":normal! vjd"): "." re-executes "Vjp", not a bare "p".
     api.nvim_buf_set_lines(0, 0, -1, true, { 'aa', 'bb', 'cc', 'dd', 'ee' })
     feed('ggyy')
@@ -384,6 +387,7 @@ describe('CmdAtom', function()
     eq({ 'aa', 'cc', 'dd', 'ee' }, get_lines())
     feed('j.')
     eq({ 'aa', 'aa', 'bb', 'ee' }, get_lines())
+
     -- {Visual}r<C-V><CR> replaces with a literal <CR> (REPLACE_CR_NCHAR): inexpressible as
     -- spec chars, so the literal keys compose the redo tail, which "." replays.
     api.nvim_buf_set_lines(0, 0, -1, true, { 'abcd', 'efgh' })
@@ -391,6 +395,42 @@ describe('CmdAtom', function()
     eq({ '\r\rcd', 'efgh' }, get_lines())
     feed('j0.')
     eq({ '\r\rcd', '\r\rgh' }, get_lines())
+
+    -- <Cmd> ":norm" mapping that extends the selection: "." replays it. #41323
+    command('xmap <M-m> <Cmd>normal! $<CR>')
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'aaa', 'bbb' })
+    feed('gg0v<M-m>d') -- "$" in Visual is one past EOL, so "d" swallows the newline (= plain v$d)
+    eq({ 'bbb' }, get_lines())
+    command('let v:errmsg = ""')
+    feed('.')
+    eq('', api.nvim_get_vvar('errmsg'))
+    eq('n', fn.mode()) -- Not in Visual.
+    eq({ '' }, get_lines())
+
+    -- <Cmd> ":norm" captured as nested subatoms: the atom is "ved", not the <Cmd>.
+    command('xmap <M-w> <Cmd>normal! e<CR>')
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'one two three', 'four five six' })
+    feed('gg0v<M-w>d')
+    eq({ ' two three', 'four five six' }, get_lines())
+    eq({ type = 'visual', keys = 'ved' }, pick(atom_last(), 'type', 'keys'))
+    feed('j0.')
+    eq({ ' two three', ' five six' }, get_lines())
+
+    -- Buffer-editing <Cmd> is unreplayable (void), so "." fallsback to equal-size reselect.
+    command('xmap <M-a> <Cmd>call append(1, "X")<CR>')
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'ab', 'cd' })
+    feed('gg0vl<M-a>d')
+    eq({ '', 'X', 'cd' }, get_lines())
+    feed('3gg0.')
+    eq({ '', 'X', '' }, get_lines())
+
+    -- A search-extended selection re-executes: the payload travels in the collected keys.
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'ab META x', 'cdef META y' })
+    feed('gg0v/META<CR>d')
+    eq({ 'ETA x', 'cdef META y' }, get_lines())
+    eq({ type = 'visual', keys = k('v/META<NL>d') }, pick(atom_last(), 'type', 'keys'))
+    feed('j0.')
+    eq({ 'ETA x', 'ETA y' }, get_lines())
   end)
 
   it('a mapping can repeat the last visual atom', function()
