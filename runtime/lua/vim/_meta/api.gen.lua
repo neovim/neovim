@@ -671,7 +671,8 @@ function vim.api.nvim_buf_line_count(buf) end
 ---   display of the text, except 'tabstop' is used for hard tabs. The 'wrap' and
 ---   'linebreak' options do not take effect, so the number of extra screen lines will
 ---   match the list-size (but see `virt_lines_overflow`). By default lines are placed
----   below the marked line.
+---   below the marked line. Special case: If the last `text_chunk` is empty,
+---   the corresponding `hl` will extend to the end of the line.
 --- - virt_lines_above: Place virtual lines above instead.
 --- - virt_lines_leftcol: Place virtual lines in the leftmost column of the window,
 ---   bypassing sign and number columns.
