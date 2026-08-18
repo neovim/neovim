@@ -2938,7 +2938,8 @@ static void spell_soundfold_wsal(slang_T *slang, const char *inword, char *res)
       // Check all rules for the same index byte.
       // If c is 0x300 need extra check for the end of the array, as
       // (c & 0xff) is NUL.
-      for (; ((ws = smp[n].sm_lead_w)[0] & 0xff) == (c & 0xff)
+      for (; n < slang->sl_sal.ga_len
+           && ((ws = smp[n].sm_lead_w)[0] & 0xff) == (c & 0xff)
            && ws[0] != NUL; n++) {
         // Quickly skip entries that don't match the word.  Most
         // entries are less than three chars, optimize for that.
