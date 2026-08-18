@@ -352,6 +352,9 @@ LSP
   `commitCharacters` had no effect.
 • The `reuse_client` predicate now passes the target buffer. See |vim.lsp.Config| and
   |vim.lsp.start()|
+• |vim.lsp.formatexpr()| now falls back to `textDocument/formatting` if the whole
+  buffer is being formatted and the language server doesn't support
+  `textDocument/rangeFormatting`.
 
 LUA
 

@@ -1099,7 +1099,10 @@ describe('vim.lsp.buf', function()
               })
             end,
             ['codeAction/resolve'] = function(_, _, callback)
-              callback('resolve failed', nil)
+              callback(
+                { code = vim.lsp.protocol.ErrorCodes.InternalError, message = 'resolve failed' },
+                nil
+              )
             end,
           },
         })
@@ -1753,7 +1756,11 @@ describe('vim.lsp.buf', function()
       return exec_lua(function()
         _G.server = _G._create_server({
           capabilities = {
-            diagnosticProvider = { workspaceDiagnostics = true },
+            diagnosticProvider = {
+              documentSelector = vim.NIL,
+              interFileDependencies = false,
+              workspaceDiagnostics = true,
+            },
           },
           handlers = {
             ['workspace/diagnostic'] = function(_, _, callback)

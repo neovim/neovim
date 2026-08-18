@@ -326,7 +326,11 @@ describe('vim.lsp.diagnostic', function()
         _G.requests = 0
         _G.server = _G._create_server({
           capabilities = {
-            diagnosticProvider = {},
+            diagnosticProvider = {
+              documentSelector = vim.NIL,
+              interFileDependencies = false,
+              workspaceDiagnostics = false,
+            },
           },
           handlers = {
             ['textDocument/diagnostic'] = function(_, params)
@@ -819,7 +823,11 @@ describe('vim.lsp.diagnostic', function()
         _G.requests = 0
         _G.server = _G._create_server({
           capabilities = {
-            diagnosticProvider = {},
+            diagnosticProvider = {
+              documentSelector = vim.NIL,
+              interFileDependencies = false,
+              workspaceDiagnostics = false,
+            },
           },
           handlers = {
             ['textDocument/diagnostic'] = function(_, _, callback)
@@ -877,7 +885,11 @@ describe('vim.lsp.diagnostic', function()
         _G.doc_requests = 0
         _G.server = _G._create_server({
           capabilities = {
-            diagnosticProvider = { workspaceDiagnostics = true },
+            diagnosticProvider = {
+              documentSelector = vim.NIL,
+              interFileDependencies = false,
+              workspaceDiagnostics = true,
+            },
           },
           handlers = {
             ['textDocument/diagnostic'] = function(_, _, callback)

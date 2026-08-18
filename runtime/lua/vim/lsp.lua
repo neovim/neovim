@@ -854,7 +854,10 @@ function lsp._set_defaults(client, bufnr)
     vim.bo[bufnr].omnifunc = lsp.omnifunc
   end
   if
-    client:supports_method('textDocument/rangeFormatting')
+    (
+      client:supports_method('textDocument/rangeFormatting')
+      or client:supports_method('textDocument/formatting')
+    )
     and is_empty_or_default(bufnr, 'formatprg')
     and is_empty_or_default(bufnr, 'formatexpr')
   then
@@ -1387,7 +1390,7 @@ function lsp.formatexpr(opts)
   opts = opts or {}
   local timeout_ms = opts.timeout_ms or 500
 
-  if vim.list_contains({ 'i', 'R', 'ic', 'ix' }, vim.fn.mode()) then
+  if vim.list_contains({ 'i', 'R' }, vim.fn.mode()) then
     -- `formatexpr` is also called when exceeding `textwidth` in insert mode
     -- fall back to internal formatting
     return 1
@@ -1400,9 +1403,11 @@ function lsp.formatexpr(opts)
     return 0
   end
   local bufnr = api.nvim_get_current_buf()
+  local range_is_whole_buffer = start_lnum == 1 and end_lnum == api.nvim_buf_line_count(bufnr)
   for _, client in pairs(lsp.get_clients({ bufnr = bufnr })) do
+    local params = util.make_formatting_params()
+    local method ---@type vim.lsp.protocol.Method.ClientToServer.Request?
     if client:supports_method('textDocument/rangeFormatting') then
-      local params = util.make_formatting_params()
       local end_line = vim.fn.getline(end_lnum) --[[@as string]]
       local end_col = vim.str_utfindex(end_line, client.offset_encoding)
       --- @cast params +lsp.DocumentRangeFormattingParams
@@ -1416,8 +1421,13 @@ function lsp.formatexpr(opts)
           character = end_col,
         },
       }
-      local response =
-        client:request_sync('textDocument/rangeFormatting', params, timeout_ms, bufnr)
+      method = 'textDocument/rangeFormatting'
+    elseif client:supports_method('textDocument/formatting') and range_is_whole_buffer then
+      method = 'textDocument/formatting'
+    end
+
+    if method then
+      local response = client:request_sync(method, params, timeout_ms, bufnr)
       if response and response.result then
         util.apply_text_edits(response.result, bufnr, client.offset_encoding)
         return 0
