@@ -211,7 +211,6 @@ typedef enum {
   CP_FAST = 32,          ///< use fast_breakcheck instead of os_breakcheck
 } cp_flags_T;
 
-static const char e_hitend[] = N_("Hit end of paragraph");
 static const char e_compldel[] = N_("E840: Completion function deleted text");
 
 // All the current matches are stored in a list.
@@ -6213,7 +6212,8 @@ static void ins_compl_show_statusmsg(void)
 {
   // we found no match if the list has only the "compl_orig_text"-entry
   if (is_first_match(compl_first_match->cp_next)) {
-    edit_submode_extra = compl_status_adding() && compl_length > 1 ? _(e_hitend) : _(e_patnotf);
+    edit_submode_extra = compl_status_adding() && compl_length > 1
+                         ? _("Hit end of paragraph") : _("Pattern not found");
     edit_submode_highl = HLF_E;
   }
 
