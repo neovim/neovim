@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:	Slang
 " Maintainer:	Austin Shijo <epestr@proton.me>
-" Last Change:	2025 Jan 05
+" Last Change:	2026 Aug 16
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -28,12 +28,9 @@ setlocal commentstring=//\ %s
 setlocal comments=sO:*\ -,mO:*\ \ ,exO:*/,s1:/*,mb:*,ex:*/,:///,://
 
 " When the matchit plugin is loaded, this makes the % command skip parens and
-" braces in comments properly, and adds support for shader-specific keywords
+" braces in comments properly
 if exists("loaded_matchit")
-  " Add common shader control structures
-  let b:match_words = '{\|^\s*\<\(if\|for\|while\|switch\|struct\|class\)\>:}\|^\s*\<break\>,' ..
-        \ '^\s*#\s*if\(\|def\|ndef\)\>:^\s*#\s*elif\>:^\s*#\s*else\>:^\s*#\s*endif\>,' ..
-        \ '\[:\]'
+  let b:match_words = '^\s*#\s*if\(\|def\|ndef\)\>:^\s*#\s*elif\>:^\s*#\s*else\>:^\s*#\s*endif\>'
   let b:match_skip = 's:comment\|string\|character\|special'
   let b:match_ignorecase = 0
   let b:undo_ftplugin ..= " | unlet! b:match_skip b:match_words b:match_ignorecase"
