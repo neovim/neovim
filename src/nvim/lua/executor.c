@@ -1061,12 +1061,14 @@ static lua_State *nlua_init_state(bool thread)
   return lstate;
 }
 
+/// Disposes global Lua state. Idempotent, harmless if called multiple times.
 void nlua_free_all_mem(void)
 {
   if (!global_lstate) {
     return;
   }
   lua_State *lstate = global_lstate;
+  global_lstate = NULL;
   nlua_unref_global(lstate, require_ref);
   nlua_common_free_all_mem(lstate);
   nlua_treesitter_free();
