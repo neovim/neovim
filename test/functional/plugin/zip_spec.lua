@@ -447,14 +447,16 @@ describe('nvim.zip', function()
     local reported = exec_lua(function(uri)
       vim.api.nvim_input('no1<CR>no2<CR>no3<CR>')
       vim.api.nvim_cmd({ cmd = 'edit', args = { uri }, magic = { file = false, bar = false } }, {})
-      return vim.wait(1000, function()
-        return vim.api
-          .nvim_exec2('messages', { output = true }).output
-          :find('incorrect password', 1, true) ~= nil
+      local function messages()
+        return vim.api.nvim_exec2('messages', { output = true }).output
+      end
+      vim.wait(1000, function()
+        return messages():find('zip: ', 1, true) ~= nil
       end)
+      return messages()
     end, ('zip://%s/secret.txt'):format(archive))
 
-    eq(true, reported)
+    t.matches('incorrect password', reported)
   end)
 
   describe('extract', function()
