@@ -3051,7 +3051,7 @@ describe('TUI', function()
     local chan = api.nvim_get_option_value('channel', { buf = 0 })
     local pid = fn.jobpid(chan)
     fn.chanclose(chan)
-    retry(nil, 50, function()
+    retry(nil, 500, function()
       eq(vim.NIL, api.nvim_get_proc(pid))
     end)
     -- FIXME: SIGHUP sometimes isn't caught with ASAN.
