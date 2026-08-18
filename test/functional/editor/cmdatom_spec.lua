@@ -57,7 +57,7 @@ end)
 describe('CmdAtom', function()
   before_each(clear)
 
-  it('a counted mapped motion carries its count in the atom', function()
+  it('motion mapping', function()
     command('nnoremap j gj')
     fn.setline(1, { 'a1', 'b2', 'c3', 'd4', 'e5' })
     feed('gg')
@@ -80,11 +80,17 @@ describe('CmdAtom', function()
     feed('gg0')
     feed('3<F6>')
     ev = atom_last()
-    eq({ type = 'mapping' }, pick(ev, 'type', 'count'))
-    eq({ keys = '3dl', count = 3 }, pick(ev.atoms[1], 'keys', 'count'))
+    eq({ type = 'mapping', lhs = k('<F6>') }, pick(ev, 'type', 'count', 'lhs'))
+    -- Only the composite carries the mapping's LHS: a subatom is its own input.
+    eq({ keys = '3dl', count = 3, lhs = '3dl' }, pick(ev.atoms[1], 'keys', 'count', 'lhs'))
+    -- "." repeats the mapping's EDIT as ONE atom, labeled "." (not "<F6>").
+    local before = #atoms()
+    feed('.')
+    eq(before + 1, #atoms())
+    eq({ type = 'operator', keys = '3dl', lhs = '.' }, pick(atom_last(), 'type', 'keys', 'lhs'))
   end)
 
-  it('a Lua-callback mapping (the "]q" default) emits a mapping atom', function()
+  it('Lua-callback mapping (e.g. "]q" default)', function()
     -- Same shape as the "]q" default mapping: a Lua callback with no
     -- replayable keys. Still a user action: it publishes with an empty
     -- replay payload.
@@ -112,7 +118,7 @@ describe('CmdAtom', function()
       end)
     ]])
     feed(',e')
-    eq({ keys = '', changed = true }, pick(atom_last(), 'keys', 'changed'))
+    eq({ keys = '', lhs = ',e', changed = true }, pick(atom_last(), 'keys', 'lhs', 'changed'))
 
     -- "<Cmd>" is opaque too, but unlike a Lua callback its command is text (like a ":" mapping).
     command('nnoremap ,c <Cmd>call setline(1, "N" . v:count)<CR>')
@@ -371,13 +377,40 @@ describe('CmdAtom', function()
     n.poke_eventloop()
     eq(2, fn.line('.')) -- the scroll dragged the cursor: selection is lines 1-2
     feed('d')
-    eq(before, #atoms()) -- not replayable: no atom published for the edit
+    -- Publishes with empty `CmdAtom.keys`; the keys that produced it are in `lhs`.
+    eq(before + 1, #atoms())
+    eq(
+      { type = 'visual', keys = '', lhs = k('V<C-E>d'), changed = true },
+      pick(atom_last(), 'type', 'keys', 'lhs', 'changed')
+    )
     eq('l3', fn.getline(1)) -- the edit itself deleted both selected lines
 
     -- "." on the unreplayable operation falls back to an equal-size reselect
     -- ("1v" + operator): it deletes the same number of lines at the cursor.
     feed('.')
     eq('l5', fn.getline(1))
+
+    -- But a viewport key that preserves cursor ("zz") does not move the selection: still
+    -- replayable, and collected like any other subatom.
+    fn.setline(1, lines)
+    feed('gg')
+    before = #atoms()
+    feed('Vzzd')
+    eq('l2', fn.getline(1))
+    eq(before + 1, #atoms())
+    -- Nothing was translated, so lhs=keys.
+    eq({ type = 'visual', keys = 'Vzzd', lhs = 'Vzzd' }, pick(atom_last(), 'type', 'keys', 'lhs'))
+    feed('.')
+    eq('l3', fn.getline(1))
+
+    -- "gv" (absolute region) is unreplayable, but emitted in `lhs`.
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'aaa bbb' })
+    feed('gg0viw<Esc>')
+    before = #atoms()
+    feed('gvd')
+    eq(' bbb', fn.getline(1))
+    eq(before + 1, #atoms())
+    eq({ type = 'visual', keys = '', lhs = 'gvd' }, pick(atom_last(), 'type', 'keys', 'lhs'))
 
     -- A fed (":normal!") Visual-put preps the selection keysequence, like any fed visual
     -- operator (":normal! vjd"): "." re-executes "Vjp", not a bare "p".
@@ -526,14 +559,15 @@ describe('CmdAtom', function()
     end)
   end)
 
-  it('one event per operation, for each kind of atom', function()
+  it('one event per user action', function()
     n.clear({ args = { '--clean' }, args_rm = { '--cmd' } })
     --- Feeds `keys`, asserts exactly ONE new event, with the given keys.
-    local function atom(keys, expected)
+    local function atom(keys, expected, lhs)
       local before = #atoms()
       feed(keys)
       local evs = atoms()
       eq({ before + 1, k(expected) }, { #evs, evs[#evs].keys })
+      eq(k(lhs or expected), evs[#evs].lhs)
     end
     local lines = {}
     for i = 1, 20 do
@@ -542,10 +576,17 @@ describe('CmdAtom', function()
     fn.setline(1, lines)
     feed('gg0')
     atoms_start()
+    -- "." with nothing to repeat stuffs nothing.
+    feed('.')
+    eq({ { type = 'command', keys = '.', lhs = '.' } }, atoms_tail(1, 'type', 'keys', 'lhs'))
     -- Operators: the atom is the redobuff (count/register included).
     -- "x" is normalized ("translated") to the elemental command "dl".
-    atom('x', 'dl')
-    atom('3x', '3dl')
+    atom('x', 'dl', 'x')
+    -- A stuffed translation UNWRAPS: keeps the resolved "type" and has no subatoms.
+    -- Only `lhs` marks it as translated; it is not a composite.
+    eq({ type = 'operator' }, pick(atom_last(), 'type', 'atoms'))
+    atom('3x', '3dl', '3x')
+    atom('D', 'd$', 'D')
     atom('dw', 'dw')
     atom('"z2dw', '"z2dw')
     atom('yy', 'yy')
@@ -570,14 +611,33 @@ describe('CmdAtom', function()
     atom('viwd', 'viwd')
     atom('Vd', 'Vd')
     atom('<C-v>jd', '<C-V>jd')
-    -- Motions.
+    -- Motions: the target is relative to the cursor.
     atom('w', 'w')
     atom('3w', '3w')
     atom('fb', 'fb')
-    atom('G', 'G')
     atom('$', '$')
     feed('gg0')
     atom(']]', ']]')
+    -- "%" is cursor-relative.
+    command('silent! nunmap %') -- the bundled matchit plugin maps it
+    fn.setline(1, 'alpha (beta) gamma')
+    feed('gg0f(')
+    atom('%', '%')
+    eq('motion', atom_last().type)
+    fn.setline(1, 'alpha beta gamma delta epsilon zeta')
+    -- G/gg (absolute line), H/M/L (viewport) are motions: multicursor replay is meaningful? (but
+    -- cursors may be "merged").
+    feed('gg0')
+    atom('G', 'G')
+    eq('motion', atom_last().type)
+    atom('gg', 'gg')
+    eq('motion', atom_last().type)
+    atom('L', 'L')
+    eq('motion', atom_last().type)
+    atom('H', 'H')
+    eq('motion', atom_last().type)
+    atom('M', 'M')
+    eq('motion', atom_last().type)
     -- Jumps: absolute/shared-state navigation, their own kind.
     atom('ma', 'ma')
     eq('command', atom_last().type) -- "m" sets state; it does not jump
@@ -592,9 +652,16 @@ describe('CmdAtom', function()
     atom('<C-r>', '<C-R>')
     -- "." emits its resolution (like "x" => "dl").
     feed('gg0')
-    atom('x', 'dl')
-    atom('.', 'dl')
-    atom('3.', '3dl') -- "3.": the new count replaces the captured one
+    atom('x', 'dl', 'x')
+    atom('.', 'dl', '.')
+    atom('3.', '3dl', '3.') -- "3.": the new count replaces the captured one
+    -- "." emits exactly ONE atom labeled ".": the repeated keys fold into its composite.
+    atom('iQ<Esc>', '1iQ<Esc>')
+    atom('.', '1iQ<Esc>', '.')
+    atom('viwd', 'viwd')
+    atom('.', 'viwd', '.')
+    atom('cwZZ<Esc>', 'cwZZ<Esc>')
+    atom('.', 'cwZZ<Esc>', '.')
     -- Payload commands: the interactively-typed cmdline completes the
     -- keysequence (not a bare "/" or ":" prefix).
     atom('/beta<CR>', '/beta<NL>')
@@ -630,13 +697,11 @@ describe('CmdAtom', function()
     local count = #atoms()
     feed(',E') -- E492 mid-mapping: the trailing "x" never runs
     eq(count, #atoms())
-    atom('x', 'dl') -- the next command is not folded into the dead composite
-    eq(nil, atom_last().lhs) -- not from a mapping: omitted
+    atom('x', 'dl', 'x') -- the next command is not folded into the dead composite
     command('nmap ,A ,B')
     command('nmap ,B ,A')
     feed(',A') -- E223: recursive mapping
-    atom('x', 'dl')
-    eq(nil, atom_last().lhs) -- not from a mapping: omitted
+    atom('x', 'dl', 'x')
     -- Macro playback ("@q") emits its commands' atoms (capture-on-replay);
     -- "@q" itself is a translation, never an atom.
     local total = #atoms()
@@ -795,9 +860,14 @@ describe('CmdAtom', function()
     feed('gg0')
     atoms_start()
     feed('ysiw"')
-    -- The atom is the redobuff plus the getchar()'d payload: a replayed
-    -- opfunc reads the same wrap char.
-    eq({ 'g@iw"' }, atoms_tail(1))
+    -- The atom is the redobuff plus the getchar()'d payload: a replayed opfunc reads the same wrap
+    -- char.
+    -- Two atoms: the mapping ends mid-operation ("ys" => "g@"), then the operator the typed "iw"
+    -- completed. Only the mapping has a translated `lhs`; the operator is its own input.
+    eq({
+      { type = 'mapping', keys = '', lhs = 'ys', pending = 'operator' },
+      { type = 'operator', keys = 'g@iw"', lhs = 'g@iw"' },
+    }, atoms_tail(2, 'type', 'keys', 'lhs', 'pending'))
     eq({ '"alpha" beta' }, get_lines())
   end)
 

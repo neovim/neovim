@@ -49,6 +49,11 @@ static void mc_vsel_refresh(void)
 {
 }
 
+static bool mc_following(void)
+{
+  return false;
+}
+
 CmdAtomVec g_atoms = KV_INITIAL_VALUE;
 /// Capture clock: ticks on any kind of capture (atom push, Visual subatom). Used to answer "was
 /// anything captured during this command (including its nested frames)?".
@@ -58,10 +63,9 @@ static bool atom_suppressed = false;
 /// Mapping edited the buffer, or its insert-session cascaded: cascades as one unit, incl. motions.
 static bool map_edit = false;
 
-/// Accumulating composite atom: the executing mapping/macro's subatoms, collected while it runs and
-/// collapsed at the command end. See `vatom` for Visual composite.
+/// Accumulating composite atom: an executing mapping/macro. See `vatom` for Visual composite.
 static struct {
-  CmdAtomVec atoms;
+  CmdAtomVec atoms;   ///< Subatoms of the mapping/macro.
   char *lhs;          ///< Label: mapping LHS or macro "@x" (NULL: not collecting).
   bool queued;        ///< A cascadable atom was queued (g_atoms) while collecting.
   bool macro;         ///< Macro execution: captured as an "@x"-labeled atom.
@@ -73,18 +77,18 @@ static CmdFrame *cur_frame = NULL;
 
 /// State of a Visual composite atom.
 typedef enum {
-  // Nothing to replay:
-  kVatomNone,      ///< No pending Visual atom.
-  kVatomVoid,      ///< Not replayable: tainted/poisoned (by mouse, gv, …). But may emit CmdAtom.
+  kVatomNone = 0,   ///< No pending Visual atom.
 
-  // Accumulating, replayable:
-  kVatomTyped,     ///< User input (typed, or mapping/macro): emitted/cascaded at end.
-  kVatomFed,       ///< Fed input (":norm! vjd", scheduled feedkeys): preps redo, no emit/cascade.
+  // Kind:
+  kVatomTyped = 1,  ///< User input (typed, or mapping/macro): emitted/cascaded at end.
+  kVatomFed = 2,    ///< Fed input (":norm! vjd", scheduled feedkeys): preps redo, no emit/cascade.
+
+  kVatomVoid = 4,   ///< Not replayable: tainted/poisoned (by mouse, gv, …). But may emit CmdAtom.
 } VatomState;
 
-/// Accumulating Visual composite: the full Visual keysequence, including the selection steps.
+/// Accumulating Visual composite: the full Visual keysequence (selection keys + operator).
 static struct {
-  CmdAtomVec atoms;  ///< Accumulated atoms during Visual mode.
+  CmdAtomVec atoms;  ///< Accumulated subatoms. A void session collects them as the `lhs` label.
   VatomState state;
 } vatom;
 
@@ -287,10 +291,9 @@ static Dict atom_dict(const CmdAtom *atom)
     PUT(d, "count", INTEGER_OBJ(spec->count));
   }
   // keys/lhs are RAW bytes (typeahead encoding).
-  PUT(d, "keys", CSTR_TO_OBJ(atom->keys != NULL ? atom->keys : ""));
-  if (atom->lhs != NULL && *atom->lhs != NUL) {
-    PUT(d, "lhs", CSTR_TO_OBJ(atom->lhs));
-  }
+  const char *keys = atom->keys != NULL ? atom->keys : "";
+  PUT(d, "keys", CSTR_TO_OBJ(keys));
+  PUT(d, "lhs", CSTR_TO_OBJ(atom->lhs != NULL && *atom->lhs != NUL ? atom->lhs : keys));
   if (*force != NUL) {
     PUT(d, "motionforce", CSTR_TO_OBJ(force));
   }
@@ -339,9 +342,9 @@ static void atom_emit(const CmdAtom *atom, const char *pending, bool cascade)
 void atom_push_raw(bool cascade, CmdAtom atom)
 {
   assert(atom.keys != NULL);
-  if (Visual.active && atom_visual_replayable()) {
+  if (atom_visual_pending()) {
     // Collecting the Visual composite: subatom of the pending visual atom.
-    if (vatom.state == kVatomTyped) {
+    if (vatom.state & kVatomTyped) {
       // Not for kVatomFed: redo-prep must not mark the enclosing span as captured.
       atom_captures++;
     }
@@ -410,7 +413,9 @@ static void atom_stage_flush(CmdFrame *frame)
     return;
   }
   frame->staged.changed = buf_get_changedtick(curbuf) != frame->tick;
-  atom_push(true, frame->staged);  // Staged commands are always edits (cascadable).
+  // Staged commands are edits, thus cascade. Except with no keys (poisoned Visual selection).
+  bool cascade = *frame->staged.keys != NUL;
+  atom_push(cascade, frame->staged);
   frame->staged = (CmdAtom){ 0 };
 }
 
@@ -447,7 +452,7 @@ static void atom_composite_start(const char *lhs, size_t len)
   composite.tick = buf_get_changedtick(curbuf);
 }
 
-/// Collapses the collected subatoms (`CmdAtom.atoms`) and emits the composite atom.
+/// Emits the composite atom with its collected subatoms (`CmdAtom.atoms`).
 ///
 ///      :nnoremap gj i<C-J><Esc>k$
 ///      "gj" => CmdAtom{ .lhs="gj", .keys="1i<NL><Esc>k$", kAMapping }
@@ -510,10 +515,10 @@ void atom_suppress(bool suppress)
   atom_suppressed = suppress;
 }
 
-/// Block atom pushes if: cascade in-progress, internal op is executing, or vatom is voided.
+/// Block atom pushes if: cascade in-progress, or internal op is executing.
 static bool atom_blocked(void)
 {
-  return mc_replaying() || atom_suppressed || (vatom.state == kVatomVoid && Visual.active);
+  return mc_replaying() || atom_suppressed;
 }
 
 /// Decides if the command is capturable.
@@ -704,6 +709,18 @@ void atom_macro_start(int regname)
   }
 }
 
+/// Starts accumulating a composite for a command that stuffs its "translation" ("x" => "dl").
+void atom_stuff_start(const cmdarg_T *cap)
+{
+  // Not while another composite collects: a mapping's own label wins ("nnoremap <F6> xw").
+  if (!atom_has_consumers() || mc_replaying() || atom_composite_active() || !atom_is_user_input()) {
+    return;
+  }
+  char *lhs = atom_redo_keys(atom_cmd_spec(cap));
+  atom_composite_start(lhs, strlen(lhs));
+  xfree(lhs);
+}
+
 /// Starts accumulating a composite for a mapping resolved from typed keys (vgetorpeek()).
 void atom_map_start(const char *lhs, size_t len)
 {
@@ -723,10 +740,16 @@ static void atom_visual_reset(void)
   atoms_free(&vatom.atoms);
 }
 
-/// True if the pending visual atom is replayable (accumulating, not voided).
+/// Visual atom is pending. A void session still accumulates, for the `lhs` label.
+static bool atom_visual_pending(void)
+{
+  return vatom.state != kVatomNone;
+}
+
+/// Pending Visual atom is replayable (not voided).
 bool atom_visual_replayable(void)
 {
-  return vatom.state == kVatomTyped || vatom.state == kVatomFed;
+  return atom_visual_pending() && !(vatom.state & kVatomVoid);
 }
 
 /// The pending visual atom's accumulated keys (allocated), or NULL data if none is replayable
@@ -739,18 +762,15 @@ String atom_visual_span(void)
   return atoms_concat_keys(vatom.atoms);
 }
 
-/// Ends the pending visual atom, appends `suffix`, and stages it. Or discards it if selection is
-/// unreplayable (void/absent).
+/// Ends the pending visual atom, appends `suffix`, and stages it. Or discards if unreplayable.
 ///
 /// @param suffix  Owned.
 /// @param spec  The completing operator, or NULL.
-/// @param redoable  Prep redo so "." re-executes the selection. Unreplayable (void/absent)
-///                  selection preps "1v" + operator instead (Vim's fixed-size visual-repeat).
+/// @param redoable  Prep redo. Unreplayable selection preps "1v" + op (fixed-size visual-repeat).
 /// @return  True if the redo was prepped.
 static bool atom_visual_end_suffix(char *suffix, const CmdSpec *spec, bool redoable)
 {
-  if (atom_suppressed) {
-    // Replay, or internal operator applied as part of another command.
+  if (mc_replaying() || atom_suppressed) {  // Replay, or internal op applied during another cmd.
     xfree(suffix);
     return false;
   }
@@ -761,8 +781,22 @@ static bool atom_visual_end_suffix(char *suffix, const CmdSpec *spec, bool redoa
       prep_redo_visual("1v", 2, (CmdSpec){ 0 });  // Equal-size fallback.
       redo_append_str(suffix, -1);
     }
+    // A poisoned selection is still a user action: emit it with lhs + empty keys, like a mapping
+    // whose commands captured nothing (atom_composite_end()).
+    bool emit = (vatom.state & kVatomVoid) && (vatom.state & kVatomTyped) && spec != NULL
+                && suffix != NULL && atom_is_user_cmd();
+    char *label = NULL;
+    if (emit) {
+      String collected = atoms_concat_keys(vatom.atoms);
+      label = xrealloc(collected.data, collected.size + strlen(suffix) + 1);
+      STRCPY(label + collected.size, suffix);
+    }
     xfree(suffix);
-    atom_visual_reset();
+    atom_visual_reset();  // End the session before staging.
+    if (emit) {
+      atom_stage_set((CmdAtom){ .type = kAVisual, .spec = *spec, .keys = xstrdup(""),
+                                .lhs = label });
+    }
     return prepped;
   }
   String v = atoms_concat_keys(vatom.atoms);
@@ -774,7 +808,7 @@ static bool atom_visual_end_suffix(char *suffix, const CmdSpec *spec, bool redoa
     prep_redo_visual(vkeys, prefix, (CmdSpec){ 0 });
     redo_append_str(suffix, -1);
   }
-  if (!atom_is_user_cmd() || vatom.state != kVatomTyped) {
+  if (!atom_is_user_cmd() || !(vatom.state & kVatomTyped)) {
     // Not user input (":normal! vjd", fed keys): the redo prep above is the only effect; no emit.
     xfree(vkeys);
     xfree(suffix);
@@ -804,7 +838,7 @@ static bool atom_visual_end_suffix(char *suffix, const CmdSpec *spec, bool redoa
 
 /// Ends the pending visual atom with the operator `spec` ("viwee" + "x").
 ///
-/// @return  True if the redo was prepped.
+/// @return  True if redo was prepped.
 bool atom_visual_end(CmdSpec spec, bool redoable)
 {
   return atom_visual_end_suffix(atom_redo_keys(spec), &spec, redoable);
@@ -939,8 +973,8 @@ InsSession atom_ins_start(int cmd, long count, VisualIns vis, bool vblock)
     .vis = vis,
     .tick = buf_get_changedtick(curbuf),
   };
-  if (vis != kVInsNone) {
-    if (vis == kVInsKeys && vatom.state != kVatomTyped) {
+  if (vis != kVInsNone && !mc_replaying()) {
+    if (vis == kVInsKeys && !(atom_visual_replayable() && (vatom.state & kVatomTyped))) {
       // The selection came from fed keys (":norm", scheduled feedkeys).
       session.typed = false;
     }
@@ -1012,6 +1046,10 @@ static void atom_capture_cmd(cmdarg_T *ca, const CmdFrame *old, bool toplevel)
   if (mc_replaying() || atom_suppressed) {
     return;
   }
+
+  //
+  // Classify
+  //
   const bool user = atom_is_user_cmd();
   const unsigned keycls = atom_key_class(ca->cmdchar, ca->nchar);
   // Opaque cmd that changed nothing is invisible; one that changed the buffer/selection voids the
@@ -1044,6 +1082,10 @@ static void atom_capture_cmd(cmdarg_T *ca, const CmdFrame *old, bool toplevel)
            && buf_get_changedtick(curbuf) != old->tick) || ins_cascaded)) {
     map_edit = true;
   }
+
+  //
+  // Visual session: open/continue/close, and decide if this command is one of its subatoms.
+  //
   bool vis = false;
   if (Visual.active) {
     if (!old->visual.active) {
@@ -1051,17 +1093,16 @@ static void atom_capture_cmd(cmdarg_T *ca, const CmdFrame *old, bool toplevel)
       // Decided once, at session start.
       vatom.state = (old->keytyped || atom_composite_active()) ? kVatomTyped : kVatomFed;
     }
-    // Collecting the Visual composite: gated on the session (not atom_capturable()), so fed
-    // selections (":normal! vjd") still accumulate for redo-prep.
-    vis = atom_visual_replayable();
-    if (vis && (Visual.select || (ca->cmdchar == 'g' && ca->nchar == 'v'))) {
-      // Not replayable: Select-mode input; "gv" (absolute region).
-      vatom.state = kVatomVoid;
-      vis = false;
-    }
-    if (vis && (ca->cmdchar == 'Q' || ca->cmdchar == 'q')) {
-      // Recording/replay commands are meta (not part of the edit): skip, no void.
-      vis = false;
+    // Decided by the session (not atom_capturable()), so fed selections (":normal! vjd") still
+    // accumulate for redo-prep. Recording/replay commands are meta (not part of the edit).
+    vis = atom_visual_pending() && ca->cmdchar != 'Q' && ca->cmdchar != 'q';
+    if (vis
+        && (Visual.select
+            || (ca->cmdchar == 'g' && ca->nchar == 'v')
+            || ((keycls & (kKeyScrollMove | kKeyScrollView | kKeyMouse)) && !unchanged))) {
+      // Not replayable: Select-mode input; "gv" (absolute region); the selection moved by
+      // viewport-dependent keys.
+      vatom.state |= kVatomVoid;
     }
   } else if (old->visual.active) {
     if (user && old->follow && atom_visual_replayable() && kv_size(vatom.atoms) > 0) {
@@ -1073,6 +1114,10 @@ static void atom_capture_cmd(cmdarg_T *ca, const CmdFrame *old, bool toplevel)
       atom_visual_reset();
     }
   }
+
+  //
+  // Capture: does this command own an atom?
+  //
   if ((vis && atom_captures == old->captures && ca->oap->op_type == OP_NOP)
       || (!Visual.active
           && !old->visual.active
@@ -1104,7 +1149,11 @@ static void atom_capture_cmd(cmdarg_T *ca, const CmdFrame *old, bool toplevel)
                        && strchr("/?:!Qq", ca->cmdchar) == NULL)
                       || special_motion);
     // Mapping-internal motions are part of its recipe: queue them, the clock edge decides.
-    bool follow = mapped && motion;
+    bool follow = (mc_following() || mapped) && motion;
+
+    //
+    // Route: decide the atom type and push it.
+    //
     if (curcmd.redo_pending && !mouse_cmd) {
       // Not for mouse commands (middle-click paste): pasting at every cursor would use
       // viewport-dependent positions.
@@ -1148,8 +1197,8 @@ static void atom_capture_cmd(cmdarg_T *ca, const CmdFrame *old, bool toplevel)
       CmdAtom atom = atom_from_spec(motion ? kAMotion : jump_cmd ? kAJump : kACommand, spec);
       atom.changed = changed;
       atom_push(follow, atom);
-    } else if (!vis && (scroll_cmd || mouse_cmd) && !atom_composite_active()) {
-      // Emit-only (viewport-dependent), and never a subatom. Composite keys must stay replayable.
+    } else if ((scroll_cmd || mouse_cmd) && !atom_composite_active()) {
+      // Emit-only (viewport-dependent).
       CmdSpec spec = atom_cmd_spec(ca);
       if (IS_SPECIAL(ca->cmdchar)) {
         // Wheel/mouse count is never typed: do_mousescroll() wrote its internal step there.
@@ -1161,12 +1210,12 @@ static void atom_capture_cmd(cmdarg_T *ca, const CmdFrame *old, bool toplevel)
     }
     if (vis && kv_size(vatom.atoms) == collected && !unchanged) {
       // Not replayable: moved the selection by non-collectible keys.
-      vatom.state = kVatomVoid;
+      vatom.state |= kVatomVoid;
     }
   }
   if (vis && (curbuf != old->buf || buf_get_changedtick(curbuf) != old->tick)) {
     // Not replayable: edited buffer during selection, so the keys do not describe the change.
-    vatom.state = kVatomVoid;
+    vatom.state |= kVatomVoid;
   }
   if (Visual.active && user && toplevel) {
     mc_vsel_refresh();

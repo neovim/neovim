@@ -4877,6 +4877,7 @@ static void nv_optrans(cmdarg_T *cap)
   static const char *str = "xXDCsSY&";
 
   if (!checkclearopq(cap->oap)) {
+    atom_stuff_start(cap);
     if (cap->count0) {
       stuffnumReadbuff(cap->count0);
     }
@@ -5769,6 +5770,7 @@ static void nv_dot(cmdarg_T *cap)
   // If "restart_edit" is true, the last but one command is repeated
   // instead of the last command (inserting text). This is used for
   // CTRL-O <.> in insert mode.
+  atom_stuff_start(cap);
   if (start_redo(cap->count0, restart_edit != 0 && Ins.moved == kInsNone) == false) {
     clearopbeep(cap->oap);
   }

@@ -55,8 +55,8 @@ struct CmdAtom {
   char *keys;     ///< Resolved keysequence (typeahead encoding), including `["x][count]` prefix
                   ///< (unlike `CmdSpec.body`, the raw unprefixed form).
   char *text;     ///< Payload: insert-session text, or Ex/search cmdline.
-  char *lhs;      ///< Mapping LHS or macro register ("gj", "@q") that produced this atom, or NULL.
-                  ///< Label/hint, not replayed.
+  char *lhs;      ///< Unresolved user input: mapping LHS or macro register ("@q"), or Visual op.
+                  ///< Label/hint, not replayed. NULL: untranslated, same as `keys`.
   CmdAtomType type;
   bool changed;   ///< The command changed the buffer.
   bool remap;     ///< Replay `keys` w/ remap. For replay of a payload mapping (vim-surround "ds'"),
