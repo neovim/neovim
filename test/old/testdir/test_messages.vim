@@ -758,6 +758,33 @@ func Test_long_formatprg_no_hit_enter()
   call StopVimInTerminal(buf)
 endfunc
 
+" A message shown while a mapping is still being processed must not raise a
+" hit-enter prompt that eats the mapping's remaining keys.
+func Test_hit_enter_no_eat_mapped_keys()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+    set ruler
+    call setline(1, range(1, 20))
+    " The 8-line :echo scrolls the screen and would raise a hit-enter prompt;
+    " the mapping then runs "gg" to move the cursor to line 1.
+    nnoremap X :echo "a\nb\nc\nd\ne\nf\ng\nh"<CR>gg
+    normal! 10G
+  END
+  call writefile(lines, 'XtestHitEnterMap', 'D')
+  let buf = RunVimInTerminal('-S XtestHitEnterMap', #{rows: 10})
+  call WaitForAssert({-> assert_match('10,1', term_getline(buf, 10))})
+
+  call term_sendkeys(buf, "X")
+  " Without the fix the hit-enter prompt eats the mapping's "g" keys and the
+  " cursor stays put.  With the fix "gg" runs and moves the cursor to line 1.
+  call WaitForAssert({-> assert_match('1,1', term_getline(buf, 10))})
+  call assert_notmatch('Press ENTER', term_getline(buf, 10))
+
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
 " Test that fileinfo is shown after deleting the last listed buffer with :bd
 func Test_fileinfo_after_last_bd()
   CheckRunVimInTerminal
