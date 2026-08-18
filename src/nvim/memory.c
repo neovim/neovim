@@ -861,9 +861,10 @@ void free_all_mem(void)
 {
   buf_T *buf, *nextbuf;
 
-  // When we cause a crash here it is caught and Vim tries to exit cleanly.
-  // Don't try freeing everything again.
+  // If a routine below recurses into free_all_mem, don't try freeing everything again.
   if (entered_free_all_mem) {
+    // Except the Lua state. #39675
+    nlua_free_all_mem();
     return;
   }
   entered_free_all_mem = true;
