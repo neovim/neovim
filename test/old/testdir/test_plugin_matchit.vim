@@ -55,4 +55,22 @@ func Test_html_matchit_tag_multiline_attributes()
   bwipe!
 endfunc
 
+func Test_shaderslang_matchit_switch_break()
+  call s:Setup(['void main() {', '  switch (x) {', '    case 1:',
+        \ '      break;', '  }', '}'], 'shaderslang')
+  call assert_equal(5, s:PercentTo([2, 14]))
+  call assert_equal(2, s:PercentTo([5, 3]))
+  bwipe!
+endfunc
+
+func Test_shaderslang_matchit_loop_break()
+  call s:Setup(['void f() {', '  for (int i = 0; i < 4; ++i) {',
+        \ '    if (i == 2)', '      break;', '    total += i;', '  }',
+        \ '  int after = 1;', '}'], 'shaderslang')
+  call assert_equal(8, s:PercentTo([1, 10]))
+  call assert_equal(6, s:PercentTo([2, 31]))
+  call assert_equal(2, s:PercentTo([6, 3]))
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
