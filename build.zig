@@ -60,6 +60,8 @@ pub fn build(b: *std.Build) !void {
     const modern_unix = is_darwin or os_tag.isBSD() or is_linux;
     const is_wasm = t.cpu.arch == .wasm32;
 
+    const pie = b.option(bool, "pie", "Build position independent executable");
+
     const h = b.graph.host.result;
     const host = b.option([]const u8, "host", "target for host ") orelse
         if (target.query.isNative() or h.cpu.arch == t.cpu.arch and h.os.tag == t.os.tag) "" else "native";
@@ -498,6 +500,8 @@ pub fn build(b: *std.Build) !void {
         .root_module = nvim_mod,
     }) else b.addExecutable(.{ .name = "nvim", .root_module = nvim_mod });
     nvim_exe.rdynamic = true; // -E
+    nvim_exe.pie = pie;
+
     if (emscripten_libc_path) |lp| nvim_exe.setLibCFile(lp);
     if (is_wasm) nvim_exe.entry = .disabled;
     if (is_wasm) nvim_exe.linker_allow_shlib_undefined = true;
@@ -505,31 +509,41 @@ pub fn build(b: *std.Build) !void {
     if (sys_opts.lua) {
         nvim_exe.root_module.linkSystemLibrary(lualib_name, .{});
     } else if (lua) |compile| {
+        compile.pie = pie;
         nvim_mod.linkLibrary(compile);
     }
     if (sys_opts.uv) {
         nvim_mod.linkSystemLibrary("libuv", .{});
         nvim_mod.linkSystemLibrary("libluv", .{});
     } else {
-        if (libuv) |compile| nvim_mod.linkLibrary(compile);
-        if (libluv) |compile| nvim_mod.linkLibrary(compile);
+        if (libuv) |compile| {
+            compile.pie = pie;
+            nvim_mod.linkLibrary(compile);
+        }
+        if (libluv) |compile| {
+            compile.pie = pie;
+            nvim_mod.linkLibrary(compile);
+        }
     }
     if (iconv) |dep| nvim_mod.linkLibrary(dep.artifact("iconv"));
     if (sys_opts.utf8proc) {
         nvim_mod.linkSystemLibrary("utf8proc", .{});
     } else if (utf8proc) |dep| {
+        dep.artifact("utf8proc").pie = pie;
         nvim_mod.linkLibrary(dep.artifact("utf8proc"));
     }
     if (use_unibilium) {
         if (sys_opts.unibilium) {
             nvim_mod.linkSystemLibrary("unibilium", .{});
         } else if (unibilium) |dep| {
+            dep.artifact("unibilium").pie = pie;
             nvim_mod.linkLibrary(dep.artifact("unibilium"));
         }
     }
     if (sys_opts.tree_sitter) {
         nvim_mod.linkSystemLibrary("tree-sitter", .{});
     } else if (treesitter) |dep| {
+        dep.artifact("tree-sitter").pie = pie;
         nvim_mod.linkLibrary(dep.artifact("tree-sitter"));
     }
     if (is_windows) {
