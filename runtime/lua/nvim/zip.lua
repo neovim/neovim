@@ -198,8 +198,8 @@ local function extract_with_password(command, source, path, dir)
 
   local function wanted()
     return exited ~= nil
-      or buffered:find('password: $') ~= nil
-      or buffered:find('reenter: $') ~= nil
+      or buffered:find('password: ', 1, true) ~= nil
+      or buffered:find('reenter: ', 1, true) ~= nil
   end
 
   local reenter = false
