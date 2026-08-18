@@ -706,6 +706,8 @@ void os_exit(int r)
   FUNC_ATTR_NORETURN
 {
   exiting = true;
+  // Avoid recursion in case SIGTERM arrives during `os_exit`.
+  signal_reject_deadly();
 
   if (ui_client_channel_id) {
     ui_client_stop();
