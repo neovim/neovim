@@ -3349,7 +3349,7 @@ nvim_buf_set_extmark({buf}, {ns_id}, {line}, {col}, {opts})
                    'wrap' and 'linebreak' options do not take effect, so the
                    number of extra screen lines will match the list-size (but
                    see `virt_lines_overflow`). By default lines are placed
-                   below the marked line.In particular, if the last
+                   below the marked line. Special case: If the last
                    `text_chunk` is empty, the corresponding `hl` will extend
                    to the end of the line.
                  • virt_lines_above: Place virtual lines above instead.
