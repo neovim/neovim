@@ -1700,7 +1700,7 @@ static void f_garbagecollect(typval_T *argvars, typval_T *rettv, EvalFuncData fp
   // using Lists and Dicts internally.  E.g.: ":echo [garbagecollect()]".
   want_garbage_collect = true;
 
-  if (argvars[0].v_type != VAR_UNKNOWN && tv_get_number(&argvars[0]) == 1) {
+  if (argvars[0].v_type != VAR_UNKNOWN && tv_get_bool(&argvars[0]) == 1) {
     garbage_collect_at_exit = true;
   }
 }
@@ -5891,9 +5891,9 @@ static void f_searchdecl(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   const char *const name = tv_get_string_chk(&argvars[0]);
   if (argvars[1].v_type != VAR_UNKNOWN) {
-    locally = tv_get_number_chk(&argvars[1], &error) == 0;
+    locally = !tv_get_bool_chk(&argvars[1], &error);
     if (!error && argvars[2].v_type != VAR_UNKNOWN) {
-      thisblock = tv_get_number_chk(&argvars[2], &error) != 0;
+      thisblock = (int)tv_get_bool_chk(&argvars[2], &error);
     }
   }
   if (!error && name != NULL) {
@@ -6881,7 +6881,7 @@ static void f_spellsuggest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
       goto f_spellsuggest_return;
     }
     if (argvars[2].v_type != VAR_UNKNOWN) {
-      need_capital = tv_get_number_chk(&argvars[2], &typeerr);
+      need_capital = tv_get_bool_chk(&argvars[2], &typeerr);
       if (typeerr) {
         goto f_spellsuggest_return;
       }
@@ -7233,7 +7233,7 @@ static void f_synID(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   const colnr_T col = (colnr_T)tv_get_number(&argvars[1]) - 1;
 
   bool transerr = false;
-  const int trans = (int)tv_get_number_chk(&argvars[2], &transerr);
+  const int trans = (int)tv_get_bool_chk(&argvars[2], &transerr);
 
   int id = 0;
   if (!transerr && lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count

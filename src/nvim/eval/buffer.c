@@ -723,23 +723,11 @@ void f_getbufinfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     dict_T *sel_d = argvars[0].vval.v_dict;
 
     if (sel_d != NULL) {
-      dictitem_T *di;
-
       filtered = true;
 
-      di = tv_dict_find(sel_d, S_LEN("buflisted"));
-      if (di != NULL && tv_get_number(&di->di_tv)) {
-        sel_buflisted = true;
-      }
-
-      di = tv_dict_find(sel_d, S_LEN("bufloaded"));
-      if (di != NULL && tv_get_number(&di->di_tv)) {
-        sel_bufloaded = true;
-      }
-      di = tv_dict_find(sel_d, S_LEN("bufmodified"));
-      if (di != NULL && tv_get_number(&di->di_tv)) {
-        sel_bufmodified = true;
-      }
+      sel_buflisted = tv_dict_get_bool(sel_d, "buflisted", false);
+      sel_bufloaded = tv_dict_get_bool(sel_d, "bufloaded", false);
+      sel_bufmodified = tv_dict_get_bool(sel_d, "bufmodified", false);
     }
   } else if (argvars[0].v_type != VAR_UNKNOWN) {
     // Information about one buffer.  Argument specifies the buffer

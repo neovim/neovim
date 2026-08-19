@@ -4018,7 +4018,7 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   const char *const type = tv_get_string(&argvars[1]);
 
   if (argvars[2].v_type != VAR_UNKNOWN) {
-    filtered = (bool)tv_get_number_chk(&argvars[2], NULL);
+    filtered = (bool)tv_get_bool_chk(&argvars[2], NULL);
   }
 
   if (p_wic) {
