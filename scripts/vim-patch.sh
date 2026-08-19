@@ -932,6 +932,7 @@ is_na_patch() {
           diff-tree --no-commit-id -r -b -U0 \
           '-I^\s+$' \
           '-I^=+$' \
+          '-I^\|popup_[_a-z]+\(\)\|' \
           '-I^popup_[_a-z]+\(' \
           '-I\*\s+For Vim version [0-9]\.[0-9]\.\s+Last change: [0-9]+ [A-Z][a-z]+ [0-9]+' \
           '-I compiled (with|without) .*\(\|.+\|\) feature\.$' \
@@ -989,9 +990,10 @@ is_na_patch() {
           '-I\sINIT\(= .+"E[0-9]+: .*enddef"' \
           '-I\sINIT\(= .+"E[0-9]+: .*([vV]im9|interface)' \
           '-I\sINIT\(= .+"E1016: Cannot declare .* variable: ' \
-          '-I\s+INIT\(= .+"E1103: Dictionary not set' \
-          '-I\s+INIT\(= .+"E1370: Cannot define a .+ as static' \
-          '-I\schar.*\s+\*w_popup_title;' \
+          '-I\sINIT\(= .+"E1103: Dictionary not set' \
+          '-I\sINIT\(= .+"E1370: Cannot define a .+ as static' \
+          '-I\s(bool|char(|_u))\s+w_popup_image_[_a-zA-Z]+;' \
+          '-I\schar(|_u)\s+\*w_popup_title;' \
           '-I\sint\s+ch_[_a-zA-Z]+;' \
           '-I\sint\s+w_(filter_mode|firstline|popup_drag|want_scrollbar);' \
           '-I\slist_T\s+\*w_popup_mask;' \
@@ -1016,8 +1018,8 @@ is_na_patch() {
           '-IEVENT_TERMINALWINOPEN' \
           '-I^#\s*include\s+<proto/' \
           '-I^\s+\{"(popup|prop|sound)_[_a-z]+",.*f_(popup|prop|sound)_[_a-z]+},$' \
-          '-I^\s*(static)?\s(char_u|hashtab_T|int|void)( \*)?$' \
-          '-I^static\s(char_u|hashtab_T|int|void)\s\*?[^*]+\(.+\);$' \
+          '-I^\s*(static)?\s(char(|_u)|hashtab_T|int|void)( \*)?$' \
+          '-I^static\s(char(|_u)|hashtab_T|int|void)\s\*?[^*]+\(.+\);$' \
           '-I#\s*define.*ex_ni$' \
           '-I[.>]b_p_key' \
           '-I[_.>]sc_version = ' \
