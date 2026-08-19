@@ -3110,6 +3110,12 @@ putglyph 1f3f4,200d,2620,fe0f 2 0,4]])
     local vt = init()
     local state = wantstate(vt, { g = true })
 
+    -- REP with no preceding graphic character is ignored, not an infinite loop
+    reset(state, nil)
+    push('\x1b[9bX', vt)
+    expect('putglyph 58 1 0,0')
+    cursor(0, 1, state)
+
     -- REP no argument
     reset(state, nil)
     push('a\x1b[b', vt)

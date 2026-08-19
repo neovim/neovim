@@ -1379,6 +1379,11 @@ static int on_csi(const char *leader, const long args[], int argcount, const cha
     break;
 
   case 0x62: {  // REP - ECMA-48 8.3.103
+    if (state->combine_width < 1) {
+      // No preceding graphic character to repeat. Ignoring REP also keeps the
+      // loop below from spinning forever on a zero-width advance.
+      break;
+    }
     const int row_width = THISROWWIDTH(state);
     count = CSI_ARG_COUNT(args[0]);
     col = state->pos.col + count;
@@ -2348,6 +2353,12 @@ void vterm_state_reset(VTermState *state, int hard)
     state->pos.row = 0;
     state->pos.col = 0;
     state->at_phantom = 0;
+
+    // The screen is about to be cleared, so there is no preceding glyph left
+    // for a combining character or REP to attach to.
+    state->grapheme_len = 0;
+    state->grapheme_last = 0;
+    state->combine_width = 0;
 
     VTermRect rect = { 0, state->rows, 0, state->cols };
     erase(state, rect, 0);
