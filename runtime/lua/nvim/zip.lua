@@ -196,10 +196,18 @@ local function extract_with_password(command, source, path, dir)
     return 'could not start unzip'
   end
 
+  -- Info-ZIP prints the prompt before disabling echo, and disables it with TCSAFLUSH, which
+  -- drops a password sent in that window. Echo is still on there, so an echo means "resend".
+  local sent = ''
+  local function echoed()
+    return sent ~= '' and buffered:find(sent .. '\r', 1, true) ~= nil
+  end
+
   local function wanted()
     return exited ~= nil
       or buffered:find('password: ', 1, true) ~= nil
       or buffered:find('reenter: ', 1, true) ~= nil
+      or echoed()
   end
 
   local reenter = false
@@ -213,15 +221,21 @@ local function extract_with_password(command, source, path, dir)
     if exited ~= nil then
       break
     end
-    local label = reenter and 'Password incorrect, try again: '
-      or ('Password for %s: '):format(path)
-    local password = vim.fn.inputsecret(label)
-    if password == '' then
-      vim.fn.jobstop(job)
-      return 'cancelled'
+    if echoed() then
+      -- Wait for its read(), else the resend is dropped too.
+      vim.wait(10)
+    else
+      local label = reenter and 'Password incorrect, try again: '
+        or ('Password for %s: '):format(path)
+      sent = vim.fn.inputsecret(label)
+      if sent == '' then
+        vim.fn.jobstop(job)
+        return 'cancelled'
+      end
+      reenter = true
     end
-    reenter, buffered = true, ''
-    vim.fn.chansend(job, password .. '\r')
+    buffered = ''
+    vim.fn.chansend(job, sent .. '\r')
   end
 
   if exited ~= 0 then
