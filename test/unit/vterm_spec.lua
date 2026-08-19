@@ -1471,6 +1471,15 @@ putglyph 1f3f4,200d,2620,fe0f 2 0,4]])
     push('\x1b[100;105r\x1bD', vt)
     push('\x1b[5;2r\x1bD', vt)
 
+    -- Shrinking past the top of the scroll region drops the region rather than
+    -- leaving a degenerate one behind
+    reset(state, nil)
+    push('\x1b[20;25r', vt)
+    resize(10, 80, vt)
+    push('\x1b[5S', vt)
+    expect('scrollrect 0..10,0..80 => +5,+0')
+    resize(25, 80, vt)
+
     reset(state, nil)
     state = wantstate(vt, { m = true, e = true })
 

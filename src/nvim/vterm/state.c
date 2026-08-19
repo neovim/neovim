@@ -148,6 +148,12 @@ static void scroll(VTermState *state, VTermRect rect, int downward, int rightwar
     return;
   }
 
+  // A degenerate rect makes rows/cols below negative, which inverts the clamps
+  // and yields a negative height for memmove()
+  if (rect.end_row <= rect.start_row || rect.end_col <= rect.start_col) {
+    return;
+  }
+
   int rows = rect.end_row - rect.start_row;
   if (downward > rows) {
     downward = rows;
@@ -2194,6 +2200,19 @@ static int on_resize(int rows, int cols, void *user)
   }
   if (state->scrollregion_right > -1) {
     UBOUND(state->scrollregion_right, state->cols);
+  }
+
+  // The near edges need clamping too, and a region that no longer fits must be
+  // dropped, exactly as DECSTBM/DECSLRM validate when the region is set
+  UBOUND(state->scrollregion_top, state->rows);
+  UBOUND(state->scrollregion_left, state->cols);
+  if (SCROLLREGION_BOTTOM(state) <= state->scrollregion_top) {
+    state->scrollregion_top = 0;
+    state->scrollregion_bottom = -1;
+  }
+  if (state->scrollregion_right > -1 && state->scrollregion_right <= state->scrollregion_left) {
+    state->scrollregion_left = 0;
+    state->scrollregion_right = -1;
   }
 
   VTermStateFields fields = {
