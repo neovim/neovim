@@ -66,14 +66,32 @@ void signal_init(void)
   signal_start();
 }
 
+#ifdef MSWIN
+/// Swallows console control events during shutdown.
+static BOOL WINAPI signal_ctrl_handler(DWORD type)
+{
+  switch (type) {
+  case CTRL_CLOSE_EVENT:
+    // Returning true is not enough; Windows terminates the process as soon as the handler returns.
+    // So block instead, like libuv's own handler does, and let the exit finish.
+    Sleep(INFINITE);
+    return true;
+  case CTRL_C_EVENT:
+  case CTRL_BREAK_EVENT:
+    return true;
+  default:
+    return false;
+  }
+}
+#endif
+
 /// During shutdown, we don't want the default actions of these signals.
-///
-/// Note: Windows still has the race. libuv's console control handler dispatches CTRL_CLOSE_EVENT
-/// as SIGHUP, but only while a watcher is registered; signal_teardown() closed ours, so the
-/// console terminates Nvim with STATUS_CONTROL_C_EXIT (-1073741510).
 static void signal_ignore_deadly(void)
 {
-#ifndef MSWIN
+#ifdef MSWIN
+  // Handlers run in reverse registration order, so this one runs before libuv's.
+  SetConsoleCtrlHandler(signal_ctrl_handler, true);
+#else
   signal(SIGHUP, SIG_IGN);
   signal(SIGINT, SIG_IGN);
   signal(SIGTERM, SIG_IGN);

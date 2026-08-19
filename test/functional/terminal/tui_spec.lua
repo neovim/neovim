@@ -3669,10 +3669,7 @@ describe('TUI', function()
     retry(nil, 2000, function()
       eq(vim.NIL, api.nvim_get_proc(pid))
     end)
-    -- On Windows the console terminates the child with STATUS_CONTROL_C_EXIT (-1073741510).
-    screen:expect({
-      any = is_os('win') and '%[Process exited %-?%d+%]' or '%[Process exited 1%]',
-    })
+    screen:expect({ any = '%[Process exited 1%]' })
     -- Closing stdin must skip the DA1 wait.
     t.assert_nolog('timed out waiting for DA1 response', testlog, 100)
   end)
