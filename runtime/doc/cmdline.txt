@@ -1213,6 +1213,8 @@ navigate, resize, close and open windows/tabpages. The mouse works as in any
 window: clicks focus other windows, and statuslines and vertical separators
 can be dragged to resize.
 
+See also |:exmode|
+
 								*E1292*
 Only one command-line window can be open at a time.
 
