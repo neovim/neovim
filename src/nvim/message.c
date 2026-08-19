@@ -1459,12 +1459,10 @@ void wait_return(int redraw)
     msg_puts(" ");              // make sure the cursor is on the right line
     c = CAR;                    // no need for a return in ex mode
     got_int = false;
-  } else if (!stuff_empty() || !typebuf_typed()) {
-    // When there are stuffed characters or pending mapped characters, the
-    // next character will dismiss the hit-enter prompt immediately.  A
-    // stuffed character then has to be put back, while a mapped character
-    // may even be swallowed (e.g. "g" treated as a message-scrollback key),
-    // so instead just don't show the hit-enter prompt at all.
+  } else if (!stuff_empty()) {
+    // When there are stuffed characters, the next stuffed character will
+    // dismiss the hit-enter prompt immediately and have to be put back, so
+    // instead just don't show the hit-enter prompt at all.
     c = CAR;
   } else {
     State = MODE_HITRETURN;
