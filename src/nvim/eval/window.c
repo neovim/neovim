@@ -669,11 +669,11 @@ void f_win_splitmove(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
 
     d = argvars[2].vval.v_dict;
-    if (tv_dict_get_number(d, "vertical")) {
+    if (tv_dict_get_bool(d, "vertical", false)) {
       flags |= WSP_VERT;
     }
     if ((di = tv_dict_find(d, "rightbelow", -1)) != NULL) {
-      flags |= tv_get_number(&di->di_tv) ? WSP_BELOW : WSP_ABOVE;
+      flags |= tv_get_bool(&di->di_tv) ? WSP_BELOW : WSP_ABOVE;
     }
     size = (int)tv_dict_get_number(d, "size");
   }

@@ -2858,13 +2858,7 @@ void f_searchcount(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         return;
       }
     }
-    di = tv_dict_find(dict, "recompute", -1);
-    if (di != NULL) {
-      recompute = tv_get_number_chk(&di->di_tv, &error);
-      if (error) {
-        return;
-      }
-    }
+    recompute = tv_dict_get_bool(dict, "recompute", recompute);
     di = tv_dict_find(dict, "pattern", -1);
     if (di != NULL) {
       pattern = (char *)tv_get_string_chk(&di->di_tv);
