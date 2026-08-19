@@ -785,7 +785,8 @@ void ui_refresh(void)
       vim.treesitter.query.set(
         'c',
         'highlights',
-        [[; extends
+        [[; query
+          ;; extends
         (identifier) @spell]]
       )
       local query = vim.treesitter.query.get('c', 'highlights')
