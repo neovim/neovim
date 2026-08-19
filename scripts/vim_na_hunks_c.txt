@@ -32,6 +32,7 @@
 ^f_test_feedinput(
 ^f_test_garbagecollect_soon(
 ^f_test_getvalue(
+^f_test_gui_[_a-zA-Z0-9]\+(
 ^f_test_ignore_error(
 ^f_test_null_channel(
 ^f_test_null_job(

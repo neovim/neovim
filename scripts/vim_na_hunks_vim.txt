@@ -17,6 +17,7 @@
 ^test_garbagecollect_soon(.\+test_garbagecollect_soon(
 ^test_getvalue(.\+test_getvalue(
 ^test_ignore_error(.\+test_ignore_error(
+^test_mswin_[_a-zA-Z0-9]\+(
 ^test_null_channel(.\+test_null_channel(
 ^test_null_job(.\+test_null_job(
 ^test_option_not_set(.\+test_option_not_set(
