@@ -66,9 +66,27 @@ void signal_init(void)
   signal_start();
 }
 
+/// During shutdown, we don't want the default actions of these signals.
+///
+/// Note: Windows still has the race. libuv's console control handler dispatches CTRL_CLOSE_EVENT
+/// as SIGHUP, but only while a watcher is registered; signal_teardown() closed ours, so the
+/// console terminates Nvim with STATUS_CONTROL_C_EXIT (-1073741510).
+static void signal_ignore_deadly(void)
+{
+#ifndef MSWIN
+  signal(SIGHUP, SIG_IGN);
+  signal(SIGINT, SIG_IGN);
+  signal(SIGTERM, SIG_IGN);
+# ifdef SIGQUIT
+  signal(SIGQUIT, SIG_IGN);
+# endif
+#endif
+}
+
 void signal_teardown(void)
 {
   signal_stop();
+  signal_ignore_deadly();
   signal_watcher_close(&spipe, NULL);
   signal_watcher_close(&shup, NULL);
   signal_watcher_close(&sint, NULL);
