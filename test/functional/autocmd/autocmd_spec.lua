@@ -741,6 +741,18 @@ describe('autocmd', function()
     eq('flarb', fn.bufname())
   end)
 
+  it('no use-after-free when closing new curwin during CTRL-W_x #41373', function()
+    exec([[
+      tabnew
+      vsplit
+      autocmd WinLeave * ++once bwipe!
+    ]])
+    eq(2, #api.nvim_list_tabpages())
+    feed('<C-W>x')
+    eq(1, #api.nvim_list_tabpages())
+    assert_alive()
+  end)
+
   it('does not ignore comma-separated patterns after a buffer-local pattern', function()
     exec [[
       edit baz  " reuses buffer 1

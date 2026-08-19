@@ -1950,7 +1950,6 @@ static void win_exchange(int Prenum)
 
   win_enter(wp, true);
   redraw_later(curwin, UPD_NOT_VALID);
-  redraw_later(wp, UPD_NOT_VALID);
 }
 
 // rotate windows: if upwards true the second window becomes the first one
