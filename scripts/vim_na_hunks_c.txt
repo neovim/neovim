@@ -32,6 +32,7 @@
 ^f_test_feedinput(
 ^f_test_garbagecollect_soon(
 ^f_test_getvalue(
+^f_test_gui_[_a-zA-Z0-9]\+(
 ^f_test_ignore_error(
 ^f_test_null_channel(
 ^f_test_null_job(
@@ -49,6 +50,7 @@
 ^mch_job_[a-z]\+(
 ^mch_[_a-z]\+_job(job_T
 ^mem_[a-zA-Z0-9_]\+(
+^parse_argument_types(
 ^parse_queued_messages(
 ^restore_buffer(bufref_T
 ^static int included_patches\[\] =

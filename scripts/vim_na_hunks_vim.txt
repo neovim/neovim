@@ -17,6 +17,7 @@
 ^test_garbagecollect_soon(.\+test_garbagecollect_soon(
 ^test_getvalue(.\+test_getvalue(
 ^test_ignore_error(.\+test_ignore_error(
+^test_mswin_[_a-zA-Z0-9]\+(
 ^test_null_channel(.\+test_null_channel(
 ^test_null_job(.\+test_null_job(
 ^test_option_not_set(.\+test_option_not_set(
@@ -46,6 +47,7 @@
 \*'imcmdline'\*
 \*'imdisable'\*
 \*'insertmode'\*
+\*'key'\*
 \*'keyprotocol'\*
 \*'macatsui'\*
 \*'maxmem'\*
@@ -78,6 +80,7 @@
 \*-v\*
 \*:Print\*
 \*:Vimuntar\*
+\*:X\*
 \*:behave\*
 \*:fixdel\*
 \*:helpfind\*
@@ -92,12 +95,14 @@
 \*DirChangedPre\*
 \*E984\*
 \*E999\*
+\*E119[3-9]\*
 \*HelpToc-mappings\*
 \*SafeStateAgain\*
 \*SigUSR1\*
 \*TerminalOpen\*
 \*TerminalWinOpen\*
 \*autocommand-events\*
+\*blowfish\*
 \*builtin-function-list\*
 \*emacs[_-]tags\*
 \*global-ime\*
@@ -106,6 +111,7 @@
 \*multibyte-ime\*
 \*os-support\*
 \*patches-\(after-\)\?[0-9].*\*
+\*pkzip\*
 \*popup-window-functions\*
 \*sound-functions\*
 \*sound_[a-zA-Z0-9]\+()\*
