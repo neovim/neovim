@@ -699,6 +699,20 @@ describe('vterm', function()
     push('\x1b[12 q', vt)
     expect('csi 71 12 I=20')
 
+    -- CSI with more arguments than CSI_ARGS_MAX: the excess is discarded
+    local max_args = 32
+    local capped = '1' .. (',1'):rep(max_args - 1)
+    push('\x1b[' .. ('1;'):rep(max_args + 8) .. '2m', vt)
+    expect('csi 6d ' .. capped)
+
+    -- ... including the value of the first argument past the end
+    push('\x1b[' .. ('1;'):rep(max_args) .. '4242424242m', vt)
+    expect('csi 6d ' .. capped)
+
+    -- CSI argument saturates instead of overflowing on a long run of digits
+    push('\x1b[99999999999999999999m', vt)
+    expect('csi 6d 2147483646')
+
     -- Mixed CSI
     push('A\x1b[8mB', vt)
     expect('text 41\ncsi 6d 8\ntext 42')
