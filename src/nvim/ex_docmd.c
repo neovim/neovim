@@ -5165,9 +5165,11 @@ static void ex_pclose(exarg_T *eap)
 /// Close window "win" and take care of handling closing the last window for a
 /// modified buffer.
 ///
-/// @param tp  NULL or the tab page "win" is in
+/// @param tp  NULL or the tab page "win" is in, if different from "curtab"
 void ex_win_close(int forceit, win_T *win, tabpage_T *tp)
 {
+  assert(tp == NULL || tp != curtab);
+
   // Never close the autocommand window.
   if (is_ctx_win(win)) {
     emsg(_(e_autocmd_close));
@@ -5276,6 +5278,8 @@ static void ex_tabonly(exarg_T *eap)
 /// Close the current tab page.
 void tabpage_close(int forceit)
 {
+  int done = 0;
+
   if (window_layout_locked(CMD_tabclose)) {
     return;
   }
@@ -5286,9 +5290,13 @@ void tabpage_close(int forceit)
 
   // First close all the windows but the current one.  If that worked then
   // close the last window in this tab, that will close it.
-  while (curwin->w_floating) {
+  while (curwin->w_floating && ++done < 1000) {
     ex_win_close(forceit, curwin, NULL);
   }
+  if (done == 1000) {
+    return;
+  }
+
   if (!ONE_WINDOW) {
     close_others(true, forceit, true);
   }
@@ -5311,6 +5319,8 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
   int done = 0;
   char prev_idx[NUMBUFLEN];
 
+  assert(tp != curtab);
+
   if (window_layout_locked(CMD_SIZE)) {
     return;
   }
@@ -5323,12 +5333,20 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
   while (++done < 1000) {
     snprintf(prev_idx, sizeof(prev_idx), "%i", tabpage_index(tp));
     win_T *wp = tp->tp_lastwin;
+
+    // Autocommands (including TabClosedPre above) may change the current tab page,
+    // abort a `:tabonly` (etc) if we're now on the tab we're trying to close
+    if (tp == curtab) {
+      done = 1000;
+      break;
+    }
     ex_win_close(forceit, wp, tp);
 
     // Autocommands may delete the tab page under our fingers.
     if (!valid_tabpage(tp)) {
       break;
     }
+
     // We may fail to close a window with a modified buffer.
     if (tp->tp_lastwin == wp) {
       done = 1000;
