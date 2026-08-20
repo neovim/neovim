@@ -311,6 +311,16 @@ Terminal state files are stored in msgpack format. Example: >
 Note: Appending to a terminal state file (`:write >>`) is not supported.
 								*E5008*
 
+Editing a state file under `|stdpath()|/term/` restores it as a live terminal:
+
+- The saved command is restarted in the saved cwd, and the saved ANSI content
+is replayed as history, followed by a "[ Terminal history ]" banner above any
+new job output.
+- A missing command falls back to 'shell', a missing cwd to the current
+directory.
+- The buffer keeps the state file's name, so |:write| overwrites the same file.
+								*E5011*
+
 ==============================================================================
 :Termdebug plugin                         *terminal-debug* *terminal-debugger*
                                                *package-termdebug* *termdebug*

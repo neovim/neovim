@@ -646,3 +646,86 @@ describe('nvim__term_capture()', function()
     eq(table.concat(visible, '\n') .. '\n\27[0m', api.nvim__term_capture(0, 4, 0))
   end)
 end)
+
+describe(':edit on a terminal state file', function()
+  local xstate = 'Xtest-functional-terminal'
+
+  before_each(function()
+    clear({ env = { XDG_STATE_HOME = xstate } })
+  end)
+
+  after_each(function()
+    n.rmdir(xstate)
+  end)
+
+  it('restores a live terminal that writes back to the same file', function()
+    -- 180 columns: the long `:write` report (full state file path) must fit on one screen line,
+    -- otherwise it wraps and hangs the child on a hit-enter prompt.
+    local screen = Screen.new(180, 7)
+    command('terminal')
+    command('write')
+    local dir = vim.fs.joinpath(fn.stdpath('state'), 'term')
+    local files = fn.readdir(dir)
+    eq(1, #files)
+    ok(files[1]:find('^=uri%-term') ~= nil)
+    local file = vim.fs.joinpath(dir, files[1])
+    command('bwipeout!')
+
+    -- restore terminal buffer
+    command('edit ' .. file)
+    eq('terminal', api.nvim_get_option_value('buftype', { buf = 0 }))
+    eq(false, api.nvim_get_option_value('modifiable', { buf = 0 }))
+    retry(nil, 30000, function()
+      screen:expect({ any = 'Terminal history' }) -- banner
+    end)
+    feed('iecho hello<CR>')
+    retry(nil, 30000, function()
+      screen:expect({ any = '\nhello' }) -- anchors to a row start
+    end)
+
+    -- `:write` on the restored buffer overwrites the same state file
+    command('write')
+    eq(1, #fn.readdir(dir))
+    command('bwipeout!')
+
+    -- restore the overwriten state file
+    command('edit ' .. file)
+    eq('terminal', api.nvim_get_option_value('buftype', { buf = 0 }))
+    eq(false, api.nvim_get_option_value('modifiable', { buf = 0 }))
+  end)
+
+  it('reports an error for a missing or invalid state file', function()
+    local dir = vim.fs.joinpath(fn.stdpath('state'), 'term')
+    fn.mkdir(dir, 'p')
+    local bad = vim.fs.joinpath(dir, 'bad.mpack')
+    fn.writefile('invalid terminal state file', bad, 'b')
+    ok(
+      pcall_err(command, 'edit ' .. bad):find('E5011: Invalid terminal state file', 1, true) ~= nil
+    )
+    local missing = vim.fs.joinpath(dir, 'missing.mpack')
+    ok(pcall_err(command, 'edit ' .. missing):find("E484: Can't open file", 1, true) ~= nil)
+  end)
+
+  it('ignores ".mpack" files outside stdpath("state")/term/', function()
+    command('terminal')
+    command('write! outside.mpack')
+    command('bwipeout!')
+    command('edit outside.mpack')
+    neq('terminal', api.nvim_get_option_value('buftype', { buf = 0 }))
+  end)
+end)
+
+describe('nvim__term_feed()', function()
+  before_each(function()
+    clear()
+  end)
+
+  it('errors on a non-terminal buffer', function()
+    command('enew')
+    eq('Buffer is not a terminal: 0', pcall_err(api.nvim__term_feed, 0, 'x'))
+  end)
+
+  it('errors on an invalid buffer', function()
+    eq('Invalid buffer id: 999', pcall_err(api.nvim__term_feed, 999, 'x'))
+  end)
+end)

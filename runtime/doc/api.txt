@@ -1958,6 +1958,21 @@ nvim__term_capture({buf}, {start}, {end})               *nvim__term_capture()*
     Return: ~
         (`string`) ANSI escape sequences.
 
+nvim__term_feed({buf}, {data})                             *nvim__term_feed()*
+    WARNING: This feature is experimental/unstable.
+
+    Feeds raw bytes to a terminal's emulator
+
+    This is the inverse of |nvim__term_capture()|: replaying a captured ANSI
+    string reproduces the captured terminal state.
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Parameters: ~
+      • {buf}   (`integer`) Buffer handle of a terminal buffer
+      • {data}  (`string`) Raw bytes
+
 
 ==============================================================================
 Vimscript Functions                                            *api-vimscript*
