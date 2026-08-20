@@ -425,6 +425,9 @@ CmdAtom				After a user action (an "atom" of input): any
 				keysequence, Ex cmdline (":cnext<CR>"),
 				mapping (and its subatoms), or scroll/mouse.
 
+				Event is |deferred|.
+				<amatch> is the atom "type" (see below).
+
 				Only for user input, not programmatic input:
 					INPUT			ATOM ~
 					typed keys		yes
@@ -435,23 +438,18 @@ CmdAtom				After a user action (an "atom" of input): any
 					|:normal|		no
 					API requests		no, lol
 					"@q" fed by a script	no
-					"multicursor" replays	no
+					|multicursor| cascade	no
 					aborted operation	no
 					terminal-mode keys	no
 					mouse drag/release	no
 					Hydrogen		yes
 
-				Note: keys fed from a typed mapping's own
-				execution (e.g. its Lua callback) count as
-				the mapping's expansion and fold into its
-				atom, "t" or not.
-				Fired at the next event-loop tick, not
-				synchronously.
-				<amatch> (the pattern) is the atom type.
+				Note: all keys fed during a mapping execution
+				(e.g. Lua callback) are part of the mapping's
+				expansion.
 
-				The |event-data| has these fields; a field
-				that does not apply is omitted (type, keys,
-				changed, and cascade are always present):
+				The |event-data| has these fields (type: `vim.event.cmdatom.data`):
+
 				- arg: Typed operand of `cmd`: the "x" of "fx",
 				  the replacement char of |r|.
 				  |key-notation|, like `cmd`.
@@ -469,10 +467,14 @@ CmdAtom				After a user action (an "atom" of input): any
 				  raw internal bytes (not |key-notation|):
 				  feed directly to |feedkeys()| or
 				  |nvim_feedkeys()| (mode "n") to replay. Use
-				  |keytrans()| to key-notation. Empty for
-				  a mapping whose commands have no replayable
-				  keys (Lua callbacks).
-				- lhs: LHS (user input). Raw bytes, like `keys`.
+				  |keytrans()| to key-notation. Empty if
+				  not replayable: a Lua mapping, or
+				  unreplayable Visual operation (mouse, |gv|,
+				  Select mode).
+				- lhs: User input, before it is
+				  resolved/translated. Mapping LHS, macro
+				  register ("@q"), or the keys of a Visual op.
+				  Raw bytes, like `keys`.
 				- motionforce |forced-motion|: "v", "V", or
 				  "<C-V>" (|key-notation|).
 				- operator: Operator: "d", "g@", "zf", ….
@@ -496,8 +498,6 @@ CmdAtom				After a user action (an "atom" of input): any
 				    - "jump": moves the cursor via
 				      absolute/shared navigation state
 				      (|jumplist|, marks, |star|).
-				    - "mouse"/"scroll" atoms are emit-only:
-				      never cascaded, not replayable.
 
 							*CmdlineChanged*
 CmdlineChanged			After EVERY change inside command line. Also
