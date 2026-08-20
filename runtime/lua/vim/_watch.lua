@@ -52,6 +52,17 @@ end
 --- @class vim._watch.watch.Opts : vim._watch.Opts
 --- @field uvflags? uv.fs_event_start.flags
 
+--- True if `err` is an expected filesystem-watcher error that should not assert.
+--- Windows `.git` lock files often yield EPERM; missing files yield ENOENT. #32386
+--- @param err? string
+--- @return boolean
+local function ignorable_fs_err(err)
+  if type(err) ~= 'string' then
+    return false
+  end
+  return err:find('^EPERM') ~= nil or err:find('^EACCES') ~= nil or err:find('^ENOENT') ~= nil
+end
+
 --- Decides if `path` should be skipped.
 ---
 --- @param path string
@@ -94,7 +105,12 @@ function M.watch(path, opts, callback)
   local watching_dir = (uv.fs_stat(path) or {}).type == 'directory'
 
   local _, start_err, start_errname = handle:start(path, uvflags, function(err, filename, events)
-    assert(not err, err)
+    if err then
+      if not ignorable_fs_err(err) then
+        vim.notify_once(('watch.watch: %s'):format(err), vim.log.levels.WARN)
+      end
+      return
+    end
     local fullpath = path
     if filename and watching_dir then
       fullpath = vim.fs.normalize(vim.fs.joinpath(fullpath, filename))
@@ -110,6 +126,8 @@ function M.watch(path, opts, callback)
       local _, staterr, staterrname = uv.fs_stat(fullpath)
       if staterrname == 'ENOENT' then
         change_type = M.FileChangeType.Deleted
+      elseif ignorable_fs_err(staterr) then
+        return
       else
         assert(not staterr, staterr)
         change_type = M.FileChangeType.Created
@@ -173,7 +191,12 @@ function M.watchdirs(path, opts, callback)
   --- @return uv.fs_event_start.callback
   local function create_on_change(filepath)
     return function(err, filename, events)
-      assert(not err, err)
+      if err then
+        if not ignorable_fs_err(err) then
+          vim.notify_once(('watch.watchdirs: %s'):format(err), vim.log.levels.WARN)
+        end
+        return
+      end
       local fullpath = vim.fs.joinpath(filepath, filename)
       if skip(fullpath, opts) then
         return
