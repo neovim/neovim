@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 #include "klib/kvec.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/input_defs.h"
 
@@ -14,9 +15,7 @@
 // - replay, cascade, insert-cascade
 
 typedef enum CmdAtomType {
-  kACommand,       ///< Not an (operator) edit, nor a cursor-move (u zz <c-w>l …). Never cascades,
-                   ///< except as part of a mapping's composite.
-  kAEx,            ///< Ex command (":cnext<CR>"): the typed cmdline is the payload.
+  kAExcmd,         ///< Ex command (":cnext<CR>"): the typed cmdline is the payload.
   kAInsert,        ///< Insert session: entry command + text + <Esc>.
   kAInsertSpan,    ///< Span (chunk) of an ongoing insert-session, cascaded mid-session.
   kAJump,          ///< Cursor movement by absolute/shared navigation (jumplist, marks, `*`):
@@ -24,10 +23,20 @@ typedef enum CmdAtomType {
   kAMapping,       ///< Subcommands of a mapping/macro, collapsed into one atom (`lhs`).
   kAMotion,        ///< Motion (cascades in "q=" follow-motion mode).
   kAMouse,         ///< Mouse action: emit-only (not replayable).
+  kANormal,        ///< Normal-mode command that is not a motion or jump ("u", CTRL-R, "za", …).
+                   ///< Never cascades, except as part of a mapping's composite.
   kAOperator,      ///< Operator+motion, or a self-contained edit command.
   kAScroll,        ///< Scroll (CTRL-Y/D/…, wheel): emit-only, like kAMouse.
   kAVisual,        ///< Visual-mode sequence ("viwee" + operator).
 } CmdAtomType;
+
+/// State gathered at start of a command, composite, or insert. For calculating the "delta" at end.
+typedef struct {
+  bufref_T buf;       ///< Buffer.
+  const win_T *win;   ///< Window.
+  pos_T pos;          ///< Cursor position. Stored here bc the window might be closed.
+  varnumber_T tick;   ///< b:changedtick.
+} CmdOrigin;
 
 /// How an insert-session was entered from Visual mode.
 typedef enum {
@@ -41,7 +50,7 @@ typedef enum {
 typedef struct {
   bool typed;        ///< Session is user input (typed, or via mapping/macro).
   VisualIns vis;     ///< Session was entered from Visual mode.
-  varnumber_T tick;  ///< b:changedtick at start (the session atom's `changed` baseline).
+  CmdOrigin origin;  ///< State at start.
 } InsSession;
 
 typedef struct CmdAtom CmdAtom;
@@ -57,8 +66,11 @@ struct CmdAtom {
   char *text;     ///< Payload: insert-session text, or Ex/search cmdline.
   char *lhs;      ///< Unresolved user input: mapping LHS or macro register ("@q"), or Visual op.
                   ///< Label/hint, not replayed. NULL: untranslated, same as `keys`.
+  CmdOrigin origin;  ///< Pre-command state.
   CmdAtomType type;
+  int undoseq;    ///< Undo state at settlement. Not monotonic (decreases on undo).
   bool changed;   ///< The command changed the buffer.
+  bool moved;     ///< The command moved the cursor.
   bool remap;     ///< Replay `keys` w/ remap. For replay of a payload mapping (vim-surround "ds'"),
                   ///< which edits invisibly (:norm/Ex) and must rerun LHS instead of resolved keys.
 };

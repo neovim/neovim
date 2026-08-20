@@ -4585,7 +4585,7 @@ static void nv_replace(cmdarg_T *cap)
     invoke_edit(cap, true, 'r', false);
   } else {
     prep_redo(true, true, (CmdSpec){ .regname = cap->oap->regname, .count = cap->count1,
-                                     .cmd = 'r', .arg = cap->nchar });
+                                     .cmd = 'r', .cmdarg = cap->nchar });
     if (had_ctrl_v != NUL) {
       redo_append_char(had_ctrl_v);
     }

@@ -260,8 +260,8 @@ static void redo_chars(const CmdSpec *spec, StringBuilder *buf, bool arg_meta)
   if (spec->cmd2 != NUL) {
     sb_add_char(buf, spec->cmd2);
   }
-  if (spec->arg != NUL && !arg_meta) {
-    sb_add_char(buf, spec->arg);
+  if (spec->cmdarg != NUL && !arg_meta) {
+    sb_add_char(buf, spec->cmdarg);
   }
 }
 

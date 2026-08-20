@@ -16,9 +16,7 @@ extern CmdAtomVec g_atoms;
 /// Pre-command state sampled at entry + storage for its "staged" atom. atom_cmd_end() finalizes it.
 typedef struct CmdFrame CmdFrame;
 struct CmdFrame {
-  pos_T pos;           ///< Cursor position.
-  const buf_T *buf;    ///< Current buffer.
-  varnumber_T tick;    ///< b:changedtick
+  CmdOrigin origin;    ///< State at entry.
   VisualState visual;  ///< Visual-mode state (active/start/mode are diffed).
   bool keytyped;       ///< KeyTyped
   uint64_t captures;   ///< Capture counter.

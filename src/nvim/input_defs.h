@@ -30,8 +30,8 @@ typedef struct {
   int op_extra;      ///< Second operator char ("g~" => '~'; 0 = none)
   int motion_force;  ///< Forced motion type ('v'/'V'/CTRL-V; 0 = none)
   int cmd;           ///< Command/motion char ('J', 'p', 'f', K_LEFT, …; 0 = none)
-  int cmd2;          ///< Second char of a two-char command name ("gJ" => 'J'; 0 = none)
-  int arg;           ///< Operand ("fx" => 'x', "ma" => 'a'; 0 = none)
+  int cmd2;          ///< Command char 2 (for two-char cmds: "gJ" => 'J'; 0 = none)
+  int cmdarg;        ///< Command operand ("fx" => 'x', "ma" => 'a'; 0 = none)
   StringBuilder body;  ///< Captured cmd "body": keys without the `["x][count]` "prefix", updated
                        ///< as the cmd executes (redo_append_xx); redo_keys() prepends the prefix.
                        ///< Empty in spec-only contexts (i.e. not a "redo" buf).
