@@ -12,9 +12,10 @@ local function mk_tag_item(name, range, uri, position_encoding)
   -- This is get_line_byte_from_position is 0-indexed, call cursor expects a 1-indexed position
   local pos = vim.pos.lsp(bufnr, range.start, position_encoding)
   local byte = pos.col + 1
+  -- :tag expands "$VAR" in filenames. Escape so URI paths keep literal "$". #41313
   return {
     name = name,
-    filename = vim.uri_to_fname(uri),
+    filename = vim.fn.fnameescape(vim.uri_to_fname(uri)),
     cmd = string.format([[/\%%%dl\%%%dc/]], range.start.line + 1, byte),
   }
 end
