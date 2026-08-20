@@ -27,6 +27,33 @@ describe('default', function()
         t.eq(2, n.eval('g:n'))
       end)
     end)
+
+    it('nvim.equalalways.VimResized equalizes splits when equalalways #41059', function()
+      n.clear()
+      local screen = Screen.new(40, 8)
+      n.command('vsplit')
+      n.command('wincmd l')
+      n.command('vertical resize 10')
+      t.neq(
+        n.api.nvim_win_get_width(n.api.nvim_list_wins()[1]),
+        n.api.nvim_win_get_width(n.api.nvim_list_wins()[2])
+      )
+
+      screen:try_resize(80, 8)
+      local w1 = n.api.nvim_win_get_width(n.api.nvim_list_wins()[1])
+      local w2 = n.api.nvim_win_get_width(n.api.nvim_list_wins()[2])
+      -- Vertical separator consumes one column, so widths may differ by 1.
+      t.ok(math.abs(w1 - w2) <= 1, 'equalized widths', { w1, w2 })
+
+      n.command('set noequalalways')
+      n.command('wincmd l')
+      n.command('vertical resize 10')
+      screen:try_resize(60, 8)
+      t.neq(
+        n.api.nvim_win_get_width(n.api.nvim_list_wins()[1]),
+        n.api.nvim_win_get_width(n.api.nvim_list_wins()[2])
+      )
+    end)
   end)
 
   describe('popupmenu', function()

@@ -751,6 +751,14 @@ do
     command = 'syntax sync minlines=1 maxlines=1',
   })
 
+  nvim_on('VimResized', vim.api.nvim_create_augroup('nvim.equalalways'), {
+    desc = "Equalize windows on resize when 'equalalways' is set",
+  }, function()
+    if vim.o.equalalways then
+      vim.cmd.wincmd('=')
+    end
+  end)
+
   nvim_on('SwapExists', vim.api.nvim_create_augroup('nvim.swapfile'), {
     pattern = '*',
     desc = 'Skip the swapfile prompt when the swapfile is owned by a running Nvim process',

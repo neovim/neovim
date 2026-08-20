@@ -4891,7 +4891,8 @@ describe('builtin popupmenu', function()
           :b långfile1^                    |
         ]])
 
-        -- check doesn't crash on screen resize
+        -- This test preserves an intentionally uneven split while resizing.
+        command('set noequalalways')
         screen:try_resize(20, 6)
         screen:expect([[
                               |
@@ -7359,6 +7360,7 @@ describe('builtin popupmenu', function()
     end)
 
     it('supports mousemodel=popup', function()
+      command('set noequalalways')
       screen:try_resize(32, 6)
       exec([[
         call setline(1, 'popup menu test')
