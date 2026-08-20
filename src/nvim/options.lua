@@ -3438,7 +3438,6 @@ local options = {
         The function should return a List, which is handled similarly to the
         return value of a |:command-completion-customlist| function.
 
-        The function is called only once per |:find| command invocation.
         The function can process all the directories specified in 'path'.
 
         If a match is found, the function should return a |List| containing
