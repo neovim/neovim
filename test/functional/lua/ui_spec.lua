@@ -129,6 +129,28 @@ describe('vim.ui', function()
       )
     end)
 
+    it('escapes cmd.exe metacharacters in URIs #41337', function()
+      eq(
+        { 'cmd.exe', '/c', 'start', '', 'https://example.com/?q=^&^|^<^>^^^%^!' },
+        exec_lua(function()
+          vim.fn.has = function(feat)
+            return feat == 'win32' and 1 or 0
+          end
+          local captured --- @type string[]
+          vim.system = function(cmd)
+            captured = cmd
+            return {
+              wait = function()
+                return { code = 0 }
+              end,
+            }
+          end
+          vim.ui.open('https://example.com/?q=&|<>^%!')
+          return captured
+        end)
+      )
+    end)
+
     it('opt.cmd #29490', function()
       t.matches(
         'ENOENT: no such file or directory',
