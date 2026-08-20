@@ -212,6 +212,11 @@ nvim.terminal:
 nvim.cmdwin:
 - |CmdwinEnter|: Limits syntax sync to maxlines=1 in the |cmdwin|.
 
+nvim.equalalways:
+- |VimResized|: Runs |CTRL-W_=| when 'equalalways' is set, so splits stay
+  equal after the UI/terminal is resized. Delete this handler or set
+  'noequalalways' to keep the previous layout.
+
 nvim.swapfile:
 - |SwapExists|: Skips the swapfile prompt (sets |v:swapchoice| to "e") when the
   swapfile is owned by a running Nvim process. Shows |W325| "Ignoring
