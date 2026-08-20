@@ -1453,12 +1453,10 @@ void wait_return(int redraw)
     c = CAR;                    // just pretend CR was hit
     quit_more = false;
     got_int = false;
-  } else if (!stuff_empty() || !typebuf_typed()) {
-    // When there are stuffed characters or pending mapped characters, the
-    // next character will dismiss the hit-enter prompt immediately.  A
-    // stuffed character then has to be put back, while a mapped character
-    // may even be swallowed (e.g. "g" treated as a message-scrollback key),
-    // so instead just don't show the hit-enter prompt at all.
+  } else if (!stuff_empty()) {
+    // When there are stuffed characters, the next stuffed character will
+    // dismiss the hit-enter prompt immediately and have to be put back, so
+    // instead just don't show the hit-enter prompt at all.
     c = CAR;
   } else {
     State = MODE_HITRETURN;
@@ -1512,7 +1510,7 @@ void wait_return(int redraw)
         // Also accept scroll-down commands when messages fill the screen,
         // to avoid that typing one 'j' too many makes the messages
         // disappear.
-        if (p_more) {
+        if (KeyTyped && p_more) {
           if (c == 'b' || c == Ctrl_B || c == 'k' || c == 'u' || c == 'g'
               || c == K_UP || c == K_PAGEUP) {
             if (msg_scrolled > Rows) {
@@ -1551,7 +1549,8 @@ void wait_return(int redraw)
       if (c == K_LEFTMOUSE || c == K_MIDDLEMOUSE || c == K_RIGHTMOUSE
           || c == K_X1MOUSE || c == K_X2MOUSE) {
         jump_to_mouse(MOUSE_SETPOS, NULL, 0);
-      } else if (vim_strchr("\r\n ", c) == NULL && c != Ctrl_C && c != 'q') {
+      } else if (!KeyTyped
+                 || (vim_strchr("\r\n ", c) == NULL && c != Ctrl_C && c != 'q')) {
         // Put the character back in the typeahead buffer.  Don't use the
         // stuff buffer, because lmaps wouldn't work.
         requeue_key(vgetc_char, vgetc_mod_mask, 0,

@@ -758,28 +758,41 @@ func Test_long_formatprg_no_hit_enter()
   call StopVimInTerminal(buf)
 endfunc
 
-" A message shown while a mapping is still being processed must not raise a
-" hit-enter prompt that eats the mapping's remaining keys.
-func Test_hit_enter_no_eat_mapped_keys()
+" A message shown while a mapping is still being processed must not eat the
+" mapping's remaining keys.
+" If a mapping starts cmdline after multiline messages exceeding 'cmdheight',
+" the messages should still be visible.
+func Test_hit_enter_during_mapping()
   CheckRunVimInTerminal
 
   let lines =<< trim END
     set ruler
     call setline(1, range(1, 20))
-    " The 8-line :echo scrolls the screen and would raise a hit-enter prompt;
-    " the mapping then runs "gg" to move the cursor to line 1.
+    " The 8-line :echo leads to a hit-enter prompt.
     nnoremap X :echo "a\nb\nc\nd\ne\nf\ng\nh"<CR>gg
+    nnoremap \b :echo "a\nb\nc\nd\ne\nf\ng\nh"<CR>:b<Space>
     normal! 10G
   END
   call writefile(lines, 'XtestHitEnterMap', 'D')
   let buf = RunVimInTerminal('-S XtestHitEnterMap', #{rows: 10})
-  call WaitForAssert({-> assert_match('10,1', term_getline(buf, 10))})
+  call WaitForAssert({-> assert_match(' 10,1 ', term_getline(buf, 10))})
 
   call term_sendkeys(buf, "X")
   " Without the fix the hit-enter prompt eats the mapping's "g" keys and the
   " cursor stays put.  With the fix "gg" runs and moves the cursor to line 1.
-  call WaitForAssert({-> assert_match('1,1', term_getline(buf, 10))})
+  call WaitForAssert({-> assert_match(' 1,1 ', term_getline(buf, 10))})
   call assert_notmatch('Press ENTER', term_getline(buf, 10))
+
+  call term_sendkeys(buf, '\b')
+  call WaitForAssert({-> assert_match('^:b ', term_getline(buf, 10))})
+  call assert_match('^a *$', term_getline(buf, 2))
+  call assert_match('^b *$', term_getline(buf, 3))
+  call assert_match('^c *$', term_getline(buf, 4))
+  call assert_match('^d *$', term_getline(buf, 5))
+  call assert_match('^e *$', term_getline(buf, 6))
+  call assert_match('^f *$', term_getline(buf, 7))
+  call assert_match('^g *$', term_getline(buf, 8))
+  call assert_match('^h *$', term_getline(buf, 9))
 
   " clean up
   call StopVimInTerminal(buf)
