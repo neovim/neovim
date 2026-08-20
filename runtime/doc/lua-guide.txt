@@ -238,6 +238,12 @@ Vimscript are automatically converted:
 <
 This works for both |vimscript-functions| and |user-function|s.
 
+Vimscript has no booleans: functions like |has()| return 0 or 1. In Lua those
+are both truthy, so compare with 1: >lua
+    if vim.fn.has('win32') == 1 then
+      -- Windows
+    end
+<
 Note that hashes (`#`) are not valid characters for identifiers in Lua, so,
 e.g., |autoload| functions have to be called with this syntax:
 >lua
