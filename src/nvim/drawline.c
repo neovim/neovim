@@ -918,13 +918,11 @@ static void apply_cursorline_highlight(win_T *wp, winlinevars_T *wlv)
   //  * high-priority ("same as Vim" priority) CursorLine if fg is set
   if (ae.rgb_fg_color == -1 && ae.cterm_fg_color == 0) {
     wlv->line_attr_lowprio = wlv->cul_attr;
+  } else if (!(State & MODE_INSERT) && bt_quickfix(wp->w_buffer)
+             && qf_current_entry(wp) == wlv->lnum) {
+    wlv->line_attr = hl_combine_attr(wlv->cul_attr, wlv->line_attr);
   } else {
-    if (!(State & MODE_INSERT) && bt_quickfix(wp->w_buffer)
-        && qf_current_entry(wp) == wlv->lnum) {
-      wlv->line_attr = hl_combine_attr(wlv->cul_attr, wlv->line_attr);
-    } else {
-      wlv->line_attr = wlv->cul_attr;
-    }
+    wlv->line_attr = wlv->cul_attr;
   }
 }
 
