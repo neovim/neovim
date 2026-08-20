@@ -57,6 +57,10 @@ Vimscript commands are described below.
 							*autocmd-once*
 			If [++once] is supplied the command is executed once,
 			then removed ("one shot").
+			When {event} is a comma-separated list, one autocommand
+			is created per event; each fires once (not once for the
+			whole list).  Same for |nvim_create_autocmd()| when
+			{event} is an array.
 
 The special pattern <buffer> or <buffer=N> defines a buffer-local autocommand.
 See |autocmd-buflocal|.
