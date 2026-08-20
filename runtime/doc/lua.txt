@@ -1468,6 +1468,11 @@ vim.str_byteindex({s}, {encoding}, {index}, {strict_indexing})
     {strict_indexing} is false then an out of range index will return byte
     length instead of throwing an error.
 
+    Use `"utf-32"` to convert Unicode code-point indices to byte indices.
+    `"utf-8"` is Nvim's native string encoding, so this function is idempotent
+    for that encoding: {index} is already a byte index and is returned
+    unchanged.
+
     Invalid UTF-8 and NUL is treated like in |vim.str_utfindex()|. An {index}
     in the middle of a UTF-16 sequence is rounded upwards to the end of that
     sequence.
