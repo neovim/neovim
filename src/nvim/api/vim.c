@@ -1259,6 +1259,28 @@ String nvim__term_capture(Buffer buf, Integer start, Integer end, Arena *arena, 
   return arena_ansi;
 }
 
+/// Feeds raw bytes to a terminal's emulator
+///
+/// This is the inverse of |nvim__term_capture()|: replaying a captured ANSI string reproduces the
+/// captured terminal state.
+///
+/// @param buf    Buffer handle of a terminal buffer
+/// @param data   Raw bytes
+/// @param[out] err Error details, if any
+void nvim__term_feed(Buffer buf, String data, Error *err)
+  FUNC_API_SINCE(15)
+{
+  buf_T *b = find_buffer_by_handle(buf, err);
+  if (!b) {
+    return;
+  }
+  if (b->terminal == NULL) {
+    api_set_error(err, kErrorTypeException, "Buffer is not a terminal: %d", (int)buf);
+    return;
+  }
+  terminal_feed(b->terminal, data.data, data.size, true);
+}
+
 static void term_read_pause(bool pause, void *data)
 {
   // Not currently needed as sending to channel isn't allowed during buffer updates.

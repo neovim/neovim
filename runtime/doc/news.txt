@@ -445,6 +445,8 @@ TERMINAL
 • |:write| in a terminal buffer exports the rendered terminal state as a
   msgpack file at |stdpath()|/term/. An explicit path (e.g. `:w foo`) writes
   to that path.
+• |:edit| on a terminal state file (|stdpath()|/term/*.mpack) restores it as
+  a live terminal with the saved history.
 
 TREESITTER
 

@@ -218,6 +218,17 @@ function vim.api.nvim__term_capture(buf, start, end_) end
 
 --- WARNING: This feature is experimental/unstable.
 ---
+--- Feeds raw bytes to a terminal's emulator
+---
+--- This is the inverse of `nvim__term_capture()`: replaying a captured ANSI string reproduces the
+--- captured terminal state.
+---
+--- @param buf integer Buffer handle of a terminal buffer
+--- @param data string Raw bytes
+function vim.api.nvim__term_feed(buf, data) end
+
+--- WARNING: This feature is experimental/unstable.
+---
 --- @param str string
 --- @return any
 function vim.api.nvim__unpack(str) end

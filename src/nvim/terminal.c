@@ -1382,13 +1382,19 @@ static void on_sync_flush(void **argv)
   unblock_autocmds();
 }
 
-void terminal_receive(Terminal *term, const char *data, size_t len)
+/// Feeds data to the terminal emulator
+///
+/// @param term Terminal instance
+/// @param data Data to feed
+/// @param len  Length of `data`
+/// @param crlf Whether to convert "\n" to "\r\n"
+void terminal_feed(Terminal *term, const char *data, size_t len, bool crlf)
 {
   if (!data) {
     return;
   }
 
-  if (term->opts.force_crlf) {
+  if (crlf) {
     StringBuilder crlf_data = KV_INITIAL_VALUE;
 
     for (size_t i = 0; i < len; i++) {
@@ -1420,6 +1426,11 @@ void terminal_receive(Terminal *term, const char *data, size_t len)
     multiqueue_put(main_loop.events, on_sync_flush,
                    (void *)(intptr_t)term->buf_handle);
   }
+}
+
+void terminal_receive(Terminal *term, const char *data, size_t len)
+{
+  terminal_feed(term, data, len, term->opts.force_crlf);
 }
 
 static int get_rgb(VTermState *state, VTermColor color)

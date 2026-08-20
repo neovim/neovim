@@ -601,6 +601,13 @@ do
     })
   end)
 
+  -- TODO(Willaaaaaaa): unsupported: restoring state files outside "stdpath("state")/term/"
+  nvim_on('BufReadCmd', nvim_terminal_augroup, {
+    pattern = vim.fs.joinpath(vim.fn.fnamemodify(vim.fn.stdpath('state'), ':p'), 'term', '*.mpack'),
+    nested = true,
+    desc = 'Restore a terminal state file as a live terminal buffer',
+  }, require('vim._core.terminal').load)
+
   local nvim_terminal_exitmsg_ns = vim.api.nvim_create_namespace('nvim.terminal.exitmsg')
 
   --- @param buf integer

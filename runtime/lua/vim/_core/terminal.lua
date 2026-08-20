@@ -110,4 +110,69 @@ function M.save(args)
   vim.api.nvim_echo({ { msg } }, false, {})
 end
 
+---@class vim._core.terminal.State
+---@field content string ANSI escape sequences (scrollback + visible screen)
+---@field argv? string[] Command the terminal was started with
+---@field cwd? string Working directory
+---@field timestamp? integer Save time
+
+--- Reads and decodes a terminal state file
+---
+---@param path string Path to a terminal state file
+---@return vim._core.terminal.State? state Decoded state, or nil on failure
+---@return string? errmsg Error message on failure
+local function read_state(path)
+  if vim.fn.filereadable(path) == 0 then
+    return nil, N_("E484: Can't open file %s"):format(path)
+  end
+  local ok, state = pcall(vim.mpack.decode, vim.fn.readblob(path))
+  if not ok or type(state) ~= 'table' or type(state.content) ~= 'string' then
+    return nil, N_('E5011: Invalid terminal state file: %s'):format(path)
+  end
+  return state
+end
+
+--- Loads a terminal state file as a live terminal buffer
+---
+--- Called as a BufReadCmd handler for `stdpath("state")/term/*.mpack` files.
+--- Restarts the saved command and replays the saved content as history,
+--- followed by a "[ Terminal history ]" banner. New job output appears below it.
+---
+---@param args table autocmd args (buf, file, match)
+function M.load(args)
+  local bufnr = args.buf ---@type integer
+  local state, err = read_state(args.file)
+  if not state then
+    vim.api.nvim_echo({ { err, 'ErrorMsg' } }, true, { err = true })
+    return
+  end
+
+  -- Restart the saved command, falling back to 'shell' if it is gone
+  local argv = state.argv
+  if type(argv) ~= 'table' or type(argv[1]) ~= 'string' or vim.fn.executable(argv[1]) == 0 then
+    argv = { vim.o.shell }
+  end
+
+  local cwd = state.cwd
+  if type(cwd) ~= 'string' or vim.fn.isdirectory(cwd) == 0 then
+    cwd = nil
+  end
+  -- jobstart() will rename the buffer to the new "term://" URI
+  vim.fn.jobstart(argv, { term = true, cwd = cwd })
+  -- Take the state file's name back, so `:write` overwrites the file the state was restored from
+  pcall(vim.api.nvim_buf_set_name, bufnr, vim.fn.fnamemodify(args.file, ':p'))
+
+  local now = vim.fn.strftime('%Y-%m-%d %H:%M', vim.fn.localtime())
+  local text ---@type string
+  if type(state.timestamp) == 'number' then
+    local saved = vim.fn.strftime('%Y-%m-%d %H:%M', state.timestamp)
+    text = ('saved at %s, restored at %s'):format(saved, now)
+  else
+    text = ('restored at %s'):format(now)
+  end
+  local banner = ('\27[7m[ Terminal history %s ]\27[0m'):format(text)
+  local pad = state.content:sub(-1) == '\n' and '' or '\n'
+  vim.api.nvim__term_feed(bufnr, state.content .. pad .. banner .. '\n\n')
+end
+
 return M
