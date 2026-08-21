@@ -421,83 +421,93 @@ ChanOpen			Just after a channel was opened.
 
 							*CmdAtom*
 CmdAtom				After a user action (an "atom" of input): any
-				motion, operator, insert session, Visual-mode
-				keysequence, Ex cmdline (":cnext<CR>"),
-				mapping (and its subatoms), or scroll/mouse.
+				normal command, motion, operator, insert
+				session, Visual sequence, Ex cmdline
+				(":cnext<CR>"), mapping (and subatoms), macro,
+				or scroll/mouse.
 
-				Event is |deferred|.
 				<amatch> is the atom "type" (see below).
+				Event is |deferred|.
 
 				Only for user input, not programmatic input:
 					INPUT			ATOM ~
-					typed keys		yes
+					Typed keys		yes
+					Mapping, macro "@q"	yes
 					|nvim_input()|		yes
 					|nvim_feedkeys()|	with "t" (see note)
-					dot-repeat |.|		yes
-					mapping, typed "@q"	yes
+					Hydrogen		yes
 					|:normal|		no
-					API requests		no, lol
+					API requests		no
 					"@q" fed by a script	no
 					|multicursor| cascade	no
-					aborted operation	no
-					terminal-mode keys	no
-					mouse drag/release	no
-					Hydrogen		yes
+					Aborted operation	no
+					Terminal-mode keys	no
+					Mouse drag/release	no (TODO?)
 
 				Note: all keys fed during a mapping execution
-				(e.g. Lua callback) are part of the mapping's
-				expansion.
+				are part of the mapping's resolved `keys`.
 
 				The |event-data| has these fields (type: `vim.event.cmdatom.data`):
 
-				- arg: Typed operand of `cmd`: the "x" of "fx",
-				  the replacement char of |r|.
-				  |key-notation|, like `cmd`.
-				- atoms: The constituent atoms of a composite
-				  (multi-command mapping, Visual sequence),
-				  in-order.  A consumer of e.g. "motion" atoms
-				  may want to inspect these "children".
-				- cascade: Queued for "multicursor" replay.
-				- changed: Buffer was changed.
-				- cmd: Command/motion/object name: "w", "fx" is
-				  "f", "iw", "gJ", "<Home>", …. |key-notation|
-				  (not raw bytes).
-				- count: Effective |count|; omitted if none.
-				- keys:	Resolved (post-mapping) keysequence,
-				  raw internal bytes (not |key-notation|):
-				  feed directly to |feedkeys()| or
-				  |nvim_feedkeys()| (mode "n") to replay. Use
-				  |keytrans()| to key-notation. Empty if
-				  not replayable: a Lua mapping, or
-				  unreplayable Visual operation (mouse, |gv|,
-				  Select mode).
+				- atoms: Ordered "subatoms" of a composite
+				  atom (multi-command mapping, Visual sequence).
+				- changed: Buffer was changed by the atom.
+				- cmd: Command/motion/object name: "w", "f",
+				  "iw", "gJ", "<Home>", …. |key-notation|
+				- cmdarg: Operand of `cmd`: the "x" of "fx",
+				  the replacement char of |r|. |key-notation|
+				- count: Effective |count|, or nil.
+				- keys:	Resolved (post-mapping) keysequence.
+				  Raw internal bytes (use |keytrans()| to get
+				  key-notation): feed to |nvim_feedkeys()|
+				  (mode "n") to replay. Empty: unreplayable.
 				- lhs: User input, before it is
-				  resolved/translated. Mapping LHS, macro
-				  register ("@q"), or the keys of a Visual op.
-				  Raw bytes, like `keys`.
+				  resolved/translated. Mapping LHS plus any
+				  payload it read (|getchar()|), macro register
+				  ("@q"), or Visual sequence. Raw bytes, like
+				  `keys`.
 				- motionforce |forced-motion|: "v", "V", or
 				  "<C-V>" (|key-notation|).
+				- moved: Cursor moved. To detect a "motion":
+				  `moved and not changed and not operator`
 				- operator: Operator: "d", "g@", "zf", ….
 				  |key-notation|, like `cmd`.
-				- pending: What is awaiting input after
-				  a mapping: "operator", "visual".
+				- pending: The next atom completes what
+				  this mapping started: "mapping",
+				  "operator", "visual".
+				- pos: Start position: [row, col], 1-indexed
+				  row, 0-indexed col.
 				- reg: Register name.
+				- remap: `keys` cannot replay this atom: the
+				  mapping reads its own arguments, or resolved
+				  to no keys. Re-run `lhs` instead. Empty
+				  `keys` WITHOUT `remap` is unreplayable (a
+				  Visual op with a tainted selection).
 				- text: Payload text: inserted text of an
 				  insert session (after its last cursor-move,
 				  like |quote.|), Ex cmdline, or search.
-				  Literal text, not key encoding.  Examples:
+				  Literal text, not key encoding.
+				  Examples:
 				    - typed "iab<Esc>" → text="ab"
 				    - typed ":cnext<CR>" → text="cnext"
 				    - typed "<Cmd>cnext<CR>" → text="cnext"
 				    - typed "iab<Left>c<Esc>" → text="c"
-				- type: "command", "ex", "insert", "jump",
-				  "mapping", "motion", "mouse", "operator",
-				  "scroll", "visual".
-				    - "command": neither edits nor moves the
-				      cursor (undo, folds, CTRL-W commands, …).
-				    - "jump": moves the cursor via
+				- type:
+				    - "excmd"
+				    - "insert"
+				    - "jump": Moves the cursor via
 				      absolute/shared navigation state
 				      (|jumplist|, marks, |star|).
+				    - "mapping"
+				    - "motion"
+				    - "mouse"
+				    - "normal": Non-motion/jump command ("u",
+				      CTRL-R, "za", CTRL-W, …).
+				    - "operator"
+				    - "scroll"
+				    - "visual"
+				- undoseq: Undo state after the action
+				  (|undotree()| `seq_cur`). Decreases on undo.
 
 							*CmdlineChanged*
 CmdlineChanged			After EVERY change inside command line. Also

@@ -37,6 +37,7 @@
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"
 #include "nvim/vim_defs.h"
+#include "nvim/window.h"
 
 #include "input_cmdatom.c.generated.h"
 
@@ -69,7 +70,7 @@ static struct {
   char *lhs;          ///< Label: mapping LHS or macro "@x" (NULL: not collecting).
   bool queued;        ///< A cascadable atom was queued (g_atoms) while collecting.
   bool macro;         ///< Macro execution: captured as an "@x"-labeled atom.
-  varnumber_T tick;   ///< b:changedtick at start.
+  CmdOrigin origin;   ///< State at start.
 } composite;
 
 /// The executing command's frame; its `parent` chain spans nested `normal_execute()`.
@@ -90,6 +91,7 @@ typedef enum {
 static struct {
   CmdAtomVec atoms;  ///< Accumulated subatoms. A void session collects them as the `lhs` label.
   VatomState state;
+  CmdOrigin origin;  ///< State at session start (before the "v").
 } vatom;
 
 /// Per-command capture scratch.
@@ -111,14 +113,14 @@ static struct {
 } typed;
 
 static const char *const type_names[] = {
-  [kACommand] = "command",
-  [kAEx] = "ex",
-  [kAInsert] = "insert",
+  [kAExcmd] = "excmd",
   [kAInsertSpan] = "insert",  // spans display as "insert" (as a composite's `atoms`)
+  [kAInsert] = "insert",
   [kAJump] = "jump",
   [kAMapping] = "mapping",
   [kAMotion] = "motion",
   [kAMouse] = "mouse",
+  [kANormal] = "normal",
   [kAOperator] = "operator",
   [kAScroll] = "scroll",
   [kAVisual] = "visual",
@@ -170,8 +172,37 @@ CmdSpec atom_cmd_spec(const cmdarg_T *cap)
     .count = cap->count0,
     .cmd = cap->cmdchar,
     .cmd2 = operand ? NUL : cap->nchar,
-    .arg = operand ? cap->nchar : NUL,
+    .cmdarg = operand ? cap->nchar : NUL,
   };
+}
+
+/// Gets the current buffer/window/cursor state.
+static CmdOrigin atom_origin(void)
+{
+  CmdOrigin origin = { .win = curwin, .pos = curwin->w_cursor,
+                       .tick = buf_get_changedtick(curbuf) };
+  set_bufref(&origin.buf, curbuf);
+  return origin;
+}
+
+/// True if the buffer was edited. False if the buf disappeared.
+static bool atom_origin_changed(CmdOrigin origin)
+{
+  return bufref_valid(&origin.buf) && buf_get_changedtick(origin.buf.br_buf) != origin.tick;
+}
+
+/// True if the cursor moved (in original buf). False if the win or buf disappeared.
+static bool atom_origin_moved(CmdOrigin origin)
+{
+  return bufref_valid(&origin.buf) && win_valid(origin.win)
+         && origin.win->w_buffer == origin.buf.br_buf
+         && !equalpos(origin.pos, origin.win->w_cursor);
+}
+
+/// Undo state of the buffer now, or 0 if the buffer disappeared.
+static int atom_origin_undoseq(CmdOrigin origin)
+{
+  return bufref_valid(&origin.buf) ? origin.buf.br_buf->b_u_seq_cur : 0;
 }
 
 /// Composes a CmdSpec into `redo_keys` format.
@@ -197,7 +228,7 @@ static CmdAtom atom_from_spec(CmdAtomType type, CmdSpec spec)
 }
 
 /// Gets a typed cmdline as a CmdAtom.
-///   ":cnext<CR>" => CmdAtom{ kAEx, keys=":cnext<NL>", text="cnext" }
+///   ":cnext<CR>" => CmdAtom{ kAExcmd, keys=":cnext<NL>", text="cnext" }
 static CmdAtom atom_from_cmdline(CmdAtomType type, cmdarg_T *ca, const char *cmdline)
 {
   StringBuilder sb = KV_INITIAL_VALUE;
@@ -275,11 +306,11 @@ static Dict atom_dict(const CmdAtom *atom)
   }
   // Inapplicable fields are OMITTED, not defaulted.
   Dict d = ARRAY_DICT_INIT;
-  char *arg = atom_key_name(spec->arg);
-  if (arg != NULL && *arg != NUL) {
-    PUT(d, "arg", CSTR_AS_OBJ(arg));
+  char *cmdarg = atom_key_name(spec->cmdarg);
+  if (cmdarg != NULL && *cmdarg != NUL) {
+    PUT(d, "cmdarg", CSTR_AS_OBJ(cmdarg));
   } else {
-    xfree(arg);
+    xfree(cmdarg);
   }
   PUT(d, "changed", BOOLEAN_OBJ(atom->changed));
   if (*cmd != NUL) {
@@ -289,6 +320,15 @@ static Dict atom_dict(const CmdAtom *atom)
   }
   if (spec->count > 0) {
     PUT(d, "count", INTEGER_OBJ(spec->count));
+  }
+  // Note: origin is undefined for an insert-session span, its cursor effect is undefined.
+  if (atom->origin.pos.lnum > 0) {
+    PUT(d, "moved", BOOLEAN_OBJ(atom->moved));
+    Array pos = ARRAY_DICT_INIT;
+    ADD(pos, INTEGER_OBJ(atom->origin.pos.lnum));
+    ADD(pos, INTEGER_OBJ(atom->origin.pos.col));
+    PUT(d, "pos", ARRAY_OBJ(pos));
+    PUT(d, "undoseq", INTEGER_OBJ(atom->undoseq));
   }
   // keys/lhs are RAW bytes (typeahead encoding).
   const char *keys = atom->keys != NULL ? atom->keys : "";
@@ -305,6 +345,9 @@ static Dict atom_dict(const CmdAtom *atom)
   if (spec->regname != 0) {
     PUT(d, "reg", CSTR_TO_OBJ(regname));
   }
+  if (atom->remap) {
+    PUT(d, "remap", BOOLEAN_OBJ(true));
+  }
   if (atom->text != NULL && *atom->text != NUL) {
     PUT(d, "text", CSTR_TO_OBJ(atom->text));
   }
@@ -313,13 +356,12 @@ static Dict atom_dict(const CmdAtom *atom)
 }
 
 /// Schedules a CmdAtom event.
-static void atom_emit(const CmdAtom *atom, const char *pending, bool cascade)
+static void atom_emit(const CmdAtom *atom, const char *pending)
 {
   if (!has_event(EVENT_CMDATOM)) {
     return;
   }
   Dict data = atom_dict(atom);
-  PUT(data, "cascade", BOOLEAN_OBJ(cascade));
   if (kv_size(atom->atoms) > 0) {
     Array atoms = ARRAY_DICT_INIT;
     for (size_t i = 0; i < kv_size(atom->atoms); i++) {
@@ -330,7 +372,8 @@ static void atom_emit(const CmdAtom *atom, const char *pending, bool cascade)
   if (*pending != NUL) {
     PUT(data, "pending", CSTR_TO_OBJ(pending));
   }
-  aucmd_defer(EVENT_CMDATOM, (char *)type_names[atom->type], NULL, AUGROUP_ALL, curbuf, NULL,
+  buf_T *buf = atom->origin.buf.br_buf != NULL ? atom->origin.buf.br_buf : curbuf;
+  aucmd_defer(EVENT_CMDATOM, (char *)type_names[atom->type], NULL, AUGROUP_ALL, buf, NULL,
               &DICT_OBJ(data));
   api_free_dict(data);
 }
@@ -342,6 +385,12 @@ static void atom_emit(const CmdAtom *atom, const char *pending, bool cascade)
 void atom_push_raw(bool cascade, CmdAtom atom)
 {
   assert(atom.keys != NULL);
+  if (atom.origin.buf.br_buf != NULL) {
+    // Calculated here, from the atom's own baseline.
+    atom.changed = atom_origin_changed(atom.origin);
+    atom.moved = atom_origin_moved(atom.origin);
+    atom.undoseq = atom_origin_undoseq(atom.origin);
+  }
   if (atom_visual_pending()) {
     // Collecting the Visual composite: subatom of the pending visual atom.
     if (vatom.state & kVatomTyped) {
@@ -367,7 +416,7 @@ void atom_push_raw(bool cascade, CmdAtom atom)
   } else {
     if (atom.type != kAInsertSpan) {
       // Spans are cascade-internal; only emit the whole session (kAInsert).
-      atom_emit(&atom, "", cascade);
+      atom_emit(&atom, "");
     }
     atom_free(&atom);
   }
@@ -412,23 +461,29 @@ static void atom_stage_flush(CmdFrame *frame)
   if (frame->staged.keys == NULL) {
     return;
   }
-  frame->staged.changed = buf_get_changedtick(curbuf) != frame->tick;
   // Staged commands are edits, thus cascade. Except with no keys (poisoned Visual selection).
   bool cascade = *frame->staged.keys != NUL;
   atom_push(cascade, frame->staged);
   frame->staged = (CmdAtom){ 0 };
 }
 
-/// Queues an LHS-replay atom: a mapping that edited invisibly (:normal/:call, "ds'") re-runs
-/// per cursor from its LHS + payload keys. Cascade only.
-void atom_lhs_replay_queue(void)
+/// The composite's trigger: its LHS plus the keys typed while it ran, i.e. the user "intention".
+/// @return Allocated.
+static char *atom_composite_lhs(void)
 {
   StringBuilder keys = KV_INITIAL_VALUE;
   kv_concat(keys, composite.lhs);
   kv_concat_len(keys, (char *)typed.keys.items + typed.map_start,
                 kv_size(typed.keys) - typed.map_start);
   kv_push(keys, NUL);
-  kv_push(g_atoms, ((CmdAtom){ .type = kAMapping, .keys = keys.items, .remap = true }));
+  return keys.items;
+}
+
+/// Queues an LHS-replay atom: a mapping that edited invisibly (:normal/:call, "ds'") re-runs
+/// per cursor from its LHS + payload keys. Cascade only.
+void atom_lhs_replay_queue(void)
+{
+  kv_push(g_atoms, ((CmdAtom){ .type = kAMapping, .keys = atom_composite_lhs(), .remap = true }));
 }
 
 /// True if the executing mapping queued a subatom: its edit was captured, no LHS-replay needed.
@@ -449,7 +504,7 @@ static void atom_composite_start(const char *lhs, size_t len)
   xfree(composite.lhs);
   composite.lhs = xmemdupz(lhs, len);
   composite.queued = false;
-  composite.tick = buf_get_changedtick(curbuf);
+  composite.origin = atom_origin();
 }
 
 /// Emits the composite atom with its collected subatoms (`CmdAtom.atoms`).
@@ -462,26 +517,36 @@ static void atom_composite_end(const char *pending)
   if (composite.lhs == NULL) {
     return;
   }
-  char *lhs = composite.lhs;
-  composite.lhs = NULL;
+  // The mapping read a payload via getchar() ("ds'"); replaying `keys` would prompt again.
+  // Consumer should rerun `lhs` (which carries the payload) in "remap" mode.
+  const bool remap = kv_size(typed.keys) > typed.map_start || kv_size(composite.atoms) == 0;
+  char *lhs = atom_composite_lhs();
+  XFREE_CLEAR(composite.lhs);
   CmdAtom atom;
   if (kv_size(composite.atoms) == 0) {
     // The mapping's commands captured nothing (Ex/Lua commands, no-ops): but it is still a user
     // action, so emit it with empty keys (identified by `lhs`).
-    atom = (CmdAtom){ .type = kAMapping, .keys = xstrdup(""), .lhs = lhs,
-                      .changed = buf_get_changedtick(curbuf) != composite.tick };
+    atom = (CmdAtom){ .type = kAMapping, .keys = xstrdup(""), .lhs = lhs, .remap = remap,
+                      .origin = composite.origin,
+                      .changed = atom_origin_changed(composite.origin),
+                      .moved = atom_origin_moved(composite.origin),
+                      .undoseq = atom_origin_undoseq(composite.origin) };
   } else if (kv_size(composite.atoms) == 1) {
     // Single subatom. "Unwrap" it so e.g. a motion mapping reports kAMotion, not kAMapping.
     atom = kv_pop(composite.atoms);
     xfree(atom.lhs);
     atom.lhs = lhs;
+    atom.remap = remap;
   } else {
     atom = (CmdAtom){ .type = kAMapping, .keys = atoms_concat_keys(composite.atoms).data,
-                      .lhs = lhs, .changed = buf_get_changedtick(curbuf) != composite.tick };
+                      .lhs = lhs, .remap = remap, .origin = composite.origin,
+                      .changed = atom_origin_changed(composite.origin),
+                      .moved = atom_origin_moved(composite.origin),
+                      .undoseq = atom_origin_undoseq(composite.origin) };
     atom.atoms = composite.atoms;  // Subatoms.
     composite.atoms = (CmdAtomVec)KV_INITIAL_VALUE;  // Reset.
   }
-  atom_emit(&atom, pending, composite.queued);
+  atom_emit(&atom, pending);
   atom_free(&atom);
 }
 
@@ -729,6 +794,12 @@ void atom_map_start(const char *lhs, size_t len)
       || Visual.active) {
     return;
   }
+  if (atom_composite_active()) {
+    // Mapping resolved from another's trailing prefix ("nmap x j," + "nnoremap ,w w"): end the
+    // pending composite, so each `lhs` owns only the keys it produced.
+    typed.map_start = kv_size(typed.keys);
+    atom_composite_end("mapping");
+  }
   atom_composite_start(lhs, len);
   typed.map_start = kv_size(typed.keys);
 }
@@ -774,6 +845,7 @@ static bool atom_visual_end_suffix(char *suffix, const CmdSpec *spec, bool redoa
     xfree(suffix);
     return false;
   }
+  const CmdOrigin origin = vatom.origin;  // atom_visual_reset() clears the session.
   const bool prep = redoable && spec != NULL;
   if (suffix == NULL || !atom_visual_replayable()) {
     bool prepped = prep && spec->op != NUL && suffix != NULL;
@@ -795,7 +867,7 @@ static bool atom_visual_end_suffix(char *suffix, const CmdSpec *spec, bool redoa
     atom_visual_reset();  // End the session before staging.
     if (emit) {
       atom_stage_set((CmdAtom){ .type = kAVisual, .spec = *spec, .keys = xstrdup(""),
-                                .lhs = label });
+                                .lhs = label, .origin = origin });
     }
     return prepped;
   }
@@ -823,9 +895,11 @@ static bool atom_visual_end_suffix(char *suffix, const CmdSpec *spec, bool redoa
     // embedded in `keys` (and decomposed in `atoms`).
     .spec = spec != NULL ? *spec : (CmdSpec){ 0 },
     .keys = keys,
+    .origin = origin,
   };
   if (spec != NULL) {
-    kv_push(vatom.atoms, ((CmdAtom){ .type = kAOperator, .spec = *spec, .keys = suffix }));
+    kv_push(vatom.atoms, ((CmdAtom){ .type = kAOperator, .spec = *spec, .keys = suffix,
+                                     .origin = cur_frame->origin }));
   } else {
     xfree(suffix);
   }
@@ -874,19 +948,21 @@ void atom_capture_op(oparg_T *oap, cmdarg_T *cap, bool redo_yank)
         spec.motion_force = oap->motion_force;
         spec.cmd = cap->cmdchar;
         spec.cmd2 = operand ? NUL : cap->nchar;
-        spec.arg = operand ? cap->nchar : NUL;
-        atom_stage_set(atom_from_spec(kAOperator, spec));
+        spec.cmdarg = operand ? cap->nchar : NUL;
+        CmdAtom op_atom = atom_from_spec(kAOperator, spec);
+        op_atom.origin = cur_frame->origin;
+        atom_stage_set(op_atom);
       }
     } else if (!Visual.active || oap->motion_force) {
       // Prepped: atom_cmd_end() derives the atom from redobuff.
     } else if (oap->op_type == OP_REPLACE && cap->nchar <= 0) {
-      // Visual "r<C-V><CR>": `spec.arg` cannot represent the sentinel nchar (REPLACE_CR_NCHAR), so
+      // Visual "r<C-V><CR>": `spec.cmdarg` cannot represent the sentinel (REPLACE_CR_NCHAR), so
       // hand-compose the literal suffix keys.
       char suffix[4] = { 'r', Ctrl_V, cap->nchar == REPLACE_CR_NCHAR ? CAR : NL, NUL };
       atom_visual_end_suffix(xstrdup(suffix), &spec, redoable);
     } else {
       // Visual-mode op: complete the accumulated visual atom with the operator keys.
-      spec.arg = oap->op_type == OP_REPLACE ? cap->nchar : NUL;
+      spec.cmdarg = oap->op_type == OP_REPLACE ? cap->nchar : NUL;
       if ((oap->op_type == OP_NR_ADD || oap->op_type == OP_NR_SUB) && cap->arg) {
         // g<C-A>: the "g" variant is distinguished by cap->arg, not the op char: compose it back.
         spec.op_extra = spec.op;
@@ -971,7 +1047,10 @@ InsSession atom_ins_start(int cmd, long count, VisualIns vis, bool vblock)
   InsSession session = {
     .typed = atom_is_user_input(),  // Sampled before the session.
     .vis = vis,
-    .tick = buf_get_changedtick(curbuf),
+    // A consumed selection opens the redo body, so the atom starts where the selection did.
+    // Else the CmdFrame origin, from before the entry moved the cursor (a/A/…).
+    .origin = vis == kVInsKeys ? vatom.origin
+                               : cur_frame != NULL ? cur_frame->origin : atom_origin(),
   };
   if (vis != kVInsNone && !mc_replaying()) {
     if (vis == kVInsKeys && !(atom_visual_replayable() && (vatom.state & kVatomTyped))) {
@@ -981,6 +1060,10 @@ InsSession atom_ins_start(int cmd, long count, VisualIns vis, bool vblock)
     // The selection is consumed: already in the redo body. Also clears selection display.
     atom_visual_reset();
   }
+  // bool repl = cmd == 'R' || cmd == 'V' || cmd == 'r' || cmd == 'v';
+  // mc_ins_cascade_start(session.typed && count <= 1 && !repl
+  //                      && (vis == kVInsNone || (vis == kVInsKeys && !vblock)),
+  //                      session.origin.tick);
   return session;
 }
 
@@ -1010,7 +1093,7 @@ static void atom_ins_push(const InsSession *session, bool cascade)
     return;
   }
   atom.text = get_last_insert_save();
-  atom.changed = buf_get_changedtick(curbuf) != session->tick;
+  atom.origin = session->origin;
   atom_push_raw(cascade, atom);
 }
 
@@ -1018,9 +1101,7 @@ static void atom_ins_push(const InsSession *session, bool cascade)
 /// classify the command (motion, Visual-mode transition, edit). Pushes the frame (`cur_frame`).
 void atom_cmd_start(CmdFrame *old)
 {
-  old->pos = curwin->w_cursor;
-  old->buf = curbuf;
-  old->tick = buf_get_changedtick(curbuf);
+  old->origin = atom_origin();
   old->visual = Visual;
   old->keytyped = KeyTyped;
   old->captures = atom_captures;
@@ -1059,9 +1140,9 @@ static void atom_capture_cmd(cmdarg_T *ca, const CmdFrame *old, bool toplevel)
   // counts as no-op. Extend this (or atom_key_class()) when such a case is reported...
   bool opaque = (keycls & kKeyOpaque) != 0;
   bool synthetic = (keycls & kKeySynthetic) != 0;
-  bool unchanged = curbuf == old->buf
-                   && equalpos(old->pos, curwin->w_cursor)
-                   && buf_get_changedtick(curbuf) == old->tick
+  bool unchanged = curbuf == old->origin.buf.br_buf && curwin == old->origin.win
+                   && !atom_origin_moved(old->origin)
+                   && !atom_origin_changed(old->origin)
                    && Visual.active == old->visual.active
                    && (!Visual.active
                        || (equalpos(old->visual.start, Visual.start)
@@ -1075,11 +1156,9 @@ static void atom_capture_cmd(cmdarg_T *ca, const CmdFrame *old, bool toplevel)
   if (mapped
       // NOT if cursor-global op: cascading (e.g. vim-repeat "nmap u") would undo at every cursor.
       && !curcmd.op_global
-      && ((
-           // NOT if it ended in another buffer: a navigation mapping ("nnoremap <M-l> <C-w>l")
-           // entering a buffer with cursors must not cascade.
-           curbuf == old->buf
-           && buf_get_changedtick(curbuf) != old->tick) || ins_cascaded)) {
+      // NOT if it ended in another buffer: a navigation mapping ("nnoremap <M-l> <C-w>l")
+      // entering a buffer with cursors must not cascade.
+      && ((curbuf == old->origin.buf.br_buf && atom_origin_changed(old->origin)) || ins_cascaded)) {
     map_edit = true;
   }
 
@@ -1092,6 +1171,7 @@ static void atom_capture_cmd(cmdarg_T *ca, const CmdFrame *old, bool toplevel)
       atom_visual_reset();
       // Decided once, at session start.
       vatom.state = (old->keytyped || atom_composite_active()) ? kVatomTyped : kVatomFed;
+      vatom.origin = old->origin;
     }
     // Decided by the session (not atom_capturable()), so fed selections (":normal! vjd") still
     // accumulate for redo-prep. Recording/replay commands are meta (not part of the edit).
@@ -1140,9 +1220,9 @@ static void atom_capture_cmd(cmdarg_T *ca, const CmdFrame *old, bool toplevel)
                        && ca->cmdchar != '"' && ca->cmdchar != '@' && ca->cmdchar != 'Q'
                        && !scroll_cmd)
                       || special_motion;
-    bool changed = buf_get_changedtick(curbuf) != old->tick;
-    bool motion = curbuf == old->buf
-                  && !equalpos(old->pos, curwin->w_cursor)
+    bool changed = atom_origin_changed(old->origin);
+    bool moved = atom_origin_moved(old->origin);
+    bool motion = moved
                   && !changed
                   && !finish_op && !jump_cmd
                   && ((ca->cmdchar > 0 && ca->cmdchar < 0x100
@@ -1170,7 +1250,7 @@ static void atom_capture_cmd(cmdarg_T *ca, const CmdFrame *old, bool toplevel)
       // did neither is a no-op (vim-surround "ysa[" whose surround char was <Esc>).
       bool effect = changed || reg_max_ts(true) > old->reg_ts;
       if (atom.keys != NULL && *atom.keys != NUL) {
-        atom.changed = changed;
+        atom.origin = old->origin;
         atom_push(effect, atom);
       } else {
         atom_free(&atom);
@@ -1179,13 +1259,13 @@ static void atom_capture_cmd(cmdarg_T *ca, const CmdFrame *old, bool toplevel)
                && !(vis && unchanged)) {
       // Payload typed in the cmdline ("/pat<CR>"). Emit-only. Not if pattern was not found.
       CmdAtom atom = atom_from_cmdline(kAMotion, ca, ca->searchbuf);
-      atom.changed = changed;
+      atom.origin = old->origin;
       atom_push(false, atom);
     } else if (!vis && curcmd.cmdline != NULL
                && (ca->cmdchar == ':' || ca->cmdchar == K_COMMAND)) {
       // Same for ":cnext<CR>" or "<Cmd>cnext<CR>". Never a Visual subatom.
-      CmdAtom atom = atom_from_cmdline(kAEx, ca, curcmd.cmdline);
-      atom.changed = changed;
+      CmdAtom atom = atom_from_cmdline(kAExcmd, ca, curcmd.cmdline);
+      atom.origin = old->origin;
       atom_push(false, atom);
     } else if (replayable && (!vis || (keycls & kKeyPayload) == 0)) {
       // Non-redoable command (u, zz, q=): never cascaded as an edit.
@@ -1194,8 +1274,8 @@ static void atom_capture_cmd(cmdarg_T *ca, const CmdFrame *old, bool toplevel)
         // Omit `regname`: would prefix '"x' to every command collected; op-end re-adds it later.
         spec.regname = 0;
       }
-      CmdAtom atom = atom_from_spec(motion ? kAMotion : jump_cmd ? kAJump : kACommand, spec);
-      atom.changed = changed;
+      CmdAtom atom = atom_from_spec(motion ? kAMotion : jump_cmd ? kAJump : kANormal, spec);
+      atom.origin = old->origin;
       atom_push(follow, atom);
     } else if ((scroll_cmd || mouse_cmd) && !atom_composite_active()) {
       // Emit-only (viewport-dependent).
@@ -1205,7 +1285,7 @@ static void atom_capture_cmd(cmdarg_T *ca, const CmdFrame *old, bool toplevel)
         spec.count = 0;
       }
       CmdAtom atom = atom_from_spec(scroll_cmd ? kAScroll : kAMouse, spec);
-      atom.changed = changed;
+      atom.origin = old->origin;
       atom_push(false, atom);
     }
     if (vis && kv_size(vatom.atoms) == collected && !unchanged) {
@@ -1213,7 +1293,7 @@ static void atom_capture_cmd(cmdarg_T *ca, const CmdFrame *old, bool toplevel)
       vatom.state |= kVatomVoid;
     }
   }
-  if (vis && (curbuf != old->buf || buf_get_changedtick(curbuf) != old->tick)) {
+  if (vis && (curbuf != old->origin.buf.br_buf || atom_origin_changed(old->origin))) {
     // Not replayable: edited buffer during selection, so the keys do not describe the change.
     vatom.state |= kVatomVoid;
   }
