@@ -4712,8 +4712,10 @@ void get_user_input(const typval_T *const argvars, typval_T *const rettv, const 
 
   const int save_ex_normal_busy = ex_normal_busy;
   ex_normal_busy = 0;
+  atom_payload_start();
   rettv->vval.v_string = getcmdline_prompt(secret ? NUL : '@', p, get_echo_hl_id(),
                                            xp_type, xp_arg, input_callback, false, NULL);
+  atom_payload_end();
   ex_normal_busy = save_ex_normal_busy;
   callback_free(&input_callback);
 

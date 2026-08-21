@@ -52,6 +52,38 @@ describe('dot-repeat', function()
     feed('j0.')
     eq({ 'acbzacbonexy', 'czacbtwo' }, get_lines())
   end)
+
+  it('of a visual op does not churn showcmd', function()
+    local screen = Screen.new(40, 8, { ext_messages = true })
+    command('set showcmd')
+    fn.setline(1, { 'foo bar', 'longword two' })
+    feed('gg0viWgU')
+    feed('2gg0')
+    screen:expect({ any = '%^longword' })
+    local updates = {}
+    function screen:_handle_msg_showcmd(msg)
+      local text = table.concat(vim.tbl_map(function(chunk)
+        return chunk[2]
+      end, msg))
+      if text ~= '' then
+        updates[#updates + 1] = text
+      end
+      self.showcmd = msg
+    end
+    feed('.')
+    retry(nil, nil, function()
+      eq({ 'FOO bar', 'LONGWORD two' }, get_lines())
+    end)
+    screen:sleep(50)
+    -- Stuffed (replayed) keys must not display in 'showcmd': ext_messages UIs redraw per showcmd
+    -- change, which would paint the replay's transient states (its in-progress Visual selection).
+    eq(
+      {},
+      vim.tbl_filter(function(s)
+        return s:find('[UW]') ~= nil
+      end, updates)
+    )
+  end)
 end)
 
 describe('CmdAtom', function()
@@ -107,7 +139,7 @@ describe('CmdAtom', function()
     feed(']q')
     eq(3, fn.line('.')) -- the mapping did run (:cnext)
     eq(
-      { type = 'mapping', lhs = ']q', keys = '', changed = false },
+      { type = 'mapping', lhs = ']q', changed = false },
       pick(atom_last(), 'type', 'lhs', 'keys', 'changed')
     )
     -- An empty-keys mapping that DOES edit still reports it: `changed` is
@@ -118,7 +150,7 @@ describe('CmdAtom', function()
       end)
     ]])
     feed(',e')
-    eq({ keys = '', lhs = ',e', changed = true }, pick(atom_last(), 'keys', 'lhs', 'changed'))
+    eq({ lhs = ',e', changed = true }, pick(atom_last(), 'keys', 'lhs', 'changed'))
 
     -- "<Cmd>" is opaque too, but unlike a Lua callback its command is text (like a ":" mapping).
     command('nnoremap ,c <Cmd>call setline(1, "N" . v:count)<CR>')
@@ -137,6 +169,25 @@ describe('CmdAtom', function()
     fn.setline(1, 'reset')
     n.exec_lua(([[vim.api.nvim_feedkeys(%q, 'nx', false)]]):format(cmdev.keys))
     eq('N3', fn.getline(1))
+
+    -- <expr> mapping that returns a "<Cmd>lua …<CR>" (dot-repeat idiom #41387) captures the same
+    -- way: the constructed command is the atom.
+    n.exec_lua([[
+      vim.keymap.set('n', ',x', function()
+        return '<Cmd>call setline(1, "E" . v:count1)<CR>'
+      end, { expr = true })
+    ]])
+    feed('2,x')
+    cmdev = atom_last()
+    eq({
+      type = 'excmd',
+      lhs = ',x',
+      keys = k('2<Cmd>call setline(1, "E" . v:count1)<NL>'),
+      count = 2,
+    }, pick(cmdev, 'type', 'lhs', 'keys', 'count'))
+    fn.setline(1, 'reset')
+    n.exec_lua(([[vim.api.nvim_feedkeys(%q, 'nx', false)]]):format(cmdev.keys))
+    eq('E2', fn.getline(1))
 
     -- Opaque key that changes nothing is invisible: mid-selection it must not void the pending
     -- visual atom, which would void its per-cursor extents.
@@ -211,12 +262,11 @@ describe('CmdAtom', function()
     feed('vf,d')
     eq({ 'ef' }, get_lines())
     eq({ '3dl', 'vf,d' }, atoms_tail(2))
-    eq(3, atoms()[#atoms() - 1].count)
     -- Structured decomposition: operator/motion/operand as fields, no byte-parsing.
     local op = atoms()[#atoms() - 1] -- "3dl"
     eq(
-      { operator = 'd', cmd = 'l', changed = true },
-      pick(op, 'operator', 'cmd', 'cmdarg', 'motionforce', 'changed')
+      { operator = 'd', cmd = 'l', count = 3, changed = true },
+      pick(op, 'operator', 'cmd', 'cmdarg', 'count', 'motionforce', 'changed')
     )
     -- A visual atom carries the completing operator's fields, and decomposes
     -- into its commands ("v", "f," and the operator).
@@ -357,24 +407,15 @@ describe('CmdAtom', function()
     n.exec_lua(([[vim.api.nvim_feedkeys(%q, 'nx', false)]]):format(ev.keys))
     eq({ ' bar', ' bar' }, get_lines())
 
-    -- Builtin "." replays the same keysequence, not Vim's equal-size reselect.
-    api.nvim_buf_set_lines(0, 0, -1, true, { 'foo bar', 'longword bar' })
-    feed('gg0viwd')
-    eq({ ' bar', 'longword bar' }, get_lines())
-    feed('j0.')
-    eq({ ' bar', ' bar' }, get_lines())
-
     -- A viewport scroll that drags the cursor along (edge/'scrolloff') grows
     -- the selection by a viewport-dependent amount: void, no atom.
-    local lines = {}
-    for i = 1, 30 do
-      lines[i] = 'l' .. i
-    end
+    local lines = vim.tbl_map(function(i)
+      return 'l' .. i
+    end, fn.range(1, 30))
     fn.setline(1, lines)
     feed('gg')
     local before = #atoms()
     feed('V<C-e>')
-    n.poke_eventloop()
     eq(2, fn.line('.')) -- the scroll dragged the cursor: selection is lines 1-2
     feed('d')
     -- Publishes with empty `CmdAtom.keys`; the keys that produced it are in `lhs`.
@@ -489,13 +530,9 @@ describe('CmdAtom', function()
     ]])
     --- Count of captured visual atoms.
     local function nvisual()
-      local count = 0
-      for _, a in ipairs(atoms()) do
-        if a.type == 'visual' then
-          count = count + 1
-        end
-      end
-      return count
+      return #vim.tbl_filter(function(a)
+        return a.type == 'visual'
+      end, atoms())
     end
     fn.setline(1, { 'foo bar', 'longword bar' })
     feed('gg0')
@@ -562,18 +599,16 @@ describe('CmdAtom', function()
   it('one event per user action', function()
     n.clear({ args = { '--clean' }, args_rm = { '--cmd' } })
     --- Feeds `keys`, asserts exactly ONE new event, with the given keys.
-    local function atom(keys, expected, lhs)
+    local function atom(keys, expected, lhs, type_)
       local before = #atoms()
       feed(keys)
       local evs = atoms()
-      eq({ before + 1, k(expected) }, { #evs, evs[#evs].keys })
-      eq(k(lhs or expected), evs[#evs].lhs)
+      eq(
+        { before + 1, k(expected), k(lhs or expected), type_ or evs[#evs].type },
+        { #evs, evs[#evs].keys, evs[#evs].lhs, evs[#evs].type }
+      )
     end
-    local lines = {}
-    for i = 1, 20 do
-      lines[i] = 'alpha beta gamma delta epsilon zeta'
-    end
-    fn.setline(1, lines)
+    fn.setline(1, fn['repeat']({ 'alpha beta gamma delta epsilon zeta' }, 20))
     feed('gg0')
     atoms_start()
     -- "." with nothing to repeat stuffs nothing.
@@ -622,32 +657,22 @@ describe('CmdAtom', function()
     command('silent! nunmap %') -- the bundled matchit plugin maps it
     fn.setline(1, 'alpha (beta) gamma')
     feed('gg0f(')
-    atom('%', '%')
-    eq('motion', atom_last().type)
+    atom('%', '%', nil, 'motion')
     fn.setline(1, 'alpha beta gamma delta epsilon zeta')
     -- G/gg (absolute line), H/M/L (viewport) are motions: multicursor replay is meaningful? (but
     -- cursors may be "merged").
     feed('gg0')
-    atom('G', 'G')
-    eq('motion', atom_last().type)
-    atom('gg', 'gg')
-    eq('motion', atom_last().type)
-    atom('L', 'L')
-    eq('motion', atom_last().type)
-    atom('H', 'H')
-    eq('motion', atom_last().type)
-    atom('M', 'M')
-    eq('motion', atom_last().type)
+    atom('G', 'G', nil, 'motion')
+    atom('gg', 'gg', nil, 'motion')
+    atom('L', 'L', nil, 'motion')
+    atom('H', 'H', nil, 'motion')
+    atom('M', 'M', nil, 'motion')
     -- Jumps: absolute/shared-state navigation, their own kind.
-    atom('ma', 'ma')
-    eq('normal', atom_last().type) -- "m" sets state; it does not jump
-    atom('`a', '`a')
-    eq('jump', atom_last().type)
-    atom('<C-o>', '<C-O>')
-    eq('jump', atom_last().type)
+    atom('ma', 'ma', nil, 'normal') -- "m" sets state; it does not jump
+    atom('`a', '`a', nil, 'jump')
+    atom('<C-o>', '<C-O>', nil, 'jump')
     -- Non-redoable commands: still emitted, as type "command".
-    atom('zz', 'zz')
-    eq('normal', atom_last().type)
+    atom('zz', 'zz', nil, 'normal')
     atom('u', 'u')
     atom('<C-r>', '<C-R>')
     -- "." emits its resolution (like "x" => "dl").
@@ -674,23 +699,19 @@ describe('CmdAtom', function()
     -- A nested cmdline opened by the command's own execution (":normal")
     -- does not hijack the payload.
     atom(':exe "normal! :echo 1\\r"<CR>', ':exe<Space>"normal!<Space>:echo<Space>1<Bslash>r"<NL>')
-    -- A mapping is ALWAYS an atom, even when its commands capture no
-    -- replayable keys ("]q" = :cnext): the event has empty keys.
-    fn.setqflist({ { text = 'one' }, { text = 'two' } })
-    feed(']q')
-    eq(
-      { type = 'mapping', lhs = ']q', keys = '' },
-      pick(atom_last(), 'type', 'lhs', 'keys', 'pending')
-    )
-    -- A mapping that ends mid-operation says what it awaits.
+    -- A mapping that ends mid-operation captures its continuation. ",D" emits nothing until the
+    -- typed "w" finishes the operation: one atom captures both.
     command('nnoremap ,D d')
     command('nnoremap ,V v')
+    before = #atoms()
     feed(',D')
-    eq({ lhs = ',D', pending = 'operator' }, pick(atom_last(), 'lhs', 'pending'))
-    atom('w', 'dw') -- the supplied motion completes the operation
+    eq(before, #atoms())
+    atom('w', 'dw', ',Dw') -- The supplied motion finishes the operation
+    -- Same for a mapping that opens Visual mode: "<Esc>" abandons the selection and closes it.
     feed(',V')
-    eq({ lhs = ',V', pending = 'visual' }, pick(atom_last(), 'lhs', 'pending'))
+    eq(before + 1, #atoms())
     feed('<Esc>')
+    eq({ type = 'mapping', lhs = k(',V<Esc>') }, pick(atom_last(), 'type', 'lhs', 'keys'))
     -- A mapping whose trailing prefix is completed by TYPED keys ("," + "w")
     -- ends where its own keys stop: each `lhs` owns only what it produced.
     command('set notimeout')
@@ -701,9 +722,9 @@ describe('CmdAtom', function()
     feed(',xw') -- no poke between: nvim awaits the pending "," under 'notimeout'
     eq(before + 2, #atoms())
     eq({
-      { type = 'motion', lhs = ',x', keys = 'j', pending = 'mapping' },
+      { type = 'motion', lhs = ',x', keys = 'j' },
       { type = 'motion', lhs = ',w', keys = 'w' },
-    }, atoms_tail(2, 'type', 'lhs', 'keys', 'pending'))
+    }, atoms_tail(2, 'type', 'lhs', 'keys'))
     command('set notimeout&')
     command('nunmap ,x')
     command('nunmap ,w')
@@ -771,7 +792,7 @@ describe('CmdAtom', function()
     -- mapping: one event, keeping the command's own type and structure).
     local evs = atoms()
     eq(1, #evs)
-    -- Inapplicable fields (count/reg/arg/motionforce/text/pending/atoms here) are omitted.
+    -- Inapplicable fields (count/reg/arg/motionforce/text/atoms here) are omitted.
     eq({
       type = 'operator',
       keys = 'dw',
@@ -880,34 +901,75 @@ describe('CmdAtom', function()
     feed('gg0')
     atoms_start()
     feed('ysiw"')
-    -- The atom is the redobuff plus the getchar()'d payload: a replayed opfunc reads the same wrap
-    -- char.
-    -- Two atoms: the mapping ends mid-operation ("ys" => "g@"), then the operator the typed "iw"
-    -- completed. Only the mapping has a translated `lhs`; the operator is its own input.
-    eq({
-      { type = 'mapping', keys = '', lhs = 'ys', pending = 'operator' },
-      { type = 'operator', keys = 'g@iw"', lhs = 'g@iw"' },
-    }, atoms_tail(2, 'type', 'keys', 'lhs', 'pending'))
+    -- One atom: the mapping captures the operation finished by "iw". `keys` is the redobuff plus
+    -- the getchar() payload: a replayed opfunc reads the same wrap char.
+    eq(
+      { type = 'operator', keys = 'g@iw"', lhs = 'ysiw"' },
+      pick(atom_last(), 'type', 'keys', 'lhs')
+    )
     eq({ '"alpha" beta' }, get_lines())
   end)
 
-  it('a ":call" payload mapping publishes its resolved RHS', function()
-    -- The atom published to CmdAtom carries the RESOLVED RHS (the ":call" line).
+  it('":call" payload mapping appends payload to `keys`', function()
     n.exec(t_atom.delsurround_vim)
     fn.setline(1, { 'a (one)', 'b (two)' })
     feed('gg0f(')
     atoms_start()
     feed('ds)') -- ")" is the getchar()'d payload
     eq({ 'a one', 'b (two)' }, get_lines())
-    local ev = atoms()[#atoms()]
-    t.matches(':call DelSurround%(%)', ev.keys)
-    -- Replaying those keys would prompt for the payload again, so the atom asks
-    -- for LHS-replay instead: `lhs` carries the payload, `remap` says to remap.
-    eq({ lhs = 'ds)', remap = true }, pick(ev, 'lhs', 'remap'))
+    local ev = atom_last()
+    -- getchar() payload is appended to `keys`, replayable.
+    eq({ lhs = 'ds)', keys = ':call DelSurround()\n)' }, pick(ev, 'lhs', 'keys'))
     feed('2G0f(')
-    n.exec_lua(([[vim.api.nvim_feedkeys(%q, 'm', false)]]):format(ev.lhs))
-    n.poke_eventloop()
+    n.exec_lua(([[vim.api.nvim_feedkeys(%q, 'nx', false)]]):format(ev.keys))
     eq({ 'a one', 'b two' }, get_lines())
+
+    -- input() payload is appended to `keys`, replayable.
+    n.exec([[
+      function! Suffix() abort
+        call setline('.', getline('.') .. input('suffix: '))
+      endfunction
+      nnoremap ,s :<C-U>call Suffix()<CR>
+    ]])
+    feed('gg')
+    feed(',sX<CR>')
+    n.poke_eventloop()
+    eq('a oneX', fn.getline(1))
+    ev = atom_last()
+    eq({ lhs = k(',sX<CR>'), keys = ':call Suffix()\nX\r' }, pick(ev, 'lhs', 'keys'))
+    feed('j')
+    n.exec_lua(([[vim.api.nvim_feedkeys(%q, 'nx', false)]]):format(ev.keys))
+    eq('b twoX', fn.getline(2))
+
+    -- Operator-pending mapping (:omap custom motion, like vim-sneak "z") fully captured.
+    n.exec(t_atom.minisneak_vim)
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'aa (x) here', 'bb (y) here' })
+    feed('gg0')
+    n.poke_eventloop()
+    feed('dzhe')
+    n.poke_eventloop()
+    eq('here', fn.getline(1))
+    ev = atom_last()
+    eq(
+      { type = 'operator', operator = 'd', lhs = 'dzhe', keys = 'd:call MiniSneak()\nhe' },
+      pick(ev, 'type', 'operator', 'lhs', 'keys')
+    )
+    feed('j0')
+    n.exec_lua(([[vim.api.nvim_feedkeys(%q, 'nx', false)]]):format(ev.keys))
+    eq('here', fn.getline(2))
+
+    -- Burst input ("f(" and the mapping arrive together): "f" peeks for a composing char with
+    -- mappings enabled, so "ds" resolves while "f(" is still executing. The motion is still its
+    -- own atom, and the K_IGNORE left by the peek stays out of `lhs`.
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'a (one)' })
+    feed('gg0')
+    n.poke_eventloop()
+    feed('f(ds)')
+    eq({ 'a one' }, get_lines())
+    eq({
+      { type = 'motion', keys = 'f(', lhs = 'f(' },
+      { type = 'excmd', keys = ':call DelSurround()\n)', lhs = 'ds)' },
+    }, atoms_tail(2, 'type', 'keys', 'lhs'))
   end)
 
   it('|restore-undo-cursor|: `pos` + `undoseq` restore across every undo form', function()
@@ -983,10 +1045,7 @@ describe('CmdAtom', function()
       _G.save = function() _G.saved = _G.last end
       _G.replay = function()
         local d = _G.saved
-        if not d.remap and d.keys == '' then
-          return -- Unreplayable Visual op: feeding `lhs` would be wrong.
-        end
-        vim.api.nvim_feedkeys(d.remap and d.lhs or d.keys, d.remap and 'm' or 'n', false)
+        vim.api.nvim_feedkeys(d.keys or d.lhs, d.keys and 'n' or 'm', false)
       end
     ]])
     n.exec(t_atom.delsurround_vim)
@@ -1015,11 +1074,11 @@ describe('CmdAtom', function()
       n.poke_eventloop()
       local l = get_lines()
       local d = n.exec_lua('return _G.saved')
-      local subs ---@type string?
-      for _, c in ipairs(d.atoms or {}) do
-        subs = (subs or '') .. c.keys
-      end
-      return { lhs = d.lhs, keys = d.keys, remap = d.remap, subs = subs, replayed = l[1] == l[2] }
+      local subs = d.atoms
+        and table.concat(vim.tbl_map(function(c)
+          return c.keys
+        end, d.atoms))
+      return { lhs = d.lhs, keys = d.keys, subs = subs, replayed = l[1] == l[2] }
     end
 
     -- Asserts the table in runtime/doc/repeat.txt.
@@ -1030,9 +1089,10 @@ describe('CmdAtom', function()
       { lhs = ',d', keys = 'dl', replayed = true },
       { lhs = '@q', keys = 'dl', replayed = true },
       { lhs = k('<F6>'), keys = 'dlw', subs = 'dlw', replayed = true },
-      -- `keys` cannot replay these two, so the recipe feeds `lhs` with remapping.
-      { lhs = ']e', keys = '', remap = true, replayed = true },
-      { lhs = 'ds)', keys = ':call DelSurround()\n', remap = true, replayed = true },
+      -- No `keys` (Lua callback): the recipe feeds `lhs` with remapping.
+      { lhs = ']e', replayed = true },
+      -- getchar() ")" is appended to `keys`, replayable.
+      { lhs = 'ds)', keys = ':call DelSurround()\n)', replayed = true },
     }, {
       both('a one two', '', 'dw'),
       both('aaa bbb', '', 'x'),
@@ -1058,32 +1118,73 @@ describe('CmdAtom', function()
     n.poke_eventloop()
     eq({ 4, 6 }, { fn.foldclosed(4), fn.foldclosedend(4) }) -- "zf" closes what it creates
 
-    -- Unreplayable: a void Visual op has no keys AND no `remap`, so the recipe
-    -- skips it rather than replaying a viewport-dependent selection.
-    local lines = {}
-    for i = 1, 30 do
-      lines[i] = 'l' .. i
-    end
-    api.nvim_buf_set_lines(0, 0, -1, true, lines)
+    -- Unreplayable: a void Visual op has empty keys, so the recipe feeds nothing
+    -- rather than replaying a viewport-dependent selection.
+    api.nvim_buf_set_lines(
+      0,
+      0,
+      -1,
+      true,
+      vim.tbl_map(function(i)
+        return 'l' .. i
+      end, fn.range(1, 30))
+    )
     feed('gg')
     feed(k('V<C-e>d'))
     n.poke_eventloop()
     n.exec_lua('_G.save()')
-    eq({ keys = '', remap = nil }, pick(n.exec_lua('return _G.saved'), 'keys', 'remap'))
+    eq({ keys = '' }, pick(n.exec_lua('return _G.saved'), 'keys'))
     local before = get_lines()
     n.exec_lua('_G.replay()')
     n.poke_eventloop()
     eq(before, get_lines())
 
-    -- A repeat mapping is an atom too, and `remap` sends the recipe back to its
-    -- own `lhs`: a recorder must skip it, or the repeat replays itself.
+    -- A repeat mapping is an atom too, and absent `keys` sends the recipe back to
+    -- its own `lhs`: a recorder must skip it, or the repeat replays itself.
     n.exec_lua([[vim.keymap.set('n', '<F7>', function() end)]])
     feed('<F7>')
     n.poke_eventloop()
     eq(
-      { type = 'mapping', keys = '', lhs = k('<F7>'), remap = true },
-      pick(n.exec_lua('return _G.last'), 'type', 'keys', 'lhs', 'remap')
+      { type = 'mapping', lhs = k('<F7>') },
+      pick(n.exec_lua('return _G.last'), 'type', 'keys', 'lhs')
     )
+  end)
+
+  it('"." mapping repeats the last edit atom, plugin operations included', function()
+    n.exec_lua([[
+      local last ---@type vim.event.cmdatom.data?
+      vim.api.nvim_create_autocmd('CmdAtom', {
+        callback = function(ev)
+          if ev.data.changed and ev.data.lhs ~= '.' then
+            last = ev.data
+          end
+        end,
+      })
+      vim.keymap.set('n', '.', function()
+        vim.schedule(function()
+          if last then
+            vim.api.nvim_feedkeys(last.keys or last.lhs, last.keys and 'n' or 'm', false)
+          end
+        end)
+      end)
+    ]])
+    n.exec(t_atom.delsurround_vim)
+    fn.setline(1, { 'aa bb', 'a (one)', 'b (two)' })
+    -- "Builtin" edit.
+    feed('gg0dw')
+    n.poke_eventloop()
+    feed('.')
+    retry(nil, 1000, function()
+      eq('', fn.getline(1))
+    end)
+    -- Payload mapping: builtin "." could not repeat this (without e.g. vim-repeat).
+    feed('2G0f(ds)')
+    n.poke_eventloop()
+    eq('a one', fn.getline(2))
+    feed('3G0f(.')
+    retry(nil, 1000, function()
+      eq('b two', fn.getline(3))
+    end)
   end)
 
   it('"," repeats the last motion atom', function()
@@ -1247,19 +1348,27 @@ describe('CmdAtom', function()
     ]])
     atoms_start()
 
-    -- A plugin motion via "<Cmd>" is type="ex" (its RHS implementation), but the
-    -- observed effect classifies it: moved, and did not change the buffer.
+    -- A plugin motion via "<Cmd>" is type="excmd" (its RHS implementation); `moved`
+    -- reports the same observed effect as the builtin motion below it.
     feed('gg0]c')
     eq(3, fn.line('.'))
     eq(
       { type = 'excmd', moved = true, changed = false, pos = { 1, 0 } },
       pick(atom_last(), 'type', 'moved', 'changed', 'pos')
     )
-    -- Same observed effect as a builtin motion, which is the point.
     feed('gg0w')
     eq(
       { type = 'motion', moved = true, changed = false },
       pick(atom_last(), 'type', 'moved', 'changed')
+    )
+    -- A motion that did not move is still a motion; `moved` is the separate question.
+    eq(
+      { { 'motion', false }, { 'motion', false }, { 'motion', false }, { 'normal', false } },
+      vim.tbl_map(function(keys)
+        feed(keys)
+        local a = atom_last()
+        return { a.type, a.moved }
+      end, { 'G$w', 'gg0fz', 'gg0h', 'gg0zz' })
     )
 
     -- Register-only operator also moves without changing: a motion carries no `operator`.

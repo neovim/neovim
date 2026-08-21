@@ -3687,10 +3687,8 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     case OP_FUNCTION:
       // Restore linebreak, so that when the user edits it looks as before.
       restore_lbr(lbr_saved);
-      atom_opfunc_slice(true);  // Keys the opfunc reads interactively (getchar) are its payload.
       // call 'operatorfunc'
       op_function(oap);
-      atom_opfunc_slice(false);
       break;
 
     case OP_INSERT:

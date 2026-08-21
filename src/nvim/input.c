@@ -1951,6 +1951,7 @@ static void getchar_common(typval_T *argvars, typval_T *rettv, bool allow_number
   if (!simplify) {
     no_reduce_keys++;
   }
+  atom_payload_start();
   while (true) {
     if (cursor_flag == 'm' || (cursor_flag == NUL && msg_col > 0)) {
       ui_cursor_goto(msg_row, msg_col);
@@ -1990,6 +1991,7 @@ static void getchar_common(typval_T *argvars, typval_T *rettv, bool allow_number
     }
     break;
   }
+  atom_payload_end();
   no_mapping--;
   allow_keys--;
   if (!simplify) {
@@ -2245,7 +2247,7 @@ static int char_iter(const uint8_t **itp, int nomap)
 /// - When there is no match yet, return map_result_nomatch, need to get more
 ///   typeahead.
 /// - On failure (out of memory) return map_result_fail.
-static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
+static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth, bool advance)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   mapblock_T *mp = NULL;
@@ -2495,7 +2497,7 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
                (size_t)(keylen - typebuf.tb_maplen));
       // A typed key sequence resolved this mapping (not a nested expansion:
       // those keys come from another mapping): open its composite.
-      atom_map_start(mp->m_keys, (size_t)mp->m_keylen);
+      atom_map_start(mp->m_keys, (size_t)mp->m_keylen, !advance);
     }
 
     cmd_silent = (typebuf.tb_silent > 0);
@@ -2779,7 +2781,8 @@ static int vgetorpeek(bool advance)
           break;
         } else if (typebuf.tb_len > 0) {
           // Check for a mapping in "typebuf".
-          map_result_T result = (map_result_T)handle_mapping(&keylen, &timedout, &mapdepth);
+          map_result_T result = (map_result_T)handle_mapping(&keylen, &timedout, &mapdepth,
+                                                             advance);
 
           if (result == map_result_retry) {
             // try mapping again

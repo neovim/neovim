@@ -461,6 +461,7 @@ CmdAtom				After a user action (an "atom" of input): any
 				  Raw internal bytes (use |keytrans()| to get
 				  key-notation): feed to |nvim_feedkeys()|
 				  (mode "n") to replay. Empty: unreplayable.
+				  Nil: lossy capture, replay `lhs` (mode "m").
 				- lhs: User input, before it is
 				  resolved/translated. Mapping LHS plus any
 				  payload it read (|getchar()|), macro register
@@ -468,21 +469,12 @@ CmdAtom				After a user action (an "atom" of input): any
 				  `keys`.
 				- motionforce |forced-motion|: "v", "V", or
 				  "<C-V>" (|key-notation|).
-				- moved: Cursor moved. To detect a "motion":
-				  `moved and not changed and not operator`
+				- moved: Cursor moved.
 				- operator: Operator: "d", "g@", "zf", ….
 				  |key-notation|, like `cmd`.
-				- pending: The next atom completes what
-				  this mapping started: "mapping",
-				  "operator", "visual".
 				- pos: Start position: [row, col], 1-indexed
 				  row, 0-indexed col.
 				- reg: Register name.
-				- remap: `keys` cannot replay this atom: the
-				  mapping reads its own arguments, or resolved
-				  to no keys. Re-run `lhs` instead. Empty
-				  `keys` WITHOUT `remap` is unreplayable (a
-				  Visual op with a tainted selection).
 				- text: Payload text: inserted text of an
 				  insert session (after its last cursor-move,
 				  like |quote.|), Ex cmdline, or search.
@@ -499,7 +491,9 @@ CmdAtom				After a user action (an "atom" of input): any
 				      absolute/shared navigation state
 				      (|jumplist|, marks, |star|).
 				    - "mapping"
-				    - "motion"
+				    - "motion": Non-jump motion. May emit
+				      `moved=false` ("w" at buffer end, failed
+				      "fx", …).
 				    - "mouse"
 				    - "normal": Non-motion/jump command ("u",
 				      CTRL-R, "za", CTRL-W, …).

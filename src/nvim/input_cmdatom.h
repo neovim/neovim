@@ -20,10 +20,13 @@ struct CmdFrame {
   VisualState visual;  ///< Visual-mode state (active/start/mode are diffed).
   bool keytyped;       ///< KeyTyped
   uint64_t captures;   ///< Capture counter.
+  uint64_t id;         ///< Identifies this frame (see `composite.frame`).
   bool follow;         ///< mc_following() ("q=")
   bool consumers;      ///< Capture is skipped if there are no consumers (for performance).
   Timestamp reg_ts;    ///< Max register timestamp (to detect a per-cursor register write).
-  CmdAtom staged;      ///< Atom staged in this frame. `keys == NULL`: none.
+  CmdAtom staged;      ///< Atom staged in this frame (`keys=NULL`: none).
+  size_t payload_start;  ///< Payload slice of key stream (`SIZE_MAX`: none):
+  size_t payload_end;    ///< `typed.keys[payload_start..payload_end)`
   CmdFrame *parent;    ///< Enclosing frame (nested normal_execute()); NULL at toplevel.
 };
 
