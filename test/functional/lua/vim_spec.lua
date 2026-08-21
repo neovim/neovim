@@ -1601,6 +1601,16 @@ describe('lua stdlib', function()
       pcall_err(exec_lua, "vim.validate('arg1', 1, 'table')")
     )
 
+    -- Optional argument with a wrong type: message must mention "nil" is also valid.
+    matches(
+      'arg1: expected string|nil, got number',
+      pcall_err(exec_lua, "vim.validate('arg1', 1, 'string', true)")
+    )
+    matches(
+      'arg1: expected number|string|nil, got table',
+      pcall_err(exec_lua, "vim.validate('arg1', {}, {'number', 'string'}, true)")
+    )
+
     matches(
       'arg1: expected even number, got 3',
       pcall_err(exec_lua, "vim.validate('arg1', 3, function(a) return a == 1 end, 'even number')")
