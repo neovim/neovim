@@ -8,8 +8,8 @@ Builtin plugin: zip                                                      *zip*
 
 Nvim opens a read-only listing when |:edit| is used with a zip archive. The
 listing is a |dir| buffer with 'filetype' set to "zip"; entries open as
-read-only `zip://{archive}/{path}` buffers. Requires the `unzip`
-executable.
+`zip://{archive}/{path}` buffers that can be modified and written back to the
+archive. Requires the `unzip` and `zip` executables.
 
 Recognized extensions include zip, jar, apk, epub, Office and OpenDocument
 formats, whl, xpi, pkpass, and cbz. Remote archives are fetched by |vim.net|.
@@ -32,10 +32,9 @@ At the archive root, - opens the containing filesystem directory.
 
 LIMITATIONS                                                *zip-limitations*
 
-Archive entries cannot be updated. Remote archives are not refetched on
-reload, and there is no PowerShell fallback, no custom backend command, and no
-support for the legacy `g:zip_*` variables. Use |old-zip| when those features
-are required.
+Remote archives are not refetched on reload, and there is no PowerShell
+fallback, no custom backend command, and no support for the legacy `g:zip_*`
+variables. Use |old-zip| when those features are required.
 
 Only the original zip encryption is supported, not AES.
 

@@ -77,7 +77,7 @@ jobs:
         uses: msys2/setup-msys2@66cd2cce69caa17b53920067426061ca1de3a884 # v2.32.0
         with:
           update: true
-          install: unzip
+          install: unzip zip
           pacboy: >-
             make:p gcc:p diffutils:p
           release: false

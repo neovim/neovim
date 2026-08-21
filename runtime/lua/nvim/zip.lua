@@ -22,6 +22,24 @@ local function unzip()
   return command
 end
 
+---@return string?, string?
+local function zip()
+  local command = vim.fn.exepath('zip')
+  if command == '' then
+    return nil, 'zip executable not found'
+  end
+  -- Windows searches the current directory before $PATH, so an archive could be opened with an
+  -- `zip` shipped next to it.
+  if vim.fn.has('win32') == 1 then
+    local dir = uv.fs_realpath(vim.fs.dirname(vim.fs.normalize(command)))
+    local cwd = uv.fs_realpath(vim.fn.getcwd())
+    if dir and cwd and dir == cwd then
+      return nil, 'refusing to run zip from the current directory'
+    end
+  end
+  return command
+end
+
 --- Escape a path so that Info-ZIP matches it literally.
 ---
 --- Info-ZIP matches `*`, `?`, and `[]` in a member selector itself, so this is not shell
@@ -301,6 +319,18 @@ local function set_readonly(buf)
   api.nvim_set_option_value('modifiable', false, { buf = buf })
 end
 
+---@param buf integer
+local function set_editable(buf)
+  if not api.nvim_buf_is_valid(buf) then
+    return
+  end
+  api.nvim_set_option_value('swapfile', false, { buf = buf })
+  api.nvim_set_option_value('buftype', 'acwrite', { buf = buf })
+  api.nvim_set_option_value('readonly', false, { buf = buf })
+  api.nvim_set_option_value('modifiable', true, { buf = buf })
+  api.nvim_set_option_value('modified', false, { buf = buf })
+end
+
 --- Read extracted bytes through Nvim's normal reader to preserve encoding, EOL, and binary behavior.
 ---@param buf integer Target archive entry buffer.
 ---@param temp string Temporary file containing the extracted bytes.
@@ -323,7 +353,7 @@ local function read_tempfile(buf, temp)
     }, {})
     api.nvim_cmd({ cmd = 'filetype', args = { 'detect' } }, {})
   end)
-  set_readonly(buf)
+  set_editable(buf)
 end
 
 --- Resolve a `zip://` buffer name, as used by quickfix and direct `:edit`.
@@ -457,6 +487,90 @@ function M.read(buf, name)
     set_readonly(buf)
     notify('zip', tostring(read_err))
   end
+end
+
+---@param buf integer
+---@param name string
+function M.write(buf, name)
+  buf = vim._resolve_bufnr(buf)
+
+  local state = get_state(buf)
+  local source, path = state and state.source, state and state.path
+
+  if not source or not path then
+    source, path = resolve_uri(name)
+  end
+
+  if not source or not path then
+    notify('zip', ('could not parse buffer name %q'):format(name))
+    return
+  end
+
+  local command, command_err = zip()
+  if not command then
+    notify('zip', command_err or 'zip executable not found')
+    return
+  end
+
+  local tempdir = vim.fn.tempname()
+  vim.fn.mkdir(tempdir, 'p')
+
+  local temp = vim.fs.joinpath(tempdir, path)
+  local parent = vim.fs.dirname(temp)
+
+  if parent ~= tempdir then
+    vim.fn.mkdir(parent, 'p')
+  end
+
+  -- Prevent ':w' from adding a final EOL when the buffer does not have one
+  -- while preserving the user's original 'fixeol' setting.
+  local fixeol = api.nvim_get_option_value('fixeol', { buf = buf })
+  api.nvim_set_option_value('fixeol', false, { buf = buf })
+
+  local write_ok, write_err = pcall(function()
+    api.nvim_buf_call(buf, function()
+      api.nvim_cmd({
+        cmd = 'write',
+        args = { temp },
+        mods = { silent = true },
+      }, {})
+    end)
+  end)
+
+  api.nvim_set_option_value('fixeol', fixeol, { buf = buf })
+
+  if not write_ok then
+    vim.fn.delete(tempdir, 'rf')
+    notify('zip', tostring(write_err))
+    return
+  end
+
+  local ok, system = pcall(vim.system, {
+    command,
+    '-u',
+    source,
+    literal_pattern(path),
+  }, {
+    cwd = tempdir,
+    text = true,
+  })
+
+  if not ok then
+    vim.fn.delete(tempdir, 'rf')
+    notify('zip', tostring(system))
+    return
+  end
+
+  local result = system:wait()
+
+  if result.code ~= 0 then
+    vim.fn.delete(tempdir, 'rf')
+    notify('zip', ('unable to update %s: %s'):format(source, vim.trim(result.stderr or '')))
+    return
+  end
+
+  vim.fn.delete(tempdir, 'rf')
+  api.nvim_set_option_value('modified', false, { buf = buf })
 end
 
 --- List the requested archive level and commit its prefix only after the backend succeeds.
