@@ -2286,6 +2286,8 @@ enable({enable}, {client_id}, {bufnr}, {opts})
       • Behavior of `autotrigger=true` is controlled by the LSP
         `triggerCharacters` field. You can override it on LspAttach, see
         |lsp-autocompletion|.
+      • `autotrigger` is tracked per client; the other {opts} fields are
+        buffer-wide. Fields omitted in {opts} keep their current value.
 
     Parameters: ~
       • {enable}     (`boolean`) True to enable, false to disable

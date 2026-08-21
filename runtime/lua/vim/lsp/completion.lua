@@ -65,7 +65,10 @@ local ns_to_ms = 0.000001
 --- @class vim.lsp.completion.BufHandle
 --- @field clients table<integer, vim.lsp.Client>
 --- @field triggers table<string, vim.lsp.Client[]>
+--- @field autotrigger? boolean
 --- @field convert? fun(item: lsp.CompletionItem): table
+--- @field cmp? fun(a: table, b: table): boolean
+--- @field commit_characters? boolean
 
 --- @type table<integer, vim.lsp.completion.BufHandle>
 local buf_handles = {}
@@ -1193,6 +1196,18 @@ local function on_insert_leave()
   Context:reset()
 end
 
+--- @param handle vim.lsp.completion.BufHandle
+--- @param client_id integer
+local function remove_trigger_client(handle, client_id)
+  for char, clients in pairs(handle.triggers) do
+    --- @param c vim.lsp.Client
+    local remaining = vim.tbl_filter(function(c)
+      return c.id ~= client_id
+    end, clients)
+    handle.triggers[char] = #remaining > 0 and remaining or nil
+  end
+end
+
 --- @param client_id integer
 --- @param bufnr integer
 local function disable_completions(client_id, bufnr)
@@ -1206,12 +1221,7 @@ local function disable_completions(client_id, bufnr)
     buf_handles[bufnr] = nil
     api.nvim_del_augroup_by_name(get_augroup(bufnr))
   else
-    for char, clients in pairs(handle.triggers) do
-      --- @param c vim.lsp.Client
-      handle.triggers[char] = vim.tbl_filter(function(c)
-        return c.id ~= client_id
-      end, clients)
-    end
+    remove_trigger_client(handle, client_id)
   end
 end
 
@@ -1231,9 +1241,6 @@ local function enable_completions(client_id, bufnr, opts)
     buf_handle = {
       clients = {},
       triggers = {},
-      convert = opts.convert,
-      cmp = opts.cmp,
-      commit_characters = opts.commit_characters ~= false,
     }
     buf_handles[bufnr] = buf_handle
 
@@ -1255,22 +1262,34 @@ local function enable_completions(client_id, bufnr, opts)
     }, function(ev)
       disable_completions(ev.data.client_id, ev.buf)
     end)
+  end
 
-    if opts.autotrigger then
+  if opts.convert ~= nil then
+    buf_handle.convert = opts.convert
+  end
+  if opts.cmp ~= nil then
+    buf_handle.cmp = opts.cmp
+  end
+  if opts.commit_characters ~= nil then
+    buf_handle.commit_characters = opts.commit_characters
+  end
+
+  if not buf_handle.clients[client_id] then
+    buf_handle.clients[client_id] = assert(lsp.get_client_by_id(client_id))
+  end
+
+  if opts.autotrigger == true then
+    local client = assert(buf_handle.clients[client_id])
+    if not buf_handle.autotrigger then
+      buf_handle.autotrigger = true
+      local group = api.nvim_create_augroup(get_augroup(bufnr), { clear = false })
       nvim_on('InsertCharPre', group, { buf = bufnr }, function()
         on_insert_char_pre(buf_handles[bufnr])
       end)
       nvim_on('InsertLeave', group, { buf = bufnr }, on_insert_leave)
     end
-  end
 
-  if not buf_handle.clients[client_id] then
-    local client = assert(lsp.get_client_by_id(client_id), 'invalid client ID')
-
-    -- Add the new client to the buffer's clients.
-    buf_handle.clients[client_id] = client
-
-    -- Add the new client to the clients that should be triggered by its trigger characters.
+    -- Add the client to the clients that should be triggered by its trigger characters.
     --- @type string[]
     local triggers = vim.tbl_get(
       client.server_capabilities,
@@ -1290,6 +1309,8 @@ local function enable_completions(client_id, bufnr, opts)
         table.insert(clients_for_trigger, client)
       end
     end
+  elseif opts.autotrigger == false then
+    remove_trigger_client(buf_handle, client_id)
   end
 end
 
@@ -1311,6 +1332,9 @@ end
 ---
 --- @note Behavior of `autotrigger=true` is controlled by the LSP `triggerCharacters` field. You
 --- can override it on LspAttach, see |lsp-autocompletion|.
+---
+--- @note `autotrigger` is tracked per client; the other {opts} fields are buffer-wide.
+--- Fields omitted in {opts} keep their current value.
 ---
 --- @param enable boolean True to enable, false to disable
 --- @param client_id integer Client ID
