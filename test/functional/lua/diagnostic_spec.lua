@@ -629,10 +629,7 @@ describe('vim.diagnostic', function()
 
   describe('enable() and disable()', function()
     it('validation', function()
-      matches(
-        'expected boolean|nil, got table',
-        pcall_err(exec_lua, [[vim.diagnostic.enable({})]])
-      )
+      matches('expected boolean|nil, got table', pcall_err(exec_lua, [[vim.diagnostic.enable({})]]))
       matches(
         'filter: expected table|nil, got string',
         pcall_err(exec_lua, [[vim.diagnostic.enable(false, '')]])
