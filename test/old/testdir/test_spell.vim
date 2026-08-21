@@ -1621,4 +1621,23 @@ func Test_spelldump_prefixtree_overflow()
   bwipe!
 endfunc
 
+" This was using the cursor position from before a SpellFileMissing
+" autocommand made the line shorter.
+func Test_spell_file_missing_z_equal()
+  new
+  call setline(1, repeat('a', 40))
+  call cursor(1, 30)
+  set spelllang=xy
+  au SpellFileMissing * call setline(1, 'ab')
+
+  " The language cannot be loaded, so z= reports E756; the invalid cursor
+  " position was used before that error reached the script level.
+  silent! norm! z=
+  call assert_equal('ab', getline(1))
+
+  au! SpellFileMissing
+  set nospell spelllang=en
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
