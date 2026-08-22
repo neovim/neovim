@@ -5,6 +5,7 @@ local t_lsp = require('test.functional.plugin.lsp.testutil')
 
 local describe, it, before_each, after_each = t.describe, t.it, t.before_each, t.after_each
 local eq = t.eq
+local retry = t.retry
 
 local clear_notrace = t_lsp.clear_notrace
 local create_server_definition = t_lsp.create_server_definition
@@ -623,5 +624,89 @@ static int foldLevel(linenr_T lnum)
   ]],
       })
     end)
+  end)
+end)
+
+describe('vim.lsp nested folding ranges', function()
+  local bufnr ---@type integer
+
+  clear_notrace()
+  before_each(function()
+    clear_notrace()
+
+    exec_lua(create_server_definition)
+    bufnr = api.nvim_get_current_buf()
+    insert('one\ntwo\nthree\nfour\nfive\nsix\nseven\neight\nnine')
+    exec_lua(function()
+      _G.server = _G._create_server({
+        capabilities = {
+          foldingRangeProvider = true,
+        },
+        handlers = {
+          ['textDocument/foldingRange'] = function(_, _, callback)
+            callback(nil, {
+              { startLine = 0, endLine = 5, collapsedText = 'outer A' },
+              { startLine = 0, endLine = 1, collapsedText = 'nested A1' },
+              { startLine = 2, endLine = 5, collapsedText = 'nested A2' },
+              { startLine = 6, endLine = 8, collapsedText = 'outer B' },
+              { startLine = 6, endLine = 7, collapsedText = 'nested B1' },
+            })
+          end,
+        },
+      })
+
+      vim.api.nvim_win_set_buf(0, bufnr)
+      vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
+    end)
+    command(
+      [[set foldmethod=expr foldexpr=v:lua.vim.lsp.foldexpr() foldtext=v:lua.vim.lsp.foldtext() foldminlines=0]]
+    )
+  end)
+  after_each(function()
+    api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
+  end)
+
+  it('keeps adjacent ranges separate when nested ranges end together', function()
+    retry(nil, nil, function()
+      eq(
+        { '>2', '<2', '>2', '2', '2', '<1', '>2', '<2', '<1' },
+        exec_lua(function()
+          local levels = {}
+          for lnum = 1, 9 do
+            levels[lnum] = vim.lsp.foldexpr(lnum)
+          end
+          return levels
+        end)
+      )
+    end)
+
+    exec_lua(function()
+      vim._foldupdate(vim.api.nvim_get_current_win(), 0, vim.api.nvim_buf_line_count(0))
+    end)
+    command('normal! zM')
+    eq(
+      { 1, 6, 7, 9 },
+      exec_lua(function()
+        return {
+          vim.fn.foldclosed(1),
+          vim.fn.foldclosedend(1),
+          vim.fn.foldclosed(7),
+          vim.fn.foldclosedend(7),
+        }
+      end)
+    )
+
+    command('normal! ggzo')
+    eq(
+      { 1, 2, 3, 6 },
+      exec_lua(function()
+        return {
+          vim.fn.foldclosed(1),
+          vim.fn.foldclosedend(1),
+          vim.fn.foldclosed(3),
+          vim.fn.foldclosedend(3),
+        }
+      end)
+    )
   end)
 end)
