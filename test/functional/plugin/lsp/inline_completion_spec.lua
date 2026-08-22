@@ -280,6 +280,19 @@ describe('vim.lsp.inline_completion', function()
         },
       }, result)
     end)
+
+    it('accepts an item after the line shrank past its range', function()
+      feed('i')
+      screen:expect({ grid = grid_with_candidates })
+      exec_lua(function()
+        -- Shrink the line the item's range covers, as backspacing would.
+        vim.api.nvim_buf_set_text(0, 0, 18, 0, 20, {})
+        vim.lsp.inline_completion.get()
+      end)
+      n.poke_eventloop()
+      feed('<Esc>')
+      screen:expect({ grid = grid_applied_candidates })
+    end)
   end)
 
   describe('select()', function()
