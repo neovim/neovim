@@ -590,6 +590,24 @@ do
     end
   end)
 
+  nvim_on({ 'TermOpen' }, nvim_terminal_augroup, {
+    desc = 'Set up BufWriteCmd for terminal state persistence',
+  }, function(args)
+    vim.api.nvim_create_autocmd('BufWriteCmd', {
+      group = nvim_terminal_augroup,
+      buffer = args.buf,
+      callback = require('vim._core.terminal').save,
+      desc = 'Save terminal state as msgpack on :write',
+    })
+  end)
+
+  -- TODO(Willaaaaaaa): unsupported: restoring state files outside "stdpath("state")/term/"
+  nvim_on('BufReadCmd', nvim_terminal_augroup, {
+    pattern = vim.fs.joinpath(vim.fn.fnamemodify(vim.fn.stdpath('state'), ':p'), 'term', '*.mpack'),
+    nested = true,
+    desc = 'Restore a terminal state file as a live terminal buffer',
+  }, require('vim._core.terminal').load)
+
   local nvim_terminal_exitmsg_ns = vim.api.nvim_create_namespace('nvim.terminal.exitmsg')
 
   --- @param buf integer

@@ -1,6 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
+local tt = require('test.functional.testterm')
 
 local describe, it, before_each, after_each, finally =
   t.describe, t.it, t.before_each, t.after_each, t.finally
@@ -13,6 +14,7 @@ local fn = n.fn
 local api = n.api
 local exec_lua = n.exec_lua
 local retry = t.retry
+local pcall_err = t.pcall_err
 local ok = t.ok
 local command = n.command
 local skip = t.skip
@@ -376,4 +378,354 @@ describe(':terminal (fake shell)', function()
       test_terminal_with_fake_shell(true)
     end)
   end
+end)
+
+describe(':write on terminal buffer', function()
+  local xstate = 'Xtest-functional-terminal'
+
+  before_each(function()
+    clear({ env = { XDG_STATE_HOME = xstate } })
+  end)
+
+  after_each(function()
+    n.rmdir(xstate)
+  end)
+
+  it(':w without arguments saves state under stdpath("state")/term/', function()
+    command('terminal')
+    local dir = vim.fs.joinpath(fn.stdpath('state'), 'term')
+    local function has_mpack()
+      for name, ftype in vim.fs.dir(dir, { depth = 1 }) do
+        if ftype == 'file' and name:match('%.mpack$') then
+          return true
+        end
+      end
+      return false
+    end
+    eq(false, has_mpack())
+    command('write')
+    eq(true, has_mpack())
+  end)
+
+  it(':w <name> refuses to overwrite without !', function()
+    command('terminal')
+    command('write test3.mpack')
+    eq(1, fn.filereadable('test3.mpack'))
+    eq('Vim(write):E13: File exists (add ! to override)', pcall_err(command, 'write test3.mpack'))
+    command('write! test3.mpack')
+    eq(1, fn.filereadable('test3.mpack'))
+  end)
+
+  it(':w <name> onto a directory gives E17', function()
+    command('terminal')
+    n.mkdir_p('test_dir/dir')
+    local err = pcall_err(command, 'write test_dir/dir')
+    ok(err:find('E17') ~= nil)
+  end)
+
+  it(':w <name> encodes state to the requested path', function()
+    command('terminal')
+    command('write test1.mpack')
+    eq(1, fn.filereadable('test1.mpack'))
+    local data = vim.mpack.decode(t.read_file('test1.mpack') --[[@as string]])
+    eq('string', type(data.content))
+    eq('table', type(data.argv))
+    eq('string', type(data.cwd))
+    eq('number', type(data.timestamp))
+  end)
+
+  it('two terminals with same cmd get distinct files', function()
+    command('terminal')
+    command('write')
+    command('terminal')
+    command('write')
+    local dir = vim.fs.joinpath(fn.stdpath('state'), 'term')
+    local files = fn.readdir(dir)
+    eq(2, #files)
+    ok(files[1] ~= files[2])
+  end)
+
+  it('derives the filename from the buffer URI', function()
+    local uris = {
+      'term://C:/Users/me//999:bash',
+      'term://foo/bar//123:bash',
+      'term://foo/bar//123:echo hello',
+      'term:///.//123:bash', -- cwd="/" is stored as "/."
+    }
+    command('terminal')
+    for _, uri in ipairs(uris) do
+      command('file ' .. uri)
+      command('write')
+    end
+    local dir = vim.fs.joinpath(fn.stdpath('state'), 'term')
+    local files = fn.readdir(dir)
+    table.sort(files)
+    eq({
+      '=uri-term-123-bash-d7d75450.mpack',
+      '=uri-term-C--Users-me-999-bash-f4d0c15b.mpack',
+      '=uri-term-foo-bar-123-bash-7fd6bb99.mpack',
+      '=uri-term-foo-bar-123-echo-hello-2a907c66.mpack',
+    }, files)
+  end)
+end)
+
+describe('nvim__term_capture()', function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = tt.setup_screen()
+  end)
+
+  it('returns an empty string for a non-terminal buffer', function()
+    command('enew')
+    eq('<>', '<' .. api.nvim__term_capture(0, 1, 0) .. '>')
+  end)
+
+  it('returns an error for an invalid buffer', function()
+    eq('Invalid buffer id: 999', pcall_err(api.nvim__term_capture, 999, 1, 0))
+  end)
+
+  it('fails while the alternate screen is active', function()
+    tt.enter_altscreen()
+    screen:expect([[
+                                                        |
+      ^                                                  |
+                                                        |*4
+      {5:-- TERMINAL --}                                    |
+    ]])
+    eq(
+      'Cannot capture terminal state while the alternate screen is active',
+      pcall_err(api.nvim__term_capture, 0, 1, 0)
+    )
+  end)
+
+  it('captures plain text and drops trailing empty screen lines', function()
+    tt.feed_data('foo')
+    screen:expect([[
+      tty ready                                         |
+      foo^                                               |
+                                                        |*4
+      {5:-- TERMINAL --}                                    |
+    ]])
+    eq('\27[0mtty ready\n\27[0mfoo\n\27[0m', api.nvim__term_capture(0, 1, 0))
+  end)
+
+  it('encodes SGR attributes and colors', function()
+    screen:set_default_attr_ids({
+      b = { bold = true },
+      i = { italic = true },
+      u = { underline = true },
+      uu = { underdouble = true },
+      uc = { undercurl = true },
+      r = { reverse = true },
+      s = { strikethrough = true },
+      fg = { foreground = 1 }, -- red
+      bg = { background = 2 }, -- green
+      mix = {
+        bold = true,
+        italic = true,
+        underline = true,
+        strikethrough = true,
+        foreground = 1, -- red
+        background = 2, -- green
+      },
+    })
+    tt.feed_data({
+      '\27[0m\27[1mbold\27[0m\27[2mdim\27[0m\27[3mitalic\27[0m\27[4munderline',
+      '\27[0m\27[21mdouble underline\27[0m\27[4:3mcurly underline',
+      '\27[0m\27[5mblink\27[0m\27[7mreverse\27[0m\27[8mconceal'
+        .. '\27[0m\27[9mstrikethrough\27[0m\27[53moverline',
+      '\27[0m\27[38;5;1mindexed foreground\27[0m\27[48;5;2mindexed background',
+      '\27[0m\27[38;2;10;20;30mRGB foreground\27[0m\27[48;2;10;20;30mRGB background'
+        .. '\27[0m\27[1;3;4;9;38;5;1;48;5;2mmix',
+    })
+    screen:expect([[
+      tty ready                                         |
+      {b:bold}dim{i:italic}{u:underline}                            |
+      {uu:double underline}{uc:curly underline}                   |
+      blink{r:reverse}conceal{s:strikethrough}overline          |
+      {fg:indexed foreground}{bg:indexed background}              |
+      RGB foregroundRGB background{mix:mix}^                   |
+      {b:-- TERMINAL --}                                    |
+    ]])
+    eq({
+      '\27[0mtty ready',
+      '\27[0;1mbold\27[0;2mdim\27[0;3mitalic\27[0;4munderline',
+      '\27[0;21mdouble underline\27[0;4:3mcurly underline',
+      '\27[0;5mblink\27[0;7mreverse\27[0;8mconceal' .. '\27[0;9mstrikethrough\27[0;53moverline',
+      '\27[0;38;5;1mindexed foreground\27[0;48;5;2mindexed background',
+      '\27[0;38;2;10;20;30mRGB foreground'
+        .. '\27[0;48;2;10;20;30mRGB background'
+        .. '\27[0;1;3;4;9;38;5;1;48;5;2mmix',
+      '\27[0m',
+    }, vim.split(api.nvim__term_capture(0, 1, 0), '\n', { plain = true }))
+  end)
+
+  it('captures wide chars without their padding cells', function()
+    tt.feed_data('测试')
+    screen:expect([[
+      tty ready                                         |
+      测试^                                              |
+                                                        |*4
+      {5:-- TERMINAL --}                                    |
+    ]])
+    eq('\27[0mtty ready\n\27[0m测试\n\27[0m', api.nvim__term_capture(0, 1, 0))
+  end)
+
+  it('preserves empty lines', function()
+    tt.feed_data('foo\n\n\nbar')
+    screen:expect([[
+      tty ready                                         |
+      foo                                               |
+                                                        |*2
+      bar^                                               |
+                                                        |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    eq(
+      '\27[0mtty ready\n\27[0mfoo\n\27[0m\n\27[0m\n\27[0mbar\n\27[0m',
+      api.nvim__term_capture(0, 1, 0)
+    )
+  end)
+
+  it('captures a line range as-is, without trimming empty lines', function()
+    tt.feed_data('foo\n\nbar')
+    screen:expect([[
+      tty ready                                         |
+      foo                                               |
+                                                        |
+      bar^                                               |
+                                                        |*2
+      {5:-- TERMINAL --}                                    |
+    ]])
+    eq('\27[0mfoo\n\27[0m\n\27[0m', api.nvim__term_capture(0, 2, 3))
+    eq('\27[0mbar\n\27[0m', api.nvim__term_capture(0, 4, 4))
+    -- Trailing empty lines inside the range are kept
+    eq('\27[0mfoo\n\27[0m\n\27[0mbar\n\27[0m\n\27[0m', api.nvim__term_capture(0, 2, 5))
+    -- `end = 0` clamps to the last non-empty line
+    eq('\27[0mfoo\n\27[0m\n\27[0mbar\n\27[0m', api.nvim__term_capture(0, 2, 0))
+  end)
+
+  it('captures scrollback before the visible screen', function()
+    tt.feed_data({
+      'line1',
+      'line2',
+      'line3',
+      'line4',
+      'line5',
+      'line6',
+      'line7',
+      'line8',
+    })
+    screen:expect([[
+      line3                                             |
+      line4                                             |
+      line5                                             |
+      line6                                             |
+      line7                                             |
+      line8^                                             |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    eq(9, api.nvim_buf_line_count(0)) -- 1 ("tty ready") + 8 (line1-8)
+
+    -- Everything (scrollback + visible screen)
+    local all = { '\27[0mtty ready' }
+    for i = 1, 8 do
+      table.insert(all, ('\27[0mline%d'):format(i))
+    end
+    eq(table.concat(all, '\n') .. '\n\27[0m', api.nvim__term_capture(0, 1, 0))
+
+    -- Scrollback only, screen only, and a range spanning the boundary
+    eq('\27[0mtty ready\n\27[0mline1\n\27[0mline2\n\27[0m', api.nvim__term_capture(0, 1, 3))
+    eq('\27[0mline2\n\27[0mline3\n\27[0m', api.nvim__term_capture(0, 3, 4))
+    local visible = {}
+    for i = 3, 8 do
+      table.insert(visible, ('\27[0mline%d'):format(i))
+    end
+    eq(table.concat(visible, '\n') .. '\n\27[0m', api.nvim__term_capture(0, 4, 0))
+  end)
+end)
+
+describe(':edit on a terminal state file', function()
+  local xstate = 'Xtest-functional-terminal'
+
+  before_each(function()
+    clear({ env = { XDG_STATE_HOME = xstate } })
+  end)
+
+  after_each(function()
+    n.rmdir(xstate)
+  end)
+
+  it('restores a live terminal that writes back to the same file', function()
+    -- 180 columns: the long `:write` report (full state file path) must fit on one screen line,
+    -- otherwise it wraps and hangs the child on a hit-enter prompt.
+    local screen = Screen.new(180, 7)
+    command('terminal')
+    command('write')
+    local dir = vim.fs.joinpath(fn.stdpath('state'), 'term')
+    local files = fn.readdir(dir)
+    eq(1, #files)
+    ok(files[1]:find('^=uri%-term') ~= nil)
+    local file = vim.fs.joinpath(dir, files[1])
+    command('bwipeout!')
+
+    -- restore terminal buffer
+    command('edit ' .. file)
+    eq('terminal', api.nvim_get_option_value('buftype', { buf = 0 }))
+    eq(false, api.nvim_get_option_value('modifiable', { buf = 0 }))
+    retry(nil, 4000, function()
+      screen:expect({ any = 'Terminal history' }) -- banner
+    end)
+    feed('iecho hello<CR>')
+    retry(nil, 4000, function()
+      screen:expect({ any = '\nhello' }) -- anchors to a row start
+    end)
+
+    -- `:write` on the restored buffer overwrites the same state file
+    command('write')
+    eq(1, #fn.readdir(dir))
+    command('bwipeout!')
+
+    -- restore the overwriten state file
+    command('edit ' .. file)
+    eq('terminal', api.nvim_get_option_value('buftype', { buf = 0 }))
+    eq(false, api.nvim_get_option_value('modifiable', { buf = 0 }))
+  end)
+
+  it('reports an error for a missing or invalid state file', function()
+    local dir = vim.fs.joinpath(fn.stdpath('state'), 'term')
+    fn.mkdir(dir, 'p')
+    local bad = vim.fs.joinpath(dir, 'bad.mpack')
+    fn.writefile('invalid terminal state file', bad, 'b')
+    ok(
+      pcall_err(command, 'edit ' .. bad):find('E5011: Invalid terminal state file', 1, true) ~= nil
+    )
+    local missing = vim.fs.joinpath(dir, 'missing.mpack')
+    ok(pcall_err(command, 'edit ' .. missing):find("E484: Can't open file", 1, true) ~= nil)
+  end)
+
+  it('ignores ".mpack" files outside stdpath("state")/term/', function()
+    command('terminal')
+    command('write! outside.mpack')
+    command('bwipeout!')
+    command('edit outside.mpack')
+    neq('terminal', api.nvim_get_option_value('buftype', { buf = 0 }))
+  end)
+end)
+
+describe('nvim__term_feed()', function()
+  before_each(function()
+    clear()
+  end)
+
+  it('errors on a non-terminal buffer', function()
+    command('enew')
+    eq('Buffer is not a terminal: 0', pcall_err(api.nvim__term_feed, 0, 'x'))
+  end)
+
+  it('errors on an invalid buffer', function()
+    eq('Invalid buffer id: 999', pcall_err(api.nvim__term_feed, 999, 'x'))
+  end)
 end)
