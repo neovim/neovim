@@ -1170,6 +1170,7 @@ Integer nvim_open_term(Buffer buf, Dict(open_term) *opts, Error *err)
     opts->on_input = LUA_NOREF;
   }
 
+  // See also: channel_terminal_alloc
   Channel *chan = channel_alloc(kChannelStreamInternal);
   chan->stream.internal.cb = cb;
   chan->stream.internal.closed = false;
@@ -1193,6 +1194,7 @@ Integer nvim_open_term(Buffer buf, Dict(open_term) *opts, Error *err)
     read_buffer_into(b, 1, b->b_ml.ml_line_count, &contents);
   }
 
+  b->b_p_channel = (OptInt)chan->id;  // 'channel' option
   channel_incref(chan);
   chan->term = terminal_alloc(b, topts);
   terminal_open(&chan->term, b);
