@@ -96,6 +96,18 @@ api.nvim_create_autocmd('BufReadCmd', {
   end,
 })
 
+api.nvim_create_autocmd('BufWriteCmd', {
+  group = group,
+  pattern = 'zip://*',
+  desc = 'Write zip archive entry',
+  callback = function(ev)
+    if legacy_loaded() then
+      return true
+    end
+    require('nvim.zip').write(ev.buf, ev.match)
+  end,
+})
+
 api.nvim_create_autocmd('BufReadCmd', {
   group = group,
   pattern = archive_patterns,

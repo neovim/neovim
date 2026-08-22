@@ -111,7 +111,7 @@ describe('nvim.zip', function()
 
       -- Re-sourcing must reuse the augroup rather than stack duplicate autocmds.
       eq(
-        2,
+        3,
         exec_lua(function()
           vim.cmd.runtime('plugin/zip.lua')
           vim.cmd.runtime('plugin/zip.lua')
@@ -177,9 +177,9 @@ describe('nvim.zip', function()
       feed('<CR>')
       poke_eventloop()
       eq({ 'root text' }, lines())
-      eq('nowrite', api.nvim_get_option_value('buftype', { buf = 0 }))
-      eq(true, api.nvim_get_option_value('readonly', { buf = 0 }))
-      eq(false, api.nvim_get_option_value('modifiable', { buf = 0 }))
+      eq('acwrite', api.nvim_get_option_value('buftype', { buf = 0 }))
+      eq(false, api.nvim_get_option_value('readonly', { buf = 0 }))
+      eq(true, api.nvim_get_option_value('modifiable', { buf = 0 }))
       eq(false, api.nvim_get_option_value('swapfile', { buf = 0 }))
     end)
 
@@ -228,6 +228,47 @@ describe('nvim.zip', function()
       edit(('zip://%s/noeol.txt'):format(archive))
       eq({ 'no final newline' }, lines())
       eq(false, api.nvim_get_option_value('endofline', { buf = 0 }))
+    end)
+
+    it('writes modified entries back to the archive', function()
+      local archive = stage(fixtures, 'browser.zip')
+      clear_zip()
+
+      edit(('zip://%s/crlf.txt'):format(archive))
+      api.nvim_buf_set_lines(0, 0, -1, false, { 'updated content' })
+      api.nvim_cmd({ cmd = 'write' }, {})
+      eq(false, api.nvim_get_option_value('modified', { buf = 0 }))
+
+      -- Verify the archive itself.
+      edit(('zip://%s/crlf.txt'):format(archive))
+      eq({ 'updated content' }, lines())
+    end)
+
+    it('preserves CRLF and missing final EOL when writing entries', function()
+      local archive = stage(fixtures, 'browser.zip')
+      clear_zip()
+
+      edit(('zip://%s/crlf.txt'):format(archive))
+
+      eq({ 'one', 'two' }, lines())
+      eq('dos', api.nvim_get_option_value('fileformat', { buf = 0 }))
+      eq(true, api.nvim_get_option_value('endofline', { buf = 0 }))
+
+      api.nvim_buf_set_lines(0, 0, -1, false, { 'hello', 'there' })
+      api.nvim_set_option_value('endofline', false, { buf = 0 })
+
+      api.nvim_cmd({ cmd = 'write' }, {})
+
+      local output = vim
+        .system({
+          'unzip',
+          '-p',
+          archive,
+          'crlf.txt',
+        })
+        :wait()
+
+      eq('hello\r\nthere', output.stdout)
     end)
 
     it('keeps suspicious entry paths visible and readable', function()
