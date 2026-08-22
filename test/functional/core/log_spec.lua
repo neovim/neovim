@@ -10,6 +10,9 @@ local eq = t.eq
 local exec_lua = n.exec_lua
 local expect_exit = n.expect_exit
 local request = n.request
+local api = n.api
+local fn = n.fn
+local eval = n.eval
 
 describe('log', function()
   local testlog = 'Xtest_logging'
@@ -118,6 +121,87 @@ describe('log', function()
     })
     t.retry(nil, nil, function()
       t.matches('log: "/foo/bar" not accessible, logging to', n.exec_capture('messages'))
+    end)
+  end)
+end)
+
+describe('logging', function()
+  local xdgdir = 'Xtest-startup-xdg-logpath'
+  local xdgstatedir = t.is_os('win') and xdgdir .. '/nvim-data' or xdgdir .. '/nvim'
+  after_each(function()
+    os.remove('Xtest-logpath')
+    n.rmdir(xdgdir)
+  end)
+
+  describe('$NVIM_LOG_FILE', function()
+    it('is used if expansion succeeds', function()
+      clear({ env = {
+        NVIM_LOG_FILE = 'Xtest-logpath',
+      } })
+      eq('Xtest-logpath', n.eval('$NVIM_LOG_FILE'))
+    end)
+
+    it('defaults to stdpath("log")/nvim.log if empty', function()
+      eq(true, t.mkdir(xdgdir) and t.mkdir(xdgstatedir))
+      clear({
+        env = {
+          XDG_STATE_HOME = xdgdir,
+          NVIM_LOG_FILE = '', -- Empty is invalid.
+        },
+      })
+      eq(('%s/logs/nvim.log'):format(xdgstatedir), n.eval('$NVIM_LOG_FILE'))
+    end)
+
+    it('defaults to stdpath("log")/nvim.log if invalid', function()
+      eq(true, t.mkdir(xdgdir) and t.mkdir(xdgstatedir))
+      clear({
+        env = {
+          XDG_STATE_HOME = xdgdir,
+          NVIM_LOG_FILE = '.', -- Any directory is invalid.
+        },
+      })
+      eq(('%s/logs/nvim.log'):format(xdgstatedir), n.eval('$NVIM_LOG_FILE'))
+      -- Avoid "failed to open $NVIM_LOG_FILE" noise in test output.
+      expect_exit(command, 'qall!')
+    end)
+  end)
+
+  describe('nvim_log()', function()
+    it('validation', function()
+      clear({ env = { NVIM_LOG_FILE = 'Xtest-logpath' } })
+      finally(function()
+        os.remove('Xtest-logpath')
+      end)
+      t.matches("Invalid 'level': 'bogus'", t.pcall_err(api.nvim_log, 'bogus', 'msg', {}))
+    end)
+
+    it('acceptance', function()
+      clear({
+        env = {
+          NVIM_LOG_FILE = 'Xtest-logpath',
+        },
+      })
+      finally(function()
+        os.remove('Xtest-logpath')
+      end)
+
+      -- Below "ERR" level, messages are dropped unless 'verbose' is set.
+      api.nvim_log('DBG', 'low-level log message…', {})
+      api.nvim_log('INF', 'you did it! :D', {})
+      api.nvim_log('WRN', 'beware of dragons ノ( º _ ºノ)', {})
+      api.nvim_log('ERR', 'problem (╯°□°)╯︵ ┻━┻', {})
+
+      -- Custom `type` prefix + `join` collapses embedded newlines.
+      api.nvim_log('ERR', 'multi\nline', { type = 'MyPlugin', join = true })
+
+      local content = table.concat(fn.readfile(eval('$NVIM_LOG_FILE')), '\n')
+      -- Default category (channel-derived) for the test session.
+      t.matches(
+        'ERR%s+%S+%s+%S+%s+testclient:remote: problem %(╯°□°%)╯︵ ┻━┻',
+        content
+      )
+      -- Custom `type` + `join` (the embedded \n is replaced with a SPACE).
+      t.matches('ERR%s+%S+%s+%S+%s+MyPlugin: multi line', content)
     end)
   end)
 end)
