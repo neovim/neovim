@@ -6,6 +6,7 @@ local clear = n.clear
 local eq = t.eq
 local fn = n.fn
 local command = n.command
+local api = n.api
 local mkdir = t.mkdir
 
 describe("'autochdir'", function()
@@ -43,5 +44,27 @@ describe("'autochdir'", function()
     eq(dir_a, fn.getcwd())
     n.rmdir(dir_a)
     n.rmdir(dir_b)
+  end)
+
+  it('win_execute() keeps buffer names #41417', function()
+    local root = vim.fs.normalize(t.tmpname(false))
+    mkdir(root)
+    mkdir(root .. '/a')
+    mkdir(root .. '/b')
+    clear()
+    command('set shellslash')
+    command('edit ' .. root .. '/a/file_a')
+    command('vsplit ' .. root .. '/b/file_b')
+    local win_b, buf_b = api.nvim_get_current_win(), api.nvim_get_current_buf()
+    command('wincmd p')
+    command('set autochdir')
+    -- Sit in an ancestor of both files: 'autochdir' moves away from it during win_execute(), and
+    -- both buffer names stay shortened, i.e. relative to the CWD.
+    command('cd ' .. root)
+    eq({ 'a/file_a', 'b/file_b' }, { fn.bufname('%'), fn.bufname(buf_b) })
+
+    fn.win_execute(win_b, 'echo')
+
+    eq({ 'a/file_a', 'b/file_b' }, { fn.bufname('%'), fn.bufname(buf_b) })
   end)
 end)

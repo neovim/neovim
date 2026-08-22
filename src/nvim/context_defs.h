@@ -116,5 +116,4 @@ typedef struct {
   char *cs_globaldir;             ///< Saved globaldir
   char *cs_cwd;                   ///< Saved CWD (kCtxKeepCwd/kCtxKeepDirs).
   bool cs_apply_acd;              ///< Re-apply 'autochdir' on ctx_restore().
-  char *cs_save_sfname;           ///< Saved b_sfname (kCtxKeepCwd/kCtxKeepDirs).
 } CtxSwitch;

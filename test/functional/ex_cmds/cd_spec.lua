@@ -572,6 +572,23 @@ describe('cd during temp context-switch', function()
     eq({ 1, tabdir, tabdir, startdir }, { tlwd(), tcwd(), cwd(), cwd(-1, -1) })
   end)
 
+  it('does not linger in buffer names after switch back #41424', function()
+    local bufdir = join(startdir, directories.buffer)
+    command('edit ' .. join(bufdir, tmpfile))
+    command('bcd ' .. bufdir)
+    command('split Xtest-cd-other') -- Buffer with no local dir.
+    local otherwin = call('win_getid')
+    command('wincmd p')
+    eq({ bufdir, tmpfile }, { cwd(), call('bufname', '%') })
+
+    -- Entering a window leaves `bufdir`, since the buffer there has no local dir.
+    call('win_execute', otherwin, 'split | close')
+
+    -- Names relative to the old CWD would cause ":write" to target nonsense.
+    eq({ bufdir, tmpfile }, { cwd(), call('bufname', '%') })
+    command('write')
+  end)
+
   it("nvim_open_win / nvim_win_set_buf keep the caller's cwd", function()
     local bufdir = join(startdir, directories.buffer)
     command('bcd ' .. bufdir)
