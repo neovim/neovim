@@ -646,14 +646,13 @@ func Test_set_completion_string_values()
   " set keyprotocol&
 
   " previewpopup / completepopup
-  " call assert_equal('height:', getcompletion('set previewpopup=', 'cmdline')[0])
-  " call assert_equal('EndOfBuffer', getcompletion('set previewpopup=highlight:End*Buffer', 'cmdline')[0])
-  " call feedkeys(":set previewpopup+=border:\<Tab>\<C-B>\"\<CR>", 'xt')
-  " call assert_equal('"set previewpopup+=border:on', @:)
-  " call feedkeys(":set completepopup=height:10,align:\<Tab>\<C-B>\"\<CR>", 'xt')
-  " call assert_equal('"set completepopup=height:10,align:item', @:)
-  " call assert_equal([], getcompletion('set completepopup=bogusname:', 'cmdline'))
-  " set previewpopup& completepopup&
+   call assert_equal('height:', getcompletion('set previewpopup=', 'cmdline')[0])
+   call feedkeys(":set previewpopup+=border:ro\<Tab>\<C-B>\"\<CR>", 'xt')
+   call assert_equal('"set previewpopup+=border:rounded', @:)
+   call feedkeys(":set completepopup=height:10,align:\<Tab>\<C-B>\"\<CR>", 'xt')
+   call assert_equal('"set completepopup=height:10,align:item', @:)
+   call assert_equal([], getcompletion('set completepopup=bogusname:', 'cmdline'))
+   set previewpopup& completepopup&
 
   " diffopt: special handling of algorithm:<alg_list> and inline:<inline_type>
   call assert_equal('filler', getcompletion('set diffopt+=', 'cmdline')[0])
@@ -2590,7 +2589,7 @@ func Test_string_option_revert_on_failure()
         \ ['completefunc', 'MyCmplFunc', '1a-'],
         "\ ['completeopt', 'popup', 'a123'],
         \ ['completeopt', 'preview', 'a123'],
-        "\ ['completepopup', 'width:20', 'border'],
+        \ ['completepopup', 'width:20', 'border'],
         \ ['concealcursor', 'v', 'xyz'],
         "\ ['cpoptions', 'HJ', 'Q'],
         \ ['cpoptions', 'J', 'Q'],
