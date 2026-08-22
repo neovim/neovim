@@ -79,3 +79,24 @@ if [ "${#missing[@]}" -ne 0 ]; then
 fi
 
 echo "build-wasm.sh finished successfully."
+
+if [ "${BUNDLE_WASM:-0}" = "1" ]; then
+  BUNDLE_DIR="$ROOT/bundle-wasm"
+  ZIP_PATH="$ROOT/nvim-wasm-emscripten.zip"
+
+  rm -rf "$BUNDLE_DIR" "$ZIP_PATH"
+  mkdir -p "$BUNDLE_DIR"
+
+  cp "$OUTDIR"/nvim.wasm "$OUTDIR"/nvim.js "$OUTDIR"/nvim.data "$BUNDLE_DIR"/
+
+  cp "$ROOT"/src/wasm/*.py "$ROOT"/src/wasm/*.html "$ROOT"/src/wasm/*.js "$ROOT"/src/wasm/*.css "$BUNDLE_DIR"/
+
+  # Rewrite repo relative paths for the flat bundle layout
+  sed -i 's#\.\./\.\./zig-out/bin/#./#g' "$BUNDLE_DIR/nvim-worker.js"
+  sed -i 's#Path(__file__)\.resolve()\.parents\[2\]#Path(__file__).resolve().parent#' "$BUNDLE_DIR/serve.py"
+
+  ( cd "$BUNDLE_DIR" && zip -r "$ZIP_PATH" . )
+  rm -rf "$BUNDLE_DIR"
+
+  echo "Created $ZIP_PATH"
+fi
