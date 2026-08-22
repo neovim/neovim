@@ -76,7 +76,7 @@ void f_rpcstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   Channel *chan = channel_job_start(argv, NULL, CALLBACK_READER_INIT,
                                     CALLBACK_READER_INIT, CALLBACK_NONE,
                                     false, true, false, false,
-                                    kChannelStdinPipe, NULL, 0, 0, NULL,
+                                    kChannelStdinPipe, false, NULL, 0, 0, NULL,
                                     &rettv->vval.v_number);
   if (chan) {
     channel_create_event(chan, NULL);
