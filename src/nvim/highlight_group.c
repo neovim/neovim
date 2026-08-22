@@ -437,6 +437,10 @@ static const char *highlight_init_light[] = {
 
   // Treesitter standard groups
   "@variable guifg=NvimDarkGrey2",
+
+  // Background for diff hunk lines, so injected syntax keeps its foreground.
+  "@diff.plus.diff  guibg=NvimLightGreen ctermbg=2",
+  "@diff.minus.diff guibg=NvimLightRed   ctermbg=1",
   NULL
 };
 
@@ -521,6 +525,10 @@ static const char *highlight_init_dark[] = {
 
   // Treesitter standard groups
   "@variable guifg=NvimLightGrey2",
+
+  // Background for diff hunk lines, so injected syntax keeps its foreground.
+  "@diff.plus.diff  guibg=NvimDarkGreen ctermbg=10",
+  "@diff.minus.diff guibg=NvimDarkRed   ctermbg=9",
   NULL
 };
 
