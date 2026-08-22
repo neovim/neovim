@@ -268,6 +268,19 @@ describe(':Man', function()
     end
 
     eq(
+      '/usr/share/man/man1/bash.1',
+      _test({ '/usr/share/man/man1/bash.1' }, '/usr/share/man/man1/bash.1')
+    )
+
+    eq(
+      '/usr/share/man/man3/strlen.3.gz',
+      _test({ '/usr/share/man/man3/strlen.3.gz' }, '/usr/share/man/man3/strlen.3.gz')
+    )
+
+    eq(nil, _test({ '/tmp/not-a-manpage' }, '/tmp/not-a-manpage'))
+    eq(nil, _test({ '/tmp/T10.1' }, '/tmp/T10.1'))
+
+    eq(
       '/usr/share/man/man3/strcpy.3',
       _test({
         '/usr/share/man/man3/strcpy.3',
