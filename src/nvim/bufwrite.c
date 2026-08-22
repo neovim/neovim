@@ -1071,6 +1071,15 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
     return res;
   }
 
+  // Emitting a msg below can run user code (ui2 `msg_show` handler), which may change CWD and thus
+  // reallocate the buffer names. #41417
+  char *const fname_copy = xstrdup(fname);
+  char *const sfname_copy = xstrdup(sfname);
+  char *const ffname_copy = xstrdup(ffname);
+  fname = fname_copy;
+  sfname = sfname_copy;
+  ffname = ffname_copy;
+
   if (cmdmod.cmod_flags & CMOD_LOCKMARKS) {
     // restore the original '[ and '] positions
     buf->b_op_start = orig_start;
@@ -1857,6 +1866,10 @@ nofail:
   }
 
   got_int |= prev_got_int;
+
+  xfree(fname_copy);
+  xfree(sfname_copy);
+  xfree(ffname_copy);
 
   return retval;
 }
