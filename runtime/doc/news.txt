@@ -391,6 +391,8 @@ LUA
 • |vim.pos| and |vim.range| can now convert between mark positions.
 • |vim.pos.cursor()| without arguments returns the cursor position of the
   current window.
+• |vim.range.has()| can exclude the end point of the range with
+  `opts.end_exclusive=true`.
 • |vim.ui.input()| now allows setting input scope.
 • |vim.log| provides a logging interface.
 • |vim.pack.get()| output includes revision of a pending update.
