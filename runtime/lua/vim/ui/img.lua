@@ -1,5 +1,3 @@
-local nvim_on = require('vim._core.util').nvim_on
-
 local M = {}
 
 ---@brief
@@ -36,15 +34,87 @@ local M = {}
 
 ---@class vim.ui.img.Opts
 ---@inlinedoc
----@field row? integer starting row (1-indexed)
----@field col? integer starting column (1-indexed)
+---@field row? integer starting row (1-indexed); buffer row if {buf} set
+---@field col? integer starting column (1-indexed); buffer col if {buf} set
 ---@field width? integer width in cells
 ---@field height? integer height in cells
 ---@field zindex? integer stacking order (higher = on top)
+---@field buf? integer buffer to anchor image inline (0 = current buffer)
+---@field pad? integer blank cells before image in inline mode
+---@field relative? vim.ui.img.Relative
 
---- Maps user-facing ID to internal tracking info.
----@type table<integer, { img_id: integer, opts: vim.ui.img.Opts }>
+---@alias vim.ui.img.Relative
+---| 'ui' # terminal-native absolute positioning
+---| 'editor' # editor-relative floating window
+---| 'buffer' # inline extmark within a buffer
+
+---@nodoc
+---@class vim.ui.img._Backend
+---@field set fun(data_or_id:string|integer, opts?:vim.ui.img.Opts):integer
+---@field del fun(id:integer)
+---@field supported fun(opts?:{timeout?:integer, chan?:integer}):boolean,string?
+
+---@nodoc
+---@class vim.ui.img._Entry
+---@field handle integer backend image id
+---@field placement vim.ui.img._Placement
+
+---Maps user-facing ID to internal tracking info.
+---@type table<integer, vim.ui.img._Entry>
 local state = {}
+
+---Retrieve the active backend, which is currently always kitty.
+---@return vim.ui.img._Backend
+local function backend()
+  return require('vim.ui.img._kitty')
+end
+
+---Retrieve a function used to render the placeholder grid for image tied to {handle}.
+---@param handle integer
+---@return fun(width: integer, height: integer): string[], string
+local function render_for(handle)
+  return function(width, height)
+    local diacritic = require('vim.ui.img._diacritic')
+    local hl = diacritic.hl_name(handle)
+    vim.api.nvim_set_hl(0, hl, { fg = handle })
+    return diacritic.grid(width, height), hl
+  end
+end
+
+---Update the displayed image within {entry}.
+---@param entry vim.ui.img._Entry
+local function apply(entry)
+  local handle, placement = entry.handle, entry.placement
+  placement:set(render_for(handle))
+  backend().set(handle, placement:opts())
+end
+
+---@param handle integer
+local function clear_hl(handle)
+  local diacritic = require('vim.ui.img._diacritic')
+  local hl = diacritic.hl_name(handle)
+  if vim.fn.hlexists(hl) == 1 then
+    vim.api.nvim_set_hl(0, hl, {})
+  end
+end
+
+---Fully delete image {id} across our placement and backend.
+---@param id integer
+---@return boolean found
+local function delete(id)
+  local entry = state[id]
+  state[id] = nil
+
+  -- No matching entry, so exit now
+  if not entry then
+    return false
+  end
+
+  clear_hl(entry.handle)
+  backend().del(entry.handle)
+  entry.placement:del()
+  return true
+end
 
 ---Display an image or update an existing one.
 ---
@@ -62,24 +132,68 @@ function M.set(data_or_id, opts)
   vim.validate('data_or_id', data_or_id, { 'string', 'number' })
   vim.validate('opts', opts, 'table')
 
-  local kitty = require('vim.ui.img._kitty')
+  local Placement = require('vim.ui.img._placement')
 
-  -- If given a string, this should be the bytes of a new image to display
+  -- If given a string, this should be the bytes of a new image to display,
+  -- and we process it and transfer it to our backend immediately
   if type(data_or_id) == 'string' then
-    local img_id, placement_id = kitty.set(data_or_id, opts)
-    state[placement_id] = { img_id = img_id, opts = vim.deepcopy(opts) }
-    return placement_id
+    -- Make a copy of the opts so we don't mutate the caller's copy later on
+    opts = vim.deepcopy(opts)
+
+    -- When relative to editor/buffer, we need explicit cell dimensions for the cell grid
+    -- whereas the ui positioning delegates sizing to the terminal so it's optional
+    local relative = Placement.relative_of(opts)
+    if relative ~= 'ui' and (not opts.width or not opts.height) then
+      local size = require('vim.ui.img._util').png_to_cell_size(data_or_id)
+      if size then
+        opts.width = opts.width or size.width
+        opts.height = opts.height or size.height
+      end
+    end
+
+    -- Construct our entry, which involves creating the placement and transferring
+    -- our image data to the backend immediately
+    local entry = {
+      placement = Placement.new(opts),
+      handle = backend().set(data_or_id),
+    }
+
+    -- The backend id doubles as the user-facing image id
+    local id = entry.handle
+    state[id] = entry
+
+    -- Set the image for the first time within our editor
+    local ok, err = pcall(apply, entry)
+    if not ok then
+      -- Something has gone wrong, so we should clear our image now to avoid a leak
+      delete(id)
+      error(err, 0)
+    end
+
+    return id
   end
 
   -- Otherwise, we update an existing image that is actively displayed
   local id = data_or_id
   local entry = state[id]
   assert(entry, 'invalid image id: ' .. tostring(id))
+  local placement = entry.placement
 
-  -- We always want to have a full set of options when passing to kitty
-  local merged = vim.tbl_extend('force', entry.opts, opts)
-  kitty.update(entry.img_id, id, merged)
-  entry.opts = merged
+  local next_placement, reused = placement:with(opts)
+  local ok, err = pcall(apply, { handle = entry.handle, placement = next_placement })
+  if not ok then
+    -- A reused placement shares its artifacts with the old one, which stays on display
+    if not reused then
+      next_placement:del()
+    end
+    error(err, 0)
+  end
+
+  entry.placement = next_placement
+  if not reused then
+    placement:del()
+  end
+
   return id
 end
 
@@ -90,13 +204,13 @@ end
 function M.get(id)
   vim.validate('id', id, 'number')
 
-  -- Grab a copy of the most recent opts used for the image
   local entry = state[id]
   if not entry then
     return nil
   end
 
-  return vim.deepcopy(entry.opts)
+  local placement = entry.placement
+  return placement:opts()
 end
 
 ---Delete an image, or all images if `math.huge` is given as the id.
@@ -106,46 +220,76 @@ end
 function M.del(id)
   vim.validate('id', id, 'number')
 
-  -- Check if we have images to delete, and clear them out of our memory
-  -- being tracked here and also send a request to delete them all from
-  -- the terminal
   if id == math.huge then
-    local has_ids = next(state) ~= nil
-    state = {}
+    local found = next(state) ~= nil
 
-    if has_ids then
-      local kitty = require('vim.ui.img._kitty')
-      kitty.delete(math.huge)
+    -- Delete each image individually so we only touch our own images and
+    -- not those of other instances sharing the same terminal
+    ---@type integer[]
+    local img_ids = vim.tbl_keys(state)
+    for _, img_id in ipairs(img_ids) do
+      delete(img_id)
     end
 
-    return has_ids
+    return found
   end
 
-  -- Skip performing the deletion if we don't have an active image with the id
-  local entry = state[id]
-  if not entry then
-    return false
-  end
-
-  local kitty = require('vim.ui.img._kitty')
-  kitty.delete(entry.img_id)
-  state[id] = nil
-  return true
+  return delete(id)
 end
 
 ---@private
---- Query whether the host terminal supports displaying images.
---- Blocks until the terminal responds or times out.
+---Query whether the host terminal supports displaying images.
+---Blocks until the terminal responds or times out.
 ---
 ---@param opts? {timeout?: integer, chan?: integer} timeout in milliseconds (default: 1000)
 ---@return boolean supported true if the terminal supports image display
 ---@return string? msg error detail if the terminal responded but not with OK
 function M._supported(opts)
-  return require('vim.ui.img._kitty').supported(opts)
+  return backend().supported(opts)
 end
 
-nvim_on('VimLeavePre', nil, function()
-  M.del(math.huge)
-end)
+local augroup = vim.api.nvim_create_augroup('vim.ui.img', {})
+
+vim.api.nvim_create_autocmd('WinClosed', {
+  group = augroup,
+  callback = function(args)
+    local winid = tonumber(args.match)
+    if not winid then
+      return
+    end
+
+    -- With the window closed, we check if a placement owned that window,
+    -- which would indicate it was a floating window, and delete that placement
+    for id, entry in pairs(state) do
+      local placement = entry.placement
+      if placement:owns_win(winid) then
+        delete(id)
+        return
+      end
+    end
+  end,
+})
+
+vim.api.nvim_create_autocmd('BufWipeout', {
+  group = augroup,
+  callback = function(args)
+    -- When the buffer is going to be completely deleted, we check if a placement
+    -- owned that buffer, and delete that placement
+    for id, entry in pairs(state) do
+      local placement = entry.placement
+      if placement:owns_buf(args.buf) then
+        delete(id)
+      end
+    end
+  end,
+})
+
+vim.api.nvim_create_autocmd('VimLeavePre', {
+  group = augroup,
+  callback = function()
+    -- Delete all images when Nvim exits to ensure that we don't have artifacts remaining
+    M.del(math.huge)
+  end,
+})
 
 return M
