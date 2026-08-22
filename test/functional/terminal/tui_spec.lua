@@ -1140,8 +1140,7 @@ describe('TUI', function()
           echoerr "FAIL ".i
         endfor
       endfunc
-    ]],
-      {}
+    ]]
     )
     feed_data(':call ManyErr()\r')
     screen:expect([[
@@ -1306,8 +1305,7 @@ describe('TUI', function()
       nnoremap <C-Esc> ACtrlEsc<Esc>
       nnoremap <D-Esc> ASuperEsc<Esc>
       nnoremap ; Asemicolon<Esc>
-    ]],
-      {}
+    ]]
     )
     -- Works with no modifier
     feed_data('\027[27u;')
@@ -1458,8 +1456,7 @@ describe('TUI', function()
       set number nostartofline nowrap mousescroll=hor:1,ver:1
       call setline(1, repeat([join(range(10), '----')], 10))
       vsplit
-    ]],
-      {}
+    ]]
     )
     screen:expect([[
       {103:  1 }^0----1----2----3----4│{103:  1 }0----1----2----3----|
@@ -1737,8 +1734,7 @@ describe('TUI', function()
       menu PopUp.baz :let g:menustr = 'baz'<CR>
       highlight Pmenu ctermbg=NONE ctermfg=NONE cterm=underline,reverse
       highlight PmenuSel ctermbg=NONE ctermfg=NONE cterm=underline,reverse,bold
-    ]],
-      {}
+    ]]
     )
     if esc then
       feed_data('\027[<2;5;1M')
@@ -2002,8 +1998,7 @@ describe('TUI', function()
       tab split
       tabnew
       highlight Tabline ctermbg=NONE ctermfg=NONE cterm=underline
-    ]],
-      {}
+    ]]
     )
     screen:expect([[
       {107: + [No Name]  + [No Name] }{5: [No Name] }{2:            }{107:X}|
@@ -3072,8 +3067,7 @@ describe('TUI', function()
       set tgc
       hi Cursor guifg=Red guibg=Green
       set guicursor=n:block-Cursor/lCursor
-    ]],
-      {}
+    ]]
     )
     screen:expect([[
       ^                                                  |
@@ -3747,8 +3741,7 @@ describe('TUI FocusGained/FocusLost', function()
       [[
       autocmd FocusGained * echo 'gained'
       autocmd FocusLost * echo 'lost'
-    ]],
-      {}
+    ]]
     )
     feed_data('\034\016') -- CTRL-\ CTRL-N
   end)
@@ -3831,8 +3824,7 @@ describe('TUI FocusGained/FocusLost', function()
       autocmd!
       autocmd FocusLost * call append(line('$'), 'lost')
       autocmd FocusGained * call append(line('$'), 'gained')
-    ]],
-      {}
+    ]]
     )
     retry(2, 3 * screen.timeout, function()
       -- Enter cmdline-mode.
