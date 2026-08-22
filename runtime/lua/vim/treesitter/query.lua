@@ -7,8 +7,8 @@ local language = require('vim.treesitter.language')
 local memoize = vim.func._memoize
 local cmp_ge = require('vim.treesitter._range').cmp_pos.ge
 
-local MODELINE_FORMAT = '^;+%s*inherits%s*:?%s*([a-z_,()]+)%s*$'
-local EXTENDS_FORMAT = '^;+%s*extends%s*$'
+local MODELINE_FORMAT = '^%s*;+%s*inherits%s*:?%s*([a-z_,()]+)%s*$'
+local EXTENDS_FORMAT = '^%s*;+%s*extends%s*$'
 
 local M = {}
 
@@ -188,11 +188,11 @@ function M.get_files(lang, query_name, is_included)
         return file:read('*l')
       end
     do
-      if not vim.startswith(modeline, ';') then
+      if not modeline:match('^%s*;') then
         break
       end
 
-      local langlist = modeline:match(MODELINE_FORMAT)
+      local langlist = modeline:match(MODELINE_FORMAT) ---@type string?
       if langlist then
         ---@diagnostic disable-next-line:param-type-mismatch
         for _, incllang in ipairs(vim.split(langlist, ',')) do
@@ -296,11 +296,11 @@ M.get = memoize('concat-2', function(lang, query_name)
     local base_langs = {} ---@type string[]
 
     for line in explicit_queries[lang][query_name]:gmatch('([^\n]*)\n?') do
-      if not vim.startswith(line, ';') then
+      if not line:match('^%s*;') then
         break
       end
 
-      local lang_list = line:match(MODELINE_FORMAT)
+      local lang_list = line:match(MODELINE_FORMAT) ---@type string?
       if lang_list then
         for _, incl_lang in ipairs(vim.split(lang_list, ',')) do
           local is_optional = incl_lang:match('%(.*%)')

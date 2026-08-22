@@ -280,8 +280,8 @@ Use |vim.treesitter.query.list_directives()| to list all available directives.
 TREESITTER QUERY MODELINES                          *treesitter-query-modeline*
 
 Nvim supports to customize the behavior of the queries using a set of
-"modelines", that is comments in the queries starting with `;`. Here are the
-currently supported modeline alternatives:
+"modelines", that is comments in the queries starting with `;`, optionally
+preceded by whitespace. Here are the currently supported modeline alternatives:
 
     `inherits: {lang}...`                     *treesitter-query-modeline-inherits*
         Specifies that this query should inherit the queries from {lang}.
@@ -304,9 +304,9 @@ repeated, for example, the following two modeline blocks are both valid:
     ;; extends
 <
 >query
-    ;; extends
-    ;;
-    ;; inherits: css
+      ;; extends
+      ;;
+      ;; inherits: css
 <
 ==============================================================================
 TREESITTER SYNTAX HIGHLIGHTING                          *treesitter-highlight*
