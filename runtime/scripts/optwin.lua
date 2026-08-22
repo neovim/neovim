@@ -463,8 +463,10 @@ local options_list = {
 
 local local_to_window = N_ '(local to window)'
 local local_to_buffer = N_ '(local to buffer)'
+local local_to_tabpage = N_ '(local to tabpage)'
 local global_or_local_to_buffer = N_ '(global or local to buffer)'
 local global_or_local_to_window = N_ '(global or local to window)'
+local global_or_local_to_tabpage = N_ '(global or local to tabpage)'
 
 local lines = {
   N_ '" Each "set" line shows the current value of an option (on the left).',
@@ -503,10 +505,16 @@ for header_number, options in ipairs(options_list) do
       table.insert(lines, '\t' .. global_or_local_to_buffer)
     elseif info.scope == 'win' and info.global_local then
       table.insert(lines, '\t' .. global_or_local_to_window)
+    elseif info.scope == 'tab' and info.global_local then
+      table.insert(lines, '\t' .. global_or_local_to_tabpage)
     elseif info.scope == 'buf' then
       table.insert(lines, '\t' .. local_to_buffer)
     elseif info.scope == 'win' then
       table.insert(lines, '\t' .. local_to_window)
+    elseif info.scope == 'tab' then
+      table.insert(lines, '\t' .. local_to_tabpage)
+    else
+      assert(info.scope == 'global')
     end
 
     local shortname = info.shortname or name
@@ -549,7 +557,7 @@ local function line_get_type(line)
   return 'other'
 end
 
----@return integer|false
+---@return integer
 local function find_window_to_have_options_in()
   local thiswin = vim.fn.winnr()
   local altwin = vim.fn.winnr('#')
@@ -564,11 +572,10 @@ local function find_window_to_have_options_in()
   if
     altwin == 0
     or altwin == thiswin
-    or vim.bo[vim.fn.winbufnr(altwin)].filetype == 'help'
     or vim.fn.winnr('$') < altwin
+    or vim.bo[vim.fn.winbufnr(altwin)].filetype == 'help'
   then
-    vim.notify("Don't know in which window")
-    return false
+    return vim.fn.win_getid(thiswin)
   end
 
   return vim.fn.win_getid(altwin)
@@ -592,13 +599,10 @@ local function update_current_line()
 
   ---@type any
   local value
-  if info.global_local or info.scope == 'global' then
+  if info.global_local or info.scope == 'global' or info.scope == 'tab' then
     value = vim.o[name] --[[@as any]]
   else
     local win = find_window_to_have_options_in()
-    if not win then
-      return
-    end
 
     value = vim._with({
       win = win,
@@ -642,14 +646,11 @@ local function current_line_set_option()
     value = assert(tonumber(value), value .. ' is not a number')
   end
 
-  if info.global_local or info.scope == 'global' then
+  if info.global_local or info.scope == 'global' or info.scope == 'tab' then
     ---@diagnostic disable-next-line: no-unknown
     vim.o[name] = value
   else
     local win = find_window_to_have_options_in()
-    if not win then
-      return
-    end
 
     vim._with({
       win = win,
