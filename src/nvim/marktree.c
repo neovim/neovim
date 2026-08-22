@@ -39,7 +39,7 @@
 // OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 //
-// Changes done by by the neovim project follow the Apache v2 license available
+// Changes done by the neovim project follow the Apache v2 license available
 // at the repo root.
 
 #include <assert.h>

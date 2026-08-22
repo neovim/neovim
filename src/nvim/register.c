@@ -163,7 +163,7 @@ bool valid_yank_reg(int regname, bool writing)
 /// clipboard register. This happens when `clipboard=unnamed[plus]` is set
 /// and a provider is available.
 ///
-/// @returns the name of of a clipboard register that should be used, or `NUL` if none.
+/// @returns the name of a clipboard register that should be used, or `NUL` if none.
 int get_default_register_name(void)
 {
   int name = NUL;

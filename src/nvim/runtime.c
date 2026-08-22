@@ -823,7 +823,7 @@ static bool path_is_after(char *buf, size_t buflen)
 {
   // NOTE: we only consider dirs exactly matching "after" to be an AFTER dir.
   // vim8 considers all dirs like "foo/bar_after", "Xafter" etc, as an
-  // "after" dir in SOME codepaths not not in ALL codepaths.
+  // "after" dir in SOME codepaths not in ALL codepaths.
   return buflen >= 5
          && (!(buflen >= 6) || vim_ispathsep(buf[buflen - 6]))
          && strcmp(buf + buflen - 5, "after") == 0;
