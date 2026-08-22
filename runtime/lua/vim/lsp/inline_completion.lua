@@ -63,6 +63,7 @@ local namespace = api.nvim_create_namespace('nvim.lsp.inline_completion')
 ---@field active table<integer, vim.lsp.inline_completion.Completor?>
 ---@field timer? uv.uv_timer_t Timer for debouncing automatic requests
 ---@field current? vim.lsp.inline_completion.Item Currently selected item
+---@field _overlay? boolean Whether `current` replaces buffer text, per its original range
 ---@field client_state table<integer, vim.lsp.inline_completion.ClientState>
 local Completor = {
   name = 'inline_completion',
@@ -184,6 +185,8 @@ function Completor:select(index, show_index)
     _filter_text = item.filterText,
     command = item.command,
   }
+  -- Recorded here because `show()` may grow the range over typed characters.
+  self._overlay = range ~= nil and not range:is_empty()
 
   local hint = show_index and (' (%d/%d)'):format(index, self:count_items()) or nil
   self:show(hint)
@@ -240,6 +243,14 @@ function Completor:show(hint)
     local cursor_row, cursor_col =
       vim.pos.cursor(self.bufnr, api.nvim_win_get_cursor(winid)):to_extmark()
     if row == cursor_row then
+      -- Characters typed since the request lie past the item's range, so `accept()`
+      -- would leave them behind. `skip` stops where the buffer stops matching.
+      if current.range and col + skip - 1 >= cursor_col then
+        local start_row, start_col, _, end_col = current.range:to_extmark()
+        if end_col < cursor_col then
+          current.range = vim.range.extmark(self.bufnr, start_row, start_col, row, cursor_col)
+        end
+      end
       skip = math.max(skip, cursor_col - col + 1)
     end
   end
@@ -256,7 +267,7 @@ function Completor:show(hint)
   api.nvim_buf_set_extmark(self.bufnr, namespace, row, col, {
     virt_text = virt_text,
     virt_lines = virt_lines,
-    virt_text_pos = (current.range and not current.range:is_empty() and 'overlay') or 'inline',
+    virt_text_pos = (self._overlay and 'overlay') or 'inline',
     hl_mode = 'combine',
   })
 end
