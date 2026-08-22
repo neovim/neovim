@@ -24,6 +24,8 @@ typedef struct {
                              ///< parts of lines, INT_MIN if not yet calculated.
 
   int virt_row;              ///< Row for virtual text, -1 if no virtual text.
+  bool skip_cur_text;        ///< Don't count inline text at the measured character or advance iter.
+                             ///< A CharsizeArg with this set cannot be reused for a later character.
   int cur_text_width_left;   ///< Width of virtual text left of cursor.
   int cur_text_width_right;  ///< Width of virtual text right of cursor.
 

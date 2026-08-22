@@ -100,6 +100,7 @@ CSType init_charsize_arg(CharsizeArg *csarg, win_T *wp, linenr_T lnum, char *lin
   csarg->cur_text_width_left = 0;
   csarg->cur_text_width_right = 0;
   csarg->virt_row = -1;
+  csarg->skip_cur_text = false;
   csarg->indent_width = INT_MIN;
   csarg->use_tabstop = !wp->w_p_list || wp->w_p_lcs_chars.tab1;
 
@@ -116,6 +117,44 @@ CSType init_charsize_arg(CharsizeArg *csarg, win_T *wp, linenr_T lnum, char *lin
   } else {
     return kCharsizeFast;
   }
+}
+
+/// Like init_charsize_arg(), but do not count inline virtual text at the measured character.
+/// The 'linebreak' lookahead can still use "virt_row", without initializing "iter".
+CSType init_charsize_arg_skip_cur_text(CharsizeArg *csarg, win_T *wp, linenr_T lnum, char *line)
+{
+  CSType cstype = init_charsize_arg(csarg, wp, 0, line);
+  csarg->skip_cur_text = true;
+  if (lnum > 0 && buf_meta_total(wp->w_buffer, kMTMetaInline) > 0) {
+    csarg->virt_row = lnum - 1;
+    cstype = kCharsizeRegular;
+  }
+  return cstype;
+}
+
+/// Total width of inline virtual text at buffer column "col" of row "row", advancing "iter".
+/// Call with non-decreasing "col", like the walks in charsize_regular().
+static int inline_virt_text_width(win_T *wp, MarkTreeIter *iter, int row, int col)
+{
+  buf_T *const buf = wp->w_buffer;
+  int width = 0;
+  while (true) {
+    MTKey mark = marktree_itr_current(iter);
+    if (mark.pos.row != row || mark.pos.col > col) {
+      break;
+    } else if (mark.pos.col == col && !mt_invalid(mark) && ns_in_win(mark.ns, wp)) {
+      DecorInline decor = mt_decor(mark);
+      DecorVirtText *vt = decor.ext ? decor.data.ext.vt : NULL;
+      while (vt) {
+        if (!(vt->flags & kVTIsLines) && vt->pos == kVPosInline) {
+          width += vt->width;
+        }
+        vt = vt->next;
+      }
+    }
+    marktree_itr_next_filter(buf->b_marktree, iter, row + 1, 0, inline_filter);
+  }
+  return width;
 }
 
 /// Get the number of cells taken up on the screen for the given arguments.
@@ -156,7 +195,7 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
     is_doublewidth = size == 2 && cur_char >= 0x80;
   }
 
-  if (csarg->virt_row >= 0) {
+  if (csarg->virt_row >= 0 && !csarg->skip_cur_text) {
     int tab_size = size;
     int col = (int)(cur - line);
     while (true) {
@@ -316,6 +355,11 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
       }
     }
 
+    // Inline virtual text widens the word, so count it like the loop above does for one
+    // character. Needs its own iterator, since this looks ahead of "csarg->iter".
+    MarkTreeIter virt_iter[1];
+    int has_virt = csarg->virt_row < 0 ? 0 : -1;  // -1: not sought yet
+
     colnr_T vcol2 = vcol;
     while (true) {
       char *ps = s;
@@ -326,6 +370,14 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
         break;
       }
 
+      int const col = (int)(s - line);
+      if (has_virt < 0) {
+        has_virt = marktree_itr_get_filter(buf->b_marktree, csarg->virt_row, col,
+                                           csarg->virt_row + 1, 0, inline_filter, virt_iter);
+      }
+      int const virt_width = has_virt
+                             ? inline_virt_text_width(wp, virt_iter, csarg->virt_row, col) : 0;
+      vcol2 += virt_width;
       vcol2 += win_chartabsize(wp, s, vcol2);
       if (vcol2 >= colmax) {  // doesn't fit
         size = colmax - vcol + col_adj;
