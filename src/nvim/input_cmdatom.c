@@ -389,34 +389,34 @@ static void atom_emit(const CmdAtom *atom)
 }
 
 /// Emits a CmdAtom event, or collects it as a subatom of an open scope. If `cascade` is true,
-/// queues a copy for mcursor cascade. Takes ownership of the atom's allocated members.
+/// queues a copy for mcursor cascade. Takes ownership: `*atom` is invalid after.
 ///
 /// Both scopes (composite, Visual session) can be open. Routed by scope kind, not depth:
 /// a collecting Visual session takes the atom, its atom then lands in the composite (",v"+"d").
 /// Depth would invert "v@q", where the "@q" composite opened LAST yet collects nothing.
-void atom_push_raw(bool cascade, CmdAtom atom)
+void atom_push_raw(bool cascade, CmdAtom *atom)
 {
-  assert(atom.keys != NULL);
-  if (atom.origin.buf.br_buf != NULL) {
+  assert(atom->keys != NULL);
+  if (atom->origin.buf.br_buf != NULL) {
     // Calculated here, from the atom's own baseline.
-    atom.changed = atom_origin_changed(atom.origin);
-    atom.moved = atom_origin_moved(atom.origin);
-    atom.undoseq = atom_origin_undoseq(atom.origin);
+    atom->changed = atom_origin_changed(atom->origin);
+    atom->moved = atom_origin_moved(atom->origin);
+    atom->undoseq = atom_origin_undoseq(atom->origin);
   }
   if (atom_visual_pending()) {
     if (vatom.state & kVatomTyped) {
       // Not for kVatomFed: redo-prep must not mark the enclosing span as captured.
       atom_captures++;
     }
-    kv_push(vatom.atoms, atom);
+    kv_push(vatom.atoms, *atom);
     return;
   }
   atom_captures++;
-  if (atom.type == kAVisual && kv_size(atom.atoms) > 0) {
+  if (atom->type == kAVisual && kv_size(atom->atoms) > 0) {
     // The completing operator is the only subatom that could have edited.
-    CmdAtom *last = &kv_A(atom.atoms, kv_size(atom.atoms) - 1);
+    CmdAtom *last = &kv_A(atom->atoms, kv_size(atom->atoms) - 1);
     if (last->type == kAOperator) {
-      last->changed = atom.changed;
+      last->changed = atom->changed;
     }
   }
   // `composite.frame`: the command that was executing when a peek opened the composite is not part
@@ -424,8 +424,8 @@ void atom_push_raw(bool cascade, CmdAtom atom)
   const bool collect = composite.lhs != NULL
                        && (cur_frame == NULL || cur_frame->id != composite.frame);
   if (cascade) {
-    CmdAtom copy = atom;
-    copy.keys = xstrdup(atom.keys);
+    CmdAtom copy = *atom;
+    copy.keys = xstrdup(atom->keys);
     copy.text = NULL;  // replay (mc_execute()) reads only type/keys/remap: not the text,
     copy.lhs = NULL;   // nor the label,
     copy.atoms = (CmdAtomVec)KV_INITIAL_VALUE;  // nor the decomposition
@@ -435,22 +435,22 @@ void atom_push_raw(bool cascade, CmdAtom atom)
     }
   }
   if (collect) {
-    kv_push(composite.atoms, atom);
+    kv_push(composite.atoms, *atom);
   } else {
-    if (atom.type != kAInsertSpan) {
+    if (atom->type != kAInsertSpan) {
       // Spans are cascade-internal; only emit the whole session (kAInsert).
-      atom_emit(&atom);
+      atom_emit(atom);
     }
-    atom_free(&atom);
+    atom_free(atom);
   }
 }
 
 /// Pushes an atom (emit + maybe cascade), or drops it if replay/Visual/internal-op already
 /// in-progress.
-static void atom_push(bool cascade, CmdAtom atom)
+static void atom_push(bool cascade, CmdAtom *atom)
 {
   if (atom_blocked()) {
-    atom_free(&atom);
+    atom_free(atom);
     return;
   }
   atom_push_raw(cascade, atom);
@@ -458,18 +458,18 @@ static void atom_push(bool cascade, CmdAtom atom)
 
 /// Stages an atom built before its command executes (do_pending_operator() prep-exempt, Visual
 /// ops), in the command's frame; pushed at frame end, once `changed` is known.
-static void atom_stage_set(CmdAtom atom)
+static void atom_stage_set(CmdAtom *atom)
 {
   assert(cur_frame != NULL);
   assert(!atom_staged());  // One stage per frame: a second would discard a captured command.
   atom_free(&cur_frame->staged);
   if (atom_blocked()) {
     // Now, not at flush: drop the atom of an internal operator (atom_suppress()).
-    atom_free(&atom);
+    atom_free(atom);
     return;
   }
-  assert(atom.keys != NULL);
-  cur_frame->staged = atom;
+  assert(atom->keys != NULL);
+  cur_frame->staged = *atom;
 }
 
 /// True if an atom is staged for the current command (frame).
@@ -486,7 +486,7 @@ static void atom_stage_flush(CmdFrame *frame)
   }
   // Staged commands are edits, thus cascade. Except with no keys (poisoned Visual selection).
   bool cascade = *frame->staged.keys != NUL;
-  atom_push(cascade, frame->staged);
+  atom_push(cascade, &frame->staged);
   frame->staged = (CmdAtom){ 0 };
 }
 
@@ -951,8 +951,8 @@ static bool atom_visual_end_suffix(char *suffix, const CmdSpec *spec, bool redoa
     xfree(suffix);
     atom_visual_reset();  // End the session before staging.
     if (emit) {
-      atom_stage_set((CmdAtom){ .type = kAVisual, .spec = *spec, .keys = xstrdup(""),
-                                .lhs = label, .origin = origin });
+      atom_stage_set(&(CmdAtom){ .type = kAVisual, .spec = *spec, .keys = xstrdup(""),
+                                 .lhs = label, .origin = origin });
     }
     return prepped;
   }
@@ -991,7 +991,7 @@ static bool atom_visual_end_suffix(char *suffix, const CmdSpec *spec, bool redoa
   atom.atoms = vatom.atoms;
   vatom.atoms = (CmdAtomVec)KV_INITIAL_VALUE;
   atom_visual_reset();
-  atom_stage_set(atom);
+  atom_stage_set(&atom);
   return prep;
 }
 
@@ -1036,7 +1036,7 @@ void atom_capture_op(oparg_T *oap, cmdarg_T *cap, bool redo_yank)
         spec.cmdarg = operand ? cap->nchar : NUL;
         CmdAtom op_atom = atom_from_spec(kAOperator, spec);
         op_atom.origin = cur_frame->origin;
-        atom_stage_set(op_atom);
+        atom_stage_set(&op_atom);
       }
     } else if (!Visual.active || oap->motion_force) {
       // Prepped: atom_cmd_end() derives the atom from redobuff.
@@ -1183,7 +1183,7 @@ static void atom_ins_push(const InsSession *session, bool cascade)
   }
   atom.text = get_last_insert_save();
   atom.origin = session->origin;
-  atom_push_raw(cascade, atom);
+  atom_push_raw(cascade, &atom);
 }
 
 /// Samples the pre-command state at normal_execute() entry; atom_cmd_end() diffs against it to
@@ -1334,7 +1334,7 @@ static void atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
       bool effect = changed || reg_max_ts(true) > old->reg_ts;
       if (atom.keys != NULL && *atom.keys != NUL) {
         atom.origin = old->origin;
-        atom_push(effect, atom);
+        atom_push(effect, &atom);
       } else {
         atom_free(&atom);
       }
@@ -1343,14 +1343,14 @@ static void atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
       // Payload typed in the cmdline ("/pat<CR>"). Emit-only. Not if pattern was not found.
       CmdAtom atom = atom_from_cmdline(kAMotion, ca, ca->searchbuf);
       atom.origin = old->origin;
-      atom_push(false, atom);
+      atom_push(false, &atom);
     } else if (!vis && curcmd.cmdline != NULL && (ca->cmdchar == ':' || ca->cmdchar == K_COMMAND)) {
       // Same for ":cnext<CR>" or "<Cmd>cnext<CR>". Never a Visual subatom.
       CmdAtom atom = atom_from_cmdline(kAExcmd, ca, curcmd.cmdline);
       // Payload read during the cmdline execution (`ds)` getchar() => ")").
       atom_payload_append(&atom, old);
       atom.origin = old->origin;
-      atom_push(false, atom);
+      atom_push(false, &atom);
     } else if (replayable && (!vis || (keycls & kKeyPayload) == 0)) {
       // Non-redoable command (u, zz, q=): never cascaded as an edit.
       CmdSpec spec = atom_cmd_spec(ca);
@@ -1360,7 +1360,7 @@ static void atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
       }
       CmdAtom atom = atom_from_spec(motion ? kAMotion : jump_cmd ? kAJump : kANormal, spec);
       atom.origin = old->origin;
-      atom_push(follow, atom);
+      atom_push(follow, &atom);
     } else if ((scroll_cmd || mouse_cmd) && !atom_composite_active()) {
       // Emit-only (viewport-dependent).
       CmdSpec spec = atom_cmd_spec(ca);
@@ -1370,7 +1370,7 @@ static void atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
       }
       CmdAtom atom = atom_from_spec(scroll_cmd ? kAScroll : kAMouse, spec);
       atom.origin = old->origin;
-      atom_push(false, atom);
+      atom_push(false, &atom);
     }
     if (vis && kv_size(vatom.atoms) == collected && !unchanged) {
       // Not replayable: moved the selection by non-collectible keys.
