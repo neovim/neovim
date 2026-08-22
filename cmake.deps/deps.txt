@@ -49,12 +49,12 @@ TREESITTER_QUERY_URL https://github.com/tree-sitter-grammars/tree-sitter-query/a
 TREESITTER_QUERY_SHA256 c2b23b9a54cffcc999ded4a5d3949daf338bebb7945dece229f832332e6e6a7d
 TREESITTER_MARKDOWN_URL https://github.com/tree-sitter-grammars/tree-sitter-markdown/archive/v0.5.3.tar.gz
 TREESITTER_MARKDOWN_SHA256 df845b1ab7c7c163ec57d7fa17170c92b04be199bddab02523636efec5224ab6
-TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/21e3614b8dcb48a20841440ac3dbf58ce82d1500.tar.gz
-TREESITTER_SHA256 481bc3c916b2e0674bc1f6ce69f6a7d4ef5283af39c394c6bed0d483b1fc55d9
+TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/baad4174e551e527bde1b069f4b41082e4abd085.tar.gz
+TREESITTER_SHA256 c0be83fb7104bef61ba75536dc47b1ebfb84170f9a0ae9bd3ce03612d063b476
 
 # NOTE: Also update the find_package() call if bumping the minimum.
-WASMTIME_URL https://github.com/bytecodealliance/wasmtime/archive/v36.0.13.tar.gz
-WASMTIME_SHA256 3f8ad583c23592ad961d49e757637d69f75e2b649dd41b42333e9ec0d3f47003
+WASMTIME_URL https://github.com/bytecodealliance/wasmtime/archive/v48.0.0.tar.gz
+WASMTIME_SHA256 f12b78b32d09d9c2ec005849f223f8e38d4a18307d3ef8f164380f1ea14ecca8
 
 UNCRUSTIFY_URL https://github.com/uncrustify/uncrustify/archive/uncrustify-0.83.0.tar.gz
 UNCRUSTIFY_SHA256 1d4d3ab3a991c66eb24cb0a3e690573b4882fd98bc6ec64a01c283998c20dc87
