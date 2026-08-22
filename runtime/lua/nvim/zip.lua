@@ -157,8 +157,9 @@ local function unzip_error(code, stderr)
   return stderr ~= '' and stderr or ('unzip exited with %d'):format(code)
 end
 
---- Returned when Info-ZIP wants a password. It only reads one from a terminal, never from a
---- pipe, and `-P` would expose it in the process arguments, so this is retried on a pty.
+--- Returned when the empty password `extract_path` supplies is rejected, so a real one is
+--- needed. It cannot go in `-P`, which would expose it in the process arguments, and Info-ZIP
+--- reads a password from nowhere but a terminal, so it is asked for on a pty.
 local ENCRYPTED = 'zip:encrypted'
 
 --- Extract one entry into `dir`, prompting for the archive password on a pty.
@@ -254,9 +255,10 @@ local function extract_path(command, source, path, target)
     return err
   end
   local write_err ---@type string?
+  -- An empty `-P` inhibits the prompt Info-ZIP would open a terminal for.
   local ok, system = pcall(
     vim.system,
-    { command, '-p', '--', literal_pattern(source), literal_pattern(path) },
+    { command, '-p', '-P', '', '--', literal_pattern(source), literal_pattern(path) },
     {
       stdout = function(pipe_err, data)
         if pipe_err then
@@ -279,12 +281,11 @@ local function extract_path(command, source, path, target)
   if write_err then
     return write_err
   end
+  if result.code == 82 then
+    return ENCRYPTED
+  end
   if result.code ~= 0 then
-    local stderr = vim.trim(result.stderr or '')
-    if stderr:find('unable to get password', 1, true) then
-      return ENCRYPTED
-    end
-    return unzip_error(result.code, stderr)
+    return unzip_error(result.code, vim.trim(result.stderr or ''))
   end
 end
 
@@ -567,6 +568,8 @@ function M._extract()
     command,
     '-o',
     '-j',
+    '-P',
+    '',
     '--',
     literal_pattern(state.source),
     literal_pattern(path),
