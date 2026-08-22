@@ -265,26 +265,50 @@ function M.to_extmark(pos)
   return pos[1], pos[2]
 end
 
---- Creates a new |vim.Pos| from extmark position (see |api-indexing|).
+--- Creates a new [vim.Pos] from an extmark.
 ---
---- Example:
+--- {extmark} can be either the return type of [nvim_buf_get_extmark_by_id()] or one of the list
+--- items returned by [nvim_buf_get_extmarks()]. Alternatively, {extmark} can be replaced with {row}
+--- and {col} arguments representing an extmark position (see [api-indexing]).
+---
+--- Examples:
 --- ```lua
+--- -- Create from an extmark.
+--- local extmarks = vim.api.nvim_buf_get_extmarks(0, ...)
+--- local pos = vim.pos.extmark(0, extmarks[1])
+---
+--- -- Create from an extmark (end).
+--- local extmarks = vim.api.nvim_buf_get_extmarks(0, ..., { details = true })
+--- local _, end_pos = vim.pos.extmark(0, extmarks[1])
+---
+--- -- Create from extmark row and column.
 --- local pos = vim.pos.extmark(0, 3, 5)
 --- ```
 ---@param buf integer
----@param row integer
----@param col integer
----@return vim.Pos
-function M.extmark(buf, row, col)
+---@param extmark vim.api.keyset.get_extmark_item_by_id|vim.api.keyset.get_extmark_item
+---@return vim.Pos Position of the extmark
+---@return vim.Pos? End position of the extmark (if the extmark has an end
+---position and extmark details were provided)
+---@overload fun(buf: integer, row: integer, col: integer): vim.Pos
+function M.extmark(buf, extmark, ...)
   validate('buf', buf, 'number')
-  validate('row', row, 'number')
-  validate('col', col, 'number')
 
-  if buf == 0 then
-    buf = api.nvim_get_current_buf()
+  local pos, end_pos --- @type vim.Pos, vim.Pos?
+  if ... then
+    -- stylua: ignore
+    ---@type integer, integer
+    local row, col = extmark --[[@as integer]], ...
+    -- Note: argument validation done by `M.new()`
+    pos = M.new(buf, row, col)
+  else
+    local row, col, end_row, end_col = util.validate_extmark(extmark)
+    pos = M.new(buf, row, col)
+    if end_row and end_col then
+      end_pos = M.new(buf, end_row, end_col)
+    end
   end
 
-  return M.new(buf, row, col)
+  return pos, end_pos
 end
 
 --- Converts |vim.Pos| to buffer (bytes) offset.
