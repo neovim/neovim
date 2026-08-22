@@ -338,7 +338,8 @@ function M.apply_text_edits(text_edits, bufnr, position_encoding, change_annotat
       -- make sure we don't go out of bounds
       pos[1] = math.min(pos[1], max)
       pos[2] = math.min(pos[2], #get_line(bufnr, pos[1] - 1))
-      api.nvim_buf_set_mark(bufnr or 0, mark, pos[1], pos[2])
+      -- `mark` is restricted to a-z above, so it is always buffer-local here.
+      api.nvim_set_mark(mark, pos[1], pos[2], { buf = bufnr })
     end
   end
 
@@ -1883,8 +1884,8 @@ function M.make_given_range_params(start_pos, end_pos, bufnr, position_encoding)
   validate('position_encoding', position_encoding, 'string')
 
   bufnr = vim._resolve_bufnr(bufnr)
-  local start_row, start_col = unpack(start_pos or api.nvim_buf_get_mark(bufnr, '<'))
-  local end_row, end_col = unpack(end_pos or api.nvim_buf_get_mark(bufnr, '>'))
+  local start_row, start_col = unpack(start_pos or api.nvim_get_mark('<', { buf = bufnr }))
+  local end_row, end_col = unpack(end_pos or api.nvim_get_mark('>', { buf = bufnr }))
   return {
     textDocument = M.make_text_document_params(bufnr),
     range = vim.range.mark(bufnr, start_row, start_col, end_row, end_col):to_lsp(position_encoding),

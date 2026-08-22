@@ -4133,7 +4133,7 @@ getpid()                                                              *getpid()*
 
 getpos({expr})                                                        *getpos()*
 		Lua: Prefer |nvim_win_get_cursor()| for "." or
-		|nvim_buf_get_mark()| for marks; return shape, `off`, and
+		|nvim_get_mark()| for marks; return shape, `off`, and
 		special-position semantics differ.
 
 		Gets a position, where {expr} is one of:
@@ -9418,8 +9418,8 @@ setcellwidths({list})                                          *setcellwidths()*
                   (`any`)
 
 setcharpos({expr}, {list})                                        *setcharpos()*
-		Lua: Prefer |nvim_win_set_cursor()| or |nvim_buf_set_mark()|
-		with |vim.str_byteindex()|; special positions, `off`, and
+		Lua: Prefer |nvim_win_set_cursor()| or |nvim_set_mark()| with
+		|vim.str_byteindex()|; special positions, `off`, and
 		`curswant` differ.
 
 		Same as |setpos()| but uses the specified column number as the
@@ -9649,7 +9649,7 @@ setmatches({list} [, {win}])                                      *setmatches()*
 
 setpos({expr}, {list})                                                *setpos()*
 		Lua: Prefer |nvim_win_set_cursor()| for "." or
-		|nvim_buf_set_mark()| for marks; special positions, `off`, and
+		|nvim_set_mark()| for marks; special positions, `off`, and
 		`curswant` differ.
 
 		Set the position for String {expr}.  Possible values:
