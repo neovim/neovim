@@ -3662,6 +3662,7 @@ describe('API', function()
           chan = 1,
           ext_cmdline = false,
           ext_hlstate = false,
+          ext_images = false,
           ext_linegrid = screen._options.ext_linegrid or false,
           ext_messages = false,
           ext_multigrid = false,

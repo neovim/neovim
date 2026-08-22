@@ -188,6 +188,36 @@ function vim.api.nvim__stats() end
 
 --- WARNING: This feature is experimental/unstable.
 ---
+--- EXPERIMENTAL: emits the "img_data" UI event, see `ui-images`. Used by `vim.ui.img`.
+---
+--- @param id integer Image identifier
+--- @param data string Raw PNG image bytes
+--- @param opts table<string,any> Reserved for future use
+function vim.api.nvim__ui_img_data(id, data, opts) end
+
+--- WARNING: This feature is experimental/unstable.
+---
+--- EXPERIMENTAL: emits the "img_del" UI event, see `ui-images`. Used by `vim.ui.img`.
+---
+--- @param id integer Image identifier
+function vim.api.nvim__ui_img_del(id) end
+
+--- WARNING: This feature is experimental/unstable.
+---
+--- EXPERIMENTAL: emits the "img_set" UI event, see `ui-images`. Used by `vim.ui.img`.
+---
+--- @param id integer Image identifier
+--- @param opts table<string,any> Placement of the image:
+--- - col: (`integer?`) 0-based column on the global layout. Direct placements only.
+--- - height: (`integer?`) Height in cells. Derived from the image if omitted.
+--- - row: (`integer?`) 0-based row on the global layout. Direct placements only.
+--- - virtual: (`boolean?`) Render at placeholder cells instead of at {row}/{col}.
+--- - width: (`integer?`) Width in cells. Derived from the image if omitted.
+--- - zindex: (`integer?`) Stacking order. Direct placements only.
+function vim.api.nvim__ui_img_set(id, opts) end
+
+--- WARNING: This feature is experimental/unstable.
+---
 --- @param str string
 --- @return any
 function vim.api.nvim__unpack(str) end
