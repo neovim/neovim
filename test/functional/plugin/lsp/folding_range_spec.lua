@@ -737,3 +737,282 @@ describe('vim.lsp nested folding ranges', function()
     end)
   end)
 end)
+
+describe('vim.lsp folding updates while editing', function()
+  local bufnr ---@type integer
+  local client_id ---@type integer
+
+  local function set_mode(mode)
+    exec_lua(function()
+      if not _G.original_get_mode then
+        _G.original_get_mode = vim.api.nvim_get_mode
+        vim.api.nvim_get_mode = function()
+          return { mode = _G.test_mode, blocking = false }
+        end
+      end
+      _G.test_mode = mode
+    end)
+  end
+
+  local function request_ranges()
+    exec_lua(function()
+      vim.api.nvim_exec_autocmds('LspNotify', {
+        buffer = bufnr,
+        data = {
+          client_id = client_id,
+          method = 'textDocument/didChange',
+        },
+      })
+    end)
+    retry(nil, nil, function()
+      eq(true, exec_lua('return #_G.fold_callbacks > 0'))
+    end)
+  end
+
+  local function respond_ranges(ranges)
+    exec_lua(function()
+      local callback = table.remove(_G.fold_callbacks, 1)
+      callback(nil, ranges)
+    end)
+  end
+
+  local function respond(end_line)
+    respond_ranges({ { startLine = 0, endLine = end_line } })
+  end
+
+  local function foldclosed(lnum)
+    return exec_lua('return vim.fn.foldclosed(...)', lnum)
+  end
+
+  local function settle()
+    set_mode('n')
+    exec_lua(function()
+      vim.api.nvim_exec_autocmds('ModeChanged', {
+        buffer = bufnr,
+        data = { old_mode = 's', new_mode = 'n' },
+      })
+    end)
+  end
+
+  before_each(function()
+    clear_notrace()
+    exec_lua(create_server_definition)
+    bufnr = api.nvim_get_current_buf()
+    insert('one\ntwo\nthree\nfour\nfive\nsix\nseven\neight\nnine')
+    client_id = exec_lua(function()
+      _G.fold_callbacks = {}
+      _G.server = _G._create_server({
+        capabilities = {
+          foldingRangeProvider = true,
+          textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
+        },
+        handlers = {
+          ['textDocument/foldingRange'] = function(_, _, callback)
+            table.insert(_G.fold_callbacks, callback)
+          end,
+        },
+      })
+      return vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
+    end)
+    command([[set foldmethod=expr foldexpr=v:lua.vim.lsp.foldexpr() foldlevel=999]])
+
+    retry(nil, nil, function()
+      eq(true, exec_lua('return #_G.fold_callbacks > 0'))
+    end)
+    respond(0)
+    retry(nil, nil, function()
+      eq('0', exec_lua('return vim.lsp.foldexpr(1)'))
+    end)
+    exec_lua(function()
+      _G.fold_update_count = 0
+      _G.original_foldupdate = vim._foldupdate
+      vim._foldupdate = function(...)
+        _G.fold_update_count = _G.fold_update_count + 1
+        return _G.original_foldupdate(...)
+      end
+    end)
+  end)
+
+  after_each(function()
+    api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
+  end)
+
+  it('defers row evaluation and fold updates in every editing mode', function()
+    local modes = { 'i', 'R', 'Rv', 's', 'S', '\19' }
+    for index, mode in ipairs(modes) do
+      set_mode(mode)
+      request_ranges()
+      respond(index + 1)
+
+      eq('0', exec_lua('return vim.lsp.foldexpr(...)', index + 2))
+      eq(index - 1, exec_lua('return _G.fold_update_count'))
+
+      settle()
+      retry(nil, nil, function()
+        eq('<1', exec_lua('return vim.lsp.foldexpr(...)', index + 2))
+        eq(index, exec_lua('return _G.fold_update_count'))
+      end)
+    end
+  end)
+
+  it('coalesces accepted responses until editing settles', function()
+    set_mode('s')
+    request_ranges()
+    respond(2)
+    request_ranges()
+    respond(5)
+
+    eq('0', exec_lua('return vim.lsp.foldexpr(1)'))
+    eq(0, exec_lua('return _G.fold_update_count'))
+
+    settle()
+    retry(nil, nil, function()
+      eq('<1', exec_lua('return vim.lsp.foldexpr(6)'))
+      eq(1, exec_lua('return _G.fold_update_count'))
+    end)
+  end)
+
+  it('settles after leaving Select mode without InsertLeave', function()
+    command('normal! gg0gh')
+    eq('s', exec_lua('return vim.api.nvim_get_mode().mode'))
+    request_ranges()
+    respond(3)
+
+    eq('0', exec_lua('return vim.lsp.foldexpr(1)'))
+    eq(0, exec_lua('return _G.fold_update_count'))
+
+    feed('<Esc>')
+    retry(nil, nil, function()
+      eq('>1', exec_lua('return vim.lsp.foldexpr(1)'))
+      eq(1, exec_lua('return _G.fold_update_count'))
+    end)
+  end)
+
+  it('preserves the Select replacement range when a fold option triggers recomputation', function()
+    command('set foldlevel=0 foldminlines=0')
+    command('normal! 3G0vjl')
+    feed('<C-G>')
+    eq('s', api.nvim_get_mode().mode)
+    request_ranges()
+    respond_ranges({ { startLine = 1, endLine = 4 } })
+
+    -- This recomputes folds independently of the adapter's deferred foldupdate.
+    command('set foldminlines=1')
+    command('redraw')
+    feed('X')
+    eq('i', api.nvim_get_mode().mode)
+    eq(
+      { 'one', 'two', 'Xur', 'five', 'six', 'seven', 'eight', 'nine' },
+      api.nvim_buf_get_lines(0, 0, -1, false)
+    )
+    feed('<Esc>')
+  end)
+
+  for _, mode in ipairs({ 'R', 'Rv' }) do
+    it('settles after leaving ' .. mode .. ' mode', function()
+      command('normal! gg0')
+      feed(mode == 'R' and 'R' or 'gR')
+      eq(mode, exec_lua('return vim.api.nvim_get_mode().mode'))
+      request_ranges()
+      respond(3)
+
+      eq('0', exec_lua('return vim.lsp.foldexpr(1)'))
+      eq(0, exec_lua('return _G.fold_update_count'))
+
+      feed('<Esc>')
+      retry(nil, nil, function()
+        eq('>1', exec_lua('return vim.lsp.foldexpr(1)'))
+        eq(1, exec_lua('return _G.fold_update_count'))
+      end)
+    end)
+  end
+
+  it('keeps a newly expanded snippet on the previous fold snapshot', function()
+    exec_lua([[vim.snippet.expand('${1:title}\nbody\nend')]])
+    retry(nil, nil, function()
+      eq('s', exec_lua('return vim.api.nvim_get_mode().mode'))
+      eq(true, exec_lua('return #_G.fold_callbacks > 0'))
+    end)
+    respond(2)
+
+    eq('0', exec_lua('return vim.lsp.foldexpr(1)'))
+    eq(0, exec_lua('return _G.fold_update_count'))
+
+    feed('<Esc>')
+    retry(nil, nil, function()
+      eq('>1', exec_lua('return vim.lsp.foldexpr(1)'))
+      eq(1, exec_lua('return _G.fold_update_count'))
+    end)
+  end)
+
+  it('applies a response that arrives after editing has settled', function()
+    set_mode('i')
+    request_ranges()
+    settle()
+    exec_lua(function()
+      vim.schedule(function()
+        _G.mode_settled = true
+      end)
+    end)
+    retry(nil, nil, function()
+      eq(true, exec_lua('return _G.mode_settled == true'))
+    end)
+
+    respond(3)
+    eq('>1', exec_lua('return vim.lsp.foldexpr(1)'))
+    eq(1, exec_lua('return _G.fold_update_count'))
+  end)
+
+  it('applies pending ranges before an explicit foldclose', function()
+    set_mode('s')
+    request_ranges()
+    respond_ranges({ { startLine = 0, endLine = 3, kind = 'comment' } })
+
+    exec_lua(function()
+      vim.lsp.foldclose('comment')
+    end)
+    eq('>1', exec_lua('return vim.lsp.foldexpr(1)'))
+    eq(1, foldclosed(1))
+    eq(1, exec_lua('return _G.fold_update_count'))
+  end)
+
+  it('discards a deferred update when the client detaches', function()
+    set_mode('s')
+    request_ranges()
+    respond(3)
+
+    exec_lua(function()
+      vim.lsp.stop_client(client_id)
+    end)
+    retry(nil, nil, function()
+      eq({}, exec_lua('return vim.lsp.get_clients({ bufnr = ... })', bufnr))
+      eq(1, exec_lua('return _G.fold_update_count'))
+    end)
+
+    settle()
+    exec_lua(function()
+      vim.schedule(function()
+        _G.detach_settled = true
+      end)
+    end)
+    retry(nil, nil, function()
+      eq(true, exec_lua('return _G.detach_settled == true'))
+    end)
+    eq(1, exec_lua('return _G.fold_update_count'))
+  end)
+
+  it('does not defer a response for a non-current buffer', function()
+    set_mode('i')
+    exec_lua(function()
+      local other = vim.api.nvim_create_buf(false, true)
+      vim.api.nvim_set_current_buf(other)
+    end)
+    request_ranges()
+    respond(3)
+
+    exec_lua(function()
+      vim.api.nvim_set_current_buf(bufnr)
+    end)
+    eq('>1', exec_lua('return vim.lsp.foldexpr(1)'))
+  end)
+end)
