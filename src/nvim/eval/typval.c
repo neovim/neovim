@@ -2026,7 +2026,7 @@ bool tv_dict_watcher_remove(dict_T *const dict, const char *const key_pattern,
   return true;
 }
 
-/// Test if `key` matches with with `watcher->key_pattern`
+/// Test if `key` matches with `watcher->key_pattern`
 ///
 /// @param[in]  watcher  Watcher to check key pattern from.
 /// @param[in]  key  Key to check.

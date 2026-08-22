@@ -401,7 +401,7 @@ function M.compute_diff(
     position_encoding
   )
   -- Find the last position changed in the previous and current buffer.
-  -- prev_end_range is sent to the server as as the end of the changed range.
+  -- prev_end_range is sent to the server as the end of the changed range.
   -- curr_end_range is used to grab the changed text from the latest buffer.
   local prev_end_range, curr_end_range = compute_end_range(
     prev_lines,
