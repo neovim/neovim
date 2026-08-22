@@ -264,6 +264,25 @@ describe(':write', function()
     )
   end)
 
+  it('unaffected if a Progress handler changes CWD #41417', function()
+    -- ASAN catches the read of the freed name. Also assert the written file name/contents.
+    local dir = vim.fs.normalize(t.tmpname(false))
+    t.mkdir(dir)
+    local file = dir .. '/f.txt'
+    write_file(file, 'one\n')
+    command('edit ' .. file)
+    command('lcd ' .. dir)
+    eq('f.txt', fn.bufname('%'))
+    -- Frees every buffer's short name, twice; the net CWD is unchanged.
+    command(('autocmd Progress * lcd %s | lcd %s'):format(vim.fs.dirname(dir), dir))
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'one', 'two' })
+    command('write')
+
+    eq('f.txt', fn.bufname('%'))
+    eq({ 'one', 'two' }, fn.readfile(file))
+    eq({ 'f.txt' }, fn.readdir(dir))
+  end)
+
   it('handles a multi-byte sequence crossing the buffer boundary converting with iconv', function()
     local content = string.rep('a', 1024 * 8 - 1) .. 'Дbbbbb'
     api.nvim_buf_set_lines(0, 0, 1, true, { content })
