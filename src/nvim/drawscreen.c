@@ -350,7 +350,7 @@ void screen_resize(int width, int height)
       break;
     }
 
-    apply_autocmds(EVENT_VIMRESIZED, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_VIMRESIZED, NULL, NULL, false, curbuf, NULL);
   }
 
   resizing_autocmd = false;

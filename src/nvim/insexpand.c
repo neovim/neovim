@@ -1465,7 +1465,7 @@ static void trigger_complete_changed_event(int cur)
 
   recursive = true;
   textlock++;
-  apply_autocmds(EVENT_COMPLETECHANGED, NULL, NULL, false, curbuf);
+  apply_autocmds(EVENT_COMPLETECHANGED, NULL, NULL, false, curbuf, curwin);
   textlock--;
   recursive = false;
 

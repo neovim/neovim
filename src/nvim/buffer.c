@@ -212,7 +212,7 @@ static int read_buffer(bool read_stdin, exarg_T *eap, int flags)
     }
 
     apply_autocmds_retval(EVENT_STDINREADPOST, NULL, NULL, false,
-                          curbuf, &retval);
+                          curbuf, curwin, &retval);
   }
   return retval;
 }
@@ -431,7 +431,7 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
     curwin->w_topline = 1;
     curwin->w_topfill = 0;
   }
-  apply_autocmds_retval(EVENT_BUFENTER, NULL, NULL, false, curbuf, &retval);
+  apply_autocmds_retval(EVENT_BUFENTER, NULL, NULL, false, curbuf, curwin, &retval);
 
   // if (retval != OK) {
   if (retval == FAIL) {
@@ -449,8 +449,7 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
     curbuf->b_flags &= ~(BF_CHECK_RO | BF_NEVERLOADED);
 
     if ((flags & READ_NOWINENTER) == 0) {
-      apply_autocmds_retval(EVENT_BUFWINENTER, NULL, NULL, false, curbuf,
-                            &retval);
+      apply_autocmds_retval(EVENT_BUFWINENTER, NULL, NULL, false, curbuf, curwin, &retval);
     }
 
     // restore curwin/curbuf and a few other things
@@ -636,7 +635,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
     buf->b_locked++;
     buf->b_locked_split++;
     if (apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname, false,
-                       buf) && !bufref_valid(&bufref)) {
+                       buf, win) && !bufref_valid(&bufref)) {
       // Autocommands deleted the buffer.
       emsg(_(e_auabort));
       return false;
@@ -655,7 +654,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
       buf->b_locked++;
       buf->b_locked_split++;
       if (apply_autocmds(EVENT_BUFHIDDEN, buf->b_fname, buf->b_fname, false,
-                         buf) && !bufref_valid(&bufref)) {
+                         buf, win) && !bufref_valid(&bufref)) {
         // Autocommands deleted the buffer.
         emsg(_(e_auabort));
         return false;
@@ -849,21 +848,21 @@ bool buf_freeall(buf_T *buf, int flags)
   buf_updates_unload(buf, false);
 
   if ((buf->b_ml.ml_mfp != NULL)
-      && apply_autocmds(EVENT_BUFUNLOAD, buf->b_fname, buf->b_fname, false, buf)
+      && apply_autocmds(EVENT_BUFUNLOAD, buf->b_fname, buf->b_fname, false, buf, NULL)
       && !bufref_valid(&bufref)) {
     // Autocommands deleted the buffer.
     return false;
   }
   if ((flags & BFA_DEL)
       && buf->b_p_bl
-      && apply_autocmds(EVENT_BUFDELETE, buf->b_fname, buf->b_fname, false, buf)
+      && apply_autocmds(EVENT_BUFDELETE, buf->b_fname, buf->b_fname, false, buf, NULL)
       && !bufref_valid(&bufref)) {
     // Autocommands may delete the buffer.
     return false;
   }
   if ((flags & BFA_WIPE)
       && apply_autocmds(EVENT_BUFWIPEOUT, buf->b_fname, buf->b_fname, false,
-                        buf)
+                        buf, NULL)
       && !bufref_valid(&bufref)) {
     // Autocommands may delete the buffer.
     return false;
@@ -1732,7 +1731,7 @@ void set_curbuf(buf_T *buf, int action, bool update_jumplist)
 
   // Autocommands may delete the current buffer and/or the buffer we want to
   // go to.  In those cases don't close the buffer.
-  if (!apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf)
+  if (!apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf, NULL)
       || (bufref_valid(&prevbufref) && bufref_valid(&newbufref)
           && !aborting())) {
     if (prevbuf == curwin->w_buffer) {
@@ -1847,8 +1846,8 @@ static void enter_buffer(buf_T *buf)
 
     curwin->w_topline = 1;
     curwin->w_topfill = 0;
-    apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf);
-    apply_autocmds(EVENT_BUFWINENTER, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf, curwin);
+    apply_autocmds(EVENT_BUFWINENTER, NULL, NULL, false, curbuf, curwin);
   }
 
   // If autocommands did not change the cursor position, restore cursor lnum
@@ -2003,7 +2002,7 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
       bufref_T bufref;
       set_bufref(&bufref, buf);
       if (!(flags & BLN_DUMMY)) {
-        if (apply_autocmds(EVENT_BUFADD, NULL, NULL, false, buf)
+        if (apply_autocmds(EVENT_BUFADD, NULL, NULL, false, buf, NULL)
             && !bufref_valid(&bufref)) {
           return NULL;
         }
@@ -2124,12 +2123,12 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
     // unexpectedly losing the empty buffer.
     bufref_T bufref;
     set_bufref(&bufref, buf);
-    if (apply_autocmds(EVENT_BUFNEW, NULL, NULL, false, buf)
+    if (apply_autocmds(EVENT_BUFNEW, NULL, NULL, false, buf, NULL)
         && !bufref_valid(&bufref)) {
       return NULL;
     }
     if ((flags & BLN_LISTED)
-        && apply_autocmds(EVENT_BUFADD, NULL, NULL, false, buf)
+        && apply_autocmds(EVENT_BUFADD, NULL, NULL, false, buf, NULL)
         && !bufref_valid(&bufref)) {
       return NULL;
     }
@@ -4172,9 +4171,9 @@ void set_buflisted(int on)
 
   curbuf->b_p_bl = on;
   if (on) {
-    apply_autocmds(EVENT_BUFADD, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_BUFADD, NULL, NULL, false, curbuf, NULL);
   } else {
-    apply_autocmds(EVENT_BUFDELETE, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_BUFDELETE, NULL, NULL, false, curbuf, NULL);
   }
 }
 
