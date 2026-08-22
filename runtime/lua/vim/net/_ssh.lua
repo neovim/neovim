@@ -1,211 +1,80 @@
 -- Converted into Lua from https://github.com/cyjake/ssh-config
 -- TODO (siddhantdev): deal with include directives
 
-local M = {}
+local M            = {}
 
-local whitespace_pattern = '%s'
-local line_break_pattern = '[\r\n]'
+local lpeg         = vim.lpeg
 
----@param param string
-local function is_multi_value_directive(param)
-  local multi_value_directives = {
-    'globalknownhostsfile',
-    'host',
-    'ipqos',
-    'sendenv',
-    'userknownhostsfile',
-    'proxycommand',
-    'match',
-    'canonicaldomains',
-  }
+local whitespace   = lpeg.S(" \t")
+local newline      = lpeg.P("\r\n") + lpeg.S("\r\n")
+local any          = lpeg.P(1)
 
-  return vim.list_contains(multi_value_directives, param:lower())
-end
+local keyword      =
+    lpeg.C((lpeg.R("az") + lpeg.R("AZ") + lpeg.S("-_")) ^ 1) *
+    ((whitespace ^ 0 * lpeg.P('=')) + whitespace ^ 1) *
+    (whitespace ^ 0)
+
+local quoted_arg   =
+    lpeg.P('"') *
+    lpeg.Cs(((lpeg.P('\\"') / '"') + (any - lpeg.P('"'))) ^ 0) *
+    lpeg.P('"') *
+    (whitespace ^ 0) *
+    lpeg.P(",") ^ -1 *
+    (whitespace ^ 0)
+
+local bare_arg     =
+    lpeg.C((any - (whitespace + newline + lpeg.S("#;,="))) ^ 1) *
+    (whitespace ^ 0) *
+    lpeg.S(",=") ^ -1 *
+    (whitespace ^ 0)
+
+local arg          = quoted_arg + bare_arg
+local args         = lpeg.Ct(arg ^ 0)
+
+local line_grammar = lpeg.Ct(
+  whitespace ^ 0 *
+  lpeg.Cg(keyword, "keyword") *
+  lpeg.Cg(args, "args") *
+  newline ^ -1
+)
 
 ---@param text string The ssh configuration which needs to be parsed
 ---@return string[] The parsed host names in the configuration
 function M.parse_ssh_config(text)
-  local i = 1
-  local line = 1
-
-  local function consume()
-    if i <= #text then
-      local char = text:sub(i, i)
-      i = i + 1
-      return char
-    end
-    return nil
-  end
-
-  local chr = consume()
-
-  local function parse_spaces()
-    local spaces = ''
-    while chr and chr:match(whitespace_pattern) do
-      spaces = spaces .. chr
-      chr = consume()
-    end
-    return spaces
-  end
-
-  local function parse_linebreaks()
-    local breaks = ''
-    while chr and chr:match(line_break_pattern) do
-      line = line + 1
-      breaks = breaks .. chr
-      chr = consume()
-    end
-    return breaks
-  end
-
-  local function parse_parameter_name()
-    local param = ''
-    while chr and not chr:match('[ \t=]') do
-      param = param .. chr
-      chr = consume()
-    end
-    return param
-  end
-
-  local function parse_separator()
-    local sep = parse_spaces()
-    if chr == '=' then
-      sep = sep .. chr
-      chr = consume()
-    end
-    return sep .. parse_spaces()
-  end
-
-  local function parse_value()
-    local val = {}
-    local quoted, escaped = false, false
-
-    while chr and not chr:match(line_break_pattern) do
-      if escaped then
-        table.insert(val, chr == '"' and chr or '\\' .. chr)
-        escaped = false
-      elseif chr == '"' and (val == {} or quoted) then
-        quoted = not quoted
-      elseif chr == '\\' then
-        escaped = true
-      elseif chr == '#' and not quoted then
-        break
-      else
-        table.insert(val, chr)
-      end
-      chr = consume()
-    end
-
-    if quoted or escaped then
-      error('Unexpected line break at line ' .. line)
-    end
-
-    return vim.trim(table.concat(val))
-  end
-
-  local function parse_comment()
-    while chr and not chr:match(line_break_pattern) do
-      chr = consume()
-    end
-  end
-
-  ---@return string[]
-  local function parse_multiple_values()
-    local results = {}
-    local val = {}
-    local quoted = false
-    local escaped = false
-
-    while chr and not chr:match(line_break_pattern) do
-      if escaped then
-        table.insert(val, chr == '"' and chr or '\\' .. chr)
-        escaped = false
-      elseif chr == '"' then
-        quoted = not quoted
-      elseif chr == '\\' then
-        escaped = true
-      elseif quoted then
-        table.insert(val, chr)
-      elseif chr:match('[ \t=]') then
-        if val ~= {} then
-          table.insert(results, vim.trim(table.concat(val)))
-          val = {}
-        end
-      elseif chr == '#' and #results > 0 then
-        break
-      else
-        table.insert(val, chr)
-      end
-      chr = consume()
-    end
-
-    if quoted or escaped then
-      error('Unexpected line break at line ' .. line)
-    end
-
-    if val ~= {} then
-      table.insert(results, vim.trim(table.concat(val)))
-    end
-
-    return results
-  end
-
-  local function parse_directive()
-    local param = parse_parameter_name()
-    local multiple = is_multi_value_directive(param)
-    local _ = parse_separator()
-    local value = multiple and parse_multiple_values() or parse_value()
-
-    local result = {
-      param = param,
-      value = value,
-    }
-
-    return result
-  end
-
-  local function parse_line()
-    local _ = parse_spaces()
-    if chr == '#' then
-      parse_comment()
-      return nil
-    end
-    local node = parse_directive()
-    local _ = parse_linebreaks()
-
-    return node
-  end
-
   local hostnames = {}
 
-  ---@param value string
-  local function is_valid(value)
-    return not (value:find('[?*!]') or vim.list_contains(hostnames, value))
+  ---@param hostname string
+  local function is_seen(hostname)
+    return vim.list_contains(hostnames, hostname)
   end
 
-  while chr do
-    local node = parse_line()
-    if node then
-      -- This is done just to assign the type
-      node.value = node.value ---@type string[]
-      if node.param:lower() == 'match' and node.value then
-        local current = nil
-        for ind, val in ipairs(node.value) do
-          if val:lower() == 'host' and ind + 1 <= #node.value and is_valid(node.value[ind + 1]) then
-            current = node.value[ind + 1]
-          end
+  for raw_line in (text .. "\n"):gmatch("([^\r\n]*)\r?\n") do
+    local parsed = line_grammar:match(raw_line)
+    if parsed == nil then
+      goto continue
+    end
+
+    -- These are done just to assign a type
+    parsed.keyword = parsed.keyword ---@type string
+    parsed.args = parsed.args ---@type string[]
+
+    parsed.keyword = parsed.keyword:lower()
+    if parsed.keyword == "host" then
+      for _, hostname in ipairs(parsed.args) do
+        if not is_seen(hostname) then
+          table.insert(hostnames, hostname)
         end
-        if current then
-          table.insert(hostnames, current)
-        end
-      elseif node.param:lower() == 'host' and node.value then
-        for _, value in ipairs(node.value) do
-          if is_valid(value) then
-            table.insert(hostnames, value)
-          end
+      end
+    elseif parsed.keyword == "match" then
+      for ind, val in ipairs(parsed.args) do
+        if val:lower() == 'host' and
+            ind + 1 <= #parsed.args and
+            not is_seen(parsed.args[ind + 1]) then
+          table.insert(hostnames, parsed.args[ind + 1])
         end
       end
     end
+    ::continue::
   end
 
   return hostnames
