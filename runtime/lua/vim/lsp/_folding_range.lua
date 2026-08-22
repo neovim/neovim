@@ -42,6 +42,15 @@ local Capability = require('vim.lsp._capability')
 ---
 --- Index in the form of start_row -> [text, highlight[]?][]
 ---@field row_virt_text table<integer, [string, string[]?][]>
+---
+--- Whether folding updates are deferred until editing settles.
+---@field defer_refresh? boolean
+---
+--- Whether `client_state` has accepted ranges not yet reflected in the row indexes.
+---@field pending_evaluate? boolean
+---
+--- Whether a deferred settle check is already scheduled.
+---@field settle_scheduled? boolean
 local State = {
   name = 'folding_range',
   method = 'textDocument/foldingRange',
@@ -106,27 +115,97 @@ local function foldupdate(bufnr)
   end
 end
 
---- Whether `foldupdate()` is scheduled for the buffer with `bufnr`.
----
---- Index in the form of bufnr -> true?
----@type table<integer, true?>
-local scheduled_foldupdate = {}
-
---- Schedule `foldupdate()` after leaving insert mode.
+--- Find windows whose cursors are visible before a deferred fold update.
 ---@param bufnr integer
-local function schedule_foldupdate(bufnr)
-  if not scheduled_foldupdate[bufnr] then
-    scheduled_foldupdate[bufnr] = true
-    nvim_on('InsertLeave', nil, { buf = bufnr, once = true }, function()
-      foldupdate(bufnr)
-      scheduled_foldupdate[bufnr] = nil
-    end)
+---@return integer[]
+local function visible_cursor_windows(bufnr)
+  local windows = {} ---@type integer[]
+  for _, winid in ipairs(vim.fn.win_findbuf(bufnr)) do
+    local wininfo = vim.fn.getwininfo(winid)[1]
+    if
+      wininfo
+      and wininfo.tabnr == vim.fn.tabpagenr()
+      and vim.wo[winid].foldmethod == 'expr'
+      and vim._with({ win = winid }, function()
+        return vim.fn.foldclosed('.') == -1
+      end)
+    then
+      windows[#windows + 1] = winid
+    end
   end
+  return windows
+end
+
+--- Open folds that newly hide a previously visible cursor.
+---@param bufnr integer
+---@param windows integer[]
+local function restore_cursor_visibility(bufnr, windows)
+  for _, winid in ipairs(windows) do
+    if
+      api.nvim_win_is_valid(winid)
+      and api.nvim_win_get_buf(winid) == bufnr
+      and vim._with({ win = winid }, function()
+        return vim.fn.foldclosed('.') ~= -1
+      end)
+    then
+      vim._foldopen_cursor(winid)
+    end
+  end
+end
+
+--- Whether the current buffer is in a mode that can actively change its text.
+---@param bufnr integer
+---@return boolean
+local function is_editing(bufnr)
+  if api.nvim_get_current_buf() ~= bufnr then
+    return false
+  end
+
+  local mode = api.nvim_get_mode().mode:sub(1, 1)
+  return mode == 'i' or mode == 'R' or mode == 'r' or mode == 's' or mode == 'S' or mode == '\19'
+end
+
+--- Apply the latest accepted folding ranges once.
+---@param restore_visibility? boolean
+function State:apply_pending(restore_visibility)
+  if not self.pending_evaluate then
+    return
+  end
+
+  local visible_windows = restore_visibility and visible_cursor_windows(self.bufnr) or {}
+  self.defer_refresh = nil
+  self.pending_evaluate = nil
+  self:evaluate()
+  foldupdate(self.bufnr)
+  restore_cursor_visibility(self.bufnr, visible_windows)
+end
+
+--- Recheck the mode after queued mode transitions have settled.
+---@param state vim.lsp.folding_range.State
+local function schedule_settle(state)
+  if state.settle_scheduled then
+    return
+  end
+
+  local bufnr = state.bufnr
+  state.settle_scheduled = true
+  vim.schedule(function()
+    state.settle_scheduled = nil
+    if State.active[bufnr] ~= state or not api.nvim_buf_is_valid(bufnr) then
+      return
+    end
+    if is_editing(bufnr) then
+      return
+    end
+
+    state:apply_pending(true)
+  end)
 end
 
 ---@param results table<integer,{err: lsp.ResponseError?, result: lsp.FoldingRange[]?}>
 ---@param ctx lsp.HandlerContext
-function State:multi_handler(results, ctx)
+---@param force? boolean
+function State:multi_handler(results, ctx, force)
   -- Handling responses from outdated buffer only causes performance overhead.
   if util.buf_versions[self.bufnr] ~= ctx.version then
     return
@@ -140,14 +219,18 @@ function State:multi_handler(results, ctx)
     end
   end
   self.version = ctx.version
+  self.pending_evaluate = true
 
-  self:evaluate()
-  if api.nvim_get_mode().mode:match('^i') then
-    -- `foldUpdate()` is guarded in insert mode.
-    schedule_foldupdate(self.bufnr)
-  else
-    foldupdate(self.bufnr)
+  local snippet_active = api.nvim_get_current_buf() == self.bufnr
+    and vim.snippet
+    and vim.snippet.active()
+  if not force and (self.defer_refresh or is_editing(self.bufnr) or snippet_active) then
+    self.defer_refresh = true
+    schedule_settle(self)
+    return
   end
+
+  self:apply_pending()
 end
 
 ---@param err lsp.ResponseError?
@@ -158,7 +241,7 @@ function State:handler(err, result, ctx)
 end
 
 --- Request `textDocument/foldingRange` from the server.
---- `foldupdate()` is scheduled once after the request is completed.
+--- Accepted ranges are applied once after the request is completed or editing settles.
 ---@param client_id integer
 function State:refresh(client_id)
   local client = vim.lsp.get_client_by_id(client_id)
@@ -179,6 +262,8 @@ function State:reset()
   tableclear(self.row_kinds)
   tableclear(self.row_text)
   tableclear(self.row_virt_text)
+  self.defer_refresh = nil
+  self.pending_evaluate = nil
 end
 
 --- Initialize `state` and event hooks, then request folding ranges.
@@ -226,6 +311,11 @@ function State:new(bufnr)
   nvim_on('FileType', self.augroup, { buf = bufnr }, function()
     self:reset()
   end)
+  nvim_on('ModeChanged', self.augroup, { buf = bufnr }, function()
+    if self.defer_refresh then
+      schedule_settle(self)
+    end
+  end)
 
   return self
 end
@@ -239,19 +329,22 @@ end
 ---@params client_id integer
 function State:on_detach(client_id)
   self.client_state[client_id] = nil
-  self:evaluate()
-  foldupdate(self.bufnr)
+  self.pending_evaluate = true
+  self:apply_pending()
 end
 
 ---@private
 function State:on_close(client_id)
   self.client_state[client_id] = {}
-  self:evaluate()
-  foldupdate(self.bufnr)
+  self.pending_evaluate = true
+  self:apply_pending()
 end
 
 ---@private
 function State:on_change(client_id)
+  if is_editing(self.bufnr) then
+    self.defer_refresh = true
+  end
   self:refresh(client_id)
 end
 
@@ -286,6 +379,7 @@ function M.foldclose(kind, winid)
 
   -- Schedule `foldclose()` if the buffer is not up-to-date.
   if provider.version == util.buf_versions[bufnr] then
+    provider:apply_pending()
     provider:foldclose(kind, winid)
     return
   end
@@ -295,8 +389,8 @@ function M.foldclose(kind, winid)
   end
   ---@type lsp.FoldingRangeParams
   local params = { textDocument = util.make_text_document_params(bufnr) }
-  vim.lsp.buf_request_all(bufnr, 'textDocument/foldingRange', params, function(...)
-    provider:multi_handler(...)
+  vim.lsp.buf_request_all(bufnr, 'textDocument/foldingRange', params, function(results, ctx)
+    provider:multi_handler(results, ctx, true)
     -- Ensure this window is still valid and buffer stays as the current buffer
     -- after the async request.
     if api.nvim_win_is_valid(winid) and api.nvim_win_get_buf(winid) == bufnr then
