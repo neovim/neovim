@@ -56,6 +56,19 @@ describe('vim.range', function()
     eq(success, false)
   end)
 
+  it('is modifiable', function()
+    local range, buf = exec_lua(function()
+      local range = vim.range(-1, 5, 5, 5, 5)
+      range.buf = 0
+      range.start_row = 4
+      range.start_col = 2
+      range.end_row = 6
+      range.end_col = 8
+      return range, vim.api.nvim_get_current_buf()
+    end)
+    eq({ 4, 2, 6, 8, buf }, range)
+  end)
+
   it('converts between vim.Range and lsp.Range', function()
     local buf = exec_lua(function()
       return vim.api.nvim_get_current_buf()

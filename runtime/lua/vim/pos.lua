@@ -55,6 +55,28 @@ function M.__index(pos, key)
   return M[key]
 end
 
+---@private
+---@param pos vim.Pos
+---@param key any
+---@param value any
+function M.__newindex(pos, key, value)
+  if key == 'row' then
+    validate('row', value, 'number')
+    pos[1] = value
+  elseif key == 'col' then
+    validate('col', value, 'number')
+    pos[2] = value
+  elseif key == 'buf' then
+    validate('buf', value, 'number')
+    if value == 0 then
+      value = api.nvim_get_current_buf()
+    end
+    pos[3] = value
+  else
+    rawset(pos, key, value)
+  end
+end
+
 ---@package
 ---@param buf integer
 ---@param row integer
