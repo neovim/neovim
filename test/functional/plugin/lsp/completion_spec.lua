@@ -859,7 +859,7 @@ end)
 
 --- @param name string
 --- @param completion_result vim.lsp.CompletionResult
---- @param opts? {trigger_chars?: string[], resolve_result?: lsp.CompletionItem|lsp.CompletionItem[], delay?: integer, cmp?: string}
+--- @param opts? {trigger_chars?: string[], autotrigger?: boolean, resolve_result?: lsp.CompletionItem|lsp.CompletionItem[], delay?: integer, cmp?: string}
 --- @return integer
 local function create_server(name, completion_result, opts)
   opts = opts or {}
@@ -892,6 +892,8 @@ local function create_server(name, completion_result, opts)
         end,
       },
     })
+    _G._servers = _G._servers or {}
+    _G._servers[name] = server
 
     local bufnr = vim.api.nvim_get_current_buf()
     vim.api.nvim_win_set_buf(0, bufnr)
@@ -903,8 +905,12 @@ local function create_server(name, completion_result, opts)
       name = name,
       cmd = server.cmd,
       on_attach = function(client, bufnr0)
+        local autotrigger = opts.autotrigger
+        if autotrigger == nil then
+          autotrigger = opts.trigger_chars ~= nil
+        end
         vim.lsp.completion.enable(true, client.id, bufnr0, {
-          autotrigger = opts.trigger_chars ~= nil,
+          autotrigger = autotrigger,
           convert = function(item)
             return { abbr = item.label:gsub('%b()', '') }
           end,
@@ -1046,7 +1052,11 @@ describe('vim.lsp.completion: protocol', function()
     end)
   end)
 
-  it('insert char triggers clients matching trigger characters', function()
+  it('insert char triggers only autotriggered clients matching trigger characters', function()
+    create_server('dummy0', {
+      isIncomplete = false,
+      items = { { label = 'hola' } },
+    }, { trigger_chars = { 'h' }, autotrigger = false })
     create_server('dummy1', {
       isIncomplete = false,
       items = { { label = 'hello' } },
@@ -1085,6 +1095,47 @@ describe('vim.lsp.completion: protocol', function()
       eq(1, #matches)
       eq('second', matches[1].word)
     end)
+  end)
+
+  it("disabled client's triggerchar does not cancel other clients' requests", function()
+    create_server('dummy1', {
+      isIncomplete = false,
+      items = { { label = 'first' } },
+    }, { trigger_chars = { '-' }, delay = 100 })
+    local client2 = create_server('dummy2', {
+      isIncomplete = false,
+      items = { { label = 'second' } },
+    }, { trigger_chars = { '>' } })
+
+    exec_lua(function()
+      vim.lsp.completion.enable(false, client2, vim.api.nvim_get_current_buf())
+    end)
+
+    feed('i-')
+    retry(nil, nil, function()
+      eq(
+        1,
+        exec_lua(function()
+          return #vim.tbl_filter(function(m)
+            return m.method == 'textDocument/completion'
+          end, _G._servers.dummy1.messages)
+        end)
+      )
+    end)
+    feed('>')
+
+    assert_matches(function(matches)
+      eq(1, #matches)
+      eq('first', matches[1].word)
+    end)
+    eq(
+      0,
+      exec_lua(function()
+        return #vim.tbl_filter(function(m)
+          return m.method == '$/cancelRequest'
+        end, _G._servers.dummy1.messages)
+      end)
+    )
   end)
 
   it('executes commands', function()
@@ -1186,6 +1237,7 @@ describe('vim.lsp.completion: protocol', function()
   end)
 
   it('enable(…,{cmp=fn}) custom sort order', function()
+    create_server('dummy0', { isIncomplete = false, items = {} })
     create_server('dummy', {
       isIncomplete = false,
       items = {
