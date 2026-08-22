@@ -1597,17 +1597,23 @@ function Screen:_extstate_repr(attr_state, exp)
 
   local messages = {}
   for i, entry in ipairs(self.messages) do
+    local exp_msg = exp and exp.messages and exp.messages[i]
+    -- Late addition, only include when expected state includes it.
     local trigger = nil
-    if exp and exp.messages and exp.messages[i] and exp.messages[i].trigger ~= nil then
-      -- Late addition, only include when expected state includes it.
+    if exp_msg and exp_msg.trigger ~= nil then
       trigger = entry.trigger
+    end
+    -- Progress messages are identified by their id, so always show it for them.
+    local id = nil
+    if entry.kind == 'progress' or (exp_msg and exp_msg.id ~= nil) then
+      id = entry.id
     end
     messages[i] = {
       kind = entry.kind,
       content = self:_chunks_repr(entry.content, attr_state),
       history = entry.history or nil,
       append = entry.append or nil,
-      id = entry.kind == 'progress' and entry.id or nil,
+      id = id,
       trigger = trigger,
     }
   end

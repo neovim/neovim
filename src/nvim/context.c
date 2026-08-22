@@ -33,6 +33,7 @@
 #include "nvim/eval/userfunc.h"
 #include "nvim/eval/vars.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/fileio.h"
 #include "nvim/globals.h"
 #include "nvim/hashtab.h"
 #include "nvim/keycodes.h"
@@ -348,9 +349,6 @@ static void ctx_dirs_save(CtxSwitch *cs, win_T *wp, tabpage_T *tp, buf_T *buf)
   // If 'acd' is set, check we are using that directory.  If yes, then
   // apply 'acd' afterwards, otherwise restore the current directory.
   if (cs->cs_cwd != NULL && p_acd) {
-    if (curbuf->b_sfname != NULL && curbuf->b_fname == curbuf->b_sfname) {
-      cs->cs_save_sfname = xstrdup(curbuf->b_sfname);
-    }
     do_autochdir();
     char autocwd[MAXPATHL];
     if (os_dirname(autocwd, MAXPATHL) == OK) {
@@ -387,17 +385,11 @@ static void ctx_dirs_restore(CtxSwitch *cs)
 
   // Restore the CWD itself. After an explicit chdir, ctx_restore() re-derives it instead.
   if (cs->cs_apply_acd) {
-    xfree(cs->cs_save_sfname);
     do_autochdir();
   } else if (cs->cs_cwd != NULL && ((cs->cs_flags & kCtxKeepDirs) || !_ctx_did_chdir)) {
     os_chdir(cs->cs_cwd);
-    if (cs->cs_save_sfname != NULL) {
-      xfree(curbuf->b_sfname);
-      curbuf->b_sfname = cs->cs_save_sfname;
-      curbuf->b_fname = curbuf->b_sfname;
-    }
-  } else {
-    xfree(cs->cs_save_sfname);
+    // Buffer names are relative to the CWD, so they must follow it back. #41424
+    shorten_fnames(true);
   }
   XFREE_CLEAR(cs->cs_cwd);
 }

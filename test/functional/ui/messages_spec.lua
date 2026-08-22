@@ -3859,6 +3859,26 @@ describe('progress-message', function()
     eq(8, id8)
   end)
 
+  it('msg-id is not inherited by the next message #41417', function()
+    local fname = 'Xtest_progress_msgid'
+    finally(function()
+      os.remove(fname)
+    end)
+    -- The write emits nothing ('msg_silent'), but must still release its msg-id.
+    command('silent write ' .. fname)
+    feed(':echoerr "boom"<CR>')
+    screen:expect({
+      messages = {
+        {
+          content = { { 'boom', 9, 'ErrorMsg' } },
+          history = true,
+          id = 1,
+          kind = 'echoerr',
+        },
+      },
+    })
+  end)
+
   it('accepts caller-defined id (string)', function()
     -- string id works
     local id = api.nvim_echo({ { 'supports str-id' } }, true, {
