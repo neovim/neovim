@@ -1,4 +1,4 @@
---- Converts Nvim :help files to HTML.  Validates |tag| links and document syntax (parser errors).
+--- Converts Nvim :help files to alternate formats (HTML or Typst).  Validates |tag| links and document syntax (parser errors).
 --
 -- USAGE (For CI/local testing purposes): Simply `make lintdoc`, which basically does the following:
 --   1. :helptags ALL
@@ -11,6 +11,15 @@
 --      - Read the docstring at gen().
 --   3. cd target/dir/ && jekyll serve --host 0.0.0.0
 --   4. Visit http://localhost:4000/…/help.txt.html
+--
+-- USAGE (GENERATE PDF VIA TYPST):
+--   1. `:helptags ALL`
+--   2. mkdir usr_manual pdf_docs
+--   3. cp runtime/doc/usr_*.txt usr_manual/
+--   4. nvim -V1 -es --clean +"lua require('src.gen.gen_help_html').gen('typ', './usr_manual', 'pdf_docs')" +q
+--   5. mv pdf_docs/usr_toc.typ pdf_docs/user_manual.typ && cat pdf_docs/usr_*.typ >> pdf_docs/user_manual.typ
+--   6. typst compile pdf_docs/user_manual.typ
+--   7. open pdf_docs/user_manual.pdf
 --
 -- USAGE (VALIDATE):
 --   1. nvim -V1 -es +"lua require('src.gen.gen_help_html').validate('./runtime/doc')" +q
@@ -163,6 +172,7 @@ local function html_esc(s)
   return (s and string.gsub(s, '[&<>{}]', html_entity) or nil)
 end
 
+--- Escape a string to make it valid Typst
 ---@type fun(s: string): string
 local function typ_esc(s)
   return (s and string.gsub(s, '([%[%]@#\\/<*`_^$])', '\\%1') or '')
@@ -225,7 +235,7 @@ local function fix_url(url)
   return fixed_url, removed_chars
 end
 
---- Checks if a given line is a "noise" line that doesn't look good in HTML form.
+--- Checks if a given line is a "noise" line that doesn't look good in non-vimdoc formats
 local function is_noise(line, noise_lines)
   if
     -- First line is always noise.
@@ -845,7 +855,7 @@ local function ts_node_to_html(root, level, lang_tree, headings, opt, stats)
   end
 end
 
--- Generate .typ from node `root` recursively.
+-- Generate Typst from node `root` recursively.
 ---@param root TSNode
 ---@param level integer
 ---@param lang_tree TSTree
@@ -1206,14 +1216,14 @@ local function gen_one_html(fname, text, to_fname, old, commit)
   return html, stats
 end
 
---- Generates .typ from one :help file `fname` and writes the result to `to_fname`.
+--- Generates Typst from one :help file `fname` and writes the result to `to_fname`.
 ---
 --- @param fname string Source :help file.
 --- @param text string|nil Source :help file contents, or nil to read `fname`.
---- @param to_fname string Destination .html file
+--- @param to_fname string Destination .typ file
 --- @param old boolean Preformat paragraphs (for old :help files which are full of arbitrary whitespace)
 ---
---- @return string html
+--- @return string Typst output
 --- @return table stats
 local function gen_one_typ(fname, text, to_fname, old, commit)
   local stats = {
