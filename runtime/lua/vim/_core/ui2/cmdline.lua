@@ -41,7 +41,7 @@ local cmdbuff = '' ---@type string Stored cmdline used to calculate translation 
 local promptlen = 0 -- Current length of the last line in the prompt.
 --- Concatenate content chunks and set the text for the current row in the cmdline buffer.
 ---
----@alias CmdChunk [integer, string]
+---@alias CmdChunk [integer, string, integer]
 ---@alias CmdContent CmdChunk[]
 ---@param content CmdContent
 ---@param prompt string
@@ -52,11 +52,32 @@ local function set_text(content, prompt, hl_id)
     lines[#lines + 1] = fn.strtrans(line)
   end
   cmdbuff, promptlen, M.erow = '', #lines[#lines], M.srow + #lines - 1
+  local highlights = {} ---@type { start_col: integer, end_col: integer, hl_group: integer }[]
+  local col = promptlen
+
   for _, chunk in ipairs(content) do
     cmdbuff = cmdbuff .. chunk[2]
+    if chunk[3] > 0 then
+      highlights[#highlights + 1] = {
+        start_col = col,
+        end_col = col + #chunk[2],
+        hl_group = chunk[3],
+      }
+    end
+
+    col = col + #chunk[2]
   end
   lines[#lines] = ('%s%s '):format(lines[#lines], fn.strtrans(cmdbuff))
   api.nvim_buf_set_lines(ui.bufs.cmd, M.srow, -1, false, lines)
+
+  for _, chunk in ipairs(highlights) do
+    api.nvim_buf_set_extmark(ui.bufs.cmd, ui.ns, M.srow, chunk.start_col, {
+      invalidate = true,
+      undo_restore = false,
+      end_col = chunk.end_col,
+      hl_group = chunk.hl_group,
+    })
+  end
 
   -- Highlight prompt, or parse and highlight line starting with ':' as Vimscript.
   if promptlen > 0 and hl_id > 0 then
