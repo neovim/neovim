@@ -1221,7 +1221,7 @@ bool os_fileinfo2(const char *path, FileInfo *info)
   const char *p = path_skip_sep(path, false);
   size_t leading_slashes = (size_t)(p - path);
 #ifdef MSWIN
-  if (leading_slashes == 0 && ASCII_ISALPHA(p[0]) && p[1] == ':') {
+  if (leading_slashes == 0 && path_has_drive_letter(p)) {
     info->type = kPathDrive;
     p = path_skip_sep(p + 2, false);
     info->rest_off = (size_t)(p - path);
@@ -1241,7 +1241,7 @@ bool os_fileinfo2(const char *path, FileInfo *info)
       goto server;
     }
     info->root_off = (size_t)(p - path);
-    if (ASCII_ISALPHA(p[0]) && p[1] == ':') {
+    if (path_has_drive_letter(p)) {
       p += 2;
     }
     p = path_skip_sep(path_next_component(p), false);

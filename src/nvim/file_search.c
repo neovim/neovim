@@ -1643,7 +1643,7 @@ char *file_name_at_cursor(int options, int count, linenr_T *file_lnum)
 char *file_name_in_line(char *line, int col, int options, int count, char *rel_fname,
                         linenr_T *file_lnum)
 {
-  // search forward for what could be the start of a file name
+  // search forward for what could be the start of a filepath/url
   char *ptr = line + col;
   while (*ptr != NUL && !vim_isfilec((uint8_t)(*ptr))) {
     MB_PTR_ADV(ptr);
@@ -1655,40 +1655,46 @@ char *file_name_in_line(char *line, int col, int options, int count, char *rel_f
     return NULL;
   }
 
-  size_t len;
-  bool in_type = true;
-  bool is_url = false;
+  char *colon = NULL;
 
-  // Search backward for first char of the file name.
-  // Go one char back to ":" before "//", or to the drive letter before ":\" (even if ":"
-  // is not in 'isfname').
+  // Search backward for what could be the start of a filepath/url.
+  // If drive letter or url are allowed, skip ":" (even if it is not in 'isfname').
   while (ptr > line) {
-    if ((len = (size_t)(utf_head_off(line, ptr - 1))) > 0) {
-      ptr -= len + 1;
-    } else if (vim_isfilec((uint8_t)ptr[-1]) || ((options & FNAME_HYP) && path_is_url(ptr - 1))) {
-      ptr--;
+    int i = utf_head_off(line, ptr - 1) + 1;
+    if (vim_isfilec((uint8_t)ptr[-i])) {
+      ptr -= i;
+    } else if (ptr[-1] == ':') {
+      if (ptr - line <= 1) {  // line starting with ":"
+        break;
+      }
+      if (path_has_drive_letter(ptr - 2) || (options & FNAME_HYP)) {
+        ptr--;
+      } else {
+        break;
+      }
+      if (colon == NULL) {
+        colon = ptr;
+      }
     } else {
       break;
     }
   }
 
-  // Search forward for the last char of the file name.
-  // Also allow ":/" when ':' is not in 'isfname'.
-  // TODO(justinmk): Check for driveletter "x:/" at start, regardless of 'isfname'.
-  len = path_has_drive_letter(ptr, strlen(ptr)) ? 2 : 0;
-  while (vim_isfilec((uint8_t)ptr[len]) || (ptr[len] == '\\' && ptr[len + 1] == ' ')
-         || ((options & FNAME_HYP) && path_is_url(ptr + len))
-         || (is_url && vim_strchr(":?&=", (uint8_t)ptr[len]) != NULL)) {
-    // After type:// we also include :, ?, & and = as valid characters, so that
-    // http://google.com:8080?q=this&that=ok works.
-    if ((ptr[len] >= 'A' && ptr[len] <= 'Z') || (ptr[len] >= 'a' && ptr[len] <= 'z')) {
-      if (in_type && path_is_url(ptr + len + 1)) {
-        is_url = true;
-      }
-    } else {
-      in_type = false;
-    }
+  bool is_url = (options & FNAME_HYP) && path_with_url(ptr);
+  size_t len = 0;
+  if (!is_url && colon) {
+    assert(colon > line);
+    ptr = path_has_drive_letter(colon - 1) ? colon - 1 : colon + 1;
+    len = ptr < colon ? 2 : 0;
+  } else if (path_has_drive_letter(ptr)) {
+    len = 2;
+  }
 
+  // Search forward for the last char of the filepath/url.
+  // If url is allowed, we also include :, ?, & and = as valid characters, so that
+  // http://google.com:8080?q=this&that=ok works.
+  while (vim_isfilec((uint8_t)ptr[len]) || (ptr[len] == '\\' && ptr[len + 1] == ' ')
+         || (is_url && vim_strchr(":?&=", (uint8_t)ptr[len]) != NULL)) {
     if (ptr[len] == '\\' && ptr[len + 1] == ' ') {
       // Skip over the "\" in "\ ".
       len++;
@@ -1769,9 +1775,10 @@ char *find_file_name_in_path(char *ptr, size_t len, int options, long count, cha
     return NULL;
   }
 
+  // TODO(ntdiary): handle this in lua for file scheme support, see nvim#39278
   if ((options & FNAME_HYP) && len > 6 && strncmp(ptr, "file:/",
                                                   6) == 0 && !vim_ispathsep(ptr[6])) {
-    size_t off = path_has_drive_letter(ptr + 6, len - 6) ? 6 : 5;
+    size_t off = path_has_drive_letter(ptr + 6) ? 6 : 5;
     ptr += off;
     len -= off;
   }

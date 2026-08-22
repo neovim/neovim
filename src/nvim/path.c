@@ -36,11 +36,6 @@
 #include "nvim/strings.h"
 #include "nvim/vim_defs.h"
 
-enum {
-  URL_SLASH = 1,      // path_is_url() has found ":/"
-  URL_BACKSLASH = 2,  // path_is_url() has found ":\\"
-};
-
 #ifdef gen_expand_wildcards
 # undef gen_expand_wildcards
 #endif
@@ -267,24 +262,20 @@ char *get_past_head(const char *path)
 bool vim_ispathsep(int c)
 {
 #ifdef UNIX
-  return c == '/';          // Unix has ':' inside file names
+  return c == PATHSEP;          // Unix has ':' inside file names
 #else
-# ifdef BACKSLASH_IN_FILENAME
-  return c == ':' || c == '/' || c == '\\';
-# else
-  return c == ':' || c == '/';
-# endif
+  return vim_ispathsep_nocolon(c) || c == ':';
 #endif
 }
 
 // Like vim_ispathsep(c), but exclude the colon for MS-Windows.
 bool vim_ispathsep_nocolon(int c)
 {
-  return vim_ispathsep(c)
 #ifdef BACKSLASH_IN_FILENAME
-         && c != ':'
+  return c == PATHSEP || c == '\\';
+#else
+  return c == PATHSEP;
 #endif
-  ;
 }
 
 /// @return true if 'c' is a path list separator.
@@ -1510,11 +1501,9 @@ size_t simplify_filename(char *filename)
   bool relative = true;
 
   char *p = filename;
-#ifdef BACKSLASH_IN_FILENAME
-  if (p[0] != NUL && p[1] == ':') {        // skip "x:"
+  if (path_has_drive_letter(p)) {        // skip "x:"
     p += 2;
   }
-#endif
 
   if (vim_ispathsep(*p)) {
     relative = false;
@@ -1675,49 +1664,45 @@ size_t simplify_filename(char *filename)
 }
 
 /// Checks for a Windows drive letter ("C:/") at the start of the path.
-///
-/// @see https://url.spec.whatwg.org/#start-with-a-windows-drive-letter
-bool path_has_drive_letter(const char *p, size_t path_len)
+bool path_has_drive_letter(const char *p)
   FUNC_ATTR_NONNULL_ALL
 {
-  return path_len >= 2
-         && ASCII_ISALPHA(p[0])
-         && (p[1] == ':' || p[1] == '|')
-         && (path_len == 2 || ((p[2] == '/') | (p[2] == '\\') | (p[2] == '?') | (p[2] == '#')));
+#ifdef MSWIN
+  return ASCII_ISALPHA(p[0]) && p[1] == ':';
+#else
+  return false;
+#endif
 }
 
-// Check if the ":/" of a URL is at the pointer, return URL_SLASH.
-// Also check for ":\\", which MS Internet Explorer accepts, return
-// URL_BACKSLASH.
-int path_is_url(const char *p)
+// Check if the ":/" of a URL is at the pointer.
+// Also check for ":\\", which MS Internet Explorer accepts.
+bool path_like_url(const char *p)
   FUNC_ATTR_NONNULL_ALL
 {
   // In the spec ':' is enough to recognize a scheme
   // https://url.spec.whatwg.org/#scheme-state
-  if (strncmp(p, ":/", 2) == 0) {
-    return URL_SLASH;
-  } else if (strncmp(p, ":\\\\", 3) == 0) {
-    return URL_BACKSLASH;
-  }
-  return 0;
+  // TODO(ntdiary): Is ":\\" really needed on Unix?
+  return strncmp(p, ":/", 2) == 0 || strncmp(p, ":\\\\", 3) == 0;
 }
 
 /// Check if "fname" starts with "name:/" or "name:\".
 ///
 /// @param  fname         is the filename to test
-/// @return URL_SLASH for "name:/", URL_BACKSLASH for "name:\", zero otherwise.
-int path_with_url(const char *fname)
+/// @return True for "scheme:/" or "scheme:\", false otherwise.
+bool path_with_url(const char *fname)
   FUNC_ATTR_NONNULL_ALL
 {
   const char *p;
 
   // first character must be alpha
   if (!ASCII_ISALPHA(*fname)) {
-    return 0;
+    return false;
   }
 
-  if (path_has_drive_letter(fname, strlen(fname))) {
-    return 0;
+  // Technically, a scheme can be a single letter, conflicting with drive letter on Windows
+  // TODO(ntdiary): Is this really needed on Unix?
+  if (path_has_drive_letter(fname)) {
+    return false;
   }
 
   // check body: (alpha, digit, '+', '-', '.') following RFC3986
@@ -1725,11 +1710,11 @@ int path_with_url(const char *fname)
 
   // check last char is not '+', '-', or '.'
   if ((p[-1] == '+') || (p[-1] == '-') || (p[-1] == '.')) {
-    return 0;
+    return false;
   }
 
   // ":/" or ":\\" must follow
-  return path_is_url(p);
+  return path_like_url(p);
 }
 
 bool path_with_extension(const char *path, const char *extension)
@@ -1746,7 +1731,7 @@ bool path_with_extension(const char *path, const char *extension)
 bool vim_isAbsName(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  return path_with_url(name) != 0 || path_is_absolute(name);
+  return path_with_url(name) || path_is_absolute(name);
 }
 
 /// Save absolute file name to "buf[len]".
@@ -1952,9 +1937,9 @@ int path_cmp(bool ic, const char *p, const char *q, size_t maxlen)
 
 #ifdef MSWIN
   const char **pp = NULL;
-  if (vim_ispathsep_nocolon(*p) && ASCII_ISALPHA(*q) && q[1] == ':') {
+  if (vim_ispathsep_nocolon(*p) && path_has_drive_letter(q)) {
     pp = &q;
-  } else if (vim_ispathsep_nocolon(*q) && ASCII_ISALPHA(*p) && p[1] == ':') {
+  } else if (vim_ispathsep_nocolon(*q) && path_has_drive_letter(p)) {
     pp = &p;
   }
   if (pp && TOLOWER_ASC(**pp) == _getdrive() + 'a' - 1) {
@@ -2313,7 +2298,7 @@ static int path_to_absolute(const char *fname, char *buf, size_t len, int force)
     if (p == NULL) {
       p = strrchr(fname, '\\');
     }
-    if (p == NULL && ASCII_ISALPHA(fname[0]) && fname[1] == ':') {  // drive letter
+    if (p == NULL && path_has_drive_letter(fname)) {
       p = fname + 1;
     }
 #endif
@@ -2350,12 +2335,9 @@ bool path_is_absolute(const char *fname)
   FUNC_ATTR_NONNULL_ALL
 {
 #ifdef MSWIN
-  if (*fname == NUL) {
-    return false;
-  }
   // A name like "d:/foo" and "//server/share" is absolute
   // /foo and \foo are absolute too because Windows keeps a current drive.
-  return ((ASCII_ISALPHA(fname[0]) && fname[1] == ':' && vim_ispathsep_nocolon(fname[2]))
+  return ((path_has_drive_letter(fname) && vim_ispathsep_nocolon(fname[2]))
           || vim_ispathsep_nocolon(fname[0]));
 #else
   // UNIX: This just checks if the file name starts with '/' or '~'.

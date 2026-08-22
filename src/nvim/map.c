@@ -58,11 +58,9 @@ static inline uint32_t hash_cstr_t(const char *s)
 static inline uint32_t hash_path_t(const char *p)
 {
   uint32_t h = 0;
-#ifdef MSWIN
-  if (ASCII_ISALPHA(*p) && p[1] == ':') {
+  if (path_has_drive_letter(p)) {
     p += 2;
   }
-#endif
   bool ic = false;
 #ifdef CASE_INSENSITIVE_FILENAME
   ic = true;
