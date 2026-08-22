@@ -78,6 +78,16 @@ m.minisurround_vim = [[
   nnoremap <expr> ys MiniSurroundSetup()
 ]]
 
+--- Minimal vim-sneak: :omap whose ":call" reads a 2-char getchar() and moves the cursor.
+m.minisneak_vim = [[
+  function! MiniSneak() abort
+    let c1 = nr2char(getchar())
+    let c2 = nr2char(getchar())
+    call search('\V' . c1 . c2, 'W')
+  endfunction
+  onoremap <silent> z :<C-U>call MiniSneak()<CR>
+]]
+
 --- Minimal vim-surround "ds": a ":call" mapping whose edit runs through :normal inside a
 --- function, with a getchar() payload naming the surround to delete.
 m.delsurround_vim = [[

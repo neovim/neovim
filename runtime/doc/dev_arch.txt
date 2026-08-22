@@ -567,6 +567,8 @@ CONCEPTS
   cascade "dry-runs" spans to display the selection.
 - VOID: When a pending (Visual) atom's keys were tainted/poisoned (by: mouse,
   `gv`, a scroll that drags the cursor, …), thus not replayable.
+- LOSSY: When capture lost part of a composite (payload with no capturing
+  atom, incomplete insert-session): `keys` cannot replay it, `lhs` can.
 
 IMPLEMENTATION
 

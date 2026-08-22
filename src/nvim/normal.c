@@ -164,6 +164,7 @@ typedef void (*nv_func_T)(cmdarg_T *cap);
 #define NV_NCW      0x200       // not allowed in command-line window
 #define NV_NCH_ARG  0x400       // second char is a typed operand (mark/register name),
                                 // not part of the command name (see NV_LANG for f/t/r)
+#define NV_MOTION   0x800       // Motion command.
 
 // Generally speaking, every Normal mode command should either clear any
 // pending operator (with *clearop*()), or set the motion type variable
@@ -190,15 +191,15 @@ static const struct nv_cmd {
   { Ctrl_E,    nv_scroll_line, 0,                      true },
   { Ctrl_F,    nv_page,        NV_STS,                 FORWARD },
   { Ctrl_G,    nv_ctrlg,       0,                      0 },
-  { Ctrl_H,    nv_ctrlh,       0,                      0 },
+  { Ctrl_H,    nv_ctrlh,       NV_MOTION,              0 },
   { Ctrl_I,    nv_pcmark,      0,                      0 },
-  { NL,        nv_down,        0,                      false },
+  { NL,        nv_down,        NV_MOTION,              false },
   { Ctrl_K,    nv_error,       0,                      0 },
   { Ctrl_L,    nv_clear,       0,                      0 },
-  { CAR,       nv_down,        0,                      true },
-  { Ctrl_N,    nv_down,        NV_STS,                 false },
+  { CAR,       nv_down,        NV_MOTION,              true },
+  { Ctrl_N,    nv_down,        NV_STS|NV_MOTION,       false },
   { Ctrl_O,    nv_ctrlo,       0,                      0 },
-  { Ctrl_P,    nv_up,          NV_STS,                 false },
+  { Ctrl_P,    nv_up,          NV_STS|NV_MOTION,       false },
   { Ctrl_Q,    nv_visual,      0,                      false },
   { Ctrl_R,    nv_redo_or_register, 0,                      0 },
   { Ctrl_S,    nv_ignore,      0,                      0 },
@@ -216,23 +217,23 @@ static const struct nv_cmd {
   { Ctrl_RSB,  nv_ident,       NV_NCW,                 0 },
   { Ctrl_HAT,  nv_hat,         NV_NCW,                 0 },
   { Ctrl__,    nv_error,       0,                      0 },
-  { ' ',       nv_right,       0,                      0 },
+  { ' ',       nv_right,       NV_MOTION,              0 },
   { '!',       nv_operator,    0,                      0 },
   { '"',       nv_regname,     NV_NCH_NOP|NV_NCH_ARG|NV_KEEPREG, 0 },
   { '#',       nv_ident,       0,                      0 },
-  { '$',       nv_dollar,      0,                      0 },
-  { '%',       nv_percent,     0,                      0 },
+  { '$',       nv_dollar,      NV_MOTION,              0 },
+  { '%',       nv_percent,     NV_MOTION,              0 },
   { '&',       nv_optrans,     0,                      0 },
   { '\'',      nv_gomark,      NV_NCH_ALW|NV_NCH_ARG,  true },
-  { '(',       nv_brace,       0,                      BACKWARD },
-  { ')',       nv_brace,       0,                      FORWARD },
+  { '(',       nv_brace,       NV_MOTION,              BACKWARD },
+  { ')',       nv_brace,       NV_MOTION,              FORWARD },
   { '*',       nv_ident,       0,                      0 },
-  { '+',       nv_down,        0,                      true },
-  { ',',       nv_csearch,     0,                      true },
-  { '-',       nv_up,          0,                      true },
+  { '+',       nv_down,        NV_MOTION,              true },
+  { ',',       nv_csearch,     NV_MOTION,              true },
+  { '-',       nv_up,          NV_MOTION,              true },
   { '.',       nv_dot,         NV_KEEPREG,             0 },
   { '/',       nv_search,      0,                      false },
-  { '0',       nv_beginline,   0,                      0 },
+  { '0',       nv_beginline,   NV_MOTION,              0 },
   { '1',       nv_ignore,      0,                      0 },
   { '2',       nv_ignore,      0,                      0 },
   { '3',       nv_ignore,      0,                      0 },
@@ -243,71 +244,71 @@ static const struct nv_cmd {
   { '8',       nv_ignore,      0,                      0 },
   { '9',       nv_ignore,      0,                      0 },
   { ':',       nv_colon,       0,                      0 },
-  { ';',       nv_csearch,     0,                      false },
+  { ';',       nv_csearch,     NV_MOTION,              false },
   { '<',       nv_operator,    NV_RL,                  0 },
   { '=',       nv_operator,    0,                      0 },
   { '>',       nv_operator,    NV_RL,                  0 },
   { '?',       nv_search,      0,                      false },
   { '@',       nv_at,          NV_NCH_NOP|NV_NCH_ARG,  false },
   { 'A',       nv_edit,        0,                      0 },
-  { 'B',       nv_bck_word,    0,                      1 },
+  { 'B',       nv_bck_word,    NV_MOTION,              1 },
   { 'C',       nv_abbrev,      NV_KEEPREG,             0 },
   { 'D',       nv_abbrev,      NV_KEEPREG,             0 },
-  { 'E',       nv_wordcmd,     0,                      true },
-  { 'F',       nv_csearch,     NV_NCH_ALW|NV_LANG,     BACKWARD },
-  { 'G',       nv_goto,        0,                      true },
-  { 'H',       nv_scroll,      0,                      0 },
+  { 'E',       nv_wordcmd,     NV_MOTION,              true },
+  { 'F',       nv_csearch,     NV_NCH_ALW|NV_LANG|NV_MOTION, BACKWARD },
+  { 'G',       nv_goto,        NV_MOTION,              true },
+  { 'H',       nv_scroll,      NV_MOTION,              0 },
   { 'I',       nv_edit,        0,                      0 },
   { 'J',       nv_join,        0,                      0 },
   { 'K',       nv_ident,       0,                      0 },
-  { 'L',       nv_scroll,      0,                      0 },
-  { 'M',       nv_scroll,      0,                      0 },
-  { 'N',       nv_next,        0,                      SEARCH_REV },
+  { 'L',       nv_scroll,      NV_MOTION,              0 },
+  { 'M',       nv_scroll,      NV_MOTION,              0 },
+  { 'N',       nv_next,        NV_MOTION,              SEARCH_REV },
   { 'O',       nv_open,        0,                      0 },
   { 'P',       nv_put,         0,                      0 },
   { 'Q',       nv_regreplay, 0,                      0 },
   { 'R',       nv_Replace,     0,                      false },
   { 'S',       nv_subst,       NV_KEEPREG,             0 },
-  { 'T',       nv_csearch,     NV_NCH_ALW|NV_LANG,     BACKWARD },
+  { 'T',       nv_csearch,     NV_NCH_ALW|NV_LANG|NV_MOTION, BACKWARD },
   { 'U',       nv_Undo,        0,                      0 },
-  { 'W',       nv_wordcmd,     0,                      true },
+  { 'W',       nv_wordcmd,     NV_MOTION,              true },
   { 'X',       nv_abbrev,      NV_KEEPREG,             0 },
   { 'Y',       nv_abbrev,      NV_KEEPREG,             0 },
   { 'Z',       nv_Zet,         NV_NCH_NOP|NV_NCW,      0 },
   { '[',       nv_brackets,    NV_NCH_ALW,             BACKWARD },
   { '\\',      nv_error,       0,                      0 },
   { ']',       nv_brackets,    NV_NCH_ALW,             FORWARD },
-  { '^',       nv_beginline,   0,                      BL_WHITE | BL_FIX },
-  { '_',       nv_lineop,      0,                      0 },
+  { '^',       nv_beginline,   NV_MOTION,              BL_WHITE | BL_FIX },
+  { '_',       nv_lineop,      NV_MOTION,              0 },
   { '`',       nv_gomark,      NV_NCH_ALW|NV_NCH_ARG,  false },
   { 'a',       nv_edit,        NV_NCH,                 0 },
-  { 'b',       nv_bck_word,    0,                      0 },
+  { 'b',       nv_bck_word,    NV_MOTION,              0 },
   { 'c',       nv_operator,    0,                      0 },
   { 'd',       nv_operator,    0,                      0 },
-  { 'e',       nv_wordcmd,     0,                      false },
-  { 'f',       nv_csearch,     NV_NCH_ALW|NV_LANG,     FORWARD },
+  { 'e',       nv_wordcmd,     NV_MOTION,              false },
+  { 'f',       nv_csearch,     NV_NCH_ALW|NV_LANG|NV_MOTION, FORWARD },
   { 'g',       nv_g_cmd,       NV_NCH_ALW,             false },
-  { 'h',       nv_left,        NV_RL,                  0 },
+  { 'h',       nv_left,        NV_RL|NV_MOTION,        0 },
   { 'i',       nv_edit,        NV_NCH,                 0 },
-  { 'j',       nv_down,        0,                      false },
-  { 'k',       nv_up,          0,                      false },
-  { 'l',       nv_right,       NV_RL,                  0 },
+  { 'j',       nv_down,        NV_MOTION,              false },
+  { 'k',       nv_up,          NV_MOTION,              false },
+  { 'l',       nv_right,       NV_RL|NV_MOTION,        0 },
   { 'm',       nv_mark,        NV_NCH_NOP|NV_NCH_ARG,  0 },
-  { 'n',       nv_next,        0,                      0 },
+  { 'n',       nv_next,        NV_MOTION,              0 },
   { 'o',       nv_open,        0,                      0 },
   { 'p',       nv_put,         0,                      0 },
   { 'q',       nv_q,           NV_NCH|NV_NCH_ARG,      0 },
   { 'r',       nv_replace,     NV_NCH_NOP|NV_LANG,     0 },
   { 's',       nv_subst,       NV_KEEPREG,             0 },
-  { 't',       nv_csearch,     NV_NCH_ALW|NV_LANG,     FORWARD },
+  { 't',       nv_csearch,     NV_NCH_ALW|NV_LANG|NV_MOTION, FORWARD },
   { 'u',       nv_undo,        0,                      0 },
-  { 'w',       nv_wordcmd,     0,                      false },
+  { 'w',       nv_wordcmd,     NV_MOTION,              false },
   { 'x',       nv_abbrev,      NV_KEEPREG,             0 },
   { 'y',       nv_operator,    0,                      0 },
   { 'z',       nv_zet,         NV_NCH_ALW,             0 },
-  { '{',       nv_findpar,     0,                      BACKWARD },
-  { '|',       nv_pipe,        0,                      0 },
-  { '}',       nv_findpar,     0,                      FORWARD },
+  { '{',       nv_findpar,     NV_MOTION,              BACKWARD },
+  { '|',       nv_pipe,        NV_MOTION,              0 },
+  { '}',       nv_findpar,     NV_MOTION,              FORWARD },
   { '~',       nv_tilde,       0,                      0 },
 
   // pound sign
@@ -338,29 +339,29 @@ static const struct nv_cmd {
   { K_NOP,     nv_nop,         0,                      0 },
   { K_INS,     nv_edit,        0,                      0 },
   { K_KINS,    nv_edit,        0,                      0 },
-  { K_BS,      nv_ctrlh,       0,                      0 },
-  { K_UP,      nv_up,          NV_SSS|NV_STS,          false },
+  { K_BS,      nv_ctrlh,       NV_MOTION,              0 },
+  { K_UP,      nv_up,          NV_SSS|NV_STS|NV_MOTION, false },
   { K_S_UP,    nv_page,        NV_SS,                  BACKWARD },
-  { K_DOWN,    nv_down,        NV_SSS|NV_STS,          false },
+  { K_DOWN,    nv_down,        NV_SSS|NV_STS|NV_MOTION, false },
   { K_S_DOWN,  nv_page,        NV_SS,                  FORWARD },
-  { K_LEFT,    nv_left,        NV_SSS|NV_STS|NV_RL,    0 },
-  { K_S_LEFT,  nv_bck_word,    NV_SS|NV_RL,            0 },
-  { K_C_LEFT,  nv_bck_word,    NV_SSS|NV_RL|NV_STS,    1 },
-  { K_RIGHT,   nv_right,       NV_SSS|NV_STS|NV_RL,    0 },
-  { K_S_RIGHT, nv_wordcmd,     NV_SS|NV_RL,            false },
-  { K_C_RIGHT, nv_wordcmd,     NV_SSS|NV_RL|NV_STS,    true },
+  { K_LEFT,    nv_left,        NV_SSS|NV_STS|NV_RL|NV_MOTION, 0 },
+  { K_S_LEFT,  nv_bck_word,    NV_SS|NV_RL|NV_MOTION,  0 },
+  { K_C_LEFT,  nv_bck_word,    NV_SSS|NV_RL|NV_STS|NV_MOTION, 1 },
+  { K_RIGHT,   nv_right,       NV_SSS|NV_STS|NV_RL|NV_MOTION, 0 },
+  { K_S_RIGHT, nv_wordcmd,     NV_SS|NV_RL|NV_MOTION,  false },
+  { K_C_RIGHT, nv_wordcmd,     NV_SSS|NV_RL|NV_STS|NV_MOTION, true },
   { K_PAGEUP,  nv_page,        NV_SSS|NV_STS,          BACKWARD },
   { K_KPAGEUP, nv_page,        NV_SSS|NV_STS,          BACKWARD },
   { K_PAGEDOWN, nv_page,       NV_SSS|NV_STS,          FORWARD },
   { K_KPAGEDOWN, nv_page,      NV_SSS|NV_STS,          FORWARD },
-  { K_END,     nv_end,         NV_SSS|NV_STS,          false },
-  { K_KEND,    nv_end,         NV_SSS|NV_STS,          false },
-  { K_S_END,   nv_end,         NV_SS,                  false },
-  { K_C_END,   nv_end,         NV_SSS|NV_STS,          true },
-  { K_HOME,    nv_home,        NV_SSS|NV_STS,          0 },
-  { K_KHOME,   nv_home,        NV_SSS|NV_STS,          0 },
-  { K_S_HOME,  nv_home,        NV_SS,                  0 },
-  { K_C_HOME,  nv_goto,        NV_SSS|NV_STS,          false },
+  { K_END,     nv_end,         NV_SSS|NV_STS|NV_MOTION, false },
+  { K_KEND,    nv_end,         NV_SSS|NV_STS|NV_MOTION, false },
+  { K_S_END,   nv_end,         NV_SS|NV_MOTION,        false },
+  { K_C_END,   nv_end,         NV_SSS|NV_STS|NV_MOTION, true },
+  { K_HOME,    nv_home,        NV_SSS|NV_STS|NV_MOTION, 0 },
+  { K_KHOME,   nv_home,        NV_SSS|NV_STS|NV_MOTION, 0 },
+  { K_S_HOME,  nv_home,        NV_SS|NV_MOTION,        0 },
+  { K_C_HOME,  nv_goto,        NV_SSS|NV_STS|NV_MOTION, false },
   { K_DEL,     nv_abbrev,      0,                      0 },
   { K_KDEL,    nv_abbrev,      0,                      0 },
   { K_UNDO,    nv_kundo,       0,                      0 },
@@ -429,6 +430,14 @@ bool nv_nchar_is_arg(int cmdchar)
 {
   int idx = find_command(cmdchar);
   return idx >= 0 && (nv_cmds[idx].cmd_flags & (NV_LANG|NV_NCH_ARG)) != 0;
+}
+
+/// True if `cmdchar` is a motion command. Multiplexed handlers (g, [, ], z) are classified by
+/// atom_key_class().
+bool nv_is_motion(int cmdchar)
+{
+  int idx = find_command(cmdchar);
+  return idx >= 0 && (nv_cmds[idx].cmd_flags & NV_MOTION) != 0;
 }
 
 /// Search for a command in the commands table.
@@ -1085,15 +1094,6 @@ normal_end:
 
 static int normal_execute(VimState *state, int key)
 {
-  // Like most things in Vim, `toplevel` is a lie: exec_normal() happily sets it to true (inherited
-  // from Vim). So we track `depth` instead.
-  // - depth=0: No command executing (idle, between commands, sitting in vgetc()).
-  // - depth=1: Outermost command-frame.
-  // - depth=2: First nested frame (e.g. the "dd" inside ":normal! dd").
-  // - depth=n: And so on...
-  static int depth = 0;
-  depth++;
-
   CmdFrame frame;
   atom_cmd_start(&frame);
 
@@ -1269,9 +1269,8 @@ static int normal_execute(VimState *state, int key)
 
 finish:
   normal_finish_command(s);
-  atom_cmd_end(&s->ca, &frame, depth == 1);
+  atom_cmd_end(&s->ca, &frame);
   xfree(s->ca.searchbuf);
-  depth--;
   return 1;
 }
 
@@ -1563,14 +1562,14 @@ void restore_visual_mode(void)
   }
 }
 
-/// Check for a balloon-eval special item to include when searching for an
-/// identifier.  When "dir" is BACKWARD "ptr[-1]" must be valid!
+/// Check for a <cexpr> special item to include when searching for an identifier: "ptr->arg",
+/// "list[idx]", "s.var".  When `dir` is BACKWARD `ptr[-1]` must be valid!
 ///
-/// @return  true if the character at "*ptr" should be included.
+/// @return  true if the character at `*ptr` should be included.
 ///
-/// @param dir    the direction of searching, is either FORWARD or BACKWARD
-/// @param *colp  is in/decremented if "ptr[-dir]" should also be included.
-/// @param bnp    points to a counter for square brackets.
+/// @param dir    Direction of searching, either FORWARD or BACKWARD.
+/// @param *colp  Is in/decremented if "ptr[-dir]" should also be included.
+/// @param bnp    Points to a counter for square brackets.
 static bool find_is_eval_item(const char *const ptr, int *const colp, int *const bnp, const int dir)
 {
   // Accept everything inside [].
@@ -1615,7 +1614,7 @@ static bool find_is_eval_item(const char *const ptr, int *const colp, int *const
 ///        - FIND_IDENT:   find an identifier (keyword)
 ///        - FIND_STRING:  find any non-white text
 ///        - FIND_IDENT + FIND_STRING: find any non-white text, identifier preferred.
-///        - FIND_EVAL:  find text useful for C program debugging
+///        - FIND_EVAL:    also include "->", "[]" and "." (<cexpr>)
 /// @param offset  If not NULL, gets cursor position relative to start of `text`.
 /// @return  Text length, or zero if no text is found.
 size_t find_ident_under_cursor(char **text, int find_type, int *offset)

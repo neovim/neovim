@@ -71,8 +71,8 @@ struct CmdAtom {
   int undoseq;    ///< Undo state at settlement. Not monotonic (decreases on undo).
   bool changed;   ///< The command changed the buffer.
   bool moved;     ///< The command moved the cursor.
-  bool remap;     ///< Replay `keys` w/ remap. For replay of a payload mapping (vim-surround "ds'"),
-                  ///< which edits invisibly (:norm/Ex) and must rerun LHS instead of resolved keys.
+  bool remap;     ///< If true, `keys` cannot replay: payload mapping (vim-surround "ds'") edits
+                  ///< invisibly (:norm/Ex). Must replay `lhs` instead.
 };
 
 /// Key classes (atom_key_class()).

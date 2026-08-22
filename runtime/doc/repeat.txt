@@ -53,52 +53,69 @@ produced.
 	INPUT (`lhs`)	RESOLUTION (`keys`) ~
 	dw		"dw"		Not translated.
 	zfa{		"zfa{"		Not an edit (`changed=false`).
-	x		"dl"		Translated builtin
-	,d		"dl"		Mapping `:nnoremap ,d x`
-	@q		"dl"		Macro `@q = "x"`
+	x		"dl"		Translated builtin.
+	,d		"dl"		Mapping `:nnoremap ,d x`.
+	@q		"dl"		Macro `@q = "x"`.
 	<F6>		"dlw"		Composite `:nnoremap <F6> xw`:
 					`type='mapping'`, subatoms "dl" and "w"
 					concat to the composite keys.
-	ds)		":call …<CR>"	"Payload" mapping (reads |getchar()|
-					e.g. vim-surround "ds'"), `remap=true`
-	]q		""		Lua mapping, `remap=true`
-	,D		""		Incomplete mapping (ended mid-
-					operation) `:nnoremap ,D d`,
-					`pending='operator'`, the NEXT atom
-					("dw") completes it
+	,Dw		"dw"		Incomplete mapping: ended mid-
+					operation (`:nnoremap ,D d`),
+					captures its continuation ("w").
+	ds)		":call …<NL>)"	"Payload" mapping (e.g. vim-surround
+					"ds'" reads |getchar()|).
+	]q		nil		Lua mapping.
 	V<C-E>d		""		Unreplayable: viewport-dependent
 					Visual sequence; `lhs` is only
 					a hint/label.
 
-To repeat an atom, feed `keys` (mode "n"), or `lhs` (mode "m").  Empty `keys`
-without `remap` means the atom is unreplayable. >lua
+To repeat an atom, feed `keys` (mode "n"), or `lhs` (mode "m") if `keys=nil`. >lua
 
     local function replay(a)
-      if not a.remap and a.keys == '' then
-        return -- Unreplayable Visual op.
-      end
-      vim.api.nvim_feedkeys(a.remap and a.lhs or a.keys, a.remap and 'm' or 'n', false)
+      vim.api.nvim_feedkeys(a.keys or a.lhs, a.keys and 'n' or 'm', false)
     end
 <
 							*motion-repeat*
 Example: This "," mapping repeats the last "motion" ("zj", "3w", "fx",
-"/pat<CR>", "]c") by checking `(moved and not changed)`. Drop the
-`not ev.data.moved` condition to repeat any non-edit ("zz", "zfa{", CTRL-W_w): >lua
+"/pat<CR>", "]c"). Drop the `pattern` to repeat any non-edit action, motion or
+not ("zz", "zfa{", CTRL-W_w): >lua
 
     local last ---@type vim.event.cmdatom.data?
     vim.api.nvim_create_autocmd('CmdAtom', {
+      pattern = 'motion',
       callback = function(ev)
-        if not ev.data.moved or ev.data.changed or ev.data.lhs == ',' then
-          return -- Skip non-motions, edits, and this mapping itself.
+        if ev.data.changed or ev.data.lhs == ',' then
+          return -- Skip edits, and this mapping itself.
         end
         last = ev.data
       end,
     })
     vim.keymap.set('n', ',', function()
-      -- CmdAtom is deferred: schedule the replay, in case "," follows a motion.
+      -- CmdAtom is deferred; schedule the replay, in case "," follows a motion.
       vim.schedule(function()
         if last then
-          replay(last)
+          vim.api.nvim_feedkeys(last.keys or last.lhs, last.keys and 'n' or 'm', false)
+        end
+      end)
+    end)
+<
+							*dot-repeat*
+Example: This "." mapping repeats ANY edit, including operations provided by
+plugins, without the need for "announcement" via vim-repeat or similar. >lua
+
+    local last ---@type vim.event.cmdatom.data?
+    vim.api.nvim_create_autocmd('CmdAtom', {
+      callback = function(ev)
+        if ev.data.changed and ev.data.lhs ~= '.' then
+          last = ev.data
+        end
+      end,
+    })
+    vim.keymap.set('n', '.', function()
+      -- CmdAtom is deferred; schedule the replay, in case "." follows an edit.
+      vim.schedule(function()
+        if last then
+          vim.api.nvim_feedkeys(last.keys or last.lhs, last.keys and 'n' or 'm', false)
         end
       end)
     end)
