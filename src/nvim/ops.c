@@ -479,18 +479,21 @@ static void shift_block(oparg_T *oap, int amount)
 
     int tabs = 0;
     int spaces = 0;
+
+    // if we're splitting a TAB, allow for it
+    const int col_pre = bd.pre_whitesp_c - (bd.startspaces != 0);
+    bd.textcol -= col_pre;
+
     // OK, now total=all the VWS reqd, and textstart points at the 1st
     // non-ws char in the block.
-    if (!curbuf->b_p_et) {
+    char *first_nonblank = skipwhite(oldp);
+    bool in_indent = (first_nonblank - oldp) >= bd.textcol;
+    if (!curbuf->b_p_et && !(curbuf->b_p_eta && !in_indent)) {
       tabstop_fromto(ws_vcol, ws_vcol + total,
                      ts_val, curbuf->b_p_vts_array, &tabs, &spaces);
     } else {
       spaces = total;
     }
-
-    // if we're splitting a TAB, allow for it
-    const int col_pre = bd.pre_whitesp_c - (bd.startspaces != 0);
-    bd.textcol -= col_pre;
 
     const int new_line_len  // the length of the line after the block shift
       = bd.textcol + tabs + spaces + (old_line_len - (int)(bd.textstart - oldp));

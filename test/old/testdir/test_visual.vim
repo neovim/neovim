@@ -134,8 +134,32 @@ func Test_block_shift_tab()
   setlocal shiftwidth=2 expandtab
   exe "normal gg\<C-V>3j>"
   call assert_equal(["        1", "        2", "        3"], getline(1, '$'))
-  setlocal shiftwidth&
 
+  " Test for block shift with <Tab>s in indent and spaces in align part with
+  " 'noexpandtab' and 'expandtabalign'
+  %d _
+  setlocal tabstop=8 shiftwidth=8 noexpandtab expandtabalign
+  call setline(1, ['aaa', 'bbb'])
+  call cursor(1, 1)
+  exe "normal \<C-V>j2>"
+  call assert_equal(["\t\taaa", "\t\tbbb"], getline(1, 2))
+  call cursor(1, 1)
+  exe "normal \<C-V>j<"
+  call assert_equal(["\taaa", "\tbbb"], getline(1, 2))
+
+  %d _
+  setlocal tabstop=4 shiftwidth=4
+  call setline(1, ['x   aaa', 'x   bbb'])
+  call cursor(1, 5)
+  exe "normal \<C-V>j>>"
+  call assert_equal(['x       aaa',
+        \            'x       bbb'], getline(1, 2))
+  call cursor(1, 5)
+  exe "normal \<C-V>j<"
+  call assert_equal(['x   aaa',
+        \            'x   bbb'], getline(1, 2))
+
+  setlocal shiftwidth& tabstop& expandtab& expandtabalign&
   bw!
 endfunc
 
