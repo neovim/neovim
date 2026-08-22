@@ -597,15 +597,17 @@ list_vimpatch_tokens() {
 # Filter reverted Vim tokens.
 list_vimpatch_numbers() {
   local patch_pat='(8\.[12]|9\.[0-9])\.[0-9]{1,4}'
-  diff "${NVIM_SOURCE_DIR}/scripts/vimpatch_token_reverts.txt" <(
-    _git -C "${NVIM_SOURCE_DIR}" log --format="%s%n%b" -E --grep="^[* ]*vim-patch:${patch_pat}" |
+  diff "${NVIM_SOURCE_DIR}/scripts/vimpatch_commit_ignore.txt" <(
+    _git -C "${NVIM_SOURCE_DIR}" log --format="%H" -E --grep="^[* ]*vim-patch:${patch_pat}"
+  ) |
+    grep -e '^> ' |
+    sed -e 's/^> //' |
+    _git -C "${NVIM_SOURCE_DIR}" log --no-walk --stdin --format="%s%n%b" |
     grep -oE "^[* ]*vim-patch:${patch_pat}" |
     sed -nEe 's/^[* ]*vim-patch:('"${patch_pat}"').*$/\1/p' |
     awk '{split($0, a, "."); printf "%d.%d.%04d\n", a[1], a[2], a[3]}' |
     sort |
-    uniq ) |
-    grep -e '^> ' |
-    sed -e 's/^> //'
+    uniq
 }
 
 declare -A tokens
@@ -928,11 +930,12 @@ is_na_patch() {
   for file in $FILES_REMAINING; do
     case ${file} in
       runtime/doc/*.txt | runtime/pack/dist/opt/*/doc/*.txt)
+        # TODO(@janlazo): ignore (multi-line) phrases based on regexp '{.\+ \(available\|compiled\) \(with\|without\) .\+}'
         HUNKS=$(git -c core.attributesfile="$NVIM_SOURCE_DIR"/.gitattributes -c 'diff.helphelp.xfuncname=^.*\*[^*]+\*$' -C "${VIM_SOURCE_DIR}" \
           diff-tree --no-commit-id -r -b -U0 \
           '-I^\s+$' \
           '-I^=+$' \
-          '-I^\|:redrawtabpanel|' \
+          '-I^\|:redrawtabpanel\|' \
           '-I^\|popup_[_a-z]+\(\)\|' \
           '-I^popup_[_a-z]+\(' \
           '-I\*\s+For Vim version [0-9]\.[0-9]\.\s+Last change: [0-9]+ [A-Z][a-z]+ [0-9]+' \
@@ -940,12 +943,9 @@ is_na_patch() {
           '-I\|popup-windows\|' \
           '-I\|tabpanel\|' \
           '-I\spopup window\s' \
-          "$patch" -- "${file}" |
-          grep -v -e '{.\+ \(available\|compiled\) \(with\|without\) .\+}' |
-          grep -Pzo '(?<=\n)@@ -[0-9][^@\n]+\+[0-9][^@\n]* @@[^@\n]*\n(?=([-+][^\n]*\n)+(@|$))' |
-          tr '\0' '\n')
+          "$patch" -- "${file}")
         if test -n "$HUNKS"; then
-          HUNK_NUM_FINAL=$(echo "$HUNKS" | sed 's/^@@ .* @@ //' | grep -cv -f "$NA_HUNKS_VIM")
+          HUNK_NUM_FINAL=$(echo "$HUNKS" | grep '^@@ .* @@' | sed 's/^@@ .* @@ //' | grep -cv -f "$NA_HUNKS_VIM")
           test "$HUNK_NUM_FINAL" -ne 0 && return 1
         fi
         ;;
@@ -1001,10 +1001,9 @@ is_na_patch() {
           '-I\slist_T\s+\*w_popup_mask;' \
           '-I\spopclose_T\sw_popup_close;' \
           '-I\s\*?w_popup_prop_[_a-z]+;' \
-          "$patch" -- "${file}" |
-          grep '^@@ .* @@')
+          "$patch" -- "${file}")
         if test -n "$HUNKS"; then
-          HUNK_NUM_FINAL=$(echo "$HUNKS" | sed 's/^@@ .* @@ //' | grep -cv -f "$NA_HUNKS_H")
+          HUNK_NUM_FINAL=$(echo "$HUNKS" | grep '^@@ .* @@' | sed 's/^@@ .* @@ //' | grep -cv -f "$NA_HUNKS_H")
           test "$HUNK_NUM_FINAL" -ne 0 && return 1
         fi
         ;;
@@ -1031,10 +1030,9 @@ is_na_patch() {
           '-Icrypt_get_method_nr\(.+\)' \
           '-I\spopup_set_firstline\(.+\);' \
           '-I\svim_free\(.*w_popup_title\);' \
-          "$patch" -- "${file}" |
-          grep '^@@ .* @@')
+          "$patch" -- "${file}")
         if test -n "$HUNKS"; then
-          HUNK_NUM_FINAL=$(echo "$HUNKS" | sed 's/^@@ .* @@ //' | grep -cv -f "$NA_HUNKS_C")
+          HUNK_NUM_FINAL=$(echo "$HUNKS" | grep '^@@ .* @@' | sed 's/^@@ .* @@ //' | grep -cv -f "$NA_HUNKS_C")
           test "$HUNK_NUM_FINAL" -ne 0 && return 1
         fi
         ;;
