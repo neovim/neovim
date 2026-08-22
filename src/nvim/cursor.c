@@ -8,6 +8,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/change.h"
 #include "nvim/cursor.h"
+#include "nvim/decoration_provider.h"
 #include "nvim/drawscreen.h"
 #include "nvim/fold.h"
 #include "nvim/globals.h"
@@ -104,6 +105,10 @@ static int coladvance2(win_T *wp, pos_T *pos, bool addspaces, bool finetune, col
                  || (Visual.active && *p_sel != 'o')
                  || ((get_ve_flags(wp) & kOptVeFlagOnemore) && wcol < MAXCOL);
 
+  // Add provider conceal to the marktree before reading "line" below: the `_on_conceal` callback
+  // can mutate the buffer, which would otherwise invalidate "line" partway through this function.
+  decor_providers_invoke_conceal(wp, pos->lnum - 1);
+
   char *line = ml_get_buf(wp->w_buffer, pos->lnum);
   int linelen = ml_get_buf_len(wp->w_buffer, pos->lnum);
 
@@ -143,15 +148,23 @@ static int coladvance2(win_T *wp, pos_T *pos, bool addspaces, bool finetune, col
 
     CharsizeArg csarg;
     CSType cstype = init_charsize_arg(&csarg, wp, pos->lnum, line);
+    // Track conceal-hidden width so 'linebreak'/'showbreak'/'breakindent' row-boundary math sees
+    // the screen-layout position on a concealed line: coladvance2() is getvcol()'s inverse and must
+    // agree with it, or a screen-column-derived target vcol can land one row short.
+    ConcealWalk walk;
+    conceal_walk_start(&csarg, &walk);
+    line = csarg.line;
     StrCharInfo ci = utf_ptr2StrCharInfo(line);
     col = 0;
     while (col <= wcol && *ci.ptr != NUL) {
       CharSize cs = win_charsize(cstype, col, ci.ptr, ci.chr.value, &csarg);
       csize = cs.width;
       head = cs.head;
+      conceal_walk_advance(&csarg, &walk, (int)(ci.ptr - line), cs);
       col += cs.width;
       ci = utfc_next(ci);
     }
+    conceal_walk_end(&csarg, &walk);
     idx = (int)(ci.ptr - line);
 
     // Handle all the special cases.  The virtual_active() check

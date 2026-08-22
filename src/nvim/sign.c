@@ -117,7 +117,7 @@ static void buf_set_sign(buf_T *buf, uint32_t *id, char *group, int prio, linenr
   sign.priority = (DecorPriority)prio;
 
   bool has_hl = (sp->sn_line_hl || sp->sn_num_hl || sp->sn_cul_hl);
-  uint16_t decor_flags = (sp->sn_text[0] ? MT_FLAG_DECOR_SIGNTEXT : 0)
+  uint32_t decor_flags = (sp->sn_text[0] ? MT_FLAG_DECOR_SIGNTEXT : 0)
                          | (has_hl ? MT_FLAG_DECOR_SIGNHL : 0);
 
   DecorInline decor = { .ext = true, .data.ext = { .vt = NULL, .sh_idx = decor_put_sh(sign) } };

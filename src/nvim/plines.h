@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "nvim/decoration.h"
 #include "nvim/marktree_defs.h"
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
@@ -14,6 +15,34 @@ enum {
   kCharsizeFast,
 };
 
+typedef struct {
+  DecorState anchor;
+  DecorState next;
+  DecorState width;
+  bool anchor_initialized;
+  bool anchor_active;
+  bool next_initialized;
+  bool next_active;
+  bool width_initialized;
+  bool width_active;
+  bool next_cached;
+  int next_start;
+  int next_end;
+  int next_char;
+} LinebreakState;
+
+/// Conceal-awareness spans two column domains:
+///
+/// - "vcol" (virtual column): position in the buffer's own coordinate space, as if nothing were
+///   concealed. What most of this file computes and returns.
+/// - "screen-layout column" ("scr_vcol" in charsize_regular()): "vcol" minus the cells hidden by
+///   persistent (marktree) conceal so far on the line, tracked in "scr_vcol_offset" below.
+///   'showbreak'/'breakindent'/'linebreak' row boundaries use it; 'tabstop' width does not, since
+///   concealing text before a tab must not shrink the tab stop.
+///
+/// Callers keep "vcol" raw and let ConcealWalk maintain "scr_vcol_offset"; charsize_regular()
+/// derives scr_vcol from the two.
+///
 /// Argument for char size functions.
 typedef struct {
   win_T *win;
@@ -30,14 +59,41 @@ typedef struct {
   int cur_text_width_right;  ///< Width of virtual text right of cursor.
 
   int max_head_vcol;         ///< See charsize_regular().
+  int scr_vcol_offset;       ///< Cells hidden by conceal so far, 0 when not conceal-aware.
   MarkTreeIter iter[1];
+
+  int row;                   ///< Buffer row (lnum - 1), or -1 for a bare string.
+  bool maybe_conceal;        ///< Line may have persistent conceal hiding cells.
+  LinebreakState *linebreak_state;  ///< Monotonic conceal lookahead state, if walking a line.
 } CharsizeArg;
 
 typedef struct {
   int width;
+  int body;  ///< Character and inline virtual text, excluding wrap prefixes and linebreak tail.
   int head;  ///< Size of 'breakindent' etc. before the character (included in width).
   int tail;  ///< Size of 'linebreak' after the character (included in width).
+  bool linebreak;  ///< This character ends a break run followed by a word.
 } CharSize;
+
+/// Tracks conceal-hidden width in csarg->scr_vcol_offset while a caller walks a line's characters.
+///
+/// Usage: conceal_walk_start(), then per character (in buffer-column order): measure it, then
+/// conceal_walk_advance() with its column and size. conceal_walk_end() when done.
+typedef struct {
+  DecorState state;
+  LinebreakState linebreak;
+  bool active;
+} ConcealWalk;
+
+/// Resume point for extconceal_off_before(), so a caller querying one line at increasing positions
+/// measures each character once instead of once per query. Zero-initialize per line; holds no
+/// marktree iterator, so it stays valid while other conceal walks run.
+typedef struct {
+  colnr_T col;     ///< Bytes measured so far.
+  int vcol;        ///< Virtual column at "col".
+  colnr_T hidden;  ///< Cells hidden by conceal before "col".
+  bool provider_ready;  ///< Provider conceal is already in the marktree.
+} ConcealOffState;
 
 #include "plines.h.generated.h"
 #include "plines.h.inline.generated.h"
@@ -58,6 +114,46 @@ static inline CharSize win_charsize(CSType cstype, int vcol, char *ptr, int32_t 
     return charsize_fast(csarg, ptr, vcol, chr);
   } else {
     return charsize_regular(csarg, ptr, vcol, chr);
+  }
+}
+
+/// May run an `_on_conceal` callback that frees the line buffer, so re-read csarg->line after this
+/// call; it is refreshed here.
+///
+/// @return true if conceal tracking is active for csarg's line (csarg->maybe_conceal).
+static inline bool conceal_walk_start(CharsizeArg *csarg, ConcealWalk *walk)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
+{
+  walk->linebreak = (LinebreakState){ 0 };
+  csarg->linebreak_state = &walk->linebreak;
+  walk->active = linesize_conceal_start(csarg, &walk->state);
+  csarg->scr_vcol_offset = 0;
+  return walk->active;
+}
+
+/// Call once per character, right after measuring it, in increasing "col" order.
+///
+/// @return cells of "cs.body" hidden by conceal for this character (0 if visible or inactive).
+static inline int conceal_walk_advance(CharsizeArg *csarg, ConcealWalk *walk, int col, CharSize cs)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
+{
+  if (!walk->active) {
+    return 0;
+  }
+  int const hidden = linesize_conceal_hidden(csarg, &walk->state, col, cs.body);
+  csarg->scr_vcol_offset += hidden;
+  return hidden;
+}
+
+static inline void conceal_walk_end(CharsizeArg *csarg, ConcealWalk *walk)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
+{
+  linebreak_state_end(&walk->linebreak);
+  if (csarg->linebreak_state == &walk->linebreak) {
+    csarg->linebreak_state = NULL;
+  }
+  if (walk->active) {
+    linesize_conceal_end(&walk->state);
   }
 }
 
@@ -89,7 +185,7 @@ static inline int win_linetabsize(win_T *wp, linenr_T lnum, char *line, colnr_T 
   if (cstype == kCharsizeFast) {
     return linesize_fast(&csarg, 0, len);
   } else {
-    return linesize_regular(&csarg, 0, len);
+    return linesize_regular(&csarg, 0, len, false);
   }
 }
 

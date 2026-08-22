@@ -126,7 +126,7 @@ static int key_cmp(MTKey a, MTKey b)
   }
 
   // TODO(bfredl): MT_FLAG_REAL could go away if we fix marktree_getp_aux for real
-  const uint16_t cmp_mask = MT_FLAG_RIGHT_GRAVITY | MT_FLAG_END | MT_FLAG_REAL | MT_FLAG_LAST;
+  const uint32_t cmp_mask = MT_FLAG_RIGHT_GRAVITY | MT_FLAG_END | MT_FLAG_REAL | MT_FLAG_LAST;
   return mt_generic_cmp(a.flags & cmp_mask, b.flags & cmp_mask);
 }
 
@@ -305,9 +305,9 @@ void marktree_put(MarkTree *b, MTKey key, int end_row, int end_col, bool end_rig
 
   if (end_row >= 0) {
     MTKey end_key = key;
-    end_key.flags = (uint16_t)((uint16_t)(key.flags & ~MT_FLAG_RIGHT_GRAVITY)
-                               |(uint16_t)MT_FLAG_END
-                               |(uint16_t)(end_right ? MT_FLAG_RIGHT_GRAVITY : 0));
+    end_key.flags = (key.flags & ~MT_FLAG_RIGHT_GRAVITY)
+                    | MT_FLAG_END
+                    | (end_right ? MT_FLAG_RIGHT_GRAVITY : 0);
     end_key.pos = (MTPos){ end_row, end_col };
     marktree_put_key(b, end_key);
     MarkTreeIter itr[1] = { 0 };
@@ -456,6 +456,7 @@ static void meta_describe_key_inc(uint32_t *meta_inc, MTKey *k)
     meta_inc[kMTMetaLines] += (k->flags & MT_FLAG_DECOR_VIRT_LINES) ? 1 : 0;
     meta_inc[kMTMetaSignHL] += (k->flags & MT_FLAG_DECOR_SIGNHL) ? 1 : 0;
     meta_inc[kMTMetaSignText] += (k->flags & MT_FLAG_DECOR_SIGNTEXT) ? 1 : 0;
+    meta_inc[kMTMetaConceal] += (k->flags & MT_FLAG_DECOR_CONCEAL) ? 1 : 0;
     meta_inc[kMTMetaConcealLines] += (k->flags & MT_FLAG_DECOR_CONCEAL_LINES) ? 1 : 0;
   }
 }
@@ -1388,8 +1389,8 @@ void marktree_restore_pair(MarkTree *b, MTKey key)
     // this function will be called again for the other end.
     return;
   }
-  rawkey(itr).flags &= (uint16_t) ~MT_FLAG_ORPHANED;
-  rawkey(end_itr).flags &= (uint16_t) ~MT_FLAG_ORPHANED;
+  rawkey(itr).flags &= ~MT_FLAG_ORPHANED;
+  rawkey(end_itr).flags &= ~MT_FLAG_ORPHANED;
 
   marktree_intersect_pair(b, mt_lookup_key_side(key, false), itr, end_itr, false);
 }
@@ -1630,7 +1631,8 @@ static const uint32_t meta_map[kMTMetaCount] = {
   MT_FLAG_DECOR_VIRT_LINES,
   MT_FLAG_DECOR_SIGNHL,
   MT_FLAG_DECOR_SIGNTEXT,
-  MT_FLAG_DECOR_CONCEAL_LINES
+  MT_FLAG_DECOR_CONCEAL,
+  MT_FLAG_DECOR_CONCEAL_LINES,
 };
 static bool marktree_itr_check_filter(MarkTree *b, MarkTreeIter *itr, int stop_row, int stop_col,
                                       MetaFilter meta_filter)
@@ -2276,7 +2278,7 @@ static void marktree_itr_fix_pos(MarkTree *b, MarkTreeIter *itr)
 void marktree_put_test(MarkTree *b, uint32_t ns, uint32_t id, int row, int col, bool right_gravity,
                        int end_row, int end_col, bool end_right, bool meta_inline)
 {
-  uint16_t flags = mt_flags(right_gravity, false, false, false);
+  uint32_t flags = mt_flags(right_gravity, false, false, false);
   // The specific choice is irrelevant here, we pick one counted decor
   // type to test the counting and filtering logic.
   flags |= meta_inline ? MT_FLAG_DECOR_VIRT_TEXT_INLINE : 0;

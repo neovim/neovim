@@ -970,6 +970,7 @@ static void free_buffer(buf_T *buf)
   for (int i = 0; i < buf->b_changelistlen; i++) {
     free_fmark(buf->b_changelist[i]);
   }
+  map_destroy(uint32_t, buf->b_conceal_providers);
   if (autocmd_busy) {
     // Do not free the buffer structure while autocommands are executing,
     // it's still needed. Free it when autocmd_busy is reset.
@@ -1020,6 +1021,7 @@ static void free_buffer_stuff(buf_T *buf, int free_flags)
   }
   uc_clear(&buf->b_ucmds);               // clear local user commands
   extmark_free_all(buf);                 // delete any extmarks
+  map_clear(uint32_t, buf->b_conceal_providers);
   map_clear_mode(buf, MAP_ALL_MODES, true, false);  // clear local mappings
   map_clear_mode(buf, MAP_ALL_MODES, true, true);   // clear local abbrevs
   XFREE_CLEAR(buf->b_start_fenc);
