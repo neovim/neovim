@@ -240,26 +240,44 @@ size_t vterm_input_write(VTerm *vt, const char *bytes, size_t len)
 
       FALLTHROUGH;
     case CSI_ARGS:
+      // argi is never advanced past CSI_ARGS_MAX; arguments beyond that are
+      // parsed and discarded, keeping the args[] writes below in bounds.
+
       // Numerical value of argument
       if (c >= '0' && c <= '9') {
-        if (vt->parser.v.csi.args[vt->parser.v.csi.argi] == CSI_ARG_MISSING) {
-          vt->parser.v.csi.args[vt->parser.v.csi.argi] = 0;
+        if (vt->parser.v.csi.argi < CSI_ARGS_MAX) {
+          long *arg = &vt->parser.v.csi.args[vt->parser.v.csi.argi];
+          if (*arg == CSI_ARG_MISSING) {
+            *arg = 0;
+          }
+          // Saturate rather than overflow on a long run of digits
+          if (*arg < (long)CSI_ARG_MISSING / 10) {
+            *arg = *arg * 10 + (c - '0');
+          } else {
+            *arg = (long)CSI_ARG_MISSING - 1;
+          }
         }
-        vt->parser.v.csi.args[vt->parser.v.csi.argi] *= 10;
-        vt->parser.v.csi.args[vt->parser.v.csi.argi] += c - '0';
         break;
       }
       if (c == ':') {
-        vt->parser.v.csi.args[vt->parser.v.csi.argi] |= CSI_ARG_FLAG_MORE;
+        if (vt->parser.v.csi.argi < CSI_ARGS_MAX) {
+          vt->parser.v.csi.args[vt->parser.v.csi.argi] |= CSI_ARG_FLAG_MORE;
+        }
         c = ';';
       }
       if (c == ';') {
-        vt->parser.v.csi.argi++;
-        vt->parser.v.csi.args[vt->parser.v.csi.argi] = CSI_ARG_MISSING;
+        if (vt->parser.v.csi.argi < CSI_ARGS_MAX) {
+          vt->parser.v.csi.argi++;
+          if (vt->parser.v.csi.argi < CSI_ARGS_MAX) {
+            vt->parser.v.csi.args[vt->parser.v.csi.argi] = CSI_ARG_MISSING;
+          }
+        }
         break;
       }
 
-      vt->parser.v.csi.argi++;
+      if (vt->parser.v.csi.argi < CSI_ARGS_MAX) {
+        vt->parser.v.csi.argi++;
+      }
       vt->parser.intermedlen = 0;
       vt->parser.state = CSI_INTERMED;
       FALLTHROUGH;
