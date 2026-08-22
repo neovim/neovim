@@ -11,7 +11,7 @@ pub fn testStep(b: *std.Build, kind: []const u8, nvim_bin: *std.Build.Step.Compi
         }
     }
     test_step.addArg(b.fmt("-P{s}", .{b.install_path}));
-    // TODO(bfredl): investigate parallell test groups like in cmake
+    // TODO(bfredl): investigate parallel test groups like in cmake
     test_step.addArg(b.fmt("-X{s}/Xdg_dir", .{b.install_path}));
     test_step.addArg("-v");
     test_step.addArg(b.fmt("--helper=./test/{s}/preload.lua", .{kind}));
@@ -21,6 +21,9 @@ pub fn testStep(b: *std.Build, kind: []const u8, nvim_bin: *std.Build.Step.Compi
 
     const env = test_step.getEnvMap();
     try env.put("NVIM_TEST", "1");
+    if (env.get("NVIM_LOG_FILE") == null) {
+        try env.put("NVIM_LOG_FILE", b.fmt("{s}/nvim.log", .{b.install_path}));
+    }
 
     _ = env.swapRemove("NVIM");
     _ = env.swapRemove("XDG_DATA_DIRS");

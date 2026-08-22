@@ -34,7 +34,6 @@ if _G.arg[1] and vim.startswith(_G.arg[1], '-P') then
 end
 if _G.arg[1] and vim.startswith(_G.arg[1], '-X') then
   local xdg_dir = string.sub(table.remove(_G.arg, 1), 3)
-  vim.env.NVIM_LOG_FILE = xdg_dir .. '/Xtest_nvimlog'
   vim.env.NVIM_RPLUGIN_MANIFEST = xdg_dir .. '/Xtest_rplugin_manifest'
   vim.env.XDG_CONFIG_HOME = xdg_dir .. '/config'
   vim.env.XDG_DATA_HOME = xdg_dir .. '/share'
