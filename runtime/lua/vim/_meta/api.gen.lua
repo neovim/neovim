@@ -973,6 +973,8 @@ function vim.api.nvim_create_augroup(name, opts) end
 --- - group (`string|integer?`) Group name or id to match against.
 --- - nested (`boolean?`, default: false) Run nested autocommands `autocmd-nested`.
 --- - once (`boolean?`, default: false) Handle the event only once `autocmd-once`.
+---   If {event} is a list, one autocommand is created per event; each
+---   fires once (not once for the whole list).
 --- - pattern (`string|array?`) Pattern(s) to match literally `autocmd-pattern`.
 --- @return integer # Autocommand id (number)
 function vim.api.nvim_create_autocmd(event, opts) end
