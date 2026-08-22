@@ -160,6 +160,12 @@ local function has_completeopt(flag)
   return vim.list_contains(vim.opt.completeopt:get(), flag)
 end
 
+--- @param s string?
+--- @return string?
+local function nonempty(s)
+  return s ~= '' and s or nil
+end
+
 --- @param input string Unparsed snippet
 --- @return string # Parsed snippet if successful, else returns its input
 local function parse_snippet(input)
@@ -211,12 +217,10 @@ local function get_completion_word(item, prefix, match)
       --    label: insert
       --
       -- Typing `i` would remove the candidate because newText starts with `t`.
-      local text = parse_snippet(item.insertText or item.textEdit.newText)
+      local text = parse_snippet(nonempty(item.insertText) or item.textEdit.newText)
+      local filter_text = nonempty(item.filterText)
       local word = #text < #item.label and vim.fn.matchstr(text, '\\k*')
-        or (
-          item.filterText and vim.fn.match(item.label, '^\\k') == -1 and item.filterText
-          or item.label
-        )
+        or (filter_text and vim.fn.match(item.label, '^\\k') == -1 and filter_text or item.label)
       return fallback_filtertext(item, word, prefix, match)
     else
       return item.label
@@ -266,7 +270,10 @@ local function apply_defaults(item, defaults, apply_kind)
   if defaults.editRange then
     local textEdit = item.textEdit or {}
     item.textEdit = textEdit
-    textEdit.newText = textEdit.newText or item.textEditText or item.insertText or item.label
+    textEdit.newText = textEdit.newText
+      or item.textEditText
+      or nonempty(item.insertText)
+      or item.label
     if defaults.editRange.start then
       textEdit.range = textEdit.range or defaults.editRange
     elseif defaults.editRange.insert then
@@ -481,8 +488,9 @@ function M._lsp_to_complete_items(
   else
     ---@param item lsp.CompletionItem
     matches = function(item)
-      if item.filterText then
-        return match_item_by_value(item.filterText, prefix)
+      local filter_text = nonempty(item.filterText)
+      if filter_text then
+        return match_item_by_value(filter_text, prefix)
       end
 
       if item.textEdit and not item.textEdit.newText then
@@ -593,7 +601,7 @@ function M._lsp_to_complete_items(
       local itema = a.user_data.nvim.lsp.completion_item
       ---@type lsp.CompletionItem
       local itemb = b.user_data.nvim.lsp.completion_item
-      return (itema.sortText or itema.label) < (itemb.sortText or itemb.label)
+      return (nonempty(itema.sortText) or itema.label) < (nonempty(itemb.sortText) or itemb.label)
     end
 
     local use_fuzzy_sort = has_completeopt('fuzzy')
