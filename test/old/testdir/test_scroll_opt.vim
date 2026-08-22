@@ -1374,6 +1374,26 @@ func Test_smoothscroll_squeezed_window()
   bwipe!
 endfunc
 
+func Test_smoothscroll_lastline_no_jump()
+  call NewWindow(10, 40)
+  setlocal smoothscroll
+  set display=lastline
+  call setline(1, map(range(1, 9), {i, v -> 'short ' .. v})
+        \ + [repeat('long ', 60)] + repeat(['tail'], 5))
+  normal! gg
+  redraw
+  call assert_equal(1, line('w0'))
+
+  " The first screen line of the wrapping line is already visible.
+  normal! 9j
+  redraw
+  call assert_equal(10, line('.'))
+  call assert_equal(1, line('w0'))
+
+  set display&
+  bwipe!
+endfunc
+
 func Test_smoothscroll_long_line_zb()
   call NewWindow(10, 40)
   call setline(1, 'abcde '->repeat(150))

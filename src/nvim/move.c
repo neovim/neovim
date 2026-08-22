@@ -2011,6 +2011,14 @@ void scroll_cursor_bot(win_T *wp, int min_scroll, bool set_topbot)
   // The lines of the cursor line itself are always used.
   int used = plines_win_nofill(wp, cln, true);
 
+  if (do_sms && (dy_flags & kOptDyFlagLastline)) {
+    // The rest of the cursor line may be cut off at the bottom.
+    int upto_cursor = plines_win_col(wp, cln, wp->w_cursor.col);
+    if (upto_cursor < used) {
+      used = upto_cursor;
+    }
+  }
+
   int scrolled = 0;
   // If the cursor is on or below botline, we will at least scroll by the
   // height of the cursor line, which is "used".  Correct for empty lines,
