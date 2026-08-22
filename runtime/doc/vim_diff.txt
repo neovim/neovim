@@ -371,7 +371,8 @@ Functions:
 - |menu_get()|
 - |msgpackdump()|, |msgpackparse()| provide msgpack de/serialization
 - |stdpath()|
-- |system()|, |systemlist()| can run {cmd} directly (without 'shell')
+- |system()|, |systemlist()| can run {cmd} directly (without 'shell') and
+  accept a |Blob| as {input}
 - |matchadd()| can be called before highlight group is defined
 - |tempname()| tries to recover if the Nvim |tempdir| disappears.
 - |writefile()| with "p" flag creates parent directories.

@@ -671,15 +671,7 @@ static void f_chansend(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   bool crlf = (chan != NULL && chan->term) ? true : false;
 #endif
 
-  if (argvars[1].v_type == VAR_BLOB) {
-    const blob_T *const b = argvars[1].vval.v_blob;
-    input_len = tv_blob_len(b);
-    if (input_len > 0) {
-      input = xmemdup(b->bv_ga.ga_data, (size_t)input_len);
-    }
-  } else {
-    input = save_tv_as_string(&argvars[1], &input_len, false, crlf);
-  }
+  input = save_tv_as_string(&argvars[1], &input_len, false, crlf);
 
   if (!input) {
     // Either the error has been handled by save_tv_as_string(),
