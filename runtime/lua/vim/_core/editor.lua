@@ -802,6 +802,11 @@ end
 --- then an out of range index will return byte length
 --- instead of throwing an error.
 ---
+--- `"utf-8"` is Nvim's native string encoding, so this function is
+--- idempotent for that encoding: {index} is already a byte index and is
+--- returned unchanged. It is not a Unicode code-point index. Use
+--- `"utf-32"` to convert code-point indices to byte indices.
+---
 --- Invalid UTF-8 and NUL is treated like in |vim.str_utfindex()|.
 --- An {index} in the middle of a UTF-16 sequence is rounded upwards to
 --- the end of that sequence.
