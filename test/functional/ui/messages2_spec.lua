@@ -1346,4 +1346,44 @@ describe('messages2', function()
     end)
     screen:expect_unchanged()
   end)
+
+  it('correct end_row for highlights copied to pager #41419', function()
+    command('echo "a" | echo "b"') -- Two lines; end_row should be offset by 2
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*10
+      {3:                                                     }|
+      a                                                    |
+      b                                                    |
+    ]])
+    feed('g<lt>')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*9
+      {3:                                                     }|
+      ^a                                                    |
+      b                                                    |
+                                                           |
+    ]])
+    command('echohl WarningMsg | echo "c" | echohl ErrorMsg | echo "de"')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*7
+      {3:                                                     }|
+      ^a                                                    |
+      b                                                    |
+      {19:c}                                                    |
+      {9:de}                                                   |
+                                                           |
+    ]])
+    feed('g<lt>')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*9
+      {3:                                                     }|
+      {19:^c}                                                    |
+      {9:de}                                                   |
+                                                           |
+    ]])
+  end)
 end)

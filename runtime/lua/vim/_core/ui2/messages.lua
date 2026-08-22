@@ -239,7 +239,8 @@ function M.expand_msg(src, tgt, focus)
 
     api.nvim_buf_set_lines(ui.bufs[tgt], srow, -1, false, lines)
     for _, m in ipairs(marks) do
-      hlopts.hl_group, hlopts.end_col, hlopts.end_row = m[4].hl_group, m[4].end_col, m[4].end_row
+      hlopts.hl_group, hlopts.end_col, hlopts.end_row =
+        m[4].hl_group, m[4].end_col, srow + m[4].end_row
       api.nvim_buf_set_extmark(ui.bufs[tgt], ui.ns, srow + m[2], m[3], hlopts)
     end
   else
