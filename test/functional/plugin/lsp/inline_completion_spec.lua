@@ -84,6 +84,11 @@ describe('vim.lsp.inline_completion', function()
         },
         handlers = {
           ['textDocument/inlineCompletion'] = function(_, _, callback)
+            if _G.items then
+              callback(nil, { items = _G.items })
+              return
+            end
+
             if _G.empty then
               callback(nil, {
                 items = {
@@ -279,6 +284,38 @@ describe('vim.lsp.inline_completion', function()
           1,
         },
       }, result)
+    end)
+
+    it('does not leave behind text typed since the request', function()
+      exec_lua(function()
+        _G.items = {
+          {
+            insertText = 'foobar',
+            range = {
+              start = { line = 1, character = 0 },
+              ['end'] = { line = 1, character = 1 },
+            },
+          },
+        }
+      end)
+      feed('ifo')
+      screen:expect([[
+        function fibonacci()                                 |
+        fo{1:^obar}                                               |
+        {1:~                                                    }|*11
+        {3:-- INSERT --}                                         |
+      ]])
+      exec_lua(function()
+        vim.lsp.inline_completion.get()
+      end)
+      n.poke_eventloop()
+      feed('<Esc>')
+      screen:expect([[
+        function fibonacci()                                 |
+        fooba^r                                               |
+        {1:~                                                    }|*11
+                                                             |
+      ]])
     end)
   end)
 
