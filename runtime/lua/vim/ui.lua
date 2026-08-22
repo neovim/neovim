@@ -199,6 +199,8 @@ function M.open(path, opt)
     if open_cmd[1] == 'xdg-open' then
       job_opt.stdout = false
       job_opt.stderr = false
+    elseif open_cmd[1] == 'cmd.exe' and is_uri then
+      path = path:gsub('([&|<>^%%!])', '^%1') -- Escape cmd.exe special chars. #41337
     end
     cmd = vim.list_extend(open_cmd, { path })
   end
