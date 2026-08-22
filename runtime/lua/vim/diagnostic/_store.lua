@@ -196,7 +196,7 @@ function M.get_diagnostics(bufnr, opts, clamp)
   --- @param buf integer
   --- @param diags vim.Diagnostic[]
   local function add_all_diags(buf, diags)
-    for _, diagnostic0 in pairs(diags) do
+    for _, diagnostic0 in ipairs(diags) do
       add(buf, diagnostic0)
     end
   end

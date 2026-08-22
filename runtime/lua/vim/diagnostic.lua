@@ -800,10 +800,42 @@ local function get_qf_id_for_title(title)
   return nil
 end
 
+--- @param a vim.Diagnostic
+--- @param b vim.Diagnostic
+--- @return boolean
+local function default_sort(a, b)
+  if a.bufnr ~= b.bufnr then
+    return a.bufnr < b.bufnr
+  elseif a.lnum ~= b.lnum then
+    return a.lnum < b.lnum
+  end
+  return a.col < b.col
+end
+
+--- Stable |table.sort()|.
+--- @param diagnostics vim.Diagnostic[]
+--- @param cmp fun(a: vim.Diagnostic, b: vim.Diagnostic): boolean
+local function stable_sort(diagnostics, cmp)
+  local order = {} --- @type table<vim.Diagnostic,integer>
+  for i, diagnostic in ipairs(diagnostics) do
+    order[diagnostic] = i
+  end
+
+  table.sort(diagnostics, function(a, b)
+    if cmp(a, b) then
+      return true
+    elseif cmp(b, a) then
+      return false
+    end
+    return order[a] < order[b]
+  end)
+end
+
 --- @param loclist boolean
 --- @param opts? vim.diagnostic.setqflist.Opts|vim.diagnostic.setloclist.Opts
 local function set_list(loclist, opts)
   opts = opts or {}
+  vim.validate('sort', opts.sort, { 'boolean', 'function' }, true)
   local open = vim.nonnil(opts.open, true)
   local title = opts.title or 'Diagnostics'
   local winnr = opts.winnr or 0
@@ -818,6 +850,12 @@ local function set_list(loclist, opts)
   if opts.format then
     diagnostics = require('vim.diagnostic._shared').reformat_diagnostics(opts.format, diagnostics)
   end
+
+  if opts.sort ~= false then
+    local cmp = opts.sort
+    stable_sort(diagnostics, type(cmp) == 'function' and cmp or default_sort)
+  end
+
   local items = M.toqflist(diagnostics)
   local qf_id = nil
   if loclist then
@@ -870,6 +908,11 @@ end
 --- If the return value is nil, the diagnostic is not displayed in the quickfix list.
 --- Else the output text is used to display the diagnostic.
 --- @field format? fun(diagnostic:vim.Diagnostic): string?
+---
+--- Sort by buffer number, then line, then column. `false` preserves the order of
+--- `vim.diagnostic.get()`. A function is used as the comparator; sorting is stable.
+--- (default: `true`)
+--- @field sort? boolean|fun(a: vim.Diagnostic, b: vim.Diagnostic): boolean
 
 --- Add all diagnostics to the quickfix list.
 ---
@@ -903,6 +946,11 @@ end
 --- If the return value is nil, the diagnostic is not displayed in the location list.
 --- Else the output text is used to display the diagnostic.
 --- @field format? fun(diagnostic:vim.Diagnostic): string?
+---
+--- Sort by buffer number, then line, then column. `false` preserves the order of
+--- `vim.diagnostic.get()`. A function is used as the comparator; sorting is stable.
+--- (default: `true`)
+--- @field sort? boolean|fun(a: vim.Diagnostic, b: vim.Diagnostic): boolean
 
 --- Add buffer diagnostics to the location list.
 ---
@@ -1005,6 +1053,8 @@ end
 --- Convert a list of diagnostics to a list of quickfix items that can be
 --- passed to |setqflist()| or |setloclist()|.
 ---
+--- The order of {diagnostics} is preserved.
+---
 ---@param diagnostics vim.Diagnostic[]
 ---@return table[] : Quickfix list items |setqflist-what|
 function M.toqflist(diagnostics)
@@ -1024,18 +1074,6 @@ function M.toqflist(diagnostics)
       valid = 1,
     }
   end
-
-  table.sort(list, function(a, b)
-    if a.bufnr == b.bufnr then
-      if a.lnum == b.lnum then
-        return a.col < b.col
-      end
-
-      return a.lnum < b.lnum
-    end
-
-    return a.bufnr < b.bufnr
-  end)
 
   return list
 end
