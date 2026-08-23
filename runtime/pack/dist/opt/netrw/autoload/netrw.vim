@@ -1,7 +1,7 @@
 " Creator:    Charles E Campbell
 " Previous Maintainer: Luca Saccarola <github.e41mv@aleeas.com>
 " Maintainer: This runtime file is looking for a new maintainer.
-" Last Change: 2026 Jul 23
+" Last Change: 2026 Aug 21
 " Copyright:  Copyright (C) 2016 Charles E. Campbell {{{1
 "             Permission is hereby granted to use and distribute this code,
 "             with or without modifications, provided that this copyright
@@ -4494,7 +4494,7 @@ function s:NetrwHome()
         if exists("g:netrw_mkdir")
             call system(g:netrw_mkdir." ".s:ShellEscape(s:NetrwFile(home)))
         else
-            call mkdir(home)
+            call mkdir(home, 'p')
         endif
     endif
 

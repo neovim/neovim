@@ -196,6 +196,11 @@ function Test_NetrwMarkFile_match_pattern_rebuild()
 
   bw
 endfunction
+
+" Test the "home" directory used for bookmarks and history
+function Test_NetrwHome() abort
+    return s:NetrwHome()
+endfunction
 " }}}
 END
 
@@ -919,6 +924,57 @@ func Test_netrw_open_no_dir_arg()
   Explore
   call assert_equal(fnamemodify(dir, ':p'), fnamemodify(b:netrw_curdir, ':p'))
   bw!
+endfunc
+
+func Test_netrw_home_setting()
+  let save_home = get(g:, 'netrw_home', '')
+  let dir = fnamemodify('XnetrwHome', ':p')
+  let vimdir = fnamemodify('XvimDir', ':p')
+  let subdir = fnamemodify('XnetrwHomeParent/XnetrwHome', ':p')
+  if has('win32')
+    let dir = substitute(dir, '/', '\\', 'g')
+    let vimdir = substitute(vimdir, '/', '\\', 'g')
+    let subdir = substitute(subdir, '/', '\\', 'g')
+  endif
+  let save_myvimdir = getenv('MYVIMDIR')
+  let $MYVIMDIR = vimdir
+
+  unlet! g:netrw_home
+  if has('nvim')
+    let expected = netrw#fs#PathJoin(stdpath('state'), 'netrw')
+    if has('win32')
+      let expected = substitute(expected, '/', '\\', 'g')
+    endif
+    call assert_equal(expected, Test_NetrwHome())
+  else
+    " without the setting $MYVIMDIR is used
+    call assert_equal(vimdir, Test_NetrwHome())
+  endif
+
+  let g:netrw_home = dir
+  call assert_equal(dir, Test_NetrwHome())
+  call assert_true(isdirectory(dir))
+
+  let g:netrw_home = subdir
+  call assert_equal(subdir, Test_NetrwHome())
+  call assert_true(isdirectory(subdir))
+
+  " the value is expanded
+  let $NETRW_TEST_HOME = dir
+  let g:netrw_home = '$NETRW_TEST_HOME'
+  call assert_equal(dir, Test_NetrwHome())
+
+  call delete(dir, 'd')
+  call delete(vimdir, 'd')
+  call delete(subdir, 'd')
+  call delete(fnamemodify(subdir, ':h'), 'd')
+  unlet $NETRW_TEST_HOME
+  call setenv('MYVIMDIR', save_myvimdir)
+  if empty(save_home)
+    unlet! g:netrw_home
+  else
+    let g:netrw_home = save_home
+  endif
 endfunc
 
 " vim:ts=8 sts=2 sw=2 et
