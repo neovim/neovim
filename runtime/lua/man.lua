@@ -257,12 +257,15 @@ function M._match_manpage_path(paths, name, sect)
     return
   end
 
-  -- `man -w /some/path` will return `/some/path` for any existent file, which
-  -- stops us from actually determining if a path has a corresponding man file.
-  -- Since `:Man /some/path/to/man/file` isn't supported anyway, we should just
-  -- error out here if we detect this is the case.
+  -- `man -w /some/path` echoes the input for any existent file. Accept only
+  -- paths that look like a man page (`.../man1/bash.1`). #30873
   if sect == '' and #paths == 1 and paths[1] == name then
-    return
+    local tail = vim.fs.basename(name)
+    local parent = vim.fs.basename(vim.fs.dirname(name))
+    if not (parent:find('^man') and tail:find('%.%d')) then
+      return
+    end
+    return name
   end
 
   -- find any that match the specified name
