@@ -691,6 +691,12 @@ function M._convert_results(
   --
   local candidates = get_items(result)
   local curstartbyte = adjust_start_col(lnum, line, candidates, encoding)
+    -- A server completion edit range may include the receiver of a member
+  -- expression. `complete()` must only replace the word being completed.
+  if curstartbyte ~= nil then
+    curstartbyte = math.max(curstartbyte, client_start_boundary)
+  end
+
   if server_start_boundary == nil then
     server_start_boundary = curstartbyte
   elseif curstartbyte ~= nil and curstartbyte ~= server_start_boundary then
@@ -1133,7 +1139,8 @@ local function trigger(bufnr, clients, ctx)
       table.sort(matches, user_cmp)
     end
 
-    local start_col = (server_start_boundary or word_boundary) + 1
+    local start_col = math.max(server_start_boundary or word_boundary, word_boundary) + 1
+
     Context.cursor = { cursor_row, start_col }
     if #matches > 0 and has_completeopt('popup') then
       local group = get_augroup(bufnr)
