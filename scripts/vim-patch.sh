@@ -1002,6 +1002,7 @@ is_na_patch() {
           '-I\s(bool|char(|_u))\s+w_popup_image_[_a-zA-Z]+;' \
           '-I\schar(|_u)\s+\*w_popup_title;' \
           '-I\sint\s+ch_[_a-zA-Z]+;' \
+          '-I\sint\s+sv_const;' \
           '-I\sint\s+w_(filter_mode|firstline|popup_drag|want_scrollbar);' \
           '-I\slist_T\s+\*w_popup_mask;' \
           '-I\spopclose_T\sw_popup_close;' \
@@ -1034,6 +1035,7 @@ is_na_patch() {
           '-Icheck_typval_type\(.+\)' \
           '-Icrypt_get_method_nr\(.+\)' \
           '-I\spopup_set_firstline\(.+\);' \
+          '-I\supdate_vim9_script_var\(.+\);$' \
           '-I\svim_free\(.*w_popup_title\);' \
           "$patch" -- "${file}")
         if test -n "$HUNKS"; then
