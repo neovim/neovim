@@ -445,8 +445,12 @@ CmdAtom				After a user action (an "atom" of input): any
 					Terminal-mode keys	no
 					Mouse drag/release	no (TODO?)
 
-				Note: all keys fed during a mapping execution
-				are part of the mapping's resolved `keys`.
+				Note: All keys fed during a mapping execution
+				are part of the resolved `keys`. But entering
+				|Terminal-mode| (e.g. a picker/fuzzy-finder
+				UI) completes the atom: terminal input is not
+				captured, because there is no defined way to
+				delimit the "end" of such an action.
 
 				Plugins should not publish "fake" CmdAtom
 				events via `nvim_exec_autocmds`.
