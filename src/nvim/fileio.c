@@ -2366,22 +2366,28 @@ static char *check_for_bom(const char *p_in, int size, int *lenp, int flags)
 /// name.
 void shorten_buf_fname(buf_T *buf, char *dirname, int force)
 {
-  if (buf->b_fname != NULL
-      && !bt_nofilename(buf)
-      && !path_with_url(buf->b_fname)
-      && (force
-          || buf->b_sfname == NULL
-          || path_is_absolute(buf->b_sfname))) {
-    if (buf->b_sfname != buf->b_ffname) {
-      XFREE_CLEAR(buf->b_sfname);
-    }
-    char *p = path_shorten_fname(buf->b_ffname, dirname);
-    if (p != NULL && *p != NUL) {
-      buf->b_sfname = xstrdup(p);
-      buf->b_fname = buf->b_sfname;
-    } else {
-      buf->b_fname = buf->b_ffname;
-    }
+  if (buf->b_fname == NULL
+      || bt_nofilename(buf)
+      || path_with_url(buf->b_fname)
+      || !(force || buf->b_sfname == NULL || path_is_absolute(buf->b_sfname))) {
+    return;
+  }
+
+  char *p = path_shorten_fname(buf->b_ffname, dirname);
+  if (p != NULL && *p != NUL && buf->b_sfname != NULL && strcmp(p, buf->b_sfname) == 0) {
+    // Same name: keep the allocation. Callers (readfile()) alias `b_fname` across autocommands and
+    // check the pointer to detect a rename. Very cool... #41454
+    return;
+  }
+
+  if (buf->b_sfname != buf->b_ffname) {
+    XFREE_CLEAR(buf->b_sfname);
+  }
+  if (p != NULL && *p != NUL) {
+    buf->b_sfname = xstrdup(p);
+    buf->b_fname = buf->b_sfname;
+  } else {
+    buf->b_fname = buf->b_ffname;
   }
 }
 
