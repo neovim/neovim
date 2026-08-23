@@ -566,6 +566,7 @@ describe('messages2', function()
 
   it('pager for consecutive command messages is not focused #41061', function()
     local win = api.nvim_get_current_win()
+    command('nnoremap j gj')
     command('echo "foo\nbar"')
     feed(':echo "baz"<CR>')
     screen:expect([[
@@ -607,6 +608,11 @@ describe('messages2', function()
     n.poke_eventloop()
     t.eq(win, api.nvim_get_current_win())
     feed('j')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      {16::}{15:echo} {26:"baz"}                                          |
+    ]])
     -- A typed command that emits no message keeps the pager; the next key dismisses it.
     command('echo "foo\nbar"')
     feed(':echo "baz"<CR>')
