@@ -385,7 +385,7 @@ do
         sum = sum + (progress_item.percent or 0)
       end
       local avg = math.floor(sum / count)
-      return string.format('%d%%%%(%d) ', avg, count)
+      return string.format('%d%%(%d)', avg, count)
     end
   end
 
