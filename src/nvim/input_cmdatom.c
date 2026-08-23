@@ -574,6 +574,14 @@ static void atom_composite_end(void)
   atom_free(&atom);
 }
 
+/// Entering :terminal mode ends the composite.
+void atom_term_enter(void)
+{
+  if (!mc_replaying()) {
+    atom_composite_end();
+  }
+}
+
 /// Discards the collecting composite (its subatoms): error/interrupt voided it.
 void atom_composite_abort(void)
 {

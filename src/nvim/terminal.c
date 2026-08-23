@@ -71,6 +71,7 @@
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
 #include "nvim/input.h"
+#include "nvim/input_cmdatom.h"
 #include "nvim/keycodes.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
@@ -912,6 +913,7 @@ bool terminal_enter(void)
   // be sure.
   terminal_check_size(s->term);
 
+  atom_term_enter();
   int save_state = State;
   s->save_rd = RedrawingDisabled;
   State = MODE_TERMINAL;
