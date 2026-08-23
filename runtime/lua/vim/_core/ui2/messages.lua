@@ -582,8 +582,8 @@ local typed_g = false
 local function cmd_on_key(key, typed)
   -- Don't dismiss for non-typed keys and mouse movement. When 'g' is passed (typed
   -- or mapped), wait until the next key to avoid flickering when the pager is opened.
-  if typed == '' or (not typed_g and (typed == '<MouseMove>' or typed == 'g' or key == 'g')) then
-    typed_g = typed == 'g' or key == 'g'
+  if not typed_g and (typed == '' or (typed == '<MouseMove>' or typed == 'g' or key == 'g')) then
+    typed_g = typed ~= '' and (typed == 'g' or key == 'g')
     return
   end
   if typed == ':' or ui.cmd.level > 0 or fn.getcmdtype() ~= '' then
