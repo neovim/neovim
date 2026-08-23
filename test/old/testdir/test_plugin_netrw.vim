@@ -941,7 +941,11 @@ func Test_netrw_home_setting()
 
   unlet! g:netrw_home
   if has('nvim')
-    call assert_equal(netrw#fs#PathJoin(stdpath('state'), 'netrw'), Test_NetrwHome())
+    let expected = netrw#fs#PathJoin(stdpath('state'), 'netrw')
+    if has('win32')
+      let expected = substitute(expected, '/', '\\', 'g')
+    endif
+    call assert_equal(expected, Test_NetrwHome())
   else
     " without the setting $MYVIMDIR is used
     call assert_equal(vimdir, Test_NetrwHome())
