@@ -50,22 +50,50 @@ local util = require('vim.pos._util')
 local M = {}
 
 ---@private
----@param pos vim.Range
+---@param range vim.Range
 ---@param key any
-function M.__index(pos, key)
+function M.__index(range, key)
   if key == 'start_row' then
-    return pos[1]
+    return range[1]
   elseif key == 'start_col' then
-    return pos[2]
+    return range[2]
   elseif key == 'end_row' then
-    return pos[3]
+    return range[3]
   elseif key == 'end_col' then
-    return pos[4]
+    return range[4]
   elseif key == 'buf' then
-    return pos[5]
+    return range[5]
   end
 
   return M[key]
+end
+
+---@private
+---@param range vim.Range
+---@param key any
+---@param value any
+function M.__newindex(range, key, value)
+  if key == 'start_row' then
+    validate('start_row', value, 'number')
+    range[1] = value
+  elseif key == 'start_col' then
+    validate('start_col', value, 'number')
+    range[2] = value
+  elseif key == 'end_row' then
+    validate('end_row', value, 'number')
+    range[3] = value
+  elseif key == 'end_col' then
+    validate('end_col', value, 'number')
+    range[4] = value
+  elseif key == 'buf' then
+    validate('buf', value, 'number')
+    if value == 0 then
+      value = api.nvim_get_current_buf()
+    end
+    range[5] = value
+  else
+    rawset(range, key, value)
+  end
 end
 
 ---@package
