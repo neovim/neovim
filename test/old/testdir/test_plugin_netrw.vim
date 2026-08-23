@@ -929,15 +929,22 @@ endfunc
 func Test_netrw_home_setting()
   let save_home = get(g:, 'netrw_home', '')
   let dir = fnamemodify('XnetrwHome', ':p')
+  let vimdir = fnamemodify('XvimDir', ':p')
   let subdir = fnamemodify('XnetrwHomeParent/XnetrwHome', ':p')
   if has('win32')
     let dir = substitute(dir, '/', '\\', 'g')
+    let vimdir = substitute(vimdir, '/', '\\', 'g')
     let subdir = substitute(subdir, '/', '\\', 'g')
   endif
- 
+  let save_myvimdir = getenv('MYVIMDIR')
+  let $MYVIMDIR = vimdir
+
+  unlet! g:netrw_home
   if has('nvim')
-    unlet! g:netrw_home
     call assert_equal(netrw#fs#PathJoin(stdpath('state'), 'netrw'), Test_NetrwHome())
+  else
+    " without the setting $MYVIMDIR is used
+    call assert_equal(vimdir, Test_NetrwHome())
   endif
 
   let g:netrw_home = dir
@@ -953,15 +960,12 @@ func Test_netrw_home_setting()
   let g:netrw_home = '$NETRW_TEST_HOME'
   call assert_equal(dir, Test_NetrwHome())
 
-  " without the setting $MYVIMDIR is used
-  unlet g:netrw_home
-  let $MYVIMDIR = dir
-  call assert_equal(dir, Test_NetrwHome())
-
   call delete(dir, 'd')
+  call delete(vimdir, 'd')
   call delete(subdir, 'd')
   call delete(fnamemodify(subdir, ':h'), 'd')
-  let $NETRW_TEST_HOME = ''
+  unlet $NETRW_TEST_HOME
+  call setenv('MYVIMDIR', save_myvimdir)
   if empty(save_home)
     unlet! g:netrw_home
   else
