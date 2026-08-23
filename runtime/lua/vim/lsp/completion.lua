@@ -691,7 +691,7 @@ function M._convert_results(
   --
   local candidates = get_items(result)
   local curstartbyte = adjust_start_col(lnum, line, candidates, encoding)
-    -- A server completion edit range may include the receiver of a member
+  -- A server completion edit range may include the receiver of a member
   -- expression. `complete()` must only replace the word being completed.
   if curstartbyte ~= nil then
     curstartbyte = math.max(curstartbyte, client_start_boundary)
