@@ -365,7 +365,8 @@ cleanup:
 /// pattern = vim.fn.expand('~') .. '/some/path/*.py'
 /// ```
 ///
-/// @param event Event(s) that will trigger the handler (`callback` or `command`).
+/// @param event Event(s) that will trigger the handler (`callback` or `command`): one handler is
+///        created for each event name.
 /// @param opts Options dict:
 ///        - buf (`integer?`) Buffer id for buffer-local autocommands |autocmd-buflocal|.
 ///          Not allowed with {pattern}.
@@ -383,7 +384,8 @@ cleanup:
 ///        - desc (`string?`) Description (for documentation and troubleshooting).
 ///        - group (`string|integer?`) Group name or id to match against.
 ///        - nested (`boolean?`, default: false) Run nested autocommands |autocmd-nested|.
-///        - once (`boolean?`, default: false) Handle the event only once |autocmd-once|.
+///        - once (`boolean?`, default: false) Handle the event only once |autocmd-once|. If {event}
+///          is a list, each handler will fire once.
 ///        - pattern (`string|array?`) Pattern(s) to match literally |autocmd-pattern|.
 ///
 /// @return Autocommand id (number)

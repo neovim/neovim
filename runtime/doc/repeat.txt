@@ -38,13 +38,12 @@ Repeating a Visual-mode command re-executes the captured keysequence,
 selection included.  See |visual-repeat|.
 
 ==============================================================================
-Semantic repeat						*cmdatom* *action-repeat*
+Semantic repeat				*action-repeat* *cmdatom* *excalibur*
 
 The |CmdAtom| event is published on every user action. This avoids the need
 for plugins to "announce" the repeatable unit, thus plugins like vim-repeat
 aren't needed.
 
-							  *excalibur*
 `CmdAtom.lhs` is the high-level user input collected during an action,
 including getchar() input. This is signficant: it reflects the semantic
 intent. `CmdAtom.keys` reveals the low-level internal commands that were

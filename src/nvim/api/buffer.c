@@ -127,8 +127,8 @@ Integer nvim_buf_line_count(Buffer buf, Error *err)
 ///        Not for Lua callbacks.
 /// @param  opts  Optional parameters.
 ///             - on_bytes: Called on granular changes (compared to on_lines). Not called on buffer
-///               reload (`:checktime`, `:edit`, …), see `on_reload:`. Return a [lua-truthy] value
-///               to detach. Args:
+///               reload (`:checktime`, `:edit`, …), see `on_reload`. Returning [lua-truthy] deletes
+///               the callback. Args:
 ///               - the string "bytes"
 ///               - buffer id
 ///               - b:changedtick
@@ -148,11 +148,12 @@ Integer nvim_buf_line_count(Buffer buf, Error *err)
 ///               - the string "changedtick"
 ///               - buffer id
 ///               - b:changedtick
-///             - on_detach: Called on detach. Args:
+///             - on_detach: Called on detach, or when the buffer is unloaded or deleted. Not called
+///               when a callback returns [lua-truthy] to delete itself. Args:
 ///               - the string "detach"
 ///               - buffer id
 ///             - on_lines: Called on linewise changes. Not called on buffer reload (`:checktime`,
-///               `:edit`, …), see `on_reload:`. Return a [lua-truthy] value to detach. Args:
+///               `:edit`, …), see `on_reload`. Returning [lua-truthy] deletes the callback. Args:
 ///               - the string "lines"
 ///               - buffer id
 ///               - b:changedtick

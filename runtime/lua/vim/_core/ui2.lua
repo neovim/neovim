@@ -10,7 +10,7 @@
 ---   msg = { -- Options related to the message module.
 ---     ---@type string|table<string, 'cmd'|'msg'|'pager'> Default message target
 ---     ---or table mapping |ui-messages| kinds, triggers and IDs to a target.
----     ---Table keys are are matched as a Lua pattern to the message ID. 'default'
+---     ---Table keys are matched as a Lua pattern to the message ID. 'default'
 ---     ---mapping applies to any omitted kind: { default = 'cmd', progress = 'msg' }.
 ---     targets = 'cmd',
 ---     cmd = { -- Options related to messages in the cmdline window.

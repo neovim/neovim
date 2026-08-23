@@ -226,8 +226,8 @@ function vim.api.nvim_buf_add_highlight(buffer, ns_id, hl_group, line, col_start
 --- Not for Lua callbacks.
 --- @param opts vim.api.keyset.buf_attach? Optional parameters.
 --- - on_bytes: Called on granular changes (compared to on_lines). Not called on buffer
----   reload (`:checktime`, `:edit`, …), see `on_reload:`. Return a [lua-truthy] value
----   to detach. Args:
+---   reload (`:checktime`, `:edit`, …), see `on_reload`. Returning [lua-truthy] deletes
+---   the callback. Args:
 ---   - the string "bytes"
 ---   - buffer id
 ---   - b:changedtick
@@ -247,11 +247,12 @@ function vim.api.nvim_buf_add_highlight(buffer, ns_id, hl_group, line, col_start
 ---   - the string "changedtick"
 ---   - buffer id
 ---   - b:changedtick
---- - on_detach: Called on detach. Args:
+--- - on_detach: Called on detach, or when the buffer is unloaded or deleted. Not called
+---   when a callback returns [lua-truthy] to delete itself. Args:
 ---   - the string "detach"
 ---   - buffer id
 --- - on_lines: Called on linewise changes. Not called on buffer reload (`:checktime`,
----   `:edit`, …), see `on_reload:`. Return a [lua-truthy] value to detach. Args:
+---   `:edit`, …), see `on_reload`. Returning [lua-truthy] deletes the callback. Args:
 ---   - the string "lines"
 ---   - buffer id
 ---   - b:changedtick
@@ -954,7 +955,8 @@ function vim.api.nvim_create_augroup(name, opts) end
 ---
 --- @see `:help autocommand`
 --- @see vim.api.nvim_del_autocmd
---- @param event vim.api.keyset.events|vim.api.keyset.events[] Event(s) that will trigger the handler (`callback` or `command`).
+--- @param event vim.api.keyset.events|vim.api.keyset.events[] Event(s) that will trigger the handler (`callback` or `command`): one handler is
+--- created for each event name.
 --- @param opts vim.api.keyset.create_autocmd? Options dict:
 --- - buf (`integer?`) Buffer id for buffer-local autocommands `autocmd-buflocal`.
 ---   Not allowed with {pattern}.
@@ -972,7 +974,8 @@ function vim.api.nvim_create_augroup(name, opts) end
 --- - desc (`string?`) Description (for documentation and troubleshooting).
 --- - group (`string|integer?`) Group name or id to match against.
 --- - nested (`boolean?`, default: false) Run nested autocommands `autocmd-nested`.
---- - once (`boolean?`, default: false) Handle the event only once `autocmd-once`.
+--- - once (`boolean?`, default: false) Handle the event only once `autocmd-once`. If {event}
+---   is a list, each handler will fire once.
 --- - pattern (`string|array?`) Pattern(s) to match literally `autocmd-pattern`.
 --- @return integer # Autocommand id (number)
 function vim.api.nvim_create_autocmd(event, opts) end

@@ -268,7 +268,7 @@ static inline uint8_t tv_blob_get(const blob_T *const b, int idx)
 
 /// Store the byte `c` at index `idx` in the blob.
 ///
-/// @param[in]  b  Blob to index. Cannot be NULL.
+/// @param[in]  blob  Blob to index. Cannot be NULL.
 /// @param[in]  idx  Index in a blob. Must be valid.
 /// @param[in]  c  Value to store.
 static inline void tv_blob_set(blob_T *const blob, int idx, uint8_t c)
