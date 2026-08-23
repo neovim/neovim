@@ -557,13 +557,13 @@ void redo_free_all(void)
 
 /// Prepare for redo of any command: stores `spec` and appends its command chars.
 ///
-/// @param claim     Claim it as the atom. False if the atom is captured by other means
-///                  (insert-session entry/restart, "z=").
+/// @param as_atom   The redo also defines the command's atom (`curcmd.redo_frame`). False for
+///                  "prep-exempt" special cases (insert-session entry/restart, "z=").
 /// @param arg_meta  Skip the `arg` byte: an interactively-typed operand may need CTRL-V quoting
 ///                  or its composing-char string form, which the caller appends itself.
-void prep_redo(bool claim, bool arg_meta, CmdSpec spec)
+void prep_redo(bool as_atom, bool arg_meta, CmdSpec spec)
 {
-  if (claim) {
+  if (as_atom) {
     atom_redo_set(spec);
   }
   redo_new(spec);
@@ -576,7 +576,7 @@ void prep_redo(bool claim, bool arg_meta, CmdSpec spec)
 /// Prepare for redo of a Visual-mode command: the body opens with `keys` (the captured selection),
 /// so "." re-executes the selection at cursor; the `["x][count]` prefix and command chars of
 /// `spec` compose into the body after them (zeroed in the stored spec, so replay doesn't also
-/// prefix them). Always claims (see prep_redo()).
+/// prefix them).
 void prep_redo_visual(const char *keys, size_t len, CmdSpec spec)
 {
   CmdSpec stored = spec;

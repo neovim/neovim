@@ -448,6 +448,9 @@ CmdAtom				After a user action (an "atom" of input): any
 				Note: all keys fed during a mapping execution
 				are part of the mapping's resolved `keys`.
 
+				Plugins should not publish "fake" CmdAtom
+				events via `nvim_exec_autocmds`.
+
 				The |event-data| has these fields (type: `vim.event.cmdatom.data`):
 
 				- atoms: Ordered "subatoms" of a composite
