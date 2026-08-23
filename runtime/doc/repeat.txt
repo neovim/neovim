@@ -75,18 +75,17 @@ To repeat an atom, feed `keys` (mode "n"), or `lhs` (mode "m") if `keys=nil`. >l
     end
 <
 							*motion-repeat*
-Example: This "," mapping repeats the last "motion" ("zj", "3w", "fx",
-"/pat<CR>", "]c"). Drop the `pattern` to repeat any non-edit action, motion or
-not ("zz", "zfa{", CTRL-W_w): >lua
+Example: This "," mapping repeats the last motion ("zj", "3w", "fx",
+"/pat<CR>", "]c", any mapping/command that sets `moved=true`). >lua
 
     local last ---@type vim.event.cmdatom.data?
     vim.api.nvim_create_autocmd('CmdAtom', {
-      pattern = 'motion',
       callback = function(ev)
-        if ev.data.changed or ev.data.lhs == ',' then
-          return -- Skip edits, and this mapping itself.
+        -- Skip edits, and the "," mapping itself.
+        local motion = ev.data.moved or ev.match == 'motion'
+        if motion and not (ev.data.changed or ev.data.lhs == ',') then
+          last = ev.data
         end
-        last = ev.data
       end,
     })
     vim.keymap.set('n', ',', function()
@@ -98,14 +97,18 @@ not ("zz", "zfa{", CTRL-W_w): >lua
       end)
     end)
 <
-							*dot-repeat*
-Example: This "." mapping repeats ANY edit, including operations provided by
-plugins, without the need for "announcement" via vim-repeat or similar. >lua
+							*edit-repeat*
+Example: This "." mapping repeats ANY edit (except undo/redo), including
+operations provided by plugins, without the need for "announcement" via
+vim-repeat or similar. >lua
 
     local last ---@type vim.event.cmdatom.data?
+    local maxseq = {} ---@type table<integer, integer>
     vim.api.nvim_create_autocmd('CmdAtom', {
       callback = function(ev)
-        if ev.data.changed and ev.data.lhs ~= '.' then
+        local is_redo_or_undo = ev.data.changed and (ev.data.undoseq or 0) <= (maxseq[ev.buf] or 0)
+        maxseq[ev.buf] = vim.fn.undotree(ev.buf).seq_last
+        if ev.data.changed and not is_redo_or_undo and ev.data.lhs ~= '.' then
           last = ev.data
         end
       end,
@@ -116,6 +119,51 @@ plugins, without the need for "announcement" via vim-repeat or similar. >lua
         if last then
           vim.api.nvim_feedkeys(last.keys or last.lhs, last.keys and 'n' or 'm', false)
         end
+      end)
+    end)
+<
+							*cmdatom-macro*
+Example: This "[count]<Space>" mapping saves the last [count] atoms as an
+editable macro: "2<Space>" opens the |cmdwin| with the last [count] atoms
+listed (you can delete/edit steps if you want), <Enter> saves it. "<Space>"
+without a count replays the macro. >lua
+
+    -- Track the last 20 atoms.
+    local atom_ring = {} ---@type vim.event.cmdatom.data[]
+    vim.api.nvim_create_autocmd('CmdAtom', {
+      callback = function(ev)
+        -- Skip this mapping itself, and cmdwin edits.
+        if ev.data.lhs ~= ' ' and vim.fn.getcmdwintype() == '' then
+          atom_ring[#atom_ring + 1] = ev.data
+          if #atom_ring > 20 then
+            table.remove(atom_ring, 1)
+          end
+        end
+      end,
+    })
+    -- [count]<space> shows a cmdwin where the user can edit/save the last [count] atoms as a "macro".
+    -- <space> (no count) replays it.
+    vim.keymap.set('n', '<Space>', function()
+      local count = vim.v.count
+      -- CmdAtom is deferred; schedule it so pending events land in the ring first.
+      vim.schedule(function()
+        count = math.min(count, #atom_ring)
+        if count == 0 then -- Replay the saved macro.
+          for _, step in ipairs(vim.g.atom_macro or {}) do
+            vim.api.nvim_feedkeys(vim.keycode(step.keys or step.lhs), step.keys and 'n' or 'm', false)
+          end
+          return
+        end
+        local parts = {}
+        for i = #atom_ring - count + 1, #atom_ring do
+          local a = atom_ring[i]
+          local keys = a.keys or ('%s%s'):format(a.count or '', a.lhs)
+          local field = a.keys and 'keys' or 'lhs'
+          parts[#parts + 1] = ('{%s=%q},'):format(field, vim.fn.keytrans(keys))
+        end
+        local cmd = ('lua vim.g.atom_macro = { %s }'):format(table.concat(parts, ' '))
+        -- Draft it on the cmdline; CTRL-F opens the cmdwin to edit it.
+        vim.api.nvim_feedkeys((':%s%s'):format(cmd, vim.keycode('<C-f>')), 'n', false)
       end)
     end)
 <

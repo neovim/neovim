@@ -112,7 +112,7 @@ static struct {
 
 /// Per-command capture scratch.
 static struct {
-  uint64_t redo_frame;  ///< CmdFrame that prepped (prep_redo*()); frame end captures it. 0: none.
+  uint64_t redo_frame;  ///< The CmdFrame that prepped redo (prep_redo*()). 0: none.
   char *cmdline;      ///< The ":" payload captured at cmdline accept. NULL: none.
                       ///< Note: search payloads ("/pat<CR>") travel on `cmdarg.searchbuf`.
   bool ins_cascaded;  ///< Did the command's insert-session already cascade?
@@ -816,8 +816,8 @@ void atom_op_global_set(void)
   curcmd.op_global = true;
 }
 
-/// Claims the prepped redo as the command's atom (prep_redo()). Only toplevel user commands (a
-/// nested redo-prep is not an atom). Declines Lua operators.
+/// Sets `curcmd.redo_frame`: at frame end, the redobuf defines `CmdAtom.keys`.
+/// Not for nested frames (":norm"), nor Lua operators.
 void atom_redo_set(CmdSpec spec)
 {
   if (spec.cmd == K_LUA) {
@@ -1206,7 +1206,10 @@ void atom_cmd_start(CmdFrame *old)
   old->parent = cur_frame;
   cur_frame = old;
   curcmd.op_global = false;
-  atom_redo_reset();
+  // A stuffed continuation frame keeps the redo-prep. "!ipsort<CR>" spans both frames.
+  if (!(KeyStuffed && curcmd.redo_frame == old->id)) {
+    atom_redo_reset();
+  }
 }
 
 /// Captures the typed command's atom: one atom per command, produced from the CmdFrame diff and
@@ -1291,6 +1294,11 @@ static void atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
   //
   // Capture: does this command own an atom?
   //
+  if (!stuff_empty() && curcmd.redo_frame == old->id && !Visual.active && !old->visual.active) {
+    // The stuffed continuation completes the redo (op_filter/do_bang()), and is the next frame
+    // (stuff precedes typeahead). Flushed instead? atom_cmd_start() checks KeyStuffed.
+    curcmd.redo_frame = old->id + 1;
+  }
   if ((vis && atom_captures == old->captures && ca->oap->op_type == OP_NOP)
       || (!Visual.active
           && !old->visual.active

@@ -10,7 +10,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/register_defs.h"  // Timestamp
 
-/// Pending atom(s). Multiple atoms may queue; they cascade as a batch (mc_clock_edge).
+/// Multicursor: pending atoms; they cascade as a batch (mc_clock_edge).
 extern CmdAtomVec g_atoms;
 
 /// Pre-command state sampled at entry + storage for its "staged" atom. atom_cmd_end() finalizes it.
