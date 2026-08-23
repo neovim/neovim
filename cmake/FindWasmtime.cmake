@@ -3,7 +3,7 @@ find_library2(WASMTIME_LIBRARY wasmtime)
 
 if(WASMTIME_INCLUDE_DIR AND EXISTS "${WASMTIME_INCLUDE_DIR}/wasmtime.h")
   file(STRINGS ${WASMTIME_INCLUDE_DIR}/wasmtime.h WASMTIME_VERSION REGEX "#define WASMTIME_VERSION")
-  string(REGEX MATCH "[0-9]+\.[0-9]\.[0-9]" WASMTIME_VERSION ${WASMTIME_VERSION})
+  string(REGEX MATCH "[0-9]+\.[0-9]+\.[0-9]+" WASMTIME_VERSION ${WASMTIME_VERSION})
 endif()
 
 find_package_handle_standard_args(Wasmtime
