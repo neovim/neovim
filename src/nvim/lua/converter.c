@@ -975,7 +975,7 @@ Array nlua_pop_Array(lua_State *lstate, Arena *arena, Error *err)
 
 /// Convert Lua table to dictionary
 ///
-/// Always pops one value from the stack. Does not check whether whether topmost
+/// Always pops one value from the stack. Does not check whether topmost
 /// value on the stack is a table.
 ///
 /// @param  lstate  Lua interpreter state.

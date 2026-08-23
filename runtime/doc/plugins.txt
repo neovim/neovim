@@ -100,28 +100,28 @@ entry name: |dir-buffer-mappings| resolve the line under the cursor against the
 buffer name, so rewriting line text makes <CR> open a nonexistent path.
 
 Sort directories last: >vim
-	autocmd User DirReadPost silent keeppatterns sort r /\/$/
+    autocmd User DirReadPost silent keeppatterns sort r /\/$/
 <
 Hide dot-prefixed entries: >vim
-	autocmd User DirReadPost silent keeppatterns g/^\./d _
+    autocmd User DirReadPost silent keeppatterns g/^\./d _
 <
 Sort by modification time, newest first: >lua
-	vim.api.nvim_create_autocmd('User', {
-	  pattern = 'DirReadPost',
-	  callback = function(args)
-	    local dir = vim.api.nvim_buf_get_name(args.buf)
-	    local names = vim.api.nvim_buf_get_lines(args.buf, 0, -1, true)
-	    local mtime = {} --- @type table<string, integer>
-	    for _, name in ipairs(names) do
-	      local stat = vim.uv.fs_stat(vim.fs.joinpath(dir, name))
-	      mtime[name] = stat and stat.mtime.sec or 0
-	    end
-	    table.sort(names, function(a, b)
-	      return mtime[a] > mtime[b]
-	    end)
-	    vim.api.nvim_buf_set_lines(args.buf, 0, -1, true, names)
-	  end,
-	})
+    vim.api.nvim_create_autocmd('User', {
+      pattern = 'DirReadPost',
+      callback = function(args)
+        local dir = vim.api.nvim_buf_get_name(args.buf)
+        local names = vim.api.nvim_buf_get_lines(args.buf, 0, -1, true)
+        local mtime = {} --- @type table<string, integer>
+        for _, name in ipairs(names) do
+          local stat = vim.uv.fs_stat(vim.fs.joinpath(dir, name))
+          mtime[name] = stat and stat.mtime.sec or 0
+        end
+        table.sort(names, function(a, b)
+          return mtime[a] > mtime[b]
+        end)
+        vim.api.nvim_buf_set_lines(args.buf, 0, -1, true, names)
+      end,
+    })
 <
 
 Decorating the listing                                          *dir-decorate*
@@ -130,40 +130,40 @@ A |nvim_set_decoration_provider()| sets |extmarks| on the visible lines of
 each redraw, so they survive reordering by a |DirReadPost| handler.
 
 Classify each entry, and show where a symbolic link points: >lua
-	local ns = vim.api.nvim_create_namespace('my.dir.classify')
-	local glyph = {
-	  fifo = '|', socket = '=', char = '%', block = '#',
-	}
-	vim.api.nvim_set_decoration_provider(ns, {
-	  on_win = function(_, _, buf)
-	    return vim.bo[buf].filetype == 'directory'
-	  end,
-	  on_range = function(_, _, buf, row)
-	    local dir = vim.api.nvim_buf_get_name(buf)
-	    local name = vim.api.nvim_buf_get_lines(buf, row, row + 1, true)[1]
-	    local path = vim.fs.joinpath(dir, (name:gsub('/$', '')))
-	    local stat = vim.uv.fs_lstat(path) or {}
-	    local exe = stat.type == 'file'
-	      and bit.band(stat.mode, tonumber('111', 8)) ~= 0
-	    local char = glyph[stat.type] or (exe and '*')
-	    if char then
-	      vim.api.nvim_buf_set_extmark(buf, ns, row, #name, {
-	        virt_text = { { char, 'Dimmed' } },
-	        virt_text_pos = 'overlay',
-	        ephemeral = true,
-	      })
-	    end
-	    if stat.type == 'link' then
-	      local target = vim.uv.fs_readlink(path) or '?'
-	      vim.api.nvim_buf_set_extmark(buf, ns, row, 0, {
-	        virt_text = { { '-> ' .. target, 'Dimmed' } },
-	        virt_text_pos = 'eol',
-	        ephemeral = true,
-	      })
-	    end
-	    return row + 1
-	  end,
-	})
+    local ns = vim.api.nvim_create_namespace('my.dir.classify')
+    local glyph = {
+      fifo = '|', socket = '=', char = '%', block = '#',
+    }
+    vim.api.nvim_set_decoration_provider(ns, {
+      on_win = function(_, _, buf)
+        return vim.bo[buf].filetype == 'directory'
+      end,
+      on_range = function(_, _, buf, row)
+        local dir = vim.api.nvim_buf_get_name(buf)
+        local name = vim.api.nvim_buf_get_lines(buf, row, row + 1, true)[1]
+        local path = vim.fs.joinpath(dir, (name:gsub('/$', '')))
+        local stat = vim.uv.fs_lstat(path) or {}
+        local exe = stat.type == 'file'
+          and bit.band(stat.mode, tonumber('111', 8)) ~= 0
+        local char = glyph[stat.type] or (exe and '*')
+        if char then
+          vim.api.nvim_buf_set_extmark(buf, ns, row, #name, {
+            virt_text = { { char, 'Dimmed' } },
+            virt_text_pos = 'overlay',
+            ephemeral = true,
+          })
+        end
+        if stat.type == 'link' then
+          local target = vim.uv.fs_readlink(path) or '?'
+          vim.api.nvim_buf_set_extmark(buf, ns, row, 0, {
+            virt_text = { { '-> ' .. target, 'Dimmed' } },
+            virt_text_pos = 'eol',
+            ephemeral = true,
+          })
+        end
+        return row + 1
+      end,
+    })
 <
 
 Replacing the directory browser                                  *dir-disable*

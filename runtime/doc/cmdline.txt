@@ -1189,7 +1189,7 @@ Also see |`=|.
 7. Command-line window				*cmdline-window* *cmdwin*
 							*command-line-window*
 The command-line window ("cmdwin") is a buffer+window in which the command
-line can be edited.
+line can be edited. See also |:exmode|, a REPL-like mode based on the cmdwin.
 
 
 OPEN						*c_CTRL-F* *q:* *q/* *q?*

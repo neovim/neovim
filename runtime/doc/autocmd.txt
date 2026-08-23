@@ -55,7 +55,8 @@ Vimscript commands are described below.
 			they execute in the order in which they were defined.
 			See |autocmd-nested| for [++nested].
 							*autocmd-once*
-			If [++once] is supplied the command is executed once,
+			If [++once] is supplied the command is executed once
+			(per {event}, which may be a comma-separated list),
 			then removed ("one shot").
 
 The special pattern <buffer> or <buffer=N> defines a buffer-local autocommand.
