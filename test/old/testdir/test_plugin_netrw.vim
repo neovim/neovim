@@ -928,9 +928,11 @@ endfunc
 
 func Test_netrw_home_setting()
   let save_home = get(g:, 'netrw_home', '')
-  let dir = fnamemodify('XnetrwHome', ':p:h')
+  let dir = fnamemodify('XnetrwHome', ':p')
+  let subdir = fnamemodify('XnetrwHomeParent/XnetrwHome', ':p')
   if has('win32')
     let dir = substitute(dir, '/', '\\', 'g')
+    let subdir = substitute(subdir, '/', '\\', 'g')
   endif
  
   if has('nvim')
@@ -941,6 +943,10 @@ func Test_netrw_home_setting()
   let g:netrw_home = dir
   call assert_equal(dir, Test_NetrwHome())
   call assert_true(isdirectory(dir))
+
+  let g:netrw_home = subdir
+  call assert_equal(subdir, Test_NetrwHome())
+  call assert_true(isdirectory(subdir))
 
   " the value is expanded
   let $NETRW_TEST_HOME = dir
@@ -953,6 +959,8 @@ func Test_netrw_home_setting()
   call assert_equal(dir, Test_NetrwHome())
 
   call delete(dir, 'd')
+  call delete(subdir, 'd')
+  call delete(fnamemodify(subdir, ':h'), 'd')
   let $NETRW_TEST_HOME = ''
   if empty(save_home)
     unlet! g:netrw_home
