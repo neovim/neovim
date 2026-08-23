@@ -582,7 +582,12 @@ list_vim_commits() { (
 # Prints all (sorted) "vim-patch:xxx" tokens found in the Nvim git log.
 list_vimpatch_tokens() {
   # Use sed…{7,7} to normalize (internal) Git hashes (for tokens caches).
-  _git -C "${NVIM_SOURCE_DIR}" log -E --grep='vim-patch:[^ ,{]{7,}' \
+  diff "${NVIM_SOURCE_DIR}/scripts/vimpatch_commit_ignore.txt" <(
+    _git -C "${NVIM_SOURCE_DIR}" log --format="%H" -E --grep='vim-patch:[^ ,{]{7,}'
+  ) |
+    grep -e '^> ' |
+    sed -e 's/^> //' |
+    _git -C "${NVIM_SOURCE_DIR}" log --no-walk --stdin \
     | grep -oE 'vim-patch:[^ ,{:]{7,}' \
     | sort \
     | uniq \
