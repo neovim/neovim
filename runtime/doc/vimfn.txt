@@ -8277,7 +8277,7 @@ readdir({directory} [, {expr}])                                      *readdir()*
 		Each time {expr} is evaluated |v:val| is set to the entry name.
 		When {expr} is a function the name is passed as the argument.
 		For example, to get a list of files ending in ".txt": >vim
-		  echo readdir(dirname, {n -> n =~ '.txt$'})
+		  echo readdir(dirname, {n -> n =~ '\.txt$'})
 <		To skip hidden and backup files: >vim
 		  echo readdir(dirname, {n -> n !~ '^\.\|\~$'})
 
