@@ -28,8 +28,8 @@
 ---     pager = { -- Options related to message window.
 ---       height = 0.999, -- Maximum height.
 ---     },
----     pager_char = nil, -- Key checked after interactive messages.
 ---   },
+---   pager_char = nil, -- Enters the pager after confirming an interactive ":" cmd.
 --- })
 --- ```
 ---
@@ -46,8 +46,8 @@
 --- Unlike the legacy |hit-enter| prompt, messages exceeding 'cmdheight' are
 --- instead "collapsed", followed by a `[+x]` "spill" indicator, where `x`
 --- indicates the spilled lines. To see the full messages, do either:
---- - ENTER immediately after interactive |:| cmdline shows a message and returns to |Normal-mode|.
 --- - |g<| at any time.
+--- - Type `pager_char` immediately after an interactive |:| command.
 ---
 --- If you'd like behavior similar to the old hit-enter prompt, pass `pager_char = "<CR>"` on
 --- the `cfg` table. When the pager is shown, hitting `<CR>` (in this example) will enter the

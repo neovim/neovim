@@ -141,6 +141,7 @@ EDITOR
 
 EVENTS
 
+• |vim.on_key()| callbacks are not invoked for keys consumed by |getchar()|.
 • |BufModifiedSet| has been removed. Use the |OptionSet| event with pattern
   "modified" instead.
 • |ui-messages| `msg_show.bufwrite` and `msg_show.completion` messages are now
