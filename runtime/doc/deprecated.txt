@@ -97,7 +97,7 @@ LUA
 UI
 
 • *hit-enter* *hit-enter-prompt*	With |ui2|, the legacy "Press ENTER"
-  *press-enter				prompt is never triggered.
+  *press-enter*				prompt is never triggered.
 
 ------------------------------------------------------------------------------
 DEPRECATED IN 0.11					*deprecated-0.11*

@@ -350,12 +350,43 @@ describe(':helptags', function()
   end)
 
   it('{dir}', function()
+    -- Helpfiles in sub-directories are found and named relative to {dir}.
+    fn.mkdir('Xhelptags/doc/sub', 'p')
+    -- A "|" in a tag would break |links|, and "*Xd" is not closed, so neither is a tag.
+    write_file('Xhelptags/doc/sub/Xc.txt', '*Xc*\n*X|c*\n*Xd\n')
+
     command('helptags Xhelptags/doc')
 
-    eq(eval("['Xa	Xa.txt	/*Xa*','Xb	Xb.txt	/*Xb*']"), eval("readfile('Xhelptags/doc/tags')"))
+    eq(
+      eval("['Xa	Xa.txt	/*Xa*','Xb	Xb.txt	/*Xb*','Xc	sub/Xc.txt	/*Xc*']"),
+      eval("readfile('Xhelptags/doc/tags')")
+    )
 
     command('help Xa')
     eq('*Xa*', api.nvim_get_current_line())
+
+    command('help Xc')
+    eq('*Xc*', api.nvim_get_current_line())
+  end)
+
+  it('overwrites existing tags file', function()
+    write_file('Xhelptags/doc/tags', 'Xstale	Xold.txt	/*Xstale*', nil, true)
+    write_file('Xhelptags/doc/Xa.txt', 'no tags here', nil, true)
+    write_file('Xhelptags/doc/Xb.txt', 'no tags here', nil, true)
+
+    command('helptags Xhelptags/doc')
+    eq({}, eval("readfile('Xhelptags/doc/tags')"))
+  end)
+
+  it('reports E150 E151 E152', function()
+    eq(true, t.pcall_err(command, 'helptags Xhelptags/doc/Xa.txt'):find('E150') ~= nil)
+
+    fn.mkdir('Xhelptags/Xempty', 'p')
+    eq(true, t.pcall_err(command, 'helptags Xhelptags/Xempty'):find('E151') ~= nil)
+
+    -- A directory named "tags" cannot be opened for writing.
+    fn.mkdir('Xhelptags/doc/tags', 'p')
+    eq(true, t.pcall_err(command, 'helptags Xhelptags/doc'):find('E152') ~= nil)
   end)
 
   it('ALL', function()
@@ -369,8 +400,12 @@ describe(':helptags', function()
   end)
 
   it('++t', function()
+    write_file('Xhelptags/doc/Xa.nlx', '*Xa*', nil, true)
+
     command('helptags ++t Xhelptags/doc')
     eq('help-tags	tags	1', eval("readfile('Xhelptags/doc/tags')[-1]"))
+    -- Each language gets a "help-tags" tag naming its own tags file.
+    eq('help-tags	tags-nl	1', eval("readfile('Xhelptags/doc/tags-nl')[-1]"))
   end)
 
   it('generates help-tag tag for VIMRUNTIME', function()
@@ -397,11 +432,23 @@ describe(':helptags', function()
     eq(true, msg:find('E154') ~= nil)
 
     eq(1, eval("filereadable('Xhelptags/doc/tags')"))
+
+    -- Duplicates do not abort the run: other languages are still processed.
+    write_file('Xhelptags/doc/Xa.nlx', '*Xnl*', nil, true)
+
+    msg = t.pcall_err(command, 'helptags Xhelptags/doc')
+    eq(true, msg:find('E154') ~= nil)
+    eq(false, msg:find('E5108') ~= nil)
+    eq(1, eval("filereadable('Xhelptags/doc/tags-nl')"))
   end)
 
   it('with translated help files', function()
     write_file('Xhelptags/doc/Xa.nlx', '*Xa*', nil, true)
+    -- The suffix is matched case-insensitively.
+    write_file('Xhelptags/doc/Xc.FRX', '*Xc*', nil, true)
+
     command('helptags Xhelptags/doc')
-    eq(1, eval("filereadable('Xhelptags/doc/tags-nl')"))
+    eq(eval("['Xa	Xa.nlx	/*Xa*']"), eval("readfile('Xhelptags/doc/tags-nl')"))
+    eq(eval("['Xc	Xc.FRX	/*Xc*']"), eval("readfile('Xhelptags/doc/tags-fr')"))
   end)
 end)

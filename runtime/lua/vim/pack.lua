@@ -835,11 +835,12 @@ local function checkout(p, timestamp, skip_stash)
   plugin_lock.plugins[p.spec.name].rev = p.info.sha_target
 
   -- (Re)Generate help tags according to the current help files.
-  -- Also use `pcall()` because `:helptags` errors if there is no 'doc/'
-  -- directory or if it is empty.
+  -- Also use `pcall()` because `:helptags` errors if 'doc/' has no help files.
   local doc_dir = vim.fs.joinpath(p.path, 'doc')
   vim.fn.delete(vim.fs.joinpath(doc_dir, 'tags'))
-  copcall(vim.cmd.helptags, { doc_dir, magic = { file = false } })
+  if vim.fn.isdirectory(doc_dir) == 1 then
+    copcall(vim.cmd.helptags, { doc_dir, magic = { file = false } })
+  end
 end
 
 --- @param plug_list vim.pack.Plug[]
