@@ -32,7 +32,6 @@ local zig_mode = {
   uncrustify = false,
   wasmtime = false,
   libuv = false,
-  unibilium = 'nested',
   utf8proc = 'nested',
 }
 
