@@ -1021,7 +1021,9 @@ int op_delete(oparg_T *oap)
     }
   }
 
-  msgmore(curbuf->b_ml.ml_line_count - old_lcount);
+  // An empty buffer retains one line that was not part of the original buffer.
+  msgmore(curbuf->b_ml.ml_line_count - old_lcount
+          - !!(curbuf->b_ml.ml_flags & ML_EMPTY));
 
 setmarks:
   if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
