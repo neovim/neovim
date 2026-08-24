@@ -131,6 +131,36 @@ void ui_refresh(void)
     eq(3, q(100))
   end)
 
+  it('creates a fresh query when setting identical text', function()
+    local result = exec_lua(function()
+      local lang, query_name = 'c', 'test'
+      local query_text = '(identifier) @identifier'
+      local other_text = '(type_identifier) @type_identifier'
+      local other_query = vim.treesitter.query.parse(lang, other_text)
+
+      vim.treesitter.query.set(lang, query_name, query_text)
+      local disabled_query = vim.treesitter.query.get(lang, query_name)
+      disabled_query.query:disable_pattern(1)
+
+      vim.treesitter.query.set(lang, query_name, query_text)
+      local query = vim.treesitter.query.get(lang, query_name)
+      local parser = vim.treesitter.get_string_parser('int value;', lang)
+      local tree = parser:parse()[1]
+      local captures = 0
+      for _ in query:iter_captures(tree:root(), 'int value;') do
+        captures = captures + 1
+      end
+
+      return {
+        disabled_query == query,
+        captures,
+        other_query == vim.treesitter.query.parse(lang, other_text),
+      }
+    end)
+
+    eq({ false, 1, true }, result)
+  end)
+
   it('supports query and iter by capture (iter_captures)', function()
     insert(test_text)
 

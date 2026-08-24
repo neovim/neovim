@@ -279,6 +279,7 @@ local explicit_queries = setmetatable({}, {
 function M.set(lang, query_name, text)
   --- @diagnostic disable-next-line: undefined-field LuaLS bad at generics
   M.get:clear(lang, query_name)
+  M.parse:clear(lang, text)
   explicit_queries[lang][query_name] = text
 end
 
