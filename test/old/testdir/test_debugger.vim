@@ -1107,6 +1107,51 @@ func Test_debug_def_and_legacy_function()
   call StopVimInTerminal(buf)
 endfunc
 
+" Test for using "up" in the debugger to select the frame of a :def function
+" and then evaluating a variable name
+func Test_debug_backtrace_up_def_function()
+  CheckRunVimInTerminal
+  CheckCWD
+  let file =<< trim END
+    vim9script
+    def g:DefFunc()
+      var defvar = 'in def'
+      g:LegacyFunc('arg')
+    enddef
+
+    func g:LegacyFunc(text)
+      let legacyvar = 'in legacy'
+      echo legacyvar
+    endfunc
+
+    breakadd func 2 g:LegacyFunc
+  END
+  call writefile(file, 'XtestDebugUp.vim', 'D')
+
+  let buf = RunVimInTerminal('-S XtestDebugUp.vim', {})
+
+  call s:RunDbgCmd(buf, ':call DefFunc()', ['line 2: echo legacyvar'])
+  call s:RunDbgCmd(buf, 'echo legacyvar', ['in legacy'])
+  call s:RunDbgCmd(buf, 'echo l:legacyvar', ['in legacy'])
+  call s:RunDbgCmd(buf, 'echo a:text', ['arg'])
+
+  " Move up to the frame of the :def function, the local variables of the
+  " legacy function are not available there.  This used to crash.
+  call s:RunDbgCmd(buf, 'up')
+  call s:RunDbgCmd(buf, 'echo legacyvar',
+        \ ['E121: Undefined variable: legacyvar'])
+  call s:RunDbgCmd(buf, 'echo l:legacyvar',
+        \ ['E121: Undefined variable: l:legacyvar'])
+  call s:RunDbgCmd(buf, 'echo a:text', ['E121: Undefined variable: a:text'])
+
+  " Back in the frame of the legacy function the variables are found again.
+  call s:RunDbgCmd(buf, 'down')
+  call s:RunDbgCmd(buf, 'echo legacyvar', ['in legacy'])
+
+  call s:RunDbgCmd(buf, 'cont')
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_debug_def_function()
   CheckRunVimInTerminal
   CheckCWD
