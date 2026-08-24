@@ -796,6 +796,28 @@ describe(':edit on a term:// URI', function()
   end)
 end)
 
+describe(':edit terms://', function()
+  local xstate = 'Xtest-functional-terminal'
+
+  before_each(function()
+    clear({ env = { XDG_STATE_HOME = xstate } })
+  end)
+
+  after_each(function()
+    n.rmdir(xstate)
+  end)
+
+  it('redirects to the state directory listing', function()
+    command('edit terms://')
+    local dir = vim.fs.joinpath(fn.stdpath('state'), 'term')
+    retry(nil, 4000, function()
+      eq(fn.fnamemodify(dir, ':p'), api.nvim_buf_get_name(0))
+    end)
+    eq(1, fn.isdirectory(dir))
+    eq(-1, fn.bufnr('terms://'))
+  end)
+end)
+
 describe('nvim__term_feed()', function()
   before_each(function()
     clear()

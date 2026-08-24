@@ -304,4 +304,23 @@ function M.open(args)
   end
 end
 
+--- Redirects a `terms://` buffer to the state directory listing
+---
+---@param args table autocmd args (buf, file, match)
+function M.list(args)
+  -- Deferred: `:edit` inside BufReadCmd would nest the read flow
+  vim.schedule(function()
+    local dir = vim.fs.joinpath(vim.fn.stdpath('state'), 'term')
+    vim.fn.mkdir(dir, 'p') -- may not exist yet
+    local win = vim.fn.bufwinid(args.buf)
+    if win ~= -1 then
+      vim.api.nvim_set_current_win(win)
+    end
+    vim.api.nvim_cmd({ cmd = 'edit', args = { dir }, magic = { file = false, bar = false } }, {})
+    if vim.api.nvim_buf_is_valid(args.buf) then
+      vim.api.nvim_buf_delete(args.buf, { force = true })
+    end
+  end)
+end
+
 return M

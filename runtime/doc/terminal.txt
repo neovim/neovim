@@ -345,6 +345,12 @@ directory.
 - The buffer keeps the state file's name, so |:write| overwrites the same file.
 								*E5011*
 
+                                                                    *terms://*
+To browse saved terminal state, use: >vim
+    :edit terms://
+This opens the state directory (`stdpath('state')/term/`) by the built-in
+|dir| plugin.
+
 ==============================================================================
 :Termdebug plugin                         *terminal-debug* *terminal-debugger*
                                                *package-termdebug* *termdebug*

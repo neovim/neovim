@@ -606,6 +606,11 @@ do
     desc = 'Restore a terminal state file as a live terminal buffer',
   }, require('vim._core.terminal').load)
 
+  nvim_on('BufReadCmd', nvim_terminal_augroup, {
+    pattern = 'terms://',
+    desc = 'Open the terminal state directory',
+  }, require('vim._core.terminal').list)
+
   local nvim_terminal_exitmsg_ns = vim.api.nvim_create_namespace('nvim.terminal.exitmsg')
 
   --- @param buf integer
