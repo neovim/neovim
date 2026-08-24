@@ -342,6 +342,10 @@ function Completor:accept(item)
   if type(insert_text) == 'string' then
     if item.range then
       local start_row, start_col, end_row, end_col = item.range:to_extmark()
+      -- The line may have shrunk past the range since the item arrived.
+      local end_line = api.nvim_buf_get_lines(self.bufnr, end_row, end_row + 1, true)[1]
+      end_col = math.min(end_col, #end_line)
+
       local lines = vim.split(insert_text, '\n')
       api.nvim_buf_set_text(self.bufnr, start_row, start_col, end_row, end_col, lines)
       local win = api.nvim_get_current_win()
