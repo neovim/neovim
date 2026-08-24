@@ -35,7 +35,10 @@
             .lazy = true,
         },
         .utf8proc = .{ .path = "./deps/utf8proc/", .lazy = true },
-        .unibilium = .{ .path = "./deps/unibilium/", .lazy = true },
+        .unibilium = .{
+            .url = "git+https://github.com/neovim/unibilium?ref=v2.1.4#b0567db6a30898d8b25d206223960a8be2795fa8",
+            .hash = "unibilium-2.1.4-INdqiXdRAQAKcGtWWj0Pb85VOTw07W3TDjMv6jrwUXgx",
+        },
         .uncrustify = .{
             .url = "git+https://codeberg.org/allyourcodebase/uncrustify#2cdf880e4ffbe438a7946368cd45fca2df9f0f7a",
             .hash = "uncrustify-0.83.0-qkVd7cVCAADAg1kS3ctVBhY2gkxEIs-W8wgurLadbgC-",
