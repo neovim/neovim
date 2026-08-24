@@ -714,7 +714,7 @@ describe('lua stdlib', function()
     eq(true, pcall(vim.split, 'string', 'string'))
     matches('s: expected string, got number', pcall_err(vim.split, 1, 'string'))
     matches('sep: expected string, got number', pcall_err(vim.split, 'string', 1))
-    matches('opts: expected table, got number', pcall_err(vim.split, 'string', 'string', 1))
+    matches('opts: expected table|nil, got number', pcall_err(vim.split, 'string', 'string', 1))
   end)
 
   it('vim.trim', function()
@@ -1624,6 +1624,38 @@ describe('lua stdlib', function()
       'arg1: expected TEST_MSG, got nil',
       pcall_err(exec_lua, "vim.validate('arg1', nil, 'table', 'TEST_MSG')")
     )
+
+    matches(
+      'arg1: expected string|nil, got number',
+      pcall_err(exec_lua, "vim.validate('arg1', 1, 'string', true)")
+    )
+    matches(
+      'arg1: expected TEST_MSG|nil, got number',
+      pcall_err(exec_lua, "vim.validate('arg1', 1, 'string', true, 'TEST_MSG')")
+    )
+    matches(
+      'arg1: expected number|string|nil, got boolean',
+      pcall_err(exec_lua, "vim.validate('arg1', true, {'number', 'string'}, true)")
+    )
+    matches(
+      'arg1: expected %?|nil, got 1',
+      pcall_err(exec_lua, "vim.validate('arg1', 1, function(v) return v == 2 end, true)")
+    )
+    matches(
+      'arg1: expected TEST_MSG|nil, got 1',
+      pcall_err(
+        exec_lua,
+        "vim.validate('arg1', 1, function(v) return v == 2 end, true, 'TEST_MSG')"
+      )
+    )
+    matches(
+      'arg1: expected string|nil, got number',
+      pcall_err(exec_lua, "vim.validate('arg1', 1, {'string', 'nil'}, true)")
+    )
+    matches(
+      'arg1: expected nil, got number',
+      pcall_err(exec_lua, "vim.validate('arg1', 1, 'nil', true)")
+    )
   end)
 
   it('vim.validate (spec form)', function()
@@ -1702,6 +1734,15 @@ describe('lua stdlib', function()
     matches(
       'arg1: expected %?, got 3. Info: TEST_MSG',
       pcall_err(exec_lua, "vim.validate{arg1={3, function(a) return a == 1, 'TEST_MSG' end}}")
+    )
+
+    matches(
+      'arg1: expected string|nil, got number',
+      pcall_err(exec_lua, "vim.validate{arg1={1, 's', true}}")
+    )
+    matches(
+      'arg1: expected number|string|nil, got boolean',
+      pcall_err(exec_lua, "vim.validate{arg1={true, {'n', 's'}, true}}")
     )
   end)
 
@@ -2425,7 +2466,7 @@ describe('lua stdlib', function()
     it('callback must be a function', function()
       local result = exec_lua [[return {pcall(function() vim.wait(1000, 13) end)}]]
       eq(false, result[1])
-      matches('callback: expected callable, got number$', remove_trace(result[2]))
+      matches('callback: expected callable|nil, got number$', remove_trace(result[2]))
     end)
 
     it('waits if callback arg is nil', function()
@@ -3006,7 +3047,7 @@ describe('vim.keymap', function()
     )
 
     matches(
-      'opts: expected table, got function',
+      'opts: expected table|nil, got function',
       pcall_err(exec_lua, [[vim.keymap.set({}, 'x', 'x', function() end)]])
     )
 
