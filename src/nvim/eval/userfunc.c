@@ -3944,14 +3944,29 @@ funccall_T *get_funccal(void)
   return funccal;
 }
 
+/// Get the function call environment to use for the l: and a: variables, based
+/// on the backtrace debug level.
+/// Returns NULL if there is no current funccal.
+static funccall_T *get_funccal_for_vars(void)
+{
+  funccall_T *funccal = NULL;
+
+  if (current_funccal == NULL) {
+    return NULL;
+  }
+  funccal = get_funccal();
+  if (funccal == NULL || funccal->fc_l_vars.dv_refcount == 0) {
+    return NULL;
+  }
+  return funccal;
+}
+
 /// @return  dict used for local variables in the current funccal or
 ///          NULL if there is no current funccal.
 dict_T *get_funccal_local_dict(void)
 {
-  if (current_funccal == NULL || current_funccal->fc_l_vars.dv_refcount == 0) {
-    return NULL;
-  }
-  return &get_funccal()->fc_l_vars;
+  funccall_T *funccal = get_funccal_for_vars();
+  return funccal == NULL ? NULL : &funccal->fc_l_vars;
 }
 
 /// @return  hashtable used for local variables in the current funccal or
@@ -3966,20 +3981,16 @@ hashtab_T *get_funccal_local_ht(void)
 ///           NULL if there is no current funccal.
 dictitem_T *get_funccal_local_var(void)
 {
-  if (current_funccal == NULL || current_funccal->fc_l_vars.dv_refcount == 0) {
-    return NULL;
-  }
-  return (dictitem_T *)&get_funccal()->fc_l_vars_var;
+  funccall_T *funccal = get_funccal_for_vars();
+  return funccal == NULL ? NULL : (dictitem_T *)&funccal->fc_l_vars_var;
 }
 
 /// @return  the dict used for argument in the current funccal or
 ///          NULL if there is no current funccal.
 dict_T *get_funccal_args_dict(void)
 {
-  if (current_funccal == NULL || current_funccal->fc_l_vars.dv_refcount == 0) {
-    return NULL;
-  }
-  return &get_funccal()->fc_l_avars;
+  funccall_T *funccal = get_funccal_for_vars();
+  return funccal == NULL ? NULL : &funccal->fc_l_avars;
 }
 
 /// @return  the hashtable used for argument in the current funccal or
@@ -3994,10 +4005,8 @@ hashtab_T *get_funccal_args_ht(void)
 ///          NULL if there is no current funccal.
 dictitem_T *get_funccal_args_var(void)
 {
-  if (current_funccal == NULL || current_funccal->fc_l_vars.dv_refcount == 0) {
-    return NULL;
-  }
-  return (dictitem_T *)&get_funccal()->fc_l_avars_var;
+  funccall_T *funccal = get_funccal_for_vars();
+  return funccal == NULL ? NULL : (dictitem_T *)&funccal->fc_l_avars_var;
 }
 
 /// List function variables, if there is a function.
