@@ -177,8 +177,8 @@ struct compl_S {
   bool cp_preselect;             ///< preselect item
   int cp_score;                  ///< fuzzy match score or proximity score
   bool cp_in_match_array;        ///< collected by compl_match_array
-  int cp_user_abbr_hlattr;       ///< highlight attribute for abbr
-  int cp_user_kind_hlattr;       ///< highlight attribute for kind
+  int cp_user_abbr_hl_id;        ///< highlight group ID for abbr
+  int cp_user_kind_hl_id;        ///< highlight group ID for kind
   int cp_cpt_source_idx;         ///< index of this match's source in 'cpt' option
 };
 
@@ -1075,8 +1075,8 @@ static int ins_compl_add(char *const str, int len, char *const fname, char *cons
     match->cp_fname = NULL;
   }
   match->cp_flags = flags;
-  match->cp_user_abbr_hlattr = user_hl ? user_hl[0] : -1;
-  match->cp_user_kind_hlattr = user_hl ? user_hl[1] : -1;
+  match->cp_user_abbr_hl_id = user_hl ? user_hl[0] : 0;
+  match->cp_user_kind_hl_id = user_hl ? user_hl[1] : 0;
   match->cp_score = score;
   match->cp_cpt_source_idx = cpt_sources_index;
 
@@ -1647,6 +1647,18 @@ static void sort_compl_match_list(MergeSortCompareFunc compare)
   (void)ins_compl_make_cyclic();
 }
 
+/// Return the attribute for highlight group "hl_id", -1 when it has none.
+static int get_user_highlight_attr(int hl_id)
+{
+  int attr;
+
+  if (hl_id <= 0) {
+    return -1;
+  }
+  attr = syn_id2attr(hl_id);
+  return attr > 0 ? attr : -1;
+}
+
 /// Build a popup menu to show the completion matches.
 ///
 /// @return  the popup menu entry that should be selected,
@@ -1802,8 +1814,8 @@ static int ins_compl_build_pum(void)
     compl_match_array[i].pum_kind = comp->cp_text[CPT_KIND];
     compl_match_array[i].pum_info = comp->cp_text[CPT_INFO];
     compl_match_array[i].pum_cpt_source_idx = comp->cp_cpt_source_idx;
-    compl_match_array[i].pum_user_abbr_hlattr = comp->cp_user_abbr_hlattr;
-    compl_match_array[i].pum_user_kind_hlattr = comp->cp_user_kind_hlattr;
+    compl_match_array[i].pum_user_abbr_hlattr = get_user_highlight_attr(comp->cp_user_abbr_hl_id);
+    compl_match_array[i].pum_user_kind_hlattr = get_user_highlight_attr(comp->cp_user_kind_hl_id);
     compl_match_array[i++].pum_extra = comp->cp_text[CPT_MENU] != NULL
                                        ? comp->cp_text[CPT_MENU] : comp->cp_fname;
     compl_T *match_next = comp->cp_match_next;
@@ -3321,12 +3333,12 @@ theend:
   }
 }
 
-static inline int get_user_highlight_attr(const char *hlname)
+static inline int get_user_highlight_id(char *hlname)
 {
   if (hlname != NULL && *hlname != NUL) {
-    return syn_name2attr(hlname);
+    return syn_check_group(hlname, strlen(hlname));
   }
-  return -1;
+  return 0;
 }
 
 /// Add a match to the list of matches from Vimscript object
@@ -3350,7 +3362,7 @@ static int ins_compl_add_tv(typval_T *const tv, const Direction dir, bool fast)
   char *user_abbr_hlname = NULL;
   char *user_kind_hlname = NULL;
   char *commit_chars = NULL;
-  int user_hl[2] = { -1, -1 };
+  int user_hl[2] = { 0, 0 };
   typval_T user_data;
 
   user_data.v_type = VAR_UNKNOWN;
@@ -3363,10 +3375,10 @@ static int ins_compl_add_tv(typval_T *const tv, const Direction dir, bool fast)
     commit_chars = tv_dict_get_string(tv->vval.v_dict, "commit_chars", true);
 
     user_abbr_hlname = tv_dict_get_string(tv->vval.v_dict, "abbr_hlgroup", false);
-    user_hl[0] = get_user_highlight_attr(user_abbr_hlname);
+    user_hl[0] = get_user_highlight_id(user_abbr_hlname);
 
     user_kind_hlname = tv_dict_get_string(tv->vval.v_dict, "kind_hlgroup", false);
-    user_hl[1] = get_user_highlight_attr(user_kind_hlname);
+    user_hl[1] = get_user_highlight_id(user_kind_hlname);
 
     tv_dict_get_tv(tv->vval.v_dict, "user_data", &user_data);
 
@@ -3634,6 +3646,8 @@ static void fill_complete_info_dict(dict_T *di, compl_T *match, bool add_match)
   tv_dict_add_str(di, S_LEN("menu"), match->cp_text[CPT_MENU]);
   tv_dict_add_str(di, S_LEN("kind"), match->cp_text[CPT_KIND]);
   tv_dict_add_str(di, S_LEN("info"), match->cp_text[CPT_INFO]);
+  tv_dict_add_str(di, S_LEN("abbr_hlgroup"), syn_id2name(match->cp_user_abbr_hl_id));
+  tv_dict_add_str(di, S_LEN("kind_hlgroup"), syn_id2name(match->cp_user_kind_hl_id));
   if (add_match) {
     tv_dict_add_bool(di, S_LEN("match"), match->cp_in_match_array);
   }

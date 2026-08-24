@@ -581,15 +581,15 @@ func Test_completefunc_info()
   call assert_equal("matched{'preinserted_text': '', 'pum_visible': 0, 'mode': '', 'selected': -1, 'items': []}", getline(1))
   %d
   call feedkeys("i\<C-X>\<C-U>\<C-R>\<C-R>=string(complete_info())\<CR>\<ESC>", "tx")
-  call assert_equal("matched{'preinserted_text': '', 'pum_visible': 1, 'mode': 'function', 'selected': 0, 'items': [{'word': 'matched', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}]}", getline(1))
+  call assert_equal("matched{'preinserted_text': '', 'pum_visible': 1, 'mode': 'function', 'selected': 0, 'items': [{'word': 'matched', 'menu': '', 'kind_hlgroup': '', 'abbr_hlgroup': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}]}", getline(1))
   %d
   set complete=.,FCompleteTest
   call feedkeys("i\<C-N>\<C-R>\<C-R>=string(complete_info())\<CR>\<ESC>", "tx")
-  call assert_equal("matched{'preinserted_text': '', 'pum_visible': 1, 'mode': 'keyword', 'selected': 0, 'items': [{'word': 'matched', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}]}", getline(1))
+  call assert_equal("matched{'preinserted_text': '', 'pum_visible': 1, 'mode': 'keyword', 'selected': 0, 'items': [{'word': 'matched', 'menu': '', 'kind_hlgroup': '', 'abbr_hlgroup': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}]}", getline(1))
   %d
   set complete=.,F
   call feedkeys("i\<C-N>\<C-R>\<C-R>=string(complete_info())\<CR>\<ESC>", "tx")
-  call assert_equal("matched{'preinserted_text': '', 'pum_visible': 1, 'mode': 'keyword', 'selected': 0, 'items': [{'word': 'matched', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}]}", getline(1))
+  call assert_equal("matched{'preinserted_text': '', 'pum_visible': 1, 'mode': 'keyword', 'selected': 0, 'items': [{'word': 'matched', 'menu': '', 'kind_hlgroup': '', 'abbr_hlgroup': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}]}", getline(1))
   set completeopt&
   set complete&
   set completefunc&
@@ -700,10 +700,10 @@ func CompleteInfoTestUserDefinedFn(mvmt, idx, noselect)
     set completeopt=menu,preview
   endif
   let items = "[" .
-        \ "{'word': 'foo', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}, " .
-        \ "{'word': 'bar', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}, " .
-        \ "{'word': 'baz', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}, " .
-        \ "{'word': 'qux', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}" .
+        \ "{'word': 'foo', 'menu': '', 'kind_hlgroup': '', 'abbr_hlgroup': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}, " .
+        \ "{'word': 'bar', 'menu': '', 'kind_hlgroup': '', 'abbr_hlgroup': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}, " .
+        \ "{'word': 'baz', 'menu': '', 'kind_hlgroup': '', 'abbr_hlgroup': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}, " .
+        \ "{'word': 'qux', 'menu': '', 'kind_hlgroup': '', 'abbr_hlgroup': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}" .
         \ "]"
   new
   set completefunc=CompleteInfoUserDefinedFn
@@ -2043,7 +2043,7 @@ func Test_cpt_func_refresh_always_fail()
   let g:CallCount = 0
   exe "normal! Gof\<C-N>oo\<c-r>=complete_info([\"items\", \"selected\"])\<cr>"
   call assert_equal('foo{''selected'': -1, ''items'': [{''word'': ''fooo1'', ''menu'': '''', '
-        \ . '''user_data'': '''', ''info'': '''', ''kind'': '''', ''abbr'': ''''}]}',
+        \ . '''kind_hlgroup'': '''', ''abbr_hlgroup'': '''', ''user_data'': '''', ''info'': '''', ''kind'': '''', ''abbr'': ''''}]}',
         \ getline(2))
   call assert_equal(3, g:CallCount)
   %d
@@ -2059,7 +2059,7 @@ func Test_cpt_func_refresh_always_fail()
   let g:CallCount = 0
   exe "normal! Gof\<C-N>o\<bs>\<c-r>=complete_info([\"items\", \"selected\"])\<cr>"
   call assert_equal('f{''selected'': -1, ''items'': [{''word'': ''fooo1'', ''menu'': '''', '
-        \ . '''user_data'': '''', ''info'': '''', ''kind'': '''', ''abbr'': ''''}]}',
+        \ . '''kind_hlgroup'': '''', ''abbr_hlgroup'': '''', ''user_data'': '''', ''info'': '''', ''kind'': '''', ''abbr'': ''''}]}',
         \ getline(2))
   call assert_equal(3, g:CallCount)
   %d
@@ -2067,7 +2067,7 @@ func Test_cpt_func_refresh_always_fail()
   let g:CallCount = 0
   exe "normal! Gof\<C-N>oo\<bs>\<c-r>=complete_info([\"items\", \"selected\"])\<cr>"
   call assert_equal('fo{''selected'': -1, ''items'': [{''word'': ''fooo1'', ''menu'': '''', '
-        \ . '''user_data'': '''', ''info'': '''', ''kind'': '''', ''abbr'': ''''}]}',
+        \ . '''kind_hlgroup'': '''', ''abbr_hlgroup'': '''', ''user_data'': '''', ''info'': '''', ''kind'': '''', ''abbr'': ''''}]}',
         \ getline(2))
   call assert_equal(3, g:CallCount)
   bw!
@@ -4254,26 +4254,26 @@ func Test_complete_info_matches()
 
   call feedkeys("Go\<C-X>\<C-N>\<F5>\<Esc>dd", 'tx')
   call assert_equal([
-    \ {'word': 'aaa', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},
-    \ {'word': 'aab', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},
-    \ {'word': 'aba', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},
-    \ {'word': 'abb', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},
+    \ {'word': 'aaa', 'menu': '', 'kind_hlgroup': '', 'abbr_hlgroup': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},
+    \ {'word': 'aab', 'menu': '', 'kind_hlgroup': '', 'abbr_hlgroup': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},
+    \ {'word': 'aba', 'menu': '', 'kind_hlgroup': '', 'abbr_hlgroup': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},
+    \ {'word': 'abb', 'menu': '', 'kind_hlgroup': '', 'abbr_hlgroup': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},
     \], g:compl_info['matches'])
 
   call feedkeys("Goa\<C-X>\<C-N>b\<F5>\<Esc>dd", 'tx')
   call assert_equal([
-    \ {'word': 'aba', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},
-    \ {'word': 'abb', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},
+    \ {'word': 'aba', 'menu': '', 'kind_hlgroup': '', 'abbr_hlgroup': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},
+    \ {'word': 'abb', 'menu': '', 'kind_hlgroup': '', 'abbr_hlgroup': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},
     \], g:compl_info['matches'])
 
   " items and matches both in what
   let g:what = ['items', 'matches']
   call feedkeys("Goa\<C-X>\<C-N>b\<F5>\<Esc>dd", 'tx')
   call assert_equal([
-    \ {'word': 'aaa', 'menu': '', 'user_data': '', 'match': v:false, 'info': '', 'kind': '', 'abbr': ''},
-    \ {'word': 'aab', 'menu': '', 'user_data': '', 'match': v:false, 'info': '', 'kind': '', 'abbr': ''},
-    \ {'word': 'aba', 'menu': '', 'user_data': '', 'match': v:true, 'info': '', 'kind': '', 'abbr': ''},
-    \ {'word': 'abb', 'menu': '', 'user_data': '', 'match': v:true, 'info': '', 'kind': '', 'abbr': ''},
+    \ {'word': 'aaa', 'menu': '', 'kind_hlgroup': '', 'abbr_hlgroup': '', 'user_data': '', 'match': v:false, 'info': '', 'kind': '', 'abbr': ''},
+    \ {'word': 'aab', 'menu': '', 'kind_hlgroup': '', 'abbr_hlgroup': '', 'user_data': '', 'match': v:false, 'info': '', 'kind': '', 'abbr': ''},
+    \ {'word': 'aba', 'menu': '', 'kind_hlgroup': '', 'abbr_hlgroup': '', 'user_data': '', 'match': v:true, 'info': '', 'kind': '', 'abbr': ''},
+    \ {'word': 'abb', 'menu': '', 'kind_hlgroup': '', 'abbr_hlgroup': '', 'user_data': '', 'match': v:true, 'info': '', 'kind': '', 'abbr': ''},
     \], g:compl_info['items'])
   call assert_false(has_key(g:compl_info, 'matches'))
 
@@ -4295,13 +4295,13 @@ func Test_complete_info_completed()
   inoremap <buffer><F5> <C-R>=ShownInfo()<CR>
 
   call feedkeys("Go\<C-X>\<C-N>\<F5>\<Esc>dd", 'tx')
-  call assert_equal({'word': 'aaa', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},  g:compl_info['completed'])
+  call assert_equal({'word': 'aaa', 'menu': '', 'kind_hlgroup': '', 'abbr_hlgroup': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},  g:compl_info['completed'])
 
   call feedkeys("Go\<C-X>\<C-N>\<C-N>\<F5>\<Esc>dd", 'tx')
-  call assert_equal({'word': 'aab', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},  g:compl_info['completed'])
+  call assert_equal({'word': 'aab', 'menu': '', 'kind_hlgroup': '', 'abbr_hlgroup': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},  g:compl_info['completed'])
 
   call feedkeys("Go\<C-X>\<C-N>\<C-N>\<C-N>\<C-N>\<F5>\<Esc>dd", 'tx')
-  call assert_equal({'word': 'abb', 'menu': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},  g:compl_info['completed'])
+  call assert_equal({'word': 'abb', 'menu': '', 'kind_hlgroup': '', 'abbr_hlgroup': '', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},  g:compl_info['completed'])
 
   set completeopt+=noselect
   call feedkeys("Go\<C-X>\<C-N>\<F5>\<Esc>dd", 'tx')
@@ -6820,6 +6820,35 @@ func Test_ins_complete_dedup()
 
   bwipe!
   unlet g:compl_info
+endfunc
+
+func Test_complete_info_hlgroup()
+  new
+  set completeopt&
+  func DoComplete()
+    call complete(1, [
+          \ #{word: 'aaa', abbr_hlgroup: 'Title', kind_hlgroup: 'SpecialKey'},
+          \ #{word: 'bbb', abbr_hlgroup: 'MyAbbr', kind_hlgroup: 'MyKind'},
+          \ #{word: 'ccc'}])
+    return ''
+  endfunc
+  func ShownItems()
+    let g:items = complete_info(['items']).items
+    return ''
+  endfunc
+
+  call assert_false(hlexists('MyAbbr'))
+  call feedkeys("i\<C-R>=DoComplete()\<CR>\<C-R>=ShownItems()\<CR>\<Esc>", 'tx')
+  call assert_equal(['Title', 'MyAbbr', ''],
+        \ map(copy(g:items), 'v:val.abbr_hlgroup'))
+  call assert_equal(['SpecialKey', 'MyKind', ''],
+        \ map(copy(g:items), 'v:val.kind_hlgroup'))
+  call assert_true(hlexists('MyAbbr'))
+
+  unlet g:items
+  delfunc DoComplete
+  delfunc ShownItems
+  bwipe!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable
