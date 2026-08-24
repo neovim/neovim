@@ -883,7 +883,7 @@ either the first or second pattern in parentheses did not match, so either
 
 These commands repeat the previous `:substitute` command with the given flags.
 The first letter is always "s", followed by one or two of the possible flag
-characters.  For example `:sce` works like `:s///ce`.  The table lists the
+characters.  For example ":sce" works like ":s ce".  The table lists the
 possible combinations, not all flags are possible, because the command is
 short for another command.
 
