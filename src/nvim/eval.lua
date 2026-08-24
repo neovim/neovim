@@ -1493,10 +1493,13 @@ M.funcs = {
       		the currently selected index item.
          items	List of all completion candidates.  Each item
       		is a dictionary containing the entries "word",
-      		"abbr", "menu", "kind", "info" and
-      		"user_data".  "equal", "preselect" and
-      		"commit_chars" are included only for items that
-      		set them.
+      		"abbr", "menu", "kind", "info",
+      		"abbr_hlgroup", "kind_hlgroup" and
+      		"user_data". The highlight group entries hold
+      		the name that the item was added with,
+      		or an empty string.
+      		"equal", "preselect" and "commit_chars" are
+      		included only for items that set them.
       		See |complete-items|.
          matches	Same as "items", but only returns items that
       		are matching current query.  If both "matches"
