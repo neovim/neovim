@@ -711,22 +711,21 @@ end
 
 local on_key_cbs = {} --- @type table<integer,[function, table]>
 
---- Registers function {fn} with [namespace] {ns_id} as a listener to every, yes EVERY, input key.
+--- Registers function {fn} with [namespace] {ns_id} as a listener to EVERY input key (except keys
+--- consumed by [getchar()], by {fn} itself, or by a [<Cmd>] payload).
 ---
 --- To parse [key-chord]s, see |vim.keycode()|. Example:
 --- ```lua
 --- local keychords = vim.keycode(vim.fn.keytrans(key), true)
 --- ```
 ---
---- The |-w| command-line option is related but does not support callbacks and cannot be toggled
---- dynamically.
----
----@note If {fn} returns an empty string, {key} is discarded/ignored; if {key} is [<Cmd>] then the
----      "[<Cmd>]…[<CR>]" sequence is discarded as a whole.
+---@note If {fn} returns an empty string, {key} is discarded/ignored; if {key} is [<Cmd>] then the "[<Cmd>]…[<CR>]" sequence is discarded as a whole.
 ---@note Non-recursive: if {fn} itself consumes input, it won't be invoked for those keys.
+---@note Not invoked for keys consumed by getchar()/getcharstr(): they never reach the main loop.
 ---@note To UNregister a given {ns_id}, pass `nil` {fn}.
 ---@note {fn} will be removed on error.
 ---@note {fn} will not be cleared by |nvim_buf_clear_namespace()|
+---@note The |-w| command-line option is related but does not support callbacks and cannot be toggled dynamically.
 ---
 ---@param fn nil|fun(key: string, typed: string): string? Function invoked for every input key,
 ---          after mappings have been applied but before further processing. Arguments {key} and

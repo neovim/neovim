@@ -132,6 +132,8 @@ static kvec_withinit_t(char, MAXMAPLEN + 1) on_key_buf = KVI_INITIAL_VALUE(on_ke
 
 /// Number of following bytes that should not be stored for vim.on_key().
 static size_t on_key_ignore_len = 0;
+/// Nesting depth of getchar()/getcharstr(). Will skip vim.on_key() callbacks. #40010
+static int getchar_depth = 0;
 
 static int typeahead_char = 0;  ///< typeahead char that's not flushed
 
@@ -1811,7 +1813,7 @@ int vgetc(void)
 
   // Execute Lua on_key callbacks.
   kvi_push(on_key_buf, NUL);
-  if (nlua_exec_on_key(c, on_key_buf.items)) {
+  if (getchar_depth == 0 && nlua_exec_on_key(c, on_key_buf.items)) {
     // Keys following K_COMMAND/K_LUA/K_PASTE_START aren't normally received by
     // vim.on_key() callbacks, so discard them along with the current key.
     if (c == K_COMMAND) {
@@ -1948,6 +1950,7 @@ static void getchar_common(typval_T *argvars, typval_T *rettv, bool allow_number
 
   no_mapping++;
   allow_keys++;
+  getchar_depth++;
   if (!simplify) {
     no_reduce_keys++;
   }
@@ -1994,6 +1997,7 @@ static void getchar_common(typval_T *argvars, typval_T *rettv, bool allow_number
   atom_payload_end();
   no_mapping--;
   allow_keys--;
+  getchar_depth--;
   if (!simplify) {
     no_reduce_keys--;
   }

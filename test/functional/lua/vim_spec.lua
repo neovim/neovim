@@ -2102,7 +2102,7 @@ describe('lua stdlib', function()
       eq('/', exec_lua([[return _G.ctrl_c_cmdtype]]))
     end)
 
-    it('callback is not invoked recursively #30752', function()
+    it('not invoked recursively #30752', function()
       local screen = Screen.new(60, 10)
       exec_lua([[
         vim.on_key(function(key, typed)
@@ -2138,6 +2138,21 @@ describe('lua stdlib', function()
         {1:~                                                           }|*8
                                                                     |
       ]])
+    end)
+
+    it('not invoked for keys consumed by getchar() #40010', function()
+      exec_lua(function()
+        _G.typed = {}
+        vim.on_key(function(_, typed)
+          table.insert(_G.typed, vim.fn.keytrans(typed))
+        end)
+        vim.keymap.set('n', '<M-m>', function()
+          _G.got = vim.fn.getchar()
+        end)
+      end)
+      feed('<M-m><CR>')
+      eq(13, exec_lua('return _G.got'))
+      eq({ '<M-m>' }, exec_lua('return _G.typed'))
     end)
 
     it('can discard input', function()
