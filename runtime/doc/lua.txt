@@ -6149,7 +6149,6 @@ indicates the spilled lines. To see the full messages, do either:
 • Type `pager_char` immediately after an interactive |:| command.
 
 If you'd like behavior similar to the old hit-enter prompt, pass
-`pager_char = "<CR>"` on the `cfg` table. When the pager is shown, hitting
-`<CR>` (in this example) will enter the pager.
+`pager_char = "<CR>"` on the `cfg` table.
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
