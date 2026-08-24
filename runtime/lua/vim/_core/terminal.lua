@@ -175,4 +175,133 @@ function M.load(args)
   vim.api.nvim__term_feed(bufnr, state.content .. pad .. banner .. '\n\n')
 end
 
+--- Finds state files matching a `term://` URI in `stdpath('state')/term/`
+---
+---@param uri string
+---@param cwd string?
+---@param cmd string
+---@return { path: string, state: vim._core.terminal.State }[]
+local function find_states(uri, cwd, cmd)
+  local term_path = vim.fs.joinpath(vim.fn.stdpath('state'), 'term')
+  if vim.fn.isdirectory(term_path) == 0 then
+    return {}
+  end
+
+  -- URIs recorded by sessions/marks is complete
+  local fname = vim.fs.joinpath(term_path, vim.fs.slug(uri) .. '.mpack')
+  local exact_state = read_state(fname)
+  if exact_state then
+    return { { path = fname, state = exact_state } }
+  end
+
+  -- local uri_cwd = cwd and vim.fs.normalize(cwd) or nil
+  ---@param state vim._core.terminal.State
+  local function matches(state)
+    -- Note: the dir in a `term://` URI is the directory the terminal was spawned in,
+    --       not the save-time cwd which may have been changed via `:bcd`/OSC 7.
+    --       So, dir is matched by filename only, and state.cwd is deliberately not compared.
+    -- if uri_cwd and (type(state.cwd) ~= 'string' or vim.fs.normalize(state.cwd) ~= uri_cwd) then
+    --   return false
+    -- end
+    return type(state.argv) == 'table' and table.concat(state.argv, ' '):find(cmd, 1, true) ~= nil
+  end
+
+  -- how dir and cmd appear in filenames
+  local dir_frag = cwd and cwd:gsub('[%c%s/\\:*?"<>|]', '-') or nil
+  local cmd_frag = cmd:gsub('[%c%s/\\:*?"<>|]', '-')
+  -- Verified matches
+  local cands = {} ---@type { path: string, state: vim._core.terminal.State }[]
+  -- Frag misses, rechecked only when `cands` is empty
+  local unchecked = {} ---@type string[]
+  for name, typ in vim.fs.dir(term_path) do
+    if typ == 'file' and name:sub(-6) == '.mpack' then
+      local path = vim.fs.joinpath(term_path, name)
+      if (dir_frag and name:find(dir_frag, 1, true)) and name:find(cmd_frag, 1, true) then
+        local state = read_state(path)
+        if state and matches(state) then
+          cands[#cands + 1] = { path = path, state = state }
+        end
+      else
+        unchecked[#unchecked + 1] = path
+      end
+    end
+  end
+  if #cands == 0 then
+    for _, path in ipairs(unchecked) do
+      local state = read_state(path)
+      if state and matches(state) then
+        cands[#cands + 1] = { path = path, state = state }
+      end
+    end
+  end
+  table.sort(cands, function(a, b)
+    return (a.state.timestamp or 0) > (b.state.timestamp or 0)
+  end)
+  return cands
+end
+
+--- Opens a `term://` URI as a live terminal buffer
+---
+--- Called as a BufReadCmd handler for `term://*` buffers. When state files match the URI,
+--- the chosen one is restored via `M.load`; otherwise the URI's command is started fresh.
+---
+---@param args table autocmd args (buf, file, match)
+function M.open(args)
+  local bufnr = args.buf ---@type integer
+  local uri = args.match ---@type string
+  if vim.b[bufnr].term_title ~= nil then
+    return
+  end
+  -- `term://{cwd}//{pid}:{cmd}`; cwd and the pid prefix are optional
+  local rest = uri:sub(#'term://' + 1)
+  local cwd, cmd = rest:match('^(.-)//(.*)$') ---@type string?, string?
+  if cmd then
+    -- Strip the PID prefix
+    cmd = cmd:match('^%d+:(.*)$') or cmd
+    cwd = cwd ~= '' and cwd or nil
+  else
+    cmd = rest
+  end
+
+  -- Only a URI with both dir and cmd participates in matching
+  local cands = {} ---@type { path: string, state: vim._core.terminal.State }[]
+  if cwd and cmd ~= '' then
+    cands = find_states(uri, cwd, cmd)
+  end
+
+  if #cands == 1 then
+    M.load({ buf = bufnr, file = cands[1].path })
+  elseif #cands > 1 then
+    vim.ui.select(cands, {
+      prompt = N_('Select a terminal state to restore:'),
+      kind = 'termstate',
+      ---@param cand { path: string, state: vim._core.terminal.State }
+      format_item = function(cand)
+        local t = type(cand.state.timestamp) == 'number'
+            and vim.fn.strftime('%Y-%m-%d %H:%M', cand.state.timestamp)
+          or '?'
+        return ('%s  %s  %s'):format(
+          t,
+          cand.state.cwd or '',
+          table.concat(cand.state.argv or {}, ' ')
+        )
+      end,
+    }, function(_, idx)
+      -- Buffer wiped while an async picker was open: nothing to restore into
+      if not vim.api.nvim_buf_is_valid(bufnr) then
+        return
+      end
+      vim.api.nvim_set_current_buf(bufnr)
+      if idx then
+        M.load({ buf = bufnr, file = cands[idx].path })
+      else
+        -- Cancelled: abandon the restore and fall back to a fresh terminal
+        vim.fn.jobstart(cmd, { term = true, cwd = vim.fn.expand(cwd or '') })
+      end
+    end)
+  else
+    vim.fn.jobstart(cmd, { term = true, cwd = vim.fn.expand(cwd or '') })
+  end
+end
+
 return M

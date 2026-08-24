@@ -311,8 +311,32 @@ Terminal state files are stored in msgpack format. Example: >
 Note: Appending to a terminal state file (`:write >>`) is not supported.
 								*E5008*
 
-Editing a state file under `|stdpath()|/term/` restores it as a live terminal:
+A terminal can be restored by "editing" its state file, for example: >vim
+    :edit ~/.local/state/nvim/term/=uri-term-foo-1234--bar-abc12345.mpack
 
+Terminal state files are normally stored under `stdpath('state')/term/`.
+Because the full path to such a file can be cumbersome to type, Nvim also
+provides the `term://` URI as a convenient way to restore a terminal: >vim
+    :edit term://{dir}//{cmd}
+
+This restarts a live terminal and restores the history if there is any
+matching state file. Since this URI is not complete, multiple state files may
+be corresponding. In this case, Nvim will present them in a picker via
+|vim.ui.select()|. If there is no matching state file, the terminal is started
+without restoring anything.
+
+Here, {dir} is the directory in which the terminal was started, not the
+working directory recorded in the state file, which may have changed later via
+|:bcd| or |terminal-osc7|.
+
+A URI naming only a command (e.g. `:edit term://bash`) never participates in
+matching, and cancelling the picker abandons the restore; in both cases the
+terminal starts fresh, as if nothing matched.
+
+Terminal URIs stored by |:mksession| and |:mark| contain the complete URI.
+They can therefore identify a specific termianl state file directly.
+
+The precise "restore" behavior is:
 - The saved command is restarted in the saved cwd, and the saved ANSI content
 is replayed as history, followed by a "[ Terminal history ]" banner above any
 new job output.

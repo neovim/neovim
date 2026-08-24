@@ -568,13 +568,11 @@ do
   end
 
   local nvim_terminal_augroup = vim.api.nvim_create_augroup('nvim.terminal')
-  vim.api.nvim_create_autocmd('BufReadCmd', {
+  nvim_on('BufReadCmd', nvim_terminal_augroup, {
     pattern = 'term://*',
-    group = nvim_terminal_augroup,
-    desc = 'Treat term:// buffers as terminal buffers',
     nested = true,
-    command = "if !exists('b:term_title')|call jobstart(matchstr(expand(\"<amatch>\"), '\\c\\mterm://\\%(.\\{-}//\\%(\\d\\+:\\)\\?\\)\\?\\zs.*'), {'term': v:true, 'cwd': expand(get(matchlist(expand(\"<amatch>\"), '\\c\\mterm://\\(.\\{-}\\)//'), 1, ''))})",
-  })
+    desc = 'Treat term:// buffers as terminal buffers, restoring saved state when available',
+  }, require('vim._core.terminal').open)
 
   nvim_on({ 'TermClose' }, nvim_terminal_augroup, {
     nested = true,

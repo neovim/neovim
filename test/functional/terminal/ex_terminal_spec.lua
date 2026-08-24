@@ -715,6 +715,87 @@ describe(':edit on a terminal state file', function()
   end)
 end)
 
+describe(':edit on a term:// URI', function()
+  local xstate = 'Xtest-functional-terminal'
+
+  before_each(function()
+    clear({ env = { XDG_STATE_HOME = xstate } })
+  end)
+
+  after_each(function()
+    n.rmdir(xstate)
+  end)
+
+  local function state_dir()
+    return vim.fs.joinpath(fn.stdpath('state'), 'term')
+  end
+
+  local function is_restored()
+    for _, l in ipairs(api.nvim_buf_get_lines(0, 0, -1, true)) do
+      if l:find('Terminal history', 1, true) then
+        return true
+      end
+    end
+    return false
+  end
+
+  it('restores the state file recorded by the full URI', function()
+    Screen.new(180, 7)
+    command('terminal')
+    command('write')
+    local uri = api.nvim_buf_get_name(0)
+    local file = vim.fs.joinpath(state_dir(), fn.readdir(state_dir())[1])
+    command('bwipeout!')
+
+    command('edit ' .. uri)
+    eq('terminal', api.nvim_get_option_value('buftype', { buf = 0 }))
+    eq(false, api.nvim_get_option_value('modifiable', { buf = 0 }))
+    retry(nil, 4000, function()
+      eq(true, is_restored())
+    end)
+    eq(fn.fnamemodify(file, ':p'), api.nvim_buf_get_name(0))
+    command('write')
+    eq(1, #fn.readdir(state_dir()))
+  end)
+
+  it('starts a fresh terminal for a cmd-only URI', function()
+    Screen.new(180, 7)
+    command('terminal')
+    local cmd = api.nvim_buf_get_name(0):match('//%d+:(.*)$')
+    command('write')
+    command('bwipeout!')
+
+    command('edit term://' .. cmd)
+    eq('terminal', api.nvim_get_option_value('buftype', { buf = 0 }))
+    eq(false, is_restored())
+  end)
+
+  it('prompts on multiple matches; cancelling abandons the restore', function()
+    Screen.new(180, 7)
+    command('terminal')
+    local uri_without_pid = (api.nvim_buf_get_name(0):gsub('//%d+:', '//'))
+    command('write')
+    command('bwipeout!')
+    command('terminal')
+    command('write')
+    command('bwipeout!')
+    eq(2, #fn.readdir(state_dir()))
+
+    exec_lua([[vim.ui.select = function(items, _, on_choice) on_choice(items[1], 1) end]])
+    command('edit ' .. uri_without_pid)
+    eq('terminal', api.nvim_get_option_value('buftype', { buf = 0 }))
+    retry(nil, 4000, function()
+      eq(true, is_restored())
+    end)
+    command('bwipeout!')
+
+    exec_lua([[vim.ui.select = function(_, _, on_choice) on_choice(nil, nil) end]])
+    command('edit ' .. uri_without_pid)
+    eq('terminal', api.nvim_get_option_value('buftype', { buf = 0 }))
+    eq(false, is_restored())
+  end)
+end)
+
 describe('nvim__term_feed()', function()
   before_each(function()
     clear()
