@@ -17,6 +17,7 @@
       "cacheVariables": {
         "USE_BUNDLED":"OFF",
         "USE_BUNDLED_TS":"ON",
+        "USE_BUNDLED_TS_PARSERS":"ON",
         "USE_BUNDLED_UTF8PROC":"ON",
         "ENABLE_WASMTIME":"OFF"
       },
