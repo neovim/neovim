@@ -65,7 +65,9 @@ UI
 
 • Healthchecks for |vim.ui.img| were moved to `:checkhealth vim.health`.
 • |ui2| messages pager no longer uses <CR> by default; use |g<| or set
-  the `pager_char` field when enabling ui2.
+  'messagesopt' "pager", e.g. `:set messagesopt+=pager:<CR>`.
+• |ui2| `cfg.pager_char` and `cfg.msg.msg.timeout` were replaced by the
+  'messagesopt' items "pager" and "timeout".
 
 VIMSCRIPT
 
@@ -420,6 +422,8 @@ OPTIONS
 • 'winpinned' prevents window from closing unless specifically targeted.
 • 'packlockfile' sets the path used for |vim.pack-lockfile|.
 • 'previewpopup' decides how the preview window is displayed.
+• 'messagesopt' items "pager" and "timeout" configure the |ui2| message pager
+  key and how long a message stays in the message window.
 
 PERFORMANCE
 
