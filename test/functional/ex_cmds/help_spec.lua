@@ -354,11 +354,13 @@ describe(':helptags', function()
     fn.mkdir('Xhelptags/doc/sub', 'p')
     -- A "|" in a tag would break |links|, and "*Xd" is not closed, so neither is a tag.
     write_file('Xhelptags/doc/sub/Xc.txt', '*Xc*\n*X|c*\n*Xd\n')
+    -- CRLF helpfile: "\r" must not confuse the parser into finding tags in an example.
+    write_file('Xhelptags/doc/Xe.txt', '*Xe*\r\n>\r\n\t+-----+\r\n\t|/* a.c */  |/* b.c */  |\r\n')
 
     command('helptags Xhelptags/doc')
 
     eq(
-      eval("['Xa	Xa.txt	/*Xa*','Xb	Xb.txt	/*Xb*','Xc	sub/Xc.txt	/*Xc*']"),
+      eval("['Xa	Xa.txt	/*Xa*','Xb	Xb.txt	/*Xb*','Xc	sub/Xc.txt	/*Xc*','Xe	Xe.txt	/*Xe*']"),
       eval("readfile('Xhelptags/doc/tags')")
     )
 

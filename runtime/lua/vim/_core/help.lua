@@ -433,6 +433,8 @@ local function extract_tags(tags, file, name)
     return
   end
   --- @cast source string
+  -- The grammar treats "\r" as part of a word, so CRLF files would yield bogus tags.
+  source = source:gsub('\r\n', '\n')
 
   local query = ts.query.parse('vimdoc', '(tag (word) @tagname)')
   local parser = ts.get_string_parser(source, 'vimdoc')
