@@ -724,14 +724,6 @@ void redo_append_char(int c)
   }
 }
 
-// Append a number to the redo buffer.
-void redo_append_num(int n)
-{
-  if (!block_redo) {
-    kv_printf(redobuff.cur.body, "%d", n);
-  }
-}
-
 /// Appends string `s` (must be typeahead encoding) to the stuff buffer.
 void stuffReadbuff(const char *s)
   FUNC_ATTR_NONNULL_ALL

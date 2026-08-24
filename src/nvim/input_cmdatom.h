@@ -17,6 +17,7 @@ extern CmdAtomVec g_atoms;
 typedef struct CmdFrame CmdFrame;
 struct CmdFrame {
   CmdOrigin origin;    ///< State at entry.
+  bool cont;           ///< Stuffed continuation frame: the atom began earlier.
   VisualState visual;  ///< Visual-mode state (active/start/mode are diffed).
   bool keytyped;       ///< KeyTyped
   uint64_t captures;   ///< Capture counter.

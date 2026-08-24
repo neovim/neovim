@@ -103,11 +103,10 @@ operations provided by plugins, without the need for "announcement" via
 vim-repeat or similar. >lua
 
     local last ---@type vim.event.cmdatom.data?
-    local maxseq = {} ---@type table<integer, integer>
     vim.api.nvim_create_autocmd('CmdAtom', {
       callback = function(ev)
-        local is_redo_or_undo = ev.data.changed and (ev.data.undoseq or 0) <= (maxseq[ev.buf] or 0)
-        maxseq[ev.buf] = vim.fn.undotree(ev.buf).seq_last
+        local is_redo_or_undo = ev.data.changed and (ev.data.undoseq or 0) <= (vim.b[ev.buf].maxseq or 0)
+        vim.b[ev.buf].maxseq = vim.fn.undotree(ev.buf).seq_last
         if ev.data.changed and not is_redo_or_undo and ev.data.lhs ~= '.' then
           last = ev.data
         end
@@ -168,27 +167,17 @@ without a count replays the macro. >lua
     end)
 <
 							*restore-undo-cursor*
-Example: Restore cursor position after undo. Works for |u|, "3u", |CTRL-R|,
-":undo N", |g-| and any mapping: >lua
+By default, |undo| returns the cursor to its original position. If you don't
+like that, you can use this snippet to get Vim's behavior instead: >lua
 
-    local seen = {} ---@type table<integer, table>
     vim.api.nvim_create_autocmd('CmdAtom', {
       callback = function(ev)
-        local seq = ev.data.undoseq
-        if not seq then
-          return
+        -- Undo/redo: the buffer changed to an already-seen undo state.
+        local undid = ev.data.changed and (ev.data.undoseq or 0) <= (vim.b[ev.buf].maxseq or 0)
+        vim.b[ev.buf].maxseq = vim.fn.undotree(ev.buf).seq_last
+        if undid then
+          vim.cmd('normal! `[') -- Start of the changed text.
         end
-        local s = seen[ev.buf] or {}
-        seen[ev.buf] = s
-        -- Note: g- :earlier may cross undo-tree branches, "best effort" in that case.
-        if s.prev and seq < s.prev and s[seq + 1] then
-          vim.api.nvim_win_set_cursor(0, s[seq + 1]) -- Undo: first abandoned state.
-        elseif s.prev and seq > s.prev and s[seq] then
-          vim.api.nvim_win_set_cursor(0, s[seq]) -- Redo: revisiting a known seq.
-        elseif ev.data.changed and not s[seq] then
-          s[seq] = ev.data.pos -- New edit.
-        end
-        s.prev = seq
       end,
     })
 <
