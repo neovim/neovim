@@ -1430,6 +1430,10 @@ describe('vim.lsp.completion: integration', function()
             range = { start = { line = 0, character = 0 }, ['end'] = { line = 0, character = 7 } },
           },
         },
+        {
+          label = 'foobar',
+          insertTextFormat = 1,
+        },
       },
     }
     exec_lua(function()
@@ -1441,6 +1445,12 @@ describe('vim.lsp.completion: integration', function()
     feed('<C-Y>')
     eq('<div class="foo"></div>', n.api.nvim_get_current_line())
     eq({ 1, 17 }, n.api.nvim_win_get_cursor(0))
+
+    feed('<Esc>ccdiv.foo<C-x><C-O>')
+    wait_for_pum()
+    feed('<C-N><C-Y>')
+    eq('div.foobar', n.api.nvim_get_current_line())
+
     assert_cleanup_after_detach(client_id)
   end)
 
