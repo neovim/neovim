@@ -647,11 +647,22 @@ describe('nvim__term_capture()', function()
   end)
 end)
 
+local function is_te_restored()
+  for _, l in ipairs(api.nvim_buf_get_lines(0, 0, -1, true)) do
+    if l:find('Terminal history', 1, true) then
+      return true
+    end
+  end
+  return false
+end
+
 describe(':edit on a terminal state file', function()
+  local screen
   local xstate = 'Xtest-functional-terminal'
 
   before_each(function()
     clear({ env = { XDG_STATE_HOME = xstate } })
+    screen = tt.setup_screen()
   end)
 
   after_each(function()
@@ -659,9 +670,6 @@ describe(':edit on a terminal state file', function()
   end)
 
   it('restores a live terminal that writes back to the same file', function()
-    -- 180 columns: the long `:write` report (full state file path) must fit on one screen line,
-    -- otherwise it wraps and hangs the child on a hit-enter prompt.
-    local screen = Screen.new(180, 7)
     command('terminal')
     command('write')
     local dir = vim.fs.joinpath(fn.stdpath('state'), 'term')
@@ -672,13 +680,13 @@ describe(':edit on a terminal state file', function()
     command('bwipeout!')
 
     -- restore terminal buffer
-    command('edit ' .. file)
+    command('silent edit ' .. file)
     eq('terminal', api.nvim_get_option_value('buftype', { buf = 0 }))
     eq(false, api.nvim_get_option_value('modifiable', { buf = 0 }))
-    retry(nil, 30000, function()
-      screen:expect({ any = 'Terminal history' }) -- banner
+    retry(nil, 4000, function()
+      eq(true, is_te_restored())
     end)
-    feed('iecho hello<CR>')
+    feed('echo hello<CR>')
     retry(nil, 30000, function()
       screen:expect({ any = '\nhello' }) -- anchors to a row start
     end)
@@ -689,7 +697,7 @@ describe(':edit on a terminal state file', function()
     command('bwipeout!')
 
     -- restore the overwriten state file
-    command('edit ' .. file)
+    command('silent edit ' .. file)
     eq('terminal', api.nvim_get_option_value('buftype', { buf = 0 }))
     eq(false, api.nvim_get_option_value('modifiable', { buf = 0 }))
   end)
@@ -699,11 +707,9 @@ describe(':edit on a terminal state file', function()
     fn.mkdir(dir, 'p')
     local bad = vim.fs.joinpath(dir, 'bad.mpack')
     fn.writefile('invalid terminal state file', bad, 'b')
-    ok(
-      pcall_err(command, 'edit ' .. bad):find('E5011: Invalid terminal state file', 1, true) ~= nil
-    )
+    ok(pcall_err(command, 'silent edit ' .. bad):find('E5011', 1, true) ~= nil)
     local missing = vim.fs.joinpath(dir, 'missing.mpack')
-    ok(pcall_err(command, 'edit ' .. missing):find("E484: Can't open file", 1, true) ~= nil)
+    ok(pcall_err(command, 'silent edit ' .. missing):find('E484', 1, true) ~= nil)
   end)
 
   it('ignores ".mpack" files outside stdpath("state")/term/', function()
@@ -730,17 +736,7 @@ describe(':edit on a term:// URI', function()
     return vim.fs.joinpath(fn.stdpath('state'), 'term')
   end
 
-  local function is_restored()
-    for _, l in ipairs(api.nvim_buf_get_lines(0, 0, -1, true)) do
-      if l:find('Terminal history', 1, true) then
-        return true
-      end
-    end
-    return false
-  end
-
   it('restores the state file recorded by the full URI', function()
-    Screen.new(180, 7)
     command('terminal')
     command('write')
     local uri = api.nvim_buf_get_name(0)
@@ -751,7 +747,7 @@ describe(':edit on a term:// URI', function()
     eq('terminal', api.nvim_get_option_value('buftype', { buf = 0 }))
     eq(false, api.nvim_get_option_value('modifiable', { buf = 0 }))
     retry(nil, 4000, function()
-      eq(true, is_restored())
+      eq(true, is_te_restored())
     end)
     eq(fn.fnamemodify(file, ':p'), api.nvim_buf_get_name(0))
     command('write')
@@ -767,7 +763,7 @@ describe(':edit on a term:// URI', function()
 
     command('edit term://' .. cmd)
     eq('terminal', api.nvim_get_option_value('buftype', { buf = 0 }))
-    eq(false, is_restored())
+    eq(false, is_te_restored())
   end)
 
   it('prompts on multiple matches; cancelling abandons the restore', function()
@@ -785,14 +781,14 @@ describe(':edit on a term:// URI', function()
     command('edit ' .. uri_without_pid)
     eq('terminal', api.nvim_get_option_value('buftype', { buf = 0 }))
     retry(nil, 4000, function()
-      eq(true, is_restored())
+      eq(true, is_te_restored())
     end)
     command('bwipeout!')
 
     exec_lua([[vim.ui.select = function(_, _, on_choice) on_choice(nil, nil) end]])
     command('edit ' .. uri_without_pid)
     eq('terminal', api.nvim_get_option_value('buftype', { buf = 0 }))
-    eq(false, is_restored())
+    eq(false, is_te_restored())
   end)
 end)
 
