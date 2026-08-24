@@ -990,6 +990,7 @@ is_na_patch() {
           '-I^EXTERN char e_.*vim9' \
           '-I^EXTERN char e_cannot_declare_.*variable_str' \
           '-I^EXTERN char e_cannot_define_new_.+_as_static' \
+          '-I^EXTERN char e_cannot_use_a_return_type_with_new' \
           '-I^EXTERN char e_dictionary_not_set' \
           '-I^EXTERN char e_dictnull' \
           '-I\sINIT\(= .+"E[0-9]+: (Abstract|Class|Enum|Interface|Type) ' \
@@ -998,6 +999,7 @@ is_na_patch() {
           '-I\sINIT\(= .+"E[0-9]+: .*([vV]im9|interface)' \
           '-I\sINIT\(= .+"E1016: Cannot declare .* variable: ' \
           '-I\sINIT\(= .+"E1103: Dictionary not set' \
+          '-I\sINIT\(= .+"E1365: Cannot use a return type with the \\"new\\" function"' \
           '-I\sINIT\(= .+"E1370: Cannot define a .+ as static' \
           '-I\s(bool|char(|_u))\s+w_popup_image_[_a-zA-Z]+;' \
           '-I\schar(|_u)\s+\*w_popup_title;' \
