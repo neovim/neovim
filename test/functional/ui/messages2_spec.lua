@@ -189,7 +189,8 @@ describe('messages2', function()
       foo [+9]                                             |
     ]])
     -- Do enter the pager in normal mode (with keybinding setup).
-    exec_lua([[require('vim._core.ui2').cfg.pager_char = '<CR>']])
+    -- Also checks that `pager_char` is normalized to the keytrans() form.
+    exec_lua([[require('vim._core.ui2').enable({ pager_char = '<cr>' })]])
     command('nmap <Esc> <Cmd>fclose<CR>')
     feed('<CR>')
     screen:expect([[

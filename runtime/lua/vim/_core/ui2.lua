@@ -50,8 +50,7 @@
 --- - Type `pager_char` immediately after an interactive |:| command.
 ---
 --- If you'd like behavior similar to the old hit-enter prompt, pass `pager_char = "<CR>"` on
---- the `cfg` table. When the pager is shown, hitting `<CR>` (in this example) will enter the
---- pager.
+--- the `cfg` table.
 
 local api = vim.api
 local nvim_on = require('vim._core.util').nvim_on
@@ -188,6 +187,11 @@ function M.enable(opts)
   M.cfg.msg.targets = type(M.cfg.msg.targets) == 'table' and M.cfg.msg.targets
     or { default = M.cfg.msg.targets }
   M.cfg.msg.targets.default = M.cfg.msg.targets.default or 'cmd'
+  if M.cfg.pager_char ~= nil then
+    vim.validate('pager_char', M.cfg.pager_char, 'string')
+    -- Normalize to the keytrans() form that cmd_on_key() compares against: "<cr>" => "<CR>".
+    M.cfg.pager_char = vim.fn.keytrans(vim.keycode(M.cfg.pager_char))
+  end
   if #vim.api.nvim_list_uis() == 0 then
     return -- Don't prevent stdout messaging when no UIs are attached.
   end
