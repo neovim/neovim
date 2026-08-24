@@ -779,14 +779,15 @@ void ui_refresh(void)
     )
   end)
 
-  it('supports "; extends" modeline in custom queries', function()
+  it('supports indented ";; extends" modelines in custom queries', function()
     insert('int zeero = 0;')
     local result = exec_lua(function()
       vim.treesitter.query.set(
         'c',
         'highlights',
-        [[; extends
-        (identifier) @spell]]
+        [[; query
+          ;; extends
+          (identifier) @spell]]
       )
       local query = vim.treesitter.query.get('c', 'highlights')
       local parser = vim.treesitter.get_parser(0, 'c')
@@ -805,6 +806,28 @@ void ui_refresh(void)
       { 'number', '0' },
       { 'punctuation.delimiter', ';' },
     }, result)
+  end)
+
+  it('supports indented modelines in query files', function()
+    local captures = exec_lua(function()
+      local dir = vim.fn.tempname()
+      local base_dir = dir .. '/base'
+      local extension_dir = dir .. '/extension'
+      vim.fn.mkdir(base_dir .. '/queries/c', 'p')
+      vim.fn.mkdir(extension_dir .. '/queries/c', 'p')
+      vim.fn.writefile({ '(primitive_type) @type' }, base_dir .. '/queries/c/indented-modeline.scm')
+      vim.fn.writefile({ '  ;; extends', '(identifier) @spell' }, extension_dir .. '/queries/c/indented-modeline.scm')
+      vim.opt.rtp:prepend(base_dir)
+      vim.opt.rtp:prepend(extension_dir)
+
+      local query = vim.treesitter.query.get('c', 'indented-modeline')
+
+      vim.opt.rtp:remove(extension_dir)
+      vim.opt.rtp:remove(base_dir)
+      vim.fn.delete(dir, 'rf')
+      return query.captures
+    end)
+    eq({ 'type', 'spell' }, captures)
   end)
 
   describe('Query:iter_captures', function()
