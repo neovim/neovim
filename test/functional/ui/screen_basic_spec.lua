@@ -51,7 +51,11 @@ describe('screen snapshots', function()
     { linegrid = false, method = 'set_default_attr_ids', attr_id = 1 },
     { linegrid = true, method = 'set_default_attr_ids', attr_id = 1 },
   }) do
-    it(('generates valid %s (ext_linegrid=%s)'):format(case.method, case.linegrid), function()
+    local name = ('generates valid %s (ext_linegrid=%s)'):format(
+      case.method,
+      tostring(case.linegrid)
+    )
+    it(name, function()
       api.nvim_buf_set_lines(0, 0, -1, false, { 'aaa' })
       local ns_id = api.nvim_create_namespace('test')
       api.nvim_buf_set_extmark(0, ns_id, 0, 0, {
