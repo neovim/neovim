@@ -611,6 +611,15 @@ do
     desc = 'Open the terminal state directory',
   }, require('vim._core.terminal').list)
 
+  nvim_on('SessionWritePre', nvim_terminal_augroup, {
+    desc = 'Save terminal state so sessions can restore terminal buffers',
+  }, function()
+    -- 'sessionoptions' is a validated comma-list; wrap with commas for an exact match
+    if (',' .. vim.o.sessionoptions .. ','):find(',terminal,', 1, true) then
+      require('vim._core.terminal').save_running()
+    end
+  end)
+
   local nvim_terminal_exitmsg_ns = vim.api.nvim_create_namespace('nvim.terminal.exitmsg')
 
   --- @param buf integer

@@ -7,7 +7,9 @@ local M = {}
 --- Called as a BufWriteCmd handler for `term://*` buffers.
 ---
 ---@param args table autocmd args (buf, file, match)
-function M.save(args)
+---@param opts? { silent?: boolean }
+function M.save(args, opts)
+  opts = opts or {}
   local bufnr = args.buf ---@type integer
   local fname = args.file ---@type string
 
@@ -36,7 +38,8 @@ function M.save(args)
     )
     return
   end
-  if is_uri and stat and vim.v.cmdbang == 0 then
+  -- `:write` on a terminal buffer overwrites its own state file like a normal buffer
+  if is_uri and stat and vim.v.cmdbang == 0 and fname ~= vim.api.nvim_buf_get_name(bufnr) then
     vim.api.nvim_echo(
       { { N_('E13: File exists (add ! to override)'), 'ErrorMsg' } },
       true,
@@ -107,7 +110,25 @@ function M.save(args)
     #packed,
     N_('written')
   )
-  vim.api.nvim_echo({ { msg } }, false, {})
+  if not opts.silent then
+    vim.api.nvim_echo({ { msg } }, false, {})
+  end
+end
+
+--- Saves the state of all running terminal buffers
+function M.save_running()
+  for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.bo[bufnr].buftype == 'terminal' then
+      local name = vim.api.nvim_buf_get_name(bufnr)
+      if vim.startswith(name, 'term://') or name:sub(-6) == '.mpack' then
+        local chan = vim.bo[bufnr].channel
+        -- Skip exited jobs: session restore falls back to restarting the command
+        if chan ~= 0 and vim.fn.jobwait({ chan }, 0)[1] == -1 then
+          M.save({ buf = bufnr, file = name }, { silent = true })
+        end
+      end
+    end
+  end
 end
 
 ---@class vim._core.terminal.State
