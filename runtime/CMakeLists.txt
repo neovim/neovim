@@ -41,14 +41,13 @@ foreach(PACKAGE ${PACKAGES})
     add_custom_command(OUTPUT "${GENERATED_PACKAGE_DIR}/${PACKNAME}/doc/tags"
       COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${PACKAGE} ${GENERATED_PACKAGE_DIR}/${PACKNAME}
-      # "-c :helptags" (E154 duplicate tags, …) does not set the exit code, so check v:errmsg.
-      COMMAND ${CMAKE_COMMAND} -E env "VIMRUNTIME=${PROJECT_SOURCE_DIR}/runtime" ${NVIM_HOST_PRG}
-        -u NONE -i NONE -e --headless -c "helptags doc" -c "exe 'cquit' !empty(v:errmsg)"
+      COMMAND ${NVIM_HOST_PRG}
+        -u NONE -l ${PROJECT_SOURCE_DIR}/src/gen/gen_helptags.lua doc/tags doc
       DEPENDS
         nvim_bin
         nvim_runtime_deps
+        ${PROJECT_SOURCE_DIR}/src/gen/gen_helptags.lua
       WORKING_DIRECTORY "${GENERATED_PACKAGE_DIR}/${PACKNAME}"
-      VERBATIM
     )
 
     set("${PACKNAME}_DOC_NAMES")
@@ -75,14 +74,13 @@ add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
   COMMAND ${CMAKE_COMMAND} -E remove_directory doc
   COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${PROJECT_SOURCE_DIR}/runtime/doc doc
-  # "-c :helptags" (E154 duplicate tags, …) does not set the exit code, so check v:errmsg.
-  COMMAND ${CMAKE_COMMAND} -E env "VIMRUNTIME=${PROJECT_SOURCE_DIR}/runtime" ${NVIM_HOST_PRG}
-    -u NONE -i NONE -e --headless -c "helptags ++t doc" -c "exe 'cquit' !empty(v:errmsg)"
+  COMMAND ${NVIM_HOST_PRG}
+    -u NONE -l ${PROJECT_SOURCE_DIR}/src/gen/gen_helptags.lua doc/tags doc ++t
   DEPENDS
     nvim_bin
     nvim_runtime_deps
+    ${PROJECT_SOURCE_DIR}/src/gen/gen_helptags.lua
   WORKING_DIRECTORY "${GENERATED_RUNTIME_DIR}"
-  VERBATIM
 )
 
 add_custom_target(
