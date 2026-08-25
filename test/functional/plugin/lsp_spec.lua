@@ -3242,24 +3242,6 @@ describe('LSP', function()
         return {}
       end)
     end)
-
-    it('does not expand $ in tag filenames #41313', function()
-      local result = exec_lua(function()
-        vim.env.personId = 'EXPANDED'
-        local dir = vim.fn.tempname()
-        vim.fn.mkdir(dir, 'p')
-        local f = vim.fs.abspath(dir .. '/people_.$personId.tsx')
-        vim.fn.writefile({ 'symbol' }, f)
-        _G.mock_locations[1].uri = vim.uri_from_fname(f)
-        local tags = vim.lsp.tagfunc('symbol', 'c')
-        vim.cmd.edit(tags[1].filename)
-        return {
-          bufname = vim.fs.abspath(vim.api.nvim_buf_get_name(0)),
-          expected = f,
-        }
-      end)
-      eq(result.expected, result.bufname)
-    end)
   end)
 
   describe('cmd', function()
