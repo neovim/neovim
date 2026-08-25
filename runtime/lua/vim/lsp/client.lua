@@ -58,7 +58,8 @@ end
 --- Command `string[]` that launches the language server (treated as in |jobstart()|, must be
 --- absolute or on `$PATH`, shell constructs like "~" are not expanded), or function that creates an
 --- RPC client (or an in-process |lsp-server|). Function receives a `dispatchers` table and the
---- resolved `config`, and must return an object in the form of |vim.lsp.rpc.Client|.
+--- resolved `config`, and must return an object in the form of |vim.lsp.rpc.Client|, or `nil` to
+--- indicate the client should not start (for example, if a required executable is missing).
 ---
 --- Example (list):
 --- ```lua
@@ -74,7 +75,7 @@ end
 ---
 --- - See |vim.lsp.rpc.Client|.
 --- - For TCP there is a builtin RPC client factory: |vim.lsp.rpc.connect()|
---- @field cmd string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.Client
+--- @field cmd string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.Client?
 ---
 --- Directory where the `cmd` process is launched when `cmd` is a string array. Defaults to
 --- `root_dir` when available, then the current working directory.
@@ -405,7 +406,7 @@ end
 
 --- @nodoc
 --- @param config vim.lsp.ClientConfig
---- @return vim.lsp.Client?
+--- @return vim.lsp.Client? # `nil` if `cmd()` returned `nil`.
 function Client.create(config)
   validate_config(config)
 
@@ -503,15 +504,29 @@ function Client.create(config)
 
   -- Start the RPC client.
   local config_cmd = config.cmd
+  --- @type vim.lsp.rpc.Client?
+  local rpc
   if type(config_cmd) == 'function' then
-    self.rpc = config_cmd(dispatchers, config)
+    rpc = config_cmd(dispatchers, config)
   else
-    self.rpc = lsp.rpc.start(config_cmd, dispatchers, {
+    rpc = lsp.rpc.start(config_cmd, dispatchers, {
       cwd = config.cmd_cwd or config.root_dir,
       env = config.cmd_env,
       detached = config.detached,
     })
   end
+
+  if not rpc then
+    log.info(('client %d: cmd() returned nil, not starting'):format(id))
+    return nil
+  end
+  validate('cmd() result', rpc, function(v)
+    return type(v) == 'table'
+      and vim.iter({ 'request', 'notify', 'is_closing', 'terminate' }):all(function(m)
+        return type(v[m]) == 'function'
+      end)
+  end, 'vim.lsp.rpc.Client')
+  self.rpc = rpc
 
   method_wrapper(self, Client, 'request')
   method_wrapper(self, Client, 'request_sync')

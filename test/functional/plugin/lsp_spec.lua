@@ -3451,6 +3451,29 @@ describe('LSP', function()
         assert(exited)
       end)
     end)
+
+    it('cmd() returning nil or an invalid client', function()
+      local result = exec_lua(function()
+        local msgs = {} --- @type string[]
+        vim.notify = function(msg)
+          msgs[#msgs + 1] = msg
+        end
+        return {
+          -- Not started, not an error.
+          declined = vim.lsp.start({ name = 'declined', cmd = function() end }),
+          invalid = vim.lsp.start({
+            name = 'invalid',
+            cmd = function()
+              return {} --[[@as vim.lsp.rpc.Client]]
+            end,
+          }),
+          msgs = msgs,
+          clients = #vim.lsp.get_clients(),
+        }
+      end)
+      eq({ nil, nil, 0, 1 }, { result.declined, result.invalid, result.clients, #result.msgs })
+      t.matches('cmd%(%) result: expected vim%.lsp%.rpc%.Client', result.msgs[1])
+    end)
   end)
 
   describe('handlers', function()
