@@ -71,7 +71,12 @@
 --- @field fn? fun()
 --- @field parent test.harness.Suite
 --- @field pending_message? string
+--- @field retries? integer
 --- @field selected? boolean
+
+--- Test context: state passed to the `it` callback (the test body).
+--- @class test.harness.Context
+--- @field retry integer Attempt index: 0 on the first run, 1 on the first retry.
 
 --- Normalized result returned from running a test or hook.
 --- @class test.harness.Result
@@ -399,11 +404,13 @@ end
 --- @param fn? fun()
 --- @param pending_message? string
 --- @return test.harness.Test
-local function register_test(name, fn, pending_message)
+local function register_test(name, fn, pending_message, opts)
   assert(type(name) == 'string' and name ~= '', 'test name must be a non-empty string')
   if fn ~= nil then
     assert(type(fn) == 'function', 'test body must be a function')
   end
+  local retries = opts and opts.retries or 0
+  assert(type(retries) == 'number' and retries >= 0, 'retries must be a non-negative number')
 
   local suite = current_suite()
   local test = {
@@ -413,6 +420,7 @@ local function register_test(name, fn, pending_message)
     parent = suite,
     trace = caller_trace(3),
     pending_message = pending_message,
+    retries = retries,
   }
   table.insert(suite.children, test)
   return test
@@ -463,11 +471,21 @@ function M.describe(name, fn)
 end
 
 --- Define a test.
---- @param name string
---- @param fn? fun()
+---
+--- @param name string Test description.
+--- @param opts? table|fun() Options:
+---        - `retries`: (default: 0) Retry the test, including setup/teardown
+---          (`before_each`/`after_each`/`finally`), up to this many times.
+---          Only the last attempt is reported.
+--- @param fn? fun(ctx: test.harness.Context) Test body.
+---        - `ctx.retry` is the index of the `retries` attempt, or 0 if this is not a retry.
 --- @return test.harness.Test
-function M.it(name, fn)
-  return register_test(name, fn, nil)
+function M.it(name, opts, fn)
+  if type(opts) == 'function' then
+    opts, fn = nil, opts
+  end
+  assert(opts == nil or type(opts) == 'table', 'it() arg 2 must be an opts table or a function')
+  return register_test(name, fn, nil, opts)
 end
 
 --- Mark the current test as pending or define a pending test.
@@ -685,7 +703,7 @@ end
 --- @param callable test.harness.RegisteredCallback
 --- @param fallback_status? test.harness.ResultStatus
 --- @return test.harness.Result, test.harness.Trace?
-local function run_callable(scope, callable, fallback_status)
+local function run_callable(scope, callable, fallback_status, ctx)
   local previous_execution = state.current_execution
   --- @type test.harness.Execution
   local execution = {
@@ -694,7 +712,10 @@ local function run_callable(scope, callable, fallback_status)
   }
   state.current_execution = execution
 
-  local ok, err = xpcall(callable.fn, exception_handler)
+  -- Note: xpcall variadic args not supported by Lua 5.1.
+  local ok, err = xpcall(function()
+    return callable.fn(ctx)
+  end, exception_handler)
   local finalizer_err
   local finalizer_trace
   for i = #execution.finalizers, 1, -1 do
@@ -999,48 +1020,57 @@ local function run_test(test, reporter, summary, file_summary)
       message = test.pending_message,
     }
   else
-    result = { status = 'success' }
+    local attempt = 0
+    repeat
+      attempt = attempt + 1
+      --- @type test.harness.Context
+      local ctx = { retry = attempt - 1 }
+      result = { status = 'success' }
 
-    for _, hook in ipairs(gather_before_each(test.parent)) do
-      result, report_trace = run_callable('before_each', hook, 'failure')
-      if result.status ~= 'success' then
-        break
+      for _, hook in ipairs(gather_before_each(test.parent)) do
+        result, report_trace = run_callable('before_each', hook, 'failure')
+        if result.status ~= 'success' then
+          break
+        end
       end
-    end
 
-    reporter:test_start(name)
+      if attempt == 1 then
+        reporter:test_start(name)
+      end
 
-    if result.status == 'success' then
-      result, report_trace = run_callable('test', { fn = test.fn, trace = test.trace }, 'failure')
-    end
-
-    for _, hook in ipairs(gather_after_each(test.parent)) do
-      local hook_result, hook_trace = run_callable('after_each', hook, 'failure')
       if result.status == 'success' then
-        result = hook_result
-        report_trace = hook_trace
-      elseif hook_result.status ~= 'success' then
-        local hook_report_trace = hook_trace or hook.trace
-        result.message = (result.message or '')
-          .. (result.message and result.message ~= '' and '\n\n' or '')
-          .. 'after_each: '
-          .. hook_result.message
-        if not result.traceback then
-          result.traceback = hook_result.traceback
-        end
-        if not result.trace then
-          result.trace = hook_result.trace
-        end
-        if result.status == 'pending' then
-          result.status = 'error'
-          report_trace = hook_report_trace
-        elseif not report_trace then
-          report_trace = hook_report_trace
+        result, report_trace =
+          run_callable('test', { fn = test.fn, trace = test.trace }, 'failure', ctx)
+      end
+
+      for _, hook in ipairs(gather_after_each(test.parent)) do
+        local hook_result, hook_trace = run_callable('after_each', hook, 'failure')
+        if result.status == 'success' then
+          result = hook_result
+          report_trace = hook_trace
+        elseif hook_result.status ~= 'success' then
+          local hook_report_trace = hook_trace or hook.trace
+          result.message = (result.message or '')
+            .. (result.message and result.message ~= '' and '\n\n' or '')
+            .. 'after_each: '
+            .. hook_result.message
+          if not result.traceback then
+            result.traceback = hook_result.traceback
+          end
+          if not result.trace then
+            result.trace = hook_result.trace
+          end
+          if result.status == 'pending' then
+            result.status = 'error'
+            report_trace = hook_report_trace
+          elseif not report_trace then
+            report_trace = hook_report_trace
+          end
         end
       end
-    end
-    -- check for interrupts
-    vim.wait(0)
+      -- check for interrupts
+      vim.wait(0)
+    until result.status == 'success' or attempt > test.retries
   end
 
   test.duration = now_seconds() - start_time

@@ -786,9 +786,9 @@ function M.read_file_list(filename, start)
   local i = 1
   local line = file:read('*l')
   while line ~= nil do
-    if i >= start then
+    if i >= lnum then
       table.insert(lines, line)
-      if #lines > maxlines then
+      if maxlines and #lines > maxlines then
         table.remove(lines, 1)
       end
     end
