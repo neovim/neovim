@@ -61,6 +61,9 @@ local INDENTATION = 4
 --- @field fn_helptag_fmt? fun(fun: nvim.gen_vimdoc.HelptagTarget): string
 ---
 --- @field append_only? string[]
+---
+--- Merge parsed files into the first section instead of rendering one section per file.
+--- @field merge_files? boolean
 
 ---@alias nvim.gen_vimdoc.HelptagTarget
 ---| nvim.luacats.parser.fun
@@ -357,6 +360,35 @@ local config = {
         return 'lsp-core'
       end
       return fmt('lsp-%s', name:lower())
+    end,
+  },
+  async = {
+    filename = 'lua-async.txt',
+    section_order = {
+      'async.lua',
+    },
+    merge_files = true,
+    files = {
+      'runtime/lua/vim/async.lua',
+      'runtime/lua/vim/async/_core.lua',
+      'runtime/lua/vim/async/_semaphore.lua',
+    },
+    section_fmt = function()
+      return 'Lua module: vim.async'
+    end,
+    helptag_fmt = function()
+      return 'lua-async'
+    end,
+    fn_xform = function(fun)
+      if fun.module == 'vim.async._core' or fun.module == 'vim.async._semaphore' then
+        fun.module = 'vim.async'
+      end
+      if fun.name == 'new_semaphore' then
+        fun.name = 'semaphore'
+      end
+      if fun.classvar == 'M' then
+        fun.classvar = nil
+      end
     end,
   },
   diagnostic = {
@@ -1248,6 +1280,10 @@ local function gen_target(cfg)
     end
   end
 
+  local merged_classes = {} --- @type table<string,nvim.luacats.parser.class>
+  local merged_funs = {} --- @type nvim.luacats.parser.fun[]
+  local merged_briefs = {} --- @type string[]
+
   for f, r in vim.spairs(file_results) do
     local classes, funs, briefs = r[1], r[2], r[3]
 
@@ -1267,14 +1303,31 @@ local function gen_target(cfg)
 
     print('    Processing file:', f)
 
-    -- FIXME: Using f_base will confuse `_meta/protocol.lua` with `protocol.lua`
-    local f_base = vim.fs.basename(f)
-    sections[f_base] = make_section(
-      f_base,
+    if cfg.merge_files then
+      merged_classes = vim.tbl_extend('error', merged_classes, classes)
+      vim.list_extend(merged_funs, funs)
+      vim.list_extend(merged_briefs, briefs)
+    else
+      -- FIXME: Using f_base will confuse `_meta/protocol.lua` with `protocol.lua`
+      local f_base = vim.fs.basename(f)
+      sections[f_base] = make_section(
+        f_base,
+        cfg,
+        render_briefs(briefs, cfg),
+        render_funs(funs, all_classes, cfg),
+        render_classes(classes, funs, cfg)
+      )
+    end
+  end
+
+  if cfg.merge_files then
+    local section_file = cfg.section_order[1]
+    sections[section_file] = make_section(
+      section_file,
       cfg,
-      render_briefs(briefs, cfg),
-      render_funs(funs, all_classes, cfg),
-      render_classes(classes, funs, cfg)
+      render_briefs(merged_briefs, cfg),
+      render_funs(merged_funs, all_classes, cfg),
+      render_classes(merged_classes, merged_funs, cfg)
     )
   end
 
