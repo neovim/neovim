@@ -4300,7 +4300,7 @@ describe('API', function()
     before_each(function()
       screen = Screen.new(100, 35)
       screen:add_extra_attr_ids {
-        [100] = { background = tonumber('0xffff40'), bg_indexed = true },
+        [100] = { background = tonumber('0xffff40'), bg_indexed = true, blend = 0 },
         [101] = {
           background = Screen.colors.LightMagenta,
           foreground = tonumber('0x00e000'),

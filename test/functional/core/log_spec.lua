@@ -47,9 +47,9 @@ describe('log', function()
         env = env,
       })
       screen:expect([[
-        ^                                                  |
-        ~                                                 |*4
-                                                          |
+        {126:^                                                  }|
+        {126:~                                                 }|*4
+        {126:                                                  }|
         {5:-- TERMINAL --}                                    |
       ]])
     end

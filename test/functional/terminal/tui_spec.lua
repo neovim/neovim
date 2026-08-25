@@ -566,6 +566,7 @@ describe('TUI :restart', function()
     screen:set_option('rgb', true)
     screen:add_extra_attr_ids({
       [101] = { bold = true, foreground = Screen.colors.WebGreen },
+      [102] = { background = Screen.colors.Red, foreground = Screen.colors.Gray100, blend = 0 },
     })
 
     -- 'termguicolors' support should be detected properly after :restart!
@@ -666,8 +667,8 @@ describe('TUI :restart', function()
                                                           |
         {1:~}{18:                                                 }|
         {3:                                                  }|
-        {9:E5201: Restart failed: +cmd did not quit server: e}|
-        {9:cho}                                               |
+        {102:E5201: Restart failed: +cmd did not quit server: e}|
+        {102:cho}                                               |
         {101:Press ENTER or type command to continue}^           |
         {5:-- TERMINAL --}                                    |
       ]])
@@ -1145,11 +1146,11 @@ describe('TUI', function()
     )
     feed_data(':call ManyErr()\r')
     screen:expect([[
-      {101:Error in function ManyErr:}                        |
+      {124:Error in function ManyErr:}                        |
       {103:line    2:}                                        |
-      {101:FAIL 0}                                            |
-      {101:FAIL 1}                                            |
-      {101:FAIL 2}                                            |
+      {124:FAIL 0}                                            |
+      {124:FAIL 1}                                            |
+      {124:FAIL 2}                                            |
       {102:-- More --}^                                        |
       {5:-- TERMINAL --}                                    |
     ]])
@@ -1157,11 +1158,11 @@ describe('TUI', function()
     screen:try_resize(50, 10)
     screen:expect([[
       :call ManyErr()                                   |
-      {101:Error in function ManyErr:}                        |
+      {124:Error in function ManyErr:}                        |
       {103:line    2:}                                        |
-      {101:FAIL 0}                                            |
-      {101:FAIL 1}                                            |
-      {101:FAIL 2}                                            |
+      {124:FAIL 0}                                            |
+      {124:FAIL 1}                                            |
+      {124:FAIL 2}                                            |
                                                         |*2
       {102:-- More --}^                                        |
       {5:-- TERMINAL --}                                    |
@@ -1169,34 +1170,34 @@ describe('TUI', function()
 
     feed_data('j')
     screen:expect([[
-      {101:Error in function ManyErr:}                        |
+      {124:Error in function ManyErr:}                        |
       {103:line    2:}                                        |
-      {101:FAIL 0}                                            |
-      {101:FAIL 1}                                            |
-      {101:FAIL 2}                                            |
-      {101:FAIL 3}                                            |
-      {101:FAIL 4}                                            |
-      {101:FAIL 5}                                            |
+      {124:FAIL 0}                                            |
+      {124:FAIL 1}                                            |
+      {124:FAIL 2}                                            |
+      {124:FAIL 3}                                            |
+      {124:FAIL 4}                                            |
+      {124:FAIL 5}                                            |
       {102:-- More --}^                                        |
       {5:-- TERMINAL --}                                    |
     ]])
 
     screen:try_resize(50, 7)
     screen:expect([[
-      {101:FAIL 1}                                            |
-      {101:FAIL 2}                                            |
-      {101:FAIL 3}                                            |
-      {101:FAIL 4}                                            |
-      {101:FAIL 5}                                            |
+      {124:FAIL 1}                                            |
+      {124:FAIL 2}                                            |
+      {124:FAIL 3}                                            |
+      {124:FAIL 4}                                            |
+      {124:FAIL 5}                                            |
       {102:-- More --}^                                        |
       {5:-- TERMINAL --}                                    |
     ]])
 
     screen:try_resize(50, 5)
     screen:expect([[
-      {101:FAIL 3}                                            |
-      {101:FAIL 4}                                            |
-      {101:FAIL 5}                                            |
+      {124:FAIL 3}                                            |
+      {124:FAIL 4}                                            |
+      {124:FAIL 5}                                            |
       {102:-- More --}^                                        |
       {5:-- TERMINAL --}                                    |
     ]])
@@ -1204,7 +1205,7 @@ describe('TUI', function()
     feed_data('g')
     screen:expect([[
       :call ManyErr()                                   |
-      {101:Error in function ManyErr:}                        |
+      {124:Error in function ManyErr:}                        |
       {103:line    2:}                                        |
       {102:-- More --}^                                        |
       {5:-- TERMINAL --}                                    |
@@ -1213,13 +1214,13 @@ describe('TUI', function()
     screen:try_resize(50, 10)
     screen:expect([[
       :call ManyErr()                                   |
-      {101:Error in function ManyErr:}                        |
+      {124:Error in function ManyErr:}                        |
       {103:line    2:}                                        |
-      {101:FAIL 0}                                            |
-      {101:FAIL 1}                                            |
-      {101:FAIL 2}                                            |
-      {101:FAIL 3}                                            |
-      {101:FAIL 4}                                            |
+      {124:FAIL 0}                                            |
+      {124:FAIL 1}                                            |
+      {124:FAIL 2}                                            |
+      {124:FAIL 3}                                            |
+      {124:FAIL 4}                                            |
       {102:-- More --}^                                        |
       {5:-- TERMINAL --}                                    |
     ]])
@@ -2121,9 +2122,9 @@ describe('TUI', function()
     -- Select-mode. Use <C-n> to move down.
     feed_data('gg04lgh\14\14')
     screen:expect([[
-      this{108: is line 1}                                    |
-      {108:this is line 2}                                    |
-      {108:line}^ 3 is here                                    |
+      this{125: is line 1}                                    |
+      {125:this is line 2}                                    |
+      {125:line}^ 3 is here                                    |
                                                         |
       {3:[No Name] [+]                                     }|
       {5:-- SELECT --}                                      |
@@ -2327,7 +2328,7 @@ describe('TUI', function()
       ^                                                  |
       {100:~                                                 }|*2
       {3:[No Name] [+]                                     }|
-      {101:paste: Lua: [string "<nvim>"]:4: fake fail}        |
+      {124:paste: Lua: [string "<nvim>"]:4: fake fail}        |
       {5:-- TERMINAL --}                                    |
     ]])
     -- Remaining chunks are discarded after vim.paste() failure.
@@ -2429,8 +2430,8 @@ describe('TUI', function()
                                                         |
       {100:~                                                 }|
       {3:                                                  }|
-      {101:paste: Lua: Vim:E21: Cannot make changes, 'modifia}|
-      {101:ble' is off}                                       |
+      {124:paste: Lua: Vim:E21: Cannot make changes, 'modifia}|
+      {124:ble' is off}                                       |
       {102:Press ENTER or type command to continue}^           |
       {5:-- TERMINAL --}                                    |
     ]])
@@ -2669,8 +2670,13 @@ describe('TUI', function()
     screen:set_default_attr_ids({
       [1] = { { reverse = true }, { reverse = true } },
       [2] = {
-        { bold = true, background = Screen.colors.LightGreen, foreground = Screen.colors.Black },
-        { bold = true },
+        {
+          bold = true,
+          background = Screen.colors.LightGreen,
+          foreground = Screen.colors.Black,
+          blend = 0,
+        },
+        { bold = true, blend = 0 },
       },
       [3] = { { bold = true }, { bold = true } },
       [4] = { { fg_indexed = true, foreground = tonumber('0xe0e000') }, { foreground = 3 } },
@@ -2682,8 +2688,9 @@ describe('TUI', function()
           bold = true,
           background = tonumber('0x66ff99'),
           foreground = Screen.colors.Black,
+          blend = 0,
         },
-        { bold = true, background = 121, foreground = 0 },
+        { bold = true, background = 121, foreground = 0, blend = 0 },
       },
       [7] = {
         {
@@ -2691,8 +2698,9 @@ describe('TUI', function()
           bg_indexed = true,
           background = tonumber('0x66ff99'),
           foreground = Screen.colors.Black,
+          blend = 0,
         },
-        { background = 121, foreground = 0 },
+        { background = 121, foreground = 0, blend = 0 },
       },
     })
 
@@ -3383,6 +3391,7 @@ describe('TUI', function()
         [100] = {
           foreground = fg,
           background = bg,
+          blend = 0,
         },
       })
       fn.jobstart({
@@ -3424,22 +3433,23 @@ describe('TUI', function()
       { testprg('shell-test'), 'EXECVP', nvim_prog, 'Xargv0nvim', '--clean' },
       { term = true, env = { VIMRUNTIME = os.getenv('VIMRUNTIME') } }
     )
+    screen:add_extra_attr_ids({ [126] = { blend = 0 } })
     command('startinsert')
     screen:expect([[
-      ^                                                  |
-      ~                                                 |*3
-      [No Name]                       0,0-1          All|
-                                                        |
+      {126:^                                                  }|
+      {126:~                                                 }|*3
+      {126:[No Name]                       0,0-1          All}|
+      {126:                                                  }|
       {5:-- TERMINAL --}                                    |
     ]])
     feed_data(':put =v:argv + [v:progname]\n')
     screen:expect([[
-      Xargv0nvim                                        |
-      --embed                                           |
-      --clean                                           |
-      ^Xargv0nvim                                        |
-      [No Name] [+]                   5,1            Bot|
-      4 more lines                                      |
+      {126:Xargv0nvim                                        }|
+      {126:--embed                                           }|
+      {126:--clean                                           }|
+      {126:^Xargv0nvim                                        }|
+      {126:[No Name] [+]                   5,1            Bot}|
+      {126:4 more lines                                      }|
       {5:-- TERMINAL --}                                    |
     ]])
   end)
@@ -3459,10 +3469,10 @@ describe('TUI', function()
     end)
     local screen = tt.setup_child_nvim({ '--clean', '-u', 'Xblend.lua' })
     screen:expect([[
-      {5:^foo}                                               |
-      ~                                                 |*3
-      [No Name] [+]                   1,1            All|
-      {5:foo}                                               |
+      {127:^foo}{126:                                               }|
+      {126:~                                                 }|*3
+      {126:[No Name] [+]                   1,1            All}|
+      {127:foo}{126:                                               }|
       {5:-- TERMINAL --}                                    |
     ]])
   end)
@@ -3557,11 +3567,11 @@ describe('TUI', function()
       'set foldcolumn=6 | call setline(1, ["", repeat("aabb", 1000)]) | echo 42',
     }, { extra_rows = 10, cols = 66 })
     screen:expect([[
-            ^                                                            |
-            aabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabb|*12
-            aabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabba@@@|
-      [No Name] [+]                                   1,0-1          Top|
-      42                                                                |
+      {126:      ^                                                            }|
+      {126:      aabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabb}|*12
+      {126:      aabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabba@@@}|
+      {126:[No Name] [+]                                   1,0-1          Top}|
+      {126:42                                                                }|
       {5:-- TERMINAL --}                                                    |
     ]])
     feed_data('\12') -- Ctrl-L
@@ -3573,11 +3583,11 @@ describe('TUI', function()
     -- The 6 repeated spaces at the start of the next screen line exceeds the
     -- 500-cell limit, so the buffer is flushed after these spaces.
     screen:expect([[
-            ^                                                            |
-            aabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabb|*12
-            aabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabba@@@|
-      [No Name] [+]                                   1,0-1          Top|
-                                                                        |
+      {126:      ^                                                            }|
+      {126:      aabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabb}|*12
+      {126:      aabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabbaabba@@@}|
+      {126:[No Name] [+]                                   1,0-1          Top}|
+      {126:                                                                  }|
       {5:-- TERMINAL --}                                                    |
     ]])
   end)
