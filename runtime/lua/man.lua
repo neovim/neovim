@@ -123,8 +123,9 @@ local function render_line(line, row, hls)
         attr = Attrs.None
       end
 
-      -- Grow the previous highlight group if possible
-      if last_hl and last_hl.attr == attr and last_hl.final == byte then
+      -- Grow the previous highlight group if possible. `hls` spans the buffer,
+      -- so only grow a group that is on the current row.
+      if last_hl and last_hl.row == row and last_hl.attr == attr and last_hl.final == byte then
         last_hl.final = byte + #char
       else
         hls[#hls + 1] = { attr = attr, row = row, start = byte, final = byte + #char }
