@@ -3363,6 +3363,53 @@ describe('LSP', function()
       end)
       eq('initialize', result.method)
     end)
+
+    it('cmd() returning nil declines to start, without error', function()
+      local result = exec_lua(function()
+        local calls = {} --- @type {msg: string, level: integer}[]
+        local orig_notify = vim.notify
+        vim.notify = function(msg, level)
+          calls[#calls + 1] = { msg = msg, level = level }
+        end
+        local id = vim.lsp.start({
+          name = 'declines-to-start',
+          cmd = function()
+            return nil
+          end,
+        })
+        vim.notify = orig_notify
+        return { id, calls }
+      end)
+      eq(NIL, result[1])
+      eq({}, result[2])
+    end)
+
+    it('cmd() returning a malformed client fails without corrupting autocmd processing', function()
+      local result = exec_lua(function()
+        local called_after = false
+        vim.api.nvim_create_autocmd('User', {
+          pattern = 'AfterBrokenClient',
+          once = true,
+          callback = function()
+            called_after = true
+          end,
+        })
+        local create_ok = pcall(vim.lsp.start, {
+          name = 'malformed-client',
+          cmd = function()
+            return {} --[[@as vim.lsp.rpc.Client]]
+          end,
+        })
+        vim.api.nvim_exec_autocmds('User', { pattern = 'AfterBrokenClient' })
+        return { create_ok, called_after }
+      end)
+      eq(true, result[1], 'vim.lsp.start() itself must not raise')
+      eq(true, result[2], 'autocmd processing must continue after a malformed client')
+      local n_clients = exec_lua(function()
+        return #vim.lsp.get_clients({ name = 'malformed-client' })
+      end)
+      eq(0, n_clients, 'no client should remain registered')
+    end)
   end)
 
   describe('handlers', function()
