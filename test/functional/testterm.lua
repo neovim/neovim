@@ -206,6 +206,8 @@ function M.setup_child_nvim(args, opts)
   local env = t.shallowcopy(opts.env) or {}
   env.VIMRUNTIME = env.VIMRUNTIME or os.getenv('VIMRUNTIME')
   env.NVIM_TEST = env.NVIM_TEST or os.getenv('NVIM_TEST')
+  -- Child servers need the socket dir set by runner.lua.
+  env.XDG_RUNTIME_DIR = env.XDG_RUNTIME_DIR or os.getenv('XDG_RUNTIME_DIR')
 
   return M.setup_screen(opts.extra_rows, argv, opts.cols, env)
 end
