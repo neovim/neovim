@@ -63,19 +63,8 @@ jobs:
 
         commit_messages=$(gh api "repos/$GH_REPO/pulls/$PR_NUMBER/commits" --paginate --jq '.[].commit.message')
 
-        has_ai_disclosure=false
-        for pattern in \
-          '^(AI|LLM|GPT)([ -][A-Za-z-]+)?: *.+' \
-          'supported +by +AI' \
-          '^Co-authored(-| +)by: .*(Claude|Codex|Copilot|Cursor|Gemini|Aider|Cline|Windsurf|OpenAI|OpenCode|Amp|Anthropic|GPT)'; do
-          if grep -Eiq "$pattern" <<< "$commit_messages"; then
-            has_ai_disclosure=true
-            break
-          fi
-        done
-
-        if [[ "$has_ai_disclosure" == false ]]; then
-          # No supported AI disclosure found in commits
+        if ! grep -Eiq '\bAI-assisted\b' <<< "$commit_messages"; then
+          # No AI disclosure found in commits
           exit 0
         fi
 
@@ -86,6 +75,53 @@ jobs:
         fi
 
         gh pr edit "$PR_NUMBER" --add-label "$AI_LABEL"
+
+  no-ai-advertisements:
+    runs-on: ubuntu-latest
+    permissions:
+      # Least privilege.
+      pull-requests: read
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+    # AGENTS.md: disclose with a bare "AI-assisted" trailer, and do not name the model or service.
+    - name: "Reject AI advertisements in commit messages"
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        # Prefix each message line with its commit, so a failure names the offender.
+        commits=$(gh api "repos/$GH_REPO/pulls/$PR_NUMBER/commits" --paginate \
+          --jq '.[] | .sha[0:12] as $sha | .commit.message | split("\n")[] | "\($sha) \(.)"')
+
+        tools='aider|anthropic|chatgpt|claude|cline|codex|copilot|cursor|devin|gemini|openai|opencode|windsurf|\bamp\b|\bai\b|\bllm\b|\bgpt\b'
+        by='(co-authored|signed-off|assisted|helped|generated|written|created|reviewed|suggested|reported|tested|debugged)[ -]?by'
+        hosts='claude\.ai|anthropic\.com|openai\.com|chatgpt\.com|copilot\.microsoft\.com|cursor\.(com|sh)|ampcode\.com|codeium\.com|windsurf\.com|(gemini|aistudio)\.google\.com'
+
+        found=$({
+          # Attribution trailers and phrasing.
+          grep -Ei "^\S+ +$by:.*($tools)" <<< "$commits" || true
+          grep -Ei "(generated|written|assisted|supported|powered|created|helped)[ -](by|with)[: ]+.*($tools)" <<< "$commits" || true
+          # Session links and trailers.
+          grep -Ei "^\S+ +($tools)[a-z0-9-]*-(session|thread|chat|conversation|link|url|id):" <<< "$commits" || true
+          grep -Ei "https?://[^ ]*($hosts)" <<< "$commits" || true
+          grep -Ei '@(anthropic|openai)\.com' <<< "$commits" || true
+          # Tool names anywhere, not just as attribution. Disabled to avoid false positives, for now...
+          # grep -Ei 'aider|anthropic|chatgpt|claude|codex|copilot|devin|gemini|openai|opencode|windsurf' <<< "$commits" || true
+          # The "AI-assisted" trailer must not name the tool.
+          grep -Ei '^\S+ +AI-assisted:.*\S' <<< "$commits" || true
+          grep -F '🤖' <<< "$commits" || true
+        } | sort -u)
+
+        if [[ -n "$found" ]]; then
+          echo 'Remove AI advertisements from commit messages ("Co-authored-by: Claude", etc.).'
+          echo 'Only a generic "AI-assisted" token is allowed, see AGENTS.md.'
+          echo
+          echo "$found"
+          exit 1
+        fi
 
   request-reviewer:
     if: github.event.action == 'opened'
