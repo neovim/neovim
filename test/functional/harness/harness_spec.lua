@@ -1015,6 +1015,67 @@ describe('test harness', function()
     not_matches('missing value for --repeat', output, true)
   end)
 
+  it('it() rejects a non-table, non-function second argument', function()
+    eq(
+      '.../harness.lua:0: it() arg 2 must be an opts table or a function',
+      t.pcall_err(it, 'nope', 'not opts', function() end)
+    )
+  end)
+
+  it('{retries=n} reruns before_each/after_each/finally, only for the retried test', function()
+    local log = t.tmpname(false)
+    local suite_dir = write_suite({
+      ['one_spec.lua'] = ([[
+        local function log(s)
+          vim.fn.writefile({ s }, '%s', 'a')
+        end
+        describe('retry', function()
+          before_each(function() log('d-before') end)
+          after_each(function() log('d-after') end)
+          it('succeeds on the second attempt', { retries = 2 }, function(ctx)
+            finally(function() log('t1-finally' .. ctx.retry) end)
+            eq(true, ctx.retry >= 1)
+          end)
+          it('runs once', function(ctx)
+            log('t2-next' .. ctx.retry)
+          end)
+        end)
+      ]]):format(log),
+    })
+
+    local code, output = run_harness(suite_dir)
+
+    eq(0, code)
+    matches('PASSED  ', output, true)
+    not_matches('FAILED  ', output, true)
+    -- Attempt 2 succeeded so attempt 3 never ran, and the next test starts back at retry 0.
+    eq(
+      'd-before t1-finally0 d-after d-before t1-finally1 d-after d-before t2-next0 d-after',
+      table.concat(vim.fn.readfile(log), ' ')
+    )
+  end)
+
+  it('{retries=n} reports one failure after all retries are exhausted', function()
+    local suite_dir = write_suite({
+      ['one_spec.lua'] = [[
+        describe('retry', function()
+          local attempts = 0
+          before_each(function() attempts = attempts + 1 end)
+          it('never succeeds', { retries = 2 }, function()
+            error('boom on attempt ' .. attempts)
+          end)
+        end)
+      ]],
+    })
+
+    local code, output = run_harness(suite_dir)
+
+    eq(1, code)
+    matches('boom on attempt 3', output, true)
+    not_matches('boom on attempt 1', output, true)
+    matches('1 test, listed below', output, true) -- One failure, not one per attempt.
+  end)
+
   it('reports test-body errors as failures', function()
     local suite_dir = write_suite({
       ['one_spec.lua'] = [[
