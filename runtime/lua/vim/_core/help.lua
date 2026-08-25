@@ -1,5 +1,7 @@
 local M = {}
 
+local echo_err = require('vim._core.util').echo_err
+
 local tag_exceptions = {
   -- Interpret asterisk (star, '*') literal but name it 'star'
   ['*'] = 'star',
@@ -391,6 +393,180 @@ function M.local_additions()
         vim.api.nvim_buf_set_lines(buf, linenr, linenr, true, lines)
       end)
       break
+    end
+  end
+end
+
+---Language code of a help file: "en" for "*.txt", "nl" for "*.nlx". See |help-translated|.
+---@param file string
+---@return string?
+local function helpfile_lang(file)
+  local ext = file:sub(-4):lower()
+  return ext == '.txt' and 'en' or ext:match('^%.(%a%a)x$')
+end
+
+---Report duplicate tags (as errmsg, not exception-throwing error).
+---@param tags string[] sorted tags file lines
+local function report_duplicates(tags)
+  local prevtag, prevfn = '', ''
+
+  for _, tagline in ipairs(tags) do
+    local curtag, curfn = tagline:match('^([^\t]*)\t([^\t]*)')
+    if curtag == prevtag then
+      local filenames = prevfn ~= curfn and (curfn .. ' and ' .. prevfn) or curfn
+      echo_err(('E154: Duplicate tag "%s" in %s'):format(curtag, filenames))
+    end
+    prevtag = curtag
+    prevfn = curfn
+  end
+end
+
+---Extract tags from {file} and add to list of tags. Modifies {tags}.
+---@param tags string[]
+---@param file string
+---@param name string Path of {file} relative to the help directory, as stored in the tags file.
+local function extract_tags(tags, file, name)
+  local ts = vim.treesitter
+  local ok, source = pcall(vim.fn.readblob, file)
+  if not ok then
+    echo_err(('E153: Unable to open %s for reading'):format(file))
+    return
+  end
+  --- @cast source string
+  -- The grammar treats "\r" as part of a word, so CRLF files would yield bogus tags.
+  source = source:gsub('\r\n', '\n')
+
+  local query = ts.query.parse('vimdoc', '(tag (word) @tagname)')
+  local parser = ts.get_string_parser(source, 'vimdoc')
+
+  local tree = assert(parser:parse())
+  local root = tree[1]:root()
+  for _, match in query:iter_matches(root, source) do
+    for id, node in pairs(match) do
+      if query.captures[id] == 'tagname' then
+        -- Only accept a *tag* when it is closed, has no "|" (which would break |links|), there is
+        -- whitespace (or nothing) before it, and followed by whitespace or end-of-line.
+        local tag_node = assert(node[1]:parent())
+        local _, _, start_byte = tag_node:start()
+        local _, _, end_byte = tag_node:end_()
+        local before = source:sub(start_byte, start_byte)
+        local after = source:sub(end_byte + 1, end_byte + 1)
+        local tagname = ts.get_node_text(node[1], source)
+        if
+          source:sub(end_byte, end_byte) == '*'
+          and not tagname:find('|', 1, true)
+          and before:match('^[ \t\n\r]?$')
+          and after:match('^[ \t\n\r]?$')
+        then
+          local escaped = tagname:gsub('[\\/]', '\\%0')
+          table.insert(tags, ('%s\t%s\t/*%s*'):format(tagname, name, escaped))
+        end
+      end
+    end
+  end
+end
+
+--- Extract tags from helpfiles and combine in a single 'tags' file.
+--- @param helpfiles string[] list of helpfiles
+--- @param dir string Help directory; tag entries name the helpfiles relative to it.
+--- @param outpath string path to write the 'tags' file to.
+--- @param include_helptags_tag boolean true if the 'help-tags' tag should be included
+--- @param ignore_writeerr boolean don't report a tags file that cannot be written
+local function gen_tagsfile(helpfiles, dir, outpath, include_helptags_tag, ignore_writeerr)
+  ---@type string[] Tags file lines: "tag<Tab>file<Tab>search command".
+  local tags = {}
+
+  -- (1) extract tags from all files
+  for _, file in ipairs(helpfiles) do
+    extract_tags(tags, file, vim.fs.relpath(dir, file) or vim.fs.basename(file))
+  end
+
+  if include_helptags_tag then
+    table.insert(tags, ('help-tags\t%s\t1'):format(vim.fs.basename(outpath)))
+  end
+
+  -- (2) sort by byte value, as |tags-file-format| requires.
+  -- Note: vim.fn.sort() compares bytes, PUC Lua "<" compares with strcoll().
+  tags = vim.fn.sort(tags)
+
+  -- (3) report duplicates (non-fatal errmsg: the tags file is still written)
+  report_duplicates(tags)
+
+  -- (4) write tags to file
+  local f = io.open(outpath, 'w')
+  if not f then
+    if not ignore_writeerr then
+      echo_err(('E152: Cannot open %s for writing'):format(outpath))
+    end
+    return
+  end
+  for _, tag in ipairs(tags) do
+    f:write(tag, '\n')
+  end
+  f:close()
+end
+
+--- Create a "tags" file for all help files in the given directory.
+---
+--- The directory {dir} is generally a "doc" directory that contains "*.txt"
+--- helpfiles.
+---
+--- @param dir string? Path to directory with help files. If `nil` (or |vim.NIL|),
+--- generate tags for every `doc` directory in the runtimepath.
+--- @param include_index_tag? boolean (default: false) Whether to include the "help-tags" tag.
+function M.gen_tags(dir, include_index_tag)
+  if dir == vim.NIL then
+    dir = nil
+  end
+  vim.validate('dir', dir, 'string', true)
+  vim.validate('include_index_tag', include_index_tag, 'boolean', true)
+
+  if not pcall(function()
+    vim.treesitter.language.add('vimdoc')
+  end) then
+    echo_err('Cannot generate helptags: no "vimdoc" parser')
+    return
+  end
+
+  local dirs = dir and { vim.fs.normalize(dir) } or vim.api.nvim_get_runtime_file('doc', true)
+  local vimruntime = vim.fs.normalize(vim.fs.joinpath(vim.env.VIMRUNTIME, 'doc'))
+
+  if dir and vim.fn.isdirectory(dirs[1]) == 0 then
+    echo_err(('E150: Not a directory: %s'):format(dir))
+    return
+  end
+
+  for _, directory in ipairs(dirs) do
+    local files = vim.fs.find(function(name, _)
+      return helpfile_lang(name) ~= nil
+    end, { path = directory, type = 'file', limit = math.huge })
+
+    if vim.tbl_isempty(files) then
+      echo_err(('E151: No match: %s'):format(vim.fs.joinpath(directory, '**/*.txt')))
+    end
+
+    -- categorize helpfiles per language, see |help-translated|
+    ---@type table<string, string[]>
+    local per_lang = {}
+    for _, file in ipairs(files) do
+      local lang = assert(helpfile_lang(file))
+      per_lang[lang] = per_lang[lang] or {}
+      table.insert(per_lang[lang], file)
+    end
+
+    for lang, langfiles in pairs(per_lang) do
+      -- English is an exception: "*.txt" files generate the "tags" file.
+      local tagsfile = lang == 'en' and 'tags' or ('tags-%s'):format(lang)
+      local outpath = vim.fs.joinpath(directory, tagsfile)
+      -- ":helptags ALL" walks 'runtimepath', which may contain read-only directories.
+      local ignore_writeerr = dir == nil
+      gen_tagsfile(
+        langfiles,
+        directory,
+        outpath,
+        include_index_tag or directory == vimruntime,
+        ignore_writeerr
+      )
     end
   end
 end

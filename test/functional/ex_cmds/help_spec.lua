@@ -1,11 +1,12 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
-local describe, it, before_each, finally = t.describe, t.it, t.before_each, t.finally
+local describe, it, before_each, after_each, finally =
+  t.describe, t.it, t.before_each, t.after_each, t.finally
 local clear = n.clear
+local eval = n.eval
 local command = n.command
 local eq = t.eq
-local pcall_err = t.pcall_err
 local fn = n.fn
 local api = n.api
 local mkdir = t.mkdir
@@ -322,5 +323,134 @@ describe(':help', function()
     command('set rtp+=Xhelptags')
     command('help …')
     eq('*…*', api.nvim_get_current_line())
+  end)
+end)
+
+describe(':helptags', function()
+  before_each(function()
+    for _, sfx in ipairs({ '', '2' }) do
+      fn.mkdir(('Xhelptags%s/doc'):format(sfx), 'p')
+      for _, tag in ipairs({ 'Xa', 'Xb' }) do
+        write_file(('Xhelptags%s/doc/%s%s.txt'):format(sfx, tag, sfx), ('*%s%s*'):format(tag, sfx))
+      end
+    end
+
+    clear()
+    command('set rtp+=Xhelptags,Xhelptags2')
+  end)
+
+  after_each(function()
+    rmdir('Xhelptags')
+    rmdir('Xhelptags2')
+  end)
+
+  it('requires an argument', function()
+    local msg = t.pcall_err(command, 'helptags')
+    eq(true, msg:find('E471') ~= nil)
+  end)
+
+  it('{dir}', function()
+    -- Helpfiles in sub-directories are found and named relative to {dir}.
+    fn.mkdir('Xhelptags/doc/sub', 'p')
+    -- A "|" in a tag would break |links|, and "*Xd" is not closed, so neither is a tag.
+    write_file('Xhelptags/doc/sub/Xc.txt', '*Xc*\n*X|c*\n*Xd\n')
+    -- CRLF helpfile: "\r" must not confuse the parser into finding tags in an example.
+    write_file('Xhelptags/doc/Xe.txt', '*Xe*\r\n>\r\n\t+-----+\r\n\t|/* a.c */  |/* b.c */  |\r\n')
+
+    command('helptags Xhelptags/doc')
+
+    eq(
+      eval("['Xa	Xa.txt	/*Xa*','Xb	Xb.txt	/*Xb*','Xc	sub/Xc.txt	/*Xc*','Xe	Xe.txt	/*Xe*']"),
+      eval("readfile('Xhelptags/doc/tags')")
+    )
+
+    command('help Xa')
+    eq('*Xa*', api.nvim_get_current_line())
+
+    command('help Xc')
+    eq('*Xc*', api.nvim_get_current_line())
+  end)
+
+  it('overwrites existing tags file', function()
+    write_file('Xhelptags/doc/tags', 'Xstale	Xold.txt	/*Xstale*', nil, true)
+    write_file('Xhelptags/doc/Xa.txt', 'no tags here', nil, true)
+    write_file('Xhelptags/doc/Xb.txt', 'no tags here', nil, true)
+
+    command('helptags Xhelptags/doc')
+    eq({}, eval("readfile('Xhelptags/doc/tags')"))
+  end)
+
+  it('reports E150 E151 E152', function()
+    eq(true, t.pcall_err(command, 'helptags Xhelptags/doc/Xa.txt'):find('E150') ~= nil)
+
+    fn.mkdir('Xhelptags/Xempty', 'p')
+    eq(true, t.pcall_err(command, 'helptags Xhelptags/Xempty'):find('E151') ~= nil)
+
+    -- A directory named "tags" cannot be opened for writing.
+    fn.mkdir('Xhelptags/doc/tags', 'p')
+    eq(true, t.pcall_err(command, 'helptags Xhelptags/doc'):find('E152') ~= nil)
+  end)
+
+  it('ALL', function()
+    command('helptags ALL')
+
+    eq(eval("['Xa	Xa.txt	/*Xa*','Xb	Xb.txt	/*Xb*']"), eval("readfile('Xhelptags/doc/tags')"))
+    eq(eval("['Xa2	Xa2.txt	/*Xa2*','Xb2	Xb2.txt	/*Xb2*']"), eval("readfile('Xhelptags2/doc/tags')"))
+
+    command('help Xa2')
+    eq('*Xa2*', api.nvim_get_current_line())
+  end)
+
+  it('++t', function()
+    write_file('Xhelptags/doc/Xa.nlx', '*Xa*', nil, true)
+
+    command('helptags ++t Xhelptags/doc')
+    eq('help-tags	tags	1', eval("readfile('Xhelptags/doc/tags')[-1]"))
+    -- Each language gets a "help-tags" tag naming its own tags file.
+    eq('help-tags	tags-nl	1', eval("readfile('Xhelptags/doc/tags-nl')[-1]"))
+  end)
+
+  it('generates help-tag tag for VIMRUNTIME', function()
+    command('let $VIMRUNTIME="Xhelptags"')
+    command('helptags Xhelptags/doc')
+    eq('help-tags	tags	1', eval("readfile('Xhelptags/doc/tags')[-1]"))
+  end)
+
+  it('errors on duplicate tags', function()
+    -- duplicate tags in different files
+    write_file('Xhelptags/doc/Xd.txt', '*Xa*', nil, true)
+    local msg = t.pcall_err(command, 'helptags Xhelptags/doc')
+    eq(true, msg:find('E154') ~= nil)
+
+    -- tags file should still be generated
+    eq(1, eval("filereadable('Xhelptags/doc/tags')"))
+
+    os.remove('Xhelptags/doc/Xd.txt')
+
+    -- duplicate tags in same file
+    write_file('Xhelptags/doc/Xa.txt', '\n*Xa*', nil, true)
+
+    msg = t.pcall_err(command, 'helptags Xhelptags/doc')
+    eq(true, msg:find('E154') ~= nil)
+
+    eq(1, eval("filereadable('Xhelptags/doc/tags')"))
+
+    -- Duplicates do not abort the run: other languages are still processed.
+    write_file('Xhelptags/doc/Xa.nlx', '*Xnl*', nil, true)
+
+    msg = t.pcall_err(command, 'helptags Xhelptags/doc')
+    eq(true, msg:find('E154') ~= nil)
+    eq(false, msg:find('E5108') ~= nil)
+    eq(1, eval("filereadable('Xhelptags/doc/tags-nl')"))
+  end)
+
+  it('with translated help files', function()
+    write_file('Xhelptags/doc/Xa.nlx', '*Xa*', nil, true)
+    -- The suffix is matched case-insensitively.
+    write_file('Xhelptags/doc/Xc.FRX', '*Xc*', nil, true)
+
+    command('helptags Xhelptags/doc')
+    eq(eval("['Xa	Xa.nlx	/*Xa*']"), eval("readfile('Xhelptags/doc/tags-nl')"))
+    eq(eval("['Xc	Xc.FRX	/*Xc*']"), eval("readfile('Xhelptags/doc/tags-fr')"))
   end)
 end)
