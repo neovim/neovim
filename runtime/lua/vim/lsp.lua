@@ -154,12 +154,16 @@ end
 ---         the client has been initialized.
 --- @return string? # Error message, if any
 local function create_and_init_client(config)
-  local ok, res = pcall(require('vim.lsp.client').create, config)
+  local ok, client = pcall(require('vim.lsp.client').create, config)
   if not ok then
-    return nil, res --[[@as string]]
+    return nil, client --[[@as string]]
   end
 
-  local client = assert(res)
+  if not client then
+    -- `cmd()` declined to start (e.g. required executable not found). Not an error:
+    -- see |vim.lsp.ClientConfig| `cmd`. Already logged inside Client.create().
+    return nil
+  end
 
   client:initialize()
 
@@ -170,7 +174,7 @@ end
 ---
 --- See `cmd` in [vim.lsp.ClientConfig].
 --- See also `reuse_client` to dynamically decide (per-buffer) when `cmd` should be re-invoked.
---- @field cmd? string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.Client
+--- @field cmd? string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.Client?
 ---
 --- Filetypes the client will attach to, or `nil` for ALL filetypes. To match files by name,
 --- pattern, or contents, you can define a custom filetype using |vim.filetype.add()|:
