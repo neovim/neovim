@@ -188,6 +188,9 @@ assign_commit_details() {
   # Extract co-authors from the commit message.
   vim_coauthors="$(echo "${vim_message}" | (grep -E '^Co-[Aa]uthored-[Bb]y: ' || true) | (grep -Fxv "${vim_coauthor0}" || true))"
   vim_coauthors="$(echo "${vim_coauthor0}"; echo "${vim_coauthors}")"
+  # Upstream may credit an AI tool; we don't advertise those, see AGENTS.md.
+  vim_coauthors="$(echo "${vim_coauthors}" \
+      | (grep -Eiv '^Co-authored-by: .*(aider|anthropic|chatgpt|claude|codex|copilot|cursor|devin|gemini|openai|opencode|windsurf)' || true))"
   # Remove Co-authored-by and Signed-off-by lines from the commit message.
   vim_message="$(echo "${vim_message}" | grep -Ev '^(Co-[Aa]uthored|Signed-[Oo]ff)-[Bb]y: ')"
   if [[ ${munge_commit_line} == "true" ]]; then
