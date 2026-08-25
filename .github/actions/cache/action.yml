@@ -35,3 +35,16 @@ runs:
         key: ${{ env.CACHE_KEY }}-${{ steps.image.outputs.version }}-${{ hashFiles('cmake**',
           '.github/**', 'CMakeLists.txt',
           'runtime/CMakeLists.txt', 'src/nvim/**/CMakeLists.txt') }}
+
+    - name: Set up ccache
+      run: |
+        echo "CCACHE_DIR=${{ github.workspace }}/.ccache" >> $GITHUB_ENV # zizmor: ignore[github-env]
+        echo "CCACHE_MAXSIZE=500M" >> $GITHUB_ENV # zizmor: ignore[github-env]
+      shell: bash
+
+    - uses: actions/cache@v6.1.0
+      with:
+        path: ${{ github.workspace }}/.ccache
+        key: ccache-${{ env.CACHE_KEY }}-${{ steps.image.outputs.version }}-${{ github.run_id }}
+        restore-keys: |
+          ccache-${{ env.CACHE_KEY }}-${{ steps.image.outputs.version }}-
