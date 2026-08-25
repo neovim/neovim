@@ -154,14 +154,31 @@ end
 ---         the client has been initialized.
 --- @return string? # Error message, if any
 local function create_and_init_client(config)
-  local ok, res = pcall(require('vim.lsp.client').create, config)
+  local ok, client = pcall(require('vim.lsp.client').create, config)
   if not ok then
-    return nil, res --[[@as string]]
+    return nil, client --[[@as string]]
   end
 
-  local client = assert(res)
+  if not client then
+    -- `cmd()` declined to start (e.g. required executable not found). Not an error:
+    -- see |vim.lsp.ClientConfig| `cmd`. Already logged inside Client.create().
+    return nil
+  end
 
-  client:initialize()
+  local init_ok, init_err = pcall(client.initialize, client)
+  if not init_ok then
+    local stop_ok, stop_err = pcall(client.stop, client, true)
+    if not stop_ok then
+      log.warn(
+        string.format(
+          'client %d: cleanup after failed initialize() also failed: %s',
+          client.id,
+          stop_err
+        )
+      )
+    end
+    return nil, tostring(init_err)
+  end
 
   return client.id, nil
 end
