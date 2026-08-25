@@ -11,7 +11,8 @@ local api, clear, command, exec_lua, feed = n.api, n.clear, n.command, n.exec_lu
 local msg_timeout = 400
 local function set_msg_target_zero_ch()
   exec_lua(function()
-    require('vim._core.ui2').enable({ msg = { targets = 'msg', msg = { timeout = msg_timeout } } })
+    vim.o.messagesopt = 'hit-enter,history:500,progress:c,timeout:' .. msg_timeout
+    require('vim._core.ui2').enable({ msg = { targets = 'msg' } })
     vim.o.cmdheight = 0
   end)
 end
@@ -189,8 +190,8 @@ describe('messages2', function()
       foo [+9]                                             |
     ]])
     -- Do enter the pager in normal mode (with keybinding setup).
-    -- Also checks that `pager_char` is normalized to the keytrans() form.
-    exec_lua([[require('vim._core.ui2').enable({ pager_char = '<cr>' })]])
+    -- Also checks that "messagesopt=pager:…" is normalized to the keytrans() form.
+    command('set messagesopt+=pager:<cr>')
     command('nmap <Esc> <Cmd>fclose<CR>')
     feed('<CR>')
     screen:expect([[
@@ -198,7 +199,7 @@ describe('messages2', function()
       foo                                                  |*12
                                          1,1            Top|
     ]])
-    exec_lua([[require('vim._core.ui2').cfg.pager_char = nil]])
+    command('set messagesopt-=pager:<cr>')
     -- Changing 'laststatus' reveals the global statusline with a pager height
     -- exceeding the available lines: #38008.
     command('set laststatus=3')
@@ -1094,7 +1095,8 @@ describe('messages2', function()
 
   it('msg window timer does not trigger ModeChanged #40780', function()
     exec_lua(function()
-      require('vim._core.ui2').enable({ msg = { targets = 'msg', msg = { timeout = 50 } } })
+      vim.o.messagesopt = 'hit-enter,history:500,progress:c,timeout:50'
+      require('vim._core.ui2').enable({ msg = { targets = 'msg' } })
     end)
     command('let g:modechanged = []')
     command([[autocmd ModeChanged i:n call add(g:modechanged, copy(v:event))]])
@@ -1196,7 +1198,7 @@ describe('messages2', function()
   end)
 
   it('configured cmd window height prevents expanded message #39375', function()
-    exec_lua('require("vim._core.ui2").enable({ msg = { cmd = { height = 1 } } })')
+    command('set messagesopt+=maxheight:1') -- Rounds up to a single row.
     command('echo "foo\nbar"')
     screen:expect([[
       ^                                                     |

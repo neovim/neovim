@@ -5959,7 +5959,15 @@ local options = {
       cb = 'did_set_messagesopt',
       defaults = 'hit-enter,history:500,progress:c',
       schema = {
-        flags = { 'hit-enter', 'wait:', 'history:', 'progress:' },
+        dict = {
+          'hit-enter',
+          { 'history', 'num' },
+          { 'maxheight', 'num' },
+          { 'pager', 'str' },
+          { 'progress', 'enum', { values = { '', 'c' } } },
+          { 'timeout', 'num' },
+          { 'wait', 'num' },
+        },
       },
       deny_duplicates = true,
       desc = [=[
@@ -5974,10 +5982,23 @@ local options = {
         hit-enter	Use a |hit-enter| prompt when the message is longer than
         		'cmdheight' size.
 
+        maxheight:{n}	|ui2| only.  Maximum height of the expanded cmdline
+        		for message display, as a percentage of 'lines'.
+        		A message longer than this is "collapsed", with
+        		a `[+x]` "spill" indicator.  (default: 50)
+
+        pager:{key}	|ui2| only.  Key that enters the message pager after an
+        		interactive |:| command showed a collapsed message.  Use
+        		|key-notation|, e.g. `<CR>`.  A literal comma must be
+        		given as "<Char-44>".  Empty: no such key.
+
         progress:{s}	Determines where to show progress messages.
         		Valid values are:
         		  - empty: Progress messages not shown in cmdline.
         		  - "c": Progress messages are shown in cmdline.
+
+        timeout:{n}	|ui2| only.  Time in milliseconds that a message is
+        		visible in the message window.
 
         wait:{n}	Deprecated with |ui2|.
         		Instead of a |hit-enter| prompt, simply wait for {n}

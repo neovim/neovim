@@ -3,7 +3,7 @@
 --- WARNING: This is an experimental feature intended to replace the builtin message + cmdline
 --- presentation layer.
 ---
---- To enable this feature (default opts shown):
+--- To enable this feature (default opts shown, see also 'messagesopt'):
 --- ```lua
 --- require('vim._core.ui2').enable({
 ---   enable = true, -- Whether to enable or disable the UI.
@@ -13,44 +13,38 @@
 ---     ---Table keys are matched as a Lua pattern to the message ID. 'default'
 ---     ---mapping applies to any omitted kind: { default = 'cmd', progress = 'msg' }.
 ---     targets = 'cmd',
----     cmd = { -- Options related to messages in the cmdline window.
----       -- Maximum height (rows if >=1, or % of 'lines' if <1) of messages expanded
----       -- beyond 'cmdheight'; 0.999 for full height.
----       height = 0.5,
----     },
 ---     dialog = { -- Options related to dialog window.
 ---       height = 0.5, -- Maximum height.
 ---     },
 ---     msg = { -- Options related to msg window.
 ---       height = 0.5, -- Maximum height.
----       timeout = 4000, -- Time a message is visible in the message window.
 ---     },
 ---     pager = { -- Options related to message window.
 ---       height = 0.999, -- Maximum height.
 ---     },
 ---   },
----   pager_char = nil, -- Enters the pager after confirming an interactive ":" cmd.
 --- })
 --- ```
 ---
+--- ui2 behavior is also configured by these 'messagesopt' items: "pager", "timeout".
+--- Example:
+--- ```vim
+--- set messagesopt+=maxheight:50,pager:<CR>,timeout:4000
+--- ```
+---
 --- There are four special windows/buffers for presenting messages and cmdline:
---- - "cmd": Cmdline. Also used for 'showcmd', 'showmode', 'ruler', and messages by default.
---- - "msg": Message window, shows ephemeral messages useful for 'cmdheight' == 0.
---- - "pager": Pager window, shows |:messages| and certain messages that are never "collapsed".
---- - "dialog": Dialog window, shows modal prompts that expect user input.
+--- - "cmd": Cmdline. Also used by default for messages, 'showcmd', 'showmode', 'ruler'.
+--- - "msg": Message window. Shows ephemeral messages; useful if 'cmdheight' is 0.
+--- - "pager": Pager window. Shows |:messages|, allows navigating all messages.
+--- - "dialog": Dialog window. Shows modal prompts that wait for user input.
 ---
---- The buffer 'filetype' is set to the above-listed id ("cmd", "msg", …).
---- Handle the |FileType| event to configure any local options for these
---- windows and their respective buffers.
+--- In each of the special buffers, 'filetype' is set as listed above ("cmd", "msg", …). Handle the
+--- [FileType] event to configure any local options for these windows/buffers.
 ---
---- Unlike the legacy |hit-enter| prompt, messages exceeding 'cmdheight' are
---- instead "collapsed", followed by a `[+x]` "spill" indicator, where `x`
---- indicates the spilled lines. To see the full messages, do either:
+--- Unlike the legacy [hit-enter] prompt, messages exceeding 'cmdheight' are collapsed, followed by
+--- a `[+x]` "spill" indicator, where `x` is number of overflow lines. To see all messages, do either:
 --- - |g<| at any time.
---- - Type `pager_char` immediately after an interactive |:| command.
----
---- If you'd like behavior similar to the old hit-enter prompt, pass `pager_char = "<CR>"` on
---- the `cfg` table.
+--- - Type the "pager" char (if configured in 'messagesopt'), immediately after an interactive [:] command.
 
 local api = vim.api
 local nvim_on = require('vim._core.util').nvim_on
@@ -66,15 +60,11 @@ local M = {
     msg = { -- Options related to the message module.
       ---@type table<string, 'cmd'|'msg'|'pager'> Kind specific message targets.
       targets = { default = 'cmd' },
-      cmd = { -- Options related to messages in the cmdline window.
-        height = 0.5, -- Maximum height while expanded for messages beyond 'cmdheight'.
-      },
       dialog = { -- Options related to dialog window.
         height = 0.5, -- Maximum height.
       },
       msg = { -- Options related to msg window.
         height = 0.5, -- Maximum height.
-        timeout = 4000, -- Time a message is visible in the message window.
       },
       pager = { -- Options related to message window.
         height = 0.999, -- Maximum height.
@@ -179,19 +169,29 @@ local function ui_callback(redraw_msg, event, ...)
 end
 local scheduled_ui_callback = vim.schedule_wrap(ui_callback)
 
+local function validate_old_cfg(name, value, new_name)
+  if value ~= nil then
+    error(
+      ([[ui2: config key %q was removed, set %q in the 'messagesopt' option instead]]):format(
+        name,
+        new_name
+      )
+    )
+  end
+end
+
 ---@nodoc
 function M.enable(opts)
   opts = opts or {}
   vim.validate('opts', opts, 'table', true)
+  local msg = opts.msg or {}
+  validate_old_cfg('pager_char', opts.pager_char, 'pager')
+  validate_old_cfg('msg.msg.timeout', (msg.msg or {}).timeout, 'timeout')
+  validate_old_cfg('msg.cmd.height', (msg.cmd or {}).height, 'maxheight')
   M.cfg = vim.tbl_deep_extend('keep', opts, M.cfg)
   M.cfg.msg.targets = type(M.cfg.msg.targets) == 'table' and M.cfg.msg.targets
     or { default = M.cfg.msg.targets }
   M.cfg.msg.targets.default = M.cfg.msg.targets.default or 'cmd'
-  if M.cfg.pager_char ~= nil then
-    vim.validate('pager_char', M.cfg.pager_char, 'string')
-    -- Normalize to the keytrans() form that cmd_on_key() compares against: "<cr>" => "<CR>".
-    M.cfg.pager_char = vim.fn.keytrans(vim.keycode(M.cfg.pager_char))
-  end
   if #vim.api.nvim_list_uis() == 0 then
     return -- Don't prevent stdout messaging when no UIs are attached.
   end
@@ -211,6 +211,7 @@ function M.enable(opts)
 
   M.cmd = require('vim._core.ui2.cmdline')
   M.msg = require('vim._core.ui2.messages')
+  M.msg.on_option_changed()
   vim.ui_attach(M.ns, { ext_messages = true, set_cmdheight = false }, function(event, ...)
     if not (M.msg[event] or M.cmd[event]) then
       return
@@ -243,11 +244,13 @@ function M.enable(opts)
   end
 
   nvim_on('OptionSet', M.augroup, {
-    pattern = { 'cmdheight', 'laststatus' },
-    desc = 'Set cmdline and message window dimensions for changed option values.',
+    pattern = { 'cmdheight', 'fillchars', 'laststatus', 'messagesopt' },
+    desc = 'Handle message/pager option changes.',
   }, function(ev)
     if ev.match == 'cmdheight' then
       check_cmdheight(vim.v.option_new)
+    else
+      M.msg.on_option_changed()
     end
     M.msg.set_pos()
   end)
@@ -255,6 +258,7 @@ function M.enable(opts)
   nvim_on({ 'VimResized', 'TabEnter' }, M.augroup, {
     desc = 'Set cmdline and message window dimensions after shell resize or tabpage change.',
   }, function(ev)
+    M.msg.on_option_changed() -- 'messagesopt':maxheight is relative to 'lines'.
     M.check_targets()
     -- After a tabpage was closed unhide the msg window on the current tabpage.
     if ev.event == 'TabEnter' and next(M.msg.msg.ids) ~= nil then

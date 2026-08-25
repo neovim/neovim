@@ -57,6 +57,7 @@
 #include "nvim/mouse.h"
 #include "nvim/option.h"
 #include "nvim/option_vars.h"
+#include "nvim/optionstr.h"
 #include "nvim/os/fs.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
@@ -73,6 +74,8 @@
 #include "nvim/ui_compositor.h"
 #include "nvim/ui_defs.h"
 #include "nvim/vim_defs.h"
+
+#include "options_keysets.generated.h"
 
 // To be able to scroll back at the "more" and "hit-enter" prompts we need to
 // store the displayed text and remember where screen lines start.
@@ -95,16 +98,10 @@ static MessageHistoryEntry *msg_hist_temp = NULL;   // First potentially tempora
 static int msg_hist_len = 0;
 static int msg_hist_max = 500;  // The default max value is 500
 
-// args in 'messagesopt' option
-#define MESSAGES_OPT_HIT_ENTER "hit-enter"
-#define MESSAGES_OPT_WAIT "wait:"
-#define MESSAGES_OPT_HISTORY "history:"
-#define MESSAGES_OPT_PROGRESS "progress:"
-
 #define PROGRESS_TARGET_CMD          0x01
 
-// The default is "hit-enter,history:500,progress:c"
-static int msg_flags = kOptMoptFlagHitEnter | kOptMoptFlagHistory | kOptMoptFlagProgress;
+// 'messagesopt' items. Default: "hit-enter,history:500,progress:c".
+static bool msg_hit_enter = true;
 static int msg_wait = 0;
 static int progress_msg_target = PROGRESS_TARGET_CMD;
 
@@ -1275,70 +1272,21 @@ void msg_hist_clear_temp(void)
 
 int messagesopt_changed(void)
 {
-  int messages_flags_new = 0;
-  int messages_wait_new = 0;
-  int messages_history_new = 0;
-  int progress_target_flag = 0;
+  OptKeyDict_mopt *v = opt_keyset(p_mopt, kOptMessagesopt, NULL);
 
-  char *p = p_mopt;
-  while (*p != NUL) {
-    if (strnequal(p, S_LEN(MESSAGES_OPT_HIT_ENTER))) {
-      p += STRLEN_LITERAL(MESSAGES_OPT_HIT_ENTER);
-      messages_flags_new |= kOptMoptFlagHitEnter;
-    } else if (strnequal(p, S_LEN(MESSAGES_OPT_WAIT))
-               && ascii_isdigit(p[STRLEN_LITERAL(MESSAGES_OPT_WAIT)])) {
-      p += STRLEN_LITERAL(MESSAGES_OPT_WAIT);
-      messages_wait_new = getdigits_int(&p, false, INT_MAX);
-      messages_flags_new |= kOptMoptFlagWait;
-    } else if (strnequal(p, S_LEN(MESSAGES_OPT_HISTORY))
-               && ascii_isdigit(p[STRLEN_LITERAL(MESSAGES_OPT_HISTORY)])) {
-      p += STRLEN_LITERAL(MESSAGES_OPT_HISTORY);
-      messages_history_new = getdigits_int(&p, false, INT_MAX);
-      messages_flags_new |= kOptMoptFlagHistory;
-    } else if (strnequal(p, S_LEN(MESSAGES_OPT_PROGRESS))) {
-      p += STRLEN_LITERAL(MESSAGES_OPT_PROGRESS);
-      messages_flags_new |= kOptMoptFlagProgress;
-      if (*p == 'c') {
-        progress_target_flag |= PROGRESS_TARGET_CMD;
-        p++;
-      }
-    }
-
-    if (*p != ',' && *p != NUL) {
-      return FAIL;
-    }
-    if (*p == ',') {
-      p++;
-    }
+  // Either "wait" or "hit-enter" is required; "history" always.
+  if ((!v->hit_enter && !HAS_KEY(v, mopt, wait)) || !HAS_KEY(v, mopt, history)) {
+    return FAIL;
   }
-
-  // Either "wait" or "hit-enter" is required
-  if (!(messages_flags_new & (kOptMoptFlagHitEnter | kOptMoptFlagWait))) {
+  // "history" and "wait" must be <= 10000; "maxheight" is a percentage.
+  if (v->history > 10000 || v->wait > 10000 || v->maxheight > 100) {
     return FAIL;
   }
 
-  // "history" must be set
-  if (!(messages_flags_new & kOptMoptFlagHistory)) {
-    return FAIL;
-  }
-
-  assert(messages_history_new >= 0);
-  // "history" must be <= 10000
-  if (messages_history_new > 10000) {
-    return FAIL;
-  }
-
-  assert(messages_wait_new >= 0);
-  // "wait" must be <= 10000
-  if (messages_wait_new > 10000) {
-    return FAIL;
-  }
-
-  msg_flags = messages_flags_new;
-  msg_wait = messages_wait_new;
-  progress_msg_target = progress_target_flag;
-
-  msg_hist_max = messages_history_new;
+  msg_hit_enter = v->hit_enter;
+  msg_wait = (int)v->wait;
+  progress_msg_target = strequal(v->progress, "c") ? PROGRESS_TARGET_CMD : 0;
+  msg_hist_max = (int)v->history;
   msg_hist_clear(msg_hist_max);
 
   return OK;
@@ -1480,7 +1428,7 @@ void wait_return(int redraw)
       cmdline_row = Rows - 1;
     }
 
-    if (msg_flags & kOptMoptFlagHitEnter) {
+    if (msg_hit_enter) {
       hit_return_msg(true);
 
       do {
