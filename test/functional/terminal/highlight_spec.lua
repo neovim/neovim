@@ -332,6 +332,20 @@ describe(':terminal highlight forwarding', function()
       {1:-- TERMINAL --}                                    |
     ]])
   end)
+
+  it('handles truecolor SGR with a colour space id', function()
+    skip(is_os('win'))
+    tt.feed_termcode('[38:2::255:128:0m')
+    tt.feed_data('color')
+    tt.clear_attrs()
+    tt.feed_data('text')
+    screen:expect([[
+      tty ready                                         |
+      {3:color}text^                                         |
+                                                        |*4
+      {1:-- TERMINAL --}                                    |
+    ]])
+  end)
 end)
 
 --- @param buflocal boolean
