@@ -3,179 +3,137 @@
 
 local M = {}
 
-local whitespace_pattern = '%s'
-local line_break_pattern = '[\r\n]'
+local lpeg = vim.lpeg
 
----@param param string
-local function is_multi_value_directive(param)
-  local multi_value_directives = {
-    'globalknownhostsfile',
-    'host',
-    'ipqos',
-    'sendenv',
-    'userknownhostsfile',
-    'proxycommand',
-    'match',
-    'canonicaldomains',
-  }
+local whitespace = lpeg.S(' \t')
+local newline = lpeg.P('\r\n') + lpeg.S('\r\n')
+local letter = lpeg.R('az', 'AZ')
+local any = lpeg.P(1)
+local comment = lpeg.P('#') * (any - newline) ^ 0
 
-  return vim.list_contains(multi_value_directives, param:lower())
+---@param str string
+---@param pos integer
+---@param message string
+local function report_error(str, pos, message)
+  local line = 1
+
+  for i = 1, pos - 1 do
+    if str:sub(i, i) == '\n' then
+      line = line + 1
+    end
+  end
+
+  error(string.format(message .. " (at line '%s')", line))
 end
 
+---@param pattern vim.lpeg.Pattern
+---@param message string
+local function expect(pattern, message)
+  return pattern + lpeg.P(function(str, pos)
+    report_error(str, pos, message)
+  end)
+end
+
+---@param str string
+local function case_insensetive_pattern(str)
+  local pat = lpeg.P(0)
+
+  for i = 1, #str do
+    local c = str:sub(i, i)
+    pat = pat * (lpeg.S(c:lower() .. c:upper()))
+  end
+
+  return pat
+end
+
+---@param pattern vim.lpeg.Pattern
+---@param has_args boolean
+local function keyword_pattern(pattern, has_args)
+  if not has_args then
+    return pattern
+      / string.lower
+      * whitespace ^ 0
+      * expect(-lpeg.P('='), 'keyword does not accept arguments')
+  end
+
+  return (pattern / string.lower)
+    * ((whitespace ^ 0 * lpeg.P('=') * whitespace ^ 0) + whitespace ^ 1)
+    * expect(-newline, string.format('expected arguments after keyword'))
+end
+
+local function ssh_line_pattern(pattern)
+  return whitespace ^ 0 * pattern * comment ^ 0 * newline
+end
+
+local empty_line = ssh_line_pattern(true)
+
+local host = keyword_pattern(case_insensetive_pattern('host'), true)
+local canonical = keyword_pattern(case_insensetive_pattern('canonical'), false)
+local final = keyword_pattern(case_insensetive_pattern('final'), false)
+local all = keyword_pattern(case_insensetive_pattern('all'), false)
+local exec = keyword_pattern(case_insensetive_pattern('exec'), true)
+local localnetwork = keyword_pattern(case_insensetive_pattern('localnetwork'), true)
+local originalhost = keyword_pattern(case_insensetive_pattern('originalhost'), true)
+local tagged = keyword_pattern(case_insensetive_pattern('tagged'), true)
+local command = keyword_pattern(case_insensetive_pattern('command'), true)
+local user = keyword_pattern(case_insensetive_pattern('user'), true)
+local localuser = keyword_pattern(case_insensetive_pattern('localuser'), true)
+local version = keyword_pattern(case_insensetive_pattern('version'), true)
+local match = keyword_pattern(case_insensetive_pattern('match'), true)
+local arbitray_keyword = keyword_pattern(letter ^ 1, true) - host - match
+
+local quoted_arg = lpeg.P('"')
+  * lpeg.Cs(((lpeg.P('\\"') / '"') + (any - newline - lpeg.P('"'))) ^ 0)
+  * expect(lpeg.P('"'), 'expected "')
+local unquoted_arg = -lpeg.P('#') * lpeg.C((any - whitespace - newline - lpeg.S(',')) ^ 1)
+local arg = quoted_arg + unquoted_arg
+local args = lpeg.Ct((arg * ((whitespace ^ 0 * lpeg.P(',') * whitespace ^ 0) + whitespace ^ 0)) ^ 1)
+
+local match_condition_without_arg = lpeg.Ct(lpeg.Cg(all + canonical + final, 'criteria'))
+local match_condition_with_arg = lpeg.Ct(
+  lpeg.Cg(
+    host + exec + localnetwork + originalhost + tagged + command + user + localuser + version,
+    'criteria'
+  )
+    * lpeg.Cg(
+      expect(
+        lpeg.Ct(quoted_arg + (unquoted_arg * lpeg.P(',') ^ 0) ^ 1),
+        'expected argument after condition'
+      ) * whitespace ^ 0,
+      'args'
+    )
+)
+local match_condition = match_condition_without_arg + match_condition_with_arg
+
+local match_declaration = lpeg.Cg(match, 'type')
+  * lpeg.Cg(lpeg.Ct(expect(match_condition ^ 1, 'expected condition after match')), 'conditions')
+  * whitespace ^ 0
+  * expect(#newline + #lpeg.P('#'), 'invalid condition for match')
+
+local host_declaration = lpeg.Cg(host, 'type')
+  * lpeg.Cg(expect(args, 'expected arguments after host'), 'patterns')
+
+local declaration = lpeg.Ct(
+  lpeg.Cg(arbitray_keyword, 'type')
+    * lpeg.Cg(expect(args, 'expected arguments after keyword'), 'args')
+)
+
+local host_segment = lpeg.Ct(
+  ssh_line_pattern(host_declaration)
+    * lpeg.Cg(lpeg.Ct((ssh_line_pattern(declaration) + empty_line) ^ 0), 'declarations')
+)
+
+local match_segment = lpeg.Ct(
+  ssh_line_pattern(match_declaration)
+    * lpeg.Cg(lpeg.Ct((ssh_line_pattern(declaration) + empty_line) ^ 0), 'declarations')
+)
+
+local ssh_config = ssh_line_pattern(true) ^ 0
+  * lpeg.Ct((host_segment + match_segment) ^ 0)
+  * expect(-any, 'unexpected content')
 ---@param text string The ssh configuration which needs to be parsed
 ---@return string[] The parsed host names in the configuration
 function M.parse_ssh_config(text)
-  local i = 1
-  local line = 1
-
-  local function consume()
-    if i <= #text then
-      local char = text:sub(i, i)
-      i = i + 1
-      return char
-    end
-    return nil
-  end
-
-  local chr = consume()
-
-  local function parse_spaces()
-    local spaces = ''
-    while chr and chr:match(whitespace_pattern) do
-      spaces = spaces .. chr
-      chr = consume()
-    end
-    return spaces
-  end
-
-  local function parse_linebreaks()
-    local breaks = ''
-    while chr and chr:match(line_break_pattern) do
-      line = line + 1
-      breaks = breaks .. chr
-      chr = consume()
-    end
-    return breaks
-  end
-
-  local function parse_parameter_name()
-    local param = ''
-    while chr and not chr:match('[ \t=]') do
-      param = param .. chr
-      chr = consume()
-    end
-    return param
-  end
-
-  local function parse_separator()
-    local sep = parse_spaces()
-    if chr == '=' then
-      sep = sep .. chr
-      chr = consume()
-    end
-    return sep .. parse_spaces()
-  end
-
-  local function parse_value()
-    local val = {}
-    local quoted, escaped = false, false
-
-    while chr and not chr:match(line_break_pattern) do
-      if escaped then
-        table.insert(val, chr == '"' and chr or '\\' .. chr)
-        escaped = false
-      elseif chr == '"' and (val == {} or quoted) then
-        quoted = not quoted
-      elseif chr == '\\' then
-        escaped = true
-      elseif chr == '#' and not quoted then
-        break
-      else
-        table.insert(val, chr)
-      end
-      chr = consume()
-    end
-
-    if quoted or escaped then
-      error('Unexpected line break at line ' .. line)
-    end
-
-    return vim.trim(table.concat(val))
-  end
-
-  local function parse_comment()
-    while chr and not chr:match(line_break_pattern) do
-      chr = consume()
-    end
-  end
-
-  ---@return string[]
-  local function parse_multiple_values()
-    local results = {}
-    local val = {}
-    local quoted = false
-    local escaped = false
-
-    while chr and not chr:match(line_break_pattern) do
-      if escaped then
-        table.insert(val, chr == '"' and chr or '\\' .. chr)
-        escaped = false
-      elseif chr == '"' then
-        quoted = not quoted
-      elseif chr == '\\' then
-        escaped = true
-      elseif quoted then
-        table.insert(val, chr)
-      elseif chr:match('[ \t=]') then
-        if val ~= {} then
-          table.insert(results, vim.trim(table.concat(val)))
-          val = {}
-        end
-      elseif chr == '#' and #results > 0 then
-        break
-      else
-        table.insert(val, chr)
-      end
-      chr = consume()
-    end
-
-    if quoted or escaped then
-      error('Unexpected line break at line ' .. line)
-    end
-
-    if val ~= {} then
-      table.insert(results, vim.trim(table.concat(val)))
-    end
-
-    return results
-  end
-
-  local function parse_directive()
-    local param = parse_parameter_name()
-    local multiple = is_multi_value_directive(param)
-    local _ = parse_separator()
-    local value = multiple and parse_multiple_values() or parse_value()
-
-    local result = {
-      param = param,
-      value = value,
-    }
-
-    return result
-  end
-
-  local function parse_line()
-    local _ = parse_spaces()
-    if chr == '#' then
-      parse_comment()
-      return nil
-    end
-    local node = parse_directive()
-    local _ = parse_linebreaks()
-
-    return node
-  end
-
   local hostnames = {}
 
   ---@param value string
@@ -183,25 +141,38 @@ function M.parse_ssh_config(text)
     return not (value:find('[?*!]') or vim.list_contains(hostnames, value))
   end
 
-  while chr do
-    local node = parse_line()
-    if node then
-      -- This is done just to assign the type
-      node.value = node.value ---@type string[]
-      if node.param:lower() == 'match' and node.value then
-        local current = nil
-        for ind, val in ipairs(node.value) do
-          if val:lower() == 'host' and ind + 1 <= #node.value and is_valid(node.value[ind + 1]) then
-            current = node.value[ind + 1]
-          end
+  ---@class HostSegment
+  ---@field type "host"
+  ---@field patterns string[]
+  ---@field declarations table[]
+
+  ---@class MatchCondition
+  ---@field criteria string
+  ---@field args string[]
+
+  ---@class MatchSegment
+  ---@field type "match"
+  ---@field conditions MatchCondition[]
+  ---@field declarations table[]
+
+  ---@alias SSHConfigSegment HostSegment|MatchSegment
+
+  ---@type SSHConfigSegment[]
+  local parsed = ssh_config:match(text .. '\n')
+  for _, segment in ipairs(parsed) do
+    if segment.type == 'host' then
+      for _, pattern in ipairs(segment.patterns) do
+        if is_valid(pattern) then
+          table.insert(hostnames, pattern)
         end
-        if current then
-          table.insert(hostnames, current)
-        end
-      elseif node.param:lower() == 'host' and node.value then
-        for _, value in ipairs(node.value) do
-          if is_valid(value) then
-            table.insert(hostnames, value)
+      end
+    else -- if it's not a "Host", then it's a "Match"
+      for _, cond in ipairs(segment.conditions) do
+        if cond.criteria == 'host' then
+          for _, pattern in ipairs(cond.args) do
+            if is_valid(pattern) then
+              table.insert(hostnames, pattern)
+            end
           end
         end
       end

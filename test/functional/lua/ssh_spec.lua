@@ -45,7 +45,57 @@ describe('SSH parser', function()
       'prod',
       'test',
       'quoted string',
+      'foo',
       'gh',
+    }, parser.parse_ssh_config(config))
+  end)
+
+  it('parses SSH configuration strings with inline comments', function()
+    local config = [[
+      Host * #comment
+        ConnectTimeout 10
+        ServerAliveInterval 60
+        ServerAliveCountMax 3
+
+      Host=dev # comment
+        HostName=dev.example.com
+        User=devuser
+        Port=2222
+        IdentityFile=~/.ssh/id_rsa_dev
+
+      Host "quoted string"   # comment
+        User quote # comment
+        Port 22
+
+      Match host foo host gh # comment
+        HostName github.com
+        User git
+        IdentityFile ~/.ssh/id_rsa_github
+        IdentitiesOnly yes
+    ]]
+
+    eq({
+      'dev',
+      'quoted string',
+      'foo',
+      'gh',
+    }, parser.parse_ssh_config(config))
+  end)
+
+  it('parses multiple hostnames separated by ","', function()
+    local config = [[
+      Host prod,dev,test,*,!yes
+        HostName 198.51.100.10
+        User admin
+        Port 22
+        IdentityFile ~/.ssh/id_rsa_prod
+        ForwardAgent yes
+    ]]
+
+    eq({
+      'prod',
+      'dev',
+      'test',
     }, parser.parse_ssh_config(config))
   end)
 
@@ -63,16 +113,28 @@ describe('SSH parser', function()
     eq(false, ok)
   end)
 
-  it('fails when the line ends with a single backslash', function()
+  it('fails when a Host segment does not have any hosts', function()
     local config = [[
-      Host prod test
+      Host
         HostName 198.51.100.10
-        User admin\
+        User admin
         Port 22
         IdentityFile ~/.ssh/id_rsa_prod
         ForwardAgent yes
     ]]
 
+    local ok, _ = pcall(parser.parse_ssh_config, config)
+    eq(false, ok)
+  end)
+
+  it("fails when there's an invalid condition for match", function()
+    local config = [[
+      Match invalidcondition
+        HostName github.com
+        User git
+        IdentityFile ~/.ssh/id_rsa_github
+        IdentitiesOnly yes
+    ]]
     local ok, _ = pcall(parser.parse_ssh_config, config)
     eq(false, ok)
   end)
