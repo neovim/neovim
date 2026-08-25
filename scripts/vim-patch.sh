@@ -943,7 +943,7 @@ is_na_patch() {
           diff-tree --no-commit-id -r -b -U0 \
           '-I^\s+$' \
           '-I^=+$' \
-          '-I^\|:redrawtabpanel\|' \
+          '-I^\|:(export|import|redrawtabpanel)\|' \
           '-I^\|popup_[_a-z]+\(\)\|' \
           '-I^popup_[_a-z]+\(' \
           '-I\*\s+For Vim version [0-9]\.[0-9]\.\s+Last change: [0-9]+ [A-Z][a-z]+ [0-9]+' \
