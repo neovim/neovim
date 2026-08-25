@@ -344,6 +344,15 @@ Assuming a suitable parser and `highlights.scm` query is found in runtimepath,
 treesitter highlighting for the current buffer can be enabled simply via
 |vim.treesitter.start()|.
 
+                                                      *g:loaded_treesitter*
+Treesitter highlighting can be disabled entirely by setting the global
+variable `g:loaded_treesitter` to any value, e.g. in your |config|: >lua
+    vim.g.loaded_treesitter = 1
+<
+
+This makes |vim.treesitter.start()| a no-op, so buffers (including those from
+the default ftplugins) fall back to legacy regex |:syntax| highlighting.
+
                                                  *treesitter-highlight-groups*
 The capture names, prefixed with `@`, are directly usable as highlight groups.
 For many commonly used captures, the corresponding highlight groups are linked
@@ -1182,6 +1191,10 @@ start({buf}, {lang})                                  *vim.treesitter.start()*
 
     Note: By default, the highlighter parses code asynchronously, using a
     segment time of 3ms.
+
+    Treesitter highlighting can be disabled entirely by setting
+    `g:loaded_treesitter` to any value, in which case this function is a
+    no-op.
 
     Example: >lua
         vim.api.nvim_create_autocmd( 'FileType', { pattern = 'tex',

@@ -222,6 +222,34 @@ describe('treesitter highlighting (C)', function()
     eq('', eval('&syntax'))
   end)
 
+  it('can be disabled via g:loaded_treesitter', function()
+    command('setfiletype c | syntax on')
+    fn.setreg('r', hl_text_c)
+    feed('i<C-R><C-O>r<Esc>gg')
+
+    exec_lua(function()
+      vim.treesitter.query.set('c', 'highlights', hl_query_c)
+    end)
+
+    -- Globally disabled: start() is a no-op, legacy syntax highlighting remains.
+    exec_lua(function()
+      vim.g.loaded_treesitter = 1
+      vim.treesitter.start()
+    end)
+    eq(
+      true,
+      exec_lua('return vim.treesitter.highlighter.active[vim.api.nvim_get_current_buf()] == nil')
+    )
+    screen:expect(hl_grid_legacy_c)
+
+    -- Re-enabling makes start() work again.
+    exec_lua(function()
+      vim.g.loaded_treesitter = nil
+      vim.treesitter.start()
+    end)
+    screen:expect(hl_grid_ts_c)
+  end)
+
   it('is updated with edits', function()
     insert(hl_text_c)
     feed('gg')

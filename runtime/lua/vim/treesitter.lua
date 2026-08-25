@@ -434,6 +434,9 @@ end
 ---
 --- Note: By default, the highlighter parses code asynchronously, using a segment time of 3ms.
 ---
+--- Treesitter highlighting can be disabled entirely by setting `g:loaded_treesitter` to any
+--- value, in which case this function is a no-op.
+---
 --- Example:
 ---
 --- ```lua
@@ -448,6 +451,10 @@ end
 ---@param buf integer? (default: current buffer) Buffer to be highlighted
 ---@param lang string? (default: from 'filetype') Language of the parser
 function M.start(buf, lang)
+  -- Allow users to disable treesitter highlighting globally via `g:loaded_treesitter`.
+  if vim.g.loaded_treesitter ~= nil then
+    return
+  end
   buf = vim._resolve_bufnr(buf)
   -- Ensure buffer is loaded. `:edit` over `bufload()` to show swapfile prompt.
   if not api.nvim_buf_is_loaded(buf) then
