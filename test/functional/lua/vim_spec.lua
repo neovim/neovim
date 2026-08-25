@@ -1582,6 +1582,20 @@ describe('lua stdlib', function()
     matches('arg1: expected function, got number', pcall_err(vim.validate, 'arg1', 5, 'function'))
     matches('arg1: expected number, got string', pcall_err(vim.validate, 'arg1', '5', 'number'))
     matches('arg1: expected x, got number', pcall_err(exec_lua, "vim.validate('arg1', 1, 'x')"))
+    matches(
+      'arg1: expected string|nil, got number',
+      pcall_err(vim.validate, 'arg1', 5, 'string', true)
+    )
+    matches(
+      'arg1: expected number|string|nil, got table',
+      pcall_err(vim.validate, 'arg1', {}, { 'number', 'string' }, true)
+    )
+    matches(
+      'arg1: expected %?|nil, got table',
+      pcall_err(vim.validate, 'arg1', {}, function()
+        return false
+      end, true)
+    )
     matches('invalid validator: 1', pcall_err(exec_lua, "vim.validate('arg1', 1, 1)"))
     matches('invalid arguments', pcall_err(exec_lua, "vim.validate('arg1', { 1 })"))
 
