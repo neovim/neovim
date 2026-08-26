@@ -671,6 +671,23 @@ static bool is_first_match(const compl_T *const match)
   return match == compl_first_match;
 }
 
+/// Return the entry holding the original text, NULL if not found.
+/// It is the first item, or the last one for backward completion.
+static compl_T *find_original_text_match(void)
+{
+  if (compl_first_match == NULL) {
+    return NULL;
+  }
+  if (match_at_original_text(compl_first_match)) {
+    return compl_first_match;
+  }
+  if (compl_first_match->cp_prev != NULL
+      && match_at_original_text(compl_first_match->cp_prev)) {
+    return compl_first_match->cp_prev;
+  }
+  return NULL;
+}
+
 static void do_autocmd_completedone(int c, int mode, String *word)
 {
   save_v_event_T save_v_event;
@@ -1617,16 +1634,20 @@ static void set_fuzzy_score(void)
   } while (comp != NULL && !is_first_match(comp));
 }
 
-/// Sort completion matches, excluding the node that contains the leader.
+/// Sort completion matches, leaving the entry with the original text in place.
 static void sort_compl_match_list(MergeSortCompareFunc compare)
 {
   if (!compl_first_match || is_first_match(compl_first_match->cp_next)) {
     return;
   }
 
-  compl_T *comp = compl_first_match->cp_prev;
+  compl_T *orig_text = find_original_text_match();
+  if (orig_text == NULL) {
+    return;
+  }
+
   ins_compl_make_linear();
-  if (compl_shows_dir_forward()) {
+  if (orig_text == compl_first_match) {
     compl_first_match->cp_next->cp_prev = NULL;
     compl_first_match->cp_next = mergesort_list(compl_first_match->cp_next,
                                                 cp_get_next, cp_set_next,
@@ -1634,15 +1655,15 @@ static void sort_compl_match_list(MergeSortCompareFunc compare)
                                                 compare);
     compl_first_match->cp_next->cp_prev = compl_first_match;
   } else {
-    comp->cp_prev->cp_next = NULL;
+    orig_text->cp_prev->cp_next = NULL;
     compl_first_match = mergesort_list(compl_first_match, cp_get_next, cp_set_next,
                                        cp_get_prev, cp_set_prev, compare);
     compl_T *tail = compl_first_match;
     while (tail->cp_next != NULL) {
       tail = tail->cp_next;
     }
-    tail->cp_next = comp;
-    comp->cp_prev = tail;
+    tail->cp_next = orig_text;
+    orig_text->cp_prev = tail;
   }
   (void)ins_compl_make_cyclic();
 }
@@ -2573,16 +2594,13 @@ static void ins_compl_set_original_text(char *str, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
   // Replace the original text entry.
-  // The CP_ORIGINAL_TEXT flag is either at the first item or might possibly
-  // be at the last item for backward completion
-  if (match_at_original_text(compl_first_match)) {  // safety check
-    API_CLEAR_STRING(compl_first_match->cp_str);
-    compl_first_match->cp_str = cbuf_to_string(str, len);
-  } else if (compl_first_match->cp_prev != NULL
-             && match_at_original_text(compl_first_match->cp_prev)) {
-    API_CLEAR_STRING(compl_first_match->cp_prev->cp_str);
-    compl_first_match->cp_prev->cp_str = cbuf_to_string(str, len);
+  compl_T *match = find_original_text_match();
+  if (match == NULL) {
+    return;
   }
+
+  API_CLEAR_STRING(match->cp_str);
+  match->cp_str = cbuf_to_string(str, len);
 }
 
 /// Append one character to the match leader.  May reduce the number of

@@ -6851,4 +6851,21 @@ func Test_complete_info_hlgroup()
   bwipe!
 endfunc
 
+func Test_complete_fuzzy_resort()
+  new
+  set completeopt=menu,menuone,noselect,fuzzy
+
+  inoremap <buffer> <F5> <Cmd>call complete(1, ['xxxb', 'xb', 'b'])<CR>
+  call feedkeys("i\<F5>b\<C-R>=string(map(complete_info(['items']).items, 'v:val.word'))\<CR>\<Esc>", 'tx')
+  call assert_equal("b['b', 'xb', 'xxxb']", getline(1))
+
+  %d _
+  call setline(1, ['xxxbar', 'xbar', 'bar'])
+  call feedkeys("Go\<C-P>b\<C-R>=string(map(complete_info(['items']).items, 'v:val.word'))\<CR>\<Esc>", 'tx')
+  call assert_equal("b['bar', 'xbar', 'xxxbar']", getline('$'))
+
+  bwipe!
+  set completeopt&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable
