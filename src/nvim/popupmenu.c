@@ -676,12 +676,7 @@ void pum_redraw(void)
     grid_invalidate(&pum_grid);
   }
   if (ui_has(kUIMultigrid)) {
-    const char *anchor = pum_above ? "SW" : "NW";
-    int row_off = pum_above ? -pum_height : 0;
-    ui_call_win_float_pos(pum_grid.handle, -1, cstr_as_string(anchor), pum_anchor_grid,
-                          pum_row - row_off - pum_win_row_offset, pum_left_col - pum_win_col_offset,
-                          false, pum_grid.zindex, (int)pum_grid.comp_index, pum_grid.comp_row,
-                          pum_grid.comp_col);
+    pum_pos_ui_flush(true);
   }
 
   int scroll_range = pum_size - pum_height;
@@ -1683,10 +1678,10 @@ void pum_make_popup(const char *path_name, int use_mouse_pos)
   }
 }
 
-void pum_ui_flush(void)
+void pum_pos_ui_flush(bool force)
 {
-  if (ui_has(kUIMultigrid) && pum_is_drawn && !pum_external && pum_grid.handle != 0
-      && pum_grid.pending_comp_index_update) {
+  if (force || (ui_has(kUIMultigrid) && pum_is_drawn && !pum_external
+                && pum_grid.handle != 0 && pum_grid.pending_comp_index_update)) {
     const char *anchor = pum_above ? "SW" : "NW";
     int row_off = pum_above ? -pum_height : 0;
     ui_call_win_float_pos(pum_grid.handle, -1, cstr_as_string(anchor), pum_anchor_grid,

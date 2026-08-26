@@ -2293,7 +2293,7 @@ void highlight_changed(void)
     if (id == 0) {
       abort();
     }
-    int ns_id = -1;
+    int ns_id = 0;
     int final_id = id;
     syn_ns_get_final_id(&ns_id, &final_id);
     if (hlf == HLF_SNC) {
