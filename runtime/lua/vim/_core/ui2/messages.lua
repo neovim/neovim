@@ -665,7 +665,6 @@ local dialog_on_key = function(_, typed)
   end
 end
 
-local was_cmdwin = ''
 ---@param min integer Minimum window height.
 local function win_row_height_border(tgt, min)
   local h = (tgt ~= 'cmd' and ui.cfg.msg[tgt].height or 0) --[[@as number]]
@@ -675,7 +674,8 @@ local function win_row_height_border(tgt, min)
       math.max(1, min),
       min < o.lines - ui.cmdheight
   end
-  local cmdwin = fn.getcmdwintype() ~= was_cmdwin and api.nvim_win_get_height(0) or 0
+  local cmdwin_win = require('vim._core.cmdwin').win()
+  local cmdwin = cmdwin_win and api.nvim_win_get_height(cmdwin_win) or 0
   local global_stl = (cmdwin > 0 or o.laststatus == 3) and 1 or 0
   local row = 1 - cmdwin - global_stl
   local top = min < o.lines - ui.cmdheight - global_stl - cmdwin
@@ -684,15 +684,15 @@ local function win_row_height_border(tgt, min)
 end
 
 local function enter_pager()
-  -- Cannot leave the cmdwin to enter the pager, so close and re-open it.
-  in_pager, was_cmdwin = true, fn.getcmdwintype()
-  if was_cmdwin ~= '' then
-    api.nvim_command('quit')
-  elseif M.cmd_on_key then
+  in_pager = true
+  if M.cmd_on_key then
     api.nvim_feedkeys(vim.keycode('<Esc>'), 'tn', false)
   end
-  -- Cmdwin is closed one event iteration later so schedule in case it was open.
+  -- Schedule: the fed <Esc> above is processed one event iteration later.
   vim.schedule(function()
+    if not api.nvim_win_is_valid(ui.wins.pager) then
+      return -- Pager was already closed somehow.
+    end
     local height, id = api.nvim_win_get_height(ui.wins.pager), 0
     api.nvim_set_option_value('eiw', '', { scope = 'local', win = ui.wins.pager })
     api.nvim_set_current_win(ui.wins.pager)
@@ -716,10 +716,6 @@ local function enter_pager()
       else
         pcall(api.nvim_set_option_value, 'eiw', 'all', { scope = 'local', win = ui.wins.pager })
         api.nvim_del_autocmd(id)
-        if was_cmdwin ~= '' then
-          api.nvim_feedkeys('q' .. was_cmdwin, 'n', false)
-          was_cmdwin = ''
-        end
       end
       pcall(api.nvim_win_set_config, ui.wins.pager, cfg)
     end)

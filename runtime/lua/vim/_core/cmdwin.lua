@@ -147,6 +147,12 @@ function M._cleanup()
   end
 end
 
+--- cmdwin window, or nil if not open.
+--- @return integer?
+function M.win()
+  return state and vim.api.nvim_win_is_valid(state.win) and state.win or nil
+end
+
 --- Closes the cmdwin and returns its current line and type.
 --- @return string line, string type
 local function _close()
