@@ -533,7 +533,7 @@ endfunc
 " member.
 func s:StructMembers(typename, items, all)
   " Todo: What about local structures?
-  let fnames = join(map(tagfiles(), 'escape(v:val, " \\#%")'))
+  let fnames = join(map(tagfiles(), 'escape(v:val, " \\#%|")'))
   if fnames == ''
     return []
   endif
