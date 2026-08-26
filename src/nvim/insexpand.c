@@ -1452,16 +1452,7 @@ static dict_T *ins_compl_dict_alloc(compl_T *match)
 {
   // { word, abbr, menu, kind, info }
   dict_T *dict = tv_dict_alloc_lock(VAR_FIXED);
-  tv_dict_add_str_len(dict, S_LEN("word"), match->cp_str.data, (int)match->cp_str.size);
-  tv_dict_add_str(dict, S_LEN("abbr"), match->cp_text[CPT_ABBR]);
-  tv_dict_add_str(dict, S_LEN("menu"), match->cp_text[CPT_MENU]);
-  tv_dict_add_str(dict, S_LEN("kind"), match->cp_text[CPT_KIND]);
-  tv_dict_add_str(dict, S_LEN("info"), match->cp_text[CPT_INFO]);
-  if (match->cp_user_data.v_type == VAR_UNKNOWN) {
-    tv_dict_add_str_len(dict, S_LEN("user_data"), "", 0);
-  } else {
-    tv_dict_add_tv(dict, S_LEN("user_data"), &match->cp_user_data);
-  }
+  fill_complete_info_dict(dict, match, false);
   return dict;
 }
 

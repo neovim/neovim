@@ -65,10 +65,16 @@ describe('completion', function()
     it('returns expected dict in normal completion', function()
       feed('ifoo<ESC>o<C-x><C-n>')
       eq('foo', eval('getline(2)'))
-      eq(
-        { word = 'foo', abbr = '', menu = '', info = '', kind = '', user_data = '' },
-        eval('v:completed_item')
-      )
+      eq({
+        word = 'foo',
+        abbr = '',
+        menu = '',
+        info = '',
+        kind = '',
+        user_data = '',
+        abbr_hlgroup = '',
+        kind_hlgroup = '',
+      }, eval('v:completed_item'))
     end)
     it('is readonly', function()
       screen:try_resize(80, 8)
@@ -105,6 +111,8 @@ describe('completion', function()
         menu = 'baz',
         info = 'foobar',
         kind = 'foobaz',
+        abbr_hlgroup = '',
+        kind_hlgroup = '',
         user_data = '',
       }, eval('v:completed_item'))
     end)
