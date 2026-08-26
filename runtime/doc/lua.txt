@@ -4116,6 +4116,73 @@ Pattern:match({subject}, {init}, {...})                      *Pattern:match()*
     Return: ~
         (`any`) ...
 
+#patt                                                *Pattern:__len()* *#patt*
+    Returns a pattern that matches only if the input string matches `patt`,
+    but without consuming any input, independently of success or failure.
+
+    This pattern never produces any capture.
+
+-patt                                       *Pattern:__unm()* *pattern-negate*
+    Returns a pattern that matches only if the input string does not match
+    `patt`. It does not consume any input, independently of success or failure.
+
+    As an example, the pattern `-lpeg.P(1)` matches only the end of string.
+
+    This pattern never produces any captures, because either `patt` fails or
+    `-patt` fails. (A failing pattern never produces captures.)
+
+patt1 + patt2                               *Pattern:__add()* *pattern-choice*
+    Returns a pattern equivalent to an ordered choice of `patt1` and `patt2`.
+    It matches either `patt1` or `patt2`, with no backtracking once one of
+    them succeeds. The identity element for this operation is the pattern
+    `lpeg.P(false)`, which always fails.
+
+    If both `patt1` and `patt2` are character sets, this operation is
+    equivalent to set union.
+
+    Example: >lua
+        local lower = lpeg.R("az")
+        local upper = lpeg.R("AZ")
+        local letter = lower + upper
+<
+
+patt1 - patt2                             *Pattern:__sub()* *pattern-subtract*
+    Returns a pattern that asserts that the input does not match `patt2` and
+    then matches `patt1`.
+
+    When successful, this pattern produces all captures from `patt1`. It
+    never produces any capture from `patt2` (as either `patt2` fails or
+    `patt1 - patt2` fails).
+
+    If both `patt1` and `patt2` are character sets, this operation is
+    equivalent to set difference. Note that `-patt` is equivalent to
+    `"" - patt` (or `0 - patt`). If `patt` is a character set, `1 - patt` is
+    its complement.
+
+patt1 * patt2                             *Pattern:__mul()* *pattern-sequence*
+    Returns a pattern that matches `patt1` and then matches `patt2`, starting
+    where `patt1` finished. The identity element for this operation is the
+    pattern `lpeg.P(true)`, which always succeeds.
+
+    (LPeg uses the `*` operator [instead of the more obvious `..`] both
+    because it has the right priority and because in formal languages it is
+    common to use a dot for denoting concatenation.)
+
+patt^n                                      *Pattern:__pow()* *pattern-repeat*
+    If `n` is nonnegative, this pattern matches `n` or more occurrences of
+    `patt`.
+
+    Otherwise, when `n` is negative, this pattern matches at most `|n|`
+    occurrences of patt.
+
+    In particular, `patt^0` is "zero or more occurrences of `patt`", `patt^1`
+    is "one or more occurrences of `patt`", and `patt^-1` is "zero or one
+    occurences of `patt`".
+
+    In all cases, the resulting pattern is greedy with no backtracking (also
+    called a possessive repetition). That is, it matches only the longest
+    possible sequence of matches for `patt`.
+
 vim.lpeg.B({pattern})                                           *vim.lpeg.B()*
     Returns a pattern that matches only if the input string at the current
     position is preceded by `patt`. Pattern `patt` must match only strings
