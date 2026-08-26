@@ -1392,7 +1392,7 @@ describe('lua stdlib', function()
   it('vim.fn `func_lua` (fast path for Lua-implemented builtins)', function()
     -- hostname() is implemented via func_lua, calling Lua directly when invoked from Lua.
     local lua_result = exec_lua([[return vim.fn.hostname()]])
-    eq(type(lua_result), 'string')
+    eq('string', type(lua_result))
     assert(#lua_result > 0, 'hostname() should return a non-empty string')
     -- VimScript path (lua_wrapper) should return the same result.
     eq(lua_result, eval('hostname()'))

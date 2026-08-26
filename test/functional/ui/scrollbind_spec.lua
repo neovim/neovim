@@ -398,8 +398,8 @@ describe('Scrollbind', function()
     n.feed('<C-y>')
     n.feed('<C-y>')
 
-    t.eq(n.exec_lua [[return vim.fn.line('w0', 1001)]], 6)
-    t.eq(n.exec_lua [[return vim.fn.line('w0', 1000)]], 3)
+    t.eq(6, n.exec_lua [[return vim.fn.line('w0', 1001)]])
+    t.eq(3, n.exec_lua [[return vim.fn.line('w0', 1000)]])
 
     screen:expect({
       grid = [[

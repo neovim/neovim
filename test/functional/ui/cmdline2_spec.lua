@@ -180,7 +180,7 @@ describe('cmdline2', function()
       {1:~                                                    }|*12
       {16::}{15:find} ^                                               |
     ]])
-    t.eq(n.eval('v:errmsg'), "E1514: 'findfunc' did not return a List type")
+    t.eq("E1514: 'findfunc' did not return a List type", n.eval('v:errmsg'))
   end)
 
   it('substitution match, empty message does not clear active cmdline', function()

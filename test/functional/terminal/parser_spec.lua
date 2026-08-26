@@ -28,7 +28,7 @@ describe(':terminal', function()
     api.nvim_chan_send(chan, input)
     --- @type string
     local term_title = api.nvim_buf_get_var(0, 'term_title')
-    t.eq(term_title, 'This title set with OSC 2')
+    t.eq('This title set with OSC 2', term_title)
     assert_alive()
   end)
 
@@ -40,7 +40,7 @@ describe(':terminal', function()
     api.nvim_chan_send(chan, input)
     --- @type string
     local term_title = api.nvim_buf_get_var(0, 'term_title')
-    t.eq(term_title, 'This title set with OSC 0')
+    t.eq('This title set with OSC 0', term_title)
     assert_alive()
   end)
 

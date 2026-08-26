@@ -626,7 +626,7 @@ describe('menu_get', function()
       },
     }
 
-    eq(m, expected)
+    eq(expected, m)
   end)
 
   it('works with right-aligned text and spaces', function()
@@ -707,6 +707,6 @@ describe('menu_get', function()
       },
     }
 
-    eq(m, expected)
+    eq(expected, m)
   end)
 end)

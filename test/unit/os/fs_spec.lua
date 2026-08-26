@@ -508,7 +508,7 @@ describe('fs.c', function()
         for _, _ in pairs(tbl) do
           i = i + 1
         end
-        eq(i, 6) -- All fds must be unique
+        eq(6, i) -- All fds must be unique
       end)
     end)
 

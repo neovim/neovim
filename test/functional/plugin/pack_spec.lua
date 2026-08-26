@@ -393,12 +393,12 @@ local function assert_progress_report(echo_log, action, step_names)
     steps_seen[step] = true
 
     -- Should not add intermediate progress report to history
-    eq(echo_args[2], false)
+    eq(false, echo_args[2])
 
     -- Should update a single message by its id (computed after first call)
     progress.id = progress.id or echo_args[3].id ---@type integer
     progress.percent = math.floor(100 * i / n_steps)
-    eq(echo_args[3], progress)
+    eq(progress, echo_args[3])
   end
 
   -- Should report all steps
@@ -499,7 +499,7 @@ describe('vim.pack', function()
 
       watch_events({ 'PackChanged' })
       vim_pack_add({ repos_src.basic })
-      eq(exec_lua('return #_G.event_log'), 0)
+      eq(0, exec_lua('return #_G.event_log'))
 
       -- Should not create redundant stash entry
       local basic_path = pack_get_plug_path('basic')
@@ -1338,13 +1338,13 @@ describe('vim.pack', function()
         -- Buffer should be special and shown in a separate tabpage
         eq(2, #api.nvim_list_tabpages())
         eq(2, fn.tabpagenr())
-        eq(api.nvim_get_option_value('filetype', {}), 'nvim-pack')
-        eq(api.nvim_get_option_value('modifiable', {}), false)
-        eq(api.nvim_get_option_value('buftype', {}), 'acwrite')
+        eq('nvim-pack', api.nvim_get_option_value('filetype', {}))
+        eq(false, api.nvim_get_option_value('modifiable', {}))
+        eq('acwrite', api.nvim_get_option_value('buftype', {}))
         local confirm_bufnr = api.nvim_get_current_buf()
         local confirm_winnr = api.nvim_get_current_win()
         local confirm_tabpage = api.nvim_get_current_tabpage()
-        eq(api.nvim_buf_get_name(0), 'nvim-pack://confirm#' .. confirm_bufnr)
+        eq('nvim-pack://confirm#' .. confirm_bufnr, api.nvim_buf_get_name(0))
 
         -- Adjust lines for a more robust screenshot testing
         local fetch_src = repos_src.fetch
@@ -1826,7 +1826,7 @@ describe('vim.pack', function()
         -- - Can still respect `:write` after action
         n.exec('write')
         eq('vim.pack: Nothing to update', n.exec_capture('1messages'))
-        eq(api.nvim_get_option_value('filetype', {}), '')
+        eq('', api.nvim_get_option_value('filetype', {}))
       end)
 
       it('has buffer-local mappings', function()
