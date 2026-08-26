@@ -4173,7 +4173,7 @@ patt^n                                      *Pattern:__pow()* *pattern-repeat*
     `patt`.
 
     Otherwise, when `n` is negative, this pattern matches at most `|n|`
-    occurrences of patt.
+    occurrences of `patt`.
 
     In particular, `patt^0` is "zero or more occurrences of `patt`", `patt^1`
     is "one or more occurrences of `patt`", and `patt^-1` is "zero or one
