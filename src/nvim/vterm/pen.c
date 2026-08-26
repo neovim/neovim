@@ -90,15 +90,25 @@ static int lookup_colour(const VTermState *state, int palette, const long args[]
                          VTermColor *col)
 {
   switch (palette) {
-  case 2:  // RGB mode - 3 args contain colour values directly
-    if (argcount < 3) {
+  case 2: {  // RGB mode - 3 args contain colour values directly
+    // ITU-T T.416 places a colour space id before R:G:B, as in "38:2::R:G:B".
+    // Skip it when this colon-separated group holds more than three arguments.
+    int grouplen = 0;
+    while (grouplen < argcount && CSI_ARG_HAS_MORE(args[grouplen])) {
+      grouplen++;
+    }
+    grouplen = grouplen < argcount ? grouplen + 1 : argcount;
+    const int skip = grouplen > 3 ? 1 : 0;
+
+    if (argcount - skip < 3) {
       return argcount;
     }
 
-    vterm_color_rgb(col, (uint8_t)CSI_ARG(args[0]), (uint8_t)CSI_ARG(args[1]),
-                    (uint8_t)CSI_ARG(args[2]));
+    vterm_color_rgb(col, (uint8_t)CSI_ARG(args[skip]), (uint8_t)CSI_ARG(args[skip + 1]),
+                    (uint8_t)CSI_ARG(args[skip + 2]));
 
-    return 3;
+    return skip + 3;
+  }
 
   case 5:  // XTerm 256-colour mode
     if (!argcount || CSI_ARG_IS_MISSING(args[0])) {
