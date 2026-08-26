@@ -743,7 +743,7 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
         || !os_fileinfo_id_equal(&file_info, file_info_old)) {
       *backup_copyp = true;
     } else {
-      // Check if we can create a file and set the owner/group to
+      // Check if we can create a file and set the owner/group/mode to
       // the ones from the original file.
       // First find a file name that doesn't exist yet (use some
       // arbitrary numbers).
@@ -764,6 +764,7 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
       } else {
 #ifdef UNIX
         os_fchown(fd, (uv_uid_t)file_info_old->stat.st_uid, (uv_gid_t)file_info_old->stat.st_gid);
+        os_fsetperm(fd, perm);
         if (!os_fileinfo(tmp_fname, &file_info)
             || file_info.stat.st_uid != file_info_old->stat.st_uid
             || file_info.stat.st_gid != file_info_old->stat.st_gid
