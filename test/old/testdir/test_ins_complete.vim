@@ -6859,7 +6859,7 @@ func Test_complete_info_auto()
   func! AutoOmni(findstart, base)
     if a:findstart
       call add(g:auto, complete_info(['auto']).auto)
-      return col('.') - 1
+      return 4
     endif
     return ['alpha', 'alphabet']
   endfunc
@@ -6879,6 +6879,13 @@ func Test_complete_info_auto()
   call feedkeys("A\<C-X>\<C-O>\<Esc>", 'tx')
   call assert_equal([1, 0], g:auto)
 
+  " CTRL-X CTRL-O is typed before 'autocompletedelay' expires.
+  set autocompletedelay=100
+  let g:auto = []
+  call feedkeys("A\<C-X>\<C-O>\<Esc>", 'tx')
+  call assert_equal([0], g:auto)
+
+  set autocompletedelay&
   setlocal noautocomplete
   let g:auto = []
   call feedkeys("A\<C-X>\<C-O>\<Esc>", 'tx')
