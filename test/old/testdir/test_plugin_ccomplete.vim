@@ -85,4 +85,34 @@ func Test_ccomplete_typeref_completion_still_works()
   let &tags = save_tags
 endfunc
 
+" The tags file names from tagfiles() are executed
+" via a single vimgrep command and trailing | does
+" not cause code execution
+func Test_ccomplete_no_exec_via_tagfile_name()
+  CheckUnix
+  let dir = "Xcc|&titlestring\t=\t'INJECTED'|ls\t"
+  call mkdir(dir, 'pR')
+  let tagsfile = dir .. '/tags'
+  call writefile(["!_TAG_FILE_SORTED\t0\t/0/",
+        \ "myvar\tmain.c\t/^x$/;\"\tv\ttyperef:struct:mystruct",
+        \ "alpha\tmain.c\t/^x$/;\"\tm\tstruct:mystruct",
+        \ ], tagsfile)
+
+  let save_tags = &tags
+  let save_title = &titlestring
+  let &tags = fnamemodify(tagsfile, ':p')
+  set titlestring=orig
+
+  new
+  call ccomplete#Complete(1, '')
+  call ccomplete#Complete(0, 'myvar.x')
+
+  call assert_equal('orig', &titlestring,
+        \ 'tags file name was executed as an Ex command during omni-completion')
+
+  bwipe!
+  let &tags = save_tags
+  let &titlestring = save_title
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
