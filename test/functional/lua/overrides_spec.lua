@@ -187,14 +187,56 @@ describe('print', function()
   end)
 end)
 
-describe('debug.debug', function()
+describe('_G.debug', function()
   local screen --- @type test.functional.ui.screen
 
   before_each(function()
     screen = Screen.new()
   end)
 
-  it('works', function()
+  it('if broken, Nvim reports it instead of crashing #41504', function()
+    -- If user code breaks `_G.debug.traceback`, Nvim should function enough to allow ":qa!".
+    -- But `_G.debug=nil` panics immediately, and that is intentional/wontfix.
+    for _, override in ipairs({ 'debug.traceback = nil', '_G.debug = {}' }) do
+      clear()
+      eq(
+        true,
+        exec_lua(([[
+          %s
+          local called = false
+          -- nvim_buf_call() is the shortest path from Lua to nlua_pcall().
+          vim.api.nvim_buf_call(0, function() called = true end)
+          return called
+        ]]):format(override))
+      )
+      -- Error reports the broken situation.
+      matches(
+        'boom\nNo traceback: debug.traceback is not a function',
+        pcall_err(exec_lua, [[vim.api.nvim_buf_call(0, function() error('boom') end)]])
+      )
+      -- vim.on_key() callbacks run on every keystroke, they should not break either.
+      exec_lua([[
+        _G.keys = 0
+        vim.on_key(function() _G.keys = _G.keys + 1 end)
+      ]])
+      feed('jjj')
+      eq(3, exec_lua('return _G.keys'))
+    end
+
+    -- We accept non-broken `debug.traceback` overrides (e.g. tui_spec.lua does this).
+    matches(
+      'boom %(custom traceback%)',
+      pcall_err(
+        exec_lua,
+        [[
+          debug.traceback = function(msg) return msg .. ' (custom traceback)' end
+          vim.api.nvim_buf_call(0, function() error('boom') end)
+        ]]
+      )
+    )
+  end)
+
+  it('debug() works', function()
     command([[lua
       function Test(a)
         print(a)
@@ -262,7 +304,7 @@ describe('debug.debug', function()
     ]])
   end)
 
-  it("can be safely exited with 'cont'", function()
+  it("debug() can be safely exited with 'cont'", function()
     feed('<cr>')
     feed(':lua debug.debug() print("x")<cr>')
     screen:expect {

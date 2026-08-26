@@ -314,21 +314,40 @@ void nlua_error(lua_State *const lstate, const char *const msg)
   lua_pop(lstate, 1);
 }
 
-/// Like lua_pcall, but use debug.traceback as errfunc.
+/// Dummy errfunc used if `_G.debug.traceback` is broken: returns the error object unchanged.
+static int nlua_no_traceback(lua_State *lstate)
+{
+  return 1;
+}
+
+/// Like lua_pcall, but use `debug.traceback` as errfunc. Called by most Lua entrypoints (`:lua`,
+/// `luaeval()`, `v:lua`, API calls, …). Not used by `pcall()` itself.
 ///
 /// @param lstate Lua interpreter state
 /// @param[in] nargs Number of arguments expected by the function being called.
 /// @param[in] nresults Number of results the function returns.
 int nlua_pcall(lua_State *lstate, int nargs, int nresults)
 {
+  // Detect broken `_G.debug` (by user code). #41504
   lua_getglobal(lstate, "debug");
-  lua_getfield(lstate, -1, "traceback");
-  lua_remove(lstate, -2);
+  if (lua_istable(lstate, -1)) {
+    lua_getfield(lstate, -1, "traceback");
+    lua_remove(lstate, -2);
+  }
+  bool no_traceback = !lua_isfunction(lstate, -1);  // `_G.debug.traceback` is a function?
+  if (no_traceback) {
+    lua_pop(lstate, 1);
+    lua_pushcfunction(lstate, nlua_no_traceback);
+  }
   lua_insert(lstate, -2 - nargs);
   int pre_top = lua_gettop(lstate);
   int status = lua_pcall(lstate, nargs, nresults, -2 - nargs);
   if (status) {
     lua_remove(lstate, -2);
+    if (no_traceback && status == LUA_ERRRUN && lua_isstring(lstate, -1)) {
+      lua_pushliteral(lstate, "\nNo traceback: debug.traceback is not a function");
+      lua_concat(lstate, 2);
+    }
   } else {
     if (nresults == LUA_MULTRET) {
       nresults = lua_gettop(lstate) - (pre_top - nargs - 1);
