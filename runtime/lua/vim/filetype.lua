@@ -290,6 +290,7 @@ local extension = {
   bass = 'bass',
   bi = detect.bas,
   bm = detect.bas,
+  bazelrc = 'bazelrc',
   bc = 'bc',
   bdf = 'bdf',
   bean = 'beancount',
@@ -2757,6 +2758,7 @@ local pattern = {
   },
   [''] = {
     ['^bash%-fc[%-%.]'] = detect.bash,
+    ['/tools/bazel%.rc$'] = 'bazelrc',
     ['/bind/db%.'] = starsetf('bindzone'),
     ['/named/db%.'] = starsetf('bindzone'),
     ['%.blade%.php$'] = 'blade',
