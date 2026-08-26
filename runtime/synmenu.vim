@@ -110,17 +110,18 @@ an 50.10.740 &Syntax.AB.Basic.QBasic :cal SetSyn("basic")<CR>
 an 50.10.750 &Syntax.AB.Basic.Visual\ Basic :cal SetSyn("vb")<CR>
 an 50.10.760 &Syntax.AB.Bazaar\ commit\ file :cal SetSyn("bzr")<CR>
 an 50.10.770 &Syntax.AB.Bazel :cal SetSyn("bzl")<CR>
-an 50.10.780 &Syntax.AB.BC\ calculator :cal SetSyn("bc")<CR>
-an 50.10.790 &Syntax.AB.BDF\ font :cal SetSyn("bdf")<CR>
-an 50.10.800 &Syntax.AB.Beancount :cal SetSyn("beancount")<CR>
-an 50.10.810 &Syntax.AB.BibTeX.Bibliography\ database :cal SetSyn("bib")<CR>
-an 50.10.820 &Syntax.AB.BibTeX.Bibliography\ Style :cal SetSyn("bst")<CR>
-an 50.10.830 &Syntax.AB.BIND.BIND\ config :cal SetSyn("named")<CR>
-an 50.10.840 &Syntax.AB.BIND.BIND\ zone :cal SetSyn("bindzone")<CR>
-an 50.10.850 &Syntax.AB.Bitbake :cal SetSyn("bitbake")<CR>
-an 50.10.860 &Syntax.AB.Blank :cal SetSyn("blank")<CR>
-an 50.10.870 &Syntax.AB.Bpftrace :cal SetSyn("bpftrace")<CR>
-an 50.10.880 &Syntax.AB.Bsdl :cal SetSyn("bsdl")<CR>
+an 50.10.780 &Syntax.AB.Bazel\ rc\ file :cal SetSyn("bazelrc")<CR>
+an 50.10.790 &Syntax.AB.BC\ calculator :cal SetSyn("bc")<CR>
+an 50.10.800 &Syntax.AB.BDF\ font :cal SetSyn("bdf")<CR>
+an 50.10.810 &Syntax.AB.Beancount :cal SetSyn("beancount")<CR>
+an 50.10.820 &Syntax.AB.BibTeX.Bibliography\ database :cal SetSyn("bib")<CR>
+an 50.10.830 &Syntax.AB.BibTeX.Bibliography\ Style :cal SetSyn("bst")<CR>
+an 50.10.840 &Syntax.AB.BIND.BIND\ config :cal SetSyn("named")<CR>
+an 50.10.850 &Syntax.AB.BIND.BIND\ zone :cal SetSyn("bindzone")<CR>
+an 50.10.860 &Syntax.AB.Bitbake :cal SetSyn("bitbake")<CR>
+an 50.10.870 &Syntax.AB.Blank :cal SetSyn("blank")<CR>
+an 50.10.880 &Syntax.AB.Bpftrace :cal SetSyn("bpftrace")<CR>
+an 50.10.890 &Syntax.AB.Bsdl :cal SetSyn("bsdl")<CR>
 an 50.20.100 &Syntax.C.C :cal SetSyn("c")<CR>
 an 50.20.110 &Syntax.C.C++ :cal SetSyn("cpp")<CR>
 an 50.20.120 &Syntax.C.C# :cal SetSyn("cs")<CR>
