@@ -134,6 +134,7 @@ static kvec_t(char) replace_stack = KV_INITIAL_VALUE;
     update_screen();  /* Show char deletion immediately */ \
     ui_flush(); \
     ins_compl_enable_autocomplete(); \
+    ins_compl_arm_autostart(); \
     if (!ins_compl_arm_autocomplete_delay()) { \
       insert_do_complete(s); \
       break; \
@@ -522,6 +523,7 @@ static int insert_check(VimState *state)
       s->c = char_before_cursor();
       if (vim_isprintc(s->c)) {
         ins_compl_enable_autocomplete();
+        ins_compl_arm_autostart();
         ins_compl_init_get_longest();
         // Defer until the delay expires (K_COMPLETE_DELAY), or
         // trigger now when no delay is in effect.
@@ -563,6 +565,7 @@ static int insert_execute(VimState *state, int key)
   if (key != K_EVENT && key != K_COMPLETE_DELAY) {
     // Don't want delayed autocompletion from the previous key either.
     ins_compl_clear_autocomplete_delay();
+    ins_compl_disarm_autostart();
   }
 
   // Special handling of keys while the popup menu is visible or wanted
@@ -1001,6 +1004,7 @@ static int insert_handle_key(InsertState *s)
     // The completion may have been cleared while waiting, so re-enable
     // autocomplete to match a zero delay.
     ins_compl_enable_autocomplete();
+    ins_compl_arm_autostart();
     insert_do_complete(s);
     break;
 

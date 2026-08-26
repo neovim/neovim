@@ -1135,6 +1135,12 @@ function vim.fn.complete_check() end
 --- Returns a |Dictionary| with information about Insert mode
 --- completion.  See |ins-completion|.
 --- The items are:
+---    auto    |TRUE| when Vim started this completion by
+---     itself, which is what 'autocomplete' does,
+---     and |FALSE| when a key asked for it, such as
+---     |i_CTRL-X_CTRL-O|.  A |complete-functions|
+---     function can read this to tell the two apart.
+---     Returned only when asked for in {what}.
 ---    completed  Return a dictionary containing the entries of
 ---     the currently selected index item.
 ---    items  List of all completion candidates.  Each item
