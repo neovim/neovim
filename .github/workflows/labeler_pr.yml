@@ -34,6 +34,19 @@ jobs:
         gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|[[:alpha:]]+\((.+)\)!?:.*|\1|')" || true
         gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|[[:alpha:]]+(\(.*\))?!:.*|breaking-change|')" || true
 
+    - name: "AI-assisted"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_REPO: ${{ github.repository }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+      run: |
+        set -euo pipefail
+        # AGENTS.md: AI-assisted commits are disclosed with an "AI-assisted" trailer.
+        commit_messages=$(gh api "repos/$GH_REPO/pulls/$PR_NUMBER/commits" --paginate --jq '.[].commit.message')
+        if grep -Eiq '\bAI-assisted\b' <<< "$commit_messages"; then
+          gh pr edit "$PR_NUMBER" --add-label 'AI assisted 🤖'
+        fi
+
     - name: "target:release"
       if: startsWith(github.base_ref, 'release')
       uses: actions/github-script@v9
@@ -45,36 +58,6 @@ jobs:
             repo: context.repo.repo,
             labels: ['target:release']
           })
-
-  ai-assisted:
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      GH_REPO: ${{ github.repository }}
-      PR_NUMBER: ${{ github.event.pull_request.number }}
-      AI_LABEL: 'AI assisted 🤖'
-    steps:
-    - name: "Label PRs with disclosed AI-assisted commits"
-      shell: bash
-      run: |
-        set -euo pipefail
-
-        commit_messages=$(gh api "repos/$GH_REPO/pulls/$PR_NUMBER/commits" --paginate --jq '.[].commit.message')
-
-        if ! grep -Eiq '\bAI-assisted\b' <<< "$commit_messages"; then
-          # No AI disclosure found in commits
-          exit 0
-        fi
-
-        pr_labels=$(gh pr view "$PR_NUMBER" --json labels --jq '.labels[].name')
-        if grep -Fxq "$AI_LABEL" <<< "$pr_labels"; then
-          # Already has label
-          exit 0
-        fi
-
-        gh pr edit "$PR_NUMBER" --add-label "$AI_LABEL"
 
   no-ai-advertisements:
     runs-on: ubuntu-latest
