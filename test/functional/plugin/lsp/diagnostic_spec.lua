@@ -509,8 +509,8 @@ describe('vim.lsp.diagnostic', function()
       end)
       -- This test case must be run over a multiline diagnostic in which the start line is shorter
       -- than the end line, and the end_col exceeds the start line's length.
-      eq(#lines[1], 8)
-      eq(#lines[2], 16)
+      eq(8, #lines[1])
+      eq(16, #lines[2])
       eq(1, #diags)
       eq(6, diags[1].col)
       eq(10, diags[1].end_col)

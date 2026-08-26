@@ -1019,14 +1019,14 @@ describe('vim.fs', function()
       -- File
       vim.uv.fs_symlink('Xtest_fs-rm/file-to-link', 'Xtest_fs-rm/file-as-link')
       vim.fs.rm('Xtest_fs-rm/file-as-link')
-      eq(vim.uv.fs_stat('Xtest_fs-rm/file-as-link'), nil)
+      eq(nil, vim.uv.fs_stat('Xtest_fs-rm/file-as-link'))
       eq({ 'File to link' }, fn.readfile('Xtest_fs-rm/file-to-link'))
 
       -- Directory
       local function assert_rm_symlinked_dir(opts)
         vim.uv.fs_symlink('Xtest_fs-rm/dir-to-link', 'Xtest_fs-rm/dir-as-link')
         vim.fs.rm('Xtest_fs-rm/dir-as-link', opts)
-        eq(vim.uv.fs_stat('Xtest_fs-rm/dir-as-link'), nil)
+        eq(nil, vim.uv.fs_stat('Xtest_fs-rm/dir-as-link'))
         eq({ 'File in dir to link' }, fn.readfile('Xtest_fs-rm/dir-to-link/file'))
       end
 

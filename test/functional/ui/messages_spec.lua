@@ -1427,7 +1427,7 @@ stack traceback:
       ^                         |
       {1:~                        }|*4
     ]])
-    eq(showmode, 0)
+    eq(0, showmode)
     feed('i')
     screen:expect({
       grid = [[
@@ -1436,17 +1436,17 @@ stack traceback:
       ]],
       showmode = { { '-- INSERT --', 5, 'ModeMsg' } },
     })
-    eq(showmode, 2)
+    eq(2, showmode)
     command('set noshowmode')
     feed('<Esc>')
     screen:expect([[
       ^                         |
       {1:~                        }|*4
     ]])
-    eq(showmode, 3)
+    eq(3, showmode)
     feed('i')
     screen:expect_unchanged()
-    eq(showmode, 3)
+    eq(3, showmode)
   end)
 
   it('emits single message for multiline print())', function()

@@ -724,8 +724,8 @@ describe('vim._with', function()
       command('wincmd s | wincmd 5+')
       win_id_3 = api.nvim_get_current_win()
 
-      eq(is_approx_eq('width', win_id_1, win_id_2), false)
-      eq(is_approx_eq('height', win_id_3, win_id_2), false)
+      eq(false, is_approx_eq('width', win_id_1, win_id_2))
+      eq(false, is_approx_eq('height', win_id_3, win_id_2))
     end)
 
     pending('works', function()
@@ -735,8 +735,8 @@ describe('vim._with', function()
           vim.cmd.wincmd('=')
         end)
       ]]
-      eq(is_approx_eq('width', win_id_1, win_id_2), true)
-      eq(is_approx_eq('height', win_id_3, win_id_2), false)
+      eq(true, is_approx_eq('width', win_id_1, win_id_2))
+      eq(false, is_approx_eq('height', win_id_3, win_id_2))
     end)
 
     pending('can be nested', function()
@@ -748,8 +748,8 @@ describe('vim._with', function()
           end)
         end)
       ]]
-      eq(is_approx_eq('width', win_id_1, win_id_2), true)
-      eq(is_approx_eq('height', win_id_3, win_id_2), true)
+      eq(true, is_approx_eq('width', win_id_1, win_id_2))
+      eq(true, is_approx_eq('height', win_id_3, win_id_2))
     end)
   end)
 

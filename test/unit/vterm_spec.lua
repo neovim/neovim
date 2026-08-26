@@ -315,9 +315,9 @@ local function lineinfo(row, expected, state)
   local dhl = info.doubleheight == 1
   local cont = info.continuation == 1
 
-  t.eq(dwl, expected.dwl or false)
-  t.eq(dhl, expected.dhl or false)
-  t.eq(cont, expected.cont or false)
+  t.eq(expected.dwl or false, dwl)
+  t.eq(expected.dhl or false, dhl)
+  t.eq(expected.cont or false, cont)
 end
 
 local function pen(attribute, expected, state)

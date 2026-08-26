@@ -53,7 +53,7 @@ describe('vim.range', function()
         return vim.range(vim.pos(buf1, 3, 5), vim.pos(buf2, 4, 6))
       end)
     end)
-    eq(success, false)
+    eq(false, success)
   end)
 
   it('is modifiable', function()

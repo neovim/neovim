@@ -590,11 +590,11 @@ describe('autocmd api', function()
 
         local aus = api.nvim_get_autocmds { event = { 'InsertEnter', 'InsertLeave' } }
         local first = aus[1]
-        eq(first.id, nil)
+        eq(nil, first.id)
 
         -- TODO: Maybe don't have this number, just assert it's not nil
         local second = aus[2]
-        neq(second.id, nil)
+        neq(nil, second.id)
 
         api.nvim_del_autocmd(second.id)
         local new_aus = api.nvim_get_autocmds { event = { 'InsertEnter', 'InsertLeave' } }
