@@ -183,13 +183,13 @@ describe(':Man', function()
     it('highlights various bullet formats', function()
       feed(dedent([[
         i· ·<C-v><C-h>·
-        +<C-v><C-h>o
+             +<C-v><C-h>o
         +<C-v><C-h>+<C-v><C-h>o<C-v><C-h>o double<ESC>]]))
       exec_lua [[require'man'.init_pager()]]
 
       screen:expect([[
       ^· {b:·}                                                 |
-      {b:·}                                                   |
+           {b:·}                                              |
       {b:·} double                                            |
       {eob:~                                                   }|
                                                           |
