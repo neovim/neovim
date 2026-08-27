@@ -888,11 +888,12 @@ describe('API/extmarks', function()
     set_extmark(ns, marks[1], 1, 2)
     feed('0<c-v>k>')
     check_undo_redo(ns, marks[1], 1, 2, 1, 6)
-    feed('<c-v>j>')
+    -- "gg0": the cursor after undo/redo depends on |restore-undo-cursor|.
+    feed('gg0<c-v>j>')
     expect('\t12345\n\t12345')
     check_undo_redo(ns, marks[1], 1, 6, 1, 3)
 
-    feed('<c-v>j<LT>')
+    feed('gg0<c-v>j<LT>')
     check_undo_redo(ns, marks[1], 1, 3, 1, 6)
   end)
 

@@ -474,8 +474,9 @@ int u_savecommon(buf_T *buf, linenr_T top, linenr_T bot, linenr_T newbot, bool r
     uhp->uh_walk = 0;
     uhp->uh_entry = NULL;
     uhp->uh_getbot_entry = NULL;
-    uhp->uh_cursor = curwin->w_cursor;          // save cursor pos. for undo
-    if (virtual_active(curwin) && curwin->w_cursor.coladd > 0) {
+    uhp->uh_cursor = atom_origin_pos(buf);  // The pre-change position: undo restores it.
+    if (virtual_active(curwin) && curwin->w_cursor.coladd > 0
+        && equalpos(uhp->uh_cursor, curwin->w_cursor)) {
       uhp->uh_cursor_vcol = getviscol();
     } else {
       uhp->uh_cursor_vcol = -1;
@@ -2530,31 +2531,40 @@ static void u_undoredo(bool undo, bool do_buf_event)
     curhead->uh_visual = visualinfo;
   }
 
-  // If the cursor is only off by one line, put it at the same position as
-  // before starting the change (for the "o" command).
-  // Otherwise the cursor should go to the first undone line.
-  if (curhead->uh_cursor.lnum + 1 == curwin->w_cursor.lnum
-      && curwin->w_cursor.lnum > 1) {
-    curwin->w_cursor.lnum--;
-  }
-  if (curwin->w_cursor.lnum <= curbuf->b_ml.ml_line_count) {
-    if (curhead->uh_cursor.lnum == curwin->w_cursor.lnum) {
-      curwin->w_cursor.col = curhead->uh_cursor.col;
-      if (virtual_active(curwin) && curhead->uh_cursor_vcol >= 0) {
-        coladvance(curwin, curhead->uh_cursor_vcol);
-      } else {
-        curwin->w_cursor.coladd = 0;
-      }
-    } else {
-      beginline(BL_SOL | BL_FIX);
+  if (undo && curhead->uh_cursor.lnum >= 1
+      && curhead->uh_cursor.lnum <= curbuf->b_ml.ml_line_count) {
+    // Undo restores the pre-change text; restore the pre-change cursor too. #5989
+    curwin->w_cursor = curhead->uh_cursor;
+    if (virtual_active(curwin) && curhead->uh_cursor_vcol >= 0) {
+      coladvance(curwin, curhead->uh_cursor_vcol);
     }
   } else {
-    // We get here with the current cursor line being past the end (eg
-    // after adding lines at the end of the file, and then undoing it).
-    // check_cursor() will move the cursor to the last line.  Move it to
-    // the first column here.
-    curwin->w_cursor.col = 0;
-    curwin->w_cursor.coladd = 0;
+    // If the cursor is only off by one line, put it at the same position as
+    // before starting the change (for the "o" command).
+    // Otherwise the cursor should go to the first changed line.
+    if (curhead->uh_cursor.lnum + 1 == curwin->w_cursor.lnum
+        && curwin->w_cursor.lnum > 1) {
+      curwin->w_cursor.lnum--;
+    }
+    if (curwin->w_cursor.lnum <= curbuf->b_ml.ml_line_count) {
+      if (curhead->uh_cursor.lnum == curwin->w_cursor.lnum) {
+        curwin->w_cursor.col = curhead->uh_cursor.col;
+        if (virtual_active(curwin) && curhead->uh_cursor_vcol >= 0) {
+          coladvance(curwin, curhead->uh_cursor_vcol);
+        } else {
+          curwin->w_cursor.coladd = 0;
+        }
+      } else {
+        beginline(BL_SOL | BL_FIX);
+      }
+    } else {
+      // We get here with the current cursor line being past the end (eg
+      // after adding lines at the end of the file, and then undoing it).
+      // check_cursor() will move the cursor to the last line.  Move it to
+      // the first column here.
+      curwin->w_cursor.col = 0;
+      curwin->w_cursor.coladd = 0;
+    }
   }
 
   // Make sure the cursor is on an existing line and column.

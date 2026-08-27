@@ -305,6 +305,11 @@ EDITOR
   real-time, instead of only on |FocusGained| or |:checktime|.
 • During |complete()|-triggered completion, CTRL-N and CTRL-P are now subject
   to insert-mode mappings.
+• |undo| restores the cursor to its original position ("diw", "atest<Esc>",
+  "d^", …), instead of jumping to the start of the changed text.
+• |undo| no longer restores the old (wrong) position of a mark that you moved
+  (|m|, |:mark|) later. The mark shifts with the text it was moved to, the
+  same as a mark the change never touched.
 • Multibyte characters, translated by 'langmap', now invoke correct
   mappings.
   Example: >vim
@@ -526,9 +531,6 @@ These existing features changed their behavior.
   `opts.plain=true` and now does not expand leading tildes ("~") in addition
   to environment variables ("expand_env" is still accepted, for backwards
   compatibility).
-• |undo| no longer restores the old (wrong) position of a mark that you moved
-  (|m|, |:mark|) later. The mark shifts with the text it was moved to, the
-  same as a mark the change never touched.
 • |:helptags| finds help tags with the "vimdoc" |treesitter| parser (and thus
   requires it to be installed).
 • `:helptags ALL` reports |E152| for "doc" directories it cannot write,

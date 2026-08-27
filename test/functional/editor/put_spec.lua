@@ -56,17 +56,9 @@ describe('put command', function()
     end
     local init_contents = curbuf_contents()
     local init_cursorpos = fn.getcurpos()
-    local assert_no_change = function(exception_table, after_undo)
+    local assert_no_change = function()
       expect(init_contents)
-      -- When putting the ". register forwards, undo doesn't move
-      -- the cursor back to where it was before.
-      -- This is because it uses the command character 'a' to
-      -- start the insert, and undo after that leaves the cursor
-      -- one place to the right (unless we were at the end of the
-      -- line when we pasted).
-      if not (exception_table.undo_position and after_undo) then
-        eq(init_cursorpos, fn.getcurpos())
-      end
+      eq(init_cursorpos, fn.getcurpos())
     end
 
     for _, test in pairs(test_variations) do
@@ -77,13 +69,12 @@ describe('put command', function()
         local orig_dotstr = fn.getreg('.')
         t.ok(visual_marks_zero())
         -- Make sure every test starts from the same conditions
-        assert_no_change(test.exception_table, false)
+        assert_no_change()
         local was_cli = test.test_action()
         test.test_assertions(test.exception_table, false)
-        -- Check that undo twice puts us back to the original conditions
-        -- (i.e. puts the cursor and text back to before)
+        -- Undo puts the cursor and text back to before the change.
         feed('u')
-        assert_no_change(test.exception_table, true)
+        assert_no_change()
 
         -- Should not have changed the ". register
         -- If we paste the ". register with a count we can't avoid
@@ -104,9 +95,6 @@ describe('put command', function()
           return
         end
 
-        if test.exception_table.undo_position then
-          fn.setpos('.', init_cursorpos)
-        end
         if was_cli then
           feed('@:')
         else
@@ -781,15 +769,13 @@ describe('put command', function()
       )
       run_test_variations(select_down_test_defs)
 
-      -- Undo and redo of a visual block put leave the cursor in the top
-      -- left of the visual block area no matter where the cursor was
-      -- when it started.
+      -- "." repeat of an upward visual block put applies at the restored cursor, so the put text
+      -- lands elsewhere: skip the position check after redo.
       local undo_redo_no = map(function(table)
         local rettab = copy_def(table)
         if not rettab[4] then
           rettab[4] = {}
         end
-        rettab[4].undo_position = true
         rettab[4].redo_position = true
         return rettab
       end, normal_command_defs)
@@ -809,20 +795,16 @@ describe('put command', function()
       )
 
       describe('blockwise cursor after undo', function()
-        -- A bit of a hack of the reset above.
-        -- In the tests that selection direction doesn't matter, we
-        -- don't check the undo/redo position because it doesn't fit
-        -- the same pattern as everything else.
-        -- Here we fix this by directly checking the undo/redo position
-        -- in the test_assertions of our test definitions.
+        -- Undo and CTRL-R restore the pre-change cursor position, even for an upward selection
+        -- (the harness only covers "." redo, not CTRL-R).
         local function assertion_creator(_, _)
           return function(_, _)
             feed('u')
             -- Have to use feed('u') here to set curswant, because
             -- ex_undo() doesn't do that.
-            eq({ 0, 1, 1, 0, 1 }, fn.getcurpos())
+            eq({ 0, 2, 1, 0, 1 }, fn.getcurpos())
             feed('<C-r>')
-            eq({ 0, 1, 1, 0, 1 }, fn.getcurpos())
+            eq({ 0, 2, 1, 0, 1 }, fn.getcurpos())
           end
         end
 

@@ -89,6 +89,31 @@ describe('u CTRL-R g- g+', function()
     undo_and_redo(4, 'g-', 'g+', '1')
   end)
 
+  it('u restores the pre-change cursor position #5989', function()
+    local api = n.api
+    local function undo_restores(row, col, keys, pre)
+      if pre then
+        command(pre)
+      end
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'this is a test' })
+      api.nvim_win_set_cursor(0, { row, col })
+      feed(keys)
+      feed('u')
+      eq({ row, col }, api.nvim_win_get_cursor(0))
+    end
+    undo_restores(1, 5, 'diw') -- Operator moves to the word start before deleting.
+    undo_restores(1, 5, 'd^') -- Backwards motion.
+    undo_restores(1, 5, 'atest<Esc>') -- Insert entered after the cursor.
+    undo_restores(1, 5, 'viwd')
+    undo_restores(1, 2, ',x', 'nnoremap ,x wdiw') -- Mapping: where it was triggered.
+    -- i_CTRL-G_u breaks: each block restores to its own start.
+    api.nvim_win_set_cursor(0, { 1, 5 })
+    feed('ifoo<C-G>ubar<Esc>u')
+    eq({ 1, 8 }, api.nvim_win_get_cursor(0))
+    feed('u')
+    eq({ 1, 5 }, api.nvim_win_get_cursor(0))
+  end)
+
   describe('undo works correctly when writing in Insert mode', function()
     before_each(function()
       exec([[
