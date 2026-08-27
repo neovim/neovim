@@ -280,7 +280,6 @@ bool hl_check_ns(void)
       hl_attr_active = *hl_def;
     }
   }
-  need_highlight_changed = true;
   return true;
 }
 
@@ -365,7 +364,7 @@ void update_window_hl(win_T *wp, bool invalid)
   int ns_id = wp->w_ns_hl;
 
   update_ns_hl(ns_id);
-  if (ns_id != wp->w_ns_hl_active || wp->w_ns_hl_attr == NULL) {
+  if (ns_id != wp->w_ns_hl_active) {
     wp->w_ns_hl_active = ns_id;
 
     NSHlAttr *hl_def_ptr = (NSHlAttr *)pmap_get(int)(&ns_hl_attr, ns_id);
@@ -373,11 +372,11 @@ void update_window_hl(win_T *wp, bool invalid)
       wp->w_ns_hl_attr = *hl_def_ptr;
     } else {
       // No specific highlights, use the defaults.
-      wp->w_ns_hl_attr = highlight_attr;
+      wp->w_ns_hl_attr = NULL;
     }
   }
 
-  int *hl_def = wp->w_ns_hl_attr;
+  int *hl_def = wp->w_ns_hl_attr ? wp->w_ns_hl_attr : hl_attr_active;
 
   if (!wp->w_hl_needs_update && !invalid) {
     return;

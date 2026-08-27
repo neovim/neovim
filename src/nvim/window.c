@@ -7918,7 +7918,7 @@ void win_ui_flush(bool validate)
     }
   }
   // The popupmenu could also have moved or changed its comp_index
-  pum_ui_flush();
+  pum_pos_ui_flush(false);
 
   // And the message
   msg_ui_flush();
