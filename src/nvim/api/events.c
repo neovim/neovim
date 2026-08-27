@@ -66,6 +66,6 @@ void nvim_ui_term_event(uint64_t channel_id, String event, Object value, Error *
 
     const String termresponse = value.data.string;
     set_vim_var_string(VV_TERMRESPONSE, termresponse.data, (ptrdiff_t)termresponse.size);
-    do_termresponse_autocmd(termresponse);
+    do_termresponse_autocmd(termresponse, channel_id);
   }
 }

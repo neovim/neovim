@@ -22,6 +22,7 @@ typedef struct {
   LuaRef uc_compl_luaref;    ///< Reference to Lua completion function
   LuaRef uc_preview_luaref;  ///< Reference to Lua preview function
   LuaRef uc_luaref;          ///< Reference to Lua function
+  char *uc_desc;             ///< Command description
 } ucmd_T;
 
 enum { UC_BUFFER = 1, };  ///< -buffer: local to current buffer

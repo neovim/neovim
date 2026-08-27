@@ -3,10 +3,11 @@ local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 local tt = require('test.functional.testterm')
 
+local describe, it, before_each, pending, finally =
+  t.describe, t.it, t.before_each, t.pending, t.finally
 local clear = n.clear
 local eq = t.eq
 local eval = n.eval
-local exc_exec = n.exc_exec
 local feed_command = n.feed_command
 local feed = n.feed
 local insert = n.insert
@@ -589,9 +590,6 @@ describe('jobs', function()
 
   it('can redefine callbacks being used by a job', function()
     local screen = Screen.new()
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue },
-    })
     source([[
       function! g:JobHandler(job_id, data, event)
       endfunction
@@ -614,11 +612,6 @@ describe('jobs', function()
 
   it('requires funcrefs for script-local (s:) functions', function()
     local screen = Screen.new(60, 5)
-    screen:set_default_attr_ids({
-      [1] = { bold = true, foreground = Screen.colors.Blue1 },
-      [2] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
-      [3] = { bold = true, foreground = Screen.colors.SeaGreen4 },
-    })
 
     -- Pass job callback names _without_ `function(...)`.
     source([[
@@ -632,7 +625,7 @@ describe('jobs', function()
         \ })
     ]])
 
-    screen:expect { any = '{2:E120: Using <SID> not in a script context: s:OnEvent}' }
+    screen:expect { any = '{9:E120: Using <SID> not in a script context: s:OnEvent}' }
   end)
 
   it('does not repeat output with slow output handlers', function()
@@ -1256,9 +1249,6 @@ describe('jobs', function()
   end)
 
   describe('running tty-test program', function()
-    if skip(is_os('win')) then
-      return
-    end
     local function next_chunk()
       local rv
       while true do
@@ -1268,6 +1258,12 @@ describe('jobs', function()
           data[i] = data[i]:gsub('\n', '\000')
         end
         rv = table.concat(data, '\n')
+        if is_os('win') then
+          -- ConPTY injects its own terminal escapes (init/teardown CSI+OSC) and pads redraw rows
+          -- with trailing spaces around tty-test's plain output.
+          rv = rv:gsub('\27%[[%d;?]*[%a~]', ''):gsub('\27%][^\7]*\7', '')
+          rv = rv:gsub('[%s]+$', '')
+        end
         rv = rv:gsub('\r\n$', ''):gsub('^\r\n', '')
         if rv ~= '' then
           break
@@ -1304,12 +1300,14 @@ describe('jobs', function()
 
     it('resizing window', function()
       command('call jobresize(j, 40, 10)')
-      eq('rows: 10, cols: 40', next_chunk())
+      -- Windows: ConPTY emits a full screen redraw, so prior content ("tty ready") may prefix the new line.
+      matches('rows: 10, cols: 40$', next_chunk())
       command('call jobresize(j, 10, 40)')
-      eq('rows: 40, cols: 10', next_chunk())
+      matches('rows: 40, cols: 10$', next_chunk())
     end)
 
     it('jobclose() sends SIGHUP', function()
+      skip(is_os('win'), 'N/A: SIGHUP is a POSIX signal')
       command('call jobclose(j)')
       local msg = next_msg()
       msg = (msg[2] == 'stdout') and next_msg() or msg -- Skip stdout, if any.
@@ -1328,7 +1326,7 @@ describe('jobs', function()
       -- Can't wait for the next message in case this test fails, if it fails
       -- there won't be any more messages, and the test would hang.
       vim.uv.sleep(100)
-      local err = exc_exec('call jobpid(j)')
+      local err = pcall_err(command, 'call jobpid(j)')
       eq('Vim(call):E900: Invalid channel id', err)
 
       -- cleanup

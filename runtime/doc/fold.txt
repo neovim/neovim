@@ -67,17 +67,35 @@ EXPR						*fold-expr*
 The folds are automatically defined by their foldlevel, like with the "indent"
 method.  The value of the 'foldexpr' option is evaluated to get the foldlevel
 of a line.  Examples:
-This will create a fold for all consecutive lines that start with a tab: >
+This will create a fold for all consecutive lines that start with a tab: >lua
+	vim.wo.foldexpr = function()
+	  return vim.fn.getline(vim.v.lnum):sub(1, 1) == '\t' and 1 or 0
+	end
+This will make a fold out of paragraphs separated by blank lines: >lua
+	vim.wo.foldexpr = function()
+	  if vim.fn.getline(vim.v.lnum):match('^%s*$')
+	      and vim.fn.getline(vim.v.lnum + 1):match('%S') then
+	    return '<1'
+	  end
+	  return 1
+	end
+This does the same: >lua
+	vim.wo.foldexpr = function()
+	  if vim.fn.getline(vim.v.lnum - 1):match('^%s*$')
+	      and vim.fn.getline(vim.v.lnum):match('%S') then
+	    return '>1'
+	  end
+	  return 1
+	end
+
+When setting an expression string with ":set" instead, backslashes must be
+used to escape characters that ":set" handles differently (space, backslash,
+double quote, etc., see |option-backslash|): >vim
 	:set foldexpr=getline(v:lnum)[0]==\"\\t\"
-This will make a fold out of paragraphs separated by blank lines: >
-	:set foldexpr=getline(v:lnum)=~'^\\s*$'&&getline(v:lnum+1)=~'\\S'?'<1':1
-This does the same: >
-	:set foldexpr=getline(v:lnum-1)=~'^\\s*$'&&getline(v:lnum)=~'\\S'?'>1':1
 
-Note that backslashes must be used to escape characters that ":set" handles
-differently (space, backslash, double quote, etc., see |option-backslash|).
-
-The most efficient is to call a function without arguments: >
+The most efficient is to use a function value (|expr-option-function|): >lua
+	vim.wo.foldexpr = MyFoldLevel
+or to call a Vimscript function without arguments: >vim
 	:set foldexpr=MyFoldLevel()
 The function must use v:lnum.  See |expr-option-function|.
 
@@ -159,20 +177,20 @@ level is found.
 If this proves difficult, the next best thing could be to cache all fold
 levels in a buffer-local variable (b:foldlevels) that is only updated on
 |b:changedtick|:
->vim
-  func MyFoldFunc()
-    if b:lasttick == b:changedtick
-      return b:foldlevels[v:lnum - 1]
-    endif
-    let b:lasttick = b:changedtick
-    let b:foldlevels = []
-    " compute foldlevels ...
-    return b:foldlevels[v:lnum - 1]
-  enddef
-  set foldexpr=s:MyFoldFunc()
+>lua
+  vim.wo.foldexpr = function()
+    if vim.b.lasttick == vim.b.changedtick then
+      return vim.b.foldlevels[vim.v.lnum]
+    end
+    vim.b.lasttick = vim.b.changedtick
+    local levels = {}
+    -- compute foldlevels ...
+    vim.b.foldlevels = levels
+    return levels[vim.v.lnum]
+  end
 <
-In above example further speedup was gained by using a function without
-arguments (that must still use v:lnum). See |expr-option-function|.
+A function value also avoids re-parsing the expression for every line (it must
+still use v:lnum).  See |expr-option-function|.
 
 SYNTAX						*fold-syntax*
 
@@ -523,11 +541,14 @@ folds will be opened.
 FOLDTEXT						*fold-foldtext*
 
 'foldtext' is a string option that specifies an expression.  This expression
-is evaluated to obtain the text displayed for a closed fold.  Example: >
+is evaluated to obtain the text displayed for a closed fold.  Example: >lua
 
-    :set foldtext=v:folddashes.substitute(getline(v:foldstart),'/\\*\\\|\\*/\\\|{{{\\d\\=','','g')
+    vim.wo.foldtext = function()
+      local line = vim.fn.getline(vim.v.foldstart)
+      return vim.v.folddashes .. line:gsub('/%*', ''):gsub('%*/', '')
+    end
 
-This shows the first line of the fold, with "/*", "*/" and "{{{" removed.
+This shows the first line of the fold, with "/*" and "*/" removed.
 Note the use of backslashes to avoid some characters to be interpreted by the
 ":set" command.  It is much simpler to define a function and call it: >
 

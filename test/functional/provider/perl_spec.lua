@@ -1,6 +1,8 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, before_each, teardown, pending =
+  t.describe, t.it, t.before_each, t.teardown, t.pending
 local eq, clear = t.eq, n.clear
 local missing_provider = n.missing_provider
 local command = n.command
@@ -17,7 +19,7 @@ do
   local reason = missing_provider('perl')
   if reason then
     pending(
-      string.format('Missing perl host, or perl version is too old (%s)', reason),
+      string.format('N/A: Missing perl host, or perl version is too old (%s)', reason),
       function() end
     )
     return

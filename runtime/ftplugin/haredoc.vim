@@ -2,6 +2,7 @@
 " Language:     Haredoc (Hare documentation format)
 " Maintainer:   Amelia Clarke <selene@perilune.dev>
 " Last Updated: 2024-05-02
+"               2026 Jun 27 by Vim Project (normalize recommended style guard)
 " Upstream:     https://git.sr.ht/~selene/hare.vim
 
 if exists('b:did_ftplugin')
@@ -29,7 +30,7 @@ let &l:path .= ',' .. hare#GetPath() .. ',,'
 let b:undo_ftplugin = 'setl com< flp< fo< inex< isf< pa< sua<'
 
 " Follow the Hare style guide by default.
-if get(g:, 'hare_recommended_style', 1)
+if get(g:, 'hare_recommended_style', get(g:, 'filetype_recommended_style', 1))
   setlocal noexpandtab
   setlocal shiftwidth=0
   setlocal softtabstop=0

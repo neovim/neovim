@@ -26,7 +26,6 @@
 --- @field noexport true?
 --- @field remote_only true?
 --- @field lua_only true?
---- @field textlock_allow_cmdwin true?
 --- @field textlock true?
 --- @field remote_impl true?
 --- @field compositor_impl true?
@@ -198,7 +197,6 @@ local fattr = (
   + attr('FUNC_API_NOEXPORT', 'noexport')
   + attr('FUNC_API_REMOTE_ONLY', 'remote_only')
   + attr('FUNC_API_LUA_ONLY', 'lua_only')
-  + attr('FUNC_API_TEXTLOCK_ALLOW_CMDWIN', 'textlock_allow_cmdwin')
   + attr('FUNC_API_TEXTLOCK', 'textlock')
   + attr('FUNC_API_REMOTE_IMPL', 'remote_impl')
   + attr('FUNC_API_COMPOSITOR_IMPL', 'compositor_impl')
@@ -356,7 +354,20 @@ if arg[1] == '--test' then
   end
 end
 
+--- Index of the `opts` parameter, which starts optional parameters.
+--- @param fn_params [string,string][] Raw `{type, name}` pairs of a parsed API function.
+--- @return integer? opts_idx 1-based index of `opts`, or nil.
+local function opts_index(fn_params)
+  for i = 1, #fn_params do
+    local c = typed_container:match(fn_params[i][1])
+    if fn_params[i][2] == 'opts' and c and c[1] == 'Dict' then
+      return i
+    end
+  end
+end
+
 return {
   grammar = grammar --[[@as nvim.c_grammar]],
   typed_container = typed_container,
+  opts_index = opts_index,
 }

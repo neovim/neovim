@@ -145,7 +145,7 @@ M.vars = {
     desc = [=[
       Number of screen cells that can be used for an `:echo` message
       in the last screen line before causing the |hit-enter| prompt
-      (or "overflow" with |ui2|).
+      (no longer applicable when |ui2| is enabled).
 
       Depends on 'showcmd', 'ruler' and 'columns'.  You need to
       check 'cmdheight' for whether there are full-width lines
@@ -268,8 +268,26 @@ M.vars = {
       Exit code, or |v:null| before invoking the |VimLeavePre|
       and |VimLeave| autocmds.  See |:q|, |:x| and |:cquit|.
       Example: >vim
-        :au VimLeave * echo "Exit value is " .. v:exiting
+        :au VimLeave * echo "Exit code is " .. v:exiting
       <
+    ]=],
+  },
+  exitreason = {
+    type = 'string',
+    desc = [=[
+      Reason for the current exit. Set before |QuitPre|. Reset if
+      exit was canceled.
+
+      Possible values:
+      - ""          Not exiting, or exit was canceled.
+      - "quit"      |:quit|, |:qall|, |:wq|, |ZZ|, |ZQ|, etc.
+      - "restart"   |:restart|, |ZR|.
+      - "restart!"  |:restart!|, |[count]||ZR|.
+
+      Example: >vim
+        autocmd ExitPre * if v:exitreason ==# 'restart' | echomsg 'restarting' | endif
+      <
+      Read-only.
     ]=],
   },
   fcs_choice = {
@@ -301,12 +319,12 @@ M.vars = {
       The reason why the |FileChangedShell| event was triggered.
       Can be used in an autocommand to decide what to do and/or what
       to set v:fcs_choice to.  Possible values:
-        deleted   file no longer exists
-        conflict  file contents, mode or timestamp was
+      - deleted   file no longer exists
+      - conflict  file contents, mode or timestamp was
                   changed and buffer is modified
-        changed   file contents has changed
-        mode      mode of file changed
-        time      only file timestamp changed
+      - changed   file contents has changed
+      - mode      mode of file changed
+      - time      only file timestamp changed
     ]=],
   },
   fname = {
@@ -428,6 +446,18 @@ M.vars = {
       It can be different from |v:ctype| when messages are desired
       in a different language than what is used for character
       encoding.  See |multi-lang|.
+    ]=],
+  },
+  useractive = {
+    type = 'integer',
+    tags = { 'user-idle' },
+    desc = [=[
+      Timestamp (nanoseconds since UNIX epoch) indicating the most
+      recent user activity, i.e. when a key is received from a UI
+      (TUI input or |nvim_input()|).
+
+      Initialized to 0 (no user activity since startup).
+      Read-only.
     ]=],
   },
   lc_time = {
@@ -734,6 +764,29 @@ M.vars = {
       not finished.  Refer to |getstacktrace()| for the structure of
       stack trace.  See also |v:exception|, |v:throwpoint|, and
       |throw-variables|.
+    ]=],
+  },
+  starttime = {
+    type = 'integer',
+    desc = [=[
+      Timestamp (nanoseconds since UNIX epoch) when the Nvim process
+      started.
+
+      To see the current "uptime": >lua
+        vim.print(('uptime: %d seconds'):format(os.time() - (vim.v.starttime / 1e9)))
+      <
+      Read-only.
+    ]=],
+  },
+  startreason = {
+    type = 'string',
+    desc = [=[
+      The reason Nvim started. Possible values:
+      - "normal"    Normal startup, yearning for life, etc.
+      - "restart"   Started by |:restart|.
+      - "restart!"  Started by |:restart!|.
+
+      Read-only.
     ]=],
   },
   statusmsg = {

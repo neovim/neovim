@@ -5,7 +5,7 @@
 #include "nvim/buffer_defs.h"  // IWYU pragma: keep
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
-#include "nvim/getchar_defs.h"
+#include "nvim/input_defs.h"
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 #include "nvim/vim_defs.h"  // IWYU pragma: keep
 
@@ -28,7 +28,7 @@ enum {
 // Whether a command index indicates a user command.
 #define IS_USER_CMDIDX(idx) ((int)(idx) < 0)
 
-enum { DIALOG_MSG_SIZE = 1000, };  ///< buffer size for dialog_msg()
+enum { DIALOG_MSG_SIZE = 1000, };  ///< buffer size for dialog messages
 
 /// Structure used to save the current state.  Used when executing Normal mode
 /// commands while in any other mode.

@@ -7,7 +7,9 @@
 --    it belongs to.
 
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 
+local describe, it, setup, teardown = t.describe, t.it, t.setup, t.teardown
 local source = n.source
 local clear, command, expect = n.clear, n.command, n.expect
 

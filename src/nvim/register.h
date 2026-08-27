@@ -1,9 +1,15 @@
 #pragma once
 
 #include "nvim/ascii_defs.h"
-#include "nvim/ex_cmds_defs.h"
+#include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/macros_defs.h"
 #include "nvim/register_defs.h"
+
+/// Used by TextPutPost/TextPutPre autocommands for the '.' register. If
+/// "add_last_insert" is == 1, then "stuff_inserted" will add the last inserted
+/// text to "last_insert_ga".
+EXTERN garray_T last_insert_ga INIT( = { 0, 0, 1, 64, NULL });
+EXTERN int add_last_insert INIT( = 0);
 
 #include "register.h.generated.h"
 #include "register.h.inline.generated.h"

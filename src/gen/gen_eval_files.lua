@@ -98,7 +98,7 @@ local function split(x, sep)
 end
 
 --- @param f string
---- @param params [string,string][]|true
+--- @param params [string,string,string?][]|true
 --- @return string
 local function render_fun_sig(f, params)
   local param_str --- @type string
@@ -107,7 +107,7 @@ local function render_fun_sig(f, params)
   else
     param_str = table.concat(
       vim.tbl_map(
-        --- @param v [string,string]
+        --- @param v [string,string,string?]
         --- @return string
         function(v)
           return luaescape(v[1])
@@ -126,8 +126,8 @@ local function render_fun_sig(f, params)
 end
 
 --- Uniquify names
---- @param params [string,string,string][]
---- @return [string,string,string][]
+--- @param params [string,string,string?][]
+--- @return [string,string,string?][]
 local function process_params(params)
   local seen = {} --- @type table<string,true>
   local sfx = 1
@@ -192,7 +192,7 @@ local function get_api_meta()
       sees[#sees + 1] = see.desc
     end
 
-    local params = {} --- @type [string,string][]
+    local params = {} --- @type [string,string,string?][]
     for _, p in ipairs(fun.params) do
       params[#params + 1] = {
         p.name,
@@ -249,6 +249,76 @@ local function norm_text(x, special)
       :gsub('%s+>\n+', '\n```\n')
       :gsub('\n+<%s+\n?', '\n```\n')
   )
+end
+
+--- @param items string[]
+--- @param conjunction string
+--- @return string
+--- Example: "foo, bar, or baz"
+local function join_with_conjunction(items, conjunction)
+  if #items == 0 then
+    return ''
+  elseif #items == 1 then
+    return items[1]
+  elseif #items == 2 then
+    return items[1] .. ' ' .. conjunction .. ' ' .. items[2]
+  end
+
+  local parts = {} --- @type string[]
+  for i = 1, #items - 1 do
+    parts[#parts + 1] = items[i]
+  end
+  return table.concat(parts, ', ') .. ', ' .. conjunction .. ' ' .. items[#items]
+end
+
+--- @param fun vim.EvalFn
+--- @return string?
+--- Example: "Lua: Prefer |math.abs()|."
+local function see_lua_text(fun)
+  if not fun.see_lua or fun.see_lua == false then
+    return
+  end
+
+  return 'Lua: Prefer ' .. join_with_conjunction(fun.see_lua, 'or') .. '.'
+end
+
+local VIMDOC_PARAGRAPH_PREFIX = '\t\t'
+local VIMDOC_PARAGRAPH_INDENT = 16 -- Two tabs in rendered vimdoc.
+
+--- @param text string
+--- @return string
+--- Example: "\t\tLua: Prefer |math.abs()|."
+local function tab_indent_vimdoc(text)
+  return VIMDOC_PARAGRAPH_PREFIX
+    .. util
+      .md_to_vimdoc(text, 0, 0, TEXT_WIDTH - VIMDOC_PARAGRAPH_INDENT)
+      :gsub('\n', '\n' .. VIMDOC_PARAGRAPH_PREFIX)
+end
+
+--- @param fun vim.EvalFn
+--- @param write fun(line: string)
+--- Example first line: "--- Lua: Prefer |math.abs()|."
+local function render_eval_see_lua_meta(fun, write)
+  local text = see_lua_text(fun)
+  if not text then
+    return
+  end
+
+  write('--- ' .. text)
+  write('---')
+end
+
+--- @param fun vim.EvalFn
+--- @param write fun(line: string)
+--- Example first line: "\t\tLua: Prefer |math.abs()|."
+local function render_eval_see_lua_doc(fun, write)
+  local text = see_lua_text(fun)
+  if not text then
+    return
+  end
+
+  write(tab_indent_vimdoc(text))
+  write('')
 end
 
 --- Generates LuaLS docstring for an API function.
@@ -328,6 +398,7 @@ local function get_api_keysets_meta()
   lint.lint_names('src/nvim/api/keysets_defs.h', nil, keysets)
 
   for _, k in ipairs(keysets) do
+    util.sort_by_key(k.keys)
     local params = {}
     for _, key in ipairs(k.keys) do
       local pty = k.types[key] or 'any'
@@ -392,6 +463,8 @@ local function render_eval_meta(f, fun, write)
   if fun.deprecated then
     write('--- @deprecated')
   end
+
+  render_eval_see_lua_meta(fun, write)
 
   local desc = fun.desc --[[@as string?]]
 
@@ -473,6 +546,8 @@ local function render_eval_doc(f, fun, write)
 
   render_sig_and_tag(fun.name or f, not f:find('__%d+$'), fun, write)
 
+  render_eval_see_lua_doc(fun, write)
+
   if not fun.desc then
     return
   end
@@ -493,6 +568,12 @@ local function render_eval_doc(f, fun, write)
   end
 
   if #desc_l > 0 and not desc_l[#desc_l]:match('^<?$') then
+    write('')
+  end
+
+  if fun.fast then
+    write(util.md_to_vimdoc('Attributes: ~', 16, 16, TEXT_WIDTH))
+    write(util.md_to_vimdoc('|api-fast|', 18, 18, TEXT_WIDTH))
     write('')
   end
 
@@ -576,11 +657,18 @@ local function render_option_meta(_f, opt, write)
     write('--- ' .. l)
   end
 
-  if opt.type == 'string' and not opt.list and opt.values then
-    local values = {} --- @type string[]
-    for _, e in ipairs(opt.values) do
-      values[#values + 1] = fmt("'%s'", e)
+  -- A non-list string option with a fixed value set (e.g. 'ambiwidth', 'tagcase') documents its
+  -- exact value union; everything else uses its Lua type.
+  local values = {} --- @type string[]
+  if opt.type == 'string' and not opt.list and opt.schema then
+    for _, v in ipairs(require('nvim.options').schema_values(opt.schema)) do
+      values[#values + 1] = fmt("'%s'", v)
     end
+  end
+  if opt.type == 'func' or opt.type == 'expr' then
+    -- "Callback" option ('operatorfunc', 'foldexpr', …).
+    write('--- @type string|function')
+  elseif #values > 0 then
     write('--- @type ' .. table.concat(values, '|'))
   else
     write('--- @type ' .. OPTION_TYPES[opt.type])
@@ -644,7 +732,7 @@ local function option_scope_doc(o)
     global = 'global',
     buf = 'local to buffer',
     win = 'local to window',
-    tab = 'local to tab page',
+    tab = 'local to tabpage',
   }
 
   local r --- @type string
@@ -667,6 +755,7 @@ local function option_scope_doc(o)
       'syntax',
       'winfixheight',
       'winfixwidth',
+      'winpinned',
     }, o.full_name)
   then
     r = r .. '  |local-noglobal|'
@@ -793,7 +882,8 @@ local function render_option_doc(_f, opt, write)
     name_str = fmt("'%s'", opt.full_name)
   end
 
-  local otype = opt.type == 'boolean' and 'boolean' or opt.type
+  -- Callback (func/expr) options are labeled "string" in the help, their ":set" form.
+  local otype = (opt.type == 'func' or opt.type == 'expr') and 'string' or opt.type
   if opt.defaults.doc or opt.defaults.if_true ~= nil or opt.defaults.meta ~= nil then
     local v = render_option_default(opt.defaults --[[@as vim.option_defaults]], true)
     local pad = string.rep('\t', math.max(1, math.ceil((24 - #name_str) / 8)))

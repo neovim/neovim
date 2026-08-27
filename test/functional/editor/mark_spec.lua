@@ -2,6 +2,8 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each, after_each, finally =
+  t.describe, t.it, t.before_each, t.after_each, t.finally
 local api = n.api
 local clear = n.clear
 local command = n.command
@@ -37,6 +39,35 @@ describe('named marks', function()
     eq({ 3, 0 }, api.nvim_buf_get_mark(0, 'B'))
     command('4kc')
     eq({ 4, 0 }, api.nvim_buf_get_mark(0, 'c'))
+  end)
+
+  it('moved after a change follow their text through undo #5754', function()
+    command('edit ' .. file1)
+    command('1mark d')
+    command('$')
+    feed('dw')
+    command('2mark d')
+    eq({ 2, 0 }, api.nvim_buf_get_mark(0, 'd'))
+    command('undo')
+    eq({ 2, 0 }, api.nvim_buf_get_mark(0, 'd'))
+    command('redo')
+    eq({ 2, 0 }, api.nvim_buf_get_mark(0, 'd'))
+
+    -- A mark on a line the change deletes is cleared by the change; undo restores it.
+    api.nvim_buf_set_mark(0, 'e', 2, 2, {})
+    command('2delete')
+    eq({ 0, 2 }, api.nvim_buf_get_mark(0, 'e'))
+    command('undo')
+    eq({ 2, 2 }, api.nvim_buf_get_mark(0, 'e'))
+    eq('1test2', fn.getline(2))
+
+    -- A mark moved after a line-count change shifts with the text it was moved to.
+    command('2delete')
+    eq('1test3', fn.getline(2))
+    command('2mark f')
+    command('undo')
+    eq({ 3, 0 }, api.nvim_buf_get_mark(0, 'f'))
+    eq('1test3', fn.getline(3))
   end)
 
   it('errors when set out of range with :mark', function()

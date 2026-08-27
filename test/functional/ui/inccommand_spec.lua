@@ -2,6 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear = n.clear
 local command = n.command
 local eq = t.eq
@@ -1135,6 +1136,24 @@ describe(':substitute, inccommand=split', function()
       :%s/B.*N/x^                    |
     ]])
 
+    -- Assert that 'inccommand' is again ENABLED after leaving cmdline mode.
+    feed([[<C-\><C-N>]])
+    eq('split', eval('&inccommand'))
+  end)
+
+  it('time limit is enforced while matching a single line #40773', function()
+    -- prevent redraws from 'incsearch'
+    api.nvim_set_option_value('incsearch', false, {})
+    -- Assert that 'inccommand' is ENABLED initially.
+    eq('split', eval('&inccommand'))
+    -- Set 'redrawtime' to minimal value, to ensure timeout is triggered.
+    command('set redrawtime=1 nowrap')
+    -- Prepare the text
+    api.nvim_buf_set_lines(0, 0, -1, true, { ('aaaaaaaa/'):rep(6) .. ('b'):rep(200) })
+    feed([[:%s/.\+\/\(.\+\)\+ft\/\1]])
+    screen:expect({ any = vim.pesc([[:%s/.\+\/\(.\+\)\+ft\/\1]]) })
+    -- Assert that 'inccommand' is DISABLED in cmdline mode.
+    eq('', eval('&inccommand'))
     -- Assert that 'inccommand' is again ENABLED after leaving cmdline mode.
     feed([[<C-\><C-N>]])
     eq('split', eval('&inccommand'))
@@ -2544,7 +2563,7 @@ describe(':substitute', function()
 end)
 
 it(':substitute with inccommand during :terminal activity', function()
-  if t.skip_fragile(pending) then
+  if t.skip_fragile(t.pending) then
     return
   end
   retry(2, 40000, function()

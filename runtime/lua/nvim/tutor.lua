@@ -16,6 +16,30 @@ local tutor_hl_ns = vim.api.nvim_create_namespace('nvim.tutor.hl')
 
 local M = {}
 
+-- Extract inline comments into metadata.
+-- Example: "This is wrong. [[This is right.]]" => { '1' = 'This is right.'}
+function M.load_metadata()
+  ---@type table<string, string|-1>
+  local data = {}
+  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+
+  for i, line in ipairs(lines) do
+    local text, expected_text = line:match('^(.-)%s%[%[(.-)%]%]$')
+
+    if text then
+      if expected_text == '-1' then
+        data[tostring(i)] = -1
+      else
+        data[tostring(i)] = expected_text
+      end
+      lines[i] = text
+    end
+  end
+
+  vim.b.tutor_metadata = { expect = data }
+  vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
+end
+
 ---@param line integer 1-based
 local function check_line(line)
   if vim.b.tutor_metadata and vim.b.tutor_metadata.expect and vim.b.tutor_extmarks then
@@ -63,7 +87,7 @@ function M.apply_marks()
         invalidate = true,
       })
 
-      local mark_id = vim.api.nvim_buf_set_extmark(0, tutor_mark_ns, lnum - 1, 0, {})
+      local mark_id = vim.api.nvim_buf_set_extmark(0, tutor_mark_ns, lnum - 1, 0)
 
       -- Cannot edit field of a Vimscript dictionary from Lua directly, see `:h lua-vim-variables`
       ---@type nvim.TutorExtmarks

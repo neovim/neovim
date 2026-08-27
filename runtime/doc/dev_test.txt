@@ -46,10 +46,10 @@ skipped.
 
 Harness isolation                                  *dev-test-harness-isolation*
 
-The Lua harness runs all selected spec files in one low-level `nvim -ll`
-process, then restores a baseline before each file. For each suite iteration,
-the file boundary baseline is captured after `--helper` is loaded, so
-helper-provided modules and defaults persist across files.
+The Lua harness runs all selected spec files in one `nvim -l` process, then
+restores a baseline before each file. For each suite iteration, the file
+boundary baseline is captured after `--helper` is loaded, so helper-provided
+modules and defaults persist across files.
 Helper files are preload-only: they may require modules, set defaults, and
 register suite-end cleanup, but they do not define tests or hooks.
 
@@ -221,7 +221,7 @@ With these installed you can use a configuration like this: >
         command = "nlua",
       },
       args = {
-        "-ll",
+        "-l",
         "test/runner.lua",
         "--helper=test/functional/preload.lua",
         "--lpath=build/?.lua",

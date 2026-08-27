@@ -220,7 +220,7 @@ Check the Kuwasha web site for the latest information!
 Credit Card:	You can use PayPal to send money with a Credit card.  This is
 		the most widely used Internet based payment system.  It's
 		really simple to use.  Use this link to find more info:
-		    https://www.paypal.com/en_US/mrb/pal=XAC62PML3GF8Q
+		    https://www.paypal.com/ncp/payment/ZZPJ7XEYD3CZ2
 		The e-mail address for sending the money to is:
 		    info@kuwasha.net
 

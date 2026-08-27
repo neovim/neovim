@@ -8,6 +8,8 @@
 #include <string.h>
 #include <uv.h>
 
+#include "nvim/context.h"
+#include "nvim/log.h"
 #ifdef NVIM_VENDOR_BIT
 # include "bit.h"
 #endif
@@ -29,6 +31,7 @@
 #include "nvim/ex_eval.h"
 #include "nvim/fold.h"
 #include "nvim/globals.h"
+#include "nvim/keycodes.h"
 #include "nvim/lua/base64.h"
 #include "nvim/lua/converter.h"
 #include "nvim/lua/spell.h"
@@ -39,6 +42,7 @@
 #include "nvim/mbyte_defs.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
+#include "nvim/message.h"
 #include "nvim/pos_defs.h"
 #include "nvim/regexp.h"
 #include "nvim/regexp_defs.h"
@@ -300,7 +304,8 @@ int nlua_regex(lua_State *lstate)
   regprog_T *prog = NULL;
 
   TRY_WRAP(&err, {
-    prog = vim_regcomp(text, RE_AUTO | RE_MAGIC | RE_STRICT);
+    // RE_NOBREAK: so vim.regex() works in api-fast context. #18111
+    prog = vim_regcomp(text, RE_AUTO | RE_MAGIC | RE_STRICT | RE_NOBREAK);
   });
 
   if (ERROR_SET(&err)) {
@@ -581,6 +586,8 @@ static int nlua_with(lua_State *L)
   int flags = 0;
   buf_T *buf = NULL;
   win_T *win = NULL;
+  bool keepcwd = false;
+  int log_level = -1;
 
 #define APPLY_FLAG(key, flag) \
   if (strequal((key), k) && (v)) { \
@@ -594,10 +601,14 @@ static int nlua_with(lua_State *L)
     if (lua_type(L, -2) == LUA_TSTRING) {
       const char *k = lua_tostring(L, -2);
       bool v = lua_toboolean(L, -1);
-      if (strequal("buf", k)) { \
+      if (strequal("buf", k)) {
         buf = handle_get_buffer((int)luaL_checkinteger(L, -1));
-      } else if (strequal("win", k)) { \
+      } else if (strequal("win", k)) {
         win = handle_get_window((int)luaL_checkinteger(L, -1));
+      } else if (strequal("keepcwd", k)) {
+        keepcwd = v;
+      } else if (strequal("log_level", k)) {
+        log_level = (int)luaL_checkinteger(L, -1);
       } else {
         APPLY_FLAG("sandbox", CMOD_SANDBOX);
         APPLY_FLAG("silent", CMOD_SILENT);
@@ -618,6 +629,16 @@ static int nlua_with(lua_State *L)
   int status = 0;
   int rets = 0;
 
+  if (flags & CMOD_ERRSILENT) {
+    // CMOD_ERRSILENT must imply CMOD_SILENT, otherwise apply_cmdmod() and undo_cmdmod() won't
+    // work properly.
+    flags |= CMOD_SILENT;
+  }
+
+  const int save_min_log_level = g_min_log_level;
+  if (log_level >= 0) {
+    g_min_log_level = log_level;
+  }
   cmdmod_T save_cmdmod = cmdmod;
   CLEAR_FIELD(cmdmod);
   cmdmod.cmod_flags = flags;
@@ -625,33 +646,31 @@ static int nlua_with(lua_State *L)
 
   Error err = ERROR_INIT;
   TRY_WRAP(&err, {
-    aco_save_T aco;
-    win_execute_T win_execute_args;
+    CtxSwitch cs = { 0 };
+    bool switched = true;
 
-    if (win) {
-      tabpage_T *tabpage = win_find_tabpage(win);
-      if (!win_execute_before(&win_execute_args, win, tabpage)) {
-        goto end;
-      }
-    } else if (buf) {
-      aucmd_prepbuf(&aco, buf);
+    if (win || buf || keepcwd) {
+      CtxSwitchFlags dirs = keepcwd ? kCtxKeepDirs : kCtxKeepCwd;
+      tabpage_T *tab = win ? win_find_tabpage(win) : NULL;
+      switched = ctx_switch(&cs, win, tab, buf, kCtxNoDisplay | dirs | (win ? kCtxValidate : 0));
     }
 
-    int s = lua_gettop(L);
-    lua_pushvalue(L, 2);
-    status = lua_pcall(L, 0, LUA_MULTRET, 0);
-    rets = lua_gettop(L) - s;
-
-    if (win) {
-      win_execute_after(&win_execute_args);
-    } else if (buf) {
-      aucmd_restbuf(&aco);
+    if (switched) {
+      int s = lua_gettop(L);
+      lua_pushvalue(L, 2);
+      status = lua_pcall(L, 0, LUA_MULTRET, 0);
+      rets = lua_gettop(L) - s;
     }
-    end:;
+
+    // No-op if nothing was switched.  Restores even when ctx_switch() failed.
+    ctx_restore(&cs);
   });
 
   undo_cmdmod(&cmdmod);
   cmdmod = save_cmdmod;
+  if (log_level >= 0) {
+    g_min_log_level = save_min_log_level;
+  }
 
   if (status) {
     return lua_error(L);
@@ -662,6 +681,53 @@ static int nlua_with(lua_State *L)
   }
 
   return rets;
+}
+
+/// Parses the internal representation of `keys` (as produced by nvim_replace_termcodes()) into
+/// a structured list of dicts representing one or more key-chords.
+static int nlua_keyparse(lua_State *L)
+{
+  luaL_argcheck(L, lua_isstring(L, 1), 1, "string expected");
+
+  char *escaped = vim_strsave_escape_ks((char *)lua_tostring(L, 1));
+  const char *p = escaped;
+
+  lua_newtable(L);
+
+  struct keychord data;
+
+  while (*p != NUL) {
+    // kTrue (same flags as keytrans()) so `keys` == keytrans(vim.keycode(…)).
+    const char *keys = str2special(&p, true, kTrue, &data);
+
+    lua_createtable(L, 0, 3);
+
+    lua_newtable(L);
+    for (int i = 0; mod_mask_table[i].name != 'A'; i++) {
+      if ((data.mods & mod_mask_table[i].mod_mask) == mod_mask_table[i].mod_flag) {
+        lua_pushlstring(L, &mod_mask_table[i].name, 1);
+        lua_rawseti(L, -2, (int)lua_objlen(L, -2) + 1);
+      }
+    }
+    lua_setfield(L, -2, "mod");
+
+    lua_pushlstring(L, data.key.data, data.key.size);
+    lua_setfield(L, -2, "key");
+
+    lua_pushstring(L, keys);
+    lua_setfield(L, -2, "keys");
+
+    if (data.key_alt.size != 0) {
+      lua_pushlstring(L, data.key_alt.data, data.key_alt.size);
+      lua_setfield(L, -2, "key_alt");
+    }
+
+    lua_rawseti(L, -2, (int)lua_objlen(L, -2) + 1);
+  }
+
+  xfree(escaped);
+
+  return 1;
 }
 
 // Access to internal functions. For use in runtime/
@@ -681,6 +747,12 @@ static void nlua_state_add_internal(lua_State *const lstate)
 
   lua_pushcfunction(lstate, &nlua_with);
   lua_setfield(lstate, -2, "_with_c");
+
+  // vim._core.keyparse
+  lua_getfield(lstate, -1, "_core");
+  lua_pushcfunction(lstate, &nlua_keyparse);
+  lua_setfield(lstate, -2, "keyparse");
+  lua_pop(lstate, 1);
 }
 
 void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)

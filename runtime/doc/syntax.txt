@@ -234,6 +234,7 @@ SpecialComment	special things inside a comment
 Debug		debugging statements
 
 Underlined	text that stands out, HTML links
+Dimmed		text that is de-emphasized
 
 Ignore		left blank, hidden  |hl-Ignore|
 
@@ -368,6 +369,19 @@ abel_cpp_comments_illegal	do not interpret '//' as inline comment leader
 ADA
 
 See |ft-ada-syntax|
+
+
+ALGOL 68					*algol68* *ft-algol68-syntax*
+
+This syntax file currently targets the Algol 68 Genie project using the
+default UPPER stropping regime.  It should also be usable in other
+environments using the UPPER stropping regime, though somewhat less complete.
+
+Highlighting can be further configured with the following variables.
+
+Variable			Highlight ~
+*algol68_no_preludes*		no prelude identifiers, procedures or
+				operators
 
 
 ANT							*ft-ant-syntax*
@@ -762,6 +776,8 @@ cpp_no_cpp11		don't highlight C++11 standard items
 cpp_no_cpp14		don't highlight C++14 standard items
 cpp_no_cpp17		don't highlight C++17 standard items
 cpp_no_cpp20		don't highlight C++20 standard items
+cpp_no_cpp23		don't highlight C++23 standard items
+cpp_no_cpp26		don't highlight C++26 standard items
 
 
 CSH							*ft-csh-syntax*
@@ -907,18 +923,20 @@ are using the "b:docbk_type" variable should be set.  Vim does this for you
 automatically if it can recognize the type.  When Vim can't guess it the type
 defaults to XML.
 You can set the type manually: >
-	:let docbk_type = "sgml"
+	:let b:docbk_type = "sgml"
 or: >
-	:let docbk_type = "xml"
+	:let b:docbk_type = "xml"
 You need to do this before loading the syntax file, which is complicated.
 Simpler is setting the filetype to "docbkxml" or "docbksgml": >
 	:set filetype=docbksgml
 or: >
 	:set filetype=docbkxml
 
-You can specify the DocBook version: >
-	:let docbk_ver = 3
-When not set 4 is used.
+You can specify the DocBook version for the current buffer: >
+	:let b:docbk_ver = 3
+When "b:docbk_ver" is not set, "g:docbk_ver" is used as a global fallback: >
+	:let g:docbk_ver = 3
+When neither variable is set, version 4 is used.
 
 
 DOSBATCH					*ft-dosbatch-syntax*
@@ -3200,12 +3218,15 @@ reduce this, the "sh_maxlines" internal variable can be set.  Example: >
 The default is to use the twice sh_minlines.  Set it to a smaller number to
 speed up displaying.  The disadvantage is that highlight errors may appear.
 
-syntax/sh.vim tries to flag certain problems as errors; usually things like
-unmatched "]", "done", "fi", etc.  If you find the error handling problematic
-for your purposes, you may suppress such error highlighting by putting
-the following line in your .vimrc: >
+Unmatched "]", "done", "fi", etc., are highlighted as errors by default.  If
+you find this error handling problematic, you may suppress it with: >
 
-	let g:sh_no_error= 1
+	let g:sh_no_error = 1
+<
+As a refinement, you may suppress particular classes of errors by looking up
+their syntax rule names and listing them with: >
+
+	let g:sh_no_error_rules = ["shCurlyError", "shParenError"]
 <
 
 						*sh-embed*  *sh-awk*
@@ -5376,7 +5397,7 @@ NormalFloat	Normal text in floating windows.
 FloatBorder	Border of floating windows.
 							*hl-FloatShadow*
 FloatShadow	Blended areas when border is "shadow".
-							*hl-FLoatShadowThrough*
+							*hl-FloatShadowThrough*
 FloatShadowThrough
 		Shadow corners when border is "shadow".
 							*hl-FloatTitle*
@@ -5462,11 +5483,11 @@ StatusLineTerm	Status line of |terminal| window.
 StatusLineTermNC
 		Status line of non-current |terminal| windows.
 							*hl-TabLine*
-TabLine		Tab pages line, not active tab page label.
+TabLine		Tabpages line, not active tabpage label.
 							*hl-TabLineFill*
-TabLineFill	Tab pages line, where there are no labels.
+TabLineFill	Tabpages line, where there are no labels.
 							*hl-TabLineSel*
-TabLineSel	Tab pages line, active tab page label.
+TabLineSel	Tabpages line, active tabpage label.
 							*hl-Title*
 Title		Titles for output from ":set all", ":autocmd" etc.
 							*hl-Visual*

@@ -2,9 +2,10 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local neq, eq, command = t.neq, t.eq, n.command
 local clear = n.clear
-local exc_exec, expect, eval = n.exc_exec, n.expect, n.eval
+local expect, eval = n.expect, n.eval
 local exec_lua = n.exec_lua
 local insert, pcall_err = n.insert, t.pcall_err
 local matches = t.matches
@@ -32,35 +33,35 @@ describe('eval-API', function()
   end)
 
   it('throw errors for invalid arguments', function()
-    local err = exc_exec('call nvim_get_current_buf("foo")')
+    local err = pcall_err(command, 'call nvim_get_current_buf("foo")')
     eq('Vim(call):E118: Too many arguments for function: nvim_get_current_buf', err)
 
-    err = exc_exec('call nvim_set_option_value("hlsearch")')
+    err = pcall_err(command, 'call nvim_set_option_value("hlsearch")')
     eq('Vim(call):E119: Not enough arguments for function: nvim_set_option_value', err)
 
-    err = exc_exec('call nvim_buf_set_lines(1, 0, -1, [], ["list"])')
+    err = pcall_err(command, 'call nvim_buf_set_lines(1, 0, -1, [], ["list"])')
     eq(
       'Vim(call):E5555: API call: Wrong type for argument 4 when calling nvim_buf_set_lines, expecting Boolean',
       err
     )
 
-    err = exc_exec('call nvim_buf_set_lines(0, 0, -1, v:true, "string")')
+    err = pcall_err(command, 'call nvim_buf_set_lines(0, 0, -1, v:true, "string")')
     eq(
       'Vim(call):E5555: API call: Wrong type for argument 5 when calling nvim_buf_set_lines, expecting ArrayOf(String)',
       err
     )
 
-    err = exc_exec('call nvim_buf_get_number("0")')
+    err = pcall_err(command, 'call nvim_buf_get_number("0")')
     eq(
       'Vim(call):E5555: API call: Wrong type for argument 1 when calling nvim_buf_get_number, expecting Buffer',
       err
     )
 
-    err = exc_exec('call nvim_buf_line_count(17)')
+    err = pcall_err(command, 'call nvim_buf_line_count(17)')
     eq('Vim(call):E5555: API call: Invalid buffer id: 17', err)
   end)
 
-  it('cannot change text or window if textlocked', function()
+  it('cannot change text or window if textlock', function()
     command('autocmd TextYankPost <buffer> ++once call nvim_buf_set_lines(0, 0, -1, v:false, [])')
     matches(
       'Vim%(call%):E5555: API call: E565: Not allowed to change text or change window$',
@@ -90,16 +91,19 @@ describe('eval-API', function()
       api.nvim_get_vvar('errmsg')
     )
 
-    -- Some functions checking textlock (usually those that may change the current window or buffer)
-    -- also ought to not be usable in the cmdwin.
+    -- cmdwin (#40312, #40484): E11 "Invalid in command-line window" restriction was removed.
     local old_win = api.nvim_get_current_win()
     feed('q:')
-    eq(
-      'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
-      pcall_err(api.nvim_set_current_win, old_win)
-    )
+    local cmdwin_win = api.nvim_get_current_win()
+    neq(old_win, cmdwin_win)
+    -- Switching to another window from the cmdwin now works (previously E11).
+    api.nvim_set_current_win(old_win)
+    eq(old_win, api.nvim_get_current_win())
+    -- ...and back into the cmdwin.
+    api.nvim_set_current_win(cmdwin_win)
+    eq(cmdwin_win, api.nvim_get_current_win())
 
-    -- But others, like nvim_buf_set_lines(), which just changes text, is OK.
+    -- nvim_buf_set_lines() in the cmdwin buffer is OK.
     api.nvim_buf_set_lines(0, 0, -1, 1, { 'wow!' })
     eq({ 'wow!' }, api.nvim_buf_get_lines(0, 0, -1, 1))
 
@@ -166,20 +170,20 @@ describe('eval-API', function()
 
   it('that are FUNC_ATTR_NOEVAL cannot be called', function()
     -- Deprecated vim_ prefix is not exported.
-    local err = exc_exec('call vim_get_current_buffer("foo")')
+    local err = pcall_err(command, 'call vim_get_current_buffer("foo")')
     eq('Vim(call):E117: Unknown function: vim_get_current_buffer', err)
 
     -- Deprecated buffer_ prefix is not exported.
-    err = exc_exec('call buffer_line_count(0)')
+    err = pcall_err(command, 'call buffer_line_count(0)')
     eq('Vim(call):E117: Unknown function: buffer_line_count', err)
 
     -- Functions deprecated before the api functions became available
     -- in vimscript are not exported.
-    err = exc_exec('call buffer_get_line(0, 1)')
+    err = pcall_err(command, 'call buffer_get_line(0, 1)')
     eq('Vim(call):E117: Unknown function: buffer_get_line', err)
 
     -- some api functions are only useful from a msgpack-rpc channel
-    err = exc_exec('call nvim_set_client_info()')
+    err = pcall_err(command, 'call nvim_set_client_info()')
     eq('Vim(call):E117: Unknown function: nvim_set_client_info', err)
   end)
 

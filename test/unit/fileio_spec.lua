@@ -1,5 +1,6 @@
 local t = require('test.unit.testutil')
-local itp = t.gen_itp(it)
+local describe = t.describe
+local itp = t.gen_itp(t.it)
 --{:cimport, :internalize, :eq, :neq, :ffi, :lib, :cstr, :to_cstr} = require 'test.unit.testutil'
 
 local eq = t.eq

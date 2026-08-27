@@ -65,9 +65,9 @@ option(USE_EXISTING_SRC_DIR "Skip download of deps sources in case of existing s
 set_default_buildtype(Release)
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 
-if (NOT DEFINED DEPS_CMAKE_ARGS) 
-  set(DEPS_CMAKE_ARGS) 
-endif() 
+if (NOT DEFINED DEPS_CMAKE_ARGS)
+  set(DEPS_CMAKE_ARGS)
+endif()
 
 if(NOT isMultiConfig)
   list(APPEND DEPS_CMAKE_ARGS -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})

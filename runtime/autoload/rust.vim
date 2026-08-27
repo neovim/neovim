@@ -1,5 +1,6 @@
 " Description: Helper functions for Rust commands/mappings
 " Last Modified: 2023-09-11
+" 2026 May 20 by Vim project: use correct shellescape() with ! command
 " For bugs, patches and license go to https://github.com/rust-lang/rust.vim
 
 function! rust#Load()
@@ -125,7 +126,7 @@ function! s:Run(dict, rustc_args, args)
         echohl None
     endif
     if !v:shell_error
-        exe '!' . shellescape(exepath) . " " . join(map(a:args, 'shellescape(v:val)'))
+        exe '!' . shellescape(exepath,1) . " " . join(map(a:args, 'shellescape(v:val,1)'))
     endif
 endfunction
 

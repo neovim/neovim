@@ -3,13 +3,15 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, before_each, setup, teardown =
+  t.describe, t.it, t.before_each, t.setup, t.teardown
 local assert_alive = n.assert_alive
 local feed, insert, source = n.feed, n.insert, n.source
 local clear, command, expect = n.clear, n.command, n.expect
 local eq, eval, write_file = t.eq, n.eval, t.write_file
 local poke_eventloop = n.poke_eventloop
-local exc_exec = n.exc_exec
 local dedent = t.dedent
+local pcall_err = t.pcall_err
 
 describe('eval', function()
   setup(function()
@@ -670,37 +672,46 @@ describe('eval', function()
       Executing call setreg(1, 2, [])
       Vim(call):E730: Using a List as a String
       Executing call setreg("/", ["1", "2"])
-      Vim(call):E883: Search pattern and expression register may not contain two or more lines
+      Vim(call):E883: Register '/' cannot contain multiple lines
       Executing call setreg("=", ["1", "2"])
-      Vim(call):E883: Search pattern and expression register may not contain two or more lines
+      Vim(call):E883: Register '=' cannot contain multiple lines
       Executing call setreg(1, ["", "", [], ""])
       Vim(call):E730: Using a List as a String]])
   end)
 
   it('function name not starting with a capital', function()
     eq(
-      'Vim(function):E128: Function name must start with a capital or "s:": g:test()\\nendfunction',
-      exc_exec(dedent([[
+      'Vim(function):E128: Function name must start with a capital or "s:": g:test()\nendfunction',
+      t.pcall_err(
+        command,
+        dedent([[
         function! g:test()
-        endfunction]]))
+        endfunction]])
+      )
     )
   end)
 
   it('Function name followed by #', function()
     eq(
-      'Vim(function):E128: Function name must start with a capital or "s:": test2() "#\\nendfunction',
-      exc_exec(dedent([[
+      'Vim(function):E128: Function name must start with a capital or "s:": test2() "#\nendfunction',
+      t.pcall_err(
+        command,
+        dedent([[
         function! test2() "#
-        endfunction]]))
+        endfunction]])
+      )
     )
   end)
 
   it('function name includes a colon', function()
     eq(
-      'Vim(function):E884: Function name cannot contain a colon: b:test()\\nendfunction',
-      exc_exec(dedent([[
+      'Vim(function):E884: Function name cannot contain a colon: b:test()\nendfunction',
+      t.pcall_err(
+        command,
+        dedent([[
         function! b:test()
-        endfunction]]))
+        endfunction]])
+      )
     )
   end)
 
@@ -747,7 +758,7 @@ describe('eval', function()
   it("using $ instead of '$' must give an error", function()
     eq(
       'Vim(call):E116: Invalid arguments for function append',
-      exc_exec('call append($, "foobar")')
+      t.pcall_err(command, 'call append($, "foobar")')
     )
   end)
 

@@ -6,7 +6,7 @@
 ^pixmaps/
 ^runtime/colors/tools/
 ^runtime/doc/gui_
-^runtime/doc/version[4-6]\.txt
+^runtime/doc/version[4-8]\.txt
 ^runtime/doc/vim9
 ^runtime/hi[1-9]
 ^runtime/icons
@@ -38,6 +38,7 @@
 ^src/GvimExt/
 ^src/INSTALL
 ^src/Make
+^src/VisVim/
 ^src/[a-z]\+_cmdidxs\.h$
 ^src/auto/
 ^src/beval
@@ -45,7 +46,9 @@
 ^src/config\.[a-z]
 ^src/configure
 ^src/crypt
+^src/glbl_ime\.
 ^src/gui[_.]
+^src/gvim
 ^src/if_
 ^src/install
 ^src/json[_.]
@@ -63,12 +66,17 @@
 ^src/po/.*\.desktop
 ^src/po/.*sjis
 ^src/proto
+^src/testdir/.*_ramp.vim
 ^src/testdir/dumps/
+^src/testdir/keycode_check\.
 ^src/testdir/python
+^src/testdir/samples/crypt_
+^src/testdir/util/gui_
 ^src/testdir/test_balloon
 ^src/testdir/test_channel
 ^src/testdir/test_terminal
 ^src/testdir/test_vim9
+^src/testdir/test8[67]\.
 ^src/tool[a-z]
 ^src/vim\.[^h]
 ^src/vim9
@@ -82,6 +90,7 @@
 \.desktop$
 \.diff$
 \.ico$
+\.idl$
 \.info$
 \.man$
 \.mms$
@@ -91,6 +100,7 @@ _example\.vim$
 /tags$
 README_[a-z]\+\.txt$
 [_.]cp125[0-1]
+helptoc
 netbeans
 textprop
 vimtutor

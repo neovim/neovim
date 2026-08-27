@@ -8,7 +8,7 @@ if exists("b:did_ftplugin")
 endif
 
 " Syntax is similar to Tcl
-runtime! ftplugin/tcl.vim
+runtime! ftplugin/tcl[.]{vim,lua}
 
 let s:cpo_save = &cpo
 set cpo&vim

@@ -3,10 +3,13 @@ local n = require('test.functional.testnvim')()
 
 local t_lsp = require('test.functional.plugin.lsp.testutil')
 
+local describe, it, before_each, after_each, setup, teardown, pending =
+  t.describe, t.it, t.before_each, t.after_each, t.setup, t.teardown, t.pending
 local buf_lines = n.buf_lines
 local command = n.command
 local dedent = t.dedent
 local exec_lua = n.exec_lua
+local feed = n.feed
 local eq = t.eq
 local eval = n.eval
 local matches = t.matches
@@ -37,6 +40,14 @@ local function get_buf_option(name, bufnr)
   return exec_lua(function()
     bufnr = bufnr or _G.BUFFER
     return vim.api.nvim_get_option_value(name, { buf = bufnr })
+  end)
+end
+
+--- True if buf-local option (func option like 'tagfunc') holds `vim.lsp[name]`.
+local function buf_option_is_lsp(name, bufnr)
+  return exec_lua(function()
+    bufnr = bufnr or _G.BUFFER
+    return vim.api.nvim_get_option_value(name, { buf = bufnr }) == vim.lsp[name]
   end)
 end
 
@@ -457,8 +468,8 @@ describe('LSP', function()
         end,
         on_handler = function(_, _, ctx)
           if ctx.method == 'test' then
-            eq('v:lua.vim.lsp.tagfunc', get_buf_option('tagfunc'))
-            eq('v:lua.vim.lsp.omnifunc', get_buf_option('omnifunc'))
+            eq(true, buf_option_is_lsp('tagfunc'))
+            eq(true, buf_option_is_lsp('omnifunc'))
             eq('v:lua.vim.lsp.formatexpr()', get_buf_option('formatexpr'))
             eq('', get_buf_option('keywordprg'))
             eq(
@@ -500,9 +511,6 @@ describe('LSP', function()
     end)
 
     it('should overwrite options set by ftplugins', function()
-      if t.is_zig_build() then
-        return pending('TODO: broken with zig build')
-      end
       local client --- @type vim.lsp.Client
       local BUFFER_1 --- @type integer
       local BUFFER_2 --- @type integer
@@ -530,8 +538,8 @@ describe('LSP', function()
         end,
         on_handler = function(_, _, ctx)
           if ctx.method == 'test' then
-            eq('v:lua.vim.lsp.tagfunc', get_buf_option('tagfunc', BUFFER_1))
-            eq('v:lua.vim.lsp.omnifunc', get_buf_option('omnifunc', BUFFER_2))
+            eq(true, buf_option_is_lsp('tagfunc', BUFFER_1))
+            eq(true, buf_option_is_lsp('omnifunc', BUFFER_2))
             eq('v:lua.vim.lsp.formatexpr()', get_buf_option('formatexpr', BUFFER_2))
             client:stop()
           end
@@ -815,23 +823,32 @@ describe('LSP', function()
       }
     end)
 
-    it('saveas sends didOpen to multiple attached servers if filename changed', function()
+    it('saveas sends didOpen to all attached servers only, if filename changed', function()
       local tmpfile_new = tmpname(false)
       exec_lua(create_server_definition)
       local messages = exec_lua(function()
         local server1 = _G._create_server()
         local server2 = _G._create_server()
+        local server3 = _G._create_server()
         local client1_id = assert(vim.lsp.start({ name = 'dummy1', cmd = server1.cmd }))
         local client2_id = assert(vim.lsp.start({ name = 'dummy2', cmd = server2.cmd }))
+        -- Attached to another buffer, so it must not be notified about this one.
+        local other_buf = vim.api.nvim_create_buf(true, false)
+        local client3_id =
+          assert(vim.lsp.start({ name = 'dummy3', cmd = server3.cmd }, { bufnr = other_buf }))
 
         vim.cmd('saveas ' .. tmpfile_new)
 
         vim.lsp.get_client_by_id(client1_id):stop()
         vim.lsp.get_client_by_id(client2_id):stop()
+        vim.lsp.get_client_by_id(client3_id):stop()
 
         return {
           server1 = server1.messages,
           server2 = server2.messages,
+          server3 = vim.tbl_map(function(m)
+            return m.method
+          end, server3.messages),
         }
       end)
       eq('textDocument/didClose', messages.server1[3].method)
@@ -841,6 +858,8 @@ describe('LSP', function()
       eq('textDocument/didClose', messages.server2[3].method)
       eq('textDocument/didOpen', messages.server2[4].method)
       eq('textDocument/didSave', messages.server2[5].method)
+
+      eq({ 'initialize', 'initialized', 'shutdown', 'exit' }, messages.server3)
     end)
 
     it('BufWritePre does not send notifications if server lacks willSave capabilities', function()
@@ -997,6 +1016,12 @@ describe('LSP', function()
           -- known methods for resolved capabilities
           eq(true, client:supports_method('textDocument/hover'))
           eq(false, client:supports_method('textDocument/definition'))
+
+          eq(false, client:supports_method('workspace/didCreateFiles'))
+
+          -- Self-mapped methods do not have a related server capability and should be assumed
+          -- to be supported.
+          eq(true, client:supports_method('shutdown'))
 
           -- unknown methods are assumed to be supported.
           eq(true, client:supports_method('unknown-method'))
@@ -2244,6 +2269,20 @@ describe('LSP', function()
       }, buf_lines(1))
     end)
 
+    it('applies newline-terminated text edits at the end of the document', function()
+      apply_text_edits({
+        { 5, 0, 5, 0, 'foobar\n' },
+      })
+      eq({
+        'First line of text',
+        'Second line of text',
+        'Third line of text',
+        'Fourth line of text',
+        'å å ɧ 汉语 ↥ 🤦 🦄',
+        'foobar',
+      }, buf_lines(1))
+    end)
+
     it('it restores marks', function()
       eq(true, api.nvim_buf_set_mark(1, 'a', 2, 1, {}))
       apply_text_edits({
@@ -2808,6 +2847,303 @@ describe('LSP', function()
     end)
   end)
 
+  describe('vim.lsp.formatexpr', function()
+    ---@return string[]
+    local function nvim_buf_get_all_lines()
+      return exec_lua(function()
+        return vim.api.nvim_buf_get_lines(0, 0, -1, true)
+      end)
+    end
+
+    before_each(function()
+      exec_lua(create_server_definition)
+      exec_lua(function()
+        vim.bo.formatexpr = 'v:lua.vim.lsp.formatexpr()'
+
+        ---@class test.functional.plugin.lsp_spec.formatexpr.start_server.Opts
+        ---@field range_formatting_handler? fun(params: lsp.DocumentRangeFormattingParams): lsp.TextEdit[]?
+        ---@field formatting_handler? fun(params: lsp.DocumentFormattingParams): lsp.TextEdit[]?
+
+        local server_number = 1
+        ---Starts a server which can support textDocument/rangeFormatting and
+        ---textDocument/formatting. Providing a handler for either method enables the corresponding
+        ---capability.
+        ---@param opts test.functional.plugin.lsp_spec.formatexpr.start_server.Opts?
+        function _G.start_server(opts)
+          opts = opts or {}
+          local server = _G._create_server({
+            capabilities = {
+              documentRangeFormattingProvider = opts.range_formatting_handler ~= nil,
+              documentFormattingProvider = opts.formatting_handler ~= nil,
+            },
+            handlers = {
+              ---@param params lsp.DocumentRangeFormattingParams
+              ['textDocument/rangeFormatting'] = function(_, params, callback)
+                local text_edits = opts.range_formatting_handler(params)
+                callback(nil, text_edits)
+              end,
+              ---@param params lsp.DocumentFormattingParams
+              ['textDocument/formatting'] = function(_, params, callback)
+                local text_edits = opts.formatting_handler(params)
+                callback(nil, text_edits)
+              end,
+            },
+          })
+          vim.lsp.start({ name = string.format('server %d', server_number), cmd = server.cmd })
+          server_number = server_number + 1
+        end
+      end)
+    end)
+
+    it('formats range of lines with textDocument/rangeFormatting', function()
+      local lines = { 'line 1', 'line 2', 'line 3', 'line 4' }
+      exec_lua(function()
+        vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
+        -- This server formats a range starting on line n and ending on line m by replacing the
+        -- whole range with the lines "formatted line $i" where $i goes from n to m. This enables us
+        -- to verify that the correct range is requested for formatting (starts at first character
+        -- of first line and ends on last character of last line).
+        start_server({
+          range_formatting_handler = function(params)
+            local lines = {} ---@type string[]
+            for i = params.range.start.line + 1, params.range['end'].line + 1 do
+              table.insert(lines, string.format('formatted line %d', i))
+            end
+            return { { range = params.range, newText = table.concat(lines, '\n') } }
+          end,
+        })
+      end)
+
+      feed('2G') -- Move to line 2
+      feed('gqj') -- Format lines 2 and 3
+
+      local expected_lines = vim.deepcopy(lines)
+      expected_lines[2] = 'formatted line 2'
+      expected_lines[3] = 'formatted line 3'
+      eq(expected_lines, nvim_buf_get_all_lines())
+    end)
+
+    it(
+      'formats whole buffer with textDocument/rangeFormatting when client supports textDocument/rangeFormatting and textDocument/formatting',
+      function()
+        local range_formatting_new_text = 'range formatting result'
+        local formatting_new_text = 'formatting result'
+        exec_lua(function()
+          -- This server formats a range and a whole document by inserting "range formatting result"
+          -- and "formatting result" respectively at the start of the buffer.
+          local first_char = { line = 0, character = 0 }
+          start_server({
+            range_formatting_handler = function()
+              return {
+                {
+                  range = { start = first_char, ['end'] = first_char },
+                  newText = range_formatting_new_text,
+                },
+              }
+            end,
+            formatting_handler = function()
+              return {
+                {
+                  range = { start = first_char, ['end'] = first_char },
+                  newText = formatting_new_text,
+                },
+              }
+            end,
+          })
+        end)
+
+        feed('gqal') -- Format whole buffer
+
+        eq({ range_formatting_new_text }, nvim_buf_get_all_lines())
+      end
+    )
+
+    it(
+      'formats whole buffer with textDocument/formatting when client supports textDocument/formatting but not textDocument/rangeFormatting',
+      function()
+        local new_text = 'formatting result'
+        exec_lua(function()
+          -- This server formats a whole document by inserting "formatting result" at the start of
+          -- the buffer.
+          start_server({
+            formatting_handler = function()
+              local first_char = { line = 0, character = 0 }
+              return {
+                {
+                  range = { start = first_char, ['end'] = first_char },
+                  newText = new_text,
+                },
+              }
+            end,
+          })
+        end)
+
+        feed('gqal') -- Format whole buffer
+
+        eq({ new_text }, nvim_buf_get_all_lines())
+      end
+    )
+
+    it(
+      'does nothing when range is not whole buffer and client supports textDocument/formatting but not textDocument/rangeFormatting',
+      function()
+        local lines = { 'a b', 'c d' }
+        local new_text = 'formatting result'
+        exec_lua(function()
+          vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
+          -- Set small textwidth to verify that gq doesn't perform internal formatting (wrap
+          -- lines) on the buffer.
+          vim.bo.textwidth = 1
+          -- This server formats a whole document by inserting "formatting result" at the start of
+          -- the buffer.
+          start_server({
+            formatting_handler = function()
+              local first_char = { line = 0, character = 0 }
+              return {
+                {
+                  range = { start = first_char, ['end'] = first_char },
+                  newText = new_text,
+                },
+              }
+            end,
+          })
+        end)
+
+        feed('2G') -- Move to line 2
+        feed('Vgq') -- Format line 2
+
+        eq(lines, nvim_buf_get_all_lines())
+      end
+    )
+
+    it('applies only one formatting result when multiple clients support formatting', function()
+      local new_text = 'formatting result'
+      exec_lua(function()
+        -- These servers format a range by inserting "formatting result" at the start of the buffer.
+        -- This enables us to verify that only one client was used, since if both were used then
+        -- both results would have been inserted at the start of the buffer.
+        for _ = 1, 2 do
+          start_server({
+            range_formatting_handler = function()
+              local first_char = { line = 0, character = 0 }
+              return {
+                {
+                  range = { start = first_char, ['end'] = first_char },
+                  newText = new_text,
+                },
+              }
+            end,
+          })
+        end
+      end)
+
+      feed('gqal') -- Format whole buffer
+
+      eq({ new_text }, nvim_buf_get_all_lines())
+    end)
+
+    it(
+      'applies first non-null formatting result when multiple clients support formatting',
+      function()
+        local new_text = 'formatting result'
+        exec_lua(function()
+          -- These servers format a range by returning null if neither of them have been called
+          -- before and inserting "formatting result" otherwise. This decouples the test from the
+          -- (undefined) order that clients are called in.
+          for _ = 1, 2 do
+            start_server({
+              range_formatting_handler = function()
+                if not range_formatting_called then
+                  _G.range_formatting_called = true
+                  return nil
+                else
+                  local first_char = { line = 0, character = 0 }
+                  return {
+                    {
+                      range = { start = first_char, ['end'] = first_char },
+                      newText = new_text,
+                    },
+                  }
+                end
+              end,
+            })
+          end
+        end)
+
+        feed('gqal') -- Format whole buffer
+
+        eq({ new_text }, nvim_buf_get_all_lines())
+      end
+    )
+
+    describe('does nothing when', function()
+      ---@type table<string, function>
+      local test_case_setups = {
+        ['no clients are attached'] = function() end,
+        ['all servers return null formatting result'] = function()
+          start_server({
+            range_formatting_handler = function()
+              return nil
+            end,
+          })
+        end,
+        ['no servers support textDocument/rangeFormatting or textDocument/formatting'] = function()
+          start_server()
+        end,
+      }
+
+      for test_case, setup in pairs(test_case_setups) do
+        it(test_case, function()
+          local lines = { 'a b' }
+          exec_lua(function()
+            vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
+            -- Set small textwidth to verify that gq doesn't perform internal formatting (wrap
+            -- lines) on the buffer.
+            vim.bo.textwidth = 1
+            start_server({
+              range_formatting_handler = function()
+                return nil
+              end,
+            })
+          end)
+          exec_lua(setup)
+
+          feed('gqal') -- Format whole buffer
+
+          eq(lines, nvim_buf_get_all_lines())
+        end)
+      end
+    end)
+
+    describe('falls back to internal formatting', function()
+      for _, mode in ipairs({ 'i', 'R' }) do
+        it(string.format('in %q mode', mode), function()
+          exec_lua(function()
+            vim.bo.textwidth = 1
+            -- This server formats a range by inserting "formatting result" at the start of the
+            -- buffer.
+            start_server({
+              range_formatting_handler = function()
+                local first_char = { line = 0, character = 0 }
+                return {
+                  {
+                    range = { start = first_char, ['end'] = first_char },
+                    newText = 'formatting result',
+                  },
+                }
+              end,
+            })
+          end)
+
+          feed(mode)
+          feed('a b')
+
+          eq({ 'a', 'b' }, nvim_buf_get_all_lines())
+        end)
+      end
+    end)
+  end)
+
   describe('vim.lsp.tagfunc', function()
     before_each(function()
       ---@type lsp.Location[]
@@ -2831,17 +3167,14 @@ describe('LSP', function()
       exec_lua(function()
         _G.mock_locations = mock_locations
         _G.server = _G._create_server({
-          ---@type lsp.ServerCapabilities
           capabilities = {
             definitionProvider = true,
             workspaceSymbolProvider = true,
           },
           handlers = {
-            ---@return lsp.Location[]
             ['textDocument/definition'] = function(_, _, callback)
               callback(nil, { _G.mock_locations[1] })
             end,
-            ---@return lsp.WorkspaceSymbol[]
             ['workspace/symbol'] = function(_, request, callback)
               assert(request.query == 'foobar')
               callback(nil, {
@@ -2912,6 +3245,52 @@ describe('LSP', function()
   end)
 
   describe('cmd', function()
+    it('cmd string[] CWD', function()
+      local root_dir = tmpname(false)
+      local cmd_cwd = tmpname(false)
+      mkdir(root_dir)
+      mkdir(cmd_cwd)
+
+      local cwd = exec_lua(function()
+        return assert(vim.uv.cwd())
+      end)
+
+      local cases = {
+        {
+          desc = 'cmd_cwd takes precedence',
+          config = { name = 'cwd-test-cmd-cwd', root_dir = root_dir, cmd_cwd = cmd_cwd },
+          expected_cwd = cmd_cwd,
+        },
+        {
+          desc = 'root_dir is used when cmd_cwd is unset',
+          config = { name = 'cwd-test-root-dir', root_dir = root_dir },
+          expected_cwd = root_dir,
+        },
+        {
+          desc = 'current cwd is used when cmd_cwd and root_dir are unset',
+          config = { name = 'cwd-test-current-cwd' },
+          expected_cwd = cwd,
+        },
+      }
+
+      for _, case in ipairs(cases) do
+        local outfile = tmpname(false)
+        local config = vim.tbl_extend('force', {
+          cmd = {
+            n.nvim_prog,
+            '--clean',
+            '--headless',
+            ('+call writefile([getcwd()], %q)'):format(outfile),
+            '+qa!',
+          },
+        }, case.config)
+        exec_lua(function(conf)
+          assert(vim.lsp.start(conf, { attach = false }))
+        end, config)
+        t.assert_log(vim.pesc(case.expected_cwd), outfile)
+      end
+    end)
+
     it('connects to lsp server via rpc.connect using ip address', function()
       exec_lua(create_tcp_echo_server)
       exec_lua(function()
@@ -3040,6 +3419,115 @@ describe('LSP', function()
       }
       eq(expected, result)
     end)
+
+    --- Starts a TCP server that completes initialization, then sends `null_id_payload` after the
+    --- "initialized" notification.
+    ---
+    --- @param null_id_payload string JSON
+    --- @return { on_error_called: table, notification_received: boolean, messages: boolean }.
+    local function test_null_id_response(null_id_payload)
+      return exec_lua(function()
+        local server = assert(vim.uv.new_tcp())
+        local accepted
+        local messages = {}
+        server:bind('127.0.0.1', 0)
+        server:listen(127, function(err)
+          assert(not err, err)
+          accepted = assert(vim.uv.new_tcp())
+          server:accept(accepted)
+          accepted:read_start(require('vim.lsp.rpc').create_read_loop(function(body)
+            local payload = vim.json.decode(body)
+            if payload.method then
+              table.insert(messages, payload.method)
+              if payload.method == 'initialize' then
+                -- Send a valid initialize response first
+                local msg = vim.json.encode({
+                  id = payload.id,
+                  jsonrpc = '2.0',
+                  result = {
+                    capabilities = {},
+                  },
+                })
+                accepted:write(
+                  table.concat({ 'Content-Length: ', tostring(#msg), '\r\n\r\n', msg })
+                )
+              elseif payload.method == 'initialized' then
+                accepted:write(table.concat({
+                  'Content-Length: ',
+                  tostring(#null_id_payload),
+                  '\r\n\r\n',
+                  null_id_payload,
+                }))
+              end
+            end
+          end, function()
+            if accepted and not accepted:is_closing() then
+              accepted:close()
+            end
+          end, function()
+            if accepted and not accepted:is_closing() then
+              accepted:close()
+            end
+          end))
+        end)
+        local port = server:getsockname().port
+        local on_error_called = false
+        local notification_received = false
+        local client_id = assert(vim.lsp.start({
+          name = 'null-id-test',
+          cmd = function(dispatchers)
+            local notification = dispatchers.notification
+            dispatchers.notification = function(method, params)
+              notification_received = true
+              if notification then
+                notification(method, params)
+              end
+            end
+            return vim.lsp.rpc.connect('127.0.0.1', port)(dispatchers)
+          end,
+          on_error = function(_code, _err)
+            on_error_called = true
+          end,
+        }))
+        vim.lsp.get_client_by_id(client_id)
+        vim.wait(1000, function()
+          return #messages >= 2 and (on_error_called or notification_received)
+        end)
+        if accepted and not accepted:is_closing() then
+          accepted:close()
+        end
+        server:shutdown()
+        server:close()
+        return {
+          messages = messages,
+          on_error_called = on_error_called,
+          notification_received = notification_received,
+        }
+      end)
+    end
+
+    it('null-id in response (JSON-RPC 2.0 parse error) is handled, emits error', function()
+      local result = test_null_id_response(
+        '{"jsonrpc":"2.0","error":{"code":-32700,"message":"Parse error"},"id":null}'
+      )
+      eq(true, result.on_error_called)
+      eq(true, #result.messages >= 2)
+    end)
+
+    it('null-id in response does not misclassify as a notification', function()
+      -- Sanity check: a real notification (no id) dispatches the handler.
+      local valid = test_null_id_response(
+        '{"jsonrpc":"2.0","method":"workspace/configuration","params":{"items":[]}}'
+      )
+      eq(true, valid.notification_received)
+
+      local result = test_null_id_response(
+        -- Error response with null id (parse error per JSON-RPC 2.0 §5)
+        '{"jsonrpc":"2.0","method":"workspace/configuration","params":{"items":[]},"id":null}'
+      )
+      -- Null id must be dispatched as a request, not as a notification.
+      eq(false, result.notification_received)
+    end)
   end)
 
   describe('#dynamic vim.lsp._dynamic', function()
@@ -3078,6 +3566,14 @@ describe('LSP', function()
               didChangeConfiguration = {
                 dynamicRegistration = true,
               },
+              fileOperations = {
+                didCreate = {
+                  dynamicRegistration = true,
+                },
+              },
+              textDocumentContent = {
+                dynamicRegistration = true,
+              },
             },
           },
         }))
@@ -3092,6 +3588,7 @@ describe('LSP', function()
                   {
                     pattern = root_dir .. '/*.foo',
                   },
+                  { pattern = '**/**.foo' },
                 },
               },
             },
@@ -3261,10 +3758,78 @@ describe('LSP', function()
         }, { client_id = client_id })
         check('workspace/didChangeConfiguration', nil, 'section')
 
+        check('workspace/didCreateFiles')
+        vim.lsp.handlers['client/registerCapability'](nil, {
+          registrations = {
+            {
+              id = 'didCreateFiles-id',
+              method = 'workspace/didCreateFiles',
+              registerOptions = {
+                label = 'did-create-files',
+                filters = {
+                  {
+                    scheme = 'file',
+                    pattern = {
+                      glob = '**/*.foo',
+                    },
+                  },
+                },
+              },
+            },
+          },
+        }, { client_id = client_id })
+        check('workspace/didCreateFiles', nil, 'label')
+
+        check('workspace/textDocumentContent')
+        vim.lsp.handlers['client/registerCapability'](nil, {
+          registrations = {
+            {
+              id = 'textDocumentContent-id',
+              method = 'workspace/textDocumentContent',
+              registerOptions = {
+                schemes = { 'git', 'untitled' },
+              },
+            },
+          },
+        }, { client_id = client_id })
+        check('workspace/textDocumentContent', nil, 'schemes')
+
+        vim.lsp.handlers['client/registerCapability'](nil, {
+          registrations = {
+            {
+              id = 'unknown-method-id',
+              method = 'unknown-method',
+              registerOptions = {
+                some_opt = 'unknown-dummy-opt',
+              },
+            },
+          },
+        }, { client_id = client_id })
+        check('unknown-method', nil, 'some_opt')
+
+        check('unknown-method-2')
+        vim.lsp.handlers['client/registerCapability'](nil, {
+          registrations = {
+            {
+              id = 'unknown-method-2-id',
+              method = 'unknown-method-2',
+              registerOptions = {
+                documentSelector = {
+                  {
+                    pattern = root_dir .. '/*.foo',
+                  },
+                },
+              },
+            },
+          },
+        }, { client_id = client_id })
+        check('unknown-method-2')
+        check('unknown-method-2', tmpfile)
+
         return result
       end)
 
-      eq(21, #result)
+      eq(29, #result)
       eq({ method = 'textDocument/formatting', supported = false }, result[1])
       eq({ method = 'textDocument/formatting', supported = true, fname = tmpfile }, result[2])
       eq({ method = 'textDocument/rangeFormatting', supported = true }, result[3])
@@ -3299,6 +3864,25 @@ describe('LSP', function()
         { method = 'workspace/didChangeConfiguration', supported = true, cap = { 'dummy-section' } },
         result[21]
       )
+      eq({ method = 'workspace/didCreateFiles', supported = false }, result[22])
+      eq(
+        { method = 'workspace/didCreateFiles', supported = true, cap = { 'did-create-files' } },
+        result[23]
+      )
+      eq({ method = 'workspace/textDocumentContent', supported = false }, result[24])
+      eq({
+        method = 'workspace/textDocumentContent',
+        supported = true,
+        cap = { { 'git', 'untitled' } },
+      }, result[25])
+      eq({
+        method = 'unknown-method',
+        supported = true,
+        cap = { 'unknown-dummy-opt' },
+      }, result[26])
+      eq({ method = 'unknown-method-2', supported = true }, result[27])
+      eq({ method = 'unknown-method-2', supported = false }, result[28])
+      eq({ method = 'unknown-method-2', supported = true, fname = tmpfile }, result[29])
     end)
 
     it('identifies client dynamic registration capability', function()
@@ -3359,9 +3943,17 @@ describe('LSP', function()
           capabilities = {
             colorProvider = { id = 'color-registration' },
             diagnosticProvider = {
+              documentSelector = vim.NIL,
+              interFileDependencies = false,
               id = 'diag-registration',
               identifier = 'diag-ident-static',
               workspaceDiagnostics = true,
+            },
+            workspace = {
+              textDocumentContent = {
+                id = 'text-document-content-registration',
+                schemes = { 'git', 'untitled' },
+              },
             },
           },
         })
@@ -3402,6 +3994,8 @@ describe('LSP', function()
             id = 'diag-registration',
             method = 'textDocument/diagnostic',
             registerOptions = {
+              documentSelector = vim.NIL,
+              interFileDependencies = false,
               id = 'diag-registration',
               identifier = 'diag-ident-static',
               workspaceDiagnostics = true,
@@ -3421,6 +4015,35 @@ describe('LSP', function()
           local result = {}
           client:_provider_foreach('textDocument/diagnostic', function(cap)
             table.insert(result, cap.identifier)
+          end)
+          return result
+        end)
+      )
+
+      eq(
+        {
+          {
+            id = 'text-document-content-registration',
+            method = 'workspace/textDocumentContent',
+            registerOptions = {
+              id = 'text-document-content-registration',
+              schemes = { 'git', 'untitled' },
+            },
+          },
+        },
+        sort_method(exec_lua(function()
+          local client = assert(vim.lsp.get_client_by_id(client_id))
+          return client.dynamic_capabilities:get('workspace.textDocumentContent')
+        end))
+      )
+
+      eq(
+        { { 'git', 'untitled' } },
+        exec_lua(function()
+          local client = assert(vim.lsp.get_client_by_id(client_id))
+          local result = {}
+          client:_provider_foreach('workspace/textDocumentContent', function(cap)
+            table.insert(result, cap.schemes)
           end)
           return result
         end)
@@ -3471,6 +4094,8 @@ describe('LSP', function()
 
           exec_lua(create_server_definition)
           local result = exec_lua(function()
+            local logfile = vim.lsp.log.get_filename()
+            vim.fn.writefile({ '' }, logfile)
             local server = _G._create_server()
             local client_id = assert(vim.lsp.start({
               name = 'watchfiles-test',
@@ -3512,6 +4137,17 @@ describe('LSP', function()
                   registerOptions = {
                     watchers = {
                       {
+                        globPattern = 'a/**b',
+                        kind = 7,
+                      },
+                      {
+                        globPattern = {
+                          baseUri = vim.uri_from_fname(root_dir),
+                          pattern = '{foo}',
+                        },
+                        kind = 7,
+                      },
+                      {
                         globPattern = '**/watch',
                         kind = 7,
                       },
@@ -3538,12 +4174,13 @@ describe('LSP', function()
 
             vim.lsp.get_client_by_id(client_id):stop()
 
-            return server.messages
+            return { logfile = logfile, messages = server.messages }
           end)
 
           local uri = vim.uri_from_fname(root_dir .. '/watch')
+          local messages = result.messages
 
-          eq(6, #result)
+          eq(6, #messages)
 
           eq({
             method = 'workspace/didChangeWatchedFiles',
@@ -3555,7 +4192,7 @@ describe('LSP', function()
                 },
               },
             },
-          }, result[3])
+          }, messages[3])
 
           eq({
             method = 'workspace/didChangeWatchedFiles',
@@ -3567,7 +4204,18 @@ describe('LSP', function()
                 },
               },
             },
-          }, result[4])
+          }, messages[4])
+
+          t.assert_log(
+            '%[ERROR%].-skipping invalid workspace/didChangeWatchedFiles globPattern.-'
+              .. pesc('a/**b'),
+            result.logfile
+          )
+          t.assert_log(
+            '%[ERROR%].-skipping invalid workspace/didChangeWatchedFiles globPattern.-'
+              .. pesc('{foo}'),
+            result.logfile
+          )
         end
       )
     end
@@ -4368,11 +5016,60 @@ describe('LSP', function()
       eq({ 0, 'foo', 1, 'bar' }, count_clients())
     end)
 
+    it('sends didClose and didOpen when languageId changes', function()
+      exec_lua(create_server_definition)
+
+      local tmp1 = t.tmpname(true)
+
+      exec_lua(function()
+        _G.server = _G._create_server({
+          handlers = {
+            initialize = function(_, _, callback)
+              callback(nil, { capabilities = { textDocumentSync = { openClose = true } } })
+            end,
+          },
+        })
+        vim.lsp.config('foo', { cmd = _G.server.cmd, filetypes = { 'foo', 'bar' } })
+        vim.lsp.enable('foo')
+        vim.cmd.edit(tmp1)
+      end)
+
+      local function test_messages()
+        local opens = 0
+        local closes = 0
+        local msgs = exec_lua([[ return _G.server.messages ]])
+        local num_clients = exec_lua([[ return #vim.lsp.get_clients() ]])
+        for _, msg in ipairs(msgs) do
+          opens = opens + (msg.method == 'textDocument/didOpen' and 1 or 0)
+          closes = closes + (msg.method == 'textDocument/didClose' and 1 or 0)
+        end
+        return { opens, 'did_open', closes, 'did_close', num_clients, 'clients' }
+      end
+
+      -- No filetype on the buffer yet.
+      eq({ 0, 'did_open', 0, 'did_close', 0, 'clients' }, test_messages())
+
+      -- Set the filetype to 'foo', confirm didOpen is sent.
+      exec_lua([[vim.bo.filetype = 'foo']])
+      retry(nil, 1000, function()
+        eq({ 1, 'did_open', 0, 'did_close', 1, 'clients' }, test_messages())
+      end)
+
+      -- Set to anohter lsp-supported filetype 'bar', confirm didClose and didOpen are sent.
+      exec_lua([[vim.bo.filetype = 'bar']])
+      retry(nil, 1000, function()
+        eq({ 2, 'did_open', 1, 'did_close', 1, 'clients' }, test_messages())
+      end)
+    end)
+
     it('validates config on attach', function()
       local tmp1 = t.tmpname(true)
+      local logfile = exec_lua(function()
+        return vim.lsp.log.get_filename()
+      end)
+
       exec_lua(function()
-        vim.fn.writefile({ '' }, fake_lsp_logfile)
-        vim.lsp.log._set_filename(fake_lsp_logfile)
+        vim.fn.writefile({ '' }, vim.lsp.log.get_filename())
       end)
 
       local function test_cfg(cfg, err)
@@ -4386,7 +5083,7 @@ describe('LSP', function()
 
         -- Assert NO log for non-applicable 'filetype'. #35737
         if type(cfg.filetypes) == 'table' then
-          t.assert_nolog(err, fake_lsp_logfile)
+          t.assert_nolog(err, logfile)
         end
 
         exec_lua(function()
@@ -4394,7 +5091,7 @@ describe('LSP', function()
         end)
 
         retry(nil, 1000, function()
-          t.assert_log(err, fake_lsp_logfile)
+          t.assert_log(err, logfile)
         end)
       end
 

@@ -29,3 +29,4 @@ local function on_notification(event, args)
 end
 
 session:run(on_request, on_notification)
+session:close()

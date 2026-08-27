@@ -1,5 +1,6 @@
 #pragma once
 
+#include <lauxlib.h>  // for LUA_NOREF
 #include <stdbool.h>
 #include <stddef.h>
 

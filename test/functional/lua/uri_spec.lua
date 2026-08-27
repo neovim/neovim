@@ -1,6 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear = n.clear
 local exec_lua = n.exec_lua
 local eq = t.eq
@@ -217,7 +218,7 @@ describe('URI methods', function()
         ]],
         file
       )
-      local expected_uri = 'file:///' .. t.fix_slashes(file)
+      local expected_uri = ('file:///%s'):format(file)
       eq(expected_uri, exec_lua(test_case))
       os.remove(file)
     end)

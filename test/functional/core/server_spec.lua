@@ -1,6 +1,8 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, before_each, after_each, finally =
+  t.describe, t.it, t.before_each, t.after_each, t.finally
 local eq, neq, eval = t.eq, t.neq, n.eval
 local clear, fn, api = n.clear, n.fn, n.api
 local matches = t.matches
@@ -87,7 +89,7 @@ describe('server', function()
 
     -- v:servername and $NVIM take the next available server.
     local servername = (
-      is_os('win') and [[\\.\pipe\Xtest-functional-server-pipe]]
+      is_os('win') and [[//./pipe/Xtest-functional-server-pipe]]
       or './Xtest-functional-server-socket'
     )
     fn.serverstart(servername)
@@ -170,7 +172,7 @@ describe('server', function()
 
     -- Add some servers.
     local servs = (
-      is_os('win') and { [[\\.\pipe\Xtest-pipe0934]], [[\\.\pipe\Xtest-pipe4324]] }
+      is_os('win') and { [[//./pipe/Xtest-pipe0934]], [[//./pipe/Xtest-pipe4324]] }
       or { [[./Xtest-pipe0934]], [[./Xtest-pipe4324]] }
     )
     for _, s in ipairs(servs) do
@@ -216,7 +218,57 @@ describe('server', function()
     eq(true, vim.list_contains(new_servs, peer_addr))
     eq(true, #servers_without_peer < #new_servs)
     eq(true, old_servs_num < #new_servs)
+
+    -- serverlist({info=true}) returns rich info dicts (implies peer=true)
+    local info_servs = fn.serverlist({ info = true })
+    eq(#new_servs, #info_servs)
+
+    local own_addr = fn.serverlist()[1]
+    local self_pid = fn.getpid()
+    ---@type table<string, table>
+    local by_addr = {}
+    for _, entry in ipairs(info_servs) do
+      eq('string', type(entry.addr))
+      eq('boolean', type(entry.own))
+      by_addr[entry.addr] = entry
+    end
+
+    -- own server: own=true, pid matches, active present
+    local own_entry = by_addr[own_addr]
+    eq(true, own_entry ~= nil)
+    eq(true, own_entry.own)
+    eq(self_pid, own_entry.pid)
+    eq('number', type(own_entry.active))
+    eq(eval('v:useractive'), own_entry.active)
+
+    -- peer server: own=false, pid + active from peer process
+    local peer_entry = by_addr[peer_addr]
+    eq(true, peer_entry ~= nil)
+    eq(false, peer_entry.own)
+    eq('number', type(peer_entry.pid))
+    eq('number', type(peer_entry.active))
+    n.set_session(client)
+    local peer_pid = fn.getpid()
+    local peer_active = eval('v:useractive')
+    n.set_session(current_server)
+    eq(peer_pid, peer_entry.pid)
+    eq(peer_active, peer_entry.active)
+
     client:close()
+  end)
+
+  it('v:useractive advances on UI input', function()
+    clear()
+    local before = eval('v:useractive')
+    eq('number', type(before))
+    n.feed('ix<Esc>')
+    local after = eval('v:useractive')
+    eq(true, after > before)
+  end)
+
+  it('v:useractive is read-only', function()
+    clear()
+    matches('E46:', pcall_err(n.command, 'let v:useractive = 0'))
   end)
 
   it('removes stale socket files automatically #36581', function()
@@ -266,6 +318,40 @@ describe('server', function()
     matches('Failed.*listen', result.stderr)
     fn.serverstop(socket_path)
   end)
+
+  it('normalizes sep in named pipe paths #39382', function()
+    t.skip(not is_os('win'), 'N/A: Named pipe is Windows feature')
+
+    local name, named_pipe = 'Xtest-server', [[\\.\pipe\Xtest-server]]
+    -- default address
+    clear { args_rm = { '--listen' } }
+    matches('//./pipe/', fn.eval('v:servername'), true)
+
+    clear({ args_rm = { '--listen' }, env = { NVIM_LISTEN_ADDRESS = named_pipe } })
+    eq(vim.fs.normalize(named_pipe), fn.eval('v:servername'))
+
+    clear({ args_rm = { '--listen' }, args = { '--listen', name } })
+    matches(vim.fs.normalize(named_pipe), fn.eval('v:servername'), true)
+
+    clear({ args_rm = { '--listen' }, args = { '--listen', named_pipe } })
+    eq(vim.fs.normalize(named_pipe), fn.eval('v:servername'))
+
+    local server = n.get_session()
+    local client = n.new_session(true)
+    n.set_session(client)
+    local res = fn.system({
+      n.nvim_prog,
+      '--clean',
+      '-es',
+      '--server',
+      named_pipe,
+      '--remote-expr',
+      'v:servername',
+    })
+    eq(vim.fs.normalize(named_pipe), res)
+    client:close()
+    n.set_session(server)
+  end)
 end)
 
 describe('startup --listen', function()
@@ -314,6 +400,15 @@ describe('startup --listen', function()
       ('nvim.*: Failed to %%-%%-listen: [^:]+ already [^:]+: "%s"'):format(vim.pesc(in_use))
     )
     _test({ '--listen', '/' }, nil, 'nvim.*: Failed to %-%-listen: [^:]+: "/"')
+    if not is_os('win') then
+      -- Too-long path is rejected, not silently truncated. #38623
+      local too_long = './Xtest-listen-' .. ('x'):rep(192)
+      _test(
+        { '--listen', too_long },
+        nil,
+        ('nvim.*: Failed to %%-%%-listen: invalid argument: "%s"'):format(vim.pesc(too_long))
+      )
+    end
     _test(
       { '--listen', 'https://example.com' },
       nil,
@@ -341,7 +436,7 @@ describe('startup --listen', function()
   end)
 
   it('sets v:servername, overrides $NVIM_LISTEN_ADDRESS', function()
-    local addr = (is_os('win') and [[\\.\pipe\Xtest-listen-pipe]] or './Xtest-listen-pipe')
+    local addr = (is_os('win') and [[//./pipe/Xtest-listen-pipe]] or './Xtest-listen-pipe')
     clear({ env = { NVIM_LISTEN_ADDRESS = './Xtest-env-pipe' }, args = { '--listen', addr } })
     eq('', eval('$NVIM_LISTEN_ADDRESS')) -- Cleared on startup.
     eq(addr, api.nvim_get_vvar('servername'))
@@ -352,30 +447,51 @@ describe('startup --listen', function()
   end)
 end)
 
-it(':restart works in headless server (no UI)', function()
-  t.skip(is_os('win'), 'FIXME: --listen not preserved by :restart on Windows')
+it(':restart! works in headless server (no UI)', function()
+  t.skip(is_os('win'), 'FIXME: --listen not preserved by :restart! on Windows')
 
   local nvim0 = clear()
   local server_pipe = n.new_pipename()
+  local dir = vim.fs.normalize(t.tmpname(false))
+  local subdir = dir .. '/subdir'
+  mkdir(dir)
+  mkdir(subdir)
 
   finally(function()
     n.expect_exit(n.command, 'qall!')
     nvim0:close()
     n.set_session(nil)
+    rmdir(dir)
   end)
 
-  fn.jobstart({ n.nvim_prog, '--clean', '--headless', '--listen', server_pipe })
+  fn.jobstart({
+    n.nvim_prog,
+    '--clean',
+    '--headless',
+    '--listen',
+    server_pipe,
+    '--cmd',
+    'let g:early_startreason = v:startreason',
+  })
   t.retry(nil, nil, function()
     neq(nil, vim.uv.fs_stat(server_pipe))
   end)
   n.set_session(n.connect(server_pipe))
 
-  n.expect_exit(n.command, 'restart')
+  api.nvim_set_current_dir(dir)
+  n.command('bcd ' .. fn.fnameescape(subdir))
+  eq(subdir, fn.getcwd())
+  eq(dir, fn.getcwd(-1, -1, -1))
+
+  n.expect_exit(n.command, 'restart!')
   n.set_session(n.connect(server_pipe))
   eq(1, api.nvim_get_vvar('vim_did_enter'))
+  eq('restart!', api.nvim_get_vvar('startreason'))
+  eq('restart!', n.eval('g:early_startreason'))
+  eq(dir, fn.getcwd())
 
   -- TODO: [command] is currently not executed without UI
-  -- n.expect_exit(n.command, 'restart lua _G.new_server = 1')
+  -- n.expect_exit(n.command, 'restart! lua _G.new_server = 1')
   -- n.set_session(n.connect(server_pipe))
   -- eq(1, n.exec_lua('return _G.new_server'))
 end)

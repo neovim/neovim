@@ -25,6 +25,7 @@
 #include "nvim/globals.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
+#include "nvim/input_cmdatom.h"
 #include "nvim/insexpand.h"
 #include "nvim/lua/executor.h"
 #include "nvim/main.h"
@@ -33,6 +34,7 @@
 #include "nvim/memfile.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/normal.h"
 #include "nvim/option_vars.h"
 #include "nvim/sign.h"
 #include "nvim/state_defs.h"
@@ -832,12 +834,12 @@ char *arena_strdup(Arena *arena, const char *str)
 # include "nvim/buffer.h"
 # include "nvim/cmdhist.h"
 # include "nvim/diff.h"
-# include "nvim/edit.h"
 # include "nvim/ex_cmds.h"
 # include "nvim/ex_docmd.h"
 # include "nvim/file_search.h"
-# include "nvim/getchar.h"
 # include "nvim/grid.h"
+# include "nvim/input.h"
+# include "nvim/insert.h"
 # include "nvim/mark.h"
 # include "nvim/msgpack_rpc/channel.h"
 # include "nvim/option.h"
@@ -859,9 +861,10 @@ void free_all_mem(void)
 {
   buf_T *buf, *nextbuf;
 
-  // When we cause a crash here it is caught and Vim tries to exit cleanly.
-  // Don't try freeing everything again.
+  // If a routine below recurses into free_all_mem, don't try freeing everything again.
   if (entered_free_all_mem) {
+    // Except the Lua state. #39675
+    nlua_free_all_mem();
     return;
   }
   entered_free_all_mem = true;
@@ -964,8 +967,7 @@ void free_all_mem(void)
 
   // Clear registers.
   clear_registers();
-  ResetRedobuff();
-  ResetRedobuff();
+  redo_free_all();
 
   // highlight info
   free_highlight();
@@ -983,7 +985,7 @@ void free_all_mem(void)
   channel_free_all_mem();
   eval_clear();
   api_extmark_free_all_mem();
-  ctx_free_all();
+  atom_free_all();
 
   map_destroy(int, &buffer_handles);
   map_destroy(int, &window_handles);

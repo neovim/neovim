@@ -32,11 +32,11 @@
 #include "nvim/ex_eval.h"
 #include "nvim/ex_eval_defs.h"
 #include "nvim/garray.h"
-#include "nvim/getchar.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/hashtab.h"
 #include "nvim/hashtab_defs.h"
+#include "nvim/input.h"
 #include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/map_defs.h"
@@ -710,6 +710,7 @@ static ArrayOf(String) runtime_get_named_common(bool lua, Array pat, bool all,
                                        item->path, pat_item.data.string.data);
         if (size < buf_len) {
           if (os_file_is_readable(buf)) {
+            TO_SLASH(buf);
             ADD_C(rv, CSTR_TO_ARENA_OBJ(arena, buf));
             if (!all) {
               goto done;
@@ -822,7 +823,7 @@ static bool path_is_after(char *buf, size_t buflen)
 {
   // NOTE: we only consider dirs exactly matching "after" to be an AFTER dir.
   // vim8 considers all dirs like "foo/bar_after", "Xafter" etc, as an
-  // "after" dir in SOME codepaths not not in ALL codepaths.
+  // "after" dir in SOME codepaths not in ALL codepaths.
   return buflen >= 5
          && (!(buflen >= 6) || vim_ispathsep(buf[buflen - 6]))
          && strcmp(buf + buflen - 5, "after") == 0;
@@ -933,6 +934,7 @@ void runtime_search_path_validate(void)
   }
   if (!runtime_search_path_valid) {
     if (!runtime_search_path_ref) {
+      msg_ext_ui_flush();  // avoid recursion due to UI callback
       runtime_search_path_free(runtime_search_path);
     }
     runtime_search_path = runtime_search_path_build();
@@ -1100,7 +1102,7 @@ static int add_pack_dir_to_rtp(char *fname, bool is_pack)
       if (rtp_ffname == NULL) {
         goto theend;
       }
-      if (path_fnamencmp(rtp_ffname, ffname, fname_len) == 0) {
+      if (path_cmp(p_fic, rtp_ffname, ffname, fname_len) == 0) {
         // Insert "ffname" after this entry (and comma).
         insp = entry;
       }
@@ -1181,7 +1183,7 @@ static int add_pack_dir_to_rtp(char *fname, bool is_pack)
   }
 
   bool was_valid = runtime_search_path_valid;
-  set_option_value_give_err(kOptRuntimepath, STRING_OPTVAL(new_rtp), 0);
+  set_option_value_give_err(kOptRuntimepath, STRING_OBJ(new_rtp), 0);
 
   assert(!runtime_search_path_valid);
   // If this is the result of "packadd opt_pack", rebuilding runtime_search_pat
@@ -1281,7 +1283,7 @@ static void add_pack_plugins(bool opt, int num_fnames, char **fnames, bool all, 
       const char *p = p_rtp;
       while (*p != NUL) {
         copy_option_part((char **)&p, buf, MAXPATHL, ",");
-        if (path_fnamecmp(buf, fnames[i]) == 0) {
+        if (path_equal(buf, fnames[i], kPathCmpLiteral)) {
           found = true;
           break;
         }
@@ -1843,10 +1845,10 @@ char *runtimepath_default(bool clean_arg)
   char *const config_home = clean_arg
                             ? NULL
                             : stdpaths_get_xdg_var(kXDGConfigHome);
-  char *const vimruntime = vim_getenv("VIMRUNTIME");
   char *const libdir = get_lib_dir();
   char *const data_dirs = stdpaths_get_xdg_var(kXDGDataDirs);
   char *const config_dirs = stdpaths_get_xdg_var(kXDGConfigDirs);
+  char *const vimruntime = vim_getenv("VIMRUNTIME");
 #define SITE_SIZE (sizeof("site") - 1)
 #define AFTER_SIZE (sizeof("after") - 1)
   size_t data_len = 0;
@@ -2517,7 +2519,7 @@ int find_script_by_name(char *name)
     // - If a script is deleted and another script is written, with a
     //   different name, the inode may be re-used.
     scriptitem_T *si = SCRIPT_ITEM(sid);
-    if (si->sn_name != NULL && path_fnamecmp(si->sn_name, name) == 0) {
+    if (si->sn_name != NULL && path_equal(si->sn_name, name, kPathCmpLiteral)) {
       return sid;
     }
   }
@@ -2537,6 +2539,7 @@ void ex_scriptnames(exarg_T *eap)
       } else {
         expand_env(eap->arg, NameBuff, MAXPATHL);
         eap->arg = NameBuff;
+        TO_SLASH(eap->arg);
       }
       do_exedit(eap, NULL);
     }
@@ -2558,19 +2561,6 @@ void ex_scriptnames(exarg_T *eap)
     }
   }
 }
-
-#ifdef BACKSLASH_IN_FILENAME
-/// Fix slashes in the list of script names for 'shellslash'.
-void scriptnames_slash_adjust(void)
-{
-  for (int i = 1; i <= script_items.ga_len; i++) {
-    if (SCRIPT_ITEM(i)->sn_name != NULL) {
-      slash_adjust(SCRIPT_ITEM(i)->sn_name);
-    }
-  }
-}
-
-#endif
 
 /// Get a pointer to a script name.  Used for ":verbose set".
 /// Message appended to "Last set from "
@@ -2784,7 +2774,7 @@ char *getsourceline(int c, void *cookie, int indent, bool do_concat)
 
   // Only concatenate lines starting with a \ when 'cpoptions' doesn't
   // contain the 'C' flag.
-  if (line != NULL && do_concat && (vim_strchr(p_cpo, CPO_CONCAT) == NULL)) {
+  if (line != NULL && do_concat && (vim_strchr(p_cpo, kCpoConcat) == NULL)) {
     char *p;
     // compensate for the one line read-ahead
     sp->sourcing_lnum--;

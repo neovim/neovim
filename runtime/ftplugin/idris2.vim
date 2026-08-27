@@ -1,6 +1,7 @@
 " Vim ftplugin file
 " Language:	   Idris 2
 " Last Change: 2024 Nov 05
+"              2026 Jun 27 by Vim Project (add recommended style guard)
 " Maintainer:  Idris Hackers (https://github.com/edwinb/idris2-vim), Serhii Khoma <srghma@gmail.com>
 " License:     Vim (see :h license)
 " Repository:  https://github.com/ShinKage/idris2-nvim
@@ -11,8 +12,11 @@ if exists("b:did_ftplugin")
   finish
 endif
 
-setlocal shiftwidth=2
-setlocal tabstop=2
+if get(g:, 'idris2_recommended_style',
+      \ get(g:, 'filetype_recommended_style', 1))
+  setlocal shiftwidth=2
+  setlocal tabstop=2
+endif
 
 " Set g:idris2#allow_tabchar = 1 to use tabs instead of spaces
 if exists('g:idris2#allow_tabchar') && g:idris2#allow_tabchar != 0

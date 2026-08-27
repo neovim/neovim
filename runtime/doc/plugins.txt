@@ -18,13 +18,15 @@ loaded by default while others are not loaded until requested by |:packadd|.
 Standard plugins                                        *standard-plugin-list*
 
 Help-link		Loaded	Short description ~
-|difftool|		No	Compares two directories or files side-by-side
+|dir|			Yes	Directory listing for |:edit|
+|difftool|		No	Compares directories (and files) side-by-side
 |editorconfig|		Yes	Detect and interpret editorconfig
 |ft-shada|		Yes	Allows editing binary |shada| files
 |man.lua|		Yes	View manpages in Nvim
 |matchit|		Yes	Extended |%| matching
 |matchparen|		Yes	Highlight matching pairs
-|netrw|			Yes	Reading and writing files over a network
+|netrw|			No	Reading and writing files over a network
+|zip|			Yes	Read-only zip archive browser
 |package-cfilter|	No	Filtering quickfix/location list
 |package-justify|	No	Justify text
 |package-nohlsearch|	No	Automatically run :nohlsearch
@@ -39,11 +41,161 @@ Help-link		Loaded	Short description ~
 |pi_swapmouse|		No	Swap meaning of left and right mouse buttons
 |pi_tar.txt|		Yes	Tar file explorer
 |pi_tutor.txt|		Yes	Interactive tutorial
-|pi_zip.txt|		Yes	Zip archive explorer
+|old-zip|		No	Legacy zip archive explorer
+
+==============================================================================
+Builtin plugin: dir                                                      *dir*
+
+Nvim opens a directory listing when you |:edit| a directory path, handled by
+the builtin "dir" plugin.  The listing is read-only, dir.lua does not provide
+actions which modify the filesystem.
+
+Each "dir" buffer is initialized as follows:
+- Sets 'filetype' to "directory".
+- Sets |current-directory| via |:bcd|, so |gf|, |:!| and friends work as
+  expected.
+- Keeps |alternate-file|, so |CTRL-^| returns to the buffer you came from.
+
+                                                    *g:loaded_nvim_dir_plugin*
+To disable the built-in directory browser, set this before startup: >lua
+    vim.g.loaded_nvim_dir_plugin = 1
+<
+
+GLOBAL MAPPINGS                                                 *dir-mappings*
+
+• - opens the parent directory of the current file or directory.
+• {count}- is like -, but a count of 1 opens the global working directory,
+  and a higher count goes up that many levels.
+
+BUFFER-LOCAL MAPPINGS                                    *dir-buffer-mappings*
+
+• <CR> opens the file or directory under the cursor.
+• - opens the parent directory.
+• R reloads the directory listing.
+
+These keys map to <Plug>(nvim-dir-open), <Plug>(nvim-dir-up), and
+<Plug>(nvim-dir-reload); map those to use different keys. Default mappings are
+skipped when the target <Plug> mapping is already mapped. The default global and
+directory-buffer "-" mappings are also skipped when "-" is already mapped.
+
+                                                                 *dir-config*
+Directory buffers follow the global 'hidden' option by default. To delete them
+after use: >vim
+    autocmd FileType directory setlocal bufhidden=delete
+<
+A discarded listing is rebuilt on the next visit, so the cursor starts at the
+first entry instead of the one it was left on. "wipe" discards the buffer
+itself, leaving no |alternate-file|; see 'bufhidden'.
+
+
+Reshaping the listing                                             *dir-render*
+
+                                                                 *DirReadPost*
+A |User| autocommand fired after each listing is rendered, including reloads.
+The buffer is writable for the duration, so a handler can sort or filter it
+with ordinary commands, and the cursor is placed afterwards.
+
+Handlers may reorder or remove lines, but each remaining line must still be an
+entry name: |dir-buffer-mappings| resolve the line under the cursor against the
+buffer name, so rewriting line text makes <CR> open a nonexistent path.
+
+Sort directories last: >vim
+    autocmd User DirReadPost silent keeppatterns sort r /\/$/
+<
+Hide dot-prefixed entries: >vim
+    autocmd User DirReadPost silent keeppatterns g/^\./d _
+<
+Sort by modification time, newest first: >lua
+    vim.api.nvim_create_autocmd('User', {
+      pattern = 'DirReadPost',
+      callback = function(args)
+        local dir = vim.api.nvim_buf_get_name(args.buf)
+        local names = vim.api.nvim_buf_get_lines(args.buf, 0, -1, true)
+        local mtime = {} --- @type table<string, integer>
+        for _, name in ipairs(names) do
+          local stat = vim.uv.fs_stat(vim.fs.joinpath(dir, name))
+          mtime[name] = stat and stat.mtime.sec or 0
+        end
+        table.sort(names, function(a, b)
+          return mtime[a] > mtime[b]
+        end)
+        vim.api.nvim_buf_set_lines(args.buf, 0, -1, true, names)
+      end,
+    })
+<
+
+Decorating the listing                                          *dir-decorate*
+
+A |nvim_set_decoration_provider()| sets |extmarks| on the visible lines of
+each redraw, so they survive reordering by a |DirReadPost| handler.
+
+Classify each entry, and show where a symbolic link points: >lua
+    local ns = vim.api.nvim_create_namespace('my.dir.classify')
+    local glyph = {
+      fifo = '|', socket = '=', char = '%', block = '#',
+    }
+    vim.api.nvim_set_decoration_provider(ns, {
+      on_win = function(_, _, buf)
+        return vim.bo[buf].filetype == 'directory'
+      end,
+      on_range = function(_, _, buf, row)
+        local dir = vim.api.nvim_buf_get_name(buf)
+        local name = vim.api.nvim_buf_get_lines(buf, row, row + 1, true)[1]
+        local path = vim.fs.joinpath(dir, (name:gsub('/$', '')))
+        local stat = vim.uv.fs_lstat(path) or {}
+        local exe = stat.type == 'file'
+          and bit.band(stat.mode, tonumber('111', 8)) ~= 0
+        local char = glyph[stat.type] or (exe and '*')
+        if char then
+          vim.api.nvim_buf_set_extmark(buf, ns, row, #name, {
+            virt_text = { { char, 'Dimmed' } },
+            virt_text_pos = 'overlay',
+            ephemeral = true,
+          })
+        end
+        if stat.type == 'link' then
+          local target = vim.uv.fs_readlink(path) or '?'
+          vim.api.nvim_buf_set_extmark(buf, ns, row, 0, {
+            virt_text = { { '-> ' .. target, 'Dimmed' } },
+            virt_text_pos = 'eol',
+            ephemeral = true,
+          })
+        end
+        return row + 1
+      end,
+    })
+<
+
+Replacing the directory browser                                  *dir-disable*
+
+To use another directory browser for the current session, delete the
+`nvim.dir` autocommand group on or after |VimEnter| and handle |FileType| "directory".
+This clears the built-in directory-opening autocommands. >lua
+
+    vim.api.nvim_del_augroup_by_name('nvim.dir')
+    vim.api.nvim_create_autocmd('FileType', {
+      pattern = 'directory',
+      callback = function(args)
+        require('my_browser').open(args.buf, vim.api.nvim_buf_get_name(args.buf))
+      end,
+    })
+<
+                                                                       *netrw*
+To enable the legacy "netrw" plugin: >vim
+
+    :packadd netrw
+
+The plugin and its mappings remain loaded (it is a core component used by
+other features such as |zip|). Define replacement keymaps explicitly, for
+example: >lua
+
+    vim.keymap.set('n', '-', function()
+      require('my_browser').open_parent()
+    end)
+<
 
 ==============================================================================
 Builtin plugin: difftool                                            *difftool*
-
 
 :DiffTool {left} {right}                                           *:DiffTool*
 Compares two directories or files side-by-side.
@@ -75,10 +227,10 @@ open({left}, {right}, {opt})                                 *difftool.open()*
                    similarity for rename detection (0 to 1)
                  • {rename.chunk_size} (`number`, default: `4096`) Maximum
                    chunk size to read from files for similarity calculation
-                 • {method} (`'auto'|'builtin'|'diffr'`, default: `auto`) Diff
-                   method to use
                  • {ignore} (`string[]`, default: `{}`) List of file patterns
                    to ignore (for example: `'.git', '*.log'`)
+                 • {method} (`'auto'|'builtin'|'diffr'`, default: `auto`) Diff
+                   method to use
                  • {rename} (`table`) Controls rename detection
 
 
@@ -196,13 +348,13 @@ The plugin can be disabled by setting `g:loaded_spellfile_plugin = 1`.
     A table with the following fields:
 
     Fields: ~
-      • {url}         (`string`) The base URL from where the spellfiles are
-                      downloaded. Uses `g:spellfile_URL` if it's set,
-                      otherwise https://ftp.nluug.nl/pub/vim/runtime/spell.
-      • {timeout_ms}  (`integer`, default: 15000) Number of milliseconds after
-                      which the |vim.net.request()| times out.
-      • {confirm}     (`boolean`, default: `true`) Whether to ask user to
-                      confirm download.
+      • {confirm}?     (`boolean`, default: `true`) Whether to ask user to
+                       confirm download.
+      • {timeout_ms}?  (`integer`, default: 15000) Number of milliseconds
+                       after which the |vim.net.request()| times out.
+      • {url}?         (`string`) The base URL from where the spellfiles are
+                       downloaded. Uses `g:spellfile_URL` if it's set,
+                       otherwise https://ftp.nluug.nl/pub/vim/runtime/spell.
 
 
 config({opts})                                            *spellfile.config()*
@@ -225,16 +377,15 @@ get({lang})                                                  *spellfile.get()*
 
     Return: ~
         (`table?`) A table with the following fields:
+        • {dir} (`string`)
+        • {encoding} (`string`)
         • {files} (`string[]`)
         • {key} (`string`)
         • {lang} (`string`)
-        • {encoding} (`string`)
-        • {dir} (`string`)
 
 
 ==============================================================================
 Builtin plugin: tohtml                                        *package-tohtml*
-
 
 :[range]TOhtml {file}                                                *:TOhtml*
 Converts the buffer shown in the current window to HTML, opens the generated
@@ -253,17 +404,17 @@ tohtml({winid}, {opt})                                       *tohtml.tohtml()*
     Parameters: ~
       • {winid}  (`integer?`) Window to convert (defaults to current window)
       • {opt}    (`table?`) Optional parameters.
-                 • {title}? (`string|false`, default: buffer name) Title tag
-                   to set in the generated HTML code.
-                 • {number_lines}? (`boolean`, default: `false`) Show line
-                   numbers.
                  • {font}? (`string[]|string`, default: `guifont`) Fonts to
                    use.
+                 • {number_lines}? (`boolean`, default: `false`) Show line
+                   numbers.
+                 • {range}? (`integer[]`, default: entire buffer) Range of
+                   rows to use.
+                 • {title}? (`string|false`, default: buffer name) Title tag
+                   to set in the generated HTML code.
                  • {width}? (`integer`, default: 'textwidth' if non-zero or
                    window width otherwise) Width used for items which are
                    either right aligned or repeat a character infinitely.
-                 • {range}? (`integer[]`, default: entire buffer) Range of
-                   rows to use.
 
     Return: ~
         (`string[]`)
@@ -287,8 +438,6 @@ open({opts})                                                 *undotree.open()*
       • {opts}  (`table?`) A table with the following fields:
                 • {bufnr} (`integer?`) Buffer to draw the tree into. If
                   omitted, a new buffer is created.
-                • {winid} (`integer?`) Window id to display the tree buffer
-                  in. If omitted, a new window is created with {command}.
                 • {command} (`string?`) Vimscript command to create the
                   window. Default value is "30vnew". Only used when {winid} is
                   nil.
@@ -296,6 +445,8 @@ open({opts})                                                 *undotree.open()*
                   the window. If a function, it accepts the buffer number of
                   the source buffer as its only argument and should return a
                   string.
+                • {winid} (`integer?`) Window id to display the tree buffer
+                  in. If omitted, a new window is created with {command}.
 
     Return: ~
         (`boolean?`) Returns true if the window was already open, nil

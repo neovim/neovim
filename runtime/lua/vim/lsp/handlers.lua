@@ -169,11 +169,6 @@ RSC['client/registerCapability'] = function(_, params, ctx)
         end
       end
     end
-    if reg.method == 'textDocument/diagnostic' then
-      for bufnr in pairs(client.attached_buffers) do
-        vim.lsp.diagnostic._refresh(bufnr, client.id)
-      end
-    end
   end
   return vim.NIL
 end
@@ -519,7 +514,8 @@ end
 --- @overload fun(direction:'to'): fun(_, result: lsp.CallHierarchyOutgoingCall[]?)
 local function make_call_hierarchy_handler(direction)
   --- @param result lsp.CallHierarchyIncomingCall[]|lsp.CallHierarchyOutgoingCall[]
-  return function(_, result)
+  --- @param ctx lsp.HandlerContext
+  return function(_, result, ctx)
     if not result then
       return
     end
@@ -527,9 +523,17 @@ local function make_call_hierarchy_handler(direction)
     for _, call_hierarchy_call in pairs(result) do
       --- @type lsp.CallHierarchyItem
       local call_hierarchy_item = call_hierarchy_call[direction]
+      local filename = nil
+      local bufnr = nil
+      if direction == 'from' then
+        filename = assert(vim.uri_to_fname(call_hierarchy_item.uri))
+      else
+        bufnr = ctx.bufnr
+      end
       for _, range in pairs(call_hierarchy_call.fromRanges) do
         table.insert(items, {
-          filename = assert(vim.uri_to_fname(call_hierarchy_item.uri)),
+          filename = filename,
+          bufnr = bufnr,
           text = call_hierarchy_item.name,
           lnum = range.start.line + 1,
           col = range.start.character + 1,
@@ -565,16 +569,12 @@ local function make_type_hierarchy_handler()
     local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
     local items = {}
     for _, type_hierarchy_item in pairs(result) do
-      local col = util._get_line_byte_from_position(
-        ctx.bufnr,
-        type_hierarchy_item.range.start,
-        client.offset_encoding
-      )
+      local pos = vim.pos.lsp(ctx.bufnr, type_hierarchy_item.range.start, client.offset_encoding)
       table.insert(items, {
         filename = assert(vim.uri_to_fname(type_hierarchy_item.uri)),
         text = format_item(type_hierarchy_item),
-        lnum = type_hierarchy_item.range.start.line + 1,
-        col = col + 1,
+        lnum = pos.row + 1,
+        col = pos.col + 1,
       })
     end
     vim.fn.setqflist({}, ' ', { title = 'LSP type hierarchy', items = items })

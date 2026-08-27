@@ -1,6 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
+local describe, it, before_each = t.describe, t.it, t.before_each
 local uv = vim.uv
 
 local clear, command, testprg = n.clear, n.command, n.testprg
@@ -167,7 +168,7 @@ describe('autocmd TermClose', function()
     end)
     feed('<c-c>')
     n.poke_eventloop() -- Wait for input to be flushed
-    n.expect_exit(1000, feed, ':qa!<cr>')
+    n.expect_exit(n.load_adjust(1000), feed, ':qa!<cr>')
   end)
 
   it('exposes v:event.status', function()

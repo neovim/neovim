@@ -14,13 +14,14 @@ pub fn build(b: *std.Build) !void {
     });
 
     if (b.lazyDependency("unibilium", .{})) |upstream| {
-        lib.addIncludePath(upstream.path(""));
+        var root_module = lib.root_module;
+        root_module.addIncludePath(upstream.path(""));
 
         lib.installHeader(upstream.path("unibilium.h"), "unibilium.h");
 
-        lib.linkLibC();
+        root_module.link_libc = true;
 
-        lib.addCSourceFiles(.{ .root = upstream.path(""), .files = &.{
+        root_module.addCSourceFiles(.{ .root = upstream.path(""), .files = &.{
             "unibilium.c",
             "uninames.c",
             "uniutil.c",

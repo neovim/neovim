@@ -1,8 +1,9 @@
+# NOTE: Also update the find_package() call if bumping the minimum.
 LIBUV_URL https://github.com/libuv/libuv/archive/v1.52.1.tar.gz
 LIBUV_SHA256 478baf2599bfbc882c355288c9cb6f92e0e7dda435fa04031fa5b607cf3f414c
 
-LUAJIT_URL https://github.com/luajit/luajit/archive/18b087cd2cd4ddc4a79782bf155383a689d5093d.tar.gz
-LUAJIT_SHA256 88a592afa9907d6b0c6e1e7ac9b39982622e3ca086f0646d4ea89b0e4e81f093
+LUAJIT_URL https://github.com/luajit/luajit/archive/1ee778a4e37122d8ca7d5733c590a47dafd6b15c.tar.gz
+LUAJIT_SHA256 512cdb23dafa39c6247763ae15f29341734b1596067b067db0c0387bbebc7c55
 
 LUA_URL https://www.lua.org/ftp/lua-5.1.5.tar.gz
 LUA_SHA256 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333
@@ -28,13 +29,18 @@ GETTEXT_SHA256 66415634c6e8c3fa8b71362879ec7575e27da43da562c798a8a2f223e6e47f5c
 LIBICONV_URL https://github.com/neovim/deps/raw/b9bf36eb31f27e8136d907da38fa23518927737e/opt/libiconv-1.17.tar.gz
 LIBICONV_SHA256 8f74213b56238c85a50a5329f77e06198771e70dd9a739779f4c02f65d971313
 
+# NOTE: Also update the find_package() call if bumping the minimum.
 UTF8PROC_URL https://github.com/juliastrings/utf8proc/archive/v2.11.3.tar.gz
 UTF8PROC_SHA256 abfed50b6d4da51345713661370290f4f4747263ee73dc90356299dfc7990c78
 
-TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/v0.24.1.tar.gz
-TREESITTER_C_SHA256 25dd4bb3dec770769a407e0fc803f424ce02c494a56ce95fedc525316dcf9b48
+TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/v0.24.2.tar.gz
+TREESITTER_C_SHA256 2eeb4db31f8fa0865e45488503d13403923bcb485a1bdb637abff8c42dd97364
+TREESITTER_DIFF_URL https://github.com/tree-sitter-grammars/tree-sitter-diff/archive/v0.2.0.tar.gz
+TREESITTER_DIFF_SHA256 6092f7fd11e186d96d3c130fdbe8d03cfc426ee9cc62cf4a2112571b1b0372e6
 TREESITTER_LUA_URL https://github.com/tree-sitter-grammars/tree-sitter-lua/archive/v0.5.0.tar.gz
 TREESITTER_LUA_SHA256 cf01b93f4b61b96a6d27942cf28eeda4cbce7d503c3bef773a8930b3d778a2d9
+TREESITTER_LUA_WASM_URL https://github.com/tree-sitter-grammars/tree-sitter-lua/releases/download/v0.5.0/tree-sitter-lua.wasm
+TREESITTER_LUA_WASM_SHA256 df08a1704e504c70b8dba4a3e6f8e0c99a4fb94e1b1693d2969f53141d09f0d4
 TREESITTER_VIM_URL https://github.com/tree-sitter-grammars/tree-sitter-vim/archive/v0.8.1.tar.gz
 TREESITTER_VIM_SHA256 93cafb9a0269420362454ace725a118ff1c3e08dcdfdc228aa86334b54d53c2a
 TREESITTER_VIMDOC_URL https://github.com/neovim/tree-sitter-vimdoc/archive/v4.1.0.tar.gz
@@ -43,11 +49,12 @@ TREESITTER_QUERY_URL https://github.com/tree-sitter-grammars/tree-sitter-query/a
 TREESITTER_QUERY_SHA256 c2b23b9a54cffcc999ded4a5d3949daf338bebb7945dece229f832332e6e6a7d
 TREESITTER_MARKDOWN_URL https://github.com/tree-sitter-grammars/tree-sitter-markdown/archive/v0.5.3.tar.gz
 TREESITTER_MARKDOWN_SHA256 df845b1ab7c7c163ec57d7fa17170c92b04be199bddab02523636efec5224ab6
-TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/64698af1ac6abb97f5a548cfbaf6e88bca2d8782.tar.gz
-TREESITTER_SHA256 3ad608d1e30321615e2d6bb3907fbfe65c0c58cf74e8041813ca8a7d8dcf6714
+TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/baad4174e551e527bde1b069f4b41082e4abd085.tar.gz
+TREESITTER_SHA256 c0be83fb7104bef61ba75536dc47b1ebfb84170f9a0ae9bd3ce03612d063b476
 
-WASMTIME_URL https://github.com/bytecodealliance/wasmtime/archive/v36.0.6.tar.gz
-WASMTIME_SHA256 c4a3c596a07c02ba6adce503154a2095fd98037a1e50d56add9773f0269ec9b7
+# NOTE: Also update the find_package() call if bumping the minimum.
+WASMTIME_URL https://github.com/bytecodealliance/wasmtime/archive/v48.0.0.tar.gz
+WASMTIME_SHA256 f12b78b32d09d9c2ec005849f223f8e38d4a18307d3ef8f164380f1ea14ecca8
 
-UNCRUSTIFY_URL https://github.com/uncrustify/uncrustify/archive/uncrustify-0.82.0.tar.gz
-UNCRUSTIFY_SHA256 e05f8d5ee36aaa1acfa032fe97546b7be46b1f4620e7c38037f8a42e25fe676f
+UNCRUSTIFY_URL https://github.com/uncrustify/uncrustify/archive/uncrustify-0.83.0.tar.gz
+UNCRUSTIFY_SHA256 1d4d3ab3a991c66eb24cb0a3e690573b4882fd98bc6ec64a01c283998c20dc87

@@ -1,6 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear, eq, neq, eval = n.clear, t.eq, t.neq, n.eval
 local api = n.api
 local curbuf = n.api.nvim_get_current_buf

@@ -3,7 +3,7 @@ local M = {}
 local health = vim.health
 
 local function get_lockfile_path()
-  return vim.fs.joinpath(vim.fn.stdpath('config'), 'nvim-pack-lock.json')
+  return vim.pack._plugin_lock_path or vim.go.packlockfile
 end
 
 local function get_plug_dir()
@@ -159,7 +159,8 @@ end
 local function check_lockfile()
   health.start('vim.pack: lockfile')
 
-  local can_read, text = pcall(vim.fn.readblob, get_lockfile_path())
+  local path = get_lockfile_path()
+  local can_read, text = pcall(vim.fn.readblob, path)
   if not can_read then
     health.error('Could not read lockfile. Delete it and restart Nvim.')
     return
@@ -177,6 +178,18 @@ local function check_lockfile()
   end
 
   local is_good = true
+  if path ~= vim.go.packlockfile then
+    health.warn(
+      "Lockfile path is not the same as 'packlockfile' option value. "
+        .. "Set 'packlockfile' before the first usage of `vim.pack` function."
+    )
+    is_good = false
+  end
+  if path ~= vim.fs.abspath(path) then
+    health.warn('Lockfile path is not absolute. Make sure that this is intentional.')
+    is_good = false
+  end
+
   --- @cast data { plugins: table<string,table> }
   for plug_name, lock_data in pairs(data.plugins) do
     is_good = check_plugin_lock_data(plug_name, lock_data) and is_good
@@ -185,6 +198,44 @@ local function check_lockfile()
   if is_good then
     health.ok('')
   end
+end
+
+--- @param manifest vim.pack.Manifest
+local function check_manifest(manifest, plug_name, plug_path)
+  local name_str = vim.inspect(plug_name)
+  if vim.tbl_count(manifest) == 0 then
+    health.warn(('Plugin %s has empty or malformed manifest file'):format(name_str))
+    return false
+  end
+
+  local nvim_engine = (manifest.engines or {}).nvim or '*'
+  local ok_version, nvim_version_range = pcall(vim.version.range, nvim_engine)
+  if not ok_version then
+    health.warn(('Plugin %s has malformed `engines.nvim` in manifest file'):format(name_str))
+    return false
+  end
+  --- @cast nvim_version_range vim.VersionRange
+  if not nvim_version_range:has(vim.version()) then
+    health.warn(
+      ('Plugin %s Nvim version requirement %s'):format(name_str, tostring(nvim_version_range))
+        .. (' does not match current version %s'):format(tostring(vim.version()))
+    )
+    return false
+  end
+
+  local ok_scripts = true
+  ---@diagnostic disable-next-line: no-unknown
+  for name, script_path in pairs(manifest.scripts or {}) do
+    if vim.fn.filereadable(vim.fs.joinpath(plug_path, script_path)) == 0 then
+      health.warn(('Plugin %s has no %s script at %s path'):format(name_str, name, script_path))
+      ok_scripts = false
+    end
+  end
+  if not ok_scripts then
+    return false
+  end
+
+  return true
 end
 
 --- @return boolean Whether a check is successful
@@ -235,6 +286,11 @@ local function check_installed_plugin(plug_name)
     )
   end
 
+  -- Manifest
+  if info[1].manifest then
+    return check_manifest(info[1].manifest, plug_name, plug_path)
+  end
+
   return true
 end
 
@@ -243,8 +299,13 @@ local function check_plug_dir()
 
   local is_good = true
   local plug_dir = get_plug_dir()
-  for plug_name, _ in vim.fs.dir(plug_dir) do
-    is_good = check_installed_plugin(plug_name) and is_good
+  for plug_name, _, err in vim.fs.dir(plug_dir, { err = true }) do
+    if err then
+      health.error(err)
+      is_good = false
+    else
+      is_good = check_installed_plugin(plug_name) and is_good
+    end
   end
 
   if is_good then

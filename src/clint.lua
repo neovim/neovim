@@ -1088,6 +1088,20 @@ local function check_language(filename, clean_lines, linenum, error)
     )
   end
 
+  -- Check for strtol: it silently overflows/truncates and needs error-prone boilerplate.
+  -- TODO: also flag atoi, atol, atoll, strtoul, strtoll, strtoull.
+  local strtol_regex = vim.regex([[\<strtol\>]])
+  if strtol_regex:match_str(line) then
+    error(
+      filename,
+      linenum,
+      'runtime/deprecated',
+      4,
+      'Use getdigits()/getdigits_int() (or vim_str2nr() for non-decimal bases) instead of strtol, '
+        .. 'which overflows silently. See src/nvim/charset.c.'
+    )
+  end
+
   -- Check for memset with wrong argument order: memset(buf, sizeof(buf), 0)
   -- Pattern: memset(arg1, arg2, 0) where arg2 is NOT a valid fill value
   local memset_start = line:find('memset%s*%([^)]*,%s*[^,]*,%s*0%s*%)')

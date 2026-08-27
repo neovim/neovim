@@ -126,6 +126,8 @@ func RunServer(cmd, testfunc, args)
     endif
 
     call call(function(a:testfunc), [port])
+  catch /E901.*Address family for hostname not supported/
+    throw 'Skipped: Invalid network setup ("' .. v:exception .. '" in ' .. v:throwpoint .. ')'
   catch
     call assert_report('Caught exception: "' . v:exception . '" in ' . v:throwpoint)
   finally
@@ -351,7 +353,7 @@ func RunVimPiped(before, after, arguments, pipecmd)
 
   let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'
   " Nvim does not support -Z flag, remove it.
-  exe "silent !" . a:pipecmd . cmd . args . ' ' . a:arguments->substitute('-Z', '', 'g')
+  exe "silent !" .. a:pipecmd .. ' ' ..  cmd .. args .. ' ' .. a:arguments->substitute('-Z', '', 'g')
 
   if len(a:before) > 0
     call delete('Xbefore.vim')

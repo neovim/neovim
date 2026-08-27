@@ -1,9 +1,11 @@
 local t = require('test.testutil')
+local describe, it, before_each, after_each, pending =
+  t.describe, t.it, t.before_each, t.after_each, t.pending
+local pcall_err = t.pcall_err
 local n = require('test.functional.testnvim')()
 
 local clear, source = n.clear, n.source
 local eq, eval, command = t.eq, n.eval, n.command
-local exc_exec = n.exc_exec
 
 describe('Test for delete()', function()
   before_each(clear)
@@ -64,7 +66,7 @@ describe('Test for delete()', function()
   end)
 
   it('gives correct emsgs', function()
-    eq('Vim(call):E474: Invalid argument', exc_exec("call delete('')"))
-    eq('Vim(call):E15: Invalid expression: "0"', exc_exec("call delete('foo', 0)"))
+    eq('Vim(call):E474: Invalid argument', pcall_err(command, "call delete('')"))
+    eq('Vim(call):E15: Invalid expression: "0"', pcall_err(command, "call delete('foo', 0)"))
   end)
 end)

@@ -1,12 +1,15 @@
 -- ShaDa marks saving/reading support
 local t = require('test.testutil')
+local describe, it, before_each, after_each = t.describe, t.it, t.before_each, t.after_each
+local pcall_err = t.pcall_err
 local n = require('test.functional.testnvim')()
 local t_shada = require('test.functional.shada.testutil')
 
 local api, nvim_command, fn, eq = n.api, n.command, n.fn, t.eq
 local feed = n.feed
-local exc_exec, exec_capture = n.exc_exec, n.exec_capture
+local exec_capture = n.exec_capture
 local expect_exit = n.expect_exit
+local command = n.command
 
 local reset, clear = t_shada.reset, t_shada.clear
 
@@ -143,8 +146,8 @@ describe('ShaDa support code', function()
     nvim_command('wshada')
     reset()
     nvim_command('language C')
-    eq('Vim(normal):E20: Mark not set', exc_exec('normal! `A'))
-    eq('Vim(normal):E20: Mark not set', exc_exec('normal! `0'))
+    eq('Vim(normal):E20: Mark not set', pcall_err(command, 'normal! `A'))
+    eq('Vim(normal):E20: Mark not set', pcall_err(command, 'normal! `0'))
   end)
 
   it("restores global and numbered marks even with `'0` and `f0` in shada", function()
@@ -184,6 +187,17 @@ describe('ShaDa support code', function()
     reset()
     nvim_command('edit ' .. testfilename)
     nvim_command('normal! `"')
+    eq(2, nvim_current_line())
+  end)
+
+  it("is able to dump, read back local mark and use `]'`", function()
+    nvim_command('edit ' .. testfilename)
+    nvim_command('2')
+    nvim_command('mark a')
+    expect_exit(nvim_command, 'qall')
+    reset({ args = { testfilename } })
+    eq(1, nvim_current_line())
+    nvim_command("normal! ]'")
     eq(2, nvim_current_line())
   end)
 
@@ -351,7 +365,7 @@ describe('ShaDa support code', function()
     }
     eq('', p:output())
     eq(0, p.status)
-    eq(0, exc_exec('rshada'))
+    command('rshada')
   end)
 
   it('does not create incorrect file for non-existent buffers opened from -c', function()
@@ -371,7 +385,7 @@ describe('ShaDa support code', function()
     }
     eq('', p:output())
     eq(0, p.status)
-    eq(0, exc_exec('rshada'))
+    command('rshada')
   end)
 
   it('updates deleted marks with :delmarks', function()
@@ -392,9 +406,9 @@ describe('ShaDa support code', function()
 
     reset()
     nvim_command('edit ' .. testfilename)
-    eq('Vim(normal):E20: Mark not set', exc_exec('normal! `A'))
-    eq('Vim(normal):E20: Mark not set', exc_exec('normal! `a'))
-    eq('Vim(normal):E20: Mark not set', exc_exec('normal! `.'))
+    eq('Vim(normal):E20: Mark not set', pcall_err(command, 'normal! `A'))
+    eq('Vim(normal):E20: Mark not set', pcall_err(command, 'normal! `a'))
+    eq('Vim(normal):E20: Mark not set', pcall_err(command, 'normal! `.'))
   end)
 
   it('updates deleted marks with :delmarks!', function()
@@ -413,8 +427,8 @@ describe('ShaDa support code', function()
 
     reset()
     nvim_command('edit ' .. testfilename)
-    eq('Vim(normal):E20: Mark not set', exc_exec('normal! `a'))
-    eq('Vim(normal):E20: Mark not set', exc_exec('normal! `.'))
+    eq('Vim(normal):E20: Mark not set', pcall_err(command, 'normal! `a'))
+    eq('Vim(normal):E20: Mark not set', pcall_err(command, 'normal! `.'))
     -- Make sure that uppercase marks aren't deleted.
     nvim_command('normal! `A')
   end)

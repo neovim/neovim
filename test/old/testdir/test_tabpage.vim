@@ -711,6 +711,7 @@ endfunc
 
 " Test for closing the tab page from a command window
 func Test_tabpage_close_cmdwin()
+  throw 'Skipped: Nvim supports cmdwin freedom #40312'
   tabnew
   call feedkeys("q/:tabclose\<CR>\<Esc>", 'xt')
   call assert_equal(2, tabpagenr('$'))
@@ -940,6 +941,23 @@ func Test_lastused_tabpage()
   tabmove #
   call assert_equal(4, tabpagenr())
   call assert_equal(wnum, win_getid())
+
+  tabonly!
+endfunc
+
+" Closing a tab page must keep the last used tab page when it is another one.
+func Test_lastused_tabpage_close()
+  tabonly!
+  tabnew
+  tabnew
+  tabfirst
+  tablast
+  call assert_equal(1, tabpagenr('#'))
+
+  tabclose
+  call assert_equal(1, tabpagenr('#'))
+  call feedkeys("g\<Tab>", "xt")
+  call assert_equal(1, tabpagenr())
 
   tabonly!
 endfunc

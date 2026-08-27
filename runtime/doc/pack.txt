@@ -220,14 +220,15 @@ is assumed that all plugins in the directory are managed exclusively by
 
 Uses Git to manage plugins and requires present `git` executable. Target
 plugins should be Git repositories with versions as named tags following
-semver convention `v<major>.<minor>.<patch>`.
+semver convention `v<major>.<minor>.<patch>` (with or without `v` prefix).
+Like `v1.2.0` or `1.2.0`, but not `1.2` or `v1`.
 
 The latest state of all managed plugins is stored inside a *vim.pack-lockfile*
-located at `$XDG_CONFIG_HOME/nvim/nvim-pack-lock.json`. It is a JSON file that
-is used to persistently track data about plugins. For a more robust config
-treat lockfile like its part: put under version control, etc. In this case all
-plugins from the lockfile will be installed at once and at lockfile's revision
-(instead of inferring from `version`). This is done on the very first
+located at |'packlockfile'|. It is a JSON file that is used to persistently
+track data about plugins. For a more robust config treat lockfile like its
+part: put under version control, etc. In this case all plugins from the
+lockfile will be installed at once (in alphabetical order) and at lockfile's
+revision (instead of inferring from `version`). This is done on the very first
 `vim.pack` function call to ensure that lockfile is aligned with what is
 actually on the disk. Lockfile should not be edited by hand. Corrupted data
 for installed plugins is repaired (including after deleting whole file), but
@@ -269,8 +270,8 @@ Basic install and management ~
   installed will be available on disk after `add()` call. Their revision is
   taken from |vim.pack-lockfile| (if present) or inferred from the `version`.
 • To update all plugins with new changes:
-  • Execute |vim.pack.update()|. This will download updates from source and
-    show confirmation buffer in a separate tabpage.
+  • Execute |:packupdate|. This will download updates from source and show
+    confirmation buffer in a separate tabpage.
   • Review changes. To confirm all updates execute |:write|. To discard
     updates execute |:quit|.
   • (Optionally) |:restart| to start using code from updated plugins.
@@ -292,7 +293,7 @@ Another approach is to utilize Git's `insteadOf` configuration:
   config on different machine will require the same Git configuration.
 
 Explore installed plugins ~
-• `vim.pack.update(nil, { offline = true })`
+• `:packupdate ++offline`
 • Navigate between plugins with `[[` and `]]`. List them with `gO`
   (|vim.lsp.buf.document_symbol()|).
 
@@ -301,11 +302,11 @@ Switch plugin's version and/or source ~
   say, the switch is for plugin named 'plugin1'.
 • |:restart|. The plugin's state on disk (revision and/or tracked source) is
   not yet changed. Only plugin's `version` in |vim.pack-lockfile| is updated.
-• Execute `vim.pack.update({ 'plugin1' })`. The plugin's source is updated. If
-  only switching version, use `{ offline = true }` option table.
+• Execute `:packupdate plugin1`. The plugin's source is updated. If only
+  switching version, also pass the `++offline` argument.
 • Review changes and either confirm or discard them. If discarded, revert
   `version` change in 'init.lua' as well or you will be prompted again next
-  time you run |vim.pack.update()|.
+  time you run `:packupdate`.
 
 Freeze plugin from being updated ~
 • Update 'init.lua' for plugin to have `version` set to current revision. Get
@@ -324,8 +325,7 @@ Revert plugin after an update ~
     |standard-path|), locate the revisions before the latest update, and
     (carefully) adjust current lockfile to have those revisions.
 • |:restart|.
-• `vim.pack.update({ 'plugin' }, { offline = true, target = 'lockfile' })`.
-  Read and confirm.
+• `:packupdate ++offline ++lockfile plugin`. Read and confirm.
 
 Synchronize config across machines ~
 • On main machine:
@@ -337,29 +337,56 @@ Synchronize config across machines ~
     are installed at proper revision. If some installation has failed but you
     know it should not (like due to bad Internet connection), revert
     |vim.pack-lockfile| and |:restart| again.
-  • `vim.pack.update(nil, { target = 'lockfile' })`. Read and confirm.
+  • `:packupdate ++lockfile`. Read and confirm.
   • Manually delete outdated plugins (present locally, but were not present in
-    the lockfile prior to restart) with `vim.pack.del( { 'plugin' })`. They
-    can be located by examining the VCS difference of the lockfile
+    the lockfile prior to restart) with `:packdel plugin`. They can be located
+    by examining the VCS difference of the lockfile
     (`git diff -- nvim-pack-lock.json` for Git).
 
 Remove plugins from disk ~
 • Remove plugin specs from |vim.pack.add()| calls in 'init.lua' or they will
   be reinstalled later.
 • |:restart|.
-• Use |vim.pack.del()| with a list of plugin names to remove. Use
-  |vim.pack.get()| to get all non-active plugins: >lua
-    vim.iter(vim.pack.get())
-     :filter(function(x) return not x.active end)
-     :map(function(x) return x.spec.name end)
-     :totable()
-<
+• Use |:packdel| with plugin names to remove. Use `:packdel ++all` to delete
+  all inactive plugins.
+
+Check for pending updates ~
+• Run `vim.pack.get(nil, { offline = false })` and check the output for items
+  with different `rev` and `rev_to` fields. To not download new updates from
+  source, use plain `vim.pack.get()`.
+
+Commands                                             *vim.pack-commands* *E5807*
+
+                                                    *:packu* *:packupdate* *E5808*
+:packu[pdate][!] [++offline] [++lockfile] [name]
+
+    Interactively update the specified plugins. Skips confirmation when `!` is
+    given. If no plugin names are provided, update all plugins.
+
+    When `++offline` is given, skip downloading new updates.
+
+    When `++lockfile` is given, use revisions from the lockfile.
+
+                                           *:packd* *:packdel* *E5809* *E5810* *E5811*
+:packd[el][!] {name}
+
+    Remove the specified plugins. Can only remove inactive plugins unless `!`
+    is given.
+
+:packd[el][!] ++all
+
+    Remove all inactive plugins. When `!` is given, instead remove all plugins.
 
                                                              *vim.pack-events*
 
 Performing actions via `vim.pack` functions can trigger these events:
 • *PackChangedPre* - before trying to change plugin's state.
 • *PackChanged* - after plugin's state has changed.
+
+Events are triggered in bulk respecting order of plugins in which they are
+supplied. First all `PackChangedPre`, then perform all actions, and only after
+- all `PackChanged` for successful actions. This provides more control for
+connected plugins, like by specifying dependencies before the plugin itself.
 
 The |event-data| has these keys (type: `vim.event.packchanged.data`):
 • `active` - whether plugin was added via |vim.pack.add()| to current session.
@@ -396,14 +423,65 @@ These events can be used to execute plugin hooks. For example: >lua
     vim.api.nvim_create_autocmd('PackChanged', { callback = hooks })
 <
 
+                                                           *vim.pack-manifest*
+
+Plugins can come with a special top level `pkg.json` manifest file with extra
+information. If present, `vim.pack` uses it for improved user experience:
+• Apply |:source| for scripts after triggering corresponding
+  |vim.pack-events|. This allows plugins to define hooks that will be executed
+  during plugin's lifetime. Sourcing is done with special context:
+  • The |current-directory| is temporarily set to plugin's root (to make it
+    easier to run |vim.system()| commands).
+  • Plugin's path is temporarily ensured to be inside |'runtimepath'| (so
+    script can use |require()| with plugin's module, possibly with explicit
+    |package.loaded| reset inside `"update"` scripts).
+• Running |:checkhealth| for `vim.pack` will perform extra checks to ensure
+  healthy plugin installation.
+
+Full specification see at https://packspec.org/. See also |vim.pack.Manifest|.
+A simple example: >json
+    {
+     "name": "best-plugin.nvim",
+     "description": "The best plugin for Neovim",
+     "engines": {
+         "nvim": ">=0.13.0",
+         "vim": ">=9.1.0"
+     },
+     "scripts": {
+       "install": "scripts/install.lua",
+       "preupdate": "scripts/preupdate.vim",
+       "update": "scripts/update.vim",
+       "preuninstall": "scripts/preuninstall.lua"
+     }
+    }
+<
+
+
+*vim.pack.Manifest*
+
+    Fields: ~
+      • {description}?  (`string`) Plugin description
+      • {engines}?      (`table`) Supported engine versions. Values should be
+                        |vim.version.range()| compatible specs.
+                        • {nvim}? (`string`) Version range for Nvim.
+                        • {vim}? (`string`) Version range for Vim.
+      • {name}?         (`string`) Plugin name
+      • {scripts}?      (`table`) Script locations (relative to plugin's root)
+                        to |:source| after triggering corresponding
+                        |vim.pack-events|.
+                        • {install}? (`string`) Post install script.
+                        • {preuninstall}? (`string`) Pre delete script.
+                        • {preupdate}? (`string`) Pre update script.
+                        • {update}? (`string`) Post update script.
 
 *vim.pack.Spec*
 
     Fields: ~
-      • {src}       (`string`) URI from which to install and pull updates. Any
-                    format supported by `git clone` is allowed.
+      • {data}?     (`any`) Arbitrary data associated with a plugin.
       • {name}?     (`string`) Name of plugin. Will be used as directory name.
                     Default: `src` repository name.
+      • {src}       (`string`) URI from which to install and pull updates. Any
+                    format supported by `git clone` is allowed.
       • {version}?  (`string|vim.VersionRange`) Version to use for install and
                     updates. Can be:
                     • `nil` (no value, default) to use repository's default
@@ -411,7 +489,6 @@ These events can be used to execute plugin hooks. For example: >lua
                     • String to use specific branch, tag, or commit hash.
                     • Output of |vim.version.range()| to install the
                       greatest/last semver tag inside the version constraint.
-      • {data}?     (`any`) Arbitrary data associated with a plugin.
 
 
 add({specs}, {opts})                                          *vim.pack.add()*
@@ -441,14 +518,14 @@ add({specs}, {opts})                                          *vim.pack.add()*
       • {specs}  (`(string|vim.pack.Spec)[]`) List of plugin specifications.
                  String item is treated as `src`.
       • {opts}   (`table?`) A table with the following fields:
+                 • {confirm}? (`boolean`) Whether to ask user to confirm
+                   initial install. Default `true`.
                  • {load}?
                    (`boolean|fun(plug_data: {spec: vim.pack.Spec, path: string})`)
                    Load `plugin/` files and `ftdetect/` scripts. If `false`,
                    works like `:packadd!`. If function, called with plugin
                    data and is fully responsible for loading plugin. Default
                    `false` during |init.lua| sourcing and `true` afterwards.
-                 • {confirm}? (`boolean`) Whether to ask user to confirm
-                   initial install. Default `true`.
 
 del({names}, {opts})                                          *vim.pack.del()*
     Remove plugins from disk
@@ -468,8 +545,10 @@ get({names}, {opts})                                          *vim.pack.get()*
       • {names}  (`string[]?`) List of plugin names. Default: all plugins
                  managed by |vim.pack|.
       • {opts}   (`table?`) A table with the following fields:
-                 • {info} (`boolean`) Whether to include extra plugin info.
+                 • {info}? (`boolean`) Whether to include extra plugin info.
                    Default `true`.
+                 • {offline}? (`boolean`) Whether to skip downloading new
+                   updates. Requires `info=true`. Default: `true`.
 
     Return: ~
         (`table[]`) A list of objects with the following fields:
@@ -477,8 +556,15 @@ get({names}, {opts})                                          *vim.pack.get()*
           to current session.
         • {branches}? (`string[]`) Available Git branches (first is default).
           Missing if `info=false`.
+        • {manifest}? (`vim.pack.Manifest`) Data from the |vim.pack-manifest|.
+          Empty in case of reading error. Missing if `info=false`. See
+          |vim.pack.Manifest|.
         • {path} (`string`) Plugin's path on disk.
-        • {rev} (`string`) Current Git revision.
+        • {rev} (`string`) Current Git revision. Taken from
+          |vim.pack-lockfile| if `info=false`.
+        • {rev_to}? (`string`) Git revision of a pending update. The same as
+          used during |vim.pack.update()| and which points to a resolved
+          `spec.version`. Missing if `info=false`.
         • {spec} (`vim.pack.SpecResolved`) A |vim.pack.Spec| with resolved
           `name`.
         • {tags}? (`string[]`) Available Git tags. Missing if `info=false`.
@@ -509,6 +595,9 @@ update({names}, {opts})                                    *vim.pack.update()*
     • |]]| and |[[| to navigate through plugin sections.
 
     Some features are provided via LSP:
+    • 'textDocument/documentLink' - compute links for plugin paths, sources,
+      commits, and tags. Makes a best effort educated guess about a link
+      structure. Use |gx| to open a link to an object at cursor.
     • 'textDocument/documentSymbol' (`gO` via |lsp-defaults| or
       |vim.lsp.buf.document_symbol()|) - show structure of the buffer.
     • 'textDocument/hover' (`K` via |lsp-defaults| or |vim.lsp.buf.hover()|) -
@@ -516,8 +605,8 @@ update({names}, {opts})                                    *vim.pack.update()*
       change or newer tag.
     • 'textDocument/codeAction' (`gra` via |lsp-defaults| or
       |vim.lsp.buf.code_action()|) - show code actions relevant for "plugin at
-      cursor". Like "delete" (if plugin is not active), "update" or "skip
-      updating" (if there are pending updates).
+      cursor". Like "delete" (after extra confirmation for active plugins),
+      "update" or "skip updating" (if there are pending updates).
 
     Parameters: ~
       • {names}  (`string[]?`) List of plugin names to update. Must be managed

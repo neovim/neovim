@@ -3,6 +3,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local t_shada = require('test.functional.shada.testutil')
 
+local describe, it, after_each = t.describe, t.it, t.after_each
 local nvim_command, fn, eq, api = n.command, n.fn, t.eq, n.api
 local expect_exit = n.expect_exit
 
@@ -103,5 +104,28 @@ describe('shada support code', function()
     local oldfiles = api.nvim_get_vvar('oldfiles')
     eq(1, #oldfiles)
     t.matches(vim.pesc(testfilename_2), oldfiles[1])
+  end)
+
+  it("saves bdelete'd buffer to v:oldfiles #39010", function()
+    reset("set shada='100")
+    nvim_command('edit ' .. testfilename)
+    nvim_command('bdelete')
+    nvim_command('edit ' .. testfilename_2)
+    expect_exit(nvim_command, 'qall')
+    reset("set shada='100")
+    local oldfiles = api.nvim_get_vvar('oldfiles')
+    eq(2, #oldfiles)
+  end)
+
+  it("does not dump bdelete'd buffer to buffer list", function()
+    reset('set shada+=%')
+    nvim_command('edit ' .. testfilename)
+    nvim_command('edit ' .. testfilename_2)
+    nvim_command('bdelete ' .. testfilename)
+    expect_exit(nvim_command, 'qall')
+    reset('set shada+=%')
+    eq(2, fn.bufnr('$'))
+    eq('', fn.bufname(1))
+    eq(testfilename_2, fn.bufname(2))
   end)
 end)

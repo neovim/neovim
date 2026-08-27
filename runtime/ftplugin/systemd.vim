@@ -7,7 +7,7 @@ if exists("b:did_ftplugin")
   finish
 endif
 " Looks a lot like dosini files.
-runtime! ftplugin/dosini.vim
+runtime! ftplugin/dosini[.]{vim,lua}
 
 if has('unix') && executable('less') && exists(':terminal') == 2
   command! -buffer -nargs=1 SystemdKeywordPrg silent exe 'term ++close ' KeywordLookup_systemd(<q-args>)

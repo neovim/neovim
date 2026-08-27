@@ -1,57 +1,17 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear = n.clear
 local exec_lua = n.exec_lua
 local eq = t.eq
-
-local function system_sync(cmd, opts)
-  return exec_lua(function()
-    local obj = vim.system(cmd, opts)
-
-    if opts and opts.timeout then
-      -- Minor delay before calling wait() so the timeout uv timer can have a headstart over the
-      -- internal call to vim.wait() in wait().
-      vim.wait(10)
-    end
-
-    local res = obj:wait()
-
-    -- Check the process is no longer running
-    assert(not vim.api.nvim_get_proc(obj.pid), 'process still exists')
-
-    return res
-  end)
-end
-
-local function system_async(cmd, opts)
-  return exec_lua(function()
-    local done = false
-    local res --- @type vim.SystemCompleted?
-    local obj = vim.system(cmd, opts, function(obj)
-      done = true
-      res = obj
-    end)
-
-    local ok = vim.wait(10000, function()
-      return done
-    end)
-
-    assert(ok, 'process did not exit')
-
-    -- Check the process is no longer running
-    assert(not vim.api.nvim_get_proc(obj.pid), 'process still exists')
-
-    return res
-  end)
-end
 
 describe('vim.system', function()
   before_each(function()
     clear()
   end)
 
-  for name, system in pairs { sync = system_sync, async = system_async } do
+  for name, system in pairs { sync = n.system_sync, async = n.system_async } do
     describe('(' .. name .. ')', function()
       it('failure modes', function()
         t.matches(
@@ -71,6 +31,17 @@ describe('vim.system', function()
 
       it('handle input', function()
         eq('hellocat', system({ 'cat' }, { stdin = 'hellocat', text = true }).stdout)
+      end)
+
+      it('uses real pipes for stdin/stdout #35984', function()
+        if t.is_os('win') then
+          return -- Not applicable for Windows.
+        end
+        local res = system(
+          { 'bash', '-c', 'wc /dev/stdin > /dev/stdout' },
+          { stdin = 'pipe\npipy text\n' }
+        )
+        eq({ '2', '3', '15', '/dev/stdin' }, vim.split(res.stdout, '%s+', { trimempty = true }))
       end)
 
       it('can set environment', function()
@@ -157,14 +128,25 @@ describe('vim.system', function()
   if t.is_os('win') then
     it('can resolve windows command extensions', function()
       t.write_file('test.bat', 'echo hello world')
-      system_sync({ 'chmod', '+x', 'test.bat' })
-      system_sync({ './test' })
+      n.system_sync({ 'chmod', '+x', 'test.bat' })
+      n.system_sync({ './test' })
+    end)
+
+    it('launches cmd.exe when shellslash is set', function()
+      n.command('set shellslash')
+      local path = exec_lua([[return vim.fn.exepath('cmd.exe')]])
+      t.neq(nil, path:find('/', 1, true))
+
+      local result = n.system_sync({ 'cmd.exe', '/c', 'echo OK' })
+      eq(0, result.code)
+      eq('OK\r\n', result.stdout)
+      eq('', result.stderr)
     end)
   end
 
   it('always captures all content of stdout/stderr #30846', function()
-    t.skip(n.fn.executable('git') == 0, 'missing "git" command')
-    t.skip(n.fn.isdirectory('.git') == 0, 'missing ".git" directory')
+    t.skip(n.fn.executable('git') == 0, 'N/A: missing "git" command')
+    t.skip(n.fn.isdirectory('.git') == 0, 'N/A: missing ".git" directory')
     eq(
       0,
       exec_lua(function()

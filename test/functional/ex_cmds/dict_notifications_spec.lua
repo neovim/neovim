@@ -1,13 +1,13 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, before_each, after_each = t.describe, t.it, t.before_each, t.after_each
 local assert_alive = n.assert_alive
 local clear, source = n.clear, n.source
 local api = n.api
 local insert = n.insert
 local eq, next_msg = t.eq, n.next_msg
 local matches = t.matches
-local exc_exec = n.exc_exec
 local exec_lua = n.exec_lua
 local command = n.command
 local eval = n.eval
@@ -321,7 +321,7 @@ describe('Vimscript dictionary notifications', function()
     ]])
     eq(
       'Vim(call):E46: Cannot change read-only variable "dictwatcheradd() argument"',
-      exc_exec('call dictwatcheradd(v:_null_dict, "x", "g:Watcher1")')
+      pcall_err(command, 'call dictwatcheradd(v:_null_dict, "x", "g:Watcher1")')
     )
   end)
 
@@ -341,14 +341,14 @@ describe('Vimscript dictionary notifications', function()
     it('fails to remove if no watcher with matching callback is found', function()
       eq(
         "Vim(call):Couldn't find a watcher matching key and callback",
-        exc_exec('call dictwatcherdel(g:, "key", "g:Watcher1")')
+        pcall_err(command, 'call dictwatcherdel(g:, "key", "g:Watcher1")')
       )
     end)
 
     it('fails to remove if no watcher with matching key is found', function()
       eq(
         "Vim(call):Couldn't find a watcher matching key and callback",
-        exc_exec('call dictwatcherdel(g:, "invalid_key", "g:Watcher2")')
+        pcall_err(command, 'call dictwatcherdel(g:, "invalid_key", "g:Watcher2")')
       )
     end)
 
@@ -360,16 +360,16 @@ describe('Vimscript dictionary notifications', function()
     it('fails to remove watcher from v:_null_dict', function()
       eq(
         "Vim(call):Couldn't find a watcher matching key and callback",
-        exc_exec('call dictwatcherdel(v:_null_dict, "x", "g:Watcher2")')
+        pcall_err(command, 'call dictwatcherdel(v:_null_dict, "x", "g:Watcher2")')
       )
     end)
 
     --[[
        [ it("fails to add/remove if the callback doesn't exist", function()
        [   eq("Vim(call):Function g:InvalidCb doesn't exist",
-       [     exc_exec('call dictwatcheradd(g:, "key", "g:InvalidCb")'))
+       [     pcall_err(command, 'call dictwatcheradd(g:, "key", "g:InvalidCb")'))
        [   eq("Vim(call):Function g:InvalidCb doesn't exist",
-       [     exc_exec('call dictwatcherdel(g:, "key", "g:InvalidCb")'))
+       [     pcall_err(command, 'call dictwatcherdel(g:, "key", "g:InvalidCb")'))
        [ end)
        ]]
 

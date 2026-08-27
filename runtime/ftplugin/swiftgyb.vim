@@ -8,4 +8,4 @@
 "
 " Vim maintainer: Emir SARI <bitigchi@me.com>
 
-runtime! ftplugin/swift.vim
+runtime! ftplugin/swift[.]{vim,lua}

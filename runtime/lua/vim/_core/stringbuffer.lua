@@ -22,20 +22,21 @@ if has_strbuffer then
   return M
 end
 
+--- @class vim._core.stringbuffer.ptr
+--- @field [integer] integer
+
 --- @class vim._core.stringbuffer
+--- @field private ptr vim._core.stringbuffer.ptr
 --- @field private buf string[]
 --- @field package len integer absolute length of the `buf`
 --- @field package skip_ptr integer
 local StrBuffer = {}
 StrBuffer.__index = StrBuffer
 
---- @return string
-function StrBuffer:tostring()
+function StrBuffer:_normalize()
   if #self.buf > 1 then
     self.buf = { table.concat(self.buf) }
   end
-
-  -- assert(self.len == #(self.buf[1] or ''), 'len mismatch')
 
   if self.skip_ptr > 0 then
     if self.buf[1] then
@@ -45,18 +46,21 @@ function StrBuffer:tostring()
     self.skip_ptr = 0
   end
 
-  -- assert(self.len == #(self.buf[1] or ''), 'len mismatch')
+  return self
+end
 
-  return self.buf[1] or ''
+--- @return string
+function StrBuffer:tostring()
+  return self:_normalize().buf[1] or ''
 end
 
 StrBuffer.__tostring = StrBuffer.tostring
 
 --- @private
---- Efficiently peak at the first `n` characters of the buffer.
+--- Efficiently peek at the first `n` characters of the buffer.
 --- @param n integer
 --- @return string
-function StrBuffer:_peak(n)
+function StrBuffer:_peek(n)
   local skip, buf1 = self.skip_ptr, self.buf[1]
   if buf1 and (n + skip) < #buf1 then
     return buf1:sub(skip + 1, skip + n)
@@ -81,7 +85,7 @@ end
 --- @return string
 function StrBuffer:get(n)
   n = n or self.len
-  local r = self:_peak(n)
+  local r = self:_peek(n)
   self:skip(n)
   return r
 end
@@ -99,8 +103,27 @@ function StrBuffer:reset()
   return self
 end
 
+--- Efficiently read the character at the 0-based index `k` in the buffer.
+--- @param k integer
+--- @return integer
+function StrBuffer:_index(k)
+  return self:_normalize().buf[1]:byte(k + 1)
+end
+
+--- @return vim._core.stringbuffer.ptr, integer
+function StrBuffer:ref()
+  return self.ptr, self.len - self.skip_ptr
+end
+
 function M.new()
-  return setmetatable({}, StrBuffer):reset()
+  local self = setmetatable({}, StrBuffer):reset()
+  ---@diagnostic disable-next-line: invisible
+  self.ptr = setmetatable({}, {
+    __index = function(_, k)
+      return StrBuffer._index(self, k)
+    end,
+  })
+  return self
 end
 
 --- @param buf vim._core.stringbuffer

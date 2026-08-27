@@ -3,6 +3,7 @@ local n = require('test.functional.testnvim')()
 
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local testprg = n.testprg
 local command = n.command
 local fn = n.fn
@@ -25,7 +26,7 @@ describe(':edit term://*', function()
     command('edit term://')
     local termopen_runs = api.nvim_get_var('termopen_runs')
     eq(1, #termopen_runs)
-    local cwd = fn.fnamemodify('.', ':p:~'):gsub([[[\/]*$]], '')
+    local cwd = fn.fnamemodify('.', ':p:~'):gsub([[/*$]], '')
     matches('^term://' .. pesc(cwd) .. '//%d+:$', termopen_runs[1])
   end)
 

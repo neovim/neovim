@@ -2,6 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each, pending = t.describe, t.it, t.before_each, t.pending
 local clear = n.clear
 local feed = n.feed
 local insert = n.insert
@@ -764,6 +765,63 @@ describe('decorations providers', function()
                                               |
     ]],
     }
+  end)
+
+  it("'hl_eol' extends into 'linebreak'/'breakindent'/'showbreak' gaps", function()
+    command('set wrap linebreak breakindent breakindentopt=shift:2')
+    api.nvim_buf_set_lines(0, 0, -1, false, {
+      '  if vim.g.colors_name == "ferricferric" then',
+    })
+    local ns = api.nvim_create_namespace('code_bg')
+    local id = api.nvim_buf_set_extmark(0, ns, 0, 0, { end_row = 1, hl_group = 'DiffAdd', hl_eol = true })
+    screen:expect([[
+      {13:^  if vim.g.colors_name ==               }|
+      {13:    "ferricferric" then                 }|
+      {1:~                                       }|*5
+                                              |
+    ]])
+
+    -- Extends across the 'showbreak' character too.
+    command('set showbreak=>')
+    screen:add_extra_attr_ids({
+      [100] = { background = Screen.colors.LightBlue },
+      [101] = { bold = true, foreground = Screen.colors.Blue1, background = Screen.colors.LightBlue },
+    })
+    screen:expect([[
+      {100:^  if vim.g.colors_name ==               }|
+      {100:    }{101:>}{100:"ferricferric" then                }|
+      {1:~                                       }|*5
+                                              |
+    ]])
+
+    -- Without 'hl_eol' the highlight decorates characters, so it leaves the gaps alone, the same
+    -- way it already leaves the cells past the end of the line alone.
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { id = id, end_row = 1, hl_group = 'DiffAdd' })
+    screen:expect([[
+      {100:^  if vim.g.colors_name == }              |
+          {1:>}{100:"ferricferric" then}                |
+      {1:~                                       }|*5
+                                              |
+    ]])
+  end)
+
+  it('breakindent keeps the highlight after a real linebreak word-push', function()
+    -- The word pushed down by 'linebreak' resets decor_attr (see listlbr_spec.lua), which must not
+    -- then leak into 'breakindent's own gap on the row the word lands on.
+    screen:try_resize(30, 5)
+    screen:add_extra_attr_ids({ [100] = { background = Screen.colors.LightBlue } })
+    command('set wrap linebreak breakindent')
+    local line = '      This is a long indented line of plain text that will wrap nicely.'
+    api.nvim_buf_set_lines(0, 0, -1, false, { line })
+    local ns = api.nvim_create_namespace('code_bg2')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { end_row = 1, hl_group = 'DiffAdd', hl_eol = true })
+    screen:expect([[
+      {100:^      This is a long indented }|
+      {100:      line of plain text that }|
+      {100:      will wrap nicely.       }|
+      {1:~                             }|
+                                    |
+    ]])
   end)
 
   it('can create and remove signs when CursorMoved autocommand validates botline #18661', function()
@@ -2175,7 +2233,7 @@ describe('extmark decorations', function()
     command('set conceallevel=1')
     screen:expect_unchanged()
 
-    eq('conceal char has to be printable', pcall_err(api.nvim_buf_set_extmark, 0, ns, 0, 0, { end_col = 0, end_row = 2, conceal = '\255' }))
+    eq('conceal char must be printable', pcall_err(api.nvim_buf_set_extmark, 0, ns, 0, 0, { end_col = 0, end_row = 2, conceal = '\255' }))
   end)
 
   it('conceal with composed conceal char', function()
@@ -3670,6 +3728,7 @@ describe('decorations: inline virtual text', function()
       [21] = { reverse = true, foreground = Screen.colors.SlateBlue },
       [22] = { background = Screen.colors.Gray90 },
       [23] = { background = Screen.colors.Gray90, foreground = Screen.colors.Blue, bold = true },
+      [24] = { foreground = Screen.colors.Blue },
     }
 
     ns = api.nvim_create_namespace 'test'
@@ -5592,6 +5651,41 @@ describe('decorations: inline virtual text', function()
     }
   end)
 
+  it('is counted when linebreak decides if a word fits', function()
+    screen:try_resize(20, 4)
+    exec([[
+      setlocal linebreak
+      call setline(1, repeat('a', 12) .. ' bbcc dd')
+    ]])
+    api.nvim_buf_set_extmark(0, ns, 0, 19, { virt_text = { { '[hint]' } }, virt_text_pos = 'inline' })
+    -- "dd" plus the virtual text does not fit in the 2 remaining cells, so the whole word moves
+    -- down instead of the virtual text being split across the boundary.
+    screen:expect([[
+      ^aaaaaaaaaaaa bbcc   |
+      d[hint]d            |
+      {1:~                   }|
+                          |
+    ]])
+  end)
+
+  it('before a TAB affects its width in linebreak lookahead', function()
+    screen:try_resize(20, 4)
+    exec([[
+      setlocal linebreak tabstop=8
+      let &l:breakat = ' '
+      call setline(1, 'aaaa ' .. "\t" .. repeat('b', 11))
+    ]])
+    api.nvim_buf_set_extmark(0, ns, 0, 5, {
+      virt_text = { { 'VV' } },
+      virt_text_pos = 'inline',
+    })
+    screen:expect([[
+      ^aaaa VV bbbbbbbbbbb |
+      {1:~                   }|*2
+                          |
+    ]])
+  end)
+
   it('before double-width char that wraps', function()
     exec([[
       call setline(1, repeat('a', 40) .. '口' .. '12345')
@@ -6759,7 +6853,7 @@ if (h->n_buckets < new_n_buckets) { // expand
     }
   end)
 
-  it('scrolls horizontally with virt_lines_overflow = "scroll" #31000', function()
+  it('scrolls horizontally with virt_lines_overflow=scroll #31000', function()
     command('set nowrap signcolumn=yes')
     insert('abcdefghijklmnopqrstuvwxyz')
     api.nvim_buf_set_extmark(0, ns, 0, 0, {
@@ -6889,6 +6983,407 @@ if (h->n_buckets < new_n_buckets) { // expand
       {1:123     45      67}                                |
       {7:  }{1:123     45      6}                               |
       {1:~                                                 }|*6
+                                                        |
+    ]])
+  end)
+
+  it('virt_lines_overflow=wrap', function()
+    command('set wrap signcolumn=yes')
+    insert('line1\nline2\nline3\n')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      virt_lines = {
+        {
+          {
+            string.rep(
+              'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean non felis dapibus, semper sapien vitae, fringilla orci.',
+              5
+            ),
+            'Special',
+          },
+        },
+      },
+      virt_lines_overflow = 'wrap',
+    })
+    screen:expect([[
+      {7:  }{16:rem ipsum dolor sit amet, consectetur adipiscing}|
+      {7:  }{16: elit. Aenean non felis dapibus, semper sapien v}|
+      {7:  }{16:itae, fringilla orci.Lorem ipsum dolor sit amet,}|
+      {7:  }{16: consectetur adipiscing elit. Aenean non felis d}|
+      {7:  }{16:apibus, semper sapien vitae, fringilla orci.Lore}|
+      {7:  }{16:m ipsum dolor sit amet, consectetur adipiscing e}|
+      {7:  }{16:lit. Aenean non felis dapibus, semper sapien vit}|
+      {7:  }{16:ae, fringilla orci.}                             |
+      {7:  }line2                                           |
+      {7:  }line3                                           |
+      {7:  }^                                                |
+                                                        |
+    ]])
+    feed('<C-e>')
+    screen:expect([[
+      {7:  }{16: elit. Aenean non felis dapibus, semper sapien v}|
+      {7:  }{16:itae, fringilla orci.Lorem ipsum dolor sit amet,}|
+      {7:  }{16: consectetur adipiscing elit. Aenean non felis d}|
+      {7:  }{16:apibus, semper sapien vitae, fringilla orci.Lore}|
+      {7:  }{16:m ipsum dolor sit amet, consectetur adipiscing e}|
+      {7:  }{16:lit. Aenean non felis dapibus, semper sapien vit}|
+      {7:  }{16:ae, fringilla orci.}                             |
+      {7:  }line2                                           |
+      {7:  }line3                                           |
+      {7:  }^                                                |
+      {1:~                                                 }|
+                                                        |
+    ]])
+    feed('<C-e>')
+    screen:expect([[
+      {7:  }{16:itae, fringilla orci.Lorem ipsum dolor sit amet,}|
+      {7:  }{16: consectetur adipiscing elit. Aenean non felis d}|
+      {7:  }{16:apibus, semper sapien vitae, fringilla orci.Lore}|
+      {7:  }{16:m ipsum dolor sit amet, consectetur adipiscing e}|
+      {7:  }{16:lit. Aenean non felis dapibus, semper sapien vit}|
+      {7:  }{16:ae, fringilla orci.}                             |
+      {7:  }line2                                           |
+      {7:  }line3                                           |
+      {7:  }^                                                |
+      {1:~                                                 }|*2
+                                                        |
+    ]])
+  end)
+
+  it('virt_lines_overflow=wrap with 2 cell character', function()
+    command('set wrap signcolumn=yes')
+    insert('line1\nline2\nline3\n')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      virt_lines = {
+        { { string.rep('12345678古', 5), 'Special' } },
+      },
+      virt_lines_overflow = 'wrap',
+    })
+    screen:expect([[
+      {7:  }line1                                           |
+      {7:  }{16:12345678古12345678古12345678古12345678古12345678}|
+      {7:  }{16:古}                                              |
+      {7:  }line2                                           |
+      {7:  }line3                                           |
+      {7:  }^                                                |
+      {1:~                                                 }|*5
+                                                        |
+    ]])
+    feed('<C-e>')
+
+    screen:expect([[
+      {7:  }{16:12345678古12345678古12345678古12345678古12345678}|
+      {7:  }{16:古}                                              |
+      {7:  }line2                                           |
+      {7:  }line3                                           |
+      {7:  }^                                                |
+      {1:~                                                 }|*6
+                                                        |
+    ]])
+
+    feed('<C-e>')
+    screen:expect([[
+      {7:  }{16:古}                                              |
+      {7:  }line2                                           |
+      {7:  }line3                                           |
+      {7:  }^                                                |
+      {1:~                                                 }|*7
+                                                        |
+    ]])
+  end)
+
+  it('virt_lines_overflow=wrap with tabs', function()
+    command('set wrap signcolumn=yes')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      virt_lines = {
+        { { string.rep('1234\t\t\t5\t6\t78古', 10), 'Special' } },
+      },
+      virt_lines_overflow = 'wrap',
+    })
+    screen:expect([[
+      {7:  }^                                                |
+      {7:  }{16:1234                    5       6       78古1234}|
+      {7:  }{16:                        5       6       78古1234}|*8
+      {7:  }{16:                        5       6       78古}    |
+                                                        |
+    ]])
+  end)
+
+  it('virt_lines_overflow=wrap with 2 cell character at the boundary', function()
+    insert('x')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      virt_lines = { { { string.rep('a', 49) .. string.rep('古', 4), 'Special' } } },
+      virt_lines_overflow = 'wrap',
+    })
+    screen:expect([[
+      ^x                                                 |
+      {16:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa }|
+      {16:古古古古}                                          |
+      {1:~                                                 }|*8
+                                                        |
+    ]])
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    screen:try_resize(13, 10)
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      virt_lines = {
+        { { 'AB', 'Special' } },
+        { { string.rep('古', 13), 'Special' } },
+      },
+      virt_lines_overflow = 'wrap',
+    })
+    screen:expect([[
+      ^x            |
+      {16:AB}           |
+      {16:古古古古古古 }|*2
+      {16:古}           |
+      {1:~            }|*4
+                   |
+    ]])
+  end)
+
+  it('virt_lines_overflow=wrap with nowrap', function()
+    command('set nowrap signcolumn=yes')
+    insert(string.rep('abcdefghij', 6) .. 'line1\nline2\nline3\n')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      virt_lines = {
+        { { string.rep('12345678古', 5), 'Special' } },
+      },
+      virt_lines_overflow = 'wrap',
+    })
+    feed('ggzlzl')
+    screen:expect([[
+      {7:  }^cdefghijabcdefghijabcdefghijabcdefghijabcdefghij|
+      {7:  }{16:12345678古12345678古12345678古12345678古12345678}|
+      {7:  }{16:古}                                              |
+      {7:  }ne2                                             |
+      {7:  }ne3                                             |
+      {7:  }                                                |
+      {1:~                                                 }|*5
+                                                        |
+    ]])
+  end)
+
+  it('virt_lines_overflow=auto with wrap', function()
+    command('set wrap signcolumn=yes')
+    insert('line1\nline2\nline3\n')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      virt_lines = {
+        { { string.rep('Thequickbrownfoxjumpsoverthelazydog. The quick brown fox jumps over the lazy dog', 20), 'Special' } },
+      },
+      virt_lines_overflow = 'auto',
+    })
+    screen:expect([[
+      {7:  }{16:rown fox jumps over the lazy dogThequickbrownfox}|
+      {7:  }{16:jumpsoverthelazydog. The quick brown fox jumps o}|
+      {7:  }{16:ver the lazy dogThequickbrownfoxjumpsoverthelazy}|
+      {7:  }{16:dog. The quick brown fox jumps over the lazy dog}|
+      {7:  }{16:Thequickbrownfoxjumpsoverthelazydog. The quick b}|
+      {7:  }{16:rown fox jumps over the lazy dogThequickbrownfox}|
+      {7:  }{16:jumpsoverthelazydog. The quick brown fox jumps o}|
+      {7:  }{16:ver the lazy dog}                                |
+      {7:  }line2                                           |
+      {7:  }line3                                           |
+      {7:  }^                                                |
+                                                        |
+    ]])
+  end)
+
+  it('virt_lines_overflow=auto and nowrap scrolls horizontally', function()
+    command('set nowrap signcolumn=yes')
+    insert('abcdefghijklmnopqrstuvwxyz')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      virt_lines = {
+        { { '12α口β̳γ̲=', 'Special' }, { '❤️345678', 'Special' } },
+        { { '123\t45\t678', 'NonText' } },
+      },
+      virt_lines_overflow = 'auto',
+    })
+    screen:expect([[
+      {7:  }abcdefghijklmnopqrstuvwxy^z                      |
+      {7:  }{16:12α口β̳γ̲=❤️345678}                                |
+      {7:  }{1:123     45      678}                             |
+      {1:~                                                 }|*8
+                                                        |
+    ]])
+    feed('zl')
+    screen:expect([[
+      {7:  }bcdefghijklmnopqrstuvwxy^z                       |
+      {7:  }{16:2α口β̳γ̲=❤️345678}                                 |
+      {7:  }{1:23     45      678}                              |
+      {1:~                                                 }|*8
+                                                        |
+    ]])
+  end)
+
+  it('virt_lines_overflow=wrap with virt_lines_above + virt_lines_leftcol', function()
+    command('set wrap signcolumn=yes')
+    insert('line1\nline2\nline3\n')
+    feed('2gg')
+    api.nvim_buf_set_extmark(0, ns, 1, 0, {
+      virt_lines = {
+        { { string.rep('Lorem ipsum dolor sit amet, consectetur. ', 6), 'Special' } },
+      },
+      virt_lines_overflow = 'wrap',
+      virt_lines_above = true,
+      virt_lines_leftcol = true,
+    })
+    screen:expect([[
+      {7:  }line1                                           |
+      {16:Lorem ipsum dolor sit amet, consectetur. Lorem ips}|
+      {16:um dolor sit amet, consectetur. Lorem ipsum dolor }|
+      {16:sit amet, consectetur. Lorem ipsum dolor sit amet,}|
+      {16: consectetur. Lorem ipsum dolor sit amet, consecte}|
+      {16:tur. Lorem ipsum dolor sit amet, consectetur. }    |
+      {7:  }^line2                                           |
+      {7:  }line3                                           |
+      {7:  }                                                |
+      {1:~                                                 }|*2
+                                                        |
+    ]])
+  end)
+
+  it('virt_lines_overflow=wrap with wrapped rows for statuscolumn', function()
+    command('set wrap statuscolumn=[%{v:lnum}]')
+    insert('line1\nline2\nline3\n')
+    feed('2gg')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      virt_lines = {
+        { { 'BELOW ' .. string.rep('Lorem ipsum dolor sit amet, consectetur. ', 4), 'Special' } },
+      },
+      virt_lines_overflow = 'wrap',
+    })
+    api.nvim_buf_set_extmark(0, ns, 1, 0, {
+      virt_lines = {
+        { { 'ABOVE ' .. string.rep('Lorem ipsum dolor sit amet, consectetur. ', 4), 'Special' } },
+      },
+      virt_lines_overflow = 'wrap',
+      virt_lines_above = true,
+    })
+    screen:expect([[
+      {8:[1]}line1                                          |
+      {8:[1]}{16:BELOW Lorem ipsum dolor sit amet, consectetur. }|
+      {8:[1]}{16:Lorem ipsum dolor sit amet, consectetur. Lorem }|
+      {8:[1]}{16:ipsum dolor sit amet, consectetur. Lorem ipsum }|
+      {8:[1]}{16:dolor sit amet, consectetur. }                  |
+      {8:[2]}{16:ABOVE Lorem ipsum dolor sit amet, consectetur. }|
+      {8:[2]}{16:Lorem ipsum dolor sit amet, consectetur. Lorem }|
+      {8:[2]}{16:ipsum dolor sit amet, consectetur. Lorem ipsum }|
+      {8:[2]}{16:dolor sit amet, consectetur. }                  |
+      {8:[2]}^line2                                          |
+      {8:[3]}line3                                          |
+                                                        |
+    ]])
+  end)
+
+  it('mixing virt_lines_overflow=wrap and virt_lines_overflow=scroll', function()
+    command('set nowrap signcolumn=yes')
+    insert('line1\nline2\nline3\n')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      virt_lines = { { { 'BELOW ' .. string.rep('a', 60), 'Special' } } },
+      virt_lines_overflow = 'wrap',
+    })
+    api.nvim_buf_set_extmark(0, ns, 1, 0, {
+      virt_lines = { { { 'ABOVE ' .. string.rep('b', 60), 'Special' } } },
+      virt_lines_overflow = 'scroll',
+      virt_lines_above = true,
+    })
+    api.nvim_buf_set_extmark(0, ns, 1, 0, {
+      virt_lines = { { { 'BELOW ' .. string.rep('c', 60), 'Special' } } },
+      virt_lines_overflow = 'scroll',
+    })
+    api.nvim_buf_set_extmark(0, ns, 2, 0, {
+      virt_lines = { { { 'ABOVE ' .. string.rep('d', 60), 'Special' } } },
+      virt_lines_overflow = 'wrap',
+      virt_lines_above = true,
+    })
+    feed('2ggzlzl')
+    screen:expect([[
+      {7:  }ne1                                             |
+      {7:  }{16:BELOW aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {7:  }{16:aaaaaaaaaaaaaaaaaa}                              |
+      {7:  }{16:OVE bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}|
+      {7:  }^ne2                                             |
+      {7:  }{16:LOW cccccccccccccccccccccccccccccccccccccccccccc}|
+      {7:  }{16:ABOVE dddddddddddddddddddddddddddddddddddddddddd}|
+      {7:  }{16:dddddddddddddddddd}                              |
+      {7:  }ne3                                             |
+      {7:  }                                                |
+      {1:~                                                 }|
+                                                        |
+    ]])
+  end)
+
+  it('highlight till eol with virt_lines_overflow=trunc', function()
+    insert('line1')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      virt_lines = { { { 'VIRT LINE1', 'String' }, { '', 'Visual' } }, { { 'VIRT LINE2', 'String' } } },
+    })
+    screen:expect([[
+      line^1                                             |
+      {26:VIRT LINE1}{17:                                        }|
+      {26:VIRT LINE2}                                        |
+      {1:~                                                 }|*8
+                                                        |
+    ]])
+  end)
+
+  it('highlight till eol with virt_lines_overflow=wrap', function()
+    insert('line1')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      virt_lines = { { { 'VIRT LINE', 'String' }, { string.rep('-', 50), 'Visual' }, { '', 'Visual' } } },
+      virt_lines_overflow = 'wrap',
+    })
+    screen:expect([[
+      line^1                                             |
+      {26:VIRT LINE}{17:-----------------------------------------}|
+      {17:---------                                         }|
+      {1:~                                                 }|*8
+                                                        |
+    ]])
+  end)
+
+  it('highlight till eol with virt_lines_overflow=scroll', function()
+    command('set nowrap')
+    insert('abcdefghijklmnopqrstuvwxyz')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      virt_lines = { { { 'VIRT LINE', 'String' }, { '', 'Visual' } } },
+      virt_lines_overflow = 'scroll',
+    })
+    screen:expect([[
+      abcdefghijklmnopqrstuvwxy^z                        |
+      {26:VIRT LINE}{17:                                         }|
+      {1:~                                                 }|*9
+                                                        |
+    ]])
+
+    feed('zl')
+    screen:expect([[
+      bcdefghijklmnopqrstuvwxy^z                         |
+      {26:IRT LINE}{17:                                          }|
+      {1:~                                                 }|*9
+                                                        |
+    ]])
+
+    feed('zl')
+    screen:expect([[
+      cdefghijklmnopqrstuvwxy^z                          |
+      {26:RT LINE}{17:                                           }|
+      {1:~                                                 }|*9
+                                                        |
+    ]])
+
+    feed('6zl')
+    screen:expect([[
+      ijklmnopqrstuvwxy^z                                |
+      {26:E}{17:                                                 }|
+      {1:~                                                 }|*9
+                                                        |
+    ]])
+
+    feed('zl')
+    screen:expect([[
+      jklmnopqrstuvwxy^z                                 |
+      {17:                                                  }|
+      {1:~                                                 }|*9
                                                         |
     ]])
   end)

@@ -1,8 +1,14 @@
 ---@diagnostic disable: no-unknown
--- Does the same as `nvim -c "helptags ++t doc" -c quit`
+-- Does the same as `nvim -c "helptags [++t] doc" -c quit`
 -- without needing to run a "nvim" binary, which is needed for cross-compiling.
+--
+-- Usage: nlua0 gen_helptags.lua {out} {dir} [++t]
+-- The tags file is sorted by byte value, but PUC Lua "<" compares with strcoll().
+os.setlocale('C', 'collate')
+
 local out = arg[1]
 local dir = arg[2]
+local add_help_tags = arg[3] == '++t'
 
 local dirfd = assert(vim.uv.fs_opendir(dir, nil, 1))
 local files = {}
@@ -55,7 +61,9 @@ for _, fn in ipairs(files) do
   end
 end
 
-table.insert(tags, { 'help-tags', 'tags' })
+if add_help_tags then
+  table.insert(tags, { 'help-tags', 'tags' })
+end
 table.sort(tags, function(a, b)
   return a[1] < b[1]
 end)

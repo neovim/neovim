@@ -1,6 +1,8 @@
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local command = n.command
 local clear, feed, feed_command = n.clear, n.feed, n.feed_command
 local exec = n.exec

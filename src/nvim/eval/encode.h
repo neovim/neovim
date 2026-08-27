@@ -17,12 +17,12 @@ int encode_vim_to_msgpack(PackerBuffer *packer, typval_T *tv, const char *objnam
 
 /// Convert Vimscript value to :echo output
 ///
-/// @param[out]  packer  Packer to save results in.
+/// @param[out]  gap  garray_T to save results in.
 /// @param[in]  tv  Dumped value.
 /// @param[in]  objname  Object name, used for error message.
 ///
 /// @return OK in case of success, FAIL otherwise.
-int encode_vim_to_echo(garray_T *packer, typval_T *tv, const char *objname);
+int encode_vim_to_echo(garray_T *gap, typval_T *tv, const char *objname);
 
 /// Structure defining state for read_from_list()
 typedef struct {

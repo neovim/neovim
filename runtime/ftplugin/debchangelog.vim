@@ -3,7 +3,7 @@
 " Maintainer:   Debian Vim Maintainers <team+vim@tracker.debian.org>
 " Former Maintainers:   Michael Piefel <piefel@informatik.hu-berlin.de>
 "                       Stefano Zacchiroli <zack@debian.org>
-" Last Change:  2023 Aug 18
+" Last Change:  2026 Jun 29
 " License:      Vim License
 " URL:          https://salsa.debian.org/vim-team/vim-debian/blob/main/ftplugin/debchangelog.vim
 
@@ -363,7 +363,7 @@ EOF
         return
       endif
       let pkgsrc = DebGetPkgSrcName(line('.'))
-      let listbugs_output = system('/usr/sbin/apt-listbugs -s ' . g:debchangelog_listbugs_severities . ' list ' . pkgsrc . ' | grep "^ #" 2> /dev/null')
+      let listbugs_output = system('/usr/sbin/apt-listbugs -s ' . g:debchangelog_listbugs_severities . ' list ' . shellescape(pkgsrc) . ' | grep "^ #" 2> /dev/null')
       let bug_lines = split(listbugs_output, '\n')
     endif
     let completions = []

@@ -1,13 +1,12 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, before_each, after_each = t.describe, t.it, t.before_each, t.after_each
 local eq = t.eq
 local clear = n.clear
 local fn = n.fn
 local api = n.api
 local command = n.command
-local exc_exec = n.exc_exec
-local get_pathsep = n.get_pathsep
 local rmdir = n.rmdir
 local pcall_err = t.pcall_err
 local mkdir = t.mkdir
@@ -34,30 +33,30 @@ for _, func in ipairs({
       for _, var in ipairs({ 'v:true', 'v:false' }) do
         eq(
           'Vim(call):E5299: Expected a Number or a String, Boolean found',
-          exc_exec('call ' .. func:format(var))
+          pcall_err(command, 'call ' .. func:format(var))
         )
       end
       eq(
         'Vim(call):E5300: Expected a Number or a String',
-        exc_exec('call ' .. func:format('v:null'))
+        pcall_err(command, 'call ' .. func:format('v:null'))
       )
     end)
     it('errors out when receives invalid argument', function()
       eq(
         'Vim(call):E745: Expected a Number or a String, List found',
-        exc_exec('call ' .. func:format('[]'))
+        pcall_err(command, 'call ' .. func:format('[]'))
       )
       eq(
         'Vim(call):E728: Expected a Number or a String, Dictionary found',
-        exc_exec('call ' .. func:format('{}'))
+        pcall_err(command, 'call ' .. func:format('{}'))
       )
       eq(
         'Vim(call):E805: Expected a Number or a String, Float found',
-        exc_exec('call ' .. func:format('0.0'))
+        pcall_err(command, 'call ' .. func:format('0.0'))
       )
       eq(
         'Vim(call):E703: Expected a Number or a String, Funcref found',
-        exc_exec('call ' .. func:format('function("tr")'))
+        pcall_err(command, 'call ' .. func:format('function("tr")'))
       )
     end)
   end)
@@ -82,8 +81,8 @@ describe('bufname() function', function()
   it('returns expected buffer name', function()
     eq('', fn.bufname('%')) -- Buffer has no name yet
     command('file ' .. fname)
-    local wd = vim.uv.cwd()
-    local sep = get_pathsep()
+    local wd = assert(t.fix_slashes(assert(vim.uv.cwd())))
+    local sep = '/'
     local curdirname = fn.fnamemodify(wd, ':t')
     for _, arg in ipairs({ '%', 1, 'X', wd }) do
       eq(fname, fn.bufname(arg))
@@ -193,11 +192,15 @@ describe('getbufline() function', function()
   end)
   it('returns empty list when range is invalid', function()
     eq({}, fn.getbufline(1, 0))
+    eq({}, fn.getbufline(-1, 1, '$'))
+    eq({}, fn.getbufline(-1, '$', '$'))
     api.nvim_buf_set_lines(0, 0, 1, false, { 'foo', 'bar', 'baz' })
     eq({}, fn.getbufline(1, 2, 1))
     eq({}, fn.getbufline(1, -10, -20))
     eq({}, fn.getbufline(1, -2, -1))
     eq({}, fn.getbufline(1, -1, 9999))
+    eq({}, fn.getbufline(-1, 1, '$'))
+    eq({}, fn.getbufline(-1, '$', '$'))
   end)
   it('returns expected lines', function()
     api.nvim_set_option_value('hidden', true, {})
@@ -267,17 +270,17 @@ end)
 describe('setbufvar() function', function()
   it('throws the error or ignores the input when buffer was not found', function()
     command('file ' .. fname)
-    eq(0, exc_exec('call setbufvar(2, "&autoindent", 0)'))
+    command('call setbufvar(2, "&autoindent", 0)')
     eq(
       'Vim(call):E94: No matching buffer for non-existent-buffer',
-      exc_exec('call setbufvar("non-existent-buffer", "&autoindent", 0)')
+      pcall_err(command, 'call setbufvar("non-existent-buffer", "&autoindent", 0)')
     )
-    eq(0, exc_exec('call setbufvar("#", "&autoindent", 0)'))
+    command('call setbufvar("#", "&autoindent", 0)')
     command('edit ' .. fname2)
     eq(2, fn.bufnr('%'))
     eq(
       'Vim(call):E93: More than one match for X',
-      exc_exec('call setbufvar("X", "&autoindent", 0)')
+      pcall_err(command, 'call setbufvar("X", "&autoindent", 0)')
     )
   end)
   it('may set options, including window-local and global values', function()
@@ -300,7 +303,7 @@ describe('setbufvar() function', function()
     eq(false, api.nvim_get_option_value('autoindent', { buf = buf1 }))
     fn.setbufvar(1, '&autoindent', true)
     eq(true, api.nvim_get_option_value('autoindent', { buf = buf1 }))
-    eq('Vim(call):E355: Unknown option: xxx', exc_exec('call setbufvar(1, "&xxx", 0)'))
+    eq('Vim(call):E355: Unknown option: xxx', pcall_err(command, 'call setbufvar(1, "&xxx", 0)'))
   end)
   it('may set variables', function()
     local buf1 = api.nvim_get_current_buf()
@@ -309,7 +312,7 @@ describe('setbufvar() function', function()
     eq(2, api.nvim_buf_get_number(0))
     fn.setbufvar(1, 'number', true)
     eq(true, api.nvim_buf_get_var(buf1, 'number'))
-    eq('Vim(call):E461: Illegal variable name: b:', exc_exec('call setbufvar(1, "", 0)'))
+    eq('Vim(call):E461: Illegal variable name: b:', pcall_err(command, 'call setbufvar(1, "", 0)'))
     eq(true, api.nvim_buf_get_var(buf1, 'number'))
     eq(
       'Vim:E46: Cannot change read-only variable "b:changedtick"',
@@ -319,5 +322,21 @@ describe('setbufvar() function', function()
   end)
   it('throws error when setting a string option to a boolean value vim-patch:9.0.0090', function()
     eq('Vim:E928: String required', pcall_err(fn.setbufvar, '', '&errorformat', true))
+  end)
+end)
+
+describe('bufload() function', function()
+  before_each(function()
+    t.write_file(fname, 'foo\n')
+  end)
+  after_each(function()
+    os.remove(fname)
+  end)
+  it('does not set hidden buffer as modified #41148', function()
+    local buf = fn.bufadd(fname)
+    fn.bufload(buf)
+    api.nvim_command('edit ' .. fname)
+    eq(true, api.nvim_buf_is_loaded(buf))
+    eq(false, api.nvim_get_option_value('modified', { buf = buf }))
   end)
 end)

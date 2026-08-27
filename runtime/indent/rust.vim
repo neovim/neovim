@@ -4,8 +4,9 @@
 " Last Change:      2023-09-11
 " 2024 Jul 04 by Vim Project: use shiftwidth() instead of hard-coding shifted values #15138
 " 2025 Dec 29 by Vim Project: clean up
-" 2025 Dec 31 by Vim Project: correcly indent after nested array literal #19042
+" 2025 Dec 31 by Vim Project: correctly indent after nested array literal #19042
 " 2026 Jan 28 by Vim Project: fix indentation when a string literal contains 'if' #19265
+" 2026 May 04 by Vim Project: fix typo
 
 " For bugs, patches and license go to https://github.com/rust-lang/rust.vim
 " Note: upstream seems umaintained: https://github.com/rust-lang/rust.vim/issues/502

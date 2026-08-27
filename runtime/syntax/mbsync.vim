@@ -4,6 +4,7 @@
 " Last Change:	2025 Apr 13
 " 2025 Jun 04 by Vim project: match TLSType configuration variable
 " 2026 Jan 15 by Vim project: support TLSVersions keyword
+" 2026 May 20 by Vim project: handle sync keyword #20243
 "
 " Syntax support for mbsync config file
 
@@ -132,7 +133,28 @@ syn match mbsCConfStPattern       '^Patterns\?\s\+\ze.*$'     contains=mbsCConfI
 syn match mbsCConfStMaxSize       '^MaxSize\s\+\ze.*$'        contains=mbsCConfItemK contained nextgroup=mbsSize transparent
 syn match mbsCConfStMaxMessages   '^MaxMessages\s\+\ze.*$'    contains=mbsCConfItemK contained nextgroup=mbsNumber transparent
 syn match mbsCConfStExpireUnread  '^ExpireUnread\s\+\ze.*$'   contains=mbsCConfItemK contained nextgroup=mbsBool transparent
-syn match mbsCConfSyncOpt 'None\|All\|\%(\s\+\%(Pull\|Push\|New\|ReNew\|Delete\|Flags\)\)\+' display contained
+" Properly matching mbsCConfSyncOpt:
+"
+" None is a special case. From mbsync's man page:
+"   "None may not be combined with any other operation."
+" Once "None" is out of the way, first try to match operations, including:
+"   - New, Old, Upgrade, Gone, Flags
+"   - ReNew (deprecated synonym for Upgrade)
+"   - Delete (deprecated synonym for Gone)
+"   - All and Full, since they can be combined with other flags
+" Then try to match the "second style" (as defined by mbsync's man page),
+" which is a concatenation of direction Flags (Pull/Push) and of the
+" operations seen above (New, Old, Upgrade/Renew, Gone/Delete, Flags, Full).
+" Note that while "PullFull" exists, "PullAll" is not handled by mbsync's
+" parser.
+" Last but not least, match "\s+%(All of the above, except None) as multiple
+" operations may be given to Sync.
+syn match mbsCConfSyncOpt /\v(
+  \None
+  \|%(Pull|Push|New|Old|Upgrade|ReNew|Gone|Delete|Flags|Full|All
+    \|%(Pull|Push)%(New|Old|Upgrade|ReNew|Gone|Delete|Flags|Full))
+  \%(\s+%(Pull|Push|New|Old|Upgrade|ReNew|Gone|Delete|Flags|Full|All
+        \|%(Pull|Push)%(New|Old|Upgrade|ReNew|Gone|Delete|Flags|Full)))*)$/ display contained
 syn match mbsCConfStSync          '^Sync\s\+\ze.*$'           contains=mbsCConfItemK contained nextgroup=mbsCConfSyncOpt transparent
 syn keyword mbsCConfManipOpt  None Far Near Both contained
 syn match mbsCConfStCreate        '^Create\s\+\ze.*$'         contains=mbsCConfItemK contained nextgroup=mbsCConfManipOpt transparent

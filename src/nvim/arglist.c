@@ -13,6 +13,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand_defs.h"
+#include "nvim/context.h"
 #include "nvim/errors.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
@@ -216,9 +217,6 @@ void alist_add(alist_T *al, char *fname, int set_fnum)
   arglist_locked = true;
   wp->w_locked++;
 
-#ifdef BACKSLASH_IN_FILENAME
-  slash_adjust(fname);
-#endif
   AARGLIST(al)[al->al_ga.ga_len].ae_fname = fname;
   if (set_fnum > 0) {
     AARGLIST(al)[al->al_ga.ga_len].ae_fnum =
@@ -229,30 +227,6 @@ void alist_add(alist_T *al, char *fname, int set_fnum)
   arglist_locked = false;
   wp->w_locked--;
 }
-
-#ifdef BACKSLASH_IN_FILENAME
-
-/// Adjust slashes in file names.  Called after 'shellslash' was set.
-void alist_slash_adjust(void)
-{
-  for (int i = 0; i < GARGCOUNT; i++) {
-    if (GARGLIST[i].ae_fname != NULL) {
-      slash_adjust(GARGLIST[i].ae_fname);
-    }
-  }
-
-  FOR_ALL_TAB_WINDOWS(tp, wp) {
-    if (wp->w_alist != &global_alist) {
-      for (int i = 0; i < WARGCOUNT(wp); i++) {
-        if (WARGLIST(wp)[i].ae_fname != NULL) {
-          slash_adjust(WARGLIST(wp)[i].ae_fname);
-        }
-      }
-    }
-  }
-}
-
-#endif
 
 /// Isolate one argument, taking backticks.
 /// Changes the argument in-place, puts a NUL after it.  Backticks remain.
@@ -388,7 +362,7 @@ static void arglist_del_files(garray_T *alist_ga)
     if (p == NULL) {
       break;
     }
-    regmatch.regprog = vim_regcomp(p, magic_isset() ? RE_MAGIC : 0);
+    regmatch.regprog = vim_regcomp(p, p_magic ? RE_MAGIC : 0);
     if (regmatch.regprog == NULL) {
       xfree(p);
       break;
@@ -401,7 +375,7 @@ static void arglist_del_files(garray_T *alist_ga)
         xfree(ARGLIST[match].ae_fname);
         memmove(ARGLIST + match, ARGLIST + match + 1,
                 (size_t)(ARGCOUNT - match - 1) * sizeof(aentry_T));
-        ALIST(curwin)->al_ga.ga_len--;
+        ARGCOUNT--;
         if (curwin->w_arg_idx > match) {
           curwin->w_arg_idx--;
         }
@@ -492,9 +466,8 @@ bool editing_arg_idx(win_T *win)
            || (win->w_buffer->b_fnum
                != WARGLIST(win)[win->w_arg_idx].ae_fnum
                && (win->w_buffer->b_ffname == NULL
-                   || !(path_full_compare(alist_name(&WARGLIST(win)[win->w_arg_idx]),
-                                          win->w_buffer->b_ffname, true,
-                                          true) & kEqualFiles))));
+                   || !path_equal(alist_name(&WARGLIST(win)[win->w_arg_idx]),
+                                  win->w_buffer->b_ffname, kPathCmpExpand | kPathCmpFull))));
 }
 
 /// Check if window "win" is editing the w_arg_idx file in its argument list.
@@ -511,9 +484,8 @@ void check_arg_idx(win_T *win)
         && win->w_arg_idx < GARGCOUNT
         && (win->w_buffer->b_fnum == GARGLIST[GARGCOUNT - 1].ae_fnum
             || (win->w_buffer->b_ffname != NULL
-                && (path_full_compare(alist_name(&GARGLIST[GARGCOUNT - 1]),
-                                      win->w_buffer->b_ffname, true, true)
-                    & kEqualFiles)))) {
+                && path_equal(alist_name(&GARGLIST[GARGCOUNT - 1]),
+                              win->w_buffer->b_ffname, kPathCmpExpand | kPathCmpFull)))) {
       arg_had_last = true;
     }
   } else {
@@ -727,7 +699,7 @@ void ex_argdedupe(exarg_T *eap FUNC_ATTR_UNUSED)
 
     for (int j = i + 1; j < ARGCOUNT; j++) {
       char *secondFullname = FullName_save(ARGLIST[j].ae_fname, false);
-      bool areNamesDuplicate = path_fnamecmp(firstFullname, secondFullname) == 0;
+      bool areNamesDuplicate = path_equal(firstFullname, secondFullname, kPathCmpLiteral);
       xfree(secondFullname);
 
       if (areNamesDuplicate) {
@@ -806,32 +778,37 @@ void ex_argdelete(exarg_T *eap)
     if (*eap->arg != NUL) {
       // Can't have both a range and an argument.
       emsg(_(e_invarg));
-    } else if (n <= 0) {
+      return;
+    }
+    if (n <= 0) {
       // Don't give an error for ":%argdel" if the list is empty.
       if (eap->line1 != 1 || eap->line2 != 0) {
         emsg(_(e_invrange));
       }
-    } else {
-      for (linenr_T i = eap->line1; i <= eap->line2; i++) {
-        xfree(ARGLIST[i - 1].ae_fname);
-      }
-      memmove(ARGLIST + eap->line1 - 1, ARGLIST + eap->line2,
-              (size_t)(ARGCOUNT - eap->line2) * sizeof(aentry_T));
-      ALIST(curwin)->al_ga.ga_len -= (int)n;
-      if (curwin->w_arg_idx >= eap->line2) {
-        curwin->w_arg_idx -= (int)n;
-      } else if (curwin->w_arg_idx > eap->line1) {
-        curwin->w_arg_idx = (int)eap->line1;
-      }
-      if (ARGCOUNT == 0) {
-        curwin->w_arg_idx = 0;
-      } else if (curwin->w_arg_idx >= ARGCOUNT) {
-        curwin->w_arg_idx = ARGCOUNT - 1;
-      }
+      return;
+    }
+
+    for (linenr_T i = eap->line1; i <= eap->line2; i++) {
+      xfree(ARGLIST[i - 1].ae_fname);
+    }
+    memmove(ARGLIST + eap->line1 - 1, ARGLIST + eap->line2,
+            (size_t)(ARGCOUNT - eap->line2) * sizeof(aentry_T));
+    ARGCOUNT -= n;
+    if (curwin->w_arg_idx >= eap->line2) {
+      curwin->w_arg_idx -= n;
+    } else if (curwin->w_arg_idx > eap->line1) {
+      curwin->w_arg_idx = eap->line1;
     }
   } else {
     do_arglist(eap->arg, AL_DEL, 0, false);
   }
+
+  if (ARGCOUNT == 0) {
+    curwin->w_arg_idx = 0;
+  } else if (curwin->w_arg_idx >= ARGCOUNT) {
+    curwin->w_arg_idx = ARGCOUNT - 1;
+  }
+
   maketitle();
 }
 
@@ -882,16 +859,15 @@ static void arg_all_close_unused_windows(arg_all_state_T *aall)
       if (buf->b_ffname == NULL
           || (!aall->keep_tabs
               && (buf->b_nwindows > 1 || wp->w_width != Columns
-                  || (wp->w_floating && !is_aucmd_win(wp))))) {
+                  || (wp->w_floating && !is_ctx_win(wp))))) {
         i = aall->opened_len;
       } else {
         // check if the buffer in this window is in the arglist
         for (i = 0; i < aall->opened_len; i++) {
           if (i < aall->alist->al_ga.ga_len
               && (AARGLIST(aall->alist)[i].ae_fnum == buf->b_fnum
-                  || path_full_compare(alist_name(&AARGLIST(aall->alist)[i]),
-                                       buf->b_ffname,
-                                       true, true) & kEqualFiles)) {
+                  || path_equal(alist_name(&AARGLIST(aall->alist)[i]),
+                                buf->b_ffname, kPathCmpExpand | kPathCmpFull))) {
             int weight = 1;
 
             if (old_curtab == curtab) {
@@ -1067,10 +1043,6 @@ static void do_arg_all(int count, int forceit, int keep_tabs)
 
   assert(firstwin != NULL);  // satisfy coverity
 
-  if (cmdwin_type != 0) {
-    emsg(_(e_cmdwin));
-    return;
-  }
   if (ARGCOUNT <= 0) {
     // Don't give an error message.  We don't want it when the ":all"
     // command is in the .vimrc.
@@ -1098,7 +1070,7 @@ static void do_arg_all(int count, int forceit, int keep_tabs)
 
   tabpage_T *const new_lu_tp = curtab;
 
-  // Stop Visual mode, the cursor and "VIsual" may very well be invalid after
+  // Stop Visual mode, the cursor and `Visual.start` may very well be invalid after
   // switching to another buffer.
   reset_VIsual_and_resel();
 
@@ -1120,7 +1092,7 @@ static void do_arg_all(int count, int forceit, int keep_tabs)
   autocmd_no_leave++;
   last_curwin = curwin;
   last_curtab = curtab;
-  // lastwin may be aucmd_win
+  // lastwin may be ctx_win
   win_enter(lastwin_nofloating(NULL), false);
 
   // Open up to "count" windows.

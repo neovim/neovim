@@ -90,11 +90,25 @@ TSHighlighter.__index = TSHighlighter
 ---           - queries table overwrite queries used by the highlighter
 ---@return vim.treesitter.highlighter Created highlighter object
 function TSHighlighter.new(tree, opts)
-  local self = setmetatable({}, TSHighlighter)
-
-  if type(tree:source()) ~= 'number' then
+  local source = tree:source()
+  if type(source) ~= 'number' then
     error('TSHighlighter can not be used with a string parser source.')
   end
+
+  -- Calling start() again on an already-highlighted buffer must be a no-op: a second instance
+  -- would register duplicate on_bytes/on_changedtree/on_detach callbacks that destroy() never
+  -- unregisters, leaking callbacks that keep firing for the orphaned instance.
+  local existing = TSHighlighter.active[source]
+  if existing then
+    if existing.tree == tree then
+      return existing
+    end
+    -- Different tree (e.g. a language switch): the old instance would otherwise be silently
+    -- orphaned with the same leaked callbacks, so destroy() it first, matching stop() semantics.
+    existing:destroy()
+  end
+
+  local self = setmetatable({}, TSHighlighter)
 
   opts = opts or {} ---@type { queries: table<string,string> }
   self.tree = tree
@@ -135,9 +149,6 @@ function TSHighlighter.new(tree, opts)
       end)
     end,
   }, true)
-
-  local source = tree:source()
-  assert(type(source) == 'number')
 
   self.bufnr = source
   self.redraw_count = 0
@@ -190,13 +201,10 @@ function TSHighlighter:destroy()
     vim.b[self.bufnr].ts_highlight = nil
     api.nvim_buf_clear_namespace(self.bufnr, ns, 0, -1)
     if vim.g.syntax_on == 1 then
-      -- FileType autocmds commonly assume curbuf is the target buffer, so nvim_buf_call.
-      api.nvim_buf_call(self.bufnr, function()
-        api.nvim_exec_autocmds(
-          'FileType',
-          { group = 'syntaxset', buf = self.bufnr, modeline = false }
-        )
-      end)
+      api.nvim_exec_autocmds(
+        'FileType',
+        { group = 'syntaxset', buf = self.bufnr, modeline = false }
+      )
     end
   end
 end
@@ -427,14 +435,29 @@ local function on_range_impl(
 
           local spell, spell_pri_offset = get_spell(capture_name)
 
+          local is_noconceal = capture_name == 'noconceal'
+          -- The "conceal" attribute can be set at the pattern level or on a particular capture
+          local conceal_attr = (metadata.conceal ~= nil and metadata.conceal)
+            or (metadata[capture] and metadata[capture].conceal)
+          local conceal ---@type boolean|string?
+          if is_noconceal then
+            conceal = false
+          else
+            conceal = conceal_attr
+            if conceal_attr == false then
+              is_noconceal = true
+            end
+          end
+          is_noconceal = is_noconceal or conceal_attr == false
+          local conceal_pri_offset = is_noconceal and 1 or 0
+
           -- The "priority" attribute can be set at the pattern level or on a particular capture
           local priority = (
             vim._tointeger(metadata.priority or metadata[capture] and metadata[capture].priority)
             or vim.hl.priorities.treesitter
-          ) + spell_pri_offset
-
-          -- The "conceal" attribute can be set at the pattern level or on a particular capture
-          local conceal = metadata.conceal or metadata[capture] and metadata[capture].conceal
+          )
+            + spell_pri_offset
+            + conceal_pri_offset
 
           local url = get_url(match, buf, capture, metadata)
 
@@ -459,7 +482,7 @@ local function on_range_impl(
 
           if
             (metadata.conceal_lines or metadata[capture] and metadata[capture].conceal_lines)
-            and #api.nvim_buf_get_extmarks(buf, ns, { start_row, 0 }, { start_row, 0 }, {}) == 0
+            and #api.nvim_buf_get_extmarks(buf, ns, { start_row, 0 }, { start_row, 0 }) == 0
           then
             api.nvim_buf_set_extmark(buf, ns, start_row, 0, {
               end_line = end_row,

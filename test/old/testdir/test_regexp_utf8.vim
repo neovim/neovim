@@ -656,4 +656,29 @@ func Test_regex_collection_range_with_composing_crash()
   bwipe!
 endfunc
 
+" A submatch in a look-behind must not start on the previous line.  See
+" issue #20802.
+func Test_lookbehind_submatch_on_second_line()
+  new
+  for re in range(0, 2)
+    exe "set re=" .. re
+    call setline(1, ['testing', 'testing'])
+    %s/\v(.)@<=/[\1]/g
+    call assert_equal(['t[t]e[e]s[s]t[t]i[i]n[n]g',
+	  \ 't[t]e[e]s[s]t[t]i[i]n[n]g'], getline(1, '$'), 're=' .. re)
+    %d _
+
+    " With "\_." the look-behind can match the line break, then the submatch
+    " does start on the previous line.
+    call setline(1, ['abc', 'def'])
+    %s/\v(\_.)@<=/[\1]/g
+    call assert_equal(['a[a]b[b]c[c]', '[]d[d]e[e]f[f]'],
+	  \ getline(1, '$'), 're=' .. re)
+    %d _
+  endfor
+
+  set re&
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

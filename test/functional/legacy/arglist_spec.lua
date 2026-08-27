@@ -4,6 +4,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear, command, eq = n.clear, n.command, t.eq
 local expect_exit = n.expect_exit
 local feed = n.feed
@@ -46,6 +47,6 @@ describe('argument list commands', function()
       {6:2 more files to edit.  Quit anyway?}                         |
       {6:[Y]es, (N)o: }^                                               |
     ]])
-    expect_exit(1000, feed, 'Y')
+    expect_exit(n.load_adjust(1000), feed, 'Y')
   end)
 end)

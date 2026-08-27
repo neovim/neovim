@@ -11,7 +11,7 @@ for _, file in ipairs(files) do
     if vim.endswith(file, '.lua') then
       assert(loadstring(trusted, '@' .. file))()
     else
-      vim.api.nvim_exec2(trusted, {})
+      vim.api.nvim_exec2(trusted)
     end
   end
   -- If the user unset 'exrc' in the current exrc then stop searching

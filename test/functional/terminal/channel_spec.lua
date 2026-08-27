@@ -2,6 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear = n.clear
 local eq = t.eq
 local eval = n.eval
@@ -125,9 +126,11 @@ it('chansend sends lines to terminal channel in proper order', function()
   local screen = Screen.new(100, 20)
   screen._default_attr_ids = nil
   local shells = is_os('win') and { 'cmd.exe', 'pwsh.exe -nop', 'powershell.exe -nop' } or { 'sh' }
+  -- Prompt which indicates the shell is ready to read.
+  local prompt = is_os('win') and '>' or '%$ '
   for _, sh in ipairs(shells) do
     command([[let id = jobstart(']] .. sh .. [[', {'term':v:true})]])
-    screen:sleep(50) -- Wait some time for the shell to start.
+    screen:expect({ any = prompt, attr_ids = {} })
     command([[call chansend(id, ['echo "hello"', 'echo "world"', ''])]])
     -- With PowerShell the command may be highlighted, so specify attr_ids = {}.
     screen:expect({ any = [[echo "hello".*echo "world"]], attr_ids = {} })

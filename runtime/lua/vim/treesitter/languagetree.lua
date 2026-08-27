@@ -103,6 +103,7 @@ local TSCallbackNames = {
 ---@field private _parent? vim.treesitter.LanguageTree Parent LanguageTree
 ---@field private _source (integer|string) Buffer or string to parse
 ---@field private _trees table<integer, TSTree> Reference to parsed tree (one for each language).
+---@field private _regions_from_tree_ranges boolean Whether _regions were copied from TSTree:included_ranges(true).
 ---Each key is the index of region, which is synced with _regions and _valid.
 ---@field private _valid_regions table<integer,true> Set of valid region IDs.
 ---@field private _num_valid_regions integer Number of valid regions
@@ -144,6 +145,7 @@ function LanguageTree.new(source, lang, opts)
     _lang = lang,
     _children = {},
     _trees = {},
+    _regions_from_tree_ranges = false,
     _opts = opts,
     _injection_query = injections[lang] and query.parse(lang, injections[lang])
       or query.get(lang, 'injections'),
@@ -264,10 +266,9 @@ function LanguageTree:invalidate(reload)
 
   -- buffer was reloaded, reparse all trees
   if reload then
-    for _, t in pairs(self._trees) do
-      self:_do_callback('changedtree', t:included_ranges(true), t)
-    end
+    self:_do_changedtree_callbacks()
     self._trees = {}
+    self._regions_from_tree_ranges = false
   end
 
   for _, child in pairs(self._children) do
@@ -458,6 +459,7 @@ function LanguageTree:_parse_regions(range, thread_state)
 
       self:_do_callback('changedtree', tree_changes, tree)
       self._trees[i] = tree
+      self._regions_from_tree_ranges = false
       vim.list_extend(changes, tree_changes)
 
       total_parse_time = total_parse_time + parse_time
@@ -862,10 +864,9 @@ function LanguageTree:set_included_regions(new_regions)
   -- outdated_regions is invalidated by _iter_regions in else branch.
   if #self:included_regions() ~= #new_regions then
     -- TODO(lewis6991): inefficient; invalidate trees incrementally
-    for _, t in pairs(self._trees) do
-      self:_do_callback('changedtree', t:included_ranges(true), t)
-    end
+    self:_do_changedtree_callbacks()
     self._trees = {}
+    self._regions_from_tree_ranges = false
     self:invalidate()
   else
     self:_iter_regions(function(i, region)
@@ -874,6 +875,7 @@ function LanguageTree:set_included_regions(new_regions)
   end
 
   self._regions = new_regions
+  self._regions_from_tree_ranges = false
   self._num_regions = #new_regions
 end
 
@@ -1023,7 +1025,9 @@ end)
 ---@return string? # resolved parser name
 local function resolve_lang(alias)
   -- normalize: treesitter language names are always lower case and use underscores
-  alias = alias and alias:lower():gsub('%-', '_')
+  -- Language name (from `get_text_node`) may end with "\n".
+  alias = alias and alias:gsub('%s+', ''):lower():gsub('%-', '_')
+
   -- validate that `alias` is a legal language
   if not (alias and alias:match('[%w_]+') == alias) then
     return
@@ -1148,6 +1152,25 @@ end
 
 ---@private
 ---@param cb_name TSCallbackName
+function LanguageTree:_has_callback(cb_name)
+  return #self._callbacks[cb_name] > 0 or #self._callbacks_rec[cb_name] > 0
+end
+
+---@private
+function LanguageTree:_do_changedtree_callbacks()
+  if not self:_has_callback('changedtree') then
+    return
+  end
+
+  local tree_ranges = self._regions_from_tree_ranges and self._regions or nil
+  for i, tree in pairs(self._trees) do
+    local ranges = tree_ranges and tree_ranges[i] or tree:included_ranges(true)
+    self:_do_callback('changedtree', ranges, tree)
+  end
+end
+
+---@private
+---@param cb_name TSCallbackName
 function LanguageTree:_do_callback(cb_name, ...)
   for _, cb in ipairs(self._callbacks[cb_name]) do
     cb(...)
@@ -1191,6 +1214,7 @@ function LanguageTree:_edit(
       regions[i] = tree:included_ranges(true)
     end
     self._regions = regions
+    self._regions_from_tree_ranges = true
   end
 
   local changed_range = {
@@ -1231,7 +1255,7 @@ function LanguageTree:_edit(
   end
 end
 
----@param bufnr integer
+---@param buf integer
 ---@param changed_tick integer
 ---@param start_row integer
 ---@param start_col integer
@@ -1243,7 +1267,7 @@ end
 ---@param new_col integer
 ---@param new_byte integer
 function LanguageTree:_on_bytes(
-  bufnr,
+  buf,
   changed_tick,
   start_row,
   start_col,
@@ -1260,7 +1284,7 @@ function LanguageTree:_on_bytes(
 
   self:_log(
     'on_bytes',
-    bufnr,
+    buf,
     changed_tick,
     start_row,
     start_col,
@@ -1288,7 +1312,7 @@ function LanguageTree:_on_bytes(
 
   self:_do_callback(
     'bytes',
-    bufnr,
+    buf,
     changed_tick,
     start_row,
     start_col,
@@ -1391,7 +1415,7 @@ end
 ---@return TSTree?
 function LanguageTree:tree_for_range(range, opts)
   opts = opts or {}
-  local ignore = vim.F.if_nil(opts.ignore_injections, true)
+  local ignore = vim.nonnil(opts.ignore_injections, true)
 
   if not ignore then
     for _, child in pairs(self._children) do

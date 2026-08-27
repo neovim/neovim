@@ -24,12 +24,14 @@ endfunc
 " Check that a :normal command can be used to stop Visual mode without side
 " effects.
 func Test_normal_escape()
+  throw 'Skipped: Nvim supports cmdwin freedom #40312'
   call feedkeys("q:i\" foo\<Esc>:normal! \<C-V>\<Esc>\<CR>:\" bar\<CR>", 'ntx')
   call assert_equal('" bar', @:)
 endfunc
 
 " This was using a pointer to a freed buffer
 func Test_cmdwin_freed_buffer_ptr()
+  throw "Skipped: Nvim supports cmdwin freedom #40312"
   " this does not work on MS-Windows because renaming an open file fails
   CheckNotMSWindows
 
@@ -94,6 +96,7 @@ func Test_cmdwin_restore_heights()
 endfunc
 
 func Test_cmdwin_temp_curwin()
+  throw "Skipped: Nvim supports cmdwin freedom #40312"
   func CheckWraps(expect_wrap)
     setlocal textwidth=0 wrapmargin=1
 
@@ -128,6 +131,7 @@ func Test_cmdwin_temp_curwin()
 endfunc
 
 func Test_cmdwin_interrupted()
+  throw "Skipped: Nvim supports cmdwin freedom #40312"
   func CheckInterrupted()
     call feedkeys("q::call assert_equal('', getcmdwintype())\<CR>:call assert_equal('', getcmdtype())\<CR>:q<CR>", 'ntx')
   endfunc
@@ -193,6 +197,7 @@ func Test_cmdwin_interrupted()
 endfunc
 
 func Test_cmdwin_existing_bufname()
+  throw "Skipped: Nvim supports cmdwin freedom #40312"
   func CheckName()
     call assert_equal(1, getbufinfo('')[0].command)
     call assert_equal(0, getbufinfo('[Command Line]')[0].command)
@@ -235,6 +240,7 @@ func Test_cmdwin_showcmd()
 endfunc
 
 func Test_cmdwin_cursor_position()
+  throw "Skipped: Nvim supports cmdwin freedom #40312"
   " When the cmdline fills the screen width exactly, pressing CTRL-F to open
   " the cmdwin should place the cursor on the last character, not past it.
   let cmd = 'echo "' .. repeat('a', &columns - 8) .. '"'

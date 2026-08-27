@@ -11,6 +11,7 @@ pub fn nvim_gen_sources(
     api_headers: *std.ArrayList(LazyPath),
     versiondef_git: LazyPath,
     version_lua: LazyPath,
+    precompile: bool,
 ) !struct { *std.Build.Step.WriteFile, LazyPath } {
     const gen_headers = b.addWriteFiles();
 
@@ -40,6 +41,8 @@ pub fn nvim_gen_sources(
         _ = gen_header(b, gen_step, "options_enum.generated.h", gen_headers);
         _ = gen_header(b, gen_step, "options_map.generated.h", gen_headers);
         _ = gen_header(b, gen_step, "option_vars.generated.h", gen_headers);
+        _ = gen_header(b, gen_step, "options_chartab.generated.h", gen_headers);
+        _ = gen_header(b, gen_step, "options_keysets.generated.h", gen_headers);
         gen_step.addFileArg(b.path("src/nvim/options.lua"));
 
         const test_gen_step = b.step("wipopt", "debug one nlua0 (options)");
@@ -64,8 +67,7 @@ pub fn nvim_gen_sources(
     {
         const gen_step = b.addRunArtifact(nlua0);
         gen_step.addFileArg(b.path("src/gen/gen_char_blob.lua"));
-        // TODO(bfredl): LUAC_PRG is missing. tricky with cross-compiling..
-        // gen_step.addArg("-c");
+        if (precompile) gen_step.addArg("-c");
         _ = gen_header(b, gen_step, "lua/vim_module.generated.h", gen_headers);
         // NB: vim._init_packages and vim.inspect must be be first and second ones
         // respectively, otherwise --luamod-dev won't work properly.
@@ -78,6 +80,7 @@ pub fn nvim_gen_sources(
             "keymap",
             "loader",
             "text",
+            "tty",
         };
         for (names) |n| {
             gen_step.addFileArg(b.path(b.fmt("runtime/lua/vim/{s}.lua", .{n})));
@@ -85,15 +88,16 @@ pub fn nvim_gen_sources(
         }
 
         // Dynamically add all Lua _core/ modules (like CMakeLists.txt does)
-        if (b.build_root.handle.openDir("runtime/lua/vim/_core", .{ .iterate = true })) |core_dir_handle| {
+        const io = b.graph.io;
+        if (b.build_root.handle.openDir(io, "runtime/lua/vim/_core", .{ .iterate = true })) |core_dir_handle| {
             var core_dir = core_dir_handle;
-            defer core_dir.close();
+            defer core_dir.close(io);
 
             var iter = core_dir.iterate();
             var core_files = try std.ArrayList([]const u8).initCapacity(b.allocator, 0);
             defer core_files.deinit(b.allocator);
 
-            while (try iter.next()) |entry| {
+            while (try iter.next(io)) |entry| {
                 if (entry.kind == .file and std.mem.endsWith(u8, entry.name, ".lua")) {
                     const module_name = try b.allocator.dupe(u8, entry.name[0 .. entry.name.len - 4]);
                     try core_files.append(b.allocator, module_name);

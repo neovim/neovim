@@ -154,10 +154,10 @@ attempting to open, and so one may specify >
 for each site in a separate file: c:\Users\MyUserName\MachineName.
 
 Now about browsing -- when you just want to look around before editing a
-file.  For browsing on your current host, just "edit" a directory: >
+file.  For netrw browsing on your current host, use |:Explore|: >
 
-	vim .
-	vim /home/userid/path
+	:Explore .
+	:Explore /home/userid/path
 <
 For browsing on a remote host, "edit" a directory (but make sure that
 the directory name is followed by a "/"): >
@@ -944,11 +944,11 @@ moving (renaming) files and directories, copying files and directories, etc.
 One may mark files and execute any system command on them!  The Netrw browser
 generally implements the previous explorer's maps and commands for remote
 directories, although details (such as pertinent global variable names)
-necessarily differ.  To browse a directory, simply "edit" it! >
+necessarily differ.  To browse a local directory with netrw, use |:Explore|: >
 
-	vim /your/directory/
-	vim .
-	vim c:\your\directory\
+	:Explore /your/directory/
+	:Explore .
+	:Explore c:\your\directory\
 <
 (Related topics: |netrw-cr|  |netrw-o|  |netrw-p| |netrw-P| |netrw-t|
                  |netrw-mf|  |netrw-mx| |netrw-D| |netrw-R| |netrw-v| )
@@ -1046,7 +1046,7 @@ QUICK REFERENCE: MAPS				*netrw-browse-maps* {{{2
 	   C	Setting the editing window                           |netrw-C|
 	   d	Make a directory                                     |netrw-d|
 	   D	Attempt to remove the file(s)/directory(ies)         |netrw-D|
-	   gb	Go to previous bookmarked directory                  |netrw-gb|
+	   gb	Go to bookmark                                       |netrw-gb|
 	   gd	Force treatment as directory                         |netrw-gd|
 	   gf	Force treatment as file                              |netrw-gf|
 	   gh	Quick hide/unhide of dot-files                       |netrw-gh|
@@ -1055,11 +1055,12 @@ QUICK REFERENCE: MAPS				*netrw-browse-maps* {{{2
 	   i	Cycle between thin, long, wide, and tree listings    |netrw-i|
 	   I	Toggle the displaying of the banner                  |netrw-I|
 	   mb	Bookmark current directory                           |netrw-mb|
+	   mB	Delete bookmark                                      |netrw-mB|
 	   mc	Copy marked files to marked-file target directory    |netrw-mc|
 	   md	Apply diff to marked files (up to 3)                 |netrw-md|
 	   me	Place marked files on arg list and edit them         |netrw-me|
 	   mf	Mark a file                                          |netrw-mf|
-	   mF	Unmark files                                         |netrw-mF|
+	   mF	Unmark buffer-local files                            |netrw-mF|
 	   mg	Apply vimgrep to marked files                        |netrw-mg|
 	   mh	Toggle marked file suffices' presence on hiding list |netrw-mh|
 	   mm	Move marked files to marked-file target directory    |netrw-mm|
@@ -1141,6 +1142,8 @@ One may easily "bookmark" the currently browsed directory by using >
 
 	mb
 <
+Note: Bookmarked paths are normalized and stored as absolute paths.
+
 								*.netrwbook*
 Bookmarks are retained in between sessions of vim in a file called .netrwbook
 as a |List|, which is typically stored in the first directory on the user's
@@ -1341,7 +1344,7 @@ the tree style will become your default listing style.
 
 One typical way to use the netrw tree display is to: >
 
-	vim .
+	:Explore .
 	(use i until a tree display shows)
 	navigate to a file
 	v  (edit as desired in vertically split window)
@@ -1362,13 +1365,16 @@ Currently, this only works for local files.
 Associated setting variables: |g:netrw_chgperm|
 
 
-CHANGING TO A BOOKMARKED DIRECTORY			*netrw-gb*  {{{2
+CHANGING TO A BOOKMARKED PATH			*netrw-gb*  {{{2
 
-To change directory back to a bookmarked directory, use
+To change to a bookmarked path, use >
 
-	{cnt}gb
+	[{cnt}]gb
 
 Any count may be used to reference any of the bookmarks.
+If {cnt} is omitted, it shows a list of the current bookmarks
+and prompts for a bookmark number to go to.
+
 Note that |netrw-qb| shows both bookmarks and history; to go
 to a location stored in the history see |netrw-u| and |netrw-U|.
 
@@ -1431,10 +1437,13 @@ DELETING BOOKMARKS					*netrw-mB* {{{2
 
 To delete a bookmark, use >
 
-	{cnt}mB
+	[{cnt}]mB
 
 If there are marked files, then mB will remove them from the
 bookmark list.
+If no files are marked and {cnt} is omitted, it shows a list
+of the current bookmarks and prompts for a bookmark number
+to delete.
 
 Alternatively, one may use :NetrwMB! (see |netrw-:NetrwMB|). >
 
@@ -1591,9 +1600,9 @@ The optional parameters are:
 	   that window.
 
 	   Return from Explorer~
-	   Conversely, when one is editing a directory, issuing a :Rexplore
-	   will return to editing the file that was last edited in that
-	   window.
+	   Conversely, when one is using a netrw directory browser, issuing a
+	   :Rexplore will return to editing the file that was last edited in
+	   that window.
 
 	   The <2-leftmouse> map (which is only available under gvim and
 	   cooperative terms) does the same as :Rexplore.
@@ -2274,9 +2283,10 @@ Set the marked file copy/move-to target (see |netrw-mc| and |netrw-mm|):
     displayed directory is used for the copy/move-to target.
 
   * Also, if the cursor is in the banner, then the netrw window's currently
-    displayed directory is used for the copy/move-to target.
-    Unless the target already is the current directory.  In which case,
-    typing "mf" clears the target.
+    displayed directory is used for the copy/move-to target - unless that
+    directory is already the target, in which case typing "mt" again clears
+    it.  Repeating "mt" in the banner thus toggles the current directory as
+    the target.
 
   * However, if the cursor is atop a directory name, then that directory is
     used for the copy/move-to target
@@ -2597,7 +2607,7 @@ your browsing preferences.  (see also: |netrw-settings|)
 				 otherwise                     "dir"
 
   *g:netrw_glob_escape*		='[]*?`{~$'  (unix)
-				='[]*?`{$'  (windows
+				='[]*?`{$'  (windows)
 				These characters in directory names are
 				escaped before applying glob()
 
@@ -2851,10 +2861,6 @@ your browsing preferences.  (see also: |netrw-settings|)
 				such as listing, file removal, etc.
 				 default: ssh
 
-  *g:netrw_tmpfile_escape*	=' &;'
-				escape() is applied to all temporary files
-				to escape these characters.
-
   *g:netrw_timefmt*		specify format string to vim's strftime().
 				The default, "%c", is "the preferred date
 				and time representation for the current
@@ -3023,9 +3029,8 @@ Also see: |g:netrw_chgwin| |netrw-p|
 
 REFRESHING THE LISTING		*netrw-refresh* *netrw-ctrl-l* *netrw-ctrl_l* {{{2
 
-To refresh either a local or remote directory listing, press ctrl-l (<c-l>) or
-hit the <cr> when atop the ./ directory entry in the listing.  One may also
-refresh a local directory by using ":e .".
+To refresh either a local or remote netrw directory listing, press ctrl-l
+(<c-l>) or hit the <cr> when atop the ./ directory entry in the listing.
 
 
 REVERSING SORTING ORDER		*netrw-r* *netrw-reverse* {{{2
@@ -3411,7 +3416,7 @@ Example: Clear netrw's marked file list via a mapping on gu >
 
 		* Put the following line in your <.vimrc>:
 			let g:netrw_altv = 1
-		* Edit the current directory:  :e .
+		* Explore the current directory:  :Explore .
 		* Select some file, press v
 		* Resize the windows as you wish (see |CTRL-W_<| and
 		  |CTRL-W_>|).  If you're using gvim, you can drag

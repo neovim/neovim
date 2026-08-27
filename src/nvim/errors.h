@@ -18,6 +18,7 @@ EXTERN const char e_cmdwin[] INIT(= N_("E11: Invalid in command-line window; <CR
 EXTERN const char e_curdir[] INIT(= N_("E12: Command not allowed in secure mode in current dir or tag search"));
 EXTERN const char e_invalid_buffer_name_str[] INIT(= N_("E158: Invalid buffer name: %s"));
 EXTERN const char e_command_too_recursive[] INIT(= N_("E169: Command too recursive"));
+EXTERN const char e_buffer_nr_invalid_buffer_number[] INIT(= N_("E680: <buffer=%d>: invalid buffer number"));
 EXTERN const char e_buffer_is_not_loaded[] INIT(= N_("E681: Buffer is not loaded"));
 EXTERN const char e_endif[] INIT(= N_("E171: Missing :endif"));
 EXTERN const char e_endtry[] INIT(= N_("E600: Missing :endtry"));
@@ -80,7 +81,6 @@ EXTERN const char e_null[] INIT(= N_("E38: Null argument"));
 EXTERN const char e_number_exp[] INIT(= N_("E39: Number expected"));
 EXTERN const char e_openerrf[] INIT(= N_("E40: Can't open errorfile %s"));
 EXTERN const char e_outofmem[] INIT(= N_("E41: Out of memory!"));
-EXTERN const char e_patnotf[] INIT(= N_("Pattern not found"));
 EXTERN const char e_patnotf2[] INIT(= N_("E486: Pattern not found: %s"));
 EXTERN const char e_positive[] INIT(= N_("E487: Argument must be positive"));
 EXTERN const char e_prev_dir[] INIT(= N_("E459: Cannot go back to previous directory"));
@@ -115,10 +115,10 @@ EXTERN const char e_scroll[] INIT(= N_("E49: Invalid scroll size"));
 EXTERN const char e_shellempty[] INIT(= N_("E91: 'shell' option is empty"));
 EXTERN const char e_signdata[] INIT(= N_("E255: Couldn't read in sign data!"));
 EXTERN const char e_swapclose[] INIT(= N_("E72: Close error on swap file"));
-EXTERN const char e_toocompl[] INIT(= N_("E74: Command too complex"));
+EXTERN const char e_command_too_complex[] INIT(= N_("E74: Command too complex"));
 EXTERN const char e_longname[] INIT(= N_("E75: Name too long"));
 EXTERN const char e_toomsbra[] INIT(= N_("E76: Too many ["));
-EXTERN const char e_toomany[] INIT(= N_("E77: Too many file names"));
+EXTERN const char e_toomany[] INIT(= N_("E77: Too many file names (glob not allowed)"));
 EXTERN const char e_trailing[] INIT(= N_("E488: Trailing characters"));
 EXTERN const char e_trailing_arg[] INIT(= N_("E488: Trailing characters: %s"));
 EXTERN const char e_umark[] INIT(= N_("E78: Unknown mark"));
@@ -163,6 +163,7 @@ EXTERN const char e_auabort[] INIT(= N_("E855: Autocommands caused command to ab
 EXTERN const char e_api_error[] INIT(= N_("E5555: API call: %s"));
 
 EXTERN const char e_fast_api_disabled[] INIT(= N_("E5560: %s must not be called in a fast event context"));
+EXTERN const char e_noui[] INIT(= N_("E5768: No UI attached"));
 
 EXTERN const char e_floatonly[] INIT(= N_("E5601: Cannot close window, only floating window would remain"));
 EXTERN const char e_floatexchange[] INIT(= N_("E5602: Cannot exchange or rotate float"));
@@ -210,6 +211,7 @@ EXTERN const char e_not_allowed_to_change_window_layout_in_this_autocmd[]
 INIT(= N_("E1312: Not allowed to change the window layout in this autocmd"));
 
 EXTERN const char e_val_too_large[] INIT(= N_("E1510: Value too large: %s"));
+EXTERN const char e_val_too_large_len[] INIT(= N_("E1510: Value too large: %.*s"));
 
 EXTERN const char e_undobang_cannot_redo_or_move_branch[]
 INIT(= N_("E5767: Cannot use :undo! to redo or move to a different undo branch"));
@@ -222,6 +224,8 @@ EXTERN const char e_cannot_have_more_than_nr_diff_anchors[] INIT( = N_("E1549: C
 EXTERN const char e_failed_to_find_all_diff_anchors[] INIT( = N_("E1550: Failed to find all diff anchors"));
 EXTERN const char e_diff_anchors_with_hidden_windows[] INIT( = N_("E1562: Diff anchors cannot be used with hidden diff windows"));
 EXTERN const char e_leadtab_requires_tab[] INIT( = N_("E1572: 'listchars' field \"leadtab\" requires \"tab\" to be specified"));
+EXTERN const char e_invalid_format_string_single_percent_s[] INIT( = N_("E1577: Invalid format string, only one \"%s\" is allowed"));
+EXTERN const char e_too_many_postponed_prefixes_spell[] INIT(= N_("E1578: Too many postponed prefixes and/or compound flags"));
 
 EXTERN const char e_trustfile[] INIT(= N_("E5570: Cannot update trust file: %s"));
 EXTERN const char e_cannot_read_from_str_2[] INIT(= N_("E282: Cannot read from \"%s\""));
@@ -229,6 +233,8 @@ EXTERN const char e_cannot_read_from_str_2[] INIT(= N_("E282: Cannot read from \
 EXTERN const char e_conflicting_configs[] INIT(= N_("E5422: Conflicting configs: \"%s\" \"%s\""));
 
 EXTERN const char e_unknown_option2[] INIT(= N_("E355: Unknown option: %s"));
+
+EXTERN const char e_restart_failed_cmd_no_quit[] INIT(= N_("E5201: Restart failed: +cmd did not quit server: %s"));
 
 EXTERN const char top_bot_msg[] INIT(= N_("search hit TOP, continuing at BOTTOM"));
 EXTERN const char bot_top_msg[] INIT(= N_("search hit BOTTOM, continuing at TOP"));

@@ -24,7 +24,7 @@ function M.call(method, args)
     local ok, result = pcall(vim.fn['remote#host#Require'], 'legacy-ruby-provider') ---@type any, any
     if not ok then
       s_err = result
-      vim.api.nvim_echo({ { result, 'WarningMsg' } }, true, {})
+      vim.api.nvim_echo({ { result, 'WarningMsg' } }, true)
       return
     end
     s_host = result

@@ -8,12 +8,15 @@
 #include "nvim/event/loop.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_eval_defs.h"
-#include "nvim/getchar_defs.h"
 #include "nvim/iconv_defs.h"
+#include "nvim/input_defs.h"
+#include "nvim/insert_defs.h"
 #include "nvim/macros_defs.h"
 #include "nvim/menu_defs.h"
+#include "nvim/normal_defs.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/runtime_defs.h"
+#include "nvim/search_defs.h"
 #include "nvim/state_defs.h"
 #include "nvim/syntax_defs.h"
 #include "nvim/types_defs.h"
@@ -319,17 +322,8 @@ EXTERN int include_none INIT( = 0);     // when 1 include "None"
 EXTERN int include_default INIT( = 0);  // when 1 include "default"
 EXTERN int include_link INIT( = 0);     // when 2 include "link" and "clear"
 
-// When highlight_match is true, highlight a match, starting at the cursor
-// position.  Search_match_lines is the number of lines after the match (0 for
-// a match within one line), search_match_endcol the column number of the
-// character just after the match in the last line.
-EXTERN bool highlight_match INIT( = false);         // show search match pos
-EXTERN linenr_T search_match_lines;                // lines of matched string
-EXTERN colnr_T search_match_endcol;                // col nr of match end
-EXTERN linenr_T search_first_line INIT( = 0);       // for :{FIRST},{last}s/pat
-EXTERN linenr_T search_last_line INIT( = MAXLNUM);  // for :{first},{LAST}s/pat
-
-EXTERN bool no_smartcase INIT( = false);          // don't use 'smartcase' once
+/// Per-subsystem state for the search/highlight engine; see search_defs.h.
+EXTERN SearchState Search INIT( = { .last_line = MAXLNUM });
 
 EXTERN bool need_check_timestamps INIT( = false);  // need to check file
                                                    // timestamps asap
@@ -451,50 +445,15 @@ EXTERN int sandbox INIT( = 0);
 
 /// Batch-mode: "-es", "-Es", "-l" commandline argument was given.
 EXTERN bool silent_mode INIT( = false);
+/// Non-interactive Ex mode ("-es"): stdin is executed as Ex commands. mode() returns "cv".
+EXTERN bool exmode_active INIT( = false);
 
-/// Start position of active Visual selection.
-EXTERN pos_T VIsual;
-/// Whether Visual mode is active.
-EXTERN bool VIsual_active INIT( = false);
-/// Whether Select mode is active.
-EXTERN bool VIsual_select INIT( = false);
-/// Register name for Select mode
-EXTERN int VIsual_select_reg INIT( = 0);
-/// Whether incremented cursor during exclusive selection
-EXTERN bool VIsual_select_exclu_adj INIT( = false);
-/// Restart Select mode when next cmd finished
-EXTERN int restart_VIsual_select INIT( = 0);
-/// Whether to restart the selection after a Select-mode mapping or menu.
-EXTERN int VIsual_reselect;
-/// Type of Visual mode.
-EXTERN int VIsual_mode INIT( = 'v');
-/// true when redoing Visual.
-EXTERN bool redo_VIsual_busy INIT( = false);
-
-// The Visual area is remembered for reselection.
-EXTERN int resel_VIsual_mode INIT( = NUL);       // 'v', 'V', or Ctrl-V
-EXTERN linenr_T resel_VIsual_line_count;        // number of lines
-EXTERN colnr_T resel_VIsual_vcol;               // nr of cols or end col
+/// Per-subsystem state for Visual/Select mode; see normal_defs.h.
+EXTERN VisualState Visual INIT( = { .mode = 'v' });
 
 /// When pasting text with the middle mouse button in visual mode with
-/// restart_edit set, remember where it started so we can set Insstart.
+/// restart_edit set, remember where it started so we can set Ins.start.
 EXTERN pos_T where_paste_started;
-
-// This flag is used to make auto-indent work right on lines where only a
-// <RETURN> or <ESC> is typed. It is set when an auto-indent is done, and
-// reset when any other editing is done on the line. If an <ESC> or <RETURN>
-// is received, and did_ai is true, the line is truncated.
-EXTERN bool did_ai INIT( = false);
-
-// Column of first char after autoindent.  0 when no autoindent done.  Used
-// when 'backspace' is 0, to avoid backspacing over autoindent.
-EXTERN colnr_T ai_col INIT( = 0);
-
-// This is a character which will end a start-middle-end comment when typed as
-// the first character on a new line.  It is taken from the last character of
-// the "end" comment leader when the COM_AUTO_END flag is given for that
-// comment end in 'comments'.  It is only valid when did_ai is true.
-EXTERN int end_comment_pending INIT( = NUL);
 
 // This flag is set after a ":syncbind" to let the check_scrollbind() function
 // know that it should not attempt to perform scrollbinding due to the scroll
@@ -502,31 +461,13 @@ EXTERN int end_comment_pending INIT( = NUL);
 // undo some of the work done by ":syncbind.")  -ralston
 EXTERN bool did_syncbind INIT( = false);
 
-// This flag is set when a smart indent has been performed. When the next typed
-// character is a '{' the inserted tab will be deleted again.
-EXTERN bool did_si INIT( = false);
-
-// This flag is set after an auto indent. If the next typed character is a '}'
-// one indent will be removed.
-EXTERN bool can_si INIT( = false);
-
-// This flag is set after an "O" command. If the next typed character is a '{'
-// one indent will be removed.
-EXTERN bool can_si_back INIT( = false);
-
 EXTERN int old_indent INIT( = 0);  ///< for ^^D command in insert mode
 
 // w_cursor before formatting text.
 EXTERN pos_T saved_cursor INIT( = { 0, 0, 0 });
 
-// Stuff for insert mode.
-EXTERN pos_T Insstart;                  // This is where the latest
-                                        // insert/append mode started.
-
-// This is where the latest insert/append mode started. In contrast to
-// Insstart, this won't be reset by certain keys and is needed for
-// op_insert(), to detect correctly where inserting by the user started.
-EXTERN pos_T Insstart_orig;
+// Stuff for insert mode: the current insert session.
+EXTERN InsState Ins;
 
 // Stuff for MODE_VREPLACE state.
 EXTERN linenr_T orig_line_count INIT( = 0);       // Line count when "gR" started
@@ -566,14 +507,6 @@ EXTERN bool finish_op INIT( = false);    // true while an operator is pending
 EXTERN int opcount INIT( = 0);           // count for pending operator
 EXTERN int motion_force INIT( = 0);      // motion force for pending operator
 
-// Ex Mode (Q) state
-EXTERN bool exmode_active INIT( = false);  // true if Ex mode is active
-
-/// Flag set when normal_check() should return 0 when entering Ex mode.
-EXTERN bool pending_exmode_active INIT( = false);
-
-EXTERN bool ex_no_reprint INIT( = false);   // No need to print after z or p.
-
 // 'inccommand' command preview state
 EXTERN bool cmdpreview INIT( = false);
 
@@ -593,10 +526,6 @@ EXTERN int u_sync_once INIT( = 0);       // Call u_sync() once when evaluating
 EXTERN bool force_restart_edit INIT( = false);  // force restart_edit after
                                                 // ex_normal returns
 EXTERN int restart_edit INIT( = 0);      // call edit when next cmd finished
-EXTERN bool arrow_used;                  // Normally false, set to true after
-                                         // hitting cursor key in insert mode.
-                                         // Used by vgetorpeek() to decide when
-                                         // to call u_sync()
 EXTERN bool ins_at_eol INIT( = false);   // put cursor after eol when
                                          // restarting edit after CTRL-O
 
@@ -651,7 +580,6 @@ EXTERN bool typebuf_was_empty INIT( = false);
 EXTERN int ex_normal_busy INIT( = 0);      // recursiveness of ex_normal()
 EXTERN int expr_map_lock INIT( = 0);       // running expr mapping, prevent use of ex_normal() and text changes
 EXTERN bool ignore_script INIT( = false);  // ignore script input
-EXTERN bool stop_insert_mode;              // for ":stopinsert"
 EXTERN bool KeyTyped;                      // true if user typed current char
 EXTERN int KeyStuffed;                     // true if current char from stuffbuf
 EXTERN int maptick INIT( = 0);             // tick for each non-mapped char
@@ -670,7 +598,6 @@ EXTERN FILE *scriptout INIT( = NULL);  ///< Write input to this file ("nvim -w")
 // callback is not called directly from the signal handlers.
 EXTERN bool got_int INIT( = false);          // set to true when interrupt signal occurred
 EXTERN bool bangredo INIT( = false);         // set to true with ! command
-EXTERN int searchcmdlen;                    // length of previous search cmd
 EXTERN int reg_do_extmatch INIT( = 0);       // Used when compiling regexp:
                                              // REX_SET to allow \z\(...\),
                                              // REX_USE to allow \z\1 et al.
@@ -735,12 +662,8 @@ EXTERN char *last_chdir_reason INIT( = NULL);
 EXTERN bool km_stopsel INIT( = false);
 EXTERN bool km_startsel INIT( = false);
 
-EXTERN int cmdwin_type INIT( = 0);    ///< type of cmdline window or 0
-EXTERN int cmdwin_result INIT( = 0);  ///< result of cmdline window or 0
-EXTERN int cmdwin_level INIT( = 0);   ///< cmdline recursion level
-EXTERN buf_T *cmdwin_buf INIT( = NULL);  ///< buffer of cmdline window or NULL
-EXTERN win_T *cmdwin_win INIT( = NULL);  ///< window of cmdline window or NULL
-EXTERN win_T *cmdwin_old_curwin INIT( = NULL);  ///< curwin before opening cmdline window or NULL
+EXTERN int cmdwin_type INIT( = 0);  ///< |cmdwin| type (':', '/', '?') or 0.
+EXTERN buf_T *cmdwin_buf INIT( = NULL);  ///< |cmdwin| scratch buffer, or NULL.
 EXTERN win_T *cmdline_win INIT( = NULL);  ///< window in use by ext_cmdline
 
 EXTERN char no_lines_msg[] INIT( = N_("--No lines in buffer--"));
@@ -759,17 +682,8 @@ EXTERN uint8_t wim_flags[4];
 #define STL_IN_TITLE   2
 EXTERN int stl_syntax INIT( = 0);
 
-// don't use 'hlsearch' temporarily
-EXTERN bool no_hlsearch INIT( = false);
-
 EXTERN bool typebuf_was_filled INIT( = false);     // received text from client
                                                    // or from feedkeys()
-
-#ifdef BACKSLASH_IN_FILENAME
-EXTERN char psepc INIT( = '\\');            // normal path separator character
-EXTERN char psepcN INIT( = '/');            // abnormal path separator character
-EXTERN char pseps[2] INIT( = { '\\', 0 });  // normal path separator string
-#endif
 
 // Set to kTrue when an operator is being executed with virtual editing
 // kNone when no operator is being executed, kFalse otherwise.
@@ -797,12 +711,6 @@ EXTERN bool headless_mode INIT( = false);
 /// Only filled for Win32.
 EXTERN char windowsVersion[20] INIT( = { 0 });
 
-/// While executing a regexp and set to OPTION_MAGIC_ON or OPTION_MAGIC_OFF this
-/// overrules p_magic.  Otherwise set to OPTION_MAGIC_NOT_SET.
-EXTERN optmagic_T magic_overruled INIT( = OPTION_MAGIC_NOT_SET);
-
-/// Skip win_fix_cursor() call for 'splitkeep' when cmdwin is closed.
-EXTERN bool skip_win_fix_cursor INIT( = false);
 /// Skip win_fix_scroll() call for 'splitkeep' when closing tab page.
 EXTERN bool skip_win_fix_scroll INIT( = false);
 /// Skip update_topline() call while executing win_fix_scroll().

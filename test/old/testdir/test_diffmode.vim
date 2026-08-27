@@ -253,6 +253,24 @@ func Test_diffget_diffput()
   %bwipe!
 endfunc
 
+" Undo after getting lines into an empty buffer must leave it empty again
+func Test_diffget_undo_empty_buffer()
+  enew!
+  diffthis
+  new
+  call setline(1, ['1', '2'])
+  diffthis
+
+  wincmd p
+  normal do
+  call assert_equal(['1', '2'], getline(1, '$'))
+  undo
+  call assert_equal([''], getline(1, '$'))
+
+  windo diffoff
+  %bwipe!
+endfunc
+
 " Test putting two changes from one buffer to another
 func Test_diffput_two()
   new a
@@ -3371,6 +3389,31 @@ func Test_diffput_to_empty_buf()
   call VerifyScreenDump(buf, 'Test_diffput_to_empty_buf_03', {})
 
   call StopVimInTerminal(buf)
+endfunc
+
+" Undo can change which lines correspond in a diff. 'cursorbind' must update
+" the other window even when the cursor here did not move.
+func Test_diff_cursorbind_after_undo()
+  call setline(1, ['x', 'y', 'c', 'd'])
+  let w1 = win_getid()
+  new
+  call setline(1, ['p', 'q', 'c', 'd'])
+  let w2 = win_getid()
+  windo diffthis
+  call win_gotoid(w1)
+
+  normal! 2dd
+  call assert_equal(1, line('.', w1))
+  call assert_equal(1, line('.', w2))
+  normal! jk
+  call assert_equal(1, line('.', w1))
+  call assert_equal(3, line('.', w2))
+
+  normal! u
+  call assert_equal(1, line('.', w1))
+  call assert_equal(1, line('.', w2))
+
+  %bw!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

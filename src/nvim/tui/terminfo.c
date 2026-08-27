@@ -133,18 +133,21 @@ bool terminfo_from_database(TerminfoEntry *ti, char *termname, Arena *arena)
     return false;
   }
 
-  ti->bce = unibi_get_bool(ut, unibi_back_color_erase);
+  ti->back_color_erase = unibi_get_bool(ut, unibi_back_color_erase);
   ti->max_colors = unibi_get_num(ut, unibi_max_colors);
   ti->lines = unibi_get_num(ut, unibi_lines);
   ti->columns = unibi_get_num(ut, unibi_columns);
 
   // Check for Tc or RGB
-  ti->has_Tc_or_RGB = false;
+  ti->Tc = false;
+  ti->RGB = false;
   ti->Su = false;
   for (size_t i = 0; i < unibi_count_ext_bool(ut); i++) {
     const char *n = unibi_get_ext_bool_name(ut, i);
-    if (n && (!strcmp(n, "Tc") || !strcmp(n, "RGB"))) {
-      ti->has_Tc_or_RGB = true;
+    if (n && !strcmp(n, "Tc")) {
+      ti->Tc = true;
+    } else if (n && !strcmp(n, "RGB")) {
+      ti->RGB = true;
     } else if (n && !strcmp(n, "Su")) {
       ti->Su = true;
     }
@@ -200,7 +203,7 @@ bool terminfo_from_database(TerminfoEntry *ti, char *termname, Arena *arena)
   }
 
   static const enum unibi_string uni_fkeys[] = {
-# define X(name) unibi_key_##name,
+# define X(name, idx) unibi_key_##name,
     XLIST_TERMINFO_FKEYS
 # undef X
   };
@@ -239,15 +242,16 @@ String terminfo_info_msg(const TerminfoEntry *ti, const char *termname, bool fro
   kv_printf(data, "\n");
 
   kv_printf(data, "Boolean capabilities:\n");
-  kv_printf(data, "  back_color_erase: %s\n", fmt(ti->bce));
-  kv_printf(data, "  truecolor ('Tc' or 'RGB'): %s\n", fmt(ti->has_Tc_or_RGB));
+  kv_printf(data, "  back_color_erase: %s\n", fmt(ti->back_color_erase));
+  kv_printf(data, "  truecolor ('Tc'): %s\n", fmt(ti->Tc));
+  kv_printf(data, "  RGB: %s\n", fmt(ti->RGB));
   kv_printf(data, "  extended underline ('Su'): %s\n", fmt(ti->Su));
   kv_printf(data, "\n");
 
   kv_printf(data, "Numeric capabilities: (-1 for unknown)\n");
   kv_printf(data, "  lines: %d\n", ti->lines);
   kv_printf(data, "  columns: %d\n", ti->columns);
-  kv_printf(data, "  max_colors: %d\n", ti->columns);
+  kv_printf(data, "  max_colors: %d\n", ti->max_colors);
   kv_printf(data, "\n");
 
   kv_printf(data, "String capabilities:\n");
@@ -279,7 +283,7 @@ String terminfo_info_msg(const TerminfoEntry *ti, const char *termname, bool fro
 #undef Y
   };
 
-  for (size_t i = 0 + 1; i < ARRAY_SIZE(key_names); i++) {
+  for (size_t i = 0; i < ARRAY_SIZE(key_names); i++) {
     const char *s = ti->keys[i][0];
     if (s) {
       kv_printf(data, "  key_%-27s = ", key_names[i]);
@@ -294,12 +298,12 @@ String terminfo_info_msg(const TerminfoEntry *ti, const char *termname, bool fro
   }
 
   static const char *fkey_names[] = {
-#define X(name) #name,
+#define X(name, idx) #name,
     XLIST_TERMINFO_FKEYS
 #undef X
   };
 
-  for (size_t i = 0 + 1; i < ARRAY_SIZE(fkey_names); i++) {
+  for (size_t i = 0; i < ARRAY_SIZE(fkey_names); i++) {
     const char *s = ti->f_keys[i];
     if (s) {
       kv_printf(data, "  key_%-27s = ", fkey_names[i]);

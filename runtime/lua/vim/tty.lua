@@ -1,5 +1,73 @@
 local M = {}
 
+--- Send `payload` to the host terminal and listen for `TermResponse`, calling `on_response` for
+--- each response. Cleans up after `opts.timeout` ms if the callback never returns `true`.
+---
+--- The autocommand is removed when:
+--- - `on_response()` returns `true`
+--- - the timeout fires (and `opts.on_timeout` is called, if given)
+--- - the caller explicitly deletes the returned autocmd id
+---
+---@param payload string Sequence to send via nvim_ui_send(). Use empty string ('') to just register
+---                      a listener (no sending).
+---@param opts? { timeout?: integer, on_timeout?: fun(), group?: integer|string, chan?: integer }
+---       - `timeout` (default: 1000) ms to wait before giving up, or 0 for never (caller must remove the autocmd).
+---       - `on_timeout` optional fn called when the timeout fires.
+---       - `group`: augroup for the TermResponse autocmd.
+---       - `chan`: only handle responses from this channel.
+---@param on_response fun(resp:string):boolean? Called for each TermResponse. Return `true` to stop listening.
+---@return integer # autocmd id of the TermResponse handler.
+function M.request(payload, opts, on_response)
+  vim.validate('payload', payload, 'string')
+  vim.validate('opts', opts, 'table', true)
+  vim.validate('on_response', on_response, 'function')
+
+  opts = opts or {}
+  local timeout = opts.timeout or 1000
+  local timer ---@type uv.uv_timer_t?
+  if timeout > 0 then
+    timer = assert(vim.uv.new_timer())
+  end
+
+  local id = require('vim._core.util').nvim_on(
+    'TermResponse',
+    opts.group,
+    { nested = true },
+    ---@param ev {data: vim.event.termresponse.data}
+    function(ev)
+      if opts.chan and ev.data.chan ~= opts.chan then
+        return
+      end
+      local stop = on_response(ev.data.sequence)
+      -- If on_response is done, cancel the timeout so on_timeout doesn't fire spuriously.
+      if stop and timer and not timer:is_closing() then
+        timer:close()
+      end
+      return stop
+    end
+  )
+
+  if payload ~= '' then
+    vim.api.nvim_ui_send(payload)
+  end
+
+  if timer then
+    timer:start(timeout, 0, function()
+      vim.schedule(function()
+        pcall(vim.api.nvim_del_autocmd, id)
+        if opts.on_timeout then
+          opts.on_timeout()
+        end
+      end)
+      if not timer:is_closing() then
+        timer:close()
+      end
+    end)
+  end
+
+  return id
+end
+
 --- Query the host terminal emulator for terminfo capabilities.
 ---
 --- This function sends the XTGETTCAP DCS sequence to the host terminal emulator asking the terminal
@@ -12,13 +80,22 @@ local M = {}
 --- emulator supports the XTGETTCAP sequence.
 ---
 --- @param caps string|table A terminal capability or list of capabilities to query
---- @param cb fun(cap:string, found:boolean, seq:string?) Callback function which is called for
----           each capability in {caps}. {found} is set to true if the capability was found or false
----           otherwise. {seq} is the control sequence for the capability if found, or nil for
----           boolean capabilities.
-function M.query(caps, cb)
+--- @param opts? { timeout?: integer, on_timeout?: fun(), group?: integer|string, chan?: integer }
+--- @param on_response fun(cap:string, found:boolean, seq:string?) Called for each capability in
+---        `caps`. `found` is true if the capability was found, else false. `seq` is the control
+---        sequence if found, or nil for boolean capabilities.
+---@overload fun(caps:string|table, on_response:fun(cap:string, found:boolean, seq:string?))
+function M.query(caps, opts, on_response)
+  if type(opts) == 'function' then
+    on_response = opts
+    opts = {}
+  end
+
   vim.validate('caps', caps, { 'string', 'table' })
-  vim.validate('cb', cb, 'function')
+  vim.validate('opts', opts, 'table', true)
+  vim.validate('on_response', on_response, 'function')
+
+  opts = opts or {}
 
   if type(caps) ~= 'table' then
     caps = { caps }
@@ -29,66 +106,104 @@ function M.query(caps, cb)
     pending[v] = true
   end
 
-  local timer = assert(vim.uv.new_timer())
-
-  local id = vim.api.nvim_create_autocmd('TermResponse', {
-    nested = true,
-    callback = function(ev)
-      local resp = ev.data.sequence ---@type string
-      local k, rest = resp:match('^\027P1%+r(%x+)(.*)$')
-      if k and rest then
-        local cap = vim.text.hexdecode(k)
-        if not cap or not pending[cap] then
-          -- Received a response for a capability we didn't request. This can happen if there are
-          -- multiple concurrent XTGETTCAP requests
-          return
-        end
-
-        local seq ---@type string?
-        if rest:match('^=%x+$') then
-          seq = vim.text
-            .hexdecode(rest:sub(2))
-            :gsub('\\E', '\027')
-            :gsub('%%p%d', '')
-            :gsub('\\(%d+)', string.char)
-        end
-
-        cb(cap, true, seq)
-
-        pending[cap] = nil
-
-        if next(pending) == nil then
-          return true
-        end
-      end
-    end,
-  })
-
   local encoded = {} ---@type string[]
   for i = 1, #caps do
     encoded[i] = vim.text.hexencode(caps[i])
   end
+  local payload = ('\027P+q%s\027\\'):format(table.concat(encoded, ';'))
 
-  local query = string.format('\027P+q%s\027\\', table.concat(encoded, ';'))
-
-  vim.api.nvim_ui_send(query)
-
-  timer:start(1000, 0, function()
-    -- Delete the autocommand if no response was received
-    vim.schedule(function()
-      -- Suppress error if autocommand has already been deleted
-      pcall(vim.api.nvim_del_autocmd, id)
-
-      -- Call the callback for all capabilities that were not found
+  M.request(payload, {
+    timeout = opts.timeout,
+    group = opts.group,
+    chan = opts.chan,
+    on_timeout = function()
+      -- Call the callback for all capabilities that were not found.
       for k in pairs(pending) do
-        cb(k, false, nil)
+        on_response(k, false, nil)
       end
-    end)
+      if opts.on_timeout then
+        opts.on_timeout()
+      end
+    end,
+  }, function(resp)
+    local k, rest = resp:match('^\027P1%+r(%x+)(.*)$')
+    if not k or not rest then
+      return
+    end
+    local cap = vim.text.hexdecode(k)
+    if not cap or not pending[cap] then
+      -- Received a response for a capability we didn't request. This can happen if there are
+      -- multiple concurrent XTGETTCAP requests
+      return
+    end
 
-    if not timer:is_closing() then
-      timer:close()
+    local seq ---@type string?
+    if rest:match('^=%x+$') then
+      seq = vim.text
+        .hexdecode(rest:sub(2))
+        :gsub('\\E', '\027')
+        :gsub('%%p%d', '')
+        :gsub('\\(%d+)', string.char)
+    end
+
+    on_response(cap, true, seq)
+    pending[cap] = nil
+
+    return next(pending) == nil
+  end)
+end
+
+--- Send an APC sequence to the terminal and call `on_response` for each APC response received.
+--- Cleans up after {timeout} milliseconds if no response is received.
+---
+--- `on_response` receives the full APC sequence including the `\027_` prefix.
+--- Return `true` from `on_response` to stop listening.
+---
+---@param payload string APC sequence to send (full escape sequence including prefix/suffix)
+---@param opts {timeout?:integer, chan?:integer} Options table (timeout in milliseconds, default 1000)
+---@param on_response fun(resp:string):boolean? Callback invoked for each APC TermResponse
+---@overload fun(payload:string, on_response:fun(resp:string):boolean?)
+function M.query_apc(payload, opts, on_response)
+  if type(opts) == 'function' then
+    on_response = opts
+    opts = {}
+  end
+
+  vim.validate('payload', payload, 'string')
+  vim.validate('opts', opts, 'table')
+  vim.validate('on_response', on_response, 'function')
+
+  M.request(payload, opts, function(resp)
+    if resp:match('^\027_') then
+      return on_response(resp)
     end
   end)
+end
+
+--- Displays error even when this code runs in the context of the client
+--- @param msg string
+local function broadcast_error(msg)
+  vim.rpcnotify(0, 'nvim_echo', {
+    {
+      msg,
+    },
+  }, true, { err = true })
+end
+
+--- Get user overrides for terminfo entries as a table. See |$NVIM_TERMDEFS|
+function M._get_termdefs()
+  local termdefs_raw = os.getenv('NVIM_TERMDEFS')
+  if termdefs_raw ~= nil then
+    local ok, termdefs_or_err = pcall(vim.json.decode, termdefs_raw)
+    if not ok then
+      broadcast_error('E557: Failed to parse $NVIM_TERMDEFS: ' .. vim.inspect(termdefs_or_err))
+      return
+    elseif type(termdefs_or_err) ~= 'table' or vim.isarray(termdefs_or_err) then
+      broadcast_error('E557: expected $NVIM_TERMDEFS to be table. :help $NVIM_TERMDEFS')
+      return
+    end
+    return termdefs_or_err
+  end
 end
 
 return M

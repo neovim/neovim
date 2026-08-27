@@ -22,7 +22,7 @@ local function win_config(win, hide, height)
   if ui.cmdheight == 0 and api.nvim_win_get_config(win).hide ~= hide then
     api.nvim_win_set_config(win, { hide = hide, height = not hide and height or nil })
   elseif api.nvim_win_get_height(win) ~= height then
-    api.nvim_win_set_height(win, height)
+    api.nvim_win_resize(win, -1, height)
   end
   if vim.o.cmdheight ~= height then
     -- Avoid moving the cursor with 'splitkeep' = "screen", and altering the user
@@ -87,25 +87,25 @@ end
 ---@param content CmdContent
 ---@param pos integer
 ---@param firstc string
----@param prompt string
+---@param prompt string|false
 ---@param indent integer
 ---@param level integer
 ---@param hl_id integer
 function M.cmdline_show(content, pos, firstc, prompt, indent, level, hl_id)
-  -- When entering the cmdline while it is expanded, move messages to dialog window.
-  if M.level == 0 and ui.msg.cmd_on_key then
+  -- Move expanded messages, or messages emitted before a prompt to dialog window.
+  if M.level == 0 and (ui.msg.cmd_on_key or (hl_id >= 0 and next(ui.msg.cmd.ids) ~= nil)) then
     M.expand, M.dialog, ui.msg.cmd_on_key = 1, true, nil
     api.nvim_win_set_config(ui.wins.cmd, { border = 'none' })
     ui.msg.expand_msg('cmd', 'dialog')
   elseif ui.msg.cmd.msg_row ~= -1 and M.expand == 0 then
-    ui.msg.msg_clear()
+    ui.msg.cmd:clear()
   end
 
-  M.level, M.indent, M.prompt = level, indent, #prompt > 0
+  M.level, M.indent, M.prompt = level, indent, hl_id >= 0
   set_text(content, ('%s%s%s'):format(firstc, prompt, (' '):rep(indent)), hl_id)
   ui.msg.virt.last = { {}, {}, {}, {} }
 
-  local height = math.max(ui.cmdheight, api.nvim_win_text_height(ui.wins.cmd, {}).all)
+  local height = math.max(ui.cmdheight, api.nvim_win_text_height(ui.wins.cmd).all)
   win_config(ui.wins.cmd, false, height)
   M.cmdline_pos(pos)
 end
@@ -126,18 +126,13 @@ end
 ---@param pos integer
 --@param level integer
 function M.cmdline_pos(pos)
-  local curpos = api.nvim_win_get_cursor(ui.wins.cmd)
   pos = #fn.strtrans(cmdbuff:sub(1, pos))
-  if curpos[1] ~= M.erow + 1 or curpos[2] ~= promptlen + pos then
-    -- Add matchparen highlighting to non-prompt part of cmdline.
-    if pos > 0 and fn.exists('#matchparen#CursorMoved') == 1 then
-      api.nvim_win_set_cursor(ui.wins.cmd, { M.erow + 1, promptlen + pos - 1 })
-      vim._with({ win = ui.wins.cmd, wo = { eventignorewin = '' } }, function()
-        api.nvim_exec_autocmds('CursorMoved', {})
-      end)
-    end
-    api.nvim_win_set_cursor(ui.wins.cmd, { M.erow + 1, promptlen + pos })
+  -- Add matchparen highlighting to non-prompt part of cmdline.
+  if pos > 0 and vim.g.loaded_matchparen == 1 and fn.exists(':DoMatchParen') > 0 then
+    api.nvim_win_set_cursor(ui.wins.cmd, { M.erow + 1, promptlen + pos - 1 })
+    require('nvim.matchparen').highlight_matching_pair(ui.wins.cmd)
   end
+  api.nvim_win_set_cursor(ui.wins.cmd, { M.erow + 1, promptlen + pos })
 end
 
 --- Leaving the cmdline, restore 'cmdheight' and 'ruler'.
@@ -159,8 +154,8 @@ function M.cmdline_hide(level, abort)
 
   fn.clearmatches(ui.wins.cmd) -- Clear matchparen highlights.
   api.nvim_win_set_cursor(ui.wins.cmd, { 1, 0 })
-  if M.prompt or abort then
-    -- Clear cmd buffer prompt or aborted command (non-abort is left visible).
+  if M.prompt or abort or cmdbuff == '' then
+    -- Clear cmd buffer prompt or aborted/empty command (non-abort is left visible).
     api.nvim_buf_set_lines(ui.bufs.cmd, 0, -1, false, {})
   end
 

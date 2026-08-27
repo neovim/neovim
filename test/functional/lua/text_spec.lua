@@ -1,6 +1,8 @@
 local t = require('test.testutil')
 
+local describe, it = t.describe, t.it
 local eq = t.eq
+local pcall_err = t.pcall_err
 
 describe('vim.text', function()
   describe('indent()', function()
@@ -45,6 +47,8 @@ describe('vim.text', function()
         { ' \n  \nfoo\n\nbar\nbaz\n    \n', 1 },
         { vim.text.indent(0, '  \n   \n foo\n\n bar\n baz\n     \n') }
       )
+      -- Tabs expand when old indent matches new indent #40932.
+      eq({ '  a', 2 }, { vim.text.indent(2, '\t a', { expandtab = 1 }) })
     end)
 
     it('real-world cases', function()

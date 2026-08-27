@@ -2,6 +2,7 @@
 " Language:          Kitty configuration files
 " Maintainer:        MD. Mouinul Hossain Shawon <mdmouinulhossainshawon [at] gmail.com>
 " Last Change:       Tue Sep 16 19:10:59 +06 2025
+" 2026 Jun 02 by Vim project: update kittyMapSeq highlight to match end-of-line #20422
 
 if exists("b:current_syntax")
   finish
@@ -46,7 +47,7 @@ syn keyword kittyMapName nextgroup=kittyMapValue skipwhite contained map
 syn region kittyMapValue start="\S" skip="[\r\n][ \t]*\\" end="\ze[\r\n]" contains=kittyMapSeq,kittyMapAction contained
 
 syn region kittyMapAction start="\S" skip="[\r\n][ \t]*\\" end="\ze[\r\n]" contains=@kittyPrimitive contained
-syn region kittyMapSeq start="\S" end="\ze\s\|^\ze[ \t]*\\" nextgroup=kittyMapAction,kittyMouseMapType skipwhite contains=kittyCtrl,kittyAlt,kittyShift,kittySuper,kittyAnd,kittyWith,kittyKey contained
+syn region kittyMapSeq start="\S" end="\ze\s\|^\ze[ \t]*\\\|\ze$" nextgroup=kittyMapAction,kittyMouseMapType skipwhite contains=kittyCtrl,kittyAlt,kittyShift,kittySuper,kittyAnd,kittyWith,kittyKey contained
 
 " Mouse shortcut """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Format: `mouse_map <keys> <type> <grabbed> <action>?`

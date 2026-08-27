@@ -1,6 +1,7 @@
 -- Black-box tests for the local Lua harness itself. These spawn a separate
--- low-level Nvim process instead of driving an embedded instance via testnvim.
+-- Nvim process instead of driving an embedded instance via testnvim.
 local t = require('test.testutil')
+local describe, it, pending, finally = t.describe, t.it, t.pending, t.finally
 local uv = vim.uv
 
 local eq = t.eq
@@ -17,6 +18,11 @@ local function mkdir(path)
   assert(t.mkdir(path), ('failed to create directory: %s'):format(path))
 end
 
+-- Prepended to each *_spec.lua fixture so it can use the test framework.
+local spec_preamble = "local h = require('test.harness'); local eq = require('test.assert').eq; "
+  .. 'local describe, it, before_each, after_each, setup, teardown, pending, finally = '
+  .. 'h.describe, h.it, h.before_each, h.after_each, h.setup, h.teardown, h.pending, h.finally; '
+
 ---@param suite_files table<string, string>
 ---@return string
 local function write_suite(suite_files)
@@ -24,6 +30,9 @@ local function write_suite(suite_files)
   mkdir(dir)
 
   for name, contents in pairs(suite_files) do
+    if name:match('_spec%.lua$') then
+      contents = spec_preamble .. contents
+    end
     t.write_file(dir .. '/' .. name, contents)
   end
 
@@ -66,7 +75,7 @@ local function run_harness(suite_dir, extra_args)
   local exit_code --- @type integer?
 
   local args = {
-    '-ll',
+    '-l',
     runner,
     '-v',
     '--lpath=' .. build_dir .. '/?.lua',
@@ -146,7 +155,7 @@ describe('test harness', function()
 
         describe('one', function()
           it('defines a preload entry', function()
-            assert.Equal('leak', require('leak_mod'))
+            eq('leak', require('leak_mod'))
           end)
         end)
       ]],
@@ -154,7 +163,7 @@ describe('test harness', function()
         describe('two', function()
           it('does not see the preload entry from another file', function()
             local ok = pcall(require, 'leak_mod')
-            assert.False(ok)
+            assert(not ok)
           end)
         end)
       ]],
@@ -171,9 +180,9 @@ describe('test harness', function()
       ['one_spec.lua'] = [[
         describe('one', function()
           it('mutates package.loaded', function()
-            assert.Equal('file', require('loaded_mod').source)
+            eq('file', require('loaded_mod').source)
             package.loaded.loaded_mod = 'leak'
-            assert.Equal('leak', require('loaded_mod'))
+            eq('leak', require('loaded_mod'))
           end)
         end)
       ]],
@@ -181,7 +190,7 @@ describe('test harness', function()
         describe('two', function()
           it('does not see package.loaded leaks from another file', function()
             local mod = require('loaded_mod')
-            assert.Equal('file', mod.source)
+            eq('file', mod.source)
           end)
         end)
       ]],
@@ -198,7 +207,7 @@ describe('test harness', function()
         describe('one', function()
           it('mutates the environment', function()
             vim.uv.os_setenv(%q, 'leak')
-            assert.Equal('leak', vim.uv.os_getenv(%q))
+            eq('leak', vim.uv.os_getenv(%q))
           end)
         end)
       ]],
@@ -209,7 +218,7 @@ describe('test harness', function()
         [[
         describe('two', function()
           it('does not see environment leaks from another file', function()
-            assert.Equal(nil, vim.uv.os_getenv(%q))
+            eq(nil, vim.uv.os_getenv(%q))
           end)
         end)
       ]],
@@ -226,14 +235,14 @@ describe('test harness', function()
         describe('one', function()
           it('mutates a global', function()
             _G.__harness_leak = 'leak'
-            assert.Equal('leak', _G.__harness_leak)
+            eq('leak', _G.__harness_leak)
           end)
         end)
       ]],
       ['two_spec.lua'] = [[
         describe('two', function()
           it('does not see global leaks from another file', function()
-            assert.Equal(nil, _G.__harness_leak)
+            eq(nil, _G.__harness_leak)
           end)
         end)
       ]],
@@ -248,14 +257,14 @@ describe('test harness', function()
         describe('one', function()
           it('mutates arg', function()
             _G.arg.__leak = 'leak'
-            assert.Equal('leak', _G.arg.__leak)
+            eq('leak', _G.arg.__leak)
           end)
         end)
       ]],
       ['two_spec.lua'] = [[
         describe('two', function()
           it('does not see arg leaks from another file', function()
-            assert.Equal(nil, _G.arg.__leak)
+            eq(nil, _G.arg.__leak)
           end)
         end)
       ]],
@@ -272,16 +281,16 @@ describe('test harness', function()
       ['one_spec.lua'] = [[
         describe('one', function()
           it('mutates a helper-provided global', function()
-            assert.Equal('baseline', _G.helper_value)
+            eq('baseline', _G.helper_value)
             _G.helper_value = 'leak'
-            assert.Equal('leak', _G.helper_value)
+            eq('leak', _G.helper_value)
           end)
         end)
       ]],
       ['two_spec.lua'] = [[
         describe('two', function()
           it('restores the helper baseline between files', function()
-            assert.Equal('baseline', _G.helper_value)
+            eq('baseline', _G.helper_value)
           end)
         end)
       ]],
@@ -300,16 +309,16 @@ describe('test harness', function()
       ['one_spec.lua'] = [[
         describe('one', function()
           it('mutates nested helper state in place', function()
-            assert.Equal('baseline', _G.helper_value.nested)
+            eq('baseline', _G.helper_value.nested)
             _G.helper_value.nested = 'leak'
-            assert.Equal('leak', _G.helper_value.nested)
+            eq('leak', _G.helper_value.nested)
           end)
         end)
       ]],
       ['two_spec.lua'] = [[
         describe('two', function()
           it('keeps the same nested helper table', function()
-            assert.Equal('leak', _G.helper_value.nested)
+            eq('leak', _G.helper_value.nested)
           end)
         end)
       ]],
@@ -332,14 +341,14 @@ describe('test harness', function()
       ['one_spec.lua'] = [[
         describe('one', function()
           it('uses the helper-loaded module', function()
-            assert.Equal(1, require('helper_mod').loads)
+            eq(1, require('helper_mod').loads)
           end)
         end)
       ]],
       ['two_spec.lua'] = [[
         describe('two', function()
           it('does not reload the helper module', function()
-            assert.Equal(1, require('helper_mod').loads)
+            eq(1, require('helper_mod').loads)
           end)
         end)
       ]],
@@ -414,7 +423,7 @@ describe('test harness', function()
 
         describe('one', function()
           it('works', function()
-            assert.True(true)
+            assert(true)
           end)
         end)
       ]],
@@ -423,7 +432,7 @@ describe('test harness', function()
 
         describe('two', function()
           it('works', function()
-            assert.True(true)
+            assert(true)
           end)
         end)
       ]],
@@ -462,10 +471,8 @@ describe('test harness', function()
         end
       end
 
-      t.write_file(
-        left .. '/same_spec.lua',
-        string.format(
-          [[
+      t.write_file(left .. '/same_spec.lua', spec_preamble .. string.format(
+        [[
         local harness = require('test.harness')
 
         harness.on_suite_end(function()
@@ -478,13 +485,10 @@ describe('test harness', function()
           it('works', function() end)
         end)
       ]],
-          marker
-        )
-      )
-      t.write_file(
-        right .. '/same_spec.lua',
-        string.format(
-          [[
+        marker
+      ))
+      t.write_file(right .. '/same_spec.lua', spec_preamble .. string.format(
+        [[
         local harness = require('test.harness')
 
         harness.on_suite_end(function()
@@ -497,9 +501,8 @@ describe('test harness', function()
           it('works', function() end)
         end)
       ]],
-          marker
-        )
-      )
+        marker
+      ))
 
       assert_harness_passes(suite_dir)
       eq('left\nright\n', t.read_file(marker))
@@ -522,7 +525,7 @@ describe('test harness', function()
 
         describe('one', function()
           it('works', function()
-            assert.True(true)
+            assert(true)
           end)
         end)
       ]],
@@ -566,7 +569,7 @@ describe('test harness', function()
 
         describe('one', function()
           it('works', function()
-            assert.True(true)
+            assert(true)
           end)
         end)
       ]],
@@ -599,7 +602,7 @@ describe('test harness', function()
       ['one_spec.lua'] = [[
         describe('one', function()
           it('works', function()
-            assert.True(true)
+            assert(true)
           end)
         end)
       ]],
@@ -623,7 +626,7 @@ describe('test harness', function()
 
         describe('one', function()
           it('starts clean', function()
-            assert.Equal(nil, _G.__repeat_leak)
+            eq(nil, _G.__repeat_leak)
           end)
         end)
       ]],
@@ -746,7 +749,7 @@ describe('test harness', function()
 
         describe('one', function()
           it('skipped', function()
-            assert.True(true)
+            assert(true)
           end)
         end)
       ]],
@@ -755,7 +758,7 @@ describe('test harness', function()
       ['two_spec.lua'] = [[
         describe('two', function()
           it('chosen', function()
-            assert.True(true)
+            assert(true)
           end)
         end)
       ]],
@@ -819,6 +822,37 @@ describe('test harness', function()
     not_matches('skipped suite works', output, true)
   end)
 
+  it('filters tests out by multiple repeated option values', function()
+    local suite_dir = write_suite({
+      ['one_spec.lua'] = [[
+        describe('chosen suite', function()
+          it('works', function() end)
+        end)
+      ]],
+      ['two_spec.lua'] = [[
+        describe('skipped suite', function()
+          it('works', function() end)
+        end)
+      ]],
+      ['three_spec.lua'] = [[
+        describe('three', function()
+          it('skipped test', function() end)
+        end)
+      ]],
+    })
+
+    local code, output = run_harness(suite_dir, {
+      '--filter-out=skipped suite',
+      '--filter-out=skipped test',
+    })
+
+    eq(0, code)
+    matches('1 test from 1 test file of ' .. suite_dir .. ' ran.', output, true)
+    matches('chosen suite works', output, true)
+    not_matches('skipped suite works', output, true)
+    not_matches('three skipped test', output, true)
+  end)
+
   it('reports when filters exclude all tests', function()
     local suite_dir = write_suite({
       ['one_spec.lua'] = [[
@@ -867,25 +901,19 @@ describe('test harness', function()
 
     local suite_dir = t.tmpname(false)
     mkdir(suite_dir)
-    t.write_file(
-      suite_dir .. '/one_spec.lua',
-      [[
+    t.write_file(suite_dir .. '/one_spec.lua', spec_preamble .. [[
         describe('one', function()
           it('works', function() end)
         end)
-      ]]
-    )
+      ]])
     local blocked = suite_dir .. '/blocked'
 
     mkdir(blocked)
-    t.write_file(
-      blocked .. '/two_spec.lua',
-      [[
+    t.write_file(blocked .. '/two_spec.lua', spec_preamble .. [[
         describe('two', function()
           it('is hidden behind permissions', function() end)
         end)
-      ]]
-    )
+      ]])
     finally(function()
       assert(uv.fs_chmod(blocked, 448))
     end)
@@ -987,6 +1015,67 @@ describe('test harness', function()
     not_matches('missing value for --repeat', output, true)
   end)
 
+  it('it() rejects a non-table, non-function second argument', function()
+    eq(
+      '.../harness.lua:0: it() arg 2 must be an opts table or a function',
+      t.pcall_err(it, 'nope', 'not opts', function() end)
+    )
+  end)
+
+  it('{retries=n} reruns before_each/after_each/finally, only for the retried test', function()
+    local log = t.tmpname(false)
+    local suite_dir = write_suite({
+      ['one_spec.lua'] = ([[
+        local function log(s)
+          vim.fn.writefile({ s }, '%s', 'a')
+        end
+        describe('retry', function()
+          before_each(function() log('d-before') end)
+          after_each(function() log('d-after') end)
+          it('succeeds on the second attempt', { retries = 2 }, function(ctx)
+            finally(function() log('t1-finally' .. ctx.retry) end)
+            eq(true, ctx.retry >= 1)
+          end)
+          it('runs once', function(ctx)
+            log('t2-next' .. ctx.retry)
+          end)
+        end)
+      ]]):format(log),
+    })
+
+    local code, output = run_harness(suite_dir)
+
+    eq(0, code)
+    matches('PASSED  ', output, true)
+    not_matches('FAILED  ', output, true)
+    -- Attempt 2 succeeded so attempt 3 never ran, and the next test starts back at retry 0.
+    eq(
+      'd-before t1-finally0 d-after d-before t1-finally1 d-after d-before t2-next0 d-after',
+      table.concat(vim.fn.readfile(log), ' ')
+    )
+  end)
+
+  it('{retries=n} reports one failure after all retries are exhausted', function()
+    local suite_dir = write_suite({
+      ['one_spec.lua'] = [[
+        describe('retry', function()
+          local attempts = 0
+          before_each(function() attempts = attempts + 1 end)
+          it('never succeeds', { retries = 2 }, function()
+            error('boom on attempt ' .. attempts)
+          end)
+        end)
+      ]],
+    })
+
+    local code, output = run_harness(suite_dir)
+
+    eq(1, code)
+    matches('boom on attempt 3', output, true)
+    not_matches('boom on attempt 1', output, true)
+    matches('1 test, listed below', output, true) -- One failure, not one per attempt.
+  end)
+
   it('reports test-body errors as failures', function()
     local suite_dir = write_suite({
       ['one_spec.lua'] = [[
@@ -1046,7 +1135,7 @@ describe('test harness', function()
       ['one_spec.lua'] = [[
         describe('one', function()
           it('equal fail', function()
-            assert.Equal(1, 2)
+            eq(1, 2)
           end)
         end)
       ]],
@@ -1189,7 +1278,7 @@ describe('test harness', function()
           end)
 
           it('afterwrap', function()
-            assert.True(true)
+            assert(true)
           end)
         end)
       ]],

@@ -2,10 +2,10 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear, eq, ok = n.clear, t.eq, t.ok
 local matches = t.matches
 local exec = n.exec
-local feed = n.feed
 local api = n.api
 local fn = n.fn
 local request = n.request
@@ -93,44 +93,18 @@ describe('api/tabpage', function()
       )
     end)
 
-    it('checks textlock, cmdwin restrictions', function()
+    it('checks textlock restrictions', function()
       command('autocmd TextYankPost * ++once call nvim_open_tabpage(0, 0, {})')
       matches('E565:', pcall_err(command, 'yank'))
       eq(1, fn.tabpagenr('$'))
 
-      local other_buf = api.nvim_get_current_buf()
-      feed('q:')
-      -- OK when not entering and not opening a tabpage with the cmdwin's buffer.
-      matches('E11:', pcall_err(api.nvim_open_tabpage, 0, false, {}))
-      eq(1, fn.tabpagenr('$'))
-      matches('E11:', pcall_err(api.nvim_open_tabpage, other_buf, true, {}))
-      eq(1, fn.tabpagenr('$'))
-      local tp = api.nvim_open_tabpage(other_buf, false, {})
-      eq(other_buf, api.nvim_win_get_buf(api.nvim_tabpage_get_win(tp)))
-      eq('command', fn.win_gettype())
-    end)
-
-    it('does not switch window when textlocked or in the cmdwin', function()
-      local target_win = api.nvim_get_current_win()
-      feed('q:')
-      local cur_win = api.nvim_get_current_win()
-      eq(
-        'Vim:E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
-        pcall_err(api.nvim_tabpage_set_win, 0, target_win)
-      )
-      eq(cur_win, api.nvim_get_current_win())
-      command('quit!')
-
-      exec(([[
+      exec([[
         new
         call setline(1, 'foo')
-        setlocal debug=throw indentexpr=nvim_tabpage_set_win(0,%d)
-      ]]):format(target_win))
-      cur_win = api.nvim_get_current_win()
-      eq(
-        'Vim(normal):E5555: API call: Vim:E565: Not allowed to change text or change window',
-        pcall_err(command, 'normal! ==')
-      )
+        setlocal debug=throw indentexpr=nvim_tabpage_set_win(0,win_getid())
+      ]])
+      local cur_win = api.nvim_get_current_win()
+      matches('E565: Not allowed to change text or change window', pcall_err(command, 'normal! =='))
       eq(cur_win, api.nvim_get_current_win())
     end)
   end)
@@ -226,12 +200,12 @@ describe('api/tabpage', function()
 
       local newtabs = api.nvim_list_tabpages()
       eq(3, #newtabs)
-      eq(newtabs, {
+      eq({
         tab1,
         tab2,
         -- new_tab,
         tab3,
-      })
+      }, newtabs)
 
       local new_tab = api.nvim_open_tabpage(0, false, { after = api.nvim_tabpage_get_number(tab2) })
       local newtabs2 = api.nvim_list_tabpages()
@@ -242,7 +216,7 @@ describe('api/tabpage', function()
         new_tab,
         tab3,
       }, newtabs2)
-      eq(api.nvim_get_current_tabpage(), tab3)
+      eq(tab3, api.nvim_get_current_tabpage())
     end)
 
     it('respects the `enter` argument', function()
@@ -253,8 +227,8 @@ describe('api/tabpage', function()
       local new_tab = api.nvim_open_tabpage(0, false, {})
       local newtabs = api.nvim_list_tabpages()
       eq(2, #newtabs)
-      eq(newtabs, { tab1, new_tab })
-      eq(api.nvim_get_current_tabpage(), tab1)
+      eq({ tab1, new_tab }, newtabs)
+      eq(tab1, api.nvim_get_current_tabpage())
       -- Tabline redrawn when not entering.
       screen:expect([[
         {5: [No Name] }{24: [No Name] }{2:                           }{24:X}|
@@ -266,8 +240,8 @@ describe('api/tabpage', function()
       local new_tab2 = api.nvim_open_tabpage(0, true, {})
       local newtabs2 = api.nvim_list_tabpages()
       eq(3, #newtabs2)
-      eq(newtabs2, { tab1, new_tab2, new_tab })
-      eq(api.nvim_get_current_tabpage(), new_tab2)
+      eq({ tab1, new_tab2, new_tab }, newtabs2)
+      eq(new_tab2, api.nvim_get_current_tabpage())
       -- Tabline redrawn. (when entering)
       screen:expect([[
         {24: [No Name] }{5: [No Name] }{24: [No Name] }{2:                }{24:X}|
@@ -389,7 +363,7 @@ describe('api/tabpage', function()
       eq(6, #tabs_after_middle)
       eq({ first_tab, tab1, before_middle, tab2, tab3, explicit_after_current }, tabs_after_middle)
 
-      eq(api.nvim_get_current_tabpage(), tab3)
+      eq(tab3, api.nvim_get_current_tabpage())
 
       -- Test default behavior (after current)
       local default_after_current = api.nvim_open_tabpage(0, false, {})

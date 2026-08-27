@@ -8,8 +8,7 @@
 "			Tyler Miller <tmillr@proton.me>
 "			Phạm Bình An <phambinhanctb2004@gmail.com>
 "			@konfekt
-" Last Change:		2025 Apr 04
-" 2025 May 06 by Vim Project update 'path' setting #17267
+" Last Change:		2026 Jun 20
 
 if exists("b:did_ftplugin")
   finish
@@ -49,7 +48,7 @@ if exists("loaded_matchit") && !exists("b:match_words")
 	\ '\<\%(return\|else\|elseif\)\>:' ..
 	\ '\<end\>,' ..
 	\ '\<repeat\>:\<until\>,' ..
-	\ '\%(--\)\=\[\(=*\)\[:]\1]'
+	\ '--\[\(=*\)\[:\%(--\)\=]\1]'
   let b:undo_ftplugin ..= " | unlet! b:match_words b:match_ignorecase"
 endif
 

@@ -318,7 +318,7 @@ bhdr_T *mf_get(memfile_T *mfp, blocknr_T nr, unsigned page_count)
   }
 
   hp->bh_flags |= BH_LOCKED;
-  pmap_put(int64_t)(&mfp->mf_hash, hp->bh_bnum, hp);  // put in front of hash table
+  pmap_put(int64_t)(&mfp->mf_hash, hp->bh_bnum, hp);
 
   return hp;
 }

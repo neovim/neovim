@@ -306,13 +306,13 @@ syntax keyword typescriptRepeat                do while for nextgroup=typescript
 syntax keyword typescriptRepeat                for nextgroup=typescriptLoopParen,typescriptAsyncFor skipwhite skipempty
 syntax keyword typescriptBranch                break continue containedin=typescriptBlock
 syntax keyword typescriptCase                  case nextgroup=@typescriptPrimitive skipwhite containedin=typescriptBlock
-syntax keyword typescriptDefault               default containedin=typescriptBlock nextgroup=@typescriptValue,typescriptClassKeyword,typescriptInterfaceKeyword skipwhite oneline
+syntax keyword typescriptDefault               default containedin=typescriptBlock nextgroup=@typescriptValue,typescriptClassKeyword,typescriptInterfaceKeyword skipwhite
 syntax keyword typescriptStatementKeyword      with
 syntax keyword typescriptStatementKeyword      yield skipwhite nextgroup=@typescriptValue containedin=typescriptBlock
 
 syntax keyword typescriptTry                   try
 syntax keyword typescriptExceptions            throw finally
-syntax keyword typescriptExceptions            catch nextgroup=typescriptCall skipwhite skipempty oneline
+syntax keyword typescriptExceptions            catch nextgroup=typescriptCall skipwhite skipempty
 syntax keyword typescriptDebugger              debugger
 
 syntax keyword typescriptAsyncFor              await nextgroup=typescriptLoopParen skipwhite skipempty contained
@@ -1766,9 +1766,9 @@ endif
 " patch
 " patch for generated code
 syntax keyword typescriptGlobal Promise
-  \ nextgroup=typescriptGlobalPromiseDot,typescriptFuncCallArg,typescriptTypeArguments oneline
+  \ nextgroup=typescriptGlobalPromiseDot,typescriptFuncCallArg,typescriptTypeArguments
 syntax keyword typescriptGlobal Map WeakMap
-  \ nextgroup=typescriptGlobalPromiseDot,typescriptFuncCallArg,typescriptTypeArguments oneline
+  \ nextgroup=typescriptGlobalPromiseDot,typescriptFuncCallArg,typescriptTypeArguments
 
 syntax keyword typescriptConstructor           contained constructor
   \ nextgroup=@typescriptCallSignature

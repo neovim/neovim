@@ -2,6 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear, feed, source = n.clear, n.feed, n.source
 local command = n.command
 local poke_eventloop = n.poke_eventloop
@@ -17,7 +18,7 @@ describe('CTRL-C (mapped)', function()
 
   it('interrupts :global', function()
     -- Crashes luajit.
-    if t.skip_fragile(pending) then
+    if t.skip_fragile(t.pending) then
       return
     end
 

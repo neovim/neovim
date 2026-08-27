@@ -62,17 +62,17 @@ For inserting text see |insert.txt|.
 :[range]d[elete] [x]	Delete [range] lines (default: current line) [into
 			register x].
 			Note these weird abbreviations:
-			   :dl		delete and list
-			   :dell	idem
-			   :delel	idem
-			   :deletl	idem
-			   :deletel	idem
-			   :dp		delete and print
-			   :dep		idem
-			   :delp	idem
-			   :delep	idem
-			   :deletp	idem
-			   :deletep	idem
+			  :dl		delete and list
+			  :dell		idem
+			  :delel	idem
+			  :deletl	idem
+			  :deletel	idem
+			  :dp		delete and print
+			  :dep		idem
+			  :delp		idem
+			  :delep	idem
+			  :deletp	idem
+			  :deletep	idem
 
 :[range]d[elete] [x] {count}
 			Delete {count} lines, starting with [range]
@@ -883,7 +883,7 @@ either the first or second pattern in parentheses did not match, so either
 
 These commands repeat the previous `:substitute` command with the given flags.
 The first letter is always "s", followed by one or two of the possible flag
-characters.  For example `:sce` works like `:s///ce`.  The table lists the
+characters.  For example ":sce" works like ":s ce".  The table lists the
 possible combinations, not all flags are possible, because the command is
 short for another command.
 
@@ -1307,26 +1307,22 @@ and ":put" commands and with CTRL-R.
 	completely from a mapping.
 
 -----------------------------------------------------------------------------
-6. Alternate file register "#                               *quote_#* *quote#*
+6. Alternate file register "#                          *quote_#* *quote#* *@#*
 
-Contains the name of the alternate file for the current window.  It will
-change how the |CTRL-^| command works. This register is writable, mainly to
-allow for restoring it after a plugin has
-changed it.
+Contains the |alternate-file| name for current window.
+This register is writable with `:let` and |setreg()|.  This changes which
+buffer CTRL-^ enters.  You can't yank or delete into this register.
+A String is matched against existing buffer names, like |:buffer|: >
+    let @# = 'buffer_name'
+Also supports using buffer number and |file-pattern|.
 
-It accepts buffer number: >
-     let altbuf = bufnr(@#)
-     ...
-     let @# = altbuf
+Throws
+  |E86| when the buffer number does not exist
+  |E93| when more than one buffer matches
+  |E94| when none match
 
-It will give error |E86| if you pass buffer number and this buffer does not
-exist.
-
-It can also accept a match with an existing buffer name: >
-     let @# = 'buffer_name'
-
-Error |E93| if there is more than one buffer matching the given name or
-|E94| if none of buffers matches the given name.
+Clear the register with empty String: >
+    let @# = ''
 
 -----------------------------------------------------------------------------
 7. Expression register "=                              *quote_=* *quote=* *@=*
@@ -1370,10 +1366,12 @@ register, nothing is returned.
 10. Last search pattern register "/			    *quote_/* *quote/*
 
 Contains the most recent search-pattern.  This is used for "n" and 'hlsearch'.
-It is writable with `:let`, you can change it to have 'hlsearch' highlight
-other matches without actually searching.  You can't yank or delete into this
-register.  The search direction is available in |v:searchforward|. Note that
-the value is restored when returning from a function |function-search-undo|.
+This register is writable with `:let` and |setreg()|.  You can change it to have
+'hlsearch' highlight other matches without actually searching.  You can't yank
+or delete into this register.  The search direction is available in
+|v:searchforward|.
+Note that the value is restored when returning from a function
+|function-search-undo|.
 
 							*@/*
 You can write to a register with a `:let` command |:let-@|.  Example: >
@@ -1496,25 +1494,24 @@ $VIMRUNTIME/ftplugin directory, sets the 'formatexpr' option to: >
 That means, you will find the corresponding script, defining the
 xmlformat#Format() function, in the file `$VIMRUNTIME/autoload/xmlformat.vim`
 
-Here is an example script that removes trailing whitespace from the selected
-text.  Put it in your autoload directory, e.g. ~/.vim/autoload/format.vim:
->vim
-  func! format#Format()
-    " only reformat on explicit gq command
-    if mode() != 'n'
-      " fall back to Vim's internal reformatting
+Here is an example that removes trailing whitespace from the selected text.
+Put it in your |ftplugin|:
+>lua
+  vim.bo.formatexpr = function()
+    -- only reformat on explicit gq command
+    if vim.fn.mode() ~= 'n' then
+      -- fall back to the internal reformatting
       return 1
-    endif
-    let lines = getline(v:lnum, v:lnum + v:count - 1)
-    call map(lines, {key, val -> substitute(val, '\s\+$', '', 'g')})
-    call setline('.', lines)
+    end
+    local lines = vim.fn.getline(vim.v.lnum, vim.v.lnum + vim.v.count - 1)
+    for i, val in ipairs(lines) do
+      lines[i] = (val:gsub('%s+$', ''))
+    end
+    vim.fn.setline('.', lines)
 
-    " do not run internal formatter!
+    -- do not run internal formatter!
     return 0
-  endfunc
-
-You can then enable the formatting by executing: >
-  setlocal formatexpr=format#Format()
+  end
 
 Note: this function explicitly returns non-zero when called from insert mode
 (which basically means, text is inserted beyond the 'textwidth' limit).  This

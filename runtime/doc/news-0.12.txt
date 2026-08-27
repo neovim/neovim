@@ -24,7 +24,7 @@ DIAGNOSTICS
 
 • |diagnostic-signs| can no longer be configured with |:sign-define| or
   |sign_define()| (deprecated in Nvim 0.10 |deprecated-0.10|).
-• Removed |vim.diagnostic.disable()| and |vim.diagnostic.is_disabled()|
+• Removed vim.diagnostic.disable() and vim.diagnostic.is_disabled()
   (deprecated in Nvim 0.10 |deprecated-0.10|).
 • The legacy signature of |vim.diagnostic.enable()| (deprecated in Nvim 0.10
   |deprecated-0.10|) is no longer supported.
@@ -107,7 +107,7 @@ API
 • |nvim_echo()| can create |Progress| messages
 • |nvim_get_commands()| returns `preview` and `callback` as Lua functions if
   they were so specified in `nvim_create_user_command()`.
-• |nvim_open_tabpage()| can open a new |tab-page|.
+• |nvim_open_tabpage()| can open a new |tabpage|.
 • |nvim_open_win()| floating windows can show a 'statusline'. Plugins can use
   `style='minimal'` or `:setlocal statusline=` to hide the statusline.
 • |nvim_win_set_config()| can move |floating-windows| to other tabpages.

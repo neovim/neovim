@@ -289,6 +289,59 @@ func Test_modeline_fails_modelineexpr()
   call s:modeline_fails('titlestring', 'titlestring=Something()', 'E992:')
 endfunc
 
+func Test_modeline_complete_uses_sandbox()
+  let modeline = &modeline
+  let modelineexpr = &modelineexpr
+
+  func! ModelineCompletePwnFindstart(findstart, base)
+    if a:findstart
+      call writefile(['findstart'], 'Xmodeline_complete_proof')
+      return 0
+    endif
+    return ['match']
+  endfunc
+
+  func! ModelineCompletePwnMatches(findstart, base)
+    if a:findstart
+      return 0
+    endif
+    call writefile(['matches'], 'Xmodeline_complete_proof')
+    return ['match']
+  endfunc
+
+  try
+    set modeline modelineexpr
+
+    call writefile([
+          \ 'vim: set complete=FModelineCompletePwnFindstart :',
+          \ 'body',
+          \ ], 'Xmodeline_complete_attack', 'D')
+    call delete('Xmodeline_complete_proof')
+    edit Xmodeline_complete_attack
+    call cursor(2, 1)
+    call assert_fails('call feedkeys("i\<C-N>\<Esc>", "xt")', 'E48:')
+    call assert_false(filereadable('Xmodeline_complete_proof'))
+    bwipe!
+
+    call writefile([
+          \ 'vim: set complete=FModelineCompletePwnMatches :',
+          \ 'body',
+          \ ], 'Xmodeline_complete_attack', 'D')
+    call delete('Xmodeline_complete_proof')
+    edit Xmodeline_complete_attack
+    call cursor(2, 1)
+    call assert_fails('call feedkeys("i\<C-N>\<Esc>", "xt")', 'E48:')
+    call assert_false(filereadable('Xmodeline_complete_proof'))
+    bwipe!
+  finally
+    let &modeline = modeline
+    let &modelineexpr = modelineexpr
+    call delete('Xmodeline_complete_proof')
+    delfunc ModelineCompletePwnFindstart
+    delfunc ModelineCompletePwnMatches
+  endtry
+endfunc
+
 func Test_modeline_setoption_verbose()
   let modeline = &modeline
   set modeline

@@ -3,6 +3,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, setup, teardown = t.describe, t.it, t.setup, t.teardown
 local feed, clear, command = n.feed, n.clear, n.command
 local eq, write_file = t.eq, t.write_file
 local poke_eventloop = n.poke_eventloop

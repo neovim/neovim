@@ -52,7 +52,7 @@ let b:undo_ftplugin = b:undo_ftplugin . ' lispwords<'
 let b:did_scheme_ftplugin = 1
 
 if exists('b:is_chicken') || exists('g:is_chicken')
-  runtime! ftplugin/chicken.vim
+  runtime! ftplugin/chicken[.]{vim,lua}
 endif
 
 unlet b:did_scheme_ftplugin

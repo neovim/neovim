@@ -3,6 +3,7 @@ local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
 local tt = require('test.functional.testterm')
+local describe, it, before_each = t.describe, t.it, t.before_each
 local feed_data = tt.feed_data
 local feed_csi = tt.feed_csi
 local feed, clear = n.feed, n.clear
@@ -15,6 +16,7 @@ local eval = n.eval
 local skip = t.skip
 local is_os = t.is_os
 local testprg = n.testprg
+local api = n.api
 
 describe(':terminal window', function()
   before_each(clear)
@@ -33,6 +35,33 @@ describe(':terminal window', function()
     command('new')
     eq({ 1, 1, 1 }, eval('[&l:wrap, &wrap, &g:wrap]'))
     eq({ 1, 1, 1 }, eval('[&l:list, &list, &g:list]'))
+  end)
+
+  it('keeps the cursor put on resize when the line above it is full width', function()
+    local screen = Screen.new(50, 7)
+    local buf = api.nvim_create_buf(true, true)
+    local chan = api.nvim_open_term(buf, {})
+    api.nvim_win_set_buf(0, buf)
+    feed('i')
+    api.nvim_chan_send(chan, 'l1\r\nl2\r\nl3\r\nl4\r\n' .. ('A'):rep(50) .. '\r\nX')
+    screen:expect([[
+      l1                                                |
+      l2                                                |
+      l3                                                |
+      l4                                                |
+      AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA|
+      X^                                                 |
+      {5:-- TERMINAL --}                                    |
+    ]])
+    screen:try_resize(50, 6)
+    screen:expect([[
+      l2                                                |
+      l3                                                |
+      l4                                                |
+      AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA|
+      X^                                                 |
+      {5:-- TERMINAL --}                                    |
+    ]])
   end)
 
   it('resets horizontal scroll on resize #35331', function()
@@ -173,12 +202,12 @@ describe(':terminal window', function()
       ]])
       feed_data('\nabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
       screen:expect([[
-        {121:++ 7  }                                            |
-        {121:++ 8  }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR|
-        {121:++ 9  }STUVWXYZ                                    |
-        {121:++10  }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR|
-        {121:++11  }STUVWXYZrows: 6, cols: 44                   |
-        {121:++12  }^                                            |
+        {121:++{MATCH: [78]}  }                                            |
+        {121:++{MATCH: [89]}  }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR|
+        {121:++{MATCH:[ 1][09]}  }STUVWXYZ                                    |
+        {121:++{MATCH:1[01]}  }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR|
+        {121:++{MATCH:1[12]}  }STUVWXYZrows: 6, cols: 44                   |
+        {121:++{MATCH:1[23]}  }^                                            |
         {5:-- TERMINAL --}                                    |
       ]])
     end)
@@ -360,7 +389,7 @@ describe(':terminal window', function()
       rows: 5, cols: 25        │rows: 5, cols: 25       |
       ^                         │                        |
                                │                        |*2
-      {120:<o [-] 3,0-1          All }{119:< [-] 2,0-1          Top}|
+      {120:<o [-] 3,0-1          All }{119:< [-] 2,0-1          All}|
       {5:-- TERMINAL --}                                    |
     ]])
     command("call win_execute(win_getid(winnr('#')), 'call cursor(1, 1)')")
@@ -394,7 +423,7 @@ describe(':terminal window', function()
       cool line 8                                       |
       cool line 9                                       |
       cool line 10                                      |
-      {5:-- TERMINAL --}                  6,1           Bot |
+      {5:-- TERMINAL --}                  6,1            Bot|
     ]])
     command('call nvim_win_set_cursor(0, [1, 0])')
     screen:expect_unchanged()
@@ -407,7 +436,7 @@ describe(':terminal window', function()
       cool line 8                                       |
       cool line 9                                       |
       cool line 10                                      |
-      {5:-- TERMINAL --}                  7,5           Bot |
+      {5:-- TERMINAL --}                  7,5            Bot|
     ]])
     -- Check topline correct after leaving terminal mode.
     -- The new cursor position is one column left of the terminal's actual cursor position.
@@ -419,7 +448,7 @@ describe(':terminal window', function()
       cool line 8                                       |
       cool line 9                                       |
       cool line 10                                      |
-                                      7,4           Bot |
+                                      7,4            Bot|
     ]])
   end)
 

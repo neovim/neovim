@@ -1,5 +1,7 @@
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local poke_eventloop = n.poke_eventloop
 local clear = n.clear
 local insert = n.insert

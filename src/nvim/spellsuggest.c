@@ -14,6 +14,7 @@
 #include "nvim/change.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
+#include "nvim/dialog.h"
 #include "nvim/errors.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
@@ -21,13 +22,13 @@
 #include "nvim/fileio.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
-#include "nvim/getchar.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/hashtab.h"
 #include "nvim/hashtab_defs.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/input.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/mbyte_defs.h"
@@ -385,33 +386,44 @@ static int sps_limit = 9999;      ///< max nr of suggestions given
 /// Sets "sps_flags" and "sps_limit".
 int spell_check_sps(void)
 {
-  char buf[MAXPATHL];
-
   sps_flags = 0;
   sps_limit = 9999;
 
-  for (char *p = p_sps; *p != NUL;) {
-    copy_option_part(&p, buf, MAXPATHL, ",");
-
+  const char *key, *val;
+  size_t keylen, vallen;
+  for (const char *p = p_sps; option_next_keyval(&p, &key, &keylen, &val, &vallen);) {
     int f = 0;
-    if (ascii_isdigit(*buf)) {
-      char *s = buf;
-      sps_limit = getdigits_int(&s, true, 0);
-      if (*s != NUL && !ascii_isdigit(*s)) {
+    if (val == NULL) {
+      // A bare number is the suggestion limit.
+      if (keylen > 0 && ascii_isdigit((uint8_t)(*key))) {
+        char *s = (char *)key;
+        sps_limit = getdigits_int(&s, true, 0);
+        if (s != key + keylen) {  // trailing non-digits
+          f = -1;
+        }
+      } else if (option_slice_eq(key, keylen, "best")) {
+        f = SPS_BEST;
+      } else if (option_slice_eq(key, keylen, "fast")) {
+        f = SPS_FAST;
+      } else if (option_slice_eq(key, keylen, "double")) {
+        f = SPS_DOUBLE;
+      } else {
         f = -1;
       }
-      // Note: Keep this in sync with opt_sps_values.
-    } else if (strcmp(buf, "best") == 0) {
-      f = SPS_BEST;
-    } else if (strcmp(buf, "fast") == 0) {
-      f = SPS_FAST;
-    } else if (strcmp(buf, "double") == 0) {
-      f = SPS_DOUBLE;
-    } else if (strncmp(buf, "expr:", 5) != 0
-               && strncmp(buf, "file:", 5) != 0
-               && (strncmp(buf, "timeout:", 8) != 0
-                   || (!ascii_isdigit(buf[8])
-                       && !(buf[8] == '-' && ascii_isdigit(buf[9]))))) {
+    } else if (option_slice_eq(key, keylen, "expr") || option_slice_eq(key, keylen, "file")) {
+      // Value is an expression/filename, consumed later in spell_find_suggest().
+    } else if (option_slice_eq(key, keylen, "timeout")) {
+      // Optional leading '-', then at least one digit.
+      const char *v = val;
+      size_t vl = vallen;
+      if (vl > 0 && *v == '-') {
+        v++;
+        vl--;
+      }
+      if (vl == 0 || !ascii_isdigit((uint8_t)(*v))) {
+        f = -1;
+      }
+    } else {
       f = -1;
     }
 
@@ -432,14 +444,64 @@ int spell_check_sps(void)
   return OK;
 }
 
+/// Let the user pick a spell suggestion. Delegates to (async) `vim.ui.select()`.
+static void select_spell_suggestion(suginfo_T *sug)
+{
+  typval_T items_tv;
+  tv_list_alloc_ret(&items_tv, sug->su_ga.ga_len);
+
+  for (int i = 0; i < sug->su_ga.ga_len; i++) {
+    suggest_T *stp = &SUG(sug->su_ga, i);
+
+    dict_T *d = tv_dict_alloc();
+
+    // The suggested word may replace only part of the bad word; append the
+    // unreplaced tail to form the user-visible "word".
+    int el = sug->su_badlen - stp->st_orglen;
+    if (el > 0) {
+      char *word = xmallocz((size_t)stp->st_wordlen + (size_t)el);
+      memcpy(word, stp->st_word, (size_t)stp->st_wordlen);
+      memcpy(word + stp->st_wordlen, sug->su_badptr + stp->st_orglen, (size_t)el);
+      tv_dict_add_allocated_str(d, S_LEN("word"), word);
+    } else {
+      tv_dict_add_str(d, S_LEN("word"), stp->st_word);
+    }
+
+    // The suggestion may replace MORE than su_badlen of the bad text;
+    // capture that wider span as `extra`.
+    if (sug->su_badlen < stp->st_orglen) {
+      char *extra = xstrnsave(sug->su_badptr, (size_t)stp->st_orglen);
+      tv_dict_add_allocated_str(d, S_LEN("extra"), extra);
+    }
+
+    // Pass raw scoring data; Lua decides whether/how to render.
+    // `altscore`/`salscore` are only meaningful with SPS_DOUBLE|SPS_BEST.
+    tv_dict_add_nr(d, S_LEN("score"), stp->st_score);
+    if (sps_flags & (SPS_DOUBLE | SPS_BEST)) {
+      tv_dict_add_nr(d, S_LEN("altscore"), stp->st_altscore);
+      tv_dict_add_bool(d, S_LEN("salscore"),
+                       stp->st_salscore ? kBoolVarTrue : kBoolVarFalse);
+    }
+
+    typval_T item = { .v_type = VAR_DICT, .vval.v_dict = d };
+    tv_list_append_tv(items_tv.vval.v_list, &item);
+  }
+
+  typval_T bad_tv = { .v_type = VAR_STRING,
+                      .vval.v_string = xstrnsave(sug->su_badptr, (size_t)sug->su_badlen) };
+  typval_T lua_args[] = { items_tv, bad_tv, { .v_type = VAR_UNKNOWN } };
+  nlua_call_typval("vim._core.spell", "select_suggest", lua_args, NULL);
+
+  tv_clear(&items_tv);
+  tv_clear(&bad_tv);
+}
+
 /// "z=": Find badly spelled word under or after the cursor.
 /// Give suggestions for the properly spelled word.
 /// In Visual mode use the highlighted word as the bad word.
 /// When "count" is non-zero use that suggestion.
 void spell_suggest(int count)
 {
-  pos_T prev_cursor = curwin->w_cursor;
-  bool mouse_used = false;
   int badlen = 0;
   int msg_scroll_save = msg_scroll;
   const int wo_spell_save = curwin->w_p_spell;
@@ -448,24 +510,27 @@ void spell_suggest(int count)
     parse_spelllang(curwin);
     curwin->w_p_spell = true;
   }
+  // Autocommands may have changed the buffer and made the cursor invalid
+  check_cursor(curwin);
+  pos_T prev_cursor = curwin->w_cursor;
 
   if (*curwin->w_s->b_p_spl == NUL) {
     emsg(_(e_no_spell));
     goto skip;
   }
 
-  if (VIsual_active) {
+  if (Visual.active) {
     // Use the Visually selected text as the bad word.  But reject
     // a multi-line selection.
-    if (curwin->w_cursor.lnum != VIsual.lnum) {
+    if (curwin->w_cursor.lnum != Visual.start.lnum) {
       vim_beep(kOptBoFlagSpell);
       goto skip;
     }
-    badlen = (int)curwin->w_cursor.col - (int)VIsual.col;
+    badlen = (int)curwin->w_cursor.col - (int)Visual.start.col;
     if (badlen < 0) {
       badlen = -badlen;
     } else {
-      curwin->w_cursor.col = VIsual.col;
+      curwin->w_cursor.col = Visual.start.col;
     }
     badlen++;
     end_visual_mode();
@@ -512,95 +577,26 @@ void spell_suggest(int count)
                      true, need_cap, true);
 
   int selected = count;
-  msg_ext_set_kind("confirm");
   if (GA_EMPTY(&sug.su_ga)) {
+    msg_ext_set_kind("wmsg");
     msg(_("No suggestions"), 0);
   } else if (count > 0) {
     if (count > sug.su_ga.ga_len) {
-      smsg(0, _("Only %" PRId64 " suggestions"),
-           (int64_t)sug.su_ga.ga_len);
+      msg_ext_set_kind("wmsg");
+      smsg(0, _("Only %" PRId64 " suggestions"), (int64_t)sug.su_ga.ga_len);
     }
   } else {
-    // When 'rightleft' is set the list is drawn right-left.
-    cmdmsg_rl = curwin->w_p_rl;
-
-    // List the suggestions.
-    msg_start();
-    msg_row = Rows - 1;         // for when 'cmdheight' > 1
-    lines_left = Rows;          // avoid more prompt
-    char *fmt = _("Change \"%.*s\" to:");
-    if (cmdmsg_rl && strncmp(fmt, "Change", 6) == 0) {
-      // And now the rabbit from the high hat: Avoid showing the
-      // untranslated message rightleft.
-      fmt = ":ot \"%.*s\" egnahC";
-    }
-    vim_snprintf(IObuff, IOSIZE, fmt, sug.su_badlen, sug.su_badptr);
-    msg_puts(IObuff);
-    msg_clr_eos();
-    msg_putchar('\n');
-
-    msg_scroll = true;
-    for (int i = 0; i < sug.su_ga.ga_len; i++) {
-      suggest_T *stp = &SUG(sug.su_ga, i);
-
-      // The suggested word may replace only part of the bad word, add
-      // the not replaced part.  But only when it's not getting too long.
-      char wcopy[MAXWLEN + 2];
-      xstrlcpy(wcopy, stp->st_word, MAXWLEN + 1);
-      int el = sug.su_badlen - stp->st_orglen;
-      if (el > 0 && stp->st_wordlen + el <= MAXWLEN) {
-        assert(sug.su_badptr != NULL);
-        xmemcpyz(wcopy + stp->st_wordlen, sug.su_badptr + stp->st_orglen, (size_t)el);
-      }
-      vim_snprintf(IObuff, IOSIZE, "%2d", i + 1);
-      if (cmdmsg_rl) {
-        rl_mirror_ascii(IObuff, NULL);
-      }
-      msg_puts(IObuff);
-
-      vim_snprintf(IObuff, IOSIZE, " \"%s\"", wcopy);
-      msg_puts(IObuff);
-
-      // The word may replace more than "su_badlen".
-      if (sug.su_badlen < stp->st_orglen) {
-        vim_snprintf(IObuff, IOSIZE, _(" < \"%.*s\""),
-                     stp->st_orglen, sug.su_badptr);
-        msg_puts(IObuff);
-      }
-
-      if (p_verbose > 0) {
-        // Add the score.
-        if (sps_flags & (SPS_DOUBLE | SPS_BEST)) {
-          vim_snprintf(IObuff, IOSIZE, " (%s%d - %d)",
-                       stp->st_salscore ? "s " : "",
-                       stp->st_score, stp->st_altscore);
-        } else {
-          vim_snprintf(IObuff, IOSIZE, " (%d)",
-                       stp->st_score);
-        }
-        if (cmdmsg_rl) {
-          // Mirror the numbers, but keep the leading space.
-          rl_mirror_ascii(IObuff + 1, NULL);
-        }
-        msg_advance(30);
-        msg_puts(IObuff);
-      }
-      if (!ui_has(kUIMessages) || i < sug.su_ga.ga_len - 1) {
-        msg_putchar('\n');
-      }
-    }
-
-    cmdmsg_rl = false;
-    msg_col = 0;
-    // Ask for choice.
-    selected = prompt_for_input(NULL, 0, false, &mouse_used);
-    if (mouse_used) {
-      selected = sug.su_ga.ga_len + 1 - (cmdline_row - mouse_row);
-    }
+    // Hand off to (async) vim.ui.select().
+    curwin->w_p_spell = wo_spell_save;
+    select_spell_suggestion(&sug);
 
     lines_left = Rows;                  // avoid more prompt
     // don't delay for 'smd' in normal_cmd()
     msg_scroll = msg_scroll_save;
+
+    spell_find_cleanup(&sug);
+    xfree(line);
+    return;
   }
 
   if (selected > 0 && selected <= sug.su_ga.ga_len && u_save_cursor() == OK) {
@@ -631,11 +627,9 @@ void spell_suggest(int count)
     strcat(p, sug.su_badptr + stp->st_orglen);
 
     // For redo we use a change-word command.
-    ResetRedobuff();
-    AppendToRedobuff("ciw");
-    AppendToRedobuffLit(p + c,
-                        stp->st_wordlen + sug.su_badlen - stp->st_orglen);
-    AppendCharToRedobuff(ESC);
+    prep_redo(false, false, (CmdSpec){ .op = 'c', .cmd = 'i', .cmd2 = 'w' });
+    redo_append_lit(p + c, stp->st_wordlen + sug.su_badlen - stp->st_orglen);
+    redo_append_char(ESC);
 
     // "p" may be freed here
     ml_replace(curwin->w_cursor.lnum, p, false);

@@ -1,12 +1,13 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, before_each, after_each = t.describe, t.it, t.before_each, t.after_each
 local mkdir = t.mkdir
 local clear = n.clear
 local eq = t.eq
 local fn = n.fn
 local api = n.api
-local exc_exec = n.exc_exec
+local exec_lua = n.exec_lua
 local read_file = t.read_file
 local write_file = t.write_file
 local pcall_err = t.pcall_err
@@ -52,17 +53,24 @@ describe('writefile()', function()
   end)
 
   it('writes list with an empty string to a file', function()
-    eq(0, exc_exec(('call writefile([$XXX_NONEXISTENT_VAR_XXX], "%s", "b")'):format(fname)))
+    command(('call writefile([$XXX_NONEXISTENT_VAR_XXX], "%s", "b")'):format(fname))
     eq('', read_file(fname))
-    eq(0, exc_exec(('call writefile([$XXX_NONEXISTENT_VAR_XXX], "%s")'):format(fname)))
+    command(('call writefile([$XXX_NONEXISTENT_VAR_XXX], "%s")'):format(fname))
     eq('\n', read_file(fname))
   end)
 
   it('writes list with a null string to a file', function()
-    eq(0, exc_exec(('call writefile([v:_null_string], "%s", "b")'):format(fname)))
+    command(('call writefile([v:_null_string], "%s", "b")'):format(fname))
     eq('', read_file(fname))
-    eq(0, exc_exec(('call writefile([v:_null_string], "%s")'):format(fname)))
+    command(('call writefile([v:_null_string], "%s")'):format(fname))
     eq('\n', read_file(fname))
+  end)
+
+  it('writes a null blob to a file', function()
+    eq(0, fn.writefile({ 'line1' }, fname, 'b'))
+    eq('line1', read_file(fname))
+    command(('call writefile(v:_null_blob, "%s")'):format(fname))
+    eq('', read_file(fname))
   end)
 
   it('appends to a file', function()
@@ -98,6 +106,18 @@ describe('writefile()', function()
     eq('\0a\0b\0', read_file(fname))
     eq(0, fn.writefile({ 'a\n' }, fname, 'b'))
     eq('a\0', read_file(fname))
+  end)
+
+  it('writes Lua (binary) strings', function()
+    eq(0, exec_lua([[return vim.fn.writefile('foo\0bar', ..., 'b')]], fname))
+    eq('foo\0bar', read_file(fname))
+  end)
+
+  it('writes RPC-API (binary) String', function()
+    eq(0, api.nvim_call_function('writefile', { 'foobar', fname }))
+    eq('foobar', read_file(fname))
+    eq(0, api.nvim_call_function('writefile', { 'foo\0bar', fname }))
+    eq('foo\0bar', read_file(fname))
   end)
 
   it('shows correct file name when supplied numbers', function()

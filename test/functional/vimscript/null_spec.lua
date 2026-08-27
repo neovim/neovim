@@ -1,7 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
-local exc_exec = n.exc_exec
+local describe, it, before_each, after_each = t.describe, t.it, t.before_each, t.after_each
 local command = n.command
 local clear = n.clear
 local api = n.api
@@ -35,7 +35,11 @@ describe('NULL', function()
   end)
   local null_test = function(name, cmd, err)
     it(name, function()
-      eq(err, exc_exec(cmd))
+      if err == 0 then
+        command(cmd)
+      else
+        eq(err, t.pcall_err(command, cmd))
+      end
     end)
   end
   local null_expr_test = function(name, expr, err, val, after)

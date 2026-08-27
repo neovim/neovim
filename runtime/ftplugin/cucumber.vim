@@ -2,6 +2,8 @@
 " Language:	Cucumber
 " Maintainer:	Tim Pope <vimNOSPAM@tpope.org>
 " Last Change:	2016 Aug 29
+" 2026 May 26 by Vim Project: prevent Code Injection
+" https://github.com/vim/vim/security/advisories/GHSA-4473-94jm-w5x9
 
 " Only do this when not done yet for this buffer
 if (exists("b:did_ftplugin"))
@@ -96,7 +98,8 @@ function! s:stepmatch(receiver,target)
   catch
   endtry
   if has("ruby") && pattern !~ '\\\@<!#{'
-    ruby VIM.command("return #{if (begin; Kernel.eval('/'+VIM.evaluate('pattern')+'/'); rescue SyntaxError; end) === VIM.evaluate('a:target') then 1 else 0 end}")
+    " Use Regexp.new, so the pattern stays untrusted data and cannot inject Ruby
+    ruby VIM.command("return #{if (begin; Regexp.new(VIM.evaluate('pattern')); rescue RegexpError; end) === VIM.evaluate('a:target') then 1 else 0 end}")
   else
     return 0
   endif

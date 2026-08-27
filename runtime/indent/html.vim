@@ -1,7 +1,7 @@
 " Vim indent script for HTML
 " Maintainer:	The Vim Project <https://github.com/vim/vim>
 " Original Author: Andy Wokula <anwoku@yahoo.de>
-" Last Change:	2023 Aug 13
+" Last Change:	2025 Apr 13
 " Version:	1.0 "{{{
 " Description:	HTML indent script with cached state for faster indenting on a
 "		range of lines.
@@ -868,7 +868,9 @@ func HtmlIndent_FindTagStart(lnum)
   let idx = match(getline(a:lnum), '\S>\s*$')
   if idx > 0
     call cursor(a:lnum, idx)
+    " VIM_INDENT_TEST_TRACE_START
     let lnum = searchpair('<\w', '' , '\S>', 'bW', '', max([a:lnum - b:html_indent_line_limit, 0]))
+    " VIM_INDENT_TEST_TRACE_END HtmlIndent_FindTagStart
     if lnum > 0
       return [lnum, 1]
     endif
@@ -903,7 +905,9 @@ func HtmlIndent_FindTagEnd()
     call search('--\zs>')
   elseif s:get_tag('/' . tagname) != 0
     " tag with a closing tag, find matching "</tag>"
+    " VIM_INDENT_TEST_TRACE_START
     call searchpair('<' . tagname, '', '</' . tagname . '\zs>', 'W', '', line('.') + b:html_indent_line_limit)
+    " VIM_INDENT_TEST_TRACE_END HtmlIndent_FindTagEnd
   else
     " self-closing tag, find the ">"
     call search('\S\zs>')

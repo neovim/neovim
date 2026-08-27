@@ -49,7 +49,7 @@ enum {
   FM_BACKWARD  = 0x01,  ///< search backwards
   FM_FORWARD   = 0x02,  ///< search forwards
   FM_BLOCKSTOP = 0x04,  ///< stop at start/end of block
-  FM_SKIPCOMM  = 0x08,  ///< skip comments
+  FM_SKIPCOMM  = 0x08,  ///< skip comments (cursor must start outside)
 };
 
 /// Values for sub_cmd and which_pat argument for search_regcomp()

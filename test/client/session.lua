@@ -14,7 +14,9 @@ local RpcStream = require('test.client.rpc_stream')
 --- @field private _timer uv.uv_timer_t
 --- @field private _is_running boolean true during `Session:run()` scope.
 --- @field data table Arbitrary user data.
-local Session = {}
+local Session = {
+  eof_err_msg = 'Nvim EOF (crash?)',
+}
 Session.__index = Session
 if package.loaded['jit'] then
   -- luajit pcall is already coroutine safe
@@ -227,15 +229,10 @@ function Session:_run(request_cb, notification_cb, timeout)
       self._prepare:stop()
     end)
   end
+  local got_eof = false
   self._rpc_stream:read_start(request_cb, notification_cb, function()
     uv.stop()
-
-    --- @diagnostic disable-next-line: invisible
-    local stderr = self._rpc_stream._stream.stderr --[[@as string?]]
-    -- See if `ProcStream.stderr` has anything useful.
-    stderr = '' ~= ((stderr or ''):match('^%s*(.*%S)') or '') and ' stderr:\n' .. stderr or ''
-
-    self.eof_err = { 1, 'EOF was received from Nvim. Likely the Nvim process crashed.' .. stderr }
+    got_eof = true
   end)
   local ret, err, _ = uv.run()
   if ret == nil then
@@ -244,6 +241,38 @@ function Session:_run(request_cb, notification_cb, timeout)
   self._prepare:stop()
   self._timer:stop()
   self._rpc_stream:read_stop()
+  if got_eof then
+    self.eof_err = { 1, self:_eof_msg() }
+  end
+end
+
+--- Message shown on unexpected stdout EOF.
+--- @private
+--- @return string
+function Session:_eof_msg()
+  local msg = self.eof_err_msg
+  --- @diagnostic disable-next-line: access-invisible
+  local proc = self._rpc_stream._stream --[[@as test.ProcStream]]
+
+  -- ProcStream (spawned child) has stderr + exit-code; SocketStream (a socket peer) does not.
+  if proc.stderr ~= nil then
+    -- stdout EOF and process-exit are separate libuv events. Wait for up to 1s.
+    vim.wait(1000, function()
+      return proc.status ~= nil or proc.signal ~= nil
+    end)
+    if proc.status ~= nil then
+      msg = ('%s exit code: %d (0x%08X)'):format(msg, proc.status, proc.status % 2 ^ 32)
+    end
+    if proc.signal ~= nil and proc.signal ~= 0 then
+      msg = ('%s signal: %d'):format(msg, proc.signal)
+    end
+  end
+
+  local stderr = proc.stderr --[[@as string?]]
+  if '' ~= ((stderr or ''):match('^%s*(.*%S)') or '') then
+    msg = msg .. ' stderr:\n' .. stderr
+  end
+  return msg
 end
 
 --- Nvim msgpack-RPC session.

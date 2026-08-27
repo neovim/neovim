@@ -3,6 +3,7 @@ local ts = vim.treesitter
 local Range = require('vim.treesitter._range')
 
 local api = vim.api
+local nvim_on = require('vim._core.util').nvim_on
 
 ---Treesitter folding is done in two steps:
 ---(1) compute the fold levels with the syntax tree and cache the result (`compute_folds_levels`)
@@ -26,12 +27,12 @@ local FoldInfo = {}
 FoldInfo.__index = FoldInfo
 
 ---@private
----@param bufnr integer
-function FoldInfo.new(bufnr)
+---@param buf integer
+function FoldInfo.new(buf)
   return setmetatable({
     levels0 = {},
     levels = {},
-    parser = ts.get_parser(bufnr, nil),
+    parser = ts.get_parser(buf, nil),
   }, FoldInfo)
 end
 
@@ -201,7 +202,7 @@ local M = {}
 ---@type table<integer,TS.FoldInfo>
 local foldinfos = {}
 
-local group = api.nvim_create_augroup('nvim.treesitter.fold', {})
+local group = api.nvim_create_augroup('nvim.treesitter.fold')
 
 --- Update the folds in the windows that contain the buffer and use expr foldmethod (assuming that
 --- the user doesn't use different foldexpr for the same buffer).
@@ -226,14 +227,9 @@ function FoldInfo:foldupdate(bufnr, srow, erow)
     })) > 0 then
       return
     end
-    api.nvim_create_autocmd('InsertLeave', {
-      group = group,
-      buf = bufnr,
-      once = true,
-      callback = function()
-        self:do_foldupdate(bufnr)
-      end,
-    })
+    nvim_on('InsertLeave', group, { buf = bufnr, once = true }, function()
+      self:do_foldupdate(bufnr)
+    end)
     return
   end
 
@@ -295,9 +291,10 @@ local function on_changedtree(bufnr, tree_changes)
       local srow, _, erow, ecol = Range.unpack4(change)
       -- If a parser doesn't have any ranges explicitly set, treesitter will
       -- return a range with end_row and end_bytes with a value of UINT32_MAX,
-      -- so clip end_row to the max buffer line.
+      -- which is represented as -1 on 32-bit platforms, so clip end_row to
+      -- the max buffer line.
       -- TODO(lewis6991): Handle this generally
-      if erow > max_erow then
+      if erow > max_erow or erow < 0 then
         erow = max_erow
       elseif ecol > 0 then
         erow = erow + 1
@@ -391,13 +388,9 @@ function M.foldexpr(lnum)
 
   if not foldinfos[bufnr] then
     foldinfos[bufnr] = FoldInfo.new(bufnr)
-    api.nvim_create_autocmd({ 'BufUnload', 'VimEnter', 'FileType' }, {
-      buf = bufnr,
-      once = true,
-      callback = function()
-        foldinfos[bufnr] = nil
-      end,
-    })
+    nvim_on({ 'BufUnload', 'VimEnter', 'FileType' }, nil, { buf = bufnr, once = true }, function()
+      foldinfos[bufnr] = nil
+    end)
 
     local parser = foldinfos[bufnr].parser
     if not parser then
@@ -441,28 +434,27 @@ function M.foldexpr(lnum)
   return foldinfos[bufnr].levels[lnum] or '0'
 end
 
-api.nvim_create_autocmd('OptionSet', {
+nvim_on('OptionSet', group, {
   pattern = { 'foldminlines', 'foldnestmax' },
   desc = 'Refresh treesitter folds',
-  callback = function()
-    local buf = api.nvim_get_current_buf()
-    local bufs = vim.v.option_type == 'global' and vim.tbl_keys(foldinfos)
-      or foldinfos[buf] and { buf }
-      or {}
-    for _, bufnr in ipairs(bufs) do
-      local foldinfo = FoldInfo.new(bufnr)
-      foldinfos[bufnr] = foldinfo
-      api.nvim_buf_call(bufnr, function()
-        compute_folds_levels(bufnr, foldinfo, nil, nil, function()
-          -- FileType/BufUnload can clear or replace the fold state while this
-          -- async parse is in flight. Ignore callbacks for stale generations.
-          if foldinfos[bufnr] ~= foldinfo then
-            return
-          end
-          foldinfo:foldupdate(bufnr, 0, api.nvim_buf_line_count(bufnr))
-        end)
+}, function()
+  local buf = api.nvim_get_current_buf()
+  local bufs = vim.v.option_type == 'global' and vim.tbl_keys(foldinfos)
+    or foldinfos[buf] and { buf }
+    or {}
+  for _, bufnr in ipairs(bufs) do
+    local foldinfo = FoldInfo.new(bufnr)
+    foldinfos[bufnr] = foldinfo
+    api.nvim_buf_call(bufnr, function()
+      compute_folds_levels(bufnr, foldinfo, nil, nil, function()
+        -- FileType/BufUnload can clear or replace the fold state while this
+        -- async parse is in flight. Ignore callbacks for stale generations.
+        if foldinfos[bufnr] ~= foldinfo then
+          return
+        end
+        foldinfo:foldupdate(bufnr, 0, api.nvim_buf_line_count(bufnr))
       end)
-    end
-  end,
-})
+    end)
+  end
+end)
 return M

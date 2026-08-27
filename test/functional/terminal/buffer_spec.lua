@@ -3,6 +3,7 @@ local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 local tt = require('test.functional.testterm')
 
+local describe, it, before_each, finally = t.describe, t.it, t.before_each, t.finally
 local assert_alive = n.assert_alive
 local feed, clear = n.feed, n.clear
 local poke_eventloop = n.poke_eventloop
@@ -16,6 +17,7 @@ local testprg = n.testprg
 local write_file = t.write_file
 local command = n.command
 local matches = t.matches
+local not_matches = t.not_matches
 local exec_lua = n.exec_lua
 local sleep = vim.uv.sleep
 local fn = n.fn
@@ -122,6 +124,14 @@ describe(':terminal buffer', function()
       ^tty ready                                         |
       appended tty ready                                |*5
                                                         |
+    ]])
+    -- pasting expression register shouldn't leak memory
+    feed([["="abcd\nefghi"<CR>pi]])
+    screen:expect([[
+      appended tty ready                                |*4
+      abcd                                              |
+      efghi^                                             |
+      {5:-- TERMINAL --}                                    |
     ]])
   end)
 
@@ -231,6 +241,9 @@ describe(':terminal buffer', function()
 
   it('requires bang (!) to close a running job #15402', function()
     eq('Vim(wqall):E948: Job still running (add ! to end the job)', pcall_err(command, 'wqall'))
+    command('redir => g:wqall_out | silent! wqall | redir END')
+    matches('E948:', api.nvim_get_var('wqall_out'))
+    not_matches('E676:', api.nvim_get_var('wqall_out'))
     for _, cmd in ipairs({ 'bdelete', '%bdelete', 'bwipeout', 'bunload' }) do
       matches(
         '^Vim%('
@@ -298,7 +311,10 @@ describe(':terminal buffer', function()
     screen:expect_unchanged()
     for i = 1, 10 do
       eq({ mode = 't', blocking = true }, api.nvim_get_mode())
-      vim.uv.sleep(15) -- Wait for the previously scheduled refresh timer to arrive
+      -- Wait for the previously scheduled refresh timer to arrive. Must comfortably exceed
+      -- terminal.c REFRESH_DELAY *plus* PTY echo round-trip; else the refresh isn't queued before
+      -- the next key and, since a partial mapping never drains main_loop.events, screen is stale.
+      vim.uv.sleep(50)
       feed('j') -- Refresh scheduled for the last 'j' and processed for the one before
       screen:expect(([[
         tty ready                                         |
@@ -331,7 +347,10 @@ describe(':terminal buffer', function()
     screen:expect_unchanged()
     for i = 1, 10 do
       eq({ mode = 'nt', blocking = true }, api.nvim_get_mode())
-      vim.uv.sleep(15) -- Wait for the previously scheduled refresh timer to arrive
+      -- Wait for the previously scheduled refresh timer to arrive. Must comfortably exceed
+      -- terminal.c REFRESH_DELAY *plus* PTY echo round-trip; else the refresh isn't queued before
+      -- the next key and, since a partial mapping never drains main_loop.events, screen is stale.
+      vim.uv.sleep(50)
       feed('j') -- Refresh scheduled for the last 'j' and processed for the one before
       screen:expect(([[
         tty ready                                         |
@@ -1423,12 +1442,14 @@ describe(':terminal buffer', function()
   end)
 
   it('does not allow OptionSet or b:term_title watcher to delete buffer', function()
-    local au = api.nvim_create_autocmd('OptionSet', { command = 'bwipeout!' })
-    local chan = api.nvim_open_term(0, {})
+    local chan = exec_lua([[
+      local au = vim.api.nvim_create_autocmd('OptionSet', { command = 'bwipeout!' })
+      local chan = vim.api.nvim_open_term(0, {})
+      vim.api.nvim_del_autocmd(au)
+      return chan
+    ]])
     matches('^E937: ', api.nvim_get_vvar('errmsg'))
-    api.nvim_del_autocmd(au)
     api.nvim_set_vvar('errmsg', '')
-
     api.nvim_chan_send(chan, '\027]2;SOME_TITLE\007')
     eq('SOME_TITLE', api.nvim_buf_get_var(0, 'term_title'))
     command([[call dictwatcheradd(b:, 'term_title', {-> execute('bwipe!')})]])
@@ -1608,30 +1629,40 @@ describe('terminal input', function()
       '<C-LeftMouse><0,0>',
       '<C-LeftDrag><0,1>',
       '<C-LeftRelease><0,1>',
+      '<LeftMouse><0,1>',
+      '<LeftRelease><0,1>',
       '<2-LeftMouse><0,1>',
       '<2-LeftDrag><0,0>',
       '<2-LeftRelease><0,0>',
       '<M-MiddleMouse><0,0>',
       '<M-MiddleDrag><0,1>',
       '<M-MiddleRelease><0,1>',
+      '<MiddleMouse><0,1>',
+      '<MiddleRelease><0,1>',
       '<2-MiddleMouse><0,1>',
       '<2-MiddleDrag><0,0>',
       '<2-MiddleRelease><0,0>',
       '<S-RightMouse><0,0>',
       '<S-RightDrag><0,1>',
       '<S-RightRelease><0,1>',
+      '<RightMouse><0,1>',
+      '<RightRelease><0,1>',
       '<2-RightMouse><0,1>',
       '<2-RightDrag><0,0>',
       '<2-RightRelease><0,0>',
       '<S-X1Mouse><0,0>',
       '<S-X1Drag><0,1>',
       '<S-X1Release><0,1>',
+      '<X1Mouse><0,1>',
+      '<X1Release><0,1>',
       '<2-X1Mouse><0,1>',
       '<2-X1Drag><0,0>',
       '<2-X1Release><0,0>',
       '<S-X2Mouse><0,0>',
       '<S-X2Drag><0,1>',
       '<S-X2Release><0,1>',
+      '<X2Mouse><0,1>',
+      '<X2Release><0,1>',
       '<2-X2Mouse><0,1>',
       '<2-X2Drag><0,0>',
       '<2-X2Release><0,0>',

@@ -20,7 +20,6 @@
 #include "nvim/decoration.h"
 #include "nvim/decoration_defs.h"
 #include "nvim/drawscreen.h"
-#include "nvim/edit.h"
 #include "nvim/errors.h"
 #include "nvim/eval/funcs.h"
 #include "nvim/eval/typval.h"
@@ -34,6 +33,7 @@
 #include "nvim/grid.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
+#include "nvim/insert.h"
 #include "nvim/macros_defs.h"
 #include "nvim/map_defs.h"
 #include "nvim/marktree.h"
@@ -916,7 +916,11 @@ static dict_T *sign_get_info_dict(sign_T *sp)
   for (int i = 0; i < 4; i++) {
     if (hl[i] > 0) {
       const char *p = get_highlight_name_ext(NULL, hl[i] - 1, false);
-      tv_dict_add_str(d, arg[i], strlen(arg[i]), p ? p : "NONE");
+      if (p == NULL) {
+        tv_dict_add_str_len(d, arg[i], strlen(arg[i]), S_LEN("NONE"));
+      } else {
+        tv_dict_add_str(d, arg[i], strlen(arg[i]), p);
+      }
     }
   }
   return d;

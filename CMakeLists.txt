@@ -153,9 +153,9 @@ set(NVIM_VERSION_PATCH 0)
 set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
 
 # API level
-set(NVIM_API_LEVEL 14)        # Bump this after any API/stdlib change.
+set(NVIM_API_LEVEL 15)        # Bump this after any API/stdlib change.
 set(NVIM_API_LEVEL_COMPAT 0)  # Adjust this after a _breaking_ API change.
-set(NVIM_API_PRERELEASE false)
+set(NVIM_API_PRERELEASE true)
 
 # We _want_ assertions in RelWithDebInfo build-type.
 if(CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DNDEBUG)
@@ -208,26 +208,6 @@ mark_as_advanced(LUA_GEN_PRG)
 message(STATUS "Using Lua interpreter for code generation: ${LUA_GEN_PRG}")
 
 option(COMPILE_LUA "Pre-compile Lua sources into bytecode (for sources that are included in the binary)" ON)
-if(COMPILE_LUA AND NOT WIN32)
-  if(PREFER_LUA)
-    foreach(CURRENT_LUAC_PRG luac5.1 luac)
-      find_program(_CHECK_LUAC_PRG ${CURRENT_LUAC_PRG})
-      if(_CHECK_LUAC_PRG)
-        set(LUAC_PRG "${_CHECK_LUAC_PRG} -s -o - %s" CACHE STRING "Format for compiling to Lua bytecode")
-        break()
-      endif()
-    endforeach()
-  elseif(LUA_PRG MATCHES "luajit")
-    check_lua_module(${LUA_PRG} "jit.bcsave" LUAJIT_HAS_JIT_BCSAVE)
-    if(LUAJIT_HAS_JIT_BCSAVE)
-      set(LUAC_PRG "${LUA_PRG} -b -s %s -" CACHE STRING "Format for compiling to Lua bytecode")
-    endif()
-  endif()
-endif()
-mark_as_advanced(LUAC_PRG)
-if(LUAC_PRG)
-  message(STATUS "Using Lua compiler: ${LUAC_PRG}")
-endif()
 
 # Lint
 option(CI_LINT "Abort if lint programs not found" OFF)

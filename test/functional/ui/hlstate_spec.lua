@@ -3,6 +3,7 @@ local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 local tt = require('test.functional.testterm')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear, insert = n.clear, n.insert
 local command = n.command
 local api = n.api

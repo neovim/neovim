@@ -14,12 +14,13 @@ pub fn build(b: *std.Build) !void {
     });
 
     if (b.lazyDependency("utf8proc", .{})) |upstream| {
-        lib.addIncludePath(upstream.path(""));
+        var root_module = lib.root_module;
+        root_module.addIncludePath(upstream.path(""));
         lib.installHeader(upstream.path("utf8proc.h"), "utf8proc.h");
 
-        lib.linkLibC();
+        root_module.link_libc = true;
 
-        lib.addCSourceFiles(.{ .root = upstream.path(""), .files = &.{
+        root_module.addCSourceFiles(.{ .root = upstream.path(""), .files = &.{
             "utf8proc.c",
         }, .flags = &.{"-DUTF8PROC_STATIC"} });
     }

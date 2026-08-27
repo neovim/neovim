@@ -644,7 +644,6 @@ static int grid_char_needs_redraw(ScreenGrid *grid, int col, size_t off_to, int 
                || linebuf_attr[col] != grid->attrs[off_to]
                || (cols > 1 && linebuf_char[col + 1] == 0
                    && linebuf_char[col + 1] != grid->chars[off_to + 1]))
-              || exmode_active  // TODO(bfredl): what in the actual fuck
               || rdb_flags & kOptRdbFlagNodelta));
 }
 
@@ -951,8 +950,7 @@ void win_grid_alloc(win_T *wp)
   if (want_allocation && (!has_allocation
                           || grid_allocated->rows != total_rows
                           || grid_allocated->cols != total_cols)) {
-    grid_alloc(grid_allocated, total_rows, total_cols,
-               wp->w_grid_alloc.valid, false);
+    grid_alloc(grid_allocated, total_rows, total_cols, wp->w_grid_alloc.valid, false);
     grid_allocated->valid = true;
     if (wp->w_floating && wp->w_config.border) {
       wp->w_redr_border = true;
@@ -1086,11 +1084,14 @@ void grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
 
 /// @param overflow Number of cells to skip.
 static void grid_draw_bordertext(VirtText vt, int col, int winbl, const int *hl_attr,
-                                 BorderTextType bt, int overflow)
+                                 int win_hl_attr_normal, BorderTextType bt, int overflow)
 {
   int default_attr = hl_attr[bt == kBorderTextTitle ? HLF_BTITLE : HLF_BFOOTER];
+  default_attr = hl_apply_winblend(winbl, default_attr);
+  default_attr = hl_combine_attr(win_hl_attr_normal, default_attr);
+
   if (overflow > 0) {
-    grid_line_puts(1, "<", -1,  hl_apply_winblend(winbl, default_attr));
+    grid_line_puts(1, "<", -1, default_attr);
     col += 1;
     overflow += 1;
   }
@@ -1100,9 +1101,6 @@ static void grid_draw_bordertext(VirtText vt, int col, int winbl, const int *hl_
     char *text = next_virt_text_chunk(vt, &i, &attr);
     if (text == NULL) {
       break;
-    }
-    if (attr == -1) {  // No highlight specified.
-      attr = default_attr;
     }
     // Skip characters from the beginning when title overflows available width.
     if (overflow > 0) {
@@ -1120,7 +1118,12 @@ static void grid_draw_bordertext(VirtText vt, int col, int winbl, const int *hl_
       }
       text = p;
     }
-    attr = hl_apply_winblend(winbl, attr);
+    if (attr == -1) {  // No highlight specified.
+      attr = default_attr;
+    } else {
+      attr = hl_apply_winblend(winbl, attr);
+      attr = hl_combine_attr(win_hl_attr_normal, attr);
+    }
     col += grid_line_puts(col, text, -1, attr);
   }
 }
@@ -1139,20 +1142,22 @@ static int get_bordertext_col(int total_col, int text_width, AlignTextPos align)
 }
 
 /// draw border on floating window grid
-void grid_draw_border(ScreenGrid *grid, WinConfig *config, int *adj, int winbl, int *hl_attr)
+void grid_draw_border(ScreenGrid *grid, WinConfig *config, int *adj, int winbl, int *hl_attr,
+                      int win_hl_attr_normal)
 {
-  int *attrs = config->border_attr;
   int default_adj[4] = { 1, 1, 1, 1 };
   if (adj == NULL) {
     adj = default_adj;
   }
   schar_T chars[8];
+  int border_attrs[8];
   if (!hl_attr) {
     hl_attr = hl_attr_active;
   }
 
   for (int i = 0; i < 8; i++) {
     chars[i] = schar_from_str(config->border_chars[i]);
+    border_attrs[i] = hl_combine_attr(win_hl_attr_normal, config->border_attr[i]);
   }
 
   int irow = grid->rows - adj[0] - adj[2];
@@ -1161,20 +1166,21 @@ void grid_draw_border(ScreenGrid *grid, WinConfig *config, int *adj, int winbl, 
   if (adj[0]) {
     screengrid_line_start(grid, 0, 0);
     if (adj[3]) {
-      grid_line_put_schar(0, chars[0], attrs[0]);
+      grid_line_put_schar(0, chars[0], border_attrs[0]);
     }
 
     for (int i = 0; i < icol; i++) {
-      grid_line_put_schar(i + adj[3], chars[1], attrs[1]);
+      grid_line_put_schar(i + adj[3], chars[1], border_attrs[1]);
     }
 
     if (config->title) {
       int title_col = get_bordertext_col(icol, config->title_width, config->title_pos);
-      grid_draw_bordertext(config->title_chunks, title_col, winbl, hl_attr, kBorderTextTitle,
+      grid_draw_bordertext(config->title_chunks, title_col, winbl, hl_attr,
+                           win_hl_attr_normal, kBorderTextTitle,
                            config->title_width - icol);
     }
     if (adj[1]) {
-      grid_line_put_schar(icol + adj[3], chars[2], attrs[2]);
+      grid_line_put_schar(icol + adj[3], chars[2], border_attrs[2]);
     }
     grid_line_flush();
   }
@@ -1182,13 +1188,13 @@ void grid_draw_border(ScreenGrid *grid, WinConfig *config, int *adj, int winbl, 
   for (int i = 0; i < irow; i++) {
     if (adj[3]) {
       screengrid_line_start(grid, i + adj[0], 0);
-      grid_line_put_schar(0, chars[7], attrs[7]);
+      grid_line_put_schar(0, chars[7], border_attrs[7]);
       grid_line_flush();
     }
     if (adj[1]) {
       int ic = (i == 0 && !adj[0] && chars[2]) ? 2 : 3;
       screengrid_line_start(grid, i + adj[0], 0);
-      grid_line_put_schar(icol + adj[3], chars[ic], attrs[ic]);
+      grid_line_put_schar(icol + adj[3], chars[ic], border_attrs[ic]);
       grid_line_flush();
     }
   }
@@ -1196,21 +1202,21 @@ void grid_draw_border(ScreenGrid *grid, WinConfig *config, int *adj, int winbl, 
   if (adj[2]) {
     screengrid_line_start(grid, irow + adj[0], 0);
     if (adj[3]) {
-      grid_line_put_schar(0, chars[6], attrs[6]);
+      grid_line_put_schar(0, chars[6], border_attrs[6]);
     }
 
     for (int i = 0; i < icol; i++) {
       int ic = (i == 0 && !adj[3] && chars[6]) ? 6 : 5;
-      grid_line_put_schar(i + adj[3], chars[ic], attrs[ic]);
+      grid_line_put_schar(i + adj[3], chars[ic], border_attrs[ic]);
     }
 
     if (config->footer) {
       int footer_col = get_bordertext_col(icol, config->footer_width, config->footer_pos);
-      grid_draw_bordertext(config->footer_chunks, footer_col, winbl, hl_attr, kBorderTextFooter,
-                           config->footer_width - icol);
+      grid_draw_bordertext(config->footer_chunks, footer_col, winbl, hl_attr, win_hl_attr_normal,
+                           kBorderTextFooter, config->footer_width - icol);
     }
     if (adj[1]) {
-      grid_line_put_schar(icol + adj[3], chars[4], attrs[4]);
+      grid_line_put_schar(icol + adj[3], chars[4], border_attrs[4]);
     }
     grid_line_flush();
   }

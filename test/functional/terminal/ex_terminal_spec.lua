@@ -2,6 +2,8 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each, after_each, finally =
+  t.describe, t.it, t.before_each, t.after_each, t.finally
 local assert_alive = n.assert_alive
 local clear, poke_eventloop = n.clear, n.poke_eventloop
 local testprg, source, eq, neq = n.testprg, n.source, t.eq, t.neq
@@ -15,7 +17,6 @@ local ok = t.ok
 local command = n.command
 local skip = t.skip
 local is_os = t.is_os
-local is_ci = t.is_ci
 
 describe(':terminal', function()
   local screen
@@ -51,7 +52,7 @@ describe(':terminal', function()
   end)
 
   it('reads output buffer on terminal reporting #4151', function()
-    skip(is_ci('cirrus') or is_os('win'))
+    skip(is_os('win'))
     if is_os('win') then
       command(
         [[terminal powershell -NoProfile -NoLogo -Command Write-Host -NoNewline "\"$([char]27)[6n\""; Start-Sleep -Milliseconds 500 ]]
@@ -266,6 +267,16 @@ local function test_terminal_with_fake_shell(backslash)
     ]])
   end)
 
+  it('spawns in CWD effective at time of invocation', function()
+    -- Run "echo" so the default TermClose handler does not auto-delete an exitcode=0 shell.
+    command('terminal echo')
+    local dir = fn.bufname():match('^term://(.-)//')
+    local parentdir = fn.fnamemodify(fn.getcwd(), ':h') -- Absolute, so 'cdpath' cannot interfere.
+    command(('bcd %s'):format(fn.fnameescape(parentdir))) -- :terminal should use this CWD.
+    command('terminal echo')
+    eq(fn.fnamemodify(dir, ':h'), fn.bufname():match('^term://(.-)//'))
+  end)
+
   it('allows quotes and slashes', function()
     command([[terminal echo 'hello' \ "world"]])
     screen:expect([[
@@ -314,11 +325,7 @@ local function test_terminal_with_fake_shell(backslash)
     eq('term://', string.match(eval('bufname("%")'), '^term://'))
     feed([[<C-\><C-N>]])
     command([[find */Xuniquefile]])
-    if is_os('win') then
-      eq('Xsomedir\\Xuniquefile', eval('bufname("%")'))
-    else
-      eq('Xsomedir/Xuniquefile', eval('bufname("%")'))
-    end
+    eq('Xsomedir/Xuniquefile', eval('bufname("%")'))
   end)
 
   it('works with gf', function()
@@ -362,7 +369,7 @@ local function test_terminal_with_fake_shell(backslash)
   end)
 end
 
-describe(':terminal (with fake shell)', function()
+describe(':terminal (fake shell)', function()
   test_terminal_with_fake_shell(false)
   if is_os('win') then
     describe("when 'shell' uses backslashes", function()

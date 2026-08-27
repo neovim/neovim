@@ -3,6 +3,8 @@
 " Maintainer:       Michael Wong
 "                   https://github.com/mmikeww/autohotkey.vim
 " Latest Revision:  2022-07-25
+" Last Change:
+" 2026 Apr 20 by Vim project: remove wrong oneline keyword #20018
 " Previous Maintainers:       SungHyun Nam <goweol@gmail.com>
 "                             Nikolai Weibull <now@bitwi.se>
 
@@ -35,7 +37,6 @@ syn region autohotkeyString
 
 syn match autohotkeyVariable
       \ display
-      \ oneline
       \ contains=autohotkeyBuiltinVariable
       \ keepend
       \ '%\S\{-}%'
@@ -123,7 +124,7 @@ syn keyword autohotkeyCommand
 
 syn keyword autohotkeyFunction
       \ InStr RegExMatch RegExReplace StrLen SubStr Asc Chr Func
-      \ DllCall VarSetCapacity WinActive WinExist IsLabel OnMessage 
+      \ DllCall VarSetCapacity WinActive WinExist IsLabel OnMessage
       \ Abs Ceil Exp Floor Log Ln Mod Round Sqrt Sin Cos Tan ASin ACos ATan
       \ FileExist GetKeyState NumGet NumPut StrGet StrPut RegisterCallback
       \ IsFunc Trim LTrim RTrim IsObject Object Array FileOpen

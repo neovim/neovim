@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "nvim/autocmd_defs.h"
 #include "nvim/channel_defs.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"
 #include "nvim/event/defs.h"
@@ -44,6 +45,7 @@ struct Channel {
 
   bool callback_busy;
   bool callback_scheduled;
+  bool did_close_event;
 };
 
 #include "channel.h.generated.h"

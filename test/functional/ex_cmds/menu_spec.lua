@@ -1,6 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear, command = n.clear, n.command
 local expect, feed = n.expect, n.feed
 local eq, eval = t.eq, n.eval
@@ -625,7 +626,7 @@ describe('menu_get', function()
       },
     }
 
-    eq(m, expected)
+    eq(expected, m)
   end)
 
   it('works with right-aligned text and spaces', function()
@@ -706,6 +707,6 @@ describe('menu_get', function()
       },
     }
 
-    eq(m, expected)
+    eq(expected, m)
   end)
 end)

@@ -5,7 +5,7 @@
 "		2024 Jan 14 by Vim Project (browsefilter)
 
 " Behaves almost like C++
-runtime! ftplugin/cpp.vim ftplugin/cpp_*.vim ftplugin/cpp/*.vim
+runtime! ftplugin/cpp[.]{vim,lua} ftplugin/cpp_*.{vim,lua} ftplugin/cpp/*.{vim,lua}
 
 let s:cpo_save = &cpo
 set cpo&vim

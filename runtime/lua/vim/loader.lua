@@ -79,7 +79,7 @@ local function fs_stat_cached(path)
 end
 
 local function normalize(path)
-  return fs.normalize(path, { expand_env = false, _fast = true })
+  return fs.normalize(path, { plain = true, _fast = true })
 end
 
 local rtp_cached = {} --- @type string[]
@@ -461,12 +461,6 @@ function M.enable(enable)
   end
 end
 
---- @deprecated
-function M.disable()
-  vim.deprecate('vim.loader.disable', 'vim.loader.enable(false)', '0.12')
-  vim.loader.enable(false)
-end
-
 --- Tracks the time spent in a function
 --- @generic F: function
 --- @param f F
@@ -533,7 +527,7 @@ function M._inspect(opts)
         end
       end
     end
-    vim.api.nvim_echo(chunks, true, {})
+    vim.api.nvim_echo(chunks, true)
   end
   return stats
 end

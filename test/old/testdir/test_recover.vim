@@ -349,7 +349,21 @@ func Test_recover_corrupted_swap_file()
   call assert_fails('recover Xfile1', 'E312:')
   call assert_equal('Xfile1', @%)
   call assert_equal(['???MANY LINES MISSING'], getline(1, '$'))
+  bw!
 
+  " use an out-of-bounds db_txt_start in the data block (would cause OOB
+  " read past dp->db_index[] in ml_recover() without the bounds check)
+  let b = copy(save_b)
+  let b[8200:8203] = s:little_endian ? 0zFEFFFFFF : 0zFFFFFFFE
+  if s:system_64bit
+    let b[8208:8215] = 0z00FFFFFF.FFFFFF00
+  else
+    let b[8208:8211] = 0z00FFFF00
+  endif
+  call writefile(b, sn)
+  call assert_fails('recover Xfile1', 'E312:')
+  call assert_equal('Xfile1', @%)
+  call assert_match('??? block header corrupted', getline(1))
   bw!
   call delete(sn)
 endfunc
@@ -494,7 +508,9 @@ func Test_recover_corrupted_swap_file1()
   new
   let sample = 'samples/recover-crash1.swp'
   let target = '.Xpoc1.swp'  " Xpoc1.swp (non-hidden) doesn't work in Nvim
-  call filecopy(sample, target)
+  " In an out-of-source-tree build the sample may be a symlink, this copies the
+  " data into a real file.
+  call writefile(readblob(sample), target, 'D')
   try
     sil recover! Xpoc1
   catch /^Vim\%((\S\+)\)\=:E1364:/
@@ -503,12 +519,14 @@ func Test_recover_corrupted_swap_file1()
   call assert_match('???ILLEGAL BLOCK NUMBER', content)
   call delete(target)
   bw!
-"
-"  " Test 2: Segfault
+
+  " Test 2: Segfault
   new
   let sample = 'samples/recover-crash2.swp'
   let target = '.Xpoc2.swp'  " Xpoc1.swp (non-hidden) doesn't work in Nvim
-  call filecopy(sample, target)
+  " In an out-of-source-tree build the sample may be a symlink, this copies the
+  " data into a real file.
+  call writefile(readblob(sample), target, 'D')
   try
     sil recover! Xpoc2
   catch /^Vim\%((\S\+)\)\=:E1364:/
@@ -517,6 +535,19 @@ func Test_recover_corrupted_swap_file1()
   call assert_match('???ILLEGAL BLOCK NUMBER', content)
   call assert_match('???LINES MISSING', content)
   call delete(target)
+  bw!
+
+  " Test 3: wrong page_count header
+  new
+  let sample = 'samples/recover-mismatch-pc.swp'
+  let target = 'Xmismatch-pc.swp'
+  call writefile(readblob(sample), target, 'bD')
+  try
+    sil noa recover! Xmismatch-pc.swp
+  catch
+  endtry
+  " Verifies no crash occurs. The OOB write is only reliably triggered
+  " interactively due to memory pressure evicting blocks in the test runner.
   bw!
 endfunc
 

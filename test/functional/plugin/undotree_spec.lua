@@ -1,6 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear = n.clear
 local eq = t.eq
 local exec = n.exec
@@ -40,7 +41,14 @@ end
 
 describe(':Undotree', function()
   before_each(function()
-    clear({ args = { '--clean' } })
+    clear({
+      args = {
+        '--clean',
+        -- autoread plugin causes flaky tests
+        '--cmd',
+        'let g:loaded_autoread=1',
+      },
+    })
     exec 'packadd nvim.undotree'
   end)
 

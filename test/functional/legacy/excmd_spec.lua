@@ -2,6 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it = t.describe, t.it
 local clear = n.clear
 local command = n.command
 local exec = n.exec
@@ -52,7 +53,7 @@ describe(':confirm command dialog', function()
       {6:Save changes to "Xbar"?}                                                    |
       {6:[Y]es, (N)o, Save (A)ll, (D)iscard All, (C)ancel: }^                         |
     ]])
-    expect_exit(1000, feed, 'A')
+    expect_exit(n.load_adjust(1000), feed, 'A')
 
     eq('foo2\n', read_file('Xfoo'))
     eq('bar2\n', read_file('Xbar'))
@@ -82,7 +83,7 @@ describe(':confirm command dialog', function()
       {6:Save changes to "Xbar"?}                                                    |
       {6:[Y]es, (N)o, Save (A)ll, (D)iscard All, (C)ancel: }^                         |
     ]])
-    expect_exit(1000, feed, 'D')
+    expect_exit(n.load_adjust(1000), feed, 'D')
 
     eq('foo2\n', read_file('Xfoo'))
     eq('bar2\n', read_file('Xbar'))
@@ -128,7 +129,7 @@ describe(':confirm command dialog', function()
       {6:Save changes to "Xfoo"?}                                                    |
       {6:[Y]es, (N)o, (C)ancel: }^                                                    |
     ]])
-    expect_exit(1000, feed, 'Y')
+    expect_exit(n.load_adjust(1000), feed, 'Y')
 
     eq('foo4\n', read_file('Xfoo'))
     eq('bar2\n', read_file('Xbar'))
@@ -262,7 +263,7 @@ describe(':confirm command dialog', function()
       fooba^r                                                                     |
       {1:~                                                                          }|*5
                                                                                  |
-                                                               1,6           All |
+                                                               1,6            All|
     ]])
     eq('foo\n', read_file('Xconfirm_write_ro'))
 
@@ -376,7 +377,7 @@ describe(':confirm command dialog', function()
       d                                                                          |
       {1:~                                                                          }|*2
                                                                                  |
-                                                               1,1           All |
+                                                               1,1            All|
     ]])
     eq('a\nb\nc\nd\n', read_file('Xwrite_partial'))
     os.remove('Xwrite_partial')

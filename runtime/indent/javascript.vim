@@ -2,7 +2,7 @@
 " Language: Javascript
 " Maintainer: Chris Paul ( https://github.com/bounceme )
 " URL: https://github.com/pangloss/vim-javascript
-" Last Change: December 4, 2017
+" Last Change: 2025 Apr 13
 
 " Only load this indent file when no other was loaded.
 if exists('b:did_indent')
@@ -69,7 +69,9 @@ let s:rel = has('reltime')
 " searchpair() wrapper
 if s:rel
   function s:GetPair(start,end,flags,skip)
+    " VIM_INDENT_TEST_TRACE_START
     return searchpair('\m'.a:start,'','\m'.a:end,a:flags,a:skip,s:l1,a:skip ==# 's:SkipFunc()' ? 2000 : 200)
+    " VIM_INDENT_TEST_TRACE_END s:GetPair
   endfunction
 else
   function s:GetPair(start,end,flags,skip)

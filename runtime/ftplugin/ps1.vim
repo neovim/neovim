@@ -6,6 +6,7 @@
 "              2024 May 23 by Riley Bruins <ribru17@gmail.com> ('commentstring')
 "              2024 Sep 19 by Konfekt (simplify keywordprg #15696)
 "              2025 Jul 22 by phanium (use :hor term #17822)
+"              2026 Jul 10 by Vim Project (quote K argument, prevent command injection)
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin") | finish | endif
@@ -52,9 +53,9 @@ endif
 
 if exists('s:pwsh_cmd')
   if exists(':terminal') == 2
-    command! -buffer -nargs=1 GetHelp silent exe 'hor term ' . s:pwsh_cmd . ' -NoLogo -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command Get-Help -Full "<args>"' . (executable('less') ? ' | less' : '')
+    command! -buffer -nargs=1 GetHelp call term_start([s:pwsh_cmd, '-NoLogo', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'RemoteSigned', '-Command', "Get-Help -Full '" . substitute(<q-args>, "'", "''", 'g') . "'" . (executable('less') ? ' | less' : '')])
   else
-    command! -buffer -nargs=1 GetHelp echo system(s:pwsh_cmd . ' -NoLogo -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command Get-Help -Full <args>')
+    command! -buffer -nargs=1 GetHelp echo system([s:pwsh_cmd, '-NoLogo', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'RemoteSigned', '-Command', "Get-Help -Full '" . substitute(<q-args>, "'", "''", 'g') . "'"])
   endif
   setlocal keywordprg=:GetHelp
   let b:undo_ftplugin ..= " | setl kp< | sil! delc -buffer GetHelp"

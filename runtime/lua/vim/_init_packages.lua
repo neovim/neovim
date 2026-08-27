@@ -60,6 +60,7 @@ vim._submodules = {
   iter = true,
   re = true,
   text = true,
+  tty = true,
   provider = true,
 }
 

@@ -5,7 +5,7 @@ local Range = require('vim.treesitter._range')
 --- they get back to the child-node they were in instead of the parents first
 --- child-node.
 ---
---- @type {[integer]:vim.treesitter.select.node,[any]:any}
+--- @type {[integer]:{id:string,range:Range4},[any]:any}
 local history = {
   --- @type integer?
   bufnr = nil,
@@ -348,34 +348,6 @@ local function node_normalize_down(node)
   return node
 end
 
-local function visual_select(range)
-  assert(type(range) == 'table')
-  local srow, scol, erow, ecol = Range.unpack4(range)
-  local cursor_other_end_of_visual = false
-
-  local vcol, vrow = vim.fn.col('v'), vim.fn.line('v')
-  local ccol, cline = vim.fn.col('.'), vim.fn.line('.')
-  if vrow > cline or (vrow == cline and vcol > ccol) then
-    cursor_other_end_of_visual = true
-  end
-
-  if ecol == 0 then
-    erow = erow - 1
-    ecol = #vim.fn.getline(erow + 1) + 1
-  end
-
-  -- reset visualmode() to 'v'
-  vim.cmd.normal({ 'v\27', bang = true })
-
-  vim.fn.setpos("'<", { 0, srow + 1, scol + 1, 0 })
-  vim.fn.setpos("'>", { 0, erow + 1, ecol, 0 })
-  if cursor_other_end_of_visual then
-    vim.cmd.normal({ 'gvo', bang = true })
-  else
-    vim.cmd.normal({ 'gv', bang = true })
-  end
-end
-
 --- @return Range4
 local function get_selection()
   local pos1 = vim.fn.getpos('v')
@@ -383,6 +355,10 @@ local function get_selection()
   if pos1[2] > pos2[2] or (pos1[2] == pos2[2] and pos1[3] > pos2[3]) then
     --- @type Range4,Range4
     pos1, pos2 = pos2, pos1
+  end
+
+  if vim.o.selection == 'exclusive' then
+    pos2[3] = pos2[3] - 1
   end
 
   if pos2[3] == #vim.fn.getline(pos2[2]) + 1 then
@@ -401,7 +377,7 @@ local function get_parent_from_range(range)
   local node, parent_chain = get_node(range)
 
   if node == false then
-    return (assert(parent_chain[1]))
+    return node_range(assert(parent_chain[1]))
   end
 
   if not node then
@@ -409,7 +385,7 @@ local function get_parent_from_range(range)
   end
 
   if not Range.equal(range, node_range(node)) then
-    return node
+    return node_range(node)
   end
 
   node = node_normalize_up(node, parent_chain)
@@ -427,10 +403,14 @@ local function get_parent_from_range(range)
         changedtick = vim.b.changedtick,
       }
     end
-    table.insert(history, node)
-    history.current_node_id = node_id(parent)
 
-    return parent
+    table.insert(history, {
+      id = node_id(node),
+      range = node_range(node),
+    })
+
+    history.current_node_id = node_id(parent)
+    return node_range(parent)
   end
 end
 
@@ -438,7 +418,7 @@ local function get_child_from_range(range)
   local node, alternative_child_nodes = get_node(range)
 
   if node == false then
-    return (assert(alternative_child_nodes[1]))
+    return node_range(assert(alternative_child_nodes[1]))
   end
 
   if not node then
@@ -452,10 +432,10 @@ local function get_child_from_range(range)
 
     local smallest_node = get_node_contained_in_range(range, node)
     if smallest_node then
-      return smallest_node
+      return node_range(smallest_node)
     end
 
-    return node
+    return node_range(node)
   end
 
   if
@@ -463,23 +443,23 @@ local function get_child_from_range(range)
     and history.changedtick == vim.b.changedtick
     and history.current_node_id == node_id(node)
   then
-    --- @type vim.treesitter.select.node
+    --- @type {id:string,range:Range4}
     local child = table.remove(history)
     if child then
-      history.current_node_id = node_id(child)
+      history.current_node_id = child.id
 
-      return child
+      return child.range
     end
   end
   history = {}
 
   for _, child in ipairs(node_get_children_no_normalize(node)) do
     if not node_is_size_0(child) then
-      return child
+      return node_range(child)
     end
   end
 
-  return node
+  return node_range(node)
 end
 
 --- @param prev boolean
@@ -512,7 +492,7 @@ local function get_sibling_from_range(range, prev)
   end
 
   if siblings[idx] then
-    return siblings[idx]
+    return node_range(siblings[idx])
   end
 end
 
@@ -524,23 +504,73 @@ local function get_prev_from_range(range)
   return get_sibling_from_range(range, true)
 end
 
+--- @param prev boolean
+local function get_grow_sibling_from_range(range, prev)
+  local node, parent_chain = get_node(range)
+  if not node then
+    return
+  end
+
+  if Range.equal(node_range(node), range) then
+    node = node_normalize_up(node, parent_chain)
+    node = node_get_parent_no_normalize(node, parent_chain)
+
+    if not node then
+      return
+    end
+  else
+    node = node_normalize_down(node)
+  end
+
+  local children = node_get_children_no_normalize(node)
+
+  if prev then
+    for idx = #children, 1, -1 do
+      local child = children[idx]
+      local crange = node_range(child)
+      if
+        not node_is_size_0(child) and Range.cmp_pos.lt(crange[1], crange[2], range[1], range[2])
+      then
+        return { crange[1], crange[2], range[3], range[4] }
+      end
+    end
+  else
+    for _, child in ipairs(children) do
+      local crange = node_range(child)
+      if
+        not node_is_size_0(child) and Range.cmp_pos.gt(crange[3], crange[4], range[3], range[4])
+      then
+        return { range[1], range[2], crange[3], crange[4] }
+      end
+    end
+  end
+end
+
+local function get_grow_next_from_range(range)
+  return get_grow_sibling_from_range(range, false)
+end
+
+local function get_grow_prev_from_range(range)
+  return get_grow_sibling_from_range(range, true)
+end
+
 --- @param count integer
---- @param fn fun(range: Range4): vim.treesitter.select.node
+--- @param fn fun(range: Range4): Range4?
 local function repeate_apply_range(count, fn)
   local range = get_selection()
 
   for _ = 1, count or 1 do
-    local node = fn(range)
+    local new_range = fn(range)
 
-    if not node then
+    if not new_range then
       break
     end
 
-    range = node_range(node)
+    range = new_range
   end
 
   if range and count ~= 0 then
-    visual_select(range)
+    Range.visual_select(range)
   end
 end
 
@@ -562,6 +592,16 @@ end
 --- @param count integer
 function M.select_prev(count)
   repeate_apply_range(count, get_prev_from_range)
+end
+
+--- @param count integer
+function M.select_grow_next(count)
+  repeate_apply_range(count, get_grow_next_from_range)
+end
+
+--- @param count integer
+function M.select_grow_prev(count)
+  repeate_apply_range(count, get_grow_prev_from_range)
 end
 
 return M

@@ -9,7 +9,7 @@ Editing files						*edit-files*
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-1. Introduction						*edit-intro*
+Introduction						*edit-intro*
 
 Editing a file with Vim means:
 
@@ -169,7 +169,7 @@ If you want to keep the changed buffer without saving it, switch on the
 'hidden' is not set, check the help for the command.
 
 ==============================================================================
-2. Editing a file					*edit-a-file*
+Editing a file						*edit-a-file*
 
 							*:e* *:edit* *reload*
 :e[dit][!] [++opt] [+cmd]
@@ -260,34 +260,33 @@ CTRL-^			Edit the alternate file.  Mostly the alternate file is
 			See |CTRL-^| above for further details.
 
 							*gf* *E446* *E447*
-[count]gf		Edit the file whose name is under or after the cursor.
+[count]gf		Edit the filename at (or after) cursor.
 			Mnemonic: "goto file".
-			Uses the 'isfname' option to find out which characters
-			are supposed to be in a file name.  Trailing
-			punctuation characters ".,:;!" are ignored.  Escaped
-			spaces "\ " are reduced to a single space.
-			Uses the 'path' option as a list of directory names to
-			look for the file.  See the 'path' option for details
-			about relative directories and wildcards.
-			Uses the 'suffixesadd' option to check for file names
-			with a suffix added.
-			If the file can't be found, 'includeexpr' is used to
-			modify the name and another attempt is done.
-			If a [count] is given, the count'th file that is found
-			in the 'path' is edited.
+
+			- The 'isfname' option decides what a filename is.
+			  Trailing punctuation characters ".,:;!" are ignored.
+			  Escaped spaces "\ " are reduced to a single space.
+			- The 'path' option decides where to look for the
+			  file, including relative directories and wildcards.
+			- The 'suffixesadd' option controls which suffixes
+			  (file extensions) are tried when building potential
+			  filepaths.
+			- If the search fails, it is retried after applying
+			  'includeexpr' to the filename.
+			- If a [count] is given, the count'th file that is
+			  found in the 'path' is edited.
+			- If the name is a URL ("type://machine/path"), it is
+			  handled by $VIMRUNTIME/plugin/net.lua
+			- Environment variables are expanded. |expand-env|.
+			- On unix: "~" is expanded.
+
 			This command fails if Vim refuses to |abandon| the
 			current file.
-			If you want to edit the file in a new window use
-			|CTRL-W_CTRL-F|.
+			See |CTRL-W_CTRL-F| to edit the file in a new window.
+
 			If you do want to edit a new file, use: >
 				:e <cfile>
-<			To make gf always work like that: >
-				:map gf :e <cfile><CR>
-<			If the name is a hypertext link, that looks like
-			"type://machine/path", you need the |netrw| plugin.
-			For Unix the '~' character is expanded, like in
-			"~user/file".  Environment variables are expanded too
-			|expand-env|.
+<
 
 							*v_gf*
 {Visual}[count]gf	Same as "gf", but the highlighted text is used as the
@@ -305,15 +304,20 @@ CTRL-^			Edit the alternate file.  Mostly the alternate file is
 			character.  " line " is also recognized, like it is
 			used in the output of `:verbose command UserCmd`
 			White space between the filename, the separator and
-			the number are ignored.
+			the number is ignored.
 			Examples:
 				eval.c:10 ~
 				eval.c @ 20 ~
 				eval.c (30) ~
 				eval.c 40 ~
+				eval.c line 50 ~
 
 							*v_gF*
-{Visual}[count]gF	Same as "v_gf".
+{Visual}[count]gF	Same as "v_gf", but if a colon and a number appear
+			immediately after the end of the selected text,
+			then the cursor is positioned on that line in the
+			file.  Unlike |gF|, only a colon is recognized as
+			separator.
 
 These commands are used to start editing a single file.  This means that the
 file is read into the buffer and the current file name is set.  The file that
@@ -330,13 +334,11 @@ current file name.
 Besides the things mentioned here, more special items for where a filename is
 expected are mentioned at |cmdline-special|.
 
-Note for systems other than Unix: When using a command that accepts a single
-file name (like ":edit file") spaces in the file name are allowed, but
-trailing spaces are ignored.  This is useful on systems that regularly embed
-spaces in file names (like MS-Windows).  Example: The command ":e   Long File
-Name " will edit the file "Long File Name".  When using a command that accepts
-more than one file name (like ":next file1 file2") embedded spaces must be
-escaped with a backslash.
+When using a command that accepts a single file name (like ":edit file")
+spaces in the file name are allowed, but trailing spaces are ignored.
+Example: The command ":e   Long File Name " will edit the file "Long File
+Name".  When using a command that accepts more than one file name (like ":next
+file1 file2") embedded spaces must be escaped with a backslash.
 
 						*wildcard* *wildcards*
 Wildcards in {file} are expanded, but as with file completion, 'wildignore'
@@ -361,18 +363,18 @@ Note there are some commands where this works slightly differently, see
 |file-searching|.
 Example: >
 	:n **/*.txt
-Finds files:
-	aaa.txt ~
-	subdir/bbb.txt ~
-	a/b/c/d/ccc.txt ~
+Finds files: >
+	aaa.txt
+	subdir/bbb.txt
+	a/b/c/d/ccc.txt
 When non-wildcard characters are used right before or after "**" these are
 only matched in the top directory.  They are not used for directories further
 down in the tree.  For example: >
 	:n /usr/inc**/types.h
-Finds files:
-	/usr/include/types.h ~
-	/usr/include/sys/types.h ~
-	/usr/inc/old/types.h ~
+Finds files: >
+	/usr/include/types.h
+	/usr/include/sys/types.h
+	/usr/inc/old/types.h
 Note that the path with "/sys" is included because it does not need to match
 "/inc".  Thus it's like matching "/usr/inc*/*/*...", not
 "/usr/inc*/inc*/inc*".
@@ -558,7 +560,7 @@ Before editing binary, executable or Vim script files you should set the
 option.  This will avoid the use of 'fileformat'.  Without this you risk that
 single <NL> characters are unexpectedly replaced with <CR><NL>.
 
-END OF LINE AND END OF FILE				*eol-and-eof*
+END-OF-LINE AND END-OF-FILE				*eol-and-eof*
 
 Vim has several options to control the file format:
 	'fileformat'	the <EOL> style: Unix, DOS, Mac
@@ -596,8 +598,29 @@ If you want to preserve the fileformat exactly as-is, including any final
 <EOL> and final CTRL-Z: >
 	setl nofixeol
 
+OPENING FILES PROGRAMMATICALLY			      *buffer-open* *open-file*
+
+When a plugin already has a literal filepath (e.g. from a picker, LSP result,
+or filesystem scan) and just wants to open it, |:edit| is the wrong tool: its
+argument is subject to |cmdline-special| expansion, |wildcard| expansion, etc.
+|fnameescape()| escapes only some of these, and may depend on 'isfname'.
+
+Instead, to open a filepath literally, use `bufadd(vim.fs.normalize(…))`: >lua
+	local buf = vim.fn.bufadd(vim.fs.normalize(path))
+	-- Set 'buflisted'; trigger BufReadPre/BufReadPost/FileType.
+	vim.api.nvim_buf_call(buf, vim.cmd.edit)
+
+Alternatively, |nvim_cmd()| and |vim.cmd()| accept a structured form whose
+`args` are tokenized verbatim. But the argument still goes through |:edit|'s
+filename-expansion phase, so some parts of `path` are still expanded: >lua
+	vim.cmd{ cmd = 'edit',
+	  args = { path },
+	  magic = { file = false, bar = false },
+	}
+<
+
 ==============================================================================
-3. The argument list				*argument-list* *arglist*
+The argument list				*argument-list* *arglist*
 
 If you give more than one file name when starting Vim, this list is remembered
 as the argument list.  You can jump to each file in this list.
@@ -911,7 +934,7 @@ flag is used for the ":substitute" command to avoid an error for files where
 "my_foo" isn't used.  ":update" writes the file only if changes were made.
 
 ==============================================================================
-4. Writing					*writing* *save-file*
+Writing						*writing* *save-file*
 
 Note: When the 'write' option is off, you are not able to write any file.
 
@@ -1137,7 +1160,7 @@ For MS-Windows the device is detected by its name:
 The names can be in upper- or lowercase.
 
 ==============================================================================
-5. Writing and quitting					*write-quit*
+Writing and quitting					*write-quit*
 
 							*:q* *:quit*
 :q[uit]			Quit the current window.  Quit Vim if this is the last
@@ -1145,9 +1168,9 @@ The names can be in upper- or lowercase.
 			and Vim refuses to |abandon| the current buffer, and
 			when the last file in the argument list has not been
 			edited.
-			If there are other tab pages and quitting the last
-			window in the current tab page the current tab page is
-			closed |tab-page|.
+			If there are other tabpages and quitting the last
+			window in the current |tabpage|, the current tabpage is
+			closed.
 			Triggers the |QuitPre| autocommand event.
 			See |CTRL-W_q| for quitting another window.
 
@@ -1208,6 +1231,12 @@ ZZ			Write current file, if modified, and close the current
 							*ZQ*
 ZQ			Quit without checking for changes (same as ":q!").
 
+							*ZR*
+[count]ZR		Performs |:restart|. If a [count] of [1-8] is given,
+			the session is not restored (":restart! +qall"). If a
+			[count] of 9 is given, restarts without restoring the
+			session or checking for changes (":restart! +qall!").
+
 MULTIPLE WINDOWS AND BUFFERS				*window-exit*
 
 							*:qa* *:qall*
@@ -1244,7 +1273,7 @@ MULTIPLE WINDOWS AND BUFFERS				*window-exit*
 		which cannot be written for another reason, Vim will not quit.
 
 ==============================================================================
-6. Dialogs						*edit-dialogs*
+Dialogs							*edit-dialogs*
 
 							*:confirm* *:conf*
 :conf[irm] {command}	Execute {command}, and use a dialog when an
@@ -1266,43 +1295,24 @@ Examples: >
 
 If you want to always use ":confirm", set the 'confirm' option.
 
-					*:browse* *:bro* *E338* *E614* *E615* *E616*
-:bro[wse] {command}	Open a file selection dialog for an argument to
-			{command}.  At present this works for |:e|, |:w|,
-			|:wall|, |:wq|, |:wqall|, |:x|, |:xall|, |:exit|,
-			|:view|, |:sview|, |:r|, |:saveas|, |:sp|, |:mkexrc|,
-			|:mkvimrc|, |:mksession|, |:mkview|, |:split|,
-			|:vsplit|, |:tabe|, |:tabnew|, |:cfile|, |:cgetfile|,
-			|:caddfile|, |:lfile|, |:lgetfile|, |:laddfile|,
-			|:diffsplit|, |:diffpatch|, |:pedit|, |:redir|,
-			|:source|, |:update|, |:visual|, |:vsplit|,
-			and |:qall| if 'confirm' is set.
-			Note: only in Win32 GUI; in console `:browse edit`
-			works if the FileExplorer autocommand group exists.
-			When ":browse" is not possible you get an error
-			message.  If {command} doesn't support browsing, the
-			{command} is executed without a dialog.
-			":browse set" works like |:options|.
-			See also |:oldfiles| for ":browse oldfiles".
+							*:browse* *:bro*
+:bro[wse] {command} [file]
+			Without [file]: opens the |current-directory| (with
+			the |dir| browser by default; see |dir-disable|).
 
-The syntax is best shown via some examples: >
-	:browse e $vim/foo
-<		Open the browser in the $vim/foo directory, and edit the
-		file chosen. >
-	:browse e
-<		Open the browser in the directory specified with 'browsedir',
-		and edit the file chosen. >
-	:browse w
-<		Open the browser in the directory of the current buffer,
-		with the current buffer filename as default, and save the
-		buffer under the filename chosen. >
-	:browse w C:/bar
-<		Open the browser in the C:/bar directory, with the current
-		buffer filename as default, and save the buffer under the
-		filename chosen.
-Also see the 'browsedir' option.
-For versions of Vim where browsing is not supported, the command is executed
-unmodified.
+			{command} must be one of: |:edit|, |:split|,
+			|:vsplit|, |:tabedit|, |:tabnew|.
+
+			With a [file] argument, or if {command} does not
+			support browsing: executes {command}.
+
+Examples: >
+	:browse edit
+<		Open the current directory. >
+	:browse vsplit
+<		Open the current directory in a vertical split.
+
+			See |:oldfiles| for ":browse oldfiles".
 
 							*browsefilter*
 For MS-Windows you can modify the filters that are used in the browse
@@ -1341,73 +1351,114 @@ use has("browsefilter"): >
 	endif
 
 ==============================================================================
-7. The current directory				*current-directory*
+The current directory					*current-directory*
 
-You can use |:cd|, |:tcd| and |:lcd| to change to another directory, so you
-will not have to type that directory name in front of the file names.  It also
-makes a difference for executing external commands, e.g. ":!ls" or ":te ls".
+The "effective working directory" affects anything that operates on relative
+paths, e.g. ":edit ./foo.txt" or shell commands like ":!ls" or ":te ls". There
+are four current-directory "scopes": global, tab, window and buffer. You can
+use |:cd|, |:tcd|, |:lcd| and |:bcd| to change to a directory at a given scope.
 
-There are three current-directory "scopes": global, tab and window.  The
-window-local working directory takes precedence over the tab-local
-working directory, which in turn takes precedence over the global
-working directory.  If a local working directory (tab or window) does not
-exist, the next-higher scope in the hierarchy applies.
+The precedence of scopes is ordered from narrowest to widest: >
 
-							*:cd* *E747* *E472*
-:cd[!]			On non-Unix systems when 'cdhome' is off: Print the
-			current directory name.
-			Otherwise: Change the current directory to the home
-			directory.  Clear any window-local directory.
-			Use |:pwd| to print the current directory on all
-			systems.
+	buffer > window > tab > global
 
-:cd[!] {path}		Change the current directory to {path}.
-			If {path} is relative, it is searched for in the
-			directories listed in 'cdpath'.
-			Clear any window-local directory.
-			Does not change the meaning of an already opened file,
-			because its full path name is remembered.  Files from
-			the |arglist| may change though!
-			On MS-Windows this also changes the active drive.
+Use |getcwd()| to get the effective directory, and `:verbose pwd` to also see
+which scope it came from.
+
+Setting a directory at a higher scope clears the lower ones: |:tcd| clears the
+window-local directory and |:cd| clears both.  But the buffer-local directory
+is never cleared, except by |:bcd| or |:bcd!|.
+
+
+:chd[ir]					*:cd* *:chd* *:chdir* *E747* *E472*
+:cd			Change the current directory to the home directory,
+			unsetting the same directories as ":cd {path}".
+
+			If 'cdhome' is disabled this only prints the name.
+			Use |:pwd| to print it regardless of 'cdhome'.
+
+:cd {path}		Change the current directory to {path}, resolved
+			against 'cdpath' (if {path} is relative). On
+			MS-Windows this also changes the active drive.
+
+			Clears the window-local and tab-local directories (on
+			the current window/tab), but not the buffer-local one.
+
 			To change to the directory of the current file: >
 				:cd %:h
 <
+			Does not change the meaning of an already opened file,
+			because its full path name is remembered.  Files from
+			the |arglist| may change though!
+
 							*:cd-* *E186*
-:cd[!] -		Change to the previous current directory (before the
-			previous ":cd {path}" command).
+:cd -			Change to previous current-directory (before the last
+			":cd {path}" command).
 
-							*:chd* *:chdir*
-:chd[ir][!] [path]	Same as |:cd|.
+:tch[dir]						*:tc* *:tcd* *:tch* *:tchdir*
+:tc[d] [path]		Like |:cd|, but only set the directory for the current
+			tab. Clears the window-local directory of the current
+			window, but not the buffer-local one.
 
-							*:tc* *:tcd*
-:tc[d][!] {path}	Like |:cd|, but only set the directory for the current
-			tab.  The current window will also use this directory.
-			The current directory is not changed for windows in
-			other tabs and for windows in the current tab that
-			have their own window-local directory.
+			Does not change the current directory for other tabs,
+			nor any other window or buffer with its own local
+			directory.
+
+			"Sticky" behavior: a new tab inherits the current
+			tab-local directory.
 
 							*:tcd-*
-:tc[d][!] -		Change to the previous current directory (before the
-			previous ":tcd {path}" command).
+:tc[d] -		Change to previous tab-local directory (before the
+			last ":tcd {path}" command).
 
-							*:tch* *:tchdir*
-:tch[dir][!]		Same as |:tcd|.
+:lch[dir]						*:lc* *:lcd* *:lch* *:lchdir*
+:lc[d] [path]		Like |:cd|, but only set the directory for the current
+			window.  Does not change the current directory for
+			other tabs, windows or buffers.
 
-							*:lc* *:lcd*
-:lc[d][!] {path}	Like |:cd|, but only set the current directory for the
-			current window.  The current directory for other
-			windows or tabs is not changed.
+			The specified directory becomes the current directory
+			whenever that window is entered, unless its current
+			buffer has a buffer-local (:bcd) directory.
 
-							*:lch* *:lchdir*
-:lch[dir][!]		Same as |:lcd|.
+			"Sticky" behavior: a new window inherits the current
+			window-local directory.
+
 
 							*:lcd-*
-:lc[d][!] -		Change to the previous current directory (before the
-			previous ":lcd {path}" command).
+:lc[d] -		Change to previous window-local directory (before the
+			last ":lcd {path}" command).
+
+:bch[dir]						*:bc* *:bcd* *:bch* *:bchdir*
+:bc[d] [path]		Like |:cd|, but only set the directory for the current
+			buffer.  Does not change the current directory for
+			tabs, windows or other buffers.
+
+			Not "sticky": unlike :lcd and :tcd, a new window or
+			buffer (|:edit|, |:enew|, …) will not "inherit" the
+			current buffer-local directory. Use |:tcd| or |:lcd|
+			if you want "sticky" behavior.
+
+			See also |project-dir|.
+
+							*:bcd-*
+:bc[d] -		Change to previous buffer-local directory (before the
+			last ":bcd {path}" command).
+
+						*:lcd!* *:tcd!* *:bcd!*
+:lc[d]!			Unset the window-local current-directory.
+:tc[d]!			Unset the tab-local current-directory.
+:bc[d]!			Unset the buffer-local current-directory.
+
+			Each unsets only its own scope, so the next-higher
+			scope takes effect. No-op if the scope has no local
+			directory.
+
+			The global directory always exists, so ":cd!" is the
+			same as |:cd|.
 
 							*:pw* *:pwd* *E187*
 :pw[d]			Print the current directory name.
-			Also see |getcwd()|.
+			See also |getcwd()|.
 							*:pwd-verbose*
 			When 'verbose' is non-zero, |:pwd| will also display
 			what scope the current directory was set.  Example: >
@@ -1416,44 +1467,35 @@ exist, the next-higher scope in the hierarchy applies.
 				:verbose pwd
 				[global] /path/to/current
 
-				" Set by :lcd
-				:verbose pwd
-				[window] /path/to/current
-
 				" Set by :tcd
 				:verbose pwd
 				[tabpage] /path/to/current
 
-So long as no |:lcd| or |:tcd| command has been used, all windows share the
-same current directory.  Using a command to jump to another window doesn't
-change anything for the current directory.
 
-When |:lcd| has been used for a window, the specified directory becomes the
-current directory for that window.  Windows where the |:lcd| command has not
-been used stick to the global or tab-local directory.  When jumping to another
-window the current directory is changed to the last specified local current
-directory.  If none was specified, the global or tab-local directory is used.
-When creating a new window it inherits the local directory of the current window.
+------------------------------------------------------------------------------
+Project directory				       *project-dir* *workspace-dir*
 
-When changing tabs the same behaviour applies.  If the current tab has no
-local working directory the global working directory is used.
+You can use |:bcd| to assign a "workspace" (or "project directory") to each
+buffer, so commands like |:make|, |:grep| and |:terminal| always run relative
+to the buffer's "workspace".
 
-When a |:cd| command is used, the current window and tab will lose their local
-current directories and will use the global current directory from now on.
-When a |:tcd| command is used, only the current window will lose its local
-working directory.
+Example: change to the project root (found by |vim.fs.root()|) of each buffer: >lua
 
-After using |:cd| the full path name will be used for reading and writing
-files.  On some networked file systems this may cause problems.  The result of
-using the full path name is that the file names currently in use will remain
-referring to the same file.  Example: If you have a file a:test and a
-directory a:vim the commands ":e test" ":cd vim" ":w" will overwrite the file
-a:test and not write a:vim/test.  But if you do ":w test" the file a:vim/test
-will be written, because you gave a new file name and did not refer to a
-filename before the ":cd".
+	vim.api.nvim_create_autocmd('BufReadPost', {
+	  callback = function(ev)
+	    local root = vim.fs.root(ev.buf, { '.git', 'Makefile' })
+	    if root then
+	      vim.cmd.bcd(root)
+	    end
+	  end,
+	})
+<
+See also:
+- |lsp-buf-working-dir|
+- |terminal-osc7|
 
 ==============================================================================
-8. Editing binary files					*edit-binary*
+Editing binary files					*edit-binary*
 
 Although Vim was made to edit text files, it is possible to edit binary
 files.  The |-b| Vim argument (b for binary) makes Vim do file I/O in binary
@@ -1487,7 +1529,7 @@ There are a few things to remember when editing binary files:
   in the text).
 
 ==============================================================================
-9. Encryption						*encryption*
+Encryption						*encryption*
 
 					                *:X* *E817* *E818* *E819* *E820*
 Support for editing encrypted files has been removed.
@@ -1495,7 +1537,7 @@ Support for editing encrypted files has been removed.
 	https://github.com/neovim/neovim/issues/701
 
 ==============================================================================
-10. Timestamps					*timestamp* *timestamps*
+Timestamps					*timestamp* *timestamps*
 
 Vim remembers the modification timestamp, mode and size of a file when you
 begin editing it.  This is used to avoid that you have two different versions
@@ -1511,6 +1553,12 @@ focus.
 If you want to automatically reload a file when it has been changed outside of
 Vim, set the 'autoread' option.  This doesn't work at the moment you write the
 file though, only when the file wasn't changed inside of Vim.
+
+Nvim uses file system watchers to detect external changes in real-time for
+all loaded buffers when 'autoread' is set.  This means files are reloaded
+promptly without waiting for |FocusGained| or |:checktime|.  The watchers
+are managed automatically: started when a buffer is loaded, restarted after
+|:write|, and stopped when the buffer is deleted or 'autoread' is disabled.
 							*ignore-timestamp*
 If you do not want to be asked or automatically reload the file, you can use
 this: >
@@ -1605,7 +1653,7 @@ in the Win32 libraries that confuses Vim about the hour time difference.  The
 problem goes away the next day.
 
 ==============================================================================
-11. File Searching					*file-searching*
+File Searching						*file-searching*
 
 The file searching is currently used for the 'path', 'cdpath' and 'tags'
 options, for |finddir()| and |findfile()|.  Other commands use |wildcards|
@@ -1704,7 +1752,7 @@ There are three different types of searching:
    with depth limiter (/usr/**2) or upward search (;) notations.
 
 ==============================================================================
-12. Trusted Files						*trust*
+Trusted Files							*trust*
 
 Nvim executes arbitrary code found on the filesystem if 'exrc' is enabled. To
 prevent executing malicious code, only "trusted files" are executed. You can
@@ -1734,12 +1782,12 @@ mark a file as trusted or untrusted using the |:trust| command or the
 			trust or deny it.
 
 ==============================================================================
-13. Log Files							*log-files*
+Log Files							*log-files*
 
 Nvim keeps log files in `stdpath("log")`. See |standard-path| for where that
 location is on your system.
 
-							*:log*
+							*:log* *E5200*
 :log [logname]
 			Open a log file that exists in `stdpath("log")`.
 			`[logname]` is the name of the file with the extension

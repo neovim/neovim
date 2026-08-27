@@ -1,10 +1,11 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local eq, clear, call = t.eq, n.clear, n.call
 local command = n.command
-local exc_exec = n.exc_exec
 local matches = t.matches
+local pcall_err = t.pcall_err
 local is_os = t.is_os
 local set_shell_powershell = n.set_shell_powershell
 local eval = n.eval
@@ -25,15 +26,18 @@ describe('exepath()', function()
     for _, input in ipairs({ 'v:null', 'v:true', 'v:false', '{}', '[]' }) do
       eq(
         'Vim(call):E1174: String required for argument 1',
-        exc_exec('call exepath(' .. input .. ')')
+        pcall_err(command, 'call exepath(' .. input .. ')')
       )
     end
-    eq('Vim(call):E1175: Non-empty string required for argument 1', exc_exec('call exepath("")'))
+    eq(
+      'Vim(call):E1175: Non-empty string required for argument 1',
+      pcall_err(command, 'call exepath("")')
+    )
     command('let $PATH = fnamemodify("./test/functional/fixtures/bin", ":p")')
     for _, input in ipairs({ 'v:null', 'v:true', 'v:false' }) do
       eq(
         'Vim(call):E1174: String required for argument 1',
-        exc_exec('call exepath(' .. input .. ')')
+        pcall_err(command, 'call exepath(' .. input .. ')')
       )
     end
   end)
@@ -73,4 +77,10 @@ describe('exepath()', function()
       end
     )
   end
+
+  it('respects shellslash #39524', function()
+    t.skip(not is_os('win'), "N/A: 'shellslash' only works on Windows")
+    local path = call('exepath', 'cmd.exe') ---@type string
+    t.ok(nil == path:find('/'))
+  end)
 end)

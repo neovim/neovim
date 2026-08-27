@@ -28,6 +28,7 @@ local fmt = string.format
 
 local wrap = util.wrap
 local md_to_vimdoc = util.md_to_vimdoc
+local align_tags = util.align_tags
 
 local TEXT_WIDTH = 78
 local INDENTATION = 4
@@ -48,6 +49,8 @@ local INDENTATION = 4
 --- @field fn_name_pat? string
 ---
 --- @field fn_xform? fun(fun: nvim.luacats.parser.fun)
+---
+--- @field brief_xform? fun(brief: string): string
 ---
 --- For generated section names.
 --- @field section_fmt fun(name: string): string
@@ -187,6 +190,7 @@ local config = {
       'json.lua',
       'keymap.lua',
       'loader.lua',
+      'log.lua',
       'lpeg.lua',
       'mpack.lua',
       'net.lua',
@@ -200,6 +204,7 @@ local config = {
       'system.lua',
       'text.lua',
       'ui.lua',
+      'img.lua', -- ui/img.lua
       'uri.lua',
       'version.lua',
 
@@ -228,6 +233,7 @@ local config = {
       'runtime/lua/vim/iter.lua',
       'runtime/lua/vim/keymap.lua',
       'runtime/lua/vim/loader.lua',
+      'runtime/lua/vim/log.lua',
       'runtime/lua/vim/net.lua',
       'runtime/lua/vim/pos.lua',
       'runtime/lua/vim/range.lua',
@@ -235,6 +241,7 @@ local config = {
       'runtime/lua/vim/snippet.lua',
       'runtime/lua/vim/text.lua',
       'runtime/lua/vim/ui.lua',
+      'runtime/lua/vim/ui/img.lua',
       'runtime/lua/vim/uri.lua',
       'runtime/lua/vim/version.lua',
     },
@@ -255,6 +262,7 @@ local config = {
     end,
     section_name = {
       ['_inspector.lua'] = 'inspector',
+      ['img.lua'] = 'ui.img',
       ['ui2.lua'] = 'ui2',
     },
     section_fmt = function(name)
@@ -472,6 +480,89 @@ local config = {
       return name
     end,
   },
+  tui = {
+    filename = 'tui.txt',
+    section_order = { 'tui.lua' },
+    files = { 'runtime/lua/vim/_meta/tui.lua' },
+    section_fmt = function(_name)
+      return 'Terminfo override'
+    end,
+    helptag_fmt = function()
+      return { 'tui-termdefs' }
+    end,
+    brief_xform = function(brief)
+      local terminfo = require('src.gen.terminfo').fields
+      local booleans = terminfo.bools
+      local numbers = terminfo.ints
+      local strings = terminfo.strings
+
+      local strings_ext = vim.tbl_map(function(v)
+        return v[1]
+      end, terminfo.strings_ext)
+
+      local unshifted_keys = vim.tbl_map(function(v)
+        return 'key_' .. v[1]
+      end, (vim.tbl_filter(function(v)
+        return not v[2]
+      end, terminfo.termkeys)))
+
+      local shifted_keys = vim.tbl_map(function(v)
+        return 'key_' .. v[1]
+      end, (vim.tbl_filter(function(v)
+        return v[2]
+      end, terminfo.termkeys)))
+
+      local f_keys = { 'key_f1', '...', 'key_f' .. terminfo.func_key_max }
+
+      local table_rows = { { 'Field', 'Type' } }
+      local col1_max_width = 0
+      --- @param defs string[]
+      --- @param type string
+      --- @param omit_padding_row nil | boolean
+      --- @param skip_sort nil | boolean
+      local function add_defs(defs, type, omit_padding_row, skip_sort)
+        if not skip_sort then
+          table.sort(defs)
+        end
+        for _, def in ipairs(defs) do
+          table.insert(table_rows, { def, type })
+          col1_max_width = math.max(col1_max_width, #def)
+        end
+        if not omit_padding_row then
+          table.insert(table_rows, { '', '' })
+        end
+      end
+
+      add_defs(booleans, 'bool')
+      add_defs(numbers, 'int')
+      add_defs(strings, 'string')
+      add_defs(strings_ext, 'string')
+      add_defs(unshifted_keys, 'string')
+      add_defs(shifted_keys, 'string[]')
+      add_defs(f_keys, 'string', true, true)
+
+      -- Convert all the table rows into strings by calculating the padding
+      -- needed between them
+      local table_str_rows = {}
+      local min_padding = 3 -- padding between table columns
+      local max_width = 0 -- max width of col1 + padding + col2
+      local indent = '    '
+      for _, row in ipairs(table_rows) do
+        if #row[1] == 0 then
+          table.insert(table_str_rows, '')
+        else
+          local padding = string.rep(' ', col1_max_width + min_padding - #row[1])
+          local val = table.concat(row, padding)
+          max_width = math.max(max_width, #val)
+          table.insert(table_str_rows, indent .. val)
+        end
+      end
+
+      -- Add table header
+      table.insert(table_str_rows, 2, indent .. string.rep('-', max_width))
+      return (brief:gsub('NVIM_TERMDEFS_TABLE', table.concat(table_str_rows, '\n')))
+    end,
+  },
 }
 
 --- @param ty string
@@ -556,6 +647,9 @@ local function get_class(ty, classes)
   return classes[cty]
 end
 
+--- Recursively resolves `@inlinedoc` classes: replaces the type with "table" and expands class
+--- fields into the object's description.
+---
 --- @param obj nvim.luacats.parser.param|nvim.luacats.parser.return|nvim.luacats.parser.field
 --- @param classes? table<string,nvim.luacats.parser.class>
 local function inline_type(obj, classes)
@@ -607,10 +701,17 @@ local function inline_type(obj, classes)
     end
   end
 
+  util.sort_by_key(cls.fields, 'name')
+
   local desc_append = {}
   for _, f in ipairs(cls.fields) do
     if not f.access then
+      inline_type(f, classes)
       local fdesc, default = get_default(f.desc)
+      if fdesc then
+        -- Indent nested list items from recursive inlining.
+        fdesc = fdesc:gsub('\n(%- {)', '\n  %1')
+      end
       local fty = render_type(f.type, nil, default)
       local fnm = fmt_field_name(f.name)
       table.insert(desc_append, table.concat({ '-', fnm, fty, fdesc }, ' '))
@@ -706,6 +807,8 @@ local function render_class(class, classes, hidden_fields, cfg)
       return not class_hidden[field.name]
     end, fields)
   end
+
+  util.sort_by_key(fields, 'name')
 
   local fields_txt = render_fields_or_params(fields, nil, classes, cfg)
   if not fields_txt:match('^%s*$') then
@@ -878,8 +981,7 @@ local function render_fun(fun, classes, cfg)
     table.insert(ret, '\n    Attributes: ~\n')
     for _, attr in ipairs(fun.attrs) do
       local attr_str = ({
-        textlock = 'not allowed when |textlock| is active or in the |cmdwin|',
-        textlock_allow_cmdwin = 'not allowed when |textlock| is active',
+        textlock = 'not allowed when |textlock| is active',
         fast = '|api-fast|',
         remote_only = '|RPC| only',
         lua_only = 'Lua |vim.api| only',
@@ -920,6 +1022,21 @@ local function render_fun(fun, classes, cfg)
 
   table.insert(ret, '\n')
   return table.concat(ret)
+end
+
+--- @param briefs string[]
+--- @param cfg nvim.gen_vimdoc.Config
+local function render_briefs(briefs, cfg)
+  local ret = {} --- @type string[]
+
+  for _, b in ipairs(briefs) do
+    if cfg.brief_xform then
+      b = cfg.brief_xform(b)
+    end
+    ret[#ret + 1] = b
+  end
+
+  return ret
 end
 
 --- @param funs nvim.luacats.parser.fun[]
@@ -1046,8 +1163,7 @@ local function render_section(section, add_header)
     vim.list_extend(doc, {
       string.rep('=', TEXT_WIDTH),
       '\n',
-      section.title,
-      fmt('%' .. (TEXT_WIDTH - section.title:len()) .. 's', section.help_tag),
+      align_tags(TEXT_WIDTH)(section.title .. ' ' .. section.help_tag),
     })
   end
 
@@ -1137,6 +1253,7 @@ local function gen_target(cfg)
 
     if not f:find('ui_events%.in%.h$') then -- TODO(justinmk): also lint UI events.
       lint.lint_names(f, funs, nil, classes)
+      lint.lint_quasi_keysets(f, funs)
     end
 
     local mod_cls_nm = find_module_class(classes, 'M')
@@ -1155,7 +1272,7 @@ local function gen_target(cfg)
     sections[f_base] = make_section(
       f_base,
       cfg,
-      briefs,
+      render_briefs(briefs, cfg),
       render_funs(funs, all_classes, cfg),
       render_classes(classes, funs, cfg)
     )

@@ -18,9 +18,13 @@ local function start_diff()
   end
   local args = vim.v.argf
   if #args == 2 then
-    vim.schedule(function()
-      require('difftool').open(args[1], args[2])
-    end)
+    local left = args[1]
+    local right = args[2]
+    if vim.fn.isdirectory(left) == 1 and vim.fn.isdirectory(right) == 1 then
+      vim.schedule(function()
+        require('difftool').open(left, right)
+      end)
+    end
   end
 end
 if vim.v.vim_did_enter > 0 then

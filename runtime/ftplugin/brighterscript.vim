@@ -8,4 +8,4 @@ if exists('b:did_ftplugin')
 endif
 let b:did_ftplugin = 1
 
-runtime! ftplugin/brightscript.vim
+runtime! ftplugin/brightscript[.]{vim,lua}

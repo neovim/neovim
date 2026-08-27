@@ -10,7 +10,8 @@ local util = lsp.util
 local function mk_tag_item(name, range, uri, position_encoding)
   local bufnr = vim.uri_to_bufnr(uri)
   -- This is get_line_byte_from_position is 0-indexed, call cursor expects a 1-indexed position
-  local byte = util._get_line_byte_from_position(bufnr, range.start, position_encoding) + 1
+  local pos = vim.pos.lsp(bufnr, range.start, position_encoding)
+  local byte = pos.col + 1
   return {
     name = name,
     filename = vim.uri_to_fname(uri),

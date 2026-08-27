@@ -113,6 +113,7 @@ int os_dirname(char *buf, size_t len)
     xstrlcpy(buf, uv_strerror(error_number), len);
     return FAIL;
   }
+  TO_SLASH(buf);
   return OK;
 }
 
@@ -224,7 +225,9 @@ int os_nodetype(const char *name)
 int os_exepath(char *buffer, size_t *size)
   FUNC_ATTR_NONNULL_ALL
 {
-  return uv_exepath(buffer, size);
+  int r = uv_exepath(buffer, size);
+  TO_SLASH(buffer);
+  return r;
 }
 
 /// Checks if the file `name` is executable.
@@ -551,6 +554,20 @@ os_dup_dup:
   return ret;
 }
 
+/// Duplicates file descriptor `fd` and marks the copy close-on-exec (Unix) / non-inheritable
+/// (Windows), so the duped fd is not leaked to spawned child processes.
+///
+/// @return New file descriptor, or libuv error code (< 0) if the dup failed.
+int os_dup_cloexec(const int fd)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  int newfd = os_dup(fd);
+  if (newfd >= 0) {
+    os_set_cloexec(newfd);
+  }
+  return newfd;
+}
+
 /// Open the file descriptor for stdin.
 int os_open_stdin_fd(void)
 {
@@ -561,7 +578,7 @@ int os_open_stdin_fd(void)
     stdin_dup_fd = os_dup(STDIN_FILENO);
 #ifdef MSWIN
     // Replace the original stdin with the console input handle.
-    os_replace_stdin_to_conin();
+    os_redirect_stdin_to_conin();
 #endif
   }
   return stdin_dup_fd;
@@ -784,6 +801,16 @@ int os_setperm(const char *const name, int perm)
 {
   int r;
   RUN_UV_FS_FUNC(r, uv_fs_chmod, name, perm, NULL);
+  return (r == kLibuvSuccess ? OK : FAIL);
+}
+
+/// Set the permission of the file referred to by the open file descriptor.
+///
+/// @return `OK` for success, `FAIL` for failure.
+int os_fsetperm(int fd, int perm)
+{
+  int r;
+  RUN_UV_FS_FUNC(r, uv_fs_fchmod, fd, perm, NULL);
   return (r == kLibuvSuccess ? OK : FAIL);
 }
 
@@ -1112,6 +1139,7 @@ int os_mkdtemp(const char *templ, char *path)
   int result = uv_fs_mkdtemp(NULL, &request, templ, NULL);
   if (result == kLibuvSuccess) {
     xstrlcpy(path, request.path, TEMP_FILE_PATH_MAXLEN);
+    TO_SLASH(path);
   }
   uv_fs_req_cleanup(&request);
   return result;
@@ -1182,6 +1210,68 @@ bool os_fileinfo(const char *path, FileInfo *file_info)
 {
   CLEAR_POINTER(file_info);
   return os_stat(path, &(file_info->stat)) == kLibuvSuccess;
+}
+
+/// Parses `path` into a `FileInfo` structure.
+///
+/// TODO(ntdiary): Could be extended for path.c cleanup and path normalization
+/// logic. Eventually merge this with `os_fileinfo`
+///
+/// TODO(justinmk): return value is meaningless currently.
+bool os_fileinfo2(const char *path, FileInfo *info)
+  FUNC_ATTR_NONNULL_ALL
+{
+  CLEAR_POINTER(info);
+  if (path_with_url(path)) {
+    return true;
+  }
+  // Preserves the leading two "/"; 3+ "///…" collapse to a single "/" (IEEE 1003.1).
+  // Same rule applies to kPathUNC/kPathGeneric on Windows, but not to kPathDevice or
+  // kPathDeviceUNC, where the leading "//" is significant.
+  const char *p = path_skip_sep(path, false);
+  size_t leading_slashes = (size_t)(p - path);
+#ifdef MSWIN
+  if (leading_slashes == 0 && ASCII_ISALPHA(p[0]) && p[1] == ':') {
+    info->type = kPathDrive;
+    p = path_skip_sep(p + 2, false);
+    info->rest_off = (size_t)(p - path);
+    return true;
+  }
+  if (leading_slashes >= 2 && (p[0] == '?' || p[0] == '.')) {
+    if (!vim_ispathsep_nocolon(p[1])) {
+      return true;
+    }
+    info->type = kPathDevice;
+    info->prefix_off = leading_slashes - 2;
+    p = path_skip_sep(p + 2, false);
+    if (vim_strnicmp_asc(p, "unc", 3) == 0 && vim_ispathsep_nocolon(p[3])) {
+      info->type = kPathDeviceUNC;
+      p = path_skip_sep(p + 4, false);
+      info->root_off = (size_t)(p - path);
+      goto server;
+    }
+    info->root_off = (size_t)(p - path);
+    if (ASCII_ISALPHA(p[0]) && p[1] == ':') {
+      p += 2;
+    }
+    p = path_skip_sep(path_next_component(p), false);
+    info->rest_off = (size_t)(p - path);
+    return true;
+  }
+  if (leading_slashes == 2) {
+    info->type = kPathUNC;
+  server:
+    p = path_skip_sep(path_next_component(p), false);
+    p = path_skip_sep(path_next_component(p), false);
+    info->rest_off = (size_t)(p - path);
+    return true;
+  }
+#endif
+  info->type = kPathGeneric;
+  info->rest_off = leading_slashes;
+  info->root_off = leading_slashes > 2 ? leading_slashes - 1 : 0;
+  info->prefix_off = info->root_off;
+  return true;
 }
 
 /// Get the file information for a given path without following links
@@ -1314,18 +1404,6 @@ bool os_fileid_equal(const FileID *file_id_1, const FileID *file_id_2)
          && file_id_1->device_id == file_id_2->device_id;
 }
 
-/// Check if a `FileID` is equal to a `FileInfo`
-///
-/// @param file_id Pointer to a `FileID`
-/// @param file_info Pointer to a `FileInfo`
-/// @return `true` if the `FileID` and the `FileInfo` represent te same file.
-bool os_fileid_equal_fileinfo(const FileID *file_id, const FileInfo *file_info)
-  FUNC_ATTR_NONNULL_ALL
-{
-  return file_id->inode == file_info->stat.st_ino
-         && file_id->device_id == file_info->stat.st_dev;
-}
-
 /// Return the canonicalized absolute pathname.
 ///
 /// @param[in] name Filename to be canonicalized.
@@ -1345,6 +1423,7 @@ char *os_realpath(const char *name, char *buf, size_t len)
       buf = xmalloc(len);
     }
     xstrlcpy(buf, request.ptr, len);
+    TO_SLASH(buf);
   }
   uv_fs_req_cleanup(&request);
   return result == kLibuvSuccess ? buf : NULL;
@@ -1430,6 +1509,7 @@ shortcut_end:
   }
 
   CoUninitialize();
+  TO_SLASH(rfname);
   return rfname;
 }
 

@@ -1,6 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear = n.clear
 local insert = n.insert
 local dedent = t.dedent
@@ -36,8 +37,6 @@ describe('vim.treesitter.inspect_tree', function()
   end)
 
   it('sets correct buffer name', function()
-    t.skip(t.is_zig_build(), 'vim.treesitter not found after chdir with build.zig')
-
     n.api.nvim_set_current_dir(t.paths.test_source_path .. '/test/functional/fixtures')
     n.command('edit lua/syntax_error.lua')
     eq('lua/syntax_error.lua', n.fn.bufname('%'))

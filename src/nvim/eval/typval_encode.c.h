@@ -420,11 +420,9 @@ static int TYPVAL_ENCODE_CONVERT_ONE_VALUE(
     const dictitem_T *val_di;
     if (TYPVAL_ENCODE_ALLOW_SPECIALS
         && tv->vval.v_dict->dv_hashtab.ht_used == 2
-        && (type_di = tv_dict_find((dict_T *)tv->vval.v_dict,
-                                   S_LEN("_TYPE"))) != NULL
+        && (type_di = tv_dict_find(tv->vval.v_dict, S_LEN("_TYPE"))) != NULL
         && type_di->di_tv.v_type == VAR_LIST
-        && (val_di = tv_dict_find((dict_T *)tv->vval.v_dict,
-                                  S_LEN("_VAL"))) != NULL) {
+        && (val_di = tv_dict_find(tv->vval.v_dict, S_LEN("_VAL"))) != NULL) {
       size_t i;
       for (i = 0; i < ARRAY_SIZE(eval_msgpack_type_lists); i++) {
         if (type_di->di_tv.vval.v_list == eval_msgpack_type_lists[i]) {
@@ -490,8 +488,8 @@ static int TYPVAL_ENCODE_CONVERT_ONE_VALUE(
           goto _convert_one_value_regular_dict;
         }
 
-        const uint64_t number = ((uint64_t)(((uint64_t)highest_bits) << 62)
-                                 | (uint64_t)(((uint64_t)high_bits) << 31)
+        const uint64_t number = ((((uint64_t)highest_bits) << 62)
+                                 | (((uint64_t)high_bits) << 31)
                                  | (uint64_t)low_bits);
         if (sign > 0) {
           TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER(tv, number);

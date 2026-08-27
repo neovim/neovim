@@ -1,6 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, before_each, pending = t.describe, t.it, t.before_each, t.pending
 local eq, neq, call = t.eq, t.neq, n.call
 local eval, feed, clear = n.eval, n.feed, n.clear
 local command, insert, expect = n.command, n.insert, n.expect
@@ -245,7 +246,27 @@ describe("'langmap'", function()
     testrecording('<M-w>', 'ello', local_setup)
     testrecording('<M-i>x', 'hllo', local_setup)
   end)
-  pending('handles multi-byte characters', function()
+  it('handles multibyte characters', function()
+    command('set langmap=ïx,δd,ςw,λl')
+    feed('ïλδς')
+    expect('iwww')
+  end)
+  it('handles multibyte mappings', function()
+    command('set langmap=ςw,λl,…ö,ν],μä')
+    command('nnoremap äö x')
+    command('nnoremap ää i…μpäike<esc>')
+    command('nnoremap ]] r')
+    command('nnoremap ï ie<esc>')
+    feed('λμ…')
+    expect('ii www')
+    feed('μμ')
+    expect('i…μpäikei www')
+    feed('lννn')
+    expect('i…μpäiken www')
+    feed('lï')
+    expect('i…μpäikene www')
+  end)
+  pending('handles multibyte characters in a macro', function()
     command('set langmap=ïx')
     testrecording('ï', 'ello', local_setup)
     -- The test below checks that what's recorded is correct.
@@ -255,7 +276,7 @@ describe("'langmap'", function()
     command('set langmap=xï')
     testrecording('x', 'hello', local_setup)
   end)
-  pending('handles multibyte mappings', function()
+  pending('handles multibyte mappings in a macro', function()
     -- See this vim issue for the problem, may as well add a test.
     -- https://github.com/vim/vim/issues/297
     command('set langmap=ïx')

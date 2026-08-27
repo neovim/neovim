@@ -160,9 +160,12 @@ end
 function M.indent(size, text, opts)
   vim.validate('size', size, 'number')
   vim.validate('text', text, 'string')
-  vim.validate('opts', opts, 'table', true)
+
   -- TODO(justinmk): `opts.prefix`, `predicate` like python https://docs.python.org/3/library/textwrap.html
+  vim.validate('opts', opts, 'table', true)
   opts = opts or {}
+  vim.validate('opts.expandtab', opts.expandtab, 'number', true)
+
   local tabspaces = opts.expandtab and (' '):rep(opts.expandtab) or nil
 
   --- Minimum common indent shared by all lines.
@@ -187,7 +190,7 @@ function M.indent(size, text, opts)
   old_indent = old_indent or 0
   prefix = prefix and prefix or ' '
 
-  if old_indent == size then
+  if not opts.expandtab and old_indent == size then
     -- Optimization: if the indent is the same, return the text unchanged.
     return text, old_indent
   end

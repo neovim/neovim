@@ -1,8 +1,8 @@
 "python3complete.vim - Omni Completion for python
 " Maintainer: <vacancy>
 " Previous Maintainer: Aaron Griffin <aaronmgriffin@gmail.com>
-" Version: 0.9
-" Last Updated: 2022 Mar 30
+" Version: 0.10
+" Last Updated: 2026 Jun 21
 "
 " Roland Puntaier: this file contains adaptations for python3 and is parallel to pythoncomplete.vim
 "
@@ -13,6 +13,16 @@
 " Complete basic syntax along with import statements
 "   i.e. "import url<c-x,c-o>"
 " Continue parsing on invalid line??
+"
+" v 0.10 by Vim project
+"   * disables importing local modules, unless the global Vim variable
+"     g:pythoncomplete_allow_import is set to non-zero
+"   * strip default values and annotations from function parameter lists
+"     before exec(), and whitelist class base lists to dotted names: the
+"     previous code passed buffer-supplied expressions to exec() which
+"     Python evaluates at definition time, allowing arbitrary code
+"     execution via crafted def/class headers
+"   * use repr() on doc strings to prevent code execution
 "
 " v 0.9
 "   * Fixed docstring parsing for classes and functions
@@ -96,6 +106,24 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 import sys, tokenize, io, types
 from token import NAME, DEDENT, NEWLINE, STRING
+import re
+
+# Used by Class.get_code(): a base class expression is only included in the
+# code passed to exec() if it is a pure dotted name (e.g. "Base", "mod.Base",
+# "pkg.sub.Cls").  Anything containing calls, subscripts, "=", ":" or other
+# operators is dropped, since exec()-ing it would evaluate buffer-supplied
+# expressions.  See the security note in the file header.
+_DOTTED_NAME_RE = re.compile(r'^[A-Za-z_]\w*(\s*\.\s*[A-Za-z_]\w*)*$')
+
+def _strip_param(p):
+    # Return the bare parameter name from a parameter spec harvested by
+    # _parenparse(), discarding any default value or annotation.  Default
+    # values and annotations would otherwise be evaluated by exec() at
+    # function-definition time.  Star prefixes ("*args", "**kw") and bare
+    # "*" / "/" are preserved as written.
+    p = p.split('=', 1)[0]
+    p = p.split(':', 1)[0]
+    return p.strip()
 
 debugstmts=[]
 def dbg(s): debugstmts.append(s)
@@ -131,12 +159,24 @@ class Completer(object):
        self.parser = PyParser()
 
     def evalsource(self,text,line=0):
+        # vim is imported locally in vimpy3complete(); re-import here so the
+        # vim.eval() below works (otherwise NameError, silently caught).
+        import vim
         sc = self.parser.parse(text,line)
+        try: allow_imports = int(
+          vim.eval("get(g:, 'pythoncomplete_allow_import', 0)"))
+        except Exception:
+          allow_imports = 0
         src = sc.get_code()
         dbg("source: %s" % src)
         try: exec(src,self.compldict)
         except: dbg("parser: %s, %s" % (sys.exc_info()[0],sys.exc_info()[1]))
         for l in sc.locals:
+            # Executing import/from statements harvested from the buffer runs
+            # arbitrary package code; only do so when the user opted in.
+            if not allow_imports and (l.startswith('import')
+                                            or l.startswith('from ')):
+                continue
             try: exec(l,self.compldict)
             except: dbg("locals: %s, %s [%s]" % (sys.exc_info()[0],sys.exc_info()[1],l))
 
@@ -299,14 +339,12 @@ class Scope(object):
 
     def get_code(self):
         str = ""
-        if len(self.docstr) > 0: str += '"""'+self.docstr+'"""\n'
-        for l in self.locals:
-            if l.startswith('import'): str += l+'\n'
+        if len(self.docstr) > 0: str += repr(self.docstr)+'\n'
         str += 'class _PyCmplNoType:\n    def __getattr__(self,name):\n        return None\n'
         for sub in self.subscopes:
             str += sub.get_code()
         for l in self.locals:
-            if not l.startswith('import'): str += l+'\n'
+            if not l.startswith('import') and not l.startswith('from '): str += l+'\n'
 
         return str
 
@@ -336,9 +374,15 @@ class Class(Scope):
         return c
     def get_code(self):
         str = '%sclass %s' % (self.currentindent(),self.name)
-        if len(self.supers) > 0: str += '(%s)' % ','.join(self.supers)
+        # Only include base class expressions that are pure dotted names.
+        # Anything else (calls, subscripts, conditionals, ...) is dropped
+        # because exec() would evaluate it at class-definition time.  See
+        # the security note in the file header.
+        safe_supers = [s.strip() for s in self.supers
+                       if _DOTTED_NAME_RE.match(s.strip())]
+        if len(safe_supers) > 0: str += '(%s)' % ','.join(safe_supers)
         str += ':\n'
-        if len(self.docstr) > 0: str += self.childindent()+'"""'+self.docstr+'"""\n'
+        if len(self.docstr) > 0: str += self.childindent()+repr(self.docstr)+'\n'
         if len(self.subscopes) > 0:
             for s in self.subscopes: str += s.get_code()
         else:
@@ -353,9 +397,15 @@ class Function(Scope):
     def copy_decl(self,indent=0):
         return Function(self.name,self.params,indent, self.docstr)
     def get_code(self):
+        # Strip default values and annotations from each parameter before
+        # joining: exec() evaluates these at definition time and a hostile
+        # buffer could otherwise execute arbitrary code via crafted def
+        # headers.  See file header for details.
+        safe_params = [_strip_param(p) for p in self.params]
+        safe_params = [p for p in safe_params if p]
         str = "%sdef %s(%s):\n" % \
-            (self.currentindent(),self.name,','.join(self.params))
-        if len(self.docstr) > 0: str += self.childindent()+'"""'+self.docstr+'"""\n'
+            (self.currentindent(),self.name,','.join(safe_params))
+        if len(self.docstr) > 0: str += self.childindent()+repr(self.docstr)+'\n'
         str += "%spass\n" % self.childindent()
         return str
 

@@ -2,6 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear, feed, api = n.clear, n.feed, n.api
 local insert, feed_command = n.insert, n.feed_command
 local eq, fn = t.eq, n.fn
@@ -108,6 +109,63 @@ describe('ui/mouse/input', function()
           '%^testing',
           'VISUAL BLOCK',
         },
+      })
+    end)
+
+    it('double left click stays in normal mode if mouse does not contain v', function()
+      api.nvim_set_option_value('mouse', 'n', {})
+
+      feed('<LeftMouse><0,0>')
+      feed('<LeftRelease><0,0>')
+      feed('<LeftMouse><0,0>')
+      feed('<LeftRelease><0,0>')
+      screen:expect({
+        any = {
+          '%^testing',
+          'mouse',
+          'support and selection',
+        },
+        mode = 'normal',
+      })
+    end)
+
+    it('triple left click stays in normal mode if mouse does not contain v', function()
+      api.nvim_set_option_value('mouse', 'n', {})
+
+      feed('<LeftMouse><0,0>')
+      feed('<LeftRelease><0,0>')
+      feed('<LeftMouse><0,0>')
+      feed('<LeftRelease><0,0>')
+      feed('<LeftMouse><0,0>')
+      feed('<LeftRelease><0,0>')
+      screen:expect({
+        any = {
+          '%^testing',
+          'mouse',
+          'support and selection',
+        },
+        mode = 'normal',
+      })
+    end)
+
+    it('quadruple left click stays in normal mode if mouse does not contain v', function()
+      api.nvim_set_option_value('mouse', 'n', {})
+
+      feed('<LeftMouse><0,0>')
+      feed('<LeftRelease><0,0>')
+      feed('<LeftMouse><0,0>')
+      feed('<LeftRelease><0,0>')
+      feed('<LeftMouse><0,0>')
+      feed('<LeftRelease><0,0>')
+      feed('<LeftMouse><0,0>')
+      feed('<LeftRelease><0,0>')
+      screen:expect({
+        any = {
+          '%^testing',
+          'mouse',
+          'support and selection',
+        },
+        mode = 'normal',
       })
     end)
 
@@ -576,6 +634,104 @@ describe('ui/mouse/input', function()
           'support and selection',
           'VISUAL',
         },
+      })
+    end)
+
+    it('left drag moves cursor if mouse does not contain v', function()
+      api.nvim_set_option_value('mouse', 'n', {})
+
+      -- drag events must be preceded by a click
+      feed('<LeftMouse><2,1>')
+      screen:expect({
+        any = {
+          'testing',
+          'mo%^use',
+          'support and selection',
+        },
+        mode = 'normal',
+      })
+      feed('<LeftDrag><4,1>')
+      screen:expect({
+        any = {
+          'testing',
+          'mous%^e',
+          'support and selection',
+        },
+        mode = 'normal',
+      })
+      feed('<LeftDrag><2,2>')
+      screen:expect({
+        any = {
+          'testing',
+          'mouse',
+          'su%^pport and selection',
+        },
+        mode = 'normal',
+      })
+      feed('<LeftDrag><0,0>')
+      screen:expect({
+        any = {
+          '%^testing',
+          'mouse',
+          'support and selection',
+        },
+        mode = 'normal',
+      })
+    end)
+
+    it('left drag does not adjust existing visual selection if mouse does not contain v', function()
+      api.nvim_set_option_value('mouse', 'n', {})
+
+      feed('gg^vlj')
+      screen:expect({
+        any = {
+          '{17:testing}',
+          '{17:m}%^ouse',
+          'support and selection',
+          'VISUAL',
+        },
+      })
+
+      -- drag events must be preceded by a click
+      feed('<LeftMouse><2,1>')
+      screen:expect({
+        any = {
+          '{17:testing}',
+          '{17:m}%^ouse',
+          'support and selection',
+          'VISUAL',
+        },
+        unchanged = true,
+      })
+      feed('<LeftDrag><4,1>')
+      screen:expect({
+        any = {
+          '{17:testing}',
+          '{17:m}%^ouse',
+          'support and selection',
+          'VISUAL',
+        },
+        unchanged = true,
+      })
+      feed('<LeftDrag><2,2>')
+      screen:expect({
+        any = {
+          '{17:testing}',
+          '{17:m}%^ouse',
+          'support and selection',
+          'VISUAL',
+        },
+        unchanged = true,
+      })
+      feed('<LeftRelease>')
+      screen:expect({
+        any = {
+          '{17:testing}',
+          '{17:m}%^ouse',
+          'support and selection',
+          'VISUAL',
+        },
+        unchanged = true,
       })
     end)
 
@@ -1964,6 +2120,84 @@ describe('ui/mouse/input', function()
       eq({ mode = 'i', blocking = false }, api.nvim_get_mode())
     end)
 
+    it('dragging at same location does not generate events', function()
+      api.nvim_set_var('left_click', 0)
+      api.nvim_set_var('left_drag', 0)
+      api.nvim_set_var('left_release', 0)
+      command('nnoremap <LeftMouse> <Cmd>let g:left_click += 1<CR>')
+      command('nnoremap <LeftDrag> <Cmd>let g:left_drag += 1<CR>')
+      command('nnoremap <LeftRelease> <Cmd>let g:left_release += 1<CR>')
+      api.nvim_input_mouse('left', 'press', '', 0, 0, 3)
+      api.nvim_input_mouse('left', 'drag', '', 0, 0, 3)
+      api.nvim_input_mouse('left', 'drag', '', 0, 0, 3)
+      feed('<LeftDrag><3,0>')
+      feed('<LeftDrag><3,0>')
+      eq({ 1, 0, 0 }, n.eval('[g:left_click, g:left_drag, g:left_release]'))
+      api.nvim_input_mouse('left', 'drag', '', 0, 1, 3)
+      api.nvim_input_mouse('left', 'drag', '', 0, 1, 3)
+      feed('<LeftDrag><3,1>')
+      feed('<LeftDrag><3,1>')
+      eq({ 1, 1, 0 }, n.eval('[g:left_click, g:left_drag, g:left_release]'))
+      api.nvim_input_mouse('left', 'drag', '', 0, 2, 3)
+      api.nvim_input_mouse('left', 'drag', '', 0, 2, 3)
+      eq({ 1, 2, 0 }, n.eval('[g:left_click, g:left_drag, g:left_release]'))
+      feed('<LeftDrag><3,3>')
+      feed('<LeftDrag><3,3>')
+      eq({ 1, 3, 0 }, n.eval('[g:left_click, g:left_drag, g:left_release]'))
+      api.nvim_input_mouse('left', 'release', '', 0, 3, 3)
+      eq({ 1, 3, 1 }, n.eval('[g:left_click, g:left_drag, g:left_release]'))
+    end)
+
+    describe('click event at different position resets multiclick count', function()
+      before_each(function()
+        api.nvim_set_var('events', {})
+        command('nnoremap <LeftMouse> <Cmd>let g:events += [1]<CR>')
+        command('nnoremap <2-LeftMouse> <Cmd>let g:events += [2]<CR>')
+        command('nnoremap <3-LeftMouse> <Cmd>let g:events += [3]<CR>')
+        command('nnoremap <4-LeftMouse> <Cmd>let g:events += [4]<CR>')
+        command('nnoremap <LeftDrag> <Cmd>let g:events += [-1]<CR>')
+        command('nnoremap <2-LeftDrag> <Cmd>let g:events += [-2]<CR>')
+        command('nnoremap <3-LeftDrag> <Cmd>let g:events += [-3]<CR>')
+        command('nnoremap <4-LeftDrag> <Cmd>let g:events += [-4]<CR>')
+        api.nvim_input_mouse('left', 'press', '', 0, 0, 3)
+        api.nvim_input_mouse('left', 'release', '', 0, 0, 3)
+        api.nvim_input_mouse('left', 'press', '', 0, 0, 3)
+      end)
+
+      it('with drag events in between', function()
+        api.nvim_input_mouse('left', 'drag', '', 0, 1, 3)
+        api.nvim_input_mouse('left', 'release', '', 0, 1, 3)
+        api.nvim_input_mouse('left', 'press', '', 0, 1, 3)
+        api.nvim_input_mouse('left', 'drag', '', 0, 2, 3)
+        api.nvim_input_mouse('left', 'drag', '', 0, 3, 3)
+        for _ = 1, 3 do
+          api.nvim_input_mouse('left', 'release', '', 0, 3, 3)
+          api.nvim_input_mouse('left', 'press', '', 0, 3, 3)
+        end
+        api.nvim_input_mouse('left', 'drag', '', 0, 4, 3)
+        api.nvim_input_mouse('left', 'release', '', 0, 4, 3)
+        eq({ 1, 2, -2, 1, -1, -1, 1, 2, 3, -3 }, api.nvim_get_var('events'))
+      end)
+
+      it('with move events in between', function()
+        api.nvim_input_mouse('left', 'release', '', 0, 0, 3)
+        api.nvim_input_mouse('move', '', '', 0, 1, 3)
+        api.nvim_input_mouse('left', 'press', '', 0, 1, 3)
+        api.nvim_input_mouse('left', 'release', '', 0, 1, 3)
+        api.nvim_input_mouse('move', '', '', 0, 2, 3)
+        for _ = 1, 3 do
+          api.nvim_input_mouse('left', 'press', '', 0, 2, 3)
+          api.nvim_input_mouse('left', 'release', '', 0, 2, 3)
+        end
+        api.nvim_input_mouse('move', '', '', 0, 3, 3)
+        for _ = 1, 4 do
+          api.nvim_input_mouse('left', 'press', '', 0, 3, 3)
+          api.nvim_input_mouse('left', 'release', '', 0, 3, 3)
+        end
+        eq({ 1, 2, 1, 1, 2, 3, 1, 2, 3, 4 }, api.nvim_get_var('events'))
+      end)
+    end)
+
     it('feeding <MouseMove> in Normal mode does not use uninitialized memory #19480', function()
       feed('<MouseMove>')
       n.poke_eventloop()
@@ -2144,6 +2378,52 @@ describe('ui/mouse/input', function()
       api.nvim_buf_set_extmark(0, 1, count - 1, 0, { conceal_lines = '' })
       api.nvim_input_mouse('left', 'press', '', 0, count, 0)
       eq('', api.nvim_get_vvar('errmsg'))
+    end)
+
+    it('on virtual lines (above/below)', function()
+      screen:try_resize(screen._width, 12)
+      local ns = api.nvim_create_namespace('')
+      api.nvim_buf_set_extmark(0, ns, 1, 0, { virt_lines = { { { 'virt_line below', '' } } } })
+      api.nvim_buf_set_extmark(0, ns, 1, 0, { virt_lines = { { { 'virt_line below', '' } } } })
+      local virt_above = { virt_lines_above = true, virt_lines = { { { 'virt_line above', '' } } } }
+      api.nvim_buf_set_extmark(0, ns, 2, 0, virt_above)
+      api.nvim_input_mouse('left', 'press', '', 0, 2, 0)
+      api.nvim_input_mouse('left', 'release', '', 0, 2, 0)
+      eq(2, fn.line('.'))
+      api.nvim_win_set_cursor(0, { 1, 0 })
+      api.nvim_input_mouse('left', 'press', '', 0, 3, 0)
+      api.nvim_input_mouse('left', 'release', '', 0, 3, 0)
+      eq(2, fn.line('.'))
+      api.nvim_win_set_cursor(0, { 1, 0 })
+      api.nvim_input_mouse('left', 'press', '', 0, 4, 0)
+      api.nvim_input_mouse('left', 'release', '', 0, 4, 0)
+      eq(3, fn.line('.'))
+      feed('gg2<C-E>')
+      api.nvim_input_mouse('left', 'press', '', 0, 0, 0)
+      api.nvim_input_mouse('left', 'release', '', 0, 0, 0)
+      eq(2, fn.line('.'))
+      feed('gg2<C-E>')
+      api.nvim_input_mouse('left', 'press', '', 0, 1, 0)
+      api.nvim_input_mouse('left', 'release', '', 0, 1, 0)
+      eq(2, fn.line('.'))
+      feed('gg2<C-E>')
+      api.nvim_input_mouse('left', 'press', '', 0, 2, 0)
+      api.nvim_input_mouse('left', 'release', '', 0, 2, 0)
+      eq(3, fn.line('.'))
+      feed('gg3<C-E>')
+      api.nvim_input_mouse('left', 'press', '', 0, 0, 0)
+      api.nvim_input_mouse('left', 'release', '', 0, 0, 0)
+      eq(2, fn.line('.'))
+      feed('gg3<C-E>')
+      api.nvim_input_mouse('left', 'press', '', 0, 1, 0)
+      api.nvim_input_mouse('left', 'release', '', 0, 1, 0)
+      eq(3, fn.line('.'))
+      feed('gg')
+      command('call setline(3, ["3"->repeat(&columns + 1), "4"])')
+      api.nvim_buf_set_extmark(0, ns, 2, 0, { virt_lines = { { { 'virt_line below', '' } } } })
+      api.nvim_input_mouse('left', 'press', '', 0, 7, 0)
+      api.nvim_input_mouse('left', 'release', '', 0, 7, 0)
+      eq(3, fn.line('.'))
     end)
   end
 

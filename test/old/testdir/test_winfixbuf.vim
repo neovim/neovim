@@ -2860,36 +2860,34 @@ func Test_tNext()
   set tags&
 endfunc
 
-" Call :tabdo and choose the next available 'nowinfixbuf' window.
-func Test_tabdo_choose_available_window()
+" Call :tabdo and stay in the 'winfixbuf' window: it only visits tabpages and
+" doesn't change the current buffer, so it must not switch to another window
+" even when a 'nowinfixbuf' window is available.
+func Test_tabdo_stay_in_winfixbuf_window()
   call s:reset_all_buffers()
 
   let [l:first, _] = s:make_args_list()
 
-  " Make a split window that is 'nowinfixbuf' but make it the second-to-last
-  " window so that :tabdo will first try the 'winfixbuf' window, pass over it,
-  " and prefer the other 'nowinfixbuf' window, instead.
-  "
   " +-------------------+
   " |   'nowinfixbuf'   |
   " +-------------------+
   " |    'winfixbuf'    |  <-- Cursor is here
   " +-------------------+
   split
-  let l:nowinfixbuf_window = win_getid()
   " Move to the 'winfixbuf' window now
   exe "normal \<C-w>j"
   let l:winfixbuf_window = win_getid()
 
   let l:expected_windows = s:get_windows_count()
   tabdo echo ''
-  call assert_equal(l:nowinfixbuf_window, win_getid())
+  call assert_equal(l:winfixbuf_window, win_getid())
   call assert_equal(l:first, bufnr())
   call assert_equal(l:expected_windows, s:get_windows_count())
 endfunc
 
-" Call :tabdo and create a new split window if all available windows are 'winfixbuf'.
-func Test_tabdo_make_new_window()
+" Call :tabdo and do not create a new window even when the only window is
+" 'winfixbuf'.
+func Test_tabdo_no_new_window()
   call s:reset_all_buffers()
 
   let [l:first, _] = s:make_buffers_list()
@@ -2899,11 +2897,9 @@ func Test_tabdo_make_new_window()
   let l:current_windows = s:get_windows_count()
 
   tabdo echo ''
-  call assert_notequal(l:current, win_getid())
+  call assert_equal(l:current, win_getid())
   call assert_equal(l:first, bufnr())
-  exe "normal \<C-w>j"
-  call assert_equal(l:first, bufnr())
-  call assert_equal(l:current_windows + 1, s:get_windows_count())
+  call assert_equal(l:current_windows, s:get_windows_count())
 endfunc
 
 " Fail :tag but :tag! is allowed
@@ -3215,6 +3211,23 @@ func Test_windo()
 
   exe $"windo buffer! {l:current_buffer}"
   call assert_equal(l:current_window, win_getid())
+endfunc
+
+" Call :windo and do not create a new window even when the only window is
+" 'winfixbuf'.
+func Test_windo_no_new_window()
+  call s:reset_all_buffers()
+
+  let [l:first, _] = s:make_buffers_list()
+  exe $"buffer! {l:first}"
+
+  let l:current = win_getid()
+  let l:current_windows = s:get_windows_count()
+
+  windo echo ''
+  call assert_equal(l:current, win_getid())
+  call assert_equal(l:first, bufnr())
+  call assert_equal(l:current_windows, s:get_windows_count())
 endfunc
 
 " Fail :wnext but :wnext! is allowed

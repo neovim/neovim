@@ -14,6 +14,7 @@
 #include "nvim/charset.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/eval.h"
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/garray.h"
 #include "nvim/gettext_defs.h"
@@ -76,9 +77,7 @@ static const char *command_complete[] = {
   [EXPAND_HIGHLIGHT] = "highlight",
   [EXPAND_HISTORY] = "history",
   [EXPAND_KEYMAP] = "keymap",
-#ifdef HAVE_WORKING_LIBINTL
   [EXPAND_LOCALES] = "locale",
-#endif
   [EXPAND_LUA] = "lua",
   [EXPAND_MAPCLEAR] = "mapclear",
   [EXPAND_MAPPINGS] = "mapping",
@@ -247,15 +246,15 @@ const char *set_context_in_user_cmd(expand_T *xp, const char *arg_in)
 
       // For the -complete, -nargs and -addr attributes, we complete
       // their arguments as well.
-      if (STRNICMP(arg, "complete", p - arg) == 0) {
+      if (STRNICMP(arg, "complete", (size_t)(p - arg)) == 0) {
         xp->xp_context = EXPAND_USER_COMPLETE;
         xp->xp_pattern = (char *)p + 1;
         return NULL;
-      } else if (STRNICMP(arg, "nargs", p - arg) == 0) {
+      } else if (STRNICMP(arg, "nargs", (size_t)(p - arg)) == 0) {
         xp->xp_context = EXPAND_USER_NARGS;
         xp->xp_pattern = (char *)p + 1;
         return NULL;
-      } else if (STRNICMP(arg, "addr", p - arg) == 0) {
+      } else if (STRNICMP(arg, "addr", (size_t)(p - arg)) == 0) {
         xp->xp_context = EXPAND_USER_ADDR_TYPE;
         xp->xp_pattern = (char *)p + 1;
         return NULL;
@@ -301,15 +300,17 @@ const char *set_context_in_user_cmdarg(const char *cmd FUNC_ATTR_UNUSED, const c
                                   CMD_map);
   }
   // Find start of last argument.
-  const char *p = arg;
-  while (*p) {
-    if (*p == ' ') {
-      // argument starts after a space
-      arg = p + 1;
-    } else if (*p == '\\' && *(p + 1) != NUL) {
-      p++;  // skip over escaped character
+  if (!(argt & EX_ARGSPACE)) {
+    const char *p = arg;
+    while (*p) {
+      if (*p == ' ') {
+        // argument starts after a space
+        arg = p + 1;
+      } else if (*p == '\\' && *(p + 1) != NUL) {
+        p++;  // skip over escaped character
+      }
+      MB_PTR_ADV(p);
     }
-    MB_PTR_ADV(p);
   }
   xp->xp_pattern = (char *)arg;
   xp->xp_context = context;
@@ -392,7 +393,7 @@ char *get_user_cmd_flags(expand_T *xp, int idx)
 /// Function given to ExpandGeneric() to obtain the list of values for -nargs.
 char *get_user_cmd_nargs(expand_T *xp, int idx)
 {
-  static char *user_cmd_nargs[] = { "0", "1", "*", "?", "+" };
+  static char *user_cmd_nargs[] = { "0", "1", "_", "*", "?", "+" };
 
   if (idx >= (int)ARRAY_SIZE(user_cmd_nargs)) {
     return NULL;
@@ -533,7 +534,7 @@ static void uc_list(char *name, size_t name_len)
       len = 0;
 
       // Arguments
-      switch (a & (EX_EXTRA | EX_NOSPC | EX_NEEDARG)) {
+      switch (a & (EX_EXTRA | EX_NOSPC | EX_NEEDARG | EX_ARGSPACE)) {
       case 0:
         IObuff[len++] = '0';
         break;
@@ -548,6 +549,9 @@ static void uc_list(char *name, size_t name_len)
         break;
       case (EX_EXTRA | EX_NOSPC | EX_NEEDARG):
         IObuff[len++] = '1';
+        break;
+      case (EX_EXTRA | EX_NOSPC | EX_NEEDARG | EX_ARGSPACE):
+        IObuff[len++] = '_';
         break;
       }
 
@@ -609,7 +613,7 @@ static void uc_list(char *name, size_t name_len)
       msg_outtrans(IObuff, 0, false);
 
       if (cmd->uc_luaref != LUA_NOREF) {
-        char *fn = nlua_funcref_str(cmd->uc_luaref, NULL);
+        char *fn = nlua_funcref_str(cmd->uc_luaref, NULL, true);
         msg_puts_hl(fn, HLF_8, false);
         xfree(fn);
         // put the description on a new line
@@ -777,6 +781,8 @@ static int uc_scan_attr(char *attr, size_t len, uint32_t *argt, int *def, int *f
           *argt |= (EX_EXTRA | EX_NOSPC);
         } else if (*val == '+') {
           *argt |= (EX_EXTRA | EX_NEEDARG);
+        } else if (*val == '_') {
+          *argt |= (EX_EXTRA | EX_NOSPC | EX_NEEDARG | EX_ARGSPACE);
         } else {
           goto wrong_nargs;
         }
@@ -890,7 +896,8 @@ char *uc_validate_name(char *name)
 /// @return  OK if the command is created, FAIL otherwise.
 int uc_add_command(char *name, size_t name_len, const char *rep, uint32_t argt, int64_t def,
                    int flags, int context, char *compl_arg, LuaRef compl_luaref,
-                   LuaRef preview_luaref, cmd_addr_T addr_type, LuaRef luaref, bool force)
+                   LuaRef preview_luaref, cmd_addr_T addr_type, LuaRef luaref, const char *desc,
+                   bool force)
   FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   ucmd_T *cmd = NULL;
@@ -942,6 +949,7 @@ int uc_add_command(char *name, size_t name_len, const char *rep, uint32_t argt, 
 
       XFREE_CLEAR(cmd->uc_rep);
       XFREE_CLEAR(cmd->uc_compl_arg);
+      XFREE_CLEAR(cmd->uc_desc);
       NLUA_CLEAR_REF(cmd->uc_luaref);
       NLUA_CLEAR_REF(cmd->uc_compl_luaref);
       NLUA_CLEAR_REF(cmd->uc_preview_luaref);
@@ -969,6 +977,7 @@ int uc_add_command(char *name, size_t name_len, const char *rep, uint32_t argt, 
   }
 
   cmd->uc_rep = rep_buf;
+  cmd->uc_desc = (desc != NULL && *desc != NUL) ? xstrdup(desc) : NULL;
   cmd->uc_argt = argt;
   cmd->uc_def = def;
   cmd->uc_compl = context;
@@ -1039,7 +1048,7 @@ void ex_command(exarg_T *eap)
     emsg(_(e_complete_used_without_allowing_arguments));
   } else {
     uc_add_command(name, name_len, p, argt, def, flags, context, compl_arg, LUA_NOREF, LUA_NOREF,
-                   addr_type_arg, LUA_NOREF, eap->forceit);
+                   addr_type_arg, LUA_NOREF, NULL, eap->forceit);
 
     return;  // success
   }
@@ -1063,6 +1072,7 @@ void free_ucmd(ucmd_T *cmd)
   xfree(cmd->uc_name);
   xfree(cmd->uc_rep);
   xfree(cmd->uc_compl_arg);
+  xfree(cmd->uc_desc);
   NLUA_CLEAR_REF(cmd->uc_compl_luaref);
   NLUA_CLEAR_REF(cmd->uc_luaref);
   NLUA_CLEAR_REF(cmd->uc_preview_luaref);
@@ -1782,6 +1792,7 @@ Dict commands_array(buf_T *buf, Arena *arena)
 
     PUT_C(d, "name", CSTR_AS_OBJ(cmd->uc_name));
     PUT_C(d, "definition", CSTR_AS_OBJ(cmd->uc_rep));
+    PUT_C(d, "desc", CSTR_AS_OBJ(cmd->uc_desc));
     PUT_C(d, "script_id", INTEGER_OBJ(cmd->uc_script_ctx.sc_sid));
     PUT_C(d, "bang", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_BANG)));
     PUT_C(d, "bar", BOOLEAN_OBJ(!!(cmd->uc_argt & EX_TRLBAR)));
@@ -1796,7 +1807,7 @@ Dict commands_array(buf_T *buf, Arena *arena)
       PUT_C(d, "callback", LUAREF_OBJ(api_new_luaref(cmd->uc_luaref)));
     }
 
-    switch (cmd->uc_argt & (EX_EXTRA | EX_NOSPC | EX_NEEDARG)) {
+    switch (cmd->uc_argt & (EX_EXTRA | EX_NOSPC | EX_NEEDARG | EX_ARGSPACE)) {
     case 0:
       arg[0] = '0'; break;
     case (EX_EXTRA):
@@ -1807,6 +1818,8 @@ Dict commands_array(buf_T *buf, Arena *arena)
       arg[0] = '+'; break;
     case (EX_EXTRA | EX_NOSPC | EX_NEEDARG):
       arg[0] = '1'; break;
+    case (EX_EXTRA | EX_NOSPC | EX_NEEDARG | EX_ARGSPACE):
+      arg[0] = '_'; break;
     }
     PUT_C(d, "nargs", CSTR_TO_ARENA_OBJ(arena, arg));
 

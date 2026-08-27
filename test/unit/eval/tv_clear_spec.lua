@@ -1,5 +1,6 @@
 local t = require('test.unit.testutil')
-local itp = t.gen_itp(it)
+local describe, before_each, after_each = t.describe, t.before_each, t.after_each
+local itp = t.gen_itp(t.it)
 local t_eval = require('test.unit.eval.testutil')
 
 local alloc_log_new = t.alloc_log_new

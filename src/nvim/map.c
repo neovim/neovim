@@ -9,8 +9,12 @@
 #include <string.h>
 
 #include "auto/config.h"
+#include "nvim/ascii_defs.h"
+#include "nvim/charset.h"
 #include "nvim/map_defs.h"
+#include "nvim/mbyte.h"
 #include "nvim/memory.h"
+#include "nvim/path.h"
 
 #define equal_simple(x, y) ((x) == (y))
 
@@ -41,6 +45,56 @@ static inline uint32_t hash_cstr_t(const char *s)
 }
 
 #define equal_cstr_t strequal
+
+/// Hash/equality for path strings. On case-insensitive platforms, case-fold first (via
+/// path_fold_char, the same fold used by path_cmp) so the hash↔equality invariant holds.
+///
+/// We additionally:
+///   - drop a leading drive letter "[A-Za-z]:" on Windows, so that "C:\foo" and "\foo" land in
+///     the same bucket (path_cmp considers them equal when the current drive matches the
+///     explicit drive letter). Two paths with *different* explicit drives ("C:\foo" vs "D:\foo")
+///     may now share a bucket — that's a permitted collision; equal_path_t still rejects them.
+///   - ignore a single trailing path separator.
+static inline uint32_t hash_path_t(const char *p)
+{
+  uint32_t h = 0;
+#ifdef MSWIN
+  if (ASCII_ISALPHA(*p) && p[1] == ':') {
+    p += 2;
+  }
+#endif
+  bool ic = false;
+#ifdef CASE_INSENSITIVE_FILENAME
+  ic = true;
+#endif
+  const char *start = p;
+  for (int len = 0; *p; p += len) {
+    if (vim_ispathsep_nocolon(*p)
+        && p[1] == NUL
+        && start != p
+        && !vim_ispathsep(p[-1])) {
+      break;
+    }
+    int c = path_fold_char(ic, p, &len);
+    h = (h << 5) - h + (uint32_t)c;
+  }
+  return h;
+}
+
+static inline bool equal_path_t(const char *a, const char *b)
+{
+  if (a == b) {
+    return true;
+  }
+  if (a == NULL || b == NULL) {
+    return false;
+  }
+  bool ic = false;
+#ifdef CASE_INSENSITIVE_FILENAME
+  ic = true;
+#endif
+  return path_cmp(ic, a, b, MAXPATHL) == 0;
+}
 
 static inline uint32_t hash_HlEntry(HlEntry ae)
 {
@@ -102,13 +156,16 @@ void mh_clear(MapHash *h)
 
 #define KEY_NAME(x) x##int
 #include "nvim/map_key_impl.c.h"
-#define VAL_NAME(x) quasiquote(x, int)
-#include "nvim/map_value_impl.c.h"
-#undef VAL_NAME
 #define VAL_NAME(x) quasiquote(x, ptr_t)
 #include "nvim/map_value_impl.c.h"
 #undef VAL_NAME
 #define VAL_NAME(x) quasiquote(x, String)
+#include "nvim/map_value_impl.c.h"
+#undef VAL_NAME
+#define VAL_NAME(x) quasiquote(x, StcClick)
+#include "nvim/map_value_impl.c.h"
+#undef VAL_NAME
+#define VAL_NAME(x) quasiquote(x, StcClicks)
 #include "nvim/map_value_impl.c.h"
 #undef VAL_NAME
 #undef KEY_NAME
@@ -128,6 +185,10 @@ void mh_clear(MapHash *h)
 #define VAL_NAME(x) quasiquote(x, int)
 #include "nvim/map_value_impl.c.h"
 #undef VAL_NAME
+#undef KEY_NAME
+
+#define KEY_NAME(x) x##path_t
+#include "nvim/map_key_impl.c.h"
 #undef KEY_NAME
 
 #define KEY_NAME(x) x##String
@@ -150,12 +211,6 @@ void mh_clear(MapHash *h)
 #define KEY_NAME(x) x##uint64_t
 #include "nvim/map_key_impl.c.h"
 #define VAL_NAME(x) quasiquote(x, ptr_t)
-#include "nvim/map_value_impl.c.h"
-#undef VAL_NAME
-#define VAL_NAME(x) quasiquote(x, ssize_t)
-#include "nvim/map_value_impl.c.h"
-#undef VAL_NAME
-#define VAL_NAME(x) quasiquote(x, uint64_t)
 #include "nvim/map_value_impl.c.h"
 #undef VAL_NAME
 #define VAL_NAME(x) quasiquote(x, int)

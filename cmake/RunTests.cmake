@@ -11,12 +11,7 @@ endif()
 set(ENV{NVIM_TEST} "1")
 # Set LC_ALL to meet expectations of some locale-sensitive tests.
 set(ENV{LC_ALL} "en_US.UTF-8")
-set(ENV{VIMRUNTIME} ${ROOT_DIR}/runtime)
 set(TEST_XDG_PREFIX ${BUILD_DIR}/Xtest_xdg${TEST_SUFFIX})
-set(ENV{XDG_CONFIG_HOME} ${TEST_XDG_PREFIX}/config)
-set(ENV{XDG_DATA_HOME} ${TEST_XDG_PREFIX}/share)
-set(ENV{XDG_STATE_HOME} ${TEST_XDG_PREFIX}/state)
-set(ENV{NVIM_RPLUGIN_MANIFEST} ${BUILD_DIR}/Xtest_rplugin_manifest${TEST_SUFFIX})
 unset(ENV{XDG_DATA_DIRS})
 unset(ENV{NVIM})  # Clear $NVIM in case tests are running from Nvim. #11009
 unset(ENV{TMUX})  # Nvim TUI shouldn't think it's running in tmux. #34173
@@ -27,12 +22,6 @@ file(CREATE_LINK ${ROOT_DIR}/runtime ${TEST_XDG_PREFIX}/runtime SYMBOLIC)
 file(CREATE_LINK ${ROOT_DIR}/src ${TEST_XDG_PREFIX}/src SYMBOLIC)
 file(CREATE_LINK ${ROOT_DIR}/test ${TEST_XDG_PREFIX}/test SYMBOLIC)
 file(CREATE_LINK ${ROOT_DIR}/README.md ${TEST_XDG_PREFIX}/README.md SYMBOLIC)
-
-# TODO(dundargoc): The CIRRUS_CI environment variable isn't passed to here from
-# the main CMakeLists.txt, so we have to manually pass it to this script and
-# re-set the environment variable. Investigate if we can avoid manually setting
-# it like with the GITHUB_CI environment variable.
-set(ENV{CIRRUS_CI} ${CIRRUS_CI})
 
 if(NOT DEFINED ENV{NVIM_LOG_FILE})
   set(ENV{NVIM_LOG_FILE} ${BUILD_DIR}/nvim.log)
@@ -93,15 +82,10 @@ if(NOT WIN32)
 endif()
 
 execute_process(
-  # Note: because of "-ll" (low-level interpreter mode), some modules like
-  # _core/editor.lua are not loaded.
-  COMMAND ${NVIM_PRG} -ll ${ROOT_DIR}/test/runner.lua -v
+  COMMAND ${NVIM_PRG} -l ${ROOT_DIR}/test/runner.lua -X${TEST_XDG_PREFIX} -v
     --summary-file=${TEST_SUMMARY_FILE}
     --helper=${TEST_DIR}/${TEST_TYPE}/preload.lua
     --lpath=${BUILD_DIR}/?.lua
-    --lpath=${ROOT_DIR}/src/?.lua
-    --lpath=${ROOT_DIR}/runtime/lua/?.lua
-    --lpath=?.lua
     ${TEST_ARGS}
     ${TEST_PATH}
   TIMEOUT $ENV{TEST_TIMEOUT}

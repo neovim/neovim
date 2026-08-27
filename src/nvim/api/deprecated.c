@@ -31,6 +31,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
+#include "nvim/window.h"
 
 #include "api/deprecated.c.generated.h"
 
@@ -234,7 +235,7 @@ Integer nvim_buf_set_virtual_text(Buffer buffer, Integer src_id, Integer line, A
   uint32_t ns_id = src2ns(&src_id);
   int width;
 
-  VirtText virt_text = parse_virt_text(chunks, err, &width);
+  VirtText virt_text = parse_virt_text(chunks, err, &width, false);
   if (ERROR_SET(err)) {
     return 0;
   }
@@ -606,7 +607,7 @@ DictAs(get_option_info) nvim_get_option_info(String name, Arena *arena, Error *e
   FUNC_API_SINCE(7)
   FUNC_API_DEPRECATED_SINCE(11)
 {
-  return get_vimoption(name, OPT_GLOBAL, curbuf, curwin, arena, err);
+  return get_option_info(name, OPT_GLOBAL, curbuf, curwin, arena, err);
 }
 
 /// Sets the global value of an option.
@@ -742,21 +743,19 @@ static Object get_option_from(void *from, OptScope scope, String name, Error *er
     return (Object)OBJECT_INIT;
   });
 
-  OptVal value = NIL_OPTVAL;
-
-  if (option_has_scope(opt_idx, scope)) {
-    value = get_option_value_for(opt_idx, scope == kOptScopeGlobal ? OPT_GLOBAL : OPT_LOCAL,
-                                 scope, from, err);
-    if (ERROR_SET(err)) {
-      return (Object)OBJECT_INIT;
-    }
-  }
-
-  VALIDATE_S(value.type != kOptValTypeNil, "option name", name.data, {
+  // Reject a scope the option doesn't support. This must be an explicit check: an unset value is
+  // itself Nil, so a Nil value can't distinguish "unsupported scope" from "unset value".
+  VALIDATE_S(option_has_scope(opt_idx, scope), "option name", name.data, {
     return (Object)OBJECT_INIT;
   });
 
-  return optval_as_object(value);
+  Object value = get_option_value_for(opt_idx, scope == kOptScopeGlobal ? OPT_GLOBAL : OPT_LOCAL,
+                                      scope, from, err);
+  if (ERROR_SET(err)) {
+    return (Object)OBJECT_INIT;
+  }
+
+  return value;
 }
 
 /// Sets the value of a global or local (buffer, window) option.
@@ -778,16 +777,16 @@ static void set_option_to(uint64_t channel_id, void *to, OptScope scope, String 
     return;
   });
 
-  bool error = false;
-  OptVal optval = object_as_optval(value, &error);
-
-  // Handle invalid option value type.
+  // Only scalar Objects (nil/boolean/number/string) are valid option values.
   // Don't use `name` in the error message here, because `name` can be any String.
   // No need to check if value type actually matches the types for the option, as set_option_value()
   // already handles that.
-  VALIDATE_EXP(!error, "value", "valid option type", api_typename(value.type), {
+  const bool valid = value.type == kObjectTypeNil || value.type == kObjectTypeBoolean
+                     || value.type == kObjectTypeInteger || value.type == kObjectTypeString;
+  VALIDATE_EXP(valid, "value", "valid option type", api_typename(value.type), {
     return;
   });
+  Object optval = value;
 
   // For global-win-local options -> setlocal
   // For        win-local options -> setglobal and setlocal (opt_flags == 0)
@@ -924,6 +923,7 @@ static void write_msg(String message, bool to_err, bool writeln)
   static StringBuilder err_line_buf = KV_INITIAL_VALUE;
   StringBuilder *line_buf = to_err ? &err_line_buf : &out_line_buf;
 
+  msg_ext_no_fast();
 #define PUSH_CHAR(c) \
   if (kv_max(*line_buf) == 0) { \
     kv_resize(*line_buf, LINE_BUFFER_MIN_SIZE); \
@@ -1004,4 +1004,51 @@ Object nvim_notify(String msg, Integer log_level, Dict opts, Arena *arena, Error
   ADD_C(args, DICT_OBJ(opts));
 
   return NLUA_EXEC_STATIC("return vim.notify(...)", args, kRetObject, arena, err);
+}
+
+/// @deprecated
+///
+/// Use |nvim_win_resize()| instead, e.g., nvim_win_resize(win, -1, height)
+///
+/// Sets the window height.
+///
+/// @param win   |window-ID|, or 0 for current window
+/// @param height   Height as a count of rows
+/// @param[out] err Error details, if any
+void nvim_win_set_height(Window win, Integer height, Error *err)
+  FUNC_API_SINCE(1) FUNC_API_DEPRECATED_SINCE(15)
+{
+  win_T *w = find_window_by_handle(win, err);
+
+  if (!w) {
+    return;
+  }
+
+  TRY_WRAP(err, {
+    win_setheight_win((int)height, w, true);
+  });
+}
+
+/// @deprecated
+///
+/// Use |nvim_win_resize()| instead, e.g., nvim_win_resize(win, width, -1)
+///
+/// Sets the window width. This will only succeed if the screen is split
+/// vertically.
+///
+/// @param win   |window-ID|, or 0 for current window
+/// @param width    Width as a count of columns
+/// @param[out] err Error details, if any
+void nvim_win_set_width(Window win, Integer width, Error *err)
+  FUNC_API_SINCE(1) FUNC_API_DEPRECATED_SINCE(15)
+{
+  win_T *w = find_window_by_handle(win, err);
+
+  if (!w) {
+    return;
+  }
+
+  TRY_WRAP(err, {
+    win_setwidth_win((int)width, w, true);
+  });
 }

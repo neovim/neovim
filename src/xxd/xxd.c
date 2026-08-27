@@ -442,14 +442,16 @@ static int huntype(FILE *fpi, FILE *fpo, int cols, int hextype, long base_off)
           p = 0;
           continue;
         }
-        want_off = (want_off << 4) | n1;
+        // Cast through unsigned to avoid signed left-shift overflow (UB) when
+        // garbage input feeds more than ~16 hex digits into the address column.
+        want_off = (long)(((unsigned long)want_off << 4) | (unsigned)n1);
       } else {  // HEX_BITS
         if (n1 < 0) {
           p = 0;
           bcnt = 0;
           continue;
         }
-        want_off = (want_off << 4) | n1;
+        want_off = (long)(((unsigned long)want_off << 4) | (unsigned)n1);
       }
       continue;
     }
@@ -573,7 +575,7 @@ static void xxdline(FILE *fp, char *l, char *colors, int nz)
   static signed char zero_seen = 0;
 
   if (!nz && zero_seen == 1) {
-    strcpy(z, l);
+    snprintf(z, sizeof(z), "%s", l);
     if (colors) {
       memcpy(z_colors, colors, strlen(z));
     }

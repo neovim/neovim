@@ -2,6 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear = n.clear
 local command = n.command
 local insert = n.insert
@@ -545,9 +546,49 @@ describe('winbar', function()
     screen:try_resize(screen._width, 20)
     command('botright split | belowright vsplit | 2wincmd w')
     api.nvim_set_option_value('winfixheight', true, { scope = 'local', win = 0 })
-    api.nvim_win_set_height(0, 8)
+    api.nvim_win_resize(0, -1, 8, {})
     feed('q:')
     n.assert_alive()
+  end)
+
+  it('draws vertical separator of a window that only has a winbar #41142', function()
+    n.exec([[
+      set laststatus=3 winminheight=0
+      topleft vsplit
+      setlocal winbar=bottom
+      aboveleft split
+      setlocal winbar=top
+      resize 1000
+    ]])
+    screen:expect([[
+      {1:top                           }│{1:Set Up The Bars              }|
+      ^                              │                             |
+      {3:~                             }│{3:~                            }|*7
+      ──────────────────────────────┤{3:~                            }|
+      {1:bottom                        }│{3:~                            }|
+      {4:[No Name]                                                   }|
+                                                                  |
+    ]])
+  end)
+
+  it('making room for a winbar does not overlap the global statusline #41140', function()
+    n.exec([[
+      set winbar= laststatus=3
+      vsplit
+      split
+      resize 1
+      setlocal winbar=top
+      resize 1000
+    ]])
+    screen:expect([[
+      {1:top                           }│                             |
+      ^                              │{3:~                            }|
+      {3:~                             }│{3:~                            }|*7
+      ──────────────────────────────┤{3:~                            }|
+                                    │{3:~                            }|
+      {4:[No Name]                                                   }|
+                                                                  |
+    ]])
   end)
 end)
 
@@ -618,6 +659,53 @@ describe('local winbar with tabs', function()
                                                                   |
     ]],
     }
+  end)
+end)
+
+describe('global winbar with tabs', function()
+  local screen
+  before_each(function()
+    clear()
+    screen = Screen.new(60, 10)
+  end)
+
+  it('updates hidden tabs when enabled #28641', function()
+    command('tabnew')
+    command('tabprev')
+    command('set winbar=my-winbar')
+    command('tabnext')
+    screen:expect([[
+      {24: [No Name] }{5: [No Name] }{2:                                     }{24:X}|
+      {5:my-winbar                                                   }|
+      ^                                                            |
+      {1:~                                                           }|*6
+                                                                  |
+    ]])
+    eq(1, fn.getwininfo(api.nvim_get_current_win())[1].winbar)
+  end)
+
+  it('updates hidden tabs when disabled #28641', function()
+    command('setglobal winbar=my-winbar')
+    command('tabnew')
+    command('tabprev')
+    command('setglobal winbar=')
+    command('tabnext')
+    screen:expect([[
+      {24: [No Name] }{5: [No Name] }{2:                                     }{24:X}|
+      ^                                                            |
+      {1:~                                                           }|*7
+                                                                  |
+    ]])
+    eq(0, fn.getwininfo(api.nvim_get_current_win())[1].winbar)
+  end)
+
+  it('updates hidden tabs when current tab has no room #28641', function()
+    command('tabnew')
+    command('tabprev')
+    command('set winbar= | split | split | split')
+    eq('Vim(set):E36: Not enough room', pcall_err(command, 'set winbar=test'))
+    command('tabnext')
+    eq(1, fn.getwininfo(api.nvim_get_current_win())[1].winbar)
   end)
 end)
 

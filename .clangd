@@ -1,5 +1,3 @@
-CompileFlags:
-  CompilationDatabase: build/       # Search build/ directory for compile_commands.json
 Diagnostics:
   UnusedIncludes: None
 Documentation:

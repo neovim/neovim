@@ -1,6 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local api = n.api
 local fn = n.fn
 local clear = n.clear
@@ -23,14 +24,10 @@ local function set_filetype(ft)
   api.nvim_set_option_value('filetype', ft, { buf = 0 })
 end
 
-local function treeselect(cmd_, ...)
-  if cmd_ == 'select_node' then
-    cmd_ = 'select_child'
-  end
-
-  exec_lua(function(cmd, ...)
-    require 'vim.treesitter._select'[cmd](...)
-  end, cmd_, ...)
+local function treeselect(cmd_, count_)
+  exec_lua(function(cmd, count)
+    vim.treesitter.select(cmd, count)
+  end, cmd_, count_)
 end
 
 describe('treesitter incremental-selection', function()
@@ -50,64 +47,82 @@ describe('treesitter incremental-selection', function()
   end)
 
   it('works', function()
-    treeselect('select_node')
+    treeselect('child')
     eq('foo(1)\nbar(2)\n', get_selected())
 
-    treeselect('select_child')
+    treeselect('child')
     eq('foo(1)', get_selected())
 
-    treeselect('select_next')
+    treeselect('next')
     eq('bar(2)', get_selected())
 
-    treeselect('select_prev')
+    treeselect('prev')
     eq('foo(1)', get_selected())
 
-    treeselect('select_parent')
+    treeselect('parent')
     eq('foo(1)\nbar(2)\n', get_selected())
+
+    set_lines('quux(1,foo,bar,baz,qux,2)')
+    feed('<esc>fbve')
+    eq('bar', get_selected())
+
+    treeselect('extend_next')
+    eq('bar,baz', get_selected())
+
+    treeselect('extend_prev')
+    eq('foo,bar,baz', get_selected())
   end)
 
   it('repeat', function()
     set_lines('foo(1,2,3,4)')
-    treeselect('select_node')
+    treeselect('child')
     eq('foo', get_selected())
-    treeselect('select_next')
+    treeselect('next')
     eq('(1,2,3,4)', get_selected())
-    treeselect('select_parent')
+    treeselect('parent')
     eq('foo(1,2,3,4)', get_selected())
 
-    treeselect('select_child', 2)
+    treeselect('child', 2)
     eq('1', get_selected())
 
-    treeselect('select_next', 3)
+    treeselect('next', 3)
     eq('4', get_selected())
 
-    treeselect('select_prev', 2)
+    treeselect('prev', 2)
     eq('2', get_selected())
 
-    treeselect('select_parent', 2)
+    treeselect('parent', 2)
     eq('foo(1,2,3,4)', get_selected())
 
-    treeselect('select_child', 2)
+    treeselect('child', 2)
     eq('2', get_selected())
+
+    feed('<esc>F1')
+    treeselect('extend_next', 2)
+    eq('1,2,3', get_selected())
+
+    feed('<esc>f4v')
+    treeselect('extend_prev', 2)
+    eq('2,3,4', get_selected())
   end)
 
   it('history', function()
-    treeselect('select_node')
-    treeselect('select_child')
-    treeselect('select_next')
+    treeselect('child')
+    treeselect('child')
+    treeselect('next')
 
     eq('bar(2)', get_selected())
-    treeselect('select_parent')
+    treeselect('parent')
     eq('foo(1)\nbar(2)\n', get_selected())
-    treeselect('select_child')
+    treeselect('child')
     eq('bar(2)', get_selected())
 
-    treeselect('select_prev')
+    treeselect('prev')
 
     eq('foo(1)', get_selected())
-    treeselect('select_parent')
+    treeselect('parent')
     eq('foo(1)\nbar(2)\n', get_selected())
-    treeselect('select_child')
+    treeselect('child')
     eq('foo(1)', get_selected())
   end)
 
@@ -115,7 +130,7 @@ describe('treesitter incremental-selection', function()
     feed('kkl', 'v', 'l')
     eq('oo', get_selected())
 
-    treeselect('select_parent')
+    treeselect('parent')
     eq('foo', get_selected())
   end)
 
@@ -123,7 +138,7 @@ describe('treesitter incremental-selection', function()
     feed('kkl', 'v', 'l')
     eq('oo', get_selected())
 
-    treeselect('select_child')
+    treeselect('child')
     eq('foo', get_selected())
   end)
 
@@ -131,24 +146,24 @@ describe('treesitter incremental-selection', function()
     feed('kkl', 'v', 'j')
     eq('oo(1)\nba', get_selected())
 
-    treeselect('select_child')
+    treeselect('child')
     eq('(1)', get_selected())
   end)
 
   it('maintains cursor selection-end-pos', function()
     feed('kk')
-    treeselect('select_node')
+    treeselect('child')
     eq('foo', get_selected())
 
-    treeselect('select_parent')
+    treeselect('parent')
     feed('h')
     eq('foo(1', get_selected())
 
-    treeselect('select_child')
+    treeselect('child')
     eq('foo', get_selected())
 
     feed('o')
-    treeselect('select_parent')
+    treeselect('parent')
     feed('l')
     eq('oo(1)', get_selected())
   end)
@@ -157,19 +172,19 @@ describe('treesitter incremental-selection', function()
     feed('gg', 'v')
     eq('', get_selected())
 
-    treeselect('select_node')
+    treeselect('child')
     eq('foo(1)\nbar(2)\n', get_selected())
 
     feed('<esc>gg', 'v')
     eq('', get_selected())
 
-    treeselect('select_child')
+    treeselect('child')
     eq('foo(1)\nbar(2)\n', get_selected())
 
     feed('<esc>gg', 'v')
     eq('', get_selected())
 
-    treeselect('select_parent')
+    treeselect('parent')
     eq('foo(1)\nbar(2)\n', get_selected())
   end)
 
@@ -181,10 +196,10 @@ describe('treesitter incremental-selection', function()
     }
 
     feed('gg', 'jfb', 'v')
-    treeselect('select_node')
+    treeselect('child')
     eq('abö', get_selected())
 
-    treeselect('select_parent')
+    treeselect('parent')
     eq('"abö"', get_selected())
   end)
 end)
@@ -198,28 +213,28 @@ describe('treesitter incremental-selection with injections', function()
     set_lines('```lua\ndo foo() end\n```')
     set_filetype('markdown')
     feed('gg0')
-    treeselect('select_node')
-    treeselect('select_parent')
+    treeselect('child')
+    treeselect('parent')
     eq('```lua\ndo foo() end\n```', get_selected())
 
-    treeselect('select_child')
-    treeselect('select_next')
-    treeselect('select_next')
-    treeselect('select_child')
-    treeselect('select_child')
-    treeselect('select_child')
+    treeselect('child')
+    treeselect('next')
+    treeselect('next')
+    treeselect('child')
+    treeselect('child')
+    treeselect('child')
 
     eq('foo', get_selected())
 
-    treeselect('select_parent')
-    treeselect('select_parent')
-    treeselect('select_parent')
-    treeselect('select_prev')
+    treeselect('parent')
+    treeselect('parent')
+    treeselect('parent')
+    treeselect('prev')
 
     eq('lua', get_selected())
 
-    treeselect('select_next')
-    treeselect('select_next')
+    treeselect('next')
+    treeselect('next')
 
     eq('```', get_selected())
   end)
@@ -236,9 +251,9 @@ describe('treesitter incremental-selection with injections', function()
       set_lines('>lua\n \n foo(\n )')
 
       feed('G0')
-      treeselect('select_node')
+      treeselect('child')
       eq(' )', get_selected())
-      treeselect('select_prev')
+      treeselect('prev')
       eq(' foo(', get_selected())
 
       exec_lua(function()
@@ -251,14 +266,14 @@ describe('treesitter incremental-selection with injections', function()
     set_lines('>lua\n \n foo(\n )')
 
     feed('G0')
-    treeselect('select_node')
+    treeselect('child')
     eq('(\n )', get_selected())
-    treeselect('select_parent')
-    treeselect('select_parent')
+    treeselect('parent')
+    treeselect('parent')
     eq('foo(\n )', get_selected())
 
     -- There will be one out of the siblings that wont be covered:
-    treeselect('select_prev')
+    treeselect('prev')
     eq(' ', get_selected())
   end)
 
@@ -289,7 +304,7 @@ describe('treesitter incremental-selection with injections', function()
     set_filetype('lua')
     set_lines({ '-- edit();' })
     feed('gg0lll')
-    treeselect('select_node')
+    treeselect('child')
     if get_selected() == 'edit' then
       -- It is random which injection gets higher priority,
       --   as the priority uses the treesitter-node's id as a priority
@@ -298,20 +313,20 @@ describe('treesitter incremental-selection with injections', function()
     end
 
     feed('<esc>gg0lll')
-    treeselect('select_node')
+    treeselect('child')
     eq(' edit();', get_selected())
-    treeselect('select_child')
+    treeselect('child')
     eq('dit();', get_selected())
-    treeselect('select_prev') -- should do nothing
+    treeselect('prev') -- should do nothing
     eq('dit();', get_selected())
 
     exec_lua(
       "require'vim.treesitter._select'.TEST_SWITCH_PRIORITY=not require'vim.treesitter._select'.TEST_SWITCH_PRIORITY"
     )
     feed('<esc>gg0lll')
-    treeselect('select_node')
+    treeselect('child')
     eq('edit', get_selected())
-    treeselect('select_next') -- should do nothing
+    treeselect('next') -- should do nothing
     eq('edit', get_selected())
   end)
 
@@ -334,19 +349,19 @@ describe('treesitter incremental-selection with injections', function()
     set_lines({ '--int foo={', '--1};' })
     feed('gg$')
 
-    treeselect('select_node')
+    treeselect('child')
     eq('{', get_selected())
-    treeselect('select_parent')
-    treeselect('select_parent')
-    treeselect('select_parent')
+    treeselect('parent')
+    treeselect('parent')
+    treeselect('parent')
     eq('--int foo={', get_selected())
 
-    treeselect('select_next')
+    treeselect('next')
     eq('--1};', get_selected())
-    treeselect('select_child')
-    treeselect('select_child')
+    treeselect('child')
+    treeselect('child')
     eq('1}', get_selected())
-    treeselect('select_prev') -- should do nothing
+    treeselect('prev') -- should do nothing
     eq('1}', get_selected())
   end)
 end)

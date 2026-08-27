@@ -622,7 +622,7 @@ func Test_invalid_args()
     endfor
   endif
 
-  if has('gui_gtk')
+  if has('gui_gtk') && has("xterm_clipboard")
     let out = split(system(GetVimCommand() .. ' --display'), "\n")
     call assert_equal(1, v:shell_error)
     call assert_match('^VIM - Vi IMproved .* (.*)$',         out[0])
@@ -1188,7 +1188,8 @@ endfunc
 " Test for the "-E" (improved Ex mode) argument
 func Test_E_arg()
   let after =<< trim [CODE]
-    call assert_equal('cv', mode(1))
+    " Nvim: "-E" enters the cmdwin REPL after startup scripts; mode()="n".
+    call assert_equal('n', mode(1))
     call writefile(v:errors, 'Xtestout')
     qall
   [CODE]

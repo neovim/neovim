@@ -37,3 +37,14 @@ vim.api.nvim_create_autocmd('BufReadCmd', {
     end
   end,
 })
+
+vim.api.nvim_create_autocmd('BufWinEnter', {
+  group = augroup,
+  pattern = 'man://*',
+  callback = function()
+    local err = require('man').refresh_page()
+    if err then
+      vim.notify('man.lua: ' .. err, vim.log.levels.ERROR)
+    end
+  end,
+})

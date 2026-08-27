@@ -3,6 +3,7 @@ local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 local os = require('os')
 
+local describe, it, before_each, after_each = t.describe, t.it, t.before_each, t.after_each
 local clear, feed, insert = n.clear, n.feed, n.insert
 local command, exec = n.command, n.exec
 local eval = n.eval
@@ -1450,6 +1451,24 @@ describe('CursorColumn highlight', function()
       {1:~                                                 }|*5
       {5:-- INSERT --}                                      |
     ]])
+  end)
+
+  -- oldtest: Test_cursorcolumn_virtualedit()
+  it('is correct with operator on empty line and virtualedit', function()
+    exec([[
+      set virtualedit=all
+      set cursorcolumn
+      call setline(1, ['', '', ''])
+      call cursor(3, 1)
+    ]])
+    screen:expect([[
+      {21: }                                                 |*2
+      ^                                                  |
+      {1:~                                                 }|*4
+                                                        |
+    ]])
+    feed('<Del>')
+    screen:expect_unchanged()
   end)
 
   -- oldtest: Test_cursorcolumn_callback()

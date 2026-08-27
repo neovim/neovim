@@ -29,6 +29,7 @@ typedef struct {
   char *tagname;                        // tag from -t argument
   char *use_ef;                         // 'errorfile' from -q argument
 
+  bool exmode;                          // "-e"/"-E": Ex mode
   bool input_istext;                    // stdin is text, not executable (-E/-Es)
 
   int no_swap_file;                     // "-n" argument used

@@ -27,19 +27,18 @@
 ///
 /// @param address Address string
 /// @return pointer to the end of the host part of the address, or NULL if it is not a TCP address
-char *socket_address_tcp_host_end(char *address)
+char *socket_address_tcp_host_end(const char *address)
 {
   if (address == NULL) {
     return NULL;
   }
 
-  // Windows drive letter path: "X:\..." or "X:/..." is a local path, not TCP.
-  if (ASCII_ISALPHA((uint8_t)address[0]) && address[1] == ':'
-      && (address[2] == '\\' || address[2] == '/')) {
+  // Windows drive letter path: "X:/..." is a local path, not TCP.
+  if (ASCII_ISALPHA((uint8_t)address[0]) && address[1] == ':' && address[2] == '/') {
     return NULL;
   }
 
-  char *colon = strrchr(address, ':');
+  char *colon = strrchr((char *)address, ':');
   return colon != NULL && colon != address ? colon : NULL;
 }
 
@@ -97,10 +96,10 @@ int socket_watcher_init(Loop *loop, SocketWatcher *watcher, const char *endpoint
   return 0;
 }
 
-/// Callback for closing a handle initialized by socket_connect().
-static void connect_close_cb(uv_handle_t *handle)
+/// Callback after closing a Stream initialized by socket_connect().
+static void connect_close_cb(Stream *stream, void *data)
 {
-  bool *closed = handle->data;
+  bool *closed = data;
   *closed = true;
 }
 
@@ -110,7 +109,7 @@ static void connect_close_cb(uv_handle_t *handle)
 /// @return true if socket is alive (connection succeeded), false otherwise
 static bool socket_alive(Loop *loop, const char *addr)
 {
-  RStream stream;
+  RStream stream = { 0 };
   const char *error = NULL;
 
   // Try to connect with a 500ms timeout (fast failure for dead sockets)
@@ -121,11 +120,18 @@ static bool socket_alive(Loop *loop, const char *addr)
 
   // Connection succeeded - socket is alive. Close the probe connection properly.
   bool closed = false;
-  stream.s.uv.pipe.data = &closed;
-  uv_close((uv_handle_t *)&stream.s.uv.pipe, connect_close_cb);
+  stream.s.internal_close_cb = connect_close_cb;
+  stream.s.internal_data = &closed;
+  stream_may_close(&stream.s);
   LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, -1, closed);
 
   return true;
+}
+
+static void early_server_close_cb(uv_handle_t *handle)
+{
+  bool *closed = handle->data;
+  *closed = true;
 }
 
 int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
@@ -162,7 +168,8 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
     }
     uv_freeaddrinfo(watcher->uv.tcp.addrinfo);
   } else {
-    result = uv_pipe_bind(&watcher->uv.pipe.handle, watcher->addr);
+    result = uv_pipe_bind2(&watcher->uv.pipe.handle, watcher->addr, strlen(watcher->addr),
+                           UV_PIPE_NO_TRUNCATE);
 
     // If bind failed with EACCES/EADDRINUSE, check if socket is stale
     if (result == UV_EACCES || result == UV_EADDRINUSE) {
@@ -181,7 +188,7 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
           uv_loop_t *uv_loop = watcher->uv.pipe.handle.loop;
           bool closed = false;
           watcher->uv.pipe.handle.data = &closed;
-          uv_close((uv_handle_t *)&watcher->uv.pipe.handle, connect_close_cb);
+          uv_close((uv_handle_t *)&watcher->uv.pipe.handle, early_server_close_cb);
           LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, -1, closed);
 
           uv_pipe_init(uv_loop, &watcher->uv.pipe.handle, 0);
@@ -189,7 +196,8 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
           watcher->stream->data = watcher;
 
           // Retry bind with fresh handle
-          result = uv_pipe_bind(&watcher->uv.pipe.handle, watcher->addr);
+          result = uv_pipe_bind2(&watcher->uv.pipe.handle, watcher->addr, strlen(watcher->addr),
+                                 UV_PIPE_NO_TRUNCATE);
         }
       } else {
         // Socket is alive - this is a real error
@@ -276,8 +284,8 @@ static void connect_cb(uv_connect_t *req, int status)
   int *ret_status = req->data;
   *ret_status = status;
   uv_handle_t *handle = (uv_handle_t *)req->handle;
-  if (status != 0 && !uv_is_closing(handle)) {
-    uv_close(handle, connect_close_cb);
+  if (status != 0) {
+    stream_may_close(handle->data);
   }
 }
 
@@ -327,18 +335,16 @@ tcp_retry:
     uv_pipe_connect(&req,  pipe, address, connect_cb);
     uv_stream = (uv_stream_t *)pipe;
   }
-  uv_stream->data = &closed;
+  stream_init(NULL, &stream->s, -1, uv_stream);
+  stream->s.internal_close_cb = connect_close_cb;
+  stream->s.internal_data = &closed;
   closed = false;
   status = 1;
   LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, timeout, status != 1);
   if (status == 0) {
-    stream_init(NULL, &stream->s, -1, uv_stream);
-    assert(uv_stream->data != &closed);  // Should have been set by stream_init().
     success = true;
   } else {
-    if (!uv_is_closing((uv_handle_t *)uv_stream)) {
-      uv_close((uv_handle_t *)uv_stream, connect_close_cb);
-    }
+    stream_may_close(&stream->s);
     // Wait for the close callback to arrive before retrying or returning, otherwise
     // it may lead to a hang or stack-use-after-return.
     LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, -1, closed);
@@ -352,6 +358,8 @@ tcp_retry:
   }
 
 cleanup:
+  stream->s.internal_close_cb = NULL;
+  stream->s.internal_data = NULL;
   xfree(addr);
   uv_freeaddrinfo(addr_req.addrinfo);
   return success;

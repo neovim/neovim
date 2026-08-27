@@ -2,6 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local assert_alive = n.assert_alive
 local clear = n.clear
 local feed = n.feed
@@ -32,7 +33,7 @@ describe('thread', function()
       {1:~                                                 }|*5
       {3:                                                  }|
       {9:Luv thread:}                                       |
-      {9:[NULL]}                                            |
+      {9:nil}                                               |
       {6:Press ENTER or type command to continue}^           |
     ]])
     feed('<cr>')

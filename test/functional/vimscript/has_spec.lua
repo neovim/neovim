@@ -2,6 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each, pending = t.describe, t.it, t.before_each, t.pending
 local clear = n.clear
 local connect = n.connect
 local get_session = n.get_session
@@ -65,19 +66,22 @@ describe('has()', function()
   end)
 
   it('"terminfo"', function()
+    local version = n.exec_capture('verbose version')
+    local compilation_string = version:match('Compilation: (.*)')
+    -- zig builds currently show only TODO for the compilation string
+    if not compilation_string or compilation_string:match('TODO') then
+      pending('no compilation string present')
+    end
     -- Looks like "HAVE_UNIBILIUM ", "HAVE_UNIBILIUM=1", "HAVE_UNIBILIUM off", ….
     -- Capture group returns the "1"/"off"/….
-    local build_flag = vim.trim(
-      (n.exec_capture('verbose version'):match('HAVE_UNIBILIUM([^-]+)') or 'missing'):lower()
+    local build_flag =
+      vim.trim((compilation_string:match('HAVE_UNIBILIUM([^-]+)') or 'missing'):lower())
+    local is_enabled = not (
+      build_flag == 'missing'
+      or build_flag == 'false'
+      or build_flag == '0'
+      or build_flag == 'off'
     )
-    -- XXX: the match() above fails in CI so currently we assume CI always builds with unibilium.
-    local is_enabled = t.is_ci()
-      or not (
-        build_flag == 'missing'
-        or build_flag == 'false'
-        or build_flag == '0'
-        or build_flag == 'off'
-      )
     eq(is_enabled and 1 or 0, fn.has('terminfo'))
   end)
 

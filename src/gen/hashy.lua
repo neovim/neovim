@@ -139,7 +139,7 @@ function M.hashy_hash(name, strings, access, icase)
 ]]):format(icase and 'vim_strnicmp_asc' or 'memcmp', access('i')))
   else
     put(([[
-  if (low < 0 || %s(str, %s, len)) {
+  if (low < 0 || %s(str, %s, len) != 0) {
     return -1;
   }
   return low;

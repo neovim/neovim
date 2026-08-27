@@ -32,13 +32,29 @@ enum {
 // Note: mostly EW_NOTFOUND and EW_SILENT are mutually exclusive: EW_NOTFOUND
 // is used when executing commands and EW_SILENT for interactive expanding.
 
-/// Return value for the comparison of two files. Also @see path_full_compare.
-typedef enum file_comparison {
-  kEqualFiles = 1,        ///< Both exist and are the same file.
-  kDifferentFiles = 2,    ///< Both exist and are different files.
-  kBothFilesMissing = 4,  ///< Both don't exist.
-  kOneFileMissing = 6,    ///< One of them doesn't exist.
-  kEqualFileNames = 7,  ///< Both don't exist and file names are same.
-} FileComparison;
+/// path_equal() flags
+typedef enum {
+  kPathCmpLiteral = 1 << 0,  ///< Compare paths literally.
+  kPathCmpExpand  = 1 << 1,  ///< Expand env vars in the first path.
+  kPathCmpFull    = 1 << 2,  ///< Compare full names when FileIds are unavailable.
+} PathCmpFlags;
+
+#ifdef BACKSLASH_IN_FILENAME
+# define TO_SLASH(p) path_to_slash(p)
+# define TO_SLASH_SAVE(p) path_to_slash_save(p)
+# define TO_BACKSLASH(p) path_to_backslash(p)
+#else
+# define TO_SLASH(...)
+# define TO_SLASH_SAVE(p) xstrdup(p)
+# define TO_BACKSLASH(...)
+#endif
+
+#ifdef MSWIN
+# define PATH_ESC_WILDCARDS "*?["
+# define PATH_ALL_WILDCARDS "*?[`$"
+#else
+# define PATH_ESC_WILDCARDS "*?[{"
+# define PATH_ALL_WILDCARDS "*?[{`'$"
+#endif
 
 #include "path.h.generated.h"

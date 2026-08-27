@@ -1,10 +1,12 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, before_each, setup, teardown, pending =
+  t.describe, t.it, t.before_each, t.setup, t.teardown, t.pending
 local eq, clear, call, write_file, command = t.eq, n.clear, n.call, t.write_file, n.command
-local exc_exec = n.exc_exec
-local eval = n.eval
+local eval, fn = n.eval, n.fn
 local is_os = t.is_os
+local pcall_err = t.pcall_err
 
 describe('executable()', function()
   before_each(clear)
@@ -18,51 +20,39 @@ describe('executable()', function()
     eq(1, call('executable', 'false'))
   end)
 
-  if is_os('win') then
-    it('exepath respects shellslash', function()
-      -- test/ cannot be a symlink in this test.
-      n.api.nvim_set_current_dir(t.paths.test_source_path)
+  it('exepath respects shellslash #13787', function()
+    t.skip(not is_os('win'), 'N/A for non-Windows')
+    -- test/ cannot be a symlink in this test.
+    n.api.nvim_set_current_dir(t.paths.test_source_path)
 
-      command('let $PATH = fnamemodify("./test/functional/fixtures/bin", ":p")')
-      eq(
-        [[test\functional\fixtures\bin\null.CMD]],
-        call('fnamemodify', call('exepath', 'null'), ':.')
-      )
-      command('set shellslash')
-      eq(
-        'test/functional/fixtures/bin/null.CMD',
-        call('fnamemodify', call('exepath', 'null'), ':.')
-      )
-    end)
+    command('let $PATH = fnamemodify("./test/functional/fixtures/bin", ":p")')
+    eq(([[%s\test\functional\fixtures\bin\null.CMD]]):format(fn.getcwd()), fn.exepath('null'))
+    command('set shellslash')
+    eq(('%s/test/functional/fixtures/bin/null.CMD'):format(fn.getcwd()), fn.exepath('null'))
+  end)
 
-    it('stdpath respects shellslash', function()
-      -- Needs to check paths relative to repo root dir.
-      n.api.nvim_set_current_dir(t.paths.test_source_path)
+  it('stdpath returns consistent slashes #13787', function()
+    t.skip(not is_os('win'), 'N/A for non-Windows')
+    -- Needs to check paths relative to repo root dir.
+    n.api.nvim_set_current_dir(t.paths.test_source_path)
 
-      t.matches(
-        [[build\Xtest_xdg[%w_]*\share\nvim%-data]],
-        call('fnamemodify', call('stdpath', 'data'), ':.')
-      )
-      command('set shellslash')
-      t.matches(
-        'build/Xtest_xdg[%w_]*/share/nvim%-data',
-        call('fnamemodify', call('stdpath', 'data'), ':.')
-      )
-    end)
-  end
+    t.matches('build/Xtest_xdg[%w_]*/share/nvim%-data', fn.stdpath('data'))
+    command('set shellslash')
+    t.matches('build/Xtest_xdg[%w_]*/share/nvim%-data', fn.stdpath('data'))
+  end)
 
   it('fails for invalid values', function()
     for _, input in ipairs({ 'v:null', 'v:true', 'v:false', '{}', '[]' }) do
       eq(
         'Vim(call):E1174: String required for argument 1',
-        exc_exec('call executable(' .. input .. ')')
+        pcall_err(command, 'call executable(' .. input .. ')')
       )
     end
     command('let $PATH = fnamemodify("./test/functional/fixtures/bin", ":p")')
     for _, input in ipairs({ 'v:null', 'v:true', 'v:false' }) do
       eq(
         'Vim(call):E1174: String required for argument 1',
-        exc_exec('call executable(' .. input .. ')')
+        pcall_err(command, 'call executable(' .. input .. ')')
       )
     end
   end)

@@ -46,7 +46,7 @@ syn cluster m4Top add=m4Quoted
 "   they simply prevent any macros from being expanded, while the text remains
 "   in the output. This region therefore disables any other matches.
 " – Comments themselves are disabled when quoted.
-syn region m4Disabled start=+#+ end=+$+ containedin=ALLBUT,m4Quoted,m4ParamCount
+syn region m4Disabled start=+#+ end=+$+ containedin=ALLBUT,m4Quoted,m4ParamCount,m4Disabled
 
 " Macros in M4:
 " – Name tokens consist of the longest possible sequence of letters, digits,

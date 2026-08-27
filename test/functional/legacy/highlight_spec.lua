@@ -2,13 +2,15 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear, feed = n.clear, n.feed
 local expect = n.expect
 local eq = t.eq
+local pcall_err = t.pcall_err
 local poke_eventloop = n.poke_eventloop
-local exc_exec = n.exc_exec
 local feed_command = n.feed_command
 local exec = n.exec
+local command = n.command
 
 before_each(clear)
 
@@ -57,7 +59,10 @@ describe(':highlight', function()
     feed_command('hi clear')
     feed_command('hi Group3')
     feed('<cr>')
-    eq("Vim(highlight):E475: Invalid argument: cterm='asdf", exc_exec([[hi Crash cterm='asdf]]))
+    eq(
+      "Vim(highlight):E475: Invalid argument: cterm='asdf",
+      pcall_err(command, [[hi Crash cterm='asdf]])
+    )
     feed_command('redir END')
 
     -- Filter ctermfg and ctermbg, the numbers depend on the terminal

@@ -1,6 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear, eq, neq = n.clear, t.eq, t.neq
 local command = n.command
 local exec_capture = n.exec_capture
@@ -355,20 +356,37 @@ describe('API: set highlight', function()
     eq('Courier New 10', hl.font)
     eq(16711680, hl.fg)
 
+    -- update=true keeps the font when it isn't re-specified
+    api.nvim_set_hl(ns, 'TestFont', { italic = true, update = true })
+    eq('Courier New 10', api.nvim_get_hl(ns, { name = 'TestFont' }).font)
+
     api.nvim_set_hl(ns, 'TestFont', { font = 'Monaco' })
     hl = api.nvim_get_hl(ns, { name = 'TestFont' })
     eq('Monaco', hl.font)
 
-    -- Clear font with "NONE"
-    api.nvim_set_hl(ns, 'TestFont', { font = 'NONE' })
-    hl = api.nvim_get_hl(ns, { name = 'TestFont' })
-    eq(nil, hl.font)
+    -- "NONE" or an empty string clears the font
+    for _, v in ipairs({ 'NONE', '' }) do
+      api.nvim_set_hl(ns, 'TestFont', { font = 'Monaco' })
+      api.nvim_set_hl(ns, 'TestFont', { font = v })
+      eq(nil, api.nvim_get_hl(ns, { name = 'TestFont' }).font)
+    end
 
-    -- global namespace
-    api.nvim_set_hl(0, 'TestFontGlobal', { bg = '#00ff00', font = 'JetBrains Mono' })
-    hl = api.nvim_get_hl(0, { name = 'TestFontGlobal' })
-    eq('JetBrains Mono', hl.font)
-    eq(65280, hl.bg)
+    -- a font-only highlight (no other attrs) must not be dropped
+    api.nvim_set_hl(0, 'TestFontGlobal', { font = 'JetBrains Mono' })
+    eq('JetBrains Mono', api.nvim_get_hl(0, { name = 'TestFontGlobal' }).font)
+  end)
+
+  it('higher-priority overlapping extmark font wins', function()
+    api.nvim_set_hl(0, 'FontLo', { fg = '#ffffff', font = 'Courier New 10' })
+    api.nvim_set_hl(0, 'FontHi', { fg = '#ff00ff', font = 'Monaco' })
+    local ns = api.nvim_create_namespace('test_font_combine')
+    api.nvim_buf_set_lines(0, 0, -1, false, { 'hello' })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { end_col = 1, hl_group = 'FontLo', priority = 100 })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { end_col = 1, hl_group = 'FontHi', priority = 200 })
+    command('redraw')
+    local cell = api.nvim__inspect_cell(1, 0, 0)[2]
+    eq(16711935, cell.foreground)
+    eq('Monaco', cell.font)
   end)
 end)
 
@@ -714,6 +732,29 @@ describe('API: get highlight', function()
     api.nvim_set_hl(0, 'Bar', { link = 'Comment', default = true })
     api.nvim_set_hl(0, 'Bar', { link = 'Foo', default = true, force = true })
     eq({ link = 'Foo', default = true }, api.nvim_get_hl(0, { name = 'Bar' }))
+  end)
+
+  it('round-trips fg_indexed/bg_indexed through nvim_get_hl', function()
+    api.nvim_set_hl(0, 'Test_idx', {
+      fg = '#cc0000',
+      bg = '#0000cc',
+      ctermfg = 1,
+      ctermbg = 4,
+      fg_indexed = true,
+      bg_indexed = true,
+    })
+    local hl = api.nvim_get_hl(0, { name = 'Test_idx' })
+    eq(true, hl.fg_indexed)
+    eq(true, hl.bg_indexed)
+    eq(tonumber('0xcc0000'), hl.fg)
+    eq(tonumber('0x0000cc'), hl.bg)
+    eq(1, hl.ctermfg)
+    eq(4, hl.ctermbg)
+
+    api.nvim_set_hl(0, 'Test_idx', { fg_indexed = false, update = true })
+    eq(nil, api.nvim_get_hl(0, { name = 'Test_idx' }).fg_indexed)
+    eq(true, api.nvim_get_hl(0, { name = 'Test_idx' }).bg_indexed)
+    eq(tonumber('0xcc0000'), api.nvim_get_hl(0, { name = 'Test_idx' }).fg)
   end)
 end)
 

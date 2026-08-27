@@ -1,7 +1,9 @@
 -- Test for :execute, :while and :if
 
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 
+local describe, it, setup = t.describe, t.it, t.setup
 local clear = n.clear
 local expect = n.expect
 local source = n.source

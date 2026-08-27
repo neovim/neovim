@@ -1,12 +1,12 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, setup = t.describe, t.it, t.setup
 local clear = n.clear
 local eq = t.eq
 local command = n.command
 local api = n.api
 local eval = n.eval
-local exc_exec = n.exc_exec
 local pcall_err = t.pcall_err
 local fn = n.fn
 local NIL = vim.NIL
@@ -237,7 +237,7 @@ describe('string() function', function()
       eval('add(l, l)')
       eq(
         'Vim(echo):E724: unable to correctly dump variable with self-referencing container',
-        exc_exec('echo string(l)')
+        pcall_err(command, 'echo string(l)')
       )
     end)
 
@@ -276,7 +276,7 @@ describe('string() function', function()
       eval('extend(d, {"d": d})')
       eq(
         'Vim(echo):E724: unable to correctly dump variable with self-referencing container',
-        exc_exec('echo string(d)')
+        pcall_err(command, 'echo string(d)')
       )
     end)
 

@@ -14,7 +14,15 @@ end
 --- Returns all environment variables as a dictionary.
 --- @return table<string, string>
 function M.f_environ()
-  return vim.uv.os_environ()
+  local env = vim.uv.os_environ() ---@type table<string, string>
+  if vim.fn.has('win32') == 1 then -- Vim/legacy behavior: force uppercase keys on Windows. #39443
+    local upper = {} --- @type table<string, string>
+    for k, v in pairs(env) do
+      upper[k:upper()] = v
+    end
+    return upper
+  end
+  return env
 end
 
 return M

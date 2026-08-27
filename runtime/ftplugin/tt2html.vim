@@ -12,4 +12,4 @@ if exists("b:did_ftplugin")
 endif
 
 " Just use the HTML plugin for now.
-runtime! ftplugin/html.vim ftplugin/html_*.vim ftplugin/html/*.vim
+runtime! ftplugin/html[.]{vim,lua} ftplugin/html_*.{vim,lua} ftplugin/html/*.{vim,lua}

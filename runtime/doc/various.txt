@@ -11,6 +11,16 @@ Various commands					*various*
 ==============================================================================
 1. Various commands					*various-cmds*
 
+							*CTRL-C*
+CTRL-C			Interrupt the current command, script, mapping,
+			prompt, or search.
+
+			In Normal mode, any pending command is aborted. During
+			a search, interrupts the search.
+
+			Lua code cannot be interrupted unless it "yields" via
+			|vim.wait()|.
+
 							*CTRL-L*
 CTRL-L			Clears and redraws the screen.  The redraw may happen
 			later, after processing typeahead.
@@ -62,10 +72,9 @@ ga			Print the ascii value of the character under the
 			but printable according to the 'isprint' option, the
 			non-printable version is also given.
 
-			When the character is larger than 127, the <M-x> form
-			is also printed.  For example:
-				<~A>  <M-^A>  129,  Hex 81,  Octal 201 ~
-				<p>  <|~>  <M-~>  254,  Hex fe,  Octal 376 ~
+			When the character is larger than 127:
+				<<81>>  129,  Hex 0081,  Octal 201 ~
+				 <p>    254,  Hex 00fe,  Octal 376 ~
 			(where <p> is a special character)
 
 			The <Nul> character in a file is stored internally as
@@ -187,6 +196,9 @@ gx			Opens the current filepath, URL (decided by
 			If the mark is "=", a line of dashes is printed
 			around the current line.
 
+			If the 'number' option is set, absolute line numbers
+			will be included in the output.
+
 							*:z!*
 :[range]z![+-^.=][count]
 			Like ":z", but when [count] is not specified, it
@@ -220,8 +232,8 @@ gx			Opens the current filepath, URL (decided by
 			will be aborted as if <Esc> or <C-C> was typed.
 			This implies that an insert command must be completed
 			(to start Insert mode, see |:startinsert|).  A ":"
-			command must be completed as well.  And you can't use
-			"gQ" to start Ex mode.
+			command must be completed as well.  And you can't
+			start |Ex-mode|.
 
 			The display is not updated while ":normal" is busy.
 
@@ -318,7 +330,7 @@ gx			Opens the current filepath, URL (decided by
 			Special characters are not escaped, use quotes or
 			|shellescape()|: >
 				:!ls "%"
-				:exe "!ls " .. shellescape(expand("%"))
+				:exe "!ls " .. shellescape(expand("%"),1)
 <
 			Newline character ends {cmd} unless a backslash
 			precedes the newline.  What follows is interpreted as
@@ -572,6 +584,10 @@ gO			Show a filetype-specific, navigable "outline" of the
 g==			Executes the current code block.
 
 			Works in |help| buffers.
+
+							*:upt* *:uptime*
+:upt[ime]		Shows Nvim's uptime.
+			See also |v:starttime|.
 
 ==============================================================================
 2. Using Vim like less or more					*less*

@@ -1,5 +1,6 @@
 .{
-    .name = "unibilium",
+    .name = .unibilium,
+    .fingerprint = 0x1d1baa4896ad720,
     .version = "2.1.2",
     .paths = .{""},
 

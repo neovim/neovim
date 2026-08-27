@@ -1,5 +1,6 @@
 local t = require('test.unit.testutil')
-local itp = t.gen_itp(it)
+local describe = t.describe
+local itp = t.gen_itp(t.it)
 
 local cimport = t.cimport
 local cstr = t.cstr
@@ -11,7 +12,7 @@ local cimp = cimport('stdlib.h', './src/nvim/memory.h')
 
 describe('xstrlcat()', function()
   local function test_xstrlcat(dst, src, dsize)
-    assert.is_true(dsize >= 1 + string.len(dst)) -- sanity check for tests
+    t.ok(dsize >= 1 + string.len(dst)) -- sanity check for tests
     local dst_cstr = cstr(dsize, dst)
     local src_cstr = to_cstr(src)
     eq(string.len(dst .. src), cimp.xstrlcat(dst_cstr, src_cstr, dsize))
@@ -19,7 +20,7 @@ describe('xstrlcat()', function()
   end
 
   local function test_xstrlcat_overlap(dst, src_idx, dsize)
-    assert.is_true(dsize >= 1 + string.len(dst)) -- sanity check for tests
+    t.ok(dsize >= 1 + string.len(dst)) -- sanity check for tests
     local dst_cstr = cstr(dsize, dst)
     local src_cstr = dst_cstr + src_idx -- pointer into `dst` (overlaps)
     eq(string.len(dst) + string.len(dst) - src_idx, cimp.xstrlcat(dst_cstr, src_cstr, dsize))

@@ -1,5 +1,7 @@
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 local Screen = require('test.functional.ui.screen')
+local describe, it, before_each = t.describe, t.it, t.before_each
 local exec_lua = n.exec_lua
 
 describe('decor perf', function()

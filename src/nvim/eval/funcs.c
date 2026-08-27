@@ -34,7 +34,7 @@
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/context.h"
 #include "nvim/cursor.h"
-#include "nvim/edit.h"
+#include "nvim/dialog.h"
 #include "nvim/errors.h"
 #include "nvim/eval/buffer.h"
 #include "nvim/eval/decode.h"
@@ -58,8 +58,6 @@
 #include "nvim/ex_getln.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
-#include "nvim/getchar.h"
-#include "nvim/getchar_defs.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
@@ -69,6 +67,8 @@
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
 #include "nvim/input.h"
+#include "nvim/input_defs.h"
+#include "nvim/insert.h"
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
 #include "nvim/lua/executor.h"
@@ -844,121 +844,6 @@ static void f_copy(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   var_item_copy(NULL, &argvars[0], rettv, false, 0);
 }
 
-/// "ctxget([{index}])" function
-static void f_ctxget(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  size_t index = 0;
-  if (argvars[0].v_type == VAR_NUMBER) {
-    index = (size_t)argvars[0].vval.v_number;
-  } else if (argvars[0].v_type != VAR_UNKNOWN) {
-    semsg(_(e_invarg2), "expected nothing or a Number as an argument");
-    return;
-  }
-
-  Context *ctx = ctx_get(index);
-  if (ctx == NULL) {
-    semsg(_(e_invargNval), "index", "out of bounds");
-    return;
-  }
-
-  Arena arena = ARENA_EMPTY;
-  Dict ctx_dict = ctx_to_dict(ctx, &arena);
-  Error err = ERROR_INIT;
-  object_to_vim(DICT_OBJ(ctx_dict), rettv, &err);
-  arena_mem_free(arena_finish(&arena));
-  api_clear_error(&err);
-}
-
-/// "ctxpop()" function
-static void f_ctxpop(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  if (!ctx_restore(NULL, kCtxAll)) {
-    emsg(_("Context stack is empty"));
-  }
-}
-
-/// "ctxpush([{types}])" function
-static void f_ctxpush(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  int types = kCtxAll;
-  if (argvars[0].v_type == VAR_LIST) {
-    types = 0;
-    TV_LIST_ITER(argvars[0].vval.v_list, li, {
-      typval_T *tv_li = TV_LIST_ITEM_TV(li);
-      if (tv_li->v_type == VAR_STRING) {
-        if (strequal(tv_li->vval.v_string, "regs")) {
-          types |= kCtxRegs;
-        } else if (strequal(tv_li->vval.v_string, "jumps")) {
-          types |= kCtxJumps;
-        } else if (strequal(tv_li->vval.v_string, "bufs")) {
-          types |= kCtxBufs;
-        } else if (strequal(tv_li->vval.v_string, "gvars")) {
-          types |= kCtxGVars;
-        } else if (strequal(tv_li->vval.v_string, "sfuncs")) {
-          types |= kCtxSFuncs;
-        } else if (strequal(tv_li->vval.v_string, "funcs")) {
-          types |= kCtxFuncs;
-        }
-      }
-    });
-  } else if (argvars[0].v_type != VAR_UNKNOWN) {
-    semsg(_(e_invarg2), "expected nothing or a List as an argument");
-    return;
-  }
-  ctx_save(NULL, types);
-}
-
-/// "ctxset({context}[, {index}])" function
-static void f_ctxset(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  if (argvars[0].v_type != VAR_DICT) {
-    semsg(_(e_invarg2), "expected dictionary as first argument");
-    return;
-  }
-
-  size_t index = 0;
-  if (argvars[1].v_type == VAR_NUMBER) {
-    index = (size_t)argvars[1].vval.v_number;
-  } else if (argvars[1].v_type != VAR_UNKNOWN) {
-    semsg(_(e_invarg2), "expected nothing or a Number as second argument");
-    return;
-  }
-
-  Context *ctx = ctx_get(index);
-  if (ctx == NULL) {
-    semsg(_(e_invargNval), "index", "out of bounds");
-    return;
-  }
-
-  const int save_did_emsg = did_emsg;
-  did_emsg = false;
-
-  Arena arena = ARENA_EMPTY;
-  Dict dict = vim_to_object(&argvars[0], &arena, true).data.dict;
-  Context tmp = CONTEXT_INIT;
-  Error err = ERROR_INIT;
-  ctx_from_dict(dict, &tmp, &err);
-
-  if (ERROR_SET(&err)) {
-    semsg("%s", err.msg);
-    ctx_free(&tmp);
-  } else {
-    ctx_free(ctx);
-    *ctx = tmp;
-  }
-
-  arena_mem_free(arena_finish(&arena));
-  api_clear_error(&err);
-  did_emsg = save_did_emsg;
-}
-
-/// "ctxsize()" function
-static void f_ctxsize(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  rettv->v_type = VAR_NUMBER;
-  rettv->vval.v_number = (varnumber_T)ctx_size();
-}
-
 /// Set the cursor position.
 /// If "charcol" is true, then use the column number as a character offset.
 /// Otherwise use the column number as a byte offset.
@@ -1167,7 +1052,7 @@ static void f_empty(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         || *argvars[0].vval.v_string == NUL;
     break;
   case VAR_PARTIAL:
-    n = false;
+    n = argvars[0].vval.v_partial == NULL;
     break;
   case VAR_NUMBER:
     n = argvars[0].vval.v_number == 0;
@@ -1261,7 +1146,7 @@ typedef struct {
   const listitem_T *li;
 } GetListLineCookie;
 
-static char *get_list_line(int c, void *cookie, int indent, bool do_concat)
+char *get_list_line(int c, void *cookie, int indent, bool do_concat)
 {
   GetListLineCookie *const p = (GetListLineCookie *)cookie;
 
@@ -1402,19 +1287,13 @@ static void f_exists(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "expand()" function
 static void f_expand(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  int options = WILD_SILENT|WILD_USE_NL|WILD_LIST_NOTFOUND;
+  int options = WILD_SILENT|WILD_USE_NL|WILD_LIST_NOTFOUND|WILD_USE_SHELLSLASH;
   bool error = false;
-#ifdef BACKSLASH_IN_FILENAME
-  char *p_csl_save = p_csl;
-
-  // avoid using 'completeslash' here
-  p_csl = empty_string_option;
-#endif
 
   rettv->v_type = VAR_STRING;
   if (argvars[1].v_type != VAR_UNKNOWN
       && argvars[2].v_type != VAR_UNKNOWN
-      && tv_get_number_chk(&argvars[2], &error)
+      && tv_get_bool_chk(&argvars[2], &error)
       && !error) {
     tv_list_set_ret(rettv, NULL);
   }
@@ -1445,7 +1324,7 @@ static void f_expand(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     // When the optional second argument is non-zero, don't remove matches
     // for 'wildignore' and don't put matches for 'suffixes' at the end.
     if (argvars[1].v_type != VAR_UNKNOWN
-        && tv_get_number_chk(&argvars[1], &error)) {
+        && tv_get_bool_chk(&argvars[1], &error)) {
       options |= WILD_KEEP_ALL;
     }
     if (!error) {
@@ -1469,9 +1348,6 @@ static void f_expand(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       rettv->vval.v_string = NULL;
     }
   }
-#ifdef BACKSLASH_IN_FILENAME
-  p_csl = p_csl_save;
-#endif
 }
 
 /// "menu_get(path [, modes])" function
@@ -1824,7 +1700,7 @@ static void f_garbagecollect(typval_T *argvars, typval_T *rettv, EvalFuncData fp
   // using Lists and Dicts internally.  E.g.: ":echo [garbagecollect()]".
   want_garbage_collect = true;
 
-  if (argvars[0].v_type != VAR_UNKNOWN && tv_get_number(&argvars[0]) == 1) {
+  if (argvars[0].v_type != VAR_UNKNOWN && tv_get_bool(&argvars[0]) == 1) {
     garbage_collect_at_exit = true;
   }
 }
@@ -2504,9 +2380,9 @@ static void f_getreg(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   if (argvars[0].v_type != VAR_UNKNOWN && argvars[1].v_type != VAR_UNKNOWN) {
     bool error = false;
-    arg2 = (int)tv_get_number_chk(&argvars[1], &error);
+    arg2 = (int)tv_get_bool_chk(&argvars[1], &error);
     if (!error && argvars[2].v_type != VAR_UNKNOWN) {
-      return_list = (bool)tv_get_number_chk(&argvars[2], &error);
+      return_list = (bool)tv_get_bool_chk(&argvars[2], &error);
     }
     if (error) {
       return;
@@ -2962,7 +2838,7 @@ static void f_index(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       assert(item != NULL);
     }
     if (argvars[3].v_type != VAR_UNKNOWN) {
-      ic = !!tv_get_number_chk(&argvars[3], &error);
+      ic = !!tv_get_bool_chk(&argvars[3], &error);
       if (error) {
         item = NULL;
       }
@@ -3376,19 +3252,32 @@ static const char *required_env_vars[] = {
   NULL
 };
 
+/// Builds an environment dict for a child process (job).
+///
+/// @param set_nvim_addr  Set the $NVIM env var.
 dict_T *create_environment(const dictitem_T *job_env, const bool clear_env, const bool pty,
-                           const char * const pty_term_name)
+                           const bool set_nvim_addr, const char * const pty_term_name)
 {
   dict_T *env = tv_dict_alloc();
 
   if (!clear_env) {
-    typval_T temp_env = TV_INITIAL_VALUE;
-    typval_T no_args[] = { { .v_type = VAR_UNKNOWN } };
-    nlua_call_vimfn("vim._core.vimfn", "f_environ", no_args, &temp_env);
-    if (temp_env.v_type == VAR_DICT) {
-      tv_dict_extend(env, temp_env.vval.v_dict, "force");
+    uv_env_item_t *envitems;
+    int envcount;
+    if (uv_os_environ(&envitems, &envcount) == 0) {
+      for (int i = 0; i < envcount; i++) {
+        const char *name = envitems[i].name;
+        size_t namelen = strlen(name);
+#ifdef MSWIN
+        // Force uppercase keys on Windows (for dedup, below). #39443
+        if (namelen < MAXPATHL / MB_MAXBYTES) {
+          namelen = mb_strup_buf(name, NameBuff);
+          name = NameBuff;
+        }
+#endif
+        tv_dict_add_str(env, name, namelen, envitems[i].value);
+      }
+      uv_os_free_environ(envitems, envcount);
     }
-    tv_clear(&temp_env);
 
     if (pty) {
       // These env vars shouldn't propagate to the child process. #6764
@@ -3421,27 +3310,32 @@ dict_T *create_environment(const dictitem_T *job_env, const bool clear_env, cons
   }
 
   // Set $NVIM (in the child process) to v:servername. #3118
-  char *nvim_addr = get_vim_var_str(VV_SEND_SERVER);
-  if (nvim_addr[0] != NUL) {
-    dictitem_T *dv = tv_dict_find(env, S_LEN("NVIM"));
-    if (dv) {
-      tv_dict_item_remove(env, dv);
+  if (set_nvim_addr) {
+    char *nvim_addr = get_vim_var_str(VV_SEND_SERVER);
+    if (nvim_addr[0] != NUL) {
+      dictitem_T *dv = tv_dict_find(env, S_LEN("NVIM"));
+      if (dv) {
+        tv_dict_item_remove(env, dv);
+      }
+      tv_dict_add_str(env, S_LEN("NVIM"), nvim_addr);
     }
-    tv_dict_add_str(env, S_LEN("NVIM"), nvim_addr);
   }
 
   if (job_env) {
 #ifdef MSWIN
     TV_DICT_ITER(job_env->di_tv.vval.v_dict, var, {
-      // Always use upper-case keys for Windows so we detect duplicate keys
-      char *const key = strcase_save(var->di_key, true);
-      size_t len = strlen(key);
-      dictitem_T *dv = tv_dict_find(env, key, len);
+      // Force uppercase keys on Windows (dedup).
+      const char *name = var->di_key;
+      size_t namelen = strlen(name);
+      if (namelen < MAXPATHL / MB_MAXBYTES) {
+        namelen = mb_strup_buf(name, NameBuff);
+        name = NameBuff;
+      }
+      dictitem_T *dv = tv_dict_find(env, name, (ptrdiff_t)namelen);
       if (dv) {
         tv_dict_item_remove(env, dv);
       }
-      tv_dict_add_str(env, key, len, tv_get_string(&var->di_tv));
-      xfree(key);
+      tv_dict_add_str(env, name, namelen, tv_get_string(&var->di_tv));
     });
 #else
     tv_dict_extend(env, job_env->di_tv.vval.v_dict, "force");
@@ -3584,6 +3478,11 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       shell_free_argv(argv);
       return;
     }
+    if (bt_cmdwin(curbuf)) {
+      emsg(_(e_cmdwin));
+      shell_free_argv(argv);
+      return;
+    }
     if (curbuf->b_changed) {
       emsg(_("jobstart(...,{term=true}) requires unmodified buffer"));
       shell_free_argv(argv);
@@ -3613,7 +3512,7 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     term_name = term_name ? term_name : "ansi";
   }
 
-  dict_T *env = create_environment(job_env, clear_env, pty, term_name);
+  dict_T *env = create_environment(job_env, clear_env, pty, true, term_name);
   Channel *chan = channel_job_start(argv, NULL, on_stdout, on_stderr, on_exit, pty,
                                     rpc, overlapped, detach, stdin_mode, cwd,
                                     width, height, env, &rettv->vval.v_number);
@@ -4036,7 +3935,7 @@ static void f_luaeval(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  nlua_typval_eval(cstr_as_string(str), &argvars[1], rettv);
+  nlua_call_luaeval(cstr_as_string(str), &argvars[1], rettv);
 }
 
 static void find_some_match(typval_T *const argvars, typval_T *const rettv,
@@ -4872,46 +4771,6 @@ static void f_printf(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 }
 
-/// "prompt_getprompt({buffer})" function
-static void f_prompt_getprompt(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-  FUNC_ATTR_NONNULL_ALL
-{
-  // return an empty string by default, e.g. it's not a prompt buffer
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = NULL;
-
-  buf_T *const buf = tv_get_buf_from_arg(&argvars[0]);
-  if (buf == NULL) {
-    return;
-  }
-
-  if (!bt_prompt(buf)) {
-    return;
-  }
-
-  rettv->vval.v_string = xstrdup(buf_prompt_text(buf));
-}
-
-/// "prompt_getinput({buffer})" function
-static void f_prompt_getinput(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-  FUNC_ATTR_NONNULL_ALL
-{
-  // return an empty string by default, e.g. it's not a prompt buffer
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = NULL;
-
-  buf_T *const buf = tv_get_buf_from_arg(&argvars[0]);
-  if (buf == NULL) {
-    return;
-  }
-
-  if (!bt_prompt(buf)) {
-    return;
-  }
-
-  rettv->vval.v_string = prompt_get_input(buf);
-}
-
 /// "pum_getpos()" function
 static void f_pum_getpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
@@ -5140,28 +4999,32 @@ static void f_getreginfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   tv_dict_add_list(dict, S_LEN("regcontents"), list);
 
   char buf[NUMBUFLEN + 2];
-  buf[0] = NUL;
-  buf[1] = NUL;
+  size_t buflen;
   colnr_T reglen = 0;
   switch (get_reg_type(regname, &reglen)) {
   case kMTLineWise:
     buf[0] = 'V';
+    buf[1] = NUL;
+    buflen = 1;
     break;
   case kMTCharWise:
     buf[0] = 'v';
+    buf[1] = NUL;
+    buflen = 1;
     break;
   case kMTBlockWise:
-    vim_snprintf(buf, sizeof(buf), "%c%d", Ctrl_V, reglen + 1);
+    buflen = vim_snprintf_safelen(buf, sizeof(buf), "%c%d", Ctrl_V, reglen + 1);
     break;
   case kMTUnknown:
     abort();
   }
-  tv_dict_add_str(dict, S_LEN("regtype"), buf);
+  tv_dict_add_str_len(dict, S_LEN("regtype"), buf, (int)buflen);
 
   buf[0] = (char)get_register_name(get_unname_register());
   buf[1] = NUL;
+  buflen = buf[0] == NUL ? 0 : 1;
   if (regname == '"') {
-    tv_dict_add_str(dict, S_LEN("points_to"), buf);
+    tv_dict_add_str_len(dict, S_LEN("points_to"), buf, (int)buflen);
   } else {
     tv_dict_add_bool(dict, S_LEN("isunnamed"),
                      regname == buf[0] ? kBoolVarTrue : kBoolVarFalse);
@@ -5170,10 +5033,10 @@ static void f_getreginfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
 static void return_register(int regname, typval_T *rettv)
 {
-  char buf[2] = { (char)regname, 0 };
+  char buf[2] = { (char)regname, NUL };
 
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = xstrdup(buf);
+  rettv->vval.v_string = xmemdupz(buf, buf[0] == NUL ? 0 : 1);
 }
 
 /// "reg_executing()" function
@@ -5458,6 +5321,7 @@ static void reduce_string(typval_T *argvars, typval_T *expr, typval_T *rettv)
   for (; *p != NUL; p += len) {
     typval_T argv[3];
     argv[0] = *rettv;
+    rettv->v_type = VAR_UNKNOWN;
     len = utfc_ptr2len(p);
     argv[1] = (typval_T){
       .v_type = VAR_STRING,
@@ -5695,7 +5559,7 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
   // Repeat until {skip} returns false.
   while (true) {
     subpatnum = searchit(curwin, curbuf, &pos, NULL, dir, (char *)pat, patlen, 1,
-                         options, RE_SEARCH, &sia);
+                         options, RE_SEARCH, p_magic, &sia);
     // finding the first match again means there is no match where {skip}
     // evaluates to zero.
     if (firstpos.lnum != 0 && equalpos(pos, firstpos)) {
@@ -6027,9 +5891,9 @@ static void f_searchdecl(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   const char *const name = tv_get_string_chk(&argvars[0]);
   if (argvars[1].v_type != VAR_UNKNOWN) {
-    locally = tv_get_number_chk(&argvars[1], &error) == 0;
+    locally = !tv_get_bool_chk(&argvars[1], &error);
     if (!error && argvars[2].v_type != VAR_UNKNOWN) {
-      thisblock = tv_get_number_chk(&argvars[2], &error) != 0;
+      thisblock = (int)tv_get_bool_chk(&argvars[2], &error);
     }
   }
   if (!error && name != NULL) {
@@ -6206,7 +6070,7 @@ int do_searchpair(const char *spat, const char *mpat, const char *epat, int dir,
     };
 
     int n = searchit(curwin, curbuf, &pos, NULL, dir, pat, patlen, 1,
-                     options, RE_SEARCH, &sia);
+                     options, RE_SEARCH, true, &sia);
     if (n == FAIL || (firstpos.lnum != 0 && equalpos(pos, firstpos))) {
       // didn't find it or found the first match again: FAIL
       break;
@@ -6299,7 +6163,7 @@ int do_searchpair(const char *spat, const char *mpat, const char *epat, int dir,
     // If it's still empty it was changed and restored, need to restore in
     // the complicated way.
     if (*p_cpo == NUL) {
-      set_option_value_give_err(kOptCpoptions, CSTR_AS_OPTVAL(save_cpo), 0);
+      set_option_value_give_err(kOptCpoptions, CSTR_AS_OBJ(save_cpo), 0);
     }
     free_string_option(save_cpo);
   }
@@ -6346,7 +6210,7 @@ static void f_serverlist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
                                                                               .vval.v_special =
                                                                                 kSpecialVarNull };
   typval_T lua_args[] = { opts, addrs_tv, { .v_type = VAR_UNKNOWN } };
-  nlua_call_vimfn("vim._core.server", "serverlist", lua_args, rettv);
+  nlua_call_typval("vim._core.server", "serverlist", lua_args, rettv);
   tv_clear(&addrs_tv);
 }
 
@@ -6367,7 +6231,7 @@ static void f_serverstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       emsg(_(e_invarg));
       return;
     }
-    address = xstrdup(tv_get_string(argvars));
+    address = TO_SLASH_SAVE(tv_get_string(argvars));
   } else {
     address = server_address_new(NULL);
   }
@@ -6636,7 +6500,7 @@ static void f_setreg(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         pointreg = *stropt;
         regname = pointreg;
       }
-    } else if (tv_dict_get_number(d, "isunnamed")) {
+    } else if (tv_dict_get_bool(d, "isunnamed", -1) > 0) {
       pointreg = regname;
     }
   } else {
@@ -6832,7 +6696,7 @@ static void f_sockconnect(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   const char *mode = tv_get_string(&argvars[0]);
-  const char *address = tv_get_string(&argvars[1]);
+  const char *address = TO_SLASH_SAVE(tv_get_string(&argvars[1]));
 
   bool tcp;
   if (strcmp(mode, "tcp") == 0) {
@@ -6841,7 +6705,7 @@ static void f_sockconnect(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     tcp = false;
   } else {
     semsg(_(e_invarg2), "invalid mode");
-    return;
+    goto cleanup;
   }
 
   bool rpc = false;
@@ -6851,7 +6715,7 @@ static void f_sockconnect(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     rpc = tv_dict_get_number(opts, "rpc") != 0;
 
     if (!tv_dict_get_callback(opts, S_LEN("on_data"), &on_data.cb)) {
-      return;
+      goto cleanup;
     }
     on_data.buffered = tv_dict_get_number(opts, "data_buffered");
     if (on_data.buffered && on_data.cb.type == kCallbackNone) {
@@ -6868,6 +6732,8 @@ static void f_sockconnect(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   rettv->vval.v_number = (varnumber_T)id;
   rettv->v_type = VAR_NUMBER;
+cleanup:
+  XFREE_CLEAR(address);
 }
 
 /// "stdioopen()" function
@@ -6913,7 +6779,7 @@ static void f_reltimefloat(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
   rettv->v_type = VAR_FLOAT;
   rettv->vval.v_float = 0;
   if (list2proftime(&argvars[0], &tm) == OK) {
-    rettv->vval.v_float = (float_T)profile_signed(tm) / 1000000000.0;
+    rettv->vval.v_float = (float_T)profile_signed(tm) / NS_PER_SEC;
   }
 }
 
@@ -7015,7 +6881,7 @@ static void f_spellsuggest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
       goto f_spellsuggest_return;
     }
     if (argvars[2].v_type != VAR_UNKNOWN) {
-      need_capital = tv_get_number_chk(&argvars[2], &typeerr);
+      need_capital = tv_get_bool_chk(&argvars[2], &typeerr);
       if (typeerr) {
         goto f_spellsuggest_return;
       }
@@ -7335,7 +7201,7 @@ static void f_substitute(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 static void f_swapfilelist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   tv_list_alloc_ret(rettv, kListLenUnknown);
-  recover_names(NULL, false, rettv->vval.v_list, 0, NULL);
+  recover_names(NULL, false, rettv->vval.v_list);
 }
 
 /// "swapinfo(swap_filename)" function
@@ -7367,7 +7233,7 @@ static void f_synID(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   const colnr_T col = (colnr_T)tv_get_number(&argvars[1]) - 1;
 
   bool transerr = false;
-  const int trans = (int)tv_get_number_chk(&argvars[2], &transerr);
+  const int trans = (int)tv_get_bool_chk(&argvars[2], &transerr);
 
   int id = 0;
   if (!transerr && lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count

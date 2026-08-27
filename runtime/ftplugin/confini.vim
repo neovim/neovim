@@ -7,4 +7,4 @@ if exists("b:did_ftplugin")
 endif
 
 " Use the cfg plugin, it's similar enough.
-runtime! ftplugin/cfg.vim
+runtime! ftplugin/cfg[.]{vim,lua}

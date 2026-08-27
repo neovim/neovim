@@ -182,7 +182,7 @@ argument.
                 changes and writing.
 
 -e                                                      *-e* *-E*
--E              Start Nvim in Ex mode |gQ|, see |Ex-mode|.
+-E              Start Nvim in |Ex-mode|.
 
                 If stdin is not a TTY:
                 • -e reads/executes stdin as Ex commands.
@@ -209,6 +209,11 @@ argument.
                 With |:verbose| or 'verbose', other commands display on stderr: >
                         nvim -es +"verbose echo 'foo'"
                         nvim -V1 -es +"echo 'foo'"
+<
+                Commands that wait for typed input (|input()|, |getchar()|, …)
+                stop Nvim on EOF; they do not consume stdin. Lua can read
+                stdin as data: >
+                        printf 'lua vim.g.b = io.read()\nfoo\nput =g:b\np' | nvim -es
 <
                 Skips user |config| unless |-u| was given.
                 Disables |shada| unless |-i| was given.
@@ -246,14 +251,6 @@ argument.
                 Disables plugins unless 'loadplugins' was set.
                 Disables |shada| unless |-i| was given.
                 Disables swapfile (like |-n|).
-
-                                                        *-ll*
--ll {script} [args]
-                Executes a Lua script, similarly to |-l|, but the editor is not
-                initialized. This gives a Lua environment similar to a worker
-                thread. See |lua-loop-threading|.
-
-                Unlike `-l` no prior arguments are allowed.
 
                                                         *-b*
 -b              Binary mode.  File I/O will only recognize <NL> to separate
@@ -315,10 +312,10 @@ argument.
                 the command line determines how the windows will be split.
 
                                                         *-p*
--p[N]           Open N tab pages.  If [N] is not given, one tab page is opened
+-p[N]           Open N tabpages.  If [N] is not given, one tabpage is opened
                 for every file given as argument.  The maximum is set with
-                'tabpagemax' pages (default 50).  If there are more tab pages
-                than arguments, the last few tab pages will be editing an
+                'tabpagemax' pages (default 50).  If there are more tabpages
+                than arguments, the last few tabpages will be editing an
                 empty file.  Also see |tabpage|.
                                                         *-d*
 -d              Start in |diff-mode|.
@@ -434,30 +431,32 @@ Initialization                                  *initialization* *startup*
 At startup, Nvim checks environment variables and files and sets values
 accordingly, proceeding as follows:
 
-1. Set the 'shell' option.                      *SHELL* *COMSPEC*
+1. Set |v:starttime| and |v:startreason|.
+
+2. Set the 'shell' option.                      *SHELL* *COMSPEC*
    The environment variable SHELL, if it exists, is used to set the 'shell'
    option.  On Win32, the COMSPEC variable is used if SHELL is not set.
 
-2. Process the arguments.
+3. Process the arguments.
    The options and file names from the command that start Vim are inspected.
    The |-V| argument can be used to display or log what happens next, useful
    for debugging the initializations. The |--cmd| arguments are executed.
    Buffers are created for all files (but not loaded yet).
 
-3. Start a server (unless |--listen| was given) and set |v:servername|.
+4. Start a server (unless |--listen| was given) and set |v:servername|.
 
-4. Wait for UI to connect.
+5. Wait for UI to connect.
    Nvim started with |--embed| waits for the UI to connect before proceeding
    to load user configuration.
 
-5. Setup |default-mappings| and |default-autocmds|.  Create |popup-menu|.
+6. Setup |default-mappings| and |default-autocmds|.  Create |popup-menu|.
 
-6. Enable filetype and indent plugins.
+7. Enable filetype and indent plugins.
    Skipped if the "-u NONE" command line argument was given.
    This does the same as: >
         :runtime! ftplugin.vim indent.vim
 
-7. Load user config (execute Ex commands from files, environment, …).
+8. Load user config (execute Ex commands from files, environment, …).
    $VIMINIT environment variable is read as one Ex command line (separate
    multiple commands with '|' or <NL>).
                                         *config* *init.vim* *init.lua* *vimrc* *exrc*
@@ -499,19 +498,19 @@ accordingly, proceeding as follows:
         - ".nvimrc"
         - ".exrc"
 
-8. Enable filetype detection.
+9. Enable filetype detection.
    Skipped if ":filetype off" was called or if the "-u NONE" command line
    argument was given. This does the same as: >
         :runtime! filetype.lua
 
-9. Enable syntax highlighting.
+10. Enable syntax highlighting.
    Skipped if ":syntax off" was called or if the "-u NONE" command line
    argument was given. This does the same as: >
         :runtime! syntax/syntax.vim
 
-10. Set the |v:vim_did_init| variable to 1.
+11. Set the |v:vim_did_init| variable to 1.
 
-11. Load the plugin scripts.                                    *load-plugins*
+12. Load the plugin scripts.                                    *load-plugins*
     This does the same as:
         `:runtime! plugin/**/*.{vim,lua}`
     - The result is that all directories in 'runtimepath' will be searched for
@@ -538,26 +537,26 @@ accordingly, proceeding as follows:
       if packages have been found, but that should not add a directory ending
       in "after".
 
-12. Set 'shellpipe' and 'shellredir', according to the value of the 'shell'
+13. Set 'shellpipe' and 'shellredir', according to the value of the 'shell'
     option, unless they were already set. Nvim will figure out the values of
     'shellpipe' and 'shellredir' for you, unless you have set them yourself.
 
-13. Set 'updatecount' to zero, if |-n| was given.
+14. Set 'updatecount' to zero, if |-n| was given.
 
-14. Set binary options if |-b| was given.
+15. Set binary options if |-b| was given.
 
-15. Read the |shada-file|.
+16. Read the |shada-file|.
 
-16. Read the quickfix file if |-q| was given, or exit on failure.
+17. Read the quickfix file if |-q| was given, or exit on failure.
 
-17. Open all windows.
+18. Open all windows.
     - When |-o| was given, windows will be opened (but not displayed yet).
-    - When |-p| was given, tab pages will be created (but not displayed yet).
+    - When |-p| was given, tabpages will be created (but not displayed yet).
     - When switching screens, it happens now.  Redrawing starts.
     - If |-q| was given, the first error is jumped to.
     - Buffers for all windows will be loaded, without triggering |BufAdd|.
 
-18. Execute startup commands.
+19. Execute startup commands.
     - If |-t| was given, the tag is jumped to.
     - Commands given with |-c| and |+cmd| are executed.
     - The |vim_starting| flag is reset, `has("vim_starting")` will now return zero.
@@ -618,7 +617,7 @@ setting can affect the entire editor in ways that are not initially obvious.
 
 To find the cause of a problem in your config, you must "bisect" it:
 1. Remove or disable half of your |config|.
-2. Restart Nvim.
+2. Restart Nvim (|:restart|).
 3. If the problem still occurs, goto 1.
 4. If the problem is gone, restore half of the removed lines.
 5. Continue narrowing your config in this way, until you find the setting or
@@ -801,11 +800,11 @@ The output of ":mksession" is like ":mkvimrc", but additional commands are
 added to the file.  Which ones depends on the 'sessionoptions' option.  The
 resulting file, when executed with a ":source" command:
 1. Restores global mappings and options, if 'sessionoptions' contains
-   "options".  Script-local mappings will not be written.
+   "options".  Lua functions, and script-local mappings, will not be written.
 2. Restores global variables that start with an uppercase letter and contain
    at least one lowercase letter, if 'sessionoptions' contains "globals".
-3. Closes all windows in the current tab page, except the current one; closes
-   all tab pages except the current one (this results in currently loaded
+3. Closes all windows in the current tabpage, except the current one; closes
+   all tabpages except the current one (this results in currently loaded
    buffers to be unloaded, some may become hidden if 'hidden' is set or
    otherwise specified); wipes out the current buffer, if it is empty and
    unnamed.
@@ -837,8 +836,8 @@ An example mapping: >
   :nmap <F2> :wa<Bar>exe "mksession! " .. v:this_session<CR>:so ~/sessions/
 This saves the current Session, and starts off the command to load another.
 
-A session includes all tab pages, unless "tabpages" was removed from
-'sessionoptions'. |tab-page|
+A session includes all tabpages, unless "tabpages" was removed from
+'sessionoptions'. |tabpage|
 
 The |SessionLoadPre| autocmd event is triggered before a session file is
 loaded/sourced and |SessionLoadPost| autocmd event is triggered after.
@@ -873,6 +872,7 @@ The output of ":mkview" contains these items:
    that are local to the current buffer and the current window are restored.
    When storing the view as part of a session and "options" is in
    'sessionoptions', global values for local options will be stored too.
+   Lua functions are not restored.
 4. Restore folds when using manual folding and 'viewoptions' contains
    "folds".  Restore manually opened and closed folds.
 5. The scroll position and the cursor position in the file.  Doesn't work very

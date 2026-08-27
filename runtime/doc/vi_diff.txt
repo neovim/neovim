@@ -78,10 +78,10 @@ Multiple windows and buffers.				|windows.txt|
 	can still be loaded (and changed) but not displayed in a window.  This
 	is called a hidden buffer.  Many commands and options have been added
 	for this facility.
-	Vim can also use multiple tab pages, each with one or more windows.  A
+	Vim can also use multiple tabpages, each with one or more windows.  A
 	line with tab labels can be used to quickly switch between these
 	pages.
-	|tab-page|
+	|tabpage|
 
 Syntax highlighting.					|:syntax|
 	Vim can highlight keywords, patterns and other things.  This is
@@ -258,7 +258,7 @@ Extended search patterns.				|pattern|
 	"x\{2,4}" matches "x" 2 to 4 times.
 	"\s" matches a white space character.
 
-Directory, remote and archive browsing.			|netrw|
+Directory, remote and archive browsing.			|dir|
 	Vim can browse the file system.  Simply edit a directory.  Move around
 	in the list with the usual commands and press <Enter> to go to the
 	directory or file under the cursor.

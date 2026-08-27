@@ -31,6 +31,37 @@ local matchregex = vim.filetype._matchregex
 -- luacheck: push no unused args
 -- luacheck: push ignore 122
 
+-- AL (Microsoft Dynamics 365 Business Central) or Perl AutoLoader
+--- @type vim.filetype.mapfn
+function M.al(_, bufnr)
+  if vim.g.filetype_al then
+    return vim.g.filetype_al
+  end
+  -- AL sources declare an object as "<kind> <id> <name>" at the start of a
+  -- line, optionally preceded by namespace and using declarations.  Perl
+  -- AutoLoader chunks match neither.  Matching a bare keyword anywhere would
+  -- be wrong: table, page and report are ordinary English words, so the object
+  -- name must follow.  The match is case sensitive because AL tooling emits
+  -- lowercase keywords, while prose in Perl comments is usually capitalised.
+  for _, line in ipairs(getlines(bufnr, 1, 200)) do
+    if
+      matchregex(
+        line,
+        [[^\s*\%(codeunit\|page\|pageextension\|pagecustomization\|table\|tableextension\|]]
+          .. [[report\|reportextension\|xmlport\|query\|enum\|enumextension\|profile\|profileextension\|]]
+          .. [[controladdin\|interface\|permissionset\|permissionsetextension\|entitlement\)\>\s\+\%(\d\|"\|\u\)]]
+      )
+      or findany(
+        line,
+        { '^%s*dotnet%s*$', '^%s*namespace%s+[%w._]+%s*;', '^%s*using%s+[%w._]+%s*;' }
+      )
+    then
+      return 'al'
+    end
+  end
+  return 'perl'
+end
+
 -- Erlang Application Resource Files (*.app.src is matched by extension)
 -- See: https://erlang.org/doc/system/applications
 --- @type vim.filetype.mapfn
@@ -61,6 +92,20 @@ function M.app(path, bufnr)
       return
     end
   end
+end
+
+-- This function checks for Kawasaki robots AS file or atlas file type.
+--- @type vim.filetype.mapfn
+function M.as(_, bufnr)
+  if vim.g.filetype_as then
+    return vim.g.filetype_as
+  end
+  for _, line in ipairs(getlines(bufnr, 1, 30)) do
+    if line:find('^%.NETCONF') then
+      return 'kawasaki_as'
+    end
+  end
+  return 'atlas'
 end
 
 --- @param bufnr integer
@@ -848,7 +893,7 @@ function M.html(_, bufnr)
     if
       matchregex(
         line,
-        [[@\(if\|for\|defer\|switch\)\|\*\(ngIf\|ngFor\|ngSwitch\|ngTemplateOutlet\)\|ng-template\|ng-content]]
+        [[@\(if\|for\|defer\|switch\)\|\*\(ngIf\|ngFor\|ngSwitch\|ngTemplateOutlet\)\|\<ng-template\|\<ng-content]]
       )
     then
       return 'htmlangular'
@@ -936,10 +981,10 @@ function M.inc(path, bufnr)
     elseif findany(line, { '^%s{', '^%s%(%*' }) or matchregex(line, pascal_keywords) then
       return 'pascal'
     elseif
-      matchregex(line, [[\<\%(require\|inherit\)\>]])
+      matchregex(line, [[^\s*\<\%(require\|inherit\)\>]])
       or matchregex(
         line,
-        [=[[A-Z][A-Za-z0-9_:${}/]*\(\[[A-Za-z0-9_:/]\+\]\)*\s\+\%(??\|[?:+.]\)\?=.\? ]=]
+        [=[^\s*[A-Z][A-Za-z0-9_:${}/]*\%(\[[A-Za-z0-9_:/]\+\]\)*\s\+\%(??=\|[?:+.]=\|=[+.]\?\)\s\+]=]
       )
     then
       return 'bitbake'
@@ -1258,8 +1303,12 @@ end
 
 --- @type vim.filetype.mapfn
 function M.mm(_, bufnr)
+  if vim.g.filetype_mm then
+    return vim.g.filetype_mm
+  end
+
   for _, line in ipairs(getlines(bufnr, 1, 20)) do
-    if matchregex(line, [[\c^\s*\(#\s*\(include\|import\)\>\|@import\>\|/\*\)]]) then
+    if matchregex(line, [[\c^\s*\(//\|#\s*\(include\|import\)\>\|@import\>\|/\*\)]]) then
       return 'objcpp'
     end
   end
@@ -1879,12 +1928,23 @@ end
 -- Determine if a *.tf file is TF (TinyFugue) mud client or terraform
 --- @type vim.filetype.mapfn
 function M.tf(_, bufnr)
-  for _, line in ipairs(getlines(bufnr)) do
-    -- Assume terraform file on a non-empty line (not whitespace-only)
-    -- and when the first non-whitespace character is not a ; or /
-    if not line:find('^%s*$') and not line:find('^%s*[;/]') then
-      return 'terraform'
+  if vim.g.filetype_tf then
+    return vim.g.filetype_tf
+  end
+
+  local continuation = false
+  for _, line in ipairs(getlines(bufnr, 1, 100)) do
+    -- TF supports backslash line continuation, so a continued line may begin
+    -- with any character.  Only test the first character of a line that does
+    -- not continue a previous one.
+    if not continuation then
+      -- Assume terraform file on a non-empty line (not whitespace-only)
+      -- and when the first non-whitespace character is not a ; or /
+      if not line:find('^%s*$') and not line:find('^%s*[;/]') then
+        return 'terraform'
+      end
     end
+    continuation = not not line:find('\\$')
   end
   return 'tf'
 end
@@ -2105,6 +2165,7 @@ local patterns_hashbang = {
   ['^execlineb\\>'] = { 'execline', { vim_regex = true } },
   ['^bpftrace\\>'] = { 'bpftrace', { vim_regex = true } },
   ['^vim\\>'] = { 'vim', { vim_regex = true } },
+  ['^ed\\>'] = { 'ed', { vim_regex = true } },
 }
 
 --- File starts with "#!".
@@ -2139,6 +2200,8 @@ local function match_from_hashbang(contents, path, dispatch_extension)
     name = fn.substitute(first_line, [[^#!.*\<env\>\s\+\(\i\+\).*]], '\\1', '')
   elseif matchregex(first_line, [[^#!\s*[^/\\ ]*\>\([^/\\]\|$\)]]) then
     name = fn.substitute(first_line, [[^#!\s*\([^/\\ ]*\>\).*]], '\\1', '')
+  elseif matchregex(first_line, [[^#!.*\<busybox\>]]) then
+    name = fn.substitute(first_line, [[^#!.*\<busybox\>\s\+\(\i\+\).*]], '\\1', '')
   else
     name = fn.substitute(first_line, [[^#!\s*\S*[/\\]\(\f\+\).*]], '\\1', '')
   end
@@ -2149,7 +2212,7 @@ local function match_from_hashbang(contents, path, dispatch_extension)
     name = 'wish'
   end
 
-  if matchregex(name, [[^\(bash\d*\|dash\|ksh\d*\|sh\)\>]]) then
+  if matchregex(name, [[^\(bash\d*\|d\?ash\|ksh\d*\|sh\)\>]]) then
     -- Bourne-like shell scripts: bash bash2 dash ksh ksh93 sh
     return sh(path, contents, first_line)
   elseif matchregex(name, [[^csh\>]]) then

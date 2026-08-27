@@ -9,5 +9,5 @@ if exists("b:did_ftplugin")
 endif
 
 " Use HTML and Django template ftplugins.
-runtime! ftplugin/html.vim
-runtime! ftplugin/django.vim
+runtime! ftplugin/html[.]{vim,lua}
+runtime! ftplugin/django[.]{vim,lua}

@@ -2,6 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear, feed, insert = n.clear, n.feed, n.insert
 local command = n.command
 local feed_command = n.feed_command
@@ -574,6 +575,16 @@ describe('search highlighting', function()
       {1:~                                       }|*4
       /mat/e                                  |
     ]])
+
+    command([[call setline(1, ['blah blah blah']) | 2,$delete_]])
+    feed('gg0/blah/e<C-g><cr>')
+    eq({ 0, 1, 9, 0 }, fn.getpos('.'))
+
+    feed('gg0/blah/e<C-g><C-g><cr>')
+    eq({ 0, 1, 14, 0 }, fn.getpos('.'))
+
+    feed('gg0/blah/e<C-g><C-g><C-t><cr>')
+    eq({ 0, 1, 9, 0 }, fn.getpos('.'))
   end)
 
   it('works with multiline regexps', function()

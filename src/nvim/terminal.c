@@ -51,6 +51,7 @@
 #include "nvim/change.h"
 #include "nvim/channel.h"
 #include "nvim/channel_defs.h"
+#include "nvim/context.h"
 #include "nvim/cursor.h"
 #include "nvim/cursor_shape.h"
 #include "nvim/drawline.h"
@@ -64,12 +65,13 @@
 #include "nvim/event/multiqueue.h"
 #include "nvim/event/time.h"
 #include "nvim/ex_docmd.h"
-#include "nvim/getchar.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
+#include "nvim/input.h"
+#include "nvim/input_cmdatom.h"
 #include "nvim/keycodes.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
@@ -247,6 +249,8 @@ static void emit_termrequest(void **argv)
   buf_T *buf = handle_get_buffer(buf_handle);
   if (!buf || buf->terminal == NULL) {  // Terminal already closed.
     xfree(sequence);
+    kv_destroy(*pending_send);
+    xfree(pending_send);
     return;
   }
   Terminal *term = buf->terminal;
@@ -277,7 +281,7 @@ static void emit_termrequest(void **argv)
 
   term->refcount++;
   apply_autocmds_group(EVENT_TERMREQUEST, NULL, NULL, true, AUGROUP_ALL, buf, NULL,
-                       &DICT_OBJ(data));
+                       &DICT_OBJ(data), false);
   term->refcount--;
   xfree(sequence);
 
@@ -585,8 +589,8 @@ void terminal_open(Terminal **termpp, buf_T *buf)
   Terminal *term = *termpp;
   assert(term != NULL);
 
-  aco_save_T aco;
-  aucmd_prepbuf(&aco, buf);
+  CtxSwitch aco = { 0 };
+  ctx_switch(&aco, NULL, NULL, buf, 0);
 
   if (term->sb_buffer != NULL) {
     // If scrollback has been allocated by autocommands between terminal_alloc()
@@ -597,7 +601,7 @@ void terminal_open(Terminal **termpp, buf_T *buf)
   }
   refresh_screen(term, buf);
   buf->b_locked++;
-  set_option_value(kOptBuftype, STATIC_CSTR_AS_OPTVAL("terminal"), OPT_LOCAL);
+  set_option_value(kOptBuftype, STATIC_CSTR_AS_OBJ("terminal"), OPT_LOCAL);
   buf->b_locked--;
 
   if (buf->b_ffname != NULL) {
@@ -613,7 +617,7 @@ void terminal_open(Terminal **termpp, buf_T *buf)
   // allocated anyway if needed.
   apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, buf);
 
-  aucmd_restbuf(&aco);
+  ctx_restore(&aco);
 
   if (*termpp == NULL || term->buf_handle == 0) {
     return;  // Terminal has already been destroyed.
@@ -735,7 +739,7 @@ void terminal_close(Terminal **termpp, int status)
     PUT_C(data, "pos", INTEGER_OBJ(pos));
 
     apply_autocmds_group(EVENT_TERMCLOSE, NULL, NULL, status >= 0, AUGROUP_ALL,
-                         buf, NULL, &DICT_OBJ(data));
+                         buf, NULL, &DICT_OBJ(data), false);
 
     restore_v_event(dict, &save_v_event);
   }
@@ -781,7 +785,7 @@ void terminal_check_size(Terminal *term)
   // Check if there is a window that displays the terminal and find the maximum width and height.
   // Skip the autocommand window which isn't actually displayed.
   FOR_ALL_TAB_WINDOWS(tp, wp) {
-    if (is_aucmd_win(wp)) {
+    if (is_ctx_win(wp)) {
       continue;
     }
     if (wp->w_buffer && wp->w_buffer->terminal == term) {
@@ -902,13 +906,14 @@ bool terminal_enter(void)
   TerminalState s[1] = { 0 };
   s->term = buf->terminal;
   s->cursor_visible = true;  // Assume visible; may change via refresh_cursor later.
-  stop_insert_mode = false;
+  Ins.stop_insert_mode = false;
 
   // Ensure the terminal is properly sized. Ideally window size management
   // code should always have resized the terminal already, but check here to
   // be sure.
   terminal_check_size(s->term);
 
+  atom_term_enter();
   int save_state = State;
   s->save_rd = RedrawingDisabled;
   State = MODE_TERMINAL;
@@ -1050,7 +1055,7 @@ static int terminal_check(VimState *state)
   // Shouldn't reach here when pressing a key to close the terminal buffer.
   assert(!s->close || (s->term->buf_handle == 0 && s->term != curbuf->terminal));
 
-  if (stop_insert_mode || !terminal_check_focus(s)) {
+  if (Ins.stop_insert_mode || !terminal_check_focus(s)) {
     return 0;
   }
 
@@ -1232,7 +1237,6 @@ void terminal_destroy(Terminal **termpp)
     kv_destroy(term->selection);
     kv_destroy(term->termrequest_buffer);
     vterm_free(term->vt);
-    xfree(term->pending.send);
     multiqueue_free(term->pending.events);
     xfree(term);
     *termpp = NULL;  // coverity[dead-store]
@@ -1827,8 +1831,17 @@ static void term_clipboard_set(void **argv)
     break;
   }
 
-  list_T *lines = tv_list_alloc(1);
-  tv_list_append_allocated_string(lines, data);
+  // Split the payload into readfile()-style list (:h chansend()).
+  // TODO(justinmk): drop this, support Blob in clipboard provider: #41097
+  list_T *lines = tv_list_alloc(kListLenMayKnow);
+  char *start = data;
+  char *end;
+  while ((end = strchr(start, '\n')) != NULL) {
+    tv_list_append_string(lines, start, end - start);
+    start = end + 1;
+  }
+  tv_list_append_string(lines, start, -1);
+  xfree(data);
 
   list_T *args = tv_list_alloc(3);
   tv_list_append_list(args, lines);
@@ -2305,10 +2318,7 @@ end:
     return false;
   }
 
-  int len = ins_char_typebuf(vgetc_char, vgetc_mod_mask, true);
-  if (KeyTyped) {
-    ungetchars(len);
-  }
+  requeue_key(vgetc_char, vgetc_mod_mask, 0, true);
   return true;
 }
 

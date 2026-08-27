@@ -48,11 +48,11 @@
 #include "nvim/errors.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
-#include "nvim/getchar.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/iconv_defs.h"
+#include "nvim/input.h"
 #include "nvim/keycodes.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mark.h"
@@ -189,93 +189,95 @@ enc_canon_table[] = {
   { "ucs-2le",         ENC_UNICODE + ENC_ENDIAN_L + ENC_2BYTE, 0 },
 #define IDX_UTF16       19
   { "utf-16",          ENC_UNICODE + ENC_ENDIAN_B + ENC_2WORD, 0 },
-#define IDX_UTF16LE     20
+#define IDX_UTF16BE     20
+  { "utf-16be",        ENC_UNICODE + ENC_ENDIAN_B + ENC_2WORD, 0 },
+#define IDX_UTF16LE     21
   { "utf-16le",        ENC_UNICODE + ENC_ENDIAN_L + ENC_2WORD, 0 },
-#define IDX_UCS4        21
+#define IDX_UCS4        22
   { "ucs-4",           ENC_UNICODE + ENC_ENDIAN_B + ENC_4BYTE, 0 },
-#define IDX_UCS4LE      22
+#define IDX_UCS4LE      23
   { "ucs-4le",         ENC_UNICODE + ENC_ENDIAN_L + ENC_4BYTE, 0 },
 
   // For debugging DBCS encoding on Unix.
-#define IDX_DEBUG       23
+#define IDX_DEBUG       24
   { "debug",           ENC_DBCS,               DBCS_DEBUG },
-#define IDX_EUC_JP      24
+#define IDX_EUC_JP      25
   { "euc-jp",          ENC_DBCS,               DBCS_JPNU },
-#define IDX_SJIS        25
+#define IDX_SJIS        26
   { "sjis",            ENC_DBCS,               DBCS_JPN },
-#define IDX_EUC_KR      26
+#define IDX_EUC_KR      27
   { "euc-kr",          ENC_DBCS,               DBCS_KORU },
-#define IDX_EUC_CN      27
+#define IDX_EUC_CN      28
   { "euc-cn",          ENC_DBCS,               DBCS_CHSU },
-#define IDX_EUC_TW      28
+#define IDX_EUC_TW      29
   { "euc-tw",          ENC_DBCS,               DBCS_CHTU },
-#define IDX_BIG5        29
+#define IDX_BIG5        30
   { "big5",            ENC_DBCS,               DBCS_CHT },
 
   // MS-DOS and MS-Windows codepages are included here, so that they can be
   // used on Unix too.  Most of them are similar to ISO-8859 encodings, but
   // not exactly the same.
-#define IDX_CP437       30
+#define IDX_CP437       31
   { "cp437",           ENC_8BIT,               437 },   // like iso-8859-1
-#define IDX_CP737       31
+#define IDX_CP737       32
   { "cp737",           ENC_8BIT,               737 },   // like iso-8859-7
-#define IDX_CP775       32
+#define IDX_CP775       33
   { "cp775",           ENC_8BIT,               775 },   // Baltic
-#define IDX_CP850       33
+#define IDX_CP850       34
   { "cp850",           ENC_8BIT,               850 },   // like iso-8859-4
-#define IDX_CP852       34
+#define IDX_CP852       35
   { "cp852",           ENC_8BIT,               852 },   // like iso-8859-1
-#define IDX_CP855       35
+#define IDX_CP855       36
   { "cp855",           ENC_8BIT,               855 },   // like iso-8859-2
-#define IDX_CP857       36
+#define IDX_CP857       37
   { "cp857",           ENC_8BIT,               857 },   // like iso-8859-5
-#define IDX_CP860       37
+#define IDX_CP860       38
   { "cp860",           ENC_8BIT,               860 },   // like iso-8859-9
-#define IDX_CP861       38
+#define IDX_CP861       39
   { "cp861",           ENC_8BIT,               861 },   // like iso-8859-1
-#define IDX_CP862       39
+#define IDX_CP862       40
   { "cp862",           ENC_8BIT,               862 },   // like iso-8859-1
-#define IDX_CP863       40
+#define IDX_CP863       41
   { "cp863",           ENC_8BIT,               863 },   // like iso-8859-8
-#define IDX_CP865       41
+#define IDX_CP865       42
   { "cp865",           ENC_8BIT,               865 },   // like iso-8859-1
-#define IDX_CP866       42
+#define IDX_CP866       43
   { "cp866",           ENC_8BIT,               866 },   // like iso-8859-5
-#define IDX_CP869       43
+#define IDX_CP869       44
   { "cp869",           ENC_8BIT,               869 },   // like iso-8859-7
-#define IDX_CP874       44
+#define IDX_CP874       45
   { "cp874",           ENC_8BIT,               874 },   // Thai
-#define IDX_CP932       45
+#define IDX_CP932       46
   { "cp932",           ENC_DBCS,               DBCS_JPN },
-#define IDX_CP936       46
+#define IDX_CP936       47
   { "cp936",           ENC_DBCS,               DBCS_CHS },
-#define IDX_CP949       47
+#define IDX_CP949       48
   { "cp949",           ENC_DBCS,               DBCS_KOR },
-#define IDX_CP950       48
+#define IDX_CP950       49
   { "cp950",           ENC_DBCS,               DBCS_CHT },
-#define IDX_CP1250      49
+#define IDX_CP1250      50
   { "cp1250",          ENC_8BIT,               1250 },   // Czech, Polish, etc.
-#define IDX_CP1251      50
+#define IDX_CP1251      51
   { "cp1251",          ENC_8BIT,               1251 },   // Cyrillic
   // cp1252 is considered to be equal to latin1
-#define IDX_CP1253      51
+#define IDX_CP1253      52
   { "cp1253",          ENC_8BIT,               1253 },   // Greek
-#define IDX_CP1254      52
+#define IDX_CP1254      53
   { "cp1254",          ENC_8BIT,               1254 },   // Turkish
-#define IDX_CP1255      53
+#define IDX_CP1255      54
   { "cp1255",          ENC_8BIT,               1255 },   // Hebrew
-#define IDX_CP1256      54
+#define IDX_CP1256      55
   { "cp1256",          ENC_8BIT,               1256 },   // Arabic
-#define IDX_CP1257      55
+#define IDX_CP1257      56
   { "cp1257",          ENC_8BIT,               1257 },   // Baltic
-#define IDX_CP1258      56
+#define IDX_CP1258      57
   { "cp1258",          ENC_8BIT,               1258 },   // Vietnamese
 
-#define IDX_MACROMAN    57
+#define IDX_MACROMAN    58
   { "macroman",        ENC_8BIT + ENC_MACROMAN, 0 },      // Mac OS
-#define IDX_HPROMAN8    58
+#define IDX_HPROMAN8    59
   { "hp-roman8",       ENC_8BIT,               0 },       // HP Roman8
-#define IDX_COUNT       59
+#define IDX_COUNT       60
 };
 
 // Aliases for encoding names.
@@ -306,8 +308,8 @@ enc_alias_table[] = {
   { "ucs-2be",         IDX_UCS2 },
   { "ucs2le",          IDX_UCS2LE },
   { "utf16",           IDX_UTF16 },
-  { "utf16be",         IDX_UTF16 },
-  { "utf-16be",        IDX_UTF16 },
+  { "utf16be",         IDX_UTF16BE },
+  { "utf-16be",        IDX_UTF16BE },
   { "utf16le",         IDX_UTF16LE },
   { "ucs4",            IDX_UCS4 },
   { "ucs4be",          IDX_UCS4 },
@@ -403,6 +405,7 @@ int bomb_size(void)
 
 // Remove all BOM from "s" by moving remaining text.
 void remove_bom(char *s)
+  FUNC_ATTR_NONNULL_ALL
 {
   char *p = s;
 
@@ -442,6 +445,7 @@ int mb_get_class_tab(const char *p, const uint64_t *const chartab)
 }
 
 static bool prop_is_emojilike(const utf8proc_property_t *prop)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
   return prop->boundclass == UTF8PROC_BOUNDCLASS_EXTENDED_PICTOGRAPHIC
          || prop->boundclass == UTF8PROC_BOUNDCLASS_REGIONAL_INDICATOR;
@@ -453,6 +457,7 @@ static bool prop_is_emojilike(const utf8proc_property_t *prop)
 /// When p_ambw is "double", return 2 for a character with East Asian Width
 /// class 'A'(mbiguous).
 int utf_char2cells(int c)
+  FUNC_ATTR_PURE
 {
   if (c < 0x80) {
     return 1;
@@ -490,6 +495,7 @@ int utf_char2cells(int c)
 /// Return the number of display cells character at "*p" occupies.
 /// This doesn't take care of unprintable characters, use ptr2cells() for that.
 int utf_ptr2cells(const char *p_in)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
   const uint8_t *p = (const uint8_t *)p_in;
   // Need to convert to a character number.
@@ -590,6 +596,7 @@ ret:
 /// Like utf_ptr2cells(), but limit string length to "size".
 /// For an empty string or truncated character returns 1.
 int utf_ptr2cells_len(const char *p, int size)
+  FUNC_ATTR_PURE
 {
   // Need to convert to a wide character.
   if (size > 0 && (uint8_t)(*p) >= 0x80) {
@@ -626,6 +633,7 @@ int utf_ptr2cells_len(const char *p, int size)
 ///            string.
 /// @return The number of cells occupied by string `str`
 size_t mb_string2cells(const char *str)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
   size_t clen = 0;
 
@@ -643,7 +651,7 @@ size_t mb_string2cells(const char *str)
 /// @param size maximum length of string. It will terminate on earlier NUL.
 /// @return The number of cells occupied by string `str`
 size_t mb_string2cells_len(const char *str, size_t size)
-  FUNC_ATTR_NONNULL_ARG(1)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ARG(1)
 {
   size_t clen = 0;
 
@@ -739,6 +747,7 @@ int utf_ptr2char(const char *const p_in)
 // If byte sequence is illegal or incomplete, returns -1 and does not advance
 // "s".
 static int utf_safe_read_char_adv(const char **s, size_t *n)
+  FUNC_ATTR_NONNULL_ARG(2)
 {
   if (*n == 0) {  // end of buffer
     return 0;
@@ -778,6 +787,7 @@ static int utf_safe_read_char_adv(const char **s, size_t *n)
 // Get character at **pp and advance *pp to the next character.
 // Note: composing characters are skipped!
 int mb_ptr2char_adv(const char **const pp)
+  FUNC_ATTR_NONNULL_ALL
 {
   int c = utf_ptr2char(*pp);
   *pp += utfc_ptr2len(*pp);
@@ -787,6 +797,7 @@ int mb_ptr2char_adv(const char **const pp)
 // Get character at **pp and advance *pp to the next character.
 // Note: composing characters are returned as separate characters.
 int mb_cptr2char_adv(const char **pp)
+  FUNC_ATTR_NONNULL_ALL
 {
   int c = utf_ptr2char(*pp);
   *pp += utf_ptr2len(*pp);
@@ -797,6 +808,7 @@ int mb_cptr2char_adv(const char **pp)
 /// by a space byte to be drawn correctly, and not merge with the space left of
 /// the string.
 bool utf_iscomposing_first(int c)
+  FUNC_ATTR_PURE
 {
   return c >= 128 && !utf8proc_grapheme_break(' ', c);
 }
@@ -896,6 +908,7 @@ schar_T utfc_ptrlen2schar(const char *p, int len, int *firstc)
 
 /// Caller must ensure there is space for `first_compose`
 static schar_T schar_from_buf_first(const char *buf, size_t len, bool first_compose)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (first_compose) {
     char cbuf[MAX_SCHAR_SIZE];
@@ -933,6 +946,7 @@ int utf_ptr2len(const char *const p_in)
 // "b" must be between 0 and 255!
 // Returns 1 for an invalid first byte value.
 int utf_byte2len(int b)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return utf8len_tab[b];
 }
@@ -944,6 +958,7 @@ int utf_byte2len(int b)
 // Returns number > "size" for an incomplete byte sequence.
 // Never returns zero.
 int utf_ptr2len_len(const char *p, int size)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int m;
 
@@ -1006,6 +1021,7 @@ int utfc_ptr2len(const char *const p)
 /// Returns 0 for an empty string.
 /// Returns 1 for an illegal char or an incomplete byte sequence.
 int utfc_ptr2len_len(const char *p, int size)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (size < 1 || *p == NUL) {
     return 0;
@@ -1051,6 +1067,7 @@ int utfc_ptr2len_len(const char *p, int size)
 
 /// Determine how many bytes certain unicode codepoint will occupy
 int utf_char2len(const int c)
+  FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (c < 0x80) {
     return 1;
@@ -1074,6 +1091,7 @@ int utf_char2len(const int c)
 ///                  must have room for at least 6 bytes
 /// @return Number of bytes (1-6).
 int utf_char2bytes(const int c, char *const buf)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (c < 0x80) {  // 7 bits
     buf[0] = (char)c;
@@ -1123,6 +1141,7 @@ int utf_char2bytes(const int c, char *const buf)
 /// Based on code from Markus Kuhn.
 /// Returns false for negative values.
 bool utf_iscomposing_legacy(int c)
+  FUNC_ATTR_PURE
 {
   const utf8proc_property_t *prop = utf8proc_get_property(c);
   return prop->category == UTF8PROC_CATEGORY_MN || prop->category == UTF8PROC_CATEGORY_ME;
@@ -1220,6 +1239,7 @@ bool utf_printable(int c)
 // 1: punctuation
 // 2 or bigger: some class of word character.
 int utf_class(const int c)
+  FUNC_ATTR_PURE
 {
   return utf_class_tab(c, curbuf->b_chartab);
 }
@@ -1342,6 +1362,7 @@ int utf_class_tab(const int c, const uint64_t *const chartab)
 }
 
 bool utf_ambiguous_width(const char *p)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
   // be quick if there is nothing to print or ASCII-only
   if (p[0] == NUL || p[1] == NUL) {
@@ -1364,6 +1385,7 @@ bool utf_ambiguous_width(const char *p)
 // Return the folded-case equivalent of "a", which is a UCS-4 character.  Uses
 // full case folding.
 int utf_fold(int a)
+  FUNC_ATTR_PURE
 {
   if (a < 0x80) {
     // be fast for ASCII
@@ -1452,6 +1474,7 @@ bool mb_isalpha(int a)
 }
 
 int utf_strnicmp(const char *s1, const char *s2, size_t n1, size_t n2)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int c1, c2;
   char buffer[6];
@@ -1647,7 +1670,7 @@ void mb_utflen(const char *s, size_t len, size_t *codepoints, size_t *codeunits)
 }
 
 ssize_t mb_utf_index_to_bytes(const char *s, size_t len, size_t index, bool use_utf16_units)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
   size_t count = 0;
   size_t clen;
@@ -1678,6 +1701,7 @@ ssize_t mb_utf_index_to_bytes(const char *s, size_t len, size_t index, bool use_
 /// @return  zero if s1 and s2 are equal (ignoring case), the difference between
 ///          two characters otherwise.
 int mb_strnicmp(const char *s1, const char *s2, const size_t nn)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return utf_strnicmp(s1, s2, nn, nn);
 }
@@ -1695,6 +1719,7 @@ int mb_strnicmp(const char *s1, const char *s2, const size_t nn)
 ///
 /// @return 0 if strings are equal, <0 if s1 < s2, >0 if s1 > s2.
 int mb_stricmp(const char *s1, const char *s2)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return mb_strnicmp(s1, s2, MAXCOL);
 }
@@ -1739,6 +1764,7 @@ void show_utf8(void)
 /// @return true if boundclass bc always starts a new cluster regardless of what's before
 /// false negatives are allowed (perf cost, not correctness)
 static bool always_break(int bc)
+  FUNC_ATTR_CONST
 {
   return (bc == UTF8PROC_BOUNDCLASS_CONTROL);
 }
@@ -1746,6 +1772,7 @@ static bool always_break(int bc)
 /// @return true if bc2 always starts a cluster after bc1
 /// false negatives are allowed (perf cost, not correctness)
 static bool always_break_two(int bc1, int bc2)
+  FUNC_ATTR_CONST
 {
   // don't check for UTF8PROC_BOUNDCLASS_CONTROL for bc2 as it either has been checked by
   // "always_break" on first iteration or when it was bc1 in the previous iteration
@@ -1761,6 +1788,7 @@ static bool always_break_two(int bc1, int bc2)
 /// If "p" points to the NUL at the end of the string return 0.
 /// Returns 0 when already at the first byte of a character.
 int utf_head_off(const char *base_in, const char *p_in)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ARG(2)
 {
   if ((uint8_t)(*p_in) < 0x80) {              // be quick for ASCII
     return 0;
@@ -1848,6 +1876,7 @@ int utf_head_off(const char *base_in, const char *p_in)
 
 /// Assumes caller already handles ascii. see `utfc_next`
 StrCharInfo utfc_next_impl(StrCharInfo cur)
+  FUNC_ATTR_PURE
 {
   int32_t prev_code = cur.chr.value;
   uint8_t *next = (uint8_t *)(cur.ptr + cur.chr.len);
@@ -2020,6 +2049,7 @@ bool utf_allow_break(int cc, int ncc)
 /// @param[in,out]  fp  Source of the character to copy.
 /// @param[in,out]  tp  Destination to copy to.
 void mb_copy_char(const char **const fp, char **const tp)
+  FUNC_ATTR_NONNULL_ALL
 {
   const size_t l = (size_t)utfc_ptr2len(*fp);
 
@@ -2032,6 +2062,7 @@ void mb_copy_char(const char **const fp, char **const tp)
 /// at the start of a character 0 is returned, otherwise the offset to the next
 /// character.  Can start anywhere in a stream of bytes.
 int mb_off_next(const char *base, const char *p)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ARG(2)
 {
   int head_off = utf_head_off(base, p);
 
@@ -2133,6 +2164,7 @@ void utf_find_illegal(void)
             curwin->w_cursor.col += l;
           }
         }
+        curwin->w_set_curswant = true;
         goto theend;
       }
       p += len;
@@ -2156,6 +2188,7 @@ theend:
 /// @return  true if string "s" is a valid utf-8 string.
 /// When "end" is NULL stop at the first NUL.  Otherwise stop at "end".
 bool utf_valid_string(const char *s, const char *end)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ARG(1)
 {
   const uint8_t *p = (uint8_t *)s;
 
@@ -2224,6 +2257,7 @@ void mb_check_adjust_col(void *win_)
 ///
 /// @return      a pointer to the character before "*p", if there is one.
 char *mb_prevptr(char *line, char *p)
+  FUNC_ATTR_PURE
 {
   if (p > line) {
     MB_PTR_BACK(line, p);
@@ -2234,6 +2268,7 @@ char *mb_prevptr(char *line, char *p)
 /// Return the character length of "str".  Each multi-byte character (with
 /// following composing characters) counts as one.
 int mb_charlen(const char *str)
+  FUNC_ATTR_PURE
 {
   const char *p = str;
   int count;
@@ -2251,6 +2286,7 @@ int mb_charlen(const char *str)
 
 /// Like mb_charlen() but for a string with specified length.
 int mb_charlen_len(const char *str, int len)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
   const char *p = str;
   int count;
@@ -2311,6 +2347,7 @@ const char *mb_unescape(const char **const pp)
 
 /// Skip the Vim specific head of a 'encoding' name.
 char *enc_skip(char *p)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
   if (strncmp(p, "2byte-", 6) == 0) {
     return p + 6;
@@ -2327,7 +2364,7 @@ char *enc_skip(char *p)
 ///
 /// @return  an allocated string.
 char *enc_canonize(char *enc)
-  FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   if (strcmp(enc, "default") == 0) {
     // Use the default encoding as found by set_init_1().
@@ -2389,6 +2426,7 @@ char *enc_canonize(char *enc)
 /// Search for an encoding alias of "name".
 /// Returns -1 when not found.
 static int enc_alias_search(const char *name)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
   for (int i = 0; enc_alias_table[i].name != NULL; i++) {
     if (strcmp(name, enc_alias_table[i].name) == 0) {
@@ -2508,6 +2546,7 @@ void *my_iconv_open(char *to, char *from)
 // If resultlenp is not NULL, sets it to the result length in bytes.
 static char *iconv_string(const vimconv_T *const vcp, const char *str, size_t slen,
                           size_t *unconvlenp, size_t *resultlenp)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   char *to;
   size_t len = 0;
@@ -2615,6 +2654,7 @@ void f_iconv(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 ///
 /// @return  FAIL when conversion is not supported, OK otherwise.
 int convert_setup(vimconv_T *vcp, char *from, char *to)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   return convert_setup_ext(vcp, from, true, to, true);
 }
@@ -2623,6 +2663,7 @@ int convert_setup(vimconv_T *vcp, char *from, char *to)
 /// "from" unicode charsets be considered utf-8.  Same for "to".
 int convert_setup_ext(vimconv_T *vcp, char *from, bool from_unicode_is_utf8, char *to,
                       bool to_unicode_is_utf8)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   int from_is_utf8;
   int to_is_utf8;
@@ -2859,6 +2900,7 @@ static size_t cw_table_size = 0;
 /// @param c The source character.
 /// @return 1 or 2 when `c` is in the cellwidth table, 0 if not.
 static int cw_value(int c)
+  FUNC_ATTR_PURE
 {
   if (cw_table == NULL) {
     return 0;
@@ -2886,6 +2928,7 @@ static int cw_value(int c)
 }
 
 static int tv_nr_compare(const void *a1, const void *a2)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
   const listitem_T *const li1 = tv_list_first(*(const list_T **)a1);
   const listitem_T *const li2 = tv_list_first(*(const list_T **)a2);
@@ -3038,6 +3081,7 @@ void f_charclass(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// Function given to ExpandGeneric() to obtain the possible arguments of the
 /// encoding options.
 char *get_encoding_name(expand_T *xp FUNC_ATTR_UNUSED, int idx)
+  FUNC_ATTR_PURE
 {
   if (idx >= (int)ARRAY_SIZE(enc_canon_table)) {
     return NULL;

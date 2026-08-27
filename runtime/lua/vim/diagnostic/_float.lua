@@ -1,4 +1,4 @@
-local api, if_nil = vim.api, vim.F.if_nil
+local api, nonnil = vim.api, vim.nonnil
 local shared = require('vim.diagnostic._shared')
 local store = require('vim.diagnostic._store')
 
@@ -99,7 +99,7 @@ function M.open(opts, ...)
     return
   end
 
-  local severity_sort = if_nil(opts.severity_sort, global_opts.severity_sort)
+  local severity_sort = nonnil(opts.severity_sort, global_opts.severity_sort)
   if severity_sort then
     if type(severity_sort) == 'table' and severity_sort.reverse then
       table.sort(diagnostics, function(a, b)
@@ -114,7 +114,7 @@ function M.open(opts, ...)
 
   local lines = {} --- @type string[]
   local highlights = {} --- @type { hlname: string, prefix?: { length: integer, hlname: string? }, suffix?: { length: integer, hlname: string? } }[]
-  local header = if_nil(opts.header, 'Diagnostics:')
+  local header = nonnil(opts.header, 'Diagnostics:')
   if header then
     vim.validate('header', header, { 'string', 'table' }, "'string' or 'table'")
     if type(header) == 'table' then
@@ -211,6 +211,7 @@ function M.open(opts, ...)
 
     --- @type lsp.DiagnosticRelatedInformation[]
     local related_info = vim.tbl_get(diagnostic, 'user_data', 'lsp', 'relatedInformation') or {}
+    assert(related_info ~= vim.NIL, 'server response has invalid (null) relatedInformation')
     -- Below the diagnostic, show its LSP related information (if any) in the form of file name and
     -- range, plus description.
     for _, info in ipairs(related_info) do

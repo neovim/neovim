@@ -22,7 +22,7 @@ error('Cannot require a meta file')
 --- @field hl_group? string
 --- @field hl_eol? boolean
 ---
---- @field conceal? string
+--- @field conceal? string|false
 --- @field spell? boolean
 --- @field ui_watched? boolean
 --- @field url? string
@@ -130,6 +130,7 @@ error('Cannot require a meta file')
 --- @field range? string
 --- @field addr? string
 --- @field callback? function
+--- @field desc? string
 
 --- @class vim.api.keyset.hl_info.base
 --- @field reverse? true
@@ -152,13 +153,16 @@ error('Cannot require a meta file')
 --- @field background? integer
 
 --- @class vim.api.keyset.get_hl_info : vim.api.keyset.hl_info.base
---- @field fg? integer
---- @field bg? integer
---- @field sp? integer
---- @field default? true
---- @field link? string
 --- @field blend? integer
+--- @field bg? integer
+--- @field bg_indexed? boolean
 --- @field cterm? vim.api.keyset.hl_info.cterm
+--- @field default? true
+--- @field fg? integer
+--- @field fg_indexed? boolean
+--- @field font? string
+--- @field link? string
+--- @field sp? integer
 
 --- @class vim.api.keyset.set_hl_info : vim.api.keyset.hl_info.base
 --- @field fg? integer|string
@@ -197,7 +201,7 @@ error('Cannot require a meta file')
 --- @class vim.api.keyset.get_option_info
 --- @field name string
 --- @field shortname string
---- @field scope 'buf'|'win'|'global'
+--- @field scope 'buf'|'win'|'global'|'tab'
 --- @field global_local boolean
 --- @field commalist boolean
 --- @field flaglist boolean

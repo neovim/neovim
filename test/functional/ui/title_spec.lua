@@ -2,6 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear = n.clear
 local command = n.command
 local curwin = n.api.nvim_get_current_win
@@ -20,16 +21,17 @@ describe('title', function()
     screen = Screen.new()
   end)
 
-  it('has correct default title with unnamed file', function()
-    local expected = '[No Name] - Nvim'
+  it('shows "No Name", CWD if the buffer is unnamed', function()
+    local expected = (is_os('win') and '[No Name] (C:/) - Nvim' or '[No Name] (/) - Nvim')
+    command(is_os('win') and 'cd C:\\' or 'cd /')
     command('set title')
     screen:expect(function()
       eq(expected, screen.title)
     end)
   end)
 
-  it('has correct default title with named file', function()
-    local expected = (is_os('win') and 'myfile (C:\\mydir) - Nvim' or 'myfile (/mydir) - Nvim')
+  it('shows filename + directory if the buffer name is outside CWD', function()
+    local expected = (is_os('win') and 'myfile (C:/mydir) - Nvim' or 'myfile (/mydir) - Nvim')
     command('set title')
     command(is_os('win') and 'file C:\\mydir\\myfile' or 'file /mydir/myfile')
     screen:expect(function()
@@ -37,14 +39,27 @@ describe('title', function()
     end)
   end)
 
+  it('shows filename + CWD if the buffer is in CWD', function()
+    local expected = (is_os('win') and 'myfile (C:/) - Nvim' or 'myfile (/) - Nvim')
+    command('set title')
+    command(is_os('win') and 'cd C:\\' or 'cd /')
+    command('file myfile')
+    screen:expect(function()
+      eq(expected, screen.title)
+    end)
+  end)
+
   it('is updated in Insert mode', function()
+    command(is_os('win') and 'cd C:\\' or 'cd /')
     api.nvim_set_option_value('title', true, {})
     screen:expect(function()
-      eq('[No Name] - Nvim', screen.title)
+      local expected = (is_os('win') and '[No Name] (C:/) - Nvim' or '[No Name] (/) - Nvim')
+      eq(expected, screen.title)
     end)
     feed('ifoo')
     screen:expect(function()
-      eq('[No Name] + - Nvim', screen.title)
+      local expected = (is_os('win') and '[No Name] + (C:/) - Nvim' or '[No Name] + (/) - Nvim')
+      eq(expected, screen.title)
     end)
     feed('<Esc>')
     api.nvim_set_option_value('titlestring', '%m %f (%{mode(1)}) | nvim', {})
@@ -106,7 +121,7 @@ describe('title', function()
   describe('is not changed by', function()
     local file1 = is_os('win') and 'C:\\mydir\\myfile1' or '/mydir/myfile1'
     local file2 = is_os('win') and 'C:\\mydir\\myfile2' or '/mydir/myfile2'
-    local expected = (is_os('win') and 'myfile1 (C:\\mydir) - Nvim' or 'myfile1 (/mydir) - Nvim')
+    local expected = (is_os('win') and 'myfile1 (C:/mydir) - Nvim' or 'myfile1 (/mydir) - Nvim')
     local buf2
 
     before_each(function()
@@ -213,6 +228,14 @@ describe('title', function()
       ]],
         buf2
       ))
+      command('redraw!')
+      screen:expect(function()
+        eq(expected, screen.title)
+      end)
+    end)
+
+    it('changing name of non-current buffer', function()
+      api.nvim_buf_set_name(buf2, 'foo')
       command('redraw!')
       screen:expect(function()
         eq(expected, screen.title)

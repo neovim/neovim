@@ -12,22 +12,51 @@
 #include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/context.h"
 #include "nvim/globals.h"
+#include "nvim/lua/executor.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
 #include "nvim/option.h"
+#include "nvim/option_defs.h"
+#include "nvim/option_vars.h"
+#include "nvim/strings.h"
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
 #include "api/options.c.generated.h"
 
-static int validate_option_value_args(Dict(option) *opts, char *name, OptIndex *opt_idxp,
-                                      int *opt_flags, OptScope *scope, void **from, char **filetype,
-                                      Error *err)
+static int validate_option_value_args(Dict(option) *opts, char *name, bool allow_tab,
+                                      OptIndex *opt_idxp, int *opt_flags, OptScope *scope,
+                                      void **from, char **filetype, set_op_T *operation,
+                                      bool *dry_run, Error *err)
 {
 #define HAS_KEY_X(d, v) HAS_KEY(d, option, v)
+  // Validate incompatible argument combinations first, then resolve handles and scope.
+  VALIDATE_CON(!HAS_KEY_X(opts, filetype)
+               || (!HAS_KEY_X(opts, scope) && !HAS_KEY_X(opts, buf)
+                   && !HAS_KEY_X(opts, win) && !HAS_KEY_X(opts, tab)),
+               "filetype", "'scope', 'buf', 'win' or 'tab'", {
+    return FAIL;
+  });
+
+  VALIDATE_CON(!HAS_KEY_X(opts, tab) || allow_tab, "tab", "this function", {
+    return FAIL;
+  });
+
+  VALIDATE_CON(!HAS_KEY_X(opts, tab)
+               || (!HAS_KEY_X(opts, win) && !HAS_KEY_X(opts, buf)
+                   && !HAS_KEY_X(opts, filetype) && !HAS_KEY_X(opts, scope)),
+               "tab", "'win', 'buf', 'filetype' or 'scope'", {
+    return FAIL;
+  });
+
+  VALIDATE_CON(!(HAS_KEY_X(opts, win) && HAS_KEY_X(opts, buf)), "buf", "win", {
+    return FAIL;
+  });
+
   if (HAS_KEY_X(opts, scope)) {
     if (!strcmp(opts->scope.data, "local")) {
       *opt_flags = OPT_LOCAL;
@@ -55,8 +84,7 @@ static int validate_option_value_args(Dict(option) *opts, char *name, OptIndex *
   }
 
   if (HAS_KEY_X(opts, buf)) {
-    VALIDATE(!(HAS_KEY_X(opts, scope) && *opt_flags == OPT_GLOBAL), "%s",
-             "cannot use both global 'scope' and 'buf'", {
+    VALIDATE_CON(!(HAS_KEY_X(opts, scope) && *opt_flags == OPT_GLOBAL), "buf", "global scope", {
       return FAIL;
     });
     *opt_flags = OPT_LOCAL;
@@ -67,23 +95,54 @@ static int validate_option_value_args(Dict(option) *opts, char *name, OptIndex *
     }
   }
 
-  VALIDATE((!HAS_KEY_X(opts, filetype)
-            || !(HAS_KEY_X(opts, buf) || HAS_KEY_X(opts, scope) || HAS_KEY_X(opts, win))),
-           "%s", "cannot use 'filetype' with 'scope', 'buf' or 'win'", {
-    return FAIL;
-  });
-
-  VALIDATE((!HAS_KEY_X(opts, win) || !HAS_KEY_X(opts, buf)),
-           "%s", "cannot use both 'buf' and 'win'", {
-    return FAIL;
-  });
+  if (HAS_KEY_X(opts, tab)) {
+    *scope = kOptScopeTab;
+    *from = find_tab_by_handle(opts->tab, err);
+    if (ERROR_SET(err)) {
+      return FAIL;
+    }
+  }
 
   *opt_idxp = find_option(name);
   if (*opt_idxp == kOptInvalid) {
     // unknown option
     api_set_error(err, kErrorTypeValidation, "Unknown option '%s'", name);
-  } else if (*scope == kOptScopeBuf || *scope == kOptScopeWin) {
-    // if 'buf' or 'win' is passed, make sure the option supports it
+    return FAIL;
+  }
+
+  if (operation != NULL && HAS_KEY_X(opts, operation)) {
+    if (strequal(opts->operation.data, "set")) {
+      *operation = OP_NONE;
+    } else if (strequal(opts->operation.data, "append")) {
+      *operation = OP_ADDING;
+    } else if (strequal(opts->operation.data, "prepend")) {
+      *operation = OP_PREPENDING;
+    } else if (strequal(opts->operation.data, "remove")) {
+      *operation = OP_REMOVING;
+    } else {
+      VALIDATE_EXP(false, "operation", "'set', 'append', 'prepend', or 'remove'", NULL, {
+        return FAIL;
+      });
+    }
+
+    VALIDATE_CON(*operation == OP_NONE || option_has_type(*opt_idxp, kObjectTypeString)
+                 || option_has_type(*opt_idxp, kObjectTypeInteger),
+                 opts->operation.data,
+                 "boolean options", {
+      return FAIL;
+    });
+  }
+
+  if (dry_run != NULL && HAS_KEY_X(opts, dry_run)) {
+    *dry_run = opts->dry_run;
+  }
+
+  // Reject keys whose scope the option doesn't support.
+  VALIDATE_CON(!HAS_KEY_X(opts, tab) || option_has_scope(*opt_idxp, kOptScopeTab),
+               "tab", name, { return FAIL; });
+
+  // If 'buf' or 'win' is passed, make sure the option supports it.
+  if (*scope == kOptScopeBuf || *scope == kOptScopeWin) {
     if (!option_has_scope(*opt_idxp, *scope)) {
       char *tgt = *scope == kOptScopeBuf ? "buf" : "win";
       char *global = option_has_scope(*opt_idxp, kOptScopeGlobal) ? "global " : "";
@@ -93,6 +152,7 @@ static int validate_option_value_args(Dict(option) *opts, char *name, OptIndex *
 
       api_set_error(err, kErrorTypeValidation, "'%s' cannot be passed for %s%soption '%s'",
                     tgt, global, req, name);
+      return FAIL;
     }
   }
 
@@ -101,10 +161,9 @@ static int validate_option_value_args(Dict(option) *opts, char *name, OptIndex *
 }
 
 /// Create a dummy buffer and run the FileType autocmd on it.
-static buf_T *do_ft_buf(const char *filetype, aco_save_T *aco, bool *aco_used, Error *err)
-  FUNC_ATTR_NONNULL_ARG(2, 3, 4)
+static buf_T *do_ft_buf(const char *filetype, CtxSwitch *aco, Error *err)
+  FUNC_ATTR_NONNULL_ARG(2, 3)
 {
-  *aco_used = false;
   if (filetype == NULL) {
     return NULL;
   }
@@ -126,11 +185,10 @@ static buf_T *do_ft_buf(const char *filetype, aco_save_T *aco, bool *aco_used, E
   set_bufref(&bufref, ftbuf);
 
   // Set curwin/curbuf to buf and save a few things.
-  aucmd_prepbuf(aco, ftbuf);
-  *aco_used = true;
+  ctx_switch(aco, NULL, NULL, ftbuf, 0);
 
-  set_option_direct(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("hide"), OPT_LOCAL, SID_NONE);
-  set_option_direct(kOptBuftype, STATIC_CSTR_AS_OPTVAL("nofile"), OPT_LOCAL, SID_NONE);
+  set_option_direct(kOptBufhidden, STATIC_CSTR_AS_OBJ("hide"), OPT_LOCAL, SID_NONE);
+  set_option_direct(kOptBuftype, STATIC_CSTR_AS_OBJ("nofile"), OPT_LOCAL, SID_NONE);
   assert(ftbuf->b_ml.ml_mfp->mf_fd < 0);  // ml_open() should not have opened swapfile already
   ftbuf->b_p_swf = false;
   ftbuf->b_p_ml = false;
@@ -186,15 +244,17 @@ static void wipe_ft_buf(buf_T *buf)
 ///
 /// @param name      Option name
 /// @param opts      Optional parameters
-///                  - scope: One of "global" or "local". Analogous to
-///                  |:setglobal| and |:setlocal|, respectively.
-///                  - win: |window-ID|. Used for getting window local options.
 ///                  - buf: Buffer number. Used for getting buffer local options.
 ///                         Implies {scope} is "local".
 ///                  - filetype: |filetype|. Used to get the default option for a
 ///                    specific filetype. Cannot be used with any other option.
 ///                    Note: this will trigger |ftplugin| and all |FileType|
 ///                    autocommands for the corresponding filetype.
+///                  - scope: One of "global" or "local". Analogous to
+///                  |:setglobal| and |:setlocal|, respectively.
+///                  - tab: |tab-ID| for tab-local options. Currently only
+///                    supports "cmdheight". Tabpage `0` means the current tabpage.
+///                  - win: |window-ID|. Used for getting window local options.
 /// @param[out] err  Error details, if any
 /// @return          Option value
 Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
@@ -206,20 +266,17 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
   void *from = NULL;
   char *filetype = NULL;
 
-  if (!validate_option_value_args(opts, name.data, &opt_idx, &opt_flags, &scope, &from,
-                                  &filetype, err)) {
+  if (!validate_option_value_args(opts, name.data, true, &opt_idx, &opt_flags, &scope, &from,
+                                  &filetype, NULL, NULL, err)) {
     return (Object)OBJECT_INIT;
   }
 
-  aco_save_T aco;
-  bool aco_used;
+  CtxSwitch aco = { 0 };
 
-  buf_T *ftbuf = do_ft_buf(filetype, &aco, &aco_used, err);
+  buf_T *ftbuf = do_ft_buf(filetype, &aco, err);
   if (ERROR_SET(err)) {
-    if (aco_used) {
-      // restore curwin/curbuf and a few other things
-      aucmd_restbuf(&aco);
-    }
+    // Restore curwin/curbuf and a few other things.
+    ctx_restore(&aco);
     if (ftbuf != NULL) {
       wipe_ft_buf(ftbuf);
     }
@@ -231,28 +288,20 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
     from = ftbuf;
   }
 
-  OptVal value = get_option_value_for(opt_idx, opt_flags, scope, from, err);
+  Object value = get_option_value_for(opt_idx, opt_flags, scope, from, err);
 
+  // Restore curwin/curbuf and a few other things.
+  ctx_restore(&aco);
   if (ftbuf != NULL) {
-    if (aco_used) {
-      // restore curwin/curbuf and a few other things
-      aucmd_restbuf(&aco);
-    }
     wipe_ft_buf(ftbuf);
   }
 
   if (ERROR_SET(err)) {
-    goto err;
+    api_free_object(value);
+    return (Object)OBJECT_INIT;
   }
 
-  VALIDATE_S(value.type != kOptValTypeNil, "option", name.data, {
-    goto err;
-  });
-
-  return optval_as_object(value);
-err:
-  optval_free(value);
-  return (Object)OBJECT_INIT;
+  return value;
 }
 
 /// Sets the value of an option. The behavior of this function matches that of
@@ -264,22 +313,33 @@ err:
 /// @param name      Option name
 /// @param value     New option value
 /// @param opts      Optional parameters
+///                  - buf: Buffer number. Used for setting buffer local option.
+///                  - dry_run: (`boolean?`, default: false) If true, then the
+///                    option value won't be set.
+///                  - operation: One of "set", "append", "prepend", or "remove".
+///                    Corresponds to |:set=|, |:set+=|, |:set^=|, and |:set-=|.
+///                    Default is "set".
 ///                  - scope: One of "global" or "local". Analogous to
 ///                  |:setglobal| and |:setlocal|, respectively.
+///                  - tab: |tab-ID| for tab-local options (currently only 'cmdheight'). Tabpage 0
+///                    means the current tabpage. If a non-current tab is given, the value will take
+///                    effect when it is switched-to.
 ///                  - win: |window-ID|. Used for setting window local option.
-///                  - buf: Buffer number. Used for setting buffer local option.
 /// @param[out] err  Error details, if any
-void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(option) *opts,
-                           Error *err)
+/// @return          Option value
+Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(option) *opts,
+                             Arena *arena, Error *err)
   FUNC_API_SINCE(9)
 {
   OptIndex opt_idx = 0;
   int opt_flags = 0;
   OptScope scope = kOptScopeGlobal;
+  set_op_T operation = OP_NONE;
   void *to = NULL;
-  if (!validate_option_value_args(opts, name.data, &opt_idx, &opt_flags, &scope, &to, NULL,
-                                  err)) {
-    return;
+  bool dry_run = false;
+  if (!validate_option_value_args(opts, name.data, true, &opt_idx, &opt_flags, &scope, &to, NULL,
+                                  &operation, &dry_run, err)) {
+    return NIL;
   }
 
   // If:
@@ -294,20 +354,73 @@ void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(
     }
   }
 
+  // Convert the incoming value into an Object.
   bool error = false;
-  OptVal optval = object_as_optval(value, &error);
+  Object optval_right = optval_from_obj(opt_idx, value, operation, &error);
 
-  // Handle invalid option value type.
-  // Don't use `name` in the error message here, because `name` can be any String.
-  // No need to check if value type actually matches the types for the option, as set_option_value()
-  // already handles that.
-  VALIDATE_EXP(!error, "value", "valid option type", api_typename(value.type), {
-    return;
+  VALIDATE_EXP(!error, name.data, "a valid type", api_typename(value.type), {
+    return NIL;
   });
 
-  WITH_SCRIPT_CONTEXT(channel_id, {
-    set_option_value_for(name.data, opt_idx, optval, opt_flags, scope, to, err);
-  });
+  Object merged_val = NIL;
+  const char *errmsg = NULL;
+  vimoption_T *option = get_option(opt_idx);
+
+  // Need to use varp specific to buf/win to ensure that merges are handled
+  // correctly when the supplied buf/win are different than curbuf/curwin.
+  buf_T *buf = scope == kOptScopeBuf ? to : curbuf;
+  win_T *win = scope == kOptScopeWin ? to : curwin;
+  void *varp = get_varp_from(option, buf, win);
+  char *argp = NULL;
+
+  switch (optval_right.type) {
+  case kObjectTypeUnset:
+  case kObjectTypeNil:
+    break;
+  case kObjectTypeString: {
+    char *optval_escaped = escape_option_str_cmdline(optval_right.data.string.data);
+    // We need a leading equal sign because get_option_newval is used for
+    // cmdline stuff and expects an =
+    argp = arena_printf(arena, "=%s", optval_escaped).data;
+    XFREE_CLEAR(optval_escaped);
+    break;
+  }
+  case kObjectTypeInteger:
+    argp = arena_printf(arena, "=%" PRId64, optval_right.data.integer).data;
+    break;
+  case kObjectTypeBoolean:
+    merged_val = optval_right;
+    break;
+  case kObjectTypeLuaRef:
+    // Callback option: no ":set"-style merge; take an independent ref for the set below.
+    merged_val = copy_object(optval_right, NULL);
+    break;
+  default:
+    abort();
+  }
+
+  optval_free(optval_right);
+
+  if (optval_right.type == kObjectTypeInteger || optval_right.type == kObjectTypeString) {
+    Object oldval = optval_own(opt_idx, opt_from_varp(opt_idx, varp));
+    merged_val = get_option_newval(opt_idx, opt_flags, PREFIX_NONE, &argp, 0, operation,
+                                   option->flags, varp, &oldval, NULL, 0, &errmsg);
+    optval_free(oldval);
+    VALIDATE(errmsg == NULL, "%s", errmsg, {
+      return NIL;
+    });
+  }
+
+  if (!dry_run) {
+    WITH_SCRIPT_CONTEXT(channel_id, {
+      set_option_value_for(name.data, opt_idx, merged_val, opt_flags, scope, to, err);
+    });
+  }
+
+  // Return the value in its structured (list/map/set) form.
+  Object rv = optval_to_obj(opt_idx, merged_val, arena);
+  optval_free(merged_val);
+  return rv;
 }
 
 /// Gets the option information for all options.
@@ -321,7 +434,7 @@ void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(
 Dict nvim_get_all_options_info(Arena *arena, Error *err)
   FUNC_API_SINCE(7)
 {
-  return get_all_vimoptions(arena);
+  return get_all_options_info(arena);
 }
 
 /// Gets the option information for one option from arbitrary buffer or window
@@ -337,7 +450,7 @@ Dict nvim_get_all_options_info(Arena *arena, Error *err)
 /// - last_set_linenr: line number where option was set
 /// - last_set_chan: Channel where option was set (0 for local)
 ///
-/// - scope: one of "global", "win", or "buf"
+/// - scope: one of "global", "win", "buf", or "tab"
 /// - global_local: whether win or buf option has a global value
 ///
 /// - commalist: List of comma separated values
@@ -350,11 +463,11 @@ Dict nvim_get_all_options_info(Arena *arena, Error *err)
 ///
 /// @param name      Option name
 /// @param opts      Optional parameters
+///                  - buf: Buffer number. Used for getting buffer local options.
+///                         Implies {scope} is "local".
 ///                  - scope: One of "global" or "local". Analogous to
 ///                  |:setglobal| and |:setlocal|, respectively.
 ///                  - win: |window-ID|. Used for getting window local options.
-///                  - buf: Buffer number. Used for getting buffer local options.
-///                         Implies {scope} is "local".
 /// @param[out] err Error details, if any
 /// @return         Option Information
 DictAs(get_option_info) nvim_get_option_info2(String name, Dict(option) *opts, Arena *arena,
@@ -365,13 +478,14 @@ DictAs(get_option_info) nvim_get_option_info2(String name, Dict(option) *opts, A
   int opt_flags = 0;
   OptScope scope = kOptScopeGlobal;
   void *from = NULL;
-  if (!validate_option_value_args(opts, name.data, &opt_idx, &opt_flags, &scope, &from, NULL,
-                                  err)) {
+  // TODO(justinmk): support tab-local option.
+  if (!validate_option_value_args(opts, name.data, false, &opt_idx, &opt_flags, &scope, &from, NULL,
+                                  NULL, NULL, err)) {
     return (Dict)ARRAY_DICT_INIT;
   }
 
   buf_T *buf = (scope == kOptScopeBuf) ? (buf_T *)from : curbuf;
   win_T *win = (scope == kOptScopeWin) ? (win_T *)from : curwin;
 
-  return get_vimoption(name, opt_flags, buf, win, arena, err);
+  return get_option_info(name, opt_flags, buf, win, arena, err);
 }

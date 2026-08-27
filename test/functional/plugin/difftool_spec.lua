@@ -1,6 +1,8 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, before_each, setup, teardown, finally =
+  t.describe, t.it, t.before_each, t.setup, t.teardown, t.finally
 local clear = n.clear
 local command = n.command
 local eq = t.eq
@@ -15,8 +17,10 @@ setup(function()
   n.mkdir_p(testdir_right)
   t.write_file(testdir_left .. pathsep .. 'file1.txt', 'hello')
   t.write_file(testdir_left .. pathsep .. 'file2.txt', 'foo')
+  t.write_file(testdir_left .. pathsep .. 'file4 with space.txt', 'hello')
   t.write_file(testdir_right .. pathsep .. 'file1.txt', 'hello world') -- modified
   t.write_file(testdir_right .. pathsep .. 'file3.txt', 'bar') -- added
+  t.write_file(testdir_right .. pathsep .. 'file4 with space.txt', 'hello world') -- modified
 end)
 
 teardown(function()
@@ -42,10 +46,12 @@ describe('nvim.difftool', function()
     -- file1.txt as modified (M)
     -- file2.txt as deleted (D)
     -- file3.txt as added (A)
+    -- file4 with space.txt as modified (M)
     eq({
       { text = 'M', rel = 'file1.txt' },
       { text = 'D', rel = 'file2.txt' },
       { text = 'A', rel = 'file3.txt' },
+      { text = 'M', rel = 'file4 with space.txt' },
     }, entries)
   end)
 
@@ -83,6 +89,7 @@ describe('nvim.difftool', function()
     eq({
       { text = 'M', rel = 'file1.txt' },
       { text = 'A', rel = 'file3.txt' },
+      { text = 'M', rel = 'file4 with space.txt' },
     }, entries)
   end)
 
@@ -144,6 +151,7 @@ describe('nvim.difftool', function()
       { text = 'M', rel = 'file1.txt' },
       { text = 'D', rel = 'file2.txt' },
       { text = 'A', rel = 'file3.txt' },
+      { text = 'M', rel = 'file4 with space.txt' },
     }, entries)
   end)
 end)

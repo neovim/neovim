@@ -107,7 +107,10 @@ func Test_tagfiles()
   " Nvim: expectation(s) based on tags in build dir (added to &rtp).
   "       Filter out the '../../../runtime/doc/tags'.
   call filter(tf, 'v:val != "../../../runtime/doc/tags"')
-  call assert_equal(1, len(tf))
+  " If 'helplang' includes another language, then we may find 2 tagfiles
+  " (e.g.: for EN and RU).
+  " We may need to adjust this, if further translated help files are included.
+  call assert_inrange(1, 2, len(tf))
   call assert_equal(fnamemodify(expand('$BUILD_DIR/runtime/doc/tags'), ':p:gs?\\?/?'),
 	\           fnamemodify(tf[0], ':p:gs?\\?/?'))
   helpclose

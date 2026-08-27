@@ -2,6 +2,7 @@
 " Language: strace output
 " Maintainer: David Necas (Yeti) <yeti@physics.muni.cz>
 " Last Change: 2022 Jan 29
+" 2026 Aug 10 by Vim Project: highlight strack trace as comment #20998
 
 " Setup
 " quit when a syntax file was already loaded
@@ -29,11 +30,13 @@ syn match straceSysCallEmbed "\w\+" contained
 syn keyword stracePID pid contained
 syn match straceOperator "[-+=*/!%&|:,]"
 syn region straceComment start="/\*" end="\*/" oneline
+syn match straceStackTrace "^ *> .*$"
 
 " Define the default highlighting
 
 hi def link straceComment Comment
 hi def link straceVerbosed Comment
+hi def link straceStackTrace Comment
 hi def link stracePID PreProc
 hi def link straceNumber Number
 hi def link straceNumberRHS Type

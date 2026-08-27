@@ -2,7 +2,9 @@
 -- Check if modelines are interpreted for the correct buffer.
 
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 
+local describe, it, setup, teardown = t.describe, t.it, t.setup, t.teardown
 local clear, feed, insert = n.clear, n.feed, n.insert
 local feed_command, expect = n.feed_command, n.expect
 

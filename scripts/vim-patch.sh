@@ -52,6 +52,13 @@ usage() {
   echo "   $0 -l -- src/edit.c"
 }
 
+# Run git with inline config to avoid error with developer's .gitconfig.
+_git() {
+  local -a git_args
+  git_args=("$@")
+  git -c log.showSignature=false "${git_args[@]}"
+}
+
 msg_ok() {
   printf '\e[32m✔\e[0m %s\n' "$@"
 }
@@ -163,7 +170,7 @@ assign_commit_details() {
     local munge_commit_line=false
   fi
 
-  local get_vim_commit_cmd="git -C ${VIM_SOURCE_DIR} log -1 --format=%H ${vim_commit_ref} --"
+  local get_vim_commit_cmd="_git -C ${VIM_SOURCE_DIR} log -1 --format=%H ${vim_commit_ref} --"
   vim_commit=$($get_vim_commit_cmd 2>&1) || {
     # Update Vim sources.
     get_vim_sources update
@@ -174,13 +181,16 @@ assign_commit_details() {
   }
 
   vim_commit_url="https://github.com/vim/vim/commit/${vim_commit}"
-  vim_message="$(git -C "${VIM_SOURCE_DIR}" log -1 --pretty='format:%B' "${vim_commit}" \
+  vim_message="$(_git -C "${VIM_SOURCE_DIR}" log -1 --pretty='format:%B' "${vim_commit}" \
       | sed -Ee 's/([^A-Za-z0-9])(#[0-9]{1,})/\1vim\/vim\2/g')"
   local vim_coauthor0
-  vim_coauthor0="$(git -C "${VIM_SOURCE_DIR}" log -1 --pretty='format:Co-authored-by: %an <%ae>' "${vim_commit}")"
+  vim_coauthor0="$(_git -C "${VIM_SOURCE_DIR}" log -1 --pretty='format:Co-authored-by: %an <%ae>' "${vim_commit}")"
   # Extract co-authors from the commit message.
   vim_coauthors="$(echo "${vim_message}" | (grep -E '^Co-[Aa]uthored-[Bb]y: ' || true) | (grep -Fxv "${vim_coauthor0}" || true))"
   vim_coauthors="$(echo "${vim_coauthor0}"; echo "${vim_coauthors}")"
+  # Upstream may credit an AI tool; we don't advertise those, see AGENTS.md.
+  vim_coauthors="$(echo "${vim_coauthors}" \
+      | (grep -Eiv '^Co-authored-by: .*(aider|anthropic|chatgpt|claude|codex|copilot|cursor|devin|gemini|openai|opencode|windsurf)' || true))"
   # Remove Co-authored-by and Signed-off-by lines from the commit message.
   vim_message="$(echo "${vim_message}" | grep -Ev '^(Co-[Aa]uthored|Signed-[Oo]ff)-[Bb]y: ')"
   if [[ ${munge_commit_line} == "true" ]]; then
@@ -277,6 +287,14 @@ preprocess_patch() {
 
   # Rename map.c to mapping.c
   LC_ALL=C sed -Ee 's/( [ab]\/src\/nvim)\/map\.c/\1\/mapping.c/g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+
+  # Rename getchar.c to input.c
+  LC_ALL=C sed -Ee 's/( [ab]\/src\/nvim)\/getchar\.c/\1\/input.c/g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+
+  # Rename edit.c to insert.c
+  LC_ALL=C sed -Ee 's/( [ab]\/src\/nvim)\/edit\.c/\1\/insert.c/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
   # Rename profiler.c to profile.c
@@ -505,10 +523,10 @@ submit_pr() {
   local nvim_remote
   nvim_remote="$(find_git_remote)"
   local pr_body
-  pr_body="$(git log --grep=vim-patch --reverse --format='#### %s%n%n%b%n' "${nvim_remote}"/master..HEAD)"
+  pr_body="$(_git log --grep=vim-patch --reverse --format='#### %s%n%n%b%n' "${nvim_remote}"/master..HEAD)"
   local patches
   # Extract just the "vim-patch:X.Y.ZZZZ" or "vim-patch:sha" portion of each log
-  patches=("$(git log --grep=vim-patch --reverse --format='%s' "${nvim_remote}"/master..HEAD | sed 's/: .*//')")
+  patches=("$(_git log --grep=vim-patch --reverse --format='%s' "${nvim_remote}"/master..HEAD | sed 's/: .*//')")
   # shellcheck disable=SC2206
   patches=(${patches[@]//vim-patch:}) # Remove 'vim-patch:' prefix for each item in array.
   local pr_title="${patches[*]}" # Create space-separated string from array.
@@ -561,13 +579,18 @@ submit_pr() {
 
 # Gets all Vim commits since the "start" commit.
 list_vim_commits() { (
-  cd "${VIM_SOURCE_DIR}" && git log --reverse v8.1.0000..HEAD "$@"
+  cd "${VIM_SOURCE_DIR}" && _git log --reverse v8.1.0000..HEAD "$@"
 ) }
 
 # Prints all (sorted) "vim-patch:xxx" tokens found in the Nvim git log.
 list_vimpatch_tokens() {
   # Use sed…{7,7} to normalize (internal) Git hashes (for tokens caches).
-  git -C "${NVIM_SOURCE_DIR}" log -E --grep='vim-patch:[^ ,{]{7,}' \
+  diff "${NVIM_SOURCE_DIR}/scripts/vimpatch_commit_ignore.txt" <(
+    _git -C "${NVIM_SOURCE_DIR}" log --format="%H" -E --grep='vim-patch:[^ ,{]{7,}'
+  ) |
+    grep -e '^> ' |
+    sed -e 's/^> //' |
+    _git -C "${NVIM_SOURCE_DIR}" log --no-walk --stdin \
     | grep -oE 'vim-patch:[^ ,{:]{7,}' \
     | sort \
     | uniq \
@@ -582,15 +605,17 @@ list_vimpatch_tokens() {
 # Filter reverted Vim tokens.
 list_vimpatch_numbers() {
   local patch_pat='(8\.[12]|9\.[0-9])\.[0-9]{1,4}'
-  diff "${NVIM_SOURCE_DIR}/scripts/vimpatch_token_reverts.txt" <(
-    git -C "${NVIM_SOURCE_DIR}" log --format="%s%n%b" -E --grep="^[* ]*vim-patch:${patch_pat}" |
+  diff "${NVIM_SOURCE_DIR}/scripts/vimpatch_commit_ignore.txt" <(
+    _git -C "${NVIM_SOURCE_DIR}" log --format="%H" -E --grep="^[* ]*vim-patch:${patch_pat}"
+  ) |
+    grep -e '^> ' |
+    sed -e 's/^> //' |
+    _git -C "${NVIM_SOURCE_DIR}" log --no-walk --stdin --format="%s%n%b" |
     grep -oE "^[* ]*vim-patch:${patch_pat}" |
     sed -nEe 's/^[* ]*vim-patch:('"${patch_pat}"').*$/\1/p' |
     awk '{split($0, a, "."); printf "%d.%d.%04d\n", a[1], a[2], a[3]}' |
     sort |
-    uniq ) |
-    grep -e '^> ' |
-    sed -e 's/^> //'
+    uniq
 }
 
 declare -A tokens
@@ -712,7 +737,7 @@ show_vimpatches() {
   printf "Vim patches missing from Neovim:\n"
 
   local -A runtime_commits
-  for commit in $(git -C "${VIM_SOURCE_DIR}" log --format="%H %D" -- runtime | sed -Ee 's/,\? tag: / /g'); do
+  for commit in $(_git -C "${VIM_SOURCE_DIR}" log --format="%H %D" -- runtime | sed -Ee 's/,\? tag: / /g'); do
     runtime_commits[$commit]=1
   done
 
@@ -901,27 +926,142 @@ is_na_patch() {
   local patch=$1
   local NA_REGEXP="$NVIM_SOURCE_DIR/scripts/vim_na_regexp.txt"
   local NA_FILELIST="$NVIM_SOURCE_DIR/scripts/vim_na_files.txt"
+  local NA_HUNKS_C="$NVIM_SOURCE_DIR/scripts/vim_na_hunks_c.txt"
+  local NA_HUNKS_H="$NVIM_SOURCE_DIR/scripts/vim_na_hunks_h.txt"
+  local NA_HUNKS_VIM="$NVIM_SOURCE_DIR/scripts/vim_na_hunks_vim.txt"
 
-  local FILES_REMAINING
-  FILES_REMAINING="$(diff <(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id --name-only -r "$patch" | grep -v -f "$NA_REGEXP") "$NA_FILELIST" |
-    grep '^<')" || true
+  local FILES_REMAINING HUNKS HUNK_NUM_FINAL
+  FILES_REMAINING="$(diff <(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b --name-only "$patch" | grep -v -f "$NA_REGEXP") "$NA_FILELIST" |
+    grep '^<' | sed 's/^< //')" || true
   test -z "$FILES_REMAINING" && return 0
-  if test "$FILES_REMAINING" == "$(printf "< src/version.c\n")"; then
-    local VERSION_LNUM
-    VERSION_LNUM=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id --numstat -r "$patch" -- src/version.c | grep -c '^2\s\+0')
-    test "$VERSION_LNUM" -ne 1 && return 1
-    local VERSION_VNUM
-    VERSION_VNUM="$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -U1 -r "$patch" -- src/version.c |
-      grep -Pzc '[ +]\/\*\*\/\n\+\s+[0-9]+,\n[ +]\/\*\*\/\n')" || true
-    test "$VERSION_VNUM" -eq 1 && return 0
-  fi
-  return 1
+
+  for file in $FILES_REMAINING; do
+    case ${file} in
+      runtime/doc/*.txt | runtime/pack/dist/opt/*/doc/*.txt)
+        # TODO(@janlazo): ignore (multi-line) phrases based on regexp '{.\+ \(available\|compiled\) \(with\|without\) .\+}'
+        HUNKS=$(git -c core.attributesfile="$NVIM_SOURCE_DIR"/.gitattributes -c 'diff.helphelp.xfuncname=^.*\*[^*]+\*$' -C "${VIM_SOURCE_DIR}" \
+          diff-tree --no-commit-id -r -b -U0 \
+          '-I^\s+$' \
+          '-I^=+$' \
+          '-I^\|:redrawtabpanel\|' \
+          '-I^\|popup_[_a-z]+\(\)\|' \
+          '-I^popup_[_a-z]+\(' \
+          '-I\*\s+For Vim version [0-9]\.[0-9]\.\s+Last change: [0-9]+ [A-Z][a-z]+ [0-9]+' \
+          '-I compiled (with|without) .*\(\|.+\|\) feature\.$' \
+          '-I\|popup-windows\|' \
+          '-I\|tabpanel\|' \
+          '-I\spopup window\s' \
+          "$patch" -- "${file}")
+        if test -n "$HUNKS"; then
+          HUNK_NUM_FINAL=$(echo "$HUNKS" | grep '^@@ .* @@' | sed 's/^@@ .* @@ //' | grep -cv -f "$NA_HUNKS_VIM")
+          test "$HUNK_NUM_FINAL" -ne 0 && return 1
+        fi
+        ;;
+      src/testdir/Makefile)
+        HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
+          '-IREDIR_TEST_TO_NULL = ' \
+          "$patch" -- "${file}")
+        test -n "$HUNKS" && return 1
+        ;;
+      src/testdir/Make_all.mak)
+        HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
+          '-I\stest8[67]\.out \\$' \
+          "$patch" -- "${file}")
+        test -n "$HUNKS" && return 1
+        ;;
+      *.h)
+        HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
+          '-I^\s+$' \
+          '-I^\s*/?\*/?$' \
+          '-I^\s*(//|/?\*).*\s([vV]im9|E[0-9]{4} - |FEAT_|channel|job|popup|sound|terminal)' \
+          '-I^#\s*((ifdef|ifndef|undef)|(if|elif)\s.*defined\().*FEAT_[^_]' \
+          '-I^#\s*(else|endif)' \
+          '-I^#\s*define\s+(FEAT|POPUPWIN|XDG|t)_[^_]' \
+          '-I^\s+(&&|\|\|)\s.*defined\(.*FEAT_[^_]' \
+          '-IEVENT_TERMINALWINOPEN' \
+          '-I^#\s*define\s+(ASSIGN_VAR|POPF_CURSORLINE)\s' \
+          '-I^typedef enum \{$' \
+          '-I^\s+POPCLOSE_[A-Z]+,?$' \
+          '-I^\} popclose_T;$' \
+          '-I^EXTERN\schar\s+\*popup_transparent' \
+          '-I^EXTERN type_T static_types\[' \
+          '-I^EXTERN type_T t_.* INIT[2-9]\(' \
+          '-I^EXTERN\swin_T\s+\*popup_dragwin' \
+          '-I^EXTERN char e_(abstract|class|enum|interface|type)_' \
+          '-I^EXTERN char e_.*def_function' \
+          '-I^EXTERN char e_.*enddef' \
+          '-I^EXTERN char e_.*vim9' \
+          '-I^EXTERN char e_cannot_declare_.*variable_str' \
+          '-I^EXTERN char e_cannot_define_new_.+_as_static' \
+          '-I^EXTERN char e_cannot_use_a_return_type_with_new' \
+          '-I^EXTERN char e_dictionary_not_set' \
+          '-I^EXTERN char e_dictnull' \
+          '-I\sINIT\(= .+"E[0-9]+: (Abstract|Class|Enum|Interface|Type) ' \
+          '-I\sINIT\(= .+"E[0-9]+: .*:def ' \
+          '-I\sINIT\(= .+"E[0-9]+: .*enddef"' \
+          '-I\sINIT\(= .+"E[0-9]+: .*([vV]im9|interface)' \
+          '-I\sINIT\(= .+"E1016: Cannot declare .* variable: ' \
+          '-I\sINIT\(= .+"E1103: Dictionary not set' \
+          '-I\sINIT\(= .+"E1365: Cannot use a return type with the \\"new\\" function"' \
+          '-I\sINIT\(= .+"E1370: Cannot define a .+ as static' \
+          '-I\s(bool|char(|_u))\s+w_popup_image_[_a-zA-Z]+;' \
+          '-I\schar(|_u)\s+\*w_popup_title;' \
+          '-I\sint\s+ch_[_a-zA-Z]+;' \
+          '-I\sint\s+sv_const;' \
+          '-I\sint\s+w_(filter_mode|firstline|popup_drag|want_scrollbar);' \
+          '-I\slist_T\s+\*w_popup_mask;' \
+          '-I\spopclose_T\sw_popup_close;' \
+          '-I\s\*?w_popup_prop_[_a-z]+;' \
+          "$patch" -- "${file}")
+        if test -n "$HUNKS"; then
+          HUNK_NUM_FINAL=$(echo "$HUNKS" | grep '^@@ .* @@' | sed 's/^@@ .* @@ //' | grep -cv -f "$NA_HUNKS_H")
+          test "$HUNK_NUM_FINAL" -ne 0 && return 1
+        fi
+        ;;
+      *.c)
+        HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
+          '-I^\s+$' \
+          '-I^\s*/?\*/?$' \
+          '-I^\s*(//|/?\*).*\s([vV]im9|E[0-9]{4} - |FEAT_|channel|job|popup|sound|terminal|uf_type_list)' \
+          '-I^#\s*((ifdef|ifndef|undef)|(if|elif)\s.*defined\().*FEAT_[^_]' \
+          '-I^#\s*(else|endif)' \
+          '-I^#\s*define\s+(FEAT|POPUPWIN|XDG|t)_[^_]' \
+          '-I^\s+(&&|\|\|)\s.*defined\(.*FEAT_[^_]' \
+          '-IEVENT_TERMINALWINOPEN' \
+          '-I^#\s*include\s+<proto/' \
+          '-I^\s+\{"(popup|prop|sound)_[_a-z]+",.*f_(popup|prop|sound)_[_a-z]+},$' \
+          '-I^\s*(static)?\s(char(|_u)|hashtab_T|int|void)( \*)?$' \
+          '-I^static\s(char(|_u)|hashtab_T|int|void)\s\*?[^*]+\(.+\);$' \
+          '-I#\s*define.*ex_ni$' \
+          '-I[.>]b_p_key' \
+          '-I[_.>]sc_version = ' \
+          '-I[_.>]uf_script_ctx_version = ' \
+          '-I[_.>]uf_type_list' \
+          '-I = skip_type\(.+\);$' \
+          '-Icheck_typval_type\(.+\)' \
+          '-Icrypt_get_method_nr\(.+\)' \
+          '-I\spopup_set_firstline\(.+\);' \
+          '-I\supdate_vim9_script_var\(.+\);$' \
+          '-I\svim_free\(.*w_popup_title\);' \
+          "$patch" -- "${file}")
+        if test -n "$HUNKS"; then
+          HUNK_NUM_FINAL=$(echo "$HUNKS" | grep '^@@ .* @@' | sed 's/^@@ .* @@ //' | grep -cv -f "$NA_HUNKS_C")
+          test "$HUNK_NUM_FINAL" -ne 0 && return 1
+        fi
+        ;;
+      *)
+        return 1
+        ;;
+    esac
+  done
+
+  return 0
 }
 
 list_na_patches() {
   list_missing_vimpatches 0 | while read -r patch; do
     if is_na_patch "$patch"; then
-      GIT_MSG="$(git -C "${VIM_SOURCE_DIR}" log -1 --oneline "$patch")"
+      GIT_MSG="$(_git -C "${VIM_SOURCE_DIR}" log -1 --oneline "$patch")"
       if (echo "$patch" | grep -q '^v[0-9]\.[0-9]\.[0-9]') && (echo "${GIT_MSG}" | grep -q ' patch [0-9]\.'); then
         # shellcheck disable=SC2001
         echo "vim-patch:$(echo "${GIT_MSG}" | sed 's/^[0-9a-zA-Z]\+ patch //')"

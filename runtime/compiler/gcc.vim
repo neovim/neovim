@@ -7,6 +7,7 @@
 "			added line suggested by Anton Lindqvist 2016 Mar 31
 "			2024 Apr 03 by The Vim Project (removed :CompilerSet definition)
 "			2025 Dec 17 by The Vim Project (correctly parse: 'make: *** [Makefile:2: all] Error 1')
+"			2026 May 28 by The Vim Project (Use %v to parse column number)
 
 if exists("current_compiler")
   finish
@@ -24,9 +25,9 @@ CompilerSet errorformat=
       \\"%f\"%*\\D%l:\ %m,
       \%-G%f:%l:\ %trror:\ (Each\ undeclared\ identifier\ is\ reported\ only\ once,
       \%-G%f:%l:\ %trror:\ for\ each\ function\ it\ appears\ in.),
-      \%f:%l:%c:\ %trror:\ %m,
-      \%f:%l:%c:\ %tarning:\ %m,
-      \%f:%l:%c:\ %m,
+      \%f:%l:%v:\ %trror:\ %m,
+      \%f:%l:%v:\ %tarning:\ %m,
+      \%f:%l:%v:\ %m,
       \%f:%l:\ %trror:\ %m,
       \%f:%l:\ %tarning:\ %m,
       \%f:%l:\ %m,

@@ -1,1 +1,1 @@
-runtime! ftplugin/objc.vim
+runtime! ftplugin/objc[.]{vim,lua}

@@ -33,6 +33,10 @@
 #include "nvim/ui.h"
 #include "nvim/ui_client.h"
 
+#ifdef MSWIN
+# include "nvim/os/os_win_console.h"
+#endif
+
 #include "msgpack_rpc/channel.c.generated.h"
 
 #ifdef NVIM_LOG_DEBUG
@@ -494,6 +498,13 @@ static void rpc_close_event(void **argv)
 
   channel_decref(channel);
 
+#ifdef MSWIN
+  // For ":detach!": unexpected disconnect does not call ui_detach_channel, unlike the normal
+  // ":detach" case, so we need to do some cleanup here.
+  bool detached_ui_stdio = channel->streamtype == kChannelStreamStdio
+                           && channel->detach && channel->rpc.ui != NULL;
+#endif
+
   // No more I/O can happen on this channel. Remove UI if there is one attached.
   // Do this here instead of in rpc_free() which isn't always called on exit, so that
   // UILeave events behave consistently.
@@ -501,7 +512,9 @@ static void rpc_close_event(void **argv)
 
   bool is_ui_client = ui_client_channel_id && channel->id == ui_client_channel_id;
   if (is_ui_client) {
-    ui_client_attach_to_restarted_server();
+    if (!exiting && channel->streamtype != kChannelStreamProc) {
+      ui_client_attach_to_restarted_server(false);
+    }
     if (ui_client_channel_id != channel->id) {
       // Attached to new server. Don't exit.
       return;
@@ -515,6 +528,12 @@ static void rpc_close_event(void **argv)
   } else if (channel->streamtype == kChannelStreamStdio && !channel->detach) {
     exit_on_closed_chan(0);
   }
+#ifdef MSWIN
+  else if (detached_ui_stdio) {
+    // Move this server off the now-dead console so it keeps working (CONIN$/CONOUT$).
+    os_swap_to_hidden_console();
+  }
+#endif
 }
 
 void rpc_free(Channel *channel)
@@ -529,6 +548,7 @@ void rpc_free(Channel *channel)
 /// Closes a channel after receiving fatal error, and logs a message.
 static void chan_close_on_err(Channel *channel, char *msg, int loglevel)
 {
+  logmsg(loglevel, "RPC: ", NULL, -1, true, "%s", msg);
   for (size_t i = 0; i < kv_size(channel->rpc.call_stack); i++) {
     ChannelCallFrame *frame = kv_A(channel->rpc.call_stack, i);
     if (frame->returned) {
@@ -673,7 +693,7 @@ void rpc_set_client_info(uint64_t id, Dict info)
     chan->rpc.client_type = kClientTypeUnknown;
   }
 
-  channel_info_changed(chan, false);
+  channel_event(chan, EVENT_CHANINFO);
 }
 
 Dict rpc_client_info(Channel *chan)

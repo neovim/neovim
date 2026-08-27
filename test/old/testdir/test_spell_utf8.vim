@@ -828,5 +828,18 @@ func Test_spell_suggest_too_long()
   bwipe!
 endfunc
 
+" A SAL rule that is too long to case-fold must not move the sentinel entry
+" out of its last position in the sl_sal array.
+func Test_spellfile_long_sal_rule()
+  call writefile(['1', 'ab'], 'Xlongsal.dic', 'D')
+  call writefile(['SAL ' .. repeat('w', 299) .. ' a',
+        \ "SAL a\u00e9 a"], 'Xlongsal.aff', 'D')
+  mkspell! Xlongsal Xlongsal
+  set spelllang=Xlongsal.utf-8.spl spell
+  " must not crash
+  call soundfold('ab')
+  set spelllang& spell&
+  call delete('Xlongsal.utf-8.spl')
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

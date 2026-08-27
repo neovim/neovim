@@ -313,9 +313,9 @@ func Test_write_file_mtime()
   call writefile(["Line1", "Line2"], 'Xfile')
   let old_ftime = getftime('Xfile')
   let buf = RunVimInTerminal('Xfile', #{rows : 10})
-  call term_wait(buf)
+  call TermWait(buf)
   call term_sendkeys(buf, ":set noswapfile\<CR>")
-  call term_wait(buf)
+  call TermWait(buf)
 
   " Modify the file directly.  Make sure the file modification time is
   " different. Note that on Linux/Unix, the file is considered modified
@@ -331,17 +331,17 @@ func Test_write_file_mtime()
 
   " Try to overwrite the file and check for the prompt
   call term_sendkeys(buf, ":w\<CR>")
-  call term_wait(buf)
+  call TermWait(buf)
   call WaitForAssert({-> assert_equal("WARNING: The file has been changed since reading it!!!", term_getline(buf, 9))})
   call assert_equal("Do you really want to write to it (y/n)?",
         \ term_getline(buf, 10))
   call term_sendkeys(buf, "n\<CR>")
-  call term_wait(buf)
+  call TermWait(buf)
   call assert_equal(new_ftime, getftime('Xfile'))
   call term_sendkeys(buf, ":w\<CR>")
-  call term_wait(buf)
+  call TermWait(buf)
   call term_sendkeys(buf, "y\<CR>")
-  call term_wait(buf)
+  call TermWait(buf)
   call WaitForAssert({-> assert_equal('Line2', readfile('Xfile')[1])})
 
   " clean up
@@ -1011,6 +1011,26 @@ func Test_write_with_xattr_support()
 
   set backupcopy&
   bw!
+endfunc
+
+func Test_backupcopy_auto_restrictive_umask()
+  CheckUnix
+  call writefile(['FOO'], 'Xumaskfile', 'D')
+  call setfperm('Xumaskfile', 'rw-r--r--')
+  let inode_before = systemlist('ls -i Xumaskfile')[0]->matchstr('^\s*\zs\d\+')
+  call writefile([
+	\ 'set backupcopy=auto writebackup nobackup backupskip=',
+	\ 'edit Xumaskfile',
+	\ 'call setline(1, ["BAR"])',
+	\ 'write',
+	\ 'qall!'
+	\ ], 'Xumaskscript', 'D')
+  call system('umask 0077; ' .. GetVimCommand() .. ' -i NONE -n -S Xumaskscript')
+  call assert_equal(0, v:shell_error)
+  call assert_equal(['BAR'], readfile('Xumaskfile'))
+  call assert_equal('rw-r--r--', getfperm('Xumaskfile'))
+  call assert_notequal(inode_before,
+	\ systemlist('ls -i Xumaskfile')[0]->matchstr('^\s*\zs\d\+'))
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

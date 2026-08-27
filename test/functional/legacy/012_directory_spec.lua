@@ -6,6 +6,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, setup, teardown = t.describe, t.it, t.setup, t.teardown
 local eq = t.eq
 local neq = t.neq
 local poke_eventloop = n.poke_eventloop

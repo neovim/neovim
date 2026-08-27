@@ -102,7 +102,7 @@ NOTE: [:q!](:q) `<Enter>`{normal} discards any changes you made. In a few lesson
 
  4. Repeat steps 2 through 4 until the sentence is correct.
 
-The ccow jumpedd ovverr thhe mooon.
+The ccow jumpedd ovverr thhe mooon. [[The cow jumped over the moon.]]
 
  5. Now that the line is correct, go on to Lesson 1.4.
 
@@ -124,8 +124,8 @@ NOTE: As you go through this tutorial, do not try to memorize everything,
  4. As each error is fixed press `<Esc>`{normal} to return to Normal mode.
     Repeat steps 2 through 4 to correct the sentence.
 
-There is text misng this .
-There is some text missing from this line.
+There is text misng this . [[There is some text missing from this line.]]
+There is some text missing from this line. [[There is some text missing from this line.]]
 
  5. When you are comfortable inserting text move to Lesson 1.5.
 
@@ -144,10 +144,10 @@ There is some text missing from this line.
  4. Move the cursor to the second line marked ✗ and repeat
     steps 2 and 3 to correct this sentence.
 
-There is some text missing from th
-There is some text missing from this line.
-There is also some text miss
-There is also some text missing here.
+There is some text missing from th [[There is some text missing from this line.]]
+There is some text missing from this line. [[There is some text missing from this line.]]
+There is also some text miss [[There is also some text missing here.]]
+There is also some text missing here. [[There is also some text missing here.]]
 
  5. When you are comfortable appending text move to Lesson 1.6.
 
@@ -215,7 +215,7 @@ Now continue with Lesson 2.
 
  4. Type [d](d)[w](w) to make the word disappear.
 
-There are a some words fun that don't belong paper in this sentence.
+There are a some words fun that don't belong paper in this sentence. [[There are some words that don't belong in this sentence.]]
 
  5. Repeat steps 3 and 4 until the sentence is correct and go to Lesson 2.2.
 
@@ -231,7 +231,7 @@ There are a some words fun that don't belong paper in this sentence.
 
  4. Type `d$`{normal} to delete to the end of the line.
 
-Somebody typed the end of this line twice. end of this line twice.
+Somebody typed the end of this line twice. end of this line twice. [[Somebody typed the end of this line twice.]]
 
  5. Move on to Lesson 2.3 to understand what is happening.
 
@@ -270,7 +270,7 @@ NOTE: Pressing just the motion while in Normal mode without an operator
 
  5. Repeat steps 2 and 3 with different numbers.
 
-This is just a line with words you can move around in.
+This is just a line with words you can move around in. [[-1]]
 
  6. Move on to Lesson 2.5.
 
@@ -289,7 +289,7 @@ insert a count before the motion to delete more:
  3. Repeat steps 1 and 2 with a different count to delete the consecutive
     UPPER CASE words with one command
 
-This ABC DE line FGHI JK LMN OP of words is Q RS TUV cleaned up.
+This ABC DE line FGHI JK LMN OP of words is Q RS TUV cleaned up. [[This line of words is cleaned up.]]
 
 # Lesson 2.6: OPERATING ON LINES
 
@@ -306,13 +306,13 @@ it would be easier to simply type two d's to delete a line.
 
  4. Type `2dd`{normal} to delete two lines.
 
-1)  Roses are red,
-2)  Mud is fun,
-3)  Violets are blue,
-4)  I have a car,
-5)  Clocks tell time,
-6)  Sugar is sweet
-7)  And so are you.
+1)  Roses are red, [[1)  Roses are red,]]
+2)  Mud is fun, [[]]
+3)  Violets are blue, [[3)  Violets are blue,]]
+4)  I have a car, [[]]
+5)  Clocks tell time, [[]]
+6)  Sugar is sweet [[6)  Sugar is sweet]]
+7)  And so are you. [[7)  And so are you.]]
 
 # Lesson 2.7: THE UNDO COMMAND
 
@@ -332,7 +332,7 @@ it would be easier to simply type two d's to delete a line.
 
  7. Now type `<C-r>`{normal} (Control + R) a few times to redo the commands.
 
-Fiix the errors oon thhis line and reeplace them witth undo.
+Fiix the errors oon thhis line and reeplace them witth undo. [[Fix the errors on this line and replace them with undo.]]
 
  8. These are very useful commands. Now move on to the Lesson 2 Summary.
 
@@ -397,8 +397,8 @@ NOTE: You can also put the text before the cursor with `P`{normal} (capital P).
 
  4. Repeat steps 2 and 3 until the first line is equal to the second one.
 
-Whan this lime was tuoed in, someone presswd some wrojg keys!
-When this line was typed in, someone pressed some wrong keys!
+Whan this lime was tuoed in, someone presswd some wrojg keys! [[When this line was typed in, someone pressed some wrong keys!]]
+When this line was typed in, someone pressed some wrong keys! [[When this line was typed in, someone pressed some wrong keys!]]
 
  5. Now move on to Lesson 3.3.
 
@@ -418,8 +418,8 @@ NOTE: Remember that you should be learning by doing, not memorizing.
 
  5. Repeat steps 3 and 4 until the first sentence is the same as the second.
 
-This lubw has a few wptfd that mrrf changing usf the change operator.
-This line has a few words that need changing using the change operator.
+This lubw has a few wptfd that mrrf changing usf the change operator. [[This line has a few words that need changing using the change operator.]]
+This line has a few words that need changing using the change operator. [[This line has a few words that need changing using the change operator.]]
 
 Notice that [c](c)e deletes the word and places you in Insert mode.
 
@@ -439,8 +439,8 @@ Notice that [c](c)e deletes the word and places you in Insert mode.
 
  5. Type `c$`{normal} and type the rest of the line like the second and press `<Esc>`{normal}.
 
-The end of this line needs some help to make it like the second.
-The end of this line needs to be corrected using the c$ command.
+The end of this line needs some help to make it like the second. [[The end of this line needs to be corrected using the c$ command.]]
+The end of this line needs to be corrected using the c$ command. [[The end of this line needs to be corrected using the c$ command.]]
 
 NOTE: You can use the Backspace key to correct mistakes while typing.
 
@@ -503,7 +503,7 @@ NOTE: You may see the cursor position in the lower right corner of the
     (keep `<Ctrl>`{normal} pressed down while pressing the letter `o`{normal}).
     Repeat to go back further. `<C-i>`{normal} goes forward.
 
-"errroor" is not the way to spell error; errroor is an error.
+"errroor" is not the way to spell error; errroor is an error. [[-1]]
 
 NOTE: When the search reaches the end of the file it will continue at the
       start, unless the ['wrapscan']('wrapscan') option has been reset.
@@ -522,7 +522,7 @@ NOTE: When the search reaches the end of the file it will continue at the
 
  5. Move the cursor to another (, ), [, ], {, or } and see what `%`{normal} does.
 
-This ( is a test line with ('s, ['s, ] and {'s } in it. ))
+This ( is a test line with ('s, ['s, ] and {'s } in it. )) [[-1]]
 
 NOTE: This is very useful in debugging a program with unmatched parentheses!
 
@@ -545,7 +545,7 @@ NOTE: This is very useful in debugging a program with unmatched parentheses!
     Adding the g [flag](:s_flags) means to substitute globally in the line,
     change all occurrences of "thee" in the line.
 
-Usually thee best time to see thee flowers is in thee spring.
+Usually thee best time to see thee flowers is in thee spring. [[Usually the best time to see the flowers is in the spring.]]
 
  4. To change every occurrence of a character string between two lines, type
 ~~~ cmd
@@ -740,12 +740,12 @@ NOTE: You can also read the output of an external command. For example,
 
  3. Now type some text and press `<Esc>`{normal} to exit Insert mode. Remove your opened lines after you're done.
 
-After typing `o`{normal} the cursor is placed on the open line in Insert mode.
+After typing `o`{normal} the cursor is placed on the open line in Insert mode. [[-1]]
 
  4. To open up a line ABOVE the cursor, simply type a [capital O](O), rather
     than a lowercase `o`{normal}. Try this on the line below. Remove your opened lines after you're done.
 
-Open up a line above this by typing O while the cursor is on this line.
+Open up a line above this by typing O while the cursor is on this line. [[-1]]
 
 # Lesson 6.2: THE APPEND COMMAND
 
@@ -761,8 +761,8 @@ Open up a line above this by typing O while the cursor is on this line.
 
  5. Use `e`{normal} to move to the next incomplete word and repeat steps 3 and 4.
 
-This li will allow you to pract appendi text to a line.
-This line will allow you to practice appending text to a line.
+This li will allow you to pract appendi text to a line. [[This line will allow you to practice appending text to a line.]]
+This line will allow you to practice appending text to a line. [[This line will allow you to practice appending text to a line.]]
 
 NOTE: [a](a), [i](i), and [A](A) all go to the same Insert mode, the only
       difference is where the characters are inserted.
@@ -782,8 +782,8 @@ NOTE: [a](a), [i](i), and [A](A) all go to the same Insert mode, the only
 
  4. Repeat the steps to replace the remaining "xxx".
 
-Adding 123 to xxx gives you xxx.
-Adding 123 to 456 gives you 579.
+Adding 123 to xxx gives you xxx. [[Adding 123 to 456 gives you 579.]]
+Adding 123 to 456 gives you 579. [[Adding 123 to 456 gives you 579.]]
 
 NOTE: Replace mode is like Insert mode, but every typed character
       replaces an existing character.
@@ -809,8 +809,8 @@ NOTE: Replace mode is like Insert mode, but every typed character
  7. Use Visual mode to select "item.", yank it with `y`{normal}, move to the
     end of the next line with `j$`{normal} and put the text there with `p`{normal}
 
-a) This is the first item.
-b)
+a) This is the first item. [[a) This is the first item.]]
+b) [[b) This is the second item.]]
 
 NOTE: You can use `y`{normal} as an operator: `yw`{normal} yanks one word.
 

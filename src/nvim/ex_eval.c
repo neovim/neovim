@@ -378,7 +378,9 @@ bool do_intthrow(cstack_T *cstack)
   return true;
 }
 
-/// Get an exception message that is to be stored in current_exception->value.
+/// Gets an exception message that is to be stored in current_exception->value.
+///
+/// For error exceptions (ET_ERROR), formats the message as "Vim(cmdname):Exx: …".
 char *get_exception_string(void *value, except_type_T type, char *cmdname, bool *should_free)
 {
   char *ret;

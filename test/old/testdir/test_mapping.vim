@@ -7,11 +7,41 @@ source term_util.vim
 
 func Test_abbreviation()
   new
-  " abbreviation with 0x80 should work
+
+  " abbreviation with 0x80 (full-id)
   inoreab чкпр   vim
   call feedkeys("Goчкпр \<Esc>", "xt")
   call assert_equal('vim ', getline('$'))
   iunab чкпр
+
+  " abbreviation with 0x80 (non-id)
+  inoreab abc⁀ abc^
+  inoreab ⁀ ^
+  call feedkeys("Goabc⁀ def⁀ ⁀ \<Esc>", "xt")
+  call assert_equal('abc^ def⁀ ^ ', getline('$'))
+  iunab abc⁀
+  iunab ⁀
+
+  " abbreviation with 0x9b (non-id)
+  inoreab abc； abc;
+  inoreab ； ;
+  call feedkeys("Goabc； def； ； \<Esc>", "xt")
+  call assert_equal('abc; def； ; ', getline('$'))
+  iunab abc；
+  iunab ；
+
+  " abbreviation with composing chars (end-id)
+  inoreab ..ã a^~
+  inoreab ..β̃ β^~
+  inoreab ..π̃ π^~
+  inoreab ..Λ̃ Λ^~
+  call feedkeys("Go..ã ..β̃ ..π̃ ..Λ̃ \<Esc>", "xt")
+  call assert_equal('a^~ β^~ π^~ Λ^~ ', getline('$'))
+  iunab ..ã
+  iunab ..β̃
+  iunab ..π̃
+  iunab ..Λ̃
+
   bwipe!
 endfunc
 
@@ -249,9 +279,11 @@ endfunc
 func Test_break_undo()
   set whichwrap=<,>,[,]
   call feedkeys("G4o2k", "xt")
+  " Nvim: "." re-executes the whole insert session, including the (wrapping)
+  " CTRL-G U <Right>, instead of only the text typed after it.
   exe ":norm! iTest3: text with a (parenthesis here\<C-G>U\<Right>new line here\<esc>\<up>\<up>."
-  call assert_equal('new line here', getline(line('$') - 3))
-  call assert_equal('Test3: text with a (parenthesis here', getline(line('$') - 2))
+  call assert_equal('Test3: text with a (parenthesis here', getline(line('$') - 3))
+  call assert_equal('new line hereTest3: text with a (parenthesis here', getline(line('$') - 2))
   call assert_equal('new line here', getline(line('$') - 1))
   set nomodified
 endfunc

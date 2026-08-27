@@ -53,27 +53,27 @@ is displayed like
 
 1. Format the line below so it becomes a lesson description:
 
-This is text with important information
-This is text with **important information**
+This is text with important information [[This is text with **important information**]]
+This is text with **important information** [[This is text with **important information**]]
 
 Note: Some words (e.g., NOTE, IMPORTANT, tip, ATTENTION, etc.) will also be
 highlighted. You don't need to mark them specially.
 
 2. Turn the line below into a TODO item:
 
-Document '&variable'
-TODO: Document '&variable'
+Document '&variable' [[TODO: Document '&variable']]
+TODO: Document '&variable' [[TODO: Document '&variable']]
 
 ### Headers *headers*
 
 3. Practice fixing the lines below:
 
-This is a level 1 header
-# This is a level 1 header
-This is a level 3 header
-### This is a level 3 header
-This is a header with a label
-# This is a header with a label {*label*}
+This is a level 1 header [[# This is a level 1 header]]
+# This is a level 1 header [[# This is a level 1 header]]
+This is a level 3 header [[### This is a level 3 header]]
+### This is a level 3 header [[### This is a level 3 header]]
+This is a header with a label [[# This is a header with a label {*label*}]]
+# This is a header with a label {*label*} [[# This is a header with a label {*label*}]]
 
 4. Now, create a 4th level section here, and add a label like in the previous
 exercise:
@@ -98,8 +98,8 @@ If the target of a link matches a help topic, opening it will open it.
 
 5. Fix the following line:
 
-A link to help for the 'breakindent' option
-A link to help for the ['breakindent']('breakindent') option
+A link to help for the 'breakindent' option [[A link to help for the ['breakindent']('breakindent') option]]
+A link to help for the ['breakindent']('breakindent') option [[A link to help for the ['breakindent']('breakindent') option]]
 
 #### Anchor links
 
@@ -113,8 +113,8 @@ and are hidden by default. Links to them look like
 
 6. Add the appropriate link:
 
-A link to the Links section
-A link to the [Links](*links*) section
+A link to the Links section [[A link to the [Links](*links*) section]]
+A link to the [Links](*links*) section [[A link to the [Links](*links*) section]]
 
 7. Now, create a link to the section you created on exercise 4
    above.
@@ -129,8 +129,8 @@ You can also have links to other tutorials. For this, you'll write the anchor in
 
 7. Create a link to this tutorial:
 
-A link to the vim-tutor-mode tutorial
-A link to [the vim-tutor-mode tutorial](@tutor:tutor)
+A link to the vim-tutor-mode tutorial [[A link to [the vim-tutor-mode tutorial](@tutor:tutor)]]
+A link to [the vim-tutor-mode tutorial](@tutor:tutor) [[A link to [the vim-tutor-mode tutorial](@tutor:tutor)]]
 
 ### Codeblocks *codeblocks*
 
@@ -147,13 +147,13 @@ echom "hello"
 
 8. Copy the viml section below
 
+ [[~~~ viml]]
+ [[echom 'the value of &number is'.string(&number)]]
+ [[~~~]]
 
-
-
-
-~~~ viml
-echom 'the value of &number is'.string(&number)
-~~~
+~~~ viml [[~~~ viml]]
+echom 'the value of &number is'.string(&number) [[echom 'the value of &number is'.string(&number)]]
+~~~ [[~~~]]
 
 You can inline viml code using "\`" and "\`{vim}":
 
@@ -178,13 +178,13 @@ Note: you can also write `norm` or `normal`.
 
 9. Copy the normal section below
 
+ [[~~~ normal]]
+ [[d2w]]
+ [[~~~]]
 
-
-
-
-~~~ normal
-d2w
-~~~
+~~~ normal [[~~~ normal]]
+d2w [[d2w]]
+~~~ [[~~~]]
 
 You can also inline normal commands by using "\`" and "\`{normal}":
 
@@ -196,8 +196,8 @@ is displayed:
 
 10. Complete the line as shown
 
-d
-`d2w`{normal}
+d [[`d2w`{normal}]]
+`d2w`{normal} [[`d2w`{normal}]]
 
 Commands to run in the system shell can be highlighted by indenting a line
 starting with "$".
@@ -216,25 +216,15 @@ to the left. Otherwise, a ✗ sign is displayed.
 ### expect *expect*
 
 "expect" lines check that the contents of the line are identical to some preset text
-(like in the exercises above).
+(like in the exercises above). The expected text is defined in inline comments that
+are not visible to the user.
 
-These elements are specified in separate JSON files like this
+An example line is written like "This is wrong. [[This is right.]]"
+The user will see "This is wrong." and have an interactive sign.
 
-~~~ json
-{
-  "expect": {
-    "1": "This is how this line should look.",
-    "2": "This is how this line should look.",
-    "3": -1
-  }
-}
-~~~
+A value of [[-1]] means that the condition for the line will always be satisfied,
+no matter what (this is useful for letting the user play a bit).
 
-These files contain an "expect" dictionary, for which the keys are line numbers and 
-the values are the expected text. A value of -1 means that the condition for the line
-will always be satisfied, no matter what (this is useful for letting the user play a bit).
+This is an "expect" line that is always satisfied. Try changing it. [[-1]]
 
-This is an "expect" line that is always satisfied. Try changing it.
-
-These files conventionally have the same name as the tutorial document with the `.json`
-extension appended (for a full example, see the file that corresponds to this tutorial).
+For a full example, see the file that corresponds to this tutorial.

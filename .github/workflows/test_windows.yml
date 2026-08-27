@@ -21,7 +21,7 @@ jobs:
       matrix:
         test: [functional, old]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
@@ -74,7 +74,7 @@ jobs:
           exit $exitCode
 
       - if: ${{ matrix.test == 'old' }}
-        uses: msys2/setup-msys2@cafece8e6baf9247cf9b1bf95097b0b983cc558d # v2.31.0
+        uses: msys2/setup-msys2@66cd2cce69caa17b53920067426061ca1de3a884 # v2.32.0
         with:
           update: true
           install: unzip

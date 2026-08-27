@@ -1,6 +1,8 @@
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear = n.clear
 local command = n.command
 local expect = n.expect
@@ -16,13 +18,13 @@ describe('edit', function()
     -- leaving insert mode in a new line with indent added by autoindent, should
     -- remove the indent.
     feed('i<Tab>foo<CR><Esc>')
-    -- Need to delay for sometime, otherwise the code in getchar.c will not be
+    -- Need to delay for sometime, otherwise the code in input.c will not be
     -- exercised.
     sleep(50)
     -- when a line is wrapped and the cursor is at the start of the second line,
     -- leaving insert mode, should move the cursor back to the first line.
     feed('o' .. ('x'):rep(20) .. '<Esc>')
-    -- Need to delay for sometime, otherwise the code in getchar.c will not be
+    -- Need to delay for sometime, otherwise the code in input.c will not be
     -- exercised.
     sleep(50)
     expect('\tfoo\n\n' .. ('x'):rep(20))

@@ -1,7 +1,9 @@
 -- Test for benchmarking the RE engine.
 
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 
+local describe, it, setup, teardown = t.describe, t.it, t.setup, t.teardown
 local insert, source = n.insert, n.source
 local clear, command = n.clear, n.command
 

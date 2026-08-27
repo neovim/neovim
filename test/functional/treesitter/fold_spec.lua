@@ -2,6 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear = n.clear
 local eq = t.eq
 local insert = n.insert
@@ -822,5 +823,43 @@ t2]])
       ^hello                                   |
                                               |
     ]])
+  end)
+
+  it('clamps unbounded changed ranges on 32-bit platforms', function()
+    insert([[
+one
+two]])
+
+    exec_lua(function()
+      local parser = {}
+
+      function parser:parse(_, callback)
+        if callback then
+          callback(nil, {})
+        end
+      end
+
+      function parser:for_each_tree() end
+
+      function parser:register_cbs(callbacks)
+        self.callbacks = callbacks
+      end
+
+      vim.treesitter.get_parser = function()
+        return parser
+      end
+
+      vim.treesitter.foldexpr()
+      vim.wo.foldmethod = 'expr'
+      vim._foldupdate = function(_, first, last)
+        _G.foldupdate_range = { first, last }
+      end
+
+      -- UINT32_MAX is represented as -1 by Lua integers on 32-bit platforms.
+      parser.callbacks.on_changedtree({ { 0, 0, -1, -1 } })
+    end)
+    poke_eventloop()
+
+    eq({ 0, 2 }, exec_lua('return _G.foldupdate_range'))
   end)
 end)

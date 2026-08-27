@@ -1,6 +1,8 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, before_each, after_each, finally =
+  t.describe, t.it, t.before_each, t.after_each, t.finally
 local exec_lua = n.exec_lua
 local eq = t.eq
 local api = n.api
@@ -69,6 +71,29 @@ describe('vim.filetype', function()
       'text',
       exec_lua(function()
         return vim.filetype.match({ filename = 'main.txt' })
+      end)
+    )
+  end)
+
+  it('detects directory filenames', function()
+    eq(
+      'directory',
+      exec_lua(function()
+        return vim.filetype.match({ filename = '/tmp/example/' })
+      end)
+    )
+  end)
+
+  it('matches URI buffer patterns ending in slash', function()
+    eq(
+      'example',
+      exec_lua(function()
+        vim.filetype.add({
+          pattern = {
+            ['example://.*'] = 'example',
+          },
+        })
+        return vim.filetype.match({ filename = 'example:///tmp/example/' })
       end)
     )
   end)
@@ -216,6 +241,9 @@ describe('vim.filetype', function()
       end)
     )
     rmdir('Xfiletype')
+
+    -- Should still work even if current directory is not on disk
+    eq('zsh', exec_lua('return vim.filetype.match({ filename = ".zshrc" })'))
   end)
 
   it('fallback to conf if any of the first five lines start with a #', function()

@@ -4,7 +4,7 @@
                 NVIM REFERENCE MANUAL
 
 
-Predefined variables                                             *vvars*
+Predefined variables					  *vvars* *v:var* *v:*
 
 Most variables are read-only, when a variable can be set by the user, it will
 be mentioned at the variable description below.  The type cannot be changed.
@@ -128,7 +128,7 @@ v:dying
 v:echospace
 		Number of screen cells that can be used for an `:echo` message
 		in the last screen line before causing the |hit-enter| prompt
-		(or "overflow" with |ui2|).
+		(no longer applicable when |ui2| is enabled).
 
 		Depends on 'showcmd', 'ruler' and 'columns'.  You need to
 		check 'cmdheight' for whether there are full-width lines
@@ -230,8 +230,24 @@ v:exiting
 		Exit code, or |v:null| before invoking the |VimLeavePre|
 		and |VimLeave| autocmds.  See |:q|, |:x| and |:cquit|.
 		Example: >vim
-		  :au VimLeave * echo "Exit value is " .. v:exiting
+		  :au VimLeave * echo "Exit code is " .. v:exiting
 <
+
+				*v:exitreason* *exitreason-variable*
+v:exitreason
+		Reason for the current exit. Set before |QuitPre|. Reset if
+		exit was canceled.
+
+		Possible values:
+		- ""          Not exiting, or exit was canceled.
+		- "quit"      |:quit|, |:qall|, |:wq|, |ZZ|, |ZQ|, etc.
+		- "restart"   |:restart|, |ZR|.
+		- "restart!"  |:restart!|, |[count]||ZR|.
+
+		Example: >vim
+		  autocmd ExitPre * if v:exitreason ==# 'restart' | echomsg 'restarting' | endif
+<
+		Read-only.
 
 					*v:false* *false-variable*
 v:false
@@ -267,12 +283,12 @@ v:fcs_reason
 		The reason why the |FileChangedShell| event was triggered.
 		Can be used in an autocommand to decide what to do and/or what
 		to set v:fcs_choice to.  Possible values:
-		  deleted   file no longer exists
-		  conflict  file contents, mode or timestamp was
+		- deleted   file no longer exists
+		- conflict  file contents, mode or timestamp was
 		            changed and buffer is modified
-		  changed   file contents has changed
-		  mode      mode of file changed
-		  time      only file timestamp changed
+		- changed   file contents has changed
+		- mode      mode of file changed
+		- time      only file timestamp changed
 
 					*v:fname* *fname-variable*
 v:fname
@@ -618,6 +634,25 @@ v:stacktrace
 		stack trace.  See also |v:exception|, |v:throwpoint|, and
 		|throw-variables|.
 
+				*v:startreason* *startreason-variable*
+v:startreason
+		The reason Nvim started. Possible values:
+		- "normal"    Normal startup, yearning for life, etc.
+		- "restart"   Started by |:restart|.
+		- "restart!"  Started by |:restart!|.
+
+		Read-only.
+
+				*v:starttime* *starttime-variable*
+v:starttime
+		Timestamp (nanoseconds since UNIX epoch) when the Nvim process
+		started.
+
+		To see the current "uptime": >lua
+		  vim.print(('uptime: %d seconds'):format(os.time() - (vim.v.starttime / 1e9)))
+<
+		Read-only.
+
 				*v:statusmsg* *statusmsg-variable*
 v:statusmsg
 		Last given status message.
@@ -728,6 +763,15 @@ v:true
 		as a String (e.g. in |expr5| with string concatenation
 		operator) and to one when used as a Number (e.g. in |expr5| or
 		|expr7| when used with numeric operators).  Read-only.
+
+			*v:useractive* *useractive-variable* *user-idle*
+v:useractive
+		Timestamp (nanoseconds since UNIX epoch) indicating the most
+		recent user activity, i.e. when a key is received from a UI
+		(TUI input or |nvim_input()|).
+
+		Initialized to 0 (no user activity since startup).
+		Read-only.
 
 						*v:val* *val-variable*
 v:val

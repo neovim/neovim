@@ -923,5 +923,225 @@ func Test_restore_cursor_position_after_undo()
   bw!
 endfunc
 
+func Test_undo_line_backspace_after_insert_cmd_cursor_movement()
+  new
+  setlocal backspace=eol undolevels=100
+  call setline(1, ['', '', 'abc', 'def'])
+  call cursor(4, 1)
+
+  let v:errmsg = ''
+  call feedkeys("i\<Cmd>setlocal undolevels=101 | call cursor(3, 1)\<CR>"
+        \ .. "\<BS>\<BS>\<Esc>u", 'xt')
+
+  call assert_equal('', v:errmsg)
+  call assert_equal(['', '', 'abc', 'def'], getline(1, '$'))
+  bwipe!
+endfunc
+
+func Test_undo_line_backspace_after_insert_func_edit()
+  new
+  setlocal backspace=eol undolevels=100
+
+  let v:errmsg = ''
+  call feedkeys("i\<CR>"
+        \ .. "\<Cmd>call setline(2, 'abc')\<CR>"
+        \ .. "\<BS>\<Esc>u", 'xt')
+
+  call assert_equal('', v:errmsg)
+  call assert_equal([''], getline(1, '$'))
+  bwipe!
+endfunc
+
+func Test_undo_line_backspace_after_insert_cmd_edit()
+  new
+  setlocal backspace=eol undolevels=100
+
+  let v:errmsg = ''
+  call feedkeys("i\<CR>"
+        \ .. "\<Cmd>s/.*/abc/\<CR>"
+        \ .. "\<BS>\<Esc>u", 'xt')
+
+  call assert_equal('', v:errmsg)
+  call assert_equal([''], getline(1, '$'))
+  bwipe!
+endfunc
+
+" Corrupted undo file via cyclic cross-references caused
+" double free
+func Test_corrupted_undofile()
+  CheckFeature persistent_undo
+  let _uf = &undofile
+  set undofile
+  new
+  call setline(1, 'hello')
+  let b=eval('0z56696D9F556E446FE50002F3AEFE62965A91903610' ..
+           \ 'F0E23CC8A69D5B87CEA6D28E75489B0D2CA02ED7993C' ..
+           \ '00000001000000000000000000000000000000010000' ..
+           \ '00010000000100000001000000010000000100000000' ..
+           \ '3B9ACA00005FD0000000010000000000000000000000' ..
+           \ '00000000010000000100000000000000000000000000' ..
+           \ '00000000000000000000000000000000000000000000' ..
+           \ '00000000000000000000000000000000000000000000' ..
+           \ '00000000000000000000000000000000000000000000' ..
+           \ '00000000000000000000000000000000000000000000' ..
+           \ '00000000000000000000000000000000000000000000' ..
+           \ '00000000000000000000000000000000000000000000' ..
+           \ '00000000000000000000000000000000000000000000' ..
+           \ '00000000000000000000000000000000000000000000' ..
+           \ '00000000000000000000000000000000000000000000' ..
+           \ '00000000000000000000000000000000000000000000' ..
+           \ '00000000000000000000000000000000000000000000' ..
+           \ '00000000000000000000000000000000000000000000' ..
+           \ '00000000000000000000000000000000000000000000' ..
+           \ '00000000000000000000000000000000000000000000' ..
+           \ '00000000000000000000000000000000000000000000' ..
+           \ '000000000000000000000000000000000000003B9ACA' ..
+           \ '00003581E7AA')
+  " Nvim: convert undo file format
+  let b = b->slice(0, -2) + 0z3581 + b->slice(-2) | let b[10] = 0x03
+  call writefile(b, 'Xundo', 'bD')
+  rundo Xundo
+  bw!
+  let &undofile = _uf
+endfunc
+
+" Test that an undo file with alternate branches round-trips: the tree
+" structure and the text at every sequence number survive :wundo + :rundo.
+func Test_undofile_branches()
+  CheckFeature persistent_undo
+  let save_ul = &undolevels
+  defer execute('let &undolevels = ' .. save_ul)
+  new Xubranches.txt
+  setl noswapfile
+  set ul=100
+  call setline(1, 'a')
+  for i in range(5)
+    let &undolevels = &undolevels
+    call setline(1, 'main' .. i)
+  endfor
+  " create two alternate branches
+  silent undo 3
+  let &undolevels = &undolevels
+  call setline(1, 'branch-a')
+  silent undo 2
+  let &undolevels = &undolevels
+  call setline(1, 'branch-b')
+
+  write
+  defer delete('Xubranches.txt')
+  wundo! Xubranches.undo
+  defer delete('Xubranches.undo')
+  let tree_before = undotree()
+  " remember the text at every undo state
+  let texts = {}
+  for seq in range(1, tree_before.seq_last)
+    exe 'silent undo ' .. seq
+    let texts[seq] = getline(1)
+  endfor
+  bwipe!
+
+  edit Xubranches.txt
+  setl noswapfile
+  rundo Xubranches.undo
+  let tree_after = undotree()
+  call assert_equal(tree_before.seq_last, tree_after.seq_last)
+  " every field of the entries, including times and save numbers, must
+  " round-trip through the undo file exactly
+  call assert_equal(tree_before.entries, tree_after.entries)
+  for [seq, text] in items(texts)
+    exe 'silent undo ' .. seq
+    call assert_equal(text, getline(1), 'text at undo state ' .. seq)
+  endfor
+
+  bwipe!
+endfunc
+
+" Test that a duplicated sequence number in an undo file is detected.
+func Test_undofile_duplicate_seq()
+  CheckFeature persistent_undo
+  let save_ul = &undolevels
+  defer execute('let &undolevels = ' .. save_ul)
+  new Xudupseq.txt
+  setl noswapfile
+  set ul=100
+  call setline(1, 'one')
+  let &undolevels = &undolevels
+  call setline(1, 'two')
+  let &undolevels = &undolevels
+  call setline(1, 'three')
+  write
+  defer delete('Xudupseq.txt')
+  wundo! Xudupseq.undo
+  defer delete('Xudupseq.undo')
+
+  " Overwrite the uh_seq of the second header with that of the first.  A
+  " header starts with the magic bytes 0x5f 0xd0, followed by four 4-byte
+  " header references and then the 4-byte uh_seq.  Require the references
+  " and uh_seq to be small numbers, so that a timestamp that happens to
+  " contain the magic bytes is not mistaken for a header.
+  let blob = readfile('Xudupseq.undo', 'B')
+  let headers = []
+  for i in range(len(blob) - 22)
+    if blob[i] == 0x5f && blob[i + 1] == 0xd0
+      let ok = v:true
+      for field in range(5)
+        let off = i + 2 + field * 4
+        if blob[off] != 0 || blob[off + 1] != 0 || blob[off + 2] != 0
+              \ || blob[off + 3] > 8
+          let ok = v:false
+          break
+        endif
+      endfor
+      if ok
+        call add(headers, i)
+      endif
+    endif
+  endfor
+  call assert_true(len(headers) >= 2, 'found undo file headers')
+  let first = headers[0] + 18
+  let second = headers[1] + 18
+  " Check that the detected headers are the intended ones before patching
+  " any bytes: the headers are written oldest first, so the first two carry
+  " sequence numbers 1 and 2.
+  call assert_equal(0z00000001, blob[first : first + 3])
+  call assert_equal(0z00000002, blob[second : second + 3])
+  let blob[second : second + 3] = blob[first : first + 3]
+  call writefile(blob, 'Xudupseq.undo')
+  call assert_fails('rundo Xudupseq.undo', 'E825:')
+
+  bwipe!
+endfunc
+
+" Test reading an undo file with zero undo headers, which is written when
+" only the line for the "U" command is saved, e.g. with 'undolevels' -1.
+func Test_undofile_zero_headers()
+  CheckFeature persistent_undo
+  let save_ul = &undolevels
+  defer execute('let &undolevels = ' .. save_ul)
+  " The buffer must not collect any undo header, so create the file on disk
+  " directly and only change the buffer with 'undolevels' already negative.
+  call writefile(['hello', 'world'], 'Xuzero.txt', 'D')
+  set undolevels=-1
+  edit Xuzero.txt
+  normal! x
+  wundo! Xuzero.undo
+  defer delete('Xuzero.undo')
+  bwipe!
+
+  " Make the same change so that the buffer text matches the hash stored in
+  " the undo file, then read the undo file back.
+  edit Xuzero.txt
+  normal! x
+  let v:errmsg = ''
+  " a silent rejection of the undo file gives a warning, not an error
+  let v:warningmsg = ''
+  rundo Xuzero.undo
+  call assert_equal('', v:errmsg)
+  call assert_equal('', v:warningmsg)
+  normal! U
+  call assert_equal('hello', getline(1))
+
+  bwipe!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

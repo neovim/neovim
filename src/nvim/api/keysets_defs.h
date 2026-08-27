@@ -48,14 +48,14 @@ typedef struct {
   Array virt_lines;
   Boolean virt_lines_above;
   Boolean virt_lines_leftcol;
-  Enum("trunc", "scroll") virt_lines_overflow;
+  Enum("trunc", "scroll", "wrap", "auto") virt_lines_overflow;
   Boolean strict;
   String sign_text;
   HLGroupID sign_hl_group;
   HLGroupID number_hl_group;
   HLGroupID line_hl_group;
   HLGroupID cursorline_hl_group;
-  String conceal;
+  Union(String, Boolean) conceal;
   String conceal_lines;
   Boolean spell;
   Boolean ui_watched;
@@ -93,6 +93,11 @@ typedef struct {
   String desc;
   Boolean replace_keycodes;
 } Dict(keymap);
+
+typedef struct {
+  OptionalKeys is_set__keymap_del_;
+  Boolean lhs;
+} Dict(keymap_del);
 
 typedef struct {
   Boolean builtin;
@@ -168,7 +173,10 @@ typedef struct {
   String scope;
   Window win;
   Buffer buf;
+  Tabpage tab;
   String filetype;
+  String operation;
+  Boolean dry_run;
 } Dict(option);
 
 typedef struct {
@@ -253,6 +261,11 @@ typedef struct {
 } Dict(win_text_height);
 
 typedef struct {
+  OptionalKeys is_set__win_resize_;
+  String anchor;
+} Dict(win_resize);
+
+typedef struct {
   OptionalKeys is_set__clear_autocmds_;
   Buffer buffer;  // deprecated - use buf
   Buffer buf;
@@ -306,7 +319,7 @@ typedef struct {
   Integer count;
   String reg;
   Boolean bang;
-  ArrayOf(String) args;
+  ArrayOf(Union(Integer, String, Boolean)) args;
   DictAs(cmd__magic) magic;
   DictAs(cmd__mods) mods;
   Union(Integer, Enum("?", "+", "*")) nargs;

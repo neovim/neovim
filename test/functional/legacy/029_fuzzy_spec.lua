@@ -1,7 +1,9 @@
 -- Test for buffer name completion when 'wildoptions' contains "fuzzy"
 -- (Confirm that Vim does not crash)
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear = n.clear
 local insert = n.insert
 local expect = n.expect

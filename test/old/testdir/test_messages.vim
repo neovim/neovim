@@ -448,7 +448,7 @@ func Test_mode_cleared_after_silent_message()
   let buf = RunVimInTerminal('-S XsilentMessageMode', {'rows': 10})
 
   call term_sendkeys(buf, 'v')
-  call TermWait(buf)
+  call WaitForAssert({-> assert_match('VISUAL.*\d\+\s\+\d', term_getline(buf, 10))}, 1000)
   call VerifyScreenDump(buf, 'Test_mode_cleared_after_silent_message_1', {})
 
   call term_sendkeys(buf, 'd')
@@ -467,6 +467,8 @@ func Test_echo_verbose_system()
   CheckNotMac  " the macos TMPDIR is too long for snapshot testing
 
   let buf = RunVimInTerminal('', {'rows': 10})
+  " give it some time to handle DECRQM response
+  call TermWait(buf, 50)
   call term_sendkeys(buf, ":4 verbose echo system('seq 20')\<CR>")
   " Note that the screendump is filtered to remove the name of the temp file
   call VerifyScreenDump(buf, 'Test_verbose_system_1', {})
@@ -756,6 +758,46 @@ func Test_long_formatprg_no_hit_enter()
   call StopVimInTerminal(buf)
 endfunc
 
+" A message shown while a mapping is still being processed must not eat the
+" mapping's remaining keys.
+" If a mapping starts cmdline after multiline messages exceeding 'cmdheight',
+" the messages should still be visible.
+func Test_hit_enter_during_mapping()
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+    set ruler
+    call setline(1, range(1, 20))
+    " The 8-line :echo leads to a hit-enter prompt.
+    nnoremap X :echo "a\nb\nc\nd\ne\nf\ng\nh"<CR>gg
+    nnoremap \b :echo "a\nb\nc\nd\ne\nf\ng\nh"<CR>:b<Space>
+    normal! 10G
+  END
+  call writefile(lines, 'XtestHitEnterMap', 'D')
+  let buf = RunVimInTerminal('-S XtestHitEnterMap', #{rows: 10})
+  call WaitForAssert({-> assert_match(' 10,1 ', term_getline(buf, 10))})
+
+  call term_sendkeys(buf, "X")
+  " Without the fix the hit-enter prompt eats the mapping's "g" keys and the
+  " cursor stays put.  With the fix "gg" runs and moves the cursor to line 1.
+  call WaitForAssert({-> assert_match(' 1,1 ', term_getline(buf, 10))})
+  call assert_notmatch('Press ENTER', term_getline(buf, 10))
+
+  call term_sendkeys(buf, '\b')
+  call WaitForAssert({-> assert_match('^:b ', term_getline(buf, 10))})
+  call assert_match('^a *$', term_getline(buf, 2))
+  call assert_match('^b *$', term_getline(buf, 3))
+  call assert_match('^c *$', term_getline(buf, 4))
+  call assert_match('^d *$', term_getline(buf, 5))
+  call assert_match('^e *$', term_getline(buf, 6))
+  call assert_match('^f *$', term_getline(buf, 7))
+  call assert_match('^g *$', term_getline(buf, 8))
+  call assert_match('^h *$', term_getline(buf, 9))
+
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
 " Test that fileinfo is shown after deleting the last listed buffer with :bd
 func Test_fileinfo_after_last_bd()
   CheckRunVimInTerminal
@@ -778,6 +820,71 @@ func Test_fileinfo_after_last_bd()
 
   " clean up
   call StopVimInTerminal(buf)
+endfunc
+
+func Test_undo_messages()
+  new
+
+  " Normal undo/redo messages
+  redir => result
+  call setline(1, 'foo')
+  undo
+  undo
+  redo
+  redo
+  redir END
+  let msg_list = split(result, "\n")
+  call assert_match("^1 line less; before #1", msg_list[0])
+  call assert_equal("Already at oldest change", msg_list[1])
+  call assert_match("^1 more line; after #1", msg_list[2])
+  call assert_equal("Already at newest change", msg_list[3])
+
+  " Ignore undo/redo messages
+  redir => result
+  set shortmess+=u
+  call setline(1, 'foo')
+  undo
+  undo
+  redo
+  redo
+  redir END
+  let msg_list = split(result, "\n")
+  call assert_equal([], msg_list)
+  set shortmess&
+
+  " undo_time() path: :earlier and :later go through a separate
+  " message site than u_doit(); make sure SHM_UNDO suppresses it too.
+  enew!
+  call setline(1, 'a')
+  call setline(1, 'b')
+  call setline(1, 'c')
+
+  redir => result
+  earlier 1
+  earlier 999
+  earlier 999
+  later 1
+  later 999
+  redir END
+  let msg_list = split(result, "\n")
+  call assert_match('^1 line less; before #', msg_list[0])
+  call assert_match('^1 changes; before #', msg_list[1])
+  call assert_match('^1 changes; before #', msg_list[2])
+  call assert_match('^1 more line; after #', msg_list[3])
+  call assert_equal('Already at newest change', msg_list[4])
+
+  set shortmess+=u
+  redir => result
+  earlier 1
+  earlier 999
+  later 1
+  later 999
+  later 999
+  redir END
+  call assert_equal([], split(result, "\n"))
+
+  set shortmess&
+  bwipe!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

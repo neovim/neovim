@@ -458,4 +458,84 @@ func Test_tagfunc_deletes_lines()
   set tagfunc=
 endfunc
 
+" The 'cmd' field can be a line number, a search pattern or any other Ex
+" command, like in a tags file.  A value that would break the tag line (an
+" unterminated pattern, trailing junk, or a <Tab> outside a pattern) is
+" rejected with E987 instead of silently corrupting the result.
+func Test_tagfunc_invalid_cmd()
+  func InvalidCmd(pat, flags, info)
+    return [{'name': 'a', 'filename': 'Xtest', 'cmd': a:pat, 'kind': 'f'}]
+  endfunc
+  set tagfunc=InvalidCmd
+
+  " unterminated search pattern
+  call assert_fails("call taglist('/foo')", 'E987:')
+  " trailing content after the closing delimiter of a pattern
+  call assert_fails('call taglist("/foo/\tbar")', 'E987:')
+  " a line number with trailing junk
+  call assert_fails("call taglist('3G5')", 'E987:')
+  " a <Tab> in a generic command would break the tag line fields
+  call assert_fails('call taglist("call\tcursor(3, 5)")', 'E987:')
+
+  " valid forms are accepted and returned unchanged: line number, delimited
+  " patterns, and a Tab inside a pattern (Universal Ctags emits one like this
+  " for a tab-indented line)
+  call assert_equal('42', taglist('42')[0].cmd)
+  call assert_equal('/foo/', taglist('/foo/')[0].cmd)
+  call assert_equal('?foo?', taglist('?foo?')[0].cmd)
+  call assert_equal("/^\tint foo$/", taglist("/^\tint foo$/")[0].cmd)
+
+  " a generic command round-trips with its kind field intact: before the fix
+  " it swallowed the ';"<Tab>kind' part, so kind came back empty (#20781)
+  let t = taglist('call cursor(3, 5)')[0]
+  call assert_equal('call cursor(3, 5)', t.cmd)
+  call assert_equal('f', t.kind)
+
+  set tagfunc&
+  delfunc InvalidCmd
+endfunc
+
+" A tagfunc 'cmd' is executed on a tag jump.  A search pattern must reach the
+" matched column (no regression from the do_search() path), and a line number
+" or a generic Ex command must position the cursor as written.
+func Test_tagfunc_cmd_jump()
+  call writefile(['line one', 'line two', 'foo bar baz'], 'Xtagcmd', 'D')
+  func JumpCmd(pat, flags, info)
+    return [{'name': 'a', 'filename': 'Xtagcmd', 'cmd': s:cmd, 'kind': 'f'}]
+  endfunc
+  set tagfunc=JumpCmd
+
+  " '5|' / cursor col 5 / the 'b' of 'bar' all land on [3, 5]
+  for cmd in ['/bar/', 'call cursor(3, 5)', 'normal! 3G5|']
+    let s:cmd = cmd
+    enew
+    tag a
+    call assert_equal([3, 5], [line('.'), col('.')], 'cmd: ' .. cmd)
+    bw!
+  endfor
+
+  set tagfunc&
+  delfunc JumpCmd
+endfunc
+
+" A generic Ex command from a tagfunc runs under 'secure' and the sandbox, just
+" like one from a tags file, so it cannot delete a file or run a shell.
+func Test_tagfunc_cmd_secure()
+  call writefile(['one', 'two', 'three'], 'Xtagcmd', 'D')
+  call writefile(['keep me'], 'Xvictim', 'D')
+  func EvilTagFunc(pat, flags, info)
+    return [{'name': 'a', 'filename': 'Xtagcmd',
+          \ 'cmd': "call delete('Xvictim')", 'kind': 'f'}]
+  endfunc
+  set tagfunc=EvilTagFunc
+
+  enew
+  call assert_fails('tag a', 'E12:')
+  call assert_true(filereadable('Xvictim'))
+
+  bw!
+  set tagfunc&
+  delfunc EvilTagFunc
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

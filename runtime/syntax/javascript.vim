@@ -1,18 +1,12 @@
 " Vim syntax file
-" Language:	JavaScript
-" Maintainer:	Claudio Fleiner <claudio@fleiner.com>
-" Updaters:	Scott Shattuck (ss) <ss@technicalpursuit.com>
-" URL:		http://www.fleiner.com/vim/syntax/javascript.vim
-" Changes:	(ss) added keywords, reserved words, and other identifiers
-"		(ss) repaired several quoting and grouping glitches
-"		(ss) fixed regex parsing issue with multiple qualifiers [gi]
-"		(ss) additional factoring of keywords, globals, and members
-" Last Change:	2022 Jun 09
-" 		2013 Jun 12: adjusted javaScriptRegexpString (Kevin Locke)
-" 		2018 Apr 14: adjusted javaScriptRegexpString (LongJohnCoder)
-" 		2024 Aug 14: fix a few stylistic issues (#15480)
-" 		2025 Aug 07: as is a reserved keyword (#17912)
-" 		2025 Sep 24: using is a reserved keyword (Devin Weaver)
+" Language:		JavaScript
+" Maintainer:		This runtime file is looking for a maintainer.
+" Previous Maintainer:	Claudio Fleiner <claudio@fleiner.com>
+" Contributors:		Scott Shattuck <ss@technicalpursuit.com>
+" 			Kevin Locke
+" 			LongJohnCoder
+" 			Devin Weaver
+" Last Change:		2026 Jun 07
 
 " tuning parameters:
 " unlet javaScript_fold
@@ -52,13 +46,20 @@ syn match   javaScriptNumber           "\<\d\+\(_\d\+\)*[eE][+-]\?\d\+\>"
 syn match   javaScriptNumber           "\<[1-9]\d*\(_\d\+\)*\(\.\(\d\+\(_\d\+\)*\([eE][+-]\?\d\+\)\?\)\?\)\?\>"
 syn match   javaScriptNumber           "\<\(\d\+\(_\d\+\)*\)\?\.\d\+\(_\d\+\)*\([eE][+-]\?\d\+\)\?\>"
 syn match   javaScriptNumber           "\<\d\+\(_\d\+\)*\.\(\d\+\(_\d\+\)*\([eE][+-]\?\d\+\)\?\)\?\>"
-syn region  javaScriptRegexpString     start=+[,(=+]\s*/[^/*]+ms=e-1,me=e-1 skip=+\\\\\|\\/+ end=+/[gimuys]\{0,2\}\s*$+ end=+/[gimuys]\{0,2\}\s*[+;.,)\]}]+me=e-1 end=+/[gimuys]\{0,2\}\s\+\/+me=e-1 contains=@htmlPreproc,javaScriptComment oneline
+syn region  javaScriptRegexpString
+      \ start=+\%([,(=+]\s*\)\@8<=/[^/*]+
+      \ skip=+\\\\\|\\/+
+      \ end=+/[dgimsuvy]\{0,7\}\ze\s*$+
+      \ end=+/[dgimsuvy]\{0,7\}\ze\s*[+;.,)\]}]+
+      \ end=+/[dgimsuvy]\{0,7\}\ze\s\+\/+
+      \ contains=@htmlPreproc,javaScriptComment
+      \ oneline
 
 syn keyword javaScriptConditional	if else switch
 syn keyword javaScriptRepeat		while for do in of
 syn keyword javaScriptBranch		break continue
 syn keyword javaScriptOperator		new delete instanceof typeof
-syn keyword javaScriptType		Array Boolean Date Function Number Object String RegExp
+syn keyword javaScriptType		Array Boolean Date Function Number Object String RegExp Symbol
 syn keyword javaScriptStatement		return with await yield
 syn keyword javaScriptBoolean		true false
 syn keyword javaScriptNull		null undefined
@@ -69,7 +70,7 @@ syn keyword javaScriptMessage		alert confirm prompt status
 syn keyword javaScriptGlobal		self window top parent
 syn keyword javaScriptMember		document event location
 syn keyword javaScriptDeprecated	escape unescape
-syn keyword javaScriptReserved		abstract as boolean byte char class const debugger double enum export extends final float from goto implements import int interface let long native package private protected public short super synchronized throws transient var volatile async using
+syn keyword javaScriptReserved		abstract as boolean byte char class const debugger double enum export extends final float from goto implements import int interface let long native package private protected public short super synchronized throws transient var void volatile async using
 syn keyword javaScriptModifier  static
 
 syn cluster  javaScriptEmbededExpr	contains=javaScriptBoolean,javaScriptNull,javaScriptIdentifier,javaScriptStringD,javaScriptStringS,javaScriptStringT

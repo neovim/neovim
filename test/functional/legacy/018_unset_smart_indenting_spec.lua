@@ -1,7 +1,9 @@
 -- Tests for not doing smart indenting when it isn't set.
 
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local feed = n.feed
 local clear = n.clear
 local insert = n.insert

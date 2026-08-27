@@ -2,6 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each, pending = t.describe, t.it, t.before_each, t.pending
 local fn = n.fn
 local api = n.api
 local command = n.command
@@ -343,6 +344,126 @@ describe('vim._with', function()
       ]])
       eq(true, out)
     end)
+
+    it('keeps ":bcd" on the target buffer', function()
+      local out = exec_lua [[
+        local other_buf, cur_buf = setup_buffers()
+        local err_buf = api.nvim_create_buf(false, true)
+        local cwd = fn.getcwd()
+        local dir = vim.fs.joinpath(cwd, 'test')
+        vim._with({ buf = other_buf }, function() vim.cmd.bcd(dir) end)
+        pcall(vim._with, { buf = err_buf }, function()
+          vim.cmd.bcd(dir)
+          error('oops')
+        end)
+        return {
+          fn.haslocaldir(-1, -1, other_buf),
+          fn.haslocaldir(-1, -1, err_buf),
+          fn.haslocaldir(-1, -1, cur_buf),
+          fn.getcwd() == cwd,  -- Caller's CWD is unaffected: the target is not current.
+        }
+      ]]
+      eq({ 1, 1, 0, true }, out)
+    end)
+  end)
+
+  describe('`cwd` context', function()
+    it('works', function()
+      local out = exec_lua [[
+        local cwd = vim.uv.cwd()
+        local temp_cwd = vim.fs.joinpath(cwd, 'test')
+        local test_cwd
+        vim._with({ cwd = temp_cwd }, function() test_cwd = vim.uv.cwd() end)
+        -- Use `fs_realpath` to resolve symlinks from how tests are set up
+        return { vim.uv.cwd() == cwd, vim.uv.fs_realpath(test_cwd) == vim.uv.fs_realpath(temp_cwd) }
+      ]]
+      eq({ true, true }, out)
+    end)
+
+    it('can be nested', function()
+      local out = exec_lua [[
+        local cwd = vim.uv.cwd()
+        local temp_cwd = vim.fs.joinpath(cwd, 'test')
+        local temp_cwd2 = vim.fs.joinpath(cwd, 'src')
+        local test_cwd_before, test_cwd, test_cwd_after
+        vim._with({ cwd = temp_cwd }, function()
+          test_cwd_before = vim.uv.cwd()
+          vim._with({ cwd = temp_cwd2 }, function()
+            test_cwd = vim.uv.cwd()
+          end)
+          test_cwd_after = vim.uv.cwd()
+        end)
+        return {
+          vim.uv.cwd() == cwd,
+          vim.uv.fs_realpath(test_cwd_before) == vim.uv.fs_realpath(temp_cwd),
+          vim.uv.fs_realpath(test_cwd) == vim.uv.fs_realpath(temp_cwd2),
+          vim.uv.fs_realpath(test_cwd_after) == vim.uv.fs_realpath(temp_cwd),
+        }
+      ]]
+      eq({ true, true, true, true }, out)
+    end)
+
+    it('does not modify global CWD', function()
+      local out = exec_lua [[
+        local other_buf, _ = setup_buffers()
+        local cwd = fn.getcwd()
+        -- Activate a window-local dir, so that the global dir must be remembered.
+        vim.cmd.lcd(vim.fs.joinpath(cwd, 'test'))
+        local lcd_cwd = fn.getcwd() -- Not necessarily `cwd .. '/test'`: symlinks are resolved.
+        vim._with({ buf = other_buf, cwd = vim.fs.joinpath(cwd, 'src') }, function() end)
+        return { fn.getcwd() == lcd_cwd, fn.getcwd(-1, -1) == cwd }
+      ]]
+      eq({ true, true }, out)
+    end)
+  end)
+
+  describe('`keepcwd` context', function()
+    it('undoes chdir at every scope', function()
+      local out = exec_lua [[
+        local cwd = fn.getcwd()
+        local dir = vim.fs.joinpath(cwd, 'test')
+        vim._with({ keepcwd = true }, function()
+          vim.cmd.cd(dir)
+          vim.cmd.tcd(dir)
+          vim.cmd.bcd(dir)
+          vim.cmd.lcd(dir)
+        end)
+        return {
+          fn.haslocaldir(),          -- window
+          fn.haslocaldir(-1, 0),     -- tabpage
+          fn.haslocaldir(-1, -1, 0), -- buffer
+          fn.getcwd() == cwd,
+          fn.getcwd(-1, -1) == cwd,  -- global
+        }
+      ]]
+      eq({ 0, 0, 0, true, true }, out)
+    end)
+
+    it('discards ":bcd"/":lcd" that a `buf`/`win` context would keep', function()
+      local out = exec_lua [[
+        local other_buf, _ = setup_buffers()
+        local other_win, _ = setup_windows()
+        local cwd = fn.getcwd()
+        local dir = vim.fs.joinpath(cwd, 'test')
+        vim._with({ buf = other_buf, keepcwd = true }, function() vim.cmd.bcd(dir) end)
+        vim._with({ win = other_win, keepcwd = true }, function() vim.cmd.lcd(dir) end)
+        return {
+          fn.haslocaldir(-1, -1, other_buf),
+          fn.haslocaldir(fn.win_id2win(other_win)),
+          fn.getcwd() == cwd,
+        }
+      ]]
+      eq({ 0, 0, true }, out)
+    end)
+
+    it('restores nothing else: the callback may switch window', function()
+      local out = exec_lua [[
+        local other_win, _ = setup_windows()
+        vim._with({ keepcwd = true }, function() api.nvim_set_current_win(other_win) end)
+        return api.nvim_get_current_win() == other_win
+      ]]
+      eq(true, out)
+    end)
   end)
 
   describe('`emsg_silent` context', function()
@@ -603,8 +724,8 @@ describe('vim._with', function()
       command('wincmd s | wincmd 5+')
       win_id_3 = api.nvim_get_current_win()
 
-      eq(is_approx_eq('width', win_id_1, win_id_2), false)
-      eq(is_approx_eq('height', win_id_3, win_id_2), false)
+      eq(false, is_approx_eq('width', win_id_1, win_id_2))
+      eq(false, is_approx_eq('height', win_id_3, win_id_2))
     end)
 
     pending('works', function()
@@ -614,8 +735,8 @@ describe('vim._with', function()
           vim.cmd.wincmd('=')
         end)
       ]]
-      eq(is_approx_eq('width', win_id_1, win_id_2), true)
-      eq(is_approx_eq('height', win_id_3, win_id_2), false)
+      eq(true, is_approx_eq('width', win_id_1, win_id_2))
+      eq(false, is_approx_eq('height', win_id_3, win_id_2))
     end)
 
     pending('can be nested', function()
@@ -627,8 +748,8 @@ describe('vim._with', function()
           end)
         end)
       ]]
-      eq(is_approx_eq('width', win_id_1, win_id_2), true)
-      eq(is_approx_eq('height', win_id_3, win_id_2), true)
+      eq(true, is_approx_eq('width', win_id_1, win_id_2))
+      eq(true, is_approx_eq('height', win_id_3, win_id_2))
     end)
   end)
 
@@ -932,7 +1053,7 @@ describe('vim._with', function()
         wo = { ve_cur = 'insert', ve_other = 'block', winbl_cur = 25, winbl_other = 10 },
         -- Global `winbl` inside context ideally should be untouched and equal
         -- to 50. It seems to be equal to 0 because `context.buf` uses
-        -- `aucmd_prepbuf` C approach which has no guarantees about window or
+        -- `ctx_switch` C approach which has no guarantees about window or
         -- window option values inside context.
         go = { cms = '-- %s', ul = 0, ve = 'none', winbl = 0, lmap = 'xy,yx', cf = false },
       }, out.inner)
@@ -1073,14 +1194,10 @@ describe('vim._with', function()
       eq('', exec_capture('messages'))
 
       local screen = Screen.new(20, 5)
-      screen:set_default_attr_ids {
-        [1] = { bold = true, reverse = true },
-        [2] = { bold = true, foreground = Screen.colors.Blue },
-      }
       exec_lua [[ vim._with({ silent = true }, function() vim.cmd.echo('"ccc"') end) ]]
       screen:expect [[
         ^                    |
-        {2:~                   }|*3
+        {1:~                   }|*3
                             |
       ]]
     end)
@@ -1229,10 +1346,6 @@ describe('vim._with', function()
 
     it('updates ruler if cursor moved', function()
       local screen = Screen.new(30, 5)
-      screen:set_default_attr_ids {
-        [1] = { reverse = true },
-        [2] = { bold = true, reverse = true },
-      }
       exec_lua [[
         vim.opt.ruler = true
         local lines = {}
@@ -1245,9 +1358,9 @@ describe('vim._with', function()
       ]]
       screen:expect [[
         19                            |
-        {1:< Name] [+] 20,1            3%}|
-        ^19                            |
         {2:< Name] [+] 20,1            3%}|
+        ^19                            |
+        {3:< Name] [+] 20,1            3%}|
                                       |
       ]]
       exec_lua [[
@@ -1256,9 +1369,9 @@ describe('vim._with', function()
       ]]
       screen:expect [[
         99                            |
-        {1:< Name] [+] 100,1          19%}|
+        {2:< Name] [+] 100,1          19%}|
         ^19                            |
-        {2:< Name] [+] 20,1            3%}|
+        {3:< Name] [+] 20,1            3%}|
                                       |
       ]]
     end)
@@ -1274,6 +1387,18 @@ describe('vim._with', function()
 
       exec_lua('vim._with({ win = ... }, function() vim.cmd.wincmd "J" end)', t2_move_win)
       eq({ 'col', { { 'leaf', t2_other_win }, { 'leaf', t2_move_win } } }, fn.winlayout(2))
+    end)
+
+    it('keeps ":lcd" on the target window, but restores the CWD', function()
+      local out = exec_lua [[
+        local other_win, cur_win = setup_windows()
+        local cwd = fn.getcwd()
+        vim._with({ win = other_win }, function()
+          vim.cmd.lcd(vim.fs.joinpath(cwd, 'test'))
+        end)
+        return { fn.haslocaldir(fn.win_id2win(other_win)), fn.getcwd() == cwd }
+      ]]
+      eq({ 1, true }, out)
     end)
   end)
 

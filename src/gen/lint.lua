@@ -6,6 +6,7 @@ local M = {}
 --- Apply to parameter names, keyset keys, and function name parts.
 local banned_nouns = {
   buffer = 'buf',
+  bufnr = 'buf',
   -- channel = 'chan',
   command = 'cmd',
   directory = 'dir',
@@ -13,6 +14,7 @@ local banned_nouns = {
   position = 'pos',
   process = 'proc',
   window = 'win',
+  winnr = 'win',
 }
 
 --- Banned verbs. See `:help dev-name-common`.
@@ -22,8 +24,12 @@ local banned_verbs = {
   delete = 'del',
   disable = 'enable',
   exit = 'cancel', -- or "stop"
+  -- format = 'fmt',
+  -- hide = '?',
+  -- show = '?',
   list = 'get',
   notify = 'print', -- or "echo"
+  pretty = 'fmt',
   remove = 'del',
   toggle = 'enable',
 }
@@ -53,10 +59,15 @@ local legacy_names = {
     nvim_list_uis = true,
     nvim_list_wins = true,
   },
+  ['runtime/lua/vim/uri.lua'] = {
+    uri_from_bufnr = true,
+    uri_to_bufnr = true,
+  },
   ['runtime/lua/vim/_core/shared.lua'] = {
     _ensure_list = true,
     _list_insert = true,
     _list_remove = true,
+    _resolve_bufnr = true,
     list_contains = true,
     tbl_contains = true,
   },
@@ -103,10 +114,33 @@ local legacy_names = {
 ---
 --- @type table<string, table<string, true>>
 local legacy_fields = {
+  ['vim.Diagnostic'] = {
+    bufnr = true,
+  },
+  ['vim.lsp.Capability'] = {
+    bufnr = true,
+  },
+  ['vim.lsp.inlay_hint.enable.Filter'] = {
+    bufnr = true,
+  },
+  ['vim.lsp.inlay_hint.get.Filter'] = {
+    bufnr = true,
+  },
+  ['vim.lsp.inlay_hint.get.ret'] = {
+    bufnr = true,
+  },
+  ['TS.Heading'] = {
+    bufnr = true, -- Passed to setloclist().
+  },
+  ['vim.treesitter.get_node.Opts'] = {
+    bufnr = true,
+  },
   ['vim.treesitter.dev.inspect_tree.Opts'] = {
+    bufnr = true,
     command = true,
   },
   ['vim.undotree.opts'] = {
+    bufnr = true,
     command = true,
   },
 }
@@ -146,10 +180,11 @@ function M.lint_names(source, api_funs, keysets, classes)
     local src_legacy = legacy_names[source] or {}
     for _, fun in ipairs(api_funs) do
       if fun.name and fun.params and not fun.deprecated and not fun.deprecated_since then
-        -- Positional parameter names: always checked (no "legacy" allowed).
+        -- Positional parameter names: always checked (no legacy allowed).
+        -- Exception: "bufnr" is allowed as a param name.
         for _, p in ipairs(fun.params) do
           local want_name = banned_nouns[p.name]
-          if want_name then
+          if want_name and p.name ~= 'bufnr' then
             local msg = '%s: %s(): param "%s" should be renamed to "%s"'
             errors[#errors + 1] = fmt(msg, source, fun.name, p.name, want_name)
           end
@@ -221,6 +256,50 @@ function M.lint_names(source, api_funs, keysets, classes)
   if #errors > 0 then
     table.sort(errors)
     error('lint_names(): found banned parameter/key names:\n  ' .. table.concat(errors, '\n  '))
+  end
+end
+
+--- Checks that markdown list items (`- name :` or `- {name}`) in parameter/field
+--- descriptions are in sorted order.
+---
+--- This is for "quasi-keysets" defined as markdown lists in docstrings. Ideally they would be
+--- defined as a luals `@class` or a API keyset, but sometimes that isn't possible.
+---
+--- @param source string Source filename.
+--- @param funs {name:string, params:{name:string, desc?:string}[]}[]
+function M.lint_quasi_keysets(source, funs)
+  local errors = {} --- @type string[]
+
+  for _, fun in ipairs(funs) do
+    for _, p in ipairs(fun.params or {}) do
+      if p.desc then
+        local prev = nil --- @type string?
+        -- Capture the keyname with optional punctuation (`, "), so the sort includes surrounding
+        -- chars: backtick items group together, double-quote group together, etc. (Example: |Client:stop()|)
+        for name in p.desc:gmatch('\n%- (["`]?[%w_]+["`]?)') do
+          -- Sort underscore-prefixed keys (e.g. "_cmdline_offset") at the end.
+          local prev_key = prev and prev:gsub('^([`"]?)_', '%1~') or nil
+          local name_key = name:gsub('^([`"]?)_', '%1~')
+          if prev_key and name_key < prev_key then
+            errors[#errors + 1] = fmt(
+              '%s: %s(): param "%s": key "%s" should come before "%s" (sort alphabetically)',
+              source,
+              fun.name,
+              p.name,
+              name,
+              prev
+            )
+          end
+          prev = name
+        end
+      end
+    end
+  end
+
+  if #errors > 0 then
+    error(
+      'lint_quasi_keysets(): unsorted keys in doc comments:\n  ' .. table.concat(errors, '\n  ')
+    )
   end
 end
 

@@ -4,6 +4,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear, feed, insert = n.clear, n.feed, n.insert
 local expect, poke_eventloop = n.expect, n.poke_eventloop
 local command, eq, eval, api = n.command, t.eq, n.eval, n.api
@@ -118,6 +119,8 @@ describe('mapping', function()
     command('imapclear')
     command('set whichwrap=<,>,[,]')
     feed('G3o<esc>2k')
+    -- Nvim: "." re-executes the whole insert session, including the (wrapping)
+    -- CTRL-G U <Right>, instead of only the text typed after it.
     command(
       [[:exe ":norm! iTest3: text with a (parenthesis here\<C-G>U\<Right>new line here\<esc>\<up>\<up>."]]
     )
@@ -130,8 +133,8 @@ describe('mapping', function()
 
 
       Test2: text wit a (here some more text [und undo])
-      new line here
       Test3: text with a (parenthesis here
+      new line hereTest3: text with a (parenthesis here
       new line here
       ]])
   end)

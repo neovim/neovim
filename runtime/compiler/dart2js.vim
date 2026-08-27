@@ -1,7 +1,7 @@
 " Vim compiler file
 " Compiler:	Dart to JavaScript Compiler
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:	2024 Apr 03
+" Last Change:	2026 Aug 04
 
 if exists("current_compiler")
   finish
@@ -11,7 +11,7 @@ let current_compiler = "dart2js"
 let s:cpo_save = &cpo
 set cpo&vim
 
-CompilerSet makeprg=dart2js
+CompilerSet makeprg=dart\ compile\ js
 CompilerSet errorformat=%E%f:%l:%c:,
 		       \%-GError:\ Compilation\ failed.,
 		       \%CError:\ %m,

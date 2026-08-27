@@ -4,7 +4,9 @@
 -- Also test for regression when calling arbitrary expression.
 
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 
+local describe, it, setup = t.describe, t.it, t.setup
 local feed, insert, source = n.feed, n.insert, n.source
 local clear, feed_command, expect = n.clear, n.feed_command, n.expect
 

@@ -29,27 +29,21 @@ typedef enum {
   kBroken,
 } WorkingStatus;
 
-/// The scope of a working-directory command like `:cd`.
-///
-/// Scopes are enumerated from lowest to highest. When adding a scope make sure
-/// to update all functions using scopes as well, such as the implementation of
-/// `getcwd()`. When using scopes as limits (e.g. in loops) don't use the scopes
-/// directly, use `MIN_CD_SCOPE` and `MAX_CD_SCOPE` instead.
+/// The scope of a working-directory command like `:cd`. Enumerated from lowest to highest.
 typedef enum {
   kCdScopeInvalid = -1,
+  kCdScopeBuffer,   ///< Affects one buffer.
   kCdScopeWindow,   ///< Affects one window.
   kCdScopeTabpage,  ///< Affects one tab page.
   kCdScopeGlobal,   ///< Affects the entire Nvim instance.
 } CdScope;
 
-#define MIN_CD_SCOPE  kCdScopeWindow
-#define MAX_CD_SCOPE  kCdScopeGlobal
-
 /// What caused the current directory to change.
 typedef enum {
   kCdCauseOther = -1,
-  kCdCauseManual,  ///< Using `:cd`, `:tcd`, `:lcd` or `chdir()`.
+  kCdCauseManual,  ///< Using `:cd`, `:tcd`, `:lcd`, `:bcd` or `chdir()`.
   kCdCauseWindow,  ///< Switching to another window.
+  kCdCauseBuffer,  ///< Switching to another buffer.
   kCdCauseAuto,    ///< On 'autochdir'.
 } CdCause;
 

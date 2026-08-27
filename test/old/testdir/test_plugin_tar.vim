@@ -321,3 +321,23 @@ func Test_extract_with_dotted_filename()
   call delete('X.txt')
   bw!
 endfunc
+
+func Test_extract_command_injection()
+  throw 'SKipped: Nvim does not support :Vimuntar'
+  CheckExecutable gunzip
+  CheckExecutable touch
+  var tgz = eval('0z1F8B08087795056A000364756D6D792E74617200EDCE2B12C2300004D01C254' ..
+   '7480269CE534080A8495BD1DBF3996106C3A08A7ACFACD8157B59A7690BFB4A0FC3707C666E357D' ..
+   'E65BC8B5A47CC8A5D61A522EA5B510D3CEBF5ED679197B8CE17CEDB7F9D4C76FBB5F3D000000000' ..
+   '000000000FCD11D32415E2C00280000')
+  var dirname = tempname()
+
+  mkdir(dirname, 'R')
+  var tar = dirname .. "/';%$(touch pwned)'.tgz"
+  writefile(tgz, tar)
+  new
+  exe "e " .. fnameescape(tar)
+  exe ":Vimuntar " .. dirname
+  assert_false(filereadable(dirname .. "/pwned"))
+  bw!
+endfunc

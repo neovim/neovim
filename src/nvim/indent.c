@@ -12,7 +12,6 @@
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
-#include "nvim/edit.h"
 #include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
@@ -26,6 +25,7 @@
 #include "nvim/globals.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
+#include "nvim/insert.h"
 #include "nvim/mark_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/mbyte_defs.h"
@@ -37,6 +37,7 @@
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
+#include "nvim/optionstr.h"
 #include "nvim/os/input.h"
 #include "nvim/plines.h"
 #include "nvim/pos_defs.h"
@@ -51,6 +52,8 @@
 #include "nvim/vim_defs.h"
 
 #include "indent.c.generated.h"
+
+#include "options_keysets.generated.h"
 
 /// Set the integer values corresponding to the string setting of 'vartabstop'.
 /// "array" will be set, caller must free it if needed.
@@ -67,9 +70,11 @@ bool tabstop_set(char *var, colnr_T **array)
 
   for (char *cp = var; *cp != NUL; cp++) {
     if (cp == var || cp[-1] == ',') {
-      char *end;
+      char *end = cp;
 
-      if (strtol(cp, &end, 10) <= 0) {
+      // Use def=1 so that overflow/too-large values pass this check and are
+      // instead rejected by the "n > TABSTOP_MAX" check in the loop below.
+      if (getdigits(&end, false, 1) <= 0) {
         if (cp != end) {
           emsg(_(e_positive));
         } else {
@@ -745,7 +750,7 @@ int get_number_indent(linenr_T lnum)
   pos.lnum = 0;
 
   // In format_lines() (i.e. not insert mode), fo+=q is needed too...
-  if ((State & MODE_INSERT) || has_format_option(FO_Q_COMS)) {
+  if ((State & MODE_INSERT) || has_format_option(kFoQComs)) {
     lead_len = get_leader_len(ml_get(lnum), NULL, false, true);
   }
   regmatch.regprog = vim_regcomp(curbuf->b_p_flp, RE_MAGIC);
@@ -778,59 +783,19 @@ int get_number_indent(linenr_T lnum)
 /// @param wp      when NULL: only check "briopt"
 ///
 /// @return  FAIL for failure, OK otherwise.
-bool briopt_check(char *briopt, win_T *wp)
+void briopt_check(win_T *wp)
 {
-  int bri_shift = 0;
-  int bri_min = 20;
-  bool bri_sbr = false;
-  int bri_list = 0;
-  int bri_vcol = 0;
-
-  char *p = empty_string_option;
-  if (briopt != NULL) {
-    p = briopt;
-  } else if (wp != NULL) {
-    p = wp->w_p_briopt;
-  }
-
-  while (*p != NUL) {
-    // Note: Keep this in sync with opt_briopt_values.
-    if (strncmp(p, "shift:", 6) == 0
-        && ((p[6] == '-' && ascii_isdigit(p[7])) || ascii_isdigit(p[6]))) {
-      p += 6;
-      bri_shift = getdigits_int(&p, true, 0);
-    } else if (strncmp(p, "min:", 4) == 0 && ascii_isdigit(p[4])) {
-      p += 4;
-      bri_min = getdigits_int(&p, true, 0);
-    } else if (strncmp(p, "sbr", 3) == 0) {
-      p += 3;
-      bri_sbr = true;
-    } else if (strncmp(p, "list:", 5) == 0) {
-      p += 5;
-      bri_list = (int)getdigits(&p, false, 0);
-    } else if (strncmp(p, "column:", 7) == 0) {
-      p += 7;
-      bri_vcol = (int)getdigits(&p, false, 0);
-    }
-    if (*p != ',' && *p != NUL) {
-      return false;
-    }
-    if (*p == ',') {
-      p++;
-    }
-  }
-
   if (wp == NULL) {
-    return OK;
+    return;  // Setting the global value: nothing to apply to a window.
   }
-
-  wp->w_briopt_shift = bri_shift;
-  wp->w_briopt_min = bri_min;
-  wp->w_briopt_sbr = bri_sbr;
-  wp->w_briopt_list = bri_list;
-  wp->w_briopt_vcol = bri_vcol;
-
-  return true;
+  // 'breakindentopt' is stored as its ":set" string (validated when set); reify it into a keyset and
+  // map that onto the applied per-window fields.
+  OptKeyDict_briopt *v = opt_keyset(wp->w_p_briopt, kOptBreakindentopt, NULL);
+  wp->w_briopt_shift = HAS_KEY(v, briopt, shift) ? (int)v->shift : 0;
+  wp->w_briopt_min = HAS_KEY(v, briopt, min) ? (int)v->min : 20;
+  wp->w_briopt_sbr = HAS_KEY(v, briopt, sbr);
+  wp->w_briopt_list = HAS_KEY(v, briopt, list) ? (int)v->list : 0;
+  wp->w_briopt_vcol = HAS_KEY(v, briopt, column) ? (int)v->column : 0;
 }
 
 // Return appropriate space number for breakindent, taking influencing
@@ -1004,19 +969,20 @@ void op_reindent(oparg_T *oap, Indenter how)
       if (i > 1
           && (i % 50 == 0 || i == oap->line_count - 1)
           && oap->line_count > p_report) {
-        smsg(0, _("%" PRId64 " lines to indent... "), (int64_t)i);
+        snprintf(IObuff, IOSIZE, _("%" PRId64 " lines to indent... "), (int64_t)i);
+        // Restore cursor to avoid redrawing curwin in msg_show callback.
+        linenr_T save_lnum = curwin->w_cursor.lnum;
+        curwin->w_cursor.lnum = start_lnum;
+        msg_progress(IObuff, "nvim.indent", "running", 0, true, false, false);
+        curwin->w_cursor.lnum = save_lnum;
       }
 
       // Be vi-compatible: For lisp indenting the first line is not
       // indented, unless there is only one line.
-      if (i != oap->line_count - 1 || oap->line_count == 1
-          || how != get_lisp_indent) {
+      if (i != oap->line_count - 1 || oap->line_count == 1 || how != get_lisp_indent) {
         char *l = skipwhite(get_cursor_line_ptr());
-        if (*l == NUL) {                      // empty or blank line
-          amount = 0;
-        } else {
-          amount = how();                     // get the indent for this line
-        }
+        // Get indent for this line unless it is blank.
+        amount = *l == NUL ? 0 : how();
         if (amount >= 0 && set_indent(amount, 0)) {
           // did change the indent, call changed_lines() later
           if (first_changed == 0) {
@@ -1047,7 +1013,9 @@ void op_reindent(oparg_T *oap, Indenter how)
 
   if (oap->line_count > p_report) {
     i = oap->line_count - (i + 1);
-    smsg(0, NGETTEXT("%" PRId64 " line indented ", "%" PRId64 " lines indented ", i), (int64_t)i);
+    snprintf(IObuff, IOSIZE,
+             NGETTEXT("%" PRId64 " line indented ", "%" PRId64 " lines indented ", i), (int64_t)i);
+    msg_progress(IObuff, "nvim.indent", "success", 0, true, false, false);
   }
   if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
     // set '[ and '] marks
@@ -1067,7 +1035,7 @@ bool preprocs_left(void)
 /// @return  true if the conditions are OK for smart indenting.
 bool may_do_si(void)
 {
-  return curbuf->b_p_si && !curbuf->b_p_cin && *curbuf->b_p_inde == NUL && !p_paste;
+  return curbuf->b_p_si && !curbuf->b_p_cin && curbuf->b_p_inde.type == kCallbackNone && !p_paste;
 }
 
 // Try to do some very smart auto-indenting.
@@ -1077,7 +1045,7 @@ void ins_try_si(int c)
   pos_T *pos;
 
   // do some very smart indenting when entering '{' or '}'
-  if (((did_si || can_si_back) && c == '{') || (can_si && c == '}' && inindent(0))) {
+  if (((Ins.did_si || Ins.can_si_back) && c == '{') || (Ins.can_si && c == '}' && inindent(0))) {
     pos_T old_pos;
     char *ptr;
     int i;
@@ -1111,7 +1079,7 @@ void ins_try_si(int c)
       // when inserting '{' after "O" reduce indent, but not
       // more than indent of previous line
       temp = true;
-      if (c == '{' && can_si_back && curwin->w_cursor.lnum > 1) {
+      if (c == '{' && Ins.can_si_back && curwin->w_cursor.lnum > 1) {
         old_pos = curwin->w_cursor;
         i = get_indent();
         while (curwin->w_cursor.lnum > 1) {
@@ -1134,14 +1102,14 @@ void ins_try_si(int c)
   }
 
   // set indent of '#' always to 0
-  if (curwin->w_cursor.col > 0 && can_si && c == '#' && inindent(0)) {
+  if (curwin->w_cursor.col > 0 && Ins.can_si && c == '#' && inindent(0)) {
     // remember current indent for next line
     old_indent = get_indent();
     set_indent(0, SIN_CHANGED);
   }
 
-  // Adjust ai_col, the char at this position can be deleted.
-  ai_col = MIN(ai_col, curwin->w_cursor.col);
+  // Adjust Ins.ai_col, the char at this position can be deleted.
+  Ins.ai_col = MIN(Ins.ai_col, curwin->w_cursor.col);
 }
 
 /// Insert an indent (for <Tab> or CTRL-T) or delete an indent (for CTRL-D).
@@ -1154,7 +1122,7 @@ void ins_try_si(int c)
 /// @param call_changed_bytes  call changed_bytes()
 void change_indent(int type, int amount, int round, bool call_changed_bytes)
 {
-  int insstart_less;                    // reduction for Insstart.col
+  int insstart_less;                    // reduction for Ins.start.col
   colnr_T orig_col = 0;                 // init for GCC
   char *orig_line = NULL;     // init for GCC
 
@@ -1275,17 +1243,17 @@ void change_indent(int type, int amount, int round, bool call_changed_bytes)
 
   // May have to adjust the start of the insert.
   if (State & MODE_INSERT) {
-    if (curwin->w_cursor.lnum == Insstart.lnum && Insstart.col != 0) {
-      if ((int)Insstart.col <= insstart_less) {
-        Insstart.col = 0;
+    if (curwin->w_cursor.lnum == Ins.start.lnum && Ins.start.col != 0) {
+      if ((int)Ins.start.col <= insstart_less) {
+        Ins.start.col = 0;
       } else {
-        Insstart.col -= insstart_less;
+        Ins.start.col -= insstart_less;
       }
     }
-    if ((int)ai_col <= insstart_less) {
-      ai_col = 0;
+    if ((int)Ins.ai_col <= insstart_less) {
+      Ins.ai_col = 0;
     } else {
-      ai_col -= insstart_less;
+      Ins.ai_col -= insstart_less;
     }
   }
 
@@ -1632,7 +1600,7 @@ void ex_retab(exarg_T *eap)
     colnr_T *old_vts_ary = curbuf->b_p_vts_array;
 
     if (tabstop_count(old_vts_ary) > 0 || tabstop_count(new_vts_array) > 1) {
-      set_option_direct(kOptVartabstop, CSTR_AS_OPTVAL(new_ts_str), OPT_LOCAL, 0);
+      set_option_direct(kOptVartabstop, CSTR_AS_OBJ(new_ts_str), OPT_LOCAL, 0);
       curbuf->b_p_vts_array = new_vts_array;
       xfree(old_vts_ary);
     } else {
@@ -1661,21 +1629,11 @@ int get_expr_indent(void)
   bool save_set_curswant = curwin->w_set_curswant;
   set_vim_var_nr(VV_LNUM, (varnumber_T)curwin->w_cursor.lnum);
 
-  if (use_sandbox) {
-    sandbox++;
-  }
   textlock++;
   current_sctx = curbuf->b_p_script_ctx[kBufOptIndentexpr];
 
-  // Need to make a copy, the 'indentexpr' option could be changed while
-  // evaluating it.
-  char *inde_copy = xstrdup(curbuf->b_p_inde);
-  int indent = (int)eval_to_number(inde_copy, true);
-  xfree(inde_copy);
+  int indent = eval_expr_option_number(&curbuf->b_p_inde, use_sandbox);
 
-  if (use_sandbox) {
-    sandbox--;
-  }
   textlock--;
   current_sctx = save_sctx;
 
@@ -1916,7 +1874,7 @@ void fixthisline(IndentGetter get_the_indent)
 
   change_indent(INDENT_SET, amount, false, true);
   if (linewhite(curwin->w_cursor.lnum)) {
-    did_ai = true;  // delete the indent if the line stays empty
+    Ins.did_ai = true;  // delete the indent if the line stays empty
   }
 }
 
@@ -1925,7 +1883,7 @@ void fixthisline(IndentGetter get_the_indent)
 bool use_indentexpr_for_lisp(void)
 {
   return curbuf->b_p_lisp
-         && *curbuf->b_p_inde != NUL
+         && curbuf->b_p_inde.type != kCallbackNone
          && strcmp(curbuf->b_p_lop, "expr:1") == 0;
 }
 

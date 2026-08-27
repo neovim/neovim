@@ -73,7 +73,7 @@ static void log_path_init(void)
       || !log_try_create(log_file_path)) {
     if (user_set) {  // User-provided $NVIM_LOG_FILE.
       // Used by _core/log.lua:check_log_file to validate logfile on startup.
-      os_setenv("__NVIM_LOG_FILE_WANT", log_file_path, true);
+      os_setenv(ENV_LOGFILE_WANT, log_file_path, true);
     }
     // Make $XDG_STATE_HOME/logs if it does not exist.
     char *loghome = concat_fnames_realloc(get_xdg_home(kXDGStateHome), "logs", true);
@@ -91,7 +91,7 @@ static void log_path_init(void)
     if (len >= size || !log_try_create(log_file_path)) {
       if (!user_set) {  // Default fallback path.
         // Used by _core/log.lua:check_log_file to validate logfile on startup.
-        os_setenv("__NVIM_LOG_FILE_WANT", log_file_path, true);
+        os_setenv(ENV_LOGFILE_WANT, log_file_path, true);
       }
       len = xstrlcpy(log_file_path, "nvim.log", size);
     }
@@ -149,13 +149,9 @@ bool logmsg(int log_level, const char *context, const char *func_name, int line_
     return false;
   }
 
-#ifndef NVIM_LOG_DEBUG
-  // This should rarely happen (callsites are compiled out), but to be sure.
-  // TODO(bfredl): allow log levels to be configured at runtime
-  if (log_level < LOGLVL_WRN) {
+  if (log_level < g_min_log_level) {
     return false;
   }
-#endif
 
 #ifdef EXITFREE
   // Logging after we've already started freeing all our memory will only cause

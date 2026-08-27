@@ -426,6 +426,25 @@ func Test_syn_sync()
   call assert_match('SyncHere', execute('syntax sync'))
   syn sync clear
   call assert_notmatch('SyncHere', execute('syntax sync'))
+
+  syn sync minlines=10
+  syntax cluster xmlStuff contains=xmlGroup1,xmlGroup2
+  syntax region xmlComment start=/<!--/ end=/-->/ keepend contains=@Spell
+  syntax sync match xmlSync1 grouphere xmlComment /<!--/
+  syntax sync match xmlSync2 groupthere NONE /-->/
+  syntax cluster xmlAll contains=ALL
+  let out = execute('syntax sync')
+  call assert_match('xmlSync1', out)
+  call assert_match('xmlSync2', out)
+  call assert_match('grouphere xmlComment', out)
+  call assert_match('groupthere NONE', out)
+  call assert_notmatch('xmlStuff', out)
+  call assert_notmatch('xmlAll', out)
+  call assert_notmatch('cluster', out)
+  call assert_notmatch('keepend', out)
+  " should output 4 lines: 1 header + 3 syn sync lines
+  call assert_equal(4, len(split(out, '\n')))
+
   syn clear
 endfunc
 
@@ -684,6 +703,44 @@ func Test_syn_zsub()
 
   set re&
   bw!
+endfunc
+
+func s:SynDumpBuffer(ft, lines)
+  new
+  syntax on
+  execute 'setfiletype ' .. a:ft
+  call setline(1, a:lines)
+  let result = []
+  for lnum in range(1, line('$'))
+    for col in range(1, max([1, len(getline(lnum))]))
+      call add(result, synIDattr(synID(lnum, col, 1), 'name'))
+    endfor
+  endfor
+  bwipe!
+  return result
+endfunc
+
+" The in_id_list() cache is a speed optimization only: highlighting must be
+" identical with the cache on (default) and off.  Compare full-buffer synID()
+" output both ways across filetypes that use "contains"/cluster lists.
+func Test_syntax_idlist_cache_unchanged()
+  throw 'Skipped: Nvim does not support test_override()'
+  let samples = {
+        \ 'c': ['#define M 0x1F', "char c = '\\n';",
+        \       'int f(int a) { return a + 0xAB; }'],
+        \ 'vim': ['func <SID>Foo() abort', '  let x = [1, 2] + {"k": 0z1f}',
+        \         'endfunc'],
+        \ 'python': ['class C:', '    def m(self): return {1: "s", 2: r"\d"}'],
+        \ 'sh': ['case $x in', '  a) echo "${y:-0xAB}";;', 'esac'],
+        \ }
+  for ft in sort(keys(samples))
+    call test_override('syn_idlist_cache', 0)
+    let l:on = s:SynDumpBuffer(ft, samples[ft])
+    call test_override('syn_idlist_cache', 1)
+    let l:off = s:SynDumpBuffer(ft, samples[ft])
+    call test_override('ALL', 0)
+    call assert_equal(l:off, l:on, 'filetype ' .. ft)
+  endfor
 endfunc
 
 " Using \z() in a region with NFA failing should not crash.

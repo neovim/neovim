@@ -7,6 +7,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/assert_defs.h"
 #include "nvim/highlight_defs.h"
+#include "nvim/statusline_defs.h"
 #include "nvim/types_defs.h"
 
 #ifdef __NetBSD__
@@ -15,6 +16,7 @@
 #endif
 
 typedef const char *cstr_t;
+typedef const char *path_t;
 typedef void *ptr_t;
 
 // when used as a key, String doesn't need to be NUL terminated,
@@ -43,13 +45,12 @@ static inline bool equal_String(String a, String b)
 
 static const int value_init_int = 0;
 static const ptr_t value_init_ptr_t = NULL;
-static const ssize_t value_init_ssize_t = -1;
 static const uint32_t value_init_uint32_t = 0;
-static const uint64_t value_init_uint64_t = 0;
 static const int64_t value_init_int64_t = 0;
 static const String value_init_String = STRING_INIT;
 static const ColorItem value_init_ColorItem = COLOR_ITEM_INITIALIZER;
 static const MTDamagePair value_init_MTDamagePair = MTDAMAGE_PAIR_INIT;
+static const StcClick value_init_StcClick = { 0 };
 
 // layer 0: type non-specific code
 
@@ -145,6 +146,7 @@ void mh_realloc(MapHash *h, uint32_t n_min_buckets);
 MH_DECLS(glyph, char, String)
 KEY_DECLS(int)
 KEY_DECLS(cstr_t)
+KEY_DECLS(path_t)
 KEY_DECLS(ptr_t)
 KEY_DECLS(uint64_t)
 KEY_DECLS(int64_t)
@@ -153,15 +155,12 @@ KEY_DECLS(String)
 KEY_DECLS(HlEntry)
 KEY_DECLS(ColorKey)
 
-MAP_DECLS(int, int)
 MAP_DECLS(int, ptr_t)
 MAP_DECLS(cstr_t, ptr_t)
 MAP_DECLS(cstr_t, int)
 MAP_DECLS(ptr_t, ptr_t)
 MAP_DECLS(uint32_t, ptr_t)
 MAP_DECLS(uint64_t, ptr_t)
-MAP_DECLS(uint64_t, ssize_t)
-MAP_DECLS(uint64_t, uint64_t)
 MAP_DECLS(uint64_t, int)
 MAP_DECLS(int64_t, int64_t)
 MAP_DECLS(int64_t, ptr_t)
@@ -170,6 +169,10 @@ MAP_DECLS(String, int)
 MAP_DECLS(int, String)
 MAP_DECLS(ColorKey, ColorItem)
 MAP_DECLS(uint64_t, MTDamagePair)
+MAP_DECLS(int, StcClick)
+typedef Map(int, StcClick) StcClicks;
+static const StcClicks value_init_StcClicks = { 0 };
+MAP_DECLS(int, StcClicks)
 
 #define set_has(T, set, key) set_has_##T(set, key)
 #define set_put(T, set, key) set_put_##T(set, key, NULL)

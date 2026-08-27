@@ -1,5 +1,6 @@
 local t = require('test.unit.testutil')
-local itp = t.gen_itp(it)
+local describe, setup, teardown = t.describe, t.setup, t.teardown
+local itp = t.gen_itp(t.it)
 
 local to_cstr = t.to_cstr
 local eq = t.eq

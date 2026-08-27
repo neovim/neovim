@@ -49,7 +49,6 @@
 #include "nvim/ui.h"
 #include "nvim/vim_defs.h"
 
-#define NS_1_SECOND         1000000000U     // 1 second, in nanoseconds
 #define OUT_DATA_THRESHOLD  1024 * 10U      // 10KB, "a few screenfuls" of data.
 
 #define SHELL_SPECIAL "\t \"&'$;<>()\\|\n"
@@ -72,7 +71,7 @@ static void save_patterns(int num_pat, char **pat, int *num_file, char ***file)
 static bool have_wildcard(int num, char **file)
 {
   for (int i = 0; i < num; i++) {
-    if (path_has_wildcard(file[i])) {
+    if (path_has_wildcard(file[i], true)) {
       return true;
     }
   }
@@ -701,6 +700,7 @@ int os_call_shell(char *cmd, int opts, char *extra_args)
 
   if (!emsg_silent && exitcode != 0 && !(opts & kShellOptSilent)) {
     msg_ext_set_kind("shell_ret");
+    msg_ext_no_fast();
     if (!ui_has(kUIMessages)) {
       msg_putchar('\n');
     }
@@ -728,7 +728,9 @@ int call_shell(char *cmd, int opts, char *extra_shell_arg)
   if (p_verbose > 3) {
     verbose_enter();
     smsg(0, _("Executing command: \"%s\""), cmd == NULL ? p_sh : cmd);
-    msg_putchar('\n');
+    if (!ui_has(kUIMessages)) {
+      msg_putchar('\n');
+    }
     verbose_leave();
   }
 
@@ -810,7 +812,6 @@ char *get_cmd_output(char *cmd, char *infile, int flags, size_t *ret_len)
   buffer = xmalloc(len + 1);
   size_t i = fread(buffer, 1, len, fd);
   fclose(fd);
-  os_remove(tempname);
   if (i != len) {
     semsg(_(e_cant_read_file_str), tempname);
     XFREE_CLEAR(buffer);
@@ -828,6 +829,7 @@ char *get_cmd_output(char *cmd, char *infile, int flags, size_t *ret_len)
   }
 
 done:
+  os_remove(tempname);
   xfree(tempname);
   return buffer;
 }
@@ -1046,10 +1048,10 @@ static bool out_data_decide_throttle(size_t size)
     started = os_hrtime();
   } else {
     uint64_t since = os_hrtime() - started;
-    if (since < (visit * (NS_1_SECOND / 10))) {
+    if (since < (visit * (NS_PER_SEC / 10))) {
       return true;
     }
-    if (since > (3 * NS_1_SECOND)) {
+    if (since > (3 * NS_PER_SEC)) {
       received = visit = 0;
       return false;
     }
@@ -1125,7 +1127,8 @@ static void out_data_event(void **argv)
   bool need_clear = true;
   int hl = (int)(intptr_t)argv[2] == STDERR_FILENO ? HLF_SE : HLF_SO;
   msg_ext_set_kind((int)(intptr_t)argv[2] == STDERR_FILENO ? "shell_err" : "shell_out");
-  msg_ext_append = true;
+  msg_ext_set_append(true);
+  msg_ext_no_fast();
   msg_multiline(cbuf_as_string((char *)argv[0], (size_t)argv[1]), hl, false, false, &need_clear);
   xfree(argv[0]);
   ui_flush();
@@ -1254,7 +1257,8 @@ static size_t write_output(char *output, size_t remaining, bool eof)
   size_t off = 0;
   while (off < remaining) {
     // CRLF
-    if (output[off] == CAR && output[off + 1] == NL) {
+    // special case: for binary mode, don't remove CR.
+    if (output[off] == CAR && output[off + 1] == NL && !curbuf->b_p_bin) {
       output[off] = NUL;
       ml_append(curwin->w_cursor.lnum++, output, (int)off + 1, false);
       size_t skip = off + 2;
@@ -1262,7 +1266,7 @@ static size_t write_output(char *output, size_t remaining, bool eof)
       remaining -= skip;
       off = 0;
       continue;
-    } else if (output[off] == CAR || output[off] == NL) {
+    } else if ((output[off] == CAR && !curbuf->b_p_bin) || output[off] == NL) {
       // Insert the line
       output[off] = NUL;
       ml_append(curwin->w_cursor.lnum++, output, (int)off + 1, false);

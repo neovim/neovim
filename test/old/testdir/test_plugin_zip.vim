@@ -7,7 +7,7 @@ if 0 " Find uncovered line
   profile! file */zip*.vim
 endif
 
-runtime plugin/zipPlugin.vim
+packadd old-zip
 
 func s:CopyZipFile(source)
   if !filecopy($"samples/{a:source}", "X.zip")
@@ -87,7 +87,7 @@ func Test_zip_basic()
   "## Check opening zip when "unzip" program is missing
   let save_zip_unzipcmd = g:zip_unzipcmd
   let g:zip_unzipcmd = "/"
-  call assert_match('unzip not available on your system', execute("e X.zip"))
+  call assert_match('(zip#Browse) sorry, your system doesn''t appear to have the / program', execute("e X.zip"))
 
   "## Check when "unzip" don't work
   if executable("false")

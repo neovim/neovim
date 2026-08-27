@@ -200,15 +200,11 @@ Boolean nvim_tabpage_is_valid(Tabpage tabpage)
 /// @param[out] err Error details, if any
 /// @return |tab-ID| of the new tabpage
 Tabpage nvim_open_tabpage(Buffer buf, Boolean enter, Dict(tabpage_config) *config, Error *err)
-  FUNC_API_SINCE(14) FUNC_API_TEXTLOCK_ALLOW_CMDWIN
+  FUNC_API_SINCE(14) FUNC_API_TEXTLOCK
 {
 #define HAS_KEY_X(d, key) HAS_KEY(d, tabpage_config, key)
   buf_T *b = find_buffer_by_handle(buf, err);
   if (b == NULL) {
-    return 0;
-  }
-  if ((cmdwin_type != 0 && enter) || b == cmdwin_buf) {
-    api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
     return 0;
   }
 

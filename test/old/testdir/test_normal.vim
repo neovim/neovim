@@ -535,9 +535,13 @@ func Test_normal09c_operatorfunc()
   new
   call setline(1, ['first', 'first', 'third', 'third', 'second'])
   normal! 1GVjg@
-  normal! 5G.
   normal! 3G.
-  call assert_equal(['_____', '_____', '_____', '_____', '______'], getline(1, '$'))
+  " Nvim: "." re-executes the captured keysequence ("Vjg@"), not an equal-size
+  " reselect. At the last line the replayed "j" fails, aborting the replay:
+  " nothing is applied (and the pending Visual mode is left active).
+  normal! 5G.
+  exe "normal! \<Esc>"
+  call assert_equal(['_____', '_____', '_____', '_____', 'second'], getline(1, '$'))
   bwipe!
   set operatorfunc=
 endfunc
@@ -1199,6 +1203,31 @@ func Test_normal17_z_scroll_hor2()
 
   " cleanup
   set wrap listchars=eol:$ sidescrolloff=0
+  bw!
+endfunc
+
+func Test_large_sidescrolloff_no_overflow()
+  10new
+  20vsp
+  setlocal nowrap sidescrolloff=2147483647
+  call setline(1, repeat('a', 40))
+
+  normal! $
+  redraw!
+  call assert_equal(29, winsaveview().leftcol)
+
+  normal! zs
+  redraw!
+  call assert_equal(29, winsaveview().leftcol)
+
+  normal! ze
+  redraw!
+  call assert_equal(29, winsaveview().leftcol)
+
+  normal! 0
+  redraw!
+  call assert_equal(0, winsaveview().leftcol)
+
   bw!
 endfunc
 
@@ -2884,7 +2913,7 @@ func Test_normal_8g8()
   " With invalid byte.
   call setline(1, "___\xff___")
   norm! 1G08g8g
-  call assert_equal([0, 1, 4, 0, 1], getcurpos())
+  call assert_equal([0, 1, 4, 0, 4], getcurpos())
 
   " With invalid byte before the cursor.
   call setline(1, "___\xff___")
@@ -2894,12 +2923,12 @@ func Test_normal_8g8()
   " With truncated sequence.
   call setline(1, "___\xE2\x82___")
   norm! 1G08g8g
-  call assert_equal([0, 1, 4, 0, 1], getcurpos())
+  call assert_equal([0, 1, 4, 0, 4], getcurpos())
 
   " With overlong sequence.
   call setline(1, "___\xF0\x82\x82\xAC___")
   norm! 1G08g8g
-  call assert_equal([0, 1, 4, 0, 1], getcurpos())
+  call assert_equal([0, 1, 4, 0, 4], getcurpos())
 
   " With valid utf8.
   call setline(1, "café")
@@ -3056,6 +3085,9 @@ endfunc
 
 " Test for CTRL-\ commands
 func Test_normal40_ctrl_bsl()
+  " Nvim #40312: includes a cmdwin assertion that doesn't translate
+  " (cmdwin is now a normal window so CTRL-\ CTRL-N is a no-op there).
+  throw 'Skipped: Nvim supports cmdwin freedom #40312'
   new
   call append(0, 'here      are   some words')
   exe "norm! 1gg0a\<C-\>\<C-N>"
@@ -3214,11 +3246,8 @@ func Test_normal50_commandline()
   func! DoTimerWork(id)
     call assert_equal(1, getbufinfo('')[0].command)
 
-    " should fail, with E11, but does fail with E23?
-    "call feedkeys("\<c-^>", 'tm')
-
-    " should fail with E11 - "Invalid in command-line window"
-    call assert_fails(":wincmd p", 'E11')
+    " Nvim removed the E11 "Invalid in command-line window" restriction (#40312, #40484).
+    "call assert_fails(":wincmd p", 'E11')
 
     " Return from commandline window.
     call feedkeys("\<CR>", 't')
@@ -3883,6 +3912,108 @@ func Test_normal_percent_jump()
   bwipe!
 endfunc
 
+" Test that "%" skips parens inside comments when 'comments' defines C-style
+" "//" or "/*" comments.
+func Test_normal_percent_skip_comment()
+  new
+  setlocal comments=s1:/*,mb:*,ex:*/,://
+
+  " Forward: skip a ")" inside a // comment, match the real one.
+  silent! %delete _
+  call setline(1, ['foo(  // )', ');'])
+  call cursor(1, 4)
+  normal %
+  call assert_equal([2, 1], [line('.'), col('.')])
+
+  " Forward: skip a ")" inside a /* */ comment, match the real one.
+  silent! %delete _
+  call setline(1, ['bar( /* ) */ x)'])
+  call cursor(1, 4)
+  normal %
+  call assert_equal([1, 15], [line('.'), col('.')])
+
+  " Backward: skip a "(" inside a // comment, match the real one.
+  silent! %delete _
+  call setline(1, ['( // (', ')'])
+  call cursor(2, 1)
+  normal %
+  call assert_equal([1, 1], [line('.'), col('.')])
+
+  " Cursor inside a // comment: a match inside that comment is still found.
+  silent! %delete _
+  call setline(1, ['x // ( y )'])
+  call cursor(1, 6)
+  normal %
+  call assert_equal([1, 10], [line('.'), col('.')])
+
+  " Cursor inside a /* */ comment: a match inside that comment is still found.
+  silent! %delete _
+  call setline(1, ['/* a ( b ) c */'])
+  call cursor(1, 6)
+  normal %
+  call assert_equal([1, 10], [line('.'), col('.')])
+
+  " When 'comments' has no C-style comments the parens are not skipped.
+  setlocal comments=b:#
+  silent! %delete _
+  call setline(1, ['foo(  // )', ');'])
+  call cursor(1, 4)
+  normal %
+  call assert_equal([1, 10], [line('.'), col('.')])
+
+  " With "%" in 'cpoptions' Vi-compatible matching is used and the parens
+  " inside comments are not skipped.
+  let save_cpo = &cpoptions
+  setlocal comments=s1:/*,mb:*,ex:*/,://
+  set cpoptions+=%
+  silent! %delete _
+  call setline(1, ['foo(  // )', ');'])
+  call cursor(1, 4)
+  normal %
+  call assert_equal([1, 10], [line('.'), col('.')])
+  let &cpoptions = save_cpo
+
+  bwipe!
+endfunc
+
+" A "//" inside a string must not be treated as a line comment by "%".  The
+" line is scanned in a single pass, so this stays fast even on lines with many
+" slashes (e.g. base64 data).
+func Test_normal_percent_skip_comment_string()
+  new
+  setlocal comments=s1:/*,mb:*,ex:*/,://
+
+  " The "//" inside the string is not a comment, so "(" matches the real ")".
+  call setline(1, ['("a // b")'])
+  call cursor(1, 1)
+  normal %
+  call assert_equal([1, 10], [line('.'), col('.')])
+
+  " JSON-like: "{" matches the closing "}" although the string has slashes.
+  silent! %delete _
+  call setline(1, ['{', '  "k": "x//y",', '}'])
+  call cursor(1, 1)
+  normal %
+  call assert_equal([3, 1], [line('.'), col('.')])
+
+  " A "/*" inside a string must not start a block comment, so "(" still
+  " matches the real ")" after the string.
+  silent! %delete _
+  call setline(1, ['( "a /* b" )'])
+  call cursor(1, 1)
+  normal %
+  call assert_equal([1, 12], [line('.'), col('.')])
+
+  " A real /* */ block comment is still skipped: "(" matches the last ")".
+  silent! %delete _
+  call setline(1, ['( /* ) */ x )'])
+  call cursor(1, 1)
+  normal %
+  call assert_equal([1, 13], [line('.'), col('.')])
+
+  bwipe!
+endfunc
+
 " Test for << and >> commands to shift text by 'shiftwidth'
 func Test_normal_shift_rightleft()
   new
@@ -4282,13 +4413,18 @@ func Test_single_line_filler_zb()
 endfunc
 
 " Test for zb with fewer buffer lines than window height, non-zero 'scrolloff'
-" and cursor on fold.
-func Test_zb_with_cursor_on_fold()
+" and cursor on or just above a fold.
+func Test_zb_with_cursor_on_or_just_above_fold()
   15new
   call setline(1, range(1, 5) + ['', 'foo{{{', 'bar}}}', '', 'baz'])
   setlocal foldmethod=marker scrolloff=1
   call assert_equal(8, foldclosedend(7))
+
   call cursor(7, 1)
+  normal! zb
+  call assert_equal(1, line('w0'))
+
+  call cursor(6, 1)
   normal! zb
   call assert_equal(1, line('w0'))
 

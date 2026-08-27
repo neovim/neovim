@@ -1,11 +1,12 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local command = n.command
 local clear = n.clear
 local eval = n.eval
 local eq = t.eq
-local exc_exec = n.exc_exec
+local pcall_err = t.pcall_err
 local feed = n.feed
 
 local scroll = function(direction)
@@ -21,15 +22,12 @@ local screencol = function()
 end
 
 describe("'mousescroll'", function()
-  local invalid_arg = 'Vim(set):E474: Invalid argument: mousescroll='
-  local digit_expected = 'Vim(set):E5080: Digit expected: mousescroll='
-
-  local function should_fail(val, errorstr)
-    eq(errorstr .. val, exc_exec('set mousescroll=' .. val))
+  local function should_fail(val, msg)
+    eq(msg, pcall_err(command, 'set mousescroll=' .. val))
   end
 
   local function should_succeed(val)
-    eq(0, exc_exec('set mousescroll=' .. val))
+    command('set mousescroll=' .. val)
   end
 
   before_each(function()
@@ -39,12 +37,19 @@ describe("'mousescroll'", function()
   end)
 
   it('handles invalid values', function()
-    should_fail('', invalid_arg) -- empty string
-    should_fail('foo:123', invalid_arg) -- unknown direction
-    should_fail('hor:1,hor:2', invalid_arg) -- duplicate direction
-    should_fail('ver:99999999999999999999', invalid_arg) -- integer overflow
-    should_fail('ver:bar', digit_expected) -- expected digit
-    should_fail('ver:-1', digit_expected) -- negative count
+    -- empty string (no direction set)
+    should_fail('', 'Vim(set):E474: Invalid argument: mousescroll=')
+    -- unknown direction
+    should_fail('foo:123', "Vim(set):E474: Unknown item 'foo': mousescroll=foo:123")
+    -- integer overflow
+    should_fail(
+      'ver:99999999999999999999',
+      "Vim(set):E474: 'ver' number is out of range: mousescroll=ver:99999999999999999999"
+    )
+    -- expected digit
+    should_fail('ver:bar', "Vim(set):E474: 'ver' requires a number: mousescroll=ver:bar")
+    -- negative count
+    should_fail('ver:-1', "Vim(set):E474: 'ver' requires a number: mousescroll=ver:-1")
   end)
 
   it('handles valid values', function()
@@ -53,6 +58,7 @@ describe("'mousescroll'", function()
     should_succeed('ver:1') -- only vertical
     should_succeed('hor:0,ver:0') -- zero
     should_succeed('hor:2147483647') -- large count
+    should_succeed('hor:1,hor:2') -- duplicate direction: last wins
   end)
 
   it('default set correctly', function()

@@ -3,7 +3,6 @@
 local M = {}
 
 --- Adds one or more blank lines above or below the cursor.
--- TODO: move to _core/defaults.lua once it is possible to assign a Lua function to options #25672
 --- @param above? boolean Place blank line(s) above the cursor
 local function add_blank(above)
   local offset = above and 1 or 0
@@ -12,12 +11,10 @@ local function add_blank(above)
   vim.api.nvim_buf_set_lines(0, linenr - offset, linenr - offset, true, repeated)
 end
 
--- TODO: move to _core/defaults.lua once it is possible to assign a Lua function to options #25672
 function M.space_above()
   add_blank(true)
 end
 
--- TODO: move to _core/defaults.lua once it is possible to assign a Lua function to options #25672
 function M.space_below()
   add_blank()
 end
@@ -66,7 +63,7 @@ end
 function M.wrapped_edit(file, mods)
   assert(mods)
   if type(mods) == 'string' then
-    mods = vim.api.nvim_parse_cmd(mods .. ' edit', {}).mods --[[@as vim.api.keyset.cmd_mods]]
+    mods = vim.api.nvim_parse_cmd(mods .. ' edit').mods --[[@as vim.api.keyset.cmd_mods]]
   end
   --- @cast mods vim.api.keyset.cmd_mods
   if (mods.tab or 0) > 0 or (mods.split or '') ~= '' or mods.horizontal or mods.vertical then
@@ -127,6 +124,102 @@ function M.term_exitcode()
     return string.format('[Exit: %d]', info.exitcode)
   end
   return ''
+end
+
+--- Compute a link to a target on a forge host
+--- @param repo string URL of repo, usually "https://<domain>/<user>/<name>"
+--- @param target string Identifier of a target, like commit hash or tag name
+--- @param target_type "commit"|"tag"
+--- @return string? # Example: <repo>/releases/tag/<target>
+function M.get_forge_url(repo, target, target_type)
+  -- The structure <host>/<middle>/<target> works for most forges. Like:
+  -- - https://github.com/neovim/nvim-lspconfig/commit/e146efa
+  -- - https://github.com/neovim/nvim-lspconfig/releases/tag/v2.8.0
+  local ref_middles = {
+    { pattern = '^https://github%.com/', commit = 'commit', tag = 'releases/tag' },
+    { pattern = '^https://gitlab%.com/', commit = '-/commit', tag = '-/tags' },
+    { pattern = '^https://git%.sr%.ht/', commit = 'commit', tag = 'refs' },
+    { pattern = '^https://tangled%.org/', commit = 'commit', tag = 'tags' },
+    { pattern = '^https://bitbucket%.org/', commit = 'commits', tag = 'src' },
+
+    -- Fall back to Forgejo style since there is no fixed host
+    { pattern = '^https://', commit = 'commit', tag = 'src/tag' },
+  }
+
+  local middle = ''
+  for _, mid in ipairs(ref_middles) do
+    if repo:match(mid.pattern) then
+      middle = mid[target_type]
+      if middle ~= '' then
+        break
+      end
+    end
+  end
+
+  if middle == '' then
+    return nil
+  end
+  repo = repo:gsub('/+$', '')
+  return ('%s/%s/%s'):format(repo, middle, target)
+end
+
+--- Gets a scrubbed message from a pcall'd command error (drops Lua context/traceback):
+--- "…/editor.lua:123: Vim(put):E484: xx" => "E484: xx"
+---
+--- @param err string
+--- @return string
+function M.cmd_errmsg(err)
+  err = err:match('^[^\n]*') or err
+  --- @type string
+  err = err:match('Vim%b():%s*(.*)') or err:match('Vim:%s*(.*)') or (err:gsub('^.-:%d+:%s*', ''))
+  return (err:gsub('^Lua:%s*', ''))
+end
+
+--- Utility function for displaying vim error codes (EXX)
+--- @param msg string
+function M.echo_err(msg)
+  vim.api.nvim_echo({ { msg } }, true, { err = true })
+end
+
+--- Shows a message from a builtin plugin, prefixed with the plugin name.
+---
+--- Scheduled, so it is safe to call from |api-fast| contexts.
+--- @param name string Plugin name, e.g. "zip".
+--- @param msg string
+--- @param level? integer Level from |vim.log.levels|. Defaults to ERROR.
+function M.notify(name, msg, level)
+  vim.schedule(function()
+    vim.notify(('%s: %s'):format(name, msg), level or vim.log.levels.ERROR)
+  end)
+end
+
+--- Define event-handlers (autocmds) ergonomically.
+---
+--- Examples:
+--- ```lua
+---   local nvim_on = require('vim._core.util').nvim_on
+---   nvim_on('BufWritePost', group, function(ev) print(ev.file) end)
+---   nvim_on({ 'BufRead', 'BufNew' }, group, { pattern = '*.lua' }, function(ev) end)
+---   nvim_on('VimLeavePre', nil, function() end)
+--- ```
+---
+--- @param events vim.api.keyset.events|vim.api.keyset.events[] Event(s) to watch. See |autocmd-events|.
+--- @param group string|integer? Group name or id, or `nil`.
+--- @param opts_or_fn vim.api.keyset.create_autocmd Options.
+--- @param fn fun(ev: vim.api.keyset.create_autocmd.callback_args): boolean? Event handler.
+--- @return integer # Autocmd id (see |nvim_create_autocmd()|).
+--- @overload fun(events: vim.api.keyset.events|vim.api.keyset.events[], group: string|integer?, fn: fun(ev: vim.api.keyset.create_autocmd.callback_args): boolean?): integer
+function M.nvim_on(events, group, opts_or_fn, fn)
+  vim.validate('opts_or_fn', opts_or_fn, { 'function', 'table' })
+  local opts --- @type vim.api.keyset.create_autocmd
+  if type(opts_or_fn) == 'function' then
+    fn, opts = opts_or_fn, {}
+  else
+    opts = opts_or_fn
+  end
+  opts.group = group
+  opts.callback = fn
+  return vim.api.nvim_create_autocmd(events, opts)
 end
 
 return M

@@ -1,8 +1,10 @@
 -- Tests for folding.
 
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local feed, insert, feed_command, expect_any = n.feed, n.insert, n.feed_command, n.expect_any
 local command = n.command
 local exec = n.exec

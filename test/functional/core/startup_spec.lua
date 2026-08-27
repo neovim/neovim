@@ -2,6 +2,8 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each, after_each, setup, teardown, finally =
+  t.describe, t.it, t.before_each, t.after_each, t.setup, t.teardown, t.finally
 local assert_alive = n.assert_alive
 local assert_log = t.assert_log
 local clear = n.clear
@@ -39,16 +41,10 @@ local testlog = 'Xtest-startupspec-log'
 describe('startup', function()
   it('--clean', function()
     clear()
-    matches(
-      vim.pesc(t.fix_slashes(fn.stdpath('config'))),
-      t.fix_slashes(api.nvim_get_option_value('runtimepath', {}))
-    )
+    matches(vim.pesc(fn.stdpath('config')), api.nvim_get_option_value('runtimepath', {}))
 
     clear('--clean')
-    ok(
-      not t.fix_slashes(api.nvim_get_option_value('runtimepath', {}))
-        :match(vim.pesc(t.fix_slashes(fn.stdpath('config'))))
-    )
+    ok(not api.nvim_get_option_value('runtimepath', {}):match(vim.pesc(fn.stdpath('config'))))
   end)
 
   it('prevents remote UI infinite loop', function()
@@ -157,14 +153,6 @@ describe('startup', function()
     end)
 
     it('os.exit() sets Nvim exitcode', function()
-      -- tricky: LeakSanitizer triggers on os.exit() and disrupts the return value, disable it
-      exec_lua [[
-        local asan_options = os.getenv('ASAN_OPTIONS') or ''
-        if asan_options ~= '' then
-          asan_options = asan_options .. ':'
-        end
-        vim.uv.os_setenv('ASAN_OPTIONS', asan_options .. ':detect_leaks=0')
-      ]]
       -- nvim -l foo.lua -arg1 -- a b c
       assert_l_out(
         [[
@@ -177,6 +165,60 @@ describe('startup', function()
         { '-arg1', '--exitcode', '73', '--arg2' }
       )
       eq(73, eval('v:shell_error'))
+    end)
+
+    it('os.exit() runs Nvim teardown', function()
+      local exit_file = t.tmpname(false)
+      finally(function()
+        os.remove(exit_file)
+      end)
+
+      fn.system(
+        {
+          nvim_prog,
+          '-u',
+          'NONE',
+          '-i',
+          'NONE',
+          '--cmd',
+          'set shada=',
+          '-l',
+          '-',
+        },
+        ([[
+        vim.api.nvim_create_autocmd('VimLeave', {
+          callback = function()
+            vim.fn.writefile({ tostring(vim.v.exiting) }, %s)
+          end,
+        })
+        os.exit(73)
+      ]]):format(vim.inspect(exit_file))
+      )
+
+      eq(73, eval('v:shell_error'))
+      eq('73\n', read_file(exit_file))
+    end)
+
+    it('os.exit() fails from libuv process callback #39783', function()
+      local out = fn.system(
+        { nvim_prog, '--clean', '-l', '-' },
+        ([[
+          local callback_called = false
+          local handle
+          handle = assert(vim.uv.spawn(%q, { args = { 'EXIT', '0' } }, function()
+            handle:close()
+            callback_called = true
+            os.exit(73)
+            error('os.exit() returned')
+          end))
+          assert(vim.wait(1000, function()
+            return callback_called
+          end))
+        ]]):format(n.testprg('shell-test'))
+      )
+
+      eq(0, eval('v:shell_error'))
+      matches('E5560: os%.exit must not be called in a fast event context', out)
     end)
 
     it('Lua-error sets Nvim exitcode', function()
@@ -300,13 +342,10 @@ describe('startup', function()
         os.remove('Xtest_shada')
       end)
 
-      assert_l_out(
-        'updatecount=0 shadafile=NONE loadplugins=false scripts=1\n',
-        nil,
-        nil,
-        '-',
-        script
-      )
+      assert_l_out(function(out)
+        -- Accept scripts=2 for PUC Lua where `vim._core.util` is sourced from disk instead of a preload blob.
+        return matches('updatecount=0 shadafile=NONE loadplugins=false scripts=[12]\n', out)
+      end, nil, nil, '-', script)
 
       -- User can override.
       assert_l_out(
@@ -642,6 +681,43 @@ describe('startup', function()
     )
     -- without `-u`
     eq('  encoding=utf-8\n', fn.system({ nvim_prog, '-n', '-es' }, { 'set encoding', '' }))
+    -- CRLF input (e.g. Windows pipes) works like LF.
+    eq('  encoding=utf-8\n', fn.system({ nvim_prog, '-n', '-es' }, 'set encoding\r\n'))
+    -- Stdin is not consumed as typeahead: `:lua` can read the next stdin line as data.
+    eq(
+      'thedata\n',
+      fn.system(
+        { nvim_prog, '-n', '-u', 'NONE', '-i', 'NONE', '-es' },
+        { 'lua vim.g.d = io.read()', 'thedata', 'put =g:d', 'print', '' }
+      )
+    )
+
+    -- Cursor starts at the last line (POSIX ex): ed-style "a" appends at end-of-file.
+    write_file('Xesfile', 'L1\nL2\n')
+    finally(function()
+      os.remove('Xesfile')
+    end)
+    eq(
+      'L1\nL2\nX\n',
+      fn.system(
+        { nvim_prog, '-n', '-u', 'NONE', '-i', 'NONE', '-es', 'Xesfile' },
+        { 'a', 'X', '.', '%print', '' }
+      )
+    )
+
+    -- In a terminal, "-es" executes +cmds and exits; it doesn't wait for input.
+    local screen = Screen.new(60, 6)
+    fn.jobstart({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '-es', '-V1', '+echo "hello"' }, {
+      term = true,
+      env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
+    })
+    -- "nvim -es" output ends with a final newline.
+    screen:expect([[
+      ^hello                                                       |
+                                                                  |
+      [Process exited 0]                                          |
+                                                                  |*3
+    ]])
   end)
 
   it('-es/-Es disables swapfile/shada/config #8540', function()
@@ -692,14 +768,10 @@ describe('startup', function()
       '--clean',
       '-es',
       '-c',
-      -- 'showcmd' leads to a char_avail() call just after the 'Q' (no more input).
-      [[set showcmd | exe "g/^/vi|Vgg:w>>Xoutput.txt\rgQ"]],
+      [[g/^/.w >>Xoutput.txt]],
       'Xinput.txt',
     })
-    eq(
-      'OUT\nline1\nline1\nline2\nline1\nline2\nline3\nline1\nline2\nline3\nline4\n',
-      read_file('Xoutput.txt')
-    )
+    eq('OUT\nline1\nline2\nline3\nline4\n', read_file('Xoutput.txt'))
   end)
 
   it('ENTER dismisses early message #7967', function()
@@ -790,35 +862,43 @@ end)
 describe('startup', function()
   it('-e/-E interactive #7679', function()
     clear('-e')
-    local screen = Screen.new(25, 3)
+    local screen = Screen.new(40, 12)
     feed("put ='from -e'<CR>")
     screen:expect([[
-      :put ='from -e'          |
-      from -e                  |
-      :^                        |
+                                              |
+      from -e                                 |
+      {1:~                                       }|*6
+      {2:[No Name] [+]                           }|
+      {1::}^                                       |
+      {3:[Ex mode]                               }|
+      {5:-- INSERT --}                            |
     ]])
 
     clear('-E')
-    screen = Screen.new(25, 3)
+    screen = Screen.new(40, 12)
     feed("put ='from -E'<CR>")
     screen:expect([[
-      :put ='from -E'          |
-      from -E                  |
-      :^                        |
+                                              |
+      from -E                                 |
+      {1:~                                       }|*6
+      {2:[No Name] [+]                           }|
+      {1::}^                                       |
+      {3:[Ex mode]                               }|
+      {5:-- INSERT --}                            |
     ]])
   end)
 
-  it('-e sets ex mode', function()
+  it('-e enters Ex mode at startup', function()
     clear('-e')
-    local screen = Screen.new(25, 3)
-    -- Verify we set the proper mode both before and after :vi.
-    feed('put =mode(1)<CR>vi<CR>:put =mode(1)<CR>')
-    screen:expect([[
-      cv                       |
-      ^n                        |
-      :put =mode(1)            |
-    ]])
+    local screen = Screen.new(40, 12)
+    -- The keep-open cmdwin REPL is focused, in Insert mode. #40962
+    screen:expect({ any = vim.pesc('[Ex mode]') })
+    eq(':', fn.getcmdwintype())
+    feed('visual<CR>')
+    eq('n', fn.mode(1))
+    eq('', fn.getcmdwintype())
 
+    -- Scripts can detect batch mode ("-es"): mode() is "cv".
     eq('cv\n', fn.system({ nvim_prog, '-n', '-es' }, { 'put =mode(1)', 'print', '' }))
   end)
 
@@ -1237,7 +1317,6 @@ describe('sysinit', function()
   local xdgdir = 'Xxdg'
   local vimdir = 'Xvim'
   local xhome = 'Xhome'
-  local pathsep = n.get_pathsep()
 
   before_each(function()
     rmdir(xdgdir)
@@ -1245,9 +1324,9 @@ describe('sysinit', function()
     rmdir(xhome)
 
     mkdir(xdgdir)
-    mkdir(xdgdir .. pathsep .. 'nvim')
+    mkdir(('%s/nvim'):format(xdgdir))
     write_file(
-      table.concat({ xdgdir, 'nvim', 'sysinit.vim' }, pathsep),
+      ('%s/nvim/sysinit.vim'):format(xdgdir),
       [[
       let g:loaded = get(g:, "loaded", 0) + 1
       let g:xdg = 1
@@ -1256,7 +1335,7 @@ describe('sysinit', function()
 
     mkdir(vimdir)
     write_file(
-      table.concat({ vimdir, 'sysinit.vim' }, pathsep),
+      ('%s/sysinit.vim'):format(vimdir),
       [[
       let g:loaded = get(g:, "loaded", 0) + 1
       let g:vim = 1
@@ -1297,11 +1376,8 @@ describe('sysinit', function()
 
   it('respects NVIM_APPNAME in XDG_CONFIG_DIRS', function()
     local appname = 'mysysinitapp'
-    mkdir(xdgdir .. pathsep .. appname)
-    write_file(
-      table.concat({ xdgdir, appname, 'sysinit.vim' }, pathsep),
-      [[let g:appname_sysinit = 1]]
-    )
+    mkdir(('%s/%s'):format(xdgdir, appname))
+    write_file(('%s/%s/sysinit.vim'):format(xdgdir, appname), [[let g:appname_sysinit = 1]])
     clear {
       args_rm = { '-u' },
       env = { HOME = xhome, XDG_CONFIG_DIRS = xdgdir, NVIM_APPNAME = appname },
@@ -1314,16 +1390,15 @@ end)
 
 describe('user config init', function()
   local xhome = 'Xhome'
-  local pathsep = n.get_pathsep()
-  local xconfig = xhome .. pathsep .. 'Xconfig'
-  local xdata = xhome .. pathsep .. 'Xdata'
-  local init_lua_path = table.concat({ xconfig, 'nvim', 'init.lua' }, pathsep)
+  local xconfig = ('%s/Xconfig'):format(xhome)
+  local xdata = ('%s/Xdata'):format(xhome)
+  local init_lua_path = ('%s/nvim/init.lua'):format(xconfig)
   local xenv = { XDG_CONFIG_HOME = xconfig, XDG_DATA_HOME = xdata }
 
   before_each(function()
     rmdir(xhome)
 
-    mkdir_p(xconfig .. pathsep .. 'nvim')
+    mkdir_p(('%s/nvim'):format(xconfig))
     mkdir_p(xdata)
 
     write_file(init_lua_path, [[vim.g.lua_rc = 1]])
@@ -1387,7 +1462,7 @@ describe('user config init', function()
           vim.g.exrc_file = '---'
         ]]
       )
-      mkdir_p(xstate .. pathsep .. (is_os('win') and 'nvim-data' or 'nvim'))
+      mkdir_p(('%s/%s'):format(xstate, is_os('win') and 'nvim-data' or 'nvim'))
     end)
 
     after_each(function()
@@ -1476,11 +1551,11 @@ describe('user config init', function()
 
       -- trust .exrc
       feed(':trust<CR>')
-      screen:expect({ any = 'Allowed in trust database: ".*' .. pathsep .. '%.exrc"' })
+      screen:expect({ any = 'Allowed in trust database: ".*/%.exrc"' })
       feed(':q<CR>')
       -- trust .nvim.lua
       feed(':trust<CR>')
-      screen:expect({ any = 'Allowed in trust database: ".*' .. pathsep .. '%.nvim%.lua"' })
+      screen:expect({ any = 'Allowed in trust database: ".*/%.nvim%.lua"' })
       feed(':q<CR>')
       -- no exrc file is executed
       feed(':echo g:exrc_count<CR>')
@@ -1513,7 +1588,7 @@ describe('user config init', function()
   end)
 
   describe('with explicitly provided config', function()
-    local custom_lua_path = table.concat({ xhome, 'custom.lua' }, pathsep)
+    local custom_lua_path = ('%s/custom.lua'):format(xhome)
     before_each(function()
       write_file(
         custom_lua_path,
@@ -1533,7 +1608,7 @@ describe('user config init', function()
   describe('VIMRC also exists', function()
     before_each(function()
       write_file(
-        table.concat({ xconfig, 'nvim', 'init.vim' }, pathsep),
+        ('%s/nvim/init.vim'):format(xconfig),
         [[
           let g:vim_rc = 1
         ]]
@@ -1557,7 +1632,7 @@ describe('user config init', function()
       -- Remove init.lua from XDG_CONFIG_HOME so nvim falls back to XDG_CONFIG_DIRS
       os.remove(init_lua_path)
       rmdir(xdgdir)
-      mkdir_p(xdgdir .. pathsep .. 'nvim')
+      mkdir_p(('%s/nvim'):format(xdgdir))
     end)
 
     after_each(function()
@@ -1565,24 +1640,18 @@ describe('user config init', function()
     end)
 
     it('loads init.lua from XDG_CONFIG_DIRS when no config in XDG_CONFIG_HOME', function()
-      write_file(
-        table.concat({ xdgdir, 'nvim', 'init.lua' }, pathsep),
-        [[vim.g.xdg_config_dirs_lua = 1]]
-      )
+      write_file(('%s/nvim/init.lua'):format(xdgdir), [[vim.g.xdg_config_dirs_lua = 1]])
       clear {
         args_rm = { '-u' },
         env = { XDG_CONFIG_HOME = xconfig, XDG_DATA_HOME = xdata, XDG_CONFIG_DIRS = xdgdir },
       }
       eq(1, eval('g:xdg_config_dirs_lua'))
-      eq(
-        fn.fnamemodify(table.concat({ xdgdir, 'nvim', 'init.lua' }, pathsep), ':p'),
-        eval('$MYVIMRC')
-      )
+      eq(fn.fnamemodify(('%s/nvim/init.lua'):format(xdgdir), ':p'), eval('$MYVIMRC'))
     end)
 
     it('prefers init.lua over init.vim, shows E5422', function()
-      write_file(table.concat({ xdgdir, 'nvim', 'init.lua' }, pathsep), [[vim.g.xdg_lua = 1]])
-      write_file(table.concat({ xdgdir, 'nvim', 'init.vim' }, pathsep), [[let g:xdg_vim = 1]])
+      write_file(('%s/nvim/init.lua'):format(xdgdir), [[vim.g.xdg_lua = 1]])
+      write_file(('%s/nvim/init.vim'):format(xdgdir), [[let g:xdg_vim = 1]])
       clear {
         args_rm = { '-u' },
         env = { XDG_CONFIG_HOME = xconfig, XDG_DATA_HOME = xdata, XDG_CONFIG_DIRS = xdgdir },
@@ -1593,7 +1662,7 @@ describe('user config init', function()
     end)
 
     it('falls back to init.vim when no init.lua', function()
-      write_file(table.concat({ xdgdir, 'nvim', 'init.vim' }, pathsep), [[let g:xdg_vim = 1]])
+      write_file(('%s/nvim/init.vim'):format(xdgdir), [[let g:xdg_vim = 1]])
       clear {
         args_rm = { '-u' },
         env = { XDG_CONFIG_HOME = xconfig, XDG_DATA_HOME = xdata, XDG_CONFIG_DIRS = xdgdir },
@@ -1603,10 +1672,10 @@ describe('user config init', function()
 
     it('respects NVIM_APPNAME', function()
       local appname = 'mytestapp'
-      mkdir_p(xdgdir .. pathsep .. appname)
+      mkdir_p(('%s/%s'):format(xdgdir, appname))
       -- Also create nvim/ with a config that should NOT be loaded
-      write_file(table.concat({ xdgdir, 'nvim', 'init.lua' }, pathsep), [[vim.g.wrong = 1]])
-      write_file(table.concat({ xdgdir, appname, 'init.lua' }, pathsep), [[vim.g.appname_lua = 1]])
+      write_file(('%s/nvim/init.lua'):format(xdgdir), [[vim.g.wrong = 1]])
+      write_file(('%s/%s/init.lua'):format(xdgdir, appname), [[vim.g.appname_lua = 1]])
       clear {
         args_rm = { '-u' },
         env = {
@@ -1618,24 +1687,20 @@ describe('user config init', function()
       }
       eq(1, eval('g:appname_lua'))
       eq(0, eval('get(g:, "wrong", 0)'))
-      eq(
-        fn.fnamemodify(table.concat({ xdgdir, appname, 'init.lua' }, pathsep), ':p'),
-        eval('$MYVIMRC')
-      )
+      eq(fn.fnamemodify(('%s/%s/init.lua'):format(xdgdir, appname), ':p'), eval('$MYVIMRC'))
     end)
   end)
 end)
 
 describe('runtime:', function()
   local xhome = 'Xhome'
-  local pathsep = n.get_pathsep()
-  local xconfig = xhome .. pathsep .. 'Xconfig'
-  local xdata = xhome .. pathsep .. 'Xdata'
+  local xconfig = ('%s/Xconfig'):format(xhome)
+  local xdata = ('%s/Xdata'):format(xhome)
   local xenv = { XDG_CONFIG_HOME = xconfig, XDG_DATA_HOME = xdata }
 
   setup(function()
     rmdir(xhome)
-    mkdir_p(xconfig .. pathsep .. 'nvim')
+    mkdir_p(('%s/nvim'):format(xconfig))
     mkdir_p(xdata)
   end)
 
@@ -1644,8 +1709,8 @@ describe('runtime:', function()
   end)
 
   it('loads plugin/*.lua from XDG config home', function()
-    local plugin_folder_path = table.concat({ xconfig, 'nvim', 'plugin' }, pathsep)
-    local plugin_file_path = table.concat({ plugin_folder_path, 'plugin.lua' }, pathsep)
+    local plugin_folder_path = ('%s/nvim/plugin'):format(xconfig)
+    local plugin_file_path = ('%s/plugin.lua'):format(plugin_folder_path)
     mkdir_p(plugin_folder_path)
     finally(function()
       rmdir(plugin_folder_path)
@@ -1658,10 +1723,9 @@ describe('runtime:', function()
   end)
 
   it('loads plugin/*.lua from start packages', function()
-    local plugin_path =
-      table.concat({ xconfig, 'nvim', 'pack', 'category', 'start', 'test_plugin' }, pathsep)
-    local plugin_folder_path = table.concat({ plugin_path, 'plugin' }, pathsep)
-    local plugin_file_path = table.concat({ plugin_folder_path, 'plugin.lua' }, pathsep)
+    local plugin_path = ('%s/nvim/pack/category/start/test_plugin'):format(xconfig)
+    local plugin_folder_path = ('%s/plugin'):format(plugin_path)
+    local plugin_file_path = ('%s/plugin.lua'):format(plugin_folder_path)
     local profiler_file = 'test_startuptime.log'
     mkdir_p(plugin_folder_path)
     finally(function()
@@ -1691,12 +1755,11 @@ describe('runtime:', function()
 
   it('loads plugin/*.lua from site packages', function()
     local nvimdata = is_os('win') and 'nvim-data' or 'nvim'
-    local plugin_path =
-      table.concat({ xdata, nvimdata, 'site', 'pack', 'xa', 'start', 'yb' }, pathsep)
-    local plugin_folder_path = table.concat({ plugin_path, 'plugin' }, pathsep)
-    local plugin_after_path = table.concat({ plugin_path, 'after', 'plugin' }, pathsep)
-    local plugin_file_path = table.concat({ plugin_folder_path, 'plugin.lua' }, pathsep)
-    local plugin_after_file_path = table.concat({ plugin_after_path, 'helloo.lua' }, pathsep)
+    local plugin_path = ('%s/%s/site/pack/xa/start/yb'):format(xdata, nvimdata)
+    local plugin_folder_path = ('%s/plugin'):format(plugin_path)
+    local plugin_after_path = ('%s/after/plugin'):format(plugin_path)
+    local plugin_file_path = ('%s/plugin.lua'):format(plugin_folder_path)
+    local plugin_after_file_path = ('%s/helloo.lua'):format(plugin_after_path)
     mkdir_p(plugin_folder_path)
     mkdir_p(plugin_after_path)
     finally(function()
@@ -1712,21 +1775,21 @@ describe('runtime:', function()
   end)
 
   it('no crash setting &rtp in plugins with :packloadall called before #18315', function()
-    local plugin_folder_path = table.concat({ xconfig, 'nvim', 'plugin' }, pathsep)
+    local plugin_folder_path = ('%s/nvim/plugin'):format(xconfig)
     mkdir_p(plugin_folder_path)
     finally(function()
       rmdir(plugin_folder_path)
     end)
 
     write_file(
-      table.concat({ plugin_folder_path, 'plugin.vim' }, pathsep),
+      ('%s/plugin.vim'):format(plugin_folder_path),
       [[
         let &runtimepath = &runtimepath
         let g:vim_plugin = 1
       ]]
     )
     write_file(
-      table.concat({ plugin_folder_path, 'plugin.lua' }, pathsep),
+      ('%s/plugin.lua'):format(plugin_folder_path),
       [[
         vim.o.runtimepath = vim.o.runtimepath
         vim.g.lua_plugin = 1
@@ -1740,29 +1803,29 @@ describe('runtime:', function()
   end)
 
   it("loads ftdetect/*.{vim,lua} respecting 'rtp' order", function()
-    local rtp_folder = table.concat({ xconfig, 'nvim' }, pathsep)
-    local after_rtp_folder = table.concat({ rtp_folder, 'after' }, pathsep)
-    local ftdetect_folder = table.concat({ rtp_folder, 'ftdetect' }, pathsep)
-    local after_ftdetect_folder = table.concat({ after_rtp_folder, 'ftdetect' }, pathsep)
+    local rtp_folder = ('%s/nvim'):format(xconfig)
+    local after_rtp_folder = ('%s/after'):format(rtp_folder)
+    local ftdetect_folder = ('%s/ftdetect'):format(rtp_folder)
+    local after_ftdetect_folder = ('%s/ftdetect'):format(after_rtp_folder)
     mkdir_p(ftdetect_folder)
     mkdir_p(after_ftdetect_folder)
     finally(function()
       rmdir(ftdetect_folder)
       rmdir(after_ftdetect_folder)
     end)
-    write_file(table.concat({ rtp_folder, 'scripts.vim' }, pathsep), [[let g:aseq ..= 'S']])
-    write_file(table.concat({ after_rtp_folder, 'scripts.vim' }, pathsep), [[let g:aseq ..= 's']])
+    write_file(('%s/scripts.vim'):format(rtp_folder), [[let g:aseq ..= 'S']])
+    write_file(('%s/scripts.vim'):format(after_rtp_folder), [[let g:aseq ..= 's']])
     -- A .lua file is loaded after a .vim file if they only differ in extension.
     -- All files in after/ftdetect/ are loaded after all files in ftdetect/.
     write_file(
-      table.concat({ ftdetect_folder, 'new-ft.vim' }, pathsep),
+      ('%s/new-ft.vim'):format(ftdetect_folder),
       [[
         let g:seq ..= 'A'
         autocmd BufRead,BufNewFile FTDETECT let g:aseq ..= 'A'
       ]]
     )
     write_file(
-      table.concat({ ftdetect_folder, 'new-ft.lua' }, pathsep),
+      ('%s/new-ft.lua'):format(ftdetect_folder),
       [[
         vim.g.seq = vim.g.seq .. 'B'
         vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile' }, {
@@ -1772,14 +1835,14 @@ describe('runtime:', function()
       ]]
     )
     write_file(
-      table.concat({ after_ftdetect_folder, 'new-ft.vim' }, pathsep),
+      ('%s/new-ft.vim'):format(after_ftdetect_folder),
       [[
         let g:seq ..= 'a'
         autocmd BufRead,BufNewFile FTDETECT let g:aseq ..= 'a'
       ]]
     )
     write_file(
-      table.concat({ after_ftdetect_folder, 'new-ft.lua' }, pathsep),
+      ('%s/new-ft.lua'):format(after_ftdetect_folder),
       [[
         vim.g.seq = vim.g.seq .. 'b'
         vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile' }, {
@@ -1794,12 +1857,23 @@ describe('runtime:', function()
     command('edit FTDETECT')
     eq('SsABab', eval('g:aseq'))
   end)
+
+  it('no crash for recursive search_path build #39815', function()
+    clear()
+    local screen = Screen.new()
+    fn.jobstart({
+      nvim_prog,
+      '--clean',
+      '+lua require("vim._core.ui2").enable()',
+      '+set rtp+=$FOO | set syntax',
+    }, { term = true, env = { VIMRUNTIME = os.getenv('VIMRUNTIME') } })
+    screen:expect({ any = 'syntax', none = 'Process exited 1' })
+  end)
 end)
 
 describe('user session', function()
   local xhome = 'Xhome'
-  local pathsep = n.get_pathsep()
-  local session_file = table.concat({ xhome, 'session.lua' }, pathsep)
+  local session_file = ('%s/session.lua'):format(xhome)
 
   before_each(function()
     rmdir(xhome)
@@ -1820,46 +1894,5 @@ describe('user session', function()
   it('loads session from the provided lua file', function()
     clear { args = { '-S', session_file }, env = { HOME = xhome } }
     eq(1, eval('g:lua_session'))
-  end)
-end)
-
-describe('inccommand on ex mode', function()
-  it('should not preview', function()
-    clear()
-    local screen
-    screen = Screen.new(60, 10)
-    local id = fn.jobstart({
-      nvim_prog,
-      '-u',
-      'NONE',
-      '-i',
-      'NONE',
-      '-c',
-      'set termguicolors background=dark',
-      '-E',
-      'README.md',
-    }, {
-      term = true,
-      env = { VIMRUNTIME = os.getenv('VIMRUNTIME') },
-    })
-    fn.chansend(id, '%s/N')
-    screen:add_extra_attr_ids({
-      [101] = {
-        background = Screen.colors.NvimDarkGrey4,
-        foreground = Screen.colors.NvimLightGray2,
-      },
-      [102] = {
-        background = Screen.colors.NvimDarkGray2,
-        foreground = Screen.colors.NvimLightGray2,
-      },
-    })
-    screen:expect([[
-      {102:^                                                            }|
-      {102:                                                            }|*5
-      {101:                                                            }|
-      {102:Entering Ex mode.  Type "visual" to go to Normal mode.      }|
-      {102::%s/N                                                       }|
-                                                                  |
-    ]])
   end)
 end)

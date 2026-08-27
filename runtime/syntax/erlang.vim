@@ -3,7 +3,7 @@
 " Maintainer:   Csaba Hoch <csaba.hoch@gmail.com>
 " Contributor:  Adam Rutkowski <hq@mtod.org>
 "               Johannes Christ <jc@jchri.st>
-" Last Update:  2025-Nov-12
+" Last Update:  2026-Jun-14
 " License:      Vim license
 " URL:          https://github.com/vim-erlang/vim-erlang-runtime
 
@@ -178,8 +178,38 @@ syn match erlangQuotedAtomModifier '\\\%(\o\{1,3}\|x\x\x\|x{\x\+}\|\^.\|.\)' con
 syn match erlangModifier           '\$\%([^\\]\|\\\%(\o\{1,3}\|x\x\x\|x{\x\+}\|\^.\|.\)\)'
 
 " Operators, separators
-syn match erlangOperator   '==\|=:=\|/=\|=/=\|<\|=<\|>\|>=\|=>\|:=\|?=\|++\|--\|=\|!\|<-\|+\|-\|\*\|\/'
+syn match erlangOperator '='
+syn match erlangOperator '+'
+syn match erlangOperator '-'
+syn match erlangOperator '*'
+syn match erlangOperator '/'
+syn match erlangOperator '<'
+syn match erlangOperator '>'
+syn match erlangOperator '!'
+syn match erlangOperator '=<'
+syn match erlangOperator '>='
+syn match erlangOperator '=>'
+syn match erlangOperator '=='
+syn match erlangOperator '=:='
+syn match erlangOperator '/='
+syn match erlangOperator '=/='
+syn match erlangOperator ':='
+syn match erlangOperator '?='
+syn match erlangOperator '++'
+syn match erlangOperator '--'
+syn match erlangOperator '<-'
+
+" erlangEqualsBinary makes the syntax reflect how Erlang parses the following:
+"
+" A=<<<"binary">>
+"   Valid, same as: A =< <<"binary">>
+" A==<<"binary">>
+"   Valid, same as: A == <<"binary">>
+" A=<<"binary">>
+"   Invalid, parsed as: A =< <"binary">>. This is invalid because there are no
+"   "<<" before the binary, only "<".
 syn match erlangEqualsBinary '=<<\%(<\)\@!'
+
 syn keyword erlangOperator div rem or xor bor bxor bsl bsr and band not bnot andalso orelse
 syn match erlangBracket    '{\|}\|\[\|]\||\|||'
 syn match erlangPipe       '|'
@@ -207,7 +237,7 @@ syn region erlangQuotedRecord        start=/#\s*'/ end=/'/ contains=erlangQuoted
 syn match erlangShebang  '^#!.*'
 
 " Bitstrings
-syn match erlangBitType '\%(\/\%(\s\|\n\|%.*\n\)*\)\@<=\%(integer\|float\|binary\|bytes\|bitstring\|bits\|binary\|utf8\|utf16\|utf32\|signed\|unsigned\|big\|little\|native\|unit\)\%(\%(\s\|\n\|%.*\n\)*-\%(\s\|\n\|%.*\n\)*\%(integer\|float\|binary\|bytes\|bitstring\|bits\|binary\|utf8\|utf16\|utf32\|signed\|unsigned\|big\|little\|native\|unit\)\)*' contains=erlangComment
+syn match erlangBitType '\%#=1\%(\/\%(\s\|\n\|%.*\n\)*\)\@<=\<\%(integer\|float\|binary\|bytes\|bitstring\|bits\|binary\|utf8\|utf16\|utf32\|signed\|unsigned\|big\|little\|native\|unit\)\%(\%(\s\|\n\|%.*\n\)*-\%(\s\|\n\|%.*\n\)*\<\%(integer\|float\|binary\|bytes\|bitstring\|bits\|binary\|utf8\|utf16\|utf32\|signed\|unsigned\|big\|little\|native\|unit\)\)*' contains=erlangComment
 
 " Constants and Directives
 syn match erlangUnknownAttribute '^\s*-\%(\s\|\n\|%.*\n\)*\l[[:alnum:]_@]*' contains=erlangComment

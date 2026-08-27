@@ -1,4 +1,5 @@
 local api = vim.api
+local nvim_on = require('vim._core.util').nvim_on
 local diagnostic = vim.diagnostic
 local diagnostic_shared = require('vim.diagnostic._shared')
 
@@ -123,13 +124,9 @@ local function once_buf_loaded(bufnr, fn)
   if api.nvim_buf_is_loaded(bufnr) then
     fn()
   else
-    return api.nvim_create_autocmd('BufRead', {
-      buf = bufnr,
-      once = true,
-      callback = function()
-        fn()
-      end,
-    })
+    return nvim_on('BufRead', nil, { buf = bufnr, once = true }, function()
+      fn()
+    end)
   end
 end
 
@@ -268,26 +265,29 @@ function M.underline.show(namespace, bufnr, diagnostics, opts)
     local underline_ns = ns.user_data.underline_ns
     local get_priority = severity_to_extmark_priority(vim.hl.priorities.diagnostics, opts)
 
+    -- skip diagnostics with an out-of-range lnum.
+    local line_count = api.nvim_buf_line_count(bufnr)
+
     for _, diagnostic0 in ipairs(diagnostics) do
-      local higroups = { underline_highlight_map[diagnostic0.severity] }
+      if diagnostic0.lnum < line_count then
+        local higroups = { underline_highlight_map[diagnostic0.severity] }
 
-      if diagnostic0._tags then
-        if diagnostic0._tags.unnecessary then
-          table.insert(higroups, 'DiagnosticUnnecessary')
+        if diagnostic0._tags then
+          if diagnostic0._tags.unnecessary then
+            table.insert(higroups, 'DiagnosticUnnecessary')
+          end
+          if diagnostic0._tags.deprecated then
+            table.insert(higroups, 'DiagnosticDeprecated')
+          end
         end
-        if diagnostic0._tags.deprecated then
-          table.insert(higroups, 'DiagnosticDeprecated')
-        end
-      end
 
-      local lines =
-        api.nvim_buf_get_lines(diagnostic0.bufnr, diagnostic0.lnum, diagnostic0.lnum + 1, true)
+        local lines =
+          api.nvim_buf_get_lines(diagnostic0.bufnr, diagnostic0.lnum, diagnostic0.lnum + 1, true)
 
-      for _, higroup in ipairs(higroups) do
         vim.hl.range(
           bufnr,
           underline_ns,
-          higroup,
+          higroups,
           { diagnostic0.lnum, math.min(diagnostic0.col, #lines[1] - 1) },
           { diagnostic0.end_lnum, diagnostic0.end_col },
           { priority = get_priority(diagnostic0.severity) }
@@ -393,6 +393,40 @@ local function render_virtual_text(namespace, bufnr, diagnostics, opts)
   end
 end
 
+---Allows to perform actions **only** within CursorHold.
+---@param buf integer
+---@param augroup integer
+---@param on_hold fun() # action to be made on CursorHold
+---@param on_move fun() # action to be made on CursorMoved, usually a cleanup after `on_hold`
+local function on_line_hold(buf, augroup, on_hold, on_move)
+  local hold_line = -1
+
+  nvim_on('CursorHold', augroup, { buf = buf }, function()
+    on_hold()
+
+    local current_line = api.nvim_win_get_cursor(0)[1]
+    if current_line == hold_line then
+      return
+    end
+
+    hold_line = current_line
+
+    -- CursorHold can fire multiple times if LSP still resolves diagnostics.
+    api.nvim_clear_autocmds({ event = 'CursorMoved', buf = buf, group = augroup })
+    nvim_on('CursorMoved', augroup, { buf = buf }, function()
+      local move_line = api.nvim_win_get_cursor(0)[1]
+      if move_line ~= hold_line then
+        on_move()
+        hold_line = -1
+        return true
+      end
+    end)
+  end)
+  -- When first loading a buffer CursorHold is emitted before this fn is executed.
+  -- So retriggering it once to have proper initial render.
+  api.nvim_exec_autocmds('CursorHold', { buf = buf, group = augroup })
+end
+
 M.virtual_text = {}
 
 --- @param namespace integer
@@ -436,16 +470,22 @@ function M.virtual_text.show(namespace, bufnr, diagnostics, opts)
     local line_diagnostics = diagnostic_shared.diagnostic_lines(diagnostics, true)
 
     if vopts.current_line ~= nil then
-      api.nvim_create_autocmd('CursorMoved', {
-        buf = bufnr,
-        group = ns.user_data.virt_text_augroup,
-        callback = function()
+      on_line_hold(bufnr, ns.user_data.virt_text_augroup, function()
+        render_virtual_text(ns.user_data.virt_text_ns, bufnr, line_diagnostics, vopts)
+      end, function()
+        if vopts.current_line then
+          clear_extmarks(bufnr, ns.user_data.virt_text_ns)
+        else
+          local saved_current_line = vopts.current_line
+          vopts.current_line = nil
           render_virtual_text(ns.user_data.virt_text_ns, bufnr, line_diagnostics, vopts)
-        end,
-      })
+          vopts.current_line = saved_current_line
+        end
+      end)
+    else
+      render_virtual_text(ns.user_data.virt_text_ns, bufnr, line_diagnostics, vopts)
     end
 
-    render_virtual_text(ns.user_data.virt_text_ns, bufnr, line_diagnostics, vopts)
     save_extmarks(ns.user_data.virt_text_ns, bufnr)
   end)
 end
@@ -479,7 +519,8 @@ end
 --- @param namespace integer
 --- @param bufnr integer
 --- @param diagnostics vim.Diagnostic[]
-local function render_virtual_lines(namespace, bufnr, diagnostics)
+--- @param opts vim.diagnostic.Opts.VirtualLines
+local function render_virtual_lines(namespace, bufnr, diagnostics, opts)
   table.sort(diagnostics, function(d1, d2)
     return diagnostic_shared.diagnostic_cmp(d1, d2, 'lnum', false)
   end)
@@ -637,7 +678,7 @@ local function render_virtual_lines(namespace, bufnr, diagnostics)
     end
 
     api.nvim_buf_set_extmark(bufnr, namespace, line_anchor[lnum] or lnum, 0, {
-      virt_lines_overflow = 'scroll',
+      virt_lines_overflow = opts.overflow or 'auto',
       virt_lines = virt_lines,
     })
   end
@@ -690,26 +731,18 @@ function M.virtual_lines.show(namespace, bufnr, diagnostics, opts)
       -- Create a mapping from line -> diagnostics so that we can quickly get the
       -- diagnostics we need when the cursor line doesn't change.
       local line_diagnostics = diagnostic_shared.diagnostic_lines(diagnostics, true)
-      api.nvim_create_autocmd('CursorMoved', {
-        buf = bufnr,
-        group = ns.user_data.virt_lines_augroup,
-        callback = function()
-          render_virtual_lines(
-            ns.user_data.virt_lines_ns,
-            bufnr,
-            diagnostic_shared.diagnostics_at_cursor(line_diagnostics)
-          )
-        end,
-      })
-
-      -- Also show diagnostics for the current line before the first CursorMoved event.
-      render_virtual_lines(
-        ns.user_data.virt_lines_ns,
-        bufnr,
-        diagnostic_shared.diagnostics_at_cursor(line_diagnostics)
-      )
+      on_line_hold(bufnr, ns.user_data.virt_lines_augroup, function()
+        render_virtual_lines(
+          ns.user_data.virt_lines_ns,
+          bufnr,
+          diagnostic_shared.diagnostics_at_cursor(line_diagnostics),
+          vopts
+        )
+      end, function()
+        clear_extmarks(bufnr, ns.user_data.virt_lines_ns)
+      end)
     else
-      render_virtual_lines(ns.user_data.virt_lines_ns, bufnr, diagnostics)
+      render_virtual_lines(ns.user_data.virt_lines_ns, bufnr, diagnostics, vopts)
     end
 
     save_extmarks(ns.user_data.virt_lines_ns, bufnr)

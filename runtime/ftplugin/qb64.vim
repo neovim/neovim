@@ -9,7 +9,7 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
-runtime! ftplugin/basic.vim
+runtime! ftplugin/basic[.]{vim,lua}
 
 let s:not_end = '\%(end\s\+\)\@<!'
 

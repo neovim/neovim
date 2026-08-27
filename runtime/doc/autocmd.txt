@@ -55,7 +55,8 @@ Vimscript commands are described below.
 			they execute in the order in which they were defined.
 			See |autocmd-nested| for [++nested].
 							*autocmd-once*
-			If [++once] is supplied the command is executed once,
+			If [++once] is supplied the command is executed once
+			(per {event}, which may be a comma-separated list),
 			then removed ("one shot").
 
 The special pattern <buffer> or <buffer=N> defines a buffer-local autocommand.
@@ -292,10 +293,6 @@ BufLeave			Before leaving to another buffer.  Also when
 
 				Not used for ":qa" or ":q" when exiting Vim.
 
-							*BufModifiedSet*
-BufModifiedSet			After the `'modified'` value of a buffer has
-				been changed. Special-case of |OptionSet|.
-
 							*BufNew*
 BufNew				After creating a new buffer (except during
 				startup, see |VimEnter|) or renaming an
@@ -401,6 +398,13 @@ BufWriteCmd			Before writing the whole buffer to a file.
 BufWritePost			After writing the whole buffer to a file
 				(should undo the commands for BufWritePre).
 
+							*ChanClose*
+ChanClose			After a channel was closed, before it is removed.
+				This is triggered even when inside an
+				autocommand defined without |autocmd-nested|.
+				Sets these |v:event| keys:
+				    info	as from |nvim_get_chan_info()|
+
 							*ChanInfo*
 ChanInfo			State of channel changed, for instance the
 				client of a RPC channel described itself.
@@ -415,6 +419,97 @@ ChanOpen			Just after a channel was opened.
 				autocommand defined without |autocmd-nested|.
 				Sets these |v:event| keys:
 				    info	as from |nvim_get_chan_info()|
+
+							*CmdAtom*
+CmdAtom				After a user action (an "atom" of input): any
+				normal command, motion, operator, insert
+				session, Visual sequence, Ex cmdline
+				(":cnext<CR>"), mapping (and subatoms), macro,
+				or scroll/mouse.
+
+				<amatch> is the atom "type" (see below).
+				Event is |deferred|.
+
+				Only for user input, not programmatic input:
+					INPUT			ATOM ~
+					Typed keys		yes
+					Mapping, macro "@q"	yes
+					|nvim_input()|		yes
+					|nvim_feedkeys()|	with "t" (see note)
+					Hydrogen		yes
+					|:normal|		no
+					API requests		no
+					"@q" fed by a script	no
+					|multicursor| cascade	no
+					Aborted operation	no
+					Terminal-mode keys	no
+					Mouse drag/release	no (TODO?)
+
+				Note: All keys fed during a mapping execution
+				are part of the resolved `keys`. But entering
+				|Terminal-mode| (e.g. a picker/fuzzy-finder
+				UI) completes the atom: terminal input is not
+				captured, because there is no defined way to
+				delimit the "end" of such an action.
+
+				Plugins should not publish "fake" CmdAtom
+				events via `nvim_exec_autocmds`.
+
+				The |event-data| has these fields (type: `vim.event.cmdatom.data`):
+
+				- atoms: Ordered "subatoms" of a composite
+				  atom (multi-command mapping, Visual sequence).
+				- changed: Buffer was changed by the atom.
+				- cmd: Command/motion/object name: "w", "f",
+				  "iw", "gJ", "<Home>", …. |key-notation|
+				- cmdarg: Operand of `cmd`: the "x" of "fx",
+				  the replacement char of |r|. |key-notation|
+				- count: Effective |count|, or nil.
+				- keys:	Resolved (post-mapping) keysequence.
+				  Raw internal bytes (use |keytrans()| to get
+				  key-notation): feed to |nvim_feedkeys()|
+				  (mode "n") to replay. Empty: unreplayable.
+				  Nil: lossy capture, replay `lhs` (mode "m").
+				- lhs: User input, before it is
+				  resolved/translated. Mapping LHS plus any
+				  payload it read (|getchar()|), macro register
+				  ("@q"), or Visual sequence. Raw bytes, like
+				  `keys`.
+				- motionforce |forced-motion|: "v", "V", or
+				  "<C-V>" (|key-notation|).
+				- moved: Cursor moved.
+				- operator: Operator: "d", "g@", "zf", ….
+				  |key-notation|, like `cmd`.
+				- pos: Start position: [row, col], 1-indexed
+				  row, 0-indexed col.
+				- reg: Register name.
+				- text: Payload text: inserted text of an
+				  insert session (after its last cursor-move,
+				  like |quote.|), Ex cmdline, or search.
+				  Literal text, not key encoding.
+				  Examples:
+				    - typed "iab<Esc>" → text="ab"
+				    - typed ":cnext<CR>" → text="cnext"
+				    - typed "<Cmd>cnext<CR>" → text="cnext"
+				    - typed "iab<Left>c<Esc>" → text="c"
+				- type:
+				    - "excmd"
+				    - "insert"
+				    - "jump": Moves the cursor via
+				      absolute/shared navigation state
+				      (|jumplist|, marks, |star|).
+				    - "mapping"
+				    - "motion": Non-jump motion. May emit
+				      `moved=false` ("w" at buffer end, failed
+				      "fx", …).
+				    - "mouse"
+				    - "normal": Non-motion/jump command ("u",
+				      CTRL-R, "za", CTRL-W, …).
+				    - "operator"
+				    - "scroll"
+				    - "visual"
+				- undoseq: Undo state after the action
+				  (|undotree()| `seq_cur`). Decreases on undo.
 
 							*CmdlineChanged*
 CmdlineChanged			After EVERY change inside command line. Also
@@ -612,13 +707,14 @@ DiffUpdated			After diffs have been updated.  Depending on
 							*DirChanged*
 DirChanged			After the |current-directory| was changed.
 				The pattern can be:
-					"window"  to trigger on `:lcd`
-					"tabpage" to trigger on `:tcd`
-					"global"  to trigger on `:cd`
-					"auto"    to trigger on 'autochdir'.
+					"auto"    triggered on 'autochdir'.
+					"buffer"  triggered on `:bcd`.
+					"global"  triggered on `:cd`.
+					"tabpage" triggered on `:tcd`.
+					"window"  triggered on `:lcd`.
 				Sets these |v:event| keys:
 				    cwd:            current working directory
-				    scope:          "global", "tabpage", "window"
+				    scope:          "global", "tabpage", "window", "buffer"
 				    changed_window: v:true if we fired the event
 				                    switching window (or tab)
 				<afile> is set to the new directory name.
@@ -630,7 +726,7 @@ DirChangedPre			When the |current-directory| is going to be
 				The pattern is like with |DirChanged|.
 				Sets these |v:event| keys:
 				    directory:      new working directory
-				    scope:          "global", "tabpage", "window"
+				    scope:          "global", "tabpage", "window", "buffer"
 				    changed_window: v:true if we fired the event
 				                    switching window (or tab)
 				<afile> is set to the new directory name.
@@ -838,11 +934,13 @@ LspTokenUpdate			See |LspTokenUpdate|
 
 							*MarkSet*
 MarkSet				After a |mark| is set by |m|, |:mark|, and
-				|nvim_buf_set_mark()|. Supports `[a-zA-Z]`
+				|nvim_buf_set_mark()|, or deleted by |:delmarks|
+				and |nvim_buf_del_mark()|. Supports `[a-zA-Z]`
 				marks (may support more in the future).
 				The |autocmd-pattern| is matched against the
 				mark name (e.g. `[ab]` matches `a` or `b`, `*`
-				matches all).
+				matches all). If line is 0, the mark has been
+				deleted.
 
 				The |event-data| has these keys (type: `vim.event.markset.data`):
 				- name: Mark name (e.g. "a")
@@ -924,9 +1022,8 @@ OptionSet			After setting an option (except during
 				always use |:noautocmd| to prevent triggering
 				OptionSet.
 
-				Note: Not triggered by the 'modified' option;
-				the |BufModifiedSet| event may be used to
-				handle that.
+				Note: OptionSet is |deferred| when triggered by
+				'modified', even when set via |:set|.
 
 				Non-recursive: |:set| in the autocommand does
 				not trigger OptionSet again.
@@ -1060,6 +1157,10 @@ SessionLoadPre			Before loading the session file created using
 SessionLoadPost			After loading the session file created using
 				the |:mksession| command.
 
+							*SessionWritePre*
+SessionWritePre			Before writing the session file created using
+				the |:mksession| command.
+
 							*SessionWritePost*
 SessionWritePost		After writing a session file by calling
 				the |:mksession| command.
@@ -1150,30 +1251,40 @@ Syntax				When the 'syntax' option has been set.  The
 				See |:syn-on|.
 
 							*TabClosed*
-TabClosed			After closing a tab page. <afile> expands to
-				the tab page number.
+TabClosed			After closing a tabpage. <afile> expands to
+				the closing |tabpage-number|.
 
 							*TabClosedPre*
-TabClosedPre			Before closing a tab page.  The window layout
-				is locked, thus opening and closing of windows
-				is prohibited.
+TabClosedPre			Before closing a tabpage. The current tabpage
+				(|tabpagenr()|) is the one being closed. The
+				window layout is locked, thus opening and
+				closing of windows is prohibited.
 
 							*TabEnter*
-TabEnter			Just after entering a tab page. |tab-page|
+TabEnter			Just after entering a |tabpage|.
 				After WinEnter.
 				Before BufEnter.
 
 							*TabLeave*
-TabLeave			Just before leaving a tab page. |tab-page|
+TabLeave			Just before leaving a |tabpage|.
 				After WinLeave.
 
+							*TabMoved*
+TabMoved			After a |tabpage| is moved (by |:tabmove| or
+				mouse drag). <amatch> expands to the old
+				|tabpage-number| before the move.
+
+				The |event-data| has these keys (type: `vim.event.tabmoved.data`)
+				- tabnr_old: |tabpage-number| before the move.
+				- tabnr_new: |tabpage-number| after the move.
+
 							*TabNew*
-TabNew				When creating a new tab page. |tab-page|
+TabNew				When creating a new |tabpage|.
 				After WinEnter.
 				Before TabEnter.
 
 							*TabNewEntered*
-TabNewEntered			After entering a new tab page. |tab-page|
+TabNewEntered			After entering a new |tabpage|.
 				After BufEnter.
 
 							*TermClose*
@@ -1216,6 +1327,7 @@ TermResponse			When Nvim receives a DA1, OSC, DCS, or APC response from
 				the host terminal. Sets |v:termresponse|.
 
 				The |event-data| has these keys (type: `vim.event.termresponse.data`):
+				- chan: the source channel id
 				- sequence: the received sequence
 
 				This is triggered even when inside an
@@ -1267,6 +1379,46 @@ TextChangedP			After a change was made to the text in the
 TextChangedT			After a change was made to the text in the
 				current buffer in |Terminal-mode|.  Otherwise
 				the same as TextChanged.
+
+							*TextPutPost*
+TextPutPost			After text has been put in the current buffer.
+				The following values in |v:event| are mostly
+				the same as |TextYankPost|:
+				   operator	The operation performed,
+						either 'p' or 'P'.
+				   regcontents	Text that was put. For
+						|quote_=|, this is the result
+						of the expression.
+				   regname	Name of the register or empty
+						string for the unnamed
+						register.  For |nvim_put()|
+						this is set to '_'.
+				   regtype	Type of the register, see
+						|getregtype()|.
+				   visual	True if the operation is
+						performed in |Visual| mode.
+				Not triggered when |quote_| is used nor when
+				called recursively.
+				It is not allowed to change the buffer text,
+				see |textlock|.
+				Note that for the |quote_.| register, since
+				the last inserted text is buffered into the
+				input buffer (buffer isn't modified directly),
+				this autocommand is called directly after
+				|TextPutPre|.
+
+							*TextPutPre*
+TextPutPre			Before text has been put in the current buffer.
+				Same values as |TextPutPost| in |v:event|.  It
+				is valid to call |setreg()| in this
+				autocommand, allowing you to process and
+				modify the text in "regcontents" before it is
+				put.  However this does not apply to |quote_#|,
+				|quote_=|, |quote_%|, |quote_:|, |quote_/| or |quote_.|.
+				Not triggered when |quote_| is used nor when
+				called recursively.
+				It is not allowed to change the buffer text,
+				see |textlock|.
 
 							*TextYankPost*
 TextYankPost			Just after a |yank| or |deleting| command, but not
@@ -1342,10 +1494,13 @@ VimLeavePre			Before exiting Vim, just before writing the
 				Not triggered if |v:dying| is 2 or more.
 
 							*VimResized*
-VimResized			After the Vim window was resized, thus 'lines'
-				and/or 'columns' changed.  Not when starting
-				up though.
+VimResized			After Nvim itself was resized: 'lines' and/or
+				'columns' changed.  But not during |startup|.
 
+				To ensure the window layout is always
+				"equalized" on resize: >
+				    :autocmd VimResized * wincmd =
+<
 							*VimResume*
 VimResume			After Nvim resumes from |suspend| state.
 
@@ -1384,7 +1539,7 @@ WinLeave			Before leaving a window.  If the window to be
 WinNewPre			Before creating a new window.  Triggered
 				before commands that modify window layout by
 				creating a split.
-				Not done when creating tab pages and for the
+				Not done when creating tabpages and for the
 				first window, as the window structure is not
 				initialized yet and so is generally not safe.
 				It is not allowed to modify window layout
@@ -1400,7 +1555,7 @@ WinNew				When a new window was created.  Not done for
 				Before WinEnter.
 
 							*WinResized*
-WinResized			After a window in the current tab page changed
+WinResized			After a window in the current tabpage changed
 				width or height.
 				See |win-scrolled-resized|.
 
@@ -1411,7 +1566,7 @@ WinResized			After a window in the current tab page changed
 				pattern, triggering and recursiveness.
 
 							*WinScrolled*
-WinScrolled			After any window in the current tab page
+WinScrolled			After any window in the current tabpage
 				scrolled the text (horizontally or vertically)
 				or changed width or height.  See
 				|win-scrolled-resized|.
@@ -1926,7 +2081,7 @@ and "++ff=" argument that are effective.  These should be used for the command
 that reads/writes the file.  The |v:cmdbang| variable is one when "!" was
 used, zero otherwise.
 
-See the $VIMRUNTIME/pack/dist/opt/netrw/plugin/netrwPlugin.vim for examples.
+See $VIMRUNTIME/plugin/net.lua for examples.
 
 ==============================================================================
 11. Disabling autocommands				*autocmd-disable*

@@ -1,5 +1,6 @@
 local t = require('test.unit.testutil')
-local itp = t.gen_itp(it)
+local describe, setup, teardown = t.describe, t.setup, t.teardown
+local itp = t.gen_itp(t.it)
 local uv = vim.uv
 local child_call_once = t.child_call_once
 local sleep = uv.sleep
@@ -69,7 +70,7 @@ describe('u_write_undo', function()
     local correct_name = ffi.string(undo.u_get_undo_file_name(file_buffer.b_ffname, false))
     local undo_file = io.open(correct_name, 'r')
 
-    neq(undo_file, nil)
+    neq(nil, undo_file)
     local success, err = os.remove(correct_name) -- delete the file now that we're done with it.
     if not success then
       print(err) -- inform tester if undofile fails to delete
@@ -81,7 +82,7 @@ describe('u_write_undo', function()
     u_write_undo(correct_name, false, file_buffer, buffer_hash)
     local undo_file = io.open(correct_name, 'r')
 
-    neq(undo_file, nil)
+    neq(nil, undo_file)
     local success, err = os.remove(correct_name) -- delete the file now that we're done with it.
     if not success then
       print(err) -- inform tester if undofile fails to delete
@@ -205,6 +206,6 @@ describe('u_write_undo', function()
     u_write_undo(nil, false, file_buffer, buffer_hash)
     local undo_file = io.open(correct_name, 'r')
 
-    eq(undo_file, nil)
+    eq(nil, undo_file)
   end)
 end)

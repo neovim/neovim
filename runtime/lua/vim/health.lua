@@ -63,7 +63,11 @@
 --- ```vim
 --- autocmd FileType checkhealth :set modifiable | silent! %s/\v( ?[^\x00-\x7F])//g
 --- ```
----
+--- Sometimes you might need to suppress filetype warnings if you have specified them dynamically.
+--- For example with the yaml.ansible filetype:
+--- ```vim
+--- autocmd FileType checkhealth :set modifiable | silent! g/Unknown filetype 'yaml\.ansible'/d
+--- ```
 ---<pre>help
 --- --------------------------------------------------------------------------------
 --- Create a healthcheck                                    *health-dev*
@@ -373,28 +377,28 @@ end
 
 ---Emit progress messages
 ---@param len integer
----@return fun(status: 'success'|'running', idx: integer, fmt: string, ...: any): nil
+---@return fun(status: 'success'|'running', idx: integer?, fmt: string, ...: any): nil
 local function progress_report(len)
   local progress = { kind = 'progress', source = 'vim.health', title = 'checkhealth' }
 
   return function(status, idx, fmt, ...)
     progress.status = status
-    progress.percent = status == 'success' and nil or math.floor(idx / len * 100)
-    -- percent=0 omits the reporting of percentage, so use 1% instead
-    -- progress.percent = progress.percent == 0 and 1 or progress.percent
+    local progress_percent = idx and math.floor(idx / len * 100) or nil
+    progress.percent = status == 'success' and nil or progress_percent
     progress.id = vim.api.nvim_echo({ { fmt:format(...) } }, false, progress)
     vim.cmd.redraw()
   end
 end
 
---- Runs the specified healthchecks.
---- Runs all discovered healthchecks if plugin_names is empty.
+--- Runs the specified healthchecks, or all discovered healthchecks if eap.args is empty.
 ---
---- @param mods string command modifiers that affect splitting a window.
---- @param plugin_names string glob of plugin names, split on whitespace. For example, using
----                            `:checkhealth vim.* nvim` will healthcheck `vim.lsp`, `vim.treesitter`
----                            and `nvim` modules.
-function M._check(mods, plugin_names)
+--- Specified healthchecks are given as plugin names, split on whitespace. For example using
+--- `:checkhealth vim.* nvim` will check `vim.lsp`, `vim.treesitter` and `nvim` modules.
+---
+--- @param eap vim._core.ExCmdArgs
+function M._check(eap)
+  local plugin_names = eap.args
+  local smods = eap.smods
   local healthchecks = plugin_names == '' and get_healthcheck('*') or get_healthcheck(plugin_names)
 
   local emptybuf = vim.fn.bufnr('$') == 1 and vim.fn.getline(1) == '' and 1 == vim.fn.line('$')
@@ -414,16 +418,22 @@ function M._check(mods, plugin_names)
       close_events = {},
     })
     vim.api.nvim_set_current_win(float_winid)
-    vim.bo[bufnr].modifiable = true
     vim.wo[float_winid].list = false
   else
     bufnr = vim.api.nvim_create_buf(true, true)
     -- When no command modifiers are used:
     -- - If the current buffer is empty, open healthcheck directly.
     -- - If not specified otherwise open healthcheck in a tab.
-    local buf_cmd = #mods > 0 and (mods .. ' sbuffer') or emptybuf and 'buffer' or 'tab sbuffer'
-    vim.cmd(buf_cmd .. ' ' .. bufnr)
+    local has_mods = smods.tab > 0 or smods.split ~= '' or smods.horizontal or smods.vertical
+    if has_mods then
+      vim.cmd.sbuffer { bufnr, mods = smods }
+    elseif emptybuf then
+      vim.cmd.buffer(bufnr)
+    else
+      vim.cmd.sbuffer { bufnr, mods = { tab = vim.api.nvim_tabpage_get_number(0) } }
+    end
   end
+  vim.bo[bufnr].modifiable = true
 
   if vim.fn.bufexists('health://') == 1 then
     vim.cmd.bwipe('health://')
@@ -436,12 +446,23 @@ function M._check(mods, plugin_names)
     return
   end
 
-  local total_checks = #vim.tbl_keys(healthchecks)
+  -- Show nvim-owned first (`vim.*`, `runtime/lua/vim/**/health.lua`).
+  local names = vim.tbl_keys(healthchecks) --- @type string[]
+  table.sort(names, function(a, b)
+    local a_nvim = vim.startswith(a, 'vim.')
+    local b_nvim = vim.startswith(b, 'vim.')
+    if a_nvim ~= b_nvim then
+      return a_nvim
+    end
+    return a < b
+  end)
+
+  local total_checks = #names
   local progress_msg = progress_report(total_checks)
   local check_idx = 1
-  for name, value in vim.spairs(healthchecks) do
+  for _, name in ipairs(names) do
+    local value = healthchecks[name]
     progress_msg('running', check_idx, 'checking %s', name)
-    check_idx = check_idx + 1
     local func = value[1]
     local type = value[2]
     s_output = {}
@@ -490,10 +511,12 @@ function M._check(mods, plugin_names)
     end
     s_output[#s_output + 1] = ''
     s_output = vim.list_extend(header, s_output)
-    vim.fn.append(vim.fn.line('$'), s_output)
+    vim.api.nvim_buf_set_lines(0, check_idx == 1 and 0 or -1, -1, true, s_output)
+
+    check_idx = check_idx + 1
   end
 
-  progress_msg('success', 0, 'checks done')
+  progress_msg('success', nil, 'checks done')
 
   -- Quit with 'q' inside healthcheck buffers.
   vim._with({ buf = bufnr }, function()

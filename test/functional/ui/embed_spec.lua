@@ -1,6 +1,8 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
+local describe, it, after_each, pending, finally =
+  t.describe, t.it, t.after_each, t.pending, t.finally
 local uv = vim.uv
 
 local api = n.api

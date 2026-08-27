@@ -7,7 +7,7 @@
                                        Type |gO| to see the table of contents.
 
 ==============================================================================
-Checkhealth                                              *vim.health* *health*
+Checkhealth                                                *vim.health* *health*
 
 vim.health is a minimal framework to help users troubleshoot configuration and
 any other environment conditions that a plugin might care about. Nvim ships
@@ -19,7 +19,6 @@ To run all healthchecks, use: >vim
 <
 
 Plugin authors are encouraged to write new healthchecks. |health-dev|
-
 
 COMMANDS                                                     *health-commands*
 
@@ -73,6 +72,10 @@ in the health report: >vim
     autocmd FileType checkhealth :set modifiable | silent! %s/\v( ?[^\x00-\x7F])//g
 <
 
+Sometimes you might need to suppress filetype warnings if you have specified
+them dynamically. For example with the yaml.ansible filetype: >vim
+    autocmd FileType checkhealth :set modifiable | silent! g/Unknown filetype 'yaml\.ansible'/d
+<
 
 --------------------------------------------------------------------------------
 Create a healthcheck                                              *health-dev*

@@ -1,12 +1,15 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, before_each, setup, teardown =
+  t.describe, t.it, t.before_each, t.setup, t.teardown
 local clear = n.clear
 local command = n.command
 local eq = t.eq
 local pathsep = n.get_pathsep()
 local fn = n.fn
 local api = n.api
+local feed = n.feed
 
 local testdir = 'Xtest-editorconfig'
 
@@ -98,6 +101,15 @@ setup(function()
     [no_trim.txt]
     trim_trailing_whitespace = false
 
+    [skip_trim_when_insert.txt]
+    trim_trailing_whitespace = true
+
+    [skip_trim_when_replace.txt]
+    trim_trailing_whitespace = true
+
+    [skip_trim_when_insert_normal.txt]
+    trim_trailing_whitespace = true
+
     [max_line_length.txt]
     max_line_length = 42
 
@@ -120,8 +132,8 @@ end)
 
 describe('editorconfig', function()
   before_each(function()
-    -- Remove -u NONE so that plugins (i.e. editorconfig.lua) are loaded
-    clear({ args_rm = { '-u' } })
+    -- Use --clean so that plugins (i.e. editorconfig.lua) are loaded
+    clear({ args = { '--clean' } })
   end)
 
   it('sets indent options', function()
@@ -207,6 +219,30 @@ But not this one
     t.write_file(filename, untrimmed)
     command('edit ' .. filename)
     command('write')
+    command('bdelete')
+    eq(untrimmed, t.read_file(filename))
+
+    filename = testdir .. pathsep .. 'skip_trim_when_insert.txt'
+    t.write_file(filename, untrimmed)
+    command('edit ' .. filename)
+    command('startinsert')
+    command('write')
+    command('bdelete')
+    eq(untrimmed, t.read_file(filename))
+
+    filename = testdir .. pathsep .. 'skip_trim_when_replace.txt'
+    t.write_file(filename, untrimmed)
+    command('edit ' .. filename)
+    command('startreplace')
+    command('write')
+    command('bdelete')
+    eq(untrimmed, t.read_file(filename))
+
+    filename = testdir .. pathsep .. 'skip_trim_when_insert_normal.txt'
+    t.write_file(filename, untrimmed)
+    command('edit ' .. filename)
+    command('startinsert')
+    feed('<C-o>:write<CR>')
     command('bdelete')
     eq(untrimmed, t.read_file(filename))
   end)

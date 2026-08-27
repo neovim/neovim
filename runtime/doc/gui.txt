@@ -47,54 +47,87 @@ can connect to any Nvim instance).
 Example: this sets "g:gui" to the value of the UI's "rgb" field:    >
         :autocmd UIEnter * let g:gui = filter(nvim_list_uis(),{k,v-> v.chan==v:event.chan})[0].rgb
 <
+								*ui-lifecycle*
+Nvim's |clientserver| architecture allows you to |:restart|, |:detach| (Nvim
+continues in the background), or |:connect| to another instance.
+
+Use cases:
+- keep the session running on remote machines after (unexpected) SSH disconnect
+- open files in an existing session from your OS file explorer
+- run Nvim as a background process (daemon/service), atttach/detach as needed
+
 ------------------------------------------------------------------------------
 Stop or detach the current UI
 
-                                                *:detach*
-:detach
-                Detaches the current UI. Other UIs (if any) remain attached.
-                The server (typically `nvim --embed`) continues running as
-                a background process, and you can reattach to it later.
-                Before detaching, you may want to note the server address:
+                                                             *:detach* *E5768*
+:[range]detach  Detaches the current UI. Other UIs (if any) remain attached,
+                unless [range] was given. If [range] is "%", all UIs _except_
+                the current UI are detached: >vim
+
+                    :%detach
+
+<                The server (typically `nvim --embed`) continues running as
+                a background process. Use |:connect| or |--remote-ui| to
+                reattach. Before detaching, you may want to note the server
+                address:
                 >vim
                     :echo v:servername
 <
-                Note: The server closes the UI RPC channel, so :detach
-                inherently "works" for all UIs. But if a UI isn't expecting
-                the channel to be closed, it may be (incorrectly) reported as
-                an error.
+                Note: The server closes the UI RPC channel, so :detach works
+                for any GUI/UI; but if the client isn't expecting this, it may
+                (incorrectly) report an error.
+
+                                                                    *:detach!*
+:detach!        Marks the current UI as "detachable" without detaching it now:
+                the UI stays attached, but if it later disconnects
+                unexpectedly (e.g. host terminal closed, ssh disconnect,
+                etc.), the server keeps running in the background.
+                Use |:connect| or |--remote-ui| to reattach.
+
+                If you always want Nvim to survive accidental disconnect, put
+                this in your config: >vim
+
+                    silent detach!
+<
 
 ------------------------------------------------------------------------------
 Restart Nvim
 
-                                                *:restart*
-:restart [+cmd] [command]
-                Restarts Nvim.
+                                                *:restart* *:restart!* *E5201*
+:restart[!] [+cmd] [command]
+                Restarts Nvim. Saves and restores the current session, unless
+                [!] is given. Sets |v:exitreason|. See also |ZR|.
 
-                1. Stops Nvim using `:qall` (or |+cmd|, if given).
-                2. Starts a new Nvim server using the same |v:argv| (except
-                   `-- [file…]` files).
-                3. Attaches all UIs to the new Nvim server and runs `[command]`
+                1. Saves the current session (unless [!] was given).
+                2. Stops Nvim using `:qall` (or |+cmd|, if given).
+                3. Starts a new Nvim server using the same |v:argv| (except
+                   `-- [file…]` files and `-S [file]`), and sets |v:startreason|.
+                4. Restores the saved session (unless [!] was given).
+                5. Attaches all UIs to the new Nvim server and runs `[command]`
                    on it.
 
                 Example: discard changes and stop with `:qall!`, then restart: >
                     :restart +qall!
-<                Example: restart and restore the current session: >
-                    :mksession! Session.vim | restart source Session.vim
+<                Example: restart and (manually) restore the session: >
+                    :mksession! Session.vim | restart! source Session.vim
 <                Example: restart and update plugins: >
-                    :restart lua vim.pack.update()
+                    :restart packupdate
 <
-                Note: Only works if the UI and server are on the same system.
-                Note: If no attached UI implements the "restart" UI event,
-                this command will lead to a dangling server process.
+                Note:
+                • Only works if the UI and server are on the same system.
+                • Windows limitation: during +cmd execution, |v:servername|
+                  refers to a temporary address.
+                • If no UI handles the "restart" event, this leaves a dangling
+                  process.
+                • To adjust what `:restart` restores, set 'sessionoptions'.
 
 ------------------------------------------------------------------------------
 Connect UI to a different server
 
                                                 *:connect*
 :connect {address}
-                Detaches the UI from the server it is currently attached to
-                and attaches it to the server at {address} instead.
+                Attaches the UI to another Nvim instance: detaches from the
+                current server, then attaches to {address}.
 
                 Note: If the current UI hasn't implemented the "connect" UI
                 event, this command is equivalent to |:detach|.

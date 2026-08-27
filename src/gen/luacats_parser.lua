@@ -143,7 +143,9 @@ local function process_doc_line(line, state)
     --- @cast parsed nvim.luacats.Class
     cur_obj.kind = 'class'
     cur_obj.name = parsed.name
+    cur_obj.generics = parsed.generics
     cur_obj.parent = parsed.parent
+    cur_obj.parent_generics = parsed.parent_generics
     cur_obj.access = parsed.access
     cur_obj.desc = state.doc_lines and table.concat(state.doc_lines, '\n') or nil
     state.doc_lines = nil

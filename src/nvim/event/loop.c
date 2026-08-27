@@ -165,7 +165,7 @@ bool loop_close(Loop *loop, bool wait)
     if ((uv_loop_close(&loop->uv) != UV_EBUSY) || !wait) {
       break;
     }
-    uint64_t elapsed_s = (os_hrtime() - start) / 1000000000;  // seconds
+    uint64_t elapsed_s = (os_hrtime() - start) / NS_PER_SEC;
     if (elapsed_s >= 2) {
       // Some libuv resource was not correctly deref'd. Log and bail.
       rv = false;

@@ -1,6 +1,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local eq = t.eq
 local ok = t.ok
 local exec_lua = n.exec_lua
@@ -14,41 +15,6 @@ local poke_eventloop = n.poke_eventloop
 describe('vim.ui', function()
   before_each(function()
     clear({ args_rm = { '-u' }, args = { '--clean' } })
-  end)
-
-  describe('select()', function()
-    it('can select an item', function()
-      local result = exec_lua [[
-        local items = {
-          { name = 'Item 1' },
-          { name = 'Item 2' },
-        }
-        local opts = {
-          format_item = function(entry)
-            return entry.name
-          end
-        }
-        local selected
-        local cb = function(item)
-          selected = item
-        end
-        -- inputlist would require input and block the test;
-        local choices
-        vim.fn.inputlist = function(x)
-          choices = x
-          return 1
-        end
-        vim.ui.select(items, opts, cb)
-        vim.wait(100, function() return selected ~= nil end)
-        return {selected, choices}
-      ]]
-      eq({ name = 'Item 1' }, result[1])
-      eq({
-        'Select one of:',
-        '1: Item 1',
-        '2: Item 2',
-      }, result[2])
-    end)
   end)
 
   describe('input()', function()
@@ -163,6 +129,28 @@ describe('vim.ui', function()
       )
     end)
 
+    it('escapes cmd.exe metacharacters in URIs #41337', function()
+      eq(
+        { 'cmd.exe', '/c', 'start', '', 'https://example.com/?q=^&^|^<^>^^^%^!' },
+        exec_lua(function()
+          vim.fn.has = function(feat)
+            return feat == 'win32' and 1 or 0
+          end
+          local captured --- @type string[]
+          vim.system = function(cmd)
+            captured = cmd
+            return {
+              wait = function()
+                return { code = 0 }
+              end,
+            }
+          end
+          vim.ui.open('https://example.com/?q=&|<>^%!')
+          return captured
+        end)
+      )
+    end)
+
     it('opt.cmd #29490', function()
       t.matches(
         'ENOENT: no such file or directory',
@@ -215,7 +203,7 @@ describe('vim.ui', function()
       })
       n.api.nvim_set_option_value('filetype', 'help', { buf = buf, scope = 'local' })
       local tags = n.api.nvim_buf_get_extmarks(buf, link_ns, 0, -1, {})
-      eq(#tags, 0)
+      eq(0, #tags)
     end)
   end)
 end)

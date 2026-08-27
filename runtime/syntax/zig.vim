@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language: Zig
-" Upstream: https://github.com/ziglang/zig.vim
+" Upstream: https://codeberg.org/ziglang/zig.vim
 
 if exists("b:current_syntax")
   finish

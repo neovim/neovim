@@ -19,8 +19,7 @@ local sleep = uv.sleep
 --- Functions executing in the current nvim session/process being tested.
 local M = {}
 
-local lib_path = t.paths.test_build_dir .. (t.is_zig_build() and '/lib' or '/lib/nvim')
-M.runtime_set = 'set runtimepath^=' .. lib_path
+M.runtime_set = 'set runtimepath^=' .. t.paths.test_build_dir .. '/lib/nvim'
 
 M.nvim_prog = (os.getenv('NVIM_PRG') or t.paths.test_build_dir .. '/bin/nvim')
 -- Default settings for the test session.
@@ -28,7 +27,8 @@ M.nvim_set = (
   'set shortmess+=IS background=light noswapfile noautoindent startofline'
   .. ' laststatus=1 undodir=. directory=. viewdir=. backupdir=.'
   .. " belloff= wildoptions-=pum joinspaces noshowcmd noruler nomore redrawdebug=invalid shada=!,'100,<50,s10,h"
-  .. [[ statusline=%<%f\ %{%nvim_eval_statusline('%h%w%m%r',\ {'maxwidth':\ 30}).width\ >\ 0\ ?\ '%h%w%m%r\ '\ :\ ''%}%=%{%\ &showcmdloc\ ==\ 'statusline'\ ?\ '%-10.S\ '\ :\ ''\ %}%{%\ exists('b:keymap_name')\ ?\ '<'..b:keymap_name..'>\ '\ :\ ''\ %}%{%\ &ruler\ ?\ (\ &rulerformat\ ==\ ''\ ?\ '%-14.(%l,%c%V%)\ %P'\ :\ &rulerformat\ )\ :\ ''\ %}]]
+  .. [[ statusline=%<%f\ %{%nvim_eval_statusline('%h%w%m%r',\ {'maxwidth':\ 30}).width\ >\ 0\ ?\ '%h%w%m%r\ '\ :\ ''%}%=%{%\ &showcmdloc\ ==\ 'statusline'\ ?\ '%-10.S\ '\ :\ ''\ %}%{%\ exists('b:keymap_name')\ ?\ '<'..b:keymap_name..'>\ '\ :\ ''\ %}%{%\ &ruler\ ?\ &rulerformat\ :\ ''\ %}]]
+  .. ' rulerformat=%18(%l,%c%V%=%P%)'
 )
 M.nvim_argv = {
   M.nvim_prog,
@@ -107,12 +107,14 @@ if prepend_argv then
 end
 
 local session --- @type test.Session?
+local sessions = {} --- @type table<test.Session, true>
+local sigpipe_handler --- @type uv.uv_signal_t?
 local loop_running --- @type boolean?
 local last_error --- @type string?
 local method_error --- @type string?
 
 if not is_os('win') then
-  local sigpipe_handler = assert(uv.new_signal())
+  sigpipe_handler = assert(uv.new_signal())
   uv.signal_start(sigpipe_handler, 'sigpipe', function()
     print('warning: got SIGPIPE signal. Likely related to a crash in nvim')
   end)
@@ -131,7 +133,7 @@ end
 --- @return any
 function M.request(method, ...)
   assert(session, 'no Nvim session')
-  assert(not session.eof_err, 'sending request after EOF from Nvim')
+  assert(not session.eof_err, 'RPC request after Nvim EOF')
   local status, rv = session:request(method, ...)
   if not status then
     if loop_running then
@@ -329,12 +331,11 @@ end
 -- Use for commands which expect nvim to quit.
 -- The first argument can also be a timeout.
 function M.expect_exit(fn_or_timeout, ...)
-  local eof_err_msg = 'EOF was received from Nvim. Likely the Nvim process crashed.'
   if type(fn_or_timeout) == 'function' then
-    t.matches(vim.pesc(eof_err_msg), t.pcall_err(fn_or_timeout, ...))
+    t.matches(vim.pesc(Session.eof_err_msg), t.pcall_err(fn_or_timeout, ...))
   else
     t.matches(
-      vim.pesc(eof_err_msg),
+      vim.pesc(Session.eof_err_msg),
       t.pcall_err(function(timeout, fn, ...)
         fn(...)
         assert(session)
@@ -346,6 +347,7 @@ function M.expect_exit(fn_or_timeout, ...)
       end, fn_or_timeout, ...)
     )
   end
+  M.check_close()
 end
 
 --- Executes a Vimscript function via Lua.
@@ -447,8 +449,21 @@ function M.check_close(noblock)
     return
   end
 
-  session:close(nil, noblock)
+  local s = session
+  s:close(nil, noblock)
+  sessions[s] = nil
   session = nil
+end
+
+local function close_extra_sessions(test_id, noblock)
+  for s in pairs(sessions) do
+    if s ~= session and (test_id == nil or (s.data and s.data.test_id == test_id)) then
+      if not s.closed then
+        s:close(nil, noblock)
+      end
+      sessions[s] = nil
+    end
+  end
 end
 
 -- Creates a new Session connected by domain socket (named pipe) or TCP.
@@ -456,7 +471,10 @@ function M.connect(file_or_address)
   local addr, port = string.match(file_or_address, '(.*):(%d+)')
   local stream = (addr and port) and SocketStream.connect(addr, port)
     or SocketStream.open(file_or_address)
-  return Session.new(stream)
+  local s = Session.new(stream)
+  s.data = { test_id = _G._nvim_test_id }
+  sessions[s] = true
+  return s
 end
 
 --- Starts a new, global Nvim session and clears the current one.
@@ -499,8 +517,10 @@ local n_processes = 0
 function M.new_session(keep, ...)
   local test_id = _G._nvim_test_id
   if not keep and session ~= nil then
+    local s = session
     -- Don't block for the previous session's exit if it's from a different test.
-    session:close(nil, session.data and session.data.test_id ~= test_id)
+    s:close(nil, s.data and s.data.test_id ~= test_id)
+    sessions[s] = nil
     session = nil
   end
 
@@ -524,6 +544,7 @@ function M.new_session(keep, ...)
   n_processes = n_processes + 1
 
   local new_session = Session.new(proc)
+  sessions[new_session] = true
   -- Make it possible to check whether two sessions are from the same test.
   new_session.data = { test_id = test_id }
   return new_session
@@ -531,6 +552,10 @@ end
 
 harness.on_suite_end(function()
   M.check_close(true)
+  -- Some tests create extra sessions without replacing the global one.
+  -- Close any that individual tests did not clean up before the runner exits.
+  close_extra_sessions(nil, true)
+
   local timed_out = false
   local timer = assert(vim.uv.new_timer())
   timer:start(10000, 0, function()
@@ -540,6 +565,14 @@ harness.on_suite_end(function()
     uv.run('once')
   end
   timer:close()
+  if sigpipe_handler and not sigpipe_handler:is_closing() then
+    sigpipe_handler:close()
+  end
+  -- Drain close callbacks queued by explicit Session/ProcStream cleanup before
+  -- Nvim checks the runner loop for active handles.
+  for _ = 1, 10 do
+    uv.run('nowait')
+  end
   if timed_out then
     print(('warning: %d dangling Nvim processes'):format(n_processes))
     io.stdout:flush()
@@ -864,20 +897,6 @@ function M.rmdir(path)
   end
 end
 
---- @deprecated Use `t.pcall_err()` to check failure, or `n.command()` to check success.
-function M.exc_exec(cmd)
-  M.command(([[
-    try
-      execute "%s"
-    catch
-      let g:__exception = v:exception
-    endtry
-  ]]):format(cmd:gsub('\n', '\\n'):gsub('[\\"]', '\\%0')))
-  local ret = M.eval('get(g:, "__exception", 0)')
-  M.command('unlet! g:__exception')
-  return ret
-end
-
 function M.exec(code)
   M.api.nvim_exec2(code, {})
 end
@@ -937,6 +956,95 @@ function M.exec_lua(code, ...)
   return require('test.functional.testnvim.exec_lua')(session, 2, code, ...)
 end
 
+--- Runs `cmd` via `vim.system()` in the Nvim-under-test and returns its result.
+---
+--- Asserts the child process is gone afterward, polling to absorb the brief lag between the
+--- exit-handler and nvim_get_proc() reporting it (seen on Windows).
+---
+--- @param cmd string[]
+--- @param opts? vim.SystemOpts
+--- @param async? boolean  Wait via the on_exit callback instead of a blocking `obj:wait()`.
+--- @return vim.SystemCompleted
+local function system(cmd, opts, async)
+  return M.exec_lua(function()
+    local res --- @type vim.SystemCompleted?
+    local obj
+    if async then
+      local done = false
+      obj = vim.system(cmd, opts, function(o)
+        done = true
+        res = o
+      end)
+      assert(
+        vim.wait(10000, function()
+          return done
+        end),
+        'process did not exit'
+      )
+    else
+      obj = vim.system(cmd, opts)
+      if opts and opts.timeout then
+        -- Minor delay before calling wait() so the timeout uv timer can have a headstart over the
+        -- internal call to vim.wait() in wait().
+        vim.wait(10)
+      end
+      res = obj:wait()
+    end
+
+    -- Assert that the process terminated.
+    -- XXX: Poll bc nvim_get_proc() can briefly lag the exit callback (on Windows): `uv_close`
+    -- completes on a later tick, thus the PID is still briefly resolvable.
+    assert(
+      vim.wait(1000, function()
+        return not vim.api.nvim_get_proc(obj.pid)
+      end),
+      'process still exists'
+    )
+
+    return res
+  end)
+end
+
+--- Runs `cmd` via `vim.system()` in the Nvim-under-test and waits (synchronously) for it to exit.
+function M.system_sync(cmd, opts)
+  return system(cmd, opts, false)
+end
+
+--- Like `system_sync()` but waits via the `vim.system()` on_exit callback.
+function M.system_async(cmd, opts)
+  return system(cmd, opts, true)
+end
+
+--- Benchmarks `fn` in the Nvim-under-test: runs it `opts.n` times, timing each run in-session, then reports.
+---
+--- Note: see `testutil.bench()` to run in the test-runner process.
+---
+--- @param body string  Lua source executed each iteration; the iteration index is available as `i`.
+--- @param opts { n: integer, label?: string, unit?: 'ms'|'us', warmup?: integer }
+--- @return table stats  See `testutil.bench_report()`.
+function M.bench(body, opts)
+  local samples = M.exec_lua(
+    [[
+    local body, n, warmup = ...
+    local fn = assert(loadstring('local i = ...\n' .. body))
+    for i = 1, warmup do
+      fn(i)
+    end
+    local samples = {}
+    for i = 1, n do
+      local t0 = vim.uv.hrtime()
+      fn(i)
+      samples[i] = vim.uv.hrtime() - t0
+    end
+    return samples
+  ]],
+    body,
+    opts.n,
+    opts.warmup or 100
+  )
+  return t.bench_report(samples, opts)
+end
+
 function M.get_pathsep()
   return is_os('win') and '\\' or '/'
 end
@@ -962,7 +1070,20 @@ end
 --- @return string
 function M.new_pipename()
   -- HACK: Start a server temporarily, get the name, then stop it.
-  local pipename = M.eval('serverstart()')
+  --
+  -- XXX: If a (still-alive) Nvim process is using an old "--listen nvim.<PID>.<counter>" pipename,
+  -- and the OS reuses the PID, then serverstart() may generate a duplicate name (bc of PID reuse).
+  -- Retry serverstart() to force an incremented <counter>.
+  local ok = false
+  local pipename ---@type string
+  for _ = 1, 100 do
+    ok, pipename = pcall(M.eval, 'serverstart()')
+    if ok then
+      break
+    end
+    sleep(20) -- Avoid hot loop; give stale process time to exit.
+  end
+  assert(ok, pipename)
   M.fn.serverstop(pipename)
   -- Remove the pipe so that trying to connect to it without a server listening
   -- will be an error instead of a hang.
@@ -1047,22 +1168,14 @@ local testid = (function()
 end)()
 
 return function()
-  local g = getfenv(2)
-
-  --- @type function?
-  local before_each = g.before_each
-  --- @type function?
-  local after_each = g.after_each
-
-  if before_each then
-    before_each(function()
+  if harness.is_defining() then
+    harness.before_each(function()
       local id = ('T%d'):format(testid())
       _G._nvim_test_id = id
     end)
-  end
 
-  if after_each then
-    after_each(function()
+    harness.after_each(function()
+      close_extra_sessions(_G._nvim_test_id, true)
       if not vim.endswith(_G._nvim_test_id, 'x') then
         -- Use a different test ID for skipped tests as well as Nvim instances spawned
         -- between this after_each() and the next before_each() (e.g. in setup()).

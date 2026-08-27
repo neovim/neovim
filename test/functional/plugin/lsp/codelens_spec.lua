@@ -3,6 +3,7 @@ local n = require('test.functional.testnvim')()
 local t_lsp = require('test.functional.plugin.lsp.testutil')
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each, after_each = t.describe, t.it, t.before_each, t.after_each
 local dedent = t.dedent
 local eq = t.eq
 
@@ -87,12 +88,18 @@ describe('vim.lsp.codelens', function()
   before_each(function()
     clear_notrace()
     exec_lua(create_server_definition)
+    exec_lua(function()
+      vim.lsp.config('*', {
+        flags = { debounce_text_changes = 0 },
+      })
+    end)
 
     screen = Screen.new(nil, 20)
 
     client_id = exec_lua(function()
       _G.server = _G._create_server({
         capabilities = {
+          textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
           codeLensProvider = {
             resolveProvider = true,
           },
@@ -251,7 +258,26 @@ describe('vim.lsp.codelens', function()
   end)
 
   it('refreshes code lenses on request', function()
+    local get_message_count = function()
+      local messages = exec_lua('return _G.server.messages')
+      local count = 0
+      for _, m in ipairs(messages) do
+        if m.method == 'textDocument/codeLens' then
+          count = count + 1
+        end
+      end
+      return count
+    end
+
+    eq(2, get_message_count())
+
     feed('ggdd')
+
+    -- Second codelens (▶︎ Run) is not resolved immediately, so its previous extmark (same row) isn't
+    -- cleared and it stays anchored to where it was. The new one (which would effectively look like
+    -- it moved a row down) needs to be resolved first, which goes through another screen update.
+    -- This is a quirk of the test since it returns the exact same result no matter what the text in
+    -- the buffer actually is
 
     screen:expect([[
       {1:       1 implementation}                              |
@@ -275,13 +301,9 @@ describe('vim.lsp.codelens', function()
       {1:~                                                    }|
                                                            |
     ]])
-    exec_lua(function()
-      vim.lsp.codelens.on_refresh(
-        nil,
-        nil,
-        { method = 'workspace/codeLens/refresh', client_id = client_id }
-      )
-    end)
+
+    eq(2, get_message_count())
+
     screen:expect([[
       {1:       1 implementation}                              |
           ^a: i32,                                          |
@@ -304,6 +326,18 @@ describe('vim.lsp.codelens', function()
       {1:~                                                    }|
                                                            |
     ]])
+
+    eq(3, get_message_count())
+
+    exec_lua(function()
+      vim.lsp.codelens.on_refresh(
+        nil,
+        nil,
+        { method = 'workspace/codeLens/refresh', client_id = client_id }
+      )
+    end)
+
+    eq(4, get_message_count())
   end)
 
   it('ignores stale codeLens/resolve responses', function()
@@ -317,6 +351,7 @@ describe('vim.lsp.codelens', function()
       _G.stale_resolve_sent = false
       _G.server = _G._create_server({
         capabilities = {
+          textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
           codeLensProvider = {
             resolveProvider = true,
           },
@@ -394,6 +429,7 @@ describe('vim.lsp.codelens', function()
       _G.refresh_response_sent = false
       _G.server = _G._create_server({
         capabilities = {
+          textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
           codeLensProvider = {
             resolveProvider = true,
           },
@@ -477,11 +513,12 @@ describe('vim.lsp.codelens', function()
           }                                                |
       }                                                    |
                                                            |
-      {1:   ▶︎ Run }                                            |
+      {1:▶︎ Run }                                               |
       ^                                                     |
       {1:~                                                    }|*5
       4 fewer lines                                        |
     ]])
+
     feed('dd')
     screen:expect([[
       {1:       1 implementation}                              |

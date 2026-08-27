@@ -982,18 +982,18 @@ int find_wl_entry(win_T *win, linenr_T lnum)
 /// Adjust the Visual area to include any fold at the start or end completely.
 void foldAdjustVisual(void)
 {
-  if (!VIsual_active || !hasAnyFolding(curwin)) {
+  if (!Visual.active || !hasAnyFolding(curwin)) {
     return;
   }
 
   pos_T *start, *end;
 
-  if (ltoreq(VIsual, curwin->w_cursor)) {
-    start = &VIsual;
+  if (ltoreq(Visual.start, curwin->w_cursor)) {
+    start = &Visual.start;
     end = &curwin->w_cursor;
   } else {
     start = &curwin->w_cursor;
-    end = &VIsual;
+    end = &Visual.start;
   }
   if (hasFolding(curwin, start->lnum, &start->lnum, NULL)) {
     start->col = 0;
@@ -1708,7 +1708,7 @@ char *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldinfo
     did_emsg = false;
   }
 
-  if (*wp->w_p_fdt != NUL) {
+  if (wp->w_p_fdt.type != kCallbackNone) {
     char dashes[MAX_LEVEL + 2];
 
     // Set "v:foldstart" and "v:foldend".
@@ -1737,7 +1737,7 @@ char *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldinfo
       Object obj = eval_foldtext(wp);
       if (obj.type == kObjectTypeArray) {
         Error err = ERROR_INIT;
-        *vt = parse_virt_text(obj.data.array, &err, NULL);
+        *vt = parse_virt_text(obj.data.array, &err, NULL, false);
         if (!ERROR_SET(&err)) {
           *buf = NUL;
           text = buf;

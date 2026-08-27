@@ -3,6 +3,7 @@ local n = require('test.functional.testnvim')()
 local t_lsp = require('test.functional.plugin.lsp.testutil')
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each, after_each = t.describe, t.it, t.before_each, t.after_each
 local dedent = t.dedent
 local eq = t.eq
 
@@ -83,6 +84,11 @@ describe('vim.lsp.inline_completion', function()
         },
         handlers = {
           ['textDocument/inlineCompletion'] = function(_, _, callback)
+            if _G.items then
+              callback(nil, { items = _G.items })
+              return
+            end
+
             if _G.empty then
               callback(nil, {
                 items = {
@@ -278,6 +284,51 @@ describe('vim.lsp.inline_completion', function()
           1,
         },
       }, result)
+    end)
+
+    it('accepts an item after the line shrank past its range', function()
+      feed('i')
+      screen:expect({ grid = grid_with_candidates })
+      exec_lua(function()
+        -- Shrink the line the item's range covers, as backspacing would.
+        vim.api.nvim_buf_set_text(0, 0, 18, 0, 20, {})
+        vim.lsp.inline_completion.get()
+      end)
+      n.poke_eventloop()
+      feed('<Esc>')
+      screen:expect({ grid = grid_applied_candidates })
+    end)
+
+    it('does not leave behind text typed since the request', function()
+      exec_lua(function()
+        _G.items = {
+          {
+            insertText = 'foobar',
+            range = {
+              start = { line = 1, character = 0 },
+              ['end'] = { line = 1, character = 1 },
+            },
+          },
+        }
+      end)
+      feed('ifo')
+      screen:expect([[
+        function fibonacci()                                 |
+        fo{1:^obar}                                               |
+        {1:~                                                    }|*11
+        {3:-- INSERT --}                                         |
+      ]])
+      exec_lua(function()
+        vim.lsp.inline_completion.get()
+      end)
+      n.poke_eventloop()
+      feed('<Esc>')
+      screen:expect([[
+        function fibonacci()                                 |
+        fooba^r                                               |
+        {1:~                                                    }|*11
+                                                             |
+      ]])
     end)
   end)
 

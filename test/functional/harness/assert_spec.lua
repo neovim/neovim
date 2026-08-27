@@ -1,5 +1,7 @@
 local assert = require('test.assert')
+local t = require('test.testutil')
 
+local describe, it = t.describe, t.it
 describe('test.assert', function()
   it('ignores aliasing differences', function()
     local shared = {}

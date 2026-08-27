@@ -60,11 +60,11 @@ vim.keymap.set({ 'n' }, '<A-l>', '<C-w>l')
 -- See `:h lua-guide-autocommands`, `:h autocmd`, `:h nvim_create_autocmd()`
 
 -- Highlight when yanking (copying) text.
--- Try it with `yap` in normal mode. See `:h vim.hl.on_yank()`
+-- Try it with `yap` in normal mode. See `:h vim.hl.hl_op()`
 vim.api.nvim_create_autocmd('TextYankPost', {
   desc = 'Highlight when yanking (copying) text',
   callback = function()
-    vim.hl.on_yank()
+    vim.hl.hl_op()
   end,
 })
 

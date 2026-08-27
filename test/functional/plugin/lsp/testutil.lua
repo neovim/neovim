@@ -65,6 +65,20 @@ M.create_tcp_echo_server = function()
 end
 
 M.create_server_definition = function()
+  ---@class test.functional.plugin.lsp.testutil._create_server.Opts
+  ---@field capabilities lsp.ServerCapabilities?
+  ---@field handlers table<vim.lsp.protocol.Method.ClientToServer.Request, fun(method: vim.lsp.protocol.Method.ClientToServer.Request, params: table?, callback: fun(err?: lsp.ResponseError, result: any))>?
+
+  ---@class test.functional.plugin.lsp.testutil._create_server.Message
+  ---@field method vim.lsp.protocol.Method.ClientToServer
+  ---@field params table?
+
+  ---@class test.functional.plugin.lsp.testutil._create_server.Server
+  ---@field messages test.functional.plugin.lsp.testutil._create_server.Message[]
+  ---@field cmd fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.Client
+
+  ---@param opts test.functional.plugin.lsp.testutil._create_server.Opts?
+  ---@return test.functional.plugin.lsp.testutil._create_server.Server
   function _G._create_server(opts)
     opts = opts or {}
     local server = {}
@@ -102,6 +116,7 @@ M.create_server_definition = function()
         if method == 'exit' then
           dispatchers.on_exit(0, 15)
         end
+        return true
       end
 
       function srv.is_closing()

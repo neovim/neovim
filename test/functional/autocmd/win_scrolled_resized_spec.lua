@@ -2,6 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each, after_each = t.describe, t.it, t.before_each, t.after_each
 local clear = n.clear
 local eq = t.eq
 local eval = n.eval
@@ -246,6 +247,29 @@ describe('WinScrolled', function()
     feed('i')
     api.nvim_input_mouse('wheel', 'down', '', 0, 6, 0)
     feed('<Esc>')
+    eq(2, eval('g:scrolled'))
+  end)
+
+  it('is triggered by incsearch scrolling #21207', function()
+    local lines = {}
+    for i = 1, 100 do
+      lines[i] = 'line ' .. i
+    end
+    lines[60] = 'special target line'
+    api.nvim_buf_set_lines(0, 0, -1, true, lines)
+    exec([[
+      set incsearch scrolloff=0
+      let g:scrolled = 0
+      au WinScrolled * let g:scrolled += 1
+    ]])
+    eq(0, eval('g:scrolled'))
+
+    -- Typing the pattern scrolls to the match.
+    feed('/target')
+    eq(1, eval('g:scrolled'))
+
+    -- <C-c> restores the original view, which is another scroll.
+    feed('<C-c>')
     eq(2, eval('g:scrolled'))
   end)
 

@@ -2,6 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear = n.clear
 local eq = t.eq
 local exec = n.exec
@@ -30,7 +31,7 @@ it('scrolling with laststatus=0 and :botright split', function()
     98                                      |
     99                                      |
     ^100                                     |
-                          100,1         Bot |
+                          100,1          Bot|
   ]])
 end)
 

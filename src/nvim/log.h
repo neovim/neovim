@@ -51,4 +51,10 @@
 # define LOG_CALLSTACK_TO_FILE(fp) log_callstack_to_file(fp, __func__, __LINE__)
 #endif
 
+#ifndef NVIM_LOG_DEBUG
+EXTERN int g_min_log_level INIT( = LOGLVL_WRN);
+#else
+EXTERN int g_min_log_level INIT( = 0);
+#endif
+
 #include "log.h.generated.h"

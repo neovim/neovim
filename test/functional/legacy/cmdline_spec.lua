@@ -1,6 +1,8 @@
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear = n.clear
 local command = n.command
 local feed = n.feed
@@ -384,7 +386,7 @@ describe('cmdline', function()
     api.nvim_set_option_value('rulerformat', '%!TestRulerFn()', {})
     screen:expect([[
       ^                                        |
-                            10,20         30% |
+                            10,20          30%|
     ]])
   end)
 

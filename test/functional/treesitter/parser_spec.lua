@@ -2,12 +2,15 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local ts_t = require('test.functional.treesitter.testutil')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear = n.clear
 local dedent = t.dedent
 local eq = t.eq
 local insert = n.insert
 local exec_lua = n.exec_lua
 local feed = n.feed
+local matches = t.matches
+local pcall_err = t.pcall_err
 local run_query = ts_t.run_query
 local assert_alive = n.assert_alive
 
@@ -105,6 +108,24 @@ describe('treesitter parser API', function()
         return tree:included_ranges(true)
       end)
     )
+  end)
+
+  it('ignores repeated parser finalization', function()
+    matches(
+      'Parser has been deleted',
+      pcall_err(exec_lua, function()
+        vim.treesitter.language.add('c')
+
+        local parser = vim._create_ts_parser('c')
+        -- The parser metatable exposes __gc through __index, so this simulates a finalizer
+        -- running before all Lua references to the userdata are gone.
+        parser:__gc()
+        parser:__gc()
+
+        parser:parse(nil, 'int x;', false)
+      end)
+    )
+    assert_alive()
   end)
 
   it('respects eol settings when parsing buffer', function()
@@ -441,7 +462,7 @@ describe('treesitter parser API', function()
       local tree = parser:parse()[1]
       return vim.treesitter.get_node_text(tree:root(), 0)
     end)
-    eq(t.dedent(test_text), res)
+    eq(t.dedent(test_text) .. '\n', res)
 
     local res2 = exec_lua(function()
       local parser = vim.treesitter.get_parser(0, 'c')
@@ -664,6 +685,34 @@ describe('treesitter parser API', function()
           { 5, 15, 5, 18 }, -- VALUE1 123
           { 6, 15, 6, 18 }, -- VALUE2 123
         }, get_ranges())
+      end)
+
+      it('notifies changedtree callbacks when replacing injection regions', function()
+        exec_lua(function()
+          _G.parser = vim.treesitter._create_parser(0, 'c', {
+            injections = {
+              c = '(preproc_def (preproc_arg) @injection.content (#set! injection.language "c"))',
+            },
+          })
+          _G.parser:parse(true)
+
+          local child = _G.parser:children().c
+          vim.api.nvim_buf_set_lines(0, 3, 4, false, { '#define VALUE changed' })
+
+          _G.changedtree = 0
+          _G.precise_changedtree = true
+          child:register_cbs({
+            on_changedtree = function(changes, tree)
+              _G.changedtree = _G.changedtree + 1
+              _G.precise_changedtree = _G.precise_changedtree
+                and vim.deep_equal(changes, tree:included_ranges(true))
+            end,
+          })
+
+          _G.parser:parse({ 3, 4 })
+        end)
+
+        eq(true, exec_lua('return _G.changedtree > 0 and _G.precise_changedtree'))
       end)
     end)
 

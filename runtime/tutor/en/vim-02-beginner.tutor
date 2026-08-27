@@ -25,7 +25,7 @@
      - Try with other operators: `ciw`{normal} (change), `yiw`{normal} (yank),
         `gqiw`{normal} (format)
 
-Practice on: "Vim's", (text_object), and 'powerful' words here.
+Practice on: "Vim's", (text_object), and 'powerful' words here. [[-1]]
 
   2. Work with bracketed content:
      - Put cursor inside any () {} [] <> pair below
@@ -33,7 +33,7 @@ Practice on: "Vim's", (text_object), and 'powerful' words here.
      - Type `da(`{normal} or `dab`{normal} (delete around brackets)
      - Try same with `i"`{normal}/`a"`{normal} for quotes, `it`{normal}/`at`{normal}  for HTML/XML tags
 
-Test cases: {curly}, [square], <angle>, and "quoted" items.
+Test cases: {curly}, [square], <angle>, and "quoted" items. [[-1]]
 
   3. Paragraph and sentence manipulation:
      - Use `dip`{normal} to delete inner paragraph (cursor anywhere in paragraph)
@@ -46,7 +46,7 @@ Test cases: {curly}, [square], <angle>, and "quoted" items.
      - `gUit`{normal}        - Uppercase inner HTML tag content
      - `va"p`{normal}        - Select quoted text and paste over it
 
-Final exercise: (Modify "this" text) by [applying {various} operations]<
+Final exercise: (Modify "this" text) by [applying {various} operations]< [[-1]]
 
 
 # Lesson 2.1.2: THE NAMED REGISTERS
@@ -68,8 +68,8 @@ Final exercise: (Modify "this" text) by [applying {various} operations]<
 
   5. Navigate to any point on the word 'cake' and type `ciw<CTRL-R>b<ESC>`{normal}
 
-a) Edward will henceforth be in charge of the cookie rations
-b) In this capacity, Vince will have sole cake discretionary powers
+a) Edward will henceforth be in charge of the cookie rations [[-1]]
+b) In this capacity, Vince will have sole cake discretionary powers [[b) In this capacity, Edward will have sole cookie discretionary powers]]
 
 NOTE: Delete also works into registers, i.e. `"sdiw`{normal} will delete
       the word under the cursor into register s.
@@ -96,8 +96,8 @@ REFERENCE: [Registers](registers)
 NOTE: All calls to system are OS dependent, e.g. on Windows use 
       `system('date /t')`{vim}   or  `:r!date /t`{vim}
 
-I have forgotten the exact number of seconds in a day, is it 84600?
-Today's date is: 
+I have forgotten the exact number of seconds in a day, is it 84600? [[I have forgotten the exact number of seconds in a day, is it 86400]]
+Today's date is:  [[-1]]
 
 NOTE: the same can be achieved with `:pu=`{normal}`system('date')`{vim}
       or, with fewer keystrokes `:r!date`{vim}
@@ -123,7 +123,7 @@ NOTE: You should notice that old full-line deletions move down the list
 
   5. Now (p)aste the following registers in order; c, 7, 4, 8, 2. i.e. `"7p`{normal}
 
-0. This
+0. This [[-1]]
 9. wobble
 8. secret
 7. is
@@ -155,7 +155,7 @@ REFERENCE: [Numbered Registers](quote0)
      - `"+p`{normal} - Paste from system clipboard
      - `"*`{normal} is primary selection on X11 (middle-click), `"+`{normal} is clipboard
 
-Try: "+yy then paste into another application with Ctrl-V or Cmd+V
+Try: "+yy then paste into another application with Ctrl-V or Cmd+V [[-1]]
 
   2. Blackhole register `_`{normal} discards text:
      - `"_daw`{normal} - Delete word without saving to any register
@@ -166,7 +166,7 @@ Try: "+yy then paste into another application with Ctrl-V or Cmd+V
      - `"_dap`{normal} - Delete paragraph without saving
      - Combine with counts: `3"_dw`{normal}
 
-Practice: "_diw on any word to delete it without affecting yank history
+Practice: "_diw on any word to delete it without affecting yank history [[-1]]
 
   3. Combine with visual selections:
      - Select text with V then `"+y`{normal}
@@ -215,7 +215,7 @@ NOTE: exact position on line is NOT important!
 NOTE: practice this operation multiple times to become fluent `ma$%"ad'a`{normal}
 
 ~~~ cmd
-AAA
+AAA [[-1]]
 function itGotRealBigRealFast() {
   if ( somethingIsTrue ) {
     doIt()

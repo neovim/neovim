@@ -224,7 +224,7 @@ func s:NoMatchParen()
 endfunc
 
 func s:DoMatchParen()
-  runtime plugin/matchparen.vim
+  runtime plugin/matchparen.lua
   let w = winnr()
   silent windo doau CursorMoved
   exe "noau ". w . "wincmd w"

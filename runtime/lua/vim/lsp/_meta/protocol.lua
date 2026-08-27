@@ -533,10 +533,10 @@ error('Cannot require a meta file')
 ---The text document.
 ---@field textDocument lsp.TextDocumentIdentifier
 ---
----The document range for which inline values should be computed.
+---The document range for which inline values information will be returned.
 ---@field range lsp.Range
 ---
----Additional information about the context in which inline values were
+---Additional information about the context in which inline values information was
 ---requested.
 ---@field context lsp.InlineValueContext
 
@@ -735,7 +735,6 @@ error('Cannot require a meta file')
 ---A parameter literal used in inline completion requests.
 ---
 ---@since 3.18.0
----@proposed
 ---@class lsp.InlineCompletionParams: lsp.TextDocumentPositionParams, lsp.WorkDoneProgressParams
 ---
 ---Additional information about the context in which inline completions were
@@ -745,7 +744,6 @@ error('Cannot require a meta file')
 ---Represents a collection of {@link InlineCompletionItem inline completion items} to be presented in the editor.
 ---
 ---@since 3.18.0
----@proposed
 ---@class lsp.InlineCompletionList
 ---
 ---The inline completion items
@@ -754,7 +752,6 @@ error('Cannot require a meta file')
 ---An inline completion item represents a text snippet that is proposed inline to complete text that is being typed.
 ---
 ---@since 3.18.0
----@proposed
 ---@class lsp.InlineCompletionItem
 ---
 ---The text to replace the range with. Must be set.
@@ -772,13 +769,11 @@ error('Cannot require a meta file')
 ---Inline completion options used during static or dynamic registration.
 ---
 ---@since 3.18.0
----@proposed
 ---@class lsp.InlineCompletionRegistrationOptions: lsp.InlineCompletionOptions, lsp.TextDocumentRegistrationOptions, lsp.StaticRegistrationOptions
 
 ---Parameters for the `workspace/textDocumentContent` request.
 ---
 ---@since 3.18.0
----@proposed
 ---@class lsp.TextDocumentContentParams
 ---
 ---The uri of the text document.
@@ -787,7 +782,6 @@ error('Cannot require a meta file')
 ---Result of the `workspace/textDocumentContent` request.
 ---
 ---@since 3.18.0
----@proposed
 ---@class lsp.TextDocumentContentResult
 ---
 ---The text content of the text document. Please note, that the content of
@@ -799,13 +793,11 @@ error('Cannot require a meta file')
 ---Text document content provider registration options.
 ---
 ---@since 3.18.0
----@proposed
 ---@class lsp.TextDocumentContentRegistrationOptions: lsp.TextDocumentContentOptions, lsp.StaticRegistrationOptions
 
 ---Parameters for the `workspace/textDocumentContent/refresh` request.
 ---
 ---@since 3.18.0
----@proposed
 ---@class lsp.TextDocumentContentRefreshParams
 ---
 ---The uri of the text document to refresh.
@@ -1245,6 +1237,9 @@ error('Cannot require a meta file')
 ---In future version of the protocol this property might become
 ---mandatory (but still nullable) to better express the active parameter if
 ---the active signature does have any.
+---
+---Since version 3.16.0 the `SignatureInformation` itself provides a
+---`activeParameter` property and it should be used instead of this one.
 ---@field activeParameter? uinteger|lsp.null
 
 ---Registration options for a {@link SignatureHelpRequest}.
@@ -1372,7 +1367,6 @@ error('Cannot require a meta file')
 ---An optional tooltip.
 ---
 ---@since 3.18.0
----@proposed
 ---@field tooltip? string
 ---
 ---The identifier of the actual command handler.
@@ -1569,7 +1563,6 @@ error('Cannot require a meta file')
 ---The parameters of a {@link DocumentRangesFormattingRequest}.
 ---
 ---@since 3.18.0
----@proposed
 ---@class lsp.DocumentRangesFormattingParams: lsp.WorkDoneProgressParams
 ---
 ---The document to format.
@@ -1643,7 +1636,6 @@ error('Cannot require a meta file')
 ---Additional data about the edit.
 ---
 ---@since 3.18.0
----@proposed
 ---@field metadata? lsp.WorkspaceEditMetadata
 
 ---The result returned from the apply workspace edit request.
@@ -2070,7 +2062,7 @@ error('Cannot require a meta file')
 ---Typically the end position of the range denotes the line where the inline values are shown.
 ---@field stoppedLocation lsp.Range
 
----Provide inline value as text.
+---Returns inline value information as the complete text to be shown.
 ---
 ---@since 3.17.0
 ---@class lsp.InlineValueText
@@ -2081,15 +2073,21 @@ error('Cannot require a meta file')
 ---The text of the inline value.
 ---@field text string
 
----Provide inline value through a variable lookup.
----If only a range is specified, the variable name will be extracted from the underlying document.
----An optional variable name can be used to override the extracted name.
+---To compute inline value through a variable lookup.
+---
+---If only a range is specified, the variable name should
+---be extracted from the underlying document.
+---
+---An optional variable name could be used to lookup instead
+---of the extracted name.
 ---
 ---@since 3.17.0
 ---@class lsp.InlineValueVariableLookup
 ---
 ---The document range for which the inline value applies.
----The range is used to extract the variable name from the underlying document.
+---
+---The range could be used to extract the variable name
+---from the underlying document.
 ---@field range lsp.Range
 ---
 ---If specified the name of the variable to look up.
@@ -2098,18 +2096,24 @@ error('Cannot require a meta file')
 ---How to perform the lookup.
 ---@field caseSensitiveLookup boolean
 
----Provide an inline value through an expression evaluation.
----If only a range is specified, the expression will be extracted from the underlying document.
----An optional expression can be used to override the extracted expression.
+---To compute an inline value through an expression evaluation.
+---
+---If only a range is specified, the expression should be
+---extracted from the underlying document.
+---
+---An optional expression could be evaluated instead of
+---the extracted expression.
 ---
 ---@since 3.17.0
 ---@class lsp.InlineValueEvaluatableExpression
 ---
 ---The document range for which the inline value applies.
----The range is used to extract the evaluatable expression from the underlying document.
+---
+---The range could be used to extract the evaluatable expression
+---from the underlying document.
 ---@field range lsp.Range
 ---
----If specified the expression overrides the extracted expression.
+---If specified the expression could be evaluated instead.
 ---@field expression? string
 
 ---Inline value options used during static registration.
@@ -2377,7 +2381,6 @@ error('Cannot require a meta file')
 ---Provides information about the context in which an inline completion was requested.
 ---
 ---@since 3.18.0
----@proposed
 ---@class lsp.InlineCompletionContext
 ---
 ---Describes how the inline completion was triggered.
@@ -2395,7 +2398,6 @@ error('Cannot require a meta file')
 ---`${name:default value}`.
 ---
 ---@since 3.18.0
----@proposed
 ---@class lsp.StringValue
 ---
 ---The kind of string value.
@@ -2407,13 +2409,11 @@ error('Cannot require a meta file')
 ---Inline completion options used during static registration.
 ---
 ---@since 3.18.0
----@proposed
 ---@class lsp.InlineCompletionOptions: lsp.WorkDoneProgressOptions
 
 ---Text document content provider options.
 ---
 ---@since 3.18.0
----@proposed
 ---@class lsp.TextDocumentContentOptions
 ---
 ---The schemes for which the server provides content.
@@ -2638,7 +2638,6 @@ error('Cannot require a meta file')
 ---Inline completion options used during static registration.
 ---
 ---@since 3.18.0
----@proposed
 ---@field inlineCompletionProvider? boolean|lsp.InlineCompletionOptions
 ---
 ---Workspace specific server capabilities.
@@ -2718,8 +2717,11 @@ error('Cannot require a meta file')
 ---appears in the user interface.
 ---@field source? string
 ---
----The diagnostic's message. It usually appears in the user interface
----@field message string
+---The diagnostic's message. It usually appears in the user interface.
+---
+---@since 3.18.0 - support for MarkupContent. This is guarded by the client
+---capability `textDocument.diagnostic.markupMessageSupport`.
+---@field message string|lsp.MarkupContent
 ---
 ---Additional metadata about the diagnostic.
 ---
@@ -3079,7 +3081,6 @@ error('Cannot require a meta file')
 ---At most one documentation entry should be shown per provider.
 ---
 ---@since 3.18.0
----@proposed
 ---@field documentation? lsp.CodeActionKindDocumentation[]
 ---
 ---The server provides support to resolve additional
@@ -3149,7 +3150,6 @@ error('Cannot require a meta file')
 ---Whether the server supports formatting multiple ranges at once.
 ---
 ---@since 3.18.0
----@proposed
 ---@field rangesSupport? boolean
 
 ---Provider options for a {@link DocumentOnTypeFormattingRequest}.
@@ -3190,7 +3190,6 @@ error('Cannot require a meta file')
 ---Additional data about a workspace edit.
 ---
 ---@since 3.18.0
----@proposed
 ---@class lsp.WorkspaceEditMetadata
 ---
 ---Signal to the editor that this edit is a refactoring.
@@ -3234,7 +3233,6 @@ error('Cannot require a meta file')
 ---An interactive text edit.
 ---
 ---@since 3.18.0
----@proposed
 ---@class lsp.SnippetTextEdit
 ---
 ---The range of the text document to be manipulated.
@@ -3291,7 +3289,7 @@ error('Cannot require a meta file')
 ---@class lsp.FileOperationPattern
 ---
 ---The glob pattern to match. Glob patterns can have the following syntax:
----- `*` to match one or more characters in a path segment
+---- `*` to match zero or more characters in a path segment
 ---- `?` to match on one character in a path segment
 ---- `**` to match any number of path segments, including none
 ---- `{}` to group sub patterns into an OR expression. (e.g. `**/*.{ts,js}` matches all TypeScript and JavaScript files)
@@ -3397,7 +3395,6 @@ error('Cannot require a meta file')
 ---Describes the currently selected completion item.
 ---
 ---@since 3.18.0
----@proposed
 ---@class lsp.SelectedCompletionInfo
 ---
 ---The range that will be replaced if this completion item is accepted.
@@ -3483,7 +3480,6 @@ error('Cannot require a meta file')
 ---The server supports the `workspace/textDocumentContent` request.
 ---
 ---@since 3.18.0
----@proposed
 ---@field textDocumentContent? lsp.TextDocumentContentOptions|lsp.TextDocumentContentRegistrationOptions
 
 ---@since 3.18.0
@@ -3577,7 +3573,6 @@ error('Cannot require a meta file')
 ---Documentation for a class of code actions.
 ---
 ---@since 3.18.0
----@proposed
 ---@class lsp.CodeActionKindDocumentation
 ---
 ---The kind of the code action being documented.
@@ -3728,13 +3723,11 @@ error('Cannot require a meta file')
 ---Capabilities specific to the folding range requests scoped to the workspace.
 ---
 ---@since 3.18.0
----@proposed
 ---@field foldingRange? lsp.FoldingRangeWorkspaceClientCapabilities
 ---
 ---Capabilities specific to the `workspace/textDocumentContent` request.
 ---
 ---@since 3.18.0
----@proposed
 ---@field textDocumentContent? lsp.TextDocumentContentClientCapabilities
 
 ---Text document specific client capabilities.
@@ -3867,7 +3860,6 @@ error('Cannot require a meta file')
 ---Client capabilities specific to inline completions.
 ---
 ---@since 3.18.0
----@proposed
 ---@field inlineCompletion? lsp.InlineCompletionClientCapabilities
 
 ---Capabilities specific to the notebook document support.
@@ -4143,13 +4135,11 @@ error('Cannot require a meta file')
 ---Whether the client supports `WorkspaceEditMetadata` in `WorkspaceEdit`s.
 ---
 ---@since 3.18.0
----@proposed
 ---@field metadataSupport? boolean
 ---
 ---Whether the client supports snippets as text edits.
 ---
 ---@since 3.18.0
----@proposed
 ---@field snippetEditSupport? boolean
 
 ---@class lsp.DidChangeConfigurationClientCapabilities
@@ -4296,7 +4286,6 @@ error('Cannot require a meta file')
 ---Client workspace capabilities specific to folding ranges
 ---
 ---@since 3.18.0
----@proposed
 ---@class lsp.FoldingRangeWorkspaceClientCapabilities
 ---
 ---Whether the client implementation supports a refresh request sent from the
@@ -4308,13 +4297,11 @@ error('Cannot require a meta file')
 ---change that requires such a calculation.
 ---
 ---@since 3.18.0
----@proposed
 ---@field refreshSupport? boolean
 
 ---Client capabilities for a text document content provider.
 ---
 ---@since 3.18.0
----@proposed
 ---@class lsp.TextDocumentContentClientCapabilities
 ---
 ---Text document content provider supports dynamic registration.
@@ -4353,6 +4340,7 @@ error('Cannot require a meta file')
 ---capabilities.
 ---@field completionItem? lsp.ClientCompletionItemOptions
 ---
+---The client supports the following completion item kinds.
 ---@field completionItemKind? lsp.ClientCompletionItemOptionsKind
 ---
 ---Defines how the client handles whitespace and indentation
@@ -4534,7 +4522,6 @@ error('Cannot require a meta file')
 ---code actions.
 ---
 ---@since 3.18.0
----@proposed
 ---@field documentationSupport? boolean
 ---
 ---Client supports the tag property on a code action. Clients
@@ -4588,7 +4575,6 @@ error('Cannot require a meta file')
 ---Whether the client supports formatting multiple ranges at once.
 ---
 ---@since 3.18.0
----@proposed
 ---@field rangesSupport? boolean
 
 ---Client capabilities of a {@link DocumentOnTypeFormattingRequest}.
@@ -4790,11 +4776,15 @@ error('Cannot require a meta file')
 ---
 ---Whether the clients supports related documents for document diagnostic pulls.
 ---@field relatedDocumentSupport? boolean
+---
+---Whether the client supports `MarkupContent` in diagnostic messages.
+---
+---@since 3.18.0
+---@field markupMessageSupport? boolean
 
 ---Client capabilities specific to inline completions.
 ---
 ---@since 3.18.0
----@proposed
 ---@class lsp.InlineCompletionClientCapabilities
 ---
 ---Whether implementation supports dynamic registration for inline completion providers.
@@ -5023,7 +5013,6 @@ error('Cannot require a meta file')
 ---indicate that no parameter should be active.
 ---
 ---@since 3.18.0
----@proposed
 ---@field noActiveParameterSupport? boolean
 
 ---@since 3.18.0
@@ -5434,7 +5423,7 @@ error('Cannot require a meta file')
 ---| "erlang" # Erlang
 ---| "fsharp" # FSharp
 ---| "git-commit" # GitCommit
----| "rebase" # GitRebase
+---| "git-rebase" # GitRebase
 ---| "go" # Go
 ---| "groovy" # Groovy
 ---| "handlebars" # Handlebars
@@ -5456,6 +5445,7 @@ error('Cannot require a meta file')
 ---| "perl" # Perl
 ---| "perl6" # Perl6
 ---| "php" # PHP
+---| "plaintext" # Plaintext
 ---| "powershell" # Powershell
 ---| "jade" # Pug
 ---| "python" # Python
@@ -5481,7 +5471,6 @@ error('Cannot require a meta file')
 ---Describes how an {@link InlineCompletionItemProvider inline completion provider} was triggered.
 ---
 ---@since 3.18.0
----@proposed
 ---@alias lsp.InlineCompletionTriggerKind
 ---| 1 # Invoked
 ---| 2 # Automatic
@@ -5693,7 +5682,7 @@ error('Cannot require a meta file')
 ---its resource, or a glob-pattern that is applied to the {@link TextDocument.fileName path}.
 ---
 ---Glob patterns can have the following syntax:
----- `*` to match one or more characters in a path segment
+---- `*` to match zero or more characters in a path segment
 ---- `?` to match on one character in a path segment
 ---- `**` to match any number of path segments, including none
 ---- `{}` to group sub patterns into an OR expression. (e.g. `**/*.{ts,js}` matches all TypeScript and JavaScript files)
@@ -5714,7 +5703,7 @@ error('Cannot require a meta file')
 ---@alias lsp.NotebookDocumentFilter lsp.NotebookDocumentFilterNotebookType|lsp.NotebookDocumentFilterScheme|lsp.NotebookDocumentFilterPattern
 
 ---The glob pattern to watch relative to the base path. Glob patterns can have the following syntax:
----- `*` to match one or more characters in a path segment
+---- `*` to match zero or more characters in a path segment
 ---- `?` to match on one character in a path segment
 ---- `**` to match any number of path segments, including none
 ---- `{}` to group conditions (e.g. `**/*.{ts,js}` matches all TypeScript and JavaScript files)

@@ -1,0 +1,62 @@
+name: nvim.wasm build
+
+on:
+  pull_request:
+    branches:
+      - 'master'
+      - 'release-[0-9]+.[0-9]+'
+    paths:
+      - 'build.zig'
+      - 'build.zig.zon'
+      - '.github/scripts/build_wasm.sh'
+      - '.github/workflows/build_wasm.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-wasm:
+    name: Build nvim.wasm (Emscripten + Zig)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Zig
+        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+        with:
+          version: 0.16.0
+          use-cache: false
+
+      - name: Cache emsdk, Binaryen & build outputs
+        uses: actions/cache@v6.1.0
+        with:
+          path: |
+            ./.emsdk
+            ./.binaryen
+          key: ${{ runner.os }}-wasm-${{ hashFiles('build.zig', 'build.zig.zon', '.github/scripts/build_wasm.sh') }}
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            python3 python3-pip curl unzip
+
+      - name: Install Emscripten SDK
+        run: |
+          set -euo pipefail
+          if [ ! -d ./.emsdk ]; then
+            git clone https://github.com/emscripten-core/emsdk.git ./.emsdk
+            cd ./.emsdk
+            ./emsdk install 6.0.2
+            ./emsdk activate 6.0.2
+            cd -
+          fi
+
+      - name: Build nvim.wasm
+        run: .github/scripts/build_wasm.sh

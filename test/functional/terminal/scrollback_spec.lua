@@ -3,6 +3,8 @@ local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 local tt = require('test.functional.testterm')
 
+local describe, it, before_each, setup, teardown =
+  t.describe, t.it, t.before_each, t.setup, t.teardown
 local clear, eq, neq = n.clear, t.eq, t.neq
 local feed, testprg = n.feed, n.testprg
 local fn = n.fn

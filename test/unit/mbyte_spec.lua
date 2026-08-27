@@ -1,5 +1,6 @@
 local t = require('test.unit.testutil')
-local itp = t.gen_itp(it)
+local describe, before_each = t.describe, t.before_each
+local itp = t.gen_itp(t.it)
 
 local ffi = t.ffi
 local eq = t.eq
@@ -311,9 +312,9 @@ describe('mbyte', function()
         pos = pos + clen
         table.insert(breaks, pos)
       end
-      eq(breaks[#breaks], len) -- include EOT as break
+      eq(len, breaks[#breaks]) -- include EOT as break
       -- we could also send in breaks, but this is more human readable
-      eq(mb_glyphs, expected_glyphs)
+      eq(expected_glyphs, mb_glyphs)
 
       for i = 1, #breaks - 1 do
         local start, next = breaks[i], breaks[i + 1]

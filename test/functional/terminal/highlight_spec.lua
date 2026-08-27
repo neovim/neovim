@@ -3,6 +3,7 @@ local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 local tt = require('test.functional.testterm')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local assert_alive = n.assert_alive
 local feed, clear = n.feed, n.clear
 local api = n.api
@@ -327,6 +328,20 @@ describe(':terminal highlight forwarding', function()
     screen:expect([[
       tty ready                                         |
       {2:text}{3:color}text^                                     |
+                                                        |*4
+      {1:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('handles truecolor SGR with a colour space id', function()
+    skip(is_os('win'))
+    tt.feed_termcode('[38:2::255:128:0m')
+    tt.feed_data('color')
+    tt.clear_attrs()
+    tt.feed_data('text')
+    screen:expect([[
+      tty ready                                         |
+      {3:color}text^                                         |
                                                         |*4
       {1:-- TERMINAL --}                                    |
     ]])

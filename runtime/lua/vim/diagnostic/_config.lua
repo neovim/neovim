@@ -1,13 +1,13 @@
 local store = require('vim.diagnostic._store')
 
 --- @class vim.diagnostic.OptsResolved
---- @field float vim.diagnostic.Opts.Float
+--- @field float false|vim.diagnostic.Opts.Float
 --- @field update_in_insert boolean
---- @field underline vim.diagnostic.Opts.Underline
---- @field virtual_text vim.diagnostic.Opts.VirtualText
---- @field virtual_lines vim.diagnostic.Opts.VirtualLines
---- @field signs vim.diagnostic.Opts.Signs
---- @field severity_sort {reverse?:boolean}
+--- @field underline false|vim.diagnostic.Opts.Underline
+--- @field virtual_text false|vim.diagnostic.Opts.VirtualText
+--- @field virtual_lines false|vim.diagnostic.Opts.VirtualLines
+--- @field signs false|vim.diagnostic.Opts.Signs
+--- @field severity_sort false|{reverse?:boolean}
 
 --- @class (private) vim.diagnostic._config
 local M = {}

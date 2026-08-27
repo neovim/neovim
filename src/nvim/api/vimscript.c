@@ -197,7 +197,8 @@ Object nvim_eval(String expr, Arena *arena, Error *err)
 /// @param self `self` dict, or NULL for non-dict functions
 /// @param[out] err Error details, if any
 /// @return Result of the function call
-static Object _call_function(String fn, Array args, dict_T *self, Arena *arena, Error *err)
+static Object _call_function(uint64_t channel_id, String fn, Array args, dict_T *self, Arena *arena,
+                             Error *err)
 {
   static int recursive = 0;  // recursion depth
   Object rv = OBJECT_INIT;
@@ -233,9 +234,11 @@ static Object _call_function(String fn, Array args, dict_T *self, Arena *arena, 
   funcexe.fe_selfdict = self;
 
   TRY_WRAP(err, {
+    const sctx_T save_current_sctx = api_set_sctx(channel_id);
     // call_func() retval is deceptive, ignore it.  Instead TRY_WRAP sets `msg_list` to capture
     // abort-causing non-exception errors.
     (void)call_func(fn.data, (int)fn.size, &rettv, (int)args.size, vim_args, &funcexe);
+    current_sctx = save_current_sctx;
   });
 
   if (!ERROR_SET(err)) {
@@ -260,10 +263,10 @@ static Object _call_function(String fn, Array args, dict_T *self, Arena *arena, 
 /// @param args     Function arguments packed in an Array
 /// @param[out] err Error details, if any
 /// @return Result of the function call
-Object nvim_call_function(String fn, Array args, Arena *arena, Error *err)
+Object nvim_call_function(uint64_t channel_id, String fn, Array args, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
 {
-  return _call_function(fn, args, NULL, arena, err);
+  return _call_function(channel_id, fn, args, NULL, arena, err);
 }
 
 /// Calls a Vimscript |Dictionary-function| with the given arguments.
@@ -275,7 +278,8 @@ Object nvim_call_function(String fn, Array args, Arena *arena, Error *err)
 /// @param args Function arguments packed in an Array
 /// @param[out] err Error details, if any
 /// @return Result of the function call
-Object nvim_call_dict_function(Object dict, String fn, Array args, Arena *arena, Error *err)
+Object nvim_call_dict_function(uint64_t channel_id, Object dict, String fn, Array args,
+                               Arena *arena, Error *err)
   FUNC_API_SINCE(4)
 {
   Object rv = OBJECT_INIT;
@@ -337,7 +341,7 @@ Object nvim_call_dict_function(Object dict, String fn, Array args, Arena *arena,
     goto end;
   });
 
-  rv = _call_function(fn, args, self_dict, arena, err);
+  rv = _call_function(channel_id, fn, args, self_dict, arena, err);
 end:
   if (mustfree) {
     tv_clear(&rettv);
@@ -357,18 +361,18 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 ///
 /// @param[in]  expr  Expression to parse. Always treated as a single line.
 /// @param[in]  flags Flags:
-///                    - "m" if multiple expressions in a row are allowed (only
-///                      the first one will be parsed),
 ///                    - "E" if EOC tokens are not allowed (determines whether
 ///                      they will stop parsing process or be recognized as an
 ///                      operator/space, though also yielding an error).
 ///                    - "l" when needing to start parsing with lvalues for
 ///                      ":let" or ":for".
-///                    Common flag sets:
-///                    - "m" to parse like for `":echo"`.
-///                    - "E" to parse like for `"<C-r>="`.
-///                    - empty string for ":call".
-///                    - "lm" to parse for ":let".
+///                    - "m" if multiple expressions in a row are allowed (only
+///                      the first one will be parsed),
+///                    - Common flag sets:
+///                      - "E" to parse like for `"<C-r>="`.
+///                      - "lm" to parse for ":let".
+///                      - "m" to parse like for `":echo"`.
+///                      - empty string for ":call".
 /// @param[in]  hl  If true, return value will also include "highlight"
 ///                        key containing array of 4-tuples (arrays) (Integer,
 ///                        Integer, Integer, String), where first three numbers

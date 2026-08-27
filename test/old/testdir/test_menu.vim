@@ -22,6 +22,7 @@ func Test_load_menu()
 endfunc
 
 func Test_buffer_menu_special_buffers()
+  throw "Skipped: Nvim supports cmdwin freedom #40312"
   " Load in runtime menus
   try
     source $VIMRUNTIME/menu.vim

@@ -344,6 +344,28 @@ func Test_goto_buf_with_confirm()
   close!
 endfunc
 
+" Test for issue #20132: when saving an unnamed buffer fails the modified
+" flag must be kept, otherwise the buffer is silently discarded.
+func Test_dialog_changed_keep_modified_on_write_fail()
+  CheckUnix
+  CheckNotGui
+  CheckFeature dialog_con
+  CheckNotFeature dialog_con_gui
+  CheckNotRoot
+
+  call writefile(['existing'], 'Untitled', 'D')
+  call setfperm('Untitled', 'r--r--r--')
+
+  new
+  call setline(1, 'test')
+  call feedkeys('y', 'L')
+  silent! confirm bdel
+  call assert_true(&modified)
+  call assert_equal(['existing'], readfile('Untitled'))
+
+  bw!
+endfunc
+
 " Test for splitting buffer with 'switchbuf'
 func Test_buffer_switchbuf()
   new Xswitchbuf
@@ -913,6 +935,28 @@ func Test_split_window_in_BufLeave_from_switching_buffer()
 
   bwipe! Xa
   bwipe! Xb
+endfunc
+
+func Test_wipe_other_buffers_in_WinLeave_from_bwipe()
+  tabnew
+  autocmd WinLeave * ++once 1,$-1bwipe!
+  " This should not crash
+  $bwipe!
+endfunc
+
+" Switch to a buffer whose name contains '%' via completion (#20529).
+func Test_buffer_switch_to_name_with_percent()
+  CheckMSWindows
+
+  let bufnr = bufadd('Xpercent%name')
+  call setbufvar(bufnr, '&buflisted', 1)
+  call bufload(bufnr)
+  enew
+
+  call feedkeys(":b Xpercent\<Tab>\<CR>", 'xt')
+  call assert_equal(bufnr, bufnr('%'))
+
+  exe 'bwipe! ' .. bufnr
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

@@ -59,6 +59,7 @@ local options_list = {
     { 'scroll', N_ 'number of lines to scroll for CTRL-U and CTRL-D' },
     { 'smoothscroll', N_ 'scroll by screen line' },
     { 'scrolloff', N_ 'number of screen lines to show around the cursor' },
+    { 'scrolloffpad', N_ 'vertically center cursor even at end of file' },
     { 'wrap', N_ 'long lines wrap' },
     { 'linebreak', N_ "wrap long lines at a character in 'breakat'" },
     { 'breakindent', N_ 'preserve indentation in wrapped text' },
@@ -128,8 +129,10 @@ local options_list = {
     { 'winfixwidth', N_ 'keep the width of the window' },
     { 'winwidth', N_ 'minimal number of columns used for the current window' },
     { 'winminwidth', N_ 'minimal number of columns used for any window' },
+    { 'winpinned', N_ 'prevent closing window with :only and :fclose' },
     { 'helpheight', N_ 'initial height of the help window' },
     { 'previewheight', N_ 'default height for the preview window' },
+    { 'previewpopup', N_ 'use floating window for preview' },
     { 'previewwindow', N_ 'identifies the preview window' },
     { 'winbar', N_ 'custom format for the window bar' },
     { 'winborder', N_ 'border of floating window' },
@@ -453,6 +456,8 @@ local options_list = {
     { 'busy', N_ 'buffer is busy' },
     { 'termpastefilter', N_ 'characters removed when pasting into terminal window' },
     { 'scrollback', N_ 'number of lines kept beyond the visible screen in terminal buffer' },
+    { 'ttyfast', N_ 'assume terminal responds quickly, enabling more features' },
+    { 'packlockfile', N_ 'sets the path used for vim.pack lockfile' },
   },
 }
 

@@ -27,7 +27,6 @@
 #include "nvim/fuzzy.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
-#include "nvim/getchar.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
@@ -35,6 +34,7 @@
 #include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
+#include "nvim/input.h"
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
 #include "nvim/mbyte.h"
@@ -331,10 +331,20 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     } else {
       // anchor position: the start of the completed word
       pum_win_row = curwin->w_wrow;
+      int wcol = curwin->w_wcol;
+      // w_wcol does not account for text concealed before the cursor;
+      // shift by the offset win_line() recorded for the cursor line so the
+      // menu lines up with the visible text.
+      if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)) {
+        wcol -= curwin->w_wcol_conceal_off;
+        if (wcol < 0) {
+          wcol = 0;
+        }
+      }
       if (pum_rl) {
-        cursor_col = curwin->w_view_width - curwin->w_wcol - 1;
+        cursor_col = curwin->w_view_width - wcol - 1;
       } else {
-        cursor_col = curwin->w_wcol;
+        cursor_col = wcol;
       }
     }
 
@@ -676,7 +686,7 @@ void pum_redraw(void)
 
   int scroll_range = pum_size - pum_height;
   if (fconfig.border) {
-    grid_draw_border(&pum_grid, &fconfig, NULL, 0, NULL);
+    grid_draw_border(&pum_grid, &fconfig, NULL, 0, NULL, 0);
     if (!fconfig.shadow) {
       row++;
       col_off++;
@@ -1024,9 +1034,9 @@ win_T *pum_set_info(int selected, char *info)
   block_autocmds();
   RedrawingDisabled++;
   no_u_sync++;
-  win_T *wp = win_float_find_preview();
+  win_T *wp = win_float_find(kWinInfo);
   if (wp == NULL) {
-    wp = win_float_create_preview(false, true);
+    wp = win_float_special(false, true, kWinInfo);
     if (!wp) {
       return NULL;
     }
@@ -1073,7 +1083,7 @@ static bool pum_set_selected(int n, int repeat)
   // Close the floating preview window if 'selected' is -1, indicating a return to the original
   // state. It is also closed when the selected item has no corresponding info item.
   if (use_float && (pum_selected < 0 || pum_array[pum_selected].pum_info == NULL)) {
-    win_T *wp = win_float_find_preview();
+    win_T *wp = win_float_find(kWinInfo);
     if (wp) {
       wp->w_config.hide = true;
       win_config_float(wp, wp->w_config);
@@ -1118,7 +1128,7 @@ static bool pum_set_selected(int n, int repeat)
     pum_first = MIN(pum_first, pum_size - pum_height);
 
     // Show extra info in the preview window if there is something and
-    // 'completeopt' contains "preview".
+    // 'completeopt' contains "preview" or "popup".
     // Skip this when tried twice already.
     // Skip this also when there is not much room.
     // Skip this for command-window when 'completeopt' contains "preview".
@@ -1127,7 +1137,7 @@ static bool pum_set_selected(int n, int repeat)
         && (Rows > 10)
         && (repeat <= 1)
         && (cur_cot_flags & (kOptCotFlagPreview | kOptCotFlagPopup))
-        && !((cur_cot_flags & kOptCotFlagPreview) && cmdwin_type != 0)) {
+        && !((cur_cot_flags & kOptCotFlagPreview) && cmdwin_buf != NULL)) {
       win_T *curwin_save = curwin;
       tabpage_T *curtab_save = curtab;
 
@@ -1148,13 +1158,13 @@ static bool pum_set_selected(int n, int repeat)
       no_u_sync++;
 
       if (!use_float) {
-        resized = prepare_tagpreview(false);
+        resized = prepare_tagpreview(false, false);
       } else {
-        win_T *wp = win_float_find_preview();
+        win_T *wp = win_float_find(kWinInfo);
         if (wp) {
           win_enter(wp, false);
         } else {
-          wp = win_float_create_preview(true, true);
+          wp = win_float_special(true, true, kWinInfo);
           if (wp) {
             resized = true;
           }
@@ -1165,7 +1175,7 @@ static bool pum_set_selected(int n, int repeat)
       RedrawingDisabled--;
       g_do_tagpreview = 0;
 
-      if (curwin->w_p_pvw || curwin->w_float_is_info) {
+      if (curwin->w_p_pvw || curwin->w_kind == kWinInfo) {
         int res = OK;
         if (!resized
             && (curbuf->b_nwindows == 1)
@@ -1183,11 +1193,11 @@ static bool pum_set_selected(int n, int repeat)
           if (res == OK) {
             // Edit a new, empty buffer. Set options for a "wipeout"
             // buffer.
-            set_option_value_give_err(kOptSwapfile, BOOLEAN_OPTVAL(false), OPT_LOCAL);
-            set_option_value_give_err(kOptBuflisted, BOOLEAN_OPTVAL(false), OPT_LOCAL);
-            set_option_value_give_err(kOptBuftype, STATIC_CSTR_AS_OPTVAL("nofile"), OPT_LOCAL);
-            set_option_value_give_err(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("wipe"), OPT_LOCAL);
-            set_option_value_give_err(kOptDiff, BOOLEAN_OPTVAL(false), OPT_LOCAL);
+            set_option_value_give_err(kOptSwapfile, BOOLEAN_OBJ(false), OPT_LOCAL);
+            set_option_value_give_err(kOptBuflisted, BOOLEAN_OBJ(false), OPT_LOCAL);
+            set_option_value_give_err(kOptBuftype, STATIC_CSTR_AS_OBJ("nofile"), OPT_LOCAL);
+            set_option_value_give_err(kOptBufhidden, STATIC_CSTR_AS_OBJ("wipe"), OPT_LOCAL);
+            set_option_value_give_err(kOptDiff, BOOLEAN_OBJ(false), OPT_LOCAL);
           }
         }
 
@@ -1251,13 +1261,17 @@ static bool pum_set_selected(int n, int repeat)
               update_topline(curwin);
             }
 
+            const bool save_pum_is_drawn = pum_is_drawn;
+
             // Update the screen before drawing the popup menu.
             // Enable updating the status lines.
             // TODO(bfredl): can simplify, get rid of the flag munging?
             // or at least eliminate extra redraw before win_enter()?
             pum_is_visible = false;
+            pum_is_drawn = false;
             update_screen();
             pum_is_visible = true;
+            pum_is_drawn = save_pum_is_drawn;
 
             if (!resized && win_valid(curwin_save)) {
               no_u_sync++;
@@ -1268,8 +1282,10 @@ static bool pum_set_selected(int n, int repeat)
             // May need to update the screen again when there are
             // autocommands involved.
             pum_is_visible = false;
+            pum_is_drawn = false;
             update_screen();
             pum_is_visible = true;
+            pum_is_drawn = save_pum_is_drawn;
           }
         }
       }
@@ -1311,10 +1327,7 @@ void pum_check_clear(void)
     }
     pum_is_drawn = false;
     pum_external = false;
-    win_T *wp = win_float_find_preview();
-    if (wp != NULL) {
-      win_close(wp, false, false);
-    }
+    win_float_close(kWinInfo);
   }
 }
 

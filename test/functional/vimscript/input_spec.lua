@@ -2,13 +2,14 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local eq = t.eq
+local pcall_err = t.pcall_err
 local feed = n.feed
 local api = n.api
 local clear = n.clear
 local source = n.source
 local command = n.command
-local exc_exec = n.exc_exec
 local async_meths = n.async_meths
 local NIL = vim.NIL
 
@@ -205,16 +206,25 @@ describe('input()', function()
     eq('DEF2', api.nvim_get_var('var'))
   end)
   it('errors out on invalid inputs', function()
-    eq('Vim(call):E730: Using a List as a String', exc_exec('call input([])'))
-    eq('Vim(call):E730: Using a List as a String', exc_exec('call input("", [])'))
-    eq('Vim(call):E730: Using a List as a String', exc_exec('call input("", "", [])'))
-    eq('Vim(call):E730: Using a List as a String', exc_exec('call input({"prompt": []})'))
-    eq('Vim(call):E730: Using a List as a String', exc_exec('call input({"default": []})'))
-    eq('Vim(call):E730: Using a List as a String', exc_exec('call input({"completion": []})'))
-    eq('Vim(call):E5050: {opts} must be the only argument', exc_exec('call input({}, "default")'))
+    eq('Vim(call):E730: Using a List as a String', pcall_err(command, 'call input([])'))
+    eq('Vim(call):E730: Using a List as a String', pcall_err(command, 'call input("", [])'))
+    eq('Vim(call):E730: Using a List as a String', pcall_err(command, 'call input("", "", [])'))
+    eq('Vim(call):E730: Using a List as a String', pcall_err(command, 'call input({"prompt": []})'))
+    eq(
+      'Vim(call):E730: Using a List as a String',
+      pcall_err(command, 'call input({"default": []})')
+    )
+    eq(
+      'Vim(call):E730: Using a List as a String',
+      pcall_err(command, 'call input({"completion": []})')
+    )
+    eq(
+      'Vim(call):E5050: {opts} must be the only argument',
+      pcall_err(command, 'call input({}, "default")')
+    )
     eq(
       'Vim(call):E118: Too many arguments for function: input',
-      exc_exec('call input("prompt> ", "default", "file", "extra")')
+      pcall_err(command, 'call input("prompt> ", "default", "file", "extra")')
     )
   end)
   it('supports highlighting', function()
@@ -378,19 +388,31 @@ describe('inputdialog()', function()
     eq('DEF2', api.nvim_get_var('var'))
   end)
   it('errors out on invalid inputs', function()
-    eq('Vim(call):E730: Using a List as a String', exc_exec('call inputdialog([])'))
-    eq('Vim(call):E730: Using a List as a String', exc_exec('call inputdialog("", [])'))
-    eq('Vim(call):E730: Using a List as a String', exc_exec('call inputdialog("", "", [])'))
-    eq('Vim(call):E730: Using a List as a String', exc_exec('call inputdialog({"prompt": []})'))
-    eq('Vim(call):E730: Using a List as a String', exc_exec('call inputdialog({"default": []})'))
-    eq('Vim(call):E730: Using a List as a String', exc_exec('call inputdialog({"completion": []})'))
+    eq('Vim(call):E730: Using a List as a String', pcall_err(command, 'call inputdialog([])'))
+    eq('Vim(call):E730: Using a List as a String', pcall_err(command, 'call inputdialog("", [])'))
+    eq(
+      'Vim(call):E730: Using a List as a String',
+      pcall_err(command, 'call inputdialog("", "", [])')
+    )
+    eq(
+      'Vim(call):E730: Using a List as a String',
+      pcall_err(command, 'call inputdialog({"prompt": []})')
+    )
+    eq(
+      'Vim(call):E730: Using a List as a String',
+      pcall_err(command, 'call inputdialog({"default": []})')
+    )
+    eq(
+      'Vim(call):E730: Using a List as a String',
+      pcall_err(command, 'call inputdialog({"completion": []})')
+    )
     eq(
       'Vim(call):E5050: {opts} must be the only argument',
-      exc_exec('call inputdialog({}, "default")')
+      pcall_err(command, 'call inputdialog({}, "default")')
     )
     eq(
       'Vim(call):E118: Too many arguments for function: inputdialog',
-      exc_exec('call inputdialog("prompt> ", "default", "file", "extra")')
+      pcall_err(command, 'call inputdialog("prompt> ", "default", "file", "extra")')
     )
   end)
   it('supports highlighting', function()
@@ -402,6 +424,19 @@ describe('inputdialog()', function()
       {EOB:~                        }|*3
       {RBP1:(}{RBP2:()}{RBP1:)}^                     |
     ]])
+  end)
+end)
+
+describe('inputlist()', function()
+  it("only offers the mouse when 'mouse' applies to cmdline mode", function()
+    screen:try_resize(75, 5)
+    feed(':call inputlist(["foo", "bar"])<CR>')
+    screen:expect({ any = vim.pesc('Type number and <Enter> (q or empty cancels): ') })
+    feed('q')
+    command('set mouse=a')
+    feed(':call inputlist(["foo", "bar"])<CR>')
+    screen:expect({ any = vim.pesc('Type number and <Enter> or click with the mouse') })
+    feed('q')
   end)
 end)
 

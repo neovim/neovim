@@ -6,7 +6,7 @@
 let s:match_words = ""
 let s:undo_ftplugin = ""
 
-runtime! ftplugin/typescript.vim
+runtime! ftplugin/typescript[.]{vim,lua}
 
 let s:cpo_save = &cpo
 set cpo-=C

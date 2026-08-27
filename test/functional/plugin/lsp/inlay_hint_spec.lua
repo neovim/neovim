@@ -3,7 +3,9 @@ local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 local t_lsp = require('test.functional.plugin.lsp.testutil')
 
+local describe, it, before_each, after_each = t.describe, t.it, t.before_each, t.after_each
 local eq = t.eq
+local pcall_err = t.pcall_err
 local dedent = t.dedent
 local exec_lua = n.exec_lua
 local insert = n.insert
@@ -91,6 +93,7 @@ int main() {
     client_id = exec_lua(function()
       _G.server = _G._create_server({
         capabilities = {
+          textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
           inlayHintProvider = true,
         },
         handlers = {
@@ -125,6 +128,7 @@ int main() {
     local client_id2 = exec_lua(function()
       _G.server2 = _G._create_server({
         capabilities = {
+          textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
           inlayHintProvider = true,
         },
         handlers = {
@@ -133,9 +137,7 @@ int main() {
           end,
         },
       })
-      local client_id2 = vim.lsp.start({ name = 'dummy2', cmd = _G.server2.cmd })
-      vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
-      return client_id2
+      return vim.lsp.start({ name = 'dummy2', cmd = _G.server2.cmd })
     end)
 
     exec_lua(function()
@@ -168,67 +170,67 @@ int main() {
         end)
       )
     end)
+  end)
 
-    describe('clears/applies inlay hints when passed false/true/nil', function()
-      local bufnr2 --- @type integer
-      before_each(function()
-        bufnr2 = exec_lua(function()
-          local bufnr2_0 = vim.api.nvim_create_buf(true, false)
-          vim.lsp.buf_attach_client(bufnr2_0, client_id)
-          vim.api.nvim_win_set_buf(0, bufnr2_0)
-          return bufnr2_0
-        end)
-        insert(text)
-        exec_lua(function()
-          vim.lsp.inlay_hint.enable(true, { bufnr = bufnr2 })
-        end)
-        n.api.nvim_win_set_buf(0, bufnr)
-        screen:expect({ grid = grid_with_inlay_hints })
+  describe('clears/applies inlay hints when passed false/true/nil', function()
+    local bufnr2 --- @type integer
+    before_each(function()
+      bufnr2 = exec_lua(function()
+        local bufnr2_0 = vim.api.nvim_create_buf(true, false)
+        vim.lsp.buf_attach_client(bufnr2_0, client_id)
+        vim.api.nvim_win_set_buf(0, bufnr2_0)
+        return bufnr2_0
       end)
-
-      it('for one single buffer', function()
-        exec_lua(function()
-          vim.lsp.inlay_hint.enable(false, { bufnr = bufnr })
-          vim.api.nvim_win_set_buf(0, bufnr2)
-        end)
-        screen:expect({ grid = grid_with_inlay_hints, unchanged = true })
-        n.api.nvim_win_set_buf(0, bufnr)
-        screen:expect({ grid = grid_without_inlay_hints, unchanged = true })
-
-        exec_lua(function()
-          vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
-        end)
-        screen:expect({ grid = grid_with_inlay_hints, unchanged = true })
-
-        exec_lua(function()
-          vim.lsp.inlay_hint.enable(
-            not vim.lsp.inlay_hint.is_enabled({ bufnr = bufnr }),
-            { bufnr = bufnr }
-          )
-        end)
-        screen:expect({ grid = grid_without_inlay_hints, unchanged = true })
-
-        exec_lua(function()
-          vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
-        end)
-        screen:expect({ grid = grid_with_inlay_hints, unchanged = true })
+      insert(text)
+      screen:expect({ grid = grid_without_inlay_hints })
+      exec_lua(function()
+        vim.lsp.inlay_hint.enable(true, { bufnr = bufnr2 })
       end)
+      screen:expect({ grid = grid_with_inlay_hints })
+    end)
 
-      it('for all buffers', function()
-        exec_lua(function()
-          vim.lsp.inlay_hint.enable(false)
-        end)
-        screen:expect({ grid = grid_without_inlay_hints, unchanged = true })
-        n.api.nvim_win_set_buf(0, bufnr2)
-        screen:expect({ grid = grid_without_inlay_hints, unchanged = true })
-
-        exec_lua(function()
-          vim.lsp.inlay_hint.enable(true)
-        end)
-        screen:expect({ grid = grid_with_inlay_hints, unchanged = true })
-        n.api.nvim_win_set_buf(0, bufnr)
-        screen:expect({ grid = grid_with_inlay_hints, unchanged = true })
+    it('for one single buffer', function()
+      exec_lua(function()
+        vim.lsp.inlay_hint.enable(false, { bufnr = bufnr })
+        vim.api.nvim_win_set_buf(0, bufnr2)
       end)
+      screen:expect({ grid = grid_with_inlay_hints, unchanged = true })
+      n.api.nvim_win_set_buf(0, bufnr)
+      screen:expect({ grid = grid_without_inlay_hints, unchanged = true })
+
+      exec_lua(function()
+        vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+      end)
+      screen:expect({ grid = grid_with_inlay_hints, unchanged = true })
+
+      exec_lua(function()
+        vim.lsp.inlay_hint.enable(
+          not vim.lsp.inlay_hint.is_enabled({ bufnr = bufnr }),
+          { bufnr = bufnr }
+        )
+      end)
+      screen:expect({ grid = grid_without_inlay_hints, unchanged = true })
+
+      exec_lua(function()
+        vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+      end)
+      screen:expect({ grid = grid_with_inlay_hints, unchanged = true })
+    end)
+
+    it('for all buffers', function()
+      exec_lua(function()
+        vim.lsp.inlay_hint.enable(false)
+      end)
+      screen:expect({ grid = grid_without_inlay_hints, unchanged = true })
+      n.api.nvim_win_set_buf(0, bufnr2)
+      screen:expect({ grid = grid_without_inlay_hints, unchanged = true })
+
+      exec_lua(function()
+        vim.lsp.inlay_hint.enable(true)
+      end)
+      screen:expect({ grid = grid_with_inlay_hints, unchanged = true })
+      n.api.nvim_win_set_buf(0, bufnr)
+      screen:expect({ grid = grid_with_inlay_hints, unchanged = true })
     end)
   end)
 
@@ -248,6 +250,7 @@ int main() {
       exec_lua(function()
         _G.server2 = _G._create_server({
           capabilities = {
+            textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
             inlayHintProvider = true,
           },
           handlers = {
@@ -257,7 +260,6 @@ int main() {
           },
         })
         _G.client2 = vim.lsp.start({ name = 'dummy2', cmd = _G.server2.cmd })
-        vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
       end)
 
       --- @type vim.lsp.inlay_hint.get.ret
@@ -312,50 +314,50 @@ int main() {
         end)
       )
     end)
+  end)
 
-    it('does not request hints from lsp when disabled', function()
-      exec_lua(function()
-        _G.server2 = _G._create_server({
-          capabilities = {
-            inlayHintProvider = true,
-          },
-          handlers = {
-            ['textDocument/inlayHint'] = function(_, _, callback)
-              _G.got_inlay_hint_request = true
-              callback(nil, {})
-            end,
-          },
-        })
-        _G.client2 = vim.lsp.start({ name = 'dummy2', cmd = _G.server2.cmd })
-      end)
-
-      local function was_request_sent()
-        return exec_lua(function()
-          return _G.got_inlay_hint_request == true
-        end)
-      end
-
-      eq(false, was_request_sent())
-
-      exec_lua(function()
-        vim.lsp.inlay_hint.get()
-      end)
-
-      eq(false, was_request_sent())
-
-      exec_lua(function()
-        vim.lsp.inlay_hint.enable(false, { bufnr = bufnr })
-        vim.lsp.inlay_hint.get()
-      end)
-
-      eq(false, was_request_sent())
-
-      exec_lua(function()
-        vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
-      end)
-
-      eq(true, was_request_sent())
+  it('does not request hints from lsp when disabled', function()
+    local client_id2 = exec_lua(function()
+      _G.server2 = _G._create_server({
+        capabilities = {
+          textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
+          inlayHintProvider = true,
+        },
+        handlers = {
+          ['textDocument/inlayHint'] = function(_, _, callback)
+            _G.got_inlay_hint_request = true
+            callback(nil, {})
+          end,
+        },
+      })
+      return vim.lsp.start({
+        name = 'dummy2',
+        cmd = _G.server2.cmd,
+        on_attach = function(client, _)
+          vim.lsp.inlay_hint.enable(false, { client_id = client.id })
+        end,
+      })
     end)
+
+    local function was_request_sent()
+      return exec_lua(function()
+        return _G.got_inlay_hint_request or false
+      end)
+    end
+
+    eq(false, was_request_sent())
+
+    exec_lua(function()
+      vim.lsp.inlay_hint.get()
+    end)
+
+    eq(false, was_request_sent())
+
+    exec_lua(function()
+      vim.lsp.inlay_hint.enable(true, { client_id = client_id2 })
+    end)
+
+    eq(true, was_request_sent())
   end)
 end)
 
@@ -402,6 +404,7 @@ test text
     client_id = exec_lua(function()
       _G.server = _G._create_server({
         capabilities = {
+          textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
           inlayHintProvider = true,
         },
         handlers = {

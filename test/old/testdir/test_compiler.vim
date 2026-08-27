@@ -86,6 +86,15 @@ func Test_compiler_without_arg()
   call assert_match(runtime .. '/compiler/' .. exp[-1] .. '.vim$', a[-1])
 endfunc
 
+" Test executing :compiler from the command line, not from a script
+func Test_compiler_commandline()
+  call system(GetVimCommandClean() .. ' -c "compiler gcc" -c "call writefile([b:current_compiler], ''XcompilerOut'')" -c "quit"')
+  call assert_equal(0, v:shell_error)
+  call assert_equal(["gcc"], readfile('XcompilerOut'))
+
+  call delete('XcompilerOut')
+endfunc
+
 func Test_compiler_completion()
   let clist = GetCompilerNames()->join(' ')
   call feedkeys(":compiler \<C-A>\<C-B>\"\<CR>", 'tx')

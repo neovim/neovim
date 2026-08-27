@@ -2,7 +2,9 @@
 -- Test for script-local function.
 
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 
+local describe, it, setup = t.describe, t.it, t.setup
 local clear, feed, insert = n.clear, n.feed, n.insert
 local expect = n.expect
 

@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:		C
 " Maintainer:		The Vim Project <https://github.com/vim/vim>
-" Last Change:		2026 Jan 13
+" Last Change:		2026 Jul 25
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Quit when a (custom) syntax file was already loaded
@@ -138,7 +138,7 @@ endif
 " This should be before cErrInParen to avoid problems with #define ({ xxx })
 if exists("c_curly_error")
   syn match cCurlyError "}"
-  syn region	cBlock		start="{" end="}" contains=ALLBUT,cBadBlock,cCurlyError,@cParenGroup,cErrInParen,cCppParen,cErrInBracket,cCppBracket,@cStringGroup,@Spell fold
+  syn region	cBlock		start="{" end="}" contains=ALLBUT,cBadBlock,cCurlyError,cInitBlock,@cParenGroup,cErrInParen,cCppParen,cErrInBracket,cCppBracket,@cStringGroup,@Spell fold
 else
   syn region	cBlock		start="{" end="}" transparent fold
 endif
@@ -146,7 +146,7 @@ endif
 " Catch errors caused by wrong parenthesis and brackets.
 " Also accept <% for {, %> for }, <: for [ and :> for ] (C99)
 " But avoid matching <::.
-syn cluster	cParenGroup	contains=cParenError,cIncluded,cSpecial,cCommentSkip,cCommentString,cComment2String,@cCommentGroup,cCommentStartError,cUserLabel,cBitField,cOctalZero,@cCppOutInGroup,cFormat,cNumber,cFloat,cOctal,cOctalError,cNumbersCom
+syn cluster	cParenGroup	contains=cParenError,cIncluded,cSpecial,cCommentSkip,cCommentString,cComment2String,@cCommentGroup,cCommentStartError,cUserLabel,cBitField,cOctalZero,@cCppOutInGroup,cFormat,cNumber,cFloat,cOctal,cOctalError,cNumbersCom,cBadParenBlock
 if exists("c_no_curly_error")
   if s:in_cpp_family && !exists("cpp_no_cpp11")
     syn region	cParen		transparent start='(' end=')' contains=ALLBUT,@cParenGroup,cCppParen,@cStringGroup,@Spell
@@ -198,7 +198,14 @@ endif
 
 if s:ft ==# 'c' || exists("cpp_no_cpp11")
   syn region	cBadBlock	keepend start="{" end="}" contained containedin=cParen,cBracket,cBadBlock transparent fold
+  if !exists("c_no_curly_error") && !exists("c_no_bracket_error")
+    " Do not mistake an unmatched ')' followed by a block for a compound literal.
+    syn region	cBadParenBlock	keepend transparent start=')\_s*\ze\%({\|<%\)' matchgroup=cErrInBracket end='}\|%>' contained containedin=cBracket,cBadBlock contains=ALLBUT,cBlock,cBadBlock,cInitBlock,@cParenGroup,cErrInParen,cCppParen,cCppBracket,@cStringGroup,@Spell
+  endif
 endif
+
+" Compound literals and initializers may appear inside parentheses or brackets.
+syn region	cInitBlock	transparent matchgroup=cInitBlock start='\%([)=]\_s*\)\@<=\%({\|<%\)' end='}\|%>' contained containedin=cParen,cBracket,cBadBlock contains=ALLBUT,cBlock,cCurlyError,@cParenGroup,cErrInParen,cCppParen,cErrInBracket,cCppBracket,@cStringGroup,@Spell,cInitBlock fold
 
 "integer number, or floating point number without a dot and with "f".
 syn case ignore
@@ -278,9 +285,9 @@ if exists("c_gnu")
   syn keyword	cOperator	__alignof__
   syn keyword	cOperator	typeof __typeof__
   syn keyword	cOperator	__real__ __imag__
-  syn keyword	cStorageClass	__attribute__ __const__ __extension__
-  syn keyword	cStorageClass	inline __inline __inline__
-  syn keyword	cStorageClass	__restrict__ __volatile__ __noreturn__
+  syn keyword	cStorageClass	__attribute__ __extension__
+  syn keyword	cTypeQualifier	__const__ __restrict__ __volatile__
+  syn keyword	cFunctionSpec	inline __inline __inline__ __noreturn__
 endif
 syn keyword	cType		int long short char void
 syn keyword	cType		signed unsigned float double
@@ -314,9 +321,11 @@ endif
 
 syn keyword	cTypedef	typedef
 syn keyword	cStructure	struct union enum
-syn keyword	cStorageClass	static register auto volatile extern const
+syn keyword	cStorageClass	static register auto extern
+syn keyword	cTypeQualifier	const volatile
 if !exists("c_no_c99") && !s:in_cpp_family
-  syn keyword	cStorageClass	inline restrict
+  syn keyword	cFunctionSpec	inline
+  syn keyword	cTypeQualifier	restrict
 endif
 if (s:ft ==# "c" && !exists("c_no_c23")) || (s:in_cpp_family && !exists("cpp_no_cpp11"))
   syn keyword	cStorageClass	constexpr
@@ -324,11 +333,11 @@ endif
 if !exists("c_no_c11")
   syn keyword	cStorageClass	_Alignas alignas
   syn keyword	cOperator	_Alignof alignof
-  syn keyword	cStorageClass	_Atomic
+  syn keyword	cTypeQualifier	_Atomic
   syn keyword	cOperator	_Generic
-  syn keyword	cStorageClass	_Noreturn
+  syn keyword	cFunctionSpec	_Noreturn
   if !s:in_cpp_family
-    syn keyword	cStorageClass	noreturn
+    syn keyword	cStandardAttribute	noreturn
   endif
   syn keyword	cOperator	_Static_assert static_assert
   syn keyword	cStorageClass	_Thread_local thread_local
@@ -350,6 +359,11 @@ if !exists("c_no_c11")
   syn keyword	cType		atomic_intptr_t atomic_uintptr_t
   syn keyword	cType		atomic_size_t atomic_ptrdiff_t
   syn keyword	cType		atomic_intmax_t atomic_uintmax_t
+endif
+
+if !exists("c_no_c23") && !s:in_cpp_family
+  syn keyword	cStandardAttribute	deprecated fallthrough maybe_unused nodiscard
+  syn keyword	cStandardAttribute	unsequenced reproducible
 endif
 
 if (s:ft ==# "c" && !exists("c_no_c23")) || (s:in_cpp_family && !exists("cpp_no_cpp20"))
@@ -606,6 +620,9 @@ hi def link cOperator		Operator
 hi def link cStructure		Structure
 hi def link cTypedef		Structure
 hi def link cStorageClass	StorageClass
+hi def link cTypeQualifier	cStorageClass
+hi def link cFunctionSpec	cStorageClass
+hi def link cStandardAttribute	cStorageClass
 hi def link cInclude		Include
 hi def link cPreProc		PreProc
 hi def link cDefine		Macro

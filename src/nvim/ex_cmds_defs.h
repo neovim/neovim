@@ -37,7 +37,8 @@
 #define EX_BANG            0x002U  // allow a ! after the command name
 #define EX_EXTRA           0x004U  // allow extra args after command name
 #define EX_XFILE           0x008U  // expand wildcards in extra part
-#define EX_NOSPC           0x010U  // no spaces allowed in the extra part
+#define EX_NOSPC           0x010U  // extra part is a single argument (no split on
+                                   // whitespace)
 #define EX_DFLALL          0x020U  // default file range is 1,$
 #define EX_WHOLEFOLD       0x040U  // extend range to include whole fold also
                                    // when less than two numbers given
@@ -53,14 +54,15 @@
 #define EX_BUFUNL        0x10000U  // accepts unlisted buffer too
 #define EX_ARGOPT        0x20000U  // allow "++opt=val" argument
 #define EX_SBOXOK        0x40000U  // allowed in the sandbox
-#define EX_CMDWIN        0x80000U  // allowed in cmdline window
+#define EX_BUFLOCK_OK    0x80000U  // Command is allowed when curbuf is `b_ro_locked` (e.g. during
+                                   // a quickfix or diff critical section). Legacy name: EX_CMDWIN.
+                                   // Implies EX_LOCK_OK.
 #define EX_MODIFY       0x100000U  // forbidden in non-'modifiable' buffer
 #define EX_FLAGS        0x200000U  // allow flags after count in argument
-#define EX_LOCK_OK     0x1000000U  // command can be executed when textlock is
-                                   // set; when missing disallows editing another
-                                   // buffer when curbuf->b_ro_locked is set
+#define EX_LOCK_OK     0x1000000U  // Command allowed when |textlock| is set. EX_BUFLOCK_OK is per-buffer.
 #define EX_KEEPSCRIPT  0x4000000U  // keep sctx of where command was invoked
 #define EX_PREVIEW     0x8000000U  // allow incremental command preview
+#define EX_ARGSPACE   0x40000000U  // completion: keep spaces in arg lead
 #define EX_FILES (EX_XFILE | EX_EXTRA)  // multiple extra files allowed
 #define EX_FILE1 (EX_FILES | EX_NOSPC)  // 1 file, defaults to current file
 #define EX_WORD1 (EX_EXTRA | EX_NOSPC)  // one extra word allowed
@@ -138,6 +140,10 @@ struct exarg {
   LineGetter ea_getline;        ///< function used to get the next line
   void *cookie;                 ///< argument for ea_getline()
   cstack_T *cstack;             ///< condition stack for ":if" etc.
+  struct {                      ///< special char handling in command args
+    bool file;
+    bool bar;
+  } magic;
 };
 
 #define FORCE_BIN 1             // ":edit ++bin file"
@@ -187,15 +193,6 @@ typedef struct {
   int cmod_save_msg_scroll;  ///< for restoring msg_scroll
   int cmod_did_esilent;  ///< incremented when emsg_silent is
 } cmdmod_T;
-
-/// Stores command modifier info used by `nvim_parse_cmd`
-typedef struct {
-  cmdmod_T cmdmod;
-  struct {
-    bool file;
-    bool bar;
-  } magic;
-} CmdParseInfo;
 
 /// Previous :substitute replacement string definition
 typedef struct {

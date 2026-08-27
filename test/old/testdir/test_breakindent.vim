@@ -1030,6 +1030,7 @@ func Test_visual_starts_before_skipcol()
   let buf = RunVimInTerminal('-S XvisualStartsBeforeSkipcol', #{rows: 6})
 
   call term_sendkeys(buf, "v$")
+  call WaitForAssert({-> assert_match('VISUAL.*\d', term_getline(buf, 6))}, 1000)
   call VerifyScreenDump(buf, 'Test_visual_starts_before_skipcol_1', {})
   call term_sendkeys(buf, "\<Esc>:setlocal showbreak=+++\<CR>gv")
   call VerifyScreenDump(buf, 'Test_visual_starts_before_skipcol_2', {})

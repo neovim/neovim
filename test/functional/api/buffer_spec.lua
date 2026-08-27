@@ -2,6 +2,8 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each, after_each, setup, teardown, finally =
+  t.describe, t.it, t.before_each, t.after_each, t.setup, t.teardown, t.finally
 local clear = n.clear
 local eq = t.eq
 local ok = t.ok
@@ -9,7 +11,7 @@ local describe_lua_and_rpc = n.describe_lua_and_rpc(describe)
 local api = n.api
 local fn = n.fn
 local request = n.request
-local exec_lua = n.exec_lua
+local exec, exec_lua = n.exec, n.exec_lua
 local insert = n.insert
 local NIL = vim.NIL
 local command = n.command
@@ -188,7 +190,7 @@ describe('api/buf', function()
       eq(0, api.nvim_buf_line_count(bufnr))
     end)
 
-    it('get_lines has defined behaviour for unloaded buffers', function()
+    it('get_lines and get_text has defined behaviour for unloaded buffers', function()
       -- we'll need to know our bufnr for when it gets unloaded
       local bufnr = api.nvim_get_current_buf()
       -- replace the buffer contents with these three lines
@@ -202,6 +204,22 @@ describe('api/buf', function()
       eq({}, api.nvim_buf_get_lines(bufnr, 1, 3, true))
       -- it's impossible to get out-of-bounds errors for an unloaded buffer
       eq({}, api.nvim_buf_get_lines(bufnr, 8888, 9999, true))
+      eq({}, api.nvim_buf_get_text(bufnr, 8888, 1000, 9999, 2000, {}))
+      -- The Lua path (vim.api) must also return an empty table, not nil. #39833 #39851
+      eq(
+        { 'table', {} },
+        exec_lua(function()
+          local r = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+          return { type(r), r }
+        end)
+      )
+      eq(
+        { 'table', {} },
+        exec_lua(function()
+          local r = vim.api.nvim_buf_get_text(bufnr, 0, 0, -1, 0, {})
+          return { type(r), r }
+        end)
+      )
     end)
 
     describe('handles topline', function()
@@ -959,6 +977,10 @@ describe('api/buf', function()
       eq('hello foo!', curbuf_depr('get_line', 0))
       -- cursor should be moved left by two columns (replacement is shorter by 2 chars)
       eq({ 1, 9 }, api.nvim_win_get_cursor(0))
+
+      -- changelist entry reflects the edit column #28618
+      local changes = fn.getchangelist()[1]
+      eq(6, changes[#changes].col)
     end)
 
     it('updates the cursor position in non-current window', function()
@@ -1003,6 +1025,110 @@ describe('api/buf', function()
       -- both cursors should be moved left by two columns (replacement is shorter by 2 chars)
       eq({ 1, 9 }, api.nvim_win_get_cursor(win))
       eq({ 1, 4 }, api.nvim_win_get_cursor(win2))
+    end)
+
+    it('keep visual select position #29558', function()
+      insert([[1234]])
+      api.nvim_win_set_cursor(0, { 1, 1 })
+      feed('vl')
+      exec_lua([[
+        vim.defer_fn(function() vim.api.nvim_buf_set_text(0, 0, 0, 0, 0, { '0' }) end, 50)
+        vim.wait(80)
+      ]])
+      local mode = api.nvim_get_mode().mode
+      eq({ '23' }, fn.getregion(fn.getpos('.'), fn.getpos('v'), { type = mode }))
+      eq({ 'v', { '01234' } }, { mode, api.nvim_buf_get_lines(0, 0, -1, false) })
+      feed('<ESC>')
+
+      api.nvim_buf_set_lines(0, 0, -1, false, { '1', '2', '3' })
+      api.nvim_win_set_cursor(0, { 2, 0 })
+      feed('v')
+      exec_lua([[
+        vim.defer_fn(function() vim.api.nvim_buf_set_text(0, 0, 0, 0, 0, { '0', '' }) end, 50)
+        vim.wait(80)
+      ]])
+      mode = api.nvim_get_mode().mode
+      eq({ '2' }, fn.getregion(fn.getpos('.'), fn.getpos('v'), { type = mode }))
+      eq({ 'v', { '0', '1', '2', '3' } }, { mode, api.nvim_buf_get_lines(0, 0, -1, false) })
+      feed('<ESC>')
+
+      api.nvim_buf_set_lines(0, 0, -1, false, { '1', '2' })
+      api.nvim_win_set_cursor(0, { 1, 0 })
+      feed('vj')
+      exec_lua([[
+        vim.defer_fn(function() vim.api.nvim_buf_set_text(0, 0, 0, 0, 0, { '0' }) end, 50)
+        vim.wait(80)
+      ]])
+      mode = api.nvim_get_mode().mode
+      eq({ '1', '2' }, fn.getregion(fn.getpos('.'), fn.getpos('v'), { type = mode }))
+      eq({ 'v', { '01', '2' } }, { mode, api.nvim_buf_get_lines(0, 0, -1, false) })
+      feed('<ESC>')
+
+      api.nvim_buf_set_lines(0, 0, -1, false, { '123' })
+      api.nvim_win_set_cursor(0, { 1, 1 })
+      feed('v')
+      exec_lua([[
+        vim.defer_fn(function() vim.api.nvim_buf_set_text(0, 0, 0, 0, 0, { '', '' }) end, 50)
+        vim.wait(80)
+      ]])
+      mode = api.nvim_get_mode().mode
+      eq({ '2' }, fn.getregion(fn.getpos('.'), fn.getpos('v'), { type = mode }))
+      eq({ 'v', { '', '123' } }, { mode, api.nvim_buf_get_lines(0, 0, -1, false) })
+      feed('<ESC>')
+
+      -- Visual block mode
+      api.nvim_buf_set_lines(0, 0, -1, false, { '123', '456' })
+      api.nvim_win_set_cursor(0, { 1, 0 })
+      feed('<C-v>jl')
+      exec_lua([[
+        vim.defer_fn(function() vim.api.nvim_buf_set_text(0, 0, 0, 0, 0, { '0' }) end, 50)
+        vim.wait(80)
+      ]])
+      mode = api.nvim_get_mode().mode
+      eq({ '01', '45' }, fn.getregion(fn.getpos('.'), fn.getpos('v'), { type = mode }))
+      eq(
+        { string.char(0x16), { '0123', '456' } },
+        { mode, api.nvim_buf_get_lines(0, 0, -1, false) }
+      )
+      feed('<ESC>')
+      -- also test nvim_buf_set_lines inserts line above visual selection
+      api.nvim_buf_set_lines(0, 0, -1, false, { '1', '2', '3' })
+      api.nvim_win_set_cursor(0, { 2, 0 })
+      feed('v')
+      exec_lua([[
+        vim.defer_fn(function() vim.api.nvim_buf_set_lines(0, 0, 0, false, { 'new' }) end, 50)
+        vim.wait(80)
+      ]])
+      mode = api.nvim_get_mode().mode
+      eq({ '2' }, fn.getregion(fn.getpos('.'), fn.getpos('v'), { type = mode }))
+      eq({ 'v', { 'new', '1', '2', '3' } }, { mode, api.nvim_buf_get_lines(0, 0, -1, false) })
+      feed('<ESC>')
+
+      api.nvim_buf_set_lines(0, 0, -1, false, { '1234' })
+      api.nvim_win_set_cursor(0, { 1, 1 })
+      feed('vl')
+      exec_lua([[
+        vim.defer_fn(function()
+          vim.api.nvim_buf_set_text(0, 0, 0, 0, 0, { '0', 'foo' })
+        end, 50)
+        vim.wait(80)
+      ]])
+      mode = api.nvim_get_mode().mode
+      eq({ '23' }, fn.getregion(fn.getpos('.'), fn.getpos('v'), { type = mode }))
+      eq({ 'v', { '0', 'foo1234' } }, { mode, api.nvim_buf_get_lines(0, 0, -1, false) })
+      feed('<ESC>')
+
+      api.nvim_buf_set_lines(0, 0, -1, false, { '1', '2', '3', '4', '5', '6', '7', '8', '9', '10' })
+      api.nvim_win_set_cursor(0, { 8, 0 })
+      feed('v')
+      exec_lua([[
+        vim.defer_fn(function() vim.api.nvim_buf_set_lines(0, 0, 5, false, {}) end, 50)
+        vim.wait(80)
+      ]])
+      mode = api.nvim_get_mode().mode
+      eq({ '8' }, fn.getregion(fn.getpos('.'), fn.getpos('v'), { type = mode }))
+      eq({ 'v', { '6', '7', '8', '9', '10' } }, { mode, api.nvim_buf_get_lines(0, 0, -1, false) })
+      feed('<ESC>')
     end)
 
     describe('when text is being added right at cursor position #22526', function()
@@ -2268,6 +2394,32 @@ describe('api/buf', function()
       os.remove(new_name)
     end)
 
+    it('directory buffer-name always ends with slash', function()
+      local cwd = t.fix_slashes(fn.getcwd())
+      local dir = 'Xtest_dir_name'
+      t.mkdir(dir)
+      finally(function()
+        n.rmdir(dir)
+      end)
+      api.nvim_buf_set_name(0, dir)
+      eq(cwd .. '/' .. dir .. '/', t.fix_slashes(api.nvim_buf_get_name(0)))
+    end)
+
+    it('directory buffer-name preserves symbolic link path', function()
+      t.skip(t.is_os('win'), 'N/A for Windows')
+      local cwd = t.fix_slashes(fn.getcwd())
+      local target = 'Xtest_dir_target'
+      local link = 'Xtest_dir_link'
+      t.mkdir(target)
+      assert(vim.uv.fs_symlink(assert(vim.uv.fs_realpath(target)), link, { dir = true }))
+      finally(function()
+        os.remove(link)
+        n.rmdir(target)
+      end)
+      api.nvim_buf_set_name(0, link .. '/')
+      eq(cwd .. '/' .. link .. '/', t.fix_slashes(api.nvim_buf_get_name(0)))
+    end)
+
     describe("with 'autochdir'", function()
       local topdir
       local oldbuf
@@ -2353,6 +2505,20 @@ describe('api/buf', function()
       ok(not api.nvim_buf_is_loaded(b))
       ok(api.nvim_buf_is_valid(b))
     end)
+
+    it('does not crash if WinClosed closes the next tabpage #40852', function()
+      exec_lua(function()
+        vim.cmd.tabnew()
+        vim.api.nvim_create_autocmd('WinClosed', {
+          callback = function()
+            pcall(vim.api.nvim_win_close, 0, true)
+          end,
+        })
+        local bufs = vim.api.nvim_list_bufs()
+        vim.api.nvim_buf_delete(bufs[#bufs - 1], { force = true })
+      end)
+      assert_alive()
+    end)
   end)
 
   describe('nvim_buf_get_mark', function()
@@ -2426,5 +2592,459 @@ describe('api/buf', function()
     it('fails when invalid buffer number is used', function()
       eq(false, pcall(api.nvim_buf_del_mark, 99, 'a'))
     end)
+  end)
+
+  describe('nvim_buf_call', function()
+    it('window keeps the buffer when the callback closes the original window', function()
+      local origin = api.nvim_get_current_win()
+      local other_buf = api.nvim_create_buf(true, false)
+      local other_win = api.nvim_open_win(other_buf, false, { split = 'right' })
+      exec_lua(function()
+        vim.api.nvim_buf_call(other_buf, function()
+          vim.api.nvim_win_close(origin, true)
+          vim.cmd('enew') -- switch the context window away from other_buf
+        end)
+      end)
+      -- Original window is gone: stay in the nvim_buf_call window, but buffer is restored.
+      eq(other_win, api.nvim_get_current_win())
+      eq(other_buf, api.nvim_win_get_buf(other_win))
+    end)
+
+    it('preserves visual-mode, unless the callback ended it', function()
+      -- Same-buffer: Visual survives untouched.
+      command('normal! v')
+      exec_lua('vim.api.nvim_buf_call(0, function() end)')
+      eq('v', fn.mode())
+      -- The callback ends Visual mode: it must STAY ended.
+      exec_lua([[vim.api.nvim_buf_call(0, function() vim.cmd('normal! \27') end)]])
+      eq('n', fn.mode())
+    end)
+
+    it('supports multiple returns', function()
+      local curbuf = api.nvim_get_current_buf()
+      local other = api.nvim_create_buf(false, true)
+      exec_lua(function()
+        function with_len(...)
+          return select('#', ...), { ... }
+        end
+        function test(fn)
+          local len, res = with_len(vim.api.nvim_buf_call(other, fn))
+          -- convert to serializable vim.NIL
+          for i = 1, len do
+            if res[i] == nil then
+              res[i] = vim.NIL
+            end
+          end
+          return res
+        end
+      end)
+
+      eq(
+        { other },
+        exec_lua(function()
+          return test(function()
+            return vim.api.nvim_get_current_buf()
+          end)
+        end)
+      )
+      eq(curbuf, api.nvim_get_current_buf())
+      eq(
+        { other, vim.NIL },
+        exec_lua(function()
+          return test(function()
+            return vim.api.nvim_get_current_buf(), nil
+          end)
+        end)
+      )
+
+      eq(
+        { 6, 7 },
+        exec_lua(function()
+          return test(function()
+            return 6, 7
+          end)
+        end)
+      )
+      eq(
+        { 6, vim.NIL, 7 },
+        exec_lua(function()
+          return test(function()
+            return 6, nil, 7
+          end)
+        end)
+      )
+      eq(
+        {},
+        exec_lua(function()
+          return test(function() end)
+        end)
+      )
+      eq(
+        { vim.NIL },
+        exec_lua(function()
+          return test(function()
+            return nil
+          end)
+        end)
+      )
+    end)
+
+    it('propagates return values when called from a coroutine #39834', function()
+      local other = api.nvim_create_buf(false, true)
+      eq(
+        { other, vim.NIL, 42 },
+        exec_lua(function()
+          local out
+          local co = coroutine.create(function()
+            local function pack(...)
+              local r = { ... }
+              for i = 1, select('#', ...) do
+                if r[i] == nil then
+                  r[i] = vim.NIL
+                end
+              end
+              return r
+            end
+            out = pack(vim.api.nvim_buf_call(other, function()
+              return vim.api.nvim_get_current_buf(), nil, 42
+            end))
+          end)
+          assert(coroutine.resume(co))
+          return out
+        end)
+      )
+    end)
+
+    it('can access buf options', function()
+      local buf1 = api.nvim_get_current_buf()
+      local buf2 = exec_lua [[
+        buf2 = vim.api.nvim_create_buf(false, true)
+        return buf2
+      ]]
+
+      eq(false, api.nvim_get_option_value('autoindent', { buf = buf1 }))
+      eq(false, api.nvim_get_option_value('autoindent', { buf = buf2 }))
+
+      local val = exec_lua [[
+        return vim.api.nvim_buf_call(buf2, function()
+          vim.cmd "set autoindent"
+          return vim.api.nvim_get_current_buf()
+        end)
+      ]]
+
+      eq(false, api.nvim_get_option_value('autoindent', { buf = buf1 }))
+      eq(true, api.nvim_get_option_value('autoindent', { buf = buf2 }))
+      eq(buf1, api.nvim_get_current_buf())
+      eq(buf2, val)
+    end)
+
+    it('does not cause ml_get errors with invalid visual selection', function()
+      -- Should be fixed by vim-patch:8.2.4028.
+      exec_lua [[
+        local api = vim.api
+        local t = function(s) return api.nvim_replace_termcodes(s, true, true, true) end
+        api.nvim_buf_set_lines(0, 0, -1, true, {"a", "b", "c"})
+        api.nvim_feedkeys(t "G<C-V>", "txn", false)
+        api.nvim_buf_call(api.nvim_create_buf(false, true), function() vim.cmd "redraw" end)
+      ]]
+    end)
+
+    it('can be nested crazily with hidden buffers', function()
+      eq(
+        true,
+        exec_lua([[
+        local function scratch_buf_call(fn)
+          local buf = vim.api.nvim_create_buf(false, true)
+          vim.api.nvim_set_option_value('cindent', true, {buf = buf})
+          return vim.api.nvim_buf_call(buf, function()
+            return vim.api.nvim_get_current_buf() == buf
+              and vim.api.nvim_get_option_value('cindent', {buf = buf})
+              and fn()
+          end) and vim.api.nvim_buf_delete(buf, {}) == nil
+        end
+
+        return scratch_buf_call(function()
+          return scratch_buf_call(function()
+            return scratch_buf_call(function()
+              return scratch_buf_call(function()
+                return scratch_buf_call(function()
+                  return scratch_buf_call(function()
+                    return scratch_buf_call(function()
+                      return scratch_buf_call(function()
+                        return scratch_buf_call(function()
+                          return scratch_buf_call(function()
+                            return scratch_buf_call(function()
+                              return scratch_buf_call(function()
+                                return true
+                              end)
+                            end)
+                          end)
+                        end)
+                      end)
+                    end)
+                  end)
+                end)
+              end)
+            end)
+          end)
+        end)
+      ]])
+      )
+    end)
+
+    it('can return values by reference', function()
+      eq(
+        { 4, 7 },
+        exec_lua [[
+        local val = {4, 10}
+        local ref = vim.api.nvim_buf_call(0, function() return val end)
+        ref[2] = 7
+        return val
+      ]]
+      )
+    end)
+
+    it('can get Visual selection in current buffer #34162', function()
+      insert('foo bar baz')
+      feed('gg0fbvtb')
+      local text = exec_lua([[
+        return vim.api.nvim_buf_call(0, function()
+          return vim.fn.getregion(vim.fn.getpos('.'), vim.fn.getpos('v'))
+        end)
+      ]])
+      eq({ 'bar ' }, text)
+    end)
+  end)
+end)
+
+describe('path sep in ffname/sfname #39382,', function()
+  if not t.is_os('win') then
+    return
+  end
+
+  local cwd, files = vim.uv.cwd(), {}
+  local expected_cwd = vim.fs.normalize(cwd)
+  for i = 1, 3 do
+    files[i] = ([[%s\Xtest\file%s]]):format(cwd, i)
+  end
+
+  local sfname_eq = function(expected, nr)
+    command(('buffer %s'):format(nr or ''))
+    eq(expected, api.nvim_eval_statusline('%f', {}).str)
+  end
+
+  setup(function()
+    t.mkdir('Xtest')
+  end)
+
+  teardown(function()
+    n.rmdir('Xtest')
+  end)
+
+  before_each(function()
+    clear()
+  end)
+
+  it('normalizes startup file arguments', function()
+    clear { args = files }
+    for i = 1, 3 do
+      eq(('%s/Xtest/file%s'):format(expected_cwd, i), api.nvim_buf_get_name(i))
+      sfname_eq(('Xtest/file%s'):format(i), i)
+    end
+  end)
+
+  it('normalizes :next arguments (FILES flag)', function()
+    command(('next %s'):format(table.concat(files, ' ')))
+    for i = 1, 3 do
+      eq(('%s/Xtest/file%s'):format(expected_cwd, i), api.nvim_buf_get_name(i))
+      sfname_eq(('%s/Xtest/file%s'):format(expected_cwd, i), i)
+    end
+  end)
+
+  it('normalizes :edit arguments (FILE1 flag)', function()
+    -- tilde prefix
+    command([[edit ~\foo\bar]])
+    eq(('%s/foo/bar'):format(fn.getenv('HOME')), api.nvim_buf_get_name(0))
+    sfname_eq('~/foo/bar')
+
+    -- absolute path
+    command(('edit %s'):format(files[1]))
+    eq(('%s/Xtest/file1'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq(('%s/Xtest/file1'):format(expected_cwd))
+  end)
+
+  it('normalizes bufadd() arguments', function()
+    local n = fn.bufadd(files[1])
+    eq(('%s/Xtest/file1'):format(expected_cwd), api.nvim_buf_get_name(n))
+    sfname_eq(('%s/Xtest/file1'):format(expected_cwd), n)
+  end)
+
+  it('normalizes bufnr() arguments', function()
+    local n = fn.bufnr(files[1], 1)
+    eq(('%s/Xtest/file1'):format(expected_cwd), api.nvim_buf_get_name(n))
+    sfname_eq(('%s/Xtest/file1'):format(expected_cwd), n)
+  end)
+
+  it('normalizes temp paths, <afile> and <amatch> for :diffpatch', function()
+    t.write_file('Xtest/patch', [[diff file]])
+    t.write_file('Xtest/test.txt', [[input file]])
+    command('edit Xtest/test.txt')
+    exec([[
+      fun MyPatch()
+        call writefile(['output file'], v:fname_out)
+      endfunc
+      set patchexpr=MyPatch()
+    ]])
+    exec_lua([[
+      vim.api.nvim_create_autocmd('BufAdd', {
+        pattern = '*',
+        callback = function(ev)
+          vim.g.test_file = ev.file
+          vim.g.test_match = ev.match
+        end
+      })
+    ]])
+    command('diffpatch Xtest/patch')
+    eq(('%s/Xtest/test.txt.new'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq('Xtest/test.txt.new')
+    local tmp = fn.getenv('TMPDIR')
+    local afile = fn.eval('g:test_file') ---@type string
+    local amatch = fn.eval('g:test_match') ---@type string
+    t.matches(tmp, afile, true)
+    t.not_matches('\\', afile, true)
+    t.matches(tmp, amatch, true)
+    t.not_matches('\\', amatch, true)
+  end)
+
+  it('normalizes :find results', function()
+    t.write_file('Xtest/file1', '')
+    command([[find Xtest\file1]])
+    eq(('%s/Xtest/file1'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq('Xtest/file1')
+
+    -- 'findfunc'
+    exec(([[
+      func FindFile(cmdarg, cmdcomplete)
+        return  ['%s']
+      endfunc
+      set findfunc=FindFile
+    ]]):format(files[2]))
+    command([[find file2]])
+    eq(('%s/Xtest/file2'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq(('%s/Xtest/file2'):format(expected_cwd))
+  end)
+
+  it('normalizes :scriptnames arguments', function()
+    command(('scriptnames %s'):format(files[1]))
+    eq(('%s/Xtest/file1'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq(('%s/Xtest/file1'):format(expected_cwd))
+  end)
+
+  it('normalizes gf targets', function()
+    t.write_file('Xtest/file1', '')
+    feed(('i%s<Esc>0gf'):format(files[1]))
+    eq(('%s/Xtest/file1'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq(('%s/Xtest/file1'):format(expected_cwd))
+    command('bw')
+    feed('<C-W>f')
+    eq(('%s/Xtest/file1'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq(('%s/Xtest/file1'):format(expected_cwd))
+  end)
+
+  it('normalizes macro definition targets and completions', function()
+    t.mkdir('Xtest/sub')
+    t.write_file(
+      'Xtest/sub/bar.h',
+      [[
+      #define MIN 0;
+      #define MAX 10;
+    ]]
+    )
+    t.write_file(
+      'Xtest/foo.c',
+      [[
+      #include "sub\bar.h";
+      void main() {
+        int i = MIN;
+      }
+    ]]
+    )
+    local screen = Screen.new(30, 10)
+    command([[set include=^\\s*#\\s*include]])
+    command([[set define=^\\s*#\\s*define]])
+    command('e Xtest/foo.c')
+    command('djump MIN')
+    eq(('%s/Xtest/sub/bar.h'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq('Xtest/sub/bar.h')
+    command('bw')
+    feed('/MIN<CR>lxxi<C-x><C-d>')
+    screen:expect({
+      any = {
+        'MIN Xtest/sub/bar.h',
+        'MAX Xtest/sub/bar.h',
+      },
+    })
+  end)
+
+  it('normalizes tag targets', function()
+    t.write_file(
+      'Xtest/tags',
+      [[
+      main	.\\foo.c	/^void main() /;"	f	typeref:typename:void
+      main2	$DIR\foo.c	/^void main2() /;"	f	typeref:typename:void
+      main3	./foo.c	/^void main3() /;"	f	typeref:typename:void
+    ]]
+    )
+    t.write_file(
+      'Xtest/foo.c',
+      [[
+      void main() {}
+      void main2() {};
+      void main3() {};
+    ]]
+    )
+
+    command('cd Xtest')
+    command('tjump main')
+    eq(('%s/Xtest/foo.c'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq('.//foo.c')
+
+    command('bw')
+    fn.setenv('DIR', ([[%s\Xtest]]):format(cwd))
+    command('tjump main2')
+    eq(('%s/Xtest/foo.c'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq(('%s/Xtest/foo.c'):format(expected_cwd))
+
+    command('bw')
+    command('tjump main3')
+    eq(('%s/Xtest/foo.c'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq('./foo.c')
+  end)
+
+  it('normalizes quickfix targets', function()
+    t.write_file(
+      'Xtest/error',
+      [[
+      foo.c
+      .\Xtest\foo.c(3): error C2143: syntax error: missing ';' before 'return'
+    ]]
+    )
+    local screen = Screen.new(40, 10)
+    command('cg Xtest/error')
+    command('copen')
+    screen:expect({
+      any = './Xtest/foo.c',
+    })
+    feed('<CR>')
+    eq(('%s/Xtest/foo.c'):format(expected_cwd), api.nvim_buf_get_name(0))
+    sfname_eq('./Xtest/foo.c')
+  end)
+
+  it('preserves backslashes in URIs', function()
+    local exe_path = fn.exepath('cmd')
+    t.not_matches('/', exe_path, true)
+    command(('e term://%s'):format(exe_path))
+    t.matches(exe_path, api.nvim_buf_get_name(0), true)
+    t.matches(exe_path, api.nvim_eval_statusline('%f', {}).str, true)
   end)
 end)

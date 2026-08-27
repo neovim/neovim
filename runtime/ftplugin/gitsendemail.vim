@@ -3,4 +3,4 @@
 " Maintainer:	Tim Pope <vimNOSPAM@tpope.org>
 " Last Change:	2009 Dec 24
 
-runtime! ftplugin/mail.vim
+runtime! ftplugin/mail[.]{vim,lua}

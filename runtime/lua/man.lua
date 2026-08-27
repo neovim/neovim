@@ -123,8 +123,9 @@ local function render_line(line, row, hls)
         attr = Attrs.None
       end
 
-      -- Grow the previous highlight group if possible
-      if last_hl and last_hl.attr == attr and last_hl.final == byte then
+      -- Grow the previous highlight group if possible. `hls` spans the buffer,
+      -- so only grow a group that is on the current row.
+      if last_hl and last_hl.row == row and last_hl.attr == attr and last_hl.final == byte then
         last_hl.final = byte + #char
       else
         hls[#hls + 1] = { attr = attr, row = row, start = byte, final = byte + #char }
@@ -257,12 +258,15 @@ function M._match_manpage_path(paths, name, sect)
     return
   end
 
-  -- `man -w /some/path` will return `/some/path` for any existent file, which
-  -- stops us from actually determining if a path has a corresponding man file.
-  -- Since `:Man /some/path/to/man/file` isn't supported anyway, we should just
-  -- error out here if we detect this is the case.
+  -- `man -w /some/path` echoes the input for any existent file. Accept only
+  -- paths that look like a man page (`.../man1/bash.1`). #30873
   if sect == '' and #paths == 1 and paths[1] == name then
-    return
+    local tail = vim.fs.basename(name)
+    local parent = vim.fs.basename(vim.fs.dirname(name))
+    if not (parent:find('^man') and tail:find('%.%d')) then
+      return
+    end
+    return name
   end
 
   -- find any that match the specified name
@@ -416,7 +420,7 @@ end
 local function set_options()
   vim.bo.swapfile = false
   vim.bo.buftype = 'nofile'
-  vim.bo.bufhidden = 'unload'
+  vim.bo.bufhidden = 'hide'
   vim.bo.modified = false
   vim.bo.readonly = true
   vim.bo.modifiable = false
@@ -427,10 +431,8 @@ end
 --- @type boolean?
 local localfile_arg
 
---- @param path string
---- @param silent boolean?
---- @return string
-local function get_page(path, silent)
+--- @return integer
+local function get_manwidth()
   -- Disable hard-wrap by using a big $MANWIDTH (max 1000 on some systems #9065).
   -- Soft-wrap: ftplugin/man.lua sets wrap/breakindent/….
   -- Hard-wrap: driven by `man`.
@@ -438,11 +440,20 @@ local function get_page(path, silent)
   if (vim.g.man_hardwrap or 1) ~= 1 then
     manwidth = 999
   elseif vim.env.MANWIDTH then
-    vim.env.MANWIDTH = vim._tointeger(vim.env.MANWIDTH) or 0
-    manwidth = math.min(vim.env.MANWIDTH, api.nvim_win_get_width(0) - vim.o.wrapmargin)
+    local env_manwidth = vim._tointeger(vim.env.MANWIDTH) or 0
+    manwidth = math.min(env_manwidth, api.nvim_win_get_width(0) - vim.o.wrapmargin)
   else
     manwidth = api.nvim_win_get_width(0) - vim.o.wrapmargin
   end
+  return manwidth
+end
+
+--- @param path string
+--- @param silent boolean?
+--- @param manwidth integer?
+--- @return string
+local function get_page(path, silent, manwidth)
+  manwidth = manwidth or get_manwidth()
 
   if localfile_arg == nil then
     local mpath = get_path('man')
@@ -498,11 +509,16 @@ local function get_paths(name, sect)
   -- - does not work on MacOS 14 and later.
   -- - only returns '/usr/bin/man' on MacOS 13 and earlier.
   --- @type string?
-  local mandirs_raw = vim.F.npcall(system, { 'manpath', '-q' })
-    or vim.F.npcall(system, { 'man', '-w' })
+  local mandirs_raw = vim.npcall(system, { 'manpath', '-q' })
+    or vim.npcall(system, { 'man', '-w' })
     or vim.env.MANPATH
 
   if not mandirs_raw then
+    -- Fall back to direct lookup ("man -w [sect] name"). NetBSD man lacks "-w". #25919
+    local ok, path = pcall(M._find_path, name, sect)
+    if ok and path then
+      return { path }
+    end
     return {}, "Could not determine man directories from: 'man -w', 'manpath' or $MANPATH"
   end
 
@@ -552,7 +568,7 @@ local function parse_cmdline(arg_lead, cmd_line)
 
   if arg_lead:match('^[^()]+%([^()]*$') then
     -- cursor (|) is at ':Man printf(|' or ':Man 1 printf(|'
-    -- The later is is allowed because of ':Man pri<TAB>'.
+    -- The latter is allowed because of ':Man pri<TAB>'.
     -- It will offer 'priclass.d(1m)' even though section is specified as 1.
     local tmp = vim.split(arg_lead, '(', { plain = true })
     local name = tmp[1]
@@ -669,8 +685,8 @@ function M.init_pager()
   -- know the correct casing, cf. `man glDrawArraysInstanced`).
   --- @type string
   local ref = (fn.getline(1):match('^[^)]+%)') or ''):gsub(' ', '_')
-  local _, sect, err = pcall(parse_ref, ref)
-  vim.b.man_sect = err ~= nil and sect or ''
+  local ok, _, sect = pcall(parse_ref, ref)
+  vim.b.man_sect = ok and (sect or '') or ''
 
   local man_bufname = 'man://' .. fn.fnameescape(ref):lower()
 
@@ -690,6 +706,7 @@ function M.init_pager()
   end
 
   set_options()
+  vim.bo.bufhidden = 'unload'
 end
 
 --- Combine the name and sect into a manpage reference so that all
@@ -755,7 +772,7 @@ function M.open_page(count, smods, args)
   end
   local buf = api.nvim_get_current_buf()
   local save_tfu = vim.bo[buf].tagfunc
-  vim.bo[buf].tagfunc = "v:lua.require'man'.goto_tag"
+  vim.bo[buf].tagfunc = M.goto_tag
 
   local target = ('%s(%s)'):format(name, sect)
 
@@ -794,10 +811,12 @@ function M.read_page(ref)
     return 'no manual entry for ' .. name
   end
 
-  local _, sect1 = parse_path(path)
-  local page = get_page(path)
+  local _, page_sect = parse_path(path)
+  local manwidth = get_manwidth()
+  local page = get_page(path, nil, manwidth)
 
-  vim.b.man_sect = sect1
+  vim.b.manwidth = manwidth
+  vim.b.man_sect = page_sect
   vim.bo.modifiable = true
   vim.bo.readonly = false
   vim.bo.swapfile = false
@@ -820,6 +839,20 @@ function M.read_page(ref)
   vim.cmd('1') -- Move cursor to first line
   highlight_man_page()
   set_options()
+end
+
+--- @return string? err
+function M.refresh_page()
+  if vim.bo.filetype ~= 'man' then
+    return
+  end
+
+  local ref = api.nvim_buf_get_name(0):match('man://(.*)')
+  if not ref or vim.b.manwidth == nil or vim.b.manwidth == get_manwidth() then
+    return
+  end
+
+  return M.read_page(ref)
 end
 
 function M.show_toc()

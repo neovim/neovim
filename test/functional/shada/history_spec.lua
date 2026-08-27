@@ -3,6 +3,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local t_shada = require('test.functional.shada.testutil')
 
+local describe, it, before_each, after_each = t.describe, t.it, t.before_each, t.after_each
 local nvim_command, fn, api, nvim_feed, eq = n.command, n.fn, n.api, n.feed, t.eq
 local assert_alive = n.assert_alive
 local expect_exit = n.expect_exit

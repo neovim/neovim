@@ -7,6 +7,7 @@
 #include "nvim/fileio.h"
 #include "nvim/globals.h"
 #include "nvim/memory.h"
+#include "nvim/os/fs.h"
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/os/stdpaths_defs.h"
@@ -43,10 +44,10 @@ static const char *const xdg_defaults_env_vars[] = {
 /// Used in case environment variables contain nothing. Need to be expanded.
 static const char *const xdg_defaults[] = {
 #ifdef MSWIN
-  [kXDGConfigHome] = "~\\AppData\\Local",
-  [kXDGDataHome] = "~\\AppData\\Local",
-  [kXDGCacheHome] = "~\\AppData\\Local\\Temp",
-  [kXDGStateHome] = "~\\AppData\\Local",
+  [kXDGConfigHome] = "~/AppData/Local",
+  [kXDGDataHome] = "~/AppData/Local",
+  [kXDGCacheHome] = "~/AppData/Local/Temp",
+  [kXDGStateHome] = "~/AppData/Local",
   [kXDGRuntimeDir] = NULL,  // Decided by vim_mktempdir().
   [kXDGConfigDirs] = NULL,
   [kXDGDataDirs] = NULL,
@@ -74,6 +75,8 @@ const char *get_appname(bool namelike)
     xstrlcpy(NameBuff, "nvim", sizeof(NameBuff));
   }
 
+  TO_SLASH(NameBuff);
+
   if (namelike) {
     // Appname may be a relative path, replace slashes to make it name-like.
     memchrsub(NameBuff, '/', '-', sizeof(NameBuff));
@@ -93,10 +96,6 @@ bool appname_is_valid(void)
       || strequal(appname, "\\")
       || strequal(appname, ".")
       || strequal(appname, "..")
-#ifdef BACKSLASH_IN_FILENAME
-      || strstr(appname, "\\..") != NULL
-      || strstr(appname, "..\\") != NULL
-#endif
       || strstr(appname, "/..") != NULL
       || strstr(appname, "../") != NULL) {
     return false;
@@ -117,7 +116,7 @@ static char *xdg_remove_duplicate(char *ret, const char *sep)
     // Check if the directory is not already in the list
     bool is_duplicate = false;
     for (size_t i = 0; i < data.size; i++) {
-      if (path_fnamecmp(kv_A(data, i), token) == 0) {
+      if (path_equal(kv_A(data, i), token, kPathCmpLiteral)) {
         is_duplicate = true;
         break;
       }
@@ -161,11 +160,19 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
   if (env_val == NULL && xdg_defaults_env_vars[idx] != NULL) {
     env_val = os_getenv(xdg_defaults_env_vars[idx]);
   }
+  if (env_val != NULL && idx == kXDGCacheHome) {
+    char *real_path = os_realpath(env_val, NULL, MAXPATHL);
+    if (real_path != NULL) {
+      xfree(env_val);
+      env_val = real_path;
+    }
+  }
 #else
   if (env_val == NULL && os_env_exists(env, false)) {
     env_val = xstrdup("");
   }
 #endif
+  TO_SLASH(env_val);
 
   char *ret = NULL;
   if (env_val != NULL) {
@@ -213,10 +220,6 @@ char *get_xdg_home(const XDGVarType idx)
     }
 #endif
     dir = concat_fnames_realloc(dir, IObuff, true);
-
-#ifdef BACKSLASH_IN_FILENAME
-    slash_adjust(dir);
-#endif
   }
   return dir;
 }
@@ -266,21 +269,22 @@ char *stdpaths_user_state_subpath(const char *fname, const size_t trailing_paths
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   char *ret = concat_fnames_realloc(get_xdg_home(kXDGStateHome), fname, true);
-  const size_t len = strlen(ret);
+  size_t len = strlen(ret);
   const size_t numcommas = (escape_commas ? memcnt(ret, ',', len) : 0);
   if (numcommas || trailing_pathseps) {
-    ret = xrealloc(ret, len + trailing_pathseps + numcommas + 1);
-    for (size_t i = 0; i < len + numcommas; i++) {
-      if (ret[i] == ',') {
-        memmove(ret + i + 1, ret + i, len - i + numcommas);
-        ret[i] = '\\';
-        i++;
+    size_t newlen = len + numcommas + trailing_pathseps;
+    ret = xrealloc(ret, newlen + 1);
+    ret[newlen] = NUL;
+
+    memset(ret + len + numcommas, PATHSEP, trailing_pathseps);
+    newlen -= trailing_pathseps;
+
+    while (numcommas && len > 0) {
+      ret[--newlen] = ret[--len];
+      if (ret[newlen] == ',') {
+        ret[--newlen] = '\\';
       }
     }
-    if (trailing_pathseps) {
-      memset(ret + len + numcommas, PATHSEP, trailing_pathseps);
-    }
-    ret[len + trailing_pathseps + numcommas] = NUL;
   }
   return ret;
 }

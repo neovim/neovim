@@ -15,6 +15,8 @@
 #include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/charset.h"
+#include "nvim/context.h"
 #include "nvim/decoration_defs.h"
 #include "nvim/drawscreen.h"
 #include "nvim/errors.h"
@@ -94,7 +96,7 @@
 ///      - "NE" northeast
 ///      - "SW" southwest
 ///      - "SE" southeast
-///   - border: (`string|string[]`) (defaults to 'winborder' option) Window border. The string form
+///   - border: (`string|string[]`, default: 'winborder' option) Window border. The string form
 ///     accepts the same values as the 'winborder' option. The array form must have a length of
 ///     eight or any divisor of eight, specifying the chars that form the border in a clockwise
 ///     fashion starting from the top-left corner. For example, the double-box style can be
@@ -134,27 +136,20 @@
 ///       configuration together with this.
 ///   - fixed: If true when anchor is NW or SW, the float window
 ///            would be kept fixed even if the window would be truncated.
-///   - focusable: Enable focus by user actions (wincmds, mouse events).
-///       Defaults to true. Non-focusable windows can be entered by
-///       |nvim_set_current_win()|, or, when the `mouse` field is set to true,
-///       by mouse events. See |focusable|.
-///   - footer: (optional) Footer in window border, string or list.
-///       List should consist of `[text, highlight]` tuples.
-///       If string, or a tuple lacks a highlight, the default highlight group is `FloatFooter`.
-///   - footer_pos: Footer position. Must be set with `footer` option.
-///       Value can be one of "left", "center", or "right".
-///       Default is `"left"`.
+///   - focusable: (default: true) Enable focus by user actions (wincmds, mouse events).
+///     Non-|focusable| windows can be entered by |nvim_set_current_win()|, or by mouse events if
+///     `mouse=true`.
+///   - footer: (`string|string[]?`) Footer in window border: string or list of `[text, highlight]`
+///     tuples. Default highlight group is `FloatFooter`.
+///   - footer_pos: (default: "left") Footer position. One of: "left", "center", "right". The
+///    `footer` field must be set also.
 ///   - height: Window height (in character cells). Minimum of 1.
-///   - hide: If true the floating window will be hidden and the cursor will be invisible when
-///           focused on it.
-///   - mouse: Specify how this window interacts with mouse events.
-///       Defaults to `focusable` value.
-///       - If false, mouse events pass through this window.
-///       - If true, mouse events interact with this window normally.
+///   - hide: Hides the floating window. |window-hidden|
+///   - mouse: (default: `focusable` value) If true, mouse events interact with the window
+///     normally; if false, they pass through to the window behind it.
 ///   - noautocmd: Block all autocommands for the duration of the call. Cannot be changed by
 ///     |nvim_win_set_config()|.
-///   - relative: Sets the window layout to "floating", placed at (row,col)
-///                 coordinates relative to:
+///   - relative: Sets the window layout to "floating", placed at (row,col) coordinates relative to:
 ///      - "cursor"     Cursor position in current window.
 ///      - "editor"     The global editor grid.
 ///      - "laststatus" 'laststatus' if present, or last row.
@@ -178,9 +173,8 @@
 ///   - title: (optional) Title in window border, string or list.
 ///       List should consist of `[text, highlight]` tuples.
 ///       If string, or a tuple lacks a highlight, the default highlight group is `FloatTitle`.
-///   - title_pos: Title position. Must be set with `title` option.
-///       Value can be one of "left", "center", or "right".
-///       Default is `"left"`.
+///   - title_pos: (default: "left") Title position. One of: "left", "center", "right". The `title`
+///     field must be set also.
 ///   - vertical: Split vertically |:vertical|.
 ///   - width: Window width (in character cells). Minimum of 1.
 ///   - win: |window-ID| target window. Can be in a different tab page. Determines the window to
@@ -201,23 +195,19 @@
 ///
 /// @return |window-ID|, or 0 on error
 Window nvim_open_win(Buffer buf, Boolean enter, Dict(win_config) *config, Error *err)
-  FUNC_API_SINCE(6) FUNC_API_TEXTLOCK_ALLOW_CMDWIN
+  FUNC_API_SINCE(6) FUNC_API_TEXTLOCK
 {
   buf_T *b = find_buffer_by_handle(buf, err);
   if (!b) {
     return 0;
   }
-  if ((cmdwin_type != 0 && enter) || b == cmdwin_buf) {
-    api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
-    return 0;
-  }
-
-  WinConfig fconfig = WIN_CONFIG_INIT;
-  if (!parse_win_config(NULL, config, &fconfig, false, err)) {
-    return 0;
-  }
 
   bool is_split = HAS_KEY_X(config, split) || HAS_KEY_X(config, vertical);
+  WinConfig fconfig = WIN_CONFIG_INIT;
+  if (!parse_win_config(NULL, config, &fconfig, false, !is_split, err)) {
+    return 0;
+  }
+
   Window rv = 0;
   if (fconfig.noautocmd) {
     block_autocmds();
@@ -257,13 +247,13 @@ Window nvim_open_win(Buffer buf, Boolean enter, Dict(win_config) *config, Error 
       if (parent == NULL || parent == curwin) {
         wp = win_split_ins(size, flags, NULL, 0, NULL);
       } else {
-        switchwin_T switchwin;
-        // `parent` is valid in `tp`, so switch_win should not fail.
-        const int result = switch_win(&switchwin, parent, tp, true);
-        assert(result == OK);
+        CtxSwitch switchwin;
+        // `parent` is valid in `tp`, so ctx_switch should not fail.
+        const bool result = ctx_switch(&switchwin, parent, tp, NULL, kCtxNoEvents | kCtxNoDisplay);
+        assert(result);
         (void)result;
         wp = win_split_ins(size, flags, NULL, 0, NULL);
-        restore_win(&switchwin, true);
+        ctx_restore(&switchwin);
       }
     });
     if (wp) {
@@ -272,9 +262,9 @@ Window nvim_open_win(Buffer buf, Boolean enter, Dict(win_config) *config, Error 
         // Without room for the requested size, window sizes may have been equalized instead.
         // If the size differs from what was requested, try to set it again now.
         if ((flags & WSP_VERT) && wp->w_width != size) {
-          win_setwidth_win(size, wp);
+          win_setwidth_win(size, wp, true);
         } else if (!(flags & WSP_VERT) && wp->w_height != size) {
-          win_setheight_win(size, wp);
+          win_setheight_win(size, wp, true);
         }
       }
     }
@@ -300,19 +290,19 @@ Window nvim_open_win(Buffer buf, Boolean enter, Dict(win_config) *config, Error 
   }
 
   // Autocommands may close `wp` or move it to another tabpage, so update and check `tp` after each
-  // event. In each case, `wp` should already be valid in `tp`, so switch_win should not fail.
+  // event. In each case, `wp` should already be valid in `tp`, so ctx_switch should not fail.
   // Also, autocommands may free the `buf` to switch to, so store a bufref to check.
   bufref_T bufref;
   set_bufref(&bufref, b);
   if (!fconfig.noautocmd) {
-    switchwin_T switchwin;
-    const int result = switch_win_noblock(&switchwin, wp, tp, true);
-    assert(result == OK);
+    CtxSwitch switchwin;
+    const bool result = ctx_switch(&switchwin, wp, tp, NULL, kCtxNoDisplay);
+    assert(result);
     (void)result;
     if (apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf)) {
       tp = win_find_tabpage(wp);
     }
-    restore_win_noblock(&switchwin, true);
+    ctx_restore(&switchwin);
   }
   if (tp && enter) {
     goto_tabpage_win(tp, wp);
@@ -407,13 +397,8 @@ static bool win_can_move_tp(win_T *wp, tabpage_T *tp, Error *err)
     api_set_error(err, kErrorTypeException, "%s", e_textlock);
     return false;
   }
-  if (is_aucmd_win(wp)) {
+  if (is_ctx_win(wp)) {
     api_set_error(err, kErrorTypeException, "Cannot move autocmd window to another tabpage");
-    return false;
-  }
-  // Can't move the cmdwin or its old curwin to a different tabpage.
-  if (wp == cmdwin_win || wp == cmdwin_old_curwin) {
-    api_set_error(err, kErrorTypeException, "%s", e_cmdwin);
     return false;
   }
   return true;
@@ -585,20 +570,21 @@ static bool win_config_split(win_T *win, const Dict(win_config) *config, WinConf
 
   TRY_WRAP(err, {
     const bool need_switch = parent != NULL && parent != curwin;
-    switchwin_T switchwin;
+    CtxSwitch switchwin;
     if (need_switch) {
-      // `parent` is valid in its tabpage, so switch_win should not fail.
-      const int result = switch_win(&switchwin, parent, parent_tp, true);
+      // `parent` is valid in its tabpage, so ctx_switch should not fail.
+      const bool result = ctx_switch(&switchwin, parent, parent_tp, NULL,
+                                     kCtxNoEvents | kCtxNoDisplay);
       (void)result;
-      assert(result == OK);
+      assert(result);
     }
     to_split_ok = win_split_ins(0, flags, win, 0, unflat_altfr) != NULL;
     if (!to_split_ok) {
-      // Restore `win` to the window list now, so it's valid for restore_win (if used).
+      // Restore `win` to the window list now, so it's valid for ctx_restore (if used).
       win_append(win->w_prev, win, win_tp == curtab ? NULL : win_tp);
     }
     if (need_switch) {
-      restore_win(&switchwin, true);
+      ctx_restore(&switchwin);
     }
   });
   if (!to_split_ok) {
@@ -627,10 +613,10 @@ restore_curwin:
 
 resize:
   if (HAS_KEY_X(config, width)) {
-    win_setwidth_win(fconfig->width, win);
+    win_setwidth_win(fconfig->width, win, true);
   }
   if (HAS_KEY_X(config, height)) {
-    win_setheight_win(fconfig->height, win);
+    win_setheight_win(fconfig->height, win, true);
   }
 
   // Merge configs now. If previously a float, clear fields irrelevant to splits that `fconfig` may
@@ -722,7 +708,7 @@ restore_curwin:
 
     // Remove grid if present. More reliable than checking curtab, as tabpage_check_windows may not
     // run when temporarily switching tabpages, meaning grids may be stale from another tabpage!
-    // (e.g: switch_win_noblock with no_display=true)
+    // (e.g: ctx_switch with kCtxNoDisplay)
     ui_comp_remove_grid(&win->w_grid_alloc);
 
     // Redraw tabline, update window's hl attribs, etc. Set must_redraw here, as redraw_later might
@@ -772,8 +758,9 @@ void nvim_win_set_config(Window win, Dict(win_config) *config, Error *err)
   bool to_split = config->relative.size == 0
                   && !(HAS_KEY_X(config, external) && config->external)
                   && (has_split || has_vertical || was_split);
+  bool will_float = (!was_split && !to_split) || config->relative.size > 0 || config->external;
 
-  if (!parse_win_config(w, config, &fconfig, !was_split || to_split, err)) {
+  if (!parse_win_config(w, config, &fconfig, !was_split || to_split, will_float, err)) {
     return;
   }
 
@@ -842,10 +829,15 @@ static void config_put_bordertext(Dict(win_config) *config, WinConfig *fconfig,
   }
 }
 
-/// Gets window configuration in the form of a dict which can be passed as the `config` parameter of
-/// |nvim_open_win()|.
+/// Gets window config as a dict which can be passed to |nvim_open_win()| as the `config` parameter.
 ///
-/// For non-floating windows, `relative` is empty.
+/// For non-floating windows, `relative` is empty, thus you can check that field to detect if
+/// a window is a floatwin:
+/// ```lua
+/// vim.print(vim.api.nvim_win_get_config(0).relative == '' and 'non-float' or 'float')
+/// -- Or use win_gettype().
+/// vim.print(vim.fn.win_gettype())
+/// ```
 ///
 /// @param      win |window-ID|, or 0 for current window
 /// @param[out] err Error details, if any
@@ -1009,8 +1001,8 @@ static bool parse_float_bufpos(Array bufpos, lpos_T *out)
   return true;
 }
 
-static void parse_bordertext(Object bordertext, BorderTextType bordertext_type, WinConfig *fconfig,
-                             Error *err)
+void parse_bordertext(Object bordertext, BorderTextType bordertext_type, WinConfig *fconfig,
+                      Error *err)
 {
   VALIDATE_EXP(!(bordertext.type != kObjectTypeString && bordertext.type != kObjectTypeArray),
                "title/footer", "String or Array", api_typename(bordertext.type), {
@@ -1022,37 +1014,26 @@ static void parse_bordertext(Object bordertext, BorderTextType bordertext_type, 
     return;
   });
 
-  bool *is_present;
-  VirtText *chunks;
-  int *width;
-  switch (bordertext_type) {
-  case kBorderTextTitle:
-    is_present = &fconfig->title;
-    chunks = &fconfig->title_chunks;
-    width = &fconfig->title_width;
-    break;
-  case kBorderTextFooter:
-    is_present = &fconfig->footer;
-    chunks = &fconfig->footer_chunks;
-    width = &fconfig->footer_width;
-    break;
-  }
+  bool is_title = bordertext_type == kBorderTextTitle;
+  bool *is_present = is_title ? &fconfig->title : &fconfig->footer;
+  VirtText *chunks = is_title ? &fconfig->title_chunks : &fconfig->footer_chunks;
+  int *width = is_title ? &fconfig->title_width : &fconfig->footer_width;
 
   if (bordertext.type == kObjectTypeString) {
     if (bordertext.data.string.size == 0) {
       *is_present = false;
       return;
     }
+    char *text = transstr(bordertext.data.string.data, true);
     kv_init(*chunks);
-    kv_push(*chunks, ((VirtTextChunk){ .text = xstrdup(bordertext.data.string.data),
-                                       .hl_id = -1 }));
-    *width = (int)mb_string2cells(bordertext.data.string.data);
-    *is_present = true;
-    return;
+    kv_push(*chunks, ((VirtTextChunk){ .text = text, .hl_id = -1 }));
+    *width = (int)mb_string2cells(text);
+  } else {
+    *chunks = parse_virt_text(bordertext.data.array, err, width, true);
+    if (ERROR_SET(err)) {
+      return;
+    }
   }
-
-  *width = 0;
-  *chunks = parse_virt_text(bordertext.data.array, err, width);
 
   *is_present = true;
 }
@@ -1223,27 +1204,20 @@ bool parse_winborder(WinConfig *fconfig, char *border_opt, Error *err)
   if (strchr(border_opt, ',')) {
     Array border_chars = ARRAY_DICT_INIT;
     char *p = border_opt;
-    char part[MAX_SCHAR_SIZE] = { 0 };
-    int count = 0;
-
-    while (*p != NUL) {
-      if (count >= 8) {
+    while (true) {
+      if (border_chars.size >= 8) {
         api_free_array(border_chars);
         return false;
       }
-
-      size_t part_len = copy_option_part(&p, part, sizeof(part), ",");
-      if (part_len == 0 || part[0] == NUL) {
-        api_free_array(border_chars);
-        return false;
+      char *comma = strchr(p, ',');
+      size_t part_len = comma != NULL ? (size_t)(comma - p) : strlen(p);
+      ADD(border_chars, STRING_OBJ(cbuf_to_string(p, part_len)));
+      if (comma == NULL) {
+        break;
       }
-
-      String str = cstr_to_string(part);
-      ADD(border_chars, STRING_OBJ(str));
-      count++;
+      p = comma + 1;
     }
-
-    if (count != 8) {
+    if (border_chars.size != 8) {
       api_free_array(border_chars);
       return false;
     }
@@ -1259,7 +1233,7 @@ bool parse_winborder(WinConfig *fconfig, char *border_opt, Error *err)
 }
 
 static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fconfig, bool reconf,
-                             Error *err)
+                             bool will_float, Error *err)
 {
   bool has_relative = false, relative_is_win = false, is_split = false;
   if (config->relative.size > 0) {
@@ -1424,7 +1398,7 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
   }
 
   if (HAS_KEY_X(config, zindex)) {
-    VALIDATE_CON(!is_split, "zindex", "non-float window", {
+    VALIDATE_CON(will_float, "zindex", "non-float window", {
       goto fail;
     });
     VALIDATE_EXP((config->zindex > 0), "zindex", "positive Integer", NULL, {
@@ -1434,7 +1408,7 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
   }
 
   if (HAS_KEY_X(config, title)) {
-    VALIDATE_CON(!is_split, "title", "non-float window", {
+    VALIDATE_CON(will_float, "title", "non-float window", {
       goto fail;
     });
 
@@ -1454,7 +1428,7 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
   }
 
   if (HAS_KEY_X(config, footer)) {
-    VALIDATE_CON(!is_split, "footer", "non-float window", {
+    VALIDATE_CON(will_float, "footer", "non-float window", {
       goto fail;
     });
 
@@ -1475,7 +1449,7 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
 
   Object border_style = OBJECT_INIT;
   if (HAS_KEY_X(config, border)) {
-    VALIDATE_CON(!is_split, "border", "non-float window", {
+    VALIDATE_CON(will_float, "border", "non-float window", {
       goto fail;
     });
     border_style = config->border;
@@ -1515,6 +1489,12 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
   }
 
   if (HAS_KEY_X(config, hide)) {
+    VALIDATE_CON(will_float || !config->hide, "hide", "non-float window", {
+      goto fail;
+    });
+    if (fconfig->hide && !config->hide) {
+      redraw_later(wp, UPD_NOT_VALID);
+    }
     fconfig->hide = config->hide;
   }
 

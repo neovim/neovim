@@ -38,42 +38,45 @@ typedef enum {
   kOptFlagNDname    = 1 << 21,  ///< Only normal directory name chars allowed.
   kOptFlagHLOnly    = 1 << 22,  ///< Option only changes highlight, not text.
   kOptFlagMLE       = 1 << 23,  ///< Under control of 'modelineexpr'.
-  kOptFlagFunc      = 1 << 24,  ///< Accept a function reference or a lambda.
+  kOptFlagFunc      = 1 << 24,  ///< Callback option: Lua function, or Vimscript funcref.
   kOptFlagColon     = 1 << 25,  ///< Values use colons to create sublists.
+  kOptFlagExpr      = 1 << 26,  ///< Callback option: Vimscript expr, e.g. 'foldexpr'.
 } OptFlags;
-
-/// Option value type.
-/// These types are also used as type flags by using the type value as an index for the type_flags
-/// bit field (@see option_has_type()).
-typedef enum {
-  kOptValTypeNil = -1,  // Make sure Nil can't be bitshifted and used as an option type flag.
-  kOptValTypeBoolean,
-  kOptValTypeNumber,
-  kOptValTypeString,
-} OptValType;
 
 /// Scopes that an option can support.
 typedef enum {
   kOptScopeGlobal = 0,  ///< Request global option value
   kOptScopeWin,      ///< Request window-local option value
   kOptScopeBuf,      ///< Request buffer-local option value
+  kOptScopeTab,      ///< Request tabpage-local option value
 } OptScope;
 /// Always update this whenever a new option scope is added.
-#define kOptScopeSize (kOptScopeBuf + 1)
+#define kOptScopeSize (kOptScopeTab + 1)
 typedef uint8_t OptScopeFlags;
 
-typedef union {
-  // boolean options are actually tri-states because they have a third "None" value.
-  TriState boolean;
-  OptInt number;
-  String string;
-} OptValData;
+/// Value kind of one key in a dict option (see "schema" in options.lua).
+typedef enum {
+  kOptSchemaFlag,   ///< bare flag, e.g. 'diffopt' "filler"
+  kOptSchemaNum,    ///< "key:N" non-negative number, e.g. 'diffopt' "context:4"
+  kOptSchemaSNum,   ///< "key:N" signed number, e.g. 'breakindentopt' "shift:-2"
+  kOptSchemaEnum,   ///< "key:val" where val is one of "enum_values", e.g. "algorithm:patience"
+  kOptSchemaStr,    ///< "key:val" where val is a free string, e.g. 'previewpopup' "highlight:Foo"
+} OptSchemaKind;
 
-/// Option value
+/// One key of a dict option, generated from its `dict` schema in options.lua.
+/// Consumed by opt_strings_check(). A NULL "name" terminates the array.
 typedef struct {
-  OptValType type;
-  OptValData data;
-} OptVal;
+  const char *name;           ///< key name, without a trailing ':'
+  OptSchemaKind kind;
+  const char **enum_values;    ///< kOptSchemaEnum: NULL-terminated valid values; else NULL
+} OptSchemaItem;
+
+/// Schema for a dict option (`schema.dict` in options.lua).
+typedef struct {
+  FieldHashfn get_field;        ///< Keyset perfect-hash lookup, for opt_fill().
+  const OptSchemaItem *schema;  ///< Grammar, for opt_strings_check() validation.
+  size_t size;                  ///< sizeof the keyset, for opt_keyset() storage.
+} OptDictSchema;
 
 /// :set operator types
 typedef enum {
@@ -93,9 +96,9 @@ typedef struct {
   int os_flags;
 
   /// Old value of the option.
-  OptValData os_oldval;
+  Object os_oldval;
   /// New value of the option.
-  OptValData os_newval;
+  Object os_newval;
 
   /// Option value was checked to be safe, no need to set kOptFlagInsecure
   /// Used for the 'keymap', 'filetype' and 'syntax' options.
@@ -167,7 +170,7 @@ typedef struct {
   char *fullname;                    ///< full option name
   char *shortname;                   ///< permissible abbreviation
   uint32_t flags;                    ///< see above
-  OptValType type;                   ///< option type
+  ObjectType type;                   ///< option type
   OptScopeFlags scope_flags;         ///< option scope flags, see OptScope
   void *var;                         ///< global option: pointer to variable;
                                      ///< window-local option: NULL;
@@ -179,6 +182,9 @@ typedef struct {
   const char **values;               ///< possible values for string options
   const size_t values_len;           ///< length of values array
 
+  /// Grammar of a dict option ("schema.dict" in options.lua); NULL otherwise.
+  const OptSchemaItem *schema;
+
   /// callback function to invoke after an option is modified to validate and
   /// apply the new value.
   opt_did_set_cb_T opt_did_set_cb;
@@ -187,6 +193,6 @@ typedef struct {
   /// cmdline. Only useful for string options.
   opt_expand_cb_T opt_expand_cb;
 
-  OptVal def_val;                    ///< default value
+  Object def_val;                    ///< default value
   sctx_T script_ctx;                 ///< script in which the option was last set
 } vimoption_T;

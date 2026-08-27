@@ -1,31 +1,290 @@
-let s:netrw_path =        $VIMRUNTIME . '/pack/dist/opt/netrw/autoload/netrw.vim'
-let s:netrw_test_dir  =   'samples'
-let s:netrw_test_path =   s:netrw_test_dir . '/netrw.vim'
+const s:testdir = expand("<script>:h")
+const s:runtimedir = simplify(s:testdir . '/../../../runtime')
+const s:netrw_path = s:runtimedir . '/pack/dist/opt/netrw/autoload/netrw.vim'
+const s:netrw_test_path = s:testdir . '/samples/netrw.vim'
+const s:testScript =<< trim END
+
+" Testing functions: {{{1
+function! TestNetrwCaptureRemotePath(dirname)
+  call s:RemotePathAnalysis(a:dirname)
+  return {"method": s:method, "user": s:user, "machine": s:machine, "port": s:port, "path": s:path, "fname": s:fname}
+endfunction
+
+" Test directory creation via s:NetrwMakeDir()
+" Precondition: inputsave() and inputrestore() must be disabled in s:NetrwMakeDir
+
+function s:test_inputsave()
+    if exists("s:inputguards_disabled") && s:inputguards_disabled
+        return
+    endif
+    call inputsave()
+endfunction
+
+function s:test_inputrestore()
+    if exists("s:inputguards_disabled") && s:inputguards_disabled
+        return
+    endif
+    call inputrestore()
+endfunction
+
+function s:test_input(prompt, text = v:null, completion = v:null)  " Nvim: use v:null instead of v:none
+
+    if exists("s:inputdefaults_disabled") && s:inputdefaults_disabled || a:text == v:null
+        return input(a:prompt)
+    elseif a:completion == v:null
+        return input(a:prompt, a:text)
+    endif
+
+    return input(a:prompt, a:text, a:completion)
+endfunction
+
+function Test_NetrwMakeDir(parentdir = $HOME, dirname = "NetrwMakeDir", symlink = 0) abort
+    if a:symlink
+        " Plainly delegate, this device is necessary because feedkeys() can't
+        " access script functions directly.
+        call s:NetrwMakeDir('')
+        " wipe out the test buffer
+        bw
+        " reenable the guards
+        let s:inputguards_disabled = 0
+    else
+        " Use feedkeys() to simulate user input (directory name)
+        new
+        let b:netrw_curdir = a:parentdir
+        let s:inputguards_disabled = 1
+        call feedkeys($"\<Cmd>call Test_NetrwMakeDir('{a:parentdir}', '{a:dirname}', 1)\<CR>{a:dirname}\<CR>", "x")
+    endif
+endfunction
+
+" Test file copy operations via s:NetrwMarkFileCopy()
+function Test_NetrwMarkFileCopy(source_dir, target_dir, marked_files) abort
+    " set up
+    new
+    let b:netrw_curdir= a:source_dir
+    let s:netrwmftgt = a:target_dir
+    let s:netrwmarkfilelist_{bufnr("%")} = a:marked_files
+    let s:netrwmftgt_islocal = 1
+    " delegate
+    call s:NetrwMarkFileCopy(1)
+    " wipe out the test buffer
+    bw
+endfunction
+
+" Corner case: copy into the same dir triggers a user prompt
+function Test_NetrwMarkFileCopy_SameDir(dir = $HOME, symlink = 0) abort
+    const filename = "filename.txt"
+    const file = netrw#fs#PathJoin(a:dir, filename)
+
+    const newfilename = "newfilename.txt"
+    const newfile = netrw#fs#PathJoin(a:dir, newfilename)
+
+    if a:symlink
+        " Plainly delegate, this device is necessary because feedkeys() can't
+        " access script functions directly.
+        " set up
+        new
+        let b:netrw_curdir = a:dir
+        let s:netrwmftgt = a:dir
+        let s:netrwmarkfilelist_{bufnr("%")} = [filename]
+        let s:netrwmftgt_islocal = 1
+
+        " delegate
+        call s:NetrwMarkFileCopy(1)
+
+        " validate
+        call assert_equalfile(file, newfile, "File copy in same dir failed")
+
+        " tear down
+        call delete(file)
+        call delete(newfile)
+        " wipe out the test buffer
+        bw
+        " reenable the guards
+        let s:inputguards_disabled = 0
+        let s:inputdefaults_disabled = 0
+    else
+        " Use feedkeys() to simulate user input (directory name)
+        let s:inputguards_disabled = 1
+        let s:inputdefaults_disabled = 1
+
+        call writefile([$"NetrwMarkFileCopy test file"], file)
+
+        call feedkeys($"\<Cmd>call Test_NetrwMarkFileCopy_SameDir('{a:dir}', 1)\<CR>{newfilename}\<CR>", "x")
+    endif
+endfunction
+
+" Test file copy operations via s:NetrwMarkFileMove()
+function Test_NetrwMarkFileMove(source_dir, target_dir, marked_files) abort
+    " set up
+    new
+    let b:netrw_curdir= a:source_dir
+    let s:netrwmftgt = a:target_dir
+    let s:netrwmarkfilelist_{bufnr("%")} = a:marked_files
+    let s:netrwmftgt_islocal = 1
+    " delegate
+    call s:NetrwMarkFileMove(1)
+    " wipe out the test buffer
+    bw
+endfunction
+
+" Test how netrw fixes paths according with settings
+" (g:netrw_keepdir, g:netrw_cygwin, tree style ...)
+function Test_NetrwFile(fname) abort
+    return s:NetrwFile(a:fname)
+endfunction
+
+" Test hostname validation
+function Test_NetrwValidateHostname(hostname) abort
+    return s:NetrwValidateHostname(a:hostname)
+endfunction
+
+" Test unmarking all files via s:NetrwUnMarkFile()
+function Test_NetrwUnMarkFile()
+    " set up: init global and buffer-local mark lists
+    new
+
+    " initializing the global mark list, the loop handles the buffer-local
+    let s:netrwmarkfilelist = ['test_file']
+
+    " making sure every buffer has a mark list and match pattern
+    let ibuf = 1
+    while ibuf <= bufnr('$')
+        let s:netrwmarkfilelist_{ibuf} = ['test_mark']
+        let s:netrwmarkfilemtch_{ibuf} = 'test_mark'
+        let ibuf = ibuf + 1
+    endwhile
+
+    call s:NetrwUnMarkFile(1)
+
+    call assert_false(exists('s:netrwmarkfilelist'), 'Global list should be wiped')
+    call assert_false(exists('s:netrwmarkfilelist_' . bufnr('$')), 'Last buffer-local list should be wiped')
+    call assert_false(exists('s:netrwmarkfilemtch_' . bufnr('$')), 'Last buffer-local match str should be wiped')
+    call assert_false(exists('s:netrwmarkfilelist_1'), 'First buffer-local list should be wiped')
+    call assert_false(exists('s:netrwmarkfilemtch_1'), 'First buffer-local match str should be wiped')
+
+    " wipe out the test buffer
+    bw
+endfunction
+
+function Test_MakeBookmark(netrw_curdir, fname)
+  new
+  let b:netrw_curdir = a:netrw_curdir
+  call s:MakeBookmark(a:fname)
+  bw
+endfunction
+
+" Test the markings match pattern rebuilt by s:NetrwMarkFile() when unmarking an entry
+function Test_NetrwMarkFile_match_pattern_rebuild()
+  new
+  let curbufnr = bufnr("%")
+
+  call s:NetrwMarkFile(1, 'fname_dir/')
+  call s:NetrwMarkFile(1, 'fname_file')
+  let match_pattern = s:netrwmarkfilemtch_{curbufnr}
+
+  " Assert match pattern after marking and unmarking a directory entry
+  call s:NetrwMarkFile(1, 'dir/')
+  call s:NetrwMarkFile(1, 'dir/')
+  let rebuilt_match_pattern = s:netrwmarkfilemtch_{curbufnr}
+  call assert_equal(match_pattern, rebuilt_match_pattern)
+
+  " Assert match pattern after marking and unmarking a file entry
+  call s:NetrwMarkFile(1, 'file')
+  call s:NetrwMarkFile(1, 'file')
+  let rebuilt_match_pattern = s:netrwmarkfilemtch_{curbufnr}
+  call assert_equal(match_pattern, rebuilt_match_pattern)
+
+  bw
+endfunction
+
+" Test the "home" directory used for bookmarks and history
+function Test_NetrwHome() abort
+    return s:NetrwHome()
+endfunction
+" }}}
+END
 
 "make copy of netrw script and add function to print local variables"
 func s:appendDebugToNetrw(netrw_path, netrw_test_path)
-  let netrwScript = readfile(a:netrw_path)
 
-  let netrwScript += [
-       \ '\n',
-       \ '"-- test helpers ---"',
-       \ 'function! TestNetrwCaptureRemotePath(dirname)',
-       \ '  call s:RemotePathAnalysis(a:dirname)',
-       \ '  return {"method": s:method, "user": s:user, "machine": s:machine, "port": s:port, "path": s:path, "fname": s:fname}',
-       \ 'endfunction'
-       \ ]
+  " load the netrw script
+  execute "split" a:netrw_test_path
+  execute "read" a:netrw_path
 
-  call writefile(netrwScript, a:netrw_test_path)
-  execute 'source' a:netrw_test_path
+  " replace input guards for convenient testing versions
+  %substitute@call inputsave()@call s:test_inputsave()@g
+  %substitute@call inputrestore()@call s:test_inputrestore()@g
+  %substitute@\<input(@s:test_input(@g
+
+  call cursor(1,1)
+  let pos = search("Settings Restoration:")-1
+  " insert the test functions before the end guard
+  call assert_false(append(pos, s:testScript))
+
+  " save the modified script content
+  write
+  bwipe!
+
 endfunction
 
-func s:setup()
+func SetUp()
+
+  " prepare modified netrw script
   call s:appendDebugToNetrw(s:netrw_path, s:netrw_test_path)
+
+  " source the modified script
+  exe "source" s:netrw_test_path
+
+  " Rig the package. The modified script guard prevents loading it again.
+  let &runtimepath=s:runtimedir
+  let &packpath=s:runtimedir
+  packadd netrw
+
+  " use proper path
+  if has('win32')
+    let $HOME = substitute($HOME, '/', '\\', 'g')
+  endif
+
 endfunction
 
-func s:cleanup()
+func TearDown()
+  " cleanup
   call delete(s:netrw_test_path)
 endfunction
+
+func SetShell(shell)
+    " select different shells
+    if a:shell == "default"
+        set shell& shellcmdflag& shellxquote& shellpipe& shellredir&
+        if has("win32")
+          " Nvim: default 'shell' is "sh" due to $SHELL being set in Makefile,
+          " but here 'shell' should be cmd.exe.
+          set shell=cmd.exe shellcmdflag=/s\ /c
+        endif
+    elseif a:shell == "powershell" " help dos-powershell
+        " powershell desktop is windows only
+        if !has("win32")
+            throw 'Skipped: powershell desktop is missing'
+        endif
+        set shell=powershell shellcmdflag=-NoProfile\ -Command shellxquote=\"
+        set shellpipe=2>&1\ \|\ Out-File\ -Encoding\ default shellredir=2>&1\ \|\ Out-File\ -Encoding\ default
+    elseif a:shell == "pwsh" " help dos-powershell
+        " powershell core works crossplatform
+        if !executable("pwsh")
+            throw 'Skipped: powershell core is missing'
+        endif
+        set shell=pwsh shellcmdflag=-NoProfile\ -c shellpipe=>%s\ 2>&1 shellredir=>%s\ 2>&1
+        if has("win32")
+            set shellxquote=\"
+        else
+            set shellxquote=
+        endif
+    else
+        call assert_report("Trying to select an unknown shell")
+    endif
+    " Nvim: 'shellxquote' needs to be empty for the tests for work.
+    set shellxquote=
+endfunc
 
 func s:combine
   \( usernames
@@ -62,19 +321,16 @@ endfunction
 
 
 func Test_netrw_parse_remote_simple()
-  call s:setup()
   let result = TestNetrwCaptureRemotePath('scp://user@localhost:2222/test.txt')
   call assert_equal(result.method, 'scp')
   call assert_equal(result.user, 'user')
   call assert_equal(result.machine, 'localhost')
   call assert_equal(result.port, '2222')
   call assert_equal(result.path, 'test.txt')
-  call s:cleanup()
 endfunction
 
 "testing different combinations"
 func Test_netrw_parse_regular_usernames()
-  call s:setup()
 
   " --- sample data for combinations ---"
   let usernames = ["root", "toor", "user01", "skillIssue"]
@@ -86,47 +342,639 @@ func Test_netrw_parse_regular_usernames()
 
   call s:combine(usernames, methods, hosts, ports, dirs, files)
 
-  call s:cleanup()
 endfunc
 
 "Host myserver
 "    HostName 192.168.1.42
 "    User alice
 func Test_netrw_parse_ssh_config_entries()
-  call s:setup()
   let result = TestNetrwCaptureRemotePath('scp://myserver//etc/nginx/nginx.conf')
   call assert_equal(result.method, 'scp')
   call assert_equal(result.user, '')
   call assert_equal(result.machine, 'myserver')
   call assert_equal(result.port, '')
   call assert_equal(result.path, '/etc/nginx/nginx.conf')
-  call s:cleanup()
 endfunction
 
 "username containing special-chars"
 func Test_netrw_parse_special_char_user()
-  call s:setup()
   let result = TestNetrwCaptureRemotePath('scp://user-01@localhost:2222/test.txt')
   call assert_equal(result.method, 'scp')
   call assert_equal(result.user, 'user-01')
   call assert_equal(result.machine, 'localhost')
   call assert_equal(result.port, '2222')
   call assert_equal(result.path, 'test.txt')
-  call s:cleanup()
 endfunction
 
-func Test_netrw_wipe_empty_buffer_fastpath()
+" Note: Test_netrw_a_empty_buffer_fastpath_wipe() should run before
+"       any other tests that open a netrw buffer (e.g, :Explore).
+func Test_netrw_a_empty_buffer_fastpath_wipe()
+  " SetUp() may have opened some buffers
+  let previous = bufnr('$')
   let g:netrw_fastbrowse=0
-  packadd netrw
   call setline(1, 'foobar')
   let  bufnr = bufnr('%')
   tabnew
   Explore
   call search('README.txt', 'W')
   exe ":norm \<cr>"
-  call assert_equal(4, bufnr('$'))
+  call assert_equal(previous + 2, bufnr('$'))
   call assert_true(bufexists(bufnr))
   bw
 
   unlet! netrw_fastbrowse
 endfunction
+
+" Test UNC paths on windows
+func Test_netrw_check_UNC_paths()
+  CheckMSWindows
+
+  let test_paths = [
+  \ '\\Server2\Share\Test\Foo.txt',
+  \ '//Server2/Share/Test/Foo.txt',
+  \ '\\Server2\Share\Test\',
+  \ '//Server2/Share/Test/',
+  \ '\\wsl.localhost\Ubuntu\home\user\_vimrc',
+  \ '//wsl.localhost/Ubuntu/home/user/_vimrc',
+  \ '\\wsl.localhost\Ubuntu\home\user',
+  \ '//wsl.localhost/Ubuntu/home/user']
+
+  " The paths must be interpreted as absolute ones
+  for path in test_paths
+    call assert_equal(
+    \   path,
+    \   Test_NetrwFile(path),
+    \   $"UNC path: {path} misinterpreted")
+  endfor
+
+endfunction
+
+" ---------------------------------
+" Testing file management functions
+" ---------------------------------
+
+" Browser directory creation
+func s:netrw_mkdir()
+
+  " create a testdir in the fake $HOME
+  call Test_NetrwMakeDir($HOME, "NetrwMakeDir")
+
+  " Check the test directory was created
+  let test_dir = netrw#fs#PathJoin($HOME, "NetrwMakeDir")
+  call WaitForAssert({-> assert_true(
+  \     isdirectory(test_dir),
+  \     "Unable to create a dir via s:NetrwMakeDir()")
+  \ })
+
+  " remove the test directory
+  call delete(test_dir, 'd')
+endfunc
+
+func Test_netrw_mkdir_default()
+  call SetShell('default')
+  call s:netrw_mkdir()
+endfunc
+
+func Test_netrw_mkdir_powershell()
+  call SetShell('powershell')
+  call s:netrw_mkdir()
+endfunc
+
+func Test_netrw_mkdir_pwsh()
+  call SetShell('pwsh')
+  call s:netrw_mkdir()
+endfunc
+
+func s:netrw_filecopy(count = 1)
+  " setup
+  let marked_files = []
+  let home = expand('$HOME')
+  let source_dir = netrw#fs#PathJoin(home, "src")
+  let target_dir = netrw#fs#PathJoin(home, "target")
+
+  call mkdir(source_dir, "R")
+  call mkdir(target_dir, "R")
+
+  for i in range(a:count)
+    call add(marked_files, $"testfile{i}.txt")
+    call writefile(
+    \   [$"NetrwMarkFileCopy test file {i}"],
+    \   netrw#fs#PathJoin(source_dir, marked_files[-1]))
+  endfor
+
+  " delegate
+  call Test_NetrwMarkFileCopy(source_dir, target_dir, marked_files)
+
+  " verify
+  for file in marked_files
+    call assert_equalfile(
+    \   netrw#fs#PathJoin(source_dir, file),
+    \   netrw#fs#PathJoin(target_dir, file),
+    \   "File copy failed for " . file)
+  endfor
+endfunc
+
+" Browser file copy
+func s:test_netrw_filecopy()
+
+  " if shellslash is available, check both settings
+  if exists('+shellslash')
+    set shellslash&
+    call s:netrw_filecopy(1)
+    call s:netrw_filecopy(10)
+    set shellslash!
+  endif
+
+  call s:netrw_filecopy(1)
+  call s:netrw_filecopy(10)
+
+endfunc
+
+func Test_netrw_filecopy_default()
+  call SetShell('default')
+  call s:test_netrw_filecopy()
+endfunc
+
+func Test_netrw_filecopy_powershell()
+  call SetShell('powershell')
+  call s:test_netrw_filecopy()
+endfunc
+
+func Test_netrw_filecopy_pwsh()
+  call SetShell('pwsh')
+  call s:test_netrw_filecopy()
+endfunc
+
+" Browser recursive directory copy
+func s:netrw_dircopy(count = 1)
+
+  " setup
+  let marked_dirname = "test_dir"
+  let home = expand('$HOME')
+  let marked_dir = netrw#fs#PathJoin(home, marked_dirname)
+  let target_dir = netrw#fs#PathJoin(home, "target")
+
+  call mkdir(marked_dir, "R")
+  call mkdir(target_dir, "R")
+
+  let dir_content = []
+  for i in range(a:count)
+    call add(dir_content, $"testfile{i}.txt")
+    call writefile(
+    \   [$"NetrwMarkFileCopy test dir content {i}"],
+    \   netrw#fs#PathJoin(marked_dir, dir_content[-1]))
+  endfor
+
+  " delegate
+  call Test_NetrwMarkFileCopy(home, target_dir, [marked_dirname])
+
+  " verify
+  for file in dir_content
+    call assert_equalfile(
+    \   netrw#fs#PathJoin(marked_dir, file),
+    \   netrw#fs#PathJoin(target_dir, marked_dirname, file),
+    \   "File copy failed for " . file)
+  endfor
+
+endfunc
+
+func s:test_netrw_dircopy()
+
+  " if shellslash is available, check both settings
+  if exists('+shellslash')
+    set shellslash&
+    call s:netrw_dircopy(10)
+    set shellslash!
+  endif
+
+  call s:netrw_dircopy(10)
+
+endfunc
+
+func Test_netrw_dircopy_default()
+  call SetShell('default')
+  call s:test_netrw_dircopy()
+endfunc
+
+func Test_netrw_dircopy_powershell()
+  call SetShell('powershell')
+  call s:test_netrw_dircopy()
+endfunc
+
+func Test_netrw_dircopy_pwsh()
+  call SetShell('pwsh')
+  call s:test_netrw_dircopy()
+endfunc
+
+" Copy file into the same directory with a different name
+func Test_netrw_dircopy_rename_default()
+  call SetShell('default')
+  call Test_NetrwMarkFileCopy_SameDir()
+endfunc
+
+func Test_netrw_dircopy_rename_powershell()
+  call SetShell('powershell')
+  call Test_NetrwMarkFileCopy_SameDir()
+endfunc
+
+func Test_netrw_dircopy_rename_pwsh()
+  call SetShell('pwsh')
+  call Test_NetrwMarkFileCopy_SameDir()
+endfunc
+
+" Browser file move
+func s:netrw_filemove(count = 1)
+  " setup
+  let marked_files = []
+  let source_dir = netrw#fs#PathJoin($HOME, "src")
+  let target_dir = netrw#fs#PathJoin($HOME, "target")
+
+  call mkdir(source_dir, "R")
+  call mkdir(target_dir, "R")
+
+  for i in range(a:count)
+    call add(marked_files, $"testfile{i}.txt")
+    call writefile(
+    \   [$"NetrwMarkFileMove test file {i}"],
+    \   netrw#fs#PathJoin(source_dir, marked_files[-1]))
+  endfor
+
+  " delegate
+  call Test_NetrwMarkFileMove(source_dir, target_dir, marked_files)
+
+  " verify
+  for i in range(a:count)
+    call assert_equal(
+    \   [$"NetrwMarkFileMove test file {i}"],
+    \   readfile(netrw#fs#PathJoin(target_dir, $"testfile{i}.txt")),
+    \   $"File move failed for testfile{i}.txt")
+  endfor
+endfunc
+
+func s:test_netrw_filemove()
+
+  " if shellslash is available, check both settings
+  if exists('+shellslash')
+    set shellslash&
+    call s:netrw_filemove(10)
+    set shellslash!
+  endif
+
+  call s:netrw_filemove(10)
+
+endfunc
+
+func Test_netrw_filemove_default()
+  call SetShell('default')
+  call s:test_netrw_filemove()
+endfunc
+
+func Test_netrw_filemove_powershell()
+  call SetShell('powershell')
+  call s:test_netrw_filemove()
+endfunc
+
+func Test_netrw_filemove_pwsh()
+  call SetShell('pwsh')
+  call s:test_netrw_filemove()
+endfunc
+
+func Test_netrw_reject_evil_hostname()
+  let msg = execute(':e scp://x;touch RCE;x/dir/')
+  let msg = split(msg, "\n")[-1]
+  call assert_match('Rejecting invalid hostname', msg)
+endfunc
+
+func Test_netrw_hostname()
+  let valid_hostnames = [
+  \   'localhost',
+  \   '_gateway',
+  \   '127.0.0.1',
+  \   '::1',
+  \   '0:0:0:0:0:0:0:1',
+  \   'user@localhost',
+  \   'usuario@127.0.0.1',
+  \   'utilisateur@::1',
+  \   'benutzer@0:0:0:0:0:0:0:1',
+  \   'localhost:22',
+  \   '127.0.0.1:80',
+  \   '[::1]:443',
+  \   '[0:0:0:0:0:0:0:1]:5432',
+  \   'user@localhost:22',
+  \   'usuario@127.0.0.1:80',
+  \   'utilisateur@[::1]:443',
+  \   'benutzer@[0:0:0:0:0:0:0:1]:5432']
+
+  for hostname in valid_hostnames
+    call assert_true(Test_NetrwValidateHostname(hostname), $"Valid hostname {hostname} was rejected")
+  endfor
+endfunc
+
+func Test_netrw_FileUrlEdit_pipe_injection()
+  CheckUnix
+  CheckExecutable id
+  let fname = 'Xtestfile'
+  let url = 'file:///tmp/file.md%7C!id>'..fname
+  sil call netrw#FileUrlEdit(url)
+  call assert_false(filereadable(fname), 'Command injection via pipe in file URL')
+endfunc
+
+" The remote filename after '.' was allowed to contain shell metacharacters
+" and rode unescaped into the tempfile name passed to sftp/file_cmd, giving a
+" shell injection on :e sftp://host/foo.txt;<cmd>.
+func Test_netrw_tempfile_suffix_injection()
+  CheckUnix
+  CheckExecutable id
+  let save_sftp = g:netrw_sftp_cmd
+  let save_file = exists('g:netrw_file_cmd') ? g:netrw_file_cmd : v:null
+  let g:netrw_sftp_cmd = 'true'
+  let g:netrw_file_cmd = 'true'
+  let fname = 'Xrce_marker'
+  try
+    call delete(fname)
+    sil! call netrw#NetRead(2, 'sftp://localhost/foo.txt;id>'..fname)
+    call assert_false(filereadable(fname), 'Command injection via sftp:// tempfile suffix')
+
+    call delete(fname)
+    sil! call netrw#NetRead(2, 'file://localhost/foo.txt;id>'..fname)
+    call assert_false(filereadable(fname), 'Command injection via file:// tempfile suffix')
+  finally
+    call delete(fname)
+    let g:netrw_sftp_cmd = save_sftp
+    if save_file is v:null
+      unlet! g:netrw_file_cmd
+    else
+      let g:netrw_file_cmd = save_file
+    endif
+  endtry
+endfunc
+
+func Test_netrw_RFC2396()
+  let fname = 'a%20b'
+  call assert_equal('a b', netrw#RFC2396(fname))
+endfunc
+
+func Test_netrw_Home_tilde()
+  Explore ~
+  call assert_match('Netrw Directory Listing', getline(2))
+  bw!
+endfunc
+
+func Test_netrw_unmark_all()
+  call Test_NetrwUnMarkFile()
+endfunc
+
+" Creating a bookmark from a marked file should use b:netrw_curdir as head directory
+func Test_netrw_bookmark_marked_file()
+  let save_keepdir = g:netrw_keepdir
+  let save_workdir = getcwd()
+  let save_bookmarklist = exists('g:netrw_bookmarklist') ? g:netrw_bookmarklist : v:null
+
+  " Make sure Vim's working directory diverge from Netrw's
+  let g:netrw_keepdir = 1
+  let g:netrw_bookmarklist = []
+  let test_workdir = getcwd() . '/Xtest_workdir'
+  let test_netrw_curdir = test_workdir . '/Xtest_netrw_curdir'
+  call mkdir(test_netrw_curdir, 'p')
+  call writefile([], test_netrw_curdir . '/test_file')
+
+  execute 'cd ' . test_workdir
+  call Test_MakeBookmark(test_netrw_curdir, 'test_file')
+
+  " Bookmark paths should be absolute and normalized to prevent duplicates on win32
+  let expected_path = netrw#fs#AbsPath(test_netrw_curdir . '/test_file')
+  if has('win32')
+    let expected_path = substitute(expected_path, '\\', '/', 'ge')
+  endif
+  let expected_path = simplify(expected_path)
+
+  call assert_equal(1, len(g:netrw_bookmarklist))
+  call assert_equal(expected_path, g:netrw_bookmarklist[0])
+  call assert_true(isabsolutepath(g:netrw_bookmarklist[0]), 'Bookmark paths should be absolute')
+
+  " Tear down
+  execute 'cd ' . save_workdir
+  call delete(test_workdir, 'rf')
+
+  let g:netrw_keepdir = save_keepdir
+  if save_bookmarklist is v:null
+    unlet! g:netrw_bookmarklist
+  else
+    let g:netrw_bookmarklist = save_bookmarklist
+  endif
+
+  bw!
+endfunc
+
+" Typing gb or mB without a count should prompt
+" for a bookmark number through an inputlist().
+" Expected dialog output (gb): # | Goto Bookmark:
+"                               1| /foo/bar/baz
+"
+" Expected dialog output (mB): # | Delete Bookmark:
+"                               1| /foo/bar/baz
+func Test_netrw_bookmark_goto_delete_prompt()
+  let save_home = g:netrw_home
+  let save_bookmarklist = exists('g:netrw_bookmarklist') ? g:netrw_bookmarklist : v:null
+
+  let g:netrw_home = getcwd()
+  let g:netrw_bookmarklist = ['/foo/bar/baz']
+  Explore .
+
+  " Inject 'q' to cancel the inputlist() prompt
+  call feedkeys('q', 't')
+  let dialog_out = execute('normal gb')
+  call assert_match('Goto Bookmark:', dialog_out)
+
+  call feedkeys('q', 't')
+  let dialog_out = execute('normal mB')
+  call assert_match('Delete Bookmark:', dialog_out)
+
+  " Tear down
+  call delete(g:netrw_home . '/.netrwbook')
+  call delete(g:netrw_home . '/.netrwhist')
+  let g:netrw_home = save_home
+  if save_bookmarklist is v:null
+    unlet! g:netrw_bookmarklist
+  else
+    let g:netrw_bookmarklist = save_bookmarklist
+  endif
+
+  bw!
+endfunc
+
+func Test_netrw_markings_match_pattern_rebuild()
+  call Test_NetrwMarkFile_match_pattern_rebuild()
+endfunc
+
+func Test_netrw_mf_command_injection()
+  CheckUnix
+  CheckExecutable touch
+  let path = tempname()
+  let fname = 'x" . execute("silent! !touch poc") . "'
+  call mkdir(path, 'R')
+  let _cwd = getcwd()
+  exe "cd " path
+  call writefile([], fname)
+  Explore .
+  call search('^x')
+  :norm mf
+  :norm mf
+  call assert_false(filereadable('poc'), 'Command injection via mf command')
+  exe "cd " _cwd
+  bw!
+endfunc
+
+function Test_netrw_NetrwMaps_CR_dirname()
+  CheckNotMSWindows
+
+  let tmpdir = tempname() . '/evil<CR>:let g:netrw_pwn=1<CR>'
+  call mkdir(tmpdir, 'pR')
+  call assert_true(isdirectory(tmpdir))
+  exe ":Explore " tmpdir
+  " Fire D
+  " If the commands are injected successfully,
+  " this fails with
+  "  Vim(let):E488: Trailing characters: \ @ command line script
+  call feedkeys("D\<C-c>\<C-c>", "xt")
+  call assert_false(exists("g:netrw_pwn"))
+
+  unlet! g:netrw_pwn
+  bw!
+endfunction
+
+func Test_netrw_injection()
+  let g:netrw_home       = getcwd()
+  let savefile           = g:netrw_home . '/.netrwhist'
+  let g:netrw_dirhistmax = 10
+  let g:netrw_dirhistcnt = 1
+  let g:netrw_dirhist_1  = "x'|let g:injected = 1|let y='z"
+  call delete(savefile)
+  try
+    call netrw#Call('NetrwBookHistSave')
+    call assert_true(filereadable(savefile), savefile . ' must be written')
+    unlet g:netrw_dirhist_1
+    execute 'source ' . fnameescape(savefile)
+    call assert_false(exists("g:injected"), 'injected statement must not execute')
+    call assert_equal("x'|let g:injected = 1|let y='z", g:netrw_dirhist_1, 'dirname must round-trip')
+  finally
+    call delete(savefile)
+    unlet! g:netrw_home g:netrw_dirhistmax g:netrw_dirhistcnt g:netrw_dirhist_1 g:injected
+  endtry
+endfunc
+
+" Deleting a file whose name contains an Ex command separator must not let the
+" name inject commands into the :execute in s:NetrwLocalRmFile().
+func Test_netrw_local_rm_injection()
+  CheckUnix
+  let dir   = getcwd() . '/Xnetrwrm'
+  let fname = "x|let g:injected = 1"
+  call mkdir(dir, 'pR')
+  call writefile([], dir . '/' . fname)
+  try
+    call netrw#Call('NetrwLocalRmFile', dir, fname, 1)
+    call assert_false(exists('g:injected'), 'filename must not inject Ex commands')
+    " The file is removed before the sink, so its absence also confirms the
+    " vulnerable code path was actually exercised (not skipped on an error).
+    call assert_false(filereadable(dir . '/' . fname), 'crafted file must be deleted')
+  finally
+    call delete(dir . '/' . fname)
+    unlet! g:injected
+  endtry
+endfunc
+
+func Test_netrw_forward_slashes()
+  Explore
+  call assert_notmatch('\\', b:netrw_curdir)
+  bw!
+  Explore .
+  call assert_notmatch('\\', b:netrw_curdir)
+  bw!
+endfunc
+
+" Selecting a file whose name is a single backslash
+func Test_netrw_open_backslash_file()
+  CheckUnix
+
+  let dir   = getcwd() . '/Xbslash'
+  let fname = dir . '/\'
+  call mkdir(dir, 'pR')
+  call writefile(['backslash file content'], fname)
+  call assert_true(filereadable(fname))
+
+  " list the directory and move onto the '\' entry
+  exe 'Explore ' . dir
+  call assert_true(search('^\\$', 'w') > 0)
+
+  " open it
+  exe "normal \<CR>"
+
+  call assert_equal('\', expand('%:t'))
+  call assert_equal(['backslash file content'], getline(1, '$'))
+
+  bw!
+endfunc
+
+" :Explore without a [dir] argument should open the dir of the current file
+func Test_netrw_open_no_dir_arg()
+  let dir = tempname()
+  call mkdir(dir, 'pR')
+  call writefile([], dir . '/foo')
+  exe 'edit ' . dir . '/foo'
+  Explore
+  call assert_equal(fnamemodify(dir, ':p'), fnamemodify(b:netrw_curdir, ':p'))
+  bw!
+endfunc
+
+func Test_netrw_home_setting()
+  let save_home = get(g:, 'netrw_home', '')
+  let dir = fnamemodify('XnetrwHome', ':p')
+  let vimdir = fnamemodify('XvimDir', ':p')
+  let subdir = fnamemodify('XnetrwHomeParent/XnetrwHome', ':p')
+  if has('win32')
+    let dir = substitute(dir, '/', '\\', 'g')
+    let vimdir = substitute(vimdir, '/', '\\', 'g')
+    let subdir = substitute(subdir, '/', '\\', 'g')
+  endif
+  let save_myvimdir = getenv('MYVIMDIR')
+  let $MYVIMDIR = vimdir
+
+  unlet! g:netrw_home
+  if has('nvim')
+    let expected = netrw#fs#PathJoin(stdpath('state'), 'netrw')
+    if has('win32')
+      let expected = substitute(expected, '/', '\\', 'g')
+    endif
+    call assert_equal(expected, Test_NetrwHome())
+  else
+    " without the setting $MYVIMDIR is used
+    call assert_equal(vimdir, Test_NetrwHome())
+  endif
+
+  let g:netrw_home = dir
+  call assert_equal(dir, Test_NetrwHome())
+  call assert_true(isdirectory(dir))
+
+  let g:netrw_home = subdir
+  call assert_equal(subdir, Test_NetrwHome())
+  call assert_true(isdirectory(subdir))
+
+  " the value is expanded
+  let $NETRW_TEST_HOME = dir
+  let g:netrw_home = '$NETRW_TEST_HOME'
+  call assert_equal(dir, Test_NetrwHome())
+
+  call delete(dir, 'd')
+  call delete(vimdir, 'd')
+  call delete(subdir, 'd')
+  call delete(fnamemodify(subdir, ':h'), 'd')
+  unlet $NETRW_TEST_HOME
+  call setenv('MYVIMDIR', save_myvimdir)
+  if empty(save_home)
+    unlet! g:netrw_home
+  else
+    let g:netrw_home = save_home
+  endif
+endfunc
+
+" vim:ts=8 sts=2 sw=2 et

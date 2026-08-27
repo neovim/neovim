@@ -840,8 +840,8 @@ CTRL-W i		Open a new window, with the cursor on the first line
 			Like `[D`  and `]D`, but search in [range] lines
 			(default: whole file).
 			See |:search-args| for [/] and [!].
-			Note that `:dl` works like `:delete` with the "l"
-			flag, not `:dlist`.
+			Note: `:dl` works like `:delete` with the "l" flag,
+			not `:dlist`.
 
 							*[_CTRL-D*
 [ CTRL-D		Jump to the first macro definition that contains the
@@ -945,7 +945,11 @@ include the following entries and each value must be a string:
 			either relative to the current directory or a full
 			path.
 	cmd		Ex command used to locate the tag in the file.  This
-			can be either an Ex search pattern or a line number.
+			can be a line number, a search pattern or any other
+			Ex command, like in a tags file (see
+			|tags-file-format|).  A search pattern must start and
+			end with "/" or "?".  An invalid value results in
+			|E987|.
 Note that the format is similar to that of |taglist()|, which makes it possible
 to use its output to generate the result.
 The following fields are optional:
@@ -963,20 +967,14 @@ It is not allowed to close a window or change window from inside 'tagfunc'.
 The following is a hypothetical example of a function used for 'tagfunc'.  It
 uses the output of |taglist()| to generate the result: a list of tags in the
 inverse order of file names.
->vim
-	function CompareFilenames(item1, item2)
-	  let f1 = a:item1['filename']
-	  let f2 = a:item2['filename']
-	  return f1 >=# f2 ? -1 : f1 <=# f2 ? 1 : 0
-	endfunction
-
-	function TagFunc(pattern, flags, info)
-	  let result = taglist(a:pattern)
-	  call sort(result, "CompareFilenames")
-
+>lua
+	vim.bo.tagfunc = function(pattern, flags, info)
+	  local result = vim.fn.taglist(pattern)
+	  table.sort(result, function(item1, item2)
+	    return item1.filename > item2.filename
+	  end)
 	  return result
-	endfunc
-	set tagfunc=TagFunc
+	end
 <
 Note: When executing |taglist()| the 'tagfunc' function won't be called
 recursively.

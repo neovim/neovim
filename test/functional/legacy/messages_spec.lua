@@ -2,6 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each, finally = t.describe, t.it, t.before_each, t.finally
 local clear = n.clear
 local command = n.command
 local exec = n.exec
@@ -885,6 +886,43 @@ describe('messages', function()
       14                                                                         |
       15                                                                         |
       3 lines filtered                                                           |
+    ]])
+  end)
+
+  -- oldtest: Test_hit_enter_during_mapping()
+  it('hit-enter prompt during a mapping', function()
+    screen = Screen.new(75, 10)
+    exec([[
+      set ruler
+      call setline(1, range(1, 20))
+      " The 8-line :echo leads to a hit-enter prompt.
+      nnoremap X :echo "a\nb\nc\nd\ne\nf\ng\nh"<CR>gg
+      nnoremap \b :echo "a\nb\nc\nd\ne\nf\ng\nh"<CR>:b<Space>
+      normal! 10G
+    ]])
+    t.eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
+    t.eq({ 10, 0 }, api.nvim_win_get_cursor(0))
+
+    feed('X')
+    -- Without the fix the hit-enter prompt eats the mapping's "g" keys and the
+    -- cursor stays put.  With the fix "gg" runs and moves the cursor to line 1.
+    t.eq({ mode = 'n', blocking = false }, api.nvim_get_mode())
+    t.eq({ 1, 0 }, api.nvim_win_get_cursor(0))
+
+    -- If a mapping starts cmdline after multiline messages exceeding 'cmdheight',
+    -- the messages should still be visible.
+    feed('\\b')
+    screen:expect([[
+      {3:                                                                           }|
+      a                                                                          |
+      b                                                                          |
+      c                                                                          |
+      d                                                                          |
+      e                                                                          |
+      f                                                                          |
+      g                                                                          |
+      h                                                                          |
+      :b ^                                                                        |
     ]])
   end)
 

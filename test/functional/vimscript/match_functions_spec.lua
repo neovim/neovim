@@ -2,11 +2,12 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local eq = t.eq
+local pcall_err = t.pcall_err
 local clear = n.clear
 local fn = n.fn
 local command = n.command
-local exc_exec = n.exc_exec
 
 before_each(clear)
 
@@ -87,15 +88,15 @@ describe('matchaddpos()', function()
     command('hi clear PreProc')
     eq(
       'Vim(let):E5030: Empty list at position 0',
-      exc_exec('let val = matchaddpos("PreProc", [[]])')
+      pcall_err(command, 'let val = matchaddpos("PreProc", [[]])')
     )
     eq(
       'Vim(let):E5030: Empty list at position 1',
-      exc_exec('let val = matchaddpos("PreProc", [1, v:_null_list])')
+      pcall_err(command, 'let val = matchaddpos("PreProc", [1, v:_null_list])')
     )
     eq(
       'Vim(let):E5031: List or number required at position 1',
-      exc_exec('let val = matchaddpos("PreProc", [1, v:_null_dict])')
+      pcall_err(command, 'let val = matchaddpos("PreProc", [1, v:_null_dict])')
     )
   end)
   it('works with 0 lnum', function()

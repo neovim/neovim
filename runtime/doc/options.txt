@@ -296,6 +296,7 @@ created, thus they behave slightly differently:
 	'winfixbuf'	specific to existing window
 	'winfixheight'	specific to existing window
 	'winfixwidth'	specific to existing window
+	'winpinned'	specific to existing window
 
 Special local buffer options
 
@@ -393,9 +394,8 @@ Note: In the future more global options can be made |global-local|.  Using
 
 						*option-value-function*
 Some options ('completefunc', 'findfunc', 'omnifunc', 'operatorfunc',
-'quickfixtextfunc', 'tagfunc' and 'thesaurusfunc') are set to a function name
-or a function reference or a lambda function.  When using a lambda it will be
-converted to the name, e.g. "<lambda>123".
+'quickfixtextfunc', 'tagfunc' and 'thesaurusfunc') can be set to a function
+name, a |Funcref|, a |lambda|, or a Lua function.
 Examples:
 >
 	set opfunc=MyOpFunc
@@ -418,13 +418,30 @@ Set using a variable with lambda expression: >
 	let L = {a, b, c -> MyTagFunc(a, b , c)}
 	let &tagfunc = L
 
+Set to a Lua function (from Lua): >lua
+	vim.o.operatorfunc = function(motion) … end
+<
+The value read back from the option reflects how it was set:
+- A Function name or |Funcref| reads back as the function name.
+- A Vimscript |lambda| or partial reads back as an evaluatable string, e.g.
+  `function('<lambda>2')` or `function('MyFunc', [10])`.
+- A |script-local| ("s:") name is expanded to `<SNR>` form.
+- A Lua function is returned as itself from Lua, or as a `"<Lua …>"` hint
+  from Vimscript/RPC.
+  - Note: Lua functions cannot be serialized, so it cannot be saved/restored
+    by |:mksession| |:mkview| |:mkvimrc|.
+
 Calling a function in an expr option			*expr-option-function*
 
-The value of a few options, such as 'foldexpr', is an expression that is
-evaluated to get a value.  The evaluation can have quite a bit of overhead.
-One way to minimize the overhead, and also to keep the option value very
-simple, is to define a function and set the option to call it without
-arguments.  A |v:lua-call| can also be used.  Example: >vim
+The value of an "expr" option ('charconvert', 'diffexpr', 'foldexpr',
+'foldtext', 'formatexpr', 'includeexpr', 'indentexpr', 'patchexpr') is a
+Vimscript expression that is evaluated to get a value.  Context is passed in
+|v:| variables, e.g. 'foldexpr' is evaluated for each line with |v:lnum| set.
+
+The evaluation can have quite a bit of overhead.  One way to minimize the
+overhead, and also to keep the option value very simple, is to define a
+function and set the option to call it without arguments.  A |v:lua-call| can
+also be used.  Example: >vim
 	lua << EOF
 	  function _G.MyFoldFunc()
 	    -- ... compute fold level for line v:lnum
@@ -432,6 +449,14 @@ arguments.  A |v:lua-call| can also be used.  Example: >vim
 	  end
 	EOF
 	set foldexpr=v:lua.MyFoldFunc()
+
+From Lua the option can also be set directly to a function, which is called
+with no arguments (read the context from |v:| variables): >lua
+	vim.wo.foldexpr = function() return vim.v.lnum == 1 and '>1' or '1' end
+<
+The value read back from the option follows the same rules as
+|option-value-function|: a string reads back as itself, and a Lua function
+reads back as the function (from Lua) or a `"<Lua …>"` hint (Vimscript/RPC).
 
 
 Setting the filetype
@@ -756,12 +781,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 			*'autochdir'* *'acd'* *'noautochdir'* *'noacd'*
 'autochdir' 'acd'	boolean	(default off)
 			global
-	When on, Vim will change the current working directory whenever you
-	open a file, switch buffers, delete a buffer or open/close a window.
-	It will change to the directory containing the file which was opened
-	or selected.  When a buffer has no name it also has no directory, thus
-	the current directory won't change when navigating to it.
+	When on, Nvim will change its global |current-directory| to the parent
+	of the current file, whenever you open a file, switch buffers, delete
+	a buffer or open/close a window.
+
+	When a buffer has no name it also has no directory, thus the current
+	directory won't change when navigating to it.
+
 	Note: When this option is on some plugins may not work.
+
+	Alternatively, consider using |:bcd|, |:lcd|, or |:tcd| in an autocmd,
+	to selectively set a local (not global) directory. See |project-dir|.
 
 			*'autocomplete'* *'ac'* *'noautocomplete'* *'noac'*
 'autocomplete' 'ac'	boolean	(default off)
@@ -808,11 +838,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 				*'autoread'* *'ar'* *'noautoread'* *'noar'*
 'autoread' 'ar'		boolean	(default on)
 			global or local to buffer |global-local|
-	When a file has been detected to have been changed outside of Vim and
-	it has not been changed inside of Vim, automatically read it again.
-	When the file has been deleted this is not done, so you have the text
-	from before it was deleted.  When it appears again then it is read.
-	|timestamp|
+	When a file was changed outside of Nvim, automatically read it again.
+	Skipped if the file was deleted (so you still have the last-available
+	text). If the file appears again, then it is read; you can |undo| to
+	see the previous contents. |timestamp|
+
+	This is driven (partially) by OS filewatcher events |uv_fs_event_t|,
+	so buffers are updated immediately (instead of only on focus-change or
+	shell-commands).
+
 	If this option has a local value, use this command to switch back to
 	using the global value: >vim
 		set autoread<
@@ -850,11 +884,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	When set to "dark" or "light", adjusts the default color groups for
 	that background type.  The |TUI| or other UI sets this on startup
-	(triggering |OptionSet|) if it can detect the background color.
+	if it can detect the background color, and re-detects it whenever a UI
+	attaches later, unless 'background' was set explicitly.  When multiple
+	UIs are attached they share one value, decided by "last wins" (may
+	not be the most recently-attached UI, since it depends on response
+	speed).
 
 	This option does NOT change the background color, it tells Nvim what
-	the "inherited" (terminal/GUI) background looks like.
-	See |:hi-normal| if you want to set the background color explicitly.
+	the "inherited" (terminal/GUI) background looks like. See |:hi-normal|
+	to set the background color explicitly.
 						*g:colors_name*
 	When a color scheme is loaded (the "g:colors_name" variable is set)
 	changing 'background' will cause the color scheme to be reloaded.  If
@@ -862,14 +900,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	However, if the color scheme sets 'background' itself the effect may
 	be undone.  First delete the "g:colors_name" variable when needed.
 
-	Normally this option would be set in the vimrc file.  Possibly
-	depending on the terminal name.  Example: >vim
+	Historically, this option was set in the vimrc file.  Example: >vim
 		if $TERM ==# "xterm"
 		  set background=dark
 		endif
-<	When this option is changed, the default settings for the highlight groups
-	will change.  To use other settings, place ":highlight" commands AFTER
-	the setting of the 'background' option.
+<	When this option is changed, the defaults for highlight groups
+	will change.  To override those defaults, place ":highlight" commands
+	AFTER setting the 'background' option.
 
 						*'backspace'* *'bs'*
 'backspace' 'bs'	string	(default "indent,eol,start")
@@ -1222,14 +1259,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 'buftype' 'bt'		string	(default "")
 			local to buffer  |local-noglobal|
 	The value of this option specifies the type of a buffer:
-	  <empty>	normal buffer
-	  acwrite	buffer will always be written with |BufWriteCmd|s
-	  help		help buffer (do not set this manually)
-	  nofile	buffer is not related to a file, will not be written
-	  nowrite	buffer will not be written
-	  prompt	buffer where only the last section can be edited, for
+	  (empty)	Normal buffer.
+	  acwrite	Buffer will always be written with |BufWriteCmd|.
+	  help		Help buffer (do not set this manually).
+	  nofile	Buffer is not a file, will not be written.
+	  nowrite	Buffer represents a filepath (such as a directory),
+			but will not be written.
+	  prompt	Buffer where only the last section can be edited, for
 			use by plugins. |prompt-buffer|
-	  quickfix	list of errors |:cwindow| or locations |:lwindow|
+	  quickfix	List of errors |:cwindow| or locations |:lwindow|
 	  terminal	|terminal-emulator| buffer
 
 	This option is used together with 'bufhidden' and 'swapfile' to
@@ -1290,7 +1328,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 'cdhome' 'cdh'		boolean	(default on on Unix, off on Windows)
 			global
 			Disallowed in |modeline|. |no-modeline-option|
-	When on, |:cd|, |:tcd| and |:lcd| without an argument changes the
+	When on, |:cd|, |:tcd|, |:lcd| and |:bcd| without an argument changes the
 	current working directory to the |$HOME| directory like in Unix.
 	When off, those commands just print the current directory name.
 
@@ -1299,7 +1337,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 			Disallowed in |modeline|. |no-modeline-option|
 	This is a list of directories which will be searched when using the
-	|:cd|, |:tcd| and |:lcd| commands, provided that the directory being
+	|:cd|, |:tcd|, |:lcd| and |:bcd| commands, provided that the directory being
 	searched for has a relative path, not an absolute part starting with
 	"/", "./" or "../", the 'cdpath' option is not used then.
 	The 'cdpath' option's value has the same form and semantics as
@@ -1353,14 +1391,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Conversion between "latin1", "unicode", "ucs-2", "ucs-4" and "utf-8"
 	is done internally by Vim, 'charconvert' is not used for this.
 	Also used for Unicode conversion.
-	Example: >vim
-		set charconvert=CharConvert()
-		fun CharConvert()
-		  system("recode "
-			\ .. v:charconvert_from .. ".." .. v:charconvert_to
-			\ .. " <" .. v:fname_in .. " >" .. v:fname_out)
-		  return v:shell_error
-		endfun
+	Example: >lua
+		vim.o.charconvert = function()
+		  vim.fn.system(('recode %s..%s <%s >%s'):format(
+		    vim.v.charconvert_from, vim.v.charconvert_to,
+		    vim.v.fname_in, vim.v.fname_out))
+		  return vim.v.shell_error
+		end
 <	The related Vim variables are:
 		v:charconvert_from	name of the current encoding
 		v:charconvert_to	name of the desired encoding
@@ -1466,11 +1503,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'cmdheight'* *'ch'*
 'cmdheight' 'ch'	number	(default 1)
-			global or local to tab page
+			global or local to tabpage
 	Number of screen lines to use for the command-line.  Helps avoiding
 	|hit-enter| prompts.
-	The value of this option is stored with the tab page, so that each tab
-	page can have a different value.
+	The value of this option is stored with the tabpage, so that each
+	tabpage can have a different value.
 
 	When 'cmdheight' is zero, there is no command-line unless it is being
 	used.  The command-line will cover the last line of the screen when
@@ -1647,8 +1684,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 		    See also |preinserted()|.
 
 	   menu	    Use a popup menu to show the possible completions.  The
-		    menu is only shown when there is more than one match and
-		    sufficient colors are available.  |ins-completion-menu|
+		    menu is only shown when there is more than one match.
+		    |ins-completion-menu|
 
 	   menuone  Use the popup menu also when there is only one match.
 		    Useful when there is additional information about the
@@ -2026,7 +2063,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			following occurrence.
 								*cpo-~*
 		~	When included, don't resolve symbolic links when
-			changing directory with |:cd|, |:lcd|, or |:tcd|.
+			changing directory with |:cd|, |:tcd|, |:lcd|, or |:bcd|.
 			This preserves the symbolic link path in buffer names
 			and when displaying the current directory.  When
 			excluded (default), symbolic links are resolved to
@@ -2217,7 +2254,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 		closeoff	When a window is closed where 'diff' is set
 				and there is only one window remaining in the
-				same tab page with 'diff' set, execute
+				same tabpage with 'diff' set, execute
 				`:diffoff` in that window.  This undoes a
 				`:diffsplit` command.
 
@@ -2535,8 +2572,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Note: The following events are considered to happen outside of a
 	window context and thus cannot be ignored by 'eventignorewin':
 
+		|ChanClose|,
 		|ChanInfo|,
 		|ChanOpen|,
+		|CmdAtom|,
 		|CmdUndefined|,
 		|CmdlineChanged|,
 		|CmdlineEnter|,
@@ -2578,6 +2617,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		|SessionLoadPost|,
 		|SessionLoadPre|,
 		|SessionWritePost|,
+		|SessionWritePre|,
 		|ShellCmdPost|,
 		|Signal|,
 		|SourceCmd|,
@@ -2592,6 +2632,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		|TabClosedPre|,
 		|TabEnter|,
 		|TabLeave|,
+		|TabMoved|,
 		|TabNew|,
 		|TabNewEntered|,
 		|TermClose|,
@@ -2934,9 +2975,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|String| and is the |:find| command argument.  The second argument is
 	a |Boolean| and is set to |v:true| when the function is called to get
 	a List of command-line completion matches for the |:find| command.
-	The function should return a List of strings.
+	The function should return a List, which is handled similarly to the
+	return value of a |:command-completion-customlist| function.
 
-	The function is called only once per |:find| command invocation.
 	The function can process all the directories specified in 'path'.
 
 	If a match is found, the function should return a |List| containing
@@ -2951,20 +2992,20 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 
 	Examples:
-	>vim
-	    " Use glob()
-	    func FindFuncGlob(cmdarg, cmdcomplete)
-		let pat = a:cmdcomplete ? $'{a:cmdarg}*' : a:cmdarg
-		return glob(pat, v:false, v:true)
-	    endfunc
-	    set findfunc=FindFuncGlob
+	>lua
+	    -- Use vim.fn.glob()
+	    vim.o.findfunc = function(cmdarg, cmdcomplete)
+	      local pat = cmdcomplete and (cmdarg .. '*') or cmdarg
+	      return vim.fn.glob(pat, false, true)
+	    end
 
-	    " Use the 'git ls-files' output
-	    func FindGitFiles(cmdarg, cmdcomplete)
-		let fnames = systemlist('git ls-files')
-		return fnames->filter('v:val =~? a:cmdarg')
-	    endfunc
-	    set findfunc=FindGitFiles
+	    -- Use the "git ls-files" output
+	    vim.o.findfunc = function(cmdarg, cmdcomplete)
+	      local fnames = vim.fn.systemlist('git ls-files')
+	      return vim.tbl_filter(function(v)
+	        return v:lower():find(cmdarg:lower(), 1, true) ~= nil
+	      end, fnames)
+	    end
 <
 
 		*'fixendofline'* *'fixeol'* *'nofixendofline'* *'nofixeol'*
@@ -3446,8 +3487,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	attempt to set 'guifontwide' to a matching double-width font.
 
 						*'helpfile'* *'hf'*
-'helpfile' 'hf'		string	(default (MS-Windows) "$VIMRUNTIME\doc\help.txt"
-                                         (others) "$VIMRUNTIME/doc/help.txt")
+'helpfile' 'hf'		string	(default "$VIMRUNTIME/doc/help.txt")
 			global
 			Disallowed in |modeline|. |no-modeline-option|
 	Name of the main help file.  All distributed help files should be
@@ -4026,6 +4066,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 		1: only if there are at least two windows
 		2: always
 		3: always and ONLY the last window
+
+	Here "last window" means the last window in a column, i.e. the bottom-
+	most one, just above the command line.
+
 	The screen looks nicer with a status line if you have several
 	windows, but it takes another screen line. |status-line|
 
@@ -4187,7 +4231,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			combine it with "tab:", for example: >vim
 				set listchars+=tab:>-,lead:.
 <
-							*lcs-leadmultispace*
+	                                *lcs-leadmultispace* *indent-guides*
 	  leadmultispace:c...
 			Like the |lcs-multispace| value, but for leading
 			spaces only.  Also overrides |lcs-lead| for leading
@@ -4198,6 +4242,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 <
 			Where "XXX" denotes the first non-blank characters in
 			the line.
+
+	                Combined with |lcs-leadtab|, this can be used to show
+	                "indentation guides" (vertical lines).
+			For example, with 'shiftwidth' 2: >vim
+				set list listchars=leadtab:\ \ │,tab:\ \ │,leadmultispace:\ \ │
+<		For richer rendering (per-level colors, treesitter-aware
+			scopes, etc.) use a third-party plugin.
 							*lcs-leadtab*
 	  leadtab:xy[z]
 			Like |lcs-tab|, but only for leading tabs.  When
@@ -4396,10 +4447,23 @@ A jump table for the options with a short description can be found at |Q_op|.
 	hit-enter	Use a |hit-enter| prompt when the message is longer than
 			'cmdheight' size.
 
+	maxheight:{n}	|ui2| only.  Maximum height of the expanded cmdline
+			for message display, as a percentage of 'lines'.
+			A message longer than this is "collapsed", with
+			a `[+x]` "spill" indicator.  (default: 50)
+
+	pager:{key}	|ui2| only.  Key that enters the message pager after an
+			interactive |:| command showed a collapsed message.  Use
+			|key-notation|, e.g. `<CR>`.  A literal comma must be
+			given as "<Char-44>".  Empty: no such key.
+
 	progress:{s}	Determines where to show progress messages.
 			Valid values are:
 			  - empty: Progress messages not shown in cmdline.
 			  - "c": Progress messages are shown in cmdline.
+
+	timeout:{n}	|ui2| only.  Time in milliseconds that a message is
+			visible in the message window.
 
 	wait:{n}	Deprecated with |ui2|.
 			Instead of a |hit-enter| prompt, simply wait for {n}
@@ -4586,7 +4650,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 			be acted upon, i.e. no cursor move.  This implies of
 			course, that right clicking outside a selection will
 			end Visual mode.
-	Overview of what button does what for each model:
+
+	For a detailed description of 'mousemodel' behaviour see
+	|mouse-mode-table|.  Overview of what button does what for each model:
+
 	mouse		    extend		popup(_setpos) ~
 	left click	    place cursor	place cursor
 	left drag	    start selection	start selection
@@ -4761,6 +4828,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	the name of a function, a |lambda| or a |Funcref|.  See
 	|option-value-function| for more information.
 
+						*'packlockfile'* *'plf'*
+'packlockfile' 'plf'	string	(default "$XDG_CONFIG_HOME/nvim/nvim-pack-lock.json")
+			global
+			Disallowed in |modeline|. |no-modeline-option|
+	Path of |vim.pack-lockfile|. Must be set before the first usage of any
+	|vim.pack| function. Environment variables are expanded |:set_env|.
+
 						*'packpath'* *'pp'*
 'packpath' 'pp'		string	(default see 'runtimepath')
 			global
@@ -4874,6 +4948,28 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	Default height for a preview window.  Used for |:ptag| and associated
 	commands.  Used for |CTRL-W_}| when no count is given.
+
+						*'previewpopup'* *'pvp'*
+'previewpopup' 'pvp'	string	(default "")
+			global
+	When not empty a floating window is used for commands that would open
+	a preview window.  See |preview-popup|.
+	The option is a comma-separated list of these items:
+	   height  Height of the window.  When omitted, it is derived from
+	           the content.
+	   width   Width of the window.  When omitted, it is derived from
+	           the content.
+	   border  One of the 'winborder' styles.  When omitted, 'winborder'
+	           is used.  A custom (comma separated) border cannot be
+	           given here, use 'winborder'.
+	The window background uses |hl-NormalFloat| and the border uses
+	|hl-FloatBorder|.
+	Not used for the insert completion info, add "popup" to 'completeopt'
+	for that.
+
+	Example: >vim
+		set previewpopup=height:10,width:60,border:rounded
+<
 
 		*'previewwindow'* *'pvw'* *'nopreviewwindow'* *'nopvw'* *E590*
 'previewwindow' 'pvw'	boolean	(default off)
@@ -5103,42 +5199,51 @@ A jump table for the options with a short description can be found at |Q_op|.
 					*'ruler'* *'ru'* *'noruler'* *'noru'*
 'ruler' 'ru'		boolean	(default on)
 			global
-	Show the line and column number of the cursor position, separated by a
-	comma.  When there is room, the relative position of the displayed
-	text in the file is shown on the far right:
-		Top	first line is visible
-		Bot	last line is visible
-		All	first and last line are visible
-		45%	relative position in the file
-	If 'rulerformat' is set, it will determine the contents of the ruler.
-	Each window has its own ruler.  If a window has a status line, the
-	ruler is shown there.  If a window doesn't have a status line and
-	'cmdheight' is zero, the ruler is not shown.  Otherwise it is shown in
-	the last line of the screen.  If the statusline is given by
-	'statusline' (i.e. not empty), this option takes precedence over
-	'ruler' and 'rulerformat'.
+	When on, show some buffer information in the ruler.  Each window has
+	its own ruler.  The ruler of the active window is shown in the last
+	line of the screen, unless 'cmdheight' is zero, or the window has a
+	status line, which (by default) contains the window's ruler.
+
+	'rulerformat' determines the contents of the ruler.
+	By default, the line and column number of the current cursor position
+	are shown, separated by a comma.
 	If the number of characters displayed is different from the number of
 	bytes in the text (e.g., for a TAB or a multibyte character), both
 	the text column (byte number) and the screen column are shown,
 	separated with a dash.
 	For an empty line "0-1" is shown.
 	For an empty buffer the line number will also be zero: "0,0-1".
+	Finally, the relative position of the displayed text in the file is
+	shown on the far right:
+		Top	first line is visible
+		Bot	last line is visible
+		All	first and last line are visible
+		45%	relative position in the file
+
 	If you don't want to see the ruler all the time but want to know where
 	you are, use "g CTRL-G" |g_CTRL-G|.
+	When 'ruler' is on, the output of |CTRL-G| doen't contain the current
+	line number of the cursor position.
 
 						*'rulerformat'* *'ruf'*
-'rulerformat' 'ruf'	string	(default "")
+'rulerformat' 'ruf'	string	(default "%18(%l,%c%V%= %P%)%<")
 			global
-	When this option is not empty, it determines the content of the ruler
-	string, as displayed for the 'ruler' option.
+	This option determines the content of the ruler string, as displayed
+	for the 'ruler' option.
 	The format of this option is like that of 'statusline'.
+	Setting to empty (`:set rulerformat=`) sets the value to the default.
 	This option cannot be set in a modeline when 'modelineexpr' is off.
 
-	The default ruler width is 17 characters.  To make the ruler 15
-	characters wide, put "%15(" at the start and "%)" at the end.
-	Example: >vim
-		set rulerformat=%15(%c%V\ %p%%%)
-<
+	When 'ruler' is on, the default 'statusline' includes 'rulerformat'.
+
+	The default ruler width is 18 characters, which is configured with
+	what looks like an item group.  But there are some differences in this
+	particular case.  Most notably, the width is fixed and not a minimum,
+	and the ruler is left-aligned, whereas the alignment of item groups is
+	configurable and right-aligned by default.
+
+	When |ui2| is enabled, the ruler no longer has a fixed width and the
+	item group syntax has no special meaning for 'rulerformat'.
 
 					*'runtimepath'* *'rtp'* *vimfiles*
 'runtimepath' 'rtp'	string	(default "$XDG_CONFIG_HOME/nvim,
@@ -5243,23 +5348,24 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Maximum number of lines kept beyond the visible screen. Lines at the
 	top are deleted if new lines exceed this limit.
 	Minimum is 1, maximum is 1000000.
-	Only in |terminal| buffers.
+	Only in |terminal| and |prompt-buffer| buffers.
 
-	Note: Lines that are not visible and kept in scrollback are not
+	Note: Lines that are not visible and kept in terminal scrollback are not
 	reflown when the terminal buffer is resized horizontally.
 
 			*'scrollbind'* *'scb'* *'noscrollbind'* *'noscb'*
 'scrollbind' 'scb'	boolean	(default off)
 			local to window
-	See also |scroll-binding|.  When this option is set, scrolling the
-	current window also scrolls other scrollbind windows (windows that
-	also have this option set).  This option is useful for viewing the
-	differences between two versions of a file, see 'diff'.
-	See 'scrollopt' for options that determine how this option should be
-	interpreted.
-	This option is mostly reset when splitting a window to edit another
-	file.  This means that ":split | edit file" results in two windows
-	with scroll-binding, but ":split file" does not.
+	Enables synchronized scrolling (in all windows with this option set).
+	Useful for comparing two versions of a file, see 'diff'.
+	Behavior is controlled by 'scrollopt'. See |scroll-binding|.
+
+	This option is (usually) reset when splitting a window to edit another
+	file: ":split | edit file" results in two windows with scroll-binding,
+	but ":split file" does not.
+
+	Note: Consider calling |:syncbind| on |WinResized|, |WinEnter| events
+	(scoped to relevant buffers).
 
 						*'scrolljump'* *'sj'*
 'scrolljump' 'sj'	number	(default 1)
@@ -5277,13 +5383,35 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Minimal number of screen lines to keep above and below the cursor.
 	This will make some context visible around where you are working.  If
 	you set it to a very large value (999) the cursor line will always be
-	in the middle of the window (except at the start or end of the file or
-	when long lines wrap).
+	in the middle of the window (except at the start or end of the file,
+	see 'scrolloffpad', or when long lines wrap).
 	After using the local value, go back the global value with one of
 	these two: >vim
 		setlocal scrolloff<
 		setlocal scrolloff=-1
 <	For scrolling horizontally see 'sidescrolloff'.
+
+						*'scrolloffpad'* *'sop'*
+'scrolloffpad' 'sop'	number	(default 0)
+			global or local to window |global-local|
+	When 'scrolloff' and 'scrolloffpad' are greater than zero, allow
+	the cursor to remain centered when at the end of the file.
+	Normally, 'scrolloff' will not keep the cursor centered at the
+	end of the file.
+
+	A value of 0 disables this feature.  Any value above 0 enables it.
+	For a window-local value, -1 means to use the global value.
+	Values below -1 are invalid.
+
+	Example: >vim
+		:set scrolloff=99 scrolloffpad=1
+<
+
+	After using the local value, go back the global value with one of
+	these two: >vim
+		setlocal scrolloffpad<
+		setlocal scrolloffpad=-1
+<
 
 						*'scrollopt'* *'sbo'*
 'scrollopt' 'sbo'	string	(default "ver,jump")
@@ -5381,16 +5509,16 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   localoptions	options and mappings local to a window or buffer (not
 			global values for local options)
 	   options	all options and mappings (also global values for local
-			options)
+			options), except Lua functions |option-value-function|.
 	   skiprtp	exclude 'runtimepath' and 'packpath' from the options
 	   resize	size of the Vim window: 'lines' and 'columns'
 	   sesdir	the directory in which the session file is located
 			will become the current directory (useful with
 			projects accessed over a network from different
 			systems)
-	   tabpages	all tab pages; without this only the current tab page
+	   tabpages	all tabpages; without this only the current tabpage
 			is restored, so that you can make a session for each
-			tab page separately
+			tabpage separately
 	   terminal	include terminal windows where the command can be
 			restored
 	   winpos	position of the whole Vim window
@@ -5583,7 +5711,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 <
 
 						*'shellcmdflag'* *'shcf'*
-'shellcmdflag' 'shcf'	string	(default "-c"; Windows: "/s /c")
+'shellcmdflag' 'shcf'	string	(default "-c"; Windows, when 'shell'
+                                           contains "cmd" somewhere: "/s /c")
 			global
 			Disallowed in |modeline|. |no-modeline-option|
 	Flag passed to the shell to execute "!" and ":!" commands; e.g.,
@@ -5609,12 +5738,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	For MS-Windows the default is "2>&1| tee".  The stdout and stderr are
 	saved in a file and echoed to the screen.
 	For Unix the default is "| tee".  The stdout of the compiler is saved
-	in a file and echoed to the screen.  If the 'shell' option is "csh" or
-	"tcsh" after initializations, the default becomes "|& tee".  If the
-	'shell' option is "sh", "ksh", "mksh", "pdksh", "zsh", "zsh-beta",
-	"bash", "fish", "ash" or "dash" the default becomes "2>&1| tee".  This
-	means that stderr is also included.  Before using the 'shell' option a
-	path is removed, thus "/bin/sh" uses "sh".
+	in a file and echoed to the screen.  If the 'shell' option contains
+	"csh" (e.g. "tcsh") after initializations, the default becomes
+	"|& tee".  Otherwise, if it contains "sh" (e.g. "bash", "zsh"), the
+	default becomes "2>&1| tee".  This means that stderr is also included.
+	Before using the 'shell' option a path is removed, thus "/bin/sh" uses
+	"sh".
 	The initialization of this option is done after reading the vimrc
 	and the other initializations, so that when the 'shell' option is set
 	there, the 'shellpipe' option changes automatically, unless it was
@@ -5629,6 +5758,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Note: When using a pipe like "| tee", you'll lose the exit code of the
 	shell command.  This might be configurable by your shell, look for
 	the pipefail option (for bash and zsh, use ":set -o pipefail").
+	Only a single "%s" value is allowed.
 
 						*'shellquote'* *'shq'*
 'shellquote' 'shq'	string	(default ""; Windows, when 'shell'
@@ -5655,12 +5785,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The name of the temporary file can be represented by "%s" if necessary
 	(the file name is appended automatically if no %s appears in the value
 	of this option).
-	The default is ">".  For Unix, if the 'shell' option is "csh" or
-	"tcsh" during initializations, the default becomes ">&".  If the
-	'shell' option is "sh", "ksh", "mksh", "pdksh", "zsh", "zsh-beta",
-	"bash" or "fish", the default becomes ">%s 2>&1".  This means that
-	stderr is also included.  For Win32, the Unix checks are done and
-	additionally "cmd" is checked for, which makes the default ">%s 2>&1".
+	The default is ">".  For Unix, if the 'shell' option contains "csh"
+	(e.g. "tcsh") during initializations, the default becomes ">&".
+	Otherwise, if it contains "sh" (e.g. "bash", "zsh"), the default
+	becomes ">%s 2>&1". This means that stderr is also included.  For
+	Win32, the Unix checks are done and additionally "cmd" is checked
+	for, which makes the default ">%s 2>&1".
 	Also, the same names with ".exe" appended are checked for.
 	The initialization of this option is done after reading the vimrc
 	and the other initializations, so that when the 'shell' option is set
@@ -5668,9 +5798,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	explicitly set before.
 	In the future pipes may be used for filtering and this option will
 	become obsolete (at least for Unix).
+								*E1577*
+	Only a single "%s" item is allowed in the option value.
 
 			*'shellslash'* *'ssl'* *'noshellslash'* *'nossl'*
-'shellslash' 'ssl'	boolean	(default on, Windows: off)
+'shellslash' 'ssl'	boolean	(default on; Windows: off, except when 'shell'
+                                         contains "sh" somewhere)
 			global
 			only modifiable in MS-Windows
 	When set, a forward slash is used when expanding file names.  This is
@@ -5708,7 +5841,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	to execute most external commands with cmd.exe.
 
 						*'shellxquote'* *'sxq'*
-'shellxquote' 'sxq'	string	(default "", Windows: "\"")
+'shellxquote' 'sxq'	string	(default ""; Windows, when 'shell'
+                                         contains "cmd" somewhere: "\"")
 			global
 			Disallowed in |modeline|. |no-modeline-option|
 	Quoting character(s), put around the command passed to the shell, for
@@ -5737,8 +5871,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 					*'shortmess'* *'shm'* *E1336*
 'shortmess' 'shm'	string	(default "ltToOCF")
 			global
-	This option helps to avoid all the |hit-enter| prompts caused by file
-	messages, for example with CTRL-G, and to avoid some other messages.
+	Controls display of file messages (e.g. CTRL-G) and various other
+	messages.
+
 	It is a list of flags:
 	 flag	meaning when present	~
 	  l	use "999L, 888B" instead of "999 lines, 888 bytes"	*shm-l*
@@ -5785,6 +5920,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 		search count statistics.  The maximum limit can be set with
 		the 'maxsearchcount' option, see also |searchcount()|
 		function.
+	  u	don't give undo and redo messages like			*shm-u*
+		"1 line less; before #1  1 second ago", "Already at oldest
+		change" or "Already at newest change"
 
 	This gives you the opportunity to avoid that a change between buffers
 	requires you to hit <Enter>, but still gives as useful a message as
@@ -5885,14 +6023,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'showtabline'* *'stal'*
 'showtabline' 'stal'	number	(default 1)
 			global
-	The value of this option specifies when the line with tab page labels
-	will be displayed:
+	Specifies when the |tabpage| labels will be displayed:
 		0: never
-		1: only if there are at least two tab pages
+		1: only if there are at least two tabpages
 		2: always
-	This is both for the GUI and non-GUI implementation of the tab pages
-	line.
-	See |tab-page| for more information about tab pages.
 
 						*'sidescroll'* *'ss'*
 'sidescroll' 'ss'	number	(default 1)
@@ -6266,11 +6400,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When using |v:relnum|, keep in mind that cursor movement by itself will
 	not cause the 'statuscolumn' to update unless 'relativenumber' is set.
 
-	NOTE: The %@ click execute function item is supported as well but the
-	specified function will be the same for each row in the same column.
-	It cannot be switched out through a dynamic 'statuscolumn' format, the
-	handler should be written with this in mind.
-
 	Examples: >vim
 		" Line number with bar separator and click handlers:
 		set statuscolumn=%@SignCb@%s%=%T%@NumCb@%l│%T
@@ -6320,8 +6449,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 	would loop.  When the result contains unprintable characters the
 	result is unpredictable.
 
-	Note that the only effect of 'ruler' when this option is set (and
-	'laststatus' is 2 or 3) is controlling the output of |CTRL-G|.
+	When 'ruler' is on, the default 'statusline' includes 'rulerformat'.
+	See note below.
+	Note that if 'statusline' is configured without including the ruler,
+	the only effect of 'ruler' when this option is set (and 'laststatus'
+	is 2 or 3) is controlling the output of |CTRL-G|.
 
 	field	    meaning ~
 	-	    Left justify the item.  The default is right justified
@@ -6338,10 +6470,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	Following is a description of the possible statusline items.  The
 	second character in "item" is the type:
-		N for number
-		S for string
-		F for flags as described below
-		- not applicable
+		"N" for number
+		"S" for string
+		"F" for flags as described below
+		"-" not applicable
 
 	item  meaning ~
 	f S   Path to the file in the buffer, as typed or relative to current
@@ -6382,7 +6514,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	{ NF  Evaluate expression between "%{" and "}" and substitute result.
 	      Note that there is no "%" before the closing "}".  The
 	      expression cannot contain a "}" character, call a function to
-	      work around that.  See |stl-%{| below.
+	      work around that.  See |stl-%{| below.  Use "%0{" to insert the
+	      result verbatim.
 	`{%` -  This is almost same as "{" except the result of the expression is
 	      re-evaluated as a statusline format string.  Thus if the
 	      return value of expr contains "%" items they will get expanded.
@@ -6394,18 +6527,20 @@ A jump table for the options with a short description can be found at |Q_op|.
 		endfunc
 <	        `stl=%{Stl_filename()}`   results in `"%t"`
 	        `stl=%{%Stl_filename()%}` results in `"Name of current file"`
+	      The default status line uses this to include 'rulerformat', see
+	      note below.
 	%} -  End of "{%" expression
 	( -   Start of item group.  Can be used for setting the width and
 	      alignment of a section.  Must be followed by %) somewhere.
 	) -   End of item group.  No width fields allowed.
-	T N   For 'tabline': start of tab page N label.  Use %T or %X to end
+	T N   For 'tabline': start of tabpage N label.  Use %T or %X to end
 	      the label.  Clicking this label with left mouse button switches
-	      to the specified tab page, while clicking it with middle mouse
-	      button closes the specified tab page.
+	      to the specified tabpage, while clicking it with middle mouse
+	      button closes the specified tabpage.
 	X N   For 'tabline': start of close tab N label.  Use %X or %T to end
 	      the label, e.g.: %3Xclose%X.  Use %999X for a "close current
 	      tab" label.  Clicking this label with left mouse button closes
-	      the specified tab page.
+	      the specified tabpage.
 	@ N   Start of execute function label. Use %X or %T to end the label,
 	      e.g.: %10@SwitchBuffer@foo.c%X.  Clicking this label runs the
 	      specified function: in the example when clicking once using left
@@ -6430,14 +6565,20 @@ A jump table for the options with a short description can be found at |Q_op|.
 	         is a bug that denotes that new mouse button recognition was
 	         added without modifying code that reacts on mouse clicks on
 	         this label.
+
 	      Use |getmousepos()|.winid in the specified function to get the
-	      corresponding window id of the clicked item.
-	< -   Where to truncate line if too long.  Default is at the start.
+	      corresponding |window-ID| of the clicked item.
+	< -   Where to truncate line if too long.  Default is at the first
+	      item.  Truncation markers within item groups apply to the
+	      truncation of that group until its maxwid is reached.
+	      In case of several competing truncation markers, the first wins.
 	      No width fields allowed.
 	= -   Separation point between alignment sections.  Each section will
 	      be separated by an equal number of spaces.  With one %= what
 	      comes after it will be right-aligned.  With two %= there is a
 	      middle part, with white space left and right of it.
+	      Alignment sections within item groups will be separated until
+	      minwid of the group is reached.
 	      No width fields allowed.
 	# -   Set highlight group.  The name must follow and then a # again.
 	      Thus use %#HLname# for highlight group HLname.  The same
@@ -6485,18 +6626,20 @@ A jump table for the options with a short description can be found at |Q_op|.
 	A result of all digits is regarded a number for display purposes.
 	Otherwise the result is taken as flag text and applied to the rules
 	described above.
+								*stl-%0{*
+	With %0{ neither applies: the result is inserted as a literal string.
 
 	Watch out for errors in expressions.  They may render Vim unusable!
 	If you are stuck, hold down ':' or 'Q' to get a prompt, then quit and
 	edit your vimrc or whatever with "vim --clean" to get it right.
 
 	Examples:
-	Emulate standard status line with 'ruler' set >vim
-	  set statusline=%<%f\ %h%w%m%r%=%-14.(%l,%c%V%)\ %P
+	A simple version of the standard status line with 'ruler' set >vim
+	  set statusline=%f\ %h%w%m%r%=\ %-14.(%l,%c%V%)\ %P
 <	Similar, but add ASCII value of char under the cursor (like "ga") >vim
-	  set statusline=%<%f%h%m%r%=%b\ 0x%B\ \ %l,%c%V\ %P
+	  set statusline=%f%h%m%r%=\ %b\ 0x%B\ \ %l,%c%V\ %P
 <	Display byte count and byte value, modified flag in red. >vim
-	  set statusline=%<%f%=\ [%1*%M%*%n%R%H]\ %-19(%3l,%02c%03V%)%O'%02b'
+	  set statusline=%f%=\ [%1*%M%*%n%R%H]\ %-19(%3l,%02c%03V%)%O'%02b'
 	  hi User1 term=inverse,bold cterm=inverse,bold ctermfg=red
 <	Display a ,GZ flag if a compressed file is loaded >vim
 	  set statusline=...%r%{VarExists('b:gzflag','\ [GZ]')}%h...
@@ -6508,6 +6651,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  function VarExists(var, val)
 	      if exists(a:var) | return a:val | else | return '' | endif
 	  endfunction
+<
+	Note: By default, the status line is truncated from the left, and the
+	ruler from the right.  But the status line can include the ruler.
+	To ensure that a top-level (i.e. not inside an item group) `%<` in
+	'rulerformat' doesn't change the truncation of the status line,
+	- 'statusline' can be prepended with an explicit `%<`, which otherwise
+	  would not be necessary. Example: >vim
+	    set statusline=%<%f%=\ %{%&rulerformat%}
+<	- Or the ruler can be wrapped in an item group, which also collapses
+	  any top-level `%=` in 'rulerformat' unless minwid is specified: >vim
+	    set statusline=%f%=\ %(%{%&rulerformat%}%)
 <
 
 						*'suffixes'* *'su'*
@@ -6535,24 +6689,20 @@ A jump table for the options with a short description can be found at |Q_op|.
 				*'swapfile'* *'swf'* *'noswapfile'* *'noswf'*
 'swapfile' 'swf'	boolean	(default on)
 			local to buffer
-	Use a swapfile for the buffer.  This option can be reset when a
-	swapfile is not wanted for a specific buffer.  For example, with
-	confidential information that even root must not be able to access.
-	Careful: All text will be in memory:
-		- Don't use this for big files.
-		- Recovery will be impossible!
-	A swapfile will only be present when 'updatecount' is non-zero and
-	'swapfile' is set.
-	When 'swapfile' is reset, the swap file for the current buffer is
-	immediately deleted.  When 'swapfile' is set, and 'updatecount' is
-	non-zero, a swap file is immediately created.
-	Also see |swap-file|.
-	If you want to open a new buffer without creating a swap file for it,
-	use the |:noswapfile| modifier.
-	See 'directory' for where the swap file is created.
+	Use a |swap-file| for the buffer (if 'updatecount' is non-zero). The
+	'directory' option decides where swapfiles are stored.
 
-	This option is used together with 'bufhidden' and 'buftype' to
-	specify special kinds of buffers.   See |special-buffers|.
+	To open a new buffer without creating a swapfile, use |:noswapfile|.
+	To disable for an existing buffer, reset its 'swapfile' option.
+	Careful:
+		- Recovery will be impossible!
+		- The entire file will be in memory.
+
+	When reset, the swapfile for the current buffer is immediately
+	deleted.  When re-enabled (and 'updatecount' is non-zero), a swapfile
+	is immediately created.
+
+	Used with 'bufhidden' and 'buftype' to specify |special-buffers|.
 
 						*'switchbuf'* *'swb'*
 'switchbuf' 'swb'	string	(default "uselast")
@@ -6567,18 +6717,18 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  |:sbnext|, or |:sbrewind|).
 	Possible values (comma-separated list):
 	   useopen	If included, jump to the first open window in the
-			current tab page that contains the specified buffer
+			current tabpage that contains the specified buffer
 			(if there is one).  Otherwise: Do not examine other
 			windows.
-	   usetab	Like "useopen", but also consider windows in other tab
-			pages.
+	   usetab	Like "useopen", but also consider windows in other
+			tabpages.
 	   split	If included, split the current window before loading
 			a buffer for a |quickfix| command that display errors.
 			Otherwise: do not split, use current window (when used
 			in the quickfix window: the previously used window or
 			split if there is no other window).
 	   vsplit	Just like "split" but split vertically.
-	   newtab	Like "split", but open a new tab page.  Overrules
+	   newtab	Like "split", but open a new tabpage.  Overrules
 			"split" when both are present.
 	   uselast	If included, jump to the previously used window when
 			jumping to errors with |quickfix| commands.
@@ -6625,27 +6775,27 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'tabclose'* *'tcl'*
 'tabclose' 'tcl'	string	(default "")
 			global
-	This option controls the behavior when closing tab pages (e.g., using
-	|:tabclose|).  When empty Vim goes to the next (right) tab page.
+	This option controls the behavior when closing tabpages (e.g., using
+	|:tabclose|).  When empty Vim goes to the next (right) tabpage.
 
 	Possible values (comma-separated list):
-	   left		If included, go to the previous tab page instead of
+	   left		If included, go to the previous tabpage instead of
 			the next one.
-	   uselast	If included, go to the previously used tab page if
+	   uselast	If included, go to the previously used tabpage if
 			possible.  This option takes precedence over the
 			others.
 
 						*'tabline'* *'tal'*
 'tabline' 'tal'		string	(default "")
 			global
-	When non-empty, this option determines the content of the tab pages
+	When non-empty, this option determines the content of the tabpages
 	line at the top of the Vim window.  When empty Vim will use a default
-	tab pages line.  See |setting-tabline| for more info.
+	tabpages line.  See |setting-tabline| for more info.
 
-	The tab pages line only appears as specified with the 'showtabline'
+	The tabpages line only appears as specified with the 'showtabline'
 	option and only when there is no GUI tab line.  When 'e' is in
 	'guioptions' and the GUI supports a tab line 'guitablabel' is used
-	instead.  Note that the two tab pages lines are very different.
+	instead.  Note that the two tabpages lines are very different.
 
 	The value is evaluated like with 'statusline'.  You can use
 	|tabpagenr()|, |tabpagewinnr()| and |tabpagebuflist()| to figure out
@@ -6656,13 +6806,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	trigger it to be updated, use |:redrawtabline|.
 	This option cannot be set in a modeline when 'modelineexpr' is off.
 
-	Keep in mind that only one of the tab pages is the current one, others
+	Keep in mind that only one of the tabpages is the current one, others
 	are invisible and you can't jump to their windows.
 
 						*'tabpagemax'* *'tpm'*
 'tabpagemax' 'tpm'	number	(default 50)
 			global
-	Maximum number of tab pages to be opened by the |-p| command line
+	Maximum number of tabpages to be opened by the |-p| command line
 	argument or the ":tab all" command. |tabpage|
 
 						*'tabstop'* *'ts'*
@@ -6949,7 +7099,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	error will be given.
 
 	The default (empty) behaviour is equivalent to: >vim
-	    set titlestring=%t%(\ %M%)%(\ \(%{expand(\"%:~:h\")}\)%)%a\ -\ Nvim
+	    set titlestring=%t%(\ %M%)%(\ \(%{expand('%:p:~:h')}\)%)%a\ -\ Nvim
 <
 	Example: >vim
 	    auto BufEnter * let &titlestring = hostname() .. "/" .. expand("%:p")
@@ -6989,6 +7139,23 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Time in milliseconds to wait for a key code sequence to complete. Also
 	used for CTRL-\ CTRL-N and CTRL-\ CTRL-G when part of a command has
 	been typed.
+
+	*'ttyfast'* *'tf'* *'nottyfast'* *'notf'* *E1568* *$NVIM_NOTTYFAST*
+'ttyfast' 'tf'		boolean	(default on)
+			global
+	Enables Nvim |TUI| features which assume a fast (usually local) host
+	terminal. During startup, Nvim queries the terminal (for 'background'
+	detection, etc.) and must wait for a response (or timeout).
+
+	If your terminal environment is slow (e.g. remote SSH), or broken
+	(doesn't respond to queries), Nvim startup may be slower. Therefore
+	you can disable this option by setting the `$NVIM_NOTTYFAST`
+	environment variable before starting Nvim: >
+		NVIM_NOTTYFAST=1 nvim
+<
+
+	The queries are performed early, before |--cmd| and user |config|, so
+	`:set nottyfast` in your config happens too late.
 
 					*'undodir'* *'udir'* *E5003*
 'undodir' 'udir'	string	(default "$XDG_STATE_HOME/nvim/undo//")
@@ -7065,17 +7232,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'updatecount'* *'uc'*
 'updatecount' 'uc'	number	(default 200)
 			global
-	After typing this many characters the swap file will be written to
-	disk.  When zero, no swap file will be created at all (see chapter on
-	recovery |crash-recovery|).  'updatecount' is set to zero by starting
-	Vim with the "-n" option, see |startup|.  When editing in readonly
-	mode this option will be initialized to 10000.
-	The swapfile can be disabled per buffer with 'swapfile'.
-	When 'updatecount' is set from zero to non-zero, swap files are
-	created for all buffers that have 'swapfile' set.  When 'updatecount'
-	is set to zero, existing swap files are not deleted.
-	This option has no meaning in buffers where 'buftype' is "nofile" or
-	"nowrite".
+	The |swap-file| will be written after typing this many characters.
+
+	- Ignored in buffers where 'buftype' is "nofile" or "nowrite".
+	- Initialized to 10000 when editing in readonly |-R| mode.
+	- To disable swapfiles per-buffer, unset the 'swapfile' option.
+	- To disable swapfiles globally, set this option to zero (or start
+	  with |-n|). See |crash-recovery|. Existing swapfiles are not deleted.
+	- When re-enabled (from zero to non-zero), swapfiles are created for
+	  all buffers that have 'swapfile' set.
 
 						*'updatetime'* *'ut'*
 'updatetime' 'ut'	number	(default 4000)
@@ -7181,7 +7346,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   folds	manually created folds, opened/closed folds and local
 			fold options
 	   options	options and mappings local to a window or buffer (not
-			global values for local options)
+	                global values for local options), except Lua functions
+			|option-value-function|.
 	   localoptions same as "options"
 	   slash	|deprecated| Always enabled. Uses "/" in filenames.
 	   unix		|deprecated| Always enabled. Uses "\n" line endings.
@@ -7382,8 +7548,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 			applies to buffer name completion.
 	"noselect"	If 'wildmenu' is enabled, show the menu but do not
 			preselect the first item.
-	If only one match exists, it is completed fully, unless "noselect" is
-	specified.
+	"noinsert"	If 'wildmenu' is enabled, show the menu and preselect
+			the first match, but do not insert it in the command
+			line.  If both "noinsert" and "noselect" are present,
+			"noselect" takes precedence.
+	If only one match exists, it is completed fully, unless "noselect" or
+	"noinsert" is specified.
 
 	Some useful combinations of colon-separated values:
 	"longest:full"		Start with the longest common string and show
@@ -7449,7 +7619,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 			is not supported for file and directory names and
 			instead wildcard expansion is used.
 	  pum		Display the completion matches using the popup menu in
-			the same style as the |ins-completion-menu|.
+			the same style as the |ins-completion-menu|.  When an
+			info popup is shown next to the menu, it can be
+			scrolled by moving the mouse pointer on top of it and
+			using the scroll wheel.
 	  tagfile	When using CTRL-D to list matching tags, the kind of
 			tag and the file of the tag is listed.	Only one match
 			is displayed per line.  Often used tag kinds are:
@@ -7516,9 +7689,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	- "shadow": Drop shadow effect, by blending with the background.
 	- "single": Single-line box.
 	- "solid": Adds padding by a single whitespace cell.
-	- custom: comma-separated list of exactly 8 characters in clockwise
-	  order starting from topleft. Example: >lua
-	     vim.o.winborder='+,-,+,|,+,-,+,|'
+	- custom: comma-separated list of exactly 8 entries in clockwise
+	  order starting from topleft. Each entry may be a single char, a
+	  single space (filled with the background), or empty (no border on
+	  that side). Example: >lua
+	     vim.o.winborder = '+,-,+,|,+,-,+,|'
+	     vim.o.winborder = ',,, ,,,, '  -- left/right padding only
 <
 
 							*'window'* *'wi'*
@@ -7625,6 +7801,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option is only checked when making a window smaller.  Don't use a
 	large number, it will cause errors when opening more than a few
 	windows.  A value of 0 to 12 is reasonable.
+
+				*'winpinned'* *'wp'* *'nowinpinned'* *'nowp'*
+'winpinned' 'wp'	boolean	(default off)
+			local to window  |local-noglobal|
+	If enabled, the window is pinned and will not be closed by |:only|
+	and |:fclose|. Only commands specifically targeting the window can
+	close it.
 
 						*'winwidth'* *'wiw'* *E592*
 'winwidth' 'wiw'	number	(default 20)

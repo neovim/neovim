@@ -1780,7 +1780,47 @@ func Test_edit_startinsert()
   call feedkeys(":startinsert!\<CR>\<C-U>\<Esc>", 'xt')
   call assert_equal('', getline(1))
 
+  call setline(1, 'foobar')
+  setl nomodifiable
+  call assert_fails('startinsert', 'E21:')
+
+  call cursor(1, 1)
+  call assert_fails('startinsert!', 'E21:')
+  call assert_equal(1, col('.'))
+
   set backspace&
+  bwipe!
+endfunc
+
+" ":startinsert" is ineffective in a terminal window: it must not give an
+" error and with "!" it must not move the cursor.
+func Test_edit_startinsert_in_terminal()
+  CheckFeature terminal
+
+  let buf = Run_shell_in_terminal({})
+
+  " Fill the terminal with text.
+  if has('win32')
+    call feedkeys("dir\<CR>", 'xt')
+  else
+    call feedkeys("ls\<CR>", 'xt')
+  endif
+  call WaitForAssert({-> assert_notequal('', term_getline(buf, 1))})
+
+  " Go to Terminal-Normal mode and put the cursor on a line with text.
+  call feedkeys("\<C-W>N", 'xt')
+  call assert_notequal(0, search('\S', 'w'))
+  call cursor(line('.'), 1)
+
+  startinsert
+  startinsert!
+  call assert_equal(1, col('.'))
+
+  " Clear "restart_edit" in case the commands were not ignored.
+  stopinsert
+
+  call feedkeys("i", 'xt')
+  call StopShellInTerminal(buf)
   bwipe!
 endfunc
 
@@ -1797,6 +1837,19 @@ func Test_edit_startreplace()
   call assert_equal("axyz\tb", getline(1))
   call feedkeys("0i\<C-R>=execute('startreplace')\<CR>12\e", 'xt')
   call assert_equal("12axyz\tb", getline(1))
+
+  call setline(1, 'abc')
+  setl nomodifiable
+  call assert_fails('startreplace', 'E21:')
+  call assert_fails('startgreplace', 'E21:')
+
+  call cursor(1, 1)
+  call assert_fails('startreplace!', 'E21:')
+  call assert_equal(1, col('.'))
+  call cursor(1, 1)
+  call assert_fails('startgreplace!', 'E21:')
+  call assert_equal(1, col('.'))
+
   bw!
 endfunc
 
@@ -2087,6 +2140,7 @@ func Test_edit_ctrl_r_failed()
 
   " trying to insert a blob produces an error
   call term_sendkeys(buf, "i\<C-R>=0z\<CR>")
+  call WaitForAssert({-> assert_match('^E976:', term_getline(buf, 5))}, 1000)
 
   " ending Insert mode should put the cursor back on the ':'
   call term_sendkeys(buf, ":\<Esc>")
@@ -2472,6 +2526,62 @@ func Test_edit_CAR_with_completion()
 
   set cot&
   bw!
+endfunc
+
+func Test_autoindent_no_strip_after_cmd_setline()
+  new
+  setlocal autoindent
+  inoremap <buffer> <F2> <Cmd>call setline('.', 'v  v')<CR><Cmd>call cursor(line('.'), 2)<CR>
+  call feedkeys("Go\<F2>\<Esc>", 'tx')
+  call assert_equal('v  v', getline(2))
+  bwipe!
+endfunc
+
+func Test_autoindent_no_strip_after_cursorholdi()
+  CheckFeature timers
+  new
+  setlocal autoindent
+  set updatetime=50
+  au CursorHoldI <buffer> call setline('.', 'v v')
+  call setline(1, ' x')
+  call cursor(1, 2)
+  call timer_start(120, {-> feedkeys("\<Esc>", 't')})
+  call feedkeys("o", 'tx!')
+  call assert_equal('v v', getline(2))
+  set updatetime&
+  bwipe!
+endfunc
+
+" Issue #20130: '[ must mark the start of the paste after CTRL-R CTRL-P + edit.
+func Test_open_square_mark_after_ctrl_r_ctrl_p_paste()
+  new
+  call setline(1, ['a', 'b', 'c', 'd'])
+  call cursor(4, 1)
+
+  call feedkeys("Vggyjo\<C-r>\<C-p>\"\<BS>\<Esc>", 'xt')
+
+  call assert_equal(['a', 'b', 'a', 'b', 'c', 'd', 'c', 'd'],
+        \ getline(1, '$'))
+  call assert_equal([0, 3, 1, 0], getpos("'["))
+  bwipe!
+endfunc
+
+func Test_autoindent_no_strip_cross_line()
+  new
+  setlocal autoindent
+  inoremap <buffer> <F3> {}<Left><CR><Cmd>normal! ==<CR><Up><End><CR>
+
+  call setline(1, '')
+  call feedkeys("i\<F3>\<Esc>", 'tx')
+
+  call assert_equal('{', getline(1))
+  call assert_equal('', getline(2))
+  call assert_equal('}', getline(3))
+  call assert_equal([0, 2, 1, 0], getpos('.'))
+
+  " Overwrite @. register with simple content to avoid affecting later tests.
+  call feedkeys("Go\<Esc>", 'tnix')
+  bwipe!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

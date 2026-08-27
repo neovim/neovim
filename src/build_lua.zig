@@ -23,6 +23,7 @@ pub fn build_nlua0(
             .optimize = optimize,
             .link_libc = true,
         }),
+        .use_llvm = true,
     });
     const nlua0_mod = nlua0_exe.root_module;
 
@@ -149,33 +150,34 @@ pub fn build_libluv(
 ) !*std.Build.Step.Compile {
     const upstream = b.lazyDependency("luv", .{});
     const compat53 = b.lazyDependency("lua_compat53", .{});
+    var root_module = b.createModule(.{
+        .target = target,
+        .optimize = optimize,
+    });
     const lib = b.addLibrary(.{
         .name = "luv",
         .linkage = .static,
-        .root_module = b.createModule(.{
-            .target = target,
-            .optimize = optimize,
-        }),
+        .root_module = root_module,
     });
 
     if (lua) |lua_lib| {
-        lib.root_module.linkLibrary(lua_lib);
+        root_module.linkLibrary(lua_lib);
     } else {
         const system_lua_lib = if (use_luajit) "luajit" else "lua5.1";
-        lib.root_module.linkSystemLibrary(system_lua_lib, .{});
+        root_module.linkSystemLibrary(system_lua_lib, .{});
     }
-    lib.linkLibrary(libuv);
+    root_module.linkLibrary(libuv);
 
     if (upstream) |dep| {
-        lib.addIncludePath(dep.path("src"));
+        root_module.addIncludePath(dep.path("src"));
         lib.installHeader(dep.path("src/luv.h"), "luv/luv.h");
-        lib.addCSourceFiles(.{ .root = dep.path("src/"), .files = &.{
+        root_module.addCSourceFiles(.{ .root = dep.path("src/"), .files = &.{
             "luv.c",
         } });
     }
     if (compat53) |dep| {
-        lib.addIncludePath(dep.path("c-api"));
-        lib.addCSourceFiles(.{ .root = dep.path("c-api"), .files = &.{
+        root_module.addIncludePath(dep.path("c-api"));
+        root_module.addCSourceFiles(.{ .root = dep.path("c-api"), .files = &.{
             "compat-5.3.c",
         } });
     }
@@ -197,18 +199,19 @@ fn findLpeg(b: *std.Build, target: std.Target) !?[]const u8 {
         "--variable=pc_system_libdirs",
         "--keep-system-cflags",
         "pkg-config",
-    }, &code, .Ignore), "\r\n");
+    }, &code, .ignore), "\r\n");
     var paths: std.ArrayList([]const u8) = try .initCapacity(b.allocator, 0);
     var path_it = std.mem.tokenizeAny(u8, dirs_stdout, " ,");
     while (path_it.next()) |dir| {
         try paths.append(b.allocator, dir);
         try paths.append(b.allocator, b.fmt("{s}/lua/5.1", .{dir}));
     }
+    const io = b.graph.io;
     for (paths.items) |path| {
-        var dir = std.fs.openDirAbsolute(path, .{}) catch continue;
-        defer dir.close();
+        var dir = std.Io.Dir.openDirAbsolute(io, path, .{}) catch continue;
+        defer dir.close(io);
         for (filenames) |filename| {
-            dir.access(filename, .{}) catch continue;
+            dir.access(io, filename, .{}) catch continue;
             return b.fmt("{s}/{s}", .{ path, filename });
         }
     }

@@ -3,6 +3,8 @@ local n = require('test.functional.testnvim')()
 
 local t_lsp = require('test.functional.plugin.lsp.testutil')
 
+local describe, it, before_each, after_each, teardown =
+  t.describe, t.it, t.before_each, t.after_each, t.teardown
 local command = n.command
 local eq = t.eq
 local exec_lua = n.exec_lua
@@ -106,13 +108,14 @@ describe('vim.lsp.buf', function()
           },
         }
         local handler = require 'vim.lsp.handlers'['callHierarchy/outgoingCalls']
-        handler(nil, rust_analyzer_response, {})
+        local bufnr = vim.api.nvim_get_current_buf()
+        handler(nil, rust_analyzer_response, { bufnr = bufnr })
         return vim.fn.getqflist()
       end)
 
       local expected = {
         {
-          bufnr = 2,
+          bufnr = 1,
           col = 5,
           end_col = 0,
           lnum = 4,
@@ -968,6 +971,109 @@ describe('vim.lsp.buf', function()
       }
     end)
 
+    it('uses diagnostics at cursor position', function()
+      exec_lua(create_server_definition)
+      local severity = exec_lua(function()
+        return vim.diagnostic.severity.ERROR
+      end)
+      local messages = exec_lua(function(severity_)
+        local server = _G._create_server({
+          capabilities = {
+            codeActionProvider = true,
+          },
+          handlers = {
+            ['textDocument/codeAction'] = function(_, _, callback)
+              callback(nil, {})
+            end,
+          },
+        })
+
+        local bufnr = vim.api.nvim_get_current_buf()
+        vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { 'local first, second = 1, 2' })
+
+        local client_id = assert(vim.lsp.start({
+          name = 'dummy',
+          cmd = server.cmd,
+        }))
+
+        local expected_messages = 2 -- initialize, initialized
+        local function wait_for_messages()
+          assert(
+            vim.wait(200, function()
+              return #server.messages == expected_messages
+            end),
+            'Timed out waiting for expected number of messages. Current messages seen so far: '
+              .. vim.inspect(server.messages)
+          )
+        end
+
+        wait_for_messages()
+
+        vim.api.nvim_win_set_cursor(0, { 1, 15 })
+
+        local ns = vim.lsp.diagnostic.get_namespace(client_id)
+        vim.diagnostic.set(ns, bufnr, {
+          {
+            lnum = 0,
+            col = 6,
+            end_lnum = 0,
+            end_col = 11,
+            message = 'first',
+            severity = severity_,
+            user_data = {
+              lsp = {
+                range = {
+                  start = { line = 0, character = 6 },
+                  ['end'] = { line = 0, character = 11 },
+                },
+                message = 'first',
+                severity = severity_,
+              },
+            },
+          },
+          {
+            lnum = 0,
+            col = 13,
+            end_lnum = 0,
+            end_col = 19,
+            message = 'second',
+            severity = severity_,
+            user_data = {
+              lsp = {
+                range = {
+                  start = { line = 0, character = 13 },
+                  ['end'] = { line = 0, character = 19 },
+                },
+                message = 'second',
+                severity = severity_,
+              },
+            },
+          },
+        })
+
+        vim.lsp.buf.code_action()
+
+        expected_messages = expected_messages + 1
+        wait_for_messages()
+
+        vim.lsp.get_client_by_id(client_id):stop()
+
+        return server.messages
+      end, severity)
+
+      eq('textDocument/codeAction', messages[3].method)
+      eq({
+        {
+          range = {
+            start = { line = 0, character = 13 },
+            ['end'] = { line = 0, character = 19 },
+          },
+          message = 'second',
+          severity = severity,
+        },
+      }, messages[3].params.context.diagnostics)
+    end)
+
     it('fallback to command execution on resolve error', function()
       exec_lua(create_server_definition)
       local result = exec_lua(function()
@@ -993,7 +1099,10 @@ describe('vim.lsp.buf', function()
               })
             end,
             ['codeAction/resolve'] = function(_, _, callback)
-              callback('resolve failed', nil)
+              callback(
+                { code = vim.lsp.protocol.ErrorCodes.InternalError, message = 'resolve failed' },
+                nil
+              )
             end,
           },
         })
@@ -1239,6 +1348,52 @@ describe('vim.lsp.buf', function()
       }
     end)
 
+    it('formats range ending with -1 column', function()
+      exec_lua(create_server_definition)
+      local result = exec_lua(function()
+        local server = _G._create_server({
+          capabilities = {
+            documentRangeFormattingProvider = true,
+          },
+          handlers = {
+            ['textDocument/rangeFormatting'] = function(_, params, callback)
+              callback(nil, {
+                {
+                  range = params.range,
+                  newText = 'function fn(abc)\n  print("hello")',
+                },
+              })
+            end,
+          },
+        })
+        local bufnr = vim.api.nvim_get_current_buf()
+        local client_id = assert(vim.lsp.start({ name = 'dummy', cmd = server.cmd }))
+        vim.api.nvim_win_set_buf(0, bufnr)
+        vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, {
+          'function fn(abc  )',
+          '  print("hello" )',
+          'end',
+        })
+        vim.lsp.buf.format({
+          bufnr = bufnr,
+          range = {
+            start = { 1, 0 },
+            ['end'] = { 2, -1 },
+          },
+        })
+        vim.lsp.get_client_by_id(client_id):stop()
+        return {
+          lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, true),
+          range = server.messages[3].params.range,
+        }
+      end)
+      eq({
+        start = { line = 0, character = 0 },
+        ['end'] = { line = 1, character = 17 },
+      }, result.range)
+      eq({ 'function fn(abc)', '  print("hello")', 'end' }, result.lines)
+    end)
+
     it('sends textDocument/rangesFormatting request to format multiple ranges', function()
       local expected_handlers = {
         { NIL, {}, { method = 'shutdown', client_id = 1 } },
@@ -1352,7 +1507,7 @@ describe('vim.lsp.buf', function()
       eq('textDocument/rangeFormatting', result[3].method)
       local expected_range = {
         start = { line = 0, character = 0 },
-        ['end'] = { line = 1, character = 4 },
+        ['end'] = { line = 2, character = 0 },
       }
       eq(expected_range, result[3].params.range)
     end)
@@ -1601,7 +1756,11 @@ describe('vim.lsp.buf', function()
       return exec_lua(function()
         _G.server = _G._create_server({
           capabilities = {
-            diagnosticProvider = { workspaceDiagnostics = true },
+            diagnosticProvider = {
+              documentSelector = vim.NIL,
+              interFileDependencies = false,
+              workspaceDiagnostics = true,
+            },
           },
           handlers = {
             ['workspace/diagnostic'] = function(_, _, callback)

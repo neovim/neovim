@@ -1,5 +1,6 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
+local describe, it, before_each, after_each = t.describe, t.it, t.before_each, t.after_each
 local uv = vim.uv
 require('os')
 

@@ -1,7 +1,7 @@
 return {
   --- @type table<string,boolean>
   --- Keys are events names.
-  --- Values are boolean indicating whether the event is window-local.
+  --- Value is true if the event is window-local, else false.
   events = {
     BufAdd = true, -- after adding a buffer to the buffer list
     BufDelete = true, -- deleting a buffer from the buffer list
@@ -10,7 +10,6 @@ return {
     BufFilePre = true, -- before renaming a buffer
     BufHidden = true, -- just after buffer becomes hidden
     BufLeave = true, -- before leaving a buffer
-    BufModifiedSet = true, -- after the 'modified' state of a buffer changes
     BufNew = true, -- after creating any buffer
     BufNewFile = true, -- when creating a buffer for a new file
     BufReadCmd = true, -- read buffer using command
@@ -23,8 +22,10 @@ return {
     BufWriteCmd = true, -- write buffer using command
     BufWritePost = true, -- after writing a buffer
     BufWritePre = true, -- before writing a buffer
+    ChanClose = false,
     ChanInfo = false, -- info was received about channel
     ChanOpen = false, -- channel was opened
+    CmdAtom = false, -- after an atomic user operation (motion, operator, insert, mapping, …)
     CmdUndefined = false, -- command undefined
     CmdlineChanged = false, -- command line was modified
     CmdlineEnter = false, -- after entering cmdline mode
@@ -98,6 +99,7 @@ return {
     SearchWrapped = true, -- after the search wrapped around
     SessionLoadPost = false, -- after loading a session file
     SessionLoadPre = false, -- before loading a session file
+    SessionWritePre = false, -- before writing a session file
     SessionWritePost = false, -- after writing a session file
     ShellCmdPost = false, -- after ":!cmd"
     ShellFilterPost = true, -- after ":1,2!cmd", ":w !cmd", ":r !cmd".
@@ -114,6 +116,7 @@ return {
     TabClosedPre = false, -- before closing a tab page
     TabEnter = false, -- after entering a tab page
     TabLeave = false, -- before leaving a tab page
+    TabMoved = false, -- after a tab was moved
     TabNew = false, -- when creating a new tab
     TabNewEntered = false, -- after entering a new tab
     TermChanged = false, -- after changing 'term'
@@ -127,6 +130,8 @@ return {
     TextChangedI = true, -- text was modified in Insert mode(no popup)
     TextChangedP = true, -- text was modified in Insert mode(popup)
     TextChangedT = true, -- text was modified in Terminal mode
+    TextPutPost = true, -- after some text was put
+    TextPutPre = true, -- before some text was put
     TextYankPost = true, -- after a yank or delete was done (y, d, c)
     UIEnter = false, -- after UI attaches
     UILeave = false, -- after UI detaches
@@ -157,7 +162,6 @@ return {
   --- @type table<string,true>
   --- List of Nvim-specific events or aliases for generating syntax file.
   nvim_specific = {
-    BufModifiedSet = true,
     DiagnosticChanged = true,
     LspAttach = true,
     LspDetach = true,
@@ -170,7 +174,9 @@ return {
     Progress = true,
     RecordingEnter = true,
     RecordingLeave = true,
+    SessionWritePre = true,
     Signal = true,
+    TabMoved = true,
     TabNewEntered = true,
     TermClose = true,
     TermOpen = true,

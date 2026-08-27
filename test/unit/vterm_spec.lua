@@ -1,5 +1,6 @@
 local t = require('test.unit.testutil')
-local itp = t.gen_itp(it)
+local describe, before_each, pending = t.describe, t.before_each, t.pending
+local itp = t.gen_itp(t.it)
 local bit = require('bit')
 
 --- @class vterm
@@ -314,9 +315,9 @@ local function lineinfo(row, expected, state)
   local dhl = info.doubleheight == 1
   local cont = info.continuation == 1
 
-  t.eq(dwl, expected.dwl or false)
-  t.eq(dhl, expected.dhl or false)
-  t.eq(cont, expected.cont or false)
+  t.eq(expected.dwl or false, dwl)
+  t.eq(expected.dhl or false, dhl)
+  t.eq(expected.cont or false, cont)
 end
 
 local function pen(attribute, expected, state)
@@ -3799,6 +3800,28 @@ putglyph 1f3f4,200d,2620,fe0f 2 0,4]])
     push('\x1b[2;1Habc\r\n\x1b[H', vt)
     resize(1, 1, vt)
     cursor(0, 0, state)
+
+    reset(state, screen)
+    resize(4, 4, vt)
+    push('ABCD\r\nX', vt)
+    screen_row(0, 'ABCD', screen, vt.cols)
+    screen_row(1, 'X', screen, vt.cols)
+    cursor(1, 1, state)
+    resize(4, 5, vt)
+    screen_row(0, 'ABCD', screen, vt.cols)
+    screen_row(1, 'X', screen, vt.cols)
+    cursor(1, 1, state)
+
+    reset(state, screen)
+    resize(4, 4, vt)
+    push('ABCD\r\nX', vt)
+    cursor(1, 1, state)
+    resize(3, 4, vt)
+    screen_row(0, 'ABCD', screen, vt.cols)
+    screen_row(1, 'X', screen, vt.cols)
+    cursor(1, 1, state)
+
+    resize(5, 10, vt)
   end)
 
   pending('90vttest_01-movement-1', function() end)

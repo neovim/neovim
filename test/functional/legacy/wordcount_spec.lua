@@ -3,6 +3,7 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local feed, insert, source = n.feed, n.insert, n.source
 local clear, command = n.clear, n.command
 local eq, eval = t.eq, n.eval

@@ -13,7 +13,7 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
-runtime! ftplugin/tex.vim
+runtime! ftplugin/tex[.]{vim,lua}
 
 " Don't load another plugin for this buffer
 let b:did_ftplugin = 1

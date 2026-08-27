@@ -9,4 +9,4 @@ if exists("b:did_ftplugin")
 endif
 
 " Behaves mostly just like KerML, only differs by keywords
-runtime! ftplugin/kerml.vim
+runtime! ftplugin/kerml[.]{vim,lua}

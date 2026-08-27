@@ -2,6 +2,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each, setup = t.describe, t.it, t.before_each, t.setup
 local clear, eq, neq = n.clear, t.eq, t.neq
 local command, api, fn = n.command, n.api, n.fn
 local tbl_deep_extend = vim.tbl_deep_extend

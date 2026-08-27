@@ -1,5 +1,6 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear = n.clear
 local Screen = require('test.functional.ui.screen')
 
@@ -397,8 +398,8 @@ describe('Scrollbind', function()
     n.feed('<C-y>')
     n.feed('<C-y>')
 
-    t.eq(n.exec_lua [[return vim.fn.line('w0', 1001)]], 6)
-    t.eq(n.exec_lua [[return vim.fn.line('w0', 1000)]], 3)
+    t.eq(6, n.exec_lua [[return vim.fn.line('w0', 1001)]])
+    t.eq(3, n.exec_lua [[return vim.fn.line('w0', 1000)]])
 
     screen:expect({
       grid = [[

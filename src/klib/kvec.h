@@ -108,11 +108,15 @@
   if (len > 0) { \
     kv_ensure_space(v, len); \
     assert((v).items); \
+    /* kv_roundup32() only ORs bits in, so kv_ensure_space() leaves capacity >= size+len. */ \
+    /* coverity[overrun-buffer-arg] */ \
     memcpy((v).items + (v).size, data, sizeof((v).items[0]) * len); \
     (v).size = (v).size + len; \
   }
 
+/// Appends a string to `v`, without its NUL.
 #define kv_concat(v, str) kv_concat_len(v, str, strlen(str))
+/// Appends all items of `v0` to `v1`.
 #define kv_splice(v1, v0) kv_concat_len(v1, (v0).items, (v0).size)
 
 #define kv_pushp(v) \

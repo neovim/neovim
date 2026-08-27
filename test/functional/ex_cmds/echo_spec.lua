@@ -1,7 +1,9 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local describe, it, setup = t.describe, t.it, t.setup
 local eq = t.eq
+local pcall_err = t.pcall_err
 local NIL = vim.NIL
 local eval = n.eval
 local clear = n.clear
@@ -10,7 +12,6 @@ local fn = n.fn
 local source = n.source
 local dedent = t.dedent
 local command = n.command
-local exc_exec = n.exc_exec
 local exec_capture = n.exec_capture
 local matches = t.matches
 
@@ -308,7 +309,7 @@ describe(':echo :echon :echomsg :echoerr', function()
     it('does not error when dumping recursive lists', function()
       api.nvim_set_var('l', {})
       eval('add(l, l)')
-      eq(0, exc_exec('echo String(l)'))
+      command('echo String(l)')
     end)
 
     it('dumps recursive lists without error', function()
@@ -338,7 +339,7 @@ describe(':echo :echon :echomsg :echoerr', function()
     it('does not error when dumping recursive dictionaries', function()
       api.nvim_set_var('d', { d = 1 })
       eval('extend(d, {"d": d})')
-      eq(0, exc_exec('echo String(d)'))
+      command('echo String(d)')
     end)
 
     it('dumps recursive dictionaries without the error', function()

@@ -466,13 +466,12 @@ func Test_spellsuggest_option_number()
   call assert_equal('A baord', getline(1))
 
   let a = execute('norm $z=')
+  " Nvim: z= goes through vim.ui.select().
   call assert_equal(
   \    "\n"
   \ .. "Change \"baord\" to:\n"
-  \ .. " 1 \"board\"\n"
-  \ .. " 2 \"bard\"\n"
-  "\ Nvim: Prompt message is sent to cmdline prompt.
-  "\ .. "Type number and <Enter> or click with the mouse (q or empty cancels): ", a)
+  \ .. "1: \"board\"\n"
+  \ .. "2: \"bard\"\n"
   \ , a)
 
   set spell spellsuggest=0
@@ -505,14 +504,13 @@ func Test_spellsuggest_option_expr()
   new
   call setline(1, 'baord')
   let a = execute('norm z=')
+  " Nvim: z= goes through vim.ui.select().
   call assert_equal(
   \    "\n"
   \ .. "Change \"baord\" to:\n"
-  \ .. " 1 \"BARD\"\n"
-  \ .. " 2 \"BOARD\"\n"
-  \ .. " 3 \"BROAD\"\n"
-  "\ Nvim: Prompt message is sent to cmdline prompt.
-  "\ .. "Type number and <Enter> or click with the mouse (q or empty cancels): ", a)
+  \ .. "1: \"BARD\"\n"
+  \ .. "2: \"BOARD\"\n"
+  \ .. "3: \"BROAD\"\n"
   \ , a)
 
   " With verbose, z= should show the score i.e. word length with
@@ -522,11 +520,9 @@ func Test_spellsuggest_option_expr()
   call assert_equal(
   \    "\n"
   \ .. "Change \"baord\" to:\n"
-  \ .. " 1 \"BARD\"                      (4 - 0)\n"
-  \ .. " 2 \"BOARD\"                     (5 - 0)\n"
-  \ .. " 3 \"BROAD\"                     (5 - 0)\n"
-  "\ Nvim: Prompt message is sent to cmdline prompt.
-  "\ .. "Type number and <Enter> or click with the mouse (q or empty cancels): ", a)
+  \ .. "1: \"BARD\" (4 - 0)\n"
+  \ .. "2: \"BOARD\" (5 - 0)\n"
+  \ .. "3: \"BROAD\" (5 - 0)\n"
   \ , a)
 
   set spell& spellsuggest& verbose&
@@ -923,7 +919,10 @@ func Test_spellsuggest_too_deep()
   " This was incrementing "depth" over MAXWLEN.
   new
   norm s000G00ý000000000000
-  sil norm ..vzG................vvzG0     v z=
+  try
+    sil norm ..vzG................vvzG0     v z=
+  catch /E759:/
+  endtry
   bwipe!
 endfunc
 
@@ -1590,6 +1589,54 @@ func Test_suggest_spell_restore()
   norm! vjz=
   call assert_equal(0, &spell)
   set spelllang&
+  bwipe!
+endfunc
+
+" A crafted .spl with a self-referential BY_INDEX node in the PREFIXTREE drove
+" dump_prefixes() past its MAXWLEN-sized depth arrays (stack out-of-bounds
+" write).  The tree parses cleanly (shared refs aren't recursed); the walk
+" happens on :spelldump.  Reaching the assert means no OOB.  Same class as the
+" tree_count_words() fix (9.2.0653).
+func Test_spelldump_prefixtree_overflow()
+  CheckUnix
+  let save_rtp = &runtimepath
+  call mkdir('Xrtp/spell', 'pR')
+  " VIMspell + v50, SN_PREFCOND(prefixcnt=1), SN_END,
+  " LWORDTREE word "a" with affixID=1 (so dump_prefixes runs),
+  " empty KWORDTREE, PREFIXTREE child BY_INDEX -> nodeidx 0 (self-cycle), 'A'
+  let spl = eval('0z56494D7370656C6C32030000000003000100FF00000004'
+        \ .. '0161010220010000000000000002010100000041')
+  call writefile(spl, 'Xrtp/spell/xx.utf-8.spl', 'b')
+
+  new
+  set runtimepath+=./Xrtp
+  set spelllang=xx
+  set spell
+  spelldump
+  call assert_true(line('$') > 1)
+
+  set spell& spelllang&
+  let &runtimepath = save_rtp
+  bwipe!
+  bwipe!
+endfunc
+
+" This was using the cursor position from before a SpellFileMissing
+" autocommand made the line shorter.
+func Test_spell_file_missing_z_equal()
+  new
+  call setline(1, repeat('a', 40))
+  call cursor(1, 30)
+  set spelllang=xy
+  au SpellFileMissing * call setline(1, 'ab')
+
+  " The language cannot be loaded, so z= reports E756; the invalid cursor
+  " position was used before that error reached the script level.
+  silent! norm! z=
+  call assert_equal('ab', getline(1))
+
+  au! SpellFileMissing
+  set nospell spelllang=en
   bwipe!
 endfunc
 

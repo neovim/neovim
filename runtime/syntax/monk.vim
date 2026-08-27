@@ -2,6 +2,7 @@
 " Language: Monk (See-Beyond Technologies)
 " Maintainer: Mike Litherland <litherm@ccf.org>
 " Last Change: 2012 Feb 03 by Thilo Six
+" 2026 Apr 20 by Vim project: remove wrong oneline keyword #20018
 
 " This syntax file is good enough for my needs, but others
 " may desire more features.  Suggestions and bug reports
@@ -33,8 +34,8 @@ syn case ignore
 
 " Fascist highlighting: everything that doesn't fit the rules is an error...
 
-syn match	monkError	oneline    ![^ \t()";]*!
-syn match	monkError	oneline    ")"
+syn match	monkError	![^ \t()";]*!
+syn match	monkError	")"
 
 " Quoted and backquoted stuff
 
@@ -131,51 +132,51 @@ syn keyword monkFunc valid-integer? verify-type
 " using variables is a day's work for a trained secretary...
 " This is a useful lax approximation:
 
-syn match	monkNumber	oneline    "[-#+0-9.][-#+/0-9a-f@i.boxesfdl]*"
-syn match	monkError	oneline    ![-#+0-9.][-#+/0-9a-f@i.boxesfdl]*[^-#+/0-9a-f@i.boxesfdl \t()";][^ \t()";]*!
+syn match	monkNumber	"[-#+0-9.][-#+/0-9a-f@i.boxesfdl]*"
+syn match	monkError	![-#+0-9.][-#+/0-9a-f@i.boxesfdl]*[^-#+/0-9a-f@i.boxesfdl \t()";][^ \t()";]*!
 
-syn match	monkOther	oneline    ![+-][ \t()";]!me=e-1
-syn match	monkOther	oneline    ![+-]$!
+syn match	monkOther	![+-][ \t()";]!me=e-1
+syn match	monkOther	![+-]$!
 " ... so that a single + or -, inside a quoted context, would not be
 " interpreted as a number (outside such contexts, it's a monkFunc)
 
-syn match	monkDelimiter	oneline    !\.[ \t()";]!me=e-1
-syn match	monkDelimiter	oneline    !\.$!
+syn match	monkDelimiter	!\.[ \t()";]!me=e-1
+syn match	monkDelimiter	!\.$!
 " ... and a single dot is not a number but a delimiter
 
 " Simple literals:
 
-syn match	monkBoolean	oneline    "#[tf]"
-syn match	monkError	oneline    !#[tf][^ \t()";]\+!
+syn match	monkBoolean	"#[tf]"
+syn match	monkError	!#[tf][^ \t()";]\+!
 
-syn match	monkChar	oneline    "#\\"
-syn match	monkChar	oneline    "#\\."
-syn match	monkError	oneline    !#\\.[^ \t()";]\+!
-syn match	monkChar	oneline    "#\\space"
-syn match	monkError	oneline    !#\\space[^ \t()";]\+!
-syn match	monkChar	oneline    "#\\newline"
-syn match	monkError	oneline    !#\\newline[^ \t()";]\+!
+syn match	monkChar	"#\\"
+syn match	monkChar	"#\\."
+syn match	monkError	!#\\.[^ \t()";]\+!
+syn match	monkChar	"#\\space"
+syn match	monkError	!#\\space[^ \t()";]\+!
+syn match	monkChar	"#\\newline"
+syn match	monkError	!#\\newline[^ \t()";]\+!
 
 " This keeps all other stuff unhighlighted, except *stuff* and <stuff>:
 
-syn match	monkOther	oneline    ,[a-z!$%&*/:<=>?^_~][-a-z!$%&*/:<=>?^_~0-9+.@]*,
-syn match	monkError	oneline    ,[a-z!$%&*/:<=>?^_~][-a-z!$%&*/:<=>?^_~0-9+.@]*[^-a-z!$%&*/:<=>?^_~0-9+.@ \t()";]\+[^ \t()";]*,
+syn match	monkOther	,[a-z!$%&*/:<=>?^_~][-a-z!$%&*/:<=>?^_~0-9+.@]*,
+syn match	monkError	,[a-z!$%&*/:<=>?^_~][-a-z!$%&*/:<=>?^_~0-9+.@]*[^-a-z!$%&*/:<=>?^_~0-9+.@ \t()";]\+[^ \t()";]*,
 
-syn match	monkOther	oneline    "\.\.\."
-syn match	monkError	oneline    !\.\.\.[^ \t()";]\+!
+syn match	monkOther	"\.\.\."
+syn match	monkError	!\.\.\.[^ \t()";]\+!
 " ... a special identifier
 
-syn match	monkConstant	oneline    ,\*[-a-z!$%&*/:<=>?^_~0-9+.@]*\*[ \t()";],me=e-1
-syn match	monkConstant	oneline    ,\*[-a-z!$%&*/:<=>?^_~0-9+.@]*\*$,
-syn match	monkError	oneline    ,\*[-a-z!$%&*/:<=>?^_~0-9+.@]*\*[^-a-z!$%&*/:<=>?^_~0-9+.@ \t()";]\+[^ \t()";]*,
+syn match	monkConstant	,\*[-a-z!$%&*/:<=>?^_~0-9+.@]*\*[ \t()";],me=e-1
+syn match	monkConstant	,\*[-a-z!$%&*/:<=>?^_~0-9+.@]*\*$,
+syn match	monkError	,\*[-a-z!$%&*/:<=>?^_~0-9+.@]*\*[^-a-z!$%&*/:<=>?^_~0-9+.@ \t()";]\+[^ \t()";]*,
 
-syn match	monkConstant	oneline    ,<[-a-z!$%&*/:<=>?^_~0-9+.@]*>[ \t()";],me=e-1
-syn match	monkConstant	oneline    ,<[-a-z!$%&*/:<=>?^_~0-9+.@]*>$,
-syn match	monkError	oneline    ,<[-a-z!$%&*/:<=>?^_~0-9+.@]*>[^-a-z!$%&*/:<=>?^_~0-9+.@ \t()";]\+[^ \t()";]*,
+syn match	monkConstant	,<[-a-z!$%&*/:<=>?^_~0-9+.@]*>[ \t()";],me=e-1
+syn match	monkConstant	,<[-a-z!$%&*/:<=>?^_~0-9+.@]*>$,
+syn match	monkError	,<[-a-z!$%&*/:<=>?^_~0-9+.@]*>[^-a-z!$%&*/:<=>?^_~0-9+.@ \t()";]\+[^ \t()";]*,
 
 " Monk input and output structures
-syn match	monkSyntax	oneline    "\(\~input\|\[I\]->\)[^ \t]*"
-syn match	monkFunc	oneline    "\(\~output\|\[O\]->\)[^ \t]*"
+syn match	monkSyntax	"\(\~input\|\[I\]->\)[^ \t]*"
+syn match	monkFunc	"\(\~output\|\[O\]->\)[^ \t]*"
 
 " Non-quoted lists, and strings:
 

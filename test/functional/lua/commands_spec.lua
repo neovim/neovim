@@ -3,6 +3,7 @@ local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each, after_each = t.describe, t.it, t.before_each, t.after_each
 local eq = t.eq
 local NIL = vim.NIL
 local eval = n.eval
@@ -16,7 +17,6 @@ local fn = n.fn
 local source = n.source
 local dedent = t.dedent
 local command = n.command
-local exc_exec = n.exc_exec
 local pcall_err = t.pcall_err
 local write_file = t.write_file
 local remove_trace = t.remove_trace
@@ -63,18 +63,32 @@ describe(':lua', function()
       pcall_err(command, 'lua ()')
     )
     eq(
-      [[Vim(lua):E5108: Lua: [string ":lua"]:1: TEST]],
-      remove_trace(exc_exec('lua error("TEST")'))
+      [[Vim(lua):E5108: Lua: [string ":lua"]:0: TEST]],
+      remove_trace(pcall_err(command, 'lua error("TEST")'))
     )
     eq(
-      [[Vim(lua):E5108: Lua: [string ":lua"]:1: Invalid buffer id: -10]],
-      remove_trace(exc_exec('lua vim.api.nvim_buf_set_lines(-10, 1, 1, false, {"TEST"})'))
+      [[Vim(lua):E5108: Lua: [string ":lua"]:0: Invalid buffer id: -10]],
+      remove_trace(pcall_err(command, 'lua vim.api.nvim_buf_set_lines(-10, 1, 1, false, {"TEST"})'))
     )
     eq({ '' }, api.nvim_buf_get_lines(0, 0, 100, false))
   end)
 
-  it('works with NULL errors', function()
-    eq([=[Vim(lua):E5108: Lua: [NULL]]=], exc_exec('lua error(nil)'))
+  it('works with nil errors', function()
+    eq([=[Vim(lua):E5108: Lua: nil]=], pcall_err(command, 'lua error(nil)'))
+  end)
+
+  it('works with errors with __tostring failure', function()
+    eq(
+      [=[Vim(lua):E5108: Lua: [UNPRINTABLE ERROR]]=],
+      pcall_err(command, 'lua error(setmetatable({}, {__tostring=error}))')
+    )
+  end)
+
+  it('works with printable errors', function()
+    eq([=[Vim(lua):E5108: Lua: false]=], pcall_err(command, 'lua error(false)'))
+    -- numbers get the location prefixed because numbers are almost strings (know the workplace rules)
+    eq([=[Vim(lua):E5108: Lua: [string ":lua"]:0: 39]=], pcall_err(command, 'lua error(39)'))
+    matches([=[Vim%(lua%):E5108: Lua: table: 0x%x+]=], pcall_err(command, 'lua error({})'))
   end)
 
   it('accepts embedded NLs without heredoc', function()
@@ -144,10 +158,8 @@ describe(':lua', function()
       remove_trace(eval('v:errmsg'))
     )
 
-    local status, err = pcall(command, 'lua error("some error\\nin a\\nAPI command")')
-    local expected = 'Vim(lua):E5108: Lua: [string ":lua"]:1: some error\nin a\nAPI command'
-    eq(false, status)
-    eq(expected, string.sub(remove_trace(err), -string.len(expected)))
+    local expected = 'Vim(lua):E5108: Lua: [string ":lua"]:0: some error\nin a\nAPI command'
+    eq(expected, remove_trace(pcall_err(command, 'lua error("some error\\nin a\\nAPI command")')))
 
     feed(':messages<cr>')
     screen:expect([[
@@ -283,8 +295,8 @@ describe(':luado command', function()
     )
   end)
 
-  it('works with NULL errors', function()
-    eq([=[Vim(luado):E5111: Lua: [NULL]]=], exc_exec('luado error(nil)'))
+  it('works with nil errors', function()
+    eq([=[Vim(luado):E5111: Lua: nil]=], pcall_err(command, 'luado error(nil)'))
   end)
 
   it('fails in sandbox when needed', function()
@@ -334,19 +346,19 @@ describe(':luafile', function()
     write_file(fname, '()')
     eq(
       ("Vim(luafile):E5112: Lua chunk: %s:1: unexpected symbol near ')'"):format(fname),
-      exc_exec('luafile ' .. fname)
+      pcall_err(command, 'luafile ' .. fname)
     )
     write_file(fname, 'vimm.api.nvim_buf_set_lines(1, 1, 2, false, {"ETTS"})')
     eq(
       ("Vim(luafile):E5113: Lua chunk: %s:1: attempt to index global 'vimm' (a nil value)"):format(
         fname
       ),
-      remove_trace(exc_exec('luafile ' .. fname))
+      remove_trace(pcall_err(command, 'luafile ' .. fname))
     )
   end)
 
-  it('works with NULL errors', function()
+  it('works with nil errors', function()
     write_file(fname, 'error(nil)')
-    eq([=[Vim(luafile):E5113: Lua chunk: [NULL]]=], exc_exec('luafile ' .. fname))
+    eq([=[Vim(luafile):E5113: Lua chunk: nil]=], pcall_err(command, 'luafile ' .. fname))
   end)
 end)

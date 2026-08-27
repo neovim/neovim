@@ -1,6 +1,8 @@
 local n = require('test.functional.testnvim')()
+local t = require('test.testutil')
 local Screen = require('test.functional.ui.screen')
 
+local describe, it, before_each = t.describe, t.it, t.before_each
 local clear = n.clear
 local exec = n.exec
 local feed = n.feed
@@ -82,5 +84,17 @@ describe('tabline', function()
       {1:~                                                 }|*2
       :                                                 |
     ]])
+  end)
+
+  -- oldtest: Test_tabline_showcmd_redraw_tabline()
+  it('clears showcmd rendered by tabline redraw', function()
+    exec([[
+      set showcmd showcmdloc=tabline showtabline=2 tabline=%S timeoutlen=0
+      nnoremap g :redraw<CR>
+      nnoremap gc <Nop>
+    ]])
+    feed('g')
+    screen:expect({ any = ':redraw', none = '{2::' })
+    t.eq('', n.api.nvim_eval_statusline('%S', {}).str)
   end)
 end)

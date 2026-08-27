@@ -52,12 +52,20 @@ typedef struct {
   partial_T *item_compare_partial;
   dict_T *item_compare_selfdict;
   bool item_compare_func_err;
+  bool item_compare_keys_ready;  ///< ptrs[].key is precomputed
 } sortinfo_T;
 
 /// Structure representing one list item, used for sort array.
 typedef struct {
   listitem_T *item;  ///< Sorted list item.
   int idx;  ///< Sorted list item index.
+  /// Sort key precomputed once per item for the numeric compare modes.
+  /// Only valid when sortinfo->item_compare_keys_ready is set (the sort()
+  /// path); uniq() passes a bare listitem_T pointer and must not read this.
+  union {
+    varnumber_T inum;  ///< for "N"
+    double fnum;       ///< for "n" and "f"
+  } key;
 } ListSortItem;
 
 typedef int (*ListSorter)(const void *, const void *);
@@ -869,6 +877,12 @@ void tv_list_extend(list_T *const l1, list_T *const l2, listitem_T *const bef)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   int todo = tv_list_len(l2);
+
+  // NULL list is equivalent to an empty list: nothing to do.
+  if (todo == 0) {
+    return;
+  }
+
   listitem_T *const befbef = (bef == NULL ? NULL : bef->li_prev);
   listitem_T *const saved_next = (befbef == NULL ? NULL : befbef->li_next);
   // We also quit the loop when we have inserted the original item count of
@@ -1187,19 +1201,34 @@ static int item_compare(const void *s1, const void *s2, bool keep_zero)
   int res;
 
   if (sortinfo->item_compare_numbers) {
-    const varnumber_T v1 = tv_get_number(tv1);
-    const varnumber_T v2 = tv_get_number(tv2);
+    const varnumber_T v1 = sortinfo->item_compare_keys_ready
+                           ? si1->key.inum : tv_get_number(tv1);
+    const varnumber_T v2 = sortinfo->item_compare_keys_ready
+                           ? si2->key.inum : tv_get_number(tv2);
 
     res = v1 == v2 ? 0 : v1 > v2 ? 1 : -1;
     goto item_compare_end;
   }
 
   if (sortinfo->item_compare_float) {
-    const float_T v1 = tv_get_float(tv1);
-    const float_T v2 = tv_get_float(tv2);
+    const float_T v1 = sortinfo->item_compare_keys_ready
+                       ? si1->key.fnum : tv_get_float(tv1);
+    const float_T v2 = sortinfo->item_compare_keys_ready
+                       ? si2->key.fnum : tv_get_float(tv2);
 
     res = v1 == v2 ? 0 : v1 > v2 ? 1 : -1;
     goto item_compare_end;
+  }
+
+  if (sortinfo->item_compare_numeric && sortinfo->item_compare_keys_ready) {
+    double n1 = si1->key.fnum;
+    double n2 = si2->key.fnum;
+
+    res = n1 == n2 ? 0 : n1 > n2 ? 1 : -1;
+    if (res == 0 && !keep_zero) {
+      res = si1->idx > si2->idx ? 1 : -1;
+    }
+    return res;
   }
 
   char *tofree1 = NULL;
@@ -1339,6 +1368,36 @@ static int item_compare2_not_keeping_zero(const void *s1, const void *s2)
   return item_compare2(s1, s2, false);
 }
 
+/// Precompute the numeric sort key of each item.  Only for the builtin numeric
+/// compare modes; each key is computed exactly as item_compare() would have.
+static void sort_compute_keys(ListSortItem *ptrs, int len, sortinfo_T *info)
+{
+  if (info->item_compare_numbers) {
+    for (int i = 0; i < len; i++) {
+      ptrs[i].key.inum = tv_get_number(&ptrs[i].item->li_tv);
+    }
+  } else if (info->item_compare_float) {
+    for (int i = 0; i < len; i++) {
+      ptrs[i].key.fnum = tv_get_float(&ptrs[i].item->li_tv);
+    }
+  } else {  // info->item_compare_numeric
+    for (int i = 0; i < len; i++) {
+      typval_T *tv = &ptrs[i].item->li_tv;
+
+      // A string is compared as a single quote in numeric mode, which
+      // strtod() reads as 0.
+      if (tv->v_type == VAR_STRING) {
+        ptrs[i].key.fnum = 0.0;
+      } else {
+        char *p = encode_tv2string(tv, NULL);
+        ptrs[i].key.fnum = p == NULL ? 0.0 : strtod(p, NULL);
+        xfree(p);
+      }
+    }
+  }
+  info->item_compare_keys_ready = true;
+}
+
 /// sort() List "l"
 static void do_sort(list_T *l, sortinfo_T *info)
 {
@@ -1356,6 +1415,13 @@ static void do_sort(list_T *l, sortinfo_T *info)
   });
 
   info->item_compare_func_err = false;
+  info->item_compare_keys_ready = false;
+
+  if (info->item_compare_func == NULL && info->item_compare_partial == NULL
+      && (info->item_compare_numbers || info->item_compare_float
+          || info->item_compare_numeric)) {
+    sort_compute_keys(ptrs, len, info);
+  }
   ListSorter item_compare_func = ((info->item_compare_func == NULL
                                    && info->item_compare_partial == NULL)
                                   ? item_compare_not_keeping_zero
@@ -1423,6 +1489,7 @@ static int parse_sort_uniq_args(typval_T *argvars, sortinfo_T *info)
   info->item_compare_func = NULL;
   info->item_compare_partial = NULL;
   info->item_compare_selfdict = NULL;
+  info->item_compare_keys_ready = false;
 
   if (argvars[1].v_type == VAR_UNKNOWN) {
     return OK;
@@ -1794,13 +1861,15 @@ bool tv_callback_equal(const Callback *cb1, const Callback *cb2)
   }
   switch (cb1->type) {
   case kCallbackFuncref:
-    return strcmp(cb1->data.funcref, cb2->data.funcref) == 0;
+    return strequal(cb1->data.funcref, cb2->data.funcref);
   case kCallbackPartial:
     // FIXME: this is inconsistent with tv_equal but is needed for precision
     // maybe change dictwatcheradd to return a watcher id instead?
     return cb1->data.partial == cb2->data.partial;
   case kCallbackLua:
     return cb1->data.luaref == cb2->data.luaref;
+  case kCallbackExpr:
+    return strequal(cb1->data.expr, cb2->data.expr);
   case kCallbackNone:
     return true;
   }
@@ -1822,6 +1891,9 @@ void callback_free(Callback *callback)
     break;
   case kCallbackLua:
     NLUA_CLEAR_REF(callback->data.luaref);
+    break;
+  case kCallbackExpr:
+    xfree(callback->data.expr);
     break;
   case kCallbackNone:
     break;
@@ -1874,6 +1946,9 @@ void callback_copy(Callback *dest, Callback *src)
   case kCallbackLua:
     dest->data.luaref = api_new_luaref(src->data.luaref);
     break;
+  case kCallbackExpr:
+    dest->data.expr = xstrdup(src->data.expr);
+    break;
   default:
     dest->data.funcref = NULL;
     break;
@@ -1884,7 +1959,7 @@ void callback_copy(Callback *dest, Callback *src)
 char *callback_to_string(Callback *cb, Arena *arena)
 {
   if (cb->type == kCallbackLua) {
-    return nlua_funcref_str(cb->data.luaref, arena);
+    return nlua_funcref_str(cb->data.luaref, arena, true);
   }
 
   const size_t msglen = 100;
@@ -1951,7 +2026,7 @@ bool tv_dict_watcher_remove(dict_T *const dict, const char *const key_pattern,
   return true;
 }
 
-/// Test if `key` matches with with `watcher->key_pattern`
+/// Test if `key` matches with `watcher->key_pattern`
 ///
 /// @param[in]  watcher  Watcher to check key pattern from.
 /// @param[in]  key  Key to check.
@@ -2313,6 +2388,13 @@ varnumber_T tv_dict_get_number_def(const dict_T *const d, const char *const key,
   return tv_get_number(&di->di_tv);
 }
 
+/// Gets a bool item from a dictionary, or a given default value.
+///
+/// @param[in]  d  Dictionary to get item from.
+/// @param[in]  key  Key to find in dictionary.
+/// @param[in]  def  Default value.
+///
+/// @return Number value, or `def` value if the item does not exist.
 varnumber_T tv_dict_get_bool(const dict_T *const d, const char *const key, const int def)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -2488,11 +2570,14 @@ int tv_dict_add_list(dict_T *const d, const char *const key, const size_t key_le
 
   item->di_tv.v_type = VAR_LIST;
   item->di_tv.vval.v_list = list;
-  tv_list_ref(list);
   if (tv_dict_add(d, item) == FAIL) {
+    // Detach "list" so tv_dict_item_free() does not unref it: on failure
+    // ownership stays with the caller.
+    item->di_tv.vval.v_list = NULL;
     tv_dict_item_free(item);
     return FAIL;
   }
+  tv_list_ref(list);
   return OK;
 }
 
@@ -2531,11 +2616,14 @@ int tv_dict_add_dict(dict_T *const d, const char *const key, const size_t key_le
 
   item->di_tv.v_type = VAR_DICT;
   item->di_tv.vval.v_dict = dict;
-  dict->dv_refcount++;
   if (tv_dict_add(d, item) == FAIL) {
+    // Detach "dict" so tv_dict_item_free() does not unref it: on failure
+    // ownership stays with the caller.
+    item->di_tv.vval.v_dict = NULL;
     tv_dict_item_free(item);
     return FAIL;
   }
+  dict->dv_refcount++;
   return OK;
 }
 
@@ -2678,11 +2766,12 @@ int tv_dict_add_func(dict_T *const d, const char *const key, const size_t key_le
 
   item->di_tv.v_type = VAR_FUNC;
   item->di_tv.vval.v_string = xmemdupz(fp->uf_name, fp->uf_namelen);
+  // Reference before tv_dict_add() so tv_dict_item_free()'s unref stays balanced on failure.
+  func_ref(item->di_tv.vval.v_string);
   if (tv_dict_add(d, item) == FAIL) {
     tv_dict_item_free(item);
     return FAIL;
   }
-  func_ref(item->di_tv.vval.v_string);
   return OK;
 }
 
@@ -4178,7 +4267,7 @@ bool tv_check_str(const typval_T *const tv)
 /// @param[in]  tv  Object to get value from.
 ///
 /// @return Number value: vim_str2nr() output for VAR_STRING objects, value
-///         for VAR_NUMBER objects, -1 for other types.
+///         for VAR_NUMBER objects, 0 for other types.
 varnumber_T tv_get_number(const typval_T *const tv)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -4195,9 +4284,11 @@ varnumber_T tv_get_number(const typval_T *const tv)
 ///                         @note Needs to be initialized to `false` to be
 ///                               useful.
 ///
-/// @return Number value: vim_str2nr() output for VAR_STRING objects, value
-///         for VAR_NUMBER objects, -1 (ret_error == NULL) or 0 (otherwise) for
-///         other types.
+/// @return Number value: vim_str2nr() output for VAR_STRING objects,
+///         value for VAR_NUMBER objects,
+///         1 (true) or 0 (false) for VAR_BOOL objects,
+///         0 for VAR_SPECIAL objects,
+///         -1 (ret_error == NULL) or 0 (otherwise) for other types.
 varnumber_T tv_get_number_chk(const typval_T *const tv, bool *const ret_error)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
 {
@@ -4233,6 +4324,15 @@ varnumber_T tv_get_number_chk(const typval_T *const tv, bool *const ret_error)
   return (ret_error == NULL ? -1 : 0);
 }
 
+/// Get the boolean value of a Vimscript object
+///
+/// @note Use tv_get_bool_chk() if you need to determine whether there was an
+///       error.
+///
+/// @param[in]  tv  Object to get value from.
+///
+/// @return Number value: vim_str2nr() output for VAR_STRING objects, value
+///         for VAR_NUMBER objects, -1 for other types.
 varnumber_T tv_get_bool(const typval_T *const tv)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
