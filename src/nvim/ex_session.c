@@ -587,7 +587,6 @@ static int store_session_globals(FILE *fd)
 static int makeopens(FILE *fd, char *dirnow)
 {
   bool only_save_windows = true;
-  bool restore_size = true;
   win_T *edited_win = NULL;
   win_T *tab_firstwin;
   frame_T *tab_topframe;
@@ -823,6 +822,7 @@ static int makeopens(FILE *fd, char *dirnow)
     // Check if window sizes can be restored (no windows omitted).
     // Remember the window number of the current window after restoring.
     int nr = 0;
+    bool restore_size = true;
     for (win_T *wp = tab_firstwin; wp != NULL; wp = wp->w_next) {
       if (ses_do_win(wp)) {
         nr++;
