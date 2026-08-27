@@ -439,4 +439,88 @@ describe('Scrollbind', function()
       ]],
     })
   end)
+
+  it('does not jump back and forth with a virt_lines block taller than the window', function()
+    n.exec_lua(function()
+      local lines = {} --- @type string[]
+      for i = 1, 20 do
+        lines[i] = tostring(i)
+      end
+
+      -- Bound window: one virt_lines block of 15 rows, window is 10 rows.
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
+      vim.bo.buftype = 'nofile'
+      local virt_lines = {} --- @type table[]
+      for i = 1, 15 do
+        virt_lines[i] = { { 'v' .. i } }
+      end
+      vim.api.nvim_buf_set_extmark(0, vim.api.nvim_create_namespace('test'), 4, 0, {
+        virt_lines = virt_lines,
+      })
+      vim.wo.scrollbind = true
+
+      -- Scrolled window: plain buffer.
+      vim.cmd.vnew()
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
+      vim.bo.buftype = 'nofile'
+      vim.wo.scrollbind = true
+    end)
+
+    n.feed('5<C-e>')
+
+    screen:expect({
+      grid = [[
+        ^6                   │v7                 |
+        7                   │v8                 |
+        8                   │v9                 |
+        9                   │v10                |
+        10                  │v11                |
+        11                  │v12                |
+        12                  │v13                |
+        13                  │v14                |
+        14                  │v15                |
+        15                  │6                  |
+        {3:[Scratch]            }{2:[Scratch]          }|
+                                                |
+      ]],
+    })
+
+    n.feed('<C-e>')
+
+    screen:expect({
+      grid = [[
+        ^7                   │v8                 |
+        8                   │v9                 |
+        9                   │v10                |
+        10                  │v11                |
+        11                  │v12                |
+        12                  │v13                |
+        13                  │v14                |
+        14                  │v15                |
+        15                  │6                  |
+        16                  │7                  |
+        {3:[Scratch]            }{2:[Scratch]          }|
+                                                |
+      ]],
+    })
+
+    n.feed('<C-e>')
+
+    screen:expect({
+      grid = [[
+        ^8                   │v9                 |
+        9                   │v10                |
+        10                  │v11                |
+        11                  │v12                |
+        12                  │v13                |
+        13                  │v14                |
+        14                  │v15                |
+        15                  │6                  |
+        16                  │7                  |
+        17                  │8                  |
+        {3:[Scratch]            }{2:[Scratch]          }|
+                                                |
+      ]],
+    })
+  end)
 end)
