@@ -36,6 +36,7 @@ typedef struct {
   const win_T *win;   ///< Window.
   pos_T pos;          ///< Cursor position. Stored here bc the window might be closed.
   varnumber_T tick;   ///< b:changedtick.
+  int maptick;        ///< Advances on typed input (globals.h:maptick).
 } CmdOrigin;
 
 /// How an insert-session was entered from Visual mode.

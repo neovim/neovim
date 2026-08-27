@@ -194,7 +194,7 @@ CmdSpec atom_cmd_spec(const cmdarg_T *cap)
 static CmdOrigin atom_origin(void)
 {
   CmdOrigin origin = { .win = curwin, .pos = curwin->w_cursor,
-                       .tick = buf_get_changedtick(curbuf) };
+                       .tick = buf_get_changedtick(curbuf), .maptick = maptick };
   set_bufref(&origin.buf, curbuf);
   return origin;
 }
@@ -1167,9 +1167,12 @@ InsSession atom_ins_start(int cmd, long count, VisualIns vis, bool vblock)
 void atom_ins_end(const InsSession *session, bool busy)
 {
   bool visual = session->vis != kVInsNone;
-  if (!session->typed || busy || restart_edit != 0 || !atom_buf_has_consumers()
+  bool user_input = session->typed
+                    // A session is user input, if user input occurred during it. #41516
+                    || maptick != session->origin.maptick;
+  if (!user_input || busy || restart_edit != 0 || !atom_buf_has_consumers()
       || (visual && session->vis != kVInsKeys)) {
-    if (session->typed && (busy || restart_edit != 0) && atom_composite_active()) {
+    if (user_input && (busy || restart_edit != 0) && atom_composite_active()) {
       // Incomplete session (i_CTRL-O): its resolution is never captured.
       composite.lossy = true;
     }
