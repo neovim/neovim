@@ -104,6 +104,7 @@ src/testdir/Make_ming.mak
 src/testdir/Make_mvc.mak
 src/testdir/crash/heap_overflow3
 src/testdir/lsan-suppress.txt
+src/testdir/samples/combining_chars.txt
 src/testdir/samples/terminal_max_combining_chars.txt
 src/testdir/samples/uncrypt_utf8_test.txt
 src/testdir/test_alot_latin.vim

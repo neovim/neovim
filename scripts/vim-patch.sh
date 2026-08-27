@@ -943,7 +943,7 @@ is_na_patch() {
           diff-tree --no-commit-id -r -b -U0 \
           '-I^\s+$' \
           '-I^=+$' \
-          '-I^\|:redrawtabpanel\|' \
+          '-I^\|:(export|import|redrawtabpanel)\|' \
           '-I^\|popup_[_a-z]+\(\)\|' \
           '-I^popup_[_a-z]+\(' \
           '-I\*\s+For Vim version [0-9]\.[0-9]\.\s+Last change: [0-9]+ [A-Z][a-z]+ [0-9]+' \
@@ -969,6 +969,14 @@ is_na_patch() {
           "$patch" -- "${file}")
         test -n "$HUNKS" && return 1
         ;;
+      src/testdir/*.vim)
+        HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
+          "$patch" -- "${file}")
+        if test -n "$HUNKS"; then
+          HUNK_NUM_FINAL=$(echo "$HUNKS" | grep '^@@ .* @@' | sed 's/^@@ .* @@ //' | grep -cv -e '^func RunVimInTerminal(')
+          test "$HUNK_NUM_FINAL" -ne 0 && return 1
+        fi
+        ;;
       *.h)
         HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
           '-I^\s+$' \
@@ -984,6 +992,7 @@ is_na_patch() {
           '-I^\s+POPCLOSE_[A-Z]+,?$' \
           '-I^\} popclose_T;$' \
           '-I^EXTERN\schar\s+\*popup_transparent' \
+          '-I^EXTERN\sint\s+disable_vterm_title_for_testing' \
           '-I^EXTERN type_T static_types\[' \
           '-I^EXTERN type_T t_.* INIT[2-9]\(' \
           '-I^EXTERN\swin_T\s+\*popup_dragwin' \
@@ -1041,6 +1050,7 @@ is_na_patch() {
           '-Icheck_typval_type\(.+\)' \
           '-Icrypt_get_method_nr\(.+\)' \
           '-I\spopup_set_firstline\(.+\);' \
+          '-I\sterm_focus_change\(.+\);$' \
           '-I\supdate_vim9_script_var\(.+\);$' \
           '-I\svim_free\(.*w_popup_title\);' \
           "$patch" -- "${file}")
