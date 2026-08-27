@@ -769,7 +769,7 @@ function vim._on_key(buf, typed_buf)
     --- @type boolean, any
     local ok, rv = xpcall(function()
       return fn(buf, typed_buf)
-    end, debug.traceback)
+    end, type(debug.traceback) == 'function' and debug.traceback or tostring)
     if ok and rv ~= nil then
       if type(rv) == 'string' and #rv == 0 then
         discard = true
