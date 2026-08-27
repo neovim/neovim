@@ -992,6 +992,7 @@ is_na_patch() {
           '-I^\s+POPCLOSE_[A-Z]+,?$' \
           '-I^\} popclose_T;$' \
           '-I^EXTERN\schar\s+\*popup_transparent' \
+          '-I^EXTERN\sint\s+disable_vterm_title_for_testing' \
           '-I^EXTERN type_T static_types\[' \
           '-I^EXTERN type_T t_.* INIT[2-9]\(' \
           '-I^EXTERN\swin_T\s+\*popup_dragwin' \
