@@ -30,16 +30,13 @@ target_link_libraries(main_lib INTERFACE ${LUV_LIBRARY})
 
 find_package(Iconv REQUIRED)
 find_package(Libuv 1.46.0 REQUIRED)
-find_package(Lpeg REQUIRED)
 find_package(Treesitter 0.25.0 REQUIRED)
 find_package(UTF8proc REQUIRED)
 
 target_link_libraries(main_lib INTERFACE
   iconv
-  lpeg
   treesitter
   utf8proc)
-target_link_libraries(nlua0 PUBLIC lpeg)
 
 if(ENABLE_LIBINTL)
   find_package(Libintl REQUIRED) # Libintl (not Intl) selects our FindLibintl.cmake script. #8464
@@ -389,10 +386,10 @@ file(MAKE_DIRECTORY ${TOUCHES_DIR} ${GENERATED_DIR} ${GENERATED_INCLUDES_DIR})
 
 file(GLOB NVIM_SOURCES CONFIGURE_DEPENDS *.c)
 file(GLOB NVIM_HEADERS CONFIGURE_DEPENDS *.h)
-file(GLOB EXTERNAL_SOURCES CONFIGURE_DEPENDS ../xdiff/*.c ../mpack/*.c ../cjson/*.c ../klib/*.c)
-file(GLOB EXTERNAL_HEADERS CONFIGURE_DEPENDS ../xdiff/*.h ../mpack/*.h ../cjson/*.h ../klib/*.h)
+file(GLOB EXTERNAL_SOURCES CONFIGURE_DEPENDS ../xdiff/*.c ../mpack/*.c ../cjson/*.c ../klib/*.c ../lpeg/*.c)
+file(GLOB EXTERNAL_HEADERS CONFIGURE_DEPENDS ../xdiff/*.h ../mpack/*.h ../cjson/*.h ../klib/*.h ../lpeg/*.h)
 
-file(GLOB NLUA0_SOURCES CONFIGURE_DEPENDS ../mpack/*.c)
+file(GLOB NLUA0_SOURCES CONFIGURE_DEPENDS ../mpack/*.c ../lpeg/*.c)
 
 if(PREFER_LUA)
   # luajit not used, use a vendored copy of the bit module

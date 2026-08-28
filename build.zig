@@ -20,7 +20,6 @@ const version = struct {
 };
 
 pub const SystemIntegrationOptions = packed struct {
-    lpeg: bool,
     lua: bool,
     tree_sitter: bool,
     unibilium: bool,
@@ -98,7 +97,6 @@ pub fn build(b: *std.Build) !void {
     const E = enum { luajit, lua51 };
 
     const sys_opts = SystemIntegrationOptions{
-        .lpeg = b.systemIntegrationOption("lpeg", .{}),
         .lua = b.systemIntegrationOption("lua", .{}),
         .tree_sitter = b.systemIntegrationOption("tree-sitter", .{}),
         .unibilium = b.systemIntegrationOption("unibilium", .{}),
@@ -167,8 +165,6 @@ pub fn build(b: *std.Build) !void {
         }
     }
 
-    const lpeg = if (sys_opts.lpeg) null else b.lazyDependency("lpeg", .{});
-
     const iconv = if (is_windows) b.lazyDependency("libiconv", .{
         .target = target,
         .optimize = optimize,
@@ -206,7 +202,6 @@ pub fn build(b: *std.Build) !void {
         optimize_host,
         host_use_luajit,
         ziglua_host,
-        lpeg,
         libluv_host,
         sys_opts,
     );
@@ -543,7 +538,7 @@ pub fn build(b: *std.Build) !void {
     nvim_mod.addIncludePath(b.path("src"));
     nvim_mod.addIncludePath(gen_config.getDirectory());
     nvim_mod.addIncludePath(gen_headers.getDirectory());
-    try build_lua.add_lua_modules(b, t, nvim_mod, lpeg, use_luajit, false, sys_opts);
+    try build_lua.add_lua_modules(nvim_mod, use_luajit, false);
 
     var unit_test_sources = try std.ArrayList([]u8).initCapacity(b.allocator, 10);
     if (support_unittests) {
