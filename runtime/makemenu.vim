@@ -1,6 +1,6 @@
 " Script to define the syntax menu in synmenu.vim
 " Maintainer:		The Vim Project <https://github.com/vim/vim>
-" Last Change:		2026 Aug 25
+" Last Change:		2026 Aug 26
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " This is used by "make menu" in the src directory.
@@ -602,6 +602,7 @@ SynMenu R.R.R\ noweb:rnoweb
 SynMenu R.Racc\ input:racc
 SynMenu R.Racket:racket
 SynMenu R.Radiance:radiance
+SynMenu R.Radvd\ config:radvd
 SynMenu R.Raml:raml
 SynMenu R.Rapid:rapid
 SynMenu R.Rasi:rasi
