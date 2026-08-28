@@ -28,6 +28,7 @@
 #include "nvim/eval/vars.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/ex_docmd.h"
 #include "nvim/ex_session.h"
 #include "nvim/fuzzy.h"
 #include "nvim/garray.h"
@@ -515,7 +516,20 @@ static mapblock_T *map_add(buf_T *buf, mapblock_T **map_table, mapblock_T **abbr
     }
   }
 
-  mp->m_keys = xstrdup(keys);
+  if (is_abbr && keys[0] == ':') {
+    mp->m_keys = xstrdup(keys + 1);
+
+    exarg_T ea = { 0 };
+    ea.cmd = mp->m_keys;
+    int full = false;
+
+    find_ex_command(&ea, &full);
+    mp->cmdidx = ea.cmdidx;
+  } else {
+    mp->m_keys = xstrdup(keys);
+    mp->cmdidx = CMD_SIZE;
+  }
+
   mp->m_str = args->rhs;
   mp->m_orig_str = args->orig_rhs;
   mp->m_luaref = args->rhs_lua;
@@ -535,6 +549,7 @@ static mapblock_T *map_add(buf_T *buf, mapblock_T **map_table, mapblock_T **abbr
     mp->m_script_ctx.sc_lnum += SOURCING_LNUM;
     nlua_set_sctx(&mp->m_script_ctx);
   }
+
   mp->m_desc = args->desc;
 
   // add the new entry in front of the abbrlist or maphash[] list
@@ -632,8 +647,7 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
         xmemcpyz(keys_unescaped, lhs, (size_t)len);
         size_t keys_unescaped_len = vim_unescape_ks(keys_unescaped);
         const char *p = keys_unescaped;
-
-        const int first = vim_iswordp(p);
+        const int first = keys_unescaped[0] == ':' ? 1 : vim_iswordp(lhs);
         int last = first;
         MB_PTR_ADV(p);
         int n = 1;
@@ -1451,6 +1465,106 @@ int ExpandMappings(char *pat, regmatch_T *regmatch, int *numMatches, char ***mat
   return count == 0 ? FAIL : OK;
 }
 
+/// Takes cmdline and if a modifier exists, stores it in a buffer
+///
+/// @param[out] p Character we're on; updated past modifier
+/// @param ptr Full cmdline
+/// @param mincol Offset from cmdline to start from
+/// @param[out] buf Buffer that holds modifier
+/// @param[out] clen Length of line, used to update abbrev.
+///
+/// @return true if valid modifier was found and stored, false otherwise
+static bool handle_modifier(char **p, char *ptr, const int mincol, char *buf, int *clen)
+{
+  bool has_pipe = false;
+  int mod_offset = 0;
+  const char first_char = **p;
+  size_t mod_len = 0;
+  *clen = -1;
+
+  // Walk backwards from *p looking for start of trailing modifier
+  // eg ("silent", "topleft") that precedes abbr.
+  // If modifier has a pipe before it, mod_offset/has_pipe record
+  // to locate that
+  while (*p > ptr + mincol) {
+    if (ascii_isspace(**p)) {
+      *p = mb_prevptr(ptr, *p);
+      if (**p == '|') {
+        *p += 2;
+        mod_offset = (int)(*p - ptr);
+        has_pipe = true;
+      } else {
+        char *after_space = *p + 1;
+        // five scenarios
+        // case1 => :lebron 1,2gr, where we just return false
+        // case2 => :silent 1,2gr, where we store "silent 1,2"
+        // case3 => :lebron gr | silent gr, make sure to adjust offset and store
+        // case4 => :lebron gr | silent bruh gr, we just return false
+        // case 5 => :lebron gr | lebron gr
+
+        // use skip(), if it returns the same thing, nothing is valid and return false
+        // otherwise, store everything
+
+        *p = mb_prevptr(ptr, *p);
+        while (**p != '|' && ptr != *p) {
+          *p = mb_prevptr(ptr, *p);
+        }
+
+        if (**p == '|') {
+          has_pipe = true;
+          *p += 2;
+          mod_offset = (int)(*p - ptr);
+        }
+
+        exarg_T ea;
+        CLEAR_FIELD(ea);
+        ea.cmd = *p;
+        const char *errormsg;
+        cmdmod_T mod;
+        parse_command_modifiers(&ea, &errormsg, &mod, true);
+
+        // handles case1 and case5
+        if (ea.cmd == *p) {
+          *p = ptr;
+          return false;
+        }
+
+        // handles case 4
+        for (char *c = ea.cmd; *c != NUL; c++) {
+          if (ascii_isspace(*c)) {
+            *p = ptr;
+            return false;
+          }
+        }
+
+        mod_len = has_pipe ? (size_t)(ea.cmd - ptr - mod_offset) : (size_t)(ea.cmd - ptr);
+        *clen = ((int)(ea.cmd - ptr) + (int)(strlen(ea.cmd))) - mod_offset;
+
+        *p = after_space;
+      }
+      break;
+    }
+    *p = mb_prevptr(ptr, *p);
+  }
+
+  size_t range_len = 0;
+  if (first_char == ',') {
+    if (ascii_isspace(**p)) {
+      *p += 1;
+    }
+    char *range_end = skip_range(*p, NULL);
+    range_len = has_pipe ? (size_t)(range_end - *p) : (size_t)(range_end - ptr) - mod_len;
+  }
+
+  xmemcpyz(buf, ptr + mod_offset, mod_len);
+  xmemcpyz(buf + mod_len, ptr + mod_len + mod_offset, range_len);
+  buf[range_len + mod_len] = NUL;
+  *clen = *clen == -1 ? (int)(strlen(*p) + mod_len) : *clen;
+  *p = ptr + range_len + mod_offset + mod_len;
+
+  return true;
+}
+
 // Check for an abbreviation.
 // Cursor is at ptr[col].
 // When inserting, mincol is where insert started.
@@ -1491,6 +1605,13 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
 
   int scol;  // starting column of the abbr.
 
+  bool has_modifier = false;
+  char modifiers[MAXMAPLEN + 1];
+  modifiers[0] = NUL;
+  // if input is at beginning of cmdline or after a pipe
+  // :gr and :echo "hello" | gr both count as true
+  bool at_cmdline_pos = false;
+
   {
     bool is_id = true;
     bool vim_abbr;
@@ -1504,15 +1625,41 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
       }
     }
     clen = 1;
+
     while (p > ptr + mincol) {
       p = mb_prevptr(ptr, p);
-      if (ascii_isspace(*p) || (!vim_abbr && is_id != vim_iswordp(p))) {
+
+      if (!ascii_isspace(*p) && (vim_abbr || is_id == vim_iswordp(p))) {
+        clen++;
+        continue;
+      }
+
+      // handles non-cmdline related abbreviations
+      // by returning the full pointer
+      if (!(State & MODE_CMDLINE)) {
         p += utfc_ptr2len(p);
         break;
       }
-      clen++;
+
+      char *boundary = p;
+      int saved_clen = clen;
+      bool is_valid = handle_modifier(&p, ptr, mincol, modifiers, &clen);
+      if (!is_valid) {
+        p = boundary + utfc_ptr2len(boundary);
+        clen = saved_clen;
+      }
+      has_modifier = is_valid;
+      at_cmdline_pos = is_valid;
+
+      break;
     }
+
     scol = (int)(p - ptr);
+
+    // check if in cmdline mode
+    if (State & MODE_CMDLINE && scol == 0) {
+      at_cmdline_pos = true;
+    }
   }
 
   if (scol < mincol) {
@@ -1527,6 +1674,7 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
       mp = mp2;
       mp2 = NULL;
     }
+
     for (; mp;
          mp->m_next == NULL ? (mp = mp2, mp2 = NULL)
                             : (mp = mp->m_next)) {
@@ -1538,10 +1686,29 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
         q = xstrdup(mp->m_keys);
         qlen = (int)vim_unescape_ks(q);
       }
+
       // find entries with right mode and keys
-      int match = (mp->m_mode & State)
-                  && qlen == len
-                  && strncmp(q, ptr, (size_t)len) == 0;
+      int match = 0;
+
+      // CMD_SIZE indicates no found cmdidx for mp
+      if (mp->cmdidx != CMD_SIZE) {
+        if (State & MODE_CMDLINE
+            && at_cmdline_pos
+            && len > 0) {
+          exarg_T ea = { 0 };
+          char buf[MAXMAPLEN + 1];
+          xmemcpyz(buf, ptr, (size_t)len);
+          ea.cmd = buf;
+          int full = false;
+          find_ex_command(&ea, &full);
+          match = (ea.cmdidx != CMD_SIZE) && (ea.cmdidx == mp->cmdidx);
+        }
+      } else {
+        match = (mp->m_mode & State)
+                && qlen == len
+                && !strncmp(q, ptr, (size_t)len);
+      }
+
       if (q != mp->m_keys) {
         xfree(q);
       }
@@ -1589,6 +1756,7 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
         }
         tb[j] = NUL;
         // insert the last typed char
+
         ins_typebuf((char *)tb, 1, 0, true, mp->m_silent);
       }
 
@@ -1600,6 +1768,34 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
       char *s;
       if (expr) {
         s = eval_map_expr(mp, c);
+      } else if (has_modifier) {
+        char *m_str = mp->m_str + 1;
+        size_t m_str_size = strlen(m_str);
+
+        // handles abbr with special chars, ie "& grep"
+        char *p = m_str;
+        for (; *p != NUL; p++) {
+          if (vim_iswordp(p)) {
+            break;
+          }
+        }
+
+        size_t offset = (size_t)(p - m_str);
+        size_t mod_len = strlen(modifiers);
+
+        size_t mem = m_str_size + mod_len + 1;
+        char *new_str = xmalloc(mem);
+
+        xmemcpyz(new_str, m_str, offset);
+        xmemcpyz(new_str + offset, modifiers, mod_len);
+        xmemcpyz(new_str + offset + mod_len, m_str + offset, m_str_size - offset);
+
+        size_t end = mod_len + m_str_size;
+        new_str[end] = NUL;
+
+        s = new_str;
+      } else if (State & MODE_CMDLINE) {
+        s = mp->m_str[0] == ':' ? mp->m_str + 1 : mp->m_str;
       } else {
         s = mp->m_str;
       }
@@ -1608,7 +1804,7 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
         ins_typebuf(s, noremap, 0, true, silent);
         // no abbrev. for these chars
         typebuf.tb_no_abbr_cnt += (int)strlen(s) + j + 1;
-        if (expr) {
+        if (expr || has_modifier) {
           xfree(s);
         }
       }
