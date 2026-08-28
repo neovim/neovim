@@ -6,6 +6,7 @@
 " Last Change:		2023 Nov 28
 " 2024 Jul 30 by Vim Project: increase syn-sync-minlines to 250
 " 2025 May 10 by Vim Project: update comment
+" 2026 Aug 26 by Vim Project: match plain tag/attribute names as keywords
 
 " See :help html.vim for some comments and a description of the options
 
@@ -49,7 +50,7 @@ syn keyword htmlTagName contained input isindex kbd li link map menu
 syn keyword htmlTagName contained meta ol option param pre p samp span
 syn keyword htmlTagName contained select small strike sub sup
 syn keyword htmlTagName contained table td textarea th tr tt ul var xmp
-syn match   htmlTagName contained "\<\%(b\|i\|u\|h[1-6]\|em\|strong\|head\|body\|title\)\>"
+syn keyword htmlTagName contained b i u em strong head body title h1 h2 h3 h4 h5 h6
 
 " new html 4.0 tags
 syn keyword htmlTagName contained abbr acronym bdo button col colgroup
@@ -80,15 +81,13 @@ syn keyword htmlArg contained align alink alt archive background bgcolor
 syn keyword htmlArg contained border bordercolor cellpadding
 syn keyword htmlArg contained cellspacing checked class clear code codebase color
 syn keyword htmlArg contained cols colspan content coords enctype face
-syn keyword htmlArg contained gutter height hspace id
+syn keyword htmlArg contained gutter height href hspace id
 syn keyword htmlArg contained link lowsrc marginheight
 syn keyword htmlArg contained marginwidth maxlength method name prompt
-syn keyword htmlArg contained rel rev rows rowspan scrolling selected shape
-syn keyword htmlArg contained size src start target text type url
+syn keyword htmlArg contained rel rev role rows rowspan scrolling selected shape
+syn keyword htmlArg contained size src start target text title type url
 syn keyword htmlArg contained usemap ismap valign value vlink vspace width wrap
-syn match   htmlArg contained "\<\%(http-equiv\|href\|title\)="me=e-1
-
-syn keyword htmlArg contained role
+syn match   htmlArg contained "\<http-equiv="me=e-1
 
 " ARIA attributes {{{1
 let s:aria =<< trim END
@@ -165,11 +164,11 @@ syn match   htmlArg	contained "\<z-index\>"
 syn keyword htmlTagName contained marquee
 
 " html 4.0 arg names
-syn match   htmlArg contained "\<\%(accept-charset\|label\)\>"
+syn match   htmlArg contained "\<accept-charset\>"
 syn keyword htmlArg contained abbr accept accesskey axis char charoff charset
 syn keyword htmlArg contained cite classid codetype compact data datetime
 syn keyword htmlArg contained declare defer dir disabled for frame
-syn keyword htmlArg contained headers hreflang lang language longdesc
+syn keyword htmlArg contained headers hreflang label lang language longdesc
 syn keyword htmlArg contained multiple nohref nowrap object profile readonly
 syn keyword htmlArg contained rules scheme scope span standby style
 syn keyword htmlArg contained summary tabindex valuetype version
