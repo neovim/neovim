@@ -153,6 +153,8 @@ the sources manually:
 * `src/xdiff/`: [xdiff](https://github.com/git/git/tree/master/xdiff)
 * `src/cjson/`: [lua-cjson](https://github.com/openresty/lua-cjson)
 * `src/klib/`: [Klib](https://github.com/attractivechaos/klib)
+* `src/lpeg/`: [Lpeg](https://www.inf.puc-rio.br/~roberto/lpeg/)
+    * Apply the patch from `src/lpeg/README.md` when syncing with upstream.
 * `runtime/lua/vim/inspect.lua`: [inspect.lua](https://github.com/kikito/inspect.lua)
 * `src/nvim/tui/terminfo_defs.h`: terminfo definitions
     * Run `scripts/update_terminfo.sh` to update these definitions.

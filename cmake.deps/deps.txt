@@ -14,9 +14,6 @@ UNIBILIUM_SHA256 7360907bcf79ba49f6fc4a504767ff86e93ab9018477026fcc70d5ab77e1f2c
 LUV_URL https://github.com/luvit/luv/archive/1.52.1-0.tar.gz
 LUV_SHA256 e8b8774b31d24be4fcf2b021b90599ecccc8e476c61efcc59c3c10cab813a885
 
-LPEG_URL https://github.com/neovim/deps/raw/d495ee6f79e7962a53ad79670cb92488abe0b9b4/opt/lpeg-1.1.0.tar.gz
-LPEG_SHA256 4b155d67d2246c1ffa7ad7bc466c1ea899bbc40fef0257cc9c03cecbaed4352a
-
 LUA_COMPAT53_URL https://github.com/lunarmodules/lua-compat-5.3/archive/v0.13.tar.gz
 LUA_COMPAT53_SHA256 f5dc30e7b1fda856ee4d392be457642c1f0c259264a9b9bfbcb680302ce88fc2
 
