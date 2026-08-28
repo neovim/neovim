@@ -1,4 +1,5 @@
---- Converts Nvim :help files to alternate formats (HTML or Typst).  Validates |tag| links and document syntax (parser errors).
+--- Converts Nvim :help files to alternate formats (HTML or Typst).
+--- Validates |tag| links and document syntax (parser errors).
 --
 -- USAGE (For CI/local testing purposes): Simply `make lintdoc`, which basically does the following:
 --   1. :helptags ALL
@@ -172,10 +173,18 @@ local function html_esc(s)
   return (s and string.gsub(s, '[&<>{}]', html_entity) or nil)
 end
 
---- Escape a string to make it valid Typst
----@type fun(s: string): string
+--- Escapes a string to make it valid Typst markup.
+--- @param s string?
+--- @return string
 local function typ_esc(s)
   return (s and string.gsub(s, '([%[%]@#\\/<*`_^$])', '\\%1') or '')
+end
+
+--- Escapes a string for use in a Typst string literal, e.g. `#label("…")`.
+--- @param s string?
+--- @return string
+local function typ_str_esc(s)
+  return (s and string.gsub(s, '([\\"])', '\\%1') or '')
 end
 
 local function url_encode(s)
@@ -235,7 +244,7 @@ local function fix_url(url)
   return fixed_url, removed_chars
 end
 
---- Checks if a given line is a "noise" line that doesn't look good in non-vimdoc formats
+--- Checks if a given line is a "noise" line that doesn't look good in non-vimdoc formats.
 local function is_noise(line, noise_lines)
   if
     -- First line is always noise.
@@ -687,7 +696,7 @@ local function ts_node_to_html(root, level, lang_tree, headings, opt, stats)
     return string.format('<div class="help-para">\n%s\n</div>\n', text)
   elseif node_name == 'line' then
     if
-      (parent ~= 'codeblock' or parent ~= 'code')
+      (parent ~= 'codeblock' and parent ~= 'code')
       and (is_blank(text) or is_noise(text, stats.noise_lines))
     then
       return '' -- Discard common "noise" lines.
@@ -912,7 +921,7 @@ local function ts_node_to_typ(root, level, lang_tree, opt, stats)
     return text
   elseif node_name == 'url' then
     local fixed_url, removed_chars = fix_url(trimmed)
-    return ('%s#link("%s")%s'):format(ws(), fixed_url, removed_chars)
+    return ('%s#link("%s")%s'):format(ws(), typ_str_esc(fixed_url), removed_chars)
   elseif node_name == 'word' or node_name == 'uppercase_name' then
     return text
   elseif node_name == 'note' then
@@ -952,7 +961,7 @@ local function ts_node_to_typ(root, level, lang_tree, opt, stats)
     return ('%s\n'):format(text)
   elseif node_name == 'line' then
     if
-      (parent ~= 'codeblock' or parent ~= 'code')
+      (parent ~= 'codeblock' and parent ~= 'code')
       and (is_blank(text) or is_noise(text, stats.noise_lines))
     then
       return '' -- Discard common "noise" lines.
@@ -1013,13 +1022,8 @@ local function ts_node_to_typ(root, level, lang_tree, opt, stats)
     end
     local in_heading = vim.list_contains({ 'h1', 'h2', 'h3' }, parent)
     local tagname = node_text(root:child(1), false)
-    if vim.tbl_count(stats.first_tags) < 2 then
-      -- Force the first 2 tags in the doc to be anchored at the main heading.
-      table.insert(stats.first_tags, tagname)
-      return ''
-    end
     -- NOTE: the <%s> syntax doesn't work because it terminates the heading
-    local s = ('%s%s #label("%s")'):format(ws(), text, tagname)
+    local s = ('%s%s #label("%s")'):format(ws(), text, typ_str_esc(tagname))
     if opt.old then
       s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
     end
@@ -1155,7 +1159,7 @@ local function validate_one(fname, request_urls)
   return stats
 end
 
---- Generates HTML from one :help file `fname` and writes the result to `to_fname`.
+--- Generates HTML from one :help file `fname`.
 ---
 --- @param fname string Source :help file.
 --- @param text string|nil Source :help file contents, or nil to read `fname`.
@@ -1216,12 +1220,13 @@ local function gen_one_html(fname, text, to_fname, old, commit)
   return html, stats
 end
 
---- Generates Typst from one :help file `fname` and writes the result to `to_fname`.
+--- Generates Typst from one :help file `fname`.
 ---
 --- @param fname string Source :help file.
 --- @param text string|nil Source :help file contents, or nil to read `fname`.
 --- @param to_fname string Destination .typ file
 --- @param old boolean Preformat paragraphs (for old :help files which are full of arbitrary whitespace)
+--- @param commit string|nil Unused.
 ---
 --- @return string Typst output
 --- @return table stats
@@ -1229,13 +1234,11 @@ local function gen_one_typ(fname, text, to_fname, old, commit)
   local stats = {
     noise_lines = {},
     parse_errors = {},
-    first_tags = {}, -- Track the first few tags in doc.
   }
   local lang_tree, buf = parse_buf(fname, text)
-  ---@type nvim.gen_help_html.heading[]
   local title = to_titlecase(basename_noext(fname))
 
-  local typ = title
+  local typ = ('= %s\n'):format(typ_esc(trim(title)))
   for _, tree in ipairs(lang_tree:trees()) do
     typ = typ
       .. (
