@@ -928,6 +928,7 @@ is_na_patch() {
   local NA_FILELIST="$NVIM_SOURCE_DIR/scripts/vim_na_files.txt"
   local NA_HUNKS_C="$NVIM_SOURCE_DIR/scripts/vim_na_hunks_c.txt"
   local NA_HUNKS_H="$NVIM_SOURCE_DIR/scripts/vim_na_hunks_h.txt"
+  local NA_HUNKS_HELP="$NVIM_SOURCE_DIR/scripts/vim_na_hunks_help.txt"
   local NA_HUNKS_VIM="$NVIM_SOURCE_DIR/scripts/vim_na_hunks_vim.txt"
 
   local FILES_REMAINING HUNKS HUNK_NUM_FINAL
@@ -954,7 +955,7 @@ is_na_patch() {
           '-I\spopup window\s' \
           "$patch" -- "${file}")
         if test -n "$HUNKS"; then
-          HUNK_NUM_FINAL=$(echo "$HUNKS" | grep '^@@ .* @@' | sed 's/^@@ .* @@ //' | grep -cv -f "$NA_HUNKS_VIM")
+          HUNK_NUM_FINAL=$(echo "$HUNKS" | grep '^@@ .* @@' | sed 's/^@@ .* @@ //' | grep -cv -f "$NA_HUNKS_HELP")
           test "$HUNK_NUM_FINAL" -ne 0 && return 1
         fi
         ;;
@@ -974,7 +975,7 @@ is_na_patch() {
         HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
           "$patch" -- "${file}")
         if test -n "$HUNKS"; then
-          HUNK_NUM_FINAL=$(echo "$HUNKS" | grep '^@@ .* @@' | sed 's/^@@ .* @@ //' | grep -cv -e '^func RunVimInTerminal(')
+          HUNK_NUM_FINAL=$(echo "$HUNKS" | grep '^@@ .* @@' | sed 's/^@@ .* @@ //' | grep -cv -f "$NA_HUNKS_VIM")
           test "$HUNK_NUM_FINAL" -ne 0 && return 1
         fi
         ;;
