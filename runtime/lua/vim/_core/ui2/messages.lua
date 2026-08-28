@@ -673,7 +673,7 @@ local function win_row_height_border(tgt, min)
   if tgt ~= 'pager' then
     return (tgt == 'msg' and 0 or 1) - ui.cmd.wmnumode,
       math.max(1, min),
-      min < o.lines - ui.cmdheight
+      min < o.lines - ui.cmdheight and ui.cmdheight > 0
   end
   local cmdwin = fn.getcmdwintype() ~= was_cmdwin and api.nvim_win_get_height(0) or 0
   local global_stl = (cmdwin > 0 or o.laststatus == 3) and 1 or 0
