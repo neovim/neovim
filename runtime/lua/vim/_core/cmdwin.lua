@@ -75,7 +75,6 @@ function M.open(type, init_line, init_col)
   vim.bo[buf].bufhidden = 'wipe'
   vim.bo[buf].swapfile = false
   vim.bo[buf].buflisted = true -- #40431
-  vim.wo[win][0].winfixbuf = true
   vim.wo[win][0].foldenable = false
   vim.wo[win][0].scrollbind = false
   -- Show cmdwin-char via 'statuscolumn'.
@@ -127,11 +126,27 @@ function M.open(type, init_line, init_col)
     end,
   })
 
+  -- Clean up when the cmdwin is swapped to another buffer
+  vim.api.nvim_create_autocmd({ 'BufWinLeave' }, {
+    buffer = buf,
+    nested = true,
+    callback = function()
+      if state == nil then
+        return
+      end
+      -- We're the last cmdwin buffer (see BufWinLeave), so cleanup.
+      -- But don't delete the buffer, as the BufWinLeave code handles it.
+      M._cleanup { delbuf = false }
+      return true
+    end,
+  })
+
   vim.api.nvim_exec_autocmds('CmdwinEnter', { pattern = type, modeline = false })
 end
 
 --- @private
-function M._cleanup()
+--- @param opts? {delbuf?: boolean}
+function M._cleanup(opts)
   if state == nil then
     return
   end
@@ -139,10 +154,14 @@ function M._cleanup()
   state = nil
   pcall(vim.api.nvim__cmdwin_set, '', 0) -- Clear the C-side globals.
   pcall(vim.api.nvim_exec_autocmds, 'CmdwinLeave', { pattern = s.type, modeline = false })
-  if vim.api.nvim_buf_is_valid(s.buf) then
+  if (opts == nil or opts.delbuf ~= false) and vim.api.nvim_buf_is_valid(s.buf) then
     pcall(vim.api.nvim_buf_delete, s.buf, { force = true })
   end
-  if vim.api.nvim_win_is_valid(s.caller_win) then
+  -- Only return to caller_win for the current tabpage; avoid changing the current tab during an autocmd.
+  if
+    vim.api.nvim_win_is_valid(s.caller_win)
+    and vim.api.nvim_win_get_tabpage(s.caller_win) == vim.api.nvim_get_current_tabpage()
+  then
     pcall(vim.api.nvim_set_current_win, s.caller_win)
   end
 end

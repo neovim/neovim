@@ -1765,7 +1765,7 @@ end
 describe('termopen() (deprecated alias to `jobstart(…,{term=true})`)', function()
   before_each(clear)
 
-  it('disallowed when textlocked and in cmdwin buffer', function()
+  it('disallowed when textlocked', function()
     command("autocmd TextYankPost <buffer> ++once call termopen('foo')")
     matches(
       'Vim%(call%):E565: Not allowed to change text or change window$',
@@ -1773,10 +1773,7 @@ describe('termopen() (deprecated alias to `jobstart(…,{term=true})`)', functio
     )
 
     feed('q:')
-    eq(
-      'Vim:E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
-      pcall_err(fn.termopen, 'bar')
-    )
+    eq('Vim:jobstart(...,{term=true}) requires unmodified buffer', pcall_err(fn.termopen, 'bar'))
   end)
 end)
 

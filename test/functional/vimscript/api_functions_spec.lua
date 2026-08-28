@@ -107,26 +107,19 @@ describe('eval-API', function()
     api.nvim_buf_set_lines(0, 0, -1, 1, { 'wow!' })
     eq({ 'wow!' }, api.nvim_buf_get_lines(0, 0, -1, 1))
 
-    -- Turning the cmdwin buffer into a terminal buffer would be pretty weird.
-    eq(
-      'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
-      pcall_err(api.nvim_open_term, 0, {})
-    )
+    -- Turning the cmdwin buffer into a terminal buffer also works (#41199)
+    api.nvim_open_term(0, {})
+    api.nvim_buf_delete(0, { force = true })
 
-    matches(
-      'E11: Invalid in command%-line window; <CR> executes, CTRL%-C quits$',
-      pcall_err(
-        exec_lua,
-        [[
-         local cmdwin_buf = vim.api.nvim_get_current_buf()
-         vim._with({buf = vim.api.nvim_create_buf(false, true)}, function()
-           vim.api.nvim_open_term(cmdwin_buf, {})
-         end)
-       ]]
-      )
-    )
+    feed('q:')
+    exec_lua([[
+      local cmdwin_buf = vim.api.nvim_get_current_buf()
+      vim._with({buf = vim.api.nvim_create_buf(false, true)}, function()
+        vim.api.nvim_open_term(cmdwin_buf, {})
+      end)
+    ]])
 
-    -- But turning a different buffer into a terminal from the cmdwin is OK.
+    -- And turning a different buffer into a terminal from the cmdwin is OK.
     local term_buf = api.nvim_create_buf(false, true)
     api.nvim_open_term(term_buf, {})
     eq('terminal', api.nvim_get_option_value('buftype', { buf = term_buf }))

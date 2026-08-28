@@ -1675,9 +1675,6 @@ msgstr "E792: 空的菜單名稱"
 msgid "E119: Not enough arguments for function: %s"
 msgstr "E119: 函式 %s 的引數太少"
 
-msgid "E11: Invalid in command-line window; <CR> executes, CTRL-C quits"
-msgstr "E11: 不能在命令列視窗中使用。<CR>執行，CTRL-C 離開"
-
 #, fuzzy, c-format
 msgid "E1203: Dot can only be used on a dictionary: %s"
 msgstr "E716: 鍵在字典中不存在: %s"

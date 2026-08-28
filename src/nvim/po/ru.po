@@ -2586,11 +2586,6 @@ msgstr "E471: Требуется указать параметр"
 msgid "E10: \\ should be followed by /, ? or &"
 msgstr "E10: После \\ должен идти символ /, ? или &"
 
-#: ../globals.h:1000
-msgid "E11: Invalid in command-line window; <CR> executes, CTRL-C quits"
-msgstr ""
-"E11: Недопустимо в окне командной строки; <CR> выполнение, CTRL-C выход"
-
 #: ../globals.h:1002
 msgid "E12: Command not allowed from exrc/vimrc in current dir or tag search"
 msgstr ""

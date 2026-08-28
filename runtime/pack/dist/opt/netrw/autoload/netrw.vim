@@ -8393,10 +8393,6 @@ function s:LocalBrowseRefresh()
     if !exists("w:netrw_bannercnt")
         return
     endif
-    if !empty(getcmdwintype())
-        " cannot move away from cmdline window, see :h E11
-        return
-    endif
     if exists("s:netrw_events") && s:netrw_events == 1
         " s:LocalFastBrowser gets called (indirectly) from a
         let s:netrw_events= 2

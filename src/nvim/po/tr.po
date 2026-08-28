@@ -2476,9 +2476,6 @@ msgstr "E471: Argüman gerekiyor"
 msgid "E10: \\ should be followed by /, ? or &"
 msgstr "E10: \\ sonrasında /, ? veya & gelmeli"
 
-msgid "E11: Invalid in command-line window; <CR> executes, CTRL-C quits"
-msgstr "E11: Komut satırı penceresinde geçersiz; <CR> çalıştırır, CTRL-C çıkar"
-
 msgid "E12: Command not allowed in secure mode in current dir or tag search"
 msgstr ""
 "E12: Geçerli dizin veya etiket aramasında güvenli kipteyken komuta izin "

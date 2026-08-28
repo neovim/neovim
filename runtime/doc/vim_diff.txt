@@ -308,8 +308,8 @@ Command-line:
   callback defined in `g:Nvim_color_cmdline` (this callback is for testing
   only, and will be removed in the future).
 - |cmdwin| (|q:|, |q/|, |q?|, |c_CTRL-F|) is a "normal" buffer+window, instead
-  of a nested modal loop. API and Lua callbacks can run without |E11| while it
-  is open. The |cmdwin-char| is shown via 'statuscolumn'.
+  of a nested modal loop. API and Lua callbacks can run while it is open. The
+  |cmdwin-char| is shown via 'statuscolumn'.
 
 Commands:
 - |:bcd|

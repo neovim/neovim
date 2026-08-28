@@ -1226,10 +1226,6 @@ It is possible to use ":", "/" and other commands that use the command-line,
 but it's not possible to open another cmdwin from there.  There is no
 nesting.
 
-								*E11*
-The cmdwin buffer cannot be used as a |:terminal|. Its window cannot switch to
-a different buffer ('winfixbuf').
-
 
 CLOSE
 
@@ -1268,7 +1264,6 @@ Buffer and window options set on cmdwin open:
 'foldenable'	off
 'statuscolumn'	shows the |cmdwin-char|
 'swapfile'	off
-'winfixbuf'	on
 
 It is allowed to write the buffer contents to a file.  This is an easy way to
 save the command-line history and read it back later.

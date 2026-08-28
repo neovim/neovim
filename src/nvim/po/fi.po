@@ -2579,9 +2579,6 @@ msgstr "E471: Argumentti puuttuu"
 msgid "E10: \\ should be followed by /, ? or &"
 msgstr "E10: \\:n jälkeen pitää tulla /, ? tai &"
 
-msgid "E11: Invalid in command-line window; <CR> executes, CTRL-C quits"
-msgstr "E11: Virheellinen komentorivi-ikkuna, <CR> suorittaa, Ctrl C lopettaa"
-
 msgid "E12: Command not allowed from exrc/vimrc in current dir or tag search"
 msgstr ""
 "E12: Komentoa ei tueta exrc:ssä tai vimrc:ssä tässä hakemistossa tai "
