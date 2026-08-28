@@ -6104,10 +6104,6 @@ msgstr "E471: Argumento bezonata"
 msgid "E10: \\ should be followed by /, ? or &"
 msgstr "E10: \\ devus esti sekvita de /, ? aŭ &"
 
-msgid "E11: Invalid in command-line window; <CR> executes, CTRL-C quits"
-msgstr ""
-"E11: Nevalida en fenestro de komanda linio; <CR> plenumas, CTRL-C eliras"
-
 msgid "E12: Command not allowed from exrc/vimrc in current dir or tag search"
 msgstr ""
 "E12: Nepermesebla komando el exrc/vimrc en aktuala dosierujo aŭ etikeda serĉo"

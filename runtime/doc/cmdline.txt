@@ -1226,10 +1226,6 @@ It is possible to use ":", "/" and other commands that use the command-line,
 but it's not possible to open another cmdwin from there.  There is no
 nesting.
 
-								*E11*
-The cmdwin buffer cannot be used as a |:terminal| (but the cmdwin window
-itself can be replaced with a |:terminal|).
-
 
 CLOSE
 

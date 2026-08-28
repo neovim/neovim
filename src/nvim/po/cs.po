@@ -2660,11 +2660,6 @@ msgstr "Je vy¾adován argument"
 msgid "E10: \\ should be followed by /, ? or &"
 msgstr "E10: po \\ by mìl následovat /. ? nebo &"
 
-#: ../globals.h:1000
-msgid "E11: Invalid in command-line window; <CR> executes, CTRL-C quits"
-msgstr ""
-"E11: Chyba v oknì pøíkazové øádky; <CR> pro spu¹t¹ní, CTRL-C pro ukonèení"
-
 #: ../globals.h:1002
 msgid "E12: Command not allowed from exrc/vimrc in current dir or tag search"
 msgstr ""

@@ -2531,10 +2531,6 @@ msgstr ""
 msgid "E10: \\ should be followed by /, ? or &"
 msgstr ""
 
-#: ../globals.h:1000
-msgid "E11: Invalid in command-line window; <CR> executes, CTRL-C quits"
-msgstr ""
-
 #: ../globals.h:1002
 msgid "E12: Command not allowed from exrc/vimrc in current dir or tag search"
 msgstr ""

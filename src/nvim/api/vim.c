@@ -1147,12 +1147,6 @@ Integer nvim_open_term(Buffer buf, Dict(open_term) *opts, Error *err)
     return 0;
   }
 
-  // Refuse to repurpose the cmdwin buffer.
-  if (bt_cmdwin(b)) {
-    api_set_error(err, kErrorTypeException, "%s", _(e_cmdwin));
-    return 0;
-  }
-
   bool may_read_buffer = true;
   if (b->terminal) {
     if (terminal_running(b->terminal)) {

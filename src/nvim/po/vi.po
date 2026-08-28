@@ -4827,9 +4827,6 @@ msgstr "E471: Cần chỉ ra tham số"
 msgid "E10: \\ should be followed by /, ? or &"
 msgstr "E10: Sau \\ phải là các ký tự /, ? hoặc &"
 
-msgid "E11: Invalid in command-line window; <CR> executes, CTRL-C quits"
-msgstr "E11: Lỗi trong cửa sổ dòng lệnh; <CR> thực hiện, CTRL-C thoát"
-
 msgid "E12: Command not allowed from exrc/vimrc in current dir or tag search"
 msgstr ""
 "E12: Câu lệnh không cho phép từ exrc/vimrc trong thư mục hiện thời hoặc "
