@@ -699,6 +699,8 @@ void mark_view_restore(fmark_T *fm)
     // and this check can prevent restoring mark view in that case.
     if (topline >= 1) {
       set_topline(curwin, topline);
+      curwin->w_topfill = fm->view.topfill;
+      check_topfill(curwin, true);
       curwin->w_skipcol = (fm->view.skipcol > 0
                            && !hasFolding(curwin, topline, NULL, NULL)
                            && fm->view.skipcol < linetabsize_eol(curwin, topline))
@@ -709,7 +711,7 @@ void mark_view_restore(fmark_T *fm)
 
 fmarkv_T mark_view_make(const win_T *wp, pos_T pos)
 {
-  return (fmarkv_T){ pos.lnum - wp->w_topline, wp->w_skipcol };
+  return (fmarkv_T){ pos.lnum - wp->w_topline, wp->w_skipcol, wp->w_topfill };
 }
 
 /// Search for the next named mark in the current file from a start position.

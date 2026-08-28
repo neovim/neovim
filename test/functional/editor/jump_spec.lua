@@ -396,6 +396,25 @@ describe('jumpoptions=view', function()
     ]])
   end)
 
+  it('restores virtual lines above the first line', function()
+    command('edit ' .. file1)
+    local ns = api.nvim_create_namespace('jump-view-topfill')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      virt_lines = { { { 'virtual line' } } },
+      virt_lines_above = true,
+    })
+    fn.winrestview({ topfill = 1 })
+    eq(1, fn.winsaveview().topfill)
+
+    feed('G<C-o>')
+    eq(1, fn.winsaveview().topfill)
+
+    feed('<C-i>')
+    eq(0, fn.winsaveview().topfill)
+    feed('<C-o>')
+    eq(1, fn.winsaveview().topfill)
+  end)
+
   it("restores the view with 'smoothscroll'", function()
     local screen = Screen.new(12, 8)
     command('edit ' .. file1)
