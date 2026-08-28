@@ -1,4 +1,4 @@
-// input.c: The input engine "bytes layer" (input_cmdatom.c. is the "policy layer").
+// input.c: The input engine "bytes layer" (input_cmdatom.c is the "policy layer").
 //
 // - Get a character from the user, a script file, or the keybufs described below.
 // - Apply mappings and abbreviations to typed keys (the :map tables live in mapping.c; the
@@ -8,7 +8,12 @@
 //
 // Concepts:
 // - "Stuffing" = when some internal logic pushes keys to execute next. This is how a cmd
-//   "translates" into another cmd: "x" stuffs "dl" (nv_optrans()), "." stuffs the redo buf.
+//   "translates" into another cmd: "x" stuffs "dl", "." stuffs the redo buf.
+//   - XXX NOTE: stuffed keys must have a consumer in the current codepath (not "later on the main
+//     loop"). There are 3 different rituals, depending on the consumer:
+//     1. basic translation: stuff, then exec_stuffed(); runs as CmdFrames of the stuffing command.
+//     2. input staged for a nested reader (getcmdline(), edit()): stuff only.
+//     3. main-loop wakeup (K_NOP): stuffed so it precedes input (unlike an event).
 // - TYPEAHEAD vs READ-AHEAD:
 //   - typeahead = external input that arrived faster than can be executed (user typed fast).
 //   - readahead = Nvim's own self-input.
@@ -18,10 +23,14 @@
 //       (KeyStuffed).
 //
 // These buffers are used:
-// - stuff buffers (`readbuf1`, `readbuf2`) are readahead buffers.
-//   - TWO stuff buffers, because stuffing nests: a cmd executed FROM redo keys (readbuf2) may
+//
+//   input ──► [ typebuf │ readbuf2 (redo) │ readbuf1 (stuff) ] ──► vgetc() ──► exec
+//               ▲ mappings expand at typebuf front
+//
+// - typeahead (`typebuf`).
+// - readahead/stuff buffers (`readbuf1`, `readbuf2`).
+//   - Two stuff buffers, because stuffing nests: a cmd executed FROM redo keys (readbuf2) may
 //     itself stuff a translation (readbuf1), which must be consumed before the remaining redo.
-// - `typebuf`: typeahead (see below).
 // - `redobuff` (RedoState): the current + previous change.
 // - `recordbuff`: accumulates the keys of a recording ("q").
 //
@@ -750,7 +759,7 @@ void stuffReadbuffLen(const char *s, ptrdiff_t len)
 /// Stuff "s" into the stuff buffer, leaving special key codes unmodified and
 /// escaping other K_SPECIAL bytes.
 /// Change CR, LF and ESC into a space.
-void stuffReadbuffSpec(const char *s)
+void stuffReadbuffSpecial(const char *s)
   FUNC_ATTR_NONNULL_ALL
 {
   while (*s != NUL) {

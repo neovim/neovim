@@ -4561,6 +4561,9 @@ static void nv_replace(cmdarg_T *cap)
     stuffcharReadbuff('R');
     stuffcharReadbuff('\t');
     stuffcharReadbuff(ESC);
+    if (exec_stuffed(cap->oap)) {
+      cap->retval |= CA_COMMAND_BUSY;
+    }
     return;
   }
 
@@ -4868,7 +4871,7 @@ static void nv_abbrev(cmdarg_T *cap)
   }
 }
 
-/// Translate a command into another command.
+/// Translate a command into another command, and execute it.
 static void nv_optrans(cmdarg_T *cap)
 {
   static const char *(ar[]) = { "dl", "dh", "d$", "c$", "cl", "cc", "yy",
@@ -4881,6 +4884,9 @@ static void nv_optrans(cmdarg_T *cap)
       stuffnumReadbuff(cap->count0);
     }
     stuffReadbuff(ar[strchr(str, (char)cap->cmdchar) - str]);
+    if (exec_stuffed(cap->oap)) {
+      cap->retval |= CA_COMMAND_BUSY;
+    }
   }
   cap->opcount = 0;
 }
@@ -5650,6 +5656,7 @@ static void nv_g_cmd(cmdarg_T *cap)
   case K_LEFTMOUSE:
     if (do_mouse(oap, cap->nchar, BACKWARD, cap->count1, 0)) {
       stuffcharReadbuff(Ctrl_RSB);
+      exec_stuffed(oap);
     }
     break;
 
@@ -5772,6 +5779,11 @@ static void nv_dot(cmdarg_T *cap)
   atom_stuff_start(cap);
   if (start_redo(cap->count0, restart_edit != 0 && Ins.moved == kInsNone) == false) {
     clearopbeep(cap->oap);
+    return;
+  }
+  // Execute the redo keys here: the whole replay resolves within this "." command.
+  if (exec_stuffed(cap->oap)) {
+    cap->retval |= CA_COMMAND_BUSY;
   }
 }
 
@@ -6699,6 +6711,12 @@ static void nv_event(cmdarg_T *cap)
   }
 }
 
+/// Executes one normal-mode command from pending input, outside the main state machine.
+///
+/// Called in a loop; a count/register prefix or a pending operator travels into the next call via
+/// `oap` ("3dl" is three calls, one command).
+///
+/// @param toplevel  `NormalState.toplevel` (full interactive-command treatment).
 void normal_cmd(oparg_T *oap, bool toplevel)
 {
   NormalState s;
@@ -6708,4 +6726,32 @@ void normal_cmd(oparg_T *oap, bool toplevel)
   normal_prepare(&s);
   normal_execute(&s.state, safe_vgetc());
   *oap = s.oa;
+}
+
+/// Executes the pending readahead (see "Stuffing", input.c).
+///
+/// During "textlock" the stuffed keys are left for the main loop instead (for CmdAtom/multicursor
+/// purposes, that's fine: if stuff_empty()=false, the pending CmdAtom stays open and will collect
+/// the effects later).
+///
+/// @param oap  The continuing operator state (see `normal_cmd`), or NULL.
+/// @return  True if insert-session-resume is pending (i_CTRL-O): the caller reports
+///          CA_COMMAND_BUSY, so resume happens after next command instead.
+bool exec_stuffed(oparg_T *oap)
+{
+  if (text_locked() || curbuf_locked()) {
+    return false;
+  }
+  oparg_T oa;
+  clear_oparg(&oa);
+  if (oap == NULL) {
+    oap = &oa;
+  }
+  finish_op = false;
+  while (!stuff_empty() && !got_int) {
+    update_topline_cursor();
+    normal_cmd(oap, true);
+  }
+  finish_op = false;
+  return restart_edit != 0;
 }

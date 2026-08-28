@@ -31,6 +31,7 @@
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/extmark.h"
 #include "nvim/file_search.h"
@@ -3073,10 +3074,10 @@ void cursor_pos_info(dict_T *dict)
   }
 }
 
-/// Handle indent and format operators and visual mode ":".
+/// Handle indent, format operators and visual mode ":". Stuff the ":[range]…" cmdline and run it
+/// here. For OP_COLON/OP_FILTER the user types the rest after the stuffed part.
 static void op_colon(oparg_T *oap)
 {
-  stuffcharReadbuff(':');
   if (oap->is_VIsual) {
     stuffReadbuff("'<,'>");
   } else {
@@ -3126,7 +3127,11 @@ static void op_colon(oparg_T *oap)
     stuffReadbuff("\n']");
   }
 
-  // do_cmdline() does the rest
+  do_cmdline(NULL, getexline, NULL, 0);
+  // Keys stuffed past the cmdline ("']" for OP_FORMAT): internal cleanup, not an atom.
+  atom_suppress(true);
+  exec_stuffed(NULL);
+  atom_suppress(false);
 }
 
 #ifdef EXITFREE

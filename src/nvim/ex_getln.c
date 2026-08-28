@@ -4708,7 +4708,7 @@ void get_user_input(const typval_T *const argvars, typval_T *const rettv, const 
   }
   cmdline_row = msg_row;
 
-  stuffReadbuffSpec(defstr);
+  stuffReadbuffSpecial(defstr);
 
   const int save_ex_normal_busy = ex_normal_busy;
   ex_normal_busy = 0;

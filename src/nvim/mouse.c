@@ -492,6 +492,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
           stuffcharReadbuff('y');
           stuffcharReadbuff(K_MIDDLEMOUSE);
         }
+        exec_stuffed(oap);
         return false;
       }
       // The rest is below jump_to_mouse()

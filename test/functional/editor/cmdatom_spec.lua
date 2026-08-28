@@ -320,7 +320,7 @@ describe('CmdAtom', function()
     )
   end)
 
-  it('"!" operator captures its stuffed cmdline continuation', function()
+  it('"!" operator captures its stuffed cmdline', function()
     -- ":.,.+1!" + typed "{prg}<CR>" completes the operator atom, like "d/END<CR>". #41447
     local prg = n.testprg('shell-test') .. ' REP 2 X'
     fn.setline(1, { 'b', 'a', '', 'e', 'c', 'd' })
@@ -356,6 +356,43 @@ describe('CmdAtom', function()
       { type = 'operator', operator = 'gq', keys = 'gqip' },
       pick(atom_last(), 'type', 'operator', 'keys')
     )
+  end)
+
+  it('stuffed translations execute within their command (exec_stuffed)', function()
+    -- A register prefix crosses into the "." replay; an explicit register must not touch the
+    -- small-delete register.
+    fn.setline(1, { 'aaa bbb', 'ccc ddd' })
+    feed('gg0dw')
+    eq('aaa ', fn.getreg('-'))
+    feed('j0"z.')
+    eq('ccc ', fn.getreg('z'))
+    eq('aaa ', fn.getreg('-'))
+    eq({ 'bbb', 'ddd' }, get_lines())
+    -- i_CTRL-O inside a stuffed translation's insert session ("S" == "cc"): the session resumes
+    -- after ONE normal command.
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'xxxx', 'yyyy' })
+    feed('ggSabc<C-o>0def<Esc>')
+    eq({ 'defabc', 'yyyy' }, get_lines())
+    -- r<Tab> under 'expandtab'/'smarttab' ("{count}R<Tab><Esc>": edit() does the tab).
+    command('set expandtab shiftwidth=4 tabstop=4')
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'abcdefgh', 'ABCDEFGH' })
+    feed('gg03r<Tab>')
+    eq('            defgh', fn.getline(1))
+    feed('j0.')
+    eq('            DEFGH', fn.getline(2))
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'abcdefgh' })
+    feed('gg0r<C-v><Tab>')
+    eq('\tbcdefgh', fn.getline(1))
+    command('set noexpandtab smarttab shiftwidth=4 tabstop=8')
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'abcdefgh' })
+    feed('gg02r<Tab>')
+    eq('\tcdefgh', fn.getline(1))
+    command('set expandtab& smarttab& shiftwidth& tabstop&')
+    -- "&" and "count&" (":.,.+Ns").
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'blue a', 'blue b', 'blue c', 'blue d' })
+    command('1s/blue/red/')
+    feed('2G&3G2&')
+    eq({ 'red a', 'red b', 'red c', 'red d' }, get_lines())
   end)
 
   it('mapping that enters :terminal mode', function()

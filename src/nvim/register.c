@@ -14,6 +14,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/ex_cmds2.h"
+#include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/extmark.h"
 #include "nvim/file_search.h"
@@ -1525,6 +1526,9 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
         return;
       }
     }
+
+    // Execute the stuffed keys here: the put resolves within the current command.
+    exec_stuffed(NULL);
     return;
   }
 
