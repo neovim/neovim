@@ -41,7 +41,9 @@ local function get_content_length(ptr, start, len)
       if c >= 65 and c <= 90 then -- lower case
         c = c + 32
       end
-      if (c == 32 or c == 9) and j == 1 then -- luacheck: ignore 542
+      if c == 10 then -- a blank line or a line with a prefix of header
+        j = 1
+      elseif (c == 32 or c == 9) and j == 1 then -- luacheck: ignore 542
         -- skip OWS for compatibility only
       elseif c == name:byte(j) then
         j = j + 1

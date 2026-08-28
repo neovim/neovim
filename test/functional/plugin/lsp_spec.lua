@@ -2052,6 +2052,28 @@ describe('LSP', function()
       end)
     end)
 
+    it('ignores blank lines before content-length', function()
+      exec_lua(function()
+        _G._send_msg_to_server(
+          'Info: Parsed 35 declarations\n\nContent-Length: ' .. #body .. ' \r\n\r\n' .. body
+        )
+      end)
+      verify_single_notification(function(method, args) ---@param args [string]
+        eq('body', method)
+        eq(body, args[1])
+      end)
+    end)
+
+    it('skips partial match of "content-length"', function()
+      exec_lua(function()
+        _G._send_msg_to_server('Cont\nContent-Length: ' .. #body .. ' \r\n\r\n' .. body)
+      end)
+      verify_single_notification(function(method, args) ---@param args [string]
+        eq('body', method)
+        eq(body, args[1])
+      end)
+    end)
+
     it('should not trim vim.NIL from the end of a list', function()
       local expected_handlers = {
         { NIL, {}, { method = 'shutdown', client_id = 1 } },
