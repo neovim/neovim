@@ -6407,6 +6407,12 @@ void ins_compl_enable_autocomplete(void)
   compl_get_longest = false;
 }
 
+/// Disable autocompletion
+void ins_compl_disable_autocomplete(void)
+{
+  compl_autocomplete = false;
+}
+
 /// Remember that Vim is about to start a completion by itself, rather than
 /// because a key was typed to ask for one.
 void ins_compl_arm_autostart(void)
