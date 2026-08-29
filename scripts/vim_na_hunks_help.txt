@@ -64,6 +64,7 @@
 \*'t_.\+'\*
 \*'termcap[a-zA-Z-]*'\*
 \*'termencoding'\*
+\*'termwinscroll'\*
 \*'terse'\*
 \*'textauto'\*
 \*'toolbar'\*
