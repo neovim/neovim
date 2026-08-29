@@ -978,7 +978,7 @@ nvim_get_hl({ns_id}, {opts})                                   *nvim_get_hl()*
                  • name: (string) Get a highlight definition by name.
 
     Return: ~
-        (`vim.api.keyset.get_hl_info`) Highlight groups as a map from group
+        (`parameter`) Highlight groups as a map from group
         name to a highlight definition map as in |nvim_set_hl()|, or only a
         single highlight definition map if requested by name or id.
 
