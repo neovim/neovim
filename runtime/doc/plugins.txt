@@ -44,7 +44,7 @@ Help-link		Loaded	Short description ~
 |old-zip|		No	Legacy zip archive explorer
 
 ==============================================================================
-Builtin plugin: dir                                                      *dir*
+Builtin plugin: dir                                            *dir* *dir.lua*
 
 Nvim opens a directory listing when you |:edit| a directory path, handled by
 the builtin "dir" plugin.  The listing is read-only, dir.lua does not provide

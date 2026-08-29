@@ -1069,7 +1069,7 @@ nvim_get_mark({name}, {opts})                                *nvim_get_mark()*
       • |nvim_del_mark()|
 
 nvim_get_mode()                                              *nvim_get_mode()*
-    Gets the current mode. |mode()| "blocking" is true if Nvim is waiting for
+    Gets the current |mode()|. "blocking" is true if Nvim is waiting for
     input.
 
     Attributes: ~
@@ -1079,6 +1079,9 @@ nvim_get_mode()                                              *nvim_get_mode()*
     Return: ~
         (`vim.api.keyset.get_mode`) Dict { "mode": String, "blocking": Boolean
         }
+
+    See also: ~
+      • |state()|
 
 nvim_get_proc({pid})                                         *nvim_get_proc()*
     Gets info describing process `pid`.

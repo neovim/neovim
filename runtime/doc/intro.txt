@@ -128,18 +128,22 @@ with the ":map" command.
 notation        meaning             equivalent  decimal value(s)        ~
 <Nul>           Zero                    CTRL-@    0 (stored as 10) *<Nul>*
 <BS>            Backspace               CTRL-H    8     *backspace*
+<BackSpace>     Same as <BS>
 <Tab>           Tab                     CTRL-I    9     *tab* *Tab*
                                                         *linefeed*
 <NL>            Linefeed                CTRL-J   10 (used for <Nul>)
+<NewLine>       Same as <NL>
 <CR>            Carriage return         CTRL-M   13     *carriage-return*
 <Return>        Same as <CR>                            *<Return>*
 <Enter>         Same as <CR>                            *<Enter>*
 <Esc>           Escape                  CTRL-[   27     *escape* *<Esc>*
+<Escape>        Same as <Esc>
 <Space>         Space                            32     *space*
 <lt>            Less-than               <        60     *<lt>*
 <Bslash>        Backslash               \        92     *backslash* *<Bslash>*
 <Bar>           Vertical bar            |       124     *<Bar>*
 <Del>           Delete                          127
+<Delete>        Same as <Del>
 <CSI>           Command sequence intro  ALT-Esc 155     *<CSI>*
 
 <EOL>           End-of-line (can be <CR>, <NL> or <CR><NL>,
@@ -147,6 +151,11 @@ notation        meaning             equivalent  decimal value(s)        ~
 <Ignore>        Cancel wait-for-character               *<Ignore>*
 <NOP>           Do nothing (no-op). Useful in mappings. *<Nop>*
                 <Ignore> is a key, <NOP> is "absence of a key".
+<Cmd>           Execute a command               |<Cmd>|
+<Plug>          Plugin-owned mapping            |<Plug>|
+<SNR>           Script-local function prefix    |<SNR>|
+<Char-…>        Character by number             |<Char->|
+<Drop>          Not implemented yet             |<Drop>|
 
 <Up>            Cursor-up                       *cursor-up* *cursor_up*
 <Down>          Cursor-down                     *cursor-down* *cursor_down*
@@ -158,13 +167,13 @@ notation        meaning             equivalent  decimal value(s)        ~
 <S-Right>       Shift-cursor-right
 <C-Left>        Control-cursor-left
 <C-Right>       Control-cursor-right
-<F1> - <F12>    Function keys 1 to 12           *function_key* *function-key*
-<S-F1> - <S-F12> Shift-function keys 1 to 12    *<S-F1>*
+<F1> - <F63>    Function keys 1 to 63           *function_key* *function-key*
+<S-F1> - <S-F63> Shift-function keys 1 to 63    *<S-F1>*
 <Help>          Help key
 <Undo>          Undo key
 <Find>          Find key
 <Select>        Select key
-<Insert>        Insert key
+<Insert>        Insert key                      *<Ins>*
 <Home>          Home                            *home*
 <End>           End                             *end*
 <PageUp>        Page-up                         *page_up* *page-up*
@@ -179,6 +188,7 @@ notation        meaning             equivalent  decimal value(s)        ~
 <kPageUp>       Keypad page-up (upper right)    *keypad-page-up*
 <kPageDown>     Keypad page-down (lower right)  *keypad-page-down*
 <kDel>          Keypad delete                   *keypad-delete*
+<kInsert>       Keypad insert                   *keypad-insert*
 <kPlus>         Keypad +                        *keypad-plus*
 <kMinus>        Keypad -                        *keypad-minus*
 <kMultiply>     Keypad *                        *keypad-multiply*
@@ -194,10 +204,13 @@ notation        meaning             equivalent  decimal value(s)        ~
 <A-…>           Same as <M-…>                   *<A-*
 <T-…>           Meta-key, when it's not alt     *<T-*
 <D-…>           Command-key or "super" key      *<D-*
+<2-…>           Multi-click (also <3-…>, <4-…>) |double-click|
 
 
 Note:
 
+- Mouse keycodes (<LeftMouse>, <ScrollWheelUp>, <MouseMove>, …) are listed at
+  |mouse-using| |mouse-scroll-keys|.
 - Availability of some keys (<Help>, <S-Right>, …) depends on the UI or host
   terminal.
 - If numlock is on the |TUI| receives plain ASCII values, so mapping <k0>,

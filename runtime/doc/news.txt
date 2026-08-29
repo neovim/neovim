@@ -192,6 +192,8 @@ UI
 • The bottom right cell of the screen is no longer left empty when the ruler
   is shown. This was originally intended to prevent unwanted scrolling on
   quirky terminals.
+• Virtual text by |nvim_buf_set_extmark()| virt_text_pos="eol" is placed one
+  cell after any displayed 'listchars' EOL character.
 
 VIMSCRIPT
 
@@ -367,6 +369,8 @@ LSP
     not advertise `completion.dynamicRegistration` by default; set it in
     |vim.lsp.Config| `capabilities` to opt in.
     https://microsoft.github.io/language-server-protocol/specification/#client_registerCapability
+  • Support for `workspace/foldingRange/refresh`:
+    https://microsoft.github.io/language-server-protocol/specification/#workspace_foldingRange_refresh
 • `:checkhealth vim.lsp` highlights the "current buffer".
 • |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|,
   |vim.lsp.buf.type_definition()|, and |vim.lsp.buf.implementation()|
@@ -387,8 +391,6 @@ LSP
 • |vim.lsp.buf.format()| respects an explicit `timeout_ms` with `async=true`.
   The timeout applies per client. Async requests have no timeout when the
   option is omitted.
-• Support for `workspace/foldingRange/refresh`:
-  https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/#workspace_foldingRange_refresh
 • |vim.lsp.completion.get()| accepts a `client_id` to request from only the
   given clients.
 

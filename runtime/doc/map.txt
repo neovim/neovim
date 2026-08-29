@@ -873,6 +873,14 @@ g@{motion}		Call the function set by the 'operatorfunc' option.
 			The '[ mark is positioned at the start of the text
 			moved over by {motion}, the '] mark on the last
 			character of the text.
+
+			If the text is empty (e.g. "g@0" in column 1), '] is
+			before '[ (except at start of buffer), thus to detect
+			empty {motion} you can compare the marks: >lua
+			    local s = vim.pos.mark(0, unpack(vim.api.nvim_buf_get_mark(0, '[')))
+			    local e = vim.pos.mark(0, unpack(vim.api.nvim_buf_get_mark(0, ']')))
+			    local empty = e < s
+<
 			The function is called with one String argument:
 			    "line"	{motion} was |linewise|
 			    "char"	{motion} was |charwise|

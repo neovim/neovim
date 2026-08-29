@@ -1566,8 +1566,9 @@ Object nvim_load_context(Dict dict, Error *err)
   return (Object)OBJECT_INIT;
 }
 
-/// Gets the current mode. |mode()|
-/// "blocking" is true if Nvim is waiting for input.
+/// Gets the current |mode()|. "blocking" is true if Nvim is waiting for input.
+///
+/// @see |state()|
 ///
 /// @returns Dict { "mode": String, "blocking": Boolean }
 DictAs(get_mode) nvim_get_mode(Arena *arena)

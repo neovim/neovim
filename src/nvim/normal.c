@@ -4314,7 +4314,7 @@ static void nv_brackets(cmdarg_T *cap)
   } else if (cap->nchar == 'C') {
     // "[C" and "]C": jump to previous/next multicursor.
     if (cap->oap->op_type != OP_NOP && mc_buf_has_cursors(curbuf)) {
-      // Not an operator motion in a session: a cascaded "d]C" would consume its own targets.
+      // Disallow "operator" behavior if multicursor is active ("d]C" cascade would consume all).
       clearopbeep(cap->oap);
     } else {
       typval_T tv_args[] = {
