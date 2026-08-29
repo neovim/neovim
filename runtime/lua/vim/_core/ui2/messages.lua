@@ -272,6 +272,47 @@ end
 local col = 0 -- Current message column appended to with :echon or reset for carriage return.
 local cmd_timer ---@type uv.uv_timer_t? Timer resetting cmdline state next event loop.
 
+---@param content MsgContent
+---@return MsgContent
+local function trim_blank_lines(content)
+  local first = 1
+  local last = #content
+
+  -- Remove leading blank lines.
+  while first <= last do
+    local text = content[first][2]
+    local trimmed = text:gsub('^[ \t]*\n', '', 1)
+
+    if trimmed == text then
+      break
+    end
+
+    content[first][2] = trimmed
+
+    if trimmed == '' then
+      first = first + 1
+    end
+  end
+
+  -- Remove trailing blank lines, but keep the final line terminator.
+  while last >= first do
+    local text = content[last][2]
+    local trimmed = text:gsub('\n[ \t]*\n*$', '\n')
+
+    if trimmed == text then
+      break
+    end
+
+    content[last][2] = trimmed
+
+    if trimmed == '' then
+      last = last - 1
+    end
+  end
+
+  return vim.list_slice(content, first, last)
+end
+
 ---@param tgt 'cmd'|'dialog'|'msg'|'pager'
 ---@param kind string
 ---@param content MsgContent
@@ -279,6 +320,10 @@ local cmd_timer ---@type uv.uv_timer_t? Timer resetting cmdline state next event
 ---@param append boolean
 ---@param id integer|string
 function M.show_msg(tgt, kind, content, replace_last, append, id)
+  if tgt ~= 'pager' and not append then
+    content = trim_blank_lines(vim.deepcopy(content))
+  end
+
   local mark, msg, cr, dupe, buf = {}, '', false, 0, ui.bufs[tgt]
 
   if M[tgt] then -- tgt == 'cmd'|'msg'
@@ -464,6 +509,16 @@ function M.msg_show(kind, content, replace_last, _, append, id, trigger)
     or id_target
     or (kind ~= '' and ui.cfg.msg.targets[kind])
     or ui.cfg.msg.targets.default
+
+  local msg = ''
+  for _, chunk in ipairs(content) do
+    msg = msg .. chunk[2]
+  end
+
+  -- Don't filter empty messages or appended fragments.
+  if kind ~= 'empty' and not append and msg:match('^%s*$') then
+    return
+  end
 
   if kind == 'search_cmd' and ui.cmdheight == 0 then
     -- Blocked by messaging() without ext_messages. TODO: look at other messaging() guards.
