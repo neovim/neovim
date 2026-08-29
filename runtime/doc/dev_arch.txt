@@ -485,10 +485,17 @@ All the global variables are declared in `globals.h`.
 
 THE MAIN EVENT-LOOP
 
-The main loop is implemented in state_enter. The basic idea is that Vim waits
+The main loop is implemented in state_enter. The basic idea is that Nvim waits
 for the user to type a character and processes it until another character is
-needed.  Thus there are several places where Vim waits for a character to be
+needed.  Thus there are several places where Nvim waits for a character to be
 typed.  The `vgetc()` function is used for this.  It also handles mapping.
+
+Internal logic "stuffs" keys (readahead) only for a consumer on the current
+call stack: `exec_stuffed()`, or a nested reader it invokes.  See "Stuffing"
+in input.c. (This is simpler and more predictable than Vim, where a command
+may stuff chars, and let the main loop deal with them at some arbitrary future
+point, thus requiring global flags checked at the right time, scattered
+throughout the codebase.)
 
 What we consider the "Nvim event loop" is actually a wrapper around `uv_run` to
 handle both the `fast_events` queue and possibly (a suitable subset of) deferred

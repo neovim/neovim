@@ -174,6 +174,10 @@ describe('TUI :detach', function()
       nvim_set .. ' laststatus=2 background=dark',
     }, { env = env_notermguicolors, cols = opts.cols })
     tt.override_screen_expect_for_conpty(screen)
+    -- The child's `--listen` socket is created asynchronously wrt its PTY output.
+    t.retry(nil, 2000, function()
+      assert(vim.uv.fs_stat(child_server))
+    end)
   end
 
   it('does not stop server', function()
