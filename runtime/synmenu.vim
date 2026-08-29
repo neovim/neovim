@@ -584,35 +584,36 @@ an 50.100.120 &Syntax.R.R.R\ noweb :cal SetSyn("rnoweb")<CR>
 an 50.100.130 &Syntax.R.Racc\ input :cal SetSyn("racc")<CR>
 an 50.100.140 &Syntax.R.Racket :cal SetSyn("racket")<CR>
 an 50.100.150 &Syntax.R.Radiance :cal SetSyn("radiance")<CR>
-an 50.100.160 &Syntax.R.Raml :cal SetSyn("raml")<CR>
-an 50.100.170 &Syntax.R.Rapid :cal SetSyn("rapid")<CR>
-an 50.100.180 &Syntax.R.Rasi :cal SetSyn("rasi")<CR>
-an 50.100.190 &Syntax.R.Ratpoison :cal SetSyn("ratpoison")<CR>
-an 50.100.200 &Syntax.R.RCS.RCS\ log\ output :cal SetSyn("rcslog")<CR>
-an 50.100.210 &Syntax.R.RCS.RCS\ file :cal SetSyn("rcs")<CR>
-an 50.100.220 &Syntax.R.Readline\ config :cal SetSyn("readline")<CR>
-an 50.100.230 &Syntax.R.Rebol :cal SetSyn("rebol")<CR>
-an 50.100.240 &Syntax.R.ReDIF :cal SetSyn("redif")<CR>
-an 50.100.250 &Syntax.R.Rego :cal SetSyn("rego")<CR>
-an 50.100.260 &Syntax.R.Relax\ NG :cal SetSyn("rng")<CR>
-an 50.100.270 &Syntax.R.Remind :cal SetSyn("remind")<CR>
-an 50.100.280 &Syntax.R.Relax\ NG\ compact :cal SetSyn("rnc")<CR>
-an 50.100.290 &Syntax.R.Renderman.Renderman\ Shader\ Lang :cal SetSyn("sl")<CR>
-an 50.100.300 &Syntax.R.Renderman.Renderman\ Interface\ Bytestream :cal SetSyn("rib")<CR>
-an 50.100.310 &Syntax.R.Requirements :cal SetSyn("requirements")<CR>
-an 50.100.320 &Syntax.R.Resolv\.conf :cal SetSyn("resolv")<CR>
-an 50.100.330 &Syntax.R.Reva\ Forth :cal SetSyn("reva")<CR>
-an 50.100.340 &Syntax.R.Rexx :cal SetSyn("rexx")<CR>
-an 50.100.350 &Syntax.R.Robots\.txt :cal SetSyn("robots")<CR>
-an 50.100.360 &Syntax.R.RockLinux\ package\ desc\. :cal SetSyn("desc")<CR>
-an 50.100.370 &Syntax.R.Rpcgen :cal SetSyn("rpcgen")<CR>
-an 50.100.380 &Syntax.R.RPL/2 :cal SetSyn("rpl")<CR>
-an 50.100.390 &Syntax.R.ReStructuredText :cal SetSyn("rst")<CR>
-an 50.100.400 &Syntax.R.ReStructuredText\ with\ R\ statements :cal SetSyn("rrst")<CR>
-an 50.100.410 &Syntax.R.Routeros :cal SetSyn("routeros")<CR>
-an 50.100.420 &Syntax.R.RTF :cal SetSyn("rtf")<CR>
-an 50.100.430 &Syntax.R.Ruby :cal SetSyn("ruby")<CR>
-an 50.100.440 &Syntax.R.Rust :cal SetSyn("rust")<CR>
+an 50.100.160 &Syntax.R.Radvd\ config :cal SetSyn("radvd")<CR>
+an 50.100.170 &Syntax.R.Raml :cal SetSyn("raml")<CR>
+an 50.100.180 &Syntax.R.Rapid :cal SetSyn("rapid")<CR>
+an 50.100.190 &Syntax.R.Rasi :cal SetSyn("rasi")<CR>
+an 50.100.200 &Syntax.R.Ratpoison :cal SetSyn("ratpoison")<CR>
+an 50.100.210 &Syntax.R.RCS.RCS\ log\ output :cal SetSyn("rcslog")<CR>
+an 50.100.220 &Syntax.R.RCS.RCS\ file :cal SetSyn("rcs")<CR>
+an 50.100.230 &Syntax.R.Readline\ config :cal SetSyn("readline")<CR>
+an 50.100.240 &Syntax.R.Rebol :cal SetSyn("rebol")<CR>
+an 50.100.250 &Syntax.R.ReDIF :cal SetSyn("redif")<CR>
+an 50.100.260 &Syntax.R.Rego :cal SetSyn("rego")<CR>
+an 50.100.270 &Syntax.R.Relax\ NG :cal SetSyn("rng")<CR>
+an 50.100.280 &Syntax.R.Remind :cal SetSyn("remind")<CR>
+an 50.100.290 &Syntax.R.Relax\ NG\ compact :cal SetSyn("rnc")<CR>
+an 50.100.300 &Syntax.R.Renderman.Renderman\ Shader\ Lang :cal SetSyn("sl")<CR>
+an 50.100.310 &Syntax.R.Renderman.Renderman\ Interface\ Bytestream :cal SetSyn("rib")<CR>
+an 50.100.320 &Syntax.R.Requirements :cal SetSyn("requirements")<CR>
+an 50.100.330 &Syntax.R.Resolv\.conf :cal SetSyn("resolv")<CR>
+an 50.100.340 &Syntax.R.Reva\ Forth :cal SetSyn("reva")<CR>
+an 50.100.350 &Syntax.R.Rexx :cal SetSyn("rexx")<CR>
+an 50.100.360 &Syntax.R.Robots\.txt :cal SetSyn("robots")<CR>
+an 50.100.370 &Syntax.R.RockLinux\ package\ desc\. :cal SetSyn("desc")<CR>
+an 50.100.380 &Syntax.R.Rpcgen :cal SetSyn("rpcgen")<CR>
+an 50.100.390 &Syntax.R.RPL/2 :cal SetSyn("rpl")<CR>
+an 50.100.400 &Syntax.R.ReStructuredText :cal SetSyn("rst")<CR>
+an 50.100.410 &Syntax.R.ReStructuredText\ with\ R\ statements :cal SetSyn("rrst")<CR>
+an 50.100.420 &Syntax.R.Routeros :cal SetSyn("routeros")<CR>
+an 50.100.430 &Syntax.R.RTF :cal SetSyn("rtf")<CR>
+an 50.100.440 &Syntax.R.Ruby :cal SetSyn("ruby")<CR>
+an 50.100.450 &Syntax.R.Rust :cal SetSyn("rust")<CR>
 an 50.110.100 &Syntax.S-Sm.S-Lang :cal SetSyn("slang")<CR>
 an 50.110.110 &Syntax.S-Sm.Samba\ config :cal SetSyn("samba")<CR>
 an 50.110.120 &Syntax.S-Sm.SAS :cal SetSyn("sas")<CR>
