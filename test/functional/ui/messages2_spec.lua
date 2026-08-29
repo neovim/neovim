@@ -401,11 +401,22 @@ describe('messages2', function()
     feed([[echo "bar\n"->repeat(&lines)<CR>]])
     screen:expect([[
       ^                                                     |
-      {1:~                                                    }|*4
-      {3:                                                     }|
+      {1:~                                                    }|*5
       foo                                                  |
       bar                                                  |*5
       bar [+8]                                             |
+    ]])
+  end)
+
+  it('does not draw the message seperator with cmdheight=0', function()
+    command('set laststatus=2 statusline=%f')
+    command('set cmdheight=0')
+    command('echo "hello"')
+
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      hello                                                |
     ]])
   end)
 
@@ -987,8 +998,7 @@ describe('messages2', function()
     command('ls!')
     screen:expect([[
       ^                                                     |
-      {1:~                                                    }|
-      {3:                                                     }|
+      {1:~                                                    }|*2
       foo                                                  |*2
       {14:f}oo [+6]                                             |
     ]])

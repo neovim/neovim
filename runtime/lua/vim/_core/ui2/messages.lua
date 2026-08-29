@@ -672,7 +672,7 @@ local function win_row_height_border(tgt, min)
   if tgt ~= 'pager' then
     return (tgt == 'msg' and 0 or 1) - ui.cmd.wmnumode,
       math.max(1, min),
-      min < o.lines - ui.cmdheight
+      min < o.lines - ui.cmdheight and ui.cmdheight > 0
   end
   local cmdwin_win = require('vim._core.cmdwin').win()
   local cmdwin = cmdwin_win and api.nvim_win_get_height(cmdwin_win) or 0
