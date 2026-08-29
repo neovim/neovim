@@ -3185,10 +3185,16 @@ static void op_function(const oparg_T *oap)
     const bool save_finish_op = finish_op;
     finish_op = false;
 
+    // Preserve prepped "g@" redo from the callback's own commands.
+    // Like Vimscript call_user_func() does.
+    RedoState save_redo;
+    save_redobuff(&save_redo);
+
     typval_T rettv;
     if (callback_call(&p_opfunc, 1, argv, &rettv)) {
       tv_clear(&rettv);
     }
+    restore_redobuff(&save_redo);
 
     virtual_op = save_virtual_op;
     finish_op = save_finish_op;

@@ -575,7 +575,7 @@ void redo_free_all(void)
 void prep_redo(bool as_atom, bool arg_meta, CmdSpec spec)
 {
   if (as_atom) {
-    atom_redo_set(spec);
+    atom_redo_prepped();
   }
   redo_new(spec);
   if (block_redo) {
@@ -593,7 +593,7 @@ void prep_redo_visual(const char *keys, size_t len, CmdSpec spec)
   CmdSpec stored = spec;
   stored.regname = 0;
   stored.count = 0;
-  atom_redo_set(stored);
+  atom_redo_prepped();
   redo_new(stored);
   if (block_redo) {
     return;
@@ -611,6 +611,7 @@ void redo_cancel(void)
     return;
   }
 
+  atom_redo_cancel();
   kv_destroy(redobuff.cur.body);
   redobuff.cur = redobuff.old;
   redobuff.old = (CmdSpec){ 0 };

@@ -4557,6 +4557,7 @@ static void nv_replace(cmdarg_T *cap)
   // Other characters are done below to avoid problems with things like
   // CTRL-V 048 (for edit() this would be R CTRL-V 0 ESC).
   if (had_ctrl_v != Ctrl_V && cap->nchar == '\t' && (curbuf->b_p_et || p_sta)) {
+    atom_stuff_start(cap);
     stuffnumReadbuff(cap->count1);
     stuffcharReadbuff('R');
     stuffcharReadbuff('\t');
