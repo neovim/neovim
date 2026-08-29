@@ -6897,6 +6897,49 @@ func Test_complete_info_auto()
   bwipe!
 endfunc
 
+" A completion asked for while 'autocompletedelay' runs is not given the
+" implicit "noselect" of autocompletion.
+func Test_complete_asked_for_during_delay()
+  call Ntest_override("char_avail", 1)
+  new
+  func! AutoOmni(findstart, base)
+    if a:findstart
+      return 4
+    endif
+    return ['alpha', 'alphabet']
+  endfunc
+  func! Selected()
+    let g:selected = complete_info(['selected']).selected
+    return ''
+  endfunc
+  setlocal omnifunc=AutoOmni
+  setlocal complete=o
+  setlocal completeopt=menuone
+  setlocal autocomplete
+  call setline(1, '    al')
+
+  " CTRL-X CTRL-O before the delay expires: the first match is selected,
+  " and taken.
+  set autocompletedelay=100
+  call feedkeys("A\<C-X>\<C-O>\<C-R>=Selected()\<CR>\<Esc>", 'tx')
+  call assert_equal(0, g:selected)
+  call assert_equal('    alpha', getline(1))
+
+  " What autocompletion puts up on its own selects nothing, so the word is
+  " left as it was.
+  set autocompletedelay&
+  call setline(1, '    al')
+  call feedkeys("A\<C-R>=Selected()\<CR>\<Esc>", 'tx')
+  call assert_equal(-1, g:selected)
+  call assert_equal('    al', getline(1))
+
+  call Ntest_override("ALL", 0)
+  unlet g:selected
+  delfunc AutoOmni
+  delfunc Selected
+  bwipe!
+endfunc
+
 func Test_complete_fuzzy_resort()
   new
   set completeopt=menu,menuone,noselect,fuzzy

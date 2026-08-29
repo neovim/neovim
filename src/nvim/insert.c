@@ -566,6 +566,10 @@ static int insert_execute(VimState *state, int key)
     // Don't want delayed autocompletion from the previous key either.
     ins_compl_clear_autocomplete_delay();
     ins_compl_disarm_autostart();
+    // A completion already on screen goes on being what it was.
+    if (!ins_compl_active()) {
+      ins_compl_disable_autocomplete();
+    }
   }
 
   // Special handling of keys while the popup menu is visible or wanted
