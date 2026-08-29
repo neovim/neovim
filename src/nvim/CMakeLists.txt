@@ -41,11 +41,6 @@ target_link_libraries(main_lib INTERFACE
   utf8proc)
 target_link_libraries(nlua0 PUBLIC lpeg)
 
-if(ENABLE_LIBINTL)
-  find_package(Libintl REQUIRED) # Libintl (not Intl) selects our FindLibintl.cmake script. #8464
-  target_link_libraries(main_lib INTERFACE libintl)
-endif()
-
 if(ENABLE_UNIBILIUM)
   find_package(Unibilium 2.0 REQUIRED)
   target_compile_definitions(nvim_bin PRIVATE HAVE_UNIBILIUM)

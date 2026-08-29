@@ -225,7 +225,7 @@ Doing this will create `.mo` files in `build/src/nvim/po`. Example:
 make CMAKE_EXTRA_FLAGS="-DENABLE_TRANSLATIONS=ON"
 ```
 
-* If you see `msgfmt: command not found`, you need to install [`gettext`](http://en.wikipedia.org/wiki/Gettext). On most systems, the package is just called `gettext`.
+* If you see `msgfmt: command not found`, you need to install [`gettext`](http://en.wikipedia.org/wiki/Gettext). On most systems, the package is just called `gettext`; on Windows, you can use, e.g., `winget install -e --id GnuWin32.GetText`.
 
 ### Localization check
 

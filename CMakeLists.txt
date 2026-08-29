@@ -131,7 +131,6 @@ if (MINGW)
 else()
   option(ENABLE_LTO "enable link time optimization" ON)
 endif()
-option(ENABLE_LIBINTL "enable libintl" ON)
 option(ENABLE_UNIBILIUM "enable unibilium" ON)
 option(ENABLE_WASMTIME "enable wasmtime" OFF)
 

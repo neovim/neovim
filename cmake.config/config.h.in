@@ -31,7 +31,6 @@
 #cmakedefine HAVE_SYS_UTSNAME_H
 #cmakedefine HAVE_SYS_WAIT_H
 #cmakedefine HAVE_TERMIOS_H
-#cmakedefine HAVE_WORKING_LIBINTL
 #cmakedefine UNIX
 #cmakedefine CASE_INSENSITIVE_FILENAME
 #cmakedefine HAVE_SYS_UIO_H

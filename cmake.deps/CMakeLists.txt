@@ -143,10 +143,6 @@ if(USE_BUNDLED_LPEG)
   include(BuildLpeg)
 endif()
 
-if(USE_BUNDLED_GETTEXT)
-  include(BuildGettext)
-endif()
-
 if(USE_BUNDLED_LIBICONV)
   include(BuildLibiconv)
 endif()

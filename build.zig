@@ -338,7 +338,6 @@ pub fn build(b: *std.Build) !void {
         .HAVE_SYS_UTSNAME_H = modern_unix or is_wasm,
         .HAVE_SYS_WAIT_H = false, // unused
         .HAVE_TERMIOS_H = modern_unix,
-        .HAVE_WORKING_LIBINTL = t.isGnuLibC(),
         .UNIX = modern_unix,
         .CASE_INSENSITIVE_FILENAME = is_darwin or is_windows,
         .HAVE_SYS_UIO_H = modern_unix,
