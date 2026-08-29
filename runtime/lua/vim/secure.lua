@@ -224,6 +224,13 @@ function M.trust(opts)
   local trust = read_trust()
 
   if action == 'allow' then
+    if path then
+      vim.notify(
+        'File contents may have changed since last viewed. Open the buffer and run :trust for stronger guarantees.',
+        vim.log.levels.WARN
+      )
+    end
+
     local contents, hash = compute_hash(fullpath, bufnr)
     if not contents then
       return false, string.format('could not read path: %s', fullpath)

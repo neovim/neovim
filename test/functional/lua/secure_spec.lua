@@ -393,10 +393,32 @@ describe('vim.secure', function()
       local hash = fn.sha256(assert(read_file(test_file)))
       local full_path = vim.fs.joinpath(cwd, test_file)
 
-      eq(
-        { true, full_path },
-        exec_lua([[return {vim.secure.trust({action='allow', path=...})}]], test_file)
+      local result = exec_lua(
+        [[
+    local notifications = {}
+    local original_notify = vim.notify
+
+    vim.notify = function(msg, level)
+      table.insert(notifications, { msg = msg, level = level })
+    end
+
+    local result = { vim.secure.trust({ action = 'allow', path = ... }) }
+
+    vim.notify = original_notify
+
+    return { result = result, notifications = notifications }
+  ]],
+        test_file
       )
+
+      eq({ true, full_path }, result.result)
+      eq(1, #result.notifications)
+      eq(
+        'File contents may have changed since last viewed. Open the buffer and run :trust for stronger guarantees.',
+        result.notifications[1].msg
+      )
+      eq(vim.log.levels.WARN, result.notifications[1].level)
+
       assert_trust_entry(('%s %s'):format(hash, full_path))
 
       eq(
