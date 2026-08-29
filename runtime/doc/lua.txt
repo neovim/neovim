@@ -3910,6 +3910,8 @@ vim.keymap.set({modes}, {lhs}, {rhs}, {opts})               *vim.keymap.set()*
                  Also accepts:
                  • {buf}? (`integer`) Creates buffer-local mapping, `0` for
                    current buffer.
+                 • {force}? (`boolean`, default: `true`) Override already
+                   present mapping if `true`, preserve it if `false`.
                  • {remap}? (`boolean`, default: `false`) Make the mapping
                    recursive. Inverse of {noremap}.
 
