@@ -169,7 +169,7 @@ pub fn build(b: *std.Build) !void {
 
     const lpeg = if (sys_opts.lpeg) null else b.lazyDependency("lpeg", .{});
 
-    const iconv = if (is_windows or is_darwin) b.lazyDependency("libiconv", .{
+    const iconv = if (is_windows) b.lazyDependency("libiconv", .{
         .target = target,
         .optimize = optimize,
     }) else null;
@@ -515,7 +515,11 @@ pub fn build(b: *std.Build) !void {
         if (libuv) |compile| nvim_mod.linkLibrary(compile);
         if (libluv) |compile| nvim_mod.linkLibrary(compile);
     }
-    if (iconv) |dep| nvim_mod.linkLibrary(dep.artifact("iconv"));
+    if (iconv) |dep| {
+        nvim_mod.linkLibrary(dep.artifact("iconv"));
+    } else if (is_darwin) {
+        nvim_mod.linkSystemLibrary("iconv", .{});
+    }
     if (sys_opts.utf8proc) {
         nvim_mod.linkSystemLibrary("utf8proc", .{});
     } else if (utf8proc) |dep| {
