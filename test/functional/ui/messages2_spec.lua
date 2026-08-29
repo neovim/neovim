@@ -420,6 +420,32 @@ describe('messages2', function()
     ]])
   end)
 
+  it('skips blank messages', function()
+    command('echo "   "')
+    command('echo "after space"')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      after space                                          |
+    ]])
+
+    command('echo "\t\t"')
+    command('echo "after tab"')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      after tab                                            |
+    ]])
+
+    command('echo "\n\n"')
+    command('echo "after newlines"')
+    screen:expect([[
+      ^                                                     |
+      {1:~                                                    }|*12
+      after newlines                                       |
+    ]])
+  end)
+
   it('no prompt and newlines with Visual filter command #38273', function()
     set_msg_target_zero_ch()
     feed('V:w !printf foo<CR>')
@@ -1202,9 +1228,7 @@ describe('messages2', function()
     feed('f')
     screen:expect([[
                                                            |
-      {1:~                                                    }|*9
-      {3:                                                     }|
-                                                           |*2
+      {1:~                                                    }|*12
       {16::}{15:f}^                                                   |
     ]])
   end)

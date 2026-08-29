@@ -465,6 +465,16 @@ function M.msg_show(kind, content, replace_last, _, append, id, trigger)
     or (kind ~= '' and ui.cfg.msg.targets[kind])
     or ui.cfg.msg.targets.default
 
+  local msg = ''
+  for _, chunk in ipairs(content) do
+    msg = msg .. chunk[2]
+  end
+
+  -- Don't filter empty messages or appended fragments.
+  if kind ~= 'empty' and not append and msg:match('^%s*$') then
+    return
+  end
+
   if kind == 'search_cmd' and ui.cmdheight == 0 then
     -- Blocked by messaging() without ext_messages. TODO: look at other messaging() guards.
     return
