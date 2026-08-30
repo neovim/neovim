@@ -53,6 +53,7 @@
 ^parse_argument_types(
 ^parse_queued_messages(
 ^restore_buffer(bufref_T
+^shortpath_[_a-zA-Z0-9]\+(
 ^static convertStruct [a-zA-Z]\+\[\] =
 ^static int included_patches\[\] =
 ^static struct interval emoji_all\[\] =
