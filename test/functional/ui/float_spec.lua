@@ -208,7 +208,7 @@ describe('float window', function()
     )
 
     -- Reconfiguring split
-    local not_allowed = { hide = true, zindex = 1, title = '', footer = '', border = 'single' }
+    local not_allowed = { hide = true, zindex = 1, title = '', footer = '', border = 'single', mousedrag = { title = true } }
     for k, v in pairs(not_allowed) do
       local err = ("Conflict: '%s' not allowed with non-float window"):format(k)
       eq(err, pcall_err(api.nvim_win_set_config, winid, { [k] = v }))
@@ -1672,6 +1672,11 @@ describe('float window', function()
         width = 20,
         zindex = 60,
         hide = false,
+        mousedrag = {
+          border = false,
+          content = false,
+          title = false,
+        },
       }
       eq(expected, api.nvim_win_get_config(win))
       eq(
@@ -1680,8 +1685,11 @@ describe('float window', function()
           [[
         local expected, win = ...
         local actual = vim.api.nvim_win_get_config(win)
-        for k,v in pairs(expected) do
-          if v ~= actual[k] then
+        for k, v in pairs(expected) do
+          local ok = type(v) == 'table'
+              and vim.deep_equal(v, actual[k])
+              or v == actual[k]
+          if not ok then
             error(k)
           end
         end
@@ -1701,6 +1709,11 @@ describe('float window', function()
         split = 'left',
         width = 40,
         height = 6,
+        mousedrag = {
+          title = false,
+          border = false,
+          content = false,
+        },
       }, api.nvim_win_get_config(0))
 
       if multigrid then
@@ -1715,6 +1728,11 @@ describe('float window', function()
           style = '',
           hide = false,
           border = 'none',
+          mousedrag = {
+            border = false,
+            content = false,
+            title = false,
+          },
         }, api.nvim_win_get_config(win))
       end
     end)
@@ -4770,6 +4788,11 @@ describe('float window', function()
         focusable = true,
         mouse = true,
         zindex = 50,
+        mousedrag = {
+          border = false,
+          content = false,
+          title = false,
+        },
       }, api.nvim_win_get_config(win))
 
       feed('<c-e>')
