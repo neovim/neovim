@@ -480,7 +480,7 @@ local function setup_autocmds(bufnr)
     desc = 'Stop the snippet session when leaving select mode',
     buf = bufnr,
   }, function(args)
-    if args.match ~= 's:n' then
+    if args.match ~= 's:n' and args.match ~= 'i:n' then
       return
     end
     vim.schedule(function()
