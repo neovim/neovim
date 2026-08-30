@@ -939,7 +939,6 @@ is_na_patch() {
   for file in $FILES_REMAINING; do
     case ${file} in
       runtime/doc/*.txt | runtime/pack/dist/opt/*/doc/*.txt)
-        # TODO(@janlazo): ignore (multi-line) phrases based on regexp '{.\+ \(available\|compiled\) \(with\|without\) .\+}'
         HUNKS=$(git -c core.attributesfile="$NVIM_SOURCE_DIR"/.gitattributes -c 'diff.helphelp.xfuncname=^.*\*[^*]+\*$' -C "${VIM_SOURCE_DIR}" \
           diff-tree --no-commit-id -r -b -U0 \
           '-I^\s+$' \
@@ -949,6 +948,7 @@ is_na_patch() {
           '-I^popup_[_a-z]+\(' \
           '-I\*\s+For Vim version [0-9]\.[0-9]\.\s+Last change: [0-9]+ [A-Z][a-z]+ [0-9]+' \
           '-I compiled (with|without) .*\(\|.+\|\) feature\.$' \
+          '-I\{.+ (available|compiled) (with|without) .+\}' \
           '-I\|channel-open-[^|]+\|' \
           '-I\|popup-windows\|' \
           '-I\|tabpanel\|' \
