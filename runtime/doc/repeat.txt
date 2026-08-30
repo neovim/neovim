@@ -106,7 +106,7 @@ vim-repeat or similar. >lua
     vim.api.nvim_create_autocmd('CmdAtom', {
       callback = function(ev)
         local is_redo_or_undo = ev.data.changed and (ev.data.undoseq or 0) <= (vim.b[ev.buf].maxseq or 0)
-        vim.b[ev.buf].maxseq = vim.fn.undotree(ev.buf).seq_last
+        vim.b[ev.buf].maxseq = math.max(vim.b[ev.buf].maxseq or 0, ev.data.undoseq or 0)
         if ev.data.changed and not is_redo_or_undo and ev.data.lhs ~= '.' then
           last = ev.data
         end
@@ -174,7 +174,7 @@ like that, you can use this snippet to get Vim's behavior instead: >lua
       callback = function(ev)
         -- Undo/redo: the buffer changed to an already-seen undo state.
         local undid = ev.data.changed and (ev.data.undoseq or 0) <= (vim.b[ev.buf].maxseq or 0)
-        vim.b[ev.buf].maxseq = vim.fn.undotree(ev.buf).seq_last
+        vim.b[ev.buf].maxseq = math.max(vim.b[ev.buf].maxseq or 0, ev.data.undoseq or 0)
         if undid then
           vim.cmd('normal! `[') -- Start of the changed text.
         end

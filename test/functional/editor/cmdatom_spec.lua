@@ -1430,12 +1430,15 @@ describe('CmdAtom', function()
     )
   end)
 
-  it('"." mapping repeats the last edit atom, plugin operations included', function()
+  it('"." mapping (|edit-repeat| example in repeat.txt)', function()
     n.exec_lua([[
       local last ---@type vim.event.cmdatom.data?
       vim.api.nvim_create_autocmd('CmdAtom', {
         callback = function(ev)
-          if ev.data.changed and ev.data.lhs ~= '.' then
+          local is_redo_or_undo = ev.data.changed
+            and (ev.data.undoseq or 0) <= (vim.b[ev.buf].maxseq or 0)
+          vim.b[ev.buf].maxseq = math.max(vim.b[ev.buf].maxseq or 0, ev.data.undoseq or 0)
+          if ev.data.changed and not is_redo_or_undo and ev.data.lhs ~= '.' then
             last = ev.data
           end
         end,
@@ -1464,6 +1467,29 @@ describe('CmdAtom', function()
     feed('3G0f(.')
     retry(nil, 1000, function()
       eq('b two', fn.getline(3))
+    end)
+
+    -- Edit fed by nvim_feedkeys(…, "mt") #41485.
+    n.exec_lua([[
+      vim.keymap.set('n', '<M-m>', function()
+        vim.api.nvim_feedkeys('dl', 'mt', false)
+      end)
+    ]])
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'abcd' })
+    feed('gg0<M-m>')
+    n.poke_eventloop()
+    eq('bcd', fn.getline(1))
+    feed('.')
+    retry(nil, 1000, function()
+      eq('cd', fn.getline(1))
+    end)
+    -- Undo is not captured: "." still repeats the edit.
+    feed('u')
+    n.poke_eventloop()
+    eq('bcd', fn.getline(1))
+    feed('.')
+    retry(nil, 1000, function()
+      eq('cd', fn.getline(1))
     end)
   end)
 
