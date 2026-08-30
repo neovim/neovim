@@ -42,6 +42,7 @@ runtime/doc/quotes.txt
 runtime/doc/test_urls.vim
 runtime/doc/testing.txt
 runtime/doc/todo.txt
+runtime/doc/uganda.rux
 runtime/doc/usr_52.txt
 runtime/doc/usr_90.txt
 runtime/doc/workshop.txt
