@@ -28,6 +28,7 @@
 #include "nvim/keycodes.h"
 #include "nvim/log.h"
 #include "nvim/macros_defs.h"
+#include "nvim/mapping.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/normal.h"
@@ -1120,7 +1121,7 @@ void atom_capture_op(oparg_T *oap, cmdarg_T *cap, bool redo_yank)
       }
     } else if (cap->cmdchar == K_LUA) {
       char buf[NUMBUFLEN];
-      redo_append_str(buf, snprintf(buf, sizeof(buf), "%d", repeat_luaref));
+      redo_append_str(buf, snprintf(buf, sizeof(buf), "%d", repeat_luamap));
       redo_append_str(S_LEN(NL_STR));
     }
   } else if (Visual.active && redoable && oap->motion_force == NUL) {

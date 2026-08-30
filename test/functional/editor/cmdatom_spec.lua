@@ -1140,10 +1140,37 @@ describe('CmdAtom', function()
     }, atoms_tail(2, 'type', 'keys', 'lhs'))
   end)
 
+  it('replay of deleted/redefined Lua mapping fails (E5117)', function()
+    n.exec_lua([[
+      vim.keymap.set('o', 'gt', function()
+        vim.cmd('normal! viw')
+      end)
+    ]])
+    fn.setline(1, { 'k1 k2', 'k3 k4' })
+    atoms_start()
+    feed('gg0dgt')
+    eq(' k2', fn.getline(1))
+    local ev = atom_last()
+    n.exec_lua([[
+      vim.keymap.del('o', 'gt')
+      vim.keymap.set('o', 'gt', function()
+        vim.cmd('normal! viw')
+      end)
+    ]])
+    feed('j0')
+    n.exec_lua(([[vim.api.nvim_feedkeys(%q, 'nx', false)]]):format(ev.keys))
+    eq('k3 k4', fn.getline(2))
+    t.matches('E5117', fn.execute('messages'))
+    -- Running the (re-defined) mapping emits CmdAtom.keys with the updated id.
+    feed('dgt')
+    eq(' k4', fn.getline(2))
+    n.exec_lua(([[vim.api.nvim_feedkeys(%q, 'nx', false)]]):format(atom_last().keys))
+    eq('k4', fn.getline(2))
+  end)
+
   it('operator completed by a Lua textobject (:omap) #41482', function()
     -- Lua :omap textobject (starts Visual mode, |omap-info|) captures the operator: `keys` is the
-    -- redobuff (K_LUA + luaref), replayable like "." repeating it. `cmd` is omitted (a Lua
-    -- callback has no notation).
+    -- redobuff (K_LUA + mapping-id).
     n.exec_lua([[
       vim.keymap.set('o', 'gt', function()
         vim.cmd('normal! viw')
