@@ -52,5 +52,3 @@ enum {
 
 #include "ops.h.generated.h"
 #include "ops.h.inline.generated.h"
-
-EXTERN LuaRef repeat_luaref INIT( = LUA_NOREF);  ///< LuaRef for "."

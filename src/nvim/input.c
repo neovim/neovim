@@ -196,6 +196,7 @@ static const char e_cmd_mapping_must_end_with_cr[]
   = N_("E1255: <Cmd> mapping must end with <CR>");
 static const char e_cmd_mapping_must_end_with_cr_before_second_cmd[]
   = N_("E1136: <Cmd> mapping must end with <CR> before second <Cmd>");
+static const char e_lua_mapping_gone[] = N_("E5117: Lua mapping no longer exists");
 
 /// Frees the buffer's memory; it becomes empty.
 static void free_buff(StuffBuf *buf)
@@ -575,7 +576,7 @@ void redo_free_all(void)
 void prep_redo(bool as_atom, bool arg_meta, CmdSpec spec)
 {
   if (as_atom) {
-    atom_redo_set(spec);
+    atom_redo_prepped();
   }
   redo_new(spec);
   if (block_redo) {
@@ -593,7 +594,7 @@ void prep_redo_visual(const char *keys, size_t len, CmdSpec spec)
   CmdSpec stored = spec;
   stored.regname = 0;
   stored.count = 0;
-  atom_redo_set(stored);
+  atom_redo_prepped();
   redo_new(stored);
   if (block_redo) {
     return;
@@ -611,6 +612,7 @@ void redo_cancel(void)
     return;
   }
 
+  atom_redo_cancel();
   kv_destroy(redobuff.cur.body);
   redobuff.cur = redobuff.old;
   redobuff.old = (CmdSpec){ 0 };
@@ -3417,12 +3419,12 @@ char *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
   return line_ga.ga_data;
 }
 
-/// Handle a Lua mapping: get its LuaRef from typeahead and execute it.
+/// Handle a Lua mapping: get its id from typeahead and execute its callback.
 ///
-/// @param may_repeat  save the LuaRef for redoing with "." later
-/// @param discard     discard the keys instead of executing the LuaRef
+/// @param may_repeat  Save the mapping-id for redoing with "." later
+/// @param discard     Discard the keys instead of executing the callback.
 ///
-/// @return  false if getting the LuaRef was aborted, true otherwise
+/// @return  false if getting the id was aborted or mapping no longer exists, true otherwise.
 bool map_execute_lua(bool may_repeat, bool discard)
 {
   garray_T line_ga;
@@ -3454,9 +3456,15 @@ bool map_execute_lua(bool may_repeat, bool discard)
     return !aborted;
   }
 
-  LuaRef ref = (LuaRef)atoi(line_ga.ga_data);
+  const int id = atoi(line_ga.ga_data);
+  const LuaRef ref = map_luaid_get(id);
+  if (ref == LUA_NOREF) {
+    ga_clear(&line_ga);
+    emsg(_(e_lua_mapping_gone));
+    return false;
+  }
   if (may_repeat) {
-    repeat_luaref = ref;
+    repeat_luamap = id;
   }
 
   Error err = ERROR_INIT;

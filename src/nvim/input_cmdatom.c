@@ -28,6 +28,7 @@
 #include "nvim/keycodes.h"
 #include "nvim/log.h"
 #include "nvim/macros_defs.h"
+#include "nvim/mapping.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/normal.h"
@@ -115,7 +116,7 @@ static struct {
 
 /// Per-command capture scratch.
 static struct {
-  uint64_t redo_frame;  ///< The CmdFrame that prepped redo (prep_redo*()). 0: none.
+  uint64_t redo_frame;  ///< Frame whose redobuf (potentially) defines the atom. 0: none.
   char *cmdline;      ///< The ":" payload captured at cmdline accept. NULL: none.
                       ///< Note: search payloads ("/pat<CR>") travel on `cmdarg.searchbuf`.
   bool ins_cascaded;  ///< Did the command's insert-session already cascade?
@@ -294,7 +295,7 @@ static String atoms_concat_keys(CmdAtomVec atoms)
 /// Renders a (cmd, arg, op) char for CmdAtom: key-notation for special keys, else UTF-8. NUL => "".
 static char *atom_key_name(int c)
 {
-  if (c == NUL) {
+  if (c == NUL || c == K_LUA) {
     return xstrdup("");
   }
   if (IS_SPECIAL(c) || c < ' ') {
@@ -840,17 +841,18 @@ void atom_op_global_set(void)
   curcmd.op_global = true;
 }
 
-/// Sets `curcmd.redo_frame`: at frame end, the redobuf defines `CmdAtom.keys`.
-/// Not for nested frames (":norm"), nor Lua operators.
-void atom_redo_set(CmdSpec spec)
+/// Declares that the current frame prepped redo. Not for nested frames (":norm").
+void atom_redo_prepped(void)
 {
-  if (spec.cmd == K_LUA) {
-    atom_redo_reset();
-    return;
-  }
   if (atom_is_user_cmd()) {
     curcmd.redo_frame = cur_frame != NULL ? cur_frame->id : 0;
   }
+}
+
+/// Redo-prep was canceled (aborted operation).
+void atom_redo_cancel(void)
+{
+  curcmd.redo_frame = 0;
 }
 
 /// Starts accumulating a composite for a macro's commands, labeled "@x".
@@ -889,6 +891,10 @@ void atom_map_start(const char *lhs, size_t len, bool peeked)
     return;
   }
   if (atom_composite_active()) {
+    if (get_real_state() == MODE_OP_PENDING) {
+      // The pending operator's own composite ("gr" <expr> mapping => "g@") absorbs its operand.
+      return;
+    }
     // Mapping resolved from another's trailing prefix ("nmap x j," + "nnoremap ,w w"): end the
     // pending composite, so each `lhs` owns only the keys it produced.
     typed.map_start = kv_size(typed.keys);
@@ -1115,7 +1121,7 @@ void atom_capture_op(oparg_T *oap, cmdarg_T *cap, bool redo_yank)
       }
     } else if (cap->cmdchar == K_LUA) {
       char buf[NUMBUFLEN];
-      redo_append_str(buf, snprintf(buf, sizeof(buf), "%d", repeat_luaref));
+      redo_append_str(buf, snprintf(buf, sizeof(buf), "%d", repeat_luamap));
       redo_append_str(S_LEN(NL_STR));
     }
   } else if (Visual.active && redoable && oap->motion_force == NUL) {
@@ -1270,7 +1276,9 @@ static void atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
                    && (!Visual.active
                        || (equalpos(old->visual.start, Visual.start)
                            && old->visual.mode == Visual.mode));
-  if (opaque && unchanged) {
+  if (opaque && unchanged
+      // Operator atom? (non-edit Lua/<Cmd> 'operatorfunc'). #41482
+      && curcmd.redo_frame != old->id) {
     return;
   }
   bool ins_cascaded = user && curcmd.ins_cascaded;
@@ -1355,8 +1363,7 @@ static void atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
     // Route: decide the atom type and push it.
     //
     if (curcmd.redo_frame == old->id && !mouse_cmd) {
-      // Not for mouse commands (middle-click paste): pasting at every cursor would use
-      // viewport-dependent positions.
+      // Redoable edit ("dw", "p", "rX", "g@…"): this frame's redobuf defines the atom.
       CmdAtom atom = atom_from_redo(kAOperator);
       // The payload ('operatorfunc' getchar()) is not in the captured redo, append it.
       atom_payload_append(&atom, old);
@@ -1371,7 +1378,7 @@ static void atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
       }
     } else if (ca->searchbuf != NULL && (ca->cmdchar == '/' || ca->cmdchar == '?')
                && !(vis && unchanged)) {
-      // Payload typed in the cmdline ("/pat<CR>"). Emit-only. Not if pattern was not found.
+      // Payload typed in search cmdline ("/pat<CR>"). Emit-only. Not if pattern was not found.
       CmdAtom atom = atom_from_cmdline(kAMotion, ca, ca->searchbuf);
       atom.origin = old->origin;
       atom_push(false, &atom);
@@ -1417,8 +1424,8 @@ static void atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
   }
 }
 
-/// Completes a cmd at normal_execute() exit: captures its atom, pushes its staged one, ends the
-/// composite. Pops the frame.
+/// Completes a normal_execute(): captures its atom, pushes its staged one, ends the composite.
+/// Pops the frame.
 void atom_cmd_end(cmdarg_T *ca, CmdFrame *old)
 {
   atom_capture_cmd(ca, old);

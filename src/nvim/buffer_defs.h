@@ -463,13 +463,13 @@ struct file_buffer {
   // bitset with 4*64=256 bits: 1 bit per character 0-255.
   uint64_t b_chartab[4];
 
-  // Table used for mappings local to a buffer.
+  // Buffer-local mappings.
   mapblock_T *(b_maphash[MAX_MAPHASH]);
-
-  // First abbreviation local to a buffer.
+  // Buffer-local abbreviations.
   mapblock_T *b_first_abbr;
-  // User commands local to the buffer.
+  // Buffer-local user commands.
   garray_T b_ucmds;
+
   // start and end of an operator, also used for '[ and ']
   pos_T b_op_start;
   pos_T b_op_start_orig;  // used for Ins.start_orig
