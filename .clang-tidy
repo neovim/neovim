@@ -71,6 +71,8 @@ Checks: >
   -readability-math-missing-parentheses,
   -readability-redundant-declaration, Conflicts with our header generation scripts,
   -readability-suspicious-call-argument,
+  -readability-trailing-comma,
+  -readability-redundant-parentheses,
   -readability-use-concise-preprocessor-directives,
 
   Aliases. These are just duplicates of other warnings and should always be ignored,
