@@ -70,13 +70,6 @@
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 
-typedef struct {
-  int rangeStart;
-  int rangeEnd;
-  int step;
-  int offset;
-} convertStruct;
-
 struct interval {
   int first;
   int last;

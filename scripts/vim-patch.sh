@@ -928,6 +928,7 @@ is_na_patch() {
   local NA_FILELIST="$NVIM_SOURCE_DIR/scripts/vim_na_files.txt"
   local NA_HUNKS_C="$NVIM_SOURCE_DIR/scripts/vim_na_hunks_c.txt"
   local NA_HUNKS_H="$NVIM_SOURCE_DIR/scripts/vim_na_hunks_h.txt"
+  local NA_HUNKS_HELP="$NVIM_SOURCE_DIR/scripts/vim_na_hunks_help.txt"
   local NA_HUNKS_VIM="$NVIM_SOURCE_DIR/scripts/vim_na_hunks_vim.txt"
 
   local FILES_REMAINING HUNKS HUNK_NUM_FINAL
@@ -948,12 +949,13 @@ is_na_patch() {
           '-I^popup_[_a-z]+\(' \
           '-I\*\s+For Vim version [0-9]\.[0-9]\.\s+Last change: [0-9]+ [A-Z][a-z]+ [0-9]+' \
           '-I compiled (with|without) .*\(\|.+\|\) feature\.$' \
+          '-I\|channel-open-[^|]+\|' \
           '-I\|popup-windows\|' \
           '-I\|tabpanel\|' \
           '-I\spopup window\s' \
           "$patch" -- "${file}")
         if test -n "$HUNKS"; then
-          HUNK_NUM_FINAL=$(echo "$HUNKS" | grep '^@@ .* @@' | sed 's/^@@ .* @@ //' | grep -cv -f "$NA_HUNKS_VIM")
+          HUNK_NUM_FINAL=$(echo "$HUNKS" | grep '^@@ .* @@' | sed 's/^@@ .* @@ //' | grep -cv -f "$NA_HUNKS_HELP")
           test "$HUNK_NUM_FINAL" -ne 0 && return 1
         fi
         ;;
@@ -973,7 +975,7 @@ is_na_patch() {
         HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
           "$patch" -- "${file}")
         if test -n "$HUNKS"; then
-          HUNK_NUM_FINAL=$(echo "$HUNKS" | grep '^@@ .* @@' | sed 's/^@@ .* @@ //' | grep -cv -e '^func RunVimInTerminal(')
+          HUNK_NUM_FINAL=$(echo "$HUNKS" | grep '^@@ .* @@' | sed 's/^@@ .* @@ //' | grep -cv -f "$NA_HUNKS_VIM")
           test "$HUNK_NUM_FINAL" -ne 0 && return 1
         fi
         ;;
@@ -989,7 +991,7 @@ is_na_patch() {
           '-IEVENT_TERMINALWINOPEN' \
           '-I^#\s*define\s+(ASSIGN_VAR|POPF_CURSORLINE)\s' \
           '-I^typedef enum \{$' \
-          '-I^\s+POPCLOSE_[A-Z]+,?$' \
+          '-I^\s+(CH_MODE|POPCLOSE)_[A-Z]+,?$' \
           '-I^\} popclose_T;$' \
           '-I^EXTERN\schar\s+\*popup_transparent' \
           '-I^EXTERN\sint\s+disable_vterm_title_for_testing' \
@@ -1000,6 +1002,7 @@ is_na_patch() {
           '-I^EXTERN char e_.*def_function' \
           '-I^EXTERN char e_.*enddef' \
           '-I^EXTERN char e_.*vim9' \
+          '-I^EXTERN char e_[_a-z]+_channel' \
           '-I^EXTERN char e_cannot_declare_.*variable_str' \
           '-I^EXTERN char e_cannot_define_new_.+_as_static' \
           '-I^EXTERN char e_cannot_use_a_return_type_with_new' \
@@ -1009,6 +1012,7 @@ is_na_patch() {
           '-I\sINIT\(= .+"E[0-9]+: .*:def ' \
           '-I\sINIT\(= .+"E[0-9]+: .*enddef"' \
           '-I\sINIT\(= .+"E[0-9]+: .*([vV]im9|interface)' \
+          '-I\sINIT\(= .+"E[0-9]+: .* (ch|channel)_[_a-z]+\(\)' \
           '-I\sINIT\(= .+"E1016: Cannot declare .* variable: ' \
           '-I\sINIT\(= .+"E1103: Dictionary not set' \
           '-I\sINIT\(= .+"E1365: Cannot use a return type with the \\"new\\" function"' \
@@ -1039,6 +1043,7 @@ is_na_patch() {
           '-IEVENT_TERMINALWINOPEN' \
           '-I^#\s*include\s+<proto/' \
           '-I^\s+\{"(popup|prop|sound)_[_a-z]+",.*f_(popup|prop|sound)_[_a-z]+},$' \
+          '-I^\s+ret_[a-z]+,\s+JOB_FUNC\(f_.+\)},$' \
           '-I^\s*(static)?\s(char(|_u)|hashtab_T|int|void)( \*)?$' \
           '-I^static\s(char(|_u)|hashtab_T|int|void)\s\*?[^*]+\(.+\);$' \
           '-I#\s*define.*ex_ni$' \
