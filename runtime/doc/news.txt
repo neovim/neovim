@@ -407,6 +407,7 @@ LUA
 • |vim.o| now accepts table style values for assignment.
 • |vim.keycode()| returns structured info as return value 2.
 • |Iter:count()| counts items in the iterator.
+• |vim.fs.find()| can skip matching directories using `opts.skip`.
 
 OPTIONS
 

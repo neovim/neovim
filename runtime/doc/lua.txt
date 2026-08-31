@@ -2755,6 +2755,9 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
                    to |current-directory|. Not expanded.
                  • {stop}? (`string`) Stop searching when this directory is
                    reached. The directory itself is not searched.
+                 • {skip}? (`fun(dir: string): boolean`) Predicate to control
+                   directory traversal. Return true to skip (not descend into)
+                   the given directory.
                  • {type}? (`string`) Find only items of the given type. If
                    omitted, all items that match {names} are included.
                  • {upward}? (`boolean`, default: `false`) Search upward
