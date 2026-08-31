@@ -14,6 +14,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/validate.h"
 #include "nvim/ascii_defs.h"
+#include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/vars.h"
@@ -995,6 +996,137 @@ void api_luarefs_free_dict(Dict value)
   }
 }
 
+/// Classify a mark name
+///
+/// @return  Class of the mark, kMarkClassInvalid for an unknown name.
+MarkClass mark_classify(char name)
+{
+  if (name == '\'' || name == '`') {
+    return kMarkClassWindow;
+  }
+  if (ASCII_ISUPPER(name) || ascii_isdigit(name)) {
+    return kMarkClassGlobal;
+  }
+  if (ASCII_ISLOWER(name) || name == '"' || name == '[' || name == ']'
+      || name == '<' || name == '>') {
+    return kMarkClassBufLocal;
+  }
+  if (name == '{' || name == '}' || name == '(' || name == ')') {
+    return kMarkClassMotion;
+  }
+  if (name == ':') {
+    return kMarkClassPrompt;
+  }
+  if (name == '^' || name == '.') {
+    return kMarkClassReadOnly;
+  }
+  return kMarkClassInvalid;
+}
+
+/// Resolve a mark to a plain struct
+///
+/// @param buf      Buffer handle, only read when "has_buf" is set.
+/// @param win      Window handle, only read when "has_win" is set.
+/// @param arena    Arena the file name is allocated in.
+///
+/// @return  Resolved mark, "line" is 0 when the mark is not set.
+MarkInfo mark_query(char name, Buffer buf, bool has_buf, Window win, bool has_win, Arena *arena,
+                    Error *err)
+{
+  MarkInfo mi = { .file = STATIC_CSTR_AS_STRING("") };
+  MarkClass mclass = mark_classify(name);
+  char namebuf[2] = { name, NUL };
+
+  VALIDATE_S((mclass != kMarkClassInvalid), "mark name", namebuf, {
+    return mi;
+  });
+
+  if (mclass == kMarkClassWindow) {
+    VALIDATE(!has_buf, "%s", "cannot use 'buf' for window-local marks", {
+      return mi;
+    });
+
+    win_T *wp = find_window_by_handle(has_win ? win : 0, err);
+    if (ERROR_SET(err)) {
+      return mi;
+    }
+
+    mi.line = wp->w_pcmark.lnum;
+    mi.col = wp->w_pcmark.col;
+    return mi;
+  }
+
+  VALIDATE(!has_win, "%s", "cannot use 'win' for non-window-local marks", {
+    return mi;
+  });
+
+  if (mclass == kMarkClassGlobal) {
+    xfmark_T *xfm = mark_get_global(false, name);  // false avoids loading the mark buffer
+    fmark_T *fm = &xfm->fmark;
+
+    // With "buf" the mark only counts if it lives in that buffer.
+    bool in_target = true;
+    if (has_buf) {
+      buf_T *target = find_buffer_by_handle(buf, err);
+      if (ERROR_SET(err)) {
+        return mi;
+      }
+      in_target = fm->fnum == target->handle;
+    }
+
+    char *filename = NULL;
+    bool allocated = false;
+    if (in_target) {
+      if (fm->fnum != 0) {
+        filename = buflist_nr2name(fm->fnum, true, true);
+        allocated = true;
+      } else {
+        filename = xfm->fname;  // mark restored from shada, buffer not loaded
+      }
+    }
+
+    if (in_target && fm->mark.lnum > 0 && filename != NULL) {
+      mi.line = fm->mark.lnum;
+      mi.col = fm->mark.col;
+      mi.bufnr = fm->fnum;
+      mi.file = CSTR_TO_ARENA_STR(arena, filename);
+      mi.timestamp = fm->timestamp;
+    }
+
+    if (allocated) {
+      xfree(filename);
+    }
+    return mi;
+  }
+
+  // Buffer-local, motion, prompt and read-only marks
+  buf_T *bp = find_buffer_by_handle(has_buf ? buf : 0, err);
+  if (ERROR_SET(err)) {
+    return mi;
+  }
+
+  // Motion marks are computed from the cursor.
+  VALIDATE((mclass != kMarkClassMotion || bp == curbuf), "%s",
+           "motion marks are only available for the current buffer", {
+    return mi;
+  });
+
+  // NULL means ':' outside a prompt buffer, or a motion that failed.
+  fmark_T *fm = mark_get_local(bp, curwin, name);
+  VALIDATE_S((fm != NULL), "mark name", namebuf, {
+    return mi;
+  });
+
+  // mark.c keeps the column when the line is invalidated, and mark_get_visual()
+  // reports MAXCOL for '>' in linewise Visual mode.
+  mi.line = fm->mark.lnum;
+  mi.col = fm->mark.col;
+  // Deleting a mark does not clear its timestamp.
+  mi.timestamp = fm->mark.lnum > 0 ? fm->timestamp : 0;
+
+  return mi;
+}
+
 /// Set a named mark
 /// buffer and mark name must be validated already
 /// @param buffer     Buffer to set the mark on
@@ -1012,7 +1144,7 @@ bool set_mark(buf_T *buf, String name, Integer line, Integer col, Error *err)
     col = 0;
     deleting = true;
   } else {
-    VALIDATE_RANGE(!(col > MAXCOL), "column", {
+    VALIDATE_RANGE(!(col < 0 || col > MAXCOL), "column", {
       return res;
     });
     VALIDATE_RANGE(!(line < 1 || line > buf->b_ml.ml_line_count), "line", {

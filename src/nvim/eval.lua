@@ -4570,7 +4570,7 @@ M.funcs = {
     returns = '[integer, integer, integer, integer]',
     signature = 'getpos({expr})',
     see_lua = {
-      '|nvim_win_get_cursor()| for "." or |nvim_buf_get_mark()| for marks; return shape, `off`, and special-position semantics differ',
+      '|nvim_win_get_cursor()| for "." or |nvim_get_mark()| for marks; return shape, `off`, and special-position semantics differ',
     },
   },
   getqflist = {
@@ -10180,7 +10180,7 @@ M.funcs = {
     params = { { 'expr', 'string' }, { 'list', 'integer[]' } },
     signature = 'setcharpos({expr}, {list})',
     see_lua = {
-      '|nvim_win_set_cursor()| or |nvim_buf_set_mark()| with |vim.str_byteindex()|; special positions, `off`, and `curswant` differ',
+      '|nvim_win_set_cursor()| or |nvim_set_mark()| with |vim.str_byteindex()|; special positions, `off`, and `curswant` differ',
     },
   },
   setcharsearch = {
@@ -10468,7 +10468,7 @@ M.funcs = {
     params = { { 'expr', 'string' }, { 'list', 'integer[]' } },
     signature = 'setpos({expr}, {list})',
     see_lua = {
-      '|nvim_win_set_cursor()| for "." or |nvim_buf_set_mark()| for marks; special positions, `off`, and `curswant` differ',
+      '|nvim_win_set_cursor()| for "." or |nvim_set_mark()| for marks; special positions, `off`, and `curswant` differ',
     },
   },
   setqflist = {
