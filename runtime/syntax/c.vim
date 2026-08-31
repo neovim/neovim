@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:		C
 " Maintainer:		The Vim Project <https://github.com/vim/vim>
-" Last Change:		2026 Jul 25
+" Last Change:		2026 Aug 30
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Quit when a (custom) syntax file was already loaded
@@ -23,6 +23,13 @@ let s:in_cpp_family = exists("b:filetype_in_cpp_family")
 if exists("c_autodoc")
   syn include @cAutodoc <sfile>:p:h/autodoc.vim
   unlet b:current_syntax
+endif
+
+" In VMS C keywords contain '$' characters.
+if has("vms")
+  syn iskeyword @,48-57,_,192-255,$
+else
+  syn iskeyword @,48-57,_,192-255
 endif
 
 " A bunch of useful C keywords
