@@ -61,6 +61,11 @@ function State:evaluate()
   tableclear(row_text)
   tableclear(row_virt_text)
 
+  -- Whether at least one range starts on the row.
+  local row_starts = {} ---@type table<integer, true>
+  -- Number of ranges ending on the row.
+  local row_ends = {} ---@type table<integer, integer>
+
   for client_id, ranges in pairs(self.client_state) do
     for _, range in ipairs(ranges) do
       local start_row = range.startLine
@@ -86,9 +91,21 @@ function State:evaluate()
           level[1] = level[1] + 1
           row_level[row] = level
         end
-        row_level[start_row][2] = '>'
-        row_level[end_row][2] = '<'
+        row_starts[start_row] = true
+        row_ends[end_row] = (row_ends[end_row] or 0) + 1
       end
+    end
+  end
+  for row, level in pairs(row_level) do
+    -- A start takes precedence when ranges start and end on the same row,
+    -- otherwise the new fold is ignored.
+    if row_starts[row] then
+      level[2] = '>'
+    elseif row_ends[row] then
+      level[2] = '<'
+      -- Use the outermost level when nested ranges end on the same row,
+      -- otherwise the end of the outer fold is ignored.
+      level[1] = level[1] - row_ends[row] + 1
     end
   end
 end
