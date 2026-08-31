@@ -15,8 +15,9 @@ else
   let b:did_ftplugin_jsonc = 1
 endif
 
-" Set comment (formatting) related options. {{{1
-setlocal commentstring=//\ %s comments=sO:*\ -,mO:*\ \ ,exO:*/,s1:/*,mb:*,ex:*/,://
+" Set comment (formatting) related options.
+setlocal comments=sO:*\ -,mO:*\ \ ,exO:*/,s1:/*,mb:*,ex:*/,://
+setlocal commentstring=//\ %s
 
 " Let Vim know how to disable the plug-in.
 let b:undo_ftplugin = 'setlocal commentstring< comments<'
