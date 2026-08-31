@@ -950,6 +950,7 @@ is_na_patch() {
           '-I compiled (with|without) .*\(\|.+\|\) feature\.$' \
           '-I\{.+ (available|compiled) (with|without) .+\}' \
           '-I\|channel-open-[^|]+\|' \
+          '-I\|comment-install\|' \
           '-I\|popup-windows\|' \
           '-I\|tabpanel\|' \
           '-I\spopup window\s' \

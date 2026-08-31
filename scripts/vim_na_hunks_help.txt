@@ -105,6 +105,7 @@
 \*autocommand-events\*
 \*blowfish\*
 \*builtin-function-list\*
+\*editorconfig-install\*
 \*emacs[_-]tags\*
 \*global-ime\*
 \*help-toc-install\*
