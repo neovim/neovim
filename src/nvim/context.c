@@ -389,7 +389,7 @@ static void ctx_dirs_restore(CtxSwitch *cs)
   } else if (cs->cs_cwd != NULL && ((cs->cs_flags & kCtxKeepDirs) || !_ctx_did_chdir)) {
     os_chdir(cs->cs_cwd);
     // Buffer names are relative to the CWD, so they must follow it back. #41424
-    shorten_fnames(true);
+    shorten_fnames_bufs(true);
   }
   XFREE_CLEAR(cs->cs_cwd);
 }

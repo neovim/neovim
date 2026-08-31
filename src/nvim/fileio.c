@@ -2392,7 +2392,7 @@ void shorten_buf_fname(buf_T *buf, char *dirname, int force)
 }
 
 /// Shorten filenames for all buffers.
-void shorten_fnames(int force)
+void shorten_fnames_bufs(int force)
 {
   char dirname[MAXPATHL];
 
@@ -2404,6 +2404,12 @@ void shorten_fnames(int force)
     // also have a swap file.
     mf_fullname(buf->b_ml.ml_mfp);
   }
+}
+
+/// Shorten filenames for all buffers and force a statusline/tabline redraw.
+void shorten_fnames(int force)
+{
+  shorten_fnames_bufs(force);
   status_redraw_all();
   redraw_tabline = true;
 }
