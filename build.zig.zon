@@ -39,8 +39,8 @@
             .hash = "uncrustify-0.83.0-qkVd7cVCAADAg1kS3ctVBhY2gkxEIs-W8wgurLadbgC-",
         },
         .libiconv = .{
-            .url = "git+https://github.com/allyourcodebase/libiconv#9def4c8a1743380e85bcedb80f2c15b455e236f3",
-            .hash = "libiconv-1.18.0-p9sJwWnqAACzVYeWgXB5r5lOQ74XwTPlptixV0JPRO28",
+            .url = "git+https://github.com/allyourcodebase/libiconv#a244cea3e4f7a0962158307b0e09e656306f4936",
+            .hash = "libiconv-1.19.0-p9sJweX8AAAjGeVgi3PLprwy3KBn28SPkZRPXNKXpeNN",
             .lazy = true,
         },
         .treesitter_c = .{
