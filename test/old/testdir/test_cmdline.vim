@@ -2273,6 +2273,27 @@ func Wildmode_tests()
   call assert_equal('oneA  oneB  oneC', g:Sline)
   call assert_equal('"MyCmd one', @:)
 
+  " Colon-separated modes apply during the same completion phase.
+  call writefile([], 'XwildmodeA', 'D')
+  call writefile([], 'XwildmodeB', 'D')
+  call writefile([], 'XwildmodeC', 'D')
+  set wildmode=list:full
+  let g:Sline = ''
+  call feedkeys(":e Xwildmode\t\<F4>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('XwildmodeA  XwildmodeB  XwildmodeC', g:Sline)
+  call assert_equal('"e XwildmodeA', @:)
+  call feedkeys(":e Xwildmode\t\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"e XwildmodeB', @:)
+
+  " Comma-separated modes apply on consecutive Tab presses.
+  set wildmode=list,full
+  let g:Sline = ''
+  call feedkeys(":MyCmd o\t\<F4>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('oneA  oneB  oneC', g:Sline)
+  call assert_equal('"MyCmd o', @:)
+  call feedkeys(":MyCmd o\t\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd oneA', @:)
+
   set wildmode=""
   call feedkeys(":MyCmd \t\t\<C-B>\"\<CR>", 'xt')
   call assert_equal('"MyCmd oneA', @:)
@@ -2306,6 +2327,13 @@ func Wildmode_tests()
   call assert_equal('"MyCmd o', @:)
   call feedkeys(":MyCmd o\t\t\<C-Y>\<C-B>\"\<CR>", 'xt')
   call assert_equal('"MyCmd o', @:)
+
+  " 'noselect' takes precedence over 'full' on the first Tab.
+  set wildmode=noselect:full
+  call feedkeys(":MyCmd o\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd o', @:)
+  call feedkeys(":MyCmd o\t\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd oneA', @:)
 
   " When 'full' is present, complete after first <tab>.
   set wildmode=noselect,full

@@ -1184,7 +1184,7 @@ static int command_line_wildchar_complete(CommandLineState *s)
     if (wim_longest) {
       res = nextwild(&s->xpc, WILD_LONGEST, options, escape);
     } else {
-      if (wim_noselect || wim_list) {
+      if (wim_noselect || (wim_list && !wim_full)) {
         options |= WILD_NOSELECT;
       }
       if (wim_noinsert) {
