@@ -240,13 +240,17 @@ an archive or as a repository.  For an archive you can follow these steps:
 	   Here "fancytext" is the name of the package, it can be anything
 	   else.
 
+In your |vimrc| use `:packadd!`: it only adds the package to 'runtimepath'
+and leaves the loading to the usual startup.  Without the "!" the package is
+loaded directly, which is what you want when trying one out.  See |:packadd|.
+
 
 ------------------------------------------------------------------------------
 Adding nohlsearch package	*nohlsearch-install* *package-nohlsearch*
 ------------------------------------------------------------------------------
 
-Load the plugin with this command: >
-	packadd nohlsearch
+To start using this plugin, add one line to your vimrc file: >
+	packadd! nohlsearch
 <
 Automatically execute |:nohlsearch| after 'updatetime' or getting into
 |Insert| mode.
