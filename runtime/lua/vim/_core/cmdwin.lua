@@ -188,7 +188,7 @@ function M.confirm()
   end
   local line, type = _close()
   line = line:gsub('%z', '\n'):gsub('(%c)', '\022%1') -- Escape control characters.
-  vim.api.nvim_feedkeys(type .. line .. vim.keycode('<CR>'), 'nt', false)
+  vim.api.nvim_feedkeys(type .. line .. '\r', 'nt', true)
 end
 
 --- Cancel: close the cmdwin and re-enter cmdline mode with the line pre-filled (no execute).
@@ -198,7 +198,7 @@ function M.cancel()
   end
   local line, type = _close()
   line = line:gsub('%z', '\n'):gsub('(%c)', '\022%1') -- Escape control characters.
-  vim.api.nvim_feedkeys(type .. line, 'nt', false)
+  vim.api.nvim_feedkeys(type .. line, 'nt', true)
 end
 
 return M

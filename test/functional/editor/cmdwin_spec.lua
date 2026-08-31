@@ -116,9 +116,9 @@ describe('cmdwin', function()
     eq(':', fn.getcmdtype())
   end)
 
-  it('history entry or current cmdline with control chars', function()
+  it('history entry or current cmdline with control chars or 0x80 byte', function()
     local firstbuf = api.nvim_get_current_buf()
-    local cmdline = 'normal! \023\022ifoo\nbar\027' -- Ctrl-W Ctrl-V ifoo\nbar Esc
+    local cmdline = 'normal! \023\022ifoo\nbar…\027' -- Ctrl-W Ctrl-V ifoo\nbar… Esc
     local bufline = cmdline:gsub('\n', '\0')
     fn.histadd(':', cmdline)
     feed('q:')
@@ -135,7 +135,7 @@ describe('cmdwin', function()
     eq({ bufline, bufline }, api.nvim_buf_get_lines(0, 0, -1, false))
     feed('<CR>')
     eq({ firstbuf, firstbuf }, fn.tabpagebuflist())
-    eq({ 'foo', 'bar' }, api.nvim_buf_get_lines(0, 0, -1, false))
+    eq({ 'foo', 'bar…' }, api.nvim_buf_get_lines(0, 0, -1, false))
   end)
 
   it('async API calls work while cmdwin is open #40312', function()
