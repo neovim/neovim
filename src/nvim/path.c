@@ -64,7 +64,10 @@ bool path_equal(const char *s1, const char *s2, PathCmpFlags flags)
   assert(!(flags & kPathCmpLiteral) || flags == kPathCmpLiteral);
 
   if (flags == kPathCmpLiteral) {
-    return path_cmp(p_fic, s1, s2, MAXPATHL) == 0;
+    const bool is_url = path_with_url(s1) || path_with_url(s2);
+    // URI comparison is scheme-agnostic, so a trailing slash is significant.
+    return (!is_url || strlen(s1) == strlen(s2))
+           && path_cmp(p_fic, s1, s2, MAXPATHL) == 0;
   }
 
   if (flags & kPathCmpExpand) {
