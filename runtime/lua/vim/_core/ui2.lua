@@ -243,6 +243,7 @@ function M.enable(opts)
   if vim.v.vim_did_enter == 0 then
     vim.schedule(function()
       check_cmdheight(vim.o.cmdheight)
+      M.msg.on_option_changed()
     end)
   end
 
