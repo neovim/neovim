@@ -5369,6 +5369,11 @@ M.funcs = {
       	if has("win32")
       	  " ...
       	endif
+      <
+      In Lua, |has()| returns 0 or 1 (not a boolean). Compare with 1: >lua
+      	if vim.fn.has('win32') == 1 then
+      	  -- ...
+      	end
       <					*feature-list*
           List of supported pseudo-feature names:
       	acl		|ACL| support.
