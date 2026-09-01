@@ -217,6 +217,8 @@ The following new features were added.
   • Navigating the |jumplist| with CTRL+O, CTRL+I behaves more intuitively
     when deleting buffers, and avoids "invalid buffer" cases. #25461
   • |:fclose| command.
+  • v_Q-default and |v_@-default| repeat a register for each line of a linewise
+    visual selection.
   • Clicking on a tabpage in the tabline with the middle mouse button closes it.
   • |:checkhealth| buffer can be opened in a split window using modifiers like
     |:vertical|, |:horizontal| and |:botright|.

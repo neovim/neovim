@@ -327,16 +327,15 @@ q			Stops recording.
 ==============================================================================
 Multiple cursors					*mcursor* *multicursor*
 
-You can place extra cursors ("multicursors") in a buffer, to repeat operations
-at each cursor, as-you-type. This is like a live |macro|, but unlike macros (a
-stream of keys without any context), actions (|CmdAtom|) replay "semantically".
+You can place extra cursors ("multicursor") in a buffer, to repeat operations
+at each cursor as-you-type. Unlike a |macro| (a stream of keys without any
+context), multicursor replays actions "semantically" (|CmdAtom|).
 
-- Mappings and Normal-mode operators are applied at each cursor.
+- Normal-mode commands, Mappings, and even Macros (|@|) replay at each cursor.
 - Insert-mode edits appear at each cursor as you type.
-- Motions (|q=|) and Visual-mode sequences replay at each cursor: "viweex"
-  re-executes the selection there, so the extents are per-cursor (each
-  cursor's own word, block, …).
-- Macros (|@|) replay at each cursor.
+- Motions (|q=|) and Visual sequences replay at each cursor: "viweex"
+  re-executes the selection so the extents are per-cursor (each cursor's own
+  word, block, …).
 - Registers are cursor-local. Each cursor reads/writes its own registers.
   The yanks are joined (linewise) when the multicursor session ends.
 - Undo is atomic: |u| reverts the aggregate edits from all cursors at once.
@@ -371,8 +370,8 @@ COMMANDS
 Q			Toggles a multicursor at the current cursor position.
 			Disables follow-mode |q=|.
 
-			With a [count]: places a cursor at every match (|gn|)
-			of the last search pattern. Example:
+[count]Q		Places a cursor at every match (|gn|) of the last
+			search pattern. Example:
 			1. Search for something ("*", "/pattern<CR>", …).
 			2. Type "1Q".
 
@@ -412,6 +411,25 @@ g CTRL-A		During a multicursor session, inserts an ascending
 							*[C*
 [C			Jump to the [count]'th previous cursor.
 
+
+EXAMPLES						*mcursor-examples*
+
+Example: a "follow-once" mapping: "q-{motion}" replays {motion} at every
+cursor, then disables follow-mode again. >lua
+
+    vim.keymap.set('n', 'q-', function()
+      vim.cmd('normal! 1q=')
+      vim.api.nvim_create_autocmd('CmdAtom', {
+        callback = function(ev)
+          if ev.data.lhs == 'q-' then
+            return -- Skip the mapping itself.
+          end
+          vim.cmd('normal! 2q=')
+          return true -- Delete the handler.
+        end,
+      })
+    end)
+<
 
 LIMITATIONS						*mcursor-limitations*
 
