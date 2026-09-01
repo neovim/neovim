@@ -5341,4 +5341,25 @@ describe('LSP', function()
       eq({ foo = true, bar = false }, get_resolved({ 'bar', 'foo' }))
     end)
   end)
+
+  describe('vim.lsp.reuse_client_default', function()
+    it('is exposed and reuses only matching clients', function()
+      exec_lua(create_server_definition)
+      local fn_type, reuse_same, reuse_diff = exec_lua(function()
+        local server = _G._create_server()
+        local client_id = assert(vim.lsp.start({
+          name = 'reuse-default-test',
+          cmd = server.cmd,
+          root_dir = 'some_dir',
+        }))
+        local client = assert(vim.lsp.get_client_by_id(client_id))
+        return type(vim.lsp.reuse_client_default),
+          vim.lsp.reuse_client_default(client, client.config),
+          vim.lsp.reuse_client_default(client, { name = 'other', root_dir = 'some_dir' })
+      end)
+      eq('function', fn_type)
+      eq(true, reuse_same)
+      eq(false, reuse_diff)
+    end)
+  end)
 end)
