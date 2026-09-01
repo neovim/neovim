@@ -112,9 +112,14 @@ do
   --- Use normal! <C-L> to prevent inserting raw <C-L> when using i_<C-O>. #17473
   ---
   --- See |CTRL-L-default|
-  vim.keymap.set('n', '<C-L>', '<Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>', {
-    desc = ':help CTRL-L-default',
-  })
+  vim.keymap.set(
+    'n',
+    '<C-L>',
+    '<Cmd>nohlsearch<Bar>diffupdate'
+      .. '<Bar>call nvim_buf_clear_namespace(0, nvim_create_namespace("nvim.multicursor"), 0, -1)'
+      .. '<Bar>normal! <C-L><CR>',
+    { desc = ':help CTRL-L-default' }
+  )
 
   --- Set undo points when deleting text in insert mode.
   ---
@@ -129,16 +134,10 @@ do
   --- See |&-default|
   vim.keymap.set('n', '&', ':&&<CR>', { desc = ':help &-default' })
 
-  --- Use Q in Visual mode to execute a macro on each line of the selection. #21422
+  --- Use @ in Visual mode to execute a macro on each line of the selection. #21422
   --- This only make sense in linewise Visual mode. #28287
   ---
-  --- Applies to @x and includes @@ too.
-  vim.keymap.set(
-    'x',
-    'Q',
-    "mode() ==# 'V' ? ':normal! @<C-R>=reg_recorded()<CR><CR>' : 'Q'",
-    { silent = true, expr = true, desc = ':help v_Q-default' }
-  )
+  --- Includes @@ too.
   vim.keymap.set(
     'x',
     '@',
@@ -991,10 +990,9 @@ do
     end
   end
 
-  --- If the TUI (term_has_truecolor) was able to determine that the host
-  --- terminal supports truecolor, enable 'termguicolors'. Otherwise, query the
-  --- terminal (using both XTGETTCAP and SGR + DECRQSS). If the terminal's
-  --- response indicates that it does support truecolor enable 'termguicolors',
+  --- If the TUI (term_has_truecolor) detected that the host terminal supports truecolor, enable
+  --- 'termguicolors'. Otherwise, query the terminal (using both XTGETTCAP and SGR + DECRQSS). If
+  --- the terminal's response indicates that it does support truecolor enable 'termguicolors',
   --- but only if the user has not already disabled it.
   ---
   --- @param ui table<string,any> The attached TTY UI (see |nvim_list_uis()|).
@@ -1088,6 +1086,7 @@ do
     end
 
     detect_termguicolors(tty)
+    require('vim._core.mcursor').detect(tty) -- Kitty multicursor protocol.
 
     -- Show progress bars in supporting terminals
     nvim_on('Progress', vim.api.nvim_create_augroup('nvim.progress'), {
@@ -1130,9 +1129,8 @@ do
         return
       end
 
-      -- 'termguicolors': enable when the attaching UI reports truecolor (or the
-      -- terminal query confirms it), unless the user set it. Never disabled here.
-      detect_termguicolors(ui)
+      detect_termguicolors(ui) -- 'termguicolors'
+      require('vim._core.mcursor').detect(ui) -- Kitty multicursor protocol.
 
       -- 'background': (re)query OSC 11. The persistent handler also reacts to
       -- runtime theme changes (mode 2031 -> TUI re-queries -> |TermResponse|);

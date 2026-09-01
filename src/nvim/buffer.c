@@ -77,6 +77,7 @@
 #include "nvim/mark.h"
 #include "nvim/mark_defs.h"
 #include "nvim/mbyte.h"
+#include "nvim/mcursor.h"
 #include "nvim/memfile_defs.h"
 #include "nvim/memline.h"
 #include "nvim/memline_defs.h"
@@ -813,6 +814,7 @@ void buf_clear(void)
 {
   linenr_T line_count = curbuf->b_ml.ml_line_count;
   extmark_free_all(curbuf);   // delete any extmarks
+  mc_buf_free(curbuf);        // Multicursors died with their extmarks.
   while (!(curbuf->b_ml.ml_flags & ML_EMPTY)) {
     ml_delete(1);
   }
@@ -924,6 +926,7 @@ bool buf_freeall(buf_T *buf, int flags)
   linenr_T count = buf->b_ml.ml_line_count;
   ml_close(buf, true);              // close and delete the memline/memfile
   buf->b_ml.ml_line_count = 0;      // no lines in buffer
+  mc_buf_clear(buf);                // Tracked mc positions died with the text.
 
   // Ensure marks are adjusted for cleared buffer in case buffer not on disk:
   // if it is reloaded the buffer will be empty.
@@ -1020,6 +1023,7 @@ static void free_buffer_stuff(buf_T *buf, int free_flags)
   }
   uc_clear(&buf->b_ucmds);               // clear local user commands
   extmark_free_all(buf);                 // delete any extmarks
+  mc_buf_free(buf);                      // Multicursors died with their extmarks.
   map_clear_mode(buf, MAP_ALL_MODES, true, false);  // clear local mappings
   map_clear_mode(buf, MAP_ALL_MODES, true, true);   // clear local abbrevs
   XFREE_CLEAR(buf->b_start_fenc);

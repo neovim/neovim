@@ -53,6 +53,7 @@
 #include "nvim/marktree_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/mbyte_defs.h"
+#include "nvim/mcursor.h"
 #include "nvim/memline.h"
 #include "nvim/memline_defs.h"
 #include "nvim/memory.h"
@@ -380,6 +381,9 @@ static void insert_enter(InsertState *s)
 static int insert_check(VimState *state)
 {
   InsertState *s = (InsertState *)state;
+
+  // Multicursor: insert-cascade, before entry ("A"/"o"/"cw"/…), and after every executed key.
+  mc_ins_cascade();
 
   if (!Ins.revins_legal) {
     Ins.revins_scol = -1;     // reset on illegal motions
@@ -2240,6 +2244,7 @@ int stop_arrow(void)
       // The count is a spec field (not body bytes), so "[count]." replaces it ("3i…").
       prep_redo(false, false, (CmdSpec){ .count = 1, .cmd = 'i' });
       Ins.new_insert_skip = 2;
+      mc_ins_cascade_restart();
     } else {
       // Cursor-move was captured (start_arrow()): the atom mc-cascade will replay it.
       // Only `last_insert` (the ". register, i_CTRL-A) restarts here, like Vim.
@@ -2332,12 +2337,11 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
     // If a space was inserted for auto-formatting, remove it now.
     check_auto_format(true);
 
-    // If we just did an auto-indent, remove the white space from the end
-    // of the line, and put the cursor back.
+    // If we just did an auto-indent, remove the whitespace from EOL, and put the cursor back.
     // Do this when ESC was used or moving the cursor up/down.
-    // Check for the old position still being valid, just in case the text
-    // got changed unexpectedly.
-    if (!nomove && Ins.did_ai
+    // Check for the old position still being valid, just in case the text changed unexpectedly.
+    // Not for span replay during a mc-session: its synthetic <Esc> ends the nested session early.
+    if (!nomove && Ins.did_ai && !mc_ins_replaying()
         && (esc || (vim_strchr(p_cpo, kCpoIndent) == NULL
                     && curwin->w_cursor.lnum != end_insert_pos->lnum))
         && end_insert_pos->lnum <= curbuf->b_ml.ml_line_count) {
@@ -3361,6 +3365,7 @@ static void ins_del(void)
         || do_join(2, false, true, false, false) == FAIL) {
       vim_beep(kOptBoFlagBackspace);
     } else {
+      mc_ins_join();
       curwin->w_cursor.col = temp;
       // Adjust orig_line_count in case more lines have been deleted than
       // have been added. That makes sure, that open_line() later
@@ -3443,6 +3448,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
 
   // Delete newline!
   if (curwin->w_cursor.col == 0) {
+    mc_ins_join();
     linenr_T lnum = Ins.start.lnum;
     if (curwin->w_cursor.lnum == lnum || Ins.revins_on) {
       if (u_save((linenr_T)(curwin->w_cursor.lnum - 2),

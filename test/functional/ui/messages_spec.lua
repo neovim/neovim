@@ -1536,7 +1536,7 @@ stack traceback:
         { content = { { 'baz' } }, kind = 'echo', append = true },
       },
     })
-    feed('Q')
+    feed('@@')
     screen:expect({
       grid = [[
         ^                         |
@@ -1544,7 +1544,7 @@ stack traceback:
       ]],
       messages = {
         {
-          content = { { "E354: Invalid register name: '^@'", 9, 'ErrorMsg' } },
+          content = { { 'E748: No previously used register', 9, 'ErrorMsg' } },
           history = true,
           kind = 'emsg',
         },
@@ -1558,7 +1558,7 @@ stack traceback:
       ]],
       msg_history = {
         prev_cmd = true,
-        { content = { { "E354: Invalid register name: '^@'", 9, 'ErrorMsg' } }, kind = 'emsg' },
+        { content = { { 'E748: No previously used register', 9, 'ErrorMsg' } }, kind = 'emsg' },
       },
     })
   end)
@@ -1611,7 +1611,7 @@ stack traceback:
   end)
 
   it('can capture execute("messages"))', function()
-    feed('Q')
+    feed('@@')
     screen:expect({
       grid = [[
         ^                         |
@@ -1619,7 +1619,7 @@ stack traceback:
       ]],
       messages = {
         {
-          content = { { "E354: Invalid register name: '^@'", 9, 'ErrorMsg' } },
+          content = { { 'E748: No previously used register', 9, 'ErrorMsg' } },
           history = true,
           kind = 'emsg',
         },
@@ -1627,7 +1627,7 @@ stack traceback:
     })
     feed(':let msg = execute("messages")<CR>')
     screen:expect_unchanged()
-    eq("E354: Invalid register name: '^@'", eval('msg'):gsub('\n', ''))
+    eq('E748: No previously used register', eval('msg'):gsub('\n', ''))
   end)
 
   it('single event for multi-expr :echo', function()
@@ -3850,7 +3850,7 @@ describe('progress-message', function()
     eq('str-id', id7)
 
     -- internal messages are also assigned an ID (and thus advance the next progress ID)
-    feed('Q')
+    feed('@@')
     local id8 = api.nvim_echo(
       { { 'test-message 30' } },
       true,

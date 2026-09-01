@@ -38,6 +38,7 @@
 #include "nvim/globals.h"
 #include "nvim/map_defs.h"
 #include "nvim/marktree.h"
+#include "nvim/mcursor.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/pos_defs.h"
@@ -251,6 +252,9 @@ bool extmark_clear(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_col, int u_r
     return false;
   }
 
+  // Multicursor extmarks are about to die, let mc snapshot them.
+  mc_ns_clearing(buf, ns_id);
+
   bool all_ns = (ns_id == 0);
   uint32_t *ns = NULL;
   if (!all_ns) {
@@ -295,6 +299,9 @@ bool extmark_clear(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_col, int u_r
 
   if (marks_cleared_any) {
     decor_state_invalidate(buf);
+    // Deleting the "nvim.multicursor" namespace deletes the cursors it tracked.
+    // TODO(justinmk): ideally, clearing a ns could be handled in userspace, e.g. an event?
+    mc_ns_cleared(buf, ns_id);
   }
 
   return marks_cleared_any;

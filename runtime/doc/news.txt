@@ -270,6 +270,11 @@ DIAGNOSTICS
 
 EDITOR
 
+• Multiple cursors (|multicursor|): edit in many places at once.
+  • Toggle cursors with |Q|, |<C-LeftMouse>|, or |nvim_mcursor()|.
+  • Toggle "follow mode" with |q=|.
+  • Clear cursors with |CTRL-L|, restore them with |gQ|.
+  • [count]Q places a cursor at every search match.
 • |:bcd| sets a buffer-local directory. |getcwd()| and |haslocaldir()| take
   `bufnr` as a third parameter.
 • |:lcd!| |:tcd!| |:bcd!| unsets the directory of that scope.

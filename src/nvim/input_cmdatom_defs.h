@@ -8,10 +8,9 @@
 #include "nvim/input_defs.h"
 
 // Concepts (see :help dev-cmdatom):
-// - atom, composite (atom with subatoms)
-// - insert-session
-// - INSERTION
-// - span
+// - atom, span, composite (atom with subatoms)
+// - insert-session, insertion
+// - payload
 // - replay, cascade, insert-cascade
 
 typedef enum CmdAtomType {
@@ -57,14 +56,14 @@ typedef struct {
 typedef struct CmdAtom CmdAtom;
 typedef kvec_t(CmdAtom) CmdAtomVec;
 
-/// One repeatable operation. `keys` is the replay payload; `spec` is the structured form.
+/// One repeatable operation. `keys` is the replay bytes; `spec` is the structured form.
 struct CmdAtom {
   CmdSpec spec;   ///< Structured fields.
   CmdAtomVec atoms;  ///< Composite (multi-command mapping, Visual sequence): its subatoms,
                      ///< in order; their keys concatenate to `keys`. Empty for non-composite.
   char *keys;     ///< Resolved keysequence (typeahead encoding), including `["x][count]` prefix
                   ///< (unlike `CmdSpec.body`, the raw unprefixed form).
-  char *text;     ///< Payload: insert-session text, or Ex/search cmdline.
+  char *text;     ///< Insert-session text, or Ex/search cmdline payload.
   char *lhs;      ///< Unresolved user input: mapping LHS or macro register ("@q"), or Visual op.
                   ///< Label/hint, not replayed. NULL: untranslated, same as `keys`.
   CmdOrigin origin;  ///< Pre-command state.

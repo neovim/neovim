@@ -68,6 +68,7 @@
 #include "nvim/math.h"
 #include "nvim/mbyte.h"
 #include "nvim/mbyte_defs.h"
+#include "nvim/mcursor.h"
 #include "nvim/memline.h"
 #include "nvim/memline_defs.h"
 #include "nvim/memory.h"
@@ -266,7 +267,7 @@ static const struct nv_cmd {
   { 'N',       nv_next,        NV_MOTION,              SEARCH_REV },
   { 'O',       nv_open,        0,                      0 },
   { 'P',       nv_put,         0,                      0 },
-  { 'Q',       nv_regreplay, 0,                      0 },
+  { 'Q',       nv_Q,           0,                      0 },
   { 'R',       nv_Replace,     0,                      false },
   { 'S',       nv_subst,       NV_KEEPREG,             0 },
   { 'T',       nv_csearch,     NV_NCH_ALW|NV_LANG|NV_MOTION, BACKWARD },
@@ -2041,13 +2042,20 @@ void display_showcmd(void)
   }
   // 'showcmdloc' is "last" or empty
 
+  // Multicursor count prefixes the pending command: "2× ciw".
+  char mc_buf[16];
+  size_t mc_len = mc_showcmd(mc_buf, sizeof(mc_buf));
+
   if (ui_has(kUIMessages)) {
     MAXSIZE_TEMP_ARRAY(content, 1);
     MAXSIZE_TEMP_ARRAY(chunk, 3);
-    if (!showcmd_is_clear) {
+    char ext_buf[sizeof(mc_buf) + SHOWCMD_BUFLEN];
+    STRCPY(ext_buf, mc_buf);
+    xstrlcpy(ext_buf + mc_len, showcmd_is_clear ? "" : showcmd_buf, sizeof(ext_buf) - mc_len);
+    if (*ext_buf != NUL) {
       // placeholder for future highlight support
       ADD_C(chunk, INTEGER_OBJ(0));
-      ADD_C(chunk, CSTR_AS_OBJ(showcmd_buf));
+      ADD_C(chunk, CSTR_AS_OBJ(ext_buf));
       ADD_C(chunk, INTEGER_OBJ(0));
       ADD_C(content, ARRAY_OBJ(chunk));
     }
@@ -2062,7 +2070,7 @@ void display_showcmd(void)
   int showcmd_row = Rows - 1;
   grid_line_start(&msg_grid_adj, showcmd_row);
 
-  int len = 0;
+  int len = mc_len > 0 ? grid_line_puts(sc_col, mc_buf, -1, 0) : 0;
   if (!showcmd_is_clear) {
     len += grid_line_puts(sc_col + len, showcmd_buf, -1, HL_ATTR(HLF_MSG));
   }
@@ -3104,22 +3112,23 @@ static void nv_zet(cmdarg_T *cap)
   }
 }
 
-/// "Q" command.
-static void nv_regreplay(cmdarg_T *cap)
+/// "Q" command: Toggles a multicursor at the cursor position.
+/// "[count]Q": Places a multicursor at every match of the last search pattern.
+/// "{visual}Q": Places a multicursor on each selected line.
+static void nv_Q(cmdarg_T *cap)
 {
-  if (checkclearop(cap->oap)) {
-    return;
-  }
-
-  if (reg_recorded != 0) {
-    // The macro's commands are captured as one "@x"-labeled atom (see
-    // atom_macro_start()).
-    atom_macro_start(reg_recorded);
-  }
-  while (cap->count1-- && !got_int) {
-    if (do_execreg(reg_recorded, false, false, false) == false) {
-      clearopbeep(cap->oap);
-      break;
+  if (reg_recording != 0 || reg_executing != 0) {
+    // Not allowed while recording/executing a macro. |mcursor-limitations|
+    vim_beep(0);
+  } else if (!checkclearop(cap->oap)) {
+    if (Visual.active) {
+      typval_T tv_args[] = { { .v_type = VAR_UNKNOWN } };
+      nlua_call_typval("vim._core.mcursor", "visual", tv_args, NULL);
+    } else if (cap->count0 > 0) {
+      typval_T tv_args[] = { { .v_type = VAR_UNKNOWN } };
+      nlua_call_typval("vim._core.mcursor", "matches", tv_args, NULL);
+    } else {
+      mc_toggle(curbuf, curwin->w_cursor, true);
     }
   }
 }
@@ -4302,6 +4311,24 @@ static void nv_brackets(cmdarg_T *cap)
                      cap->count1) == false) {
       clearopbeep(cap->oap);
     }
+  } else if (cap->nchar == 'C') {
+    // "[C" and "]C": jump to previous/next multicursor.
+    if (cap->oap->op_type != OP_NOP) {
+      // Not an operator motion: a cascaded "d]C" would consume its own targets.
+      clearopbeep(cap->oap);
+    } else {
+      typval_T tv_args[] = {
+        { .v_type = VAR_BOOL, .vval.v_bool = cap->cmdchar == ']' ? kBoolVarTrue : kBoolVarFalse },
+        { .v_type = VAR_NUMBER, .vval.v_number = cap->count1 },
+        { .v_type = VAR_UNKNOWN },
+      };
+      typval_T rettv = TV_INITIAL_VALUE;
+      nlua_call_typval("vim._core.mcursor", "jump", tv_args, &rettv);
+      if (rettv.v_type != VAR_BOOL || rettv.vval.v_bool != kBoolVarTrue) {
+        clearopbeep(cap->oap);
+      }
+      tv_clear(&rettv);
+    }
   } else if (cap->nchar == 'r' || cap->nchar == 's' || cap->nchar == 'S') {
     // "[r", "[s", "[S", "]r", "]s" and "]S": move to next spell error.
     setpcmark();
@@ -4557,14 +4584,11 @@ static void nv_replace(cmdarg_T *cap)
   // Other characters are done below to avoid problems with things like
   // CTRL-V 048 (for edit() this would be R CTRL-V 0 ESC).
   if (had_ctrl_v != Ctrl_V && cap->nchar == '\t' && (curbuf->b_p_et || p_sta)) {
-    atom_stuff_start(cap);
     stuffnumReadbuff(cap->count1);
     stuffcharReadbuff('R');
     stuffcharReadbuff('\t');
     stuffcharReadbuff(ESC);
-    if (exec_stuffed(cap->oap)) {
-      cap->retval |= CA_COMMAND_BUSY;
-    }
+    exec_stuffed(cap);
     return;
   }
 
@@ -4880,14 +4904,11 @@ static void nv_optrans(cmdarg_T *cap)
   static const char *str = "xXDCsSY&";
 
   if (!checkclearopq(cap->oap)) {
-    atom_stuff_start(cap);
     if (cap->count0) {
       stuffnumReadbuff(cap->count0);
     }
     stuffReadbuff(ar[strchr(str, (char)cap->cmdchar) - str]);
-    if (exec_stuffed(cap->oap)) {
-      cap->retval |= CA_COMMAND_BUSY;
-    }
+    exec_stuffed(cap);
   }
   cap->opcount = 0;
 }
@@ -5416,6 +5437,8 @@ static void nv_g_cmd(cmdarg_T *cap)
       cap->cmdchar = cap->nchar;
       cap->nchar = NUL;
       nv_addsub(cap);
+    } else if (cap->nchar == Ctrl_A && cap->oap->op_type == OP_NOP && mc_buf_has_cursors(curbuf)) {
+      mc_counter(cap->count1);
     } else {
       clearopbeep(oap);
     }
@@ -5443,6 +5466,17 @@ static void nv_g_cmd(cmdarg_T *cap)
   // "gV": Don't reselect the previous Visual area after a Select mode mapping of menu.
   case 'V':
     Visual.reselect = false;
+    break;
+
+  // "gQ": restore the previous multicursors (analogous to "gv").
+  case 'Q':
+    if (reg_recording != 0 || reg_executing != 0) {
+      // Not allowed while recording/executing a macro. |mcursor-limitations|
+      vim_beep(0);
+    } else {
+      typval_T tv_args[] = { { .v_type = VAR_UNKNOWN } };
+      nlua_call_typval("vim._core.mcursor", "restore", tv_args, NULL);
+    }
     break;
 
   // "gh":  start Select mode.
@@ -5657,7 +5691,7 @@ static void nv_g_cmd(cmdarg_T *cap)
   case K_LEFTMOUSE:
     if (do_mouse(oap, cap->nchar, BACKWARD, cap->count1, 0)) {
       stuffcharReadbuff(Ctrl_RSB);
-      exec_stuffed(oap);
+      exec_stuffed(cap);
     }
     break;
 
@@ -5777,15 +5811,12 @@ static void nv_dot(cmdarg_T *cap)
   // If "restart_edit" is true, the last but one command is repeated
   // instead of the last command (inserting text). This is used for
   // CTRL-O <.> in insert mode.
-  atom_stuff_start(cap);
   if (start_redo(cap->count0, restart_edit != 0 && Ins.moved == kInsNone) == false) {
     clearopbeep(cap->oap);
     return;
   }
   // Execute the redo keys here: the whole replay resolves within this "." command.
-  if (exec_stuffed(cap->oap)) {
-    cap->retval |= CA_COMMAND_BUSY;
-  }
+  exec_stuffed(cap);
 }
 
 /// CTRL-R: undo undo or specify register in select mode
@@ -6397,6 +6428,7 @@ static void nv_object(cmdarg_T *cap)
 /// "q" command: Start/stop macro recording.
 /// "q:", "q/", "q?": cmdwin.
 /// "[count]q:": interactive Ex-mode.
+/// "q=": Multicursor "follow".
 static void nv_q(cmdarg_T *cap)
 {
   if (cap->oap->op_type == OP_FORMAT) {
@@ -6411,7 +6443,11 @@ static void nv_q(cmdarg_T *cap)
     return;
   }
 
-  if (cap->nchar == ':' || cap->nchar == '/' || cap->nchar == '?') {
+  if (cap->nchar == '=') {
+    if (!mc_follow_toggle(cap->count0)) {
+      clearopbeep(cap->oap);
+    }
+  } else if (cap->nchar == ':' || cap->nchar == '/' || cap->nchar == '?') {
     if (cmdwin_buf != NULL) {
       emsg(_(e_cmdline_window_already_open));
       return;
@@ -6729,30 +6765,32 @@ void normal_cmd(oparg_T *oap, bool toplevel)
   *oap = s.oa;
 }
 
-/// Executes the pending readahead (see "Stuffing", input.c).
+/// Executes pending readahead now (see "Stuffing", input.c).
 ///
-/// During "textlock" the stuffed keys are left for the main loop instead (for CmdAtom/multicursor
-/// purposes, that's fine: if stuff_empty()=false, the pending CmdAtom stays open and will collect
-/// the effects later).
+/// During "textlock" the stuffed keys are queued instead (main loop). For CmdAtom/multicursor
+/// purposes, that's fine: if stuff_empty()=false, pending CmdAtom stays open, will collect later.
 ///
-/// @param oap  The continuing operator state (see `normal_cmd`), or NULL.
-/// @return  True if insert-session-resume is pending (i_CTRL-O): the caller reports
-///          CA_COMMAND_BUSY, so resume happens after next command instead.
-bool exec_stuffed(oparg_T *oap)
+/// @param cap  The cmd whose translation was stuffed ("x" => "dl"), or NULL (internal stuff).
+void exec_stuffed(cmdarg_T *cap)
 {
+  if (cap != NULL) {
+    atom_stuff_start(cap);  // Label as one atom.
+  }
   if (text_locked() || curbuf_locked()) {
-    return false;
+    return;
   }
   oparg_T oa;
   clear_oparg(&oa);
-  if (oap == NULL) {
-    oap = &oa;
-  }
+  oparg_T *oap = cap != NULL ? cap->oap : &oa;
   finish_op = false;
   while (!stuff_empty() && !got_int) {
     update_topline_cursor();
+    // Continue the command's operator state.
     normal_cmd(oap, true);
   }
   finish_op = false;
-  return restart_edit != 0;
+  if (cap != NULL && restart_edit != 0) {
+    // When insert-session-resume is pending (i_CTRL-O), resume happens after next command.
+    cap->retval |= CA_COMMAND_BUSY;
+  }
 }

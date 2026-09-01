@@ -40,9 +40,8 @@ selection included.  See |visual-repeat|.
 ==============================================================================
 Semantic repeat				*action-repeat* *cmdatom* *excalibur*
 
-The |CmdAtom| event is published on every user action. This avoids the need
-for plugins to "announce" the repeatable unit, thus plugins like vim-repeat
-aren't needed.
+Every user action emits a |CmdAtom| event. This avoids the need for plugins to
+"announce" the repeatable unit, thus plugins like vim-repeat aren't needed.
 
 `CmdAtom.lhs` is the high-level user input collected during an action,
 including getchar() input. This is signficant: it reflects the semantic
@@ -113,6 +112,12 @@ vim-repeat or similar. >lua
       end,
     })
     vim.keymap.set('n', '.', function()
+      -- Multicursors: degrade to builtin "." (cascades).
+      local mc = vim.api.nvim_create_namespace('nvim.multicursor')
+      if #vim.api.nvim_buf_get_extmarks(0, mc, 0, -1, { limit = 1 }) > 0 then
+        vim.api.nvim_feedkeys('.', 'n', false)
+        return
+      end
       -- CmdAtom is deferred; schedule the replay, in case "." follows an edit.
       vim.schedule(function()
         if last then
@@ -295,18 +300,6 @@ q			Stops recording.
 {Visual}@@		register for each selected line.
 			See |visual-repeat|, |default-mappings|.
 
-							*Q*
-Q			Repeat the last recorded register [count] times.
-			See |reg_recorded()|.
-
-							*v_Q-default*
-{Visual}Q		In linewise Visual mode, repeat the last recorded
-			register for each selected line.
-			See |visual-repeat|, |default-mappings|.
-
-							*v_Q*
-{Visual}Q		Place a cursor on each line of the Visual selection.
-
 							*:@*
 :[addr]@{0-9a-z".=*+}	Execute the contents of register {0-9a-z".=*+} as an
 			Ex command.  First set cursor at line [addr] (default
@@ -334,7 +327,106 @@ Q			Repeat the last recorded register [count] times.
 ==============================================================================
 Multiple cursors					*mcursor* *multicursor*
 
-todo
+You can place extra cursors ("multicursors") in a buffer, to repeat operations
+at each cursor, as-you-type. This is like a live |macro|, but unlike macros (a
+stream of keys without any context), actions (|CmdAtom|) replay "semantically".
+
+- Mappings and Normal-mode operators are applied at each cursor.
+- Insert-mode edits appear at each cursor as you type.
+- Motions (|q=|) and Visual-mode sequences replay at each cursor: "viweex"
+  re-executes the selection there, so the extents are per-cursor (each
+  cursor's own word, block, …).
+- Macros (|@|) replay at each cursor.
+- Registers are cursor-local. Each cursor reads/writes its own registers.
+  The yanks are joined (linewise) when the multicursor session ends.
+- Undo is atomic: |u| reverts the aggregate edits from all cursors at once.
+- CTRL-C interrupts the cascade.
+
+Example: place a cursor on every matching pattern: >
+    :g/pattern/normal! nQ
+<
+Example: place a cursor at each |quickfix| item, or a range: >
+    :cdo normal! Q
+    :2,4cdo normal! Q
+<
+Example: place a cursor at every match, using the API: >lua
+    for _, m in ipairs(vim.fn.matchbufline('%', [[pattern]], 1, '$')) do
+      vim.api.nvim_mcursor(0, { m.lnum, m.byteidx })
+    end
+<
+Plugins can place cursors with |nvim_mcursor()| and inspect user actions via
+the |CmdAtom| event.
+
+The cursor positions are tracked as |extmarks| in the "nvim.multicursor"
+namespace. Query them with |nvim_buf_get_extmarks()|; deleting an extmark
+deletes the cursor. You can also use |:marks| to peek at cursors: >
+    :marks nvim.multicursor
+<
+Multicursors are presented as |hl-MCursor| highlights, unless your (terminal)
+UI supports the Kitty multiple-cursors protocol.
+
+
+COMMANDS
+							*Q*
+Q			Toggles a multicursor at the current cursor position.
+			Disables follow-mode |q=|.
+
+			With a [count]: places a cursor at every match (|gn|)
+			of the last search pattern. Example:
+			1. Search for something ("*", "/pattern<CR>", …).
+			2. Type "1Q".
+
+							*mcursor-mouse* *<C-LeftMouse>*
+<C-LeftMouse>		Toggles a multicursor at the click position, without
+			moving the primary cursor (or changing windows). Does
+			NOT disable follow-mode |q=|. No-op in Insert-mode.
+
+							*v_Q*
+{Visual}Q		Places a cursor on each line of the Visual selection.
+			Enables follow-mode |q=|.
+
+							*q=*
+q=			Toggles follow-mode: motions (not jumps/scrolls) are
+			replayed per-cursor. Cursors arriving at the same
+			position (e.g. "G") are merged (deduplicated).
+
+			Use [count] to force the mode instead of toggling:
+			"1q=" on, "2q=" off.
+
+							*mcursor-clear*
+CTRL-L			Clears multicursors in the current buffer.
+			|CTRL-L-default|
+
+							*gQ*
+gQ			Restores the previous multicursors.
+
+							*g_CTRL-A*
+g CTRL-A		During a multicursor session, inserts an ascending
+			number ("counter") at each cursor, so a column of
+			cursors becomes 1, 2, 3, …. Use [count] to choose the
+			initial number.
+
+							*]C*
+]C			Jump to the [count]'th next cursor.
+
+							*[C*
+[C			Jump to the [count]'th previous cursor.
+
+
+LIMITATIONS						*mcursor-limitations*
+
+- Extra cursors on the same line can be lost or misplaced by an edit that
+  shifts columns (e.g. inserting text): the cursors shift each other.
+- Undo restores the buffer, not (per-cursor) registers.
+- Time-travel undo (|g-|, |g+|, |:earlier|) clears all cursors.
+- Reloading/unloading a buffer (|:edit!|, 'autoread') clears its cursors
+  (extmarks limitation).
+- An operator replayed at a cursor inside a closed fold applies to the whole
+  fold, like any operator (|fold-behavior|).
+- |Q| is not allowed while recording or executing a macro.
+- An 'operatorfunc' that caches its |getchar()| input instead of re-reading it
+  misbehaves at the extra cursors: the unconsumed input runs as a normal-mode
+  key.
 
 
  vim:tw=78:ts=8:noet:ft=help:norl:

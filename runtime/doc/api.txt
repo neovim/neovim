@@ -573,9 +573,9 @@ nvim_ui_term_event({event}, {value})                      *nvim_ui_term_event*
     Emitted by the TUI client to signal when a host-terminal event occurred.
 
     Supports these events:
-    • "termresponse": The host-terminal sent a DA1, OSC, DCS, or APC response
-      sequence to Nvim. The payload is the received response. Sets
-      |v:termresponse| and fires |TermResponse|.
+    • "termresponse": The host-terminal sent an OSC, DCS, APC, or recognized
+      CSI (DA1, kitty multiple-cursors) response to Nvim. The payload is the
+      received response. Sets |v:termresponse| and fires |TermResponse|.
 
     Attributes: ~
         |RPC| only
@@ -1278,6 +1278,20 @@ nvim_load_context({dict})                                *nvim_load_context()*
 
     Return: ~
         (`any`)
+
+nvim_mcursor({buf}, {pos})                                    *nvim_mcursor()*
+    Adds a multicursor in the given buffer.
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Parameters: ~
+      • {buf}  (`integer`) Buffer handle, or 0 for current buffer
+      • {pos}  (`[integer, integer]`) (row, col) (1,0)-indexed cursor position
+               (byte offset)
+
+    Return: ~
+        (`integer`) Total number of extra cursors.
 
 nvim_open_term({buf}, {opts})                               *nvim_open_term()*
     Open a terminal instance in a buffer

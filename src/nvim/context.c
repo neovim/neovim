@@ -11,6 +11,7 @@
 // Related:
 // - vim.with()
 // - switch_option_context(), restore_option_context()
+// - McSandbox: input-replay guard. Sibling axis to ctx_switch() and ctx_save().
 
 #include <assert.h>
 #include <stdbool.h>

@@ -121,6 +121,12 @@ function vim.api.nvim__invalidate_glyph_cache() end
 
 --- WARNING: This feature is experimental/unstable.
 ---
+--- Returns true if a multicursor cascade is in-progress.
+--- @return boolean
+function vim.api.nvim__mcursor_cascading() end
+
+--- WARNING: This feature is experimental/unstable.
+---
 --- Get the properties for namespace
 ---
 --- @param ns_id integer Namespace
@@ -1673,6 +1679,13 @@ function vim.api.nvim_list_wins() end
 --- @param dict table<string,any> Msgpack-encoded editor state, in the form returned by [nvim_get_context()].
 --- @return any
 function vim.api.nvim_load_context(dict) end
+
+--- Adds a multicursor in the given buffer.
+---
+--- @param buf integer Buffer handle, or 0 for current buffer
+--- @param pos [integer, integer] (row, col) (1,0)-indexed cursor position (byte offset)
+--- @return integer # Total number of extra cursors.
+function vim.api.nvim_mcursor(buf, pos) end
 
 --- @deprecated
 --- @param msg string

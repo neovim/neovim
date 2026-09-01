@@ -110,7 +110,7 @@ func Test_xterm_mouse_right_click_extends_visual()
   bwipe!
 endfunc
 
-" Test that <C-LeftMouse> jumps to help tag and <C-RightMouse> jumps back.
+" Nvim: <C-LeftMouse> adds a multicursor. <C-RightMouse> still pops the tagstack.
 func Test_xterm_mouse_ctrl_click()
   let save_mouse = &mouse
   let save_term = &term
@@ -129,14 +129,15 @@ func Test_xterm_mouse_ctrl_click()
     let col = 1
     call MouseCtrlLeftClick(row, col)
     call MouseLeftRelease(row, col)
-    call assert_match('usr_02.txt$', bufname('%'), msg)
-    call assert_equal('*usr_02.txt*', expand('<cWORD>'), msg)
+    " No tag jump: a multicursor was added at the click position.
+    "call assert_match('usr_02.txt$', bufname('%'), msg)
+    "call assert_equal('*usr_02.txt*', expand('<cWORD>'), msg)
 
     call MouseCtrlRightClick(row, col)
     call MouseRightRelease(row, col)
     " call assert_match('help.txt$', bufname('%'), msg)
     call assert_match('usr_toc.txt$', bufname('%'), msg)
-    call assert_equal('|usr_02.txt|', expand('<cWORD>'), msg)
+    "call assert_equal('|usr_02.txt|', expand('<cWORD>'), msg)
 
     helpclose
   endfor

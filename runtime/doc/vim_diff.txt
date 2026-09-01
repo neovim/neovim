@@ -235,6 +235,7 @@ MAJOR COMPONENTS
 - Job control                     |job-control|
 - LSP framework                   |lsp|
 - Lua scripting                   |lua| |-l|
+- Multicursor                     |multicursor|
 - Parsing engine                  |treesitter|
 - Plugin manager                  |vim.pack|
 - Providers

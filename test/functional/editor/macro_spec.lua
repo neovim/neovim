@@ -74,7 +74,7 @@ describe('macros with default mappings', function()
     eq('lxxx', eval('@i'))
   end)
 
-  it('can be replayed with Q', function()
+  it('can be replayed with @@', function()
     insert [[
 hello
 hello
@@ -87,39 +87,7 @@ helloFOO
 hello
 hello]]
 
-    feed [[Q]]
-    expect [[
-helloFOOFOO
-hello
-hello]]
-
-    feed [[G3Q]]
-    expect [[
-helloFOOFOO
-hello
-helloFOOFOOFOO]]
-
-    feed [[ggV3jQ]]
-    expect [[
-helloFOOFOOFOO
-helloFOO
-helloFOOFOOFOOFOO]]
-  end)
-
-  it('can be replayed with Q and @@', function()
-    insert [[
-hello
-hello
-hello]]
-    feed [[gg]]
-
-    feed [[qqAFOO<esc>q]]
-    expect [[
-helloFOO
-hello
-hello]]
-
-    feed [[Q]]
+    feed [[@q]]
     expect [[
 helloFOOFOO
 hello
@@ -168,39 +136,6 @@ helloFOO]]
 helloFOO123
 helloFOO123
 helloFOO]]
-  end)
-
-  it('can be recorded and replayed in Visual mode', function()
-    insert('foo BAR BAR foo BAR foo BAR BAR BAR foo BAR BAR')
-    feed('0vqifofRq')
-    eq({ 0, 1, 7, 0 }, fn.getpos('.'))
-    eq({ 0, 1, 1, 0 }, fn.getpos('v'))
-    feed('Q')
-    eq({ 0, 1, 19, 0 }, fn.getpos('.'))
-    eq({ 0, 1, 1, 0 }, fn.getpos('v'))
-    feed('Q')
-    eq({ 0, 1, 27, 0 }, fn.getpos('.'))
-    eq({ 0, 1, 1, 0 }, fn.getpos('v'))
-    feed('@i')
-    eq({ 0, 1, 43, 0 }, fn.getpos('.'))
-    eq({ 0, 1, 1, 0 }, fn.getpos('v'))
-  end)
-
-  it('can be recorded and replayed in Visual mode when ignorecase', function()
-    command('set ignorecase')
-    insert('foo BAR BAR foo BAR foo BAR BAR BAR foo BAR BAR')
-    feed('0vqifofRq')
-    eq({ 0, 1, 7, 0 }, fn.getpos('.'))
-    eq({ 0, 1, 1, 0 }, fn.getpos('v'))
-    feed('Q')
-    eq({ 0, 1, 19, 0 }, fn.getpos('.'))
-    eq({ 0, 1, 1, 0 }, fn.getpos('v'))
-    feed('Q')
-    eq({ 0, 1, 27, 0 }, fn.getpos('.'))
-    eq({ 0, 1, 1, 0 }, fn.getpos('v'))
-    feed('@i')
-    eq({ 0, 1, 43, 0 }, fn.getpos('.'))
-    eq({ 0, 1, 1, 0 }, fn.getpos('v'))
   end)
 
   it('can be replayed with @ in blockwise Visual mode', function()

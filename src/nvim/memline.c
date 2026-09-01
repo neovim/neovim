@@ -1880,6 +1880,27 @@ colnr_T ml_get_buf_len(buf_T *buf, linenr_T lnum)
   return buf->b_ml.ml_line_textlen - 1;
 }
 
+/// Gets the charwise NL-joined text of range [start, end), 1-based lnum, 0-based col, end col
+/// exclusive, as an allocated String ("" if empty). Line range must be valid (start <= end); cols
+/// clamp to line-length.
+String ml_region_text(buf_T *buf, pos_T start, pos_T end)
+  FUNC_ATTR_NONNULL_ALL
+{
+  StringBuilder sb = KV_INITIAL_VALUE;
+  for (linenr_T lnum = start.lnum; lnum <= end.lnum; lnum++) {
+    char *line = ml_get_buf(buf, lnum);
+    colnr_T len = ml_get_buf_len(buf, lnum);
+    colnr_T from = lnum == start.lnum ? MIN(start.col, len) : 0;
+    colnr_T to = lnum == end.lnum ? MIN(end.col, len) : len;
+    kv_concat_len(sb, line + from, (size_t)(to - from));
+    if (lnum < end.lnum) {
+      kv_push(sb, NL);
+    }
+  }
+  kv_push(sb, NUL);
+  return cbuf_as_string(sb.items, kv_size(sb) - 1);
+}
+
 /// @return  codepoint at pos. pos must be either valid or have col set to MAXCOL!
 int gchar_pos(pos_T *pos)
   FUNC_ATTR_NONNULL_ARG(1)

@@ -27,8 +27,8 @@ CTRL-L			Clears and redraws the screen.  The redraw may happen
 			See also |nvim__redraw()|.
 							*CTRL-L-default*
 			By default, also clears search highlighting
-			|:nohlsearch| and updates diffs |:diffupdate|.
-			|default-mappings|
+			|:nohlsearch|, removes |multicursor|s, and updates
+			diffs |:diffupdate|. |default-mappings|
 
 							*:mod* *:mode* *E359*
 :mod[e]			Clears and redraws the screen.

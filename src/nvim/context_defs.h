@@ -22,7 +22,7 @@ typedef struct {
 } Context;
 typedef kvec_t(Context) ContextVec;
 
-#define CONTEXT_INIT (Context) { \
+#define CONTEXT_INIT { \
   .pos = { 0 }, \
   .mark = 0, \
   .curswant = -1, \

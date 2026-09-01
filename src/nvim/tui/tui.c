@@ -1687,10 +1687,16 @@ void tui_default_colors_set(TUIData *tui, Integer rgb_fg, Integer rgb_bg, Intege
   invalidate(tui, 0, tui->grid.height, 0, tui->grid.width);
 }
 
-/// Writes directly to the TTY, bypassing the buffer.
+/// Writes to the TTY, or buffers (to avoid "tearing") if a frame is being assembled (or output is
+/// already buffered).
 void tui_ui_send(TUIData *tui, String content)
   FUNC_ATTR_NONNULL_ALL
 {
+  if (kv_size(tui->invalid_regions) || tui->bufpos > 0) {
+    // Append to buffer instead of writing directly.
+    out(tui, content.data, content.size);
+    return;
+  }
   uv_write_t req;
   uv_buf_t buf = { .base = content.data, .len = UV_BUF_LEN(content.size) };
   int ret = uv_write(&req, (uv_stream_t *)&tui->output_handle, &buf, 1, NULL);

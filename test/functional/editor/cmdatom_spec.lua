@@ -124,7 +124,7 @@ describe('CmdAtom', function()
 
   it('Lua-callback mapping (e.g. "]q" default)', function()
     -- Same shape as the "]q" default mapping: a Lua callback with no
-    -- replayable keys. Still a user action: it publishes with an empty
+    -- replayable keys. Still a user action: it emits with an empty
     -- replay payload.
     n.exec_lua([[
       vim.keymap.set('n', ']q', function()
@@ -199,7 +199,7 @@ describe('CmdAtom', function()
   end)
 
   it('motions, search, Ex emit without an edit', function()
-    -- Emission is not tied to editing: every user action publishes, so
+    -- Emission is not tied to editing: every user action emits, so
     -- plugins can observe all activity.
     fn.setline(1, { 'alpha beta', 'gamma delta' })
     feed('gg0')
@@ -409,6 +409,29 @@ describe('CmdAtom', function()
     feed('2G&3G2&')
     eq({ 'red a', 'red b', 'red c', 'red d' }, get_lines())
     eq({ type = 'excmd', lhs = '2&', keys = ':.,.+1s\n' }, pick(atom_last(), 'type', 'lhs', 'keys'))
+
+    -- Reg "." put re-inserts through edit(), and a mapping's composite labels it.
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'one' })
+    feed('ggifoo<Esc>')
+    feed('$".p')
+    eq('fooonefoo', fn.getline(1))
+    eq(
+      { type = 'insert', lhs = k('1afoo<Esc>'), keys = k('1afoo<Esc>') },
+      pick(atom_last(), 'type', 'lhs', 'keys')
+    )
+    command('nnoremap ,p ".p')
+    feed(',p')
+    eq(
+      { type = 'insert', lhs = ',p', keys = k('1afoo<Esc>') },
+      pick(atom_last(), 'type', 'lhs', 'keys')
+    )
+    -- Typed ":put ." emits typed cmdline payload, not the internal ":put _" translation.
+    feed(':put .<CR>')
+    eq('foo', fn.getline(2))
+    eq(
+      { type = 'excmd', lhs = ':put .\n', keys = ':put .\n', text = 'put .' },
+      pick(atom_last(), 'type', 'lhs', 'keys', 'text')
+    )
   end)
 
   it('mapping that enters :terminal mode', function()
@@ -468,11 +491,6 @@ describe('CmdAtom', function()
     local evs = take()
     eq(1, #evs)
     eq('@q', evs[1].lhs)
-    -- Same for "Q" (replay the last recorded register).
-    feed('Q')
-    evs = take()
-    eq(1, #evs)
-    eq({ lhs = '@q', keys = 'dl' }, pick(evs[1], 'lhs', 'keys'))
 
     -- Programmatic / replayed input must NOT leak any atom.
     fresh()
@@ -1444,6 +1462,12 @@ describe('CmdAtom', function()
         end,
       })
       vim.keymap.set('n', '.', function()
+        -- Multicursors: degrade to builtin ".", which repeats at each cursor.
+        local mc = vim.api.nvim_create_namespace('nvim.multicursor')
+        if #vim.api.nvim_buf_get_extmarks(0, mc, 0, -1, { limit = 1 }) > 0 then
+          vim.api.nvim_feedkeys('.', 'n', false)
+          return
+        end
         vim.schedule(function()
           if last then
             vim.api.nvim_feedkeys(last.keys or last.lhs, last.keys and 'n' or 'm', false)
@@ -1490,6 +1514,17 @@ describe('CmdAtom', function()
     feed('.')
     retry(nil, 1000, function()
       eq('cd', fn.getline(1))
+    end)
+
+    -- While multicursor is active, the "." mapping degrades to builtin "." so it cascades.
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'aaa', 'bbb', 'ccc' })
+    feed('gg0QjQj')
+    feed('x')
+    n.poke_eventloop()
+    eq({ 'aa', 'bb', 'cc' }, api.nvim_buf_get_lines(0, 0, -1, true))
+    feed('.')
+    retry(nil, 1000, function()
+      eq({ 'a', 'b', 'c' }, api.nvim_buf_get_lines(0, 0, -1, true))
     end)
   end)
 

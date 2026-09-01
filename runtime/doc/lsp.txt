@@ -219,7 +219,7 @@ Call |vim.lsp.enable()| to ENABLE a config: it will automatically ACTIVATE
 
 - 'filetype' matches one of the config `filetypes`
 - 'buftype' is empty or "help"
-- `root_markers` or `root_dir()` resolved a workspace roort, or the config has
+- `root_markers` or `root_dir()` resolved a workspace root, or the config has
   `workspace_required=false`
 
 Note: The initial call to |vim.lsp.enable()| (or |:lsp-enable|) also actively
