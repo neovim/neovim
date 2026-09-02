@@ -71,7 +71,7 @@ function M.range(buf, ns, hlgroup, start, finish, opts)
     or {
       buf,
       finish[1] + 1,
-      finish[2] ~= -1 and start[2] ~= v_maxcol and finish[2] + 1 or v_maxcol,
+      finish[2] ~= -1 and finish[2] ~= v_maxcol and finish[2] + 1 or v_maxcol,
       0,
     }
 
