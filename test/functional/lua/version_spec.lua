@@ -167,8 +167,12 @@ describe('version', function()
         eq(nil, vim.version.intersect(r2, r1))
       else
         local ref = vim.version.range(output)
-        eq(ref, vim.version.intersect(r1, r2))
-        eq(ref, vim.version.intersect(r2, r1))
+        local result1 = vim.version.intersect(r1, r2)
+        local result2 = vim.version.intersect(r2, r1)
+        eq(ref, result1)
+        eq(ref, result2)
+        assert(result1:has(result1.from))
+        eq(result1, vim.version.intersect(result1, r1))
       end
     end
 
