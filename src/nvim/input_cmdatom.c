@@ -1355,9 +1355,11 @@ static void atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
       CmdAtom atom = atom_from_redo(kAOperator);
       // The payload ('operatorfunc' getchar()) is not in the captured redo, append it.
       atom_payload_append(&atom, old);
-      // Cascade only on an OBSERVABLE effect: an edit or register write. A redoable operator that
-      // did neither is a no-op (vim-surround "ysa[" whose surround char was <Esc>).
-      bool effect = changed || reg_max_ts(true) > old->reg_ts;
+
+      // Cascade only an observable "effect": edit, register-write, or cursor-move (only during
+      // follow-mode).
+      bool effect = changed || reg_max_ts(true) > old->reg_ts
+                    || (mc_following() && atom_origin_moved(old->origin));
       if (atom.keys != NULL && *atom.keys != NUL) {
         atom.origin = old->origin;
         atom_push(effect, &atom);

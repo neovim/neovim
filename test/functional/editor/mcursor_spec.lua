@@ -2271,7 +2271,7 @@ describe('multicursor', function()
     end)
   end)
 
-  describe('operatorfunc (g@)', function()
+  describe("'operatorfunc' (g@)", function()
     it('VISUAL-mode surround ("S") cascades', function()
       pending('visual ":" LHS-replay: the visual selection differs per cursor; TODO')
       -- Minimal vim-surround "S": VSurround is an Ex command plus a getchar()
@@ -2294,29 +2294,26 @@ describe('multicursor', function()
       eq({ '"foo" one', '"bar" two' }, get_lines())
     end)
 
-    it(
-      'surround-style plugin cascades, getchar() payload included; one u/CTRL-R reverts',
-      function()
-        -- The op edits each cursor's region through :normal + register juggling (a full
-        -- exec_normal() per cursor).
-        n.exec(t_atom.minisurround_vim)
-        cursors({ 'alpha beta', 'gamma delta', 'epsilon zeta' }, 'Qj0Qj0')
-        atoms_start()
-        feed('ysiw"')
-        -- The atom is the redobuff plus the getchar()'d payload: the replayed
-        -- opfunc reads the same wrap char.
-        eq({ 'g@iw"' }, atoms_tail(1))
-        eq({ '"alpha" beta', '"gamma" delta', '"epsilon" zeta' }, get_lines())
-        -- The whole cascade (primary + replays) is ONE undo step: a single
-        -- u/CTRL-R reverts or reapplies it at every cursor.
-        feed('u')
-        eq({ 'alpha beta', 'gamma delta', 'epsilon zeta' }, get_lines())
-        feed('<C-r>')
-        eq({ '"alpha" beta', '"gamma" delta', '"epsilon" zeta' }, get_lines())
-      end
-    )
+    it('surround plugin (w/ getchar() payload) cascades; one u/CTRL-R reverts', function()
+      -- The op edits each cursor's region through :normal + register juggling (a full
+      -- exec_normal() per cursor).
+      n.exec(t_atom.minisurround_vim)
+      cursors({ 'alpha beta', 'gamma delta', 'epsilon zeta' }, 'Qj0Qj0')
+      atoms_start()
+      feed('ysiw"')
+      -- The atom is the redobuff plus the getchar()'d payload: the replayed
+      -- opfunc reads the same wrap char.
+      eq({ 'g@iw"' }, atoms_tail(1))
+      eq({ '"alpha" beta', '"gamma" delta', '"epsilon" zeta' }, get_lines())
+      -- The whole cascade (primary + replays) is ONE undo step: a single
+      -- u/CTRL-R reverts or reapplies it at every cursor.
+      feed('u')
+      eq({ 'alpha beta', 'gamma delta', 'epsilon zeta' }, get_lines())
+      feed('<C-r>')
+      eq({ '"alpha" beta', '"gamma" delta', '"epsilon" zeta' }, get_lines())
+    end)
 
-    it('a no-effect operator (aborted "ysa[") does not cascade; cursors survive', function()
+    it('no-effect operator (aborted "ysa[") does not cascade', function()
       -- vim-surround "ysa[" whose surround char is <Esc>/CTRL-C: a redoable g@ whose opfunc does
       -- nothing. Its "a[" textobject jumps EVERY cursor to the same "[", so a cascade would
       -- collapse them (dedupe). No edit and no register write = no per-cursor effect: must not
@@ -2335,6 +2332,39 @@ describe('multicursor', function()
       feed('gg0Qj0') -- cursor on line 1, primary on line 2 (neither has brackets)
       feed(',sa[z') -- g@ + a[ jumps primary to line 4's "["; opfunc getchar()'s "z", does nothing
       eq(1, ncursors()) -- the cursor survives
+    end)
+
+    it('motion-only operator cascades during follow-mode #41612', function()
+      -- The operator does not change text/registers; it only moves the cursor.
+      n.exec_lua([[
+        local function test_op(motion)
+          if motion == nil then
+            vim.o.operatorfunc = test_op
+            return 'g@'
+          end
+          local pos = vim.pos.cursor()
+          local line = vim.api.nvim_buf_get_lines(pos.buf, pos.row, pos.row + 1, false)[1]
+          pos.col = #line
+          vim.api.nvim_win_set_cursor(0, pos:to_cursor())
+        end
+        vim.keymap.set('n', 'gm', test_op, { expr = true })
+      ]])
+      cursors({ 'aaaa', 'bbbbb', 'cccccc' }, 'QjQj')
+      feed('1q=')
+      atoms_start()
+      feed('gmil')
+      eq({ { 0, 3 }, { 1, 4 } }, anchors())
+      eq(6, fn.col('.'))
+      -- Exactly one type=operator atom.
+      eq(1, #atoms())
+      eq({
+        type = 'operator',
+        keys = 'g@il',
+        lhs = 'gmil',
+        operator = 'g@',
+        changed = false,
+        moved = true,
+      }, t_atom.pick(atom_last(), 'type', 'keys', 'lhs', 'operator', 'changed', 'moved'))
     end)
 
     it('cursors placed inside the opfunc are live for the next typed cascade', function()
