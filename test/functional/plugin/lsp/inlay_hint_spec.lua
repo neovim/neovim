@@ -455,3 +455,71 @@ test text
     api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
   end)
 end)
+
+describe('Inlay hints with an out-of-range column', function()
+  -- Regression test for #39772: a cached hint whose column is past the end of
+  -- the line (e.g. after an edit shortens the line) must be skipped instead of
+  -- crashing the decoration provider with "Invalid 'col': out of range".
+  local text = dedent([[
+test text
+  ]])
+
+  -- 'test text' is 9 characters long, so character 99 is out of range and must
+  -- be skipped; the remaining hints render normally.
+  local response = {
+    { position = { line = 0, character = 0 }, label = '0' },
+    { position = { line = 0, character = 0 }, label = '1' },
+    { position = { line = 0, character = 0 }, label = '2' },
+    { position = { line = 0, character = 0 }, label = '3' },
+    { position = { line = 0, character = 0 }, label = '4' },
+    { position = { line = 0, character = 99 }, label = 'oob' },
+  }
+
+  local grid_with_inlay_hints = [[
+  {1:01234}test text                                    |
+  ^                                                  |
+                                                    |
+]]
+
+  --- @type test.functional.ui.screen
+  local screen
+
+  --- @type integer
+  local bufnr
+
+  before_each(function()
+    clear_notrace()
+    screen = Screen.new(50, 3)
+
+    exec_lua(create_server_definition)
+    bufnr = n.api.nvim_get_current_buf()
+    exec_lua(function()
+      _G.server = _G._create_server({
+        capabilities = {
+          textDocumentSync = vim.lsp.protocol.TextDocumentSyncKind.Full,
+          inlayHintProvider = true,
+        },
+        handlers = {
+          ['textDocument/inlayHint'] = function(_, _, callback)
+            callback(nil, response)
+          end,
+        },
+      })
+
+      vim.api.nvim_win_set_buf(0, bufnr)
+
+      return vim.lsp.start({ name = 'dummy', cmd = _G.server.cmd })
+    end)
+    insert(text)
+  end)
+
+  it('skips the out-of-range hint without erroring (#39772)', function()
+    exec_lua([[vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })]])
+    screen:expect({ grid = grid_with_inlay_hints })
+    eq('', api.nvim_get_vvar('errmsg'))
+  end)
+
+  after_each(function()
+    api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
+  end)
+end)

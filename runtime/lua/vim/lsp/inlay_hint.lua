@@ -377,12 +377,21 @@ function InlayHint:on_win(topline, botline)
           end
         end
 
-        for pos, vt in pairs(hint_virtual_texts) do
-          api.nvim_buf_set_extmark(self.bufnr, state.namespace, lnum, pos, {
-            virt_text_pos = 'inline',
-            ephemeral = false,
-            virt_text = vt,
-          })
+        if next(hint_virtual_texts) then
+          local line_len = #(api.nvim_buf_get_lines(self.bufnr, lnum, lnum + 1, false)[1] or '')
+          for pos, vt in pairs(hint_virtual_texts) do
+            -- Skip hints whose column is past the end of the line. A cached hint
+            -- position can reference a column beyond the current line length
+            -- (e.g. after an edit shortens the line), which would otherwise make
+            -- nvim_buf_set_extmark raise "Invalid 'col': out of range".
+            if pos <= line_len then
+              api.nvim_buf_set_extmark(self.bufnr, state.namespace, lnum, pos, {
+                virt_text_pos = 'inline',
+                ephemeral = false,
+                virt_text = vt,
+              })
+            end
+          end
         end
       end
     end
