@@ -6940,6 +6940,9 @@ static void ex_redraw(exarg_T *eap)
     redraw_curbuf_later(UPD_INVERTED);
   }
   update_screen();
+  if ((State & MODE_CMDLINE) == 0) {
+    setcursor();  // put cursor back where it belongs
+  }
   if (need_maketitle) {
     maketitle();
   }
