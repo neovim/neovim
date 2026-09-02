@@ -14,10 +14,12 @@ describe('vim.loader', function()
   it('can be disabled', function()
     exec_lua(function()
       local orig_loader = _G.loadfile
+      local orig_loaders = { unpack(package.loaders) }
       vim.loader.enable()
       assert(orig_loader ~= _G.loadfile)
       vim.loader.enable(false)
       assert(orig_loader == _G.loadfile)
+      assert(vim.deep_equal(orig_loaders, package.loaders))
     end)
   end)
 

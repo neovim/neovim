@@ -452,7 +452,8 @@ function M.enable(enable)
     end
   else
     _G.loadfile = _loadfile
-    for l, loader in ipairs(loaders) do
+    for l = #loaders, 1, -1 do
+      local loader = loaders[l]
       if loader == loader_cached or loader == loader_lib_cached then
         table.remove(loaders, l)
       end
