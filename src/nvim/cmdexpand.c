@@ -2047,6 +2047,8 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
                        kCallbackNone ? EXPAND_FINDFUNC : EXPAND_FILES_IN_PATH;
     }
     break;
+  case CMD_bcd:
+  case CMD_bchdir:
   case CMD_cd:
   case CMD_chdir:
   case CMD_lcd:
