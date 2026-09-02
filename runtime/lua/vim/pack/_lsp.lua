@@ -122,7 +122,7 @@ methods['textDocument/documentLink'] = function(params, callback)
   --- @type vim.pack.lsp.DocumentLink[]
   local links = {}
   local cur_src = ''
-  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   for i, l in ipairs(lines) do
     cur_src = l:match('^Source: +(.+)$') or cur_src
 
