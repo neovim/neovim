@@ -381,7 +381,7 @@ function M.intersect(r1, r2)
   local from = r1.from <= r2.from and r2.from or r1.from
   local to = (r1.to == nil or (r2.to ~= nil and r2.to <= r1.to)) and r2.to or r1.to
   if to == nil or from < to or (from == to and r1:has(from) and r2:has(from)) then
-    return setmetatable({ from = from, to = to }, VersionRange)
+    return setmetatable({ from = from, to = to }, range_mt)
   end
 end
 
