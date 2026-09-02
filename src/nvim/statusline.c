@@ -905,12 +905,23 @@ static void stl_truncate(int *width, int minwid, int maxwid, schar_T fillchar,
   **out_p = NUL;
 }
 
+// used in the algorithm to determine separator expansion
+typedef struct {
+  int expansion;
+  enum {
+    kStlSepInit = 0,
+    kStlSepMinwidViolation,
+    kStlSepMaxwidViolation,
+    kStlSepFrozen,
+  } state;
+} StlSepExpansionState;
+
 /// Expands the statusline at separation markers (%=) if present,
-/// or otherwise according to padding choice.
+/// and according to padding choice if needed.
 ///
 /// @param width  Current width in cells (will be adjusted if expansion took place)
 /// @param target_width  Target width in cells
-/// @param padding  Padding to add until target width is reached, if there are no separation markers
+/// @param padding  Padding to add until target width is reached (after %=-expansion)
 /// @param remaining_capacity  Remaining output buffer capacity in bytes
 /// @param fillchar  Fillchar
 /// @param stl_items  Items
@@ -927,23 +938,77 @@ static void stl_expand(int *width, int target_width, StlPadding padding, int rem
   int added_bytes = added_cells * fillchar_bytes;
 
   // First, try to expand at separation markers %=.
+  // Note: minwid expansion was already added when the marker was first encountered.
   int num_separators = 0;
+  int total_expansion = added_cells;
   for (int i = startitem; i < curitem; i++) {
     if (stl_items[i].type == Separate) {
       num_separators += 1;
+      total_expansion += stl_items[i].minwid;
     }
   }
   if (num_separators > 0) {
-    int standard_spaces = added_cells / num_separators;
-    int final_spaces = added_cells - standard_spaces * (num_separators - 1);
+    // Distribute expansion as evenly as possible among the separation markers,
+    // taking into account their minwid and maxwid constraints.
+    // Algorithm from: https://www.w3.org/TR/css-flexbox-1/#resolve-flexible-lengths
+    static size_t state_len = 0;
+    static StlSepExpansionState *state = NULL;
+    if (num_separators > (int)state_len) {
+      state_len = (size_t)num_separators * 3 / 2;
+      state = state == NULL ? xmalloc(sizeof(StlSepExpansionState) * state_len)
+                            : xrealloc(state, sizeof(StlSepExpansionState) * state_len);
+    }
+    memset(state, 0, sizeof(StlSepExpansionState) * (size_t)num_separators);
+    int num_frozen = 0;
+    do {
+      int average_expansion = total_expansion / (num_separators - num_frozen);
+      int remainder = total_expansion % (num_separators - num_frozen);
+      int total_adjustment = 0;
+      for (int idx = -1, i = startitem; i < curitem; i++) {
+        if (stl_items[i].type == Separate && state[++idx].state != kStlSepFrozen) {
+          int expansion = average_expansion;
+          // Distribute remainder so that we're done in one iteration if only %1= and %= are used.
+          if (remainder + idx >= num_separators
+              || (expansion < stl_items[i].minwid && remainder-- > 0)) {
+            expansion += 1;
+          }
+          int adjustment = 0;
+          state[idx].state = kStlSepInit;
+          if (expansion < stl_items[i].minwid) {
+            adjustment = stl_items[i].minwid - expansion;
+            state[idx].state = kStlSepMinwidViolation;
+          } else if (expansion > stl_items[i].maxwid) {
+            adjustment = stl_items[i].maxwid - expansion;
+            state[idx].state = kStlSepMaxwidViolation;
+          }
+          state[idx].expansion = expansion + adjustment;
+          total_adjustment += adjustment;
+        }
+      }
+      if (total_adjustment == 0) {
+        break;
+      }
+      for (int idx = -1, i = startitem; i < curitem; i++) {
+        if (stl_items[i].type == Separate) {
+          idx += 1;
+          if ((total_adjustment > 0 && state[idx].state == kStlSepMinwidViolation)
+              || (total_adjustment < 0 && state[idx].state == kStlSepMaxwidViolation)) {
+            num_frozen += 1;
+            state[idx].state = kStlSepFrozen;
+            total_expansion -= state[idx].expansion;
+          }
+        }
+      }
+    } while (num_frozen < num_separators);
+
     int cumulated_dislocation = 0;
 
-    for (int i = startitem; i < curitem; i++) {
+    for (int idx = -1, i = startitem; i < curitem; i++) {
       stl_items[i].start += cumulated_dislocation;
 
-      if (stl_items[i].type == Separate) {
-        int dislocation = --num_separators > 0 ? standard_spaces : final_spaces;
-        dislocation *= fillchar_bytes;
+      if (stl_items[i].type == Separate && state[++idx].expansion > stl_items[i].minwid) {
+        int expansion = state[idx].expansion - stl_items[i].minwid;
+        int dislocation = expansion * fillchar_bytes;
         cumulated_dislocation += dislocation;
 
         char *start = stl_items[i].start;
@@ -952,14 +1017,21 @@ static void stl_expand(int *width, int target_width, StlPadding padding, int rem
         for (char *s = start; s < seploc;) {
           schar_get_adv(&s, fillchar);
         }
+
+        *width += expansion;
+        *out_p += dislocation;
+        added_cells -= expansion;
+        added_bytes -= dislocation;
       }
     }
 
-    *width += added_cells;
-    *out_p += added_bytes;
+    if (*width == target_width) {
+      return;
+    }
+  }
 
-    // Add filler characters to the right.
-  } else if (padding == kPaddingRight) {
+  // Add filler characters to the right.
+  if (padding == kPaddingRight) {
     for (; added_cells > 0; added_cells--) {
       schar_get_adv(out_p, fillchar);
     }
@@ -1171,14 +1243,6 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
       continue;
     }
 
-    // STL_SEPARATE: Separation between items, filled with fillchars.
-    if (*fmt_p == STL_SEPARATE) {
-      fmt_p++;
-      stl_items[curitem].type = Separate;
-      stl_items[curitem++].start = out_p;
-      continue;
-    }
-
     // STL_TRUNCMARK: Where to begin truncating if the statusline is too long.
     if (*fmt_p == STL_TRUNCMARK) {
       fmt_p++;
@@ -1276,8 +1340,9 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
       continue;
     }
 
+#define MAXWID_INFINITY 9999
     int minwid = 0;
-    int maxwid = 9999;
+    int maxwid = MAXWID_INFINITY;
     int foldsignitem = -1;        // Start of fold or sign item
     bool left_align_num = false;  // Number item for should be left-aligned
     bool left_align = false;
@@ -1389,6 +1454,25 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
       stl_items[curitem].maxwid = maxwid;
       fmt_p++;
       curitem++;
+      continue;
+    }
+
+    // Separation between items, filled with fillchars.
+    if (*fmt_p == STL_SEPARATE) {
+      fmt_p++;
+      minwid = MIN(maxwid, MAX(minwid, 0));
+      if (minwid != maxwid) {
+        stl_items[curitem].type = Separate;
+        stl_items[curitem].start = out_p;
+        stl_items[curitem].minwid = minwid;
+        stl_items[curitem].maxwid = maxwid;
+        curitem++;
+      }
+      // Add minimum separation unconditionally now.
+      // This makes it easier later to determine whether to further expand or to truncate.
+      for (int i = 0; i < minwid && out_p < out_end_p; i++) {
+        schar_get_adv(&out_p, fillchar);
+      }
       continue;
     }
 
@@ -1558,7 +1642,10 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
         left_align_num = wp->w_p_rnu && wp->w_p_nu && relnum == 0;
         if (!left_align_num) {
           stl_items[curitem].type = Separate;
-          stl_items[curitem++].start = out_p;
+          stl_items[curitem].start = out_p;
+          stl_items[curitem].minwid = 0;
+          stl_items[curitem].maxwid = MAXWID_INFINITY;
+          curitem++;
         }
       } else if (stcp == NULL) {
         num = (wp->w_buffer->b_ml.ml_flags & ML_EMPTY) ? 0 : wp->w_cursor.lnum;
@@ -1985,7 +2072,10 @@ stcsign:
     // For a 'statuscolumn' number item that is left aligned, add a separator item.
     if (left_align_num) {
       stl_items[curitem].type = Separate;
-      stl_items[curitem++].start = out_p;
+      stl_items[curitem].start = out_p;
+      stl_items[curitem].minwid = 0;
+      stl_items[curitem].maxwid = MAXWID_INFINITY;
+      curitem++;
     }
   }
 
