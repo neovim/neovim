@@ -136,7 +136,7 @@ end
 ---@param opts? vim.keymap.del.Opts
 ---@see |vim.keymap.set()|
 function keymap.del(modes, lhs, opts)
-  vim.validate('mode', modes, { 'string', 'table' })
+  vim.validate('modes', modes, { 'string', 'table' })
   vim.validate('lhs', lhs, { 'string', 'table' })
   vim.validate('opts', opts, 'table', true)
 
