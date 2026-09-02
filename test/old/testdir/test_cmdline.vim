@@ -3264,6 +3264,48 @@ func Test_wildmenu_pum()
   call StopVimInTerminal(buf)
 endfunc
 
+" Test that popup_settext() from a CmdlineChanged autocmd updates the
+" cmdline-mode info popup without needing an explicit :redraw (#20175).
+func Test_wildmenu_pum_info_async_update()
+  CheckScreendump
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+      vim9script
+      set completeopt=menuone,popup
+      set wildmenu wildoptions=pum wildcharm=<Tab>
+      augroup Test
+          au!
+          au CmdlineChanged : UpdateInfo()
+      augroup END
+
+      def UpdateInfo()
+          if getcmdcompltype() != 'customlist,Complete'
+              return
+          endif
+          var id = popup_findinfo()
+          if id != 0
+              id->popup_settext('done')
+              popup_show(id)
+          endif
+      enddef
+
+      def Complete(_, _, _): list<dict<any>>
+          return [{word: '1', info: 'lazy'}, {word: '2', info: 'lazy'}]
+      enddef
+
+      command! -nargs=1 -complete=customlist,Complete Test echo <args>
+  END
+  call writefile(lines, 'XtestWildmenuInfoAsync', 'D')
+  let buf = RunVimInTerminal('-S XtestWildmenuInfoAsync', #{rows: 14, cols: 50})
+  call term_sendkeys(buf, ":Test \<Tab>")
+  call TermWait(buf, 200)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_info_async_update', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+endfunc
+
 " Test for wildmenumode() with the cmdline popup menu
 func Test_wildmenumode_with_pum()
   set wildmenu
