@@ -339,6 +339,10 @@ context), multicursor replays actions "semantically" (|CmdAtom|).
 - Registers are cursor-local. Each cursor reads/writes its own registers.
   The yanks are joined (linewise) when the multicursor session ends.
 - Undo is atomic: |u| reverts the aggregate edits from all cursors at once.
+- Folds are ignored during replay. Edits replay within folds ("dd" deletes the
+  line at cursor, not the entire folded contents). Motions step into folds
+  instead of skipping over them. The primary cursor keeps the usual
+  |fold-behavior|.
 - CTRL-C interrupts the cascade.
 
 Example: place a cursor on every matching pattern: >
@@ -396,6 +400,10 @@ q=			Toggles follow-mode: motions (not jumps/scrolls) are
 CTRL-L			Clears multicursors in the current buffer.
 			|CTRL-L-default|
 
+			Cursors can also be cleared by clearing the namespace: >lua
+			    local mc_ns = vim.api.nvim_create_namespace('nvim.multicursor')
+			    vim.api.nvim_buf_clear_namespace(0, mc_ns, 0, -1)
+<
 							*gQ*
 gQ			Restores the previous multicursors.
 

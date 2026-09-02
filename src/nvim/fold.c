@@ -38,6 +38,7 @@
 #include "nvim/mark.h"
 #include "nvim/mark_defs.h"
 #include "nvim/mbyte.h"
+#include "nvim/mcursor.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -57,7 +58,6 @@
 #include "nvim/vim_defs.h"
 
 // local declarations. {{{1
-// typedef fold_T {{{2
 
 // The toplevel folds for each window are stored in the w_folds growarray.
 // Each toplevel fold can contain an array of second level folds in the
@@ -83,7 +83,7 @@ enum {
 
 #define MAX_LEVEL       20      // maximum fold depth
 
-// Define "fline_T", passed to get fold level for a line. {{{2
+// Define "fline_T", passed to get fold level for a line.
 typedef struct {
   win_T *wp;              // window
   linenr_T lnum;                // current line number
@@ -105,7 +105,7 @@ static bool fold_changed;
 // Function used by foldUpdateIEMSRecurse
 typedef void (*LevelGetter)(fline_T *);
 
-// static functions {{{2
+// static functions
 
 #include "fold.c.generated.h"
 static const char *e_nofold = N_("E490: No fold found");
@@ -132,8 +132,10 @@ static size_t foldstartmarkerlen;
 static char *foldendmarker;
 static size_t foldendmarkerlen;
 
+//
 // Exported folding functions. {{{1
-// copyFoldingState() {{{2
+//
+
 /// Copy that folding state from window "wp_from" to window "wp_to".
 void copyFoldingState(win_T *wp_from, win_T *wp_to)
 {
@@ -142,16 +144,14 @@ void copyFoldingState(win_T *wp_from, win_T *wp_to)
   cloneFoldGrowArray(&wp_from->w_folds, &wp_to->w_folds);
 }
 
-// hasAnyFolding() {{{2
-/// @return  true if there may be folded lines in window "win".
+/// True if there may be folded lines in window `win`. Decides how closed folds are treated: if
+/// false, operations/motions act as if all folds were open.
 int hasAnyFolding(win_T *win)
 {
-  // very simple now, but can become more complex later
-  return !win->w_buffer->terminal && win->w_p_fen
+  return !win->w_buffer->terminal && win->w_p_fen && !mc_replaying()
          && (!foldmethodIsManual(win) || !GA_EMPTY(&win->w_folds));
 }
 
-// hasFolding() {{{2
 /// When returning true, *firstp and *lastp are set to the first and last
 /// lnum of the sequence of folded lines (skipped when NULL).
 ///
@@ -161,7 +161,6 @@ bool hasFolding(win_T *win, linenr_T lnum, linenr_T *firstp, linenr_T *lastp)
   return hasFoldingWin(win, lnum, firstp, lastp, true, NULL);
 }
 
-// hasFoldingWin() {{{2
 /// Search folds starting at lnum
 /// @param lnum first line to search
 /// @param[out] first first line of fold containing lnum
@@ -262,7 +261,6 @@ bool hasFoldingWin(win_T *const win, const linenr_T lnum, linenr_T *const firstp
   return true;
 }
 
-// foldLevel() {{{2
 /// @return  fold level at line number "lnum" in the current window.
 static int foldLevel(linenr_T lnum)
 {
@@ -284,7 +282,6 @@ static int foldLevel(linenr_T lnum)
   return foldLevelWin(curwin, lnum);
 }
 
-// lineFolded() {{{2
 /// Low level function to check if a line is folded.  Doesn't use any caching.
 ///
 /// @return  true if line is folded or,
@@ -294,8 +291,6 @@ bool lineFolded(win_T *const win, const linenr_T lnum)
   return fold_info(win, lnum).fi_lines != 0;
 }
 
-// fold_info() {{{2
-///
 /// Count the number of lines that are folded at line number "lnum".
 /// Normally "lnum" is the first line of a possible fold, and the returned
 /// number is the number of lines in the fold.
@@ -318,49 +313,42 @@ foldinfo_T fold_info(win_T *win, linenr_T lnum)
   return info;
 }
 
-// foldmethodIsManual() {{{2
 /// @return  true if 'foldmethod' is "manual"
 bool foldmethodIsManual(win_T *wp)
 {
   return (wp->w_p_fdm[0] != NUL && wp->w_p_fdm[3] == 'u');
 }
 
-// foldmethodIsIndent() {{{2
 /// @return  true if 'foldmethod' is "indent"
 bool foldmethodIsIndent(win_T *wp)
 {
   return wp->w_p_fdm[0] == 'i';
 }
 
-// foldmethodIsExpr() {{{2
 /// @return  true if 'foldmethod' is "expr"
 bool foldmethodIsExpr(win_T *wp)
 {
   return (wp->w_p_fdm[0] != NUL && wp->w_p_fdm[1] == 'x');
 }
 
-// foldmethodIsMarker() {{{2
 /// @return  true if 'foldmethod' is "marker"
 bool foldmethodIsMarker(win_T *wp)
 {
   return (wp->w_p_fdm[0] != NUL && wp->w_p_fdm[2] == 'r');
 }
 
-// foldmethodIsSyntax() {{{2
 /// @return  true if 'foldmethod' is "syntax"
 bool foldmethodIsSyntax(win_T *wp)
 {
   return wp->w_p_fdm[0] == 's';
 }
 
-// foldmethodIsDiff() {{{2
 /// @return  true if 'foldmethod' is "diff"
 bool foldmethodIsDiff(win_T *wp)
 {
   return wp->w_p_fdm[0] == 'd';
 }
 
-// closeFold() {{{2
 /// Close fold for current window at position "pos".
 /// Repeat "count" times.
 void closeFold(pos_T pos, int count)
@@ -368,15 +356,12 @@ void closeFold(pos_T pos, int count)
   setFoldRepeat(pos, count, false);
 }
 
-// closeFoldRecurse() {{{2
 /// Close fold for current window at position `pos` recursively.
 void closeFoldRecurse(pos_T pos)
 {
   setManualFold(pos, false, true, NULL);
 }
 
-// opFoldRange() {{{2
-///
 /// Open or Close folds for current window in lines "first" to "last".
 /// Used for "zo", "zO", "zc" and "zC" in Visual mode.
 ///
@@ -414,7 +399,6 @@ void opFoldRange(pos_T firstpos, pos_T lastpos, int opening, int recurse, bool h
   }
 }
 
-// openFold() {{{2
 /// Open fold for current window at position "pos".
 /// Repeat "count" times.
 void openFold(pos_T pos, int count)
@@ -422,14 +406,12 @@ void openFold(pos_T pos, int count)
   setFoldRepeat(pos, count, true);
 }
 
-// openFoldRecurse() {{{2
 /// Open fold for current window at position `pos` recursively.
 void openFoldRecurse(pos_T pos)
 {
   setManualFold(pos, true, true, NULL);
 }
 
-// foldOpenCursor() {{{2
 /// Open folds until the cursor line is not in a closed fold.
 void foldOpenCursor(void)
 {
@@ -445,7 +427,6 @@ void foldOpenCursor(void)
   }
 }
 
-// newFoldLevel() {{{2
 /// Set new foldlevel for current window.
 void newFoldLevel(void)
 {
@@ -478,7 +459,6 @@ static void newFoldLevelWin(win_T *wp)
   changed_window_setting(wp);
 }
 
-// foldCheckClose() {{{2
 /// Apply 'foldlevel' to all folds that don't contain the cursor.
 void foldCheckClose(void)
 {
@@ -494,7 +474,6 @@ void foldCheckClose(void)
   }
 }
 
-// checkCloseRec() {{{2
 static bool checkCloseRec(garray_T *gap, linenr_T lnum, int level)
 {
   bool retval = false;
@@ -516,7 +495,6 @@ static bool checkCloseRec(garray_T *gap, linenr_T lnum, int level)
   return retval;
 }
 
-// foldManualAllowed() {{{2
 /// @return  true if it's allowed to manually create or delete a fold or,
 ///          give an error message and return false if not.
 int foldManualAllowed(bool create)
@@ -532,7 +510,6 @@ int foldManualAllowed(bool create)
   return false;
 }
 
-// foldCreate() {{{2
 /// Create a fold from line "start" to line "end" (inclusive) in the current
 /// window.
 void foldCreate(win_T *wp, pos_T start, pos_T end)
@@ -659,7 +636,6 @@ void foldCreate(win_T *wp, pos_T start, pos_T end)
   }
 }
 
-// deleteFold() {{{2
 /// @param start delete all folds from start to end when not 0
 /// @param end delete all folds from start to end when not 0
 /// @param recursive delete recursively if true
@@ -752,7 +728,6 @@ void deleteFold(win_T *const wp, const linenr_T start, const linenr_T end, const
   }
 }
 
-// clearFolding() {{{2
 /// Remove all folding for window "win".
 void clearFolding(win_T *win)
 {
@@ -760,7 +735,6 @@ void clearFolding(win_T *win)
   win->w_foldinvalid = false;
 }
 
-// foldUpdate() {{{2
 /// Update folds for changes in the buffer of a window.
 /// Note that inserted/deleted lines must have already been taken care of by
 /// calling foldMarkAdjust().
@@ -817,7 +791,6 @@ void foldUpdateAfterInsert(void)
   foldOpenCursor();
 }
 
-// foldUpdateAll() {{{2
 /// Update all lines in a window for folding.
 /// Used when a fold setting changes or after reloading the buffer.
 /// The actual updating is postponed until fold info is used, to avoid doing
@@ -828,8 +801,6 @@ void foldUpdateAll(win_T *win)
   redraw_later(win, UPD_NOT_VALID);
 }
 
-// foldMoveTo() {{{2
-///
 /// If "updown" is false: Move to the start or end of the fold.
 /// If "updown" is true: move to fold at the same level.
 /// @return FAIL if not moved.
@@ -950,14 +921,12 @@ int foldMoveTo(const bool updown, const int dir, const int count)
   return retval;
 }
 
-// foldInitWin() {{{2
 /// Init the fold info in a new window.
 void foldInitWin(win_T *new_win)
 {
   ga_init(&new_win->w_folds, (int)sizeof(fold_T), 10);
 }
 
-// find_wl_entry() {{{2
 /// Find an entry in the win->w_lines[] array for buffer line "lnum".
 /// Only valid entries are considered (for entries where wl_valid is false the
 /// line number can be wrong).
@@ -978,7 +947,6 @@ int find_wl_entry(win_T *win, linenr_T lnum)
   return -1;
 }
 
-// foldAdjustVisual() {{{2
 /// Adjust the Visual area to include any fold at the start or end completely.
 void foldAdjustVisual(void)
 {
@@ -1011,7 +979,6 @@ void foldAdjustVisual(void)
   mb_adjust_cursor();
 }
 
-// foldAdjustCursor() {{{2
 /// Move the cursor to the first line of a closed fold.
 void foldAdjustCursor(win_T *wp)
 {
@@ -1019,7 +986,6 @@ void foldAdjustCursor(win_T *wp)
 }
 
 // Internal functions for "fold_T" {{{1
-// cloneFoldGrowArray() {{{2
 /// Will "clone" (i.e deep copy) a garray_T of folds.
 void cloneFoldGrowArray(garray_T *from, garray_T *to)
 {
@@ -1046,7 +1012,6 @@ void cloneFoldGrowArray(garray_T *from, garray_T *to)
   }
 }
 
-// foldFind() {{{2
 /// Search for line "lnum" in folds of growarray "gap".
 /// Set "*fpp" to the fold struct for the fold that contains "lnum" or
 /// the first fold below it (careful: it can be beyond the end of the array!).
@@ -1083,7 +1048,6 @@ static bool foldFind(const garray_T *gap, linenr_T lnum, fold_T **fpp)
   return false;
 }
 
-// foldLevelWin() {{{2
 /// @return  fold level at line number "lnum" in window "wp".
 static int foldLevelWin(win_T *wp, linenr_T lnum)
 {
@@ -1106,7 +1070,6 @@ static int foldLevelWin(win_T *wp, linenr_T lnum)
   return level;
 }
 
-// checkupdate() {{{2
 /// Check if the folds in window "wp" are invalid and update them if needed.
 static void checkupdate(win_T *wp)
 {
@@ -1118,7 +1081,6 @@ static void checkupdate(win_T *wp)
   wp->w_foldinvalid = false;
 }
 
-// setFoldRepeat() {{{2
 /// Open or close fold for current window at position `pos`.
 /// Repeat "count" times.
 static void setFoldRepeat(pos_T pos, int count, int do_open)
@@ -1136,7 +1098,6 @@ static void setFoldRepeat(pos_T pos, int count, int do_open)
   }
 }
 
-// setManualFold() {{{2
 /// Open or close the fold in the current window which contains "lnum".
 /// Also does this for other windows in diff mode when needed.
 ///
@@ -1162,7 +1123,6 @@ static linenr_T setManualFold(pos_T pos, bool opening, bool recurse, int *donep)
   return setManualFoldWin(curwin, pos.lnum, opening, recurse, donep);
 }
 
-// setManualFoldWin() {{{2
 /// Open or close the fold in window "wp" which contains "lnum".
 /// "donep", when not NULL, points to flag that is set to DONE_FOLD when some
 /// fold was found and to DONE_ACTION when some fold was opened or closed.
@@ -1264,7 +1224,6 @@ static linenr_T setManualFoldWin(win_T *wp, linenr_T lnum, bool opening, bool re
   return next;
 }
 
-// foldOpenNested() {{{2
 /// Open all nested folds in fold "fpr" recursively.
 static void foldOpenNested(fold_T *fpr)
 {
@@ -1275,7 +1234,6 @@ static void foldOpenNested(fold_T *fpr)
   }
 }
 
-// deleteFoldEntry() {{{2
 /// Delete fold "idx" from growarray "gap".
 ///
 /// @param recursive  when true, also delete all the folds contained in it.
@@ -1325,7 +1283,6 @@ static void deleteFoldEntry(win_T *const wp, garray_T *const gap, const int idx,
   }
 }
 
-// deleteFoldRecurse() {{{2
 /// Delete nested folds in a fold.
 void deleteFoldRecurse(buf_T *bp, garray_T *gap)
 {
@@ -1333,7 +1290,6 @@ void deleteFoldRecurse(buf_T *bp, garray_T *gap)
   GA_DEEP_CLEAR(gap, fold_T, DELETE_FOLD_NESTED);
 }
 
-// foldMarkAdjust() {{{2
 /// Update line numbers of folds for inserted/deleted lines.
 ///
 /// We are adjusting the folds in the range from line1 til line2,
@@ -1357,7 +1313,6 @@ void foldMarkAdjust(win_T *wp, linenr_T line1, linenr_T line2, linenr_T amount,
   foldMarkAdjustRecurse(wp, &wp->w_folds, line1, line2, amount, amount_after);
 }
 
-// foldMarkAdjustRecurse() {{{2
 static void foldMarkAdjustRecurse(win_T *wp, garray_T *gap, linenr_T line1, linenr_T line2,
                                   linenr_T amount, linenr_T amount_after)
 {
@@ -1447,7 +1402,6 @@ static void foldMarkAdjustRecurse(win_T *wp, garray_T *gap, linenr_T line1, line
   }
 }
 
-// getDeepestNesting() {{{2
 /// Get the lowest 'foldlevel' value that makes the deepest nested fold in
 /// window `wp`.
 int getDeepestNesting(win_T *wp)
@@ -1469,7 +1423,6 @@ static int getDeepestNestingRecurse(garray_T *gap)
   return maxlevel;
 }
 
-// check_closed() {{{2
 /// Check if a fold is closed and update the info needed to check nested folds.
 ///
 /// @param[in,out] use_levelp true: outer fold had FD_LEVEL
@@ -1510,7 +1463,6 @@ static bool check_closed(win_T *const wp, fold_T *const fp, bool *const use_leve
   return closed;
 }
 
-// checkSmall() {{{2
 /// Update fd_small field of fold "fp".
 ///
 /// @param lnum_off  offset for fp->fd_top
@@ -1538,7 +1490,6 @@ static void checkSmall(win_T *const wp, fold_T *const fp, const linenr_T lnum_of
   }
 }
 
-// setSmallMaybe() {{{2
 /// Set small flags in "gap" to kNone.
 static void setSmallMaybe(garray_T *gap)
 {
@@ -1548,7 +1499,6 @@ static void setSmallMaybe(garray_T *gap)
   }
 }
 
-// foldCreateMarkers() {{{2
 /// Create a fold from line "start" to line "end" (inclusive) in window `wp`
 /// by adding markers.
 static void foldCreateMarkers(win_T *wp, pos_T start, pos_T end)
@@ -1574,7 +1524,6 @@ static void foldCreateMarkers(win_T *wp, pos_T start, pos_T end)
   buf_updates_send_changes(buf, start.lnum, num_changed, num_changed);
 }
 
-// foldAddMarker() {{{2
 /// Add "marker[markerlen]" in 'commentstring' to position `pos`.
 static void foldAddMarker(buf_T *buf, pos_T pos, const char *marker, size_t markerlen)
 {
@@ -1613,7 +1562,6 @@ static void foldAddMarker(buf_T *buf, pos_T pos, const char *marker, size_t mark
   }
 }
 
-// deleteFoldMarkers() {{{2
 /// Delete the markers for a fold, causing it to be deleted.
 ///
 /// @param lnum_off  offset for fp->fd_top
@@ -1631,7 +1579,6 @@ static void deleteFoldMarkers(win_T *wp, fold_T *fp, bool recursive, linenr_T ln
                 foldendmarker, foldendmarkerlen);
 }
 
-// foldDelMarker() {{{2
 /// Delete marker "marker[markerlen]" at the end of line "lnum".
 /// Delete 'commentstring' if it matches.
 /// If the marker is not found, there is no error message.  Could be a missing
@@ -1678,7 +1625,6 @@ static void foldDelMarker(buf_T *buf, linenr_T lnum, char *marker, size_t marker
   }
 }
 
-// get_foldtext() {{{2
 /// Generates text to display
 ///
 /// @param buf allocated memory of length FOLD_TEXT_LEN. Used when 'foldtext'
@@ -1804,7 +1750,6 @@ char *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldinfo
   return text;
 }
 
-// foldtext_cleanup() {{{2
 /// Remove 'foldmarker' and 'commentstring' from "str" (in-place).
 static void foldtext_cleanup(char *str)
 {
@@ -1882,7 +1827,6 @@ static void foldtext_cleanup(char *str)
 // Folding by indent, expr, marker and syntax. {{{1
 // Function declarations. {{{2
 
-// foldUpdateIEMS() {{{2
 /// Update the folding for window "wp", at least from lines "top" to "bot".
 /// IEMS = "Indent Expr Marker Syntax"
 static void foldUpdateIEMS(win_T *const wp, linenr_T top, linenr_T bot)
@@ -2103,7 +2047,6 @@ static void foldUpdateIEMS(win_T *const wp, linenr_T top, linenr_T bot)
   invalid_top = 0;
 }
 
-// foldUpdateIEMSRecurse() {{{2
 /// Update a fold that starts at "flp->lnum".  At this line there is always a
 /// valid foldlevel, and its level >= "level".
 ///
@@ -2519,7 +2462,6 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *const gap, const int level,
   return bot;
 }
 
-// foldInsert() {{{2
 /// Insert a new fold in "gap" at position "i".
 static void foldInsert(garray_T *gap, int i)
 {
@@ -2533,7 +2475,6 @@ static void foldInsert(garray_T *gap, int i)
   ga_init(&fp->fd_nested, (int)sizeof(fold_T), 10);
 }
 
-// foldSplit() {{{2
 /// Split the "i"th fold in "gap", which starts before "top" and ends below
 /// "bot" in two pieces, one ending above "top" and the other starting below
 /// "bot".
@@ -2578,7 +2519,6 @@ static void foldSplit(buf_T *buf, garray_T *const gap, const int i, const linenr
   fold_changed = true;
 }
 
-// foldRemove() {{{2
 /// Remove folds within the range "top" to and including "bot".
 /// Check for these situations:
 ///      1  2  3
@@ -2644,7 +2584,6 @@ static void foldRemove(win_T *const wp, garray_T *gap, linenr_T top, linenr_T bo
   }
 }
 
-// foldReverseOrder() {{{2
 static void foldReverseOrder(garray_T *gap, const linenr_T start_arg, const linenr_T end_arg)
 {
   linenr_T start = start_arg;
@@ -2658,7 +2597,19 @@ static void foldReverseOrder(garray_T *gap, const linenr_T start_arg, const line
   }
 }
 
-// foldMoveRange() {{{2
+static void truncate_fold(win_T *const wp, fold_T *fp, linenr_T end)
+{
+  // I want to stop *at here*, foldRemove() stops *above* top
+  end += 1;
+  foldRemove(wp, &fp->fd_nested, end - fp->fd_top, MAXLNUM);
+  fp->fd_len = end - fp->fd_top;
+}
+
+#define FOLD_END(fp) ((fp)->fd_top + (fp)->fd_len - 1)
+#define VALID_FOLD(fp, gap) \
+  ((gap)->ga_len > 0 && (fp) < ((fold_T *)(gap)->ga_data + (gap)->ga_len))
+#define FOLD_INDEX(fp, gap) ((size_t)((fp) - ((fold_T *)(gap)->ga_data)))
+
 /// Move folds within the inclusive range "line1" to "line2" to after "dest"
 /// require "line1" <= "line2" <= "dest"
 ///
@@ -2688,18 +2639,6 @@ static void foldReverseOrder(garray_T *gap, const linenr_T start_arg, const line
 /// 8. truncated below dest and shifted up.
 /// 9. shifted up
 /// 10. not changed
-static void truncate_fold(win_T *const wp, fold_T *fp, linenr_T end)
-{
-  // I want to stop *at here*, foldRemove() stops *above* top
-  end += 1;
-  foldRemove(wp, &fp->fd_nested, end - fp->fd_top, MAXLNUM);
-  fp->fd_len = end - fp->fd_top;
-}
-
-#define FOLD_END(fp) ((fp)->fd_top + (fp)->fd_len - 1)
-#define VALID_FOLD(fp, gap) \
-  ((gap)->ga_len > 0 && (fp) < ((fold_T *)(gap)->ga_data + (gap)->ga_len))
-#define FOLD_INDEX(fp, gap) ((size_t)((fp) - ((fold_T *)(gap)->ga_data)))
 void foldMoveRange(win_T *const wp, garray_T *gap, const linenr_T line1, const linenr_T line2,
                    const linenr_T dest)
 {
@@ -2802,7 +2741,6 @@ void foldMoveRange(win_T *const wp, garray_T *gap, const linenr_T line1, const l
 #undef VALID_FOLD
 #undef FOLD_INDEX
 
-// foldMerge() {{{2
 /// Merge two adjacent folds (and the nested ones in them).
 /// This only works correctly when the folds are really adjacent!  Thus "fp1"
 /// must end just above "fp2".
@@ -2838,7 +2776,6 @@ static void foldMerge(win_T *const wp, fold_T *fp1, garray_T *gap, fold_T *fp2)
   fold_changed = true;
 }
 
-// foldlevelIndent() {{{2
 /// Low level function to get the foldlevel for the "indent" method.
 /// Doesn't use any caching.
 ///
@@ -2861,7 +2798,6 @@ static void foldlevelIndent(fline_T *flp)
   flp->lvl = MIN(flp->lvl, (int)MAX(0, flp->wp->w_p_fdn));
 }
 
-// foldlevelDiff() {{{2
 /// Low level function to get the foldlevel for the "diff" method.
 /// Doesn't use any caching.
 static void foldlevelDiff(fline_T *flp)
@@ -2869,7 +2805,6 @@ static void foldlevelDiff(fline_T *flp)
   flp->lvl = (diff_infold(flp->wp, flp->lnum + flp->off)) ? 1 : 0;
 }
 
-// foldlevelExpr() {{{2
 /// Low level function to get the foldlevel for the "expr" method.
 /// Doesn't use any caching.
 ///
@@ -2969,7 +2904,6 @@ static void foldlevelExpr(fline_T *flp)
   curbuf = curwin->w_buffer;
 }
 
-// parseMarker() {{{2
 /// Parse 'foldmarker' and set "foldendmarker", "foldstartmarkerlen" and
 /// "foldendmarkerlen".
 /// Relies on the option value to have been checked for correctness already.
@@ -2980,7 +2914,6 @@ static void parseMarker(win_T *wp)
   foldendmarkerlen = strlen(foldendmarker);
 }
 
-// foldlevelMarker() {{{2
 /// Low level function to get the foldlevel for the "marker" method.
 /// "foldendmarker", "foldstartmarkerlen" and "foldendmarkerlen" must have been
 /// set before calling this.
@@ -3044,7 +2977,6 @@ static void foldlevelMarker(fline_T *flp)
   flp->lvl_next = MAX(flp->lvl_next, 0);
 }
 
-// foldlevelSyntax() {{{2
 /// Low level function to get the foldlevel for the "syntax" method.
 /// Doesn't use any caching.
 static void foldlevelSyntax(fline_T *flp)
@@ -3064,7 +2996,6 @@ static void foldlevelSyntax(fline_T *flp)
 }
 
 // functions for storing the fold state in a View {{{1
-// put_folds() {{{2
 /// Write commands to "fd" to restore the manual folds in window "wp".
 ///
 /// @return  FAIL if writing fails.
@@ -3086,7 +3017,6 @@ int put_folds(FILE *fd, win_T *wp)
   return OK;
 }
 
-// put_folds_recurse() {{{2
 /// Write commands to "fd" to recreate manually created folds.
 ///
 /// @return  FAIL when writing failed.
@@ -3109,7 +3039,6 @@ static int put_folds_recurse(FILE *fd, garray_T *gap, linenr_T off)
   return OK;
 }
 
-// put_foldopen_recurse() {{{2
 /// Write commands to "fd" to open and close manually opened/closed folds.
 ///
 /// @return  FAIL when writing failed.
@@ -3156,7 +3085,6 @@ static int put_foldopen_recurse(FILE *fd, win_T *wp, garray_T *gap, linenr_T off
   return OK;
 }
 
-// put_fold_open_close() {{{2
 /// Write the open or close command to "fd".
 ///
 /// @return  FAIL when writing failed.

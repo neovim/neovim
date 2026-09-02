@@ -404,6 +404,71 @@ describe('multicursor', function()
       eq(6, fn.line('.'))
     end)
 
+    it('per-cursor on fold contents, not the fold itself', function()
+      -- If the primary cursor operates on a closed fold it applies to the whole fold
+      -- (|fold-behavior|); but *replayed* edits/motions ignore folds, and operate on the per-cursor
+      -- text within folds (if there happens to be one at the given cursor).
+
+      fn.setline(1, { 'aaa', 'bbb', 'ccc', 'ddd' })
+      feed('3G0Q')
+      command('2,4fold')
+      eq(2, fn.foldclosed(3))
+      feed('gg0')
+      feed('x')
+      eq({ 'aa', 'bbb', 'cc', 'ddd' }, get_lines())
+      feed('dd')
+
+      -- Replayed "dd" deletes only the line (within the fold) at cursor. And the stays closed.
+      eq({ 'bbb', 'ddd' }, get_lines())
+      eq({ 1, 2 }, { fn.foldclosed(1), fn.foldclosedend(1) })
+      eq({ { 1, 0 } }, anchors())
+
+      -- Insert-cascade entry ("cc") acts on the fold contents, not the fold itself.
+      clear_cursors()
+      feed('zE') -- Eliminate the fold above, it would misdirect "3j" below.
+      cursors({ 'aaa', 'bbb', 'ccc', 'ddd', 'eee' }, '3jQgg')
+      command('3,5fold')
+      eq(3, fn.foldclosed(4))
+      feed('gg')
+      feed('ccX<Esc>')
+      eq({ 'X', 'bbb', 'ccc', 'X', 'eee' }, get_lines())
+      eq({ 3, 5 }, { fn.foldclosed(4), fn.foldclosedend(4) })
+      eq({ { 3, 0 } }, anchors())
+
+      -- Replayed fold command ("zN") must not re-enable fold semantics mid-cascade.
+      clear_cursors()
+      feed('zE')
+      command('nnoremap X zN:normal! dd<CR>')
+      cursors({ 'aaa', 'bbb', 'ccc', 'ddd', 'eee', 'fff' }, '3jQgg')
+      command('3,5fold')
+      feed('gg')
+      feed('X') -- Performs "dd".
+      eq({ 'bbb', 'ccc', 'eee', 'fff' }, get_lines())
+      eq({ 2, 3 }, { fn.foldclosed(2), fn.foldclosedend(2) })
+
+      -- Primary cursor keeps the usual |fold-behavior|: its "dd" deletes the whole fold.
+      -- But the replay does not: it only deletes the line at each cursor.
+      clear_cursors()
+      feed('zE')
+      cursors({ 'aaa', 'bbb', 'ccc', 'ddd', 'eee', 'fff' }, '4jQgg')
+      command('2,3fold')
+      feed('2G') -- Into the closed fold.
+      feed('dd')
+      eq({ 'aaa', 'ddd', 'fff' }, get_lines())
+      eq({ { 2, 0 } }, anchors())
+
+      -- Follow-mode motions also ignore closed folds. Replayed "j" steps into the fold.
+      clear_cursors()
+      feed('zE')
+      cursors({ 'aaa', 'bbb', 'ccc', 'ddd', 'eee', 'fff', 'ggg' }, 'Q4j')
+      command('2,4fold')
+      feed('q=')
+      feed('jj')
+      eq({ { 2, 0 } }, anchors())
+      eq(7, fn.line('.'))
+      eq(2, fn.foldclosed(3))
+    end)
+
     it('CTRL-D scrolling does not affect the other cursors', function()
       local screen = Screen.new(30, 10)
       local l = {}
@@ -2598,18 +2663,6 @@ describe('multicursor', function()
       eq({ 'ab', 'd' }, get_lines())
       feed('p')
       eq({ 'abc', 'de' }, get_lines())
-    end)
-
-    it('fold parity: cascade at a cursor inside a closed fold', function()
-      -- Operator on a closed fold applies to the whole fold (|fold-behavior|), so the replayed "x"
-      -- deletes the fold's lines.
-      fn.setline(1, { 'aaa', 'bbb', 'ccc', 'ddd' })
-      feed('3G0Q')
-      command('2,4fold')
-      eq(2, fn.foldclosed(3))
-      feed('gg0')
-      feed('x')
-      eq({ 'aa' }, get_lines())
     end)
 
     it('type=excmd CmdAtoms are emit-only, ":s" does not cascade', function()
