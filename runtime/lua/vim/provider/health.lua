@@ -547,7 +547,7 @@ local function version_info(python)
   local function compare(metapath1, metapath2)
     local dir1 = vim.fs.basename(vim.fs.dirname(vim.fs.abspath(metapath1)))
     local dir2 = vim.fs.basename(vim.fs.dirname(vim.fs.abspath(metapath2)))
-    return vim.version.cmp(dir1, dir2)
+    return vim.version.gt(dir1, dir2)
   end
 
   -- Try to get neovim.VERSION (added in 0.1.11dev).
@@ -559,11 +559,11 @@ local function version_info(python)
   }, { stderr = true, ignore_error = true })
   if rc ~= 0 or nvim_version == '' then
     nvim_version = 'unable to find pynvim module version'
-    local base = vim.fs.basename(nvim_path)
+    local base = vim.fs.dirname(nvim_path)
     local metas = vim.fn.glob(base .. '-*/METADATA', true, true)
     vim.list_extend(metas, vim.fn.glob(base .. '-*/PKG-INFO', true, true))
     vim.list_extend(metas, vim.fn.glob(base .. '.egg-info/PKG-INFO', true, true))
-    metas = table.sort(metas, compare)
+    table.sort(metas, compare)
 
     if metas and next(metas) ~= nil then
       for line in io.lines(metas[1]) do
