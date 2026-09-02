@@ -242,7 +242,10 @@ describe('highlight defaults', function()
 
   it('Cursor after `:hi clear|syntax reset` #6508', function()
     command('highlight clear|syntax reset')
-    eq('guifg=bg guibg=fg', eval([[matchstr(execute('hi Cursor'), '\v(gui|cterm).*$')]]))
+    eq(
+      'cterm=reverse guifg=bg guibg=fg',
+      eval([[matchstr(execute('hi Cursor'), '\v(gui|cterm).*$')]])
+    )
   end)
 
   it('Whitespace highlight', function()

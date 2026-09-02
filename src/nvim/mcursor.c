@@ -223,8 +223,8 @@ bool mc_replaying(void)
 ///                       position (e.g. "o" on the line above).
 /// @param no_undo        Transient mark, undo must not restore it (a restored right-gravity mark
 ///                       drifts when undo re-inserts text at its position).
-static void mc_point_mark_set(buf_T *buf, uint32_t ns, uint32_t *mark, pos_T pos, bool watched,
-                              bool right_gravity, bool no_undo)
+static void mc_mark_set(buf_T *buf, uint32_t ns, uint32_t *mark, pos_T pos, bool watched,
+                        bool right_gravity, bool no_undo)
 {
   DecorInline decor = DECOR_INLINE_INIT;
   if (watched) {
@@ -237,7 +237,7 @@ static void mc_point_mark_set(buf_T *buf, uint32_t ns, uint32_t *mark, pos_T pos
 /// Creates or updates the extmark tracking a multicursor position.
 static void mc_mark_upd(buf_T *buf, uint32_t *mark, pos_T pos)
 {
-  mc_point_mark_set(buf, mc_ns(), mark, pos, true, true, false);
+  mc_mark_set(buf, mc_ns(), mark, pos, true, true, false);
 }
 
 /// Gets the position tracked by `mark`, adjusted for buffer edits since the mark was set.
@@ -258,7 +258,7 @@ static bool mc_mark_get(buf_T *buf, uint32_t ns, uint32_t mark, pos_T *pos)
 /// across a cascade, the preview-apply cursor).
 static void mc_track_upd(buf_T *buf, uint32_t *mark, pos_T pos)
 {
-  mc_point_mark_set(buf, mc_session_ns(), mark, pos, false, true, true);
+  mc_mark_set(buf, mc_session_ns(), mark, pos, false, true, true);
 }
 
 /// Enters a replay sandbox, so keys fed (cascaded) per-cursor do not modify pending typeahead nor
@@ -1091,7 +1091,7 @@ void mc_vsel_refresh(void)
     }
     // Selection-end cursor; the anchor extmark stays put (the eventual replay position).
     uint32_t cmark = 0;
-    mc_point_mark_set(curbuf, mc_vcur_ns(), &cmark, curwin->w_cursor, true, false, true);
+    mc_mark_set(curbuf, mc_vcur_ns(), &cmark, curwin->w_cursor, true, false, true);
     mc_vsel_buf = curbuf->handle;
     Visual.active = false;
   }
@@ -1231,7 +1231,6 @@ bool mc_follow_toggle(long count0)
   } else {
     return false;
   }
-  smsg(0, _("multicursor: follow motion %s"), mc_follow_motion ? "on" : "off");
   return true;
 }
 
@@ -1345,7 +1344,7 @@ void mc_ns_cleared(buf_T *buf, uint32_t ns_id)
       continue;
     }
     uint32_t mark = 0;
-    mc_point_mark_set(buf, mc_last_ns(), &mark, ctx->pos, false, true, false);
+    mc_mark_set(buf, mc_last_ns(), &mark, ctx->pos, false, true, false);
   }
   mc_dedupe();  // Cleanup.
   if (kv_size(mc_cursors) == 0) {

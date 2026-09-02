@@ -434,7 +434,7 @@ describe('multicursor', function()
         line11                        |
         line12                        |
         line13                        |
-        multicursor: ...ow motion off |
+                                      |
       ]])
     end)
   end)
@@ -2468,10 +2468,10 @@ describe('multicursor', function()
       screen:expect({ any = '1×' })
       feed('jQ')
       screen:expect({ any = '2×' })
-      command('silent normal! 1q=') -- Follow mode: "=" prefix (silent to avoid the q= message).
-      feed('l') --  Tickle showcmd redraw.
+      feed('q=') -- Follow mode: "=" prefix.
+      feed('l') -- Tickle showcmd redraw.
       screen:expect({ any = '=2×' })
-      command('silent normal! 2q=')
+      feed('q=') -- Follow mode off.
       feed('h') --  Tickle showcmd redraw.
       clear_cursors() -- cleared with the cursors
       feed('<Esc>') -- the indicator refreshes on the next command
@@ -2492,13 +2492,37 @@ describe('multicursor', function()
       screen:expect({ any = '1×' })
       feed('jQ')
       screen:expect({ any = '2×' })
-      command('silent normal! 1q=') -- Follow mode: "=" prefix (silent to avoid the q= message).
+      feed('q=') -- Follow mode: "=" prefix.
       feed('l') -- Tickle showcmd redraw.
       screen:expect({ any = '=2×' })
     end)
   end)
 
   describe('workflows', function()
+    it('follow-once mapping', function()
+      n.exec_lua([[
+        vim.keymap.set('n', 'q-', function()
+          vim.cmd('normal! 1q=')
+          vim.api.nvim_create_autocmd('CmdAtom', {
+            callback = function(ev)
+              if ev.data.lhs == 'q-' then
+                return
+              end
+              vim.cmd('normal! 2q=')
+              return true
+            end,
+          })
+        end)
+      ]])
+      cursors({ '  aaa', '  bbb', '  ccc' })
+      feed('q-')
+      feed('^') -- Cascades: every cursor moves to the first non-blank.
+      eq({ { 0, 2 }, { 1, 2 } }, anchors())
+      feed('l') -- Follow already ended: primary only.
+      eq({ { 0, 2 }, { 1, 2 } }, anchors())
+      eq(4, fn.col('.'))
+    end)
+
     it('split visual selection into line cursors', function()
       -- {Visual}Q
       fn.setline(1, { 'aaaa', 'bbbb', 'cc', 'dddd' })
