@@ -290,7 +290,7 @@ local function check_performance()
   local elapsed_time = vim.uv.hrtime() - start_time
   if elapsed_time > slow_cmd_time then
     health.warn(
-      'Slow shell invocation (took ' .. vim.fn.printf('%.2f', elapsed_time) .. ' seconds).'
+      'Slow shell invocation (took ' .. vim.fn.printf('%.2f', elapsed_time / 1e9) .. ' seconds).'
     )
   end
 
@@ -520,7 +520,7 @@ local function check_infocmp()
     health.info(
       vim.fn.printf(
         'key_dc (kdch1) terminfo entry: `%s`',
-        (kbs_entry == '' and '? (not found)' or kdch1_entry)
+        (kdch1_entry == '' and '? (not found)' or kdch1_entry)
       )
     )
   end
@@ -597,7 +597,7 @@ local function check_external_tools()
         return
       end
       if vim.version.le(curl_version, { 7, 12, 3 }) then
-        health.warn('curl version %s not compatible', curl_version)
+        health.warn(('curl version %s not compatible'):format(curl_version))
         return
       end
       local lines = { string.format('curl %s (%s)', curl_version, curl_path) }
