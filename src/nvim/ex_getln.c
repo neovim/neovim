@@ -1184,7 +1184,7 @@ static int command_line_wildchar_complete(CommandLineState *s)
     if (wim_longest) {
       res = nextwild(&s->xpc, WILD_LONGEST, options, escape);
     } else {
-      if (wim_noselect || wim_list) {
+      if (wim_noselect || (wim_list && !wim_full)) {
         options |= WILD_NOSELECT;
       }
       if (wim_noinsert) {
@@ -1211,8 +1211,9 @@ static int command_line_wildchar_complete(CommandLineState *s)
     if (res == OK && s->xpc.xp_numfiles > ((wim_noselect || wim_noinsert) ? 0 : 1)) {
       if (wim_longest) {
         bool found_longest_prefix = (ccline.cmdpos != cmdpos_before);
-        if (wim_list || (p_wmnu && wim_full)) {
-          showmatches(&s->xpc, p_wmnu, wim_list, kOptWimFlagNoselect);
+        bool show_menu = p_wmnu && wim_full;
+        if (wim_list || show_menu) {
+          showmatches(&s->xpc, show_menu, wim_list, kOptWimFlagNoselect);
         } else if (!found_longest_prefix) {
           bool wim_list_next = (wim_flags[1] & kOptWimFlagList);
           bool wim_full_next = (wim_flags[1] & kOptWimFlagFull);
@@ -1223,7 +1224,8 @@ static int command_line_wildchar_complete(CommandLineState *s)
             if (wim_full_next && !wim_noselect_next && !wim_noinsert_next) {
               nextwild(&s->xpc, WILD_NEXT, options, escape);
             } else {
-              showmatches(&s->xpc, p_wmnu, wim_list_next, p_wmnu ? wim_flags[1] : 0);
+              showmatches(&s->xpc, p_wmnu && (wim_noselect_next || wim_noinsert_next),
+                          wim_list_next, p_wmnu ? wim_flags[1] : 0);
             }
             if (wim_list_next) {
               s->did_wild_list = true;
@@ -1231,8 +1233,9 @@ static int command_line_wildchar_complete(CommandLineState *s)
           }
         }
       } else {
-        if (wim_list || (p_wmnu && (wim_full || wim_noselect || wim_noinsert))) {
-          showmatches(&s->xpc, p_wmnu, wim_list, p_wmnu ? wim_flags[0] : 0);
+        bool show_menu = p_wmnu && (wim_full || wim_noselect || wim_noinsert);
+        if (wim_list || show_menu) {
+          showmatches(&s->xpc, show_menu, wim_list, p_wmnu ? wim_flags[0] : 0);
         } else {
           vim_beep(kOptBoFlagWildmode);
         }
@@ -1522,8 +1525,8 @@ static int command_line_execute(VimState *state, int key)
       if (s->xpc.xp_numfiles > 1
           && ((!s->did_wild_list && (wim_flags[s->wim_index] & kOptWimFlagList)) || p_wmnu)) {
         // Trigger the popup menu when wildoptions=pum
-        showmatches(&s->xpc, p_wmnu, wim_flags[s->wim_index] & kOptWimFlagList,
-                    p_wmnu ? wim_flags[0] : 0);
+        bool list = wim_flags[s->wim_index] & kOptWimFlagList;
+        showmatches(&s->xpc, p_wmnu && !list, list, p_wmnu ? wim_flags[0] : 0);
       }
       nextwild(&s->xpc, WILD_PREV, 0, s->firstc != '@');
       nextwild(&s->xpc, WILD_PREV, 0, s->firstc != '@');

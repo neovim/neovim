@@ -486,6 +486,9 @@ function M.msg_show(kind, content, replace_last, _, append, id, trigger)
     replace_last = api.nvim_win_get_config(ui.wins.dialog).hide or kind == 'wildlist'
     if kind == 'wildlist' then
       api.nvim_buf_set_lines(ui.bufs.dialog, 0, -1, false, {})
+      if ui.cmd.wmnumode ~= (fn.pumvisible() == 0 and fn.wildmenumode() or 0) then
+        ui.cmd.wmnumode = (ui.cmd.wmnumode == 1 and 0 or 1)
+      end
     end
     ui.cmd.dialog = true -- Ensure dialog is closed when cmdline is hidden.
     M.show_msg('dialog', kind, content, replace_last, append, id)

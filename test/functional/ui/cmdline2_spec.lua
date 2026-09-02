@@ -230,15 +230,6 @@ describe('cmdline2', function()
     feed(':call Fo<C-Z>')
     screen:expect([[
                                                            |
-      {1:~                                                    }|*9
-      {3:                                                     }|
-      Foo()   Fooo()                                       |
-                                                           |
-      {16::}{15:call} Fo^                                             |
-    ]])
-    feed('<C-Z>')
-    screen:expect([[
-                                                           |
       {1:~                                                    }|*8
       {3:                                                     }|
       Foo()   Fooo()                                       |
@@ -256,7 +247,7 @@ describe('cmdline2', function()
                                                            |
       {16::}{15:call} Foo^                                            |
     ]])
-    feed('<C-Z><C-Z>')
+    feed('<C-Z>')
     screen:expect([[
                                                            |
       {1:~                                                    }|*9
