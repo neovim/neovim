@@ -7,6 +7,7 @@
 " 2026 Jan 26 by Vim Project: highlight constants #18922
 " 2026 Mar 11 by Vim Project: fix number performance #19630
 " 2026 May 27 by Vim Project: highlight `lazy` soft keyword (PEP 810) #20342
+" 2026 Aug 30 by Vim Project: improve number and ellipsis performance
 " Credits:	Neil Schemenauer <nas@python.ca>
 "		Dmitry Vasiliev
 "		Rob B
@@ -285,9 +286,9 @@ if !exists("python_no_number_highlight")
   " \d\.\d
   syn match   pythonNumber
         \ "\<\d\+\%(_\d\+\)*\.\d\+\%(_\d\+\)*\%([eE][+-]\=\d\+\%(_\d\+\)*\)\=[jJ]\=\>"
-  " \.\d
+  " \.\d -- \%#=1 selects the faster backtracking engine (leading look-behind)
   syn match   pythonNumber
-        \ "\%(^\|\W\)\@1<=\.\d\+\%(_\d\+\)*\%([eE][+-]\=\d\+\%(_\d\+\)*\)\=[jJ]\=\>"
+        \ "\%#=1\%(^\|\W\)\@1<=\.\d\+\%(_\d\+\)*\%([eE][+-]\=\d\+\%(_\d\+\)*\)\=[jJ]\=\>"
 endif
 
 " Group the built-ins in the order in the 'Python Library Reference' for
@@ -330,7 +331,8 @@ if !exists("python_no_builtin_highlight")
 	\ contains=ALLBUT,pythonBuiltin,pythonClass,pythonFunction,pythonType,pythonAsync
 	\ transparent
   " the ellipsis literal `...` can be used in multiple syntactic contexts
-  syn match   pythonEllipsis	"\.\@1<!\.\.\.\ze\.\@!" display
+  " \%#=1 selects the faster backtracking engine (leading look-behind)
+  syn match   pythonEllipsis	"\%#=1\.\@1<!\.\.\.\ze\.\@!" display
 endif
 
 " From the 'Python Library Reference' class hierarchy at the bottom.
@@ -390,7 +392,8 @@ if !exists("python_no_doctest_highlight")
     syn region pythonDoctestValue
 	  \ start=+^\s*\%(>>>\s\|\.\.\.\s\|"""\|'''\)\@!\S\++ end="$"
 	  \ contained contains=pythonEllipsis
-    syn match pythonEllipsis "\%(^\s*\)\@<!\.\@1<!\zs\.\.\.\ze\.\@!" display
+    " \%#=1 selects the faster backtracking engine (leading look-behind)
+    syn match pythonEllipsis "\%#=1\%(^\s*\)\@<!\.\@1<!\zs\.\.\.\ze\.\@!" display
 	  \ contained containedin=pythonDoctest
   else
     syn region pythonDoctest
