@@ -1132,7 +1132,7 @@ describe('multicursor', function()
       ]])
     end)
 
-    it('typed text appears at cursors before leaving insert-mode', function()
+    it('typed text live-mirrors at cursors', function()
       local screen = Screen.new(30, 6)
       cursors({ 'aaa', 'bbb', 'ccc' })
       -- Still in insert mode (no <Esc> yet): the text already cascaded; each cursor displays
@@ -1155,8 +1155,7 @@ describe('multicursor', function()
         {1:~                             }|*2
                                       |
       ]])
-      -- Entering insert mode displays each cursor at its insertion point
-      -- right away, BEFORE any text is typed ("a": one char to the right).
+      -- Entering insert mode ("a") displays each cursor at its insertion-point immediately.
       feed('a')
       screen:expect([[
         XY{17:a}aa                         |
@@ -1166,8 +1165,7 @@ describe('multicursor', function()
         {5:-- INSERT --}                  |
       ]])
       feed('<Esc>')
-      -- An operator entry ("ciw") live-mirrors the same way: the entry
-      -- replay changes each cursor's OWN word, still in insert mode.
+      -- Operator entry ("ciw") live-mirrors the per-cursor change, still in insert mode.
       feed('0ciwZ')
       screen:expect([[
         Z{17: }                            |
@@ -1177,13 +1175,23 @@ describe('multicursor', function()
         {5:-- INSERT --}                  |
       ]])
       feed('<Esc>')
-      -- A Visual-entered change ("viwc") live-mirrors too: the entry replay
-      -- re-executes the selection at each cursor.
+      -- Visual-change entry ("viwc") live-mirrors the selection at each cursor.
       feed('viwcW')
       screen:expect([[
         W{17: }                            |
         W{17: }                            |
         W^                             |
+        {1:~                             }|*2
+        {5:-- INSERT --}                  |
+      ]])
+      feed('<Esc>')
+      -- Also when "c" is a Visual-mode operator mapping. #41605
+      command('xnoremap c "_c')
+      feed('viwcM')
+      screen:expect([[
+        M{17: }                            |
+        M{17: }                            |
+        M^                             |
         {1:~                             }|*2
         {5:-- INSERT --}                  |
       ]])
