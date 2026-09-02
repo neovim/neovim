@@ -209,7 +209,7 @@ size_t mc_showcmd(char *buf, size_t size)
   return (size_t)snprintf(buf, size, "%s%zu× ", mc_follow_motion ? "=" : "", kv_size(mc_cursors));
 }
 
-/// True while a replay runs: keys executing are fed back by Nvim itself, not new user input.
+/// True during a replay: re-executing keys internally, not new user input.
 bool mc_replaying(void)
 {
   return mc_replay;
