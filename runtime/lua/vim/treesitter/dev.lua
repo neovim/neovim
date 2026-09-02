@@ -391,6 +391,8 @@ function M.inspect_tree(opts)
     title = ('Syntax tree for %s'):format(vim.fs.relpath('.', bufname) or bufname)
   elseif type(opts_title) == 'function' then
     title = opts_title(buf)
+  else
+    title = opts_title
   end
 
   assert(type(title) == 'string', 'Window title must be a string')
