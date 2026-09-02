@@ -1693,7 +1693,7 @@ M.funcs = {
       	echo cosh(0.5)
       <	1.127626 >vim
       	echo cosh(-0.5)
-      <	-1.127626
+      <	1.127626
 
     ]=],
     func_float = 'cosh',
