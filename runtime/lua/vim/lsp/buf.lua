@@ -631,7 +631,7 @@ function M.format(opts)
   local mode = api.nvim_get_mode().mode
   local range = opts.range
   -- Try to use visual selection if no range is given
-  if not range and mode == 'v' or mode == 'V' then
+  if not range and (mode == 'v' or mode == 'V') then
     range = range_from_selection(bufnr, mode)
   end
 
