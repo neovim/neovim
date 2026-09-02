@@ -1125,6 +1125,18 @@ static void showmatches_oneline(expand_T *xp, char **matches, int numMatches, in
   }
 }
 
+/// Show the matches in a popup menu, with the first one selected unless
+/// "noselect" is set.
+static inline void show_pum_matches(CmdlineInfo *ccline, expand_T *xp, char **matches,
+                                    int numMatches, bool showtail, bool noselect,
+                                    bool cmdline_unchanged)
+{
+  cmdline_pum_create(ccline, xp, matches, numMatches, showtail, cmdline_unchanged);
+  compl_selected = noselect ? -1 : 0;
+  pum_clear();
+  cmdline_pum_display(true);
+}
+
 /// Display completion matches.
 /// Returns EXPAND_NOTHING when the character that triggered expansion should be
 ///   inserted as a normal character.
@@ -1159,10 +1171,7 @@ int showmatches(expand_T *xp, bool display_wildmenu, bool display_list, int wim_
   }
 
   if (cmdline_compl_use_pum(display_wildmenu && !display_list)) {
-    cmdline_pum_create(ccline, xp, matches, numMatches, showtail, cmdline_unchanged);
-    compl_selected = noselect ? -1 : 0;
-    pum_clear();
-    cmdline_pum_display(true);
+    show_pum_matches(ccline, xp, matches, numMatches, showtail, noselect, cmdline_unchanged);
     return EXPAND_OK;
   }
 
@@ -1231,6 +1240,16 @@ int showmatches(expand_T *xp, bool display_wildmenu, bool display_list, int wim_
     // we redraw the command below the lines that we have just listed
     // This is a bit tricky, but it saves a lot of screen updating.
     cmdline_row = msg_row;      // will put it back later
+  }
+
+  // "list" and "full" in the same 'wildmode' phase: the matches are listed
+  // above and shown in the menu as well.
+  if (display_wildmenu && display_list) {
+    if (cmdline_compl_use_pum(true)) {
+      show_pum_matches(ccline, xp, matches, numMatches, showtail, noselect, cmdline_unchanged);
+    } else {
+      redraw_wildmenu(xp, numMatches, matches, noselect ? -1 : 0, showtail);
+    }
   }
 
   if (xp->xp_numfiles == -1) {
