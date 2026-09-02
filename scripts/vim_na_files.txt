@@ -6,6 +6,7 @@ Makefile
 SECURITY.md
 configure
 runtime/autoload/README.txt
+runtime/autoload/tohtml.vim
 runtime/bugreport.vim
 runtime/defaults.vim
 runtime/doc/channel.txt
@@ -58,6 +59,8 @@ runtime/plugin/README.txt
 runtime/plugin/logiPat.vim
 runtime/plugin/manpager.vim
 runtime/plugin/rrhelper.vim
+runtime/plugin/tohtml.vim
+runtime/syntax/2html.vim
 runtime/syntax/syncolor.vim
 runtime/termcap
 runtime/tools/README.txt
@@ -126,6 +129,7 @@ src/testdir/test_mzscheme.vim
 src/testdir/test_plugin_comment.vim
 src/testdir/test_plugin_glvs.vim
 src/testdir/test_plugin_osc52.vim
+src/testdir/test_plugin_tohtml.vim
 src/testdir/test_plugin_vimball.vim
 src/testdir/test_python2.vim
 src/testdir/test_pyx2.vim
@@ -138,6 +142,7 @@ src/testdir/test_suspend.vim
 src/testdir/test_tabpanel.vim
 src/testdir/test_tcl.vim
 src/testdir/test_termencoding.vim
+src/testdir/test_tohtml.vim
 src/testdir/test_xdg.vim
 src/testdir/test_xxd.vim
 src/testdir/thread_util.py

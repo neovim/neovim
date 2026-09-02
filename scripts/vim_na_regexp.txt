@@ -70,6 +70,7 @@
 ^src/testdir/dumps/
 ^src/testdir/keycode_check\.
 ^src/testdir/python
+^src/testdir/samples/Test_tohtml_
 ^src/testdir/samples/crypt_
 ^src/testdir/util/gui_
 ^src/testdir/test_balloon

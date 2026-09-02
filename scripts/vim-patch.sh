@@ -969,7 +969,10 @@ is_na_patch() {
         HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
           '-I\stest8[67]\.out \\$' \
           "$patch" -- "${file}")
-        test -n "$HUNKS" && return 1
+        if test -n "$HUNKS"; then
+          HUNK_NUM_FINAL=$(echo "$HUNKS" | grep '^@@ .* @@' | sed 's/^@@ .* @@ //' | grep -cv -e '^NEW_TESTS\(\|_RES\) = \\$')
+          test "$HUNK_NUM_FINAL" -ne 0 && return 1
+        fi
         ;;
       src/testdir/*.vim)
         HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
