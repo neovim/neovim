@@ -51,6 +51,9 @@ end
 -- For text nodes inside curly braces. It stops parsing when reaching an escapable character.
 local braced_text = (text(escapable) ^ 0) / escape_text()
 
+-- Same, but non-empty, so it can be repeated in a sequence without looping.
+local braced_text1 = (text(escapable) ^ 1) / escape_text()
+
 -- Within choice nodes, \ also escapes comma and pipe characters.
 local choice_text = C(text(escapable .. ',|') ^ 1) / escape_text(escapable .. ',|')
 
@@ -126,6 +129,23 @@ local function node(type)
   end
 end
 
+--- Reduces the nodes of a placeholder value (or a variable default) to a single node.
+---
+--- The grammar in the specification allows only one node there, but its own prose nests text and
+--- tabstops in one value ("Placeholders can be nested, like `${1:another ${2:placeholder}}`"), and
+--- servers emit that form. A lone node is returned as is, so trees that parsed before don't change.
+---
+--- @param children vim.snippet.Node<any>[]
+--- @return vim.snippet.Node<any>
+local function reduce(children)
+  if #children == 0 then
+    return node(Type.Text)({ text = '' })
+  elseif #children == 1 then
+    return children[1]
+  end
+  return node(Type.Snippet)({ children = children })
+end
+
 -- stylua: ignore
 --- @diagnostic disable-next-line: missing-fields
 local G = P({
@@ -137,9 +157,10 @@ local G = P({
     ) ^ 1), 'children'
   ) * -P(1)) / node(Type.Snippet),
   any = V('placeholder') + V('tabstop') + V('choice') + V('variable'),
-  any_or_text = V('any') + (Ct(Cg(braced_text, 'text')) / node(Type.Text)),
+  any_or_text = V('any') + (Ct(Cg(braced_text1, 'text')) / node(Type.Text)),
+  value = Ct(V('any_or_text') ^ 0) / reduce,
   tabstop = Ct(dollar * (tabstop + (l_brace * tabstop * r_brace))) / node(Type.Tabstop),
-  placeholder = Ct(dollar * l_brace * tabstop * colon * Cg(V('any_or_text'), 'value') * r_brace) / node(Type.Placeholder),
+  placeholder = Ct(dollar * l_brace * tabstop * colon * Cg(V('value'), 'value') * r_brace) / node(Type.Placeholder),
   choice = Ct(dollar *
     l_brace *
     tabstop *
@@ -151,7 +172,7 @@ local G = P({
     var + (
     l_brace * var * (
       r_brace +
-      (colon * Cg(V('any_or_text'), 'default') * r_brace) +
+      (colon * Cg(V('value'), 'default') * r_brace) +
       (slash * regex * slash * Cg(Ct((V('format') + (C(format_text) / node(Type.Text))) ^ 1), 'format') * slash * options * r_brace)
     ))
   )) / node(Type.Variable),

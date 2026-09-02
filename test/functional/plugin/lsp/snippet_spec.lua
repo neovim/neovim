@@ -170,4 +170,51 @@ describe('vim.lsp._snippet_grammar', function()
       }, '\n'))
     )
   end)
+
+  it('parses a placeholder value made of several nodes', function()
+    -- The example given in the specification's own "Placeholders" section.
+    eq({
+      {
+        type = type.Placeholder,
+        data = {
+          tabstop = 1,
+          value = {
+            type = type.Snippet,
+            data = {
+              children = {
+                { type = type.Text, data = { text = 'another ' } },
+                {
+                  type = type.Placeholder,
+                  data = {
+                    tabstop = 2,
+                    value = { type = type.Text, data = { text = 'placeholder' } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }, parse('${1:another ${2:placeholder}}'))
+  end)
+
+  it('parses a variable default made of several nodes', function()
+    eq({
+      {
+        type = type.Variable,
+        data = {
+          name = 'VAR',
+          default = {
+            type = type.Snippet,
+            data = {
+              children = {
+                { type = type.Text, data = { text = 'a' } },
+                { type = type.Tabstop, data = { tabstop = 1 } },
+              },
+            },
+          },
+        },
+      },
+    }, parse('${VAR:a$1}'))
+  end)
 end)

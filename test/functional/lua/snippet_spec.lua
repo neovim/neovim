@@ -116,6 +116,14 @@ describe('vim.snippet', function()
     test_expand_success({ 'print($UNKNOWN)' }, { 'print(UNKNOWN)' })
   end)
 
+  it('expands a placeholder whose value is several nodes #32830', function()
+    test_expand_success(
+      { 'foreach (\\$${1:variable} as \\$${2:key} ${3:=> \\$${4:value}}) {', '\t${0:# code}', '}' },
+      { 'foreach ($variable as $key => $value) {', '  # code', '}' },
+      'vim.o.expandtab = true\nvim.o.shiftwidth = 2'
+    )
+  end)
+
   it('highlights active tabstop with SnippetTabstopActive', function()
     local function get_extmark_details(col, end_col)
       return api.nvim_buf_get_extmarks(0, -1, { 0, col }, { 0, end_col }, { details = true })[1][4]
