@@ -343,6 +343,7 @@ context), multicursor replays actions "semantically" (|CmdAtom|).
   line at cursor, not the entire folded contents). Motions step into folds
   instead of skipping over them. The primary cursor keeps the usual
   |fold-behavior|.
+- Cursors are per-buffer, and cascade only while their buffer is current.
 - CTRL-C interrupts the cascade.
 
 Example: place a cursor on every matching pattern: >

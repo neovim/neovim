@@ -930,6 +930,34 @@ describe('multicursor', function()
       eq({ 'xx', 'yy' }, api.nvim_buf_get_lines(buf_b, 0, -1, true))
     end)
 
+    it('atom queued in one buffer does not cascade in another buffer', function()
+      command('set hidden')
+      cursors({ 'aaa', 'bbb' }, 'Qj')
+      local buf_a = api.nvim_get_current_buf()
+      command('enew')
+      fn.setline(1, { 'ccc', 'ddd' })
+      feed('gg0Qj')
+      local buf_b = api.nvim_get_current_buf()
+      command('buffer #')
+      command('nnoremap X x:bnext<CR>')
+      feed('2G0X')
+      -- The "x" atom was captured in A but resolves in B. It should not cascade to B's cursors.
+      -- A's cursors are skipped, except the edit done by the primary cursor.
+      eq({ a = { 'aaa', 'bb' }, b = { 'ccc', 'ddd' } }, {
+        a = api.nvim_buf_get_lines(buf_a, 0, -1, true),
+        b = api.nvim_buf_get_lines(buf_b, 0, -1, true),
+      })
+      -- Same-buffer edit still cascades.
+      feed('2G0x')
+      eq({ 'cc', 'dd' }, api.nvim_buf_get_lines(buf_b, 0, -1, true))
+
+      -- TEMPORARY buffer-switch is allowed. A mapping may do work in a throwaway buffer, then apply
+      -- edits to curbuf.
+      command('nnoremap Y :new<CR>ihello<Esc>:bwipe!<CR>x')
+      feed('2G0Y')
+      eq({ 'c', 'd' }, api.nvim_buf_get_lines(buf_b, 0, -1, true))
+    end)
+
     it('edits cascade from any window showing the buffer (:split)', function()
       -- Cascade is conditional on the buffer, not the window.
       cursors({ 'aaa', 'bbb' }, 'Q')

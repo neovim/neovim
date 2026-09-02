@@ -498,8 +498,7 @@ static char *atom_composite_lhs(void)
   return keys.items;
 }
 
-/// Queues an LHS-replay atom: a mapping that edited invisibly (:normal/:call, "ds'") re-runs
-/// per cursor from its LHS + payload keys. Cascade only.
+/// Queues an internal-only atom for mcursor cascade (no emit).
 void atom_lhs_replay_queue(void)
 {
   kv_push(g_atoms, ((CmdAtom){ .type = kAMapping, .keys = atom_composite_lhs(), .remap = true }));
@@ -972,7 +971,7 @@ static bool atom_visual_end_suffix(char *suffix, const CmdSpec *spec, bool redoa
     redo_append_str(suffix, -1);
   }
   if (!atom_is_user_cmd() || !(vatom.state & kVatomTyped)) {
-    // Not user input (":normal! vjd", fed keys): the redo prep above is the only effect; no emit.
+    // Internal input (":norm! vjd", fed keys): the redo prep above is the only effect; no emit.
     xfree(vkeys);
     xfree(suffix);
     atom_visual_reset();

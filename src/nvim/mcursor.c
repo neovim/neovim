@@ -468,6 +468,13 @@ static void mc_cascade(void)
 
   // Replay each atom at each cursor (nested ":norm! xx" queues multiple atoms per clock edge).
   for (size_t ai = 0; ai < kv_size(g_atoms); ai++) {
+    CmdAtom *atom = &kv_A(g_atoms, ai);
+    if (atom->origin.buf.br_buf != NULL
+        && (!bufref_valid(&atom->origin.buf) || atom->origin.buf.br_buf != curbuf)) {
+      // Cascade only in the atom's origin buffer (a mapping may switch buffers).
+      // Assume untagged atoms (atom_lhs_replay_queue()) are current-buffer.
+      continue;
+    }
     for (size_t ci = 0; ci < kv_size(mc_cursors); ci++) {
       // Replays consume `typebuf` only, so check for CTRL-C in OS/RPC input here.
       line_breakcheck();
@@ -499,9 +506,8 @@ void mc_clock_edge(bool map_edit)
 {
   if (map_edit && !atom_composite_queued() && kv_size(g_atoms) == 0
       && atom_composite_active() && mc_buf_has_cursors(curbuf)) {
-    // A payload mapping (vim-surround "ds'"/"S") edited the buffer via :normal/:call; invisible
-    // to atom capture, so nothing was queued. Fallback to LHS-replay: re-run the mapping at each
-    // cursor by replaying its trigger plus the keys its getchar() read (atom_lhs_replay_queue()).
+    // A payload mapping (vim-surround "ds'"/"S") edited the buffer via :norm/:call, invisible to
+    // atom capture, so nothing was queued. Fallback to LHS-replay.
     atom_lhs_replay_queue();
   }
   if (mc_buf_has_cursors(curbuf) && kv_size(g_atoms) > 0) {
