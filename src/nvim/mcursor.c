@@ -33,6 +33,7 @@
 #include "nvim/input.h"
 #include "nvim/input_cmdatom.h"
 #include "nvim/insert.h"
+#include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
 #include "nvim/log.h"
 #include "nvim/lua/executor.h"
@@ -51,6 +52,7 @@
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
 #include "nvim/plines.h"
+#include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"
 #include "nvim/register.h"
 #include "nvim/register_defs.h"
@@ -525,7 +527,7 @@ void mc_clock_edge(bool map_edit)
   }
 }
 
-/// Removes cursors that overlap another cursor, so an edit does not apply N times at one position.
+/// Prunes cursors that overlap others, so an edit does not apply N times at one position.
 static void mc_dedupe(void)
 {
   const bool had_cursors = kv_size(mc_cursors) > 0;
@@ -839,8 +841,11 @@ void mc_ins_cascade(void)
   } else if (ins.size > mc_ins_span.done_len
              && mc_ins_keys_nonliteral(ins.data + mc_ins_span.done_len,
                                        ins.size - mc_ins_span.done_len)) {
-    // Non-literal keys pending (BS, CTRL-U, ...): re-execute instead of previewing.
-    mc_ins_span_flush(&ins, false);
+    // Non-literal keys pending (BS, CTRL-U, …): re-execute instead of previewing.
+    // Not during completion: edit() would raise E565. #41602
+    if (!ins_compl_active() && !pum_visible()) {
+      mc_ins_span_flush(&ins, false);
+    }
   } else {
     MTPair p = extmark_from_id(curbuf, mc_session_ns(), mc_ins_span.region);
     if (p.start.id != 0) {

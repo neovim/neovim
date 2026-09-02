@@ -1342,23 +1342,21 @@ static void insert_handle_key_post(InsertState *s)
 
 /// edit(): Start inserting text.
 ///
-/// "cmdchar" can be:
-/// 'i' normal insert command
-/// 'a' normal append command
-/// 'R' replace command
-/// 'r' "r<CR>" command: insert one <CR>.
-///     Note: count can be > 1, for redo, but still only one <CR> is inserted.
-///           <Esc> is not used for redo.
-/// 'g' "gI" command.
-/// 'V' "gR" command for Virtual Replace mode.
-/// 'v' "gr" command for single character Virtual Replace mode.
+/// May nest: ":normal i…" and multicursor insert-cascade enters it while an outer edit() is
+/// suspended. But i_CTRL-O does not nest: edit() returns, and the caller runs the Normal-mode
+/// command.
 ///
-/// This function is not called recursively.  For CTRL-O commands, it returns
-/// and lets the caller handle the Normal-mode command.
-///
-/// @param  cmdchar  command that started the insert
-/// @param  startln  if true, insert at start of line
-/// @param  count    repeat count for the command
+/// @param  cmdchar  Command that started the insert:
+///   - 'i'
+///   - 'a'
+///   - 'R'
+///   - 'r': "r<CR>" command: insert one <CR>. Note: count can be > 1, for redo, but still only one
+///     <CR> is inserted. <Esc> is not used for redo.
+///   - 'g': "gI" command.
+///   - 'V': "gR" command: Virtual Replace mode.
+///   - 'v': "gr" command: single-character Virtual Replace mode.
+/// @param  startln  If true, insert at start of line.
+/// @param  count    Repeat count for the command.
 ///
 /// @return true if a CTRL-O command caused the return (insert mode pending).
 bool edit(int cmdchar, bool startln, int count)
@@ -1381,10 +1379,10 @@ bool edit(int cmdchar, bool startln, int count)
     return false;
   }
 
-  // Don't allow changes in the buffer while editing the cmdline.  The
-  // caller of getcmdline() may get confused.
-  // Don't allow recursive insert mode when busy with completion.
-  // Allow in dummy buffers since they are only used internally
+  // Disallow edit() (insert-mode) when:
+  // - ins-completion is active
+  // - textlock (the caller of getcmdline() may get confused)
+  // - <expr> mapping eval
   if (textlock != 0 || ins_compl_active() || compl_busy || pum_visible()
       || expr_map_locked()) {
     emsg(_(e_textlock));

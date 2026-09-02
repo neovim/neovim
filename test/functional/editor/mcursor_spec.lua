@@ -1401,6 +1401,17 @@ describe('multicursor', function()
       feed('cc')
       feed('f<C-n><C-n><C-e><Esc>') -- cycle, then cancel back to the leader
       eq({ 'f', 'f', 'f' }, { get_lines()[4], get_lines()[5], get_lines()[6] })
+
+      -- No candidates, {Visual}Q cursors: <BS> mid-completion. #41602
+      clear_cursors()
+      api.nvim_buf_set_lines(0, 0, -1, true, { '', '', '' })
+      command('let v:errmsg = ""')
+      feed('VggQ')
+      feed('i a<BS>')
+      eq('', api.nvim_get_vvar('errmsg'))
+      feed('<Esc>')
+      eq('', api.nvim_get_vvar('errmsg'))
+      eq({ ' ', ' ', ' ' }, get_lines())
     end)
 
     it('InsertCharPre-driven complete() plugin (cmp-style)', function()
