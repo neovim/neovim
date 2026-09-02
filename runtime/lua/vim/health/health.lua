@@ -557,7 +557,7 @@ local function check_stable_version(nvim_version)
       { text = true, timeout = 5000 }
     )
     :wait()
-  if result.code ~= 0 or not result.stdout or result.stdout == '' then
+  if not result or result.code ~= 0 or not result.stdout or result.stdout == '' then
     return
   end
   local stable_sha = assert(
@@ -584,7 +584,7 @@ local function check_head_hash(commit)
       { text = true, timeout = 5000 }
     )
     :wait()
-  if result.code ~= 0 or not result.stdout or result.stdout == '' then
+  if not result or result.code ~= 0 or not result.stdout or result.stdout == '' then
     return
   end
 
