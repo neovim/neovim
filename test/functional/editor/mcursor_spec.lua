@@ -1502,7 +1502,7 @@ describe('multicursor', function()
   describe('visual-mode cascade', function()
     it('failed command mid-replay does not leak Visual mode into the next replay', function()
       fn.setline(1, { 'alpha bravo', 'golf hotel', 'mike november' })
-      feed('ggVjjQ') -- cursor on each line; enables "q=" follow-motion
+      feed('ggVjjQ') -- cursor on each line; enables "q=" follow-mode
       feed('gg0')
       -- The abandoned selection replays "vlo h <Esc>" at each cursor ("q=" follow). The "h" fails
       -- (col 0 after "o" swapped to the selection start), which flushes the rest of the replay,
@@ -1683,7 +1683,7 @@ describe('multicursor', function()
     end)
   end)
 
-  describe('q= (follow motion)', function()
+  describe('q= (follow-mode)', function()
     it('cursors follow primary-cursor motions', function()
       cursors({ 'abcd', 'efgh' }, 'Q')
       feed('j') -- No cascade/follow.
@@ -1710,7 +1710,7 @@ describe('multicursor', function()
       eq({ 'b', '!' }, get_lines())
     end)
 
-    it('implicit exit (cursors deduped) resets follow-motion', function()
+    it('implicit exit (cursors deduped) resets follow-mode', function()
       cursors({ 'aaa', 'bbb', 'ccc' })
       eq(2, ncursors())
       feed('q=')
@@ -1732,6 +1732,36 @@ describe('multicursor', function()
       feed('j') -- No follow: nothing converges or dedupes.
       eq(2, ncursors())
       eq({ { 0, 1 }, { 1, 1 } }, anchors())
+    end)
+
+    it('follows a mapping that moves the cursor via API (no motion key) #41646', function()
+      command(
+        'nnoremap gm <Cmd>lua local p = vim.api.nvim_win_get_cursor(0); '
+          .. 'p[2] = p[2] + 1; vim.api.nvim_win_set_cursor(0, p)<CR>'
+      )
+      cursors({ 'abcd', 'efgh', 'ijkl' }, 'QjQj') -- A cursor on each line.
+      feed('q=')
+      feed('gm') -- Every cursor moves one column right.
+      feed('x')
+      eq({ 'acd', 'egh', 'ikl' }, get_lines())
+
+      -- <Cmd> mapping uses nested ":normal!" to move the cursor. #41653
+      clear_cursors()
+      command('nnoremap gh <Cmd>normal! $<CR>')
+      cursors({ 'a b', 'c d', 'e f' }, 'QjQj')
+      feed('q=')
+      feed('gh') -- Every cursor moves to EOL.
+      feed('x')
+      eq({ 'a ', 'c ', 'e ' }, get_lines())
+
+      -- matchit "%" mapping (uses ":call" to move the cursor).
+      command('packadd matchit')
+      clear_cursors()
+      cursors({ '(aa)', '(bb)', '(cc)' }, 'QjQj') -- All cursors on "(".
+      feed('q=')
+      feed('%') -- Every cursor jumps to its ")".
+      feed('x')
+      eq({ '(aa', '(bb', '(cc' }, get_lines())
     end)
 
     it('jumps are not followed (CTRL-O, backtick)', function()
@@ -2720,7 +2750,7 @@ describe('multicursor', function()
       -- One cursor per selected line, at primary cursor's column (on the short line: past EOL).
       feed('iX<Esc>')
       eq({ 'aaXaa', 'bbXbb', 'ccX', 'dddd' }, get_lines())
-      -- The mapping enabled follow-motion (q=).
+      -- The mapping enabled follow-mode (q=).
       feed('jx')
       eq({ 'aaXaa', 'bbbb', 'cc', 'ddd' }, get_lines())
     end)
