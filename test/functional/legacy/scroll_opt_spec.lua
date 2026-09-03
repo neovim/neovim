@@ -1599,4 +1599,21 @@ describe('scrolloffpad', function()
     exec('normal! G')
     screen:expect(s1)
   end)
+
+  it("uses the target window's value, not the current window's", function()
+    exec([[
+      set scrolloff=10 scrolloffpad=0
+      enew!
+      call setline(1, map(range(1, 100), 'printf("line %d", v:val)'))
+      split
+      setlocal scrolloffpad=5
+      normal! G
+      wincmd j
+      silent 1,60d
+    ]])
+    -- The upper window turned 'scrolloffpad' on for itself, so its own value
+    -- decides how far its cursor is padded from the end of the buffer, even
+    -- though the current window leaves the option at the global 0.
+    t.eq(36, n.fn.line('w0', n.fn.win_getid(1)))
+  end)
 end)
