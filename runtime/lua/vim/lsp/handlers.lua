@@ -58,8 +58,30 @@ RSC['$/progress'] = function(_, params, ctx)
     err_message('LSP[id=', tostring(ctx.client_id), '] client has shut down during progress update')
     return vim.NIL
   end
+  -- Some servers incorrectly send $/progress params as a positional `[token, value]`
+  -- array instead of the spec'd `{ token, value }` object. Convert if this is the
+  -- case, matching the workaround in vscode-languageserver-node's jsonrpc connection.
+  local token, value ---@type lsp.ProgressToken, unknown
+  if
+    vim.islist(params)
+    and #params == 2
+    and (type(params[1]) == 'string' or type(params[1]) == 'number')
+  then
+    token, value = params[1], params[2]
+  else
+    token, value = params.token, params.value
+  end
+
+  if type(token) == 'string' or type(token) == 'number' then
+    local handler = client.progress.partialResults[token]
+    if handler then
+      handler(value)
+      --If token is for partial results don't push to progress
+      return
+    end
+  end
+
   local kind = nil
-  local value = params.value
 
   if type(value) == 'table' then
     kind = value.kind --- @type string
@@ -67,11 +89,11 @@ RSC['$/progress'] = function(_, params, ctx)
     -- So that consumers always have it available, even if they consume a
     -- subset of the full sequence
     if kind == 'begin' then
-      client.progress.pending[params.token] = value.title
+      client.progress.pending[token] = value.title
     else
-      value.title = client.progress.pending[params.token]
+      value.title = client.progress.pending[token]
       if kind == 'end' then
-        client.progress.pending[params.token] = nil
+        client.progress.pending[token] = nil
       end
     end
   end

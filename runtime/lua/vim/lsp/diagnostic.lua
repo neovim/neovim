@@ -476,6 +476,38 @@ local function previous_result_ids(client_id, identifier)
   return results
 end
 
+local partial_result_token_counter = 0
+
+--- @param identifier string?
+--- @param client_id integer
+--- @param items lsp.WorkspaceDocumentDiagnosticReport[]
+local function handle_workspace_report_items(identifier, client_id, items)
+  for _, report in ipairs(items) do
+    -- Avoid creating a buffer (via vim.uri_to_bufnr) just to record bookkeeping for a
+    -- file that has no diagnostics and isn't already open.
+    local has_diagnostics = report.kind == 'full' and #report.items > 0
+    if has_diagnostics or vim.fn.bufexists(vim.uri_to_fname(report.uri)) == 1 then
+      local bufnr = vim.uri_to_bufnr(report.uri)
+
+      -- Start tracking the buffer (but don't send "textDocument/diagnostic" requests for it).
+      local provider = Diagnostics.active[bufnr] or Diagnostics:new(bufnr)
+      local state = provider.client_state[client_id]
+      if not state then
+        state = { pull_kind = 'workspace', result_id = {} }
+        provider.client_state[client_id] = state
+      end
+
+      -- We favor document pull requests over workspace results, so only update the buffer
+      -- state if we're not pulling document diagnostics for this buffer.
+      if state.pull_kind == 'workspace' and report.kind == 'full' then
+        handle_diagnostics(report.uri, client_id, report.items, true, identifier)
+        local key = result_id_key(identifier)
+        state.result_id[key] = report.resultId
+      end
+    end
+  end
+end
+
 --- Request workspace-wide diagnostics.
 --- @param opts vim.lsp.WorkspaceDiagnosticsOpts
 function M._workspace_diagnostics(opts)
@@ -485,48 +517,52 @@ function M._workspace_diagnostics(opts)
   --- @param result lsp.WorkspaceDiagnosticReport
   --- @param ctx lsp.HandlerContext
   local function handler(error, result, ctx)
+    local partial_result_token = ctx.params.partialResultToken ---@type lsp.ProgressToken
+    if partial_result_token then
+      local client = assert(lsp.get_client_by_id(ctx.client_id))
+      client.progress.partialResults[partial_result_token] = nil
+    end
+
     -- Check for retrigger requests on cancellation errors.
     -- Unless `retriggerRequest` is explicitly disabled, try again.
     if error ~= nil and error.code == protocol.ErrorCodes.ServerCancelled then
       if error.data == nil or error.data.retriggerRequest ~= false then
         local client = assert(lsp.get_client_by_id(ctx.client_id))
+        -- Recreate partialResultToken
+        partial_result_token_counter = partial_result_token_counter + 1
+        local new_partial_result_token = 'workspace-diagnostic-' .. partial_result_token_counter ---@type lsp.ProgressToken
+        client.progress.partialResults[new_partial_result_token] = function(value)
+          ---@cast value lsp.WorkspaceDiagnosticReportPartialResult
+          handle_workspace_report_items(ctx.params.identifier, client.id, value.items)
+        end
+        ctx.params.partialResultToken = new_partial_result_token
+
         client:request('workspace/diagnostic', ctx.params, handler)
+        return
       end
-      return
     end
 
     if error == nil and result ~= nil then
-      ---@type lsp.WorkspaceDiagnosticParams
-      local params = ctx.params
-      for _, report in ipairs(result.items) do
-        local bufnr = vim.uri_to_bufnr(report.uri)
-
-        -- Start tracking the buffer (but don't send "textDocument/diagnostic" requests for it).
-        local provider = Diagnostics.active[bufnr] or Diagnostics:new(bufnr)
-        local state = provider.client_state[ctx.client_id]
-        if not state then
-          state = { pull_kind = 'workspace', result_id = {} }
-          provider.client_state[ctx.client_id] = state
-        end
-
-        -- We favor document pull requests over workspace results, so only update the buffer
-        -- state if we're not pulling document diagnostics for this buffer.
-        if state.pull_kind == 'workspace' and report.kind == 'full' then
-          handle_diagnostics(report.uri, ctx.client_id, report.items, true, params.identifier)
-          local key = result_id_key(params.identifier)
-          state.result_id[key] = report.resultId
-        end
-      end
+      handle_workspace_report_items(ctx.params.identifier, ctx.client_id, result.items)
     end
   end
 
   for _, client in ipairs(clients) do
     ---@param cap lsp.DiagnosticRegistrationOptions
     client:_provider_foreach('workspace/diagnostic', function(cap)
+      partial_result_token_counter = partial_result_token_counter + 1
+      local partial_result_token = 'workspace-diagnostic-' .. partial_result_token_counter
+
+      client.progress.partialResults[partial_result_token] = function(value)
+        ---@cast value lsp.WorkspaceDiagnosticReportPartialResult
+        handle_workspace_report_items(cap.identifier, client.id, value.items)
+      end
+
       --- @type lsp.WorkspaceDiagnosticParams
       local params = {
         identifier = cap.identifier,
         previousResultIds = previous_result_ids(client.id, cap.identifier),
+        partialResultToken = partial_result_token,
       }
 
       client:request('workspace/diagnostic', params, handler)
