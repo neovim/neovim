@@ -907,8 +907,8 @@ static void shada_read(FileDescriptor *const sd_reader, const int flags)
 {
   list_T *oldfiles_list = get_vim_var_list(VV_OLDFILES);
   const bool force = flags & kShaDaForceit;
-  const bool get_old_files = (flags & (kShaDaGetOldfiles | kShaDaForceit)
-                              && (force || tv_list_len(oldfiles_list) == 0));
+  const bool get_old_files = (flags & kShaDaGetOldfiles)
+                             && (force || tv_list_len(oldfiles_list) == 0);
   const bool want_marks = flags & kShaDaWantMarks;
   const bool no_opt = flags & kShaDaNoOpt;
   const unsigned srni_flags =

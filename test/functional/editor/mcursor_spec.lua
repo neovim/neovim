@@ -1133,6 +1133,7 @@ describe('multicursor', function()
     end)
 
     it('typed text live-mirrors at cursors', function()
+      command('let v:oldfiles = ["/a", "/b"] | let @a = "reg"')
       local screen = Screen.new(30, 6)
       cursors({ 'aaa', 'bbb', 'ccc' })
       -- Still in insert mode (no <Esc> yet): the text already cascaded; each cursor displays
@@ -1155,6 +1156,9 @@ describe('multicursor', function()
         {1:~                             }|*2
                                       |
       ]])
+      -- Cascade context-management should not clobber v:oldfiles.
+      eq({ '/a', '/b' }, api.nvim_get_vvar('oldfiles'))
+
       -- Entering insert mode ("a") displays each cursor at its insertion-point immediately.
       feed('a')
       screen:expect([[
