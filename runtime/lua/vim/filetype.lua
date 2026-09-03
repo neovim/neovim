@@ -1492,6 +1492,7 @@ local extension = {
   yy = 'yacc',
   ['y++'] = 'yacc',
   yxx = 'yacc',
+  cff = 'yaml',
   yml = 'yaml',
   yaml = 'yaml',
   eyaml = 'yaml',
