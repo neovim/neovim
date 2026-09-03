@@ -314,6 +314,8 @@ typedef struct {
   // b_sst_array        pointer to an array of synstate_T
   // b_sst_len          number of entries in b_sst_array[]
   // b_sst_first        pointer to first used entry in b_sst_array[] or NULL
+  // b_sst_search       cached entry near the last accessed line, used as a
+  //                    start point for forward lookups, or NULL
   // b_sst_firstfree    pointer to first free entry in b_sst_array[] or NULL
   // b_sst_freecount    number of free entries in b_sst_array[]
   // b_sst_check_lnum   entries after this lnum need to be checked for
@@ -321,6 +323,7 @@ typedef struct {
   synstate_T *b_sst_array;
   int b_sst_len;
   synstate_T *b_sst_first;
+  synstate_T *b_sst_search;
   synstate_T *b_sst_firstfree;
   int b_sst_freecount;
   linenr_T b_sst_check_lnum;

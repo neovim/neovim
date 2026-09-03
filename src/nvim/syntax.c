@@ -885,6 +885,7 @@ static void syn_stack_free_block(synblock_T *block)
   }
   XFREE_CLEAR(block->b_sst_array);
   block->b_sst_first = NULL;
+  block->b_sst_search = NULL;
   block->b_sst_len = 0;
 }
 // Free b_sst_array[] for buffer "buf".
@@ -965,6 +966,8 @@ static void syn_stack_alloc(void)
     xfree(syn_block->b_sst_array);
     syn_block->b_sst_array = sstp;
     syn_block->b_sst_len = len;
+    // The entries were moved to a new array, drop the stale pointer.
+    syn_block->b_sst_search = NULL;
   }
 }
 
@@ -1082,6 +1085,9 @@ static bool syn_stack_cleanup(void)
 // Move the entry into the free list.
 static void syn_stack_free_entry(synblock_T *block, synstate_T *p)
 {
+  if (block->b_sst_search == p) {
+    block->b_sst_search = NULL;
+  }
   clear_syn_state(p);
   p->sst_next = block->b_sst_firstfree;
   block->b_sst_firstfree = p;
@@ -1093,13 +1099,26 @@ static void syn_stack_free_entry(synblock_T *block, synstate_T *p)
 static synstate_T *syn_stack_find_entry(linenr_T lnum)
 {
   synstate_T *prev = NULL;
-  for (synstate_T *p = syn_block->b_sst_first; p != NULL; prev = p, p = p->sst_next) {
+  synstate_T *p = syn_block->b_sst_first;
+
+  // The list is sorted by line number and lookups while parsing advance
+  // monotonically, so resume from the last returned entry instead of
+  // rescanning from the start whenever it is at or before "lnum".
+  if (syn_block->b_sst_search != NULL && syn_block->b_sst_search->sst_lnum <= lnum) {
+    p = syn_block->b_sst_search;
+  }
+
+  for (; p != NULL; prev = p, p = p->sst_next) {
     if (p->sst_lnum == lnum) {
+      syn_block->b_sst_search = p;
       return p;
     }
     if (p->sst_lnum > lnum) {
       break;
     }
+  }
+  if (prev != NULL) {
+    syn_block->b_sst_search = prev;
   }
   return prev;
 }
@@ -1175,6 +1194,8 @@ static synstate_T *store_current_state(void)
       sp = p;
       sp->sst_stacksize = 0;
       sp->sst_lnum = current_lnum;
+      // Resume the next forward lookup from the entry just stored.
+      syn_block->b_sst_search = sp;
     }
   }
   if (sp != NULL) {
