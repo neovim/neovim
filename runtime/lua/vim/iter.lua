@@ -852,7 +852,7 @@ end
 function IterArray:take(n)
   if type(n) == 'function' then
     local inc = self._head < self._tail and 1 or -1
-    for i = self._head, self._tail, inc do
+    for i = self._head, self._tail - inc, inc do
       if not n(unpack(self._table[i])) then
         self._tail = i
         break
