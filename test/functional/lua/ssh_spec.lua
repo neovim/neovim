@@ -49,6 +49,18 @@ describe('SSH parser', function()
     }, parser.parse_ssh_config(config))
   end)
 
+  it('ignores repeated and trailing separators', function()
+    -- Runs of separators between values, and trailing whitespace before the
+    -- line break, must not yield empty hostnames.
+    local config = table.concat({
+      'Host  alpha   beta ',
+      '  HostName example.com',
+      '',
+    }, '\n')
+
+    eq({ 'alpha', 'beta' }, parser.parse_ssh_config(config))
+  end)
+
   it('fails when a quote is not closed', function()
     local config = [[
       Host prod dev "test prod my
