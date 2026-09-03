@@ -8271,6 +8271,16 @@ vim.go.wim = vim.go.wildmode
 --- 		info popup is shown next to the menu, it can be
 --- 		scrolled by moving the mouse pointer on top of it and
 --- 		using the scroll wheel.
+--- 		To navigate the popup menu with <Up> and <Down>, and
+--- 		directories with <Left> and <Right>, use:
+---
+--- ```vim
+--- 		  cnoremap <expr> <Up> pumvisible() ? "\\<Left>" : "\\<Up>"
+--- 		  cnoremap <expr> <Down> pumvisible() ? "\\<Right>" : "\\<Down>"
+--- 		  cnoremap <expr> <Left> pumvisible() ? "\\<Up>" : "\\<Left>"
+--- 		  cnoremap <expr> <Right> pumvisible() ? "\\<Down>" : "\\<Right>"
+--- ```
+---
 ---   tagfile	When using CTRL-D to list matching tags, the kind of
 --- 		tag and the file of the tag is listed.	Only one match
 --- 		is displayed per line.  Often used tag kinds are:
