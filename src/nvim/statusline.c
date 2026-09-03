@@ -1122,19 +1122,22 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
   //       so any user-visible characters must occur before here.
   char *out_end_p = (out + outlen) - 1;
 
+#define MAY_GROW_STL_ITEMS_LEN() \
+  do { \
+    if (curitem == (int)stl_items_len) { \
+      size_t new_len = stl_items_len * 3 / 2; \
+      stl_items = xrealloc(stl_items, sizeof(stl_item_t) * new_len); \
+      stl_groupitems = xrealloc(stl_groupitems, sizeof(int) * new_len); \
+      stl_hltab = xrealloc(stl_hltab, sizeof(stl_hlrec_t) * (new_len + 1)); \
+      stl_tabtab = xrealloc(stl_tabtab, sizeof(StlClickRecord) * (new_len + 1)); \
+      stl_items_len = new_len; \
+    } \
+  } while (0)
+
   // Proceed character by character through the statusline format string
   // fmt_p is the current position in the input buffer
   for (char *fmt_p = usefmt; *fmt_p != NUL;) {
-    if (curitem == (int)stl_items_len) {
-      size_t new_len = stl_items_len * 3 / 2;
-
-      stl_items = xrealloc(stl_items, sizeof(stl_item_t) * new_len);
-      stl_groupitems = xrealloc(stl_groupitems, sizeof(int) * new_len);
-      stl_hltab = xrealloc(stl_hltab, sizeof(stl_hlrec_t) * (new_len + 1));
-      stl_tabtab = xrealloc(stl_tabtab, sizeof(StlClickRecord) * (new_len + 1));
-
-      stl_items_len = new_len;
-    }
+    MAY_GROW_STL_ITEMS_LEN();
 
     if (*fmt_p != '%') {
       prevchar_isflag = prevchar_isitem = false;
@@ -1559,6 +1562,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
         if (!left_align_num) {
           stl_items[curitem].type = Separate;
           stl_items[curitem++].start = out_p;
+          MAY_GROW_STL_ITEMS_LEN();
         }
       } else if (stcp == NULL) {
         num = (wp->w_buffer->b_ml.ml_flags & ML_EMPTY) ? 0 : wp->w_cursor.lnum;
@@ -1709,6 +1713,7 @@ stcsign:
           }
         }
         stl_items[curitem++].type = fdc > 0 ? HighlightFold : HighlightSign;
+        MAY_GROW_STL_ITEMS_LEN();
       }
       str = buf_tmp;
       break;
@@ -1800,6 +1805,7 @@ stcsign:
     // If we made it this far, the item is normal and starts at
     // our current position in the output buffer.
     // Non-normal items would have `continued`.
+    assert(curitem < (int)stl_items_len);
     stl_items[curitem].start = out_p;
     stl_items[curitem].type = Normal;
 
@@ -1984,10 +1990,12 @@ stcsign:
     curitem++;
     // For a 'statuscolumn' number item that is left aligned, add a separator item.
     if (left_align_num) {
+      MAY_GROW_STL_ITEMS_LEN();
       stl_items[curitem].type = Separate;
       stl_items[curitem++].start = out_p;
     }
   }
+#undef MAY_GROW_STL_ITEMS_LEN
 
   *out_p = NUL;
 
