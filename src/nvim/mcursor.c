@@ -694,7 +694,7 @@ static void mc_ins_preview_rebase(void)
   mc_ins_regions_clear();
   for (size_t i = 0; i < kv_size(mc_cursors); i++) {
     Context *ctx = &kv_A(mc_cursors, i);
-    pos_T pos;
+    pos_T pos = { 0 };
     uint32_t mark = 0;
     if (mc_ctx_resolve(ctx, &pos)) {
       mc_region_mark_set(&mark, pos);
@@ -822,6 +822,7 @@ void mc_ins_cascade(void)
     return;
   }
   String ins = redo_keys(NULL);
+  assert(ins.data != NULL || ins.size == 0);  // Coverity: NULL only when empty.
   if (mc_ins_span.first) {
     // Not with a pending autoindent ("o" + 'autoindent'): the entry span's replay ends in <Esc>,
     // which would delete the indent.
@@ -1045,7 +1046,7 @@ void mc_vsel_refresh(void)
 
   for (size_t i = 0; i < kv_size(mc_cursors); i++) {
     Context *ctx = &kv_A(mc_cursors, i);
-    pos_T pos;
+    pos_T pos = { 0 };
     if (!mc_ctx_resolve(ctx, &pos)) {
       continue;
     }
