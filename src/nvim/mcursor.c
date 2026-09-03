@@ -307,10 +307,10 @@ static void mc_sandbox_leave(McSandbox *sb)
   ctx_free(&sb->regs);
   restore_redobuff(&sb->redo);
   restore_search_patterns();
-  restore_current_state(&sb->sst);
-  // Visual before the cursor restore: check_cursor() below must see the restored mode (a
-  // blockwise 'virtualedit' selection would otherwise lose the cursor's coladd).
+  // Visual first: restore_current_state() updates the cursor shape, and check_cursor() below keeps
+  // a blockwise 'virtualedit' selection's coladd.
   Visual = sb->visual;
+  restore_current_state(&sb->sst);
   buf_T *buf = handle_get_buffer(sb->bufnr);
   bool topline_valid = false;
   if (buf != NULL) {
