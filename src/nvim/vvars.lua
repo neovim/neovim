@@ -691,6 +691,17 @@ M.vars = {
       Read-only.
     ]=],
   },
+  sarg = {
+    type = 'any[]',
+    desc = [=[
+      Arguments passed to Vimscript from Nvim API. Only valid during
+      the execution of |nvim_exec2()|.
+
+      See |v:sresult| for the corresponding return values.
+
+      Read-only.
+    ]=],
+  },
   scrollstart = {
     type = 'string',
     desc = [=[
@@ -755,6 +766,15 @@ M.vars = {
           echo 'could not rename "foo" to "bar"!'
         endif
       <
+    ]=],
+  },
+  sresult = {
+    type = 'any[]',
+    desc = [=[
+      Values returned to Nvim API from Vimscript. Only valid during
+      the execution of |nvim_exec2()|.
+
+      See |v:sarg| for the corresponding arguments.
     ]=],
   },
   stacktrace = {
