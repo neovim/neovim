@@ -1196,6 +1196,17 @@ describe('multicursor', function()
         {5:-- INSERT --}                  |
       ]])
       feed('<Esc>')
+      -- Also when another key maps to "c".
+      command('xnoremap - c')
+      feed('viw-N')
+      screen:expect([[
+        N{17: }                            |
+        N{17: }                            |
+        N^                             |
+        {1:~                             }|*2
+        {5:-- INSERT --}                  |
+      ]])
+      feed('<Esc>')
     end)
   end)
 
@@ -1402,7 +1413,8 @@ describe('multicursor', function()
       eq({ l[4], l[4] }, { l[5], l[6] })
     end)
 
-    it("'autocomplete': <BS> and <C-e> cancel propagate", function()
+    it("'autocomplete': <BS>, <C-e>", function()
+      -- BS/C-e cancel propagation.
       ac_setup()
       feed('ifoo<BS>x<Esc>')
       eq({ 'fox', 'fox', 'fox' }, { get_lines()[4], get_lines()[5], get_lines()[6] })
@@ -1420,6 +1432,35 @@ describe('multicursor', function()
       feed('<Esc>')
       eq('', api.nvim_get_vvar('errmsg'))
       eq({ ' ', ' ', ' ' }, get_lines())
+
+      -- Live-mirrors after <BS> ends autocompletion; popup shows on new input.
+      clear_cursors()
+      ac_setup()
+      feed('ifo')
+      eq(1, fn.pumvisible())
+      feed('<BS>')
+      eq(1, fn.pumvisible())
+      feed('<BS>')
+      eq(0, fn.pumvisible())
+      feed('fo')
+      eq(1, fn.pumvisible())
+      eq({ 'fo', 'fo', 'fo' }, { get_lines()[4], get_lines()[5], get_lines()[6] })
+      feed('<Esc>')
+      eq({ 'fo', 'fo', 'fo' }, { get_lines()[4], get_lines()[5], get_lines()[6] })
+
+      -- Live-mirrors if <BS> ends autocompletion then restarts it immediately ('autocomplete' with
+      -- printable char before the cursor). #41605
+      clear_cursors()
+      cursors({ 'foo', 'foobar', 'foobarbaz' })
+      feed('A f')
+      eq(1, fn.pumvisible())
+      feed('<BS>')
+      eq({ 'foo ', 'foobar ', 'foobarbaz ' }, get_lines())
+      feed(' fo')
+      eq(1, fn.pumvisible())
+      eq({ 'foo  fo', 'foobar  fo', 'foobarbaz  fo' }, get_lines())
+      feed('<Esc>')
+      eq({ 'foo  fo', 'foobar  fo', 'foobarbaz  fo' }, get_lines())
     end)
 
     it('InsertCharPre-driven complete() plugin (cmp-style)', function()
