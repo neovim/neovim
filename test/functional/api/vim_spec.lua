@@ -4526,6 +4526,13 @@ describe('API', function()
       }, api.nvim_eval_statusline('Should be truncated%<', { maxwidth = 15 }))
     end)
 
+    it('does not take a zero item width literally', function()
+      command('file some/dir/testfile.txt')
+      eq({ str = 'abc', width = 3 }, api.nvim_eval_statusline('%.0(abc%)', {}))
+      eq(api.nvim_eval_statusline('%.50f', {}), api.nvim_eval_statusline('%.0f', {}))
+      eq(api.nvim_eval_statusline('%.50l', {}), api.nvim_eval_statusline('%.0l', {}))
+    end)
+
     it('has correct default fillchar', function()
       local oldwin = api.nvim_get_current_win()
       command('set fillchars=stl:#,stlnc:$,wbr:%')
