@@ -8431,6 +8431,13 @@ describe('decorations: window scoped', function()
     return api.nvim_buf_set_extmark(0, ns, line, col, opts)
   end
 
+  it('rejects an invalid window without leaking the window set', function()
+    -- The bad handle comes second, so the set already owns an allocation by
+    -- the time validation fails and returns.
+    eq('Invalid window id: 9999', t.pcall_err(api.nvim__ns_set, ns, { wins = { api.nvim_get_current_win(), 9999 } }))
+    assert_alive()
+  end)
+
   it('hl_group', function()
     set_extmark(0, 0, {
       hl_group = 'Comment',
