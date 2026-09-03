@@ -2326,9 +2326,9 @@ void cursor_correct(win_T *wp)
   validate_botline_win(wp);
   if (wp->w_botline == wp->w_buffer->b_ml.ml_line_count + 1
       && mouse_dragging == 0) {
-    if (!use_scrolloffpad(wp)) {
-      below_wanted = 0;
-    }
+    // Missing context below EOF must not move the cursor up.  Automatic
+    // scrolling handles the centering for 'scrolloffpad'.
+    below_wanted = 0;
     int max_off = (wp->w_view_height - 1) / 2;
     above_wanted = MIN(above_wanted, max_off);
   }

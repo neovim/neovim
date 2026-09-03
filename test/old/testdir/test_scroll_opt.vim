@@ -1744,6 +1744,60 @@ func Test_scrolloffpad_paging_to_eof()
   bwipe!
 endfunc
 
+func Test_scrolloffpad_ctrl_d_at_eof()
+  new
+  setlocal scroll=6
+  call setline(1, map(range(1, 80), 'printf("line %d", v:val)'))
+
+  for height in [11, 12]
+    execute 'resize ' .. height
+    for so in [1, 999]
+      let &l:scrolloff = so
+      for sop in [0, 1]
+        let &l:scrolloffpad = sop
+        for endcmd in ['ggG', 'ggGzb']
+          let context = printf('height=%d so=%d sop=%d %s',
+                \ height, so, sop, endcmd)
+          execute 'normal! ' .. endcmd
+          let view_before = winsaveview()
+
+          call assert_beeps('execute "normal! \<C-D>"')
+          call assert_equal(view_before, winsaveview(), context)
+        endfor
+      endfor
+    endfor
+  endfor
+
+  bwipe!
+endfunc
+
+func Test_scrolloffpad_ctrl_e_at_eof()
+  new
+  call setline(1, map(range(1, 80), 'printf("line %d", v:val)'))
+
+  for height in [11, 12]
+    execute 'resize ' .. height
+    for so in [1, 999]
+      let &l:scrolloff = so
+      for sop in [0, 1]
+        let &l:scrolloffpad = sop
+        for endcmd in ['ggG', 'ggGzb']
+          let context = printf('height=%d so=%d sop=%d %s',
+                \ height, so, sop, endcmd)
+          execute 'normal! ' .. endcmd
+          let expected_view = winsaveview()
+          let expected_view.topline += 1
+
+          execute "normal! \<C-E>"
+          call assert_equal(expected_view, winsaveview(), context)
+        endfor
+      endfor
+    endfor
+  endfor
+
+  bwipe!
+endfunc
+
 func Test_scrolloffpad_autocmd_append_at_eof()
   let states = {}
   for sop in [0, 1]
