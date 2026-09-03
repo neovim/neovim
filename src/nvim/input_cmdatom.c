@@ -77,7 +77,7 @@ static struct {
                       ///< ("f(" + mapped key in one batch). 0: none.
 } composite;
 
-/// State of a Visual composite atom.
+/// State of a Visual session atom.
 typedef enum {
   kVatomNone = 0,   ///< No pending Visual atom.
 
@@ -88,7 +88,10 @@ typedef enum {
   kVatomVoid = 4,   ///< Not replayable: tainted/poisoned (by mouse, gv, …). But may emit CmdAtom.
 } VatomState;
 
-/// Accumulating Visual composite: the full Visual keysequence (selection keys + operator).
+/// Accumulating Visual session atom: the full Visual keysequence (selection keys + operator).
+///
+/// NOTE: Visual session is not modeled as `composite` bc they may overlap (not clean nesting):
+/// a mapping can open before `v` and end mid-selection ("nmap X vjj" followed by "d").
 static struct {
   CmdAtomVec atoms;  ///< Accumulated subatoms. A void session collects them as the `lhs` label.
   VatomState state;
@@ -1147,9 +1150,10 @@ InsSession atom_ins_start(int cmd, long count, VisualIns vis, bool vblock)
                                : cur_frame != NULL ? cur_frame->origin : atom_origin(),
   };
   if (vis != kVInsNone && !mc_replaying()) {
-    if (vis == kVInsKeys && !(atom_visual_replayable() && (vatom.state & kVatomTyped))) {
-      // The selection came from fed keys (":norm", scheduled feedkeys).
-      session.typed = false;
+    if (vis == kVInsKeys) {
+      // Internal (non-user) keys (":norm", scheduled feedkeys) are not user-input.
+      // But a Visual-mode operator mapping ("xnoremap c c") is user-input. #41605
+      session.typed = atom_visual_replayable() && (vatom.state & kVatomTyped) != 0;
     }
     // The selection is consumed: already in the redo body. Also clears selection display.
     atom_visual_reset();
