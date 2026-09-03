@@ -1257,6 +1257,28 @@ describe('extmark decorations', function()
     screen:expect_unchanged()
   end)
 
+  it('pads virtual text after a listchars eol character #26101', function()
+    screen:try_resize(20, 4)
+    insert('hello')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      virt_text = { { 'test', 'ErrorMsg' } },
+      virt_text_pos = 'eol',
+    })
+    command('set listchars=eol:$')
+    screen:expect([[
+      hell^o {4:test}          |
+      {1:~                   }|*2
+                          |
+    ]])
+
+    command('set list')
+    screen:expect([[
+      hell^o{1:$} {4:test}         |
+      {1:~                   }|*2
+                          |
+    ]])
+  end)
+
   it('can have virtual text of overlay position', function()
     insert(example_text)
     feed 'gg'
