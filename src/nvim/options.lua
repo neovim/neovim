@@ -9114,14 +9114,14 @@ local options = {
       defaults = {
         if_true = table.concat({
           '%<', -- guards the default truncation from the left against a %< injected via rulerformat
-          '%f %h%w%m%r ',
-          "%{% v:lua.require('vim._core.util').term_exitcode() %}",
-          '%=',
-          "%{% luaeval('(package.loaded[''vim.ui''] and vim.api.nvim_get_current_win() == tonumber(vim.g.actual_curwin or -1) and vim.ui.progress_status()) or '''' ')%}",
-          "%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}",
-          "%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}",
-          "%{% &busy > 0 ? '◐ ' : '' %}",
-          "%{% luaeval('(package.loaded[''vim.diagnostic''] and next(vim.diagnostic.count()) and vim.diagnostic.status() .. '' '') or '''' ') %}",
+          '%f',
+          "%( %h%w%m%r%{ v:lua.require('vim._core.util').term_exitcode() }%)",
+          '%= ',
+          '%(%-10S %)',
+          "%{ &busy > 0 ? '◐\226\128\175' : '' }", -- use non-breaking space to avoid fillchar
+          "%(%{ luaeval('(package.loaded[''vim.ui''] and vim.api.nvim_get_current_win() == tonumber(vim.g.actual_curwin or -1) and vim.ui.progress_status()) or '''' ')} %)",
+          "%{% luaeval('(package.loaded[''vim.diagnostic''] and next(vim.diagnostic.count(0)) and vim.diagnostic.status() .. '' '') or '''' ') %}",
+          '%(%k %)',
           "%{% &ruler ? &rulerformat : '' %}",
         }),
         doc = 'is very long',

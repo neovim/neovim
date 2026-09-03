@@ -121,7 +121,8 @@ function M.term_exitcode()
 
   local info = vim.api.nvim_get_chan_info(chan_id)
   if info.exitcode and info.exitcode >= 0 then
-    return string.format('[Exit: %d]', info.exitcode)
+    -- use non-breaking space to avoid fillchar
+    return string.format('[Exit:\226\128\175%d]', info.exitcode)
   end
   return ''
 end

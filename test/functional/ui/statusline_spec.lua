@@ -1152,14 +1152,14 @@ describe('default statusline', function()
 
     local default_statusline = table.concat({
       '%<',
-      '%f %h%w%m%r ',
-      "%{% v:lua.require('vim._core.util').term_exitcode() %}",
-      '%=',
-      "%{% luaeval('(package.loaded[''vim.ui''] and vim.api.nvim_get_current_win() == tonumber(vim.g.actual_curwin or -1) and vim.ui.progress_status()) or '''' ')%}",
-      "%{% &showcmdloc == 'statusline' ? '%-10.S ' : '' %}",
-      "%{% exists('b:keymap_name') ? '<'..b:keymap_name..'> ' : '' %}",
-      "%{% &busy > 0 ? '◐ ' : '' %}",
-      "%{% luaeval('(package.loaded[''vim.diagnostic''] and next(vim.diagnostic.count()) and vim.diagnostic.status() .. '' '') or '''' ') %}",
+      '%f',
+      "%( %h%w%m%r%{ v:lua.require('vim._core.util').term_exitcode() }%)",
+      '%= ',
+      '%(%-10S %)',
+      "%{ &busy > 0 ? '◐\226\128\175' : '' }",
+      "%(%{ luaeval('(package.loaded[''vim.ui''] and vim.api.nvim_get_current_win() == tonumber(vim.g.actual_curwin or -1) and vim.ui.progress_status()) or '''' ')} %)",
+      "%{% luaeval('(package.loaded[''vim.diagnostic''] and next(vim.diagnostic.count(0)) and vim.diagnostic.status() .. '' '') or '''' ') %}",
+      '%(%k %)',
       "%{% &ruler ? &rulerformat : '' %}",
     })
 
@@ -1210,7 +1210,7 @@ describe('default statusline', function()
     screen:expect([[
       ^                                                            |
       {1:~                                                           }|*13
-      {3:[No Name]                               ◐ 0,0-1          All}|
+      {3:[No Name]                               ◐ 0,0-1          All}|
                                                                   |
     ]])
 
@@ -1229,7 +1229,7 @@ describe('default statusline', function()
     api.nvim_set_option_value('shellcmdflag', 'EXIT', {})
     api.nvim_set_option_value('shellxquote', '', {}) -- win: avoid extra quotes
     command('terminal 9')
-    screen:expect({ any = '%[Exit: 9%]' })
+    screen:expect({ any = '%[Exit:\226\128\1759%]' })
     expect_exitcode(9)
   end)
 
@@ -1237,8 +1237,7 @@ describe('default statusline', function()
     exec_lua("vim.o.statusline = ''")
     local function get_progress()
       return exec_lua(function()
-        local stl_str = vim.ui.progress_status()
-        return vim.api.nvim_eval_statusline(stl_str, {}).str
+        return vim.ui.progress_status()
       end)
     end
 
@@ -1249,7 +1248,7 @@ describe('default statusline', function()
       true,
       { kind = 'progress', source = 'tests', title = 'test', status = 'running', percent = 10 }
     )
-    eq('10%(1) ', get_progress())
+    eq('10%(1)', get_progress())
 
     api.nvim_echo({ { 'searching' } }, true, {
       id = id1,
@@ -1259,7 +1258,7 @@ describe('default statusline', function()
       status = 'running',
       title = 'terminal(ripgrep)',
     })
-    eq('50%(1) ', get_progress())
+    eq('50%(1)', get_progress())
 
     api.nvim_echo({ { 'searching...' } }, true, {
       kind = 'progress',
@@ -1268,7 +1267,7 @@ describe('default statusline', function()
       status = 'running',
       percent = 20,
     })
-    eq('35%(2) ', get_progress())
+    eq('35%(2)', get_progress())
 
     api.nvim_echo({ { 'searching' } }, true, {
       id = id1,
@@ -1278,7 +1277,7 @@ describe('default statusline', function()
       status = 'success',
       title = 'terminal(ripgrep)',
     })
-    eq('20%(1) ', get_progress())
+    eq('20%(1)', get_progress())
 
     exec('redrawstatus')
     screen:expect([[
