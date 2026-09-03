@@ -8134,6 +8134,16 @@ vim.go.wic = vim.go.wildignorecase
 --- CTRL-Y		- accept the currently selected match and stop
 --- 		  completion.
 ---
+--- To use <Up> and <Down> to select matches and <Left> and <Right> to
+--- traverse directories or submenus, use:
+---
+--- ```vim
+---   cnoremap <expr> <Up> wildmenumode() ? '<Left>' : '<Up>'
+---   cnoremap <expr> <Down> wildmenumode() ? '<Right>' : '<Down>'
+---   cnoremap <expr> <Left> wildmenumode() ? '<Up>' : '<Left>'
+---   cnoremap <expr> <Right> wildmenumode() ? '<Down>' : '<Right>'
+--- ```
+---
 --- If you want <Left> and <Right> to move the cursor instead of selecting
 --- a different match, use this:
 ---
