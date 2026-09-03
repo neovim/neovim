@@ -56,6 +56,7 @@ OPTIONS
   groups in 'rulerformat' to configure that fixed width. An old-style left-
   aligned fixed-width ruler can now be achieved by using item groups exactly
   as they are documented, e.g. `%-20.20(...%)`.
+• 'expandtabalign' expands non-leading <Tab> to spaces in Insert mode.
 
 TREESITTER
 
