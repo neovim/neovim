@@ -122,6 +122,18 @@ setup(function()
     [custom_properties.txt]
     property1 = something1
     property2 = x[something2]x
+
+    [foo{1..3}.txt]
+    indent_style = space
+    indent_size = 2
+
+    [bar{2..10}.txt]
+    indent_style = space
+    indent_size = 3
+
+    [eq{1..1}.txt]
+    indent_style = space
+    indent_size = 4
     ]]
   )
 end)
@@ -279,6 +291,19 @@ But not this one
   it('sets spelllang', function()
     test_case('short_spelling_language.txt', { spelllang = 'de' })
     test_case('long_spelling_language.txt', { spelllang = 'en_nz' })
+  end)
+
+  it('matches EditorConfig integer ranges #41264', function()
+    test_case('foo1.txt', { expandtab = true, shiftwidth = 2 })
+    test_case('foo3.txt', { expandtab = true, shiftwidth = 2 })
+    test_case('foo4.txt', { shiftwidth = 8 })
+
+    test_case('bar2.txt', { expandtab = true, shiftwidth = 3 })
+    test_case('bar10.txt', { expandtab = true, shiftwidth = 3 })
+    test_case('bar11.txt', { shiftwidth = 8 })
+
+    -- {1..1} is invalid (num1 must be less than num2), so it must not apply.
+    test_case('eq1.txt', { shiftwidth = 8 })
   end)
 
   it('set custom properties', function()
