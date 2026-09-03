@@ -1512,7 +1512,7 @@ describe('multicursor', function()
       eq('n', api.nvim_get_mode().mode)
     end)
 
-    it('shows per-cursor visual selection', function()
+    it('shows per-cursor selection', function()
       local screen = Screen.new(30, 6)
       cursors({ 'longword x', 'ab y', 'medium z' })
       -- Each cursor shows its own selection ("iw" = that cursor's word), previewed live.
@@ -1524,6 +1524,7 @@ describe('multicursor', function()
         {1:~                             }|*2
         {5:-- VISUAL --}                  |
       ]])
+      eq('visual', screen.mode) -- The UI mode ('guicursor'). #41631
       feed('e')
       screen:expect([[
         {17:longword x}                    |
@@ -1540,6 +1541,7 @@ describe('multicursor', function()
         {1:~                             }|*2
                                       |
       ]])
+      eq('normal', screen.mode)
     end)
 
     it('shows linewise/blockwise selections', function()
