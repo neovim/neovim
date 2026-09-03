@@ -1310,9 +1310,9 @@ static void atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
       vatom.state |= kVatomVoid;
     }
   } else if (old->visual.active) {
-    if (user && old->follow && atom_visual_replayable() && kv_size(vatom.atoms) > 0) {
-      // Follow-motion ("q="): a selection abandoned without an operator (<Esc>, "v" toggle) still
-      // moved the primary cursor to the selection end: replay it at every cursor.
+    if (user && atom_visual_replayable() && kv_size(vatom.atoms) > 0) {
+      // Cursor moved to selection-end after ESC/"v"-toggle. Even though this is technically
+      // a "motion", it's more intuitive to always replay it? #41631
       char suffix[2] = { ESC, NUL };
       atom_visual_end_suffix(xstrdup(suffix), NULL, false);
     } else {
