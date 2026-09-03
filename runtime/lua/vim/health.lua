@@ -118,6 +118,7 @@
 --- ```
 
 local M = {}
+local async = require('vim.async') --- @type vim.async._core
 
 local s_output = {} ---@type string[]
 local check_summary = { warn = 0, error = 0 }
@@ -457,67 +458,6 @@ function M._check(eap)
     return a < b
   end)
 
-  local total_checks = #names
-  local progress_msg = progress_report(total_checks)
-  local check_idx = 1
-  for _, name in ipairs(names) do
-    local value = healthchecks[name]
-    progress_msg('running', check_idx, 'checking %s', name)
-    local func = value[1]
-    local type = value[2]
-    s_output = {}
-    check_summary = { warn = 0, error = 0 }
-
-    if func == '' then
-      M.error('No healthcheck found for "' .. name .. '" plugin.')
-    end
-    if type == 'v' then
-      vim.fn.call(func, {})
-    else
-      local f = assert(loadstring(func))
-      local ok, output = pcall(f) ---@type boolean, string
-      if not ok then
-        M.error(
-          string.format('Failed to run healthcheck for "%s" plugin. Exception:\n%s\n', name, output)
-        )
-      end
-    end
-    -- in the event the healthcheck doesn't return anything
-    -- (the plugin author should avoid this possibility)
-    if next(s_output) == nil then
-      s_output = {}
-      M.error('The healthcheck report for "' .. name .. '" plugin is empty.')
-    end
-
-    local report = get_summary()
-    local replen = vim.fn.strwidth(report)
-    local header = {
-      string.rep('=', 78),
-      -- Example: `foo.health: [ …] 1 ⚠️  5 ❌`
-      ('%s: %s%s'):format(name, (' '):rep(76 - name:len() - replen), report),
-      '',
-    }
-
-    -- remove empty line after header from report_start
-    if s_output[1] == '' then
-      local tmp = {} ---@type string[]
-      for i = 2, #s_output do
-        tmp[#tmp + 1] = s_output[i]
-      end
-      s_output = {}
-      for _, v in ipairs(tmp) do
-        s_output[#s_output + 1] = v
-      end
-    end
-    s_output[#s_output + 1] = ''
-    s_output = vim.list_extend(header, s_output)
-    vim.api.nvim_buf_set_lines(0, check_idx == 1 and 0 or -1, -1, true, s_output)
-
-    check_idx = check_idx + 1
-  end
-
-  progress_msg('success', nil, 'checks done')
-
   -- Quit with 'q' inside healthcheck buffers.
   vim._with({ buf = bufnr }, function()
     if
@@ -532,9 +472,103 @@ function M._check(eap)
     end
   end)
 
-  -- Once we're done writing checks, set nomodifiable.
-  vim.bo[bufnr].modifiable = false
-  vim.cmd.setfiletype('checkhealth')
+  local task = async.run('checkhealth', function()
+    local total_checks = #names
+    local progress_msg = progress_report(total_checks)
+    local check_idx = 1
+    for _, name in ipairs(names) do
+      local value = healthchecks[name]
+      progress_msg('running', check_idx, 'checking %s', name)
+      local func = value[1]
+      local type = value[2]
+      s_output = {}
+      check_summary = { warn = 0, error = 0 }
+
+      if func == '' then
+        M.error('No healthcheck found for "' .. name .. '" plugin.')
+      end
+      if type == 'v' then
+        vim.fn.call(func, {})
+      else
+        local f = assert(loadstring(func))
+        --- @diagnostic disable-next-line: assign-type-mismatch
+        local ok, output = async.pawait(async.run(name, f)) ---@type boolean, string
+        if vim.in_fast_event() then
+          async.await(vim.schedule)
+        end
+        if not ok then
+          M.error(
+            string.format(
+              'Failed to run healthcheck for "%s" plugin. Exception:\n%s\n',
+              name,
+              output
+            )
+          )
+        end
+      end
+      -- in the event the healthcheck doesn't return anything
+      -- (the plugin author should avoid this possibility)
+      if next(s_output) == nil then
+        s_output = {}
+        M.error('The healthcheck report for "' .. name .. '" plugin is empty.')
+      end
+
+      local report = get_summary()
+      local replen = vim.fn.strwidth(report)
+      local header = {
+        string.rep('=', 78),
+        -- Example: `foo.health: [ …] 1 ⚠️  5 ❌`
+        ('%s: %s%s'):format(name, (' '):rep(76 - name:len() - replen), report),
+        '',
+      }
+
+      -- remove empty line after header from report_start
+      if s_output[1] == '' then
+        local tmp = {} ---@type string[]
+        for i = 2, #s_output do
+          tmp[#tmp + 1] = s_output[i]
+        end
+        s_output = {}
+        for _, v in ipairs(tmp) do
+          s_output[#s_output + 1] = v
+        end
+      end
+      s_output[#s_output + 1] = ''
+      s_output = vim.list_extend(header, s_output)
+
+      if not vim.api.nvim_buf_is_valid(bufnr) then
+        return
+      end
+      vim.api.nvim_buf_set_lines(bufnr, check_idx == 1 and 0 or -1, -1, true, s_output)
+
+      check_idx = check_idx + 1
+    end
+
+    progress_msg('success', nil, 'checks done')
+
+    if not vim.api.nvim_buf_is_valid(bufnr) then
+      return
+    end
+    -- Once we're done writing checks, set nomodifiable.
+    vim.bo[bufnr].modifiable = false
+    vim._with({ buf = bufnr }, function()
+      vim.cmd.setfiletype('checkhealth')
+    end)
+  end)
+
+  local cancel_autocmd = vim.api.nvim_create_autocmd('BufWipeout', {
+    buffer = bufnr,
+    once = true,
+    callback = function()
+      task:close()
+    end,
+  })
+  task:on_complete(function(err)
+    pcall(vim.api.nvim_del_autocmd, cancel_autocmd)
+    if err and err ~= 'closed' then
+      error(task:traceback(err), 0)
+    end
+  end)
 end
 
 return M
