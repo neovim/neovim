@@ -14275,8 +14275,17 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
 
   // Run for each character.
   while (true) {
-    int curc = utf_ptr2char((char *)rex.input);
-    int clen = utfc_ptr2len((char *)rex.input);
+    int curc, clen;
+    // Fast path for an ASCII byte not followed by a composing
+    // character, matching the check in utfc_ptr2len().  Avoids two
+    // indirect calls for the common case.
+    if (rex.input[0] != NUL && rex.input[0] < 0x80 && rex.input[1] < 0x80) {
+      curc = rex.input[0];
+      clen = 1;
+    } else {
+      curc = utf_ptr2char((char *)rex.input);
+      clen = utfc_ptr2len((char *)rex.input);
+    }
     if (curc == NUL) {
       clen = 0;
       go_to_nextline = false;
