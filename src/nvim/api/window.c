@@ -58,8 +58,11 @@ void nvim_win_set_buf(Window win, Buffer buf, Error *err)
   FUNC_API_TEXTLOCK
 {
   win_T *w = find_window_by_handle(win, err);
+  if (!w) {
+    return;
+  }
   buf_T *b = find_buffer_by_handle(buf, err);
-  if (!w || !b) {
+  if (!b) {
     return;
   }
 

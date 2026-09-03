@@ -56,6 +56,9 @@ describe('API/win', function()
     it('validates args', function()
       eq('Invalid buffer id: 23', pcall_err(api.nvim_win_set_buf, api.nvim_get_current_win(), 23))
       eq('Invalid window id: 23', pcall_err(api.nvim_win_set_buf, 23, api.nvim_get_current_buf()))
+      -- When both are invalid the window is reported, so the message allocated
+      -- for it is not overwritten and leaked.
+      eq('Invalid window id: 23', pcall_err(api.nvim_win_set_buf, 23, 24))
     end)
 
     it('in cmdwin #40312', function()
