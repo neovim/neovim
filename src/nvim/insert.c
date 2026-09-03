@@ -131,6 +131,7 @@ static kvec_t(char) replace_stack = KV_INITIAL_VALUE;
 // Otherwise trigger completion right away.
 #define TRIGGER_AUTOCOMPLETE() \
   do { \
+    mc_ins_cascade();  /* Multicursor: replay pending keys, since compl refused edit(). #41605 */ \
     redraw_later(curwin, UPD_VALID); \
     update_screen();  /* Show char deletion immediately */ \
     ui_flush(); \
