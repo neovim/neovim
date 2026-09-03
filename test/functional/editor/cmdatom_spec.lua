@@ -849,11 +849,15 @@ describe('CmdAtom', function()
     feed(',D')
     eq(before, #atoms())
     atom('w', 'dw', ',Dw') -- The supplied motion finishes the operation
-    -- Same for a mapping that opens Visual mode: "<Esc>" abandons the selection and closes it.
+    -- Same for a mapping that opens Visual mode: ESC closes the selection (cursor stays on the
+    -- selection end, where it moved during the Visual sequence).
     feed(',V')
     eq(before + 1, #atoms())
     feed('<Esc>')
-    eq({ type = 'mapping', lhs = k(',V<Esc>') }, pick(atom_last(), 'type', 'lhs', 'keys'))
+    eq(
+      { type = 'visual', lhs = k(',V<Esc>'), keys = k('v<Esc>') },
+      pick(atom_last(), 'type', 'lhs', 'keys')
+    )
     -- A mapping whose trailing prefix is completed by TYPED keys ("," + "w")
     -- ends where its own keys stop: each `lhs` owns only what it produced.
     command('set notimeout')

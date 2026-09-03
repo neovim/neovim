@@ -1533,10 +1533,11 @@ describe('multicursor', function()
         {1:~                             }|*2
         {5:-- VISUAL --}                  |
       ]])
+      -- <Esc>: cursors move to the selection-end, like the primary.
       feed('<Esc>')
       screen:expect([[
-        {17:l}ongword x                    |
-        {17:a}b y                          |
+        longword {17:x}                    |
+        ab {17:y}                          |
         medium ^z                      |
         {1:~                             }|*2
                                       |
@@ -1557,7 +1558,8 @@ describe('multicursor', function()
         {5:-- VISUAL LINE --}             |
       ]])
       feed('<Esc>')
-      feed('3G0l')
+      clear_cursors()
+      cursors({ 'aaaa', 'bbbb', 'cccc', 'dddd' }, 'Q2jl')
       feed('<C-v>jl') -- blockwise: primary (3,1)-(4,2), fake (1,0)-(2,1)
       screen:expect([[
         {17:aa}aa                          |
@@ -1605,11 +1607,19 @@ describe('multicursor', function()
       })
     end)
 
-    it('<Esc> discards the pending visual atom', function()
+    it('ESC moves cursors to selection-end', function()
       cursors({ 'abc', 'def' }, 'Qj')
       feed('viw<Esc>')
       feed('x') -- cascades normally; no stray visual replay
-      eq({ 'bc', 'de' }, get_lines())
+      eq({ 'ab', 'de' }, get_lines())
+      -- Without follow-mode a plain motion ("0") stays primary-only.
+      -- But the selection itself moves every cursor to its selection-end.
+      clear_cursors()
+      cursors({ 'aaa bbb ccc', 'ddd eee fff', 'ggg hhh iii' }, '4lQjQj')
+      feed('viw<Esc>x')
+      eq({ 'aaa bb ccc', 'ddd ee fff', 'ggg hh iii' }, get_lines())
+      feed('0viwe<Esc>x')
+      eq({ 'aaa bb cc', 'ddd ee ff', 'ggg h iii' }, get_lines())
     end)
 
     it('cursor displays at each selection end; o swaps it', function()
@@ -1805,19 +1815,6 @@ describe('multicursor', function()
       feed('x')
       -- Follow did not toggle.
       eq({ '1', 'a2', 'b1', '2' }, get_lines())
-    end)
-
-    it('abandoned visual selection moves cursors to their selection ends', function()
-      cursors({ 'aaa bbb ccc', 'ddd eee fff', 'ggg hhh iii' }, '4lQjQj')
-      feed('q=')
-      feed('viw<Esc>') -- Selection end: the last char of each cursor's word.
-      feed('x')
-      eq({ 'aaa bb ccc', 'ddd ee fff', 'ggg hh iii' }, get_lines())
-      -- No follow: <Esc> discards, other cursors stay; "x" cascades.
-      feed('q=')
-      feed('0viw<Esc>')
-      feed('x')
-      eq({ 'aaa bbccc', 'ddd eefff', 'gg hh iii' }, get_lines())
     end)
 
     it('per-cursor curswant is kept over short lines', function()
