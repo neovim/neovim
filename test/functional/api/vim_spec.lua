@@ -2892,6 +2892,11 @@ describe('API', function()
       eq(1, eval('g:one'))
       eq('', eval('&shada'))
       eq(0, eval("get(g:, 'optionset', 0)"))
+
+      -- Does not touch v:oldfiles (only ":rshada!" rebuilds it).
+      command('let v:oldfiles = ["/a", "/b"]')
+      api.nvim_load_context(ctx)
+      eq({ '/a', '/b' }, eval('v:oldfiles'))
     end)
 
     it('errors when context dict is invalid', function()
