@@ -1435,7 +1435,8 @@ void atom_cmd_end(cmdarg_T *ca, CmdFrame *old)
   // likewise while stuffed keys are pending (i_CTRL-O dance, or exec_stuffed() deferred under
   // textlock).
   if (old->parent == NULL && !mc_replaying() && typebuf_typed() && stuff_empty()) {
-    mc_clock_edge(map_edit);
+    bool map_moved = atom_composite_active() && atom_origin_moved(composite.origin);
+    mc_clock_edge(map_edit, map_moved);
     map_edit = false;
     // One atom spans its continuation: while op-pending, selection-active, or insert-will-resume
     // (i_CTRL-O), it stays open. ",Dw" (":nnoremap ,D d") is one atom, `keys="dw"`.

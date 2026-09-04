@@ -499,17 +499,18 @@ done:
   }
 }
 
-/// The clock edge: cascades the queued atoms (g_atoms) at every cursor. Called from
-/// atom_cmd_end(), at the completion of a toplevel, typed command.
+/// The clock edge: cascades the current composite, and queued atoms (g_atoms), at every cursor.
+/// Called at the completion of a toplevel, typed command.
 ///
-/// @param map_edit  A command fed by a mapping edited the buffer (or was insert-cascaded): the
-///                  whole mapping cascades as one unit, including its motions.
-void mc_clock_edge(bool map_edit)
+/// @param map_edit  The composite edited the buffer (or insert-cascaded).
+/// @param map_moved  The composite moved the cursor.
+void mc_clock_edge(bool map_edit, bool map_moved)
 {
-  if (map_edit && !atom_composite_queued() && kv_size(g_atoms) == 0
+  if ((map_edit || (mc_follow_motion && map_moved))
+      && !atom_composite_queued() && kv_size(g_atoms) == 0
       && atom_composite_active() && mc_buf_has_cursors(curbuf)) {
-    // A payload mapping (vim-surround "ds'"/"S") edited the buffer via :norm/:call, invisible to
-    // atom capture, so nothing was queued. Fallback to LHS-replay.
+    // XXX: Fallback to LHS-replay if the mapping edited the buffer or moved the cursor (in
+    // follow-mode) via :norm/Lua/… (thus no atom was captured/queued).
     atom_lhs_replay_queue();
   }
   if (mc_buf_has_cursors(curbuf) && kv_size(g_atoms) > 0) {
