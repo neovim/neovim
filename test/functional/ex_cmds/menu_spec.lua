@@ -159,35 +159,35 @@ describe('menu_get', function()
           {
             mappings = {
               i = {
-                sid = 1,
+                sid = 0,
                 noremap = 1,
                 enabled = 1,
                 rhs = 'insert',
                 silent = 0,
               },
               s = {
-                sid = 1,
+                sid = 0,
                 noremap = 1,
                 enabled = 1,
                 rhs = 'x',
                 silent = 0,
               },
               n = {
-                sid = 1,
+                sid = 0,
                 noremap = 1,
                 enabled = 1,
                 rhs = 'inormal<Esc>',
                 silent = 0,
               },
               v = {
-                sid = 1,
+                sid = 0,
                 noremap = 1,
                 enabled = 1,
                 rhs = 'x',
                 silent = 0,
               },
               c = {
-                sid = 1,
+                sid = 0,
                 noremap = 1,
                 enabled = 1,
                 rhs = 'cmdmode',
@@ -291,7 +291,7 @@ describe('menu_get', function()
             mappings = {
               n = {
                 sid = 1,
-                noremap = 1,
+                noremap = 0,
                 enabled = 1,
                 rhs = 'p',
                 silent = 0,
@@ -308,14 +308,14 @@ describe('menu_get', function()
           {
             mappings = {
               c = {
-                sid = 1,
+                sid = 0,
                 noremap = 1,
                 enabled = 1,
                 rhs = '<C-R>"',
                 silent = 0,
               },
               n = {
-                sid = 1,
+                sid = 0,
                 noremap = 1,
                 enabled = 1,
                 rhs = 'p',
@@ -391,7 +391,7 @@ describe('menu_get', function()
             mappings = {
               n = {
                 sid = 1,
-                noremap = 1,
+                noremap = 0,
                 enabled = 1,
                 rhs = 'p',
                 silent = 0,
@@ -414,7 +414,7 @@ describe('menu_get', function()
           {
             mappings = {
               i = {
-                sid = 1,
+                sid = 0,
                 noremap = 1,
                 enabled = 1,
                 rhs = 'insert',
@@ -442,7 +442,7 @@ describe('menu_get', function()
           {
             mappings = {
               i = {
-                sid = 1,
+                sid = 0,
                 noremap = 1,
                 enabled = 1,
                 rhs = 'insert',
@@ -490,7 +490,7 @@ describe('menu_get', function()
             priority = 500,
             mappings = {
               n = {
-                sid = 1,
+                sid = 0,
                 noremap = 1,
                 enabled = 1,
                 rhs = 'inormal<Esc>',
@@ -504,7 +504,7 @@ describe('menu_get', function()
             priority = 500,
             mappings = {
               i = {
-                sid = 1,
+                sid = 0,
                 noremap = 1,
                 enabled = 1,
                 rhs = '<Tab><Esc>',
@@ -518,14 +518,14 @@ describe('menu_get', function()
             priority = 500,
             mappings = {
               s = {
-                sid = 1,
+                sid = 0,
                 noremap = 1,
                 enabled = 1,
                 rhs = 'yA<C-R>0<Tab>xyz<Esc>',
                 silent = 0,
               },
               v = {
-                sid = 1,
+                sid = 0,
                 noremap = 1,
                 enabled = 1,
                 rhs = 'yA<C-R>0<Tab>xyz<Esc>',
@@ -539,7 +539,7 @@ describe('menu_get', function()
             priority = 500,
             mappings = {
               i = {
-                sid = 1,
+                sid = 0,
                 noremap = 1,
                 enabled = 1,
                 rhs = '<C-R>*',
@@ -553,7 +553,7 @@ describe('menu_get', function()
             priority = 500,
             mappings = {
               i = {
-                sid = 1,
+                sid = 0,
                 noremap = 1,
                 enabled = 1,
                 rhs = '<C-R>+',
@@ -567,7 +567,7 @@ describe('menu_get', function()
             priority = 500,
             mappings = {
               n = {
-                sid = 1,
+                sid = 0,
                 noremap = 1,
                 enabled = 1,
                 rhs = '',
@@ -581,7 +581,7 @@ describe('menu_get', function()
             priority = 500,
             mappings = {
               n = {
-                sid = 1,
+                sid = 0,
                 noremap = 1,
                 enabled = 1,
                 rhs = '',
@@ -595,7 +595,7 @@ describe('menu_get', function()
             priority = 500,
             mappings = {
               n = {
-                sid = 1,
+                sid = 0,
                 noremap = 1,
                 enabled = 1,
                 rhs = '',
@@ -609,7 +609,7 @@ describe('menu_get', function()
             priority = 500,
             mappings = {
               n = {
-                sid = 1,
+                sid = 0,
                 noremap = 1,
                 enabled = 1,
                 rhs = '""',
@@ -643,7 +643,7 @@ describe('menu_get', function()
           {
             mappings = {
               n = {
-                sid = 1,
+                sid = 0,
                 noremap = 1,
                 enabled = 1,
                 rhs = 'inormal<Alt-j>',
@@ -667,7 +667,7 @@ describe('menu_get', function()
             priority = 500,
             mappings = {
               n = {
-                sid = 1,
+                sid = 0,
                 noremap = 1,
                 enabled = 1,
                 rhs = 'Wargl',
@@ -688,7 +688,7 @@ describe('menu_get', function()
           {
             mappings = {
               n = {
-                sid = 1,
+                sid = 0,
                 noremap = 1,
                 enabled = 1,
                 rhs = 'i space<Esc>',
