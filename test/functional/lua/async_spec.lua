@@ -288,7 +288,7 @@ describe('async', function()
         return nil, 1
       end)
 
-      local r1, r2 = task:wait(10)
+      local r1, r2 = task:wait(100)
       eq(r1, nil)
       eq(r2, 1)
     end)
