@@ -939,7 +939,6 @@ is_na_patch() {
   for file in $FILES_REMAINING; do
     case ${file} in
       runtime/doc/*.txt | runtime/pack/dist/opt/*/doc/*.txt)
-        # TODO(@janlazo): ignore (multi-line) phrases based on regexp '{.\+ \(available\|compiled\) \(with\|without\) .\+}'
         HUNKS=$(git -c core.attributesfile="$NVIM_SOURCE_DIR"/.gitattributes -c 'diff.helphelp.xfuncname=^.*\*[^*]+\*$' -C "${VIM_SOURCE_DIR}" \
           diff-tree --no-commit-id -r -b -U0 \
           '-I^\s+$' \
@@ -949,7 +948,9 @@ is_na_patch() {
           '-I^popup_[_a-z]+\(' \
           '-I\*\s+For Vim version [0-9]\.[0-9]\.\s+Last change: [0-9]+ [A-Z][a-z]+ [0-9]+' \
           '-I compiled (with|without) .*\(\|.+\|\) feature\.$' \
+          '-I\{.+ (available|compiled) (with|without) .+\}' \
           '-I\|channel-open-[^|]+\|' \
+          '-I\|comment-install\|' \
           '-I\|popup-windows\|' \
           '-I\|tabpanel\|' \
           '-I\spopup window\s' \
@@ -997,7 +998,7 @@ is_na_patch() {
           '-I^\s+(CH_MODE|POPCLOSE)_[A-Z]+,?$' \
           '-I^\} popclose_T;$' \
           '-I^EXTERN\schar\s+\*popup_transparent' \
-          '-I^EXTERN\sint\s+disable_vterm_title_for_testing' \
+          '-I^EXTERN\sint\s+[_a-z]+_for_testing\s' \
           '-I^EXTERN type_T static_types\[' \
           '-I^EXTERN type_T t_.* INIT[2-9]\(' \
           '-I^EXTERN\swin_T\s+\*popup_dragwin' \
