@@ -1506,3 +1506,30 @@ mispelledtwo]])
   local pos = api.nvim_win_get_cursor(0)
   eq(1, pos[1], 'Should have wrapped back to Line 1')
 end)
+
+it('conceals lines contributed by an injected tree', function()
+  clear()
+  command('set conceallevel=3')
+
+  -- Measured without an intervening redraw, so that the conceal_line callback
+  -- is the thing that has to parse the injection. The outer ~~~ fences come
+  -- from the root tree, the inner ``` fences from the markdown tree injected
+  -- into it; all four carry conceal_lines, leaving "filler", "print(1)" and
+  -- "tail" on screen.
+  eq(
+    3,
+    exec_lua(function()
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, {
+        'filler',
+        '~~~markdown',
+        '```lua',
+        'print(1)',
+        '```',
+        '~~~',
+        'tail',
+      })
+      vim.treesitter.start(0, 'markdown')
+      return vim.api.nvim_win_text_height(0, {}).all
+    end)
+  )
+end)
