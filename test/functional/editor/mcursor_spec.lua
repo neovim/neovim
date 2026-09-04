@@ -2628,6 +2628,32 @@ describe('multicursor', function()
   end)
 
   describe('clipboard', function()
+    it("does not crash after jumping to an empty line with 'clipboard'", function()
+      n.exec_lua([[
+        _G.content = {}
+        vim.g.clipboard = {
+          name = 'test',
+          copy = {
+            ['+'] = function(lines)
+              _G.content = lines
+            end,
+          },
+          paste = {
+            ['+'] = function()
+              return _G.content
+            end,
+          },
+        }
+        vim.o.clipboard = 'unnamedplus'
+      ]])
+      cursors({ '', 'aa' }, 'Qj') -- Cursor on the empty line, primary on the non-empty line.
+      feed(']C') -- Make the empty-line cursor primary.
+      feed('C')
+      n.assert_alive()
+      feed('<Esc>')
+      eq({ '', '' }, get_lines())
+    end)
+
     it("perf: provider syncs once per cascade with 'clipboard'", function()
       n.exec_lua([[
         _G.copies = 0
