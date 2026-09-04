@@ -102,11 +102,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ macos-15-intel, macos-14 ]
+        runner: [ macos-15-intel, macos-15 ]
         include:
           - runner: macos-15-intel
             arch: x86_64
-          - runner: macos-14
+          - runner: macos-15
             arch: arm64
     runs-on: ${{ matrix.runner }}
     env:
