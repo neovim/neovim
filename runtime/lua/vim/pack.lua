@@ -268,7 +268,8 @@
 
 local api = vim.api
 local uv = vim.uv
-local async = require('vim._async')
+---@diagnostic disable-next-line: no-unknown
+local async = require('vim.async')
 local util = require('vim._core.util')
 local nvim_on = util.nvim_on
 local N_ = vim.fn.gettext
@@ -650,15 +651,7 @@ local function new_progress_report(action)
 end
 
 local copcall = package.loaded.jit and pcall or require('coxpcall').pcall
-
-local function async_join_run_wait(funs)
-  local n_threads = 2 * (uv.available_parallelism() or 1)
-  --- @async
-  local function joined_f()
-    async.join(n_threads, funs)
-  end
-  async.run(joined_f):wait()
-end
+local max_timeout = 120000
 
 --- Execute function in parallel for each non-errored plugin in the list
 --- @param plug_list vim.pack.Plug[]
@@ -667,35 +660,41 @@ end
 local function run_list(plug_list, f, progress_action)
   local report_progress = new_progress_report(progress_action)
 
-  -- Construct array of functions to execute in parallel
-  local n_finished = 0
-  local funs = {} --- @type (async fun())[]
-  for _, p in ipairs(plug_list) do
+  -- Collect plugins to execute in parallel
+  local plugs = vim.tbl_filter(function(p) --- @param p vim.pack.Plug
     -- Run only for plugins which didn't error before
-    if p.info.err == '' then
-      --- @async
-      funs[#funs + 1] = function()
-        local ok, err = copcall(f, p) --[[@as string]]
-        if not ok then
-          p.info.err = err --- @as string
-        end
-
-        -- Show progress
-        n_finished = n_finished + 1
-        local percent = math.floor(100 * n_finished / #funs)
-        report_progress('report', percent, '(%d/%d) - %s', n_finished, #funs, p.spec.name)
-      end
-    end
-  end
-
-  if #funs == 0 then
+    return p.info.err == ''
+  end, plug_list)
+  if #plugs == 0 then
     return
   end
 
   -- Run async in parallel but wait for all to finish/timeout
-  report_progress('begin', 0, '(0/%d)', #funs)
-  async_join_run_wait(funs)
-  report_progress('end', 100, '(%d/%d)', #funs, #funs)
+  local n_finished = 0
+  report_progress('begin', 0, '(0/%d)', #plugs)
+  async
+    .run(function()
+      ---@diagnostic disable-next-line: no-unknown
+      local semaphore = async.semaphore(2 * (uv.available_parallelism() or 1))
+      for _, p in ipairs(plugs) do
+        async.run(function()
+          semaphore:with(function()
+            ---@diagnostic disable-next-line: no-unknown
+            local ok, err = async.pawait(async.run(f, p))
+            if not ok then
+              p.info.err = err --- @as string
+            end
+          end)
+
+          -- Show progress
+          n_finished = n_finished + 1
+          local percent = math.floor(100 * n_finished / #plugs)
+          report_progress('report', percent, '(%d/%d) - %s', n_finished, #plugs, p.spec.name)
+        end)
+      end
+    end)
+    :wait(max_timeout)
+  report_progress('end', 100, '(%d/%d)', #plugs, #plugs)
 end
 
 local confirm_all = false
@@ -767,7 +766,8 @@ local function resolve_version(p)
   local tags = git_get_tags(p.path)
   if type(version) == 'string' then
     local is_branch = vim.tbl_contains(branches, version)
-    local is_tag_or_hash = copcall(git_get_hash, version, p.path)
+    ---@diagnostic disable-next-line: no-unknown
+    local is_tag_or_hash = async.pawait(async.run(git_get_hash, version, p.path))
     if not (is_branch or is_tag_or_hash) then
       local err = ('`%s` is not a branch/tag/commit. Available:'):format(version)
         .. list_in_line('Tags', tags)
@@ -992,7 +992,7 @@ local function lock_repair(names, plug_dir)
       plugin_lock.plugins[name] = data
     end
   end
-  async.run(f):wait()
+  async.run(f):wait(max_timeout)
 end
 
 --- Sync lockfile data and installed plugins:
@@ -1591,27 +1591,35 @@ end
 --- @param p_data_list vim.pack.PlugData[]
 --- @param offline boolean
 local function add_p_data_info(p_data_list, offline)
-  local funs = {} --- @type (async fun())[]
   local plug_dir = get_plug_dir()
-  for i, p_data in ipairs(p_data_list) do
-    local plug = new_plug(p_data.spec, plug_dir)
-    local path = p_data.path
-    --- @async
-    funs[i] = function()
-      p_data.branches = git_get_branches(path)
-      p_data.tags = git_get_tags(path)
-      p_data.manifest = manifest_read(path)
+  async
+    .run(function()
+      ---@diagnostic disable-next-line: no-unknown
+      local semaphore = async.semaphore(2 * (uv.available_parallelism() or 1))
+      for _, p_data in ipairs(p_data_list) do
+        local plug = new_plug(p_data.spec, plug_dir)
+        local path = p_data.path
+        async.run(function()
+          -- A failed lookup should not cancel sibling lookups.
+          semaphore:with(function()
+            async.pawait(async.run(function()
+              p_data.branches = git_get_branches(path)
+              p_data.tags = git_get_tags(path)
+              p_data.manifest = manifest_read(path)
 
-      if not offline then
-        git_fetch(path)
+              if not offline then
+                git_fetch(path)
+              end
+
+              infer_revisions(plug)
+              p_data.rev = plug.info.sha_head
+              p_data.rev_to = plug.info.sha_target
+            end))
+          end)
+        end)
       end
-
-      infer_revisions(plug)
-      p_data.rev = plug.info.sha_head
-      p_data.rev_to = plug.info.sha_target
-    end
-  end
-  async_join_run_wait(funs)
+    end)
+    :wait(max_timeout)
 end
 
 --- Gets |vim.pack| plugin info, optionally filtered by `names`.
