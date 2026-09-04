@@ -709,4 +709,13 @@ describe('menu_get', function()
 
     eq(expected, m)
   end)
+
+  it('stores terminal-mode mappings in `tl`', function()
+    command('tlnoremenu &Test.Test bar')
+    local mappings = fn.menu_get('', 'tl')[1].submenus[1].mappings
+    -- "tl" is the mode designator for terminal mode, "t" is the one for a
+    -- tooltip, so a terminal mapping must not land under "t".
+    eq('bar', mappings.tl.rhs)
+    eq(nil, mappings.t)
+  end)
 end)
