@@ -533,8 +533,6 @@ describe('statuscolumn', function()
     exec_lua('vim.api.nvim_buf_set_extmark(0, ns, 15, 0, { virt_lines = {{{"END", ""}}} })')
     feed('GkJzz')
     screen:expect([[
-      {8:buffer  0 12}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {8:wrapped 1 12}aaaaaaaaa                                |
       {8:buffer  0 13}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {8:wrapped 1 13}aaaaaaaaa                                |
       {8:buffer  0 14}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -543,7 +541,7 @@ describe('statuscolumn', function()
       {15:wrapped 1 15}{19:aaaaaaaaa^ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {15:wrapped 2 15}{19:aaaaaaaaaaaaaaaaaaa                      }|
       {8:virtual-1 15}END                                      |
-      {1:~                                                    }|*3
+      {1:~                                                    }|*5
                                                            |
     ]])
     -- Also test virt_lines when 'cpoptions' includes "n"
@@ -553,8 +551,6 @@ describe('statuscolumn', function()
       vim.api.nvim_buf_set_extmark(0, ns, 14, 0, { virt_lines = {{{"virt_line2", ""}}} })
     ]])
     screen:expect([[
-      {8:buffer  0 12}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      aaaaaaaaa                                            |
       {8:buffer  0 13}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       aaaaaaaaa                                            |
       {8:buffer  0 14}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -565,7 +561,7 @@ describe('statuscolumn', function()
       {8:virtual-1 15}virt_line1                               |
       {8:virtual-2 15}virt_line2                               |
       {8:virtual-3 15}END                                      |
-      {1:~                                                    }|
+      {1:~                                                    }|*3
                                                            |
     ]])
     -- Also test "col_rows" code path for 'relativenumber' cursor movement
@@ -574,8 +570,6 @@ describe('statuscolumn', function()
       set stc=%{v:virtnum<0?'virtual':(!v:virtnum?'buffer':'wrapped')}%=%{'\ '.v:virtnum.'\ '.v:lnum.'\ '.v:relnum}
     ]])
     screen:expect([[
-      {8:buffer  0 12 3}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {8:wrapped 1 12 3}aaaaaaaaaaa                            |
       {8:buffer  0 13 2}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {8:wrapped 1 13 2}aaaaaaaaaaa                            |
       {8:buffer  0 14 1}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -586,13 +580,11 @@ describe('statuscolumn', function()
       {8:virtual-1 15 0}virt_line1                             |
       {8:virtual-2 15 0}virt_line2                             |
       {8:virtual-3 15 0}END                                    |
-      {1:~                                                    }|
+      {1:~                                                    }|*3
                                                            |
     ]])
     feed('kk')
     screen:expect([[
-      {8:buffer  0 12 1}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {8:wrapped 1 12 1}aaaaaaaaaaa                            |
       {8:buffer  0 13 0}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {8:wrapped 1 13 0}aaaaaaaaaa^a                            |
       {8:buffer  0 14 1}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -603,7 +595,7 @@ describe('statuscolumn', function()
       {8:virtual-1 15 2}virt_line1                             |
       {8:virtual-2 15 2}virt_line2                             |
       {8:virtual-3 15 2}END                                    |
-      {1:~                                                    }|
+      {1:~                                                    }|*3
                                                            |
     ]])
     feed('gg5<C-E>')

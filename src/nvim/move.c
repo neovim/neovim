@@ -2204,6 +2204,8 @@ void scroll_cursor_halfway(win_T *wp, bool atend, bool prefer_above)
   }
 
   int topfill = 0;
+  int above = 0;
+  int below = 0;
   while (topline > 1) {
     // If using smoothscroll, we can precisely scroll to the
     // exact point where the cursor is halfway down the screen.
@@ -2238,8 +2240,6 @@ void scroll_cursor_halfway(win_T *wp, bool atend, bool prefer_above)
     // Depending on "prefer_above" we add a line above or below first.
     // Loop twice to avoid duplicating code.
     bool done = false;
-    int above = 0;
-    int below = 0;
     for (int round = 1; round <= 2; round++) {
       if (prefer_above
           ? (round == 2 && below < above)
