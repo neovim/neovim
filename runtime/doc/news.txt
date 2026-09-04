@@ -453,8 +453,8 @@ PERFORMANCE
 
 PLUGINS
 
-• The zip plugin is now |zip|, a read-only archive browser built on |dir|.
-  To use the legacy plugin instead: >
+• The zip plugin is now |zip|, an archive browser built on |dir| that can
+  update archive entries. To use the legacy plugin instead: >
   :packadd old-zip
 <
 • provider: add bun support for Node.js plugins
