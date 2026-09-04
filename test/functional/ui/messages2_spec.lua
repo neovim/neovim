@@ -679,6 +679,7 @@ describe('messages2', function()
       6 [+93]                                                                |
       Type number and <Enter> (q or empty cancels): ^                         |
     ]]
+    command('set mousescroll=ver:2')
     feed(':call inputlist(range(100))<CR>')
     screen:expect(top)
     feed('<Down>')
@@ -731,6 +732,37 @@ describe('messages2', function()
     feed('<PageDown>')
     screen:expect_unchanged()
     feed('<Home>')
+    screen:expect(top)
+    -- The wheel scrolls by 'mousescroll'; the arrow keys above still scrolled by one #39172
+    feed('<ScrollWheelDown><0,0>')
+    screen:expect([[
+                                                                             |
+      {1:~                                                                      }|*4
+      {3:                                                                       }|
+      2 [+2]                                                                 |
+      3                                                                      |
+      4                                                                      |
+      5                                                                      |
+      6                                                                      |
+      7                                                                      |
+      8 [+91]                                                                |
+      Type number and <Enter> (q or empty cancels): ^                         |
+    ]])
+    feed('<Up>')
+    screen:expect([[
+                                                                             |
+      {1:~                                                                      }|*4
+      {3:                                                                       }|
+      1 [+1]                                                                 |
+      2                                                                      |
+      3                                                                      |
+      4                                                                      |
+      5                                                                      |
+      6                                                                      |
+      7 [+92]                                                                |
+      Type number and <Enter> (q or empty cancels): ^                         |
+    ]])
+    feed('<ScrollWheelUp><0,0>')
     screen:expect(top)
   end)
 
