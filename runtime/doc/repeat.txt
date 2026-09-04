@@ -415,10 +415,12 @@ g CTRL-A		During a multicursor session, inserts an ascending
 			initial number.
 
 							*]C*
-]C			Jump to the [count]'th next cursor.
+]C			Jump to the [count]'th next cursor, leaving a cursor at
+			the current position.
 
 							*[C*
-[C			Jump to the [count]'th previous cursor.
+[C			Jump to the [count]'th previous cursor, leaving a cursor
+			at the current position.
 
 
 EXAMPLES						*mcursor-examples*

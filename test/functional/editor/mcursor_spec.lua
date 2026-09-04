@@ -2554,19 +2554,25 @@ describe('multicursor', function()
       screen:expect({ any = 'ine 30' }) -- ("l" is under the painted cursor cell)
     end)
 
-    it('cycle through the cursors, wrapping', function()
+    it('cycle through the cursors, wrapping; the old position keeps a cursor', function()
       cursors({ 'aaa', 'bbb', 'ccc', 'ddd' }, 'Q2jllQ')
       feed('gg0j')
       feed(']C')
       eq({ 3, 2 }, cur())
+      eq({ { 0, 0 }, { 1, 0 }, { 2, 2 } }, anchors())
       feed(']C') -- wraps
       eq({ 1, 0 }, cur())
       feed('2]C') -- count
-      eq({ 1, 0 }, cur())
-      feed('[C')
       eq({ 3, 2 }, cur())
       feed('[C')
+      eq({ 2, 0 }, cur())
+      feed('[C')
       eq({ 1, 0 }, cur())
+      -- The set of positions is invariant: an edit applies once at each (the cursor under the
+      -- primary merges into it).
+      feed('x')
+      eq({ 'aa', 'bb', 'cc', 'ddd' }, get_lines())
+      eq({ { 1, 0 }, { 2, 1 } }, anchors())
     end)
 
     it('does not move the other cursors in q= mode', function()
@@ -2574,7 +2580,7 @@ describe('multicursor', function()
       feed('q=')
       feed(']C')
       eq({ 1, 0 }, cur())
-      eq({ { 0, 0 } }, anchors())
+      eq({ { 0, 0 }, { 1, 0 } }, anchors()) -- (1,0): left behind by the jump.
       feed('q=')
     end)
 

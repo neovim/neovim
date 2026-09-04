@@ -164,6 +164,8 @@ function M.jump(forward, count)
     idx = (i - 1 - steps) % n + 1
   end
   vim.cmd [[normal! m']]
+  -- Leave a cursor behind: the jump rotates which cursor is primary, the set of positions stays.
+  vim.api.nvim_mcursor(0, curpos:to_cursor())
   vim.api.nvim_win_set_cursor(0, positions[idx]:to_cursor())
   return true
 end
