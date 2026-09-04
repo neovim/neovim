@@ -3312,13 +3312,11 @@ dict_T *create_environment(const dictitem_T *job_env, const bool clear_env, cons
   // Set $NVIM (in the child process) to v:servername. #3118
   if (set_nvim_addr) {
     char *nvim_addr = get_vim_var_str(VV_SEND_SERVER);
-    if (nvim_addr[0] != NUL) {
-      dictitem_T *dv = tv_dict_find(env, S_LEN("NVIM"));
-      if (dv) {
-        tv_dict_item_remove(env, dv);
-      }
-      tv_dict_add_str(env, S_LEN("NVIM"), nvim_addr);
+    dictitem_T *dv = tv_dict_find(env, S_LEN("NVIM"));
+    if (dv) {
+      tv_dict_item_remove(env, dv);
     }
+    tv_dict_add_str(env, S_LEN("NVIM"), nvim_addr);
   }
 
   if (job_env) {
