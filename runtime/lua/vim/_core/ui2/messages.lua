@@ -1,6 +1,7 @@
 local api, fn, o = vim.api, vim.fn, vim.o
 local nvim_on = require('vim._core.util').nvim_on
 local ui = require('vim._core.ui2')
+local more_msg = api.nvim_get_hl_id_by_name('MoreMsg') -- Highlight for the [+x] indicators.
 
 ---@alias Msg { extid: integer, timer: uv.uv_timer_t? }
 ---@class vim._core.ui2.messages
@@ -162,11 +163,11 @@ local function set_virttext(type, tgt)
         col = fn.virtcol2col(win, row + 1, texth.end_vcol - (scol - offset + width - mwidth))
       end
 
-      -- Give virt_text the same highlight as the message tail.
+      -- Give virt_text without its own highlight the same highlight as the message tail.
       local pos, opts = { row, col }, { details = true, overlap = true, type = 'highlight' }
       local hl = api.nvim_buf_get_extmarks(ui.bufs[tgt], ui.ns, pos, pos, opts)
       for _, chunk in ipairs(hl[1] and chunks or {}) do
-        chunk[2] = hl[1][4].hl_group
+        chunk[2] = chunk[2] or hl[1][4].hl_group
       end
     else
       local mode = #M.virt.last[M.virt.idx.mode]
@@ -340,7 +341,7 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
         local texth = api.nvim_win_text_height(ui.wins.cmd, { max_height = lines })
         texth.all = math.max(texth.all, api.nvim_buf_line_count(ui.bufs.cmd))
         local spill = texth.all > ui.cmdheight and (' [+%d]'):format(texth.all - ui.cmdheight)
-        M.virt.cmd[M.virt.idx.spill][1] = spill and { 0, spill } or nil
+        M.virt.cmd[M.virt.idx.spill][1] = spill and { 0, spill, more_msg } or nil
         M.cmd.msg_row = texth.end_row
 
         -- Expand the cmdline for a non-error message that doesn't fit.
@@ -636,9 +637,9 @@ end
 local function set_top_bot_spill()
   local topspill = fn.line('w0', ui.wins.dialog) - 1
   local botspill = api.nvim_buf_line_count(ui.bufs.dialog) - fn.line('w$', ui.wins.dialog)
-  M.virt.top[1][1] = topspill > 0 and { 0, (' [+%d]'):format(topspill) } or nil
+  M.virt.top[1][1] = topspill > 0 and { 0, (' [+%d]'):format(topspill), more_msg } or nil
   set_virttext('top', 'dialog')
-  M.virt.bot[1][1] = botspill > 0 and { 0, (' [+%d]'):format(botspill) } or nil
+  M.virt.bot[1][1] = botspill > 0 and { 0, (' [+%d]'):format(botspill), more_msg } or nil
   set_virttext('bot', 'dialog')
   api.nvim__redraw({ flush = true })
   return topspill > 0 or botspill > 0
@@ -753,9 +754,10 @@ function M.set_pos(tgt, focus)
         -- Dismiss temporarily expanded cmdline on next keypress and update spill indicator.
         texth.all = math.max(texth.all, api.nvim_buf_line_count(ui.bufs.cmd))
         local spill = texth.all > cfg.height and (' [+%d]'):format(texth.all - cfg.height)
-        M.virt.cmd[M.virt.idx.spill][1] = spill and { 0, spill } or nil
+        M.virt.cmd[M.virt.idx.spill][1] = spill and { 0, spill, more_msg } or nil
         set_virttext('cmd', 'cmd')
-        M.virt.cmd[M.virt.idx.spill][1] = { 0, (' [+%d]'):format(texth.all - ui.cmdheight) }
+        M.virt.cmd[M.virt.idx.spill][1] =
+          { 0, (' [+%d]'):format(texth.all - ui.cmdheight), more_msg }
         M.cmd_on_key = vim.on_key(cmd_on_key, ui.ns)
       elseif tgt == 'dialog' and set_top_bot_spill() then
         M.dialog_on_key = vim.on_key(dialog_on_key, M.dialog_on_key)
