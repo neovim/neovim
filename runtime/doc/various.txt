@@ -110,8 +110,8 @@ g8			Print the hex values of the bytes used in the
 			command won't move the cursor.
 
 							*gx*
-gx			Opens the current filepath, URL (decided by
-			|<cfile>|, 'isfname'), or |LSP| "documentLink" at
+gx			Opens the current filepath (decided by |<cfile>|,
+			'isfname'), URL, or |LSP| "documentLink" at
 			cursor using the system default handler.
 
 			In |help| files, gx treats help tags as
