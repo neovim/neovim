@@ -700,7 +700,7 @@ void fuzmatch_str_free(fuzmatch_str_T *const fuzmatch, int count)
     return;
   }
   for (int i = 0; i < count; i++) {
-    xfree(fuzmatch[count].str);
+    xfree(fuzmatch[i].str);
   }
   xfree(fuzmatch);
 }
