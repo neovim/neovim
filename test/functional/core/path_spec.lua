@@ -174,57 +174,89 @@ describe('file search', function()
 
   it('gf/<cfile> matches Windows drive-letter filepaths (without ":" in &isfname)', function()
     local iswin = is_os('win')
-    local function test_cfile(input, expected, expected_win)
+    local function test_cfile(input, char, expected, expected_win)
       expected = (iswin and expected_win or expected) or input
       command('%delete')
       insert(input)
-      command('norm! 0')
+      command(char and ('norm! F%s'):format(char) or 'norm! 0')
       eq(expected, eval('expand("<cfile>")'))
     end
 
-    -- test_cfile([[c:/d:/e:/foo/bar.txt]], 'c:/d:/e') -- TODO(justinmk): should return "d:/foo/bar.txt" ?
-    test_cfile([[c:/d:/foo/bar.txt]]) -- TODO(justinmk): should return "d:/foo/bar.txt" ?
-    test_cfile([[//share/c:/foo/bar/]])
-    test_cfile([[file://c:/foo/bar]])
-    test_cfile([[file://c:/foo/bar:42]])
-    test_cfile([[file://c:/foo/bar:42:666]])
-    test_cfile([[https://c:/foo/bar]])
-    test_cfile([[\foo\bar]], [[foo]], [[\foo\bar]])
-    test_cfile([[/foo/bar]], [[/foo/bar]])
-    test_cfile([[c:\foo\bar]], [[c:]], [[c:\foo\bar]])
-    test_cfile([[c:\foo\bar:42:666]], [[c:]], [[c:\foo\bar]])
-    test_cfile([[c:/foo/bar]])
-    test_cfile([[c:/foo/bar:42]], [[c:/foo/bar]])
-    test_cfile([[c:/foo/bar:42:666]], [[c:/foo/bar]])
-    test_cfile([[c:foo\bar]], [[c]])
-    test_cfile([[c:foo/bar]], [[c]])
-    test_cfile([[c:foo]], [[c]])
+    -- Common path formats
+    test_cfile([[/foo/bar.z]], nil, [[/foo/bar.z]])
+    test_cfile([[\foo\bar.z]], nil, [[foo]], [[\foo\bar.z]])
+    test_cfile([[/foo/bar.z]], 'f', [[/foo/bar.z]])
+    test_cfile([[\foo\bar.z]], 'f', [[foo]], [[\foo\bar.z]])
+    test_cfile([[/foo/bar.z]], '/', [[/foo/bar.z]]) -- 2nd '/'
+    test_cfile([[\foo\bar.z]], '\\', [[bar.z]], [[\foo\bar.z]]) -- 2nd '\'
+    test_cfile([[/foo/bar.z]], 'b', [[/foo/bar.z]])
+    test_cfile([[\foo\bar.z]], 'b', [[bar.z]], [[\foo\bar.z]])
+    -- Unix treats 'c:/' as a url, but doesn't treat '\' as a sep
+    test_cfile([[c:/bar.z]], 'c', [[c:/bar.z]], [[c:/bar.z]])
+    test_cfile([[c:\bar.z]], 'c', [[c]], [[c:\bar.z]])
+    -- Relative path on Windows
+    test_cfile([[c:foo/bar]], 'c', [[c]], [[c:foo/bar]])
+    test_cfile([[c:foo\bar]], 'c', [[c]], [[c:foo\bar]])
+    test_cfile([[c:/bar.z:42]], 'c', [[c:/bar.z:42]], [[c:/bar.z]])
+    test_cfile([[c:/bar.z:42:666]], 'c', [[c:/bar.z:42:666]], [[c:/bar.z]])
+    test_cfile([[c:\bar.z:42:666]], 'c', [[c]], [[c:\bar.z]])
+
+    test_cfile([[*/foo/bar.z]], nil, [[/foo/bar.z]])
+    test_cfile([[*\foo\bar.z]], nil, [[foo]], [[\foo\bar.z]])
+    test_cfile([[*c:/bar.z]], nil, [[c:/bar.z]], [[c:/bar.z]])
+    test_cfile([[*c:\bar.z]], nil, [[c]], [[c:\bar.z]])
+
+    -- edge case, multiple drive letters
+    test_cfile([[c:/d:/bar.z]], 'c', [[c:/d:/bar.z]], [[c:/d]])
+    test_cfile([[c:\d:\bar.z]], 'c', [[c]], [[c:\d]])
+    test_cfile([[c:/d:/bar.z]], 'd', [[c:/d:/bar.z]], [[c:/d]])
+    test_cfile([[c:\d:\bar.z]], 'd', [[d]], [[c:\d]])
+    test_cfile([[c:/d:/bar.z]], 'b', [[c:/d:/bar.z]], [[d:/bar.z]])
+    test_cfile([[c:\d:\bar.z]], 'b', [[bar.z]], [[d:\bar.z]])
+    test_cfile([[c:/d:/bar.z]], '/', [[c:/d:/bar.z]], [[d:/bar.z]])
+    test_cfile([[c:\d:\bar.z]], '\\', [[bar.z]], [[d:\bar.z]])
+
+    -- common url
+    test_cfile([[file://c:/bar.z]], 'f')
+    test_cfile([[file://c:/bar.z]], 'c')
+    test_cfile([[file://c:/bar.z]], 'b')
+    test_cfile([[file://c:/bar.z:42]], 'f')
+    test_cfile([[file://c:/bar.z:42]], 'c')
+    test_cfile([[file://c:/bar.z:42]], 'b')
+    test_cfile([[file://c:/bar.z:42:666]], 'f')
+    test_cfile([[file://c:/bar.z:42:666]], 'c')
+    test_cfile([[file://c:/bar.z:42:666]], 'b')
+    -- 'file:/' prefix is removed on Windows temporarily, see neovim#38915
+    test_cfile([[file:/c:/bar.z]], 'f', [[/c:/bar.z]], [[c:/bar.z]])
+
+    -- filepath, since path sep is not a valid scheme letter
+    test_cfile([[/bin:/usr]], 'b', [[/bin]])
+    test_cfile([[\bin:\usr]], 'b', [[bin]], [[\bin]])
+    test_cfile([[/bin:/usr]], 'u', [[/usr]], [[n:/usr]])
+    test_cfile([[\bin:\usr]], 'u', [[usr]], [[n:\usr]])
+
     -- Examples from: https://learn.microsoft.com/en-us/dotnet/standard/io/file-path-formats#example-ways-to-refer-to-the-same-file
-    test_cfile([[c:\temp\test-file.txt]], [[c:]], [[c:\temp\test-file.txt]])
-    test_cfile(
-      [[\\127.0.0.1\c$\temp\test-file.txt]],
-      [[127.0.0.1]],
-      [[\\127.0.0.1\c$\temp\test-file.txt]]
-    )
-    test_cfile(
-      [[\\LOCALHOST\c$\temp\test-file.txt]],
-      [[LOCALHOST]],
-      [[\\LOCALHOST\c$\temp\test-file.txt]]
-    )
-    -- not supported yet
-    test_cfile([[\\.\c:\temp\test-file.txt]], [[.]], [[\\.\c]])
-    -- not supported yet
-    test_cfile([[\\?\c:\temp\test-file.txt]], [[c:]], [[\\]])
-    test_cfile(
-      [[\\.\UNC\LOCALHOST\c$\temp\test-file.txt]],
-      [[.]],
-      [[\\.\UNC\LOCALHOST\c$\temp\test-file.txt]]
-    )
-    test_cfile(
-      [[\\127.0.0.1\c$\temp\test-file.txt]],
-      [[127.0.0.1]],
-      [[\\127.0.0.1\c$\temp\test-file.txt]]
-    )
+    test_cfile([[//127.0.0.1/c$/bar.z]], nil)
+    test_cfile([[\\127.0.0.1\c$\bar.z]], nil, [[127.0.0.1]], [[\\127.0.0.1\c$\bar.z]])
+    test_cfile([[//127.0.0.1/c$/bar.z]], '$')
+    test_cfile([[\\127.0.0.1\c$\bar.z]], '$', [[c$]], [[\\127.0.0.1\c$\bar.z]])
+    test_cfile([[//localhost/c$/bar.z]], nil)
+    test_cfile([[\\localhost\c$\bar.z]], nil, [[localhost]], [[\\localhost\c$\bar.z]])
+    -- not fully supported yet
+    test_cfile([[//./c:/bar.z]], nil, [[//./c]])
+    test_cfile([[\\.\c:\bar.z]], nil, [[.]], [[\\.\c]])
+    test_cfile([[//?/c:/bar.z]], nil, [[//]])
+    test_cfile([[\\?\c:\bar.z]], nil, [[c]], [[\\]])
+    test_cfile([[//./c:/bar.z]], 'c', [[//./c]])
+    test_cfile([[\\.\c:\bar.z]], 'c', [[c]], [[\\.\c]])
+    test_cfile([[//?/c:/bar.z]], 'c', [[/c]])
+    test_cfile([[\\?\c:\bar.z]], 'c', [[c]], [[\c]])
+    test_cfile([[//./c:/bar.z]], 'b', [[/bar.z]], [[c:/bar.z]])
+    test_cfile([[\\.\c:\bar.z]], 'b', [[bar.z]], [[c:\bar.z]])
+    test_cfile([[//?/c:/bar.z]], 'b', [[/bar.z]], [[c:/bar.z]])
+    test_cfile([[\\?\c:\bar.z]], 'b', [[bar.z]], [[c:\bar.z]])
+    test_cfile([[//./unc/localhost/c$/bar.z]], nil, [[//./unc/localhost/c$/bar.z]])
+    test_cfile([[\\.\unc\localhost\c$\bar.z]], nil, [[.]], [[\\.\unc\localhost\c$\bar.z]])
   end)
 
   it('gf/<cfile> handles local file: paths', function()
