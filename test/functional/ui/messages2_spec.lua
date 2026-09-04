@@ -79,7 +79,7 @@ describe('messages2', function()
       bar                                                  |
       baz                                                  |
       bar                                                  |
-      baz [+23]                                            |
+      baz{6: [+23]}                                            |
     ]])
     -- Any key press resizes the cmdline and updates the spill indicator.
     feed('j')
@@ -161,7 +161,7 @@ describe('messages2', function()
       {5: + [No Name] }{24: [No Name] }{2:                            }{24:X}|
       ^x                                                    |
       {1:~                                                    }|*11
-      foo [+1]                           1,1            All|
+      foo{6: [+1]}                           1,1            All|
     ]])
     -- Don't enter the pager in insert mode.
     command('tabonly | call nvim_echo([["foo\n"]]->repeat(&lines), 1, {}) | startinsert')
@@ -170,14 +170,14 @@ describe('messages2', function()
       {1:~                                                    }|*5
       {3:                                                     }|
       foo                                                  |*6
-      foo [+8]                                             |
+      foo{6: [+8]}                                             |
     ]])
     feed('<CR>')
     screen:expect([[
                                                            |
       ^x                                                    |
       {1:~                                                    }|*11
-      foo [+14]                          2,1            All|
+      foo{6: [+14]}                          2,1            All|
     ]])
     feed('<BS><Esc>')
     -- First multiline message expands cmdline, additional message updates spill indicator.
@@ -187,7 +187,7 @@ describe('messages2', function()
       {1:~                                                    }|*5
       {3:                                                     }|
       foo                                                  |*6
-      foo [+9]                                             |
+      foo{6: [+9]}                                             |
     ]])
     -- Do enter the pager in normal mode (with keybinding setup).
     -- Also checks that "messagesopt=pager:…" is normalized to the keytrans() form.
@@ -404,7 +404,7 @@ describe('messages2', function()
       {1:~                                                    }|*5
       foo                                                  |
       bar                                                  |*5
-      bar [+8]                                             |
+      bar{6: [+8]}                                             |
     ]])
   end)
 
@@ -501,7 +501,7 @@ describe('messages2', function()
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*12
-      foo [+1]                                             |
+      foo{6: [+1]}                                             |
     ]])
   end)
 
@@ -512,7 +512,7 @@ describe('messages2', function()
       {1:~                                                    }|*5
       {3:                                                     }|
       foo                                                  |*6
-      foo [+8]                                             |
+      foo{6: [+8]}                                             |
     ]])
     -- Place cmdline below expanded messages: #37653, without "more" title #38481.
     feed(':call setline(1, "foo")')
@@ -521,7 +521,7 @@ describe('messages2', function()
       {1:~                                                    }|*4
       {3:                                                     }|
       foo                                                  |*6
-      foo [+8]                                             |
+      foo{6: [+8]}                                             |
       {16::}{15:call} {25:setline}{16:(}{26:1}{16:,} {26:"foo"}{16:)}^                              |
     ]])
     -- No message closes expanded cmdline and keeps the entered command.
@@ -676,7 +676,7 @@ describe('messages2', function()
       3                                                                      |
       4                                                                      |
       5                                                                      |
-      6 [+93]                                                                |
+      6{6: [+93]}                                                                |
       Type number and <Enter> (q or empty cancels): ^                         |
     ]]
     command('set mousescroll=ver:2')
@@ -687,13 +687,13 @@ describe('messages2', function()
                                                                              |
       {1:~                                                                      }|*4
       {3:                                                                       }|
-      1 [+1]                                                                 |
+      1{6: [+1]}                                                                 |
       2                                                                      |
       3                                                                      |
       4                                                                      |
       5                                                                      |
       6                                                                      |
-      7 [+92]                                                                |
+      7{6: [+92]}                                                                |
       Type number and <Enter> (q or empty cancels): ^                         |
     ]])
     feed('<Up>')
@@ -703,13 +703,13 @@ describe('messages2', function()
                                                                              |
       {1:~                                                                      }|*4
       {3:                                                                       }|
-      5 [+5]                                                                 |
+      5{6: [+5]}                                                                 |
       6                                                                      |
       7                                                                      |
       8                                                                      |
       9                                                                      |
       10                                                                     |
-      11 [+88]                                                               |
+      11{6: [+88]}                                                               |
       Type number and <Enter> (q or empty cancels): ^                         |
     ]])
     feed('<PageUp>')
@@ -719,7 +719,7 @@ describe('messages2', function()
                                                                              |
       {1:~                                                                      }|*4
       {3:                                                                       }|
-      93 [+93]                                                               |
+      93{6: [+93]}                                                               |
       94                                                                     |
       95                                                                     |
       96                                                                     |
@@ -739,13 +739,13 @@ describe('messages2', function()
                                                                              |
       {1:~                                                                      }|*4
       {3:                                                                       }|
-      2 [+2]                                                                 |
+      2{6: [+2]}                                                                 |
       3                                                                      |
       4                                                                      |
       5                                                                      |
       6                                                                      |
       7                                                                      |
-      8 [+91]                                                                |
+      8{6: [+91]}                                                                |
       Type number and <Enter> (q or empty cancels): ^                         |
     ]])
     feed('<Up>')
@@ -753,13 +753,13 @@ describe('messages2', function()
                                                                              |
       {1:~                                                                      }|*4
       {3:                                                                       }|
-      1 [+1]                                                                 |
+      1{6: [+1]}                                                                 |
       2                                                                      |
       3                                                                      |
       4                                                                      |
       5                                                                      |
       6                                                                      |
-      7 [+92]                                                                |
+      7{6: [+92]}                                                                |
       Type number and <Enter> (q or empty cancels): ^                         |
     ]])
     feed('<ScrollWheelUp><0,0>')
@@ -1032,7 +1032,7 @@ describe('messages2', function()
       ^                                                     |
       {1:~                                                    }|*2
       foo                                                  |*2
-      {14:f}oo [+6]                                             |
+      {14:f}oo{6: [+6]}                                             |
     ]])
     feed('<Esc>')
     screen:expect([[
@@ -1247,7 +1247,7 @@ describe('messages2', function()
     screen:expect([[
       ^                                                     |
       {1:~                                                    }|*12
-      foo [+1]                                             |
+      foo{6: [+1]}                                             |
     ]])
   end)
 

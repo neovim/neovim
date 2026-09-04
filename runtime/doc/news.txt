@@ -496,6 +496,7 @@ UI
   • |z=| (spell suggest)
 • The |ui2| dialog window scrolls with the mouse wheel, by 'mousescroll'
   lines.
+• The |ui2| `[+x]` "spill" indicator is highlighted with |hl-MoreMsg|.
 
 VIMSCRIPT
 
