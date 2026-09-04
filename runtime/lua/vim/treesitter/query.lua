@@ -593,7 +593,8 @@ local predicate_handlers = {
     end
 
     for _, node in ipairs(nodes) do
-      if vim.list_contains({ unpack(predicate, 3) }, node:parent():type()) then
+      local parent = node:parent()
+      if parent and vim.list_contains({ unpack(predicate, 3) }, parent:type()) then
         return true
       end
     end

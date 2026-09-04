@@ -451,6 +451,26 @@ void ui_refresh(void)
     eq({}, result)
   end)
 
+  it('supports builtin predicate has-parent?', function()
+    insert([[
+      int x = 123;
+      enum C { y = 124 };]])
+
+    local result = exec_lua(
+      get_query_result,
+      [[((number_literal) @literal (#has-parent? @literal "init_declarator"))]]
+    )
+    eq({ { 'literal', 'number_literal', { 0, 8, 0, 11 }, '123' } }, result)
+
+    -- The root node has no parent: the predicate does not match, rather than
+    -- erroring on the nil parent.
+    result = exec_lua(
+      get_query_result,
+      [[((translation_unit) @root (#has-parent? @root "translation_unit"))]]
+    )
+    eq({}, result)
+  end)
+
   it('allows loading query with escaped quotes and capture them `#{lua,vim}-match`?', function()
     insert('char* astring = "Hello World!";')
 
