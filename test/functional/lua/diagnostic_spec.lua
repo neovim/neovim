@@ -4257,7 +4257,7 @@ describe('vim.diagnostic', function()
     end)
 
     it('returns count for each diagnostic kind', function()
-      local result = exec_lua(function()
+      exec_lua(function()
         vim.diagnostic.set(_G.diagnostic_ns, 0, {
           _G.make_error('Error 1', 0, 1, 0, 1),
 
@@ -4273,12 +4273,30 @@ describe('vim.diagnostic', function()
           _G.make_hint('Hint 3', 4, 4, 4, 4),
           _G.make_hint('Hint 4', 4, 4, 4, 4),
         })
+
+        vim.diagnostic.set(_G.other_ns, 0, {
+          _G.make_error('Error 1', 0, 1, 0, 1),
+          _G.make_error('Error 2', 1, 1, 1, 1),
+
+          _G.make_warning('Warning 1', 2, 2, 2, 2),
+        })
+        vim.diagnostic.enable(false, { ns_id = _G.other_ns })
+
         return vim.diagnostic.status()
       end)
 
       eq(
+        '%#DiagnosticSignError#E:3 %#DiagnosticSignWarn#W:3 %#DiagnosticSignInfo#I:3 %#DiagnosticSignHint#H:4%##',
+        exec_lua(function()
+          return vim.diagnostic.status()
+        end)
+      )
+
+      eq(
         '%#DiagnosticSignError#E:1 %#DiagnosticSignWarn#W:2 %#DiagnosticSignInfo#I:3 %#DiagnosticSignHint#H:4%##',
-        result
+        exec_lua(function()
+          return vim.diagnostic.status(0, { enabled = true })
+        end)
       )
 
       exec_lua('vim.cmd.enew()')

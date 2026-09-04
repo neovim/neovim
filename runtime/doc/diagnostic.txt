@@ -1063,15 +1063,16 @@ show({namespace}, {buf}, {diagnostics}, {opts})        *vim.diagnostic.show()*
                        {namespace} or {buf} is nil.
       • {opts}         (`vim.diagnostic.Opts?`) Display options.
 
-status({buf})                                        *vim.diagnostic.status()*
+status({buf}, {opts})                                *vim.diagnostic.status()*
     Returns formatted string with diagnostics for the current buffer. The
     severities with 0 diagnostics are left out. Example `E:2 W:3 I:4 H:5`
 
     To customise appearance, see |vim.diagnostic.Opts.Status|.
 
     Parameters: ~
-      • {buf}  (`integer?`) Buffer number to get diagnostics from. Defaults to
-               0 for the current buffer
+      • {buf}   (`integer?`) Buffer number to get diagnostics from. Defaults
+                to 0 for the current buffer
+      • {opts}  (`vim.diagnostic.GetOpts?`)
 
     Return: ~
         (`string`)

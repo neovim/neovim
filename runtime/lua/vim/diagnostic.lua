@@ -1115,15 +1115,15 @@ local default_status_signs = {
 ---
 ---@param buf? integer Buffer number to get diagnostics from.
 ---                      Defaults to 0 for the current buffer
----
+---@param opts? vim.diagnostic.GetOpts
 ---@return string
-function M.status(buf)
+function M.status(buf, opts)
   vim.validate('buf', buf, 'number', true)
   buf = buf or 0
   local config = assert(vim.diagnostic.config()).status or {} --- @type vim.diagnostic.Opts.Status
   vim.validate('config.format', config.format, 'function', true)
 
-  local counts = M.count(buf)
+  local counts = M.count(buf, opts)
   local format = config.format
   local result_str --- @type string
   if type(format) == 'function' then
