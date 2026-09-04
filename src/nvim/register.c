@@ -986,14 +986,13 @@ void free_register(yankreg_T *reg)
   FUNC_ATTR_NONNULL_ALL
 {
   XFREE_CLEAR(reg->additional_data);
-  if (reg->y_array == NULL) {
-    return;
+  if (reg->y_array != NULL) {
+    for (size_t i = reg->y_size; i-- > 0;) {  // from y_size - 1 to 0 included
+      API_CLEAR_STRING(reg->y_array[i]);
+    }
+    XFREE_CLEAR(reg->y_array);
   }
-
-  for (size_t i = reg->y_size; i-- > 0;) {  // from y_size - 1 to 0 included
-    API_CLEAR_STRING(reg->y_array[i]);
-  }
-  XFREE_CLEAR(reg->y_array);
+  *reg = (yankreg_T){ 0 };
 }
 
 /// Copy a block range into a register.
