@@ -190,6 +190,12 @@ static uint32_t mc_session_ns(void)
   return ns;
 }
 
+/// Is `ns` a multicursor namespace?
+bool mc_is_mcursor_ns(uint32_t ns_id)
+{
+  return ns_id == mc_ns() || ns_id == mc_vcur_ns() || ns_id == mc_vsel_ns();
+}
+
 /// Number of mcursors, excluding the primary cursor. 0: no multicursor session.
 size_t mc_count(void)
 {
@@ -1531,8 +1537,6 @@ void mc_zq(oparg_T *oap, cmdarg_T *cap, pos_T origin)
     }
     curbuf->b_visual = mc_zq_target(primary, search, oap->motion_type, NULL);  // Its own target.
     curbuf->b_visual_mode_eval = curbuf->b_visual.vi_mode;
-    // Do ":nohlsearch" so cursors are visible. #41629
-    set_no_hlsearch(true);
     redraw_all_later(UPD_SOME_VALID);
   }
   curwin->w_cursor = primary;

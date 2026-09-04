@@ -304,9 +304,7 @@ describe('multicursor', function()
       fn.setline(1, { 'foo bar foo', 'baz foo qux', 'foobar foo' })
       feed('gg0') -- on the first "foo"
       feed('*') -- whole-word pattern; the cursor moves to the next match
-      eq(1, api.nvim_get_vvar('hlsearch'))
       feed('zqn')
-      eq(0, api.nvim_get_vvar('hlsearch')) -- ":nohlsearch", workaround for #41629.
       -- 4 whole-word "foo" matches ("foobar" excluded), including the primary's.
       eq(4, ncursors())
       -- The primary cursor does not move ("*" left it on the second match).
@@ -4052,6 +4050,33 @@ describe('multicursor', function()
         { 'xaa,xbb,xcc 0 0,0,0', 'xaa,xbb,xcc 1 1,1,1', 'xaa,xbb,xcc 1 1,1,1' },
         n.exec_lua('return _G.seen')
       )
+    end)
+
+    it('MCursor and MCursorVisual render above hlsearch', function()
+      command('hi! MCursor       guifg=White guibg=Red')
+      command('hi! MCursorVisual guifg=NONE  guibg=Magenta')
+      command('hi! Search        guifg=White guibg=Blue')
+      command('hi! Visual        guifg=NONE  guibg=LightGrey')
+
+      local screen = Screen.new(30, 5)
+      screen:add_extra_attr_ids({
+        MCursorVisual = { background = Screen.colors.Magenta },
+        Search = { foreground = Screen.colors.Gray100, background = Screen.colors.Blue },
+        Visual = { background = Screen.colors.LightGray },
+        VisualSearch = { foreground = Screen.colors.Gray100, background = Screen.colors.LightGray },
+      })
+
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'hello world abc', 'hello world abc' })
+      feed('gg0wQ')
+      feed('j')
+      feed('viw')
+      command('let @/ = "world" | set hlsearch')
+      screen:expect([[
+        hello {MCursorVisual:worl}{9:d} abc               |
+        hello {VisualSearch:worl^d} abc               |
+        {1:~                             }|*2
+        {5:-- VISUAL --}                  |
+      ]])
     end)
   end)
 
