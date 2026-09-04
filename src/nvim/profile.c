@@ -25,6 +25,7 @@
 #include "nvim/keycodes.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/option_vars.h"
 #include "nvim/os/fs.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
@@ -226,6 +227,9 @@ int profile_cmp(proftime_T tm1, proftime_T tm2) FUNC_ATTR_CONST
 
 static char *profile_fname = NULL;
 
+/// Time of the last eager profile dump, or zero if none was written.
+static proftime_T profile_dump_time = 0;
+
 /// Reset all profiling information.
 void profile_reset(void)
 {
@@ -282,6 +286,7 @@ void profile_reset(void)
   }
 
   XFREE_CLEAR(profile_fname);
+  profile_dump_time = 0;
 }
 
 /// ":profile cmd args"
@@ -298,6 +303,7 @@ void ex_profile(exarg_T *eap)
     profile_fname = expand_env_save_opt(e, true, NULL);
     do_profiling = PROF_YES;
     profile_set_wait(profile_zero());
+    profile_dump_time = 0;
     set_vim_var_nr(VV_PROFILING, 1);
   } else if (do_profiling == PROF_NONE) {
     emsg(_("E750: First use \":profile start {fname}\""));
@@ -582,6 +588,7 @@ void func_line_end(void *cookie)
       fp->uf_tml_self[fp->uf_tml_idx] =
         profile_self(fp->uf_tml_self[fp->uf_tml_idx], fp->uf_tml_start,
                      fp->uf_tml_children);
+      profile_may_dump();
     }
     fp->uf_tml_idx = -1;
   }
@@ -782,6 +789,22 @@ void profile_dump(void)
   }
 }
 
+/// Periodically dump the profile while profiling.
+void profile_may_dump(void)
+{
+  if (profile_fname == NULL || do_profiling != PROF_YES || p_pdi == 0) {
+    return;
+  }
+  proftime_T now = profile_start();
+  const int64_t dump_interval = p_pdi * (NS_PER_SEC / 1000);
+  if (profile_dump_time != 0
+      && profile_signed(profile_sub(now, profile_dump_time)) < dump_interval) {
+    return;
+  }
+  profile_dump_time = now;
+  profile_dump();
+}
+
 /// Called when starting to read a script line.
 /// "sourcing_lnum" must be correct!
 /// When skipping lines it may not actually be executed, but we won't find out
@@ -842,6 +865,7 @@ void script_line_end(void)
       pp->sn_prl_total = profile_add(pp->sn_prl_total, si->sn_prl_start);
       pp->sn_prl_self = profile_self(pp->sn_prl_self, si->sn_prl_start,
                                      si->sn_prl_children);
+      profile_may_dump();
     }
     si->sn_prl_idx = -1;
   }

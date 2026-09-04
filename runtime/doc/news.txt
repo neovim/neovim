@@ -418,6 +418,9 @@ LUA
 
 OPTIONS
 
+• |:profile| periodically writes its output while profiled Vimscript lines
+  execute.  'profiledumpinterval' controls the minimum interval between
+  writes.
 • Lua functions/closures can be assigned to "func" and "expr" options:
   |option-value-function| (e.g. `vim.o.operatorfunc`), |expr-option-function|
   (e.g. `vim.wo.foldexpr`, `vim.bo.indentexpr`). Reading such an option:
