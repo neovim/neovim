@@ -88,7 +88,7 @@ local function tokens_to_ranges(data, bufnr, client, request, ranges)
   local encoding = client.offset_encoding
   local lines = api.nvim_buf_get_lines(bufnr, 0, -1, false)
   -- For all encodings, \r\n takes up two code points, and \n (or \r) takes up one.
-  local eol_offset = vim.bo.fileformat[bufnr] == 'dos' and 2 or 1
+  local eol_offset = vim.bo[bufnr].fileformat == 'dos' and 2 or 1
   local version = request.version
   local request_id = request.request_id
   local last_insert_idx = 1
