@@ -581,6 +581,25 @@ static int nlua_foldupdate(lua_State *lstate)
   return 0;
 }
 
+// Open the fold chain containing the cursor in the given window.
+static int nlua_foldopen_cursor(lua_State *lstate)
+{
+  handle_T window = (handle_T)luaL_checkinteger(lstate, 1);
+  win_T *win = handle_get_window(window);
+  if (!win) {
+    return luaL_error(lstate, "invalid window");
+  }
+
+  CtxSwitch cs = { 0 };
+  tabpage_T *tab = win_find_tabpage(win);
+  if (ctx_switch(&cs, win, tab, NULL, kCtxNoDisplay | kCtxKeepCwd | kCtxValidate)) {
+    foldOpenCursor();
+  }
+  ctx_restore(&cs);
+
+  return 0;
+}
+
 static int nlua_with(lua_State *L)
 {
   int flags = 0;
@@ -744,6 +763,9 @@ static void nlua_state_add_internal(lua_State *const lstate)
   // _updatefolds
   lua_pushcfunction(lstate, &nlua_foldupdate);
   lua_setfield(lstate, -2, "_foldupdate");
+
+  lua_pushcfunction(lstate, &nlua_foldopen_cursor);
+  lua_setfield(lstate, -2, "_foldopen_cursor");
 
   lua_pushcfunction(lstate, &nlua_with);
   lua_setfield(lstate, -2, "_with_c");
