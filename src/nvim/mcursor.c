@@ -595,7 +595,11 @@ void mc_ins_cascade_start(bool cascade, varnumber_T tick)
     return;
   }
   mc_ins_joined = false;
-  mc_ins_span.active = cascade && mc_buf_has_cursors(curbuf) && kv_size(g_atoms) == 0;
+  if (cascade && mc_buf_has_cursors(curbuf) && kv_size(g_atoms) > 0) {
+    // Cascade now if a mapping queued atoms before entering Insert ("nnoremap i ^i").
+    mc_cascade();
+  }
+  mc_ins_span.active = cascade && mc_buf_has_cursors(curbuf);
   mc_ins_span.first = true;
   mc_ins_span.done_len = 0;
   mc_ins_span.tick = tick;
