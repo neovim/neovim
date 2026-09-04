@@ -62,6 +62,7 @@ enum {
   kSHConceal = 64,
   kSHConcealLines = 128,
   kSHConcealOff = 256,
+  kSHAboveSearch = 512,
 };
 
 typedef struct {

@@ -3696,6 +3696,102 @@ describe('extmark decorations', function()
       end
     end
   end)
+
+  describe('multicursor namespace renders above search/area highlights', function()
+    local mc_ns ---@type integer
+
+    before_each(function()
+      command('hi! Search    guifg=White guibg=Blue')
+      command('hi! IncSearch guifg=Black guibg=Yellow')
+      command('hi! Visual    guifg=NONE  guibg=LightGrey')
+      command('hi! MyMark    guifg=White guibg=Red')
+      mc_ns = api.nvim_create_namespace('nvim.multicursor')
+      screen:add_extra_attr_ids({
+        Search = { foreground = Screen.colors.White, background = Screen.colors.Blue },
+        IncSearch = { foreground = Screen.colors.Black, background = Screen.colors.Yellow },
+      })
+    end)
+
+    it('renders above hlsearch highlight', function()
+      screen:try_resize(30, 3)
+      insert('hello world hello')
+      feed('gg0')
+      local mymark_id = api.nvim_buf_set_extmark(0, ns, 0, 6, {
+        end_col = 11,
+        hl_group = 'MyMark',
+      })
+      command('let @/ = "world" | set hlsearch')
+      screen:expect([[
+        ^hello {Search:world} hello             |
+        {1:~                             }|
+                                      |
+      ]])
+
+      api.nvim_buf_del_extmark(0, ns, mymark_id)
+      api.nvim_buf_set_extmark(0, mc_ns, 0, 6, {
+        end_col = 11,
+        hl_group = 'MyMark',
+      })
+      screen:expect([[
+        ^hello {9:world} hello             |
+        {1:~                             }|
+                                      |
+      ]])
+    end)
+
+    it('renders above Visual decoration', function()
+      screen:try_resize(30, 3)
+      insert('hello world hello')
+      feed('gg0w')
+      api.nvim_buf_set_extmark(0, mc_ns, 0, 6, {
+        end_col = 11,
+        hl_group = 'MyMark',
+      })
+
+      feed('viw')
+      screen:expect([[
+        hello {9:worl^d} hello             |
+        {1:~                             }|
+        {5:-- VISUAL --}                  |
+      ]])
+    end)
+
+    it('renders above IncSearch', function()
+      screen:try_resize(30, 3)
+      insert('hello world hello')
+      feed('gg0')
+      api.nvim_buf_set_extmark(0, mc_ns, 0, 6, {
+        end_col = 11,
+        hl_group = 'MyMark',
+      })
+      command('set incsearch')
+
+      feed('/world')
+      screen:expect([[
+        hello {9:world} hello             |
+        {1:~                             }|
+        /world^                        |
+      ]])
+      feed('<Esc>')
+    end)
+
+    it('does not affect normal extmark priority ordering', function()
+      screen:try_resize(30, 3)
+      insert('hello world hello')
+      feed('gg0')
+
+      api.nvim_buf_set_extmark(0, ns, 0, 6, {
+        end_col = 11,
+        hl_group = 'MyMark',
+      })
+      command('let @/ = "world" | set hlsearch')
+      screen:expect([[
+        ^hello {Search:world} hello             |
+        {1:~                             }|
+                                      |
+      ]])
+    end)
+  end)
 end)
 
 describe('decorations: inline virtual text', function()
