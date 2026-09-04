@@ -214,21 +214,39 @@ function M.is_empty(range)
   return util.cmp_pos.ge(range[1], range[2], range[3], range[4])
 end
 
+---@class vim.range.has.Opts
+---@inlinedoc
+---
+---If true, don't consider {inner} to be inside of {outer} when it is
+---positioned at the end of the range (when `outer.end_col == inner.col`).
+---Useful if {inner} represents a cursor position. Errors if {inner} is a range.
+---(default: `false`)
+---@field end_exclusive? boolean
+
 --- Checks whether {outer} range contains {inner} range or position.
 ---
 ---@param outer vim.Range
 ---@param inner vim.Range|vim.Pos
+---@param opts? vim.range.has.Opts
 ---@return boolean `true` if {outer} range fully contains {inner} range or position.
-function M.has(outer, inner)
+function M.has(outer, inner, opts)
   validate('outer', outer, 'table')
   validate('inner', inner, 'table')
+  validate('opts', opts, 'table', true)
+
+  opts = opts or {}
 
   if getmetatable(inner) == vim.pos then
     ---@cast inner -vim.Range
+    local end_offset = opts.end_exclusive and 1 or 0
     return util.cmp_pos.le(outer[1], outer[2], inner[1], inner[2])
-      and util.cmp_pos.ge(outer[3], outer[4], inner[1], inner[2])
+      and util.cmp_pos.ge(outer[3], outer[4] - end_offset, inner[1], inner[2])
   end
   ---@cast inner -vim.Pos
+
+  if opts.end_exclusive ~= nil then
+    error('opts.end_exclusive cannot be used when {inner} is a range')
+  end
 
   if outer:is_empty() then
     return false

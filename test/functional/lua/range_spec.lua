@@ -149,13 +149,15 @@ describe('vim.range', function()
   end)
 
   it('checks whether a range contains a position', function()
-    eq(
-      true,
-      exec_lua(function()
-        local buf = vim.api.nvim_create_buf(false, true)
-        return vim.range(buf, 0, 0, 1, 5):has(vim.pos(buf, 0, 1))
-      end)
-    )
+    exec_lua(function()
+      _G.range = vim.range(0, 0, 0, 1, 5)
+    end)
+
+    eq(true, exec_lua([[return range:has(vim.pos(0, 0, 1))]]))
+
+    --- Directly at the end
+    eq(true, exec_lua([[return range:has(vim.pos(0, 1, 5))]]))
+    eq(false, exec_lua([[return range:has(vim.pos(0, 1, 5), { end_exclusive = true })]]))
   end)
 
   it('a range does not contain an empty range just outside it', function()

@@ -4868,12 +4868,18 @@ extmark({buf}, {start_row}, {start_col}, {end_row}, {end_col})
     Return: ~
         (`vim.Range`) See |vim.Range|.
 
-has({outer}, {inner})                                        *vim.range.has()*
+has({outer}, {inner}, {opts})                                *vim.range.has()*
     Checks whether {outer} range contains {inner} range or position.
 
     Parameters: ~
       • {outer}  (`vim.Range`) See |vim.Range|.
       • {inner}  (`vim.Range|vim.Pos`)
+      • {opts}   (`table?`) A table with the following fields:
+                 • {end_exclusive}? (`boolean`, default: `false`) If true,
+                   don't consider {inner} to be inside of {outer} when it is
+                   positioned at the end of the range (when
+                   `outer.end_col == inner.col`). Useful if {inner} represents
+                   a cursor position. Errors if {inner} is a range.
 
     Return: ~
         (`boolean`) `true` if {outer} range fully contains {inner} range or
