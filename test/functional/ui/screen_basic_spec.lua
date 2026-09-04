@@ -42,6 +42,41 @@ describe('screen', function()
   end)
 end)
 
+describe('screen snapshots', function()
+  before_each(clear)
+
+  for _, case in ipairs({
+    { linegrid = false, method = 'add_extra_attr_ids', attr_id = 100 },
+    { linegrid = true, method = 'add_extra_attr_ids', attr_id = 100 },
+    { linegrid = false, method = 'set_default_attr_ids', attr_id = 1 },
+    { linegrid = true, method = 'set_default_attr_ids', attr_id = 1 },
+  }) do
+    local name = ('generates valid %s (ext_linegrid=%s)'):format(
+      case.method,
+      tostring(case.linegrid)
+    )
+    it(name, function()
+      api.nvim_buf_set_lines(0, 0, -1, false, { 'aaa' })
+      local ns_id = api.nvim_create_namespace('test')
+      api.nvim_buf_set_extmark(0, ns_id, 0, 0, {
+        end_row = 0,
+        end_col = 3,
+        hl_group = 'DiagnosticInfo',
+      })
+
+      local screen = Screen.new(20, 5, { ext_linegrid = case.linegrid })
+      if case.method == 'set_default_attr_ids' then
+        screen:set_default_attr_ids({})
+      end
+      screen:expect({ any = 'aaa' })
+
+      local method, attr_id = screen:_print_snapshot():match('screen:([%w_]+)%(%{%s+%[(%d+)%]')
+      eq(case.method, method)
+      eq(case.attr_id, tonumber(attr_id))
+    end)
+  end
+end)
+
 local function screen_tests(linegrid)
   local screen
 
