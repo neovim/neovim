@@ -281,6 +281,114 @@ Concepts                                                   *terminal-concepts*
 TODO
 
 ==============================================================================
+Terminal persistence                                    *terminal-persistence*
+
+In a terminal buffer, `:write` exports the rendered terminal state
+(scrollback + visible screen) as a msgpack file, including metadata such as
+cwd, argv, and timestamp.
+
+`:w`                        Save rendered terminal state to
+                          |stdpath()|/term/<name>.mpack, where <name>
+                          is derived from the terminal buffer URI.
+`:w {name}`                 Save rendered terminal state as a msgpack file
+                          at the given path.
+`:w! {name}`                Overwrite an existing file.
+
+Terminal state files are stored in msgpack format. Example: >
+    {
+      argv = { "/bin/bash" },
+      content = "\x1b[32mhello\x1b[0m",
+      cwd = "/home/user/project",
+      timestamp = 1750000000,
+    }
+  `argv`        The command argument list of the terminal job.
+  `content`     ANSI escape sequences of the scrollback and screen.
+  `cwd`         Working directory. Uses the buffer-local directory
+                (|:bcd| or an OSC 7 handler) if set; otherwise falls
+                back to the spawn-time directory of the terminal job.
+  `timestamp`   When the state was saved (seconds since epoch).
+
+Note: Appending to a terminal state file (`:write >>`) is not supported.
+								*E5008*
+
+A terminal can be restored by "editing" its state file, for example: >vim
+    :edit ~/.local/state/nvim/term/=uri-term-foo-1234--bar-abc12345.mpack
+
+Terminal state files are normally stored under `stdpath('state')/term/`.
+Because the full path to such a file can be cumbersome to type, Nvim also
+provides the `term://` URI as a convenient way to restore a terminal: >vim
+    :edit term://{dir}//{cmd}
+
+This restarts a live terminal and restores the history if there is any
+matching state file. Since this URI is not complete, multiple state files may
+be corresponding. In this case, Nvim will present them in a picker via
+|vim.ui.select()|. If there is no matching state file, the terminal is started
+without restoring anything.
+
+Here, {dir} is the directory in which the terminal was started, not the
+working directory recorded in the state file, which may have changed later via
+|:bcd| or |terminal-osc7|.
+
+A URI naming only a command (e.g. `:edit term://bash`) never participates in
+matching, and cancelling the picker abandons the restore; in both cases the
+terminal starts fresh, as if nothing matched.
+
+Terminal URIs stored by |:mksession| and |:mark| contain the complete URI.
+They can therefore identify a specific termianl state file directly.
+
+The precise "restore" behavior is:
+- The saved command is restarted in the saved cwd, and the saved ANSI content
+is replayed as history, followed by a "[ Terminal history ]" banner above any
+new job output.
+- A missing command falls back to 'shell', a missing cwd to the current
+directory.
+- The buffer keeps the state file's name, so |:write| overwrites the same file.
+- A buffer restored from a session keeps the complete `term://` name recorded
+in the session file (including its original pid), so windows can be matched
+again while sourcing.
+								*E5011*
+
+                                                                    *terms://*
+To browse saved terminal state, use: >vim
+    :edit terms://
+This opens the state directory (`stdpath('state')/term/`) by the built-in
+|dir| plugin.
+
+                                            *terminal-persistence-integration*
+When 'sessionoptions' contains "terminal" (the default), |:mksession| saves
+the state of every running terminal buffer via |SessionWritePre|, and sourcing
+the session restores them with their history. Exited terminals are not saved;
+restoring one restarts its command without history.
+
+Terminal state is not saved automatically on exit. To save it on exit,
+register a |VimLeavePre| handler: >lua
+    vim.api.nvim_create_autocmd('VimLeavePre', {
+      callback = function()
+        require('vim._core.terminal').save_running()
+      end,
+    })
+<
+To save only the terminal buffers where you added global marks: >lua
+    vim.api.nvim_create_autocmd('VimLeavePre', {
+      callback = function()
+        local marked = {}
+        for _, m in ipairs(vim.fn.getmarklist()) do
+          if m.mark:match("^'[A-Z]$") then
+            marked[m.pos[1]] = true -- pos = [bufnum, lnum, col, off]
+          end
+        end
+        for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+          if marked[bufnr] and vim.bo[bufnr].buftype == 'terminal' then
+            local name = vim.api.nvim_buf_get_name(bufnr)
+            require('vim._core.terminal').save(
+              { buf = bufnr, file = name }, { silent = true })
+          end
+        end
+      end,
+    })
+<
+
+==============================================================================
 :Termdebug plugin                         *terminal-debug* *terminal-debugger*
                                                *package-termdebug* *termdebug*
 

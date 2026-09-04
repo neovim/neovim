@@ -5,7 +5,9 @@
 #include <stdint.h>
 
 #include "nvim/api/private/defs.h"  // IWYU pragma: keep
+#include "nvim/pos_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
+#include "nvim/vterm/vterm_defs.h"  // IWYU pragma: keep
 
 typedef void (*terminal_read_pause_cb)(bool pause, void *data);
 typedef void (*terminal_write_cb)(const char *buffer, size_t size, void *data);
@@ -23,5 +25,16 @@ typedef struct {
   terminal_close_cb close_cb;
   bool force_crlf;
 } TerminalOptions;
+
+/// Iterator over terminal logical lines
+/// Initialize with `terminal_row_iter_init()`, drive with `terminal_row_iter_next()`,
+/// release with `terminal_row_iter_clear()`.
+typedef struct {
+  Terminal *term;
+  linenr_T lnum;
+  linenr_T end;
+  int width;
+  VTermScreenCell *cells;
+} TerminalRowIter;
 
 #include "terminal.h.generated.h"
