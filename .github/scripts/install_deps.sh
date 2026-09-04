@@ -49,7 +49,6 @@ if [[ $OS == Linux ]]; then
     fi
   fi
 elif [[ $OS == Darwin ]]; then
-  brew update --quiet
   if [[ -n $TEST ]]; then
     brew install cpanminus fish fswatch
 
