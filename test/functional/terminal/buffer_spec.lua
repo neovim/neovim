@@ -648,14 +648,17 @@ describe(':terminal buffer', function()
       [100] = {
         foreground = Screen.colors.NvimDarkGrey2,
         background = Screen.colors.NvimLightGrey2,
+        blend = 0,
       },
       [101] = {
         foreground = Screen.colors.NvimLightGrey4,
         background = Screen.colors.NvimLightGrey2,
+        blend = 0,
       },
       [102] = {
         foreground = Screen.colors.NvimDarkGrey2,
         background = Screen.colors.NvimLightGrey4,
+        blend = 0,
       },
     })
     command('set shell=fish termguicolors')
