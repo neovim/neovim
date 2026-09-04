@@ -659,6 +659,11 @@ local dialog_on_key = function(_, typed)
   map['<PageUp>'], map['<S-PageUp>'] = [[\<C-B>]], [[\<C-B>]]
   map['<PageDown>'], map['<S-PageDown>'] = [[\<C-F>]], [[\<C-F>]]
 
+  local ver = tonumber(o.mousescroll:match('ver:(%d+)')) or 3
+  if ver > 0 then
+    map['<ScrollWheelUp>'], map['<ScrollWheelDown>'] = ver .. [[\<C-Y>]], ver .. [[\<C-E>]]
+  end
+
   local info = map[typed] and fn.getwininfo(ui.wins.dialog)[1]
   if info and (not eob or info.botline < api.nvim_buf_line_count(ui.bufs.dialog)) then
     -- Keep Normal commands for screen-relative H/L and page scrolling behavior.

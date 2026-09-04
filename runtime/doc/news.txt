@@ -494,6 +494,8 @@ UI
   • |:recover|
   • |:tselect|
   • |z=| (spell suggest)
+• The |ui2| dialog window scrolls with the mouse wheel, by 'mousescroll'
+  lines.
 
 VIMSCRIPT
 
