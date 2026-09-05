@@ -7151,7 +7151,7 @@ int64_t get_scrolloff_value(win_T *wp)
 /// global value when appropriate.
 int64_t get_scrolloffpad_value(win_T *wp)
 {
-  return wp->w_p_sop == -1 ? p_sop : curwin->w_p_sop;
+  return wp->w_p_sop == -1 ? p_sop : wp->w_p_sop;
 }
 
 /// Return the effective 'sidescrolloff' value for the current window, using the
