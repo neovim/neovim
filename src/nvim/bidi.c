@@ -20,9 +20,13 @@
 
 #include "nvim/ascii_defs.h"
 #include "nvim/bidi.h"
+#include "nvim/buffer.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mbyte.h"
+#include "nvim/memline.h"
 #include "nvim/memory.h"
+#include "nvim/option_vars.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "bidi.c.generated.h"
@@ -61,6 +65,185 @@ BidiClass bidi_char_class(int c)
     // never classified on its own.  Both read as neutral.
     return kBidiON;
   }
+}
+
+/// @return  the first line of the paragraph "lnum" belongs to.
+///
+/// A paragraph runs between blank lines, the way a reader sees one, not between
+/// newlines.  Scanning back is bounded: a block of text longer than this is not
+/// a paragraph anyone is reading as a unit.
+static linenr_T bidi_paragraph_start(buf_T *buf, linenr_T lnum)
+  FUNC_ATTR_NONNULL_ALL
+{
+  static buf_T *cached_buf = NULL;
+  static linenr_T cached_lnum = 0;
+  static linenr_T cached_start = 0;
+  static int cached_changedtick = -1;
+
+  int changedtick = (int)buf_get_changedtick(buf);
+
+  // Lines are drawn in order, so the paragraph of the line before is nearly
+  // always the answer, and one line has to be read instead of the whole scan.
+  if (buf == cached_buf && changedtick == cached_changedtick && lnum == cached_lnum + 1) {
+    cached_start = (ml_get_buf_len(buf, lnum - 1) == 0) ? lnum : cached_start;
+    cached_lnum = lnum;
+    return cached_start;
+  }
+
+  linenr_T limit = MAX(1, lnum - 500);
+  linenr_T start = limit;
+  for (linenr_T l = lnum; l > limit; l--) {
+    if (ml_get_buf_len(buf, l - 1) == 0) {
+      start = l;
+      break;
+    }
+  }
+
+  cached_buf = buf;
+  cached_lnum = lnum;
+  cached_start = start;
+  cached_changedtick = changedtick;
+  return start;
+}
+
+/// @return  true if the paragraph holding "lnum" reads right to left.
+///
+/// Resolving this per paragraph rather than per line keeps a Hebrew paragraph
+/// aligned the same way throughout, even where one of its lines opens with a
+/// Latin word (UAX #9 P1 to P3).
+static bool bidi_paragraph_is_rtl(buf_T *buf, linenr_T lnum)
+  FUNC_ATTR_NONNULL_ALL
+{
+  static buf_T *cached_buf = NULL;
+  static linenr_T cached_start = 0;
+  static int cached_changedtick = -1;
+  static bool cached_rtl = false;
+
+  linenr_T start = bidi_paragraph_start(buf, lnum);
+  int changedtick = (int)buf_get_changedtick(buf);
+  if (buf == cached_buf && start == cached_start && changedtick == cached_changedtick) {
+    return cached_rtl;
+  }
+
+  bool rtl = false;
+  for (linenr_T l = start; l <= buf->b_ml.ml_line_count && l < start + 500; l++) {
+    if (ml_get_buf_len(buf, l) == 0) {
+      if (l > start) {
+        break;
+      }
+      continue;
+    }
+    const char *text = ml_get_buf(buf, l);
+    bool strong = false;
+    for (const char *p = text; *p != NUL; p += utfc_ptr2len(p)) {
+      switch (bidi_char_class(utf_ptr2char(p))) {
+      case kBidiL:
+        strong = true;
+        break;
+      case kBidiR:
+      case kBidiAL:
+        rtl = true;
+        strong = true;
+        break;
+      default:
+        continue;
+      }
+      break;
+    }
+    if (strong) {
+      break;
+    }
+  }
+
+  cached_buf = buf;
+  cached_start = start;
+  cached_changedtick = changedtick;
+  cached_rtl = rtl;
+  return rtl;
+}
+
+/// @return  what 'bidi' does with the lines of "wp".
+///
+/// 'termbidi' and 'rightleft' both say the reordering is already someone else's
+/// job, so 'bidi' stands down for either.
+BidiMode bidi_mode(win_T *wp)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+{
+  if (p_tbidi || wp->w_p_rl) {
+    return kBidiOff;
+  }
+  switch (*wp->w_p_bidi) {
+  case 'a':
+    return kBidiAuto;
+  case 'l':
+    return kBidiLtr;
+  case 'r':
+    return kBidiRtl;
+  default:
+    return kBidiOff;
+  }
+}
+
+/// @return  true if the paragraph holding line "lnum" of "wp" reads right to
+///          left, and so starts at the right margin.
+bool bidi_win_is_rtl(win_T *wp, linenr_T lnum)
+  FUNC_ATTR_NONNULL_ALL
+{
+  switch (bidi_mode(wp)) {
+  case kBidiRtl:
+    return true;
+  case kBidiAuto:
+    return bidi_paragraph_is_rtl(wp->w_buffer, lnum);
+  default:
+    return false;
+  }
+}
+
+/// @return  true if 'bidi' moves the cells of line "lnum" of "wp" when it is
+///          drawn, because the line holds text that reads right to left or its
+///          paragraph does, which pushes the line to the right margin.
+///
+/// Cached on the line, so that walking the cursor along one line costs a single
+/// scan of it.
+bool bidi_line_is_reordered(win_T *wp, linenr_T lnum)
+  FUNC_ATTR_NONNULL_ALL
+{
+  static buf_T *cached_buf = NULL;
+  static linenr_T cached_lnum = 0;
+  static int cached_changedtick = -1;
+  static bool cached_reordered = false;
+
+  if (bidi_mode(wp) == kBidiOff) {
+    return false;
+  }
+  if (bidi_win_is_rtl(wp, lnum)) {
+    return true;
+  }
+
+  buf_T *buf = wp->w_buffer;
+  int changedtick = (int)buf_get_changedtick(buf);
+  if (buf == cached_buf && lnum == cached_lnum && changedtick == cached_changedtick) {
+    return cached_reordered;
+  }
+
+  bool reordered = false;
+  for (const char *p = ml_get_buf(buf, lnum); !reordered && *p != NUL; p += utfc_ptr2len(p)) {
+    switch (bidi_char_class(utf_ptr2char(p))) {
+    case kBidiR:
+    case kBidiAL:
+    case kBidiAN:
+      reordered = true;
+      break;
+    default:
+      break;
+    }
+  }
+
+  cached_buf = buf;
+  cached_lnum = lnum;
+  cached_changedtick = changedtick;
+  cached_reordered = reordered;
+  return reordered;
 }
 
 /// The characters that mirror each other, from Unicode's BidiMirroring.txt,
