@@ -486,7 +486,7 @@ describe("'bidi' beside the options that change a line's shape", function()
   it("puts 'cursorcolumn' on the cell the cursor is in", function()
     command('set cursorcolumn')
     insert('שלום עולם\nשלום עולם')
-    feed('gg0ll')
+    feed('gg0hh')
     screen:expect([[
                            םלוע ם^ולש|
                            םלוע ם{21:ו}לש|
@@ -542,11 +542,57 @@ describe("'bidi' beside the features that draw over a line", function()
 
   it('highlights the cells a Visual selection covers', function()
     insert('שלום עולם')
-    feed('0vlll')
+    feed('0vhhh')
     screen:expect([[
                            םלוע ^ם{17:ולש}|
       {1:~                             }|*4
       {5:-- VISUAL --}                  |
+    ]])
+  end)
+end)
+
+describe("'bidi' horizontal motions", function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(30, 6)
+    command('set bidi=auto')
+  end)
+
+  it('moves left with "h" and right with "l"', function()
+    insert('שלום עולם')
+    feed('0')
+    screen:expect([[
+                           םלוע םול^ש|
+      {1:~                             }|*4
+                                    |
+    ]])
+    -- forward in Hebrew is leftward, so "h" walks the cursor left
+    feed('hh')
+    screen:expect([[
+                           םלוע ם^ולש|
+      {1:~                             }|*4
+                                    |
+    ]])
+    feed('l')
+    screen:expect([[
+                           םלוע םו^לש|
+      {1:~                             }|*4
+                                    |
+    ]])
+  end)
+
+  it('inverts "<" and ">" as well', function()
+    command('set shiftwidth=2')
+    insert('שלום עולם')
+    -- "<" moves the text left, the way the key reads on a line that starts at
+    -- the right margin
+    feed('0<lt><lt>')
+    screen:expect([[
+                         םלוע םול^ש  |
+      {1:~                             }|*4
+                                    |
     ]])
   end)
 end)

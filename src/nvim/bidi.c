@@ -199,6 +199,18 @@ bool bidi_win_is_rtl(win_T *wp, linenr_T lnum)
   }
 }
 
+/// @return  true if the horizontal motions on the cursor line of "wp" should be
+///          inverted, so that "h" moves left and "l" moves right on a line that
+///          reads right to left.
+///
+/// The motion itself stays logical; only the key is flipped, by the direction of
+/// the line.  Emacs and Chrome both arrive at right-to-left movement this way.
+bool bidi_invert_horizontal(win_T *wp)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return bidi_win_is_rtl(wp, wp->w_cursor.lnum);
+}
+
 /// @return  true if 'bidi' moves the cells of line "lnum" of "wp" when it is
 ///          drawn, because the line holds text that reads right to left or its
 ///          paragraph does, which pushes the line to the right margin.
