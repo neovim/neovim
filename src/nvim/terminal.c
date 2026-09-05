@@ -280,7 +280,7 @@ static void emit_termrequest(void **argv)
         VTERM_TERMINATOR_BEL ? STATIC_CSTR_AS_OBJ("\x07") : STATIC_CSTR_AS_OBJ("\x1b\\"));
 
   term->refcount++;
-  apply_autocmds_group(EVENT_TERMREQUEST, NULL, NULL, true, AUGROUP_ALL, buf, NULL,
+  apply_autocmds_group(EVENT_TERMREQUEST, NULL, NULL, true, AUGROUP_ALL, buf, curwin, NULL,
                        &DICT_OBJ(data), false);
   term->refcount--;
   xfree(sequence);
@@ -739,7 +739,7 @@ void terminal_close(Terminal **termpp, int status)
     PUT_C(data, "pos", INTEGER_OBJ(pos));
 
     apply_autocmds_group(EVENT_TERMCLOSE, NULL, NULL, status >= 0, AUGROUP_ALL,
-                         buf, NULL, &DICT_OBJ(data), false);
+                         buf, curwin, NULL, &DICT_OBJ(data), false);
 
     restore_v_event(dict, &save_v_event);
   }

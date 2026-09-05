@@ -370,6 +370,7 @@ describe('autocmd api', function()
         event = event,
         match = amatch,
         file = exec_pat,
+        win = api.nvim_get_current_win(),
         buf = 1,
       }, api.nvim_get_var('autocmd_args'))
 
@@ -392,6 +393,7 @@ describe('autocmd api', function()
         event = event,
         match = amatch,
         file = exec_pat,
+        win = api.nvim_get_current_win(),
         buf = 1,
       }, api.nvim_get_var('autocmd_args'))
     end
@@ -403,6 +405,134 @@ describe('autocmd api', function()
 
       it('for event that takes file pattern', function()
         test_autocmd_args('BufEnter')
+      end)
+    end)
+
+    describe('ev.win #25844', function()
+      it('is the current window for events that are not about a window', function()
+        local win = api.nvim_get_current_win()
+        exec_lua(function()
+          vim.api.nvim_create_autocmd('BufAdd', {
+            callback = function(ev)
+              vim.g.ev_win = ev.win
+            end,
+          })
+        end)
+        command('badd some_file')
+        eq(win, api.nvim_get_var('ev_win'))
+      end)
+
+      it('WinClosed reports the closed window', function()
+        command('split')
+        local closed_win = api.nvim_get_current_win()
+        exec_lua(function()
+          vim.api.nvim_create_autocmd('WinClosed', {
+            callback = function(ev)
+              vim.g.ev_win = ev.win
+              vim.g.ev_match = ev.match
+            end,
+          })
+        end)
+        command('quit')
+        eq(closed_win, api.nvim_get_var('ev_win'))
+        eq(tostring(closed_win), api.nvim_get_var('ev_match'))
+      end)
+
+      it('WinNew reports the new window, not the focused one', function()
+        local origin_win = api.nvim_get_current_win()
+        local buf = api.nvim_create_buf(false, true)
+        exec_lua(function()
+          vim.api.nvim_create_autocmd('WinNew', {
+            callback = function(ev)
+              vim.g.ev_win = ev.win
+            end,
+          })
+        end)
+        local new_win = api.nvim_open_win(buf, false, {
+          relative = 'editor',
+          row = 0,
+          col = 0,
+          width = 10,
+          height = 5,
+        })
+        eq(origin_win, api.nvim_get_current_win())
+        eq(new_win, api.nvim_get_var('ev_win'))
+      end)
+
+      it('WinResized reports the resized window, not curwin', function()
+        local top_win = api.nvim_get_current_win()
+        command('botright split')
+        local bot_win = api.nvim_get_current_win()
+        neq(top_win, bot_win)
+        command('redraw') -- flush the WinResized caused by the split itself
+        exec_lua(function()
+          vim.api.nvim_create_autocmd('WinResized', {
+            callback = function(ev)
+              vim.g.ev_win = ev.win
+              vim.g.ev_match = ev.match
+              vim.g.ev_curwin = vim.api.nvim_get_current_win()
+            end,
+          })
+        end)
+        command('resize 3')
+        command('redraw')
+        -- ev.win is the first window whose size changed, matching <amatch>.
+        eq(top_win, api.nvim_get_var('ev_win'))
+        eq(tostring(top_win), api.nvim_get_var('ev_match'))
+        eq(bot_win, api.nvim_get_var('ev_curwin'))
+      end)
+
+      it('WinScrolled reports the scrolled window, not curwin', function()
+        command('split')
+        local scrolled = api.nvim_get_current_win()
+        exec_lua(function()
+          local lines = {}
+          for i = 1, 30 do
+            lines[i] = 'line ' .. i
+          end
+          vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
+        end)
+        command('wincmd w')
+        neq(scrolled, api.nvim_get_current_win())
+        command('redraw')
+        exec_lua(function(scroll_win)
+          vim.api.nvim_create_autocmd('WinScrolled', {
+            callback = function(ev)
+              vim.g.ev_win = ev.win
+              vim.g.ev_match = ev.match
+              vim.g.ev_curwin = vim.api.nvim_get_current_win()
+            end,
+          })
+          vim.api.nvim_win_call(scroll_win, function()
+            vim.cmd('normal! G')
+          end)
+        end, scrolled)
+        command('redraw')
+        eq(scrolled, api.nvim_get_var('ev_win'))
+        eq(tostring(scrolled), api.nvim_get_var('ev_match'))
+        neq(scrolled, api.nvim_get_var('ev_curwin'))
+      end)
+
+      it('is restored after a nested autocmd', function()
+        command('edit a')
+        command('rightbelow vsplit b')
+        command('wincmd w')
+        local trigger_win = api.nvim_get_current_win()
+        exec_lua(function()
+          -- Fires BufLeave/WinLeave/WinEnter/BufEnter, each with its own ev.win.
+          vim.api.nvim_create_autocmd('ColorScheme', {
+            callback = function()
+              vim.cmd('wincmd w')
+            end,
+          })
+          vim.api.nvim_create_autocmd('ColorScheme', {
+            callback = function(ev)
+              vim.g.ev_win = ev.win
+            end,
+          })
+        end)
+        command('colorscheme blue')
+        eq(trigger_win, api.nvim_get_var('ev_win'))
       end)
     end)
 
