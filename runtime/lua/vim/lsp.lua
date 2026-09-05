@@ -114,10 +114,11 @@ function lsp._buf_get_full_text(bufnr)
   return text
 end
 
+--- @since 15
 --- @param client vim.lsp.Client
 --- @param config vim.lsp.ClientConfig
 --- @return boolean
-local function reuse_client_default(client, config)
+function lsp.reuse_client_default(client, config)
   if client.name ~= config.name or client:is_stopped() then
     return false
   end
@@ -190,7 +191,13 @@ end
 --- @field filetypes? string[]
 ---
 --- Predicate which decides if a client should be re-used. Used on all running clients. The default
---- implementation re-uses a client if name and root_dir matches.
+--- implementation (|vim.lsp.reuse_client_default()|) re-uses a client if name and root_dir matches.
+--- To add conditions, compose with the default:
+--- ```lua
+--- reuse_client = function(client, config)
+---   return vim.lsp.reuse_client_default(client, config) and my_condition(config)
+--- end
+--- ```
 --- @field reuse_client? fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig, bufnr: integer): boolean #
 ---
 --- [lsp-root_dir()]()
@@ -737,7 +744,7 @@ end
 --- @return integer? client_id
 function lsp.start(config, opts)
   opts = opts or {}
-  local reuse_client = opts.reuse_client or reuse_client_default
+  local reuse_client = opts.reuse_client or lsp.reuse_client_default
   local bufnr = vim._resolve_bufnr(opts.bufnr)
 
   if not config.root_dir and opts._root_markers then
