@@ -1,15 +1,28 @@
 local nvim_on = require('vim._core.util').nvim_on
 
 local M = {}
+local async = require('vim.async') --- @type vim.async._core
 local health = require('vim.health')
 
+---@async
+---@param cmd string[]
+---@param opts? vim.SystemOpts
+---@return vim.SystemCompleted
+local function run_system(cmd, opts)
+  --- @diagnostic disable-next-line: assign-type-mismatch
+  local result = async.await(3, vim.system, cmd, opts) --- @type vim.SystemCompleted
+  async.await(vim.schedule)
+  return result
+end
+
 ---Run a system command and return ok and its stdout and stderr combined.
+---@async
 ---@param cmd string[]
 ---@param timeout? integer Timeout in ms (default: no timeout).
 ---@return boolean
 ---@return string
 local function system(cmd, timeout)
-  local result = vim.system(cmd, { text = true, timeout = timeout }):wait()
+  local result = run_system(cmd, { text = true, timeout = timeout })
   if not result then -- Workaround https://github.com/neovim/neovim/issues/37922
     return false, 'command failed'
   end
@@ -551,7 +564,7 @@ local function check_external_tools()
 
   if vim.fn.executable('rg') == 1 then
     local rg_path = vim.fn.exepath('rg')
-    local rg_job = vim.system({ rg_path, '-V' }):wait()
+    local rg_job = run_system({ rg_path, '-V' })
     if rg_job.code == 0 then
       health.ok(('%s (%s)'):format(vim.trim(rg_job.stdout), rg_path))
     else
@@ -572,7 +585,7 @@ local function check_external_tools()
   -- `vim.pack` prefers git 2.36 but tries to work with 2.x.
   if vim.fn.executable('git') == 1 then
     local git = vim.fn.exepath('git')
-    local version = vim.system({ 'git', 'version' }, {}):wait().stdout or ''
+    local version = run_system({ 'git', 'version' }).stdout or ''
     health.ok(('%s (%s)'):format(vim.trim(version), git))
   else
     health.warn('git not available (required by `vim.pack`)')
@@ -580,7 +593,7 @@ local function check_external_tools()
 
   if vim.fn.executable('curl') == 1 then
     local curl_path = vim.fn.exepath('curl')
-    local curl_job = vim.system({ curl_path, '--version' }):wait()
+    local curl_job = run_system({ curl_path, '--version' })
 
     if curl_job.code == 0 then
       local curl_out = curl_job.stdout
