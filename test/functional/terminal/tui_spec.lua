@@ -12,6 +12,7 @@ local tt = require('test.functional.testterm')
 local describe, it, before_each, after_each, pending, finally =
   t.describe, t.it, t.before_each, t.after_each, t.pending, t.finally
 local eq = t.eq
+local eq_paths = t.eq_paths
 local feed_data = tt.feed_data
 local clear = n.clear
 local command = n.command
@@ -533,7 +534,8 @@ describe('TUI :restart', function()
   it('works', function()
     -- Log exit events + v:exitreason.
     local eventlog = t.tmpname()
-    local initfile = t.tmpname() .. '.lua'
+    local tmpdir = t.tmpname(false)
+    t.mkdir(tmpdir)
     local init = [[
       local f = %q
       vim.api.nvim_create_autocmd({ 'QuitPre', 'ExitPre', 'VimLeavePre', 'VimLeave' }, {
@@ -542,10 +544,11 @@ describe('TUI :restart', function()
         end,
       })
     ]]
-    write_file(initfile, init:format(eventlog))
+    write_file('Xrestart-init.lua', init:format(eventlog))
     finally(function()
       os.remove(eventlog)
-      os.remove(initfile)
+      os.remove('Xrestart-init.lua')
+      os.remove(tmpdir)
     end)
 
     local function assert_exitreason(expected)
@@ -559,7 +562,7 @@ describe('TUI :restart', function()
     local screen = tt.setup_child_nvim({
       '--clean',
       '-u',
-      initfile,
+      'Xrestart-init.lua',
       '--listen',
       server_pipe,
       '--cmd',
@@ -616,13 +619,18 @@ describe('TUI :restart', function()
                                                         |
       {5:-- TERMINAL --}                                    |
     ]]
-
+    -- Relative path args (e.g. '-u [initfile]') are expanded based on startdir.
+    -- If the assertion below passed after `cd`, it means that restart(non !) really uses the startdir.
+    local _, startdir = server_session:request('nvim_call_function', 'getcwd', {})
+    server_session:request('nvim_call_function', 'chdir', { tmpdir })
     tt.feed_data(':set nomodified\013')
     tt.feed_data(':restart\013')
     screen:expect(s0)
     assert_new_pid()
     assert_exitreason('QuitPre:restart\nExitPre:restart\nVimLeavePre:restart\nVimLeave:restart\n')
     assert_termguicolors_and_no_gui_running()
+    local _, restart_nonbang_dir = server_session:request('nvim_call_function', 'getcwd', {})
+    eq_paths(tmpdir, restart_nonbang_dir)
 
     tt.feed_data(':set nomodified\013')
     -- Command is run on new server.
@@ -631,6 +639,9 @@ describe('TUI :restart', function()
     assert_new_pid()
     assert_exitreason()
     assert_termguicolors_and_no_gui_running()
+    local _, restart_dir = server_session:request('nvim_call_function', 'getcwd', {})
+    -- Restart! resotres cwd to startdir.
+    eq_paths(startdir, restart_dir)
 
     -- Complex command following +cmd.
     tt.feed_data(":restart! +qall! put ='Hello2' | put ='World2'\013")

@@ -546,6 +546,7 @@ These existing features changed their behavior.
   requires it to be installed).
 • `:helptags ALL` reports |E152| for "doc" directories it cannot write,
   instead of silently skipping them.
+• |:restart| uses the directory Nvim was started in.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*

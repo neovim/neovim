@@ -265,6 +265,9 @@ int main(int argc, char **argv)
   mparm_T params;         // various parameters passed between
                           // main() and other functions.
 
+  char pwd[MAXPATHL];
+  startdir = os_dirname(pwd, MAXPATHL) ? xstrdup(pwd) : NULL;
+
   // Many variables are in `params` so that we can pass them around easily.
   // `argc` and `argv` are also copied, so that they can be changed.
   init_params(&params, argc, argv);

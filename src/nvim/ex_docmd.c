@@ -4912,7 +4912,6 @@ static void ex_restart(exarg_T *eap)
   char **argv = xcalloc((size_t)argc + 3, sizeof(char *));
   size_t i = 0;
   const char *listen_arg = NULL;  // --listen arg given by user, if any.
-
   // Build args to start the new Nvim, based on the current v:argv.
   for (const listitem_T *li = l->lv_first; li != NULL; li = li->li_next) {
     const char *arg = tv_get_string(TV_LIST_ITEM_TV(li));
@@ -4952,6 +4951,7 @@ static void ex_restart(exarg_T *eap)
         }
       }
     }
+
     // Replace `--embed` OR `--headless` with `--embed` or `--embed --headless` once.
     // Drop stdin ("-") argument.
     if (i == 0
@@ -5005,7 +5005,7 @@ static void ex_restart(exarg_T *eap)
   Channel *channel = channel_job_start(argv, exepath,
                                        CALLBACK_READER_INIT, on_err, CALLBACK_NONE,
                                        false, true, true, detach, kChannelStdinPipe,
-                                       globaldir, 0, 0, env, &exit_status);
+                                       startdir, 0, 0, env, &exit_status);
   if (!channel) {
     emsg("cannot create a channel job");
     goto fail_1;

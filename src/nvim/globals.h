@@ -655,7 +655,7 @@ enum {
 // current directory is stored here (in allocated memory).  If the current
 // directory is not a local directory, globaldir is NULL.
 EXTERN char *globaldir INIT( = NULL);
-
+EXTERN char *startdir INIT( = NULL);  // CWD at startup. Never changes.
 EXTERN char *last_chdir_reason INIT( = NULL);
 
 // Whether 'keymodel' contains "stopsel" and "startsel".
