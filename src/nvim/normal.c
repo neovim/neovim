@@ -2185,6 +2185,12 @@ void check_scrollbind(linenr_T vtopline_diff, int leftcol_diff)
         } else {
           scrolldown(curwin, -y, false);
         }
+
+        // The scroll may not reach new_vtopline (tall virt_lines block).
+        // Sync w_scbind_pos to the actual position, else the miss repeats.
+        if (curwin->w_scbind_pos == new_vtopline) {
+          curwin->w_scbind_pos = get_vtopline(curwin);
+        }
       }
 
       redraw_later(curwin, UPD_VALID);
