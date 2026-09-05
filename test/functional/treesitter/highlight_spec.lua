@@ -182,9 +182,7 @@ describe('treesitter highlighting (C)', function()
     -- treesitter highlighting is used
     screen:expect(hl_grid_ts_c)
 
-    -- A second start() on an already-highlighted buffer is a no-op: it returns the existing
-    -- highlighter instead of replacing it (replacing it would leak the old instance's
-    -- on_bytes/on_changedtree callbacks, since destroy() is never called on it).
+    -- A second start() reuses the existing highlighter.
     eq(
       true,
       exec_lua(function()
@@ -220,6 +218,94 @@ describe('treesitter highlighting (C)', function()
     end)
     -- Does not change &syntax of the other, unrelated buffer.
     eq('', eval('&syntax'))
+  end)
+
+  it('respects highlighter and buffer changes made by autocommands', function()
+    exec_lua(function()
+      vim.cmd('syntax on')
+      local H = vim.treesitter.highlighter
+      local group = vim.api.nvim_create_augroup('highlighter_lifecycle', {})
+      for _, case in ipairs({
+        { 'Syntax', 'start' },
+        { 'Syntax', 'stop' },
+        { 'Syntax', 'delete' },
+        { 'Syntax', 'switch' },
+        { 'OptionSet', 'start' },
+        { 'OptionSet', 'delete' },
+        { 'OptionSet', 'start', 'switch' },
+        { 'Syntax', 'error' },
+        { 'OptionSet', 'error', 'new' },
+        { 'Syntax', 'replace_error' },
+        { 'OptionSet', 'replace_error', 'new' },
+      }) do
+        local event, action, operation = unpack(case)
+        local buf = vim.api.nvim_create_buf(false, true)
+        vim.api.nvim_set_current_buf(buf)
+        vim.bo[buf].filetype = 'c'
+        local parser = vim.treesitter.get_parser(buf, 'c')
+        local spelloptions = vim.bo[buf].spelloptions
+        if event == 'OptionSet' and operation ~= 'new' then
+          H.new(parser)
+        end
+        local replacement
+        local calls = 0
+        vim.api.nvim_create_autocmd(event, {
+          group = group,
+          pattern = event == 'OptionSet' and 'spelloptions' or '*',
+          once = action ~= 'error',
+          callback = function()
+            calls = calls + 1
+            if action == 'start' or action == 'switch' then
+              vim.treesitter.start(buf, action == 'switch' and 'lua' or 'c')
+              replacement = H.active[buf]
+            elseif action == 'replace_error' then
+              vim.treesitter.start(buf, 'lua')
+              replacement = H.active[buf]
+              error('highlighter init error')
+            elseif action == 'error' then
+              error('highlighter init error')
+            elseif action == 'stop' then
+              vim.treesitter.stop(buf)
+            else
+              vim.api.nvim_buf_delete(buf, { force = true })
+            end
+          end,
+        })
+        local ok, result = pcall(function()
+          if operation == 'switch' then
+            return H.new(vim.treesitter.get_parser(buf, 'lua'))
+          elseif event == 'Syntax' or operation == 'new' then
+            return H.new(parser)
+          else
+            vim.treesitter.stop(buf)
+          end
+        end)
+        vim.api.nvim_clear_autocmds({ group = group })
+        if action == 'error' or action == 'replace_error' then
+          assert(not ok and tostring(result):find('highlighter init error', 1, true))
+          assert(calls == 1)
+        else
+          assert(ok, event .. '/' .. action .. ': ' .. tostring(result))
+        end
+        if action == 'start' or action == 'switch' or action == 'replace_error' then
+          assert(replacement and H.active[buf] == replacement)
+          assert(vim.b[buf].ts_highlight and vim.bo[buf].syntax == '')
+          vim.treesitter.stop(buf)
+        else
+          assert(H.active[buf] == nil)
+          if action == 'error' then
+            assert(vim.bo[buf].spelloptions == spelloptions)
+            vim.treesitter.start(buf, 'c')
+            assert(vim.bo[buf].spelloptions:find('noplainbuffer', 1, true))
+            vim.treesitter.stop(buf)
+          end
+        end
+        assert(#parser._callbacks.detach == 0 and #parser._callbacks_rec.changedtree == 0)
+        if vim.api.nvim_buf_is_valid(buf) then
+          vim.api.nvim_buf_delete(buf, { force = true })
+        end
+      end
+    end)
   end)
 
   it('is updated with edits', function()
@@ -1299,6 +1385,131 @@ vim.cmd([[
                                                                                         |
       ]],
     })
+  end)
+end)
+
+describe('treesitter highlighter callback lifetime', function()
+  before_each(clear)
+
+  local function assert_collected()
+    eq(
+      true,
+      exec_lua(function()
+        if jit then
+          jit.flush()
+        end
+        collectgarbage('collect')
+        collectgarbage('collect')
+        return next(_G.retired_highlighters) == nil
+      end)
+    )
+  end
+
+  it('releases restarted owners without removing unrelated listeners', function()
+    exec_lua(function()
+      local parser = vim.treesitter.get_parser(0, 'c')
+      local calls = 0
+      parser:register_cbs({
+        on_bytes = function()
+          calls = calls + 1
+        end,
+      }, true)
+      _G.retired_highlighters = setmetatable({}, { __mode = 'v' })
+      for i = 1, 3 do
+        vim.treesitter.start(0, 'c')
+        _G.retired_highlighters[i] =
+          vim.treesitter.highlighter.active[vim.api.nvim_get_current_buf()]
+        vim.treesitter.start(0, 'c')
+        assert(#parser._callbacks.detach == 1 and #parser._callbacks_rec.bytes == 2)
+        vim.treesitter.stop()
+        assert(#parser._callbacks.detach == 0 and #parser._callbacks_rec.bytes == 1)
+        assert(#parser._callbacks_rec.changedtree == 0)
+        vim.api.nvim_buf_set_lines(0, 0, -1, true, { 'int x' .. i .. ';' })
+      end
+      assert(calls == 3)
+      local invalid = '(invalid_node) @invalid'
+      assert(not pcall(vim.treesitter.highlighter.new, parser, { queries = { c = invalid } }))
+      vim.treesitter.query.set('c', 'highlights', invalid)
+      assert(not pcall(vim.treesitter.start, 0, 'c'))
+      assert(#parser._callbacks.detach == 0 and #parser._callbacks_rec.changedtree == 0)
+    end)
+    assert_collected()
+  end)
+
+  it('does not skip the listener following highlighter teardown', function()
+    eq(
+      1,
+      exec_lua(function()
+        local parser = vim.treesitter.get_parser(0, 'c')
+        vim.treesitter.start(0, 'c')
+        local calls = 0
+        parser:register_cbs({
+          on_detach = function()
+            calls = calls + 1
+          end,
+        })
+        vim.api.nvim_buf_delete(0, { force = true })
+        return calls
+      end)
+    )
+  end)
+
+  it('releases a child removed by an earlier child_added listener', function()
+    exec_lua(function()
+      local buf = vim.api.nvim_get_current_buf()
+      vim.api.nvim_buf_set_lines(buf, 0, -1, true, { 'local x = 1' })
+      local parser = vim.treesitter.get_parser(buf, 'c')
+      parser:register_cbs({
+        on_child_added = function(child)
+          _G.retained_child = child
+          child:parse()
+          parser:remove_child(child:lang())
+        end,
+        on_child_removed = function()
+          vim.treesitter.stop(buf)
+          vim.treesitter.start(buf, 'c')
+        end,
+      }, true)
+      vim.treesitter.start(buf, 'c')
+      local old = vim.treesitter.highlighter.active[buf]
+      _G.retired_highlighters = setmetatable({ old }, { __mode = 'v' })
+      parser:add_child('lua')
+      old.on_changedtree = function()
+        error('retired highlighter was called')
+      end
+      _G.retained_child:invalidate(true)
+      local current = vim.treesitter.highlighter.active[buf]
+      current._conceal_checked[0] = true
+      _G.retained_child:_do_callback('bytes', buf)
+      assert(current._conceal_checked[0])
+      old:destroy()
+      assert(vim.treesitter.highlighter.active[buf] == current)
+    end)
+    assert_collected()
+  end)
+
+  it('releases the owner when buffer deletion abandons a pending parse', function()
+    exec_lua(function()
+      local lines = {}
+      for i = 1, 60000 do
+        lines[i] = 'int variable_' .. i .. ' = ' .. i .. ';'
+      end
+      vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
+      local parser = vim.treesitter.get_parser(0, 'c')
+      vim.treesitter.start(0, 'c')
+      local highlighter = vim.treesitter.highlighter
+      _G.retired_highlighters = setmetatable(
+        { highlighter.active[vim.api.nvim_get_current_buf()] },
+        { __mode = 'v' }
+      )
+      vim.g._ts_force_sync_parsing = false
+      highlighter._on_start()
+      assert(next(parser._cb_queues), 'parse must yield to exercise the pending callback')
+      vim.treesitter.stop()
+      vim.api.nvim_buf_delete(0, { force = true })
+      _G.retained_parser = parser
+    end)
+    assert_collected()
   end)
 end)
 

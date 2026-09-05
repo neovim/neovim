@@ -1372,6 +1372,32 @@ function LanguageTree:register_cbs(cbs, recursive)
   end
 end
 
+--- The owner must invalidate callbacks retained by removed children or an active dispatch.
+---@nodoc
+---@param cbs table<TSCallbackNameOn,function>
+---@param recursive? boolean
+function LanguageTree:_unregister_cbs(cbs, recursive)
+  local callbacks = recursive and self._callbacks_rec or self._callbacks
+  for name, cbname in pairs(TSCallbackNames) do
+    if cbs[name] then
+      -- Preserve an ongoing iteration over the old list.
+      callbacks[cbname] = vim.tbl_filter(
+        ---@param cb function
+        function(cb)
+          return cb ~= cbs[name]
+        end,
+        callbacks[cbname]
+      )
+    end
+  end
+
+  if recursive then
+    for _, child in pairs(self._children) do
+      child:_unregister_cbs(cbs, true)
+    end
+  end
+end
+
 ---@param tree TSTree
 ---@param range Range
 ---@return boolean

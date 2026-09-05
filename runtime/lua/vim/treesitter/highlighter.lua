@@ -69,6 +69,8 @@ end
 --- This state is kept during rendering across each line update.
 ---@field private _highlight_states vim.treesitter.highlighter.State[]
 ---@field private _queries table<string,vim.treesitter.highlighter.Query>
+---@field private _callback_owner table<integer,vim.treesitter.highlighter>
+---@field private _unregister_cbs (fun())?
 ---@field  _conceal_line boolean?
 ---@field  _conceal_checked table<integer, boolean>
 ---@field tree vim.treesitter.LanguageTree
@@ -80,6 +82,14 @@ local TSHighlighter = {
 }
 
 TSHighlighter.__index = TSHighlighter
+
+---@param highlighter vim.treesitter.highlighter
+---@param lang string
+local function set_conceal_lines(highlighter, lang)
+  if not highlighter._conceal_line and highlighter:get_query(lang):query() then
+    highlighter._conceal_line = highlighter:get_query(lang):query().has_conceal_line
+  end
+end
 
 ---@nodoc
 ---
@@ -95,60 +105,71 @@ function TSHighlighter.new(tree, opts)
     error('TSHighlighter can not be used with a string parser source.')
   end
 
-  -- Calling start() again on an already-highlighted buffer must be a no-op: a second instance
-  -- would register duplicate on_bytes/on_changedtree/on_detach callbacks that destroy() never
-  -- unregisters, leaking callbacks that keep firing for the orphaned instance.
+  -- Reuse the highlighter rather than registering duplicate callbacks.
   local existing = TSHighlighter.active[source]
   if existing then
     if existing.tree == tree then
       return existing
     end
-    -- Different tree (e.g. a language switch): the old instance would otherwise be silently
-    -- orphaned with the same leaked callbacks, so destroy() it first, matching stop() semantics.
     existing:destroy()
+    if TSHighlighter.active[source] then
+      return TSHighlighter.active[source]
+    end
+  end
+  if not api.nvim_buf_is_loaded(source) then
+    error('Cannot create a highlighter for an unloaded buffer')
   end
 
   local self = setmetatable({}, TSHighlighter)
 
   opts = opts or {} ---@type { queries: table<string,string> }
   self.tree = tree
-  tree:register_cbs({
+  local owner = { self }
+  self._callback_owner = owner
+  local cbs = {
     on_detach = function()
-      self:on_detach()
+      if owner[1] then
+        owner[1]:on_detach()
+      end
     end,
-  })
+  }
 
-  -- Enable conceal_lines if query exists for lang and has conceal_lines metadata.
-  local function set_conceal_lines(lang)
-    if not self._conceal_line and self:get_query(lang):query() then
-      self._conceal_line = self:get_query(lang):query().has_conceal_line
-    end
-  end
-
-  tree:register_cbs({
+  local cbs_rec = {
     on_bytes = function(buf)
       -- Clear conceal_lines marks whenever the buffer text changes. Marks are added
       -- back as either the _conceal_line or on_win callback comes across them.
-      local hl = TSHighlighter.active[buf]
+      local hl = owner[1]
       if hl and next(hl._conceal_checked) then
         api.nvim_buf_clear_namespace(buf, ns, 0, -1)
         hl._conceal_checked = {}
       end
     end,
     on_changedtree = function(...)
-      self:on_changedtree(...)
+      if owner[1] then
+        owner[1]:on_changedtree(...)
+      end
     end,
     on_child_removed = function(child)
+      if not owner[1] then
+        return
+      end
       child:for_each_tree(function(t)
-        self:on_changedtree(t:included_ranges(true))
+        if owner[1] then
+          owner[1]:on_changedtree(t:included_ranges(true))
+        end
       end)
     end,
     on_child_added = function(child)
-      child:for_each_tree(function(t)
-        set_conceal_lines(t:lang())
+      if not owner[1] then
+        return
+      end
+      child:for_each_tree(function(_, child_tree)
+        if owner[1] then
+          set_conceal_lines(owner[1], child_tree:lang())
+        end
       end)
     end,
-  }, true)
+  }
 
   self.bufnr = source
   self.redraw_count = 0
@@ -162,31 +183,51 @@ function TSHighlighter.new(tree, opts)
   if opts.queries then
     for lang, query_string in pairs(opts.queries) do
       self._queries[lang] = TSHighlighterQuery.new(lang, query_string)
-      set_conceal_lines(lang)
+      set_conceal_lines(self, lang)
     end
   end
-  set_conceal_lines(tree:lang())
+  set_conceal_lines(self, tree:lang())
+
+  self._unregister_cbs = function()
+    -- Removed children and in-flight callbacks must no longer use this instance.
+    owner[1] = nil
+    tree:_unregister_cbs(cbs)
+    tree:_unregister_cbs(cbs_rec, true)
+  end
+  tree:register_cbs(cbs)
+  tree:register_cbs(cbs_rec, true)
+
   self.orig_spelloptions = vim.bo[self.bufnr].spelloptions
 
-  vim.bo[self.bufnr].syntax = ''
-  vim.b[self.bufnr].ts_highlight = true
-
-  TSHighlighter.active[self.bufnr] = self
-
-  -- Tricky: if syntax hasn't been enabled, we need to reload color scheme
-  -- but use synload.vim rather than syntax.vim to not enable
-  -- syntax FileType autocmds. Later on we should integrate with the
-  -- `:syntax` and `set syntax=...` machinery properly.
-  -- Still need to ensure that syntaxset augroup exists, so that calling :destroy()
-  -- immediately afterwards will not error.
   if vim.g.syntax_on ~= 1 then
-    vim.cmd.runtime({ 'syntax/synload.vim', bang = true })
     api.nvim_create_augroup('syntaxset', { clear = false })
   end
+  -- Option changes may stop or replace the highlighter.
+  TSHighlighter.active[self.bufnr] = self
+  vim.b[self.bufnr].ts_highlight = true
+  local ok, err = pcall(vim._with, { buf = self.bufnr }, function()
+    vim.bo[self.bufnr].syntax = ''
+    if TSHighlighter.active[self.bufnr] ~= self or not api.nvim_buf_is_loaded(self.bufnr) then
+      self:destroy()
+      return
+    end
 
-  vim._with({ buf = self.bufnr }, function()
+    -- Load colors and Syntax handlers without enabling FileType handlers.
+    if vim.g.syntax_on ~= 1 then
+      vim.cmd.runtime({ 'syntax/synload.vim', bang = true })
+    end
+    if TSHighlighter.active[self.bufnr] ~= self or not api.nvim_buf_is_loaded(self.bufnr) then
+      self:destroy()
+      return
+    end
     vim.opt_local.spelloptions:append('noplainbuffer')
   end)
+  if not ok then
+    vim._with({ noautocmd = true }, function()
+      self:destroy()
+    end)
+    error(err, 0)
+  end
 
   return self
 end
@@ -194,12 +235,25 @@ end
 --- @nodoc
 --- Removes all internal references to the highlighter
 function TSHighlighter:destroy()
+  if self._unregister_cbs then
+    self._unregister_cbs()
+    self._unregister_cbs = nil
+  end
+  if TSHighlighter.active[self.bufnr] ~= self then
+    return
+  end
   TSHighlighter.active[self.bufnr] = nil
 
+  if not api.nvim_buf_is_valid(self.bufnr) then
+    return
+  end
+  vim.b[self.bufnr].ts_highlight = nil
   if api.nvim_buf_is_loaded(self.bufnr) then
-    vim.bo[self.bufnr].spelloptions = self.orig_spelloptions
-    vim.b[self.bufnr].ts_highlight = nil
     api.nvim_buf_clear_namespace(self.bufnr, ns, 0, -1)
+    vim.bo[self.bufnr].spelloptions = self.orig_spelloptions
+    if TSHighlighter.active[self.bufnr] or not api.nvim_buf_is_loaded(self.bufnr) then
+      return
+    end
     if vim.g.syntax_on == 1 then
       api.nvim_exec_autocmds(
         'FileType',
@@ -594,6 +648,7 @@ function TSHighlighter._on_start()
   end
   for buf, ranges in pairs(buf_ranges) do
     local highlighter = TSHighlighter.active[buf]
+    local owner = highlighter._callback_owner
     if not highlighter.parsing then
       table.sort(ranges, function(a, b)
         return a[1] < b[1]
@@ -601,8 +656,9 @@ function TSHighlighter._on_start()
       highlighter.parsing = highlighter.parsing
         or nil
           == highlighter.tree:parse(ranges, function(_, trees)
-            if trees and highlighter.parsing then
-              highlighter.parsing = false
+            local current = owner[1]
+            if trees and current and current.parsing and TSHighlighter.active[buf] == current then
+              current.parsing = false
               api.nvim__redraw({ buf = buf, valid = false, flush = false })
             end
           end)
