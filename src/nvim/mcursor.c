@@ -595,10 +595,6 @@ void mc_ins_cascade_start(bool cascade, varnumber_T tick)
     return;
   }
   mc_ins_joined = false;
-  if (cascade && mc_buf_has_cursors(curbuf) && kv_size(g_atoms) > 0) {
-    // Cascade now if a mapping queued atoms before entering Insert ("nnoremap i ^i").
-    mc_cascade();
-  }
   mc_ins_span.active = cascade && mc_buf_has_cursors(curbuf);
   mc_ins_span.first = true;
   mc_ins_span.done_len = 0;
@@ -640,11 +636,13 @@ static void mc_ins_restore_state(const McInsSaved *saved)
   curbuf->b_last_changedtick_i = saved->last_changedtick_i;
 }
 
-/// Pushes one span and immediately cascades it. Takes ownership of `keys` and `text`.
+/// Pushes one span and immediately cascades it, plus any pending mapping atoms.
+/// Takes ownership of `keys` and `text`.
 static void mc_ins_span_push(char *keys, char *text)
 {
   mc_ins_span.first = false;
-  // If all cursors disappear mid-session (e.g. by dedupe), emit but don't cascade.
+
+  // If all cursors disappear mid-session (e.g. dedupe), emit but don't cascade.
   bool cascade = mc_buf_has_cursors(curbuf);
   atom_push_raw(cascade, &(CmdAtom){
     .type = kAInsertSpan,
@@ -655,6 +653,7 @@ static void mc_ins_span_push(char *keys, char *text)
   if (!cascade) {
     return;
   }
+
   McInsSaved saved = mc_ins_save_state();
   block_autocmds();  // The span replay would fire InsertEnter/InsertLeave on every key.
   mc_cascade();
@@ -823,7 +822,7 @@ void mc_ins_cascade_restart(void)
 void mc_ins_cascade(void)
 {
   if (!mc_ins_span.active || mc_replaying() || !(State & MODE_INSERT)
-      || !mc_buf_has_cursors(curbuf) || kv_size(g_atoms) != 0) {
+      || !mc_buf_has_cursors(curbuf)) {
     return;
   }
   String ins = redo_keys(NULL);

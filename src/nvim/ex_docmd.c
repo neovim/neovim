@@ -7092,7 +7092,7 @@ void update_topline_cursor(void)
   update_curswant();
 }
 
-/// Save the current State and go to Normal mode.
+/// Save the current State (editor-mode) and go to Normal mode.
 void save_current_state(save_state_T *sst)
   FUNC_ATTR_NONNULL_ALL
 {

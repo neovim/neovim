@@ -1,9 +1,10 @@
-// Context = "full app state" abstraction. (Note: it's named "Context" to disambiguate with state.c
-// which is about the event-loop state-machine, not "total program state".)
+// Context = "full app state" abstraction. So named to disambiguate state.c, which is about the
+// event-loop state-machine, not "total program state".
 //
 // Unified interface of:
 // + shada
 // + CtxSwitch/ctx_switch (FKA: aucmd_prepbuf, switch_win, win_execute_T)
+// + TODO: save_state_T/save_current_state
 // + TODO: sessions
 // + TODO: undo save/restore (for cmdpreview, multicursor)
 // + TODO: TRY_WRAP ?
@@ -11,7 +12,7 @@
 // Related:
 // - vim.with()
 // - switch_option_context(), restore_option_context()
-// - McSandbox: input-replay guard. Sibling axis to ctx_switch() and ctx_save().
+// - McSandbox/mc_sandbox_enter: input-replay guard. Sibling axis to ctx_switch() and ctx_save().
 
 #include <assert.h>
 #include <stdbool.h>
