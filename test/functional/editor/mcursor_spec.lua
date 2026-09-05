@@ -302,6 +302,16 @@ describe('multicursor', function()
       api.nvim_input_mouse('left', 'press', 'C', 0, 2, 0)
       api.nvim_input_mouse('left', 'release', 'C', 0, 2, 0)
       eq(0, ncursors())
+
+      -- Toggling another cursor keeps the cursor under the primary.
+      feed('Q')
+      for _ = 1, 2 do
+        api.nvim_input_mouse('left', 'press', 'C', 0, 2, 0)
+        api.nvim_input_mouse('left', 'release', 'C', 0, 2, 0)
+      end
+      eq({ { 0, 0 } }, anchors())
+      feed('Q')
+
       -- CTRL-click keeps "q=" follow-mode (unlike Q).
       feed('ggQj')
       feed('q=')
@@ -796,8 +806,7 @@ describe('multicursor', function()
       cursors({ 'a', 'b' }, 'Qj0')
       feed('5g<C-A>')
       eq({ '5a', '6b' }, get_lines())
-      -- The primary sitting ON a cursor (no cascade ran in between, so mc_dedupe did not):
-      -- the coincident pair shares one number slot, and the cursor survives.
+      -- Number overlapping primary/multicursor positions once, without deleting the multicursor.
       clear_cursors()
       cursors({ 'x', 'y', 'z' }, 'QjQj')
       feed('gg0g<C-A>')
@@ -855,7 +864,7 @@ describe('multicursor', function()
       t.matches('Invalid buffer', t.pcall_err(api.nvim_mcursor, 9999, { 1, 0 }))
     end)
 
-    it('deleting a cursor extmark deletes the cursor', function()
+    it('deleting an extmark deletes its cursor', function()
       cursors({ 'aaa', 'bbb', 'ccc' })
       local ns = api.nvim_create_namespace('nvim.multicursor')
       local marks = api.nvim_buf_get_extmarks(0, ns, 0, -1, {})
@@ -875,11 +884,22 @@ describe('multicursor', function()
       n.expect_exit(command, 'qall!')
     end)
 
-    it('cursors are freed with their buffer', function()
+    it('cursors are disposed with their buffer', function()
       fn.setline(1, { 'aaa', 'bbb' })
       local buf = api.nvim_get_current_buf()
       eq(1, api.nvim_mcursor(0, { 1, 0 }))
       eq(2, api.nvim_mcursor(0, { 2, 0 }))
+
+      -- Deleting an unrelated buffer does not dedupe the cursor under the primary. #41651
+      for _, has_cursor in ipairs({ false, true }) do
+        local scratch = api.nvim_create_buf(false, true)
+        if has_cursor then
+          eq(3, api.nvim_mcursor(scratch, { 1, 0 }))
+        end
+        api.nvim_buf_delete(scratch, { force = true })
+        eq({ { 0, 0 }, { 1, 0 } }, anchors())
+      end
+
       command('new')
       fn.setreg('"', 'KEEP')
       command('bwipeout! ' .. buf)
@@ -990,6 +1010,11 @@ describe('multicursor', function()
       eq(1, ncursors())
       feed('x') -- both cursors edit again (primary still on line 2)
       eq({ 'aa', 'bb' }, get_lines())
+
+      -- Partially clearing the namespace does not "dedupe" the cursor under the primary.
+      feed('Q')
+      api.nvim_buf_clear_namespace(0, api.nvim_create_namespace('nvim.multicursor'), 0, 1)
+      eq({ { 1, 0 } }, anchors())
     end)
 
     it(':edit! reload clears the cursors', function()
