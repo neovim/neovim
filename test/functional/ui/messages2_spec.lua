@@ -1217,6 +1217,16 @@ describe('messages2', function()
     ]])
   end)
 
+  it('no legacy prompt on quit', function()
+    set_msg_target_zero_ch()
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'one' })
+    command('quit')
+    screen:expect([[
+      ^one                                                  |
+      {1:~                                                    }|*13
+    ]])
+  end)
+
   it('no crash for resized grid during redraw #39075', function()
     exec_lua(function()
       vim.api.nvim_set_decoration_provider(vim.api.nvim_create_namespace(''), {
