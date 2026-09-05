@@ -320,6 +320,55 @@ describe('CmdAtom', function()
     )
   end)
 
+  it('<expr> mapping: EXPRESSION input vs EXECUTION input #41665', function()
+    atoms_start()
+    for _, reader in ipairs({ 'getcharstr', 'input' }) do
+      n.exec_lua(function(reader_)
+        _G._log = {}
+        vim.keymap.set('o', 's', function()
+          local input = reader_ == 'input' and vim.fn.input('') or vim.fn.getcharstr()
+          local data = { input, vim.v.count1 }
+          return ('<Cmd>lua table.insert(_G._log, %s)<CR>'):format(vim.inspect(data))
+        end, { expr = true })
+      end, reader)
+
+      local input = reader == 'input' and 'e<CR>' or 'e'
+      -- Placement of [count] should not change the behavior. #41665
+      for _, prefix in ipairs({ '2d', 'd2' }) do
+        feed(('%ss%s'):format(prefix, input))
+        eq({
+          type = 'operator',
+          operator = 'd',
+          count = 2,
+          lhs = k(('ds%s'):format(input)),
+          keys = k('2d<Cmd>lua table.insert(_G._log, { "e", 2 })<NL>'),
+        }, pick(atom_last(), 'type', 'operator', 'count', 'lhs', 'keys'))
+      end
+      eq({ { 'e', 2 }, { 'e', 2 } }, n.exec_lua('return _G._log'))
+    end
+
+    -- expr EVALUATION gets "e" from getcharstr(), which the expr-mapping RETURNS, thus hardcoding
+    -- it into `keys` (not APPENDED by the capture engine).
+    -- Mapping EXECUTION getcharstr() consumes "q" _when executed_, thus "q" is APPENDED to `keys`.
+    n.exec_lua([[
+      vim.keymap.set('o', 's', function()
+        return ('<Cmd>let g:read_input = %q . getcharstr()<CR>'):format(vim.fn.getcharstr())
+      end, { expr = true })
+    ]])
+    for _, keys in ipairs({ '2dseq', 'd2seq' }) do
+      feed(keys)
+      local ev = atom_last()
+      eq(
+        { lhs = 'dseq', keys = k('2d<Cmd>let g:read_input = "e" . getcharstr()<NL>q') },
+        pick(ev, 'lhs', 'keys')
+      )
+      eq('eq', api.nvim_get_var('read_input'))
+      api.nvim_set_var('read_input', '')
+      api.nvim_feedkeys(ev.keys, 'nx', false)
+      eq('eq', api.nvim_get_var('read_input'))
+    end
+  end)
+
   it('"!" operator captures its stuffed cmdline', function()
     -- ":.,.+1!" + typed "{prg}<CR>" completes the operator atom, like "d/END<CR>". #41447
     local prg = n.testprg('shell-test') .. ' REP 2 X'
