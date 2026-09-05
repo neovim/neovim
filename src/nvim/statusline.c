@@ -1377,6 +1377,9 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
       fmt_p++;
       if (ascii_isdigit(*fmt_p)) {
         maxwid = getdigits_int(&fmt_p, false, 50);
+        if (maxwid <= 0) {  // overflow or an explicit zero
+          maxwid = 50;
+        }
       }
     }
 
