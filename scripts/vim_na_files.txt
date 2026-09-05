@@ -106,6 +106,7 @@ src/testdir/Make_amiga.mak
 src/testdir/Make_dos.mak
 src/testdir/Make_ming.mak
 src/testdir/Make_mvc.mak
+src/testdir/commondumps.vim
 src/testdir/crash/heap_overflow3
 src/testdir/lsan-suppress.txt
 src/testdir/samples/combining_chars.txt
@@ -151,6 +152,7 @@ src/testdir/util/amiga.vim
 src/testdir/util/dos.vim
 src/testdir/util/socketserver.vim
 src/testdir/util/vms.vim
+src/testdir/viewdumps.vim
 src/typemap
 src/uninstall.c
 src/version.h
