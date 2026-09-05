@@ -1215,14 +1215,10 @@ describe('multicursor', function()
       -- Also when a Normal-mode mapping moves before entering Insert. #41605
       clear_cursors()
       cursors({ 'aaaa', 'bbbb', 'cccc' }, 'llQjQj')
+      eq({ { 0, 2 }, { 1, 2 } }, anchors())
+      eq({ 3, 2 }, api.nvim_win_get_cursor(0))
       command('nnoremap i ^i')
-      screen:expect([[
-        aa{17:a}a                          |
-        bb{17:b}b                          |
-        cc^cc                          |
-        {1:~                             }|*2
-                                      |
-      ]])
+      atoms_start()
       feed('iX')
       screen:expect([[
         X{17:a}aaa                         |
@@ -1233,6 +1229,16 @@ describe('multicursor', function()
       ]])
       feed('<Esc>')
       eq({ 'Xaaaa', 'Xbbbb', 'Xcccc' }, get_lines())
+      local ev = atom_last()
+      eq(
+        { type = 'mapping', lhs = k('iX<Esc>'), changed = true },
+        t_atom.pick(atom_last(), 'type', 'lhs', 'changed')
+      )
+      local children = {}
+      for _, child in ipairs(ev.atoms) do
+        children[#children + 1] = { child.type, child.keys }
+      end
+      eq({ { 'motion', '^' }, { 'insert', k('1i<Esc>') }, { 'insert', k('iX<Esc>') } }, children)
     end)
   end)
 

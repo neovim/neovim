@@ -493,7 +493,7 @@ EXTERN int inhibit_delete_count INIT( = 0);
 /// Encoding used when 'fencs' is set to "default"
 EXTERN char *fenc_default INIT( = NULL);
 
-/// "State" is the main state of Vim.
+/// "State" is the main state (editor-mode) of Vim.
 /// There are other variables that modify the state:
 ///    Visual_mode:    When State is MODE_NORMAL or MODE_INSERT.
 ///    finish_op  :    When State is MODE_NORMAL, after typing the operator and
