@@ -83,6 +83,48 @@ local TSHighlighter = {
 
 TSHighlighter.__index = TSHighlighter
 
+---@private
+---@param ts_query TSQuery
+function TSHighlighter._restart(ts_query)
+  if vim.in_fast_event() then
+    vim.schedule(function()
+      TSHighlighter._restart(ts_query)
+    end)
+    return
+  end
+  ---@type vim.treesitter.highlighter[]
+  local highlighters = vim.tbl_values(TSHighlighter.active)
+  for _, highlighter in ipairs(highlighters) do
+    local buf = highlighter.bufnr
+    if TSHighlighter.active[buf] == highlighter then
+      for _, hl_query in pairs(highlighter._queries) do
+        local q = hl_query:query()
+        if q and q.query == ts_query then
+          local queries = vim.tbl_extend('force', {}, highlighter._queries)
+          local syntax = vim.bo[buf].syntax
+          local spelloptions = vim.bo[buf].spelloptions
+          highlighter:destroy()
+          if not TSHighlighter.active[buf] and api.nvim_buf_is_loaded(buf) then
+            local current = TSHighlighter.new(highlighter.tree, nil, queries)
+            if TSHighlighter.active[buf] == current then
+              -- Preserve options set after highlighting was started.
+              if vim.bo[buf].syntax ~= syntax then
+                vim.bo[buf].syntax = syntax
+              end
+              if
+                TSHighlighter.active[buf] == current and vim.bo[buf].spelloptions ~= spelloptions
+              then
+                vim.bo[buf].spelloptions = spelloptions
+              end
+            end
+          end
+          break
+        end
+      end
+    end
+  end
+end
+
 ---@nodoc
 ---
 --- Creates a highlighter for `tree`.
@@ -90,8 +132,9 @@ TSHighlighter.__index = TSHighlighter
 ---@param tree vim.treesitter.LanguageTree parser object to use for highlighting
 ---@param opts (table|nil) Configuration of the highlighter:
 ---           - queries table overwrite queries used by the highlighter
+---@param queries? table<string,vim.treesitter.highlighter.Query> Queries to reuse when restarting.
 ---@return vim.treesitter.highlighter Created highlighter object
-function TSHighlighter.new(tree, opts)
+function TSHighlighter.new(tree, opts, queries)
   local source = tree:source()
   if type(source) ~= 'number' then
     error('TSHighlighter can not be used with a string parser source.')
@@ -151,7 +194,7 @@ function TSHighlighter.new(tree, opts)
   self.bufnr = source
   self.redraw_count = 0
   self._conceal_checked = {}
-  self._queries = {}
+  self._queries = queries or {}
   self._highlight_states = {}
   self.parsing = false
 
@@ -160,6 +203,11 @@ function TSHighlighter.new(tree, opts)
   if opts.queries then
     for lang, query_string in pairs(opts.queries) do
       self:get_query(lang, query_string)
+      set_conceal_lines(lang)
+    end
+  end
+  if queries then
+    for lang in pairs(queries) do
       set_conceal_lines(lang)
     end
   end

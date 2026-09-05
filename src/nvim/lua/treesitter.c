@@ -1766,12 +1766,30 @@ static int query_inspect(lua_State *L)
   return 1;
 }
 
+static void query_redraw(lua_State *L)
+{
+  if (!lua_isnoneornil(L, 3) && !lua_toboolean(L, 3)) {
+    return;
+  }
+
+  // Query mutation must not load the highlighter.
+  lua_getfield(L, LUA_REGISTRYINDEX, "_LOADED");  // [query, ..., loaded]
+  lua_getfield(L, -1, "vim.treesitter.highlighter");  // [query, ..., loaded, highlighter]
+  if (lua_istable(L, -1)) {
+    lua_getfield(L, -1, "_restart");  // [query, ..., loaded, highlighter, restart]
+    lua_pushvalue(L, 1);  // [query, ..., loaded, highlighter, restart, query]
+    lua_call(L, 1, 0);  // [query, ..., loaded, highlighter]
+  }
+  lua_pop(L, 2);  // [query, ...]
+}
+
 static int query_disable_capture(lua_State *L)
 {
   TSQuery *query = query_check(L, 1);
   size_t name_len;
   const char *name = luaL_checklstring(L, 2, &name_len);
   ts_query_disable_capture(query, name, (uint32_t)name_len);
+  query_redraw(L);
   return 0;
 }
 
@@ -1780,6 +1798,7 @@ static int query_disable_pattern(lua_State *L)
   TSQuery *query = query_check(L, 1);
   const uint32_t pattern_index = (uint32_t)luaL_checkinteger(L, 2);
   ts_query_disable_pattern(query, pattern_index - 1);
+  query_redraw(L);
   return 0;
 }
 

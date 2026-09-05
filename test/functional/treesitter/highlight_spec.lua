@@ -962,6 +962,107 @@ describe('treesitter highlighting (C)', function()
     eq(nil, get_hl '@total.nonsense.but.a.lot.of.dots')
   end)
 
+  it('updates shared conceal_lines after a query change in a fast event', function()
+    command('set conceallevel=3 concealcursor=nvic')
+    eq(
+      { true, 3, 3 },
+      exec_lua(function()
+        local first = vim.api.nvim_get_current_buf()
+        local second = vim.api.nvim_create_buf(false, true)
+        vim.treesitter.query.set('c', 'highlights', '((comment) @comment (#set! conceal_lines ""))')
+        for _, buf in ipairs({ first, second }) do
+          vim.api.nvim_win_set_buf(0, buf)
+          vim.api.nvim_buf_set_lines(buf, 0, -1, false, { '/* hidden', ' */', 'int i;' })
+          vim.treesitter.start(buf, 'c')
+          vim.treesitter.get_parser(buf, 'c'):parse(true)
+          assert(vim.api.nvim_win_text_height(0, {}).all == 1)
+        end
+        assert(vim.treesitter.highlighter.active[first])
+        local q = vim.treesitter.query.get('c', 'highlights').query
+        local timer = assert(vim.uv.new_timer())
+        local done, ok, err
+        timer:start(0, 0, function()
+          ok, err = pcall(q.disable_capture, q, 'comment')
+          timer:close()
+          done = true
+        end)
+        assert(vim.wait(1000, function()
+          return done and (not ok or vim.api.nvim_win_text_height(0, {}).all == 3)
+        end))
+        assert(ok, err)
+        local height = vim.api.nvim_win_text_height(0, {}).all
+        vim.api.nvim_win_set_buf(0, first)
+        return { ok, height, vim.api.nvim_win_text_height(0, {}).all }
+      end)
+    )
+  end)
+
+  for _, disabled in ipairs({ 'capture', 'pattern' }) do
+    it('updates conceal_lines after disabling a ' .. disabled, function()
+      screen:try_resize(20, 8)
+      command('set conceallevel=3 concealcursor=nvic')
+      eq(
+        { 1, 1, { 2 }, 4 },
+        exec_lua(function(kind)
+          vim.api.nvim_buf_set_lines(0, 0, -1, false, {
+            '/* first',
+            ' */',
+            '/* second */',
+            'int i;',
+          })
+          local text = [[
+            ((comment) @first (#match? @first "first") (#set! conceal_lines ""))
+            ((comment) @second (#match? @second "second") (#set! conceal_lines ""))
+          ]]
+          local parser = vim.treesitter.get_parser(0, 'c')
+          vim.treesitter.highlighter.new(parser, { queries = { c = text } })
+          vim.bo.syntax = 'c'
+          vim.bo.spelloptions = 'camel'
+          parser:parse(true)
+          local before = vim.api.nvim_win_text_height(0, {}).all
+          local q = vim.treesitter.query.parse('c', text).query
+          local disable = q['disable_' .. kind]
+          local first = kind == 'capture' and 'first' or 1
+          disable(q, first, false)
+          local deferred = vim.api.nvim_win_text_height(0, {}).all
+          disable(q, first, true)
+          vim.api.nvim_win_text_height(0, {})
+          local ns = vim.api.nvim_get_namespaces()['nvim.treesitter.highlighter']
+          local remaining = vim.tbl_map(function(mark)
+            return mark[2]
+          end, vim.api.nvim_buf_get_extmarks(0, ns, 0, -1, {}))
+          disable(q, kind == 'capture' and 'second' or 2)
+          assert(vim.bo.syntax == 'c' and vim.bo.spelloptions == 'camel')
+          return { before, deferred, remaining, vim.api.nvim_win_text_height(0, {}).all }
+        end, disabled)
+      )
+    end)
+  end
+
+  it('redraws highlights after a query pattern is disabled', function()
+    screen:try_resize(20, 4)
+    api.nvim_set_hl(0, '@query_test', { fg = '#ff0000' })
+    screen:add_extra_attr_ids({ [100] = { foreground = 0xff0000 } })
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'int x;' })
+    exec_lua(function()
+      vim.treesitter.query.set('c', 'highlights', '(identifier) @query_test')
+      vim.treesitter.start(0, 'c')
+    end)
+    screen:expect([[
+      ^int {100:x};              |
+      {1:~                   }|*2
+                          |
+    ]])
+    exec_lua(function()
+      vim.treesitter.query.get('c', 'highlights').query:disable_pattern(1)
+    end)
+    screen:expect([[
+      ^int x;              |
+      {1:~                   }|*2
+                          |
+    ]])
+  end)
+
   it('supports multiple nodes assigned to the same capture #17060', function()
     insert([[
       int x = 4;

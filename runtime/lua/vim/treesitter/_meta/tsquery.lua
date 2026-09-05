@@ -25,10 +25,10 @@ function TSQuery:inspect() end
 --- ```lua
 --- local query = vim.treesitter.query.get('vimdoc', 'highlights')
 --- query.query:disable_capture("variable.parameter")
---- vim.treesitter.get_parser():parse()
 --- ```
 ---@param capture_name string
-function TSQuery:disable_capture(capture_name) end
+---@param redraw? boolean Restart highlighters using this query (default: true)
+function TSQuery:disable_capture(capture_name, redraw) end
 
 --- Disable a specific pattern in this query; once disabled the pattern cannot be re-enabled.
 --- The {pattern_index} for a particular match can be obtained with |:Inspect!|, or by reading
@@ -39,7 +39,7 @@ function TSQuery:disable_capture(capture_name) end
 --- local link_pattern = 9 -- from :Inspect!
 --- local query = vim.treesitter.query.get('vimdoc', 'highlights')
 --- query.query:disable_pattern(link_pattern)
---- local tree = vim.treesitter.get_parser():parse()[1]
 --- ```
 ---@param pattern_index integer
-function TSQuery:disable_pattern(pattern_index) end
+---@param redraw? boolean Restart highlighters using this query (default: true)
+function TSQuery:disable_pattern(pattern_index, redraw) end
