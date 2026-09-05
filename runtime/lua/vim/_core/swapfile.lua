@@ -59,12 +59,10 @@ function M.select_swap(items)
     if not idx then
       return
     end
-    -- Queue ":recover! <swapfile>" as user input, so the recursive recovery runs via the normal
-    -- input-dispatch loop. Using vim.schedule + vim.cmd can hang bc of "Press ENTER".
-    vim.fn.feedkeys(
-      vim.keycode(('<Cmd>recover! %s<CR>'):format(vim.fn.fnameescape(items[idx]))),
-      'in'
-    )
+    -- Queue ":recover! {swapfile}" via "mode dispatch". |event-queues|
+    vim.schedule_dispatch(function()
+      vim.cmd.recover { args = { items[idx] }, bang = true, magic = { file = false, bar = true } }
+    end)
   end)
 end
 
