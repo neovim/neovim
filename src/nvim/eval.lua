@@ -8548,7 +8548,7 @@ M.funcs = {
       <      1.41
 
       You will get an overflow error |E1510|, when the field-width
-      or precision will result in a string longer than 1 MB
+      or precision will result in a string longer than 1 MiB
       (1024*1024 = 1048576) chars.
 
       					*E1500*
