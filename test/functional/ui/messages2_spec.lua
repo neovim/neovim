@@ -1400,6 +1400,53 @@ describe('messages2', function()
     screen:expect_unchanged()
   end)
 
+  it('no end_col error when searching in pager', function()
+    screen:add_extra_attr_ids({
+      [101] = { background = Screen.colors.Yellow, foreground = Screen.colors.Gray100 },
+    })
+
+    command('set cmdheight=0 | echo "echoed text"')
+    feed('g<lt>')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*11
+      {3:                                                     }|
+      ^echoed text                                          |
+    ]])
+
+    -- Place a "foreign" (non-ui-namespace) highlight extmark directly in ui.bufs.cmd.
+    -- This should then not be copied to the ui.bufs.pager.
+    exec_lua(function()
+      local ui = require('vim._core.ui2')
+      local msgs = require('vim._core.ui2.messages')
+      vim.api.nvim_buf_set_lines(ui.bufs.cmd, 0, -1, false, { 'marked text' })
+      local ns = vim.api.nvim_create_namespace('foreign-test')
+      vim.api.nvim_buf_set_extmark(ui.bufs.cmd, ns, 0, 1, { hl_group = 'ErrorMsg', end_col = 5 })
+      msgs.expand_msg('cmd', 'pager')
+    end)
+
+    -- Ensure "foreign" extmarks are not copied into the pager.
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*10
+      {3:                                                     }|
+      ^echoed text                                          |
+      marked text                                          |
+    ]])
+
+    -- And we don't get an out of bounds end_col when search for non-existant text
+    feed('/pattern-not-present<CR>')
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*8
+      {3:                                                     }|
+      ^echoed text                                          |
+      marked text                                          |
+      {19:search hit BOTTOM, continuing at TOP}                 |
+      {9:E486: Pattern not found: }{101:pattern-not-present}         |
+    ]])
+  end)
+
   it('correct end_row for highlights copied to pager #41419', function()
     command('echo "a" | echo "b"') -- Two lines; end_row should be offset by 2
     screen:expect([[
