@@ -934,6 +934,79 @@ describe('treesitter highlighting (C)', function()
     eq(nil, get_hl '@total.nonsense.but.a.lot.of.dots')
   end)
 
+  it('invalidates conceal_lines after a query change in a fast event', function()
+    command('set conceallevel=3 concealcursor=nvic')
+    eq(
+      { true, 3 },
+      exec_lua(function()
+        vim.api.nvim_buf_set_lines(0, 0, -1, false, { '/* hidden', ' */', 'int i;' })
+        vim.treesitter.query.set('c', 'highlights', '((comment) @comment (#set! conceal_lines ""))')
+        vim.treesitter.start(0, 'c')
+        vim.treesitter.get_parser():parse(true)
+        assert(vim.api.nvim_win_text_height(0, {}).all == 1)
+        local q = vim.treesitter.query.get('c', 'highlights').query
+        local timer = assert(vim.uv.new_timer())
+        local done, ok, err
+        timer:start(0, 0, function()
+          ok, err = pcall(q.disable_capture, q, 'comment')
+          timer:close()
+          done = true
+        end)
+        assert(vim.wait(1000, function()
+          return done and (not ok or vim.api.nvim_win_text_height(0, {}).all == 3)
+        end))
+        assert(ok, err)
+        return { ok, vim.api.nvim_win_text_height(0, {}).all }
+      end)
+    )
+  end)
+
+  for _, disabled in ipairs({ 'capture', 'pattern' }) do
+    it('updates conceal_lines after disabling a ' .. disabled, function()
+      screen:try_resize(20, 8)
+      command('set conceallevel=3 concealcursor=nvic')
+      eq(
+        { 1, { 2 }, 4 },
+        exec_lua(function(kind)
+          vim.api.nvim_buf_set_lines(0, 0, -1, false, {
+            '/* first',
+            ' */',
+            '/* second */',
+            'int i;',
+          })
+          vim.treesitter.query.set(
+            'c',
+            'highlights',
+            [[
+              ((comment) @first (#match? @first "first") (#set! conceal_lines ""))
+              ((comment) @second (#match? @second "second") (#set! conceal_lines ""))
+            ]]
+          )
+          vim.treesitter.start(0, 'c')
+          vim.treesitter.get_parser():parse(true)
+          local before = vim.api.nvim_win_text_height(0, {}).all
+          local q = vim.treesitter.query.get('c', 'highlights')
+          if kind == 'capture' then
+            q.query:disable_capture('first')
+          else
+            q.query:disable_pattern(1)
+          end
+          vim.api.nvim_win_text_height(0, {})
+          local ns = vim.api.nvim_get_namespaces()['nvim.treesitter.highlighter']
+          local remaining = vim.tbl_map(function(mark)
+            return mark[2]
+          end, vim.api.nvim_buf_get_extmarks(0, ns, 0, -1, {}))
+          if kind == 'capture' then
+            q.query:disable_capture('second')
+          else
+            q.query:disable_pattern(2)
+          end
+          return { before, remaining, vim.api.nvim_win_text_height(0, {}).all }
+        end, disabled)
+      )
+    end)
+  end
+
   it('supports multiple nodes assigned to the same capture #17060', function()
     insert([[
       int x = 4;

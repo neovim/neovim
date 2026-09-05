@@ -1568,6 +1568,7 @@ static struct luaL_Reg query_meta[] = {
   { "inspect", query_inspect },
   { "disable_capture", query_disable_capture },
   { "disable_pattern", query_disable_pattern },
+  { "_set_on_changed", query_set_on_changed },
   { NULL, NULL }
 };
 
@@ -1597,6 +1598,8 @@ static int tslua_parse_query(lua_State *L)
   *ud = query;
   lua_getfield(L, LUA_REGISTRYINDEX, TS_META_QUERY);  // [udata, meta]
   lua_setmetatable(L, -2);  // [udata]
+  lua_newtable(L);  // [udata, fenv]
+  lua_setfenv(L, -2);  // [udata]
   return 1;
 }
 
@@ -1766,12 +1769,37 @@ static int query_inspect(lua_State *L)
   return 1;
 }
 
+static int query_set_on_changed(lua_State *L)
+{
+  query_check(L, 1);
+  luaL_argcheck(L, lua_isnoneornil(L, 2) || lua_isfunction(L, 2), 2, "function expected");
+  lua_settop(L, 2);
+  lua_getfenv(L, 1);  // [query, callback, fenv]
+  lua_pushvalue(L, 2);  // [query, callback, fenv, callback]
+  lua_setfield(L, -2, "on_changed");  // [query, callback, fenv]
+  return 0;
+}
+
+static void query_on_changed(lua_State *L)
+{
+  lua_getfenv(L, 1);  // [query, ..., fenv]
+  lua_getfield(L, -1, "on_changed");  // [query, ..., fenv, callback]
+  if (lua_isfunction(L, -1)) {
+    lua_pushvalue(L, 1);  // [query, ..., fenv, callback, query]
+    lua_call(L, 1, 0);  // [query, ..., fenv]
+  } else {
+    lua_pop(L, 1);  // [query, ..., fenv]
+  }
+  lua_pop(L, 1);  // [query, ...]
+}
+
 static int query_disable_capture(lua_State *L)
 {
   TSQuery *query = query_check(L, 1);
   size_t name_len;
   const char *name = luaL_checklstring(L, 2, &name_len);
   ts_query_disable_capture(query, name, (uint32_t)name_len);
+  query_on_changed(L);
   return 0;
 }
 
@@ -1780,6 +1808,7 @@ static int query_disable_pattern(lua_State *L)
   TSQuery *query = query_check(L, 1);
   const uint32_t pattern_index = (uint32_t)luaL_checkinteger(L, 2);
   ts_query_disable_pattern(query, pattern_index - 1);
+  query_on_changed(L);
   return 0;
 }
 

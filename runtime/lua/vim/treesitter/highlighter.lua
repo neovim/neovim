@@ -5,6 +5,9 @@ local cmp_lt = Range.cmp_pos.lt
 
 local ns = api.nvim_create_namespace('nvim.treesitter.highlighter')
 
+---@type vim.treesitter.highlighter
+local TSHighlighter
+
 ---@alias vim.treesitter.highlighter.Iter fun(end_line: integer|nil, end_col: integer|nil): integer, TSNode, vim.treesitter.query.TSMetadata, TSQueryMatch, TSTree
 
 ---@class (private) vim.treesitter.highlighter.Query
@@ -27,6 +30,10 @@ function TSHighlighterQuery.new(lang, query_string)
     self._query = query.parse(lang, query_string)
   else
     self._query = query.get(lang, 'highlights')
+  end
+
+  if self._query then
+    self._query.query:_set_on_changed(TSHighlighter._on_query_changed)
   end
 
   return self
@@ -75,11 +82,34 @@ end
 ---@field private redraw_count integer
 --- A map from window ID to whether we are currently parsing that window asynchronously
 ---@field parsing boolean
-local TSHighlighter = {
+TSHighlighter = {
   active = {},
 }
 
 TSHighlighter.__index = TSHighlighter
+
+---@private
+---@param ts_query TSQuery
+function TSHighlighter._on_query_changed(ts_query)
+  if vim.in_fast_event() then
+    vim.schedule(function()
+      TSHighlighter._on_query_changed(ts_query)
+    end)
+    return
+  end
+  for buf, highlighter in pairs(TSHighlighter.active) do
+    for _, hl_query in pairs(highlighter._queries) do
+      local q = hl_query:query()
+      if q and q.query == ts_query then
+        api.nvim_buf_clear_namespace(buf, ns, 0, -1)
+        highlighter._conceal_checked = {}
+        highlighter._highlight_states = {}
+        api.nvim__redraw({ buf = buf, valid = false, flush = false })
+        break
+      end
+    end
+  end
+end
 
 ---@nodoc
 ---
