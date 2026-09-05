@@ -904,6 +904,7 @@ void ui_refresh(void)
       if disabled.pattern then
         q.query:disable_pattern(disabled.pattern)
       end
+      assert(package.loaded['vim.treesitter.highlighter'] == nil)
 
       local parser = vim.treesitter.get_parser(0, 'c')
       local root = parser:parse()[1]:root()
