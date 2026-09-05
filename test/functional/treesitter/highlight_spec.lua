@@ -182,9 +182,7 @@ describe('treesitter highlighting (C)', function()
     -- treesitter highlighting is used
     screen:expect(hl_grid_ts_c)
 
-    -- A second start() on an already-highlighted buffer is a no-op: it returns the existing
-    -- highlighter instead of replacing it (replacing it would leak the old instance's
-    -- on_bytes/on_changedtree callbacks, since destroy() is never called on it).
+    -- A second start() reuses the existing highlighter.
     eq(
       true,
       exec_lua(function()
@@ -196,10 +194,33 @@ describe('treesitter highlighting (C)', function()
     )
 
     exec_lua(function()
+      local parser = vim.treesitter.get_parser()
+      local highlighter = vim.treesitter.highlighter
+      _G.stopped_highlighter = setmetatable(
+        { highlighter.active[vim.api.nvim_get_current_buf()] },
+        { __mode = 'v' }
+      )
       vim.treesitter.stop()
+      assert(not pcall(highlighter.new, parser, { queries = { c = '(invalid_node) @invalid' } }))
     end)
     -- legacy syntax highlighting is used
     screen:expect(hl_grid_legacy_c)
+
+    -- Release stack and JIT references before checking collection.
+    eq(
+      { true, 0, 0 },
+      exec_lua(function()
+        if jit then
+          jit.flush()
+        end
+        collectgarbage('collect')
+        collectgarbage('collect')
+        local parser = vim.treesitter.get_parser()
+        local collected = _G.stopped_highlighter[1] == nil
+        _G.stopped_highlighter = nil
+        return { collected, #parser._callbacks.detach, #parser._callbacks_rec.changedtree }
+      end)
+    )
 
     exec_lua(function()
       vim.treesitter.start()
@@ -208,6 +229,13 @@ describe('treesitter highlighting (C)', function()
     screen:expect(hl_grid_ts_c)
 
     exec_lua(function()
+      local buf = vim.api.nvim_get_current_buf()
+      local previous = vim.treesitter.highlighter.active[buf]
+      vim.treesitter.stop()
+      vim.treesitter.start()
+      local current = vim.treesitter.highlighter.active[buf]
+      previous:destroy()
+      assert(vim.treesitter.highlighter.active[buf] == current)
       vim.treesitter.stop()
     end)
     -- legacy syntax highlighting is used

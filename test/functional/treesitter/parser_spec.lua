@@ -22,6 +22,90 @@ describe('treesitter parser API', function()
     end)
   end)
 
+  for _, recursive in ipairs({ false, true }) do
+    it('unregisters callbacks during dispatch (recursive=' .. tostring(recursive) .. ')', function()
+      eq(
+        { 'shared', 'shared', 'other', 'shared', 'other' },
+        exec_lua(function(rec)
+          local parser = vim.treesitter.get_parser(0, 'c')
+          local calls = {}
+          local unregister, unregister_later
+          local cbs = {
+            on_bytes = function()
+              calls[#calls + 1] = 'shared'
+              unregister()
+              unregister_later()
+            end,
+          }
+          unregister = parser:register_cbs(cbs, rec)
+          parser:register_cbs(cbs, rec)
+          unregister_later = parser:register_cbs({
+            on_bytes = function()
+              calls[#calls + 1] = 'removed'
+            end,
+          }, rec)
+          parser:register_cbs({
+            on_bytes = function()
+              calls[#calls + 1] = 'other'
+            end,
+          }, rec)
+          vim.api.nvim_buf_set_lines(0, 0, -1, true, { 'int x;' })
+          vim.api.nvim_buf_set_lines(0, 0, -1, true, { 'int y;' })
+          assert(cbs.on_bytes)
+          return calls
+        end, recursive)
+      )
+    end)
+  end
+
+  it('unregisters inherited callbacks, including those on removed children', function()
+    eq(
+      { true, true },
+      exec_lua(function()
+        local text = '/* local x = 1 */'
+        vim.api.nvim_buf_set_lines(0, 0, -1, true, { text })
+        local parser = vim.treesitter.get_parser(0, 'c', {
+          injections = {
+            c = '((comment) @injection.content (#set! injection.language "lua"))',
+          },
+        })
+        parser:parse(true)
+        local child = assert(parser:children().lua)
+        local refs = setmetatable({}, { __mode = 'v' })
+        local unregister
+        local calls, seen = 0, {}
+        do
+          local value = { increment = 1 }
+          refs[1] = value
+          unregister = parser:register_cbs({
+            on_changedtree = function(_, tree)
+              calls = calls + value.increment
+              seen[tree:root():type()] = true
+            end,
+          }, true)
+        end
+        parser:invalidate(true)
+        parser:parse(true)
+        assert(seen.translation_unit and seen.chunk)
+        vim.api.nvim_buf_set_lines(0, 0, -1, true, { 'int x;' })
+        parser:parse(true)
+        assert(not parser:children().lua)
+        vim.api.nvim_buf_set_lines(0, 0, -1, true, { text })
+        parser:parse(true)
+        assert(parser:children().lua ~= child)
+        unregister()
+        assert(#parser:children().lua._callbacks_rec.changedtree == 0)
+        local before = calls
+        child:invalidate(true)
+        parser:invalidate(true)
+        parser:parse(true)
+        collectgarbage('collect')
+        collectgarbage('collect')
+        return { calls == before, refs[1] == nil }
+      end)
+    )
+  end)
+
   it('parses buffer', function()
     insert([[
       int main() {

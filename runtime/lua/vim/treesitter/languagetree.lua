@@ -70,6 +70,8 @@ local entire_document_range = {
 ---| 'on_child_added'
 ---| 'on_child_removed'
 
+---@alias TSCallbacks table<TSCallbackName,function>
+
 ---@alias ParserThreadState { timeout: integer? }
 
 --- @type table<TSCallbackNameOn,TSCallbackName>
@@ -83,8 +85,8 @@ local TSCallbackNames = {
 
 ---@nodoc
 ---@class vim.treesitter.LanguageTree
----@field private _callbacks table<TSCallbackName,function[]> Callback handlers
----@field package _callbacks_rec table<TSCallbackName,function[]> Callback handlers (recursive)
+---@field private _callbacks table<TSCallbackName,TSCallbacks[]> Callback handlers
+---@field package _callbacks_rec table<TSCallbackName,TSCallbacks[]> Callback handlers (recursive)
 ---@field private _children table<string,vim.treesitter.LanguageTree> Injected languages
 ---@field private _injection_query vim.treesitter.Query Queries defining injected languages
 ---@field private _processed_injection_region Range[]? Range for which injections have been processed
@@ -1153,7 +1155,17 @@ end
 ---@private
 ---@param cb_name TSCallbackName
 function LanguageTree:_has_callback(cb_name)
-  return #self._callbacks[cb_name] > 0 or #self._callbacks_rec[cb_name] > 0
+  for _, cbs in ipairs(self._callbacks[cb_name]) do
+    if cbs[cb_name] then
+      return true
+    end
+  end
+  for _, cbs in ipairs(self._callbacks_rec[cb_name]) do
+    if cbs[cb_name] then
+      return true
+    end
+  end
+  return false
 end
 
 ---@private
@@ -1172,11 +1184,17 @@ end
 ---@private
 ---@param cb_name TSCallbackName
 function LanguageTree:_do_callback(cb_name, ...)
-  for _, cb in ipairs(self._callbacks[cb_name]) do
-    cb(...)
+  for _, cbs in ipairs(self._callbacks[cb_name]) do
+    local cb = cbs[cb_name]
+    if cb then
+      cb(...)
+    end
   end
-  for _, cb in ipairs(self._callbacks_rec[cb_name]) do
-    cb(...)
+  for _, cbs in ipairs(self._callbacks_rec[cb_name]) do
+    local cb = cbs[cb_name]
+    if cb then
+      cb(...)
+    end
   end
 end
 
@@ -1352,22 +1370,67 @@ end
 ---              Takes one argument, the number of the buffer.
 --- @param recursive? boolean Apply callbacks recursively for all children. Any new children will
 ---                           also inherit the callbacks.
+---@return function|nil # Function that unregisters these callbacks, including inherited callbacks.
 function LanguageTree:register_cbs(cbs, recursive)
   if not cbs then
     return
   end
 
-  local callbacks = recursive and self._callbacks_rec or self._callbacks
-
+  local registered = {} ---@type TSCallbacks
   for name, cbname in pairs(TSCallbackNames) do
     if cbs[name] then
-      table.insert(callbacks[cbname], cbs[name])
+      registered[cbname] = cbs[name]
     end
+  end
+  self:_register_cbs(registered, recursive)
+
+  return function()
+    if not next(registered) then
+      return
+    end
+    self:_unregister_cbs(registered, recursive)
+    -- Detached children and running callbacks may still reference this registration.
+    for name in pairs(registered) do
+      registered[name] = nil
+    end
+  end
+end
+
+---@private
+---@param cbs TSCallbacks
+---@param recursive? boolean
+function LanguageTree:_register_cbs(cbs, recursive)
+  local callbacks = recursive and self._callbacks_rec or self._callbacks
+  for name in pairs(cbs) do
+    table.insert(callbacks[name], cbs)
   end
 
   if recursive then
     for _, child in pairs(self._children) do
-      child:register_cbs(cbs, true)
+      child:_register_cbs(cbs, true)
+    end
+  end
+end
+
+---@private
+---@param cbs TSCallbacks
+---@param recursive? boolean
+function LanguageTree:_unregister_cbs(cbs, recursive)
+  local callbacks = recursive and self._callbacks_rec or self._callbacks
+  for name in pairs(cbs) do
+    -- Preserve an ongoing iteration over the old list.
+    callbacks[name] = vim.tbl_filter(
+      ---@param registered TSCallbacks
+      function(registered)
+        return registered ~= cbs
+      end,
+      callbacks[name]
+    )
+  end
+
+  if recursive then
+    for _, child in pairs(self._children) do
+      child:_unregister_cbs(cbs, true)
     end
   end
 end
