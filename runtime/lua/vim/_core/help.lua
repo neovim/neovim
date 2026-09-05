@@ -537,9 +537,20 @@ function M.gen_tags(dir, include_index_tag)
   end
 
   for _, directory in ipairs(dirs) do
-    local files = vim.fs.find(function(name, _)
-      return helpfile_lang(name) ~= nil
-    end, { path = directory, type = 'file', limit = math.huge })
+    local files = vim.fs.find(function(name, path)
+      if helpfile_lang(name) == nil then
+        return false
+      end
+      local stat = vim.uv.fs_stat(vim.fs.joinpath(path, name))
+      if stat == nil then
+        return false
+      end
+      return stat.type == 'file'
+    end, {
+      path = directory,
+      follow = true,
+      limit = math.huge,
+    })
 
     if vim.tbl_isempty(files) then
       echo_err(('E151: No match: %s'):format(vim.fs.joinpath(directory, '**/*.txt')))
