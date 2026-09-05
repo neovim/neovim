@@ -261,4 +261,64 @@ describe('URI methods', function()
       eq('[%3a]', exec_lua('return vim.uri_encode(str, rfc)'))
     end)
   end)
+
+  describe('vim.uri.parse_nvim', function()
+    local function parse(uri)
+      return exec_lua([[return vim.uri.parse_nvim(...) ]], uri)
+    end
+
+    local function parse_err(uri)
+      return exec_lua(
+        [[
+        local _, err = vim.uri.parse_nvim(...)
+        return err
+      ]],
+        uri
+      )
+    end
+
+    it('parses nvim:// URI', function()
+      eq(
+        { action = 'open', file = '/path/to/file.txt' },
+        parse('nvim://open?file=/path/to/file.txt')
+      )
+      eq(
+        { action = 'open', file = '/path/to/file.txt', line = 42 },
+        parse('nvim://open?file=/path/to/file.txt&line=42')
+      )
+      eq(
+        { action = 'open', file = '/path/to/file.txt', line = 42, column = 10 },
+        parse('nvim://open?file=/path/to/file.txt&line=42&column=10')
+      )
+      eq(
+        { action = 'open', file = '/path/to/file.txt', server = '/tmp/nvim.sock' },
+        parse('nvim://open?file=/path/to/file.txt&server=/tmp/nvim.sock')
+      )
+      eq(
+        { action = 'open', file = './relative/path.txt', line = 10 },
+        parse('nvim://open?file=./relative/path.txt&line=10')
+      )
+      eq(
+        { action = 'open', file = '/path/to/my file.txt' },
+        parse('nvim://open?file=/path/to/my%20file.txt')
+      )
+    end)
+
+    it('validation', function()
+      eq('URI scheme must be "nvim"', parse_err('http://example.com'))
+      eq('Missing required "file" parameter', parse_err('nvim://open?line=42'))
+      eq(
+        'Unsupported action: foo. Supported actions: open',
+        parse_err('nvim://foo?file=/path/to/file.txt')
+      )
+      eq(
+        'Unsupported action: edit. Supported actions: open',
+        parse_err('nvim://edit?file=/path/to/file.txt')
+      )
+      eq(
+        'Unsupported nvim:// URI format. Expected: nvim://{action}?file=...',
+        parse_err('nvim://open')
+      )
+    end)
+  end)
 end)
