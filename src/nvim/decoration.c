@@ -124,6 +124,9 @@ void decor_redraw_sh(buf_T *buf, int row1, int row2, DecorSignHighlight sh)
       || (sh.flags & (kSHIsSign | kSHSpellOn | kSHSpellOff | kSHConceal | kSHConcealOff))) {
     if (row2 >= row1) {
       redraw_buf_range_later(buf, row1 + 1, row2 + 1);
+      if (sh.flags & (kSHConceal | kSHConcealOff)) {
+        changed_lines_invalidate_buf(buf, row1 + 1, 0, row2 + 2, 0);
+      }
     }
   }
   if (sh.flags & kSHConcealLines) {
@@ -324,7 +327,21 @@ void decor_state_invalidate(buf_T *buf)
 {
   if (decor_state.win && decor_state.win->w_buffer == buf) {
     decor_state.itr_valid = false;
+    decor_state.version++;
   }
+}
+
+/// Replacement at the start of a concealed region, or NUL when fully hidden.
+schar_T decor_conceal_char(win_T *wp, const DecorState *state)
+{
+  if (!decor_conceal_is_start(state) || wp->w_p_cole == 3
+      || (!decor_conceal_has_char(state) && wp->w_p_cole != 1)) {
+    return NUL;
+  }
+  if (decor_conceal_has_char(state)) {
+    return state->conceal_char;
+  }
+  return wp->w_p_lcs_chars.conceal != NUL ? wp->w_p_lcs_chars.conceal : schar_from_ascii(' ');
 }
 
 void decor_check_to_be_deleted(void)
@@ -769,6 +786,7 @@ next_mark:
   int attr = 0;
   int hl_eol_attr = 0;
   int conceal = 0;
+  bool conceal_persistent = false;
   schar_T conceal_char = 0;
   int conceal_attr = 0;
   TriState spell = kNone;
@@ -797,6 +815,9 @@ next_mark:
 
       if (r->kind == kDecorKindHighlight && (r->data.sh.flags & kSHConceal)) {
         conceal = 1;
+        if (!r->owned) {
+          conceal_persistent = true;
+        }
         if (r->start_row == row && r->start_col == col) {
           DecorSignHighlight *sh = &r->data.sh;
           conceal = 2;
@@ -858,13 +879,32 @@ next_mark:
   state->current = attr;
   state->current_hl_eol = hl_eol_attr;
   state->conceal = conceal;
+  state->conceal_persistent = conceal_persistent;
   state->conceal_char = conceal_char;
   state->conceal_attr = conceal_attr;
   state->spell = spell;
   return attr;
 }
 
-static const uint32_t conceal_filter[kMTMetaCount] = {[kMTMetaConcealLines] = kMTFilterSelect };
+static bool decor_has_sh_flag(DecorInline decor, uint16_t flag)
+{
+  if (!decor.ext) {
+    return decor.data.hl.flags & flag;
+  }
+  uint32_t idx = decor.data.ext.sh_idx;
+  while (idx != DECOR_ID_INVALID) {
+    DecorSignHighlight *sh = &kv_A(decor_items, idx);
+    if (sh->flags & flag) {
+      return true;
+    }
+    idx = sh->next;
+  }
+  return false;
+}
+
+static const uint32_t conceal_lines_filter[kMTMetaCount] = {
+  [kMTMetaConcealLines] = kMTFilterSelect,
+};
 
 /// Called by draw, move and plines code to determine whether a line is concealed.
 /// Scans the marktree for conceal_line marks on "row" and invokes any
@@ -883,7 +923,7 @@ bool decor_conceal_line(win_T *wp, int row, bool check_cursor)
     return false;
   }
 
-  // No need to scan the marktree if there are no conceal_line marks.
+  // No need to scan the marktree if there are no whole-line conceal marks.
   if (!buf_meta_total(wp->w_buffer, kMTMetaConcealLines)) {
     return decor_providers_invoke_conceal_line(wp, row);
   }
@@ -893,22 +933,23 @@ bool decor_conceal_line(win_T *wp, int row, bool check_cursor)
   MarkTreeIter itr[1];
   marktree_itr_get_overlap(wp->w_buffer->b_marktree, row, 0, itr);
   while (marktree_itr_step_overlap(wp->w_buffer->b_marktree, itr, &pair)) {
-    if (mt_conceal_lines(pair.start) && ns_in_win(pair.start.ns, wp)) {
+    if (decor_has_sh_flag(mt_decor(pair.start), kSHConcealLines)
+        && ns_in_win(pair.start.ns, wp)) {
       return true;
     }
   }
 
-  marktree_itr_step_out_filter(wp->w_buffer->b_marktree, itr, conceal_filter);
+  marktree_itr_step_out_filter(wp->w_buffer->b_marktree, itr, conceal_lines_filter);
 
   while (itr->x) {
     MTKey mark = marktree_itr_current(itr);
     if (mark.pos.row > row) {
       break;
     }
-    if (mt_conceal_lines(mark) && ns_in_win(mark.ns, wp)) {
+    if (decor_has_sh_flag(mt_decor(mark), kSHConcealLines) && ns_in_win(mark.ns, wp)) {
       return true;
     }
-    marktree_itr_next_filter(wp->w_buffer->b_marktree, itr, row + 1, 0, conceal_filter);
+    marktree_itr_next_filter(wp->w_buffer->b_marktree, itr, row + 1, 0, conceal_lines_filter);
   }
 
   return decor_providers_invoke_conceal_line(wp, row);

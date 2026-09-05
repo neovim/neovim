@@ -437,6 +437,12 @@ OPTIONS
 • 'previewpopup' decides how the preview window is displayed.
 • 'messagesopt' items "pager" and "timeout" configure the |ui2| message pager
   key and how long a message stays in the message window.
+• 'wrap' is now conceal-aware: a line whose text is hidden by conceal wraps
+  at its displayed width instead of at the pre-conceal wrap points, and the
+  cursor, |screenpos()|, |wincol()| and mouse follow the reflowed layout.
+  This applies to conceal from |extmarks| and |treesitter-highlight-conceal|;
+  ":syntax" conceal, |matchadd()| conceal, and conceal from other decoration
+  providers are unchanged.
 
 PERFORMANCE
 

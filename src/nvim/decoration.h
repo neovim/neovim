@@ -93,11 +93,13 @@ typedef struct {
   int conceal;
   schar_T conceal_char;
   int conceal_attr;
+  bool conceal_persistent;  ///< at least one active conceal range is a persistent (non-owned) mark
 
   TriState spell;
 
   bool running_decor_provider;
   bool itr_valid;
+  uint64_t version;  ///< Structural changes during callbacks, also invalidating local iterators.
 } DecorState;
 
 EXTERN DecorState decor_state INIT( = { 0 });
@@ -116,4 +118,29 @@ static inline int decor_redraw_col(win_T *wp, int col, int win_col, bool hidden,
     return state->current;
   }
   return decor_redraw_col_impl(wp, col, win_col, hidden, state, max_col_last);
+}
+
+/// Whether "state" (as populated by decor_redraw_col()/decor_redraw_line()) is positioned at the
+/// first screen cell of an active persistent (marktree) conceal region, i.e. "state->conceal"'s
+/// most specific value (see decor_redraw_col_impl()): 0 not concealed, 1 concealed but not this
+/// region's first cell, 2 concealed and this is the first cell.
+///
+/// Shared by win_line() (drawline.c), as one of the per-source conditions in its combined
+/// :syntax/matchadd()/decor "show a replacement char" decision, and linesize_conceal_hidden()
+/// (plines.c), which considers persistent conceal alone (the only source 'wrap' reflow follows).
+/// Routing both through the same accessor means a future change to what "region start" means
+/// cannot update one without the other.
+static inline bool decor_conceal_is_start(const DecorState *state)
+  FUNC_ATTR_ALWAYS_INLINE
+{
+  return state->conceal > 1;
+}
+
+/// Whether "state"'s active persistent-conceal region has its own custom substitute character
+/// ("cchar") to show at its first cell. Only meaningful together with decor_conceal_is_start().
+/// Shared by win_line() (drawline.c) and linesize_conceal_hidden() (plines.c); see there.
+static inline bool decor_conceal_has_char(const DecorState *state)
+  FUNC_ATTR_ALWAYS_INLINE
+{
+  return state->conceal != 0 && state->conceal_char != 0;
 }

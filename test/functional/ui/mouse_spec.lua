@@ -1356,7 +1356,7 @@ describe('ui/mouse/input', function()
       })
     end)
 
-    local function test_mouse_click_conceal()
+    local function test_mouse_click_conceal(reflows)
       it('(level 1) click on non-wrapped lines', function()
         feed_command('let &conceallevel=1', 'echo')
 
@@ -1429,7 +1429,13 @@ describe('ui/mouse/input', function()
 
         feed('<esc><LeftMouse><24,1>')
         screen:expect({
-          any = {
+          any = reflows and {
+            'Section{1:>>--->--->---}{14: }t1{14: } ',
+            '{1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14:%^ }',
+            't4{14: }                      ',
+            '{14:>} 私は猫が大好き{1:>---}{14: X } {1:>}',
+            '✨🐈✨                   ',
+          } or {
             'Section{1:>>--->--->---}{14: }t1{14: } ',
             '{1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14:%^ }',
             't4{14: }                      ',
@@ -1440,7 +1446,13 @@ describe('ui/mouse/input', function()
 
         feed('<esc><LeftMouse><0,2>')
         screen:expect({
-          any = {
+          any = reflows and {
+            'Section{1:>>--->--->---}{14: }t1{14: } ',
+            '{1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }',
+            '%^t4{14: }                      ',
+            '{14:>} 私は猫が大好き{1:>---}{14: X } {1:>}',
+            '✨🐈✨                   ',
+          } or {
             'Section{1:>>--->--->---}{14: }t1{14: } ',
             '{1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }',
             '%^t4{14: }                      ',
@@ -1451,7 +1463,13 @@ describe('ui/mouse/input', function()
 
         feed('<esc><LeftMouse><8,3>')
         screen:expect({
-          any = {
+          any = reflows and {
+            'Section{1:>>--->--->---}{14: }t1{14: } ',
+            '{1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }',
+            't4{14: }                      ',
+            '{14:>} 私は猫%^が大好き{1:>---}{14: X } {1:>}',
+            '✨🐈✨                   ',
+          } or {
             'Section{1:>>--->--->---}{14: }t1{14: } ',
             '{1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }',
             't4{14: }                      ',
@@ -1462,7 +1480,13 @@ describe('ui/mouse/input', function()
 
         feed('<esc><LeftMouse><21,3>')
         screen:expect({
-          any = {
+          any = reflows and {
+            'Section{1:>>--->--->---}{14: }t1{14: } ',
+            '{1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }',
+            't4{14: }                      ',
+            '{14:>} 私は猫が大好き{1:>---}{14: %^X } {1:>}',
+            '✨🐈✨                   ',
+          } or {
             'Section{1:>>--->--->---}{14: }t1{14: } ',
             '{1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }',
             't4{14: }                      ',
@@ -1473,7 +1497,15 @@ describe('ui/mouse/input', function()
 
         feed('<esc><LeftMouse><4,4>')
         screen:expect({
-          any = {
+          any = reflows and {
+            'Section{1:>>--->--->---}{14: }t1{14: } ',
+            '{1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }',
+            't4{14: }                      ',
+            '{14:>} 私は猫が大好き{1:>---}{14: X } {1:>}',
+            -- Reflow drops the leading concealed space that used to precede this row, shifting
+            -- the same click column onto the following double-width character.
+            '✨🐈%^✨                   ',
+          } or {
             'Section{1:>>--->--->---}{14: }t1{14: } ',
             '{1:>--->--->---}  {14: }t2{14: } {14: }t3{14: } {14: }',
             't4{14: }                      ',
@@ -1604,7 +1636,12 @@ describe('ui/mouse/input', function()
 
         feed('<esc><LeftMouse><20,0>')
         screen:expect({
-          any = {
+          any = reflows and {
+            'Section{1:>>--->--->---}%^t1   ',
+            '{1:>--->--->---}  t2 t3 t4   ',
+            '{14:>} 私は猫が大好き{1:>---}{14:X} ✨{1:>}',
+            '🐈✨                     ',
+          } or {
             'Section{1:>>--->--->---}%^t1   ',
             '{1:>--->--->---}  t2 t3      ',
             't4                       ',
@@ -1615,7 +1652,12 @@ describe('ui/mouse/input', function()
 
         feed('<esc><LeftMouse><14,1>')
         screen:expect({
-          any = {
+          any = reflows and {
+            'Section{1:>>--->--->---}t1   ',
+            '{1:>--->--->---}  %^t2 t3 t4   ',
+            '{14:>} 私は猫が大好き{1:>---}{14:X} ✨{1:>}',
+            '🐈✨                     ',
+          } or {
             'Section{1:>>--->--->---}t1   ',
             '{1:>--->--->---}  %^t2 t3      ',
             't4                       ',
@@ -1626,7 +1668,12 @@ describe('ui/mouse/input', function()
 
         feed('<esc><LeftMouse><18,1>')
         screen:expect({
-          any = {
+          any = reflows and {
+            'Section{1:>>--->--->---}t1   ',
+            '{1:>--->--->---}  t2 t%^3 t4   ',
+            '{14:>} 私は猫が大好き{1:>---}{14:X} ✨{1:>}',
+            '🐈✨                     ',
+          } or {
             'Section{1:>>--->--->---}t1   ',
             '{1:>--->--->---}  t2 t%^3      ',
             't4                       ',
@@ -1635,15 +1682,19 @@ describe('ui/mouse/input', function()
           },
         })
 
-        -- NOTE: The click would ideally be on the 't' in 't4', but wrapping
-        -- caused the invisible '*' right before 't4' to remain on the previous
-        -- screen line.  This is being treated as expected because fixing this is
-        -- out of scope for mouse clicks.  Should the wrapping behavior of
-        -- concealed characters change in the future, this case should be
-        -- reevaluated.
+        -- NOTE (non-reflowing case only): the click would ideally be on the 't' in 't4', but
+        -- wrapping caused the invisible '*' right before 't4' to remain on the previous screen
+        -- line.  This is being treated as expected because fixing this is out of scope for mouse
+        -- clicks. With reflow, 't4' shares the previous screen row entirely, so the click at
+        -- <0,2> now lands on the reflowed japanese-text row instead.
         feed('<esc><LeftMouse><0,2>')
         screen:expect({
-          any = {
+          any = reflows and {
+            'Section{1:>>--->--->---}t1   ',
+            '{1:>--->--->---}  t2 t3 t4   ',
+            '{14:%^>} 私は猫が大好き{1:>---}{14:X} ✨{1:>}',
+            '🐈✨                     ',
+          } or {
             'Section{1:>>--->--->---}t1   ',
             '{1:>--->--->---}  t2 t3 %^     ',
             't4                       ',
@@ -1654,7 +1705,12 @@ describe('ui/mouse/input', function()
 
         feed('<esc><LeftMouse><1,2>')
         screen:expect({
-          any = {
+          any = reflows and {
+            'Section{1:>>--->--->---}t1   ',
+            '{1:>--->--->---}  t2 t3 t4   ',
+            '{14:>}%^ 私は猫が大好き{1:>---}{14:X} ✨{1:>}',
+            '🐈✨                     ',
+          } or {
             'Section{1:>>--->--->---}t1   ',
             '{1:>--->--->---}  t2 t3      ',
             't%^4                       ',
@@ -1665,7 +1721,12 @@ describe('ui/mouse/input', function()
 
         feed('<esc><LeftMouse><0,3>')
         screen:expect({
-          any = {
+          any = reflows and {
+            'Section{1:>>--->--->---}t1   ',
+            '{1:>--->--->---}  t2 t3 t4   ',
+            '{14:>} 私は猫が大好き{1:>---}{14:X} ✨{1:>}',
+            '%^🐈✨                     ',
+          } or {
             'Section{1:>>--->--->---}t1   ',
             '{1:>--->--->---}  t2 t3      ',
             't4                       ',
@@ -1676,7 +1737,12 @@ describe('ui/mouse/input', function()
 
         feed('<esc><LeftMouse><20,3>')
         screen:expect({
-          any = {
+          any = reflows and {
+            'Section{1:>>--->--->---}t1   ',
+            '{1:>--->--->---}  t2 t3 t4   ',
+            '{14:>} 私は猫が大好き{1:>---}{14:X} ✨{1:>}',
+            '🐈%^✨                     ',
+          } or {
             'Section{1:>>--->--->---}t1   ',
             '{1:>--->--->---}  t2 t3      ',
             't4                       ',
@@ -1687,7 +1753,13 @@ describe('ui/mouse/input', function()
 
         feed('<esc><LeftMouse><1,4>')
         screen:expect({
-          any = {
+          any = reflows and {
+            'Section{1:>>--->--->---}t1   ',
+            '{1:>--->--->---}  t2 t3 t4   ',
+            '{14:>} 私は猫が大好き{1:>---}{14:X} ✨{1:>}',
+            '🐈✨                     ',
+            '%^                         ',
+          } or {
             'Section{1:>>--->--->---}t1   ',
             '{1:>--->--->---}  t2 t3      ',
             't4                       ',
@@ -1698,7 +1770,13 @@ describe('ui/mouse/input', function()
 
         feed('<esc><LeftMouse><5,4>')
         screen:expect({
-          any = {
+          any = reflows and {
+            'Section{1:>>--->--->---}t1   ',
+            '{1:>--->--->---}  t2 t3 t4   ',
+            '{14:>} 私は猫が大好き{1:>---}{14:X} ✨{1:>}',
+            '🐈✨                     ',
+            '%^                         ',
+          } or {
             'Section{1:>>--->--->---}t1   ',
             '{1:>--->--->---}  t2 t3      ',
             't4                       ',
@@ -1754,7 +1832,12 @@ describe('ui/mouse/input', function()
 
         feed('<esc><LeftMouse><14,1>')
         screen:expect({
-          any = {
+          any = reflows and {
+            'Section{1:>>--->--->---}t1   ',
+            '{1:>--->--->---}  %^t2 t3 t4   ',
+            ' 私は猫が大好き{1:>---} ✨🐈{1:>}',
+            '✨                       ',
+          } or {
             'Section{1:>>--->--->---}t1   ',
             '{1:>--->--->---}  %^t2 t3      ',
             't4                       ',
@@ -1765,7 +1848,12 @@ describe('ui/mouse/input', function()
 
         feed('<esc><LeftMouse><18,1>')
         screen:expect({
-          any = {
+          any = reflows and {
+            'Section{1:>>--->--->---}t1   ',
+            '{1:>--->--->---}  t2 t%^3 t4   ',
+            ' 私は猫が大好き{1:>---} ✨🐈{1:>}',
+            '✨                       ',
+          } or {
             'Section{1:>>--->--->---}t1   ',
             '{1:>--->--->---}  t2 t%^3      ',
             't4                       ',
@@ -1776,7 +1864,12 @@ describe('ui/mouse/input', function()
 
         feed('<esc><LeftMouse><1,2>')
         screen:expect({
-          any = {
+          any = reflows and {
+            'Section{1:>>--->--->---}t1   ',
+            '{1:>--->--->---}  t2 t3 t4   ',
+            ' %^私は猫が大好き{1:>---} ✨🐈{1:>}',
+            '✨                       ',
+          } or {
             'Section{1:>>--->--->---}t1   ',
             '{1:>--->--->---}  t2 t3      ',
             't%^4                       ',
@@ -1787,7 +1880,13 @@ describe('ui/mouse/input', function()
 
         feed('<esc><LeftMouse><0,3>')
         screen:expect({
-          any = {
+          any = reflows and {
+            'Section{1:>>--->--->---}t1   ',
+            '{1:>--->--->---}  t2 t3 t4   ',
+            ' 私は猫が大好き{1:>---} ✨🐈{1:>}',
+            '%^✨                       ',
+            '                         ',
+          } or {
             'Section{1:>>--->--->---}t1   ',
             '{1:>--->--->---}  t2 t3      ',
             't4                       ',
@@ -1798,7 +1897,13 @@ describe('ui/mouse/input', function()
 
         feed('<esc><LeftMouse><20,3>')
         screen:expect({
-          any = {
+          any = reflows and {
+            'Section{1:>>--->--->---}t1   ',
+            '{1:>--->--->---}  t2 t3 t4   ',
+            ' 私は猫が大好き{1:>---} ✨🐈{1:>}',
+            '%^✨                       ',
+            '                         ',
+          } or {
             'Section{1:>>--->--->---}t1   ',
             '{1:>--->--->---}  t2 t3      ',
             't4                       ',
@@ -1809,7 +1914,13 @@ describe('ui/mouse/input', function()
 
         feed('<esc><LeftMouse><1,4>')
         screen:expect({
-          any = {
+          any = reflows and {
+            'Section{1:>>--->--->---}t1   ',
+            '{1:>--->--->---}  t2 t3 t4   ',
+            ' 私は猫が大好き{1:>---} ✨🐈{1:>}',
+            '✨                       ',
+            '%^                         ',
+          } or {
             'Section{1:>>--->--->---}t1   ',
             '{1:>--->--->---}  t2 t3      ',
             't4                       ',
@@ -1820,7 +1931,13 @@ describe('ui/mouse/input', function()
 
         feed('<esc><LeftMouse><3,4>')
         screen:expect({
-          any = {
+          any = reflows and {
+            'Section{1:>>--->--->---}t1   ',
+            '{1:>--->--->---}  t2 t3 t4   ',
+            ' 私は猫が大好き{1:>---} ✨🐈{1:>}',
+            '✨                       ',
+            '%^                         ',
+          } or {
             'Section{1:>>--->--->---}t1   ',
             '{1:>--->--->---}  t2 t3      ',
             't4                       ',
@@ -1831,7 +1948,13 @@ describe('ui/mouse/input', function()
 
         feed('<esc><LeftMouse><5,4>')
         screen:expect({
-          any = {
+          any = reflows and {
+            'Section{1:>>--->--->---}t1   ',
+            '{1:>--->--->---}  t2 t3 t4   ',
+            ' 私は猫が大好き{1:>---} ✨🐈{1:>}',
+            '✨                       ',
+            '%^                         ',
+          } or {
             'Section{1:>>--->--->---}t1   ',
             '{1:>--->--->---}  t2 t3      ',
             't4                       ',
@@ -1872,7 +1995,7 @@ describe('ui/mouse/input', function()
           command([[syntax match X2 /cats/ conceal cchar=X contained]])
           command([[syntax match X3 /\n\@<=x/ conceal cchar=>]])
         end)
-        test_mouse_click_conceal()
+        test_mouse_click_conceal(false)
       end)
 
       describe('(matchadd())', function()
@@ -1881,7 +2004,7 @@ describe('ui/mouse/input', function()
           fn.matchadd('Conceal', [[cats]], 10, -1, { conceal = 'X' })
           fn.matchadd('Conceal', [[\n\@<=x]], 10, -1, { conceal = '>' })
         end)
-        test_mouse_click_conceal()
+        test_mouse_click_conceal(false)
       end)
 
       describe('(extmarks)', function()
@@ -1900,9 +2023,40 @@ describe('ui/mouse/input', function()
           api.nvim_buf_set_extmark(0, ns, 2, 25, { end_col = 29, conceal = 'X' })
           api.nvim_buf_set_extmark(0, ns, 2, 0, { end_col = 1, conceal = '>' })
         end)
-        test_mouse_click_conceal()
+        -- Persistent extmark conceal reflows 'wrap' at its displayed width (#14409); syntax and
+        -- match conceal keep the historical boguscols (no reflow) behavior.
+        test_mouse_click_conceal(true)
       end)
     end)
+
+    it(
+      'getmousepos() reports the reflowed buffer column with conceal-aware wrap (#14409)',
+      function()
+        command('%delete')
+        command('set wrap conceallevel=2 concealcursor=nvic mouse=a')
+        local ns = api.nvim_create_namespace('conceal_wrap_getmousepos')
+        -- 10 a + HIDDEN(6) + 30 b = 46 raw; hide the 6 -> 40 cells -> 2 rows at width 20.
+        screen:try_resize(20, 6)
+        insert(('a'):rep(10) .. 'HIDDEN' .. ('b'):rep(30))
+        api.nvim_buf_set_extmark(0, ns, 0, 10, { end_col = 16, conceal = '' })
+        command('redraw')
+
+        -- Row 1 (0-based 0), cell 14: reflowed 'b' at buffer col 20.
+        api.nvim_input_mouse('left', 'press', '', 0, 0, 14)
+        local mousepos = fn.getmousepos()
+        eq(1, mousepos.line)
+        eq(21, mousepos.column)
+        eq(0, mousepos.coladd)
+
+        -- The boundary cell where the concealed run collapses to zero width: row 1, cell 10 lands
+        -- on the first visible 'b' (buffer col 16, the concealed region's own start).
+        api.nvim_input_mouse('left', 'press', '', 0, 0, 10)
+        mousepos = fn.getmousepos()
+        eq(1, mousepos.line)
+        eq(17, mousepos.column)
+        eq(0, mousepos.coladd)
+      end
+    )
 
     it('virtual text does not change cursor placement on concealed line', function()
       command('%delete')

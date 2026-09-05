@@ -701,7 +701,7 @@ void mark_view_restore(fmark_T *fm)
       set_topline(curwin, topline);
       curwin->w_skipcol = (fm->view.skipcol > 0
                            && !hasFolding(curwin, topline, NULL, NULL)
-                           && fm->view.skipcol < linetabsize_eol(curwin, topline))
+                           && fm->view.skipcol < win_screen_linewidth_eol(curwin, topline))
                           ? fm->view.skipcol : 0;
     }
   }

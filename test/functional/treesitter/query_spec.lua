@@ -926,5 +926,47 @@ void ui_refresh(void)
       local result = exec_lua(get_patterns, query_text, { capture = 'param' })
       eq({ { id = 1, pattern = 1 } }, result)
     end)
+
+    it('notifies after disabling captures and patterns', function()
+      eq(
+        { 2, true },
+        exec_lua(function()
+          local q = vim.treesitter.query.parse('c', '(identifier) @variable')
+          local other = vim.treesitter.query.parse('c', '(identifier) @other')
+          local count, same_query = 0, true
+          q.query:_set_on_changed(function(changed)
+            count = count + 1
+            same_query = same_query and changed == q.query
+          end)
+          other.query:disable_pattern(1)
+          q.query:disable_capture('variable')
+          q.query:disable_pattern(1)
+          q.query:_set_on_changed(nil)
+          q.query:disable_pattern(1)
+          return { count, same_query }
+        end)
+      )
+    end)
+
+    it('collects queries and their change callbacks', function()
+      eq(
+        { true, true },
+        exec_lua(function()
+          vim.treesitter.language.add('c')
+          local refs = setmetatable({}, { __mode = 'v' })
+          do
+            local q = vim._ts_parse_query('c', '(identifier) @variable')
+            local value = {}
+            q:_set_on_changed(function()
+              return q, value
+            end)
+            refs[1], refs[2] = q, value
+          end
+          collectgarbage('collect')
+          collectgarbage('collect')
+          return { refs[1] == nil, refs[2] == nil }
+        end)
+      )
+    end)
   end)
 end)

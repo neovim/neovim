@@ -18,6 +18,11 @@ local TSQuery = {} -- luacheck: no unused
 ---@return TSQueryInfo
 function TSQuery:inspect() end
 
+--- Set the callback invoked after disabling a capture or pattern.
+---@nodoc
+---@param callback fun(query: TSQuery)?
+function TSQuery:_set_on_changed(callback) end
+
 --- Disable a specific capture in this query; once disabled the capture cannot be re-enabled.
 --- {capture_name} should not include a leading "@".
 ---
