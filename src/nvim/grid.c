@@ -20,6 +20,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/arabic.h"
 #include "nvim/ascii_defs.h"
+#include "nvim/bidi.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/decoration.h"
 #include "nvim/globals.h"
@@ -548,42 +549,367 @@ void grid_line_mirror(int width)
   grid_line_flags |= SLF_RIGHTLEFT;
 }
 
-void linebuf_mirror(int *firstp, int *lastp, int *clearp, int width)
-{
-  int first = *firstp;
-  int last = *lastp;
+/// What 'bidi' needs to know about each cell of the line being drawn.  Allocated
+/// with the line buffers.
+///
+/// "cls", "orig" and "cp" are live only while the levels are being resolved.
+/// "level" and the virtual text marks are read again while the line is
+/// reordered.
+static struct {
+  uint8_t *cls;         ///< bidi class of the cell, resolved in place
+  uint8_t *orig;        ///< class the cell started with, which UAX #9 L1 needs
+  uint8_t *level;       ///< resolved embedding level of the cell
+  int *cp;              ///< first codepoint of the cell
+  bool *virt_text;      ///< the cell holds virtual text
+  uint8_t *virt_class;  ///< class of the text a virtual text cell covers
+  bool has_virt_text;   ///< any cell is marked in "virt_text"
+} linebuf_bidi;
 
+/// @return  number of cells at "col" that move together when the line is
+///          reflected: a stretch of virtual text, or a single cell.
+static int linebuf_block_len(int col, int last)
+{
+  if (!linebuf_bidi.has_virt_text || !linebuf_bidi.virt_text[col]) {
+    return 1;
+  }
+  int end = col;
+  while (end < last && linebuf_bidi.virt_text[end]) {
+    end++;
+  }
+  return end - col;
+}
+
+/// Reflect the "size" byte wide cells of [first, last) about "mirror", reading
+/// from "scratch" and writing to "buf".
+static void linebuf_reflect_blocks(void *buf, const void *scratch, size_t size, int first, int last,
+                                   int mirror)
+{
+  for (int col = first; col < last;) {
+    int len = linebuf_block_len(col, last);
+    memcpy((char *)buf + (size_t)(mirror - col - len + 1) * size,
+           (const char *)scratch + (size_t)col * size, (size_t)len * size);
+    col += len;
+  }
+}
+
+/// Reflect the cells in [first, last) about "mirror", so that a cell at "col"
+/// ends up at "mirror - col".  Double-width pairs and stretches of virtual text
+/// stay together and keep their order.
+static void linebuf_reflect(int first, int last, int mirror)
+{
   size_t n = (size_t)(last - first);
-  int mirror = width - 1;  // Mirrors are more fun than television.
+
   schar_T *scratch_char = (schar_T *)linebuf_scratch;
   memcpy(scratch_char + first, linebuf_char + first, n * sizeof(schar_T));
-  for (int col = first; col < last; col++) {
-    int rev = mirror - col;
-    if (col + 1 < last && scratch_char[col + 1] == 0) {
-      linebuf_char[rev - 1] = scratch_char[col];
-      linebuf_char[rev] = 0;
-      col++;
-    } else {
-      linebuf_char[rev] = scratch_char[col];
+  for (int col = first; col < last;) {
+    int len = linebuf_block_len(col, last);
+    if (len == 1 && col + 1 < last && scratch_char[col + 1] == 0) {
+      len = 2;
     }
+    memcpy(linebuf_char + mirror - col - len + 1, scratch_char + col,
+           (size_t)len * sizeof(schar_T));
+    col += len;
   }
 
   // for attr and vcol: assumes doublewidth chars are self-consistent
   sattr_T *scratch_attr = (sattr_T *)linebuf_scratch;
   memcpy(scratch_attr + first, linebuf_attr + first, n * sizeof(sattr_T));
-  for (int col = first; col < last; col++) {
-    linebuf_attr[mirror - col] = scratch_attr[col];
-  }
+  linebuf_reflect_blocks(linebuf_attr, scratch_attr, sizeof(sattr_T), first, last, mirror);
 
   colnr_T *scratch_vcol = (colnr_T *)linebuf_scratch;
   memcpy(scratch_vcol + first, linebuf_vcol + first, n * sizeof(colnr_T));
-  for (int col = first; col < last; col++) {
-    linebuf_vcol[mirror - col] = scratch_vcol[col];
+  linebuf_reflect_blocks(linebuf_vcol, scratch_vcol, sizeof(colnr_T), first, last, mirror);
+
+  if (!linebuf_bidi.has_virt_text) {
+    return;
   }
+
+  // Last: the loops above read this to find the blocks.  A block is uniform, so
+  // reflecting the marks cell by cell lands them on the same cells.
+  bool *scratch_virt_text = (bool *)linebuf_scratch;
+  memcpy(scratch_virt_text + first, linebuf_bidi.virt_text + first, n * sizeof(bool));
+  for (int col = first; col < last; col++) {
+    linebuf_bidi.virt_text[mirror - col] = scratch_virt_text[col];
+  }
+}
+
+void linebuf_mirror(int *firstp, int *lastp, int *clearp, int width)
+{
+  int first = *firstp;
+  int last = *lastp;
+
+  linebuf_reflect(first, last, width - 1);  // Mirrors are more fun than television.
 
   *firstp = width - *clearp;
   *clearp = width - first;
   *lastp = width - last;
+}
+
+/// Reverse the cells in [first, last) in place, taking their embedding levels
+/// with them.
+///
+/// Only reordering resolves levels, so only reordering moves them: the mirror
+/// that 'rightleft' applies goes through linebuf_reflect() alone.
+static void linebuf_reverse(int first, int last)
+{
+  int mirror = first + last - 1;
+  size_t n = (size_t)(last - first);
+
+  // Before linebuf_reflect(), which moves the virtual text marks that
+  // linebuf_reflect_blocks() reads to find the blocks.
+  uint8_t *scratch_level = (uint8_t *)linebuf_scratch;
+  memcpy(scratch_level + first, linebuf_bidi.level + first, n * sizeof(uint8_t));
+  linebuf_reflect_blocks(linebuf_bidi.level, scratch_level, sizeof(uint8_t), first, last, mirror);
+
+  linebuf_reflect(first, last, mirror);
+}
+
+/// Draw the characters in [first, last) that sit at an odd embedding level with
+/// their mirrored glyph, so that "(" opens towards the text it encloses.
+///
+/// UAX #9 L4.  Virtual text is left alone: it was mirrored already, when it was
+/// reordered as a paragraph of its own.
+static void linebuf_mirror_brackets(int first, int last)
+{
+  for (int col = first; col < last; col++) {
+    if (linebuf_char[col] == 0 || !(linebuf_bidi.level[col] & 1)
+        || (linebuf_bidi.has_virt_text && linebuf_bidi.virt_text[col])) {
+      continue;
+    }
+    int mirrored = bidi_char_mirror(schar_get_first_codepoint(linebuf_char[col]));
+    if (mirrored != NUL) {
+      linebuf_char[col] = schar_from_char(mirrored);
+    }
+  }
+}
+
+/// @return  the bidirectional class of the character in "sc".
+///
+/// ASCII covers most of most files and its classes are fixed, so it skips the
+/// property lookup.
+static uint8_t linebuf_cell_class(schar_T sc)
+{
+  char ascii = schar_get_ascii(sc);
+  if (ascii == NUL) {
+    return (uint8_t)bidi_char_class(schar_get_first_codepoint(sc));
+  }
+  if (ascii >= '0' && ascii <= '9') {
+    return kBidiEN;
+  }
+  if (ASCII_ISALPHA(ascii)) {
+    return kBidiL;
+  }
+  switch (ascii) {
+  case ' ':
+    return kBidiWS;
+  case '\t':
+    return kBidiS;
+  case '+':
+  case '-':
+    return kBidiES;
+  case '#':
+  case '$':
+  case '%':
+    return kBidiET;
+  case ',':
+  case '.':
+  case ':':
+  case '/':
+    return kBidiCS;
+  default:
+    return kBidiON;
+  }
+}
+
+/// Classify the cells in [first, last) and resolve their embedding levels.
+///
+/// @return  false when the line needs no reordering, which is a left-to-right
+///          paragraph holding nothing that reads right to left.  Most lines of
+///          most files take this path.
+static bool linebuf_resolve_levels(int first, int last, int para_level)
+{
+  bool any_rtl = false;
+
+  for (int col = first; col < last; col++) {
+    if (linebuf_bidi.has_virt_text && linebuf_bidi.virt_text[col]) {
+      // A cell holding virtual text says nothing about the direction of the
+      // line; use the class of the character that was drawn there.
+      linebuf_bidi.cls[col] = linebuf_bidi.virt_class[col];
+      linebuf_bidi.cp[col] = NUL;
+    } else if (linebuf_char[col] == 0 && col > first) {
+      linebuf_bidi.cls[col] = linebuf_bidi.cls[col - 1];
+      linebuf_bidi.cp[col] = NUL;
+    } else {
+      linebuf_bidi.cls[col] = linebuf_cell_class(linebuf_char[col]);
+      linebuf_bidi.cp[col] = schar_get_first_codepoint(linebuf_char[col]);
+    }
+    linebuf_bidi.orig[col] = linebuf_bidi.cls[col];
+    any_rtl |= (linebuf_bidi.cls[col] == kBidiR || linebuf_bidi.cls[col] == kBidiAL
+                || linebuf_bidi.cls[col] == kBidiAN);
+  }
+
+  if (!any_rtl && para_level == 0) {
+    return false;
+  }
+
+  bidi_resolve_levels(linebuf_bidi.cls + first, linebuf_bidi.orig + first,
+                      linebuf_bidi.cp + first, linebuf_bidi.level + first,
+                      last - first, para_level);
+  return true;
+}
+
+/// Reorder the cells in [first, last) so that bidirectional text is displayed in
+/// visual order.
+///
+/// Virtual text marked by linebuf_virt_text_reorder() moves as one block and
+/// keeps the order it was given there.
+///
+/// @param rtl  the line reads right to left as a whole.  This comes from the
+///             buffer text: the cells also hold the line number, virtual text
+///             and fold markers, which say nothing about the direction of the
+///             line itself.
+void linebuf_reorder(int first, int last, bool rtl)
+{
+  if (first >= last) {
+    return;
+  }
+
+  int para_level = rtl ? 1 : 0;
+  if (!linebuf_resolve_levels(first, last, para_level)) {
+    return;
+  }
+
+  // A stretch of virtual text reads as one word: give every cell of it the level
+  // of the first, so that no reversal splits it.
+  if (linebuf_bidi.has_virt_text) {
+    for (int col = first; col < last;) {
+      int len = linebuf_block_len(col, last);
+      for (int i = 1; i < len; i++) {
+        linebuf_bidi.level[col + i] = linebuf_bidi.level[col];
+      }
+      col += len;
+    }
+  }
+
+  int highest = para_level;
+  int lowest_odd = UINT8_MAX;
+  for (int col = first; col < last; col++) {
+    int level = linebuf_bidi.level[col];
+    highest = MAX(highest, level);
+    if (level & 1) {
+      lowest_odd = MIN(lowest_odd, level);
+    }
+  }
+
+  // L2: from the highest level down to the lowest odd one, reverse each run of
+  // cells at that level or above.
+  for (int level = highest; level >= lowest_odd; level--) {
+    for (int col = first; col < last; col++) {
+      if (linebuf_bidi.level[col] < level) {
+        continue;
+      }
+      int end = col;
+      while (end < last && linebuf_bidi.level[end] >= level) {
+        end++;
+      }
+      linebuf_reverse(col, end);
+      col = end;
+    }
+  }
+
+  linebuf_mirror_brackets(first, last);
+}
+
+/// @return  true if the cells in [first, last) read right to left, taken from
+///          the first character in them that has a direction (UAX #9 P2 and P3).
+static bool linebuf_is_rtl(int first, int last)
+{
+  for (int col = first; col < last; col++) {
+    if (linebuf_char[col] == 0) {
+      continue;
+    }
+    BidiClass bidi_class = bidi_char_class(schar_get_first_codepoint(linebuf_char[col]));
+    if (bidi_class == kBidiR || bidi_class == kBidiAL) {
+      return true;
+    }
+    if (bidi_class == kBidiL) {
+      return false;
+    }
+  }
+  return false;
+}
+
+/// Record the class of the text in [first, last), and count the cells up to
+/// "width" beyond it as blank.
+///
+/// Call this before virtual text is drawn on the line.  Virtual text overwrites
+/// the cells it is drawn in, and reading the direction back out of them would
+/// make an inlay hint or a blame annotation reorder the line it annotates.
+void linebuf_bidi_snapshot(int first, int last, int width)
+{
+  for (int col = first; col < last; col++) {
+    linebuf_bidi.virt_class[col] = (linebuf_char[col] == 0 && col > first)
+                                   ? linebuf_bidi.virt_class[col - 1]
+                                   : linebuf_cell_class(linebuf_char[col]);
+  }
+  for (int col = MAX(first, last); col < width; col++) {
+    linebuf_bidi.virt_class[col] = kBidiWS;
+  }
+}
+
+/// Reorder the virtual text just drawn into [first, last), and mark those cells
+/// as holding it.
+///
+/// Virtual text is a paragraph of its own: its direction comes from its own
+/// characters, not from the line it annotates.  The line is then reordered
+/// around it, moving it as one block and reading the class of the text it covers
+/// rather than of the text drawn in it.
+void linebuf_virt_text_reorder(int first, int last)
+{
+  if (first >= last) {
+    return;
+  }
+
+  linebuf_reorder(first, last, linebuf_is_rtl(first, last));
+  for (int col = first; col < last; col++) {
+    linebuf_bidi.virt_text[col] = true;
+  }
+  linebuf_bidi.has_virt_text = true;
+}
+
+/// Forget where the virtual text was, once the line has been reordered.
+void linebuf_virt_text_clear(void)
+{
+  if (linebuf_bidi.has_virt_text) {
+    memset(linebuf_bidi.virt_text, 0, linebuf_size * sizeof(bool));
+    linebuf_bidi.has_virt_text = false;
+  }
+}
+
+/// Move the cells in [first, last) to the right edge of a "width" wide line,
+/// filling the cells they leave behind with spaces.
+///
+/// A right-to-left paragraph starts at the right margin, the way a left-to-right
+/// one starts at the left.
+void linebuf_align_right(int first, int last, int width)
+{
+  int shift = width - last;
+  if (shift <= 0 || first >= last) {
+    return;
+  }
+
+  memmove(linebuf_char + first + shift, linebuf_char + first,
+          (size_t)(last - first) * sizeof(schar_T));
+  memmove(linebuf_attr + first + shift, linebuf_attr + first,
+          (size_t)(last - first) * sizeof(sattr_T));
+  memmove(linebuf_vcol + first + shift, linebuf_vcol + first,
+          (size_t)(last - first) * sizeof(colnr_T));
+
+  for (int col = first; col < first + shift; col++) {
+    linebuf_char[col] = schar_from_ascii(' ');
+    linebuf_attr[col] = 0;
+    linebuf_vcol[col] = -1;
+  }
 }
 
 /// End a group of grid_line_puts calls and send the screen buffer to the UI layer.
@@ -887,10 +1213,23 @@ void grid_alloc(ScreenGrid *grid, int rows, int columns, bool copy, bool valid)
     xfree(linebuf_attr);
     xfree(linebuf_vcol);
     xfree(linebuf_scratch);
+    xfree(linebuf_bidi.cls);
+    xfree(linebuf_bidi.orig);
+    xfree(linebuf_bidi.level);
+    xfree(linebuf_bidi.cp);
+    xfree(linebuf_bidi.virt_text);
+    xfree(linebuf_bidi.virt_class);
     linebuf_char = xmalloc((size_t)columns * sizeof(schar_T));
     linebuf_attr = xmalloc((size_t)columns * sizeof(sattr_T));
     linebuf_vcol = xmalloc((size_t)columns * sizeof(colnr_T));
     linebuf_scratch = xmalloc((size_t)columns * sizeof(sscratch_T));
+    linebuf_bidi.cls = xmalloc((size_t)columns * sizeof(uint8_t));
+    linebuf_bidi.orig = xmalloc((size_t)columns * sizeof(uint8_t));
+    linebuf_bidi.level = xmalloc((size_t)columns * sizeof(uint8_t));
+    linebuf_bidi.cp = xmalloc((size_t)columns * sizeof(int));
+    linebuf_bidi.virt_text = xcalloc((size_t)columns, sizeof(bool));
+    linebuf_bidi.virt_class = xmalloc((size_t)columns * sizeof(uint8_t));
+    linebuf_bidi.has_virt_text = false;
     linebuf_size = (size_t)columns;
   }
 }
@@ -919,6 +1258,12 @@ void grid_free_all_mem(void)
   xfree(linebuf_attr);
   xfree(linebuf_vcol);
   xfree(linebuf_scratch);
+  xfree(linebuf_bidi.cls);
+  xfree(linebuf_bidi.orig);
+  xfree(linebuf_bidi.level);
+  xfree(linebuf_bidi.cp);
+  xfree(linebuf_bidi.virt_text);
+  xfree(linebuf_bidi.virt_class);
   set_destroy(glyph, &glyph_cache);
 }
 #endif
