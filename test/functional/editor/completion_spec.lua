@@ -1068,6 +1068,21 @@ describe('completion', function()
     eq('edit', fn.getcompletion('restart ed', 'cmdline')[1])
   end)
 
+  it('cmdline completion for :*cd family shows dirs only', function()
+    local dir = 'Xtest-cd-compl/'
+    local subdir1 = dir .. 'subdir1/'
+    local subdir2 = dir .. 'subdir2/'
+    finally(function()
+      n.rmdir(dir)
+    end)
+    fn.mkdir(subdir1, 'p')
+    fn.mkdir(subdir2, 'p')
+    fn.writefile({ '' }, dir .. 'file')
+    for _, cmd in ipairs({ 'cd', 'lcd', 'tcd', 'bcd' }) do
+      eq({ subdir1, subdir2 }, fn.getcompletion(cmd .. ' ' .. dir, 'cmdline'))
+    end
+  end)
+
   describe('from the commandline window', function()
     it('is cleared after CTRL-C', function()
       feed('q:')
