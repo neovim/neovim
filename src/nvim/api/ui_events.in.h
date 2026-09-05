@@ -198,3 +198,10 @@ void error_exit(Integer status)
 // |v:progpath| and `argv` as its arguments |v:argv|, and reattach to the new
 // server.
 void _set_restart_on_crash_exit(String progpath, Array argv) FUNC_API_CLIENT_IMPL;
+
+void img_data(Integer id, String data, Dict opts)
+  FUNC_API_SINCE(15) FUNC_API_REMOTE_IMPL FUNC_API_CLIENT_IGNORE;
+void img_set(Integer id, Dict opts)
+  FUNC_API_SINCE(15) FUNC_API_REMOTE_IMPL FUNC_API_CLIENT_IGNORE;
+void img_del(Integer id)
+  FUNC_API_SINCE(15) FUNC_API_REMOTE_IMPL FUNC_API_CLIENT_IGNORE;

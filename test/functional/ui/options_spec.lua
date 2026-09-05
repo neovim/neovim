@@ -39,6 +39,7 @@ describe('UI receives option updates', function()
       ext_multigrid = false,
       ext_messages = false,
       ext_termcolors = false,
+      ext_images = false,
     }
 
     clear_opts = shallowcopy(clear_opts or {})

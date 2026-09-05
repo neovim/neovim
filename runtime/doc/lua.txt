@@ -5713,7 +5713,9 @@ EXPERIMENTAL: This API may change in the future. Its semantics are not yet
 finalized.
 
 This provides a functional API for displaying images in Nvim. Currently
-supports PNG images via the Kitty graphics protocol.
+supports PNG images, displayed via UI events when any attached UI activated
+the "ext_images" capability (|ui-images|), otherwise via the Kitty graphics
+protocol.
 
 To override the image backend, replace `vim.ui.img` with your own
 implementation providing set/get/del.
@@ -5756,9 +5758,14 @@ vim.ui.img.get({id})                                        *vim.ui.img.get()*
 
     Return: ~
         (`table?`) opts copy of image opts, or nil if not found
-        • {col}? (`integer`) starting column (1-indexed)
+        • {buf}? (`integer`) buffer to anchor image inline (0 = current
+          buffer)
+        • {col}? (`integer`) starting column (1-indexed); buffer col if {buf}
+          set
         • {height}? (`integer`) height in cells
-        • {row}? (`integer`) starting row (1-indexed)
+        • {pad}? (`integer`) blank cells before image in inline mode
+        • {relative}? (`vim.ui.img.Relative`)
+        • {row}? (`integer`) starting row (1-indexed); buffer row if {buf} set
         • {width}? (`integer`) width in cells
         • {zindex}? (`integer`) stacking order (higher = on top)
 
@@ -5775,9 +5782,16 @@ vim.ui.img.set({data_or_id}, {opts})                        *vim.ui.img.set()*
       • {data_or_id}  (`string|integer`) image bytes (string) or existing id
                       (integer)
       • {opts}        (`table?`) A table with the following fields:
-                      • {col}? (`integer`) starting column (1-indexed)
+                      • {buf}? (`integer`) buffer to anchor image inline (0 =
+                        current buffer)
+                      • {col}? (`integer`) starting column (1-indexed); buffer
+                        col if {buf} set
                       • {height}? (`integer`) height in cells
-                      • {row}? (`integer`) starting row (1-indexed)
+                      • {pad}? (`integer`) blank cells before image in inline
+                        mode
+                      • {relative}? (`vim.ui.img.Relative`)
+                      • {row}? (`integer`) starting row (1-indexed); buffer
+                        row if {buf} set
                       • {width}? (`integer`) width in cells
                       • {zindex}? (`integer`) stacking order (higher = on top)
 
