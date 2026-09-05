@@ -754,6 +754,49 @@ local options = {
       flags_varname = 'bo_flags',
     },
     {
+      defaults = '',
+      schema = {
+        enum = {
+          '',
+          'auto',
+          'ltr',
+          'rtl',
+        },
+      },
+      desc = [=[
+        Display bidirectional text in visual order, by reordering each line
+        as it is drawn: runs that read right to left are reversed, and the
+        Latin text and numbers among them keep their order, as the Unicode
+        bidirectional algorithm prescribes.  Unlike 'rightleft', which mirrors
+        the whole window, only the text that needs reordering is moved.
+        The value sets the direction of a paragraph, which decides the edge its
+        lines start at and where its neutral characters settle:
+           ""		off
+           "auto"	from the first character of the paragraph that has a
+        		direction; a paragraph is delimited by empty lines
+           "ltr"	always left to right
+           "rtl"	always right to left
+        A right-to-left paragraph starts at the right margin.  The sign, number
+        and fold columns keep their place.
+        Virtual text (|nvim_buf_set_extmark()|) is reordered as a paragraph of
+        its own and then moves with the text it annotates: an "overlay" covers
+        the cells of the characters it is drawn over, and "eol" and
+        "right_align" text is drawn at the end of a right-to-left line, which
+        is its left edge.  "virt_text_win_col" is mirrored along with the line,
+        as it is under 'rightleft'.
+        Ignored when 'termbidi' or 'rightleft' is set, both of which say that
+        the reordering is already someone else's job.
+        Incomplete: the characters that set the direction explicitly are
+        ignored, as are the marks that combine with a character to their left.
+        Also see |rileft.txt|.
+      ]=],
+      full_name = 'bidi',
+      redraw = { 'current_window' },
+      scope = { 'win' },
+      short_desc = N_('display bidirectional text in visual order'),
+      type = 'string',
+    },
+    {
       abbreviation = 'bin',
       cb = 'did_set_binary',
       defaults = false,
@@ -7263,7 +7306,8 @@ local options = {
         simultaneously, or to view the same file in both ways (this is
         useful whenever you have a mixed text file with both right-to-left
         and left-to-right strings so that both sets are displayed properly
-        in different windows).  Also see |rileft.txt|.
+        in different windows).  'bidi' instead reorders each line on its own,
+        leaving the window as it is.  Also see |rileft.txt|.
       ]=],
       full_name = 'rightleft',
       redraw = { 'current_window' },
@@ -9822,6 +9866,8 @@ local options = {
         'arabic' is set and the value of 'arabicshape' will be ignored.
         Note that setting 'termbidi' has the immediate effect that
         'arabicshape' is ignored, but 'rightleft' isn't changed automatically.
+        'bidi' is ignored as well: it reorders the text itself, which is what
+        this option says the terminal is doing.
         For further details see |l10n-arabic.txt|.
       ]=],
       full_name = 'termbidi',

@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "nvim/ascii_defs.h"
+#include "nvim/bidi.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
@@ -77,6 +78,8 @@ typedef struct {
   int vcol_off_co;           ///< offset for concealed characters
 
   int off;                   ///< offset relative start of line
+  int leftcols_width;        ///< width of the sign, number and fold columns
+  bool rtl;                  ///< line reads right to left, from its text
 
   int cul_attr;              ///< set when 'cursorline' active
   int line_attr;             ///< attribute for the whole line
@@ -277,6 +280,13 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
   int right_pos = max_col;
   bool const do_eol = state->eol_col > -1;
 
+  // Take the direction of the line from the buffer text, before the virtual
+  // text is drawn over it.
+  bool const do_bidi = bidi_mode(wp) != kBidiOff;
+  if (do_bidi) {
+    linebuf_bidi_snapshot(col_off, MIN(*end_col, max_col), max_col);
+  }
+
   int const end = state->current_end;
   int *const indices = state->ranges_i.items;
   DecorRangeSlot *const slots = state->slots.items;
@@ -362,6 +372,9 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
       int vcol = item->draw_col - col_off;
       int col = draw_virt_text_item(buf, item->draw_col, vt->data.virt_text,
                                     vt->hl_mode, max_col, vcol, 0, false);
+      if (do_bidi) {
+        linebuf_virt_text_reorder(item->draw_col, col);
+      }
       if (do_eol && ((vt->pos == kVPosEndOfLine) || (vt->pos == kVPosEndOfLineRightAlign))) {
         state->eol_col = col + 1;
       }
@@ -1506,6 +1519,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
     }
   }
 
+  // Resolve the direction before the line is fetched: this reads other lines of
+  // the paragraph, which would invalidate "line".  The text of a closed fold is
+  // Nvim's own, not the buffer's, so it reads left to right whatever the lines
+  // it stands for do; the Hebrew inside it is still reordered.
+  wlv.rtl = draw_text && !has_foldtext && bidi_win_is_rtl(wp, lnum);
+
   // current line
   char *line = draw_text ? ml_get_buf(wp->w_buffer, lnum) : "";
   // current position in "line"
@@ -1730,7 +1749,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
 
   win_line_start(wp, &wlv);
   bool draw_cols = true;
-  int leftcols_width = 0;
 
   // won't highlight after TERM_ATTRS_MAX columns
   int term_attrs[TERM_ATTRS_MAX] = { 0 };
@@ -1831,7 +1849,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
 
       // When only updating the columns and that's done, stop here.
       if (col_rows > 0) {
-        wlv_put_linebuf(wp, &wlv, MIN(wlv.off, view_width), false, bg_attr, 0);
+        wlv_put_linebuf(wp, &wlv, MIN(wlv.off, view_width), false, bg_attr, 0, false);
         // Need to update more screen lines if:
         // - 'statuscolumn' needs to be drawn, or
         // - LineNrAbove or LineNrBelow is used, or
@@ -1873,7 +1891,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       wlv.col = wlv.off;
       draw_cols = false;
       if (wlv.filler_todo <= 0) {
-        leftcols_width = wlv.off;
+        wlv.leftcols_width = wlv.off;
       }
       if (has_decor && wlv.row == startrow + wlv.filler_lines) {
         // hide virt_text on text hidden by 'nowrap' or 'smoothscroll'
@@ -1895,7 +1913,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
     if (dollar_vcol >= 0 && in_curline && wlv.vcol >= wp->w_virtcol) {
       draw_virt_text(wp, buf, win_col_offset, &wlv.col, wlv.row);
       // don't clear anything after wlv.col
-      wlv_put_linebuf(wp, &wlv, wlv.col, false, bg_attr, 0);
+      wlv_put_linebuf(wp, &wlv, wlv.col, false, bg_attr, 0, false);
       // Pretend we have finished updating the window.  Except when
       // 'cursorcolumn' is set.
       if (wp->w_p_cuc) {
@@ -2991,7 +3009,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       draw_virt_text(wp, buf, win_col_offset, &wlv.col, wlv.row);
       // Set increasing virtual columns in grid->vcols[] to set correct curswant
       // (or "coladd" for 'virtualedit') when clicking after end of line.
-      wlv_put_linebuf(wp, &wlv, wlv.col, true, bg_attr, SLF_INC_VCOL);
+      wlv_put_linebuf(wp, &wlv, wlv.col, true, bg_attr, SLF_INC_VCOL, true);
       wlv.row++;
 
       // Update w_cline_height and w_cline_folded if the cursor line was
@@ -3219,7 +3237,7 @@ end_check:
     // At end of screen line and there is more to come: Display the line
     // so far.  If there is no more to display it is caught above.
     if (wlv.col >= view_width && (!has_foldtext || wlv.filler_todo > 0)
-        && (wlv.col <= leftcols_width
+        && (wlv.col <= wlv.leftcols_width
             || *ptr != NUL
             || wlv.filler_todo > 0
             || (wp->w_p_list && wp->w_p_lcs_chars.eol != NUL && lcs_eol_todo)
@@ -3269,7 +3287,7 @@ end_check:
         draw_virt_text(wp, buf, win_col_offset, &draw_col, wlv.row);
       }
 
-      wlv_put_linebuf(wp, &wlv, draw_col, true, bg_attr, wrap ? SLF_WRAP : 0);
+      wlv_put_linebuf(wp, &wlv, draw_col, true, bg_attr, wrap ? SLF_WRAP : 0, true);
       if (wrap) {
         int current_row = wlv.row;
         int dummy_col = 0;  // unused
@@ -3289,7 +3307,7 @@ end_check:
       }
 
       // When the window is too narrow draw all "@" lines.
-      if (wlv.col <= leftcols_width) {
+      if (wlv.col <= wlv.leftcols_width) {
         win_draw_end(wp, schar_from_ascii('@'), true, wlv.row, wp->w_view_height, HLF_AT);
         set_empty_rows(wp, wlv.row);
         wlv.row = endrow;
@@ -3329,14 +3347,70 @@ end_check:
   return wlv.row;
 }
 
+/// Put the cursor on the cell that the character at "w_virtcol" was drawn in.
+///
+/// curs_columns() derives the screen column from the virtual column, which only
+/// holds when the two run in the same direction.  After 'bidi' has reordered the
+/// line, only the renderer knows where the character ended up, so correct the
+/// column here, the way concealing does.
+static void wlv_bidi_cursor(win_T *wp, const winlinevars_T *wlv, int endcol, bool rtl)
+{
+  int leftmost = -1;
+  colnr_T last_vcol = -1;
+  int at_cursor = -1;
+  int at_next = -1;
+
+  for (int col = wlv->leftcols_width; col < endcol; col++) {
+    colnr_T vcol = linebuf_vcol[col];
+    if (vcol == wp->w_virtcol) {
+      at_cursor = col;
+    } else if (vcol == wp->w_virtcol + 1) {
+      at_next = col;
+    }
+    if (vcol >= 0) {
+      if (leftmost < 0) {
+        leftmost = col;
+      }
+      last_vcol = MAX(last_vcol, vcol);
+    }
+  }
+
+  if (at_cursor >= 0) {
+    // In Insert mode the cursor marks a position between two characters.  Inside
+    // a right-to-left run that position is to the right of the character it
+    // precedes, which is the cell the next typed character will appear in.
+    if ((State & MODE_INSERT) && at_next >= 0 && at_next < at_cursor
+        && at_cursor + 1 < endcol) {
+      at_cursor++;
+    }
+    wp->w_wcol = at_cursor;
+    wp->w_wrow = wlv->row;
+    wp->w_valid |= VALID_WCOL|VALID_WROW|VALID_VIRTCOL;
+    return;
+  }
+
+  // One past the last character of this row, as when appending: no cell holds
+  // that virtual column.  A right-to-left line ends at the left edge of its
+  // leftmost cell, which is where the next character goes.
+  if (rtl && leftmost >= wlv->leftcols_width && wp->w_virtcol == last_vcol + 1) {
+    wp->w_wcol = leftmost;
+    wp->w_wrow = wlv->row;
+    wp->w_valid |= VALID_WCOL|VALID_WROW|VALID_VIRTCOL;
+  }
+}
+
 /// Call grid_put_linebuf() using values from "wlv".
 /// Also takes care of putting "<<<" on the first line for 'smoothscroll'
 /// when 'showbreak' is not set.
 ///
 /// @param clear_end  clear until the end of the screen line.
 /// @param flags  for grid_put_linebuf(), but shouldn't contain SLF_RIGHTLEFT.
+/// @param reorder  apply 'bidi' to the line.  False when only the sign, number
+///                  and fold columns are being redrawn: the buffer then holds
+///                  no text to reorder, and moving what is there would wipe the
+///                  rest of the line.
 static void wlv_put_linebuf(win_T *wp, const winlinevars_T *wlv, int endcol, bool clear_end,
-                            int bg_attr, int flags)
+                            int bg_attr, int flags, bool reorder)
 {
   GridView *grid = &wp->w_grid;
 
@@ -3347,6 +3421,18 @@ static void wlv_put_linebuf(win_T *wp, const winlinevars_T *wlv, int endcol, boo
   if (wp->w_p_rl) {
     linebuf_mirror(&startcol, &endcol, &clear_width, wp->w_view_width);
     flags |= SLF_RIGHTLEFT;
+  } else if (reorder && bidi_mode(wp) != kBidiOff) {
+    // Reorder right-to-left runs, leaving the sign, number and fold columns
+    // in place.  A right-to-left line starts at the right margin.
+    linebuf_reorder(wlv->leftcols_width, endcol, wlv->rtl);
+    if (wlv->rtl) {
+      linebuf_align_right(wlv->leftcols_width, endcol, wp->w_view_width);
+      endcol = wp->w_view_width;
+      clear_width = wp->w_view_width;
+    }
+    if (wp == curwin && wlv->lnum == wp->w_cursor.lnum && wlv->filler_todo <= 0) {
+      wlv_bidi_cursor(wp, wlv, endcol, wlv->rtl);
+    }
   }
 
   // Take care of putting "<<<" on the first line for 'smoothscroll'.
@@ -3379,6 +3465,7 @@ static void wlv_put_linebuf(win_T *wp, const winlinevars_T *wlv, int endcol, boo
   int coloff = 0;
   ScreenGrid *g = grid_adjust(grid, &row, &coloff);
   grid_put_linebuf(g, row, coloff, startcol, endcol, clear_width, bg_attr, 0, wlv->vcol - 1, flags);
+  linebuf_virt_text_clear();
 }
 
 static int decor_providers_setup(int rows_to_draw, bool draw_from_line_start, linenr_T lnum,

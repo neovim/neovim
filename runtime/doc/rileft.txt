@@ -25,12 +25,12 @@ right to left.
 Bidirectionality (or bidi for short) is what Unicode offers as a full
 solution to these languages.  Bidi offers the user the ability to view
 both right-to-left as well as left-to-right text properly at the same time
-within the same window.  Vim currently, due to simplicity, does not offer
-bidi and is merely opting to present a functional means to display/enter/use
-right-to-left languages.  An older hybrid solution in which direction is
-encoded for every character (or group of characters) are not supported either
-as this kind of support is out of the scope of a simple addition to an
-existing editor (and it's not sanctioned by Unicode either).
+within the same window.  The 'bidi' option displays a line that way, by
+reordering it as it is drawn; 'rightleft' instead mirrors the whole window,
+which is the simpler means Vim has always offered.  An older hybrid solution
+in which direction is encoded for every character (or group of characters) is
+not supported, as this kind of support is out of the scope of a simple
+addition to an existing editor (and it's not sanctioned by Unicode either).
 
 As many people working on the code do not use the right-to-left mode, this
 feature may not work in some situations.  If you can describe what is wrong
@@ -116,7 +116,9 @@ o  Somewhat slower in right-to-left mode, because right-to-left motion is
 o  When both 'rightleft' and 'revins' are on: 'textwidth' does not work.
    Lines do not wrap at all; you just get a single, long line.
 
-o  There is no full bidirectionality (bidi) support.
+o  'bidi' resolves the Unicode bidirectional algorithm only in part: the
+   characters that set the direction explicitly are ignored, as are the marks
+   that combine with a character to their left.
 
 
  vim:tw=78:ts=8:noet:ft=help:norl:

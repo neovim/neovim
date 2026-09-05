@@ -14,6 +14,7 @@
 #include <stdlib.h>
 
 #include "nvim/ascii_defs.h"
+#include "nvim/bidi.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/cursor.h"
@@ -160,6 +161,12 @@ static void redraw_for_cursorcolumn(win_T *wp)
   // If the cursor moves horizontally when 'concealcursor' is active, then the
   // current line needs to be redrawn to calculate the correct cursor position.
   if (wp == curwin && wp->w_p_cole > 0 && conceal_cursor_line(wp)) {
+    redrawWinline(wp, wp->w_cursor.lnum);
+  }
+
+  // 'bidi' places the cursor while drawing the line, so a line it reorders must
+  // be redrawn when the cursor moves along it.
+  if (wp == curwin && bidi_line_is_reordered(wp, wp->w_cursor.lnum)) {
     redrawWinline(wp, wp->w_cursor.lnum);
   }
 

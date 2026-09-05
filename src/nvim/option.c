@@ -5383,6 +5383,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return &(win->w_p_pvw);
   case kOptLhistory:
     return &(win->w_p_lhi);
+  case kOptBidi:
+    return &(win->w_p_bidi);
   case kOptRightleft:
     return &(win->w_p_rl);
   case kOptRightleftcmd:
@@ -5620,6 +5622,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_ve = copy_option_val(from->wo_ve);
   to->wo_ve_flags = from->wo_ve_flags;
   to->wo_nuw = from->wo_nuw;
+  to->wo_bidi = copy_option_val(from->wo_bidi);
   to->wo_rl = from->wo_rl;
   to->wo_rlc = copy_option_val(from->wo_rlc);
   to->wo_sbr = copy_option_val(from->wo_sbr);
@@ -5698,6 +5701,7 @@ static void check_winopt(winopt_T *wop)
   check_string_option(&wop->wo_eiw);
   check_string_option(&wop->wo_scl);
   check_string_option(&wop->wo_rlc);
+  check_string_option(&wop->wo_bidi);
   check_string_option(&wop->wo_sbr);
   check_string_option(&wop->wo_stl);
   check_string_option(&wop->wo_culopt);
@@ -5726,6 +5730,7 @@ void clear_winopt(winopt_T *wop)
   clear_string_option(&wop->wo_eiw);
   clear_string_option(&wop->wo_scl);
   clear_string_option(&wop->wo_rlc);
+  clear_string_option(&wop->wo_bidi);
   clear_string_option(&wop->wo_sbr);
   clear_string_option(&wop->wo_stl);
   clear_string_option(&wop->wo_culopt);
