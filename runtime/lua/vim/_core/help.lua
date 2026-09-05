@@ -571,4 +571,249 @@ function M.gen_tags(dir, include_index_tag)
   end
 end
 
+--- Get descriptions for builtin Ex commands.
+---
+--- Parses `doc/*.txt` `*:cmd*` sections and extracts command descriptions.
+---
+--- Used by |nvim_get_commands()| with `{ builtin = true, desc = true }`.
+--- @param names string[]
+--- @return string[]
+function M._get_excmd_descs(names)
+  local target = #names == 1 and names[1] or nil
+  local descs = {} --- @type table<string, string>
+
+  local function is_tag_only_line(line)
+    local s = vim.trim(line)
+    if s == '' then
+      return false
+    end
+    return s:gsub('%*[^*]+%*', ''):match('^%s*$') ~= nil
+  end
+
+  --- Drop the synopsis column. It is not always a `:cmd`: could be a
+  --- normal-mode key (`ga`, `<Help>`, `CTRL-W -`), or nothing at all.
+  local function strip_cmd_leader(line)
+    if line:match('^%s') then
+      return vim.trim(line)
+    end
+    ---@type string
+    local tabbed = line:match('^%S.-\t+(.+)$')
+    if tabbed then
+      return vim.trim(tabbed)
+    end
+    if vim.startswith(line, ':') then
+      ---@type string
+      local spaced = line:match('^:.-%s%s+(.+)$') -- Some use spaces for a tab.
+      return spaced and vim.trim(spaced) or ''
+    end
+    if line:match('^[<{%[]') then
+      return '' -- Leftover synopsis: `{script}`, `{endmarker}`.
+    end
+    return vim.trim(line) -- Plain paragraph.
+  end
+
+  --- Strip inline help markup from kept prose.
+  --- @param s string
+  --- @return string
+  local function clean_inline(s)
+    s = s:gsub('%s*%*[^%s*]+%*', '') -- Leftover tags, e.g. `*E1156*`.
+    s = s:gsub('`(.-)`', '%1')
+    s = s:gsub('|(%S-)|', '%1')
+    return s
+  end
+
+  --- Description held by one line, '' if it holds none.
+  --- @param line string
+  --- @return string
+  local function line_desc(line)
+    local s = vim.trim(clean_inline(strip_cmd_leader(line)))
+    return #s > 3 and s or '' -- The "or" in `<Help><Tab>or` is not a description.
+  end
+
+  --- Bullet, like the "not implemented" lists in vim_diff.txt.
+  local function is_list_item(line)
+    local s = vim.trim(line)
+    return vim.startswith(s, '- ') or vim.startswith(s, '\226\128\162 ')
+  end
+
+  --- Section heading (`13. Highlight command<Tab>*:highlight*`) rather than a
+  --- command. What follows it describes the section, not the command.
+  local function is_heading(line)
+    ---@type string
+    local head = line:match('^(.-)%s*%*') or ''
+    if head == '' then
+      return false
+    end
+    local c = head:sub(1, 1)
+    return c ~= ':' and c ~= '<' and c ~= '-' and c:byte() < 128 and not c:match('%s')
+  end
+
+  --- A line ending in `>` (or a lone `>`) begins a literal/code block.
+  local function is_block_lead(line)
+    return line:match('%s>%s*$') ~= nil or vim.trim(line) == '>'
+  end
+
+  ---@param cur_cmds string[]
+  ---@param cur_lines string[]
+  ---@return boolean hit
+  local function flush(cur_cmds, cur_lines)
+    if #cur_lines == 0 then
+      return false
+    end
+    local desc = table.concat(cur_lines, ' ')
+    desc = desc:gsub('[,;]?%s*[Ee]xample:%s*$', '')
+    desc = desc:gsub('[,;]?%s*%f[%a][Ee]%.?%s?[Gg]%.?:%s*$', '')
+    desc = desc:gsub('%s*:%s*$', '.')
+    desc = vim.trim(desc)
+    ---@type string
+    local first = desc:match('^(.-[.!?])%s')
+    desc = first or desc -- First sentence is the summary.
+    if #desc == 0 then
+      return false
+    end
+    for _, cmd in ipairs(cur_cmds) do
+      if descs[cmd] == nil then
+        descs[cmd] = desc
+        if cmd == target then
+          return true
+        end
+      end
+    end
+    return false
+  end
+
+  --- Scan one file. Returns true if `target` was hit.
+  ---@param file string
+  ---@return boolean hit
+  local function scan_file(file)
+    local cur_cmds, cur_lines = {}, {} ---@type string[], string[]
+    -- Blank line seen before any description. Adjacent tag lines are one block
+    -- (`*:w*` then `*E502*`), a tag line after a gap belongs to something else.
+    local gap = false
+    for _, line in ipairs(vim.fn.readfile(file)) do
+      local new_cmds = {} ---@type string[]
+      for cmd in line:gmatch('%*:(%S-)%*') do
+        new_cmds[#new_cmds + 1] = cmd
+      end
+
+      if #new_cmds > 0 then
+        -- Header (tag) line.
+        if #cur_lines > 0 then
+          if flush(cur_cmds, cur_lines) then
+            return true
+          end
+          cur_cmds, cur_lines = {}, {}
+        end
+        if is_heading(line) then
+          cur_cmds = {} -- Skip, or we pick up the section intro.
+        else
+          -- Merge: consecutive synopsis/tag lines share the description.
+          for _, c in ipairs(new_cmds) do
+            cur_cmds[#cur_cmds + 1] = c
+          end
+          -- deprecated.txt writes the description after the tags. Only text
+          -- past the last one: before them is the synopsis.
+          ---@type string
+          local tail = line:match('.*%*%s*(.*)$')
+          local own = tail and vim.trim(clean_inline(tail)) or ''
+          if #own > 0 then
+            cur_lines[#cur_lines + 1] = own
+          end
+        end
+        gap = false
+      elseif line:match('^%s*$') or line:match('^[=%-]+$') then
+        if #cur_lines > 0 then
+          if flush(cur_cmds, cur_lines) then
+            return true
+          end
+          cur_cmds, cur_lines, gap = {}, {}, false
+        elseif line:match('^[=%-]+$') then
+          cur_cmds, gap = {}, false -- Never carry tags across a section rule.
+        else
+          gap = true -- A blank line may sit between the tags and the text.
+        end
+      elseif #cur_lines == 0 and (is_list_item(line) or (gap and is_tag_only_line(line))) then
+        cur_cmds, gap = {}, false -- Not ours: a bullet, or a later tag block.
+      elseif #cur_cmds > 0 and not is_tag_only_line(line) then
+        local blocky = is_block_lead(line)
+        local raw = blocky and line:gsub('%s*>%s*$', '') or line
+        local stripped = line_desc(raw)
+        if stripped:find('\t') or stripped:find('~%s*$') then
+          blocky, stripped = true, '' -- A table, not prose.
+        end
+        if #stripped > 0 then
+          cur_lines[#cur_lines + 1] = stripped
+        end
+        if blocky then
+          -- Stop the description at the first code block.
+          if flush(cur_cmds, cur_lines) then
+            return true
+          end
+          cur_cmds, cur_lines, gap = {}, {}, false
+        end
+      end
+    end
+    return flush(cur_cmds, cur_lines)
+  end
+
+  --- First two tab-separated fields (tag, file) of a tags line.
+  local function tag_file(line)
+    local t1 = line:find('\t', 1, true) --- @type integer?
+    if not t1 then
+      return nil
+    end
+    local t2 = line:find('\t', t1 + 1, true) --- @type integer?
+    return line:sub(1, t1 - 1), (t2 and line:sub(t1 + 1, t2 - 1) or line:sub(t1 + 1))
+  end
+
+  -- Pick only the help files we need, from the `tags` index.
+  local files = {} --- @type string[]
+  local docdir = vim.fs.joinpath(vim.env.VIMRUNTIME, 'doc')
+  local tags = vim.fn.readfile(vim.fs.joinpath(docdir, 'tags'))
+  if target then
+    -- Single command: jump straight to the file that defines `:<name>`.
+    local want = ':' .. target
+    for _, line in ipairs(tags) do
+      local tag, file = tag_file(line)
+      if tag == want and file and vim.endswith(file, '.txt') then
+        files = { file }
+        break
+      end
+    end
+  else
+    -- All commands: every file that defines a `:` tag.
+    local seen = {} --- @type table<string, true>
+    for _, line in ipairs(tags) do
+      local tag, file = tag_file(line)
+      if
+        tag
+        and tag:sub(1, 1) == ':'
+        and file
+        and vim.endswith(file, '.txt')
+        and not seen[file]
+      then
+        seen[file] = true
+        files[#files + 1] = file
+      end
+    end
+  end
+
+  for _, name in ipairs(files) do
+    -- Allow Ctrl-C to interrupt long scans.
+    local _, code = vim.wait(0, nil, 0)
+    if code == -2 then
+      break
+    end
+    if scan_file(vim.fs.joinpath(docdir, name)) then
+      break
+    end
+  end
+
+  local result = {} --- @type string[]
+  for i, name in ipairs(names) do
+    result[i] = descs[name] or ''
+  end
+  return result
+end
+
 return M
