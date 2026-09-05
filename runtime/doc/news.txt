@@ -437,6 +437,8 @@ OPTIONS
 • 'previewpopup' decides how the preview window is displayed.
 • 'messagesopt' items "pager" and "timeout" configure the |ui2| message pager
   key and how long a message stays in the message window.
+• 'bidi' displays bidirectional text in visual order, so that Hebrew and Arabic
+  read the way they are written.
 
 PERFORMANCE
 
