@@ -71,6 +71,8 @@ end
 ---@field private _queries table<string,vim.treesitter.highlighter.Query>
 ---@field private _callback_owner table<integer,vim.treesitter.highlighter>
 ---@field private _unregister_cbs (fun())?
+---@field private _initializing boolean?
+---@field private _restart_pending boolean?
 ---@field  _conceal_line boolean?
 ---@field  _conceal_checked table<integer, boolean>
 ---@field tree vim.treesitter.LanguageTree
@@ -91,6 +93,38 @@ local function set_conceal_lines(highlighter, lang)
   end
 end
 
+---@private
+---@param ts_query TSQuery
+function TSHighlighter._restart(ts_query)
+  if vim.in_fast_event() then
+    vim.schedule(function()
+      TSHighlighter._restart(ts_query)
+    end)
+    return
+  end
+  ---@type vim.treesitter.highlighter[]
+  local highlighters = vim.tbl_values(TSHighlighter.active)
+  for _, highlighter in ipairs(highlighters) do
+    local buf = highlighter.bufnr
+    if TSHighlighter.active[buf] == highlighter then
+      for _, hl_query in pairs(highlighter._queries) do
+        local q = hl_query:query()
+        if q and q.query == ts_query then
+          if highlighter._initializing then
+            highlighter._restart_pending = true
+          else
+            highlighter:destroy(true)
+            if not TSHighlighter.active[buf] and api.nvim_buf_is_loaded(buf) then
+              TSHighlighter.new(highlighter.tree, nil, highlighter)
+            end
+          end
+          break
+        end
+      end
+    end
+  end
+end
+
 ---@nodoc
 ---
 --- Creates a highlighter for `tree`.
@@ -98,8 +132,9 @@ end
 ---@param tree vim.treesitter.LanguageTree parser object to use for highlighting
 ---@param opts (table|nil) Configuration of the highlighter:
 ---           - queries table overwrite queries used by the highlighter
+---@param previous? vim.treesitter.highlighter Highlighter whose editor state is preserved.
 ---@return vim.treesitter.highlighter Created highlighter object
-function TSHighlighter.new(tree, opts)
+function TSHighlighter.new(tree, opts, previous)
   local source = tree:source()
   if type(source) ~= 'number' then
     error('TSHighlighter can not be used with a string parser source.')
@@ -174,7 +209,7 @@ function TSHighlighter.new(tree, opts)
   self.bufnr = source
   self.redraw_count = 0
   self._conceal_checked = {}
-  self._queries = {}
+  self._queries = previous and vim.tbl_extend('force', {}, previous._queries) or {}
   self._highlight_states = {}
   self.parsing = false
 
@@ -183,6 +218,11 @@ function TSHighlighter.new(tree, opts)
   if opts.queries then
     for lang, query_string in pairs(opts.queries) do
       self._queries[lang] = TSHighlighterQuery.new(lang, query_string)
+      set_conceal_lines(self, lang)
+    end
+  end
+  if previous then
+    for lang in pairs(self._queries) do
       set_conceal_lines(self, lang)
     end
   end
@@ -197,14 +237,22 @@ function TSHighlighter.new(tree, opts)
   tree:register_cbs(cbs)
   tree:register_cbs(cbs_rec, true)
 
-  self.orig_spelloptions = vim.bo[self.bufnr].spelloptions
+  self.orig_spelloptions = previous and previous.orig_spelloptions
+    or vim.bo[self.bufnr].spelloptions
 
-  if vim.g.syntax_on ~= 1 then
+  if not previous and vim.g.syntax_on ~= 1 then
     api.nvim_create_augroup('syntaxset', { clear = false })
+  end
+  if not previous then
+    self._initializing = true
   end
   -- Option changes may stop or replace the highlighter.
   TSHighlighter.active[self.bufnr] = self
   vim.b[self.bufnr].ts_highlight = true
+  if previous then
+    api.nvim__redraw({ buf = self.bufnr, valid = false, flush = false })
+    return self
+  end
   local ok, err = pcall(vim._with, { buf = self.bufnr }, function()
     vim.bo[self.bufnr].syntax = ''
     if TSHighlighter.active[self.bufnr] ~= self or not api.nvim_buf_is_loaded(self.bufnr) then
@@ -229,12 +277,27 @@ function TSHighlighter.new(tree, opts)
     error(err, 0)
   end
 
+  if TSHighlighter.active[self.bufnr] ~= self or not api.nvim_buf_is_loaded(self.bufnr) then
+    self:destroy()
+    return self
+  end
+  self._initializing = nil
+  if self._restart_pending then
+    self:destroy(true)
+    if not TSHighlighter.active[self.bufnr] and api.nvim_buf_is_loaded(self.bufnr) then
+      return TSHighlighter.new(tree, nil, self)
+    end
+  end
+
   return self
 end
 
 --- @nodoc
 --- Removes all internal references to the highlighter
-function TSHighlighter:destroy()
+---@param keep_options? boolean Preserve editor options and syntax definitions when restarting.
+function TSHighlighter:destroy(keep_options)
+  self._initializing = nil
+  self._restart_pending = nil
   if self._unregister_cbs then
     self._unregister_cbs()
     self._unregister_cbs = nil
@@ -250,6 +313,9 @@ function TSHighlighter:destroy()
   vim.b[self.bufnr].ts_highlight = nil
   if api.nvim_buf_is_loaded(self.bufnr) then
     api.nvim_buf_clear_namespace(self.bufnr, ns, 0, -1)
+    if keep_options then
+      return
+    end
     vim.bo[self.bufnr].spelloptions = self.orig_spelloptions
     if TSHighlighter.active[self.bufnr] or not api.nvim_buf_is_loaded(self.bufnr) then
       return
