@@ -949,6 +949,7 @@ is_na_patch() {
           '-I\*\s+For Vim version [0-9]\.[0-9]\.\s+Last change: [0-9]+ [A-Z][a-z]+ [0-9]+' \
           '-I compiled (with|without) .*\(\|.+\|\) feature\.$' \
           '-I\{.+ (available|compiled) (with|without) .+\}' \
+          '-I\|52\.6\|' \
           '-I\|channel-open-[^|]+\|' \
           '-I\|comment-install\|' \
           '-I\|popup-windows\|' \
