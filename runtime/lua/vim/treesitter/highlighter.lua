@@ -69,6 +69,8 @@ end
 --- This state is kept during rendering across each line update.
 ---@field private _highlight_states vim.treesitter.highlighter.State[]
 ---@field private _queries table<string,vim.treesitter.highlighter.Query>
+---@field private _unregister_cbs (fun())?
+---@field private _unregister_cbs_rec (fun())?
 ---@field  _conceal_line boolean?
 ---@field  _conceal_checked table<integer, boolean>
 ---@field tree vim.treesitter.LanguageTree
@@ -95,16 +97,12 @@ function TSHighlighter.new(tree, opts)
     error('TSHighlighter can not be used with a string parser source.')
   end
 
-  -- Calling start() again on an already-highlighted buffer must be a no-op: a second instance
-  -- would register duplicate on_bytes/on_changedtree/on_detach callbacks that destroy() never
-  -- unregisters, leaking callbacks that keep firing for the orphaned instance.
+  -- Reuse the highlighter rather than registering duplicate callbacks.
   local existing = TSHighlighter.active[source]
   if existing then
     if existing.tree == tree then
       return existing
     end
-    -- Different tree (e.g. a language switch): the old instance would otherwise be silently
-    -- orphaned with the same leaked callbacks, so destroy() it first, matching stop() semantics.
     existing:destroy()
   end
 
@@ -112,7 +110,7 @@ function TSHighlighter.new(tree, opts)
 
   opts = opts or {} ---@type { queries: table<string,string> }
   self.tree = tree
-  tree:register_cbs({
+  self._unregister_cbs = tree:register_cbs({
     on_detach = function()
       self:on_detach()
     end,
@@ -125,7 +123,7 @@ function TSHighlighter.new(tree, opts)
     end
   end
 
-  tree:register_cbs({
+  self._unregister_cbs_rec = tree:register_cbs({
     on_bytes = function(buf)
       -- Clear conceal_lines marks whenever the buffer text changes. Marks are added
       -- back as either the _conceal_line or on_win callback comes across them.
@@ -161,7 +159,7 @@ function TSHighlighter.new(tree, opts)
   -- string query... if one is not provided it will be looked up by file.
   if opts.queries then
     for lang, query_string in pairs(opts.queries) do
-      self._queries[lang] = TSHighlighterQuery.new(lang, query_string)
+      self:get_query(lang, query_string)
       set_conceal_lines(lang)
     end
   end
@@ -194,6 +192,17 @@ end
 --- @nodoc
 --- Removes all internal references to the highlighter
 function TSHighlighter:destroy()
+  if self._unregister_cbs then
+    self._unregister_cbs()
+    self._unregister_cbs = nil
+  end
+  if self._unregister_cbs_rec then
+    self._unregister_cbs_rec()
+    self._unregister_cbs_rec = nil
+  end
+  if TSHighlighter.active[self.bufnr] ~= self then
+    return
+  end
   TSHighlighter.active[self.bufnr] = nil
 
   if api.nvim_buf_is_loaded(self.bufnr) then
@@ -278,10 +287,11 @@ end
 --- Gets the query used for @param lang
 ---@nodoc
 ---@param lang string Language used by the highlighter.
+---@param query_string? string
 ---@return vim.treesitter.highlighter.Query
-function TSHighlighter:get_query(lang)
+function TSHighlighter:get_query(lang, query_string)
   if not self._queries[lang] then
-    local success, result = pcall(TSHighlighterQuery.new, lang)
+    local success, result = pcall(TSHighlighterQuery.new, lang, query_string)
     if not success then
       self:destroy()
       error(result)
@@ -601,7 +611,7 @@ function TSHighlighter._on_start()
       highlighter.parsing = highlighter.parsing
         or nil
           == highlighter.tree:parse(ranges, function(_, trees)
-            if trees and highlighter.parsing then
+            if trees and highlighter.parsing and TSHighlighter.active[buf] == highlighter then
               highlighter.parsing = false
               api.nvim__redraw({ buf = buf, valid = false, flush = false })
             end
