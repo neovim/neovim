@@ -135,6 +135,18 @@ static keycodes_s keycodes_fn[] = {
   { KEYCODE_CSINUM, '~',  21 },   // F10
   { KEYCODE_CSINUM, '~',  23 },   // F11
   { KEYCODE_CSINUM, '~',  24 },   // F12
+  { KEYCODE_CSINUM, '~',  25 },   // F13
+  { KEYCODE_CSINUM, '~',  26 },   // F14
+  { KEYCODE_CSINUM, '~',  28 },   // F15
+  { KEYCODE_CSINUM, '~',  29 },   // F16
+  { KEYCODE_CSINUM, '~',  31 },   // F17
+  { KEYCODE_CSINUM, '~',  32 },   // F18
+  { KEYCODE_CSINUM, '~',  33 },   // F19
+  { KEYCODE_CSINUM, '~',  34 },   // F20
+  { KEYCODE_CSINUM, '~',  42 },   // F21
+  { KEYCODE_CSINUM, '~',  43 },   // F22
+  { KEYCODE_CSINUM, '~',  44 },   // F23
+  { KEYCODE_CSINUM, '~',  45 },   // F24
 };
 
 static keycodes_s keycodes_kp[] = {
