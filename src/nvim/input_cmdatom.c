@@ -735,10 +735,11 @@ static bool atom_typed_collecting(void)
          || (cur_frame != NULL && cur_frame->payload_start != SIZE_MAX);
 }
 
-/// Opens the CmdFrame's payload slice: keys from getchar(), input() append to `CmdAtom.keys`.
+/// Opens the CmdFrame's payload slice: keys from getchar()/input()/… append to `CmdAtom.keys`.
 void atom_payload_start(void)
 {
-  if (cur_frame != NULL && cur_frame->payload_start == SIZE_MAX && !mc_replaying()) {
+  if (expr_map_lock == 0  // Do not append input read during expr EVALUATION.
+      && cur_frame != NULL && cur_frame->payload_start == SIZE_MAX && !mc_replaying()) {
     cur_frame->payload_start = cur_frame->payload_end = kv_size(typed.keys);
   }
 }
@@ -746,7 +747,8 @@ void atom_payload_start(void)
 /// Closes (or extends) the payload slice.
 void atom_payload_end(void)
 {
-  if (cur_frame != NULL && cur_frame->payload_start != SIZE_MAX && !mc_replaying()) {
+  if (expr_map_lock == 0 && cur_frame != NULL && cur_frame->payload_start != SIZE_MAX
+      && !mc_replaying()) {
     cur_frame->payload_end = kv_size(typed.keys);
   }
 }
