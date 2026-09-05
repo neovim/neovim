@@ -1158,7 +1158,7 @@ describe('default statusline', function()
       '%(%-10S %)',
       "%{ &busy > 0 ? '◐\226\128\175' : '' }",
       "%(%{ luaeval('(package.loaded[''vim.ui''] and vim.api.nvim_get_current_win() == tonumber(vim.g.actual_curwin or -1) and vim.ui.progress_status()) or '''' ')} %)",
-      "%{% luaeval('(package.loaded[''vim.diagnostic''] and next(vim.diagnostic.count(0)) and vim.diagnostic.status() .. '' '') or '''' ') %}",
+      "%{% luaeval('(package.loaded[''vim.diagnostic''] and vim.diagnostic.is_enabled({bufnr = 0}) and next(vim.diagnostic.count(0)) and vim.diagnostic.status() .. '' '') or '''' ') %}",
       '%(%k %)',
       "%{% &ruler ? &rulerformat : '' %}",
     })
