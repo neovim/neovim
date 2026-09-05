@@ -1211,6 +1211,28 @@ describe('multicursor', function()
         {5:-- INSERT --}                  |
       ]])
       feed('<Esc>')
+
+      -- Also when a Normal-mode mapping moves before entering Insert. #41605
+      clear_cursors()
+      cursors({ 'aaaa', 'bbbb', 'cccc' }, 'llQjQj')
+      command('nnoremap i ^i')
+      screen:expect([[
+        aa{17:a}a                          |
+        bb{17:b}b                          |
+        cc^cc                          |
+        {1:~                             }|*2
+                                      |
+      ]])
+      feed('iX')
+      screen:expect([[
+        X{17:a}aaa                         |
+        X{17:b}bbb                         |
+        X^cccc                         |
+        {1:~                             }|*2
+        {5:-- INSERT --}                  |
+      ]])
+      feed('<Esc>')
+      eq({ 'Xaaaa', 'Xbbbb', 'Xcccc' }, get_lines())
     end)
   end)
 
