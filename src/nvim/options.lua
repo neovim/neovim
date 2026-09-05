@@ -6916,6 +6916,20 @@ local options = {
       type = 'boolean',
     },
     {
+      defaults = 1000,
+      desc = [=[
+        Minimum time in milliseconds between automatic writes to the profile
+        output file while profiling.  A value of zero disables automatic
+        writes.  The `:profile dump` and `:profile stop` commands always write
+        the profile output regardless of this option.
+      ]=],
+      full_name = 'profiledumpinterval',
+      scope = { 'global' },
+      short_desc = N_('interval between automatic profile dumps'),
+      type = 'number',
+      varname = 'p_pdi',
+    },
+    {
       defaults = true,
       full_name = 'prompt',
       scope = { 'global' },

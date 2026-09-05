@@ -5121,6 +5121,15 @@ vim.o.pvw = vim.o.previewwindow
 vim.wo.previewwindow = vim.o.previewwindow
 vim.wo.pvw = vim.wo.previewwindow
 
+--- Minimum time in milliseconds between automatic writes to the profile
+--- output file while profiling.  A value of zero disables automatic
+--- writes.  The `:profile dump` and `:profile stop` commands always write
+--- the profile output regardless of this option.
+---
+--- @type integer
+vim.o.profiledumpinterval = 1000
+vim.go.profiledumpinterval = vim.o.profiledumpinterval
+
 --- Enables pseudo-transparency for the `popup-menu`. Valid values are in
 --- the range of 0 for fully opaque popupmenu (disabled) to 100 for fully
 --- transparent background. Values between 0-30 are typically most useful.

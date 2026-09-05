@@ -4978,6 +4978,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	set.  It's normally not set directly, but by using one of the commands
 	|:ptag|, |:pedit|, etc.
 
+						*'profiledumpinterval'*
+'profiledumpinterval'	number	(default 1000)
+			global
+	Minimum time in milliseconds between automatic writes to the profile
+	output file while profiling.  A value of zero disables automatic
+	writes.  The `:profile dump` and `:profile stop` commands always write
+	the profile output regardless of this option.
+
 						*'pumblend'* *'pb'*
 'pumblend' 'pb'		number	(default 0)
 			global
