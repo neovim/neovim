@@ -222,11 +222,10 @@ function M.trust(opts)
   fullpath = vim.fs.normalize(fullpath) -- Ensure "/" slashes, even on Windows.
 
   local trust = read_trust()
-
   if action == 'allow' then
     if path then
       vim.notify(
-        'File contents may have changed since last viewed. Open the buffer and run :trust for stronger guarantees.',
+        'File contents may have changed. Run :trust (without args) to confirm.',
         vim.log.levels.WARN
       )
     end
