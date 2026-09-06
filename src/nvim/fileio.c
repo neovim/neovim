@@ -2888,6 +2888,31 @@ static bool buf_apply_filechanged_autocmd(buf_T *buf, bufref_T *bufref, const ch
   return handled;
 }
 
+/// Check if the path of a "nowrite" buffer has changed and trigger
+/// |FileChangedShell| if it has.
+///
+/// @return  1 if a changed buffer was found or,
+///          2 if a FileChangedShell autocommand handled the change or,
+///          0 otherwise ('autoread' is off or the path has not changed).
+static int buf_check_nowrite_timestamp(buf_T *buf, bufref_T *bufref, bool *busy)
+{
+  if (!(buf->b_p_ar >= 0 ? buf->b_p_ar : p_ar)) {
+    return 0;
+  }
+
+  FileChange change;
+  if (!buf_detect_file_change(buf, &change)) {
+    return 0;
+  }
+
+  if (!change.file_info_ok) {
+    return 1;
+  }
+
+  bool handled = buf_apply_filechanged_autocmd(buf, bufref, S_LEN("changed"), busy);
+  return handled ? 2 : 1;
+}
+
 /// Check if any not hidden buffer has been changed.
 /// Postpone the check if there are characters in the stuff buffer, a global
 /// command is being executed, a mapping is being executed or an autocommand is
@@ -3012,14 +3037,20 @@ int buf_check_timestamp(buf_T *buf)
   set_bufref(&bufref, buf);
 
   // If its a terminal, there is no file name, the buffer is not loaded,
-  // 'buftype' is set, we are in the middle of a save or being called
-  // recursively: ignore this buffer.
+  // we are in the middle of a save or being called recursively: ignore this
+  // buffer.
   if (buf->terminal
       || buf->b_ffname == NULL
       || buf->b_ml.ml_mfp == NULL
-      || !bt_normal(buf)
       || buf->b_saving
       || busy) {
+    return 0;
+  }
+
+  if (bt_nowrite(buf)) {
+    return buf_check_nowrite_timestamp(buf, &bufref, &busy);
+  }
+  if (!bt_normal(buf)) {
     return 0;
   }
 
