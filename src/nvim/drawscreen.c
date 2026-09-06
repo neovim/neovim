@@ -2282,6 +2282,12 @@ static void win_update(win_T *wp)
         bool display_buf_line = !concealed
                                 && (foldinfo.fi_lines == 0 || wp->w_p_fdt.type == kCallbackNone);
 
+        // Add provider conceal to the marktree before drawing, so win_line() reflows it the same
+        // way the geometry functions do.
+        if (display_buf_line) {
+          decor_providers_invoke_conceal(wp, lnum - 1);
+        }
+
         // Display one line
         spellvars_T zero_spv = { 0 };
         row = win_line(wp, lnum, srow, wp->w_view_height, 0, concealed,
