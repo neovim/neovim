@@ -116,9 +116,8 @@ static struct {
   size_t done_len;  ///< Bytes of the capture already consumed by replayed spans; tail is pending.
   varnumber_T tick;  ///< b:changedtick at session start: the session's atoms (spans, the whole
                      ///< session) diff against it for their `changed` field.
-  uint32_t region;  ///< Extmark (pair) tracking the primary's inserted text.
-  kvec_t(uint32_t) regions;  ///< Per-cursor extmarks (pairs, `mc_session_ns()`) tracking each
-                             ///< cursor's preview region (anchor .. preview end).
+  uint32_t region;  ///< Primary cursor's inserted text.
+  kvec_t(uint32_t) regions;  ///< Per-cursor preview regions (`mc_session_ns`).
 } mc_ins_span;
 
 /// Editor state when the mc session started, which every cursor replays against.
@@ -183,7 +182,7 @@ static uint32_t mc_last_ns(void)
   return ns;
 }
 
-/// Namespace for session-internal marks (live text region, transient primary-cursor tracker).
+/// Namespace for session-internal marks (live text regions, transient primary-cursor tracker).
 static uint32_t mc_session_ns(void)
 {
   static uint32_t ns = 0;
@@ -710,7 +709,8 @@ static void mc_ins_preview_rebase(void)
 }
 
 /// First live per-cursor preview region, or `start.id == 0` if none. A live region's buffer
-/// content is the applied preview text, and start == end means no preview is applied.
+/// content is the applied preview text, and `start == end` means no preview is applied.
+/// All live regions hold the same preview, so any one represents the batch.
 static MTPair mc_ins_region_first(void)
 {
   for (size_t i = 0; i < kv_size(mc_ins_span.regions); i++) {
@@ -722,11 +722,23 @@ static MTPair mc_ins_region_first(void)
   return (MTPair){ 0 };
 }
 
-/// The buffer range of paired region mark `p`.
+/// The buffer range (start/end positions) of region mark `p`.
 static void mc_region_range(MTPair p, pos_T *start, pos_T *end)
 {
   *start = (pos_T){ .lnum = p.start.pos.row + 1, .col = p.start.pos.col };
   *end = (pos_T){ .lnum = p.end_pos.row + 1, .col = p.end_pos.col };
+}
+
+/// Resolves a session extmark to its buffer range (start/end). Returns false if the mark is gone
+/// (deleted mid-session by a script?).
+static bool mc_region_mark_range(uint32_t mark, pos_T *start, pos_T *end)
+{
+  MTPair p = extmark_from_id(curbuf, mc_session_ns(), mark);
+  if (p.start.id == 0) {
+    return false;
+  }
+  mc_region_range(p, start, end);
+  return true;
 }
 
 /// Replaces buffer text (end-exclusive) with `text` (multiline), preserving marks and undo.
@@ -756,7 +768,7 @@ static void mc_ins_preview_replace(pos_T start, pos_T end, const String *text)
   arena_mem_free(arena_finish(&arena));
 }
 
-/// Sets `text` as the preview at every cursor, replacing the previous one.
+/// Sets the preview at every cursor, replacing the previous one.
 static void mc_ins_preview_set(const String *new)
 {
   // The primary's own insert session must not notice the preview edits.
@@ -765,13 +777,12 @@ static void mc_ins_preview_set(const String *new)
   uint32_t primary = 0;
   mc_track_upd(curbuf, &primary, curwin->w_cursor);
   for (size_t i = 0; i < kv_size(mc_ins_span.regions); i++) {
-    MTPair p = extmark_from_id(curbuf, mc_session_ns(), kv_A(mc_ins_span.regions, i));
-    if (p.start.id == 0) {
-      continue;  // A script deleted the extmark mid-session.
+    pos_T rs, re;
+    // Re-resolve each region, previous loop iterations may have shifted it.
+    if (!mc_region_mark_range(kv_A(mc_ins_span.regions, i), &rs, &re)) {
+      continue;
     }
     // Cursor display mark (right-gravity) is pushed by the replacement to the new preview end.
-    pos_T rs, re;
-    mc_region_range(p, &rs, &re);
     mc_ins_preview_replace(rs, re, new);
   }
   pos_T pos = curwin->w_cursor;
@@ -780,13 +791,6 @@ static void mc_ins_preview_set(const String *new)
   }
   extmark_del_id(curbuf, mc_session_ns(), primary);
   mc_ins_restore_state(&saved);
-}
-
-/// Deletes the preview at every cursor.
-static void mc_ins_preview_del(void)
-{
-  static const String empty = STRING_INIT;
-  mc_ins_preview_set(&empty);
 }
 
 /// True if `keys` has a non-literal key (kKeyInsFlush): a literal preview cannot represent it.
@@ -819,7 +823,7 @@ void mc_ins_cascade_restart(void)
   mc_ins_preview_rebase();
 }
 
-/// Insert-cascades the session. Called after each key in insert-mode; extends the preview or
+/// Cascades the insert-session. Called after each key in insert-mode. Updates the preview or
 /// flushes a span and cascades it.
 void mc_ins_cascade(void)
 {
@@ -827,8 +831,11 @@ void mc_ins_cascade(void)
       || !mc_buf_has_cursors(curbuf)) {
     return;
   }
+
+  pos_T start, end;  // The primary cursor's insert-span region.
   String ins = redo_keys(NULL);
   assert(ins.data != NULL || ins.size == 0);  // Coverity: NULL only when empty.
+
   if (mc_ins_span.first) {
     // Not with a pending autoindent ("o" + 'autoindent'): the entry span's replay ends in <Esc>,
     // which would delete the indent.
@@ -853,28 +860,47 @@ void mc_ins_cascade(void)
     if (!ins_compl_active() && !pum_visible()) {
       mc_ins_span_flush(&ins, false);
     }
-  } else {
-    MTPair p = extmark_from_id(curbuf, mc_session_ns(), mc_ins_span.region);
-    if (p.start.id != 0) {
-      pos_T rs, re;
-      mc_region_range(p, &rs, &re);
-      String text = ml_region_text(curbuf, rs, re);
-      // Skip the re-apply if the previews already hold this text (first live region == primary's).
-      bool applied = false;
-      MTPair fp = mc_ins_region_first();
-      if (fp.start.id != 0) {
-        pos_T frs, fre;
-        mc_region_range(fp, &frs, &fre);
-        String cur = ml_region_text(curbuf, frs, fre);
-        applied = cur.size == text.size
-                  && (text.size == 0 || memcmp(cur.data, text.data, text.size) == 0);
-        api_free_string(cur);
-      }
-      if (!applied) {
-        mc_ins_preview_set(&text);
-      }
-      api_free_string(text);
+  } else if (mc_region_mark_range(mc_ins_span.region, &start, &end)) {
+    // Live preview: mirror the primary's inserted text, without replay.
+    // Skip if unchanged, or if completion-preview could shift/overlap the primary's span.
+
+    String text = ml_region_text(curbuf, start, end);
+    bool update = true;
+    MTPair fp = mc_ins_region_first();
+    if (fp.start.id != 0) {
+      pos_T frs, fre;
+      mc_region_range(fp, &frs, &fre);
+      String cur = ml_region_text(curbuf, frs, fre);
+      // Preview-text changed?
+      update = cur.size != text.size
+               || (text.size > 0 && memcmp(cur.data, text.data, text.size) != 0);
+      api_free_string(cur);
     }
+    if (update && (ins_compl_active() || pum_visible())) {
+      // Completion active. check all cursor-preview regions; if one would disturb completion, defer
+      // (skip) the entire preview update (all-or-none: mc_ins_region_first() assumes all previews
+      // have the same text).
+      //
+      // TODO(justinmk): if completion positions (e.g. `compl_col`) followed extmarks, we wouldn't
+      // have this problem, and live-preview could allow (non-conflicting) text-shifts. #41719
+      for (size_t i = 0; i < kv_size(mc_ins_span.regions); i++) {
+        pos_T rs, re;
+        if (!mc_region_mark_range(kv_A(mc_ins_span.regions, i), &rs, &re)) {
+          continue;
+        }
+        // A preview after `end` is safe. Otherwise, multiline old or new preview text could shift
+        // the primary's rows.
+        if (!lt(end, rs) && (re.lnum >= start.lnum || rs.lnum != re.lnum
+                             || start.lnum != end.lnum)) {
+          update = false;
+          break;
+        }
+      }
+    }
+    if (update) {
+      mc_ins_preview_set(&text);
+    }
+    api_free_string(text);
   }
   api_free_string(ins);
 }
@@ -887,10 +913,11 @@ void mc_ins_cascade(void)
 ///                session, and rebase for the continuing preview.
 static void mc_ins_span_flush(const String *ins, bool commit)
 {
+  static const String empty = STRING_INIT;
   MTPair fp = mc_ins_region_first();
   if (fp.start.id != 0
       && (fp.start.pos.row != fp.end_pos.row || fp.start.pos.col != fp.end_pos.col)) {
-    mc_ins_preview_del();
+    mc_ins_preview_set(&empty);  // Delete the preview at every cursor.
   }
   size_t dlen = ins->size - mc_ins_span.done_len;
   StringBuilder keys = KV_INITIAL_VALUE;

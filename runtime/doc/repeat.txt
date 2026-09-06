@@ -444,9 +444,11 @@ cursor, then disables follow-mode again. >lua
 
 LIMITATIONS						*mcursor-limitations*
 
-- Extra cursors on the same line can be lost or misplaced by an edit that
-  shifts columns (e.g. inserting text): the cursors shift each other.
-- Undo restores the buffer, not (per-cursor) registers.
+- During Insert-mode completion, live mirroring pauses if a preview could
+  shift or overlap the primary's completion (same-line edits before the
+  primary, or line insertions/deletions before it).
+- Cursors on the same line can be lost or misplaced by an edit that shifts
+  columns (e.g. inserting text).
 - Time-travel undo (|g-|, |g+|, |:earlier|) clears all cursors.
 - Reloading/unloading a buffer (|:edit!|, 'autoread') clears its cursors
   (extmarks limitation).

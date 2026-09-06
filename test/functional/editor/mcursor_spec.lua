@@ -1031,7 +1031,7 @@ describe('multicursor', function()
     end)
   end)
 
-  describe('insert-mode cascade', function()
+  describe('insert-mode', function()
     it('CTRL-U cascades before <Esc> (deletion crossing the session anchor)', function()
       -- Deleting typed text cascades live (the region shrinks). But CTRL-U here eats the "o"
       -- autoindent, which precedes the tracked region, invisible to the preview diff.
@@ -1265,12 +1265,10 @@ describe('multicursor', function()
       end
       eq({ { 'motion', '^' }, { 'insert', k('1i<Esc>') }, { 'insert', k('iX<Esc>') } }, children)
     end)
-  end)
 
-  describe('insert-mode depth', function()
     it('session survives all cursors deduping away mid-session', function()
-      -- A cursor at the primary's position: the "A" entry replay lands it on the primary and
-      -- dedupe removes it mid-session; the <Esc> commit must not cascade into the empty set.
+      -- "A" entry replay lands on the primary and dedupe removes it mid-session; the ESC commit
+      -- must not cascade into the empty set.
       fn.setline(1, { 'x' })
       feed('Q')
       feed('Ahi<Esc>')
@@ -1278,7 +1276,7 @@ describe('multicursor', function()
       eq({ 'xhi' }, get_lines())
     end)
 
-    it('insert sessions cascade at each cursor', function()
+    it('sessions cascade at each cursor', function()
       assert_rows({
         -- iZ: after <Esc> the cursors sit ON the last inserted char (like the primary cursor).
         {
@@ -1390,7 +1388,7 @@ describe('multicursor', function()
       })
     end)
 
-    it('ea appends at word end at each cursor (with q=)', function()
+    it('ea (with q=)', function()
       cursors({ 'one two', 'three four' }, 'Qj')
       feed('q=')
       feed('ea!<Esc>')
@@ -1398,13 +1396,79 @@ describe('multicursor', function()
       eq({ 'one! two', 'three! four' }, get_lines())
     end)
 
-    it('i_CTRL-N completion result appears at each cursor', function()
-      fn.setline(1, { 'wombat', 'wo', 'wo' })
-      feed('2gg')
-      feed('Q')
-      feed('j')
+    it('completion: i_CTRL-N completes existing text at each cursor', function()
+      command('set completeopt=menuone')
+      cursors({ 'wombat', 'wo', 'wo' }, 'jQj')
       feed('A<C-n><Esc>')
       eq({ 'wombat', 'wombat', 'wombat' }, get_lines())
+    end)
+
+    it('completion: live-mirrors cursors on separate lines', function()
+      command('set completeopt=menuone')
+      cursors({ 'wombat', '', '' }, 'jQj')
+      feed('iwo<C-n>')
+      eq(1, fn.pumvisible())
+      eq({ 'wombat', 'wombat', 'wombat' }, get_lines())
+      feed('<Esc>')
+      eq({ 'wombat', 'wombat', 'wombat' }, get_lines())
+    end)
+
+    it('completion: ESC commits with stale previews #41719', function()
+      command('set completeopt=menuone,noselect')
+      cursors({ 'aa', 'bb cc dd', 'ee' }, 'GQkQww')
+      feed('ciwa<C-n>a')
+      eq(1, fn.pumvisible())
+      eq({ 'aa', 'a cc aa', 'a' }, get_lines())
+      feed('<Esc>')
+      eq({ 'aa', 'aa cc aa', 'aa' }, get_lines())
+    end)
+
+    it('completion: live-mirrors same-line cursor AFTER the primary', function()
+      command('set completeopt=menuone,noselect')
+      cursors({ 'aa', 'bb cc dd' }, 'jwwQ0')
+      feed('ciw<C-n>a')
+      eq(1, fn.pumvisible())
+      eq({ 'aa', 'a cc a' }, get_lines())
+      feed('<C-e>x<Esc>')
+      eq({ 'aa', 'ax cc ax' }, get_lines())
+    end)
+
+    it('completion: defers preview of multiline edit BEFORE primary #41719', function()
+      command('set completeopt=menuone')
+      cursors({ '', '' }, 'Qj')
+      feed('ia')
+      fn.complete(1, { 'aa\nbb', 'ac' })
+      eq(1, fn.pumvisible())
+      eq({ 'a', 'aa', 'bb' }, get_lines())
+      feed('<C-c>')
+    end)
+
+    it('completion: defers preview of same-line cursor BEFORE primary #41719', function()
+      command('set completeopt=menu,noselect')
+      -- Place cursor1 on its own line, to exercise whole-batch deferral.
+      -- Place cursor2 on same line as the primary, to test same-line handling.
+      for _, case in ipairs({
+        { 'aa', 'aa', '' },
+        { 'a<C-e>', 'a', 'a' },
+        { 'a<C-n><C-y>', 'aa', 'aa' },
+        { 'a<BS>a', 'a', 'a' },
+      }) do
+        local keys, text, preview = unpack(case)
+        clear_cursors()
+        cursors({ 'aa', 'bb cc dd', 'ee' }, 'GQkQww')
+        eq({ { 1, 0 }, { 2, 0 } }, anchors())
+        eq({ 2, 6 }, api.nvim_win_get_cursor(0))
+        feed('ciw<C-n>')
+        eq(1, fn.pumvisible())
+        feed(keys)
+        eq({ 'aa', ('%s cc %s'):format(preview, text), preview }, get_lines())
+        feed('aa')
+        eq(0, fn.pumvisible())
+        feed(' ')
+        eq({ 'aa', ('%saa  cc %saa '):format(text, text), ('%saa '):format(text) }, get_lines())
+        feed('x<Esc>')
+        eq({ 'aa', ('%saa x cc %saa x'):format(text, text), ('%saa x'):format(text) }, get_lines())
+      end
     end)
   end)
 
@@ -1438,8 +1502,7 @@ describe('multicursor', function()
 
   describe('completion', function()
     -- While a completion is active, the cascade pauses: redobuff is frozen, and spans cannot replay
-    -- into a busy completion (edit() refuses recursive insert). The other cursors catch up when the
-    -- completion ends.
+    -- into a busy completion (edit() refuses nesting). The cursors catch up when completion ends.
 
     --- Three empty lines under "foo*" completion candidates; cursors on lines 4-5, primary on 6.
     local function ac_setup()
