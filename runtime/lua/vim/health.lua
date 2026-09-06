@@ -497,9 +497,7 @@ function M._check(eap)
         local f = assert(loadstring(func))
         --- @diagnostic disable-next-line: assign-type-mismatch
         local ok, output = async.pawait(async.run(name, f)) ---@type boolean, string
-        if vim.in_fast_event() then
-          async.await(vim.schedule)
-        end
+        async.await(vim.schedule)
         if not ok then
           M.error(
             string.format(
@@ -560,7 +558,7 @@ function M._check(eap)
     end)
   end)
 
-  local cancel_autocmd = vim.api.nvim_create_autocmd('BufWipeout', {
+  local cancel_autocmd = vim.api.nvim_create_autocmd('BufUnload', {
     buffer = bufnr,
     once = true,
     callback = function()
