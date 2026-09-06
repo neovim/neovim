@@ -1022,6 +1022,53 @@ describe('CursorLine and CursorLineNr highlights', function()
     ]])
   end)
 
+  it('follows a conceal-aware reflowed cursor line (#14409)', function()
+    local screen = Screen.new(20, 4)
+    local ns = api.nvim_create_namespace('conceal_wrap_cursorline')
+    command('set wrap conceallevel=2 concealcursor= cursorline scrolloff=0 noshowmode')
+    api.nvim_buf_set_lines(0, 0, -1, true, {
+      ('a'):rep(5) .. 'HIDDEN' .. ('b'):rep(14),
+      'line2',
+    })
+    api.nvim_buf_set_extmark(0, ns, 0, 5, { end_col = 11, conceal = '' })
+
+    api.nvim_win_set_cursor(0, { 2, 0 })
+    local concealed = [[
+      aaaaabbbbbbbbbbbbbb |
+      {21:^line2               }|
+      {1:~                   }|
+                          |
+    ]]
+    screen:expect(concealed)
+
+    api.nvim_win_set_cursor(0, { 1, 0 })
+    local revealed = [[
+      {21:^aaaaaHIDDENbbbbbbbbb}|
+      {21:bbbbb               }|
+      line2               |
+                          |
+    ]]
+    screen:expect(revealed)
+
+    command('set concealcursor=n')
+    local concealed_cursor = [[
+      {21:^aaaaabbbbbbbbbbbbbb }|
+      line2               |
+      {1:~                   }|
+                          |
+    ]]
+    screen:expect(concealed_cursor)
+    local changedtick = api.nvim_buf_get_changedtick(0)
+    feed('i')
+    screen:expect(revealed)
+    feed('<Esc>')
+    screen:expect(concealed_cursor)
+    eq(changedtick, api.nvim_buf_get_changedtick(0))
+
+    api.nvim_win_set_cursor(0, { 2, 0 })
+    screen:expect(concealed)
+  end)
+
   it("'cursorlineopt' screenline", function()
     local screen = Screen.new(20, 5)
     screen:add_extra_attr_ids {
