@@ -98,4 +98,45 @@ describe('conceal-aware wrapping (#14409): real terminal', function()
     screen:try_resize(20, 7)
     screen:expect(wide)
   end)
+
+  it('redraws a wrapped Tree-sitter line after editing and undo', function()
+    local screen = start_conceal(
+      'concealcursor=nvic scrolloff=0 shortmess+=u',
+      [[
+      local lines = {}
+      for i = 1, 24 do
+        lines[i] = ('int HIDDENIDENTIFIER = %d;'):format(i)
+      end
+      vim.api.nvim_buf_set_lines(0, 0, -1, true, lines)
+      vim.treesitter.query.set('c', 'highlights', [=[
+        ((identifier) @conceal (#eq? @conceal "HIDDENIDENTIFIER") (#set! conceal ""))
+      ]=])
+      vim.treesitter.start(0, 'c')
+      vim.treesitter.get_parser():parse(true)
+      vim.cmd('normal! 15Gzt')
+    ]]
+    )
+    local concealed = [[
+      ^int  = 15;          |
+      int  = 16;          |
+      int  = 17;          |
+      int  = 18;          |
+      int  = 19;          |
+                          |
+      {5:-- TERMINAL --}      |
+    ]]
+    screen:expect(concealed)
+    feed_data('wciwVISIBLEIDENTIFIE\0270')
+    screen:expect([[
+      ^int VISIBLEIDENTIFIE|
+       = 15;              |
+      int  = 16;          |
+      int  = 17;          |
+      int  = 18;          |
+                          |
+      {5:-- TERMINAL --}      |
+    ]])
+    feed_data('u0')
+    screen:expect(concealed)
+  end)
 end)
