@@ -455,6 +455,7 @@ error('Cannot require a meta file')
 --- @field virt_text_pos? "eol"|"eol_right_align"|"overlay"|"right_align"|"inline"
 --- @field virt_text_repeat_linebreak? boolean
 --- @field virt_text_win_col? integer
+--- @field _conceal_continuation? boolean
 --- @field _subpriority? integer
 
 --- @class vim.api.keyset.tabpage_config

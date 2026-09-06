@@ -63,6 +63,7 @@ typedef struct {
   String url;
   Boolean scoped;
 
+  Boolean _conceal_continuation;  // Do not repeat the replacement of a row-clipped conceal range.
   Integer _subpriority;
 } Dict(set_extmark);
 

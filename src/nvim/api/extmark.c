@@ -403,6 +403,10 @@ ArrayOf(DictAs(get_extmark_item)) nvim_buf_get_extmarks(Buffer buf, Integer ns_i
 ///                     Non-empty char is used as |:syn-cchar|. Highlighted with "hl_group" if
 ///                     defined, else defaults to |hl-Conceal|.
 ///                   - boolean: true is equivalent to "", false removes any existing conceal.
+///                 With 'wrap', active persistent conceal determines the displayed layout,
+///                 including its replacement. Syntax, match, or ephemeral conceal cannot
+///                 override that layout at the same position. Other highlight attributes
+///                 retain their usual priority; use a persistent conceal override to change layout.
 ///               - conceal_lines: (string) Line-level conceal. When set to an empty string (other
 ///                 values reserved for future use), the lines in the extmark range are not drawn;
 ///                 the next non-concealed line is drawn in their place. Requires 'conceallevel' >=
@@ -616,6 +620,13 @@ Integer nvim_buf_set_extmark(Buffer buf, Integer ns_id, Integer line, Integer co
         });
       }
     }
+  }
+
+  if (opts->_conceal_continuation) {
+    VALIDATE(hl.flags & kSHConceal, "%s", "_conceal_continuation requires conceal", {
+      goto error;
+    });
+    hl.flags |= kSHConcealNoStart;
   }
 
   if (HAS_KEY(opts, set_extmark, conceal_lines)) {
@@ -848,7 +859,7 @@ Integer nvim_buf_set_extmark(Buffer buf, Integer ns_id, Integer line, Integer co
       goto error;
     }
 
-    uint16_t decor_flags = 0;
+    uint32_t decor_flags = 0;
 
     DecorVirtText *decor_alloc = NULL;
     if (kv_size(virt_text.data.virt_text)) {
@@ -890,6 +901,9 @@ Integer nvim_buf_set_extmark(Buffer buf, Integer ns_id, Integer line, Integer co
       }
     }
 
+    if (hl.flags & kSHConceal) {
+      decor_flags |= MT_FLAG_DECOR_CONCEAL;
+    }
     if (hl.flags & kSHConcealLines) {
       decor_flags |= MT_FLAG_DECOR_CONCEAL_LINES;
     }

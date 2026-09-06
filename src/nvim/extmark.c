@@ -76,14 +76,14 @@ static void extmark_push_savepos(buf_T *buf, uint64_t mark, int undo_row, colnr_
 ///
 /// must not be used during iteration!
 void extmark_set(buf_T *buf, uint32_t ns_id, uint32_t *idp, int row, colnr_T col, int end_row,
-                 colnr_T end_col, DecorInline decor, uint16_t decor_flags, bool right_gravity,
+                 colnr_T end_col, DecorInline decor, uint32_t decor_flags, bool right_gravity,
                  bool end_right_gravity, bool no_undo, bool invalidate, Error *err)
 {
   uint32_t *ns = map_put_ref(uint32_t, uint32_t)(buf->b_extmark_ns, ns_id, NULL, NULL);
   uint32_t id = idp ? *idp : 0;
   bool created = true;  // Mark did not exist before this call.
 
-  uint16_t flags = mt_flags(right_gravity, no_undo, invalidate, decor.ext) | decor_flags;
+  uint32_t flags = mt_flags(right_gravity, no_undo, invalidate, decor.ext) | decor_flags;
   if (id == 0) {
     id = ++*ns;
   } else {
@@ -105,7 +105,7 @@ void extmark_set(buf_T *buf, uint32_t ns_id, uint32_t *idp, int row, colnr_T col
         if (old_mark.pos.row == row && old_mark.pos.col == col) {
           // not paired: we can revise in place
           if (!mt_invalid(old_mark) && mt_decor_any(old_mark)) {
-            mt_itr_rawkey(itr).flags &= (uint16_t) ~MT_FLAG_EXTERNAL_MASK;
+            mt_itr_rawkey(itr).flags &= ~MT_FLAG_EXTERNAL_MASK;
             buf_decor_remove(buf, row, row, col, mt_decor(old_mark), true);
           }
           mt_itr_rawkey(itr).flags |= flags;
@@ -176,8 +176,8 @@ static void extmark_setraw(buf_T *buf, uint64_t mark, int row, colnr_T col, bool
   MTKey alt = marktree_get_alt(buf->b_marktree, key, altitr);
 
   if (invalid) {
-    mt_itr_rawkey(itr).flags &= (uint16_t) ~MT_FLAG_INVALID;
-    mt_itr_rawkey(altitr).flags &= (uint16_t) ~MT_FLAG_INVALID;
+    mt_itr_rawkey(itr).flags &= ~MT_FLAG_INVALID;
+    mt_itr_rawkey(altitr).flags &= ~MT_FLAG_INVALID;
     marktree_revise_meta(buf->b_marktree, mt_end(key) ? altitr : itr, mt_end(key) ? alt : key);
   } else if (!mt_invalid(key) && key.flags & MT_FLAG_DECOR_SIGNTEXT && buf->b_signcols.autom) {
     row1 = MIN(alt.pos.row, MIN(key.pos.row, row));
