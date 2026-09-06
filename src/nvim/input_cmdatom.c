@@ -873,8 +873,7 @@ void atom_stuff_start(const cmdarg_T *cap)
 void atom_map_start(const char *lhs, size_t len, bool peeked)
 {
   if (!atom_has_consumers() || mc_replaying()
-      || reg_executing != 0 || ex_normal_busy != 0 || !(State & MODE_NORMAL)
-      || Visual.active) {
+      || reg_executing != 0 || ex_normal_busy != 0 || !(State & MODE_NORMAL)) {
     return;
   }
   if (atom_composite_active()) {

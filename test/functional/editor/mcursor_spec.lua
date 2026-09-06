@@ -514,6 +514,20 @@ describe('multicursor', function()
     end)
   end)
 
+  describe('composite/mapping', function()
+    it('Visual-mode mapping that creates cursors (Q) #41694', function()
+      command('xmap I Q0i')
+      cursors({ 'test', 'nvim', '', 'test', 'nvim' }, '')
+      feed('gg$Qjjj')
+      atoms_start()
+      feed('VjI')
+      feed('bad<Esc>')
+      eq({ 'badtest', 'nvim', '', 'badtest', 'badnvim' }, get_lines())
+      -- "Q" is excluded: it is cursor-management, not part of the edit.
+      eq({ '01i\27ibad\27' }, atoms_tail(1))
+    end)
+  end)
+
   describe('. (dot-repeat)', function()
     it('repeats operators, pre-cursor edits, inserts and changes at all cursors', function()
       -- Operator.
