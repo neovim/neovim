@@ -771,6 +771,20 @@ describe('nvim.dir', function()
     line_of('gamma.txt')
   end)
 
+  it('refreshes directory buffers with :checktime', function()
+    make_fixture()
+    n.clear({ args = { '--clean' } })
+
+    edit(root)
+    local stat = assert(vim.uv.fs_stat(root))
+    t.write_file(root .. '/beta.txt', 'beta', true)
+    assert(vim.uv.fs_utime(root, stat.atime.sec, stat.mtime.sec + 10))
+    command('checktime')
+    poke_eventloop()
+
+    line_of('beta.txt')
+  end)
+
   it('reports an error and keeps the buffer when reloading a removed directory', function()
     make_fixture()
     n.clear({ args = { '--clean' } })
