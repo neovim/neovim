@@ -777,7 +777,9 @@ static void atom_payload_append(CmdAtom *atom, CmdFrame *frame)
 /// Collects a typed key (gotchars()) into the stream.
 void atom_typed_add(const uint8_t *chars, size_t len)
 {
-  if (mc_replaying() || !atom_typed_collecting()) {
+  if (mc_replaying() || !atom_typed_collecting()
+      // Skip inputsecret(), to avoid leaking a password e.g. if a plugin logs `CmdAtom.keys`.
+      || cmdline_star > 0) {
     return;
   }
   if (len == 3 && chars[0] == K_SPECIAL
