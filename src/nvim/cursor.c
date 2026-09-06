@@ -87,6 +87,33 @@ int coladvance(win_T *wp, colnr_T wcol)
   return rc;
 }
 
+/// Move to a displayed column without interpreting its offset as a raw virtual column.
+int coladvance_scol(win_T *wp, colnr_T scol)
+{
+  if (!maybe_extconceal_line(wp, wp->w_cursor.lnum)) {
+    return coladvance(wp, scol);
+  }
+  pos_T pos = { .lnum = wp->w_cursor.lnum };
+  pos.col = scol2col(wp, pos.lnum, scol, &pos.coladd);
+  return coladvance_pos(wp, &pos);
+}
+
+/// Move to a resolved screen position while retaining coladvance()'s mode and EOL rules.
+int coladvance_pos(win_T *wp, pos_T *pos)
+{
+  assert(wp->w_cursor.lnum == pos->lnum);
+  colnr_T vcol;
+  getvcol(wp, pos, &vcol, NULL, NULL, 0);
+  int rc = coladvance(wp, vcol);
+  if (virtual_active(wp)) {
+    wp->w_cursor.coladd = pos->coladd;
+    wp->w_valid &= ~(VALID_WCOL | VALID_WROW | VALID_VIRTCOL);
+  } else if (pos->coladd > 0 && pos->col == ml_get_buf_len(wp->w_buffer, pos->lnum)) {
+    rc = FAIL;
+  }
+  return rc;
+}
+
 /// @param addspaces  change the text to achieve our goal? only for wp=curwin!
 /// @param finetune  change char offset for the exact column
 /// @param wcol_arg  column to move to (can be negative)

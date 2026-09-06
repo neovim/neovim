@@ -136,23 +136,53 @@ static bool redraw_popupmenu = false;
 static bool msg_grid_invalid = false;
 static bool resizing_autocmd = false;
 static bool conceal_cursor_used = false;
+static bool conceal_visual_used = false;
+static win_T *conceal_cursor_win = NULL;
+
+static void conceal_redraw_cursor_line(win_T *wp)
+{
+  redrawWinline(wp, wp->w_cursor.lnum);
+  if (decor_conceal_line(wp, wp->w_cursor.lnum - 1, true)
+      || extconceal_line_changes_height(wp, wp->w_cursor.lnum)) {
+    changed_window_setting(wp);
+  }
+}
+
+static void conceal_check_cursor_win(win_T *wp)
+{
+  if (wp == NULL || !win_valid_any_tab(wp) || wp->w_p_cole <= 0 || conceal_cursor_line(wp)) {
+    return;
+  }
+  conceal_redraw_cursor_line(wp);
+}
 
 /// Check if the cursor line needs to be redrawn because of 'concealcursor'.
 ///
 /// When cursor is moved at the same time, both lines will be redrawn regardless.
 void conceal_check_cursor_line(void)
 {
+  if (conceal_cursor_win != curwin) {
+    conceal_check_cursor_win(conceal_cursor_win);
+    conceal_cursor_win = curwin;
+    conceal_check_cursor_win(curwin);
+  }
+
+  if (conceal_visual_used != Visual.active) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (wp->w_buffer == curbuf && vim_strchr(wp->w_p_cocu, 'v') == NULL
+          && maybe_extconceal_buf(wp)) {
+        changed_window_setting(wp);
+      }
+    }
+    conceal_visual_used = Visual.active;
+  }
+
   bool should_conceal = conceal_cursor_line(curwin);
   if (curwin->w_p_cole <= 0 || conceal_cursor_used == should_conceal) {
     return;
   }
 
-  redrawWinline(curwin, curwin->w_cursor.lnum);
-
-  // Concealed line visibility toggled.
-  if (decor_conceal_line(curwin, curwin->w_cursor.lnum - 1, true)) {
-    changed_window_setting(curwin);
-  }
+  conceal_redraw_cursor_line(curwin);
   // Need to recompute cursor column, e.g., when starting Visual mode
   // without concealing.
   curs_columns(curwin, true);
@@ -2856,6 +2886,21 @@ bool conceal_cursor_line(const win_T *wp)
     return false;
   }
   return vim_strchr(wp->w_p_cocu, c) != NULL;
+}
+
+/// Return true if 'concealcursor' reveals line "lnum" in window "wp": the cursor line outside the
+/// listed modes, and every line of the Visual area unless "v" is listed. Drawing and height
+/// calculations must ask this the same way, or they disagree about how tall a concealed line is.
+bool conceal_cursor_reveals_line(const win_T *wp, linenr_T lnum)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (wp == curwin && lnum == wp->w_cursor.lnum && !conceal_cursor_line(wp)) {
+    return true;
+  }
+  return Visual.active && wp->w_buffer == curwin->w_buffer
+         && lnum >= MIN(Visual.start.lnum, curwin->w_cursor.lnum)
+         && lnum <= MAX(Visual.start.lnum, curwin->w_cursor.lnum)
+         && vim_strchr(wp->w_p_cocu, 'v') == NULL;
 }
 
 /// Whether cursorline is drawn in a special way

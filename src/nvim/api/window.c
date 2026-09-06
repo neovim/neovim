@@ -527,7 +527,7 @@ DictAs(win_text_height_ret) nvim_win_text_height(Window win, Dict(win_text_heigh
   }
 
   int64_t fill = 0;
-  int64_t all = win_text_height(w, start_lnum, start_vcol, &end_lnum, &end_vcol, &fill, max);
+  int64_t all = win_text_height(w, start_lnum, start_vcol, &end_lnum, &end_vcol, &fill, max, false);
   if (!HAS_KEY(opts, win_text_height, end_row)) {
     const int64_t end_fill = win_get_fill(w, line_count + 1);
     fill += end_fill;

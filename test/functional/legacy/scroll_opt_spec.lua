@@ -7,6 +7,10 @@ local clear = n.clear
 local exec = n.exec
 local feed = n.feed
 local assert_alive = n.assert_alive
+local api = n.api
+local fn = n.fn
+local command = n.command
+local eq = t.eq
 
 before_each(clear)
 
@@ -1645,5 +1649,235 @@ describe('scroll_cursor_halfway()', function()
       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx|*5
                                               |
     ]])
+  end)
+end)
+
+describe('window motions and scrolling with conceal-aware wrap (#14409)', function()
+  -- Line "lnum" reflows from 36 raw cells to 30 displayed cells.
+  local function reflowing_buf(count, lnum)
+    local ns = api.nvim_create_namespace('conceal_wrap_scroll')
+    local lines = {}
+    for i = 1, count do
+      lines[i] = i == lnum and (('a'):rep(10) .. 'HIDDEN' .. ('b'):rep(20)) or ('L%02d'):format(i)
+    end
+    api.nvim_buf_set_lines(0, 0, -1, true, lines)
+    api.nvim_buf_set_extmark(0, ns, lnum - 1, 10, { end_col = 16, conceal = '' })
+  end
+
+  it('L and M target the correct reflowed row', function()
+    local screen = Screen.new(30, 8)
+    command('set wrap conceallevel=2 concealcursor=nvic')
+    reflowing_buf(10, 3)
+
+    api.nvim_win_set_cursor(0, { 1, 0 })
+    feed('zt')
+    -- Line 3 reflows to one row, so seven buffer lines fit instead of six.
+    screen:expect([[
+      ^L01                           |
+      L02                           |
+      aaaaaaaaaabbbbbbbbbbbbbbbbbbbb|
+      L04                           |
+      L05                           |
+      L06                           |
+      L07                           |
+                                    |
+    ]])
+
+    feed('L')
+    eq({ 7, 0 }, api.nvim_win_get_cursor(0))
+    feed('gg')
+    feed('M')
+    eq({ 4, 0 }, api.nvim_win_get_cursor(0))
+    command('set conceallevel=0')
+    feed('ggL')
+    eq({ 6, 0 }, api.nvim_win_get_cursor(0))
+    feed('ggM')
+    eq({ 3, 0 }, api.nvim_win_get_cursor(0))
+  end)
+
+  it('centers a concealed long line for scrolloff without changing raw desired columns', function()
+    Screen.new(20, 7)
+    command('set wrap smoothscroll scrolloff=3 conceallevel=2 concealcursor=nvic')
+    local text = ('abcdefghij'):rep(28)
+    api.nvim_buf_set_lines(0, 0, -1, true, {
+      text:sub(1, 5) .. ('X'):rep(40) .. text:sub(6),
+      text,
+    })
+    api.nvim_buf_set_extmark(0, api.nvim_create_namespace(''), 0, 5, {
+      end_col = 45,
+      conceal = '',
+    })
+    api.nvim_win_set_cursor(0, { 1, 168 })
+    feed('g0')
+    eq({ 1, 160 }, api.nvim_win_get_cursor(0))
+    eq(60, fn.winsaveview().skipcol)
+    eq(4, fn.winline())
+    feed('j')
+    eq({ 2, 160 }, api.nvim_win_get_cursor(0))
+  end)
+
+  it('g^ skips hidden nonblank text but ^ keeps buffer semantics', function()
+    Screen.new(20, 6)
+    command('set wrap conceallevel=2 concealcursor=nvic')
+    api.nvim_buf_set_lines(0, 0, -1, true, {
+      ('a'):rep(20) .. '  HIDDEN  ABCDE',
+      '  HIDDEN  A',
+      '  HIDDEN  ',
+    })
+    local ns = api.nvim_create_namespace('')
+    api.nvim_buf_set_extmark(0, ns, 0, 22, { end_col = 28, conceal = '' })
+    api.nvim_buf_set_extmark(0, ns, 1, 2, { end_col = 8, conceal = '' })
+    api.nvim_buf_set_extmark(0, ns, 2, 2, { end_col = 8, conceal = '' })
+    feed('gg$g^')
+    eq({ 1, 30 }, api.nvim_win_get_cursor(0))
+    feed('2G$^')
+    eq({ 2, 2 }, api.nvim_win_get_cursor(0))
+    feed('g^')
+    eq({ 2, 10 }, api.nvim_win_get_cursor(0))
+    feed('G$g^')
+    eq({ 3, 9 }, api.nvim_win_get_cursor(0))
+    command('set virtualedit=all')
+    feed('g^')
+    eq({ 3, 10 }, api.nvim_win_get_cursor(0))
+  end)
+
+  it('scroll commands count the displayed cursor row', function()
+    Screen.new(20, 7)
+    command('set wrap scrolloff=0 conceallevel=2 concealcursor=nvic')
+    local ns = api.nvim_create_namespace('')
+    for _, case in ipairs({
+      { 6, '<C-Y>', 2, { 5, 2 } },
+      { 6, 'i<C-X><C-Y><Esc>', 3, { 6, 74 } },
+      { 4, 'i<C-X><C-E><Esc>', 4, { 4, 74 } },
+    }) do
+      api.nvim_buf_clear_namespace(0, ns, 0, -1)
+      local lines = {}
+      for i = 1, 10 do
+        lines[i] = ('L%02d'):format(i)
+      end
+      lines[case[1]] = 'abcde' .. ('X'):rep(40) .. ('abcdefghij'):rep(4) .. 'abcde'
+      api.nvim_buf_set_lines(0, 0, -1, true, lines)
+      api.nvim_buf_set_extmark(0, ns, case[1] - 1, 5, { end_col = 45, conceal = '' })
+      api.nvim_win_set_cursor(0, { case[1], 75 })
+      fn.winrestview({ topline = 3 })
+      command('redraw')
+      feed(case[2])
+      eq(case[3], fn.line('w0'))
+      eq(case[4], api.nvim_win_get_cursor(0))
+    end
+  end)
+
+  it(
+    "sum_scroll_delta accounts for 'smoothscroll' Ctrl-E landing mid-way through a reflowed line",
+    function()
+      local screen = Screen.new(21, 8, { ext_multigrid = true })
+      command('set wrap conceallevel=2 concealcursor=nvic smoothscroll')
+      reflowing_buf(20, 5)
+      api.nvim_win_set_cursor(0, { 1, 0 })
+
+      -- 4 presses reach line 5 (the reflowed line) as topline.
+      feed('4<C-E>')
+      screen:expect({
+        grid = [[
+        ## grid 1
+          [2:---------------------]|*7
+          [3:---------------------]|
+        ## grid 2
+          ^aaaaaaaaaabbbbbbbbbbb|
+          bbbbbbbbb            |
+          L06                  |
+          L07                  |
+          L08                  |
+          L09                  |
+          L10                  |
+        ## grid 3
+                               |
+        ]],
+        win_viewport = {
+          [2] = {
+            win = 1000,
+            topline = 4,
+            botline = 11,
+            curline = 4,
+            curcol = 0,
+            linecount = 20,
+            sum_scroll_delta = 4,
+          },
+        },
+      })
+
+      -- A 5th press must skip into the reflowed line's own 2nd row (skipcol), the sub-line boundary
+      -- this feature's reflow affects: topline stays on line 5 (0-indexed 4), only the screen view
+      -- advances by the single reflowed row.
+      feed('<C-E>')
+      screen:expect({
+        grid = [[
+        ## grid 1
+          [2:---------------------]|*7
+          [3:---------------------]|
+        ## grid 2
+          {1:<<<}bbbbb^b            |
+          L06                  |
+          L07                  |
+          L08                  |
+          L09                  |
+          L10                  |
+          L11                  |
+        ## grid 3
+                               |
+        ]],
+        win_viewport = {
+          [2] = {
+            win = 1000,
+            topline = 4,
+            botline = 12,
+            curline = 4,
+            curcol = 35,
+            linecount = 20,
+            sum_scroll_delta = 5,
+          },
+        },
+      })
+    end
+  )
+
+  it("'smoothscroll' does not retain a row removed by conceal", function()
+    Screen.new(21, 8)
+    command('set wrap smoothscroll scrolloff=0 conceallevel=2 concealcursor=nvic')
+    local lines = { ('x'):rep(42) }
+    for i = 2, 20 do
+      lines[i] = ('L%02d'):format(i)
+    end
+    api.nvim_buf_set_lines(0, 0, -1, true, lines)
+    local ns = api.nvim_create_namespace('conceal_smoothscroll_removed_row')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { end_col = 21, conceal = '' })
+    api.nvim_win_set_cursor(0, { 1, 21 })
+
+    feed('<C-E>')
+    eq({ 2, 0 }, { fn.line('w0'), fn.winsaveview().skipcol })
+
+    feed('<C-Y>')
+    eq({ 1, 0 }, { fn.line('w0'), fn.winsaveview().skipcol })
+  end)
+
+  it('adjust_skipcol uses the displayed cursor column', function()
+    Screen.new(22, 7)
+    command(
+      'set wrap linebreak breakindent breakindentopt=shift:2,min:0,sbr '
+        .. 'showbreak=>> smoothscroll scrolloff=0 conceallevel=3 concealcursor=nvic '
+        .. 'number relativenumber numberwidth=4'
+    )
+    local text = '- **Alpha** Beta Gamma Delta Epsilon Zeta Eta Theta Iota Kappa Lambda Mu Nu Xi'
+    api.nvim_buf_set_lines(0, 0, -1, true, { text, 'Q' })
+    local ns = api.nvim_create_namespace('conceal_adjust_skipcol')
+    api.nvim_buf_set_extmark(0, ns, 0, 2, { end_col = 4, conceal = '' })
+    api.nvim_buf_set_extmark(0, ns, 0, 9, { end_col = 11, conceal = '' })
+    api.nvim_win_set_cursor(0, { 1, 0 })
+
+    feed('<C-E>')
+    eq(
+      { 1, 18, 1, 7 },
+      { api.nvim_win_get_cursor(0)[1], fn.winsaveview().skipcol, fn.winline(), fn.wincol() }
+    )
   end)
 end)
