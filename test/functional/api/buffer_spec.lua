@@ -185,6 +185,32 @@ describe('api/buf', function()
     eq(1, api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all)
   end)
 
+  it('reuses conceal provider storage after deleting a buffer', function()
+    local buf, provider, marks = unpack(exec_lua(function()
+      local a = vim.api
+      local provider = a.nvim_create_namespace('conceal-provider-lifetime')
+      a.nvim_set_decoration_provider(provider, { _on_conceal = function() end })
+      return { a.nvim_get_current_buf(), provider, a.nvim_create_namespace('conceal-owned') }
+    end))
+    api.nvim_buf_set_name(buf, 'conceal-provider-lifetime')
+    for _ = 1, 2 do
+      api.nvim_set_current_buf(buf)
+      api.nvim_set_option_value('buflisted', true, { buf = buf })
+      exec_lua(function(b, p, ns)
+        vim.api.nvim__buf_set_conceal_provider(b, p, ns, true)
+      end, buf, provider, marks)
+      eq(1, api.nvim__buf_stats(buf).conceal_providers)
+      command('enew')
+      command('bunload ' .. buf)
+      eq(1, api.nvim__buf_stats(buf).conceal_providers)
+      command('bdelete ' .. buf)
+      eq(0, api.nvim__buf_stats(buf).conceal_providers)
+    end
+    command('bwipeout ' .. buf)
+    eq(false, api.nvim_buf_is_valid(buf))
+    assert_alive()
+  end)
+
   it('redraws conceal changes with wrapping or conceal disabled', function()
     local screen = Screen.new(20, 6)
     command('set laststatus=0 noshowmode noruler concealcursor=n')
