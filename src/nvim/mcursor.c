@@ -505,7 +505,7 @@ done:
 /// @param map_moved  The composite moved the cursor.
 void mc_clock_edge(bool map_edit, bool map_moved)
 {
-  if ((map_edit || (mc_follow_motion && map_moved))
+  if ((map_edit || (mc_follow_motion && map_moved && !Visual.active))
       && !atom_composite_queued() && kv_size(g_atoms) == 0
       && atom_composite_active() && mc_buf_has_cursors(curbuf)) {
     // XXX: Fallback to LHS-replay if the mapping edited the buffer or moved the cursor (in
@@ -517,7 +517,9 @@ void mc_clock_edge(bool map_edit, bool map_moved)
     for (size_t i = 0; !has_edit && i < kv_size(g_atoms); i++) {
       has_edit = kv_A(g_atoms, i).type != kAMotion;
     }
-    if (has_edit || mc_follow_motion) {
+    if (has_edit || mc_follow_motion
+        // Cascade if a mapping left a selection open ("nn x w<Cmd>norm! viw<CR>").
+        || Visual.active) {
       mc_cascade();
     } else {
       // A pure-motion mapping without "q=" follow-motion: do not cascade

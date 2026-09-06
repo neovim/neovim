@@ -1214,6 +1214,17 @@ describe('multicursor', function()
         {5:-- INSERT --}                  |
       ]])
       feed('<Esc>')
+      -- Programmatic Visual selection followed by a typed change. #41705
+      command('normal! viw')
+      feed('cV')
+      screen:expect([[
+        V{17: }                            |
+        V{17: }                            |
+        V^                             |
+        {1:~                             }|*2
+        {5:-- INSERT --}                  |
+      ]])
+      feed('<Esc>')
       -- Also when "c" is a Visual-mode operator mapping. #41605
       command('xnoremap c "_c')
       feed('viwcM')
@@ -1696,6 +1707,93 @@ describe('multicursor', function()
       eq({ ' x', ' d' }, get_lines())
       -- The operator is normalized ("translated"): visual "x" == "d".
       eq({ 'viweed' }, atoms_tail(1))
+    end)
+
+    it('shows selections opened by :normal #41705', function()
+      local screen = Screen.new(30, 6)
+      command('nnoremap <F2> <Cmd>normal! viw<CR>')
+      n.exec_lua(function()
+        vim.keymap.set('n', '<F3>', function()
+          vim.cmd.normal('vZ')
+        end)
+        vim.keymap.set('x', 'Z', '<Cmd>normal! iw<CR>')
+      end)
+      atoms_start()
+      -- Each entry opens the selection from a different enclosing frame: typed cmdline, <Cmd>
+      -- mapping, Lua mapping (nested x-mapping), RPC. Result does not depend on the follow-mode.
+      for i, keys in ipairs({ ':normal! viw<CR>', '<F2>', '<F3>', 'api' }) do
+        clear_cursors()
+        cursors({ 'longword x', 'ab y', 'medium z' })
+        feed(i % 2 == 0 and '2q=' or '1q=')
+        if keys == 'api' then
+          command('normal! viw')
+        else
+          feed(keys)
+        end
+        screen:expect([[
+          {17:longword} x                    |
+          {17:ab} y                          |
+          {17:mediu}^m z                      |
+          {1:~                             }|*2
+          {5:-- VISUAL --}                  |
+        ]])
+        -- Preview does not advance the anchors, even when a mapping opens the selection.
+        eq({ { 0, 0 }, { 1, 0 } }, anchors(), keys)
+        feed('d')
+        eq({ ' x', ' y', ' z' }, get_lines(), keys)
+        eq({ 'viwd' }, atoms_tail(1))
+        screen:expect({
+          condition = function()
+            eq('normal', screen.mode)
+          end,
+        })
+      end
+    end)
+
+    it('previews selections after mapping motions', function()
+      local screen = Screen.new(30, 6)
+      cursors({ 'a longword x', 'bbbb ab y', 'cc medium z' })
+      command('nnoremap <F2> w<Cmd>normal! viw<CR>')
+      atoms_start()
+      feed('<F2>')
+      -- The mapping's "w" places the selection anchors, even without follow-mode.
+      eq({ { 0, 2 }, { 1, 5 } }, anchors())
+      screen:expect([[
+        a {17:longword} x                  |
+        bbbb {17:ab} y                     |
+        cc {17:mediu}^m z                   |
+        {1:~                             }|*2
+        {5:-- VISUAL --}                  |
+      ]])
+      feed('d')
+      eq({ 'a  x', 'bbbb  y', 'cc  z' }, get_lines())
+      eq({ 'wviwd' }, atoms_tail(1))
+    end)
+
+    it('refreshes a nested selection even if the primary selection is unchanged', function()
+      local screen = Screen.new(30, 5)
+      cursors({ 'foo.bar tail', 'word tail' }, 'Qj')
+      n.exec_lua(function()
+        vim.keymap.set('x', 'Z', function()
+          vim.cmd.normal({ vim.keycode('<Esc>viW'), bang = true })
+        end)
+      end)
+      feed('viw')
+      screen:expect([[
+        {17:foo}.bar tail                  |
+        {17:wor}^d tail                     |
+        {1:~                             }|*2
+        {5:-- VISUAL --}                  |
+      ]])
+      feed('Z')
+      screen:expect([[
+        {17:foo.bar} tail                  |
+        {17:wor}^d tail                     |
+        {1:~                             }|*2
+        {5:-- VISUAL --}                  |
+      ]])
+      feed('d')
+      eq({ ' tail', ' tail' }, get_lines())
     end)
 
     it('operators cascade at each cursor', function()
@@ -3106,8 +3204,13 @@ describe('multicursor', function()
 
     it(':normal! never cascades (programmatic input)', function()
       cursors({ 'aaa', 'bbb' }, 'Qj')
+      atoms_start()
       command('normal! x') -- Programmatic, no cascade (primary only).
       eq({ 'aaa', 'bb' }, get_lines())
+      command('normal! viwd') -- The entire Visual op is programmatic, not just selection.
+      eq({ 'aaa', '' }, get_lines())
+      eq({}, atoms())
+      feed('u')
       feed('x') -- User input, cascades.
       eq({ 'aa', 'b' }, get_lines())
     end)
