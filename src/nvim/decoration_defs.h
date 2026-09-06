@@ -62,6 +62,7 @@ enum {
   kSHConceal = 64,
   kSHConcealLines = 128,
   kSHConcealOff = 256,
+  kSHConcealNoStart = 512,  ///< Continuation of a conceal range: no replacement at its start.
 };
 
 typedef struct {
