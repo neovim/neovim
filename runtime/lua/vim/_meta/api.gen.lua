@@ -624,6 +624,10 @@ function vim.api.nvim_buf_line_count(buf) end
 ---       Non-empty char is used as `:syn-cchar`. Highlighted with "hl_group" if
 ---       defined, else defaults to `hl-Conceal`.
 ---     - boolean: true is equivalent to "", false removes any existing conceal.
+---   With 'wrap', active persistent conceal determines the displayed layout,
+---   including its replacement. Syntax, match, or ephemeral conceal cannot
+---   override that layout at the same position. Other highlight attributes
+---   retain their usual priority; use a persistent conceal override to change layout.
 --- - conceal_lines: (string) Line-level conceal. When set to an empty string (other
 ---   values reserved for future use), the lines in the extmark range are not drawn;
 ---   the next non-concealed line is drawn in their place. Requires 'conceallevel' >=

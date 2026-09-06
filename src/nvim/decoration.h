@@ -93,11 +93,14 @@ typedef struct {
   int conceal;
   schar_T conceal_char;
   int conceal_attr;
+  int conceal_persistent;  ///< Effective persistent conceal slot index + 1, or zero.
 
   TriState spell;
 
   bool running_decor_provider;
   bool itr_valid;
+  bool conceal_only;  ///< Measurement state: omit non-conceal and virtual-position ranges.
+  uint64_t version;  ///< Structural changes during callbacks, also invalidating local iterators.
 } DecorState;
 
 EXTERN DecorState decor_state INIT( = { 0 });
@@ -116,4 +119,18 @@ static inline int decor_redraw_col(win_T *wp, int col, int win_col, bool hidden,
     return state->current;
   }
   return decor_redraw_col_impl(wp, col, win_col, hidden, state, max_col_last);
+}
+
+/// Whether the combined decoration conceal starts at the current buffer position.
+static inline bool decor_conceal_is_start(const DecorState *state)
+  FUNC_ATTR_ALWAYS_INLINE
+{
+  return state->conceal > 1;
+}
+
+/// Whether the combined decoration conceal has a custom replacement.
+static inline bool decor_conceal_has_char(const DecorState *state)
+  FUNC_ATTR_ALWAYS_INLINE
+{
+  return state->conceal != 0 && state->conceal_char != 0;
 }
