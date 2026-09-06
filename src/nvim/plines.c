@@ -12,6 +12,7 @@
 #include "nvim/charset.h"
 #include "nvim/decoration.h"
 #include "nvim/decoration_defs.h"
+#include "nvim/decoration_provider.h"
 #include "nvim/diff.h"
 #include "nvim/drawscreen.h"
 #include "nvim/fold.h"
@@ -102,7 +103,7 @@ static void charsize_arg_init_inline(CharsizeArg *csarg)
 }
 
 /// Whether persistent conceal may hide cells on line "lnum" of window "wp": 'conceallevel' is set
-/// and there are marktree conceal marks, unless 'concealcursor' reveals the
+/// and there are marktree or decoration-provider conceal marks, unless 'concealcursor' reveals the
 /// line. This is CharsizeArg::maybe_conceal's formula, extracted so callers can cheaply check it
 /// (no marktree walk, unlike init_charsize_arg()) before deciding whether a conceal-aware walk is
 /// worth setting up at all.
@@ -117,7 +118,9 @@ bool maybe_extconceal_line(win_T *wp, linenr_T lnum)
 /// column across every line they visit.
 bool maybe_extconceal_buf(win_T *wp)
 {
-  return wp->w_p_cole > 0 && buf_meta_total(wp->w_buffer, kMTMetaConceal) > 0;
+  return wp->w_p_cole > 0
+         && (buf_meta_total(wp->w_buffer, kMTMetaConceal) > 0
+             || decor_has_conceal_providers(wp->w_buffer));
 }
 
 /// Prepare the structure passed to charsize functions.
@@ -255,7 +258,7 @@ static DecorState *linebreak_cursor(CharsizeArg *csarg, LinebreakCursor *cursor)
 {
   if (!cursor->started) {
     cursor->started = true;
-    cursor->active = linesize_conceal_start(csarg, &cursor->decor);
+    cursor->active = linesize_conceal_start_impl(csarg, &cursor->decor, false);
   }
   return cursor->active ? &cursor->decor : NULL;
 }
@@ -747,10 +750,15 @@ static bool in_win_border(win_T *wp, colnr_T vcol)
 /// Shared by callers measuring displayed positions, not raw virtual columns.
 ///
 /// @return true if conceal tracking is active for this line.
-bool linesize_conceal_start(CharsizeArg *csarg, DecorState *state)
+static bool linesize_conceal_start_impl(CharsizeArg *csarg, DecorState *state, bool invoke_provider)
 {
   if (!csarg->maybe_conceal) {
     return false;
+  }
+  if (invoke_provider) {
+    decor_providers_invoke_conceal(csarg->win, csarg->row);
+    csarg->line = ml_get_buf(csarg->win->w_buffer, csarg->row + 1);
+    charsize_arg_init_inline(csarg);
   }
   *state = (DecorState){ 0 };
   if (decor_redraw_reset_conceal(csarg->win, state) == 0) {
@@ -758,6 +766,11 @@ bool linesize_conceal_start(CharsizeArg *csarg, DecorState *state)
   }
   decor_redraw_line(csarg->win, csarg->row, state);
   return true;
+}
+
+bool linesize_conceal_start(CharsizeArg *csarg, DecorState *state)
+{
+  return linesize_conceal_start_impl(csarg, state, true);
 }
 
 /// @return concealed cells of the character's own "width", excluding inline text and wrap padding.
@@ -787,7 +800,9 @@ void extconceal_off_end(ConcealOffState *state)
     return;
   }
   conceal_walk_end(&state->csarg, &state->walk);
+  bool const provider_ready = state->provider_ready;
   memset(state, 0, sizeof(*state));
+  state->provider_ready = provider_ready;
 }
 
 /// Offset from GETVCOL_CONCEAL's layout column to the displayed column.
@@ -818,10 +833,11 @@ static int extconceal_off_before_impl(win_T *wp, linenr_T lnum, colnr_T len, col
   ConcealWalk *const walk = &state->walk;
   if (!state->initialized) {
     init_charsize_arg_conceal(csarg, wp, lnum, ml_get_buf(wp->w_buffer, lnum));
-    walk->active = linesize_conceal_start(csarg, &walk->state);
+    walk->active = linesize_conceal_start_impl(csarg, &walk->state, !state->provider_ready);
     csarg->conceal_state = walk->active ? &walk->state : NULL;
     csarg->linebreak_state = &walk->linebreak;
     state->initialized = true;
+    state->provider_ready = true;
   }
   if (!walk->active) {
     if (vcolp != NULL) {
@@ -1492,7 +1508,8 @@ bool extconceal_line_changes_height(win_T *wp, linenr_T lnum)
       || lnum < 1 || lnum > wp->w_buffer->b_ml.ml_line_count) {
     return false;
   }
-  if (buf_meta_total(wp->w_buffer, kMTMetaConceal) == 0) {
+  if (!(buf_meta_total(wp->w_buffer, kMTMetaConceal) > 0
+        || decor_has_conceal_providers(wp->w_buffer))) {
     return false;
   }
 
@@ -1511,6 +1528,9 @@ bool extconceal_line_changes_height(win_T *wp, linenr_T lnum)
   if (!any_decor) {
     return false;
   }
+  // The provider callback may have replaced the line buffer.
+  line = probe.line;
+
   int const extra = (wp->w_p_list && wp->w_p_lcs_chars.eol != NUL) ? 1 : 0;
 
   // Measure conceal even if the cursor currently reveals this line.
