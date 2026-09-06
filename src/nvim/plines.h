@@ -91,6 +91,7 @@ typedef struct {
   colnr_T col;     ///< Bytes measured so far.
   int vcol;        ///< Virtual column at "col".
   bool initialized;
+  bool provider_ready;  ///< Provider conceal is already in the marktree.
 } ConcealOffState;
 
 #include "plines.h.generated.h"
@@ -115,6 +116,9 @@ static inline CharSize win_charsize(CSType cstype, int vcol, char *ptr, int32_t 
   }
 }
 
+/// May run an `_on_conceal` callback that frees the line buffer, so re-read csarg->line after this
+/// call; it is refreshed here.
+///
 /// @return true if conceal tracking is active for csarg's line (csarg->maybe_conceal).
 bool conceal_walk_start(CharsizeArg *csarg, ConcealWalk *walk);
 void conceal_walk_end(CharsizeArg *csarg, ConcealWalk *walk);

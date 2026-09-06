@@ -2546,8 +2546,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           // handling below), so it can't anchor the padding that pushes the following word to the
           // next screen line. Look past any concealed run for the real boundary. Nothing can be
           // concealed on a row carrying no decoration, so skip the lookahead entirely there.
-          bool const may_conceal = has_decor
-                                   && buf_meta_total(wp->w_buffer, kMTMetaConceal) > 0;
+          bool const may_conceal = (has_decor
+                                    && buf_meta_total(wp->w_buffer, kMTMetaConceal) > 0)
+                                   || decor_has_conceal_providers(wp->w_buffer);
           if (may_conceal || !vim_isbreak((uint8_t)(*ptr))) {
             CharsizeArg csarg;
             CSType cstype = init_charsize_arg_skip_cur_text(&csarg, wp, lnum, line);
@@ -2555,6 +2556,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
             if (csarg.maybe_conceal) {
               if (!conceal_size_initialized) {
                 memset(&conceal_off, 0, sizeof(conceal_off));
+                conceal_off.provider_ready = true;
                 memset(&linebreak_state, 0, sizeof(linebreak_state));
                 conceal_size_initialized = true;
               }
