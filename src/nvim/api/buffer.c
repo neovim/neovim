@@ -1252,7 +1252,7 @@ Dict nvim__buf_stats(Buffer buf, Arena *arena, Error *err)
     return (Dict)ARRAY_DICT_INIT;
   }
 
-  Dict rv = arena_dict(arena, 9);
+  Dict rv = arena_dict(arena, 10);
   // Number of times the cached line was flushed.
   // This should generally not increase while editing the same
   // line in the same mode.
@@ -1268,6 +1268,7 @@ Dict nvim__buf_stats(Buffer buf, Arena *arena, Error *err)
   PUT_C(rv, "virt_blocks", INTEGER_OBJ((Integer)buf_meta_total(b, kMTMetaLines)));
   PUT_C(rv, "conceal_marks", INTEGER_OBJ((Integer)buf_meta_total(b, kMTMetaConceal)));
   PUT_C(rv, "conceal_line_marks", INTEGER_OBJ((Integer)buf_meta_total(b, kMTMetaConcealLines)));
+  PUT_C(rv, "conceal_providers", INTEGER_OBJ((Integer)map_size(b->b_conceal_providers)));
 
   u_header_T *uhp = NULL;
   if (b->b_u_curhead != NULL) {
