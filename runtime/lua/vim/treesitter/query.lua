@@ -12,6 +12,11 @@ local EXTENDS_FORMAT = '^;+%s*extends%s*$'
 
 local M = {}
 
+---@type table<string, TSDirective>
+local directive_handlers
+---@type table<string, TSDirective>
+local builtin_directive_handlers
+
 ---Parsed query, see |vim.treesitter.query.parse()|
 ---
 ---@class vim.treesitter.Query
@@ -19,6 +24,7 @@ local M = {}
 ---@field captures string[] list of (unique) capture names defined in query
 ---@field info vim.treesitter.QueryInfo query context (e.g. captures, predicates, directives)
 ---@field has_conceal_line boolean whether the query sets conceal_lines metadata
+---@field has_conceal boolean whether the query can conceal text or override conceal
 ---@field has_combined_injections boolean whether the query contains combined injections
 ---@field query TSQuery userdata query object
 ---@field private _processed_patterns table<integer, vim.treesitter.query.ProcessedPattern>
@@ -45,6 +51,7 @@ end
 --- Splits the query patterns into predicates and directives.
 function Query:_process_patterns()
   self._processed_patterns = {}
+  self.has_conceal = vim.list_contains(self.captures, 'noconceal')
 
   for k, pattern_list in pairs(self.info.patterns) do
     ---@type vim.treesitter.query.ProcessedPredicate[]
@@ -64,6 +71,14 @@ function Query:_process_patterns()
         end
         if vim.deep_equal(pattern, { 'set!', 'conceal_lines', '' }) then
           self.has_conceal_line = true
+        end
+        -- Custom directives can set conceal metadata at either level.
+        if
+          (pred_name == 'set!' and (pattern[2] == 'conceal' or pattern[3] == 'conceal'))
+          or not builtin_directive_handlers[pred_name]
+          or builtin_directive_handlers[pred_name] ~= directive_handlers[pred_name]
+        then
+          self.has_conceal = true
         end
       else
         local should_match = true
@@ -627,8 +642,9 @@ predicate_handlers['any-vim-match?'] = predicate_handlers['any-match?']
 -- Directives should always end with a `!`.
 -- Directive handler receive the following arguments
 -- (match, pattern, bufnr, predicate, metadata)
+---@nodoc
 ---@type table<string,TSDirective>
-local directive_handlers = {
+directive_handlers = {
   ['set!'] = function(_, _, _, pred, metadata)
     if #pred >= 3 and type(pred[2]) == 'number' then
       -- (#set! @capture key value)
@@ -754,6 +770,9 @@ local directive_handlers = {
   end,
 }
 
+---@nodoc
+builtin_directive_handlers = vim.tbl_extend('force', {}, directive_handlers)
+
 --- @class vim.treesitter.query.add_predicate.Opts
 --- @inlinedoc
 ---
@@ -859,6 +878,7 @@ function Query:_apply_directives(directives, pattern_i, captures, source)
   local metadata = {}
 
   for _, directive in pairs(directives) do
+    ---@type TSDirective?
     local handler = directive_handlers[directive[1]]
 
     if not handler then

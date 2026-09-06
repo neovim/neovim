@@ -440,10 +440,10 @@ OPTIONS
 • 'wrap' is now conceal-aware: a line whose text is hidden by conceal wraps
   at its displayed width instead of at the pre-conceal wrap points, and the
   cursor, |screenpos()|, |wincol()| and mouse follow the reflowed layout.
-  This applies to conceal from |extmarks|; ":syntax", |matchadd()|, and
-  ephemeral conceal do not reflow. Where they overlap an actively reflowed
-  persistent range, its conceal and replacement determine layout. Other
-  highlight attributes retain their usual priority.
+  This applies to conceal from |extmarks| and |treesitter-highlight-conceal|;
+  ":syntax", |matchadd()|, and ephemeral conceal do not reflow. Where they
+  overlap an actively reflowed persistent range, its conceal and replacement
+  determine layout. Other highlight attributes retain their usual priority.
 
 PERFORMANCE
 
