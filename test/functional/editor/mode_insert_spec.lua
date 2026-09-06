@@ -18,6 +18,35 @@ describe('insert-mode', function()
     clear()
   end)
 
+  it('does not scroll when concealed text still fits on the bottom row', function()
+    local screen = Screen.new(30, 6)
+    command('set wrap conceallevel=2 concealcursor=nvic scrolloff=0 nosmoothscroll')
+    api.nvim_buf_set_lines(0, 0, -1, true, {
+      'one',
+      'two',
+      'three',
+      'four',
+      ('a'):rep(10) .. 'HIDDEN' .. ('b'):rep(13),
+    })
+    api.nvim_buf_set_extmark(0, api.nvim_create_namespace('conceal'), 4, 10, {
+      end_col = 16,
+      conceal = '',
+    })
+    feed('GA')
+    eq(1, n.fn.line('w0'))
+    feed('x')
+    eq(1, n.fn.line('w0'))
+    eq({ 5, 30 }, api.nvim_win_get_cursor(0))
+    screen:expect([[
+      one                           |
+      two                           |
+      three                         |
+      four                          |
+      aaaaaaaaaabbbbbbbbbbbbbx^      |
+      {5:-- INSERT --}                  |
+    ]])
+  end)
+
   it('indents only once after "!" keys #12894', function()
     command('let counter = []')
     command('set indentexpr=len(add(counter,0))')
