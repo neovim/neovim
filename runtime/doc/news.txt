@@ -452,6 +452,8 @@ OPTIONS
 
 PERFORMANCE
 
+• LSP shares identical file watcher registrations, reducing startup work in
+  large workspaces.
 • |treesitter-highlight| performance on large injection-heavy files improves
   by 50% to 100% by reusing edited child-tree ranges.
 • Nvim architecture allows pure-Lua implementations of some `vim.fn`

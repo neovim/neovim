@@ -1,53 +1,10 @@
 local bit = require('bit')
-local glob = vim.glob
 local watch = vim._watch
 local log = require('vim.lsp.log')
 local notify = require('vim._core.util').notify
 local protocol = require('vim.lsp.protocol')
-local lpeg = vim.lpeg
 
 local M = {}
-
--- Use a bounded set to suppress repeat warnings without unbounded growth.
----@type table<string, true>
-local logged_invalid_patterns = {}
----@type string[]
-local logged_invalid_pattern_keys = {}
-local logged_invalid_pattern_key_index = 1
-
----@param key string
-local function remember_invalid_pattern(key)
-  local old_key = logged_invalid_pattern_keys[logged_invalid_pattern_key_index]
-  if old_key then
-    logged_invalid_patterns[old_key] = nil
-  end
-  logged_invalid_patterns[key] = true
-  logged_invalid_pattern_keys[logged_invalid_pattern_key_index] = key
-  logged_invalid_pattern_key_index = logged_invalid_pattern_key_index % 20 + 1
-end
-
---- Parses a glob pattern and logs invalid patterns once.
----@param pattern string
----@param client vim.lsp.Client
----@return vim.lpeg.Pattern?
-local function glob_to_lpeg(pattern, client)
-  local ok, pattern_or_err = pcall(glob.to_lpeg, pattern)
-  if ok then
-    return pattern_or_err
-  end
-  local key = string.format('%d:%s', client.id, pattern)
-  if not logged_invalid_patterns[key] then
-    log.error(
-      string.format(
-        'LSP[%s] skipping invalid workspace/didChangeWatchedFiles globPattern',
-        client.name
-      ),
-      pattern,
-      pattern_or_err
-    )
-    remember_invalid_pattern(key)
-  end
-end
 
 if vim.fn.has('win32') == 1 or vim.fn.has('mac') == 1 then
   M._watchfunc = watch.watch
@@ -57,8 +14,10 @@ else
   M._watchfunc = watch.watchdirs
 end
 
----@type table<integer, table<string, function[]>> client id -> registration id -> cancel function
-local cancels = vim.defaulttable()
+--- @type table<integer, table<string, fun()>> client id -> registration id -> cancel
+local registered = vim.defaulttable(function()
+  return {}
+end)
 
 local queue_timeout_ms = 100
 ---@type table<integer, uv.uv_timer_t> client id -> libuv timer which will send queued changes at its timeout
@@ -78,10 +37,110 @@ local to_lsp_change_type = {
 
 --- Default excludes the same as VSCode's `files.watcherExclude` setting.
 --- https://github.com/microsoft/vscode/blob/eef30e7165e19b33daa1e15e92fa34ff4a5df0d3/src/vs/workbench/contrib/files/browser/files.contribution.ts#L261
----@type vim.lpeg.Pattern parsed Lpeg pattern
-M._poll_exclude_pattern = glob.to_lpeg('**/.git/{objects,subtree-cache}/**')
-  + glob.to_lpeg('**/node_modules/*/**')
-  + glob.to_lpeg('**/.hg/store/**')
+--- @type vim._watch.Filter
+M._poll_exclude_pattern = {
+  '**/.git/{objects,subtree-cache}/**',
+  '**/node_modules/*/**',
+  '**/.hg/store/**',
+}
+
+--- Resolves LSP workspace folders and relative patterns into filesystem watcher rules.
+--- @param watchers lsp.FileSystemWatcher[]
+--- @param workspace_folders lsp.WorkspaceFolder[]
+--- @return vim._watch.Rule[]
+local function watcher_rules(watchers, workspace_folders)
+  local rules = {} --- @type vim._watch.Rule[]
+
+  for _, w in ipairs(watchers) do
+    local events --- @type vim._watch.FileChangeType[]?
+    if w.kind then
+      events = {}
+      for change_type, lsp_change_type in pairs(to_lsp_change_type) do
+        -- WatchKind is a bitmask, whereas FileChangeType is an enum.
+        if bit.band(w.kind, bit.lshift(1, lsp_change_type - 1)) ~= 0 then
+          table.insert(events, change_type)
+        end
+      end
+    end
+
+    local pattern = w.globPattern
+    if type(pattern) == 'string' then
+      for _, folder in ipairs(workspace_folders) do
+        rules[#rules + 1] =
+          { path = vim.uri_to_fname(folder.uri), pattern = pattern, events = events }
+      end
+    else
+      local uri = type(pattern.baseUri) == 'string' and pattern.baseUri or pattern.baseUri.uri
+      local base = vim.uri_to_fname(uri)
+      local prefix = vim.fs.normalize(base):gsub('/$', '')
+
+      rules[#rules + 1] = {
+        path = base,
+        -- Keep the base literal. '/' handles UNC paths; '#' avoids the parser's leading marker.
+        pattern = vim.fn.escape(prefix, '\\/*?[]{}#') .. '/' .. pattern.pattern,
+        events = events,
+      }
+    end
+  end
+
+  return rules
+end
+
+--- @param client vim.lsp.Client
+--- @param err string
+local function report_error(client, err)
+  local name = string.format('LSP[%s]', client.name)
+  local message = 'file watcher failed: ' .. err
+  local level = vim.log.levels.ERROR
+
+  -- Servers may register a nonexistent baseUri. Keep this informational
+  -- and continue registering the other watchers.
+  if err:match('^ENOENT:') then
+    level = vim.log.levels.INFO
+    log.info(name, message)
+  else
+    log.error(name, message)
+  end
+
+  notify(name, message, level, true)
+end
+
+--- Queues a file change, pruning consecutive duplicates per URI.
+--- Changes are batched into a single notification per client.
+---
+--- @param client vim.lsp.Client
+--- @param fullpath string
+--- @param change_type vim._watch.FileChangeType
+local function queue_change(client, fullpath, change_type)
+  local client_id = client.id
+  --- @type lsp.FileEvent
+  local change = {
+    uri = vim.uri_from_fname(fullpath),
+    type = assert(
+      to_lsp_change_type[change_type],
+      'Must receive change type Created, Changed or Deleted'
+    ),
+  }
+
+  local last_type = change_cache[client_id][change.uri]
+  if last_type ~= change.type then
+    change_queues[client_id] = change_queues[client_id] or {}
+    table.insert(change_queues[client_id], change)
+    change_cache[client_id][change.uri] = change.type
+  end
+
+  if not queue_timers[client_id] then
+    queue_timers[client_id] = vim.defer_fn(function()
+      --- @type lsp.DidChangeWatchedFilesParams
+      local params = { changes = change_queues[client_id] }
+      client:notify('workspace/didChangeWatchedFiles', params)
+
+      queue_timers[client_id] = nil
+      change_queues[client_id] = nil
+      change_cache[client_id] = nil
+    end, queue_timeout_ms)
+  end
+end
 
 --- Registers the workspace/didChangeWatchedFiles capability dynamically.
 ---
@@ -96,139 +155,50 @@ function M.register(reg, client_id)
   if not has_capability or not client.workspace_folders then
     return
   end
-  local register_options = reg.registerOptions --[[@as lsp.DidChangeWatchedFilesRegistrationOptions]]
-  ---@type table<string, {pattern: vim.lpeg.Pattern, kind: lsp.WatchKind}[]> by base_dir
-  local watch_regs = vim.defaulttable()
-  for _, w in ipairs(register_options.watchers) do
-    local kind = w.kind
-      or (protocol.WatchKind.Create + protocol.WatchKind.Change + protocol.WatchKind.Delete)
-    local glob_pattern = w.globPattern
 
-    if type(glob_pattern) == 'string' then
-      local pattern = glob_to_lpeg(glob_pattern, client)
-      if pattern then
-        for _, folder in ipairs(client.workspace_folders) do
-          local base_dir = vim.uri_to_fname(folder.uri)
-          table.insert(watch_regs[base_dir], { pattern = pattern, kind = kind })
-        end
-      end
-    else
-      local base_uri = glob_pattern.baseUri
-      local uri = type(base_uri) == 'string' and base_uri or base_uri.uri
-      local base_dir = vim.uri_to_fname(uri)
-      local pattern = glob_to_lpeg(glob_pattern.pattern, client)
-      if pattern then
-        local relative_pattern = lpeg.P(base_dir .. '/') * pattern --[[@as vim.lpeg.Pattern]]
-        table.insert(watch_regs[base_dir], { pattern = relative_pattern, kind = kind })
-      end
-    end
-  end
+  local options = reg.registerOptions --[[@as lsp.DidChangeWatchedFilesRegistrationOptions]]
+  local rules = watcher_rules(options.watchers, client.workspace_folders)
 
-  ---@param base_dir string
-  local callback = function(base_dir)
-    return function(fullpath, change_type)
-      local registrations = watch_regs[base_dir]
-      for _, w in ipairs(registrations) do
-        local lsp_change_type = assert(
-          to_lsp_change_type[change_type],
-          'Must receive change type Created, Changed or Deleted'
-        )
-        -- e.g. match kind with Delete bit (0b0100) to Delete change_type (3)
-        local kind_mask = bit.lshift(1, lsp_change_type - 1)
-        local change_type_match = bit.band(w.kind, kind_mask) == kind_mask
-        if w.pattern:match(fullpath) ~= nil and change_type_match then
-          ---@type lsp.FileEvent
-          local change = {
-            uri = vim.uri_from_fname(fullpath),
-            type = lsp_change_type,
-          }
+  local cancel = M._watchfunc(rules, {
+    uvflags = { recursive = true },
+    exclude_pattern = M._poll_exclude_pattern,
+    on_error = function(err)
+      report_error(client, err)
+    end,
+  }, function(fullpath, change_type)
+    queue_change(client, fullpath, change_type)
+  end)
 
-          local last_type = change_cache[client_id][change.uri]
-          if last_type ~= change.type then
-            change_queues[client_id] = change_queues[client_id] or {}
-            table.insert(change_queues[client_id], change)
-            change_cache[client_id][change.uri] = change.type
-          end
-
-          if not queue_timers[client_id] then
-            queue_timers[client_id] = vim.defer_fn(function()
-              ---@type lsp.DidChangeWatchedFilesParams
-              local params = {
-                changes = change_queues[client_id],
-              }
-              client:notify('workspace/didChangeWatchedFiles', params)
-              queue_timers[client_id] = nil
-              change_queues[client_id] = nil
-              change_cache[client_id] = nil
-            end, queue_timeout_ms)
-          end
-
-          break -- if an event matches multiple watchers, only send one notification
-        end
-      end
-    end
-  end
-
-  for base_dir, watches in pairs(watch_regs) do
-    local include_pattern = vim.iter(watches):fold(lpeg.P(false), function(acc, w)
-      return acc + w.pattern
-    end)
-
-    table.insert(
-      cancels[client_id][reg.id],
-      M._watchfunc(base_dir, {
-        uvflags = {
-          recursive = true,
-        },
-        -- include_pattern will ensure the pattern from *any* watcher definition for the
-        -- base_dir matches. This first pass prevents polling for changes to files that
-        -- will never be sent to the LSP server. A second pass in the callback is still necessary to
-        -- match a *particular* pattern+kind pair.
-        include_pattern = include_pattern,
-        exclude_pattern = M._poll_exclude_pattern,
-        on_error = function(err)
-          local name = string.format('LSP[%s]', client.name)
-          local message = string.format('file watcher failed for %s', base_dir)
-          local level = vim.log.levels.ERROR
-          -- Servers may register a nonexistent baseUri. Keep this informational
-          -- and continue registering the other watchers.
-          if err:match('^ENOENT:') then
-            level = vim.log.levels.INFO
-            log.info(name, message, err)
-          else
-            log.error(name, message, err)
-          end
-          notify(name, message .. ': ' .. err, level, true)
-        end,
-      }, callback(base_dir))
-    )
-  end
+  -- Acquire first so replacing an ID does not stop a shared backend between subscriptions.
+  M.unregister(reg.id, client_id)
+  registered[client_id][reg.id] = cancel
 end
 
 --- Unregisters the workspace/didChangeWatchedFiles capability dynamically.
 ---
----@param unreg lsp.Unregistration LSP Unregistration object.
----@param client_id integer Client ID.
-function M.unregister(unreg, client_id)
-  local client_cancels = cancels[client_id]
-  local reg_cancels = client_cancels[unreg.id]
-  while #reg_cancels > 0 do
-    table.remove(reg_cancels)()
+--- @param id string Registration ID.
+--- @param client_id integer Client ID.
+function M.unregister(id, client_id)
+  local client_registrations = registered[client_id]
+  local cancel = client_registrations[id]
+
+  client_registrations[id] = nil
+  if not next(client_registrations) then
+    registered[client_id] = nil
   end
-  client_cancels[unreg.id] = nil
-  if not next(cancels[client_id]) then
-    cancels[client_id] = nil
+
+  if cancel then
+    cancel()
   end
 end
 
 --- @param client_id integer
 function M.cancel(client_id)
-  for _, reg_cancels in pairs(cancels[client_id]) do
-    for _, cancel in pairs(reg_cancels) do
-      cancel()
-    end
+  for id in pairs(registered[client_id]) do
+    M.unregister(id, client_id)
   end
-  cancels[client_id] = nil
+
+  registered[client_id] = nil
 end
 
 return M
