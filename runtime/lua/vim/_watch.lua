@@ -1,4 +1,5 @@
 local uv = vim.uv
+local log = vim.log.new({ name = 'nvim-watch' })
 
 local M = {}
 
@@ -35,6 +36,9 @@ end
 --- @class vim._watch.Opts
 ---
 --- @field debounce? integer ms
+---
+--- Handles watcher failures. Defaults to logging at ERROR in nvim-watch.log.
+--- @field on_error? fun(err: string)
 ---
 --- An |lpeg| pattern. Only changes to files whose full paths match the pattern
 --- will be reported. Only matches against non-directoriess, all directories will
@@ -87,6 +91,7 @@ function M.watch(path, opts, callback)
   vim.validate('callback', callback, 'function')
 
   opts = opts or {}
+  local on_error = opts.on_error or log.error
 
   path = vim.fs.normalize(path)
   local uvflags = opts and opts.uvflags or {}
@@ -94,8 +99,10 @@ function M.watch(path, opts, callback)
 
   local watching_dir = (uv.fs_stat(path) or {}).type == 'directory'
 
-  local _, start_err, start_errname = handle:start(path, uvflags, function(err, filename, events)
-    assert(not err, err)
+  local _, start_err = handle:start(path, uvflags, function(err, filename, events)
+    if err then
+      return on_error(err)
+    end
     local fullpath = path
     if filename and watching_dir then
       fullpath = vim.fs.normalize(vim.fs.joinpath(fullpath, filename))
@@ -112,7 +119,9 @@ function M.watch(path, opts, callback)
       if staterrname == 'ENOENT' then
         change_type = M.FileChangeType.Deleted
       else
-        assert(not staterr, staterr)
+        if staterr then
+          return on_error(staterr)
+        end
         change_type = M.FileChangeType.Created
       end
     elseif events.change then
@@ -122,13 +131,8 @@ function M.watch(path, opts, callback)
   end)
 
   if start_err then
-    if start_errname == 'ENOENT' then
-      -- Server may send "workspace/didChangeWatchedFiles" with nonexistent `baseUri` path.
-      -- This is mostly a placeholder until we have `nvim_log` API.
-      vim.notify_once(('watch.watch: %s'):format(start_err), vim.log.levels.INFO)
-    end
     handle:close()
-    -- TODO(justinmk): log important errors once we have `nvim_log` API.
+    on_error(start_err)
     return function() end
   end
 
@@ -156,6 +160,7 @@ function M.watchdirs(path, opts, callback)
   vim.validate('callback', callback, 'function')
 
   opts = opts or {}
+  local on_error = opts.on_error or log.error
   local debounce = opts.debounce or 500
 
   ---@type table<string, uv.uv_fs_event_t> handle by fullpath
@@ -174,7 +179,9 @@ function M.watchdirs(path, opts, callback)
   --- @return uv.fs_event_start.callback
   local function create_on_change(filepath)
     return function(err, filename, events)
-      assert(not err, err)
+      if err then
+        return on_error(err)
+      end
       local fullpath = vim.fs.joinpath(filepath, filename)
       if skip(fullpath, opts) then
         return
@@ -204,7 +211,15 @@ function M.watchdirs(path, opts, callback)
             if not handle then
               handle = assert(uv.new_fs_event())
               handles[fullpath] = handle
-              handle:start(fullpath, {}, create_on_change(fullpath))
+              local _, err, errname = handle:start(fullpath, {}, create_on_change(fullpath))
+              if err then
+                handle:close()
+                handles[fullpath] = nil
+                -- The directory may have disappeared since fs_stat().
+                if errname ~= 'ENOENT' then
+                  on_error(err)
+                end
+              end
             end
           end
         else
@@ -225,17 +240,13 @@ function M.watchdirs(path, opts, callback)
 
   local root_handle = assert(uv.new_fs_event())
   handles[path] = root_handle
-  local _, start_err, start_errname = root_handle:start(path, {}, create_on_change(path))
+  local _, start_err = root_handle:start(path, {}, create_on_change(path))
 
   if start_err then
-    if start_errname == 'ENOENT' then
-      -- Server may send "workspace/didChangeWatchedFiles" with nonexistent `baseUri` path.
-      -- This is mostly a placeholder until we have `nvim_log` API.
-      vim.notify_once(('watch.watchdirs: %s'):format(start_err), vim.log.levels.INFO)
-    end
-    -- TODO(justinmk): log important errors once we have `nvim_log` API.
-
-    -- Continue. vim.fs.dir() will return nothing, so the code below is harmless.
+    root_handle:close()
+    timer:close()
+    on_error(start_err)
+    return function() end
   end
 
   --- "640K ought to be enough for anyone"
@@ -256,7 +267,15 @@ function M.watchdirs(path, opts, callback)
       if not skip(filepath, opts) then
         local handle = assert(uv.new_fs_event())
         handles[filepath] = handle
-        handle:start(filepath, {}, create_on_change(filepath))
+        local _, err, errname = handle:start(filepath, {}, create_on_change(filepath))
+        if err then
+          handle:close()
+          handles[filepath] = nil
+          -- The directory may have disappeared since it was listed.
+          if errname ~= 'ENOENT' then
+            on_error(err)
+          end
+        end
       end
     end
   end
@@ -314,7 +333,10 @@ end
 --- @param callback vim._watch.Callback Callback for new events
 --- @return fun() cancel Stops the watcher
 function M.inotify(path, opts, callback)
-  local obj = vim.system({
+  opts = opts or {}
+  local on_error = opts.on_error or log.error
+  local cancelled = false
+  local ok, obj = pcall(vim.system, {
     'inotifywait',
     '--quiet', -- suppress startup messages
     '--no-dereference', -- don't follow symlinks
@@ -333,22 +355,21 @@ function M.inotify(path, opts, callback)
   }, {
     stderr = function(err, data)
       if err then
-        error(err)
+        on_error(err)
+        return
       end
 
       if data and #vim.trim(data) > 0 then
-        vim.schedule(function()
-          if vim.fn.has('linux') == 1 and vim.startswith(data, 'Failed to watch') then
-            data = 'inotify(7) limit reached, see :h inotify-limitations for more info.'
-          end
-
-          vim.notify('inotify: ' .. data, vim.log.levels.ERROR)
-        end)
+        if vim.fn.has('linux') == 1 and vim.startswith(data, 'Failed to watch') then
+          data = 'inotify(7) limit reached, see :h inotify-limitations for more info.'
+        end
+        on_error(data)
       end
     end,
     stdout = function(err, data)
       if err then
-        error(err)
+        on_error(err)
+        return
       end
 
       for line in vim.gsplit(data or '', '\n', { plain = true, trimempty = true }) do
@@ -357,9 +378,19 @@ function M.inotify(path, opts, callback)
     end,
     -- --latency is locale dependent but tostring() isn't and will always have '.' as decimal point.
     env = { LC_NUMERIC = 'C' },
-  })
+  }, function(result)
+    if not cancelled then
+      on_error(('inotifywait exited with code %d'):format(result.code))
+    end
+  end)
+
+  if not ok then
+    on_error(obj)
+    return function() end
+  end
 
   return tracked_cancel('inotify', function()
+    cancelled = true
     obj:kill(2)
   end)
 end

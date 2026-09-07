@@ -52,24 +52,49 @@ describe('vim._watch', function()
     end
   end)
 
-  local function run(watchfunc)
-    -- Monkey-patches vim.notify_once so we can "spy" on it.
-    local function spy_notify_once()
-      exec_lua [[
-        _G.__notify_once_msgs = {}
-        vim.notify_once = (function(overridden)
-          return function(msg, level, opts)
-            table.insert(_G.__notify_once_msgs, msg)
-            return overridden(msg, level, opts)
+  it('watchdirs() tolerates directories deleted during setup', function()
+    local root_dir = t.tmpname(false)
+    t.finally(function()
+      n.rmdir(root_dir)
+    end)
+    n.mkdir_p(root_dir .. '/gone')
+
+    exec_lua(function(root)
+      local dir = vim.fs.dir
+      vim.fs.dir = function(path, opts)
+        local iter = dir(path, opts)
+        return function()
+          local name, kind = iter()
+          if name == 'gone' then
+            -- Delete after enumeration, before the backend starts watching it.
+            assert(vim.uv.fs_rmdir(root .. '/gone'))
           end
-        end)(vim.notify_once)
-      ]]
-    end
+          return name, kind
+        end
+      end
+      local cancel = vim._watch.watchdirs(root, { on_error = error }, function() end)
+      vim.fs.dir = dir
+      cancel()
+    end, root_dir)
+  end)
 
-    local function last_notify_once_msg()
-      return exec_lua 'return _G.__notify_once_msgs[#_G.__notify_once_msgs]'
-    end
+  it('inotify() reports failure to start the process', function()
+    exec_lua(function()
+      vim.env.PATH = ''
+      local errors = {}
+      local cancel = vim._watch.inotify('.', {
+        on_error = function(err)
+          errors[#errors + 1] = err
+        end,
+      }, function() end)
+      cancel()
+      assert(#errors == 1, vim.inspect(errors))
+      assert(errors[1]:find('ENOENT', 1, true), errors[1])
+      assert(vim._watch.active.inotify == 0)
+    end)
+  end)
 
+  local function run(watchfunc)
     local function do_watch(root_dir, watchfunc_)
       exec_lua(
         [[
@@ -90,27 +115,47 @@ describe('vim._watch', function()
       )
     end
 
-    it(watchfunc .. '() ignores nonexistent paths', function()
+    it(watchfunc .. '() reports nonexistent paths to on_error', function()
       if watchfunc == 'inotify' then
         skip(n.fn.executable('inotifywait') == 0, 'inotifywait not found')
         skip(is_os('bsd'), 'inotifywait on bsd CI seems to expect path to exist?')
         skip(t.is_arch('s390x'), 'inotifywait not available on s390x CI')
       end
 
-      local msg = ('watch.%s: ENOENT: no such file or directory'):format(watchfunc)
-
-      spy_notify_once()
-      do_watch('/i am /very/funny.go', watchfunc)
-
-      if watchfunc ~= 'inotify' then -- watch.inotify() doesn't (currently) call vim.notify_once.
-        t.retry(nil, 2000, function()
-          t.eq(msg, last_notify_once_msg())
+      exec_lua(function(backend)
+        local errors = {}
+        local cancel = vim._watch[backend]('/i am /very/funny.go', {
+          on_error = function(err)
+            errors[#errors + 1] = err
+          end,
+        }, function()
+          error('Unexpected file change')
         end)
-      end
-      eq(0, exec_lua [[return #_G.events]])
-
-      exec_lua [[_G.stop_watch()]]
+        assert(vim.wait(2000, function()
+          return #errors > 0
+        end))
+        if backend ~= 'inotify' then
+          assert(errors[1]:match('^ENOENT:'), errors[1])
+        end
+        cancel()
+      end, watchfunc)
     end)
+
+    if watchfunc ~= 'inotify' then
+      it(watchfunc .. '() logs startup failures without on_error', function()
+        local logfile = exec_lua(function(backend)
+          local logfile = vim.fs.joinpath(vim.fn.stdpath('log'), 'nvim-watch.log')
+          vim.fn.writefile({}, logfile)
+          local cancel = vim._watch[backend]('/i am /very/funny.go', {}, function()
+            error('Unexpected file change')
+          end)
+          cancel()
+          assert(vim._watch.active[backend] == 0)
+          return logfile
+        end, watchfunc)
+        t.assert_log('%[ERROR%].-ENOENT:', logfile)
+      end)
+    end
 
     it(watchfunc .. '() detects file changes', function()
       if watchfunc == 'inotify' then
