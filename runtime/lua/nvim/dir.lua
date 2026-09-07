@@ -6,7 +6,7 @@ local api = vim.api
 local M = {}
 
 --- An entry rendered as one line in a listing buffer.
----@class (private) nvim.dir.Entry
+---@class (internal) nvim.dir.Entry
 ---@field name string
 ---@field dir boolean
 

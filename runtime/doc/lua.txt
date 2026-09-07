@@ -1650,19 +1650,19 @@ Ringbuf:peek()                                                *Ringbuf:peek()*
     Returns the first unread item without removing it
 
     Return: ~
-        (`any?`)
+        (`T?`)
 
 Ringbuf:pop()                                                  *Ringbuf:pop()*
     Removes and returns the first unread item
 
     Return: ~
-        (`any?`)
+        (`T?`)
 
 Ringbuf:push({item})                                          *Ringbuf:push()*
     Adds an item, overriding the oldest item if the buffer is full.
 
     Parameters: ~
-      • {item}  (`any`)
+      • {item}  (`T`)
 
 vim.deep_equal({a}, {b})                                    *vim.deep_equal()*
     Deep compare values for equality
@@ -2034,7 +2034,7 @@ vim.ringbuf({size})                                            *vim.ringbuf()*
       • {size}  (`integer`)
 
     Return: ~
-        (`vim.Ringbuf`) ringbuf
+        (`vim.Ringbuf<any>`) ringbuf
 
 vim.spairs({t})                                                 *vim.spairs()*
     Enumerates key-value pairs of a table, ordered by key.
@@ -2982,7 +2982,7 @@ vim.fs.slug({path}, {opts})                                    *vim.fs.slug()*
 
     Parameters: ~
       • {path}  (`string`) Filepath (or other identity string).
-      • {opts}  (`table?`)
+      • {opts}  (`{ maxlen?: integer }?`)
                 • maxlen: (integer, default: 180) Max length (bytes) of the
                   result.
 
@@ -3573,7 +3573,7 @@ Iter:totable()                                                *Iter:totable()*
         Since: 0.10.0
 
     Overloads: ~
-      • `fun<T>(self: vim.Iter<T>): T[]`
+      • `fun<T>(self: vim.Iter<T, never>): T[]`
       • `fun<V1, V2, V...>(self: vim.Iter<V1, V2, V...>): [V1, V2, V...][]`
 
     Return: ~

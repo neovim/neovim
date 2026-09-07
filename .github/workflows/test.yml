@@ -105,8 +105,8 @@ jobs:
         run: cmake --build build --target lintlua-stylua
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: luals
-        run: cmake --build build --target luals
+        name: emmylua
+        run: cmake --build build --target emmylua-check
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: lintsh

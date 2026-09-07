@@ -109,7 +109,7 @@ local TSCallbackNames = {
 ---@field private _num_valid_regions integer Number of valid regions
 ---@field private _is_entirely_valid boolean Whether the entire tree (excluding children) is valid.
 ---@field private _logger? fun(logtype: string, msg: string)
----@field private _logfile? file*
+---@field private _logfile? file
 local LanguageTree = {}
 
 ---Optional arguments:
@@ -139,7 +139,7 @@ function LanguageTree.new(source, lang, opts)
 
   local injections = opts.injections or {}
 
-  --- @class vim.treesitter.LanguageTree
+  --- @type vim.treesitter.LanguageTree
   local self = {
     _source = source,
     _lang = lang,

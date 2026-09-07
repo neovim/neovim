@@ -113,7 +113,8 @@ function M.new(...)
     if start.buf ~= end_.buf then
       error('start and end positions must belong to the same buffer')
     end
-    start_row, start_col, end_row, end_col, buf = start[1], start[2], end_[1], end_[2], start.buf
+    start_row, start_col, end_row, end_col, buf =
+      start.row, start.col, end_.row, end_.col, start.buf
   elseif nargs == 5 then
     ---@type integer, integer, integer, integer, integer
     buf, start_row, start_col, end_row, end_col = ...
@@ -225,8 +226,8 @@ function M.has(outer, inner)
 
   if getmetatable(inner) == vim.pos then
     ---@cast inner -vim.Range
-    return util.cmp_pos.le(outer[1], outer[2], inner[1], inner[2])
-      and util.cmp_pos.ge(outer[3], outer[4], inner[1], inner[2])
+    return util.cmp_pos.le(outer[1], outer[2], inner.row, inner.col)
+      and util.cmp_pos.ge(outer[3], outer[4], inner.row, inner.col)
   end
   ---@cast inner -vim.Pos
 

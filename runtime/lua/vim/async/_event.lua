@@ -1,6 +1,3 @@
--- LuaLS cannot model the generic annotations used by this vendored implementation.
----@diagnostic disable: no-unknown, undefined-doc-name, luadoc-miss-symbol, missing-return, missing-return-value, param-type-mismatch, return-type-mismatch, redundant-return-value, undefined-field, need-check-nil, await-in-sync
-
 local async = require('vim.async._core')
 local runtime = require('vim.async._runtime')
 

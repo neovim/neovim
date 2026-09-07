@@ -60,7 +60,7 @@ local stats = { find = { total = 0, time = 0, not_found = 0 } }
 --- @type table<string, uv.fs_stat.result>?
 local fs_stat_cache
 
---- @type table<string, table<string,vim.loader.ModuleInfo>>
+--- @type table<string, table<string,vim.loader.ModuleInfo>?>
 local indexed = {}
 
 --- @param path string

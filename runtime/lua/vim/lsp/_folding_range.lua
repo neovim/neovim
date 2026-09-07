@@ -203,6 +203,7 @@ end
 ---@return vim.lsp.folding_range.State
 function State:new(bufnr)
   self = Capability.new(self, bufnr)
+  ---@cast self vim.lsp.folding_range.State
   self.lang = vim.treesitter.language.get_lang(vim.bo[self.bufnr].filetype)
   self.row_level = {}
   self.row_kinds = {}
@@ -325,8 +326,8 @@ end
 --- Split `line` into highlighted virt_text chunks from `spans`.
 ---
 ---@param line string
----@param spans [integer, integer, string][] [start_col, end_col, highlight]
----@return [string, string[]?][] [text, highlight[]?][]
+---@param spans [integer, integer, string][] # [start_col, end_col, highlight]
+---@return [string, string[]?][] # [text, highlight[]?][]
 local function spans_to_virt_text(line, spans)
   local boundaries = { 0, #line }
   for _, span in ipairs(spans) do

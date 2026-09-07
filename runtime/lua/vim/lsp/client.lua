@@ -416,7 +416,7 @@ function Client.create(config)
   local id = client_index
   local name = get_name(id, config)
 
-  --- @class vim.lsp.Client
+  --- @type vim.lsp.Client
   local self = {
     id = id,
     config = config,

@@ -69,7 +69,7 @@ def_autocmd({ 'FileWriteCmd', 'FileAppendCmd' }, {}, function(ev)
       vim.fn.getline(
         math.min(vim.fn.line("'["), vim.fn.line("']")),
         math.max(vim.fn.line("'["), vim.fn.line("']"))
-      ) --[=[@as string[]]=]
+      ) --[=[@as string[] ]=]
     ),
     ev.file,
     ev.event == 'FileAppendCmd' and 'ab' or 'b'

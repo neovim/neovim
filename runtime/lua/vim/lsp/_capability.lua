@@ -48,10 +48,8 @@ local buf_capabilities = {}
 local M = {}
 M.__index = M
 
----@generic T : vim.lsp.Capability
----@param self T
 ---@param bufnr integer
----@return T
+---@return self
 function M:new(bufnr)
   -- `self` in the `new()` function refers to the concrete type (i.e., the metatable).
   -- `Class` may be a subtype of `Capability`, as it supports inheritance.

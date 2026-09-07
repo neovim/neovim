@@ -25,7 +25,7 @@ local luacats_grammar = require('gen.luacats_grammar')
 --- @field overloads string[]
 --- @field returns nvim.luacats.parser.return[]
 --- @field desc string
---- @field access? 'private'|'package'|'protected'
+--- @field access? 'private'|'package'|'protected'|'internal'
 --- @field class? string
 --- @field module? string
 --- @field modvar? string
@@ -198,6 +198,8 @@ local function process_doc_line(line, state)
     cur_obj.access = 'package'
   elseif kind == 'protected' then
     cur_obj.access = 'protected'
+  elseif kind == 'internal' then
+    cur_obj.access = 'internal'
   elseif kind == 'deprecated' then
     cur_obj.deprecated = true
   elseif kind == 'inlinedoc' then

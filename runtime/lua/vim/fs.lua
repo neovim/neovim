@@ -173,7 +173,7 @@ end
 ---
 ---@since 15
 ---@param path string Filepath (or other identity string).
----@param opts? table
+---@param opts? { maxlen?: integer } #
 ---  - maxlen: (integer, default: 180) Max length (bytes) of the result.
 ---@return string # Filesystem-safe, mnemonic slug.
 function M.slug(path, opts)

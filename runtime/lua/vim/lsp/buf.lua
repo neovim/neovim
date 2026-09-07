@@ -675,14 +675,15 @@ function M.format(opts)
       return util.make_given_range_params(r.start, r['end'], bufnr, client.offset_encoding).range
     end
 
-    local ret = params --[[@as lsp.DocumentFormattingParams|lsp.DocumentRangeFormattingParams|lsp.DocumentRangesFormattingParams]]
+    --- @type lsp.DocumentFormattingParams|lsp.DocumentRangeFormattingParams|lsp.DocumentRangesFormattingParams
+    local ret = params
     if passed_multiple_ranges then
       --- @cast range {start:[integer,integer],end:[integer, integer]}[]
-      ret = params --[[@as lsp.DocumentRangesFormattingParams]]
+      --- @cast ret lsp.DocumentRangesFormattingParams
       ret.ranges = vim.tbl_map(to_lsp_range, range)
     elseif range then
       --- @cast range {start:[integer,integer],end:[integer, integer]}
-      ret = params --[[@as lsp.DocumentRangeFormattingParams]]
+      --- @cast ret lsp.DocumentRangeFormattingParams
       ret.range = to_lsp_range(range)
     end
     return ret

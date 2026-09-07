@@ -249,9 +249,11 @@ Docstring format:
   - See scripts/util.lua for the mapping of api-level to Nvim version.
 - Use `@deprecated` to mark deprecated functions.
 - Use `@nodoc` to prevent documentation generation.
-- Use `@private` if the function is internal or otherwise non-public.
+- Use `@private` for private functions.
   - Naming a function with an underscore prefix ("_foo", not "foo") implies
     `@nodoc` and `@private`.
+- Use `@internal` for non-public functions shared across Nvim modules, or
+  `@class (internal)` for shared internal types. Both hide generated docs.
 - Use `@inlinedoc` to inline `@class` blocks into `@param` blocks.
   E.g. >lua
       --- Object with fields:

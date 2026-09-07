@@ -10,7 +10,7 @@ local M = {}
 ---
 ---@param payload string Sequence to send via nvim_ui_send(). Use empty string ('') to just register
 ---                      a listener (no sending).
----@param opts? { timeout?: integer, on_timeout?: fun(), group?: integer|string, chan?: integer }
+---@param opts? { timeout?: integer, on_timeout?: fun(), group?: integer|string, chan?: integer } #
 ---       - `timeout` (default: 1000) ms to wait before giving up, or 0 for never (caller must remove the autocmd).
 ---       - `on_timeout` optional fn called when the timeout fires.
 ---       - `group`: augroup for the TermResponse autocmd.

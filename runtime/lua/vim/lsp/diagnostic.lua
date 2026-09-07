@@ -384,7 +384,7 @@ end
 
 --- |lsp-handler| for the method `workspace/diagnostic/refresh`
 ---@param ctx lsp.HandlerContext
----@private
+---@internal
 function M.on_refresh(err, _, ctx)
   if err then
     return vim.NIL

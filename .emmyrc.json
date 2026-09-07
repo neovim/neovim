@@ -1,5 +1,19 @@
 {
-  "$schema": "https://raw.githubusercontent.com/EmmyLuaLs/emmylua-analyzer-rust/refs/heads/main/crates/emmylua_code_analysis/resources/schema.json",
+  "$schema": "https://raw.githubusercontent.com/EmmyLuaLs/emmylua-analyzer-rust/0.25.1/crates/emmylua_code_analysis/resources/schema.json",
+  "runtime": {
+    "version": "LuaJIT"
+  },
+  "workspace": {
+    "ignoreDir": [
+      ".deps",
+      "build"
+    ],
+    "ignoreGlobs": [
+      "**/example_init.lua",
+      "test/**/fixtures/**"
+    ],
+    "preloadFileSize": 1000
+  },
   "format": {
     "externalTool": {
       "program": "stylua",
@@ -12,9 +26,35 @@
   },
   "diagnostics": {
     "disable": [
+      "annotation-usage-error",
+      "assign-type-mismatch",
+      "await-in-sync",
+      "call-non-callable",
+      "code-style-check",
+      "deprecated",
+      "global-in-non-module",
+      "incomplete-signature-doc",
+      "invert-if",
+      "iter-variable-reassign",
+      "missing-fields",
+      "missing-global-doc",
+      "need-check-nil",
+      "non-literal-expressions-in-assert",
+      "param-type-mismatch",
       "preferred-local-alias",
-      "unnecessary-if"
-    ]
+      "redefined-label",
+      "redefined-local",
+      "return-type-mismatch",
+      "undefined-field",
+      "unknown-doc-tag",
+      "unnecessary-assert",
+      "unnecessary-if",
+      "unreachable-code",
+      "unused"
+    ],
+    "severity": {
+      "duplicate-require": "warning"
+    }
   },
   "codeAction": {
     "insertSpace": true

@@ -419,14 +419,15 @@ Example: https://github.com/neovim/neovim/pull/35768
 
 FIXING LINT FAILURES
 
-`make lint` (and `make lintlua`) runs [LuaLS](https://github.com/LuaLS/lua-language-server/wiki/Annotations)
-on the test code.
+`make emmylua-check` runs EmmyLua on the runtime Lua code, using `.emmyrc.json`.
+The checker is downloaded automatically. Enable more checks incrementally by
+removing codes from `diagnostics.disable` and fixing the resulting diagnostics.
 
-If a LuaLS/EmmyLS warning must be ignored, specify the warning code. Example: >lua
+If an EmmyLua warning must be ignored, specify the warning code. Example: >lua
 
-    ---@diagnostic disable-next-line: unused-vararg
+    ---@diagnostic disable-next-line: unused
 
-https://github.com/LuaLS/lua-language-server/wiki/Annotations#diagnostic
+https://github.com/EmmyLuaLs/emmylua-analyzer-rust
 
 Ignore the smallest applicable scope (e.g. inside a function, not at the top of
 the file).

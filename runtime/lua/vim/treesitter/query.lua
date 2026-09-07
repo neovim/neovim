@@ -548,6 +548,7 @@ local predicate_handlers = {
     return impl['contains'](match, source, predicate, true)
   end,
 
+  --- @param predicate any[] & { string_set?: table<string, boolean> }
   ['any-of?'] = function(match, _, source, predicate)
     local nodes = match[predicate[2]]
     if not nodes or #nodes == 0 then
@@ -559,7 +560,7 @@ local predicate_handlers = {
 
       -- Since 'predicate' will not be used by callers of this function, use it
       -- to store a string set built from the list of words to check against.
-      local string_set = predicate['string_set'] --- @type table<string, boolean>
+      local string_set = predicate['string_set']
       if not string_set then
         string_set = {}
         for i = 3, #predicate do

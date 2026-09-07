@@ -137,7 +137,7 @@ end
 --- Store hints for a specific buffer and client
 ---@param result lsp.InlayHint[]?
 ---@param ctx lsp.HandlerContext
----@private
+---@internal
 function M.on_inlayhint(err, result, ctx)
   local bufnr = assert(ctx.bufnr)
   local provider = InlayHint.active[bufnr]
@@ -223,7 +223,7 @@ end
 
 --- |lsp-handler| for the method `workspace/inlayHint/refresh`
 ---@param ctx lsp.HandlerContext
----@private
+---@internal
 function M.on_refresh(err, _, ctx)
   if err then
     return vim.NIL
