@@ -181,8 +181,9 @@ describe('semantic token highlighting', function()
       exec_lua(function()
         local bufnr = vim.api.nvim_get_current_buf()
         vim.api.nvim_win_set_buf(0, bufnr)
+        vim.bo[bufnr].fileformat = 'unix'
         vim.bo[bufnr].filetype = 'some-filetype'
-        _G._start_server(_G.server2)
+        _G.test_client_id = _G._start_server(_G.server2)
       end)
 
       screen:expect {
@@ -197,6 +198,33 @@ describe('semantic token highlighting', function()
         {2:#else}                                   |
         {2:    printf("%d\n", x);}                  |
         {2:#endif}                                  |
+        }                                       |
+        ^}                                       |
+        {1:~                                       }|*3
+                                                |
+      ]],
+      }
+
+      -- The same token reaches four characters less far in a 'dos' buffer, because each
+      -- of the four line endings it spans takes two characters instead of one.
+      exec_lua(function()
+        vim.lsp.get_client_by_id(assert(_G.test_client_id)):stop()
+        vim.bo[vim.api.nvim_get_current_buf()].fileformat = 'dos'
+        _G._start_server(_G.server2)
+      end)
+
+      screen:expect {
+        grid = [[
+        #include <iostream>                     |
+                                                |
+        int main()                              |
+        {                                       |
+            int x;                              |
+        {2:#ifdef __cplusplus}                      |
+        {2:    std::cout << x << "\n";}             |
+        {2:#else}                                   |
+        {2:    printf("%d\n", x);}                  |
+        {2:#e}ndif                                  |
         }                                       |
         ^}                                       |
         {1:~                                       }|*3
