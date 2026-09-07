@@ -132,11 +132,11 @@ function s:msgpack_init_python() abort
     let [year, month, day, hour, minute, second] = match[1:6]
     " Bisection start and end:
     "
-    " Start: 365 days in year, 28 days in month, -12 hours tz offset.
+    " Start: 365 days in year, 28 days in month, -14 hours tz offset.
     let bisect_ts_start = (((((year - 1970) * 365
                              \+ (month - 1) * 28
                              \+ (day - 1)) * 24
-                            \+ hour - 12) * 60
+                            \+ hour - 14) * 60
                            \+ minute) * 60
                           \+ second)
     if bisect_ts_start < 0
