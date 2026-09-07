@@ -390,6 +390,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
   // Ignore drag and release events if we didn't get a click.
   if (is_click) {
     got_click = true;
+    in_tab_line = false;
   } else {
     if (!got_click) {                   // didn't get click, ignore
       return false;

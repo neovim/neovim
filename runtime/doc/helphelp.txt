@@ -485,6 +485,24 @@ and 'tabstop' options and the 'filetype' to "help".  Never set a global option
 in such a modeline, that can have undesired consequences.
 
 
+STYLE
+
+If your Vim has 'modeline' enabled, Vim should follow the preferred style
+automatically when editing built-in help files.
+
+Vim help files should be formatted for a 'textwidth' of 78 characters, so they
+look good in a typical 80 x 24 terminal window.
+
+Use two spaces between the final dot of a sentence of the first letter of the
+next sentence.  Like this.
+
+Use tab characters for aligning content, with a 'tabstop' setting of 8.
+This also helps reduce the file size.
+
+Always use |:retab| after you have finished editing.  Don't blindly use
+|:retab!|, always review what will be changed to avoid unwanted changes.
+
+
 TAGS
 
 To define a help tag, place the name between asterisks ("*tag-name*").  The
