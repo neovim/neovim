@@ -421,6 +421,17 @@ int augroup_add(const char *name)
   return next_id;
 }
 
+void augroup_del_by_id(int id)
+{
+  char *name = id <= 0 ? NULL : augroup_name(id);
+  if (name == NULL) {
+    semsg(_("E367: No such group id: %d"), id);
+  } else {
+    // NB: this can still error, but the error might be "semantic" like "-- Deleted --"
+    augroup_del(name, id, false);
+  }
+}
+
 /// Delete the augroup that matches name.
 /// @param stupid_legacy_mode bool: This parameter determines whether to run the augroup
 ///     deletion in the same fashion as `:augroup! {name}` where if there are any remaining
@@ -432,11 +443,18 @@ int augroup_add(const char *name)
 ///     I did not consider this good behavior, so now when NOT in stupid_legacy_mode, we actually
 ///     delete these groups and their commands, like you would expect (and don't leave hanging
 ///     `--- DELETED ---` groups around)
-void augroup_del(char *name, bool stupid_legacy_mode)
+/// @param id_for_error  only to provide context for an error message:
+///                       if >= 0, we tried to look up the group by id
+///                       if < 0, only use `name` for error
+void augroup_del(char *name, int id_for_error, bool stupid_legacy_mode)
 {
   int group = augroup_find(name);
   if (group == AUGROUP_ERROR) {  // the group doesn't exist
-    semsg(_("E367: No such group: \"%s\""), name);
+    if (id_for_error > 0) {
+      semsg(_("E367: No such group id: %d \"%s\""), id_for_error, name);
+    } else {
+      semsg(_("E367: No such group: \"%s\""), name);
+    }
     return;
   } else if (group == current_augroup) {
     emsg(_("E936: Cannot delete the current group"));
@@ -548,7 +566,7 @@ void do_augroup(char *arg, bool del_group)
     if (*arg == NUL) {
       emsg(_(e_argreq));
     } else {
-      augroup_del(arg, true);
+      augroup_del(arg, -1, true);
     }
   } else if (STRICMP(arg, "end") == 0) {  // ":aug end": back to group 0
     current_augroup = AUGROUP_DEFAULT;
