@@ -1053,7 +1053,7 @@ function Client:_unregister(unregistrations)
   self:_unregister_dynamic(unregistrations)
   for _, unreg in ipairs(unregistrations) do
     if unreg.method == 'workspace/didChangeWatchedFiles' then
-      lsp._watchfiles.unregister(unreg, self.id)
+      lsp._watchfiles.unregister(unreg.id, self.id)
     end
   end
 end
