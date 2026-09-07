@@ -961,6 +961,17 @@ is_na_patch() {
           test "$HUNK_NUM_FINAL" -ne 0 && return 1
         fi
         ;;
+      src/po/Make*)
+        HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
+          '-I^\$\([_A-Z]+\)\.pot:' \
+          "$patch" -- "${file}")
+        if test -n "$HUNKS"; then
+          HUNK_NUM_FINAL=$(echo "$HUNKS" | grep '^@@ .* @@' | sed 's/^@@ .* @@ //' | grep -cv \
+            -e '^\$([_A-Z]\+)\.pot:' \
+            -e '^clean:')
+          test "$HUNK_NUM_FINAL" -ne 0 && return 1
+        fi
+        ;;
       src/testdir/Makefile)
         HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
           '-IREDIR_TEST_TO_NULL = ' \
