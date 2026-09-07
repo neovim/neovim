@@ -460,6 +460,24 @@ describe('lua stdlib', function()
     )
   end)
 
+  it('vim.str_byteindex stays within the string for truncated sequences', function()
+    -- A truncated multi-byte sequence at the end of the string reports a length
+    -- longer than the bytes that are actually there. The returned byte index
+    -- must still be clamped to the length of the string.
+    for _, s in ipairs({ '\xc3', '\xe4\xb8', '\xf0\x9f', '\xf0\x9f\x98', 'abc\xc3' }) do
+      for _, encoding in ipairs({ 'utf-8', 'utf-16', 'utf-32' }) do
+        for index = 0, #s + 2 do
+          local byteindex = exec_lua('return vim.str_byteindex(...)', s, encoding, index, false)
+          ok(
+            byteindex <= #s,
+            ('at most %d'):format(#s),
+            ('%d (encoding=%s, index=%d)'):format(byteindex, encoding, index)
+          )
+        end
+      end
+    end
+  end)
+
   it('vim.str_utf_start', function()
     exec_lua([[_G.test_text = "xy åäö ɧ 汉语 ↥ 🤦x🦄 å بِيَّ"]])
     local expected_positions = {
