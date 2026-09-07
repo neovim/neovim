@@ -1331,11 +1331,11 @@ end
 
 do
   ---@class vim.Ringbuf<T>
-  ---@field private _items table[]
+  ---@field private _items table<integer, T?>
   ---@field private _idx_read integer
   ---@field private _idx_write integer
   ---@field private _size integer
-  ---@overload fun(self): table?
+  ---@overload fun(self: vim.Ringbuf<T>): T?
   local Ringbuf = {}
 
   --- Clear all items
@@ -1346,7 +1346,6 @@ do
   end
 
   --- Adds an item, overriding the oldest item if the buffer is full.
-  ---@generic T
   ---@param item T
   function Ringbuf.push(self, item)
     self._items[self._idx_write] = item
@@ -1357,7 +1356,6 @@ do
   end
 
   --- Removes and returns the first unread item
-  ---@generic T
   ---@return T?
   function Ringbuf.pop(self)
     local idx_read = self._idx_read
@@ -1371,7 +1369,6 @@ do
   end
 
   --- Returns the first unread item without removing it
-  ---@generic T
   ---@return T?
   function Ringbuf.peek(self)
     if self._idx_read == self._idx_write then
@@ -1407,7 +1404,7 @@ do
   --- - |Ringbuf:clear()|
   ---
   ---@param size integer
-  ---@return vim.Ringbuf ringbuf
+  ---@return vim.Ringbuf<any> ringbuf
   function vim.ringbuf(size)
     local ringbuf = {
       _items = {},

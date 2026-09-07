@@ -495,7 +495,7 @@ function M._lsp_to_complete_items(
     return {}
   end
 
-  ---@type fun(item: lsp.CompletionItem, item_prefix: string):boolean
+  ---@type fun(item: lsp.CompletionItem, item_prefix: string): boolean, integer?
   local matches
   if not prefix:find('%w') then
     matches = function(_, _)

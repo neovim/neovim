@@ -91,14 +91,14 @@ local v = setmetatable({}, {
 --- @field generics? string[]
 --- @field parent? string
 --- @field parent_generics? string[]
---- @field access? 'private'|'protected'|'package'
+--- @field access? 'private'|'protected'|'package'|'internal'
 
 --- @class nvim.luacats.Field
 --- @field kind 'field'
 --- @field name string
 --- @field type string
 --- @field desc? string
---- @field access? 'private'|'protected'|'package'
+--- @field access? 'private'|'protected'|'package'|'internal'
 
 --- @class nvim.luacats.Note
 --- @field desc? string
@@ -173,7 +173,7 @@ local function generic_opt(name)
   return (Pf('<') * Cg(Ct(comma1(typedef)), name) * Plf('>')) + -Plf('<')
 end
 
-local access = P('private') + P('protected') + P('package')
+local access = P('private') + P('protected') + P('package') + P('internal')
 local caccess = Cg(access, 'access')
 local cattr = Cg(comma(access + P('exact')), 'access')
 local desc_delim = Sf '#:' + ws

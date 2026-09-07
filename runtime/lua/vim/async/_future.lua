@@ -1,9 +1,11 @@
--- LuaLS cannot model the generic annotations used by this vendored implementation.
----@diagnostic disable: no-unknown, undefined-doc-name, luadoc-miss-symbol, missing-return, missing-return-value, param-type-mismatch, return-type-mismatch, redundant-return-value, undefined-field, need-check-nil, await-in-sync
-
 local F = vim.F
 local util = require('vim._core.util')
 
+--- @class (internal) vim.async.Future<R>
+--- @field private _callbacks table<integer, fun(err?: any, ...: R...)>
+--- @field private _callback_pos integer
+--- @field private _err? any
+--- @field private _result? R[] & { n: integer }
 local Future = {}
 Future.__index = Future
 
@@ -22,6 +24,8 @@ function Future:result()
   end
 end
 
+--- @param callback fun(err?: any, ...: R...)
+--- @return fun()
 function Future:on_complete(callback)
   if self:completed() then
     -- Already completed or closed
@@ -42,6 +46,8 @@ function Future:on_complete(callback)
   end
 end
 
+--- @param err? any
+--- @param ... R...
 function Future:complete(err, ...)
   if self:completed() then
     error('Future is already completed', 2)
@@ -69,6 +75,7 @@ function Future:complete(err, ...)
   end
 end
 
+--- @return vim.async.Future<any>
 return function()
   return setmetatable({
     _callbacks = {},

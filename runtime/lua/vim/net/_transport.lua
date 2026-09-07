@@ -3,7 +3,7 @@ local strbuffer = require('vim._core.stringbuffer')
 
 --- Interface for transport implementations.
 ---
---- @class (private, exact) vim.net.Transport
+--- @class (internal, exact) vim.net.Transport
 --- @field listen fun(self: vim.net.Transport, on_read: fun(err: any, data: string), on_exit: fun(code: integer, signal: integer))
 --- @field write fun(self: vim.net.Transport, msg: string)
 --- @field is_closing fun(self: vim.net.Transport): boolean
@@ -101,7 +101,7 @@ end
 --- These messages are buffered in `msgbuf`.
 --- @field private connected boolean
 --- @field private closing boolean
---- @field private msgbuf vim.Ringbuf
+--- @field private msgbuf vim.Ringbuf<string>
 --- @field private on_exit? fun(code: integer, signal: integer)
 --- @field new fun(host_or_path: string, port?: integer, log: vim.Log): vim.net.TransportConnect
 local TransportConnect = {}
@@ -193,7 +193,7 @@ end
 --- `nil` means it needs more transport data.
 --- decoder errors are reported through `on_error`.
 ---
----@class (private, exact) vim.net.MessageStream
+---@class (internal, exact) vim.net.MessageStream
 ---@field private strbuf string.buffer
 ---@field private decode fun(strbuf: string.buffer): string?
 ---@field private on_read fun(err: string?, data: string?)

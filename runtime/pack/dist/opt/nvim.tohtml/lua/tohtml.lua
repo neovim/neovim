@@ -465,8 +465,7 @@ local function styletable_treesitter(state)
       query:iter_captures(root, buf_highlighter.bufnr, state.start - 1, state.end_)
     do
       local srow, scol, erow, ecol = node:range()
-      --- @diagnostic disable-next-line: invisible
-      local c = q._query.captures[capture]
+      local c = query.captures[capture]
       if c ~= nil then
         local hlid = register_hl(state, '@' .. c .. '.' .. tree:lang())
         if metadata.conceal and state.opt.conceallevel ~= 0 then

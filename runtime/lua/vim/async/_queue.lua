@@ -1,6 +1,3 @@
--- LuaLS cannot model the generic annotations used by this vendored implementation.
----@diagnostic disable: no-unknown, undefined-doc-name, luadoc-miss-symbol, missing-return, missing-return-value, param-type-mismatch, return-type-mismatch, redundant-return-value, undefined-field, need-check-nil, await-in-sync
-
 local new_event = require('vim.async._event')
 
 --- An optionally bounded FIFO queue for passing values between async tasks.

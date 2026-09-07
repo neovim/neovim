@@ -33,10 +33,10 @@ local M = {
   },
   virt = { -- Stored virt_text state.
     last = { {}, {}, {}, {} }, ---@type MsgContent[] status in last cmdline row.
-    cmd = { {}, {} }, ---@type MsgContent[] [(x)] indicators in cmd window.
-    msg = { {}, {} }, ---@type MsgContent[] [(x)] indicators in msg window.
-    top = { {} }, ---@type MsgContent[] [+x] top indicator in dialog window.
-    bot = { {} }, ---@type MsgContent[] [+x] bottom indicator in dialog window.
+    cmd = { {}, {} }, ---@type MsgContent[] # [(x)] indicators in cmd window.
+    msg = { {}, {} }, ---@type MsgContent[] # [(x)] indicators in msg window.
+    top = { {} }, ---@type MsgContent[] # [+x] top indicator in dialog window.
+    bot = { {} }, ---@type MsgContent[] # [+x] bottom indicator in dialog window.
     idx = { mode = 1, search = 2, cmd = 3, ruler = 4, spill = 1, dupe = 2 },
     ids = {}, ---@type { ['last'|'cmd'|'msg'|'top'|'bot']: integer? } Table of mark IDs.
     delayed = false, -- Whether placement of 'last' virt_text is delayed.

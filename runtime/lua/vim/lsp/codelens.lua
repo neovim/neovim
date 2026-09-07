@@ -428,7 +428,7 @@ end
 
 --- |lsp-handler| for the method `workspace/codeLens/refresh`
 ---
----@private
+---@internal
 ---@type lsp.Handler
 function M.on_refresh(err, _, ctx)
   if err then

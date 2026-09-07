@@ -107,6 +107,28 @@ describe('luacats parser', function()
     exp
   )
 
+  for _, access in ipairs({ 'internal', 'internal, exact' }) do
+    it('tracks internal visibility with (' .. access .. ')', function()
+      local classes, funs = parser.parse_str(
+        dedent([[
+          --- @class (%s) vim.MyClass
+          --- @field internal value string
+          local MyClass = {}
+
+          --- @internal
+          function MyClass.get() end
+
+          return MyClass
+        ]]):format(access),
+        'runtime/lua/vim/myclass.lua'
+      )
+
+      eq(access, classes['vim.MyClass'].access)
+      eq('internal', classes['vim.MyClass'].fields[1].access)
+      eq('internal', funs[1].access)
+    end)
+  end
+
   it('tracks class member declaration style', function()
     local classes, funs = parser.parse_str(
       dedent([[        --- @class vim.MyClass

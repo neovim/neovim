@@ -8,6 +8,7 @@ local uv = vim.uv
 local M = {}
 
 --- @param border string|(string|[string,string])[]
+--- @return never
 local function border_error(border)
   error(
     string.format(
@@ -69,8 +70,7 @@ local function get_border_size(opts)
       -- border specified as a list of border characters
       return e
     end
-    --- @diagnostic disable-next-line:missing-return
-    border_error(border)
+    return border_error(border)
   end
 
   --- @param e string
@@ -179,7 +179,7 @@ function M.apply_text_edits(text_edits, bufnr, position_encoding, change_annotat
   local function apply_text_edits()
     -- Fix reversed range and indexing each text_edits
     for index, text_edit in ipairs(text_edits) do
-      --- @cast text_edit lsp.TextEdit|{_index: integer}
+      --- @cast text_edit lsp.TextEdit & { _index?: integer }
       -- XXX: Preserve existing _index to avoid surprises if the same edit is reapplied. #39344
       if text_edit._index == nil then
         text_edit._index = index
@@ -668,7 +668,11 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers
   if active_signature >= #signature_help.signatures or active_signature < 0 then
     active_signature = 0
   end
-  local signature = vim.deepcopy(signature_help.signatures[active_signature + 1])
+  local signature = signature_help.signatures[active_signature + 1]
+  if not signature then
+    return
+  end
+  signature = vim.deepcopy(signature)
   local label = signature.label
   if ft then
     -- wrap inside a code block for proper rendering
@@ -1410,7 +1414,7 @@ function M._make_floating_popup_size(contents, opts)
   local title_length = 0
   local chunks = type(opts.title) == 'string' and { { opts.title } } or opts.title or {}
   for _, chunk in
-    ipairs(chunks --[=[@as [string, string][]]=])
+    ipairs(chunks --[=[@as [string, string][] ]=])
   do
     title_length = title_length + vim.fn.strdisplaywidth(chunk[1])
   end

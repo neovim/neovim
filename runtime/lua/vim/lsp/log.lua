@@ -42,7 +42,7 @@ M._self = log
 --- Returns the log filename.
 ---@return string log filename
 function M.get_filename()
-  ---@diagnostic disable-next-line: invisible
+  ---@diagnostic disable-next-line: access-invisible
   return log.filename
 end
 

@@ -314,6 +314,8 @@ end
 ---@return integer
 ---@package
 function TSTreeView:iter()
+  -- TODO(lewis6991): EmmyLua 0.25.1's ipairs annotation omits the table and initial index.
+  --- @diagnostic disable-next-line: missing-return-value
   return ipairs(self.opts.anon and self.nodes or self.named)
 end
 

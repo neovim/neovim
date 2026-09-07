@@ -64,13 +64,11 @@
 --- -- { "a", "b" }
 --- ```
 
--- LuaLS cannot model the variadic EmmyLua generics used by this module.
----@diagnostic disable: no-unknown, undefined-doc-name, luadoc-miss-symbol, missing-return, missing-return-value, param-type-mismatch, return-type-mismatch, redundant-return-value, undefined-field
-
+-- `never` represents an empty tail for single-value iterators.
 --- @nodoc
 --- @class vim.IterModule
 --- @operator call: vim.Iter<any, any...>
---- @overload fun<T>(src: T[]): vim.IterArray<T>
+--- @overload fun<T>(src: T[]): vim.IterArray<T, never>
 --- @overload fun<K, V>(src: table<K, V>): vim.Iter<K, V>
 --- @overload fun(src: table, ...): vim.Iter<any, any...>
 --- @overload fun(src: function, ...): vim.Iter<any, any...>
@@ -468,7 +466,7 @@ end
 ---
 ---
 --- @since 12
---- @overload fun<T>(self: vim.Iter<T>): T[]
+--- @overload fun<T>(self: vim.Iter<T, never>): T[]
 --- @overload fun<V1, V2, V...>(self: vim.Iter<V1, V2, V...>): [V1, V2, V...][]
 --- @return any[]
 function Iter:totable()
@@ -486,7 +484,7 @@ function Iter:totable()
 end
 
 --- @nodoc
---- @overload fun<T>(self: vim.IterArray<T>): T[]
+--- @overload fun<T>(self: vim.IterArray<T, never>): T[]
 --- @overload fun<V1, V2, V...>(self: vim.IterArray<V1, V2, V...>): [V1, V2, V...][]
 --- @return any[]
 function IterArray:totable()
@@ -1250,7 +1248,7 @@ end
 --- @generic R1, R...
 --- @param src table<R1, R>|fun(s: table, v: any): R1, R... Table or iterator to drain values from
 --- @return vim.Iter<R1, R...>
---- @overload fun<T>(src: T[]): vim.IterArray<T>
+--- @overload fun<T>(src: T[]): vim.IterArray<T, never>
 --- @overload fun<K, V>(src: table<K, V>): vim.Iter<K, V>
 --- @private
 function Iter.new(src, ...)

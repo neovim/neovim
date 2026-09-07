@@ -493,9 +493,8 @@ vim.cmd = setmetatable({}, {
   --- @param t table<string,function>
   __index = function(t, cmd)
     t[cmd] = function(...)
-      local opts --- @type vim.api.keyset.cmd
+      local opts --- @type vim.api.keyset.cmd & { [integer]: any }
       if select('#', ...) == 1 and type(select(1, ...)) == 'table' then
-        --- @type vim.api.keyset.cmd
         opts = select(1, ...)
 
         -- Move indexed positions in opts to opt.args
@@ -506,7 +505,6 @@ vim.cmd = setmetatable({}, {
               break
             end
             opts.args[i] = opts[i]
-            --- @diagnostic disable-next-line: no-unknown
             opts[i] = nil
           end
         end
@@ -565,7 +563,7 @@ end
 ---@param bufnr integer Buffer number, or 0 for current buffer
 ---@param pos1 integer[]|string Start of region as a (line, column) tuple or |getpos()|-compatible string
 ---@param pos2 integer[]|string End of region as a (line, column) tuple or |getpos()|-compatible string
----@param regtype string [setreg()]-style selection type
+---@param regtype string # [setreg()]-style selection type
 ---@param inclusive boolean Controls whether the ending column is inclusive (see also 'selection').
 ---@return table region Dict of the form `{linenr = {startcol,endcol}}`. `endcol` is exclusive, and
 ---whole lines are returned as `{startcol,endcol} = {0,-1}`.
