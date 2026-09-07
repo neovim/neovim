@@ -231,7 +231,9 @@ local function get_completion_word(item, prefix, match)
     word = word:match('([^\n]*)') or word
     return fallback_filtertext(item, word, prefix, match)
   elseif item.insertText and item.insertText ~= '' then
-    return fallback_filtertext(item, item.insertText, prefix, match)
+    local word = string.gsub(item.insertText, '\r\n?', '\n')
+    word = word:match('([^\n]*)') or word
+    return fallback_filtertext(item, word, prefix, match)
   end
   return item.label
 end
