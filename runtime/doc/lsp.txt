@@ -1153,7 +1153,7 @@ config({name}, {cfg})                                       *vim.lsp.config()*
 
     Parameters: ~
       • {name}  (`string`)
-      • {cfg}   (`vim.lsp.Config`) See |vim.lsp.Config|.
+      • {cfg}   (`vim.lsp.Config`)
 
 enable({name}, {enable})                                    *vim.lsp.enable()*
     Enables a |lsp-config|: automatically attaches the client to any buffer
@@ -1284,7 +1284,7 @@ get_client_by_id({client_id})                     *vim.lsp.get_client_by_id()*
       • {client_id}  (`integer`) client id
 
     Return: ~
-        (`vim.lsp.Client?`) client rpc object. See |vim.lsp.Client|.
+        (`vim.lsp.Client?`) client rpc object
 
 get_clients({filter})                                  *vim.lsp.get_clients()*
     Gets active clients.
@@ -1398,8 +1398,7 @@ start({config}, {opts})                                      *vim.lsp.start()*
         Since: 0.8.0
 
     Parameters: ~
-      • {config}  (`vim.lsp.ClientConfig`) Configuration for the server. See
-                  |vim.lsp.ClientConfig|.
+      • {config}  (`vim.lsp.ClientConfig`) Configuration for the server.
       • {opts}    (`table?`) Optional keyword arguments.
                   • {attach}? (`boolean`) Whether to attach the client to a
                     buffer (default true). If set to `false`, `reuse_client`
@@ -1576,13 +1575,13 @@ declaration({opts})                                *vim.lsp.buf.declaration()*
         |vim.lsp.buf.definition()| instead.
 
     Parameters: ~
-      • {opts}  (`vim.lsp.ListOpts?`) See |vim.lsp.ListOpts|.
+      • {opts}  (`vim.lsp.ListOpts?`)
 
 definition({opts})                                  *vim.lsp.buf.definition()*
     Jumps to the definition of the symbol under the cursor.
 
     Parameters: ~
-      • {opts}  (`vim.lsp.ListOpts?`) See |vim.lsp.ListOpts|.
+      • {opts}  (`vim.lsp.ListOpts?`)
 
 document_highlight()                        *vim.lsp.buf.document_highlight()*
     Send request to the server to resolve document highlights for the current
@@ -1602,7 +1601,7 @@ document_symbol({opts})                        *vim.lsp.buf.document_symbol()*
     Lists all symbols in the current buffer in the |location-list|.
 
     Parameters: ~
-      • {opts}  (`vim.lsp.ListOpts?`) See |vim.lsp.ListOpts|.
+      • {opts}  (`vim.lsp.ListOpts?`)
 
 format({opts})                                          *vim.lsp.buf.format()*
     Formats a buffer using the attached (and optionally filtered) language
@@ -1663,14 +1662,14 @@ hover({config})                                          *vim.lsp.buf.hover()*
 <
 
     Parameters: ~
-      • {config}  (`vim.lsp.buf.hover.Opts?`) See |vim.lsp.buf.hover.Opts|.
+      • {config}  (`vim.lsp.buf.hover.Opts?`)
 
 implementation({opts})                          *vim.lsp.buf.implementation()*
     Lists all the implementations for the symbol under the cursor in the
     quickfix window.
 
     Parameters: ~
-      • {opts}  (`vim.lsp.ListOpts?`) See |vim.lsp.ListOpts|.
+      • {opts}  (`vim.lsp.ListOpts?`)
 
 incoming_calls()                                *vim.lsp.buf.incoming_calls()*
     Lists all the call sites of the symbol under the cursor in the |quickfix|
@@ -1691,7 +1690,7 @@ references({context}, {opts})                       *vim.lsp.buf.references()*
 
     Parameters: ~
       • {context}  (`lsp.ReferenceContext?`) Context for the request
-      • {opts}     (`vim.lsp.ListOpts?`) See |vim.lsp.ListOpts|.
+      • {opts}     (`vim.lsp.ListOpts?`)
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
@@ -1742,14 +1741,13 @@ signature_help({config})                        *vim.lsp.buf.signature_help()*
 <
 
     Parameters: ~
-      • {config}  (`vim.lsp.buf.signature_help.Opts?`) See
-                  |vim.lsp.buf.signature_help.Opts|.
+      • {config}  (`vim.lsp.buf.signature_help.Opts?`)
 
 type_definition({opts})                        *vim.lsp.buf.type_definition()*
     Jumps to the definition of the type of the symbol under the cursor.
 
     Parameters: ~
-      • {opts}  (`vim.lsp.ListOpts?`) See |vim.lsp.ListOpts|.
+      • {opts}  (`vim.lsp.ListOpts?`)
 
 typehierarchy({kind})                            *vim.lsp.buf.typehierarchy()*
     Lists all the subtypes or supertypes of the symbol under the cursor in the
@@ -1780,7 +1778,7 @@ workspace_symbol({query}, {opts})             *vim.lsp.buf.workspace_symbol()*
 
     Parameters: ~
       • {query}  (`string?`) optional
-      • {opts}   (`vim.lsp.ListOpts?`) See |vim.lsp.ListOpts|.
+      • {opts}   (`vim.lsp.ListOpts?`)
 
 
 ==============================================================================
@@ -1799,8 +1797,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
       • {commands}              (`table<string,fun(command: lsp.Command, ctx: table)>`)
                                 Client commands. See |vim.lsp.ClientConfig|.
       • {config}                (`vim.lsp.ClientConfig`) Copy of the config
-                                passed to |vim.lsp.start()|. See
-                                |vim.lsp.ClientConfig|.
+                                passed to |vim.lsp.start()|.
       • {dynamic_capabilities}  (`lsp.DynamicCapabilities`) Capabilities
                                 provided at runtime (after startup).
       • {exec_cmd}              (`fun(self: vim.lsp.Client, cmd: lsp.Command, context: {bufnr?: integer}?, handler: lsp.Handler?)`)
@@ -1832,8 +1829,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                 See |Client:on_attach()|.
       • {progress}              (`vim.lsp.Client.Progress`) A ring buffer
                                 (|vim.ringbuf()|) containing progress messages
-                                sent by the server. See
-                                |vim.lsp.Client.Progress|.
+                                sent by the server.
       • {request}               (`fun(self: vim.lsp.Client, method: string, params: table?, handler: lsp.Handler?, bufnr: integer?): boolean, integer?`)
                                 See |Client:request()|.
       • {request_sync}          (`fun(self: vim.lsp.Client, method: string, params: table, timeout_ms: integer?, bufnr: integer?): {err: lsp.ResponseError?, result:any}?, string?`)
@@ -2808,7 +2804,7 @@ start({cmd}, {dispatchers}, {extra_spawn_params})        *vim.lsp.rpc.start()*
                                 See |vim.system()|
 
     Return: ~
-        (`vim.lsp.rpc.Client`) See |vim.lsp.rpc.Client|.
+        (`vim.lsp.rpc.Client`)
 
 
 ==============================================================================
@@ -3074,8 +3070,7 @@ make_floating_popup_options({width}, {height}, {opts})
     Parameters: ~
       • {width}   (`integer`) window width (in character cells)
       • {height}  (`integer`) window height (in character cells)
-      • {opts}    (`vim.lsp.util.open_floating_preview.Opts?`) See
-                  |vim.lsp.util.open_floating_preview.Opts|.
+      • {opts}    (`vim.lsp.util.open_floating_preview.Opts?`)
 
     Return: ~
         (`vim.api.keyset.win_config`)
@@ -3179,8 +3174,7 @@ open_floating_preview({contents}, {syntax}, {opts})
       • {opts}      (`vim.lsp.util.open_floating_preview.Opts?`) with optional
                     fields (additional keys are filtered with
                     |vim.lsp.util.make_floating_popup_options()| before they
-                    are passed on to |nvim_open_win()|). See
-                    |vim.lsp.util.open_floating_preview.Opts|.
+                    are passed on to |nvim_open_win()|)
 
     Return (multiple): ~
         (`integer`) bufnr of newly created float window
@@ -3196,8 +3190,7 @@ preview_location({location}, {opts})         *vim.lsp.util.preview_location()*
 
     Parameters: ~
       • {location}  (`lsp.Location|lsp.LocationLink`)
-      • {opts}      (`vim.lsp.util.open_floating_preview.Opts?`) See
-                    |vim.lsp.util.open_floating_preview.Opts|.
+      • {opts}      (`vim.lsp.util.open_floating_preview.Opts?`)
 
     Return (multiple): ~
         (`integer?`) buffer id of float window

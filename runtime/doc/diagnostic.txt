@@ -506,7 +506,6 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
                        with {diagnostic}.
       • {diagnostic}?  (`vim.Diagnostic`) The diagnostic to jump to. Mutually
                        exclusive with {count}, {namespace}, and {severity}.
-                       See |vim.Diagnostic|.
       • {on_jump}?     (`fun(diagnostic:vim.Diagnostic?, bufnr:integer)`)
                        Optional callback invoked with the diagnostic that was
                        jumped to.
@@ -526,7 +525,7 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
     Fields: ~
       • {disabled}?  (`boolean`)
       • {name}       (`string`)
-      • {opts}       (`vim.diagnostic.Opts`) See |vim.diagnostic.Opts|.
+      • {opts}       (`vim.diagnostic.Opts`)
       • {user_data}  (`table`)
 
 *vim.diagnostic.Opts*
@@ -555,8 +554,7 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
       • {signs}?             (`boolean|vim.diagnostic.Opts.Signs|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.Signs`, default: `true`)
                              Use signs for diagnostics |diagnostic-signs|.
       • {status}?            (`vim.diagnostic.Opts.Status`) Options for the
-                             statusline component. See
-                             |vim.diagnostic.Opts.Status|.
+                             statusline component.
       • {underline}?         (`boolean|vim.diagnostic.Opts.Underline|fun(namespace: integer, bufnr:integer): vim.diagnostic.Opts.Underline`, default: `true`)
                              Used to call attention to a diagnostic
                              ("underline" is a misnomer). Controls the
@@ -807,7 +805,7 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
 
     Return: ~
         (`vim.diagnostic.Opts?`) Current diagnostic config if {opts} is
-        omitted. See |vim.diagnostic.Opts|.
+        omitted.
 
 count({buf}, {opts})                                  *vim.diagnostic.count()*
     Get current diagnostics count.
@@ -815,7 +813,7 @@ count({buf}, {opts})                                  *vim.diagnostic.count()*
     Parameters: ~
       • {buf}   (`integer?`) Buffer number to get diagnostics from. Use 0 for
                 current buffer or nil for all buffers.
-      • {opts}  (`vim.diagnostic.GetOpts?`) See |vim.diagnostic.GetOpts|.
+      • {opts}  (`vim.diagnostic.GetOpts?`)
 
     Return: ~
         (`table<integer, integer>`) Table with actually present severity
@@ -849,7 +847,7 @@ fromqflist({list}, {opts})                       *vim.diagnostic.fromqflist()*
                   newline. (default: false)
 
     Return: ~
-        (`vim.Diagnostic[]`) See |vim.Diagnostic|.
+        (`vim.Diagnostic[]`)
 
 get({buf}, {opts})                                      *vim.diagnostic.get()*
     Get current diagnostics.
@@ -860,11 +858,11 @@ get({buf}, {opts})                                      *vim.diagnostic.get()*
     Parameters: ~
       • {buf}   (`integer?`) Buffer number to get diagnostics from. Use 0 for
                 current buffer or nil for all buffers.
-      • {opts}  (`vim.diagnostic.GetOpts?`) See |vim.diagnostic.GetOpts|.
+      • {opts}  (`vim.diagnostic.GetOpts?`)
 
     Return: ~
         (`vim.Diagnostic[]`) Fields `buf`, `end_lnum`, `end_col`, and
-        `severity` are guaranteed to be present. See |vim.Diagnostic|.
+        `severity` are guaranteed to be present.
 
 get_namespace({namespace})                    *vim.diagnostic.get_namespace()*
     Get namespace metadata.
@@ -873,7 +871,7 @@ get_namespace({namespace})                    *vim.diagnostic.get_namespace()*
       • {namespace}  (`integer`) Diagnostic namespace
 
     Return: ~
-        (`vim.diagnostic.NS`) Namespace metadata. See |vim.diagnostic.NS|.
+        (`vim.diagnostic.NS`) Namespace metadata
 
 get_namespaces()                             *vim.diagnostic.get_namespaces()*
     Get current diagnostic namespaces.
@@ -886,19 +884,19 @@ get_next({opts})                                   *vim.diagnostic.get_next()*
     Get the next diagnostic closest to the cursor position.
 
     Parameters: ~
-      • {opts}  (`vim.diagnostic.JumpOpts?`) See |vim.diagnostic.JumpOpts|.
+      • {opts}  (`vim.diagnostic.JumpOpts?`)
 
     Return: ~
-        (`vim.Diagnostic?`) Next diagnostic. See |vim.Diagnostic|.
+        (`vim.Diagnostic?`) Next diagnostic
 
 get_prev({opts})                                   *vim.diagnostic.get_prev()*
     Get the previous diagnostic closest to the cursor position.
 
     Parameters: ~
-      • {opts}  (`vim.diagnostic.JumpOpts?`) See |vim.diagnostic.JumpOpts|.
+      • {opts}  (`vim.diagnostic.JumpOpts?`)
 
     Return: ~
-        (`vim.Diagnostic?`) Previous diagnostic. See |vim.Diagnostic|.
+        (`vim.Diagnostic?`) Previous diagnostic
 
 hide({namespace}, {buf})                               *vim.diagnostic.hide()*
     Hide currently displayed diagnostics.
@@ -936,11 +934,10 @@ jump({opts})                                           *vim.diagnostic.jump()*
     Move to a diagnostic.
 
     Parameters: ~
-      • {opts}  (`vim.diagnostic.JumpOpts`) See |vim.diagnostic.JumpOpts|.
+      • {opts}  (`vim.diagnostic.JumpOpts`)
 
     Return: ~
-        (`vim.Diagnostic?`) The diagnostic that was moved to. See
-        |vim.Diagnostic|.
+        (`vim.Diagnostic?`) The diagnostic that was moved to.
 
                                                       *vim.diagnostic.match()*
 match({str}, {pat}, {groups}, {severity_map}, {defaults})
@@ -976,8 +973,7 @@ open_float({opts})                               *vim.diagnostic.open_float()*
     Show diagnostics in a floating window.
 
     Parameters: ~
-      • {opts}  (`vim.diagnostic.Opts.Float?`) See
-                |vim.diagnostic.Opts.Float|.
+      • {opts}  (`vim.diagnostic.Opts.Float?`)
 
     Return (multiple): ~
         (`integer?`) float_bufnr
@@ -1003,9 +999,9 @@ set({namespace}, {buf}, {diagnostics}, {opts})          *vim.diagnostic.set()*
     Parameters: ~
       • {namespace}    (`integer`) The diagnostic namespace
       • {buf}          (`integer`) Buffer number
-      • {diagnostics}  (`vim.Diagnostic.Set[]`) See |vim.Diagnostic.Set|.
+      • {diagnostics}  (`vim.Diagnostic.Set[]`)
       • {opts}         (`vim.diagnostic.Opts?`) Display options to pass to
-                       |vim.diagnostic.show()|. See |vim.diagnostic.Opts|.
+                       |vim.diagnostic.show()|
 
 setloclist({opts})                               *vim.diagnostic.setloclist()*
     Add buffer diagnostics to the location list.
@@ -1061,9 +1057,8 @@ show({namespace}, {buf}, {diagnostics}, {opts})        *vim.diagnostic.show()*
                        namespace and buffer. This can be used to display a
                        list of diagnostics without saving them or to display
                        only a subset of diagnostics. May not be used when
-                       {namespace} or {buf} is nil. See |vim.Diagnostic|.
-      • {opts}         (`vim.diagnostic.Opts?`) Display options. See
-                       |vim.diagnostic.Opts|.
+                       {namespace} or {buf} is nil.
+      • {opts}         (`vim.diagnostic.Opts?`) Display options.
 
 status({buf})                                        *vim.diagnostic.status()*
     Returns formatted string with diagnostics for the current buffer. The
@@ -1083,7 +1078,7 @@ toqflist({diagnostics})                            *vim.diagnostic.toqflist()*
     passed to |setqflist()| or |setloclist()|.
 
     Parameters: ~
-      • {diagnostics}  (`vim.Diagnostic[]`) See |vim.Diagnostic|.
+      • {diagnostics}  (`vim.Diagnostic[]`)
 
     Return: ~
         (`table[]`) Quickfix list items |setqflist-what|

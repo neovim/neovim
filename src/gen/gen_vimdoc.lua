@@ -692,27 +692,7 @@ local function inline_type(obj, classes)
 
   local cls = get_class(ty, classes)
 
-  if not cls or cls.nodoc then
-    return
-  end
-
-  if not cls.inlinedoc then
-    -- Not inlining so just add a: "See |tag|."
-    local tag = fmt('|%s|', cls.name)
-    if obj.desc and obj.desc:find(tag) then
-      -- Tag already there
-      return
-    end
-
-    -- TODO(lewis6991): Aim to remove this. Need this to prevent dead
-    -- references to types defined in runtime/lua/vim/lsp/_meta/protocol.lua
-    if not vim.startswith(cls.name, 'vim.') then
-      return
-    end
-
-    obj.desc = obj.desc or ''
-    local period = (obj.desc == '' or vim.endswith(obj.desc, '.')) and '' or '.'
-    obj.desc = obj.desc .. fmt('%s See %s.', period, tag)
+  if not cls or cls.nodoc or not cls.inlinedoc then
     return
   end
 
