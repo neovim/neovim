@@ -1630,7 +1630,7 @@ get({lang}, {query_name})                         *vim.treesitter.query.get()*
 
     Return: ~
         (`vim.treesitter.Query?`) Parsed query. `nil` if no query files are
-        found. See |vim.treesitter.Query|.
+        found.
 
                                             *vim.treesitter.query.get_files()*
 get_files({lang}, {query_name}, {is_included})
@@ -1721,7 +1721,7 @@ parse({lang}, {query})                          *vim.treesitter.query.parse()*
       • {query}  (`string`) Query text, in s-expr syntax
 
     Return: ~
-        (`vim.treesitter.Query`) Parsed query . See |vim.treesitter.Query|.
+        (`vim.treesitter.Query`) Parsed query
 
     See also: ~
       • |vim.treesitter.query.get()|

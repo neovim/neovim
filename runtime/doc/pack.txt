@@ -557,8 +557,7 @@ get({names}, {opts})                                          *vim.pack.get()*
         • {branches}? (`string[]`) Available Git branches (first is default).
           Missing if `info=false`.
         • {manifest}? (`vim.pack.Manifest`) Data from the |vim.pack-manifest|.
-          Empty in case of reading error. Missing if `info=false`. See
-          |vim.pack.Manifest|.
+          Empty in case of reading error. Missing if `info=false`.
         • {path} (`string`) Plugin's path on disk.
         • {rev} (`string`) Current Git revision. Taken from
           |vim.pack-lockfile| if `info=false`.

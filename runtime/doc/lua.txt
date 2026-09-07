@@ -2034,7 +2034,7 @@ vim.ringbuf({size})                                            *vim.ringbuf()*
       • {size}  (`integer`)
 
     Return: ~
-        (`vim.Ringbuf`) ringbuf See |vim.Ringbuf|.
+        (`vim.Ringbuf`) ringbuf
 
 vim.spairs({t})                                                 *vim.spairs()*
     Enumerates key-value pairs of a table, ordered by key.
@@ -4025,7 +4025,7 @@ get_level({log})                                         *vim.log.get_level()*
     Gets the current log level.
 
     Parameters: ~
-      • {log}  (`vim.Log`) See |vim.Log|.
+      • {log}  (`vim.Log`)
 
     Return: ~
         (`vim.log.levels`)
@@ -4050,7 +4050,7 @@ new({opts})                                                    *vim.log.new()*
                   by the logger.
 
     Return: ~
-        (`vim.Log`) See |vim.Log|.
+        (`vim.Log`)
 
 set_format_func({log}, {func})                     *vim.log.set_format_func()*
     Sets the formatter used to produce log entries.
@@ -4060,7 +4060,7 @@ set_format_func({log}, {func})                     *vim.log.set_format_func()*
     or `nil` to skip it.
 
     Parameters: ~
-      • {log}   (`vim.Log`) See |vim.Log|.
+      • {log}   (`vim.Log`)
       • {func}  (`fun(min_level: vim.log.levels, level: vim.log.levels, ...): string?`)
 
 set_level({log}, {level})                                *vim.log.set_level()*
@@ -4069,7 +4069,7 @@ set_level({log}, {level})                                *vim.log.set_level()*
     Entries below this level are skipped.
 
     Parameters: ~
-      • {log}    (`vim.Log`) See |vim.Log|.
+      • {log}    (`vim.Log`)
       • {level}  (`vim.log.levels`)
 
 
@@ -4640,7 +4640,7 @@ cursor({buf}, {pos})                                        *vim.pos.cursor()*
       • `fun(win?: integer): vim.Pos`
 
     Return: ~
-        (`vim.Pos`) See |vim.Pos|.
+        (`vim.Pos`)
 
 extmark({buf}, {row}, {col})                               *vim.pos.extmark()*
     Creates a new |vim.Pos| from extmark position (see |api-indexing|).
@@ -4655,7 +4655,7 @@ extmark({buf}, {row}, {col})                               *vim.pos.extmark()*
       • {col}  (`integer`)
 
     Return: ~
-        (`vim.Pos`) See |vim.Pos|.
+        (`vim.Pos`)
 
 lsp({buf}, {pos}, {position_encoding})                         *vim.pos.lsp()*
     Creates a new |vim.Pos| from `lsp.Position`.
@@ -4675,7 +4675,7 @@ lsp({buf}, {pos}, {position_encoding})                         *vim.pos.lsp()*
       • {position_encoding}  (`lsp.PositionEncodingKind`)
 
     Return: ~
-        (`vim.Pos`) See |vim.Pos|.
+        (`vim.Pos`)
 
 mark({buf}, {lnum}, {col})                                    *vim.pos.mark()*
     Creates a new |vim.Pos| from mark position (see |api-indexing|).
@@ -4697,7 +4697,7 @@ mark({buf}, {lnum}, {col})                                    *vim.pos.mark()*
       • {col}   (`integer`)
 
     Return: ~
-        (`vim.Pos`) See |vim.Pos|.
+        (`vim.Pos`)
 
 offset({buf}, {offset})                                     *vim.pos.offset()*
     Creates a new |vim.Pos| from buffer (bytes) offset.
@@ -4712,7 +4712,7 @@ offset({buf}, {offset})                                     *vim.pos.offset()*
       • {offset}  (`integer`)
 
     Return: ~
-        (`vim.Pos`) See |vim.Pos|.
+        (`vim.Pos`)
 
 to_cursor({pos})                                         *vim.pos.to_cursor()*
     Converts |vim.Pos| to cursor position (see |api-indexing|).
@@ -4726,7 +4726,7 @@ to_cursor({pos})                                         *vim.pos.to_cursor()*
 <
 
     Parameters: ~
-      • {pos}  (`vim.Pos`) See |vim.Pos|.
+      • {pos}  (`vim.Pos`)
 
     Return: ~
         (`[integer, integer]`) (lnum, col) tuple
@@ -4742,7 +4742,7 @@ to_extmark({pos})                                       *vim.pos.to_extmark()*
 <
 
     Parameters: ~
-      • {pos}  (`vim.Pos`) See |vim.Pos|.
+      • {pos}  (`vim.Pos`)
 
     Return (multiple): ~
         (`integer`) row
@@ -4759,7 +4759,7 @@ to_lsp({pos}, {position_encoding})                          *vim.pos.to_lsp()*
 <
 
     Parameters: ~
-      • {pos}                (`vim.Pos`) See |vim.Pos|.
+      • {pos}                (`vim.Pos`)
       • {position_encoding}  (`lsp.PositionEncodingKind`)
 
     Return: ~
@@ -4777,7 +4777,7 @@ to_mark({pos})                                             *vim.pos.to_mark()*
 <
 
     Parameters: ~
-      • {pos}  (`vim.Pos`) See |vim.Pos|.
+      • {pos}  (`vim.Pos`)
 
     Return (multiple): ~
         (`integer`) lnum
@@ -4798,7 +4798,7 @@ to_offset({pos})                                         *vim.pos.to_offset()*
 <
 
     Parameters: ~
-      • {pos}  (`vim.Pos`) See |vim.Pos|.
+      • {pos}  (`vim.Pos`)
 
     Return: ~
         (`integer`)
@@ -4866,13 +4866,13 @@ extmark({buf}, {start_row}, {start_col}, {end_row}, {end_col})
       • {end_col}    (`integer`)
 
     Return: ~
-        (`vim.Range`) See |vim.Range|.
+        (`vim.Range`)
 
 has({outer}, {inner})                                        *vim.range.has()*
     Checks whether {outer} range contains {inner} range or position.
 
     Parameters: ~
-      • {outer}  (`vim.Range`) See |vim.Range|.
+      • {outer}  (`vim.Range`)
       • {inner}  (`vim.Range|vim.Pos`)
 
     Return: ~
@@ -4883,18 +4883,18 @@ intersect({r1}, {r2})                                  *vim.range.intersect()*
     Computes the common range shared by the given ranges.
 
     Parameters: ~
-      • {r1}  (`vim.Range`) First range to intersect. See |vim.Range|.
-      • {r2}  (`vim.Range`) Second range to intersect. See |vim.Range|.
+      • {r1}  (`vim.Range`) First range to intersect.
+      • {r2}  (`vim.Range`) Second range to intersect
 
     Return: ~
         (`vim.Range?`) range that is present inside both `r1` and `r2`. `nil`
-        if such range does not exist. See |vim.Range|.
+        if such range does not exist.
 
 is_empty({range})                                       *vim.range.is_empty()*
     Checks whether the given range is empty; i.e., start >= end.
 
     Parameters: ~
-      • {range}  (`vim.Range`) See |vim.Range|.
+      • {range}  (`vim.Range`)
 
     Return: ~
         (`boolean`) `true` if the given range is empty.
@@ -4917,7 +4917,7 @@ lsp({buf}, {range}, {position_encoding})                     *vim.range.lsp()*
       • {position_encoding}  (`lsp.PositionEncodingKind`)
 
     Return: ~
-        (`vim.Range`) See |vim.Range|.
+        (`vim.Range`)
 
                                                             *vim.range.mark()*
 mark({buf}, {start_lnum}, {start_col}, {end_lnum}, {end_col})
@@ -4940,7 +4940,7 @@ mark({buf}, {start_lnum}, {start_col}, {end_lnum}, {end_col})
       • {end_col}     (`integer`)
 
     Return: ~
-        (`vim.Range`) See |vim.Range|.
+        (`vim.Range`)
 
 to_extmark({range})                                   *vim.range.to_extmark()*
     Converts |vim.Range| to extmark range (see |api-indexing|).
@@ -4953,7 +4953,7 @@ to_extmark({range})                                   *vim.range.to_extmark()*
 <
 
     Parameters: ~
-      • {range}  (`vim.Range`) See |vim.Range|.
+      • {range}  (`vim.Range`)
 
     Return (multiple): ~
         (`integer`) start_row
@@ -4972,7 +4972,7 @@ to_lsp({range}, {position_encoding})                      *vim.range.to_lsp()*
 <
 
     Parameters: ~
-      • {range}              (`vim.Range`) See |vim.Range|.
+      • {range}              (`vim.Range`)
       • {position_encoding}  (`lsp.PositionEncodingKind`)
 
     Return: ~
@@ -4989,7 +4989,7 @@ to_mark({range})                                         *vim.range.to_mark()*
 <
 
     Parameters: ~
-      • {range}  (`vim.Range`) See |vim.Range|.
+      • {range}  (`vim.Range`)
 
     Return (multiple): ~
         (`integer`) start_lnum
@@ -5206,7 +5206,7 @@ vim.snippet.active({filter})                            *vim.snippet.active()*
                   with:
                   • `direction` (vim.snippet.Direction): Navigation direction.
                     Will return `true` if the snippet can be jumped in the
-                    given direction. See |vim.snippet.ActiveFilter|.
+                    given direction.
 
     Return: ~
         (`boolean`)
@@ -5350,7 +5350,7 @@ SystemObj:wait({timeout})                                   *SystemObj:wait()*
       • {timeout}  (`integer?`)
 
     Return: ~
-        (`vim.SystemCompleted`) See |vim.SystemCompleted|.
+        (`vim.SystemCompleted`)
 
 SystemObj:write({data})                                    *SystemObj:write()*
     Writes data to the stdin of the process or closes stdin.
@@ -5438,7 +5438,7 @@ vim.system({cmd}, {opts}, {on_exit})                            *vim.system()*
       • `fun(cmd: string[], on_exit: fun(out: vim.SystemCompleted)): vim.SystemObj`
 
     Return: ~
-        (`vim.SystemObj`) See |vim.SystemObj|.
+        (`vim.SystemObj`)
 
 
 ==============================================================================
@@ -5628,8 +5628,7 @@ vim.ui.open({path}, {opt})                                     *vim.ui.open()*
                 • {cmd}? (`string[]`) Command used to open the path or URL.
 
     Return (multiple): ~
-        (`vim.SystemObj?`) Command object, or nil if not found. See
-        |vim.SystemObj|.
+        (`vim.SystemObj?`) Command object, or nil if not found.
         (`string?`) Error message on failure, or nil on success.
 
     See also: ~
@@ -6013,14 +6012,12 @@ vim.version.intersect({r1}, {r2})                    *vim.version.intersect()*
         Since: 0.12.0
 
     Parameters: ~
-      • {r1}  (`vim.VersionRange`) First range to intersect. See
-              |vim.VersionRange|.
-      • {r2}  (`vim.VersionRange`) Second range to intersect. See
-              |vim.VersionRange|.
+      • {r1}  (`vim.VersionRange`) First range to intersect.
+      • {r2}  (`vim.VersionRange`) Second range to intersect.
 
     Return: ~
         (`vim.VersionRange?`) Maximal range that is present inside both `r1`
-        and `r2`. `nil` if such range does not exist. See |vim.VersionRange|.
+        and `r2`. `nil` if such range does not exist.
 
 vim.version.last({versions})                              *vim.version.last()*
     TODO: generalize this, move to func.lua
@@ -6092,7 +6089,7 @@ vim.version.range({spec})                                *vim.version.range()*
       • {spec}  (`string`) Version range "spec"
 
     Return: ~
-        (`vim.VersionRange?`) See |vim.VersionRange|.
+        (`vim.VersionRange?`)
 
 
 ==============================================================================

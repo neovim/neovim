@@ -294,6 +294,36 @@ describe(':help', function()
     eq({ '*vim.lsp.codelens.run()*', 'lsp.txt' }, buf_word())
   end)
 
+  it('K resolves generic type names in help', function()
+    command('helptags ++t $VIMRUNTIME/doc')
+    for _, ty in ipairs({
+      'vim.async.Task<R>',
+      'vim.async.Task<R...>',
+      'vim.async.Task<R>[]',
+    }) do
+      command('help lua-async')
+      command('setlocal keywordprg=:help!')
+      assert(fn.search('\\V(`' .. ty .. '`)', 'W') > 0)
+      command('normal! fTK')
+      eq({ '*vim.async.Task*', 'lua-async.txt' }, buf_word())
+    end
+  end)
+
+  it('K resolves nullable type names in help', function()
+    command('helptags ++t $VIMRUNTIME/doc')
+    for _, ref in ipairs({
+      { 'lsp', 'vim.lsp.Client', '?' },
+      { 'diagnostic', 'vim.Diagnostic', '?' },
+      { 'diagnostic', 'vim.Diagnostic', '[]?' },
+    }) do
+      command('help ' .. ref[1])
+      command('setlocal keywordprg=:help!')
+      assert(fn.search('\\V(`' .. ref[2] .. ref[3] .. '`)', 'W') > 0)
+      command('normal! 2lK')
+      eq({ '*' .. ref[2] .. '*', ref[1] .. '.txt' }, buf_word())
+    end
+  end)
+
   it('window closed makes cursor return to a valid win/buf #9773', function()
     n.add_builddir_to_rtp()
     command('help help')

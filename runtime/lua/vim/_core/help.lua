@@ -204,10 +204,13 @@ local function trim_tag(tag, offset)
     e = e - 1
   end
 
-  -- Truncate at "(" with args, e.g. "foo('bar')" => "foo".
+  -- Truncate function or generic arguments, e.g. "foo('bar')" => "foo", "Task<R...>" => "Task".
   -- But keep "()" since it's part of valid tags like "vim.fn.expand()".
   for i = s, e do
-    if tag:sub(i, i) == '(' and not (i + 1 <= e and tag:sub(i + 1, i + 1) == ')') then
+    if
+      tag:sub(i, i) == '<'
+      or (tag:sub(i, i) == '(' and not (i + 1 <= e and tag:sub(i + 1, i + 1) == ')'))
+    then
       e = i - 1
       break
     end
@@ -249,6 +252,12 @@ function M.resolve_tag()
   local tag = vim.fn.expand('<cWORD>')
   if not tag or tag == '' then
     return nil
+  end
+
+  -- In type annotations, "?" means nullable rather than a help-search wildcard.
+  local nullable_type = tag:match('^%(`([%w_.]+)[%[%]]*%?`%)$')
+  if nullable_type and #vim.fn.getcompletion(nullable_type, 'help') > 0 then
+    return nullable_type
   end
 
   -- Compute cursor offset within <cWORD>.
