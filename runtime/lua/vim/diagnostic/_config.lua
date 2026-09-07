@@ -95,6 +95,7 @@ end
 --- @param namespace integer? Update the options for the given namespace.
 ---                          When omitted, update the global diagnostic options.
 --- @return vim.diagnostic.Opts? : Current diagnostic config if {opts} is omitted.
+--- @overload fun(opts?: nil, namespace?: integer): vim.diagnostic.Opts
 function M.config(opts, namespace)
   vim.validate('opts', opts, 'table', true)
   vim.validate('namespace', namespace, 'number', true)

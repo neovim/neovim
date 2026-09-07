@@ -1828,7 +1828,12 @@ vim.list.bisect({t}, {val}, {opts})                        *vim.list.bisect()*
     Use {bound} to determine whether to return the first or the last position,
     defaults to "lower", i.e., the first position.
 
-    NOTE: Behavior is undefined on unsorted lists!
+    With {opts.key}, {val} may differ from the list elements, provided the key
+    function accepts both. For a string key, that field must exist on both. A
+    partial record is sufficient if it contains all fields used by the key.
+
+    NOTE: The values being compared must support `<`, and the list must be
+    sorted by those values (after applying {opts.key}, if provided).
 
     Example: >lua
 
@@ -1858,7 +1863,7 @@ vim.list.bisect({t}, {val}, {opts})                        *vim.list.bisect()*
         Since: 0.12.0
 
     Parameters: ~
-      • {t}     (`any[]`) A comparable list.
+      • {t}     (`any[]`) A sorted list.
       • {val}   (`any`) The value to search.
       • {opts}  (`table?`) A table with the following fields:
                 • {bound}? (`'lower'|'upper'`, default: `'lower'`) Specifies
@@ -1869,10 +1874,16 @@ vim.list.bisect({t}, {val}, {opts})                        *vim.list.bisect()*
                     keeps the list sorted..
                 • {hi}? (`integer`, default: `#t + 1`) End index of the list,
                   exclusive.
-                • {key}? (`string|fun(val: any): any`) Optional, compare the
-                  return value instead of the {val} itself if provided. If a
-                  string, index each value by this field name.
+                • {key}? (`(string & keyof T)|fun(val: T): any`) Applied to
+                  {val} and the list elements being compared. If a string,
+                  index both by this field name. If a function, it must accept
+                  both {val} and the list elements and return mutually
+                  comparable keys.
                 • {lo}? (`integer`, default: `1`) Start index of the list.
+
+    Overloads: ~
+      • `fun<T, Q>(t: T[], val: Q, opts: vim.list.bisect.Opts<T|Q> & { key: fun(val: T|Q): any }): integer`
+      • `fun<T: table, Q: table>(t: T[], val: Q, opts: vim.list.bisect.Opts<T|Q> & { key: string & keyof T & keyof Q }): integer`
 
     Return: ~
         (`integer`) index serves as either the lower bound or the upper bound
@@ -2252,11 +2263,11 @@ vim.tbl_map({fn}, {t})                                         *vim.tbl_map()*
     change).
 
     Parameters: ~
-      • {fn}  (`fun(value: T): any`) Function
+      • {fn}  (`fun(value: T): R`) Function
       • {t}   (`table<any, T>`) Table
 
     Return: ~
-        (`table`) Table of transformed values
+        (`table<any, R>`) Table of transformed values
 
 vim.tbl_values({t})                                         *vim.tbl_values()*
     Return a list of all values used in a table. However, the order of the

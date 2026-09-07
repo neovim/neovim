@@ -219,8 +219,11 @@ function M.signs.show(namespace, bufnr, diagnostics, opts)
 
     for _, diagnostic0 in ipairs(diagnostics) do
       if diagnostic0.lnum <= line_count then
+        local severity_name = (
+          severity --[[@as table<vim.diagnostic.Severity, vim.diagnostic.SeverityName>]]
+        )[diagnostic0.severity]
         api.nvim_buf_set_extmark(bufnr, ns.user_data.sign_ns, diagnostic0.lnum, 0, {
-          sign_text = text[diagnostic0.severity] or text[severity[diagnostic0.severity]] or 'U',
+          sign_text = text[diagnostic0.severity] or text[severity_name] or 'U',
           sign_hl_group = sign_highlight_map[diagnostic0.severity],
           number_hl_group = numhl[diagnostic0.severity],
           line_hl_group = linehl[diagnostic0.severity],

@@ -298,7 +298,7 @@ end
 --- @param metadata vim.treesitter.query.TSMetadata
 --- @return string?
 local function get_url(match, bufnr, capture, metadata)
-  ---@type string|number|nil
+  ---@type string|integer|nil
   local url = metadata[capture] and metadata[capture].url
 
   if not url or type(url) == 'string' then
@@ -369,7 +369,6 @@ local function on_range_impl(
   self:for_each_highlight_state(function(state)
     subtree_counter = subtree_counter + 1
     local root_node = state.tstree:root()
-    ---@type { [1]: integer, [2]: integer, [3]: integer, [4]: integer }
     local root_range = { root_node:range() }
 
     if

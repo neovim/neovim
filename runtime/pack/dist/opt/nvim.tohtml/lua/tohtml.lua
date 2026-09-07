@@ -1337,16 +1337,7 @@ local styletable_funcs = {
 local function state_generate_style(state)
   vim._with({ win = state.winid }, function()
     for _, fn in ipairs(styletable_funcs) do
-      --- @type string?
-      local cond
-      if type(fn) == 'table' then
-        cond = fn[2] --[[@as string]]
-        --- @type function
-        fn = fn[1]
-      end
-      if not cond or cond(state) then
-        fn(state)
-      end
+      fn(state)
     end
   end)
 end

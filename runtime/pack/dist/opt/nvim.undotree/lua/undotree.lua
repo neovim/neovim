@@ -49,12 +49,27 @@ local function treefy(ent, _tree, _last)
   return tree
 end
 
---- @class (private) vim.undotree.graph_line
---- @field kind 'node'|'remove'|'branch'|'remove+branch'|'nochange_remove'
+--- @class (private) vim.undotree.graph_line.base
 --- @field index integer
 --- @field node_count integer
---- @field node integer|integer[]
---- @field index2 integer? -- for branch-index in `remove+branch`
+
+--- @class (private) vim.undotree.graph_line.node: vim.undotree.graph_line.base
+--- @field kind 'node'|'remove'|'nochange_remove'
+--- @field node integer
+
+--- @class (private) vim.undotree.graph_line.branch: vim.undotree.graph_line.base
+--- @field kind 'branch'
+--- @field node integer[]
+
+--- @class (private) vim.undotree.graph_line.remove_branch: vim.undotree.graph_line.base
+--- @field kind 'remove+branch'
+--- @field node integer
+--- @field index2 integer
+
+--- @alias vim.undotree.graph_line
+--- | vim.undotree.graph_line.node
+--- | vim.undotree.graph_line.branch
+--- | vim.undotree.graph_line.remove_branch
 
 --- @param tree vim.undotree.tree
 --- @return vim.undotree.graph_line[]
@@ -181,13 +196,15 @@ local function buf_apply_graph_lines(tree, graph_lines, buf, meta, find_seq)
     --- @type string?
     local line
     if v.kind == 'node' then
+      -- Work around tagged union narrowing: EmmyLuaLs/emmylua-analyzer-rust#1241.
+      local seq = v.node --[[@as integer]]
       line = ('| '):rep(v.index - 1)
         .. '*'
         .. (' |'):rep(v.node_count - v.index)
         .. '    '
-        .. v.node
+        .. seq
         .. '    ('
-        .. undo_fmt_time(tree[v.node].time)
+        .. undo_fmt_time(tree[seq].time)
         .. ')'
     elseif v.kind == 'remove' then
       line = ('| '):rep(v.index - 1) .. (' /'):rep(v.node_count - v.index)

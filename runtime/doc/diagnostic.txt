@@ -659,11 +659,11 @@ Lua module: vim.diagnostic                                    *diagnostic-api*
       • {severity}?  (`vim.diagnostic.SeverityFilter`) Only show signs for
                      diagnostics matching the given severity
                      |diagnostic-severity|
-      • {text}?      (`table<vim.diagnostic.Severity,string>`) A table mapping
-                     |diagnostic-severity| to the sign text to display in the
-                     sign column and statusline. The default is to use `"E"`,
-                     `"W"`, `"I"`, and `"H"` for errors, warnings,
-                     information, and hints, respectively. Example: >lua
+      • {text}?      (`table<vim.diagnostic.Severity|vim.diagnostic.SeverityName,string>`)
+                     A table mapping |diagnostic-severity| to the sign text to
+                     display in the sign column and statusline. The default is
+                     to use `"E"`, `"W"`, `"I"`, and `"H"` for errors,
+                     warnings, information, and hints, respectively. Example: >lua
                          vim.diagnostic.config({
                            signs = { text = { [vim.diagnostic.severity.ERROR] = 'E', ... } }
                          })
@@ -802,6 +802,9 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
                      table (see |vim.diagnostic.Opts|).
       • {namespace}  (`integer?`) Update the options for the given namespace.
                      When omitted, update the global diagnostic options.
+
+    Overloads: ~
+      • `fun(opts?: nil, namespace?: integer): vim.diagnostic.Opts`
 
     Return: ~
         (`vim.diagnostic.Opts?`) Current diagnostic config if {opts} is

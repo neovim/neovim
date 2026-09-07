@@ -107,6 +107,7 @@ function M.request(method, url, opts, on_response)
     return (b == nil and true) or (type(b) == 'string' and not b:match('^@'))
   end, true, 'body should be string and not start with @')
   vim.validate('on_response', on_response, 'function', true)
+  ---@cast on_response vim.net.request.ResponseFunc?
 
   local retry = opts.retry or 3
 

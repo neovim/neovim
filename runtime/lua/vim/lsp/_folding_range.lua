@@ -387,9 +387,9 @@ function M.foldtext(lnum)
 
   line = state.row_text[row] or line
   local ok, parser = pcall(function()
-    local parser = vim.treesitter.get_string_parser(line, lang)
-    parser:parse(true)
-    return parser
+    local string_parser = vim.treesitter.get_string_parser(line, lang)
+    string_parser:parse(true)
+    return string_parser
   end)
   if not ok then
     return line

@@ -145,14 +145,15 @@ local typedef = P({
   'typedef',
   typedef = C(v.type),
 
-  type = v.ty * rep_array_opt_postfix * rep(Pf('|') * v.ty * rep_array_opt_postfix),
+  type = v.ty * rep_array_opt_postfix * rep(Sf('|&') * v.ty * rep_array_opt_postfix),
   ty = v.composite + paren(v.typedef),
   composite = (v.types * array_postfix)
     + (v.types * opt_postfix)
     + (P(ty_ident) * P('...')) -- Generic vararg
     + v.types,
-  types = v.fun + v.generics + v.kv_table + v.tuple + v.dict + v.table_literal + ty_prims,
+  types = v.keyof + v.fun + v.generics + v.kv_table + v.tuple + v.dict + v.table_literal + ty_prims,
 
+  keyof = P('keyof') * ws * v.ty,
   tuple = Pf('[') * comma1(v.type) * Plf(']'),
   dict = Pf('{') * comma1(Pf('[') * v.type * Pf(']') * colon * v.type) * Plf('}'),
   kv_table = Pf('table') * Pf('<') * v.type * Pf(',') * v.type * Plf('>'),

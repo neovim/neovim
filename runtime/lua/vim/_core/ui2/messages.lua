@@ -737,13 +737,14 @@ end
 ---@param focus? boolean Enter the pager: it was explicitly requested.
 function M.set_pos(tgt, focus)
   for t, win in pairs(ui.wins) do
-    local cfg = (t == tgt or (tgt == nil and t ~= 'cmd'))
+    local current_cfg = (t == tgt or (tgt == nil and t ~= 'cmd'))
       and api.nvim_win_is_valid(win)
       and api.nvim_win_get_config(win)
-    if cfg and (tgt or not cfg.hide) then
+    if current_cfg and (tgt or not current_cfg.hide) then
       local texth = api.nvim_win_text_height(win, { max_height = o.lines })
       local top = { mopt.msgsep, 'MsgSeparator' }
-      cfg = { hide = false, relative = 'laststatus', col = 10000 } ---@type table
+      ---@type vim.api.keyset.win_config
+      local cfg = { hide = false, relative = 'laststatus', col = 10000 }
       cfg.row, cfg.height, cfg.border = win_row_height_border(t, texth.all)
       cfg.border = cfg.border and t ~= 'msg' and { '', top, '', '', '', '', '', '' } or nil
       cfg.mouse = tgt == 'cmd' or t == 'msg' or nil

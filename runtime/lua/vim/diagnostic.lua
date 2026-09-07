@@ -309,7 +309,7 @@ local M = vim._defer_require('vim.diagnostic', {
 ---   signs = { text = { [vim.diagnostic.severity.ERROR] = 'E', ... } }
 --- })
 --- ```
---- @field text? table<vim.diagnostic.Severity,string>
+--- @field text? table<vim.diagnostic.Severity|vim.diagnostic.SeverityName,string>
 ---
 --- A table mapping |diagnostic-severity| to the highlight group used for the
 --- line number where the sign is placed.
@@ -441,6 +441,7 @@ local all_namespaces = {}
 ---@param namespace integer? Update the options for the given namespace.
 ---                          When omitted, update the global diagnostic options.
 ---@return vim.diagnostic.Opts? : Current diagnostic config if {opts} is omitted.
+---@overload fun(opts?: nil, namespace?: integer): vim.diagnostic.Opts
 function M.config(opts, namespace)
   return M._config.config(opts, namespace)
 end

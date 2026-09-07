@@ -345,8 +345,8 @@ function M.offset(buf, offset)
 
   local lnum = vim.list.bisect(
     setmetatable({}, {
-      __index = function(_, lnum)
-        return api.nvim_buf_get_offset(buf, lnum - 1)
+      __index = function(_, idx)
+        return api.nvim_buf_get_offset(buf, idx - 1)
       end,
     }),
     offset,
@@ -364,6 +364,6 @@ setmetatable(M, {
     return M.new(...)
   end,
 })
----@cast M +fun(buf: integer, row: integer, col: integer): vim.Pos
+---@cast M vim.Pos & fun(buf: integer, row: integer, col: integer): vim.Pos
 
 return M

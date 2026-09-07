@@ -29,31 +29,27 @@
       "annotation-usage-error",
       "assign-type-mismatch",
       "await-in-sync",
-      "call-non-callable",
       "code-style-check",
       "deprecated",
       "global-in-non-module",
       "incomplete-signature-doc",
       "invert-if",
       "iter-variable-reassign",
-      "missing-fields",
       "missing-global-doc",
       "need-check-nil",
       "non-literal-expressions-in-assert",
       "param-type-mismatch",
       "preferred-local-alias",
-      "redefined-label",
-      "redefined-local",
       "return-type-mismatch",
-      "undefined-field",
       "unknown-doc-tag",
       "unnecessary-assert",
       "unnecessary-if",
-      "unreachable-code",
       "unused"
     ],
     "severity": {
-      "duplicate-require": "warning"
+      "duplicate-require": "warning",
+      "redefined-local": "warning",
+      "unreachable-code": "warning"
     }
   },
   "codeAction": {

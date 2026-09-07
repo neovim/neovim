@@ -953,6 +953,7 @@ local function pack_add(plug, load)
   active_plugins[plug.path] = { plug = plug, id = n_active_plugins }
 
   if vim.is_callable(load) then
+    ---@cast load -boolean
     load({ spec = vim.deepcopy(plug.spec), path = plug.path })
     return
   end
@@ -1389,6 +1390,7 @@ end
 
 --- @class vim.pack.keyset.update
 --- @inlinedoc
+--- @field package _ex? boolean
 --- @field force? boolean Whether to skip confirmation and make updates immediately. Default `false`.
 ---
 --- @field offline? boolean Whether to skip downloading new updates. Default: `false`.
@@ -1520,6 +1522,7 @@ end
 
 --- @class vim.pack.keyset.del
 --- @inlinedoc
+--- @field package _ex? boolean
 --- @field force? boolean Whether to allow deleting an active plugin. Default `false`.
 
 --- Remove plugins from disk

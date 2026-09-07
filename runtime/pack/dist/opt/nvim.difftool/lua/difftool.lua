@@ -261,7 +261,7 @@ local function diff_dirs_builtin(left_dir, right_dir, opt)
   -- Detect possible renames
   if opt.rename.detect then
     for left_rel, left_path in pairs(left_only) do
-      ---@type {similarity: number, path: string?, rel: string}
+      ---@type {similarity: number, path: string?, rel: string?}
       local best_match = { similarity = opt.rename.similarity, path = nil }
 
       for right_rel, right_path in pairs(right_only) do
