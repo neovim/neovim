@@ -185,6 +185,21 @@ function M.register(reg, client_id)
         -- match a *particular* pattern+kind pair.
         include_pattern = include_pattern,
         exclude_pattern = M._poll_exclude_pattern,
+        on_error = function(err)
+          local message = string.format('LSP[%s] file watcher failed for %s', client.name, base_dir)
+          -- Servers may register a nonexistent baseUri. Report it once.
+          if err:match('^ENOENT:') then
+            log.info(message, err)
+            vim.schedule(function()
+              vim.notify_once(message .. ': ' .. err, vim.log.levels.INFO)
+            end)
+            return
+          end
+          log.error(message, err)
+          vim.schedule(function()
+            vim.notify(message .. ': ' .. err, vim.log.levels.ERROR)
+          end)
+        end,
       }, callback(base_dir))
     )
   end

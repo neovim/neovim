@@ -53,23 +53,6 @@ describe('vim._watch', function()
   end)
 
   local function run(watchfunc)
-    -- Monkey-patches vim.notify_once so we can "spy" on it.
-    local function spy_notify_once()
-      exec_lua [[
-        _G.__notify_once_msgs = {}
-        vim.notify_once = (function(overridden)
-          return function(msg, level, opts)
-            table.insert(_G.__notify_once_msgs, msg)
-            return overridden(msg, level, opts)
-          end
-        end)(vim.notify_once)
-      ]]
-    end
-
-    local function last_notify_once_msg()
-      return exec_lua 'return _G.__notify_once_msgs[#_G.__notify_once_msgs]'
-    end
-
     local function do_watch(root_dir, watchfunc_)
       exec_lua(
         [[
@@ -90,27 +73,42 @@ describe('vim._watch', function()
       )
     end
 
-    it(watchfunc .. '() ignores nonexistent paths', function()
+    it(watchfunc .. '() reports nonexistent paths to on_error', function()
       if watchfunc == 'inotify' then
         skip(n.fn.executable('inotifywait') == 0, 'inotifywait not found')
         skip(is_os('bsd'), 'inotifywait on bsd CI seems to expect path to exist?')
         skip(t.is_arch('s390x'), 'inotifywait not available on s390x CI')
       end
 
-      local msg = ('watch.%s: ENOENT: no such file or directory'):format(watchfunc)
-
-      spy_notify_once()
-      do_watch('/i am /very/funny.go', watchfunc)
-
-      if watchfunc ~= 'inotify' then -- watch.inotify() doesn't (currently) call vim.notify_once.
-        t.retry(nil, 2000, function()
-          t.eq(msg, last_notify_once_msg())
+      exec_lua(function(backend)
+        local errors = {}
+        local cancel = vim._watch[backend]('/i am /very/funny.go', {
+          on_error = function(err)
+            errors[#errors + 1] = err
+          end,
+        }, function()
+          error('Unexpected file change')
         end)
-      end
-      eq(0, exec_lua [[return #_G.events]])
-
-      exec_lua [[_G.stop_watch()]]
+        assert(vim.wait(2000, function()
+          return #errors > 0
+        end))
+        if backend ~= 'inotify' then
+          assert(errors[1]:match('^ENOENT:'), errors[1])
+        end
+        cancel()
+      end, watchfunc)
     end)
+
+    if watchfunc ~= 'inotify' then
+      it(watchfunc .. '() raises startup errors without on_error', function()
+        local err = t.pcall_err(exec_lua, function(backend)
+          vim._watch[backend]('/i am /very/funny.go', {}, function()
+            error('Unexpected file change')
+          end)
+        end, watchfunc)
+        t.matches('ENOENT:', err)
+      end)
+    end
 
     it(watchfunc .. '() detects file changes', function()
       if watchfunc == 'inotify' then
