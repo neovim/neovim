@@ -1711,6 +1711,23 @@ describe('CmdAtom', function()
     wait_active(true)
   end)
 
+  it('does not capture inputsecret() input', function()
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'aaa' })
+    n.exec_lua(function()
+      vim.keymap.set('n', 'sp', function()
+        _G.pw = vim.fn.inputsecret('Password: ')
+        vim.api.nvim_put({ 'X' }, 'c', false, true)
+      end)
+    end)
+    feed('gg0')
+    atoms_start()
+    feed('sp')
+    feed('hunter2<CR>')
+    feed('<Esc>') -- The composite resolves at the next clock edge.
+    eq('hunter2', n.exec_lua('return _G.pw')) -- The function gets the input.
+    eq({ type = 'mapping', lhs = 'sp' }, pick(atoms()[1], 'type', 'lhs', 'keys')) -- Not CmdAtom.
+  end)
+
   it('reports the original buffer', function()
     n.exec_lua([[
       _G.evs = {}
