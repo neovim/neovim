@@ -4084,12 +4084,12 @@ describe('LSP', function()
       deleted = exec_lua([[return vim.lsp.protocol.FileChangeType.Deleted]])
     end)
 
-    local function test_filechanges(watchfunc, missing_root)
+    local function test_filechanges(watchfunc, root_change)
       it(
         string.format(
           'sends notifications when files change (watchfunc=%s)%s',
           watchfunc,
-          missing_root and ' after root is created' or ''
+          root_change and (' after root is ' .. root_change) or ''
         ),
         function()
           if watchfunc == 'inotify' then
@@ -4116,7 +4116,7 @@ describe('LSP', function()
           end
 
           local root_dir = tmpname(false)
-          if not missing_root then
+          if root_change ~= 'created' then
             mkdir(root_dir)
           end
 
@@ -4143,7 +4143,11 @@ describe('LSP', function()
               },
             }))
 
-            require('vim.lsp._watchfiles')._watchfunc = require('vim._watch')[watchfunc]
+            local starts = 0
+            vim.lsp._watchfiles._watchfunc = function(...)
+              starts = starts + 1
+              return vim._watch[watchfunc](...)
+            end
 
             local expected_messages = 0
 
@@ -4190,17 +4194,29 @@ describe('LSP', function()
               },
             }, { client_id = client_id })
 
-            if missing_root then
+            if root_change then
               local client = assert(vim.lsp.get_client_by_id(client_id))
               local method = 'workspace/didChangeWatchedFiles'
               local reg = vim.deepcopy(client.registrations[method][1])
-              reg.id = 'watchfiles-test-missing'
-              client:_register({ reg })
-              client:_unregister({ { id = reg.id, method = method } })
-              vim.fn.mkdir(root_dir)
+              if root_change == 'replaced' then
+                -- Allocate a different inode before deleting the original directory.
+                vim.fn.mkdir(root_dir .. '-replacement')
+                assert(vim.uv.fs_rmdir(root_dir))
+                assert(vim.uv.fs_rename(root_dir .. '-replacement', root_dir))
+              else
+                reg.id = 'watchfiles-test-missing'
+                client:_register({ reg })
+                client:_unregister({ { id = reg.id, method = method } })
+                assert(starts == 2, 'failed watcher must not be reused')
+                vim.fn.mkdir(root_dir)
+              end
               reg.id = 'watchfiles-test-1'
               client:_register({ reg })
               client:_unregister({ { id = 'watchfiles-test-0', method = method } })
+              assert(
+                starts == (root_change == 'created' and 3 or 2),
+                'watcher for the new root must be started'
+              )
             end
 
             if watchfunc ~= 'watch' then
@@ -4262,7 +4278,7 @@ describe('LSP', function()
               .. pesc('{foo}'),
             result.logfile
           )
-          if missing_root then
+          if root_change == 'created' then
             t.assert_log(
               '%[INFO%].-file watcher failed for ' .. pesc(root_dir) .. '.-ENOENT',
               result.logfile
@@ -4281,7 +4297,136 @@ describe('LSP', function()
     test_filechanges('watch')
     test_filechanges('watchdirs')
     test_filechanges('inotify')
-    test_filechanges('watchdirs', true)
+    test_filechanges('watchdirs', 'created')
+    test_filechanges('watch', 'replaced')
+    test_filechanges('watchdirs', 'replaced')
+
+    local function start_watchfiles_client()
+      local root_dir = tmpname(false)
+      mkdir(root_dir)
+      t.finally(function()
+        n.rmdir(root_dir)
+      end)
+      exec_lua(create_server_definition)
+      exec_lua(function()
+        _G.server = _G._create_server()
+        local client_id = assert(vim.lsp.start({
+          name = 'watchfiles-test',
+          cmd = _G.server.cmd,
+          root_dir = root_dir,
+          capabilities = {
+            workspace = { didChangeWatchedFiles = { dynamicRegistration = true } },
+          },
+        }))
+        _G.client = assert(vim.lsp.get_client_by_id(client_id))
+        assert(vim.wait(1000, function()
+          return #_G.server.messages == 2
+        end))
+      end)
+      return root_dir
+    end
+
+    for _, stop_client in ipairs({ false, true }) do
+      it(
+        'shares identical registrations until ' .. (stop_client and 'client stop' or 'unregister'),
+        function()
+          local root_dir = start_watchfiles_client()
+          local result = exec_lua(function(stop_client_)
+            local client, server = _G.client, _G.server
+
+            local starts, cancels = 0, 0
+            local send_event
+            vim.lsp._watchfiles._watchfunc = function(_, _, callback)
+              starts = starts + 1
+              send_event = callback
+              return function()
+                cancels = cancels + 1
+                assert(cancels == 1, 'watcher cancelled twice')
+              end
+            end
+            -- Repeating an ID must neither restart the watcher nor add an owner.
+            for _, id in ipairs({ 'a', 'a', 'b', 'c', 'c' }) do
+              client:_register({
+                {
+                  id = id,
+                  method = 'workspace/didChangeWatchedFiles',
+                  registerOptions = { watchers = { { globPattern = '**/*.py' } } },
+                },
+              })
+            end
+            assert(starts == 1, 'identical registrations must share one watcher')
+
+            client:_unregister({ { id = 'a', method = 'workspace/didChangeWatchedFiles' } })
+            if not stop_client_ then
+              client:_unregister({ { id = 'b', method = 'workspace/didChangeWatchedFiles' } })
+            end
+            assert(cancels == 0, 'watcher cancelled while registrations remain')
+            send_event(root_dir .. '/file.py', vim._watch.FileChangeType.Created)
+            send_event(root_dir .. '/file.txt', vim._watch.FileChangeType.Created)
+            assert(vim.wait(1000, function()
+              return #server.messages == 3
+            end))
+            if stop_client_ then
+              client:stop(true)
+            else
+              client:_unregister({ { id = 'c', method = 'workspace/didChangeWatchedFiles' } })
+            end
+            assert(cancels == 1, 'watcher not cancelled after its last registration')
+            return server.messages[3]
+          end, stop_client)
+
+          eq({
+            method = 'workspace/didChangeWatchedFiles',
+            params = {
+              changes = { { uri = vim.uri_from_fname(root_dir .. '/file.py'), type = created } },
+            },
+          }, result)
+        end
+      )
+    end
+
+    it('starts watchers for newly added workspace folders', function()
+      local root_dir = start_watchfiles_client()
+      local added_dir = root_dir .. '/another_dir'
+      mkdir(added_dir)
+      local result = exec_lua(function()
+        local client, server = _G.client, _G.server
+
+        local watchers = {}
+        vim.lsp._watchfiles._watchfunc = function(path, _, callback)
+          watchers[path] = callback
+          return function() end
+        end
+        for _, id in ipairs({ 'a', 'b' }) do
+          client:_register({
+            {
+              id = id,
+              method = 'workspace/didChangeWatchedFiles',
+              registerOptions = { watchers = { { globPattern = '**/*.py' } } },
+            },
+          })
+          if id == 'a' then
+            table.insert(client.workspace_folders, {
+              uri = vim.uri_from_fname(added_dir),
+              name = 'another_dir',
+            })
+          end
+        end
+
+        watchers[added_dir](added_dir .. '/file.py', vim._watch.FileChangeType.Created)
+        assert(vim.wait(1000, function()
+          return #server.messages == 3
+        end))
+        return server.messages[3]
+      end)
+
+      eq({
+        method = 'workspace/didChangeWatchedFiles',
+        params = {
+          changes = { { uri = vim.uri_from_fname(added_dir .. '/file.py'), type = created } },
+        },
+      }, result)
+    end)
 
     it('correctly registers and unregisters', function()
       local root_dir = '/some_dir'
