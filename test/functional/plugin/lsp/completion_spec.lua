@@ -1079,6 +1079,41 @@ describe('vim.lsp.completion: protocol', function()
     end)
   end)
 
+  it('reads completionProvider from a dynamic registration', function()
+    exec_lua(function()
+      local server = _G._create_server({
+        capabilities = {},
+        handlers = {
+          ['textDocument/completion'] = function(_, _, callback)
+            callback(nil, { isIncomplete = false, items = { { label = 'hello' } } })
+          end,
+        },
+      })
+      local client_id = assert(vim.lsp.start({ name = 'dummy', cmd = server.cmd }))
+      assert(vim.lsp.get_client_by_id(client_id)):_register({
+        {
+          id = 'nvim.test.completion',
+          method = 'textDocument/completion',
+          registerOptions = {
+            triggerCharacters = { '.' },
+            resolveProvider = true,
+            allCommitCharacters = { ';' },
+          },
+        },
+      })
+      vim.lsp.completion.enable(true, client_id, 0, { autotrigger = true })
+    end)
+
+    feed('i.')
+
+    assert_matches(function(matches)
+      eq(1, #matches)
+      eq('hello', matches[1].word)
+      eq(';', matches[1].commit_chars)
+      eq(true, matches[1].user_data.nvim.lsp.completion_item_needs_resolving)
+    end)
+  end)
+
   it('treats 2-triggers-at-once as "last char wins"', function()
     create_server('dummy1', {
       isIncomplete = false,
