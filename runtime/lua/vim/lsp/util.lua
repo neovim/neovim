@@ -876,6 +876,13 @@ function M.show_document(location, position_encoding, opts)
   end
   local bufnr = vim.uri_to_bufnr(uri)
 
+  -- Return early if the buffer fails to load, to avoid partial setup.
+  local loaded, err = pcall(vim.fn.bufload, bufnr)
+  if not loaded then
+    vim.notify(tostring(err), vim.log.levels.ERROR)
+    return false
+  end
+
   opts = opts or {}
   local focus = vim.nonnil(opts.focus, true)
   if focus then
