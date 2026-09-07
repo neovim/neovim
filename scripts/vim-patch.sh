@@ -949,6 +949,7 @@ is_na_patch() {
           '-I\*\s+For Vim version [0-9]\.[0-9]\.\s+Last change: [0-9]+ [A-Z][a-z]+ [0-9]+' \
           '-I compiled (with|without) .*\(\|.+\|\) feature\.$' \
           '-I\{.+ (available|compiled) (with|without) .+\}' \
+          '-I\|52\.6\|' \
           '-I\|channel-open-[^|]+\|' \
           '-I\|comment-install\|' \
           '-I\|popup-windows\|' \
@@ -957,6 +958,20 @@ is_na_patch() {
           "$patch" -- "${file}")
         if test -n "$HUNKS"; then
           HUNK_NUM_FINAL=$(echo "$HUNKS" | grep '^@@ .* @@' | sed 's/^@@ .* @@ //' | grep -cv -f "$NA_HUNKS_HELP")
+          test "$HUNK_NUM_FINAL" -ne 0 && return 1
+        fi
+        ;;
+      src/po/Make*)
+        HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
+          '-I^\$\([_A-Z]+\)\.pot:' \
+          "$patch" -- "${file}")
+        if test -n "$HUNKS"; then
+          # shellcheck disable=SC2016
+          HUNK_NUM_FINAL=$(echo "$HUNKS" | grep '^@@ .* @@' | sed 's/^@@ .* @@ //' | grep -cv \
+            -e '^\$([_A-Z]\+)\.pot:' \
+            -e '^clean:' \
+            -e '^g\?vim\.desktop:' \
+            )
           test "$HUNK_NUM_FINAL" -ne 0 && return 1
         fi
         ;;
