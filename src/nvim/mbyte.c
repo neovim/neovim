@@ -1733,7 +1733,9 @@ ssize_t mb_utf_index_to_bytes(const char *s, size_t len, size_t index, bool use_
       count++;
     }
     if (count >= index) {
-      return (ssize_t)(i + clen);
+      // "clen" can exceed the remaining bytes for an incomplete sequence at the
+      // end of the string, so clamp to "len".
+      return (ssize_t)MIN(i + clen, len);
     }
   }
   return -1;
