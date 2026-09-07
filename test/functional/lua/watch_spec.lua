@@ -21,6 +21,37 @@ describe('vim._watch', function()
     clear()
   end)
 
+  it('watchdirs() does not scan excluded subtrees', function()
+    local root_dir = t.tmpname(false)
+    t.finally(function()
+      n.rmdir(root_dir)
+    end)
+    n.mkdir_p(root_dir .. '/src/deep')
+    n.mkdir_p(root_dir .. '/node_modules/pkg/excluded/deep')
+
+    -- Also cover a pattern that matches the directory but not its descendants.
+    for _, pattern in ipairs({ '**/node_modules/*/**', '**/excluded' }) do
+      local scanned = exec_lua(function(root, exclude_pattern)
+        root = vim.fs.normalize(root)
+        local scanned = {}
+        local fs_scandir = vim.uv.fs_scandir
+        vim.uv.fs_scandir = function(path, ...)
+          scanned[#scanned + 1] = path:sub(#root + 1)
+          return fs_scandir(path, ...)
+        end
+        local cancel = vim._watch.watchdirs(root, {
+          exclude_pattern = vim.glob.to_lpeg(exclude_pattern),
+        }, function() end)
+        vim.uv.fs_scandir = fs_scandir
+        cancel()
+        table.sort(scanned)
+        return scanned
+      end, root_dir, pattern)
+
+      eq({ '', '/node_modules', '/node_modules/pkg', '/src', '/src/deep' }, scanned, pattern)
+    end
+  end)
+
   local function run(watchfunc)
     -- Monkey-patches vim.notify_once so we can "spy" on it.
     local function spy_notify_once()

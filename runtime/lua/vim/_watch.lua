@@ -44,7 +44,8 @@ end
 ---
 --- An |lpeg| pattern. Only changes to files and directories whose full path does
 --- not match the pattern will be reported. Matches against both files and
---- directories. When nil, matches nothing.
+--- directories. With watchdirs(), excluding a subdirectory excludes its entire
+--- subtree. When nil, matches nothing.
 --- @field exclude_pattern? vim.lpeg.Pattern
 
 --- @alias vim._watch.Callback fun(path: string, change_type: vim._watch.FileChangeType)
@@ -241,7 +242,15 @@ function M.watchdirs(path, opts, callback)
   --- Who has folders this deep?
   local max_depth = 100
 
-  for name, type in vim.fs.dir(path, { depth = max_depth }) do
+  for name, type in
+    vim.fs.dir(path, {
+      depth = max_depth,
+      skip = function(name)
+        return not opts.exclude_pattern
+          or opts.exclude_pattern:match(vim.fs.joinpath(path, name)) == nil
+      end,
+    })
+  do
     if type == 'directory' then
       local filepath = vim.fs.joinpath(path, name)
       if not skip(filepath, opts) then
