@@ -966,9 +966,12 @@ is_na_patch() {
           '-I^\$\([_A-Z]+\)\.pot:' \
           "$patch" -- "${file}")
         if test -n "$HUNKS"; then
+          # shellcheck disable=SC2016
           HUNK_NUM_FINAL=$(echo "$HUNKS" | grep '^@@ .* @@' | sed 's/^@@ .* @@ //' | grep -cv \
             -e '^\$([_A-Z]\+)\.pot:' \
-            -e '^clean:')
+            -e '^clean:' \
+            -e '^g\?vim\.desktop:' \
+            )
           test "$HUNK_NUM_FINAL" -ne 0 && return 1
         fi
         ;;
