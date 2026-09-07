@@ -708,6 +708,15 @@ to find a window to edit the file:
 6. If the above step fails, then a new horizontally split window above the
    quickfix window is used.
 
+						*quickfix-winfixbuf*
+When 'winfixbuf' is set for the window that would be used to display the
+error, jumping to an error in another buffer is not possible in that window.
+For a quickfix list Vim then looks for another suitable window, using the
+previously accessed window if it does not have 'winfixbuf' set, and otherwise
+splits a new window.  For a location list this fails with |E1513|, because a
+location list is tied to its window and cannot move to or split off another
+one.  Using [!] skips these checks.
+
 					*CTRL-W_<Enter>* *CTRL-W_<CR>*
 You can use CTRL-W <Enter> to open a new window and jump to the error there.
 
@@ -1827,6 +1836,8 @@ Basic items
 			    w - warning message
 			    i - info message
 			    n - note message
+			The uppercase letters E, W, I and N are also
+			recognized and have the same meaning.
 	%n		error number (finds a number)
 	%m		error message (finds a string)
 	%r		matches the "rest" of a single-line file message %O/P/Q

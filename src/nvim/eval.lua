@@ -4594,8 +4594,8 @@ M.funcs = {
       	type	type of the error, 'E', '1', etc.
       	valid	|TRUE|: recognized error message
       	user_data
-      		custom data associated with the item, can be
-      		any type.
+      		any type.  This entry is present only when
+      		user data was set for this item.
 
       When there is no error list or it's empty, an empty list is
       returned.  Quickfix list entries with a non-existing buffer
@@ -4637,6 +4637,11 @@ M.funcs = {
       	qfbufnr number of the buffer displayed in the quickfix
       		window.  Returns 0 if the quickfix buffer is
       		not present.  See |quickfix-buffer|.
+      	quickfixtextfunc
+      		function to get the text to display in the
+      		quickfix window.  Returns an empty string if
+      		this function is not set for the list.  See
+      		|quickfix-window-function|.
       	size	number of entries in the quickfix list
       	title	get the list title |quickfix-title|
       	winid	get the quickfix |window-ID|
@@ -4668,6 +4673,9 @@ M.funcs = {
       		0
       	qfbufnr	number of the buffer displayed in the quickfix
       		window.  If not present, set to 0.
+      	quickfixtextfunc
+      		'quickfixtextfunc' setting of the list.  If
+      		not present, set to "".
       	size	number of entries in the quickfix list.  If
       		not present, set to 0.
       	title	quickfix list title text.  If not present, set
@@ -10534,7 +10542,10 @@ M.funcs = {
       		call setqflist([], 'r')
       <
       'u'	Like 'r', but tries to preserve the current selection
-      	in the quickfix list.
+      	in the quickfix list.  The entry nearest to the
+      	previously selected one becomes the current entry.
+      	Proximity is determined by comparing the file, then
+      	the line number and then the column number.
       'f'	All the quickfix lists in the quickfix stack are
       	freed.
 
