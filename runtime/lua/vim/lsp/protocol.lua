@@ -583,6 +583,9 @@ function protocol.make_client_capabilities()
       callHierarchy = {
         dynamicRegistration = false,
       },
+      typeHierarchy = {
+        dynamicRegistration = false,
+      },
       colorProvider = {
         dynamicRegistration = true,
       },
@@ -605,6 +608,9 @@ function protocol.make_client_capabilities()
       },
       configuration = true,
       didChangeConfiguration = {
+        dynamicRegistration = false,
+      },
+      executeCommand = {
         dynamicRegistration = false,
       },
       workspaceFolders = true,
