@@ -257,6 +257,11 @@ local config = {
         fun.table = nil
       end
 
+      -- Render the callable version module as ordinary module functions.
+      if fun.class == 'vim.VersionModule' then
+        fun.classvar = nil
+      end
+
       if fun.classvar or vim.startswith(fun.name, 'vim.') or fun.module == 'vim.iter' then
         return
       end
@@ -345,6 +350,9 @@ local config = {
     },
     fn_xform = function(fun)
       fun.name = fun.name:gsub('result%.', '')
+      if fun.module == 'vim.lsp' and fun.name == 'config' then
+        fun.table = nil
+      end
       if fun.module == 'vim.lsp.protocol' then
         fun.classvar = nil
       end
@@ -674,7 +682,7 @@ local function get_class(ty, classes)
     return
   end
 
-  local cty = ty:gsub('%s*|%s*nil', '?'):gsub('?$', ''):gsub('%[%]$', '')
+  local cty = ty:gsub('%s*|%s*nil', '?'):gsub('?$', ''):gsub('%[%]$', ''):gsub('%b<>$', '')
 
   return classes[cty]
 end

@@ -272,10 +272,10 @@ end
 --- Applies function `fn` to all values of table `t`, in `pairs()` iteration order (which is not
 --- guaranteed to be stable, even when the data doesn't change).
 ---
----@generic T
----@param fn fun(value: T): any Function
+---@generic T, R
+---@param fn fun(value: T): R Function
 ---@param t table<any, T> Table
----@return table : Table of transformed values
+---@return table<any, R> : Table of transformed values
 function vim.tbl_map(fn, t)
   vim.validate('fn', fn, 'callable')
   vim.validate('t', t, 'table')
@@ -457,7 +457,7 @@ function vim.list.unique(t, key)
   return t
 end
 
----@class vim.list.bisect.Opts
+---@class vim.list.bisect.Opts<T>
 ---@inlinedoc
 ---
 --- Start index of the list.
@@ -468,9 +468,10 @@ end
 --- (default: `#t + 1`)
 ---@field hi? integer
 ---
---- Optional, compare the return value instead of the {val} itself if provided.
---- If a string, index each value by this field name.
----@field key? string|fun(val: any): any
+--- Applied to {val} and the list elements being compared.
+--- If a string, index both by this field name. If a function, it must accept both
+--- {val} and the list elements and return mutually comparable keys.
+---@field key? (string & keyof T)|fun(val: T): any
 ---
 --- Specifies the search variant.
 ---   - "lower": returns the first position
@@ -480,12 +481,12 @@ end
 --- (default: `'lower'`)
 ---@field bound? 'lower' | 'upper'
 
----@generic T
+---@generic T, Q
 ---@param t T[]
----@param val T
+---@param val Q
 ---@param lo integer
 ---@param hi integer
----@param key_fn fun(val: any): any
+---@param key_fn fun(val: T|Q): any
 ---@return integer i in range such that `t[j]` < {val} for all j < i,
 ---                and `t[j]` >= {val} for all j >= i,
 ---                or return {hi} if no such index is found.
@@ -503,12 +504,12 @@ local function lower_bound(t, val, lo, hi, key_fn)
   return lo
 end
 
----@generic T
+---@generic T, Q
 ---@param t T[]
----@param val T
+---@param val Q
 ---@param lo integer
 ---@param hi integer
----@param key_fn fun(val: any): any
+---@param key_fn fun(val: T|Q): any
 ---@return integer i in range such that `t[j]` <= {val} for all j < i,
 ---                and `t[j]` > {val} for all j >= i,
 ---                or return {hi} if no such index is found.
@@ -532,7 +533,12 @@ end
 --- Use {bound} to determine whether to return the first or the last position,
 --- defaults to "lower", i.e., the first position.
 ---
---- NOTE: Behavior is undefined on unsorted lists!
+--- With {opts.key}, {val} may differ from the list elements, provided the key
+--- function accepts both. For a string key, that field must exist on both.
+--- A partial record is sufficient if it contains all fields used by the key.
+---
+--- NOTE: The values being compared must support `<`, and the list must be sorted
+--- by those values (after applying {opts.key}, if provided).
 ---
 --- Example:
 --- ```lua
@@ -560,10 +566,12 @@ end
 --- ```
 ---@since 14
 ---@generic T
----@param t T[] A comparable list.
+---@param t T[] A sorted list.
 ---@param val T The value to search.
----@param opts? vim.list.bisect.Opts
+---@param opts? vim.list.bisect.Opts<T>
 ---@return integer index serves as either the lower bound or the upper bound position.
+---@overload fun<T, Q>(t: T[], val: Q, opts: vim.list.bisect.Opts<T|Q> & { key: fun(val: T|Q): any }): integer
+---@overload fun<T: table, Q: table>(t: T[], val: Q, opts: vim.list.bisect.Opts<T|Q> & { key: string & keyof T & keyof Q }): integer
 function vim.list.bisect(t, val, opts)
   vim.validate('t', t, 'table')
   vim.validate('opts', opts, 'table', true)
@@ -1131,6 +1139,7 @@ do
       end
     elseif vim.is_callable(validator) then
       -- Check user-provided validation function
+      ---@cast validator fun(v: any): boolean, string?
       local valid, opt_msg = validator(val)
       if not valid then
         local err_msg = ('%s: expected %s, got %s'):format(

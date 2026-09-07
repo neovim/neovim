@@ -1438,7 +1438,8 @@ tagfunc({pattern}, {flags})                                *vim.lsp.tagfunc()*
       • {flags}    (`string`) See |tag-function|
 
     Return: ~
-        (`table[]`) tags A list of matching tags
+        (`table[]|vim.NIL`) tags A list of matching tags, or `vim.NIL` to use
+        the built-in tags.
 
 
 ==============================================================================

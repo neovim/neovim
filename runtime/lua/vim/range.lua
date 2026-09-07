@@ -465,7 +465,6 @@ setmetatable(M, {
     return M.new(...)
   end,
 })
----@cast M +fun(start: vim.Pos, end_: vim.Pos): vim.Range
----@cast M +fun(buf: integer, start_row: integer, start_col: integer, end_row: integer, end_col: integer): vim.Range
+---@cast M vim.Range & (fun(start: vim.Pos, end_: vim.Pos): vim.Range) & (fun(buf: integer, start_row: integer, start_col: integer, end_row: integer, end_col: integer): vim.Range)
 
 return M

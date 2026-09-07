@@ -270,12 +270,13 @@ function M._match_manpage_path(paths, name, sect)
   end
 
   -- find any that match the specified name
+  --- @type string[]
   --- @param v string
   local namematches = vim.tbl_filter(function(v)
     local tail = vim.fs.basename(v)
     return tail:find(name, 1, true) ~= nil
-  end, paths) or {}
-  local sectmatches = {}
+  end, paths)
+  local sectmatches = {} --- @type string[]
 
   if #namematches > 0 and sect ~= '' then
     --- @param v string

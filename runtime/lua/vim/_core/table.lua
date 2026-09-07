@@ -21,6 +21,8 @@ if not has_clear then
   end
 end
 
+---@cast new fun(narr: integer, nrec: integer): table
+---@cast clear fun(tab: table)
 M.new = new
 M.clear = clear
 

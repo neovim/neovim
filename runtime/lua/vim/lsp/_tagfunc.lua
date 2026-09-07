@@ -84,6 +84,9 @@ local function query_workspace_symbols(pattern)
   return results
 end
 
+---@param pattern string
+---@param flags string
+---@return table[]|vim.NIL
 local function tagfunc(pattern, flags)
   -- avoid definition/symbol queries for insert completion
   if string.match(flags, 'i') then

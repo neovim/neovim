@@ -1313,8 +1313,11 @@ function IterArray.new(t)
   }, IterArray)
 end
 
-return setmetatable(M, {
+setmetatable(M, {
   __call = function(_, ...)
     return Iter.new(...)
   end,
 })
+
+-- Return M separately to work around EmmyLuaLs/emmylua-analyzer-rust#1240.
+return M

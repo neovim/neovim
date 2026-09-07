@@ -284,8 +284,9 @@ end
 ---
 --- @param name string
 --- @param cfg vim.lsp.Config
+--- @type vim.lsp.config
 --- @diagnostic disable-next-line:assign-type-mismatch
-function lsp.config(name, cfg)
+lsp.config = function(name, cfg)
   local _, _ = name, cfg -- ignore unused
   -- dummy proto for docs
 end
@@ -321,6 +322,7 @@ end
 --- @class vim.lsp.config
 --- @field [string] vim.lsp.Config?
 --- @field package _configs table<string,vim.lsp.Config>
+--- @overload fun(name: string, cfg: vim.lsp.Config)
 lsp.config = setmetatable({ _configs = {} }, {
   --- @param self vim.lsp.config
   --- @param name string
@@ -332,7 +334,7 @@ lsp.config = setmetatable({ _configs = {} }, {
 
     if not rconfig.resolved_config then
       if name == '*' then
-        rconfig.resolved_config = lsp.config._configs['*'] or {}
+        rconfig.resolved_config = self._configs['*'] or {}
         return rconfig.resolved_config
       end
 
@@ -355,7 +357,7 @@ lsp.config = setmetatable({ _configs = {} }, {
 
       rconfig.resolved_config = vim.tbl_deep_extend(
         'force',
-        lsp.config._configs['*'] or {},
+        self._configs['*'] or {},
         rtp_config or {},
         self._configs[name] or {}
       )
@@ -1449,8 +1451,10 @@ end
 ---@param pattern string Pattern used to find a workspace symbol
 ---@param flags string See |tag-function|
 ---
----@return table[] tags A list of matching tags
+---@return table[]|vim.NIL tags A list of matching tags, or `vim.NIL` to use the built-in tags.
 function lsp.tagfunc(pattern, flags)
+  -- EmmyLua incorrectly treats function exports referenced by @module as non-callable.
+  --- @diagnostic disable-next-line:call-non-callable EmmyLuaLs/emmylua-analyzer-rust#1238
   return vim.lsp._tagfunc(pattern, flags)
 end
 

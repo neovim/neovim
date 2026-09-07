@@ -245,9 +245,9 @@ function M.watchdirs(path, opts, callback)
   for name, type in
     vim.fs.dir(path, {
       depth = max_depth,
-      skip = function(name)
+      skip = function(dir)
         return not opts.exclude_pattern
-          or opts.exclude_pattern:match(vim.fs.joinpath(path, name)) == nil
+          or opts.exclude_pattern:match(vim.fs.joinpath(path, dir)) == nil
       end,
     })
   do

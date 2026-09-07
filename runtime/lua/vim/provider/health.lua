@@ -3,6 +3,9 @@ local iswin = vim.fn.has('win32') == 1
 
 local M = {}
 
+---@param cmd string[]
+---@return boolean
+---@return string?
 local function cmd_ok(cmd)
   local result = vim.system(cmd, { text = true }):wait()
   return result.code == 0, result.stdout

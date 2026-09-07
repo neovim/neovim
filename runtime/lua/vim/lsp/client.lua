@@ -417,7 +417,7 @@ function Client.create(config)
   local name = get_name(id, config)
 
   --- @type vim.lsp.Client
-  local self = {
+  local self = setmetatable({
     id = id,
     config = config,
     handlers = config.handlers or {},
@@ -455,7 +455,7 @@ function Client.create(config)
 
     --- @deprecated use client.progress instead
     messages = { name = name, messages = {}, progress = {}, status = {} },
-  }
+  }, Client)
 
   self.capabilities =
     vim.tbl_deep_extend('force', lsp.protocol.make_client_capabilities(), self.capabilities or {})
@@ -515,8 +515,6 @@ function Client.create(config)
       detached = config.detached,
     })
   end
-
-  setmetatable(self, Client)
 
   method_wrapper(self, Client, 'request')
   method_wrapper(self, Client, 'request_sync')
@@ -768,19 +766,19 @@ function Client:request(method, params, handler, bufnr)
   local request_registered = false
 
   -- NOTE: rpc.request might call an in-process (Lua) server, thus may be synchronous.
-  local success, request_id = self.rpc.request(method, params, function(err, result, request_id)
+  local success, request_id = self.rpc.request(method, params, function(err, result, id)
     handler(err, result, {
       method = method,
       client_id = self.id,
-      request_id = request_id,
+      request_id = id,
       bufnr = bufnr,
       params = params,
       version = version,
     })
-  end, function(request_id)
+  end, function(id)
     -- Called when the server sends a response to the request (including cancelled acknowledgment).
     if request_registered then
-      self:_process_request(request_id, 'complete')
+      self:_process_request(id, 'complete')
     end
     already_responded = true
   end)

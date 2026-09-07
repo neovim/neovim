@@ -140,7 +140,7 @@ function LanguageTree.new(source, lang, opts)
   local injections = opts.injections or {}
 
   --- @type vim.treesitter.LanguageTree
-  local self = {
+  local self = setmetatable({
     _source = source,
     _lang = lang,
     _children = {},
@@ -159,9 +159,7 @@ function LanguageTree.new(source, lang, opts)
     _cb_queues = {},
     _callbacks = {},
     _callbacks_rec = {},
-  }
-
-  setmetatable(self, LanguageTree)
+  }, LanguageTree)
 
   if vim.g.__ts_debug and type(vim.g.__ts_debug) == 'number' then
     self:_set_logger()

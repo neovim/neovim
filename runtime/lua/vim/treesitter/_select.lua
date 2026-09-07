@@ -31,7 +31,7 @@ local history = {
 --- @field ltree vim.treesitter.LanguageTree
 --- @field region Range4
 
-local M = {}
+local M = { TEST_SWITCH_PRIORITY = false }
 
 --- @param node vim.treesitter.select.node
 --- @return string
@@ -96,10 +96,8 @@ end
 --- @param ltree vim.treesitter.LanguageTree
 --- @return vim.treesitter.select.node.top
 local function create_top_node(tree, region, ltree)
-  --- @type vim.treesitter.select.node.top
   local self = {
     node = tree:root(),
-    top = {} --[[@as any]],
     ltree = ltree,
     region = region,
   }

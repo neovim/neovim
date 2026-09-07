@@ -796,7 +796,7 @@ function M.rename(new_name, opts)
 
     if client:supports_method('textDocument/prepareRename') then
       local params = util.make_position_params(win, client.offset_encoding)
-      ---@param result? lsp.Range|{ range: lsp.Range, placeholder: string }
+      ---@param result? lsp.PrepareRenameResult
       client:request('textDocument/prepareRename', params, function(err, result)
         if err or result == nil then
           if next(clients, idx) then
@@ -816,10 +816,8 @@ function M.rename(new_name, opts)
 
         local range ---@type vim.Range?
         if result.start then
-          ---@cast result lsp.Range
           range = vim.range.lsp(bufnr, result, client.offset_encoding)
         elseif result.range then
-          ---@cast result { range: lsp.Range, placeholder: string }
           range = vim.range.lsp(bufnr, result.range, client.offset_encoding)
         end
         if range then
@@ -841,8 +839,6 @@ function M.rename(new_name, opts)
           prompt_opts.default = result.placeholder
         elseif result.start then
           prompt_opts.default = get_text_at_range(result, client.offset_encoding)
-        elseif result.range then
-          prompt_opts.default = get_text_at_range(result.range, client.offset_encoding)
         else
           prompt_opts.default = cword
         end
@@ -1273,6 +1269,8 @@ local function on_code_action_results(results, opts)
       return
     end
 
+    -- Work around incorrect union narrowing: EmmyLuaLs/emmylua-analyzer-rust#1239.
+    ---@cast action lsp.CodeAction
     if action.disabled then
       vim.notify(action.disabled.reason, vim.log.levels.ERROR)
       return

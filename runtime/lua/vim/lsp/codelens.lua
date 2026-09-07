@@ -10,12 +10,12 @@ local Capability = require('vim.lsp._capability')
 ---@class (private) vim.lsp.codelens.RowLenses
 ---@field lenses lsp.CodeLens[]
 ---@field version? integer `TextDocument` version most recently applied to this row.
----
+
 ---@class (private) vim.lsp.codelens.ClientState
 ---@field row_lenses table<integer, vim.lsp.codelens.RowLenses>
 ---@field namespace integer
 ---@field version? integer `TextDocument` version current state corresponds to.
----
+
 ---@class (private) vim.lsp.codelens.Provider : vim.lsp.Capability
 ---@field active table<integer, vim.lsp.codelens.Provider>
 ---

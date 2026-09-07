@@ -163,7 +163,7 @@ local function tokens_to_ranges(data, bufnr, client, request, ranges)
 
       if last_insert_idx < #ranges then
         local needs_insert = true
-        local idx = vim.list.bisect(ranges, { line = range.line }, {
+        local idx = vim.list.bisect(ranges, range, {
           lo = last_insert_idx,
           key = function(highlight)
             return highlight.line

@@ -135,11 +135,11 @@ local function filepath_to_healthcheck(path)
   else
     local rtp_lua = vim
       .iter(vim.api.nvim_get_runtime_file('lua/', true))
-      :map(function(rtp_lua)
-        return vim.fs.abspath(vim.fs.normalize(rtp_lua))
+      :map(function(dir)
+        return vim.fs.abspath(vim.fs.normalize(dir))
       end)
-      :find(function(rtp_lua)
-        return vim.fs.relpath(rtp_lua, path)
+      :find(function(dir)
+        return vim.fs.relpath(dir, path)
       end)
     -- "/path/to/rtp/lua/foo/bar/health.lua" => "foo/bar/health.lua"
     -- "/another/rtp/lua/baz/health/init.lua" => "baz/health/init.lua"
@@ -314,6 +314,8 @@ function M.error(msg, ...)
   check_summary['error'] = check_summary['error'] + 1
 end
 
+---@param path string
+---@return string
 local path2name = function(path)
   if vim.fs.ext(path) == 'lua' then
     -- Lua: transform "../lua/vim/lsp/health.lua" into "vim.lsp"
@@ -340,13 +342,12 @@ end
 local PATTERNS = { '/autoload/health/*.vim', '/lua/**/**/health.lua', '/lua/**/**/health/init.lua' }
 --- :checkhealth completion function used by cmdexpand.c get_healthcheck_names()
 M._complete = function()
-  local unique = vim ---@type table<string,boolean>
-    ---@param pattern string
+  ---@type table<string,boolean>
+  local unique = vim
     .iter(vim.tbl_map(function(pattern)
       return vim.tbl_map(path2name, vim.api.nvim_get_runtime_file(pattern, true))
     end, PATTERNS))
     :flatten()
-    ---@param t table<string,boolean>
     :fold({}, function(t, name)
       t[name] = true -- Remove duplicates
       return t

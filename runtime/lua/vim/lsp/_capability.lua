@@ -48,9 +48,11 @@ local buf_capabilities = {}
 local M = {}
 M.__index = M
 
+---@generic T: vim.lsp.Capability
+---@param self T
 ---@param bufnr integer
----@return self
-function M:new(bufnr)
+---@return T
+function M.new(self, bufnr)
   -- `self` in the `new()` function refers to the concrete type (i.e., the metatable).
   -- `Class` may be a subtype of `Capability`, as it supports inheritance.
   ---@type vim.lsp.Capability
@@ -63,7 +65,7 @@ function M:new(bufnr)
     all_capabilities[Class.name] = Class
   end
 
-  ---@type vim.lsp.Capability
+  ---@type T
   self = setmetatable({}, Class)
   self.bufnr = bufnr
   self.augroup = api.nvim_create_augroup(string.format('nvim.lsp.%s:%s', self.name, bufnr), {
