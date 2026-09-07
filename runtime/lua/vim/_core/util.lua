@@ -209,9 +209,11 @@ end
 --- @param name string Plugin name, e.g. "zip".
 --- @param msg string
 --- @param level? integer Level from |vim.log.levels|. Defaults to ERROR.
-function M.notify(name, msg, level)
+--- @param once? boolean Only show the message once.
+function M.notify(name, msg, level, once)
   vim.schedule(function()
-    vim.notify(('%s: %s'):format(name, msg), level or vim.log.levels.ERROR)
+    local notify = once and vim.notify_once or vim.notify
+    notify(('%s: %s'):format(name, msg), level or vim.log.levels.ERROR)
   end)
 end
 

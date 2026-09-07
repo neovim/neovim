@@ -2,6 +2,7 @@ local bit = require('bit')
 local glob = vim.glob
 local watch = vim._watch
 local log = require('vim.lsp.log')
+local notify = require('vim._core.util').notify
 local protocol = require('vim.lsp.protocol')
 local lpeg = vim.lpeg
 
@@ -185,6 +186,20 @@ function M.register(reg, client_id)
         -- match a *particular* pattern+kind pair.
         include_pattern = include_pattern,
         exclude_pattern = M._poll_exclude_pattern,
+        on_error = function(err)
+          local name = string.format('LSP[%s]', client.name)
+          local message = string.format('file watcher failed for %s', base_dir)
+          local level = vim.log.levels.ERROR
+          -- Servers may register a nonexistent baseUri. Keep this informational
+          -- and continue registering the other watchers.
+          if err:match('^ENOENT:') then
+            level = vim.log.levels.INFO
+            log.info(name, message, err)
+          else
+            log.error(name, message, err)
+          end
+          notify(name, message .. ': ' .. err, level, true)
+        end,
       }, callback(base_dir))
     )
   end
