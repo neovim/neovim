@@ -1433,6 +1433,34 @@ describe('vim.lsp.completion: integration', function()
     assert_cleanup_after_detach(client_id)
   end)
 
+  it('expands a snippet before a slow resolve answers', function()
+    exec_lua(function()
+      vim.o.completeopt = 'menuone,noselect'
+      local server = _G._create_server({
+        capabilities = { completionProvider = { resolveProvider = true } },
+        handlers = {
+          ['textDocument/completion'] = function(_, _, callback)
+            callback(nil, {
+              isIncomplete = false,
+              items = { { label = 'hello', insertText = 'hello($0)', insertTextFormat = 2 } },
+            })
+          end,
+          ['completionItem/resolve'] = function(_, item, callback)
+            vim.defer_fn(function()
+              callback(nil, item)
+            end, 100)
+          end,
+        },
+      })
+      local client_id = assert(vim.lsp.start({ name = 'dummy', cmd = server.cmd }))
+      vim.lsp.completion.enable(true, client_id, 0)
+    end)
+    feed('S<C-x><C-o>')
+    wait_for_pum()
+    feed('<C-n><C-y>x')
+    eq({ 'hello(x)' }, n.api.nvim_buf_get_lines(0, 0, -1, true))
+  end)
+
   it('clear multiple-lines word', function()
     local completion_list = {
       isIncomplete = false,

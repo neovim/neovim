@@ -1000,47 +1000,54 @@ local function on_complete_done()
     )
   end
 
-  local function apply_snippet_and_command()
-    if expand_snippet then
-      apply_snippet(completion_item)
-    end
-
+  local function exec_command()
     local command = completion_item.command
     if command then
       client:exec_cmd(command, { bufnr = bufnr })
     end
   end
 
-  if completion_item.additionalTextEdits and next(completion_item.additionalTextEdits) then
-    clear_word()
-    lsp.util.apply_text_edits(completion_item.additionalTextEdits, bufnr, position_encoding)
-    apply_snippet_and_command()
-  elseif resolve_provider and type(completion_item) == 'table' then
-    local changedtick = vim.b[bufnr].changedtick
-
-    --- @param result lsp.CompletionItem
-    client:request('completionItem/resolve', completion_item, function(err, result)
-      if changedtick ~= vim.b[bufnr].changedtick then
-        return
-      end
-
-      clear_word()
-      if err then
-        vim.notify_once(err.message, vim.log.levels.WARN)
-      elseif result then
-        if result.additionalTextEdits then
-          lsp.util.apply_text_edits(result.additionalTextEdits, bufnr, position_encoding)
-        end
-        if result.command then
-          completion_item.command = result.command
-        end
-      end
-      apply_snippet_and_command()
-    end, bufnr)
-  else
-    clear_word()
-    apply_snippet_and_command()
+  --- @param edits lsp.TextEdit[]
+  local function apply_additional_edits(edits)
+    -- The edits can move the cursor; keep it where it was.
+    lsp.util.apply_text_edits(edits, bufnr, position_encoding, nil, { keep_cursor = true })
   end
+
+  clear_word()
+
+  local edits = completion_item.additionalTextEdits
+  local has_edits = edits ~= nil and next(edits) ~= nil
+  if has_edits then
+    apply_additional_edits(assert(edits))
+  end
+  if expand_snippet then
+    apply_snippet(completion_item)
+  end
+
+  -- Nothing to gain if the item carried its edits, or it cannot be resolved.
+  if has_edits or not resolve_provider or type(completion_item) ~= 'table' then
+    exec_command()
+    return
+  end
+
+  --- @param result lsp.CompletionItem
+  client:request('completionItem/resolve', completion_item, function(err, result)
+    if not api.nvim_buf_is_valid(bufnr) then
+      return
+    end
+    if err then
+      vim.notify_once(err.message, vim.log.levels.WARN)
+    elseif result then
+      if result.additionalTextEdits then
+        apply_additional_edits(result.additionalTextEdits)
+      end
+      -- A resolved command replaces the one the item came with.
+      if result.command then
+        completion_item.command = result.command
+      end
+    end
+    exec_command()
+  end, bufnr)
 end
 
 ---@param bufnr integer

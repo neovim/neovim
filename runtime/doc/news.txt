@@ -556,6 +556,8 @@ These existing features changed their behavior.
   instead of silently skipping them.
 • The highlighting groups |hl-CursorLineFold| and |hl-CursorLineSign| are
   always used when 'cursorline' is set.
+• |vim.lsp.util.apply_text_edits()| accepts `opts.keep_cursor`, to hold the
+  cursor on the text it is on while edits move around it.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
