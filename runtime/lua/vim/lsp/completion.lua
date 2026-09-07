@@ -467,6 +467,22 @@ local function edit_start_char(item, lnum)
   end
 end
 
+--- Completion options for a buffer, fields from a dynamic registration.
+---
+--- @param client vim.lsp.Client
+--- @param bufnr integer
+--- @return lsp.CompletionOptions
+local function completion_options(client, bufnr)
+  local static = client.server_capabilities.completionProvider or {}
+  for _, reg in ipairs(client:_get_registrations('completionProvider', bufnr) or {}) do
+    local opts = reg.registerOptions
+    if type(opts) == 'table' then
+      return vim.tbl_extend('keep', opts, static)
+    end
+  end
+  return static
+end
+
 --- Turns the result of a `textDocument/completion` request into vim-compatible
 --- |complete-items|.
 ---
@@ -524,7 +540,8 @@ function M._lsp_to_complete_items(
   local user_convert = vim.tbl_get(buf_handles, bufnr, 'convert')
   local user_cmp = vim.tbl_get(buf_handles, bufnr, 'cmp')
   local client = client_id and lsp.get_client_by_id(client_id)
-  local server_supports_resolve = client and client:supports_method('completionItem/resolve')
+  local server_supports_resolve = client
+    and completion_options(client, bufnr).resolveProvider == true
   local use_commit = vim.tbl_get(buf_handles, bufnr, 'commit_characters') ~= false
   local commit_support = client
     and vim.tbl_get(
@@ -535,8 +552,7 @@ function M._lsp_to_complete_items(
       'commitCharactersSupport'
     )
 
-  local all_commit_chars = client
-    and vim.tbl_get(client.server_capabilities or {}, 'completionProvider', 'allCommitCharacters')
+  local all_commit_chars = client and completion_options(client, bufnr).allCommitCharacters
   local all_commit_str = all_commit_chars and commit_chars_str(all_commit_chars) or nil
 
   for _, item in ipairs(items) do
@@ -870,7 +886,9 @@ function CompletionResolver:request(bufnr, param, selected_word)
 
     local client_id = vim.tbl_get(cmp_info.completed, 'user_data', 'nvim', 'lsp', 'client_id')
     local client = client_id and vim.lsp.get_client_by_id(client_id)
-    if not client or not client:supports_method('completionItem/resolve') then
+    -- completionItem/resolve is not registrable, so supports_method() would
+    -- only see the static capability.
+    if not client or not completion_options(client, bufnr).resolveProvider then
       return
     end
 
@@ -956,7 +974,7 @@ local function on_complete_done()
   end
 
   local position_encoding = client.offset_encoding or 'utf-16'
-  local resolve_provider = (client.server_capabilities.completionProvider or {}).resolveProvider
+  local resolve_provider = completion_options(client, bufnr).resolveProvider
 
   -- Keep reference to avoid race where completion/resolve response arrives after on_insert_leave
   -- and Context.cursor got cleared before clear_word() gets called
@@ -1290,11 +1308,7 @@ local function enable_completions(client_id, bufnr, opts)
 
     -- Add the new client to the clients that should be triggered by its trigger characters.
     --- @type string[]
-    local triggers = vim.tbl_get(
-      client.server_capabilities,
-      'completionProvider',
-      'triggerCharacters'
-    ) or {}
+    local triggers = completion_options(client, bufnr).triggerCharacters or {}
     for _, char in ipairs(triggers) do
       local clients_for_trigger = buf_handle.triggers[char]
       if not clients_for_trigger then
