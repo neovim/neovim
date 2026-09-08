@@ -912,6 +912,14 @@ static TermKeyResult peekkey_simple(TermKey *tk, TermKeyKey *key, int force, siz
 
     switch (metakey_result) {
     case TERMKEY_RES_KEY:
+      if (key->event == TERMKEY_EVENT_REPEAT || key->event == TERMKEY_EVENT_RELEASE) {
+        // A repeat or release event's modifiers are encoded in its escape sequence, so
+        // a preceding Esc cannot be its Alt modifier, and can only be an <Esc> press.
+        key->event = TERMKEY_EVENT_PRESS;
+        (*tk->method.emit_codepoint)(tk, b0, key);
+        *nbytep = 1;
+        return TERMKEY_RES_KEY;
+      }
       key->modifiers |= TERMKEY_KEYMOD_ALT;
       (*nbytep)++;
       break;
