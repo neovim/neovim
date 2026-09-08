@@ -1624,7 +1624,14 @@ vim.o.cuc = vim.o.cursorcolumn
 vim.wo.cursorcolumn = vim.o.cursorcolumn
 vim.wo.cuc = vim.wo.cursorcolumn
 
---- Highlight the text line of the cursor with CursorLine `hl-CursorLine`.
+--- Highlighting used for the line the cursor is on:
+---
+--- CursorLine		the text line `hl-CursorLine`
+--- CursorLineFold		the fold column `hl-CursorLineFold`
+--- CursorLineSign		the sign column `hl-CursorLineSign`
+--- CursorLineNr		the line number, when 'cursorlineopt' contains
+--- 			"number" `hl-CursorLineNr`
+---
 --- Useful to easily spot the cursor.  Will make screen redrawing slower.
 --- When Visual mode is active the highlighting isn't used to make it
 --- easier to see the selected text.

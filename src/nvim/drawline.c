@@ -480,12 +480,11 @@ static void draw_col_fill(winlinevars_T *wlv, schar_T fillchar, int width, int a
   }
 }
 
-/// Return true if CursorLineSign highlight is to be used.
+/// Return true if CursorLineSign / CursorLineFold highlight is to be used.
+/// This depends only on 'cursorline', not on 'cursorlineopt'.
 bool use_cursor_line_highlight(win_T *wp, linenr_T lnum)
 {
-  return wp->w_p_cul
-         && lnum == wp->w_cursorline
-         && (wp->w_p_culopt_flags & kOptCuloptFlagNumber);
+  return wp->w_p_cul && lnum == wp->w_cursorline;
 }
 
 /// Setup for drawing the 'foldcolumn', if there is one.

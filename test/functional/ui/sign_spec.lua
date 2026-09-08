@@ -162,7 +162,7 @@ describe('Signs', function()
       exec('set cursorline cursorlineopt=line')
       screen:expect([[
         {101:>>}a                                                  |
-        {101:>>}{21:^b                                                  }|
+        {9:>>}{21:^b                                                  }|
         {101:>>}c                                                  |
         {1:~                                                    }|*10
                                                              |

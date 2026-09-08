@@ -551,6 +551,8 @@ These existing features changed their behavior.
   requires it to be installed).
 • `:helptags ALL` reports |E152| for "doc" directories it cannot write,
   instead of silently skipping them.
+• The highlighting groups |hl-CursorLineFold| and |hl-CursorLineSign| are
+  always used when 'cursorline' is set.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
