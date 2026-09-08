@@ -517,6 +517,15 @@ describe('multicursor', function()
   describe('composite/mapping', function()
     it('Visual-mode mapping that creates cursors (Q) #41694', function()
       command('xmap I Q0i')
+
+      -- The mapping itself creates the cursors; until then, nothing consumes atoms.
+      cursors({ 'test', 'nvim', '', 'test', 'nvim' }, '')
+      feed('gg$jjjVjI')
+      feed('bad<Esc>')
+      eq({ 'test', 'nvim', '', 'badtest', 'badnvim' }, get_lines())
+
+      -- Existing cursors, and a CmdAtom consumer:
+      clear_cursors()
       cursors({ 'test', 'nvim', '', 'test', 'nvim' }, '')
       feed('gg$Qjjj')
       atoms_start()

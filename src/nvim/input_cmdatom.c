@@ -61,7 +61,8 @@ static uint64_t frame_id = 0;
 static CmdFrame *cur_frame = NULL;
 
 /// The pending atom, while it spans CmdFrames (a mapping's commands, an operator awaiting its
-/// motion, i_CTRL-O). See `vatom` for Visual composite.
+/// motion, i_CTRL-O). See `vatom` for Visual composite. Always collects, because a mapping may
+/// itself create consumers ("xmap I Q0i" => creates a mcursor => which listens to atoms).
 ///
 /// Also used by undo, to restore cursor position.
 static struct {
@@ -634,12 +635,6 @@ static bool atom_buf_has_consumers(void)
   return mc_buf_has_cursors(curbuf) || has_event(EVENT_CMDATOM);
 }
 
-/// XXX: Checks consumers for ANY buffer: a mapping/macro may navigate into a buffer w/ cursors...
-static bool atom_has_consumers(void)
-{
-  return mc_count() > 0 || has_event(EVENT_CMDATOM);
-}
-
 /// Classifies key/command `cmd` (`arg` is its argument char, for two-char commands like "g;").
 ///
 /// @return  kKeyXx flags, or 0 for an ordinary key.
@@ -847,7 +842,7 @@ void atom_redo_cancel(void)
 /// Starts accumulating a composite for a macro's commands, labeled "@x".
 void atom_macro_start(int regname)
 {
-  if (atom_is_user_input() && atom_has_consumers()) {
+  if (atom_is_user_input()) {
     composite.macro = true;
     if (!atom_composite_active()) {
       // The macro's commands collapse into one "@x"-labeled atom.
@@ -861,7 +856,7 @@ void atom_macro_start(int regname)
 void atom_stuff_start(const cmdarg_T *cap)
 {
   // Not while another composite collects: a mapping's own label wins ("nnoremap <F6> xw").
-  if (!atom_has_consumers() || mc_replaying() || atom_composite_active() || !atom_is_user_input()) {
+  if (mc_replaying() || atom_composite_active() || !atom_is_user_input()) {
     return;
   }
   char *lhs = atom_redo_keys(atom_cmd_spec(cap));
@@ -874,8 +869,7 @@ void atom_stuff_start(const cmdarg_T *cap)
 /// @param peeked  Resolved by a peek: the executing command did not consume the mapping's keys.
 void atom_map_start(const char *lhs, size_t len, bool peeked)
 {
-  if (!atom_has_consumers() || mc_replaying()
-      || reg_executing != 0 || ex_normal_busy != 0 || !(State & MODE_NORMAL)) {
+  if (mc_replaying() || reg_executing != 0 || ex_normal_busy != 0 || !(State & MODE_NORMAL)) {
     return;
   }
   if (atom_composite_active()) {
