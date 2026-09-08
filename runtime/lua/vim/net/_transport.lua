@@ -137,6 +137,11 @@ function TransportConnect:listen(on_read, on_exit)
           vim.log.levels.WARN
         )
       end)
+      -- Since the actual connection establishment is done asynchronously, we cannot throw an error on failure,
+      -- therefore we treat the failure of the actual connection as a disconnection of our abstracted connection.
+      -- Furthermore, because we also allow writes before the actual connection is established,
+      -- this makes the underlying actual connection remain transparent to the user.
+      on_read(nil, nil)
       return
     end
     self.handle:read_start(on_read)
@@ -178,7 +183,9 @@ function TransportConnect:terminate()
   end
   self.closing = true
   if self.handle then
-    self.handle:shutdown()
+    if self.connected then
+      self.handle:shutdown()
+    end
     self.handle:close()
   end
   if self.on_exit then
