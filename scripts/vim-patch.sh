@@ -1077,6 +1077,7 @@ is_na_patch() {
           '-Icheck_typval_type\(.+\)' \
           '-Icrypt_get_method_nr\(.+\)' \
           '-I\spopup_set_firstline\(.+\);' \
+          '-I\sredraw_tabpanel =' \
           '-I\sterm_focus_change\(.+\);$' \
           '-I\supdate_vim9_script_var\(.+\);$' \
           '-I\svim_free\(.*w_popup_title\);' \
