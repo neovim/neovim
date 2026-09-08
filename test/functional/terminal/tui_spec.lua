@@ -1261,17 +1261,19 @@ describe('TUI', function()
     ]])
   end)
 
-  it('interprets leading <Esc> byte as ALT modifier in normal-mode', function()
+  it('interprets leading ESC byte as ALT modifier in normal-mode', function()
     local keys = 'dfghjkl'
     for c in keys:gmatch('.') do
       feed_data(':nnoremap <a-' .. c .. '> ialt-' .. c .. '<cr><esc>\r')
       feed_data('\027' .. c)
     end
+    feed_data(':nnoremap <a-esc> ialt-esc<esc>\r')
+    feed_data('\027\027')
     screen:expect([[
       alt-j                                             |
       alt-k                                             |
       alt-l                                             |
-      ^                                                  |
+      alt-es^c                                           |
       {3:[No Name] [+]                                     }|
                                                         |
       {5:-- TERMINAL --}                                    |
@@ -1301,7 +1303,7 @@ describe('TUI', function()
     ]])
   end)
 
-  it('interprets <Esc> encoded with kitty keyboard protocol', function()
+  it('interprets ESC encoded with kitty keyboard protocol', function()
     child_session:request(
       'nvim_exec2',
       [[
@@ -1332,13 +1334,13 @@ describe('TUI', function()
                                                         |
       {5:-- TERMINAL --}                                    |
     ]])
-    -- <Esc>; should be recognized as <M-;> when <M-;> is mapped
+    -- ESC+; should be recognized as <M-;> when <M-;> is mapped
     feed_data('\027;')
     screen:expect_unchanged()
     expect_child_buf_lines({ 'ESCsemicolonCtrlEscSuperEscESC' })
   end)
 
-  it('interprets <Esc><Nul> as <M-C-Space> #17198', function()
+  it('interprets ESC NUL as <M-C-Space> #17198', function()
     t.skip(is_os('win'), 'FIXME: does not work on Windows')
     feed_data('i\022\027\000')
     screen:expect([[
@@ -1348,6 +1350,19 @@ describe('TUI', function()
       {5:-- INSERT --}                                      |
       {5:-- TERMINAL --}                                    |
     ]])
+  end)
+
+  it('does not interpret ESC preceding repeat/release event as ALT #41763', function()
+    child_session:request('nvim_command', 'noremap <M-Esc> <Nop>')
+    child_session:request('nvim_command', 'noremap! <M-Esc> <Nop>')
+    feed_data('i\015')
+    wait_for_mode('niI')
+    feed_data('\027\027[27;1:3u') -- ESC, ESC release
+    wait_for_mode('i')
+    feed_data('\015')
+    wait_for_mode('niI')
+    feed_data('\027\027[27;1:2u\027[27;1:3u') -- ESC, ESC repeat, ESC release
+    wait_for_mode('n')
   end)
 
   it("split sequences work within 'ttimeoutlen' time", function()
