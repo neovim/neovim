@@ -58,6 +58,22 @@ describe('autoread file watcher', function()
     end)
   end)
 
+  it('checks timestamps when closing the last window of a tab', function()
+    local path = t.tmpname()
+    write_file(path, 'foo\n')
+    command('edit ' .. path)
+
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'local change' })
+    command('let g:file_changed_shell = 0')
+    command('autocmd FileChangedShell * let g:file_changed_shell = 1')
+
+    command('tabnew')
+    write_file(path, 'external change\n')
+    command('close')
+
+    eq(1, api.nvim_get_var('file_changed_shell'))
+  end)
+
   it('reloads on external change; survives hide; undoable; bdelete stops watch', function()
     local path = open_watched('original content\n')
     local bufnr = api.nvim_get_current_buf()

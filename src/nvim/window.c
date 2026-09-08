@@ -2719,6 +2719,7 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf, tabpage_T *prev
   apply_autocmds(EVENT_WINENTER, NULL, NULL, false, curbuf);
   apply_autocmds(EVENT_TABENTER, NULL, NULL, false, curbuf);
   if (old_curbuf != curbuf) {
+    buf_check_timestamp(curbuf);
     apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf);
   }
   return true;
