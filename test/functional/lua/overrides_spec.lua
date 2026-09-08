@@ -59,15 +59,15 @@ describe('print', function()
     eq('', exec_capture('luafile ' .. fname))
     -- TODO(bfredl): these look weird, print() should not use "E5114:" style errors..
     eq(
-      'Vim(lua):E5108: Lua: E5114: Converting print argument #2: [NULL]',
+      'Vim(lua):E5108: Lua: E5114: Converting print argument #2: nil',
       pcall_err(command, 'lua print("foo", v_nilerr, "bar")')
     )
     eq(
       'Vim(lua):E5108: Lua: E5114: Converting print argument #2: Xtest-functional-lua-overrides-luafile:2: abc',
       pcall_err(command, 'lua print("foo", v_abcerr, "bar")')
     )
-    eq(
-      'Vim(lua):E5108: Lua: E5114: Converting print argument #2: <Unknown error: lua_tolstring returned NULL for tostring result>',
+    matches(
+      '^Vim%(lua%):E5108: Lua: E5114: Converting print argument #2: table: 0x%x+$',
       pcall_err(command, 'lua print("foo", v_tblout, "bar")')
     )
   end)

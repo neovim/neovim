@@ -61,7 +61,7 @@ func Test_sign()
 
   " Check placed signs
   let a=execute('sign place')
-  call assert_equal("\n--- Signs ---\nSigns for [NULL]:\n" .
+  call assert_equal("\n--- Signs ---\nSigns for Untitled:\n" .
 		\ "    line=3  id=41  name=Sign1  priority=10", a)
 
   " Unplace the sign and try jumping to it again should fail.
@@ -90,7 +90,7 @@ func Test_sign()
   sign place 77 line=9 name=Sign2
   let a=execute('sign place')
   " Nvim: sign line clamped to buffer length
-  call assert_equal("\n--- Signs ---\nSigns for [NULL]:\n" .
+  call assert_equal("\n--- Signs ---\nSigns for Untitled:\n" .
 		\ "    line=4  id=77  name=Sign2  priority=10", a)
   sign unplace *
 

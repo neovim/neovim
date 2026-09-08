@@ -451,7 +451,7 @@ describe('Signs', function()
         {3:                                                     }|
         :sign place                                          |
         {100:--- Signs ---}                                        |
-        {18:Signs for [NULL]:}                                    |
+        {18:Signs for Untitled:}                                  |
             line=1  id=100000  name=piet  priority=10        |
         {6:Press ENTER or type command to continue}^              |
       ]])

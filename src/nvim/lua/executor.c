@@ -1131,12 +1131,6 @@ static void nlua_print_event(void **argv)
 static int nlua_print(lua_State *const lstate)
   FUNC_ATTR_NONNULL_ALL
 {
-#define PRINT_ERROR(msg) \
-  do { \
-    errmsg = msg; \
-    errmsg_len = sizeof(msg) - 1; \
-    goto nlua_print_error; \
-  } while (0)
   const int nargs = lua_gettop(lstate);
   lua_getglobal(lstate, "tostring");
   const char *errmsg = NULL;
@@ -1148,22 +1142,21 @@ static int nlua_print(lua_State *const lstate)
     lua_pushvalue(lstate, -1);  // tostring
     lua_pushvalue(lstate, curargidx);  // arg
     // Do not use nlua_pcall here to avoid duplicate stack trace information
-    if (lua_pcall(lstate, 1, 1, 0)) {
-      errmsg = lua_tolstring(lstate, -1, &errmsg_len);
+    if (lua_pcall(lstate, 1, 1, 0) || lua_type(lstate, -1) != LUA_TSTRING) {
+      // NB: this might try tostring once more to print a weird error from
+      // a __tostring methamethod but we stop after that.
+      errmsg = nlua_get_error(lstate, &errmsg_len);
       goto nlua_print_error;
     }
+
     size_t len;
     const char *const s = lua_tolstring(lstate, -1, &len);
-    if (s == NULL) {
-      PRINT_ERROR("<Unknown error: lua_tolstring returned NULL for tostring result>");
-    }
     ga_concat_len(&msg_ga, s, len);
     if (curargidx < nargs) {
       ga_append(&msg_ga, ' ');
     }
     lua_pop(lstate, 1);
   }
-#undef PRINT_ERROR
   ga_append(&msg_ga, NUL);
 
   lua_getfield(lstate, LUA_REGISTRYINDEX, "nvim.thread");

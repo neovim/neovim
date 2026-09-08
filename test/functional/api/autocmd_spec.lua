@@ -1671,13 +1671,13 @@ describe('autocmd api', function()
       eq('Vim:E367: No such group: "noexist"', pcall_err(api.nvim_del_augroup_by_name, 'noexist'))
 
       eq(false, exec_lua [[return pcall(vim.api.nvim_del_augroup_by_id, -12342)]])
-      eq('Vim:E367: No such group: "--Deleted--"', pcall_err(api.nvim_del_augroup_by_id, -12312))
+      eq('Vim:E367: No such group id: -12312', pcall_err(api.nvim_del_augroup_by_id, -12312))
 
       eq(false, exec_lua [[return pcall(vim.api.nvim_del_augroup_by_id, 0)]])
-      eq('Vim:E367: No such group: "[NULL]"', pcall_err(api.nvim_del_augroup_by_id, 0))
+      eq('Vim:E367: No such group id: 0', pcall_err(api.nvim_del_augroup_by_id, 0))
 
       eq(false, exec_lua [[return pcall(vim.api.nvim_del_augroup_by_id, 12342)]])
-      eq('Vim:E367: No such group: "[NULL]"', pcall_err(api.nvim_del_augroup_by_id, 12312))
+      eq('Vim:E367: No such group id: 12312', pcall_err(api.nvim_del_augroup_by_id, 12312))
     end)
 
     it('groups work with once', function()
@@ -1828,6 +1828,13 @@ describe('autocmd api', function()
       -- so now this works as expected
       eq(false, pcall(api.nvim_get_autocmds, { group = 'TEMP_ABCD' }))
       eq(0, #api.nvim_get_autocmds { event = 'BufReadPost' })
+
+      -- deleting an already deleted group gives NICE error message:
+      -- exact value of augroup_id here depends on defaults.lua and bullshit, splice it in!
+      eq(
+        'Vim:E367: No such group id: ' .. augroup_id .. ' "--Deleted--"',
+        pcall_err(api.nvim_del_augroup_by_id, augroup_id)
+      )
     end)
 
     it('api: should clear and not return any autocmds for delete groups by name', function()

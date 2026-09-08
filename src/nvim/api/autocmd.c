@@ -663,8 +663,7 @@ void nvim_del_augroup_by_id(Integer id, Error *err)
   FUNC_API_SINCE(9)
 {
   TRY_WRAP(err, {
-    char *name = id == 0 ? NULL : augroup_name((int)id);
-    augroup_del(name, false);
+    augroup_del_by_id((int)id);
   });
 }
 
@@ -678,7 +677,7 @@ void nvim_del_augroup_by_name(String name, Error *err)
   FUNC_API_SINCE(9)
 {
   TRY_WRAP(err, {
-    augroup_del(name.data, false);
+    augroup_del(name.data, -1, false);
   });
 }
 
