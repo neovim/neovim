@@ -132,6 +132,44 @@ local function foldupdate(bufnr)
   end
 end
 
+--- Find windows whose cursors are visible before a deferred fold update.
+---@param bufnr integer
+---@return integer[]
+local function visible_cursor_windows(bufnr)
+  local windows = {} ---@type integer[]
+  for _, winid in ipairs(vim.fn.win_findbuf(bufnr)) do
+    local wininfo = vim.fn.getwininfo(winid)[1]
+    if
+      wininfo
+      and wininfo.tabnr == vim.fn.tabpagenr()
+      and vim.wo[winid].foldmethod == 'expr'
+      and vim._with({ win = winid }, function()
+        return vim.fn.foldclosed('.') == -1
+      end)
+    then
+      windows[#windows + 1] = winid
+    end
+  end
+  return windows
+end
+
+--- Open folds that newly hide a previously visible cursor.
+---@param bufnr integer
+---@param windows integer[]
+local function restore_cursor_visibility(bufnr, windows)
+  for _, winid in ipairs(windows) do
+    if
+      api.nvim_win_is_valid(winid)
+      and api.nvim_win_get_buf(winid) == bufnr
+      and vim._with({ win = winid }, function()
+        return vim.fn.foldclosed('.') ~= -1
+      end)
+    then
+      vim._foldopen_cursor(winid)
+    end
+  end
+end
+
 --- Whether the current buffer is in a mode that can actively change its text.
 ---@param bufnr integer
 ---@return boolean
@@ -145,15 +183,18 @@ local function is_editing(bufnr)
 end
 
 --- Apply the latest accepted folding ranges once.
-function State:apply_pending()
+---@param restore_visibility? boolean
+function State:apply_pending(restore_visibility)
   if not self.pending_evaluate then
     return
   end
 
+  local visible_windows = restore_visibility and visible_cursor_windows(self.bufnr) or {}
   self.defer_refresh = nil
   self.pending_evaluate = nil
   self:evaluate()
   foldupdate(self.bufnr)
+  restore_cursor_visibility(self.bufnr, visible_windows)
 end
 
 --- Recheck the mode after queued mode transitions have settled.
@@ -174,7 +215,7 @@ local function schedule_settle(state)
       return
     end
 
-    state:apply_pending()
+    state:apply_pending(true)
   end)
 end
 
