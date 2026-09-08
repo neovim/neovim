@@ -122,8 +122,23 @@ local M = {}
 local s_output = {} ---@type string[]
 local check_summary = { warn = 0, error = 0 }
 
+---@param name string
+---@param path string
+---@return string?
+local function search_package_path(name, path)
+  name = name:gsub('%.', vim.fn.has('win32') == 1 and '\\' or '/')
+  for template in path:gmatch('[^;]+') do
+    local filepath = template:gsub('?', name)
+    local stat = vim.uv.fs_stat(filepath)
+    if stat and stat.type == 'file' then
+      return filepath
+    end
+  end
+end
+
 -- From a path return a list [{name}, {func}, {type}] representing a healthcheck
-local function filepath_to_healthcheck(path)
+---@param plugin_name string
+local function filepath_to_healthcheck(path, plugin_name)
   path = vim.fs.abspath(vim.fs.normalize(path))
   local name --- @type string
   local func --- @type string
@@ -143,15 +158,19 @@ local function filepath_to_healthcheck(path)
       end)
     -- "/path/to/rtp/lua/foo/bar/health.lua" => "foo/bar/health.lua"
     -- "/another/rtp/lua/baz/health/init.lua" => "baz/health/init.lua"
-    local subpath = path:gsub('^' .. vim.pesc(rtp_lua), ''):gsub('^/+', '')
-    if vim.fs.basename(subpath) == 'health.lua' then
-      -- */health.lua
-      name = vim.fs.dirname(subpath)
+    if rtp_lua then
+      local subpath = path:gsub('^' .. vim.pesc(rtp_lua), ''):gsub('^/+', '')
+      if vim.fs.basename(subpath) == 'health.lua' then
+        -- */health.lua
+        name = vim.fs.dirname(subpath)
+      else
+        -- */health/init.lua
+        name = vim.fs.dirname(vim.fs.dirname(subpath))
+      end
+      name = assert(name:gsub('/', '.')) --[[@as string]]
     else
-      -- */health/init.lua
-      name = vim.fs.dirname(vim.fs.dirname(subpath))
+      name = plugin_name:gsub('/', '.')
     end
-    name = assert(name:gsub('/', '.')) --[[@as string]]
 
     func = 'require("' .. name .. '.health").check()'
     filetype = 'l'
@@ -177,6 +196,13 @@ local function get_healthcheck_list(plugin_names)
     )
     vim.list_extend(paths, vim.api.nvim_get_runtime_file('lua/**/' .. p .. '/health.lua', true))
 
+    if vim.tbl_count(paths) == 0 and not p:find('%*') then
+      local lua_lib_path = search_package_path(p .. '.health', package.path)
+      if lua_lib_path then
+        paths[#paths + 1] = lua_lib_path
+      end
+    end
+
     if vim.tbl_count(paths) == 0 then
       healthchecks[#healthchecks + 1] = { p, '', '' } -- healthcheck not found
     else
@@ -190,7 +216,7 @@ local function get_healthcheck_list(plugin_names)
       end
 
       for _, v in ipairs(paths) do
-        healthchecks[#healthchecks + 1] = filepath_to_healthcheck(v)
+        healthchecks[#healthchecks + 1] = filepath_to_healthcheck(v, p)
       end
     end
   end

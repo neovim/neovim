@@ -314,6 +314,26 @@ describe('vim.health', function()
       ]])
     end)
 
+    it('finds healthcheck in package.path #26580', function()
+      command([[set runtimepath-=test/functional/fixtures]])
+      exec_lua(
+        [[package.searchpath = nil
+        package.path = ... .. '/test/functional/fixtures/lua/?/init.lua;' .. package.path]],
+        t.paths.test_source_path
+      )
+      command('checkhealth test_plug')
+      n.expect([[
+      ==============================================================================
+      test_plug:                                                                  ✅
+
+      report 1 ~
+      - ✅ OK everything is fine
+
+      report 2 ~
+      - ✅ OK nothing to see here
+      ]])
+    end)
+
     it('&rtp can contain nested path (by packadd)', function()
       -- re-add to ensure this appears before new nested rtp
       command([[set runtimepath-=test/functional/fixtures]])
