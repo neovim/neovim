@@ -77,6 +77,8 @@ function M.open(type, init_line, init_col)
   vim.bo[buf].buflisted = true -- #40431
   vim.wo[win][0].foldenable = false
   vim.wo[win][0].scrollbind = false
+  -- Make every cmdline cursor position reachable, end-of-line included.
+  vim.wo[win][0].virtualedit = 'onemore'
   -- Show cmdwin-char via 'statuscolumn'.
   vim.wo[win][0].statuscolumn = '%#NonText#' .. type
 
@@ -181,14 +183,31 @@ local function _close()
   return line, type
 end
 
+--- Line and cursor column (1-based byte) awaiting |c_CTRL-\_e|.
+local restore = { line = '', col = 1 }
+
+--- Keys that hand `restore` to the cmdline. Setting the text this way (instead of typing it)
+--- keeps control characters and 0x80 bytes literal, and places the cursor in the same step.
+local restore_keys = vim.keycode([[<C-\>e]])
+  .. [[luaeval("require('vim._core.cmdwin')._restore()")]]
+  .. '\r'
+
+--- @private
+--- Expression for |c_CTRL-\_e|.
+--- @return string
+function M._restore()
+  vim.fn.setcmdpos(restore.col)
+  return restore.line
+end
+
 --- Confirm and execute the current line as a cmdline.
 function M.confirm()
   if state == nil then -- Not in cmdwin (closed already?).
     return
   end
   local line, type = _close()
-  line = line:gsub('%z', '\n'):gsub('(%c)', '\022%1') -- Escape control characters.
-  vim.api.nvim_feedkeys(type .. line .. '\r', 'nt', true)
+  restore = { line = line:gsub('%z', '\n'), col = 1 }
+  vim.api.nvim_feedkeys(type .. restore_keys .. '\r', 'nt', false)
 end
 
 --- Cancel: close the cmdwin and re-enter cmdline mode with the line pre-filled (no execute).
@@ -196,9 +215,10 @@ function M.cancel()
   if state == nil then -- Not in cmdwin (closed already?).
     return
   end
+  local col = vim.api.nvim_win_get_cursor(0)[2]
   local line, type = _close()
-  line = line:gsub('%z', '\n'):gsub('(%c)', '\022%1') -- Escape control characters.
-  vim.api.nvim_feedkeys(type .. line, 'nt', true)
+  restore = { line = line:gsub('%z', '\n'), col = col + 1 }
+  vim.api.nvim_feedkeys(type .. restore_keys, 'nt', false)
 end
 
 return M
