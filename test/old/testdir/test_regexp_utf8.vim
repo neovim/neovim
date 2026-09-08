@@ -363,6 +363,12 @@ func Run_regexp_ignore_case()
   call assert_equal('iIx', substitute('iIİ', '\c\(\%u0130\)', 'x', 'g'))
   call assert_equal('iIx', substitute('iIİ', '\c\([\u0130]\)', 'x', 'g'))
   call assert_equal('iIx', substitute('iIİ', '\c\([\u012f-\u0131]\)', 'x', 'g'))
+
+  " Ignoring case in a literal string that starts with a character longer
+  " than a following one must still match.
+  call assert_equal('Über', matchstr('Überraschung', '\cüber'))
+  call assert_equal('Ünder', matchstr('Ünderdog', '\cünder'))
+  call assert_equal('αaaa', matchstr('αaaaa', '\cαaaa'))
 endfunc
 
 func Test_regexp_ignore_case()
