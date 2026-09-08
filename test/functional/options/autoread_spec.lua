@@ -4,11 +4,13 @@ local n = require('test.functional.testnvim')()
 local describe, it, before_each = t.describe, t.it, t.before_each
 local clear = n.clear
 local command = n.command
+local feed = n.feed
 local eq = t.eq
 local api = n.api
 local retry = t.retry
 local write_file = t.write_file
 local sleep = vim.uv.sleep
+local is_os = t.is_os
 
 --- Returns true if the autoread module is watching the given buffer
 --- (defaults to the current buffer).
@@ -251,6 +253,21 @@ describe('autoread file watcher', function()
     write_file(path, 'second change\n')
     retry(nil, 3000, function()
       eq({ 'second change' }, api.nvim_buf_get_lines(0, 0, -1, true))
+    end)
+  end)
+
+  it('triggers autoread after terminal exit in another tab #41759', function()
+    local path = open_watched('original\n')
+    local buf = api.nvim_get_current_buf()
+    command('tabnew')
+    if is_os('win') then
+      command('terminal cmd.exe /c (echo|set /p="changed")> ' .. path)
+    else
+      command('terminal sh -c "echo changed > ' .. path .. '"')
+    end
+    feed('a<CR>')
+    retry(nil, 3000, function()
+      eq({ 'changed' }, api.nvim_buf_get_lines(buf, 0, -1, true))
     end)
   end)
 end)

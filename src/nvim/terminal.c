@@ -743,6 +743,9 @@ void terminal_close(Terminal **termpp, int status)
 
     restore_v_event(dict, &save_v_event);
   }
+
+  did_check_timestamps = false;
+  need_check_timestamps = true;
 }
 
 static void terminal_state_change_event(void **argv)
@@ -989,6 +992,9 @@ bool terminal_enter(void)
       do_buffer(DOBUF_WIPE, DOBUF_FIRST, FORWARD, buf_handle, true);
     }
   }
+
+  did_check_timestamps = false;
+  need_check_timestamps = true;
 
   return s->got_bsl_o;
 }
