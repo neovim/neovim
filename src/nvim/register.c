@@ -71,6 +71,9 @@ yankreg_T *get_y_register(int reg)
   return &y_regs[reg];
 }
 
+/// What `p` pastes: the last-written register (x: -, yy: 0, "+yy: +, :let @"=…: 0).
+///
+/// Exception: with clipboard=unnamed/unnamedplus, `p` tries the provider first.
 yankreg_T *get_y_previous(void)
   FUNC_ATTR_PURE
 {

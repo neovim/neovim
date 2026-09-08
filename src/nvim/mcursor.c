@@ -462,8 +462,6 @@ static void mc_cascade(void)
       return;
     }
   }
-  // Optimization: one clipboard-provider sync for the whole cascade.
-  start_batch_changes();
   McSandbox sb;
   mc_sandbox_enter(&sb, edits);
 
@@ -489,7 +487,6 @@ static void mc_cascade(void)
 done:
   atoms_free(&g_atoms);
   mc_sandbox_leave(&sb);
-  end_batch_changes();
   mc_cleanup(true);
   if (handle_get_buffer(sb.bufnr) == curbuf && !curbuf->b_u_synced
       && curbuf->b_u_newhead != NULL) {
@@ -1033,6 +1030,10 @@ static void mc_reg_gather(void)
     if (gather[i] && kv_size(joined[i]) > 0) {
       write_reg_contents_ex(MC_REGS[i], joined[i].items, (ssize_t)kv_size(joined[i]), false,
                             kMTLineWise, 0);
+      if (MC_REGS[i] == '"') {
+        // If implicit clipboard is enabled (clipboard=unnamed[plus]): write the joined result.
+        set_clipboard(NUL, get_y_previous());
+      }
     }
     kv_destroy(joined[i]);
   }

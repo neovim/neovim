@@ -2891,9 +2891,9 @@ describe('multicursor', function()
       eq({ '', '' }, get_lines())
     end)
 
-    it("perf: provider syncs once per cascade with 'clipboard'", function()
+    it('clipboard: implicit clipboard=unnamed[plus], explicit "+', function()
       n.exec_lua([[
-        _G.copies = 0
+        _G.copies, _G.pastes = 0, 0
         _G.content = {}
         vim.g.clipboard = {
           name = 'test',
@@ -2905,20 +2905,40 @@ describe('multicursor', function()
           },
           paste = {
             ['+'] = function()
+              _G.pastes = _G.pastes + 1
               return _G.content
             end,
           },
         }
-        vim.o.clipboard = 'unnamedplus'
       ]])
+      local function provider()
+        return n.exec_lua('return { _G.copies, _G.pastes, _G.content }')
+      end
+
+      -- Implicit clipboard (clipboard=unnamed[plus]) is ignored during cascade.
+      -- On multicursor exit, the unnamed (") join is written to the clipboard.
+      command('set clipboard=unnamedplus')
       cursors({ 'aa bb', 'cc dd', 'ee ff' })
-      local base = n.exec_lua('return _G.copies')
       feed('dw')
       eq({ 'bb', 'dd', 'ff' }, get_lines())
-      -- One provider sync for the primary's own delete, ONE for the whole
-      -- cascade (not one per cursor), and the primary's registers win.
-      eq(base + 2, n.exec_lua('return _G.copies'))
-      eq({ 'ee ' }, n.exec_lua('return _G.content'))
+      -- Clipboard provider was updated only by the primary's "dw". Not cascaded.
+      eq({ 1, 0, { 'ee ' } }, provider())
+      feed('p') -- Pastes unnamed reg (not clipboard) per-cursor.
+      eq({ 'baa b', 'dcc d', 'fee f' }, get_lines())
+      eq({ 1, 1, { 'ee ' } }, provider())
+      clear_cursors() -- Exit: the joined yank is written to the clipboard.
+      eq({ 2, 1, { 'aa ', 'cc ', 'ee ', '' } }, provider())
+
+      -- Explicit clipboard "+".
+      command('set clipboard=')
+      cursors({ 'aa', 'bb' }, 'Qj0')
+      feed('"+yy') -- Explicit "+: writes the primary's yank to the clipboard.
+      eq({ 3, 1, { 'bb', '' } }, provider())
+      feed('"+p') -- Explicit "+: pastes the primary's clipboard at every cursor.
+      eq({ 'aa', 'bb', 'bb', 'bb' }, get_lines())
+      eq({ 3, 2, { 'bb', '' } }, provider())
+      clear_cursors()
+      eq({ 3, 2, { 'bb', '' } }, provider())
     end)
   end)
 
