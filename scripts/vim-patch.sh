@@ -952,6 +952,7 @@ is_na_patch() {
           '-I\|52\.6\|' \
           '-I\|channel-open-[^|]+\|' \
           '-I\|comment-install\|' \
+          '-I\|os_haiku.txt\|' \
           '-I\|popup-windows\|' \
           '-I\|tabpanel\|' \
           '-I\spopup window\s' \
