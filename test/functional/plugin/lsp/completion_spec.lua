@@ -1089,7 +1089,13 @@ describe('vim.lsp.completion: protocol', function()
           end,
         },
       })
-      local client_id = assert(vim.lsp.start({ name = 'dummy', cmd = server.cmd }))
+      local client_id = assert(vim.lsp.start({
+        name = 'dummy',
+        cmd = server.cmd,
+        capabilities = {
+          textDocument = { completion = { dynamicRegistration = true } },
+        },
+      }))
       assert(vim.lsp.get_client_by_id(client_id)):_register({
         {
           id = 'nvim.test.completion',

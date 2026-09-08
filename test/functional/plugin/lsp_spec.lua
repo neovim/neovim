@@ -3856,7 +3856,7 @@ describe('LSP', function()
       eq({ method = 'textDocument/formatting', supported = true, fname = tmpfile }, result[2])
       eq({ method = 'textDocument/rangeFormatting', supported = true }, result[3])
       eq({ method = 'textDocument/rangeFormatting', supported = true, fname = tmpfile }, result[4])
-      eq({ method = 'textDocument/completion', supported = true }, result[5])
+      eq({ method = 'textDocument/completion', supported = false }, result[5])
       eq({ method = 'workspace/didChangeWatchedFiles', supported = false }, result[6])
       eq(
         { method = 'workspace/didChangeWatchedFiles', supported = false, fname = tmpfile },
