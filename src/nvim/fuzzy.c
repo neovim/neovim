@@ -742,11 +742,12 @@ static int has_match(const char *const needle, const char *const haystack)
 
   while (*n_ptr) {
     const int n_char = utf_ptr2char(n_ptr);
+    const int n_upper = mb_toupper(n_char);
     bool found = false;
 
     while (*h_ptr) {
       const int h_char = utf_ptr2char(h_ptr);
-      if (n_char == h_char || mb_toupper(n_char) == h_char) {
+      if (h_char == n_char || h_char == n_upper) {
         found = true;
         h_ptr += utfc_ptr2len(h_ptr);
         break;
