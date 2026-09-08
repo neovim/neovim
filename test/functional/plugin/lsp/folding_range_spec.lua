@@ -101,13 +101,14 @@ static int foldLevel(linenr_T lnum)
     exec_lua(create_server_definition)
     bufnr = n.api.nvim_get_current_buf()
     client_id = exec_lua(function()
+      _G.folding_ranges = result
       _G.server = _G._create_server({
         capabilities = {
           foldingRangeProvider = true,
         },
         handlers = {
           ['textDocument/foldingRange'] = function(_, _, callback)
-            callback(nil, result)
+            callback(nil, _G.folding_ranges)
           end,
         },
       })
@@ -184,6 +185,31 @@ static int foldLevel(linenr_T lnum)
         [20] = '<1',
         [21] = '0',
       }, foldlevels)
+    end)
+
+    it('refreshes folding ranges on request', function()
+      local function foldlevels()
+        return exec_lua(function()
+          return { vim.lsp.foldexpr(1), vim.lsp.foldexpr(2), vim.lsp.foldexpr(3) }
+        end)
+      end
+
+      retry(nil, nil, function()
+        eq({ '>1', '<1', '0' }, foldlevels())
+      end)
+
+      exec_lua(function()
+        _G.folding_ranges = { { startLine = 1, endLine = 2 } }
+        vim.lsp._folding_range.on_refresh(
+          nil,
+          nil,
+          { method = 'workspace/foldingRange/refresh', client_id = client_id }
+        )
+      end)
+
+      retry(nil, nil, function()
+        eq({ '0', '>1', '<1' }, foldlevels())
+      end)
     end)
 
     it('updates folds in all windows', function()

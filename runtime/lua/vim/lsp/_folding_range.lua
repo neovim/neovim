@@ -289,6 +289,26 @@ function State:foldclose(kind, winid)
   end)
 end
 
+--- |lsp-handler| for the method `workspace/foldingRange/refresh`
+---
+--- Refresh requests are sent by the server to indicate a project-wide change
+--- that requires all folding ranges to be re-requested by the client.
+---@param ctx lsp.HandlerContext
+---@internal
+function M.on_refresh(err, _, ctx)
+  if err then
+    return vim.NIL
+  end
+
+  for _, state in pairs(State.active) do
+    if state.client_state[ctx.client_id] then
+      state:refresh(ctx.client_id)
+    end
+  end
+
+  return vim.NIL
+end
+
 ---@param kind lsp.FoldingRangeKind
 ---@param winid? integer
 function M.foldclose(kind, winid)

@@ -673,6 +673,11 @@ RSC['workspace/diagnostic/refresh'] = function(err, result, ctx)
   return vim.lsp.diagnostic.on_refresh(err, result, ctx)
 end
 
+---@see https://microsoft.github.io/language-server-protocol/specification/#workspace_foldingRange_refresh
+RSC['workspace/foldingRange/refresh'] = function(err, result, ctx)
+  return vim.lsp._folding_range.on_refresh(err, result, ctx)
+end
+
 ---@see https://microsoft.github.io/language-server-protocol/specification/#workspace_inlayHint_refresh
 RSC['workspace/inlayHint/refresh'] = function(err, result, ctx)
   return vim.lsp.inlay_hint.on_refresh(err, result, ctx)

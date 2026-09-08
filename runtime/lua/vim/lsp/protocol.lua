@@ -639,6 +639,9 @@ function protocol.make_client_capabilities()
       diagnostics = {
         refreshSupport = true,
       },
+      foldingRange = {
+        refreshSupport = true,
+      },
       fileOperations = {
         dynamicRegistration = false,
         didCreate = false,
