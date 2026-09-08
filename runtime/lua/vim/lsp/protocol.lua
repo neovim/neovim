@@ -481,7 +481,7 @@ function protocol.make_client_capabilities()
         rangesSupport = true,
       },
       completion = {
-        dynamicRegistration = true,
+        dynamicRegistration = false,
         completionItem = {
           snippetSupport = true,
           commitCharactersSupport = true,

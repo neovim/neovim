@@ -349,10 +349,15 @@ LSP
     "preselect". https://microsoft.github.io/language-server-protocol/specification/#completionClientCapabilities
   • `textDocument/foldingRange` |vim.lsp.foldtext()| highlights collapsed text.
     https://microsoft.github.io/language-server-protocol/specification/#textDocument_foldingRange
-  • Completon supports `CompletionList.applyKind`: a server can ask for
+  • Completion supports `CompletionList.applyKind`: a server can ask for
     `commitCharacters` and `data` from `itemDefaults` to be merged with the
     item's own values instead of replacing them.
     https://microsoft.github.io/language-server-protocol/specification/#completionItemApplyKinds
+  • Completion supports a `completionProvider` registered with
+    `client/registerCapability` instead of declared at `initialize`. Nvim does
+    not advertise `completion.dynamicRegistration` by default; set it in
+    |vim.lsp.Config| `capabilities` to opt in.
+    https://microsoft.github.io/language-server-protocol/specification/#client_registerCapability
 • `:checkhealth vim.lsp` highlights the "current buffer".
 • |vim.lsp.buf.declaration()|, |vim.lsp.buf.definition()|,
   |vim.lsp.buf.type_definition()|, and |vim.lsp.buf.implementation()|
