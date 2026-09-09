@@ -90,17 +90,19 @@ struct stl_item {
   int minwid;              ///< The minimum width of the item
   int maxwid;              ///< The maximum width of the item
   enum {
+    Disabled,
     Normal,
-    Empty,
+    NormalEmpty,
     Group,
     Separate,
+    Trunc,
+    Expression,
     Highlight,
     HighlightCombining,
     HighlightSign,
     HighlightFold,
     TabPage,
     ClickFunc,
-    Trunc,
   } type;
 };
 
