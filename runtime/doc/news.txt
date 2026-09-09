@@ -98,6 +98,8 @@ DIAGNOSTICS
 • `current_line` property of |vim.diagnostic.Opts.VirtualLines| and
   |vim.diagnostic.Opts.VirtualText| is now applied on |CursorHold| event.
   Make sure your 'updatetime' is reasonable.
+• |vim.diagnostic.toqflist()| no longer sorts its result. Use `opts.sort` of
+  |vim.diagnostic.setqflist()| or |vim.diagnostic.setloclist()| instead.
 
 EDITOR
 
@@ -267,6 +269,8 @@ DIAGNOSTICS
   field of |vim.diagnostic.config()|, if any.
 • `virtual_lines.overflow` in |vim.diagnostic.config()| controls
   how virtual lines wider than the window are displayed.
+• |vim.diagnostic.setqflist()| and |vim.diagnostic.setloclist()| accept
+  `opts.sort`: `false` keeps the input order, or pass a comparator function.
 
 EDITOR
 

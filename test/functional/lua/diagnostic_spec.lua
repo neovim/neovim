@@ -3975,6 +3975,29 @@ describe('vim.diagnostic', function()
       eq(1, #loc_list)
       eq('foo_ls: Error', loc_list[1].text)
     end)
+
+    it('respects opts.sort', function()
+      local result = exec_lua(function()
+        vim.api.nvim_win_set_buf(0, _G.diagnostic_bufnr)
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Error 1', 2, 0, 2, 1),
+          _G.make_error('Error 2', 0, 0, 0, 1),
+          _G.make_warning('Warning', 1, 0, 1, 1),
+        })
+        local lnums = function()
+          return vim.tbl_map(function(item)
+            return item.lnum
+          end, vim.fn.getloclist(0))
+        end
+        vim.diagnostic.setloclist({ open = false })
+        local sorted = lnums()
+        vim.diagnostic.setloclist({ open = false, sort = false })
+        local unsorted = lnums()
+        return { sorted, unsorted }
+      end)
+      eq({ 1, 2, 3 }, result[1])
+      eq({ 3, 1, 2 }, result[2])
+    end)
   end)
 
   describe('setqflist()', function()
@@ -4068,6 +4091,53 @@ describe('vim.diagnostic', function()
 
       eq(1, #qf_list)
       eq('foo_ls: Error', qf_list[1].text)
+    end)
+
+    it('respects opts.sort', function()
+      local result = exec_lua(function()
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Error 1', 2, 0, 2, 1),
+          _G.make_warning('Warning', 0, 0, 0, 1),
+          _G.make_error('Error 2', 1, 0, 1, 1),
+        })
+        local lnums = function()
+          return vim.tbl_map(function(item)
+            return item.lnum
+          end, vim.fn.getqflist())
+        end
+        vim.diagnostic.setqflist({ open = false, title = 'T1' })
+        local sorted = lnums()
+        vim.diagnostic.setqflist({ open = false, sort = false, title = 'T2' })
+        local unsorted = lnums()
+        vim.diagnostic.setqflist({
+          open = false,
+          title = 'T3',
+          sort = function(a, b)
+            return a.severity < b.severity
+          end,
+        })
+        local by_severity = lnums()
+        return { sorted, unsorted, by_severity }
+      end)
+
+      eq({ 1, 2, 3 }, result[1])
+      eq({ 3, 1, 2 }, result[2])
+      eq({ 3, 2, 1 }, result[3])
+    end)
+
+    it('opts.sort is stable', function()
+      local result = exec_lua(function()
+        vim.diagnostic.set(_G.diagnostic_ns, _G.diagnostic_bufnr, {
+          _G.make_error('Error 1', 0, 0, 0, 1),
+          _G.make_error('Error 2', 0, 0, 0, 1),
+          _G.make_error('Error 3', 0, 0, 0, 1),
+        })
+        vim.diagnostic.setqflist({ open = false })
+        return vim.tbl_map(function(item)
+          return item.text
+        end, vim.fn.getqflist())
+      end)
+      eq({ 'Error 1', 'Error 2', 'Error 3' }, result)
     end)
   end)
 
@@ -4175,6 +4245,22 @@ describe('vim.diagnostic', function()
         return { diagnostics, new_diagnostics }
       end)
       eq(result[1], result[2])
+    end)
+
+    it('toqflist() preserves the order of the given diagnostics', function()
+      local result = exec_lua(function()
+        local items = vim.diagnostic.toqflist({
+          _G.make_error('Error 1', 2, 0, 2, 1),
+          _G.make_error('Error 2', 0, 0, 0, 1),
+          _G.make_warning('Warning', 1, 0, 1, 1),
+        })
+
+        return vim.tbl_map(function(item)
+          return item.text
+        end, items)
+      end)
+
+      eq({ 'Error 1', 'Error 2', 'Warning' }, result)
     end)
 
     it('merge_lines=true merges continuation lines', function()
