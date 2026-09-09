@@ -1501,8 +1501,13 @@ void ex_retab(exarg_T *eap)
           if (!curbuf->b_p_et) {
             int t, s;
 
-            tabstop_fromto((colnr_T)start_vcol, (colnr_T)vcol,
-                           (int)curbuf->b_p_ts, new_vts_array, &t, &s);
+            if (curbuf->b_p_eta && start_col != 0) {
+              t = 0;
+              s = len;
+            } else {
+              tabstop_fromto((colnr_T)start_vcol, (colnr_T)vcol,
+                             (int)curbuf->b_p_ts, new_vts_array, &t, &s);
+            }
             num_tabs = t;
             num_spaces = s;
           }

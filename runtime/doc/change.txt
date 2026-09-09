@@ -959,6 +959,9 @@ This replaces each 'E' character with a euro sign.  Read more in |<Char->|.
 			spaces with tabs where appropriate.
 			With 'expandtab' on, Vim replaces all tabs with the
 			appropriate number of spaces.
+			With 'expandtabalign' on and 'expandtab' off, Vim
+			replaces non-leading tabs with the appropriate number
+			of spaces.
 			This command sets 'tabstop' to {new-tabstop} and if
 			performed on the whole file, which is default, should
 			not make any visible change.
