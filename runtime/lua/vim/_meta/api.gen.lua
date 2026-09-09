@@ -969,13 +969,14 @@ function vim.api.nvim_create_augroup(name, opts) end
 --- - callback (`function|string?`) Lua function (or Vimscript function name, if string)
 ---   called when the event(s) is triggered. Lua callback can return `lua-truthy` to delete
 ---   the autocommand. Callback receives one argument, a table with keys: [event-args]()
----     - buf: (`number`) [<abuf>]
+---     - buf: (`integer`) [<abuf>]
 ---     - data: (`any`) Arbitrary data passed from [nvim_exec_autocmds()] [event-data]()
 ---     - event: (`vim.api.keyset.events`) Name of the triggered event `autocmd-events`
 ---     - file: (`string`) [<afile>] (not expanded to a full path)
----     - group: (`number?`) Group id, if any
----     - id: (`number`) Autocommand id
+---     - group: (`integer?`) Group id, if any
+---     - id: (`integer`) Autocommand id
 ---     - match: (`string`) [<amatch>] (expanded to a full path)
+---     - win: (`integer`) id of the window for the event, see `window-ID`
 --- - command (string?) Vim command executed on event. Not allowed with {callback}.
 --- - desc (`string?`) Description (for documentation and troubleshooting).
 --- - group (`string|integer?`) Group name or id to match against.
