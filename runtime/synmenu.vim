@@ -712,15 +712,16 @@ an 50.120.510 &Syntax.Sn-Sy.Structurizr :cal SetSyn("structurizr")<CR>
 an 50.120.520 &Syntax.Sn-Sy.Stylus :cal SetSyn("stylus")<CR>
 an 50.120.530 &Syntax.Sn-Sy.Subversion\ commit :cal SetSyn("svn")<CR>
 an 50.120.540 &Syntax.Sn-Sy.Sudoers :cal SetSyn("sudoers")<CR>
-an 50.120.550 &Syntax.Sn-Sy.SVG :cal SetSyn("svg")<CR>
-an 50.120.560 &Syntax.Sn-Sy.Swayconfig :cal SetSyn("swayconfig")<CR>
-an 50.120.570 &Syntax.Sn-Sy.Swift.Swift :cal SetSyn("swift")<CR>
-an 50.120.580 &Syntax.Sn-Sy.Swift.GYB :cal SetSyn("swiftgyb")<CR>
-an 50.120.590 &Syntax.Sn-Sy.Swig :cal SetSyn("swig")<CR>
-an 50.120.600 &Syntax.Sn-Sy.Symbian\ meta-makefile :cal SetSyn("mmp")<CR>
-an 50.120.610 &Syntax.Sn-Sy.Sysctl\.conf :cal SetSyn("sysctl")<CR>
-an 50.120.620 &Syntax.Sn-Sy.Systemd :cal SetSyn("systemd")<CR>
-an 50.120.630 &Syntax.Sn-Sy.SystemVerilog :cal SetSyn("systemverilog")<CR>
+an 50.120.550 &Syntax.Sn-Sy.Svelt :cal SetSyn("svelte")<CR>
+an 50.120.560 &Syntax.Sn-Sy.SVG :cal SetSyn("svg")<CR>
+an 50.120.570 &Syntax.Sn-Sy.Swayconfig :cal SetSyn("swayconfig")<CR>
+an 50.120.580 &Syntax.Sn-Sy.Swift.Swift :cal SetSyn("swift")<CR>
+an 50.120.590 &Syntax.Sn-Sy.Swift.GYB :cal SetSyn("swiftgyb")<CR>
+an 50.120.600 &Syntax.Sn-Sy.Swig :cal SetSyn("swig")<CR>
+an 50.120.610 &Syntax.Sn-Sy.Symbian\ meta-makefile :cal SetSyn("mmp")<CR>
+an 50.120.620 &Syntax.Sn-Sy.Sysctl\.conf :cal SetSyn("sysctl")<CR>
+an 50.120.630 &Syntax.Sn-Sy.Systemd :cal SetSyn("systemd")<CR>
+an 50.120.640 &Syntax.Sn-Sy.SystemVerilog :cal SetSyn("systemverilog")<CR>
 an 50.130.100 &Syntax.T.TADS :cal SetSyn("tads")<CR>
 an 50.130.110 &Syntax.T.Tags :cal SetSyn("tags")<CR>
 an 50.130.120 &Syntax.T.TAK.TAK\ compare :cal SetSyn("takcmp")<CR>
