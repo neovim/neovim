@@ -477,7 +477,7 @@ describe('vim.lsp.completion: item conversion', function()
     }, extract_word_abbr(result.items))
   end)
 
-  it('trims trailing newline or tab from textEdit', function()
+  it('trims trailing newline or tab from textEdit and insertText', function()
     local range0 = {
       start = { line = 0, character = 0 },
       ['end'] = { line = 0, character = 0 },
@@ -494,11 +494,17 @@ describe('vim.lsp.completion: item conversion', function()
           range = range0,
         },
       },
+      {
+        kind = 7,
+        label = 'ansible.builtin.copy',
+        sortText = '3_ansible.builtin.copy',
+        insertText = 'ansible.builtin.copy:\n	',
+      },
     }
-    eq(
-      { { abbr = 'ansible.builtin.lineinfile', word = 'ansible.builtin.lineinfile:' } },
-      extract_word_abbr(complete('|', items).items)
-    )
+    eq({
+      { abbr = 'ansible.builtin.lineinfile', word = 'ansible.builtin.lineinfile:' },
+      { abbr = 'ansible.builtin.copy', word = 'ansible.builtin.copy:' },
+    }, extract_word_abbr(complete('|', items).items))
   end)
 
   it('handles multiword textEdits', function()
