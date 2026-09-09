@@ -131,8 +131,21 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
   cmdmod_T cmod;
   char *cmdline = arena_memdupz(arena, str.data, str.size);
   const char *errormsg = NULL;
+  bool parsed = false;
 
-  if (!parse_cmdline(&cmdline, &ea, &cmod, &errormsg)) {
+  TRY_WRAP(err, {
+    parsed = parse_cmdline(&cmdline, &ea, &cmod, &errormsg);
+  });
+
+  if (ERROR_SET(err)) {
+    if (parsed) {
+      // parse_cmdline() only undoes the modifiers itself when it fails.
+      undo_cmdmod(&cmod);
+    }
+    goto end;
+  }
+
+  if (!parsed) {
     if (errormsg != NULL) {
       api_set_error(err, kErrorTypeException, "Parsing command-line: %s", errormsg);
     } else {
