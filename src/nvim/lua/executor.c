@@ -81,6 +81,9 @@ static int in_fast_callback = 0;
 // Initialized in nlua_init().
 static lua_State *global_lstate = NULL;
 
+// Whether Nvim was started with `-l`.
+static bool nlua_is_lua_script = false;
+
 // Tracks the currently executing Lua thread (main or coroutine).
 lua_State *active_lstate = NULL;
 
@@ -723,6 +726,10 @@ static void nlua_common_vim_init(lua_State *lstate, bool is_thread)
   nlua_ref_state_t *ref_state = nlua_new_ref_state(lstate, is_thread);
   lua_setfield(lstate, LUA_REGISTRYINDEX, "nlua.ref_state");
 
+  // vim._is_lua_script
+  lua_pushboolean(lstate, nlua_is_lua_script);
+  lua_setfield(lstate, -2, "_is_lua_script");
+
   // vim.is_thread
   lua_pushboolean(lstate, is_thread);
   lua_setfield(lstate, LUA_REGISTRYINDEX, "nvim.thread");
@@ -1003,6 +1010,8 @@ static bool nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 /// Initializes global Lua interpreter, or exits Nvim on failure.
 void nlua_init(char **argv, int argc, int lua_arg0)
 {
+  nlua_is_lua_script = lua_arg0 > 0;
+
 #ifdef NLUA_TRACK_REFS
   if (os_env_exists("NVIM_LUA_NOTRACK", true)) {
     nlua_track_refs = true;

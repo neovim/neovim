@@ -1,5 +1,5 @@
 -- Keep default relative paths for nvim -l only.
-if not (arg and arg[0]) then
+if not vim._is_lua_script then
   local function remove_cwd_template(path, pattern)
     local result = {}
     for entry in (path .. ';'):gmatch('(.-);') do

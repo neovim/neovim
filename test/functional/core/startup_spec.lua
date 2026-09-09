@@ -162,9 +162,9 @@ describe('startup', function()
       )
     end)
 
-    it('protects worker package paths in -l mode', function()
+    it('includes current directory in worker package paths in -l mode', function()
       assert_l_out(
-        'false\nfalse',
+        'true\ntrue',
         { '--clean' },
         nil,
         '-',
