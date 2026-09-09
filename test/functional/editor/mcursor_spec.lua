@@ -1730,6 +1730,13 @@ describe('multicursor', function()
       eq({ ' x', ' d' }, get_lines())
       -- The operator is normalized ("translated"): visual "x" == "d".
       eq({ 'viweed' }, atoms_tail(1))
+
+      -- A motion that fails (beeps) at primary is skipped. E.g. "j" at EOB.
+      clear_cursors()
+      cursors({ 'a', 'b', 'c', 'd', 'e', 'f' }, 'QjQ4j') -- Cursors at lines 1-2, primary on the last.
+      feed('Vjd')
+      eq({ 'c', 'd', 'e' }, get_lines())
+      eq({ 'Vd' }, atoms_tail(1))
     end)
 
     it('shows selections opened by :normal #41705', function()
@@ -2049,6 +2056,21 @@ describe('multicursor', function()
       feed('$')
       feed('x')
       eq({ 'ab', 'defg' }, get_lines())
+
+      -- A motion that fails (beeps) at primary is not replayed. E.g. "j" at EOB.
+      clear_cursors()
+      cursors({ 'a', 'b', 'c' }, 'QjQj') -- Cursors at lines 1-2, primary on the last line.
+      feed('q=')
+      feed('j')
+      feed('x')
+      eq({ '', '', '' }, get_lines())
+      -- "0" at col 0 does not move the primary, but also does not fail/beep, so it cascades.
+      clear_cursors()
+      cursors({ 'abc', 'def' }, 'llQj0') -- Cursor at column 2, primary at column 0.
+      feed('q=')
+      feed('0')
+      feed('x')
+      eq({ 'bc', 'ef' }, get_lines())
     end)
 
     it('cursors follow mapped motions (nnoremap j gj)', function()
