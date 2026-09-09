@@ -2906,7 +2906,7 @@ static void replace_do_bs(int limit_col)
       int vcol = start_vcol;
       for (int i = 0; i < ins_len; i++) {
         vcol += win_chartabsize(curwin, p + i, vcol);
-        i += utfc_ptr2len(p) - 1;
+        i += utfc_ptr2len(p + i) - 1;
       }
       vcol -= start_vcol;
 
