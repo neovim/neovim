@@ -387,18 +387,55 @@ describe(':helptags', function()
     -- CRLF helpfile: "\r" must not confuse the parser into finding tags in an example.
     write_file('Xhelptags/doc/Xe.txt', '*Xe*\r\n>\r\n\t+-----+\r\n\t|/* a.c */  |/* b.c */  |\r\n')
 
-    command('helptags Xhelptags/doc')
-
-    eq(
-      eval("['Xa	Xa.txt	/*Xa*','Xb	Xb.txt	/*Xb*','Xc	sub/Xc.txt	/*Xc*','Xe	Xe.txt	/*Xe*']"),
-      eval("readfile('Xhelptags/doc/tags')")
-    )
+    for _, dir in ipairs({
+      'Xhelptags/doc',
+      './Xhelptags/doc',
+      fn.fnamemodify('Xhelptags/doc', ':p'),
+    }) do
+      command('helptags ' .. fn.fnameescape(dir))
+      eq({
+        'Xa\tXa.txt\t/*Xa*',
+        'Xb\tXb.txt\t/*Xb*',
+        'Xc\tsub/Xc.txt\t/*Xc*',
+        'Xe\tXe.txt\t/*Xe*',
+      }, fn.readfile('Xhelptags/doc/tags'))
+    end
 
     command('help Xa')
     eq('*Xa*', api.nvim_get_current_line())
 
     command('help Xc')
     eq('*Xc*', api.nvim_get_current_line())
+  end)
+
+  it('ignores tags in examples and resumes after unindented text', function()
+    for _, newline in ipairs({ '\n', '\r\n' }) do
+      write_file(
+        'Xhelptags/doc/Xa.txt',
+        table.concat({
+          '*Xa* *Xz*',
+          'Some ordinary prose.',
+          'prefix*invalid* *invalid*suffix *bad|tag* **',
+          '>lua',
+          '',
+          '  *example*',
+          'End of example.',
+          '',
+          '  *Xc*',
+          'More ordinary prose.',
+          '*Xd*', -- No final newline.
+        }, newline),
+        true
+      )
+      command('helptags Xhelptags/doc')
+      eq({
+        'Xa\tXa.txt\t/*Xa*',
+        'Xb\tXb.txt\t/*Xb*',
+        'Xc\tXa.txt\t/*Xc*',
+        'Xd\tXa.txt\t/*Xd*',
+        'Xz\tXa.txt\t/*Xz*',
+      }, fn.readfile('Xhelptags/doc/tags'))
+    end
   end)
 
   it('overwrites existing tags file', function()
@@ -450,7 +487,7 @@ describe(':helptags', function()
     -- duplicate tags in different files
     write_file('Xhelptags/doc/Xd.txt', '*Xa*', nil, true)
     local msg = t.pcall_err(command, 'helptags Xhelptags/doc')
-    eq(true, msg:find('E154') ~= nil)
+    eq(true, msg:find('E154: Duplicate tag "Xa" in Xd.txt and Xa.txt', 1, true) ~= nil)
 
     -- tags file should still be generated
     eq(1, eval("filereadable('Xhelptags/doc/tags')"))
@@ -461,7 +498,7 @@ describe(':helptags', function()
     write_file('Xhelptags/doc/Xa.txt', '\n*Xa*', nil, true)
 
     msg = t.pcall_err(command, 'helptags Xhelptags/doc')
-    eq(true, msg:find('E154') ~= nil)
+    eq(true, msg:find('E154: Duplicate tag "Xa" in Xa.txt', 1, true) ~= nil)
 
     eq(1, eval("filereadable('Xhelptags/doc/tags')"))
 

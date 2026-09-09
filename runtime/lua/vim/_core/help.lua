@@ -417,17 +417,46 @@ end
 ---Report duplicate tags (as errmsg, not exception-throwing error).
 ---@param tags string[] sorted tags file lines
 local function report_duplicates(tags)
-  local prevtag, prevfn = '', ''
+  local prevtag
 
-  for _, tagline in ipairs(tags) do
-    local curtag, curfn = tagline:match('^([^\t]*)\t([^\t]*)')
+  for i, tagline in ipairs(tags) do
+    local curtag = tagline:match('^[^\t]*')
     if curtag == prevtag then
+      local curfn = tagline:match('\t([^\t]*)')
+      local prevfn = tags[i - 1]:match('\t([^\t]*)')
       local filenames = prevfn ~= curfn and (curfn .. ' and ' .. prevfn) or curfn
       echo_err(('E154: Duplicate tag "%s" in %s'):format(curtag, filenames))
     end
     prevtag = curtag
-    prevfn = curfn
   end
+end
+
+local helptags_pattern ---@type vim.lpeg.Pattern
+do
+  local P, S, R, B, C, Ct = vim.lpeg.P, vim.lpeg.S, vim.lpeg.R, vim.lpeg.B, vim.lpeg.C, vim.lpeg.Ct
+  local any = P(1)
+  local eof = -any
+  local space = S(' \t')
+  -- Accept LF, CRLF, and an unterminated final line.
+  local newline = P('\r') ^ -1 * P('\n')
+  local line_end = newline + P('\r') ^ -1 * eof
+  local line_start = -B(any) + B(P('\n'))
+  -- Assert surrounding whitespace without consuming it, so adjacent tags can share it.
+  local tag = (line_start + B(space))
+    * P('*')
+    * C((any - S('* \t|\n')) ^ 1)
+    * P('*')
+    * #(space + line_end)
+  -- An example continues through blank or indented lines.
+  local example_line = newline + space * (any - P('\n')) ^ 0 * (P('\n') + eof)
+  local example = (line_start + B(P(' ')))
+    * P('>')
+    * R('az', '09') ^ 0
+    * line_end
+    * example_line ^ 0
+  -- Skip ordinary text in spans; consume invalid markers one character at a time.
+  local text = (any - S('*>')) ^ 1 + any
+  helptags_pattern = Ct((example + tag + text) ^ 0)
 end
 
 ---Extract tags from {file} and add to list of tags. Modifies {tags}.
@@ -435,43 +464,17 @@ end
 ---@param file string
 ---@param name string Path of {file} relative to the help directory, as stored in the tags file.
 local function extract_tags(tags, file, name)
-  local ts = vim.treesitter
-  local ok, source = pcall(vim.fn.readblob, file)
-  if not ok then
+  local f = io.open(file, 'r')
+  if not f then
     echo_err(('E153: Unable to open %s for reading'):format(file))
     return
   end
-  --- @cast source string
-  -- The grammar treats "\r" as part of a word, so CRLF files would yield bogus tags.
-  source = source:gsub('\r\n', '\n')
+  -- Read once to avoid stdio calls and locking for every line.
+  local source = assert(f:read('*a'))
+  f:close()
 
-  local query = ts.query.parse('vimdoc', '(tag (word) @tagname)')
-  local parser = ts.get_string_parser(source, 'vimdoc')
-
-  local tree = assert(parser:parse())
-  local root = tree[1]:root()
-  for _, match in query:iter_matches(root, source) do
-    for id, node in pairs(match) do
-      if query.captures[id] == 'tagname' then
-        -- Only accept a *tag* when it is closed, has no "|" (which would break |links|), there is
-        -- whitespace (or nothing) before it, and followed by whitespace or end-of-line.
-        local tag_node = assert(node[1]:parent())
-        local _, _, start_byte = tag_node:start()
-        local _, _, end_byte = tag_node:end_()
-        local before = source:sub(start_byte, start_byte)
-        local after = source:sub(end_byte + 1, end_byte + 1)
-        local tagname = ts.get_node_text(node[1], source)
-        if
-          source:sub(end_byte, end_byte) == '*'
-          and not tagname:find('|', 1, true)
-          and before:match('^[ \t\n\r]?$')
-          and after:match('^[ \t\n\r]?$')
-        then
-          local escaped = tagname:gsub('[\\/]', '\\%0')
-          table.insert(tags, ('%s\t%s\t/*%s*'):format(tagname, name, escaped))
-        end
-      end
-    end
+  for _, tagname in ipairs(helptags_pattern:match(source)) do
+    tags[#tags + 1] = ('%s\t%s\t/*%s*'):format(tagname, name, tagname:gsub('[\\/]', '\\%0'))
   end
 end
 
@@ -482,6 +485,15 @@ end
 --- @param include_helptags_tag boolean true if the 'help-tags' tag should be included
 --- @param ignore_writeerr boolean don't report a tags file that cannot be written
 local function gen_tagsfile(helpfiles, dir, outpath, include_helptags_tag, ignore_writeerr)
+  -- Avoid scanning helpfiles when the output cannot be written (:helptags ALL).
+  local f = io.open(outpath, 'w')
+  if not f then
+    if not ignore_writeerr then
+      echo_err(('E152: Cannot open %s for writing'):format(outpath))
+    end
+    return
+  end
+
   ---@type string[] Tags file lines: "tag<Tab>file<Tab>search command".
   local tags = {}
 
@@ -502,13 +514,6 @@ local function gen_tagsfile(helpfiles, dir, outpath, include_helptags_tag, ignor
   report_duplicates(tags)
 
   -- (4) write tags to file
-  local f = io.open(outpath, 'w')
-  if not f then
-    if not ignore_writeerr then
-      echo_err(('E152: Cannot open %s for writing'):format(outpath))
-    end
-    return
-  end
   for _, tag in ipairs(tags) do
     f:write(tag, '\n')
   end
@@ -530,13 +535,6 @@ function M.gen_tags(dir, include_index_tag)
   vim.validate('dir', dir, 'string', true)
   vim.validate('include_index_tag', include_index_tag, 'boolean', true)
 
-  if not pcall(function()
-    vim.treesitter.language.add('vimdoc')
-  end) then
-    echo_err('Cannot generate helptags: no "vimdoc" parser')
-    return
-  end
-
   local dirs = dir and { vim.fs.normalize(dir) } or vim.api.nvim_get_runtime_file('doc', true)
   local vimruntime = vim.fs.normalize(vim.fs.joinpath(vim.env.VIMRUNTIME, 'doc'))
 
@@ -546,9 +544,12 @@ function M.gen_tags(dir, include_index_tag)
   end
 
   for _, directory in ipairs(dirs) do
+    -- Resolve once for traversal and relpath(), avoiding getcwd() for every file.
+    -- Keep directory for messages and the VIMRUNTIME comparison.
+    local absdir = vim.fs.abspath(directory)
     local files = vim.fs.find(function(name, _)
       return helpfile_lang(name) ~= nil
-    end, { path = directory, type = 'file', limit = math.huge })
+    end, { path = absdir, type = 'file', limit = math.huge })
 
     if vim.tbl_isempty(files) then
       echo_err(('E151: No match: %s'):format(vim.fs.joinpath(directory, '**/*.txt')))
@@ -571,7 +572,7 @@ function M.gen_tags(dir, include_index_tag)
       local ignore_writeerr = dir == nil
       gen_tagsfile(
         langfiles,
-        directory,
+        absdir,
         outpath,
         include_index_tag or directory == vimruntime,
         ignore_writeerr
