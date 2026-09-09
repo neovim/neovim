@@ -1824,6 +1824,20 @@ func Test_edit_startinsert_in_terminal()
   bwipe!
 endfunc
 
+" Backspacing in Virtual Replace mode over a wide character that replaced
+" several narrower ones must not eat the padding that follows.
+func Test_edit_vreplace_bs_multibyte()
+  new
+  call setline(1, 'aé    xyz')
+  call feedkeys("gR\u4e00\<BS>\e", 'xt')
+  call assert_equal('aé    xyz', getline(1))
+
+  call setline(1, 'a€  xyz')
+  call feedkeys("gR\u4e00\<BS>\e", 'xt')
+  call assert_equal('a€  xyz', getline(1))
+  bwipe!
+endfunc
+
 " Test for :startreplace and :startgreplace
 func Test_edit_startreplace()
   new
