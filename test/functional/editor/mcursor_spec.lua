@@ -286,6 +286,128 @@ describe('multicursor', function()
     end)
   end)
 
+  describe('follow-mode (q=)', function()
+    it('motions cascade to other cursors when primary moves', function()
+      cursors({ 'aaa', 'bbb', 'ccc' })
+      feed('q=')
+      feed('l')
+      eq({ { 0, 1 }, { 1, 1 } }, anchors())
+      eq({ 3, 1 }, api.nvim_win_get_cursor(0))
+      feed('k')
+      eq({ 2, 1 }, api.nvim_win_get_cursor(0))
+      eq({ { 0, 1 } }, anchors())
+      feed('q=')
+    end)
+
+    it('"j" at end of buffer does not move or delete other cursors #41808', function()
+      fn.setline(1, { 'hello', 'world', 'foo', 'bar', 'baz', 'test' })
+      -- Create a cursor on line 2, primary on line 6 (end of buffer)
+      feed('2G0Q')
+      feed('6G0')
+      eq(1, ncursors())
+      eq({ { 1, 0 } }, anchors())
+      eq({ 6, 0 }, api.nvim_win_get_cursor(0))
+
+      feed('q=')
+      -- Primary cursor is on the last line; "j" cannot move it
+      feed('jjjjj')
+      -- Primary cursor stayed at line 6
+      eq({ 6, 0 }, api.nvim_win_get_cursor(0))
+      -- Secondary cursor stayed at line 2 and was not deduplicated
+      eq(1, ncursors())
+      eq({ { 1, 0 } }, anchors())
+
+      -- Moving primary back up moves secondary cursor in sync
+      feed('k')
+      eq({ 5, 0 }, api.nvim_win_get_cursor(0))
+      eq({ { 0, 0 } }, anchors())
+      feed('q=')
+    end)
+
+    it('"k" at top of buffer does not move or delete other cursors #41808', function()
+      fn.setline(1, { 'hello', 'world', 'foo', 'bar', 'baz', 'test' })
+      -- Cursor on line 5, primary on line 1 (top of buffer)
+      feed('5G0Q')
+      feed('gg0')
+      eq(1, ncursors())
+      eq({ { 4, 0 } }, anchors())
+      eq({ 1, 0 }, api.nvim_win_get_cursor(0))
+
+      feed('q=')
+      -- "k" cannot move primary cursor past line 1
+      feed('kkkkk')
+      eq({ 1, 0 }, api.nvim_win_get_cursor(0))
+      eq(1, ncursors())
+      eq({ { 4, 0 } }, anchors())
+
+      -- Moving down moves both cursors in sync
+      feed('j')
+      eq({ 2, 0 }, api.nvim_win_get_cursor(0))
+      eq({ { 5, 0 } }, anchors())
+      feed('q=')
+    end)
+
+    it('"h" at column 0 does not move or delete other cursors #41808', function()
+      fn.setline(1, { 'abcdefgh', 'abcdefgh' })
+      -- Cursor on line 2 col 4, primary on line 1 col 0
+      feed('2G04lQ')
+      feed('gg0')
+      eq(1, ncursors())
+      eq({ { 1, 4 } }, anchors())
+      eq({ 1, 0 }, api.nvim_win_get_cursor(0))
+
+      feed('q=')
+      feed('hhhhh')
+      eq({ 1, 0 }, api.nvim_win_get_cursor(0))
+      eq(1, ncursors())
+      eq({ { 1, 4 } }, anchors())
+      feed('q=')
+    end)
+
+    it('mapped motion does not cascade when primary cannot move #41808', function()
+      fn.setline(1, { 'hello', 'world', 'foo' })
+      feed('2G0Q')
+      feed('3G0')
+      eq(1, ncursors())
+      eq({ { 1, 0 } }, anchors())
+      eq({ 3, 0 }, api.nvim_win_get_cursor(0))
+
+      command('nnoremap j gj')
+      feed('q=')
+      feed('jjjj')
+      eq({ 3, 0 }, api.nvim_win_get_cursor(0))
+      eq(1, ncursors())
+      eq({ { 1, 0 } }, anchors())
+      feed('q=')
+    end)
+
+    it(
+      '{visual}Q follow-mode does not delete cursors when hitting buffer boundary #41808',
+      function()
+        fn.setline(1, { 'hello', 'world', 'foo', 'bar', 'baz', 'test' })
+        feed('2G0Q')
+        feed('4G0')
+        feed('1q=')
+        feed('j') -- primary 5, other 3
+        feed('j') -- primary 6, other 4
+        eq({ 6, 0 }, api.nvim_win_get_cursor(0))
+        eq({ { 3, 0 } }, anchors())
+
+        -- Repeated "j" at the end of the buffer
+        feed('jjj')
+        eq({ 6, 0 }, api.nvim_win_get_cursor(0))
+        eq({ { 3, 0 } }, anchors())
+        eq(1, ncursors())
+
+        -- Move back up
+        feed('k')
+        eq({ 5, 0 }, api.nvim_win_get_cursor(0))
+        eq({ { 2, 0 } }, anchors())
+        feed('q=')
+      end
+    )
+  end)
+
   describe('mouse', function()
     it('<C-LeftMouse> toggles a cursor at the click, without moving the primary', function()
       command('set mousetime=0') -- repeated clicks must not count as double-clicks

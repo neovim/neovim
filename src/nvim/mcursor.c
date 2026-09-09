@@ -514,13 +514,13 @@ void mc_clock_edge(bool map_edit, bool map_moved)
     for (size_t i = 0; !has_edit && i < kv_size(g_atoms); i++) {
       has_edit = kv_A(g_atoms, i).type != kAMotion;
     }
-    if (has_edit || mc_follow_motion
+    if (has_edit || (mc_follow_motion && (!atom_composite_active() || map_moved))
         // Cascade if a mapping left a selection open ("nn x w<Cmd>norm! viw<CR>").
         || Visual.active) {
       mc_cascade();
     } else {
-      // A pure-motion mapping without "q=" follow-motion: do not cascade
-      // (the atoms are still emitted as one composite CmdAtom).
+      // A pure-motion mapping without "q=" follow-motion (or one where the cursor did not
+      // move): do not cascade (the atoms are still emitted as one composite CmdAtom).
       atoms_free(&g_atoms);
     }
   }

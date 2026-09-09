@@ -1368,7 +1368,8 @@ static bool atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
     bool motion = (nv_is_motion(ca->cmdchar) || special_motion) && !changed
                   && !finish_op && !jump_cmd;
     // Mapping-internal motions are part of its recipe: queue them, the clock edge decides.
-    bool follow = (mc_following() || mapped) && motion;
+    // For follow-mode motions, cascade only if the primary cursor actually moved.
+    bool follow = (mapped || (mc_following() && atom_origin_moved(old->origin))) && motion;
 
     //
     // Route: decide the atom type and push it.
