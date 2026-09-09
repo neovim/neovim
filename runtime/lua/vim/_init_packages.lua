@@ -1,3 +1,22 @@
+-- Remove the default current-directory entries from Lua's package paths. These
+-- entries are preserved for `nvim -l`, where loading from the current directory
+-- is part of the script-mode interface. Worker states have no `arg[0]`, so
+-- they remain protected even when the main state runs in script mode.
+if not (arg and arg[0]) then
+  local function remove_cwd_template(path, pattern)
+    local result = {}
+    for entry in (path .. ';'):gmatch('(.-);') do
+      if not entry:match(pattern) then
+        result[#result + 1] = entry
+      end
+    end
+    return table.concat(result, ';')
+  end
+
+  package.path = remove_cwd_template(package.path, '^%.[/\\\\]%?%.lua$')
+  package.cpath = remove_cwd_template(package.cpath, '^%.[/\\\\]%?%.[^/\\\\;]+$')
+end
+
 local pathtrails = {} --- @type table<string,true> ta
 vim._so_trails = {} --- @type string[]
 for s in (package.cpath .. ';'):gmatch('[^;]*;') do

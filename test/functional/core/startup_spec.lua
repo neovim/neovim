@@ -145,6 +145,23 @@ describe('startup', function()
       eq('foo\n', out)
     end)
 
+    it('includes current directory in package paths', function()
+      assert_l_out(
+        'true\ntrue\n',
+        { '--clean' },
+        nil,
+        '-',
+        [[
+          local function has_cwd_template(path)
+            return path:match('^%.[/\\\\]%?%.lua;') ~= nil
+              or path:match('^%.[/\\\\]%?%.[^/\\\\;]+;') ~= nil
+          end
+          print(has_cwd_template(package.path))
+          print(has_cwd_template(package.cpath))
+        ]]
+      )
+    end)
+
     it('failure modes', function()
       -- nvim -l <empty>
       local proc = n.spawn_wait('-l')
