@@ -381,4 +381,16 @@ describe('package.path and package.cpath', function()
     not_matches('^%.[/\\\\]%?%.lua', fn.luaeval('package.path'))
     not_matches('^%.[/\\\\]%?%.[^/\\\\;]+', fn.luaeval('package.cpath'))
   end)
+
+  it('remove current directory from all package path entries', function()
+    clear {
+      args_rm = { '--cmd' },
+      env = {
+        LUA_PATH = 'before;./?.lua;after;./?.lua',
+        LUA_CPATH = 'before;./?.so;after;./?.so',
+      },
+    }
+    eq('before;after', fn.luaeval('package.path'))
+    eq('before;after', fn.luaeval('package.cpath'))
+  end)
 end)

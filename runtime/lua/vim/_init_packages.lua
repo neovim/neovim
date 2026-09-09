@@ -1,7 +1,4 @@
--- Remove the default current-directory entries from Lua's package paths. These
--- entries are preserved for `nvim -l`, where loading from the current directory
--- is part of the script-mode interface. Worker states have no `arg[0]`, so
--- they remain protected even when the main state runs in script mode.
+-- Keep default relative paths for nvim -l only.
 if not (arg and arg[0]) then
   local function remove_cwd_template(path, pattern)
     local result = {}
