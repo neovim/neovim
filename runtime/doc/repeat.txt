@@ -447,8 +447,13 @@ LIMITATIONS						*mcursor-limitations*
 - During Insert-mode completion, live mirroring pauses if a preview could
   shift or overlap the primary's completion (same-line edits before the
   primary, or line insertions/deletions before it).
-- Cursors on the same line can be lost or misplaced by an edit that shifts
-  columns (e.g. inserting text).
+- Explicit clipboard registers (`"*yy`, `"+yy`) are global, not per-cursor. On
+  multicursor exit, you can set the clipboard to the joined yank: >
+      :let @+=@"
+- Implicit 'clipboard' ("unnamed"/"unnamedplus") updates the clipboard on
+  multicursor exit.
+- Same-line cursors may be lost/misplaced by an edit that shifts columns (e.g.
+  inserting text).
 - Time-travel undo (|g-|, |g+|, |:earlier|) clears all cursors.
 - Reloading/unloading a buffer (|:edit!|, 'autoread') clears its cursors
   (extmarks limitation).
