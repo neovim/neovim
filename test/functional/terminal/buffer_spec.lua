@@ -639,6 +639,23 @@ end)
 describe(':terminal buffer', function()
   before_each(clear)
 
+  it('exit emits FileChangedShell #41759', function()
+    local path = t.tmpname()
+    write_file(path, 'foo\n')
+    command('edit ' .. path)
+    command('set noautoread') -- Disable 'autoread' to exercise :checktime specifically.
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'local change' })
+    n.exec('let g:fcs = 0 | autocmd FileChangedShell * let g:fcs = 1')
+    write_file(path, 'external change\n')
+
+    -- Terminal in another tab, so returning to the buffer is not what triggers the check.
+    command('tabnew')
+    fn.jobstart({ testprg('shell-test'), 'EXIT', '0' }, { term = true })
+    retry(nil, 10000, function()
+      eq(1, api.nvim_get_var('fcs'))
+    end)
+  end)
+
   it('can resume suspended PTY process running in fish', function()
     skip(is_os('win'), 'N/A for Windows')
     skip(fn.executable('fish') == 0, 'missing "fish" command')

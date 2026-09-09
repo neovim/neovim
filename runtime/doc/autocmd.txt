@@ -779,7 +779,7 @@ FileChangedShell		When Vim notices that the modification time of
 				change or when the size of the file changes.
 				|timestamp|
 				Triggered for each changed file, after:
-				- executing a shell command
+				- executing a shell command or |:terminal| job
 				- |:checktime|
 				- |FocusGained|
 
@@ -1169,8 +1169,9 @@ SessionWritePost		After writing a session file by calling
 ShellCmdPost			After executing a shell command with |:!cmd|,
 				|:make| and |:grep|.  Can be used to check for
 				any changed files.
+
 				For non-blocking shell commands, see
-				|job-control|.
+				|TermClose| |job-control|.
 
 							*ShellFilterPost*
 ShellFilterPost			After executing a shell command with

@@ -729,6 +729,11 @@ void terminal_close(Terminal **termpp, int status)
     return;
   }
 
+  if (status >= 0) {  // The job may have changed files on disk, like `do_shell` (":!cmd").
+    did_check_timestamps = false;
+    need_check_timestamps = true;
+  }
+
   if (buf && !is_autocmd_blocked()) {
     save_v_event_T save_v_event;
     dict_T *dict = get_v_event(&save_v_event);
