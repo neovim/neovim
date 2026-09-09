@@ -48,14 +48,19 @@ describe('nvim_get_commands', function()
     keepscript = false,
     script_id = 0,
   }
-  before_each(clear)
+
+  before_each(function()
+    clear()
+    command('helptags $VIMRUNTIME/doc')
+  end)
 
   it('gets empty list if no commands were defined', function()
     eq({}, api.nvim_get_commands({ builtin = false }))
   end)
 
   it('validation', function()
-    eq('builtin=true not implemented', pcall_err(api.nvim_get_commands, { builtin = true }))
+    matches('Invalid command', pcall_err(api.nvim_get_commands, { builtin = true, name = 'foo' }))
+    matches('Invalid command', pcall_err(api.nvim_get_commands, { builtin = true, name = '#!' }))
     eq("Invalid key: 'foo'", pcall_err(api.nvim_get_commands, { foo = 'blah' }))
   end)
 
@@ -300,6 +305,73 @@ describe('nvim_get_commands', function()
       assert(cmd["preview"]() == 4)
       assert(cmd["complete"]() == 5)
     ]]
+  end)
+
+  it('gets builtin commands', function()
+    local t_cmd = {
+      addr = vim.NIL,
+      bang = false,
+      bar = true,
+      count = vim.NIL,
+      desc = 'Synonym for copy.',
+      name = 't',
+      nargs = '*',
+      range = '.',
+      register = false,
+    }
+    eq(t_cmd, api.nvim_get_commands({ builtin = true, name = 't', desc = true }).t)
+    t_cmd.desc = ''
+    eq(t_cmd, api.nvim_get_commands({ builtin = true, name = 't', desc = false }).t)
+    local builtin = api.nvim_get_commands({ builtin = true, desc = true })
+    eq(true, vim.tbl_count(builtin) > 0)
+    local user = api.nvim_get_commands({ builtin = false })
+    local all_completable = fn.getcompletion('', 'command')
+    eq(vim.tbl_count(builtin) + vim.tbl_count(user), #all_completable)
+
+    command('command Foo echo "foo"')
+    command('command Bar echo "bar"')
+    eq(1, vim.tbl_count(api.nvim_get_commands({ name = 'Foo' })))
+    eq({}, api.nvim_get_commands({ name = 'Nonexistent' }))
+
+    command('command -buffer BufFoo echo "foo"')
+    eq(1, vim.tbl_count(api.nvim_buf_get_commands(0, { name = 'BufFoo' })))
+  end)
+
+  it('builtin "desc" shows first block from help file', function()
+    local builtin = api.nvim_get_commands({ builtin = true, desc = true })
+    matches('^Quit the current window%.', builtin.quit.desc)
+    matches('^Create a quickfix list using the result', builtin.cexpr.desc)
+    matches('^Write the whole buffer to the current file%.', builtin.write.desc)
+    matches('^Split window and go to', builtin.sbNext.desc)
+    matches('^synonym for :number%.', builtin['#'].desc)
+    matches('^Repeat last :substitute with same search pattern', builtin['&'].desc)
+    matches('^Repeat the commands between :for and :endfor', builtin['for'].desc)
+    eq(builtin['for'].desc, builtin['endfor'].desc)
+    matches('^Map the key sequence', builtin.cmap.desc)
+    eq(builtin.cmap.desc, builtin.tmap.desc)
+    matches('^Show all buffers', builtin.files.desc)
+    -- Description stops at the first code block: no embedded example/table text.
+    matches('^The ":amenu" command can be used', builtin.amenu.desc)
+    eq(nil, builtin.amenu.desc:find('appended', 1, true))
+    -- Truncated to the first sentence.
+    matches('%.$', builtin['while'].desc)
+    eq(nil, builtin['while'].desc:find('execution continues', 1, true))
+    -- Column 0 may hold a normal-mode key (`ga`) instead of an Ex command.
+    matches('^Print the ascii value', builtin.ascii.desc)
+    -- Description written on the tag line itself.
+    matches('^Deprecated alias', builtin.rviminfo.desc)
+    -- Blank line between the tag line and the description.
+    matches('^Manage trusted files', builtin.trust.desc)
+    -- Two-column table under `:delete` is not prose.
+    eq(nil, builtin.delete.desc:find('delete and list', 1, true))
+    -- Empty beats wrong: `*:sign*` heads a section, `*[b*` interrupts
+    -- `*:bNext*`, and Nvim does not document `:tcl`.
+    eq({ '', '', '' }, { builtin.sign.desc, builtin.bNext.desc, builtin.tcl.desc })
+    -- No description leaks help markup or the column layout.
+    for name, cmd in pairs(builtin) do
+      eq(nil, cmd.desc:find('\t'), name)
+      eq(nil, cmd.desc:find('%*%S+%*'), name)
+    end
   end)
 end)
 

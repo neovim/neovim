@@ -100,7 +100,10 @@ typedef struct {
 } Dict(keymap_del);
 
 typedef struct {
+  OptionalKeys is_set__get_commands_;
   Boolean builtin;
+  Boolean desc;
+  String name;
 } Dict(get_commands);
 
 typedef struct {
