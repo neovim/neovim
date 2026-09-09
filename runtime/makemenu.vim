@@ -732,6 +732,7 @@ SynMenu Sn-Sy.Structurizr:structurizr
 SynMenu Sn-Sy.Stylus:stylus
 SynMenu Sn-Sy.Subversion\ commit:svn
 SynMenu Sn-Sy.Sudoers:sudoers
+SynMenu Sn-Sy.Svelt:svelte
 SynMenu Sn-Sy.SVG:svg
 SynMenu Sn-Sy.Swayconfig:swayconfig
 SynMenu Sn-Sy.Swift.Swift:swift

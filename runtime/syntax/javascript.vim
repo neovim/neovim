@@ -142,6 +142,13 @@ let b:current_syntax = "javascript"
 if main_syntax == 'javascript'
   unlet main_syntax
 endif
+
+" Svelte 5 runes ($state, $derived, $props, ...) inside .svelte.js modules.
+if expand('%:t') =~# '\.svelte\.js$'
+  syntax match svelteRune "\$\w\+" containedin=ALL
+  highlight default link svelteRune Statement
+endif
+
 let &cpo = s:cpo_save
 unlet s:cpo_save
 
