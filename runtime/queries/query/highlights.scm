@@ -55,7 +55,7 @@
 
 ((parameters
   (identifier) @number)
-  (#match? @number "^[-+]?[0-9]+(.[0-9]+)?$"))
+  (#match? @number "^[-+]?[0-9]+([.][0-9]+)?$"))
 
 ((program
   .
