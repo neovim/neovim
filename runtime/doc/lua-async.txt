@@ -1,6 +1,6 @@
 
 ==============================================================================
-Lua module: vim.async                                              *lua-async*
+Lua module: vim.async                                    *lua-async* *vim.async*
 
 Structured async API for Lua code that waits on event-loop work.
 

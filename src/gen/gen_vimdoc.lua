@@ -385,7 +385,7 @@ local config = {
       return 'Lua module: vim.async'
     end,
     helptag_fmt = function()
-      return 'lua-async'
+      return { 'lua-async', 'vim.async' }
     end,
     fn_xform = function(fun)
       if fun.module == 'vim.async._core' or fun.module == 'vim.async._semaphore' then
