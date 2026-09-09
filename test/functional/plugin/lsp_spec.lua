@@ -3367,6 +3367,30 @@ describe('LSP', function()
       end)
       eq('initialize', result.method)
     end)
+
+    it('clean up failed lsp client when rpc.connect fails', function()
+      exec_lua(function()
+        local server = assert(vim.uv.new_tcp())
+        server:bind('127.0.0.1', 0)
+        local port = server:getsockname().port
+        server:close()
+        local exited = false
+        vim.lsp.start({
+          name = 'dummy',
+          cmd = vim.lsp.rpc.connect('127.0.0.1', port),
+          on_exit = function()
+            exited = true
+          end,
+        })
+        assert(
+          vim.wait(1000, function()
+            return #vim.lsp.get_clients({ name = 'dummy', _uninitialized = true }) == 0
+          end),
+          'Timed out waiting for errored client to be cleaned up'
+        )
+        assert(exited)
+      end)
+    end)
   end)
 
   describe('handlers', function()
