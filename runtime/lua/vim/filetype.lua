@@ -109,7 +109,7 @@ end
 --- @return table<string,true>
 function M._get_known_filetypes()
   local known = {} --- @type table<string,true>
-  for _, ft in ipairs(vim.fn.getcompletion('', 'filetype')) do
+  for _, ft in ipairs(fn.getcompletion('', 'filetype')) do
     known[ft] = true
   end
   local registry = vim.filetype.inspect()

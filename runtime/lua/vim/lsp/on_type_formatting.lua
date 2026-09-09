@@ -37,7 +37,7 @@ local function on_type_formatting(err, result, ctx)
     return
   end
 
-  local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
+  local client = assert(lsp.get_client_by_id(ctx.client_id))
 
   util.apply_text_edits(result, ctx.bufnr, client.offset_encoding)
 end
@@ -246,8 +246,10 @@ function M.enable(enable, filter)
   filter = filter or {}
 
   if filter.client_id then
-    local client =
-      assert(lsp.get_client_by_id(filter.client_id), 'Client not found for id ' .. filter.client_id)
+    local client = lsp.get_client_by_id(filter.client_id)
+    if not client then
+      error('Client not found for id ' .. filter.client_id)
+    end
     toggle_for_client(enable, client)
   else
     toggle_globally(enable)

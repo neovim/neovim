@@ -412,6 +412,7 @@ end
 --- @return Range6[] changes
 --- @return integer no_regions_parsed
 --- @return number total_parse_time
+--- @async
 function LanguageTree:_parse_regions(range, thread_state)
   local changes = {}
   local no_regions_parsed = 0
@@ -636,12 +637,15 @@ function LanguageTree:parse(range, on_parse)
   if on_parse then
     return self:_async_parse(range, on_parse)
   end
+  -- Without a timeout, parsing never yields.
+  ---@diagnostic disable-next-line: await-in-sync
   local trees, _ = self:_parse(range, {})
   return trees
 end
 
 ---@param thread_state ParserThreadState
 ---@param time integer
+---@async
 function LanguageTree:_subtract_time(thread_state, time)
   thread_state.timeout = thread_state.timeout and math.max(thread_state.timeout - time, 0)
   if thread_state.timeout == 0 then
@@ -654,6 +658,7 @@ end
 --- @param thread_state ParserThreadState
 --- @return table<integer, TSTree> trees
 --- @return boolean finished
+--- @async
 function LanguageTree:_parse(range, thread_state)
   if self:is_valid(nil, type(range) == 'table' and range or nil) then
     self:_log('valid')
@@ -1088,6 +1093,7 @@ end
 --- @param range Range|Range[]|true
 --- @param thread_state ParserThreadState
 --- @return table<string, Range6[][]>
+--- @async
 function LanguageTree:_get_injections(range, thread_state)
   if not self._injection_query or #self._injection_query.captures == 0 then
     self._processed_injection_region = entire_document_range

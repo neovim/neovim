@@ -145,7 +145,7 @@ local compute_new_average = exp_avg(10, 10)
 ---
 --- @param last_request_time integer?
 --- @param current_rtt_ms number
---- @return integer
+--- @return number
 local function adaptive_debounce(last_request_time, current_rtt_ms)
   if not last_request_time then
     return current_rtt_ms
@@ -298,6 +298,7 @@ local function get_items(result)
     return result.items
   else
     -- Else just return the items as they are.
+    ---@cast result lsp.CompletionItem[]
     return result
   end
 end
@@ -308,7 +309,7 @@ end
 ---@return lsp.MarkupKind
 local function get_doc(item)
   local doc = item.documentation
-  local default_kind = vim.lsp.protocol.MarkupKind.Markdown
+  local default_kind = protocol.MarkupKind.Markdown
   if not doc then
     return '', default_kind
   end
@@ -349,11 +350,11 @@ end
 ---@return string? kind text or "■" for colors
 ---@return string? highlight group for colors
 local function generate_kind(item)
-  if not lsp.protocol.CompletionItemKind[item.kind] then
+  if not protocol.CompletionItemKind[item.kind] then
     return 'Unknown'
   end
-  if item.kind ~= lsp.protocol.CompletionItemKind.Color then
-    return lsp.protocol.CompletionItemKind[item.kind]
+  if item.kind ~= protocol.CompletionItemKind.Color then
+    return protocol.CompletionItemKind[item.kind] --[[@as string]]
   end
   local doc = get_doc(item)
   if #doc == 0 then
@@ -575,6 +576,7 @@ function M._lsp_to_complete_items(
 
       local hl_group = ''
       if
+        ---@diagnostic disable-next-line: deprecated
         item.deprecated
         or vim.list_contains((item.tags or {}), protocol.CompletionTag.Deprecated)
       then
@@ -786,7 +788,7 @@ end
 --- @param kind? string
 local function update_popup_window(winid, bufnr, kind)
   if winid and api.nvim_win_is_valid(winid) and bufnr and api.nvim_buf_is_valid(bufnr) then
-    if kind == lsp.protocol.MarkupKind.Markdown then
+    if kind == protocol.MarkupKind.Markdown then
       vim.wo[winid].conceallevel = 2
       vim.treesitter.start(bufnr, kind)
     end
@@ -856,9 +858,9 @@ end
 --- @return boolean, table Validity of the request and the completion info
 function CompletionResolver:is_valid()
   local cmp_info = vim.fn.complete_info({ 'selected', 'completed' })
-  return vim.api.nvim_buf_is_valid(self.bufnr)
-    and vim.api.nvim_get_current_buf() == self.bufnr
-    and vim.startswith(vim.api.nvim_get_mode().mode, 'i')
+  return api.nvim_buf_is_valid(self.bufnr)
+    and api.nvim_get_current_buf() == self.bufnr
+    and vim.startswith(api.nvim_get_mode().mode, 'i')
     and vim.fn.pumvisible() ~= 0
     and (vim.tbl_get(cmp_info, 'completed', 'word') or '') == self.word,
     cmp_info
@@ -887,7 +889,7 @@ function CompletionResolver:request(bufnr, param, selected_word)
     self:cancel_pending_requests()
 
     local client_id = vim.tbl_get(cmp_info.completed, 'user_data', 'nvim', 'lsp', 'client_id')
-    local client = client_id and vim.lsp.get_client_by_id(client_id)
+    local client = client_id and lsp.get_client_by_id(client_id)
     -- completionItem/resolve is not registrable, so supports_method() would
     -- only see the static capability.
     if not client or not completion_options(client, bufnr).resolveProvider then
@@ -917,7 +919,7 @@ function CompletionResolver:request(bufnr, param, selected_word)
 
       local info, kind = complete_item_info(result)
       if info ~= '' and info ~= cmp_info.completed.info then
-        local windata = vim.api.nvim__complete_set(cmp_info.selected, { info = info })
+        local windata = api.nvim__complete_set(cmp_info.selected, { info = info })
         update_popup_window(windata.winid, windata.bufnr, kind)
       end
     end, bufnr)

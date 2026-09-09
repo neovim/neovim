@@ -297,6 +297,7 @@ end
 ---
 ---@param filter? vim.lsp.codelens.get.Filter
 ---@return vim.lsp.codelens.get.Result[]
+---@overload fun(filter: integer): lsp.CodeLens[]
 function M.get(filter)
   if type(filter) == 'number' then
     vim.deprecate(
@@ -316,6 +317,7 @@ function M.get(filter)
         result = vim.list_extend(result, row_lenses.lenses)
       end
     end
+    ---@diagnostic disable-next-line: return-type-mismatch
     return result
   end
 

@@ -79,11 +79,11 @@ end
 --- @param line string Buffer line to find a link in
 --- @param pattern string Pattern matching link location and contents, like `'^Path: +()(.+)()$'`
 --- @param link_type "commit"|"path"|"src"|"tag"
---- @param lnum number Line number in a buffer
+--- @param lnum integer Line number in a buffer
 --- @param src string Plugin source
 --- @return vim.pack.lsp.DocumentLink? # A link structure according to the LSP specification
 local function match_link(line, pattern, link_type, lnum, src)
-  --- @type number?, string?, number?
+  --- @type integer?, string?, integer?
   local from, match, to = line:match(pattern)
   if not (from and match and to) then
     return nil

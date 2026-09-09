@@ -243,6 +243,8 @@ local function cterm_to_hex(colorstr)
       cterm_color_cache = cterm_16_to_hex
     end
   end
+  -- EmmyLua retains the failed lookup narrowing after the cache is updated.
+  ---@diagnostic disable-next-line: return-type-mismatch
   return cterm_color_cache[color]
 end
 

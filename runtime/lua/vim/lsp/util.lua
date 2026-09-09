@@ -70,6 +70,8 @@ local function get_border_size(opts)
       -- border specified as a list of border characters
       return e
     end
+    -- EmmyLua rejects `never` as a subtype of the declared string result.
+    ---@diagnostic disable-next-line: return-type-mismatch
     return border_error(border)
   end
 
@@ -280,10 +282,10 @@ function M.apply_text_edits(text_edits, bufnr, position_encoding, change_annotat
         'change_annotations must be provided for annotated text edits'
       )
 
-      local annotation = assert(
-        change_annotations[text_edit.annotationId],
-        string.format('No change annotation found for ID: %s', text_edit.annotationId)
-      )
+      local annotation = change_annotations[text_edit.annotationId]
+      if not annotation then
+        error(string.format('No change annotation found for ID: %s', text_edit.annotationId))
+      end
 
       if annotation.needsConfirmation then
         confirmations[text_edit.annotationId] = (confirmations[text_edit.annotationId] or 0) + 1
@@ -365,7 +367,7 @@ function M.apply_text_document_edit(
   position_encoding,
   change_annotations
 )
-  vim.validate('position_encoding', position_encoding, 'string')
+  validate('position_encoding', position_encoding, 'string')
 
   local text_document = text_document_edit.textDocument
   local bufnr = vim.uri_to_bufnr(text_document.uri)
@@ -548,8 +550,8 @@ end
 ---@param position_encoding 'utf-8'|'utf-16'|'utf-32' (required)
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_applyEdit
 function M.apply_workspace_edit(workspace_edit, position_encoding)
-  vim.validate('workspace_edit', workspace_edit, 'table')
-  vim.validate('position_encoding', position_encoding, 'string')
+  validate('workspace_edit', workspace_edit, 'table')
+  validate('position_encoding', position_encoding, 'string')
 
   if workspace_edit.documentChanges then
     for idx, change in ipairs(workspace_edit.documentChanges) do
@@ -597,6 +599,7 @@ end
 --- Note that if the input is of type `MarkupContent` and its kind is `plaintext`,
 --- then the corresponding value is returned without further modifications.
 ---
+---@diagnostic disable-next-line: deprecated
 ---@param input lsp.MarkedString|lsp.MarkedString[]|lsp.MarkupContent
 ---@param contents string[]? List of strings to extend with converted lines. Defaults to {}.
 ---@return string[] extended with lines of converted markdown.
@@ -867,7 +870,7 @@ end
 ---@param opts? vim.lsp.util.show_document.Opts
 ---@return boolean `true` if succeeded
 function M.show_document(location, position_encoding, opts)
-  vim.validate('position_encoding', position_encoding, 'string')
+  validate('position_encoding', position_encoding, 'string')
 
   -- location may be Location or LocationLink
   local uri = location.uri or location.targetUri
@@ -919,10 +922,10 @@ function M.show_document(location, position_encoding, opts)
 
     -- nvim_win_set_cursor clamps to last char at EOL. In insert mode the cursor
     -- should be past the last char (append position).
-    if vim.api.nvim_get_mode().mode == 'i' then
+    if api.nvim_get_mode().mode == 'i' then
       local line = api.nvim_buf_get_lines(bufnr, row, row + 1, false)[1] or ''
       if col >= #line then
-        vim.api.nvim_feedkeys(vim.keycode('<End>'), 'n', false)
+        api.nvim_feedkeys(vim.keycode('<End>'), 'n', false)
       end
     end
   end
@@ -979,10 +982,10 @@ local function is_float(winnr)
 end
 
 ---Returns true if the line is empty or only contains whitespace.
----@param line string
+---@param line string?
 ---@return boolean
 local function is_blank_line(line)
-  return line and line:match('^%s*$')
+  return line ~= nil and line:match('^%s*$') ~= nil
 end
 
 ---Returns true if the line corresponds to a Markdown thematic break.
@@ -1131,7 +1134,7 @@ function M.stylize_markdown(bufnr, contents, opts)
 
   --- @param line string
   --- @param match {type:string,ft:string}
-  --- @return string
+  --- @return string?
   local function match_end(line, match)
     local pattern = matchers[match.type]
     return line:match(string.format('^%%s*%s%%s*$', pattern[3]))
@@ -1733,7 +1736,7 @@ end)
 ---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
 ---@return vim.quickfix.entry[] # See |setqflist()| for the format
 function M.locations_to_items(locations, position_encoding)
-  vim.validate('position_encoding', position_encoding, 'string')
+  validate('position_encoding', position_encoding, 'string')
 
   local items = {} --- @type vim.quickfix.entry[]
 
@@ -1793,7 +1796,7 @@ end
 ---@param position_encoding 'utf-8'|'utf-16'|'utf-32'
 ---@return vim.quickfix.entry[] # See |setqflist()| for the format
 function M.symbols_to_items(symbols, bufnr, position_encoding)
-  vim.validate('position_encoding', position_encoding, 'string')
+  validate('position_encoding', position_encoding, 'string')
 
   bufnr = vim._resolve_bufnr(bufnr)
 
@@ -1814,6 +1817,7 @@ function M.symbols_to_items(symbols, bufnr, position_encoding)
 
     if filename and range then
       local kind = protocol.SymbolKind[symbol.kind] or 'Unknown'
+      ---@diagnostic disable-next-line: deprecated
       local is_deprecated = not vim.isnil(symbol.deprecated or nil)
         or (
           not vim.isnil(symbol.tags)
@@ -1958,7 +1962,7 @@ end
 ---@return integer `position_encoding` index of the character in line {row} column {col} in buffer {buf}
 function M.character_offset(buf, row, col, position_encoding)
   vim.deprecate('vim.lsp.util.character_offset', 'vim.str_utfindex', '0.14')
-  vim.validate('position_encoding', position_encoding, 'string')
+  validate('position_encoding', position_encoding, 'string')
 
   local line = get_line(buf, row)
   return vim.str_utfindex(line, position_encoding, col, false)

@@ -56,6 +56,8 @@ function vim.inspect_pos(buf, row, col, filter)
     row, col = cursor[1] - 1, cursor[2]
   end
   buf = vim._resolve_bufnr(buf)
+  ---@cast row integer
+  ---@cast col integer
 
   local results = {
     treesitter = {}, --- @type table[]

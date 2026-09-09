@@ -385,8 +385,8 @@ end
 --- (try `:Man 3 App::CLI`). Also on linux, name seems to be case-insensitive.
 --- So for `:Man PRIntf`, we still want the name of the buffer to be 'printf'.
 --- @param path string
---- @return string name
---- @return string sect
+--- @return string? name
+--- @return string? sect
 local function parse_path(path)
   local tail = vim.fs.basename(path)
   if

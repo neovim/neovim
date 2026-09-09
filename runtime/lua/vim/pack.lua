@@ -878,7 +878,7 @@ local function install_list(plug_list, confirm)
     trigger_events(plug_list, 'PackChangedPre', 'install')
     run_list(plug_list, do_install, 'Installing plugins')
     local installed = vim.tbl_filter(function(p) --- @param p vim.pack.Plug
-      return p.info.installed
+      return p.info.installed == true
     end, plug_list)
     trigger_events(installed, 'PackChanged', 'install')
   end
@@ -1023,7 +1023,7 @@ local function lock_sync(confirm, specs)
 
   -- Compute installed plugins
   local plug_dir = get_plug_dir()
-  if vim.uv.fs_stat(plug_dir) == nil then
+  if uv.fs_stat(plug_dir) == nil then
     vim.fn.mkdir(plug_dir, 'p')
   end
 
@@ -1351,7 +1351,7 @@ end
 --- @param bufnr integer
 --- @return table<string,boolean>
 local function get_update_map(bufnr)
-  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local lines = api.nvim_buf_get_lines(bufnr, 0, -1, false)
   --- @type table<string,boolean>, boolean
   local res, is_in_update = {}, false
   for _, l in ipairs(lines) do
@@ -1383,7 +1383,7 @@ local function update_list(plug_list)
   run_list(plug_list, do_update, 'Applying updates')
 
   local updated = vim.tbl_filter(function(p) --- @param p vim.pack.Plug
-    return p.info.updated
+    return p.info.updated == true
   end, plug_list)
   trigger_events(updated, 'PackChanged', 'update')
 end

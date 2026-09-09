@@ -199,7 +199,7 @@ end
 
 ---@param buf integer
 ---@param range Range
----@returns string
+---@return string
 local function buf_range_get_text(buf, range)
   local start_row, start_col, end_row, end_col = M._range.unpack4(range)
   local append_newline = end_col == 0 and start_row ~= end_row

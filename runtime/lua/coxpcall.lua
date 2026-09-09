@@ -48,6 +48,7 @@ local running = coroutine.running
 --- @type table<thread,thread>
 local coromap = setmetatable({}, { __mode = "k" })
 
+--- @async
 local function handleReturnValue(err, co, status, ...)
     if not status then
         return false, err(debug.traceback(co, (...)), ...)
@@ -59,6 +60,7 @@ local function handleReturnValue(err, co, status, ...)
     end
 end
 
+--- @async
 function performResume(err, co, ...)
     return handleReturnValue(err, co, coroutine.resume(co, ...))
 end
@@ -68,6 +70,10 @@ local function id(trace, ...)
     return trace
 end
 
+--- @param f function
+--- @param err function
+--- @param ... any
+--- @return boolean, any...
 function _G.coxpcall(f, err, ...)
     local current = running()
     if not current then
@@ -87,6 +93,8 @@ function _G.coxpcall(f, err, ...)
             co = coroutine.create(newf)
         end
         coromap[co] = current
+        -- This branch only runs inside a coroutine.
+        --- @diagnostic disable-next-line: await-in-sync
         return performResume(err, co, ...)
     end
 end
@@ -109,7 +117,12 @@ end
 -- Implements pcall with coroutines
 -------------------------------------------------------------------------------
 
+--- @param f function
+--- @param ... any
+--- @return boolean, any...
 function _G.copcall(f, ...)
+    -- EmmyLua does not distribute the union of xpcall return tuples.
+    --- @diagnostic disable-next-line: return-type-mismatch
     return coxpcall(f, id, ...)
 end
 

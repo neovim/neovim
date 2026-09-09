@@ -276,7 +276,7 @@ local function fs_scandir_next(fs, path)
   end
 
   if etype == nil then
-    local stat = vim.uv.fs_lstat(M.joinpath(path, name))
+    local stat = uv.fs_lstat(M.joinpath(path, name))
     -- Workaround #39612 https://github.com/luvit/luv/issues/660
     etype = stat and stat.type or 'unknown'
   end

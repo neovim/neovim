@@ -5,17 +5,14 @@ local has_clear, clear = pcall(require, 'table.clear')
 local M = {}
 
 if not has_new then
-  ---@diagnostic disable-next-line: unused-local
-  new = function(narr, nrec)
+  new = function(_narr, _nrec)
     return {}
   end
 end
 
 if not has_clear then
   clear = function(tab)
-    ---@diagnostic disable-next-line: no-unknown
     for k in pairs(tab) do
-      ---@diagnostic disable-next-line: no-unknown
       tab[k] = nil
     end
   end

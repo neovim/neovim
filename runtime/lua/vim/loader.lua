@@ -437,7 +437,8 @@ function M.enable(enable)
   M.enabled = enable
 
   if enable then
-    vim.fn.mkdir(vim.fs.abspath(M.path), 'p')
+    vim.fn.mkdir(fs.abspath(M.path), 'p')
+    ---@diagnostic disable-next-line: global-in-non-module
     _G.loadfile = loadfile_cached
     -- add Lua loader
     table.insert(loaders, 2, loader_cached)
@@ -451,6 +452,7 @@ function M.enable(enable)
       end
     end
   else
+    ---@diagnostic disable-next-line: global-in-non-module
     _G.loadfile = _loadfile
     for l = #loaders, 1, -1 do
       local loader = loaders[l]
