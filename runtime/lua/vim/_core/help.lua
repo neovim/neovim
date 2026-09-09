@@ -249,7 +249,7 @@ end
 ---
 ---@return string? resolved The resolved help tag, or nil if no match found
 function M.resolve_tag()
-  local tag = vim.fn.expand('<cWORD>')
+  local tag = vim.fn.expand('<cWORD>') --[[@as string]]
   if not tag or tag == '' then
     return nil
   end

@@ -2,7 +2,7 @@ local api = vim.api
 
 local M = {}
 
----@type table<string,string>
+---@type table<string,string?>
 local ft_to_lang = {
   help = 'vimdoc',
   checkhealth = 'vimdoc',

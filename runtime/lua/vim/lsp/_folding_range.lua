@@ -254,7 +254,7 @@ function State:on_attach(client_id)
   self:refresh(client_id)
 end
 
----@params client_id integer
+---@param client_id integer
 function State:on_detach(client_id)
   self.client_state[client_id] = nil
   self:evaluate()
@@ -275,7 +275,7 @@ end
 
 ---@param kind lsp.FoldingRangeKind
 ---@param winid integer
-function State:foldclose(kind, winid)
+function State.foldclose(_, kind, winid)
   vim._with({ win = winid }, function()
     local bufnr = api.nvim_win_get_buf(winid)
     local row_kinds = State.active[bufnr].row_kinds
@@ -395,7 +395,7 @@ function M.foldtext(lnum)
   local row = lnum - 1
   local state = State.active[bufnr]
   local lang = state and state.lang
-  local line = vim.fn.getline(lnum)
+  local line = vim.fn.getline(lnum) --[[@as string]]
   if not lang then
     return line
   end ---@cast state -nil

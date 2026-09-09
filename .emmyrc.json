@@ -28,29 +28,27 @@
     "disable": [
       "annotation-usage-error",
       "assign-type-mismatch",
-      "await-in-sync",
       "code-style-check",
-      "deprecated",
-      "global-in-non-module",
       "incomplete-signature-doc",
-      "invert-if",
       "iter-variable-reassign",
-      "missing-global-doc",
       "need-check-nil",
-      "non-literal-expressions-in-assert",
       "param-type-mismatch",
-      "preferred-local-alias",
-      "return-type-mismatch",
-      "unknown-doc-tag",
       "unnecessary-assert",
-      "unnecessary-if",
-      "unused"
+      "unnecessary-if"
     ],
     "severity": {
+      "deprecated": "warning",
       "duplicate-require": "warning",
+      "preferred-local-alias": "warning",
       "redefined-local": "warning",
-      "unreachable-code": "warning"
-    }
+      "unreachable-code": "warning",
+      "unused": "warning"
+    },
+    "enables": [
+      "missing-global-doc",
+      "non-literal-expressions-in-assert",
+      "unknown-doc-tag"
+    ]
   },
   "codeAction": {
     "insertSpace": true
@@ -58,5 +56,14 @@
   "strict": {
     "typeCall": true,
     "arrayIndex": true
+  },
+  "doc": {
+    "knownTags": [
+      "brief",
+      "inlinedoc",
+      "nodoc",
+      "note",
+      "since"
+    ]
   }
 }

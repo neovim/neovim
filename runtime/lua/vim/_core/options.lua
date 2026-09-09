@@ -295,7 +295,7 @@ local function create_option_accessor(scope)
     end,
 
     append = function(self, right)
-      vim.api.nvim_set_option_value(self._name, right, { operation = 'append', scope = scope })
+      api.nvim_set_option_value(self._name, right, { operation = 'append', scope = scope })
     end,
 
     __infix = function(self, right, operation)
@@ -315,7 +315,7 @@ local function create_option_accessor(scope)
       end
       return make_option(
         self._name,
-        vim.api.nvim_set_option_value(
+        api.nvim_set_option_value(
           self._name,
           right,
           { operation = operation, scope = scope, dry_run = true }
@@ -329,7 +329,7 @@ local function create_option_accessor(scope)
     end,
 
     prepend = function(self, right)
-      vim.api.nvim_set_option_value(self._name, right, { operation = 'prepend', scope = scope })
+      api.nvim_set_option_value(self._name, right, { operation = 'prepend', scope = scope })
     end,
 
     __pow = function(self, right)
@@ -337,7 +337,7 @@ local function create_option_accessor(scope)
     end,
 
     remove = function(self, right)
-      vim.api.nvim_set_option_value(self._name, right, { operation = 'remove', scope = scope })
+      api.nvim_set_option_value(self._name, right, { operation = 'remove', scope = scope })
     end,
 
     __sub = function(self, right)
@@ -479,6 +479,7 @@ local Option = {} -- luacheck: no unused
 --- end
 --- ```
 ---@return string|integer|boolean|nil value of option
+---@diagnostic disable-next-line: unused used for gen_vimdoc
 function Option:get() end
 
 --- Append a value to string-style options. See |:set+=|
@@ -490,7 +491,7 @@ function Option:get() end
 --- vim.opt.formatoptions = vim.opt.formatoptions + 'j'
 --- ```
 ---@param value string Value to append
----@diagnostic disable-next-line:unused-local used for gen_vimdoc
+---@diagnostic disable-next-line:unused used for gen_vimdoc
 function Option:append(value) end -- luacheck: no unused
 
 --- Prepend a value to string-style options. See |:set^=|
@@ -502,7 +503,7 @@ function Option:append(value) end -- luacheck: no unused
 --- vim.opt.wildignore = vim.opt.wildignore ^ '*.o'
 --- ```
 ---@param value string Value to prepend
----@diagnostic disable-next-line:unused-local used for gen_vimdoc
+---@diagnostic disable-next-line:unused used for gen_vimdoc
 function Option:prepend(value) end -- luacheck: no unused
 
 --- Remove a value from string-style options. See |:set-=|
@@ -514,7 +515,7 @@ function Option:prepend(value) end -- luacheck: no unused
 --- vim.opt.wildignore = vim.opt.wildignore - '*.pyc'
 --- ```
 ---@param value string Value to remove
----@diagnostic disable-next-line:unused-local used for gen_vimdoc
+---@diagnostic disable-next-line:unused used for gen_vimdoc
 function Option:remove(value) end -- luacheck: no unused
 
 --- @nodoc

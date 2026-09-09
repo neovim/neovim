@@ -801,6 +801,8 @@ local function check_sysinfo()
     local encoded_body = vim.uri_encode(body) --- @type string
     local issue_url = 'https://github.com/neovim/neovim/issues/new?type=Bug&body=' .. encoded_body
 
+    --- Opens the prefilled issue from the checkhealth winbar.
+    ---@diagnostic disable-next-line: global-in-non-module
     _G.nvim_health_bugreport_open = function()
       vim.ui.open(issue_url)
     end

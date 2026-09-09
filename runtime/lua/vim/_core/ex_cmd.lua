@@ -216,7 +216,7 @@ function M.ex_log(eap)
     else
       path = fs.joinpath(log_dir, filename .. '.log')
     end
-    if not vim.uv.fs_stat(path) then
+    if not uv.fs_stat(path) then
       util.echo_err(N_('E5200: No such log file: %s'):format(path))
       return
     end
@@ -229,7 +229,7 @@ end
 --- @return string[] completions
 function M.log_complete()
   local names = { 'nvim' } --- @type string[]
-  for file, type in vim.fs.dir(log_dir, { depth = math.huge }) do
+  for file, type in fs.dir(log_dir, { depth = math.huge }) do
     local name, matches = file:gsub('%.log$', '')
     if matches ~= 0 and type == 'file' and name ~= 'nvim' then
       names[#names + 1] = name

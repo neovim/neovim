@@ -2187,6 +2187,9 @@ get({filter})                                         *vim.lsp.codelens.get()*
                   • {client_id}? (`integer`, default: all) Client ID, or nil
                     for all.
 
+    Overloads: ~
+      • `fun(filter: integer): lsp.CodeLens[]`
+
     Return: ~
         (`table[]`) A list of objects with the following fields:
         • {client_id} (`integer`)

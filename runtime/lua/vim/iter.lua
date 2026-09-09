@@ -276,7 +276,7 @@ function Iter:unique(key)
 end
 
 --- @nodoc
---- @diagnostic disable-next-line:unused-local
+--- @diagnostic disable-next-line:unused
 function Iter:flatten(depth)
   error('flatten() requires an array-like table')
 end
@@ -629,7 +629,7 @@ function IterArray:next()
 end
 
 --- @nodoc
---- @diagnostic disable-next-line: unused-local
+--- @diagnostic disable-next-line: unused
 function Iter:rev()
   error('rev() requires an array-like table')
 end
@@ -743,7 +743,7 @@ function Iter:find(f)
 end
 
 --- @nodoc
---- @diagnostic disable-next-line:unused-local
+--- @diagnostic disable-next-line:unused
 function Iter:rfind(f)
   error('rfind() requires an array-like table')
 end
@@ -866,7 +866,7 @@ function IterArray:take(n)
 end
 
 --- @nodoc
---- @diagnostic disable-next-line: unused-local
+--- @diagnostic disable-next-line: unused
 function Iter:pop()
   error('pop() requires an array-like table')
 end
@@ -894,7 +894,7 @@ function IterArray:pop()
 end
 
 --- @nodoc
---- @diagnostic disable-next-line: unused-local
+--- @diagnostic disable-next-line: unused
 function Iter:rpeek()
   error('rpeek() requires an array-like table')
 end
@@ -1003,7 +1003,7 @@ function IterArray:skip(n)
 end
 
 --- @nodoc
---- @diagnostic disable-next-line:unused-local
+--- @diagnostic disable-next-line:unused
 function Iter:rskip(n)
   error('rskip() requires an array-like table')
 end
@@ -1064,7 +1064,7 @@ function Iter:nth(n)
 end
 
 --- @nodoc
---- @diagnostic disable-next-line:unused-local
+--- @diagnostic disable-next-line:unused
 function Iter:slice(first, last)
   error('slice() requires an array-like table')
 end

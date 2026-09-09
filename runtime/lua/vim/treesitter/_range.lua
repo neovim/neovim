@@ -80,6 +80,8 @@ function M.intersection(r1, r2)
   if #r1 == 4 or #r2 == 4 then
     local rs = M.cmp_pos.le(r1[1], r1[2], r2[1], r2[2]) and r2 or r1
     local re = M.cmp_pos.ge(r1[3], r1[4], r2[3], r2[4]) and r2 or r1
+    -- This branch implements the Range4 overload.
+    ---@diagnostic disable-next-line: return-type-mismatch
     return { rs[1], rs[2], re[3], re[4] }
   end
 
@@ -95,6 +97,8 @@ function M.unpack4(r)
     return r[1], 0, r[2], 0
   end
   local off_1 = #r == 6 and 1 or 0
+  -- EmmyLua does not narrow tuple fields from the range length.
+  ---@diagnostic disable-next-line: return-type-mismatch
   return r[1], r[2], r[3 + off_1], r[4 + off_1]
 end
 

@@ -1680,6 +1680,7 @@ end
 --- @return T[]
 function vim._ensure_list(x)
   if type(x) == 'table' then
+    --- @cast x T[]
     return x
   end
   return { x }

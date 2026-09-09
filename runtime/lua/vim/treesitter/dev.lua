@@ -148,9 +148,8 @@ function TSTreeView:new(buf, lang)
     },
   }
 
-  setmetatable(t, self)
   self.__index = self
-  return t
+  return setmetatable(t, self)
 end
 
 local decor_ns = api.nvim_create_namespace('nvim.treesitter.dev')

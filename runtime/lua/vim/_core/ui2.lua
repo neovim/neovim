@@ -195,7 +195,7 @@ function M.enable(opts)
   M.cfg.msg.targets = type(M.cfg.msg.targets) == 'table' and M.cfg.msg.targets
     or { default = M.cfg.msg.targets }
   M.cfg.msg.targets.default = M.cfg.msg.targets.default or 'cmd'
-  if #vim.api.nvim_list_uis() == 0 then
+  if #api.nvim_list_uis() == 0 then
     return -- Don't prevent stdout messaging when no UIs are attached.
   end
 

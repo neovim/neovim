@@ -830,7 +830,7 @@ end
 ---@param captures table<integer, TSNode[]>
 ---@param source integer|string
 ---@return boolean whether the predicates match
-function Query:_match_predicates(predicates, pattern_i, captures, source)
+function Query._match_predicates(predicates, pattern_i, captures, source)
   for _, predicate in ipairs(predicates) do
     local processed_name = predicate[1]
     local should_match = predicate[2]
@@ -856,7 +856,7 @@ end
 ---@param source integer|string
 ---@param captures table<integer, TSNode[]>
 ---@return vim.treesitter.query.TSMetadata metadata
-function Query:_apply_directives(directives, pattern_i, captures, source)
+function Query._apply_directives(_, directives, pattern_i, captures, source)
   ---@type vim.treesitter.query.TSMetadata
   local metadata = {}
 
@@ -979,7 +979,7 @@ function Query:iter_captures(node, source, start_row, end_row, opts)
         local captures = match:captures()
 
         local predicates = processed_pattern.predicates
-        if not self:_match_predicates(predicates, pattern_i, captures, source) then
+        if not self._match_predicates(predicates, pattern_i, captures, source) then
           cursor:remove_match(match_id)
 
           local row, col = captured_node:range()
@@ -1081,7 +1081,7 @@ function Query:iter_matches(node, source, start, stop, opts)
     local metadata = {}
     if processed_pattern then
       local predicates = processed_pattern.predicates
-      if not self:_match_predicates(predicates, pattern_i, captures, source) then
+      if not self._match_predicates(predicates, pattern_i, captures, source) then
         cursor:remove_match(match_id)
         return iter() -- tail call: try next match
       end

@@ -147,6 +147,8 @@ function SystemObj:wait(timeout)
     end, nil, true)
   end
 
+  -- TODO: A short timeout can leave result nil even after sending SIGKILL.
+  ---@diagnostic disable-next-line: return-type-mismatch
   return state.result
 end
 

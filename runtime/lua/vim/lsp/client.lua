@@ -989,7 +989,7 @@ end
 
 --- Get provider for a method to be registered dynamically.
 --- @param method vim.lsp.protocol.Method | vim.lsp.protocol.Method.Registration
-function Client:_registration_provider(method)
+function Client._registration_provider(_, method)
   return lsp.protocol._request_name_to_registration_provider[method] or method
 end
 
@@ -1224,7 +1224,7 @@ function Client:on_attach(bufnr)
   -- schedule the initialization of capabilities to give the above on_attach and LspAttach callbacks
   -- the ability to enable or disable them
   vim.schedule(function()
-    if not vim.api.nvim_buf_is_valid(bufnr) then
+    if not api.nvim_buf_is_valid(bufnr) then
       return
     end
     for _, Capability in pairs(lsp._capability.all) do
@@ -1456,7 +1456,7 @@ function Client:_on_detach(bufnr)
     end
   end
 
-  vim.diagnostic.reset(vim.lsp.diagnostic.get_namespace(self.id, false), bufnr)
+  vim.diagnostic.reset(lsp.diagnostic.get_namespace(self.id, false), bufnr)
 
   changetracking.reset_buf(self, bufnr)
 
@@ -1468,10 +1468,10 @@ end
 --- Reset defaults set by `set_defaults`.
 --- Must only be called if the last client attached to a buffer exits.
 local function reset_defaults(bufnr)
-  if vim.bo[bufnr].tagfunc == vim.lsp.tagfunc then
+  if vim.bo[bufnr].tagfunc == lsp.tagfunc then
     vim.bo[bufnr].tagfunc = nil
   end
-  if vim.bo[bufnr].omnifunc == vim.lsp.omnifunc then
+  if vim.bo[bufnr].omnifunc == lsp.omnifunc then
     vim.bo[bufnr].omnifunc = nil
   end
   if vim.bo[bufnr].formatexpr == 'v:lua.vim.lsp.formatexpr()' then

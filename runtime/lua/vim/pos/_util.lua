@@ -94,7 +94,7 @@ function M.get_lines(buf, rows)
   end
 
   -- Get the data from the file.
-  local success, data = pcall(vim.fn.readblob, vim.api.nvim_buf_get_name(buf))
+  local success, data = pcall(vim.fn.readblob, api.nvim_buf_get_name(buf))
   if not success then
     return row_line
   end

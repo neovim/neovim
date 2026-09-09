@@ -36,7 +36,7 @@ local function ctx_is_valid(ctx)
     not bufnr
     or not api.nvim_buf_is_valid(bufnr)
     or api.nvim_get_current_buf() ~= bufnr
-    or vim.lsp.util.buf_versions[bufnr] ~= ctx.version
+    or lsp.util.buf_versions[bufnr] ~= ctx.version
   then
     return false
   end

@@ -535,10 +535,10 @@ do
   local function make_dict_accessor(scope, handle)
     vim.validate('scope', scope, 'string')
     local mt = {}
-    function mt:__newindex(k, v)
+    function mt.__newindex(_, k, v)
       return vim._setvar(scope, handle or 0, k, v)
     end
-    function mt:__index(k)
+    function mt.__index(_, k)
       if handle == nil and type(k) == 'number' then
         return make_dict_accessor(scope, k)
       end
@@ -926,7 +926,7 @@ function vim.str_utfindex(s, encoding, index, strict_indexing)
 
   if encoding == 'utf-8' then
     local len = #s
-    return index <= len and index or (strict_indexing and error('index out of range') or len)
+    return (index <= len and index or (strict_indexing and error('index out of range') or len)) --[[@as integer]]
   end
   local col32, col16 = vim._str_utfindex(s, index) --[[@as integer?,integer?]]
   local col = encoding == 'utf-16' and col16 or col32

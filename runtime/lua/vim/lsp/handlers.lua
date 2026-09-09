@@ -44,6 +44,7 @@ local function show_message_notification(params, ctx)
 end
 
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
+---@diagnostic disable-next-line: deprecated
 RCS['workspace/executeCommand'] = function(_, _, _)
   -- Error handling is done implicitly by wrapping all handlers; see end of this file
 end
@@ -120,6 +121,8 @@ RSC['window/showMessageRequest'] = function(_, params, ctx)
           coroutine.resume(co, choice or vim.NIL)
         end)
       end)
+      -- The coroutine.running() check above guards this yield.
+      ---@diagnostic disable-next-line: await-in-sync
       return coroutine.yield()
     else
       local option_strings = { params.message, '\nRequest Actions:' }
@@ -259,11 +262,13 @@ NSC['textDocument/publishDiagnostics'] = function(...)
 end
 
 --- @private
+---@diagnostic disable-next-line: deprecated
 RCS['textDocument/diagnostic'] = function(...)
   return vim.lsp.diagnostic.on_diagnostic(...)
 end
 
 --- @private
+---@diagnostic disable-next-line: deprecated
 RCS['textDocument/inlayHint'] = function(...)
   return vim.lsp.inlay_hint.on_inlayhint(...)
 end
@@ -304,6 +309,7 @@ end
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentSymbol
+---@diagnostic disable-next-line: deprecated
 RCS['textDocument/documentSymbol'] = response_to_list(
   util.symbols_to_items,
   'document symbols',
@@ -315,12 +321,14 @@ RCS['textDocument/documentSymbol'] = response_to_list(
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_symbol
+---@diagnostic disable-next-line: deprecated
 RCS['workspace/symbol'] = response_to_list(util.symbols_to_items, 'symbols', function(ctx)
   return string.format("Symbols matching '%s'", ctx.params.query)
 end)
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_rename
+---@diagnostic disable-next-line: deprecated
 RCS['textDocument/rename'] = function(_, result, ctx)
   if not result then
     vim.notify("Language server couldn't provide rename result", vim.log.levels.INFO)
@@ -332,6 +340,7 @@ end
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_rangeFormatting
+---@diagnostic disable-next-line: deprecated
 RCS['textDocument/rangeFormatting'] = function(_, result, ctx)
   if not result then
     return
@@ -342,6 +351,7 @@ end
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting
+---@diagnostic disable-next-line: deprecated
 RCS['textDocument/formatting'] = function(_, result, ctx)
   if not result then
     return
@@ -352,6 +362,7 @@ end
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
+---@diagnostic disable-next-line: deprecated
 RCS['textDocument/completion'] = function(_, result, _)
   if vim.tbl_isempty(result or {}) then
     return
@@ -495,6 +506,7 @@ RCS['textDocument/signatureHelp'] = M.signature_help
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentHighlight
+---@diagnostic disable-next-line: deprecated
 RCS['textDocument/documentHighlight'] = function(_, result, ctx)
   if not result then
     return
@@ -547,10 +559,12 @@ end
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#callHierarchy_incomingCalls
+---@diagnostic disable-next-line: deprecated
 RCS['callHierarchy/incomingCalls'] = make_call_hierarchy_handler('from')
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#callHierarchy_outgoingCalls
+---@diagnostic disable-next-line: deprecated
 RCS['callHierarchy/outgoingCalls'] = make_call_hierarchy_handler('to')
 
 --- Displays type hierarchy in the quickfix window.
@@ -584,10 +598,12 @@ end
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#typeHierarchy_incomingCalls
+---@diagnostic disable-next-line: deprecated
 RCS['typeHierarchy/subtypes'] = make_type_hierarchy_handler()
 
 --- @deprecated remove in 0.13
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#typeHierarchy_outgoingCalls
+---@diagnostic disable-next-line: deprecated
 RCS['typeHierarchy/supertypes'] = make_type_hierarchy_handler()
 
 --- @see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_logMessage
@@ -690,6 +706,7 @@ end
 
 --- @nodoc
 --- @type table<string, lsp.Handler>
+---@diagnostic disable-next-line: deprecated
 M = vim.tbl_extend('force', M, RSC, NSC, RCS)
 
 -- Add boilerplate error validation and logging for all of these.

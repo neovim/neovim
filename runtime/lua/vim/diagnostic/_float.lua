@@ -5,6 +5,8 @@ local store = require('vim.diagnostic._store')
 --- @class (private) vim.diagnostic._float
 local M = {}
 
+local float_ns = api.nvim_create_namespace('nvim.diagnostic.float')
+
 local severity = vim.diagnostic.severity
 
 --- @type table<vim.diagnostic.Severity, string>
@@ -263,19 +265,31 @@ function M.open(opts, ...)
     end
   end, { buf = float_bufnr, remap = false })
 
-  --- @diagnostic disable-next-line: deprecated
-  local add_highlight = api.nvim_buf_add_highlight
-
+  -- The preview may trim empty lines or reuse an older buffer, so highlight ranges
+  -- can extend past its contents. Use strict = false to tolerate this.
   for i, hl in ipairs(highlights) do
     local line = lines[i]
     local prefix_len = hl.prefix and hl.prefix.length or 0
     local suffix_len = hl.suffix and hl.suffix.length or 0
     if prefix_len > 0 then
-      add_highlight(float_bufnr, -1, hl.prefix.hlname, i - 1, 0, prefix_len)
+      api.nvim_buf_set_extmark(float_bufnr, float_ns, i - 1, 0, {
+        hl_group = hl.prefix.hlname,
+        end_col = prefix_len,
+        strict = false,
+      })
     end
-    add_highlight(float_bufnr, -1, hl.hlname, i - 1, prefix_len, #line - suffix_len)
+    api.nvim_buf_set_extmark(float_bufnr, float_ns, i - 1, prefix_len, {
+      hl_group = hl.hlname,
+      end_col = #line - suffix_len,
+      strict = false,
+    })
     if suffix_len > 0 then
-      add_highlight(float_bufnr, -1, hl.suffix.hlname, i - 1, #line - suffix_len, -1)
+      api.nvim_buf_set_extmark(float_bufnr, float_ns, i - 1, #line - suffix_len, {
+        hl_group = hl.suffix.hlname,
+        end_row = i,
+        end_col = 0,
+        strict = false,
+      })
     end
   end
 
