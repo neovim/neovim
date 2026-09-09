@@ -392,7 +392,9 @@ Q			Toggles a multicursor at the current cursor position.
 							*q=*
 q=			Toggles follow-mode: motions (not jumps/scrolls) are
 			replayed per-cursor. Cursors arriving at the same
-			position (e.g. "G") are merged (deduplicated).
+			position (e.g. "G") are merged (deduplicated). Motions
+			that fail/beep are not replayed (e.g. "j" on the last
+			line).
 
 			Use [count] to force the mode instead of toggling:
 			"1q=" on, "2q=" off.

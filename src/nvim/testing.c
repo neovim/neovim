@@ -348,11 +348,12 @@ static int assert_beeps(typval_T *argvars, bool no_beep)
   const char *const cmd = tv_get_string_chk(&argvars[0]);
   int ret = 0;
 
-  called_vim_beep = false;
+  const uint64_t beeps = did_beep;
   suppress_errthrow = true;
   emsg_silent = false;
   do_cmdline_cmd(cmd);
-  if (no_beep ? called_vim_beep : !called_vim_beep) {
+  const bool beeped = did_beep != beeps;
+  if (no_beep ? beeped : !beeped) {
     garray_T ga;
     prepare_assert_error(&ga);
     if (no_beep) {

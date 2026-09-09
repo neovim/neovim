@@ -327,7 +327,7 @@ void ui_busy_stop(void)
 /// val is one of the OptBoFlags values, e.g., kOptBoFlagOperator
 void vim_beep(unsigned val)
 {
-  called_vim_beep = true;
+  did_beep++;
 
   if (emsg_silent != 0 || in_assert_fails) {
     return;

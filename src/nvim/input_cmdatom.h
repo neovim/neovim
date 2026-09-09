@@ -21,6 +21,7 @@ struct CmdFrame {
   bool keytyped;       ///< KeyTyped
   uint64_t captures;   ///< Capture counter.
   uint64_t global_ops;  ///< `global_ops` at entry.
+  uint64_t beeps;      ///< `did_beep` at entry.
   uint64_t id;         ///< Identifies this frame (see `composite.frame`).
   bool follow;         ///< mc_following() ("q=")
   bool consumers;      ///< Capture is skipped if there are no consumers (for performance).

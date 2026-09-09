@@ -1237,6 +1237,7 @@ void atom_cmd_start(CmdFrame *old)
   old->keytyped = KeyTyped;
   old->captures = atom_captures;
   old->global_ops = global_ops;
+  old->beeps = did_beep;
   old->id = ++frame_id;
   // Sampled: "q=" toggled DURING a command must not apply to it retroactively.
   old->follow = mc_following();
@@ -1367,8 +1368,10 @@ static bool atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
     // Note: an operator's motion belongs to the operator (`finish_op`).
     bool motion = (nv_is_motion(ca->cmdchar) || special_motion) && !changed
                   && !finish_op && !jump_cmd;
+    // Beeped without moving (e.g. "j" on the last line).
+    bool failed = did_beep != old->beeps && !atom_origin_moved(old->origin);
     // Mapping-internal motions are part of its recipe: queue them, the clock edge decides.
-    bool follow = (mc_following() || mapped) && motion;
+    bool follow = (mc_following() || mapped) && motion && !failed;
 
     //
     // Route: decide the atom type and push it.
@@ -1402,7 +1405,7 @@ static bool atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
       atom_payload_append(&atom, old);
       atom.origin = old->origin;
       atom_push(false, &atom);
-    } else if (replayable && (!vis || (keycls & kKeyPayload) == 0)) {
+    } else if (replayable && (!vis || ((keycls & kKeyPayload) == 0 && !failed))) {
       // Non-redoable command (u, zz, q=): never cascaded as an edit.
       CmdSpec spec = atom_cmd_spec(ca);
       if (vis) {
