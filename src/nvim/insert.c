@@ -4384,14 +4384,14 @@ static char *do_insert_char_pre(int c)
   char buf[MB_MAXBYTES + 1];
   const int save_State = State;
 
-  if (c == Ctrl_RSB) {
+  if (c == Ctrl_RSB  // i_CTRL-] only triggers abbreviations.
+      // Stuffed text was transformed when typed and appended to redobuf (redo_append_lit).
+      // Like abbreviations (vgetorpeek()), don't transform it again.
+      || KeyStuffed
+      || !has_event(EVENT_INSERTCHARPRE)) {
     return NULL;
   }
 
-  // Return quickly when there is nothing to do.
-  if (!has_event(EVENT_INSERTCHARPRE)) {
-    return NULL;
-  }
   size_t buflen = (size_t)utf_char2bytes(c, buf);
   buf[buflen] = NUL;
 
