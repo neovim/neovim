@@ -255,6 +255,8 @@ BUILD
   "-Dtarget=wasm32-emscripten", which can run inside a web browser. A basic
   browser-based demo for running it is also included. Still very
   experimental.
+• The message catalogs built with `ENABLE_TRANSLATIONS` include Azerbaijani
+  ("az").
 
 DEFAULTS
 
