@@ -1683,7 +1683,11 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   nesting++;  // see matching decrement below
 
   // Remember that FileType was triggered.  Used for did_filetype().
-  if (event == EVENT_FILETYPE) {
+  // Only mark b_did_filetype when a filetype is actually set.  Otherwise
+  // a FileType event on a buffer with an empty filetype (e.g. from
+  // "doautoall FileType" during a BufReadPre callback) would prevent
+  // subsequent filetype detection via ":setf" from ever running.
+  if (event == EVENT_FILETYPE && *curbuf->b_p_ft != NUL) {
     curbuf->b_did_filetype = true;
   }
 
@@ -2546,7 +2550,9 @@ bool do_filetype_autocmd(buf_T *buf, bool force)
   secure = 0;
 
   ft_recursive++;
-  buf->b_did_filetype = true;
+  if (*buf->b_p_ft != NUL) {
+    buf->b_did_filetype = true;
+  }
   // Only pass true for "force" when it is true or
   // used recursively, to avoid endless recurrence.
   bool ret
