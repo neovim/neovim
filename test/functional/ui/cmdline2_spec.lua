@@ -29,7 +29,7 @@ describe('cmdline2', function()
       {5: [No Name] }{24: [No Name] }{2:                              }{24:X}|
                                                            |
       {1:~                                                    }|*11
-      {16::}{15:set} {16:ch}{15:=}0^                                            |
+      {16::}{15:set} {16:ch}{15:=}{26:0}^                                            |
     ]])
     feed('<CR>')
     exec('tabnext')
@@ -37,7 +37,7 @@ describe('cmdline2', function()
       {24: [No Name] }{5: [No Name] }{2:                              }{24:X}|
       ^                                                     |
       {1:~                                                    }|*11
-      {16::}{15:set} {16:ch}{15:=}0                                            |
+      {16::}{15:set} {16:ch}{15:=}{26:0}                                            |
     ]])
     exec('tabnext')
     screen:expect([[

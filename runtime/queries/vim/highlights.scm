@@ -348,7 +348,7 @@
 
 ; Options
 ((set_value) @number
-  (#lua-match? @number "^[%d]+(%.[%d]+)?$"))
+  (#lua-match? @number "^%d+%.?%d*$"))
 
 (inv_option
   "!" @operator)
