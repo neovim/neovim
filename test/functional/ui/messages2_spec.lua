@@ -1219,6 +1219,16 @@ describe('messages2', function()
     ]])
   end)
 
+  it('no modal/blocking prompt on exit', function()
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'one' })
+    feed(':quit<CR>')
+    screen:expect([[
+      ^one                                                  |
+      {1:~                                                    }|*12
+      {9:E37: No write since last change}{6: [+2]}                 |
+    ]])
+  end)
+
   it('no crash for resized grid during redraw #39075', function()
     exec_lua(function()
       vim.api.nvim_set_decoration_provider(vim.api.nvim_create_namespace(''), {
