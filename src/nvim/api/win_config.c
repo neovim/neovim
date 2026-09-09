@@ -147,6 +147,12 @@
 ///   - hide: Hides the floating window. |window-hidden|
 ///   - mouse: (default: `focusable` value) If true, mouse events interact with the window
 ///     normally; if false, they pass through to the window behind it.
+///   - mousedrag: (`table?`) What the mouse can drag the window by. Only the given fields are
+///     changed. A drag makes the window editor-relative and NW-anchored.
+///     - title: (default: false) Drag the title or footer text to move the window.
+///     - content: (default: false) Drag the text area to move the window. Dragging there
+///       no longer selects text.
+///     - border: (default: false) Drag the border or a corner to resize the window.
 ///   - noautocmd: Block all autocommands for the duration of the call. Cannot be changed by
 ///     |nvim_win_set_config()|.
 ///   - relative: Sets the window layout to "floating", placed at (row,col) coordinates relative to:
@@ -871,6 +877,12 @@ Dict(win_config) nvim_win_get_config(Window win, Arena *arena, Error *err)
   PUT_KEY_X(rv, mouse, config->mouse);
   PUT_KEY_X(rv, style, cstr_as_string(win_style_str[config->style]));
 
+  Dict mousedrag = arena_dict(arena, 3);
+  PUT_C(mousedrag, "title", BOOLEAN_OBJ(config->mousedrag_title));
+  PUT_C(mousedrag, "content", BOOLEAN_OBJ(config->mousedrag_content));
+  PUT_C(mousedrag, "border", BOOLEAN_OBJ(config->mousedrag_border));
+  PUT_KEY_X(rv, mousedrag, mousedrag);
+
   if (wp->w_floating) {
     PUT_KEY_X(rv, width, config->width);
     PUT_KEY_X(rv, height, config->height);
@@ -1502,6 +1514,27 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
     fconfig->_cmdline_offset = (int)config->_cmdline_offset;
   }
 
+  if (HAS_KEY_X(config, mousedrag)) {
+    Dict(win_config_mousedrag) md[1] = KEYDICT_INIT;
+    if (!api_dict_to_keydict(md, DictHash(win_config_mousedrag), config->mousedrag, err)) {
+      goto fail;
+    }
+    if (HAS_KEY(md, win_config_mousedrag, title)) {
+      fconfig->mousedrag_title = md->title;
+    }
+    if (HAS_KEY(md, win_config_mousedrag, border)) {
+      fconfig->mousedrag_border = md->border;
+    }
+    if (HAS_KEY(md, win_config_mousedrag, content)) {
+      fconfig->mousedrag_content = md->content;
+    }
+
+    VALIDATE_CON(will_float || !(fconfig->mousedrag_title || fconfig->mousedrag_border
+                                 || fconfig->mousedrag_content),
+                 "mousedrag", "non-float window", {
+      goto fail;
+    });
+  }
   return true;
 
 fail:
