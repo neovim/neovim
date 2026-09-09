@@ -148,6 +148,12 @@ static void scroll(VTermState *state, VTermRect rect, int downward, int rightwar
     return;
   }
 
+  // A degenerate rect makes rows/cols below negative, which inverts the clamps
+  // and yields a negative height for memmove()
+  if (rect.end_row <= rect.start_row || rect.end_col <= rect.start_col) {
+    return;
+  }
+
   int rows = rect.end_row - rect.start_row;
   if (downward > rows) {
     downward = rows;
@@ -1379,6 +1385,11 @@ static int on_csi(const char *leader, const long args[], int argcount, const cha
     break;
 
   case 0x62: {  // REP - ECMA-48 8.3.103
+    if (state->combine_width < 1) {
+      // No preceding graphic character to repeat. Ignoring REP also keeps the
+      // loop below from spinning forever on a zero-width advance.
+      break;
+    }
     const int row_width = THISROWWIDTH(state);
     count = CSI_ARG_COUNT(args[0]);
     col = state->pos.col + count;
@@ -2191,6 +2202,19 @@ static int on_resize(int rows, int cols, void *user)
     UBOUND(state->scrollregion_right, state->cols);
   }
 
+  // The near edges need clamping too, and a region that no longer fits must be
+  // dropped, exactly as DECSTBM/DECSLRM validate when the region is set
+  UBOUND(state->scrollregion_top, state->rows);
+  UBOUND(state->scrollregion_left, state->cols);
+  if (SCROLLREGION_BOTTOM(state) <= state->scrollregion_top) {
+    state->scrollregion_top = 0;
+    state->scrollregion_bottom = -1;
+  }
+  if (state->scrollregion_right > -1 && state->scrollregion_right <= state->scrollregion_left) {
+    state->scrollregion_left = 0;
+    state->scrollregion_right = -1;
+  }
+
   VTermStateFields fields = {
     .pos = state->pos,
     .lineinfos = {[0] = state->lineinfos[0], [1] = state->lineinfos[1] },
@@ -2348,6 +2372,12 @@ void vterm_state_reset(VTermState *state, int hard)
     state->pos.row = 0;
     state->pos.col = 0;
     state->at_phantom = 0;
+
+    // The screen is about to be cleared, so there is no preceding glyph left
+    // for a combining character or REP to attach to.
+    state->grapheme_len = 0;
+    state->grapheme_last = 0;
+    state->combine_width = 0;
 
     VTermRect rect = { 0, state->rows, 0, state->cols };
     erase(state, rect, 0);
