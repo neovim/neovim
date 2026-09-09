@@ -416,6 +416,7 @@ error('Cannot require a meta file')
 --- @field on_range? fun(_: "range", winid: integer, bufnr: integer, start_row: integer, start_col: integer, end_row: integer, end_col: integer): boolean?
 --- @field on_start? fun(_: "start", tick: integer): boolean?
 --- @field on_win? fun(_: "win", winid: integer, bufnr: integer, toprow: integer, botrow: integer): boolean?
+--- @field _on_conceal? fun(_: "conceal", winid: integer, bufnr: integer, row: integer)
 --- @field _on_conceal_line? fun(_: "conceal_line")
 --- @field _on_hl_def? fun(_: "hl_def")
 --- @field _on_spell_nav? fun(_: "spell_nav")
@@ -455,6 +456,7 @@ error('Cannot require a meta file')
 --- @field virt_text_pos? "eol"|"eol_right_align"|"overlay"|"right_align"|"inline"
 --- @field virt_text_repeat_linebreak? boolean
 --- @field virt_text_win_col? integer
+--- @field _conceal_continuation? boolean
 --- @field _subpriority? integer
 
 --- @class vim.api.keyset.tabpage_config

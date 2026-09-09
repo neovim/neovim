@@ -27,6 +27,7 @@ typedef enum {
   kMTMetaLines,
   kMTMetaSignHL,
   kMTMetaSignText,
+  kMTMetaConceal,
   kMTMetaConcealLines,
   kMTMetaCount,  // sentinel, must be last
 } MetaIndex;
@@ -63,7 +64,7 @@ typedef struct {
   MTPos pos;
   uint32_t ns;
   uint32_t id;
-  uint16_t flags;
+  uint32_t flags;
   DecorInlineData decor_data;  // "ext" tag in flags
 } MTKey;
 

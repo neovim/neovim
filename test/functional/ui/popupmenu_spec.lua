@@ -10199,6 +10199,34 @@ describe('builtin popupmenu', function()
     end)
   end
 
+  describe('conceal-aware wrap (#14409)', function()
+    it('pum row follows the conceal-reflowed cursor row', function()
+      local screen = Screen.new(30, 6)
+      local ns = api.nvim_create_namespace('conceal_wrap_pum')
+      command('set wrap conceallevel=2 concealcursor=nvic')
+      api.nvim_buf_set_lines(0, 0, -1, true, {
+        ('a'):rep(10) .. 'HIDDEN' .. ('b'):rep(15),
+      })
+      api.nvim_buf_set_extmark(0, ns, 0, 10, { end_col = 16, conceal = '' })
+
+      feed('A')
+      exec_lua(function()
+        vim.fn.complete(vim.fn.col('.'), { 'foo', 'foobar', 'foobaz' })
+      end)
+
+      -- The zero-based menu row is immediately below the reflowed text row.
+      eq(1, fn.pum_getpos().row)
+      screen:expect([[
+      aaaaaaaaaabbbbbbbbbbbbbbbfoo^  |
+      {12:foo            }{1:               }|
+      {4:foobar         }{1:               }|
+      {4:foobaz         }{1:               }|
+      {1:~                             }|
+      {5:-- INSERT --}                  |
+      ]])
+    end)
+  end)
+
   describe('with ext_multigrid and actual mouse grid', function()
     with_ext_multigrid(true, true)
   end)

@@ -20,6 +20,15 @@ function vim.api.nvim__buf_debug_extmarks(buf, keys, dot) end
 
 --- WARNING: This feature is experimental/unstable.
 ---
+--- "conceal_ns_id" must identify a dedicated namespace for conceal marks added by this provider.
+--- @param buf integer
+--- @param ns_id integer
+--- @param conceal_ns_id integer
+--- @param enabled boolean
+function vim.api.nvim__buf_set_conceal_provider(buf, ns_id, conceal_ns_id, enabled) end
+
+--- WARNING: This feature is experimental/unstable.
+---
 --- @param buf integer
 --- @return table<string,any>
 function vim.api.nvim__buf_stats(buf) end
@@ -624,6 +633,10 @@ function vim.api.nvim_buf_line_count(buf) end
 ---       Non-empty char is used as `:syn-cchar`. Highlighted with "hl_group" if
 ---       defined, else defaults to `hl-Conceal`.
 ---     - boolean: true is equivalent to "", false removes any existing conceal.
+---   With 'wrap', active persistent conceal determines the displayed layout,
+---   including its replacement. Syntax, match, or ephemeral conceal cannot
+---   override that layout at the same position. Other highlight attributes
+---   retain their usual priority; use a persistent conceal override to change layout.
 --- - conceal_lines: (string) Line-level conceal. When set to an empty string (other
 ---   values reserved for future use), the lines in the extmark range are not drawn;
 ---   the next non-concealed line is drawn in their place. Requires 'conceallevel' >=

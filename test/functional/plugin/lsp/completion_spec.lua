@@ -1591,7 +1591,7 @@ describe('vim.lsp.completion: integration', function()
         -- documentation populated but not detail
         documentation = {
           kind = 'markdown',
-          value = [[```lua\nfunction vim.api.nvim__id_array_2(arr: any[])\n  -> any[]\n```]],
+          value = '```lua\nfunction vim.api.nvim__id_array_2(arr: any[])\n  -> any[]\n```',
         },
         insertText = 'nvim__id_array_2',
         insertTextFormat = 1,
@@ -1634,7 +1634,7 @@ describe('vim.lsp.completion: integration', function()
         detail = '(method) nvim__id_array_1(arr: any[]): any[]',
         documentation = {
           kind = 'markdown',
-          value = [[```lua\nfunction vim.api.nvim__id_array_1(arr: any[])\n  -> any[]\n```]],
+          value = '```lua\nfunction vim.api.nvim__id_array_1(arr: any[])\n  -> any[]\n```',
         },
         insertText = 'nvim__id_array_1',
         insertTextFormat = 1,
@@ -1647,7 +1647,7 @@ describe('vim.lsp.completion: integration', function()
         detail = '(method) nvim__id_array_2(arr: any[]): any[]',
         documentation = {
           kind = 'markdown',
-          value = [[```lua\nfunction vim.api.nvim__id_array_2(arr: any[])\n  -> any[]\n```]],
+          value = '```lua\nfunction vim.api.nvim__id_array_2(arr: any[])\n  -> any[]\n```',
         },
         insertText = 'nvim__id_array_2',
         insertTextFormat = 1,
@@ -1682,7 +1682,7 @@ describe('vim.lsp.completion: integration', function()
         detail = '_assert_integer',
         documentation = {
           kind = 'markdown',
-          value = [[```lua\nmore doc for vim._assert_integer\n```]],
+          value = '```lua\nmore doc for vim._assert_integer\n```',
         },
         insertText = '_assert_integer(${1:x}, ${2:base?})',
         insertTextFormat = 2,
@@ -1697,6 +1697,8 @@ describe('vim.lsp.completion: integration', function()
       local screen = Screen.new(50, 20)
       screen:add_extra_attr_ids({
         [100] = { background = Screen.colors.Plum1, foreground = Screen.colors.Blue },
+        [101] = { background = Screen.colors.Plum1, foreground = Screen.colors.Cyan4 },
+        [102] = { background = Screen.colors.Plum1, foreground = Screen.colors.SlateBlue },
       })
       local completion_list = {
         isIncomplete = false,
@@ -1731,11 +1733,10 @@ describe('vim.lsp.completion: integration', function()
         nvim__id_array_1^                                  |
         {12:nvim__id_array_1 Function }{100:(method) nvim__id_array}{1: }|
         {4:nvim__id_array_2 Function }{100:_1(arr: any[]): any[]}{4:  }{1: }|
-        {4:for i = ..       Snippet  }{100:lua\nfunction vim.ap}{4:   }{1: }|
-        {4:for j = ..       Snippet  }{100:i.nvim__id_array_1(arr:}{1: }|
-        {4:_assert_integer  Function }{100: any[])\n  -> any[]\n}{4:  }{1: }|
-        {1:~                         }{4:                       }{1: }|
-        {1:~                                                 }|*12
+        {4:for i = ..       Snippet  }{100:function }{101:vim}{102:.}{101:api}{102:.}{101:nvim__}{1: }|
+        {4:for j = ..       Snippet  }{101:id_array_1}{102:(}{101:arr}{102::}{100: }{101:any}{102:[])}{4: }{1: }|
+        {4:_assert_integer  Function }{100:  -> }{101:any}{102:[]}{4:             }{1: }|
+        {1:~                                                 }|*13
         {5:-- INSERT --}                                      |
       ]])
       feed('<C-N>')
@@ -1743,11 +1744,10 @@ describe('vim.lsp.completion: integration', function()
         nvim__id_array_2^                                  |
         {4:nvim__id_array_1 Function }{100:(method) nvim__id_array}{1: }|
         {12:nvim__id_array_2 Function }{100:_2(arr: any[]): any[]}{4:  }{1: }|
-        {4:for i = ..       Snippet  }{100:lua\nfunction vim.ap}{4:   }{1: }|
-        {4:for j = ..       Snippet  }{100:i.nvim__id_array_2(arr:}{1: }|
-        {4:_assert_integer  Function }{100: any[])\n  -> any[]\n}{4:  }{1: }|
-        {1:~                         }{4:                       }{1: }|
-        {1:~                                                 }|*12
+        {4:for i = ..       Snippet  }{100:function }{101:vim}{102:.}{101:api}{102:.}{101:nvim__}{1: }|
+        {4:for j = ..       Snippet  }{101:id_array_2}{102:(}{101:arr}{102::}{100: }{101:any}{102:[])}{4: }{1: }|
+        {4:_assert_integer  Function }{100:  -> }{101:any}{102:[]}{4:             }{1: }|
+        {1:~                                                 }|*13
         {5:-- INSERT --}                                      |
       ]])
       feed('<C-N>')
@@ -1783,13 +1783,13 @@ describe('vim.lsp.completion: integration', function()
         end)
         neq(nil, info:find('more doc for vim._assert_integer', 1, true))
         local _, count = info:gsub('_assert_integer', '')
-        -- item 3: detail '_assert_integer' is in documentation, should not be duplicated
+        -- item 5: detail '_assert_integer' is in documentation, should not be duplicated
         eq(1, count)
       end)
       screen:expect([[
         _assert_integer(x, base)^                          |
-        {4:nvim__id_array_1 Function }{100:lua\nmore doc for vi}{4:   }{1: }|
-        {4:nvim__id_array_2 Function }{100:m._assert_integer\n}{4:    }{1: }|
+        {4:nvim__id_array_1 Function }{101:more}{100: }{101:doc}{100: for }{101:vim}{102:.}{101:_asser}{1: }|
+        {4:nvim__id_array_2 Function }{101:t_integer}{4:              }{1: }|
         {4:for i = ..       Snippet  }{1:                        }|
         {4:for j = ..       Snippet  }{1:                        }|
         {12:_assert_integer  Function }{1:                        }|
@@ -1804,6 +1804,44 @@ describe('vim.lsp.completion: integration', function()
 
     it('when server does not support completionItem/resolve', function()
       run_test({ items = complete_items })
+    end)
+
+    it('does not resize a converted preview after parsing', function()
+      Screen.new(50, 12)
+      exec_lua(function()
+        vim.o.completeopt = 'menuone,popup'
+        local LanguageTree = require('vim.treesitter.languagetree')
+        local parse = LanguageTree.parse
+        LanguageTree.parse = function(self, range, on_parse)
+          if range == true and on_parse then
+            _G.finish_parse = function()
+              LanguageTree.parse = parse
+              on_parse(nil, parse(self, range))
+            end
+            return nil
+          end
+          return parse(self, range, on_parse)
+        end
+      end)
+      create_server('dummy', {
+        { label = 'item', documentation = { kind = 'markdown', value = '**label**' } },
+      })
+      feed('S<C-X><C-O>')
+      retry(nil, nil, function()
+        eq(true, exec_lua('return _G.finish_parse ~= nil'))
+      end)
+      eq(
+        { '', 6 },
+        exec_lua(function()
+          local api = vim.api
+          local win = vim.fn.complete_info({ 'selected' }).preview_winid
+          assert(vim.fn.win_gettype(win) == 'popup')
+          api.nvim_win_set_config(win, { split = 'below', win = api.nvim_get_current_win() })
+          api.nvim_win_set_height(win, 6)
+          _G.finish_parse()
+          return { vim.fn.win_gettype(win), api.nvim_win_get_height(win) }
+        end)
+      )
     end)
   end)
 

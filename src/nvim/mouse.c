@@ -285,7 +285,10 @@ static int get_fpos_of_mouse(pos_T *mpos, win_T **wpp)
     return IN_UNKNOWN;
   }
 
-  mpos->col = vcol2col(wp, mpos->lnum, col, &mpos->coladd);
+  // Under 'wrap' "col" is a screen-layout column; under 'nowrap' it includes raw w_leftcol.
+  mpos->col = wp->w_p_wrap && maybe_extconceal_line(wp, mpos->lnum)
+              ? scol2col(wp, mpos->lnum, col, &mpos->coladd)
+              : vcol2col(wp, mpos->lnum, col, &mpos->coladd);
   return IN_BUFFER;
 }
 
@@ -1449,8 +1452,6 @@ retnomove:
       }
       return IN_SEP_LINE | CURSOR_MOVED;
     }
-
-    curwin->w_cursor.lnum = curwin->w_topline;
   } else if (status_line_offset) {
     if (which_button == MOUSE_LEFT && dragwin != NULL) {
       // Drag the status line
@@ -1569,9 +1570,24 @@ foldclick:;
   mouse_check_grid(&col_from_screen, &mouse_fold_flags);
 
   // compute the position in the buffer line from the posn on the screen
-  if (mouse_comp_pos(curwin, &row, &col, &curwin->w_cursor.lnum)) {
+  pos_T screenpos = { 0 };
+  if (mouse_comp_pos(curwin, &row, &col, &screenpos.lnum)) {
     mouse_past_bottom = true;
   }
+
+  // Resolve before moving the cursor or starting Visual mode changes conceal.
+  bool const use_scol = curwin->w_p_wrap && maybe_extconceal_line(curwin, screenpos.lnum);
+  if (use_scol) {
+    if (col_from_screen >= 0) {
+      col = mouse_layout_to_pos(curwin, &screenpos, col_from_screen);
+    } else {
+      screenpos.col = scol2col(curwin, screenpos.lnum, col, &screenpos.coladd);
+      col = scol2vcol(curwin, screenpos.lnum, col);
+    }
+  } else if (col_from_screen >= 0) {
+    col = col_from_screen;
+  }
+  curwin->w_cursor.lnum = screenpos.lnum;
 
   // Start Visual mode before coladvance(), for when 'sel' != "old"
   if ((flags & MOUSE_MAY_VIS) && !Visual.active) {
@@ -1587,13 +1603,10 @@ foldclick:;
     }
   }
 
-  if (col_from_screen >= 0) {
-    col = col_from_screen;
-  }
-
   curwin->w_curswant = col;
   curwin->w_set_curswant = false;       // May still have been true
-  if (coladvance(curwin, col) == FAIL) {        // Mouse click beyond end of line
+  int const rc = use_scol ? coladvance_pos(curwin, &screenpos) : coladvance(curwin, col);
+  if (rc == FAIL) {        // Mouse click beyond end of line
     if (inclusive != NULL) {
       *inclusive = true;
     }
@@ -1880,6 +1893,40 @@ static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
   return NULL;
 }
 
+/// Resolve a grid layout column to a byte position and raw desired column.
+static colnr_T mouse_layout_to_pos(win_T *wp, pos_T *pos, colnr_T vcol)
+{
+  CharsizeArg csarg;
+  CSType const cstype = init_charsize_arg_conceal(&csarg, wp, pos->lnum,
+                                                  ml_get_buf(wp->w_buffer, pos->lnum));
+  ConcealWalk walk;
+  conceal_walk_start(&csarg, &walk);
+  StrCharInfo ci = utf_ptr2StrCharInfo(csarg.line);
+  int col = 0;
+  int head = 0;
+  while (*ci.ptr != NUL) {
+    CharSize const cs = win_charsize(cstype, col, ci.ptr, ci.chr.value, &csarg);
+    conceal_walk_advance(&csarg, &walk, (int)(ci.ptr - csarg.line), cs);
+    if (col + cs.width > vcol) {
+      head = cs.head;
+      // Keep the raw offset inside the source body, not the displayed replacement's offset:
+      // virtualedit motions and getvvcol() interpret cursor coladd in the raw column domain.
+      pos->coladd = MAX(vcol - col - head, 0);
+      break;
+    }
+    col += cs.width;
+    ci = utfc_next(ci);
+  }
+  pos->col = (colnr_T)(ci.ptr - csarg.line);
+  if (*ci.ptr == NUL) {
+    pos->coladd = MAX(vcol - col, 0);
+  }
+  conceal_walk_end(&csarg, &walk);
+  colnr_T raw;
+  getvcol(wp, pos, &raw, NULL, NULL, 0);
+  return raw + MAX(vcol - col - head, 0);
+}
+
 /// Convert a virtual (screen) column to a character column.
 /// The first column is zero.
 colnr_T vcol2col(win_T *wp, linenr_T lnum, colnr_T vcol, colnr_T *coladdp)
@@ -2050,7 +2097,8 @@ void f_getmousepos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       wincol = col + 1 + wp->w_wincol_off;  // Adjust by 1 for left border
       if (row >= 0 && row < wp->w_height && col >= 0 && col < wp->w_width) {
         mouse_comp_pos(wp, &row, &col, &lnum);
-        col = vcol2col(wp, lnum, col, &coladd);
+        col = wp->w_p_wrap && maybe_extconceal_line(wp, lnum)
+              ? scol2col(wp, lnum, col, &coladd) : vcol2col(wp, lnum, col, &coladd);
         column = col + 1;
       }
     }
