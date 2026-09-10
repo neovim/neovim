@@ -486,6 +486,48 @@ int utf_char2cells(int c)
   return 1;
 }
 
+/// Number of extra display cells needed by the SpacingMarks in the grapheme
+/// cluster starting at "p", whose first codepoint is "firstlen" bytes. "size"
+/// bounds the read, or -1 when "p" is NUL-terminated.
+///
+/// A SpacingMark does not break the cluster (UAX#29 GB9a) but has positive
+/// advance width (Unicode core spec D55), so it needs a cell of its own.
+static int utf_cluster_spacing_cells(const char *p, int firstlen, int size)
+  FUNC_ATTR_NONNULL_ALL
+{
+  GraphemeState state = GRAPHEME_STATE_INIT;
+  const char *prev = p;
+  const char *cur = p + firstlen;
+  int extra = 0;
+
+  while (*cur != NUL) {
+    int remaining = (size < 0) ? -1 : size - (int)(cur - p);
+    if (remaining == 0) {
+      break;
+    }
+
+    int len = (remaining < 0) ? utf_ptr2len(cur) : utf_ptr2len_len(cur, remaining);
+    if (len <= 0 || (remaining > 0 && len > remaining)) {
+      break;  // truncated sequence
+    }
+
+    if (!utf_composinglike(prev, cur, &state)) {
+      break;  // end of the cluster
+    }
+
+    int c = utf_ptr2char(cur);
+    if (utf8proc_get_property(c)->boundclass == UTF8PROC_BOUNDCLASS_SPACINGMARK
+        || (c & ~1) == 0xFF9E) {  // halfwidth katakana voiced sound marks
+      extra += utf_char2cells(c);
+    }
+
+    prev = cur;
+    cur += len;
+  }
+
+  return extra;
+}
+
 /// Return the number of display cells character at "*p" occupies.
 /// This doesn't take care of unprintable characters, use ptr2cells() for that.
 int utf_ptr2cells(const char *p_in)
@@ -512,7 +554,12 @@ int utf_ptr2cells(const char *p_in)
         return 2;  // emoji presentation
       }
     }
-    return cells;
+    if (cells > 2) {
+      return cells;  // unprintable, shown as <xx> or <xxxx>
+    }
+    // currently, the grid allows maximum two cells per cluster
+    int extra = utf_cluster_spacing_cells(p_in, len, -1);
+    return MIN(cells + extra, 2);
   }
   return 1;
 }
@@ -616,7 +663,12 @@ int utf_ptr2cells_len(const char *p, int size)
         return 2;  // emoji presentation
       }
     }
-    return cells;
+    if (cells > 2) {
+      return cells;  // unprintable, shown as <xx> or <xxxx>
+    }
+    // currently, the grid allows maximum two cells per cluster
+    int extra = utf_cluster_spacing_cells(p, len, size);
+    return MIN(cells + extra, 2);
   }
   return 1;
 }
