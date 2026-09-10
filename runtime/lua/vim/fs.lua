@@ -554,28 +554,29 @@ function M.find(names, opts)
         if err ~= nil then
           table.insert(errors, err)
         else
-          local f = M.joinpath(dir, other)
+          -- Keep joinpath() calls inside the match and traversal branches. Joining paths for rejected
+          -- entries can account for up to ~25% of the total search time.
           if type(names) == 'function' then
             if (not opts.type or opts.type == type_) and names(other, dir) then
-              if add(f) then
+              if add(M.joinpath(dir, other)) then
                 return matches, errors
               end
             end
           else
             for _, name in ipairs(names) do
               if name == other and (not opts.type or opts.type == type_) then
-                if add(f) then
+                if add(M.joinpath(dir, other)) then
                   return matches, errors
                 end
               end
             end
           end
 
-          if
-            type_ == 'directory'
-            or (type_ == 'link' and opts.follow and (uv.fs_stat(f) or {}).type == 'directory')
-          then
-            dirs[#dirs + 1] = f
+          if type_ == 'directory' or (type_ == 'link' and opts.follow) then
+            local f = M.joinpath(dir, other)
+            if type_ == 'directory' or (uv.fs_stat(f) or {}).type == 'directory' then
+              dirs[#dirs + 1] = f
+            end
           end
         end
       end
