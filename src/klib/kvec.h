@@ -97,22 +97,24 @@
 /// fit at least "len" more items
 #define kv_ensure_space(v, len) \
   do { \
-    if ((v).capacity < (v).size + len) { \
-      (v).capacity = (v).size + len; \
+    if ((v).capacity < (v).size + (len)) { \
+      (v).capacity = (v).size + (len); \
       kv_roundup32((v).capacity); \
       kv_resize((v), (v).capacity); \
     } \
   } while (0)
 
 #define kv_concat_len(v, data, len) \
-  if (len > 0) { \
-    kv_ensure_space(v, len); \
-    assert((v).items); \
-    /* kv_roundup32() only ORs bits in, so kv_ensure_space() leaves capacity >= size+len. */ \
-    /* coverity[overrun-buffer-arg] */ \
-    memcpy((v).items + (v).size, data, sizeof((v).items[0]) * len); \
-    (v).size = (v).size + len; \
-  }
+  do { \
+    if ((len) > 0) { \
+      kv_ensure_space(v, len); \
+      assert((v).items); \
+      /* kv_roundup32() only ORs bits in, so kv_ensure_space() leaves capacity >= size+len. */ \
+      /* coverity[overrun-buffer-arg] */ \
+      memcpy((v).items + (v).size, (data), sizeof((v).items[0]) * (len)); \
+      (v).size = (v).size + (len); \
+    } \
+  } while (0)
 
 /// Appends a string to `v`, without its NUL.
 #define kv_concat(v, str) kv_concat_len(v, str, strlen(str))
@@ -223,20 +225,22 @@ static inline void *_memcpy_free(void *const restrict dest, void *const restrict
 /// fit at least "len" more items
 #define kvi_ensure_more_space(v, len) \
   do { \
-    if ((v).capacity < (v).size + len) { \
-      (v).capacity = (v).size + len; \
+    if ((v).capacity < (v).size + (len)) { \
+      (v).capacity = (v).size + (len); \
       kv_roundup32((v).capacity); \
       kvi_resize((v), (v).capacity); \
     } \
   } while (0)
 
 #define kvi_concat_len(v, data, len) \
-  if (len > 0) { \
-    kvi_ensure_more_space(v, len); \
-    assert((v).items); \
-    memcpy((v).items + (v).size, data, sizeof((v).items[0]) * len); \
-    (v).size = (v).size + len; \
-  }
+  do { \
+    if ((len) > 0) { \
+      kvi_ensure_more_space(v, len); \
+      assert((v).items); \
+      memcpy((v).items + (v).size, (data), sizeof((v).items[0]) * (len)); \
+      (v).size = (v).size + (len); \
+    } \
+  } while (0)
 
 #define kvi_concat(v, str) kvi_concat_len(v, str, strlen(str))
 #define kvi_splice(v1, v0) kvi_concat_len(v1, (v0).items, (v0).size)
