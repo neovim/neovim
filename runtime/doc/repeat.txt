@@ -99,7 +99,8 @@ Example: This "," mapping repeats the last motion ("zj", "3w", "fx",
 							*edit-repeat*
 Example: This "." mapping repeats ANY edit (except undo/redo), including
 operations provided by plugins, without the need for "announcement" via
-vim-repeat or similar. >lua
+vim-repeat or similar. A typed [count] overrides the recorded count, like
+builtin ".". >lua
 
     local last ---@type vim.event.cmdatom.data?
     vim.api.nvim_create_autocmd('CmdAtom', {
@@ -118,10 +119,18 @@ vim-repeat or similar. >lua
         vim.api.nvim_feedkeys('.', 'n', false)
         return
       end
+      local count = vim.v.count
       -- CmdAtom is deferred; schedule the replay, in case "." follows an edit.
       vim.schedule(function()
         if last then
-          vim.api.nvim_feedkeys(last.keys or last.lhs, last.keys and 'n' or 'm', false)
+          local keys = last.keys or last.lhs
+          if count > 0 then
+            -- A typed [count] overrides the recorded ["x][count] prefix of
+            -- `keys`, like builtin ".".
+            local reg = keys:sub(1, 1) == '"' and keys:sub(1, 2) or ''
+            keys = ('%s%d%s'):format(reg, count, (keys:sub(#reg + 1):gsub('^%d+', '')))
+          end
+          vim.api.nvim_feedkeys(keys, last.keys and 'n' or 'm', false)
         end
       end)
     end)
