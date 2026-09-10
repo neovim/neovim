@@ -5366,38 +5366,34 @@ describe('LSP', function()
         vim.lsp.enable('foo')
       end)
 
-      local function names(configs)
-        local config_names = vim
-          .iter(configs)
-          :map(function(config)
-            return config.name
-          end)
-          :totable()
-        table.sort(config_names)
-        return config_names
+      local function config_names(filter)
+        return exec_lua(function(opts)
+          local config_names = vim
+            .iter(vim.lsp.get_configs(opts))
+            :map(function(config)
+              return config.name
+            end)
+            :totable()
+          table.sort(config_names)
+          return config_names
+        end, filter)
       end
 
-      eq({ 'foo' }, names(exec_lua([[return vim.lsp.get_configs { enabled = true }]])))
+      eq({ 'foo' }, config_names({ enabled = true }))
       -- Does NOT resolve non-enabled configs.
       eq({ foo = true, bar = false }, get_resolved({ 'bar', 'foo' }))
 
-      eq({ 'bar' }, names(exec_lua([[return vim.lsp.get_configs { enabled = false }]])))
+      eq({ 'bar', 'nvim.filepaths' }, config_names({ enabled = false }))
 
       -- With no filter, return all configs
-      eq({ 'bar', 'foo' }, names(exec_lua([[return vim.lsp.get_configs()]])))
+      eq({ 'bar', 'foo', 'nvim.filepaths' }, config_names())
 
       -- Confirm `filetype` works
-      eq({ 'foo' }, names(exec_lua([[return vim.lsp.get_configs { filetype = 'foofile' }]])))
+      eq({ 'foo' }, config_names({ filetype = 'foofile' }))
 
       -- Confirm filters combine
-      eq(
-        { 'foo' },
-        names(exec_lua([[return vim.lsp.get_configs { filetype = 'foofile', enabled = true }]]))
-      )
-      eq(
-        {},
-        names(exec_lua([[return vim.lsp.get_configs { filetype = 'foofile', enabled = false }]]))
-      )
+      eq({ 'foo' }, config_names({ filetype = 'foofile', enabled = true }))
+      eq({}, config_names({ filetype = 'foofile', enabled = false }))
       -- Does NOT resolve non-enabled configs.
       eq({ foo = true, bar = false }, get_resolved({ 'bar', 'foo' }))
     end)

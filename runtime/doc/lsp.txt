@@ -535,6 +535,47 @@ LSP notification shape: >
 https://microsoft.github.io/language-server-protocol/specifications/specification-current/#notificationMessage
 
 ------------------------------------------------------------------------------
+PATH COMPLETION                                           *lsp-path-completion*
+
+Nvim includes an opt-in in-process LSP server for path completion. Enable it
+with: >lua
+
+    vim.lsp.enable('nvim.filepaths')
+<
+
+The server supports path completion in normal buffers. Completion is triggered
+when typing `/`; configure `vim.lsp.completion.enable()` with
+`autotrigger = true` on |LspAttach| to use automatic completion.
+
+Configure the server with |vim.lsp.config()|: >lua
+
+    vim.lsp.config('nvim.filepaths', {
+      settings = {
+        filepaths = {
+          base_dir = 'cur_buf',
+          base_dir_overrides = { gitcommit = 'cwd' },
+          sort = 'dir_first',
+          max_items = 1000,
+        },
+      },
+    })
+<
+
+The available `settings.filepaths` settings are:
+
+base_dir ~
+    `cur_buf` (default) or `cwd`. Determines the base directory for relative
+    paths.
+base_dir_overrides ~
+    A table mapping filetypes to `cur_buf` or `cwd`. Overrides `base_dir` for
+    matching filetypes. Defaults to `{}`.
+sort ~
+    `dir_first` (default) or `system`. Controls whether directories are listed
+    before files.
+max_items ~
+    A positive integer (default: 1000) limiting the number of candidates.
+
+------------------------------------------------------------------------------
 IN-PROCESS LSP SERVER                                             *lsp-server*
 
 For maximum flexibility you may want to create your own server. This allows
