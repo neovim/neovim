@@ -61,6 +61,7 @@ local options_list = {
     { 'scrolloff', N_ 'number of screen lines to show around the cursor' },
     { 'scrolloffpad', N_ 'vertically center cursor even at end of file' },
     { 'wrap', N_ 'long lines wrap' },
+    { 'wrapcolumn', N_ 'column at which lines visually wrap' },
     { 'linebreak', N_ "wrap long lines at a character in 'breakat'" },
     { 'breakindent', N_ 'preserve indentation in wrapped text' },
     { 'breakindentopt', N_ 'adjust breakindent behaviour' },
