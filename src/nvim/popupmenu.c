@@ -978,39 +978,59 @@ static void pum_preview_set_text(win_T *win, char *info, linenr_T *lnum, int *ma
 }
 
 /// adjust floating info preview window position
-static bool pum_adjust_info_position(win_T *wp, int width)
+static bool pum_adjust_info_position(win_T *wp, int wantwidth)
 {
-  int border_width = pum_border_width();
-  int col = pum_col + pum_width + 1 + MAX(border_width, pum_scrollbar);
-  // TODO(glepnir): support config align border by using completepopup
-  // align menu
-  int right_extra = Columns - col;
-  int left_extra = pum_col - 2;
+  linenr_T count = wp->w_buffer->b_ml.ml_line_count;
+  int wantheight = plines_m_win(wp, wp->w_topline, count, Rows);
+  int hpad = MAX(pum_border_width(), pum_scrollbar);
 
-  int max_extra = MAX(right_extra, left_extra);
-  // Close info window if there's insufficient space
-  // TODO(glepnir): Replace the hardcoded value (10) with values from the 'completepopup' width/height options.
-  if (max_extra < 10) {
+  int north = pum_row - 1 - pum_border_width();
+  int south = Rows - (pum_row + pum_height + 1 + pum_border_width());
+  int east = Columns - (pum_col + pum_width + 1 + hpad);
+  int west = pum_col - 1 - hpad;
+  int most = MAX(MAX(MAX(east, west), north), south);
+  if (east < 10 && west < 10 && north < 5 && south < 5) {
     wp->w_config.hide = true;
     return false;
   }
 
-  if (right_extra > width) {  // place in right
-    wp->w_config.width = width;
-    wp->w_config.col = col - 1;
-  } else if (left_extra > width) {  // place in left
-    wp->w_config.width = width;
-    wp->w_config.col = pum_col - wp->w_config.width - 1;
-  } else {  // either width is enough just use the biggest one.
-    const bool place_in_right = right_extra > left_extra;
-    wp->w_config.width = max_extra;
-    wp->w_config.col = place_in_right ? col - 1 : pum_col - wp->w_config.width - 1;
+  int ns_off = (wantwidth > Columns - pum_col) ? wantwidth - (Columns - pum_col) : 0;
+  int ew_off = (wantheight > Rows - pum_row) ? wantheight - (Rows - pum_row) : 0;
+  if (ns_off >= pum_col) {
+    ns_off = pum_col - 1;
   }
-  wp->w_config.anchor = 0;  // NW: align top of info window with top of pum
-  linenr_T count = wp->w_buffer->b_ml.ml_line_count;
+  if (ew_off >= pum_row) {
+    ew_off = pum_row - 1;
+  }
+  int ns_width = MIN(Columns - pum_col + ns_off, wantwidth);
+  int ew_height = MIN(Rows - pum_row + ew_off, wantheight);
+
+  // TODO: make this order configurable - maybe 'completepopup'
+  if (north == most) {
+    wp->w_config.width = ns_width;
+    wp->w_config.height = MIN(north, wantheight);
+    wp->w_config.row = pum_row - (pum_above ? 0 : 1);
+    wp->w_config.col = pum_col - ns_off;
+    wp->w_config.anchor = kFloatAnchorSouth;
+  } else if (south == most) {
+    wp->w_config.width = ns_width;
+    wp->w_config.height = MIN(south, wantheight);
+    wp->w_config.row = pum_row + pum_height + (pum_above ? 1 : 0);
+    wp->w_config.col = pum_col - ns_off;
+  } else if (east == most) {
+    wp->w_config.width = MIN(east, wantwidth);
+    wp->w_config.height = ew_height;
+    wp->w_config.row = pum_row;
+    wp->w_config.col = pum_col + pum_width + hpad;
+  } else if (west == most) {
+    wp->w_config.width = MIN(west, wantwidth);
+    wp->w_config.height = ew_height;
+    wp->w_config.row = pum_row;
+    wp->w_config.col = pum_col - wp->w_config.width;
+  }
+
   wp->w_view_width = wp->w_config.width;
-  wp->w_config.height = plines_m_win(wp, wp->w_topline, count, Rows);
-  wp->w_config.row = pum_row;
+  wp->w_view_height = wp->w_config.height;
   wp->w_config.hide = false;
   win_config_float(wp, wp->w_config);
   return true;
