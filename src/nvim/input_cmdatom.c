@@ -395,7 +395,7 @@ static void atom_emit(const CmdAtom *atom)
     PUT(data, "atoms", ARRAY_OBJ(atoms));
   }
   buf_T *buf = atom->origin.buf.br_buf != NULL ? atom->origin.buf.br_buf : curbuf;
-  aucmd_defer(EVENT_CMDATOM, (char *)type_names[atom->type], NULL, AUGROUP_ALL, buf, NULL,
+  aucmd_defer(EVENT_CMDATOM, (char *)type_names[atom->type], NULL, AUGROUP_ALL, buf, curwin, NULL,
               &DICT_OBJ(data));
   api_free_dict(data);
 }

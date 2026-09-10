@@ -51,7 +51,7 @@ static int cursorhold_tb_change_cnt = 0;  ///< tb_change_cnt when waiting starte
 static void cursorhold_event(void **argv)
 {
   event_T event = State & MODE_INSERT ? EVENT_CURSORHOLDI : EVENT_CURSORHOLD;
-  apply_autocmds(event, NULL, NULL, false, curbuf);
+  apply_autocmds(event, NULL, NULL, false, curbuf, curwin);
   did_cursorhold = true;
 }
 

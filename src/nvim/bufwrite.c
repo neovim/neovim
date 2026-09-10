@@ -377,22 +377,22 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
   set_bufref(&bufref, buf);
 
   if (append) {
-    did_cmd = apply_autocmds_exarg(EVENT_FILEAPPENDCMD, sfname, sfname, false, curbuf, eap);
+    did_cmd = apply_autocmds_exarg(EVENT_FILEAPPENDCMD, sfname, sfname, false, curbuf, curwin, eap);
     if (!did_cmd) {
       if (overwriting && bt_nofilename(curbuf)) {
         nofile_err = true;
       } else {
         apply_autocmds_exarg(EVENT_FILEAPPENDPRE,
-                             sfname, sfname, false, curbuf, eap);
+                             sfname, sfname, false, curbuf, curwin, eap);
       }
     }
   } else if (filtering) {
     apply_autocmds_exarg(EVENT_FILTERWRITEPRE,
-                         NULL, sfname, false, curbuf, eap);
+                         NULL, sfname, false, curbuf, curwin, eap);
   } else if (reset_changed && whole) {
     bool was_changed = curbufIsChanged();
 
-    did_cmd = apply_autocmds_exarg(EVENT_BUFWRITECMD, sfname, sfname, false, curbuf, eap);
+    did_cmd = apply_autocmds_exarg(EVENT_BUFWRITECMD, sfname, sfname, false, curbuf, curwin, eap);
     if (did_cmd) {
       if (was_changed && !curbufIsChanged()) {
         // Written everything correctly and BufWriteCmd has reset
@@ -406,17 +406,17 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
         nofile_err = true;
       } else {
         apply_autocmds_exarg(EVENT_BUFWRITEPRE,
-                             sfname, sfname, false, curbuf, eap);
+                             sfname, sfname, false, curbuf, curwin, eap);
       }
     }
   } else {
-    did_cmd = apply_autocmds_exarg(EVENT_FILEWRITECMD, sfname, sfname, false, curbuf, eap);
+    did_cmd = apply_autocmds_exarg(EVENT_FILEWRITECMD, sfname, sfname, false, curbuf, curwin, eap);
     if (!did_cmd) {
       if (overwriting && bt_nofilename(curbuf)) {
         nofile_err = true;
       } else {
         apply_autocmds_exarg(EVENT_FILEWRITEPRE,
-                             sfname, sfname, false, curbuf, eap);
+                             sfname, sfname, false, curbuf, curwin, eap);
       }
     }
   }
@@ -530,16 +530,16 @@ static void buf_write_do_post_autocmds(buf_T *buf, char *fname, exarg_T *eap, bo
 
   if (append) {
     apply_autocmds_exarg(EVENT_FILEAPPENDPOST, fname, fname,
-                         false, curbuf, eap);
+                         false, curbuf, curwin, eap);
   } else if (filtering) {
     apply_autocmds_exarg(EVENT_FILTERWRITEPOST, NULL, fname,
-                         false, curbuf, eap);
+                         false, curbuf, curwin, eap);
   } else if (reset_changed && whole) {
     apply_autocmds_exarg(EVENT_BUFWRITEPOST, fname, fname,
-                         false, curbuf, eap);
+                         false, curbuf, curwin, eap);
   } else {
     apply_autocmds_exarg(EVENT_FILEWRITEPOST, fname, fname,
-                         false, curbuf, eap);
+                         false, curbuf, curwin, eap);
   }
 
   // restore curwin/curbuf and a few other things
