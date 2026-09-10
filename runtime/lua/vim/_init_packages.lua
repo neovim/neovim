@@ -10,8 +10,8 @@ if not vim._is_lua_script then
     return table.concat(result, ';')
   end
 
-  package.path = remove_cwd_template(package.path, '^%.[/\\\\]%?%.lua$')
-  package.cpath = remove_cwd_template(package.cpath, '^%.[/\\\\]%?%.[^/\\\\;]+$')
+  package.path = remove_cwd_template(package.path, [[^%.[/\]%?%.lua$]])
+  package.cpath = remove_cwd_template(package.cpath, [[^%.[/\]%?%.[^/\;]+$]])
 end
 
 local pathtrails = {} --- @type table<string,true> ta
