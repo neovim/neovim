@@ -349,6 +349,8 @@ Editor:
 
 Events (autocommands):
 - Fixed inconsistent behavior in execution of nested autocommands #23368
+- |InsertCharPre| is not triggered for stuffed text (|.| redo, |i_CTRL-R|,
+  |i_CTRL-A|), which also skips mappings and abbreviations.
 - |OptionSet| is triggered for 'modified' when writing a file, undoing changes,
   or using |:set| modified.
 - |Progress|

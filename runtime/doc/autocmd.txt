@@ -903,6 +903,8 @@ InsertCharPre			When a character is typed in Insert mode,
 				to more than one character this text is
 				inserted literally.
 
+				Not triggered for |.| redo, |i_CTRL-R|, |i_CTRL-A|.
+
 				Cannot change the text. |textlock|
 
 							*InsertEnter*
