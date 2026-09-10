@@ -1,6 +1,7 @@
 local M = {}
 
 local echo_err = require('vim._core.util').echo_err
+local fs = require('vim.fs')
 
 local tag_exceptions = {
   -- Interpret asterisk (star, '*') literal but name it 'star'
@@ -414,7 +415,7 @@ local function helpfile_lang(file)
   return ext == '.txt' and 'en' or ext:match('^%.(%a%a)x$')
 end
 
----Report duplicate tags (as errmsg, not exception-throwing error).
+---Report duplicate tags.
 ---@param tags string[] sorted tags file lines
 local function report_duplicates(tags)
   local prevtag
@@ -482,9 +483,9 @@ end
 --- @param helpfiles string[] list of helpfiles
 --- @param dir string Help directory; tag entries name the helpfiles relative to it.
 --- @param outpath string path to write the 'tags' file to.
---- @param include_helptags_tag boolean true if the 'help-tags' tag should be included
+--- @param index_tag string? Filename for the "help-tags" entry, if included
 --- @param ignore_writeerr boolean don't report a tags file that cannot be written
-local function gen_tagsfile(helpfiles, dir, outpath, include_helptags_tag, ignore_writeerr)
+function M.gen_tagsfile(helpfiles, dir, outpath, index_tag, ignore_writeerr)
   -- Avoid scanning helpfiles when the output cannot be written (:helptags ALL).
   local f = io.open(outpath, 'w')
   if not f then
@@ -499,18 +500,21 @@ local function gen_tagsfile(helpfiles, dir, outpath, include_helptags_tag, ignor
 
   -- (1) extract tags from all files
   for _, file in ipairs(helpfiles) do
-    extract_tags(tags, file, vim.fs.relpath(dir, file) or vim.fs.basename(file))
+    extract_tags(tags, file, fs.relpath(dir, file) or fs.basename(file))
   end
 
-  if include_helptags_tag then
-    table.insert(tags, ('help-tags\t%s\t1'):format(vim.fs.basename(outpath)))
+  if index_tag then
+    table.insert(tags, ('help-tags\t%s\t1'):format(index_tag))
   end
 
   -- (2) sort by byte value, as |tags-file-format| requires.
-  -- Note: vim.fn.sort() compares bytes, PUC Lua "<" compares with strcoll().
-  tags = vim.fn.sort(tags)
+  -- PUC Lua uses strcoll(), so use C collation for this sort.
+  local locale = os.setlocale(nil, 'collate')
+  os.setlocale('C', 'collate')
+  table.sort(tags)
+  os.setlocale(locale, 'collate')
 
-  -- (3) report duplicates (non-fatal errmsg: the tags file is still written)
+  -- (3) report duplicates
   report_duplicates(tags)
 
   -- (4) write tags to file
@@ -570,11 +574,11 @@ function M.gen_tags(dir, include_index_tag)
       local outpath = vim.fs.joinpath(directory, tagsfile)
       -- ":helptags ALL" walks 'runtimepath', which may contain read-only directories.
       local ignore_writeerr = dir == nil
-      gen_tagsfile(
+      M.gen_tagsfile(
         langfiles,
         absdir,
         outpath,
-        include_index_tag or directory == vimruntime,
+        (include_index_tag or directory == vimruntime) and tagsfile or nil,
         ignore_writeerr
       )
     end
