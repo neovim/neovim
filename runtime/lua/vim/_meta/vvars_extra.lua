@@ -43,37 +43,41 @@ error('Cannot require a meta file')
 --- |c_CTRL-C| for |CmdlineLeave|).
 --- @field abort? boolean
 --- @field chan? integer See |channel-id|
---- @field info? table Dict of arbitrary event data.
+--- Is |v:true| if the event fired while changing window (or tab) on |DirChanged|.
+--- @field changed_window? boolean
 --- @field cmdlevel? integer Level of cmdline.
 --- @field cmdtype? string Type of cmdline, |cmdline-char|.
+--- @field col? integer Col count of popup menu on |CompleteChanged|, relative to screen.
+--- What |CompleteChanged| is filtering by. Not the same as reading the line: a
+--- match may be shown in the buffer in its place, and "longest" fills it with
+--- the common prefix.
+--- @field complete_leader? string
+--- @field complete_type? string See |complete_info_mode|
+--- @field complete_word? string The word that was selected, empty if abandoned complete.
+--- Current selected complete item on |CompleteChanged|, Is `{}` when no
+--- complete item selected.
+--- @field completed_item? vim.v.completed_item
 --- @field cwd? string Current working directory.
+--- @field height? integer Height of popup menu on |CompleteChanged|
 --- @field inclusive? boolean Motion is |inclusive|, else exclusive.
---- @field scope? string Event-specific scope name.
+--- @field info? table Dict of arbitrary event data.
 --- Current |operator|. Also set for Ex commands (unlike |v:operator|). For
 --- example if |TextYankPost| is triggered by the |:yank| Ex command then
 --- `v:event.operator` is "y".
 --- @field operator? string
+--- @field reason? string Reason for completion being done. |CompleteDone|
 --- Text stored in the register as a |readfile()|-style list of lines.
 --- @field regcontents? string|string[]
 --- Requested register (e.g "x" for "xyy) or the empty string for an unnamed operation.
 --- @field regname? string
 --- @field regtype? string Type of register as returned by |getregtype()|.
---- @field visual? boolean Selection is visual (as opposed to, e.g., via motion).
---- Current selected complete item on |CompleteChanged|, Is `{}` when no
---- complete item selected.
---- @field completed_item? vim.v.completed_item
---- @field height? integer Height of popup menu on |CompleteChanged|
---- @field width? integer Width of popup menu on |CompleteChanged|
 --- @field row? integer Row count of popup menu on |CompleteChanged|, relative to screen.
---- @field col? integer Col count of popup menu on |CompleteChanged|, relative to screen.
---- @field size? integer Total number of completion items on |CompleteChanged|.
+--- @field scope? string Event-specific scope name.
 --- Is |v:true| if popup menu have scrollbar, or |v:false| if not.
 --- @field scrollbar? boolean
---- Is |v:true| if the event fired while changing window  (or tab) on |DirChanged|.
---- @field changed_window? boolean
+--- @field size? integer Total number of completion items on |CompleteChanged|.
 --- @field status? integer Job status or exit code, -1 means "unknown". |TermClose|
---- @field reason? string Reason for completion being done. |CompleteDone|
---- @field complete_type? string See |complete_info_mode|
---- @field complete_word? string The word that was selected, empty if abandoned complete.
+--- @field visual? boolean Selection is visual (as opposed to, e.g., via motion).
+--- @field width? integer Width of popup menu on |CompleteChanged|
 --- List of window IDs that changed on |WinResized|
 --- @field windows? integer[]

@@ -331,6 +331,8 @@ EVENTS
 • |ChanClose| is triggered after a channel is closed, before it is removed.
 • |CmdAtom| fires after each atomic user action (motion, mapping, operator,
   insert session, visual, Ex command, …).
+• |CompleteChanged| sets `v:event.complete_leader` to what the completion is
+  being filtered by.
 • |SessionWritePre| event emits just before |:mksession|.
 • |TextPutPre| and |TextPutPost| are triggered before/after putting text.
 • |TabMoved| is triggered when tabs are reordered.
