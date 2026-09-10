@@ -1,87 +1,29 @@
----@diagnostic disable: no-unknown
--- Does the same as `nvim -c "helptags [++t] doc" -c quit`
--- without needing to run a "nvim" binary, which is needed for cross-compiling.
---
+-- Generate build tags using the runtime scanner, including with nlua0.
 -- Usage: nlua0 gen_helptags.lua {out} {dir} [++t]
--- The tags file is sorted by byte value, but PUC Lua "<" compares with strcoll().
-os.setlocale('C', 'collate')
+local scriptdir = arg[0]:match('^(.*[/\\])') or './'
+local luadir = scriptdir .. '../../runtime/lua/'
+package.path = luadir .. '?.lua;' .. package.path
 
-local out = arg[1]
-local dir = arg[2]
-local add_help_tags = arg[3] == '++t'
+local fs = require('vim.fs')
+-- Load the source version: NVIM_HOST_PRG may embed an older help module.
+local help = dofile(luadir .. 'vim/_core/help.lua')
 
-local dirfd = assert(vim.uv.fs_opendir(dir, nil, 1))
+local dir = fs.abspath(arg[2])
 local files = {}
+local scan = assert(vim.uv.fs_scandir(dir))
 while true do
-  local file = dirfd:readdir()
-  if file == nil then
+  local name, kind = vim.uv.fs_scandir_next(scan)
+  if not name then
     break
   end
-  if file[1].type == 'file' and vim.endswith(file[1].name, '.txt') then
-    table.insert(files, file[1].name)
+  if kind == 'file' and name:sub(-4) == '.txt' then
+    files[#files + 1] = fs.joinpath(dir, name)
   end
 end
 
-local tags = {}
-for _, fn in ipairs(files) do
-  local in_example = false
-  for line in io.lines(dir .. '/' .. fn) do
-    if in_example then
-      local first = string.sub(line, 1, 1)
-      if first ~= ' ' and first ~= '\t' and first ~= '' then
-        in_example = false
-      end
-    end
-    local chunks = vim.split(line, '*', { plain = true })
-    local next_valid = false
-    local n_chunks = #chunks
-    for i, chunk in ipairs(chunks) do
-      if next_valid and not in_example then
-        if #chunk > 0 and string.find(chunk, '[ \t|]') == nil then
-          local next = string.sub(chunks[i + 1], 1, 1)
-          if next == ' ' or next == '\t' or (i == n_chunks - 1 and next == '') then
-            table.insert(tags, { chunk, fn })
-          end
-        end
-      end
+help.gen_tagsfile(files, dir, arg[1], arg[3] == '++t' and 'tags' or nil, false)
 
-      if i == n_chunks - 1 then
-        break
-      end
-      next_valid = false
-      local lastend = string.sub(chunk, -1) -- "" for empty string
-      if lastend == ' ' or lastend == '\t' or (i == 1 and lastend == '') then
-        next_valid = true
-      end
-    end
-
-    if line:find('^>[a-z0-9]*$') or line:find(' >[a-z0-9]*$') then
-      in_example = true
-    end
-  end
+-- nvim -l exits successfully after echo_err(), so fail the build explicitly.
+if vim.v and vim.v.errmsg ~= '' then
+  os.exit(1)
 end
-
-if add_help_tags then
-  table.insert(tags, { 'help-tags', 'tags' })
-end
-table.sort(tags, function(a, b)
-  return a[1] < b[1]
-end)
-
-local f = assert(io.open(out, 'w'))
-local lasttagname, lastfn = nil, nil
-for _, tag in ipairs(tags) do
-  local tagname, fn = unpack(tag)
-  if tagname == lasttagname then
-    error('duplicate tags in ' .. fn .. (lastfn ~= fn and (' and ' .. lastfn) or ''))
-  end
-  lasttagname, lastfn = tagname, fn
-
-  if tagname == 'help-tags' then
-    f:write(tagname .. '\t' .. fn .. '\t1\n')
-  else
-    local escaped = string.gsub(tagname, '[\\/]', '\\%0')
-    f:write(tagname .. '\t' .. fn .. '\t/*' .. escaped .. '*\n')
-  end
-end
-f:close()

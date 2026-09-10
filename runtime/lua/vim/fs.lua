@@ -44,8 +44,8 @@ local uv = vim.uv
 
 local M = {}
 
-local iswin = vim.fn.has('win32') == 1
-local os_sep = iswin and '\\' or '/'
+local os_sep = package.config:sub(1, 1)
+local iswin = os_sep == '\\'
 
 --- Iterate over all the parents of the given path (not expanded/resolved, the caller must do that).
 ---
