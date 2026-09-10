@@ -185,6 +185,7 @@ local config = {
 
       -- Sections in alphanumeric order:
       'base64.lua',
+      'exrc.lua',
       'filetype.lua',
       'fs.lua',
       'glob.lua',
@@ -229,6 +230,7 @@ local config = {
       'runtime/lua/vim/_meta/re.lua',
       'runtime/lua/vim/_meta/regex.lua',
       'runtime/lua/vim/_meta/spell.lua',
+      'runtime/lua/vim/exrc.lua',
       'runtime/lua/vim/filetype.lua',
       'runtime/lua/vim/fs.lua',
       'runtime/lua/vim/glob.lua',

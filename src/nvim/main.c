@@ -2213,7 +2213,8 @@ static bool do_user_initialization(void)
 // Read initialization commands from ".nvim.lua", ".nvimrc", or ".exrc" in
 // current directory and all parent directories.  This is only done if the 'exrc'
 // option is set. Only do this if VIMRC_FILE is not the same as vimrc file
-// sourced in do_user_initialization.
+// sourced in do_user_initialization.  Skipped if exrc files were already
+// loaded (e.g. by an explicit vim.exrc.load() call in the user config).
 static void do_exrc_initialization(void)
 {
   lua_State *const L = get_global_lstate();
@@ -2221,9 +2222,15 @@ static void do_exrc_initialization(void)
 
   lua_getglobal(L, "require");
   lua_pushstring(L, "vim._core.exrc");
-  if (nlua_pcall(L, 1, 0)) {
+  if (nlua_pcall(L, 1, 1)) {
+    fprintf(stderr, "%s\n", lua_tostring(L, -1));
+    return;
+  }
+  lua_getfield(L, -1, "load");
+  if (nlua_pcall(L, 0, 0)) {
     fprintf(stderr, "%s\n", lua_tostring(L, -1));
   }
+  lua_pop(L, 1);  // module
 }
 
 /// Source startup scripts

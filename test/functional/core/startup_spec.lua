@@ -1585,6 +1585,63 @@ describe('user config init', function()
       feed(':qall!<CR>')
       screen:expect({ any = vim.pesc('[Process exited 0]') })
     end)
+
+    -- Pre-populate the trust database so that the exrc file is sourced without
+    -- a trust prompt (there is no UI to answer it in a headless session).
+    local function trust_file(filename)
+      local f = io.open(filename, 'r')
+      local contents = f:read('*a')
+      f:close()
+      local trust_path = ('%s/%s/trust'):format(xstate, is_os('win') and 'nvim-data' or 'nvim')
+      local tf = assert(io.open(trust_path, 'a'))
+      tf:write(
+        ('%s %s\n'):format(vim.fn.sha256(contents), vim.fs.normalize(vim.uv.fs_realpath(filename)))
+      )
+      tf:close()
+    end
+
+    it('vim.exrc.load() sources exrc files early, during init.lua', function()
+      setup_exrc_file('.nvim.lua')
+      trust_file('.nvim.lua')
+      write_file(
+        init_lua_path,
+        [[
+          vim.o.exrc = true
+          vim.exrc.load()
+          vim.g.exrc_during_init = vim.g.exrc_count or 0
+        ]]
+      )
+      clear { args_rm = { '-u' }, env = xstateenv }
+      -- The exrc file was sourced before the rest of init.lua…
+      eq(1, eval('g:exrc_during_init'))
+      -- …and was NOT sourced again by the automatic load at the end of startup.
+      eq(1, eval('g:exrc_count'))
+    end)
+
+    it('vim.exrc.load() does not source exrc files twice', function()
+      setup_exrc_file('.nvim.lua')
+      trust_file('.nvim.lua')
+      write_file(
+        init_lua_path,
+        [[
+          vim.o.exrc = true
+          vim.exrc.load()
+          vim.exrc.load()
+        ]]
+      )
+      clear { args_rm = { '-u' }, env = xstateenv }
+      eq(1, eval('g:exrc_count'))
+    end)
+
+    it('vim.exrc.load() does nothing after exrc was loaded at startup', function()
+      setup_exrc_file('.nvim.lua')
+      trust_file('.nvim.lua')
+      write_file(init_lua_path, [[vim.o.exrc = true]])
+      clear { args_rm = { '-u' }, env = xstateenv }
+      eq(1, eval('g:exrc_count'))
+      command('lua vim.exrc.load()')
+      eq(1, eval('g:exrc_count'))
+    end)
   end)
 
   describe('with explicitly provided config', function()

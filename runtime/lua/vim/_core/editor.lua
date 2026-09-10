@@ -19,6 +19,7 @@ for k, v in pairs({
   ui = true,
   health = true,
   secure = true,
+  exrc = true,
   snippet = true,
   pack = true,
   async = true,
