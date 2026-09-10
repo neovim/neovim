@@ -1,5 +1,6 @@
 local M = {}
 
+local async = require('vim.async') --- @type vim.async._core
 local health = vim.health
 
 local function get_lockfile_path()
@@ -10,12 +11,15 @@ local function get_plug_dir()
   return vim.fs.joinpath(vim.fn.stdpath('data'), 'site', 'pack', 'core', 'opt')
 end
 
+---@async
 local function git_cmd(cmd, cwd)
   cmd = vim.list_extend({ 'git', '-c', 'gc.auto=0' }, cmd)
   local env = vim.fn.environ() --- @type table<string,string>
   env.GIT_DIR, env.GIT_WORK_TREE = nil, nil
   local sys_opts = { cwd = cwd, text = true, env = env, clear_env = true }
-  local out = vim.system(cmd, sys_opts):wait() --- @type vim.SystemCompleted
+  --- @diagnostic disable-next-line: assign-type-mismatch
+  local out = async.await(3, vim.system, cmd, sys_opts) --- @type vim.SystemCompleted
+  async.await(vim.schedule)
   if out.code ~= 0 then
     return false, ((out.stderr or ''):gsub('\n+$', ''))
   end
