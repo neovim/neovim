@@ -126,6 +126,7 @@ typedef struct {
   int c;
   int old_col;
   pos_T old_pos;
+  uint64_t last_redraw;
 } NormalState;
 
 static int VIsual_mode_orig = NUL;              // saved Visual mode
@@ -1431,12 +1432,23 @@ static int normal_check(VimState *state)
 
   state_no_longer_safe(NULL);
 
+  // Give queued wheel input time to advance between redraws, including when
+  // drawing itself takes longer than the interval.
+  const uint64_t kWheelRedrawIntervalNs = 8 * 1000000;
+  bool wheel = !Visual.active
+               && (s->ca.cmdchar == K_MOUSEUP || s->ca.cmdchar == K_MOUSEDOWN
+                   || s->ca.cmdchar == K_MOUSELEFT || s->ca.cmdchar == K_MOUSERIGHT);
+  bool defer_redraw = wheel && os_hrtime() - s->last_redraw < kWheelRedrawIntervalNs
+                      && input_pending_wheel();
+
   // If skip redraw is set (for ":" in wait_return()), don't redraw now.
-  // If there is nothing in the stuff_buffer or do_redraw is true,
-  // update cursor and redraw.
   if (skip_redraw) {
     skip_redraw = false;
     setcursor();
+  } else if (defer_redraw && !do_redraw) {
+    // The next wheel event still needs valid cursor and viewport positions.
+    update_topline(curwin);
+    validate_cursor(curwin);
   } else if (do_redraw || stuff_empty()) {
     terminal_check_refresh();
 
@@ -1468,6 +1480,11 @@ static int normal_check(VimState *state)
     normal_check_folds(s);
     normal_redraw(s);
     do_redraw = false;
+    if (wheel) {
+      // Queued input can keep the main loop from reaching its usual UI flush.
+      ui_flush();
+    }
+    s->last_redraw = os_hrtime();
 
     // Now that we have drawn the first screen all the startup stuff
     // has been done, close any file for startup messages.

@@ -1903,6 +1903,45 @@ bool char_avail(void)
   return retval != NUL;
 }
 
+/// Check for an unmapped wheel event without consuming input or evaluating mappings.
+bool input_pending_wheel(void)
+{
+  if (!char_avail() || !stuff_empty() || can_get_ungot() || typeahead_char != 0
+      || typebuf.tb_len < 3) {
+    return false;
+  }
+  const uint8_t *keys = typebuf.tb_buf + typebuf.tb_off;
+  if (keys[0] != K_SPECIAL || keys[1] != KS_EXTRA) {
+    return false;
+  }
+  int key = TO_SPECIAL(keys[1], keys[2]);
+  if (key != K_MOUSEUP && key != K_MOUSEDOWN
+      && key != K_MOUSELEFT && key != K_MOUSERIGHT) {
+    return false;
+  }
+
+  const uint8_t *noremap = typebuf.tb_noremap + typebuf.tb_off;
+  if (no_mapping != 0 || noremap[0] == RM_SCRIPT
+      || ((noremap[0] | noremap[1] | noremap[2]) & (RM_NONE | RM_ABBR))) {
+    return true;
+  }
+
+  int mode = get_real_state();
+  mapblock_T *maps[] = {
+    get_buf_maphash_list(mode, K_SPECIAL),
+    get_maphash_list(mode, K_SPECIAL),
+  };
+  for (size_t i = 0; i < ARRAY_SIZE(maps); i++) {
+    for (mapblock_T *mp = maps[i]; mp != NULL; mp = mp->m_next) {
+      // Leave wheel-prefixed mappings to the mapping engine, including partial matches.
+      if ((mp->m_mode & mode) && mp->m_keylen >= 3 && memcmp(mp->m_keys, keys, 3) == 0) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 static int no_reduce_keys = 0;  ///< Do not apply modifiers to the key.
 
 /// "getchar()" and "getcharstr()" functions

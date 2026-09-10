@@ -10,6 +10,113 @@ local poke_eventloop = n.poke_eventloop
 local command = n.command
 local exec = n.exec
 
+describe('queued mouse wheel input', function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(40, 10)
+    exec([[
+      set mouse=a mousescroll=ver:1,hor:1 nowrap scrolloff=0
+      call setline(1, range(1, 200))
+      normal! gg
+      let g:last_cursor = 1
+      let g:last_topline = 1
+      autocmd CursorMoved * let g:last_cursor = line('.')
+      autocmd WinScrolled * let g:last_topline = getwininfo(str2nr(expand('<amatch>')))[0].topline
+    ]])
+  end)
+
+  it('updates isolated input and queued input in the hovered window', function()
+    feed('<ScrollWheelDown><0,0>')
+    screen:expect({ any = '%^2 +' })
+    eq({ 2, 2 }, { fn.line('.'), api.nvim_get_var('last_cursor') })
+
+    feed(('<ScrollWheelDown><0,0>'):rep(31))
+    screen:expect({ any = '%^33 +' })
+    eq({ 33, 33 }, { api.nvim_get_var('last_cursor'), api.nvim_get_var('last_topline') })
+
+    local other = api.nvim_get_current_win()
+    command('vsplit')
+    local current = api.nvim_get_current_win()
+    feed(('<ScrollWheelDown><25,0>'):rep(10))
+    eq(current, api.nvim_get_current_win())
+    eq(33, fn.line('w0'))
+    eq(43, fn.getwininfo(other)[1].topline)
+    eq(43, api.nvim_get_var('last_topline'))
+  end)
+
+  it('preserves the cursor position with smoothscroll and scrolloff', function()
+    api.nvim_buf_set_lines(0, 0, -1, false, { ('a'):rep(41), ('b'):rep(200) })
+    command('set wrap smoothscroll scrolloff=99')
+    command('normal! gg0zt')
+    feed(('<ScrollWheelDown><0,0>'):rep(3))
+    local view = fn.winsaveview()
+    eq({ 2, 160, 160, 2, 0 }, { view.lnum, view.col, view.curswant, view.topline, view.skipcol })
+  end)
+
+  it('updates cursor events before mappings and respects noremap input', function()
+    for _, mapping in ipairs({
+      { '<F3>', {} },
+      { '<ScrollWheelUp>', {} },
+      { '<ScrollWheelUp>', { buffer = true } },
+      { '<ScrollWheelUp>', { expr = true } },
+      { '<ScrollWheelUp><F3>', {} },
+    }) do
+      command('normal! gg')
+      n.exec_lua(function(lhs, opts)
+        vim.g.observed = false
+        vim.keymap.set('n', lhs, function()
+          vim.g.observed = { vim.g.last_cursor, vim.fn.line('.'), vim.g.last_topline }
+          return ''
+        end, opts)
+      end, mapping[1], mapping[2])
+      feed(('<ScrollWheelDown><0,0>'):rep(31) .. mapping[1]:gsub('(<ScrollWheel%a+>)', '%1<0,0>'))
+      eq({ 32, 32, 32 }, api.nvim_get_var('observed'))
+      n.exec_lua(function(lhs, opts)
+        vim.keymap.del('n', lhs, { buffer = opts.buffer })
+      end, mapping[1], mapping[2])
+    end
+
+    command('normal! gg')
+    n.exec_lua(function()
+      vim.g.mapping_called = false
+      vim.keymap.set('n', '<ScrollWheelDown>', function()
+        vim.g.mapping_called = true
+      end)
+      vim.api.nvim_feedkeys(vim.keycode('<ScrollWheelDown>'):rep(32), 'nt', false)
+    end)
+    screen:expect({ any = '%^33 +' })
+    eq(false, api.nvim_get_var('mapping_called'))
+  end)
+
+  it('flushes intermediate frames while wheel input remains queued', function()
+    n.exec_lua(function()
+      local count = 0
+      vim.on_key(function(key)
+        if key == vim.keycode('<ScrollWheelDown>') then
+          count = count + 1
+          if count == 8 or count == 24 then
+            -- Cross the redraw budget without yielding or inserting another key.
+            vim.uv.sleep(20)
+          end
+        end
+      end)
+    end)
+    feed(('<ScrollWheelDown><0,0>'):rep(32))
+    local seen = {}
+    screen:expect(function()
+      local view = screen.win_viewport[2]
+      if view then
+        seen[view.topline] = true
+      end
+      eq(true, seen[8])
+      eq(true, seen[24])
+      eq(32, view.topline)
+    end)
+  end)
+end)
+
 describe('ui/mouse/input', function()
   local function with_ext_multigrid(multigrid)
     local screen
