@@ -2359,6 +2359,24 @@ describe('multicursor', function()
       eq(3, fn.line('.')) -- primary placement after undoing a live insert
     end)
 
+    it('one undo reverts a per-cursor newline-insert #41822', function()
+      -- A newline shifts the line count between the per-cursor replays; single "u" restores it.
+      cursors({ 'aa', 'bb', 'cc' }, 'Qjj')
+      feed('A{<CR><Esc>') -- Append + newline at cursor (line 1) and primary (line 3).
+      eq({ 'aa{', '', 'bb', 'cc{', '' }, get_lines())
+      feed('u')
+      eq({ 'aa', 'bb', 'cc' }, get_lines())
+      feed('<C-r>')
+      eq({ 'aa{', '', 'bb', 'cc{', '' }, get_lines())
+      -- "o" opens the line before Insert starts: the range still covers it.
+      clear_cursors()
+      cursors({ 'aa', 'bb', 'cc' }, 'Qjj')
+      feed('ox<Esc>')
+      eq({ 'aa', 'x', 'bb', 'cc', 'x' }, get_lines())
+      feed('u')
+      eq({ 'aa', 'bb', 'cc' }, get_lines())
+    end)
+
     it('a mapped undo/redo (vim-repeat "nmap u") does not cascade', function()
       -- vim-repeat maps u/U/<C-R> to undo/redo wrappers. Such a mapping changes the buffer, but an
       -- undo/redo is buffer-global, not a per-cursor edit: it must NOT cascade, or every cursor

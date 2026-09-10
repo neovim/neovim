@@ -601,6 +601,24 @@ void mc_ins_cascade_start(bool cascade, varnumber_T tick)
   mc_ins_span.tick = tick;
   mc_ins_span.region = 0;
   mc_ins_regions_clear();
+
+  if (mc_ins_span.active) {
+    // Cover the line-range of all cursors with one undo-entry. #41822
+    //
+    // Undo entries apply in reverse save-order, so this entry (saved first) "wins", even though
+    // per-cursor newline-shifting edits may record conflicting undo entries. Same approach is used
+    // by Vim for linewise-op/range-command (see u_save in op_shift, ex_sort, …).
+    linenr_T lo = curwin->w_cursor.lnum;
+    linenr_T hi = curwin->w_cursor.lnum;
+    for (size_t i = 0; i < kv_size(mc_cursors); i++) {
+      pos_T pos;
+      if (mc_ctx_resolve(&kv_A(mc_cursors, i), &pos)) {
+        lo = MIN(lo, pos.lnum);
+        hi = MAX(hi, pos.lnum);
+      }
+    }
+    (void)u_save(lo - 1, hi + 1);  // Ignore FAIL result: only relevant only if undo is unavailable.
+  }
 }
 
 /// True during a span replay. The replay's synthetic <Esc> does not end the primary insert-session,
