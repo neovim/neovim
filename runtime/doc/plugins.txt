@@ -70,13 +70,19 @@ GLOBAL MAPPINGS                                                 *dir-mappings*
 BUFFER-LOCAL MAPPINGS                                    *dir-buffer-mappings*
 
 • <CR> opens the file or directory under the cursor.
+• a opens the file or directory under the cursor in a vertical split.
+• o opens the file or directory under the cursor in a horizontal split.
 • - opens the parent directory.
 • R reloads the directory listing.
 
-These keys map to <Plug>(nvim-dir-open), <Plug>(nvim-dir-up), and
-<Plug>(nvim-dir-reload); map those to use different keys. Default mappings are
-skipped when the target <Plug> mapping is already mapped. The default global and
-directory-buffer "-" mappings are also skipped when "-" is already mapped.
+a and o are available for local directories and keep focus in the listing.
+'splitright' and 'splitbelow' control where the new window appears.
+
+These keys map to <Plug>(nvim-dir-open), <Plug>(nvim-dir-vsplit),
+<Plug>(nvim-dir-split), <Plug>(nvim-dir-up), and <Plug>(nvim-dir-reload); map those
+to use different keys. Default mappings are skipped when the target <Plug>
+mapping is already mapped. The default "-", "a", and "o" mappings are also
+skipped when their keys are already mapped.
 
                                                                  *dir-config*
 Directory buffers follow the global 'hidden' option by default. To delete them
