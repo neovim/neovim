@@ -228,7 +228,7 @@ local function pager_shown()
   return api.nvim_win_is_valid(ui.wins.pager) and not api.nvim_win_get_config(ui.wins.pager).hide
 end
 
-local hlopts = { undo_restore = false, invalidate = true, priority = 1 }
+local hlopts = { undo_restore = false, invalidate = true, priority = 1, strict = false }
 --- Move messages to expanded cmdline, dialog or pager to show in full.
 --- Return updated target+buffer in case it differs from 'src'.
 ---
@@ -240,7 +240,6 @@ function M.expand_msg(src, tgt, focus)
   local hidden = not pager_shown()
   tgt = tgt or not hidden and 'pager' or 'cmd' ---@type 'cmd'|'dialog'|'msg'|'pager'
   if tgt ~= src then
-    local srow = hidden and 0 or api.nvim_buf_line_count(ui.bufs.pager)
     local opts = { details = true, type = 'highlight' }
     local marks = api.nvim_buf_get_extmarks(ui.bufs[src], -1, 0, -1, opts)
     local lines = api.nvim_buf_get_lines(ui.bufs[src], 0, -1, false)
@@ -252,6 +251,8 @@ function M.expand_msg(src, tgt, focus)
       M.virt[src] = { {}, {} }
     end
 
+    -- Append to visible pager, replace any other target. msg_clear() events may have edited pager.
+    local srow = (not hidden and tgt == 'pager') and api.nvim_buf_line_count(ui.bufs.pager) or 0
     api.nvim_buf_set_lines(ui.bufs[tgt], srow, -1, false, lines)
     for _, m in ipairs(marks) do
       hlopts.hl_group, hlopts.end_col, hlopts.end_row =

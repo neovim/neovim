@@ -1450,5 +1450,23 @@ describe('messages2', function()
       {9:de}                                                   |
                                                            |
     ]])
+
+    -- A prompt with pending cmd messages moves them to the dialog (cmdline.lua). The pager is
+    -- still shown, but its line count must not offset the marks copied into the dialog.
+    exec_lua(function()
+      local ui = require('vim._core.ui2')
+      vim.api.nvim_buf_set_lines(ui.bufs.cmd, 0, -1, false, { 'err' })
+      local o = { end_row = 0, end_col = 3, hl_group = 'ErrorMsg' }
+      vim.api.nvim_buf_set_extmark(ui.bufs.cmd, ui.ns, 0, 0, o)
+      ui.msg.expand_msg('cmd', 'dialog')
+    end)
+    screen:expect([[
+                                                           |
+      {1:~                                                    }|*9
+      {3:                                                     }|
+      {3:^                                                     }|
+      {9:err}                                                  |
+                                                           |
+    ]])
   end)
 end)
