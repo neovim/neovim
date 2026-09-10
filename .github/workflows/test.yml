@@ -190,6 +190,9 @@ jobs:
           sudo cpanm -n Neovim::Ext || cat "$HOME/.cpanm/build.log"
           perl -W -e 'use Neovim::Ext; print $Neovim::Ext::VERSION'
 
+      - name: List runtime files
+        run: git -C runtime ls-files -z '*.vim' '*.ps' '*.dict' '*.py' '*.tutor' '*.awk' '*.sh' '*.bat' > "$RUNNER_TEMP/runtime-files"
+
       - name: Remove .git directory
         if: ${{ matrix.build.os == 'ubuntu' }}
         run: cmake -E rm -rf -- .git
@@ -244,12 +247,12 @@ jobs:
           fi
 
           # Check that all runtime files were installed
-          for file in $(git -C runtime ls-files '*.vim' '*.ps' '*.dict' '*.py' '*.tutor' '*.awk' '*.sh' '*.bat'); do
+          while IFS= read -r -d '' file; do
             if ! test -e "$INSTALL_PREFIX/share/nvim/runtime/$file"; then
               printf "It appears that %s is not installed." "$file"
               exit 1
             fi
-          done
+          done < "$RUNNER_TEMP/runtime-files"
 
           # Check that generated syntax file has function names, #5060.
           genvimsynf=syntax/vim/generated.vim
