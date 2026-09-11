@@ -569,7 +569,7 @@ void redo_free_all(void)
 
 /// Prepare for redo of any command: stores `spec` and appends its command chars.
 ///
-/// @param as_atom   The redo also defines the command's atom (`curcmd.redo_frame`). False for
+/// @param as_atom   The redo also defines the command's atom (`CmdFrame.redo_frame`). False for
 ///                  "prep-exempt" special cases (insert-session entry/restart, "z=").
 /// @param arg_meta  Skip the `arg` byte: an interactively-typed operand may need CTRL-V quoting
 ///                  or its composing-char string form, which the caller appends itself.
