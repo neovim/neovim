@@ -1240,7 +1240,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
           for (n = stl_groupitems[groupdepth] + 1; n < curitem; n++) {
             // do not use the highlighting from the removed group
             if (stl_items[n].type == Highlight || stl_items[n].type == HighlightCombining) {
-              stl_items[n].type = Empty;
+              stl_items[n].type = Disabled;
             }
             // adjust the start position of TabPage to the next
             // item position
@@ -1272,7 +1272,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
       // Deactivate separation/truncation markers for wrapping item groups and top-level.
       for (int n = stl_groupitems[groupdepth] + 1; n < curitem; n++) {
         if (stl_items[n].type == Separate || stl_items[n].type == Trunc) {
-          stl_items[n].type = Empty;
+          stl_items[n].type = Disabled;
         }
       }
 
@@ -1398,10 +1398,29 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
       continue;
     }
 
-    // Denotes end of expanded %{} block
+    // Denotes end of an expanded %{%...%} block
     if (*fmt_p == '}' && evaldepth > 0) {
       fmt_p++;
       evaldepth--;
+      if (groupdepth > 0) {
+        // Look for normal items since the last %{%.
+        // If we find a %{% before any normal item, it must be the start of the current block, since
+        // a nested block would have been marked normal unless it contained normal items itself.
+        bool normal_items = false;
+        for (int i = curitem - 1; i >= evalstart && stl_items[i].type != Expression; i--) {
+          if (stl_items[i].type == Normal || stl_items[i].type == NormalEmpty) {
+            normal_items = true;
+            break;
+          }
+        }
+        if (!normal_items) {
+          // If the expression result contained no normal items, treat the whole result as one.
+          // This prevents a surrounding auto-hiding item group from being hidden.
+          stl_items[curitem].type = Normal;
+          stl_items[curitem].start = out_p;
+          curitem++;
+        }
+      }
       continue;
     }
 
@@ -1547,6 +1566,9 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
         usefmt = new_fmt;
         fmt_p = usefmt + parsed_usefmt;
         evaldepth++;
+        stl_items[curitem].type = Expression;
+        stl_items[curitem].start = out_p;
+        curitem++;
         continue;
       }
       break;
@@ -1976,7 +1998,7 @@ stcsign:
 
       // Otherwise, there was nothing to print so mark the item as empty
     } else {
-      stl_items[curitem].type = Empty;
+      stl_items[curitem].type = NormalEmpty;
     }
 
     if (num >= 0 || (!itemisflag && str && *str)) {
