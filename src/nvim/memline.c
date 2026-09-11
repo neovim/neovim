@@ -420,6 +420,11 @@ void ml_setname(buf_T *buf)
       break;
     }
     char *fname = findswapname(buf, &dirp, mfp->mf_fname, &found_existing_dir);
+    // autocmd may have freed mfp if findswapname creates different swapfile name
+    if (buf->b_ml.ml_mfp != mfp) {
+      xfree(fname);
+      return;
+    }
     // alloc's fname
     if (dirp == NULL) {             // out of memory
       break;
