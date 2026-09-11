@@ -264,6 +264,23 @@ describe(':write', function()
     )
   end)
 
+  it('unaffected if a BufWritePre autocmd changes CWD away from the file #41838', function()
+    -- Leaving the file's directory clears its short name; the write must fall back to the full one.
+    local dir = vim.fs.normalize(t.tmpname(false))
+    t.mkdir(dir)
+    t.mkdir(dir .. '/other')
+    local file = dir .. '/f.txt'
+    command('edit ' .. file)
+    command('lcd ' .. dir)
+    eq('f.txt', fn.bufname('%'))
+    command(('autocmd BufWritePre <buffer> lcd %s/other'):format(dir))
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'hello' })
+    command('write')
+
+    eq(file, fn.bufname('%'))
+    eq({ 'hello' }, fn.readfile(file))
+  end)
+
   it('unaffected if a Progress handler changes CWD #41417', function()
     -- ASAN catches the read of the freed name. Also assert the written file name/contents.
     local dir = vim.fs.normalize(t.tmpname(false))

@@ -500,18 +500,19 @@ static int buf_write_do_autocmds(buf_T *buf, char **fnamep, char **sfnamep, char
   }
 
   // The autocommands may have changed the name of the buffer, which may
-  // be kept in fname, ffname and sfname.
+  // be kept in fname, ffname and sfname. A CWD change may also clear b_sfname;
+  // use b_fname, which falls back to the full name when there is no short name.
   if (buf_ffname) {
     *ffnamep = buf->b_ffname;
   }
   if (buf_sfname) {
-    *sfnamep = buf->b_sfname;
+    *sfnamep = buf->b_fname;
   }
   if (buf_fname_f) {
     *fnamep = buf->b_ffname;
   }
   if (buf_fname_s) {
-    *fnamep = buf->b_sfname;
+    *fnamep = buf->b_fname;
   }
   return NOTDONE;
 }
