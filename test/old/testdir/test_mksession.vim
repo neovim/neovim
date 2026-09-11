@@ -1482,6 +1482,58 @@ func Test_mksession_cursor_position()
   %bwipe
 endfunc
 
+func Test_mksession_with_Ctrl_I_map()
+  set sessionoptions=options
+
+  " <Tab> and g<Tab> not mapped explicitly
+  imapclear
+  inoremap <C-I> foo
+  inoremap g<C-I> bar
+  imap <F2> <C-I>
+  imap g<F2> g<C-I>
+  mksession! Xtest_mks.out
+
+  " Check that the session doesn't create spurious simplified mappings
+  imapclear
+  source Xtest_mks.out
+  call assert_equal('i  <C-I>       * foo', execute('imap <C-I>')->trim())
+  call assert_equal('No mapping found', execute('imap <Tab>')->trim())
+  call assert_equal('i  g<C-I>      * bar', execute('imap g<C-I>')->trim())
+  call assert_equal('No mapping found', execute('imap g<Tab>')->trim())
+
+  " Check that the restored mappings are working properly
+  new
+  call feedkeys("i\<*C-I>\<F2>g\<*C-I>g\<F2>\<Esc>", 'tx')
+  call assert_equal('foofoobarbar', getline('.'))
+  bwipe!
+
+  " <Tab> and g<Tab> mapped explicitly
+  imapclear
+  inoremap <C-I> foo
+  inoremap <Tab> FOO
+  inoremap g<C-I> bar
+  inoremap g<Tab> BAR
+  mksession! Xtest_mks.out
+
+  " Check that the session restores mappings properly
+  imapclear
+  source Xtest_mks.out
+  call assert_equal('i  <C-I>       * foo', execute('imap <C-I>')->trim())
+  call assert_equal('i  <Tab>       * FOO', execute('imap <Tab>')->trim())
+  call assert_equal('i  g<C-I>      * bar', execute('imap g<C-I>')->trim())
+  call assert_equal('i  g<Tab>      * BAR', execute('imap g<Tab>')->trim())
+
+  " Check that the restored mappings are working properly
+  new
+  call feedkeys("i\<*C-I>\<Tab>g\<*C-I>g\<Tab>\<Esc>", 'tx')
+  call assert_equal('fooFOObarBAR', getline('.'))
+  bwipe!
+
+  call delete('Xtest_mks.out')
+  imapclear
+  set sessionoptions&
+endfunc
+
 " Test sessions global and local mappings
 func Test_mksession_localmappings()
 
