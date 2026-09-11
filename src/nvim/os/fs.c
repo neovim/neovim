@@ -249,11 +249,8 @@ bool os_can_exe(const char *name, char **abspath, bool use_path)
 #ifdef MSWIN
     return is_executable_ext(name, abspath);
 #else
-    // Must have path separator, cannot execute files in the current directory.
-    return ((use_path || gettail_dir(name) != name)
-            && is_executable(name, abspath));
+    return is_executable(name, abspath);
 #endif
-    return false;
   }
 
   return is_executable_in_path(name, abspath);
