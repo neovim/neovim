@@ -4,10 +4,15 @@ local Screen = require('test.functional.ui.screen')
 
 local describe, it = t.describe, t.it
 
-describe('mouse wheel perf', function()
+describe('navigation perf', function()
   for _, cost_us in ipairs({ 0, 200 }) do
-    for _, mode in ipairs({ 'Normal', 'Insert' }) do
-      local label = ('%s, synthetic cursor callback: %d us'):format(mode, cost_us)
+    for _, case in ipairs({
+      { 'Normal', '<ScrollWheelDown><145,30>' },
+      { 'Insert', '<ScrollWheelDown><145,30>' },
+      { 'Normal', '<C-E>' },
+    }) do
+      local mode, input = case[1], case[2]
+      local label = ('%s %s, synthetic cursor callback: %d us'):format(mode, input, cost_us)
       it(label, function()
         n.clear()
         Screen.new(210, 98)
@@ -51,7 +56,7 @@ describe('mouse wheel perf', function()
           end
 
           -- Time the native input loop, without polling RPC between the markers.
-          n.feed('<F3>' .. ('<ScrollWheelDown><145,30>'):rep(450) .. '<F4>')
+          n.feed('<F3>' .. input:rep(450) .. '<F4>')
           local message
           repeat
             message = assert(n.next_msg(), 'scroll benchmark did not finish')

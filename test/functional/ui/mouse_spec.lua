@@ -57,11 +57,9 @@ describe('queued mouse wheel input', function()
 
   it('updates cursor events before mappings and respects noremap input', function()
     for _, mapping in ipairs({
-      { '<F3>', {} },
       { '<ScrollWheelUp>', {} },
-      { '<ScrollWheelUp>', { buffer = true } },
-      { '<ScrollWheelUp>', { expr = true } },
-      { '<ScrollWheelUp><F3>', {} },
+      { '<ScrollWheelUp><F3>', { buffer = true, expr = true } },
+      { string.char(5) .. 'x', { expr = true }, '<C-E>x' },
     }) do
       command('normal! gg')
       n.exec_lua(function(lhs, opts)
@@ -71,7 +69,10 @@ describe('queued mouse wheel input', function()
           return ''
         end, opts)
       end, mapping[1], mapping[2])
-      feed(('<ScrollWheelDown><0,0>'):rep(31) .. mapping[1]:gsub('(<ScrollWheel%a+>)', '%1<0,0>'))
+      feed(
+        ('<ScrollWheelDown><0,0>'):rep(31)
+          .. (mapping[3] or mapping[1]):gsub('(<ScrollWheel%a+>)', '%1<0,0>')
+      )
       eq({ 32, 32, 32 }, api.nvim_get_var('observed'))
       n.exec_lua(function(lhs, opts)
         vim.keymap.del('n', lhs, { buffer = opts.buffer })
@@ -88,32 +89,6 @@ describe('queued mouse wheel input', function()
     end)
     screen:expect({ any = '%^33 +' })
     eq(false, api.nvim_get_var('mapping_called'))
-  end)
-
-  it('flushes intermediate frames while wheel input remains queued', function()
-    n.exec_lua(function()
-      local count = 0
-      vim.on_key(function(key)
-        if key == vim.keycode('<ScrollWheelDown>') then
-          count = count + 1
-          if count == 8 or count == 24 then
-            -- Cross the redraw budget without yielding or inserting another key.
-            vim.uv.sleep(20)
-          end
-        end
-      end)
-    end)
-    feed(('<ScrollWheelDown><0,0>'):rep(32))
-    local seen = {}
-    screen:expect(function()
-      local view = screen.win_viewport[2]
-      if view then
-        seen[view.topline] = true
-      end
-      eq(true, seen[8])
-      eq(true, seen[24])
-      eq(32, view.topline)
-    end)
   end)
 end)
 

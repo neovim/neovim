@@ -263,6 +263,14 @@ size_t input_available(void)
   return (size_t)(input_write_pos - input_read_pos);
 }
 
+/// Copy available input without consuming it.
+size_t input_peek(char *buf, size_t maxlen)
+{
+  size_t len = MIN(maxlen, input_available());
+  memcpy(buf, input_read_pos, len);
+  return len;
+}
+
 static size_t input_space(void)
 {
   return (size_t)(input_buffer + INPUT_BUFFER_SIZE - input_write_pos);
