@@ -8,6 +8,7 @@
 " 2026 Mar 11 by Vim Project: fix number performance #19630
 " 2026 May 27 by Vim Project: highlight `lazy` soft keyword (PEP 810) #20342
 " 2026 Aug 30 by Vim Project: improve number and ellipsis performance
+" 2026 Sep 10 by Vim Project: add new builtins #21254
 " Credits:	Neil Schemenauer <nas@python.ca>
 "		Dmitry Vasiliev
 "		Rob B
@@ -314,7 +315,7 @@ if !exists("python_no_builtin_highlight")
   " constants added by the `site` module
   syn keyword pythonBuiltin	quit exit copyright credits license
   " built-in functions
-  syn keyword pythonBuiltin	abs all any ascii bin bool breakpoint bytearray
+  syn keyword pythonBuiltin	abs aiter all anext any ascii bin bool breakpoint bytearray
   syn keyword pythonBuiltin	bytes callable chr classmethod compile complex
   syn keyword pythonBuiltin	delattr dict dir divmod enumerate eval exec
   syn keyword pythonBuiltin	filter float format frozenset getattr globals
@@ -339,7 +340,7 @@ endif
 " http://docs.python.org/library/exceptions.html
 if !exists("python_no_exception_highlight")
   " builtin base exceptions (used mostly as base classes for other exceptions)
-  syn keyword pythonExceptions	BaseException Exception
+  syn keyword pythonExceptions	BaseException Exception BaseExceptionGroup ExceptionGroup
   syn keyword pythonExceptions	ArithmeticError BufferError LookupError
   " builtin exceptions (actually raised)
   syn keyword pythonExceptions	AssertionError AttributeError EOFError
@@ -348,7 +349,7 @@ if !exists("python_no_exception_highlight")
   syn keyword pythonExceptions	KeyboardInterrupt MemoryError
   syn keyword pythonExceptions	ModuleNotFoundError NameError
   syn keyword pythonExceptions	NotImplementedError OSError OverflowError
-  syn keyword pythonExceptions	RecursionError ReferenceError RuntimeError
+  syn keyword pythonExceptions	PythonFinalizationError RecursionError ReferenceError RuntimeError
   syn keyword pythonExceptions	StopAsyncIteration StopIteration SyntaxError
   syn keyword pythonExceptions	SystemError SystemExit TabError TypeError
   syn keyword pythonExceptions	UnboundLocalError UnicodeDecodeError
@@ -366,7 +367,7 @@ if !exists("python_no_exception_highlight")
   syn keyword pythonExceptions	IsADirectoryError NotADirectoryError
   syn keyword pythonExceptions	PermissionError ProcessLookupError TimeoutError
   " builtin warnings
-  syn keyword pythonExceptions	BytesWarning DeprecationWarning FutureWarning
+  syn keyword pythonExceptions	BytesWarning DeprecationWarning EncodingWarning FutureWarning
   syn keyword pythonExceptions	ImportWarning PendingDeprecationWarning
   syn keyword pythonExceptions	ResourceWarning RuntimeWarning
   syn keyword pythonExceptions	SyntaxWarning UnicodeWarning
