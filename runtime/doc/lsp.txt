@@ -1642,9 +1642,12 @@ format({opts})                                          *vim.lsp.buf.format()*
                   that contain `start` and `end` keys as described above, in
                   which case `textDocument/rangesFormatting` support is
                   required.
-                • {timeout_ms}? (`integer`, default: `1000`) Time in
-                  milliseconds to block for formatting requests. No effect if
-                  async=true.
+                • {timeout_ms}? (`integer`, default: `1000` for synchronous
+                  requests) Time in milliseconds allowed for each formatting
+                  request. On timeout, cancels the request and continues with
+                  the next client. With async=true, there is no timeout unless
+                  this option is set. Responses received after the request
+                  times out are ignored.
 
 hover({config})                                          *vim.lsp.buf.hover()*
     Displays hover information about the symbol under the cursor in a floating

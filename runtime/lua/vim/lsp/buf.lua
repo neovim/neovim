@@ -580,8 +580,11 @@ end
 --- See https://microsoft.github.io/language-server-protocol/specification/#formattingOptions
 --- @field formatting_options? lsp.FormattingOptions
 ---
---- Time in milliseconds to block for formatting requests. No effect if async=true.
---- (default: `1000`)
+--- Time in milliseconds allowed for each formatting request. On timeout, cancels
+--- the request and continues with the next client. With async=true, there is no
+--- timeout unless this option is set. Responses received after the request times
+--- out are ignored.
+--- (default: `1000` for synchronous requests)
 --- @field timeout_ms? integer
 ---
 --- Restrict formatting to the clients attached to the given buffer.
@@ -697,11 +700,39 @@ function M.format(opts)
         return
       end
       local params = set_range(client, util.make_formatting_params(opts.formatting_options))
-      client:request(method, params, function(...)
+      local timer = opts.timeout_ms and assert(vim.uv.new_timer())
+      local success, request_id = client:request(method, params, function(...)
+        if timer then
+          if timer:is_closing() then
+            return
+          end
+          timer:close()
+        end
         local handler = client.handlers[method] or lsp.handlers[method]
         handler(...)
         do_format(next(clients, idx))
       end, bufnr)
+      if timer and not timer:is_closing() then
+        if not success then
+          timer:close()
+          return
+        end
+        timer:start(
+          assert(opts.timeout_ms),
+          0,
+          vim.schedule_wrap(function()
+            if timer:is_closing() then
+              return
+            end
+            timer:close()
+            if request_id and client.requests[request_id] then
+              client:cancel_request(request_id)
+            end
+            vim.notify(string.format('[LSP][%s] timeout', client.name), vim.log.levels.WARN)
+            do_format(next(clients, idx))
+          end)
+        )
+      end
     end
     do_format(next(clients))
   else
