@@ -204,20 +204,29 @@ function M.visual()
   vim.cmd('norm! 1q=') -- "Follow" mode.
 end
 
---- "[count]Q": Places a multicursor at every match of the last search pattern.
-function M.matches()
+--- "[{Visual}][count]Q": Places a cursor at each match (limited to Visual linewise range, if any).
+--- @param first integer First line of the range (0: whole buffer).
+--- @param last integer
+function M.matches(first, last)
   if vim.fn.getreg('/') == '' then
     require('vim._core.util').echo_err('E35: No previous regular expression')
     return
   end
+  local ranged = first > 0
+  if ranged then
+    vim.cmd.normal({ vim.keycode('<Esc>'), bang = true }) -- End Visual mode.
+  end
   local view = vim.fn.winsaveview()
-  vim.api.nvim_win_set_cursor(0, { 1, 0 })
-  local pos = vim.fn.searchpos('', 'cW')
+  vim.api.nvim_win_set_cursor(0, { ranged and first or 1, 0 })
+  local stopline = ranged and last or vim.fn.line('$')
+  -- TODO(justinmk): if we really want to limit by charwise/block selection, then we should add that
+  -- feature to seachpos() or sth like that, rather than doing yucky stuff here.
+  local pos = vim.fn.searchpos('', 'cW', stopline)
   while pos[1] ~= 0 do
     vim.api.nvim_mcursor(0, { pos[1], pos[2] - 1 })
-    pos = vim.fn.searchpos('', 'W')
+    pos = vim.fn.searchpos('', 'W', stopline)
   end
-  vim.fn.winrestview(view)
+  vim.fn.winrestview(view) -- Primary stays put.
 end
 
 --- Inserts an ascending number at each cursor (Emacs F3-counter): 1, 2, 3, ….

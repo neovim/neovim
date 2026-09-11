@@ -3121,11 +3121,23 @@ static void nv_Q(cmdarg_T *cap)
     // Not allowed while recording/executing a macro. |mcursor-limitations|
     vim_beep(0);
   } else if (!checkclearop(cap->oap)) {
-    if (Visual.active) {
+    if (Visual.active && cap->count0 == 0) {
+      // {Visual}Q: a cursor per selected line.
       typval_T tv_args[] = { { .v_type = VAR_UNKNOWN } };
       nlua_call_typval("vim._core.mcursor", "visual", tv_args, NULL);
     } else if (cap->count0 > 0) {
-      typval_T tv_args[] = { { .v_type = VAR_UNKNOWN } };
+      // [count]Q / {Visual}[count]Q: a cursor at each match (limited to Visual lines, if any).
+      linenr_T first = 0;
+      linenr_T last = 0;
+      if (Visual.active) {
+        first = MIN(Visual.start.lnum, curwin->w_cursor.lnum);
+        last = MAX(Visual.start.lnum, curwin->w_cursor.lnum);
+      }
+      typval_T tv_args[] = {
+        { .v_type = VAR_NUMBER, .vval.v_number = first },  // 0: whole buffer.
+        { .v_type = VAR_NUMBER, .vval.v_number = last },
+        { .v_type = VAR_UNKNOWN },
+      };
       nlua_call_typval("vim._core.mcursor", "matches", tv_args, NULL);
     } else {
       mc_toggle(curbuf, curwin->w_cursor, true);

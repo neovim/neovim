@@ -384,6 +384,9 @@ Q			Toggles a multicursor at the current cursor position.
 {Visual}Q		Places a cursor on each line of the Visual selection.
 			Enables follow-mode |q=|.
 
+{Visual}[count]Q	Places a cursor at each match of the last search pattern
+			within the Visually-selected lines.
+
 							*mcursor-mouse* *<C-LeftMouse>*
 <C-LeftMouse>		Toggles a multicursor at the click position, without
 			moving the primary cursor (or changing windows). Does

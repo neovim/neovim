@@ -301,6 +301,80 @@ describe('multicursor', function()
     end)
   end)
 
+  describe('[count]Q', function()
+    it('places a cursor at each match of the last search pattern', function()
+      fn.setline(1, { 'foo bar foo', 'baz foo qux', 'foobar foo' })
+      feed('gg0') -- on the first "foo"
+      feed('*') -- whole-word pattern; the cursor moves to the next match
+      feed('1Q')
+      -- 4 whole-word "foo" matches ("foobar" excluded), including under the primary.
+      eq(4, ncursors())
+      -- The primary cursor does not move ("*" left it on the second match).
+      eq({ 1, 8 }, api.nvim_win_get_cursor(0))
+      feed('cwXXX<Esc>')
+      eq({ 'XXX bar XXX', 'baz XXX qux', 'foobar XXX' }, get_lines())
+      -- The cursor under the primary merged at the cascade (no double-apply).
+      eq(3, ncursors())
+      -- A "/" search likewise, also with several matches per line.
+      clear_cursors()
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'ab ab ab', 'xx ab' })
+      feed('gg0/ab<CR>') -- the cursor lands on the second "ab"
+      feed('1Q')
+      eq(4, ncursors())
+      feed('x')
+      eq({ 'b b b', 'xx b' }, get_lines())
+      -- Placement uses the real search engine, so it matches what "n" finds under the current
+      -- case options. 'ignorecase': "/foo" matches all three cases.
+      clear_cursors()
+      command('set ignorecase')
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'Foo foo FOO' })
+      feed('gg0/foo<CR>')
+      feed('1Q')
+      eq(3, ncursors())
+      feed('gUiw')
+      eq({ 'FOO FOO FOO' }, get_lines())
+      -- 'smartcase': an uppercase letter in the pattern forces case-sensitivity, so only the
+      -- exact-case match is a cursor (matchbufline would have matched all three).
+      clear_cursors()
+      command('set smartcase')
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'Foo foo Foo' })
+      feed('gg0/Foo<CR>') -- only the two "Foo"s, not "foo"
+      feed('1Q')
+      eq(2, ncursors())
+      feed('x')
+      eq({ 'oo foo oo' }, get_lines())
+    end)
+
+    it('does nothing without a previous search (E35)', function()
+      fn.setline(1, { 'foo foo' })
+      feed('1Q')
+      eq(0, ncursors())
+      feed('vl') -- {Visual}1Q likewise beeps and adds nothing.
+      feed('1Q')
+      eq(0, ncursors())
+    end)
+
+    it('{Visual}[count]Q limits matches to selection (linewise)', function()
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'foo one', 'foo foo', 'foo y foo', 'foo end' })
+      feed('gg0/foo<CR>') -- pattern; cursor lands on line 2's first "foo"
+      feed('Vj') -- linewise: lines 2-3
+      feed('1Q')
+      -- 4 matches within lines 2-3; line 1's and line 4's "foo" are excluded.
+      eq(4, ncursors())
+      eq({ 3, 0 }, api.nvim_win_get_cursor(0)) -- primary stays put (selection end), not moved
+      feed('x') -- the selection ended on a match, so the primary edits with the others
+      eq({ 'foo one', 'oo oo', 'oo y oo', 'foo end' }, get_lines())
+
+      -- Charwise selection spans whole lines: partial-column endpoints are ignored.
+      clear_cursors()
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'foo foo', 'bar', 'foo foo' })
+      feed('gg0/foo<CR>') -- cursor on line 1's second "foo"
+      feed('vj') -- charwise from mid-line 1 into line 2, but the whole lines 1-2 are searched
+      feed('1Q')
+      eq(2, ncursors()) -- both "foo"s on line 1; line 3 is outside the range
+    end)
+  end)
+
   describe('mouse', function()
     it('<C-LeftMouse> toggles a cursor at the click, without moving the primary', function()
       command('set mousetime=0') -- repeated clicks must not count as double-clicks
@@ -780,57 +854,6 @@ describe('multicursor', function()
           expect = { '  foo', '  bar' },
         },
       })
-    end)
-  end)
-
-  describe('[count]Q (search matches)', function()
-    it('places a cursor at each match of the last search pattern', function()
-      fn.setline(1, { 'foo bar foo', 'baz foo qux', 'foobar foo' })
-      feed('gg0') -- on the first "foo"
-      feed('*') -- whole-word pattern; the cursor moves to the next match
-      feed('1Q')
-      -- 4 whole-word "foo" matches ("foobar" excluded), including under the primary.
-      eq(4, ncursors())
-      -- The primary cursor does not move ("*" left it on the second match).
-      eq({ 1, 8 }, api.nvim_win_get_cursor(0))
-      feed('cwXXX<Esc>')
-      eq({ 'XXX bar XXX', 'baz XXX qux', 'foobar XXX' }, get_lines())
-      -- The cursor under the primary merged at the cascade (no double-apply).
-      eq(3, ncursors())
-      -- A "/" search likewise, also with several matches per line.
-      clear_cursors()
-      api.nvim_buf_set_lines(0, 0, -1, true, { 'ab ab ab', 'xx ab' })
-      feed('gg0/ab<CR>') -- the cursor lands on the second "ab"
-      feed('1Q')
-      eq(4, ncursors())
-      feed('x')
-      eq({ 'b b b', 'xx b' }, get_lines())
-      -- Placement uses the real search engine, so it matches what "n" finds under the current
-      -- case options. 'ignorecase': "/foo" matches all three cases.
-      clear_cursors()
-      command('set ignorecase')
-      api.nvim_buf_set_lines(0, 0, -1, true, { 'Foo foo FOO' })
-      feed('gg0/foo<CR>')
-      feed('1Q')
-      eq(3, ncursors())
-      feed('gUiw')
-      eq({ 'FOO FOO FOO' }, get_lines())
-      -- 'smartcase': an uppercase letter in the pattern forces case-sensitivity, so only the
-      -- exact-case match is a cursor (matchbufline would have matched all three).
-      clear_cursors()
-      command('set smartcase')
-      api.nvim_buf_set_lines(0, 0, -1, true, { 'Foo foo Foo' })
-      feed('gg0/Foo<CR>') -- only the two "Foo"s, not "foo"
-      feed('1Q')
-      eq(2, ncursors())
-      feed('x')
-      eq({ 'oo foo oo' }, get_lines())
-    end)
-
-    it('does nothing without a previous search (E35)', function()
-      fn.setline(1, { 'foo foo' })
-      feed('1Q')
-      eq(0, ncursors())
     end)
   end)
 

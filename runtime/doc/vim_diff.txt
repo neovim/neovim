@@ -410,8 +410,7 @@ Input/Mappings:
 Normal commands:
 - |gO| shows a filetype-defined "outline" of the current buffer.
 - |gQ| restores |multicursor|s.
-- |Q| adds a |multicursor| ([count]Q: at each match; {Visual}Q: at each
-  selected line |v_Q|) instead of switching to Ex mode.
+- |Q| adds a |multicursor| instead of switching to Ex mode.
 - [count]q: enters |Ex-mode|.
 - |ZR| performs |:restart|
 - |v_al| selects the whole buffer; |v_il| selects the current line without
