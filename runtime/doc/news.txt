@@ -376,6 +376,9 @@ LSP
 • |vim.lsp.formatexpr()| now falls back to `textDocument/formatting` if the whole
   buffer is being formatted and the language server doesn't support
   `textDocument/rangeFormatting`.
+• |vim.lsp.buf.format()| respects an explicit `timeout_ms` with `async=true`.
+  The timeout applies per client. Async requests have no timeout when the
+  option is omitted.
 • Support for `workspace/foldingRange/refresh`:
   https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/#workspace_foldingRange_refresh
 
