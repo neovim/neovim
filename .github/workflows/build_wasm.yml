@@ -39,7 +39,7 @@ jobs:
           path: |
             ./.emsdk
             ./.binaryen
-          key: ${{ runner.os }}-wasm-${{ hashFiles('build.zig', 'build.zig.zon', '.github/scripts/build_wasm.sh') }}
+          key: ${{ runner.os }}-wasm-${{ hashFiles('build.zig', 'build.zig.zon', '.github/scripts/build_wasm.sh', '.github/workflows/build_wasm.yml') }}
 
       - name: Install system deps
         run: |
