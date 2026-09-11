@@ -132,7 +132,11 @@ static int putglyph(VTermGlyphInfo *info, VTermPos pos, void *user)
   }
 
   for (int col = 1; col < info->width; col++) {
-    getcell(screen, pos.row, pos.col + col)->schar = (uint32_t)-1;
+    ScreenCell *onecell = getcell(screen, pos.row, pos.col + col);
+    if (onecell == NULL) {
+      break;
+    }
+    onecell->schar = (uint32_t)-1;
   }
 
   VTermRect rect = {
