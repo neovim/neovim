@@ -22,6 +22,7 @@
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/macros_defs.h"
+#include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option.h"
@@ -336,6 +337,48 @@ char *get_locales(expand_T *xp, int idx)
   return locales[idx];
 }
 
+#ifndef MSWIN
+/// Force LC_CTYPE to a UTF-8 locale, so multibyte text is handled correctly
+/// by the OS and by child processes (e.g. clipboard tools). #11432
+static void set_ctype_utf8(void)
+{
+  char *enc = enc_locale();
+  bool is_utf8 = enc != NULL && strcmp(enc, "utf-8") == 0;
+  xfree(enc);
+  if (is_utf8) {
+    return;
+  }
+
+  // Try "<current locale>.UTF-8" first, then generic fallbacks.
+  char buf[64] = { 0 };
+  const char *loc = setlocale(LC_CTYPE, NULL);
+  if (loc != NULL) {
+    size_t len = 0;
+    while (loc[len] != NUL && loc[len] != '.' && loc[len] != '@' && len < sizeof(buf) - 10) {
+      len++;
+    }
+    xstrlcpy(buf, loc, len + 1);
+    xstrlcat(buf, ".UTF-8", sizeof(buf));
+  }
+
+  const char *cands[] = { buf, "C.UTF-8", "en_US.UTF-8" };
+  for (size_t i = 0; i < ARRAY_SIZE(cands); i++) {
+    if (*cands[i] == NUL) {
+      continue;
+    }
+    if (setlocale(LC_CTYPE, cands[i]) != NULL) {
+      // Export it so child processes (e.g. clipboard tools) use UTF-8 too.
+      os_setenv("LC_CTYPE", cands[i], 1);
+      if (os_env_exists("LC_ALL", true)) {
+        // Unset $LC_ALL (it would overrule LC_CTYPE); other LC_* fall back to $LANG.
+        os_unsetenv("LC_ALL");
+      }
+      return;
+    }
+  }
+}
+#endif
+
 void lang_init(void)
 {
 #if defined(__APPLE__)
@@ -367,5 +410,8 @@ void lang_init(void)
     }
 # endif
   }
+#endif
+#ifndef MSWIN
+  set_ctype_utf8();
 #endif
 }
