@@ -272,6 +272,17 @@ describe('multicursor', function()
       eq(1, ncursors())
     end)
 
+    it('{Visual}Q after an <expr> mapping does not replay the mapping keys #41857', function()
+      command('xnoremap <expr> is "ip"') -- selects the inner paragraph
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'a1', 'a2', 'a3', '', 'b1', 'b2' })
+      feed('gg0j') -- line 2, inside the first paragraph
+      feed('vis') -- Visual + the <expr> mapping: selects lines 1-3
+      feed('Q') -- a cursor on each selected line
+      eq(3, ncursors())
+      feed('iX<Esc>') -- the mapping keys ("s", "Q") must NOT be replayed
+      eq({ 'Xa1', 'Xa2', 'Xa3', '', 'b1', 'b2' }, get_lines())
+    end)
+
     it('1Q then Q mixes both cursor sets', function()
       fn.setline(1, { 'foo bar foo' })
       feed('gg0*') -- sets the last search pattern; the cursor lands on the second "foo"
@@ -2006,6 +2017,19 @@ describe('multicursor', function()
       feed('%') -- Every cursor jumps to its ")".
       feed('x')
       eq({ '(aa', '(bb', '(cc' }, get_lines())
+    end)
+
+    it('q= toggle is synchronous within a mapping #41836', function()
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'l1', 'l2', 'l3', 'l4', 'l5' })
+      feed('gg0jQjQjQj1q=') -- cursors on lines 2-4, primary line 5, follow ON
+      -- A mapping toggles follow OFF, moves, toggles ON: the move must NOT cascade.
+      n.exec_lua([[vim.keymap.set('n', '<F1>', function() vim.cmd('norm! 2q=gg1q=') end)]])
+      feed('<F1>')
+      eq({ { 1, 0 }, { 2, 0 }, { 3, 0 } }, anchors()) -- cursors stay on lines 2-4 (not cascaded)
+      eq({ 1, 0 }, api.nvim_win_get_cursor(0)) -- primary moved to line 1
+      -- Follow is ON again (trailing "1q="): a plain motion now cascades.
+      feed('jx')
+      eq({ 'l1', '2', '3', '4', '5' }, get_lines())
     end)
 
     it('jumps are not followed (CTRL-O, backtick)', function()

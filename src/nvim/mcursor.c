@@ -500,9 +500,10 @@ done:
 ///
 /// @param map_edit  The composite edited the buffer (or insert-cascaded).
 /// @param map_moved  The composite moved the cursor.
-void mc_clock_edge(bool map_edit, bool map_moved)
+/// @param follow  Follow-mode ("q=") when the queued motions ran.
+void mc_clock_edge(bool map_edit, bool map_moved, bool follow)
 {
-  if ((map_edit || (mc_follow_motion && map_moved && !Visual.active))
+  if ((map_edit || (follow && map_moved && !Visual.active))
       && !atom_composite_queued() && kv_size(g_atoms) == 0
       && atom_composite_active() && mc_buf_has_cursors(curbuf)) {
     // XXX: Fallback to LHS-replay if the mapping edited the buffer or moved the cursor (in
@@ -514,7 +515,7 @@ void mc_clock_edge(bool map_edit, bool map_moved)
     for (size_t i = 0; !has_edit && i < kv_size(g_atoms); i++) {
       has_edit = kv_A(g_atoms, i).type != kAMotion;
     }
-    if (has_edit || mc_follow_motion
+    if (has_edit || follow
         // Cascade if a mapping left a selection open ("nn x w<Cmd>norm! viw<CR>").
         || Visual.active) {
       mc_cascade();
@@ -617,7 +618,7 @@ void mc_ins_cascade_start(bool cascade, varnumber_T tick)
         hi = MAX(hi, pos.lnum);
       }
     }
-    (void)u_save(lo - 1, hi + 1);  // Ignore FAIL result: only relevant only if undo is unavailable.
+    (void)u_save(lo - 1, hi + 1);  // Ignore FAIL result: only relevant if undo is unavailable.
   }
 }
 

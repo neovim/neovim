@@ -23,7 +23,7 @@ struct CmdFrame {
   uint64_t global_ops;  ///< `global_ops` at entry.
   uint64_t beeps;      ///< `did_beep` at entry.
   uint64_t id;         ///< Identifies this frame (see `composite.frame`).
-  bool follow;         ///< mc_following() ("q=")
+  bool follow;         ///< mc_following() ("q=") at frame start.
   bool consumers;      ///< Capture is skipped if there are no consumers (for performance).
   Timestamp reg_ts;    ///< Max register timestamp (to detect a per-cursor register write).
   CmdAtom staged;      ///< Atom staged in this frame (`keys=NULL`: none).

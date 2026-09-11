@@ -105,12 +105,15 @@ static struct {
   uint64_t frame;    ///< Last subatom frame; enclosing frames must not recapture its keys.
 } vatom;
 
-/// Per-command capture scratch.
+/// Scratch state/metadata on the root CmdFrame (toplevel cmd). Reset at toplevel.
+///
+/// Note: `composite` accumulates one atom across its frames; it can span multiple toplevel cmds.
 static struct {
   uint64_t redo_frame;  ///< Frame whose redobuf (potentially) defines the atom. 0: none.
   char *cmdline;      ///< The ":" payload captured at cmdline accept. NULL: none.
                       ///< Note: search payloads ("/pat<CR>") travel on `cmdarg.searchbuf`.
   bool ins_cascaded;  ///< Did the command's insert-session already cascade?
+  TriState follow;    ///< Follow-mode at the command's first motion (`kNone`: not yet).
 } curcmd;
 
 /// Interactively typed keys of the executing command. Collected during a composite (its `lhs`
@@ -805,6 +808,7 @@ static void atom_redo_reset(void)
   }
   curcmd.redo_frame = 0;
   curcmd.ins_cascaded = false;
+  curcmd.follow = kNone;
   XFREE_CLEAR(curcmd.cmdline);
   // The stream is truncated only once the mapping slice ends too (with its composite).
   if (!atom_composite_active()) {
@@ -1442,6 +1446,12 @@ static bool atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
 /// Pops the frame.
 void atom_cmd_end(cmdarg_T *ca, CmdFrame *old)
 {
+  if (curcmd.follow < 0 && !mc_replaying()
+      && (atom_origin_moved(old->origin) || nv_is_motion(ca->cmdchar))) {
+    // First motion (or cursor-move, e.g. API) of the command; innermost frame wins (children end
+    // before parents), so the clock edge sees the follow state (`old->follow`) from when it ran.
+    curcmd.follow = old->follow ? kTrue : kFalse;
+  }
   const bool refresh_visual = atom_capture_cmd(ca, old);
   atom_stage_flush(old);
   if (atom_composite_active() && old->payload_start != SIZE_MAX
@@ -1456,7 +1466,7 @@ void atom_cmd_end(cmdarg_T *ca, CmdFrame *old)
   // textlock).
   if (old->parent == NULL && !mc_replaying() && typebuf_typed() && stuff_empty()) {
     bool map_moved = atom_composite_active() && atom_origin_moved(composite.origin);
-    mc_clock_edge(map_edit, map_moved);
+    mc_clock_edge(map_edit, map_moved, curcmd.follow == kTrue);
     map_edit = false;
     // One atom spans its continuation: while op-pending, selection-active, or insert-will-resume
     // (i_CTRL-O), it stays open. ",Dw" (":nnoremap ,D d") is one atom, `keys="dw"`.
