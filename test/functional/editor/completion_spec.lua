@@ -1321,6 +1321,31 @@ describe('completion', function()
     ]])
   end)
 
+  -- oldtest: Test_complete_included_file_name()
+  it('shows included files by relative path', function()
+    t.mkdir('Xincl')
+    finally(function()
+      n.rmdir('Xincl')
+    end)
+    t.mkdir('Xincl/sub')
+    t.write_file('Xincl/sub/inc.vim', 'let included_word = 1\n')
+    t.write_file('Xincl/main.vim', 'source ./sub/inc.vim\n\n')
+    n.exec([[
+      edit Xincl/main.vim
+      setlocal include=^\\s*source\\s\\+ complete=i completeopt=menuone,noselect
+    ]])
+    feed('Goincluded_<C-N>')
+    screen:expect([[
+      source ./sub/inc.vim                                        |
+                                                                  |
+      included_^                                                   |
+      {4:included_word Xincl/sub/inc.vim }{1:                            }|
+      {1:~                                                           }|*3
+      {5:-- Keyword completion (^N^P) }{19:Back at original}               |
+    ]])
+    feed('<Esc>')
+  end)
+
   -- oldtest: Test_complete_changed_complete_info()
   it('no crash calling complete_info() in CompleteChanged', function()
     source([[

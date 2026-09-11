@@ -3338,10 +3338,11 @@ search_line:
           }
         }
 
-        const int add_r = ins_compl_add_infercase(aux, i, p_ic,
-                                                  curr_fname == curbuf->b_fname
-                                                  ? NULL : curr_fname,
-                                                  dir, cont_s_ipos, 0);
+        const int add_r
+          = ins_compl_add_infercase(aux, i, p_ic,
+                                    curr_fname == curbuf->b_fname
+                                    ? NULL : path_try_shorten_fname(curr_fname),
+                                    dir, cont_s_ipos, 0);
         if (add_r == OK) {
           // if dir was BACKWARD then honor it just once
           dir = FORWARD;

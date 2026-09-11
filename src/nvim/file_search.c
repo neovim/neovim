@@ -1505,20 +1505,19 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
         }
 
         // When the file doesn't exist, try adding parts of 'suffixesadd'.
-        size_t NameBufflen = l;
         char *suffix = suffixes;
         while (true) {
           if ((os_path_exists(NameBuff)
                && (find_what == FINDFILE_BOTH
                    || ((find_what == FINDFILE_DIR) == os_isdir(NameBuff))))) {
-            file_name = xmemdupz(NameBuff, NameBufflen);
+            file_name = xmemdupz(NameBuff, simplify_filename(NameBuff));
             goto theend;
           }
           if (*suffix == NUL) {
             break;
           }
           assert(MAXPATHL >= l);
-          NameBufflen = l + copy_option_part(&suffix, NameBuff + l, MAXPATHL - l, ",");
+          copy_option_part(&suffix, NameBuff + l, MAXPATHL - l, ",");
         }
       }
     }

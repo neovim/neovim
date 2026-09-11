@@ -3531,6 +3531,26 @@ func s:Tagfunc(t,f,o)
   return []
 endfunc
 
+" A match from an included file shows the file by its name under the current
+" directory, without the "./" of the include line.
+func Test_complete_included_file_name()
+  CheckRunVimInTerminal
+  call mkdir('Xincl/sub', 'pR')
+  call writefile(['let included_word = 1'], 'Xincl/sub/inc.vim')
+  call writefile(['source ./sub/inc.vim', ''], 'Xincl/main.vim')
+  let lines =<< trim END
+    setlocal include=^\\s*source\\s\\+ complete=i completeopt=menuone,noselect
+  END
+  call writefile(lines, 'Xincl/setup.vim')
+  let buf = RunVimInTerminal('-S Xincl/setup.vim Xincl/main.vim',
+        \ {'rows': 8, 'cols': 120})
+  call term_sendkeys(buf, "Goincluded_\<C-N>")
+  call WaitForAssert({-> assert_match('included_word\s\+Xincl/sub/inc.vim\s',
+        \ term_getline(buf, 4))})
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+endfunc
+
 " This was using freed memory, since 'complete' was in a wiped out buffer.
 " Also using a window that was closed.
 func Test_tagfunc_wipes_out_buffer()
