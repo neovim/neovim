@@ -380,14 +380,14 @@ Q			Toggles a multicursor at the current cursor position.
 			1. Search for something ("*", "/pattern<CR>", …).
 			2. Type "1Q".
 
+							*v_Q*
+{Visual}Q		Places a cursor on each line of the Visual selection.
+			Enables follow-mode |q=|.
+
 							*mcursor-mouse* *<C-LeftMouse>*
 <C-LeftMouse>		Toggles a multicursor at the click position, without
 			moving the primary cursor (or changing windows). Does
 			NOT disable follow-mode |q=|. No-op in Insert-mode.
-
-							*v_Q*
-{Visual}Q		Places a cursor on each line of the Visual selection.
-			Enables follow-mode |q=|.
 
 							*q=*
 q=			Toggles follow-mode: motions (not jumps/scrolls) are

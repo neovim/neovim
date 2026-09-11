@@ -197,7 +197,7 @@ function M.visual()
     end
     return vim.fn.virtcol2col(0, lnum, vcol) - 1
   end
-  vim.api.nvim_win_set_cursor(0, { first, bytecol(first) })
+  vim.api.nvim_win_set_cursor(0, { cline, bytecol(cline) }) -- Align to column.
   for lnum = first, last do
     vim.api.nvim_mcursor(0, { lnum, bytecol(lnum) })
   end
