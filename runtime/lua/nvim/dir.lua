@@ -167,24 +167,15 @@ local function reload(buf, provider)
 end
 
 ---@param buf integer
-local function set_maps(buf)
-  ---@param lhs string
-  ---@param plug string
-  local function map(lhs, plug)
-    if vim.fn.hasmapto(plug, 'n') == 0 then
+---@param lhs string
+---@param plug string
+---@param force? boolean
+function M._map(buf, lhs, plug, force)
+  api.nvim_buf_call(buf, function()
+    if (force or vim.fn.mapcheck(lhs, 'n') == '') and vim.fn.hasmapto(plug, 'n') == 0 then
       vim.keymap.set('n', lhs, plug, { buffer = buf, silent = true })
     end
-  end
-  ---@param lhs string
-  ---@param plug string
-  local function default_map(lhs, plug)
-    if vim.fn.mapcheck(lhs, 'n') == '' and vim.fn.hasmapto(plug, 'n') == 0 then
-      vim.keymap.set('n', lhs, plug, { buffer = buf, silent = true })
-    end
-  end
-  map('<CR>', '<Plug>(nvim-dir-open)')
-  default_map('-', '<Plug>(nvim-dir-up)')
-  map('R', '<Plug>(nvim-dir-reload)')
+  end)
 end
 
 --- Let handlers reshape the rendered listing. Unlocks the buffer for the duration and
@@ -286,7 +277,9 @@ function load(buf, name, provider, restore_view, setup, select)
     end
 
     setup_render_autocmds(buf)
-    set_maps(buf)
+    M._map(buf, '<CR>', '<Plug>(nvim-dir-open)', true)
+    M._map(buf, '-', '<Plug>(nvim-dir-up)')
+    M._map(buf, 'R', '<Plug>(nvim-dir-reload)', true)
     if provider.init then
       provider.init(buf, name)
     end
@@ -326,12 +319,27 @@ local function get_provider(buf)
   return state and state.provider or nil
 end
 
-function M._open_entry()
+---@param cmd? 'split'|'vsplit'
+function M._open_entry(cmd)
   local buf = api.nvim_get_current_buf()
   local provider = get_provider(buf)
   local entry = current_entry(buf)
-  if provider and entry then
-    provider.open(buf, api.nvim_buf_get_name(buf), entry)
+  if not provider or not entry then
+    return
+  end
+  local name = api.nvim_buf_get_name(buf)
+  local win = cmd and api.nvim_get_current_win()
+  local ok, err = pcall(function()
+    if cmd then
+      api.nvim_cmd({ cmd = cmd }, {})
+    end
+    provider.open(buf, name, entry)
+  end)
+  if win and api.nvim_win_is_valid(win) then
+    api.nvim_set_current_win(win)
+  end
+  if not ok then
+    error(err, 0)
   end
 end
 
