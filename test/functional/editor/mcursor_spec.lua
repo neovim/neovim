@@ -259,9 +259,9 @@ describe('multicursor', function()
   describe('{Visual}Q', function()
     it('adds a cursor on each selected line', function()
       fn.setline(1, { 'aaa', 'bbb', 'ccc' })
-      feed('ggvjQ') -- selection spans lines 1-2
+      feed('ggvjQ') -- selection spans lines 1-2, cursor ends on line 2
       eq('n', fn.mode()) -- Visual mode ended
-      eq({ 1, 0 }, api.nvim_win_get_cursor(0)) -- primary: first selected line
+      eq({ 2, 0 }, api.nvim_win_get_cursor(0)) -- primary: unmoved, where the selection ended
       eq(2, ncursors()) -- one per selected line, including under the primary
       feed('x') -- edits both lines
       eq({ 'aa', 'bb', 'ccc' }, get_lines())
@@ -270,24 +270,23 @@ describe('multicursor', function()
       clear_cursors()
       api.nvim_buf_set_lines(0, 0, -1, true, { 'é123', 'abcdef' })
       feed('gg0llvjQ') -- Visual from "2" (line 1) down; cursor ends on "c" (screen column 3)
-      eq({ 1, 3 }, api.nvim_win_get_cursor(0)) -- primary: on "2", not mid-"é"
+      eq({ 2, 2 }, api.nvim_win_get_cursor(0)) -- primary: unmoved, on "c" (screen column 3)
       feed('x')
       eq({ 'é13', 'abdef' }, get_lines())
     end)
 
-    it('V{motion}Q keeps the column (potentially past EOL), enables follow-mode', function()
-      fn.setline(1, { 'aaaa', 'bbbb', 'cc', 'dddd' })
-      feed('gg0ll')
-      feed('V2j')
+    it('V{motion}Q keeps primary at selection-end; aligns past EOL', function()
+      fn.setline(1, { 'aaaa', 'cc', 'dddd', 'eeee' })
+      feed('gg0ll') -- screen column 3 on line 1
+      feed('Vjj') -- linewise down to line 3; the cursor ends on line 3
       feed('Q')
-      -- Primary cursor is the top of the range.
-      eq({ 1, 2 }, api.nvim_win_get_cursor(0))
-      -- One cursor per selected line, at primary cursor's column (on the short line: past EOL).
+      eq({ 3, 2 }, api.nvim_win_get_cursor(0)) -- Primary is unmoved (line 3).
+      -- One cursor per selected line at shared screen column; short line 2 inserts past EOL.
       feed('iX<Esc>')
-      eq({ 'aaXaa', 'bbXbb', 'ccX', 'dddd' }, get_lines())
+      eq({ 'aaXaa', 'ccX', 'ddXdd', 'eeee' }, get_lines())
       -- {Visual}Q enabled follow-mode (q=).
-      feed('jx')
-      eq({ 'aaXaa', 'bbbb', 'cc', 'ddd' }, get_lines())
+      feed('$x')
+      eq({ 'aaXa', 'cc', 'ddXd', 'eeee' }, get_lines())
     end)
 
     it('after an <expr> mapping does not replay the mapping keys #41857', function()
