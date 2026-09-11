@@ -1005,7 +1005,7 @@ static bool pum_adjust_info_position(win_T *wp, int wantwidth)
   int ns_width = MIN(Columns - pum_col + ns_off, wantwidth);
   int ew_height = MIN(Rows - pum_row + ew_off, wantheight);
 
-  // TODO: make this order configurable - maybe 'completepopup'
+  // TODO(ZWORX52): make this order configurable if/when 'completepopup' is merged
   if (north == most) {
     wp->w_config.width = ns_width;
     wp->w_config.height = MIN(north, wantheight);
