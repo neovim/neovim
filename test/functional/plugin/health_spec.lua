@@ -238,6 +238,9 @@ describe('vim.health', function()
 
     it('concatenates multiple reports', function()
       command('checkhealth success1 success2 test_plug')
+      retry(nil, 5000, function()
+        eq(false, api.nvim_get_option_value('modifiable', { buf = 0 }))
+      end)
       n.expect([[
         ==============================================================================
         test_plug:                                                                  ✅
