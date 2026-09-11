@@ -459,7 +459,7 @@ function M._check(eap)
     return a < b
   end)
 
-  local task --- @type vim.async.Task
+  local task --- @type vim.async.Task<nil>
 
   -- Quit with 'q' inside healthcheck buffers.
   vim._with({ buf = bufnr }, function()

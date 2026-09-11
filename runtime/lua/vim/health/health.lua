@@ -231,6 +231,7 @@ local function read_int(path)
 end
 
 -- Note: this is part of check_performance().
+---@async
 local function check_limits()
   -- 'ulimit -n' (RLIMIT_NOFILE): each Nvim buffer may hold an open swapfile. Sockets, channels, filewatchers also consume file descriptors.
   if vim.fn.has('win32') == 0 then
@@ -276,6 +277,7 @@ local function check_limits()
   end
 end
 
+---@async
 local function check_performance()
   health.start('Performance')
 
@@ -377,11 +379,13 @@ local function check_rplugin_manifest()
   end
 end
 
+---@async
 local function check_tmux()
   if not vim.env.TMUX or vim.fn.executable('tmux') == 0 then
     return
   end
 
+  ---@async
   ---@param option string
   local get_tmux_option = function(option)
     local cmd = { 'tmux', 'show-option', '-qvg', option } -- try global scope
@@ -500,6 +504,7 @@ local function check_graphics()
 end
 
 -- Note: this is part of check_terminal().
+---@async
 local function check_infocmp()
   if vim.fn.executable('infocmp') == 0 then
     return
@@ -539,6 +544,7 @@ local function check_infocmp()
   end
 end
 
+---@async
 local function check_terminal()
   health.start('Terminal')
 
@@ -559,6 +565,7 @@ local function check_terminal()
   end
 end
 
+---@async
 local function check_external_tools()
   health.start('External Tools')
 
@@ -688,6 +695,7 @@ local function detect_terminal()
   return 'unknown'
 end
 
+---@async
 ---@param nvim_version string
 local function check_stable_version(nvim_version)
   local ok, output =
@@ -709,6 +717,7 @@ local function check_stable_version(nvim_version)
   end
 end
 
+---@async
 ---@param commit string
 local function check_head_hash(commit)
   local ok, output = system(
@@ -745,6 +754,7 @@ local function check_head_hash(commit)
   end
 end
 
+---@async
 local function check_sysinfo()
   vim.health.start('System Info')
 
@@ -830,6 +840,7 @@ local function check_sysinfo()
   end)
 end
 
+---@async
 function M.check()
   check_sysinfo()
   check_config()
