@@ -69,6 +69,7 @@ if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
 endif
 
 let b:man_default_sects = '3,2'
+let b:undo_ftplugin ..= " | unlet! b:man_default_sects"
 
 let &cpo = s:cpo_save
 unlet s:cpo_save
