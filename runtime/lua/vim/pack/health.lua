@@ -200,8 +200,47 @@ local function check_lockfile()
   end
 end
 
+--- @param dep_data vim.pack.ManifestDependency
+--- @param src_version_map table<string,any> Map from all installed plugin sources to their version
+local function check_manifest_dependency(dep_data, src_version_map)
+  local is_proper_shape = type(dep_data) == 'table'
+    and type(dep_data.src) == 'string'
+    and (dep_data.version == nil or type(dep_data.version) == 'string')
+  if not is_proper_shape then
+    return false, 'is malformed'
+  end
+
+  local src_version = src_version_map[dep_data.src]
+  if not src_version then
+    return false, dep_data.src .. ' is not installed'
+  end
+
+  if dep_data.version then
+    local dep_version = dep_data.version:match("^'(.+)'$") or vim.version.range(dep_data.version)
+    if not dep_version then
+      return false, dep_data.src .. ' has malformed `version`'
+    end
+
+    -- Version range match if user specified subset of what is in manifest
+    local is_version_exact_match = type(dep_version) == 'string' and dep_version == src_version
+    local is_version_range_match, intersect = pcall(vim.version.intersect, dep_version, src_version)
+    is_version_range_match = is_version_range_match and intersect == src_version
+    if not (is_version_exact_match or is_version_range_match) then
+      local msg = ('%s version `%s` does not match installed version `%s`'):format(
+        dep_data.src,
+        tostring(dep_version),
+        src_version == true and 'nil' or tostring(src_version)
+      )
+      return false, msg
+    end
+  end
+
+  return true, nil
+end
+
 --- @param plug_data vim.pack.PlugData
-local function check_manifest(plug_data)
+--- @param all_plug_data vim.pack.PlugData[]
+local function check_manifest(plug_data, all_plug_data)
   local name_str = vim.inspect(plug_data.spec.name)
   local manifest = plug_data.manifest --- @type vim.pack.Manifest
   local function warn(msg)
@@ -235,6 +274,19 @@ local function check_manifest(plug_data)
       warn(('Plugin %s has no %s script at %s path'):format(name_str, name, script_path))
       is_good = false
     end
+  end
+
+  -- Dependencies
+  local src_version_map = {} --- @type table<string,any>
+  for _, p_data in ipairs(all_plug_data) do
+    src_version_map[p_data.spec.src] = p_data.spec.version or p_data.branches[1]
+  end
+  for _, dep_data in ipairs(manifest.dependencies or {}) do
+    local ok_dep, msg = check_manifest_dependency(dep_data, src_version_map)
+    if not ok_dep then
+      warn(('Plugin %s dependency %s'):format(name_str, msg))
+    end
+    is_good = is_good and ok_dep
   end
 
   return is_good
@@ -295,7 +347,7 @@ local function check_installed_plugin(plug_name, all_plug_data)
 
   -- Manifest
   if data.manifest then
-    return check_manifest(data)
+    return check_manifest(data, all_plug_data)
   end
 
   return true
