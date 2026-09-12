@@ -531,8 +531,8 @@ These existing features changed their behavior.
 • `nvim_exec_autocmds({buf=…})` runs in the context of the target buffer.
 • |OptionSet| is no longer triggered during startup by automatic
   |'background'| detection.
-• |SessionWritePre| is no longer triggered by |:mkview|, |:mkvimrc|, or
-  |:mkexrc|.
+• |SessionWritePre| and |SessionWritePost| are no longer triggered by
+  |:mkview|, |:mkvimrc|, or |:mkexrc|.
 • Editing a local directory now shows its contents in a `filetype=directory`
   buffer. See |dir|.
 • |:Open| with no arguments uses the current file.
