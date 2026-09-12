@@ -76,4 +76,9 @@ describe("'shell…' option defaults based on $SHELL #28384", function()
     }
     expect(('"%s/foo bar/bash"'):format(n.nvim_dir), '-c', '2>&1| tee', '>%s 2>&1', '', true)
   end)
+
+  it('no crash when the shell path ends in a separator', function()
+    clear { args = { '--cmd', 'let &shell = "/bin/"' } }
+    eq('/bin/', api.nvim_get_option_value('shell', {}))
+  end)
 end)
