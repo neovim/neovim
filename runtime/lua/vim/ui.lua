@@ -189,7 +189,7 @@ function M.open(path, opt)
   local job_opt = { text = true, detach = true } --- @type vim.SystemOpts
 
   if opt.cmd then
-    cmd = vim.list_extend(opt.cmd --[[@as string[] ]], { path })
+    cmd = vim.list_extend(vim.list_slice(opt.cmd) --[[@as string[] ]], { path })
   else
     local open_cmd, err = M._get_open_cmd()
     if err then
