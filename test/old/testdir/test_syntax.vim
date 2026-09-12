@@ -103,10 +103,15 @@ func Test_syntax_after_reload()
   call delete('Xsomefile')
 endfunc
 
+func Test_syntax_filetype_syntax()
+  set filetype=syntax
+  syntax on
+  syntax off
+  set filetype= syntax=
+endfunc
+
 func Test_syntime()
-  if !has('profile')
-    return
-  endif
+  CheckFeature profile
 
   syntax on
   syntime on
