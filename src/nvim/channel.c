@@ -254,7 +254,7 @@ void channel_create_event(Channel *chan, const char *ext_source)
   // to pretty print top level dict in defined order
   object_to_vim(DICT_OBJ(info), &tv, NULL);
   assert(tv.v_type == VAR_DICT);
-  char *str = encode_tv2json(&tv, NULL);
+  char *str = encode_tv2string(&tv, NULL);
   ILOG("new channel %" PRIu64 " (%s) : %s", chan->id, source, str);
   xfree(str);
   arena_mem_free(arena_finish(&arena));
