@@ -513,9 +513,9 @@ function M._inspect(opts)
       return math.floor(nsec / 1e6 * 1000 + 0.5) / 1000 .. 'ms'
     end
     local chunks = {} --- @type string[][]
-    for _, stat in vim.spairs(stats) do
+    for name, stat in vim.spairs(stats) do
       vim.list_extend(chunks, {
-        { '\n' .. stat .. '\n', 'Title' },
+        { '\n' .. name .. '\n', 'Title' },
         { '* total:    ' },
         { tostring(stat.total) .. '\n', 'Number' },
         { '* time:     ' },
