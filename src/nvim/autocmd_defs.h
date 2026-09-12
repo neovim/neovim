@@ -55,6 +55,7 @@ typedef struct {
   char *fname;
   char *fname_io;
   Buffer buf;
+  Window win;               ///< Window for `ev.win`, see aucmd_defer()
   int group;
   exarg_T *eap;
   Object *data;

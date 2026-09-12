@@ -1443,7 +1443,7 @@ void show_popupmenu(void)
   char *mode = menu_mode_chars[menu_mode];
   size_t mode_len = strlen(mode);
 
-  apply_autocmds(EVENT_MENUPOPUP, mode, NULL, false, curbuf);
+  apply_autocmds(EVENT_MENUPOPUP, mode, NULL, false, curbuf, curwin);
 
   vimmenu_T *menu;
 

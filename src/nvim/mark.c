@@ -111,7 +111,7 @@ static void do_markset_autocmd(char c, pos_T *pos, buf_T *buf)
   PUT_C(data, "name", STRING_OBJ(((String){ .data = mark_str, .size = 1 })));
   PUT_C(data, "line", INTEGER_OBJ(pos->lnum));
   PUT_C(data, "col", INTEGER_OBJ(pos->col));
-  aucmd_defer(EVENT_MARKSET, mark_str, NULL, AUGROUP_ALL, buf, NULL, &DICT_OBJ(data));
+  aucmd_defer(EVENT_MARKSET, mark_str, NULL, AUGROUP_ALL, buf, curwin, NULL, &DICT_OBJ(data));
 }
 
 // Set named mark "c" to position "pos".

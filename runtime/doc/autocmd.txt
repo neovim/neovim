@@ -1567,7 +1567,8 @@ WinResized			After a window in the current tabpage changed
 				changes. |WinResized-event|
 
 				Same behavior as |WinScrolled| for the
-				pattern, triggering and recursiveness.
+				pattern, <amatch>, "win", triggering and
+				recursiveness.
 
 							*WinScrolled*
 WinScrolled			After any window in the current tabpage
@@ -1585,7 +1586,8 @@ WinScrolled			After any window in the current tabpage
 				The pattern is matched against the |window-ID|
 				of the first window that scrolled or resized.
 				Both <amatch> and <afile> are set to the
-				|window-ID|.
+				|window-ID|, as is the "win" argument of a
+				Lua callback. |event-args|
 
 				|v:event| is set with information about size
 				and scroll changes. |WinScrolled-event|

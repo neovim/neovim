@@ -1024,7 +1024,7 @@ void ex_mkrc(exarg_T *eap)
     }
 
     if (eap->cmdidx == CMD_mksession) {
-      apply_autocmds(EVENT_SESSIONWRITEPRE, NULL, NULL, false, curbuf);
+      apply_autocmds(EVENT_SESSIONWRITEPRE, NULL, NULL, false, curbuf, curwin);
     }
 
     // Write the version command for :mkvimrc
@@ -1133,7 +1133,7 @@ void ex_mkrc(exarg_T *eap)
   xfree(viewFile);
 
   if (eap->cmdidx == CMD_mksession) {
-    apply_autocmds(EVENT_SESSIONWRITEPOST, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_SESSIONWRITEPOST, NULL, NULL, false, curbuf, curwin);
   }
 }
 
