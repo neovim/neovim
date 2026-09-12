@@ -203,39 +203,40 @@ end
 --- @param manifest vim.pack.Manifest
 local function check_manifest(manifest, plug_name, plug_path)
   local name_str = vim.inspect(plug_name)
-  if vim.tbl_count(manifest) == 0 then
-    health.warn(('Plugin %s has empty or malformed manifest file'):format(name_str))
-    return false
+  local function warn(msg)
+    health.warn(msg .. '\nManifest file: ' .. vim.fs.joinpath(plug_path, 'pkg.json'))
   end
 
-  local nvim_engine = (manifest.engines or {}).nvim or '*'
-  local ok_version, nvim_version_range = pcall(vim.version.range, nvim_engine)
-  if not ok_version then
-    health.warn(('Plugin %s has malformed `engines.nvim` in manifest file'):format(name_str))
+  if vim.tbl_count(manifest) == 0 then
+    warn(('Plugin %s has empty or malformed manifest file'):format(name_str))
     return false
   end
-  --- @cast nvim_version_range vim.VersionRange
-  if not nvim_version_range:has(vim.version()) then
-    health.warn(
+  local is_good = true
+
+  -- Engine
+  local nvim_engine = (manifest.engines or {}).nvim or '*'
+  local ok_version, nvim_version_range = pcall(vim.version.range, nvim_engine)
+  if not ok_version or nvim_version_range == nil then
+    warn(('Plugin %s has malformed `engines.nvim` in manifest file'):format(name_str))
+    is_good = false
+  elseif not nvim_version_range:has(vim.version()) then
+    warn(
       ('Plugin %s Nvim version requirement %s'):format(name_str, tostring(nvim_version_range))
         .. (' does not match current version %s'):format(tostring(vim.version()))
     )
-    return false
+    is_good = false
   end
 
-  local ok_scripts = true
+  -- Scripts
   ---@diagnostic disable-next-line: no-unknown
   for name, script_path in pairs(manifest.scripts or {}) do
     if vim.fn.filereadable(vim.fs.joinpath(plug_path, script_path)) == 0 then
-      health.warn(('Plugin %s has no %s script at %s path'):format(name_str, name, script_path))
-      ok_scripts = false
+      warn(('Plugin %s has no %s script at %s path'):format(name_str, name, script_path))
+      is_good = false
     end
   end
-  if not ok_scripts then
-    return false
-  end
 
-  return true
+  return is_good
 end
 
 --- @return boolean Whether a check is successful
