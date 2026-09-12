@@ -170,6 +170,7 @@ end
 
 --- @class vim.lsp.Client.Progress: vim.Ringbuf<{token: integer|string, value: any}>
 --- @field pending table<lsp.ProgressToken,lsp.LSPAny>
+--- @field partialResults table<lsp.ProgressToken,fun(value: lsp.LSPAny)>
 
 --- @class vim.lsp.Client
 ---
@@ -487,6 +488,9 @@ function Client.create(config)
 
   --- @type table<string|integer, string> title of unfinished progress sequences by token
   self.progress.pending = {}
+
+  --- @type table<string|integer, function> handlers of unfinished partial result sequences by token
+  self.progress.partialResults = {}
 
   --- @type vim.lsp.rpc.Dispatchers
   local dispatchers = {
