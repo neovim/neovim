@@ -2338,9 +2338,9 @@ describe('API/win', function()
         script_file,
       })
       screen:expect([[
-                                 │^                        |
-        ~                        │~                       |*4
-                                        0,0-1          All|
+        {126:                         │^                        }|
+        {126:~                        │~                       }|*4
+        {126:                                0,0-1          All}|
         {5:-- TERMINAL --}                                    |
       ]])
       screen:detach()
@@ -2352,9 +2352,9 @@ describe('API/win', function()
         script_file,
       })
       screen:expect([[
-        ^                         │                        |
-        ~                        │~                       |*4
-                                        0,0-1          All|
+        {126:^                         │                        }|
+        {126:~                        │~                       }|*4
+        {126:                                0,0-1          All}|
         {5:-- TERMINAL --}                                    |
       ]])
     end)
