@@ -102,6 +102,7 @@
 \*SigUSR1\*
 \*TerminalOpen\*
 \*TerminalWinOpen\*
+\*XLFD\*
 \*autocommand-events\*
 \*blowfish\*
 \*builtin-function-list\*
