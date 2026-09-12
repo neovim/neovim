@@ -153,6 +153,7 @@ local function to_inclusive_pos(buf, row, col)
     col = col + vim.str_utf_start(line, col) - 1
   elseif col == 0 and row > 0 then
     row = row - 1
+    line = util.get_line(buf, row)
     col = #line > 0 and #line + vim.str_utf_start(line, #line) - 1 or 0
   end
 
