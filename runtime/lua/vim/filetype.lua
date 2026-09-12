@@ -2802,6 +2802,7 @@ local pattern = {
     ['%.%.ch$'] = 'chill',
     ['%.cmake%.in$'] = 'cmake',
     ['^crontab%.'] = starsetf('crontab'),
+    ['^crontabs%.'] = starsetf('crontab'),
     ['^cvs%d+$'] = 'cvs',
     ['/DEBIAN/control$'] = 'debcontrol',
     ['^php%.ini%-'] = starsetf('dosini'),

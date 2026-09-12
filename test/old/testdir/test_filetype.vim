@@ -207,7 +207,7 @@ func s:GetFilenameChecks() abort
     \ 'cpp': ['file.cxx', 'file.c++', 'file.hh', 'file.hxx', 'file.hpp', 'file.ipp', 'file.ixx', 'file.moc', 'file.tcc', 'file.inl', 'file.tlh', 'file.cppm', 'file.ccm', 'file.cxxm', 'file.c++m', 'file.mpp'],
     \ 'cqlang': ['file.cql'],
     \ 'crm': ['file.crm'],
-    \ 'crontab': ['crontab', 'crontab.file', '/etc/cron.d/file', 'any/etc/cron.d/file'],
+    \ 'crontab': ['crontab', 'crontab.file', '/etc/cron.d/file', 'any/etc/cron.d/file', 'var/spool/cron/crontabs.9999'],
     \ 'crystal': ['file.cr'],
     \ 'cs': ['file.cs', 'file.csx', 'file.cake'],
     \ 'csc': ['file.csc'],
