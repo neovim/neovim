@@ -567,13 +567,11 @@ do
   end
 
   local nvim_terminal_augroup = vim.api.nvim_create_augroup('nvim.terminal')
-  vim.api.nvim_create_autocmd('BufReadCmd', {
+  nvim_on('BufReadCmd', nvim_terminal_augroup, {
     pattern = 'term://*',
-    group = nvim_terminal_augroup,
-    desc = 'Treat term:// buffers as terminal buffers',
     nested = true,
-    command = "if !exists('b:term_title')|call jobstart(matchstr(expand(\"<amatch>\"), '\\c\\mterm://\\%(.\\{-}//\\%(\\d\\+:\\)\\?\\)\\?\\zs.*'), {'term': v:true, 'cwd': expand(get(matchlist(expand(\"<amatch>\"), '\\c\\mterm://\\(.\\{-}\\)//'), 1, ''))})",
-  })
+    desc = 'Treat term:// buffers as terminal buffers, restoring saved state when available',
+  }, require('vim._core.terminal').open)
 
   nvim_on({ 'TermClose' }, nvim_terminal_augroup, {
     nested = true,
@@ -586,6 +584,38 @@ do
     local argv = info.argv or {}
     if table.concat(argv, ' ') == vim.o.shell then
       vim.api.nvim_buf_delete(ev.buf, { force = true })
+    end
+  end)
+
+  nvim_on({ 'TermOpen' }, nvim_terminal_augroup, {
+    desc = 'Set up BufWriteCmd for terminal state persistence',
+  }, function(args)
+    vim.api.nvim_create_autocmd('BufWriteCmd', {
+      group = nvim_terminal_augroup,
+      buffer = args.buf,
+      callback = require('vim._core.terminal').save,
+      desc = 'Save terminal state as msgpack on :write',
+    })
+  end)
+
+  -- TODO(Willaaaaaaa): unsupported: restoring state files outside "stdpath("state")/term/"
+  nvim_on('BufReadCmd', nvim_terminal_augroup, {
+    pattern = vim.fs.joinpath(vim.fn.fnamemodify(vim.fn.stdpath('state'), ':p'), 'term', '*.mpack'),
+    nested = true,
+    desc = 'Restore a terminal state file as a live terminal buffer',
+  }, require('vim._core.terminal').load)
+
+  nvim_on('BufReadCmd', nvim_terminal_augroup, {
+    pattern = 'terms://',
+    desc = 'Open the terminal state directory',
+  }, require('vim._core.terminal').list)
+
+  nvim_on('SessionWritePre', nvim_terminal_augroup, {
+    desc = 'Save terminal state so sessions can restore terminal buffers',
+  }, function()
+    -- 'sessionoptions' is a validated comma-list; wrap with commas for an exact match
+    if (',' .. vim.o.sessionoptions .. ','):find(',terminal,', 1, true) then
+      require('vim._core.terminal').save_running()
     end
   end)
 
