@@ -98,7 +98,7 @@ int main() {
         },
         handlers = {
           ['textDocument/inlayHint'] = function(_, _, callback)
-            callback(nil, response)
+            callback(nil, vim.deepcopy(response))
           end,
         },
       })
@@ -108,7 +108,7 @@ int main() {
 
     insert(text)
     exec_lua(function()
-      vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+      vim.lsp.inlay_hint.enable(true, { client_id = client_id })
     end)
     screen:expect({ grid = grid_with_inlay_hints })
   end)
@@ -173,35 +173,14 @@ int main() {
   end)
 
   describe('clears/applies inlay hints when passed false/true/nil', function()
-    local bufnr2 --- @type integer
-    before_each(function()
-      bufnr2 = exec_lua(function()
-        local bufnr2_0 = vim.api.nvim_create_buf(true, false)
-        vim.lsp.buf_attach_client(bufnr2_0, client_id)
-        vim.api.nvim_win_set_buf(0, bufnr2_0)
-        return bufnr2_0
-      end)
-      insert(text)
-      screen:expect({ grid = grid_without_inlay_hints })
-      exec_lua(function()
-        vim.lsp.inlay_hint.enable(true, { bufnr = bufnr2 })
-      end)
-      screen:expect({ grid = grid_with_inlay_hints })
-    end)
-
     it('for one single buffer', function()
+      screen:expect({ grid = grid_with_inlay_hints, unchanged = true })
+
       exec_lua(function()
         vim.lsp.inlay_hint.enable(false, { bufnr = bufnr })
-        vim.api.nvim_win_set_buf(0, bufnr2)
       end)
-      screen:expect({ grid = grid_with_inlay_hints, unchanged = true })
-      n.api.nvim_win_set_buf(0, bufnr)
-      screen:expect({ grid = grid_without_inlay_hints, unchanged = true })
 
-      exec_lua(function()
-        vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
-      end)
-      screen:expect({ grid = grid_with_inlay_hints, unchanged = true })
+      screen:expect({ grid = grid_without_inlay_hints })
 
       exec_lua(function()
         vim.lsp.inlay_hint.enable(
@@ -209,27 +188,44 @@ int main() {
           { bufnr = bufnr }
         )
       end)
-      screen:expect({ grid = grid_without_inlay_hints, unchanged = true })
+
+      screen:expect({ grid = grid_with_inlay_hints })
 
       exec_lua(function()
-        vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+        vim.lsp.inlay_hint.enable(false, { bufnr = bufnr })
       end)
-      screen:expect({ grid = grid_with_inlay_hints, unchanged = true })
+
+      screen:expect({ grid = grid_without_inlay_hints })
     end)
 
     it('for all buffers', function()
-      exec_lua(function()
-        vim.lsp.inlay_hint.enable(false)
+      ---@type integer
+      local bufnr2 = exec_lua(function()
+        local bufnr2_0 = vim.api.nvim_create_buf(true, false)
+        vim.lsp.buf_attach_client(bufnr2_0, client_id)
+        vim.api.nvim_win_set_buf(0, bufnr2_0)
+        return bufnr2_0
       end)
-      screen:expect({ grid = grid_without_inlay_hints, unchanged = true })
-      n.api.nvim_win_set_buf(0, bufnr2)
+
+      insert(text)
+
+      n.poke_eventloop()
+      screen:expect({ grid = grid_with_inlay_hints, intermediate = true })
+
+      exec_lua(function()
+        vim.lsp.inlay_hint.enable(false, { client_id = client_id })
+      end)
+
+      screen:expect({ grid = grid_without_inlay_hints })
+      n.api.nvim_win_set_buf(0, bufnr)
       screen:expect({ grid = grid_without_inlay_hints, unchanged = true })
 
       exec_lua(function()
-        vim.lsp.inlay_hint.enable(true)
+        vim.lsp.inlay_hint.enable(true, { client_id = client_id })
       end)
-      screen:expect({ grid = grid_with_inlay_hints, unchanged = true })
-      n.api.nvim_win_set_buf(0, bufnr)
+
+      screen:expect({ grid = grid_with_inlay_hints })
+      n.api.nvim_win_set_buf(0, bufnr2)
       screen:expect({ grid = grid_with_inlay_hints, unchanged = true })
     end)
   end)
@@ -260,6 +256,7 @@ int main() {
           },
         })
         _G.client2 = vim.lsp.start({ name = 'dummy2', cmd = _G.server2.cmd })
+        vim.lsp.inlay_hint.enable(true, { client_id = _G.client2 })
       end)
 
       --- @type vim.lsp.inlay_hint.get.ret
