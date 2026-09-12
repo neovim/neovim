@@ -168,6 +168,7 @@ const char *invocation_path_tail(const char *invocation, size_t *len)
     int l = utfc_ptr2len(p);
     if (vim_ispathsep_nocolon(*p)) {
       tail = p + 1;  // Now tail points one past the separator.
+      tail_end = tail;
     } else if (*p == '\\' && inquote) {
       p++;
     } else if (*p == '"') {
