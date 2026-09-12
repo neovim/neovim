@@ -943,8 +943,9 @@ is_na_patch() {
           diff-tree --no-commit-id -r -b -U0 \
           '-I^\s+$' \
           '-I^=+$' \
+          '-I^Functions:\s~$' \
           '-I^\|:(export|import|redrawtabpanel)\|' \
-          '-I^\|popup_[_a-z]+\(\)\|' \
+          '-I^\|(ch|popup)_[_a-z]+\(\)\|' \
           '-I^popup_[_a-z]+\(' \
           '-I\*\s+For Vim version [0-9]\.[0-9]\.\s+Last change: [0-9]+ [A-Z][a-z]+ [0-9]+' \
           '-I compiled (with|without) .*\(\|.+\|\) feature\.$' \
@@ -952,6 +953,7 @@ is_na_patch() {
           '-I\|52\.6\|' \
           '-I\|channel-open-[^|]+\|' \
           '-I\|comment-install\|' \
+          '-I\|os_haiku.txt\|' \
           '-I\|popup-windows\|' \
           '-I\|tabpanel\|' \
           '-I\spopup window\s' \
@@ -960,6 +962,13 @@ is_na_patch() {
           HUNK_NUM_FINAL=$(echo "$HUNKS" | grep '^@@ .* @@' | sed 's/^@@ .* @@ //' | grep -cv -f "$NA_HUNKS_HELP")
           test "$HUNK_NUM_FINAL" -ne 0 && return 1
         fi
+        ;;
+      runtime/syntax/vim.vim)
+        HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
+          '-I^" Last Change:\s' \
+          '-I^syn\skeyword\svimFuncName\scontained\s' \
+          "$patch" -- "${file}")
+        test -n "$HUNKS" && return 1
         ;;
       src/po/Make*)
         HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
@@ -1002,7 +1011,7 @@ is_na_patch() {
         HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
           '-I^\s+$' \
           '-I^\s*/?\*/?$' \
-          '-I^\s*(//|/?\*).*\s([vV]im9|E[0-9]{4} - |FEAT_|channel|job|popup|sound|terminal)' \
+          '-I^\s*(//|/?\*).*\s([vV]im9|E[0-9]{4} - |FEAT_|JSON-RPC|channel|job|popup|sound|terminal)' \
           '-I^#\s*((ifdef|ifndef|undef)|(if|elif)\s.*defined\().*FEAT_[^_]' \
           '-I^#\s*(else|endif)' \
           '-I^#\s*define\s+(FEAT|POPUPWIN|XDG|t)_[^_]' \
@@ -1010,7 +1019,7 @@ is_na_patch() {
           '-IEVENT_TERMINALWINOPEN' \
           '-I^#\s*define\s+(ASSIGN_VAR|POPF_CURSORLINE)\s' \
           '-I^typedef enum \{$' \
-          '-I^\s+(CH_MODE|POPCLOSE)_[A-Z]+,?$' \
+          '-I^\s+(CH_MODE|POPCLOSE)_[A-Z]+,?(\s+//.+)?$' \
           '-I^\} popclose_T;$' \
           '-I^EXTERN\schar\s+\*popup_transparent' \
           '-I^EXTERN\sint\s+[_a-z]+_for_testing\s' \
@@ -1024,9 +1033,12 @@ is_na_patch() {
           '-I^EXTERN char e_[_a-z]+_channel' \
           '-I^EXTERN char e_cannot_declare_.*variable_str' \
           '-I^EXTERN char e_cannot_define_new_.+_as_static' \
+          '-I^EXTERN char e_cannot_listen_on_port' \
+          '-I^EXTERN char e_cannot_open_a_popup_window_to_a_closing_buffer' \
           '-I^EXTERN char e_cannot_use_a_return_type_with_new' \
           '-I^EXTERN char e_dictionary_not_set' \
           '-I^EXTERN char e_dictnull' \
+          '-I^EXTERN char e_gethostbyname_in_channel_' \
           '-I\sINIT\(= .+"E[0-9]+: (Abstract|Class|Enum|Interface|Type) ' \
           '-I\sINIT\(= .+"E[0-9]+: .*:def ' \
           '-I\sINIT\(= .+"E[0-9]+: .*enddef"' \
@@ -1036,6 +1048,8 @@ is_na_patch() {
           '-I\sINIT\(= .+"E1103: Dictionary not set' \
           '-I\sINIT\(= .+"E1365: Cannot use a return type with the \\"new\\" function"' \
           '-I\sINIT\(= .+"E1370: Cannot define a .+ as static' \
+          '-I\sINIT\(= .+"E1551: Cannot open a popup window to a closing buffer' \
+          '-I\sINIT\(= .+"E157[34]: ' \
           '-I\s(bool|char(|_u))\s+w_popup_image_[_a-zA-Z]+;' \
           '-I\schar(|_u)\s+\*w_popup_title;' \
           '-I\sint\s+ch_[_a-zA-Z]+;' \
@@ -1061,8 +1075,9 @@ is_na_patch() {
           '-I^\s+(&&|\|\|)\s.*defined\(.*FEAT_[^_]' \
           '-IEVENT_TERMINALWINOPEN' \
           '-I^#\s*include\s+<proto/' \
+          '-I^\s+\{"ch_[_a-z]+",.*\sFEARG_[1-9],\s+arg[1-9]+_' \
           '-I^\s+\{"(popup|prop|sound)_[_a-z]+",.*f_(popup|prop|sound)_[_a-z]+},$' \
-          '-I^\s+ret_[a-z]+,\s+JOB_FUNC\(f_.+\)},$' \
+          '-I^\s+ret_[a-z]+,\s+(JOB|PROP)_FUNC\(f_.+\)},$' \
           '-I^\s*(static)?\s(char(|_u)|hashtab_T|int|void)( \*)?$' \
           '-I^static\s(char(|_u)|hashtab_T|int|void)\s\*?[^*]+\(.+\);$' \
           '-I#\s*define.*ex_ni$' \
@@ -1074,6 +1089,7 @@ is_na_patch() {
           '-Icheck_typval_type\(.+\)' \
           '-Icrypt_get_method_nr\(.+\)' \
           '-I\spopup_set_firstline\(.+\);' \
+          '-I\sredraw_tabpanel =' \
           '-I\sterm_focus_change\(.+\);$' \
           '-I\supdate_vim9_script_var\(.+\);$' \
           '-I\svim_free\(.*w_popup_title\);' \

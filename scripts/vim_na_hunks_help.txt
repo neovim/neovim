@@ -102,9 +102,11 @@
 \*SigUSR1\*
 \*TerminalOpen\*
 \*TerminalWinOpen\*
+\*XLFD\*
 \*autocommand-events\*
 \*blowfish\*
 \*builtin-function-list\*
+\*channel-functions\*
 \*editorconfig-install\*
 \*emacs[_-]tags\*
 \*global-ime\*
