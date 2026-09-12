@@ -105,7 +105,7 @@ describe(':lsp', function()
     local completions = exec_lua(function()
       return vim.fn.getcompletion('lsp enable ', 'cmdline')
     end)
-    eq({ 'dummy' }, completions)
+    eq({ 'dummy', 'nvim.filepaths' }, completions)
   end)
 
   it('argument completion with spaces', function()

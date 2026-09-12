@@ -345,6 +345,8 @@ HIGHLIGHTS
 
 LSP
 
+• |lsp-path-completion| provides an opt-in in-process LSP server for path
+  completion: `nvim.filepaths`.
 • LSP capabilities:
   • Completion supports `CompletionItem.preselect` if 'completeopt' has
     "preselect". https://microsoft.github.io/language-server-protocol/specification/#completionClientCapabilities
