@@ -156,6 +156,20 @@ function M.rebind_after_restart(canonical_addr, expected_uis)
   end)
 end
 
+--- Detect filetypes missed while restoring a restart session.
+---
+--- Session files add buffers before editing them. Autocommands reacting to BufAdd may load a
+--- buffer while nested events are disabled, which suppresses the normal BufRead filetype detection.
+function M._restore_filetypes_after_restart()
+  for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_loaded(bufnr) and vim.bo[bufnr].filetype == '' then
+      vim.api.nvim_buf_call(bufnr, function()
+        vim.cmd('filetype detect')
+      end)
+    end
+  end
+end
+
 -- Called by ex_restart(). Saves the current session and calls ex_restart() (again) with the
 -- updated arguments.
 --
@@ -191,6 +205,7 @@ function M.ex_session_restart(eap, extra)
   -- Lua commands to restore the session and remove the session file
   local after_list = {}
   table.insert(after_list, ('vim.cmd("source %s")'):format(session_arg))
+  table.insert(after_list, [[require('vim._core.server')._restore_filetypes_after_restart()]])
   table.insert(after_list, ('pcall(vim.fs.rm, [==[%s]==])'):format(session))
   table.insert(after_list, ('vim.v.this_session = [==[%s]==]'):format(this_session))
   if after_cmd ~= '' then
