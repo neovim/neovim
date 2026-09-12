@@ -43,7 +43,7 @@ describe('autoread TUI FocusGained/FocusLost', function()
 
     screen:expect([[
       ^                                                  |
-      {100:~                                                 }|*3
+      {100:~}                                                 |*3
       {3:[No Name]                                         }|
                                                         |
       {5:-- TERMINAL --}                                    |
@@ -51,7 +51,7 @@ describe('autoread TUI FocusGained/FocusLost', function()
     n.feed(':edit ' .. path .. '<CR>')
     screen:expect([[
       ^                                                  |
-      {100:~                                                 }|*3
+      {100:~}                                                 |*3
       {3:xtest-foo                                         }|
       :edit xtest-foo                                   |
       {5:-- TERMINAL --}                                    |

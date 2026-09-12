@@ -44,8 +44,7 @@ describe(':edit term://*', function()
 
     local bufcontents = {}
     local winheight = api.nvim_win_get_height(0)
-    local buf_cont_start = rep - sb - winheight + 1
-    for i = buf_cont_start, (rep - 1) do
+    for i = 0, (rep - 1) do
       bufcontents[#bufcontents + 1] = ('%d: foobar'):format(i)
     end
     bufcontents[#bufcontents + 1] = ''
@@ -59,6 +58,7 @@ describe(':edit term://*', function()
 
     exp_screen = exp_screen .. (' '):rep(columns) .. '|\n'
     scr:expect(exp_screen)
+    eq(sb, api.nvim_get_option_value('scrollback', { buf = 0 }))
     eq(bufcontents, api.nvim_buf_get_lines(0, 0, -1, true))
   end)
 end)
