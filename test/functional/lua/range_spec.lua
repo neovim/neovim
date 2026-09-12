@@ -206,6 +206,17 @@ describe('vim.range', function()
     )
   end)
 
+  it('preserves single-character intersections', function()
+    insert('abc')
+    eq(
+      { 0, 1, 0, 2 },
+      exec_lua(function()
+        local overlap = vim.range(0, 0, 0, 0, 2):intersect(vim.range(0, 0, 1, 0, 3))
+        return overlap and { overlap:to_extmark() } or nil
+      end)
+    )
+  end)
+
   it('an empty range intersercts with no other range', function()
     eq(
       nil,
