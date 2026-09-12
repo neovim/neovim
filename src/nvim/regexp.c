@@ -54,12 +54,6 @@ typedef enum {
 } reg_getline_flags_T;
 
 enum {
-  /// In the NFA engine: how many braces are allowed.
-  /// TODO(RE): Use dynamic memory allocation instead of static, like here
-  NFA_MAX_BRACES = 20,
-};
-
-enum {
   /// In the NFA engine: how many states are allowed.
   NFA_MAX_STATES = 100000,
   NFA_TOO_EXPENSIVE = -1,
