@@ -13,6 +13,7 @@
 #include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
+#include "nvim/event/multiqueue.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
@@ -45,6 +46,21 @@
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
+
+/// A RegisterChanged event waiting to be fired, for one register name.
+typedef struct {
+  bool captured;   ///< "old" holds the value from before the first write of this tick
+  bool changed;    ///< a write reported a new value this tick
+  bool live;       ///< read the new value from "live_reg" at drain, "new" is unset
+  int live_reg;    ///< y_regs index holding the new value, when "live"
+  bool fire;       ///< the drain's first pass found a net change
+  RegValue old;    ///< comparison basis, owned by this slot
+  RegValue new;    ///< the new value, owned by this slot once "live" is resolved
+  RegisterChangedReason reason;
+  int operator;    ///< operator char, NUL unless "reason" licenses it
+  bool visual;
+  int points_to;   ///< '"' only: name of the register it resolves to, NUL if none
+} RegChangedPending;
 
 #include "register.c.generated.h"
 
@@ -101,8 +117,10 @@ int get_expr_register(void)
 /// Argument must be an allocated string.
 void set_expr_line(char *new_line)
 {
+  register_changed_capture('=', REG_VALUE_CSTR(expr_line));
   xfree(expr_line);
   expr_line = new_line;
+  register_changed('=', REG_VALUE_CSTR(expr_line), kRegChangedExpr, NULL);
 }
 
 /// Get the result of the '=' register expression.
@@ -271,12 +289,17 @@ bool op_reg_set(const char name, const yankreg_T reg, bool is_unnamed)
   if (i == -1) {
     return false;
   }
+  int regname = get_register_name(i);
+  reg_capture_unnamed();
+  reg_capture_slot(regname, &y_regs[i], true);
   free_register(&y_regs[i]);
   y_regs[i] = reg;
 
   if (is_unnamed) {
     y_previous = &y_regs[i];
   }
+  reg_changed_slot(regname, &y_regs[i], kRegChangedShada, NULL);
+  reg_changed_unnamed(kRegChangedShada, NULL);
   return true;
 }
 
@@ -306,7 +329,9 @@ bool op_reg_set_previous(const char name)
     return false;
   }
 
+  reg_capture_unnamed();
   y_previous = &y_regs[i];
+  reg_changed_unnamed(kRegChangedSetreg, NULL);
   return true;
 }
 
@@ -372,6 +397,7 @@ yankreg_T *get_yank_register(int regname, int mode)
 
   if (mode == YREG_YANK) {
     // remember the written register for unnamed paste
+    reg_capture_unnamed();  // "" is about to move: record what @" reads now
     y_previous = reg;
   }
   return reg;
@@ -435,7 +461,11 @@ static int stuff_yank(int regname, char *p)
 
   const size_t plen = strlen(p);
   yankreg_T *reg = get_yank_register(regname, YREG_YANK);
+  // Report the slot actually written, not the name asked for: q" records into
+  // register 0, and "A is register a plus an append flag.
+  int name = get_register_name((int)(reg - y_regs));
   if (is_append_register(regname) && reg->y_array != NULL) {
+    reg_capture_slot(name, reg, false);  // appending: the old value survives
     String *pp = &(reg->y_array[reg->y_size - 1]);
     const size_t tmplen = pp->size + plen;
     char *tmp = xmalloc(tmplen + 1);
@@ -446,6 +476,7 @@ static int stuff_yank(int regname, char *p)
     xfree(pp->data);
     *pp = cbuf_as_string(tmp, tmplen);
   } else {
+    reg_capture_slot(name, reg, true);
     free_register(reg);
     reg->additional_data = NULL;
     reg->y_array = xmalloc(sizeof(String));
@@ -454,6 +485,7 @@ static int stuff_yank(int regname, char *p)
     reg->y_type = kMTCharWise;
   }
   reg->timestamp = (Timestamp)os_realtime();
+  reg_changed_slot(name, reg, kRegChangedRecord, NULL);
   return OK;
 }
 
@@ -520,6 +552,7 @@ int do_record(int c)
       retval = stuff_yank(regname, p);
 
       y_previous = old_y_previous;
+      reg_changed_unnamed(kRegChangedRecord, NULL);
     }
 
     apply_autocmds(EVENT_RECORDINGLEAVE, NULL, NULL, false, curbuf);
@@ -971,6 +1004,16 @@ bool cmdline_paste_reg(int regname, bool literally_arg, bool remcr)
 /// Shift the delete registers: "9 is cleared, "8 becomes "9, etc.
 void shift_delete_registers(bool y_append)
 {
+  reg_capture_unnamed();
+  // The rotation is a permutation, not nine writes: only "9's value is freed,
+  // the rest are relocated one slot up and stay alive there. So only "9's old
+  // value can be taken; the others must be copied, or the basis would alias a
+  // live register.
+  reg_capture_slot('9', &y_regs[9], true);
+  for (int n = 1; n < 9; n++) {
+    reg_capture_slot(get_register_name(n), &y_regs[n], false);
+  }
+
   free_register(&y_regs[9]);  // free register "9
   for (int n = 9; n > 1; n--) {
     y_regs[n] = y_regs[n - 1];
@@ -979,6 +1022,12 @@ void shift_delete_registers(bool y_append)
     y_previous = &y_regs[1];
   }
   y_regs[1].y_array = NULL;  // set register "1 to empty
+
+  // "1 is reported by the op_yank_reg() that fills it, with reason "delete".
+  for (int n = 2; n < 10; n++) {
+    reg_changed_slot(get_register_name(n), &y_regs[n], kRegChangedShift, NULL);
+  }
+  reg_changed_unnamed(kRegChangedShift, NULL);
 }
 
 #ifdef EXITFREE
@@ -987,6 +1036,7 @@ void clear_registers(void)
   for (int i = 0; i < NUM_REGISTERS; i++) {
     free_register(&y_regs[i]);
   }
+  reg_changed_free_all();
 }
 #endif
 
@@ -1006,6 +1056,491 @@ void free_register(yankreg_T *reg)
   }
   *reg = (yankreg_T){ 0 };
 }
+
+// RegisterChanged
+//
+// The event reports net changes: it means "@x now reads differently", not "a
+// write happened". So a write is not an event on its own. Each write records
+// two things in a pending slot keyed by the register name - the value from
+// before the operation began, and the value it produced - and the slot is
+// drained at the next event-loop tick, where the two are compared and an event
+// is fired only if they differ.
+//
+// Deferring is what |dev-new-event| asks for, and it also makes a burst cheap:
+// further writes to a register that already has an undrained slot replace that
+// slot's payload instead of queueing a second event, so one all-in-one
+// operation produces one event per register it changed.
+
+/// Pending events, indexed by register name character.
+static RegChangedPending reg_pending[128] = { 0 };
+/// Whether a drain job is already on "deferred_events".
+static bool reg_pending_queued = false;
+/// Whether the drain job is running. Register writes made from a handler must
+/// not create new slots: a child-queue put extends the drain in progress, so a
+/// handler that writes a register would otherwise loop forever.
+static bool reg_draining = false;
+
+/// What Nvim last wrote to "* and "+, indexed by "reg_clip_idx()".
+///
+/// The y_regs slots for those two registers are not storage but scratch space
+/// for the clipboard provider: a *read* of @* or @+ destroys and refills them
+/// (see get_clipboard()). They are therefore useless as a comparison basis, so
+/// the event keeps its own. Kept up to date even with no subscriber, since it
+/// must be truthful as soon as one appears.
+static RegValue reg_clip_shadow[2] = { 0 };
+
+/// The order RegisterChanged emits in when one operation changed several
+/// registers: |:registers| order, except that the unnamed register comes last,
+/// after whichever register it points at.
+static const char reg_changed_order[] = "0123456789abcdefghijklmnopqrstuvwxyz-*+.:/=\"";
+
+/// @return  index into "reg_clip_shadow" for the clipboard register "name".
+static int reg_clip_idx(int name)
+{
+  assert(name == '*' || name == '+');
+  return name == '+';
+}
+
+/// @return  true while register writes should be recorded for RegisterChanged.
+static bool reg_changed_active(void)
+{
+  // "starting" suppresses the |startup| ShaDa burst, on the |OptionSet|
+  // precedent; the exemption ends immediately before VimEnter is dispatched.
+  return !reg_draining && !starting && has_event(EVENT_REGISTERCHANGED);
+}
+
+/// @return  a borrowed view of the value held by "reg".
+static RegValue reg_value_of(const yankreg_T *reg)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return (RegValue){
+    .lines = reg->y_array,
+    .count = reg->y_array == NULL ? 0 : reg->y_size,
+    .type = reg->y_type,
+    .width = reg->y_width,
+  };
+}
+
+/// @return  a deep copy of "val", owning its lines.
+static RegValue reg_value_copy(RegValue val)
+{
+  RegValue copy = val;
+  if (val.lines == NULL || val.count == 0) {
+    copy.lines = NULL;
+    copy.count = 0;
+    return copy;
+  }
+  copy.lines = xcalloc(val.count, sizeof(String));
+  for (size_t i = 0; i < val.count; i++) {
+    copy.lines[i] = copy_string(val.lines[i], NULL);
+  }
+  return copy;
+}
+
+/// Free "val" and reset it to the unset value, which is also the empty one:
+/// kMTCharWise is 0, matching get_reg_type()'s unconditional return.
+static void reg_value_free(RegValue *val)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (val->lines != NULL) {
+    for (size_t i = val->count; i-- > 0;) {
+      API_CLEAR_STRING(val->lines[i]);
+    }
+    xfree(val->lines);
+  }
+  *val = (RegValue){ 0 };
+}
+
+/// Whether "val" is indistinguishable from an unset register.
+///
+/// A register cannot report "unset": the payload always carries "regcontents",
+/// so firing on unset -> empty would emit an event matching the previous state.
+/// Mirrors reg_empty(), which means a single empty *linewise* line is correctly
+/// not conflated with unset.
+static bool reg_value_empty(RegValue val)
+{
+  return val.lines == NULL
+         || val.count == 0
+         || (val.count == 1 && val.type == kMTCharWise && val.lines[0].size == 0);
+}
+
+/// Whether two register values are the same as far as the event is concerned.
+///
+/// The compared value is exactly what the event reports: "regcontents" and
+/// "regtype". Never the reason, the operator or the timestamp - those describe
+/// the write, and comparing them would collapse net-change back into
+/// fire-on-every-write.
+static bool reg_value_equal(RegValue a, RegValue b)
+{
+  if (reg_value_empty(a) && reg_value_empty(b)) {
+    return true;
+  }
+  if (a.count != b.count) {
+    return false;
+  }
+  // Compare the *formatted* register type rather than the struct fields: it
+  // folds the width into "<C-V>{width}" for blockwise registers, where it is
+  // meaningful, and ignores it everywhere else, where it may be stale.
+  char abuf[NUMBUFLEN + 2];
+  char bbuf[NUMBUFLEN + 2];
+  format_reg_type(a.type, a.width, abuf, sizeof(abuf));
+  format_reg_type(b.type, b.width, bbuf, sizeof(bbuf));
+  if (strcmp(abuf, bbuf) != 0) {
+    return false;
+  }
+  for (size_t i = 0; i < a.count; i++) {
+    // Registers can hold NUL bytes, so this must be size-aware.
+    if (a.lines[i].size != b.lines[i].size
+        || (a.lines[i].size != 0
+            && memcmp(a.lines[i].data, b.lines[i].data, a.lines[i].size) != 0)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/// @return  the pending slot for register "name".
+static RegChangedPending *reg_pending_slot(int name)
+{
+  assert(name > 0 && name < (int)ARRAY_SIZE(reg_pending));
+  assert(vim_strchr(reg_changed_order, name) != NULL);
+  return &reg_pending[name];
+}
+
+/// Queue the drain job, once per tick.
+static void reg_pending_queue(void)
+{
+  if (!reg_pending_queued) {
+    reg_pending_queued = true;
+    multiqueue_put(deferred_events, reg_changed_drain, NULL);
+  }
+}
+
+/// Fill the comparison basis of register "name" with "val", which the slot takes
+/// ownership of. Only the first capture of a tick is kept: the reference point
+/// is the value from before the operation began, not before the last write.
+static void reg_capture_owned(int name, RegValue val)
+{
+  RegChangedPending *p = reg_pending_slot(name);
+  if (p->captured) {
+    reg_value_free(&val);
+    return;
+  }
+  p->old = val;
+  p->captured = true;
+  reg_pending_queue();
+}
+
+/// Record the value of the y_regs slot "reg" before it is overwritten.
+///
+/// @param may_steal  true when the caller is about to free this value, so the
+///                   slot can take ownership instead of copying. False on the
+///                   append paths, where the old contents survive into the new
+///                   value, and for the register rotation, which relocates "1
+///                   to "8 rather than freeing them.
+static void reg_capture_slot(int name, yankreg_T *reg, bool may_steal)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (!reg_changed_active() || reg_pending_slot(name)->captured) {
+    return;
+  }
+  if (name == '*' || name == '+') {
+    // The slot is clipboard scratch and may hold the residue of a read; the
+    // basis is what Nvim itself last put there.
+    reg_capture_owned(name, reg_value_copy(reg_clip_shadow[reg_clip_idx(name)]));
+    return;
+  }
+  if (may_steal) {
+    RegValue val = reg_value_of(reg);
+    reg->y_array = NULL;
+    reg->y_size = 0;
+    reg_capture_owned(name, val);
+  } else {
+    reg_capture_owned(name, reg_value_copy(reg_value_of(reg)));
+  }
+}
+
+/// Record the value register "name" had before the operation now under way.
+///
+/// Called just before the old value becomes unreachable. "val" is borrowed; the
+/// slot takes a copy. Used by the registers that have no free-and-replace seam
+/// to hand their old value over: "/, "=, ": and ".
+///
+/// @param name  register name, lowercase
+/// @param val   value the register is about to lose
+void register_changed_capture(int name, RegValue val)
+{
+  if (!reg_changed_active()) {
+    return;
+  }
+  reg_capture_owned(name, reg_value_copy(val));
+}
+
+/// Record how the write that just happened should be reported.
+static void reg_changed_meta(RegChangedPending *p, RegisterChangedReason reason, oparg_T *oap)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  p->changed = true;
+  p->reason = reason;
+  // "operator" and "visual" describe the write only for the two operator
+  // reasons. Everywhere else - setreg(), a macro, the rotation, ShaDa - there
+  // is no operator, and they carry filler.
+  bool licensed = (reason == kRegChangedYank || reason == kRegChangedDelete) && oap != NULL;
+  p->operator = licensed ? get_op_char(oap->op_type) : NUL;
+  p->visual = licensed && oap->is_VIsual;
+}
+
+/// Record that the y_regs slot "reg" was just written.
+///
+/// The value is not copied here: nothing outside the write funnels can change a
+/// y_regs slot before the drain, so the slot itself is the snapshot, and the
+/// drain resolves it before running any handler. That matters because
+/// coalescing throws away every payload but the last: copying at each write
+/// would make an append loop quadratic in the register size.
+///
+/// The two clipboard registers are the exception. Their slots are provider
+/// scratch that a read overwrites, so the shadow is copied here instead - once
+/// per write, on a path that is already talking to another process.
+static void reg_changed_slot(int name, yankreg_T *reg, RegisterChangedReason reason, oparg_T *oap)
+  FUNC_ATTR_NONNULL_ARG(2)
+{
+  if (name == '*' || name == '+') {
+    RegValue *shadow = &reg_clip_shadow[reg_clip_idx(name)];
+    reg_value_free(shadow);
+    *shadow = reg_value_copy(reg_value_of(reg));
+  }
+  if (!reg_changed_active()) {
+    return;
+  }
+  RegChangedPending *p = reg_pending_slot(name);
+  if (!p->captured) {
+    return;
+  }
+  reg_value_free(&p->new);
+  p->live = true;
+  p->live_reg = (int)(reg - y_regs);
+  reg_changed_meta(p, reason, oap);
+}
+
+/// Record the value register "name" holds after the write that just happened.
+///
+/// "val" is borrowed; the slot takes a copy, because the registers that use this
+/// entry point - "/, "=, ": and ". - are owned by subsystems that free and
+/// replace their value with no seam to intercept. They are single-line and
+/// low-frequency, so the copy is affordable. Does nothing unless the matching
+/// register_changed_capture() ran, so an unwired site cannot emit an event with
+/// no comparison basis.
+///
+/// @param name    register name, lowercase
+/// @param val     value the register now holds
+/// @param reason  mechanism of this write
+/// @param oap     operator arguments, NULL when the write had no operator
+void register_changed(int name, RegValue val, RegisterChangedReason reason, oparg_T *oap)
+{
+  if (!reg_changed_active()) {
+    return;
+  }
+  RegChangedPending *p = reg_pending_slot(name);
+  if (!p->captured) {
+    return;
+  }
+  reg_value_free(&p->new);
+  p->live = false;
+  p->new = reg_value_copy(val);
+  reg_changed_meta(p, reason, oap);
+}
+
+/// @return  the value @" would paste right now.
+static RegValue reg_unnamed_value(void)
+{
+  if (y_previous == NULL) {
+    return (RegValue){ 0 };
+  }
+  assert(y_previous >= y_regs && y_previous < y_regs + NUM_REGISTERS);
+  int name = get_register_name((int)(y_previous - y_regs));
+  if (name == '*' || name == '+') {
+    // @" resolves through clipboard scratch; report what Nvim wrote there.
+    return reg_clip_shadow[reg_clip_idx(name)];
+  }
+  return reg_value_of(y_previous);
+}
+
+/// Record what @" resolves to, before anything can change it.
+///
+/// "" is a subscribable name in its own right: RegisterChanged " fires whenever
+/// Nvim changes what @" would paste, whether because "" now points at a
+/// different register or because the register it points at changed underneath
+/// it. Must run before y_previous moves, which get_yank_register() does before
+/// the content is written.
+static void reg_capture_unnamed(void)
+{
+  if (!reg_changed_active() || reg_pending_slot('"')->captured) {
+    return;
+  }
+  // Always a copy: the register this resolves to may hand its own old value to
+  // its own slot, or not be written at all.
+  reg_capture_owned('"', reg_value_copy(reg_unnamed_value()));
+}
+
+/// Record what @" resolves to after a write or a move of y_previous.
+static void reg_changed_unnamed(RegisterChangedReason reason, oparg_T *oap)
+{
+  if (!reg_changed_active() || !reg_pending_slot('"')->captured) {
+    return;
+  }
+  RegChangedPending *p = reg_pending_slot('"');
+  reg_value_free(&p->new);
+  p->live = y_previous != NULL;
+  p->live_reg = p->live ? (int)(y_previous - y_regs) : 0;
+  // Which register @" resolves to is reported, but is not part of the compared
+  // value, so a move between two registers holding the same text is silent and
+  // this can go stale. It is dropped when y_previous is unset, matching
+  // getreginfo('"'), which has no "points_to" key then either.
+  p->points_to = p->live ? get_register_name(p->live_reg) : NUL;
+  reg_changed_meta(p, reason, oap);
+}
+
+/// Report that @" may now resolve to a different register.
+///
+/// The registers that carry a value report themselves; "" is reported by
+/// whatever moved it or changed the register under it. A caller that moves
+/// y_previous without writing anything - setreg('"', {points_to: ...}) - is
+/// the one case that has no write to ride along with, so it must say so.
+///
+/// @param reason  mechanism that moved the pointer
+void register_changed_repoint(RegisterChangedReason reason)
+{
+  reg_changed_unnamed(reason, NULL);
+}
+
+/// @return  the v:event.reason value for "reason".
+static const char *reg_changed_reason_name(RegisterChangedReason reason)
+{
+  switch (reason) {
+  case kRegChangedYank:
+    return "yank";
+  case kRegChangedDelete:
+    return "delete";
+  case kRegChangedShift:
+    return "shift";
+  case kRegChangedRecord:
+    return "record";
+  case kRegChangedSetreg:
+    return "setreg";
+  case kRegChangedRedir:
+    return "redir";
+  case kRegChangedShada:
+    return "shada";
+  case kRegChangedSearch:
+    return "search";
+  case kRegChangedExpr:
+    return "expr";
+  case kRegChangedCmdline:
+    return "cmdline";
+  case kRegChangedInsert:
+    return "insert";
+  }
+  abort();
+}
+
+/// Fire RegisterChanged for register "name" with the payload in "p".
+static void reg_changed_emit(int name, const RegChangedPending *p)
+  FUNC_ATTR_NONNULL_ALL
+{
+  save_v_event_T save_v_event;
+  dict_T *dict = get_v_event(&save_v_event);
+
+  list_T *const list = tv_list_alloc((ptrdiff_t)p->new.count);
+  for (size_t i = 0; i < p->new.count; i++) {
+    tv_list_append_string(list, p->new.lines[i].data, (ssize_t)p->new.lines[i].size);
+  }
+  tv_list_set_lock(list, VAR_FIXED);
+  tv_dict_add_list(dict, S_LEN("regcontents"), list);
+
+  char buf[NUMBUFLEN + 2];
+  size_t len = format_reg_type(p->new.type, p->new.width, buf, sizeof(buf));
+  tv_dict_add_str_len(dict, S_LEN("regtype"), buf, (int)len);
+
+  char name_str[2] = { (char)name, NUL };
+  tv_dict_add_str(dict, S_LEN("regname"), name_str);
+
+  char op_str[2] = { (char)p->operator, NUL };
+  tv_dict_add_str(dict, S_LEN("operator"), op_str);
+
+  tv_dict_add_bool(dict, S_LEN("visual"), p->visual ? kBoolVarTrue : kBoolVarFalse);
+  tv_dict_add_str(dict, S_LEN("reason"), reg_changed_reason_name(p->reason));
+
+  if (name == '"' && p->points_to != NUL) {
+    char points_to[2] = { (char)p->points_to, NUL };
+    tv_dict_add_str(dict, S_LEN("points_to"), points_to);
+  }
+
+  tv_dict_set_keys_readonly(dict);
+  apply_autocmds(EVENT_REGISTERCHANGED, name_str, NULL, false, curbuf);
+  restore_v_event(dict, &save_v_event);
+}
+
+/// @return  a borrowed view of the value a pending slot reports.
+static RegValue reg_pending_value(const RegChangedPending *p)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (!p->live) {
+    return p->new;
+  }
+  int name = get_register_name(p->live_reg);
+  if (name == '*' || name == '+') {
+    return reg_clip_shadow[reg_clip_idx(name)];
+  }
+  return reg_value_of(&y_regs[p->live_reg]);
+}
+
+/// Fire the events collected during the previous event-loop tick.
+///
+/// Two passes. The first decides what changed and resolves every live slot into
+/// an owned value, so that a handler writing registers cannot alter what a
+/// later event in the same drain reports. The second fires.
+static void reg_changed_drain(void **argv)
+{
+  reg_pending_queued = false;
+  reg_draining = true;
+
+  for (size_t i = 0; i < ARRAY_SIZE(reg_changed_order) - 1; i++) {
+    RegChangedPending *p = &reg_pending[(uint8_t)reg_changed_order[i]];
+    if (!p->captured || !p->changed) {
+      continue;
+    }
+    p->fire = !reg_value_equal(p->old, reg_pending_value(p));
+    if (p->fire && p->live) {
+      p->new = reg_value_copy(reg_pending_value(p));
+      p->live = false;
+    }
+  }
+
+  for (size_t i = 0; i < ARRAY_SIZE(reg_changed_order) - 1; i++) {
+    RegChangedPending *p = &reg_pending[(uint8_t)reg_changed_order[i]];
+    if (p->fire) {
+      reg_changed_emit((uint8_t)reg_changed_order[i], p);
+    }
+    reg_value_free(&p->old);
+    reg_value_free(&p->new);
+    *p = (RegChangedPending){ 0 };
+  }
+
+  reg_draining = false;
+}
+
+#ifdef EXITFREE
+/// Free everything RegisterChanged holds on to.
+static void reg_changed_free_all(void)
+{
+  for (size_t i = 0; i < ARRAY_SIZE(reg_pending); i++) {
+    reg_value_free(&reg_pending[i].old);
+    reg_value_free(&reg_pending[i].new);
+  }
+  reg_value_free(&reg_clip_shadow[0]);
+  reg_value_free(&reg_clip_shadow[1]);
+}
+#endif
 
 /// Copy a block range into a register.
 ///
@@ -1048,8 +1583,15 @@ void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
   struct block_def bd;
 
   yankreg_T *curr = reg;  // copy of current register
+  // Every caller passes a slot of y_regs.
+  assert(curr >= y_regs && curr < y_regs + NUM_REGISTERS);
+  int regname = get_register_name((int)(curr - y_regs));
+  RegisterChangedReason reason = oap->op_type == OP_YANK ? kRegChangedYank : kRegChangedDelete;
+  bool appending = append && reg->y_array != NULL;
+  reg_capture_slot(regname, curr, !appending);
+
   // append to existing contents
-  if (append && reg->y_array != NULL) {
+  if (appending) {
     reg = &newreg;
   } else {
     free_register(reg);  // free previously yanked lines
@@ -1197,6 +1739,9 @@ void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
       decl(&curbuf->b_op_end);
     }
   }
+
+  reg_changed_slot(regname, curr, reason, oap);
+  reg_changed_unnamed(reason, oap);
 }
 
 /// Format the register type as a string.
@@ -2564,7 +3109,9 @@ static yankreg_T *init_write_reg(int name, yankreg_T **old_y_previous, bool must
   *old_y_previous = y_previous;
 
   yankreg_T *reg = get_yank_register(name, YREG_YANK);
-  if (!is_append_register(name) && !must_append) {
+  bool appending = is_append_register(name) || must_append;
+  reg_capture_slot(get_register_name((int)(reg - y_regs)), reg, !appending);
+  if (!appending) {
     free_register(reg);
   }
   return reg;
@@ -2702,10 +3249,19 @@ static void finish_write_reg(int name, yankreg_T *reg, yankreg_T *old_y_previous
   // Send text of clipboard register to the clipboard.
   set_clipboard(name, reg);
 
+  // ":redir @a" and the setreg() family share this funnel, so tell them apart
+  // by the register being redirected to rather than by "redir_reg" alone: a
+  // ":let @b = ..." while ":redir @a" is active is still a plain setreg.
+  int regname = get_register_name((int)(reg - y_regs));
+  bool is_redir = redir_reg != 0 && op_reg_index(redir_reg) == (int)(reg - y_regs);
+  RegisterChangedReason reason = is_redir ? kRegChangedRedir : kRegChangedSetreg;
+  reg_changed_slot(regname, reg, reason, NULL);
+
   // ':let @" = "val"' should change the meaning of the "" register
   if (name != '"') {
     y_previous = old_y_previous;
   }
+  reg_changed_unnamed(reason, NULL);
 }
 
 /// store `str` in register `name`
@@ -2815,6 +3371,10 @@ void write_reg_contents_ex(int name, const char *str, ssize_t len, bool must_app
       offset = exprlen;
     }
 
+    // The realloc below can free the old bytes in place, so the value has to
+    // be captured before it, not merely before the assignment.
+    register_changed_capture('=', REG_VALUE_CSTR(expr_line));
+
     // modify the global expr_line, extend/shrink it if necessary (realloc).
     // Copy the input string into the adjusted memory at the specified
     // offset.
@@ -2822,6 +3382,7 @@ void write_reg_contents_ex(int name, const char *str, ssize_t len, bool must_app
     memcpy(expr_line + offset, str, (size_t)len);
     expr_line[totlen] = NUL;
 
+    register_changed('=', REG_VALUE_CSTR(expr_line), kRegChangedExpr, NULL);
     return;
   }
 

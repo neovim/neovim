@@ -339,6 +339,9 @@ EVENTS
 • |TabMoved| is triggered when tabs are reordered.
 • |DirReadPost| is triggered after each |dir| listing is rendered, so it can
   be sorted or filtered. See |dir-render|.
+• |RegisterChanged| is triggered when the contents of a register change.
+  The |autocmd-pattern| is the register name, and the event reports a net
+  change rather than every write.
 
 HIGHLIGHTS
 

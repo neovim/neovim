@@ -67,6 +67,35 @@ typedef struct {
   AdditionalData *additional_data;  ///< Additional data from ShaDa file.
 } yankreg_T;
 
+/// The value of a register, as the |RegisterChanged| event compares and reports it.
+///
+/// Deliberately not "yankreg_T": that type also carries "timestamp" and
+/// "additional_data", which describe the register rather than its value and must
+/// never take part in the comparison.
+typedef struct {
+  String *lines;    ///< Array of "count" lines, NULL when the register is unset.
+  size_t count;     ///< Number of lines.
+  MotionType type;  ///< Register type, always kMTCharWise for the special registers.
+  colnr_T width;    ///< Register width (only valid for type == kMTBlockWise).
+} RegValue;
+
+/// The mechanism that wrote a register, reported as v:event.reason by
+/// |RegisterChanged|. Names the mechanism, never the user action and never the
+/// register. New values may be added; none will be renamed or repurposed.
+typedef enum {
+  kRegChangedYank,     ///< yank operator
+  kRegChangedDelete,   ///< delete or change operator
+  kRegChangedShift,    ///< rotation of the numbered registers "1 to "9
+  kRegChangedRecord,   ///< macro recording finished
+  kRegChangedSetreg,   ///< setreg(), ":let @x = ..."
+  kRegChangedRedir,    ///< ":redir @x"
+  kRegChangedShada,    ///< ShaDa load, also nvim_set_context()
+  kRegChangedSearch,   ///< new search pattern
+  kRegChangedExpr,     ///< assignment to the expression register
+  kRegChangedCmdline,  ///< a command line was executed
+  kRegChangedInsert,   ///< text was inserted
+} RegisterChangedReason;
+
 /// Modes for get_yank_register()
 typedef enum {
   YREG_PASTE,
