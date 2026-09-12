@@ -208,6 +208,7 @@ function Screen.new(width, height, options, session)
     win_viewport = {},
     win_viewport_margins = {},
     float_pos = {},
+    images = {},
     msg_grid = nil,
     msg_grid_pos = nil,
     _session = nil,
@@ -1498,6 +1499,25 @@ function Screen:_handle_ui_send(content)
   if self._stdout then
     self._stdout:write(content)
   end
+end
+
+function Screen:_handle_img_data(id, data, _opts)
+  local img = self.images[id] or { data_events = 0 }
+  img.data = data
+  img.data_events = img.data_events + 1
+  self.images[id] = img
+end
+
+function Screen:_handle_img_set(id, opts)
+  -- Per |ui-images|, placements for unknown image ids are ignored
+  local img = self.images[id]
+  if img then
+    img.placement = opts
+  end
+end
+
+function Screen:_handle_img_del(id)
+  self.images[id] = nil
 end
 
 function Screen:_clear_block(grid, top, bot, left, right)

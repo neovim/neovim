@@ -2779,6 +2779,7 @@ describe('TUI', function()
         chan = ui_chan,
         ext_cmdline = false,
         ext_hlstate = false,
+        ext_images = false,
         ext_linegrid = true,
         ext_messages = false,
         ext_multigrid = false,

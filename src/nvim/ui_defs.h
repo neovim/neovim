@@ -20,6 +20,7 @@ typedef enum {
   kUIHlState,
   kUITermColors,
   kUIFloatDebug,
+  kUIImages,
   kUIExtCount,
 } UIExtension;
 
