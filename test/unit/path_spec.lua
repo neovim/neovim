@@ -742,49 +742,50 @@ describe('path.c', function()
       local function path_with_url(fname)
         return cimp.path_with_url(to_cstr(fname))
       end
+      local iswin = ffi.os == 'Windows'
 
       -- Check normal scheme with just alphabetic
-      eq(1, path_with_url([[test://xyz/foo/b0]]))
-      eq(2, path_with_url([[test:\\xyz\foo\b0]]))
+      eq(true, path_with_url([[test://xyz/foo/b0]]))
+      eq(true, path_with_url([[test:\\xyz\foo\b0]]))
 
       -- Check valid scheme with just alphanumeric
-      eq(1, path_with_url([[test123://xyz/foo/b0]]))
-      eq(2, path_with_url([[test123:\\xyz\foo\b0]]))
+      eq(true, path_with_url([[test123://xyz/foo/b0]]))
+      eq(true, path_with_url([[test123:\\xyz\foo\b0]]))
 
       -- Check invalid scheme (contains invalid character)
-      eq(0, path_with_url([[test_abc://xyz/foo/b2]]))
+      eq(false, path_with_url([[test_abc://xyz/foo/b2]]))
 
       -- Check valid scheme containing '+', '-', or '.'
-      eq(1, path_with_url([[test+abc://xyz/foo/b1]]))
-      eq(2, path_with_url([[test+abc:\\xyz\foo\b1]]))
-      eq(1, path_with_url([[test-abc://xyz/foo/b3]]))
-      eq(2, path_with_url([[test-abc:\\xyz\foo\b3]]))
-      eq(1, path_with_url([[test.abc://xyz/foo/b1]]))
-      eq(2, path_with_url([[test.abc:\\xyz\foo\b1]]))
+      eq(true, path_with_url([[test+abc://xyz/foo/b1]]))
+      eq(true, path_with_url([[test+abc:\\xyz\foo\b1]]))
+      eq(true, path_with_url([[test-abc://xyz/foo/b3]]))
+      eq(true, path_with_url([[test-abc:\\xyz\foo\b3]]))
+      eq(true, path_with_url([[test.abc://xyz/foo/b1]]))
+      eq(true, path_with_url([[test.abc:\\xyz\foo\b1]]))
 
       -- Check valid scheme with full suite of allowed characters
-      eq(1, path_with_url([[test+abc-123.ghi://xyz/foo/b1]]))
-      eq(2, path_with_url([[test+abc-123.ghi:\\xyz\foo\b1]]))
+      eq(true, path_with_url([[test+abc-123.ghi://xyz/foo/b1]]))
+      eq(true, path_with_url([[test+abc-123.ghi:\\xyz\foo\b1]]))
 
       -- Check invalid scheme starting or ending with '+', '-', or '.'
-      eq(0, path_with_url([[-test://xyz/foo/b4]]))
-      eq(0, path_with_url([[test-://xyz/foo/b5]]))
-      eq(0, path_with_url([[+test://xyz/foo/b4]]))
-      eq(0, path_with_url([[test+://xyz/foo/b5]]))
-      eq(0, path_with_url([[.test://xyz/foo/b4]]))
-      eq(0, path_with_url([[test.://xyz/foo/b5]]))
+      eq(false, path_with_url([[-test://xyz/foo/b4]]))
+      eq(false, path_with_url([[test-://xyz/foo/b5]]))
+      eq(false, path_with_url([[+test://xyz/foo/b4]]))
+      eq(false, path_with_url([[test+://xyz/foo/b5]]))
+      eq(false, path_with_url([[.test://xyz/foo/b4]]))
+      eq(false, path_with_url([[test.://xyz/foo/b5]]))
 
       -- Check additional valid scheme containing '+', '-', or '.'
-      eq(1, path_with_url([[test-C:/xyz/foo/b5]]))
-      eq(1, path_with_url([[test-custom:/xyz/foo/b5]]))
-      eq(1, path_with_url([[test+C:/xyz/foo/b5]]))
-      eq(1, path_with_url([[test+custom:/xyz/foo/b5]]))
-      eq(1, path_with_url([[test.C:/xyz/foo/b5]]))
-      eq(1, path_with_url([[test.custom:/xyz/foo/b5]]))
+      eq(true, path_with_url([[test-C:/xyz/foo/b5]]))
+      eq(true, path_with_url([[test-custom:/xyz/foo/b5]]))
+      eq(true, path_with_url([[test+C:/xyz/foo/b5]]))
+      eq(true, path_with_url([[test+custom:/xyz/foo/b5]]))
+      eq(true, path_with_url([[test.C:/xyz/foo/b5]]))
+      eq(true, path_with_url([[test.custom:/xyz/foo/b5]]))
 
       -- Check invalid scheme representing drive letter
-      eq(0, path_with_url([[c:/xyz/foo/b5]]))
-      eq(0, path_with_url([[C:/xyz/foo/b5]]))
+      eq(not iswin, path_with_url([[c:/xyz/foo/b5]]))
+      eq(not iswin, path_with_url([[C:/xyz/foo/b5]]))
     end)
   end)
 end)
