@@ -1103,13 +1103,9 @@ void ex_mkrc(exarg_T *eap)
       if (Search.no_hlsearch && fprintf(fd, "%s", "nohlsearch\n") < 0) {
         failed = true;
       }
-      if (fprintf(fd, "%s", "doautoall SessionLoadPost\n") < 0) {
+      if (eap->cmdidx == CMD_mksession
+          && fprintf(fd, "doautoall SessionLoadPost\nunlet SessionLoad\n") < 0) {
         failed = true;
-      }
-      if (eap->cmdidx == CMD_mksession) {
-        if (fprintf(fd, "unlet SessionLoad\n") < 0) {
-          failed = true;
-        }
       }
     }
     if (put_line(fd, "\" vim: set ft=vim :") == FAIL) {

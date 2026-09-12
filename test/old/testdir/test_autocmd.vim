@@ -1138,6 +1138,7 @@ endfunc
 func Test_autocmd_SessLoadPre()
   tabnew
   set noswapfile
+  mkview! Xview.vim
   mksession! Session.vim
 
   call assert_false(exists('g:session_loaded_var'))
@@ -1154,6 +1155,7 @@ func Test_autocmd_SessLoadPre()
     endfunc
 
     func! OnSessionLoadPre()
+      call Assert(exists('g:SessionLoad'), 'SessionLoadPre: session IS loading')
       call Assert(!exists('g:session_loaded_var'),
             \ 'SessionLoadPre: var NOT set')
     endfunc
@@ -1183,7 +1185,7 @@ func Test_autocmd_SessLoadPre()
   " --- Run child Vim ---
   call system(
         \ GetVimCommand('Xvimrc')
-        \ .. ' --headless --noplugins -S Session.vim -c cq'
+        \ .. ' --headless --noplugins -S Xview.vim -S Session.vim -c cq'
         \ )
 
   call WaitForAssert({-> assert_true(filereadable('XerrorsPost'))})
@@ -1195,7 +1197,7 @@ func Test_autocmd_SessLoadPre()
   call assert_match('SessionLoadPost DONE', errors)
 
   set swapfile
-  for file in ['Session.vim', 'Sessionx.vim', 'XerrorsPost']
+  for file in ['Session.vim', 'Sessionx.vim', 'Xview.vim', 'XerrorsPost']
     call delete(file)
   endfor
 endfunc

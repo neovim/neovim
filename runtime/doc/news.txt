@@ -529,6 +529,7 @@ CHANGED FEATURES                                                 *news-changed*
 These existing features changed their behavior.
 
 • `nvim_exec_autocmds({buf=…})` runs in the context of the target buffer.
+• |SessionLoadPost| is no longer included in views saved by |:mkview|.
 • |OptionSet| is no longer triggered during startup by automatic
   |'background'| detection.
 • |SessionWritePre| and |SessionWritePost| are no longer triggered by
