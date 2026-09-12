@@ -1003,7 +1003,7 @@ is_na_patch() {
         HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
           '-I^\s+$' \
           '-I^\s*/?\*/?$' \
-          '-I^\s*(//|/?\*).*\s([vV]im9|E[0-9]{4} - |FEAT_|channel|job|popup|sound|terminal)' \
+          '-I^\s*(//|/?\*).*\s([vV]im9|E[0-9]{4} - |FEAT_|JSON-RPC|channel|job|popup|sound|terminal)' \
           '-I^#\s*((ifdef|ifndef|undef)|(if|elif)\s.*defined\().*FEAT_[^_]' \
           '-I^#\s*(else|endif)' \
           '-I^#\s*define\s+(FEAT|POPUPWIN|XDG|t)_[^_]' \
@@ -1011,7 +1011,7 @@ is_na_patch() {
           '-IEVENT_TERMINALWINOPEN' \
           '-I^#\s*define\s+(ASSIGN_VAR|POPF_CURSORLINE)\s' \
           '-I^typedef enum \{$' \
-          '-I^\s+(CH_MODE|POPCLOSE)_[A-Z]+,?$' \
+          '-I^\s+(CH_MODE|POPCLOSE)_[A-Z]+,?(\s+//.+)?$' \
           '-I^\} popclose_T;$' \
           '-I^EXTERN\schar\s+\*popup_transparent' \
           '-I^EXTERN\sint\s+[_a-z]+_for_testing\s' \
