@@ -1749,6 +1749,11 @@ int makemap(FILE *fd, buf_T *buf)
       }
 
       for (; mp; mp = mp->m_next) {
+        // simplified map blocks are not created explicitly
+        if (mp->m_simplified) {
+          continue;
+        }
+
         // skip script-local mappings
         if (mp->m_noremap == REMAP_SCRIPT) {
           continue;
