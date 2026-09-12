@@ -146,6 +146,9 @@ EVENTS
 • |vim.on_key()| callbacks are not invoked for keys consumed by |getchar()|.
 • |BufModifiedSet| has been removed. Use the |OptionSet| event with pattern
   "modified" instead.
+• |RecordingLeave| is now triggered after the recorded macro has been written
+  to its register, so |getreg()| on it returns the new contents instead of the
+  previous ones. |reg_recorded()| is still only updated after the event.
 • |ui-messages| `msg_show.bufwrite` and `msg_show.completion` messages are now
   `msg_show.progress` events.
 

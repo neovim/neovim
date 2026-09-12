@@ -502,15 +502,14 @@ int do_record(int c)
     // Get the recorded key hits.  K_SPECIAL will be escaped, this
     // needs to be removed again to put it in a register.  exec_reg then
     // adds the escaping back later.
-    apply_autocmds(EVENT_RECORDINGLEAVE, NULL, NULL, false, curbuf);
-    restore_v_event(dict, &save_v_event);
-    reg_recorded = reg_recording;
-    reg_recording = 0;
-    if (p_ch == 0 || ui_has(kUIMessages)) {
-      showmode();
-    } else {
-      msg("", 0);
-    }
+    //
+    // Fill the register before dispatching, so that a RecordingLeave handler
+    // reading getreg(v:event.regname) sees the macro it was just told about
+    // rather than the register's previous contents. "reg_recording" and
+    // "reg_recorded" are still rolled over after the dispatch: the event fires
+    // just before recording stops, and |RecordingLeave| documents
+    // reg_recording() as still naming the register and reg_recorded() as only
+    // updating afterwards.
     if (p == NULL) {
       retval = FAIL;
     } else {
@@ -521,6 +520,16 @@ int do_record(int c)
       retval = stuff_yank(regname, p);
 
       y_previous = old_y_previous;
+    }
+
+    apply_autocmds(EVENT_RECORDINGLEAVE, NULL, NULL, false, curbuf);
+    restore_v_event(dict, &save_v_event);
+    reg_recorded = reg_recording;
+    reg_recording = 0;
+    if (p_ch == 0 || ui_has(kUIMessages)) {
+      showmode();
+    } else {
+      msg("", 0);
     }
   }
   return retval;

@@ -1109,6 +1109,9 @@ RecordingLeave			When a macro stops recording.
 				register.
 				|reg_recorded()| is only updated after this
 				event.
+				The register itself is already written, so
+				|getreg()| on it returns the just-recorded
+				macro.
 				Sets these |v:event| keys:
 				    regcontents
 				    regname
