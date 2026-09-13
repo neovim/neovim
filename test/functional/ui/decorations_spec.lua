@@ -1134,6 +1134,227 @@ describe('decorations providers', function()
   end)
 end)
 
+describe('decorations: conceal-line provider dispatch', function()
+  before_each(clear)
+
+  -- Run setup and geometry queries in one RPC call. An intervening redraw
+  -- could populate conceal marks or add calls to the provider log.
+  local function exec_case(code, ...)
+    return exec_lua([=[
+        local api = vim.api
+
+        local function open_window(buf, height)
+          local win = api.nvim_open_win(buf, false, {
+            relative = 'editor', row = 0, col = 0,
+            width = 40, height = height, style = 'minimal',
+          })
+          vim.wo[win].conceallevel = 3
+          vim.wo[win].wrap = false
+          vim.wo[win].foldenable = false
+          -- Keep this window non-current, so cursor-line exceptions cannot affect
+          -- the row-height queries.
+          return win
+        end
+
+        local function new_window(lines, height)
+          local buf = api.nvim_create_buf(false, true)
+          api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+          return buf, open_window(buf, height)
+        end
+
+        local function row_height(win, row)
+          return api.nvim_win_text_height(win, { start_row = row, end_row = row }).all
+        end
+
+        local function conceal(buf, ns, row, end_row)
+          return api.nvim_buf_set_extmark(buf, ns, row, 0, {
+            id = 1, end_row = end_row or row, end_col = 0, conceal_lines = '',
+          })
+        end
+      ]=] .. code, ...)
+  end
+
+  it('runs every provider once, then reuses the mark without another provider pass', function()
+    eq(
+      {
+        first = 0,
+        again = 0,
+        calls = {
+          { 'first', 'conceal_line', true, true, 1 },
+          { 'second', 'conceal_line', true, true, 1 },
+        },
+      },
+      exec_case([[
+        local buf, win = new_window({ 'head', 'requested', 'tail' }, 4)
+        local first_ns = api.nvim_create_namespace('conceal-test-first')
+        local second_ns = api.nvim_create_namespace('conceal-test-second')
+        local calls = {}
+        api.nvim_set_decoration_provider(first_ns, {
+          _on_conceal_line = function(tag, w, b, row)
+            calls[#calls + 1] = { 'first', tag, w == win, b == buf, row }
+            conceal(b, first_ns, row)
+          end,
+        })
+        api.nvim_set_decoration_provider(second_ns, {
+          _on_conceal_line = function(tag, w, b, row)
+            calls[#calls + 1] = { 'second', tag, w == win, b == buf, row }
+          end,
+        })
+        -- The second provider must run even though the first added a mark.
+        -- The second lookup must NOT restart the provider loop.
+        local first = row_height(win, 1)
+        local again = row_height(win, 1)
+        api.nvim_set_decoration_provider(first_ns, {})
+        api.nvim_set_decoration_provider(second_ns, {})
+        return { first = first, again = again, calls = calls }
+      ]])
+    )
+  end)
+
+  it('does not conceal the requested row when a provider marks only a later row', function()
+    eq(
+      { { 1, 1 }, { 0, 1 }, { 1, 2 } },
+      exec_case([[
+        local buf, win = new_window({ 'head', 'requested', 'later' }, 4)
+        local ns = api.nvim_create_namespace('conceal-test-later')
+        local calls = 0
+        api.nvim_set_decoration_provider(ns, {
+          _on_conceal_line = function(_, _, b, _)
+            calls = calls + 1
+            conceal(b, ns, 2)
+          end,
+        })
+        local results = {}
+        for _, row in ipairs({ 1, 2, 1 }) do
+          local height = row_height(win, row)
+          results[#results + 1] = { height, calls }
+        end
+        api.nvim_set_decoration_provider(ns, {})
+        return results
+      ]])
+    )
+  end)
+
+  it('does not retry a negative lookup or treat a true callback result as concealment', function()
+    eq(
+      { { 1, 1 }, { 1, 2 } },
+      exec_case([[
+        local _, win = new_window({ 'head', 'requested' }, 4)
+        local ns = api.nvim_create_namespace('conceal-test-empty')
+        local calls = 0
+        api.nvim_set_decoration_provider(ns, {
+          _on_conceal_line = function()
+            calls = calls + 1
+            return true
+          end,
+        })
+        local results = {}
+        for _ = 1, 2 do
+          local height = row_height(win, 1)
+          results[#results + 1] = { height, calls }
+        end
+        api.nvim_set_decoration_provider(ns, {})
+        return results
+      ]])
+    )
+  end)
+
+  it('does not mistake an ordinary highlight mark for a conceal-line mark', function()
+    eq(
+      { height = 1, calls = 1, marks = 1 },
+      exec_case([[
+        local buf, win = new_window({ 'head', 'requested' }, 4)
+        local ns = api.nvim_create_namespace('conceal-test-highlight')
+        local calls = 0
+        api.nvim_set_decoration_provider(ns, {
+          _on_conceal_line = function(_, _, b, row)
+            calls = calls + 1
+            api.nvim_buf_set_extmark(b, ns, row, 0, {
+              id = 1, end_row = row, end_col = 1, hl_group = 'ErrorMsg',
+            })
+          end,
+        })
+        local height = row_height(win, 1)
+        api.nvim_set_decoration_provider(ns, {})
+        return {
+          height = height, calls = calls,
+          marks = #api.nvim_buf_get_extmarks(buf, ns, 0, -1, {}),
+        }
+      ]])
+    )
+  end)
+
+  it('recognizes concealment when a provider updates an existing mark', function()
+    eq(
+      { first = 0, again = 0, calls = 1, marks = 1 },
+      exec_case([[
+        local buf, win = new_window({ 'head', 'requested' }, 4)
+        local ns = api.nvim_create_namespace('conceal-test-update')
+        api.nvim_buf_set_extmark(buf, ns, 1, 0, {
+          id = 1, end_row = 1, end_col = 1, hl_group = 'ErrorMsg',
+        })
+        local calls = 0
+        api.nvim_set_decoration_provider(ns, {
+          _on_conceal_line = function(_, _, b, row)
+            calls = calls + 1
+            -- Preserve the ID and both endpoints: no extra marktree keys.
+            api.nvim_buf_set_extmark(b, ns, row, 0, {
+              id = 1, end_row = row, end_col = 1, conceal_lines = '',
+            })
+          end,
+        })
+        local first = row_height(win, 1)
+        local again = row_height(win, 1)
+        api.nvim_set_decoration_provider(ns, {})
+        return {
+          first = first, again = again, calls = calls,
+          marks = #api.nvim_buf_get_extmarks(buf, ns, 0, -1, {}),
+        }
+      ]])
+    )
+  end)
+
+  for _, overlap in ipairs({ false, true }) do
+    local kind = overlap and 'overlapping' or 'same-row'
+    it('honors window scoping for ' .. kind .. ' marks in both lookups', function()
+      eq(
+        { { 1, 1 }, { 1, 2 }, { 0, 2 } },
+        exec_case(
+          [[
+          local overlap = ...
+          local buf, excluded = new_window({ 'head', 'requested', 'tail' }, 4)
+          local included = open_window(buf, 4)
+          local provider_ns = api.nvim_create_namespace('conceal-test-provider')
+          local mark_ns = api.nvim_create_namespace('conceal-test-scoped-mark')
+          api.nvim__ns_set(mark_ns, { wins = { included } })
+          local calls = 0
+          -- Keep the provider itself unscoped. It must be invoked, and the
+          -- lookup (not provider eligibility) must reject its scoped mark.
+          api.nvim_set_decoration_provider(provider_ns, {
+            _on_conceal_line = function(_, _, b, row)
+              calls = calls + 1
+              if overlap then
+                conceal(b, mark_ns, row - 1, row + 1)
+              else
+                conceal(b, mark_ns, row)
+              end
+            end,
+          })
+          local results = {}
+          for _, win in ipairs({ excluded, excluded, included }) do
+            local height = row_height(win, 1)
+            results[#results + 1] = { height, calls }
+          end
+          api.nvim_set_decoration_provider(provider_ns, {})
+          return results
+        ]],
+          overlap
+        )
+      )
+    end)
+  end
+end)
+
 describe('decoration_providers', function()
   it('errors and logs gracefully', function()
     local testlog = 'Xtest_decorations_log'

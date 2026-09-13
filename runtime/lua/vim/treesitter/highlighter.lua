@@ -538,19 +538,29 @@ function TSHighlighter._on_spell_nav(_, _, buf, srow, _, erow, _)
 end
 
 ---@private
+---@param win integer
 ---@param buf integer
 ---@param row integer
-function TSHighlighter._on_conceal_line(_, _, buf, row)
+function TSHighlighter._on_conceal_line(_, win, buf, row)
   local self = TSHighlighter.active[buf]
   if not self or not self._conceal_line or self._conceal_checked[row] then
     return
   end
 
+  -- Computing window geometry asks about consecutive lines before the normal
+  -- redraw parse. Check a screenful at once instead of parsing and restarting
+  -- the highlight queries for every line. Do not compute the window's bottom
+  -- line here: that would recursively ask for concealed lines again.
+  local end_row = math.min(api.nvim_buf_line_count(buf), row + api.nvim_win_get_height(win))
+  if end_row <= row then
+    return
+  end
+
   -- Do not affect potentially populated highlight state.
   local highlight_states = self._highlight_states
-  self.tree:parse({ row, row + 1 })
-  self:prepare_highlight_states(row, row)
-  on_range_impl(self, buf, row, 0, row + 1, 0, false, true)
+  self.tree:parse({ row, end_row })
+  self:prepare_highlight_states(row, end_row)
+  on_range_impl(self, buf, row, 0, end_row, 0, false, true)
   self._highlight_states = highlight_states
 end
 
