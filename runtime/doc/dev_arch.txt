@@ -562,10 +562,13 @@ CONCEPTS
   structured fields (`CmdSpec`). Every user action emits a |CmdAtom| event.
   - SPAN: Fragment of an Insert or Visual sequence, cascades but does not emit
     a CmdAtom.
+  - FRAME: Scopes one MODE_NORMAL command (Normal, Visual, Select,
+    Op-pending). Non-MODE_NORMAL modes (Insert, Cmdline) are "sessions", not
+    "frames". All emit atoms.
 - CASCADE: Replay queued atoms at the "clock edge" at every cursor. Visual
   cascade "dry-runs" spans to display the selection.
-- COMPOSITE: An atom composed of subatoms (`CmdAtom.atoms`): a mapping/macro's
-  commands, or a Visual sequence.
+- COMPOSITE: An atom composed of subatoms (`CmdAtom.atoms`): a mapping/macro,
+  or a Visual sequence.
 - INSERT-SESSION: All changes from an insert-mode session, until <Esc>.
   - INSERTION: An `Ins.start`..cursor "undo unit" within a session.
   - INSERT-CASCADE: Replay an insert-session span-by-span as it is typed (each
@@ -589,11 +592,11 @@ Capture happens at the `atom_xx()` hooks.
 - `atom_cmd_start()` delimits a command in `normal_execute()`.  Everything not
   covered above is decided here (motions, jumps, scrolls, mouse).
 - `atom_ins_start()` delimits an insert session.
-- `atom_map_start()`, `atom_macro_start()` delimits a composite.
+- `atom_map_start()`, `atom_macro_start()` delimit a composite.
 - `atom_visual_end()` completes the pending Visual atom, `viweex` => `viweed`.
   <Esc> discards it; non-replayable commands VOID it.
 - `atom_cmdline_set()` gets an invoked cmdline payload (e.g. `/pat<CR>` is
-  a motion atom, `:cnext<CR>` is an "ex" atom.)
+  a motion atom, `:cnext<CR>` is an "excmd" atom.)
 
 DOT-REPEAT
 
@@ -615,8 +618,8 @@ CmdAtoms queued for cascade (`g_atoms`) are replayed at every cursor on the
 a mapping is executing (its keys are still in typebuf) the edge is deferred
 (subatoms queue/accumulate).
 
-Undo is buffer-global and applied in bulk.  Each cascade adds exactly one undo
-state, and undo/redo is itself never cascaded (`u_doit()` calls `atom_op_global_set()`).
+Undo is buffer-global and applied in bulk.  Each cascade adds one undo state,
+and undo/redo itself is not cascaded.
 
 The insert-cascade PREVIEW/COMMIT model (why text is previewed instead of
 replayed) is documented at `mc_ins_span`.  Sessions that cannot insert-cascade
@@ -626,7 +629,7 @@ replayed) is documented at `mc_ins_span`.  Sessions that cannot insert-cascade
 
 RENDERING
 
-Display is owned by `runtime/lua/vim/_core/mcursor.lua`. the C core maintains
+Display is owned by `runtime/lua/vim/_core/mcursor.lua`. The C core maintains
 the model, as extmarks:
 
 - "nvim.multicursor": the tracking marks (cursor positions).

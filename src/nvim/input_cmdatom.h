@@ -13,7 +13,14 @@
 /// Multicursor: pending atoms; they cascade as a batch (mc_clock_edge).
 extern CmdAtomVec g_atoms;
 
-/// Pre-command state sampled at entry + storage for its "staged" atom. atom_cmd_end() finalizes it.
+/// One `normal_execute()`: the scope of a MODE_NORMAL command (Normal/Visual/Select/Op-pending, see
+/// get_real_state()). Same lifetime as `cmdarg_T`. A `composite` spans successive toplevel frames.
+///
+/// Entry state (`origin`, …) is diffed at `atom_cmd_end()` into the command's CmdAtom.
+///
+/// Insert/Cmdline modes (non-MODE_NORMAL) are "sessions", not "frames" (atom_ins_start(),
+/// atom_payload_start()). Mappings initiating from non-MODE_NORMAL defer their `composite` to the
+/// first frame.
 typedef struct CmdFrame CmdFrame;
 struct CmdFrame {
   CmdOrigin origin;     ///< State at entry.
