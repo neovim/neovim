@@ -410,6 +410,9 @@ static int insert_check(VimState *state)
   if (Ins.stop_insert_mode && !ins_compl_active()) {
     // ":stopinsert" used
     s->count = 0;
+    if (Visual.active) {
+      s->nomove = true;
+    }
     return 0;  // exit insert mode
   }
 

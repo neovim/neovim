@@ -651,7 +651,9 @@ fold.
 When in Insert mode, the cursor line is never folded.  That allows you to see
 what you type!
 
-When using an operator, a closed fold is included as a whole.  Thus "dl"
+In Select mode, folds intersecting the selection are opened so that typed text
+replaces the visible selection exactly.  In Visual mode, a closed fold is
+included as a whole.  Thus "dl"
 deletes the whole closed fold under the cursor.
 
 For Ex commands that operate on buffer lines, the range is adjusted to always
