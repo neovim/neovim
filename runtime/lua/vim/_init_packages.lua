@@ -61,6 +61,7 @@ vim._submodules = {
   re = true,
   text = true,
   tty = true,
+  uri = true,
   provider = true,
 }
 
