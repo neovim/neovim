@@ -935,8 +935,13 @@ Lua module: vim.lsp                                                 *lsp-core*
       • {reuse_client}?  (`fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig, bufnr: integer): boolean`)
                          Predicate which decides if a client should be
                          re-used. Used on all running clients. The default
-                         implementation re-uses a client if name and root_dir
-                         matches.
+                         implementation (|vim.lsp.reuse_client_default()|)
+                         re-uses a client if name and root_dir matches. To add
+                         conditions, compose with the default: >lua
+                             reuse_client = function(client, config)
+                               return vim.lsp.reuse_client_default(client, config) and my_condition(config)
+                             end
+<
       • {root_dir}?      (`string|fun(bufnr: integer, on_dir:fun(root_dir?:string))`)
                          *lsp-root_dir()* Decides the workspace root: the
                          directory where the LSP server will base its
@@ -1357,6 +1362,19 @@ omnifunc({findstart}, {base})                             *vim.lsp.omnifunc()*
       • |complete-functions|
       • |complete-items|
       • |CompleteDone|
+
+                                              *vim.lsp.reuse_client_default()*
+reuse_client_default({client}, {config})
+
+    Attributes: ~
+        Since: 0.13.0
+
+    Parameters: ~
+      • {client}  (`vim.lsp.Client`) See |vim.lsp.Client|.
+      • {config}  (`vim.lsp.ClientConfig`) See |vim.lsp.ClientConfig|.
+
+    Return: ~
+        (`boolean`)
 
 start({config}, {opts})                                      *vim.lsp.start()*
     Create a new LSP client and start a language server or reuses an already
