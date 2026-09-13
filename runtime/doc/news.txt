@@ -451,6 +451,9 @@ OPTIONS
 
 PERFORMANCE
 
+• Mouse scrolling and basic keyboard navigation in Normal mode batch redraws
+  while input is queued, improving responsiveness with expensive cursor/scroll
+  callbacks.
 • |treesitter-highlight| performance on large injection-heavy files improves
   by 50% to 100% by reusing edited child-tree ranges.
 • Nvim architecture allows pure-Lua implementations of some `vim.fn`

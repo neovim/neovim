@@ -2636,6 +2636,68 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth, boo
   return map_result_nomatch;
 }
 
+/// Peek a complete, unmapped key without consuming keys or evaluating mappings.
+/// Return NUL if the key may start a mapping or needs further interpretation.
+int input_peek_key(void)
+{
+  if (test_disable_char_avail || got_int || (vgetc_busy > 0 && ex_normal_busy == 0)
+      || (typebuf.tb_len == 0 && !char_avail())
+      || !stuff_empty() || can_get_ungot() || typeahead_char != 0
+      || typebuf.tb_len == 0 || typebuf.tb_maplen != 0 || *p_langmap != NUL) {
+    return NUL;
+  }
+
+  uint8_t keys[4];
+  size_t available = MIN(sizeof(keys), (size_t)typebuf.tb_len);
+  memcpy(keys, typebuf.tb_buf + typebuf.tb_off, available);
+  if (available < sizeof(keys) && !using_script()) {
+    available += input_peek((char *)keys + available, sizeof(keys) - available);
+  }
+  int len = 1;
+  int key = keys[0];
+  if (key == K_SPECIAL) {
+    if (available < 3) {
+      return NUL;
+    }
+    if (keys[1] == KS_MODIFIER) {
+      if (available < 4 || keys[3] >= 0x80 || (State & MODE_TERMINAL)
+          || no_reduce_keys > 0 || (no_mapping != 0 && allow_keys == 0)) {
+        return NUL;
+      }
+      int modifiers = keys[2];
+      key = merge_modifiers(keys[3], &modifiers);
+      if (modifiers != 0 || key <= NUL || key >= 0x80) {
+        return NUL;
+      }
+      len = 4;
+    } else {
+      key = TO_SPECIAL(keys[1], keys[2]);
+      len = 3;
+    }
+  } else if (key >= 0x80) {
+    return NUL;
+  }
+
+  char lhs[5];
+  memcpy(lhs, keys, (size_t)len);
+  lhs[len] = NUL;
+  while (true) {
+    mapblock_T *mp = NULL;
+    int rhs_lua;
+    check_map(lhs, get_real_state(), false, false, false, &mp, NULL, &rhs_lua);
+    if (mp != NULL) {
+      return NUL;
+    }
+    if (len != 4) {
+      return key;
+    }
+    // A Ctrl key can also match a mapping after its modifier is simplified.
+    lhs[0] = (char)key;
+    lhs[1] = NUL;
+    len = 1;
+  }
+}
+
 /// unget one character (can only be done once!)
 /// If the character was stuffed, vgetc() will get it next time it is called.
 /// Otherwise vgetc() will only get it when the stuff buffer is empty.

@@ -1575,6 +1575,9 @@ WinScrolled			After any window in the current tabpage
 				or changed width or height.  See
 				|win-scrolled-resized|.
 
+				Multiple scrolls may be reported together when
+				there is typeahead.
+
 				Note: This can not be skipped with
 				`:noautocmd`, because it triggers after
 				processing normal commands when Vim is back in
