@@ -1659,7 +1659,8 @@ void adjust_skipcol(void)
 void check_topfill(win_T *wp, bool down)
 {
   if (wp->w_topfill > 0) {
-    int n = plines_win_nofill(wp, wp->w_topline, true);
+    int n = plines_win_nofill(wp, wp->w_topline, false) - adjust_plines_for_skipcol(wp);
+    n = MIN(MAX(n, 0), wp->w_view_height);
     if (wp->w_topfill + n > wp->w_view_height) {
       if (down && wp->w_topline > 1) {
         wp->w_topline--;
@@ -1671,6 +1672,13 @@ void check_topfill(win_T *wp, bool down)
     }
   }
   win_check_anchored_floats(wp);
+}
+
+void reconcile_topfill(win_T *wp)
+{
+  if (wp->w_topfill == 0 && buf_meta_total(wp->w_buffer, kMTMetaLines) > 0) {
+    wp->w_topfill = win_get_fill(wp, wp->w_topline);
+  }
 }
 
 // Scroll the screen one line down, but don't do it if it would move the
