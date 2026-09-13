@@ -559,7 +559,7 @@ static void mc_cleanup(bool dedupe)
   kv_size(mc_cursors) = n;
   if (n == 0) {
     // Session ended implicitly ("q=" + "G" deduped all cursors). Reset "q=".
-    mc_follow_motion = false;
+    mc_follow_set(kFalse);
     if (had_cursors) {
       ctx_free(&mc_start.regs);
       mc_start.regs = (Context)CONTEXT_INIT;
@@ -1286,19 +1286,16 @@ void mc_counter(long count1)
   nlua_call_typval("vim._core.mcursor", "number", tv_args, NULL);
 }
 
-/// "q=": toggles "follow motion" mode; [count] forces it: "1q=" on, "2q=" off.
+/// Sets "follow motion" mode ("q="), and applies the change to the executing CmdAtom.
 ///
-/// @return  false on an invalid count (> 2).
-bool mc_follow_toggle(long count0)
+/// @param on  kNone: toggle. kTrue/kFalse: force it ("1q=" on, "2q=" off).
+void mc_follow_set(TriState on)
 {
-  if (count0 == 0) {
-    mc_follow_motion = !mc_follow_motion;
-  } else if (count0 <= 2) {
-    mc_follow_motion = count0 == 1;
-  } else {
-    return false;
+  bool follow = on == kNone ? !mc_follow_motion : on == kTrue;
+  if (mc_follow_motion != follow) {
+    mc_follow_motion = follow;
+    atom_follow_changed();
   }
-  return true;
 }
 
 /// Places an mcursor, or removes the cursor already at the given position.
@@ -1309,7 +1306,7 @@ void mc_toggle(buf_T *buf, pos_T pos, bool end_follow)
     return;
   }
   if (end_follow) {
-    mc_follow_motion = false;
+    mc_follow_set(kFalse);
   }
   uint32_t mark = mc_mark_at(buf, pos);
   if (mark != 0) {

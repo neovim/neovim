@@ -2085,8 +2085,8 @@ describe('multicursor', function()
     end)
 
     it('q= toggle is synchronous within a mapping #41836', function()
-      api.nvim_buf_set_lines(0, 0, -1, true, { 'l1', 'l2', 'l3', 'l4', 'l5' })
-      feed('gg0jQjQjQj1q=') -- cursors on lines 2-4, primary line 5, follow ON
+      -- Cursors on lines 2-4, primary line 5, follow=ON.
+      cursors({ 'l1', 'l2', 'l3', 'l4', 'l5' }, 'jQjQjQj1q=')
       -- Mapping toggles follow OFF, moves, then toggles ON: the move should NOT cascade.
       n.exec_lua([[vim.keymap.set('n', '<F1>', function() vim.cmd('norm! 2q=gg1q=') end)]])
       feed('<F1>')
@@ -2107,6 +2107,27 @@ describe('multicursor', function()
       command('nnoremap <F3> j1q=2q=')
       feed('<F3>')
       eq({ { 1, 0 }, { 2, 0 }, { 3, 0 } }, anchors()) -- Cursors did not move.
+      eq({ 2, 0 }, api.nvim_win_get_cursor(0))
+
+      -- Cursor-move by API in-between the toggles is not followed, even with follow=ON initially.
+      clear_cursors()
+      n.exec_lua([[
+        vim.keymap.set('n', '<Up>', function()
+          local next_pos = vim.pos.cursor(0)
+          next_pos.row = math.max(next_pos.row - 1, 1)
+          vim.cmd('norm! Q')
+          vim.cmd('norm! 2q=')
+          vim.api.nvim_win_set_cursor(0, next_pos:to_cursor())
+          vim.cmd('norm! 1q=')
+        end)
+      ]])
+      -- Follow=OFF: cursor on line 5, primary line 4.
+      cursors({ 'l1', 'l2', 'l3', 'l4', 'l5' }, 'G0<Up>')
+      eq({ { 4, 0 } }, anchors())
+      feed('<Up>') -- follow=ON ("1q="): cursor on line 4, primary line 3
+      eq({ { 3, 0 }, { 4, 0 } }, anchors())
+      feed('k') -- follow=ON again: cursors follow the motion
+      eq({ { 2, 0 }, { 3, 0 } }, anchors())
       eq({ 2, 0 }, api.nvim_win_get_cursor(0))
     end)
 
