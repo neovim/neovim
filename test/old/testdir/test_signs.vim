@@ -2135,4 +2135,26 @@ func Test_sign_signcolumn_change_no_clear()
   bwipe!
 endfunc
 
+" A buffer name containing a bar must not be interpreted as an Ex command
+" separator when jumping to a sign in a buffer that is not displayed.
+func Test_sign_jump_name_with_bar()
+  CheckFeature signs
+
+  let bufnr = bufadd('Xsign|call setline(1, "PWNED")')
+  call bufload(bufnr)
+  call setbufline(bufnr, 1, ['one', 'two', 'three'])
+
+  sign define sjTest text=x
+  call sign_place(1, '', 'sjTest', bufnr, #{lnum: 2})
+
+  call sign_jump(1, '', bufnr)
+
+  call assert_equal(bufnr, bufnr('%'))
+  call assert_equal(2, line('.'))
+  call assert_equal('two', getline(2))
+
+  call sign_undefine('sjTest')
+  exe 'bwipe! ' .. bufnr
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
