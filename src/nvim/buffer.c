@@ -2217,6 +2217,9 @@ void free_buf_options(buf_T *buf, bool free_p_ff)
   clear_string_option(&buf->b_p_cinw);
   clear_string_option(&buf->b_p_cot);
   clear_string_option(&buf->b_p_cpt);
+#ifdef BACKSLASH_IN_FILENAME
+  clear_string_option(&buf->b_p_csl);
+#endif
   callback_free(&buf->b_p_cfu);
   callback_free(&buf->b_p_ofu);
   callback_free(&buf->b_p_tsrfu);
