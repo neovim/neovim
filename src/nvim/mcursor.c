@@ -605,8 +605,9 @@ void mc_ins_cascade_start(bool cascade, varnumber_T tick)
 
   if (mc_ins_span.active) {
     // Cover the line-range of all cursors with one undo-entry. #41822
+    // If the insert-session changes nothing, mc_ins_commit() drops it. #41883
     //
-    // Undo entries apply in reverse save-order, so this entry (saved first) "wins", even though
+    // Undo entries apply in reverse save-order, so this (first) entry "wins", even though
     // per-cursor newline-shifting edits may record conflicting undo entries. Same approach is used
     // by Vim for linewise-op/range-command (see u_save in op_shift, ex_sort, …).
     linenr_T lo = curwin->w_cursor.lnum;
@@ -1182,7 +1183,8 @@ void mc_undo_time(void)
 /// a real replay. No-op if the session did not insert-cascade.
 bool mc_ins_commit(void)
 {
-  bool ins_cascaded = mc_ins_span.active && !mc_ins_span.first;
+  bool active = mc_ins_span.active;
+  bool ins_cascaded = active && !mc_ins_span.first;
   mc_ins_span.active = false;
 
   if (ins_cascaded) {
@@ -1203,6 +1205,11 @@ bool mc_ins_commit(void)
     mc_ins_span.region = 0;
   }
   mc_ins_regions_clear();
+
+  if (active && buf_get_changedtick(curbuf) == mc_ins_span.tick) {
+    // Nothing changed; drop the "umbrella" undo-entry added by mc_ins_cascade_start. #41883
+    u_forget_unchanged(curbuf);
+  }
 
   if (!ins_cascaded) {
     return false;
