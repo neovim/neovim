@@ -314,6 +314,28 @@ func Test_matchaddpos_error()
   call assert_fails("call matchaddpos('Error', [1], [], 1)", 'E745:')
 endfunc
 
+" setmatches() with more than one "posN" entry used to keep a reference to
+" every position list, so they were not released until the next garbage
+" collection.  A "posN" value that is not a List made it bail out early
+" without releasing the list at all.
+func Test_setmatches_pos_refcount()
+  throw 'Skipped: Nvim does not have test_refcount()'
+  let p1 = [1, 1, 1]
+  let p2 = [2, 1, 1]
+  call assert_equal(1, test_refcount(p1))
+  call assert_equal(1, test_refcount(p2))
+
+  call setmatches([#{group: 'Search', priority: 10, id: 4, pos1: p1, pos2: p2}])
+  call clearmatches()
+  call assert_equal(1, test_refcount(p1))
+  call assert_equal(1, test_refcount(p2))
+
+  let p3 = [3, 1, 1]
+  call assert_equal(-1, setmatches([#{group: 'Search', priority: 10, id: 4, pos1: p3, pos2: {}}]))
+  call clearmatches()
+  call assert_equal(1, test_refcount(p3))
+endfunc
+
 func OtherWindowCommon()
   let lines =<< trim END
     call setline(1, 'Hello Vim world')

@@ -966,6 +966,7 @@ void f_setmatches(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (di == NULL) {
       if (s == NULL) {
         s = tv_list_alloc(9);
+        tv_list_ref(s);
       }
 
       // match from matchaddpos()
@@ -975,11 +976,11 @@ void f_setmatches(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         dictitem_T *const pos_di = tv_dict_find(d, buf, -1);
         if (pos_di != NULL) {
           if (pos_di->di_tv.v_type != VAR_LIST) {
+            tv_list_unref(s);
             return;
           }
 
           tv_list_append_tv(s, &pos_di->di_tv);
-          tv_list_ref(s);
         } else {
           break;
         }
