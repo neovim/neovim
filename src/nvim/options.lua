@@ -334,9 +334,12 @@ local options = {
         text). If the file appears again, then it is read; you can |undo| to
         see the previous contents. |timestamp|
 
-        This is driven (partially) by OS filewatcher events |uv_fs_event_t|,
-        so buffers are updated immediately (instead of only on focus-change or
-        shell-commands).
+        For "nowrite" buffers, |FileChangedShell| is triggered instead when
+        timestamps are checked.
+
+        For normal buffers, this is driven (partially) by OS filewatcher events
+        |uv_fs_event_t|, so buffers are updated immediately (instead of only on
+        focus-change or shell-commands).
 
         If this option has a local value, use this command to switch back to
         using the global value: >vim
@@ -1011,8 +1014,9 @@ local options = {
         Also see |win_gettype()|, which returns the type of the window.
 
         Be careful with changing this option, it can have many side effects!
-        One such effect is that Vim will not check the timestamp of the file,
-        if the file is changed by another program this will not be noticed.
+        Nvim does not check the timestamp of most non-normal buffers. For
+        "nowrite" buffers, |FileChangedShell| is triggered when timestamps are
+        checked and 'autoread' is set.
 
         A "quickfix" buffer is only used for the error list and the location
         list.  This value is set by the |:cwindow| and |:lwindow| commands and

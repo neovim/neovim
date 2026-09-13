@@ -774,7 +774,8 @@ FileChangedRO			Before making the first change to a read-only
 
 							*FileChangedShell*
 FileChangedShell		When Vim notices that the modification time of
-				a file has changed since editing started.
+				a file or the path of a "nowrite" buffer has
+				changed since editing started.
 				Also when the file attributes of the file
 				change or when the size of the file changes.
 				|timestamp|
@@ -783,12 +784,15 @@ FileChangedShell		When Vim notices that the modification time of
 				- |:checktime|
 				- |FocusGained|
 
-				Not used when 'autoread' is set and the buffer
-				was not changed.  If a FileChangedShell
-				autocommand exists the warning message and
-				prompt is not given.
+				For normal buffers, not used when 'autoread' is set
+				and the buffer was not changed.  For "nowrite"
+				buffers, only used when 'autoread' is set and the
+				path still exists.
+				If a FileChangedShell autocommand exists the
+				warning message and prompt is not given.
 				|v:fcs_reason| indicates what happened. Set
 				|v:fcs_choice| to control what happens next.
+				|v:fcs_choice| is ignored for "nowrite" buffers.
 				NOTE: Current buffer "%" is not the target
 				buffer "<afile>" and "<abuf>". |<buffer=abuf>|
 							*E246* *E811*
