@@ -68,6 +68,7 @@ let fontname = has('win32') ? 'fixedsys' : 'fixed'
 " For boolean options, if non-empty a fixed test will be run, otherwise skipped.
 let test_values = {
       "\ Nvim-only options
+      \ 'bidi': [['', 'auto', 'ltr', 'rtl'], ['xxx']],
       \ 'channel': [[], []],
       \ 'inccommand': [['', 'nosplit', 'split'], ['xxx']],
       \ 'mousescroll': [['ver:1', 'hor:2', 'ver:1,hor:2', 'hor:1,ver:2'],

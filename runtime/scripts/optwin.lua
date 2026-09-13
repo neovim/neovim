@@ -411,6 +411,7 @@ local options_list = {
     { 'iskeyword', N_ 'specifies the characters in a keyword' },
     { 'isprint', N_ 'specifies printable characters' },
     { 'quoteescape', N_ 'specifies escape characters in a string' },
+    { 'bidi', N_ 'display bidirectional text in visual order' },
     { 'rightleft', N_ 'display the buffer right-to-left' },
     { 'rightleftcmd', N_ 'when to edit the command-line right-to-left' },
     { 'revins', N_ 'insert characters backwards' },

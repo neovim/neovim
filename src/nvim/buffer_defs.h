@@ -154,6 +154,8 @@ typedef struct {
 #define w_p_pvw w_onebuf_opt.wo_pvw    // 'previewwindow'
   OptInt wo_lhi;
 #define w_p_lhi w_onebuf_opt.wo_lhi    // 'lhistory'
+  char *wo_bidi;
+#define w_p_bidi w_onebuf_opt.wo_bidi  // 'bidi'
   int wo_rl;
 #define w_p_rl w_onebuf_opt.wo_rl      // 'rightleft'
   char *wo_rlc;
