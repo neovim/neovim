@@ -34,9 +34,10 @@ function M.select_suggest(items, bad)
     if not idx then
       return
     end
-    -- Queue ":normal! [idx]z=" as user input, so the recursive spell_suggest runs via the normal
-    -- input-dispatch loop. Using vim.schedule + vim.cmd can hang bc of "Press ENTER".
-    vim.fn.feedkeys(vim.keycode(('<Cmd>normal! %dz=<CR>'):format(idx)), 'in')
+    -- Queue "[idx]z=" via "mode dispatch". |event-queues|
+    vim.schedule_dispatch(function()
+      vim.cmd.normal { args = { idx .. 'z=' }, bang = true }
+    end)
   end)
 end
 
