@@ -968,6 +968,7 @@ is_na_patch() {
           '-I^\s+$' \
           '-I^" Last Change:\s' \
           '-I^\s*syn\s+keyword\s+(vimCommand|vimFuncName)\s+contained\s+' \
+          '-I^\s*syn\s+keyword\s+vimAutoEvent\s+contained\s+[^U]' \
           '-I^\s*syn\s+match\s+vimFuncName\s+contained\s+"\\<nvim_' \
           "$patch" -- "${file}")
         test -n "$HUNKS" && return 1
