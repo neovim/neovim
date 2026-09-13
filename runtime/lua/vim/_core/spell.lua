@@ -23,7 +23,7 @@ function M.select_suggest(items, bad)
     format_item = function(s)
       local extra = s.extra and (' < "' .. s.extra .. '"') or ''
       local score = ''
-      if vim.o.verbose > 0 then
+      if vim.o.verbose > 1 then
         score = s.altscore
             and (' (%s%d - %d)'):format(s.salscore and 's ' or '', s.score, s.altscore)
           or (' (%d)'):format(s.score)
