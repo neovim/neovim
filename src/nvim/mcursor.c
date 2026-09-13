@@ -68,23 +68,15 @@
 
 /// Primary-cursor state saved across a replay sandbox.
 typedef struct {
+  Context primary;        ///< Editor state, registers.
+  uint32_t cursor_mark;   ///< Extmark tracking `primary.pos` across replay edits
+  uint32_t topline_mark;  ///< Extmark tracking `topline` across replay edits
+  pos_T topline;
+  colnr_T leftcol;
+  // Replay isolation: the primary's in-flight input machinery.
   save_state_T sst;       ///< mode, typeahead, reg_executing, …
   RedoState redo;
-  Context regs;           ///< Registers.
-  handle_T bufnr;         ///< buffer at enter (revalidated on leave: autocmds may wipe it)
-  pos_T cursor;
-  colnr_T curswant;
-  bool set_curswant;
-  colnr_T leftcol;
-  uint32_t cursor_mark;   ///< extmark tracking `cursor` across replay edits
-  uint32_t topline_mark;  ///< extmark tracking `topline` across replay edits
-  pos_T topline;
-  VisualState visual;
-  pos_T op_start;         ///< b_op_start: change marks belong to the primary's operation
-  pos_T op_end;
-  fmark_T last_change;
-  visualinfo_T bvisual;
-  int bvisual_mode;
+  VisualState visual;     ///< The active selection (globals.h:Visual), not the '<,'> region.
 } McSandbox;
 
 /// Primary cursor's insert-session, saved across nested edit() sessions during insert-cascade.
@@ -270,65 +262,46 @@ static void mc_sandbox_enter(McSandbox *sb, bool save_regs)
 {
   assert(!mc_replay);
   mc_replay = true;  // Capture hooks will ignore keys fed during the sandbox.
-  sb->bufnr = curbuf->handle;
-  sb->cursor = curwin->w_cursor;
-  sb->curswant = curwin->w_curswant;
-  sb->set_curswant = curwin->w_set_curswant;
-  sb->leftcol = curwin->w_leftcol;
+  sb->primary = (Context)CONTEXT_INIT;
+  // Change/Visual marks belong to the primary cursor's (already executed) operation.
+  // (jumplist/changelist are protected per replay, via CMOD_KEEPJUMPS.)
+  ctx_save(&sb->primary, kCtxCursor | kCtxMarks | (save_regs ? kCtxRegs : 0));
   sb->cursor_mark = 0;
-  mc_track_upd(curbuf, &sb->cursor_mark, sb->cursor);
+  mc_track_upd(curbuf, &sb->cursor_mark, sb->primary.pos);
   sb->topline = (pos_T){ .lnum = curwin->w_topline, .col = 0 };
   sb->topline_mark = 0;
   mc_track_upd(curbuf, &sb->topline_mark, sb->topline);
+  sb->leftcol = curwin->w_leftcol;
   sb->visual = Visual;
-  // Change/Visual marks belong to the primary cursor's (already executed) operation.
-  // (jumplist/changelist are protected per replay, via CMOD_KEEPJUMPS.)
-  sb->op_start = curbuf->b_op_start;
-  sb->op_end = curbuf->b_op_end;
-  sb->last_change = curbuf->b_last_change;
-  sb->bvisual = curbuf->b_visual;
-  sb->bvisual_mode = curbuf->b_visual_mode_eval;
   save_current_state(&sb->sst);  // hint: see call_user_func()
   save_search_patterns();
   save_redobuff(&sb->redo);
-  sb->regs = (Context)CONTEXT_INIT;
-  if (save_regs) {
-    ctx_save(&sb->regs, kCtxRegs);
-  }
 }
 
 /// @see mc_sandbox_enter
 static void mc_sandbox_leave(McSandbox *sb)
 {
-  if (sb->regs.regs.data != NULL) {
-    ctx_load(&sb->regs, kCtxRegs, 0);
+  if (sb->primary.regs.data != NULL) {
+    ctx_load(&sb->primary, kCtxRegs, 0);
   }
-  ctx_free(&sb->regs);
   restore_redobuff(&sb->redo);
   restore_search_patterns();
   // Visual first: restore_current_state() updates the cursor shape, and check_cursor() below keeps
   // a blockwise 'virtualedit' selection's coladd.
   Visual = sb->visual;
   restore_current_state(&sb->sst);
-  buf_T *buf = handle_get_buffer(sb->bufnr);
+  buf_T *buf = handle_get_buffer(sb->primary.buf);
   bool topline_valid = false;
   if (buf != NULL) {
     // mc_mark_get() updates lnum/col only, an unshifted position keeps its coladd.
-    mc_mark_get(buf, mc_session_ns(), sb->cursor_mark, &sb->cursor);
+    mc_mark_get(buf, mc_session_ns(), sb->cursor_mark, &sb->primary.pos);
     extmark_del_id(buf, mc_session_ns(), sb->cursor_mark);
     topline_valid = mc_mark_get(buf, mc_session_ns(), sb->topline_mark, &sb->topline);
     extmark_del_id(buf, mc_session_ns(), sb->topline_mark);
   }
   if (buf == curbuf) {
-    curbuf->b_op_start = sb->op_start;
-    curbuf->b_op_end = sb->op_end;
-    curbuf->b_last_change = sb->last_change;
-    curbuf->b_visual = sb->bvisual;
-    curbuf->b_visual_mode_eval = sb->bvisual_mode;
-    curwin->w_cursor = sb->cursor;
+    ctx_load(&sb->primary, kCtxCursor | kCtxMarks, 0);
     check_cursor(curwin);
-    curwin->w_curswant = sb->curswant;
-    curwin->w_set_curswant = sb->set_curswant;
     if (topline_valid) {
       set_topline(curwin, MIN(sb->topline.lnum, curbuf->b_ml.ml_line_count));
       // Scroll (minimally) if an edit moved the primary cursor off-view.
@@ -336,6 +309,7 @@ static void mc_sandbox_leave(McSandbox *sb)
     }
     curwin->w_leftcol = sb->leftcol;
   }
+  ctx_free(&sb->primary);
   mc_replay = false;
 }
 
@@ -356,28 +330,10 @@ static void mc_execute(size_t cursoridx, size_t atomidx)
     return;
   }
 
-  curwin->w_cursor = ctx.pos;
-  // Edits by other cursors may have invalidated this cursor's position.
-  if (atom.type == kAInsertSpan) {
-    // The anchor may be one past EOL (the insertion point); edit() accepts that.
-    // Not check_cursor(): would clamp onto last char (a previous span may have set MODE_NORMAL).
-    check_pos(curbuf, &curwin->w_cursor);
-  } else {
-    check_cursor(curwin);
-  }
-  // Per-cursor `curswant`: vertical motions over short lines must not inherit the primary's column.
-  // Unset: derive from the position, like a new cursor.
-  if (ctx.curswant >= 0) {
-    curwin->w_curswant = ctx.curswant;
-    curwin->w_set_curswant = false;
-  } else {
-    curwin->w_set_curswant = true;
-  }
-
-  // Perf: skip register serialization for motions, so "l" in "follow mode" is fast.
-  const bool swap_regs = atom.type != kAMotion;
+  // Perf: skip per-cursor state swap (esp. registers) for motions, so "l" in follow-mode is fast.
+  const bool swap_state = atom.type != kAMotion;
   Timestamp regs_ts = 0;
-  if (swap_regs) {
+  if (swap_state) {
     if (reg_max_ts(false) >= mc_start.time) {
       // Registers written globally are the previous cursor's; reset to baseline.
       ctx_load(&mc_start.regs, kCtxRegs, 0);
@@ -386,6 +342,15 @@ static void mc_execute(size_t cursoridx, size_t atomidx)
       ctx_load(&ctx, kCtxRegs, kCtxMergeReg);  // This cursor's own writes; merge w/ baseline.
     }
     regs_ts = reg_max_ts(false);
+  }
+  ctx_load(&ctx, kCtxCursor | (swap_state ? kCtxMarks : 0), 0);
+  // Edits by other cursors may have invalidated this cursor's position.
+  if (atom.type == kAInsertSpan) {
+    // The anchor may be one past EOL (the insertion point); edit() accepts that.
+    // Not check_cursor(): would clamp onto last char (a previous span may have set MODE_NORMAL).
+    check_pos(curbuf, &curwin->w_cursor);
+  } else {
+    check_cursor(curwin);
   }
   const int save_cmod_flags = cmdmod.cmod_flags;
   if (atom.type == kAInsertSpan) {
@@ -410,7 +375,7 @@ static void mc_execute(size_t cursoridx, size_t atomidx)
     Visual.select = false;
   }
 
-  const bool wrote_regs = swap_regs && reg_max_ts(false) != regs_ts;
+  const bool wrote_regs = swap_state && reg_max_ts(false) != regs_ts;
 
   if (cursoridx >= kv_size(mc_cursors)) {
     // Cursors were removed while replaying (e.g. gQ via autocmd); already freed.
@@ -422,16 +387,12 @@ static void mc_execute(size_t cursoridx, size_t atomidx)
     api_free_string(ctx.regs);
     ctx.regs = shada_encode_regs(false, mc_start.time);
   }
-
-  update_curswant();
-  ctx.curswant = curwin->w_curswant;
+  ctx_save(&ctx, kCtxCursor | (swap_state ? kCtxMarks : 0));
 
   if (atom.type == kAInsertSpan && curbuf->b_last_insert.mark.lnum > 0) {
     // Anchor at the insertion point ('^ mark): this is where the primary cursor, still in Insert
     // mode, displays its cursor, and where the next span continues inserting.
     ctx.pos = curbuf->b_last_insert.mark;
-  } else {
-    ctx.pos = curwin->w_cursor;
   }
   // The extmark's decor redraws both the old and the new line (extmark_set()).
   mc_mark_upd(curbuf, &ctx.mark, ctx.pos);
@@ -486,9 +447,10 @@ static void mc_cascade(void)
   }
 done:
   atoms_free(&g_atoms);
+  const handle_T bufnr = sb.primary.buf;  // mc_sandbox_leave() frees `sb.primary`.
   mc_sandbox_leave(&sb);
   mc_cleanup(true);
-  if (handle_get_buffer(sb.bufnr) == curbuf && !curbuf->b_u_synced
+  if (handle_get_buffer(bufnr) == curbuf && !curbuf->b_u_synced
       && curbuf->b_u_newhead != NULL) {
     // Store the primary's post-cascade position in the still-open undo block; redo restores it.
     curbuf->b_u_newhead->uh_cursor_after = curwin->w_cursor;
@@ -562,7 +524,6 @@ static void mc_cleanup(bool dedupe)
     mc_follow_set(kFalse);
     if (had_cursors) {
       ctx_free(&mc_start.regs);
-      mc_start.regs = (Context)CONTEXT_INIT;
       mc_start.time = 0;
       mc_lua_enable(false);
     }
@@ -1102,11 +1063,10 @@ void mc_vsel_refresh(void)
 
   for (size_t i = 0; i < kv_size(mc_cursors); i++) {
     Context *ctx = &kv_A(mc_cursors, i);
-    pos_T pos = { 0 };
-    if (!mc_ctx_resolve(ctx, &pos)) {
+    if (!mc_ctx_resolve(ctx, &ctx->pos)) {
       continue;
     }
-    curwin->w_cursor = pos;
+    ctx_load(ctx, kCtxCursor | kCtxMarks, 0);
     check_cursor(curwin);
     Visual.active = false;
     Visual.select = false;

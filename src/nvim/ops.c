@@ -3288,8 +3288,8 @@ static VisualIns op_ins_visual(oparg_T *oap, cmdarg_T *cap)
     // motion) or a forced-motion operator: the redo replays the motion's own keys instead.
     return kVInsOther;
   }
-  // Unreplayable (void/absent) selection: the redo falls back to an equal-size reselect ("1v").
-  return atom_visual_replayable() ? kVInsKeys : kVInsOther;
+  // Unreplayable (void/absent/"gv") selection: the redo falls back to an equal-size reselect ("1v").
+  return atom_visual_redoable() ? kVInsKeys : kVInsOther;
 }
 
 /// Handle an operator after Visual mode or when the movement is finished.

@@ -5,14 +5,24 @@
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/mark_defs.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
+#include "nvim/undo_defs.h"
 
 typedef struct {
   pos_T pos;         ///< Current cursor position (cache, see `mark`).
   uint32_t mark;     ///< Extmark id tracking `pos` across buffer edits.
   colnr_T curswant;  ///< Preferred column ("curswant"); -1 if unset.
+
+  int visual_mode_eval;  ///< `b_visual_mode_eval` (visualmode()).
+  visualinfo_T visual;   ///< (Cache) Previous Visual area (`'<`, `'>`, "gv").
+  pos_T op_start;        ///< (Cache) '[ (b_op_start).
+  pos_T op_end;          ///< (Cache) '] (b_op_end).
+  fmark_T last_change;   ///< (Cache) '. (b_last_change).
+  uint32_t pos_marks[5];  ///< Extmarks tracking the (Cache) positions above (in that order),
+                          ///< across buffer edits. 0: none.
   handle_T buf;      ///< Current buffer handle.
   String regs;       ///< Registers (shada msgpack string).
   String jumps;      ///< Jumplist (shada msgpack string).
@@ -26,6 +36,12 @@ typedef kvec_t(Context) ContextVec;
   .pos = { 0 }, \
   .mark = 0, \
   .curswant = -1, \
+  .visual = { .vi_start = { 0 } }, \
+  .visual_mode_eval = 0, \
+  .op_start = { 0 }, \
+  .op_end = { 0 }, \
+  .last_change = { .mark = { 0 } }, \
+  .pos_marks = { 0 }, \
   .buf = 0, \
   .regs = STRING_INIT, \
   .jumps = STRING_INIT, \
@@ -42,6 +58,10 @@ typedef enum {
   kCtxSFuncs = 16,    ///< Script functions
   kCtxFuncs = 32,     ///< Functions
   kCtxAll = kCtxRegs | kCtxJumps | kCtxBufs | kCtxGVars | kCtxSFuncs | kCtxFuncs,
+
+  // In-memory only (TODO(justinmk): support this in dict/kCtxAll too):
+  kCtxCursor = 64,    ///< Cursor position and curswant.
+  kCtxMarks = 128,    ///< Visual area ('< '>, visualmode()) and change marks ('[ '] '.).
 } CtxStateFlags;
 
 /// "How" to load, orthogonal to "what" (CtxStateFlags).

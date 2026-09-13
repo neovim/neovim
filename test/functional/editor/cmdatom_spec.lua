@@ -841,14 +841,16 @@ describe('CmdAtom', function()
       feed('.')
       eq('l3', fn.getline(1))
 
-      -- "gv" (absolute region) is unreplayable, but emitted in `lhs`.
-      api.nvim_buf_set_lines(0, 0, -1, true, { 'aaa bbb' })
+      -- "gv" is replayable, but "." redoes a fixed-size region ("1v"), like Vim.
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'aaa bbb ccc' })
       feed('gg0viw<Esc>')
       before = #atoms()
       feed('gvd')
-      eq(' bbb', fn.getline(1))
+      eq(' bbb ccc', fn.getline(1))
       eq(before + 1, #atoms())
-      eq({ type = 'visual', keys = '', lhs = 'gvd' }, pick(atom_last(), 'type', 'keys', 'lhs'))
+      eq({ type = 'visual', keys = 'gvd', lhs = 'gvd' }, pick(atom_last(), 'type', 'keys', 'lhs'))
+      feed('.')
+      eq('b ccc', fn.getline(1))
 
       -- A fed (":normal!") Visual-put preps the selection keysequence, like any fed visual
       -- operator (":normal! vjd"): "." re-executes "Vjp", not a bare "p".
