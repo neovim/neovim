@@ -1922,7 +1922,7 @@ syn keyword	vimSyncLinecont	contained	linecont	skipwhite	nextgroup=vimSynRegPat
 syn match	vimSyncLines	contained	"\<lines="		nextgroup=vimNumber
 syn match	vimSyncLines	contained	"\<minlines="		nextgroup=vimNumber
 syn match	vimSyncLines	contained	"\<maxlines="		nextgroup=vimNumber
-syn match	vimSyncGroupName	contained	"\<\h\w*\>"	skipwhite	nextgroup=vimSyncKey
+syn match	vimSyncGroupName	contained	"\<\h\w*\>"	skipwhite	nextgroup=vimSyncKey,vimSynRegPat
 syn match	vimSyncKey	contained	"\<grouphere\>"	skipwhite	nextgroup=vimSyncGroup
 syn match	vimSyncKey	contained	"\<groupthere\>"	skipwhite	nextgroup=vimSyncGroup
 syn match	vimSyncGroup	contained	"\<\h\w*\>"	skipwhite	nextgroup=vimSynRegPat,vimSyncNone
