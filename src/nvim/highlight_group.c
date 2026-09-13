@@ -183,7 +183,7 @@ static const char *highlight_init_both[] = {
   "default link ComplMatchIns    NONE",
   "default link ComplHint        NonText",
   "default link ComplHintMore    MoreMsg",
-  "default link MCursor          Cursor",
+  "default link MCursor          CurSearch",
   "default link MCursorVisual    Visual",
   "default link Substitute       Search",
   "default link StatusLineTerm   StatusLine",
