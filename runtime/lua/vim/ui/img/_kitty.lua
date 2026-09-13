@@ -1,23 +1,9 @@
 ---Kitty graphics protocol implementation for vim.ui.img.
+---@class vim.ui.img._kitty: vim.ui.img._Backend
 local M = {}
 
-local generate_id = (function()
-  local bit = require('bit')
-  local NVIM_PID_BITS = 10
-
-  local nvim_pid = 0
-  local cnt = 30
-
-  ---@return integer
-  return function()
-    if nvim_pid == 0 then
-      local pid = vim.fn.getpid()
-      nvim_pid = bit.band(bit.bxor(pid, bit.rshift(pid, 5), bit.rshift(pid, NVIM_PID_BITS)), 0x3FF)
-    end
-    cnt = cnt + 1
-    return bit.bor(bit.lshift(nvim_pid, 24 - NVIM_PID_BITS), cnt)
-  end
-end)()
+---@type vim.ui.img._util
+local util = require('vim.ui.img._util')
 
 ---Build a Kitty graphics protocol escape sequence.
 ---@param control table<string, string|number>
@@ -48,6 +34,10 @@ end
 ---Large images may cause the terminal to hang or the escape sequence to get
 ---interrupted mid-write. A future filepath option (t=f) could let the
 ---terminal read the file directly, avoiding this issue for local sessions.
+---
+---Chunks are sent back-to-back: the protocol forbids interleaving other
+---graphics escapes into a chunked transmission, and all chunks except the
+---last must have a size that is a multiple of 4.
 ---@param id integer kitty image id
 ---@param data string raw image bytes
 local function transmit(id, data)
@@ -78,83 +68,79 @@ local function transmit(id, data)
   end
 end
 
----Send a kitty place/display command with cursor management.
----@param img_id integer kitty image id
----@param placement_id integer kitty placement id
----@param opts vim.ui.img.Opts
-local function place(img_id, placement_id, opts)
-  local cursor_save = '\0277'
-  local cursor_hide = '\027[?25l'
-  local cursor_move = string.format('\027[%d;%dH', opts.row or 1, opts.col or 1)
-  local cursor_restore = '\0278'
-  local cursor_show = '\027[?25h'
+---Constant since we keep a single placement per image; re-placing with the
+---same (i, p) replaces the previous placement.
+local placement_id = 1
 
-  ---@type table<string, string|number>
-  local control = {
-    a = 'p',
-    i = img_id,
-    p = placement_id,
-    C = '1', -- Don't move the cursor at all
-    q = '2', -- Suppress responses
-  }
-
-  if opts.width then
-    control.c = opts.width
-  end
-  if opts.height then
-    control.r = opts.height
-  end
-  if opts.zindex then
-    control.z = opts.zindex
+---Transmit an image, or (re-)place a transmitted image.
+---
+---When {data_or_id} is a string, transmits the bytes without displaying and
+---returns the new image id. When it is an id, places the image per
+---{opts.relative}: absolute terminal coordinates for 'ui', an invisible
+---virtual placement (unicode placeholder mode) otherwise.
+---@param data_or_id string|integer image bytes (string) or image id (integer)
+---@param opts? vim.ui.img.Opts required when placing an image id
+---@return integer id
+function M.set(data_or_id, opts)
+  -- If given data, we just transmit it without rendering it, and return the id
+  if type(data_or_id) == 'string' then
+    local id = util.generate_id()
+    transmit(id, data_or_id)
+    return id
   end
 
-  vim.api.nvim_ui_send(
-    cursor_save .. cursor_hide .. cursor_move .. seq(control) .. cursor_restore .. cursor_show
-  )
-end
+  -- Otherwise, when given an id, we assume it has been transmitted already,
+  -- and figure out how we plan to render it (placeholder unicode or directly)
+  local id = data_or_id
+  assert(opts, 'opts required when placing an image id')
 
----Transmit image bytes and place the image. Returns both IDs.
----@param data string raw image bytes
----@param opts vim.ui.img.Opts
----@return integer img_id
----@return integer placement_id
-function M.set(data, opts)
-  local img_id = generate_id()
-  local placement_id = generate_id()
+  if opts.relative == nil or opts.relative == 'ui' then
+    local cursor_save = '\0277'
+    local cursor_hide = '\027[?25l'
+    local cursor_move = string.format('\027[%d;%dH', opts.row or 1, opts.col or 1)
+    local cursor_restore = '\0278'
+    local cursor_show = '\027[?25h'
 
-  transmit(img_id, data)
-  place(img_id, placement_id, opts)
+    ---@type table<string, string|number>
+    local control = {
+      a = 'p',
+      i = id,
+      p = placement_id,
+      C = '1', -- Don't move the cursor at all
+      q = '2', -- Suppress responses
+    }
+    if opts.width then
+      control.c = opts.width
+    end
+    if opts.height then
+      control.r = opts.height
+    end
+    if opts.zindex then
+      control.z = opts.zindex
+    end
 
-  return img_id, placement_id
-end
-
----Update an existing placement (flicker-free, reuses same IDs).
----@param img_id integer
----@param placement_id integer
----@param opts vim.ui.img.Opts
-function M.update(img_id, placement_id, opts)
-  place(img_id, placement_id, opts)
-end
-
----Delete an image and all its placements from the terminal.
----When {img_id} is `math.huge`, deletes all images.
----@param img_id integer
-function M.delete(img_id)
-  if img_id == math.huge then
-    -- delete all placements and free stored image data (if not referenced elsewhere, e.g. scrollback)
-    vim.api.nvim_ui_send(seq({
-      a = 'd',
-      d = 'A',
-      q = '2',
-    }))
+    vim.api.nvim_ui_send(
+      cursor_save .. cursor_hide .. cursor_move .. seq(control) .. cursor_restore .. cursor_show
+    )
   else
     vim.api.nvim_ui_send(seq({
-      a = 'd',
-      d = 'i',
-      i = img_id,
-      q = '2', -- Suppress responses
+      a = 'p',
+      U = '1',
+      i = id,
+      p = placement_id,
+      c = opts.width,
+      r = opts.height,
+      q = '2',
     }))
   end
+
+  return id
+end
+
+---Delete image {id}, both its placements and transmitted data.
+---@param id integer
+function M.del(id)
+  vim.api.nvim_ui_send(seq({ a = 'd', d = 'I', i = id, q = '2' }))
 end
 
 --- Query whether this terminal supports the kitty graphics protocol.
@@ -172,7 +158,7 @@ function M.supported(opts)
     return false
   end
 
-  local query_id = generate_id()
+  local query_id = util.generate_id()
 
   ---@type boolean?
   local result
@@ -185,8 +171,12 @@ function M.supported(opts)
     function(resp)
       -- kitty APC response: \027_G[<fields>,]i=<id>[,<fields>];<status>
       -- status is "OK" or an error code+message like "ENODATA:Missing image data"
+      ---@type string?
       local id = resp:match('^\027_G[^;]*i=(%d+)')
+
+      ---@type string?
       local status = resp:match(';(.-)%s*$')
+
       if id and tonumber(id) == query_id and status then
         result = true
         msg = status ~= 'OK' and status or nil
