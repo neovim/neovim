@@ -10,5 +10,6 @@
 #include "nvim/normal_defs.h"  // IWYU pragma: keep (cmdarg_T, used by mcursor.h.generated.h)
 #include "nvim/pos_defs.h"
 #include "nvim/register_defs.h"  // IWYU pragma: keep (yankreg_T, used by mcursor.h.generated.h)
+#include "nvim/types_defs.h"  // IWYU pragma: keep (TriState, used by mcursor.h.generated.h)
 
 #include "mcursor.h.generated.h"

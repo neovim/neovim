@@ -830,6 +830,21 @@ void atom_did_global_op(void)
   }
 }
 
+/// Applies "q=" change to the current command, and later moves.
+void atom_follow_changed(void)
+{
+  if (mc_replaying()) {
+    return;
+  }
+  for (CmdFrame *frame = cur_frame; frame != NULL; frame = frame->parent) {
+    if (!atom_origin_moved(frame->origin)) {
+      frame->follow = mc_following();
+    } else if (composite.follow == kNone) {
+      composite.follow = frame->follow ? kTrue : kFalse;
+    }
+  }
+}
+
 /// Declares that the current frame prepped redo. Not for nested frames (":norm").
 void atom_redo_prepped(void)
 {
@@ -1246,7 +1261,7 @@ void atom_cmd_start(CmdFrame *old)
     .global_ops = global_ops,
     .beeps = did_beep,
     .id = ++frame_id,
-    // Sampled: "q=" toggled DURING a command must not apply to it retroactively.
+    // Sampled; a later "q=" applies only to later moves.
     .follow = mc_following(),
     .consumers = consumers,
     // Diffed at command end to detect a register-write (yank).

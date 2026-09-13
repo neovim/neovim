@@ -6455,10 +6455,10 @@ static void nv_q(cmdarg_T *cap)
     return;
   }
 
-  if (cap->nchar == '=') {
-    if (!mc_follow_toggle(cap->count0)) {
-      clearopbeep(cap->oap);
-    }
+  if (cap->nchar == '=' && cap->count0 > 2) {
+    clearopbeep(cap->oap);
+  } else if (cap->nchar == '=') {  // "1q=" on, "2q=" off.
+    mc_follow_set(cap->count0 == 0 ? kNone : cap->count0 == 1 ? kTrue : kFalse);
   } else if (cap->nchar == ':' || cap->nchar == '/' || cap->nchar == '?') {
     if (cmdwin_buf != NULL) {
       emsg(_(e_cmdline_window_already_open));
