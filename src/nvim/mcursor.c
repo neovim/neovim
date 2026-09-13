@@ -192,6 +192,13 @@ static uint32_t mc_session_ns(void)
   return ns;
 }
 
+/// Is `ns` a multicursor namespace? Note this doesn't check against the previous session's cursor
+/// positions or session-internal marks.
+bool mc_is_mcursor_ns(uint32_t ns_id)
+{
+  return ns_id == mc_ns() || ns_id == mc_vcur_ns() || ns_id == mc_vsel_ns();
+}
+
 /// Number of mcursors, excluding the primary cursor. 0: no multicursor session.
 size_t mc_count(void)
 {
