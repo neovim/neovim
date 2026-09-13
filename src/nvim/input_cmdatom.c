@@ -60,19 +60,20 @@ static uint64_t frame_id = 0;
 /// The executing command's frame; its `parent` chain spans nested `normal_execute()`.
 static CmdFrame *cur_frame = NULL;
 
-/// Accumulates one CmdAtom across its CmdFrames (a mapping's sub-commands, a pending operator,
-/// i_CTRL-O). May span multiple toplevel cmds. Always collects, because a mapping may itself create
-/// consumers ("xmap I Q0i" => creates a mcursor => which listens to atoms).
+/// Accumulates one CmdAtom across its CmdFrames. May span multiple toplevel cmds. Always collects,
+/// because a mapping may itself create consumers ("xmap I Q0i" => creates a mcursor => which
+/// listens to atoms).
 ///
 /// See `vatom` for Visual composite (different lifetime).
 ///
 /// Also used by undo, to restore cursor position.
 static struct {
-  bool open;          ///< True from the atom's first toplevel frame until it resolves.
+  bool active;        ///< Collecting subatoms. If false but `lhs` is set, collecting was deferred.
+  bool open;          ///< User action is in progress: set by its first toplevel cmd (frame).
   CmdOrigin origin;   ///< State at the atom's start.
   TriState follow;    ///< `CmdFrame.follow` at the atom's first motion (`kNone`: none yet).
   CmdAtomVec atoms;   ///< Subatoms of the mapping/macro.
-  char *lhs;          ///< Label: mapping LHS or macro "@x" (NULL: not collecting).
+  char lhs[MAXMAPLEN + 4];  ///< Label: mapping LHS, macro "@x", or :omap's op+LHS. "": none.
   bool queued;        ///< A cascadable atom was queued (g_atoms) while collecting.
   bool lossy;         ///< Capture lost part of the mapping (incomplete insert, payload with no
                       ///< capturing atom): `keys` cannot replay it, `lhs` can.
@@ -116,11 +117,11 @@ static struct {
 } typed;
 
 static const char *const type_names[] = {
+  [kAComp] = "mapping",
   [kAExcmd] = "excmd",
   [kAInsertSpan] = "insert",  // spans display as "insert" (as a composite's `atoms`)
   [kAInsert] = "insert",
   [kAJump] = "jump",
-  [kAMapping] = "mapping",
   [kAMotion] = "motion",
   [kAMouse] = "mouse",
   [kANormal] = "normal",
@@ -434,7 +435,7 @@ void atom_push_raw(bool cascade, CmdAtom *atom)
   }
   // `composite.frame`: the command that was executing when a peek opened the composite is not part
   // of it.
-  const bool collect = composite.lhs != NULL
+  const bool collect = composite.active
                        && (cur_frame == NULL || cur_frame->id != composite.frame);
   if (cascade) {
     CmdAtom copy = *atom;
@@ -518,7 +519,7 @@ static char *atom_composite_lhs(void)
 /// Queues an internal-only (no emit) atom for mcursor cascade.
 void atom_lhs_replay_queue(void)
 {
-  kv_push(g_atoms, ((CmdAtom){ .type = kAMapping, .keys = atom_composite_lhs(), .remap = true }));
+  kv_push(g_atoms, ((CmdAtom){ .type = kAComp, .keys = atom_composite_lhs(), .remap = true }));
 }
 
 /// True if the executing mapping queued a subatom: its edit was captured, no LHS-replay needed.
@@ -530,14 +531,27 @@ bool atom_composite_queued(void)
 /// True while a composite is collecting subatoms.
 bool atom_composite_active(void)
 {
-  return composite.lhs != NULL;
+  return composite.active;
+}
+
+/// Labels a composite, without necessarily starting to "collect" (active=false).
+static void atom_composite_label(const char *lhs, size_t len)
+{
+  len = MIN(len, sizeof(composite.lhs) - 1);
+  memcpy(composite.lhs, lhs, len);
+  composite.lhs[len] = NUL;
 }
 
 /// Starts collecting subatoms.
+///
+/// @param lhs  Label. NULL: keep the (deferred) label.
+/// @param len  Length of `lhs`.
 static void atom_composite_start(const char *lhs, size_t len)
 {
-  xfree(composite.lhs);
-  composite.lhs = xmemdupz(lhs, len);
+  if (lhs != NULL) {
+    atom_composite_label(lhs, len);
+  }
+  composite.active = true;
   composite.queued = false;
   composite.lossy = false;
   composite.frame = 0;
@@ -546,20 +560,21 @@ static void atom_composite_start(const char *lhs, size_t len)
 /// Emits the composite atom with its collected subatoms (`CmdAtom.atoms`).
 ///
 ///      :nnoremap gj i<C-J><Esc>k$
-///      "gj" => CmdAtom{ .lhs="gj", .keys="1i<NL><Esc>k$", kAMapping }
+///      "gj" => CmdAtom{ .lhs="gj", .keys="1i<NL><Esc>k$", kAComp }
 static void atom_composite_end(void)
 {
   composite.macro = false;  // "@x" capture ends with its composite.
-  if (composite.lhs == NULL) {
+  if (!composite.active) {
     return;
   }
   // LHS-replay when the capture is lossy, or captured nothing (Ex/Lua edits).
   const bool remap = composite.lossy || kv_size(composite.atoms) == 0;
   char *lhs = atom_composite_lhs();
-  XFREE_CLEAR(composite.lhs);
+  composite.lhs[0] = NUL;
+  composite.active = false;
   CmdAtom atom;
   if (kv_size(composite.atoms) == 1) {
-    // Single subatom. "Unwrap" it so e.g. a motion mapping reports kAMotion, not kAMapping.
+    // Single subatom (simple mapping). "Unwrap" it: a motion mapping reports kAMotion, not kAComp.
     atom = kv_pop(composite.atoms);
     xfree(atom.lhs);
     atom.lhs = lhs;
@@ -567,7 +582,7 @@ static void atom_composite_end(void)
   } else {
     // Zero subatoms (captured nothing (Ex/Lua, no-op); still a user action, identified by `lhs`),
     // or multiple subatoms.
-    atom = (CmdAtom){ .type = kAMapping, .keys = atoms_concat_keys(composite.atoms).data,
+    atom = (CmdAtom){ .type = kAComp, .keys = atoms_concat_keys(composite.atoms).data,
                       .lhs = lhs, .remap = remap, .origin = composite.origin,
                       .changed = atom_origin_changed(composite.origin),
                       .moved = atom_origin_moved(composite.origin),
@@ -584,7 +599,8 @@ static void atom_composite_end(void)
 void atom_composite_abort(void)
 {
   composite.macro = false;
-  XFREE_CLEAR(composite.lhs);
+  composite.lhs[0] = NUL;
+  composite.active = false;
   atoms_free(&composite.atoms);
   composite.open = false;
 }
@@ -853,12 +869,17 @@ void atom_stuff_start(const cmdarg_T *cap)
   xfree(lhs);
 }
 
-/// Starts accumulating a composite for a mapping resolved from typed keys (vgetorpeek()).
+/// Starts a composite for a mapping resolved from typed keys.
 ///
-/// @param peeked  Resolved by a peek: the executing command did not consume the mapping's keys.
+/// @param peeked  The executing command did not consume the mapping's keys.
 void atom_map_start(const char *lhs, size_t len, bool peeked)
 {
-  if (mc_replaying() || reg_executing != 0 || ex_normal_busy != 0 || !(State & MODE_NORMAL)) {
+  if (mc_replaying() || reg_executing != 0 || ex_normal_busy != 0) {
+    return;
+  }
+  if (!(State & MODE_NORMAL)) {
+    // Label the (potential, deferred) composite but don't start collecting (!MODE_NORMAL).
+    atom_composite_label(lhs, len);
     return;
   }
   if (atom_composite_active()) {
@@ -1238,6 +1259,16 @@ void atom_cmd_start(CmdFrame *old)
     composite.open = true;
     composite.origin = old->origin;
     composite.follow = kNone;
+  }
+  // Deferred composite: now start collecting...
+  if (old->parent == NULL && !mc_replaying() && !composite.active && composite.lhs[0] != NUL) {
+    if (!KeyTyped && consumers) {
+      atom_composite_start(NULL, 0);
+      typed.map_start = kv_size(typed.keys);
+      composite.follow = kNone;  // Sampled again later.
+    } else {  // Not from the mapping (typed), or no consumers.
+      composite.lhs[0] = NUL;
+    }
   }
   // A toplevel user command starts a new typed stream, unless a mapping slice is still open (its
   // composite spans commands). Not for a nested frame (":norm!", exec_stuffed()).

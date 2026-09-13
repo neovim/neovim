@@ -493,21 +493,20 @@ CmdAtom				After a user action (an "atom" of input): any
 				    - typed "<Cmd>cnext<CR>" → text="cnext"
 				    - typed "iab<Left>c<Esc>" → text="c"
 				- type:
-				    - "excmd"
-				    - "insert"
-				    - "jump": Moves the cursor via
-				      absolute/shared navigation state
-				      (|jumplist|, marks, |star|).
-				    - "mapping"
+				    - "excmd": Ex cmdline session.
+				    - "insert": Insert session.
+				    - "jump": Cursor moved by absolute/shared
+				      navigation (|jumplist|, marks, |star|).
+				    - "mapping": Composite (>=2 subatoms).
 				    - "motion": Non-jump motion. May emit
 				      `moved=false` ("w" at buffer end, failed
 				      "fx", …).
 				    - "mouse"
-				    - "normal": Non-motion/jump command ("u",
-				      CTRL-R, "za", CTRL-W, …).
+				    - "normal": Other commands ("u", CTRL-R,
+				      "za", CTRL-W, …).
 				    - "operator"
-				    - "scroll"
-				    - "visual"
+				    - "scroll": Viewport scroll.
+				    - "visual": Visual composite.
 				- undoseq: Undo state after the action
 				  (|undotree()| `seq_cur`). Decreases on undo.
 

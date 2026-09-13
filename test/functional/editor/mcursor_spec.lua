@@ -19,6 +19,7 @@ local atoms_start = t_atom.atoms_start
 local atoms = t_atom.atoms
 local atoms_tail = t_atom.atoms_tail
 local atom_last = t_atom.atom_last
+local subatoms = t_atom.subatoms
 
 --- Clears the buffer mcursors like the default CTRL-L mapping (test-harness "mapclear" removed it).
 local function clear_cursors()
@@ -1334,11 +1335,11 @@ describe('multicursor', function()
         { type = 'mapping', lhs = k('iX<Esc>'), changed = true },
         t_atom.pick(atom_last(), 'type', 'lhs', 'changed')
       )
-      local children = {}
-      for _, child in ipairs(ev.atoms) do
-        children[#children + 1] = { child.type, child.keys }
-      end
-      eq({ { 'motion', '^' }, { 'insert', k('1i<Esc>') }, { 'insert', k('iX<Esc>') } }, children)
+      eq({
+        { type = 'motion', keys = '^' },
+        { type = 'insert', keys = k('1i<Esc>') },
+        { type = 'insert', keys = k('iX<Esc>') },
+      }, subatoms(ev, 'type', 'keys'))
     end)
 
     it('session survives all cursors deduping away mid-session', function()
@@ -1544,6 +1545,40 @@ describe('multicursor', function()
         feed('x<Esc>')
         eq({ 'aa', ('%saa x cc %saa x'):format(text, text), ('%saa x'):format(text) }, get_lines())
       end
+    end)
+
+    it('mapping ending in a Normal-mode "tail", cascades #41864', function()
+      command('inoremap <Esc> <Esc>l') -- the "<Esc>" leaves a Normal-mode tail ("l")
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'echo hi', 'echo bye' })
+      feed('WQjq=') -- cursor (1,5), primary (2,5); follow-mode ON
+      feed('i<Esc>')
+      -- The empty insert and its "l" tail cascade: both cursors end on column 5, not 4.
+      eq({ { 0, 5 } }, anchors())
+      eq({ 2, 5 }, api.nvim_win_get_cursor(0))
+      feed('x')
+      eq({ 'echo i', 'echo ye' }, get_lines())
+
+      -- Without follow-mode, the tail "l" is a motion, so primary-only.
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'echo hi', 'echo bye' })
+      clear_cursors()
+      feed('gg0WQj') -- follow-mode OFF
+      feed('i<Esc>')
+      eq({ { 0, 4 } }, anchors())
+      eq({ 2, 5 }, api.nvim_win_get_cursor(0))
+
+      -- A mapping that explicitly invokes ("1q=…2q=") can force the tail "l" to cascade.
+      command('iunmap <Esc>')
+      command('inoremap <Esc> <Esc>1q=l2q=')
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'echo hi', 'echo bye' })
+      clear_cursors()
+      feed('gg0WQj') -- follow-mode OFF
+      feed('i<Esc>')
+      eq({ { 0, 5 } }, anchors())
+      eq({ 2, 5 }, api.nvim_win_get_cursor(0))
+      -- Follow-mode is off again: a typed motion stays primary-only.
+      feed('l')
+      eq({ { 0, 5 } }, anchors())
+      eq({ 2, 6 }, api.nvim_win_get_cursor(0))
     end)
   end)
 
@@ -2214,16 +2249,13 @@ describe('multicursor', function()
         changed = evs[1].changed,
       })
       -- `atoms` is non-empty iff the atom is a composite of more than one command;
-      local children = {}
-      for _, c in ipairs(evs[1].atoms) do
-        table.insert(children, { c.type, c.keys })
-      end
       eq({
-        { 'insert', k('1i<Esc>') }, -- spans display as "insert" (cascade-internal type)
-        { 'insert', k('i<NL><Esc>') },
-        { 'motion', 'k' },
-        { 'motion', '$' },
-      }, children)
+        -- Spans display as "insert" (cascade-internal type).
+        { type = 'insert', keys = k('1i<Esc>') },
+        { type = 'insert', keys = k('i<NL><Esc>') },
+        { type = 'motion', keys = 'k' },
+        { type = 'motion', keys = '$' },
+      }, subatoms(evs[1], 'type', 'keys'))
       eq({ 'k', false }, { evs[1].atoms[3].cmd, evs[1].atoms[3].changed })
       -- The mapping's motions (k$) cascade too, even without "q=", because the mapping edits.
       feed('x')

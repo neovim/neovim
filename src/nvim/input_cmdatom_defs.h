@@ -14,19 +14,19 @@
 // - replay, cascade, insert-cascade
 
 typedef enum CmdAtomType {
+  kAComp,          ///< Composite: complex mapping/macro. >=2 subatoms, or 0 (captured nothing).
   kAExcmd,         ///< Ex command (":cnext<CR>"): the typed cmdline is the payload.
   kAInsert,        ///< Insert session: entry command + text + <Esc>.
   kAInsertSpan,    ///< Span (chunk) of an ongoing insert-session, cascaded mid-session.
   kAJump,          ///< Cursor movement by absolute/shared navigation (jumplist, marks, `*`):
                    ///< not followable (its target would collapse cursors onto one position).
-  kAMapping,       ///< Subcommands of a mapping/macro, collapsed into one atom (`lhs`).
   kAMotion,        ///< Motion (cascades in "q=" follow-motion mode).
   kAMouse,         ///< Mouse action: emit-only (not replayable).
   kANormal,        ///< Normal-mode command that is not a motion or jump ("u", CTRL-R, "za", …).
                    ///< Never cascades, except as part of a mapping's composite.
   kAOperator,      ///< Operator+motion, or a self-contained edit command.
   kAScroll,        ///< Scroll (CTRL-Y/D/…, wheel): emit-only, like kAMouse.
-  kAVisual,        ///< Visual-mode sequence ("viwee" + operator).
+  kAVisual,        ///< Visual-mode sequence ("viwee" + operator). Captures subatoms.
 } CmdAtomType;
 
 /// State gathered at start of a command, composite, or insert. For calculating the "delta" at end.
@@ -64,8 +64,8 @@ struct CmdAtom {
   char *keys;     ///< Resolved keysequence (typeahead encoding), including `["x][count]` prefix
                   ///< (unlike `CmdSpec.body`, the raw unprefixed form).
   char *text;     ///< Insert-session text, or Ex/search cmdline payload.
-  char *lhs;      ///< Unresolved user input: mapping LHS or macro register ("@q"), or Visual op.
-                  ///< Label/hint, not replayed. NULL: untranslated, same as `keys`.
+  char *lhs;      ///< Unresolved user input: mapping LHS, macro ("@q"), Visual op, or translation
+                  ///< ("x" => "dl"). NULL: untranslated, same as `keys`.
   CmdOrigin origin;  ///< Pre-command state.
   CmdAtomType type;
   int undoseq;    ///< Undo state at settlement. Not monotonic (decreases on undo).

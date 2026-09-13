@@ -59,6 +59,17 @@ function m.atoms_tail(count, ...)
   return tail
 end
 
+--- Gets `ev`'s subatoms (`CmdAtom.atoms`): bare `keys` strings by default, or projections of the
+--- named `fields`.
+function m.subatoms(ev, ...)
+  local fields = select('#', ...) > 0 and { ... } or nil
+  local subs = {}
+  for _, c in ipairs(ev.atoms) do
+    table.insert(subs, fields and m.pick(c, unpack(fields)) or c.keys)
+  end
+  return subs
+end
+
 --- Minimal vim-surround "ys": an <expr> mapping sets 'operatorfunc' and returns "g@"; the opfunc
 --- reads the wrap char with getchar() and wraps the motion region (yank, modify register, paste
 --- back).

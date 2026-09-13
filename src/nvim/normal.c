@@ -6760,10 +6760,11 @@ static void nv_event(cmdarg_T *cap)
   }
 }
 
-/// Executes one normal-mode command from pending input, outside the main state machine.
+/// Executes one MODE_NORMAL command (Normal, Visual, Select and Op-pending, see get_real_state())
+/// from pending input, outside the main state machine.
 ///
-/// Called in a loop; a count/register prefix or a pending operator travels into the next call via
-/// `oap` ("3dl" is three calls, one command).
+/// Called in a loop. A pending op/register travels into the next call via `oap`; a count prefix via
+/// `opcount` ("3dl" is two calls, one command).
 ///
 /// @param toplevel  `NormalState.toplevel` (full interactive-command treatment).
 void normal_cmd(oparg_T *oap, bool toplevel)
