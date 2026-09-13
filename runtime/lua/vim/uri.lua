@@ -127,4 +127,35 @@ function M.uri_to_bufnr(uri)
   return vim.fn.bufadd(M.uri_to_fname(uri))
 end
 
+---@class vim.net.SshUri
+---@nodoc
+---@private
+---@field host string
+---@field user? string
+---@field port? string
+
+---@param str string
+---@return vim.net.SshUri
+function M._parse_ssh_uri(str)
+  ---@type vim.net.SshUri
+  local uri = { host = '' }
+  ---@type string?
+  local scheme_match = str:match('^ssh://(.*)')
+  if scheme_match then
+    str = scheme_match
+  end
+  local user_match = str:match('^(.-)@(.*)')
+  if user_match then
+    uri.user = str:match('^(.-)@')
+    str = str:match('@(.*)')
+  end
+  local port_match = str:match(':(%d+)$')
+  if port_match then
+    uri.port = port_match
+    str = str:sub(1, -(#port_match + 2))
+  end
+  uri.host = str
+  return uri
+end
+
 return M
