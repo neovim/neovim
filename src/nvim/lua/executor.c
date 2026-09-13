@@ -1015,6 +1015,7 @@ void nlua_init(char **argv, int argc, int lua_arg0)
     os_exit(1);
   }
   luaL_openlibs(lstate);
+  nlua_init_argv(lstate, argv, argc, lua_arg0);
   if (!nlua_state_init(lstate)) {
     fprintf(stderr, _("E970: Failed to initialize builtin Lua modules\n"));
 #ifdef EXITFREE
@@ -1027,7 +1028,6 @@ void nlua_init(char **argv, int argc, int lua_arg0)
   global_lstate = lstate;
   active_lstate = lstate;
   main_thread = uv_thread_self();
-  nlua_init_argv(lstate, argv, argc, lua_arg0);
 }
 
 static lua_State *nlua_thread_acquire_vm(void)

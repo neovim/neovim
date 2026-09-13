@@ -1,3 +1,19 @@
+-- Keep default relative paths for nvim -l only.
+if not (arg and arg[0]) then
+  local function remove_cwd_template(path, pattern)
+    local result = {}
+    for entry in (path .. ';'):gmatch('(.-);') do
+      if not entry:match(pattern) then
+        result[#result + 1] = entry
+      end
+    end
+    return table.concat(result, ';')
+  end
+
+  package.path = remove_cwd_template(package.path, '^%.[/\\\\]%?%.lua$')
+  package.cpath = remove_cwd_template(package.cpath, '^%.[/\\\\]%?%.[^/\\\\;]+$')
+end
+
 local pathtrails = {} --- @type table<string,true> ta
 vim._so_trails = {} --- @type string[]
 for s in (package.cpath .. ';'):gmatch('[^;]*;') do

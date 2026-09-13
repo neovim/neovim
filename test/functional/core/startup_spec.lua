@@ -145,6 +145,47 @@ describe('startup', function()
       eq('foo\n', out)
     end)
 
+    it('includes current directory in package paths', function()
+      assert_l_out(
+        'true\ntrue\n',
+        { '--clean' },
+        nil,
+        '-',
+        [[
+          local function has_cwd_template(path)
+            return path:match('^%.[/\\\\]%?%.lua;') ~= nil
+              or path:match('^%.[/\\\\]%?%.[^/\\\\;]+;') ~= nil
+          end
+          print(has_cwd_template(package.path))
+          print(has_cwd_template(package.cpath))
+        ]]
+      )
+    end)
+
+    it('protects worker package paths in -l mode', function()
+      assert_l_out(
+        'false\nfalse',
+        { '--clean' },
+        nil,
+        '-',
+        [[
+          local thread = vim.uv.new_thread(function()
+            local function has_cwd_template(path)
+              for entry in (path .. ';'):gmatch('(.-);') do
+                if entry:match('^%.[/\\\\]%?%.[^/\\\\;]+$') then
+                  return true
+                end
+              end
+              return false
+            end
+            print(tostring(has_cwd_template(package.path)))
+            print(tostring(has_cwd_template(package.cpath)))
+          end)
+          vim.uv.thread_join(thread)
+        ]]
+      )
+    end)
+
     it('failure modes', function()
       -- nvim -l <empty>
       local proc = n.spawn_wait('-l')
