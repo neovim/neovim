@@ -8,6 +8,7 @@
 --- - `lnum` is used to represent a 1-based index of a line, short for "line number".
 
 local api = vim.api
+local validate = vim.validate
 
 local M = {}
 
@@ -172,6 +173,35 @@ end
 ---@return integer row, integer col
 function M.from_mark(lnum, col)
   return lnum - 1, col
+end
+
+---@param extmark vim.api.keyset.get_extmark_item_by_id|vim.api.keyset.get_extmark_item
+---@return integer row
+---@return integer col
+---@return integer? end_row
+---@return integer? end_col
+function M.from_extmark(extmark)
+  validate('extmark', extmark, 'table')
+
+  local row, col, details ---@type integer, integer, vim.api.keyset.extmark_details
+  if type(extmark[3]) ~= 'number' then
+    ---@cast extmark vim.api.keyset.get_extmark_item_by_id
+    row, col, details = extmark[1], extmark[2], extmark[3]
+  else
+    ---@cast extmark vim.api.keyset.get_extmark_item
+    row, col, details = extmark[2], extmark[3], extmark[4]
+  end
+
+  validate('extmark row', row, 'number')
+  validate('extmark col', col, 'number')
+  validate('extmark details', details, 'table', true)
+  if details then
+    validate('extmark details.end_row', details.end_row, 'number', true)
+    validate('extmark details.end_col', details.end_col, 'number', true)
+    return row, col, details.end_row, details.end_col
+  else
+    return row, col
+  end
 end
 
 return M
