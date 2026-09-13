@@ -458,8 +458,8 @@ CmdAtom				After a user action (an "atom" of input): any
 				The |event-data| has these fields (type: `vim.event.cmdatom.data`):
 
 				- atoms: Ordered "subatoms" of a composite
-				  atom (multi-command mapping, Visual sequence).
-				- changed: Buffer was changed by the atom.
+				  atom (complex mapping, Visual sequence).
+				- changed: Buffer was changed by the command.
 				- cmd: Command/motion/object name: "w", "f",
 				  "iw", "gJ", "<Home>", …. |key-notation|
 				- cmdarg: Operand of `cmd`: the "x" of "fx",
@@ -470,11 +470,10 @@ CmdAtom				After a user action (an "atom" of input): any
 				  key-notation): feed to |nvim_feedkeys()|
 				  (mode "n") to replay. Empty: unreplayable.
 				  Nil: lossy capture, replay `lhs` (mode "m").
-				- lhs: User input, before it is
-				  resolved/translated. Mapping LHS plus any
-				  payload it read (|getchar()|), macro register
-				  ("@q"), or Visual sequence. Raw bytes, like
-				  `keys`.
+				- lhs: User input, before it is resolved.
+				  Mapping LHS plus any payload it read
+				  (|getchar()|), macro register ("@q"), or
+				  Visual sequence. Raw bytes, like `keys`.
 				- motionforce |forced-motion|: "v", "V", or
 				  "<C-V>" (|key-notation|).
 				- moved: Cursor moved.
@@ -483,10 +482,9 @@ CmdAtom				After a user action (an "atom" of input): any
 				- pos: Start position: [row, col], 1-indexed
 				  row, 0-indexed col.
 				- reg: Register name.
-				- text: Payload text: inserted text of an
-				  insert session (after its last cursor-move,
-				  like |quote.|), Ex cmdline, or search.
-				  Literal text, not key encoding.
+				- text: Payload: full text of an insert
+				  session, Ex cmdline, or search. Raw bytes,
+				  like `keys`.
 				  Examples:
 				    - typed "iab<Esc>" → text="ab"
 				    - typed ":cnext<CR>" → text="cnext"
@@ -495,10 +493,10 @@ CmdAtom				After a user action (an "atom" of input): any
 				- type:
 				    - "excmd": Ex cmdline session.
 				    - "insert": Insert session.
-				    - "jump": Cursor moved by absolute/shared
-				      navigation (|jumplist|, marks, |star|).
+				    - "jump": Absolute/shared navigation
+				      (|jumplist|, marks, |star|).
 				    - "mapping": Composite (>=2 subatoms).
-				    - "motion": Non-jump motion. May emit
+				    - "motion": Non-jump motion. May report
 				      `moved=false` ("w" at buffer end, failed
 				      "fx", …).
 				    - "mouse"

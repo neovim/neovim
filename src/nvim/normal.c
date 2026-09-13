@@ -6565,6 +6565,7 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
   if (cap->oap->op_type != OP_NOP) {
     // "dp" is ":diffput"
     if (cap->oap->op_type == OP_DELETE && cap->cmdchar == 'p') {
+      atom_capture_op(cap->oap, cap, false);  // Atom + dot-repeat for "dp".
       clearop(cap->oap);
       assert(cap->opcount >= 0);
       nv_diffgetput(true, (size_t)cap->opcount);
@@ -6718,6 +6719,7 @@ static void nv_open(cmdarg_T *cap)
 {
   // "do" is ":diffget"
   if (cap->oap->op_type == OP_DELETE && cap->cmdchar == 'o') {
+    atom_capture_op(cap->oap, cap, false);  // Atom + dot-repeat for "do".
     clearop(cap->oap);
     assert(cap->opcount >= 0);
     nv_diffgetput(false, (size_t)cap->opcount);
