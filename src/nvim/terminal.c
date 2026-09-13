@@ -1631,10 +1631,12 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
     if (frag.initial) {
       term->title_len = 0;
       term->title_size = MAX(frag.len, 1024);
-      term->title = xmalloc(sizeof(char *) * term->title_size);
+      term->title = xmalloc(term->title_size);
     } else if (term->title_len + frag.len > term->title_size) {
-      term->title_size *= 2;
-      term->title = xrealloc(term->title, sizeof(char *) * term->title_size);
+      while (term->title_len + frag.len > term->title_size) {
+        term->title_size *= 2;
+      }
+      term->title = xrealloc(term->title, term->title_size);
     }
 
     memcpy(term->title + term->title_len, frag.str, frag.len);
