@@ -966,7 +966,7 @@ is_na_patch() {
       runtime/syntax/vim.vim)
         HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
           '-I^" Last Change:\s' \
-          '-I^syn\skeyword\svimFuncName\scontained\s' \
+          '-I^syn\skeyword\s(vimCommand|vimFuncName)\scontained\s' \
           "$patch" -- "${file}")
         test -n "$HUNKS" && return 1
         ;;
