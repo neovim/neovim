@@ -6854,7 +6854,7 @@ matchbufline({buf}, {pat}, {lnum}, {end}, [, {dict}])           *matchbufline()*
                   • {dict} (`table?`)
 
                 Return: ~
-                  (`string[]`)
+                  (`table`)
 
 matchdelete({id} [, {win}])                            *matchdelete()* *E802* *E803*
 		Deletes a match with ID {id} previously defined by |matchadd()|
