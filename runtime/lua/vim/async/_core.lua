@@ -116,6 +116,7 @@ end
 local Task = {}
 
 --- @return_cast x vim.async.Task<any>
+--- @param x any
 local function is_task(x)
   return getmetatable(x) == Task
 end
@@ -584,6 +585,8 @@ do --- Task
       local sync_args --- @type false|{[integer]: any, n: integer}?
       local awaiting --- @type vim.async.Task<any>|vim.async.Closable?
 
+      --- @param err? any
+      --- @param ... any
       local function complete_await(err, ...)
         -- Cancellation and child failures resume through `_raise()`. Ignore a
         -- racing result so `_resume()` can finish awaitable cleanup first.

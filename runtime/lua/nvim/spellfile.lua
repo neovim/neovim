@@ -62,7 +62,7 @@ M._done = {}
 
 ---@return string[]
 local function rtp_list()
-  return vim.opt.rtp:get()
+  return vim.opt.rtp:get() --[[@as string[] ]]
 end
 
 ---@param msg string

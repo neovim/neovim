@@ -219,6 +219,8 @@ local function diff_dirs_builtin(left_dir, right_dir, opt)
   --- @type table<string, string>
   local right_only = {}
 
+  --- @param dir_path string
+  --- @param is_left boolean
   local function process_files_in_directory(dir_path, is_left)
     local files = vim.fs.find(function(name, path)
       local rel_path = vim.fs.relpath(dir_path, vim.fs.joinpath(path, name))
@@ -429,8 +431,9 @@ function M.open(left, right, opt)
   layout.group = vim.api.nvim_create_augroup('nvim.difftool.events', { clear = true })
   local hl_id = vim.api.nvim_create_namespace('nvim.difftool.hl')
 
+  --- @param bufnr? integer
   local function get_diff_entry(bufnr)
-    --- @type {idx: number, items: table[], size: number}
+    --- @type {idx: number, items: vim.quickfix.entry[], size: number}
     local qf_info = vim.fn.getqflist({ idx = 0, items = 1, size = 1 })
     if qf_info.size == 0 then
       return false

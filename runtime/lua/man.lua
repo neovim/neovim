@@ -733,6 +733,7 @@ local function ref_from_args(args)
 end
 
 --- @param count integer
+--- @param smods vim.api.keyset.cmd.mods
 --- @param args string[]
 --- @return string? err
 function M.open_page(count, smods, args)
@@ -800,6 +801,7 @@ function M.open_page(count, smods, args)
 end
 
 --- Called when a man:// buffer is opened.
+--- @param ref string
 --- @return string? err
 function M.read_page(ref)
   local name, sect, err = parse_ref(ref)

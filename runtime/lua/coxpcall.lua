@@ -20,6 +20,7 @@
 -------------------------------------------------------------------------------
 -- Checks if (x)pcall function is coroutine safe
 -------------------------------------------------------------------------------
+--- @param func function
 local function isCoroutineSafe(func)
     local co = coroutine.create(function()
         return func(coroutine.yield, function() end)
@@ -49,6 +50,11 @@ local running = coroutine.running
 local coromap = setmetatable({}, { __mode = "k" })
 
 --- @async
+--- @param err function
+--- @param co thread
+--- @param status boolean
+--- @param ... any
+--- @return boolean, any...
 local function handleReturnValue(err, co, status, ...)
     if not status then
         return false, err(debug.traceback(co, (...)), ...)
@@ -61,11 +67,17 @@ local function handleReturnValue(err, co, status, ...)
 end
 
 --- @async
+--- @param err function
+--- @param co thread
+--- @param ... any
 function performResume(err, co, ...)
     return handleReturnValue(err, co, coroutine.resume(co, ...))
 end
 
 --- @diagnostic disable-next-line: unused-vararg
+--- @generic T
+--- @param trace T
+--- @param ... any
 local function id(trace, ...)
     return trace
 end
@@ -89,6 +101,7 @@ function _G.coxpcall(f, err, ...)
     else
         local res, co = oldpcall(coroutine.create, f)
         if not res then
+            --- @param ... any
             local newf = function(...) return f(...) end
             co = coroutine.create(newf)
         end

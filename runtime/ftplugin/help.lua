@@ -29,6 +29,8 @@ local function colorize_hl_groups(patterns)
   vim.fn.setpos('.', save_cursor)
 end
 
+--- @param bufname string
+--- @param path string
 local function help_bufname_match(bufname, path)
   return vim.endswith(bufname, path .. '.txt') or bufname:find(path .. '%.%a%ax$')
 end

@@ -678,6 +678,10 @@ end
 local function styletable_match(state)
   for _, match in ipairs(vim.fn.getmatches(state.winid)) do
     local hlid = register_hl(state, match.group)
+    --- @param srow integer
+    --- @param scol integer
+    --- @param erow integer
+    --- @param ecol integer
     local function range(srow, scol, erow, ecol)
       if match.group == 'Conceal' and state.opt.conceallevel ~= 0 then
         styletable_insert_conceal(state, srow, scol, erow, ecol, match.conceal or '', hlid)
@@ -818,6 +822,9 @@ local function styletable_listchars(state)
   if not state.opt.list then
     return
   end
+  --- @param str string
+  --- @param i integer
+  --- @param j? integer
   --- @return string
   local function utf8_sub(str, i, j)
     return vim.fn.strcharpart(str, i - 1, j and j - i + 1 or nil)

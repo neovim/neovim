@@ -2,6 +2,7 @@ local api = vim.api
 
 local M = {}
 
+--- @param filetype string
 local function get_ftplugin_runtime(filetype)
   local files = api.nvim__get_runtime({
     string.format('ftplugin/%s.vim', filetype),

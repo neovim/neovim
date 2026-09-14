@@ -525,7 +525,7 @@ end
 --- @overload fun(direction:'from'): fun(_, result: lsp.CallHierarchyIncomingCall[]?)
 --- @overload fun(direction:'to'): fun(_, result: lsp.CallHierarchyOutgoingCall[]?)
 local function make_call_hierarchy_handler(direction)
-  --- @param result lsp.CallHierarchyIncomingCall[]|lsp.CallHierarchyOutgoingCall[]
+  --- @param result lsp.CallHierarchyIncomingCall[]|lsp.CallHierarchyOutgoingCall[]|nil
   --- @param ctx lsp.HandlerContext
   return function(_, result, ctx)
     if not result then
@@ -569,11 +569,13 @@ RCS['callHierarchy/outgoingCalls'] = make_call_hierarchy_handler('to')
 
 --- Displays type hierarchy in the quickfix window.
 local function make_type_hierarchy_handler()
-  --- @param result lsp.TypeHierarchyItem[]
+  --- @param result lsp.TypeHierarchyItem[]?
+  --- @param ctx lsp.HandlerContext
   return function(_, result, ctx, _)
     if not result then
       return
     end
+    --- @param item lsp.TypeHierarchyItem
     local function format_item(item)
       if not item.detail or #item.detail == 0 then
         return item.name

@@ -49,6 +49,7 @@ local function coords()
 end
 
 --- Kitty cursors protocol: Sends a term sequence. Empty string ('') means clear.
+--- @param seq string
 local function send(seq)
   if seq == last_seq then -- Skip redundant sequences.
     return
@@ -71,6 +72,9 @@ end
 ---
 --- NOTE: The fake Visual selections ("nvim.multicursor.visual") are self-painting extmarks.
 --- TODO(justimk): could also do that for "nvim.multicursor" after #41576.
+--- @param bufnr integer
+--- @param topline integer
+--- @param botline integer
 local function display_win(_, _, bufnr, topline, botline)
   if tty_cursors then -- Terminal draws the cursors; emit once per redraw (on_end).
     pending = true

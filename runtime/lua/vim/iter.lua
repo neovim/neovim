@@ -81,7 +81,8 @@ local M = {}
 --- @overload fun(self: vim.Iter<V1, V...>): V1?, V...
 local Iter = {}
 Iter.__index = Iter
-Iter.__call = function(self)
+
+function Iter:__call()
   return self:next()
 end
 
@@ -98,6 +99,9 @@ IterArray.__call = Iter.__call
 --- Packed tables use this as their metatable
 local packedmt = {}
 
+--- @generic V1, V...
+--- @param t V1|([V1, V...] & { n: integer })
+--- @return V1?, V...
 local function unpack(t)
   if type(t) == 'table' and getmetatable(t) == packedmt then
     return _G.unpack(t, 1, t.n)
@@ -116,8 +120,11 @@ local function pack(...)
   return ...
 end
 
+--- @generic T
+--- @param t T
 local function sanitize(t)
   if type(t) == 'table' and getmetatable(t) == packedmt then
+    --- @cast t table
     -- Remove length tag and metatable
     t.n = nil
     setmetatable(t, nil)
@@ -277,6 +284,7 @@ end
 
 --- @nodoc
 --- @diagnostic disable-next-line:unused
+--- @param depth? integer
 function Iter:flatten(depth)
   error('flatten() requires an array-like table')
 end
@@ -421,6 +429,7 @@ end
 ---                  Takes all of the values returned by the previous stage
 ---                  in the pipeline as arguments.
 function Iter:each(f)
+  --- @param ... any
   local function fn(...)
     if select(1, ...) ~= nil then
       f(...)
@@ -561,6 +570,7 @@ function Iter:fold(init, f)
   local acc = init
 
   --- Use a closure to handle var args returned from iterator
+  --- @param ... any
   local function fn(...)
     if select(1, ...) ~= nil then
       acc = f(acc, ...)
@@ -719,6 +729,7 @@ end
 function Iter:find(f)
   if type(f) ~= 'function' then
     local val = f
+    --- @param v V1
     f = function(v)
       return v == val
     end
@@ -727,6 +738,7 @@ function Iter:find(f)
   local result = nil
 
   --- Use a closure to handle var args returned from iterator
+  --- @param ... any
   local function fn(...)
     if select(1, ...) ~= nil then
       if f(...) then
@@ -744,6 +756,7 @@ end
 
 --- @nodoc
 --- @diagnostic disable-next-line:unused
+--- @param f V1|fun(v: V1, ...: V...): boolean
 function Iter:rfind(f)
   error('rfind() requires an array-like table')
 end
@@ -772,6 +785,7 @@ end
 function IterArray:rfind(f)
   if type(f) ~= 'function' then
     local val = f
+    --- @param v V1
     f = function(v)
       return v == val
     end
@@ -827,6 +841,10 @@ function Iter:take(n)
   end
 
   local stop = false
+
+  --- @generic A...
+  --- @param ... A...
+  --- @return A...
   local function fn(...)
     if not stop and select(1, ...) ~= nil and pred(...) then
       i = i + 1
@@ -957,6 +975,7 @@ function Iter:skip(n)
   elseif type(n) == 'function' then
     local next = self.next
 
+    --- @return V1?, V...
     --- @diagnostic disable-next-line:duplicate-set-field
     self.next = function()
       while true do
@@ -1004,6 +1023,7 @@ end
 
 --- @nodoc
 --- @diagnostic disable-next-line:unused
+--- @param n integer
 function Iter:rskip(n)
   error('rskip() requires an array-like table')
 end
@@ -1065,6 +1085,8 @@ end
 
 --- @nodoc
 --- @diagnostic disable-next-line:unused
+--- @param first integer
+--- @param last integer
 function Iter:slice(first, last)
   error('slice() requires an array-like table')
 end
@@ -1093,6 +1115,7 @@ function Iter:any(pred)
   local any = false
 
   --- Use a closure to handle var args returned from iterator
+  --- @param ... any
   local function fn(...)
     if select(1, ...) ~= nil then
       if pred(...) then
@@ -1117,6 +1140,7 @@ end
 function Iter:all(pred)
   local all = true
 
+  --- @param ... any
   local function fn(...)
     if select(1, ...) ~= nil then
       if not pred(...) then

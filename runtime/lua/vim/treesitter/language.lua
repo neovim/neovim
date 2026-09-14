@@ -46,6 +46,10 @@ function M.get_lang(filetype)
 end
 
 ---@deprecated
+---@param lang string
+---@param path? string
+---@param silent? boolean
+---@param symbol_name? string
 function M.require_language(lang, path, silent, symbol_name)
   vim.deprecate(
     'vim.treesitter.language.require_language()',

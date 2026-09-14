@@ -63,6 +63,7 @@ function M._create_parser(buf, lang, opts)
   return self
 end
 
+--- @param lang string?
 local function valid_lang(lang)
   return lang and lang ~= ''
 end

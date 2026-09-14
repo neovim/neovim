@@ -1093,7 +1093,8 @@ Option:get()                                                   *vim.opt:get()*
 <
 
     Return: ~
-        (`string|integer|boolean?`) value of option
+        (`string|integer|boolean|string[]|table<string,string|boolean>?`)
+        value of option
 
 Option:prepend({value})                                    *vim.opt:prepend()*
     Prepend a value to string-style options. See |:set^=|

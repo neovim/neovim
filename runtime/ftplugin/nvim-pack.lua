@@ -3,7 +3,13 @@ local ns = vim.api.nvim_create_namespace('nvim.pack.confirm')
 vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
 
 local priority = 100
-local hi_range = function(lnum, start_col, end_col, hl, pr)
+
+--- @param lnum integer
+--- @param start_col integer
+--- @param end_col integer
+--- @param hl string
+--- @param pr? integer
+local function hi_range(lnum, start_col, end_col, hl, pr)
   --- @type vim.api.keyset.set_extmark
   local opts = { end_row = lnum - 1, end_col = end_col, hl_group = hl, priority = pr or priority }
   -- Set expanding gravity for easier testing. Should not make big difference.
@@ -53,8 +59,11 @@ for i, l in ipairs(lines) do
   end
 end
 
--- Mappings
-local map_section_jump = function(lhs, search_flags, desc)
+--- Mappings
+--- @param lhs string
+--- @param search_flags string
+--- @param desc string
+local function map_section_jump(lhs, search_flags, desc)
   vim.keymap.set({ 'n', 'x' }, lhs, function()
     for _ = 1, vim.v.count1 do
       vim.fn.search('^## ', search_flags)

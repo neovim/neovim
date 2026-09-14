@@ -483,6 +483,7 @@ function M.find(names, opts)
   local matches = {} --- @type string[]
   local errors = {} --- @type string[]
 
+  --- @param match string
   local function add(match)
     matches[#matches + 1] = M.normalize(match)
     if #matches == limit then
@@ -498,6 +499,7 @@ function M.find(names, opts)
     local test --- @type fun(p: string): string[]
 
     if type(names) == 'function' then
+      --- @param p string
       test = function(p)
         local t = {}
         for name, type, err in M.dir(p, { err = true }) do
@@ -510,6 +512,7 @@ function M.find(names, opts)
         return t
       end
     else
+      --- @param p string
       test = function(p)
         local t = {} --- @type string[]
         local ok, aerr = uv.fs_access(p, 'R') -- Check if the root dir is readable.

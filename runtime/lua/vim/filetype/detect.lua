@@ -542,6 +542,7 @@ function M.dep3patch(path, bufnr)
   end
 end
 
+--- @param contents string[]
 local function diff(contents)
   if
     contents[1]:find('^%-%-%- ') and contents[2]:find('^%+%+%+ ')
@@ -558,6 +559,7 @@ local function diff(contents)
   end
 end
 
+--- @param contents string[]
 local function dns_zone(contents)
   if
     findany(
@@ -1478,6 +1480,7 @@ function M.prg(_, bufnr)
   end
 end
 
+--- @param ptcap_type string
 function M.printcap(ptcap_type)
   if fn.did_filetype() == 0 then
     return 'ptcap', function(bufnr)
@@ -1759,6 +1762,7 @@ local function sh(path, contents, name)
   local on_detect --- @type fun(b: integer)?
 
   if name:find('^ksh$') or matchregex(name, [[^#!.\{-2,}\<ksh\>]]) then
+    --- @param b integer
     on_detect = function(b)
       vim.b[b].is_kornshell = 1
       vim.b[b].is_bash = nil
@@ -1769,12 +1773,14 @@ local function sh(path, contents, name)
     or name:find('^bash2?$')
     or matchregex(name, [[^#!.\{-2,}\<bash2\=\>]])
   then
+    --- @param b integer
     on_detect = function(b)
       vim.b[b].is_bash = 1
       vim.b[b].is_kornshell = nil
       vim.b[b].is_sh = nil
     end
   elseif findany(name, { '^sh$', '^dash$' }) or matchregex(name, [[^#!.\{-2,}\<\%(da\)\=sh\>]]) then -- Ubuntu links "sh" to "dash"
+    --- @param b integer
     on_detect = function(b)
       vim.b[b].is_sh = 1
       vim.b[b].is_kornshell = nil

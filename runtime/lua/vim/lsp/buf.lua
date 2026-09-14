@@ -197,9 +197,16 @@ function M.hover(config)
   end)
 end
 
+--- @param name vim.lsp.protocol.Method.ClientToServer.Request
+--- @param params lsp.DocumentSymbolParams|lsp.WorkspaceSymbolParams
+--- @param opts? vim.lsp.ListOpts
 local function request_with_opts(name, params, opts)
   local req_handler --- @type function?
   if opts then
+    --- @param err lsp.ResponseError?
+    --- @param result lsp.DocumentSymbol[]|lsp.SymbolInformation[]|lsp.WorkspaceSymbol[]|nil
+    --- @param ctx lsp.HandlerContext
+    --- @param config? vim.lsp.ListOpts
     req_handler = function(err, result, ctx, config)
       local client = assert(lsp.get_client_by_id(ctx.client_id))
       local handler = client.handlers[name] or lsp.handlers[name]

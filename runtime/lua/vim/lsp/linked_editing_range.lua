@@ -165,6 +165,7 @@ function LinkedEditor:refresh()
 end
 
 ---@package
+---@param bufnr integer
 function LinkedEditor:new(bufnr)
   self = Capability.new(self, bufnr)
 
