@@ -12730,14 +12730,25 @@ static void copy_sub(regsub_T *to, regsub_T *from)
     return;
   }
 
-  // Copy the match start and end positions.
+  // Copy the match start and end positions.  addstate() calls this for
+  // every state it adds, so it is very hot.  Patterns without capturing
+  // groups only use subexpression zero (the whole match), so special-case
+  // "in_use == 1" with a direct assignment to avoid the mch_memmove() call.
   if (REG_MULTI) {
-    memmove(&to->list.multi[0], &from->list.multi[0],
-            sizeof(struct multipos) * (size_t)from->in_use);
+    if (from->in_use == 1) {
+      to->list.multi[0] = from->list.multi[0];
+    } else {
+      memmove(&to->list.multi[0], &from->list.multi[0],
+              sizeof(struct multipos) * (size_t)from->in_use);
+    }
     to->orig_start_col = from->orig_start_col;
   } else {
-    memmove(&to->list.line[0], &from->list.line[0],
-            sizeof(struct linepos) * (size_t)from->in_use);
+    if (from->in_use == 1) {
+      to->list.line[0] = from->list.line[0];
+    } else {
+      memmove(&to->list.line[0], &from->list.line[0],
+              sizeof(struct linepos) * (size_t)from->in_use);
+    }
   }
 }
 
