@@ -2138,9 +2138,9 @@ endfunc
 " A buffer name containing a bar must not be interpreted as an Ex command
 " separator when jumping to a sign in a buffer that is not displayed.
 func Test_sign_jump_name_with_bar()
-  CheckFeature signs
-
   let bufnr = bufadd('Xsign|call setline(1, "PWNED")')
+  " The name is not valid for a file on MS-Windows, do not create a swap file.
+  call setbufvar(bufnr, '&swapfile', 0)
   call bufload(bufnr)
   call setbufline(bufnr, 1, ['one', 'two', 'three'])
 
