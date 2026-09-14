@@ -24,8 +24,8 @@
 #include "nvim/eval/funcs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds_defs.h"
-#include "nvim/ex_docmd.h"
 #include "nvim/extmark.h"
 #include "nvim/fold.h"
 #include "nvim/gettext_defs.h"
@@ -36,6 +36,7 @@
 #include "nvim/insert.h"
 #include "nvim/macros_defs.h"
 #include "nvim/map_defs.h"
+#include "nvim/mark.h"
 #include "nvim/marktree.h"
 #include "nvim/marktree_defs.h"
 #include "nvim/mbyte.h"
@@ -607,11 +608,11 @@ static linenr_T sign_jump(int id, char *group, buf_T *buf)
       emsg(_("E934: Cannot jump to a buffer that does not have a name"));
       return -1;
     }
-    size_t cmdlen = strlen(buf->b_fname) + 24;
-    char *cmd = xmallocz(cmdlen);
-    snprintf(cmd, cmdlen, "e +%" PRId64 " %s", (int64_t)lnum, buf->b_fname);
-    do_cmdline_cmd(cmd);
-    xfree(cmd);
+    setpcmark();
+    if (do_ecmd(buf->b_fnum, NULL, NULL, NULL, lnum,
+                buf_hide(curbuf) ? ECMD_HIDE : 0, curwin) == FAIL) {
+      return -1;
+    }
   }
 
   foldOpenCursor();
