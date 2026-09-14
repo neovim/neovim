@@ -3048,7 +3048,7 @@ describe('pager', function()
       {4:-- More --}^                         |
     ]])
 
-    -- responds to resize, but text is not reflown
+    -- responds to resize, but text is not reflowed
     screen:try_resize(45, 5)
     screen:expect([[
       {2:adipisicing elit, sed do eiusmod te}          |
@@ -3059,7 +3059,7 @@ describe('pager', function()
     ]])
 
     -- can create empty space, as the command hasn't output the text below yet.
-    -- text is not reflown; existing lines get cut
+    -- text is not reflowed; existing lines get cut
     screen:try_resize(30, 12)
     screen:expect([[
       :lua error(_G.x)              |
