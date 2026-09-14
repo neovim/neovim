@@ -79,8 +79,8 @@ local function failed_git_cmd(plug_name, plug_path)
   return false
 end
 
---- @param plug_name string
---- @param lock_data vim.pack.LockData
+--- @param plug_name any
+--- @param lock_data any
 --- @return boolean Whether a check is successful
 local function check_plugin_lock_data(plug_name, lock_data)
   local name_str = vim.inspect(plug_name)
@@ -198,7 +198,7 @@ local function check_lockfile()
     is_good = false
   end
 
-  --- @cast data vim.pack.Lock
+  --- @cast data { plugins: table<any, any> }
   for plug_name, lock_data in pairs(data.plugins) do
     is_good = check_plugin_lock_data(plug_name, lock_data) and is_good
   end
