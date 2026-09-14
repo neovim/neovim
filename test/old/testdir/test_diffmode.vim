@@ -3416,4 +3416,94 @@ func Test_diff_cursorbind_after_undo()
   %bw!
 endfunc
 
+" Redrawing folds scans the diff block list.  The scan is resumed from a
+" remembered position (the "finger") when the line number does not move
+" backwards, so make sure it yields exactly the same folds as a full scan
+" with many changes, when walking up and down, in both windows, and after an
+" edit invalidates the finger.
+func Test_diff_fold_scan_finger()
+  enew!
+  let lines = []
+  for i in range(1, 600)
+    call add(lines, string(i))
+  endfor
+  call setline(1, lines)
+  diffthis
+  let winone = win_getid()
+  new
+  let other = copy(lines)
+  " Change one line in every 30-line block, far enough apart to stay separate.
+  let changes = range(30, 570, 30)
+  for c in changes
+    let other[c - 1] = 'x' . other[c - 1]
+  endfor
+  call setline(1, other)
+  diffthis
+  let wintwo = win_getid()
+
+  set diffopt=internal,filler,context:4
+  diffupdate
+  " Park the cursor on a changed (never folded) line so the fold under the
+  " cursor is not opened, which would perturb the checks below.
+  call cursor(300, 1)
+  normal! zx
+
+  " Fold boundaries derived independently from the change positions: each
+  " change at line c keeps [c - 4, c + 4] visible, the gaps are closed folds.
+  let expected = []
+  let prev_end = 0
+  for c in changes
+    if c - 4 - 1 >= prev_end + 1
+      call add(expected, [prev_end + 1, c - 4 - 1])
+    endif
+    let prev_end = c + 4
+  endfor
+  if prev_end + 1 <= 600
+    call add(expected, [prev_end + 1, 600])
+  endif
+
+  " Walk the folds forward (lnum increasing: exercises the resume path).
+  for [s, e] in expected
+    call assert_equal(s, foldclosed(s), 'foldclosed at ' . s)
+    call assert_equal(e, foldclosedend(s), 'foldclosedend at ' . s)
+  endfor
+
+  " Walk the folds backward (lnum decreasing: forces the finger to restart).
+  for [s, e] in reverse(copy(expected))
+    call assert_equal(s, foldclosed(e), 'reverse foldclosed at ' . e)
+    call assert_equal(e, foldclosedend(e), 'reverse foldclosedend at ' . e)
+  endfor
+
+  " The context lines around every change must not be in a closed fold.
+  for c in changes
+    call assert_equal(-1, foldclosed(c), 'change line ' . c . ' visible')
+  endfor
+
+  " The other window (different buffer index) must produce the same folds.
+  call win_gotoid(winone)
+  call cursor(300, 1)
+  normal! zx
+  for [s, e] in expected
+    call assert_equal(s, foldclosed(s), 'winone foldclosed at ' . s)
+    call assert_equal(e, foldclosedend(s), 'winone foldclosedend at ' . s)
+  endfor
+
+  " Editing invalidates the finger; a new change deep inside a fold must split
+  " it and become visible.
+  call win_gotoid(wintwo)
+  call cursor(300, 1)
+  call setline(315, 'x' . getline(315))
+  diffupdate
+  normal! zx
+  call assert_equal(305, foldclosed(305))
+  call assert_equal(310, foldclosedend(305))
+  call assert_equal(-1, foldclosed(315))
+  call assert_equal(320, foldclosed(320))
+  call assert_equal(325, foldclosedend(320))
+
+  diffoff!
+  %bwipe!
+  set diffopt&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
