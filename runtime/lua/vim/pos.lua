@@ -160,10 +160,6 @@ function M.lsp(buf, pos, position_encoding)
   validate('pos', pos, 'table')
   validate('position_encoding', position_encoding, 'string')
 
-  if buf == 0 then
-    buf = api.nvim_get_current_buf()
-  end
-
   local row, col = util.from_lsp(buf, pos, position_encoding)
   return M.new(buf, row, col)
 end
@@ -208,9 +204,6 @@ function M.cursor(buf, pos)
 
   if pos then
     validate('buf', buf, 'number')
-    if buf == 0 then
-      buf = api.nvim_get_current_buf()
-    end
   else
     local win = buf
     validate('win', win, 'number', true)
@@ -264,10 +257,6 @@ function M.mark(buf, lnum, col)
   validate('lnum', lnum, 'number')
   validate('col', col, 'number')
 
-  if buf == 0 then
-    buf = api.nvim_get_current_buf()
-  end
-
   return M.new(buf, util.from_mark(lnum, col))
 end
 
@@ -301,10 +290,6 @@ function M.extmark(buf, row, col)
   validate('buf', buf, 'number')
   validate('row', row, 'number')
   validate('col', col, 'number')
-
-  if buf == 0 then
-    buf = api.nvim_get_current_buf()
-  end
 
   return M.new(buf, row, col)
 end
