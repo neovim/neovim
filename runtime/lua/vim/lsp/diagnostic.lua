@@ -481,8 +481,6 @@ local function previous_result_ids(client_id, identifier)
   return results
 end
 
-local partial_result_token_counter = 0
-
 --- @param identifier string?
 --- @param client_id integer
 --- @param items lsp.WorkspaceDocumentDiagnosticReport[]
@@ -518,59 +516,37 @@ end
 function M._workspace_diagnostics(opts)
   local clients = lsp.get_clients({ method = 'workspace/diagnostic', id = opts.client_id })
 
-  --- @param error lsp.ResponseError?
-  --- @param result lsp.WorkspaceDiagnosticReport
-  --- @param ctx lsp.HandlerContext
-  local function handler(error, result, ctx)
-    local partial_result_token = ctx.params.partialResultToken ---@type lsp.ProgressToken
-    if partial_result_token then
-      local client = assert(lsp.get_client_by_id(ctx.client_id))
-      client.progress.partialResults[partial_result_token] = nil
-    end
-
-    -- Check for retrigger requests on cancellation errors.
-    -- Unless `retriggerRequest` is explicitly disabled, try again.
-    if error ~= nil and error.code == protocol.ErrorCodes.ServerCancelled then
-      if error.data == nil or error.data.retriggerRequest ~= false then
-        local client = assert(lsp.get_client_by_id(ctx.client_id))
-        -- Recreate partialResultToken
-        partial_result_token_counter = partial_result_token_counter + 1
-        local new_partial_result_token = 'workspace-diagnostic-' .. partial_result_token_counter ---@type lsp.ProgressToken
-        client.progress.partialResults[new_partial_result_token] = function(value)
-          ---@cast value lsp.WorkspaceDiagnosticReportPartialResult
-          handle_workspace_report_items(ctx.params.identifier, client.id, value.items)
+  --- @param client vim.lsp.Client
+  --- @param params lsp.WorkspaceDiagnosticParams
+  local function request_workspace_diagnostics(client, params)
+    client:partial_result_request('workspace/diagnostic', params, function(value)
+      ---@cast value lsp.WorkspaceDiagnosticReportPartialResult
+      handle_workspace_report_items(params.identifier, client.id, value.items)
+    end, function(error, result, ctx)
+      -- Check for retrigger requests on cancellation errors.
+      -- Unless `retriggerRequest` is explicitly disabled, try again.
+      if error ~= nil and error.code == protocol.ErrorCodes.ServerCancelled then
+        if error.data == nil or error.data.retriggerRequest ~= false then
+          request_workspace_diagnostics(client, params)
+          return
         end
-        ctx.params.partialResultToken = new_partial_result_token
-
-        client:request('workspace/diagnostic', ctx.params, handler)
-        return
       end
-    end
 
-    if error == nil and result ~= nil then
-      handle_workspace_report_items(ctx.params.identifier, ctx.client_id, result.items)
-    end
+      if error == nil and result ~= nil then
+        handle_workspace_report_items(params.identifier, ctx.client_id, result.items)
+      end
+    end)
   end
 
   for _, client in ipairs(clients) do
     ---@param cap lsp.DiagnosticRegistrationOptions
     client:_provider_foreach('workspace/diagnostic', function(cap)
-      partial_result_token_counter = partial_result_token_counter + 1
-      local partial_result_token = 'workspace-diagnostic-' .. partial_result_token_counter
-
-      client.progress.partialResults[partial_result_token] = function(value)
-        ---@cast value lsp.WorkspaceDiagnosticReportPartialResult
-        handle_workspace_report_items(cap.identifier, client.id, value.items)
-      end
-
       --- @type lsp.WorkspaceDiagnosticParams
       local params = {
         identifier = cap.identifier,
         previousResultIds = previous_result_ids(client.id, cap.identifier),
-        partialResultToken = partial_result_token,
       }
-
-      client:request('workspace/diagnostic', params, handler)
+      request_workspace_diagnostics(client, params)
     end)
   end
 end
