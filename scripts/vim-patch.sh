@@ -939,7 +939,7 @@ is_na_patch() {
   for file in $FILES_REMAINING; do
     case ${file} in
       runtime/doc/*.txt | runtime/pack/dist/opt/*/doc/*.txt)
-        HUNKS=$(git -c core.attributesfile="$NVIM_SOURCE_DIR"/.gitattributes -c 'diff.helphelp.xfuncname=^.*\*[^*]+\*$' -C "${VIM_SOURCE_DIR}" \
+        HUNKS=$(git -c core.attributesfile="$NVIM_SOURCE_DIR"/.gitattributes -c 'diff.helphelp.xfuncname=^.*\*[^*\s]+\*$' -C "${VIM_SOURCE_DIR}" \
           diff-tree --no-commit-id -r -b -U0 \
           '-I^\s+$' \
           '-I^=+$' \
@@ -965,8 +965,11 @@ is_na_patch() {
         ;;
       runtime/syntax/vim.vim)
         HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
+          '-I^\s+$' \
           '-I^" Last Change:\s' \
-          '-I^syn\skeyword\svimFuncName\scontained\s' \
+          '-I^\s*syn\s+keyword\s+(vimCommand|vimFuncName)\s+contained\s+' \
+          '-I^\s*syn\s+keyword\s+vimAutoEvent\s+contained\s+[^U]' \
+          '-I^\s*syn\s+match\s+vimFuncName\s+contained\s+"\\<nvim_' \
           "$patch" -- "${file}")
         test -n "$HUNKS" && return 1
         ;;
