@@ -24,6 +24,48 @@ describe('Folding', function()
     os.remove(tempfname)
   end)
 
+  it('does not compute disabled folds when opening a file #9084', function()
+    t.write_file(tempfname, 'one\ntwo\nthree\n')
+    exec([[
+      let g:fold_calls = 0
+      function! CountFolds()
+        let g:fold_calls += 1
+        return 1
+      endfunction
+      setlocal nofoldenable foldexpr=CountFolds() foldmethod=expr
+    ]])
+    command('edit ' .. tempfname)
+    command('redraw!')
+    eq(0, n.eval('g:fold_calls'))
+    eq(-1, fn.foldclosed(1))
+    eq(0, n.eval('g:fold_calls'))
+    feed('zc')
+    eq(1, fn.foldclosed(1))
+    eq(3, fn.foldclosedend(1))
+    neq(0, n.eval('g:fold_calls'))
+  end)
+
+  it('does not scan syntax folds with nofoldenable #9084', function()
+    t.write_file(tempfname, string.rep('text\n', 1000) .. 'start\ntail\nend\n')
+    command('setlocal nofoldenable foldmethod=syntax')
+    command('edit ' .. tempfname)
+    exec([[
+      syntax region FoldTail start=/^start$/ end=/^end$/ fold
+      syntime on
+      redraw!
+    ]])
+    local function matches()
+      local report = fn.execute('syntime report')
+      return tonumber(report:match('\n%s*[%d.]+%s+%d+%s+(%d+)[^\n]*FoldTail')) or 0
+    end
+    eq(0, matches())
+    command('setlocal foldenable')
+    eq(1001, fn.foldclosed(1001))
+    eq(1003, fn.foldclosedend(1001))
+    neq(0, matches())
+    command('syntime off')
+  end)
+
   it('manual folding adjusts with filter', function()
     insert([[
     1
