@@ -329,8 +329,7 @@ describe('--embed --listen UI', function()
       let g:evs = []
       autocmd UIEnter * call add(g:evs, $"UIEnter:{v:event.chan}")
       autocmd VimEnter * call add(g:evs, "VimEnter")
-    ]],
-      {}
+    ]]
     )
 
     -- VimEnter and UIEnter shouldn't be triggered until after attach
