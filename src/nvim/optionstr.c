@@ -1803,6 +1803,7 @@ const char *did_set_splitkeep(optset_T *args FUNC_ATTR_UNUSED)
 {
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     wp->w_prev_height = wp->w_height;
+    wp->w_prev_winrow = wp->w_winrow;
   }
   return did_set_str_generic(args);
 }
