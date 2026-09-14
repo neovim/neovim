@@ -100,6 +100,13 @@ typedef struct {
 } Dict(keymap_del);
 
 typedef struct {
+  OptionalKeys is_set__log_;
+  String type;
+  Boolean join;
+  Integer trunc;
+} Dict(log);
+
+typedef struct {
   Boolean builtin;
 } Dict(get_commands);
 
