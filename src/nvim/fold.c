@@ -172,8 +172,6 @@ bool hasFolding(win_T *win, linenr_T lnum, linenr_T *firstp, linenr_T *lastp)
 bool hasFoldingWin(win_T *const win, const linenr_T lnum, linenr_T *const firstp,
                    linenr_T *const lastp, const bool cache, foldinfo_T *const infop)
 {
-  checkupdate(win);
-
   // Return quickly when there is no folding at all in this window.
   if (!hasAnyFolding(win)) {
     if (infop != NULL) {
@@ -181,6 +179,8 @@ bool hasFoldingWin(win_T *const win, const linenr_T lnum, linenr_T *const firstp
     }
     return false;
   }
+
+  checkupdate(win);
 
   bool had_folded = false;
   linenr_T first = 0;
