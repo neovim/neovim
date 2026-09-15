@@ -2041,7 +2041,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       }
 
       // Decide which of the highlight attributes to use.
-      if (area_attr != 0) {
+      // above_search_attr: extmarks with kSHAboveSearch (e.g. multicursor) render above
+      // search/area highlights regardless of extmark priority.
+      int above_search_attr = decor_state.current_above_search;
+      if (above_search_attr != 0) {
+        char_attr_pri = hl_combine_attr(wlv.line_attr, above_search_attr);
+      } else if (area_attr != 0) {
         char_attr_pri = hl_combine_attr(wlv.line_attr, area_attr);
         if (!Search.hl_match) {
           // let search highlight show in Visual area if possible

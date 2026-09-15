@@ -3402,4 +3402,36 @@ describe('multicursor', function()
       eq({ 'aa', 'b' }, get_lines())
     end)
   end)
+
+  describe('highlight priority', function()
+    local screen ---@type test.functional.ui.screen
+
+    before_each(function()
+      command('hi! MCursor       guifg=White guibg=Red')
+      command('hi! MCursorVisual guifg=NONE  guibg=Magenta')
+      command('hi! Search        guifg=White guibg=Blue')
+      command('hi! Visual        guifg=NONE  guibg=LightGrey')
+      screen = Screen.new(30, 5)
+      screen:add_extra_attr_ids({
+        MCursorVisual = { background = Screen.colors.Magenta },
+        Search = { foreground = Screen.colors.Gray100, background = Screen.colors.Blue },
+        Visual = { background = Screen.colors.LightGray },
+        VisualSearch = { foreground = Screen.colors.Gray100, background = Screen.colors.LightGray },
+      })
+    end)
+
+    it('MCursor and MCursorVisual render above hlsearch', function()
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'hello world abc', 'hello world abc' })
+      feed('gg0wQ')
+      feed('j')
+      feed('viw')
+      command('let @/ = "world" | set hlsearch')
+      screen:expect([[
+        hello {MCursorVisual:worl}{9:d} abc               |
+        hello {VisualSearch:worl}{Search:^d} abc               |
+        {1:~                             }|*2
+        {5:-- VISUAL --}                  |
+      ]])
+    end)
+  end)
 end)
