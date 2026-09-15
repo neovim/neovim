@@ -2436,6 +2436,25 @@ putglyph 1f3f4,200d,2620,fe0f 2 0,4]])
     cursor(5, 9, state)
   end)
 
+  itp('kitty query does not report unsupported keyboard flags #41295', function()
+    local vt = init()
+    wantstate(vt)
+
+    -- Unsupported kitty keyboard protocol flags are not advertised.
+    push('\x1b[>31u\x1b[?u', vt)
+    expect_output('\x1b[?1u')
+    inkey('tab', vt)
+    expect_output('\x09')
+
+    -- Changing unsupported flags leaves the supported flag unchanged.
+    push('\x1b[=8;2u\x1b[?u', vt)
+    expect_output('\x1b[?1u')
+
+    -- Popping restores the previous flags.
+    push('\x1b[<u\x1b[?u', vt)
+    expect_output('\x1b[?0u')
+  end)
+
   itp('25state_input', function()
     local vt = init()
     local state = wantstate(vt)
