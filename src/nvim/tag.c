@@ -53,6 +53,7 @@
 #include "nvim/optionstr.h"
 #include "nvim/os/fs.h"
 #include "nvim/os/input.h"
+#include "nvim/plines.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/os/time.h"
 #include "nvim/path.h"
@@ -2895,6 +2896,9 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
     }
 
     if (retval == OK) {
+      // Restoring a tag target may reset the top filler after decorations
+      // such as CodeLens virtual lines were added to its buffer.
+      reconcile_topfill(curwin);
       // For a help buffer: Put the cursor line at the top of the window,
       // the help subject will be below it.
       if (curbuf->b_help) {

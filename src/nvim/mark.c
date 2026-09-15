@@ -52,6 +52,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/undo.h"
 #include "nvim/vim_defs.h"
+#include "nvim/window.h"
 
 // This file contains routines to maintain and manipulate marks.
 
@@ -693,23 +694,56 @@ end:
 /// @param  fm the named mark.
 void mark_view_restore(fmark_T *fm)
 {
-  if (fm != NULL && fm->view.topline_offset >= 0) {
-    linenr_T topline = fm->mark.lnum - fm->view.topline_offset;
-    // If the mark does not have a view, topline_offset is MAXLNUM,
-    // and this check can prevent restoring mark view in that case.
-    if (topline >= 1) {
-      set_topline(curwin, topline);
-      curwin->w_skipcol = (fm->view.skipcol > 0
-                           && !hasFolding(curwin, topline, NULL, NULL)
-                           && fm->view.skipcol < linetabsize_eol(curwin, topline))
-                          ? fm->view.skipcol : 0;
-    }
+  if (fm == NULL) {
+    return;
   }
+
+  // Fold and diff queries may evaluate user code. Copy the mark view first.
+  const linenr_T mark_lnum = fm->mark.lnum;
+  const fmarkv_T view = fm->view;
+  if (view.topline_offset < 0 || view.topline_offset == MAXLNUM) {
+    return;
+  }
+
+  linenr_T topline = mark_lnum - view.topline_offset;
+  if (topline < 1) {
+    return;
+  }
+
+  win_T *wp = curwin;
+  bufref_T bufref;
+  set_bufref(&bufref, wp->w_buffer);
+  topline = MIN(topline, wp->w_buffer->b_ml.ml_line_count);
+  set_topline(wp, topline);
+  if (!win_valid(wp) || !bufref_valid(&bufref) || wp->w_buffer != bufref.br_buf) {
+    return;
+  }
+
+  colnr_T skipcol = (view.skipcol > 0
+                     && !hasFolding(wp, wp->w_topline, NULL, NULL)
+                     && view.skipcol < linetabsize_eol(wp, wp->w_topline))
+                    ? view.skipcol : 0;
+  int topfill = 0;
+  if (view.topfill == 0) {
+    // A zero saved value may predate virtual lines added to the buffer.
+    reconcile_topfill(wp);
+    topfill = wp->w_topfill;
+  }
+  if (view.topfill > 0) {
+    const int max_topfill = win_get_fill(wp, wp->w_topline);
+    if (!win_valid(wp) || !bufref_valid(&bufref) || wp->w_buffer != bufref.br_buf) {
+      return;
+    }
+    topfill = MIN(view.topfill, max_topfill);
+  }
+  wp->w_skipcol = skipcol;
+  wp->w_topfill = topfill;
+  check_topfill(wp, false);
 }
 
 fmarkv_T mark_view_make(const win_T *wp, pos_T pos)
 {
-  return (fmarkv_T){ pos.lnum - wp->w_topline, wp->w_skipcol };
+  return (fmarkv_T){ pos.lnum - wp->w_topline, wp->w_skipcol, wp->w_topfill };
 }
 
 /// Search for the next named mark in the current file from a start position.
