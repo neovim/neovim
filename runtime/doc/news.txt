@@ -461,6 +461,8 @@ PERFORMANCE
   memory reallocation during each data reset.
 • RPC client avoids string allocations when parsing Content-Length messages.
 • LSP: "overscan" semantic_token range requests to avoid flicker.
+• |vim.hl.range()| and |vim.hl.hl_op()| are faster for large characterwise and
+  linewise regions.
 
 PLUGINS
 
