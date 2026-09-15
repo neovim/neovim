@@ -1,6 +1,9 @@
 local M = {}
 
-local git_cmd = function(cmd, cwd, on_exit)
+--- @param cmd string[]
+--- @param cwd string
+--- @param on_exit fun(out: vim.SystemCompleted)
+local function git_cmd(cmd, cwd, on_exit)
   cmd = vim.list_extend({ 'git', '-c', 'gc.auto=0' }, cmd)
   local env = vim.fn.environ() --- @type table<string,string>
   env.GIT_DIR, env.GIT_WORK_TREE = nil, nil
@@ -28,15 +31,18 @@ function methods.shutdown(_, callback)
   return callback(nil, nil)
 end
 
-local get_confirm_bufnr = function(uri)
+--- @param uri string
+local function get_confirm_bufnr(uri)
   return vim._tointeger(uri:match('^nvim%-pack://confirm#(%d+)$'))
 end
 
 local group_header_pattern = '^# (%S+)'
 local plugin_header_pattern = '^## (.+)$'
 
+--- @param bufnr integer
+--- @param lnum integer
 --- @return { group: string?, name: string?, from: integer?, to: integer?, active: boolean? }
-local get_plug_data_at_lnum = function(bufnr, lnum)
+local function get_plug_data_at_lnum(bufnr, lnum)
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   --- @type string, string, integer, integer
   local group, name, from, to
@@ -153,13 +159,20 @@ methods['textDocument/documentSymbol'] = function(params, callback)
   ---   children: vim.pack.lsp.Symbol[]?,
   --- }
 
+  --- @param name string?
+  --- @param start_line integer?
+  --- @param end_line integer
+  --- @param kind integer
   --- @return vim.pack.lsp.Symbol?
-  local new_symbol = function(name, start_line, end_line, kind)
+  local function new_symbol(name, start_line, end_line, kind)
     if name == nil then
       return nil
     end
     local range = {
-      start = { line = start_line, character = 0 },
+      start = {
+        line = start_line --[[@as integer]],
+        character = 0,
+      },
       ['end'] = { line = end_line, character = 0 },
     }
     return { name = name, kind = kind, range = range, selectionRange = range }
@@ -167,8 +180,12 @@ methods['textDocument/documentSymbol'] = function(params, callback)
 
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
 
+  --- @param pattern string
+  --- @param start_line integer
+  --- @param end_line integer
+  --- @param kind integer
   --- @return vim.pack.lsp.Symbol[]
-  local parse_headers = function(pattern, start_line, end_line, kind)
+  local function parse_headers(pattern, start_line, end_line, kind)
     local res, cur_match, cur_start = {}, nil, nil
     for i = start_line, end_line do
       local m = lines[i + 1]:match(pattern)
@@ -209,6 +226,8 @@ methods['textDocument/codeAction'] = function(params, callback)
     return callback(nil, {})
   end
 
+  --- @param title string
+  --- @param command string
   local function new_action(title, command)
     return {
       title = ('%s `%s`'):format(title, plug_data.name),
@@ -306,11 +325,15 @@ local dispatchers = {}
 
 -- TODO: Simplify after `vim.lsp.server` is a thing
 -- https://github.com/neovim/neovim/pull/24338
-local cmd = function(disp)
+--- @param disp vim.lsp.rpc.Dispatchers
+local function cmd(disp)
   -- Store dispatchers to use for showing progress notifications
   dispatchers = disp
   local res, closing, request_id = {}, false, 0
 
+  --- @param method vim.lsp.protocol.Method.ClientToServer.Request
+  --- @param params table?
+  --- @param callback fun(err: lsp.ResponseError?, result: any)
   function res.request(method, params, callback)
     local method_impl = methods[method]
     if method_impl ~= nil then
@@ -320,6 +343,7 @@ local cmd = function(disp)
     return true, request_id
   end
 
+  --- @param method vim.lsp.protocol.Method.ClientToServer.Notification
   function res.notify(method, _)
     if method == 'exit' then
       dispatchers.on_exit(0, 15)

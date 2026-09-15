@@ -1,6 +1,8 @@
 --- @diagnostic disable: duplicate-doc-alias
 
----@param tbl table<string, string|number>
+---@generic T: string|number
+---@param tbl table<string, T>
+---@return T[]
 local function get_value_set(tbl)
   local value_set = {}
   for _, v in pairs(tbl) do

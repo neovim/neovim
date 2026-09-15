@@ -129,7 +129,9 @@ function M.diagnostic_cmp(a, b, primary_key, reverse, col_fn)
     b_val = b[primary_key] --[[@as integer]]
   end
 
-  local cmp = function(x, y)
+  --- @param x integer
+  --- @param y integer
+  local function cmp(x, y)
     if reverse then
       return x > y
     end

@@ -11,6 +11,7 @@ local function cmd_ok(cmd)
   return result.code == 0, result.stdout
 end
 
+---@param cmd string[]
 local function cli_version(cmd)
   local ok, out = cmd_ok(cmd)
   return ok, vim.version.parse(out, { strict = false })
@@ -32,6 +33,8 @@ end
 
 -- Handler for s:system() function.
 --- @param self {output: string, stderr: string, add_stderr_to_output: boolean}
+--- @param data string[]
+--- @param event 'stdout'|'stderr'
 local function system_handler(self, _, data, event)
   if event == 'stderr' then
     if self.add_stderr_to_output then
@@ -116,6 +119,7 @@ local function provider_disabled(provider)
 end
 
 --- Checks the hygiene of a `g:loaded_xx_provider` variable.
+--- @param var string
 local function check_loaded_var(var)
   if vim.g[var] == 1 then
     health.error(('`g:%s=1` may have been set by mistake.'):format(var), {
@@ -361,6 +365,8 @@ local function perl()
   end
 end
 
+--- @param path string?
+--- @param ty string
 local function is(path, ty)
   if not path then
     return false
@@ -373,6 +379,7 @@ local function is(path, ty)
 end
 
 -- Resolves Python executable path by invoking and checking `sys.executable`.
+--- @param invocation string?
 local function python_exepath(invocation)
   if invocation == '' or invocation == nil then
     return nil
@@ -431,6 +438,7 @@ local function check_for_pyenv()
 end
 
 -- Check the Python interpreter's usability.
+--- @param bin string
 local function check_bin(bin)
   if not is(bin, 'file') and (not iswin or not is(bin .. '.exe', 'file')) then
     health.error('"' .. bin .. '" was not found.')
@@ -547,6 +555,8 @@ local function version_info(python)
 
   -- Assuming that multiple versions of a package are installed as
   -- `<semver>/<metapath>`, sort them on semantic version in descending order.
+  --- @param metapath1 string
+  --- @param metapath2 string
   local function compare(metapath1, metapath2)
     local dir1 = vim.fs.basename(vim.fs.dirname(vim.fs.abspath(metapath1)))
     local dir2 = vim.fs.basename(vim.fs.dirname(vim.fs.abspath(metapath2)))

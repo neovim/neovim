@@ -289,6 +289,7 @@ end
 ---@param lines table list of lines
 ---@param start_range vim.lsp.sync.Range table returned by first_difference
 ---@param end_range vim.lsp.sync.Range new_end_range returned by last_difference
+---@param line_ending string
 ---@return string text extracted from defined region
 local function extract_text(lines, start_range, end_range, line_ending)
   if not lines[start_range.line_idx] then

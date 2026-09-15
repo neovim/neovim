@@ -826,6 +826,8 @@ end
 --- @see |vim.lsp.buf_request_sync()|
 function Client:request_sync(method, params, timeout_ms, bufnr)
   local request_result = nil
+  --- @param err lsp.ResponseError?
+  --- @param result any
   local function _sync_handler(err, result)
     request_result = { err = err, result = result }
   end
@@ -984,7 +986,7 @@ function Client:_supports_registration(method)
     return true
   end
   local capability = vim.tbl_get(self.capabilities, unpack(capability_path))
-  return type(capability) == 'table' and capability.dynamicRegistration
+  return type(capability) == 'table' and capability.dynamicRegistration == true
 end
 
 --- Get provider for a method to be registered dynamically.
@@ -1057,6 +1059,7 @@ function Client:_unregister(unregistrations)
 end
 
 --- @private
+--- @param bufnr integer
 function Client:_get_language_id(bufnr)
   return self.get_language_id(bufnr, vim.bo[bufnr].filetype)
 end
@@ -1467,6 +1470,7 @@ end
 
 --- Reset defaults set by `set_defaults`.
 --- Must only be called if the last client attached to a buffer exits.
+--- @param bufnr integer
 local function reset_defaults(bufnr)
   if vim.bo[bufnr].tagfunc == lsp.tagfunc then
     vim.bo[bufnr].tagfunc = nil

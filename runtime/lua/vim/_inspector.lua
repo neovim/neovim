@@ -1,5 +1,15 @@
 --- @diagnostic disable:no-unknown
 
+--- @class (private) vim._inspector.Extmark
+--- @field id integer
+--- @field row integer
+--- @field col integer
+--- @field end_row integer
+--- @field end_col integer
+--- @field opts vim.api.keyset.extmark_details & { hl_group_link?: string }
+--- @field ns_id integer
+--- @field ns string
+
 --- @class vim._inspector.Filter
 --- @inlinedoc
 ---
@@ -70,6 +80,8 @@ function vim.inspect_pos(buf, row, col, filter)
   }
 
   -- resolve hl links
+  --- @generic T: { hl_group?: string, hl_group_link?: string }
+  --- @param data T
   local function resolve_hl(data)
     if data.hl_group then
       local hlid = vim.api.nvim_get_hl_id_by_name(data.hl_group)
@@ -105,6 +117,7 @@ function vim.inspect_pos(buf, row, col, filter)
   end
 
   --- Convert an extmark tuple into a table
+  --- @param extmark [integer, integer, integer, vim.api.keyset.extmark_details]
   local function to_map(extmark)
     local opts = resolve_hl(extmark[4])
     return {
@@ -121,6 +134,7 @@ function vim.inspect_pos(buf, row, col, filter)
 
   --- Exclude end_col and unpaired marks from the overlapping marks, unless
   --- filter.extmarks == 'all' (a highlight is drawn until end_col - 1).
+  --- @param extmark vim._inspector.Extmark
   local function exclude_end_col(extmark)
     return filter.extmarks == 'all' or row < extmark.end_row or col < extmark.end_col
   end
@@ -142,7 +156,7 @@ function vim.inspect_pos(buf, row, col, filter)
   if filter.extmarks then
     results.extmarks = vim.tbl_filter(function(extmark)
       return extmark.ns:find('nvim.lsp.semantic_tokens') ~= 1
-        and (filter.extmarks == 'all' or extmark.opts.hl_group)
+        and (filter.extmarks == 'all' or extmark.opts.hl_group ~= nil)
     end, extmarks)
   end
 
@@ -172,6 +186,8 @@ function vim.show_pos(buf, row, col, filter)
 
   local lines = { {} }
 
+  ---@param str string
+  ---@param hl? string
   local function append(str, hl)
     table.insert(lines[#lines], { str, hl })
   end
@@ -180,6 +196,8 @@ function vim.show_pos(buf, row, col, filter)
     table.insert(lines, {})
   end
 
+  --- @param data { hl_group: string, hl_group_link: string }
+  --- @param comment? string
   local function item(data, comment)
     append('  - ')
     append(data.hl_group, data.hl_group)

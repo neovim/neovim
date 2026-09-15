@@ -57,6 +57,7 @@ do
   ---
   --- See |v_star-default| and |v_#-default|
   do
+    --- @param forward 0|1
     local function _visual_search(forward)
       assert(forward == 0 or forward == 1)
       local pos = vim.fn.getpos('.')
@@ -147,6 +148,7 @@ do
 
   --- Map |gx| to call |vim.ui.open| on the `textDocument/documentLink` or <cfile> at cursor.
   do
+    --- @param uri string
     local function do_open(uri)
       local cmd, err = vim.ui.open(uri)
       local rv = cmd and cmd:wait(1000) or nil
@@ -679,6 +681,7 @@ do
   end)
 
   ---@param ns integer
+  ---@param win integer
   ---@param buf integer
   ---@param count integer
   local function jump_to_prompt(ns, win, buf, count)
@@ -919,6 +922,7 @@ do
   --- @param sync boolean When true (a TTY is present at startup), also send a
   --- DSR probe and synchronously wait so 'background' is set before user config,
   --- warning (E1568) if the terminal never answers the DSR.
+  --- @param chan integer
   local function detect_background(sync, chan)
     -- Re-create (clear) the handler's augroup on each call so only the
     -- most-recently-attached TUI's handler remains.

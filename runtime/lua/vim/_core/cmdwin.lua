@@ -19,6 +19,8 @@ local cmdwin_types = { [':'] = true, ['/'] = true, ['?'] = true }
 
 --- Fills the cmdwin buffer with the cmdline history.
 --- @return boolean filled  Whether any lines were written.
+--- @param buf integer
+--- @param type ':'|'/'|'?'
 local function fill_history(buf, type)
   local histname = type == ':' and 'cmd' or (type == '/' or type == '?') and 'search' or nil
   assert(histname, 'cmdwin: unknown type: ' .. tostring(type))

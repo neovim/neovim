@@ -3225,7 +3225,7 @@ describe('API', function()
     end
 
     it('stream=job :terminal channel', function()
-      local screen = Screen.new(80, 24)
+      Screen.new(80, 24)
 
       command(':terminal')
       eq(1, api.nvim_get_current_buf())
@@ -3258,7 +3258,9 @@ describe('API', function()
       eq(expected2, actual2)
 
       -- Make sure Nvim TUI is started (which is after registering SIGHUP handler).
-      screen:expect({ any = 'Nvim is open source and freely distributable' })
+      t.retry(nil, nil, function()
+        matches('Nvim is open source and freely distributable', n.curbuf_contents())
+      end)
 
       -- :terminal with args + stopped process (Nvim TUI).
       eq(1, eval('jobstop(&channel)'))
@@ -3275,7 +3277,9 @@ describe('API', function()
       -- Use a process that doesn't read stdin, so PTY EOF can't race SIGHUP.
       argv = { n.testprg('shell-test'), 'HOLD' }
       fn.jobstart(argv, { term = true })
-      screen:expect({ any = { vim.pesc('holding $') } })
+      t.retry(nil, nil, function()
+        matches('holding %$', n.curbuf_contents())
+      end)
       eq(1, eval('jobstop(&channel)'))
       eval('jobwait([&channel], 1000)') -- Wait.
       local expected3 = term_channel_info(5, 3, argv)

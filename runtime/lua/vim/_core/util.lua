@@ -56,6 +56,7 @@ end
 --- @param file string
 --- @return number buffer number of the edited buffer
 M.edit_in = function(winnr, file)
+  --- @param path string?
   local function resolved_path(path)
     if not path or path == '' then
       return ''

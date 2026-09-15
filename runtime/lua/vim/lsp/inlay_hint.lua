@@ -38,6 +38,7 @@ setmetatable(InlayHint, Capability)
 Capability.all[InlayHint.name] = InlayHint
 
 ---@package
+---@param bufnr integer
 function InlayHint:new(bufnr)
   self = Capability.new(self, bufnr)
 
@@ -51,6 +52,7 @@ function InlayHint:new(bufnr)
 end
 
 ---@package
+---@param client_id integer
 function InlayHint:on_attach(client_id)
   if not self.client_state[client_id] then
     self.client_state[client_id] = {
@@ -63,6 +65,7 @@ function InlayHint:on_attach(client_id)
 end
 
 ---@package
+---@param client_id integer
 function InlayHint:on_detach(client_id)
   local state = self.client_state[client_id]
   if state then
@@ -72,11 +75,13 @@ function InlayHint:on_detach(client_id)
 end
 
 ---@private
+---@param client_id integer
 function InlayHint:on_close(client_id)
   self:reset(client_id)
 end
 
 ---@private
+---@param client_id integer
 function InlayHint:on_change(client_id)
   self:refresh(client_id)
 end
@@ -135,6 +140,7 @@ end
 
 --- |lsp-handler| for the method `textDocument/inlayHint`
 --- Store hints for a specific buffer and client
+---@param err lsp.ResponseError?
 ---@param result lsp.InlayHint[]?
 ---@param ctx lsp.HandlerContext
 ---@internal
@@ -209,6 +215,7 @@ function M.on_inlayhint(err, result, ctx)
 end
 
 ---@private
+---@param client_id integer
 function InlayHint:cancel_active_request(client_id)
   local state = assert(self.client_state[client_id])
   local client = vim.lsp.get_client_by_id(client_id)
@@ -222,6 +229,7 @@ function InlayHint:cancel_active_request(client_id)
 end
 
 --- |lsp-handler| for the method `workspace/inlayHint/refresh`
+---@param err lsp.ResponseError?
 ---@param ctx lsp.HandlerContext
 ---@internal
 function M.on_refresh(err, _, ctx)

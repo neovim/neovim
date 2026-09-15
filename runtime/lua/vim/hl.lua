@@ -221,6 +221,7 @@ function M.hl_op(opts)
 end
 
 --- @deprecated Use |vim.hl.hl_op()| instead.
+--- @param opts? table
 function M.on_yank(opts)
   vim.deprecate('vim.hl.on_yank', 'vim.hl.hl_op', '0.14')
   return M.hl_op(opts)

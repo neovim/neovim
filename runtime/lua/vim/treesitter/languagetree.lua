@@ -1185,6 +1185,15 @@ function LanguageTree:_do_callback(cb_name, ...)
 end
 
 ---@package
+---@param start_byte integer
+---@param end_byte_old integer
+---@param end_byte_new integer
+---@param start_row integer
+---@param start_col integer
+---@param end_row_old integer
+---@param end_col_old integer
+---@param end_row_new integer
+---@param end_col_new integer
 function LanguageTree:_edit(
   start_byte,
   end_byte_old,
@@ -1334,6 +1343,7 @@ function LanguageTree:_on_reload()
   self:invalidate(true)
 end
 
+--- @param ... integer
 function LanguageTree:_on_detach(...)
   self:invalidate(true)
   self:_do_callback('detach', ...)

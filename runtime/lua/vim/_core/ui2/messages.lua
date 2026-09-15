@@ -232,6 +232,8 @@ local hlopts = { undo_restore = false, invalidate = true, priority = 1, strict =
 --- Move messages to expanded cmdline, dialog or pager to show in full.
 --- Return updated target+buffer in case it differs from 'src'.
 ---
+---@param src 'cmd'|'msg'|'dialog'|'pager'
+---@param tgt? 'cmd'|'msg'|'dialog'|'pager'
 ---@param focus? boolean Enter the pager: it was explicitly requested.
 function M.expand_msg(src, tgt, focus)
   -- Copy and clear message from src to enlarged cmdline that is dismissed by any
@@ -598,6 +600,9 @@ function M.msg_history_show(entries, prev_cmd)
 end
 
 local typed_g = false
+
+--- @param key string
+--- @param typed string
 local function cmd_on_key(key, typed)
   typed = fn.keytrans(typed)
   -- Don't dismiss for non-typed keys and mouse movement. When 'g' is passed (typed
@@ -647,7 +652,8 @@ local function set_top_bot_spill()
 end
 
 --- Allow paging in the dialog window, consume the key if the topline changes.
-local dialog_on_key = function(_, typed)
+--- @param typed string?
+local function dialog_on_key(_, typed)
   typed = typed and fn.keytrans(typed)
   if not typed then
     return
@@ -675,6 +681,7 @@ local dialog_on_key = function(_, typed)
   end
 end
 
+---@param tgt 'cmd'|'msg'|'dialog'|'pager'
 ---@param min integer Minimum window height.
 local function win_row_height_border(tgt, min)
   local h = (tgt ~= 'cmd' and ui.cfg.msg[tgt].height or 0) --[[@as number]]

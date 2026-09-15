@@ -351,6 +351,14 @@ function Client.new(dispatchers, transport, decode, format)
 end
 
 ---@private
+---@param payload {
+---  jsonrpc: '2.0',
+---  id?: integer|string,
+---  method?: string,
+---  params?: table,
+---  error?: lsp.ResponseError,
+---  result?: any
+---}
 function Client:encode_and_send(payload)
   log.debug('rpc.send', payload)
   if self.transport:is_closing() then
@@ -377,6 +385,9 @@ end
 
 ---@private
 --- sends an error object to the remote LSP process.
+---@param request_id integer|string
+---@param err lsp.ResponseError?
+---@param result any
 function Client:send_response(request_id, err, result)
   return self:encode_and_send({
     id = request_id,

@@ -123,7 +123,8 @@ local async = require('vim.async') --- @type vim.async._core
 local s_output = {} ---@type string[]
 local check_summary = { warn = 0, error = 0 }
 
--- From a path return a list [{name}, {func}, {type}] representing a healthcheck
+--- From a path return a list [{name}, {func}, {type}] representing a healthcheck
+--- @param path string
 local function filepath_to_healthcheck(path)
   path = vim.fs.abspath(vim.fs.normalize(path))
   local name --- @type string

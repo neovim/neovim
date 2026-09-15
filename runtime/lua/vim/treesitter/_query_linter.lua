@@ -205,6 +205,7 @@ function M.omnifunc(findstart, base)
   if findstart == 1 then
     local result =
       api.nvim_get_current_line():sub(1, api.nvim_win_get_cursor(0)[2]):find('["#%-%w]*$')
+    assert(result)
     return result - 1
   end
 

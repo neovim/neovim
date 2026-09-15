@@ -38,6 +38,7 @@ local function get_commentstring(ref_position)
   local ts_cs, res_level = nil, 0
 
   ---@param lang_tree vim.treesitter.LanguageTree
+  ---@param level integer
   local function traverse(lang_tree, level)
     if not lang_tree:contains(ref_range) then
       return

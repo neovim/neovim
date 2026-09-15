@@ -262,6 +262,7 @@ function State:on_detach(client_id)
 end
 
 ---@private
+---@param client_id integer
 function State:on_close(client_id)
   self.client_state[client_id] = {}
   self:evaluate()
@@ -269,6 +270,7 @@ function State:on_close(client_id)
 end
 
 ---@private
+---@param client_id integer
 function State:on_change(client_id)
   self:refresh(client_id)
 end
@@ -294,6 +296,7 @@ end
 --- Refresh requests are sent by the server to indicate a project-wide change
 --- that requires all folding ranges to be re-requested by the client.
 ---@param ctx lsp.HandlerContext
+---@param err lsp.ResponseError?
 ---@internal
 function M.on_refresh(err, _, ctx)
   if err then

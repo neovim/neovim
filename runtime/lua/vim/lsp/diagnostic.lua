@@ -383,8 +383,9 @@ function Diagnostics:refresh(client_id)
 end
 
 --- |lsp-handler| for the method `workspace/diagnostic/refresh`
----@param ctx lsp.HandlerContext
 ---@internal
+---@param err lsp.ResponseError?
+---@param ctx lsp.HandlerContext
 function M.on_refresh(err, _, ctx)
   if err then
     return vim.NIL
@@ -413,6 +414,7 @@ end
 
 --- Enable pull diagnostics for a buffer from a client
 ---@package
+---@param client_id integer
 function Diagnostics:on_attach(client_id)
   local state = self.client_state[client_id]
 
@@ -428,6 +430,7 @@ end
 
 --- Disable pull diagnostics for a buffer from a client
 ---@package
+---@param client_id integer
 function Diagnostics:on_detach(client_id)
   local state = self.client_state[client_id]
   if state then
@@ -437,6 +440,7 @@ function Diagnostics:on_detach(client_id)
 end
 
 ---@private
+---@param client_id integer
 function Diagnostics:on_close(client_id)
   local state = self.client_state[client_id]
   if state and state.pull_kind == 'document' then
@@ -445,6 +449,7 @@ function Diagnostics:on_close(client_id)
 end
 
 ---@private
+---@param client_id integer
 function Diagnostics:on_change(client_id)
   local state = self.client_state[client_id]
   if state and state.pull_kind == 'document' then

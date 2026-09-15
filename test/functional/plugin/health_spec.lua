@@ -303,6 +303,10 @@ describe('vim.health', function()
         Bar = { foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGrey },
       })
       command('checkhealth foo success1')
+      -- Wait for the filetype plugin before changing window options.
+      retry(nil, 5000, function()
+        eq('checkhealth', api.nvim_get_option_value('filetype', { buf = 0 }))
+      end)
       command('set nofoldenable nowrap laststatus=0')
       screen:expect {
         grid = [[

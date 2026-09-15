@@ -152,6 +152,9 @@ function M.check_targets()
   end
 end
 
+--- @param redraw_msg boolean
+--- @param event string
+--- @param ... any
 local function ui_callback(redraw_msg, event, ...)
   local handler = M.msg[event] or M.cmd[event] --[[@as function]]
   M.check_targets()
@@ -172,6 +175,9 @@ local function ui_callback(redraw_msg, event, ...)
 end
 local scheduled_ui_callback = vim.schedule_wrap(ui_callback)
 
+--- @param name string
+--- @param value any
+--- @param new_name string
 local function validate_old_cfg(name, value, new_name)
   if value ~= nil then
     error(
@@ -184,6 +190,17 @@ local function validate_old_cfg(name, value, new_name)
 end
 
 ---@nodoc
+---@class (private) vim._core.ui2.Opts
+---@field enable? boolean
+---@field pager_char? string
+---@field msg? {
+---   targets?: 'cmd'|'msg'|'pager'|table<string,'cmd'|'msg'|'pager'>,
+---   dialog?: { height?: number },
+---   msg?: { height?: number, timeout?: integer },
+---   pager?: { height?: number },
+---   cmd?: { height?: integer },
+--- }
+---@param opts? vim._core.ui2.Opts
 function M.enable(opts)
   opts = opts or {}
   vim.validate('opts', opts, 'table', true)
@@ -232,6 +249,7 @@ function M.enable(opts)
   -- dependent on some option values. Reconfigure windows when option value
   -- has changed and after VimEnter when the user configured value is known.
   -- TODO: Reconsider what is needed when this module is enabled by default early in startup.
+  --- @param value integer
   local function check_cmdheight(value)
     M.check_targets()
     -- 'cmdheight' set; (un)hide cmdline window and set its height.

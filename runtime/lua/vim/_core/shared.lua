@@ -343,6 +343,7 @@ function vim.tbl_contains(t, value, opts)
     vim.validate('value', value, 'callable')
     pred = value
   else
+    --- @param v any
     pred = function(v)
       return v == value
     end
@@ -601,6 +602,7 @@ end
 
 --- We only merge empty tables or tables that are not list-like (indexed by consecutive integers
 --- starting from 1)
+--- @param v any
 local function can_merge(v)
   return type(v) == 'table' and (vim.tbl_isempty(v) or not vim.islist(v))
 end
@@ -1116,6 +1118,8 @@ do
   --- @field [2] vim.validate.Validator Argument validator
   --- @field [3]? boolean|string Optional flag or error message
 
+  --- @param val any
+  --- @param t string
   local function is_type(val, t)
     return type(val) == t or (t == 'callable' and vim.is_callable(val))
   end
@@ -1560,9 +1564,10 @@ end
 ---   Not triggering `OptionSet` seems to be a good idea, though. So probably
 ---   only moving context save and restore to lower level might resolve this.
 ---
+--- @generic R...
 --- @param context vim.context.mods
---- @param f function
---- @return any
+--- @param f fun(): R...
+--- @return R...
 function vim._with(context, f)
   vim.validate('context', context, 'table')
   vim.validate('f', f, 'function')

@@ -82,6 +82,7 @@ end
 local client_errors_base = table.maxn(lsp.rpc.client_errors)
 local client_errors_offset = 0
 
+---@param name string
 local function client_error(name)
   client_errors_offset = client_errors_offset + 1
   local index = client_errors_base + client_errors_offset
@@ -464,6 +465,7 @@ end
 
 local lsp_enable_autocmd_id --- @type integer?
 
+--- @param v any
 local function validate_cmd(v)
   if type(v) == 'table' then
     if vim.fn.executable(v[1]) == 0 then

@@ -237,6 +237,7 @@ local function node_get_parent_no_normalize(node, parent_chain)
 end
 
 --- @param node vim.treesitter.select.node
+--- @param parent_chain vim.treesitter.select.node[]
 --- @return vim.treesitter.select.node
 local function node_normalize_up(node, parent_chain)
   while true do
@@ -371,6 +372,7 @@ local function get_selection()
   return { pos1[2] - 1, pos1[3] - 1, pos2[2] - 1, pos2[3] }
 end
 
+--- @param range Range4
 local function get_parent_from_range(range)
   local node, parent_chain = get_node(range)
 
@@ -412,6 +414,7 @@ local function get_parent_from_range(range)
   end
 end
 
+--- @param range Range4
 local function get_child_from_range(range)
   local node, alternative_child_nodes = get_node(range)
 
@@ -460,6 +463,7 @@ local function get_child_from_range(range)
   return node_range(node)
 end
 
+--- @param range Range4
 --- @param prev boolean
 local function get_sibling_from_range(range, prev)
   local node, parent_chain = get_node(range)
@@ -494,14 +498,17 @@ local function get_sibling_from_range(range, prev)
   end
 end
 
+--- @param range Range4
 local function get_next_from_range(range)
   return get_sibling_from_range(range, false)
 end
 
+--- @param range Range4
 local function get_prev_from_range(range)
   return get_sibling_from_range(range, true)
 end
 
+--- @param range Range4
 --- @param prev boolean
 local function get_grow_sibling_from_range(range, prev)
   local node, parent_chain = get_node(range)
@@ -544,10 +551,12 @@ local function get_grow_sibling_from_range(range, prev)
   end
 end
 
+--- @param range Range4
 local function get_grow_next_from_range(range)
   return get_grow_sibling_from_range(range, false)
 end
 
+--- @param range Range4
 local function get_grow_prev_from_range(range)
   return get_grow_sibling_from_range(range, true)
 end

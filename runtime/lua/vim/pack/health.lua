@@ -10,6 +10,8 @@ local function get_plug_dir()
   return vim.fs.joinpath(vim.fn.stdpath('data'), 'site', 'pack', 'core', 'opt')
 end
 
+--- @param cmd string[]
+--- @param cwd string
 local function git_cmd(cmd, cwd)
   cmd = vim.list_extend({ 'git', '-c', 'gc.auto=0' }, cmd)
   local env = vim.fn.environ() --- @type table<string,string>
@@ -62,10 +64,13 @@ local function check_basics()
   return has_lockfile, has_plug_dir
 end
 
+--- @param x any
 local function is_version(x)
   return type(x) == 'string' or (type(x) == 'table' and pcall(x.has, x, '1'))
 end
 
+--- @param plug_name string
+--- @param plug_path string
 local function failed_git_cmd(plug_name, plug_path)
   local msg = ('Failed Git command inside plugin %s.'):format(vim.inspect(plug_name))
     .. ' This is unexpected and should not happen.'
@@ -74,10 +79,13 @@ local function failed_git_cmd(plug_name, plug_path)
   return false
 end
 
+--- @param plug_name any
+--- @param lock_data any
 --- @return boolean Whether a check is successful
 local function check_plugin_lock_data(plug_name, lock_data)
   local name_str = vim.inspect(plug_name)
-  local error_with_del_advice = function(reason)
+  --- @param reason string
+  local function error_with_del_advice(reason)
     local msg = ('%s %s.'):format(name_str, reason)
       .. (' Delete %s entry (do not create trailing comma) and '):format(name_str)
       .. 'restart Nvim to regenerate lockfile data'
@@ -190,7 +198,7 @@ local function check_lockfile()
     is_good = false
   end
 
-  --- @cast data { plugins: table<string,table> }
+  --- @cast data { plugins: table<any, any> }
   for plug_name, lock_data in pairs(data.plugins) do
     is_good = check_plugin_lock_data(plug_name, lock_data) and is_good
   end
@@ -201,6 +209,8 @@ local function check_lockfile()
 end
 
 --- @param manifest vim.pack.Manifest
+--- @param plug_name string
+--- @param plug_path string
 local function check_manifest(manifest, plug_name, plug_path)
   local name_str = vim.inspect(plug_name)
   if vim.tbl_count(manifest) == 0 then
@@ -238,6 +248,7 @@ local function check_manifest(manifest, plug_name, plug_path)
   return true
 end
 
+--- @param plug_name string
 --- @return boolean Whether a check is successful
 local function check_installed_plugin(plug_name)
   local name_str = vim.inspect(plug_name)
