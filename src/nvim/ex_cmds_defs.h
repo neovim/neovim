@@ -127,6 +127,7 @@ struct exarg {
   linenr_T do_ecmd_lnum;        ///< the line number in an edited file
   int append;                   ///< true with ":w >>file" command
   int usefilter;                ///< true with ":w !command" and ":r!command"
+  int useterm;                  ///< true with ":w :term command" and ":r :term command" #40407
   int amount;                   ///< number of '>' or '<' for shift command
   int regname;                  ///< register name (NUL if none)
   int force_bin;                ///< 0, FORCE_BIN or FORCE_NOBIN

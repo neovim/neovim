@@ -265,9 +265,26 @@ gx			Opens the current filepath, URL (decided by
 :sh[ell]		Removed. |vim-differences|
 
 						  *:terminal* *:te*
-:te[rminal][!] [cmd]	Run [cmd] in a non-interactive 'shell' in a new
+:[range]te[rminal][!] [cmd]
+			Run [cmd] in a non-interactive 'shell' in a new
 			|terminal-emulator| buffer. Without [cmd], start an
 			interactive 'shell'.
+
+			If [range] is given, those lines are piped to the job's
+			stdin (a separate pipe, see |jobstart()| stdin="fd"),
+			while the terminal stays interactive: the command reads
+			[range] on stdin yet can still be typed into and prompt
+			on the tty. Example, pipe the buffer through a pager: >
+				:%term less
+<			(Unlike Vim's |:terminal|, typing is NOT disabled when
+			[range] is piped. Unix only; see |jobstart()| for the
+			Windows caveat.)
+
+			This is one of three ways to connect a buffer to an
+			interactive terminal command (same pipe plumbing, three
+			directions): |:terminal| pipes [range] in, |:write-term|
+			pipes the buffer to a command's stdin, and |:read-term|
+			captures a command's stdout into the buffer.
 
 			By default the current window is used. To open in
 			a split window, use |:horizontal| or |:vertical|: >

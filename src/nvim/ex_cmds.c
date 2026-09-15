@@ -1217,7 +1217,27 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
     strcat(newcmd, p_shq);
     free_newcmd = true;
   }
-  if (addr_count == 0) {                // :!
+  if (eap->useterm) {                 // ":[range]w :term cmd" / ":r :term cmd" #40407
+    // ":w :term" pipes the lines to a command's stdin; ":r :term" inserts a command's stdout.
+    const char *fn = (do_in && !do_out) ? "write_shell"
+                                        : (do_out && !do_in) ? "read_shell" : NULL;
+    if (fn == NULL) {
+      emsg(_("E5681: ':term' as a range filter (stdin + capture) is not implemented yet"));
+    } else {
+      typval_T argv[4];
+      argv[0].v_type = VAR_STRING;  argv[0].vval.v_string = newcmd;
+      argv[1].v_type = VAR_NUMBER;  argv[1].vval.v_number = line1;
+      argv[2].v_type = VAR_NUMBER;  argv[2].vval.v_number = line2;
+      argv[3].v_type = VAR_UNKNOWN;
+      typval_T rettv;
+      nlua_call_typval("vim._core.run_in_terminal", fn, argv, &rettv);
+      // write_shell is blocking and returns the exit status; read_shell is non-blocking (nil).
+      if (rettv.v_type == VAR_NUMBER) {
+        set_vim_var_nr(VV_SHELL_ERROR, rettv.vval.v_number);
+      }
+      tv_clear(&rettv);
+    }
+  } else if (addr_count == 0) {       // :!
     // echo the command
     msg_start();
     msg_ext_no_fast();
