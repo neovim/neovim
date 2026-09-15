@@ -1,9 +1,11 @@
 #include <assert.h>
 #include <limits.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "klib/kvec.h"
 #include "nvim/api/extmark.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
@@ -11,6 +13,7 @@
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/change.h"
+#include "nvim/charset.h"
 #include "nvim/decoration.h"
 #include "nvim/decoration_provider.h"
 #include "nvim/drawscreen.h"
@@ -1134,17 +1137,66 @@ static inline bool decor_virt_line_wrap(win_T *wp, VirtLineOverflow overflow)
   return overflow == kVLOverflowWrap || (overflow == kVLOverflowAuto && wp->w_p_wrap);
 }
 
+/// Check the next word and its trailing 'breakat' characters, across highlight chunks.
+///
+/// @param buf Buffer whose 'tabstop' and 'vartabstop' determine TAB widths.
+/// @param vt Virtual text chunks to scan, including their highlight metadata.
+/// @param chunk Zero-based index of the chunk containing the start of the word.
+/// @param text Pointer to the first character of the word within that chunk.
+/// @param vcol Display-cell offset of text from the start of the virtual line, excluding wrap padding.
+/// @param remaining Number of display cells available on the current screen row.
+///
+/// @return true if the word and its trailing 'breakat' characters fit in remaining cells;
+///         false as soon as their width exceeds the available space.
+static bool virt_text_word_fits(buf_T *buf, VirtText vt, int chunk, const char *text, int vcol,
+                                int remaining)
+{
+  bool trailing_break = false;
+  for (int i = chunk; i < (int)kv_size(vt); i++) {
+    if (i != chunk) {
+      text = kv_A(vt, i).text;
+    }
+    if (text == NULL) {
+      continue;
+    }
+    while (*text != NUL) {
+      bool is_break = (uint8_t)(*text) < 128 && vim_isbreak((uint8_t)(*text));
+      if (trailing_break && !is_break) {
+        return true;
+      }
+      trailing_break = is_break;
+
+      int cells = *text == TAB
+                  ? tabstop_padding(vcol, buf->b_p_ts, buf->b_p_vts_array)
+                  : utf_ptr2cells(text);
+      if (cells > remaining) {
+        return false;
+      }
+      remaining -= cells;
+      vcol += cells;
+      text += utfc_ptr2len(text);
+    }
+  }
+
+  return true;
+}
+
 /// Counts the number of rows occupied by a virtual line. When skip_cells is non-NULL, sets it to
 /// the cell offset where target_row begins.
 ///
 /// @param target_row Row relative to the virtual line that skip_cells is computed for.
 /// @param skip_cells Cell offset for the target_row. Pass NULL when only the row count is needed.
+/// @param end_cells Cell offset where a word is pushed to the next row, or MXACOL otherwise.
 ///
 /// @return Number of rows occupied by the virtual line.
-int decor_virt_line_rows(win_T *wp, const struct virt_line *vl, int target_row, int *skip_cells)
+int decor_virt_line_rows(win_T *wp, const struct virt_line *vl, int target_row, int *skip_cells,
+                         int *end_cells)
 {
   if (skip_cells != NULL) {
     *skip_cells = 0;
+  }
+  if (end_cells != NULL) {
+    *end_cells = MAXCOL;
   }
   if (!decor_virt_line_wrap(wp, vl->overflow)) {
     return 1;
@@ -1158,6 +1210,8 @@ int decor_virt_line_rows(win_T *wp, const struct virt_line *vl, int target_row, 
   int vcol = 0;
   int row_cells = 0;
   int row = 0;
+  bool need_lbr = false;
+  bool prev_break = false;
   for (int i = 0; i < (int)kv_size(vt); i++) {
     const char *virt_str = kv_A(vt, i).text;
     if (virt_str == NULL) {
@@ -1169,10 +1223,20 @@ int decor_virt_line_rows(win_T *wp, const struct virt_line *vl, int target_row, 
       int cells = (*virt_str == TAB)
                   ? tabstop_padding(vcol, buf->b_p_ts, buf->b_p_vts_array)
                   : utf_ptr2cells(virt_str);
+
+      bool is_break = (uint8_t)(*virt_str) < 128 && vim_isbreak((uint8_t)(*virt_str));
+      // only break at a word after the init indent
+      bool word_wrap = wp->w_onebuf_opt.wo_lbr && need_lbr && prev_break && !is_break
+                       && row_cells > 0 && row_cells < row_width
+                       && !virt_text_word_fits(buf, vt, i, virt_str, vcol, row_width - row_cells);
+
       virt_str += bytes_to_next_char;
       // Wrap before total row cell length would exceed the window size
       // to protect against double width cell chars being split at the boundary
-      if (row_cells + cells > row_width) {
+      if (word_wrap || row_cells + cells > row_width) {
+        if (word_wrap && end_cells != NULL && row == target_row) {
+          *end_cells = vcol;
+        }
         row++;
         if (skip_cells != NULL && row == target_row) {
           *skip_cells = vcol;
@@ -1181,6 +1245,8 @@ int decor_virt_line_rows(win_T *wp, const struct virt_line *vl, int target_row, 
       }
       row_cells += cells;
       vcol += cells;
+      need_lbr |= !is_break;
+      prev_break = is_break;
     }
   }
 
@@ -1226,7 +1292,7 @@ int decor_virt_lines(win_T *wp, int start_row, int end_row, int *num_below, Virt
               // Iterates over each virtual line summing number of rows.
               // Rows belonging to previous line are accumulated in num_below.
               for (int i = 0; i < (int)kv_size(virt_lines); i++) {
-                int rows = decor_virt_line_rows(wp, &kv_A(virt_lines, i), 0, NULL);
+                int rows = decor_virt_line_rows(wp, &kv_A(virt_lines, i), 0, NULL, NULL);
                 n_virt_lines += rows;
                 if (num_below && !above) {
                   (*num_below) += rows;
