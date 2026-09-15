@@ -4091,6 +4091,13 @@ bool bt_nofile(const buf_T *const buf)
   return buf != NULL && buf->b_p_bt[0] == 'n' && buf->b_p_bt[2] == 'f';
 }
 
+/// @return  true if "buf" has 'buftype' set to "nowrite".
+bool bt_nowrite(const buf_T *const buf)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return buf != NULL && buf->b_p_bt[0] == 'n' && buf->b_p_bt[2] == 'w';
+}
+
 /// @return  true if "buf" is a "nowrite", "nofile", "terminal" or "prompt"
 ///          buffer.
 bool bt_dontwrite(const buf_T *const buf)

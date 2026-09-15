@@ -100,6 +100,14 @@
 # define UV_FS_COPYFILE_FICLONE 0
 #endif
 
+typedef struct {
+  FileInfo file_info;
+  bool file_info_ok;
+  int64_t prev_mtime;
+  uint64_t orig_size;
+  int orig_mode;
+} FileChange;
+
 #include "fileio.c.generated.h"
 
 static const char *e_auchangedbuf = N_("E812: Autocommands changed buffer or buffer name");
@@ -2826,6 +2834,71 @@ int vim_copyfile(const char *from, const char *to)
 
 static bool already_warned = false;
 
+static bool buf_detect_file_change(buf_T *buf, FileChange *change)
+{
+  if (buf->b_mtime == 0) {
+    return false;
+  }
+
+  change->file_info_ok = os_fileinfo(buf->b_ffname, &change->file_info);
+  if (change->file_info_ok
+      && !time_differs(&change->file_info, buf->b_mtime, buf->b_mtime_ns)
+      && (int)change->file_info.stat.st_mode == buf->b_orig_mode) {
+    return false;
+  }
+
+  change->prev_mtime = buf->b_mtime;
+  change->orig_size = buf->b_orig_size;
+  change->orig_mode = buf->b_orig_mode;
+  // set b_mtime to stop further warnings (e.g., when executing
+  // FileChangedShell autocmd)
+  if (change->file_info_ok) {
+    buf_store_file_info(buf, &change->file_info);
+  } else {
+    // Check the file again later to see if it re-appears.
+    buf->b_mtime = -1;
+    buf->b_orig_size = 0;
+    buf->b_orig_mode = 0;
+  }
+  return true;
+}
+
+static bool buf_apply_filechanged_autocmd(buf_T *buf, bufref_T *bufref, const char *reason,
+                                          size_t reasonlen, bool *busy)
+{
+  // Avoid being called recursively by setting "busy".
+  *busy = true;
+  set_vim_var_string(VV_FCS_REASON, reason, (int)reasonlen);
+  set_vim_var_string(VV_FCS_CHOICE, "", 0);
+  allbuf_lock++;
+  bool handled = apply_autocmds(EVENT_FILECHANGEDSHELL, buf->b_fname, buf->b_fname, false, buf);
+  allbuf_lock--;
+  *busy = false;
+  if (handled && !bufref_valid(bufref)) {
+    emsg(_("E246: FileChangedShell autocommand deleted buffer"));
+  }
+  return handled;
+}
+
+static int buf_check_nowrite_timestamp(buf_T *buf, bufref_T *bufref, bool *busy)
+{
+  if (!(buf->b_p_ar >= 0 ? buf->b_p_ar : p_ar)) {
+    return 0;
+  }
+
+  FileChange change;
+  if (!buf_detect_file_change(buf, &change)) {
+    return 0;
+  }
+
+  if (!change.file_info_ok) {
+    return 1;
+  }
+
+  bool handled = buf_apply_filechanged_autocmd(buf, bufref, S_LEN("changed"), busy);
+  return handled ? 2 : 1;
+}
+
 /// Check if any not hidden buffer has been changed.
 /// Postpone the check if there are characters in the stuff buffer, a global
 /// command is being executed, a mapping is being executed or an autocommand is
@@ -2944,51 +3017,37 @@ int buf_check_timestamp(buf_T *buf)
   } reload = RELOAD_NONE;
 
   bool can_reload = false;
-  uint64_t orig_size = buf->b_orig_size;
-  int orig_mode = buf->b_orig_mode;
   static bool busy = false;
 
   bufref_T bufref;
   set_bufref(&bufref, buf);
 
   // If its a terminal, there is no file name, the buffer is not loaded,
-  // 'buftype' is set, we are in the middle of a save or being called
-  // recursively: ignore this buffer.
+  // we are in the middle of a save or being called recursively: ignore this
+  // buffer.
   if (buf->terminal
       || buf->b_ffname == NULL
       || buf->b_ml.ml_mfp == NULL
-      || !bt_normal(buf)
       || buf->b_saving
       || busy) {
     return 0;
   }
 
-  FileInfo file_info;
-  bool file_info_ok;
-  if (!(buf->b_flags & BF_NOTEDITED)
-      && buf->b_mtime != 0
-      && (!(file_info_ok = os_fileinfo(buf->b_ffname, &file_info))
-          || time_differs(&file_info, buf->b_mtime, buf->b_mtime_ns)
-          || (int)file_info.stat.st_mode != buf->b_orig_mode)) {
-    const int64_t prev_b_mtime = buf->b_mtime;
+  if (bt_nowrite(buf)) {
+    return buf_check_nowrite_timestamp(buf, &bufref, &busy);
+  }
+  if (!bt_normal(buf)) {
+    return 0;
+  }
 
+  FileChange change = { .orig_mode = buf->b_orig_mode };
+  if (!(buf->b_flags & BF_NOTEDITED) && buf_detect_file_change(buf, &change)) {
     retval = 1;
-
-    // set b_mtime to stop further warnings (e.g., when executing
-    // FileChangedShell autocmd)
-    if (!file_info_ok) {
-      // Check the file again later to see if it re-appears.
-      buf->b_mtime = -1;
-      buf->b_orig_size = 0;
-      buf->b_orig_mode = 0;
-    } else {
-      buf_store_file_info(buf, &file_info);
-    }
 
     if (os_isdir(buf->b_fname)) {
       // Don't do anything for a directory.  Might contain the file explorer.
     } else if ((buf->b_p_ar >= 0 ? buf->b_p_ar : p_ar)
-               && !bufIsChanged(buf) && file_info_ok) {
+               && !bufIsChanged(buf) && change.file_info_ok) {
       // If 'autoread' is set, the buffer has no changes and the file still
       // exists, reload the buffer.  Use the buffer-local option value if it
       // was set, the global option value otherwise.
@@ -2997,16 +3056,16 @@ int buf_check_timestamp(buf_T *buf)
       char *reason;
       size_t reasonlen;
 
-      if (!file_info_ok) {
+      if (!change.file_info_ok) {
         reason = "deleted";
         reasonlen = STRLEN_LITERAL("deleted");
       } else if (bufIsChanged(buf)) {
         reason = "conflict";
         reasonlen = STRLEN_LITERAL("conflict");
-      } else if (orig_size != buf->b_orig_size || buf_contents_changed(buf)) {
+      } else if (change.orig_size != buf->b_orig_size || buf_contents_changed(buf)) {
         reason = "changed";
         reasonlen = STRLEN_LITERAL("changed");
-      } else if (orig_mode != buf->b_orig_mode) {
+      } else if (change.orig_mode != buf->b_orig_mode) {
         reason = "mode";
         reasonlen = STRLEN_LITERAL("mode");
       } else {
@@ -3016,18 +3075,8 @@ int buf_check_timestamp(buf_T *buf)
 
       // Only give the warning if there are no FileChangedShell
       // autocommands.
-      // Avoid being called recursively by setting "busy".
-      busy = true;
-      set_vim_var_string(VV_FCS_REASON, reason, (int)reasonlen);
-      set_vim_var_string(VV_FCS_CHOICE, "", 0);
-      allbuf_lock++;
-      bool n = apply_autocmds(EVENT_FILECHANGEDSHELL, buf->b_fname, buf->b_fname, false, buf);
-      allbuf_lock--;
-      busy = false;
+      bool n = buf_apply_filechanged_autocmd(buf, &bufref, reason, reasonlen, &busy);
       if (n) {
-        if (!bufref_valid(&bufref)) {
-          emsg(_("E246: FileChangedShell autocommand deleted buffer"));
-        }
         char *s = get_vim_var_str(VV_FCS_CHOICE);
         if (strcmp(s, "reload") == 0 && *reason != 'd') {
           reload = RELOAD_NORMAL;
@@ -3042,7 +3091,7 @@ int buf_check_timestamp(buf_T *buf)
       if (!n) {
         if (*reason == 'd') {
           // Only give the message once.
-          if (prev_b_mtime != -1) {
+          if (change.prev_mtime != -1) {
             mesg = _("E211: File \"%s\" no longer available");
           }
         } else {
@@ -3135,7 +3184,7 @@ int buf_check_timestamp(buf_T *buf)
 
   if (reload != RELOAD_NONE) {
     // Reload the buffer.
-    buf_reload(buf, orig_mode, reload == RELOAD_DETECT);
+    buf_reload(buf, change.orig_mode, reload == RELOAD_DETECT);
     if (bufref_valid(&bufref) && buf->b_p_udf && buf->b_ffname != NULL) {
       uint8_t hash[UNDO_HASH_SIZE];
 

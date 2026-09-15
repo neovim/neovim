@@ -303,7 +303,7 @@ vim.v.fcs_choice = ...
 --- - deleted   file no longer exists
 --- - conflict  file contents, mode or timestamp was
 ---             changed and buffer is modified
---- - changed   file contents has changed
+--- - changed   file contents or a "nowrite" buffer path changed
 --- - mode      mode of file changed
 --- - time      only file timestamp changed
 --- @type string
