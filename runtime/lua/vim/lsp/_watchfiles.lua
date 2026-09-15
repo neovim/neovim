@@ -57,8 +57,21 @@ else
   M._watchfunc = watch.watchdirs
 end
 
----@type table<integer, table<string, function[]>> client id -> registration id -> cancel function
-local cancels = vim.defaulttable()
+---@class (private) vim.lsp._watchfiles.Registration
+---@field options lsp.DidChangeWatchedFilesRegistrationOptions
+---@field workspace_folders lsp.WorkspaceFolder[]
+---@field exclude_pattern vim.lpeg.Pattern
+---@field watchfunc function
+---@field refcount integer
+---@field cancels function[]
+---@field roots table<string, uv.fs_stat.result|false>
+---@field ready boolean False until all backend watchers have been created.
+---@field failed boolean
+
+---@type table<integer, table<string, vim.lsp._watchfiles.Registration>> client id -> registration id
+local registered = vim.defaulttable(function()
+  return {}
+end)
 
 local queue_timeout_ms = 100
 ---@type table<integer, uv.uv_timer_t> client id -> libuv timer which will send queued changes at its timeout
@@ -83,23 +96,16 @@ M._poll_exclude_pattern = glob.to_lpeg('**/.git/{objects,subtree-cache}/**')
   + glob.to_lpeg('**/node_modules/*/**')
   + glob.to_lpeg('**/.hg/store/**')
 
---- Registers the workspace/didChangeWatchedFiles capability dynamically.
+--- Compiles watcher globs and groups them by base directory.
 ---
----@param reg lsp.Registration LSP Registration object.
----@param client_id integer Client ID.
-function M.register(reg, client_id)
-  local client = assert(vim.lsp.get_client_by_id(client_id), 'Client must be running')
-  -- Ill-behaved servers may not honor the client capability and try to register
-  -- anyway, so ignore requests when the user has opted out of the feature.
-  local has_capability =
-    vim.tbl_get(client.capabilities, 'workspace', 'didChangeWatchedFiles', 'dynamicRegistration')
-  if not has_capability or not client.workspace_folders then
-    return
-  end
-  local register_options = reg.registerOptions --[[@as lsp.DidChangeWatchedFilesRegistrationOptions]]
+---@param client vim.lsp.Client
+---@param watchers lsp.FileSystemWatcher[]
+---@param workspace_folders lsp.WorkspaceFolder[]
+---@return table<string, {pattern: vim.lpeg.Pattern, kind: lsp.WatchKind}[]>
+local function compile_watchers(client, watchers, workspace_folders)
   ---@type table<string, {pattern: vim.lpeg.Pattern, kind: lsp.WatchKind}[]> by base_dir
   local watch_regs = vim.defaulttable()
-  for _, w in ipairs(register_options.watchers) do
+  for _, w in ipairs(watchers) do
     local kind = w.kind
       or (protocol.WatchKind.Create + protocol.WatchKind.Change + protocol.WatchKind.Delete)
     local glob_pattern = w.globPattern
@@ -107,7 +113,7 @@ function M.register(reg, client_id)
     if type(glob_pattern) == 'string' then
       local pattern = glob_to_lpeg(glob_pattern, client)
       if pattern then
-        for _, folder in ipairs(client.workspace_folders) do
+        for _, folder in ipairs(workspace_folders) do
           local base_dir = vim.uri_to_fname(folder.uri)
           table.insert(watch_regs[base_dir], { pattern = pattern, kind = kind })
         end
@@ -123,6 +129,96 @@ function M.register(reg, client_id)
       end
     end
   end
+  return watch_regs
+end
+
+--- Checks root identity: a directory can be replaced without reporting a watcher error.
+---@param roots table<string, uv.fs_stat.result|false>
+---@return boolean
+local function roots_unchanged(roots)
+  for path, previous in pairs(roots) do
+    local current = vim.uv.fs_stat(path)
+    if
+      not previous
+      or not current
+      or previous.dev ~= current.dev
+      or previous.ino ~= current.ino
+    then
+      return false
+    end
+  end
+  return true
+end
+
+--- Associates the registration ID with a matching watcher set or a new one.
+--- The caller must start the watchers if the set was not reused.
+---
+---@param reg lsp.Registration
+---@param client_id integer
+---@param workspace_folders lsp.WorkspaceFolder[]
+---@return vim.lsp._watchfiles.Registration
+---@return boolean reused
+local function acquire_registration(reg, client_id, workspace_folders)
+  local register_options = reg.registerOptions --[[@as lsp.DidChangeWatchedFilesRegistrationOptions]]
+  local client_registrations = registered[client_id]
+  -- Servers may register replacements before unregistering identical watchers.
+  -- Keep the backend alive until the last registration using it is removed.
+  for _, registration in pairs(client_registrations) do
+    if
+      registration.ready
+      and not registration.failed
+      and registration.watchfunc == M._watchfunc
+      and registration.exclude_pattern == M._poll_exclude_pattern
+      and vim.deep_equal(registration.options, register_options)
+      and vim.deep_equal(registration.workspace_folders, workspace_folders)
+      and roots_unchanged(registration.roots)
+    then
+      if client_registrations[reg.id] ~= registration then
+        registration.refcount = registration.refcount + 1
+        M.unregister({ id = reg.id, method = reg.method }, client_id)
+        client_registrations[reg.id] = registration
+      end
+      return registration, true
+    end
+  end
+
+  M.unregister({ id = reg.id, method = reg.method }, client_id)
+  client_registrations = registered[client_id]
+  ---@type vim.lsp._watchfiles.Registration
+  local registration = {
+    options = vim.deepcopy(register_options),
+    workspace_folders = vim.deepcopy(workspace_folders),
+    exclude_pattern = M._poll_exclude_pattern,
+    watchfunc = M._watchfunc,
+    refcount = 1,
+    cancels = {},
+    roots = {},
+    ready = false,
+    failed = false,
+  }
+  client_registrations[reg.id] = registration
+  return registration, false
+end
+
+--- Registers the workspace/didChangeWatchedFiles capability dynamically.
+---
+---@param reg lsp.Registration LSP Registration object.
+---@param client_id integer Client ID.
+function M.register(reg, client_id)
+  local client = assert(vim.lsp.get_client_by_id(client_id), 'Client must be running')
+  -- Ill-behaved servers may not honor the client capability and try to register
+  -- anyway, so ignore requests when the user has opted out of the feature.
+  local has_capability =
+    vim.tbl_get(client.capabilities, 'workspace', 'didChangeWatchedFiles', 'dynamicRegistration')
+  if not has_capability or not client.workspace_folders then
+    return
+  end
+  local registration, reused = acquire_registration(reg, client_id, client.workspace_folders)
+  if reused then
+    return
+  end
+  local register_options = reg.registerOptions --[[@as lsp.DidChangeWatchedFilesRegistrationOptions]]
+  local watch_regs = compile_watchers(client, register_options.watchers, client.workspace_folders)
 
   ---@param base_dir string
   local callback = function(base_dir)
@@ -174,8 +270,9 @@ function M.register(reg, client_id)
       return acc + w.pattern
     end)
 
+    registration.roots[base_dir] = vim.uv.fs_stat(base_dir) or false
     table.insert(
-      cancels[client_id][reg.id],
+      registration.cancels,
       M._watchfunc(base_dir, {
         uvflags = {
           recursive = true,
@@ -187,6 +284,7 @@ function M.register(reg, client_id)
         include_pattern = include_pattern,
         exclude_pattern = M._poll_exclude_pattern,
         on_error = function(err)
+          registration.failed = true
           local name = string.format('LSP[%s]', client.name)
           local message = string.format('file watcher failed for %s', base_dir)
           local level = vim.log.levels.ERROR
@@ -203,6 +301,17 @@ function M.register(reg, client_id)
       }, callback(base_dir))
     )
   end
+  registration.ready = true
+end
+
+---@param registration vim.lsp._watchfiles.Registration
+local function release(registration)
+  registration.refcount = registration.refcount - 1
+  if registration.refcount == 0 then
+    for _, cancel in ipairs(registration.cancels) do
+      cancel()
+    end
+  end
 end
 
 --- Unregisters the workspace/didChangeWatchedFiles capability dynamically.
@@ -210,25 +319,24 @@ end
 ---@param unreg lsp.Unregistration LSP Unregistration object.
 ---@param client_id integer Client ID.
 function M.unregister(unreg, client_id)
-  local client_cancels = cancels[client_id]
-  local reg_cancels = client_cancels[unreg.id]
-  while #reg_cancels > 0 do
-    table.remove(reg_cancels)()
+  local client_registrations = registered[client_id]
+  local registration = client_registrations[unreg.id]
+  client_registrations[unreg.id] = nil
+  if not next(client_registrations) then
+    registered[client_id] = nil
   end
-  client_cancels[unreg.id] = nil
-  if not next(cancels[client_id]) then
-    cancels[client_id] = nil
+  if registration then
+    release(registration)
   end
 end
 
 --- @param client_id integer
 function M.cancel(client_id)
-  for _, reg_cancels in pairs(cancels[client_id]) do
-    for _, cancel in pairs(reg_cancels) do
-      cancel()
-    end
+  local client_registrations = registered[client_id]
+  registered[client_id] = nil
+  for _, registration in pairs(client_registrations) do
+    release(registration)
   end
-  cancels[client_id] = nil
 end
 
 return M
