@@ -4003,9 +4003,34 @@ function vim.fn.getregion(pos1, pos2, opts) end
 ---       value of 0 is used for both positions.
 ---       (default: |FALSE|)
 ---
+---   bounds    If |TRUE|, return only the outer
+---       bounds of the region as a single
+---       pair: >
+---         [[{start_pos}, {end_pos}]]
+--- <      {start_pos} is the start position on
+---       the first line of the region and
+---       {end_pos} the end position on its
+---       last line.  The lines in between are
+---       not visited, which is much faster for
+---       a large region.
+---       (default: |FALSE|)
+---
+--- Using "bounds" with the same {opts} is equivalent to taking
+--- the outer positions of the full result: >vim
+---   let full = getregionpos(pos1, pos2, opts)
+---   let bounds = [[full[0][0], full[-1][1]]]
+--- <When the full result is empty, e.g. because {pos1} and {pos2}
+--- are in different buffers, the result is empty as well.
+--- Note that the two positions then come from different lines, so
+--- they describe a diagonal of the region and not its shape.  For
+--- a blockwise region they are the start of the first line and
+--- the end of the last line, not the corners of the block.
+--- Likewise, when the first line is empty and "eol" is |FALSE|,
+--- {start_pos} has a "col" of 0 while {end_pos} may not.
+---
 --- @param pos1 [integer, integer, integer, integer]
 --- @param pos2 [integer, integer, integer, integer]
---- @param opts? {type?:string, exclusive?:boolean, eol?:boolean}
+--- @param opts? {type?:string, exclusive?:boolean, eol?:boolean, bounds?:boolean}
 --- @return [ [integer, integer, integer, integer], [integer, integer, integer, integer] ][]
 function vim.fn.getregionpos(pos1, pos2, opts) end
 
