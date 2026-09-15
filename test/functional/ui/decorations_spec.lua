@@ -7049,6 +7049,166 @@ if (h->n_buckets < new_n_buckets) { // expand
     ]])
   end)
 
+  it('virt_lines_overflow=wrap respects linebreak #41369', function()
+    screen:try_resize(18, 9)
+    command('set wrap linebreak')
+    local text = string.rep('word ', 8)
+    api.nvim_buf_set_lines(0, 0, -1, false, { text })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      virt_lines = { { { text } } },
+      virt_lines_overflow = 'wrap',
+    })
+    screen:expect([[
+      ^word word word    |
+      word word word    |
+      word word         |
+      word word word    |
+      word word word    |
+      word word         |
+      {1:~                 }|*2
+                        |
+    ]])
+  end)
+
+  for _, overflow in ipairs({ 'wrap', 'auto' }) do
+    it('virt_lines_overflow=' .. overflow .. ' respects breakat', function()
+      screen:try_resize(12, 6)
+      command('set wrap linebreak breakat=-')
+      api.nvim_buf_set_lines(0, 0, -1, false, { 'line' })
+      api.nvim_buf_set_extmark(0, ns, 0, 0, {
+        virt_lines = { { { 'aaaa-bbbb-cccc-dddd' } } },
+        virt_lines_overflow = overflow,
+      })
+      screen:expect([[
+        ^line        |
+        aaaa-bbbb-  |
+        cccc-dddd   |
+        {1:~           }|*2
+                    |
+      ]])
+      command('set breakat=')
+      screen:expect([[
+        ^line        |
+        aaaa-bbbb-cc|
+        cc-dddd     |
+        {1:~           }|*2
+                    |
+      ]])
+      command('set breakat=- nowrap')
+      if overflow == 'wrap' then
+        screen:expect([[
+          ^line        |
+          aaaa-bbbb-  |
+          cccc-dddd   |
+          {1:~           }|*2
+                      |
+        ]])
+      else
+        screen:expect([[
+          ^line        |
+          aaaa-bbbb-cc|
+          {1:~           }|*3
+                      |
+        ]])
+      end
+    end)
+  end
+
+  it('linebreak looks across highlight chunks and preserves EOL highlighting', function()
+    screen:try_resize(18, 6)
+    command('set wrap linebreak')
+    api.nvim_buf_set_lines(0, 0, -1, false, { 'line' })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      virt_lines = {
+        {
+          { 'first ', 'Special' },
+          { '', 'String' },
+          { 'long', 'String' },
+          { 'word', 'Function' },
+          { 'xxxx', 'String' },
+          { ' tail', 'Special' },
+          { '', 'Visual' },
+        },
+      },
+      virt_lines_overflow = 'wrap',
+    })
+    screen:expect([[
+      ^line              |
+      {16:first }{17:            }|
+      {26:long}{25:word}{26:xxxx}{16: tail}{17: }|
+      {1:~                 }|*2
+                        |
+    ]])
+  end)
+
+  it('linebreak handles indentation, long words, tabs and wide characters', function()
+    screen:try_resize(18, 12)
+    command('set wrap linebreak tabstop=4')
+    api.nvim_buf_set_lines(0, 0, -1, false, { 'line' })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      virt_lines = {
+        { { '   abcdefghijklmnopqrstuvwxyz' } },
+        { { 'aa abcdefghijklmnopqrstuvwxyz' } },
+        { { 'aa\tbbbb cccc dddd' } },
+        { { 'aa 古古古古古古古古 bb' } },
+      },
+      virt_lines_overflow = 'wrap',
+    })
+    screen:expect([[
+      ^line              |
+         abcdefghijklmno|
+      pqrstuvwxyz       |
+      aa                |
+      abcdefghijklmnopqr|
+      stuvwxyz          |
+      aa  bbbb cccc dddd|
+      aa                |
+      古古古古古古古古  |
+      bb                |
+      {1:~                 }|
+                        |
+    ]])
+  end)
+
+  it('linebreak keeps virtual row offsets in sync after resize and scrolling', function()
+    screen:try_resize(18, 9)
+    command('set wrap linebreak')
+    api.nvim_buf_set_lines(0, 0, -1, false, { 'one', 'two' })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      virt_lines = { { { string.rep('word ', 8) } } },
+      virt_lines_overflow = 'wrap',
+    })
+    screen:expect([[
+      ^one               |
+      word word word    |
+      word word word    |
+      word word         |
+      two               |
+      {1:~                 }|*3
+                        |
+    ]])
+    screen:try_resize(14, 9)
+    screen:expect([[
+      ^one           |
+      word word     |
+      word word     |
+      word word     |
+      word word     |
+      two           |
+      {1:~             }|*2
+                    |
+    ]])
+    api.nvim_win_set_cursor(0, { 2, 0 })
+    fn.winrestview({ topline = 2, topfill = 2 })
+    screen:expect([[
+      word word     |
+      word word     |
+      ^two           |
+      {1:~             }|*5
+                    |
+    ]])
+  end)
+
   it('virt_lines_overflow=wrap with 2 cell character', function()
     command('set wrap signcolumn=yes')
     insert('line1\nline2\nline3\n')

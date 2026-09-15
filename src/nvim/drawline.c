@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "klib/kvec.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
@@ -361,7 +362,7 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
     if (vt) {
       int vcol = item->draw_col - col_off;
       int col = draw_virt_text_item(buf, item->draw_col, vt->data.virt_text,
-                                    vt->hl_mode, max_col, vcol, 0, false);
+                                    vt->hl_mode, max_col, vcol, 0, MAXCOL, false);
       if (do_eol && ((vt->pos == kVPosEndOfLine) || (vt->pos == kVPosEndOfLineRightAlign))) {
         state->eol_col = col + 1;
       }
@@ -373,9 +374,10 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
   }
 }
 
+/// @param end_cells Stop drawing text at this virtual column (for 'linebreak' opt)
 /// @param eol_hl Extend highlight to EOL.
 static int draw_virt_text_item(buf_T *buf, int col, VirtText vt, HlMode hl_mode, int max_col,
-                               int vcol, int skip_cells, bool eol_hl)
+                               int vcol, int skip_cells, int end_cells, bool eol_hl)
 {
   const char *virt_str = "";
   int virt_attr = 0;
@@ -406,6 +408,16 @@ static int draw_virt_text_item(buf_T *buf, int col, VirtText vt, HlMode hl_mode,
       skip_cells -= cells;
       vcol += cells;
       virt_str += c_len;
+    }
+    if (vcol >= end_cells) {
+      if (!eol_hl) {
+        break;
+      }
+      while (virt_pos < kv_size(vt)) {
+        virt_attr = 0;
+        next_virt_text_chunk(vt, &virt_pos, &virt_attr);
+      }
+      virt_str = " ";
     }
     // If a double-width char or TAB doesn't fit, pad with spaces.
     const char *draw_str = skip_cells < 0 ? " " : virt_str;
@@ -1747,6 +1759,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
   int virt_line_index = 0;
   int virt_line_start_row = 0;
   int virt_line_skip_cells = 0;
+  int virt_line_end_cells = MAXCOL;
 
   // Repeat for each cell in the displayed line.
   while (true) {
@@ -1786,13 +1799,14 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           // Find the virtual line containing the target row.
           // Set skip cells with the same row-counting function so offset calculation stays in sync
           for (; virt_line_index < (int)kv_size(virt_lines); virt_line_index++) {
-            int line_rows = decor_virt_line_rows(wp, &kv_A(virt_lines, virt_line_index), 0, NULL);
+            int line_rows = decor_virt_line_rows(wp, &kv_A(virt_lines, virt_line_index), 0, NULL,
+                                                 NULL);
             if (target_row < virt_line_start_row + line_rows) {
               has_virt_line = true;
               virt_line_flags = kv_A(virt_lines, virt_line_index).flags;
               decor_virt_line_rows(wp, &kv_A(virt_lines, virt_line_index),
                                    target_row - virt_line_start_row,
-                                   &virt_line_skip_cells);
+                                   &virt_line_skip_cells, &virt_line_end_cells);
               break;
             }
             virt_line_start_row += line_rows;
@@ -2985,7 +2999,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
       }
 
       if (kv_size(fold_vt) > 0) {
-        draw_virt_text_item(buf, win_col_offset, fold_vt, kHlModeCombine, view_width, 0, 0, false);
+        draw_virt_text_item(buf, win_col_offset, fold_vt, kHlModeCombine, view_width, 0, 0, MAXCOL,
+                            false);
       }
       draw_virt_text(wp, buf, win_col_offset, &wlv.col, wlv.row);
       // Set increasing virtual columns in grid->vcols[] to set correct curswant
@@ -3263,7 +3278,7 @@ end_check:
                             kHlModeReplace,
                             view_width,
                             0,
-                            virt_line_skip_cells, true);
+                            virt_line_skip_cells, virt_line_end_cells, true);
       } else if (wlv.filler_todo <= 0) {
         draw_virt_text(wp, buf, win_col_offset, &draw_col, wlv.row);
       }
