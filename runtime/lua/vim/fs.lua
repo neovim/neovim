@@ -353,6 +353,10 @@ function M.find(names, opts)
   end
 
   if opts.upward then
+    if path == stop then
+      return matches, errors
+    end
+
     local test --- @type fun(p: string): string[]
 
     if type(names) == 'function' then
