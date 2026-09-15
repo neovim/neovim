@@ -1006,13 +1006,16 @@ static int peekchr(void)
     } else {
       // Next character can never be (made) magic?
       // Then backslashing it won't do anything.
-      curchr = utf_ptr2char(regparse + 1);
+      curchr = c >= 0x80 ? utf_ptr2char(regparse + 1) : c;
     }
     break;
   }
 
   default:
-    curchr = utf_ptr2char(regparse);
+    // curchr already holds regparse[0]; only a multi-byte lead byte needs decoding.
+    if (curchr >= 0x80) {
+      curchr = utf_ptr2char(regparse);
+    }
   }
 
   return curchr;
@@ -1028,8 +1031,13 @@ static void skipchr(void)
     prevchr_len = 0;
   }
   if (regparse[prevchr_len] != NUL) {
-    // Exclude composing chars that utfc_ptr2len does include.
-    prevchr_len += utf_ptr2len(regparse + prevchr_len);
+    // Exclude composing chars that utfc_ptr2len does include.  A byte
+    // below 0x80 is always a single character.
+    if ((uint8_t)regparse[prevchr_len] < 0x80) {
+      prevchr_len++;
+    } else {
+      prevchr_len += utf_ptr2len(regparse + prevchr_len);
+    }
   }
   regparse += prevchr_len;
   prev_at_start = at_start;
@@ -12723,7 +12731,7 @@ static void clear_sub(regsub_T *sub)
 }
 
 // Copy the submatches from "from" to "to".
-static void copy_sub(regsub_T *to, regsub_T *from)
+static inline void copy_sub(regsub_T *to, regsub_T *from)
 {
   to->in_use = from->in_use;
   if (from->in_use <= 0) {
