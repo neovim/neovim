@@ -126,6 +126,7 @@ typedef struct {
   int c;
   int old_col;
   pos_T old_pos;
+  uint64_t last_redraw;  // Zero when no navigation remains queued.
 } NormalState;
 
 static int VIsual_mode_orig = NUL;              // saved Visual mode
@@ -1408,6 +1409,19 @@ static void normal_redraw(NormalState *s)
   setcursor();
 }
 
+/// Single-key navigation that does not start an operator or change modes.
+static bool normal_is_navigation(int key)
+{
+  int idx = find_command(key);
+  if (idx < 0 || key == CAR || (nv_cmds[idx].cmd_flags & NV_SS)) {
+    return false;
+  }
+  nv_func_T fn = nv_cmds[idx].cmd_func;
+  return fn == nv_up || fn == nv_down || fn == nv_left || fn == nv_right
+         || fn == nv_page || fn == nv_halfpage || fn == nv_scroll_line
+         || fn == nv_mousescroll;
+}
+
 /// Function executed before each iteration of normal mode.
 ///
 /// @return:
@@ -1431,12 +1445,34 @@ static int normal_check(VimState *state)
 
   state_no_longer_safe(NULL);
 
+  bool navigation = !Visual.active && !op_pending() && restart_edit == 0
+                    && KeyTyped && !KeyStuffed && mod_mask == 0
+                    && normal_is_navigation(s->ca.cmdchar);
+  int next_key = navigation ? input_peek_key() : NUL;
+  bool queued_navigation = next_key != NUL && normal_is_navigation(next_key);
+
+  // Measure the interval within queued navigation, excluding preceding idle time.
+  const uint64_t kRedrawIntervalNs = 8 * 1000000;
+  if (!queued_navigation) {
+    s->last_redraw = 0;
+  } else if (s->last_redraw == 0) {
+    s->last_redraw = os_hrtime();
+  }
+  bool redraw_due = queued_navigation && os_hrtime() - s->last_redraw >= kRedrawIntervalNs;
+
   // If skip redraw is set (for ":" in wait_return()), don't redraw now.
-  // If there is nothing in the stuff_buffer or do_redraw is true,
-  // update cursor and redraw.
   if (skip_redraw) {
     skip_redraw = false;
     setcursor();
+  } else if (queued_navigation && !redraw_due && !do_redraw) {
+    // A skipped draw must still leave valid geometry for the next navigation command.
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (wp == curwin || (curwin->w_p_crb && wp->w_p_crb)) {
+        validate_botline_win(wp);
+      }
+    }
+    update_topline(curwin);
+    validate_cursor(curwin);
   } else if (do_redraw || stuff_empty()) {
     terminal_check_refresh();
 
@@ -1468,6 +1504,11 @@ static int normal_check(VimState *state)
     normal_check_folds(s);
     normal_redraw(s);
     do_redraw = false;
+    if (queued_navigation) {
+      // Queued input can keep the main loop from reaching its usual UI flush.
+      ui_flush();
+      s->last_redraw = os_hrtime();
+    }
 
     // Now that we have drawn the first screen all the startup stuff
     // has been done, close any file for startup messages.
