@@ -92,6 +92,24 @@ describe('vim.net.request', function()
     t.matches('404', result.error)
   end)
 
+  it('keeps outbuf=0 tied to the buffer where the request started', function()
+    local buffers = exec_lua(function()
+      local on_exit
+      vim.system = function(_, _, callback)
+        on_exit = callback
+      end
+      local original = vim.api.nvim_get_current_buf()
+      vim.net.request('https://example.com', { outbuf = 0 })
+      local other = vim.api.nvim_create_buf(true, false)
+      vim.api.nvim_set_current_buf(other)
+      vim.api.nvim_buf_set_lines(other, 0, -1, true, { 'unrelated text' })
+      on_exit({ code = 0, signal = 0, stdout = 'response', stderr = '' })
+      return { original, other }
+    end)
+    t.eq({ 'response' }, n.api.nvim_buf_get_lines(buffers[1], 0, -1, true))
+    t.eq({ 'unrelated text' }, n.api.nvim_buf_get_lines(buffers[2], 0, -1, true))
+  end)
+
   it('plugin writes output to buffer', function()
     t.skip(skip_integ, 'NVIM_TEST_INTEG not set (network integration test)')
 
