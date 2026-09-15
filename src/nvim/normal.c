@@ -5147,6 +5147,33 @@ void start_selection(void)
   n_start_visual_mode('v');
 }
 
+/// Select a nonempty byte range without first passing through Normal mode.
+/// Like Shift-selection in Insert mode, prepare the selection before ending
+/// Insert so that InsertLeave observes the destination mode.
+void select_range(pos_T start, pos_T end)
+{
+  if (*p_sel != 'e') {
+    dec(&end);  // Preserve a trailing newline in an inclusive selection.
+  }
+  Visual.mode = 'v';
+  Visual.active = true;
+  Visual.select = true;
+  Visual.reselect = true;
+  Visual.select_exclu_adj = false;
+  Visual.start = end;
+  curwin->w_cursor = start;
+  curwin->w_set_curswant = true;
+  restart_edit = 0;
+  if (State & MODE_INSERT) {
+    Ins.stop_insert_mode = true;
+  }
+  may_trigger_modechanged();
+  setmouse();
+  ui_cursor_shape();
+  redraw_cmdline = true;
+  redraw_curbuf_later(UPD_INVERTED);
+}
+
 /// Start Select mode, if "c" is in 'selectmode' and not in a mapping or menu.
 /// When "c" is 'o' (checking for "mouse") then also when mapped.
 void may_start_select(int c)

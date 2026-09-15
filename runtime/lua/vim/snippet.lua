@@ -381,17 +381,9 @@ local function select_tabstop(tabstop)
       display_choices(tabstop)
     end
   else
-    -- Else, select the tabstop's text.
-    -- Need this exact order so cannot mix regular API calls with feedkeys, which
-    -- are not executed immediately. Use <Cmd> to set the cursor position.
-    local keys = {
-      mode ~= 'n' and '<Esc>' or '',
-      ('<Cmd>call cursor(%s,%s)<CR>'):format(range[1] + 1, range[2] + 1),
-      'v',
-      ('<Cmd>call cursor(%s,%s)<CR>'):format(range[3] + 1, range[4]),
-      'o<c-g><c-r>_',
-    }
-    feedkeys(table.concat(keys))
+    -- Establish the selection before leaving Insert. Otherwise InsertLeave
+    -- callbacks run in the Normal-mode gap before the placeholder is selected.
+    vim._select_range(range[1], range[2], range[3], range[4])
   end
 end
 

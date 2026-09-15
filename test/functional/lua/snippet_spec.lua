@@ -2,6 +2,7 @@
 
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
+local Screen = require('test.functional.ui.screen')
 
 local describe, it, before_each = t.describe, t.it, t.before_each
 local buf_lines = n.buf_lines
@@ -439,5 +440,54 @@ describe('vim.snippet', function()
     feed('<Tab><Tab>a, b')
 
     eq({ 'func foo(a, b) {', '  var x = a + b', '}' }, buf_lines(0))
+  end)
+
+  it('enters Select before InsertLeave without an intermediate Normal mode', function()
+    local screen = Screen.new(40, 8)
+    feed('i')
+    exec_lua([[
+      modes, leaves = {}, {}
+      vim.api.nvim_create_autocmd('ModeChanged', {
+        callback = function() modes[#modes + 1] = vim.v.event.new_mode end,
+      })
+      vim.api.nvim_create_autocmd('InsertLeave', {
+        callback = function() leaves[#leaves + 1] = vim.fn.mode() end,
+      })
+      vim.snippet.expand('${1:bravo}\n${2:charlie}$0')
+    ]])
+    eq('s', api.nvim_get_mode().mode)
+    eq({ 's' }, exec_lua('return modes'))
+    eq({ 's' }, exec_lua('return leaves'))
+    screen:expect({ any = '-- SELECT --' })
+    feed('<Tab>')
+    eq('s', api.nvim_get_mode().mode)
+    eq({ 's' }, exec_lua('return modes'))
+    feed('X')
+    eq({ 'bravo', 'X' }, buf_lines(0))
+  end)
+
+  for _, selection in ipairs({ 'inclusive', 'exclusive' }) do
+    it('selects multibyte and newline-ending placeholders with selection=' .. selection, function()
+      api.nvim_set_option_value('selection', selection, {})
+      feed('i')
+      exec_lua([[vim.snippet.expand('a${1:口é}\n${2:one\n}end$0')]])
+      feed('X<Tab>Y')
+      eq({ 'aX', 'Yend' }, buf_lines(0))
+    end)
+  end
+
+  it('rejects selecting a range while text is locked', function()
+    api.nvim_buf_set_lines(0, 0, -1, false, { 'abc' })
+    exec_lua([[
+      vim.keymap.set('i', '<F3>', function()
+        local ok, err = pcall(vim._select_range, 0, 0, 0, 1)
+        selection_error = { ok, err }
+        return ''
+      end, { expr = true })
+    ]])
+    feed('i<F3>')
+    local result = exec_lua('return selection_error')
+    eq(false, result[1])
+    matches('text is locked', result[2])
   end)
 end)
