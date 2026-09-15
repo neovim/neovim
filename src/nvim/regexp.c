@@ -12723,7 +12723,7 @@ static void clear_sub(regsub_T *sub)
 }
 
 // Copy the submatches from "from" to "to".
-static void copy_sub(regsub_T *to, regsub_T *from)
+static inline void copy_sub(regsub_T *to, regsub_T *from)
 {
   to->in_use = from->in_use;
   if (from->in_use <= 0) {
