@@ -1,0 +1,88 @@
+*remote_ssh.txt*  Nvim
+
+                            NVIM REFERENCE MANUAL
+
+Remote SSH                                     *remote-ssh* *remote-ssh-plugin*
+
+Nvim can connect to remote SSH servers.
+Using the |:connect| command with an `ssh://` URI, Nvim will automatically
+connect to a host, bootstrap itself, and connect the local UI to the remote
+headless server.
+
+                                      Type |gO| to see the table of contents.
+
+==============================================================================
+1. Introduction                               *remote-ssh-introduction* *E6101*
+
+The remote-ssh feature uses `ssh` to connect to a remote system. It:
+- Detects the remote architecture.
+- Bootstraps the Nvim binary in `~/.local/bin/nvim` and `~/.local/share/nvim-remote`.
+- Starts the remote Nvim with `NVIM_APPNAME=nvim-remote`, keeping remote
+  state separate from any local Nvim installation on the remote host.
+- Initiates a headless Nvim server and connects your local UI via a Unix
+  domain socket.
+- On disconnect, kills the remote headless process and SSH mux socket, but
+  leaves the persistent data directory (`~/.local/share/nvim-remote`) intact
+  for fast reconnects.
+
+==============================================================================
+2. Usage                                                    *remote-ssh-usage*
+
+From the command line: ~
+
+Connect to a remote server using `-c` with |:connect|. SSH key-based
+authentication is required; password prompts are not supported.
+>sh
+    nvim -c 'connect ssh://user@192.168.1.100'
+    nvim -c 'connect ssh://root@server:2222'
+<
+
+From a running Nvim session: ~
+
+`:connect` ssh://{uri}
+
+Connects to {uri} over SSH. The remote-ssh feature bootstraps the remote
+host and reconnects the local UI to the remote server.
+>vim
+    :connect ssh://user@192.168.1.100
+    :connect ssh://root@server:2222
+<
+
+`:connect` {address}
+
+Without the `ssh://` prefix, `:connect` connects to a local server at the
+given address (e.g. a Unix socket path).
+
+==============================================================================
+3. Requirements                                      *remote-ssh-requirements*
+
+Both local and remote systems must meet certain requirements:
+
+Local (Host):
+- `ssh` (OpenSSH 4.0+) installed and accessible in `$PATH`.
+- Multiplexing support (`ControlMaster`). Note: Win32-OpenSSH does not
+  support multiplexing, so Windows clients are not supported currently.
+- `/tmp` directory must be writable.
+
+Remote (Target):
+- Linux (x86_64, aarch64) or macOS (arm64, x86_64).
+- `tar`, `curl` to download and extract the Nvim release.
+- A POSIX-compliant shell.
+
+==============================================================================
+4. Remote Environment                                     *remote-ssh-configs*
+
+The remote Nvim starts with `NVIM_APPNAME=nvim-remote`, which isolates its
+configuration and data directories from any existing Nvim installation on
+the remote host. See |$NVIM_APPNAME|.
+
+Remote paths used:
+  - Config: `~/.config/nvim-remote/`
+  - Data:   `~/.local/share/nvim-remote/`
+  - Binary: `~/.local/bin/nvim`
+
+The data directory persists across connections for fast reconnects. On
+teardown, only the headless process and SSH mux socket are cleaned up.
+
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:
