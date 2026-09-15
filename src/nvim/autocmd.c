@@ -1169,7 +1169,7 @@ int do_doautocmd(char *arg_start, bool do_msg, bool *did_something)
   // Loop over the events.
   while (*arg && !ends_excmd(*arg) && !ascii_iswhite(*arg)) {
     if (apply_autocmds_group(event_name2nr(arg, &arg), fname, NULL, true, group,
-                             curbuf, curwin, NULL, NULL, false)) {
+                             curbuf, curwin->handle, NULL, NULL, false)) {
       nothing_done = false;
     }
   }
@@ -1260,11 +1260,12 @@ bool check_nomodeline(char **argp)
 /// @param fname_io Filename to use for <afile> on cmdline, NULL means use `fname`.
 /// @param group Group ID or AUGROUP_ALL
 /// @param buf Buffer for <abuf>
+/// @param win Window for `ev.win`, captured now (see apply_autocmds()).
 /// @param eap Ex command arguments
 /// @param data Event-specific data. Will be copied, caller must free `data`.
 /// The `data` items will also be copied to `v:event`.
-void aucmd_defer(event_T event, char *fname, char *fname_io, int group, buf_T *buf, exarg_T *eap,
-                 Object *data)
+void aucmd_defer(event_T event, char *fname, char *fname_io, int group, buf_T *buf, win_T *win,
+                 exarg_T *eap, Object *data)
 {
   AutoCmdEvent *evdata = xmalloc(sizeof(AutoCmdEvent));
   evdata->event = event;
@@ -1272,6 +1273,7 @@ void aucmd_defer(event_T event, char *fname, char *fname_io, int group, buf_T *b
   evdata->fname_io = fname_io != NULL ? xstrdup(fname_io) : NULL;
   evdata->group = group;
   evdata->buf = buf->handle;
+  evdata->win = win == NULL ? 0 : win->handle;
   evdata->eap = eap;
   if (data) {
     evdata->data = xmalloc(sizeof(Object));
@@ -1315,11 +1317,9 @@ static void deferred_event(void **argv)
     }
     tv_dict_set_keys_readonly(v_event);
 
-    win_T *win = curwin;  // before ctx_switch() may make the context window current
-
     CtxSwitch aco = { 0 };
     ctx_switch(&aco, NULL, NULL, buf, 0);
-    apply_autocmds_group(event, fname, fname_io, false, group, buf, win, eap, data, false);
+    apply_autocmds_group(event, fname, fname_io, false, group, buf, e->win, eap, data, false);
     ctx_restore(&aco);
 
     restore_v_event(v_event, &save_v_event);
@@ -1365,31 +1365,20 @@ void aucmd_defer_modified(buf_T *buf, bool new_val)
 
 /// Execute autocommands for "event" and file name "fname".
 ///
-/// `ev.win` is curwin; use apply_autocmds_win() for window-specific events.
-///
 /// @param event event that occurred
 /// @param fname filename, NULL or empty means use actual file name
 /// @param fname_io filename to use for <afile> on cmdline
 /// @param force Ignore autocmd_busy (force "++nested" behavior)
 /// @param buf Buffer for <abuf>
+/// @param win Window for `ev.win`: the window the event is about, `curwin` for
+///            events in the current window.  NULL only while exiting, when
+///            there is no window.
 ///
 /// @return true if some commands were executed.
-bool apply_autocmds(event_T event, char *fname, char *fname_io, bool force, buf_T *buf)
+bool apply_autocmds(event_T event, char *fname, char *fname_io, bool force, buf_T *buf, win_T *win)
 {
-  return apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, curwin, NULL, NULL,
-                              false);
-}
-
-/// Like apply_autocmds(), but with an explicit window for `ev.win`.
-///
-/// @param win Window for `ev.win`, NULL for the current window.
-///
-/// @return true if some commands were executed.
-bool apply_autocmds_win(event_T event, char *fname, char *fname_io, bool force, buf_T *buf,
-                        win_T *win)
-{
-  return apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, win, NULL, NULL,
-                              false);
+  return apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf,
+                              win == NULL ? 0 : win->handle, NULL, NULL, false);
 }
 
 /// Like apply_autocmds(), but with extra "eap" argument.  This takes care of
@@ -1400,14 +1389,15 @@ bool apply_autocmds_win(event_T event, char *fname, char *fname_io, bool force, 
 /// @param fname_io fname to use for <afile> on cmdline
 /// @param force Ignore autocmd_busy (force "++nested" behavior)
 /// @param buf Buffer for <abuf>
+/// @param win Window for `ev.win`, see apply_autocmds()
 /// @param exarg Ex command arguments
 ///
 /// @return true if some commands were executed.
 bool apply_autocmds_exarg(event_T event, char *fname, char *fname_io, bool force, buf_T *buf,
-                          exarg_T *eap)
+                          win_T *win, exarg_T *eap)
 {
-  return apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, curwin, eap, NULL,
-                              false);
+  return apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf,
+                              win == NULL ? 0 : win->handle, eap, NULL, false);
 }
 
 /// Like apply_autocmds(), but handles the caller's retval.  If the script
@@ -1420,18 +1410,19 @@ bool apply_autocmds_exarg(event_T event, char *fname, char *fname_io, bool force
 /// @param fname_io fname to use for <afile> on cmdline
 /// @param force Ignore autocmd_busy (force "++nested" behavior)
 /// @param buf Buffer for <abuf>
+/// @param win Window for `ev.win`, see apply_autocmds()
 /// @param[in,out] retval caller's retval
 ///
 /// @return true if some autocommands were executed
 bool apply_autocmds_retval(event_T event, char *fname, char *fname_io, bool force, buf_T *buf,
-                           int *retval)
+                           win_T *win, int *retval)
 {
   if (should_abort(*retval)) {
     return false;
   }
 
-  bool did_cmd = apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, curwin, NULL,
-                                      NULL, false);
+  bool did_cmd = apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf,
+                                      win == NULL ? 0 : win->handle, NULL, NULL, false);
   if (did_cmd && aborting()) {
     *retval = FAIL;
   }
@@ -1475,13 +1466,14 @@ bool trigger_cursorhold(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 /// @param force Ignore autocmd_busy (force "++nested" behavior)
 /// @param group autocmd group ID or AUGROUP_ALL
 /// @param buf Buffer for <abuf>
-/// @param win Window for `ev.win`, NULL for the current window.
+/// @param winid Handle of the window for `ev.win` (see apply_autocmds()), 0 for none.
+///              A handle, not a pointer: the window may already be freed, like <amatch>.
 /// @param eap Ex command arguments
 /// @param with_buf Run callbacks with "buf" as the current buffer
 ///
 /// @return true if some commands were executed.
 bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force, int group,
-                          buf_T *buf, win_T *win, exarg_T *eap, Object *data, bool with_buf)
+                          buf_T *buf, handle_T winid, exarg_T *eap, Object *data, bool with_buf)
 {
   char *sfname = NULL;  // short file name
   bool retval = false;
@@ -1665,8 +1657,8 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   }
 
   // Set the window handle for `ev.win`.  After the last "goto BYPASS_AU", which
-  // skips the restore below, and before ctx_switch().
-  autocmd_winid = win != NULL ? win->handle : (curwin != NULL ? curwin->handle : 0);
+  // skips the restore below.
+  autocmd_winid = winid;
 
   if (with_buf && buf != NULL && buf != curbuf) {
     ctx_switch(&aco, NULL, NULL, buf, 0);
@@ -1868,8 +1860,8 @@ void do_termresponse_autocmd(const String sequence, uint64_t channel_id)
   MAXSIZE_TEMP_DICT(data, 2);
   PUT_C(data, "sequence", STRING_OBJ(sequence));
   PUT_C(data, "chan", INTEGER_OBJ((Integer)channel_id));
-  apply_autocmds_group(EVENT_TERMRESPONSE, NULL, NULL, true, AUGROUP_ALL, NULL, curwin, NULL,
-                       &DICT_OBJ(data), false);
+  apply_autocmds_group(EVENT_TERMRESPONSE, NULL, NULL, true, AUGROUP_ALL, NULL, curwin->handle,
+                       NULL, &DICT_OBJ(data), false);
   termresponse_changed = true;
   termresponse_chan_id = channel_id;
 }
@@ -2493,7 +2485,7 @@ static TriState pending_vimresume = kFalse;
 
 static void vimresume_event(void **argv)
 {
-  apply_autocmds(EVENT_VIMRESUME, NULL, NULL, false, NULL);
+  apply_autocmds(EVENT_VIMRESUME, NULL, NULL, false, NULL, curwin);
   pending_vimresume = kFalse;
 }
 
@@ -2502,7 +2494,7 @@ void may_trigger_vim_suspend_resume(bool suspend)
 {
   if (suspend && pending_vimresume == kFalse) {
     pending_vimresume = kNone;
-    apply_autocmds(EVENT_VIMSUSPEND, NULL, NULL, false, NULL);
+    apply_autocmds(EVENT_VIMSUSPEND, NULL, NULL, false, NULL, curwin);
     pending_vimresume = kTrue;
   } else if (!suspend && pending_vimresume == kTrue) {
     pending_vimresume = kNone;
@@ -2528,7 +2520,7 @@ void do_autocmd_uienter(uint64_t chanid, bool attached)
   assert(chanid < VARNUMBER_MAX);
   tv_dict_add_nr(dict, S_LEN("chan"), (varnumber_T)chanid);
   tv_dict_set_keys_readonly(dict);
-  apply_autocmds(attached ? EVENT_UIENTER : EVENT_UILEAVE, NULL, NULL, false, curbuf);
+  apply_autocmds(attached ? EVENT_UIENTER : EVENT_UILEAVE, NULL, NULL, false, curbuf, curwin);
   restore_v_event(dict, &save_v_event);
 
   recursive = false;
@@ -2545,7 +2537,8 @@ void do_autocmd_focusgained(bool gained)
     return;  // disallow recursion
   }
   recursive = true;
-  apply_autocmds((gained ? EVENT_FOCUSGAINED : EVENT_FOCUSLOST), NULL, NULL, false, curbuf);
+  apply_autocmds((gained ? EVENT_FOCUSGAINED : EVENT_FOCUSLOST), NULL, NULL, false, curbuf,
+                 curwin);
 
   // When activated: Check if any file was modified outside of Vim.
   // Only do this when not done within the last two seconds as:
@@ -2579,8 +2572,8 @@ bool do_filetype_autocmd(buf_T *buf, bool force)
   buf->b_did_filetype = true;
   // Only pass true for "force" when it is true or
   // used recursively, to avoid endless recurrence.
-  bool ret
-    = apply_autocmds(EVENT_FILETYPE, buf->b_p_ft, buf->b_fname, force || ft_recursive == 1, buf);
+  bool ret = apply_autocmds(EVENT_FILETYPE, buf->b_p_ft, buf->b_fname, force || ft_recursive == 1,
+                            buf, curwin);
   ft_recursive--;
 
   secure = secure_save;

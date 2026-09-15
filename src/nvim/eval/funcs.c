@@ -3537,7 +3537,7 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     channel_incref(chan);
     channel_terminal_alloc(buf, chan);
 
-    apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, buf);
+    apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, buf, curwin);
 
     if (chan->term == NULL || terminal_buf(chan->term) == 0) {
       goto term_done;  // Terminal may be destroyed during autocommands.
@@ -3562,7 +3562,7 @@ void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     snprintf(NameBuff, sizeof(NameBuff), "term://%s//%d:%s", IObuff, pid, cmd);
 
     setfname(buf, NameBuff, NULL, true);
-    apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, buf);
+    apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, buf, curwin);
 
     if (chan->term == NULL || terminal_buf(chan->term) == 0) {
       goto term_done;  // Terminal may be destroyed during autocommands.
