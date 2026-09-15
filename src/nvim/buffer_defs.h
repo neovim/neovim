@@ -744,6 +744,7 @@ struct file_buffer {
 
   MarkTree b_marktree[1];
   Map(uint32_t, uint32_t) b_extmark_ns[1];         // extmark namespaces
+  Map(uint32_t, uint32_t) b_conceal_providers[1];  // provider ns -> conceal ns
 
   // Store the line count as it was before appending or inserting lines.
   // Used to determine a valid range before splicing marks, when the line
