@@ -29,24 +29,28 @@ From inside Vim an easy way to run a command and handle the output is with the
 |:make| command (see below).
 
 The 'errorformat' option should be set to match the error messages from your
-compiler (see |errorformat| below).
+compiler (see |errorformat| below).  Vim uses it to extract information such
+as the file name, line number and message from each line of compiler output.
+Lines that do not match are kept as invalid entries and are skipped by
+commands such as |:cnext|.  Use |:clist|! to display them as well.
 
 					*quickfix-stack* *quickfix-ID*
 Each quickfix list has a unique identifier called the quickfix ID and this
 number will not change within a Vim session.  The |getqflist()| function can be
 used to get the identifier assigned to a list.  There is also a quickfix list
-number which may change whenever more than 'chistory' lists are added to a
-quickfix stack.
+number, which is its position in the quickfix stack.  This number may change
+when lists are added or removed, or when more than 'chistory' lists are kept.
+Use the ID when a script needs to refer to the same list reliably; use the
+list number when referring to its current position in the stack.
 
 						*location-list* *E776*
-A location list is a window-local quickfix list.  You get one after commands
-like `:lvimgrep`, `:lgrep`, `:lhelpgrep`, `:lmake`, etc., which create a
-location list instead of a quickfix list as the corresponding `:vimgrep`,
-`:grep`, `:helpgrep`, `:make` do.
+A location list is a quickfix list tied to one window.  Each window can have a
+separate location list, and commands such as `:lvimgrep`, `:lgrep`,
+`:lhelpgrep` and `:lmake` use it instead of the global quickfix list.  The
+corresponding commands without the "l" prefix use the quickfix list.
 						*location-list-file-window*
-A location list is associated with a window and each window can have a
-separate location list.  A location list can be associated with only one
-window.  The location list is independent of the quickfix list.
+The location list is independent of the quickfix list.  A location list can
+be associated with only one window.
 
 When a window with a location list is split, the new window gets a copy of the
 location list.  When there are no longer any references to a location list,
@@ -93,12 +97,23 @@ processing a quickfix or location list command, it will be aborted.
 
 						*:cn* *:cne* *:cnext* *E553*
 :[count]cn[ext][!]	Display the [count] next error in the list that
-			includes a file name.  If there are no file names at
-			all, go to the [count] next error.  See |:cc| for
-			[!] and 'switchbuf'.
+			includes a file name.  Entries without a file name are
+			skipped, since Vim cannot use them to jump to a file.  If
+			there are no file names at all, go to the [count] next
+			error.  See |:cc| for [!] and 'switchbuf'.
 
 								*]q*
 ]q			Mapped to |:cnext|. |default-mappings|
+
+:[count]cN[ext][!]		*:cp* *:cprevious*  *:cprev* *:cN* *:cNext*
+:[count]cp[revious][!]	Display the [count] previous error in the list that
+			includes a file name.  Entries without a file name are
+			skipped, since Vim cannot use them to jump to a file.  If
+			there are no file names at all, go to the [count] previous
+			error.  See |:cc| for [!] and 'switchbuf'.
+
+								*[q*
+[q			Mapped to |:cprevious|. |default-mappings|
 
 							*:lne* *:lnext*
 :[count]lne[xt][!]	Same as ":cnext", except the location list for the
@@ -106,15 +121,6 @@ processing a quickfix or location list command, it will be aborted.
 
 								*]l*
 ]l			Mapped to |:lnext|. |default-mappings|
-
-:[count]cN[ext][!]		*:cp* *:cprevious*  *:cprev* *:cN* *:cNext*
-:[count]cp[revious][!]	Display the [count] previous error in the list that
-			includes a file name.  If there are no file names at
-			all, go to the [count] previous error.  See |:cc| for
-			[!] and 'switchbuf'.
-
-								*[q*
-[q			Mapped to |:cprevious|. |default-mappings|
 
 
 :[count]lN[ext][!]		*:lp* *:lprevious* *:lprev* *:lN* *:lNext*
@@ -264,9 +270,10 @@ processing a quickfix or location list command, it will be aborted.
 			execute the command, etc.
 			{N} can also be zero, in which case Vim exits
 			normally.
-			WARNING: All changes in files are lost.  It works like
-			":qall!" |:qall|, except that Nvim exits non-zero or
-			[count].
+			WARNING: This abandons changes in all files, using
+			|:qall|!.
+			The [!] does not change this.  Vim returns a non-zero
+			exit code, unless {N} is zero.
 
 							*:cf* *:cfi* *:cfile*
 :cf[ile][!] [errorfile]	Read the error file and jump to the first error.
@@ -310,14 +317,21 @@ processing a quickfix or location list command, it will be aborted.
 :laddf[ile] [errorfile]	Same as ":caddfile", except the location list for the
 			current window is used instead of the quickfix list.
 
+The following commands read error messages from a buffer:
+`:cbuffer` creates a list and jumps to its first error, `:cgetbuffer`
+creates a list without jumping, and `:caddbuffer` adds entries to the
+current list without changing the cursor position.  The corresponding
+commands with an "l" prefix use the location list.
+
 						*:cb* *:cbuffer* *E681*
 :[range]cb[uffer][!] [bufnr]
 			Read the error list from the current buffer.
 			When [bufnr] is given it must be the number of a
 			loaded buffer.  That buffer will then be used instead
 			of the current buffer.
-			A range can be specified for the lines to be used.
-			Otherwise all lines in the buffer are used.
+			A range can be specified for the lines to be used, for
+			example `:10,20cbuffer`.  Otherwise all lines in the
+			buffer are used.
 			See |:cc| for [!].
 
 						*:lb* *:lbuffer*
@@ -348,6 +362,12 @@ processing a quickfix or location list command, it will be aborted.
 			Same as ":caddbuffer", except the location list for
 			the current window is used instead of the quickfix
 			list.
+
+The following commands create or update a quickfix list from an expression:
+`:cexpr` creates a list and jumps to its first error, `:cgetexpr` creates a
+list without jumping, and `:caddexpr` adds entries to the current list without
+changing the cursor position.  The corresponding commands with an "l" prefix
+use the location list.
 
 							*:cex* *:cexpr* *E777*
 :cex[pr][!] {expr}	Create a quickfix list using the result of {expr} and
@@ -400,6 +420,8 @@ processing a quickfix or location list command, it will be aborted.
 			quickfix entries matching a supplied pattern.  The
 			pattern is matched against the filename, module name,
 			pattern and text of the entry.
+			For example, `:filter /\.c:/clist` lists only entries
+			whose displayed text contains `.c:`.  See |:filter|.
 
 :cl[ist] +{count}	List the current and next {count} valid errors.  This
 			is similar to ":clist from from+count", where "from"
@@ -448,7 +470,7 @@ use this code: >
 	   call setqflist(qflist)
 	endfunction
 
-	au QuickfixCmdPost make call QfMakeConv()
+	au QuickFixCmdPost make call QfMakeConv()
 Another option is using 'makeencoding'.
 
 							*quickfix-title*
@@ -512,6 +534,19 @@ entries parsed from lines.  The following shows how to use a custom
 'errorformat' to parse the lines without modifying the 'errorformat' option: >
 	echo getqflist({'efm' : '%f#%l#%m', 'lines' : ['F1#10#Line']})
 <
+
+To execute a command for entries or files in a list, use:
+
+				 Quickfix list  Location list
+	Each entry		 :cdo		 :ldo
+	Each file		 :cfdo		 :lfdo
+
+Use `:cdo` when a command should run for every valid entry, for example
+`:cdo s/old/new/g` to change each matching line.  Use `:cfdo` when it should
+run once for each file, for example `:cfdo update` to write each affected
+file once.  Add the "l" prefix to use the location list instead.
+
+The commands below describe these differences in more detail.
 
 EXECUTE A COMMAND IN ALL THE BUFFERS IN QUICKFIX OR LOCATION LIST:
 							*:cdo*
@@ -688,8 +723,9 @@ instead.  If the buffer in the used window has changed, and the error is in
 another file, jumping to the error will fail.  You will first have to make
 sure the window contains a buffer which can be abandoned.
 
-When you select a file from the quickfix window, the following steps are used
-to find a window to edit the file:
+When you select a file from the quickfix window, Vim first reuses a window
+that already displays the file.  Otherwise it uses a suitable window in the
+current tab page, or opens a new one.  The detailed selection rules are:
 
 1. If a window displaying the selected file is present in the current tabpage
    (starting with the window before the quickfix window), then that window is
@@ -752,8 +788,10 @@ is similar to the quickfix window, except that you can have more than one
 location list window open at a time.  When you use a location list command in
 this window, the displayed location list is used.
 
-When you select a file from the location list window, the following steps are
-used to find a window to edit the file:
+When you select a file from the location list window, Vim first uses the
+window associated with that location list, when possible.  Otherwise it
+reuses a suitable window or opens a new one.  The detailed selection rules
+are:
 
 1. If a non-quickfix window associated with the location list is present in
    the current tabpage, then that window is used.
@@ -985,6 +1023,13 @@ To get the number of the current list in the stack: >
 			Same as ":make", except the location list for the
 			current window is used instead of the quickfix list.
 
+In short, `:make` runs 'makeprg', reads its output using 'errorformat',
+optionally jumps to the first recognized error, and then removes the temporary
+error file used by the normal `:make` workflow.  If 'shellpipe' is empty, or
+if the program manages its own output file, this cleanup does not apply to
+that program's file.  Use |:cnext| and related commands to move through the
+resulting list.
+
 The ":make" command executes the command given with the 'makeprg' option.
 This is done by passing the command to the shell given with the 'shell'
 option.  This works almost like typing
@@ -1035,7 +1080,7 @@ read the error messages: >
 	   call setqflist(qflist)
 	endfunction
 
-	au QuickfixCmdPost make call QfMakeConv()
+	au QuickFixCmdPost make call QfMakeConv()
 
 (Example by Faque Cheng)
 Another option is using 'makeencoding'.
@@ -1048,8 +1093,9 @@ advantage of the internal grep is that it works on all systems and uses the
 powerful Vim search patterns.  An external grep program can be used when the
 Vim grep does not do what you want.
 
-The internal method will be slower, because files are read into memory.  The
-advantages are:
+The internal method will be slower, because files are read into memory.  For
+large projects, consider using |:grep| with an external search program.  The
+advantages of the internal method are:
 - Line separators and encoding are automatically recognized, as if a file is
   being edited.
 - Uses Vim search patterns.  Multi-line patterns can be used.
@@ -1101,9 +1147,11 @@ commands can be combined to create a NewGrep command: >
 			     buffer are abandoned.
 
 			'f'  When the 'f' flag is specified, fuzzy string
-			     matching is used to find matching lines.  In this
-			     case, {pattern} is treated as a literal string
-			     instead of a regular expression.  See
+			     matching is used to find matching lines.  The
+			     characters in {pattern} must appear in order, but
+			     need not be next to each other.  In this case,
+			     {pattern} is treated as a literal string instead of
+			     a regular expression.  See
 			     |fuzzy-matching| for more information about fuzzy
 			     matching strings.
 
@@ -1294,6 +1342,17 @@ need to write down a "todo" list.
 The Vim plugins in the "compiler" directory will set options to use the
 selected compiler.  For `:compiler` local options are set, for `:compiler!`
 global options.
+
+In normal use, select a compiler with `:compiler {name}` and then run
+|:make|.  The compiler plugin usually sets 'makeprg' and 'errorformat' so
+Vim can run the compiler and read its messages.  The descriptions below
+document options for particular compiler plugins.
+
+The values set by a compiler plugin can be changed afterwards with |:set| or
+|:setlocal|.  `:compiler {name}` sets options for the current buffer, while
+`:compiler! {name}` sets global options; a buffer-local value takes precedence
+over a global value.
+
 							*current_compiler*
 To support older Vim versions, the plugins always use "current_compiler" and
 not "b:current_compiler".  What the command actually does is the following:
@@ -1791,15 +1850,20 @@ This can be changed by setting the |g:typst_cmd| variable: >
 
 					*errorformat* *E372* *E373* *E374*
 						*E375* *E376* *E377* *E378*
-The 'errorformat' option specifies a list of formats that are recognized.  The
-first format that matches with an error message is used.  You can add several
-formats for different messages your compiler produces, or even entries for
-multiple compilers.  See |efm-entries|.
+The 'errorformat' option specifies patterns that Vim uses to read compiler
+output.  A pattern can extract the file name, line number, column and message
+from each line.  The first format that matches with an error message is used.
+You can add several formats for different messages your compiler produces, or
+even entries for multiple compilers.  See |efm-entries|.
 
 Each entry in 'errorformat' is a scanf-like string that describes the format.
 First, you need to know how scanf works.  Look in the documentation of your
 C compiler.  Below you find the % items that Vim understands.  Others are
 invalid.
+
+Quick start: Vim already includes formats for many common compilers.  Check
+|errorformats| for an example before writing your own.  If no example matches,
+start with the basic items below and adapt one of the examples as needed.
 
 Special characters in 'errorformat' are comma and backslash.  See
 |efm-entries| for how to deal with them.  Note that a literal "%" is matched
@@ -2159,6 +2223,12 @@ done via a 'cd' command in the makefile or with the parameter "-C dir" (change
 to directory before reading the makefile).  It may be useful to use the switch
 "-w" to force GNU-make to print out the working directory before and after
 processing.
+
+This matters only when compiler output contains relative file names from
+multiple directories.  If the output does not clearly report directory
+changes, Vim has to guess and can select the wrong file.  Printing absolute
+directory names and both entering and leaving directory messages avoids this
+problem.
 
 Maintaining the correct directory is more complicated if you don't use
 GNU-make.  AIX-make for example doesn't print any information about its
