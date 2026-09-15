@@ -270,7 +270,7 @@ processing a quickfix or location list command, it will be aborted.
 			execute the command, etc.
 			{N} can also be zero, in which case Vim exits
 			normally.
-			WARNING: This abandons changes in all files, using
+			WARNING: This abandons changes in all files, like
 			|:qall|!.
 			The [!] does not change this.  Vim returns a non-zero
 			exit code, unless {N} is zero.
