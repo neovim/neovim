@@ -386,10 +386,29 @@ describe('TUI :restart', function()
   end)
 
   it(':restart (no bang) restores session, window layout', function()
-    local file = 'Xtest-restart-file'
+    local file = 'Xtest-restart-file.conf'
+    local init = 'Xtest-restart-init.lua'
     write_file(file, 'foobar')
+    write_file(
+      init,
+      t.dedent([[
+        vim.api.nvim_create_autocmd('VimEnter', {
+          callback = function()
+            if vim.v.startreason == 'restart' then
+              -- Simulate a plugin loading session buffers before :edit enters them.
+              vim.api.nvim_create_autocmd('BufAdd', {
+                callback = function(ev)
+                  vim.fn.bufload(ev.buf)
+                end,
+              })
+            end
+          end,
+        })
+      ]])
+    )
     finally(function()
       os.remove(file)
+      os.remove(init)
     end)
 
     local server_pipe = new_pipename()
@@ -405,6 +424,8 @@ describe('TUI :restart', function()
       server_pipe,
       '--cmd',
       'set notermguicolors laststatus=0 noruler noshowcmd',
+      '--cmd',
+      'luafile ' .. init,
     }, {
       env = vim.tbl_extend('force', env_notermguicolors, {
         -- Ignore logs, because assert_restarted may log "connection refused" while it retries.
@@ -429,6 +450,10 @@ describe('TUI :restart', function()
     server_session = n.connect(server_pipe)
     local _, starttime = server_session:request('nvim_eval', 'v:starttime')
     eq({ true, '' }, { server_session:request('nvim_get_vvar', 'this_session') })
+    eq(
+      { true, 'conf' },
+      { server_session:request('nvim_get_option_value', 'filetype', { buf = 0 }) }
+    )
 
     -- :restart
     feed_data(':restart\r')
@@ -444,6 +469,10 @@ describe('TUI :restart', function()
     starttime, server_session = assert_restarted(starttime, server_session, server_pipe)
     eq({ true, 'restart' }, { server_session:request('nvim_get_vvar', 'startreason') })
     eq({ true, '' }, { server_session:request('nvim_get_vvar', 'this_session') })
+    eq(
+      { true, 'conf' },
+      { server_session:request('nvim_get_option_value', 'filetype', { buf = 0 }) }
+    )
 
     -- :restart!
     feed_data(':restart!\r')
