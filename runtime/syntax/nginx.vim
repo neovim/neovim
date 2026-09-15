@@ -1,7 +1,8 @@
 " Vim syntax file
 " Language: nginx.conf
 " Maintainer: Chris Aumann <me@chr4.org>
-" Last Change: Jan 09, 2026
+" Last Change: 2026 Jan 09
+" 2026 Sep 14 by Vim project: improve regex matching performance #21195
 
 if exists("b:current_syntax")
   finish
@@ -719,46 +720,20 @@ syn keyword ngxDirective zone
 if !exists('g:loaded_sslsecure')
   " Mark insecure SSL Ciphers (Note: List might not not complete)
   " Reference: https://www.openssl.org/docs/man1.0.2/apps/ciphers.html
-  syn match ngxSSLCipherInsecure '[^!]\zsSSLv3'
-  syn match ngxSSLCipherInsecure '[^!]\zsSSLv2'
-  syn match ngxSSLCipherInsecure '[^!]\zsHIGH'
-  syn match ngxSSLCipherInsecure '[^!]\zsMEDIUM'
-  syn match ngxSSLCipherInsecure '[^!]\zsLOW'
-  syn match ngxSSLCipherInsecure '[^!]\zsDEFAULT'
-  syn match ngxSSLCipherInsecure '[^!]\zsCOMPLEMENTOFDEFAULT'
-  syn match ngxSSLCipherInsecure '[^!]\zsALL'
-  syn match ngxSSLCipherInsecure '[^!]\zsCOMPLEMENTOFALL'
-
   " SHA ciphers are only used in HMAC with all known OpenSSL/ LibreSSL cipher suites and MAC
-  " usage is still considered safe
-  " syn match ngxSSLCipherInsecure '[^!]\zsSHA\ze\D'      " Match SHA1 without matching SHA256+
-  " syn match ngxSSLCipherInsecure '[^!]\zsSHA1'
-  syn match ngxSSLCipherInsecure '[^!]\zsMD5'
-  syn match ngxSSLCipherInsecure '[^!]\zsRC2'
-  syn match ngxSSLCipherInsecure '[^!]\zsRC4'
-  syn match ngxSSLCipherInsecure '[^!]\zs3DES'
+  " usage is still considered safe, so SHA/SHA1 are intentionally not matched.
+  " The ciphers sharing the common '[^!]\zs' prefix are merged into a single
+  " alternation for performance (one match rule instead of dozens).
+  syn match ngxSSLCipherInsecure '[^!]\zs\%(SSLv[23]\|COMPLEMENTOFDEFAULT\|COMPLEMENTOFALL\|DEFAULT\|MEDIUM\|HIGH\|LOW\|ALL\|MD5\|RC[24]\|3DES\|aDSS\|PSK\|IDEA\|SEED\|EXP\w*\|[ak]GOST\w*\|[kae]\?FZA\|ECB\|[aes]NULL\|ADH\|kDHE\|kEDH\|kECDHE\|kEECDH\)'
+
+  " These need a different preceding-character constraint, so keep them separate.
   syn match ngxSSLCipherInsecure '[^!3]\zsDES'
-  syn match ngxSSLCipherInsecure '[^!]\zsaDSS'
   syn match ngxSSLCipherInsecure '[^!a]\zsDSS'
-  syn match ngxSSLCipherInsecure '[^!]\zsPSK'
-  syn match ngxSSLCipherInsecure '[^!]\zsIDEA'
-  syn match ngxSSLCipherInsecure '[^!]\zsSEED'
-  syn match ngxSSLCipherInsecure '[^!]\zsEXP\w*'        " Match all EXPORT ciphers
-  syn match ngxSSLCipherInsecure '[^!]\zsaGOST\w*'      " Match all GOST ciphers
-  syn match ngxSSLCipherInsecure '[^!]\zskGOST\w*'
   syn match ngxSSLCipherInsecure '[^!ak]\zsGOST\w*'
-  syn match ngxSSLCipherInsecure '[^!]\zs[kae]\?FZA'    " Not implemented
-  syn match ngxSSLCipherInsecure '[^!]\zsECB'
-  syn match ngxSSLCipherInsecure '[^!]\zs[aes]NULL'
 
   " Anonymous cipher suites should never be used
   syn match ngxSSLCipherInsecure '[^!ECa]\zsDH\ze[^E]'  " Try to match DH without DHE, EDH, EECDH, etc.
   syn match ngxSSLCipherInsecure '[^!EA]\zsECDH\ze[^E]' " Do not match EECDH, ECDHE
-  syn match ngxSSLCipherInsecure '[^!]\zsADH'
-  syn match ngxSSLCipherInsecure '[^!]\zskDHE'
-  syn match ngxSSLCipherInsecure '[^!]\zskEDH'
-  syn match ngxSSLCipherInsecure '[^!]\zskECDHE'
-  syn match ngxSSLCipherInsecure '[^!]\zskEECDH'
   syn match ngxSSLCipherInsecure '[^!E]\zsAECDH'
 endif
 
