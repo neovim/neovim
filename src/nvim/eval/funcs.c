@@ -2250,6 +2250,81 @@ static void add_regionpos_range(typval_T *rettv, pos_T p1, pos_T p2)
   tv_list_append_number(l3, p2.coladd);
 }
 
+/// Compute the positions of the region segment on line "lnum".
+/// "ret_p1" is set to the start position of the segment and "ret_p2" to its
+/// end position.
+static void getregionpos_line(linenr_T lnum, pos_T p1, pos_T p2, bool inclusive,
+                              MotionType region_type, oparg_T *oap, bool allow_eol, pos_T *ret_p1,
+                              pos_T *ret_p2)
+{
+  char *line = ml_get(lnum);
+  colnr_T line_len = ml_get_len(lnum);
+
+  if (region_type == kMTLineWise) {
+    ret_p1->col = 1;
+    ret_p1->coladd = 0;
+    ret_p2->col = MAXCOL;
+    ret_p2->coladd = 0;
+  } else {
+    struct block_def bd;
+
+    if (region_type == kMTBlockWise) {
+      block_prep(oap, &bd, lnum, false);
+    } else {
+      charwise_block_prep(p1, p2, &bd, lnum, inclusive);
+    }
+
+    if (bd.is_oneChar) {  // selection entirely inside one char
+      if (region_type == kMTBlockWise) {
+        ret_p1->col = (colnr_T)(mb_prevptr(line, bd.textstart) - line) + 1;
+        ret_p1->coladd = bd.start_char_vcols - (bd.start_vcol - oap->start_vcol);
+      } else {
+        ret_p1->col = p1.col + 1;
+        ret_p1->coladd = p1.coladd;
+      }
+    } else if (region_type == kMTBlockWise && oap->start_vcol > bd.start_vcol) {
+      // blockwise selection entirely beyond end of line
+      ret_p1->col = MAXCOL;
+      ret_p1->coladd = oap->start_vcol - bd.start_vcol;
+      bd.is_oneChar = true;
+    } else if (bd.startspaces > 0) {
+      ret_p1->col = (colnr_T)(mb_prevptr(line, bd.textstart) - line) + 1;
+      ret_p1->coladd = bd.start_char_vcols - bd.startspaces;
+    } else {
+      ret_p1->col = bd.textcol + 1;
+      ret_p1->coladd = 0;
+    }
+
+    if (bd.is_oneChar) {  // selection entirely inside one char
+      ret_p2->col = ret_p1->col;
+      ret_p2->coladd = ret_p1->coladd + bd.startspaces + bd.endspaces;
+    } else if (bd.endspaces > 0) {
+      ret_p2->col = bd.textcol + bd.textlen + 1;
+      ret_p2->coladd = bd.endspaces;
+    } else {
+      ret_p2->col = bd.textcol + bd.textlen;
+      ret_p2->coladd = 0;
+    }
+  }
+
+  if (!allow_eol && ret_p1->col > line_len) {
+    ret_p1->col = 0;
+    ret_p1->coladd = 0;
+  } else if (ret_p1->col > line_len + 1) {
+    ret_p1->col = line_len + 1;
+  }
+
+  if (!allow_eol && ret_p2->col > line_len) {
+    ret_p2->col = ret_p1->col == 0 ? 0 : line_len;
+    ret_p2->coladd = 0;
+  } else if (ret_p2->col > line_len + 1) {
+    ret_p2->col = line_len + 1;
+  }
+
+  ret_p1->lnum = lnum;
+  ret_p2->lnum = lnum;
+}
+
 /// "getregionpos()" function
 static void f_getregionpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
@@ -2260,6 +2335,7 @@ static void f_getregionpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
   bool inclusive = true;
   MotionType region_type = kMTUnknown;
   bool allow_eol = false;
+  bool bounds_only = false;
   oparg_T oa;
 
   if (getregionpos(argvars, rettv, &p1, &p2, &inclusive, &region_type, &oa) == FAIL) {
@@ -2268,77 +2344,31 @@ static void f_getregionpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
 
   if (argvars[2].v_type == VAR_DICT) {
     allow_eol = tv_dict_get_bool(argvars[2].vval.v_dict, "eol", false);
+    bounds_only = tv_dict_get_bool(argvars[2].vval.v_dict, "bounds", false);
   }
 
-  for (linenr_T lnum = p1.lnum; lnum <= p2.lnum; lnum++) {
-    pos_T ret_p1, ret_p2;
-    char *line = ml_get(lnum);
-    colnr_T line_len = ml_get_len(lnum);
+  if (bounds_only) {
+    // Only the outer bounds of the region are wanted, so the lines in
+    // between do not have to be visited.
+    pos_T start_pos, end_pos;
 
-    if (region_type == kMTLineWise) {
-      ret_p1.col = 1;
-      ret_p1.coladd = 0;
-      ret_p2.col = MAXCOL;
-      ret_p2.coladd = 0;
-    } else {
-      struct block_def bd;
+    getregionpos_line(p1.lnum, p1, p2, inclusive, region_type, &oa,
+                      allow_eol, &start_pos, &end_pos);
+    if (p2.lnum != p1.lnum) {
+      pos_T unused;
 
-      if (region_type == kMTBlockWise) {
-        block_prep(&oa, &bd, lnum, false);
-      } else {
-        charwise_block_prep(p1, p2, &bd, lnum, inclusive);
-      }
-
-      if (bd.is_oneChar) {  // selection entirely inside one char
-        if (region_type == kMTBlockWise) {
-          ret_p1.col = (colnr_T)(mb_prevptr(line, bd.textstart) - line) + 1;
-          ret_p1.coladd = bd.start_char_vcols - (bd.start_vcol - oa.start_vcol);
-        } else {
-          ret_p1.col = p1.col + 1;
-          ret_p1.coladd = p1.coladd;
-        }
-      } else if (region_type == kMTBlockWise && oa.start_vcol > bd.start_vcol) {
-        // blockwise selection entirely beyond end of line
-        ret_p1.col = MAXCOL;
-        ret_p1.coladd = oa.start_vcol - bd.start_vcol;
-        bd.is_oneChar = true;
-      } else if (bd.startspaces > 0) {
-        ret_p1.col = (colnr_T)(mb_prevptr(line, bd.textstart) - line) + 1;
-        ret_p1.coladd = bd.start_char_vcols - bd.startspaces;
-      } else {
-        ret_p1.col = bd.textcol + 1;
-        ret_p1.coladd = 0;
-      }
-
-      if (bd.is_oneChar) {  // selection entirely inside one char
-        ret_p2.col = ret_p1.col;
-        ret_p2.coladd = ret_p1.coladd + bd.startspaces + bd.endspaces;
-      } else if (bd.endspaces > 0) {
-        ret_p2.col = bd.textcol + bd.textlen + 1;
-        ret_p2.coladd = bd.endspaces;
-      } else {
-        ret_p2.col = bd.textcol + bd.textlen;
-        ret_p2.coladd = 0;
-      }
+      getregionpos_line(p2.lnum, p1, p2, inclusive, region_type, &oa,
+                        allow_eol, &unused, &end_pos);
     }
+    add_regionpos_range(rettv, start_pos, end_pos);
+  } else {
+    for (linenr_T lnum = p1.lnum; lnum <= p2.lnum; lnum++) {
+      pos_T ret_p1, ret_p2;
 
-    if (!allow_eol && ret_p1.col > line_len) {
-      ret_p1.col = 0;
-      ret_p1.coladd = 0;
-    } else if (ret_p1.col > line_len + 1) {
-      ret_p1.col = line_len + 1;
+      getregionpos_line(lnum, p1, p2, inclusive, region_type, &oa,
+                        allow_eol, &ret_p1, &ret_p2);
+      add_regionpos_range(rettv, ret_p1, ret_p2);
     }
-
-    if (!allow_eol && ret_p2.col > line_len) {
-      ret_p2.col = ret_p1.col == 0 ? 0 : line_len;
-      ret_p2.coladd = 0;
-    } else if (ret_p2.col > line_len + 1) {
-      ret_p2.col = line_len + 1;
-    }
-
-    ret_p1.lnum = lnum;
-    ret_p2.lnum = lnum;
-    add_regionpos_range(rettv, ret_p1, ret_p2);
   }
 
   // getregionpos() may change curbuf and virtual_op
