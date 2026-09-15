@@ -170,6 +170,7 @@ end
 
 --- @class vim.lsp.Client.Progress: vim.Ringbuf<{token: integer|string, value: any}>
 --- @field pending table<lsp.ProgressToken,lsp.LSPAny>
+--- @field partialResults table<lsp.ProgressToken,fun(value: lsp.LSPAny)>
 
 --- @class vim.lsp.Client
 ---
@@ -223,6 +224,15 @@ end
 --- "complete" ephemerally while executing |LspRequest| autocmds when replies
 --- are received from the server.
 --- @field requests table<integer,{ type: string, bufnr: integer, method: string}?>
+---
+--- Partial result tokens awaiting cleanup, keyed by request id. Removed from
+--- `progress.partialResults` once the request completes, including on a
+--- cancellation acknowledgment.
+--- @field private _partial_result_tokens table<integer,lsp.ProgressToken>
+---
+--- Counter used to generate unique `partialResultToken`s for
+--- Client:partial_result_request().
+--- @field private _partial_result_token_counter integer
 ---
 --- See [vim.lsp.ClientConfig].
 --- @field root_dir string?
@@ -426,6 +436,8 @@ function Client.create(config)
     _log_prefix = string.format('LSP[%s]', name),
     _glob_cache = {},
     requests = {},
+    _partial_result_tokens = {},
+    _partial_result_token_counter = 0,
     attached_buffers = {},
     server_capabilities = {},
     registrations = {},
@@ -487,6 +499,9 @@ function Client.create(config)
 
   --- @type table<string|integer, string> title of unfinished progress sequences by token
   self.progress.pending = {}
+
+  --- @type table<string|integer, function> handlers of unfinished partial result sequences by token
+  self.progress.partialResults = {}
 
   --- @type vim.lsp.rpc.Dispatchers
   local dispatchers = {
@@ -780,6 +795,11 @@ function Client:request(method, params, handler, bufnr)
     if request_registered then
       self:_process_request(id, 'complete')
     end
+    local token = self._partial_result_tokens[request_id]
+    if token then
+      self._partial_result_tokens[request_id] = nil
+      self.progress.partialResults[token] = nil
+    end
     already_responded = true
   end)
 
@@ -788,6 +808,46 @@ function Client:request(method, params, handler, bufnr)
     request_registered = true
   end
 
+  return success, request_id
+end
+
+--- Sends a request that streams results via LSP partial results (`$/progress`).
+---
+--- Generates and registers a `partialResultToken`, threading streamed values to
+--- {on_partial_result}. The token is deregistered once the request completes,
+--- whether by response, error, or cancellation, so callers never need to touch
+--- `client.progress.partialResults` themselves.
+---
+--- @param method vim.lsp.protocol.Method.ClientToServer.Request LSP method name.
+--- @param params table LSP request params. `partialResultToken` is set/overwritten.
+--- @param on_partial_result fun(value: lsp.LSPAny) Called for each streamed `$/progress` value.
+--- @param handler? lsp.Handler Response |lsp-handler| for the final response.
+--- @param bufnr? integer (default: 0) Buffer handle, or 0 for current.
+--- @return boolean status, integer? request_id See |Client:request()|.
+function Client:partial_result_request(method, params, on_partial_result, handler, bufnr)
+  self._partial_result_token_counter = self._partial_result_token_counter + 1
+  local token = ('%s-%d'):format(method, self._partial_result_token_counter) --- @type lsp.ProgressToken
+
+  self.progress.partialResults[token] = on_partial_result
+  params.partialResultToken = token
+
+  local function wrapped_handler(err, result, ctx)
+    -- Clean up directly rather than relying on Client:request's generic cleanup,
+    -- which a synchronous response can run before `_partial_result_tokens` is set.
+    self.progress.partialResults[token] = nil
+    self._partial_result_tokens[ctx.request_id] = nil
+    return handler and handler(err, result, ctx)
+  end
+
+  local success, request_id = self:request(method, params, wrapped_handler, bufnr)
+  if not success then
+    -- wrapped_handler was never invoked; nothing else will clean this up.
+    self.progress.partialResults[token] = nil
+  elseif self.progress.partialResults[token] then
+    -- Still in flight: register for Client:request's generic cleanup, which
+    -- covers a later cancellation ack that wrapped_handler never sees.
+    self._partial_result_tokens[request_id] = token
+  end
   return success, request_id
 end
 
