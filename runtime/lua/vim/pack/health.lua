@@ -200,48 +200,108 @@ local function check_lockfile()
   end
 end
 
---- @param manifest vim.pack.Manifest
-local function check_manifest(manifest, plug_name, plug_path)
-  local name_str = vim.inspect(plug_name)
-  if vim.tbl_count(manifest) == 0 then
-    health.warn(('Plugin %s has empty or malformed manifest file'):format(name_str))
-    return false
+--- @param dep_data vim.pack.ManifestDependency
+--- @param src_version_map table<string,any> Map from all installed plugin sources to their version
+local function check_manifest_dependency(dep_data, src_version_map)
+  local is_proper_shape = type(dep_data) == 'table'
+    and type(dep_data.src) == 'string'
+    and (dep_data.version == nil or type(dep_data.version) == 'string')
+  if not is_proper_shape then
+    return false, 'is malformed'
   end
 
-  local nvim_engine = (manifest.engines or {}).nvim or '*'
-  local ok_version, nvim_version_range = pcall(vim.version.range, nvim_engine)
-  if not ok_version then
-    health.warn(('Plugin %s has malformed `engines.nvim` in manifest file'):format(name_str))
+  local src_version = src_version_map[dep_data.src]
+  if not src_version then
+    return false, dep_data.src .. ' is not installed'
+  end
+
+  if dep_data.version then
+    local dep_version = dep_data.version:match("^'(.+)'$") or vim.version.range(dep_data.version)
+    if not dep_version then
+      return false, dep_data.src .. ' has malformed `version`'
+    end
+
+    -- Version range match if user specified subset of what is in manifest
+    local is_version_exact_match = type(dep_version) == 'string' and dep_version == src_version
+    local is_version_range_match, intersect = pcall(vim.version.intersect, dep_version, src_version)
+    is_version_range_match = is_version_range_match and intersect == src_version
+    if not (is_version_exact_match or is_version_range_match) then
+      local msg = ('%s version `%s` does not match installed version `%s`'):format(
+        dep_data.src,
+        tostring(dep_version),
+        src_version == true and 'nil' or tostring(src_version)
+      )
+      return false, msg
+    end
+  end
+
+  return true, nil
+end
+
+--- @param plug_data vim.pack.PlugData
+--- @param all_plug_data vim.pack.PlugData[]
+local function check_manifest(plug_data, all_plug_data)
+  local name_str = vim.inspect(plug_data.spec.name)
+  local manifest = plug_data.manifest --- @type vim.pack.Manifest
+  local function warn(msg)
+    health.warn(msg .. '\nManifest file: ' .. vim.fs.joinpath(plug_data.path, 'pkg.json'))
+  end
+
+  if vim.tbl_count(manifest) == 0 then
+    warn(('Plugin %s has empty or malformed manifest file'):format(name_str))
     return false
   end
-  --- @cast nvim_version_range vim.VersionRange
-  if not nvim_version_range:has(vim.version()) then
-    health.warn(
+  local is_good = true
+
+  -- Engine
+  local nvim_engine = (manifest.engines or {}).nvim or '*'
+  local ok_version, nvim_version_range = pcall(vim.version.range, nvim_engine)
+  if not ok_version or nvim_version_range == nil then
+    warn(('Plugin %s has malformed `engines.nvim` in manifest file'):format(name_str))
+    is_good = false
+  elseif not nvim_version_range:has(vim.version()) then
+    warn(
       ('Plugin %s Nvim version requirement %s'):format(name_str, tostring(nvim_version_range))
         .. (' does not match current version %s'):format(tostring(vim.version()))
     )
-    return false
+    is_good = false
   end
 
-  local ok_scripts = true
+  -- Scripts
   ---@diagnostic disable-next-line: no-unknown
   for name, script_path in pairs(manifest.scripts or {}) do
-    if vim.fn.filereadable(vim.fs.joinpath(plug_path, script_path)) == 0 then
-      health.warn(('Plugin %s has no %s script at %s path'):format(name_str, name, script_path))
-      ok_scripts = false
+    if vim.fn.filereadable(vim.fs.joinpath(plug_data.path, script_path)) == 0 then
+      warn(('Plugin %s has no %s script at %s path'):format(name_str, name, script_path))
+      is_good = false
     end
   end
-  if not ok_scripts then
-    return false
+
+  -- Dependencies
+  local src_version_map = {} --- @type table<string,any>
+  for _, p_data in ipairs(all_plug_data) do
+    src_version_map[p_data.spec.src] = p_data.spec.version or p_data.branches[1]
+  end
+  for _, dep_data in ipairs(manifest.dependencies or {}) do
+    local ok_dep, msg = check_manifest_dependency(dep_data, src_version_map)
+    if not ok_dep then
+      warn(('Plugin %s dependency %s'):format(name_str, msg))
+    end
+    is_good = is_good and ok_dep
   end
 
-  return true
+  return is_good
 end
 
+--- @param plug_name string
+--- @param all_plug_data vim.pack.PlugData[]
 --- @return boolean Whether a check is successful
-local function check_installed_plugin(plug_name)
+local function check_installed_plugin(plug_name, all_plug_data)
   local name_str = vim.inspect(plug_name)
-  local plug_path = vim.fs.joinpath(get_plug_dir(), plug_name)
+  local data = {}
+  for _, p_data in ipairs(all_plug_data) do
+    data = p_data.spec.name == plug_name and p_data or data
+  end
+  local plug_path = data.path or vim.fs.joinpath(get_plug_dir(), plug_name)
 
   if vim.fn.isdirectory(plug_path) ~= 1 then
     health.error(('%s is not a directory. Delete it'):format(plug_name))
@@ -273,13 +333,12 @@ local function check_installed_plugin(plug_name)
   end
 
   -- Usage data
-  local has_pack_info, info = pcall(vim.pack.get, { plug_name })
-  if not has_pack_info then
+  if data.spec == nil then
     health.error('Could not get `vim.pack` usage information for plugin ' .. name_str)
     return false
   end
 
-  if not info[1].active then
+  if not data.active then
     health.info(
       ('Plugin %s is not active.'):format(name_str)
         .. ' Is it lazy loaded or did you forget to run `vim.pack.del()`?'
@@ -287,8 +346,8 @@ local function check_installed_plugin(plug_name)
   end
 
   -- Manifest
-  if info[1].manifest then
-    return check_manifest(info[1].manifest, plug_name, plug_path)
+  if data.manifest then
+    return check_manifest(data, all_plug_data)
   end
 
   return true
@@ -299,12 +358,13 @@ local function check_plug_dir()
 
   local is_good = true
   local plug_dir = get_plug_dir()
+  local all_plug_data = vim.pack.get(nil, { info = true })
   for plug_name, _, err in vim.fs.dir(plug_dir, { err = true }) do
     if err then
       health.error(err)
       is_good = false
     else
-      is_good = check_installed_plugin(plug_name) and is_good
+      is_good = check_installed_plugin(plug_name, all_plug_data) and is_good
     end
   end
 

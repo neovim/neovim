@@ -452,7 +452,20 @@ A simple example: >json
        "preupdate": "scripts/preupdate.vim",
        "update": "scripts/update.vim",
        "preuninstall": "scripts/preuninstall.lua"
-     }
+     },
+     "dependencies": [
+       {
+         "src": "https://github.com/user/plugin1"
+       },
+       {
+         "src": "https://github.com/user/plugin2",
+         "version": ">=1.0.0"
+       },
+       {
+         "src": "https://github.com/user/plugin3",
+         "version": "'branch'"
+       }
+     ]
     }
 <
 
@@ -460,19 +473,34 @@ A simple example: >json
 *vim.pack.Manifest*
 
     Fields: ~
-      • {description}?  (`string`) Plugin description
-      • {engines}?      (`table`) Supported engine versions. Values should be
-                        |vim.version.range()| compatible specs.
-                        • {nvim}? (`string`) Version range for Nvim.
-                        • {vim}? (`string`) Version range for Vim.
-      • {name}?         (`string`) Plugin name
-      • {scripts}?      (`table`) Script locations (relative to plugin's root)
-                        to |:source| after triggering corresponding
-                        |vim.pack-events|.
-                        • {install}? (`string`) Post install script.
-                        • {preuninstall}? (`string`) Pre delete script.
-                        • {preupdate}? (`string`) Pre update script.
-                        • {update}? (`string`) Post update script.
+      • {dependencies}?  (`table[]`) A list of data that plugin declares as
+                         its plugin dependencies. All should be installable
+                         with |vim.pack.add()|. Each data has the following
+                         fields:
+                         • {src} (`string`) Source to install from. Must match
+                           exactly the |vim.pack.Spec| source in
+                           |vim.pack.add()|.
+                         • {version}? (`string`) Suggested version. If
+                           describes a version constraint, used
+                           |vim.pack.Spec| `version` should be a
+                           |vim.VersionRange| that entirely fits into the
+                           constraint. If quoted string, describes the
+                           branch/tag/commit and |vim.pack.Spec| `version`
+                           should define the string exactly. If missing, no
+                           version is suggested.
+      • {description}?   (`string`) Plugin description
+      • {engines}?       (`table`) Supported engine versions. Values should be
+                         |vim.version.range()| compatible specs.
+                         • {nvim}? (`string`) Version range for Nvim.
+                         • {vim}? (`string`) Version range for Vim.
+      • {name}?          (`string`) Plugin name
+      • {scripts}?       (`table`) Script locations (relative to plugin's
+                         root) to |:source| after triggering corresponding
+                         |vim.pack-events|.
+                         • {install}? (`string`) Post install script.
+                         • {preuninstall}? (`string`) Pre delete script.
+                         • {preupdate}? (`string`) Pre update script.
+                         • {update}? (`string`) Post update script.
 
 *vim.pack.Spec*
 
