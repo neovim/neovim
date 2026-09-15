@@ -1580,3 +1580,252 @@ it('conceals lines contributed by an injected tree', function()
     end)
   )
 end)
+
+it('batches conceal queries and invalidates them on edits', function()
+  clear()
+  command('set conceallevel=3')
+
+  eq(
+    { { 13, 1 }, { 13, 1 }, { 13, 2 }, { 14, 3 }, { 13, 4 } },
+    exec_lua(function()
+      -- A later fence in the batch must not conceal any of the preceding text.
+      local lines = {}
+      for _ = 1, 10 do
+        lines[#lines + 1] = 'filler'
+      end
+      vim.list_extend(lines, {
+        'filler',
+        '~~~markdown',
+        '```lua',
+        'print(1)',
+        '```',
+        '~~~',
+        'tail',
+      })
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
+      vim.treesitter.start(0, 'markdown')
+      local tree = vim.treesitter.highlighter.active[vim.api.nvim_get_current_buf()].tree
+      local parse = tree.parse
+      local parses = 0
+      tree.parse = function(self, ...)
+        parses = parses + 1
+        return parse(self, ...)
+      end
+      local results = {}
+      local function measure()
+        -- No intervening redraw: only geometry's conceal callback can parse.
+        results[#results + 1] = { vim.api.nvim_win_text_height(0, {}).all, parses }
+      end
+      measure()
+      measure()
+      vim.api.nvim_buf_set_lines(0, 1, 2, false, { 'edited filler' })
+      measure()
+      vim.api.nvim_buf_set_lines(0, 1, 1, false, { 'inserted filler' })
+      measure()
+      vim.api.nvim_buf_set_lines(0, 1, 2, false, {})
+      measure()
+      tree.parse = parse
+      return results
+    end)
+  )
+end)
+
+describe('treesitter conceal-line query batching', function()
+  before_each(clear)
+
+  -- Run setup, geometry queries and edits in one RPC call. In particular, do not
+  -- allow redraw to populate conceal marks or add calls to the parse log.
+  local function exec_case(code)
+    return exec_lua([=[
+        local api = vim.api
+
+        local function open_window(buf, height)
+          local win = api.nvim_open_win(buf, false, {
+            relative = 'editor', row = 0, col = 0,
+            width = 40, height = height, style = 'minimal',
+          })
+          vim.wo[win].conceallevel = 3
+          vim.wo[win].wrap = false
+          vim.wo[win].foldenable = false
+          -- Keep this window non-current, so cursor-line exceptions cannot affect
+          -- the geometry or the first row of a batch.
+          return win
+        end
+
+        local function new_window(lines, height)
+          local buf = api.nvim_create_buf(false, true)
+          api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+          return buf, open_window(buf, height)
+        end
+
+        local function row_height(win, row)
+          return api.nvim_win_text_height(win, { start_row = row, end_row = row }).all
+        end
+
+        local function start_highlighter(buf)
+          -- Own the queries: do not depend on the user's runtime queries or on
+          -- parsers other than Markdown. Only a "markdown" fence injects a tree.
+          vim.treesitter.query.set('markdown', 'highlights', [[
+            (fenced_code_block
+              (fenced_code_block_delimiter) @conceal
+              (#set! conceal_lines ""))
+          ]])
+          vim.treesitter.query.set('markdown', 'injections', [[
+            ((fenced_code_block
+              (info_string (language) @injection.language)
+              (code_fence_content) @injection.content)
+              (#eq? @injection.language "markdown"))
+          ]])
+          vim.treesitter.start(buf, 'markdown')
+          return vim.treesitter.highlighter.active[buf]
+        end
+
+        local function with_parse_log(tree, fn)
+          local parse = tree.parse
+          local ranges = {}
+          tree.parse = function(self, range, ...)
+            ranges[#ranges + 1] = vim.deepcopy(range)
+            return parse(self, range, ...)
+          end
+          local ok, result = pcall(fn, ranges)
+          tree.parse = parse
+          if not ok then
+            error(result)
+          end
+          return result
+        end
+
+        local function snapshot(win, ranges)
+          -- Measure the whole buffer before inspecting individual rows, so a bad
+          -- answer on the cold pass cannot be hidden by a subsequent cache hit.
+          local all = api.nvim_win_text_height(win, {}).all
+          local rows = {}
+          local buf = api.nvim_win_get_buf(win)
+          for row = 0, api.nvim_buf_line_count(buf) - 1 do
+            rows[#rows + 1] = row_height(win, row)
+          end
+          return { all = all, rows = rows, parses = #ranges }
+        end
+      ]=] .. code)
+  end
+
+  it('uses fixed-height batches across fences and caps the last batch at EOF', function()
+    local heights = { 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0 }
+    eq(
+      {
+        height = 4,
+        ranges = { { 0, 4 }, { 4, 8 }, { 8, 12 }, { 12, 14 } },
+        first = { all = 6, rows = heights, parses = 4 },
+        again = { all = 6, rows = heights, parses = 4 },
+      },
+      exec_case([[
+        local buf, win = new_window({
+          'head',        -- 0: first batch starts here
+          '```',
+          'one',
+          '```',         -- 3: concealed immediately before a batch boundary
+          'between',     -- 4: second batch starts here
+          '~~~markdown', -- 5: concealed immediately after that boundary
+          '```',         -- 6: delimiter in an injected Markdown tree
+          'two',
+          'three',       -- 8: third batch starts inside that injected tree
+          '```',
+          '~~~',
+          '```',
+          'last',        -- 12: fourth batch starts here
+          '```',         -- 13: concealed EOF, in a short final batch
+        }, 4)
+        local highlighter = start_highlighter(buf)
+        -- Populate syntax trees, not conceal marks or the checked-row cache.
+        -- This isolates batching from first-parse notifications of newly
+        -- discovered injections. The edit tests below also cover cold parsing.
+        highlighter.tree:parse(true)
+        return with_parse_log(highlighter.tree, function(ranges)
+          local first = snapshot(win, ranges)
+          local again = snapshot(win, ranges)
+          return {
+            height = api.nvim_win_get_height(win),
+            ranges = ranges, first = first, again = again,
+          }
+        end)
+      ]])
+    )
+  end)
+
+  it(
+    'invalidates concealed and visible rows when injected fences are removed and restored',
+    function()
+      local concealed = { 1, 0, 0, 1, 0, 0, 1 }
+      local visible = { 1, 0, 1, 1, 1, 0, 1 }
+      eq(
+        {
+          { all = 3, rows = concealed, parses = 1 },
+          { all = 3, rows = concealed, parses = 1 },
+          { all = 5, rows = visible, parses = 2 },
+          { all = 5, rows = visible, parses = 2 },
+          { all = 3, rows = concealed, parses = 3 },
+          { all = 3, rows = concealed, parses = 3 },
+        },
+        exec_case([[
+        local buf, win = new_window({
+          'head', '~~~markdown', '```', 'body', '```', '~~~', 'tail',
+        }, 8)
+        local highlighter = start_highlighter(buf)
+        return with_parse_log(highlighter.tree, function(ranges)
+          local results = {}
+          local function measure_twice()
+            results[#results + 1] = snapshot(win, ranges)
+            results[#results + 1] = snapshot(win, ranges)
+          end
+          measure_twice()
+          api.nvim_buf_set_lines(buf, 2, 5, false, {
+            'plain opening', 'body', 'plain closing',
+          })
+          measure_twice()
+          api.nvim_buf_set_lines(buf, 2, 5, false, { '```', 'body', '```' })
+          measure_twice()
+          return results
+        end)
+      ]])
+      )
+    end
+  )
+
+  it('drops and recreates injected conceal marks when the fence language changes', function()
+    local concealed = { 1, 0, 0, 1, 0, 0, 1 }
+    local visible = { 1, 0, 1, 1, 1, 0, 1 }
+    eq(
+      {
+        { all = 3, rows = concealed, parses = 1, injected = true },
+        { all = 5, rows = visible, parses = 2, injected = false },
+        { all = 5, rows = visible, parses = 2, injected = false },
+        { all = 3, rows = concealed, parses = 3, injected = true },
+        { all = 3, rows = concealed, parses = 3, injected = true },
+      },
+      exec_case([[
+        local buf, win = new_window({
+          'head', '~~~markdown', '```', 'body', '```', '~~~', 'tail',
+        }, 8)
+        local highlighter = start_highlighter(buf)
+        return with_parse_log(highlighter.tree, function(ranges)
+          local results = {}
+          local function measure()
+            local result = snapshot(win, ranges)
+            result.injected = highlighter.tree:children().markdown ~= nil
+            results[#results + 1] = result
+          end
+          measure()
+          -- The test's injection query excludes "text" deliberately: no
+          -- optional parser is required, and the inner fences become text.
+          api.nvim_buf_set_lines(buf, 1, 2, false, { '~~~text' })
+          measure()
+          measure()
+          api.nvim_buf_set_lines(buf, 1, 2, false, { '~~~markdown' })
+          measure()
+          measure()
+          return results
+        end)
+      ]])
+    )
+  end)
+end)
