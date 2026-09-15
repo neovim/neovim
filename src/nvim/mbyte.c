@@ -554,8 +554,8 @@ int utf_ptr2cells(const char *p_in)
         return 2;  // emoji presentation
       }
     }
-    if (cells > 2) {
-      return cells;  // unprintable, shown as <xx> or <xxxx>
+    if (cells >= 2) {
+      return cells;  // unprintable or already known to be doublewidth
     }
     // currently, the grid allows maximum two cells per cluster
     int extra = utf_cluster_spacing_cells(p_in, len, -1);
@@ -663,8 +663,8 @@ int utf_ptr2cells_len(const char *p, int size)
         return 2;  // emoji presentation
       }
     }
-    if (cells > 2) {
-      return cells;  // unprintable, shown as <xx> or <xxxx>
+    if (cells >= 2) {
+      return cells;  // unprintable or already known to be doublewidth
     }
     // currently, the grid allows maximum two cells per cluster
     int extra = utf_cluster_spacing_cells(p, len, size);
