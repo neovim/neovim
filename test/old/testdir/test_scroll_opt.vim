@@ -2273,4 +2273,41 @@ func Test_smoothscroll_textoff_showbreak()
   call StopVimInTerminal(buf)
 endfunc
 
+" comp_botline() reuses the line heights computed for the previous redraw.
+" Changing an option that affects the displayed height of a line must
+" invalidate that cache.  Check that scrolling after such a change gives the
+" same result as setting the option before scrolling.
+func Test_botline_cache_invalidated_on_option_change()
+  " Resizing the height of a vertically split window pushes the reclaimed
+  " lines into 'cmdheight'; save and restore it so the following tests run
+  " with a full-height screen.
+  let save_cmdheight = &cmdheight
+  vnew
+  vertical resize 40
+  resize 10
+  setlocal scrolloff=0
+  let lines = map(range(1, 400), {_, v -> printf('%4d ', v) .. repeat('word ', 30)})
+
+  for opt in ['number', 'breakindent', 'foldcolumn=4', 'list', 'nowrap']
+    " Reference: option set before scrolling, so no stale cache is possible.
+    call setline(1, lines)
+    setlocal wrap nonumber nobreakindent nolist foldcolumn=0
+    exe 'setlocal ' .. opt
+    normal! 120Gzt
+    redraw
+    let expected = getwininfo(win_getid())[0].botline
+
+    " Same option applied after scrolling, when the cache is populated.
+    setlocal wrap nonumber nobreakindent nolist foldcolumn=0
+    normal! 120Gzt
+    redraw
+    exe 'setlocal ' .. opt
+    redraw
+    call assert_equal(expected, getwininfo(win_getid())[0].botline, 'setlocal ' .. opt)
+  endfor
+
+  bwipe!
+  let &cmdheight = save_cmdheight
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
