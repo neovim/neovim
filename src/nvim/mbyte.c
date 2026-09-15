@@ -528,40 +528,33 @@ static int utf_cluster_spacing_cells(const char *p, int firstlen, int size)
   return extra;
 }
 
+/// Return number of display cells occupied by character at "*p".
+/// A TAB is counted as two cells: "^I" or four: "<09>".
+///
+/// Consider using utf_ClusterInfo() instead to calculate both
+/// byte length and cell width of a printable cluster at once
+///
+/// @param p
+///
+/// @return number of display cells.
+int ptr2cells(const char *p_in)
+{
+  return utf_ClusterInfo(utf_ptr2StrCharInfo((char *)p_in)).cells;
+}
+
 /// Return the number of display cells character at "*p" occupies.
-/// This doesn't take care of unprintable characters, use ptr2cells() for that.
+///
+/// This considers all ASCII bytes to have width "1". Use ptr2cells()
+/// for 'display' style printing of unprintable ASCII.
 int utf_ptr2cells(const char *p_in)
   FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
   const uint8_t *p = (const uint8_t *)p_in;
-  // Need to convert to a character number.
-  if ((*p) >= 0x80) {
-    int len = utf8len_tab[*p];
-    int32_t c = utf_ptr2CharInfo_impl(p, (uintptr_t)len);
-    // An illegal byte is displayed as <xx>.
-    if (c <= 0) {
-      return 4;
-    }
-    // If the char is ASCII it must be an overlong sequence.
-    if (c < 0x80) {
-      return char2cells(c);
-    }
-    int cells = utf_char2cells(c);
-    if (cells == 1 && p_emoji
-        && prop_is_emojilike(utf8proc_get_property(c))) {
-      int c2 = utf_ptr2char(p_in + len);
-      if (c2 == 0xFE0F) {
-        return 2;  // emoji presentation
-      }
-    }
-    if (cells >= 2) {
-      return cells;  // unprintable or already known to be doublewidth
-    }
-    // currently, the grid allows maximum two cells per cluster
-    int extra = utf_cluster_spacing_cells(p_in, len, -1);
-    return MIN(cells + extra, 2);
+  if (*p < 0x80) {
+    return 1;
   }
-  return 1;
+
+  return ptr2cells(p_in);
 }
 
 /// Convert a UTF-8 byte sequence to a character number.
@@ -683,8 +676,12 @@ size_t mb_string2cells(const char *str)
 {
   size_t clen = 0;
 
-  for (const char *p = str; *p != NUL; p += utfc_ptr2len(p)) {
-    clen += (size_t)utf_ptr2cells(p);
+  StrCharInfo ci = utf_ptr2StrCharInfo((char *)str);
+  while (*ci.ptr != NUL) {
+    ClusterInfo cli = utf_ClusterInfo(ci);
+    // TODO(bfredl): moar unification, allowing dy_escape_width should be fine
+    clen += ci.chr.value < 0x80 ? 1 : (size_t)cli.cells;
+    ci = cli.next;
   }
 
   return clen;
@@ -1920,31 +1917,53 @@ int utf_head_off(const char *base_in, const char *p_in)
   return 0;
 }
 
-/// Assumes caller already handles ascii. see `utfc_next`
-StrCharInfo utfc_next_impl(StrCharInfo cur)
-  FUNC_ATTR_PURE
+ClusterInfo utf_ClusterInfo_impl(StrCharInfo cur)
 {
+  int cells = basechar_cells_impl(cur.chr);
   int32_t prev_code = cur.chr.value;
   uint8_t *next = (uint8_t *)(cur.ptr + cur.chr.len);
   GraphemeState state = GRAPHEME_STATE_INIT;
   assert(*next >= 0x80);
 
+  bool check_emoji = cells == 1 && p_emoji
+                     && prop_is_emojilike(utf8proc_get_property(cur.chr.value));
+
   while (true) {
     uint8_t const next_len = utf8len_tab[*next];
     int32_t const next_code = utf_ptr2CharInfo_impl(next, (uintptr_t)next_len);
     if (!utf_iscomposing(prev_code, next_code, &state)) {
-      return (StrCharInfo){
-        .ptr = (char *)next,
-        .chr = (CharInfo){ .value = next_code, .len = (next_code < 0 ? 1 : next_len) },
+      return (ClusterInfo){
+        .next = (StrCharInfo){
+          .ptr = (char *)next,
+          .chr = (CharInfo){ .value = next_code, .len = (next_code < 0 ? 1 : next_len) },
+        },
+        .cells = cells,
       };
+    }
+
+    if (check_emoji) {
+      if (next_code == 0xFE0F) {
+        cells = 2;
+      }
+      check_emoji = false;
+    }
+
+    if (cells == 1) {
+      if (utf8proc_get_property(next_code)->boundclass == UTF8PROC_BOUNDCLASS_SPACINGMARK
+          || (next_code & ~1) == 0xFF9E) {  // halfwidth katakana voiced sound marks
+        cells = 2;
+      }
     }
 
     prev_code = next_code;
     next += next_len;
     if (EXPECT(*next < 0x80U, true)) {
-      return (StrCharInfo){
-        .ptr = (char *)next,
-        .chr = (CharInfo){ .value = *next, .len = 1 },
+      return (ClusterInfo){
+        .next = (StrCharInfo){
+          .ptr = (char *)next,
+          .chr = (CharInfo){ .value = *next, .len = 1 },
+        },
+        .cells = cells,
       };
     }
   }

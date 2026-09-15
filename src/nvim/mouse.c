@@ -1892,12 +1892,14 @@ colnr_T vcol2col(win_T *wp, linenr_T lnum, colnr_T vcol, colnr_T *coladdp)
   StrCharInfo ci = utf_ptr2StrCharInfo(line);
   int cur_vcol = 0;
   while (cur_vcol < vcol && *ci.ptr != NUL) {
-    int next_vcol = cur_vcol + win_charsize(cstype, cur_vcol, ci.ptr, ci.chr.value, &csarg).width;
+    ClusterInfo cli = utf_ClusterInfo(ci);
+    int next_vcol = cur_vcol + win_charsize(cstype, cur_vcol, ci.ptr, ci.chr.value, &csarg,
+                                            cli.cells).width;
     if (next_vcol > vcol) {
       break;
     }
     cur_vcol = next_vcol;
-    ci = utfc_next(ci);
+    ci = cli.next;
   }
 
   if (coladdp != NULL) {

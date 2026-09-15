@@ -69,6 +69,11 @@ typedef struct {
 } StrCharInfo;
 
 typedef struct {
+  StrCharInfo next;  ///< char after cluster
+  int cells;         ///< cell width of cluster
+} ClusterInfo;
+
+typedef struct {
   int8_t begin_off;  ///< Offset to the first byte of the codepoint.
   int8_t end_off;    ///< Offset to one past the end byte of the codepoint.
 } CharBoundsOff;

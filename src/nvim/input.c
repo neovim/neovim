@@ -2885,8 +2885,9 @@ static int vgetorpeek(bool advance)
                   if (!ascii_iswhite(ci.chr.value)) {
                     curwin->w_wcol = vcol;
                   }
-                  vcol += win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg).width;
-                  ci = utfc_next(ci);
+                  ClusterInfo cli = utf_ClusterInfo(ci);
+                  vcol += win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg, cli.cells).width;
+                  ci = cli.next;
                 }
 
                 curwin->w_wrow = curwin->w_cline_row

@@ -1184,12 +1184,14 @@ void change_indent(int type, int amount, int round, bool call_changed_bytes)
       CSType cstype = init_charsize_arg(&csarg, curwin, 0, line);
       StrCharInfo ci = utf_ptr2StrCharInfo(line);
       while (true) {
-        int next_vcol = vcol + win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg).width;
+        ClusterInfo cli = utf_ClusterInfo(ci);
+        int next_vcol = vcol + win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg,
+                                            cli.cells).width;
         if (next_vcol > end_vcol) {
           break;
         }
         vcol = next_vcol;
-        ci = utfc_next(ci);
+        ci = cli.next;
         if (*ci.ptr == NUL) {
           break;
         }
@@ -1736,8 +1738,9 @@ int get_lisp_indent(void)
       StrCharInfo sci = utf_ptr2StrCharInfo(line);
       amount = 0;
       while (*sci.ptr != NUL && col > 0) {
-        amount += win_charsize(cstype, amount, sci.ptr, sci.chr.value, &csarg).width;
-        sci = utfc_next(sci);
+        ClusterInfo cli = utf_ClusterInfo(sci);
+        amount += win_charsize(cstype, amount, sci.ptr, sci.chr.value, &csarg, cli.cells).width;
+        sci = cli.next;
         col--;
       }
       char *that = sci.ptr;
@@ -1756,7 +1759,7 @@ int get_lisp_indent(void)
         colnr_T firsttry = amount;
 
         while (ascii_iswhite(*that)) {
-          amount += win_charsize(cstype, amount, that, (uint8_t)(*that), &csarg).width;
+          amount += win_charsize(cstype, amount, that, (uint8_t)(*that), &csarg, 1).width;
           that++;
         }
 
@@ -1785,21 +1788,21 @@ int get_lisp_indent(void)
                 parencount--;
               }
               if ((ci.value == '\\') && (*(that + 1) != NUL)) {
-                amount += win_charsize(cstype, amount, that, ci.value, &csarg).width;
-                StrCharInfo next_sci = utfc_next((StrCharInfo){ that, ci });
-                that = next_sci.ptr;
-                ci = next_sci.chr;
+                ClusterInfo cli = utf_ClusterInfo((StrCharInfo){ that, ci });
+                amount += win_charsize(cstype, amount, that, ci.value, &csarg, cli.cells).width;
+                that = cli.next.ptr;
+                ci = cli.next.chr;
               }
 
-              amount += win_charsize(cstype, amount, that, ci.value, &csarg).width;
-              StrCharInfo next_sci = utfc_next((StrCharInfo){ that, ci });
-              that = next_sci.ptr;
-              ci = next_sci.chr;
+              ClusterInfo cli = utf_ClusterInfo((StrCharInfo){ that, ci });
+              amount += win_charsize(cstype, amount, that, ci.value, &csarg, cli.cells).width;
+              that = cli.next.ptr;
+              ci = cli.next.chr;
             }
           }
 
           while (ascii_iswhite(*that)) {
-            amount += win_charsize(cstype, amount, that, (uint8_t)(*that), &csarg).width;
+            amount += win_charsize(cstype, amount, that, (uint8_t)(*that), &csarg, 1).width;
             that++;
           }
 

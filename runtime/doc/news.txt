@@ -466,6 +466,8 @@ PERFORMANCE
 • LSP: "overscan" semantic_token range requests to avoid flicker.
 • |vim.hl.range()| and |vim.hl.hl_op()| are faster for large characterwise and
   linewise regions.
+• The display of multibyte text with grapheme clusters has been optimized,
+  by calculating byte length and cell width of clusters in a single loop.
 
 PLUGINS
 
@@ -570,6 +572,11 @@ These existing features changed their behavior.
 • |vim.lsp.util.apply_text_edits()| accepts `opts.keep_cursor`, to hold the
   cursor on the text it is on while edits move around it.
 • 'tagfunc' is now also used for :tag completion.
+• Some character clusters are restored to occupy two cells like they
+  did prior to Nvim 0.11. These include Thai syllables like สำ and
+  half-width Katakana with voicing marks ｶﾞ. The TUI renders these in
+  a safe way which also supports terminals which consider these to be
+  single-width.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
