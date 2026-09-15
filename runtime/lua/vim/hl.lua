@@ -94,15 +94,15 @@ function M.range(buf, ns, hlgroup, start, finish, opts)
     end
   end)
 
+  -- For non-blockwise selection, use a single extmark and only compute its bounds.
+  local bounds = regtype == 'v' or regtype == 'V'
   local region = vim.fn.getregionpos(pos1, pos2, {
     type = regtype,
     exclusive = not inclusive,
     eol = true,
+    bounds = bounds,
   })
-  -- For non-blockwise selection, use a single extmark.
-  if regtype == 'v' or regtype == 'V' then
-    --- @type [ [integer, integer, integer, integer], [integer, integer, integer, integer]][]
-    region = { { assert(region[1])[1], assert(region[#region])[2] } }
+  if bounds then
     local region1 = assert(region[1])
     if
       regtype == 'V'
