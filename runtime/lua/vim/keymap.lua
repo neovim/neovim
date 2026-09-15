@@ -39,9 +39,10 @@ local keymap = {}
 ---     type = 'v',
 ---     exclusive = false,
 ---     eol = false,
+---     bounds = true,
 ---   })
 ---   local line1 = region[1][1][2]
----   local line2 = region[#region][1][2]
+---   local line2 = region[1][2][2]
 ---   vim.print({ line1, line2 })
 --- end)
 ---
