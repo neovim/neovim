@@ -8568,9 +8568,16 @@ static const char e_value_too_large[] = N_("E951: \\% value too large");
 // Variables only used in nfa_regcomp() and descendants.
 static int nfa_re_flags;  ///< re_flags passed to nfa_regcomp().
 static int *post_start;   ///< holds the postfix form of r.e.
+static size_t post_start_len;  ///< size of allocated post_start (in ints)
 static int *post_end;
 static int *post_ptr;
 static int nfa_reg_parse_depth;  // nesting depth in nfa_reg()
+
+// The postfix list (post_start) and fragment stack (nfa_stack) are reused
+// across compilations; a buffer that grew past these sizes for a big pattern
+// is freed afterwards instead of being kept, to avoid holding much memory.
+#define NFA_POSTFIX_KEEP        10000   // number of ints (~40 Kbyte)
+#define NFA_STACK_KEEP          4000    // number of Frag_T (~64 Kbyte)
 
 // Set when the pattern should use the NFA engine.
 // E.g. [[:upper:]] only allows 8bit characters for BT engine,
@@ -8615,9 +8622,15 @@ static void nfa_regcomp_start(uint8_t *expr, int re_flags)
   // Size for postfix representation of expr.
   postfix_size = sizeof(int) * nstate_max;
 
-  post_start = (int *)xmalloc(postfix_size);
+  // Reuse the postfix buffer across compilations, only growing it when the
+  // estimate exceeds the current size; it is freed in free_regexp_stuff().
+  if (post_start == NULL || post_start_len < nstate_max) {
+    xfree(post_start);
+    post_start = xmalloc(postfix_size);
+    post_start_len = nstate_max;
+  }
   post_ptr = post_start;
-  post_end = post_start + nstate_max;
+  post_end = post_start + post_start_len;
   wants_nfa = false;
   rex.nfa_has_zend = false;
   rex.nfa_has_backref = false;
@@ -8806,6 +8819,7 @@ static void realloc_post_list(void)
   post_ptr = new_start + (post_ptr - post_start);
   post_end = new_start + new_max;
   post_start = new_start;
+  post_start_len = new_max;
 }
 
 // Search between "start" and "end" and try to recognize a
@@ -11746,6 +11760,10 @@ static nfa_state_T *alloc_state(int c, nfa_state_T *out, nfa_state_T *out1)
   return s;
 }
 
+// Reused across compilations by post2nfa(); freed in free_regexp_stuff().
+static Frag_T *nfa_stack;
+static int nfa_stack_len;
+
 // A partially built NFA without the matching state filled in.
 // Frag_T.start points at the start state.
 // Frag_T.out is a list of places that need to be set to the
@@ -12097,13 +12115,18 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
 #define POP()       st_pop(&stackp, stack); \
   if (stackp < stack) { \
     st_error(postfix, end, p); \
-    xfree(stack); \
     return NULL; \
   }
 
   if (nfa_calc_size == false) {
-    // Allocate space for the stack. Max states on the stack: "nstate".
-    stack = xmalloc((size_t)(nstate + 1) * sizeof(Frag_T));
+    // Reuse the fragment stack across compilations, growing when needed;
+    // it is freed in free_regexp_stuff().
+    if (nfa_stack == NULL || nfa_stack_len < nstate + 1) {
+      xfree(nfa_stack);
+      nfa_stack = xmalloc((size_t)(nstate + 1) * sizeof(Frag_T));
+      nfa_stack_len = nstate + 1;
+    }
+    stack = nfa_stack;
     stackp = stack;
     stack_end = stack + (nstate + 1);
   }
@@ -12561,13 +12584,11 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
 
   e = POP();
   if (stackp != stack) {
-    xfree(stack);
     EMSG_RET_NULL(_("E875: (NFA regexp) (While converting from postfix to NFA),"
                     "too many states left on stack"));
   }
 
   if (istate >= nstate) {
-    xfree(stack);
     EMSG_RET_NULL(_("E876: (NFA regexp) "
                     "Not enough space to store the whole NFA "));
   }
@@ -12581,7 +12602,6 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
   ret = e.start;
 
 theend:
-  xfree(stack);
   return ret;
 
 #undef POP1
@@ -15925,8 +15945,18 @@ static regprog_T *nfa_regcomp(uint8_t *expr, int re_flags)
 #endif
 
 out:
-  xfree(post_start);
-  post_start = post_ptr = post_end = NULL;
+  // The postfix list and fragment stack are reused by the next compilation
+  // (and freed in free_regexp_stuff()), but drop ones that grew large for a
+  // big pattern to avoid holding much memory.
+  if (post_start_len > NFA_POSTFIX_KEEP) {
+    XFREE_CLEAR(post_start);
+    post_start_len = 0;
+  }
+  post_ptr = post_end = NULL;
+  if (nfa_stack_len > NFA_STACK_KEEP) {
+    XFREE_CLEAR(nfa_stack);
+    nfa_stack_len = 0;
+  }
   state_ptr = NULL;
   return (regprog_T *)prog;
 
@@ -16151,6 +16181,12 @@ void free_regexp_stuff(void)
   ga_clear(&backpos);
   xfree(reg_tofree);
   xfree(reg_prev_sub);
+  xfree(post_start);   // NFA postfix buffer, reused across compilations
+  post_start = NULL;
+  post_start_len = 0;
+  xfree(nfa_stack);    // NFA fragment stack, reused across compilations
+  nfa_stack = NULL;
+  nfa_stack_len = 0;
 }
 
 #endif
