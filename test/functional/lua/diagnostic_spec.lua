@@ -4306,7 +4306,7 @@ describe('vim.diagnostic', function()
       end)
 
       eq(
-        '%#DiagnosticSignError#E:1 %#DiagnosticSignWarn#W:2 %#DiagnosticSignInfo#I:3 %#DiagnosticSignHint#H:4%##',
+        '%#(%$DiagnosticSignError$E:1%#) %#(%$DiagnosticSignWarn$W:2%#) %#(%$DiagnosticSignInfo$I:3%#) %#(%$DiagnosticSignHint$H:4%#)',
         result
       )
 
@@ -4340,7 +4340,7 @@ describe('vim.diagnostic', function()
         return vim.diagnostic.status()
       end)
 
-      eq('%#DiagnosticSignError#⨯:1 %#DiagnosticSignWarn#⚠︎:1%##', result)
+      eq('%#(%$DiagnosticSignError$⨯:1%#) %#(%$DiagnosticSignWarn$⚠︎:1%#)', result)
     end)
 
     it('works when signs are disabled', function()
@@ -4355,7 +4355,7 @@ describe('vim.diagnostic', function()
         return vim.diagnostic.status()
       end)
 
-      eq('%#DiagnosticSignError#E:1 %#DiagnosticSignWarn#W:1%##', result)
+      eq('%#(%$DiagnosticSignError$E:1%#) %#(%$DiagnosticSignWarn$W:1%#)', result)
     end)
 
     it('uses format function diagnostic.config().status.format', function()
@@ -4394,7 +4394,7 @@ describe('vim.diagnostic', function()
         return vim.diagnostic.status()
       end)
 
-      eq('%#ERROR#EE 1 %#WARN#WW 1 %#INFO#II 0 %#HINT#HH 0%##', result)
+      eq('%#(%#ERROR#EE 1 %#WARN#WW 1 %#INFO#II 0 %#HINT#HH 0%#)', result)
     end)
   end)
 
