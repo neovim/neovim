@@ -455,7 +455,7 @@ win_T *win_float_special(bool enter, bool new_buf, WinKind kind)
   config.style = kWinStyleMinimal;
   Error err = ERROR_INIT;
   bool preview = kind == kWinPreview;
-  if (preview && !win_previewpopup_config(&config)) {
+  if (preview && !win_previewpopup_config(p_pvp, &config)) {
     emsg(_(e_invarg));
     return NULL;
   }
@@ -580,13 +580,13 @@ void win_float_update_preview(win_T *wp)
   win_config_float(wp, wp->w_config);
 }
 
-/// Applies 'previewpopup' ("height:N,width:N,border:style") to `config`.
+/// Applies a 'previewpopup' value ("height:N,width:N,border:style") to `config`.
 ///
 /// @return false on an invalid value; caller emits E474.
-bool win_previewpopup_config(WinConfig *config)
+bool win_previewpopup_config(const char *value, WinConfig *config)
   FUNC_ATTR_NONNULL_ALL
 {
-  OptKeyDict_pvp *v = opt_keyset(p_pvp, kOptPreviewpopup, NULL);
+  OptKeyDict_pvp *v = opt_keyset(value, kOptPreviewpopup, NULL);
 
   if ((HAS_KEY(v, pvp, height) && v->height < 1) || (HAS_KEY(v, pvp, width) && v->width < 1)) {
     return false;

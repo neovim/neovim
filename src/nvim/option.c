@@ -2301,6 +2301,23 @@ static const char *did_set_equalalways(optset_T *args)
   return NULL;
 }
 
+/// Process the new 'foldenable' option value.
+static const char *did_set_foldenable(optset_T *args)
+{
+  win_T *win = (win_T *)args->os_win;
+  if (args->os_varp == &win->w_p_fen && args->os_oldval.data.boolean != win->w_p_fen
+      && foldmethodIsDiff(win) && win->w_p_scb) {
+    // Adjust 'foldenable' in diff-synced windows without recursive setters.
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (wp != win && foldmethodIsDiff(wp) && wp->w_p_scb) {
+        wp->w_p_fen = win->w_p_fen;
+        changed_window_setting(wp);
+      }
+    }
+  }
+  return NULL;
+}
+
 /// Process the new 'foldlevel' option value.
 static const char *did_set_foldlevel(optset_T *args FUNC_ATTR_UNUSED)
 {
@@ -2627,23 +2644,20 @@ static const char *did_set_paste(optset_T *args FUNC_ATTR_UNUSED)
   return NULL;
 }
 
-/// Process the updated 'previewwindow' option value.
-static const char *did_set_previewwindow(optset_T *args)
+/// Validate the 'previewwindow' option.
+static const char *validate_previewwindow(const optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
-
-  if (!win->w_p_pvw) {
+  if ((args->os_flags & OPT_GLOBAL) || !args->os_newval.data.boolean) {
     return NULL;
   }
-
-  // There can be only one window with 'previewwindow' set.
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_p_pvw && wp != win) {
-      win->w_p_pvw = false;
+  win_T *win = args->os_win;
+  tabpage_T *tab = win == curwin ? curtab : win_find_tabpage(win);
+  // There can be only one preview window in a tab.
+  FOR_ALL_WINDOWS_IN_TAB(wp, tab) {
+    if (wp != win && wp->w_p_pvw) {
       return e_preview_window_already_exists;
     }
   }
-
   return NULL;
 }
 
@@ -3017,13 +3031,14 @@ static void do_spelllang_source(win_T *win)
 ///
 /// @param          opt_idx    Index in options[] table. Must not be kOptInvalid.
 /// @param[in,out]  newval     Pointer to new option value. Will be set to bound checked value.
+/// @param          win       Target window.
 /// @param[out]     errbuf     Buffer for error message. Cannot be NULL.
 /// @param          errbuflen  Length of error buffer.
 ///
 /// @return Error message, if any.
-static const char *check_num_option_bounds(OptIndex opt_idx, OptInt *newval, char *errbuf,
-                                           size_t errbuflen)
-  FUNC_ATTR_NONNULL_ARG(3)
+static const char *check_num_option_bounds(OptIndex opt_idx, OptInt *newval, win_T *win,
+                                           char *errbuf, size_t errbuflen)
+  FUNC_ATTR_NONNULL_ARG(3, 4)
 {
   const char *errmsg = NULL;
 
@@ -3057,12 +3072,12 @@ static const char *check_num_option_bounds(OptIndex opt_idx, OptInt *newval, cha
     }
     break;
   case kOptScroll:
-    if ((*newval <= 0 || (*newval > curwin->w_view_height && curwin->w_view_height > 0))
+    if ((*newval <= 0 || (*newval > win->w_view_height && win->w_view_height > 0))
         && full_screen) {
       if (*newval != 0) {
         errmsg = e_scroll;
       }
-      *newval = win_default_scroll(curwin);
+      *newval = win_default_scroll(win);
     }
     break;
   default:
@@ -3080,7 +3095,7 @@ static const char *check_num_option_bounds(OptIndex opt_idx, OptInt *newval, cha
 /// @param          errbuflen  Length of error buffer.
 ///
 /// @return Error message, if any.
-static const char *validate_num_option(OptIndex opt_idx, OptInt *newval, char *errbuf,
+static const char *validate_num_option(OptIndex opt_idx, OptInt *newval, win_T *win, char *errbuf,
                                        size_t errbuflen)
 {
   OptInt value = *newval;
@@ -3242,7 +3257,7 @@ static const char *validate_num_option(OptIndex opt_idx, OptInt *newval, char *e
     break;
   }
 
-  return check_num_option_bounds(opt_idx, newval, errbuf, errbuflen);
+  return check_num_option_bounds(opt_idx, newval, win, errbuf, errbuflen);
 }
 
 /// Called after an option changed: check if something needs to be redrawn.
@@ -4071,10 +4086,6 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, Object old_value
   if (direct) {
     // Don't do any extra processing if setting directly.
   }
-  // Disallow changing immutable options.
-  else if (opt->immutable && !option_equal(old_value, new_value)) {
-    errmsg = e_unsupportedoption;
-  }
   // Disallow changing some options from secure mode.
   else if ((secure || sandbox != 0) && (opt->flags & kOptFlagSecure)) {
     errmsg = e_secure;
@@ -4208,12 +4219,15 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, Object old_value
   return errmsg;
 }
 
-/// Validates an option value (internal scalar/:set-style form).
+/// Validates an option value (internal scalar/:set-style form) without applying side effects.
+/// Some option-specific checks still live in did_set callbacks and are not covered here.
 ///
 /// @param  opt_idx         Index in options[] table. Must not be kOptInvalid.
 /// @param  newval[in,out]  New option value. Might be modified.
-static const char *validate_option_value(const OptIndex opt_idx, Object *newval, int opt_flags,
-                                         char *errbuf, size_t errbuflen)
+/// @param  buf             Target buffer.
+/// @param  win             Target window, used for defaults and window-dependent bounds.
+const char *validate_option_value(const OptIndex opt_idx, Object *newval, int opt_flags, buf_T *buf,
+                                  win_T *win, char *errbuf, size_t errbuflen)
 {
   const char *errmsg = NULL;
   vimoption_T *opt = &options[opt_idx];
@@ -4232,7 +4246,9 @@ static const char *validate_option_value(const OptIndex opt_idx, Object *newval,
     } else {
       // Unset the local value of a global-local option; for other options, an unset local value
       // means the global value.
-      *newval = option_is_global_local(opt_idx) ? UNSET : get_option_value(opt_idx, OPT_GLOBAL);
+      void *varp = get_varp_scope_from(opt, OPT_GLOBAL, buf, win);
+      *newval = option_is_global_local(opt_idx) ? UNSET : optval_own(opt_idx,
+                                                                     opt_from_varp(opt_idx, varp));
     }
   } else if (newval->type == kObjectTypeLuaRef) {
     // A callback option accepts a funcref; scalar validation doesn't apply.
@@ -4240,24 +4256,51 @@ static const char *validate_option_value(const OptIndex opt_idx, Object *newval,
   } else if (!option_has_type(opt_idx, optval_type(*newval))) {
     char *rep = optval_to_cstr(*newval, true);
     const char *type_str = optval_type_name(opt->type);
-    snprintf(errbuf, IOSIZE, _("Invalid value for option '%s': expected %s, got %s %s"),
+    snprintf(errbuf, errbuflen, _("Invalid value for option '%s': expected %s, got %s %s"),
              opt->fullname, type_str, optval_type_name(optval_type(*newval)), rep);
     xfree(rep);
     errmsg = errbuf;
-  } else if ((opt->flags & kOptFlagFunc) && newval->data.string.size > 0) {
-    // Callback option: the string must parse to a valid function reference or lambda. Validate
-    // here (before storing) so an invalid value leaves the old callback intact.
-    Callback cb = CALLBACK_NONE;
-    if (option_set_callback_func(newval->data.string.data, &cb) == FAIL) {
-      errmsg = e_invarg;
-    }
-    callback_free(&cb);
   } else if (newval->type == kObjectTypeInteger) {
     // Validate and bound check num option values.
-    errmsg = validate_num_option(opt_idx, &newval->data.integer, errbuf, errbuflen);
+    errmsg = validate_num_option(opt_idx, &newval->data.integer, win, errbuf, errbuflen);
+  }
+  if (errmsg != NULL) {
+    return errmsg;
   }
 
-  return errmsg;
+  // Disallow changing immutable options.
+  if (opt->immutable) {
+    Object oldval = opt_from_varp(opt_idx, get_varp_scope_from(opt, opt_flags, buf, win));
+    bool unchanged = option_equal(oldval, *newval);
+    optval_free_read(opt_idx, oldval);
+    if (!unchanged) {
+      return e_unsupportedoption;
+    }
+  }
+  if (newval->type != kObjectTypeUnset && opt->opt_validate_cb != NULL) {
+    const bool scope_both = !(opt_flags & (OPT_LOCAL | OPT_GLOBAL));
+    // Match set_option(): setting both scopes of a global-local option resets its local value.
+    void *varp = scope_both && option_is_global_local(opt_idx)
+                 ? opt->var : get_varp_scope_from(opt, opt_flags, buf, win);
+    const optset_T args = {
+      .os_varp = varp,
+      .os_idx = opt_idx,
+      .os_flags = opt_flags,
+      .os_oldval = opt_from_varp(opt_idx, varp),
+      .os_newval = *newval,
+      .os_value_checked = false,
+      .os_value_changed = false,
+      .os_restore_chartab = false,
+      .os_errbuf = errbuf,
+      .os_errbuflen = errbuflen,
+      .os_buf = buf,
+      .os_win = win,
+    };
+    errmsg = opt->opt_validate_cb(&args);
+    optval_free_read(opt_idx, args.os_oldval);
+    return errmsg;
+  }
+  return NULL;
 }
 
 /// Set the value of an option using an Object.
@@ -4283,23 +4326,30 @@ static const char *set_option(const OptIndex opt_idx, Object value, int opt_flag
   const char *errmsg = NULL;
 
   // Every set path for a dict option (":set", the API, Vimscript, a merge) funnels through here as a
-  // ":set" string. Validate it once.
-  if (value.type == kObjectTypeString && is_dict_option(opt_idx)) {
+  // ":set" string.
+  if (!direct) {
+    errmsg = validate_option_value(opt_idx, &value, opt_flags, curbuf, curwin, errbuf, errbuflen);
+
+    if (errmsg == NULL && value.type == kObjectTypeString
+        && (options[opt_idx].flags & kOptFlagFunc) && value.data.string.size > 0) {
+      // Callback option: the string must parse to a valid function reference or lambda.
+      // Parsing can evaluate Vimscript, so keep it off the dry-run path. Check before storing
+      // so an invalid value leaves the old callback intact.
+      Callback cb = CALLBACK_NONE;
+      if (option_set_callback_func(value.data.string.data, &cb) == FAIL) {
+        errmsg = e_invarg;
+      }
+      callback_free(&cb);
+    }
+  } else if (value.type == kObjectTypeString && is_dict_option(opt_idx)) {
+    // Internal direct setters also require valid dict schemas.
     errmsg = opt_strings_check(value.data.string.data, opt_dict_schema(opt_idx)->schema, errbuf,
                                errbuflen);
-    if (errmsg != NULL) {
-      optval_free(value);
-      return errmsg;
-    }
   }
 
-  if (!direct) {
-    errmsg = validate_option_value(opt_idx, &value, opt_flags, errbuf, errbuflen);
-
-    if (errmsg != NULL) {
-      optval_free(value);
-      return errmsg;
-    }
+  if (errmsg != NULL) {
+    optval_free(value);
+    return errmsg;
   }
 
 #ifdef BACKSLASH_IN_FILENAME
