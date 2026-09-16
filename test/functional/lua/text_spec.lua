@@ -9,7 +9,7 @@ describe('vim.text', function()
     it('validation', function()
       t.matches('size%: expected number, got string', t.pcall_err(vim.text.indent, 'x', 'x'))
       t.matches('size%: expected number, got nil', t.pcall_err(vim.text.indent, nil, 'x'))
-      t.matches('opts%: expected table, got string', t.pcall_err(vim.text.indent, 0, 'x', 'z'))
+      t.matches('opts%: expected table|nil, got string', t.pcall_err(vim.text.indent, 0, 'x', 'z'))
     end)
 
     it('basic cases', function()
