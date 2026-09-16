@@ -58,6 +58,12 @@
 #include "nvim/window.h"
 #include "nvim/winfloat.h"
 
+typedef enum {
+  kTopLevel,
+  kItemGroup,
+  kHighlightScope,
+} StlScopeType;
+
 #include "options_keysets.generated.h"
 #include "optionstr.c.generated.h"
 
@@ -280,74 +286,99 @@ int check_signcolumn(char *scl, win_T *wp)
   return OK;
 }
 
-/// Check validity of options with the 'statusline' format.
+/// Check validity of string with the 'statusline' format until the end of the current scope.
 /// Return an untranslated error message or NULL.
-const char *check_stl_option(char *s)
+static const char *check_stl_str_adv_scope(char **s, StlScopeType scope_type)
 {
-  int groupdepth = 0;
   static char errbuf[ERR_BUFLEN];
 
-  while (*s) {
+  while (**s) {
     // Check for valid keys after % sequences
-    while (*s && *s != '%') {
-      s++;
+    while (**s && **s != '%') {
+      (*s)++;
     }
-    if (!*s) {
+    if (!**s) {
       break;
     }
-    s++;
-    if (*s == '%' || *s == STL_TRUNCMARK || *s == STL_SEPARATE) {
-      s++;
+    (*s)++;
+    if (**s == '%' || **s == STL_TRUNCMARK || **s == STL_SEPARATE) {
+      (*s)++;
       continue;
     }
-    if (*s == ')') {
-      s++;
-      if (--groupdepth < 0) {
-        break;
+    if (**s == ')') {
+      (*s)++;
+      return scope_type == kItemGroup ? NULL : e_unbalanced_groups;
+    }
+    if (**s == STL_HIGHLIGHT) {
+      (*s)++;
+      if (**s == '(') {
+        (*s)++;
+        const char *err = check_stl_str_adv_scope(s, kHighlightScope);
+        if (err == NULL) {
+          continue;
+        } else {
+          return err;
+        }
+      } else if (**s == ')') {
+        (*s)++;
+        return scope_type == kHighlightScope ? NULL : e_unbalanced_groups;
       }
+      while (**s && **s != STL_HIGHLIGHT) {
+        (*s)++;
+      }
+      (*s)++;
       continue;
     }
-    if (*s == '-') {
-      s++;
+    if (**s == '-') {
+      (*s)++;
     }
-    while (ascii_isdigit(*s)) {
-      s++;
+    while (ascii_isdigit(**s)) {
+      (*s)++;
     }
-    if (*s == STL_USER_HL) {
+    if (**s == STL_USER_HL) {
       continue;
     }
-    if (*s == '.') {
-      s++;
-      while (*s && ascii_isdigit(*s)) {
-        s++;
+    if (**s == '.') {
+      (*s)++;
+      while (**s && ascii_isdigit(**s)) {
+        (*s)++;
       }
     }
-    if (*s == '(') {
-      groupdepth++;
-      continue;
+    if (**s == '(') {
+      (*s)++;
+      const char *err = check_stl_str_adv_scope(s, kItemGroup);
+      if (err == NULL) {
+        continue;
+      } else {
+        return err;
+      }
     }
-    if (vim_strchr(STL_ALL, (uint8_t)(*s)) == NULL) {
-      return illegal_char(errbuf, sizeof(errbuf), (uint8_t)(*s));
+    if (vim_strchr(STL_ALL, (uint8_t)(**s)) == NULL) {
+      return illegal_char(errbuf, sizeof(errbuf), (uint8_t)(**s));
     }
-    if (*s == '{') {
-      bool reevaluate = (*++s == '%');
+    if (**s == '{') {
+      bool reevaluate = (*(++*s) == '%');
 
-      if (reevaluate && *++s == '}') {
+      if (reevaluate && *(++*s) == '}') {
         // "}" is not allowed immediately after "%{%"
         return illegal_char(errbuf, sizeof(errbuf), '}');
       }
-      while ((*s != '}' || (reevaluate && s[-1] != '%')) && *s) {
-        s++;
+      while ((**s != '}' || (reevaluate && (*s)[-1] != '%')) && **s) {
+        (*s)++;
       }
-      if (*s != '}') {
+      if (**s != '}') {
         return e_unclosed_expression_sequence;
       }
     }
   }
-  if (groupdepth != 0) {
-    return e_unbalanced_groups;
-  }
-  return NULL;
+  return scope_type == kTopLevel ? NULL : e_unbalanced_groups;
+}
+
+/// Check validity of options with the 'statusline' format.
+/// Return an untranslated error message or NULL.
+const char *check_stl_option(char *s)
+{
+  return check_stl_str_adv_scope(&s, kTopLevel);
 }
 
 /// Check for a "normal" directory or file name in some options.  Disallow a

@@ -1106,6 +1106,8 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
   int groupdepth = 0;
   int evaldepth = 0;
 
+  int curr_hl_pos = -1;
+
   // nvim_eval_statusline() can be called from inside a {-expression item so
   // this may be a recursive call. Keep track of the start index into "stl_items".
   // During post-processing only treat items filled in a certain recursion level.
@@ -1198,6 +1200,10 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
         continue;
       }
       groupdepth--;
+      if (stl_items[stl_groupitems[groupdepth]].type != Group) {
+        // it's possible to break assumptions with %{%...%}, which doesn't check syntax
+        continue;
+      }
 
       // Determine how long the group is.
       // Note: We set the current output position to null
@@ -1306,6 +1312,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
     // User highlight groups override the min width field
     // to denote the styling to use.
     if (*fmt_p == STL_USER_HL) {
+      curr_hl_pos = curitem;
       stl_items[curitem].type = Highlight;
       stl_items[curitem].start = out_p;
       stl_items[curitem].minwid = minwid > 9 ? 1 : minwid;
@@ -1422,6 +1429,46 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
         }
       }
       continue;
+    }
+
+    // Denotes a highlight scope
+    if (*fmt_p == STL_HIGHLIGHT) {
+      switch (*(fmt_p + 1)) {
+      case '(':
+        fmt_p += 2;
+        stl_groupitems[groupdepth++] = curitem;
+        stl_items[curitem].type = HighlightScope;
+        stl_items[curitem].start = out_p;
+        stl_items[curitem].minwid = curr_hl_pos;
+        curitem++;
+        continue;
+      case ')':
+        fmt_p += 2;
+        if (groupdepth < 1) {
+          continue;
+        }
+        int scope_start = stl_groupitems[--groupdepth];
+        if (stl_items[scope_start].type != HighlightScope) {
+          // it's possible to break assumptions with %{%...%}, which doesn't check syntax
+          continue;
+        }
+        int hl_pos = stl_items[scope_start].minwid;
+        curr_hl_pos = curitem;
+        stl_items[curitem].type = Highlight;
+        stl_items[curitem].start = out_p;
+        stl_items[curitem].minwid = hl_pos == -1 ? 0 : stl_items[hl_pos].minwid;
+        curitem++;
+        for (int i = hl_pos == -1 ? evalstart : hl_pos + 1; i < scope_start; i++) {
+          MAY_GROW_STL_ITEMS_LEN();
+          if (stl_items[i].type == HighlightCombining) {
+            stl_items[curitem].type = HighlightCombining;
+            stl_items[curitem].start = out_p;
+            stl_items[curitem].minwid = stl_items[i].minwid;
+            curitem++;
+          }
+        }
+        continue;
+      }
     }
 
     // An invalid item was specified.
@@ -1817,7 +1864,12 @@ stcsign:
 
       // Create a highlight item based on the name
       if (*fmt_p == opt) {
-        stl_items[curitem].type = opt == STL_HIGHLIGHT_COMB ? HighlightCombining : Highlight;
+        if (opt == STL_HIGHLIGHT) {
+          curr_hl_pos = curitem;
+          stl_items[curitem].type = Highlight;
+        } else {
+          stl_items[curitem].type = HighlightCombining;
+        }
         stl_items[curitem].start = out_p;
         stl_items[curitem].minwid = -syn_name2id_len(t, (size_t)(fmt_p - t));
         curitem++;
