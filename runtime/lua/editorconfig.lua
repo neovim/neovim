@@ -221,6 +221,29 @@ function properties.spelling_language(bufnr, val)
   end
 end
 
+--- Expand EditorConfig `{num1..num2}` integer ranges into brace lists.
+--- The spec requires num1 < num2; invalid ranges raise an error. #41264
+--- @param glob string
+--- @return string
+local function expand_int_ranges(glob)
+  return (
+    glob:gsub('{(-?%d+)%.%.(-?%d+)}', function(a, b)
+      local startn, endn = tonumber(a), tonumber(b)
+      if not startn or not endn or startn >= endn then
+        error(('invalid integer range {%s..%s}: num1 must be less than num2'):format(a, b), 0)
+      end
+      if endn - startn > 10000 then
+        error(('integer range {%s..%s} is too large'):format(a, b), 0)
+      end
+      local parts = {} --- @type string[]
+      for i = startn, endn do
+        parts[#parts + 1] = tostring(i)
+      end
+      return '{' .. table.concat(parts, ',') .. '}'
+    end)
+  )
+end
+
 --- Modified version of [glob2regpat()] that does not match path separators on `*`.
 ---
 --- This function replaces single instances of `*` with the regex pattern `[^/]*`.
@@ -233,7 +256,7 @@ end
 local function glob2regpat(glob)
   local placeholder = '@@PLACEHOLDER@@'
   local glob1 = vim.fn.substitute(
-    glob:gsub('{(%d+)%.%.(%d+)}', '[%1-%2]'),
+    expand_int_ranges(glob),
     '\\*\\@<!\\*\\*\\@!',
     placeholder,
     'g'
