@@ -86,18 +86,18 @@ typedef enum {
   OP_REMOVING,    ///< "opt-=arg"
 } set_op_T;
 
-/// Argument for the callback function (opt_did_set_cb_T) invoked after an
-/// option value is modified.
+/// Arguments for validating an option value or applying it after storage.
 typedef struct {
   /// Pointer to the option variable.  The variable can be an OptInt (numeric
-  /// option), an int (boolean option) or a char pointer (string option).
+  /// option), an int (boolean option), a char pointer (string option), or a Callback.
+  /// Holds the old value during validation and the new value when applying it.
   void *os_varp;
   OptIndex os_idx;
   int os_flags;
 
   /// Old value of the option.
   Object os_oldval;
-  /// New value of the option.
+  /// New value of the option (not yet stored during validation).
   Object os_newval;
 
   /// Option value was checked to be safe, no need to set kOptFlagInsecure
@@ -122,11 +122,14 @@ typedef struct {
   void *os_buf;
 } optset_T;
 
-/// Type for the callback function that is invoked after an option value is
-/// changed to validate and apply the new value.
+/// Check a candidate value without changing option variables or derived state,
+/// or evaluating user code. Return an error message, or NULL on success.
+typedef const char *(*opt_validate_cb_T)(const optset_T *args);
+
+/// Type for the callback function invoked after storing an option value to
+/// apply it and update derived state.
 ///
-/// Returns NULL if the option value is valid and successfully applied.
-/// Otherwise returns an error message.
+/// Returns NULL on success, or an error message if the value could not be applied.
 typedef const char *(*opt_did_set_cb_T)(optset_T *args);
 
 /// Argument for the callback function (opt_expand_cb_T) invoked after a string
@@ -185,8 +188,10 @@ typedef struct {
   /// Grammar of a dict option ("schema.dict" in options.lua); NULL otherwise.
   const OptSchemaItem *schema;
 
-  /// callback function to invoke after an option is modified to validate and
-  /// apply the new value.
+  /// Validate a candidate value before storing it, without side effects.
+  opt_validate_cb_T opt_validate_cb;
+
+  /// Apply the stored value. Some handlers still perform option-specific validation.
   opt_did_set_cb_T opt_did_set_cb;
 
   /// callback function to invoke when expanding possible values on the

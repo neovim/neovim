@@ -2727,8 +2727,8 @@ static void nv_zet(cmdarg_T *cap)
 {
   colnr_T col;
   int nchar = cap->nchar;
-  int old_fdl = (int)curwin->w_p_fdl;
-  int old_fen = curwin->w_p_fen;
+  OptInt foldlevel = -1;
+  int foldenable = kNone;
 
   int64_t siso = get_sidescrolloff_value(curwin);
 
@@ -2902,13 +2902,7 @@ static void nv_zet(cmdarg_T *cap)
     if (foldManualAllowed(true)) {
       cap->nchar = 'f';
       nv_operator(cap);
-      curwin->w_p_fen = true;
-
-      // "zF" is like "zfzf"
-      if (nchar == 'F' && cap->oap->op_type == OP_FOLD) {
-        nv_operator(cap);
-        finish_op = true;
-      }
+      foldenable = true;
     } else {
       clearopbeep(cap->oap);
     }
@@ -2942,17 +2936,17 @@ static void nv_zet(cmdarg_T *cap)
 
   // "zn": fold none: reset 'foldenable'
   case 'n':
-    curwin->w_p_fen = false;
+    foldenable = false;
     break;
 
   // "zN": fold Normal: set 'foldenable'
   case 'N':
-    curwin->w_p_fen = true;
+    foldenable = true;
     break;
 
   // "zi": invert folding: toggle 'foldenable'
   case 'i':
-    curwin->w_p_fen = !curwin->w_p_fen;
+    foldenable = !curwin->w_p_fen;
     break;
 
   // "za": open closed fold or close open fold at cursor
@@ -2961,7 +2955,7 @@ static void nv_zet(cmdarg_T *cap)
       openFold(curwin->w_cursor, cap->count1);
     } else {
       closeFold(curwin->w_cursor, cap->count1);
-      curwin->w_p_fen = true;
+      foldenable = true;
     }
     break;
 
@@ -2971,7 +2965,7 @@ static void nv_zet(cmdarg_T *cap)
       openFoldRecurse(curwin->w_cursor);
     } else {
       closeFoldRecurse(curwin->w_cursor);
-      curwin->w_p_fen = true;
+      foldenable = true;
     }
     break;
 
@@ -3000,7 +2994,7 @@ static void nv_zet(cmdarg_T *cap)
     } else {
       closeFold(curwin->w_cursor, cap->count1);
     }
-    curwin->w_p_fen = true;
+    foldenable = true;
     break;
 
   // "zC": close fold recursively
@@ -3010,7 +3004,7 @@ static void nv_zet(cmdarg_T *cap)
     } else {
       closeFoldRecurse(curwin->w_cursor);
     }
-    curwin->w_p_fen = true;
+    foldenable = true;
     break;
 
   // "zv": open folds at the cursor
@@ -3020,48 +3014,42 @@ static void nv_zet(cmdarg_T *cap)
 
   // "zx": re-apply 'foldlevel' and open folds at the cursor
   case 'x':
-    curwin->w_p_fen = true;
+    foldenable = true;
     curwin->w_foldinvalid = true;               // recompute folds
-    newFoldLevel();                             // update right now
-    foldOpenCursor();
+    foldlevel = curwin->w_p_fdl;                // re-apply even when unchanged
     break;
 
   // "zX": undo manual opens/closes, re-apply 'foldlevel'
   case 'X':
-    curwin->w_p_fen = true;
+    foldenable = true;
     curwin->w_foldinvalid = true;               // recompute folds
-    old_fdl = -1;                               // force an update
+    foldlevel = curwin->w_p_fdl;                // re-apply even when unchanged
     break;
 
   // "zm": fold more
   case 'm':
-    if (curwin->w_p_fdl > 0) {
-      curwin->w_p_fdl -= cap->count1;
-      curwin->w_p_fdl = MAX(curwin->w_p_fdl, 0);
-    }
-    old_fdl = -1;                       // force an update
-    curwin->w_p_fen = true;
+    foldlevel = MAX(curwin->w_p_fdl - cap->count1, 0);
+    foldenable = true;
     break;
 
   // "zM": close all folds
   case 'M':
-    curwin->w_p_fdl = 0;
-    old_fdl = -1;                       // force an update
-    curwin->w_p_fen = true;
+    foldlevel = 0;
+    foldenable = true;
     break;
 
   // "zr": reduce folding
-  case 'r':
-    curwin->w_p_fdl += cap->count1;
-    {
-      int d = getDeepestNesting(curwin);
-      curwin->w_p_fdl = MIN(curwin->w_p_fdl, d);
+  case 'r': {
+    const int depth = getDeepestNesting(curwin);
+    OptInt level = MIN(curwin->w_p_fdl + cap->count1, depth);
+    if (level != curwin->w_p_fdl) {
+      foldlevel = level;
     }
     break;
+  }
 
   case 'R':     //  "zR": open all folds
-    curwin->w_p_fdl = getDeepestNesting(curwin);
-    old_fdl = -1;                       // force an update
+    foldlevel = getDeepestNesting(curwin);
     break;
 
   case 'j':     // "zj" move to next fold downwards
@@ -3092,23 +3080,28 @@ static void nv_zet(cmdarg_T *cap)
     clearopbeep(cap->oap);
   }
 
-  // Redraw when 'foldenable' changed
-  if (old_fen != curwin->w_p_fen) {
-    if (foldmethodIsDiff(curwin) && curwin->w_p_scb) {
-      // Adjust 'foldenable' in diff-synced windows.
-      FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-        if (wp != curwin && foldmethodIsDiff(wp) && wp->w_p_scb) {
-          wp->w_p_fen = curwin->w_p_fen;
-          changed_window_setting(wp);
-        }
-      }
+  // Use the same validation, redraw and synchronization as explicit option assignments.
+  const handle_T win_handle = curwin->handle;
+  const handle_T buf_handle = curbuf->handle;
+  if (foldenable != kNone && foldenable != curwin->w_p_fen) {
+    set_option_value(kOptFoldenable, BOOLEAN_OBJ(foldenable), OPT_LOCAL);
+    if (curwin->handle != win_handle || curbuf->handle != buf_handle) {
+      // OptionSet left the command's window or buffer; don't finish a pending fold there.
+      clearop(cap->oap);
+      return;
     }
-    changed_window_setting(curwin);
   }
-
-  // Redraw when 'foldlevel' changed.
-  if (old_fdl != curwin->w_p_fdl) {
-    newFoldLevel();
+  // "zF" is like "zfzf": enable folding before counting lines.
+  if (nchar == 'F' && cap->oap->op_type == OP_FOLD) {
+    nv_operator(cap);
+    finish_op = true;
+  }
+  if (foldlevel >= 0) {
+    // Re-apply even an unchanged value to undo manual opens/closes.
+    set_option_value(kOptFoldlevel, INTEGER_OBJ(foldlevel), OPT_LOCAL);
+  }
+  if (nchar == 'x' && curwin->handle == win_handle && curbuf->handle == buf_handle) {
+    foldOpenCursor();
   }
 }
 

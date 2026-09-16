@@ -2316,8 +2316,8 @@ function vim.api.nvim_set_option(name, value) end
 --- @param value any New option value
 --- @param opts vim.api.keyset.option? Optional parameters
 --- - buf: Buffer number. Used for setting buffer local option.
---- - dry_run: (`boolean?`, default: false) If true, then the
----   option value won't be set.
+--- - dry_run: (`boolean?`, default: false) If true, validates the
+---   option value without setting it.
 --- - operation: One of "set", "append", "prepend", or "remove".
 ---   Corresponds to `:set=`, `:set+=`, `:set^=`, and `:set-=`.
 ---   Default is "set".

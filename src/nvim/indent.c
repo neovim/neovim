@@ -281,28 +281,6 @@ void tabstop_fromto(colnr_T start_col, colnr_T end_col, int ts_arg, const colnr_
   *nspcs = spaces % (int)vts[tabcount];
 }
 
-/// See if two tabstop arrays contain the same values.
-static bool tabstop_eq(const colnr_T *ts1, const colnr_T *ts2)
-{
-  if ((ts1 == 0 && ts2) || (ts1 && ts2 == 0)) {
-    return false;
-  }
-  if (ts1 == ts2) {
-    return true;
-  }
-  if (ts1[0] != ts2[0]) {
-    return false;
-  }
-
-  for (int t = 1; t <= ts1[0]; t++) {
-    if (ts1[t] != ts2[t]) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
 /// Copy a tabstop array, allocating space for the new array.
 int *tabstop_copy(const int *oldts)
 {
@@ -1447,9 +1425,6 @@ void ex_retab(exarg_T *eap)
   linenr_T last_line = 0;               // last changed line
   bool is_indent_only = false;
 
-  int save_list = curwin->w_p_list;
-  curwin->w_p_list = 0;             // don't want list mode here
-
   char *ptr = eap->arg;
   if (strncmp(ptr, "-indentonly", 11) == 0 && ascii_iswhite_or_nul(ptr[11])) {
     is_indent_only = true;
@@ -1473,6 +1448,10 @@ void ex_retab(exarg_T *eap)
   } else {
     new_ts_str = xmemdupz(new_ts_str, (size_t)(ptr - new_ts_str));
   }
+
+  int save_list = curwin->w_p_list;
+  curwin->w_p_list = 0;             // don't want list mode here
+
   for (linenr_T lnum = eap->line1; !got_int && lnum <= eap->line2; lnum++) {
     ptr = ml_get(lnum);
     int old_len = ml_get_len(lnum);
@@ -1576,44 +1555,35 @@ void ex_retab(exarg_T *eap)
     emsg(_(e_interr));
   }
 
-  // If a single value was given then it can be considered equal to
-  // either the value of 'tabstop' or the value of 'vartabstop'.
-  if (tabstop_count(curbuf->b_p_vts_array) == 0
-      && tabstop_count(new_vts_array) == 1
-      && curbuf->b_p_ts == tabstop_first(new_vts_array)) {
-    // not changed
-  } else if (tabstop_count(curbuf->b_p_vts_array) > 0
-             && tabstop_eq(curbuf->b_p_vts_array, new_vts_array)) {
-    // not changed
-  } else {
-    redraw_curbuf_later(UPD_NOT_VALID);
-  }
   if (first_line != 0) {
     changed_lines(curbuf, first_line, 0, last_line + 1, 0, true);
   }
 
   curwin->w_p_list = save_list;         // restore 'list'
+  // Finish buffer cleanup before OptionSet can switch buffers.
+  u_clearline(curbuf);
 
   if (new_ts_str != NULL) {  // set the new tabstop
+    const handle_T win_handle = curwin->handle;
+    const handle_T buf_handle = curbuf->handle;
+
     // If 'vartabstop' is in use or if the value given to retab has more
     // than one tabstop then update 'vartabstop'.
-    colnr_T *old_vts_ary = curbuf->b_p_vts_array;
-
-    if (tabstop_count(old_vts_ary) > 0 || tabstop_count(new_vts_array) > 1) {
-      set_option_direct(kOptVartabstop, CSTR_AS_OBJ(new_ts_str), OPT_LOCAL, 0);
-      curbuf->b_p_vts_array = new_vts_array;
-      xfree(old_vts_ary);
+    if (tabstop_count(curbuf->b_p_vts_array) > 0 || tabstop_count(new_vts_array) > 1) {
+      set_option_value(kOptVartabstop, CSTR_AS_OBJ(new_ts_str), OPT_LOCAL);
     } else {
       // 'vartabstop' wasn't in use and a single value was given to
       // retab then update 'tabstop'.
-      curbuf->b_p_ts = tabstop_first(new_vts_array);
-      xfree(new_vts_array);
+      set_option_value(kOptTabstop, INTEGER_OBJ(tabstop_first(new_vts_array)), OPT_LOCAL);
     }
+    xfree(new_vts_array);
     xfree(new_ts_str);
+    // OptionSet may have left the command's window or buffer.
+    if (curwin->handle != win_handle || curbuf->handle != buf_handle) {
+      return;
+    }
   }
   coladvance(curwin, curwin->w_curswant);
-
-  u_clearline(curbuf);
 }
 
 /// Get indent level from 'indentexpr'.
