@@ -944,12 +944,12 @@ is_na_patch() {
           '-I^\s+$' \
           '-I^=+$' \
           '-I^Functions:\s~$' \
-          '-I^\|:(export|import|redrawtabpanel)\|' \
           '-I^\|(ch|popup)_[_a-z]+\(\)\|' \
           '-I^popup_[_a-z]+\(' \
           '-I\*\s+For Vim version [0-9]\.[0-9]\.\s+Last change: [0-9]+ [A-Z][a-z]+ [0-9]+' \
           '-I compiled (with|without) .*\(\|.+\|\) feature\.$' \
           '-I\{.+ (available|compiled) (with|without) .+\}' \
+          '-I\|:(cscope|export|import|redrawtabpanel)\|' \
           '-I\|52\.6\|' \
           '-I\|channel-open-[^|]+\|' \
           '-I\|comment-install\|' \
