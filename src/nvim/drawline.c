@@ -2680,7 +2680,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           xstrlcpy(wlv.extra, transchar_buf(wp->w_buffer, mb_c), sizeof(wlv.extra));
           wlv.p_extra = wlv.extra;
           if (wlv.n_extra == 0) {
-            wlv.n_extra = byte2cells(mb_c) - 1;
+            wlv.n_extra = dy_escape_width - 1;
           }
           if ((dy_flags & kOptDyFlagUhex) && wp->w_p_rl) {
             rl_mirror_ascii(wlv.p_extra, NULL);   // reverse "<12>"
@@ -2695,7 +2695,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
             p[wlv.n_extra] = NUL;
             wlv.p_extra = p;
           } else {
-            wlv.n_extra = byte2cells(mb_c) - 1;
+            wlv.n_extra = dy_escape_width - 1;
             mb_c = (uint8_t)(*wlv.p_extra++);
           }
           wlv.n_attr = wlv.n_extra + 1;

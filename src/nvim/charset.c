@@ -48,7 +48,6 @@ static bool chartab_initialized = false;
 static uint8_t g_chartab[256];
 
 // Flags for g_chartab[].
-#define CT_CELL_MASK  0x07  ///< mask: nr of display cells (1, 2 or 4)
 #define CT_PRINT_CHAR 0x10  ///< flag: set for printable chars
 #define CT_ID_CHAR    0x20  ///< flag: set for ID chars
 #define CT_FNAME_CHAR 0x40  ///< flag: set for file name chars
@@ -66,8 +65,7 @@ static uint8_t g_chartab[256];
 /// - The lower two bits, masked by CT_CELL_MASK, give the number of display
 ///   cells the character occupies (1 or 2).  Not valid for UTF-8 above 0x80.
 /// - CT_PRINT_CHAR bit is set when the character is printable (no need to
-///   translate the character before displaying it).  Note that only DBCS
-///   characters can have 2 display cells and still be printable.
+///   translate the character before displaying it).
 /// - CT_FNAME_CHAR bit is set when the character can be in a file name.
 /// - CT_ID_CHAR bit is set when the character can be in an identifier.
 ///
@@ -87,28 +85,21 @@ int init_chartab(void)
 int buf_init_chartab(buf_T *buf, bool global)
 {
   if (global) {
-    // Set the default size for printable characters:
-    // From <Space> to '~' is 1 (printable), others are 2 (not printable).
-    // This also inits all 'isident' and 'isfname' flags to false.
-    int c = 0;
+    // This inits all 'isident' and 'isfname' flags to false, except visible latin-1 for some reason
 
-    while (c < ' ') {
-      g_chartab[c++] = (dy_flags & kOptDyFlagUhex) ? 4 : 2;
+    // TODO(bfredl): CT_PRINT_CHAR is also criiiinge in the enc_utf8 only world
+    memset(g_chartab, 0, sizeof g_chartab);
+    memset(&g_chartab[' '], CT_PRINT_CHAR, '~' - ' ' + 1);
+    memset(&g_chartab[0xa0], CT_PRINT_CHAR | CT_FNAME_CHAR, 0x100 - 0xa0);
+
+    if (parse_isopt(p_isi, buf, false) == FAIL) {  // 'isident'
+      return FAIL;
     }
-
-    while (c <= '~') {
-      g_chartab[c++] = 1 + CT_PRINT_CHAR;
+    if (parse_isopt(p_isp, buf, false) == FAIL) {  // 'isprint'
+      return FAIL;
     }
-
-    while (c < 256) {
-      if (c >= 0xa0) {
-        // UTF-8: bytes 0xa0 - 0xff are printable (latin1)
-        // Also assume that every multi-byte char is a filename character.
-        g_chartab[c++] = (CT_PRINT_CHAR | CT_FNAME_CHAR) + 1;
-      } else {
-        // the rest is unprintable by default
-        g_chartab[c++] = (dy_flags & kOptDyFlagUhex) ? 4 : 2;
-      }
+    if (parse_isopt(p_isf, buf, false) == FAIL) {  // 'isfname'
+      return FAIL;
     }
   }
 
@@ -120,25 +111,8 @@ int buf_init_chartab(buf_T *buf, bool global)
     SET_CHARTAB(buf, '-');
   }
 
-  // Walk through the 'isident', 'iskeyword', 'isfname' and 'isprint' options.
-  for (int i = global ? 0 : 3; i <= 3; i++) {
-    const char *p;
-    if (i == 0) {
-      // first round: 'isident'
-      p = p_isi;
-    } else if (i == 1) {
-      // second round: 'isprint'
-      p = p_isp;
-    } else if (i == 2) {
-      // third round: 'isfname'
-      p = p_isf;
-    } else {  // i == 3
-      // fourth round: 'iskeyword'
-      p = buf->b_p_isk;
-    }
-    if (parse_isopt(p, buf, false) == FAIL) {
-      return FAIL;
-    }
+  if (parse_isopt(buf->b_p_isk, buf, false) == FAIL) {  // 'iskeyword'
+    return FAIL;
   }
 
   chartab_initialized = true;
@@ -234,11 +208,8 @@ static int parse_isopt(const char *var, buf_T *buf, bool only_check)
         } else if (var == p_isp) {  // (re)set printable
           if (c < ' ' || c > '~') {
             if (tilde) {
-              g_chartab[c] = (uint8_t)((g_chartab[c] & ~CT_CELL_MASK)
-                                       + ((dy_flags & kOptDyFlagUhex) ? 4 : 2));
               g_chartab[c] &= (uint8_t) ~CT_PRINT_CHAR;
             } else {
-              g_chartab[c] = (uint8_t)((g_chartab[c] & ~CT_CELL_MASK) + 1);
               g_chartab[c] |= CT_PRINT_CHAR;
             }
           }
@@ -331,9 +302,9 @@ size_t transstr_len(const char *const s, bool untab)
       len += 1;
       p++;
     } else {
-      const int b2c_l = byte2cells((uint8_t)(*p++));
       // Illegal byte sequence may occupy up to 4 characters.
-      len += (size_t)(b2c_l > 0 ? b2c_l : 4);
+      uint8_t c = (uint8_t)(*p++);
+      len += (size_t)(c < 0x80 ? ascii2cells(c) : 4);
     }
   }
   return len;
@@ -680,26 +651,6 @@ static inline unsigned nr2hex(unsigned n)
   return (n & 0xf) - 10 + 'a';
 }
 
-/// Return number of display cells occupied by byte "b".
-///
-/// Caller must make sure 0 <= b <= 255.
-/// For multi-byte mode "b" must be the first byte of a character.
-/// A TAB is counted as two cells: "^I".
-/// This will return 0 for bytes >= 0x80, because the number of
-/// cells depends on further bytes in UTF-8.
-///
-/// @param b
-///
-/// @return Number of display cells.
-int byte2cells(int b)
-  FUNC_ATTR_PURE
-{
-  if (b >= 0x80) {
-    return 0;
-  }
-  return g_chartab[b] & CT_CELL_MASK;
-}
-
 /// Return number of display cells occupied by character "c".
 ///
 /// "c" can be a special key (negative number) in which case 3 or 4 is returned.
@@ -710,7 +661,7 @@ int byte2cells(int b)
 /// @return Number of display cells.
 int char2cells(int c)
 {
-  if (IS_SPECIAL(c)) {
+  if (IS_SPECIAL(c)) {  // c < 0
     return char2cells(K_SECOND(c)) + 2;
   }
 
@@ -718,7 +669,7 @@ int char2cells(int c)
     // UTF-8: above 0x80 need to check the value
     return utf_char2cells(c);
   }
-  return g_chartab[c & 0xff] & CT_CELL_MASK;
+  return ascii2cells(c);
 }
 
 /// Return number of display cells occupied by character at "*p".
@@ -735,8 +686,8 @@ int ptr2cells(const char *p_in)
     return utf_ptr2cells(p_in);
   }
 
-  // For DBCS we can tell the cell count from the first byte.
-  return g_chartab[*p] & CT_CELL_MASK;
+  // For ASCII we can tell the cell count from the first byte.
+  return ascii2cells(*p);
 }
 
 /// Return the number of character cells string "s" will take on the screen,
