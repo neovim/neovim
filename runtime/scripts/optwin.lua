@@ -277,6 +277,7 @@ local options_list = {
     { 'softtabstop', N_ 'if non-zero, number of spaces to insert for a <Tab>' },
     { 'shiftround', N_ 'round to \'shiftwidth\' for "<<" and ">>"' },
     { 'expandtab', N_ 'expand <Tab> to spaces in Insert mode' },
+    { 'expandtabalign', N_ 'expand non-leading <Tab> to spaces in Insert mode' },
     { 'autoindent', N_ 'automatically set the indent of a new line' },
     { 'smartindent', N_ 'do clever autoindenting' },
     { 'cindent', N_ 'enable specific indenting for C code' },
