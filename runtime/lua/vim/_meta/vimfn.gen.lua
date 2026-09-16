@@ -1150,8 +1150,9 @@ function vim.fn.complete_check() end
 ---     "user_data". The highlight group entries hold
 ---     the name that the item was added with,
 ---     or an empty string.
----     "equal", "preselect" and "commit_chars" are
----     included only for items that set them.
+---     "equal", "preselect", "commit_chars",
+---     "startcol" and "filter_text" are included only
+---     for items that set them.
 ---     See |complete-items|.
 ---    matches  Same as "items", but only returns items that
 ---     are matching current query.  If both "matches"
