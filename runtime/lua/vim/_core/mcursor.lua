@@ -58,12 +58,37 @@ local function send(seq)
   vim.api.nvim_ui_send(seq == '' and '\027[>0;4 q' or seq)
 end
 
+--- Kitty cursors protocol: Builds the escape sequence for extra cursors at screen coords `c`.
+---@param c string[] Coords in "2:row:col" format.
+local function cursor_seq(c)
+  local seq = '\027[>0;4 q'
+  local hl = vim.api.nvim_get_hl(0, { name = 'MCursor', link = false })
+  if hl.fg then
+    seq = seq
+      .. ('\027[>30;2:%d:%d:%d q'):format(
+        bit.rshift(bit.band(hl.fg, 0xFF0000), 16),
+        bit.rshift(bit.band(hl.fg, 0xFF00), 8),
+        bit.band(hl.fg, 0xFF)
+      )
+  end
+  if hl.bg then
+    seq = seq
+      .. ('\027[>40;2:%d:%d:%d q'):format(
+        bit.rshift(bit.band(hl.bg, 0xFF0000), 16),
+        bit.rshift(bit.band(hl.bg, 0xFF00), 8),
+        bit.band(hl.bg, 0xFF)
+      )
+  end
+  return seq .. ('\027[>29;%s q'):format(table.concat(c, ';'))
+end
+
 --- Kitty cursors protocol: Updates the cursors.
 local function refresh()
   local c = coords()
-  -- Clear all extra cursors ("no cursor" over the full-screen rectangle), then set shape 29 (mimic
-  -- primary) at each position.
-  send(#c == 0 and '' or ('\027[>0;4 q\027[>29;%s q'):format(table.concat(c, ';')))
+  -- Clear all extra cursors ("no cursor" over the full-screen rectangle), then optionally set
+  -- cursor/text colors (shapes 30/40 from MCursor hl), and finally shape 29 (follow primary) at
+  -- each position.
+  send(#c == 0 and '' or cursor_seq(c))
 end
 
 --- Displays the mcursors. Invoked per-redraw while cursors exist.
