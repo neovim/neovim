@@ -538,4 +538,143 @@ func Test_tagfunc_cmd_secure()
   delfunc EvilTagFunc
 endfunc
 
+" Test that 'tagfunc' is called during `:tag` completion
+func Test_tagfunc_completion()
+  let g:compl_tagfunc_args = []
+
+  func ComplTagFunc(pat, flags, info)
+    let g:compl_tagfunc_args += [[a:pat, a:flags]]
+    return [
+          \ {'name': 'mytagA', 'filename': 'Xfile1', 'cmd': '1'},
+          \ {'name': 'mytagB', 'filename': 'Xfile1', 'cmd': '2'},
+          \ ]
+  endfunc
+
+  try
+    set tagfunc=ComplTagFunc
+    call assert_equal(['mytagA', 'mytagB'], getcompletion('myt', 'tag'))
+    call assert_equal([['^myt', 'r']], g:compl_tagfunc_args)
+
+    " An empty list means no matches, not a fallback to the tags files.
+    func EmptyTagFunc(pat, flags, info)
+      return []
+    endfunc
+    set tagfunc=EmptyTagFunc
+    call assert_equal([], getcompletion('myt', 'tag'))
+
+    " v:null falls back to the tags files, of which there are none here.
+    func NullTagFunc(pat, flags, info)
+      return v:null
+    endfunc
+    set tagfunc=NullTagFunc
+    call assert_fails("call getcompletion('myt', 'tag')", 'E433:')
+
+    " An invalid return value gives an error, completion yields nothing.
+    func BadTagFunc(pat, flags, info)
+      return 'not a list'
+    endfunc
+    set tagfunc=BadTagFunc
+    call assert_fails("call getcompletion('myt', 'tag')", 'E987:')
+
+    " A 'tagfunc' that throws must not leave completion in a bad state.
+    func ThrowTagFunc(pat, flags, info)
+      throw 'tagfunc failed'
+    endfunc
+    set tagfunc=ThrowTagFunc
+    call assert_fails("call getcompletion('myt', 'tag')", 'tagfunc failed')
+  finally
+    set tagfunc&
+    delfunc! ComplTagFunc
+    delfunc! EmptyTagFunc
+    delfunc! NullTagFunc
+    delfunc! BadTagFunc
+    delfunc! ThrowTagFunc
+    unlet! g:compl_tagfunc_args
+  endtry
+endfunc
+
+" A 'tagfunc' may do anything, including changing the window layout and
+" wiping buffers.  Completion must survive that.
+func Test_tagfunc_completion_side_effects()
+  func SplitTagFunc(pat, flags, info)
+    new
+    return [{'name': 'mytagS', 'filename': 'Xfile1', 'cmd': '1'}]
+  endfunc
+
+  func CloseTagFunc(pat, flags, info)
+    if winnr('$') > 1
+      close
+    endif
+    return [{'name': 'mytagC', 'filename': 'Xfile1', 'cmd': '1'}]
+  endfunc
+
+  func WipeTagFunc(pat, flags, info)
+    silent! %bwipe!
+    return [{'name': 'mytagW', 'filename': 'Xfile1', 'cmd': '1'}]
+  endfunc
+
+  func TabTagFunc(pat, flags, info)
+    tabnew
+    tabclose
+    return [{'name': 'mytagT', 'filename': 'Xfile1', 'cmd': '1'}]
+  endfunc
+
+  func CursorTagFunc(pat, flags, info)
+    call setline(1, range(1, 100))
+    call cursor(100, 1)
+    return [{'name': 'mytagP', 'filename': 'Xfile1', 'cmd': '1'}]
+  endfunc
+
+  func StackTagFunc(pat, flags, info)
+    call settagstack(win_getid(), {'items': []}, 'r')
+    return [{'name': 'mytagK', 'filename': 'Xfile1', 'cmd': '1'}]
+  endfunc
+
+  try
+    " Opening a window during completion.
+    set tagfunc=SplitTagFunc
+    let nwin = winnr('$')
+    call assert_equal(['mytagS'], getcompletion('myt', 'tag'))
+    call assert_equal(nwin + 1, winnr('$'))
+    only!
+
+    " Closing a window during completion.
+    new
+    set tagfunc=CloseTagFunc
+    call assert_equal(['mytagC'], getcompletion('myt', 'tag'))
+    only!
+
+    " Wiping every buffer during completion.
+    set tagfunc=WipeTagFunc
+    call assert_equal(['mytagW'], getcompletion('myt', 'tag'))
+
+    " Opening and closing a tab page during completion.
+    set tagfunc=TabTagFunc
+    call assert_equal(['mytagT'], getcompletion('myt', 'tag'))
+    call assert_equal(1, tabpagenr('$'))
+
+    " The cursor position is restored by find_tagfunc_tags().
+    enew!
+    call setline(1, ['one', 'two', 'three'])
+    call cursor(2, 1)
+    set tagfunc=CursorTagFunc
+    call assert_equal(['mytagP'], getcompletion('myt', 'tag'))
+    call assert_equal(2, line('.'))
+
+    " Clearing the tag stack during completion.
+    set tagfunc=StackTagFunc
+    call assert_fails("call getcompletion('myt', 'tag')", 'E986:')
+  finally
+    set tagfunc&
+    silent! only!
+    delfunc! SplitTagFunc
+    delfunc! CloseTagFunc
+    delfunc! WipeTagFunc
+    delfunc! TabTagFunc
+    delfunc! CursorTagFunc
+    delfunc! StackTagFunc
+    bwipe!
+  endtry
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

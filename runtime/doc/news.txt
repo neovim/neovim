@@ -566,6 +566,7 @@ These existing features changed their behavior.
   always used when 'cursorline' is set.
 • |vim.lsp.util.apply_text_edits()| accepts `opts.keep_cursor`, to hold the
   cursor on the text it is on while edits move around it.
+• 'tagfunc' is now also used for :tag completion.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
