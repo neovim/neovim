@@ -82,6 +82,7 @@ EXTERN const char e_openerrf[] INIT(= N_("E40: Can't open errorfile %s"));
 EXTERN const char e_outofmem[] INIT(= N_("E41: Out of memory!"));
 EXTERN const char e_patnotf2[] INIT(= N_("E486: Pattern not found: %s"));
 EXTERN const char e_positive[] INIT(= N_("E487: Argument must be positive"));
+// E458 unused
 EXTERN const char e_prev_dir[] INIT(= N_("E459: Cannot go back to previous directory"));
 
 EXTERN const char e_no_errors[] INIT(= N_("E42: No Errors"));
