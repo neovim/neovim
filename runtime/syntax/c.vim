@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:		C
 " Maintainer:		The Vim Project <https://github.com/vim/vim>
-" Last Change:		2026 Aug 30
+" Last Change:		2026 Sep 14
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Quit when a (custom) syntax file was already loaded
@@ -222,13 +222,13 @@ syn match	cNumbersCom	display contained transparent "\<\d\|\.\d" contains=cNumbe
 
 " cpp.vim handles these
 if !exists("c_no_c23") && !s:in_cpp_family
-  syn match	cNumber		display contained "\d\%('\=\d\+\)*\%(u\=l\{0,2}\|ll\=u\|u\=wb\|wbu\=\)\>"
+  syn match	cNumber		display contained "\d\+\%('\d\+\)*\%(u\=l\{0,2}\|ll\=u\|u\=wb\|wbu\=\)\>"
   "hex number
-  syn match	cNumber		display contained "0x\x\%('\=\x\+\)*\%(u\=l\{0,2}\|ll\=u\|u\=wb\|wbu\=\)\>"
+  syn match	cNumber		display contained "0x\x\+\%('\x\+\)*\%(u\=l\{0,2}\|ll\=u\|u\=wb\|wbu\=\)\>"
   " Flag the first zero of an octal number as something special
-  syn match	cOctal		display contained "0\o\%('\=\o\+\)*\%(u\=l\{0,2}\|ll\=u\|u\=wb\|wbu\=\)\>" contains=cOctalZero
+  syn match	cOctal		display contained "0\o*\%('\o\+\)*\%(u\=l\{0,2}\|ll\=u\|u\=wb\|wbu\=\)\>" contains=cOctalZero
   "binary number
-  syn match	cNumber		display contained "0b[01]\%('\=[01]\+\)*\%(u\=l\{0,2}\|ll\=u\|u\=wb\|wbu\=\)\>"
+  syn match	cNumber		display contained "0b[01]\+\%('[01]\+\)*\%(u\=l\{0,2}\|ll\=u\|u\=wb\|wbu\=\)\>"
 else
   syn match	cNumber		display contained "\d\+\%(u\=l\{0,2}\|ll\=u\)\>"
   "hex number
