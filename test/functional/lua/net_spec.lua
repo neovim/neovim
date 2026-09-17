@@ -34,9 +34,12 @@ local function request(method, url, opts)
       done = true
     end)
 
-    vim.wait(2000, function()
-      return done
-    end)
+    assert(
+      vim.wait(2000, function()
+        return done
+      end),
+      ('Timed out waiting for HTTP provider (2000 ms): %s %s'):format(method, url)
+    )
     return result
   end)
 
@@ -46,6 +49,18 @@ end
 describe('vim.net.request', function()
   before_each(function()
     n:clear()
+  end)
+
+  it('reports a provider timeout instead of returning no result', function()
+    exec_lua(function()
+      -- Simulate a provider that does not finish before the helper's timeout.
+      vim.net.request = function() end
+    end)
+
+    t.matches(
+      'Timed out waiting for HTTP provider %(2000 ms%): GET https://example.com',
+      t.pcall_err(request, 'GET', 'https://example.com')
+    )
   end)
 
   it('fetches a URL into memory (async success)', function()
