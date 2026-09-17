@@ -437,15 +437,16 @@ arguments.  A |v:lua-call| can also be used.  Example: >vim
 Setting the filetype
 
 :setf[iletype] [FALLBACK] {filetype}			*:setf* *:setfiletype*
-			Set the 'filetype' option to {filetype}, but only if
-			not done yet in a sequence of (nested) autocommands.
+			Set the 'filetype' option to {filetype}, unless it was
+			already set (non-empty) in a sequence of (nested)
+			autocommands.
 			This is short for: >
 				:if !did_filetype()
 				:  setlocal filetype={filetype}
 				:endif
-<			This command is used in a filetype.vim file to avoid
-			setting the 'filetype' option twice, causing different
-			settings and syntax files to be loaded.
+<			Used in a filetype.vim file to avoid setting the
+			'filetype' option twice, causing different settings
+			and syntax files to be loaded.
 
 			When the optional FALLBACK argument is present, a
 			later :setfiletype command will override the
