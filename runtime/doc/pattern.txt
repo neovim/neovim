@@ -514,7 +514,7 @@ Character classes:					*/character-classes*
 |/\K|	\K	\K	like "\k", but excluding digits
 |/\f|	\f	\f	file name character (see 'isfname' option)
 |/\F|	\F	\F	like "\f", but excluding digits
-|/\p|	\p	\p	printable character (see 'isprint' option)
+|/\p|	\p	\p	printable character
 |/\P|	\P	\P	like "\p", but excluding digits
 |/\s|	\s	\s	whitespace character: <Space> and <Tab>
 |/\S|	\S	\S	non-whitespace character; opposite of \s
@@ -1026,7 +1026,7 @@ Character classes:
 \K	like "\k", but excluding digits			*/\K*
 \f	file name character (see 'isfname' option)	*/\f*
 \F	like "\f", but excluding digits			*/\F*
-\p	printable character (see 'isprint' option)	*/\p*
+\p	printable character				*/\p*
 \P	like "\p", but excluding digits			*/\P*
 
 NOTE: the above also work for multibyte characters.  The ones below only

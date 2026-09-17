@@ -279,8 +279,7 @@ Examples: >
 		:set fileencoding=2byte-cp932
 
 The MS-Windows codepage 1252 is very similar to latin1.  For practical reasons
-the same encoding is used and it's called latin1.  'isprint' can be used to
-display the characters 0x80 - 0xA0 or not.
+the same encoding is used and it's called latin1.
 
 Several aliases can be used, they are translated to one of the names above.
 Incomplete list:

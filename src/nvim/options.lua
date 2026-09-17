@@ -5119,45 +5119,14 @@ local options = {
     },
     {
       abbreviation = 'isp',
-      cb = 'did_set_isopt',
-      validation_cb = 'validate_isopt',
       defaults = '@,161-255',
       deny_duplicates = true,
-      desc = [=[
-        The characters given by this option are displayed directly on the
-        screen.  It is also used for "\p" in a |pattern|.  The characters from
-        space (ASCII 32) to '~' (ASCII 126) are always displayed directly,
-        even when they are not included in 'isprint' or excluded.  See
-        'isfname' for a description of the format of this option.
-
-        Non-printable characters are displayed with two characters:
-        	  0 -  31	"^@" - "^_"
-        	 32 - 126	always single characters
-        	   127		"^?"
-        	128 - 159	"~@" - "~_"
-        	160 - 254	"| " - "|~"
-        	   255		"~?"
-        Illegal bytes from 128 to 255 (invalid UTF-8) are
-        displayed as <xx>, with the hexadecimal value of the byte.
-        When 'display' contains "uhex" all unprintable characters are
-        displayed as <xx>.
-        The SpecialKey highlighting will be used for unprintable characters.
-        |hl-SpecialKey|
-
-        Multi-byte characters 256 and above are always included, only the
-        characters up to 255 are specified with this option.  When a character
-        is printable but it is not available in the current font, a
-        replacement character will be shown.
-        Unprintable and zero-width Unicode characters are displayed as <xxxx>.
-        There is no option to specify these characters.
-      ]=],
       full_name = 'isprint',
       list = 'comma',
-      redraw = { 'all_windows' },
       scope = { 'global' },
       short_desc = N_('printable characters'),
       type = 'string',
-      varname = 'p_isp',
+      immutable = true,
     },
     {
       abbreviation = 'js',

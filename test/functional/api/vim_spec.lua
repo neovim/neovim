@@ -2407,7 +2407,7 @@ describe('API', function()
         { 'isident', '256', 'E474:' },
         { 'iskeyword', '256', 'E474:' },
         { 'isfname', '256', 'E474:' },
-        { 'isprint', '256', 'E474:' },
+        { 'isprint', '256', 'E519:' },
         { 'spelllang', 'en/gb', 'E474:' },
         { 'spellfile', 'words.txt', 'E474:' },
         { 'complete', 'x', 'E539:' },

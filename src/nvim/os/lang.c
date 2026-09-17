@@ -235,6 +235,11 @@ void ex_language(exarg_T *eap)
       maketitle();
     }
   }
+
+  // TODO(bfredl): isident=@ should not depend on the locale
+  buf_init_isk_chartab(curbuf);
+  init_isf_chartab();
+  init_isi_chartab();
 }
 
 static char **locales = NULL;       // Array of all available locales
