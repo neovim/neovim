@@ -1034,6 +1034,7 @@ is_na_patch() {
           '-I^EXTERN char e_.*enddef' \
           '-I^EXTERN char e_.*vim9' \
           '-I^EXTERN char e_[_a-z]+_channel' \
+          '-I^EXTERN char e_cannot_add(_redraw|)_listener_in_listener_callback' \
           '-I^EXTERN char e_cannot_declare_.*variable_str' \
           '-I^EXTERN char e_cannot_define_new_.+_as_static' \
           '-I^EXTERN char e_cannot_listen_on_port' \
@@ -1053,6 +1054,7 @@ is_na_patch() {
           '-I\sINIT\(= .+"E1103: Dictionary not set' \
           '-I\sINIT\(= .+"E1365: Cannot use a return type with the \\"new\\" function"' \
           '-I\sINIT\(= .+"E1370: Cannot define a .+ as static' \
+          '-I\sINIT\(= .+"E15[0-9]+: Cannot use .*listener_add in a .* listener callback"' \
           '-I\sINIT\(= .+"E1551: Cannot open a popup window to a closing buffer' \
           '-I\sINIT\(= .+"E157[34]: ' \
           '-I\s(bool|char(|_u))\s+w_popup_image_[_a-zA-Z]+;' \

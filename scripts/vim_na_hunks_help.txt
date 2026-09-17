@@ -98,6 +98,8 @@
 \*E984\*
 \*E999\*
 \*E119[3-9]\*
+\*E1569\*
+\*E1570\*
 \*HelpToc-mappings\*
 \*SafeStateAgain\*
 \*SigUSR1\*
