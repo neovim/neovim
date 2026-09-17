@@ -287,7 +287,7 @@ describe('luaeval(vim.api.…)', function()
 
   it('converts booleans in optional args', function()
     eq({}, exec_lua [[ return vim.api.nvim_exec2("echo 'foobar'", {output=false}) ]])
-    eq({}, exec_lua [[ return vim.api.nvim_exec2("echo 'foobar'", {}) ]]) -- same as {output=nil}
+    eq({}, exec_lua [[ return vim.api.nvim_exec2("echo 'foobar'") ]]) -- same as {output=nil}
 
     -- API conventions (not lua conventions): zero is falsy
     eq({}, exec_lua [[ return vim.api.nvim_exec2("echo 'foobar'", {output=0}) ]])
