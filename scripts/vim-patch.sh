@@ -1014,7 +1014,7 @@ is_na_patch() {
         HUNKS=$(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id -r -b -U0 \
           '-I^\s+$' \
           '-I^\s*/?\*/?$' \
-          '-I^\s*(//|/?\*).*\s([vV]im9|E[0-9]{4} - |FEAT_|JSON-RPC|channel|job|popup|sound|terminal)' \
+          '-I^\s*(//|/?\*).*\s([vV]im9|E649 unused|E[0-9]{4} - |FEAT_|JSON-RPC|channel|job|popup|sound|terminal)' \
           '-I^#\s*((ifdef|ifndef|undef)|(if|elif)\s.*defined\().*FEAT_[^_]' \
           '-I^#\s*(else|endif)' \
           '-I^#\s*define\s+(FEAT|POPUPWIN|XDG|t)_[^_]' \
@@ -1042,11 +1042,13 @@ is_na_patch() {
           '-I^EXTERN char e_dictionary_not_set' \
           '-I^EXTERN char e_dictnull' \
           '-I^EXTERN char e_gethostbyname_in_channel_' \
+          '-I^EXTERN char e_invalid_identifier_in_defineannotype' \
           '-I\sINIT\(= .+"E[0-9]+: (Abstract|Class|Enum|Interface|Type) ' \
           '-I\sINIT\(= .+"E[0-9]+: .*:def ' \
           '-I\sINIT\(= .+"E[0-9]+: .*enddef"' \
           '-I\sINIT\(= .+"E[0-9]+: .*([vV]im9|interface)' \
           '-I\sINIT\(= .+"E[0-9]+: .* (ch|channel)_[_a-z]+\(\)' \
+          '-I\sINIT\(= .+"E649: Invalid identifier name in defineAnnoType' \
           '-I\sINIT\(= .+"E1016: Cannot declare .* variable: ' \
           '-I\sINIT\(= .+"E1103: Dictionary not set' \
           '-I\sINIT\(= .+"E1365: Cannot use a return type with the \\"new\\" function"' \
