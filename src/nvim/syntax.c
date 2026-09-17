@@ -724,6 +724,7 @@ static void save_chartab(char *chartab)
     return;
   }
 
+  // TODO(bfredl): what really now?
   memmove(chartab, syn_buf->b_chartab, (size_t)32);
   memmove(syn_buf->b_chartab, syn_win->w_s->b_syn_chartab, (size_t)32);
 }
@@ -2943,8 +2944,6 @@ static void syn_cmd_spell(exarg_T *eap, int syncing)
 static void syn_cmd_iskeyword(exarg_T *eap, int syncing)
 {
   char *arg = eap->arg;
-  char save_chartab[32];
-  char *save_isk;
 
   if (eap->skip) {
     return;
@@ -2964,16 +2963,9 @@ static void syn_cmd_iskeyword(exarg_T *eap, int syncing)
       memmove(curwin->w_s->b_syn_chartab, curbuf->b_chartab, (size_t)32);
       clear_string_option(&curwin->w_s->b_syn_isk);
     } else {
-      memmove(save_chartab, curbuf->b_chartab, (size_t)32);
-      save_isk = curbuf->b_p_isk;
-      curbuf->b_p_isk = xstrdup(arg);
-
-      buf_init_chartab(curbuf, false);
-      memmove(curwin->w_s->b_syn_chartab, curbuf->b_chartab, (size_t)32);
-      memmove(curbuf->b_chartab, save_chartab, (size_t)32);
       clear_string_option(&curwin->w_s->b_syn_isk);
-      curwin->w_s->b_syn_isk = curbuf->b_p_isk;
-      curbuf->b_p_isk = save_isk;
+      curwin->w_s->b_syn_isk = xstrdup(arg);
+      parse_isopt(curwin->w_s->b_syn_isk, curwin->w_s->b_syn_chartab);
     }
   }
   redraw_later(curwin, UPD_NOT_VALID);

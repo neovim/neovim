@@ -434,7 +434,7 @@ void prepare_help_buffer(void)
   if (strcmp(curbuf->b_p_isk, p) != 0) {
     set_option_direct(kOptIskeyword, CSTR_AS_OBJ(p), OPT_LOCAL, 0);
     check_buf_options(curbuf);
-    buf_init_chartab(curbuf, false);
+    buf_init_isk_chartab(curbuf);
   }
 
   // Don't use the global foldmethod.

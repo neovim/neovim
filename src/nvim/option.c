@@ -1834,8 +1834,10 @@ static char *option_expand(OptIndex opt_idx, const char *val)
 /// option values.
 static void didset_options(void)
 {
-  // initialize the table for 'iskeyword' et.al.
-  init_chartab();
+  // initialize the tables for 'iskeyword' et.al.
+  buf_init_isk_chartab(curbuf);
+  init_isf_chartab();
+  init_isi_chartab();
 
   didset_string_options();
 
@@ -2467,7 +2469,7 @@ static const char *did_set_lisp(optset_T *args)
 {
   buf_T *buf = (buf_T *)args->os_buf;
   // When 'lisp' option changes include/exclude '-' in keyword characters.
-  buf_init_chartab(buf, false);          // ignore errors
+  buf_init_isk_chartab(buf);          // ignore errors
   return NULL;
 }
 
@@ -4062,7 +4064,6 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, Object old_value
 {
   vimoption_T *opt = &options[opt_idx];
   const char *errmsg = NULL;
-  bool restore_chartab = false;
   bool value_changed = false;
   bool value_checked = false;
 
@@ -4074,7 +4075,6 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, Object old_value
     .os_newval = new_value,
     .os_value_checked = false,
     .os_value_changed = false,
-    .os_restore_chartab = false,
     .os_errbuf = errbuf,
     .os_errbuflen = errbuflen,
     .os_buf = curbuf,
@@ -4101,8 +4101,6 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, Object old_value
     // os_value_checked field.
     value_checked = did_set_cb_args.os_value_checked;
     // The 'isident', 'iskeyword', 'isprint' and 'isfname' options may change the character table.
-    // On failure, this needs to be restored.
-    restore_chartab = did_set_cb_args.os_restore_chartab;
   }
 
   // If option is hidden or if an error is detected, restore the previous value and don't do any
@@ -4111,9 +4109,6 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, Object old_value
     set_option_varp(opt_idx, varp, old_value);
     optval_free(old_value);
     // When resetting some values, need to act on it.
-    if (restore_chartab) {
-      buf_init_chartab(curbuf, true);
-    }
 
     return errmsg;
   }
@@ -6102,7 +6097,7 @@ void buf_copy_options(buf_T *buf, int flags)
 
   check_buf_options(buf);           // make sure we don't have NULLs
   if (did_isk) {
-    buf_init_chartab(buf, false);
+    buf_init_isk_chartab(buf);
   }
 }
 

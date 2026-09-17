@@ -270,7 +270,7 @@ let test_values = {
       \ 'isfname': [['', '@', '@,48-52'], ['xxx', '@48']],
       \ 'isident': [['', '@', '@,48-52'], ['xxx', '@48']],
       \ 'iskeyword': [['', '@', '@,48-52'], ['xxx', '@48']],
-      \ 'isprint': [['', '@', '@,48-52'], ['xxx', '@48']],
+      "\ 'isprint': [['', '@', '@,48-52'], ['xxx', '@48']],
       \ 'jumpoptions': [['', 'stack'], ['xxx']],
       \ 'keymap': [['', 'accents'], ['/']],
       \ 'keymodel': [['', 'startsel', 'stopsel', 'startsel,stopsel'], ['xxx']],
