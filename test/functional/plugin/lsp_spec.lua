@@ -3264,6 +3264,32 @@ describe('LSP', function()
         return {}
       end)
     end)
+
+    -- The tag-jump path must not expand "$VAR" in filenames handed over
+    -- verbatim (e.g. decoded from a file:// URI). Unlike the reverted
+    -- approach, nothing is escaped here: the fix lives in the tag-jump
+    -- consumption path, so raw URIs still reach autocmd consumers
+    -- untouched. #41313
+    it(':tag keeps literal $ in filenames from tagfunc #41313', function()
+      local result = exec_lua(function()
+        vim.env.personId = 'EXPANDED'
+        local dir = vim.fn.tempname()
+        vim.fn.mkdir(dir, 'p')
+        local f = vim.fs.abspath(dir .. '/people_.$personId.tsx')
+        vim.fn.writefile({ 'symbol' }, f)
+        _G.tag_target = f
+        _G.literal_tagfunc = function()
+          return { { name = 'symbol', filename = _G.tag_target, cmd = '1' } }
+        end
+        vim.o.tagfunc = 'v:lua.literal_tagfunc'
+        vim.cmd('tag symbol')
+        return {
+          bufname = vim.fs.abspath(vim.api.nvim_buf_get_name(0)),
+          expected = f,
+        }
+      end)
+      eq(result.expected, result.bufname)
+    end)
   end)
 
   describe('cmd', function()

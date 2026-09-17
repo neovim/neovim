@@ -2955,8 +2955,17 @@ static char *expand_tag_fname(char *fname, char *const tag_fname, const bool exp
     expanded_fname = ExpandOne(&xpc, fname, NULL,
                                WILD_LIST_NOTFOUND|WILD_SILENT, WILD_EXPAND_FREE);
     if (expanded_fname != NULL) {
-      xfree(fname);
-      fname = expanded_fname;
+      // If expansion changed the name but the result does not exist, the
+      // original name may contain a literal "$" (decoded from a "file://"
+      // URI, or listed verbatim in a tags file).  Fall back to the
+      // unexpanded name instead of failing.  URLs for other schemes are
+      // unaffected: they reach autocmd consumers verbatim.  #41313
+      if (strcmp(expanded_fname, fname) != 0 && !os_path_exists(expanded_fname)) {
+        xfree(expanded_fname);
+      } else {
+        xfree(fname);
+        fname = expanded_fname;
+      }
     }
   }
 
