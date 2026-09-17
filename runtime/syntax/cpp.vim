@@ -9,6 +9,8 @@
 "   2026 Jan 08 by Vim Project highlight capital letter prefixes for numbers
 "   2026 May 29 by Vim Project add C++23 stdfloat types (#16498)
 "   2026 Sep 14 by Vim Project support number suffix uz for C++23 (#21281)
+"   2026 Sep 14 by Vim Project fix number patterns to avoid catastrophic
+"                              backtracking under re=1
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -60,12 +62,12 @@ endif
 if !exists("cpp_no_cpp14")
   syn match cppNumbers		display transparent "\<\d\|\.\d" contains=cppNumber,cppFloat
   syn match cppNumber		display contained "\<0\([Uu]\=\([Ll]\|LL\|ll\)\|\([Ll]\|LL\|ll\)\=[Uu]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
-  syn match cppNumber		display contained "\<[1-9]\('\=\d\+\)*\([Uu]\=\([Ll]\|LL\|ll\)\|\([Ll]\|LL\|ll\)\=[Uu]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
-  syn match cppNumber		display contained "\<0\('\=\o\+\)\+\([Uu]\=\([Ll]\|LL\|ll\)\|\([Ll]\|LL\|ll\)\=[Uu]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
-  syn match cppNumber		display contained "\<0[Bb][01]\('\=[01]\+\)*\([Uu]\=\([Ll]\|LL\|ll\)\|\([Ll]\|LL\|ll\)\=[Uu]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
-  syn match cppNumber		display contained "\<0[Xx]\x\('\=\x\+\)*\([Uu]\=\([Ll]\|LL\|ll\)\|\([Ll]\|LL\|ll\)\=[Uu]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
-  syn match cppFloat		display contained "\<\d\('\=\d\+\)*\.\(\d\('\=\d\+\)*\)\=\([Ee][-+]\=\d\+\)\=\([FfLl]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
-  syn match cppFloat		display contained "\.\d\('\=\d\+\)*\([Ee][-+]\=\d\+\)\=\([FfLl]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
+  syn match cppNumber		display contained "\<[1-9]\d*\('\d\+\)*\([Uu]\=\([Ll]\|LL\|ll\)\|\([Ll]\|LL\|ll\)\=[Uu]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
+  syn match cppNumber		display contained "\<0\o*\('\o\+\)*\([Uu]\=\([Ll]\|LL\|ll\)\|\([Ll]\|LL\|ll\)\=[Uu]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
+  syn match cppNumber		display contained "\<0[Bb][01]\+\('[01]\+\)*\([Uu]\=\([Ll]\|LL\|ll\)\|\([Ll]\|LL\|ll\)\=[Uu]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
+  syn match cppNumber		display contained "\<0[Xx]\x\+\('\x\+\)*\([Uu]\=\([Ll]\|LL\|ll\)\|\([Ll]\|LL\|ll\)\=[Uu]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
+  syn match cppFloat		display contained "\<\d\+\('\d\+\)*\.\(\d\+\('\d\+\)*\)\=\([Ee][-+]\=\d\+\)\=\([FfLl]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
+  syn match cppFloat		display contained "\.\d\+\('\d\+\)*\([Ee][-+]\=\d\+\)\=\([FfLl]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
   syn match cppFloat		display contained "\<\d\+[Ee][-+]\=\d\+\([FfLl]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
   syn region cppString		start=+\(L\|u\|u8\|U\)\="+ skip=+\\\\\|\\"\|\\$+ excludenl end=+"\(sv\|s\|_\i*\)\=+ end='$' contains=cSpecial,cFormat,@Spell
 endif
@@ -74,8 +76,8 @@ endif
 if !exists("cpp_no_cpp17")
   syn match cppCast		"\<reinterpret_pointer_cast\s*<"me=e-1
   syn match cppCast		"\<reinterpret_pointer_cast\s*$"
-  syn match cppFloat		display contained "\<0[Xx]\(\x\('\=\x\+\)*\)\=\.\x\('\=\x\+\)*[Pp][-+]\=\d\('\=\d\+\)*\([FfLl]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
-  syn match cppFloat		display contained "\<0[Xx]\x\('\=\x\+\)*\.\=[Pp][-+]\=\d\('\=\d\+\)*\([FfLl]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
+  syn match cppFloat		display contained "\<0[Xx]\(\x\+\('\x\+\)*\)\=\.\x\+\('\x\+\)*[Pp][-+]\=\d\+\('\d\+\)*\([FfLl]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
+  syn match cppFloat		display contained "\<0[Xx]\x\+\('\x\+\)*\.\=[Pp][-+]\=\d\+\('\d\+\)*\([FfLl]\|i[fl]\=\|h\|min\|s\|ms\|us\|ns\|_\i*\)\=\>"
 
   " TODO: push this up to c.vim if/when supported in C23
   syn match cppCharacter	"u8'[^\\]'"
@@ -95,10 +97,10 @@ endif
 " C++ 20 extensions
 if !exists("cpp_no_cpp20")
   syn match cppNumber		display contained "\<0\(y\|d\)\>"
-  syn match cppNumber		display contained "\<[1-9]\('\=\d\+\)*\(y\|d\)\>"
+  syn match cppNumber		display contained "\<[1-9]\d*\('\d\+\)*\(y\|d\)\>"
   syn match cppNumber		display contained "\<0\o\+\(y\|d\)\>"
-  syn match cppNumber		display contained "\<0[Bb][01]\('\=[01]\+\)*\(y\|d\)\>"
-  syn match cppNumber		display contained "\<0[Xx]\x\('\=\x\+\)*\(y\|d\)\>"
+  syn match cppNumber		display contained "\<0[Bb][01]\+\('[01]\+\)*\(y\|d\)\>"
+  syn match cppNumber		display contained "\<0[Xx]\x\+\('\x\+\)*\(y\|d\)\>"
   syn keyword cppStatement	co_await co_return co_yield requires
   syn keyword cppStorageClass	consteval constinit
   syn keyword cppStructure	concept
@@ -109,14 +111,14 @@ endif
 " C++ 23 extensions
 if !exists("cpp_no_cpp23")
   syn match cppNumber		display contained "\<0\([Zz][Uu]\=\|[Uu][Zz]\)\>"
-  syn match cppNumber		display contained "\<[1-9]\('\=\d\+\)*\([Zz][Uu]\=\|[Uu][Zz]\)\>"
-  syn match cppNumber		display contained "\<0\o\('\=\o\+\)*\([Zz][Uu]\=\|[Uu][Zz]\)\>"
-  syn match cppNumber		display contained "\<0[Bb][01]\('\=[01]\+\)*\([Zz][Uu]\=\|[Uu][Zz]\)\>"
-  syn match cppNumber		display contained "\<0[Xx]\x\('\=\x\+\)*\([Zz][Uu]\=\|[Uu][Zz]\)\>"
-  syn match cppFloat		display contained "\<\d\%('\=\d\+\)*\.\%(\d\%('\=\d\+\)*\)\=\%([Ee][-+]\=\d\%('\=\d\+\)*\)\=\%([Ff]\%(16\|32\|64\|128\)\|\%(BF\|bf\)16\)\>"
-  syn match cppFloat		display contained "\.\d\%('\=\d\+\)*\%([Ee][-+]\=\d\%('\=\d\+\)*\)\=\%([Ff]\%(16\|32\|64\|128\)\|\%(BF\|bf\)16\)\=\>"
-  syn match cppFloat		display contained "\<0[Xx]\%(\x\%('\=\x\+\)*\)\=\.\x\%('\=\x\+\)*[Pp][-+]\=\d\%('\=\d\+\)*\%([Ff]\%(16\|32\|64\|128\)\|\%(BF\|bf\)16\)\=\>"
-  syn match cppFloat		display contained "\<0[Xx]\x\%('\=\x\+\)*\.\=[Pp][-+]\=\d\%('\=\d\+\)*\%([Ff]\%(16\|32\|64\|128\)\|\%(BF\|bf\)16\)\=\>"
+  syn match cppNumber		display contained "\<[1-9]\d*\('\d\+\)*\([Zz][Uu]\=\|[Uu][Zz]\)\>"
+  syn match cppNumber		display contained "\<0\o*\('\o\+\)*\([Zz][Uu]\=\|[Uu][Zz]\)\>"
+  syn match cppNumber		display contained "\<0[Bb][01]\+\('[01]\+\)*\([Zz][Uu]\=\|[Uu][Zz]\)\>"
+  syn match cppNumber		display contained "\<0[Xx]\x\+\('\x\+\)*\([Zz][Uu]\=\|[Uu][Zz]\)\>"
+  syn match cppFloat		display contained "\<\d\+\%('\d\+\)*\.\%(\d\+\%('\d\+\)*\)\=\%([Ee][-+]\=\d\+\%('\d\+\)*\)\=\%([Ff]\%(16\|32\|64\|128\)\|\%(BF\|bf\)16\)\>"
+  syn match cppFloat		display contained "\.\d\+\%('\d\+\)*\%([Ee][-+]\=\d\+\%('\d\+\)*\)\=\%([Ff]\%(16\|32\|64\|128\)\|\%(BF\|bf\)16\)\=\>"
+  syn match cppFloat		display contained "\<0[Xx]\%(\x\+\%('\x\+\)*\)\=\.\x\+\%('\x\+\)*[Pp][-+]\=\d\+\%('\d\+\)*\%([Ff]\%(16\|32\|64\|128\)\|\%(BF\|bf\)16\)\=\>"
+  syn match cppFloat		display contained "\<0[Xx]\x\+\%('\x\+\)*\.\=[Pp][-+]\=\d\+\%('\d\+\)*\%([Ff]\%(16\|32\|64\|128\)\|\%(BF\|bf\)16\)\=\>"
   syn keyword cppType		float16_t float32_t float64_t float128_t bfloat16_t
 endif
 
