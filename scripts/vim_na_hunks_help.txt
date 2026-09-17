@@ -122,7 +122,7 @@
 \*popup-window-functions\*
 \*sound-functions\*
 \*sound_[a-zA-Z0-9]\+()\*
-\*tabpanel\*
+\*tabpanel[-a-z]*\*
 \*term++\(close\|open\)\*
 \*term_start()\*
 \*test_gui_[a-zA-Z0-9_]\+()\*
