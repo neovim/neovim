@@ -1110,43 +1110,39 @@ RecordingLeave			When a macro stops recording.
 				|reg_recorded()| is only updated after this
 				event.
 				The register itself is already written, so
-				|getreg()| on it returns the just-recorded
-				macro.
+				calling |getreg()| on it returns the
+				just-recorded macro.
 				Sets these |v:event| keys:
 				    regcontents
 				    regname
 
 							*RegisterChanged*
 RegisterChanged			After the contents of a register changed.  The
-				|autocmd-pattern| is matched against the register
-				name and |<amatch>| is that name, so
-				`au RegisterChanged a,b` subscribes to exactly
-				two registers and `*` matches all.  The name is
-				always lowercase: `"Ayy` appends to `"a` and fires
-				`RegisterChanged a`.  To match the selection
-				register alone, escape the glob: >vim
-				  au RegisterChanged \* echo 'selection changed'
+				|autocmd-pattern| is matched against the
+				register name (|<amatch>|), so `au
+				RegisterChanged a,b` subscribes to registers
+				`a` and `b`.  `*` matches all.  Register names
+				are lowercase here (`"Ayy` appends to `"a` and
+				fires `RegisterChanged a`).  To match the
+				selection register, escape the glob: >vim
+				  au RegisterChanged \* echo 'changed'
 <
-				Reports a net change: the event means `@x` now
-				reads differently, not that a write happened.  A
-				write that puts back the value already there is
-				silent, and so is a save-and-restore round trip: >vim
+				Reports a net change, not every write that
+				happens.  No-op writes are silent, as are
+				save-and-restore round trips. >vim
 				  let s:save = @a | let @a = 'x' | let @a = s:save
-<				emits nothing.
+<				
 
-				|deferred|: the event fires at the next event-loop
-				tick rather than at the write, and writes to the
-				same register in between are coalesced, so one
-				all-in-one operation produces at most one event per
-				register it changed.  Intermediate values are never
-				reported: `:g/foo/yank A` emits one event for `"a`,
-				whatever the line count.
+				Event is |deferred|. One operation produces at
+				most one event per register it changed.
+				Intermediate values are not reported, e.g.
+				`:g/foo/yank A` emits only one event for `"a`.
 
-				When one operation changes several registers they
-				are emitted in |:registers| order - `"0` to `"9`,
-				`"a` to `"z`, `"-`, `"*`, `"+`, `".`, `":`, `"/`,
-				`"=` - except that the unnamed register comes last,
-				after whichever register it points at.
+				When one operation changes several registers,
+				they are emitted in |:registers| order: `"0`
+				to `"9`, `"a` to `"z`, `"-`, `"*`, `"+`, `".`,
+				`":`, `"/`, `"=`. Exception: the unnamed
+				register comes last.
 
 				Sets these |v:event| keys (type:
 				`vim.event.registerchanged.data`):
@@ -1156,14 +1152,15 @@ RegisterChanged			After the contents of a register changed.  The
 				    regname
 				    regtype
 				    visual
-				plus `points_to`, on the unnamed register only.
-				Unlike |TextYankPost| there is no `inclusive` key:
-				the |'[| and |']| marks it depends on are not in
-				step with a deferred event.  `operator` and `visual`
-				describe the write only when `reason` is "yank" or
-				"delete"; otherwise they carry `""` and |v:false|.
+				plus `points_to` on the unnamed register only.
+				Unlike |TextYankPost| there is no `inclusive`
+				key becuase the |'[| and |']| marks are not in
+				step with a deferred event.  `operator` and
+				`visual` describe the write only when `reason`
+				is "yank" or "delete"; otherwise they are `""`
+				and |v:false|.
 
-				`reason` names the mechanism that wrote the
+				`reason` specifies the mechanism that wrote the
 				register: ~
 				    yank      |yank| operator
 				    delete    |deleting| or |changing| operator
@@ -1176,48 +1173,45 @@ RegisterChanged			After the contents of a register changed.  The
 				    expr      assignment to `"=`
 				    cmdline   a command line was executed
 				    insert    text was inserted
-				New values may be added in future releases and
-				handlers must tolerate unrecognised ones; existing
-				values will not be renamed or repurposed.
+				New values may be added in future releases;
+				existing values will not be renamed or
+				repurposed.
 
-				The unnamed register fires whenever Nvim changes
-				what `@"` would paste, whether because it now points
-				at a different register or because the register it
-				points at changed underneath it.  `points_to` is the
-				register it resolves to, as |getreginfo()| reports
-				it, but the pointer is not part of the compared
-				value: moving it between two registers holding the
-				same text is silent.
+				An event for the unnamed register fires
+				whenever Nvim changes what `@"` would paste.
+				`points_to` is the register it resolves to, as
+				|getreginfo()| reports it, but the pointer is
+				not part of the compared value.  Switching it
+				between two registers holding the same text
+				fires no event.
 
-				A register cannot report "unset", so a handler must
-				treat `[]` and `[""]` as the same state; which one
-				arrives depends on how the register was emptied.
-				`"=` reports the expression text, not its value.
-				`":` fires for typed commands only and after the
-				command has run, so `@:` does not re-register
-				itself.  `".` reports the inserted text without the
-				trailing <Esc>, once per insert rather than per
-				keystroke.  `q"` and `:let @" =` both write `"0`,
-				and the event says so.
+				A register cannot report "unset", so a handler
+				must treat `[]` and `[""]` as the same state;
+				which one arrives depends on how the register
+				was emptied. `"=` reports the expression text,
+				not its value. `":` fires for typed commands
+				only and after the command has run, so `@:`
+				does not re-register itself.  `".` reports the
+				inserted text without the trailing <Esc>, once
+				per insert rather than per keystroke.  `q"`
+				and `:let @" =` both write `"0`.
 
-				Does not fire for the black hole register |quote_|,
-				nor for `"%` and `"#`, which are projections of
-				window state rather than stored content - use
-				|BufEnter| or |WinEnter|.  Not during |startup|, so
-				a |shada| load at launch is silent; read |getreg()|
-				at |VimEnter| instead.  A later |:rshada| does fire.
+				Does not fire for the black hole register
+				|quote_|, nor for `"%` and `"#` (use
+				|BufEnter| or |WinEnter| instead for these).
+				Also does not fire during |startup|, so
+				|shada| load at launch is silent (use
+				|getreg()| at |VimEnter| instead).  Later
+				|:rshada| does fire an event.
 
-				A clipboard read does not fire: the `"*` and `"+`
-				slots are scratch space for the
-				|provider-clipboard|, so a change another
-				application made is invisible here.  With
-				'clipboard' "unnamedplus" a plain `yy` fires `"0`
-				and `""` but not `"+`, because the outbound path
-				never writes that slot.
+				Clipboard reads do not fire events. With
+				'clipboard' "unnamedplus" a plain `yy` fires
+				`"0` and `""` but not `"+`.
 
-				Register writes made from within a RegisterChanged
-				handler do not themselves fire the event.  The
-				handler runs at a safe state and may change text.
+				Register writes made from within a
+				RegisterChanged handler do not fire the event.
+				The handler runs at a safe state and may
+				change text.
 
 							*RemoteReply*
 RemoteReply			When a reply from a Vim that functions as
