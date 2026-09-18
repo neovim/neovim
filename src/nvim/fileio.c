@@ -312,7 +312,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
 
     if (newfile) {
       if (apply_autocmds_exarg(EVENT_BUFREADCMD, NULL, sfname,
-                               false, curbuf, eap)) {
+                               false, curbuf, curwin, eap)) {
         retval = OK;
         if (aborting()) {
           retval = FAIL;
@@ -324,7 +324,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
         // BF_NOTEDITED flag.  Then ":write" will work to overwrite the
         // same file.
         if (retval == OK && !curbuf->b_au_did_filetype && *curbuf->b_p_ft != NUL) {
-          apply_autocmds(EVENT_FILETYPE, curbuf->b_p_ft, curbuf->b_fname, true, curbuf);
+          apply_autocmds(EVENT_FILETYPE, curbuf->b_p_ft, curbuf->b_fname, true, curbuf, curwin);
           if (aborting()) {
             retval = FAIL;
           }
@@ -335,7 +335,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
         goto theend;
       }
     } else if (apply_autocmds_exarg(EVENT_FILEREADCMD, sfname, sfname,
-                                    false, NULL, eap)) {
+                                    false, NULL, curwin, eap)) {
       retval = aborting() ? FAIL : OK;
       goto theend;
     }
@@ -508,7 +508,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
         set_forced_fenc(eap);
       }
       apply_autocmds_exarg(EVENT_BUFNEWFILE, sfname, sfname,
-                           false, curbuf, eap);
+                           false, curbuf, curwin, eap);
       // remember the current fileformat
       save_file_ff(curbuf);
 
@@ -630,16 +630,16 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
     msg_scroll = true;
     if (filtering) {
       apply_autocmds_exarg(EVENT_FILTERREADPRE, NULL, sfname,
-                           false, curbuf, eap);
+                           false, curbuf, curwin, eap);
     } else if (read_stdin) {
       apply_autocmds_exarg(EVENT_STDINREADPRE, NULL, sfname,
-                           false, curbuf, eap);
+                           false, curbuf, curwin, eap);
     } else if (newfile) {
       apply_autocmds_exarg(EVENT_BUFREADPRE, NULL, sfname,
-                           false, curbuf, eap);
+                           false, curbuf, curwin, eap);
     } else {
       apply_autocmds_exarg(EVENT_FILEREADPRE, sfname, sfname,
-                           false, NULL, eap);
+                           false, NULL, curwin, eap);
     }
 
     // autocommands may have changed it
@@ -1913,18 +1913,18 @@ failed:
     msg_scroll = true;
     if (filtering) {
       apply_autocmds_exarg(EVENT_FILTERREADPOST, NULL, sfname,
-                           false, curbuf, eap);
+                           false, curbuf, curwin, eap);
     } else if (newfile || (read_buffer && sfname != NULL)) {
       apply_autocmds_exarg(EVENT_BUFREADPOST, NULL, sfname,
-                           false, curbuf, eap);
+                           false, curbuf, curwin, eap);
       if (!curbuf->b_au_did_filetype && *curbuf->b_p_ft != NUL) {
         // EVENT_FILETYPE was not triggered but the buffer already has a
         // filetype.  Trigger EVENT_FILETYPE using the existing filetype.
-        apply_autocmds(EVENT_FILETYPE, curbuf->b_p_ft, curbuf->b_fname, true, curbuf);
+        apply_autocmds(EVENT_FILETYPE, curbuf->b_p_ft, curbuf->b_fname, true, curbuf, curwin);
       }
     } else {
       apply_autocmds_exarg(EVENT_FILEREADPOST, sfname, sfname,
-                           false, NULL, eap);
+                           false, NULL, curwin, eap);
     }
     if (msg_scrolled == n) {
       msg_scroll = m;
@@ -2121,9 +2121,9 @@ int set_rw_fname(char *fname, char *sfname)
 
   // It's like the unnamed buffer is deleted....
   if (curbuf->b_p_bl) {
-    apply_autocmds(EVENT_BUFDELETE, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_BUFDELETE, NULL, NULL, false, curbuf, curwin);
   }
-  apply_autocmds(EVENT_BUFWIPEOUT, NULL, NULL, false, curbuf);
+  apply_autocmds(EVENT_BUFWIPEOUT, NULL, NULL, false, curbuf, curwin);
   if (aborting()) {         // autocmds may abort script processing
     return FAIL;
   }
@@ -2138,9 +2138,9 @@ int set_rw_fname(char *fname, char *sfname)
   }
 
   // ....and a new named one is created
-  apply_autocmds(EVENT_BUFNEW, NULL, NULL, false, curbuf);
+  apply_autocmds(EVENT_BUFNEW, NULL, NULL, false, curbuf, curwin);
   if (curbuf->b_p_bl) {
-    apply_autocmds(EVENT_BUFADD, NULL, NULL, false, curbuf);
+    apply_autocmds(EVENT_BUFADD, NULL, NULL, false, curbuf, curwin);
   }
   if (aborting()) {         // autocmds may abort script processing
     return FAIL;
@@ -3021,7 +3021,8 @@ int buf_check_timestamp(buf_T *buf)
       set_vim_var_string(VV_FCS_REASON, reason, (int)reasonlen);
       set_vim_var_string(VV_FCS_CHOICE, "", 0);
       allbuf_lock++;
-      bool n = apply_autocmds(EVENT_FILECHANGEDSHELL, buf->b_fname, buf->b_fname, false, buf);
+      bool n = apply_autocmds(EVENT_FILECHANGEDSHELL, buf->b_fname, buf->b_fname, false, buf,
+                              curwin);
       allbuf_lock--;
       busy = false;
       if (n) {
@@ -3147,7 +3148,7 @@ int buf_check_timestamp(buf_T *buf)
 
   // Trigger FileChangedShell when the file was changed in any way.
   if (bufref_valid(&bufref) && retval != 0) {
-    apply_autocmds(EVENT_FILECHANGEDSHELLPOST, buf->b_fname, buf->b_fname, false, buf);
+    apply_autocmds(EVENT_FILECHANGEDSHELLPOST, buf->b_fname, buf->b_fname, false, buf, curwin);
   }
   return retval;
 }

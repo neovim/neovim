@@ -2131,7 +2131,7 @@ void apply_optionset_autocmd_now(OptIndex opt_idx, int opt_flags, Object oldval,
     set_vim_var_string(VV_OPTION_COMMAND, S_LEN("modeline"));
     set_vim_var_tv(VV_OPTION_OLDLOCAL, &oldval_tv);
   }
-  apply_autocmds(EVENT_OPTIONSET, options[opt_idx].fullname, NULL, false, NULL);
+  apply_autocmds(EVENT_OPTIONSET, options[opt_idx].fullname, NULL, false, NULL, curwin);
   reset_v_option_vars();
 
   tv_clear(&oldval_tv);
@@ -2243,7 +2243,7 @@ static const char *did_set_buflisted(optset_T *args)
   // when 'buflisted' changes, trigger autocommands
   if (args->os_oldval.data.boolean != buf->b_p_bl) {
     apply_autocmds(buf->b_p_bl ? EVENT_BUFADD : EVENT_BUFDELETE,
-                   NULL, NULL, true, buf);
+                   NULL, NULL, true, buf, curwin);
   }
   return NULL;
 }
@@ -2983,7 +2983,7 @@ static void do_syntax_autocmd(buf_T *buf, bool value_changed)
   // Only pass true for "force" when the value changed or not used
   // recursively, to avoid endless recurrence.
   apply_autocmds(EVENT_SYNTAX, buf->b_p_syn, buf->b_fname,
-                 value_changed || syn_recursive == 1, buf);
+                 value_changed || syn_recursive == 1, buf, curwin);
   syn_recursive--;
 }
 

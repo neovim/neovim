@@ -1296,8 +1296,8 @@ theend:
   if (serious_error && called_from_main) {
     ml_close(curbuf, true);
   } else {
-    apply_autocmds(EVENT_BUFREADPOST, NULL, curbuf->b_fname, false, curbuf);
-    apply_autocmds(EVENT_BUFWINENTER, NULL, curbuf->b_fname, false, curbuf);
+    apply_autocmds(EVENT_BUFREADPOST, NULL, curbuf->b_fname, false, curbuf, curwin);
+    apply_autocmds(EVENT_BUFWINENTER, NULL, curbuf->b_fname, false, curbuf, curwin);
   }
 }
 
@@ -3431,7 +3431,7 @@ static sea_choice_T do_swapexists(buf_T *buf, char *fname)
   // Trigger SwapExists autocommands with <afile> set to the file being
   // edited.  Disallow changing directory here.
   allbuf_lock++;
-  apply_autocmds(EVENT_SWAPEXISTS, buf->b_fname, NULL, false, NULL);
+  apply_autocmds(EVENT_SWAPEXISTS, buf->b_fname, NULL, false, NULL, curwin);
   allbuf_lock--;
 
   set_vim_var_string(VV_SWAPNAME, NULL, -1);
