@@ -3674,6 +3674,11 @@ bool valid_spellfile(const char *val)
     if (l >= MAXPATHL - 4 || l < 4 || strcmp(spf_name + l - 4, ".add") != 0) {
       return false;
     }
+#ifdef BACKSLASH_IN_FILENAME
+    // The setter converts backslashes to slashes after validation.
+    // Do the same here before checking 'isfname'.
+    path_to_slash(spf_name);
+#endif
     for (char *s = spf_name; *s != NUL; s++) {
       if (!vim_is_fname_char((uint8_t)(*s))) {
         return false;

@@ -694,10 +694,8 @@ bool event_ignored(event_T event, char *ei)
 
 /// Return OK when the contents of 'eventignore' or 'eventignorewin' is valid,
 /// FAIL otherwise.
-int check_ei(char *ei)
+int check_ei(char *ei, bool win)
 {
-  bool win = ei != p_ei;
-
   while (*ei) {
     if (STRNICMP(ei, "all", 3) == 0 && (ei[3] == NUL || ei[3] == ',')) {
       ei += 3 + (ei[3] == ',');

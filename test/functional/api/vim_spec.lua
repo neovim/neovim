@@ -2373,6 +2373,8 @@ describe('API', function()
 
     it('dry runs reject invalid values with the same errors as assignments', function()
       api.nvim_set_option_value('foldlevel', 2, {})
+      api.nvim_set_option_value('backupext', '.bak', {})
+      api.nvim_set_option_value('patchmode', '.orig', {})
       for _, case in ipairs({
         { 'foldmethod', 'nonsense', 'E474:' },
         { 'foldcolumn', 'auto:0', 'E474:' },
@@ -2382,7 +2384,41 @@ describe('API', function()
         { 'background', 'nonsense', 'E474:' },
         { 'fileformat', 'nonsense', 'E474:' },
         { 'fileformats', 'unix,nonsense', 'E474:' },
+        { 'comments', 'b', 'E524:' },
+        { 'comments', 'b:', 'E525:' },
         { 'commentstring', 'hello', 'E537:' },
+        { 'eventignore', 'NotAnEvent', 'E474:' },
+        { 'eventignorewin', 'NotAnEvent', 'E474:' },
+        { 'eventignorewin', 'VimEnter', 'E474:' },
+        { 'helplang', 'eng', 'E474:' },
+        { 'matchpairs', '(:', 'E474:' },
+        { 'shellpipe', '%x', 'E1577:' },
+        { 'shellredir', '%s %s', 'E1577:' },
+        { 'showbreak', '界', 'E595:' },
+        { 'winborder', 'nonsense', 'E474:' },
+        { 'pumborder', 'nonsense', 'E474:' },
+        -- Leading dots are ignored when comparing backup extensions.
+        { 'backupext', 'orig', 'E589:' },
+        { 'patchmode', 'bak', 'E589:' },
+        { 'highlight', '', 'E519:' },
+        { 'filetype', 'bad/name', 'E474:' },
+        { 'syntax', 'bad/name', 'E474:' },
+        { 'keymap', 'bad/name', 'E474:' },
+        { 'isident', '256', 'E474:' },
+        { 'iskeyword', '256', 'E474:' },
+        { 'isfname', '256', 'E474:' },
+        { 'isprint', '256', 'E474:' },
+        { 'spelllang', 'en/gb', 'E474:' },
+        { 'spellfile', 'words.txt', 'E474:' },
+        { 'complete', 'x', 'E539:' },
+        { 'complete', '.^x', 'E535:' },
+        { 'mkspellmem', '1,2,3', 'E474:' },
+        { 'buftype', 'terminal', 'E474:' },
+        { 'shada', ':', 'E526:' },
+        { 'shada', ':1', 'E528:' },
+        { 'shada', "nfile,'100", 'E528:' }, -- The apostrophe is part of the filename.
+        { 'wildchar', 3, 'E474:' }, -- CTRL-C.
+        { 'wildcharm', 13, 'E474:' }, -- Enter.
         { 'colorcolumn', 'bad', 'E474:' },
         { 'statusline', '%(', 'E542:' },
         { 'statuscolumn', '%(', 'E542:' },
@@ -2432,6 +2468,12 @@ describe('API', function()
     it('dry runs and assignments accept valid edge cases', function()
       for _, case in ipairs({
         { 'backspace', '2' }, -- Legacy numeric spelling.
+        { 'eventignore', 'VimEnter' }, -- Allowed globally, but not in eventignorewin.
+        { 'iskeyword', '' }, -- An empty character list is allowed.
+        { 'winborder', '+,-,+,|,+,-,+,|' }, -- Custom border characters.
+        { 'complete', '.^2,w' }, -- A source can have a completion limit.
+        { 'mkspellmem', '1000,50,10' }, -- Memory and word-count limits.
+        { 'shada', "'0" }, -- Zero disables file marks.
         { 'lispoptions', '' }, -- Empty is allowed.
         { 'signcolumn', 'auto:1-3' }, -- Range syntax is allowed.
         { 'mousescroll', 'ver:0' }, -- Zero disables vertical scrolling.
@@ -2441,6 +2483,42 @@ describe('API', function()
         local dry_value = api.nvim_set_option_value(name, value, { dry_run = true })
         eq(dry_value, api.nvim_set_option_value(name, value, {}))
       end
+    end)
+
+    it('dry runs do not change which characters belong to words', function()
+      api.nvim_set_option_value('iskeyword', '@', { buf = 0 })
+      eq('one', fn.matchstr('one-two', [[\k\+]]))
+      api.nvim_set_option_value('iskeyword', '@,-', { buf = 0, dry_run = true })
+      eq('one', fn.matchstr('one-two', [[\k\+]]))
+      api.nvim_set_option_value('iskeyword', '@,-', { buf = 0 })
+      eq('one-two', fn.matchstr('one-two', [[\k\+]]))
+    end)
+
+    it('only successful assignments change the spell suggestion limit', function()
+      exec_lua([[
+        vim.ui.select = function(items) _G.suggestion_count = #items end
+      ]])
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'helo' })
+      api.nvim_set_option_value('spellsuggest', 'fast,2', {})
+      command('normal! z=')
+      eq(2, exec_lua('return _G.suggestion_count'))
+
+      matches('E474:', pcall_err(api.nvim_set_option_value, 'spellsuggest', 'best,fast', {}))
+      command('normal! z=')
+      eq(2, exec_lua('return _G.suggestion_count'))
+
+      api.nvim_set_option_value('spellsuggest', 'fast,1', {})
+      command('normal! z=')
+      eq(1, exec_lua('return _G.suggestion_count'))
+    end)
+
+    it('validates spellfile paths with Windows separators', function()
+      skip(not is_os('win'))
+      -- Backslashes become forward slashes before checking filename characters.
+      api.nvim_set_option_value('isfname', '@,/,.', {})
+      api.nvim_set_option_value('spellfile', [[dir\words.add]], { dry_run = true })
+      api.nvim_set_option_value('spellfile', [[dir\words.add]], {})
+      eq('dir/words.add', api.nvim_get_option_value('spellfile', {}))
     end)
 
     it('dry runs leave listchars rendering unchanged', function()
@@ -2480,6 +2558,23 @@ describe('API', function()
       eq(true, api.nvim_set_option_value('previewwindow', true, { win = current, dry_run = true }))
       api.nvim_set_option_value('previewwindow', true, { win = current })
       eq(true, api.nvim_set_option_value('previewwindow', true, { win = current, dry_run = true }))
+    end)
+
+    it('buftype checks terminal buffers only for local assignments', function()
+      local terminal = api.nvim_create_buf(false, true)
+      api.nvim_open_term(terminal, {})
+      for _, dry_run in ipairs({ true, false }) do
+        local opts = { buf = terminal, dry_run = dry_run }
+        matches('E474:', pcall_err(api.nvim_set_option_value, 'buftype', 'nofile', opts))
+        eq('terminal', api.nvim_set_option_value('buftype', 'terminal', opts))
+        eq(
+          'terminal',
+          api.nvim_set_option_value('buftype', 'terminal', {
+            scope = 'global',
+            dry_run = dry_run,
+          })
+        )
+      end
     end)
 
     it('dry runs return clamped numeric values without storing them', function()
@@ -2568,8 +2663,14 @@ describe('API', function()
     it('dry runs do not evaluate callback strings', function()
       local value = "function('tr', [execute('let g:called = 1')])"
       eq(value, api.nvim_set_option_value('operatorfunc', value, { dry_run = true }))
+      local complete = api.nvim_get_option_value('complete', {})
+      value = 'F' .. value:gsub(',', '\\,')
+      api.nvim_set_option_value('complete', value, { dry_run = true })
+      eq(complete, api.nvim_get_option_value('complete', {}))
       eq(0, fn.exists('g:called'))
       eq('', api.nvim_get_option_value('operatorfunc', {}))
+      api.nvim_set_option_value('complete', value, {})
+      eq(1, eval('g:called'))
     end)
 
     it('2zF includes the existing fold and the next line', function()
