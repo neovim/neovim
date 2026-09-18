@@ -2433,6 +2433,9 @@ describe('API', function()
         { 'compatible', true, 'E519:' },
         { 'foldnestmax', 2147483648, 'E474:' },
         -- Schemas apply to strings and structured input; validate after merging.
+        { 'breakindentopt', 'shift:x', "E474: 'shift' requires a number" },
+        { 'diffopt', { algorithm = 'bogus' }, "E474: 'algorithm' must be one of:" },
+        { 'messagesopt', 'history:x', "E474: 'history' requires a number" },
         { 'mousescroll', '', 'E474:' },
         { 'mousescroll', 'ver:x', "E474: 'ver' requires a number" },
         { 'mousescroll', { bogus = 1 }, "E474: Unknown item 'bogus'", 'append' },

@@ -399,14 +399,11 @@ const char *did_set_str_generic(optset_T *args)
   return check_str_opt(args->os_idx, args->os_varp, args->os_errbuf, args->os_errbuflen);
 }
 
-/// Validate the values described by an option's schema without updating derived flags.
+/// Validate named string values without updating derived flags.
 const char *validate_str_generic(const optset_T *args)
 {
   vimoption_T *opt = get_option(args->os_idx);
   char *value = args->os_newval.data.string.data;
-  if (opt->schema != NULL) {
-    return opt_strings_check(value, opt->schema, args->os_errbuf, args->os_errbuflen);
-  }
   return opt_strings_flags(value, opt_values(args->os_idx, NULL), NULL,
                            opt->flags & kOptFlagComma, args->os_errbuf, args->os_errbuflen);
 }
@@ -1536,10 +1533,6 @@ int expand_set_mouse(optexpand_T *args, int *numMatches, char ***matches)
 /// @return error message, NULL if it's OK.
 const char *validate_mousescroll(const optset_T *args)
 {
-  const char *errmsg = validate_str_generic(args);
-  if (errmsg != NULL) {
-    return errmsg;
-  }
   OptKeyDict_mousescroll *v = opt_keyset(args->os_newval.data.string.data, kOptMousescroll, NULL);
   // At least one direction is required, even if its count is zero.
   return HAS_KEY(v, mousescroll, hor) || HAS_KEY(v, mousescroll, ver) ? NULL : e_invarg;
@@ -2669,10 +2662,6 @@ const char *check_chars_options(void)
 
 const char *validate_previewpopup(const optset_T *args)
 {
-  const char *errmsg = validate_str_generic(args);
-  if (errmsg != NULL) {
-    return errmsg;
-  }
   WinConfig fconfig = WIN_CONFIG_INIT;
   if (!win_previewpopup_config(args->os_newval.data.string.data, &fconfig)) {
     return e_invarg;

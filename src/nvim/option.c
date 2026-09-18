@@ -4275,6 +4275,12 @@ const char *validate_option_value(const OptIndex opt_idx, Object *newval, int op
       return e_unsupportedoption;
     }
   }
+  if (newval->type == kObjectTypeString && opt->schema != NULL) {
+    errmsg = opt_strings_check(newval->data.string.data, opt->schema, errbuf, errbuflen);
+    if (errmsg != NULL) {
+      return errmsg;
+    }
+  }
   if (newval->type != kObjectTypeUnset && opt->opt_validate_cb != NULL) {
     const bool scope_both = !(opt_flags & (OPT_LOCAL | OPT_GLOBAL));
     // Match set_option(): setting both scopes of a global-local option resets its local value.
