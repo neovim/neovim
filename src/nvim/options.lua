@@ -861,7 +861,6 @@ local options = {
     {
       abbreviation = 'briopt',
       cb = 'did_set_breakindentopt',
-      validation_cb = 'validate_str_generic',
       defaults = '',
       schema = {
         dict = {
@@ -2478,7 +2477,6 @@ local options = {
     {
       abbreviation = 'dip',
       cb = 'did_set_diffopt',
-      validation_cb = 'validate_str_generic',
       defaults = 'internal,filler,closeoff,indent-heuristic,inline:char,linematch:40',
       schema = {
         dict = {
@@ -5999,7 +5997,6 @@ local options = {
     {
       abbreviation = 'mopt',
       cb = 'did_set_messagesopt',
-      validation_cb = 'validate_str_generic',
       defaults = 'hit-enter,history:500,progress:c',
       schema = {
         dict = {
