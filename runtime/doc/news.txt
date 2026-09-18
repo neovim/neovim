@@ -133,6 +133,7 @@ EDITOR
     inoremap <Right> <C-o><Right>
 • |visual-repeat| is "semantic" instead of "fixed-size". See
   |visual-fixed-size| if you prefer Vim's "fixed-size" Visual-repeat.
+• |:diffget|, |:diffput| (|do|, |dp|) can be |.| repeated.
 • |Q| adds a |multicursor| instead of replaying the last recorded register.
   To get the old behavior: >lua
     vim.keymap.set('n', 'Q', function()

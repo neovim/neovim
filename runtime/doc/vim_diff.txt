@@ -317,6 +317,7 @@ Commands:
 - |:checkhealth|
 - |:connect|
 - |:detach|
+- |:diffget|, |:diffput| (|do|, |dp|) can be |.| repeated.
 - |:drop| is always available
 - |:EditQuery|
 - |:Inspect|
