@@ -1207,13 +1207,15 @@ InsSession atom_ins_start(int cmd, long count, VisualIns vis, bool vblock)
 /// @param busy  True when edit() returned early (i_CTRL-O): session incomplete.
 void atom_ins_end(const InsSession *session, bool busy)
 {
+  if (mc_replaying()) {
+    return;
+  }
+
   bool visual = session->vis != kVInsNone;
   bool user_input = session->typed
                     // A session is user input, if user input occurred during it. #41516
                     || maptick != session->origin.maptick;
-  if (mc_replaying()) {
-    return;
-  }
+
   if (mc_ins_commit()) {
     root_frame()->ins_cascaded = true;
     // Not during a mapping: there the spans are subatoms of its composite.

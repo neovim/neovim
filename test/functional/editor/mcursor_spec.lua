@@ -2497,6 +2497,27 @@ describe('multicursor', function()
       eq({ 'aa', 'bb', 'cc' }, get_lines())
     end)
 
+    it('empty insert-session does not add undo state #41883', function()
+      cursors({ 'abc', 'def', 'ghi' }, 'Qj')
+      local seq = fn.undotree().seq_last
+      feed('i<Esc>')
+      eq(seq, fn.undotree().seq_last)
+      feed('a<Esc>') -- Move the cursors (records extmark undo), but don't edit.
+      eq(seq, fn.undotree().seq_last)
+      -- In a mapping the session shares the mapping's undo state: only its own entry is dropped.
+      command('nnoremap <F5> xi<Esc>')
+      feed('<F5>')
+      eq({ 'bc', 'ef', 'ghi' }, get_lines())
+      eq(seq + 1, fn.undotree().seq_last)
+      feed('u')
+      eq({ 'abc', 'def', 'ghi' }, get_lines())
+      -- After an undo, the redo branch survives.
+      feed('i<Esc>')
+      eq(seq + 1, fn.undotree().seq_last)
+      feed('<C-r>')
+      eq({ 'bc', 'ef', 'ghi' }, get_lines())
+    end)
+
     it('a mapped undo/redo (vim-repeat "nmap u") does not cascade', function()
       -- vim-repeat maps u/U/<C-R> to undo/redo wrappers. Such a mapping changes the buffer, but an
       -- undo/redo is buffer-global, not a per-cursor edit: it must NOT cascade, or every cursor

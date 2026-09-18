@@ -522,12 +522,7 @@ int u_savecommon(buf_T *buf, linenr_T top, linenr_T bot, linenr_T newbot, bool r
 
         // If lines have been inserted/deleted we give up.
         // Also when the line was included in a multi-line save.
-        if ((buf->b_u_newhead->uh_getbot_entry != uep
-             ? (uep->ue_top + uep->ue_size + 1
-                != (uep->ue_bot == 0
-                    ? buf->b_ml.ml_line_count + 1
-                    : uep->ue_bot))
-             : uep->ue_lcount != buf->b_ml.ml_line_count)
+        if (u_entry_resized(buf, uep)
             || (uep->ue_size > 1
                 && top >= uep->ue_top
                 && top + 2 <= uep->ue_top + uep->ue_size + 1)) {
@@ -623,6 +618,15 @@ int u_savecommon(buf_T *buf, linenr_T top, linenr_T bot, linenr_T newbot, bool r
   u_check(false);
 #endif
   return OK;
+}
+
+/// Whether lines were added or deleted since `uep` (an entry of the newest undo state) was saved.
+static bool u_entry_resized(buf_T *buf, u_entry_T *uep)
+{
+  return buf->b_u_newhead->uh_getbot_entry != uep
+         ? uep->ue_top + uep->ue_size + 1
+         != (uep->ue_bot == 0 ? buf->b_ml.ml_line_count + 1 : uep->ue_bot)
+         : uep->ue_lcount != buf->b_ml.ml_line_count;
 }
 
 // magic at start of undofile
@@ -1892,6 +1896,70 @@ bool u_undo_and_forget(int count, bool do_buf_event)
   }
   u_freebranch(curbuf, to_forget, NULL);
   return true;
+}
+
+/// Forgets the newest undo entry if it has no changes: a u_save() not followed by an actual change.
+/// Frees the undo state (and its extmark undo) if no entries remain, restoring the redo branch it
+/// displaced.
+///
+/// The entry restores identical lines, so dropping it changes no undo/redo result. Freeing an
+/// emptied state also drops the no-op step that would otherwise require an extra "u".
+void u_forget_unchanged(buf_T *buf)
+  FUNC_ATTR_NONNULL_ALL
+{
+  u_header_T *uhp = buf->b_u_newhead;
+  u_entry_T *uep = uhp != NULL ? uhp->uh_entry : NULL;
+  if (uep == NULL || buf->b_u_curhead != NULL || u_entry_resized(buf, uep)) {
+    return;
+  }
+  for (linenr_T i = 0; i < uep->ue_size; i++) {
+    if (strcmp(uep->ue_array[i], ml_get_buf(buf, uep->ue_top + 1 + i)) != 0) {
+      return;
+    }
+  }
+
+  uhp->uh_entry = uep->ue_next;
+  if (uhp->uh_getbot_entry == uep) {
+    uhp->uh_getbot_entry = NULL;
+  }
+  u_freeentry(uep, uep->ue_size);
+  if (uhp->uh_entry != NULL) {
+    return;
+  }
+
+  // Empty: drop the undo state. Its alternate branch holds the undone changes it displaced
+  // (u_savecommon()): restore them as the redo branch.
+  u_header_T *redo = uhp->uh_alt_next.ptr;
+  buf->b_u_curhead = redo;
+  if (redo != NULL) {
+    redo->uh_alt_prev.ptr = uhp->uh_alt_prev.ptr;
+    if (uhp->uh_alt_prev.ptr != NULL) {
+      uhp->uh_alt_prev.ptr->uh_alt_next.ptr = redo;
+    }
+    if (redo->uh_next.ptr != NULL) {
+      redo->uh_next.ptr->uh_prev.ptr = redo;
+    }
+    buf->b_u_newhead = redo;
+    while (buf->b_u_newhead->uh_prev.ptr != NULL) {
+      buf->b_u_newhead = buf->b_u_newhead->uh_prev.ptr;
+    }
+    buf->b_u_seq_cur = redo->uh_next.ptr != NULL ? redo->uh_next.ptr->uh_seq : 0;
+  } else {
+    buf->b_u_newhead = uhp->uh_next.ptr;
+    if (buf->b_u_newhead != NULL) {
+      buf->b_u_newhead->uh_prev.ptr = NULL;
+    }
+    buf->b_u_seq_cur = buf->b_u_newhead != NULL ? buf->b_u_newhead->uh_seq : 0;
+  }
+  if (buf->b_u_oldhead == uhp) {
+    buf->b_u_oldhead = redo;
+  }
+  if (buf->b_u_seq_last == uhp->uh_seq) {
+    buf->b_u_seq_last--;
+  }
+  uhp->uh_alt_next.ptr = NULL;
+  u_freeentries(buf, uhp, NULL);
+  buf->b_u_synced = true;
 }
 
 /// Undo or redo, depending on `undo_undoes`, `count` times.
