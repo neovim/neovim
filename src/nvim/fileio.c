@@ -1915,12 +1915,19 @@ failed:
       apply_autocmds_exarg(EVENT_FILTERREADPOST, NULL, sfname,
                            false, curbuf, eap);
     } else if (newfile || (read_buffer && sfname != NULL)) {
-      apply_autocmds_exarg(EVENT_BUFREADPOST, NULL, sfname,
-                           false, curbuf, eap);
+      // 'filetype' detection is triggered by BufReadPost.
+      bool did_bufrp = apply_autocmds_exarg(EVENT_BUFREADPOST, NULL, sfname, false, curbuf, eap);
+
       if (!curbuf->b_au_did_filetype && *curbuf->b_p_ft != NUL) {
         // EVENT_FILETYPE was not triggered but the buffer already has a
         // filetype.  Trigger EVENT_FILETYPE using the existing filetype.
         apply_autocmds(EVENT_FILETYPE, curbuf->b_p_ft, curbuf->b_fname, true, curbuf);
+      }
+
+      if (!did_bufrp && *curbuf->b_p_ft == NUL && augroup_exists("filetypedetect")) {
+        // BufReadPost was skipped, and 'filetype' is empty. Retry filetype-detection now.
+        apply_autocmds_group(EVENT_BUFREADPOST, sfname, NULL, true, augroup_find("filetypedetect"),
+                             curbuf, curwin, NULL, NULL, false);
       }
     } else {
       apply_autocmds_exarg(EVENT_FILEREADPOST, sfname, sfname,
