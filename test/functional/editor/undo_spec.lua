@@ -57,14 +57,17 @@ describe('u CTRL-R g- g+', function()
     undo_and_redo(0, 'u', '<C-r>', '')
     undo_and_redo(0, 'g-', 'g+', '')
   end)
+
   it('undoes a change when at a leaf', function()
     undo_and_redo(1, 'u', '<C-r>', '')
     undo_and_redo(1, 'g-', 'g+', '')
   end)
+
   it('undoes a change when in a non-leaf', function()
     undo_and_redo(2, 'u', '<C-r>', '1')
     undo_and_redo(2, 'g-', 'g+', '1')
   end)
+
   it('undoes properly around a branch point', function()
     undo_and_redo(
       3,
@@ -84,6 +87,7 @@ describe('u CTRL-R g- g+', function()
       3]]
     )
   end)
+
   it('can find the previous sequence after undoing to a branch', function()
     undo_and_redo(4, 'u', '<C-r>', '1')
     undo_and_redo(4, 'g-', 'g+', '1')
@@ -196,6 +200,7 @@ describe(':undo! command', function()
     feed('oTake 1 down, patch it around<Esc>')
     feed('o99 little bugs in the code<Esc>')
   end)
+
   it('works', function()
     command('undo!')
     expect([[
@@ -205,6 +210,7 @@ describe(':undo! command', function()
     feed('<C-r>')
     eq('Already at newest change', lastmessage())
   end)
+
   it('works with arguments', function()
     command('undo! 2')
     expect([[
@@ -213,6 +219,7 @@ describe(':undo! command', function()
     feed('<C-r>')
     eq('Already at newest change', lastmessage())
   end)
+
   it('correctly sets alternative redo', function()
     feed('uo101 little bugs in the code<Esc>')
     command('undo!')
@@ -232,7 +239,29 @@ describe(':undo! command', function()
       1 little bug in the code
       Take 1 down, patch it around
       99 little bugs in the code]])
+
+    -- The root header: its alternate must take over as the root, not only as the redo branch.
+    command('new')
+    feed('ia<Esc>')
+    feed('u')
+    feed('ib<Esc>')
+    -- seq 2 is the root, with seq 1 nested as its alternate.
+    local tree = fn.undotree()
+    eq(2, tree.seq_last)
+    eq(1, #tree.entries)
+    eq(2, tree.entries[1].seq)
+    eq(1, tree.entries[1].alt[1].seq)
+    command('undo!')
+    expect('')
+    -- seq 1 is the root now, nothing nested, and it is the redo position.
+    tree = fn.undotree()
+    eq(1, tree.seq_last)
+    eq(1, #tree.entries)
+    eq({ seq = 1, curhead = 1 }, t.pick(tree.entries[1], 'seq', 'curhead', 'alt'))
+    feed('<C-r>')
+    expect('a')
   end)
+
   it('fails when attempting to redo or move to different undo branch', function()
     eq(
       'Vim(undo):E5767: Cannot use :undo! to redo or move to a different undo branch',

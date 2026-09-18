@@ -20,7 +20,7 @@ local atoms_start = t_atom.atoms_start
 local atoms = t_atom.atoms
 local atoms_tail = t_atom.atoms_tail
 local atom_last = t_atom.atom_last
-local pick = t_atom.pick
+local pick = t.pick
 local subatoms = t_atom.subatoms
 
 describe('dot-repeat', function()
