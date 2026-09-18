@@ -90,7 +90,8 @@ typedef enum {
   kVatomTyped = 1,  ///< User input (typed, or mapping/macro): emit/cascade.
   kVatomFed = 2,    ///< Non-user input (programmatic). See `atom_visual_typed`.
 
-  kVatomVoid = 4,   ///< Not replayable: tainted/poisoned (by mouse, gv, …). But may emit CmdAtom.
+  kVatomVoid = 4,   ///< Not replayable: tainted/poisoned (by mouse, Select, …). But may emit CmdAtom.
+  kVatomReselect = 8,  ///< Has "gv": replayable, but redo uses "1v" |visual-fixed-size| fallback.
 } VatomState;
 
 /// Accumulating Visual session atom: the full Visual keysequence (selection keys + operator).
@@ -953,6 +954,12 @@ bool atom_visual_replayable(void)
   return atom_visual_pending() && !(vatom.state & kVatomVoid);
 }
 
+/// Pending Visual atom's keys can redo: replayable and not a reselect ("gv").
+bool atom_visual_redoable(void)
+{
+  return atom_visual_replayable() && !(vatom.state & kVatomReselect);
+}
+
 /// The pending visual atom's accumulated keys (allocated), or NULL data if none is replayable
 /// (inactive/void). For the selection dry-run (mc_vsel_refresh()).
 String atom_visual_span(void)
@@ -967,7 +974,8 @@ String atom_visual_span(void)
 ///
 /// @param suffix  Owned.
 /// @param spec  The completing operator, or NULL.
-/// @param redoable  Prep redo. Unreplayable selection preps "1v" + op (fixed-size visual-repeat).
+/// @param redoable  Prep redo. Unreplayable (or "gv") selection preps "1v" + op (fixed-size
+///                  visual-repeat).
 /// @return  True if the redo was prepped.
 static bool atom_visual_end_suffix(char *suffix, const CmdSpec *spec, bool redoable)
 {
@@ -1007,7 +1015,8 @@ static bool atom_visual_end_suffix(char *suffix, const CmdSpec *spec, bool redoa
   if (prep) {
     // Get the redo tail (register/count, op chars) from the suffix. Prevents divergence of prep vs
     // atom, and suffixes inexpressible as spec chars ("r<C-V><CR>") stay replayable.
-    prep_redo_visual(vkeys, prefix, (CmdSpec){ 0 });
+    const bool redo_keys = atom_visual_redoable();
+    prep_redo_visual(redo_keys ? vkeys : "1v", redo_keys ? prefix : 2, (CmdSpec){ 0 });
     redo_append_str(suffix, -1);
   }
   if (!atom_is_user_cmd() || !atom_visual_typed()) {
@@ -1151,9 +1160,9 @@ void atom_capture_op(oparg_T *oap, cmdarg_T *cap, bool redo_yank)
       });
     } else if (ins_op && !excmd && cap->cmdchar != K_LUA) {
       // Visual-entered Insert: redo body opens with the selection's captured keys; appends the
-      // op+text+<Esc>. Unreplayable (void) selection falls back to "1v" (fixed-size reselect).
+      // op+text+<Esc>. Unreplayable (void, "gv") selection falls back to "1v" (fixed-size reselect).
       // (Ex/Lua-motion selections were already prepped above, as the motion's keys.)
-      String v = atom_visual_span();
+      String v = atom_visual_redoable() ? atom_visual_span() : (String)STRING_INIT;
       prep_redo_visual(v.data != NULL ? v.data : "1v", v.data != NULL ? v.size : 2, (CmdSpec){
         .regname = oap->regname,
         .op = get_op_char(oap->op_type), .op_extra = get_extra_op_char(oap->op_type),
@@ -1359,17 +1368,18 @@ static bool atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
     }
     if (atom_visual_pending() && user && !synthetic && (old->keytyped || atom_composite_active())) {
       // Recalculated on every frame.
-      vatom.state = (vatom.state & kVatomVoid) | kVatomTyped;
+      vatom.state = (vatom.state & (kVatomVoid | kVatomReselect)) | kVatomTyped;
     }
     // Decided by the session (not atom_capturable()), so fed selections (":normal! vjd") still
     // accumulate for redo-prep. Recording/replay commands are meta (not part of the edit).
     vis = atom_visual_pending() && ca->cmdchar != 'Q' && ca->cmdchar != 'q';
+    if (vis && ca->cmdchar == 'g' && ca->nchar == 'v') {
+      vatom.state |= kVatomReselect;  // "gv"
+    }
     if (vis
         && (Visual.select
-            || (ca->cmdchar == 'g' && ca->nchar == 'v')
             || ((keycls & (kKeyScrollMove | kKeyScrollView | kKeyMouse)) && !unchanged))) {
-      // Not replayable: Select-mode input; "gv" (absolute region); the selection moved by
-      // viewport-dependent keys.
+      // Not replayable: Select-mode input; the selection moved by viewport-dependent keys.
       vatom.state |= kVatomVoid;
     }
   } else if (old->visual.active) {

@@ -178,8 +178,9 @@ State                                                              *dev-state*
 - sessions/views (`src/nvim/ex_session.c`): windows/layout, per-window
   cursor/options, CWD, …. Vimscript format: commands, not merged data.
   Overlaps shada for the buffer list and global variables.
-- context (`src/nvim/context.c`): |nvim_get_context()|.
-  Currently interfaces shada and other state. Needs more thought.
+- context (`src/nvim/context.c`): |nvim_get_context()|. Interfaces shada and
+  other state; also in-memory per-cursor state (`kCtxCursor`, `kCtxMarks`) for
+  |multicursor|. Needs more thought.
 - scoped execution ("temporary state"): `ctx_switch()`, `vim._with()`,
   |nvim_win_call()|, |nvim_buf_call()|, `cmdmod_T`. Temporary switches, not
   snapshots. The C mechanisms overlap with each other; `vim._with()` is the
@@ -580,7 +581,7 @@ CONCEPTS
   cmdline (`d/pat<CR>`), `f{char}`, a mapping's `getchar()`.
 - REPLAY: Execute keys (dot-repeat, or atom).
 - VOID: When a pending (Visual) atom's keys were tainted/poisoned (by: mouse,
-  `gv`, a scroll that drags the cursor, …), thus not replayable.
+  Select mode, a scroll that drags the cursor, …), thus not replayable.
 
 IMPLEMENTATION
 
@@ -611,7 +612,7 @@ THE CASCADE
 Cursors are `Context` entries in `mc_cursors`, tracked as extmarks. The
 extmark is authoritative: it follows edits, and user code may delete cursors
 by deleting their extmarks. Cursor-local state is swapped in on replay, so
-e.g. each cursor reads/writes its own registers.
+each cursor reads/writes its own registers, Visual area and change marks.
 
 CmdAtoms queued for cascade (`g_atoms`) are replayed at every cursor on the
 "clock edge": the completion of a toplevel `normal_execute()`.  While
