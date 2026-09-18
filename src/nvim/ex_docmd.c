@@ -1576,7 +1576,9 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, cmdmod_T *cmod, const char **er
   // Check for '|' to separate commands and '"' to start comments.
   // Don't do this for ":read !cmd" and ":write !cmd".
   if ((eap->argt & EX_TRLBAR)) {
-    separate_nextcmd(eap);
+    if (!separate_nextcmd(eap)) {
+      goto end;
+    }
   } else if (cmd_has_expr_args(eap->cmdidx)) {
     // For commands without EX_TRLBAR, check for '|' separator
     // by skipping over expressions (including string literals)
@@ -4114,7 +4116,9 @@ static char *repl_cmdline(exarg_T *eap, char *src, size_t srclen, char *repl, ch
 }
 
 /// Check for '|' to separate commands and '"' to start comments.
-void separate_nextcmd(exarg_T *eap)
+///
+/// @return  false if an invalid `=expr` was found, true otherwise.
+bool separate_nextcmd(exarg_T *eap)
 {
   char *p = skip_grep_pat(eap);
 
@@ -4132,7 +4136,9 @@ void separate_nextcmd(exarg_T *eap)
     } else if (p[0] == '`' && p[1] == '=' && (eap->argt & EX_XFILE)) {
       // Skip over `=expr` when wildcards are expanded.
       p += 2;
-      skip_expr(&p, NULL);
+      if (skip_expr(&p, NULL) == FAIL) {
+        return false;
+      }
       if (*p == NUL) {  // stop at NUL after CTRL-V
         break;
       }
@@ -4167,6 +4173,8 @@ void separate_nextcmd(exarg_T *eap)
   if (!(eap->argt & EX_NOTRLCOM)) {  // remove trailing spaces
     del_trailing_spaces(eap->arg);
   }
+
+  return true;
 }
 
 /// get + command from ex argument
