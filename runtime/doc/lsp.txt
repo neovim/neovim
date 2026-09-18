@@ -1904,7 +1904,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                • Note: To send an empty dictionary use
                                  |vim.empty_dict()|, else it will be encoded
                                  as an array.
-      • {cmd}                  (`string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.Client`)
+      • {cmd}                  (`string[]|fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.Client?`)
                                Command `string[]` that launches the language
                                server (treated as in |jobstart()|, must be
                                absolute or on `$PATH`, shell constructs like
@@ -1912,7 +1912,9 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                an RPC client (or an in-process |lsp-server|).
                                Function receives a `dispatchers` table and the
                                resolved `config`, and must return an object in
-                               the form of |vim.lsp.rpc.Client|.
+                               the form of |vim.lsp.rpc.Client|, or `nil` to
+                               indicate the client should not start (for
+                               example, if a required executable is missing).
 
                                Example (list): >lua
                                    cmd = { 'flow', 'lsp' }
