@@ -1763,6 +1763,25 @@ describe('completion', function()
     run_test_autocompletedelay_ctrl_k(150, 500)
   end)
 
+  it("autocomplete without selection doesn't modify the buffer", function()
+    source([[
+      call setline(1, ['completion', 'comp'])
+      set autocomplete autocompletedelay=100 complete=. completeopt=menuone,noselect
+      setlocal nomodified
+    ]])
+    local changedtick = eval('b:changedtick')
+
+    feed('G$a')
+    vim.uv.sleep(200)
+    poke_eventloop()
+
+    eq(1, fn.pumvisible())
+    eq(0, eval('&modified'))
+    eq(changedtick, eval('b:changedtick'))
+    expect('completion\ncomp')
+    feed('<Esc>')
+  end)
+
   -- oldtest: Test_fuzzy_select_item_when_acl()
   it([[first item isn't selected with "fuzzy" and 'acl']], function()
     screen:try_resize(60, 10)

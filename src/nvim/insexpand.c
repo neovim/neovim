@@ -5473,6 +5473,7 @@ static int ins_compl_next(bool allow_get_expansion, int count, bool insert_match
   bool compl_no_insert = (cur_cot_flags & kOptCotFlagNoinsert) != 0
                          || (compl_autocomplete && !ins_compl_has_preinsert());
   bool compl_preinsert = ins_compl_has_preinsert();
+  bool suppress_insert = compl_no_insert && (!started || !allow_get_expansion);
 
   // When user complete function return -1 for findstart which is next
   // time of 'always', compl_shown_match become NULL.
@@ -5487,7 +5488,7 @@ static int ins_compl_next(bool allow_get_expansion, int count, bool insert_match
     ins_compl_update_shown_match();
   }
 
-  if (allow_get_expansion && insert_match
+  if (allow_get_expansion && insert_match && !suppress_insert
       && (!compl_get_longest || compl_used_match)) {
     // Delete old text to be replaced
     ins_compl_delete(false);
@@ -5519,8 +5520,7 @@ static int ins_compl_next(bool allow_get_expansion, int count, bool insert_match
   // Insert the text of the new completion, or the compl_leader.
   if (!started && ins_compl_preinsert_longest()) {
     ins_compl_insert(true, true);
-  } else if (compl_no_insert && !started && !compl_preinsert) {
-    ins_compl_insert_bytes(compl_orig_text.data + get_compl_len(), -1);
+  } else if (suppress_insert && !compl_preinsert) {
     compl_used_match = false;
     restore_orig_extmarks();
   } else if (insert_match) {
@@ -5548,7 +5548,9 @@ static int ins_compl_next(bool allow_get_expansion, int count, bool insert_match
 
     // Delete old text to be replaced, since we're still searching and
     // don't want to match ourselves!
-    ins_compl_delete(false);
+    if (!suppress_insert) {
+      ins_compl_delete(false);
+    }
   }
 
   // Enter will select a match when the match wasn't inserted and the popup
