@@ -187,6 +187,76 @@ static int foldLevel(linenr_T lnum)
       }, foldlevels)
     end)
 
+    it('treats unknown folding range kinds like an absent kind #41765', function()
+      exec_lua(function()
+        _G.folding_ranges = {
+          { startLine = 0, endLine = 1, kind = 'function' },
+          { startLine = 3, endLine = 4 },
+          { startLine = 6, endLine = 7, kind = '' },
+          { startLine = 9, endLine = 10, kind = 'comment' },
+          { startLine = 12, endLine = 13, kind = 'imports' },
+          { startLine = 15, endLine = 16, kind = 'region' },
+        }
+        vim.lsp._folding_range.on_refresh(
+          nil,
+          nil,
+          { method = 'workspace/foldingRange/refresh', client_id = client_id }
+        )
+      end)
+
+      retry(nil, nil, function()
+        eq(
+          {
+            '>1',
+            '<1',
+            '0',
+            '>1',
+            '<1',
+            '0',
+            '>1',
+            '<1',
+            '0',
+            '>1',
+            '<1',
+            '0',
+            '>1',
+            '<1',
+            '0',
+            '>1',
+            '<1',
+          },
+          exec_lua(function()
+            local levels = {}
+            for lnum = 1, 17 do
+              levels[lnum] = vim.lsp.foldexpr(lnum)
+            end
+            return levels
+          end)
+        )
+      end)
+
+      exec_lua(function()
+        for _, kind in ipairs({ 'comment', 'imports', 'region', 'function', '' }) do
+          vim.lsp.foldclose(kind)
+        end
+      end)
+      -- Unknown and absent kinds are not selected by kind-specific folding.
+      eq(
+        { -1, -1, -1, 10, 13, 16 },
+        exec_lua(function()
+          return vim.tbl_map(vim.fn.foldclosed, { 1, 4, 7, 10, 13, 16 })
+        end)
+      )
+
+      command('normal! zM')
+      eq(
+        { 1, 4, 7, 10, 13, 16 },
+        exec_lua(function()
+          return vim.tbl_map(vim.fn.foldclosed, { 1, 4, 7, 10, 13, 16 })
+        end)
+      )
+    end)
+
     it('refreshes folding ranges on request', function()
       local function foldlevels()
         return exec_lua(function()

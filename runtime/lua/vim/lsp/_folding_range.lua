@@ -66,7 +66,7 @@ function State:evaluate()
   -- Number of ranges ending on the row.
   local row_ends = {} ---@type table<integer, integer>
 
-  for client_id, ranges in pairs(self.client_state) do
+  for _, ranges in pairs(self.client_state) do
     for _, range in ipairs(ranges) do
       local start_row = range.startLine
       local end_row = range.endLine
@@ -75,15 +75,11 @@ function State:evaluate()
         row_text[start_row] = range.collapsedText
 
         local kind = range.kind
-        if kind then
-          -- Ignore unsupported fold kinds.
-          if supported_fold_kinds[kind] then
-            local kinds = row_kinds[start_row] or {}
-            kinds[kind] = true
-            row_kinds[start_row] = kinds
-          else
-            log.info(('Unknown fold kind "%s" from client %d'):format(kind, client_id))
-          end
+        -- Treat unknown kinds like an absent kind, but still fold the range.
+        if kind and supported_fold_kinds[kind] then
+          local kinds = row_kinds[start_row] or {}
+          kinds[kind] = true
+          row_kinds[start_row] = kinds
         end
 
         for row = start_row, end_row do
