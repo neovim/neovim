@@ -382,16 +382,16 @@ enum {
 static int sps_flags = SPS_BEST;  ///< flags from 'spellsuggest'
 static int sps_limit = 9999;      ///< max nr of suggestions given
 
-/// Check the 'spellsuggest' option.  Return FAIL if it's wrong.
-/// Updates "sps_flags" and "sps_limit" only when the value is valid.
-int spell_check_sps(void)
+/// Parse 'spellsuggest' without changing suggestion state.
+/// Return FAIL if invalid, leaving the outputs unchanged.
+int spell_check_sps(const char *value, int *ret_flags, int *ret_limit)
 {
   int flags = 0;
   int limit = 9999;
 
   const char *key, *val;
   size_t keylen, vallen;
-  for (const char *p = p_sps; option_next_keyval(&p, &key, &keylen, &val, &vallen);) {
+  for (const char *p = value; option_next_keyval(&p, &key, &keylen, &val, &vallen);) {
     int f = 0;
     if (val == NULL) {
       // A bare number is the suggestion limit.
@@ -438,10 +438,17 @@ int spell_check_sps(void)
   if (flags == 0) {
     flags = SPS_BEST;
   }
-  sps_flags = flags;
-  sps_limit = limit;
+  *ret_flags = flags;
+  *ret_limit = limit;
 
   return OK;
+}
+
+/// Apply validated 'spellsuggest' flags and suggestion limit.
+void spell_apply_sps(int flags, int limit)
+{
+  sps_flags = flags;
+  sps_limit = limit;
 }
 
 /// Let the user pick a spell suggestion. Delegates to (async) `vim.ui.select()`.

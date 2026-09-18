@@ -58,14 +58,15 @@
 /// Set the integer values corresponding to the string setting of 'vartabstop'.
 /// "array" will be set, caller must free it if needed.
 ///
-/// @return  false for an error.
-bool tabstop_set(char *var, colnr_T **array)
+/// @param errbuf  Buffer for error message, or NULL when only checking success.
+/// @return  an error message, or NULL on success.
+const char *tabstop_set(char *var, colnr_T **array, const CharBuf *errbuf)
 {
   int valcount = 1;
 
   if (var[0] == NUL || (var[0] == '0' && var[1] == NUL)) {
     *array = NULL;
-    return true;
+    return NULL;
   }
 
   for (char *cp = var; *cp != NUL; cp++) {
@@ -76,11 +77,10 @@ bool tabstop_set(char *var, colnr_T **array)
       // instead rejected by the "n > TABSTOP_MAX" check in the loop below.
       if (getdigits(&end, false, 1) <= 0) {
         if (cp != end) {
-          emsg(_(e_positive));
-        } else {
-          semsg(_(e_invarg2), cp);
+          return e_positive;
         }
-        return false;
+        var = cp;
+        goto invalid;
       }
     }
 
@@ -91,8 +91,7 @@ bool tabstop_set(char *var, colnr_T **array)
       valcount++;
       continue;
     }
-    semsg(_(e_invarg2), var);
-    return false;
+    goto invalid;
   }
 
   *array = (colnr_T *)xmalloc((unsigned)(valcount + 1) * sizeof(int));
@@ -104,9 +103,9 @@ bool tabstop_set(char *var, colnr_T **array)
 
     // Catch negative values, overflow and ridiculous big values.
     if (n <= 0 || n > TABSTOP_MAX) {
-      semsg(_(e_invarg2), cp);
       XFREE_CLEAR(*array);
-      return false;
+      var = cp;
+      goto invalid;
     }
     (*array)[t++] = n;
     while (*cp != NUL && *cp != ',') {
@@ -117,7 +116,10 @@ bool tabstop_set(char *var, colnr_T **array)
     }
   }
 
-  return true;
+  return NULL;
+
+invalid:
+  return opt_error(errbuf, e_invarg2, var);
 }
 
 /// Calculate the number of screen spaces a tab will occupy.
@@ -1434,7 +1436,10 @@ void ex_retab(exarg_T *eap)
   }
 
   new_ts_str = ptr;
-  if (!tabstop_set(ptr, &new_vts_array)) {
+  const CharBuf errbuf = { (char[IOSIZE]){ 0 }, IOSIZE };
+  const char *errmsg = tabstop_set(ptr, &new_vts_array, &errbuf);
+  if (errmsg != NULL) {
+    emsg(_(errmsg));
     return;
   }
   while (ascii_isdigit(*ptr) || *ptr == ',') {
