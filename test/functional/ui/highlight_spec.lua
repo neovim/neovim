@@ -1022,6 +1022,33 @@ describe('CursorLine and CursorLineNr highlights', function()
     ]])
   end)
 
+  it("'cursorlineopt' global assignments keep the local highlight", function()
+    local screen = Screen.new(20, 5)
+    screen:add_extra_attr_ids {
+      [100] = { background = Screen.colors.Red },
+    }
+    command('highlight CursorLine guibg=Red gui=NONE')
+    command('setlocal cursorline cursorlineopt=both')
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'example' })
+    screen:expect([[
+      {100:^example             }|
+      {1:~                   }|*3
+                          |
+    ]])
+    command('setglobal cursorlineopt=number')
+    eq('both', eval('&l:cursorlineopt'))
+    eq('number', eval('&g:cursorlineopt'))
+    command('redraw!')
+    screen:expect {
+      grid = [[
+        {100:^example             }|
+        {1:~                   }|*3
+                            |
+      ]],
+      unchanged = true,
+    }
+  end)
+
   it("'cursorlineopt' screenline", function()
     local screen = Screen.new(20, 5)
     screen:add_extra_attr_ids {
@@ -1067,7 +1094,8 @@ describe('CursorLine and CursorLineNr highlights', function()
                           |
     ]])
 
-    -- CursorLineNr should not apply to line number when 'cursorlineopt' does not contain "number"
+    -- A dry run adding "number" must not enable CursorLineNr.
+    api.nvim_set_option_value('cursorlineopt', 'number', { operation = 'append', dry_run = true })
     command('set relativenumber numberwidth=2')
     screen:expect([[
       {101:0 }{102:øøøøøøøøøøøø^øøøøøø}|

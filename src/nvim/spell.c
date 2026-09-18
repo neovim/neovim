@@ -3701,26 +3701,22 @@ const char *did_set_spell_option(void)
   return errmsg;
 }
 
-/// Set curbuf->b_cap_prog to the regexp program for 'spellcapcheck'.
-/// Return error message when failed, NULL when OK.
-const char *compile_cap_prog(synblock_T *synblock)
-  FUNC_ATTR_NONNULL_ALL
+/// Compile 'spellcapcheck', replacing the old program only on success.
+/// Return an error message when failed, NULL when OK.
+const char *compile_cap_prog(const char *value, regprog_T **prog)
 {
-  regprog_T *rp = synblock->b_cap_prog;
-
-  if (synblock->b_p_spc == NULL || *synblock->b_p_spc == NUL) {
-    synblock->b_cap_prog = NULL;
-  } else {
+  regprog_T *rp = NULL;
+  if (value != NULL && *value != NUL) {
     // Prepend a ^ so that we only match at one column
-    char *re = concat_str("^", synblock->b_p_spc);
-    synblock->b_cap_prog = vim_regcomp(re, RE_MAGIC);
+    char *re = concat_str("^", value);
+    rp = vim_regcomp(re, RE_MAGIC);
     xfree(re);
-    if (synblock->b_cap_prog == NULL) {
-      synblock->b_cap_prog = rp;         // restore the previous program
+    if (rp == NULL) {
       return e_invarg;
     }
   }
 
-  vim_regfree(rp);
+  vim_regfree(*prog);
+  *prog = rp;
   return NULL;
 }
