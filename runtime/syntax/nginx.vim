@@ -1,8 +1,7 @@
 " Vim syntax file
 " Language: nginx.conf
 " Maintainer: Chris Aumann <me@chr4.org>
-" Last Change: 2026 Jan 09
-" 2026 Sep 14 by Vim project: improve regex matching performance #21195
+" Last Change: Aug 31, 2026
 
 if exists("b:current_syntax")
   finish
@@ -31,8 +30,7 @@ syn match ngxIPaddr '\[\(\x\{1,4}:\)\{5}:\(\(\x\{1,4}:\)\{,1}\x\{1,4}\|\([0-2]\?
 syn match ngxIPaddr '\[\(\x\{1,4}:\)\{6}:\x\{1,4}\]'
 
 " Highlight wildcard listening signs also as IPaddr
-syn match ngxIPaddr '\s\zs\[::]'
-syn match ngxIPaddr '\s\zs\*'
+syn match ngxIPaddr '\s\zs\%(\[::]\|\*\)'
 
 syn keyword ngxBoolean on
 syn keyword ngxBoolean off
@@ -576,17 +574,13 @@ syn keyword ngxSSLPreferServerCiphersOff off contained
 syn keyword ngxDirective ssl_preread
 syn keyword ngxDirective ssl_protocols nextgroup=ngxSSLProtocol,ngxSSLProtocolDeprecated skipwhite
 syn keyword ngxDirective ssl_reject_handshake
-syn match ngxSSLProtocol 'TLSv1' contained nextgroup=ngxSSLProtocol,ngxSSLProtocolDeprecated skipwhite
-syn match ngxSSLProtocol 'TLSv1\.1' contained nextgroup=ngxSSLProtocol,ngxSSLProtocolDeprecated skipwhite
-syn match ngxSSLProtocol 'TLSv1\.2' contained nextgroup=ngxSSLProtocol,ngxSSLProtocolDeprecated skipwhite
-syn match ngxSSLProtocol 'TLSv1\.3' contained nextgroup=ngxSSLProtocol,ngxSSLProtocolDeprecated skipwhite
+syn match ngxSSLProtocol 'TLSv1\%(\.[123]\)\?' contained nextgroup=ngxSSLProtocol,ngxSSLProtocolDeprecated skipwhite
 
 " Do not enable highlighting of insecure protocols if sslecure is loaded
 if !exists('g:loaded_sslsecure')
   syn keyword ngxSSLProtocolDeprecated SSLv2 SSLv3 contained nextgroup=ngxSSLProtocol,ngxSSLProtocolDeprecated skipwhite
 else
-  syn match ngxSSLProtocol 'SSLv2' contained nextgroup=ngxSSLProtocol,ngxSSLProtocolDeprecated skipwhite
-  syn match ngxSSLProtocol 'SSLv3' contained nextgroup=ngxSSLProtocol,ngxSSLProtocolDeprecated skipwhite
+  syn match ngxSSLProtocol 'SSLv[23]' contained nextgroup=ngxSSLProtocol,ngxSSLProtocolDeprecated skipwhite
 endif
 
 syn keyword ngxDirective ssl_session_cache
