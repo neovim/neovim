@@ -93,6 +93,7 @@
 \*:shell\*
 \*:smile\*
 \*:version\*
+\*2html\.vim\*
 \*DirChanged\*
 \*DirChangedPre\*
 \*E984\*
