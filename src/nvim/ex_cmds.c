@@ -1674,7 +1674,7 @@ void append_redir(char *const buf, const size_t buflen, const char *const opt,
 
 // This looks incredibly suss because it is: we are allowing a user option to
 // define a snprintf format string. Such code should normally not be written.
-// The validitiy of these option values are checked in `did_set_shellpipe_redir`
+// The validity of these option values is checked in `validate_shellpipe_redir`.
     PRAGMA_DIAG_PUSH_IGNORE_MISSING_FORMAT_ATTRIBUTE;
     vim_snprintf(end + 1, (size_t)((ptrdiff_t)buflen - (end + 1 - buf)), opt, fname);
     PRAGMA_DIAG_POP;

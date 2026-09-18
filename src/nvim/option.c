@@ -103,7 +103,6 @@
 #include "nvim/regexp_defs.h"
 #include "nvim/runtime.h"
 #include "nvim/spell.h"
-#include "nvim/spellfile.h"
 #include "nvim/spellsuggest.h"
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"
@@ -1840,7 +1839,6 @@ static void didset_options(void)
 
   didset_string_options();
 
-  spell_check_msm();
   spell_check_sps();
   compile_cap_prog(curwin->w_s);
   did_set_spell_option();
@@ -2894,10 +2892,10 @@ static const char *did_set_updatecount(optset_T *args)
   return NULL;
 }
 
-/// Process the new 'wildchar' / 'wildcharm' option value.
-static const char *did_set_wildchar(optset_T *args)
+/// Validate the 'wildchar' or 'wildcharm' option.
+static const char *validate_wildchar(const optset_T *args)
 {
-  OptInt c = *(OptInt *)args->os_varp;
+  OptInt c = args->os_newval.data.integer;
 
   // Don't allow key values that wouldn't work as wildchar.
   if (c == Ctrl_C || c == '\n' || c == '\r' || c == K_KENTER) {

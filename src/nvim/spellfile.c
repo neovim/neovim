@@ -1872,16 +1872,16 @@ static void spell_reload_one(char *fname, bool added_word)
 #define CONDIT_AFF      8       // word already has an affix
 
 // Tunable parameters for when the tree is compressed.  Filled from the
-// 'mkspellmem' option.
+// 'mkspellmem' option at the start of each spell-file build.
 static int compress_start = 30000;     // memory / SBLOCKSIZE
 static int compress_inc = 100;         // memory / SBLOCKSIZE
 static int compress_added = 500000;    // word count
 
 // Check the 'mkspellmem' option.  Return FAIL if it's wrong.
-// Sets "sps_flags".
-int spell_check_msm(void)
+// Updates the compression settings only when "apply" is true.
+int spell_check_msm(char *value, bool apply)
 {
-  char *p = p_msm;
+  char *p = value;
 
   if (!ascii_isdigit(*p)) {
     return FAIL;
@@ -1912,9 +1912,11 @@ int spell_check_msm(void)
     return FAIL;
   }
 
-  compress_start = start;
-  compress_inc = incr;
-  compress_added = added;
+  if (apply) {
+    compress_start = start;
+    compress_inc = incr;
+    compress_added = added;
+  }
   return OK;
 }
 
@@ -5232,6 +5234,9 @@ static void mkspell(int fcount, char **fnames, bool ascii, bool over_write, bool
   afffile_T *(afile[MAXREGIONS]);
   bool error = false;
   spellinfo_T spin;
+
+  // Only spell-file generation needs the derived 'mkspellmem' limits.
+  spell_check_msm(p_msm, true);
 
   CLEAR_FIELD(spin);
   spin.si_verbose = !added_word;

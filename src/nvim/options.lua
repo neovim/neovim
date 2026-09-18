@@ -620,7 +620,7 @@ local options = {
     },
     {
       abbreviation = 'bex',
-      cb = 'did_set_backupext_or_patchmode',
+      validation_cb = 'validate_backupext_or_patchmode',
       defaults = '~',
       desc = [=[
         String which is appended to a file name to make the name of the
@@ -986,7 +986,7 @@ local options = {
     {
       abbreviation = 'bt',
       cb = 'did_set_buftype',
-      validation_cb = 'validate_str_generic',
+      validation_cb = 'validate_buftype',
       defaults = '',
       schema = {
         enum = {
@@ -1486,7 +1486,7 @@ local options = {
     },
     {
       abbreviation = 'com',
-      cb = 'did_set_comments',
+      validation_cb = 'validate_comments',
       defaults = 's1:/*,mb:*,ex:*/,://,b:#,:%,:XCOMM,n:>,fb:-,fb:•',
       deny_duplicates = true,
       desc = [=[
@@ -1530,6 +1530,7 @@ local options = {
     {
       abbreviation = 'cpt',
       cb = 'did_set_complete',
+      validation_cb = 'validate_complete',
       defaults = '.,w,b,u,t',
       schema = {
         set = { '.', 'w', 'b', 'u', 'k', 'kspell', 's', 'i', 'd', ']', 't', 'U', 'f', 'F', 'o' },
@@ -2961,7 +2962,7 @@ local options = {
     },
     {
       abbreviation = 'ei',
-      cb = 'did_set_eventignore',
+      validation_cb = 'validate_eventignore',
       defaults = '',
       deny_duplicates = true,
       desc = [=[
@@ -2985,7 +2986,7 @@ local options = {
     },
     {
       abbreviation = 'eiw',
-      cb = 'did_set_eventignore',
+      validation_cb = 'validate_eventignore',
       defaults = '',
       deny_duplicates = true,
       desc = [=[
@@ -3298,6 +3299,7 @@ local options = {
     {
       abbreviation = 'ft',
       cb = 'did_set_filetype_or_syntax',
+      validation_cb = 'validate_filetype',
       defaults = '',
       desc = [=[
         When this option is set, the FileType autocommand event is triggered.
@@ -4487,7 +4489,7 @@ local options = {
     },
     {
       abbreviation = 'hlg',
-      cb = 'did_set_helplang',
+      validation_cb = 'validate_helplang',
       defaults = {
         if_true = '',
         doc = 'messages language or empty',
@@ -4541,7 +4543,7 @@ local options = {
     },
     {
       abbreviation = 'hl',
-      cb = 'did_set_highlight',
+      validation_cb = 'validate_highlight',
       defaults = macros('HIGHLIGHT_INIT', 'string'),
       deny_duplicates = true,
       full_name = 'highlight',
@@ -4989,6 +4991,7 @@ local options = {
     {
       abbreviation = 'isf',
       cb = 'did_set_isopt',
+      validation_cb = 'validate_isopt',
       defaults = {
         condition = 'BACKSLASH_IN_FILENAME',
         if_false = '@,48-57,/,.,-,_,+,,,#,$,%,~,=',
@@ -5055,6 +5058,7 @@ local options = {
     {
       abbreviation = 'isi',
       cb = 'did_set_isopt',
+      validation_cb = 'validate_isopt',
       defaults = {
         condition = 'MSWIN',
         if_false = '@,48-57,_,192-255',
@@ -5085,6 +5089,7 @@ local options = {
     {
       abbreviation = 'isk',
       cb = 'did_set_iskeyword',
+      validation_cb = 'validate_isopt',
       defaults = '@,48-57,_,192-255',
       deny_duplicates = true,
       desc = [=[
@@ -5117,6 +5122,7 @@ local options = {
     {
       abbreviation = 'isp',
       cb = 'did_set_isopt',
+      validation_cb = 'validate_isopt',
       defaults = '@,161-255',
       deny_duplicates = true,
       desc = [=[
@@ -5202,6 +5208,7 @@ local options = {
     {
       abbreviation = 'kmp',
       cb = 'did_set_keymap',
+      validation_cb = 'validate_filetype',
       defaults = '',
       desc = [=[
         Name of a keyboard mapping.  See |mbyte-keymap|.
@@ -5849,7 +5856,7 @@ local options = {
     },
     {
       abbreviation = 'mps',
-      cb = 'did_set_matchpairs',
+      validation_cb = 'validate_matchpairs',
       defaults = '(:),{:},[:]',
       deny_duplicates = true,
       desc = [=[
@@ -6053,7 +6060,7 @@ local options = {
     },
     {
       abbreviation = 'msm',
-      cb = 'did_set_mkspellmem',
+      validation_cb = 'validate_mkspellmem',
       defaults = '460000,2000,500',
       desc = [=[
         Parameters for |:mkspell|.  This tunes when to start compressing the
@@ -6767,7 +6774,7 @@ local options = {
     },
     {
       abbreviation = 'pm',
-      cb = 'did_set_backupext_or_patchmode',
+      validation_cb = 'validate_backupext_or_patchmode',
       defaults = '',
       desc = [=[
         When non-empty the oldest version of a file is kept.  This can be used
@@ -6990,7 +6997,7 @@ local options = {
     {
       full_name = 'pumborder',
       scope = { 'global' },
-      cb = 'did_set_pumborder',
+      validation_cb = 'validate_border',
       defaults = { if_true = '' },
       schema = {
         set = { '', 'double', 'single', 'shadow', 'rounded', 'solid', 'bold', 'none' },
@@ -7845,7 +7852,7 @@ local options = {
     {
       abbreviation = 'sd',
       alias = { 'vi', 'viminfo' },
-      cb = 'did_set_shada',
+      validation_cb = 'validate_shada',
       defaults = "!,'100,<50,s10,h,r/tmp/,r/private/",
       deny_duplicates = true,
       desc = [=[
@@ -8086,7 +8093,7 @@ local options = {
     },
     {
       abbreviation = 'sp',
-      cb = 'did_set_shellpipe_redir',
+      validation_cb = 'validate_shellpipe_redir',
       defaults = {
         condition = 'MSWIN',
         if_false = '| tee',
@@ -8159,7 +8166,7 @@ local options = {
     },
     {
       abbreviation = 'srr',
-      cb = 'did_set_shellpipe_redir',
+      validation_cb = 'validate_shellpipe_redir',
       defaults = {
         condition = 'MSWIN',
         if_false = '>',
@@ -8417,7 +8424,7 @@ local options = {
     },
     {
       abbreviation = 'sbr',
-      cb = 'did_set_showbreak',
+      validation_cb = 'validate_showbreak',
       defaults = '',
       desc = [=[
         String to put at the start of lines that have been wrapped.  Useful
@@ -8824,6 +8831,7 @@ local options = {
     {
       abbreviation = 'spf',
       cb = 'did_set_spellfile',
+      validation_cb = 'validate_spellfile',
       defaults = '',
       deny_duplicates = true,
       desc = [=[
@@ -8859,6 +8867,7 @@ local options = {
     {
       abbreviation = 'spl',
       cb = 'did_set_spelllang',
+      validation_cb = 'validate_spelllang',
       defaults = 'en',
       deny_duplicates = true,
       desc = [=[
@@ -9561,6 +9570,7 @@ local options = {
     {
       abbreviation = 'syn',
       cb = 'did_set_filetype_or_syntax',
+      validation_cb = 'validate_filetype',
       defaults = '',
       desc = [=[
         When this option is set, the syntax with this name is loaded, unless
@@ -10654,7 +10664,7 @@ local options = {
     },
     {
       abbreviation = 'wc',
-      cb = 'did_set_wildchar',
+      validation_cb = 'validate_wildchar',
       defaults = {
         if_true = macros('TAB', 'number'),
         doc = '<Tab>',
@@ -10688,7 +10698,7 @@ local options = {
     },
     {
       abbreviation = 'wcm',
-      cb = 'did_set_wildchar',
+      validation_cb = 'validate_wildchar',
       defaults = 0,
       desc = [=[
         'wildcharm' works exactly like 'wildchar', except that it is
@@ -11009,7 +11019,7 @@ local options = {
     {
       full_name = 'winborder',
       scope = { 'global' },
-      cb = 'did_set_winborder',
+      validation_cb = 'validate_border',
       defaults = { if_true = '' },
       schema = {
         set = { '', 'double', 'single', 'shadow', 'rounded', 'solid', 'bold', 'none' },
