@@ -1131,7 +1131,7 @@ RegisterChanged			After the contents of a register changed.  The
 				happens.  No-op writes are silent, as are
 				save-and-restore round trips. >vim
 				  let s:save = @a | let @a = 'x' | let @a = s:save
-<				
+<
 
 				Event is |deferred|. One operation produces at
 				most one event per register it changed.
