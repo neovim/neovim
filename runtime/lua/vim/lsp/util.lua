@@ -100,9 +100,10 @@ local function split_lines(s, no_blank)
   s = string.gsub(s, '\r\n?', '\n')
   local raw = vim.split(s, '\n', { plain = true, trimempty = true })
 
+  --- @param l string
   --- @return boolean # true if line begins a (4-space-indented) codeblock. #40860
   local function codeblock(l)
-    return l:find('^    ') or l:find('^\t')
+    return l:find('^    ') ~= nil or l:find('^\t') ~= nil
   end
 
   local lines = {}
@@ -424,6 +425,7 @@ function M.apply_text_document_edit(
   M.apply_text_edits(text_document_edit.edits, bufnr, position_encoding, change_annotations)
 end
 
+--- @param path string
 local function path_components(path)
   return vim.split(path, '/', { plain = true })
 end
@@ -463,6 +465,7 @@ local function get_writable_bufs(prefix)
   return buffers
 end
 
+--- @param s string
 local function escape_gsub_repl(s)
   return (s:gsub('%%', '%%%%'))
 end
@@ -1000,6 +1003,8 @@ function M.preview_location(location, opts)
   return M.open_floating_preview(contents, syntax, opts)
 end
 
+--- @param name string
+--- @param value any
 local function find_window_by_var(name, value)
   for _, win in ipairs(api.nvim_list_wins()) do
     if vim.w[win][name] == value then
@@ -1262,6 +1267,9 @@ function M.stylize_markdown(bufnr, contents, opts)
   -- no need to include the same syntax more than once
   local langs = {} --- @type table<string,boolean>
   local fences = get_markdown_fences()
+  --- @param ft string
+  --- @param start integer
+  --- @param finish integer
   local function apply_syntax_to_region(ft, start, finish)
     if ft == '' then
       vim.cmd(

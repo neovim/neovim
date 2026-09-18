@@ -212,6 +212,7 @@ local group = api.nvim_create_augroup('nvim.treesitter.fold')
 ---@package
 ---@param srow integer
 ---@param erow integer 0-indexed, exclusive
+---@param bufnr integer
 function FoldInfo:foldupdate(bufnr, srow, erow)
   if self.foldupdate_range then
     edit_range(self.foldupdate_range, srow, erow, erow)
@@ -237,6 +238,7 @@ function FoldInfo:foldupdate(bufnr, srow, erow)
 end
 
 ---@package
+---@param bufnr integer
 function FoldInfo:do_foldupdate(bufnr)
   -- InsertLeave is not executed when <C-C> is used for exiting the insert mode, leaving
   -- do_foldupdate untouched. If another execution of foldupdate consumes foldupdate_range, the
@@ -319,6 +321,7 @@ end
 ---@param old_col integer
 ---@param new_row integer
 ---@param new_col integer
+---@param start_col integer
 local function on_bytes(bufnr, start_row, start_col, old_row, old_col, new_row, new_col)
   -- Buffer reload clears `foldinfos[bufnr]`, which may still be nil when callback is invoked.
   local foldinfo = foldinfos[bufnr]

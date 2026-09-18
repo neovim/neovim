@@ -293,6 +293,40 @@ describe('mbyte', function()
     end)
   end)
 
+  describe('utf_ptr2cells', function()
+    local function check(str, expected)
+      eq(expected, lib.utf_ptr2cells(to_cstr(str)))
+      eq(expected, lib.utf_ptr2cells_len(to_cstr(str), #str))
+    end
+
+    itp('gives a spacing mark its own cell', function()
+      check('ำ', 1)
+      check('ท', 1)
+      check('ทำ', 2)
+      check('का', 2)
+    end)
+
+    itp('gives the halfwidth katakana sound marks their own cell', function()
+      check('ｶ', 1)
+      check('ｶﾞ', 2)
+      check('ﾊﾟ', 2) -- U+FF9F, the semi-voiced mark
+    end)
+
+    itp('does not widen clusters of non-spacing marks', function()
+      check('ท่', 1)
+      check('é', 1) -- decomposed, so the acute joins the cluster
+    end)
+
+    itp('clamps to the maximum cells per cluster', function()
+      check('ทำำ', 2)
+    end)
+
+    itp('leaves double-width and illegal bytes alone', function()
+      check('漢', 2)
+      eq(4, lib.utf_ptr2cells(to_cstr('\xff'))) -- illegal byte, shown as <ff>
+    end)
+  end)
+
   itp('utf_head_off', function()
     local function check(str, expected_glyphs)
       local len = #str

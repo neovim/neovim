@@ -108,6 +108,8 @@ function Version:__index(key)
   return type(key) == 'number' and ({ self.major, self.minor, self.patch })[key] or Version[key]
 end
 
+---@param key string|integer
+---@param value integer|string|nil
 function Version:__newindex(key, value)
   if key == 1 then
     self.major = value

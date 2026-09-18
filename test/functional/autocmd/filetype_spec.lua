@@ -16,4 +16,17 @@ describe('autocmd FileType', function()
     command('help help')
     t.eq(1, eval('g:foo'))
   end)
+
+  it("empty 'filetype' does not prevent FileType event #41711", function()
+    local file = t.tmpname(false) .. '.md'
+    t.write_file(file, '# hi\n')
+    command('filetype on')
+    -- Like vim.lsp.enable() lazy-loaded while the buffer is being read.
+    command('autocmd FileType * :')
+    command('autocmd BufReadPre * ++once doautoall FileType')
+    -- Run :edit in a nested event (mimics :restart session-restore).
+    command(('autocmd User X ++nested edit %s'):format(vim.fn.fnameescape(file)))
+    command('doautocmd User X')
+    t.eq('markdown', eval('&filetype'))
+  end)
 end)

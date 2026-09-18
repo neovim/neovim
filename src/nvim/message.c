@@ -2254,7 +2254,7 @@ void msg_prt_line(const char *s, bool list)
         sc = curwin->w_p_lcs_chars.eol;
         hl_id = HLF_AT;
         s--;
-      } else if (c != NUL && (n = byte2cells(c)) > 1) {
+      } else if (c != NUL && (n = ascii2cells(c)) > 1) {
         n_extra = n - 1;
         p_extra = transchar_byte_buf(NULL, c);
         sc = schar_from_ascii(*p_extra++);

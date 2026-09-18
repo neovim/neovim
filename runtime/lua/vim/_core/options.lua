@@ -118,6 +118,8 @@ vim.env = setmetatable({}, {
   end,
 })
 
+--- @param bufnr? integer
+--- @return vim.bo
 local function new_buf_opt_accessor(bufnr)
   return setmetatable({}, {
     __index = function(_, k)
@@ -133,6 +135,9 @@ local function new_buf_opt_accessor(bufnr)
   })
 end
 
+--- @param winid? integer
+--- @param bufnr? integer
+--- @return vim.wo
 local function new_win_opt_accessor(winid, bufnr)
   -- TODO(lewis6991): allow passing both buf and win to nvim_get_option_value
   if bufnr ~= nil and bufnr ~= 0 then
@@ -265,10 +270,17 @@ vim.bo = new_buf_opt_accessor()
 --- ```
 vim.wo = new_win_opt_accessor()
 
+--- @param scope? 'local'|'global'
+--- @return table<string,vim.Option>
 local function create_option_accessor(scope)
   --- @diagnostic disable-next-line: no-unknown
   local option_mt
 
+  --- @generic T
+  --- @param name string
+  --- @param value T
+  --- @param op_count integer
+  --- @return vim.Option & { _name: string, _value: T, _op_count: integer }
   local function make_option(name, value, op_count)
     if type(value) == 'table' and getmetatable(value) == option_mt then
       assert(name == value._name, "must be the same value, otherwise that's weird.")
@@ -478,7 +490,7 @@ local Option = {} -- luacheck: no unused
 ---     print("J is enabled!")
 --- end
 --- ```
----@return string|integer|boolean|nil value of option
+---@return string|integer|boolean|string[]|table<string,string|boolean>|nil value of option
 ---@diagnostic disable-next-line: unused used for gen_vimdoc
 function Option:get() end
 

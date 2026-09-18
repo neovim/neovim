@@ -102,6 +102,8 @@ function M.detect_by_module(module)
   return nil, 'Could not load Python :\n' .. table.concat(errors, '\n')
 end
 
+--- @param host { name: string, orig_name: string }
+--- @return integer
 function M.require(host)
   -- Python host arguments
   local prog = M.detect_by_module('neovim')
@@ -126,6 +128,8 @@ function M.require(host)
   )
 end
 
+--- @param method string
+--- @param args any[]
 function M.call(method, args)
   if s_err then
     return

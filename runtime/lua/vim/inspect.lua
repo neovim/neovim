@@ -54,9 +54,12 @@ local render
 
 if sbavailable then
   buffnew = stringbuffer.new
+  --- @param buf string.buffer
+  --- @param str string
   puts = function(buf, str)
     buf:put(str)
   end
+  --- @param buf string.buffer
   render = function(buf)
     return buf:get()
   end
@@ -64,10 +67,13 @@ else
   buffnew = function()
     return { n = 0 }
   end
+  --- @param buf { [integer]: string, n: integer }
+  --- @param str string
   puts = function(buf, str)
     buf.n = buf.n + 1
     buf[buf.n] = str
   end
+  --- @param buf string[]
   render = function(buf)
     return table.concat(buf)
   end
@@ -77,16 +83,25 @@ local _rawget
 if rawget then
   _rawget = rawget
 else
+  --- @generic K, V
+  --- @param t table<K,V>
+  --- @param k K
+  --- @return V?
   _rawget = function(t, k)
     return t[k]
   end
 end
+
+--- @generic K, V
+--- @param t table<K,V>
+--- @return (fun(t: table<K,V>, key?: K): K?, V?), table<K,V>, nil
 local function rawpairs(t)
   return next, t, nil
 end
 
--- Apostrophizes the string if it has quotes, but not aphostrophes
--- Otherwise, it returns a regular quoted string
+--- Apostrophizes the string if it has quotes, but not aphostrophes
+--- Otherwise, it returns a regular quoted string
+--- @param str string
 local function smartQuote(str)
   if match(str, '"') and not match(str, "'") then
     return "'" .. str .. "'"
@@ -114,6 +129,7 @@ for i = 0, 31 do
   end
 end
 
+--- @param str string
 local function escape(str)
   return (
     gsub(
@@ -133,6 +149,7 @@ do
   luaKeywords[k] = true
 end
 
+--- @param str any
 local function isIdentifier(str)
   return type(str) == 'string'
     -- identifier must start with a letter and underscore, and be followed by letters, numbers, and underscores
@@ -142,6 +159,9 @@ local function isIdentifier(str)
 end
 
 local flr = math.floor
+
+--- @param k any
+--- @param sequenceLength integer
 local function isSequenceKey(k, sequenceLength)
   return type(k) == 'number' and flr(k) == k and 1 <= k and k <= sequenceLength
 end
@@ -156,6 +176,8 @@ local defaultTypeOrders = {
   ['thread'] = 7,
 }
 
+--- @param a any
+--- @param b any
 local function sortKeys(a, b)
   local ta, tb = type(a), type(b)
 
@@ -172,6 +194,9 @@ local function sortKeys(a, b)
   return dta == dtb and ta < tb or dta < dtb
 end
 
+--- @generic K
+--- @param t table<K,any>
+--- @return K[], integer, integer
 local function getKeys(t)
   local seqLen = 1
   while _rawget(t, seqLen) ~= nil do
@@ -190,6 +215,9 @@ local function getKeys(t)
   return keys, keysLen, seqLen
 end
 
+--- @param x any
+--- @param cycles table<table,integer>
+--- @param depth number
 local function countCycles(x, cycles, depth)
   if type(x) == 'table' then
     if cycles[x] then
@@ -207,6 +235,11 @@ local function countCycles(x, cycles, depth)
   end
 end
 
+--- @generic T
+--- @param path T[]
+--- @param a T
+--- @param b? T
+--- @return T[]
 local function makePath(path, a, b)
   local newPath = {}
   local len = #path
@@ -220,6 +253,10 @@ local function makePath(path, a, b)
   return newPath
 end
 
+--- @param process fun(item: any, path: any[]): any
+--- @param item any
+--- @param path any[]
+--- @param visited table<any,any>
 local function processRecursive(process, item, path, visited)
   if item == nil then
     return nil
@@ -253,14 +290,24 @@ local function processRecursive(process, item, path, visited)
   return processed
 end
 
+--- @class (private) vim.inspect.Inspector
+--- @field buf string.buffer|{ [integer]: string, n: integer }
+--- @field ids table<any,integer>
+--- @field cycles table<table,integer>
+--- @field depth number
+--- @field level integer
+--- @field newline string
+--- @field indent string
 local Inspector = {}
 
 local Inspector_mt = { __index = Inspector }
 
+--- @param inspector vim.inspect.Inspector
 local function tabify(inspector)
   puts(inspector.buf, inspector.newline .. rep(inspector.indent, inspector.level))
 end
 
+--- @param v any
 function Inspector:getId(v)
   local id = self.ids[v]
   local ids = self.ids
@@ -272,6 +319,7 @@ function Inspector:getId(v)
   return tostring(id)
 end
 
+--- @param v any
 function Inspector:putValue(v)
   local buf = self.buf
   local tv = type(v)
@@ -355,6 +403,8 @@ function Inspector:putValue(v)
   end
 end
 
+--- @param root any
+--- @param options? vim.inspect.Opts
 function inspect.inspect(root, options)
   options = options or {}
 

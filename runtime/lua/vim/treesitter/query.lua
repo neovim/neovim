@@ -25,6 +25,7 @@ local M = {}
 local Query = {}
 Query.__index = Query
 
+---@param name string
 local function is_directive(name)
   return string.sub(name, -1) == '!'
 end
@@ -129,6 +130,8 @@ local function dedupe_files(files)
   return result
 end
 
+--- @param filename string
+--- @param read_quantifier '*a'|'*l'
 local function safe_read(filename, read_quantifier)
   local file, err = io.open(filename, 'r')
   if not file then
@@ -141,6 +144,9 @@ end
 
 --- Adds {ilang} to {base_langs}, only if {ilang} is different than {lang}
 ---
+---@param base_langs string[]
+---@param lang string
+---@param ilang string
 ---@return boolean true If lang == ilang
 local function add_included_lang(base_langs, lang, ilang)
   if lang == ilang then
@@ -445,6 +451,7 @@ local impl = {
 
   ['match'] = (function()
     local magic_prefixes = { ['\\v'] = true, ['\\m'] = true, ['\\M'] = true, ['\\V'] = true }
+    --- @param str string
     local function check_magic(str)
       if string.len(str) < 2 or magic_prefixes[string.sub(str, 1, 2)] then
         return str
@@ -956,6 +963,8 @@ function Query:iter_captures(node, source, start_row, end_row, opts)
   ---@type table<integer, vim.treesitter.query.TSMetadata>
   local match_cache = {}
 
+  ---@param end_line? integer
+  ---@param end_col? integer
   local function iter(end_line, end_col)
     local capture, captured_node, match = cursor:next_capture()
 

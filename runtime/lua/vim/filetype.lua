@@ -114,6 +114,7 @@ function M._get_known_filetypes()
   end
   local registry = vim.filetype.inspect()
 
+  --- @param value vim.filetype.mapping.value
   local function add_filetype(value)
     local filetype = type(value) == 'table' and value[1] or value
     if type(filetype) == 'string' then
@@ -189,6 +190,8 @@ local function detect_seq(...)
   end
 end
 
+--- @param path string
+--- @param bufnr integer
 local function detect_noext(path, bufnr)
   local root = fn.fnamemodify(path, ':r')
   if root == path then

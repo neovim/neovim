@@ -227,6 +227,8 @@ local function setup_output(output, text)
     handler = output
   else
     bucket = {}
+    --- @param err string?
+    --- @param data string?
     handler = function(err, data)
       if err then
         error(err)

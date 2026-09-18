@@ -209,6 +209,7 @@ local function tokens_to_ranges(data, bufnr, client, request, ranges)
 end
 
 ---@package
+---@param bufnr integer
 function STHighlighter:new(bufnr)
   self = Capability.new(self, bufnr)
 
@@ -230,6 +231,7 @@ function STHighlighter:new(bufnr)
 end
 
 ---@package
+---@param client_id integer
 function STHighlighter:on_attach(client_id)
   local client = vim.lsp.get_client_by_id(client_id)
   local state = self.client_state[client_id]
@@ -254,6 +256,7 @@ function STHighlighter:on_attach(client_id)
 end
 
 ---@package
+---@param client_id integer
 function STHighlighter:on_detach(client_id)
   local state = self.client_state[client_id]
   if state then
@@ -265,11 +268,13 @@ function STHighlighter:on_detach(client_id)
 end
 
 ---@private
+---@param client_id integer
 function STHighlighter:on_close(client_id)
   self:reset(client_id)
 end
 
 ---@private
+---@param client_id integer
 function STHighlighter:on_change(client_id)
   self:send_request(client_id)
 end
@@ -436,6 +441,7 @@ function STHighlighter:send_full_delta_request(client, state, version)
 end
 
 ---@private
+---@param client_id integer
 function STHighlighter:cancel_active_request(client_id)
   local state = assert(self.client_state[client_id])
   local client = vim.lsp.get_client_by_id(client_id)
@@ -669,6 +675,9 @@ function STHighlighter:on_win(topline, botline)
       -- finishes, clangd sends a refresh request which lets the client
       -- re-synchronize the tokens.
 
+      --- @param token STTokenRange
+      --- @param hl_group string
+      --- @param delta integer
       local function set_mark0(token, hl_group, delta)
         set_mark(
           self.bufnr,
@@ -981,6 +990,7 @@ end
 --- invalidate the current results of all buffers and automatically kick off a
 --- new request for buffers that are displayed in a window. For those that aren't,
 --- the BufWinEnter event should take care of it next time it's displayed.
+---@param err lsp.ResponseError?
 ---@param ctx lsp.HandlerContext
 function M._refresh(err, _, ctx)
   if err then

@@ -30,6 +30,7 @@ end
 --- @param on_read fun(err: any, data: string)
 --- @param on_exit fun(code: integer, signal: integer)
 function TransportRun:listen(on_read, on_exit)
+  --- @param chunk string?
   local function on_stderr(_, chunk)
     if chunk then
       self.log.error('transport', self.cmd[1], 'stderr', chunk)
@@ -128,6 +129,7 @@ function TransportConnect:listen(on_read, on_exit)
     or assert(uv.new_pipe(false), 'Pipe could not be opened.')
   )
 
+  --- @param err string?
   local function on_connect(err)
     if err then
       local address = not self.port and self.host_or_path or (self.host_or_path .. ':' .. self.port)

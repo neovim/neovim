@@ -1,5 +1,9 @@
 local F = {}
 
+-- Failure returns no values, so every result becomes optional.
+--- @nodoc
+--- @alias vim.F.OptionalReturns<T> { [K in keyof T]: T[K]|nil }
+
 --- Returns the first argument which is not nil.
 ---
 --- If all arguments are nil, returns nil.
@@ -25,6 +29,10 @@ end
 
 -- Use in combination with pcall
 --- @deprecated
+--- @generic T...
+--- @param status boolean
+--- @param ... T...
+--- @return vim.F.OptionalReturns<T>...
 function F.ok_or_nil(status, ...)
   vim.deprecate('vim.F.ok_or_nil', 'actual error handling', '0.15')
   if not status then
@@ -46,6 +54,9 @@ end
 
 --- Wrap a function to return nil if it fails, otherwise the value
 --- @deprecated
+--- @generic A..., R...
+--- @param fn fun(...: A...): R...
+--- @return fun(...: A...): vim.F.OptionalReturns<R>...
 function F.nil_wrap(fn)
   vim.deprecate('vim.F.nil_wrap', 'vim.npcall', '0.15')
   return function(...)
@@ -56,13 +67,17 @@ end
 -- TODO: deprecate `F.pack_len` and `F.unpack_len`
 
 --- like {...} except preserve the length explicitly
+--- @param ... any
+--- @return { [integer]: any, n: integer }
 function F.pack_len(...)
   return { n = select('#', ...), ... }
 end
 
 --- like unpack() but use the length set by F.pack_len if present
+--- @param t { [integer]: any, n?: integer }
+--- @return any...
 function F.unpack_len(t)
-  return unpack(t, 1, t.n)
+  return unpack(t, 1, t.n or #t)
 end
 
 return F

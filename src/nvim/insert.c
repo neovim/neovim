@@ -2096,7 +2096,7 @@ void insertchar(int c, int flags, int second_indent)
            && MB_BYTE2LEN(c) == 1
            && i < INPUT_BUFLEN
            && (textwidth == 0
-               || (virtcol += byte2cells((uint8_t)buf[i - 1])) < (colnr_T)textwidth)
+               || (virtcol += ascii2cells((uint8_t)buf[i - 1])) < (colnr_T)textwidth)
            && !(!no_abbr && !vim_iswordc(c) && vim_iswordc((uint8_t)buf[i - 1]))) {
       c = vgetc();
       buf[i++] = (char)c;

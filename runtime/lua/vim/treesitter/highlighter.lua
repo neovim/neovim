@@ -118,7 +118,8 @@ function TSHighlighter.new(tree, opts)
     end,
   })
 
-  -- Enable conceal_lines if query exists for lang and has conceal_lines metadata.
+  --- Enable conceal_lines if query exists for lang and has conceal_lines metadata.
+  --- @param lang string
   local function set_conceal_lines(lang)
     if not self._conceal_line and self:get_query(lang):query() then
       self._conceal_line = self:get_query(lang):query().has_conceal_line

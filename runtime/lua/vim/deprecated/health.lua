@@ -27,6 +27,10 @@ function M.check()
   end
 end
 
+--- @param name string
+--- @param version string
+--- @param backtrace string
+--- @param alternative? string
 function M.add(name, version, backtrace, alternative)
   if deprecated[name] == nil then
     deprecated[name] = { version, { backtrace }, alternative }

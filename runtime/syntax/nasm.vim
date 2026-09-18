@@ -1,16 +1,17 @@
 " Vim syntax file
-" Language:	NASM - The Netwide Assembler (v0.98)
+" Language:	NASM - The Netwide Assembler
 " Maintainer:	Andrii Sokolov	<andriy145@gmail.com>
 " Original Author:	Manuel M.H. Stol	<Manuel.Stol@allieddata.nl>
 " Former Maintainer:	Manuel M.H. Stol	<Manuel.Stol@allieddata.nl>
 " Contributors:
-" 	Leonard König <leonard.r.koenig@gmail.com> (C string highlighting),
+" 	Leonard König <leonard.r.koenig@gmail.com> (C string highlighting)
 " 	Peter Stanhope <dev.rptr@gmail.com> (Add missing 64-bit mode registers)
 " 	Frédéric Hamel <frederic.hamel123@gmail.com> (F16c support, partial AVX
 " 						     support, other)
 "	sarvel <sarvel@protonmail.com> (Complete set of supported instructions)
-" Last Change:	2024 Oct 8
-" NASM Home:	http://www.nasm.us/
+"	Amelia Clarke <selene@perilune.dev> (Move options to ftplugin)
+" Last Change:	2026 Sep 15
+" NASM Home:	https://nasm.us/
 
 
 " Setup Syntax:
@@ -20,13 +21,7 @@ if exists("b:current_syntax")
 endif
 "  Assembler syntax is case insensetive
 syn case ignore
-
-
-" Vim search and movement commands on identifers
-"  Comments at start of a line inside which to skip search for indentifiers
-setlocal comments=:;
-"  Identifier Keyword characters (defines \k)
-setlocal iskeyword=@,48-57,#,$,.,?,@-@,_,~
+syn iskeyword @,48-57,#,$,.,?,@-@,_,~
 
 
 " Comments:
@@ -326,7 +321,7 @@ syn match   nasmInstructnError  "\<VP\a\{3}R\a\>"
 " Instructions:
 " Standard
 syn keyword nasmInstructionStandard AAA AAD AAM AAS ADC
-syn keyword nasmInstructionStandard ADD AND ARPL 
+syn keyword nasmInstructionStandard ADD AND ARPL
 syn keyword nasmInstructionStandard BOUND BSF BSR BSWAP BT
 syn keyword nasmInstructionStandard BTC BTR BTS CALL CBW
 syn keyword nasmInstructionStandard CDQ CDQE CLC CLD CLI
@@ -373,24 +368,24 @@ syn keyword nasmInstructionStandard MWAIT MWAITX NEG NOP NOT
 syn keyword nasmInstructionStandard OR OUT OUTSB OUTSD OUTSW
 syn keyword nasmInstructionStandard PACKSSDW PACKSSWB PACKUSWB PADDB PADDD
 syn keyword nasmInstructionStandard PADDSB PADDSW PADDUSB PADDUSW
-syn keyword nasmInstructionStandard PADDW PAND PANDN PAUSE 
+syn keyword nasmInstructionStandard PADDW PAND PANDN PAUSE
 syn keyword nasmInstructionStandard PAVGUSB PCMPEQB PCMPEQD PCMPEQW PCMPGTB
 syn keyword nasmInstructionStandard PCMPGTD PCMPGTW PF2ID PFACC
 syn keyword nasmInstructionStandard PFADD PFCMPEQ PFCMPGE PFCMPGT PFMAX
 syn keyword nasmInstructionStandard PFMIN PFMUL PFRCP PFRCPIT1 PFRCPIT2
 syn keyword nasmInstructionStandard PFRSQIT1 PFRSQRT PFSUB PFSUBR PI2FD
 syn keyword nasmInstructionStandard PMADDWD PMULHRWA
-syn keyword nasmInstructionStandard PMULHW PMULLW 
+syn keyword nasmInstructionStandard PMULHW PMULLW
 syn keyword nasmInstructionStandard POP POPA POPAD
 syn keyword nasmInstructionStandard POPAW POPF POPFD POPFQ POPFW
 syn keyword nasmInstructionStandard POR PREFETCH PREFETCHW PSLLD PSLLQ
 syn keyword nasmInstructionStandard PSLLW PSRAD PSRAW PSRLD PSRLQ
-syn keyword nasmInstructionStandard PSRLW PSUBB PSUBD PSUBSB 
+syn keyword nasmInstructionStandard PSRLW PSUBB PSUBD PSUBSB
 syn keyword nasmInstructionStandard PSUBSW PSUBUSB PSUBUSW PSUBW PUNPCKHBW
 syn keyword nasmInstructionStandard PUNPCKHDQ PUNPCKHWD PUNPCKLBW PUNPCKLDQ PUNPCKLWD
 syn keyword nasmInstructionStandard PUSH PUSHA PUSHAD PUSHAW PUSHF
 syn keyword nasmInstructionStandard PUSHFD PUSHFQ PUSHFW PXOR RCL
-syn keyword nasmInstructionStandard RCR 
+syn keyword nasmInstructionStandard RCR
 syn keyword nasmInstructionStandard RDTSCP RET RETF RETN RETW
 syn keyword nasmInstructionStandard RETFW RETNW RETD RETFD RETND
 syn keyword nasmInstructionStandard RETQ RETFQ RETNQ ROL ROR
@@ -398,7 +393,7 @@ syn keyword nasmInstructionStandard RSM RSTS
 syn keyword nasmInstructionStandard SAHF SAL SALC SAR SBB
 syn keyword nasmInstructionStandard SCASB SCASD SCASQ SCASW SFENCE
 syn keyword nasmInstructionStandard SGDT SHL SHLD SHR SHRD
-syn keyword nasmInstructionStandard SIDT SLDT SKINIT SMI 
+syn keyword nasmInstructionStandard SIDT SLDT SKINIT SMI
 syn keyword nasmInstructionStandard SMSW STC STD STI
 syn keyword nasmInstructionStandard STOSB STOSD STOSQ STOSW STR
 syn keyword nasmInstructionStandard SUB SWAPGS
@@ -425,7 +420,7 @@ syn keyword nasmInstructionStandard SETLE SETNA SETNAE SETNB SETNBE
 syn keyword nasmInstructionStandard SETNC SETNE SETNG SETNGE SETNL
 syn keyword nasmInstructionStandard SETNLE SETNO SETNP SETNS SETNZ
 syn keyword nasmInstructionStandard SETO SETP SETPE SETPO SETS
-syn keyword nasmInstructionStandard SETZ 
+syn keyword nasmInstructionStandard SETZ
 " SIMD
 syn keyword nasmInstructionSIMD ADDPS ADDSS ANDNPS ANDPS CMPEQPS
 syn keyword nasmInstructionSIMD CMPEQSS CMPLEPS CMPLESS CMPLTPS CMPLTSS
@@ -508,7 +503,7 @@ syn keyword nasmInstructionTEJAS PSIGND
 " AMD_SSE4A
 syn keyword nasmInstructionAMD_SSE4A EXTRQ INSERTQ MOVNTSD MOVNTSS
 " BARCELONA
-syn keyword nasmInstructionBARCELONA LZCNT 
+syn keyword nasmInstructionBARCELONA LZCNT
 " PENRY
 syn keyword nasmInstructionPENRY BLENDPD BLENDPS BLENDVPD BLENDVPS DPPD
 syn keyword nasmInstructionPENRY DPPS EXTRACTPS INSERTPS MOVNTDQA MPSADBW
@@ -524,11 +519,11 @@ syn keyword nasmInstructionPENRY ROUNDPD ROUNDPS ROUNDSD ROUNDSS
 syn keyword nasmInstructionNEHALEM CRC32 PCMPESTRI PCMPESTRM PCMPISTRI PCMPISTRM
 syn keyword nasmInstructionNEHALEM PCMPGTQ POPCNT
 " SMX
-syn keyword nasmInstructionSMX GETSEC 
+syn keyword nasmInstructionSMX GETSEC
 " GEODE_3DNOW
 syn keyword nasmInstructionGEODE_3DNOW PFRCPV PFRSQRTV
 " INTEL_NEW
-syn keyword nasmInstructionINTEL_NEW MOVBE 
+syn keyword nasmInstructionINTEL_NEW MOVBE
 " AES
 syn keyword nasmInstructionAES AESENC AESENCLAST AESDEC AESDECLAST AESIMC
 syn keyword nasmInstructionAES AESKEYGENASSIST
@@ -921,7 +916,7 @@ syn keyword nasmInstructionAVX512 VUNPCKHPS VUNPCKLPD VUNPCKLPS VXORPD VXORPS
 " PROTECTION
 syn keyword nasmInstructionPROTECTION RDPKRU WRPKRU
 " RDPID
-syn keyword nasmInstructionRDPID RDPID 
+syn keyword nasmInstructionRDPID RDPID
 " NMEM
 syn keyword nasmInstructionNMEM CLFLUSHOPT CLWB PCOMMIT
 syn keyword nasmInstructionNMEM CLZERO
@@ -956,7 +951,7 @@ syn keyword nasmInstructionINTEL_EXTENSION XRESLDTRK XSUSLDTRK
 " AVX512_BF16
 syn keyword nasmInstructionAVX512_BF16 VCVTNE2PS2BF16 VCVTNEPS2BF16 VDPBF16PS
 " AVX512_MASK_INTERSECT
-syn keyword nasmInstructionAVX512_MASK_INTERSECT VP2INTERSECTD 
+syn keyword nasmInstructionAVX512_MASK_INTERSECT VP2INTERSECTD
 " AMX
 syn keyword nasmInstructionAMX LDTILECFG STTILECFG TDPBF16PS TDPBSSD TDPBSUD
 syn keyword nasmInstructionAMX TDPBUSD TDPBUUD TILELOADD TILELOADDT1 TILERELEASE
@@ -998,9 +993,9 @@ syn keyword nasmInstructionFRET ERETS ERETU LKGS
 " WRMSRNS_MSRLIST
 syn keyword nasmInstructionWRMSRNS_MSRLIST WRMSRNS RDMSRLIST WRMSRLIST
 " HRESET
-syn keyword nasmInstructionHRESET HRESET 
+syn keyword nasmInstructionHRESET HRESET
 " PTWRITE
-syn keyword nasmInstructionPTWRITE PTWRITE 
+syn keyword nasmInstructionPTWRITE PTWRITE
 " HINTNOP
 syn keyword nasmInstructionHINTNOP HINT_NOP0 HINT_NOP1 HINT_NOP2 HINT_NOP3 HINT_NOP4
 syn keyword nasmInstructionHINTNOP HINT_NOP5 HINT_NOP6 HINT_NOP7 HINT_NOP8 HINT_NOP9

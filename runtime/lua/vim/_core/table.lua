@@ -11,6 +11,7 @@ if not has_new then
 end
 
 if not has_clear then
+  --- @param tab table
   clear = function(tab)
     for k in pairs(tab) do
       tab[k] = nil

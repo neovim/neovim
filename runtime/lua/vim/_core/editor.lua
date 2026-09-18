@@ -197,6 +197,7 @@ local utfs = {
 
 -- Gets process info from the `ps` command.
 -- Used by nvim_get_proc() as a fallback.
+--- @param pid integer
 function vim._os_proc_info(pid)
   if pid == nil or pid <= 0 or type(pid) ~= 'number' then
     error('invalid pid')
@@ -222,6 +223,7 @@ end
 
 -- Gets process children from the `pgrep` command.
 -- Used by nvim_get_proc_children() as a fallback.
+--- @param ppid integer
 function vim._os_proc_children(ppid)
   if ppid == nil or ppid <= 0 or type(ppid) ~= 'number' then
     error('invalid ppid')
@@ -244,7 +246,8 @@ end
 --- @class vim.inspect.Opts
 --- @field depth? integer
 --- @field newline? string
---- @field process? fun(item:any, path: string[]): any
+--- @field indent? string
+--- @field process? fun(item: any, path: any[]): any
 
 --- Gets a human-readable representation of the given object.
 ---
@@ -424,6 +427,7 @@ vim.fn = setmetatable({}, {
         error(string.format('Tried to call API function with vim.fn: use vim.api.%s instead', key))
       end
     else
+      --- @param ... any
       _fn = function(...)
         return vim.call(key, ...)
       end
@@ -434,8 +438,10 @@ vim.fn = setmetatable({}, {
 })
 
 --- @private
+--- @param viml_func_name string
+--- @return function
 vim.funcref = function(viml_func_name)
-  return vim.fn[viml_func_name]
+  return vim.fn[viml_func_name] --[[@as function]]
 end
 
 --- Executes Vimscript (|Ex-command|s).
@@ -535,9 +541,12 @@ do
   local function make_dict_accessor(scope, handle)
     vim.validate('scope', scope, 'string')
     local mt = {}
+    --- @param k string
+    --- @param v any
     function mt.__newindex(_, k, v)
       return vim._setvar(scope, handle or 0, k, v)
     end
+    --- @param k string|integer
     function mt.__index(_, k)
       if handle == nil and type(k) == 'number' then
         return make_dict_accessor(scope, k)
@@ -760,6 +769,8 @@ end
 
 --- Executes the on_key callbacks.
 ---@private
+---@param buf string
+---@param typed_buf string
 function vim._on_key(buf, typed_buf)
   local failed = {} ---@type [integer, string][]
   local discard = false
@@ -947,6 +958,7 @@ end
 --- 2. Can we get it to return things from global namespace even with `print(` in front.
 ---
 --- @param pat string
+--- @param env? table<string,any>
 --- @return any[], integer
 function vim._expand_pat(pat, env)
   env = env or _G
@@ -1061,6 +1073,8 @@ function vim._expand_pat(pat, env)
     end
   end
   ---@param acc table<string,any>
+  ---@param k string
+  ---@param v any
   local function _fold_to_map(acc, k, v)
     acc[k] = (v or true)
     return acc
@@ -1118,10 +1132,12 @@ function vim._expand_pat(pat, env)
       return true
     end
     if vim.bo == final_env then
+      --- @param option vim.api.keyset.get_option_info
       filter = function(_, option)
         return option.scope == 'buf'
       end
     elseif vim.wo == final_env then
+      --- @param option vim.api.keyset.get_option_info
       filter = function(_, option)
         return option.scope == 'win'
       end
@@ -1313,9 +1329,12 @@ function vim.keycode(keys, info)
   end
 end
 
+--- @param rcid integer
 --- @param server_addr string
 --- @param connect_error string
+--- @param args string[]
 function vim._cs_remote(rcid, server_addr, connect_error, args)
+  --- @param consequence string
   --- @return string
   local function connection_failure_errmsg(consequence)
     local explanation --- @type string
@@ -1387,6 +1406,7 @@ function vim._cs_remote(rcid, server_addr, connect_error, args)
 end
 
 do
+  --- @param msg string
   local function truncated_echo(msg)
     -- Truncate message to avoid hit-enter-prompt
     vim.api.nvim_echo({ { msg, 'WarningMsg' } }, true, { _truncate = true })
@@ -1394,6 +1414,7 @@ do
 
   local notified = false
 
+  --- @param msg string
   function vim._truncated_echo_once(msg)
     if not notified then
       truncated_echo(msg)

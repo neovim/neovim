@@ -162,6 +162,10 @@
 ---  with different `rev` and `rev_to` fields. To not download new updates
 ---  from source, use plain `vim.pack.get()`.
 ---
+---Check for issues ~
+---
+---- Run `:checkhealth vim.pack` and follow recommendations in case of detected issues.
+---
 --- <pre>help
 --- Commands                                             *vim.pack-commands* *E5807*
 ---
@@ -276,12 +280,14 @@ local N_ = vim.fn.gettext
 
 local M = {}
 
---- @class (private) vim.pack.LockData
+--- @nodoc
+--- @class vim.pack.LockData
 --- @field rev string Latest recorded revision.
 --- @field src string Plugin source.
 --- @field version? string|vim.VersionRange Plugin `version`, as supplied in `spec`.
 
---- @class (private) vim.pack.Lock
+--- @nodoc
+--- @class vim.pack.Lock
 --- @field plugins table<string, vim.pack.LockData> Map from plugin name to its lock data.
 
 --- @type vim.pack.Lock
@@ -318,6 +324,7 @@ local function git_cmd(cmd, cwd)
   return (assert(out.stdout):gsub('\n+$', ''))
 end
 
+--- @param x string
 local function parse_semver(x)
   return vim.version.parse(x, { strict = true })
 end
@@ -421,6 +428,7 @@ local function is_semver(x)
   return parse_semver(x) ~= nil
 end
 
+--- @param x any
 local function is_nonempty_string(x)
   return type(x) == 'string' and x ~= ''
 end
@@ -660,6 +668,7 @@ local function async_join_run_wait(funs)
   local function joined_f()
     ---@diagnostic disable-next-line: no-unknown
     local semaphore = async.semaphore(n_threads)
+    ---@param f async fun()
     local function run_one(f)
       -- Isolate job failures. Task return still observes cancellation.
       copcall(semaphore.with, semaphore, f)
@@ -757,6 +766,8 @@ end
 --- @async
 --- @param p vim.pack.Plug
 local function resolve_version(p)
+  --- @param name string
+  --- @param list string[]
   local function list_in_line(name, list)
     return ('\n%s: %s'):format(name, table.concat(list, ', '))
   end
@@ -857,6 +868,7 @@ local function checkout(p, timestamp, skip_stash)
 end
 
 --- @param plug_list vim.pack.Plug[]
+--- @param confirm boolean
 local function install_list(plug_list, confirm)
   local timestamp = get_timestamp()
   --- @async
@@ -994,6 +1006,7 @@ local function lock_write()
 end
 
 --- @param names string[]
+--- @param plug_dir string
 local function lock_repair(names, plug_dir)
   --- @async
   local function f()
@@ -1105,6 +1118,8 @@ local function lock_sync(confirm, specs)
   end
 end
 
+--- @param confirm? boolean
+--- @param specs? vim.pack.Spec[]
 local function lock_read(confirm, specs)
   if plugin_lock then
     return
@@ -1327,6 +1342,7 @@ local function show_confirm_buf(lines, on_finish)
   -- Define action to cancel confirm
   --- @type integer
   local cancel_au_id
+  --- @param data vim.api.keyset.create_autocmd.callback_args
   local function on_cancel(data)
     if vim._tointeger(data.match) ~= win_id then
       return

@@ -1710,8 +1710,8 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   filechangeshell_busy = (event == EVENT_FILECHANGEDSHELL);
   nesting++;  // see matching decrement below
 
-  // Remember that FileType was triggered.  Used for did_filetype().
-  if (event == EVENT_FILETYPE) {
+  // Remember that FileType was triggered, if 'filetype' was actually set.  For :setf.
+  if (event == EVENT_FILETYPE && *curbuf->b_p_ft != NUL) {
     curbuf->b_did_filetype = true;
   }
 

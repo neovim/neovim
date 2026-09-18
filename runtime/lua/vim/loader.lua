@@ -78,6 +78,7 @@ local function fs_stat_cached(path)
   return fs_stat_cache[path]
 end
 
+--- @param path string
 local function normalize(path)
   return fs.normalize(path, { plain = true, _fast = true })
 end
@@ -466,6 +467,7 @@ end
 
 --- Tracks the time spent in a function
 --- @generic F: function
+--- @param stat string
 --- @param f F
 --- @return F
 local function track(stat, f)
@@ -509,6 +511,7 @@ end
 --- @private
 function M._inspect(opts)
   if opts and opts.print then
+    --- @param nsec number
     local function ms(nsec)
       return math.floor(nsec / 1e6 * 1000 + 0.5) / 1000 .. 'ms'
     end

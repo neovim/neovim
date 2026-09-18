@@ -496,6 +496,23 @@ func Test_local_fillchars()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_fillchars_vert_default()
+  CheckScreendump
+
+  let lines =<< trim END
+      hi VertSplit ctermfg=12 ctermbg=0
+      set fillchars=trunc:<
+      call setline(1, ['window 1']->repeat(3))
+      vnew
+      call setline(1, ['window 2']->repeat(3))
+  END
+  call writefile(lines, 'Xdisplayfillcharsvert', 'D')
+  let buf = RunVimInTerminal('-S Xdisplayfillcharsvert', #{rows: 8})
+  call VerifyScreenDump(buf, 'Test_display_fillchars_vert', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_display_linebreak_breakat()
   new
   vert resize 25

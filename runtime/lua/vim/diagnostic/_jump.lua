@@ -90,16 +90,22 @@ local function next_diagnostic(search_forward, opts, use_logical_pos)
       local line_length = #api.nvim_buf_get_lines(bufnr, lnum, lnum + 1, true)[1]
       local sort_diagnostics, is_next --- @type function, function
       if search_forward then
+        --- @param a vim.Diagnostic
+        --- @param b vim.Diagnostic
         sort_diagnostics = function(a, b)
           return shared.diagnostic_cmp(a, b, 'col', false, col_fn)
         end
+        --- @param diagnostic vim.Diagnostic
         is_next = function(diagnostic)
           return math.min(col_fn(diagnostic), math.max(line_length - 1, 0)) > position[2]
         end
       else
+        --- @param a vim.Diagnostic
+        --- @param b vim.Diagnostic
         sort_diagnostics = function(a, b)
           return shared.diagnostic_cmp(a, b, 'col', true, col_fn)
         end
+        --- @param diagnostic vim.Diagnostic
         is_next = function(diagnostic)
           return math.min(col_fn(diagnostic), math.max(line_length - 1, 0)) < position[2]
         end

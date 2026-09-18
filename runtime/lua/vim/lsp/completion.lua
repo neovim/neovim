@@ -184,6 +184,10 @@ local function apply_snippet(item)
   end
 end
 
+--- @param item lsp.CompletionItem
+--- @param word string
+--- @param prefix string
+--- @param match fun(word: string, prefix: string): boolean
 local function fallback_filtertext(item, word, prefix, match)
   if item.filterText and not match(word, prefix) and match(item.filterText, prefix) then
     return item.filterText
@@ -626,10 +630,10 @@ function M._lsp_to_complete_items(
   end
 
   if not user_cmp then
-    local compare_by_sortText_and_label = function(a, b)
-      ---@type lsp.CompletionItem
+    --- @param a { user_data: { nvim: { lsp: { completion_item: lsp.CompletionItem } } } }
+    --- @param b { user_data: { nvim: { lsp: { completion_item: lsp.CompletionItem } } } }
+    local function compare_by_sortText_and_label(a, b)
       local itema = a.user_data.nvim.lsp.completion_item
-      ---@type lsp.CompletionItem
       local itemb = b.user_data.nvim.lsp.completion_item
       return (nonempty(itema.sortText) or itema.label) < (nonempty(itemb.sortText) or itemb.label)
     end
@@ -928,6 +932,8 @@ end
 
 --- Defines a CompleteChanged handler to highlight the completion info popup and request/display LSP
 --- completion item documentation via completionItem/resolve
+--- @param group integer
+--- @param bufnr integer
 local function on_completechanged(group, bufnr)
   nvim_on('CompleteChanged', group, {
     buf = bufnr,

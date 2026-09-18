@@ -3205,6 +3205,11 @@ int modifier_len(char *cmd)
     p = skipwhite(skipdigits(cmd + 1));
   }
   for (int i = 0; i < (int)ARRAY_SIZE(cmdmods); i++) {
+    // cmdmod_info_tab[] is sorted by name: once the first letter is past
+    // the command's first letter no later entry can match.
+    if (cmdmods[i].name[0] > *p) {
+      break;
+    }
     int j;
     for (j = 0; p[j] != NUL; j++) {
       if (p[j] != cmdmods[i].name[j]) {

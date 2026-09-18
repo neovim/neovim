@@ -53,11 +53,13 @@ function Provider:on_detach(client_id)
 end
 
 ---@private
+---@param client_id integer
 function Provider:on_close(client_id)
   self:clear(client_id)
 end
 
 ---@private
+---@param client_id integer
 function Provider:on_change(client_id)
   self:request(client_id)
 end
