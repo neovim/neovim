@@ -2690,9 +2690,12 @@ describe('multicursor', function()
 
       cursors({ 'aaa', 'bbb', 'ccc' }, 'QjQ')
       exec_lua('vim.wait(10)') -- drain the scheduled refresh
-      -- Clear-all, then shape 29 ("follow main cursor") at each position.
+      -- Clear-all, text color (30), cursor color (40), then positions (29).
       local sent = exec_lua('return _G.sent')
-      eq('\027[>0;4 q\027[>29;2:1:1;2:2:1 q', sent[#sent])
+      t.matches(
+        '^\027%[>0;4 q\027%[>30;2:%d+:%d+:%d+ q\027%[>40;2:%d+:%d+:%d+ q\027%[>29;2:1:1;2:2:1 q$',
+        sent[#sent]
+      )
 
       -- The cell-highlight fallback is suppressed (no {17:} on line 1).
       screen:expect([[
