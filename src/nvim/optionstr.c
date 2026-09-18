@@ -1101,6 +1101,7 @@ const char *did_set_display(optset_T *args)
   if (errmsg != NULL) {
     return errmsg;
   }
+  dy_escape_width = ((dy_flags & kOptDyFlagUhex) ? 4 : 2);
   init_chartab();
   msg_grid_validate();
   return NULL;

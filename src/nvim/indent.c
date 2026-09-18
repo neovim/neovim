@@ -396,7 +396,7 @@ int get_indent_buf(buf_T *buf, linenr_T lnum)
 int indent_size_no_ts(char const *ptr)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
-  int tab_size = byte2cells(TAB);
+  int tab_size = dy_escape_width;
 
   int vcol = 0;
   while (true) {

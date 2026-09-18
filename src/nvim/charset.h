@@ -38,3 +38,19 @@ static inline bool vim_isbreak(int c)
 {
   return breakat_flags[(uint8_t)c];
 }
+
+/// Return number of display cells occupied by ASCII byte "b".
+///
+/// this only makes sense for 0 <= b <= 127.
+/// Use a proper wrapper for multibyte chars depending on the context, like
+/// char2cells() or ptr2cells()
+/// A TAB is counted as two or four cells: "^I" or "<09>".
+///
+/// @param b
+///
+/// @return Number of display cells.
+static inline int ascii2cells(int b)
+  FUNC_ATTR_PURE
+{
+  return (b >= ' ' && b <= '~') ? 1 : dy_escape_width;
+}

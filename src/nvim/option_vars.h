@@ -246,6 +246,7 @@ EXTERN int p_dg;                ///< 'digraph'
 EXTERN char *p_dir;             ///< 'directory'
 EXTERN char *p_dy;              ///< 'display'
 EXTERN unsigned dy_flags;
+EXTERN int dy_escape_width INIT( = 2);
 EXTERN char *p_ead;             ///< 'eadirection'
 EXTERN int p_emoji;             ///< 'emoji'
 EXTERN int p_ea;                ///< 'equalalways'
