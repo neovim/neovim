@@ -162,6 +162,10 @@
 ---  with different `rev` and `rev_to` fields. To not download new updates
 ---  from source, use plain `vim.pack.get()`.
 ---
+---Check for issues ~
+---
+---- Run `:checkhealth vim.pack` and follow recommendations in case of detected issues.
+---
 --- <pre>help
 --- Commands                                             *vim.pack-commands* *E5807*
 ---

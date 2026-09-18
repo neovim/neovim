@@ -73,7 +73,7 @@ end
 --- @param plug_path string
 local function failed_git_cmd(plug_name, plug_path)
   local msg = ('Failed Git command inside plugin %s.'):format(vim.inspect(plug_name))
-    .. ' This is unexpected and should not happen.'
+    .. ' This is unexpected (like after interrupted `git clone`) and should not happen.'
     .. (' Manually delete directory %s and reinstall plugin'):format(plug_path)
   health.error(msg)
   return false
