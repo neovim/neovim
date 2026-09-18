@@ -1509,6 +1509,18 @@ static void set_vcount_ca(cmdarg_T *cap, bool *set_prevcount)
   *set_prevcount = false;    // only set v:prevcount once
 }
 
+/// The active Visual area: `Visual.start` to the cursor. What `b_visual` saves for '< and '> marks,
+/// and "gv".
+visualinfo_T visualinfo(void)
+{
+  return (visualinfo_T){
+    .vi_start = Visual.start,
+    .vi_end = curwin->w_cursor,
+    .vi_mode = Visual.mode,
+    .vi_curswant = curwin->w_curswant,
+  };
+}
+
 /// End Visual mode.
 /// This function should ALWAYS be called to end Visual mode, except from
 /// do_pending_operator().
@@ -1520,10 +1532,7 @@ void end_visual_mode(void)
   mouse_dragging = 0;
 
   // Save the current Visual area for '< and '> marks, and "gv"
-  curbuf->b_visual.vi_mode = Visual.mode;
-  curbuf->b_visual.vi_start = Visual.start;
-  curbuf->b_visual.vi_end = curwin->w_cursor;
-  curbuf->b_visual.vi_curswant = curwin->w_curswant;
+  curbuf->b_visual = visualinfo();
   curbuf->b_visual_mode_eval = Visual.mode;
   if (!virtual_active(curwin)) {
     curwin->w_cursor.coladd = 0;
@@ -5217,27 +5226,16 @@ static void nv_gv_cmd(cmdarg_T *cap)
     return;
   }
 
-  pos_T tpos;
   // set w_cursor to the start of the Visual area, tpos to the end
+  const visualinfo_T prev = curbuf->b_visual;
   if (Visual.active) {
-    int i = Visual.mode;
-    Visual.mode = curbuf->b_visual.vi_mode;
-    curbuf->b_visual.vi_mode = i;
-    curbuf->b_visual_mode_eval = i;
-    i = curwin->w_curswant;
-    curwin->w_curswant = curbuf->b_visual.vi_curswant;
-    curbuf->b_visual.vi_curswant = i;
-
-    tpos = curbuf->b_visual.vi_end;
-    curbuf->b_visual.vi_end = curwin->w_cursor;
-    curwin->w_cursor = curbuf->b_visual.vi_start;
-    curbuf->b_visual.vi_start = Visual.start;
-  } else {
-    Visual.mode = curbuf->b_visual.vi_mode;
-    curwin->w_curswant = curbuf->b_visual.vi_curswant;
-    tpos = curbuf->b_visual.vi_end;
-    curwin->w_cursor = curbuf->b_visual.vi_start;
+    curbuf->b_visual = visualinfo();
+    curbuf->b_visual_mode_eval = Visual.mode;
   }
+  Visual.mode = prev.vi_mode;
+  curwin->w_curswant = prev.vi_curswant;
+  pos_T tpos = prev.vi_end;
+  curwin->w_cursor = prev.vi_start;
 
   Visual.active = true;
   Visual.reselect = true;

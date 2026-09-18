@@ -9,6 +9,7 @@
 #include "nvim/mapping_defs.h"
 #include "nvim/marktree_defs.h"
 #include "nvim/memline_defs.h"
+#include "nvim/normal_defs.h"
 #include "nvim/option_defs.h"
 #include "nvim/os/fs_defs.h"
 #include "nvim/statusline_defs.h"

@@ -1864,6 +1864,129 @@ describe('multicursor', function()
       eq(2, ncursors())
     end)
 
+    it('selection moved by API/Lua inside a mapping #41956', function()
+      local screen = Screen.new(30, 6)
+      n.exec_lua(function()
+        -- Extends the selection by 2 via the API, around a fed "o".
+        vim.keymap.set('x', 'gh', function()
+          local cursor = vim.api.nvim_win_get_cursor(0)
+          vim.api.nvim_win_set_cursor(0, { cursor[1], cursor[2] + 1 })
+          vim.cmd('normal! o')
+          vim.api.nvim_win_set_cursor(0, { cursor[1], cursor[2] + 3 })
+        end)
+        -- Starts a selection with a fed "v", extends it via the API.
+        vim.keymap.set('n', 'gL', function()
+          local cursor = vim.api.nvim_win_get_cursor(0)
+          vim.cmd('normal! v')
+          vim.api.nvim_win_set_cursor(0, { cursor[1], cursor[2] + 2 })
+        end)
+      end)
+      cursors({ 'aaaaaaa', 'bbbbbbb', 'ccccccc' })
+      atoms_start()
+      -- The fed "o" does not describe the selection the mapping leaves, so the mapping itself is
+      -- the subatom: it replays at each cursor, for the preview and the cascade alike.
+      feed('vgh')
+      screen:expect([[
+        a{17:aaa}aaa                       |
+        b{17:bbb}bbb                       |
+        c{17:cc}^cccc                       |
+        {1:~                             }|*2
+        {5:-- VISUAL --}                  |
+      ]])
+      feed('d')
+      eq({ 'aaaa', 'bbbb', 'cccc' }, get_lines())
+      eq({ { type = 'visual' } }, atoms_tail(1, 'type'))
+      -- A mapping that starts the selection: same.
+      feed('gL')
+      screen:expect([[
+        a{17:aaa}                          |
+        b{17:bbb}                          |
+        c{17:cc}^c                          |
+        {1:~                             }|*2
+        {5:-- VISUAL --}                  |
+      ]])
+      feed('d')
+      eq({ 'a', 'b', 'c' }, get_lines())
+
+      -- A fed "gv" reselects marks the mapping set: the mapping is the subatom, not "gv".
+      n.exec_lua(function()
+        vim.keymap.set('x', 'gs', function()
+          local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+          vim.fn.setpos("'<", { 0, row, col + 1, 0 })
+          vim.fn.setpos("'>", { 0, row, col + 3, 0 })
+          vim.cmd.normal({ 'gv', bang = true })
+        end)
+      end)
+      clear_cursors()
+      cursors({ 'aaaaaaa', 'bbbbbbb', 'ccccccc' })
+      feed('vgs')
+      screen:expect([[
+        {17:aaa}aaaa                       |
+        {17:bbb}bbbb                       |
+        {17:cc}^ccccc                       |
+        {1:~                             }|*2
+        {5:-- VISUAL --}                  |
+      ]])
+      feed('d')
+      eq({ 'aaaa', 'bbbb', 'cccc' }, get_lines())
+
+      -- A mapping that ends the selection with an operator and starts a new one elsewhere: the
+      -- session is kept across the operator, the mapping replaces what it fed.
+      n.exec_lua(function()
+        vim.keymap.set('x', 'gl', function()
+          vim.cmd('normal! "_y')
+          vim.cmd('normal! 2l')
+          vim.cmd('normal! 1v')
+        end)
+      end)
+      clear_cursors()
+      cursors({ 'aaaaaaa', 'bbbbbbb', 'ccccccc' })
+      feed('vlgl')
+      screen:expect([[
+        aa{17:aa}aaa                       |
+        bb{17:bb}bbb                       |
+        cc{17:c}^cccc                       |
+        {1:~                             }|*2
+        {5:-- VISUAL --}                  |
+      ]])
+      feed('d')
+      eq({ 'aaaaa', 'bbbbb', 'ccccc' }, get_lines())
+    end)
+
+    it('treesitter "an" expands at each cursor #41716', function()
+      -- Simulate the v_an treesitter mapping. Selects via setpos("'<") + "gv", after "v<Esc>".
+      n.exec_lua(function()
+        vim.keymap.set({ 'x', 'o' }, 'an', function()
+          vim.treesitter.select('parent', vim.v.count1)
+        end)
+      end)
+      api.nvim_buf_set_lines(0, 0, -1, true, {
+        'int main(void) {',
+        '  foo(1);',
+        '}',
+        'void other(void) {',
+        '  bar(2);',
+        '}',
+      })
+      command('setfiletype c')
+      n.exec_lua(function()
+        vim.treesitter.start(0, 'c')
+      end)
+      local vsel = api.nvim_create_namespace('nvim.multicursor.visual')
+      local function fake()
+        local m = api.nvim_buf_get_extmarks(0, vsel, 0, -1, { details = true })[1]
+        return { m[2], m[3], m[4].end_row, m[4].end_col }
+      end
+      feed('2G3|Q5G3|') -- Cursor on "foo", primary on "bar".
+      feed('van') -- Each cursor selects its own identifier...
+      eq({ 1, 2, 1, 5 }, fake())
+      feed('an') -- ...then its own call expression.
+      eq({ 1, 2, 1, 8 }, fake())
+      eq({ 5, 3, 5, 8 }, { fn.line('v'), fn.col('v'), fn.line('.'), fn.col('.') })
+      feed('d')
+      eq({ 'int main(void) {', '  ;', '}', 'void other(void) {', '  ;', '}' }, get_lines())
+    end)
+
     it('replays the full visual keysequence', function()
       cursors({ 'one two three x', 'aa bb cc d' }, 'Qj')
       -- Select word, extend twice, delete: selection re-executes at each cursor, so the extents are
