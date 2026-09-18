@@ -1918,10 +1918,11 @@ M.funcs = {
   did_filetype = {
     desc = [=[
       Returns |TRUE| when autocommands are being executed and the
-      FileType event has been triggered at least once.  Can be used
-      to avoid triggering the FileType event again in the scripts
-      that detect the file type. |FileType|
+      FileType event triggered at least once for a buffer with
+      a non-empty 'filetype'.  Can be used to avoid triggering
+      the FileType event again in the |ftdetect| scripts. |FileType|
       Returns |FALSE| when `:setf FALLBACK` was used.
+
       When editing another file, the counter is reset, thus this
       really checks if the FileType event has been triggered for the
       current buffer.  This allows an autocommand that starts
