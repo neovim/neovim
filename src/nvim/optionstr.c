@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "nvim/api/private/defs.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/api/win_config.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
@@ -940,48 +941,44 @@ const char *did_set_complete(optset_T *args)
   return NULL;
 }
 
-/// The 'completeitemalign' option is changed.
-const char *did_set_completeitemalign(optset_T *args)
+/// Validate 'completeitemalign' and prepare its column order.
+const char *validate_completeitemalign(const optset_T *args)
 {
-  char *p = p_cia;
+  char *p = args->os_newval.data.string.data;
   unsigned new_cia_flags = 0;
   bool seen[3] = { false, false, false };
   int count = 0;
   char buf[10];
   while (*p) {
     copy_option_part(&p, buf, sizeof(buf), ",");
-    if (count >= 3) {
-      return e_invarg;
-    }
+    cpitem_T item;
     if (strequal(buf, "abbr")) {
-      if (seen[CPT_ABBR]) {
-        return e_invarg;
-      }
-      new_cia_flags = new_cia_flags * 10 + CPT_ABBR;
-      seen[CPT_ABBR] = true;
-      count++;
+      item = CPT_ABBR;
     } else if (strequal(buf, "kind")) {
-      if (seen[CPT_KIND]) {
-        return e_invarg;
-      }
-      new_cia_flags = new_cia_flags * 10 + CPT_KIND;
-      seen[CPT_KIND] = true;
-      count++;
+      item = CPT_KIND;
     } else if (strequal(buf, "menu")) {
-      if (seen[CPT_MENU]) {
-        return e_invarg;
-      }
-      new_cia_flags = new_cia_flags * 10 + CPT_MENU;
-      seen[CPT_MENU] = true;
-      count++;
+      item = CPT_MENU;
     } else {
       return e_invarg;
     }
+    if (seen[item]) {
+      return e_invarg;
+    }
+    new_cia_flags = new_cia_flags * 10 + item;
+    seen[item] = true;
+    count++;
   }
-  if (new_cia_flags == 0 || count != 3) {
+  if (count != 3) {
     return e_invarg;
   }
-  cia_flags = new_cia_flags;
+  args->os_prepared->data.flags = new_cia_flags;
+  return NULL;
+}
+
+/// The 'completeitemalign' option is changed.
+const char *did_set_completeitemalign(optset_T *args)
+{
+  cia_flags = args->os_prepared->data.flags;
   return NULL;
 }
 
@@ -1042,17 +1039,20 @@ int expand_set_cpoptions(optexpand_T *args, int *numMatches, char ***matches)
   return expand_set_opt_listflag(args, CPO_VI, numMatches, matches);
 }
 
+const char *validate_cursorlineopt(const optset_T *args)
+{
+  char *value = args->os_newval.data.string.data;
+  if (*value == NUL || fill_culopt_flags(value, &args->os_prepared->data.flags) != OK) {
+    return e_invarg;
+  }
+  return NULL;
+}
+
 /// The 'cursorlineopt' option is changed.
 const char *did_set_cursorlineopt(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
-  char **varp = (char **)args->os_varp;
-
-  // This could be changed to use opt_strings_flags() instead.
-  if (**varp == NUL || fill_culopt_flags(*varp, win) != OK) {
-    return e_invarg;
-  }
-
+  win->w_p_culopt_flags = (uint8_t)args->os_prepared->data.flags;
   return NULL;
 }
 
@@ -1110,43 +1110,52 @@ const char *did_set_display(optset_T *args)
   return NULL;
 }
 
+/// Validate and canonize 'encoding', 'fileencoding' or 'makeencoding'.
+const char *validate_encoding(const optset_T *args)
+{
+  if (args->os_idx == kOptFileencoding) {
+    buf_T *buf = (buf_T *)args->os_buf;
+    if (!MODIFIABLE(buf) && args->os_flags != OPT_GLOBAL) {
+      return e_modifiable;
+    }
+
+    if (vim_strchr(args->os_newval.data.string.data, ',') != NULL) {
+      // No comma allowed in 'fileencoding'; catches confusing it
+      // with 'fileencodings'.
+      return e_invarg;
+    }
+  }
+
+  char *value = enc_canonize(args->os_newval.data.string.data);
+  args->os_prepared->data.ptr = value;
+  args->os_prepared->free = xfree;
+  // Only encoding=utf-8 is allowed, including aliases such as "utf8".
+  if (args->os_idx == kOptEncoding && strcmp(value, "utf-8") != 0) {
+    return e_unsupportedoption;
+  }
+  return NULL;
+}
+
 /// One of the 'encoding', 'fileencoding' or 'makeencoding'
 /// options is changed.
 const char *did_set_encoding(optset_T *args)
 {
   buf_T *buf = (buf_T *)args->os_buf;
   char **varp = (char **)args->os_varp;
-  int opt_flags = args->os_flags;
-  // Get the global option to compare with, otherwise we would have to check
-  // two values for all local options.
-  char **gvarp = (char **)get_option_varp_scope_from(args->os_idx, OPT_GLOBAL, buf, NULL);
-
-  if (gvarp == &p_fenc) {
-    if (!MODIFIABLE(buf) && opt_flags != OPT_GLOBAL) {
-      return e_modifiable;
-    }
-
-    if (vim_strchr(*varp, ',') != NULL) {
-      // No comma allowed in 'fileencoding'; catches confusing it
-      // with 'fileencodings'.
-      return e_invarg;
-    }
-
+  if (args->os_idx == kOptFileencoding) {
     // May show a "+" in the title now.
     redraw_titles();
     // Add 'fileencoding' to the swap file.
     ml_setflags(buf);
   }
 
-  // canonize the value, so that strcmp() can be used on it
-  char *p = enc_canonize(*varp);
-  xfree(*varp);
-  *varp = p;
+  // Unsetting a local value skips validation; the empty string is already canonical.
+  if (args->os_prepared->data.ptr != NULL) {
+    xfree(*varp);
+    *varp = args->os_prepared->data.ptr;
+    args->os_prepared->data.ptr = NULL;
+  }
   if (varp == &p_enc) {
-    // only encoding=utf-8 allowed
-    if (strcmp(p_enc, "utf-8") != 0) {
-      return e_unsupportedoption;
-    }
     spell_reload();
   }
   return NULL;
@@ -1502,15 +1511,6 @@ const char *validate_matchpairs(const optset_T *args)
   return NULL;
 }
 
-/// Process the updated 'messagesopt' option value.
-const char *did_set_messagesopt(optset_T *args FUNC_ATTR_UNUSED)
-{
-  if (messagesopt_changed() == FAIL) {
-    return e_invarg;
-  }
-  return NULL;
-}
-
 /// Validate the 'mkspellmem' option.
 const char *validate_mkspellmem(const optset_T *args)
 {
@@ -1715,12 +1715,47 @@ const char *did_set_signcolumn(optset_T *args)
   return NULL;
 }
 
+static void free_spellcap_prog(void *prog)
+{
+  vim_regfree(prog);
+}
+
+/// Validate 'spellcapcheck' and prepare its regexp program.
+const char *validate_spellcapcheck(const optset_T *args)
+{
+  regprog_T *prog = NULL;
+  const char *errmsg;
+  Error err = ERROR_INIT;
+  // :silent! bypasses exception collection, so disable it while capturing errors.
+  int save_emsg_silent = emsg_silent;
+  emsg_silent = 0;
+  TRY_WRAP(&err, {
+    errmsg = compile_cap_prog(args->os_newval.data.string.data, &prog);
+  });
+  emsg_silent = save_emsg_silent;
+  args->os_prepared->data.ptr = prog;
+  args->os_prepared->free = free_spellcap_prog;
+  if (ERROR_SET(&err)) {
+    // The setter adds the command context; don't keep the exception's "Vim:" prefix.
+    const char *msg = strncmp(err.msg, "Vim:", 4) == 0 ? err.msg + 4 : err.msg;
+    snprintf(args->os_errbuf, args->os_errbuflen, "%s", msg);
+    api_clear_error(&err);
+    return args->os_errbuf;
+  }
+  return errmsg;
+}
+
 /// The 'spellcapcheck' option is changed.
 const char *did_set_spellcapcheck(optset_T *args)
 {
+  if (args->os_varp == &p_spc) {
+    return NULL;  // The global value only affects new buffers.
+  }
   win_T *win = (win_T *)args->os_win;
-  // When 'spellcapcheck' is set compile the regexp program.
-  return compile_cap_prog(win->w_s);
+  vim_regfree(win->w_s->b_cap_prog);
+  win->w_s->b_cap_prog = args->os_prepared->data.ptr;
+  args->os_prepared->data.ptr = NULL;
+  return NULL;
 }
 
 /// Validate the 'spellfile' option.
@@ -1775,10 +1810,16 @@ const char *did_set_spelloptions(optset_T *args)
   return NULL;
 }
 
+/// Validate the 'spellsuggest' option.
+const char *validate_spellsuggest(const optset_T *args)
+{
+  return spell_check_sps(args->os_newval.data.string.data, false) == OK ? NULL : e_invarg;
+}
+
 /// The 'spellsuggest' option is changed.
 const char *did_set_spellsuggest(optset_T *args FUNC_ATTR_UNUSED)
 {
-  if (spell_check_sps() != OK) {
+  if (spell_check_sps(p_sps, true) != OK) {
     return e_invarg;
   }
   return NULL;
@@ -1921,66 +1962,42 @@ const char *did_set_titlestring(optset_T *args)
   return did_set_titleiconstring(args, STL_IN_TITLE);
 }
 
-/// The 'varsofttabstop' option is changed.
-const char *did_set_varsofttabstop(optset_T *args)
+/// Validate 'vartabstop' or 'varsofttabstop' and prepare its tab widths.
+const char *validate_vartabstop(const optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
-  char **varp = (char **)args->os_varp;
-
-  if (!(*varp)[0] || ((*varp)[0] == '0' && !(*varp)[1])) {
-    XFREE_CLEAR(buf->b_p_vsts_array);
-    return NULL;
-  }
-
-  for (char *cp = *varp; *cp; cp++) {
+  char *value = args->os_newval.data.string.data;
+  for (char *cp = value; *cp; cp++) {
     if (ascii_isdigit(*cp)) {
       continue;
     }
-    if (*cp == ',' && cp > *varp && *(cp - 1) != ',') {
+    if (*cp == ',' && cp > value && *(cp - 1) != ',') {
       continue;
     }
     return e_invarg;
   }
 
-  colnr_T *oldarray = buf->b_p_vsts_array;
-  if (tabstop_set(*varp, &(buf->b_p_vsts_array))) {
-    xfree(oldarray);
-  } else {
-    return e_invarg;
-  }
-  return NULL;
+  colnr_T *array = NULL;
+  const char *errmsg = tabstop_set(value, &array);
+  args->os_prepared->data.ptr = array;
+  args->os_prepared->free = xfree;
+  return errmsg;
 }
 
-/// The 'varstabstop' option is changed.
+/// The 'vartabstop' or 'varsofttabstop' option is changed.
 const char *did_set_vartabstop(optset_T *args)
 {
+  if (args->os_varp == &p_vts || args->os_varp == &p_vsts) {
+    return NULL;  // The global value only affects new buffers.
+  }
   buf_T *buf = (buf_T *)args->os_buf;
   win_T *win = (win_T *)args->os_win;
-  char **varp = (char **)args->os_varp;
-
-  if (!(*varp)[0] || ((*varp)[0] == '0' && !(*varp)[1])) {
-    XFREE_CLEAR(buf->b_p_vts_array);
-    return NULL;
-  }
-
-  for (char *cp = *varp; *cp; cp++) {
-    if (ascii_isdigit(*cp)) {
-      continue;
-    }
-    if (*cp == ',' && cp > *varp && *(cp - 1) != ',') {
-      continue;
-    }
-    return e_invarg;
-  }
-
-  colnr_T *oldarray = buf->b_p_vts_array;
-  if (tabstop_set(*varp, &(buf->b_p_vts_array))) {
-    xfree(oldarray);
-    if (foldmethodIsIndent(win)) {
-      foldUpdateAll(win);
-    }
-  } else {
-    return e_invarg;
+  bool soft = args->os_idx == kOptVarsofttabstop;
+  colnr_T **array = soft ? &buf->b_p_vsts_array : &buf->b_p_vts_array;
+  xfree(*array);
+  *array = args->os_prepared->data.ptr;
+  args->os_prepared->data.ptr = NULL;
+  if (!soft && *array != NULL && foldmethodIsIndent(win)) {
+    foldUpdateAll(win);
   }
   return NULL;
 }
@@ -2040,10 +2057,15 @@ int expand_set_whichwrap(optexpand_T *args, int *numMatches, char ***matches)
   return expand_set_opt_listflag(args, WW_ALL, numMatches, matches);
 }
 
+const char *validate_wildmode(const optset_T *args)
+{
+  return check_opt_wim(args->os_newval.data.string.data, NULL) == FAIL ? e_invarg : NULL;
+}
+
 /// The 'wildmode' option is changed.
 const char *did_set_wildmode(optset_T *args FUNC_ATTR_UNUSED)
 {
-  if (check_opt_wim() == FAIL) {
+  if (check_opt_wim(p_wim, wim_flags) == FAIL) {
     return e_invarg;
   }
   return NULL;
