@@ -60,6 +60,32 @@ describe('thread', function()
     assert_alive()
   end)
 
+  it('does not include current directory in package paths', function()
+    exec_lua [[
+      local work = vim.uv.new_work(function()
+        local function has_cwd_template(path)
+          for entry in (path .. ';'):gmatch('(.-);') do
+            if entry:match('^%.[/\\\\]%?%.[^/\\\\;]+$') then
+              return true
+            end
+          end
+          return false
+        end
+
+        return has_cwd_template(package.path), has_cwd_template(package.cpath)
+      end, function(path, cpath)
+        vim.rpcnotify(1, 'package_paths', path, cpath)
+      end)
+      work:queue()
+    ]]
+
+    local msg = next_msg()
+    while msg[1] ~= 'notification' or msg[2] ~= 'package_paths' do
+      msg = next_msg()
+    end
+    eq({ 'notification', 'package_paths', { false, false } }, msg)
+  end)
+
   it('callback is executed in protected mode', function()
     exec_lua [[
       local thread = vim.uv.new_thread(function()
