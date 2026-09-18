@@ -4474,6 +4474,14 @@ static int get_next_default_completion(ins_compl_next_state_T *st, pos_T *start_
       continue;
     }
 
+    // Autocomplete with no selection leaves the original text in place while
+    // searching. Don't offer that text as its own completion match.
+    if (compl_autocomplete && in_curbuf
+        && curwin->w_cursor.lnum == st->cur_match_pos->lnum
+        && compl_col == st->cur_match_pos->col) {
+      continue;
+    }
+
     if (!in_fuzzy_collect) {
       ptr = ins_compl_get_next_word_or_line(st->ins_buf,
                                             st->cur_match_pos, &len, &cont_s_ipos);
