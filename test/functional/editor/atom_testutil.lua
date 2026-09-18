@@ -1,5 +1,6 @@
 -- Helpers shared by the atom-capture specs (mcursor_spec.lua, cmdatom_spec.lua).
 
+local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
 local m = {}
@@ -37,16 +38,6 @@ function m.atom_last()
   return evs[#evs]
 end
 
---- Projects only the named fields of `ev` (a nil field stays absent, so `eq` still asserts
---- omission when the expected table lacks it).
-function m.pick(ev, ...)
-  local r = {}
-  for _, f in ipairs({ ... }) do
-    r[f] = ev[f]
-  end
-  return r
-end
-
 --- Gets the last `count` collected CmdAtom events: bare `keys` strings by default, or
 --- projections of the named `fields`.
 function m.atoms_tail(count, ...)
@@ -54,7 +45,7 @@ function m.atoms_tail(count, ...)
   local fields = select('#', ...) > 0 and { ... } or nil
   local tail = {}
   for i = #evs - count + 1, #evs do
-    table.insert(tail, fields and m.pick(evs[i], unpack(fields)) or evs[i].keys)
+    table.insert(tail, fields and t.pick(evs[i], unpack(fields)) or evs[i].keys)
   end
   return tail
 end
@@ -65,7 +56,7 @@ function m.subatoms(ev, ...)
   local fields = select('#', ...) > 0 and { ... } or nil
   local subs = {}
   for _, c in ipairs(ev.atoms) do
-    table.insert(subs, fields and m.pick(c, unpack(fields)) or c.keys)
+    table.insert(subs, fields and t.pick(c, unpack(fields)) or c.keys)
   end
   return subs
 end

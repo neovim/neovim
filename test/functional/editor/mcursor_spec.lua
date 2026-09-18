@@ -1333,7 +1333,7 @@ describe('multicursor', function()
       local ev = atom_last()
       eq(
         { type = 'mapping', lhs = k('iX<Esc>'), changed = true },
-        t_atom.pick(atom_last(), 'type', 'lhs', 'changed')
+        t.pick(atom_last(), 'type', 'lhs', 'changed')
       )
       eq({
         { type = 'motion', keys = '^' },
@@ -2867,7 +2867,7 @@ describe('multicursor', function()
         operator = 'g@',
         changed = false,
         moved = true,
-      }, t_atom.pick(atom_last(), 'type', 'keys', 'lhs', 'operator', 'changed', 'moved'))
+      }, t.pick(atom_last(), 'type', 'keys', 'lhs', 'operator', 'changed', 'moved'))
     end)
 
     it('cursors placed inside the opfunc are live for the next typed cascade', function()
