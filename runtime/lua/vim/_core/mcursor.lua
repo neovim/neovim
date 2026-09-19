@@ -208,6 +208,12 @@ function M.restore()
       vim.api.nvim_mcursor(0, { m[2] + 1, m[3] })
     end
   end
+
+  local last_primary_pos = vim.api.nvim_create_namespace('nvim.multicursor.primary')
+  local mark = vim.api.nvim_buf_get_extmarks(0, last_primary_pos, 0, -1, { limit = 1 })[1]
+  if mark and mark[2] < lastrow then
+    vim.api.nvim_win_set_cursor(0, { mark[2] + 1, mark[3] })
+  end
 end
 
 --- Places a cursor on each line of the Visual selection. Enables "follow mode" (q=).

@@ -143,6 +143,16 @@ static uint32_t mc_ns(void)
   return ns;
 }
 
+/// Namespace for the previous session's primary cursor location, snapshotted on clear.
+static uint32_t mc_last_primary_ns(void)
+{
+  static uint32_t ns = 0;
+  if (ns == 0) {
+    ns = (uint32_t)nvim_create_namespace(STATIC_CSTR_AS_STRING("nvim.multicursor.primary"));
+  }
+  return ns;
+}
+
 /// Namespace for the selection-end cursors. While they exist they are the display positions;
 /// "nvim.multicursor" holds the selection anchors.
 static uint32_t mc_vcur_ns(void)
@@ -1316,6 +1326,7 @@ void mc_buf_clear(buf_T *buf)
   }
   extmark_clear(buf, mc_ns(), 0, 0, MAXLNUM, MAXCOL);
   extmark_clear(buf, mc_last_ns(), 0, 0, MAXLNUM, MAXCOL);
+  extmark_clear(buf, mc_last_primary_ns(), 0, 0, MAXLNUM, MAXCOL);
 }
 
 /// Called when a buffer's extmarks were freed. Deleting a cursor's extmark deletes the cursor.
@@ -1365,6 +1376,12 @@ void mc_ns_cleared(buf_T *buf, uint32_t ns_id)
   if (!others) {
     // "DWIM yank": before the multicursor session ends, join per-cursor yanks to primary.
     mc_reg_gather();
+  }
+
+  extmark_clear(buf, mc_last_primary_ns(), 0, 0, MAXLNUM, MAXCOL);
+  if (curbuf == buf && curwin) {
+    uint32_t mark = 0;
+    mc_mark_set(buf, mc_last_primary_ns(), &mark, curwin->w_cursor, false, true, false);
   }
 
   // Snapshot the positions into "nvim.multicursor.last" ("gQ").

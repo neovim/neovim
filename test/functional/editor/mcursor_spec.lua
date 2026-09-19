@@ -174,10 +174,13 @@ describe('multicursor', function()
 
     it('gQ restores the cleared cursors (like gv)', function()
       cursors({ 'aaa', 'bbb', 'ccc', 'ddd' }, 'QjQ')
+      feed('j')
       clear_cursors()
+      feed('G')
       eq(0, ncursors())
       feed('gQ')
       eq(2, ncursors())
+      eq({ 3, 0 }, api.nvim_win_get_cursor(0))
       feed('Gx') -- the restored cursors cascade
       eq({ 'aa', 'bb', 'ccc', 'dd' }, get_lines())
       -- The snapshot is extmark-tracked: edits in between shift it.
@@ -1106,8 +1109,10 @@ describe('multicursor', function()
       eq(1, ncursors())
       command('edit!')
       eq(0, ncursors())
+      feed('G')
       feed('gQ')
       eq(0, ncursors()) -- Nothing to restore: the snapshot died with the text.
+      eq({ 2, 0 }, api.nvim_win_get_cursor(0)) -- Primary cursor position not restored
       feed('Q') -- A new session starts cleanly.
       eq(1, ncursors())
     end)
