@@ -972,12 +972,6 @@ describe('json_encode() function', function()
     )
   end)
 
-  it('ignores improper values in &isprint', function()
-    api.nvim_set_option_value('isprint', '1', {})
-    eq(1, eval('"\1" =~# "\\\\p"'))
-    eq('"\\u0001"', fn.json_encode('\1'))
-  end)
-
   it('fails when using surrogate character in a UTF-8 string', function()
     eq(
       'Vim(call):E474: UTF-8 string contains code point which belongs to a surrogate pair: \237\160\128',

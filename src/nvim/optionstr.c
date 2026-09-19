@@ -1105,7 +1105,6 @@ const char *did_set_display(optset_T *args)
     return errmsg;
   }
   dy_escape_width = ((dy_flags & kOptDyFlagUhex) ? 4 : 2);
-  init_chartab();
   msg_grid_validate();
   return NULL;
 }
@@ -1380,7 +1379,7 @@ const char *did_set_inccommand(optset_T *args FUNC_ATTR_UNUSED)
   return NULL;
 }
 
-/// Validate the 'isident', 'iskeyword', 'isprint' or 'isfname' option.
+/// Validate the 'isident', 'iskeyword' or 'isfname' option.
 const char *validate_isopt(const optset_T *args)
 {
   return check_isopt(args->os_newval.data.string.data) == FAIL ? e_invarg : NULL;
@@ -1393,7 +1392,10 @@ const char *did_set_iskeyword(optset_T *args)
 
   // The global value only affects new buffers.
   if (varp != &p_isk) {
-    return did_set_isopt(args);
+    buf_T *buf = (buf_T *)args->os_buf;
+    if (buf_init_isk_chartab(buf) == FAIL) {
+      return e_invarg;    // error in value
+    }
   }
 
   return NULL;
@@ -1403,15 +1405,14 @@ const char *did_set_iskeyword(optset_T *args)
 /// changed.
 const char *did_set_isopt(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
-  // 'isident', 'iskeyword', 'isprint' or 'isfname' option: refill g_chartab[]
-  // If the new option is invalid, use old value.
-  // 'lisp' option: refill g_chartab[] for '-' char
-  if (buf_init_chartab(buf, true) == FAIL) {
-    args->os_restore_chartab = true;  // need to restore it below
-    return e_invarg;                  // error in value
+  int res = FAIL;
+  if (args->os_varp == &p_isf) {
+    res = init_isf_chartab();
+  } else {
+    res = init_isi_chartab();
   }
-  return NULL;
+
+  return res == FAIL ? e_invarg : NULL;
 }
 
 /// The 'keymap' option has changed.

@@ -361,6 +361,7 @@ OPTIONS
 			WARNING: Setting this breaks plugins, because "/g"
 			will have the opposite effect. |:s_g|
 • *'highlight'* *'hl'*	Names of builtin |highlight-groups| cannot be changed.
+• *'isprint* *'isp'*	Printability of ASCII or Unicode chars cannot be changed.
 • *'langnoremap'*	Deprecated alias to 'nolangremap'.
 • *'magic'* *'nomagic'*	boolean	(default on) Changes the special characters in
 			search |pattern|s.

@@ -374,7 +374,7 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
 
   // if first time loading this buffer, init b_chartab[]
   if (curbuf->b_flags & BF_NEVERLOADED) {
-    buf_init_chartab(curbuf, false);
+    buf_init_isk_chartab(curbuf);
     parse_cino(curbuf);
   }
 
