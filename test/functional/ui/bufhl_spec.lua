@@ -806,10 +806,10 @@ describe('Buffer highlighting', function()
     it('works with listchars', function()
       command('set list listchars+=eol:$')
       screen:expect([[
-        ^1 + 2{1:$}{3:=}{2: 3}                               |
-        3 +{1:$}{11:ERROR:} invalid syntax               |
+        ^1 + 2{1:$} {3:=}{2: 3}                              |
+        3 +{1:$} {11:ERROR:} invalid syntax              |
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
-        , 5, 5, 5, 5, 5, 5,{1:-$}Lorem ipsum dolor s|
+        , 5, 5, 5, 5, 5, 5,{1:-$} Lorem ipsum dolor |
         x = 4{1:$}                                  |
         {1:~                                       }|*2
                                                 |
