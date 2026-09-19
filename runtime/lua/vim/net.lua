@@ -110,6 +110,7 @@ function M.request(method, url, opts, on_response)
   ---@cast on_response vim.net.request.ResponseFunc?
 
   local retry = opts.retry or 3
+  local outbuf = opts.outbuf == 0 and vim.api.nvim_get_current_buf() or opts.outbuf
 
   -- Build curl command
   local args = { 'curl' }
@@ -167,9 +168,9 @@ function M.request(method, url, opts, on_response)
 
     -- nvim_buf_is_loaded and nvim_buf_set_lines are not allowed in fast context
     vim.schedule(function()
-      if res.code == 0 and opts.outbuf and vim.api.nvim_buf_is_loaded(opts.outbuf) then
+      if res.code == 0 and outbuf and vim.api.nvim_buf_is_loaded(outbuf) then
         local lines = vim.split(res.stdout, '\n', { plain = true })
-        vim.api.nvim_buf_set_lines(opts.outbuf, 0, -1, true, lines)
+        vim.api.nvim_buf_set_lines(outbuf, 0, -1, true, lines)
       end
     end)
 
