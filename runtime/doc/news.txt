@@ -324,6 +324,9 @@ EDITOR
 <    Typing õõ in |Normal-mode| now invokes a mapping bound to ]].
 • New |complete-items| field "commit_chars": characters that accept the
   selected completion item when typed.
+• New |complete-items| fields "startcol" and "filter_text": an item can
+  replace text in front of the completion column and be filtered by
+  something other than what it inserts.
 
 EVENTS
 
