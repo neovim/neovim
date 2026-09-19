@@ -957,6 +957,7 @@ is_na_patch() {
           '-I\|popup-windows\|' \
           '-I\|tabpanel\|' \
           '-I\spopup window\s' \
+          '-I\sterm_start\(\)\s' \
           "$patch" -- "${file}")
         if test -n "$HUNKS"; then
           HUNK_NUM_FINAL=$(echo "$HUNKS" | grep '^@@ .* @@' | sed 's/^@@ .* @@ //' | grep -cv -f "$NA_HUNKS_HELP")
@@ -1015,7 +1016,7 @@ is_na_patch() {
           '-I^\s+$' \
           '-I^\s*/?\*/?$' \
           '-I^\s*(//|/?\*).*\s([vV]im9|E[0-9]{,4} unused|E[0-9]{4} - |FEAT_|JSON-RPC|channel|job|popup|sound|terminal)' \
-          '-I^#\s*((ifdef|ifndef|undef)|(if|elif)\s.*defined\().*FEAT_[^_]' \
+          '-I^#\s*((ifdef|ifndef|undef)|(if|elif)\s.*defined\().*(FEAT_[^_]|USE_GTK)' \
           '-I^#\s*(else|endif)' \
           '-I^#\s*define\s+(FEAT|POPUPWIN|XDG|t)_[^_]' \
           '-I^\s+(&&|\|\|)\s.*defined\(.*FEAT_[^_]' \
@@ -1076,7 +1077,7 @@ is_na_patch() {
           '-I^\s+$' \
           '-I^\s*/?\*/?$' \
           '-I^\s*(//|/?\*).*\s([vV]im9|E[0-9]{4} - |FEAT_|channel|job|popup|sound|terminal|uf_type_list)' \
-          '-I^#\s*((ifdef|ifndef|undef)|(if|elif)\s.*defined\().*FEAT_[^_]' \
+          '-I^#\s*((ifdef|ifndef|undef)|(if|elif)\s.*defined\().*(FEAT_[^_]|USE_GTK)' \
           '-I^#\s*(else|endif)' \
           '-I^#\s*define\s+(FEAT|POPUPWIN|XDG|t)_[^_]' \
           '-I^\s+(&&|\|\|)\s.*defined\(.*FEAT_[^_]' \
@@ -1095,6 +1096,7 @@ is_na_patch() {
           '-I = skip_type\(.+\);$' \
           '-Icheck_typval_type\(.+\)' \
           '-Icrypt_get_method_nr\(.+\)' \
+          '-Imsg\(.*".*GTK.*"\)' \
           '-I\spopup_set_firstline\(.+\);' \
           '-I\sredraw_tabpanel =' \
           '-I\sterm_focus_change\(.+\);$' \
