@@ -92,6 +92,7 @@
 \*:scriptversion\*
 \*:shell\*
 \*:smile\*
+\*:terminal\*
 \*:version\*
 \*2html\.vim\*
 \*DirChanged\*
@@ -126,6 +127,7 @@
 \*tabpanel[-a-z]*\*
 \*term++\(close\|open\)\*
 \*term_start()\*
+\*terminal-\(bufname\|nospecial\)\*
 \*test_gui_[a-zA-Z0-9_]\+()\*
 \*v:none\*
 \*v:sizeof[a-z]\+\*

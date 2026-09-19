@@ -957,6 +957,7 @@ is_na_patch() {
           '-I\|popup-windows\|' \
           '-I\|tabpanel\|' \
           '-I\spopup window\s' \
+          '-I\sterm_start\(\)\s' \
           "$patch" -- "${file}")
         if test -n "$HUNKS"; then
           HUNK_NUM_FINAL=$(echo "$HUNKS" | grep '^@@ .* @@' | sed 's/^@@ .* @@ //' | grep -cv -f "$NA_HUNKS_HELP")
