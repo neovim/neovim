@@ -983,7 +983,14 @@ static void set_key_encoding_flags(VTermState *state, int arg, int mode)
   // When mode is 1, unset bits are reset
   bool reset_unset = mode == 1;
 
-  struct VTermKeyEncodingFlags flags = { 0 };
+  int screen = state->mode.alt_screen ? BUFIDX_ALTSCREEN : BUFIDX_PRIMARY;
+  struct VTermKeyEncodingStack *stack = &state->key_encoding_stacks[screen];
+  assert(stack->size > 0);
+  VTermKeyEncodingFlags flags = stack->items[stack->size - 1];
+
+  // Ignore unsupported flags so queries accurately describe the encoding behavior.
+  arg &= KEY_ENCODING_SUPPORTED_FLAGS;
+
   if (arg & KEY_ENCODING_DISAMBIGUATE) {
     flags.disambiguate = set;
   } else if (reset_unset) {
@@ -1013,9 +1020,6 @@ static void set_key_encoding_flags(VTermState *state, int arg, int mode)
     flags.report_associated = false;
   }
 
-  int screen = state->mode.alt_screen ? BUFIDX_ALTSCREEN : BUFIDX_PRIMARY;
-  struct VTermKeyEncodingStack *stack = &state->key_encoding_stacks[screen];
-  assert(stack->size > 0);
   stack->items[stack->size - 1] = flags;
 }
 
