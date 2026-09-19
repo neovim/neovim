@@ -772,6 +772,24 @@ do
     )
   end)
 
+  nvim_on('VimResized', nil, {
+    desc = 'Resize windows equally when Neovim is resized',
+  }, function()
+    if not vim.o.equalalways then
+      return
+    end
+
+    local eadirection = vim.o.eadirection
+
+    if eadirection == 'ver' then
+      vim.cmd('vertical wincmd =')
+    elseif eadirection == 'hor' then
+      vim.cmd('horizontal wincmd =')
+    else
+      vim.cmd('wincmd =')
+    end
+  end)
+
   -- Check if a TTY is attached
   local tty = nil
   for _, ui in ipairs(vim.api.nvim_list_uis()) do

@@ -833,6 +833,129 @@ local function screen_tests(linegrid)
                                                            |
     ]])
   end)
+
+  it('equalizes windows on VimResized when equalalways is set (eadirection=both)', function()
+    screen:try_resize(80, 40)
+    command('set equalalways')
+    command('set eadirection=both')
+    command('split')
+    local win_ids = api.nvim_list_wins()
+    api.nvim_win_set_height(win_ids[1], 12)
+    api.nvim_win_set_height(win_ids[2], 8)
+
+    local h1 = api.nvim_win_get_height(win_ids[1])
+    local h2 = api.nvim_win_get_height(win_ids[2])
+
+    assert(h1 ~= h2)
+
+    screen:try_resize(80, 24)
+
+    local h1_new = api.nvim_win_get_height(win_ids[1])
+    local h2_new = api.nvim_win_get_height(win_ids[2])
+
+    assert(math.abs(h1_new - h2_new) <= 1)
+  end)
+
+  it('equalizes windows on VimResized when equalalways is set (eadirection=ver)', function()
+    screen:try_resize(80, 40)
+    command('set equalalways')
+    command('set eadirection=ver')
+    command('split')
+    local win_ids = api.nvim_list_wins()
+    api.nvim_win_set_height(win_ids[1], 12)
+    api.nvim_win_set_height(win_ids[2], 8)
+
+    local h1 = api.nvim_win_get_height(win_ids[1])
+    local h2 = api.nvim_win_get_height(win_ids[2])
+
+    assert(h1 ~= h2)
+
+    screen:try_resize(80, 24)
+
+    local h1_new = api.nvim_win_get_height(win_ids[1])
+    local h2_new = api.nvim_win_get_height(win_ids[2])
+
+    assert(math.abs(h1_new - h2_new) <= 1)
+  end)
+
+  it('equalizes windows on VimResized when equalalways is set (eadirection=hor)', function()
+    screen:try_resize(80, 40)
+    command('set equalalways')
+    command('set eadirection=hor')
+    command('vsplit')
+    local win_ids = api.nvim_list_wins()
+    api.nvim_win_set_height(win_ids[1], 12)
+    api.nvim_win_set_height(win_ids[2], 8)
+
+    local h1 = api.nvim_win_get_width(win_ids[1])
+    local h2 = api.nvim_win_get_width(win_ids[2])
+
+    assert(h1 ~= h2)
+
+    screen:try_resize(80, 24)
+
+    local h1_new = api.nvim_win_get_width(win_ids[1])
+    local h2_new = api.nvim_win_get_width(win_ids[2])
+
+    assert(math.abs(h1_new - h2_new) <= 1)
+  end)
+
+  it('equalizes windows on VimResized when equalalways is set (eadirection=both)', function()
+    screen:try_resize(80, 40)
+    command('set equalalways')
+    command('set eadirection=both')
+
+    local original_win = api.nvim_get_current_win()
+
+    command('split')
+    local split_win = api.nvim_get_current_win()
+
+    command('vsplit')
+    local vsplit_win = api.nvim_get_current_win()
+
+    api.nvim_win_set_width(vsplit_win, 12)
+    api.nvim_win_set_height(original_win, 8)
+
+    local w1 = api.nvim_win_get_width(split_win)
+    local w2 = api.nvim_win_get_width(vsplit_win)
+    local h1 = api.nvim_win_get_height(split_win)
+    local h2 = api.nvim_win_get_height(original_win)
+
+    assert(w1 ~= w2)
+    assert(h1 ~= h2)
+
+    screen:try_resize(80, 24)
+
+    local w1_new = api.nvim_win_get_width(split_win)
+    local w2_new = api.nvim_win_get_width(vsplit_win)
+    local h1_new = api.nvim_win_get_height(split_win)
+    local h2_new = api.nvim_win_get_height(original_win)
+
+    assert(math.abs(w1_new - w2_new) <= 1)
+    assert(math.abs(h1_new - h2_new) <= 1)
+  end)
+
+  it('equalizes windows on VimResized when equalalways is unset)', function()
+    screen:try_resize(80, 40)
+    command('set noequalalways')
+    command('split')
+
+    local win_ids = api.nvim_list_wins()
+
+    api.nvim_win_set_height(win_ids[1], 12)
+
+    local h1 = api.nvim_win_get_height(win_ids[1])
+    local h2 = api.nvim_win_get_height(win_ids[2])
+
+    assert(h1 ~= h2)
+
+    screen:try_resize(80, 24)
+
+    local h1_new = api.nvim_win_get_height(win_ids[1])
+    local h2_new = api.nvim_win_get_height(win_ids[2])
+
+    assert(math.abs(h1_new - h2_new) > 1)
+  end)
 end
 
 describe('Screen (char-based)', function()
