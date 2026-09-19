@@ -87,6 +87,14 @@ typedef struct {
   VisualExtent resel;     ///< Previous Visual area's extent, for {count}v reselect.
 } VisualState;
 
+/// Visual area. The region when Visual mode ended, or the active region (visualinfo()).
+typedef struct {
+  pos_T vi_start;       ///< Start pos.
+  pos_T vi_end;         ///< End position.
+  int vi_mode;          ///< Visual.mode.
+  colnr_T vi_curswant;  ///< MAXCOL from w_curswant.
+} visualinfo_T;
+
 /// Replacement for nchar used by nv_replace().
 enum {
   REPLACE_CR_NCHAR  = -1,

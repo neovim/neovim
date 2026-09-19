@@ -26,7 +26,8 @@ struct CmdFrame {
   CmdOrigin origin;     ///< State at entry.
   VisualState visual;   ///< Visual-mode state (active/start/mode are diffed).
   bool keytyped;        ///< KeyTyped
-  uint64_t captures;    ///< Capture counter.
+  uint64_t captures;    ///< `atom_captures` at entry.
+  size_t vatoms;        ///< `kv_size(vatom.atoms)` at entry: any beyond were fed in this frame.
   uint64_t global_ops;  ///< `global_ops` at entry.
   uint64_t beeps;       ///< `did_beep` at entry.
   uint64_t id;          ///< Identifies this frame (see `composite.frame`).

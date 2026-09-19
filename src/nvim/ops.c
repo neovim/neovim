@@ -3343,11 +3343,8 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     if (Visual.active) {
       if (!gui_yank) {
         // Save the current Visual area for '< and '> marks, and "gv"
-        curbuf->b_visual.vi_start = Visual.start;
-        curbuf->b_visual.vi_end = curwin->w_cursor;
-        curbuf->b_visual.vi_mode = Visual.mode;
+        curbuf->b_visual = visualinfo();
         restore_visual_mode();
-        curbuf->b_visual.vi_curswant = curwin->w_curswant;
         curbuf->b_visual_mode_eval = Visual.mode;
       }
 
