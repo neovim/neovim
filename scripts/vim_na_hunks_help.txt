@@ -115,6 +115,7 @@
 \*editorconfig-install\*
 \*emacs[_-]tags\*
 \*global-ime\*
+\*gui-start\*
 \*help-toc-install\*
 \*job_[a-zA-Z0-9]\+()\*
 \*multibyte-ime\*
