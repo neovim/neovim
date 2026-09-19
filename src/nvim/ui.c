@@ -86,10 +86,10 @@ static void ui_log(const char *funname)
     uilog_seen++;
   } else {
     if (uilog_seen > 0) {
-      logmsg(LOGLVL_DBG, "UI: ", NULL, -1, true,
+      logmsg(LOGLVL_DBG, "UI: ", NULL, -1, false, 0, true,
              "%s (+%zu times...)", uilog_last_event, uilog_seen);
     }
-    logmsg(LOGLVL_DBG, "UI: ", NULL, -1, true, "%s", funname);
+    logmsg(LOGLVL_DBG, "UI: ", NULL, -1, false, 0, true, "%s", funname);
     uilog_seen = 0;
     uilog_last_event = funname;
   }
