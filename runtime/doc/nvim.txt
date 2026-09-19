@@ -25,7 +25,7 @@ To learn how to use Vim in 30 minutes, try the tutorial: >vim
 <
 Or watch this 10-minute video: https://youtu.be/TQn2hJeHQbM .
 
-                                               *config-example* *example-init*
+                                               *example-init*
 To customize Nvim, you will need a config file. Create your |init.lua| by
 copying the "example_init.lua" file: >vim
 
