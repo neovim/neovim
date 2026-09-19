@@ -532,7 +532,7 @@ For more information: https://github.com/google/sanitizers/wiki/SanitizerCommonF
 
 If you run nvim in the builtin TUI, it can be asked to load the crash log
 after a crash as a quickfix list in a restarted nvim instance.
-Put this in init.lua (adjust quickfix commands to taste):
+Put this in gether (adjust quickfix commands to taste):
 >lua
     if vim.env.ASAN_OPTIONS ~= nil then
       local log_name = vim.env.HOME.."/logs/asan."..vim.uv.getpid()
