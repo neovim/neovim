@@ -40,10 +40,11 @@ typedef struct {
 
 /// How an insert-session was entered from Visual mode.
 typedef enum {
-  kVInsNone,   ///< Not entered from Visual mode.
-  kVInsKeys,   ///< Redo opens with the selection's captured keys: replayable.
-  kVInsOther,  ///< Redo without the captured keys (Ex/Lua-motion selection, forced
-               ///< motion, or the "1v" fixed-size fallback for a void selection).
+  kVInsNone,    ///< Not entered from Visual mode.
+  kVInsKeys,    ///< Redo opens with the selection's captured keys: replayable.
+  kVInsMotion,  ///< Ex/Lua motion selected the region ("c" + Lua textobj): replayable.
+  kVInsOther,   ///< Redo without captured keys: forced or self-selecting motion (gn, gv), or "1v"
+                ///< fixed-size fallback.
 } VisualIns;
 
 /// The insert-session delimited by atom_ins_start()/atom_ins_end().

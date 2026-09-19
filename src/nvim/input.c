@@ -708,23 +708,28 @@ void redo_append_lit(const char *str, int len)
   sb_add_lit(&redobuff.cur.body, str, len);
 }
 
-/// Append "s" to the redo buffer, leaving 3-byte special key codes unmodified
-/// and escaping other K_SPECIAL bytes.
+/// Appends `s` to `buf`, leaving 3-byte special key codes unmodified and escaping other K_SPECIAL
+/// bytes. Unlike sb_add_lit(), no CTRL-V: for text read raw (<Cmd>), not typed into a cmdline.
+void sb_add_spec(StringBuilder *buf, const char *s)
+{
+  while (*s != NUL) {
+    if ((uint8_t)(*s) == K_SPECIAL && s[1] != NUL && s[2] != NUL) {
+      // Insert special key literally.
+      kv_concat_len(*buf, s, 3);
+      s += 3;
+    } else {
+      sb_add_char(buf, mb_cptr2char_adv(&s));
+    }
+  }
+}
+
+/// Append "s" to the redo buffer.
 void redo_append_spec(const char *s)
 {
   if (block_redo) {
     return;
   }
-
-  while (*s != NUL) {
-    if ((uint8_t)(*s) == K_SPECIAL && s[1] != NUL && s[2] != NUL) {
-      // Insert special key literally.
-      kv_concat_len(redobuff.cur.body, s, 3);
-      s += 3;
-    } else {
-      sb_add_char(&redobuff.cur.body, mb_cptr2char_adv(&s));
-    }
-  }
+  sb_add_spec(&redobuff.cur.body, s);
 }
 
 /// Appends character `c` to the redo buffer, translated to typeahead encoding.
