@@ -174,6 +174,17 @@ describe('vim.ui', function()
       )
     end)
 
+    it('can reuse opt.cmd without accumulating paths', function()
+      eq(
+        'arg1=arg1;arg2=https://example.com/second;',
+        exec_lua(function(opener)
+          local opts = { cmd = { opener, 'arg1' } }
+          vim.ui.open('https://example.com/first', opts):wait()
+          return vim.ui.open('https://example.com/second', opts):wait().stdout
+        end, n.testprg('printargs-test'))
+      )
+    end)
+
     it('gx on a help tag opens URL', function()
       n.command('helptags $VIMRUNTIME/doc')
       n.command('help nvim.txt')
