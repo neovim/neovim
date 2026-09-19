@@ -21,6 +21,7 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/autocmd_defs.h"
+#include "nvim/bidi.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/change.h"
@@ -1208,8 +1209,8 @@ static int normal_execute(VimState *state, int key)
     goto finish;
   }
 
-  if (curwin->w_p_rl && KeyTyped && !KeyStuffed
-      && (nv_cmds[s->idx].cmd_flags & NV_RL)) {
+  if (KeyTyped && !KeyStuffed && (nv_cmds[s->idx].cmd_flags & NV_RL)
+      && (curwin->w_p_rl || bidi_invert_horizontal(curwin))) {
     // Invert horizontal movements and operations.  Only when typed by the
     // user directly, not when the result of a mapping or "x" translated
     // to "dl".
