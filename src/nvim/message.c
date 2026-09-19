@@ -1270,26 +1270,33 @@ void msg_hist_clear_temp(void)
   }
 }
 
-int messagesopt_changed(void)
+/// Check the 'messagesopt' fields after schema validation.
+const char *validate_messagesopt(const optset_T *args)
 {
-  OptKeyDict_mopt *v = opt_keyset(p_mopt, kOptMessagesopt, NULL);
+  OptKeyDict_mopt *v = opt_keyset(args->os_newval.data.string.data, kOptMessagesopt, NULL);
 
   // Either "wait" or "hit-enter" is required; "history" always.
   if ((!v->hit_enter && !HAS_KEY(v, mopt, wait)) || !HAS_KEY(v, mopt, history)) {
-    return FAIL;
+    return e_invarg;
   }
   // "history" and "wait" must be <= 10000; "maxheight" is a percentage.
   if (v->history > 10000 || v->wait > 10000 || v->maxheight > 100) {
-    return FAIL;
+    return e_invarg;
   }
+  return NULL;
+}
+
+/// Process the updated 'messagesopt' option value.
+const char *did_set_messagesopt(optset_T *args FUNC_ATTR_UNUSED)
+{
+  OptKeyDict_mopt *v = opt_keyset(p_mopt, kOptMessagesopt, NULL);
 
   msg_hit_enter = v->hit_enter;
   msg_wait = (int)v->wait;
   progress_msg_target = strequal(v->progress, "c") ? PROGRESS_TARGET_CMD : 0;
   msg_hist_max = (int)v->history;
   msg_hist_clear(msg_hist_max);
-
-  return OK;
+  return NULL;
 }
 
 /// :messages command implementation

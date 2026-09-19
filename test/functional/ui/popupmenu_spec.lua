@@ -8939,6 +8939,8 @@ describe('builtin popupmenu', function()
         ]])
         -- T1
         command('set cia=abbr,kind,menu')
+        -- A dry run must leave the popup columns in their current order.
+        api.nvim_set_option_value('completeitemalign', 'menu,kind,abbr', { dry_run = true })
         feed('S<C-X><C-O>')
         screen:expect([[
           foo^                           |

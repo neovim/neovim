@@ -2957,18 +2957,14 @@ char *getcmdline_prompt(const int firstc, const char *const prompt, const int hl
   return ret;
 }
 
-/// Read the 'wildmode' option, fill wim_flags[].
-int check_opt_wim(void)
+/// Parse 'wildmode', updating flags only when non-NULL and the value is valid.
+int check_opt_wim(const char *value, uint8_t *flags)
 {
-  uint8_t new_wim_flags[4];
+  uint8_t new_wim_flags[4] = { 0 };
   int i;
   int idx = 0;
 
-  for (i = 0; i < 4; i++) {
-    new_wim_flags[i] = 0;
-  }
-
-  for (char *p = p_wim; *p; p++) {
+  for (const char *p = value; *p; p++) {
     // Note: Keep this in sync with opt_wim_values.
     for (i = 0; ASCII_ISALPHA(p[i]); i++) {}
     if (p[i] != NUL && p[i] != ',' && p[i] != ':') {
@@ -3007,9 +3003,9 @@ int check_opt_wim(void)
     idx++;
   }
 
-  // only when there are no errors, wim_flags[] is changed
-  for (i = 0; i < 4; i++) {
-    wim_flags[i] = new_wim_flags[i];
+  // Only when there are no errors, the flags are changed.
+  if (flags != NULL) {
+    memcpy(flags, new_wim_flags, sizeof(new_wim_flags));
   }
   return OK;
 }
@@ -4456,19 +4452,23 @@ void cmdline_init(void)
   CLEAR_FIELD(ccline);
 }
 
-/// Check value of 'cedit' and set cedit_key.
-/// Returns NULL if value is OK, error message otherwise.
-const char *did_set_cedit(optset_T *args)
+/// Validate the 'cedit' option.
+const char *validate_cedit(const optset_T *args)
 {
-  if (*p_cedit == NUL) {
-    cedit_key = -1;
-  } else {
-    int n = string_to_key(p_cedit);
+  char *value = args->os_newval.data.string.data;
+  if (*value != NUL) {
+    int n = string_to_key(value);
     if (n == 0 || vim_isprintc(n)) {
       return e_invarg;
     }
-    cedit_key = n;
   }
+  return NULL;
+}
+
+/// The 'cedit' option is changed.
+const char *did_set_cedit(optset_T *args FUNC_ATTR_UNUSED)
+{
+  cedit_key = *p_cedit == NUL ? -1 : string_to_key(p_cedit);
   return NULL;
 }
 
