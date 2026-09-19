@@ -466,6 +466,38 @@ xfmark_T *mark_get_global(bool resolve, int name)
   return mark;
 }
 
+/// Delete a global mark {A-Z0-9}.
+///
+/// Clears the position, the buffer and the shada file name. setmark_pos() would
+/// instead leave fnum pointing at the current buffer.
+///
+/// @param timestamp  Time of the deletion, kept for shada merging.
+///
+/// @return  true if the mark had a position, i.e. something was deleted.
+bool mark_del_global(int name, Timestamp timestamp)
+{
+  if (!ASCII_ISUPPER(name) && !ascii_isdigit(name)) {
+    return false;
+  }
+  int n = ascii_isdigit(name) ? name - '0' + NMARKS : name - 'A';
+
+  xfmark_T *xfm = &namedfm[n];
+  bool was_set = xfm->fmark.mark.lnum != 0;
+
+  if (was_set) {
+    // Must run before the mark is cleared: fnum is the only way back to its
+    // buffer.
+    buf_T *buf = buflist_findnr(xfm->fmark.fnum);
+    pos_T pos = { 0, 0, 0 };
+    do_markset_autocmd((char)name, &pos, buf != NULL ? buf : curbuf);
+  }
+
+  clear_fmark(&xfm->fmark, timestamp);
+  XFREE_CLEAR(xfm->fname);
+
+  return was_set;
+}
+
 /// Get a local mark (lowercase and symbols).
 ///
 /// Some marks are not actually marks, but positions that are never adjusted or motions presented as
@@ -924,7 +956,6 @@ void ex_marks(exarg_T *eap)
 void ex_delmarks(exarg_T *eap)
 {
   int from, to;
-  int n;
   pos_T pos = { 0, 0, 0 };
 
   if (*eap->arg == NUL && eap->forceit) {
@@ -986,22 +1017,7 @@ void ex_delmarks(exarg_T *eap)
             curbuf->b_namedm[i - 'a'].mark.lnum = 0;
             curbuf->b_namedm[i - 'a'].timestamp = timestamp;
           } else {
-            if (digit) {
-              n = i - '0' + NMARKS;
-            } else {
-              n = i - 'A';
-            }
-            if (namedfm[n].fmark.mark.lnum != 0) {
-              buf_T *buf = buflist_findnr(namedfm[n].fmark.fnum);
-              if (buf == NULL) {
-                buf = curbuf;
-              }
-              do_markset_autocmd((char)i, &pos, buf);
-            }
-            namedfm[n].fmark.mark.lnum = 0;
-            namedfm[n].fmark.fnum = 0;
-            namedfm[n].fmark.timestamp = timestamp;
-            XFREE_CLEAR(namedfm[n].fname);
+            mark_del_global(i, timestamp);
           }
         }
       } else {
