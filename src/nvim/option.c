@@ -3838,7 +3838,8 @@ Object optval_from_obj(OptIndex opt_idx, Object o, set_op_T op, bool *error)
         GA_APPEND(char *, &ga, xstrdup(item.data.string.data));
       }
     }
-    str = ga_concat_strings(&ga, ",");
+    // A bare flag list is concatenated with no separator, as in the Dict branch below.
+    str = ga_concat_strings(&ga, (is_flaglist && !is_comma) ? "" : ",");
     GA_DEEP_CLEAR_PTR(&ga);
   } else {  // kObjectTypeDict
     garray_T ga;
