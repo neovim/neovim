@@ -1568,6 +1568,7 @@ end
 --- @param context vim.context.mods
 --- @param f fun(): R...
 --- @return R...
+--- @overload fun(context: vim.context.mods, f: fun())
 function vim._with(context, f)
   vim.validate('context', context, 'table')
   vim.validate('f', f, 'function')
