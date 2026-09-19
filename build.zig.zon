@@ -29,7 +29,10 @@
             .hash = "libuv-1.52.0-htqqvzNqAAAB6cHIx-wIffe_mqMW5GOKjHeDBJYHGwls",
             .lazy = true,
         },
-        .utf8proc = .{ .path = "./deps/utf8proc/", .lazy = true },
+        .utf8proc = .{
+            .url = "git+https://github.com/juliastrings/utf8proc#da376b8116a9257ace63d2aa0673bf8bcea72c2a",
+            .hash = "utf8proc-2.12.0-xFSJu3f7JQBRCV0q-KZwh1Bgh6X3BXEgpAP7uUvQccSw",
+        },
         .unibilium = .{
             .url = "git+https://github.com/neovim/unibilium?ref=v2.1.4#b0567db6a30898d8b25d206223960a8be2795fa8",
             .hash = "unibilium-2.1.4-INdqiXdRAQAKcGtWWj0Pb85VOTw07W3TDjMv6jrwUXgx",

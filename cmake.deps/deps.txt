@@ -27,8 +27,8 @@ LIBICONV_URL https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.19.tar.gz
 LIBICONV_SHA256 88dd96a8c0464eca144fc791ae60cd31cd8ee78321e67397e25fc095c4a19aa6
 
 # NOTE: Also update the find_package() call if bumping the minimum.
-UTF8PROC_URL https://github.com/juliastrings/utf8proc/archive/v2.11.3.tar.gz
-UTF8PROC_SHA256 abfed50b6d4da51345713661370290f4f4747263ee73dc90356299dfc7990c78
+UTF8PROC_URL https://github.com/juliastrings/utf8proc/archive/da376b8116a9257ace63d2aa0673bf8bcea72c2a.tar.gz
+UTF8PROC_SHA256 feb4e410393e4868a914a145ed6026f6f0cdef44743d30e6078e18b4535618f1
 
 TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/v0.24.2.tar.gz
 TREESITTER_C_SHA256 2eeb4db31f8fa0865e45488503d13403923bcb485a1bdb637abff8c42dd97364
