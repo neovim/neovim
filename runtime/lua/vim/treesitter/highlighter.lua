@@ -539,19 +539,32 @@ function TSHighlighter._on_spell_nav(_, _, buf, srow, _, erow, _)
 end
 
 ---@private
+---@param win integer
 ---@param buf integer
 ---@param row integer
-function TSHighlighter._on_conceal_line(_, _, buf, row)
+function TSHighlighter._on_conceal_line(_, win, buf, row)
   local self = TSHighlighter.active[buf]
   if not self or not self._conceal_line or self._conceal_checked[row] then
     return
   end
 
+  local line_count = api.nvim_buf_line_count(buf)
+  local height = api.nvim_win_get_height(win)
+  if row >= line_count or height < 1 then
+    return
+  end
+
+  -- Geometry scans both forwards and backwards. Align batches so a backwards
+  -- scan does not re-query a screenful for each newly encountered row.
+  -- Do not compute the window's bottom line here: that recurses into conceal.
+  local start_row = row - row % height
+  local end_row = math.min(line_count, start_row + height)
+
   -- Do not affect potentially populated highlight state.
   local highlight_states = self._highlight_states
-  self.tree:parse({ row, row + 1 })
-  self:prepare_highlight_states(row, row)
-  on_range_impl(self, buf, row, 0, row + 1, 0, false, true)
+  self.tree:parse({ start_row, end_row })
+  self:prepare_highlight_states(start_row, end_row)
+  on_range_impl(self, buf, start_row, 0, end_row, 0, false, true)
   self._highlight_states = highlight_states
 end
 
