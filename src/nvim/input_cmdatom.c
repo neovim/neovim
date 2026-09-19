@@ -626,12 +626,12 @@ bool atom_is_user_cmd(void)
 }
 
 /// Like atom_is_user_cmd(), for sampling before a command consumes its keys.
-///   typed "i", mapped "gj" => true;  "." (stuffed redo), "@r" => false
+/// - typed "i", mapped "gj" => true
+/// - "." (stuffed redo), "@r", feedkeys() without "t" => false
 static bool atom_is_user_input(void)
 {
   // An open composite is user input even after its keys were consumed (":nnoremap ,i i").
-  return KeyTyped
-         || (atom_is_user_cmd() && (typebuf_maplen() > 0 || atom_composite_active()));
+  return KeyTyped || (atom_is_user_cmd() && atom_composite_active());
 }
 
 /// Suppresses atom pushes. For internal operators.

@@ -1560,6 +1560,11 @@ describe('CmdAtom', function()
     eq(0, #take())
     n.exec_lua([[vim.api.nvim_feedkeys('x', '', false)]]) -- feedkeys without "t"
     eq(0, #take())
+    command('nnoremap gj i<c-j><esc>k$')
+    n.exec_lua([[vim.api.nvim_feedkeys('gj', 'm', false)]]) -- remapped feedkeys without "t"
+    eq({}, take())
+    n.exec_lua([[vim.api.nvim_feedkeys('ihello\27', '', false)]]) -- insert session without "t"
+    eq({}, take())
     command('normal! @q') -- macro played programmatically, not typed
     eq(0, #take())
     n.exec_lua([[vim.api.nvim_feedkeys('@q', '', false)]])
