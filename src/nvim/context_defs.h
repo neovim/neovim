@@ -6,10 +6,10 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/mark_defs.h"
+#include "nvim/normal_defs.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
-#include "nvim/undo_defs.h"
 
 typedef struct {
   pos_T pos;         ///< Current cursor position (cache, see `mark`).
