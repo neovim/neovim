@@ -94,6 +94,7 @@ return {
     Progress = false, -- after showing/updating a progress message
     RecordingEnter = true, -- when starting to record a macro
     RecordingLeave = true, -- just before a macro stops recording
+    RegisterChanged = false, -- after the contents of a register changed
     RemoteReply = false, -- upon string reception from a remote vim
     SafeState = false, -- going to wait for a character
     SearchWrapped = true, -- after the search wrapped around
@@ -174,6 +175,7 @@ return {
     Progress = true,
     RecordingEnter = true,
     RecordingLeave = true,
+    RegisterChanged = true,
     SessionWritePre = true,
     Signal = true,
     TabMoved = true,

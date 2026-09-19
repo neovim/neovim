@@ -54,6 +54,7 @@
 #include "nvim/plines.h"
 #include "nvim/profile.h"
 #include "nvim/regexp.h"
+#include "nvim/register.h"
 #include "nvim/search.h"
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"
@@ -221,6 +222,7 @@ void save_re_pat(int idx, char *pat, size_t patlen, int magic)
     return;
   }
 
+  search_reg_capture();
   free_spat(&spats[idx]);
   spats[idx].pat = xstrnsave(pat, patlen);
   spats[idx].patlen = patlen;
@@ -229,6 +231,7 @@ void save_re_pat(int idx, char *pat, size_t patlen, int magic)
   spats[idx].timestamp = os_time();
   spats[idx].additional_data = NULL;
   last_idx = idx;
+  search_reg_changed(kRegChangedSearch);
   // If 'hlsearch' set and search pat changed: need redraw.
   if (p_hls) {
     redraw_all_later(UPD_SOME_VALID);
@@ -242,6 +245,7 @@ static int save_level = 0;
 
 void save_search_patterns(void)
 {
+  search_reg_capture();
   if (save_level++ != 0) {
     return;
   }
@@ -280,12 +284,35 @@ void restore_search_patterns(void)
   mr_patternlen = saved_mr_patternlen;
   last_idx = saved_spats_last_idx;
   set_no_hlsearch(saved_spats_no_hlsearch);
+  search_reg_changed(kRegChangedSearch);
 }
 
 static inline void free_spat(SearchPattern *const spat)
 {
   xfree(spat->pat);
   xfree(spat->additional_data);
+}
+
+// The value @/ reads is spats[last_idx].pat: a write to either slot changes it
+// only while "last_idx" points there, and moving "last_idx" changes it with no
+// write at all. So both halves report the resolved value, exactly as the unnamed
+// register reports whatever y_previous points at.
+//
+// Capture keeps the first value of each event-loop tick and the report keeps the
+// last, so bracketing the save/restore wrappers as well as the writes is what
+// makes a pattern that is changed and put back inside a user function silent:
+// the restore's report puts the original value back in the pending slot.
+
+/// Record what @/ reads before something changes it.
+static void search_reg_capture(void)
+{
+  register_changed_capture('/', REG_VALUE_CSTR(spats[last_idx].pat));
+}
+
+/// Record what @/ reads after it changed.
+static void search_reg_changed(RegisterChangedReason reason)
+{
+  register_changed('/', REG_VALUE_CSTR(spats[last_idx].pat), reason, NULL);
 }
 
 #ifdef EXITFREE
@@ -319,6 +346,7 @@ static linenr_T saved_search_match_lines;
 /// cancelling incremental searching even if it's called inside user functions.
 void save_last_search_pattern(void)
 {
+  search_reg_capture();
   if (++did_save_last_search_spat != 1) {
     // nested call, nothing to do
     return;
@@ -352,6 +380,7 @@ void restore_last_search_pattern(void)
   set_vv_searchforward();
   last_idx = saved_last_idx;
   set_no_hlsearch(saved_no_hlsearch);
+  search_reg_changed(kRegChangedSearch);
 }
 
 /// Save and restore the incsearch highlighting variables.
@@ -496,6 +525,7 @@ void reset_search_dir(void)
 // Also set the saved search pattern, so that this works in an autocommand.
 void set_last_search_pat(const char *s, int idx, int magic, bool setlast)
 {
+  search_reg_capture();
   free_spat(&spats[idx]);
   // An empty string means that nothing should be matched.
   if (*s == NUL) {
@@ -529,6 +559,7 @@ void set_last_search_pat(const char *s, int idx, int magic, bool setlast)
     }
     saved_spats_last_idx = last_idx;
   }
+  search_reg_changed(kRegChangedSearch);
   // If 'hlsearch' set and search pat changed: need redraw.
   if (p_hls && idx == last_idx && !Search.no_hlsearch) {
     redraw_all_later(UPD_SOME_VALID);
@@ -3615,17 +3646,21 @@ bool search_pattern_cleared(bool substitute)
 /// Set last search pattern
 void set_search_pattern(const SearchPattern pat)
 {
+  search_reg_capture();
   free_spat(&spats[0]);
   memcpy(&(spats[0]), &pat, sizeof(spats[0]));
   set_vv_searchforward();
+  search_reg_changed(kRegChangedShada);
 }
 
 /// Set last substitute pattern
 void set_substitute_pattern(const SearchPattern pat)
 {
+  search_reg_capture();
   free_spat(&spats[1]);
   memcpy(&(spats[1]), &pat, sizeof(spats[1]));
   CLEAR_FIELD(spats[1].off);
+  search_reg_changed(kRegChangedShada);
 }
 
 /// Set last used search pattern
@@ -3634,7 +3669,10 @@ void set_substitute_pattern(const SearchPattern pat)
 ///                                    used. Otherwise sets search pattern.
 void set_last_used_pattern(const bool is_substitute_pattern)
 {
+  // Moves what @/ reads without writing either slot.
+  search_reg_capture();
   last_idx = (is_substitute_pattern ? 1 : 0);
+  search_reg_changed(kRegChangedShada);
 }
 
 /// Returns true if search pattern was the last used one

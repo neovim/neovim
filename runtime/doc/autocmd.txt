@@ -1107,9 +1107,109 @@ RecordingLeave			When a macro stops recording.
 				register.
 				|reg_recorded()| is only updated after this
 				event.
+				The register itself is already written, so
+				calling |getreg()| on it returns the
+				just-recorded macro.
 				Sets these |v:event| keys:
 				    regcontents
 				    regname
+
+							*RegisterChanged*
+RegisterChanged			After the contents of a register changed.  The
+				|autocmd-pattern| is matched against the
+				register name (|<amatch>|), so `au
+				RegisterChanged a,b` subscribes to registers
+				`a` and `b`.  `*` matches all.  Register names
+				are lowercase here (`"Ayy` appends to `"a` and
+				fires `RegisterChanged a`).  To match the
+				selection register, escape the glob: >vim
+				  au RegisterChanged \* echo 'changed'
+<
+				Reports a net change, not every write that
+				happens.  No-op writes are silent, as are
+				save-and-restore round trips. >vim
+				  let s:save = @a | let @a = 'x' | let @a = s:save
+<
+
+				Event is |deferred|. One operation produces at
+				most one event per register it changed.
+				Intermediate values are not reported, e.g.
+				`:g/foo/yank A` emits only one event for `"a`.
+
+				When one operation changes several registers,
+				they are emitted in |:registers| order: `"0`
+				to `"9`, `"a` to `"z`, `"-`, `"*`, `"+`, `".`,
+				`":`, `"/`, `"=`. Exception: the unnamed
+				register comes last.
+
+				Sets these |v:event| keys (type:
+				`vim.event.registerchanged.data`):
+				    operator
+				    reason
+				    regcontents
+				    regname
+				    regtype
+				    visual
+				plus `points_to` on the unnamed register only.
+				Unlike |TextYankPost| there is no `inclusive`
+				key becuase the |'[| and |']| marks are not in
+				step with a deferred event.  `operator` and
+				`visual` describe the write only when `reason`
+				is "yank" or "delete"; otherwise they are `""`
+				and |v:false|.
+
+				`reason` specifies the mechanism that wrote the
+				register: ~
+				    yank      |yank| operator
+				    delete    |deleting| or |changing| operator
+				    shift     rotation of `"1` to `"9`
+				    record    macro recording finished
+				    setreg    |setreg()|, `:let @x =`
+				    redir     |:redir| into a register
+				    shada     |shada| load
+				    search    new search pattern, `:let @/ =`
+				    expr      assignment to `"=`
+				    cmdline   a command line was executed
+				    insert    text was inserted
+				New values may be added in future releases;
+				existing values will not be renamed or
+				repurposed.
+
+				An event for the unnamed register fires
+				whenever Nvim changes what `@"` would paste.
+				`points_to` is the register it resolves to, as
+				|getreginfo()| reports it, but the pointer is
+				not part of the compared value.  Switching it
+				between two registers holding the same text
+				fires no event.
+
+				A register cannot report "unset", so a handler
+				must treat `[]` and `[""]` as the same state;
+				which one arrives depends on how the register
+				was emptied. `"=` reports the expression text,
+				not its value. `":` fires for typed commands
+				only and after the command has run, so `@:`
+				does not re-register itself.  `".` reports the
+				inserted text without the trailing <Esc>, once
+				per insert rather than per keystroke.  `q"`
+				and `:let @" =` both write `"0`.
+
+				Does not fire for the black hole register
+				|quote_|, nor for `"%` and `"#` (use
+				|BufEnter| or |WinEnter| instead for these).
+				Also does not fire during |startup|, so
+				|shada| load at launch is silent (use
+				|getreg()| at |VimEnter| instead).  Later
+				|:rshada| does fire an event.
+
+				Clipboard reads do not fire events. With
+				'clipboard' "unnamedplus" a plain `yy` fires
+				`"0` and `""` but not `"+`.
+
+				Register writes made from within a
+				RegisterChanged handler do not fire the event.
+				The handler runs at a safe state and may
+				change text.
 
 							*RemoteReply*
 RemoteReply			When a reply from a Vim that functions as
