@@ -7,7 +7,7 @@
 #     - verbose output: cmake --build build --verbose
 
 # Version should match the tested CMAKE_URL in .github/workflows/build.yml.
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.19)
 
 project(nvim C)
 
