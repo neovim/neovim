@@ -1930,6 +1930,7 @@ static int cell_attr(Terminal *term, GhosttyCell cell, GhosttyStyle style,
   GhosttyStyleColor bg_color = cell_bg_color(cell, style.bg_color);
   TerminalColorAttrs bg = convert_color(palette, bg_color);
   int underline = get_underline_hl_flag(style.underline);
+  int sp = underline ? convert_color(palette, style.underline_color).rgb : -1;
 
   int hl_attrs = (style.bold ? HL_BOLD : 0)
                  | (style.faint ? HL_DIM : 0)
@@ -1955,7 +1956,7 @@ static int cell_attr(Terminal *term, GhosttyCell cell, GhosttyStyle style,
       .rgb_ae_attr = (int32_t)hl_attrs,
       .rgb_fg_color = fg.rgb,
       .rgb_bg_color = bg.rgb,
-      .rgb_sp_color = -1,
+      .rgb_sp_color = sp,
       .hl_blend = -1,
       .url = -1,
     });
