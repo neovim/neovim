@@ -177,10 +177,6 @@ struct terminal {
   /// Lines in the terminal buffer belonging to the screen instead of the scrollback.
   int old_height;
 
-  char *title;     // VTermStringFragment buffer
-  size_t title_len;
-  size_t title_size;
-
   // buf_T instance that acts as a "drawing surface" for libvterm
   // we can't store a direct reference to the buffer because the
   // refresh_timer_cb may be called after the buffer was freed, and there's
@@ -676,6 +672,8 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
 #endif
   assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_BELL,
                                  (const void *)on_term_ghostty_bell));
+  assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_TITLE_CHANGED,
+                                 (const void *)on_ghostty_title_changed));
 #if defined(__GNUC__)
 # pragma GCC diagnostic pop
 #endif
@@ -1412,7 +1410,6 @@ void terminal_destroy(Terminal **termpp)
       xfree(term->sb_buffer[i]);
     }
     xfree(term->sb_buffer);
-    xfree(term->title);
     xfree(term->selection_buffer);
     kv_destroy(term->selection);
     kv_destroy(term->termrequest_buffer);
@@ -1929,7 +1926,19 @@ static void terminal_focus(Terminal *term, bool focus)
 }
 
 // }}}
-// libvterm callbacks {{{
+// libghostty and libvterm callbacks {{{
+
+/// Called when the terminal wants to set the title.
+static void on_ghostty_title_changed(GhosttyTerminal ghostty, void *user_data)
+{
+  Terminal *term = (Terminal *)user_data;
+  GhosttyString title = { 0 };
+  assert_ok(ghostty_terminal_get(ghostty, GHOSTTY_TERMINAL_DATA_TITLE, &title));
+
+  buf_T *buf = handle_get_buffer(term->buf_handle);
+  buf_set_term_title(buf, title.ptr == NULL ? "" : (const char *)title.ptr, title.len);
+}
+
 
 static int term_damage(VTermRect rect, void *data)
 {
@@ -1987,34 +1996,8 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
     invalidate_terminal(term, -1, -1);
     break;
 
-  case VTERM_PROP_TITLE: {
-    buf_T *buf = handle_get_buffer(term->buf_handle);  // May be NULL
-    VTermStringFragment frag = val->string;
-
-    if (frag.initial && frag.final) {
-      buf_set_term_title(buf, frag.str, frag.len);
-      break;
-    }
-
-    if (frag.initial) {
-      term->title_len = 0;
-      term->title_size = MAX(frag.len, 1024);
-      term->title = xmalloc(sizeof(char *) * term->title_size);
-    } else if (term->title_len + frag.len > term->title_size) {
-      term->title_size *= 2;
-      term->title = xrealloc(term->title, sizeof(char *) * term->title_size);
-    }
-
-    memcpy(term->title + term->title_len, frag.str, frag.len);
-    term->title_len += frag.len;
-
-    if (frag.final) {
-      buf_set_term_title(buf, term->title, term->title_len);
-      xfree(term->title);
-      term->title = NULL;
-    }
+  case VTERM_PROP_TITLE:
     break;
-  }
 
   case VTERM_PROP_MOUSE:
     break;
