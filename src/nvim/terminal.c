@@ -1480,13 +1480,12 @@ static void sync_key_encoder(Terminal *term)
 
 /// Returns a known unshifted codepoint for a key event.
 ///
-/// @param mods Ghostty modifiers for the key event.
 /// @param utf8 Produced UTF-8 text for the key event.
 /// @param utf8_len Length of `utf8` in bytes.
 /// @return Unshifted codepoint, or 0 if unknown.
-static uint32_t get_unshifted_codepoint(GhosttyMods mods, const char *utf8, size_t utf8_len)
+static uint32_t get_unshifted_codepoint(const char *utf8, size_t utf8_len)
 {
-  if (!(mods & GHOSTTY_MODS_CTRL) || utf8_len != 1) {
+  if (utf8_len != 1) {
     return 0;
   }
 
@@ -1537,7 +1536,7 @@ static void send_key_event(Terminal *term, GhosttyKey key, GhosttyMods mods, con
   ghostty_key_event_set_key(term->ghostty_key_event, key);
   ghostty_key_event_set_mods(term->ghostty_key_event, mods);
   ghostty_key_event_set_utf8(term->ghostty_key_event, utf8, utf8_len);
-  uint32_t unshifted_codepoint = get_unshifted_codepoint(mods, utf8, utf8_len);
+  uint32_t unshifted_codepoint = get_unshifted_codepoint(utf8, utf8_len);
   ghostty_key_event_set_unshifted_codepoint(term->ghostty_key_event, unshifted_codepoint);
 
   // An escape sequence with the text of at most one character.
@@ -2118,6 +2117,9 @@ static GhosttyMods convert_modifiers(int modifiers)
   }
   if (modifiers & MOD_MASK_ALT) {
     mods |= GHOSTTY_MODS_ALT;
+  }
+  if (modifiers & MOD_MASK_CMD) {
+    mods |= GHOSTTY_MODS_SUPER;
   }
   return mods;
 }
