@@ -1058,7 +1058,7 @@ is_na_patch() {
           '-I\sINIT\(= .+"E15[0-9]+: Cannot use .*listener_add in a .* listener callback"' \
           '-I\sINIT\(= .+"E1551: Cannot open a popup window to a closing buffer' \
           '-I\sINIT\(= .+"E157[34]: ' \
-          '-I\s(bool|char(|_u))\s+w_popup_image_[_a-zA-Z]+;' \
+          '-I\s(bool|char(|_u)|int)\s+w_popup_image_[_a-zA-Z]+;' \
           '-I\schar(|_u)\s+\*w_popup_title;' \
           '-I\sint\s+ch_[_a-zA-Z]+;' \
           '-I\sint\s+sv_const;' \
