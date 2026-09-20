@@ -156,7 +156,20 @@ typedef enum {
   kTermRequestParserEventNone = 0,
   kTermRequestParserEventStart,
   kTermRequestParserEventFinish,
+  kTermRequestParserEventSyncOutput,
 } TermRequestParserEvent;
+
+typedef struct {
+  uint16_t parameter;
+  bool parameter_set;
+  bool private;
+  bool has_mode;
+} SyncOutputParser;
+
+typedef enum {
+  kTerminalClipboardRegister = 0,
+  kTerminalClipboardPrimary,
+} TerminalClipboardRegister;
 
 #include "terminal.c.generated.h"
 
@@ -250,6 +263,8 @@ struct terminal {
   bool synchronized_output;  ///< Mode 2026: suppress redraws until end of synchronized update
   bool sync_flush_pending;   ///< Set when mode 2026 ends; triggers immediate buffer refresh
 
+  SyncOutputParser sync_output_parser;
+
   bool color_set[16];
 
   char *selection_buffer;  ///< libvterm selection buffer
@@ -267,7 +282,7 @@ static VTermScreenCallbacks vterm_screen_callbacks = {
   .damage = term_damage,
   .moverect = term_moverect,
   .movecursor = term_mixed_movecursor,
-  .settermprop = term_settermprop,
+  .settermprop = NULL,
   .bell = NULL,
   .theme = term_theme,
   .sb_pushline = term_sb_push,  // Called before a line goes offscreen.
@@ -445,7 +460,7 @@ static TermRequestParserEvent terminal_termrequest_parse_byte(Terminal *term, ui
       terminal_termrequest_begin(term, kTermRequestKindApc);
       return kTermRequestParserEventStart;
     case 0x9b:
-      term->termrequest_state = kTermRequestParserCsi;
+      terminal_sync_output_parser_begin(term);
       return kTermRequestParserEventNone;
     case ESC:
       term->termrequest_state = kTermRequestParserEsc;
@@ -467,7 +482,7 @@ static TermRequestParserEvent terminal_termrequest_parse_byte(Terminal *term, ui
       return kTermRequestParserEventStart;
     case '[':
     case 0x9b:
-      term->termrequest_state = kTermRequestParserCsi;
+      terminal_sync_output_parser_begin(term);
       return kTermRequestParserEventNone;
     case ESC:
       return kTermRequestParserEventNone;
@@ -482,8 +497,12 @@ static TermRequestParserEvent terminal_termrequest_parse_byte(Terminal *term, ui
       return kTermRequestParserEventNone;
     }
     if (c == 0x9b) {
-      term->termrequest_state = kTermRequestParserCsi;
+      terminal_sync_output_parser_begin(term);
       return kTermRequestParserEventNone;
+    }
+    if (terminal_sync_output_parse_byte(term, c)) {
+      term->termrequest_state = kTermRequestParserNormal;
+      return kTermRequestParserEventSyncOutput;
     }
     if (c >= 0x40 && c <= 0x7e) {
       term->termrequest_state = kTermRequestParserNormal;
@@ -531,6 +550,68 @@ static TermRequestParserEvent terminal_termrequest_parse_byte(Terminal *term, ui
     return kTermRequestParserEventNone;
   }
   return kTermRequestParserEventNone;
+}
+
+static void terminal_sync_output_parser_begin(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  term->termrequest_state = kTermRequestParserCsi;
+  term->sync_output_parser = (SyncOutputParser) { 0 };
+}
+
+static bool terminal_sync_output_parse_byte(Terminal *term, uint8_t c)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (c >= '0' && c <= '9') {
+    term->sync_output_parser.parameter = MIN((uint16_t)2027,
+                                             (uint16_t)(term->sync_output_parser.parameter * 10
+                                                        + (c - '0')));
+    term->sync_output_parser.parameter_set = true;
+    return false;
+  }
+  if (term->sync_output_parser.parameter_set) {
+    term->sync_output_parser.has_mode |= term->sync_output_parser.parameter == 2026;
+    term->sync_output_parser.parameter = 0;
+    term->sync_output_parser.parameter_set = false;
+  }
+  if (c == '?') {
+    term->sync_output_parser.private = true;
+  }
+  return term->sync_output_parser.private
+         && term->sync_output_parser.has_mode
+         && (c == 'h' || c == 'l');
+}
+
+static void terminal_ghostty_sync_output_update(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  bool synchronized_output = terminal_ghostty_mode_get(term, GHOSTTY_MODE_SYNC_OUTPUT);
+  if (term->synchronized_output && !synchronized_output) {
+    term->sync_flush_pending = true;
+  }
+  term->synchronized_output = synchronized_output;
+}
+
+static void terminal_ghostty_termprops_update(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  terminal_ghostty_sync_output_update(term);
+
+  GhosttyTerminalScreen screen = GHOSTTY_TERMINAL_SCREEN_PRIMARY;
+  assert_ok(ghostty_terminal_get(term->ghostty,
+                                 GHOSTTY_TERMINAL_DATA_ACTIVE_SCREEN,
+                                 &screen));
+  bool in_altscreen = screen == GHOSTTY_TERMINAL_SCREEN_ALTERNATE;
+  if (term->in_altscreen != in_altscreen) {
+    int height;
+    terminal_ghostty_size_get(term, &height, NULL);
+    term->invalid_start = 0;
+    term->invalid_end = height;
+    invalidate_terminal(term, -1, -1);
+  }
+  term->in_altscreen = in_altscreen;
+
+  term->theme_updates = terminal_ghostty_mode_get(term, GHOSTTY_MODE_COLOR_SCHEME_REPORT);
 }
 
 void terminal_init(void)
@@ -2039,6 +2120,10 @@ static void terminal_vt_write(Terminal *term, const char *data, size_t len)
       term->termrequest_kind = kTermRequestKindNone;
       kv_size(term->termrequest_buffer) = 0;
       chunk_start = i + 1;
+    } else if (event == kTermRequestParserEventSyncOutput) {
+      terminal_vt_write_chunk(term, data + chunk_start, i + 1 - chunk_start);
+      terminal_ghostty_sync_output_update(term);
+      chunk_start = i + 1;
     }
   }
   terminal_vt_write_chunk(term, data + chunk_start, len - chunk_start);
@@ -2710,51 +2795,6 @@ static void buf_set_term_title(buf_T *buf, const char *title, size_t len)
   buf->b_locked--;
   api_clear_error(&err);
   status_redraw_buf(buf);
-}
-
-static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
-{
-  Terminal *term = data;
-
-  switch (prop) {
-  case VTERM_PROP_ALTSCREEN:
-    if (term->in_altscreen != val->boolean) {
-      int height;
-      vterm_get_size(term->vt, &height, NULL);
-      term->invalid_start = 0;
-      term->invalid_end = height;
-      invalidate_terminal(term, -1, -1);
-    }
-    term->in_altscreen = val->boolean;
-    break;
-
-
-  case VTERM_PROP_TITLE:
-    break;
-
-  case VTERM_PROP_MOUSE:
-    break;
-
-
-
-  case VTERM_PROP_THEMEUPDATES:
-    term->theme_updates = val->boolean;
-    break;
-
-  case VTERM_PROP_SYNCOUTPUT:
-    term->synchronized_output = val->boolean;
-    if (!val->boolean) {
-      // Mark that sync just ended; terminal_receive() will flush
-      // the buffer immediately rather than waiting for the 10ms timer.
-      term->sync_flush_pending = true;
-    }
-    break;
-
-  default:
-    return 0;
-  }
-
-  return 1;
 }
 
 /// Called when the terminal wants to ring the system bell.
@@ -3608,14 +3648,14 @@ static void terminal_ghostty_render_state_update(Terminal *term)
   FUNC_ATTR_NONNULL_ALL
 {
   assert_ok(ghostty_render_state_update(term->ghostty_render_state,
-                                                     term->ghostty));
-
+                                        term->ghostty));
   terminal_ghostty_cursor_update(term);
+  terminal_ghostty_termprops_update(term);
 
   GhosttyRenderStateDirty dirty_state = GHOSTTY_RENDER_STATE_DIRTY_FALSE;
   assert_ok(ghostty_render_state_get(term->ghostty_render_state,
-                                                  GHOSTTY_RENDER_STATE_DATA_DIRTY,
-                                                  &dirty_state));
+                                     GHOSTTY_RENDER_STATE_DATA_DIRTY,
+                                     &dirty_state));
   // Nothing to re-render, so we're done.
   if (dirty_state == GHOSTTY_RENDER_STATE_DIRTY_FALSE) {
     return;
@@ -3628,15 +3668,15 @@ static void terminal_ghostty_render_state_update(Terminal *term)
   if (dirty_state == GHOSTTY_RENDER_STATE_DIRTY_FULL) {
     uint16_t rows = 0;
     assert_ok(ghostty_render_state_get(term->ghostty_render_state,
-                                                    GHOSTTY_RENDER_STATE_DATA_ROWS,
-                                                    &rows));
+                                       GHOSTTY_RENDER_STATE_DATA_ROWS,
+                                       &rows));
     dirty_start = 0;
     dirty_end = rows;
   }
 
   assert_ok(ghostty_render_state_get(term->ghostty_render_state,
-                                                  GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR,
-                                                  &term->ghostty_render_row_iterator));
+                                     GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR,
+                                     &term->ghostty_render_row_iterator));
 
   int row_idx = 0;
 
@@ -3644,8 +3684,8 @@ static void terminal_ghostty_render_state_update(Terminal *term)
     if (dirty_state == GHOSTTY_RENDER_STATE_DIRTY_PARTIAL) {
       bool row_dirty = false;
       assert_ok(ghostty_render_state_row_get(term->ghostty_render_row_iterator,
-                                                          GHOSTTY_RENDER_STATE_ROW_DATA_DIRTY,
-                                                          &row_dirty));
+                                             GHOSTTY_RENDER_STATE_ROW_DATA_DIRTY,
+                                             &row_dirty));
       if (row_dirty) {
         dirty_start = MIN(dirty_start, row_idx);
         dirty_end = row_idx + 1;
@@ -3655,8 +3695,8 @@ static void terminal_ghostty_render_state_update(Terminal *term)
     // Mark the row as clean.
     bool dirty = false;
     assert_ok(ghostty_render_state_row_set(term->ghostty_render_row_iterator,
-                                                        GHOSTTY_RENDER_STATE_ROW_OPTION_DIRTY,
-                                                        &dirty));
+                                           GHOSTTY_RENDER_STATE_ROW_OPTION_DIRTY,
+                                           &dirty));
     row_idx++;
   }
 
@@ -3664,8 +3704,8 @@ static void terminal_ghostty_render_state_update(Terminal *term)
 
   dirty_state = GHOSTTY_RENDER_STATE_DIRTY_FALSE;
   assert_ok(ghostty_render_state_set(term->ghostty_render_state,
-                                                  GHOSTTY_RENDER_STATE_OPTION_DIRTY,
-                                                  &dirty_state));
+                                     GHOSTTY_RENDER_STATE_OPTION_DIRTY,
+                                     &dirty_state));
 }
 
 /// Normally refresh_timer_cb() is called when processing main_loop.events, but with
