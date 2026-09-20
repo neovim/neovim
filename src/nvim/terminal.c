@@ -675,6 +675,7 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   // Set the reset default too, so a full reset (RIS) doesn't turn clustering off.
   assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_MODE_DEFAULT,
                                  &grapheme_cluster));
+  terminal_update_colors(term);
   assert_ok(ghostty_render_state_new(NULL, &term->ghostty_render_state));
   assert_ok(ghostty_render_state_row_iterator_new(NULL,
                                                   &term->ghostty_render_row_iterator));
@@ -808,17 +809,15 @@ void terminal_open(Terminal **termpp, buf_T *buf)
     if (color_val == -1) {
       continue;
     }
-    palette[i] = (GhosttyColorRgb){
-      .r = (uint8_t)((color_val >> 16) & 0xFF),
-      .g = (uint8_t)((color_val >> 8) & 0xFF),
-      .b = (uint8_t)((color_val >> 0) & 0xFF),
-    };
+    palette[i] = rgb_value_to_ghostty_color(color_val);
     term->color_set[i] = true;
   }
 
   assert_ok(ghostty_terminal_set(term->ghostty,
                                  GHOSTTY_TERMINAL_OPT_COLOR_PALETTE,
                                  palette));
+
+  terminal_update_colors(term);
 }
 
 /// Closes the Terminal buffer.
@@ -1839,6 +1838,16 @@ static int get_underline_hl_flag(int underline)
   }
 }
 
+/// Converts an RGB value to Ghostty's RGB representation.
+static GhosttyColorRgb rgb_value_to_ghostty_color(RgbValue color)
+{
+  return (GhosttyColorRgb) {
+    .r = (uint8_t)((color >> 16) & 0xff),
+    .g = (uint8_t)((color >> 8) & 0xff),
+    .b = (uint8_t)(color & 0xff),
+  };
+}
+
 static TerminalColorAttrs convert_color(const GhosttyColorRgb palette[256], GhosttyStyleColor color)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -2150,6 +2159,47 @@ void terminal_notify_theme(Terminal *term, bool dark)
 
 /// Updates the terminal's default foreground, background, and cursor colors.
 /// Updates the default colors for every open terminal buffer.
+void terminal_update_colors(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  bool dark = (*p_bg == 'd');
+
+  // Set the foreground color.
+  RgbValue fg = (p_tgc && normal_fg >= 0) ? normal_fg : (dark ? 0xffffff : 0x000000);
+  GhosttyColorRgb fg_ghostty = rgb_value_to_ghostty_color(fg);
+  assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_COLOR_FOREGROUND,
+                                 &fg_ghostty));
+
+  // Set the background color.
+  RgbValue bg = (p_tgc && normal_bg >= 0) ? normal_bg : (dark ? 0x000000 : 0xffffff);
+  GhosttyColorRgb bg_ghostty = rgb_value_to_ghostty_color(bg);
+  assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_COLOR_BACKGROUND,
+                                 &bg_ghostty));
+
+  // Set the cursor color.
+  if (*p_guicursor != NUL && shape_table[SHAPE_IDX_TERM].id != 0) {
+    HlAttrs attrs = syn_attr2entry(syn_id2attr(shape_table[SHAPE_IDX_TERM].id));
+    if (attrs.hl_blend != 100 && !(attrs.rgb_ae_attr & HL_INVERSE) && attrs.rgb_bg_color >= 0) {
+      GhosttyColorRgb cursor_ghostty = rgb_value_to_ghostty_color(attrs.rgb_bg_color);
+      assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_COLOR_CURSOR,
+                                     &cursor_ghostty));
+      return;
+    }
+  }
+
+  assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_COLOR_CURSOR,
+                                 NULL));
+}
+
+void terminal_update_colors_all(void)
+{
+  FOR_ALL_BUFFERS(buf) {
+    if (buf->terminal) {
+      terminal_update_colors(buf->terminal);
+    }
+  }
+}
+
 static void terminal_focus(Terminal *term, bool focus)
   FUNC_ATTR_NONNULL_ALL
 {

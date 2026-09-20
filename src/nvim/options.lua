@@ -9915,6 +9915,7 @@ local options = {
     },
     {
       abbreviation = 'tgc',
+      cb = 'did_set_termguicolors',
       defaults = false,
       desc = [=[
         Enables 24-bit RGB color in the |TUI|.  Uses "gui" |:highlight|

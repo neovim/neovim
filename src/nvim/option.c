@@ -2791,6 +2791,14 @@ static const char *did_set_swapfile(optset_T *args)
   return NULL;
 }
 
+/// Process the updated 'termguicolors' option value.
+static const char *did_set_termguicolors(optset_T *args FUNC_ATTR_UNUSED)
+{
+  // Terminal default colors use the Normal highlight's GUI colors only with 'termguicolors'.
+  terminal_update_colors_all();
+  return NULL;
+}
+
 /// Process the new 'textwidth' option value.
 static const char *did_set_textwidth(optset_T *args FUNC_ATTR_UNUSED)
 {
