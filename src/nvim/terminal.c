@@ -34,6 +34,7 @@
 // Some code from pangoterm http://www.leonerd.org.uk/code/pangoterm
 
 #include <assert.h>
+#include <ghostty/vt.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -148,6 +149,7 @@ struct terminal {
   TerminalOptions opts;  // options passed to terminal_alloc()
   VTerm *vt;
   VTermScreen *vts;
+  GhosttyTerminal ghostty;
   // buffer used to:
   //  - convert VTermScreen cell arrays into utf8 strings
   //  - receive data from libvterm as a result of key presses.
@@ -492,6 +494,11 @@ static bool term_may_alloc_scrollback(Terminal *term, buf_T *buf)
   return true;
 }
 
+static void assert_ok(GhosttyResult res)
+{
+  assert(res == GHOSTTY_SUCCESS);
+}
+
 // public API {{{
 
 /// Allocates a terminal instance and initializes terminal properties.
@@ -520,6 +527,12 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   // Create VTerm
   term->vt = vterm_new(opts.height, opts.width);
   vterm_set_utf8(term->vt, 1);
+  // Create Ghostty
+  assert_ok(ghostty_terminal_new(NULL, &term->ghostty, opts.width, opts.height));
+  assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_SCROLLBACK_MAX_BYTES,
+                                 NULL));
+  assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_SCROLLBACK_MAX_LINES,
+                                 &(size_t){ SB_MAX }));
   // Setup state
   VTermState *state = vterm_obtain_state(term->vt);
   // Set up screen
@@ -822,6 +835,7 @@ void terminal_check_size(Terminal *term)
 
   vterm_set_size(term->vt, height, width);
   vterm_screen_flush_damage(term->vts);
+  ghostty_terminal_resize(term->ghostty, width, height, 0, 0);
   term->pending.resize = true;
   invalidate_terminal(term, -1, -1);
 }
@@ -1256,6 +1270,7 @@ void terminal_destroy(Terminal **termpp)
     kv_destroy(term->termrequest_buffer);
     vterm_free(term->vt);
     multiqueue_free(term->pending.events);
+    ghostty_terminal_free(term->ghostty);
     xfree(term);
     *termpp = NULL;  // coverity[dead-store]
   }
@@ -1416,9 +1431,11 @@ void terminal_receive(Terminal *term, const char *data, size_t len)
     }
 
     vterm_input_write(term->vt, crlf_data.items, kv_size(crlf_data));
+    ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)crlf_data.items, kv_size(crlf_data));
     kv_destroy(crlf_data);
   } else {
     vterm_input_write(term->vt, data, len);
+    ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)data, len);
   }
   vterm_screen_flush_damage(term->vts);
 
