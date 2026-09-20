@@ -171,6 +171,7 @@ struct terminal {
   TerminalOptions opts;  // options passed to terminal_alloc()
   VTerm *vt;
   VTermScreen *vts;
+  VTermPos vterm_cursor;
   GhosttyTerminal ghostty;
   int width, height;  ///< Size of the Ghostty terminal.
   GhosttyRenderState ghostty_render_state;
@@ -204,7 +205,6 @@ struct terminal {
   // no way to know if the memory was reused.
   handle_T buf_handle;
   bool in_altscreen;
-  bool vterm_screen_render_pending;
   // program suspended
   bool suspended;
   // program exited
@@ -216,7 +216,7 @@ struct terminal {
   int invalid_start, invalid_end;   // invalid rows in libvterm screen
   struct {
     int row, col;
-    int shape;
+    GhosttyRenderStateCursorVisualStyle shape;
     bool visible;  ///< Terminal wants to show cursor.
                    ///< `TerminalState.cursor_visible` indicates whether it is actually shown.
     bool blink;
@@ -250,7 +250,7 @@ struct terminal {
 static VTermScreenCallbacks vterm_screen_callbacks = {
   .damage = term_damage,
   .moverect = term_moverect,
-  .movecursor = term_movecursor,
+  .movecursor = term_mixed_movecursor,
   .settermprop = term_settermprop,
   .bell = NULL,
   .theme = term_theme,
@@ -341,6 +341,7 @@ static void schedule_termrequest(Terminal *term)
   term->pending.send = xmalloc(sizeof(StringBuilder));
   kv_init(*term->pending.send);
 
+  terminal_ghostty_cursor_position_update(term);
   int line = row_to_linenr(term, term->cursor.row);
   multiqueue_put(main_loop.events, emit_termrequest, (void *)(intptr_t)term->buf_handle,
                  xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size),
@@ -523,22 +524,6 @@ static bool mode_enabled(Terminal *term, GhosttyMode mode)
   return config.value;
 }
 
-// TODO(noib3): Remove when libvterm no longer owns render state for the X10
-// mouse report / CSI M ambiguity, or when upstream gives us a safer signal.
-static bool terminal_input_has_x10_mouse_report(const char *data, size_t len)
-  FUNC_ATTR_NONNULL_ALL
-{
-  for (size_t i = 0; i < len; i++) {
-    if (i + 1 < len && (uint8_t)data[i] == 0x9b && data[i + 1] == 'M') {
-      return true;
-    }
-    if (i + 2 < len && data[i] == ESC && data[i + 1] == '[' && data[i + 2] == 'M') {
-      return true;
-    }
-  }
-  return false;
-}
-
 /// Sets the screen size of the mouse encoder. Mouse events are already in cell coordinates, so each
 /// cell is 1x1.
 static void set_mouse_encoder_size(Terminal *term, uint16_t width, uint16_t height)
@@ -598,6 +583,95 @@ static GhosttyMouseButton held_mouse_button(Terminal *term)
   return GHOSTTY_MOUSE_BUTTON_UNKNOWN;
 }
 
+static void terminal_ghostty_cursor_position_update(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (terminal_mixed_screen_use_vterm(term)) {
+    VTermPos pos = term->vterm_cursor;
+    term->cursor.col = pos.col;
+    term->cursor.row = pos.row;
+    return;
+  }
+  uint16_t col = 0;
+  uint16_t row = 0;
+  assert_ok(ghostty_terminal_get(term->ghostty,
+                                 GHOSTTY_TERMINAL_DATA_CURSOR_X,
+                                 &col));
+  assert_ok(ghostty_terminal_get(term->ghostty,
+                                 GHOSTTY_TERMINAL_DATA_CURSOR_Y,
+                                 &row));
+  term->cursor.col = (int)col;
+  term->cursor.row = (int)row;
+}
+
+/// Updates term->cursor from the render state. Falls back to the cursor position on the active
+/// screen when the cursor isn't in the viewport.
+static void fetch_cursor(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  GhosttyRenderStateCursor cursor = GHOSTTY_INIT_SIZED(GhosttyRenderStateCursor);
+  assert_ok(ghostty_render_state_get(term->ghostty_render_state,
+                                     GHOSTTY_RENDER_STATE_DATA_CURSOR,
+                                     &cursor));
+
+  int old_row = term->cursor.row;
+  int old_col = term->cursor.col;
+  if (terminal_mixed_screen_use_vterm(term)) {
+    term->cursor.col = term->vterm_cursor.col;
+    term->cursor.row = term->vterm_cursor.row;
+  } else if (cursor.viewport_has_value) {
+    term->cursor.col = cursor.viewport_x;
+    term->cursor.row = cursor.viewport_y;
+  } else {
+    terminal_ghostty_cursor_position_update(term);
+  }
+  bool position_changed = term->cursor.row != old_row || term->cursor.col != old_col;
+  bool visibility_changed = term->cursor.visible != cursor.visible;
+  bool style_changed = term->cursor.blink != cursor.blinking
+                       || term->cursor.shape != cursor.visual_style;
+  term->cursor.visible = cursor.visible;
+  term->cursor.blink = cursor.blinking;
+  term->cursor.shape = cursor.visual_style;
+
+  if (style_changed) {
+    term->pending.cursor = true;
+  }
+  if (position_changed || visibility_changed || style_changed) {
+    invalidate_terminal(term, -1, -1);
+  }
+}
+
+static int terminal_default_decsusr_cursor_style(void)
+{
+  int style = 1;
+  bool blink = shape_table[SHAPE_IDX_TERM].blinkon != 0
+               && shape_table[SHAPE_IDX_TERM].blinkoff != 0;
+
+  switch (shape_table[SHAPE_IDX_TERM].shape) {
+  case SHAPE_BLOCK:
+    style = blink ? 1 : 2;
+    break;
+  case SHAPE_HOR:
+    style = blink ? 3 : 4;
+    break;
+  case SHAPE_VER:
+    style = blink ? 5 : 6;
+    break;
+  }
+  return style;
+}
+
+static void terminal_ghostty_init_cursor_style(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int style = terminal_default_decsusr_cursor_style();
+
+  char buf[8];
+  int len = snprintf(buf, sizeof(buf), "\x1b[%d q", style);
+  assert(len > 0 && (size_t)len < sizeof(buf));
+  ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)buf, (size_t)len);
+}
+
 static size_t get_history_rows(Terminal *term)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -613,6 +687,16 @@ static size_t get_history_rows(Terminal *term)
 static bool terminal_mixed_screen_use_vterm(Terminal *term)
 {
   return get_history_rows(term) != term->sb_current;
+}
+
+static int term_mixed_movecursor(VTermPos new_pos, VTermPos old_pos, int visible, void *data)
+{
+  Terminal *term = data;
+  term->vterm_cursor = new_pos;
+  if (terminal_mixed_screen_use_vterm(term)) {
+    invalidate_terminal(term, -1, -1);
+  }
+  return 1;
 }
 
 // public API {{{
@@ -699,27 +783,8 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   vterm_state_set_selection_callbacks(state, &vterm_selection_callbacks, term,
                                       term->selection_buffer, SELECTIONBUF_SIZE);
 
-  VTermValue cursor_shape;
-  switch (shape_table[SHAPE_IDX_TERM].shape) {
-  case SHAPE_BLOCK:
-    cursor_shape.number = VTERM_PROP_CURSORSHAPE_BLOCK;
-    break;
-  case SHAPE_HOR:
-    cursor_shape.number = VTERM_PROP_CURSORSHAPE_UNDERLINE;
-    break;
-  case SHAPE_VER:
-    cursor_shape.number = VTERM_PROP_CURSORSHAPE_BAR_LEFT;
-    break;
-  }
-  vterm_state_set_termprop(state, VTERM_PROP_CURSORSHAPE, &cursor_shape);
-
-  VTermValue cursor_blink;
-  if (shape_table[SHAPE_IDX_TERM].blinkon != 0 && shape_table[SHAPE_IDX_TERM].blinkoff != 0) {
-    cursor_blink.boolean = true;
-  } else {
-    cursor_blink.boolean = false;
-  }
-  vterm_state_set_termprop(state, VTERM_PROP_CURSORBLINK, &cursor_blink);
+  terminal_ghostty_init_cursor_style(term);
+  update_render_state(term);
 
   // Force a initial refresh of the screen to ensure the buffer will always
   // have as many lines as screen rows when refresh_scrollback() is called.
@@ -1752,12 +1817,6 @@ void terminal_receive(Terminal *term, const char *data, size_t len)
   if (!data || len == 0) {
     return;
   }
-  // X10 mouse reports echo back as CSI M, which is also DL.  Cursor/screen state
-  // is still libvterm-owned in this phase, so render that update from vterm.
-  if (terminal_input_has_x10_mouse_report(data, len)) {
-    term->vterm_screen_render_pending = true;
-  }
-
   if (term->opts.force_crlf) {
     StringBuilder crlf_data = KV_INITIAL_VALUE;
 
@@ -2266,7 +2325,7 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *te
   }
 
   width = MIN(TERM_ATTRS_MAX, width);
-  if (terminal_mixed_screen_use_vterm(term) || row < 0 || term->vterm_screen_render_pending) {
+  if (terminal_mixed_screen_use_vterm(term) || row < 0) {
     VTermState *state = vterm_obtain_state(term->vt);
     for (int col = 0; col < width; col++) {
       term_attrs[col] = terminal_vterm_cell_attr(term, state, row, col);
@@ -2383,15 +2442,6 @@ static int term_moverect(VTermRect dest, VTermRect src, void *data)
   return 1;
 }
 
-static int term_movecursor(VTermPos new_pos, VTermPos old_pos, int visible, void *data)
-{
-  Terminal *term = data;
-  term->cursor.row = new_pos.row;
-  term->cursor.col = new_pos.col;
-  invalidate_terminal(term, -1, -1);
-  return 1;
-}
-
 static void buf_set_term_title(buf_T *buf, const char *title, size_t len)
 {
   if (!buf) {
@@ -2423,33 +2473,15 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
       vterm_get_size(term->vt, &height, NULL);
       term->invalid_start = 0;
       term->invalid_end = height;
-      term->vterm_screen_render_pending = true;
       invalidate_terminal(term, -1, -1);
     }
     term->in_altscreen = val->boolean;
-    break;
-
-  case VTERM_PROP_CURSORVISIBLE:
-    term->cursor.visible = val->boolean;
-    invalidate_terminal(term, -1, -1);
     break;
 
   case VTERM_PROP_TITLE:
     break;
 
   case VTERM_PROP_MOUSE:
-    break;
-
-  case VTERM_PROP_CURSORBLINK:
-    term->cursor.blink = val->boolean;
-    term->pending.cursor = true;
-    invalidate_terminal(term, -1, -1);
-    break;
-
-  case VTERM_PROP_CURSORSHAPE:
-    term->cursor.shape = val->number;
-    term->pending.cursor = true;
-    invalidate_terminal(term, -1, -1);
     break;
 
   case VTERM_PROP_THEMEUPDATES:
@@ -3108,7 +3140,7 @@ static size_t fetch_vterm_row(Terminal *term, int row, int end_col)
 
 static void fetch_row(Terminal *term, int row, int end_col)
 {
-  if (row >= 0 && !term->vterm_screen_render_pending) {
+  if (row >= 0) {
     if (fetch_ghostty_row(term, row, end_col) > 0) {
       return;
     }
@@ -3170,6 +3202,8 @@ static void update_render_state(Terminal *term)
 {
   assert_ok(ghostty_render_state_update(term->ghostty_render_state,
                                         term->ghostty));
+
+  fetch_cursor(term);
 
   assert_ok(ghostty_render_state_get(term->ghostty_render_state,
                                      GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR,
@@ -3258,17 +3292,20 @@ static void refresh_cursor(Terminal *term, bool *cursor_visible)
   }
 
   switch (term->cursor.shape) {
-  case VTERM_PROP_CURSORSHAPE_BLOCK:
+  case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_BLOCK:
+  case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_BLOCK_HOLLOW:
     shape_table[SHAPE_IDX_TERM].shape = SHAPE_BLOCK;
     break;
-  case VTERM_PROP_CURSORSHAPE_UNDERLINE:
+  case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_UNDERLINE:
     shape_table[SHAPE_IDX_TERM].shape = SHAPE_HOR;
     shape_table[SHAPE_IDX_TERM].percentage = 20;
     break;
-  case VTERM_PROP_CURSORSHAPE_BAR_LEFT:
+  case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_BAR:
     shape_table[SHAPE_IDX_TERM].shape = SHAPE_VER;
     shape_table[SHAPE_IDX_TERM].percentage = 25;
     break;
+  case GHOSTTY_RENDER_STATE_CURSOR_VISUAL_STYLE_MAX_VALUE:
+    abort();
   }
 
   ui_mode_info_set();
@@ -3441,7 +3478,7 @@ static void refresh_screen(Terminal *term, buf_T *buf)
       continue;
     }
 
-    if (term->vterm_screen_render_pending || terminal_mixed_screen_use_vterm(term)) {
+    if (terminal_mixed_screen_use_vterm(term)) {
       fetch_vterm_row(term, r, width);
     } else if (has_row) {
       GhosttyRenderStateRowCells cells = term->ghostty_render_row_cells;
@@ -3472,7 +3509,6 @@ static void refresh_screen(Terminal *term, buf_T *buf)
   int change_end = change_start + changed;
   term->invalid_start = INT_MAX;
   term->invalid_end = -1;
-  term->vterm_screen_render_pending = false;
   // Call this after resetting the invalid region, as buffer update callbacks may
   // poll for terminal output and lead to new invalidations.
   changed_lines(buf, change_start, 0, change_end, added, true);
