@@ -1117,13 +1117,13 @@ describe(':terminal buffer', function()
     local screen = Screen.new(50, 7)
     feed 'i'
     local chan = api.nvim_open_term(0, {})
-    api.nvim_chan_send(chan, '\239\187\191') -- '\xef\xbb\xbf'
+    api.nvim_chan_send(chan, '\239\191\191') -- '\xef\xbf\xbf'
     screen:expect([[
-      {18:<feff>}^                                            |
+      {18:<ffff>}^                                            |
                                                         |*5
       {5:-- TERMINAL --}                                    |
     ]])
-    eq('\239\187\191', api.nvim_get_current_line())
+    eq('\239\191\191', api.nvim_get_current_line())
   end)
 
   it("handles bell respecting 'belloff' and 'visualbell'", function()
