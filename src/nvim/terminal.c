@@ -232,7 +232,7 @@ static VTermScreenCallbacks vterm_screen_callbacks = {
   .moverect = term_moverect,
   .movecursor = term_movecursor,
   .settermprop = term_settermprop,
-  .bell = term_bell,
+  .bell = NULL,
   .theme = term_theme,
   .sb_pushline = term_sb_push,  // Called before a line goes offscreen.
   .sb_popline = term_sb_pop,
@@ -669,6 +669,16 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
                                  NULL));
   assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_SCROLLBACK_MAX_LINES,
                                  &(size_t){ SB_MAX }));
+  assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_USERDATA, term));
+#if defined(__GNUC__)
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wpedantic"
+#endif
+  assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_BELL,
+                                 (const void *)on_term_ghostty_bell));
+#if defined(__GNUC__)
+# pragma GCC diagnostic pop
+#endif
   assert_ok(ghostty_key_encoder_new(NULL, &term->ghostty_key_encoder));
   assert_ok(ghostty_key_event_new(NULL, &term->ghostty_key_event));
   assert_ok(ghostty_mouse_encoder_new(NULL, &term->ghostty_mouse_encoder));
@@ -2042,10 +2052,10 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
 }
 
 /// Called when the terminal wants to ring the system bell.
-static int term_bell(void *data)
+static void on_term_ghostty_bell(GhosttyTerminal ghostty FUNC_ATTR_UNUSED,
+                                 void *user_data FUNC_ATTR_UNUSED)
 {
   vim_beep(kOptBoFlagTerm);
-  return 1;
 }
 
 /// Called when the terminal wants to query the system theme.
