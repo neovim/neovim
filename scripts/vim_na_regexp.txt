@@ -49,6 +49,7 @@
 ^src/glbl_ime\.
 ^src/gui[_.]
 ^src/gvim
+^src/hardcopy[_a-z]*\.[ch]$
 ^src/if_
 ^src/install
 ^src/json[_.]
