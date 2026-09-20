@@ -146,6 +146,8 @@ struct terminal {
   VTerm *vt;
   VTermScreen *vts;
   GhosttyTerminal ghostty;
+  GhosttyRenderState ghostty_render_state;
+  GhosttyRenderStateRowIterator ghostty_render_row_iterator;
   GhosttyKeyEncoder ghostty_key_encoder;
   GhosttyKeyEvent ghostty_key_event;
   GhosttyMouseEncoder ghostty_mouse_encoder;
@@ -597,6 +599,9 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
                                  NULL));
   assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_SCROLLBACK_MAX_LINES,
                                  &(size_t){ SB_MAX }));
+  assert_ok(ghostty_render_state_new(NULL, &term->ghostty_render_state));
+  assert_ok(ghostty_render_state_row_iterator_new(NULL,
+                                                  &term->ghostty_render_row_iterator));
   assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_USERDATA, term));
 #if defined(__GNUC__)
 # pragma GCC diagnostic push
@@ -936,6 +941,7 @@ void terminal_check_size(Terminal *term)
   vterm_set_size(term->vt, height, width);
   vterm_screen_flush_damage(term->vts);
   assert_ok(ghostty_terminal_resize(term->ghostty, width, height, 0, 0));
+  update_render_state(term);
   set_mouse_encoder_size(term, width, height);
   term->pending.resize = true;
   invalidate_terminal(term, -1, -1);
@@ -1375,6 +1381,8 @@ void terminal_destroy(Terminal **termpp)
     ghostty_mouse_encoder_free(term->ghostty_mouse_encoder);
     ghostty_key_event_free(term->ghostty_key_event);
     ghostty_key_encoder_free(term->ghostty_key_encoder);
+    ghostty_render_state_row_iterator_free(term->ghostty_render_row_iterator);
+    ghostty_render_state_free(term->ghostty_render_state);
     ghostty_terminal_free(term->ghostty);
     xfree(term);
     *termpp = NULL;  // coverity[dead-store]
@@ -1645,10 +1653,12 @@ void terminal_receive(Terminal *term, const char *data, size_t len)
 
     vterm_input_write(term->vt, crlf_data.items, kv_size(crlf_data));
     ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)crlf_data.items, kv_size(crlf_data));
+    update_render_state(term);
     kv_destroy(crlf_data);
   } else {
     vterm_input_write(term->vt, data, len);
     ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)data, len);
+    update_render_state(term);
   }
   vterm_screen_flush_damage(term->vts);
 
@@ -2538,6 +2548,33 @@ static void invalidate_terminal(Terminal *term, int start_row, int end_row)
     time_watcher_start(&refresh_timer, refresh_timer_cb, REFRESH_DELAY, 0);
     refresh_pending = true;
   }
+}
+
+/// Invalidates the terminal rows Ghostty reports as dirty.
+///
+/// We're currently handling invalid terminal rows as a single range, so partial Ghostty damage is
+/// collapsed to the smallest range covering every dirty row. After this returns, Ghostty's render
+/// state has been fully reset to not dirty.
+static void update_render_state(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  assert_ok(ghostty_render_state_update(term->ghostty_render_state,
+                                        term->ghostty));
+
+  assert_ok(ghostty_render_state_get(term->ghostty_render_state,
+                                     GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR,
+                                     &term->ghostty_render_row_iterator));
+  int dirty_start = INT_MAX;
+  int dirty_end = -1;
+  uint16_t row;
+  while (ghostty_render_state_row_iterator_next_dirty(term->ghostty_render_row_iterator, &row)) {
+    dirty_start = MIN(dirty_start, row);
+    dirty_end = row + 1;
+  }
+  if (dirty_end != -1) {
+    invalidate_terminal(term, dirty_start, dirty_end);
+  }
+  assert_ok(ghostty_render_state_clean(term->ghostty_render_state));
 }
 
 /// Normally refresh_timer_cb() is called when processing main_loop.events, but with
