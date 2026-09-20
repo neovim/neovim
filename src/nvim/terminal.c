@@ -251,7 +251,7 @@ static VTermScreenCallbacks vterm_screen_callbacks = {
   .damage = term_damage,
   .moverect = term_moverect,
   .movecursor = term_mixed_movecursor,
-  .settermprop = term_settermprop,
+  .settermprop = NULL,
   .bell = NULL,
   .theme = term_theme,
   .sb_pushline = term_sb_push,  // Called before a line goes offscreen.
@@ -458,6 +458,19 @@ static bool termrequest_parse_byte(Terminal *term, uint8_t c)
     return false;
   }
   return false;
+}
+
+static void terminal_ghostty_termprops_update(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  GhosttyTerminalScreen screen = GHOSTTY_TERMINAL_SCREEN_PRIMARY;
+  assert_ok(ghostty_terminal_get(term->ghostty,
+                                 GHOSTTY_TERMINAL_DATA_ACTIVE_SCREEN,
+                                 &screen));
+  // Switching screens makes all rows dirty, so they're invalidated after this.
+  term->in_altscreen = screen == GHOSTTY_TERMINAL_SCREEN_ALTERNATE;
+
+  term->theme_updates = mode_enabled(term, GHOSTTY_MODE_COLOR_SCHEME_REPORT);
 }
 
 void terminal_init(void)
@@ -765,6 +778,8 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
                                  (const void *)on_bell));
   assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_TITLE_CHANGED,
                                  (const void *)on_title_changed));
+  assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_RENDER_HOLD,
+                                 (const void *)on_render_hold));
 #if defined(__GNUC__)
 # pragma GCC diagnostic pop
 #endif
@@ -2472,52 +2487,20 @@ static void buf_set_term_title(buf_T *buf, const char *title, size_t len)
   status_redraw_buf(buf);
 }
 
-static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
-{
-  Terminal *term = data;
-
-  switch (prop) {
-  case VTERM_PROP_ALTSCREEN:
-    if (term->in_altscreen != val->boolean) {
-      int height;
-      vterm_get_size(term->vt, &height, NULL);
-      term->invalid_start = 0;
-      term->invalid_end = height;
-      invalidate_terminal(term, -1, -1);
-    }
-    term->in_altscreen = val->boolean;
-    break;
-
-  case VTERM_PROP_TITLE:
-    break;
-
-  case VTERM_PROP_MOUSE:
-    break;
-
-  case VTERM_PROP_THEMEUPDATES:
-    term->theme_updates = val->boolean;
-    break;
-
-  case VTERM_PROP_SYNCOUTPUT:
-    term->synchronized_output = val->boolean;
-    if (!val->boolean) {
-      // Mark that sync just ended; terminal_receive() will flush
-      // the buffer immediately rather than waiting for the 10ms timer.
-      term->sync_flush_pending = true;
-    }
-    break;
-
-  default:
-    return 0;
-  }
-
-  return 1;
-}
-
 /// Called when the terminal wants to ring the system bell.
 static void on_bell(GhosttyTerminal ghostty FUNC_ATTR_UNUSED, void *user_data FUNC_ATTR_UNUSED)
 {
   vim_beep(kOptBoFlagTerm);
+}
+
+/// Called when synchronized output (mode 2026) begins or ends.
+static void on_render_hold(GhosttyTerminal ghostty FUNC_ATTR_UNUSED, void *user_data, bool held)
+{
+  Terminal *term = user_data;
+  if (term->synchronized_output && !held) {
+    term->sync_flush_pending = true;
+  }
+  term->synchronized_output = held;
 }
 
 /// Called when the terminal wants to query the system theme.
@@ -3212,8 +3195,8 @@ static void update_render_state(Terminal *term)
 {
   assert_ok(ghostty_render_state_update(term->ghostty_render_state,
                                         term->ghostty));
-
   fetch_cursor(term);
+  terminal_ghostty_termprops_update(term);
 
   assert_ok(ghostty_render_state_get(term->ghostty_render_state,
                                      GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR,
