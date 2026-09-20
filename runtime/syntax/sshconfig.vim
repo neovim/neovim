@@ -8,6 +8,7 @@
 "		Dean, Adam Kenneth <adam.ken.dean@hpe.com>
 " Last Change:	2026 Mar 31
 " SSH Version:	10.1p1
+" 2026 Sep 19 by Vim project: Add UseKeychain keyword #21339
 "
 
 " Setup
@@ -246,6 +247,7 @@ syn keyword sshconfigKeyword Tunnel
 syn keyword sshconfigKeyword TunnelDevice
 syn keyword sshconfigKeyword UpdateHostKeys
 syn keyword sshconfigKeyword UseBlacklistedKeys
+syn keyword sshconfigKeyword UseKeychain
 syn keyword sshconfigKeyword User
 syn keyword sshconfigKeyword UserKnownHostsFile
 syn keyword sshconfigKeyword VerifyHostKeyDNS
