@@ -1295,6 +1295,8 @@ void mc_add(buf_T *buf, pos_T pos)
   if (mc_mark_at(buf, pos) != 0) {
     return;
   }
+  // Discard the pending Visual atom, else it would cascade to the cursor created below.
+  atom_visual_reset();
   if (kv_size(mc_cursors) == 0) {
     // Session start: snapshot the primary's regs; hand the display to mcursor.lua.
     mc_start.time = (Timestamp)os_realtime();

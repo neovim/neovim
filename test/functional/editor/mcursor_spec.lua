@@ -1755,7 +1755,7 @@ describe('multicursor', function()
       eq('n', api.nvim_get_mode().mode)
     end)
 
-    it('shows per-cursor selection', function()
+    it('per-cursor selection', function()
       local screen = Screen.new(30, 6)
       cursors({ 'longword x', 'ab y', 'medium z' })
       -- Each cursor shows its own selection ("iw" = that cursor's word), previewed live.
@@ -1788,7 +1788,7 @@ describe('multicursor', function()
       eq('normal', screen.mode)
     end)
 
-    it('shows linewise/blockwise selections', function()
+    it('linewise/blockwise selections', function()
       local screen = Screen.new(30, 6)
       cursors({ 'aaaa', 'bbbb', 'cccc', 'dddd' }, 'Q2j')
       feed('Vj') -- linewise: primary lines 3-4, fake lines 1-2
@@ -1971,18 +1971,18 @@ describe('multicursor', function()
       eq({ 'Vd' }, atoms_tail(1))
     end)
 
-    it('shows selections opened by :normal #41705', function()
+    it('selections opened by :normal #41705', function()
       local screen = Screen.new(30, 6)
       command('nnoremap <F2> <Cmd>normal! viw<CR>')
       n.exec_lua(function()
+        vim.keymap.set('x', 'Z', '<Cmd>normal! iw<CR>')
         vim.keymap.set('n', '<F3>', function()
           vim.cmd.normal('vZ')
         end)
-        vim.keymap.set('x', 'Z', '<Cmd>normal! iw<CR>')
       end)
       atoms_start()
       -- Each entry opens the selection from a different enclosing frame: typed cmdline, <Cmd>
-      -- mapping, Lua mapping (nested x-mapping), RPC. Result does not depend on the follow-mode.
+      -- mapping, Lua mapping (nested x-mapping), RPC. Result does not depend on follow-mode.
       for i, keys in ipairs({ ':normal! viw<CR>', '<F2>', '<F3>', 'api' }) do
         clear_cursors()
         cursors({ 'longword x', 'ab y', 'medium z' })
@@ -2003,7 +2003,20 @@ describe('multicursor', function()
         eq({ { 0, 0 }, { 1, 0 } }, anchors(), keys)
         feed('d')
         eq({ ' x', ' y', ' z' }, get_lines(), keys)
-        eq({ 'viwd' }, atoms_tail(1))
+
+        -- The atom is the literal input: a command is captured as itself, not any keys it "feeds".
+        -- But fed input with no enclosing command (RPC) collects its own keys.
+        local expected = ({
+          [':normal! viw<CR>'] = k(':normal! viw<NL>d'),
+          ['<F2>'] = k('<Cmd>normal! viw<NL>d'),
+          ['api'] = 'viwd',
+        })[keys]
+        if expected then
+          eq({ expected }, atoms_tail(1), keys)
+        else
+          t.matches('^\128\253g%d+\nd$', atoms_tail(1)[1]) -- "<F3>": K_LUA + mapping id.
+        end
+
         screen:expect({
           condition = function()
             eq('normal', screen.mode)
@@ -2012,7 +2025,7 @@ describe('multicursor', function()
       end
     end)
 
-    it('previews selections after mapping motions', function()
+    it('selections after mapping motions', function()
       local screen = Screen.new(30, 6)
       cursors({ 'a longword x', 'bbbb ab y', 'cc medium z' })
       command('nnoremap <F2> w<Cmd>normal! viw<CR>')
@@ -2029,7 +2042,7 @@ describe('multicursor', function()
       ]])
       feed('d')
       eq({ 'a  x', 'bbbb  y', 'cc  z' }, get_lines())
-      eq({ 'wviwd' }, atoms_tail(1))
+      eq({ k('w<Cmd>normal! viw<NL>d') }, atoms_tail(1))
     end)
 
     it('refreshes a nested selection even if the primary selection is unchanged', function()
@@ -2240,7 +2253,7 @@ describe('multicursor', function()
       eq({ '(aa', '(bb', '(cc' }, get_lines())
     end)
 
-    it('q= toggle is synchronous within a mapping #41836', function()
+    it("is decided at a mapping's first move #41836", function()
       -- Cursors on lines 2-4, primary line 5, follow=ON.
       cursors({ 'l1', 'l2', 'l3', 'l4', 'l5' }, 'jQjQjQj1q=')
       -- Mapping toggles follow OFF, moves, then toggles ON: the move should NOT cascade.

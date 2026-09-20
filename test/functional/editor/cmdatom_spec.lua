@@ -946,12 +946,12 @@ describe('CmdAtom', function()
       eq('n', fn.mode()) -- Not in Visual.
       eq({ '' }, get_lines())
 
-      -- <Cmd> ":norm" captured as nested subatoms: the atom is "ved", not the <Cmd>.
+      -- <Cmd> ":norm" captured as itself (not its subatoms).
       command('xmap <M-w> <Cmd>normal! e<CR>')
       api.nvim_buf_set_lines(0, 0, -1, true, { 'one two three', 'four five six' })
       feed('gg0v<M-w>d')
       eq({ ' two three', 'four five six' }, get_lines())
-      eq({ type = 'visual', keys = 'ved' }, pick(atom_last(), 'type', 'keys'))
+      eq({ type = 'visual', keys = k('v<Cmd>normal! e<NL>d') }, pick(atom_last(), 'type', 'keys'))
       feed('j0.')
       eq({ ' two three', ' five six' }, get_lines())
 
@@ -977,13 +977,35 @@ describe('CmdAtom', function()
       feed('3gg0.')
       eq({ '', 'X', '' }, get_lines())
 
-      -- A search-extended selection re-executes: the payload travels in the collected keys.
+      -- Search-extended selection: the payload travels in the collected keys.
       api.nvim_buf_set_lines(0, 0, -1, true, { 'ab META x', 'cdef META y' })
       feed('gg0v/META<CR>d')
       eq({ 'ETA x', 'cdef META y' }, get_lines())
       eq({ type = 'visual', keys = k('v/META<NL>d') }, pick(atom_last(), 'type', 'keys'))
       feed('j0.')
       eq({ 'ETA x', 'ETA y' }, get_lines())
+
+      -- Excmd that visually-selects. Replaying ":" prefills "'<,'>"; keys place <C-U> internally.
+      exec([[
+        func SelectWord()
+          normal! viw
+        endfunc
+      ]])
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'foo bar', 'longword bar' })
+      feed('gg0v:<C-U>call SelectWord()<CR>d')
+      eq({ ' bar', 'longword bar' }, get_lines())
+      eq(
+        { type = 'visual', keys = k('v:<C-U>call SelectWord()<NL>d') },
+        pick(atom_last(), 'type', 'keys')
+      )
+      feed('j0.')
+      eq({ ' bar', ' bar' }, get_lines())
+
+      -- Nothing typed a <C-U> here: this ":" keeps the prefilled range.
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'a xx', 'b xx', 'c xx' })
+      feed('gg0Vj:s/xx/YY/<CR>')
+      eq({ 'a YY', 'b YY', 'c xx' }, get_lines())
+      eq(k("Vj:<C-U>'<,'>s/xx/YY/<NL>"), atom_last().keys)
     end)
 
     it('|visual-fixed-size| example in visual.txt', function()

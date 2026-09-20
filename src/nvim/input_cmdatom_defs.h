@@ -79,8 +79,8 @@ struct CmdAtom {
 /// Key classes (atom_key_class()).
 /// Flags, bc same char can mean different things per mode (CTRL-T: tag-jump vs i_CTRL-T indent).
 enum {
-  kKeyOpaque     = 1 << 0,  ///< Uncapturable keys (<Cmd>, K_LUA, plus kKeySynthetic): its only
-                            ///< trace is its effect.
+  kKeyOpaque     = 1 << 0,  ///< Cmds not reified from subatoms (<Cmd>, K_LUA), plus kKeySynthetic.
+                            ///< The cmd itself is the atom, else its only trace is its effect.
   kKeySynthetic  = 1 << 1,  ///< Not a user keystroke (K_EVENT, K_IGNORE): unlike <Cmd>/K_LUA, never
                             ///< reaches us from a mapping.
   kKeyPayload    = 1 << 2,  ///< Interactively-typed payload (/, ?, :, !).
