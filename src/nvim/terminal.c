@@ -130,6 +130,26 @@ typedef struct {
   bool is_default;
 } TerminalColorAttrs;
 
+// TODO(noib3): drop these types and use ghostty_terminal_vt_write_until() once we pin to a version
+// of Ghostty that includes https://github.com/ghostty-org/ghostty/pull/14802.
+typedef enum {
+  kTermRequestParserNormal = 0,
+  kTermRequestParserEsc,
+  kTermRequestParserString,     ///< Inside an OSC, DCS or APC string.
+  kTermRequestParserStringEsc,  ///< After an ESC inside a string.
+} TermRequestParserState;
+
+typedef enum {
+  kTermRequestKindOsc = 0,
+  kTermRequestKindDcs,
+  kTermRequestKindApc,
+} TermRequestKind;
+
+typedef enum {
+  kTermRequestTerminatorBel = 0,
+  kTermRequestTerminatorSt,
+} TermRequestTerminator;
+
 #include "terminal.c.generated.h"
 
 // Delay for refreshing the terminal buffer after receiving updates from
@@ -220,7 +240,9 @@ struct terminal {
   StringBuilder selection;  ///< Growable array containing full selection data
 
   StringBuilder termrequest_buffer;  ///< Growable array containing unfinished request sequence
-  VTermTerminator termrequest_terminator;  ///< Terminator (BEL or ST) used in the termrequest
+  TermRequestParserState termrequest_state;  ///< Current request parser state.
+  TermRequestKind termrequest_kind;  ///< Current OSC/DCS/APC sequence kind.
+  TermRequestTerminator termrequest_terminator;  ///< Terminator (BEL or ST) used in request.
 
   size_t refcount;                  // reference count
 };
@@ -254,7 +276,7 @@ static void emit_termrequest(void **argv)
   int row = (int)(intptr_t)argv[4];
   int col = (int)(intptr_t)argv[5];
   size_t sb_deleted = (size_t)(intptr_t)argv[6];
-  VTermTerminator terminator = (VTermTerminator)(intptr_t)argv[7];
+  TermRequestTerminator terminator = (TermRequestTerminator)(intptr_t)argv[7];
 
   buf_T *buf = handle_get_buffer(buf_handle);
   if (!buf || buf->terminal == NULL) {  // Terminal already closed.
@@ -287,7 +309,7 @@ static void emit_termrequest(void **argv)
   PUT_C(data, "cursor", ARRAY_OBJ(cursor));
   PUT_C(data, "terminator",
         terminator ==
-        VTERM_TERMINATOR_BEL ? STATIC_CSTR_AS_OBJ("\x07") : STATIC_CSTR_AS_OBJ("\x1b\\"));
+        kTermRequestTerminatorBel ? STATIC_CSTR_AS_OBJ("\x07") : STATIC_CSTR_AS_OBJ("\x1b\\"));
 
   term->refcount++;
   apply_autocmds_group(EVENT_TERMREQUEST, NULL, NULL, true, AUGROUP_ALL, buf, curwin, NULL,
@@ -358,98 +380,84 @@ static int parse_osc8(const char *str, int *attr)
   return 1;
 }
 
-static int on_osc(int command, VTermStringFragment frag, void *user)
+static void termrequest_finish(Terminal *term, TermRequestTerminator terminator)
   FUNC_ATTR_NONNULL_ALL
 {
-  Terminal *term = user;
-
-  if (frag.str == NULL || frag.len == 0) {
-    return 0;
-  }
-
-  if (command != 8 && !has_event(EVENT_TERMREQUEST)) {
-    return 1;
-  }
-
-  if (frag.initial) {
-    kv_size(term->termrequest_buffer) = 0;
-    kv_printf(term->termrequest_buffer, "\x1b]%d;", command);
-  }
-  kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
-  if (frag.final) {
-    term->termrequest_terminator = frag.terminator;
-    if (has_event(EVENT_TERMREQUEST)) {
-      schedule_termrequest(term);
-    }
-    if (command == 8) {
-      kv_push(term->termrequest_buffer, NUL);
-      const size_t off = STRLEN_LITERAL("\x1b]8;");
-      int attr = 0;
-      if (parse_osc8(term->termrequest_buffer.items + off, &attr)) {
-        VTermState *state = vterm_obtain_state(term->vt);
-        VTermValue value = { .number = attr };
-        vterm_state_set_penattr(state, VTERM_ATTR_URI, VTERM_VALUETYPE_INT, &value);
-      }
-    }
-  }
-  return 1;
+  term->termrequest_terminator = terminator;
+  term->termrequest_state = kTermRequestParserNormal;
 }
 
-static int on_dcs(const char *command, size_t commandlen, VTermStringFragment frag, void *user)
+/// Feeds one byte of terminal output to the TermRequest parser.
+///
+/// @return true if "c" terminated an OSC, DCS or APC request, which is then in
+///         "term->termrequest_buffer" without its terminator.
+static bool termrequest_parse_byte(Terminal *term, uint8_t c)
+  FUNC_ATTR_NONNULL_ALL
 {
-  Terminal *term = user;
+  switch (term->termrequest_state) {
+  case kTermRequestParserNormal:
+    // In UTF-8, single bytes in 0x80-0x9f are continuation bytes, not C1 introducers.
+    if (c == ESC) {
+      term->termrequest_state = kTermRequestParserEsc;
+    }
+    return false;
 
-  if (command == NULL || frag.str == NULL) {
-    return 0;
-  }
-  if (!has_event(EVENT_TERMREQUEST)) {
-    return 1;
-  }
-
-  if (frag.initial) {
+  case kTermRequestParserEsc:
+    switch (c) {
+    case ']':
+      term->termrequest_kind = kTermRequestKindOsc;
+      break;
+    case 'P':
+      term->termrequest_kind = kTermRequestKindDcs;
+      break;
+    case '_':
+      term->termrequest_kind = kTermRequestKindApc;
+      break;
+    case ESC:
+      return false;
+    default:
+      term->termrequest_state = kTermRequestParserNormal;
+      return false;
+    }
+    term->termrequest_state = kTermRequestParserString;
     kv_size(term->termrequest_buffer) = 0;
-    kv_printf(term->termrequest_buffer, "\x1bP%.*s", (int)commandlen, command);
+    kv_push(term->termrequest_buffer, ESC);
+    kv_push(term->termrequest_buffer, (char)c);
+    return false;
+
+  case kTermRequestParserStringEsc:
+    if (c == '\\') {
+      termrequest_finish(term, kTermRequestTerminatorSt);
+      return true;
+    }
+    // Not an ST, so the ESC is part of the string, and so is "c" if it's another ESC.
+    kv_push(term->termrequest_buffer, ESC);
+    term->termrequest_state = kTermRequestParserString;
+    if (c == ESC) {
+      kv_push(term->termrequest_buffer, ESC);
+      return false;
+    }
+    FALLTHROUGH;
+
+  case kTermRequestParserString:
+    // Like Ghostty, treat a single 0x9c as ST only in an APC. In OSC and DCS it's UTF-8 content.
+    if (c == 0x9c && term->termrequest_kind == kTermRequestKindApc) {
+      termrequest_finish(term, kTermRequestTerminatorSt);
+      return true;
+    }
+    if (term->termrequest_kind == kTermRequestKindOsc && c == BELL) {
+      termrequest_finish(term, kTermRequestTerminatorBel);
+      return true;
+    }
+    if (c == ESC) {
+      term->termrequest_state = kTermRequestParserStringEsc;
+      return false;
+    }
+    kv_push(term->termrequest_buffer, (char)c);
+    return false;
   }
-  kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
-  if (frag.final) {
-    term->termrequest_terminator = frag.terminator;
-    schedule_termrequest(term);
-  }
-  return 1;
+  return false;
 }
-
-static int on_apc(VTermStringFragment frag, void *user)
-{
-  Terminal *term = user;
-  if (frag.str == NULL || frag.len == 0) {
-    return 0;
-  }
-
-  if (!has_event(EVENT_TERMREQUEST)) {
-    return 1;
-  }
-
-  if (frag.initial) {
-    kv_size(term->termrequest_buffer) = 0;
-    kv_printf(term->termrequest_buffer, "\x1b_");
-  }
-  kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
-  if (frag.final) {
-    term->termrequest_terminator = frag.terminator;
-    schedule_termrequest(term);
-  }
-  return 1;
-}
-
-static VTermStateFallbacks vterm_fallbacks = {
-  .control = NULL,
-  .csi = NULL,
-  .osc = on_osc,
-  .dcs = on_dcs,
-  .apc = on_apc,
-  .pm = NULL,
-  .sos = NULL,
-};
 
 void terminal_init(void)
 {
@@ -683,7 +691,6 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   vterm_screen_enable_reflow(term->vts, true);
   // delete empty lines at the end of the buffer
   vterm_screen_set_callbacks(term->vts, &vterm_screen_callbacks, term);
-  vterm_screen_set_unrecognised_fallbacks(term->vts, &vterm_fallbacks, term);
   vterm_screen_set_damage_merge(term->vts, VTERM_DAMAGE_SCROLL);
   vterm_screen_reset(term->vts, 1);
   vterm_output_set_callback(term->vt, term_output_callback, term);
@@ -1690,9 +1697,59 @@ static void on_sync_flush(void **argv)
   unblock_autocmds();
 }
 
+static void terminal_vt_write_chunk(Terminal *term, const char *data, size_t len)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (len == 0) {
+    return;
+  }
+  vterm_input_write(term->vt, data, len);
+  ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)data, len);
+}
+
+static void terminal_vt_write(Terminal *term, const char *data, size_t len)
+  FUNC_ATTR_NONNULL_ALL
+{
+  size_t chunk_start = 0;
+  for (size_t i = 0; i < len; i++) {
+    if (term->termrequest_state == kTermRequestParserNormal) {
+      // Only ESC starts a sequence handled below, so skip to the next one.
+      const char *esc = memchr(data + i, ESC, len - i);
+      if (esc == NULL) {
+        break;
+      }
+      i = (size_t)(esc - data);
+    }
+
+    if (termrequest_parse_byte(term, (uint8_t)data[i])) {
+      // Ghostty must process the output up to here before schedule_termrequest() reads the
+      // cursor and starts holding back responses to later queries.
+      terminal_vt_write_chunk(term, data + chunk_start, i + 1 - chunk_start);
+      if (has_event(EVENT_TERMREQUEST)) {
+        schedule_termrequest(term);
+      }
+      // Historical cells still belong to libvterm; preserve their OSC 8 pen metadata.
+      if (term->termrequest_kind == kTermRequestKindOsc
+          && kv_size(term->termrequest_buffer) >= 4
+          && memcmp(term->termrequest_buffer.items, "\x1b]8;", 4) == 0) {
+        kv_push(term->termrequest_buffer, NUL);
+        int attr = 0;
+        if (parse_osc8(term->termrequest_buffer.items + 4, &attr)) {
+          VTermState *state = vterm_obtain_state(term->vt);
+          VTermValue value = { .number = attr };
+          vterm_state_set_penattr(state, VTERM_ATTR_URI, VTERM_VALUETYPE_INT, &value);
+        }
+      }
+      chunk_start = i + 1;
+    }
+  }
+  terminal_vt_write_chunk(term, data + chunk_start, len - chunk_start);
+  update_render_state(term);
+}
+
 void terminal_receive(Terminal *term, const char *data, size_t len)
 {
-  if (!data) {
+  if (!data || len == 0) {
     return;
   }
   // X10 mouse reports echo back as CSI M, which is also DL.  Cursor/screen state
@@ -1711,14 +1768,10 @@ void terminal_receive(Terminal *term, const char *data, size_t len)
       kv_push(crlf_data, data[i]);
     }
 
-    vterm_input_write(term->vt, crlf_data.items, kv_size(crlf_data));
-    ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)crlf_data.items, kv_size(crlf_data));
-    update_render_state(term);
+    terminal_vt_write(term, crlf_data.items, kv_size(crlf_data));
     kv_destroy(crlf_data);
   } else {
-    vterm_input_write(term->vt, data, len);
-    ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)data, len);
-    update_render_state(term);
+    terminal_vt_write(term, data, len);
   }
   vterm_screen_flush_damage(term->vts);
 
