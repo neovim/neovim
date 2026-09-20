@@ -582,9 +582,9 @@ describe(':terminal buffer', function()
         {5:-- TERMINAL --}                                    |
       ]])
       api.nvim_input_mouse('right', 'press', '', 0, 0, 25)
-      screen:expect({ any = vim.pesc('"!!^') })
+      screen:expect({ any = vim.pesc('"!!') })
       api.nvim_input_mouse('right', 'release', '', 0, 0, 25)
-      screen:expect({ any = vim.pesc('#!!^') })
+      screen:expect({ any = vim.pesc('#!!') })
       vim.uv.kill(pid, 'sigstop')
       local s1 = [[
         rows: 6, cols: 25       │rows: 6, cols: 25        |
@@ -615,14 +615,14 @@ describe(':terminal buffer', function()
         rows: 6, cols: 25       │rows: 6, cols: 25        |
         mouse enabled           │mouse enabled            |
                                 │                         |*3
-           #!!                  │   #!!^                   |
+        #!!                     │#!!^                      |
         {5:-- TERMINAL --}                                    |
       ]])
       -- Mouse is forwarded after process is resumed.
       api.nvim_input_mouse('right', 'press', '', 0, 0, 28)
-      screen:expect({ any = vim.pesc('"$!^') })
+      screen:expect({ any = vim.pesc('"$!') })
       api.nvim_input_mouse('right', 'release', '', 0, 0, 28)
-      screen:expect({ any = vim.pesc('#$!^') })
+      screen:expect({ any = vim.pesc('#$!') })
     end
 
     it('resumed by an external signal', function()
