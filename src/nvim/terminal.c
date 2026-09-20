@@ -1,26 +1,16 @@
 // VT220/xterm-like terminal emulator.
-// Powered by libvterm http://www.leonerd.org.uk/code/libvterm
-//
-// libvterm is a pure C99 terminal emulation library with abstract input and
-// display. This means that the library needs to read data from the master fd
-// and feed VTerm instances, which will invoke user callbacks with screen
-// update instructions that must be mirrored to the real display.
+// Powered by libghostty https://ghostty.org
 //
 // Keys are encoded into byte streams that must be fed back to the master fd.
 //
 // Nvim buffers are used as the display mechanism for both the visible screen
 // and the scrollback buffer.
 //
-// When a line becomes invisible due to a decrease in screen height or because
-// a line was pushed up during normal terminal output, we store the line
-// information in the scrollback buffer, which is mirrored in the nvim buffer
-// by appending lines just above the visible part of the buffer.
+// libghostty owns the terminal screen and scrollback contents. Nvim buffers
+// mirror Ghostty's screen and the visible slice of Ghostty's history so
+// scrollback remains a normal buffer.
 //
-// When the screen height increases, libvterm will ask for a row in the
-// scrollback buffer, which is mirrored in the nvim buffer displaying lines
-// that were previously invisible.
-//
-// The vterm->nvim synchronization is performed in intervals of 10 milliseconds,
+// The terminal->nvim synchronization is performed in intervals of 10 milliseconds,
 // to minimize screen updates when receiving large bursts of data.
 //
 // This module is decoupled from the processes that normally feed it data, so
@@ -125,9 +115,8 @@ typedef struct {
 } TerminalState;
 
 typedef struct {
-  int16_t idx;
-  int rgb;
-  bool is_default;
+  int16_t idx;  ///< Palette index + 1, or 0 if the color isn't indexed.
+  int rgb;      ///< RGB value, or -1 for the default color.
 } TerminalColorAttrs;
 
 // TODO(noib3): drop these types and use ghostty_terminal_vt_write_until() once we pin to a version
@@ -152,26 +141,20 @@ typedef enum {
 
 #include "terminal.c.generated.h"
 
-// Delay for refreshing the terminal buffer after receiving updates from
-// libvterm. Improves performance when receiving large bursts of data.
+// Delay for refreshing the terminal buffer after receiving updates. Improves
+// performance when receiving large bursts of data.
 #define REFRESH_DELAY 10
 
-#define TEXTBUF_SIZE      0x1fff
+#define TEXTBUF_SIZE 0x1fff
 #define SELECTIONBUF_SIZE 0x0400
 
 static TimeWatcher refresh_timer;
 static bool refresh_pending = false;
 
-typedef struct {
-  size_t cols;
-  VTermScreenCell cells[];
-} ScrollbackLine;
-
 struct terminal {
   TerminalOptions opts;  // options passed to terminal_alloc()
   VTerm *vt;
   VTermScreen *vts;
-  VTermPos vterm_cursor;
   GhosttyTerminal ghostty;
   int width, height;  ///< Size of the Ghostty terminal.
   GhosttyRenderState ghostty_render_state;
@@ -183,23 +166,21 @@ struct terminal {
   GhosttyMouseEvent ghostty_mouse_event;
   unsigned ghostty_mouse_buttons;  ///< Held buttons, with bit N set for GhosttyMouseButton N.
   unsigned ghostty_mouse_modes;  ///< Mouse modes last applied to the mouse encoder.
-  // buffer used to:
-  //  - convert VTermScreen cell arrays into utf8 strings
-  //  - receive data from libvterm as a result of key presses.
+  // Buffer used to fetch Ghostty rows.
   char textbuf[TEXTBUF_SIZE];
 
-  ScrollbackLine **sb_buffer;  ///< Scrollback storage.
-  size_t sb_current;           ///< Lines stored in sb_buffer.
-  size_t sb_size;              ///< Capacity of sb_buffer.
-  /// "virtual index" that points to the first sb_buffer row that we need to
-  /// push to the terminal buffer when refreshing the scrollback.
-  int sb_pending;
-  size_t sb_deleted;      ///< Lines deleted from sb_buffer.
-  size_t old_sb_deleted;  ///< Value of sb_deleted on last refresh_scrollback().
-  /// Lines in the terminal buffer belonging to the screen instead of the scrollback.
-  int old_height;
+  /// First active row and cursor row at the previous refresh, see
+  /// count_dropped_rows().
+  struct {
+    GhosttyTrackedGridRef ref;
+    size_t row;  ///< Screen row when it was set.
+  } scrollback_anchors[2];
+  size_t scrollback_rows;          ///< Ghostty history rows mirrored in the nvim buffer.
+  size_t scrollback_deleted;       ///< Mirrored history rows deleted from the buffer top.
+  bool scrollback_clear_pending;   ///< Ghostty processed CSI 3 J since the last refresh.
+  size_t scrollback_clear_rows;    ///< Buffer rows that became history before CSI 3 J.
 
-  // buf_T instance that acts as a "drawing surface" for libvterm
+  // buf_T instance that acts as a "drawing surface" for the terminal.
   // we can't store a direct reference to the buffer because the
   // refresh_timer_cb may be called after the buffer was freed, and there's
   // no way to know if the memory was reused.
@@ -212,8 +193,8 @@ struct terminal {
   // when true, the terminal's destruction is already enqueued.
   bool destroy;
 
-  // some vterm properties
-  int invalid_start, invalid_end;   // invalid rows in libvterm screen
+  // some terminal properties
+  int invalid_start, invalid_end;   // invalid rows in Ghostty screen
   struct {
     int row, col;
     GhosttyRenderStateCursorVisualStyle shape;
@@ -236,11 +217,11 @@ struct terminal {
 
   bool color_set[16];
 
-  char *selection_buffer;  ///< libvterm selection buffer
-  StringBuilder selection;  ///< Growable array containing full selection data
+  char *selection_buffer;
+  StringBuilder selection;
 
   StringBuilder termrequest_buffer;  ///< Growable array containing unfinished request sequence
-  TermRequestParserState termrequest_state;  ///< Current request parser state.
+  TermRequestParserState termrequest_state;  ///< Current OSC/DCS/APC TermRequest or CSI parser state.
   TermRequestKind termrequest_kind;  ///< Current OSC/DCS/APC sequence kind.
   TermRequestTerminator termrequest_terminator;  ///< Terminator (BEL or ST) used in request.
 
@@ -248,20 +229,11 @@ struct terminal {
 };
 
 static VTermScreenCallbacks vterm_screen_callbacks = {
-  .damage = term_damage,
-  .moverect = term_moverect,
-  .movecursor = term_mixed_movecursor,
-  .settermprop = NULL,
-  .bell = NULL,
   .theme = term_theme,
-  .sb_pushline = term_sb_push,  // Called before a line goes offscreen.
-  .sb_popline = term_sb_pop,
-  .sb_clear = term_sb_clear,
 };
 
 static VTermSelectionCallbacks vterm_selection_callbacks = {
   .set = term_selection_set,
-  // For security reasons we don't support querying the system clipboard from the embedded terminal
   .query = NULL,
 };
 
@@ -275,7 +247,7 @@ static void emit_termrequest(void **argv)
   StringBuilder *pending_send = argv[3];
   int row = (int)(intptr_t)argv[4];
   int col = (int)(intptr_t)argv[5];
-  size_t sb_deleted = (size_t)(intptr_t)argv[6];
+  size_t scrollback_deleted = (size_t)(intptr_t)argv[6];
   TermRequestTerminator terminator = (TermRequestTerminator)(intptr_t)argv[7];
 
   buf_T *buf = handle_get_buffer(buf_handle);
@@ -287,20 +259,12 @@ static void emit_termrequest(void **argv)
   }
   Terminal *term = buf->terminal;
 
-  if (term->sb_pending > 0) {
-    // Don't emit the event while there is pending scrollback because we need
-    // the buffer contents to be fully updated. If this is the case, schedule
-    // the event onto the pending queue where it will be executed after the
-    // terminal is refreshed and the pending scrollback is cleared.
-    multiqueue_put(term->pending.events, emit_termrequest, argv[0], argv[1], argv[2],
-                   argv[3], argv[4], argv[5], argv[6], argv[7]);
-    return;
-  }
+  refresh_terminal(term);
 
   set_vim_var_string(VV_TERMREQUEST, sequence, (ptrdiff_t)sequence_length);
 
   MAXSIZE_TEMP_ARRAY(cursor, 2);
-  ADD_C(cursor, INTEGER_OBJ(row - (int64_t)(term->sb_deleted - sb_deleted)));
+  ADD_C(cursor, INTEGER_OBJ(row - (int64_t)(term->scrollback_deleted - scrollback_deleted)));
   ADD_C(cursor, INTEGER_OBJ(col));
 
   MAXSIZE_TEMP_DICT(data, 3);
@@ -342,43 +306,13 @@ static void schedule_termrequest(Terminal *term)
   kv_init(*term->pending.send);
 
   terminal_ghostty_cursor_position_update(term);
-  int line = row_to_linenr(term, term->cursor.row);
+  int line = term->cursor.row + (int)get_history_rows(term) + 1;
   multiqueue_put(main_loop.events, emit_termrequest, (void *)(intptr_t)term->buf_handle,
                  xmemdup(term->termrequest_buffer.items, term->termrequest_buffer.size),
                  (void *)(intptr_t)term->termrequest_buffer.size, term->pending.send,
                  (void *)(intptr_t)line, (void *)(intptr_t)term->cursor.col,
-                 (void *)(intptr_t)term->sb_deleted,
+                 (void *)(intptr_t)term->scrollback_deleted,
                  (void *)(intptr_t)term->termrequest_terminator);
-}
-
-static int parse_osc8(const char *str, int *attr)
-  FUNC_ATTR_NONNULL_ALL
-{
-  // Parse the URI from the OSC 8 sequence and add the URL to our URL set.
-  // Skip the ID, we don't use it (for now)
-  size_t i = 0;
-  for (; str[i] != NUL; i++) {
-    if (str[i] == ';') {
-      break;
-    }
-  }
-
-  if (str[i] != ';') {
-    // Invalid OSC sequence
-    return 0;
-  }
-
-  // Move past the semicolon
-  i++;
-
-  if (str[i] == NUL) {
-    // Empty OSC 8, no URL
-    *attr = 0;
-    return 1;
-  }
-
-  *attr = hl_add_url(0, str + i);
-  return 1;
 }
 
 static void termrequest_finish(Terminal *term, TermRequestTerminator terminator)
@@ -460,19 +394,6 @@ static bool termrequest_parse_byte(Terminal *term, uint8_t c)
   return false;
 }
 
-static void terminal_ghostty_termprops_update(Terminal *term)
-  FUNC_ATTR_NONNULL_ALL
-{
-  GhosttyTerminalScreen screen = GHOSTTY_TERMINAL_SCREEN_PRIMARY;
-  assert_ok(ghostty_terminal_get(term->ghostty,
-                                 GHOSTTY_TERMINAL_DATA_ACTIVE_SCREEN,
-                                 &screen));
-  // Switching screens makes all rows dirty, so they're invalidated after this.
-  term->in_altscreen = screen == GHOSTTY_TERMINAL_SCREEN_ALTERNATE;
-
-  term->theme_updates = mode_enabled(term, GHOSTTY_MODE_COLOR_SCHEME_REPORT);
-}
-
 void terminal_init(void)
 {
   time_watcher_init(&main_loop, &refresh_timer, NULL);
@@ -491,39 +412,6 @@ void terminal_teardown(void)
   invalidated_terminals = (Set(ptr_t)) SET_INIT;
 }
 
-static void term_output_callback(const char *s, size_t len, void *user_data)
-{
-  terminal_send((Terminal *)user_data, s, len);
-}
-
-/// Allocates a terminal's scrollback buffer if it hasn't been allocated yet.
-/// Does nothing if it's already allocated, unlike adjust_scrollback().
-///
-/// @param term Terminal instance.
-/// @param buf  The terminal's buffer, or NULL to get it from buf_handle.
-///
-/// @return whether the terminal now has a scrollback buffer.
-static bool term_may_alloc_scrollback(Terminal *term, buf_T *buf)
-{
-  if (term->sb_buffer != NULL) {
-    return true;
-  }
-  if (buf == NULL) {
-    buf = handle_get_buffer(term->buf_handle);
-    if (buf == NULL) {  // No need to allocate scrollback if buffer is deleted.
-      return false;
-    }
-  }
-
-  if (buf->b_p_scbk < 1) {
-    buf->b_p_scbk = SB_MAX;
-  }
-  // Configure the scrollback buffer.
-  term->sb_size = (size_t)buf->b_p_scbk;
-  term->sb_buffer = xmalloc(sizeof(ScrollbackLine *) * term->sb_size);
-  return true;
-}
-
 static void assert_ok(GhosttyResult res)
 {
   assert(res == GHOSTTY_SUCCESS);
@@ -535,6 +423,144 @@ static bool mode_enabled(Terminal *term, GhosttyMode mode)
   GhosttyTerminalModeConfig config = { .mode = mode };
   assert_ok(ghostty_terminal_get(term->ghostty, GHOSTTY_TERMINAL_DATA_MODE, &config));
   return config.value;
+}
+
+static void terminal_ghostty_cursor_position_update(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  uint16_t col = 0;
+  uint16_t row = 0;
+  assert_ok(ghostty_terminal_get(term->ghostty,
+                                 GHOSTTY_TERMINAL_DATA_CURSOR_X,
+                                 &col));
+  assert_ok(ghostty_terminal_get(term->ghostty,
+                                 GHOSTTY_TERMINAL_DATA_CURSOR_Y,
+                                 &row));
+  term->cursor.col = (int)col;
+  term->cursor.row = (int)row;
+}
+
+/// Updates term->cursor from the render state. Falls back to the cursor position on the active
+/// screen when the cursor isn't in the viewport.
+static void fetch_cursor(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  GhosttyRenderStateCursor cursor = GHOSTTY_INIT_SIZED(GhosttyRenderStateCursor);
+  assert_ok(ghostty_render_state_get(term->ghostty_render_state,
+                                     GHOSTTY_RENDER_STATE_DATA_CURSOR,
+                                     &cursor));
+
+  int old_row = term->cursor.row;
+  int old_col = term->cursor.col;
+  if (cursor.viewport_has_value) {
+    term->cursor.col = cursor.viewport_x;
+    term->cursor.row = cursor.viewport_y;
+  } else {
+    terminal_ghostty_cursor_position_update(term);
+  }
+  bool position_changed = term->cursor.row != old_row || term->cursor.col != old_col;
+  bool visibility_changed = term->cursor.visible != cursor.visible;
+  bool style_changed = term->cursor.blink != cursor.blinking
+                       || term->cursor.shape != cursor.visual_style;
+  term->cursor.visible = cursor.visible;
+  term->cursor.blink = cursor.blinking;
+  term->cursor.shape = cursor.visual_style;
+
+  if (style_changed) {
+    term->pending.cursor = true;
+  }
+  if (position_changed || visibility_changed || style_changed) {
+    invalidate_terminal(term, -1, -1);
+  }
+}
+
+static void terminal_ghostty_termprops_update(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  GhosttyTerminalScreen screen = GHOSTTY_TERMINAL_SCREEN_PRIMARY;
+  assert_ok(ghostty_terminal_get(term->ghostty,
+                                 GHOSTTY_TERMINAL_DATA_ACTIVE_SCREEN,
+                                 &screen));
+  // Switching screens makes all rows dirty, so they're invalidated after this.
+  term->in_altscreen = screen == GHOSTTY_TERMINAL_SCREEN_ALTERNATE;
+
+  term->theme_updates = mode_enabled(term, GHOSTTY_MODE_COLOR_SCHEME_REPORT);
+}
+
+static GhosttyTerminalCursorStyle default_cursor_style(void)
+{
+  switch (shape_table[SHAPE_IDX_TERM].shape) {
+  case SHAPE_BLOCK:
+    return GHOSTTY_TERMINAL_CURSOR_STYLE_BLOCK;
+  case SHAPE_HOR:
+    return GHOSTTY_TERMINAL_CURSOR_STYLE_UNDERLINE;
+  case SHAPE_VER:
+    return GHOSTTY_TERMINAL_CURSOR_STYLE_BAR;
+  }
+  UNREACHABLE;
+}
+
+/// Sets the cursor Ghostty falls back to when the child resets it (DECSCUSR 0) from the terminal
+/// mode of 'guicursor'.
+static void update_default_cursor(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  GhosttyTerminalCursorStyle style = default_cursor_style();
+  assert_ok(ghostty_terminal_set(term->ghostty,
+                                 GHOSTTY_TERMINAL_OPT_DEFAULT_CURSOR_STYLE,
+                                 &style));
+
+  bool blink = shape_table[SHAPE_IDX_TERM].blinkon != 0
+               && shape_table[SHAPE_IDX_TERM].blinkoff != 0;
+  assert_ok(ghostty_terminal_set(term->ghostty,
+                                 GHOSTTY_TERMINAL_OPT_DEFAULT_CURSOR_BLINK,
+                                 &blink));
+}
+
+/// Applies a 'guicursor' change to all terminals.
+void terminal_update_default_cursor_all(void)
+{
+  FOR_ALL_BUFFERS(buf) {
+    if (buf->terminal) {
+      update_default_cursor(buf->terminal);
+      update_render_state(buf->terminal);
+    }
+  }
+}
+
+static size_t get_history_rows(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  size_t rows = 0;
+  assert_ok(ghostty_terminal_get(term->ghostty,
+                                 GHOSTTY_TERMINAL_DATA_SCROLLBACK_ROWS,
+                                 &rows));
+  return rows;
+}
+
+// TODO(noib3): drop this detection once we pin to a version of Ghostty that includes
+// https://github.com/ghostty-org/ghostty/pull/14838.
+static size_t clear_scrollback_seq_len(const char *data, size_t len, size_t offset)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (data[offset] == ESC && offset + 3 < len && data[offset + 1] == '['
+      && data[offset + 2] == '3' && data[offset + 3] == 'J') {
+    return 4;
+  }
+  return 0;
+}
+
+static void record_scrollback_clear(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  size_t history_rows = get_history_rows(term);
+  size_t clear_rows = history_rows;
+  if (!term->scrollback_clear_pending) {
+    clear_rows = MAX(term->scrollback_rows, history_rows);
+  }
+
+  term->scrollback_clear_pending = true;
+  term->scrollback_clear_rows += clear_rows;
 }
 
 /// Sets the screen size of the mouse encoder. Mouse events are already in cell coordinates, so each
@@ -596,132 +622,6 @@ static GhosttyMouseButton held_mouse_button(Terminal *term)
   return GHOSTTY_MOUSE_BUTTON_UNKNOWN;
 }
 
-static void terminal_ghostty_cursor_position_update(Terminal *term)
-  FUNC_ATTR_NONNULL_ALL
-{
-  if (terminal_mixed_screen_use_vterm(term)) {
-    VTermPos pos = term->vterm_cursor;
-    term->cursor.col = pos.col;
-    term->cursor.row = pos.row;
-    return;
-  }
-  uint16_t col = 0;
-  uint16_t row = 0;
-  assert_ok(ghostty_terminal_get(term->ghostty,
-                                 GHOSTTY_TERMINAL_DATA_CURSOR_X,
-                                 &col));
-  assert_ok(ghostty_terminal_get(term->ghostty,
-                                 GHOSTTY_TERMINAL_DATA_CURSOR_Y,
-                                 &row));
-  term->cursor.col = (int)col;
-  term->cursor.row = (int)row;
-}
-
-/// Updates term->cursor from the render state. Falls back to the cursor position on the active
-/// screen when the cursor isn't in the viewport.
-static void fetch_cursor(Terminal *term)
-  FUNC_ATTR_NONNULL_ALL
-{
-  GhosttyRenderStateCursor cursor = GHOSTTY_INIT_SIZED(GhosttyRenderStateCursor);
-  assert_ok(ghostty_render_state_get(term->ghostty_render_state,
-                                     GHOSTTY_RENDER_STATE_DATA_CURSOR,
-                                     &cursor));
-
-  int old_row = term->cursor.row;
-  int old_col = term->cursor.col;
-  if (terminal_mixed_screen_use_vterm(term)) {
-    term->cursor.col = term->vterm_cursor.col;
-    term->cursor.row = term->vterm_cursor.row;
-  } else if (cursor.viewport_has_value) {
-    term->cursor.col = cursor.viewport_x;
-    term->cursor.row = cursor.viewport_y;
-  } else {
-    terminal_ghostty_cursor_position_update(term);
-  }
-  bool position_changed = term->cursor.row != old_row || term->cursor.col != old_col;
-  bool visibility_changed = term->cursor.visible != cursor.visible;
-  bool style_changed = term->cursor.blink != cursor.blinking
-                       || term->cursor.shape != cursor.visual_style;
-  term->cursor.visible = cursor.visible;
-  term->cursor.blink = cursor.blinking;
-  term->cursor.shape = cursor.visual_style;
-
-  if (style_changed) {
-    term->pending.cursor = true;
-  }
-  if (position_changed || visibility_changed || style_changed) {
-    invalidate_terminal(term, -1, -1);
-  }
-}
-
-static GhosttyTerminalCursorStyle default_cursor_style(void)
-{
-  switch (shape_table[SHAPE_IDX_TERM].shape) {
-  case SHAPE_BLOCK:
-    return GHOSTTY_TERMINAL_CURSOR_STYLE_BLOCK;
-  case SHAPE_HOR:
-    return GHOSTTY_TERMINAL_CURSOR_STYLE_UNDERLINE;
-  case SHAPE_VER:
-    return GHOSTTY_TERMINAL_CURSOR_STYLE_BAR;
-  }
-  UNREACHABLE;
-}
-
-/// Sets the cursor Ghostty falls back to when the child resets it (DECSCUSR 0) from the terminal
-/// mode of 'guicursor'.
-static void update_default_cursor(Terminal *term)
-  FUNC_ATTR_NONNULL_ALL
-{
-  GhosttyTerminalCursorStyle style = default_cursor_style();
-  assert_ok(ghostty_terminal_set(term->ghostty,
-                                 GHOSTTY_TERMINAL_OPT_DEFAULT_CURSOR_STYLE,
-                                 &style));
-
-  bool blink = shape_table[SHAPE_IDX_TERM].blinkon != 0
-               && shape_table[SHAPE_IDX_TERM].blinkoff != 0;
-  assert_ok(ghostty_terminal_set(term->ghostty,
-                                 GHOSTTY_TERMINAL_OPT_DEFAULT_CURSOR_BLINK,
-                                 &blink));
-}
-
-/// Applies a 'guicursor' change to all terminals.
-void terminal_update_default_cursor_all(void)
-{
-  FOR_ALL_BUFFERS(buf) {
-    if (buf->terminal) {
-      update_default_cursor(buf->terminal);
-      update_render_state(buf->terminal);
-    }
-  }
-}
-
-static size_t get_history_rows(Terminal *term)
-  FUNC_ATTR_NONNULL_ALL
-{
-  size_t rows = 0;
-  assert_ok(ghostty_terminal_get(term->ghostty,
-                                 GHOSTTY_TERMINAL_DATA_SCROLLBACK_ROWS,
-                                 &rows));
-  return rows;
-}
-
-// Keep the old active/history boundary coherent while libvterm owns scrollback.
-// Resize reflow and pruning can make the two backends retain different row counts.
-static bool terminal_mixed_screen_use_vterm(Terminal *term)
-{
-  return get_history_rows(term) != term->sb_current;
-}
-
-static int term_mixed_movecursor(VTermPos new_pos, VTermPos old_pos, int visible, void *data)
-{
-  Terminal *term = data;
-  term->vterm_cursor = new_pos;
-  if (terminal_mixed_screen_use_vterm(term)) {
-    invalidate_terminal(term, -1, -1);
-  }
-  return 1;
-}
-
 // public API {{{
 
 /// Allocates a terminal instance and initializes terminal properties.
@@ -747,21 +647,27 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   // Associate the terminal instance with the new buffer
   term->buf_handle = buf->handle;
   buf->terminal = term;
-  // Create VTerm
   term->vt = vterm_new(opts.height, opts.width);
   vterm_set_utf8(term->vt, 1);
   // Create Ghostty
   assert_ok(ghostty_terminal_new(NULL, &term->ghostty, opts.width, opts.height));
   term->width = opts.width;
   term->height = opts.height;
-  assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_SCROLLBACK_MAX_BYTES,
+  // Ghostty has a default scrollback byte limit of 10k bytes, so we set it to NULL to disable it.
+  assert_ok(ghostty_terminal_set(term->ghostty,
+                                 GHOSTTY_TERMINAL_OPT_SCROLLBACK_MAX_BYTES,
                                  NULL));
-  assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_SCROLLBACK_MAX_LINES,
+  // Ghostty has no scrollback line limit by default, so we initially set it to the max value of the
+  // 'scrollback' option. The real value will be set when processing TermOpen.
+  assert_ok(ghostty_terminal_set(term->ghostty,
+                                 GHOSTTY_TERMINAL_OPT_SCROLLBACK_MAX_LINES,
                                  &(size_t){ SB_MAX }));
-  assert_ok(ghostty_render_state_new(NULL, &term->ghostty_render_state));
-  assert_ok(ghostty_render_state_row_iterator_new(NULL,
-                                                  &term->ghostty_render_row_iterator));
-  assert_ok(ghostty_render_state_row_cells_new(NULL, &term->ghostty_render_row_cells));
+  for (size_t i = 0; i < ARRAY_SIZE(term->scrollback_anchors); i++) {
+    GhosttyPoint point = { .tag = GHOSTTY_POINT_TAG_ACTIVE };
+    assert_ok(ghostty_terminal_grid_ref_track(term->ghostty, point,
+                                              &term->scrollback_anchors[i].ref));
+  }
+  set_scrollback_anchors(term);
   GhosttyTerminalModeConfig grapheme_cluster = {
     .mode = GHOSTTY_MODE_GRAPHEME_CLUSTER,
     .value = true,
@@ -769,7 +675,16 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   // Set the reset default too, so a full reset (RIS) doesn't turn clustering off.
   assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_MODE_DEFAULT,
                                  &grapheme_cluster));
+  assert_ok(ghostty_render_state_new(NULL, &term->ghostty_render_state));
+  assert_ok(ghostty_render_state_row_iterator_new(NULL,
+                                                  &term->ghostty_render_row_iterator));
+  assert_ok(ghostty_render_state_row_cells_new(NULL,
+                                               &term->ghostty_render_row_cells));
   assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_USERDATA, term));
+
+  // ghostty_terminal_set() takes option values as const void *, including
+  // callback options. ISO C does not allow converting function pointers to
+  // object pointers, so we briefly disable pedantic warnings.
 #if defined(__GNUC__)
 # pragma GCC diagnostic push
 # pragma GCC diagnostic ignored "-Wpedantic"
@@ -783,6 +698,7 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
 #if defined(__GNUC__)
 # pragma GCC diagnostic pop
 #endif
+
   assert_ok(ghostty_key_encoder_new(NULL, &term->ghostty_key_encoder));
   assert_ok(ghostty_key_event_new(NULL, &term->ghostty_key_event));
   assert_ok(ghostty_mouse_encoder_new(NULL, &term->ghostty_mouse_encoder));
@@ -792,27 +708,23 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   ghostty_mouse_encoder_setopt(term->ghostty_mouse_encoder,
                                GHOSTTY_MOUSE_ENCODER_OPT_TRACK_LAST_CELL,
                                &track_last_cell);
-  // Setup state
+  update_default_cursor(term);
+  update_render_state(term);
+
+  // libvterm still handles terminal queries and OSC 52 writes during the migration.
   VTermState *state = vterm_obtain_state(term->vt);
-  // Set up screen
   term->vts = vterm_obtain_screen(term->vt);
   vterm_screen_enable_altscreen(term->vts, true);
   vterm_screen_enable_reflow(term->vts, true);
-  // delete empty lines at the end of the buffer
   vterm_screen_set_callbacks(term->vts, &vterm_screen_callbacks, term);
   vterm_screen_set_damage_merge(term->vts, VTERM_DAMAGE_SCROLL);
   vterm_screen_reset(term->vts, 1);
   vterm_output_set_callback(term->vt, term_output_callback, term);
-
   term->selection_buffer = xcalloc(SELECTIONBUF_SIZE, 1);
   vterm_state_set_selection_callbacks(state, &vterm_selection_callbacks, term,
                                       term->selection_buffer, SELECTIONBUF_SIZE);
 
-  update_default_cursor(term);
-  update_render_state(term);
-
-  // Force a initial refresh of the screen to ensure the buffer will always
-  // have as many lines as screen rows when refresh_scrollback() is called.
+  // Force an initial refresh so the buffer starts with one line per screen row.
   term->invalid_start = 0;
   term->invalid_end = opts.height;
 
@@ -830,12 +742,10 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
     }
     deleted_lines_buf(buf, 1, line_count);
   }
-  term->old_height = 1;
-
   return term;
 }
 
-/// Triggers TermOpen and allocates terminal scrollback buffer.
+/// Triggers TermOpen.
 ///
 /// @param termpp  Pointer to the terminal channel's `term` field.
 /// @param buf     Buffer used for presentation of the terminal.
@@ -848,13 +758,7 @@ void terminal_open(Terminal **termpp, buf_T *buf)
   CtxSwitch aco = { 0 };
   ctx_switch(&aco, NULL, NULL, buf, 0);
 
-  if (term->sb_buffer != NULL) {
-    // If scrollback has been allocated by autocommands between terminal_alloc()
-    // and terminal_open(), it also needs to be refreshed.
-    refresh_scrollback(term, buf);
-  } else {
-    assert(term->invalid_start >= 0);
-  }
+  assert(term->invalid_start >= 0);
   refresh_screen(term, buf);
   buf->b_locked++;
   set_option_value(kOptBuftype, STATIC_CSTR_AS_OBJ("terminal"), OPT_LOCAL, true, NULL);
@@ -867,10 +771,6 @@ void terminal_open(Terminal **termpp, buf_T *buf)
   // Reset cursor in current window.
   curwin->w_cursor = (pos_T){ .lnum = 1, .col = 0, .coladd = 0 };
 
-  // Apply TermOpen autocmds _before_ configuring the scrollback buffer, to avoid
-  // over-allocating in case TermOpen reduces 'scrollback'.
-  // In the rare case where TermOpen polls for events, the scrollback buffer will be
-  // allocated anyway if needed.
   apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, buf);
 
   ctx_restore(&aco);
@@ -879,17 +779,18 @@ void terminal_open(Terminal **termpp, buf_T *buf)
     return;  // Terminal has already been destroyed.
   }
 
-  // Local 'scrollback' _after_ autocmds.
-  if (!term_may_alloc_scrollback(term, buf)) {
-    abort();
+  if (buf->b_p_scbk < 1) {  // Local 'scrollback' was set to -1.
+    buf->b_p_scbk = SB_MAX;
   }
+  size_t scrollback_limit = (size_t)buf->b_p_scbk;
+  assert_ok(ghostty_terminal_set(term->ghostty,
+                                 GHOSTTY_TERMINAL_OPT_SCROLLBACK_MAX_LINES,
+                                 &scrollback_limit));
 
   GhosttyColorRgb palette[256];
   assert_ok(ghostty_terminal_get(term->ghostty,
                                  GHOSTTY_TERMINAL_DATA_COLOR_PALETTE_DEFAULT,
                                  palette));
-
-  VTermState *state = vterm_obtain_state(term->vt);
 
   // Configure the color palette. Try to get the color from:
   //
@@ -912,12 +813,6 @@ void terminal_open(Terminal **termpp, buf_T *buf)
       .g = (uint8_t)((color_val >> 8) & 0xFF),
       .b = (uint8_t)((color_val >> 0) & 0xFF),
     };
-    VTermColor color;
-    vterm_color_rgb(&color,
-                    (uint8_t)((color_val >> 16) & 0xFF),
-                    (uint8_t)((color_val >> 8) & 0xFF),
-                    (uint8_t)((color_val >> 0) & 0xFF));
-    vterm_state_set_palette_color(state, i, &color);
     term->color_set[i] = true;
   }
 
@@ -958,14 +853,12 @@ void terminal_close(Terminal **termpp, int status)
   } else {
     // flush any pending changes to the buffer
     if (!exiting) {
-      int height, width;
-      vterm_get_size(term->vt, &height, &width);
-      if (status != -1 && term->cursor.row == height - 1) {
-        fetch_row(term, term->cursor.row, width);
-        if (term->textbuf[0] != NUL) {
-          // Start a new line, else "[Process exited]" (line after cursor) hides the last line.
-          terminal_receive(term, "\r\n", 2);
-        }
+      GhosttyRenderStateRowCells cells = NULL;
+      if (status != -1 && term->cursor.row == term->height - 1
+          && get_row_cells(term, (uint32_t)term->cursor.row, &cells)
+          && fetch_row_cells(term, cells, term->width) > 0) {
+        // Start a new line, else "[Process exited]" (line after cursor) hides the last line.
+        terminal_receive(term, "\r\n", 2);
       }
       block_autocmds();
       refresh_terminal(term);
@@ -1062,8 +955,6 @@ void terminal_check_size(Terminal *term)
     return;
   }
 
-  int curwidth, curheight;
-  vterm_get_size(term->vt, &curheight, &curwidth);
   uint16_t width = 0;
   uint16_t height = 0;
 
@@ -1083,7 +974,7 @@ void terminal_check_size(Terminal *term)
 
   // if no window displays the terminal, or such all windows are zero-height,
   // don't resize the terminal.
-  if ((curheight == height && curwidth == width) || height == 0 || width == 0) {
+  if ((term->height == height && term->width == width) || height == 0 || width == 0) {
     return;
   }
 
@@ -1519,14 +1410,7 @@ void terminal_destroy(Terminal **termpp)
       unblock_autocmds();
       set_del(ptr_t, &invalidated_terminals, term);
     }
-    for (size_t i = 0; i < term->sb_current; i++) {
-      xfree(term->sb_buffer[i]);
-    }
-    xfree(term->sb_buffer);
-    xfree(term->selection_buffer);
-    kv_destroy(term->selection);
     kv_destroy(term->termrequest_buffer);
-    vterm_free(term->vt);
     multiqueue_free(term->pending.events);
     ghostty_mouse_event_free(term->ghostty_mouse_event);
     ghostty_mouse_encoder_free(term->ghostty_mouse_encoder);
@@ -1535,6 +1419,12 @@ void terminal_destroy(Terminal **termpp)
     ghostty_render_state_row_cells_free(term->ghostty_render_row_cells);
     ghostty_render_state_row_iterator_free(term->ghostty_render_row_iterator);
     ghostty_render_state_free(term->ghostty_render_state);
+    for (size_t i = 0; i < ARRAY_SIZE(term->scrollback_anchors); i++) {
+      ghostty_tracked_grid_ref_free(term->scrollback_anchors[i].ref);
+    }
+    xfree(term->selection_buffer);
+    kv_destroy(term->selection);
+    vterm_free(term->vt);
     ghostty_terminal_free(term->ghostty);
     xfree(term);
     *termpp = NULL;  // coverity[dead-store]
@@ -1797,7 +1687,9 @@ static void terminal_vt_write_chunk(Terminal *term, const char *data, size_t len
   ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)data, len);
 }
 
-static void terminal_vt_write(Terminal *term, const char *data, size_t len)
+/// Writes child output to Ghostty. Stops at the end of each TermRequest so Ghostty has processed
+/// the output before it when the request is scheduled, and records each scrollback clear (CSI 3 J).
+static void vt_write(Terminal *term, const char *data, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
   size_t chunk_start = 0;
@@ -1809,6 +1701,18 @@ static void terminal_vt_write(Terminal *term, const char *data, size_t len)
         break;
       }
       i = (size_t)(esc - data);
+      size_t clear_sequence_len = clear_scrollback_seq_len(data, len, i);
+      if (clear_sequence_len > 0) {
+        if (i > chunk_start) {
+          terminal_vt_write_chunk(term, data + chunk_start, i - chunk_start);
+          update_render_state(term);
+        }
+        record_scrollback_clear(term);
+        terminal_vt_write_chunk(term, data + i, clear_sequence_len);
+        i += clear_sequence_len - 1;
+        chunk_start = i + 1;
+        continue;
+      }
     }
 
     if (termrequest_parse_byte(term, (uint8_t)data[i])) {
@@ -1817,18 +1721,6 @@ static void terminal_vt_write(Terminal *term, const char *data, size_t len)
       terminal_vt_write_chunk(term, data + chunk_start, i + 1 - chunk_start);
       if (has_event(EVENT_TERMREQUEST)) {
         schedule_termrequest(term);
-      }
-      // Historical cells still belong to libvterm; preserve their OSC 8 pen metadata.
-      if (term->termrequest_kind == kTermRequestKindOsc
-          && kv_size(term->termrequest_buffer) >= 4
-          && memcmp(term->termrequest_buffer.items, "\x1b]8;", 4) == 0) {
-        kv_push(term->termrequest_buffer, NUL);
-        int attr = 0;
-        if (parse_osc8(term->termrequest_buffer.items + 4, &attr)) {
-          VTermState *state = vterm_obtain_state(term->vt);
-          VTermValue value = { .number = attr };
-          vterm_state_set_penattr(state, VTERM_ATTR_URI, VTERM_VALUETYPE_INT, &value);
-        }
       }
       chunk_start = i + 1;
     }
@@ -1842,6 +1734,7 @@ void terminal_receive(Terminal *term, const char *data, size_t len)
   if (!data || len == 0) {
     return;
   }
+
   if (term->opts.force_crlf) {
     StringBuilder crlf_data = KV_INITIAL_VALUE;
 
@@ -1852,11 +1745,12 @@ void terminal_receive(Terminal *term, const char *data, size_t len)
       kv_push(crlf_data, data[i]);
     }
 
-    terminal_vt_write(term, crlf_data.items, kv_size(crlf_data));
+    vt_write(term, crlf_data.items, kv_size(crlf_data));
     kv_destroy(crlf_data);
   } else {
-    terminal_vt_write(term, data, len);
+    vt_write(term, data, len);
   }
+
   vterm_screen_flush_damage(term->vts);
 
   // When a synchronized update just ended, refresh the buffer immediately
@@ -1867,10 +1761,8 @@ void terminal_receive(Terminal *term, const char *data, size_t len)
     // Schedule a full-screen refresh for this terminal on the main loop.
     // Force full-screen damage so every row is updated, not just
     // the rows with accumulated damage from individual callbacks.
-    int height;
-    vterm_get_size(term->vt, &height, NULL);
     term->invalid_start = 0;
-    term->invalid_end = height;
+    term->invalid_end = term->height;
     multiqueue_put(main_loop.events, on_sync_flush,
                    (void *)(intptr_t)term->buf_handle);
   }
@@ -1947,87 +1839,23 @@ static int get_underline_hl_flag(int underline)
   }
 }
 
-static int terminal_ghostty_rgb(GhosttyColorRgb color)
-{
-  return RGB_(color.r, color.g, color.b);
-}
-
-// TODO(noib3): Remove once scrollback attrs are no longer libvterm-owned.
-static int terminal_vterm_rgb(VTermState *state, VTermColor color)
-{
-  vterm_state_convert_color_to_rgb(state, &color);
-  return RGB_(color.rgb.red, color.rgb.green, color.rgb.blue);
-}
-
-// TODO(noib3): Remove once scrollback attrs are no longer libvterm-owned.
-static int terminal_vterm_underline_hl_flag(VTermScreenCellAttrs attrs)
-{
-  switch (attrs.underline) {
-  case VTERM_UNDERLINE_OFF:
-    return 0;
-  case VTERM_UNDERLINE_SINGLE:
-    return HL_UNDERLINE;
-  case VTERM_UNDERLINE_DOUBLE:
-    return HL_UNDERDOUBLE;
-  case VTERM_UNDERLINE_CURLY:
-    return HL_UNDERCURL;
-  default:
-    return HL_UNDERLINE;
-  }
-}
-
-static int terminal_cell_hl_attr(Terminal *term, int hl_attrs, int16_t fg_idx, int16_t bg_idx,
-                                 int fg, int bg, bool fg_default, bool bg_default, int url_attr)
-  FUNC_ATTR_NONNULL_ALL
-{
-  bool fg_indexed = fg_idx != 0;
-  bool bg_indexed = bg_idx != 0;
-  bool fg_set = fg_idx && fg_idx <= 16 && term->color_set[fg_idx - 1];
-  bool bg_set = bg_idx && bg_idx <= 16 && term->color_set[bg_idx - 1];
-
-  hl_attrs |= ((fg_indexed && !fg_set) ? HL_FG_INDEXED : 0)
-              | ((bg_indexed && !bg_set) ? HL_BG_INDEXED : 0);
-
-  int attr_id = 0;
-  if (hl_attrs || !fg_default || !bg_default) {
-    attr_id = hl_get_term_attr(&(HlAttrs) {
-      .cterm_ae_attr = (int32_t)hl_attrs,
-      .cterm_fg_color = fg_idx,
-      .cterm_bg_color = bg_idx,
-      .rgb_ae_attr = (int32_t)hl_attrs,
-      .rgb_fg_color = fg,
-      .rgb_bg_color = bg,
-      .rgb_sp_color = -1,
-      .hl_blend = -1,
-      .url = -1,
-    });
-  }
-
-  return url_attr > 0 ? hl_combine_attr(attr_id, url_attr) : attr_id;
-}
-
 static TerminalColorAttrs convert_color(const GhosttyColorRgb palette[256], GhosttyStyleColor color)
   FUNC_ATTR_NONNULL_ALL
 {
   switch (color.tag) {
-  case GHOSTTY_STYLE_COLOR_PALETTE:
+  case GHOSTTY_STYLE_COLOR_PALETTE: {
+    GhosttyColorRgb rgb = palette[color.value.palette];
     return (TerminalColorAttrs) {
       .idx = (int16_t)(color.value.palette + 1),
-      .rgb = terminal_ghostty_rgb(palette[color.value.palette]),
-      .is_default = false,
+      .rgb = RGB_(rgb.r, rgb.g, rgb.b),
     };
-  case GHOSTTY_STYLE_COLOR_RGB:
-    return (TerminalColorAttrs) {
-      .idx = 0,
-      .rgb = terminal_ghostty_rgb(color.value.rgb),
-      .is_default = false,
-    };
+  }
+  case GHOSTTY_STYLE_COLOR_RGB: {
+    GhosttyColorRgb rgb = color.value.rgb;
+    return (TerminalColorAttrs) { .idx = 0, .rgb = RGB_(rgb.r, rgb.g, rgb.b) };
+  }
   default:
-    return (TerminalColorAttrs) {
-      .idx = 0,
-      .rgb = -1,
-      .is_default = color.tag == GHOSTTY_STYLE_COLOR_NONE,
-    };
+    return (TerminalColorAttrs) { .idx = 0, .rgb = -1 };
   }
 }
 
@@ -2074,8 +1902,10 @@ static int cell_url_attr(const GhosttyGridRef *ref)
   return attr;
 }
 
-static int cell_attr(Terminal *term, GhosttyPointTag tag, uint32_t row, int col, GhosttyCell cell,
-                     GhosttyStyle style, const GhosttyColorRgb palette[256])
+/// Returns the highlight attribute for a cell with "style", combined with "url_attr" if it's
+/// nonzero.
+static int cell_attr(Terminal *term, GhosttyCell cell, GhosttyStyle style,
+                     const GhosttyColorRgb palette[256], int url_attr)
   FUNC_ATTR_NONNULL_ALL
 {
   TerminalColorAttrs fg = convert_color(palette, style.fg_color);
@@ -2093,131 +1923,50 @@ static int cell_attr(Terminal *term, GhosttyPointTag tag, uint32_t row, int col,
                  | underline
                  | (style.strikethrough ? HL_STRIKETHROUGH : 0);
 
-  int url_attr = 0;
+  bool fg_set = fg.idx && fg.idx <= 16 && term->color_set[fg.idx - 1];
+  bool bg_set = bg.idx && bg.idx <= 16 && term->color_set[bg.idx - 1];
+  hl_attrs |= ((fg.idx && !fg_set) ? HL_FG_INDEXED : 0)
+              | ((bg.idx && !bg_set) ? HL_BG_INDEXED : 0);
+
+  int attr_id = 0;
+  if (hl_attrs || fg.rgb != -1 || bg.rgb != -1) {
+    attr_id = hl_get_term_attr(&(HlAttrs) {
+      .cterm_ae_attr = (int32_t)hl_attrs,
+      .cterm_fg_color = fg.idx,
+      .cterm_bg_color = bg.idx,
+      .rgb_ae_attr = (int32_t)hl_attrs,
+      .rgb_fg_color = fg.rgb,
+      .rgb_bg_color = bg.rgb,
+      .rgb_sp_color = -1,
+      .hl_blend = -1,
+      .url = -1,
+    });
+  }
+
+  return url_attr > 0 ? hl_combine_attr(attr_id, url_attr) : attr_id;
+}
+
+static bool cell_has_hyperlink(GhosttyCell cell)
+{
   bool has_hyperlink = false;
   assert_ok(ghostty_cell_get(cell, GHOSTTY_CELL_DATA_HAS_HYPERLINK, &has_hyperlink));
-  if (has_hyperlink) {
-    GhosttyGridRef ref = { 0 };
-    if (get_grid_ref(term, tag, row, col, &ref)) {
-      url_attr = cell_url_attr(&ref);
-    }
-  }
-
-  return terminal_cell_hl_attr(term, hl_attrs, fg.idx, bg.idx, fg.rgb, bg.rgb,
-                               fg.is_default, bg.is_default, url_attr);
+  return has_hyperlink;
 }
 
-static int terminal_ghostty_cell_attr(Terminal *term, GhosttyPointTag tag, uint32_t row, int col,
-                                      const GhosttyColorRgb palette[256])
+/// Returns the highlight attribute of the cell at "ref". Used for scrollback rows, which aren't in
+/// the render state.
+static int grid_ref_cell_attr(Terminal *term, const GhosttyGridRef *ref,
+                              const GhosttyColorRgb palette[256])
   FUNC_ATTR_NONNULL_ALL
 {
-  GhosttyGridRef ref = { 0 };
-  if (!get_grid_ref(term, tag, row, col, &ref)) {
-    return 0;
-  }
-
   GhosttyCell cell = 0;
-  assert_ok(ghostty_grid_ref_cell(&ref, &cell));
+  assert_ok(ghostty_grid_ref_cell(ref, &cell));
 
   GhosttyStyle style = GHOSTTY_INIT_SIZED(GhosttyStyle);
-  assert_ok(ghostty_grid_ref_style(&ref, &style));
+  assert_ok(ghostty_grid_ref_style(ref, &style));
 
-  return cell_attr(term, tag, row, col, cell, style, palette);
-}
-
-// TODO(noib3): Remove once scrollback attrs are no longer libvterm-owned.
-static int terminal_vterm_cell_attr(Terminal *term, VTermState *state, int row, int col)
-{
-  VTermScreenCell cell;
-  bool color_valid = fetch_cell(term, row, col, &cell);
-  bool fg_default = !color_valid || VTERM_COLOR_IS_DEFAULT_FG(&cell.fg);
-  bool bg_default = !color_valid || VTERM_COLOR_IS_DEFAULT_BG(&cell.bg);
-
-  int vt_fg = fg_default ? -1 : terminal_vterm_rgb(state, cell.fg);
-  int vt_bg = bg_default ? -1 : terminal_vterm_rgb(state, cell.bg);
-
-  int16_t vt_fg_idx = (!fg_default && VTERM_COLOR_IS_INDEXED(&cell.fg))
-                      ? cell.fg.indexed.idx + 1 : 0;
-  int16_t vt_bg_idx = (!bg_default && VTERM_COLOR_IS_INDEXED(&cell.bg))
-                      ? cell.bg.indexed.idx + 1 : 0;
-
-  if (row >= 0) {
-    GhosttyRenderStateColors colors = GHOSTTY_INIT_SIZED(GhosttyRenderStateColors);
-    assert_ok(ghostty_render_state_get(term->ghostty_render_state,
-                                       GHOSTTY_RENDER_STATE_DATA_COLORS,
-                                       &colors));
-    if (vt_fg_idx) {
-      vt_fg = terminal_ghostty_rgb(colors.palette[vt_fg_idx - 1]);
-    }
-    if (vt_bg_idx) {
-      vt_bg = terminal_ghostty_rgb(colors.palette[vt_bg_idx - 1]);
-    }
-  }
-
-  int hl_attrs = (cell.attrs.bold ? HL_BOLD : 0)
-                 | (cell.attrs.dim ? HL_DIM : 0)
-                 | (cell.attrs.blink ? HL_BLINK : 0)
-                 | (cell.attrs.conceal ? HL_CONCEALED : 0)
-                 | (cell.attrs.overline ? HL_OVERLINE : 0)
-                 | (cell.attrs.italic ? HL_ITALIC : 0)
-                 | (cell.attrs.reverse ? HL_INVERSE : 0)
-                 | terminal_vterm_underline_hl_flag(cell.attrs)
-                 | (cell.attrs.strike ? HL_STRIKETHROUGH : 0);
-
-  return terminal_cell_hl_attr(term, hl_attrs, vt_fg_idx, vt_bg_idx, vt_fg, vt_bg,
-                               fg_default, bg_default, cell.uri);
-}
-
-/// Returns the number of Nvim display cells used by the grapheme cluster "text".
-static int grapheme_display_width(const char *text, size_t len)
-  FUNC_ATTR_NONNULL_ALL
-{
-  int size = (int)len;
-  StrCharInfo ci = utf_ptr2StrCharInfo_len(text, size);
-  return utf_ClusterInfo_len(ci, &size).cells;
-}
-
-static int terminal_ghostty_cell_display_width(const GhosttyGridRef *ref)
-  FUNC_ATTR_NONNULL_ALL
-{
-  size_t grapheme_len = 0;
-  GhosttyResult result = ghostty_grid_ref_graphemes(ref, NULL, 0, &grapheme_len);
-  if (grapheme_len == 0) {
-    return 1;
-  }
-  if (result != GHOSTTY_OUT_OF_SPACE) {
-    assert_ok(result);
-  }
-
-  uint32_t stack[16];
-  uint32_t *graphemes = stack;
-  if (grapheme_len > ARRAY_SIZE(stack)) {
-    graphemes = xmalloc(sizeof(*graphemes) * grapheme_len);
-  }
-
-  assert_ok(ghostty_grid_ref_graphemes(ref, graphemes, grapheme_len,
-                                       &grapheme_len));
-  char buf[MB_MAXBYTES * ARRAY_SIZE(stack)];
-  char *text = buf;
-  if (grapheme_len > ARRAY_SIZE(stack)) {
-    text = xmalloc(MB_MAXBYTES * grapheme_len);
-  }
-
-  size_t len = 0;
-  for (size_t i = 0; i < grapheme_len; i++) {
-    len += (size_t)utf_char2bytes((int)graphemes[i], text + len);
-  }
-
-  int width = grapheme_display_width(text, len);
-
-  if (text != buf) {
-    xfree(text);
-  }
-  if (graphemes != stack) {
-    xfree(graphemes);
-  }
-
-  return width;
+  int url_attr = cell_has_hyperlink(cell) ? cell_url_attr(ref) : 0;
+  return cell_attr(term, cell, style, palette, url_attr);
 }
 
 /// Copies the UTF-8 text of the current cell to "buf" and returns its length, or 0 if the cell has
@@ -2252,10 +2001,15 @@ static int cell_display_width(GhosttyRenderStateRowCells cells)
   FUNC_ATTR_NONNULL_ALL
 {
   char text[MAX_SCHAR_SIZE];
-  size_t len = cell_text(cells, text);
-  return len == 0 ? 1 : grapheme_display_width(text, len);
+  int len = (int)cell_text(cells, text);
+  if (len == 0) {
+    return 1;
+  }
+  StrCharInfo ci = utf_ptr2StrCharInfo_len(text, len);
+  return utf_ClusterInfo_len(ci, &len).cells;
 }
 
+/// Converts Ghostty's cursor column on the active row to the virtual column in the buffer.
 static int cursor_virtcol(Terminal *term)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -2263,67 +2017,26 @@ static int cursor_virtcol(Terminal *term)
     return 0;
   }
 
-  if (terminal_mixed_screen_use_vterm(term)) {
-    int vcol = 0;
-    int col = 0;
-    while (col < term->cursor.col) {
-      VTermScreenCell cell;
-      if (!fetch_cell(term, term->cursor.row, col, &cell)) {
-        break;
-      }
-      char text[MAX_SCHAR_SIZE];
-      size_t len = schar_get(text, cell.schar);
-      vcol += len == 0 ? 1 : grapheme_display_width(text, len);
-      col += MAX(cell.width, 1);
-    }
-    return vcol + term->cursor.col - col;
+  GhosttyRenderStateRowCells cells = NULL;
+  if (!get_row_cells(term, (uint32_t)term->cursor.row, &cells)) {
+    return term->cursor.col;
   }
 
   int vcol = 0;
   int col = 0;
-  GhosttyRenderStateRowCells cells = NULL;
-  if (get_row_cells(term, (uint32_t)term->cursor.row, &cells)) {
-    while (col < term->cursor.col && col < term->width) {
-      assert_ok(ghostty_render_state_row_cells_select(cells, (uint16_t)col));
-
-      GhosttyCell cell = 0;
-      assert_ok(ghostty_render_state_row_cells_get(cells,
-                                                   GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_RAW,
-                                                   &cell));
-
-      GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
-      assert_ok(ghostty_cell_get(cell, GHOSTTY_CELL_DATA_WIDE, &wide));
-      int cell_width = wide == GHOSTTY_CELL_WIDE_WIDE ? 2 : 1;
-      int next_col = col + cell_width;
-      int display_width = cell_display_width(cells);
-
-      if (next_col > term->cursor.col) {
-        vcol += MIN(display_width, term->cursor.col - col);
-        break;
-      }
-
-      vcol += display_width;
-      col = next_col;
-    }
-
-    return vcol + term->cursor.col - col;
-  }
-
   while (col < term->cursor.col && col < term->width) {
-    GhosttyGridRef ref = { 0 };
-    if (!get_grid_ref(term, GHOSTTY_POINT_TAG_ACTIVE, (uint32_t)term->cursor.row, col,
-                      &ref)) {
-      break;
-    }
+    assert_ok(ghostty_render_state_row_cells_select(cells, (uint16_t)col));
 
     GhosttyCell cell = 0;
-    assert_ok(ghostty_grid_ref_cell(&ref, &cell));
+    assert_ok(ghostty_render_state_row_cells_get(cells,
+                                                 GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_RAW,
+                                                 &cell));
 
     GhosttyCellWide wide = GHOSTTY_CELL_WIDE_NARROW;
     assert_ok(ghostty_cell_get(cell, GHOSTTY_CELL_DATA_WIDE, &wide));
     int cell_width = wide == GHOSTTY_CELL_WIDE_WIDE ? 2 : 1;
     int next_col = col + cell_width;
-    int display_width = terminal_ghostty_cell_display_width(&ref);
+    int display_width = cell_display_width(cells);
 
     if (next_col > term->cursor.col) {
       vcol += MIN(display_width, term->cursor.col - col);
@@ -2339,53 +2052,67 @@ static int cursor_virtcol(Terminal *term)
 
 void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *term_attrs)
 {
-  int height, width;
-  vterm_get_size(term->vt, &height, &width);
+  (void)wp;
   assert(linenr);
-  int row = linenr_to_row(term, linenr);
-  if (row >= height) {
+  if (linenr < 1) {
+    return;
+  }
+
+  size_t screen_row = (size_t)(linenr - 1);
+  if (screen_row >= term->scrollback_rows + (size_t)term->height) {
     // Terminal height was decreased but the change wasn't reflected into the
     // buffer yet
     return;
   }
 
-  width = MIN(TERM_ATTRS_MAX, width);
-  if (terminal_mixed_screen_use_vterm(term) || row < 0) {
-    VTermState *state = vterm_obtain_state(term->vt);
-    for (int col = 0; col < width; col++) {
-      term_attrs[col] = terminal_vterm_cell_attr(term, state, row, col);
-    }
-    return;
-  }
-
+  int width = MIN(TERM_ATTRS_MAX, term->width);
   GhosttyRenderStateColors colors = GHOSTTY_INIT_SIZED(GhosttyRenderStateColors);
   assert_ok(ghostty_render_state_get(term->ghostty_render_state,
                                      GHOSTTY_RENDER_STATE_DATA_COLORS,
                                      &colors));
-  GhosttyRenderStateRowCells cells = NULL;
-  if (get_row_cells(term, (uint32_t)row, &cells)) {
-    int col = 0;
-    while (col < width && ghostty_render_state_row_cells_next(cells)) {
-      GhosttyCell cell = 0;
-      assert_ok(ghostty_render_state_row_cells_get(cells,
-                                                   GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_RAW,
-                                                   &cell));
 
-      GhosttyStyle style = GHOSTTY_INIT_SIZED(GhosttyStyle);
-      assert_ok(ghostty_render_state_row_cells_get(cells,
-                                                   GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_STYLE,
-                                                   &style));
-
-      term_attrs[col] = cell_attr(term, GHOSTTY_POINT_TAG_ACTIVE, (uint32_t)row, col,
-                                  cell, style, colors.palette);
-      col++;
+  if (screen_row < term->scrollback_rows) {
+    // Grid refs aren't meant for rendering: each lookup walks the scrollback pages. Look up the row
+    // once and move the ref along it, unless an incomplete reflow left its page narrower.
+    GhosttyGridRef ref;
+    bool full_row = get_grid_ref(term, GHOSTTY_POINT_TAG_SCREEN,
+                                 (uint32_t)screen_row, width - 1, &ref);
+    for (int col = 0; col < width; col++) {
+      if (full_row) {
+        ref.x = (uint16_t)col;
+      } else if (!get_grid_ref(term, GHOSTTY_POINT_TAG_SCREEN,
+                               (uint32_t)screen_row, col, &ref)) {
+        break;
+      }
+      term_attrs[col] = grid_ref_cell_attr(term, &ref, colors.palette);
     }
     return;
   }
 
-  for (int col = 0; col < width; col++) {
-    term_attrs[col] = terminal_ghostty_cell_attr(term, GHOSTTY_POINT_TAG_ACTIVE,
-                                                 (uint32_t)row, col, colors.palette);
+  uint32_t row = (uint32_t)(screen_row - term->scrollback_rows);
+  GhosttyRenderStateRowCells cells = NULL;
+  if (!get_row_cells(term, row, &cells)) {
+    return;
+  }
+
+  for (int col = 0; col < width && ghostty_render_state_row_cells_next(cells); col++) {
+    GhosttyCell cell = 0;
+    assert_ok(ghostty_render_state_row_cells_get(cells,
+                                                 GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_RAW,
+                                                 &cell));
+
+    GhosttyStyle style = GHOSTTY_INIT_SIZED(GhosttyStyle);
+    assert_ok(ghostty_render_state_row_cells_get(cells,
+                                                 GHOSTTY_RENDER_STATE_ROW_CELLS_DATA_STYLE,
+                                                 &style));
+
+    int url_attr = 0;
+    GhosttyGridRef ref;
+    if (cell_has_hyperlink(cell)
+        && get_grid_ref(term, GHOSTTY_POINT_TAG_ACTIVE, row, col, &ref)) {
+      url_attr = cell_url_attr(&ref);
+    }
+    term_attrs[col] = cell_attr(term, cell, style, colors.palette, url_attr);
   }
 }
 
@@ -2421,6 +2148,8 @@ void terminal_notify_theme(Terminal *term, bool dark)
   terminal_send(term, buf, (size_t)ret);
 }
 
+/// Updates the terminal's default foreground, background, and cursor colors.
+/// Updates the default colors for every open terminal buffer.
 static void terminal_focus(Terminal *term, bool focus)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -2443,7 +2172,12 @@ static void terminal_focus(Terminal *term, bool focus)
 // }}}
 // libghostty and libvterm callbacks {{{
 
-/// Called when the terminal wants to set the title.
+static void term_output_callback(const char *s, size_t len, void *user_data)
+{
+  terminal_send((Terminal *)user_data, s, len);
+}
+
+/// Called when the terminal program wants to set the title.
 static void on_title_changed(GhosttyTerminal ghostty, void *user_data)
 {
   Terminal *term = (Terminal *)user_data;
@@ -2454,17 +2188,20 @@ static void on_title_changed(GhosttyTerminal ghostty, void *user_data)
   buf_set_term_title(buf, title.ptr == NULL ? "" : (const char *)title.ptr, title.len);
 }
 
-static int term_damage(VTermRect rect, void *data)
+/// Called when the terminal program wants to ring the system bell.
+static void on_bell(GhosttyTerminal ghostty FUNC_ATTR_UNUSED, void *user_data FUNC_ATTR_UNUSED)
 {
-  invalidate_terminal(data, rect.start_row, rect.end_row);
-  return 1;
+  vim_beep(kOptBoFlagTerm);
 }
 
-static int term_moverect(VTermRect dest, VTermRect src, void *data)
+/// Called when synchronized output (mode 2026) begins or ends.
+static void on_render_hold(GhosttyTerminal ghostty FUNC_ATTR_UNUSED, void *user_data, bool held)
 {
-  invalidate_terminal(data, MIN(dest.start_row, src.start_row),
-                      MAX(dest.end_row, src.end_row));
-  return 1;
+  Terminal *term = user_data;
+  if (term->synchronized_output && !held) {
+    term->sync_flush_pending = true;
+  }
+  term->synchronized_output = held;
 }
 
 static void buf_set_term_title(buf_T *buf, const char *title, size_t len)
@@ -2487,146 +2224,10 @@ static void buf_set_term_title(buf_T *buf, const char *title, size_t len)
   status_redraw_buf(buf);
 }
 
-/// Called when the terminal wants to ring the system bell.
-static void on_bell(GhosttyTerminal ghostty FUNC_ATTR_UNUSED, void *user_data FUNC_ATTR_UNUSED)
-{
-  vim_beep(kOptBoFlagTerm);
-}
-
-/// Called when synchronized output (mode 2026) begins or ends.
-static void on_render_hold(GhosttyTerminal ghostty FUNC_ATTR_UNUSED, void *user_data, bool held)
-{
-  Terminal *term = user_data;
-  if (term->synchronized_output && !held) {
-    term->sync_flush_pending = true;
-  }
-  term->synchronized_output = held;
-}
-
-/// Called when the terminal wants to query the system theme.
 static int term_theme(bool *dark, void *data)
   FUNC_ATTR_NONNULL_ALL
 {
   *dark = (*p_bg == 'd');
-  return 1;
-}
-
-/// Scrollback push handler: called just before a line goes offscreen (and libvterm will forget it),
-/// giving us a chance to store it.
-///
-/// Code adapted from pangoterm.
-static int term_sb_push(int cols, const VTermScreenCell *cells, void *data)
-{
-  Terminal *term = data;
-
-  if (!term_may_alloc_scrollback(term, NULL)) {
-    return 0;
-  }
-  assert(term->sb_size > 0);
-
-  // copy vterm cells into sb_buffer
-  size_t c = (size_t)cols;
-  ScrollbackLine *sbrow = NULL;
-  if (term->sb_current == term->sb_size) {
-    if (term->sb_buffer[term->sb_current - 1]->cols == c) {
-      // Recycle old row if it's the right size
-      sbrow = term->sb_buffer[term->sb_current - 1];
-    } else {
-      xfree(term->sb_buffer[term->sb_current - 1]);
-    }
-    term->sb_deleted++;
-
-    // Make room at the start by shifting to the right.
-    memmove(term->sb_buffer + 1, term->sb_buffer,
-            sizeof(term->sb_buffer[0]) * (term->sb_current - 1));
-  } else if (term->sb_current > 0) {
-    // Make room at the start by shifting to the right.
-    memmove(term->sb_buffer + 1, term->sb_buffer,
-            sizeof(term->sb_buffer[0]) * term->sb_current);
-  }
-
-  if (!sbrow) {
-    sbrow = xmalloc(sizeof(ScrollbackLine) + c * sizeof(sbrow->cells[0]));
-    sbrow->cols = c;
-  }
-
-  // New row is added at the start of the storage buffer.
-  term->sb_buffer[0] = sbrow;
-  if (term->sb_current < term->sb_size) {
-    term->sb_current++;
-  }
-
-  if (term->sb_pending < (int)term->sb_size) {
-    term->sb_pending++;
-  }
-
-  memcpy(sbrow->cells, cells, sizeof(cells[0]) * c);
-  if (!term->synchronized_output) {
-    set_put(ptr_t, &invalidated_terminals, term);
-  }
-
-  return 1;
-}
-
-/// Scrollback pop handler (from pangoterm).
-///
-/// @param cols
-/// @param cells  VTerm state to update.
-/// @param data   Terminal
-static int term_sb_pop(int cols, VTermScreenCell *cells, void *data)
-{
-  Terminal *term = data;
-
-  if (!term->sb_current) {
-    return 0;
-  }
-
-  if (term->sb_pending > 0) {
-    term->sb_pending--;
-  } else {
-    term->old_height++;
-  }
-
-  ScrollbackLine *sbrow = term->sb_buffer[0];
-  term->sb_current--;
-  // Forget the "popped" row by shifting the rest onto it.
-  memmove(term->sb_buffer, term->sb_buffer + 1,
-          sizeof(term->sb_buffer[0]) * (term->sb_current));
-
-  size_t cols_to_copy = MIN((size_t)cols, sbrow->cols);
-
-  // copy to vterm state
-  memcpy(cells, sbrow->cells, sizeof(cells[0]) * cols_to_copy);
-  for (size_t col = cols_to_copy; col < (size_t)cols; col++) {
-    cells[col].schar = 0;
-    cells[col].width = 1;
-  }
-
-  xfree(sbrow);
-  if (!term->synchronized_output) {
-    set_put(ptr_t, &invalidated_terminals, term);
-  }
-
-  return 1;
-}
-
-static int term_sb_clear(void *data)
-{
-  Terminal *term = data;
-
-  if (term->in_altscreen || !term->sb_size || !term->sb_current) {
-    return 1;
-  }
-
-  for (size_t i = 0; i < term->sb_current; i++) {
-    xfree(term->sb_buffer[i]);
-  }
-
-  term->sb_deleted += term->sb_current;
-  term->sb_current = 0;
-  term->sb_pending = 0;
-  invalidate_terminal(term, -1, -1);
-
   return 1;
 }
 
@@ -3096,72 +2697,59 @@ static size_t fetch_row_cells(Terminal *term, GhosttyRenderStateRowCells cells, 
   return line_len;
 }
 
-static size_t fetch_ghostty_row(Terminal *term, int row, int end_col)
+/// Mirrors Ghostty scrollback rows [row, end) into the buffer.
+///
+/// Scrollback rows are displayed as buffer lines, so scrolling the window does not move Ghostty's
+/// viewport. Because render states only expose the current viewport, we temporarily move it through
+/// the history in screen-sized steps, read each viewport, then restore it to the active area.
+///
+/// @param insert  Append rows if true, otherwise replace existing lines.
+static void mirror_scrollback_rows(Terminal *term, buf_T *buf, size_t row, size_t end, bool insert)
   FUNC_ATTR_NONNULL_ALL
 {
-  GhosttyRenderStateRowCells cells = NULL;
-  if (!get_row_cells(term, (uint32_t)row, &cells)) {
-    term->textbuf[0] = NUL;
-    return 0;
-  }
-  return fetch_row_cells(term, cells, end_col);
-}
-
-// TODO(noib3): Remove once scrollback text and vterm-owned transition
-// rendering no longer need libvterm.
-static size_t fetch_vterm_row(Terminal *term, int row, int end_col)
-{
-  int col = 0;
-  size_t line_len = 0;
-  char *ptr = term->textbuf;
-
-  while (col < end_col) {
-    VTermScreenCell cell;
-    fetch_cell(term, row, col, &cell);
-    if (cell.schar) {
-      schar_get_adv(&ptr, cell.schar);
-      line_len = (size_t)(ptr - term->textbuf);
-    } else {
-      *ptr++ = ' ';
-    }
-    col += cell.width;
-  }
-
-  term->textbuf[line_len] = NUL;
-  return line_len;
-}
-
-static void fetch_row(Terminal *term, int row, int end_col)
-{
-  if (row >= 0) {
-    if (fetch_ghostty_row(term, row, end_col) > 0) {
-      return;
-    }
-
-    term->textbuf[0] = NUL;
-    return;
-  }
-
-  fetch_vterm_row(term, row, end_col);
-}
-
-static bool fetch_cell(Terminal *term, int row, int col, VTermScreenCell *cell)
-{
-  if (row < 0) {
-    ScrollbackLine *sbrow = term->sb_buffer[-row - 1];
-    if ((size_t)col < sbrow->cols) {
-      *cell = sbrow->cells[col];
-      return true;
-    }
-
-    *cell = (VTermScreenCell) {
-      .schar = 0,
-      .width = 1,
+  while (row < end) {
+    GhosttyTerminalScrollViewport viewport = {
+      .tag = GHOSTTY_SCROLL_VIEWPORT_ROW,
+      .value.row = row,
     };
-    return false;
-  }
+    ghostty_terminal_scroll_viewport(term->ghostty, viewport);
+    assert_ok(ghostty_render_state_update(term->ghostty_render_state, term->ghostty));
+    assert_ok(ghostty_render_state_get(term->ghostty_render_state,
+                                       GHOSTTY_RENDER_STATE_DATA_ROW_ITERATOR,
+                                       &term->ghostty_render_row_iterator));
 
-  return vterm_screen_get_cell(term->vts, (VTermPos) { row, col }, cell) != 0;
+    size_t chunk_end = MIN(row + (size_t)term->height, end);
+    while (row < chunk_end) {
+      if (!ghostty_render_state_row_iterator_next(term->ghostty_render_row_iterator)) {
+        break;
+      }
+      GhosttyRenderStateRowCells cells = term->ghostty_render_row_cells;
+      assert_ok(ghostty_render_state_row_get(term->ghostty_render_row_iterator,
+                                             GHOSTTY_RENDER_STATE_ROW_DATA_CELLS,
+                                             &cells));
+      (void)fetch_row_cells(term, cells, term->width);
+      linenr_T linenr = (linenr_T)row + 1;
+      if (insert) {
+        ml_append_buf(buf, (linenr_T)row, term->textbuf, 0, false);
+        appended_lines_buf(buf, (linenr_T)row, 1);
+      } else if (linenr <= buf->b_ml.ml_line_count) {
+        ml_replace_buf(buf, linenr, term->textbuf, true, false);
+      } else {
+        ml_append_buf(buf, buf->b_ml.ml_line_count, term->textbuf, 0, false);
+        appended_lines_buf(buf, buf->b_ml.ml_line_count, 1);
+      }
+      row++;
+    }
+    if (row < chunk_end) {
+      break;
+    }
+  }
+  ghostty_terminal_scroll_viewport(term->ghostty,
+                                   (GhosttyTerminalScrollViewport) {
+    .tag = GHOSTTY_SCROLL_VIEWPORT_BOTTOM,
+  });
+  // Restore the render state before refresh_screen() reads it.
+  assert_ok(ghostty_render_state_update(term->ghostty_render_state, term->ghostty));
 }
 
 // queue a terminal instance for refresh
@@ -3232,7 +2820,7 @@ static void refresh_terminal(Terminal *term)
   linenr_T ml_before = buf->b_ml.ml_line_count;
 
   bool resized = refresh_size(term, buf);
-  refresh_scrollback(term, buf);
+  refresh_scrollback(term, buf, resized);
   refresh_screen(term, buf);
 
   int ml_added = buf->b_ml.ml_line_count - ml_before;
@@ -3334,109 +2922,162 @@ static void refresh_timer_cb(TimeWatcher *watcher, void *data)
 
 static bool refresh_size(Terminal *term, buf_T *buf)
 {
+  (void)buf;
   if (!term->pending.resize || term->closed) {
     return false;
   }
 
   term->pending.resize = false;
-  int width, height;
-  vterm_get_size(term->vt, &height, &width);
   term->invalid_start = 0;
-  term->invalid_end = height;
-  term->opts.resize_cb((uint16_t)width, (uint16_t)height, term->opts.data);
+  term->invalid_end = term->height;
+  term->opts.resize_cb((uint16_t)term->width, (uint16_t)term->height, term->opts.data);
   return true;
 }
 
-void on_scrollback_option_changed(Terminal *term)
+void on_scrollback_option_changed(Terminal *term, size_t limit, bool force_refresh)
 {
-  // Scrollback buffer may not exist yet, e.g. if 'scrollback' is set in a TermOpen autocmd.
-  if (term->sb_buffer != NULL) {
+  assert_ok(ghostty_terminal_set(term->ghostty,
+                                 GHOSTTY_TERMINAL_OPT_SCROLLBACK_MAX_LINES,
+                                 &limit));
+  if (force_refresh) {
     refresh_terminal(term);
   }
 }
 
-/// Adjusts scrollback storage and the terminal buffer scrollback lines
-static void adjust_scrollback(Terminal *term, buf_T *buf)
+/// Deletes up to "count" lines from the top of the buffer, for rows that Ghostty removed from the
+/// scrollback. Always keeps at least one line.
+static void delete_scrollback_lines(Terminal *term, buf_T *buf, size_t count)
+  FUNC_ATTR_NONNULL_ALL
 {
-  if (buf->b_p_scbk < 1) {  // Local 'scrollback' was set to -1.
-    buf->b_p_scbk = SB_MAX;
+  count = MIN(count, (size_t)buf->b_ml.ml_line_count - 1);
+  if (count == 0) {
+    return;
   }
-  const size_t scbk = (size_t)buf->b_p_scbk;
-  assert(term->sb_current < SIZE_MAX);
-  if (term->sb_pending > 0) {  // Pending rows must be processed first.
-    abort();
+  mark_adjust_buf(buf, 1, (linenr_T)count, MAXLNUM, -(linenr_T)count, true, kMarkAdjustTerm,
+                  kExtmarkUndo);
+  term->scrollback_deleted += count;
+  for (size_t i = 0; i < count; i++) {
+    ml_delete_buf(buf, 1, false);
   }
-
-  // Delete lines exceeding the new 'scrollback' limit.
-  if (scbk < term->sb_current) {
-    size_t diff = term->sb_current - scbk;
-    for (size_t i = 0; i < diff; i++) {
-      ml_delete_buf(buf, 1, false);
-      term->sb_current--;
-      xfree(term->sb_buffer[term->sb_current]);
-    }
-    mark_adjust_buf(buf, 1, (linenr_T)diff, MAXLNUM, -(linenr_T)diff, true,
-                    kMarkAdjustTerm, kExtmarkUndo);
-    deleted_lines_buf(buf, 1, (linenr_T)diff);
-  }
-
-  // Resize the scrollback storage.
-  size_t sb_region = sizeof(ScrollbackLine *) * scbk;
-  if (scbk != term->sb_size) {
-    term->sb_buffer = xrealloc(term->sb_buffer, sb_region);
-  }
-
-  term->sb_size = scbk;
+  deleted_lines_buf(buf, 1, (linenr_T)count);
 }
 
 // Refresh the scrollback of an invalidated terminal.
-static void refresh_scrollback(Terminal *term, buf_T *buf)
+static void refresh_scrollback(Terminal *term, buf_T *buf, bool resized)
 {
   // Buffer update callbacks may poll for uv events.
   // Avoid polling for output to the same terminal as the one being refreshed.
   term->opts.read_pause_cb(true, term->opts.data);
 
-  linenr_T deleted = (linenr_T)(term->sb_deleted - term->old_sb_deleted);
-  deleted = MIN(deleted, buf->b_ml.ml_line_count);
-  mark_adjust_buf(buf, 1, deleted, MAXLNUM, -deleted, true, kMarkAdjustTerm, kExtmarkUndo);
-  term->old_sb_deleted = term->sb_deleted;
+  int height = term->height;
 
-  int old_height = term->old_height;
-  int width, height;
-  vterm_get_size(term->vt, &height, &width);
-
-  // Remove deleted scrollback lines at the top, but don't unnecessarily remove
-  // lines that will be overwritten by refresh_screen().
-  while (deleted > 0 && buf->b_ml.ml_line_count > old_height) {
-    ml_delete_buf(buf, 1, false);
-    deleted_lines_buf(buf, 1, 1);
-    deleted--;
+  if (term->in_altscreen) {
+    linenr_T target_line_count = (linenr_T)(term->scrollback_rows + (size_t)height);
+    FOR_ALL_TAB_WINDOWS(tp, wp) {
+      if (!is_ctx_win(wp) && wp->w_buffer == buf) {
+        target_line_count = MAX(target_line_count,
+                                (linenr_T)(term->scrollback_rows + (size_t)wp->w_view_height));
+      }
+    }
+    while (buf->b_ml.ml_line_count > target_line_count && buf->b_ml.ml_line_count > 1) {
+      ml_delete_buf(buf, buf->b_ml.ml_line_count, false);
+      deleted_lines_buf(buf, buf->b_ml.ml_line_count, 1);
+    }
+    while (buf->b_ml.ml_line_count < target_line_count) {
+      ml_append_buf(buf, buf->b_ml.ml_line_count, "", 0, false);
+      appended_lines_buf(buf, buf->b_ml.ml_line_count, 1);
+    }
+    term->opts.read_pause_cb(false, term->opts.data);
+    return;
   }
 
-  // Clamp old_height in case buffer lines have been deleted by the user.
-  old_height = MIN(old_height, buf->b_ml.ml_line_count);
-  while (term->sb_pending > 0) {
-    // This means that either the window height has decreased or the screen
-    // became full and libvterm had to push all rows up. Convert the first
-    // pending scrollback row into a string and append it just above the visible
-    // section of the buffer.
-    fetch_row(term, -term->sb_pending, width);
-    int buf_index = buf->b_ml.ml_line_count - old_height;
-    ml_append_buf(buf, buf_index, term->textbuf, 0, false);
-    appended_lines_buf(buf, buf_index, 1);
-    term->sb_pending--;
+  size_t scrollback_rows = get_history_rows(term);
+  size_t old_scrollback_rows = term->scrollback_rows;
+  bool scrollback_cleared = term->scrollback_clear_pending;
+  size_t scrollback_clear_rows = term->scrollback_clear_rows;
+  term->scrollback_clear_pending = false;
+  term->scrollback_clear_rows = 0;
+  term->scrollback_rows = scrollback_rows;
+
+  if (!resized) {
+    // Delete the rows Ghostty removed from the top. A CSI 3 J removes at least all mirrored rows.
+    size_t dropped = scrollback_cleared ? scrollback_clear_rows
+                                        : count_dropped_rows(term);
+    delete_scrollback_lines(term, buf, dropped);
+    old_scrollback_rows -= MIN(dropped, old_scrollback_rows);
+
+    if (old_scrollback_rows < scrollback_rows) {
+      mirror_scrollback_rows(term, buf, old_scrollback_rows, scrollback_rows, true);
+    } else {
+      delete_scrollback_lines(term, buf, old_scrollback_rows - scrollback_rows);
+    }
   }
 
-  int max_line_count = (int)term->sb_current + height;
-  // Remove extra lines at the bottom.
-  while (buf->b_ml.ml_line_count > max_line_count) {
-    ml_delete_buf(buf, buf->b_ml.ml_line_count, false);
-    deleted_lines_buf(buf, buf->b_ml.ml_line_count, 1);
+  linenr_T target_line_count = (linenr_T)(scrollback_rows + (size_t)height);
+  while (buf->b_ml.ml_line_count < target_line_count) {
+    ml_append_buf(buf, buf->b_ml.ml_line_count, "", 0, false);
+    appended_lines_buf(buf, buf->b_ml.ml_line_count, 1);
+  }
+  if (resized && scrollback_rows >= old_scrollback_rows) {
+    // The active screen shrank while history was preserved. Remove obsolete
+    // screen rows from the bottom without shifting saved window views.
+    while (buf->b_ml.ml_line_count > target_line_count) {
+      ml_delete_buf(buf, buf->b_ml.ml_line_count, false);
+      deleted_lines_buf(buf, buf->b_ml.ml_line_count, 1);
+    }
+  } else if (buf->b_ml.ml_line_count > target_line_count) {
+    delete_scrollback_lines(term, buf, (size_t)(buf->b_ml.ml_line_count - target_line_count));
   }
 
-  adjust_scrollback(term, buf);
+  if (resized) {
+    mirror_scrollback_rows(term, buf, 0, scrollback_rows, false);
+    if (scrollback_rows > 0) {
+      changed_lines(buf, 1, 0, (linenr_T)scrollback_rows + 1, 0, true);
+    }
+  }
 
+  set_scrollback_anchors(term);
   term->opts.read_pause_cb(false, term->opts.data);
+}
+
+/// Moves the scrollback anchors to the first active row and to the cursor row.
+///
+/// The second anchor goes on the cursor row rather than the last row because Ghostty doesn't trim
+/// blank rows with tracked pins when shrinking, and the cursor row already has one.
+static void set_scrollback_anchors(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  for (size_t i = 0; i < ARRAY_SIZE(term->scrollback_anchors); i++) {
+    GhosttyPoint point = {
+      .tag = GHOSTTY_POINT_TAG_ACTIVE,
+      .value.coordinate = { .x = 0, .y = i == 0 ? 0 : (uint32_t)term->cursor.row },
+    };
+    assert_ok(ghostty_tracked_grid_ref_set(term->scrollback_anchors[i].ref, term->ghostty,
+                                           point));
+    GhosttyPointCoordinate anchor = { 0 };
+    assert_ok(ghostty_tracked_grid_ref_point(term->scrollback_anchors[i].ref,
+                                             GHOSTTY_POINT_TAG_SCREEN, &anchor));
+    term->scrollback_anchors[i].row = anchor.y;
+  }
+}
+
+/// Returns how many rows Ghostty pruned from the top of its screen since the last refresh, or
+/// SIZE_MAX if all the rows mirrored in the buffer were pruned.
+static size_t count_dropped_rows(Terminal *term)
+  FUNC_ATTR_NONNULL_ALL
+{
+  for (size_t i = 0; i < ARRAY_SIZE(term->scrollback_anchors); i++) {
+    GhosttyPointCoordinate anchor = { 0 };
+    GhosttyResult result = ghostty_tracked_grid_ref_point(term->scrollback_anchors[i].ref,
+                                                          GHOSTTY_POINT_TAG_SCREEN, &anchor);
+    if (result == GHOSTTY_SUCCESS) {
+      size_t row = term->scrollback_anchors[i].row;
+      return row > anchor.y ? row - anchor.y : 0;
+    } else if (result != GHOSTTY_NO_VALUE) {
+      assert_ok(result);
+    }
+  }
+  return SIZE_MAX;
 }
 
 // Refresh the screen (visible part of the buffer when the terminal is
@@ -3445,9 +3086,8 @@ static void refresh_screen(Terminal *term, buf_T *buf)
 {
   int changed = 0;
   int added = 0;
-  int height;
-  int width;
-  vterm_get_size(term->vt, &height, &width);
+  int height = term->height;
+  int width = term->width;
   // Terminal height may have decreased before `invalid_end` reflects it.
   term->invalid_end = MIN(term->invalid_end, height);
 
@@ -3471,9 +3111,7 @@ static void refresh_screen(Terminal *term, buf_T *buf)
       continue;
     }
 
-    if (terminal_mixed_screen_use_vterm(term)) {
-      fetch_vterm_row(term, r, width);
-    } else if (has_row) {
+    if (has_row) {
       GhosttyRenderStateRowCells cells = term->ghostty_render_row_cells;
       assert_ok(ghostty_render_state_row_get(term->ghostty_render_row_iterator,
                                              GHOSTTY_RENDER_STATE_ROW_DATA_CELLS,
@@ -3496,8 +3134,6 @@ static void refresh_screen(Terminal *term, buf_T *buf)
       added++;
     }
   }
-  term->old_height = height;
-
   int change_start = row_to_linenr(term, term->invalid_start);
   int change_end = change_start + changed;
   term->invalid_start = INT_MAX;
@@ -3546,12 +3182,7 @@ static void adjust_topline_cursor(Terminal *term, buf_T *buf, int added)
 
 static int row_to_linenr(Terminal *term, int row)
 {
-  return row != INT_MAX ? row + (int)term->sb_current + 1 : INT_MAX;
-}
-
-static int linenr_to_row(Terminal *term, int linenr)
-{
-  return linenr - (int)term->sb_current - 1;
+  return row != INT_MAX ? row + (int)term->scrollback_rows + 1 : INT_MAX;
 }
 
 static bool is_focused(Terminal *term)
