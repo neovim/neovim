@@ -2161,7 +2161,8 @@ static GhosttyColorRgb rgb_value_to_ghostty_color(RgbValue color)
 }
 
 static int terminal_cell_hl_attr(Terminal *term, int hl_attrs, int16_t fg_idx, int16_t bg_idx,
-                                 int fg, int bg, bool fg_default, bool bg_default, int url_attr)
+                                 int fg, int bg, int sp, bool fg_default, bool bg_default,
+                                 int url_attr)
   FUNC_ATTR_NONNULL_ALL
 {
   bool fg_indexed = fg_idx != 0;
@@ -2181,7 +2182,7 @@ static int terminal_cell_hl_attr(Terminal *term, int hl_attrs, int16_t fg_idx, i
       .rgb_ae_attr = (int32_t)hl_attrs,
       .rgb_fg_color = fg,
       .rgb_bg_color = bg,
-      .rgb_sp_color = -1,
+      .rgb_sp_color = sp,
       .hl_blend = -1,
       .url = -1,
     });
@@ -2283,6 +2284,7 @@ static int cell_raw_attr(Terminal *term, GhosttyPointTag tag, uint32_t row, int 
   TerminalColorAttrs fg = terminal_ghostty_style_color_attrs(palette, style.fg_color);
   TerminalColorAttrs bg = terminal_ghostty_cell_bg_attrs(cell, style.bg_color, palette);
   int underline = terminal_ghostty_underline_hl_flag(style.underline);
+  int sp = underline ? terminal_ghostty_style_color_rgb(palette, style.underline_color) : -1;
 
   int hl_attrs = (style.bold ? HL_BOLD : 0)
                  | (style.faint ? HL_DIM : 0)
@@ -2304,7 +2306,7 @@ static int cell_raw_attr(Terminal *term, GhosttyPointTag tag, uint32_t row, int 
     }
   }
 
-  return terminal_cell_hl_attr(term, hl_attrs, fg.idx, bg.idx, fg.rgb, bg.rgb,
+  return terminal_cell_hl_attr(term, hl_attrs, fg.idx, bg.idx, fg.rgb, bg.rgb, sp,
                                fg.is_default, bg.is_default, url_attr);
 }
 
