@@ -555,6 +555,12 @@ func Test_tagfunc_completion()
     call assert_equal(['mytagA', 'mytagB'], getcompletion('myt', 'tag'))
     call assert_equal([['^myt', 'r']], g:compl_tagfunc_args)
 
+    " Test via actual command-line completion with <C-A>
+    let g:compl_tagfunc_args = []
+    call feedkeys(":tag myt\<C-A>\<C-B>\"\<CR>", 'tx')
+    call assert_equal('"tag mytagA mytagB', @:)
+    call assert_equal([['^myt', 'r']], g:compl_tagfunc_args)
+
     " An empty list means no matches, not a fallback to the tags files.
     func EmptyTagFunc(pat, flags, info)
       return []
@@ -630,6 +636,16 @@ func Test_tagfunc_completion_side_effects()
     return [{'name': 'mytagK', 'filename': 'Xfile1', 'cmd': '1'}]
   endfunc
 
+  func SetCmdlineFunc(pat, flags, info)
+    call assert_equal(0, setcmdline('hello there'))
+    return []
+  endfunc
+
+  func SetCmdposFunc(pat, flags, info)
+    call assert_equal(0, setcmdpos(2))
+    return []
+  endfunc
+
   try
     " Opening a window during completion.
     set tagfunc=SplitTagFunc
@@ -664,6 +680,17 @@ func Test_tagfunc_completion_side_effects()
     " Clearing the tag stack during completion.
     set tagfunc=StackTagFunc
     call assert_fails("call getcompletion('myt', 'tag')", 'E986:')
+
+    " Using setcmdline() during completion (and via command-line completion).
+    set tagfunc=SetCmdlineFunc
+    call feedkeys(":tag my\<Tab>", 'tx')
+    call feedkeys(":tag my\<Tab>\<C-B>\"\<CR>", 'tx')
+    call assert_equal('"hello there', @:)
+
+    " Using setcmdpos() during completion - doesn't change the position.
+    set tagfunc=SetCmdposFunc
+    call feedkeys(":tag my\<Tab>MARK\<C-B>\"\<CR>", 'tx')
+    call assert_equal('"tag myMARK', @:)
   finally
     set tagfunc&
     silent! only!
@@ -673,6 +700,8 @@ func Test_tagfunc_completion_side_effects()
     delfunc! TabTagFunc
     delfunc! CursorTagFunc
     delfunc! StackTagFunc
+    delfunc! SetCmdlineFunc
+    delfunc! SetCmdposFunc
     bwipe!
   endtry
 endfunc
