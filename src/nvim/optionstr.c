@@ -585,6 +585,7 @@ const char *did_set_background(optset_T *args)
   FOR_ALL_BUFFERS(buf) {
     if (buf->terminal) {
       terminal_notify_theme(buf->terminal, dark);
+      terminal_update_colors(buf->terminal);
     }
   }
 
@@ -1321,6 +1322,7 @@ const char *did_set_guicursor(optset_T *args FUNC_ATTR_UNUSED)
   if (errmsg != NULL) {
     return errmsg;
   }
+  terminal_update_colors_all();
   terminal_update_default_cursor_all();
   if (Visual.active) {
     // In Visual mode cursor may be drawn differently.
