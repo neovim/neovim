@@ -1953,40 +1953,6 @@ describe('multicursor', function()
       eq({ 'aaaaa', 'bbbbb', 'ccccc' }, get_lines())
     end)
 
-    it('treesitter "an" expands at each cursor #41716', function()
-      -- Simulate the v_an treesitter mapping. Selects via setpos("'<") + "gv", after "v<Esc>".
-      n.exec_lua(function()
-        vim.keymap.set({ 'x', 'o' }, 'an', function()
-          vim.treesitter.select('parent', vim.v.count1)
-        end)
-      end)
-      api.nvim_buf_set_lines(0, 0, -1, true, {
-        'int main(void) {',
-        '  foo(1);',
-        '}',
-        'void other(void) {',
-        '  bar(2);',
-        '}',
-      })
-      command('setfiletype c')
-      n.exec_lua(function()
-        vim.treesitter.start(0, 'c')
-      end)
-      local vsel = api.nvim_create_namespace('nvim.multicursor.visual')
-      local function fake()
-        local m = api.nvim_buf_get_extmarks(0, vsel, 0, -1, { details = true })[1]
-        return { m[2], m[3], m[4].end_row, m[4].end_col }
-      end
-      feed('2G3|Q5G3|') -- Cursor on "foo", primary on "bar".
-      feed('van') -- Each cursor selects its own identifier...
-      eq({ 1, 2, 1, 5 }, fake())
-      feed('an') -- ...then its own call expression.
-      eq({ 1, 2, 1, 8 }, fake())
-      eq({ 5, 3, 5, 8 }, { fn.line('v'), fn.col('v'), fn.line('.'), fn.col('.') })
-      feed('d')
-      eq({ 'int main(void) {', '  ;', '}', 'void other(void) {', '  ;', '}' }, get_lines())
-    end)
-
     it('replays the full visual keysequence', function()
       cursors({ 'one two three x', 'aa bb cc d' }, 'Qj')
       -- Select word, extend twice, delete: selection re-executes at each cursor, so the extents are
@@ -3209,7 +3175,58 @@ describe('multicursor', function()
     end)
   end)
 
-  describe('treesitter interaction', function()
+  describe('treesitter', function()
+    it('incremental selections at each cursor #41716', function()
+      -- The default ts "an"/"in" mappings: setpos("'<") + "gv" in Lua.
+      clear({ args_rm = { '--cmd' } })
+      command(n.nvim_set)
+      command('colorscheme vim')
+      command('hi MCursor guifg=Black guibg=LightGrey')
+      local screen = Screen.new(30, 6)
+      command('set filetype=lua')
+      cursors({ 'foo(one, two)', 'bar(three, four)', 'baz(five, six)' }, 'ftQj0ffQj0fs')
+      eq({ { 0, 9 }, { 1, 11 } }, anchors())
+      eq({ 3, 10 }, api.nvim_win_get_cursor(0))
+      feed('van')
+      screen:expect([[
+        foo(one, {17:two})                 |
+        bar(three, {17:four})              |
+        baz(five, {17:si}^x)                |
+        {1:~                             }|*2
+        {5:-- VISUAL --}                  |
+      ]])
+      feed('an')
+      screen:expect([[
+        foo{17:(one, two)}                 |
+        bar{17:(three, four)}              |
+        baz{17:(five, six}^)                |
+        {1:~                             }|*2
+        {5:-- VISUAL --}                  |
+      ]])
+      -- TODO: "in" after "an": the primary selects the first child. #42000
+      -- feed('in')
+      -- screen:expect([[
+      --   foo(one, {17:two})                 |
+      --   bar(three, {17:four})              |
+      --   baz(five, {17:si}^x)                |
+      --   {1:~                             }|*2
+      --   {5:-- VISUAL --}                  |
+      -- ]])
+      feed('cX')
+      eq({ 'fooX', 'barX', 'bazX' }, get_lines())
+      eq('i', fn.mode())
+      feed('<Esc>')
+      eq({ 'fooX', 'barX', 'bazX' }, get_lines())
+
+      clear_cursors()
+      cursors({ 'foo(one, two)', 'bar(three, four)', 'baz(five, six)' }, 'ftQj0ffQj0fs')
+      feed('canX')
+      eq({ 'foo(one, X)', 'bar(three, X)', 'baz(five, X)' }, get_lines())
+      eq('i', fn.mode())
+      feed('<Esc>')
+      eq({ 'foo(one, X)', 'bar(three, X)', 'baz(five, X)' }, get_lines())
+    end)
+
     it('markdown highlighting survives a live insert', function()
       n.exec_lua([[
         -- Large, injection-heavy buffer: multi-slice ASYNC parses (the

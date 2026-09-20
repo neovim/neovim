@@ -168,6 +168,10 @@ describe('CmdAtom', function()
       fn.setline(1, 'reset')
       n.exec_lua(([[vim.api.nvim_feedkeys(%q, 'nx', false)]]):format(cmdev.keys))
       eq('N3', fn.getline(1))
+      -- "<Cmd>" text is raw, a trailing "0" is not CTRL-V escaped (as for a ":" cmdline).
+      command([[nnoremap ,z <Cmd>call setline(1, 'Z') <Bar> let g:z = 10<CR>]])
+      feed(',z')
+      eq(k([[<Cmd>call setline(1, 'Z') | let g:z = 10<NL>]]), atom_last().keys)
 
       -- <expr> mapping that returns a "<Cmd>lua …<CR>" (dot-repeat idiom #41387) captures the same
       -- way: the constructed command is the atom.
@@ -859,18 +863,21 @@ describe('CmdAtom', function()
       feed('j0.')
       eq('b', fn.getline(2)) -- The API move clamps on the short line; "1v" would have emptied it.
       -- Also when only the fed key follows the API move: "o" alone would replay a 1-char selection.
-      n.exec_lua(function()
-        vim.keymap.set('x', 'gH', function()
-          local cursor = vim.api.nvim_win_get_cursor(0)
-          vim.api.nvim_win_set_cursor(0, { cursor[1], cursor[2] + 1 })
-          vim.cmd('normal! o')
+      -- Defined >=10 times: at least 1 mapping-id ends in "0" (exercises redobuf encoding...).
+      for _ = 1, 10 do
+        n.exec_lua(function()
+          vim.keymap.set('x', 'gH', function()
+            local cursor = vim.api.nvim_win_get_cursor(0)
+            vim.api.nvim_win_set_cursor(0, { cursor[1], cursor[2] + 1 })
+            vim.cmd('normal! o')
+          end)
         end)
-      end)
-      api.nvim_buf_set_lines(0, 0, -1, true, { 'aaaaaaa', 'bbbbbbb' })
-      feed('gg0vgHd')
-      eq('aaaaa', fn.getline(1))
-      feed('j0.')
-      eq('bbbbb', fn.getline(2))
+        api.nvim_buf_set_lines(0, 0, -1, true, { 'aaaaaaa', 'bbbbbbb' })
+        feed('gg0vgHd')
+        eq('aaaaa', fn.getline(1))
+        feed('j0.')
+        eq('bbbbb', fn.getline(2))
+      end
       -- A fed "gv" reselects marks the mapping set.
       n.exec_lua(function()
         vim.keymap.set('x', 'gs', function()

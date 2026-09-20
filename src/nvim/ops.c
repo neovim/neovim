@@ -3282,10 +3282,11 @@ static VisualIns op_ins_visual(oparg_T *oap, cmdarg_T *cap)
   if (!oap->is_VIsual) {
     return kVInsNone;
   }
-  if (is_ex_cmdchar(cap) || cap->cmdchar == K_LUA || oap->motion_force != NUL
-      || op_self_select(cap)) {
-    // The selection came from a self-selecting motion (gn/gN/gv, an omap running ":normal", a Lua
-    // motion) or a forced-motion operator: the redo replays the motion's own keys instead.
+  if (is_ex_cmdchar(cap) || cap->cmdchar == K_LUA) {
+    return kVInsMotion;  // An omap selected it (Lua, or ":norm"): redo replays the omap.
+  }
+  if (oap->motion_force != NUL || op_self_select(cap)) {
+    // A self-selecting motion (gn/gN/gv) or a forced-motion operator: redo replays its keys.
     return kVInsOther;
   }
   // Unreplayable (void/absent/"gv") selection: the redo falls back to an equal-size reselect ("1v").

@@ -270,7 +270,11 @@ static CmdAtom atom_from_cmdline(CmdAtomType type, cmdarg_T *ca, const char *cmd
     kv_printf(sb, "%d", ca->count0);
   }
   sb_add_char(&sb, ca->cmdchar);
-  sb_add_lit(&sb, cmdline, -1);
+  if (IS_SPECIAL(ca->cmdchar)) {
+    sb_add_spec(&sb, cmdline);  // <Cmd> text, Lua mapping-id.
+  } else {
+    sb_add_lit(&sb, cmdline, -1);  // Typed cmdline (":", "/"), interprets CTRL-V.
+  }
   sb_add_char(&sb, NL);
   kv_push(sb, NUL);
   return (CmdAtom){
@@ -1241,7 +1245,7 @@ void atom_capture_op(oparg_T *oap, cmdarg_T *cap, bool redo_yank)
 /// - Count is given ("[count]i…").
 /// - Replace mode (R, gR, r<CR>, gr): continuation spans re-enter with "i".
 /// - Blockwise ("1vI", CTRL-V+"jc").
-/// - Entered from Visual without captured keys: cannot re-execute.
+/// - Entered from Visual without captured keys, or by Ex/Lua motion that read input: unreplayable.
 ///
 /// @param cmd     Entry command char, edit()-style ('i', 'a', 'R', 'v' = gr, …).
 /// @param count   Count given to the entry command.
@@ -1266,8 +1270,9 @@ InsSession atom_ins_start(int cmd, long count, VisualIns vis, bool vblock)
     atom_visual_reset();
   }
   bool repl = cmd == 'R' || cmd == 'V' || cmd == 'r' || cmd == 'v';
-  mc_ins_cascade_start(session.typed && count <= 1 && !repl
-                       && (vis == kVInsNone || (vis == kVInsKeys && !vblock)),
+  bool reexec = vis == kVInsNone || vis == kVInsKeys
+                || (vis == kVInsMotion && cur_frame->payload_start == SIZE_MAX);
+  mc_ins_cascade_start(session.typed && count <= 1 && !repl && !vblock && reexec,
                        session.origin.tick);
   return session;
 }
