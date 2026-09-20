@@ -130,6 +130,34 @@ typedef struct {
   bool is_default;
 } TerminalColorAttrs;
 
+typedef enum {
+  kTermRequestParserNormal = 0,
+  kTermRequestParserEsc,
+  kTermRequestParserCsi,
+  kTermRequestParserOsc,
+  kTermRequestParserDcs,
+  kTermRequestParserApc,
+  kTermRequestParserStringEsc,
+} TermRequestParserState;
+
+typedef enum {
+  kTermRequestKindNone = 0,
+  kTermRequestKindOsc,
+  kTermRequestKindDcs,
+  kTermRequestKindApc,
+} TermRequestKind;
+
+typedef enum {
+  kTermRequestTerminatorBel = 0,
+  kTermRequestTerminatorSt,
+} TermRequestTerminator;
+
+typedef enum {
+  kTermRequestParserEventNone = 0,
+  kTermRequestParserEventStart,
+  kTermRequestParserEventFinish,
+} TermRequestParserEvent;
+
 #include "terminal.c.generated.h"
 
 // Delay for refreshing the terminal buffer after receiving updates from
@@ -228,7 +256,9 @@ struct terminal {
   StringBuilder selection;  ///< Growable array containing full selection data
 
   StringBuilder termrequest_buffer;  ///< Growable array containing unfinished request sequence
-  VTermTerminator termrequest_terminator;  ///< Terminator (BEL or ST) used in the termrequest
+  TermRequestParserState termrequest_state;  ///< Current request parser state.
+  TermRequestKind termrequest_kind;  ///< Current OSC/DCS/APC sequence kind.
+  TermRequestTerminator termrequest_terminator;  ///< Terminator (BEL or ST) used in request.
 
   size_t refcount;                  // reference count
 };
@@ -262,7 +292,7 @@ static void emit_termrequest(void **argv)
   int row = (int)(intptr_t)argv[4];
   int col = (int)(intptr_t)argv[5];
   size_t sb_deleted = (size_t)(intptr_t)argv[6];
-  VTermTerminator terminator = (VTermTerminator)(intptr_t)argv[7];
+  TermRequestTerminator terminator = (TermRequestTerminator)(intptr_t)argv[7];
 
   buf_T *buf = handle_get_buffer(buf_handle);
   if (!buf || buf->terminal == NULL) {  // Terminal already closed.
@@ -295,7 +325,7 @@ static void emit_termrequest(void **argv)
   PUT_C(data, "cursor", ARRAY_OBJ(cursor));
   PUT_C(data, "terminator",
         terminator ==
-        VTERM_TERMINATOR_BEL ? STATIC_CSTR_AS_OBJ("\x07") : STATIC_CSTR_AS_OBJ("\x1b\\"));
+        kTermRequestTerminatorBel ? STATIC_CSTR_AS_OBJ("\x07") : STATIC_CSTR_AS_OBJ("\x1b\\"));
 
   term->refcount++;
   apply_autocmds_group(EVENT_TERMREQUEST, NULL, NULL, true, AUGROUP_ALL, buf, curwin, NULL,
@@ -366,98 +396,141 @@ static int parse_osc8(const char *str, int *attr)
   return 1;
 }
 
-static int on_osc(int command, VTermStringFragment frag, void *user)
+static void terminal_termrequest_begin(Terminal *term, TermRequestKind kind)
   FUNC_ATTR_NONNULL_ALL
 {
-  Terminal *term = user;
-
-  if (frag.str == NULL || frag.len == 0) {
-    return 0;
+  term->termrequest_kind = kind;
+  term->termrequest_state = kind == kTermRequestKindOsc
+                            ? kTermRequestParserOsc
+                            : kind == kTermRequestKindDcs
+                            ? kTermRequestParserDcs
+                            : kTermRequestParserApc;
+  kv_size(term->termrequest_buffer) = 0;
+  switch (kind) {
+  case kTermRequestKindOsc:
+    kv_concat_len(term->termrequest_buffer, "\x1b]", 2);
+    break;
+  case kTermRequestKindDcs:
+    kv_concat_len(term->termrequest_buffer, "\x1bP", 2);
+    break;
+  case kTermRequestKindApc:
+    kv_concat_len(term->termrequest_buffer, "\x1b_", 2);
+    break;
+  case kTermRequestKindNone:
+    break;
   }
-
-  if (command != 8 && !has_event(EVENT_TERMREQUEST)) {
-    return 1;
-  }
-
-  if (frag.initial) {
-    kv_size(term->termrequest_buffer) = 0;
-    kv_printf(term->termrequest_buffer, "\x1b]%d;", command);
-  }
-  kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
-  if (frag.final) {
-    term->termrequest_terminator = frag.terminator;
-    if (has_event(EVENT_TERMREQUEST)) {
-      schedule_termrequest(term);
-    }
-    if (command == 8) {
-      kv_push(term->termrequest_buffer, NUL);
-      const size_t off = STRLEN_LITERAL("\x1b]8;");
-      int attr = 0;
-      if (parse_osc8(term->termrequest_buffer.items + off, &attr)) {
-        VTermState *state = vterm_obtain_state(term->vt);
-        VTermValue value = { .number = attr };
-        vterm_state_set_penattr(state, VTERM_ATTR_URI, VTERM_VALUETYPE_INT, &value);
-      }
-    }
-  }
-  return 1;
 }
 
-static int on_dcs(const char *command, size_t commandlen, VTermStringFragment frag, void *user)
+static void terminal_termrequest_finish(Terminal *term, TermRequestTerminator terminator)
+  FUNC_ATTR_NONNULL_ALL
 {
-  Terminal *term = user;
-
-  if (command == NULL || frag.str == NULL) {
-    return 0;
-  }
-  if (!has_event(EVENT_TERMREQUEST)) {
-    return 1;
-  }
-
-  if (frag.initial) {
-    kv_size(term->termrequest_buffer) = 0;
-    kv_printf(term->termrequest_buffer, "\x1bP%.*s", (int)commandlen, command);
-  }
-  kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
-  if (frag.final) {
-    term->termrequest_terminator = frag.terminator;
-    schedule_termrequest(term);
-  }
-  return 1;
+  term->termrequest_terminator = terminator;
+  term->termrequest_state = kTermRequestParserNormal;
 }
 
-static int on_apc(VTermStringFragment frag, void *user)
+static TermRequestParserEvent terminal_termrequest_parse_byte(Terminal *term, uint8_t c)
+  FUNC_ATTR_NONNULL_ALL
 {
-  Terminal *term = user;
-  if (frag.str == NULL || frag.len == 0) {
-    return 0;
-  }
+  switch (term->termrequest_state) {
+  case kTermRequestParserNormal:
+    switch (c) {
+    case 0x90:
+      terminal_termrequest_begin(term, kTermRequestKindDcs);
+      return kTermRequestParserEventStart;
+    case 0x9d:
+      terminal_termrequest_begin(term, kTermRequestKindOsc);
+      return kTermRequestParserEventStart;
+    case 0x9f:
+      terminal_termrequest_begin(term, kTermRequestKindApc);
+      return kTermRequestParserEventStart;
+    case 0x9b:
+      term->termrequest_state = kTermRequestParserCsi;
+      return kTermRequestParserEventNone;
+    case ESC:
+      term->termrequest_state = kTermRequestParserEsc;
+      return kTermRequestParserEventNone;
+    default:
+      return kTermRequestParserEventNone;
+    }
 
-  if (!has_event(EVENT_TERMREQUEST)) {
-    return 1;
-  }
+  case kTermRequestParserEsc:
+    switch (c) {
+    case ']':
+      terminal_termrequest_begin(term, kTermRequestKindOsc);
+      return kTermRequestParserEventStart;
+    case 'P':
+      terminal_termrequest_begin(term, kTermRequestKindDcs);
+      return kTermRequestParserEventStart;
+    case '_':
+      terminal_termrequest_begin(term, kTermRequestKindApc);
+      return kTermRequestParserEventStart;
+    case '[':
+    case 0x9b:
+      term->termrequest_state = kTermRequestParserCsi;
+      return kTermRequestParserEventNone;
+    case ESC:
+      return kTermRequestParserEventNone;
+    default:
+      term->termrequest_state = kTermRequestParserNormal;
+      return kTermRequestParserEventNone;
+    }
 
-  if (frag.initial) {
-    kv_size(term->termrequest_buffer) = 0;
-    kv_printf(term->termrequest_buffer, "\x1b_");
+  case kTermRequestParserCsi:
+    if (c == ESC) {
+      term->termrequest_state = kTermRequestParserEsc;
+      return kTermRequestParserEventNone;
+    }
+    if (c == 0x9b) {
+      term->termrequest_state = kTermRequestParserCsi;
+      return kTermRequestParserEventNone;
+    }
+    if (c >= 0x40 && c <= 0x7e) {
+      term->termrequest_state = kTermRequestParserNormal;
+    }
+    return kTermRequestParserEventNone;
+
+  case kTermRequestParserOsc:
+  case kTermRequestParserDcs:
+  case kTermRequestParserApc:
+    if (c == 0x9c) {
+      terminal_termrequest_finish(term, kTermRequestTerminatorSt);
+      return kTermRequestParserEventFinish;
+    }
+    if (term->termrequest_kind == kTermRequestKindOsc && c == BELL) {
+      terminal_termrequest_finish(term, kTermRequestTerminatorBel);
+      return kTermRequestParserEventFinish;
+    }
+    if (c == ESC) {
+      term->termrequest_state = kTermRequestParserStringEsc;
+      return kTermRequestParserEventNone;
+    }
+    kv_push(term->termrequest_buffer, (char)c);
+    return kTermRequestParserEventNone;
+
+  case kTermRequestParserStringEsc:
+    if (c == '\\') {
+      terminal_termrequest_finish(term, kTermRequestTerminatorSt);
+      return kTermRequestParserEventFinish;
+    }
+    kv_push(term->termrequest_buffer, ESC);
+    if (c == 0x9c) {
+      terminal_termrequest_finish(term, kTermRequestTerminatorSt);
+      return kTermRequestParserEventFinish;
+    }
+    if (term->termrequest_kind == kTermRequestKindOsc && c == BELL) {
+      terminal_termrequest_finish(term, kTermRequestTerminatorBel);
+      return kTermRequestParserEventFinish;
+    }
+    kv_push(term->termrequest_buffer, (char)c);
+    term->termrequest_state = term->termrequest_kind == kTermRequestKindOsc
+                              ? kTermRequestParserOsc
+                              : term->termrequest_kind == kTermRequestKindDcs
+                              ? kTermRequestParserDcs
+                              : kTermRequestParserApc;
+    return kTermRequestParserEventNone;
   }
-  kv_concat_len(term->termrequest_buffer, frag.str, frag.len);
-  if (frag.final) {
-    term->termrequest_terminator = frag.terminator;
-    schedule_termrequest(term);
-  }
-  return 1;
+  return kTermRequestParserEventNone;
 }
-
-static VTermStateFallbacks vterm_fallbacks = {
-  .control = NULL,
-  .csi = NULL,
-  .osc = on_osc,
-  .dcs = on_dcs,
-  .apc = on_apc,
-  .pm = NULL,
-  .sos = NULL,
-};
 
 void terminal_init(void)
 {
@@ -757,7 +830,6 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   vterm_screen_enable_reflow(term->vts, true);
   // delete empty lines at the end of the buffer
   vterm_screen_set_callbacks(term->vts, &vterm_screen_callbacks, term);
-  vterm_screen_set_unrecognised_fallbacks(term->vts, &vterm_fallbacks, term);
   vterm_screen_set_damage_merge(term->vts, VTERM_DAMAGE_SCROLL);
   vterm_screen_reset(term->vts, 1);
   vterm_output_set_callback(term->vt, term_output_callback, term);
@@ -1817,9 +1889,60 @@ static void on_sync_flush(void **argv)
   unblock_autocmds();
 }
 
+static void terminal_vt_write_chunk(Terminal *term, const char *data, size_t len)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (len == 0) {
+    return;
+  }
+  vterm_input_write(term->vt, data, len);
+  ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)data, len);
+}
+
+static void terminal_vt_write(Terminal *term, const char *data, size_t len)
+  FUNC_ATTR_NONNULL_ALL
+{
+  size_t chunk_start = 0;
+  for (size_t i = 0; i < len; i++) {
+    TermRequestParserEvent event = terminal_termrequest_parse_byte(term, (uint8_t)data[i]);
+    if (event == kTermRequestParserEventStart) {
+      size_t request_start = i;
+      if (i > 0 && data[i - 1] == ESC
+          && ((uint8_t)data[i] == ']' || (uint8_t)data[i] == 'P' || (uint8_t)data[i] == '_')) {
+        request_start--;
+      }
+      terminal_vt_write_chunk(term, data + chunk_start, request_start - chunk_start);
+      chunk_start = request_start;
+    } else if (event == kTermRequestParserEventFinish) {
+      terminal_vt_write_chunk(term, data + chunk_start, i + 1 - chunk_start);
+      if (has_event(EVENT_TERMREQUEST)) {
+        schedule_termrequest(term);
+      }
+      // Historical cells still belong to libvterm; preserve their OSC 8 pen metadata.
+      if (term->termrequest_kind == kTermRequestKindOsc
+          && kv_size(term->termrequest_buffer) >= 4
+          && memcmp(term->termrequest_buffer.items, "\x1b]8;", 4) == 0) {
+        kv_push(term->termrequest_buffer, NUL);
+        int attr = 0;
+        if (parse_osc8(term->termrequest_buffer.items + 4, &attr)) {
+          VTermState *state = vterm_obtain_state(term->vt);
+          VTermValue value = { .number = attr };
+          vterm_state_set_penattr(state, VTERM_ATTR_URI, VTERM_VALUETYPE_INT, &value);
+        }
+      }
+      term->termrequest_state = kTermRequestParserNormal;
+      term->termrequest_kind = kTermRequestKindNone;
+      kv_size(term->termrequest_buffer) = 0;
+      chunk_start = i + 1;
+    }
+  }
+  terminal_vt_write_chunk(term, data + chunk_start, len - chunk_start);
+  terminal_ghostty_render_state_update(term);
+}
+
 void terminal_receive(Terminal *term, const char *data, size_t len)
 {
-  if (!data) {
+  if (!data || len == 0) {
     return;
   }
   // X10 mouse reports echo back as CSI M, which is also DL.  Cursor/screen state
@@ -1838,14 +1961,10 @@ void terminal_receive(Terminal *term, const char *data, size_t len)
       kv_push(crlf_data, data[i]);
     }
 
-    vterm_input_write(term->vt, crlf_data.items, kv_size(crlf_data));
-    ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)crlf_data.items, kv_size(crlf_data));
-    terminal_ghostty_render_state_update(term);
+    terminal_vt_write(term, crlf_data.items, kv_size(crlf_data));
     kv_destroy(crlf_data);
   } else {
-    vterm_input_write(term->vt, data, len);
-    ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)data, len);
-    terminal_ghostty_render_state_update(term);
+    terminal_vt_write(term, data, len);
   }
   vterm_screen_flush_damage(term->vts);
 

@@ -726,6 +726,23 @@ describe(':terminal buffer', function()
       eq(termbuf, eval('g:termbuf'))
     end)
 
+    it('emits event if autocommand is created before sequence terminates', function()
+      command('autocmd! nvim.terminal TermRequest')
+      local term = api.nvim_open_term(0, {})
+      api.nvim_chan_send(term, '\027]777;part')
+
+      exec_lua([[
+        vim.api.nvim_create_autocmd('TermRequest', {
+          callback = function(ev)
+            _G.termrequest_sequence = ev.data.sequence
+          end,
+        })
+      ]])
+      api.nvim_chan_send(term, 'ial\027\\')
+
+      eq('\027]777;partial', exec_lua('return _G.termrequest_sequence'))
+    end)
+
     it('emits events for APC', function()
       local term = api.nvim_open_term(0, {})
 
