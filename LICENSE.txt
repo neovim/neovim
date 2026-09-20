@@ -193,6 +193,7 @@ The externally maintained libraries used by Neovim are:
   - LuaJIT: a Just-In-Time Compiler for Lua. Copyright Mike Pall. MIT license.
   - Luv: Apache 2.0 license
   - gettext
+  - libghostty-vt: MIT license
   - libiconv
   - libmpack: MIT license
   - libtermkey: MIT license
