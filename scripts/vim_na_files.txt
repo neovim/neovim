@@ -85,7 +85,6 @@ src/cairo.c
 src/channel.c
 src/clientserver.c
 src/dlldata.c
-src/hardcopy.c
 src/iid_ole.c
 src/job.c
 src/kitty.c
