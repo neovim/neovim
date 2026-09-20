@@ -641,35 +641,45 @@ static void fetch_cursor(Terminal *term)
   }
 }
 
-static int terminal_default_decsusr_cursor_style(void)
+static GhosttyTerminalCursorStyle default_cursor_style(void)
 {
-  int style = 1;
-  bool blink = shape_table[SHAPE_IDX_TERM].blinkon != 0
-               && shape_table[SHAPE_IDX_TERM].blinkoff != 0;
-
   switch (shape_table[SHAPE_IDX_TERM].shape) {
   case SHAPE_BLOCK:
-    style = blink ? 1 : 2;
-    break;
+    return GHOSTTY_TERMINAL_CURSOR_STYLE_BLOCK;
   case SHAPE_HOR:
-    style = blink ? 3 : 4;
-    break;
+    return GHOSTTY_TERMINAL_CURSOR_STYLE_UNDERLINE;
   case SHAPE_VER:
-    style = blink ? 5 : 6;
-    break;
+    return GHOSTTY_TERMINAL_CURSOR_STYLE_BAR;
   }
-  return style;
+  UNREACHABLE;
 }
 
-static void terminal_ghostty_init_cursor_style(Terminal *term)
+/// Sets the cursor Ghostty falls back to when the child resets it (DECSCUSR 0) from the terminal
+/// mode of 'guicursor'.
+static void update_default_cursor(Terminal *term)
   FUNC_ATTR_NONNULL_ALL
 {
-  int style = terminal_default_decsusr_cursor_style();
+  GhosttyTerminalCursorStyle style = default_cursor_style();
+  assert_ok(ghostty_terminal_set(term->ghostty,
+                                 GHOSTTY_TERMINAL_OPT_DEFAULT_CURSOR_STYLE,
+                                 &style));
 
-  char buf[8];
-  int len = snprintf(buf, sizeof(buf), "\x1b[%d q", style);
-  assert(len > 0 && (size_t)len < sizeof(buf));
-  ghostty_terminal_vt_write(term->ghostty, (const uint8_t *)buf, (size_t)len);
+  bool blink = shape_table[SHAPE_IDX_TERM].blinkon != 0
+               && shape_table[SHAPE_IDX_TERM].blinkoff != 0;
+  assert_ok(ghostty_terminal_set(term->ghostty,
+                                 GHOSTTY_TERMINAL_OPT_DEFAULT_CURSOR_BLINK,
+                                 &blink));
+}
+
+/// Applies a 'guicursor' change to all terminals.
+void terminal_update_default_cursor_all(void)
+{
+  FOR_ALL_BUFFERS(buf) {
+    if (buf->terminal) {
+      update_default_cursor(buf->terminal);
+      update_render_state(buf->terminal);
+    }
+  }
 }
 
 static size_t get_history_rows(Terminal *term)
@@ -783,7 +793,7 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   vterm_state_set_selection_callbacks(state, &vterm_selection_callbacks, term,
                                       term->selection_buffer, SELECTIONBUF_SIZE);
 
-  terminal_ghostty_init_cursor_style(term);
+  update_default_cursor(term);
   update_render_state(term);
 
   // Force a initial refresh of the screen to ensure the buffer will always
