@@ -788,7 +788,6 @@ local function check_includes(filename, lines, error)
     'mpack/object.h',
     'nvim/func_attr.h',
     'termkey/termkey.h',
-    'vterm/vterm.h',
     'xdiff/xdiff.h',
   }
 
