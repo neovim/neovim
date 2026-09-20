@@ -96,22 +96,13 @@ describe(':terminal', function()
       return
     end
 
+    -- SIGWINCH delivery is asynchronous, so the child may print one or more
+    -- intermediate size reports. Wait for the final size instead of asserting
+    -- the whole resize transcript.
     screen:try_resize(w1, h1)
-    screen:expect([[
-      tty ready                                      |
-      rows: 7, cols: 47                              |
-                                                     |*4
-      ^                                               |
-                                                     |
-    ]])
+    screen:expect { any = 'rows: 7, cols: 47' }
     screen:try_resize(w2, h2)
-    screen:expect([[
-      tty ready                                |
-      rows: 7, cols: 47                        |
-      rows: 4, cols: 41                        |
-      ^                                         |
-                                               |
-    ]])
+    screen:expect { any = 'rows: 4, cols: 41' }
   end)
 
   it('stays in terminal mode with <Cmd>wincmd', function()

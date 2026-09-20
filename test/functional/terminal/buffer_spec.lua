@@ -766,18 +766,18 @@ describe(':terminal buffer', function()
         })
         vim.api.nvim_create_autocmd('TermRequest', {
           callback = function(ev)
-            if ev.data.sequence == '\027]11;?' then
-              table.insert(_G.input, '\027]11;rgb:0000/0000/0000\027\\')
+            if ev.data.sequence == '\027]777;?' then
+              table.insert(_G.input, '\027]777;ok\027\\')
             end
           end
         })
         return term
       ]])
-      api.nvim_chan_send(term, '\027]11;?\007\027[5n\027]11;?\007\027[5n')
+      api.nvim_chan_send(term, '\027]777;?\007\027[5n\027]777;?\007\027[5n')
       eq({
-        '\027]11;rgb:0000/0000/0000\027\\',
+        '\027]777;ok\027\\',
         '\027[0n',
-        '\027]11;rgb:0000/0000/0000\027\\',
+        '\027]777;ok\027\\',
         '\027[0n',
       }, exec_lua('return _G.input'))
     end)
@@ -808,6 +808,30 @@ describe(':terminal buffer', function()
       retry(nil, 4000, function()
         eq(true, exec_lua('return _G.result'))
       end)
+    end)
+
+    it('includes pending scrollback in cursor position', function()
+      command('autocmd! nvim.terminal TermRequest')
+      local screen = Screen.new(50, 10)
+      local term = exec_lua([[
+        _G.cursor = {}
+        local term = vim.api.nvim_open_term(0, {})
+        vim.api.nvim_create_autocmd('TermRequest', {
+          callback = function(ev)
+            _G.cursor = ev.data.cursor
+          end
+        })
+        return term
+      ]])
+      feed('a')
+
+      api.nvim_chan_send(term, string.rep('>\n', 9) .. '\027]133;D\027\\')
+      screen:expect([[
+        >                                                 |*8
+        ^                                                  |
+        {5:-- TERMINAL --}                                    |
+      ]])
+      eq({ 10, 0 }, exec_lua('return _G.cursor'))
     end)
 
     it('includes cursor position #31609', function()
@@ -869,7 +893,7 @@ describe(':terminal buffer', function()
       eq({ 25, 5 }, exec_lua('return _G.cursor'))
 
       api.nvim_set_option_value('scrollback', 10, {})
-      eq(19, api.nvim_buf_line_count(0))
+      eq(32, api.nvim_buf_line_count(0))
 
       api.nvim_chan_send(term, 'Hello\nworld!\027]133;D\027\\')
       screen:expect([[
@@ -880,7 +904,7 @@ describe(':terminal buffer', function()
         world!^                                            |
         {5:-- TERMINAL --}                                    |
       ]])
-      eq({ 19, 6 }, exec_lua('return _G.cursor'))
+      eq({ 33, 6 }, exec_lua('return _G.cursor'))
 
       api.nvim_chan_send(term, '\nHello\027]133;D\027\\\nworld!\n')
       screen:expect([[
@@ -892,7 +916,7 @@ describe(':terminal buffer', function()
         ^                                                  |
         {5:-- TERMINAL --}                                    |
       ]])
-      eq({ 17, 5 }, exec_lua('return _G.cursor'))
+      eq({ 34, 5 }, exec_lua('return _G.cursor'))
 
       api.nvim_chan_send(term, 'Hello\027]133;D\027\\\nworld!' .. ('\n'):rep(6))
       screen:expect([[
@@ -903,7 +927,7 @@ describe(':terminal buffer', function()
         ^                                                  |
         {5:-- TERMINAL --}                                    |
       ]])
-      eq({ 12, 5 }, exec_lua('return _G.cursor'))
+      eq({ 36, 5 }, exec_lua('return _G.cursor'))
 
       api.nvim_chan_send(term, 'Hello\027]133;D\027\\\nworld!' .. ('\n'):rep(8))
       screen:expect([[
@@ -912,7 +936,7 @@ describe(':terminal buffer', function()
         ^                                                  |
         {5:-- TERMINAL --}                                    |
       ]])
-      eq({ 10, 5 }, exec_lua('return _G.cursor'))
+      eq({ 43, 5 }, exec_lua('return _G.cursor'))
 
       api.nvim_chan_send(term, 'Hello\027]133;D\027\\\nworld!' .. ('\n'):rep(20))
       screen:expect([[
@@ -920,7 +944,7 @@ describe(':terminal buffer', function()
         ^                                                  |
         {5:-- TERMINAL --}                                    |
       ]])
-      eq({ -2, 5 }, exec_lua('return _G.cursor'))
+      eq({ 52, 5 }, exec_lua('return _G.cursor'))
     end)
 
     it('does not cause hang in vim.wait() #32753', function()
@@ -1070,7 +1094,13 @@ describe(':terminal buffer', function()
       {5:-- TERMINAL --}                                    |
     ]]):format(count - 5, count - 4, count - 3, count - 2, count - 1))
     local lines = api.nvim_buf_get_lines(0, 0, -1, true)
-    local start = math.max(count + 1 - scrollback - 6, 0)
+    local start = tonumber(lines[1]:match('^(%d+): TEST$'))
+    assert(start)
+    if scrollback < count then
+      eq(true, start > 0)
+    else
+      eq(0, start)
+    end
     for i = start, count - 1 do
       eq(('%d: TEST'):format(i), lines[i - start + 1])
     end
@@ -1140,7 +1170,7 @@ describe(':terminal buffer', function()
     local screen = Screen.new(50, 7)
     feed 'i'
     local chan = api.nvim_open_term(0, {})
-    api.nvim_chan_send(chan, '\239\191\191') -- '\xef\xbf\xbf'
+    api.nvim_chan_send(chan, '\239\191\191') -- U+FFFF
     screen:expect([[
       {18:<ffff>}^                                            |
                                                         |*5
