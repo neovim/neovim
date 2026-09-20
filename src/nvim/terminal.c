@@ -86,12 +86,6 @@
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/vim_defs.h"
-#include "nvim/vterm/parser.h"
-#include "nvim/vterm/pen.h"
-#include "nvim/vterm/screen.h"
-#include "nvim/vterm/state.h"
-#include "nvim/vterm/vterm.h"
-#include "nvim/vterm/vterm_keycodes_defs.h"
 #include "nvim/window.h"
 
 typedef struct {
@@ -156,8 +150,6 @@ static bool refresh_pending = false;
 
 struct terminal {
   TerminalOptions opts;  // options passed to terminal_alloc()
-  VTerm *vt;
-  VTermScreen *vts;
   GhosttyTerminal ghostty;
   int width, height;  ///< Size of the Ghostty terminal.
   GhosttyRenderState ghostty_render_state;
@@ -638,8 +630,6 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   // Associate the terminal instance with the new buffer
   term->buf_handle = buf->handle;
   buf->terminal = term;
-  term->vt = vterm_new(opts.height, opts.width);
-  vterm_set_utf8(term->vt, 1);
   // Create Ghostty
   assert_ok(ghostty_terminal_new(NULL, &term->ghostty, opts.width, opts.height));
   term->width = opts.width;
@@ -710,12 +700,6 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
                                &track_last_cell);
   update_default_cursor(term);
   update_render_state(term);
-
-  term->vts = vterm_obtain_screen(term->vt);
-  vterm_screen_enable_altscreen(term->vts, true);
-  vterm_screen_enable_reflow(term->vts, true);
-  vterm_screen_set_damage_merge(term->vts, VTERM_DAMAGE_SCROLL);
-  vterm_screen_reset(term->vts, 1);
 
   // Force an initial refresh so the buffer starts with one line per screen row.
   term->invalid_start = 0;
@@ -969,8 +953,6 @@ void terminal_check_size(Terminal *term)
     return;
   }
 
-  vterm_set_size(term->vt, height, width);
-  vterm_screen_flush_damage(term->vts);
   assert_ok(ghostty_terminal_resize(term->ghostty, width, height, 0, 0));
   term->width = width;
   term->height = height;
@@ -1413,7 +1395,6 @@ void terminal_destroy(Terminal **termpp)
     for (size_t i = 0; i < ARRAY_SIZE(term->scrollback_anchors); i++) {
       ghostty_tracked_grid_ref_free(term->scrollback_anchors[i].ref);
     }
-    vterm_free(term->vt);
     ghostty_terminal_free(term->ghostty);
     xfree(term);
     *termpp = NULL;  // coverity[dead-store]
