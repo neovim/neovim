@@ -165,6 +165,10 @@ typedef struct {
 #define TEXTBUF_SIZE 0x1fff
 #define SELECTIONBUF_SIZE 0x0400
 
+// Whether to include OSC 52/clipboard support in Ghostty's DA1 response. Functional tests
+// toggle this to force the runtime OSC 52 detection path to fall back to XTGETTCAP.
+DLLEXPORT int terminal_ghostty_da_clipboard = 1;
+
 static TimeWatcher refresh_timer;
 static bool refresh_pending = false;
 
@@ -251,7 +255,7 @@ struct terminal {
 };
 
 static VTermScreenCallbacks vterm_screen_callbacks = {
-  .theme = term_theme,
+  .theme = NULL,
 };
 
 static VTermSelectionCallbacks vterm_selection_callbacks = {
@@ -930,10 +934,16 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
 # pragma GCC diagnostic push
 # pragma GCC diagnostic ignored "-Wpedantic"
 #endif
+  assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_WRITE_PTY,
+                                 (const void *)on_ghostty_write_pty));
   assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_BELL,
                                  (const void *)on_term_ghostty_bell));
   assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_TITLE_CHANGED,
                                  (const void *)on_ghostty_title_changed));
+  assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_COLOR_SCHEME,
+                                 (const void *)on_term_ghostty_color_scheme));
+  assert_ok(ghostty_terminal_set(term->ghostty, GHOSTTY_TERMINAL_OPT_DEVICE_ATTRIBUTES,
+                                 (const void *)on_term_ghostty_device_attributes));
 #if defined(__GNUC__)
 # pragma GCC diagnostic pop
 #endif
@@ -958,7 +968,6 @@ Terminal *terminal_alloc(buf_T *buf, TerminalOptions opts)
   vterm_screen_set_callbacks(term->vts, &vterm_screen_callbacks, term);
   vterm_screen_set_damage_merge(term->vts, VTERM_DAMAGE_SCROLL);
   vterm_screen_reset(term->vts, 1);
-  vterm_output_set_callback(term->vt, term_output_callback, term);
   term->selection_buffer = xcalloc(SELECTIONBUF_SIZE, 1);
   vterm_state_set_selection_callbacks(state, &vterm_selection_callbacks, term,
                                       term->selection_buffer, SELECTIONBUF_SIZE);
@@ -2636,9 +2645,12 @@ static void terminal_focus(Terminal *term, bool focus)
 // }}}
 // libghostty and libvterm callbacks {{{
 
-static void term_output_callback(const char *s, size_t len, void *user_data)
+/// Called when Ghostty needs to write the response for a terminal query.
+static void on_ghostty_write_pty(GhosttyTerminal ghostty FUNC_ATTR_UNUSED, void *user_data,
+                                 const uint8_t *data, size_t len)
 {
-  terminal_send((Terminal *)user_data, s, len);
+  Terminal *term = (Terminal *)user_data;
+  terminal_send(term, (const char *)data, len);
 }
 
 /// Called when the terminal program wants to set the title.
@@ -2657,6 +2669,35 @@ static void on_term_ghostty_bell(GhosttyTerminal ghostty FUNC_ATTR_UNUSED,
                                  void *user_data FUNC_ATTR_UNUSED)
 {
   vim_beep(kOptBoFlagTerm);
+}
+
+/// Called when the terminal program wants to know the terminal device attributes.
+static bool on_term_ghostty_device_attributes(GhosttyTerminal ghostty, void *user_data,
+                                              GhosttyDeviceAttributes *out_attrs)
+{
+  (void)ghostty;
+  (void)user_data;
+
+  GhosttyDeviceAttributes attrs = {
+    .primary = {
+      .conformance_level = GHOSTTY_DA_CONFORMANCE_VT220,
+      .features = { GHOSTTY_DA_FEATURE_ANSI_COLOR },
+      .num_features = 1,
+    },
+    .secondary = {
+      .device_type = GHOSTTY_DA_DEVICE_TYPE_VT220,
+      .firmware_version = 10,
+      .rom_cartridge = 0,
+    },
+    .tertiary = {
+      .unit_id = 0,
+    },
+  };
+  if (terminal_ghostty_da_clipboard) {
+    attrs.primary.features[attrs.primary.num_features++] = GHOSTTY_DA_FEATURE_CLIPBOARD;
+  }
+  *out_attrs = attrs;
+  return true;
 }
 
 static void buf_set_term_title(buf_T *buf, const char *title, size_t len)
@@ -2679,11 +2720,13 @@ static void buf_set_term_title(buf_T *buf, const char *title, size_t len)
   status_redraw_buf(buf);
 }
 
-static int term_theme(bool *dark, void *data)
-  FUNC_ATTR_NONNULL_ALL
+/// Called when the terminal program wants to query the system theme.
+static bool on_term_ghostty_color_scheme(GhosttyTerminal ghostty FUNC_ATTR_UNUSED,
+                                         void *user_data FUNC_ATTR_UNUSED,
+                                         GhosttyColorScheme *out_scheme)
 {
-  *dark = (*p_bg == 'd');
-  return 1;
+  *out_scheme = (*p_bg == 'd') ? GHOSTTY_COLOR_SCHEME_DARK : GHOSTTY_COLOR_SCHEME_LIGHT;
+  return true;
 }
 
 static void term_clipboard_set(void **argv)

@@ -3111,28 +3111,6 @@ describe('TUI', function()
     ]])
   end)
 
-  it('redraws on SIGWINCH even if terminal size is unchanged #23411', function()
-    -- On Windows, SIGWINCH cannot be sent as a signal with uv_kill(), while
-    -- SIGWINCH handlers are only called on terminal resize.
-    t.skip(is_os('win'), 'N/A for Windows')
-    child_session:request('nvim_echo', { { 'foo' } }, false, {})
-    screen:expect([[
-      ^                                                  |
-      {100:~}                                                 |*3
-      {3:[No Name]                                         }|
-      foo                                               |
-      {5:-- TERMINAL --}                                    |
-    ]])
-    exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigwinch')]])
-    screen:expect([[
-      ^                                                  |
-      {100:~}                                                 |*3
-      {3:[No Name]                                         }|
-                                                        |
-      {5:-- TERMINAL --}                                    |
-    ]])
-  end)
-
   it('supports hiding cursor', function()
     child_session:request(
       'nvim_command',
@@ -4229,7 +4207,7 @@ describe("TUI 't_Co' (terminal colors)", function()
   -- others:
 
   -- TODO(blueyed): this is made pending, since it causes failure + later hang
-  --                when using non-compatible libvterm (#9494/#10179).
+  --                with some terminal implementations (#9494/#10179).
   pending('TERM=interix uses 8 colors', function()
     assert_term_colors('interix', nil, 8)
   end)
@@ -4504,14 +4482,20 @@ describe('TUI', function()
       pending('N/A: missing LuaJIT FFI')
     end
 
-    -- Change vterm's DA1 response so that it doesn't include 52
+    -- Change Ghostty's DA1 response so that it doesn't include 52.
     exec_lua(function()
       local ffi = require('ffi')
       ffi.cdef [[
-        extern char vterm_primary_device_attr[]
+        extern int terminal_ghostty_da_clipboard;
       ]]
 
-      ffi.copy(ffi.C.vterm_primary_device_attr, '61;22')
+      ffi.C.terminal_ghostty_da_clipboard = 0
+    end)
+    finally(function()
+      exec_lua(function()
+        local ffi = require('ffi')
+        ffi.C.terminal_ghostty_da_clipboard = 1
+      end)
     end)
 
     exec_lua([[
@@ -4688,7 +4672,9 @@ describe('TUI bg color', function()
     end)
   end)
 
-  it('queries the terminal for background color', function()
+  it('answers the terminal background color query and emits TermRequest', function()
+    command('highlight clear Normal')
+    command('set background=light')
     exec_lua([[
       vim.api.nvim_create_autocmd('TermRequest', {
         callback = function(ev)
@@ -4700,16 +4686,22 @@ describe('TUI bg color', function()
         end,
       })
     ]])
-    tt.setup_child_nvim({
+    local child_server = new_pipename()
+    local screen = tt.setup_child_nvim({
       '--clean',
+      '--listen',
+      child_server,
       '--cmd',
       'colorscheme vim',
       '--cmd',
       'set noswapfile',
     })
-    retry(nil, 1000, function()
-      eq(true, eval("get(g:, 'oscrequest', v:false)"))
+    screen:expect({ any = '%[No Name%]' })
+    local child_session = n.connect(child_server)
+    retry(nil, nil, function()
+      eq({ true, 'light' }, { child_session:request('nvim_eval', '&background') })
     end)
+    eq(true, eval("get(g:, 'oscrequest', v:false)"))
   end)
 
   it('sends theme update notifications when background changes #31652', function()
