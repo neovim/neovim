@@ -499,6 +499,14 @@ static void assert_ok(GhosttyResult res)
   assert(res == GHOSTTY_SUCCESS);
 }
 
+static bool mode_enabled(Terminal *term, GhosttyMode mode)
+  FUNC_ATTR_NONNULL_ALL
+{
+  GhosttyTerminalModeConfig config = { .mode = mode };
+  assert_ok(ghostty_terminal_get(term->ghostty, GHOSTTY_TERMINAL_DATA_MODE, &config));
+  return config.value;
+}
+
 // public API {{{
 
 /// Allocates a terminal instance and initializes terminal properties.
@@ -1579,15 +1587,23 @@ void terminal_notify_theme(Terminal *term, bool dark)
   terminal_send(term, buf, (size_t)ret);
 }
 
-static void terminal_focus(const Terminal *term, bool focus)
+static void terminal_focus(Terminal *term, bool focus)
   FUNC_ATTR_NONNULL_ALL
 {
-  VTermState *state = vterm_obtain_state(term->vt);
-  if (focus) {
-    vterm_state_focus_in(state);
-  } else {
-    vterm_state_focus_out(state);
+  // Return early if focus reporting is not enabled.
+  if (!mode_enabled(term, GHOSTTY_MODE_FOCUS_EVENT)) {
+    return;
   }
+
+  enum { FOCUS_BUF_SIZE = 3, };
+  char buf[FOCUS_BUF_SIZE];
+  size_t len = 0;
+  assert_ok(ghostty_focus_encode(focus ? GHOSTTY_FOCUS_GAINED : GHOSTTY_FOCUS_LOST,
+                                 buf,
+                                 FOCUS_BUF_SIZE,
+                                 &len));
+
+  terminal_send(term, buf, len);
 }
 
 // }}}
