@@ -27,6 +27,7 @@ typedef enum CmdAtomType {
   kAOperator,      ///< Operator+motion, or a self-contained edit command.
   kAScroll,        ///< Scroll (CTRL-Y/D/…, wheel): emit-only, like kAMouse.
   kAVisual,        ///< Visual-mode sequence ("viwee" + operator). Captures subatoms.
+  kAVisualSpan,    ///< Span (chunk) of an ongoing Visual session, cascaded mid-session.
 } CmdAtomType;
 
 /// State gathered at start of a command, composite, or insert. For calculating the "delta" at end.
@@ -59,21 +60,21 @@ typedef kvec_t(CmdAtom) CmdAtomVec;
 
 /// One repeatable operation. `keys` is the replay bytes; `spec` is the structured form.
 struct CmdAtom {
+  CmdAtomType type;
   CmdSpec spec;   ///< Structured fields.
+  CmdOrigin origin;  ///< Pre-command state.
   CmdAtomVec atoms;  ///< Composite (multi-command mapping, Visual sequence): its subatoms,
-                     ///< in order; their keys concatenate to `keys`. Empty for non-composite.
+                     ///< in order; their keys concatenate to `keys`. Empty: non-composite.
   char *keys;     ///< Resolved keysequence (typeahead encoding), including `["x][count]` prefix
                   ///< (unlike `CmdSpec.body`, the raw unprefixed form).
   char *text;     ///< Insert-session text, or Ex/search cmdline payload.
   char *lhs;      ///< Unresolved user input: mapping LHS, macro ("@q"), Visual op, or translation
                   ///< ("x" => "dl"). NULL: untranslated, same as `keys`.
-  CmdOrigin origin;  ///< Pre-command state.
-  CmdAtomType type;
   int undoseq;    ///< Undo state at settlement. Not monotonic (decreases on undo).
   bool changed;   ///< The command changed the buffer.
   bool moved;     ///< The command moved the cursor.
-  bool remap;     ///< If true, `keys` cannot replay: payload mapping (vim-surround "ds'") edits
-                  ///< invisibly (:norm/Ex). Must replay `lhs` instead.
+  bool remap;     ///< True if `keys` cannot replay (lossy/empty capture). Replay `lhs` instead.
+  bool cascaded;  ///< This atom already cascaded as spans: emit-only.
 };
 
 /// Key classes (atom_key_class()).

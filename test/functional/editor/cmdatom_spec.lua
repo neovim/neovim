@@ -955,7 +955,7 @@ describe('CmdAtom', function()
       feed('j0.')
       eq({ ' two three', ' five six' }, get_lines())
 
-      -- A nested command can replace the pending selection, not just extend it. #41705
+      -- Nested command can replace the pending selection, not just extend it. #41705
       n.exec_lua(function()
         vim.keymap.set('x', 'Z', function()
           -- Mapping ends with the selection "open".
@@ -969,11 +969,15 @@ describe('CmdAtom', function()
       eq({ ' tail' }, get_lines())
       eq({ type = 'visual', keys = 'viWd' }, pick(atom_last(), 'type', 'keys'))
 
-      -- Buffer-editing <Cmd> is unreplayable (void), so "." fallsback to equal-size reselect.
+      -- Buffer-editing <Cmd> is captured as itself.
       command('xmap <M-a> <Cmd>call append(1, "X")<CR>')
       api.nvim_buf_set_lines(0, 0, -1, true, { 'ab', 'cd' })
       feed('gg0vl<M-a>d')
       eq({ '', 'X', 'cd' }, get_lines())
+      eq(
+        { type = 'visual', keys = k('vl<Cmd>call append(1, "X")<NL>d') },
+        pick(atom_last(), 'type', 'keys')
+      )
       feed('3gg0.')
       eq({ '', 'X', '' }, get_lines())
 

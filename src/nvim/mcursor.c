@@ -105,6 +105,7 @@ typedef struct {
 static struct {
   bool active;      ///< Current insert-session is cascading.
   bool first;       ///< Entry-command not yet cascaded (no span pushed yet).
+  uint64_t frame;   ///< Root frame that started the insert-session.
   size_t done_len;  ///< Bytes of the capture already consumed by replayed spans; tail is pending.
   varnumber_T tick;  ///< b:changedtick at session start: the session's atoms (spans, the whole
                      ///< session) diff against it for their `changed` field.
@@ -343,7 +344,9 @@ static void mc_execute(size_t cursoridx, size_t atomidx)
     }
     regs_ts = reg_max_ts(false);
   }
+
   ctx_load(&ctx, kCtxCursor | (swap_state ? kCtxMarks : 0), 0);
+
   // Edits by other cursors may have invalidated this cursor's position.
   if (atom.type == kAInsertSpan) {
     // The anchor may be one past EOL (the insertion point); edit() accepts that.
@@ -352,6 +355,13 @@ static void mc_execute(size_t cursoridx, size_t atomidx)
   } else {
     check_cursor(curwin);
   }
+
+  // The active selection is global (ctx_load() does not swap it per cursor).
+  if (atom.type == kAVisualSpan) {
+    Visual.active = false;  // A leading "v" would toggle it OFF.
+    Visual.select = false;
+  }
+
   const int save_cmod_flags = cmdmod.cmod_flags;
   if (atom.type == kAInsertSpan) {
     // exec_normal() clamps a past-EOL cursor via check_cursor() unless Insert-mode; a previous span
@@ -368,9 +378,14 @@ static void mc_execute(size_t cursoridx, size_t atomidx)
   nvim_feedkeys(cstr_as_string(atom.keys), cstr_as_string(atom.remap ? "ix" : "nix"), false);
   cmdmod.cmod_flags = save_cmod_flags;
 
-  // A failed command flushes remaining keys (beep_flush()), which can eat a visual atom's
-  // terminating <Esc>/operator; end the leaked Visual mode.
+  // A failed cmd flushes remaining keys (beep_flush()), which can eat a Visual atom's terminating
+  // ESC/op; don't "leak" Visual mode.
   if (Visual.active) {
+    if (atom.type == kAVisualSpan) {
+      // Persist this cursor's selection. The next span reselects it with "gv".
+      curbuf->b_visual = visualinfo();
+      curbuf->b_visual_mode_eval = Visual.mode;
+    }
     Visual.active = false;
     Visual.select = false;
   }
@@ -400,7 +415,7 @@ static void mc_execute(size_t cursoridx, size_t atomidx)
 }
 
 /// Runs the cascade: replays queued atoms (g_atoms) at every cursor, as one batch.
-static void mc_cascade(void)
+static void mc_cascade(pos_T primary)
 {
   assert(kv_size(g_atoms) >= 1);
   assert(kv_size(mc_cursors) > 0);
@@ -417,7 +432,7 @@ static void mc_cascade(void)
     edits |= kv_A(g_atoms, i).type != kAMotion;
   }
   if (edits) {
-    mc_cleanup(true);
+    mc_cleanup(true, primary);
     if (kv_size(mc_cursors) == 0) {
       atoms_free(&g_atoms);
       return;
@@ -449,7 +464,7 @@ done:
   atoms_free(&g_atoms);
   const handle_T bufnr = sb.primary.buf;  // mc_sandbox_leave() frees `sb.primary`.
   mc_sandbox_leave(&sb);
-  mc_cleanup(true);
+  mc_cleanup(true, curwin->w_cursor);
   if (handle_get_buffer(bufnr) == curbuf && !curbuf->b_u_synced
       && curbuf->b_u_newhead != NULL) {
     // Store the primary's post-cascade position in the still-open undo block; redo restores it.
@@ -463,7 +478,8 @@ done:
 /// @param map_edit  The composite edited the buffer (or insert-cascaded).
 /// @param map_moved  The composite moved the cursor.
 /// @param follow  Follow-mode ("q=") when the queued motions ran.
-void mc_clock_edge(bool map_edit, bool map_moved, bool follow)
+/// @param primary  Primary cursor pos at cmd start.
+void mc_clock_edge(bool map_edit, bool map_moved, bool follow, pos_T primary)
 {
   if ((map_edit || (follow && map_moved && !Visual.active))
       && !atom_composite_queued() && kv_size(g_atoms) == 0
@@ -480,7 +496,7 @@ void mc_clock_edge(bool map_edit, bool map_moved, bool follow)
     if (has_edit || follow
         // Cascade if a mapping left a selection open ("nn x w<Cmd>norm! viw<CR>").
         || Visual.active) {
-      mc_cascade();
+      mc_cascade(primary);
     } else {
       // A pure-motion mapping without "q=" follow-motion: do not cascade
       // (the atoms are still emitted as one composite CmdAtom).
@@ -492,7 +508,8 @@ void mc_clock_edge(bool map_edit, bool map_moved, bool follow)
 /// Prunes dead cursors and ends empty sessions. Optionally dedupes.
 ///
 /// @param dedupe  Also removes overlapping cursors at cascade boundaries.
-static void mc_cleanup(bool dedupe)
+/// @param primary  Primary cursor pos, for `dedupe`.
+static void mc_cleanup(bool dedupe, pos_T primary)
 {
   const bool had_cursors = kv_size(mc_cursors) > 0;
   size_t n = 0;
@@ -508,7 +525,7 @@ static void mc_cleanup(bool dedupe)
     // Deduplicate/merge: cursor is a duplicate if it coincides with the primary (which always
     // wins), or another cursor's mark is first at its position (first wins).
     const bool dup = dedupe && ctx->mark != 0
-                     && ((curwin != NULL && buf == curbuf && equalpos(ctx->pos, curwin->w_cursor))
+                     && ((curwin != NULL && buf == curbuf && equalpos(ctx->pos, primary))
                          || mc_mark_at(buf, ctx->pos) != ctx->mark);
     if (dup) {
       extmark_del_id(buf, mc_ns(), ctx->mark);
@@ -550,7 +567,7 @@ bool mc_ins_replay_can_join(void)
 ///
 /// @param cascade  The session qualifies for insert-cascading.
 /// @param tick     b:changedtick at session start.
-void mc_ins_cascade_start(bool cascade, varnumber_T tick)
+void mc_ins_cascade_start(bool cascade, varnumber_T tick, uint64_t root_frame)
 {
   if (mc_replaying()) {
     // Nested replay session: don't clobber the primary session's state.
@@ -559,6 +576,7 @@ void mc_ins_cascade_start(bool cascade, varnumber_T tick)
   mc_ins_joined = false;
   mc_ins_span.active = cascade && mc_buf_has_cursors(curbuf);
   mc_ins_span.first = true;
+  mc_ins_span.frame = root_frame;
   mc_ins_span.done_len = 0;
   mc_ins_span.tick = tick;
   mc_ins_span.region = 0;
@@ -637,7 +655,7 @@ static void mc_ins_span_push(char *keys, char *text)
 
   McInsSaved saved = mc_ins_save_state();
   block_autocmds();  // The span replay would fire InsertEnter/InsertLeave on every key.
-  mc_cascade();
+  mc_cascade(curwin->w_cursor);
   unblock_autocmds();
   mc_ins_restore_state(&saved);
   mc_ins_joined = false;  // The next span decides whether its replays may join.
@@ -801,6 +819,12 @@ void mc_ins_cascade_restart(void)
   mc_ins_span.done_len = ins.size;
   api_free_string(ins);
   mc_ins_preview_rebase();
+}
+
+/// True if the insert-session started by `root_frame` cascaded a span.
+bool mc_ins_cascaded(uint64_t root_frame)
+{
+  return !mc_ins_span.first && mc_ins_span.frame == root_frame;
 }
 
 /// Cascades the insert-session. Called after each key in insert-mode. Updates the preview or
@@ -1043,7 +1067,8 @@ static void mc_vsel_mark(linenr_T start_lnum, colnr_T start_col, linenr_T end_ln
   mc_vsel_buf = curbuf->handle;
 }
 
-/// Displays a fake Visual selection at each cursor, mirroring the primary cursor's selection.
+/// Displays a fake Visual selection (dry-runs the primary's selection keys) at each cursor.
+/// XXX: The keys must not edit the buffer. #42005
 void mc_vsel_refresh(void)
 {
   mc_vsel_clear();
@@ -1278,7 +1303,7 @@ void mc_toggle(buf_T *buf, pos_T pos, bool end_follow)
   uint32_t mark = mc_mark_at(buf, pos);
   if (mark != 0) {
     extmark_del_id(buf, mc_ns(), mark);
-    mc_cleanup(false);
+    mc_cleanup(false, (pos_T){ 0 });
     return;
   }
   mc_add(buf, pos);
@@ -1327,7 +1352,7 @@ void mc_buf_free(buf_T *buf)
     // Can't mutate (mc_cleanup) mc_cursors during cascade.
     return;
   }
-  mc_cleanup(false);
+  mc_cleanup(false, (pos_T){ 0 });
   if (mc_vsel_buf == buf->handle) {
     // The selection extmarks died with the buffer too.
     mc_vsel_buf = 0;
@@ -1379,7 +1404,7 @@ void mc_ns_cleared(buf_T *buf, uint32_t ns_id)
     uint32_t mark = 0;
     mc_mark_set(buf, mc_last_ns(), &mark, ctx->pos, false, true, false);
   }
-  mc_cleanup(false);
+  mc_cleanup(false, (pos_T){ 0 });
   if (kv_size(mc_cursors) == 0) {
     // Session ended; drop the pending cascade.
     atoms_free(&g_atoms);
