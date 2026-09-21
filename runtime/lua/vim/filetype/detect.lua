@@ -840,22 +840,28 @@ end
 
 --- @type vim.filetype.mapfn
 function M.header(_, bufnr)
-  for _, line in ipairs(getlines(bufnr, 1, 200)) do
-    if findany(line:lower(), { '^@interface', '^@end', '^@class' }) then
+  if vim.g.filetype_h then
+    return vim.g.filetype_h
+  elseif vim.g.c_syntax_for_h then
+    return 'c'
+  elseif vim.g.ch_syntax_for_h then
+    return 'ch'
+  end
+
+  for _, line in ipairs(getlines(bufnr, 1, 100)) do
+    if findany(line:lower(), { '^%s*@interface', '^%s*@end', '^%s*@class' }) then
       if vim.g.c_syntax_for_h then
         return 'objc'
       else
         return 'objcpp'
       end
     end
+    if findany(line:lower(), { "^%s*class%f[%W]", "^%s*namespace%f[%W]", "^%s*template%f[%W]", "^%s*using%f[%W]" }) then
+      return 'cpp'
+    end
   end
-  if vim.g.c_syntax_for_h then
-    return 'c'
-  elseif vim.g.ch_syntax_for_h then
-    return 'ch'
-  else
-    return 'cpp'
-  end
+
+  return 'c'
 end
 
 --- Recursively search for Hare source files in a directory and any
