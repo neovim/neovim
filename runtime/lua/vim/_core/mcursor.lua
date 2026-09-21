@@ -228,7 +228,11 @@ function M.visual()
   end
   vim.api.nvim_win_set_cursor(0, { cline, bytecol(cline) }) -- Align to column.
   for lnum = first, last do
-    vim.api.nvim_mcursor(0, { lnum, bytecol(lnum) })
+    if lnum ~= cline then
+      -- The primary cursor already participates in the edit. Keeping an extra cursor at the
+      -- same position can replay a mapping twice before the positions are deduplicated.
+      vim.api.nvim_mcursor(0, { lnum, bytecol(lnum) })
+    end
   end
   vim.cmd('norm! 1q=') -- "Follow" mode.
 end

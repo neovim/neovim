@@ -263,7 +263,7 @@ describe('multicursor', function()
       feed('ggvjQ') -- selection spans lines 1-2, cursor ends on line 2
       eq('n', fn.mode()) -- Visual mode ended
       eq({ 2, 0 }, api.nvim_win_get_cursor(0)) -- primary: unmoved, where the selection ended
-      eq(2, ncursors()) -- one per selected line, including under the primary
+      eq(1, ncursors()) -- one extra cursor per selected line, excluding the primary
       feed('x') -- edits both lines
       eq({ 'aa', 'bb', 'ccc' }, get_lines())
       -- Cursors align by screen column, not byte column: a multibyte char before the cursor
@@ -296,9 +296,19 @@ describe('multicursor', function()
       feed('gg0j') -- line 2, inside the first paragraph
       feed('vis') -- Visual + the <expr> mapping: selects lines 1-3
       feed('Q') -- a cursor on each selected line
-      eq(3, ncursors())
+      eq(2, ncursors())
       feed('iX<Esc>') -- the mapping keys ("s", "Q") must NOT be replayed
       eq({ 'Xa1', 'Xa2', 'Xa3', '', 'b1', 'b2' }, get_lines())
+    end)
+
+    it('does not replay a mapping twice at the primary cursor #42025', function()
+      fn.setline(1, { 'aa', 'bb' })
+      feed('gg0')
+      command('nnoremap gm yiwp')
+      feed('vipQ')
+      eq(1, ncursors())
+      feed('gm')
+      eq({ 'aaaa', 'bbbb' }, get_lines())
     end)
   end)
 
