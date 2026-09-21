@@ -86,6 +86,17 @@ typedef enum {
   OP_REMOVING,    ///< "opt-=arg"
 } set_op_T;
 
+/// Per-assignment result shared by the validation and did_set callbacks. They agree on the
+/// union member and pointer type. If free is set, the option code calls it on non-NULL ptr
+/// after a dry run, an error, or application. A callback taking ownership must clear ptr.
+typedef struct {
+  union {
+    void *ptr;
+    unsigned flags;
+  } data;
+  void (*free)(void *);
+} OptPrepared;
+
 /// Arguments for validating an option value or applying it after storage.
 typedef struct {
   /// Pointer to the option variable.  The variable can be an OptInt (numeric
@@ -99,6 +110,9 @@ typedef struct {
   Object os_oldval;
   /// New value of the option (not yet stored during validation).
   Object os_newval;
+
+  /// Initially empty; validation may fill it without changing live option state.
+  OptPrepared *os_prepared;
 
   /// Option value was checked to be safe, no need to set kOptFlagInsecure
   /// Used for the 'keymap', 'filetype' and 'syntax' options.
@@ -124,6 +138,7 @@ typedef struct {
 
 /// Check a candidate value without changing option variables or derived state,
 /// or evaluating user code. Return an error message, or NULL on success.
+/// May populate os_prepared for the did_set callback.
 typedef const char *(*opt_validate_cb_T)(const optset_T *args);
 
 /// Type for the callback function invoked after storing an option value to

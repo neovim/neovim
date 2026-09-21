@@ -2372,6 +2372,7 @@ describe('API', function()
     end)
 
     it('dry runs reject invalid values with the same errors as assignments', function()
+      command("messages clear | let v:errmsg = 'unchanged'")
       api.nvim_set_option_value('foldlevel', 2, {})
       api.nvim_set_option_value('backupext', '.bak', {})
       api.nvim_set_option_value('patchmode', '.orig', {})
@@ -2410,10 +2411,29 @@ describe('API', function()
         { 'isprint', '256', 'E474:' },
         { 'spelllang', 'en/gb', 'E474:' },
         { 'spellfile', 'words.txt', 'E474:' },
+        { 'spellcapcheck', [[\(]], 'E54:' },
+        { 'vartabstop', '4,0', 'E487:' },
+        { 'varsofttabstop', '4,0', 'E487:' },
         { 'complete', 'x', 'E539:' },
         { 'complete', '.^x', 'E535:' },
         { 'mkspellmem', '1,2,3', 'E474:' },
+        { 'spellsuggest', 'best,fast', 'E474:' },
+        { 'spellsuggest', '12x', 'E474:' },
+        { 'encoding', 'latin1', 'E519:' },
+        { 'fileencoding', 'utf-8,latin1', 'E474:' },
         { 'buftype', 'terminal', 'E474:' },
+        { 'cedit', 'x', 'E474:' },
+        { 'cursorlineopt', '', 'E474:' },
+        { 'cursorlineopt', 'line,screenline', 'E474:' },
+        { 'completeitemalign', 'abbr,kind', 'E474:' },
+        { 'completeitemalign', 'abbr,abbr,menu', 'E474:' },
+        { 'messagesopt', 'history:10', 'E474:' },
+        { 'messagesopt', 'hit-enter', 'E474:' },
+        { 'messagesopt', 'wait:10001,history:10', 'E474:' },
+        { 'messagesopt', 'hit-enter,history:10001', 'E474:' },
+        { 'messagesopt', 'hit-enter,history:10,maxheight:101', 'E474:' },
+        { 'wildmode', 'nonsense', 'E474:' },
+        { 'wildmode', 'full,full,full,full,full', 'E474:' },
         { 'shada', ':', 'E526:' },
         { 'shada', ':1', 'E528:' },
         { 'shada', "nfile,'100", 'E528:' }, -- The apostrophe is part of the filename.
@@ -2454,6 +2474,9 @@ describe('API', function()
         eq(dry_error, pcall_err(api.nvim_set_option_value, name, value, opts))
         eq(before, api.nvim_get_option_value(name, {}))
       end
+      -- API errors should be returned without also changing the message state.
+      eq('unchanged', eval('v:errmsg'))
+      eq('', exec_capture('messages'))
     end)
 
     it('dry runs validate the result of removal, not the removed item', function()
@@ -2468,6 +2491,18 @@ describe('API', function()
       )
     end)
 
+    it('dry runs return regexp errors without changing v:errmsg under silent!', function()
+      exec([=[
+        let v:errmsg = 'unchanged'
+        silent! lua << trim EOF
+          local _, err = pcall(vim.api.nvim_set_option_value, 'spellcapcheck', [[\(]], { dry_run = true })
+          vim.g.validation_error = err
+        EOF
+      ]=])
+      eq([[E54: Unmatched \(]], eval('g:validation_error'))
+      eq('unchanged', eval('v:errmsg'))
+    end)
+
     it('dry runs and assignments accept valid edge cases', function()
       for _, case in ipairs({
         { 'backspace', '2' }, -- Legacy numeric spelling.
@@ -2476,6 +2511,8 @@ describe('API', function()
         { 'winborder', '+,-,+,|,+,-,+,|' }, -- Custom border characters.
         { 'complete', '.^2,w' }, -- A source can have a completion limit.
         { 'mkspellmem', '1000,50,10' }, -- Memory and word-count limits.
+        { 'cedit', '' }, -- Disables the command-line window key.
+        { 'wildmode', 'longest:full,full' }, -- Modes can be combined within a step.
         { 'shada', "'0" }, -- Zero disables file marks.
         { 'lispoptions', '' }, -- Empty is allowed.
         { 'signcolumn', 'auto:1-3' }, -- Range syntax is allowed.
@@ -2488,6 +2525,23 @@ describe('API', function()
       end
     end)
 
+    it('stores canonical encoding names only on assignment', function()
+      for _, name in ipairs({ 'encoding', 'fileencoding', 'makeencoding' }) do
+        local old_value = api.nvim_get_option_value(name, {})
+        eq('UTF8', api.nvim_set_option_value(name, 'UTF8', { dry_run = true }))
+        eq(old_value, api.nvim_get_option_value(name, {}))
+        eq('UTF8', api.nvim_set_option_value(name, 'UTF8', {}))
+        eq('utf-8', api.nvim_get_option_value(name, {}))
+      end
+
+      -- Clearing a local override restores the global encoding.
+      api.nvim_set_option_value('makeencoding', 'LATIN1', { scope = 'local' })
+      eq('latin1', api.nvim_get_option_value('makeencoding', {}))
+      api.nvim_set_option_value('makeencoding', NIL, { scope = 'local' })
+      eq('', api.nvim_get_option_value('makeencoding', { scope = 'local' }))
+      eq('utf-8', api.nvim_get_option_value('makeencoding', {}))
+    end)
+
     it('dry runs do not change which characters belong to words', function()
       api.nvim_set_option_value('iskeyword', '@', { buf = 0 })
       eq('one', fn.matchstr('one-two', [[\k\+]]))
@@ -2495,6 +2549,15 @@ describe('API', function()
       eq('one', fn.matchstr('one-two', [[\k\+]]))
       api.nvim_set_option_value('iskeyword', '@,-', { buf = 0 })
       eq('one-two', fn.matchstr('one-two', [[\k\+]]))
+    end)
+
+    it('dry runs do not clear message history', function()
+      command('messages clear')
+      command("echomsg 'keep this message'")
+      api.nvim_set_option_value('messagesopt', 'hit-enter,history:0', { dry_run = true })
+      eq('keep this message', exec_capture('messages'))
+      api.nvim_set_option_value('messagesopt', 'hit-enter,history:0', {})
+      eq('', exec_capture('messages'))
     end)
 
     it('only successful assignments change the spell suggestion limit', function()
@@ -2506,6 +2569,9 @@ describe('API', function()
       command('normal! z=')
       eq(2, exec_lua('return _G.suggestion_count'))
 
+      api.nvim_set_option_value('spellsuggest', 'fast,1', { dry_run = true })
+      command('normal! z=')
+      eq(2, exec_lua('return _G.suggestion_count'))
       matches('E474:', pcall_err(api.nvim_set_option_value, 'spellsuggest', 'best,fast', {}))
       command('normal! z=')
       eq(2, exec_lua('return _G.suggestion_count'))
@@ -2513,6 +2579,55 @@ describe('API', function()
       api.nvim_set_option_value('spellsuggest', 'fast,1', {})
       command('normal! z=')
       eq(1, exec_lua('return _G.suggestion_count'))
+    end)
+
+    for _, name in ipairs({ 'vartabstop', 'varsofttabstop' }) do
+      it(name .. ' keeps its tab widths until a local assignment succeeds', function()
+        command('setlocal expandtab nosmarttab tabstop=8 softtabstop=0')
+        local function tab_width()
+          api.nvim_buf_set_lines(0, 0, -1, true, { '' })
+          feed('i<Tab>x<Esc>')
+          return fn.indent(1)
+        end
+
+        api.nvim_set_option_value(name, '4', { buf = 0 })
+        eq(4, tab_width())
+        api.nvim_set_option_value(name, '2', { buf = 0, dry_run = true })
+        eq(4, tab_width())
+        matches('E475:', pcall_err(api.nvim_set_option_value, name, '4,10000', { buf = 0 }))
+        eq(4, tab_width())
+
+        api.nvim_set_option_value(name, '2', { scope = 'global' })
+        eq(4, tab_width())
+        api.nvim_set_option_value(name, '2', { buf = 0 })
+        eq(2, tab_width())
+        for _, value in ipairs({ '', '0' }) do
+          api.nvim_set_option_value(name, value, { buf = 0 })
+          eq(8, tab_width())
+        end
+
+        command('new')
+        eq(2, tab_width()) -- New buffers use the global value.
+      end)
+    end
+
+    it('spellcapcheck only changes capitalization checks on local assignments', function()
+      command('set spell spelllang=en')
+      local text = 'A sentence. another sentence'
+      api.nvim_set_option_value('spellcapcheck', '[.] ', { buf = 0 })
+      eq({ 'another', 'caps' }, fn.spellbadword(text))
+
+      api.nvim_set_option_value('spellcapcheck', '[!] ', { buf = 0, dry_run = true })
+      eq({ 'another', 'caps' }, fn.spellbadword(text))
+      matches('E54:', pcall_err(api.nvim_set_option_value, 'spellcapcheck', [[\(]], { buf = 0 }))
+      eq({ 'another', 'caps' }, fn.spellbadword(text))
+
+      api.nvim_set_option_value('spellcapcheck', '', { scope = 'global' })
+      eq({ 'another', 'caps' }, fn.spellbadword(text))
+      api.nvim_set_option_value('spellcapcheck', '[!] ', { buf = 0 })
+      eq({ '', '' }, fn.spellbadword(text))
+      api.nvim_set_option_value('spellcapcheck', '', { buf = 0 })
+      eq({ '', '' }, fn.spellbadword(text))
     end)
 
     it('validates spellfile paths with Windows separators', function()
@@ -2546,6 +2661,7 @@ describe('API', function()
       local current = api.nvim_get_current_win()
       for _, case in ipairs({
         { 'fileformat', 'dos', { buf = buf }, 'E21:' },
+        { 'fileencoding', 'latin1', { buf = buf }, 'E21:' },
         { 'previewwindow', true, { win = win }, 'E590:' },
       }) do
         local name, value, opts, error = unpack(case)
