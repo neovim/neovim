@@ -69,10 +69,9 @@
 /// Primary-cursor state saved across a replay sandbox.
 typedef struct {
   Context primary;        ///< Editor state, registers.
-  uint32_t cursor_mark;   ///< Extmark tracking `primary.pos` across replay edits
-  uint32_t topline_mark;  ///< Extmark tracking `topline` across replay edits
-  pos_T topline;
-  colnr_T leftcol;
+  uint32_t cursor_mark;   ///< Extmark tracking `primary.pos` across replay edits.
+  uint32_t topline_mark;  ///< Extmark tracking `view.vs_topline` across replay edits.
+  viewstate_T view;
   // Replay isolation: the primary's in-flight input machinery.
   save_state_T sst;       ///< mode, typeahead, reg_executing, …
   RedoState redo;
@@ -209,50 +208,18 @@ bool mc_replaying(void)
   return mc_replay;
 }
 
-/// Sets an extmark which tracks a position. Decor handled by mcursor.lua. TODO(justinmk): #41576
-///
-/// @param watched        Decorated (ui_watched): UIs receive the position per redraw (ui-event
-///                       "win_extmark"), to draw the cursors themselves.
-/// @param right_gravity  The mark moves with its text when an insert lands exactly at its
-///                       position (e.g. "o" on the line above).
-/// @param no_undo        Transient mark, undo must not restore it (a restored right-gravity mark
-///                       drifts when undo re-inserts text at its position).
-static void mc_mark_set(buf_T *buf, uint32_t ns, uint32_t *mark, pos_T pos, bool watched,
-                        bool right_gravity, bool no_undo)
-{
-  DecorInline decor = DECOR_INLINE_INIT;
-  if (watched) {
-    decor.data.hl.flags = kSHUIWatched | kSHUIWatchedOverlay;
-  }
-  extmark_set(buf, ns, mark, (int)pos.lnum - 1, pos.col, (int)pos.lnum - 1, pos.col + 1,
-              decor, watched ? MT_FLAG_DECOR_HL : 0, right_gravity, false, no_undo, false, NULL);
-}
-
-/// Creates or updates the extmark tracking a multicursor position.
+/// Creates or updates the (ui_watched) extmark tracking a multicursor position.
+/// Decor handled by mcursor.lua. TODO(justinmk): #41576
 static void mc_mark_upd(buf_T *buf, uint32_t *mark, pos_T pos)
 {
-  mc_mark_set(buf, mc_ns(), mark, pos, true, true, false);
+  extmark_set_pos(buf, mc_ns(), mark, pos, true, false, true);
 }
 
-/// Gets the position tracked by `mark`, adjusted for buffer edits since the mark was set.
-///
-/// @return false if the mark no longer exists.
-static bool mc_mark_get(buf_T *buf, uint32_t ns, uint32_t mark, pos_T *pos)
-{
-  MTPair mtp = extmark_from_id(buf, ns, mark);
-  if (mtp.start.id == 0) {
-    return false;
-  }
-  pos->lnum = mtp.start.pos.row + 1;
-  pos->col = mtp.start.pos.col;
-  return true;
-}
-
-/// Session-internal variant of mc_mark_upd(): tracks a transient position (primary cursor/topline
-/// across a cascade, the preview-apply cursor).
+/// Session-internal variant of mc_mark_upd(): tracks a transient, undecorated position (primary
+/// cursor/topline across a cascade, the preview-apply cursor).
 static void mc_track_upd(buf_T *buf, uint32_t *mark, pos_T pos)
 {
-  mc_mark_set(buf, mc_session_ns(), mark, pos, false, true, true);
+  extmark_set_pos(buf, mc_session_ns(), mark, pos, true, true, false);
 }
 
 /// Enters a replay sandbox, so keys fed (cascaded) per-cursor do not modify pending typeahead nor
@@ -269,10 +236,9 @@ static void mc_sandbox_enter(McSandbox *sb, bool save_regs)
   ctx_save(&sb->primary, kCtxCursor | kCtxMarks | (save_regs ? kCtxRegs : 0));
   sb->cursor_mark = 0;
   mc_track_upd(curbuf, &sb->cursor_mark, sb->primary.pos);
-  sb->topline = (pos_T){ .lnum = curwin->w_topline, .col = 0 };
+  save_viewstate(curwin, &sb->view);
   sb->topline_mark = 0;
-  mc_track_upd(curbuf, &sb->topline_mark, sb->topline);
-  sb->leftcol = curwin->w_leftcol;
+  mc_track_upd(curbuf, &sb->topline_mark, (pos_T){ .lnum = sb->view.vs_topline });
   sb->visual = Visual;
   save_current_state(&sb->sst);  // hint: see call_user_func()
   save_search_patterns();
@@ -292,23 +258,24 @@ static void mc_sandbox_leave(McSandbox *sb)
   Visual = sb->visual;
   restore_current_state(&sb->sst);
   buf_T *buf = handle_get_buffer(sb->primary.buf);
+  pos_T topline = { 0 };
   bool topline_valid = false;
   if (buf != NULL) {
-    // mc_mark_get() updates lnum/col only, an unshifted position keeps its coladd.
-    mc_mark_get(buf, mc_session_ns(), sb->cursor_mark, &sb->primary.pos);
+    // Shifted by replay edits; an unshifted position keeps its coladd.
+    extmark_get_pos(buf, mc_session_ns(), sb->cursor_mark, &sb->primary.pos);
     extmark_del_id(buf, mc_session_ns(), sb->cursor_mark);
-    topline_valid = mc_mark_get(buf, mc_session_ns(), sb->topline_mark, &sb->topline);
+    topline_valid = extmark_get_pos(buf, mc_session_ns(), sb->topline_mark, &topline);
     extmark_del_id(buf, mc_session_ns(), sb->topline_mark);
   }
   if (buf == curbuf) {
-    ctx_load(&sb->primary, kCtxCursor | kCtxMarks, 0);
+    restore_viewstate(curwin, &sb->view);
+    ctx_load(&sb->primary, kCtxCursor | kCtxMarks, 0);  // After the view: its curswant wins.
     check_cursor(curwin);
     if (topline_valid) {
-      set_topline(curwin, MIN(sb->topline.lnum, curbuf->b_ml.ml_line_count));
+      set_topline(curwin, MIN(topline.lnum, curbuf->b_ml.ml_line_count));
       // Scroll (minimally) if an edit moved the primary cursor off-view.
       update_topline(curwin);
     }
-    curwin->w_leftcol = sb->leftcol;
   }
   ctx_free(&sb->primary);
   mc_replay = false;
@@ -326,7 +293,7 @@ static void mc_execute(size_t cursoridx, size_t atomidx)
   }
 
   // Get the tracked position: edits by other cursors (etc) may have shifted it since last update.
-  if (ctx.mark != 0 && !mc_mark_get(curbuf, mc_ns(), ctx.mark, &ctx.pos)) {
+  if (ctx.mark != 0 && !extmark_get_pos(curbuf, mc_ns(), ctx.mark, &ctx.pos)) {
     // The extmark was deleted, thus the cursor is deleted (swept by mc_cleanup()).
     return;
   }
@@ -517,7 +484,7 @@ static void mc_cleanup(bool dedupe, pos_T primary)
     Context *ctx = &kv_A(mc_cursors, i);
     buf_T *buf = handle_get_buffer(ctx->buf);
     if (buf == NULL
-        || (ctx->mark != 0 && !mc_mark_get(buf, mc_ns(), ctx->mark, &ctx->pos))) {
+        || (ctx->mark != 0 && !extmark_get_pos(buf, mc_ns(), ctx->mark, &ctx->pos))) {
       // Buffer was freed, or the cursor's extmark was deleted.
       ctx_free(ctx);
       continue;
@@ -675,7 +642,7 @@ static void mc_ins_regions_clear(void)
 static bool mc_ctx_resolve(const Context *ctx, pos_T *pos)
 {
   return handle_get_buffer(ctx->buf) == curbuf && ctx->mark != 0
-         && mc_mark_get(curbuf, mc_ns(), ctx->mark, pos);
+         && extmark_get_pos(curbuf, mc_ns(), ctx->mark, pos);
 }
 
 /// Places a paired session mark at `pos` (left-gravity anchor .. right-gravity end): text
@@ -744,19 +711,8 @@ static void mc_ins_preview_replace(pos_T start, pos_T end, const String *text)
 {
   Arena arena = ARENA_EMPTY;
   Error err = ERROR_INIT;
-  char *data = text->data != NULL ? text->data : (char *)"";  // Empty text (a delete) => NULL data.
-  size_t nlines = 1;
-  for (size_t i = 0; i < text->size; i++) {
-    nlines += data[i] == NL;
-  }
-  Array lines = arena_array(&arena, nlines);
-  size_t start_i = 0;
-  for (size_t i = 0; i <= text->size; i++) {
-    if (i == text->size || data[i] == NL) {
-      ADD_C(lines, STRING_OBJ(cbuf_as_string(data + start_i, i - start_i)));
-      start_i = i + 1;
-    }
-  }
+  // Empty text (a delete) has NULL data; an empty array deletes the range.
+  Array lines = string_to_array(text->data != NULL ? *text : (String)STRING_INIT, false, &arena);
   nvim_buf_set_text(LUA_INTERNAL_CALL, 0, start.lnum - 1, start.col,
                     end.lnum - 1, end.col, lines, &arena, &err);
   if (ERROR_SET(&err)) {
@@ -784,7 +740,7 @@ static void mc_ins_preview_set(const String *new)
     mc_ins_preview_replace(rs, re, new);
   }
   pos_T pos = curwin->w_cursor;
-  if (mc_mark_get(curbuf, mc_session_ns(), primary, &pos)) {
+  if (extmark_get_pos(curbuf, mc_session_ns(), primary, &pos)) {
     curwin->w_cursor = pos;
   }
   extmark_del_id(curbuf, mc_session_ns(), primary);
@@ -1101,50 +1057,33 @@ void mc_vsel_refresh(void)
     }
     pos_T s = Visual.start;
     pos_T e = curwin->w_cursor;
-    if (lt(e, s)) {
-      pos_T tmp = s;
-      s = e;
-      e = tmp;
-    }
-    if (Visual.mode == 'V') {
+    const MotionType type = Visual.mode == 'V' ? kMTLineWise
+                                               : Visual.mode == Ctrl_V ? kMTBlockWise : kMTCharWise;
+    bool inclusive = true;
+    oparg_T oa;
+    virtual_op = virtual_active(curwin);
+    getregionpos_prep(&s, &e, type, *p_sel == 'e', 0, &inclusive, &oa);
+    if (type == kMTLineWise) {
       mc_vsel_mark(s.lnum, 0, e.lnum, ml_get_len(e.lnum));
-    } else if (Visual.mode == Ctrl_V) {
-      // Blockwise: one range per line, computed by block_prep().
-      colnr_T sv1, sv2, ev1, ev2;
-      const bool lbr_saved = reset_lbr();
-      getvvcol(curwin, &s, &sv1, NULL, &sv2, 0);
-      getvvcol(curwin, &e, &ev1, NULL, &ev2, 0);
-      restore_lbr(lbr_saved);
-      oparg_T oa = {
-        .op_type = OP_NOP,
-        .motion_type = kMTBlockWise,
-        .inclusive = true,
-        .start = s,
-        .end = e,
-        .start_vcol = MIN(sv1, ev1),
-        .end_vcol = curwin->w_curswant == MAXCOL ? MAXCOL : MAX(sv2, ev2),
-      };
+    } else if (type == kMTBlockWise) {
+      if (curwin->w_curswant == MAXCOL) {
+        oa.end_vcol = MAXCOL;  // "$": to the end of every line.
+      }
+      // One range per line.
       for (linenr_T lnum = s.lnum; lnum <= e.lnum; lnum++) {
-        struct block_def bd;
-        block_prep(&oa, &bd, lnum, false);
-        if (bd.textlen > 0) {
-          mc_vsel_mark(lnum, bd.textcol, lnum, bd.textcol + bd.textlen);
+        pos_T rs, re;
+        getregionpos_line(lnum, s, e, inclusive, type, &oa, false, &rs, &re);  // 1-indexed cols.
+        if (rs.col > 0) {  // Else no part of the block is on this line.
+          mc_vsel_mark(lnum, rs.col - 1, lnum, re.col);
         }
       }
     } else {
-      // Charwise, inclusive: extend past the last selected char.
-      char *line = ml_get(e.lnum);
-      colnr_T ecol = e.col;
-      if (line[ecol] != NUL) {
-        ecol += utfc_ptr2len(line + ecol);
-      } else {
-        ecol++;
-      }
-      mc_vsel_mark(s.lnum, s.col, e.lnum, ecol);
+      // Charwise: `e` is on the last byte of the last char, or on NUL (eol cell is selected).
+      mc_vsel_mark(s.lnum, s.col, e.lnum, e.col + 1);
     }
     // Selection-end cursor; the anchor extmark stays put (the eventual replay position).
     uint32_t cmark = 0;
-    mc_mark_set(curbuf, mc_vcur_ns(), &cmark, curwin->w_cursor, true, false, true);
+    extmark_set_pos(curbuf, mc_vcur_ns(), &cmark, curwin->w_cursor, false, true, true);
     mc_vsel_buf = curbuf->handle;
     Visual.active = false;
   }
@@ -1369,7 +1308,7 @@ void mc_ns_clearing(buf_T *buf, uint32_t ns_id)
   for (size_t i = 0; i < kv_size(mc_cursors); i++) {
     Context *ctx = &kv_A(mc_cursors, i);
     if (ctx->buf == buf->handle && ctx->mark != 0) {
-      mc_mark_get(buf, mc_ns(), ctx->mark, &ctx->pos);
+      extmark_get_pos(buf, mc_ns(), ctx->mark, &ctx->pos);
     }
   }
 }
@@ -1387,7 +1326,7 @@ void mc_ns_cleared(buf_T *buf, uint32_t ns_id)
     Context *ctx = &kv_A(mc_cursors, i);
     pos_T pos;
     others = ctx->buf != buf->handle
-             || (ctx->mark != 0 && mc_mark_get(buf, mc_ns(), ctx->mark, &pos));
+             || (ctx->mark != 0 && extmark_get_pos(buf, mc_ns(), ctx->mark, &pos));
   }
   if (!others) {
     // "DWIM yank": before the multicursor session ends, join per-cursor yanks to primary.
@@ -1402,7 +1341,7 @@ void mc_ns_cleared(buf_T *buf, uint32_t ns_id)
       continue;
     }
     uint32_t mark = 0;
-    mc_mark_set(buf, mc_last_ns(), &mark, ctx->pos, false, true, false);
+    extmark_set_pos(buf, mc_last_ns(), &mark, ctx->pos, true, false, false);
   }
   mc_cleanup(false, (pos_T){ 0 });
   if (kv_size(mc_cursors) == 0) {

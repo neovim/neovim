@@ -8,6 +8,7 @@
 // + TODO: sessions
 // + TODO: undo save/restore (for cmdpreview, multicursor)
 // + TODO: TRY_WRAP ?
+// + TODO: viewstate_T ?
 //
 // Related:
 // - vim.with()
@@ -148,8 +149,7 @@ void ctx_save(Context *ctx, const CtxStateFlags flags)
       }
       pos_T p = *pos[i];
       check_pos(curbuf, &p);  // Vim clamps marks at use; an extmark needs a valid position.
-      extmark_set(curbuf, ctx_marks_ns(), &ctx->pos_marks[i], (int)p.lnum - 1, p.col, -1, 0,
-                  (DecorInline)DECOR_INLINE_INIT, 0, true, false, true, false, NULL);
+      extmark_set_pos(curbuf, ctx_marks_ns(), &ctx->pos_marks[i], p, true, true, false);
     }
   }
 
@@ -225,11 +225,8 @@ void ctx_load(Context *ctx, const CtxStateFlags flags, const CtxLoadFlags loadfl
       if (ctx->pos_marks[i] == 0) {
         continue;
       }
-      MTPair mtp = extmark_from_id(curbuf, ctx_marks_ns(), ctx->pos_marks[i]);
-      if (mtp.start.id != 0) {  // Shifted by edits since ctx_save(); coladd stays.
-        pos[i]->lnum = mtp.start.pos.row + 1;
-        pos[i]->col = mtp.start.pos.col;
-      }
+      // Shifted by edits since ctx_save(); a deleted mark keeps the saved position.
+      extmark_get_pos(curbuf, ctx_marks_ns(), ctx->pos_marks[i], pos[i]);
     }
     curbuf->b_visual = ctx->visual;
     curbuf->b_visual_mode_eval = ctx->visual_mode_eval;

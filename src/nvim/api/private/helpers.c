@@ -439,7 +439,7 @@ Array string_to_array(const String input, bool crlf, Arena *arena)
     // If line ends at end-of-buffer, add empty final item.
     // This is "readfile()-style", see also ":help channel-lines".
     if (i + 1 == input.size && (*end == NL || (crlf && *end == CAR))) {
-      kvi_push(ret, STRING_OBJ(STRING_INIT));
+      kvi_push(ret, STRING_OBJ(CBUF_TO_ARENA_STR(arena, "", 0)));
     }
   }
 

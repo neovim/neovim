@@ -661,6 +661,34 @@ void set_topline(win_T *wp, linenr_T lnum)
   redraw_later(wp, UPD_VALID);
 }
 
+/// Saves the view of `wp`, for restore_viewstate().
+void save_viewstate(win_T *wp, viewstate_T *vs)
+  FUNC_ATTR_NONNULL_ALL
+{
+  vs->vs_curswant = wp->w_curswant;
+  vs->vs_set_curswant = wp->w_set_curswant;
+  vs->vs_leftcol = wp->w_leftcol;
+  vs->vs_skipcol = wp->w_skipcol;
+  vs->vs_topline = wp->w_topline;
+  vs->vs_topfill = wp->w_topfill;
+  vs->vs_botline = wp->w_botline;
+  vs->vs_empty_rows = wp->w_empty_rows;
+}
+
+/// Restores the view saved by save_viewstate(). No validation.
+void restore_viewstate(win_T *wp, const viewstate_T *vs)
+  FUNC_ATTR_NONNULL_ALL
+{
+  wp->w_curswant = vs->vs_curswant;
+  wp->w_set_curswant = vs->vs_set_curswant;
+  wp->w_leftcol = vs->vs_leftcol;
+  wp->w_skipcol = vs->vs_skipcol;
+  wp->w_topline = vs->vs_topline;
+  wp->w_topfill = vs->vs_topfill;
+  wp->w_botline = vs->vs_botline;
+  wp->w_empty_rows = vs->vs_empty_rows;
+}
+
 /// Call this function when the length of the cursor line (in screen
 /// characters) has changed, and the change is before the cursor.
 /// If the line length changed the number of screen lines might change,

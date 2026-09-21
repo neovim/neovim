@@ -98,17 +98,6 @@
 /// Last value of prompt_id, incremented when doing new prompt
 static unsigned last_prompt_id = 0;
 
-// Struct to store the viewstate during 'incsearch' highlighting and 'inccommand' preview.
-typedef struct {
-  colnr_T vs_curswant;
-  colnr_T vs_leftcol;
-  colnr_T vs_skipcol;
-  linenr_T vs_topline;
-  int vs_topfill;
-  linenr_T vs_botline;
-  int vs_empty_rows;
-} viewstate_T;
-
 // Struct to store the state of 'incsearch' highlighting.
 typedef struct {
   pos_T search_start;   // where 'incsearch' starts searching
@@ -218,30 +207,6 @@ static void trigger_cmd_autocmd(int typechar, event_T evt)
 {
   char typestr[2] = { (char)typechar, NUL };
   apply_autocmds(evt, typestr, typestr, false, curbuf);
-}
-
-static void save_viewstate(win_T *wp, viewstate_T *vs)
-  FUNC_ATTR_NONNULL_ALL
-{
-  vs->vs_curswant = wp->w_curswant;
-  vs->vs_leftcol = wp->w_leftcol;
-  vs->vs_skipcol = wp->w_skipcol;
-  vs->vs_topline = wp->w_topline;
-  vs->vs_topfill = wp->w_topfill;
-  vs->vs_botline = wp->w_botline;
-  vs->vs_empty_rows = wp->w_empty_rows;
-}
-
-static void restore_viewstate(win_T *wp, viewstate_T *vs)
-  FUNC_ATTR_NONNULL_ALL
-{
-  wp->w_curswant = vs->vs_curswant;
-  wp->w_leftcol = vs->vs_leftcol;
-  wp->w_skipcol = vs->vs_skipcol;
-  wp->w_topline = vs->vs_topline;
-  wp->w_topfill = vs->vs_topfill;
-  wp->w_botline = vs->vs_botline;
-  wp->w_empty_rows = vs->vs_empty_rows;
 }
 
 static void init_incsearch_state(incsearch_state_T *s)
