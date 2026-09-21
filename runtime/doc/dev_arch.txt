@@ -567,7 +567,8 @@ CONCEPTS
     Op-pending). Non-MODE_NORMAL modes (Insert, Cmdline) are "sessions", not
     "frames". All emit atoms.
 - CASCADE: Replay queued atoms at the "clock edge" at every cursor. Visual
-  cascade "dry-runs" spans to display the selection.
+  edits cascade span-by-span each preceded by "gv"; the non-edit "tail"
+  dry-runs to display the selection.
 - COMPOSITE: An atom composed of subatoms (`CmdAtom.atoms`): a mapping/macro,
   or a Visual sequence.
 - INSERT-SESSION: All changes from an insert-mode session, until <Esc>.

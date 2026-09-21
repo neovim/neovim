@@ -46,7 +46,6 @@ struct CmdFrame {
   uint64_t redo_frame;  ///< Frame whose redobuf (potentially) defines the atom. 0: none.
   char *cmdline;        ///< The ":" payload captured at cmdline accept. NULL: none.
                         ///< Note: search payloads ("/pat<CR>") travel on `cmdarg.searchbuf`.
-  bool ins_cascaded;    ///< Did the command's insert-session already cascade?
 };
 
 #include "input_cmdatom.h.generated.h"

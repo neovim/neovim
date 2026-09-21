@@ -74,7 +74,7 @@ static struct {
   TriState follow;    ///< `CmdFrame.follow` at the atom's first motion (`kNone`: none yet).
   CmdAtomVec atoms;   ///< Subatoms of the mapping/macro.
   char lhs[MAXMAPLEN + 4];  ///< Label: mapping LHS, macro "@x", or :omap's op+LHS. "": none.
-  bool queued;        ///< A cascadable atom was queued (g_atoms) while collecting.
+  bool queued;        ///< Subatom queued for cascade (`g_atoms`, or Visual). No LHS-replay needed.
   bool lossy;         ///< Detected partial capture: `keys` cannot replay it, `lhs` can.
                       ///< When: incomplete insert, payload with no capturing atom.
   bool macro;         ///< Macro execution: captured as an "@x"-labeled atom.
@@ -109,6 +109,7 @@ static struct {
   CmdOrigin origin;  ///< State at session start (before the "v").
   uint64_t frame;    ///< Frame that pushed the last subatom. An enclosing frame must not recapture
                      ///< its keys, restart its session, nor void it (`frame` > its own id).
+  size_t done;       ///< Subatoms already-cascaded as spans; `atoms[done..]` is the pending tail.
 } vatom;
 
 /// Interactively typed keys of the executing command. Collected during a composite (its `lhs`
@@ -121,7 +122,7 @@ static struct {
 static const char *const type_names[] = {
   [kAComp] = "mapping",
   [kAExcmd] = "excmd",
-  [kAInsertSpan] = "insert",  // spans display as "insert" (as a composite's `atoms`)
+  [kAInsertSpan] = "insert",  // Span displays as "insert" (as composite's `atoms`).
   [kAInsert] = "insert",
   [kAJump] = "jump",
   [kAMotion] = "motion",
@@ -129,6 +130,7 @@ static const char *const type_names[] = {
   [kANormal] = "normal",
   [kAOperator] = "operator",
   [kAScroll] = "scroll",
+  [kAVisualSpan] = "visual",  // Span displays as "visual" (as composite's `atoms`).
   [kAVisual] = "visual",
 };
 
@@ -315,14 +317,14 @@ static CmdAtom atom_from_frame(cmdarg_T *ca, const CmdFrame *root, bool vis)
   return (CmdAtom){ 0 };  // Frame is not a Ex/Lua cmd: keys=NULL.
 }
 
-/// Joins the `keys` of a list of (composite) subatoms. This is a plain concat (the `keys` field of
-/// each subatom is assumed to be in `redo_keys` format).
+/// Joins the `keys` of a list of (composite) subatoms, starting at index `from`. Plain concat
+/// (assumes `subatom.keys` is in `redo_keys` format).
 ///
-/// @return Allocated keysequence, "" if `atoms` is empty (never NULL).
-static String atoms_concat_keys(CmdAtomVec atoms)
+/// @return Allocated keysequence, "" if empty (never NULL).
+static String atoms_concat_keys(CmdAtomVec atoms, size_t from)
 {
   StringBuilder keys = KV_INITIAL_VALUE;
-  for (size_t i = 0; i < kv_size(atoms); i++) {
+  for (size_t i = from; i < kv_size(atoms); i++) {
     kv_concat(keys, kv_A(atoms, i).keys);
   }
   size_t len = kv_size(keys);
@@ -456,10 +458,17 @@ void atom_push_raw(bool cascade, CmdAtom *atom)
     atom->moved = atom_origin_moved(atom->origin);
     atom->undoseq = atom_origin_undoseq(atom->origin);
   }
+  // `composite.frame`: the command that was executing when a peek opened the composite is not part
+  // of it.
+  const bool collect = composite.active
+                       && (cur_frame == NULL || cur_frame->id != composite.frame);
   if (atom_visual_pending()) {
     if (vatom.state & kVatomTyped) {
       // Not for kVatomFed: redo-prep must not mark the enclosing span as captured.
       atom_captures++;
+    }
+    if (collect) {
+      composite.queued = true;
     }
     kv_push(vatom.atoms, *atom);
     vatom.frame = cur_frame->id;
@@ -473,10 +482,6 @@ void atom_push_raw(bool cascade, CmdAtom *atom)
       last->changed = atom->changed;
     }
   }
-  // `composite.frame`: the command that was executing when a peek opened the composite is not part
-  // of it.
-  const bool collect = composite.active
-                       && (cur_frame == NULL || cur_frame->id != composite.frame);
   if (cascade) {
     CmdAtom copy = *atom;
     copy.keys = xstrdup(atom->keys);
@@ -538,8 +543,8 @@ static void atom_stage_flush(CmdFrame *frame)
   if (frame->staged.keys == NULL) {
     return;
   }
-  // Staged commands are edits, thus cascade. Except with no keys (poisoned Visual selection).
-  bool cascade = *frame->staged.keys != NUL;
+  // Staged cmds are edits: cascade. Except if no keys (void Visual), or already-cascaded as spans.
+  bool cascade = *frame->staged.keys != NUL && !frame->staged.cascaded;
   atom_push(cascade, &frame->staged);
   frame->staged = (CmdAtom){ 0 };
 }
@@ -562,7 +567,7 @@ void atom_lhs_replay_queue(void)
   kv_push(g_atoms, ((CmdAtom){ .type = kAComp, .keys = atom_composite_lhs(), .remap = true }));
 }
 
-/// True if the executing mapping queued a subatom: its edit was captured, no LHS-replay needed.
+/// True if the mapping queued a subatom for cascade: no LHS-replay needed
 bool atom_composite_queued(void)
 {
   return composite.queued;
@@ -622,7 +627,7 @@ static void atom_composite_end(void)
   } else {
     // Zero subatoms (captured nothing (Ex/Lua, no-op); still a user action, identified by `lhs`),
     // or multiple subatoms.
-    atom = (CmdAtom){ .type = kAComp, .keys = atoms_concat_keys(composite.atoms).data,
+    atom = (CmdAtom){ .type = kAComp, .keys = atoms_concat_keys(composite.atoms, 0).data,
                       .lhs = lhs, .remap = remap, .origin = composite.origin,
                       .changed = atom_origin_changed(composite.origin),
                       .moved = atom_origin_moved(composite.origin),
@@ -972,6 +977,7 @@ void atom_visual_reset(void)
   atoms_free(&vatom.atoms);
   vatom.origin = (CmdOrigin){ 0 };
   vatom.frame = 0;
+  vatom.done = 0;
   mc_vsel_clear();
 }
 
@@ -1009,14 +1015,49 @@ bool atom_visual_redoable(void)
   return true;
 }
 
-/// The pending visual atom's accumulated keys (allocated), or NULL data if none is replayable
-/// (inactive/void). For the selection dry-run (mc_vsel_refresh()).
+/// The pending visual atom's uncascaded "tail" keys (allocated; NULL data if inactive/void).
+/// Replaying produces the per-cursor selection. Prefixed with "gv" if a span cascaded.
 String atom_visual_span(void)
 {
   if (!atom_visual_replayable()) {
     return (String)STRING_INIT;
   }
-  return atoms_concat_keys(vatom.atoms);
+  String tail = atoms_concat_keys(vatom.atoms, vatom.done);
+  if (vatom.done == 0) {
+    return tail;
+  }
+
+  // Prefix with "gv".
+  StringBuilder keys = KV_INITIAL_VALUE;
+  kv_concat(keys, "gv");
+  kv_concat_len(keys, tail.data, tail.size);
+  size_t len = kv_size(keys);
+  kv_push(keys, NUL);
+  api_free_string(tail);
+  return (String){ .data = keys.items, .size = len };
+}
+
+/// Cascades the Visual session's uncascaded subatoms as a span, if one of them edited the buffer.
+///
+/// The session's own atom must not cascade again (`CmdAtom.cascaded`). Pure selection keys stay
+/// pending; the dry-run previews them (mc_vsel_refresh).
+static void atom_visual_span_flush(void)
+{
+  if (vatom.done >= kv_size(vatom.atoms) || !atom_visual_replayable() || !atom_visual_typed()
+      || !mc_buf_has_cursors(curbuf)) {
+    return;
+  }
+  bool edited = false;
+  for (size_t i = vatom.done; i < kv_size(vatom.atoms); i++) {
+    assert(kv_A(vatom.atoms, i).type != kAOperator);  // Only atom_push_raw() computes `changed`.
+    edited |= kv_A(vatom.atoms, i).changed;
+  }
+  if (!edited) {
+    return;
+  }
+  String span = atom_visual_span();
+  vatom.done = kv_size(vatom.atoms);
+  kv_push(g_atoms, ((CmdAtom){ .type = kAVisualSpan, .keys = span.data }));
 }
 
 /// Ends the pending visual atom, appends `suffix`, and stages it. Or discards if unreplayable.
@@ -1034,7 +1075,7 @@ static bool atom_visual_end_suffix(char *suffix, const CmdSpec *spec, bool redoa
   }
   const CmdOrigin origin = vatom.origin;  // atom_visual_reset() clears the session.
   const bool replayable = suffix != NULL && atom_visual_replayable();
-  String v = replayable ? atoms_concat_keys(vatom.atoms) : (String)STRING_INIT;
+  String v = replayable ? atoms_concat_keys(vatom.atoms, 0) : (String)STRING_INIT;
   // Redo: the collected keys, else "1v" fallback. The tail (reg/count/op) comes from the suffix:
   // prep/atom cannot diverge, and suffixes inexpressible as spec ("r<C-V><CR>") stay replayable.
   const bool prepped = redoable && spec != NULL && suffix != NULL
@@ -1060,7 +1101,7 @@ static bool atom_visual_end_suffix(char *suffix, const CmdSpec *spec, bool redoa
                 && suffix != NULL && atom_is_user_cmd();
     char *label = NULL;
     if (emit) {
-      String collected = atoms_concat_keys(vatom.atoms);
+      String collected = atoms_concat_keys(vatom.atoms, 0);
       label = xrealloc(collected.data, collected.size + strlen(suffix) + 1);
       STRCPY(label + collected.size, suffix);
     }
@@ -1099,6 +1140,12 @@ static bool atom_visual_end_suffix(char *suffix, const CmdSpec *spec, bool redoa
                                      .origin = cur_frame->origin }));
   } else {
     xfree(suffix);
+  }
+  atom.cascaded = vatom.done > 0;
+  if (atom.cascaded && vatom.done < kv_size(vatom.atoms)) {
+    // Spans cascaded the selection's edits. This last one completes it (the operator).
+    String span = atom_visual_span();
+    kv_push(g_atoms, ((CmdAtom){ .type = kAVisualSpan, .keys = span.data }));
   }
   atom.atoms = vatom.atoms;
   vatom.atoms = (CmdAtomVec)KV_INITIAL_VALUE;
@@ -1265,7 +1312,7 @@ InsSession atom_ins_start(int cmd, long count, VisualIns vis, bool vblock)
   bool reexec = vis == kVInsNone || vis == kVInsKeys
                 || (vis == kVInsMotion && cur_frame->payload_start == SIZE_MAX);
   mc_ins_cascade_start(session.typed && count <= 1 && !repl && !vblock && reexec,
-                       session.origin.tick);
+                       session.origin.tick, root_frame()->id);
   return session;
 }
 
@@ -1285,7 +1332,6 @@ void atom_ins_end(const InsSession *session, bool busy)
                     || maptick != session->origin.maptick;
 
   if (mc_ins_commit()) {
-    root_frame()->ins_cascaded = true;
     // Not during a mapping: there the spans are subatoms of its composite.
     if (has_event(EVENT_CMDATOM) && !atom_composite_active()) {
       atom_ins_push(session, false);
@@ -1405,7 +1451,7 @@ static bool atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
       && root->redo_frame != old->id) {
     return false;
   }
-  bool ins_cascaded = user && root->ins_cascaded;
+  bool ins_cascaded = user && mc_ins_cascaded(root->id);
   // Command from a mapping's RHS (typed keys have KeyTyped set).
   bool mapped = user && !old->keytyped && !synthetic;
   if (mapped
@@ -1558,10 +1604,12 @@ static bool atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
     }
   }
 
-  if (vis && (curbuf != old->origin.buf.br_buf || atom_origin_changed(old->origin))) {
-    // Not replayable: edited buffer during selection, so the keys do not describe the change.
+  if (vis && (curbuf != old->origin.buf.br_buf
+              || (atom_origin_changed(old->origin) && vatom.frame != old->id))) {
+    // Not replayable: edited during visual, and this frame pushed no subatom describing it.
     vatom.state |= kVatomVoid;
   }
+  atom_visual_span_flush();
 
   return Visual.active && user && old->parent == NULL;
 }
@@ -1589,7 +1637,11 @@ void atom_cmd_end(cmdarg_T *ca, CmdFrame *old)
   // textlock).
   if (old->parent == NULL && !mc_replaying() && typebuf_typed() && stuff_empty()) {
     bool map_moved = atom_composite_active() && atom_origin_moved(composite.origin);
-    mc_clock_edge(map_edit, map_moved, composite.follow == kTrue);
+    // Primary pos: defined at cmd start or Visual-sel start, even if the cmd moved it since.
+    pos_T primary = old->visual.active ? old->visual.start : old->origin.pos;
+
+    mc_clock_edge(map_edit, map_moved, composite.follow == kTrue, primary);
+
     map_edit = false;
     // One atom spans its continuation: while op-pending, selection-active, or insert-will-resume
     // (i_CTRL-O), it stays open. ",Dw" (":nnoremap ,D d") is one atom, `keys="dw"`.
