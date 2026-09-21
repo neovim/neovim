@@ -47,6 +47,7 @@
 #include "nvim/memory.h"
 #include "nvim/memory_defs.h"
 #include "nvim/message.h"
+#include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
 #include "nvim/pos_defs.h"
@@ -2642,10 +2643,8 @@ const char *did_set_langmap(optset_T *args)
         }
       }
       if (to == NUL) {
-        snprintf(args->os_errbuf, args->os_errbuflen,
-                 _("E357: 'langmap': Matching character missing for %s"),
-                 transchar(from));
-        return args->os_errbuf;
+        return opt_error(args->os_errbuf, N_("E357: 'langmap': Matching character missing for %s"),
+                         transchar(from));
       }
 
       if (from >= 256) {
@@ -2666,10 +2665,8 @@ const char *did_set_langmap(optset_T *args)
           p = p2;
           if (p[0] != NUL) {
             if (p[0] != ',') {
-              snprintf(args->os_errbuf, args->os_errbuflen,
-                       _("E358: 'langmap': Extra characters after semicolon: %s"),
-                       p);
-              return args->os_errbuf;
+              return opt_error(args->os_errbuf,
+                               N_("E358: 'langmap': Extra characters after semicolon: %s"), p);
             }
             p++;
           }

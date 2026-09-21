@@ -1445,10 +1445,10 @@ static char *ex_let_option(char *arg, typval_T *const tv, const bool is_const,
     }
   }
 
-  const char *err = set_option_value_handle_tty(arg, opt_idx, newval, opt_flags);
   arg_end = p;
-  if (err != NULL) {
-    emsg(_(err));
+  // Ignore TTY assignments after validation for compatibility with old vimrcs.
+  if (!is_tty_opt) {
+    set_option_value_give_err(opt_idx, newval, opt_flags);
   }
 
 theend:
@@ -3326,7 +3326,8 @@ static void set_option_from_tv(const char *varname, typval_T *varp)
   Object value = opt_from_tv(varp, opt_idx, varname, &error);
 
   if (!error) {
-    const char *errmsg = set_option_value_handle_tty(varname, opt_idx, value, OPT_LOCAL);
+    const CharBuf errbuf = { (char[IOSIZE]){ 0 }, IOSIZE };
+    const char *errmsg = set_option_value(opt_idx, value, OPT_LOCAL, &errbuf);
 
     if (errmsg) {
       emsg(errmsg);

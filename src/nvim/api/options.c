@@ -404,7 +404,7 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
   if (optval_right.type == kObjectTypeInteger || optval_right.type == kObjectTypeString) {
     Object oldval = optval_own(opt_idx, opt_from_varp(opt_idx, varp));
     merged_val = get_option_newval(opt_idx, opt_flags, PREFIX_NONE, &argp, 0, operation,
-                                   option->flags, varp, &oldval, NULL, 0, &errmsg);
+                                   option->flags, varp, &oldval, &errmsg);
     optval_free(oldval);
     VALIDATE(errmsg == NULL, "%s", errmsg, {
       return NIL;
@@ -412,9 +412,8 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
   }
 
   if (dry_run) {
-    char errbuf[IOSIZE];
-    errmsg = validate_option_value(opt_idx, &merged_val, opt_flags, buf, win, errbuf,
-                                   sizeof(errbuf));
+    const CharBuf errbuf = { (char[IOSIZE]){ 0 }, IOSIZE };
+    errmsg = validate_option_value(opt_idx, &merged_val, opt_flags, buf, win, &errbuf);
     if (errmsg != NULL) {
       api_set_error(err, kErrorTypeException, "%s", errmsg);
       optval_free(merged_val);
@@ -422,7 +421,7 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
     }
   } else {
     WITH_SCRIPT_CONTEXT(channel_id, {
-      set_option_value_for(name.data, opt_idx, merged_val, opt_flags, scope, to, err);
+      set_option_value_for(opt_idx, merged_val, opt_flags, scope, to, err);
     });
   }
 
