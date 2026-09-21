@@ -1023,6 +1023,13 @@ String atom_visual_span(void)
   return atoms_concat_keys(vatom.atoms);
 }
 
+/// Cursor position at Visual-session start (before "v"). Extra-cursor selection previews replay
+/// from each cursor's own start; the primary dry-run at the end of mc_vsel_refresh() uses this.
+pos_T atom_visual_origin(void)
+{
+  return vatom.origin.pos;
+}
+
 /// Ends the pending visual atom, appends `suffix`, and stages it. Or discards if unreplayable.
 ///
 /// @param suffix  Owned.

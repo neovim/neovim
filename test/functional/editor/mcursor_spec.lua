@@ -3203,15 +3203,23 @@ describe('multicursor', function()
         {1:~                             }|*2
         {5:-- VISUAL --}                  |
       ]])
-      -- TODO: "in" after "an": the primary selects the first child. #42000
-      -- feed('in')
-      -- screen:expect([[
-      --   foo(one, {17:two})                 |
-      --   bar(three, {17:four})              |
-      --   baz(five, {17:si}^x)                |
-      --   {1:~                             }|*2
-      --   {5:-- VISUAL --}                  |
-      -- ]])
+      -- "in" after "an" must return to the child the primary came from, not the first child. #42000
+      feed('in')
+      screen:expect([[
+        foo(one, {17:two})                 |
+        bar(three, {17:four})              |
+        baz(five, {17:si}^x)                |
+        {1:~                             }|*2
+        {5:-- VISUAL --}                  |
+      ]])
+      feed('an')
+      screen:expect([[
+        foo{17:(one, two)}                 |
+        bar{17:(three, four)}              |
+        baz{17:(five, six}^)                |
+        {1:~                             }|*2
+        {5:-- VISUAL --}                  |
+      ]])
       feed('cX')
       eq({ 'fooX', 'barX', 'bazX' }, get_lines())
       eq('i', fn.mode())

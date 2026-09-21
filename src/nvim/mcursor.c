@@ -1124,6 +1124,16 @@ void mc_vsel_refresh(void)
     Visual.active = false;
   }
 
+  // Extra-cursor dry-runs leave module-level Lua state (e.g. vim.treesitter._select history)
+  // written for the last other cursor. Replay the span once more at the primary's session start
+  // so shared state is last written for the primary. #42000
+  curwin->w_cursor = atom_visual_origin();
+  check_cursor(curwin);
+  Visual.active = false;
+  Visual.select = false;
+  nvim_feedkeys(span, cstr_as_string("nix"), false);
+  Visual.active = false;
+
   cmdmod.cmod_flags = save_cmod_flags;
   emsg_silent--;
   unblock_autocmds();
