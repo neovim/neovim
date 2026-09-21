@@ -6,6 +6,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/regexp_defs.h"
+#include "nvim/types_defs.h"
 
 #include "options_enum.generated.h"
 
@@ -114,9 +115,7 @@ typedef struct {
   /// If the value specified for an option is not valid and the error message
   /// is parameterized, then the "os_errbuf" buffer is used to store the error
   /// message (when it is not NULL).
-  char *os_errbuf;
-  /// length of the error buffer
-  size_t os_errbuflen;
+  const CharBuf *os_errbuf;
 
   void *os_win;
   void *os_buf;

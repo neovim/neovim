@@ -35,8 +35,7 @@ describe('build_stl_str_hl', function()
 
     return stl.build_stl_str_hl(
       globals.curwin,
-      output_buffer,
-      buffer_byte_size,
+      t.ffi.new('CharBuf', { output_buffer, buffer_byte_size }),
       to_cstr(pat),
       -1,
       0,

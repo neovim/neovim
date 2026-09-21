@@ -379,7 +379,7 @@ static void win_redr_stl_expr(win_T *wp, bool draw_winbar, bool draw_ruler, bool
   stl = xstrdup(stl);
 
   StlClickRecord *tabtab = NULL;
-  build_stl_str_hl(ewp, buf, sizeof(buf), stl, opt_idx, opt_scope,
+  build_stl_str_hl(ewp, (CharBuf){ buf, sizeof(buf) }, stl, opt_idx, opt_scope,
                    fillchar, maxwidth, &hltab, NULL, click_defs ? &tabtab : NULL, NULL);
   stl_fill_click_defs(click_defs, tabtab, buf, maxwidth, wp == NULL);
 
@@ -755,7 +755,7 @@ void draw_tabline(void)
 /// the v:lnum and v:relnum variables don't have to be updated.
 ///
 /// @return  The width of the built status column string for line "lnum"
-int build_statuscol_str(win_T *wp, linenr_T lnum, int relnum, int virtnum, char *buf,
+int build_statuscol_str(win_T *wp, linenr_T lnum, int relnum, int virtnum, CharBuf buf,
                         statuscol_T *stcp)
 {
   if (relnum >= 0) {
@@ -766,7 +766,7 @@ int build_statuscol_str(win_T *wp, linenr_T lnum, int relnum, int virtnum, char 
 
   StlClickRecord *clickrec;
   char *stc = xstrdup(wp->w_p_stc);
-  int width = build_stl_str_hl(wp, buf, MAXPATHL, stc, kOptStatuscolumn, OPT_LOCAL, 0,
+  int width = build_stl_str_hl(wp, buf, stc, kOptStatuscolumn, OPT_LOCAL, 0,
                                stcp->width, &stcp->hlrec, NULL, &clickrec, stcp);
   xfree(stc);
 
@@ -775,7 +775,7 @@ int build_statuscol_str(win_T *wp, linenr_T lnum, int relnum, int virtnum, char 
     StcClick *click_defs = map_put_ref(int, StcClick)(clicks, virtnum, NULL, NULL);
     stl_clear_click_defs(click_defs->def, click_defs->size);
     click_defs->def = stl_alloc_click_defs(click_defs->def, width, &click_defs->size);
-    stl_fill_click_defs(click_defs->def, clickrec, buf, width, false);
+    stl_fill_click_defs(click_defs->def, clickrec, buf.data, width, false);
   }
 
   return width;
@@ -1002,7 +1002,6 @@ static void stl_expand(int *width, int target_width, StlPadding padding, int rem
 /// @param wp  The window to build a statusline for
 /// @param out  The output buffer to write the statusline to
 ///             Note: This should not be NameBuff
-/// @param outlen  The length of the output buffer
 /// @param fmt  The statusline format string
 /// @param opt_idx  Index of the option corresponding to "fmt"
 /// @param opt_scope  The scope corresponding to "opt_idx"
@@ -1013,9 +1012,9 @@ static void stl_expand(int *width, int target_width, StlPadding padding, int rem
 /// @param stcp  Status column attributes (can be NULL)
 ///
 /// @return  The final width of the statusline
-int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex opt_idx,
-                     int opt_scope, schar_T fillchar, int maxwidth, stl_hlrec_t **hltab,
-                     size_t *hltab_len, StlClickRecord **tabtab, statuscol_T *stcp)
+int build_stl_str_hl(win_T *wp, CharBuf out, char *fmt, OptIndex opt_idx, int opt_scope,
+                     schar_T fillchar, int maxwidth, stl_hlrec_t **hltab, size_t *hltab_len,
+                     StlClickRecord **tabtab, statuscol_T *stcp)
 {
   static size_t stl_items_len = 20;  // Initial value, grows as needed.
   static stl_item_t *stl_items = NULL;
@@ -1115,12 +1114,12 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
   bool prevchar_isitem = false;
 
   // out_p is the current position in the output buffer
-  char *out_p = out;
+  char *out_p = out.data;
 
   // out_end_p is the last valid character in the output buffer
   // Note: The null termination character must occur here or earlier,
   //       so any user-visible characters must occur before here.
-  char *out_end_p = (out + outlen) - 1;
+  char *out_end_p = (out.data + out.size) - 1;
 
 #define MAY_GROW_STL_ITEMS_LEN() \
   do { \
@@ -1489,7 +1488,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
         break;
       }
       fmt_p++;
-      if (reevaluate && out_p > out) {
+      if (reevaluate && out_p > out.data) {
         out_p[-1] = NUL;  // remove the % at the end of %{% expr %}
       } else {
         *out_p = NUL;
@@ -2032,16 +2031,16 @@ stcsign:
   // We have now processed the entire statusline format string.
   // What follows is post-processing to handle alignment and highlighting.
 
-  int width = vim_strsize(out);
+  int width = vim_strsize(out.data);
   if (maxwidth > 0 && width > maxwidth && (!stcp || width > MAX_STCWIDTH)) {
     // Result is too long, must truncate somewhere.
-    stl_truncate(&width, 0, maxwidth, fillchar, stl_items, evalstart, &curitem, out, &out_p);
+    stl_truncate(&width, 0, maxwidth, fillchar, stl_items, evalstart, &curitem, out.data, &out_p);
 
     // If there is room left in our statusline, and room left in our buffer,
     // add characters at the separation markers (if there are any) to fill up the available space.
   } else if (width < maxwidth) {
     stl_expand(&width, maxwidth, kPaddingNone, (int)(out_end_p - out_p), fillchar, stl_items,
-               evalstart, curitem, out, &out_p);
+               evalstart, curitem, out.data, &out_p);
   }
 
   // Store the info about highlighting.

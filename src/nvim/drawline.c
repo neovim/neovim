@@ -744,13 +744,14 @@ static void draw_statuscol(win_T *wp, winlinevars_T *wlv, int col_rows, statusco
   prev_wp = wp;
 
   char buf[MAXPATHL];
+  const CharBuf outbuf = { buf, sizeof(buf) };
   // When a buffer's line count has changed, make a best estimate for the full
   // width of the status column by building with the largest possible line number.
   // Add potentially truncated width and rebuild before drawing anything.
   if (wp->w_statuscol_line_count != wp->w_nrwidth_line_count) {
     wp->w_statuscol_line_count = wp->w_nrwidth_line_count;
     int width = build_statuscol_str(wp, wp->w_nrwidth_line_count,
-                                    wp->w_nrwidth_line_count, 0, buf, stcp);
+                                    wp->w_nrwidth_line_count, 0, outbuf, stcp);
     if (width > stcp->width) {
       int addwidth = MIN(width - stcp->width, MAX_STCWIDTH - stcp->width);
       wp->w_nrwidth += addwidth;
@@ -766,7 +767,7 @@ static void draw_statuscol(win_T *wp, winlinevars_T *wlv, int col_rows, statusco
     }
   }
 
-  int width = build_statuscol_str(wp, lnum, relnum, virtnum, buf, stcp);
+  int width = build_statuscol_str(wp, lnum, relnum, virtnum, outbuf, stcp);
   // Force a redraw in case of error or when truncated
   if (*wp->w_p_stc == NUL || (width > stcp->width && stcp->width < MAX_STCWIDTH)) {
     if (*wp->w_p_stc == NUL) {  // 'statuscolumn' reset due to error

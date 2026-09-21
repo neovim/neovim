@@ -115,6 +115,18 @@ describe(':let', function()
     eq(false, api.nvim_get_option_value('equalalways', {}))
   end)
 
+  it('ignores legacy TTY assignments after validation', function()
+    for _, name in ipairs({ 't_xx', 't_Co', 'term', 'ttytype' }) do
+      local original = eval('&' .. name)
+      command('let &' .. name .. ' = "ignored"')
+      eq(original, eval('&' .. name))
+      command('let &' .. name .. ' .= "ignored"')
+      eq(original, eval('&' .. name))
+    end
+    eq('Vim(let):E730: Using a List as a String', t.pcall_err(command, 'let &t_xx = []'))
+    eq('Vim(let):E734: Wrong variable type for +=', t.pcall_err(command, 'let &t_xx += 1'))
+  end)
+
   it('no crash: assigning bool/special to a string option gives E928', function()
     for _, v in ipairs({ 'v:true', 'v:false', 'v:null' }) do
       -- Regular string option.

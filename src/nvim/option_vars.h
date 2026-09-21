@@ -520,7 +520,7 @@ EXTERN int p_cdh;               ///< 'cdhome'
 #define NO_LOCAL_UNDOLEVEL (-123456)
 
 // Buffer for an option-set error message. Large enough to list an option's valid values (see
-// opt_invalid_value_err()); the value is appended separately into IObuff.
+// opt_values_err()); the value is appended separately into IObuff.
 #define ERR_BUFLEN 256
 
 #define SB_MAX 1000000  // Maximum 'scrollback' value.

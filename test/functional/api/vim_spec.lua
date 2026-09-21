@@ -2420,6 +2420,7 @@ describe('API', function()
         { 'wildchar', 3, 'E474:' }, -- CTRL-C.
         { 'wildcharm', 13, 'E474:' }, -- Enter.
         { 'colorcolumn', 'bad', 'E474:' },
+        { 'statusline', '%^', 'E539:' },
         { 'statusline', '%(', 'E542:' },
         { 'statuscolumn', '%(', 'E542:' },
         { 'winbar', '%(', 'E542:' },
@@ -4930,6 +4931,11 @@ describe('API', function()
         str = '%StatusLineStringWithHighlights',
         width = 31,
       }, api.nvim_eval_statusline('%%StatusLineString%#WarningMsg#WithHighlights', {}))
+    end)
+
+    it('rejects invalid format characters', function()
+      eq('E539: Illegal character <^>', pcall_err(api.nvim_eval_statusline, '%^', {}))
+      eq('E539: Illegal character <}>', pcall_err(api.nvim_eval_statusline, '%{%}', {}))
     end)
 
     it('reports an invalid window once', function()
