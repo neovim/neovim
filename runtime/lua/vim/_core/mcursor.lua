@@ -14,6 +14,8 @@ local vcur_ns = vim.api.nvim_create_namespace('nvim.multicursor.cursor')
 local tty_cursors = false
 local last_seq = '' ---@type string
 local pending = false
+--- Max CSI params in one terminal seq (kitty: 256). #41969
+local max_csi_params = 256
 
 --- Gets the operative mcursors namespace, depending on the current state.
 --- @param buf integer
@@ -61,7 +63,7 @@ end
 --- Kitty cursors protocol: Builds the escape sequence for extra cursors at screen coords `c`.
 ---@param c string[] Coords in "2:row:col" format.
 local function cursor_seq(c)
-  local seq = '\027[>0;4 q'
+  local seq = '\027[>0;4 q' -- Clear.
   local hl = vim.api.nvim_get_hl(0, { name = 'MCursor', link = false })
   if hl.fg then
     seq = seq
@@ -79,15 +81,17 @@ local function cursor_seq(c)
         bit.band(hl.bg, 0xFF)
       )
   end
-  return seq .. ('\027[>29;%s q'):format(table.concat(c, ';'))
+  -- Shape 29 at each position, in batches of ~(max_csi_params/3).
+  local per_seq = math.floor((max_csi_params - 1) / 3) -- Shape takes 1 param, each coord takes 3.
+  for i = 1, #c, per_seq do
+    seq = seq .. ('\027[>29;%s q'):format(table.concat(c, ';', i, math.min(i + per_seq - 1, #c)))
+  end
+  return seq
 end
 
 --- Kitty cursors protocol: Updates the cursors.
 local function refresh()
   local c = coords()
-  -- Clear all extra cursors ("no cursor" over the full-screen rectangle), then optionally set
-  -- cursor/text colors (shapes 30/40 from MCursor hl), and finally shape 29 (follow primary) at
-  -- each position.
   send(#c == 0 and '' or cursor_seq(c))
 end
 
