@@ -1096,7 +1096,7 @@ normal_end:
 static int normal_execute(VimState *state, int key)
 {
   CmdFrame frame;
-  atom_cmd_start(&frame);
+  atom_cmd_start(&frame, key);
 
   NormalState *s = (NormalState *)state;
   s->command_finished = false;

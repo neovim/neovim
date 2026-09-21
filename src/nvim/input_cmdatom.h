@@ -26,8 +26,9 @@ struct CmdFrame {
   CmdOrigin origin;     ///< State at entry.
   VisualState visual;   ///< Visual-mode state (active/start/mode are diffed).
   bool keytyped;        ///< KeyTyped
+  unsigned keyclass;    ///< atom_key_class() of the cmd char, before its `nchar`.
+  int ex_normal;        ///< If higher than `root_frame().ex_normal`, a cmd fed this (:norm, feed).
   uint64_t captures;    ///< `atom_captures` at entry.
-  size_t vatoms;        ///< `kv_size(vatom.atoms)` at entry: any beyond were fed in this frame.
   uint64_t global_ops;  ///< `global_ops` at entry.
   uint64_t beeps;       ///< `did_beep` at entry.
   uint64_t id;          ///< Identifies this frame (see `composite.frame`).
