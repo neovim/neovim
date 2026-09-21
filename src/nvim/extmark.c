@@ -386,6 +386,38 @@ MTPair extmark_from_id(buf_T *buf, uint32_t ns_id, uint32_t id)
   return mtpair_from(mark, end);
 }
 
+/// Creates or updates point extmark (shifts with buffer edits) `mark` at `pos`.
+///
+/// @param right_gravity  The mark shifts with text inserted exactly at its position (e.g. "o" on the
+///                       line above).
+/// @param no_undo        Transient mark: undo does not restore its position.
+/// @param ui_watched     Mark is drawn by the UI, which receives its position per redraw (ui-event
+///                       "win_extmark").
+void extmark_set_pos(buf_T *buf, uint32_t ns_id, uint32_t *mark, pos_T pos, bool right_gravity,
+                     bool no_undo, bool ui_watched)
+{
+  DecorInline decor = DECOR_INLINE_INIT;
+  if (ui_watched) {
+    decor.data.hl.flags = kSHUIWatched | kSHUIWatchedOverlay;
+  }
+  extmark_set(buf, ns_id, mark, (int)pos.lnum - 1, pos.col, -1, 0, decor,
+              ui_watched ? MT_FLAG_DECOR_HL : 0, right_gravity, false, no_undo, false, NULL);
+}
+
+/// Gets the position of an extmark, shifted by buffer edits since it was set. Keeps `pos->coladd`.
+///
+/// @return  False if the mark no longer exists (`pos` untouched).
+bool extmark_get_pos(buf_T *buf, uint32_t ns_id, uint32_t id, pos_T *pos)
+{
+  MTPair mtp = extmark_from_id(buf, ns_id, id);
+  if (mtp.start.id == 0) {
+    return false;
+  }
+  pos->lnum = mtp.start.pos.row + 1;
+  pos->col = mtp.start.pos.col;
+  return true;
+}
+
 /// free extmarks from the buffer
 void extmark_free_all(buf_T *buf)
 {
