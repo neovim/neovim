@@ -942,8 +942,8 @@ is_na_patch() {
         HUNKS=$(git -c core.attributesfile="$NVIM_SOURCE_DIR"/.gitattributes -c 'diff.helphelp.xfuncname=^.*\*[^*[:space:]]+\*$' -C "${VIM_SOURCE_DIR}" \
           diff-tree --no-commit-id -r -b -U0 \
           '-I^\s+$' \
-          '-I^=+$' \
-          '-I^Functions:\s~$' \
+          '-I^[-=]+$' \
+          '-I^(Functions:|GUI|Other)\s~$' \
           '-I^\|(ch|popup)_[_a-z]+\(\)\|' \
           '-I^popup_[_a-z]+\(' \
           '-I\*\s+For Vim version [0-9]\.[0-9]\.\s+Last change: [0-9]+ [A-Z][a-z]+ [0-9]+' \
@@ -956,8 +956,11 @@ is_na_patch() {
           '-I\|os_haiku.txt\|' \
           '-I\|popup-windows\|' \
           '-I\|tabpanel\|' \
+          '-I\|xdg\.vim\|' \
+          '-I\sGTK\s?4\s' \
           '-I\spopup window\s' \
           '-I\sterm_start\(\)\s' \
+          '-I\-gui=gtk' \
           "$patch" -- "${file}")
         if test -n "$HUNKS"; then
           HUNK_NUM_FINAL=$(echo "$HUNKS" | grep '^@@ .* @@' | sed 's/^@@ .* @@ //' | grep -cv -f "$NA_HUNKS_HELP")
