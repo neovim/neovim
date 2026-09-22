@@ -568,6 +568,22 @@ local function can_show(ctx)
   return ctx.is_valid() and api.nvim_win_is_valid(ctx.win)
 end
 
+--- The hint an action that handles a single hint should use, warning when several were given.
+--- @param hints lsp.InlayHint[]
+--- @param action vim.lsp.inlay_hint.action.name
+--- @return lsp.InlayHint?
+local function single_hint(hints, action)
+  if #hints > 1 then
+    vim.schedule(function()
+      vim.notify(
+        ('vim.lsp.inlay_hint.action(%q) only supports a single inlay hint.'):format(action),
+        vim.log.levels.WARN
+      )
+    end)
+  end
+  return hints[1]
+end
+
 --- The built-in action handlers.
 --- @type table<vim.lsp.inlay_hint.action.name, fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.internal_context, on_done: vim.lsp.inlay_hint.action.on_done.callback): boolean>
 local action_handlers = {
@@ -641,18 +657,10 @@ local action_handlers = {
   end,
 
   hover = function(hints, ctx, on_done)
-    if #hints == 0 then
+    local hint = single_hint(hints, 'hover')
+    if not hint then
       return false
     end
-    if #hints ~= 1 then
-      vim.schedule(function()
-        vim.notify(
-          'vim.lsp.inlay_hint.action("hover") only supports showing hover for a single inlay hint.',
-          vim.log.levels.WARN
-        )
-      end)
-    end
-    local hint = assert(hints[1])
     local hint_labels = get_hint_labels(hint, { 'location' })
     if #hint_labels == 0 then
       return false
@@ -720,19 +728,10 @@ local action_handlers = {
   end,
 
   tooltip = function(hints, ctx, on_done)
-    if #hints == 0 then
+    local hint = single_hint(hints, 'tooltip')
+    if not hint then
       return false
     end
-    if #hints ~= 1 then
-      vim.schedule(function()
-        vim.notify(
-          'vim.lsp.inlay_hint.action("tooltip") only supports showing tooltips for a single inlay hint.',
-          vim.log.levels.WARN
-        )
-      end)
-    end
-
-    local hint = assert(hints[1])
     local hint_labels = get_hint_labels(hint, { 'location', 'command', 'tooltip' })
 
     -- The level 1 heading is the full hint object
@@ -784,19 +783,12 @@ local action_handlers = {
   end,
 
   command = function(hints, ctx, on_done)
-    if #hints == 0 then
+    local hint = single_hint(hints, 'command')
+    if not hint then
       return false
     end
-    if #hints ~= 1 then
-      vim.schedule(function()
-        vim.notify(
-          'vim.lsp.inlay_hint.action("command") only supports showing commands for a single inlay hint.',
-          vim.log.levels.WARN
-        )
-      end)
-    end
-    local hint_labels = get_hint_labels(assert(hints[1]), { 'command' })
-    if hint_labels == nil or #hint_labels == 0 then
+    local hint_labels = get_hint_labels(hint, { 'command' })
+    if #hint_labels == 0 then
       -- no commands in this hint
       return false
     end
