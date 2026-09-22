@@ -1334,8 +1334,8 @@ const char *find_option_end(const char *arg, OptIndex *opt_idxp)
 /// Get new option value from argp. Allocated Object must be freed by caller.
 /// Can unset local value of an option when ":set {option}<" is used.
 Object get_option_newval(OptIndex opt_idx, int opt_flags, set_prefix_T prefix, char **argp,
-                         int nextchar, set_op_T op, uint32_t flags, void *varp,
-                         Object *oldval_override, const char **errmsg)
+                         int nextchar, set_op_T op, void *varp, Object *oldval_override,
+                         const char **errmsg)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   assert(varp != NULL);
@@ -1574,7 +1574,7 @@ static const char *do_one_set_option(int opt_flags, char **argp, bool *did_show,
     }
   }
 
-  Object newval = get_option_newval(opt_idx, opt_flags, prefix, argp, nextchar, op, flags, varp,
+  Object newval = get_option_newval(opt_idx, opt_flags, prefix, argp, nextchar, op, varp,
                                     NULL, &errmsg);
 
   if (newval.type == kObjectTypeNil || errmsg != NULL) {
@@ -1901,7 +1901,7 @@ void check_options(void)
 /// @param  opt_idx    Option index in options[] table.
 /// @param  opt_flags  Option flags (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 ///
-/// @return  True if option was set from a modeline or in secure mode, false if it wasn't.
+/// @return  True if the option value came from a modeline, secure mode, or the sandbox.
 int was_set_insecurely(win_T *const wp, OptIndex opt_idx, int opt_flags)
 {
   assert(opt_idx != kOptInvalid);
@@ -2090,10 +2090,10 @@ void set_option_sctx(OptIndex opt_idx, int opt_flags, sctx_T script_ctx)
 
 /// Execute OptionSet autocmd now (not deferred).
 void apply_optionset_autocmd_now(OptIndex opt_idx, int opt_flags, Object oldval, Object oldval_g,
-                                 Object oldval_l, Object newval, const char *errmsg)
+                                 Object oldval_l, Object newval)
 {
-  // Don't do this while starting up, failure or recursively.
-  if (starting || errmsg != NULL || *get_vim_var_str(VV_OPTION_TYPE) != NUL) {
+  // Don't do this while starting up or recursively.
+  if (starting || *get_vim_var_str(VV_OPTION_TYPE) != NUL) {
     return;
   }
 
@@ -2136,22 +2136,22 @@ void apply_optionset_autocmd_now(OptIndex opt_idx, int opt_flags, Object oldval,
 
 /// For 'modified', the event is deferred.
 static void apply_optionset_autocmd(OptIndex opt_idx, int opt_flags, Object oldval, Object oldval_g,
-                                    Object oldval_l, Object newval, const char *errmsg)
+                                    Object oldval_l, Object newval)
 {
-  if (starting || errmsg != NULL) {
+  if (starting) {
     return;
   }
   if (opt_idx == kOptModified) {
     aucmd_defer_modified(curbuf, newval.data.boolean);
     return;
   }
-  apply_optionset_autocmd_now(opt_idx, opt_flags, oldval, oldval_g, oldval_l, newval, errmsg);
+  apply_optionset_autocmd_now(opt_idx, opt_flags, oldval, oldval_g, oldval_l, newval);
 }
 
 /// Process the updated 'arabic' option value.
 static const char *did_set_arabic(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   const char *errmsg = NULL;
 
   if (win->w_p_arab) {
@@ -2221,10 +2221,8 @@ static const char *did_set_autochdir(optset_T *args FUNC_ATTR_UNUSED)
 /// Process the updated 'binary' option value.
 static const char *did_set_binary(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
-
   // when 'bin' is set also set some other options
-  set_options_bin((int)args->os_oldval.data.boolean, buf->b_p_bin, args->os_flags);
+  set_options_bin((int)args->os_oldval.data.boolean, args->os_buf->b_p_bin, args->os_flags);
   redraw_titles();
 
   return NULL;
@@ -2233,7 +2231,7 @@ static const char *did_set_binary(optset_T *args)
 /// Process the updated 'buflisted' option value.
 static const char *did_set_buflisted(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_buf;
 
   // when 'buflisted' changes, trigger autocommands
   if (args->os_oldval.data.boolean != buf->b_p_bl) {
@@ -2267,7 +2265,7 @@ static const char *did_set_cmdheight(optset_T *args)
 /// Process the updated 'diff' option value.
 static const char *did_set_diff(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   // May add or remove the buffer from the list of diff buffers.
   diff_buf_adjust(win);
   if (foldmethodIsDiff(win)) {
@@ -2288,9 +2286,8 @@ static const char *did_set_eof_eol_fixeol_bomb(optset_T *args FUNC_ATTR_UNUSED)
 /// Process the updated 'equalalways' option value.
 static const char *did_set_equalalways(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
   if (p_ea && !args->os_oldval.data.boolean) {
-    win_equal(win, false, 0);
+    win_equal(args->os_win, false, 0);
   }
 
   return NULL;
@@ -2299,7 +2296,7 @@ static const char *did_set_equalalways(optset_T *args)
 /// Process the new 'foldenable' option value.
 static const char *did_set_foldenable(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   if (args->os_varp == &win->w_p_fen && args->os_oldval.data.boolean != win->w_p_fen
       && foldmethodIsDiff(win) && win->w_p_scb) {
     // Adjust 'foldenable' in diff-synced windows without recursive setters.
@@ -2323,15 +2320,14 @@ static const char *did_set_foldlevel(optset_T *args FUNC_ATTR_UNUSED)
 /// Process the new 'foldminlines' option value.
 static const char *did_set_foldminlines(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
-  foldUpdateAll(win);
+  foldUpdateAll(args->os_win);
   return NULL;
 }
 
 /// Process the new 'foldnestmax' option value.
 static const char *did_set_foldnestmax(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   if (foldmethodIsSyntax(win) || foldmethodIsIndent(win)) {
     foldUpdateAll(win);
   }
@@ -2462,9 +2458,8 @@ static const char *did_set_lines_or_columns(optset_T *args)
 /// Process the updated 'lisp' option value.
 static const char *did_set_lisp(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
   // When 'lisp' option changes include/exclude '-' in keyword characters.
-  buf_init_isk_chartab(buf);          // ignore errors
+  buf_init_isk_chartab(args->os_buf);          // ignore errors
   return NULL;
 }
 
@@ -2480,7 +2475,7 @@ static const char *did_set_modifiable(optset_T *args FUNC_ATTR_UNUSED)
 /// Process the updated 'modified' option value.
 static const char *did_set_modified(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_buf;
   if (!args->os_newval.data.boolean) {
     save_file_ff(buf);  // Buffer is unchanged
   }
@@ -2492,7 +2487,7 @@ static const char *did_set_modified(optset_T *args)
 /// Process the updated 'number' or 'relativenumber' option value.
 static const char *did_set_number_relativenumber(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   if (*win->w_p_stc != NUL) {
     // When 'relativenumber'/'number' is changed and 'statuscolumn' is set, reset width.
     win->w_nrwidth_line_count = 0;
@@ -2504,8 +2499,7 @@ static const char *did_set_number_relativenumber(optset_T *args)
 /// Process the new 'numberwidth' option value.
 static const char *did_set_numberwidth(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
-  win->w_nrwidth_line_count = 0;  // trigger a redraw
+  args->os_win->w_nrwidth_line_count = 0;  // trigger a redraw
 
   return NULL;
 }
@@ -2670,7 +2664,7 @@ static const char *did_set_pumblend(optset_T *args FUNC_ATTR_UNUSED)
 /// Process the updated 'readonly' option value.
 static const char *did_set_readonly(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_buf;
 
   // when 'readonly' is reset globally, also reset readonlymode
   if (!buf->b_p_ro && (args->os_flags & OPT_LOCAL) == 0) {
@@ -2690,7 +2684,7 @@ static const char *did_set_readonly(optset_T *args)
 /// Process the new 'scrollback' option value.
 static const char *did_set_scrollback(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_buf;
   OptInt old_value = args->os_oldval.data.integer;
   OptInt value = args->os_newval.data.integer;
 
@@ -2704,7 +2698,7 @@ static const char *did_set_scrollback(optset_T *args)
 /// Process the updated 'scrollbind' option value.
 static const char *did_set_scrollbind(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
 
   // when 'scrollbind' is set: snapshot the current position to avoid a jump
   // at the end of normal_cmd()
@@ -2719,8 +2713,8 @@ static const char *did_set_scrollbind(optset_T *args)
 /// Process the new 'shiftwidth' or the 'tabstop' option value.
 static const char *did_set_shiftwidth_tabstop(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
-  win_T *win = (win_T *)args->os_win;
+  buf_T *buf = args->os_buf;
+  win_T *win = args->os_win;
   OptInt *pp = (OptInt *)args->os_varp;
 
   if (foldmethodIsIndent(win)) {
@@ -2746,7 +2740,7 @@ static const char *did_set_showtabline(optset_T *args FUNC_ATTR_UNUSED)
 /// Process the updated 'smoothscroll' option value.
 static const char *did_set_smoothscroll(optset_T *args FUNC_ATTR_UNUSED)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   if (!win->w_p_sms) {
     win->w_skipcol = 0;
   }
@@ -2757,7 +2751,7 @@ static const char *did_set_smoothscroll(optset_T *args FUNC_ATTR_UNUSED)
 /// Process the updated 'spell' option value.
 static const char *did_set_spell(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   if (win->w_p_spell) {
     return parse_spelllang(win);
   }
@@ -2768,7 +2762,7 @@ static const char *did_set_spell(optset_T *args)
 /// Process the updated 'swapfile' option value.
 static const char *did_set_swapfile(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_buf;
   // when 'swf' is set, create swapfile, when reset remove swapfile
   if (buf->b_p_swf && p_uc) {
     ml_open_file(buf);                     // create the swap file
@@ -2813,7 +2807,7 @@ static const char *did_set_titlelen(optset_T *args)
 /// Process the updated 'undofile' option value.
 static const char *did_set_undofile(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_buf;
 
   // Only take action when the option was set.
   if (!buf->b_p_udf && !p_udf) {
@@ -2864,7 +2858,7 @@ const char *did_set_buflocal_undolevels(buf_T *buf, OptInt value, OptInt old_val
 /// Process the new 'undolevels' option value.
 static const char *did_set_undolevels(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_buf;
   OptInt *pp = (OptInt *)args->os_varp;
 
   if (pp == &p_ul) {                  // global 'undolevels'
@@ -2905,7 +2899,7 @@ static const char *validate_wildchar(const optset_T *args)
 /// Process the new 'winblend' option value.
 static const char *did_set_winblend(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   OptInt old_value = args->os_oldval.data.integer;
   OptInt value = args->os_newval.data.integer;
 
@@ -2954,7 +2948,7 @@ static const char *did_set_winwidth(optset_T *args)
 /// Process the updated 'wrap' option value.
 static const char *did_set_wrap(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   // Set w_leftcol or w_skipcol to zero.
   if (win->w_p_wrap) {
     win->w_leftcol = 0;
@@ -2969,14 +2963,13 @@ static const char *did_set_wrap(optset_T *args)
 /// be used if args->os_varp is the same as p_chi, else 'lhistory'.
 static const char *did_set_xhistory(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
   bool is_p_chi = (OptInt *)args->os_varp == &p_chi;
   OptInt *arg = is_p_chi ? &p_chi : (OptInt *)args->os_varp;
 
   if (is_p_chi) {
     qf_resize_stack((int)(*arg));
   } else {
-    ll_resize_stack(win, (int)(*arg));
+    ll_resize_stack(args->os_win, (int)(*arg));
   }
 
   return NULL;
@@ -4446,7 +4439,7 @@ static const char *set_option(const OptIndex opt_idx, Object value, int opt_flag
   if (errmsg == NULL && !direct) {
     if (!starting) {
       apply_optionset_autocmd(opt_idx, opt_flags, saved_used_value, saved_old_global_value,
-                              saved_old_local_value, saved_new_value, errmsg);
+                              saved_old_local_value, saved_new_value);
     }
     if (opt->flags & kOptFlagUIOption) {
       ui_call_option_set(cstr_as_string(opt->fullname), saved_new_value);
