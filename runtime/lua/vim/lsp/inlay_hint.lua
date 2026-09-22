@@ -200,7 +200,7 @@ function M.on_inlayhint(err, result, ctx)
     namespace_cleared = false,
   }
 
-  if vim.fn.win_gettype(vim.fn.bufwinid(bufnr)) == '' then
+  if fn.win_gettype(fn.bufwinid(bufnr)) == '' then
     api.nvim__redraw({ buf = bufnr, valid = true, flush = false })
   end
 end
@@ -234,7 +234,7 @@ function M.on_refresh(err, _, ctx)
       provider:cancel_active_request(ctx.client_id)
       state.current_result.version = nil
 
-      if not vim.tbl_isempty(vim.fn.win_findbuf(bufnr)) then
+      if not vim.tbl_isempty(fn.win_findbuf(bufnr)) then
         provider:refresh(ctx.client_id)
       end
     end
