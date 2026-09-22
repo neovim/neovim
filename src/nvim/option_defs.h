@@ -33,7 +33,7 @@ typedef enum {
   kOptFlagGettext   = 1 << 15,  ///< Expand default value with _().
   kOptFlagNoGlob    = 1 << 16,  ///< Do not use local value for global vimrc.
   kOptFlagNFname    = 1 << 17,  ///< Only normal file name chars allowed.
-  kOptFlagInsecure  = 1 << 18,  ///< Option was set from a modeline.
+  kOptFlagInsecure  = 1 << 18,  ///< Value contains untrusted content; evaluate it in the sandbox.
   kOptFlagPriMkrc   = 1 << 19,  ///< Priority for :mkvimrc (setting option has side effects).
   kOptFlagCurswant  = 1 << 20,  ///< Update curswant required; not needed when there is a redraw flag.
   kOptFlagNDname    = 1 << 21,  ///< Only normal directory name chars allowed.
