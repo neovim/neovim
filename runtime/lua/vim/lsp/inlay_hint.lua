@@ -858,7 +858,7 @@ local inlayhint_actions = {
         if idx == nil then
           -- `vim.ui.select` was cancelled
           if on_finish then
-            on_finish({ bufnr = ctx.bufnr, client = ctx.client })
+            on_finish({ bufnr = ctx.bufnr })
           end
           return
         end
