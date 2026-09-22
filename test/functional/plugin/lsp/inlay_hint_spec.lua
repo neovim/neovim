@@ -770,91 +770,49 @@ describe('vim.lsp.inlay_hint.action', function()
     end)
   end
 
-  it('uses hints on either side of the cursor in normal mode', function()
-    assert(curr_winid)
+  it('selects hints from the cursor, or from the visual selection', function()
     eq(1, count_selected_hints({ 8, 18 }))
-  end)
-
-  it('uses hints inside the selection in visual mode', function()
-    assert(curr_winid)
     eq(2, count_selected_hints({ 8, 0 }, { 9, 30 }))
   end)
 
-  it('invokes on_done without a client when no action was taken', function()
-    local ctx = exec_lua(function()
-      local done_ctx ---@type table?
-      vim.lsp.inlay_hint.action(function()
-        return false
-      end, {
-        hints = {},
-        on_done = function(ctx)
-          done_ctx = ctx
-        end,
-      })
-      vim.wait(wait_time, function()
-        return done_ctx ~= nil
-      end)
-      return assert(done_ctx)
-    end)
-
-    eq(nil, ctx.client)
+  it('textEdits inserts the edits of every selected hint', function()
+    local result = run_action('textEdits', { 7, 18 }, { 8, 20 })
+    eq('let my_instance: MyStruct = MyStruct::new(42);', vim.trim(result.lines[8]))
+    eq('let _MyInstance: MyStruct = MyStruct::new(43);', vim.trim(result.lines[9]))
   end)
 
-  describe('textEdits', function()
-    it('inserts the textEdits', function()
-      local result = run_action('textEdits', { 7, 18 }, { 8, 20 })
-      eq('let my_instance: MyStruct = MyStruct::new(42);', vim.trim(result.lines[8]))
-      eq('let _MyInstance: MyStruct = MyStruct::new(43);', vim.trim(result.lines[9]))
-    end)
-
-    it('does NOT insert when the hint has no textEdits', function()
-      eq(mocked_files.main.lines, run_action('textEdits', { 9, 21 }, { 9, 24 }).lines)
-    end)
+  it('location jumps to the label location', function()
+    eq(mocked_files.lib.bufnr, run_action('location', { 7, 18 }, { 7, 20 }).buf)
   end)
 
-  describe('location', function()
-    it('jumps to the location when provided', function()
-      eq(mocked_files.lib.bufnr, run_action('location', { 7, 18 }, { 7, 20 }).buf)
+  it('tooltip shows the tooltips, location and command in a floating window', function()
+    -- The path in the tooltip is rendered relative to the client root (unset here), falling
+    -- back to the full path, so it depends on the platform.
+    local lib_path = exec_lua(function()
+      return vim.fn.fnamemodify(vim.uri_to_fname(mocked_files.lib.uri), ':p:~')
     end)
 
-    it('does NOT jump when the hint has no location', function()
-      eq(mocked_files.main.bufnr, run_action('location', { 9, 21 }, { 9, 24 }).buf)
-    end)
+    local result = run_action('tooltip', { 7, 18 }, { 7, 20 })
+    neq(mocked_files.main.bufnr, result.buf)
+    neq(curr_winid, result.win)
+    eq({
+      '# `: MyStruct`',
+      '',
+      'plaintext markup tooltip',
+      '',
+      '## `MyStruct`',
+      '',
+      'string tooltip',
+      ('_Location_: `%s`:0'):format(lib_path),
+      '_Command_: Dummy command',
+    }, result.lines)
   end)
 
-  describe('tooltip', function()
-    it('shows the tooltip in a floating window', function()
-      -- The path in the tooltip is rendered relative to the client root (unset here), falling
-      -- back to the full path, so it depends on the platform.
-      local lib_path = exec_lua(function()
-        return vim.fn.fnamemodify(vim.uri_to_fname(mocked_files.lib.uri), ':p:~')
-      end)
-
-      local result = run_action('tooltip', { 7, 18 }, { 7, 20 })
-      neq(mocked_files.main.bufnr, result.buf)
-      neq(curr_winid, result.win)
-      eq({
-        '# `: MyStruct`',
-        '',
-        'plaintext markup tooltip',
-        '',
-        '## `MyStruct`',
-        '',
-        'string tooltip',
-        ('_Location_: `%s`:0'):format(lib_path),
-        '_Command_: Dummy command',
-      }, result.lines)
-    end)
-
-    it('does NOT show a tooltip when the hint has none', function()
-      local buf_count = #api.nvim_list_bufs()
-      run_action('tooltip', { 9, 21 }, { 9, 24 })
-      eq(buf_count, #api.nvim_list_bufs())
-    end)
-  end)
-
-  describe('hover', function()
-    local ref_hover = {
+  it('hover shows hover info of the label location in a floating window', function()
+    local result = run_action('hover', { 7, 18 }, { 7, 20 })
+    neq(mocked_files.main.bufnr, result.buf)
+    neq(curr_winid, result.win)
+    eq({
       '# `MyStruct`',
       '```rust',
       'dummy',
@@ -869,40 +827,26 @@ describe('vim.lsp.inlay_hint.action', function()
       '---',
       '',
       'size = 4, align = 0x4',
-    }
-
-    it('shows hover info of the label location in a floating window', function()
-      local result = run_action('hover', { 7, 18 }, { 7, 20 })
-      neq(mocked_files.main.bufnr, result.buf)
-      neq(curr_winid, result.win)
-      eq(ref_hover, result.lines)
-    end)
-
-    it('does NOT show hover when the hint has no location', function()
-      local buf_count = #api.nvim_list_bufs()
-      run_action('hover', { 9, 21 }, { 9, 24 })
-      eq(buf_count, #api.nvim_list_bufs())
-    end)
+    }, result.lines)
   end)
 
-  describe('command', function()
-    --- @param start_pos [integer, integer]
-    --- @param end_pos [integer, integer]
-    --- @return integer
-    local function commands_called(start_pos, end_pos)
-      run_action('command', start_pos, end_pos)
-      return exec_lua(function()
-        return #_G.command_called
-      end)
+  it('command executes the label command', function()
+    run_action('command', { 7, 18 }, { 7, 20 })
+    eq(1, exec_lua('return #_G.command_called'))
+  end)
+
+  -- The hint on line 9 carries a bare label and nothing else, so no action applies to it.
+  it('takes no action on a hint without the needed attributes', function()
+    local buf_count = #api.nvim_list_bufs()
+    for _, action in ipairs({ 'textEdits', 'location', 'tooltip', 'hover', 'command' }) do
+      local result = run_action(action, { 9, 21 }, { 9, 24 })
+      -- No jump, no float, and nothing inserted.
+      eq(mocked_files.main.bufnr, result.buf, action)
+      eq(mocked_files.main.lines, result.lines, action)
+      eq(nil, result.client_id, action)
     end
-
-    it('executes the command when available', function()
-      eq(1, commands_called({ 7, 18 }, { 7, 20 }))
-    end)
-
-    it('does NOT execute a command when the hint has none', function()
-      eq(0, commands_called({ 9, 21 }, { 9, 24 }))
-    end)
+    eq(buf_count, #api.nvim_list_bufs())
+    eq(0, exec_lua('return #_G.command_called'))
   end)
 end)
 
