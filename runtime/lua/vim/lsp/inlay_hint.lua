@@ -448,16 +448,8 @@ end
 --- @param base string?
 --- @return string
 local function cleanup_path(path, base)
-  ---@type string?
-  local result = nil
-  if base then
-    -- relative to `base`
-    result = vim.fs.relpath(base, path)
-  end
-  if result == nil then
-    result = fn.fnamemodify(path, ':p:~')
-  end
-  return result
+  -- Relative to `base`, falling back to a path shortened against $HOME.
+  return base and vim.fs.relpath(base, path) or fn.fnamemodify(path, ':p:~')
 end
 
 --- Build ranges from the cursor or visual selection, one per selected line.
