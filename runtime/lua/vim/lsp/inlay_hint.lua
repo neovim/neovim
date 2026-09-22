@@ -3,6 +3,8 @@ local fn = vim.fn
 local log = require('vim.lsp.log')
 local nvim_on = require('vim._core.util').nvim_on
 local util = require('vim.lsp.util')
+-- TODO(oriori1703): remove this import by replacing its usage with `vim.pos`.
+local get_line = require('vim.pos._util').get_line
 
 local Capability = require('vim.lsp._capability')
 
@@ -493,35 +495,51 @@ local function cleanup_path(path, base)
   return result
 end
 
---- Build the range from normal or visual mode based on cursor position.
---- @return vim.Range
-local function make_range()
+--- Build ranges from the cursor or visual selection, one per selected line.
+--- @return vim.Range[]
+local function make_ranges()
   local bufnr = api.nvim_get_current_buf()
-  local winid = fn.bufwinid(bufnr)
   local mode = fn.mode()
-
-  if mode == 'n' then
-    local cursor = api.nvim_win_get_cursor(winid)
-    -- Include the hints on either side of the cursor.
-    local row, col = cursor[1] - 1, cursor[2]
-    return vim.range(bufnr, row, col, row, col + 1)
+  --- End-exclusive column just past the character at `col`, clamped to the line end.
+  --- @param line string
+  --- @param col integer
+  local function after_char(line, col)
+    return col >= #line and #line or col + vim.str_utf_end(line, col + 1) + 1
+  end
+  if mode ~= 'v' and mode ~= 'V' and mode ~= '\22' then
+    local cursor = vim.pos.cursor(0)
+    local row, col = cursor[1], cursor[2]
+    return { vim.range(bufnr, row, col, row, after_char(get_line(bufnr, row), col)) }
   end
 
-  local start_pos = fn.getpos('v')
-  local end_pos = fn.getpos('.')
-  if start_pos[2] > end_pos[2] or (start_pos[2] == end_pos[2] and start_pos[3] > end_pos[3]) then
-    --- @type [integer, integer, integer, integer]
-    start_pos, end_pos = end_pos, start_pos
+  local ranges = {} --- @type vim.Range[]
+  for _, segment in
+    ipairs(fn.getregionpos(fn.getpos('v'), fn.getpos('.'), {
+      type = mode,
+      exclusive = vim.o.selection == 'exclusive',
+      eol = true,
+    }))
+  do
+    local start_pos, end_pos = segment[1], segment[2]
+    local row, start_col, end_col = start_pos[2] - 1, start_pos[3] - 1, end_pos[3] - 1
+    -- The fourth element is the offset into a multi-cell character. A start that lands
+    -- inside one begins at the next character; an end that lands on one covers all of it.
+    if start_pos[4] > 0 or end_pos[4] == 0 then
+      local line = get_line(bufnr, row)
+      if start_pos[4] > 0 then
+        start_col = after_char(line, start_col)
+      end
+      if end_pos[4] == 0 then
+        end_col = after_char(line, end_col)
+      end
+    end
+    -- An empty segment (an empty line, or a blockwise column past the end of a short
+    -- line) can end before it starts; `vim.range` rejects those.
+    if start_col <= end_col then
+      ranges[#ranges + 1] = vim.range(bufnr, row, start_col, row, end_col)
+    end
   end
-  local start_row, start_col = start_pos[2] - 1, start_pos[3] - 1
-  local end_row, end_col = end_pos[2] - 1, end_pos[3]
-
-  if mode == 'V' or mode == 'Vs' then
-    start_col = 0
-    end_row = end_row + 1
-    end_col = 0
-  end
-  return vim.range(bufnr, start_row, start_col, end_row, end_col)
+  return ranges
 end
 
 --- Append `new_label` to `labels` unless an equal label (comparing `value` and each of
@@ -947,17 +965,13 @@ function M.action(action, opts)
   local bufnr = api.nvim_get_current_buf()
   local hints = opts.hints
   if hints == nil then
-    local range = make_range()
-    hints = M.get({
-      range = {
-        -- In `M.on_inlayhint`,
-        -- the inlay hints are stored by byte indices, not lsp positions (utf-*),
-        -- so we can't use `vim.range.to_lsp`
-        start = { line = range.start_row, character = range.start_col },
-        ['end'] = { line = range.end_row, character = range.end_col },
-      },
-      bufnr = bufnr,
-    })
+    hints = {}
+    for _, range in ipairs(make_ranges()) do
+      -- Cached hint positions are byte-indexed, so use UTF-8 rather than the
+      -- client's encoding. get() includes both endpoints, selecting hints on
+      -- either side of the cursor or selected characters.
+      vim.list_extend(hints, M.get({ bufnr = range.buf, range = range:to_lsp('utf-8') }))
+    end
   else
     for _, item in ipairs(hints) do
       vim.validate('hint.bufnr', item.bufnr, 'number')
