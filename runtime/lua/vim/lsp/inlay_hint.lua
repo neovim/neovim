@@ -540,12 +540,11 @@ local function get_hint_labels(hint, needed_fields)
 
   if type(hint.label) == 'table' then
     for _, label in ipairs(hint.label) do
-      if
-        vim.iter(needed_fields):any(function(field_name)
-          return label[field_name] ~= nil
-        end)
-      then
-        add_new_label(hint_labels, label, needed_fields)
+      for _, field_name in ipairs(needed_fields) do
+        if label[field_name] ~= nil then
+          add_new_label(hint_labels, label, needed_fields)
+          break
+        end
       end
     end
   end
