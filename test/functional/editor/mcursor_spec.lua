@@ -3202,25 +3202,35 @@ describe('multicursor', function()
       screen:expect({ any = 'ine 30' }) -- ("l" is under the painted cursor cell)
     end)
 
-    it('cycle through the cursors, wrapping; the old position keeps a cursor', function()
+    it('cycle through the cursors, wrapping', function()
       cursors({ 'aaa', 'bbb', 'ccc', 'ddd' }, 'Q2jllQ')
       feed('gg0j')
       feed(']C')
       eq({ 3, 2 }, cur())
-      eq({ { 0, 0 }, { 1, 0 }, { 2, 2 } }, anchors())
+      eq({ { 0, 0 }, { 2, 2 } }, anchors())
       feed(']C') -- wraps
       eq({ 1, 0 }, cur())
       feed('2]C') -- count
+      eq({ 1, 0 }, cur())
+      feed('[C')
       eq({ 3, 2 }, cur())
       feed('[C')
-      eq({ 2, 0 }, cur())
-      feed('[C')
       eq({ 1, 0 }, cur())
-      -- The set of positions is invariant: an edit applies once at each (the cursor under the
-      -- primary merges into it).
-      feed('x')
-      eq({ 'aa', 'bb', 'cc', 'ddd' }, get_lines())
-      eq({ { 1, 0 }, { 2, 1 } }, anchors())
+      feed(']CQ') -- "]CQ" removes the cursor it lands on.
+      eq({ { 0, 0 } }, anchors())
+      -- |mcursor-examples| mapping: ]C lays an egg before jumping.
+      n.exec_lua([[
+        vim.keymap.set('n', ']C', function()
+          vim.api.nvim_mcursor(0, vim.api.nvim_win_get_cursor(0))
+          vim.cmd('normal! ]C')
+        end)
+      ]])
+      feed(']C')
+      eq({ 1, 0 }, cur())
+      eq({ { 0, 0 }, { 2, 2 } }, anchors())
+      feed(']C')
+      eq({ 3, 2 }, cur())
+      eq({ { 0, 0 }, { 2, 2 } }, anchors())
     end)
 
     it('does not move the other cursors in q= mode', function()
@@ -3228,7 +3238,7 @@ describe('multicursor', function()
       feed('q=')
       feed(']C')
       eq({ 1, 0 }, cur())
-      eq({ { 0, 0 }, { 1, 0 } }, anchors()) -- (1,0): left behind by the jump.
+      eq({ { 0, 0 } }, anchors())
       feed('q=')
     end)
 
@@ -3345,7 +3355,7 @@ describe('multicursor', function()
         }
         vim.o.clipboard = 'unnamedplus'
       ]])
-      cursors({ '', 'aa' }, 'Qj') -- Cursor on the empty line, primary on the non-empty line.
+      cursors({ '', 'aa' }, 'QjQ') -- Cursors on both lines, primary on the non-empty line.
       feed(']C') -- Make the empty-line cursor primary.
       feed('C')
       n.assert_alive()

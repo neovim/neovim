@@ -13,7 +13,7 @@ Chapter 26 of the user manual introduces repeating |usr_26.txt|.
 ==============================================================================
 Single repeat						*single-repeat*
 
-							*.*
+							*.* *dot-repeat*
 .			Repeat last change, with count replaced with [count].
 			Also repeat a yank command, when the 'y' flag is
 			included in 'cpoptions'.  Does not repeat a
@@ -22,9 +22,9 @@ Single repeat						*single-repeat*
 							*@:*
 @:			Repeat last command-line [count] times.
 
-Simple changes can be repeated with the "." command.  Without a count, the
-count of the last change is used.  If you enter a count, it will replace the
-last one.  |v:count| and |v:count1| will be set.
+Simple changes (edits) can be repeated with the "." command.  Without a count,
+the count of the last change is used.  If you enter a count, it will replace
+the last one.  |v:count| and |v:count1| will be set.
 
 If the last change included a specification of a numbered register, the
 register number will be incremented.  See |redo-register| for an example how
@@ -37,8 +37,11 @@ jumps (mouse, |i_<PageUp>|, …) split an insert session.
 Repeating a Visual-mode command re-executes the captured keysequence,
 selection included.  See |visual-repeat|.
 
+To repeat non-changes, see |motion-repeat|. To repeat multiple actions, see
+|cmdatom-macro| and |complex-repeat|.
+
 ==============================================================================
-Semantic repeat				*action-repeat* *cmdatom* *excalibur*
+Semantic repeat				*action-repeat* *cmdatom* *excalibur* 🗡️
 
 Every user action emits a |CmdAtom| event. This avoids the need for plugins to
 "announce" the repeatable unit, thus plugins like vim-repeat aren't needed.
@@ -420,16 +423,24 @@ g CTRL-A		During a multicursor session, inserts an ascending
 			initial number.
 
 							*]C*
-]C			Jump to the [count]'th next cursor, leaving a cursor at
-			the current position.
+]C			Jump to the [count]'th next cursor.
+			Hint: "]CQ" removes cursors one at a time.
 
 							*[C*
-[C			Jump to the [count]'th previous cursor, leaving a cursor
-			at the current position.
+[C			Jump to the [count]'th previous cursor.
 
 
 EXAMPLES						*mcursor-examples*
 
+Example: "]C" mapping which places a cursor before jumping to the next, so you
+can "rotate" through the cursors. |nvim_mcursor()| is a no-op if a cursor is
+already there (unlike |Q|, which toggles). >lua
+
+    vim.keymap.set('n', ']C', function()
+      vim.api.nvim_mcursor(0, vim.api.nvim_win_get_cursor(0))
+      vim.cmd('normal! ]C')
+    end)
+<
 Example: a "follow-once" mapping: "q-{motion}" replays {motion} at every
 cursor, then disables follow-mode again. >lua
 
@@ -462,8 +473,6 @@ LIMITATIONS						*mcursor-limitations*
 - Time-travel undo (|g-|, |g+|, |:earlier|) clears all cursors.
 - Reloading/unloading a buffer (|:edit!|, 'autoread') clears its cursors
   (extmarks limitation).
-- An operator replayed at a cursor inside a closed fold applies to the whole
-  fold, like any operator (|fold-behavior|).
 - |Q| is not allowed while recording or executing a macro.
 - An 'operatorfunc' that caches its |getchar()| input instead of re-reading it
   misbehaves at the extra cursors: the unconsumed input runs as a normal-mode
