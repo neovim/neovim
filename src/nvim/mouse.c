@@ -1130,6 +1130,8 @@ void ins_mousescroll(int dir)
     }
 
     undisplay_dollar();
+  } else if (curwin->w_p_scb) {
+    do_check_scrollbind(false);
   }
 
   pos_T orig_cursor = curwin->w_cursor;
@@ -1137,6 +1139,9 @@ void ins_mousescroll(int dir)
   // Call the common mouse scroll function shared with other modes.
   do_mousescroll(&cap);
 
+  if (curwin != old_curwin && curwin->w_p_scb) {
+    do_check_scrollbind(true);
+  }
   curwin->w_redr_status = true;
   curwin = old_curwin;
   curbuf = curwin->w_buffer;
@@ -1655,9 +1660,16 @@ void nv_mousescroll(cmdarg_T *cap)
     curbuf = curwin->w_buffer;
   }
 
+  if (curwin != old_curwin && curwin->w_p_scb) {
+    do_check_scrollbind(false);
+  }
+
   // Call the common mouse scroll function shared with other modes.
   do_mousescroll(cap);
 
+  if (curwin != old_curwin && curwin->w_p_scb) {
+    do_check_scrollbind(true);
+  }
   curwin->w_redr_status = true;
   curwin = old_curwin;
   curbuf = curwin->w_buffer;

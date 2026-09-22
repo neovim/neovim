@@ -1258,6 +1258,29 @@ describe('ui/mouse/input', function()
       wheel(true)
     end)
 
+    it('scrolls both diff windows when the mouse targets the inactive window', function()
+      local lines = {}
+      for i = 1, 100 do
+        lines[i] = tostring(i)
+      end
+      screen:try_resize(40, 10)
+      api.nvim_buf_set_lines(0, 0, -1, false, lines)
+      command('vnew')
+      api.nvim_buf_set_lines(0, 0, -1, false, lines)
+      command('windo diffthis | setlocal scrolloff=0 mousescroll=ver:1')
+      command('windo normal! 50G')
+      command('wincmd h')
+
+      local active = api.nvim_get_current_win()
+      local wins = api.nvim_tabpage_list_wins(0)
+      local inactive = wins[1] == active and wins[2] or wins[1]
+      for _ = 1, 5 do
+        api.nvim_input_mouse('wheel', 'up', '', 0, 2, 30)
+      end
+
+      eq(fn.line('w0', active), fn.line('w0', inactive))
+    end)
+
     it('horizontal scrolling (pseudokey)', function()
       command('set sidescroll=0')
       feed('<esc>:set nowrap<cr>')
