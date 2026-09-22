@@ -843,8 +843,34 @@ describe('vim.lsp.inlay_hint.action', function()
       eq(ref_hover, result.lines)
     end)
 
-    it('should deduplicate same locations', function()
-      local result = run_action('hover', { 7, 18 }, { 8, 20 })
+    it('deduplicates identical locations within a hint', function()
+      -- A hint whose label parts carry the same location twice produces a single hover
+      -- section, not two.
+      local result = exec_lua(function()
+        local hint = {
+          label = {
+            { value = 'MyStruct', location = lib_location },
+            { value = 'MyStruct', location = lib_location },
+          },
+          position = { line = 7, character = 19 },
+        }
+
+        local done_buf ---@type integer?
+        vim.lsp.inlay_hint.action('hover', {
+          hints = {
+            { bufnr = mocked_files.main.bufnr, client_id = client_id, inlay_hint = hint },
+          },
+          on_done = function(ctx)
+            done_buf = ctx.buf
+          end,
+        })
+        vim.wait(wait_time, function()
+          return done_buf ~= nil
+        end)
+        local buf = assert(done_buf, 'action() did not finish')
+        return { buf = buf, lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false) }
+      end)
+
       neq(mocked_files.main.bufnr, result.buf)
       eq(ref_hover, result.lines)
     end)
