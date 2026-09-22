@@ -851,21 +851,22 @@ local action_handlers = {
       function(_, idx)
         if idx == nil or not ctx.is_valid() then
           -- `vim.ui.select` was cancelled
-          if on_done then
-            on_done({ buf = ctx.buf })
-          end
+          on_done({ buf = ctx.buf })
           return
         end
-        ctx.client:request('workspace/executeCommand', hint_labels[idx].label.command, function(...)
+        local cmd = assert(hint_labels[idx].label.command)
+        local local_command = ctx.client.commands[cmd.command] or vim.lsp.commands[cmd.command]
+        ctx.client:exec_cmd(cmd, { bufnr = ctx.buf }, function(...)
           local default_handler = ctx.client.handlers['workspace/executeCommand']
             or vim.lsp.handlers['workspace/executeCommand']
           if default_handler then
             default_handler(...)
           end
-          if on_done then
-            on_done({ buf = api.nvim_get_current_buf(), client = ctx.client })
-          end
-        end, ctx.buf)
+          on_done({ buf = ctx.buf, client = ctx.client })
+        end)
+        if local_command then
+          on_done({ buf = ctx.buf, client = ctx.client })
+        end
       end
     )
 
@@ -917,11 +918,17 @@ local action_handlers = {
 --- @field hints? vim.lsp.inlay_hint.get.ret[]
 ---
 --- A callback invoked exactly once (asynchronously) at the end of the action.
+--- Also invoked when no action is taken or selection is cancelled.
+--- Receives a context with these fields:
+---   - `buf`: the preview buffer for hover/tooltip, the destination buffer for location,
+---     or the source buffer otherwise. The source buffer may have been deleted.
+---   - `client`: the client used by the action, or nil when no action was taken.
 --- @field on_done? vim.lsp.inlay_hint.action.on_done.callback
 
 --- Apply some actions provided by inlay hints in the selected range.
 --- Built-in actions are abandoned if the source buffer changes or is unloaded before
---- they can be applied.
+--- they can be applied. The "hover", "tooltip", and "command" actions use only the first
+--- hint from each client, and warn if multiple hints were supplied for that client.
 ---
 --- Example usage:
 --- ```lua

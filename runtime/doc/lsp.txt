@@ -2434,7 +2434,9 @@ Lua module: vim.lsp.inlay_hint                                *lsp-inlay_hint*
 action({action}, {opts})                         *vim.lsp.inlay_hint.action()*
     Apply some actions provided by inlay hints in the selected range. Built-in
     actions are abandoned if the source buffer changes or is unloaded before
-    they can be applied.
+    they can be applied. The "hover", "tooltip", and "command" actions use
+    only the first hint from each client, and warn if multiple hints were
+    supplied for that client.
 
     Example usage: >lua
         vim.keymap.set(
@@ -2492,7 +2494,14 @@ action({action}, {opts})                         *vim.lsp.inlay_hint.action()*
                     • {inlay_hint} (`lsp.InlayHint`)
                   • {on_done}? (`vim.lsp.inlay_hint.action.on_done.callback`)
                     A callback invoked exactly once (asynchronously) at the
-                    end of the action.
+                    end of the action. Also invoked when no action is taken or
+                    selection is cancelled. Receives a context with these
+                    fields:
+                    • `buf`: the preview buffer for hover/tooltip, the
+                      destination buffer for location, or the source buffer
+                      otherwise. The source buffer may have been deleted.
+                    • `client`: the client used by the action, or nil when no
+                      action was taken.
 
 enable({enable}, {filter})                       *vim.lsp.inlay_hint.enable()*
     Enables or disables inlay hints for the {filter}ed scope.

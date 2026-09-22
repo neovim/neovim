@@ -600,6 +600,7 @@ describe('vim.lsp.inlay_hint.action', function()
       _G.server = _G._create_server({
         capabilities = {
           inlayHintProvider = { resolveProvider = true },
+          executeCommandProvider = { commands = { 'dummy_command' } },
         },
         handlers = {
           ['workspace/executeCommand'] = function(_, param, callback)
@@ -1352,6 +1353,71 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
       end)
     )
   end)
+
+  for _, outcome in ipairs({ 'result' }) do
+    it('completes a server command with a server ' .. outcome, function()
+      eq(
+        { { command = 'test', arguments = { 42 } }, outcome == 'result' },
+        exec_lua(function()
+          local failed = outcome == 'error'
+          local sent
+          local client = start_hint_client({
+            inlayHintProvider = true,
+            executeCommandProvider = { commands = { 'test' } },
+          }, {
+            ['workspace/executeCommand'] = function(_, params, cb)
+              sent = params
+              cb(failed and { code = -32603, message = 'failed' } or nil, nil)
+            end,
+          })
+          local handled = false
+          client.handlers['workspace/executeCommand'] = function(err)
+            assert((err ~= nil) == failed)
+            handled = true
+          end
+          local entry = hint_entry(client, {
+            label = {
+              { value = 'T', command = { title = 'Test', command = 'test', arguments = { 42 } } },
+            },
+          })
+          local result = run_hint_action('command', { entry })
+          assert(handled)
+          return { sent, result.client_id ~= nil }
+        end)
+      )
+    end)
+  end
+
+  for _, scope in ipairs({ 'client', 'global' }) do
+    it('executes ' .. scope .. '-side commands locally', function()
+      eq(
+        { true, true },
+        exec_lua(function()
+          local client = start_hint_client()
+          local called = false
+          local commands = scope == 'client' and client.commands or vim.lsp.commands
+          commands.test = function(cmd, ctx)
+            assert(cmd.arguments[1] == 42 and ctx.bufnr == vim.api.nvim_get_current_buf())
+            called = true
+          end
+          client.rpc.request = function()
+            error('unexpected server request')
+          end
+          local result = run_hint_action('command', {
+            hint_entry(client, {
+              label = {
+                {
+                  value = 'T',
+                  command = { title = 'Test', command = 'test', arguments = { 42 } },
+                },
+              },
+            }),
+          })
+          return { called, result.client_id == client.id }
+        end)
+      )
+    end)
+  end
 
   it('uses the cursor of the invoking window', function()
     eq(
