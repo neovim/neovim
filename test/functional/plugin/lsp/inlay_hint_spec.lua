@@ -1029,11 +1029,15 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
     )
   end)
 
-  it('applies supplied edits to their source buffer', function()
+  it('applies supplied edits to their source buffer without resolving again', function()
     eq(
       { 'aXbc', 'other', true },
       exec_lua(function()
-        local client = start_hint_client()
+        local client = start_hint_client({ inlayHintProvider = { resolveProvider = true } }, {
+          ['inlayHint/resolve'] = function()
+            error('unexpected resolve')
+          end,
+        })
         local source = vim.api.nvim_get_current_buf()
         local entry = hint_entry(client, {
           textEdits = {
@@ -1076,6 +1080,73 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
         })
         vim.wait(0)
         return { ok, tostring(err):find('same buffer', 1, true) ~= nil, called }
+      end)
+    )
+  end)
+
+  it('converts cached positions for UTF-16 resolution without mutating them', function()
+    eq(
+      { 3, 6, 6 },
+      exec_lua(function()
+        vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'é😀x' })
+        local sent
+        start_hint_client({
+          positionEncoding = 'utf-16',
+          inlayHintProvider = { resolveProvider = true },
+        }, {
+          ['textDocument/inlayHint'] = function(_, _, cb)
+            cb(nil, { { label = 'T', position = { line = 0, character = 3 } } })
+          end,
+          ['inlayHint/resolve'] = function(_, params, cb)
+            sent = params.position.character
+            cb(nil, params)
+          end,
+        })
+        vim.lsp.inlay_hint.enable(true)
+        assert(vim.wait(1000, function()
+          return #vim.lsp.inlay_hint.get({ bufnr = 0 }) == 1
+        end))
+        local hints = vim.lsp.inlay_hint.get({ bufnr = 0 })
+        local received
+        run_hint_action(function(resolved, ctx, done)
+          received = resolved[1].position.character
+          done(ctx)
+          return true
+        end, hints)
+        return { sent, received, hints[1].inlay_hint.position.character }
+      end)
+    )
+  end)
+
+  it('retains hint order when resolve responses arrive in reverse order', function()
+    eq(
+      { 'first', 'second' },
+      exec_lua(function()
+        local pending = {}
+        local client = start_hint_client({ inlayHintProvider = { resolveProvider = true } }, {
+          ['inlayHint/resolve'] = function(_, params, cb)
+            pending[#pending + 1] = function()
+              cb(nil, params)
+            end
+          end,
+        })
+        local labels
+        run_hint_action(
+          function(hints, ctx, done)
+            labels = { hints[1].label, hints[2].label }
+            done(ctx)
+            return true
+          end,
+          { hint_entry(client, { label = 'first' }), hint_entry(client, { label = 'second' }) },
+          function()
+            assert(vim.wait(1000, function()
+              return #pending == 2
+            end))
+            pending[2]()
+            pending[1]()
+          end
+        )
+        return labels
       end)
     )
   end)
@@ -1141,6 +1212,52 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
         })
         local result = run_hint_action('textEdits', { hint_entry(client) })
         return { vim.api.nvim_get_current_line(), result.client_id ~= nil }
+      end)
+    )
+  end)
+
+  for _, case in ipairs({ { 'inlayHint/resolve', 'textEdits' } }) do
+    local method, action = case[1], case[2]
+    it('completes when submitting ' .. method .. ' fails', function()
+      eq(
+        false,
+        exec_lua(function()
+          local client = start_hint_client({
+            inlayHintProvider = { resolveProvider = method == 'inlayHint/resolve' },
+            executeCommandProvider = { commands = { 'test' } },
+          })
+          client.rpc.request = function()
+            return false
+          end
+          local loc = label_loc()
+          local result = run_hint_action(action, {
+            hint_entry(client, {
+              label = {
+                { value = 'T', location = loc, command = { title = 'Test', command = 'test' } },
+              },
+            }),
+          })
+          return result.client_id ~= nil
+        end)
+      )
+    end)
+  end
+
+  it('falls back to another client after a resolve error', function()
+    eq(
+      2,
+      exec_lua(function()
+        local first = start_hint_client({ inlayHintProvider = { resolveProvider = true } }, {
+          ['inlayHint/resolve'] = function(_, _, cb)
+            cb({ code = -32603, message = 'failed' })
+          end,
+        })
+        local second = start_hint_client()
+        local result = run_hint_action('tooltip', {
+          hint_entry(first),
+          hint_entry(second, { tooltip = 'docs' }),
+        })
+        return result.client_id
       end)
     )
   end)
