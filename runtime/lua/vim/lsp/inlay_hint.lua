@@ -417,140 +417,138 @@ end
 --- @field hint lsp.InlayHint
 --- @field label lsp.InlayHintLabelPart
 
-local action_helpers = {
-  --- Turn an inlay hint object into the visible text, merging any label parts.
-  --- Paddings can be optionally included.
-  --- @param hint lsp.InlayHint
-  --- @param with_padding boolean?
-  --- @return string
-  get_label_text = function(hint, with_padding)
-    --- @type string?
-    local label
-    if type(hint.label) == 'string' then
-      label = tostring(hint.label)
-    elseif vim.islist(hint.label) then
-      ---@type string
-      label = vim
-        .iter(hint.label)
-        :map(
-          --- @param part lsp.InlayHintLabelPart
-          function(part)
-            return part.value
-          end
-        )
-        :join('')
-    end
-
-    assert(label ~= nil, 'Failed to extract the label value from the inlay hint')
-
-    if with_padding then
-      if hint.paddingLeft then
-        label = ' ' .. label
-      end
-      if hint.paddingRight then
-        label = label .. ' '
-      end
-    end
-
-    return label
-  end,
-
-  --- A wrapper of `vim.ui.select` that skips the menu when there's only one item.
-  --- @generic T
-  --- @param items T[] Arbitrary items
-  --- @param opts vim.ui.select.Opts Additional options
-  --- @param on_choice fun(item: T|nil, idx: integer|nil)
-  do_or_select = function(items, opts, on_choice)
-    if #items == 0 then
-      return error('Empty items!')
-    end
-    if #items == 1 then
-      return on_choice(items[1], 1)
-    end
-    return vim.ui.select(items, opts, on_choice)
-  end,
-
-  --- @param path string
-  --- @param base string?
-  --- @return string
-  cleanup_path = function(path, base)
-    ---@type string?
-    local result = nil
-    if base then
-      -- relative to `base`
-      result = vim.fs.relpath(base, path)
-    end
-    if result == nil then
-      result = fn.fnamemodify(path, ':p:~')
-    end
-    return result
-  end,
-
-  --- Build the range from normal or visual mode based on cursor position.
-  --- @return vim.Range
-  make_range = function()
-    local bufnr = api.nvim_get_current_buf()
-    local winid = fn.bufwinid(bufnr)
-    local mode = fn.mode()
-
-    if mode == 'n' then
-      local cursor = api.nvim_win_get_cursor(winid)
-      -- Include the hints on either side of the cursor.
-      local row, col = cursor[1] - 1, cursor[2]
-      return vim.range(bufnr, row, col, row, col + 1)
-    end
-
-    local start_pos = fn.getpos('v')
-    local end_pos = fn.getpos('.')
-    if start_pos[2] > end_pos[2] or (start_pos[2] == end_pos[2] and start_pos[3] > end_pos[3]) then
-      --- @type [integer, integer, integer, integer]
-      start_pos, end_pos = end_pos, start_pos
-    end
-    local start_row, start_col = start_pos[2] - 1, start_pos[3] - 1
-    local end_row, end_col = end_pos[2] - 1, end_pos[3]
-
-    if mode == 'V' or mode == 'Vs' then
-      start_col = 0
-      end_row = end_row + 1
-      end_col = 0
-    end
-    return vim.range(bufnr, start_row, start_col, end_row, end_col)
-  end,
-
-  --- Append `new_label` to `labels` if there are no duplicates.
-  ---@param labels vim.lsp.inlay_hint.action.hint_label[]
-  ---@param new_label vim.lsp.inlay_hint.action.hint_label
-  ---@param by_attribute ('location'|'command'|'tooltip')[]|nil When provided, only check for these attributes (and `value`) for equality
-  add_new_label = function(labels, new_label, by_attribute)
-    if
-      vim.iter(labels):any(
-        ---@param existing_label vim.lsp.inlay_hint.action.hint_label
-        function(existing_label)
-          -- Check for duplications with existing hint_labels
-          if by_attribute then
-            -- Check for concerned attributes
-            return vim.iter(by_attribute):all(function(attr)
-              return existing_label.label.value == new_label.label.value
-                and vim.deep_equal(existing_label.label[attr], new_label.label[attr])
-            end)
-          else
-            -- Check the entire label
-            return vim.deep_equal(existing_label.label, new_label.label)
-          end
+--- Turn an inlay hint object into the visible text, merging any label parts.
+--- Paddings can be optionally included.
+--- @param hint lsp.InlayHint
+--- @param with_padding boolean?
+--- @return string
+local function get_label_text(hint, with_padding)
+  --- @type string?
+  local label
+  if type(hint.label) == 'string' then
+    label = tostring(hint.label)
+  elseif vim.islist(hint.label) then
+    ---@type string
+    label = vim
+      .iter(hint.label)
+      :map(
+        --- @param part lsp.InlayHintLabelPart
+        function(part)
+          return part.value
         end
       )
-    then
-      return
-    end
-    table.insert(labels, new_label)
-  end,
-}
+      :join('')
+  end
 
----Return a non-empty list of hint label, or `nil` if not found.
+  assert(label ~= nil, 'Failed to extract the label value from the inlay hint')
+
+  if with_padding then
+    if hint.paddingLeft then
+      label = ' ' .. label
+    end
+    if hint.paddingRight then
+      label = label .. ' '
+    end
+  end
+
+  return label
+end
+
+--- A wrapper of `vim.ui.select` that skips the menu when there's only one item.
+--- @generic T
+--- @param items T[] Arbitrary items
+--- @param opts vim.ui.select.Opts Additional options
+--- @param on_choice fun(item: T|nil, idx: integer|nil)
+local function do_or_select(items, opts, on_choice)
+  if #items == 0 then
+    return error('Empty items!')
+  end
+  if #items == 1 then
+    return on_choice(items[1], 1)
+  end
+  return vim.ui.select(items, opts, on_choice)
+end
+
+--- @param path string
+--- @param base string?
+--- @return string
+local function cleanup_path(path, base)
+  ---@type string?
+  local result = nil
+  if base then
+    -- relative to `base`
+    result = vim.fs.relpath(base, path)
+  end
+  if result == nil then
+    result = fn.fnamemodify(path, ':p:~')
+  end
+  return result
+end
+
+--- Build the range from normal or visual mode based on cursor position.
+--- @return vim.Range
+local function make_range()
+  local bufnr = api.nvim_get_current_buf()
+  local winid = fn.bufwinid(bufnr)
+  local mode = fn.mode()
+
+  if mode == 'n' then
+    local cursor = api.nvim_win_get_cursor(winid)
+    -- Include the hints on either side of the cursor.
+    local row, col = cursor[1] - 1, cursor[2]
+    return vim.range(bufnr, row, col, row, col + 1)
+  end
+
+  local start_pos = fn.getpos('v')
+  local end_pos = fn.getpos('.')
+  if start_pos[2] > end_pos[2] or (start_pos[2] == end_pos[2] and start_pos[3] > end_pos[3]) then
+    --- @type [integer, integer, integer, integer]
+    start_pos, end_pos = end_pos, start_pos
+  end
+  local start_row, start_col = start_pos[2] - 1, start_pos[3] - 1
+  local end_row, end_col = end_pos[2] - 1, end_pos[3]
+
+  if mode == 'V' or mode == 'Vs' then
+    start_col = 0
+    end_row = end_row + 1
+    end_col = 0
+  end
+  return vim.range(bufnr, start_row, start_col, end_row, end_col)
+end
+
+--- Append `new_label` to `labels` if there are no duplicates.
+---@param labels vim.lsp.inlay_hint.action.hint_label[]
+---@param new_label vim.lsp.inlay_hint.action.hint_label
+---@param by_attribute ('location'|'command'|'tooltip')[]|nil When provided, only check for these attributes (and `value`) for equality
+local function add_new_label(labels, new_label, by_attribute)
+  if
+    vim.iter(labels):any(
+      ---@param existing_label vim.lsp.inlay_hint.action.hint_label
+      function(existing_label)
+        -- Check for duplications with existing hint_labels
+        if by_attribute then
+          -- Check for concerned attributes
+          return vim.iter(by_attribute):all(function(attr)
+            return existing_label.label.value == new_label.label.value
+              and vim.deep_equal(existing_label.label[attr], new_label.label[attr])
+          end)
+        else
+          -- Check the entire label
+          return vim.deep_equal(existing_label.label, new_label.label)
+        end
+      end
+    )
+  then
+    return
+  end
+  table.insert(labels, new_label)
+end
+
+---Return a non-empty list of hint labels, or `nil` if not found.
 --- @param hint lsp.InlayHint
 --- @param needed_fields ("location"|"command"|"tooltip")[]
 --- @return vim.lsp.inlay_hint.action.hint_label[]?
-action_helpers.get_hint_labels = function(hint, needed_fields)
+local function get_hint_labels(hint, needed_fields)
   --- @type vim.lsp.inlay_hint.action.hint_label[]
   local hint_labels = {}
 
@@ -563,7 +561,7 @@ action_helpers.get_hint_labels = function(hint, needed_fields)
             return label[field_name] ~= nil
           end)
         then
-          action_helpers.add_new_label(hint_labels, { hint = hint, label = label }, needed_fields)
+          add_new_label(hint_labels, { hint = hint, label = label }, needed_fields)
         end
       end
     )
@@ -576,7 +574,7 @@ end
 
 --- The built-in action handlers.
 --- @type table<vim.lsp.inlay_hint.action.name, vim.lsp.inlay_hint.action.handler>
-local inlayhint_actions = {
+local action_handlers = {
   textEdits = function(hints, ctx, on_finish)
     ---@type lsp.InlayHint[]
     local valid_hints = vim
@@ -620,7 +618,7 @@ local inlayhint_actions = {
       --- @param item lsp.InlayHint
       function(item)
         if type(item.label) == 'table' and #item.label > 0 then
-          local labels_from_this = action_helpers.get_hint_labels(item, { 'location' })
+          local labels_from_this = get_hint_labels(item, { 'location' })
           if labels_from_this then
             count = count + 1
             vim.list_extend(hint_labels, labels_from_this)
@@ -633,7 +631,7 @@ local inlayhint_actions = {
       return 0
     end
 
-    action_helpers.do_or_select(
+    do_or_select(
       vim
         .iter(hint_labels)
         :map(
@@ -643,7 +641,7 @@ local inlayhint_actions = {
             return string.format(
               '%s\t%s:%d',
               label.value,
-              action_helpers.cleanup_path(vim.uri_to_fname(label.location.uri), ctx.client.root_dir),
+              cleanup_path(vim.uri_to_fname(label.location.uri), ctx.client.root_dir),
               label.location.range.start.line
             )
           end
@@ -686,7 +684,7 @@ local inlayhint_actions = {
       end)
     end
     local hint = assert(hints[1])
-    local hint_labels = action_helpers.get_hint_labels(hint, { 'location' })
+    local hint_labels = get_hint_labels(hint, { 'location' })
     if hint_labels == nil then
       return 0
     end
@@ -758,10 +756,10 @@ local inlayhint_actions = {
     end
 
     local hint = assert(hints[1])
-    local hint_labels = action_helpers.get_hint_labels(hint, { 'location', 'command' })
+    local hint_labels = get_hint_labels(hint, { 'location', 'command' })
 
     -- The level 1 heading is the full hint object
-    local lines = { string.format('# `%s`', action_helpers.get_label_text(hint, false)), '' }
+    local lines = { string.format('# `%s`', get_label_text(hint, false)), '' }
 
     if hint.tooltip then
       util.convert_input_to_markdown_lines(hint.tooltip, lines)
@@ -784,7 +782,7 @@ local inlayhint_actions = {
             -- include the location in this label part
             lines[#lines + 1] = string.format(
               '_Location_: `%s`:%d',
-              action_helpers.cleanup_path(vim.uri_to_fname(label.location.uri), ctx.client.root_dir),
+              cleanup_path(vim.uri_to_fname(label.location.uri), ctx.client.root_dir),
               label.location.range.start.line
             )
           end
@@ -826,13 +824,13 @@ local inlayhint_actions = {
         )
       end)
     end
-    local hint_labels = action_helpers.get_hint_labels(assert(hints[1]), { 'command' })
+    local hint_labels = get_hint_labels(assert(hints[1]), { 'command' })
     if hint_labels == nil or #hint_labels == 0 then
       -- no commands in this hint
       return 0
     end
 
-    action_helpers.do_or_select(
+    do_or_select(
       vim
         .iter(hint_labels)
         :map(
@@ -949,14 +947,14 @@ local inlayhint_actions = {
 ---   to be invoked.
 function M.action(action, opts, callback)
   vim.validate('action', action, function(val)
-    return type(val) == 'function' or type(inlayhint_actions[val]) == 'function'
+    return type(val) == 'function' or type(action_handlers[val]) == 'function'
   end, false)
   vim.validate('opts', opts, 'table', true)
   vim.validate('callback', callback, 'function', true)
 
   local action_handler = action
   if type(action) == 'string' then
-    action_handler = inlayhint_actions[action]
+    action_handler = action_handlers[action]
     --- @cast action_handler -vim.lsp.inlay_hint.action.name
   end
 
@@ -978,7 +976,7 @@ function M.action(action, opts, callback)
 
   local hints = opts.hints
   if hints == nil then
-    local range = action_helpers.make_range()
+    local range = make_range()
     hints = M.get({
       range = {
         -- In `M.on_inlayhint`,
