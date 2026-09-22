@@ -923,7 +923,8 @@ local action_handlers = {
 --- - `"tooltip"`: show a hover-like window that contains the `tooltip`, available `command`s and
 ---   `location`s that comes with the inlay hint.
 --- - a custom handler with 3 parameters:
----   - `hints`: `lsp.InlayHint[]` a list of inlay hints in the requested range.
+---   - `hints`: `lsp.InlayHint[]` a list of inlay hints in the requested range. Hint positions
+---     use byte indices, as in `vim.lsp.inlay_hint.get()`.
 ---   - `ctx`: `{buf: integer, client: vim.lsp.Client}` the buffer on which the action is taken, and the LSP client that provides `hints`.
 ---   - `on_done`: `fun(ctx: {buf: integer, client?: vim.lsp.Client})` see `on_done` in {opts}.
 ---     Always supplied, even when {opts} omits `on_done`.
@@ -1044,17 +1045,45 @@ function M.action(action, opts)
       return
     end
 
-    local num_processed = 0
+    -- Resolve in parallel, retaining input order even when replies arrive out of order.
+    local remaining = #client_hints
+    local resolved = {} --- @type table<integer, lsp.InlayHint>
     for i, hint in ipairs(client_hints) do
-      client:request('inlayHint/resolve', hint, function(_, result)
-        if result then
-          client_hints[i] = vim.tbl_deep_extend('force', client_hints[i], result)
+      --- @param result lsp.InlayHint?
+      local function complete(result)
+        resolved[i] = result
+        remaining = remaining - 1
+        if remaining == 0 then
+          local ordered = {} --- @type lsp.InlayHint[]
+          for j = 1, #client_hints do
+            if resolved[j] then
+              ordered[#ordered + 1] = resolved[j]
+            end
+          end
+          apply(ordered)
         end
-        num_processed = num_processed + 1
-        if num_processed == #client_hints then
-          apply(client_hints)
+      end
+      if action == 'textEdits' and hint.textEdits ~= nil then
+        complete(hint)
+      else
+        -- Only `position` is replaced, so the rest can stay shared with `hint`.
+        local params = vim.tbl_extend('force', {}, hint) --[[@as lsp.InlayHint]]
+        params.position =
+          vim.pos(bufnr, hint.position.line, hint.position.character):to_lsp(client.offset_encoding)
+        local success = client:request('inlayHint/resolve', params, function(err, result)
+          if err or not result then
+            complete(nil)
+          else
+            local merged = vim.tbl_deep_extend('force', hint, result)
+            -- Keep handler positions byte-indexed, like get(), without changing the cache.
+            merged.position = hint.position
+            complete(merged)
+          end
+        end, bufnr)
+        if not success then
+          complete(nil)
         end
-      end, bufnr)
+      end
     end
   end
 

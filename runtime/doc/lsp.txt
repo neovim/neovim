@@ -2463,7 +2463,8 @@ action({action}, {opts})                         *vim.lsp.inlay_hint.action()*
                     with the inlay hint.
                   • a custom handler with 3 parameters:
                     • `hints`: `lsp.InlayHint[]` a list of inlay hints in the
-                      requested range.
+                      requested range. Hint positions use byte indices, as in
+                      `vim.lsp.inlay_hint.get()`.
                     • `ctx`: `{buf: integer, client: vim.lsp.Client}` the
                       buffer on which the action is taken, and the LSP client
                       that provides `hints`.
