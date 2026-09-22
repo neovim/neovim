@@ -1343,7 +1343,7 @@ static void deferred_optionset_modified(void **argv)
     Object new = BOOLEAN_OBJ(new_val);
     CtxSwitch aco = { 0 };
     ctx_switch(&aco, NULL, NULL, buf, 0);
-    apply_optionset_autocmd_now(kOptModified, OPT_LOCAL, old, old, old, new, NULL);
+    apply_optionset_autocmd_now(kOptModified, OPT_LOCAL, old, old, old, new);
     ctx_restore(&aco);
   }
 }

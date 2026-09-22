@@ -608,7 +608,7 @@ const char *validate_backupcopy(const optset_T *args)
 /// The 'backupcopy' option is changed.
 const char *did_set_backupcopy(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_buf;
   int opt_flags = args->os_flags;
   char *bkc = p_bkc;
   unsigned *flags = &bkc_flags;
@@ -665,7 +665,7 @@ const char *did_set_breakat(optset_T *args FUNC_ATTR_UNUSED)
 /// The 'breakindentopt' option is changed.
 const char *did_set_breakindentopt(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   // Apply it to the window, or to nothing if setting the global value.
   bool is_local = args->os_varp == (void *)&win->w_p_briopt;
   briopt_check(is_local ? win : NULL);
@@ -681,7 +681,7 @@ const char *did_set_breakindentopt(optset_T *args)
 /// Validate the 'buftype' option.
 const char *validate_buftype(const optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_buf;
   const char *errmsg = validate_str_generic(args);
   if (errmsg != NULL) {
     return errmsg;
@@ -697,8 +697,8 @@ const char *validate_buftype(const optset_T *args)
 /// The 'buftype' option is changed.
 const char *did_set_buftype(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
-  win_T *win = (win_T *)args->os_win;
+  buf_T *buf = args->os_buf;
+  win_T *win = args->os_win;
   // buftype=prompt:
   if (buf->b_p_bt[0] == 'p') {
     // Set default value for 'comments'
@@ -764,7 +764,7 @@ static const char *did_set_global_chars_option(win_T *win, char *val, CharsOptio
 /// The 'fillchars' option or the 'listchars' option is changed.
 const char *did_set_chars_option(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   char **varp = (char **)args->os_varp;
   const char *errmsg = NULL;
 
@@ -795,7 +795,7 @@ int expand_set_chars_option(optexpand_T *args, int *numMatches, char ***matches)
 /// The 'cinoptions' option is changed.
 const char *did_set_cinoptions(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_buf;
   // TODO(vim): recognize errors
   parse_cino(buf);
 
@@ -810,7 +810,7 @@ const char *validate_colorcolumn(const optset_T *args)
 /// The 'colorcolumn' option is changed.
 const char *did_set_colorcolumn(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   char **varp = (char **)args->os_varp;
   return check_colorcolumn(*varp, varp == &win->w_p_cc ? win : NULL);
 }
@@ -972,7 +972,7 @@ const char *did_set_completeitemalign(optset_T *args)
 /// The 'completeopt' option is changed.
 const char *did_set_completeopt(optset_T *args FUNC_ATTR_UNUSED)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_buf;
   char *cot = p_cot;
   unsigned *flags = &cot_flags;
 
@@ -991,7 +991,7 @@ const char *did_set_completeopt(optset_T *args FUNC_ATTR_UNUSED)
 /// The 'completeslash' option is changed.
 const char *did_set_completeslash(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_buf;
   const char *errmsg = opt_strings_flags(p_csl, opt_csl_values, NULL, false, args->os_errbuf);
   if (errmsg != NULL) {
     return errmsg;
@@ -1025,7 +1025,7 @@ int expand_set_cpoptions(optexpand_T *args, int *numMatches, char ***matches)
 /// The 'cursorlineopt' option is changed.
 const char *did_set_cursorlineopt(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   char **varp = (char **)args->os_varp;
 
   // This could be changed to use opt_strings_flags() instead.
@@ -1093,7 +1093,7 @@ const char *did_set_display(optset_T *args)
 /// options is changed.
 const char *did_set_encoding(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_buf;
   char **varp = (char **)args->os_varp;
   int opt_flags = args->os_flags;
   // Get the global option to compare with, otherwise we would have to check
@@ -1183,7 +1183,7 @@ const char *validate_fileformat(const optset_T *args)
 /// The 'fileformat' option is changed.
 const char *did_set_fileformat(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_buf;
   const char *oldval = args->os_oldval.data.string.data;
 
   redraw_titles();
@@ -1231,7 +1231,7 @@ const char *did_set_filetype_or_syntax(optset_T *args)
 /// The 'foldexpr' option is changed.
 const char *did_set_foldexpr(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   if (foldmethodIsExpr(win)) {
     foldUpdateAll(win);
   }
@@ -1241,7 +1241,7 @@ const char *did_set_foldexpr(optset_T *args)
 /// The 'foldignore' option is changed.
 const char *did_set_foldignore(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   if (foldmethodIsIndent(win)) {
     foldUpdateAll(win);
   }
@@ -1262,7 +1262,7 @@ const char *validate_foldmarker(const optset_T *args)
 /// The 'foldmarker' option is changed.
 const char *did_set_foldmarker(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   if (foldmethodIsMarker(win)) {
     foldUpdateAll(win);
   }
@@ -1273,7 +1273,7 @@ const char *did_set_foldmarker(optset_T *args)
 /// The 'foldmethod' option is changed.
 const char *did_set_foldmethod(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   foldUpdateAll(win);
   if (foldmethodIsDiff(win)) {
     newFoldLevel();
@@ -1371,7 +1371,7 @@ const char *did_set_iskeyword(optset_T *args)
 
   // The global value only affects new buffers.
   if (varp != &p_isk) {
-    buf_T *buf = (buf_T *)args->os_buf;
+    buf_T *buf = args->os_buf;
     if (buf_init_isk_chartab(buf) == FAIL) {
       return e_invarg;    // error in value
     }
@@ -1397,7 +1397,7 @@ const char *did_set_isopt(optset_T *args)
 /// The 'keymap' option has changed.
 const char *did_set_keymap(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_buf;
   int opt_flags = args->os_flags;
 
   int secure_save = secure;
@@ -1676,7 +1676,7 @@ const char *validate_signcolumn(const optset_T *args)
 /// The 'signcolumn' option is changed.
 const char *did_set_signcolumn(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   char **varp = (char **)args->os_varp;
   const char *oldval = args->os_oldval.data.string.data;
   if (check_signcolumn(*varp, varp == &win->w_p_scl ? win : NULL) != OK) {
@@ -1693,7 +1693,7 @@ const char *did_set_signcolumn(optset_T *args)
 /// The 'spellcapcheck' option is changed.
 const char *did_set_spellcapcheck(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   // When 'spellcapcheck' is set compile the regexp program.
   return compile_cap_prog(win->w_s);
 }
@@ -1729,7 +1729,7 @@ const char *did_set_spelllang(optset_T *args FUNC_ATTR_UNUSED)
 /// The 'spelloptions' option is changed.
 const char *did_set_spelloptions(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   int opt_flags = args->os_flags;
   const char *val = args->os_newval.data.string.data;
 
@@ -1794,7 +1794,7 @@ const char *did_set_statusline(optset_T *args)
 static const char *did_set_statustabline_rulerformat(optset_T *args, bool rulerformat,
                                                      bool statuscolumn)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   char **varp = (char **)args->os_varp;
   if (rulerformat) {       // reset ru_wid first
     ru_wid = 0;
@@ -1846,7 +1846,7 @@ const char *did_set_tabline(optset_T *args)
 /// The 'tagcase' option is changed.
 const char *did_set_tagcase(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_buf;
   int opt_flags = args->os_flags;
 
   unsigned *flags;
@@ -1897,7 +1897,7 @@ const char *did_set_titlestring(optset_T *args)
 /// The 'varsofttabstop' option is changed.
 const char *did_set_varsofttabstop(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
+  buf_T *buf = args->os_buf;
   char **varp = (char **)args->os_varp;
 
   if (!(*varp)[0] || ((*varp)[0] == '0' && !(*varp)[1])) {
@@ -1927,8 +1927,8 @@ const char *did_set_varsofttabstop(optset_T *args)
 /// The 'varstabstop' option is changed.
 const char *did_set_vartabstop(optset_T *args)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
-  win_T *win = (win_T *)args->os_win;
+  buf_T *buf = args->os_buf;
+  win_T *win = args->os_win;
   char **varp = (char **)args->os_varp;
 
   if (!(*varp)[0] || ((*varp)[0] == '0' && !(*varp)[1])) {
@@ -1971,7 +1971,7 @@ const char *did_set_verbosefile(optset_T *args)
 /// The 'virtualedit' option is changed.
 const char *did_set_virtualedit(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
 
   char *ve = p_ve;
   unsigned *flags = &ve_flags;
@@ -2039,7 +2039,7 @@ const char *validate_border(const optset_T *args)
 /// The 'winhighlight' option is changed.
 const char *did_set_winhighlight(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
+  win_T *win = args->os_win;
   char **varp = (char **)args->os_varp;
   if (!parse_winhl_opt(*varp, varp == &win->w_p_winhl ? win : NULL)) {
     return e_invarg;

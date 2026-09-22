@@ -29,7 +29,7 @@ typedef enum {
   kOptFlagOneComma  = (1 << 11) | kOptFlagComma,  ///< Comma-separated list that cannot have two consecutive commas.
   kOptFlagNoDup     = 1 << 12,  ///< Don't allow duplicate strings.
   kOptFlagFlagList  = 1 << 13,  ///< List of single-char flags.
-  kOptFlagSecure    = 1 << 14,  ///< Cannot change in modeline or secure mode.
+  kOptFlagSecure    = 1 << 14,  ///< Cannot change in modelines, secure mode, or the sandbox.
   kOptFlagGettext   = 1 << 15,  ///< Expand default value with _().
   kOptFlagNoGlob    = 1 << 16,  ///< Do not use local value for global vimrc.
   kOptFlagNFname    = 1 << 17,  ///< Only normal file name chars allowed.
@@ -117,8 +117,8 @@ typedef struct {
   /// message (when it is not NULL).
   const CharBuf *os_errbuf;
 
-  void *os_win;
-  void *os_buf;
+  win_T *os_win;
+  buf_T *os_buf;
 } optset_T;
 
 /// Check a candidate value without changing option variables or derived state,
