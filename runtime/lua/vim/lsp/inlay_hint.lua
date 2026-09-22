@@ -575,7 +575,7 @@ end
 --- The built-in action handlers.
 --- @type table<vim.lsp.inlay_hint.action.name, vim.lsp.inlay_hint.action.handler>
 local action_handlers = {
-  textEdits = function(hints, ctx, on_finish)
+  textEdits = function(hints, ctx, on_done)
     ---@type lsp.InlayHint[]
     local valid_hints = vim
       .iter(hints)
@@ -600,15 +600,15 @@ local action_handlers = {
       :totable()
     if #text_edits > 0 then
       vim.schedule(function()
-        util.apply_text_edits(text_edits, ctx.bufnr, ctx.client.offset_encoding)
-        if on_finish then
-          on_finish({ bufnr = ctx.bufnr, client = ctx.client })
+        util.apply_text_edits(text_edits, ctx.buf, ctx.client.offset_encoding)
+        if on_done then
+          on_done({ buf = ctx.buf, client = ctx.client })
         end
       end)
     end
     return #valid_hints
   end,
-  location = function(hints, ctx, on_finish)
+  location = function(hints, ctx, on_done)
     local count = 0
 
     --- @type vim.lsp.inlay_hint.action.hint_label[]
@@ -651,8 +651,8 @@ local action_handlers = {
       function(_, idx)
         if idx == nil then
           -- `vim.ui.select` was cancelled
-          if on_finish then
-            on_finish({ bufnr = ctx.bufnr })
+          if on_done then
+            on_done({ buf = ctx.buf })
           end
           return
         end
@@ -662,8 +662,8 @@ local action_handlers = {
           { reuse_win = true, focus = true }
         )
 
-        if on_finish then
-          on_finish({ bufnr = api.nvim_get_current_buf(), client = ctx.client })
+        if on_done then
+          on_done({ buf = api.nvim_get_current_buf(), client = ctx.client })
         end
       end
     )
@@ -671,7 +671,7 @@ local action_handlers = {
     return count
   end,
 
-  hover = function(hints, ctx, on_finish)
+  hover = function(hints, ctx, on_done)
     if #hints == 0 then
       return 0
     end
@@ -703,8 +703,8 @@ local action_handlers = {
           lines = { 'Empty' }
         end
         local float_buf, _ = util.open_floating_preview(lines, 'markdown')
-        if on_finish then
-          on_finish({ client = ctx.client, bufnr = float_buf })
+        if on_done then
+          on_done({ client = ctx.client, buf = float_buf })
         end
         return
       end
@@ -734,7 +734,7 @@ local action_handlers = {
           end
           get_hover(next(hint_labels, idx))
         end,
-        ctx.bufnr
+        ctx.buf
       )
     end
 
@@ -742,7 +742,7 @@ local action_handlers = {
     return 1
   end,
 
-  tooltip = function(hints, ctx, on_finish)
+  tooltip = function(hints, ctx, on_done)
     if #hints == 0 then
       return 0
     end
@@ -806,13 +806,13 @@ local action_handlers = {
     ---@type integer, integer
     local buf, _ = util.open_floating_preview(lines, 'markdown')
 
-    if on_finish then
-      on_finish({ bufnr = buf, client = ctx.client })
+    if on_done then
+      on_done({ buf = buf, client = ctx.client })
     end
     return 1
   end,
 
-  command = function(hints, ctx, on_finish)
+  command = function(hints, ctx, on_done)
     if #hints == 0 then
       return 0
     end
@@ -849,8 +849,8 @@ local action_handlers = {
       function(_, idx)
         if idx == nil then
           -- `vim.ui.select` was cancelled
-          if on_finish then
-            on_finish({ bufnr = ctx.bufnr })
+          if on_done then
+            on_done({ buf = ctx.buf })
           end
           return
         end
@@ -860,10 +860,10 @@ local action_handlers = {
           if default_handler then
             default_handler(...)
           end
-          if on_finish then
-            on_finish({ bufnr = api.nvim_get_current_buf(), client = ctx.client })
+          if on_done then
+            on_done({ buf = api.nvim_get_current_buf(), client = ctx.client })
           end
-        end, ctx.bufnr)
+        end, ctx.buf)
       end
     )
 
@@ -884,28 +884,35 @@ local action_handlers = {
 
 --- @class vim.lsp.inlay_hint.action.context
 --- @inlinedoc
---- @field bufnr integer
+--- @field buf integer
 --- @field client vim.lsp.Client
 
---- @class vim.lsp.inlay_hint.action.on_finish.context
+--- @class vim.lsp.inlay_hint.action.on_done.context
 --- @inlinedoc
---- @field client? vim.lsp.Client The LSP client used to trigger the action if the action was successfully triggered.
---- If the action opened or jumped to a new buffer, this will be the buffer number.
---- Otherwise it'll be the original buffer.
---- @field bufnr integer
+---
+--- The buffer that ends up focused by the action. If the action opened or jumped to a new
+--- buffer, this is that buffer; otherwise it's the buffer the action started from.
+--- @field buf integer
+---
+--- The `vim.lsp.Client` used to invoke the action. `nil` when no action was invoked.
+--- @field client? vim.lsp.Client
 
 --- This should be called __exactly__ once in the action handler.
---- @alias vim.lsp.inlay_hint.action.on_finish.callback fun(ctx: vim.lsp.inlay_hint.action.on_finish.context)
+--- @alias vim.lsp.inlay_hint.action.on_done.callback fun(ctx: vim.lsp.inlay_hint.action.on_done.context)
 
---- @alias vim.lsp.inlay_hint.action.handler fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.context, on_finish: vim.lsp.inlay_hint.action.on_finish.callback?):integer
+--- @alias vim.lsp.inlay_hint.action.handler fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.context, on_done: vim.lsp.inlay_hint.action.on_done.callback?):integer
 
 --- @class vim.lsp.inlay_hint.action.Opts
 --- @inlinedoc
+---
 --- Inlay hints (returned by `vim.lsp.inlay_hint.get()`) to take actions on.
 --- When not specified:
 ---   - in |Normal-mode|, it uses hints on either side of the cursor.
 ---   - in |Visual-mode|, it uses hints inside the selected range.
 --- @field hints? vim.lsp.inlay_hint.get.ret[]
+---
+--- A callback invoked exactly once (asynchronously) at the end of the action.
+--- @field on_done? vim.lsp.inlay_hint.action.on_done.callback
 
 --- Apply some actions provided by inlay hints in the selected range.
 ---
@@ -932,25 +939,20 @@ local action_handlers = {
 ---   `location`s that comes with the inlay hint.
 --- - a custom handler with 3 parameters:
 ---   - `hints`: `lsp.InlayHint[]` a list of inlay hints in the requested range.
----   - `ctx`: `{bufnr: integer, client: vim.lsp.Client}` the buffer number on which the action is taken, and the LSP client that provides `hints`.
----   - `on_finish`: `fun(_ctx: {bufnr: integer, client?: vim.lsp.Client})` see the `callback` parameter of `vim.lsp.inlay_hint.action`.
----     When implementing a custom handler, the `on_finish` callback should be called when the handler is returning a non-zero value.
+---   - `ctx`: `{buf: integer, client: vim.lsp.Client}` the buffer on which the action is taken, and the LSP client that provides `hints`.
+---   - `on_done`: `fun(ctx: {buf: integer, client?: vim.lsp.Client})` see `on_done` in {opts}.
+---     When implementing a custom handler, the `on_done` callback should be called when the handler is returning a non-zero value.
 ---
 ---   This custom handler should also return the number of items in `hints` that contributed to the action. For example, the `location` handler should return `1` on a successful jump because the target location is from 1 inlay hint object, regardless of the number of hints in `hints`.
 --- @param opts? vim.lsp.inlay_hint.action.Opts
---- @param callback? fun(ctx: {bufnr: integer, client?: vim.lsp.Client})
---- A callback function that will be triggered exactly once (asynchronously) at the end of the action.
---- It accepts a table with the following keys as the parameter:
---- - `bufnr`: the buffer number that is focused on. If there's any jump-to-location or pop-up,
----   this'll points you to the new buffer.
---- - `client?`: the `vim.lsp.Client` used to invoke the action. `nil` when the action failed
----   to be invoked.
-function M.action(action, opts, callback)
+function M.action(action, opts)
   vim.validate('action', action, function(val)
     return type(val) == 'function' or type(action_handlers[val]) == 'function'
   end, false)
   vim.validate('opts', opts, 'table', true)
-  vim.validate('callback', callback, 'function', true)
+
+  opts = opts or {}
+  vim.validate('opts.on_done', opts.on_done, 'function', true)
 
   local action_handler = action
   if type(action) == 'string' then
@@ -958,19 +960,18 @@ function M.action(action, opts, callback)
     --- @cast action_handler -vim.lsp.inlay_hint.action.name
   end
 
-  opts = opts or {}
-
   local bufnr = api.nvim_get_current_buf()
 
-  local on_finish_cb_called = false
-  if callback then
-    local original_callback = callback
-    -- Decorate the `on_finish` callback to make sure it only called once.
-    ---@type vim.lsp.inlay_hint.action.on_finish.callback
-    callback = function(...)
-      assert(not on_finish_cb_called, 'The callback should only be called once.')
-      on_finish_cb_called = true
-      return original_callback(...)
+  local on_done_called = false
+  local on_done = opts.on_done
+  if on_done then
+    local original_on_done = on_done
+    -- Decorate `on_done` to make sure it is only called once.
+    ---@type vim.lsp.inlay_hint.action.on_done.callback
+    on_done = function(...)
+      assert(not on_done_called, '`on_done` should only be called once.')
+      on_done_called = true
+      return original_on_done(...)
     end
   end
 
@@ -1018,10 +1019,10 @@ function M.action(action, opts, callback)
   --- @param idx? integer
   --- @param client? vim.lsp.Client
   local function do_action(idx, client)
-    if idx == nil or client == nil or on_finish_cb_called then
+    if idx == nil or client == nil or on_done_called then
       -- all clients have been consumed. Terminate the iteration.
-      if callback and not on_finish_cb_called then
-        callback({ bufnr = api.nvim_get_current_buf() })
+      if on_done and not on_done_called then
+        on_done({ buf = api.nvim_get_current_buf() })
       end
       return
     end
@@ -1034,11 +1035,11 @@ function M.action(action, opts, callback)
     end
 
     local support_resolve = client:supports_method('inlayHint/resolve', bufnr)
-    local action_ctx = { bufnr = bufnr, client = client }
+    local action_ctx = { buf = bufnr, client = client }
 
     if not support_resolve then
       -- no need to resolve because the client doesn't support it.
-      if action_handler(_hints, action_ctx, callback) == 0 then
+      if action_handler(_hints, action_ctx, on_done) == 0 then
         -- no actions invoked. proceed with the client.
         return do_action(next(clients, idx))
       else
@@ -1063,7 +1064,7 @@ function M.action(action, opts, callback)
 
         if num_processed == #_hints then
           -- all hints have been resolved. we're now ready to invoke the action.
-          if action_handler(_hints, action_ctx, callback) == 0 then
+          if action_handler(_hints, action_ctx, on_done) == 0 then
             return do_action(next(clients, idx))
           else
             -- Actions were taken. we're done with the actions.
