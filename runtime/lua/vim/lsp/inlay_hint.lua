@@ -617,41 +617,36 @@ local action_handlers = {
       return false
     end
 
-    do_or_select(
-      vim
-        .iter(hint_labels)
-        :map(
-          --- @param loc vim.lsp.inlay_hint.action.hint_label
-          function(loc)
-            local label = loc.label
-            return string.format(
-              '%s\t%s:%d',
-              label.value,
-              cleanup_path(vim.uri_to_fname(label.location.uri), ctx.client.root_dir),
-              label.location.range.start.line
-            )
-          end
+    do_or_select(hint_labels, {
+      prompt = 'Location to jump to',
+      kind = 'inlay_hint_location',
+      --- @param item vim.lsp.inlay_hint.action.hint_label
+      format_item = function(item)
+        local label = item.label
+        return string.format(
+          '%s\t%s:%d',
+          label.value,
+          cleanup_path(vim.uri_to_fname(label.location.uri), ctx.client.root_dir),
+          label.location.range.start.line
         )
-        :totable(),
-      { prompt = 'Location to jump to' },
-      function(_, idx)
-        if idx == nil or not can_show(ctx) then
-          -- `vim.ui.select` was cancelled
-          on_done({ buf = ctx.buf })
-          return
-        end
-        api.nvim_set_current_win(ctx.win)
-        local shown = util.show_document(
-          hint_labels[idx].label.location,
-          ctx.client.offset_encoding,
-          { reuse_win = true, focus = true }
-        )
-        on_done({
-          buf = shown and api.nvim_get_current_buf() or ctx.buf,
-          client = shown and ctx.client or nil,
-        })
+      end,
+    }, function(item, idx)
+      if idx == nil or not can_show(ctx) then
+        -- `vim.ui.select` was cancelled
+        on_done({ buf = ctx.buf })
+        return
       end
-    )
+      api.nvim_set_current_win(ctx.win)
+      local shown = util.show_document(
+        item.label.location,
+        ctx.client.offset_encoding,
+        { reuse_win = true, focus = true }
+      )
+      on_done({
+        buf = shown and api.nvim_get_current_buf() or ctx.buf,
+        client = shown and ctx.client or nil,
+      })
+    end)
 
     return true
   end,
@@ -793,45 +788,40 @@ local action_handlers = {
       return false
     end
 
-    do_or_select(
-      vim
-        .iter(hint_labels)
-        :map(
-          --- @param item vim.lsp.inlay_hint.action.hint_label
-          function(item)
-            local label = item.label
-            local entry_line = string.format('%s: %s', label.value, assert(label.command).title)
-            if label.tooltip then
-              entry_line = entry_line .. string.format(' (%s)', label.tooltip)
-            end
-            return entry_line
-          end
-        )
-        :totable(),
-      { prompt = 'Command to execute' },
-      function(_, idx)
-        if idx == nil or not ctx.is_valid() then
-          -- `vim.ui.select` was cancelled
-          on_done({ buf = ctx.buf })
-          return
+    do_or_select(hint_labels, {
+      prompt = 'Command to execute',
+      kind = 'inlay_hint_command',
+      --- @param item vim.lsp.inlay_hint.action.hint_label
+      format_item = function(item)
+        local label = item.label
+        local entry_line = string.format('%s: %s', label.value, assert(label.command).title)
+        if label.tooltip then
+          entry_line = entry_line .. string.format(' (%s)', label.tooltip)
         end
-        local cmd = assert(hint_labels[idx].label.command)
-        local success, request_id = ctx.client:exec_cmd(cmd, { bufnr = ctx.buf }, function(err, ...)
-          local default_handler = ctx.client.handlers['workspace/executeCommand']
-            or vim.lsp.handlers['workspace/executeCommand']
-          if default_handler then
-            default_handler(err, ...)
-          end
-          on_done({ buf = ctx.buf, client = not err and ctx.client or nil })
-        end)
-        if not success then
-          on_done({ buf = ctx.buf })
-        elseif not request_id then
-          -- The command ran locally, so the handler above is never called.
-          on_done({ buf = ctx.buf, client = ctx.client })
-        end
+        return entry_line
+      end,
+    }, function(item, idx)
+      if idx == nil or not ctx.is_valid() then
+        -- `vim.ui.select` was cancelled
+        on_done({ buf = ctx.buf })
+        return
       end
-    )
+      local cmd = assert(item.label.command)
+      local success, request_id = ctx.client:exec_cmd(cmd, { bufnr = ctx.buf }, function(err, ...)
+        local default_handler = ctx.client.handlers['workspace/executeCommand']
+          or vim.lsp.handlers['workspace/executeCommand']
+        if default_handler then
+          default_handler(err, ...)
+        end
+        on_done({ buf = ctx.buf, client = not err and ctx.client or nil })
+      end)
+      if not success then
+        on_done({ buf = ctx.buf })
+      elseif not request_id then
+        -- The command ran locally, so the handler above is never called.
+        on_done({ buf = ctx.buf, client = ctx.client })
+      end
+    end)
 
     return true
   end,
