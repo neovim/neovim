@@ -117,6 +117,29 @@ In the user's config:
     vim.keymap.set({'n', 'v'}, '<leader>h', '<Plug>(SayHello)')
 <
 ==============================================================================
+Repeatable edits                                           *lua-plugin-repeat*
+
+Nvim captures each user action (|CmdAtom|), so your plugin does not need to do
+any special handling to support dot-repeat.
+
+|multicursor| and |edit-repeat| "." mapping replay a Lua mapping by its LHS
+(i.e. the actual mapping, same as a macro). Builtin |dot-repeat| replays the
+low-level "resolved" keys. To support builtin ".", define an operator: set
+'operatorfunc' and return "g@". See |:map-operator|.
+
+If your mapping prompts for input (|getchar()|, |input()|) the input will
+automatically be replayed by "." dot-repeat. Your mapping should not cache the
+input; just read it as usual, on every call. |repeat-payload|.
+
+Example:
+>lua
+    vim.keymap.set('n', '<Plug>(my-surround)', function()
+      local char = vim.fn.getcharstr() -- Read on every call. Don't "cache" it.
+      local word = vim.fn.expand('<cword>')
+      vim.cmd(('normal! "_ciw%s%s%s'):format(char, word, char))
+    end)
+<
+==============================================================================
 Initialization                                               *lua-plugin-init*
 
 Strictly separated configuration and smart initialization allow your plugin to

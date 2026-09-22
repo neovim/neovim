@@ -820,6 +820,30 @@ void atom_payload_end(void)
   }
 }
 
+/// Collects a byte replayed from redo (".") into the CmdFrame's payload slice.
+void atom_payload_add(uint8_t byte)
+{
+  if (mc_replaying() || cur_frame == NULL || cur_frame->payload_start == SIZE_MAX) {
+    return;
+  }
+  kv_push(typed.keys, byte);
+}
+
+/// Appends the CmdFrame's payload slice to its redo (so dot-repeat "." does not re-prompt) and
+/// closes it. Affects atom_from_redo().
+void atom_payload_redo(void)
+{
+  CmdFrame *frame = cur_frame;
+  if (frame == NULL || frame->payload_start == SIZE_MAX
+      || frame->payload_end <= frame->payload_start
+      || root_frame()->redo_frame != frame->id) {  // This frame's redobuf is not the atom.
+    return;
+  }
+  redo_append_str((char *)typed.keys.items + frame->payload_start,
+                  (ptrdiff_t)(frame->payload_end - frame->payload_start));
+  frame->payload_start = SIZE_MAX;  // Close the payload slice.
+}
+
 /// Drains the CmdFrame's payload slice to `CmdAtom.keys`.
 static void atom_payload_append(CmdAtom *atom, CmdFrame *frame)
 {
@@ -1271,6 +1295,9 @@ void atom_capture_op(oparg_T *oap, cmdarg_T *cap, bool redo_yank)
       xfree(v.data);
     }
   }
+
+  // The motion's payload (":omap"/Lua that reads getchar(), like vim-sneak) belongs to redo.
+  atom_payload_redo();
 }
 
 /// Delimits an insert-session, called before its edit(). The session either insert-cascades (spans
@@ -1544,8 +1571,6 @@ static bool atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
     if (root->redo_frame == old->id && !mouse_cmd) {
       // Redoable edit ("dw", "p", "rX", "g@…"): this frame's redobuf defines the atom.
       CmdAtom atom = atom_from_redo(kAOperator);
-      // The payload ('operatorfunc' getchar()) is not in the captured redo, append it.
-      atom_payload_append(&atom, old);
 
       // Cascade only an observable "effect": edit, register-write, or cursor-move (only during
       // follow-mode).

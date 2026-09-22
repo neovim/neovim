@@ -37,6 +37,21 @@ jumps (mouse, |i_<PageUp>|, …) split an insert session.
 Repeating a Visual-mode command re-executes the captured keysequence,
 selection included.  See |visual-repeat|.
 
+						*redo-payload* *repeat-payload*
+If a command/mapping reads input (|getchar()|, |input()|) while it executes,
+that input is stored as part of the |dot-repeat| sequence. Such commands
+automatically work with "." without any special handling for dot-repeat.
+
+But that also means, legacy plugins with clever workarounds to "cache" input
+or dynamically define a |:map-<expr>| for dot-repeat, will NOT work properly.
+Plugins should not cache input for dot-repeat, they should just re-read the
+input as usual.
+
+This applies to an 'operatorfunc' (|g@|), an operator-pending motion
+(|omap-info|), and any mapping that prompts. Reading fewer times than when the
+input was captured means the leftover input runs as a command; reading more
+consumes the keys that follow.
+
 To repeat non-changes, see |motion-repeat|. To repeat multiple actions, see
 |cmdatom-macro| and |complex-repeat|.
 
@@ -63,8 +78,8 @@ produced.
 	,Dw		"dw"		Incomplete mapping: ended mid-
 					operation (`:nnoremap ,D d`),
 					captures its continuation ("w").
-	ds)		":call …<NL>)"	"Payload" mapping (e.g. vim-surround
-					"ds'" reads |getchar()|).
+	ds)		":call …<NL>)"	"Payload" mapping: |redo-payload|
+					(e.g. vim-surround "ds'" |getchar()|).
 	]q		nil		Lua mapping.
 	V<C-E>d		""		Unreplayable: viewport-dependent
 					Visual sequence; `lhs` is only
@@ -100,9 +115,9 @@ Example: This "," mapping repeats the last motion ("zj", "3w", "fx",
     end)
 <
 							*edit-repeat*
-Example: This "." mapping repeats ANY edit (except undo/redo), including
-operations provided by plugins, without the need for "announcement" via
-vim-repeat or similar. >lua
+Example: This "." mapping repeats ANY edit, including operations provided by
+plugins (|:omap|, 'operatorfunc'). Note: This won't work if your plugins use
+legacy workarounds (vim-repeat, caching or redefining expr-mappings). >lua
 
     local last ---@type vim.event.cmdatom.data?
     vim.api.nvim_create_autocmd('CmdAtom', {
@@ -481,9 +496,8 @@ LIMITATIONS						*mcursor-limitations*
 - Reloading/unloading a buffer (|:edit!|, 'autoread') clears its cursors
   (extmarks limitation).
 - |Q| is not allowed while recording or executing a macro.
-- An 'operatorfunc' that caches its |getchar()| input instead of re-reading it
-  misbehaves at the extra cursors: the unconsumed input runs as a normal-mode
-  key.
+- A mapping or function that does not re-read its input will not cascade
+  correctly. |redo-payload|
 
 
  vim:tw=78:ts=8:noet:ft=help:norl:

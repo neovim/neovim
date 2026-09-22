@@ -3323,6 +3323,7 @@ static void op_function(const oparg_T *oap)
       tv_clear(&rettv);
     }
     restore_redobuff(&save_redo);
+    atom_payload_redo();
 
     virtual_op = save_virtual_op;
     finish_op = save_finish_op;

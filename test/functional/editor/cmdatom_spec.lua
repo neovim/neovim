@@ -489,7 +489,7 @@ describe('CmdAtom', function()
       eq('t', api.nvim_get_mode().mode)
     end)
 
-    it('":call" payload mapping appends payload to `keys`', function()
+    it(':call payload mapping appends payload to `keys`', function()
       n.exec(t_atom.delsurround_vim)
       fn.setline(1, { 'a (one)', 'b (two)' })
       feed('gg0f(')
@@ -537,20 +537,72 @@ describe('CmdAtom', function()
       n.exec_lua(([[vim.api.nvim_feedkeys(%q, 'nx', false)]]):format(ev.keys))
       eq('here', fn.getline(2))
 
-      -- An :omap that abandons the operator is still one replayable atom.
-      command('onoremap <F2> <Esc>x')
-      api.nvim_buf_set_lines(0, 0, -1, true, { 'abcd' })
-      feed('gg0')
-      local before = #atoms()
-      feed('d<F2>')
-      -- The typed "d" is part of the composite atom.
-      eq(before + 1, #atoms())
-      eq(
-        { { type = 'mapping', lhs = k('d<F2>'), keys = k('<Esc>dl') } },
-        atoms_tail(1, 'type', 'lhs', 'keys')
-      )
-      eq({ 'bcd' }, get_lines())
+      -- Redobuf includes the input-payload, so "." repeats the motion + the payload.
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'a1 here b2 here c3 here' })
+      feed('gg0dzhe')
+      eq('here b2 here c3 here', fn.getline(1))
+      feed('fb.')
+      eq('here here c3 here', fn.getline(1))
+      feed('fc.')
+      eq('here here here', fn.getline(1))
 
+      -- Insert-entering operator ("c"), like vim-sneak "cz{target}". Cascades by `keys`.
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'a1 here b2 here c3 here' })
+      feed('gg0czheX<Esc>')
+      eq('Xhere b2 here c3 here', fn.getline(1))
+      ev = atom_last()
+      eq({
+        type = 'insert',
+        operator = 'c',
+        lhs = k('czheX<Esc>'),
+        -- The op + :call (motion) + payload + inserted-session.
+        keys = k('c:call MiniSneak()<NL>heX<Esc>'),
+      }, pick(ev, 'type', 'operator', 'lhs', 'keys'))
+      feed('fb.')
+      eq('Xhere Xhere c3 here', fn.getline(1))
+      feed('fc.')
+      eq('Xhere Xhere Xhere', fn.getline(1))
+    end)
+
+    it('Lua payload mapping has no `keys`, replays `lhs`', function()
+      -- Fake "surround" plugin. Reads input on every call.
+      n.exec_lua(function()
+        vim.keymap.set('n', ',w', function()
+          local char = vim.fn.getcharstr() -- Read input on every call.
+          local word = vim.fn.expand('<cword>')
+          vim.cmd(('normal! "_ciw%s%s%s'):format(char, word, char))
+        end)
+      end)
+      fn.setline(1, { 'foo bar', 'baz bar', 'qux bar' })
+      atoms_start()
+      feed('gg0,w*')
+      eq('*foo* bar', fn.getline(1))
+      local ev = atom_last()
+
+      -- Lua mapping has no `keys` to append the payload to; must replay `lhs` instead.
+      eq(
+        { type = 'mapping', lhs = ',w*', changed = true },
+        pick(ev, 'type', 'lhs', 'keys', 'changed')
+      )
+      feed('2G0')
+      n.exec_lua(([[vim.api.nvim_feedkeys(%q, 'mx', false)]]):format(ev.lhs))
+      eq('*baz* bar', fn.getline(2))
+
+      -- Builtin "." repeats the last change: the Lua mapping's ":norm!" edit, not the mapping LHS.
+      -- Replaying `lhs` does repeat it (|edit-repeat|).
+      feed('3G0.')
+      eq('*baz* bar', fn.getline(3))
+
+      -- Multicursor cascade.
+      fn.setline(1, { 'foo bar', 'baz bar', 'qux bar' })
+      feed('gg0QjQj')
+      feed(',w-')
+      eq({ '-foo- bar', '-baz- bar', '-qux- bar' }, get_lines())
+    end)
+
+    it('burst input: a mapping resolved mid-command is its own atom', function()
+      n.exec(t_atom.delsurround_vim)
+      atoms_start()
       -- Burst input ("f(" and the mapping arrive together): "f" peeks for a composing char with
       -- mappings enabled, so "ds" resolves while "f(" is still executing. The motion is still its
       -- own atom, and the K_IGNORE left by the peek stays out of `lhs`.
@@ -1161,7 +1213,7 @@ describe('CmdAtom', function()
       )
     end)
 
-    it('|edit-repeat|', function()
+    it('|edit-repeat| "." mapping', function()
       n.exec_lua([[
         local last ---@type vim.event.cmdatom.data?
         vim.api.nvim_create_autocmd('CmdAtom', {
@@ -1188,23 +1240,82 @@ describe('CmdAtom', function()
           end)
         end)
       ]])
+      local screen = Screen.new(30, 5)
       n.exec(t_atom.delsurround_vim)
       fn.setline(1, { 'aa bb', 'a (one)', 'b (two)' })
       -- "Builtin" edit.
       feed('gg0dw')
-      n.poke_eventloop()
+      screen:expect([[
+        ^bb                            |
+        a (one)                       |
+        b (two)                       |
+        {1:~                             }|
+                                      |
+      ]])
       feed('.')
-      retry(nil, 1000, function()
-        eq('', fn.getline(1))
-      end)
+      screen:expect([[
+        ^                              |
+        a (one)                       |
+        b (two)                       |
+        {1:~                             }|
+                                      |
+      ]])
       -- Payload mapping: builtin "." could not repeat this (without e.g. vim-repeat).
       feed('2G0f(ds)')
-      n.poke_eventloop()
-      eq('a one', fn.getline(2))
+      screen:expect([[
+                                      |
+        a ^one                         |
+        b (two)                       |
+        {1:~                             }|
+                                      |
+      ]])
       feed('3G0f(.')
-      retry(nil, 1000, function()
-        eq('b two', fn.getline(3))
-      end)
+      screen:expect([[
+                                      |
+        a one                         |
+        b ^two                         |
+        {1:~                             }|
+        :call DelSurround()           |
+      ]])
+
+      -- Operator whose MOTION reads input payload (vim-sneak "dz{target}").
+      -- https://github.com/justinmk/vim-sneak/issues/329
+      n.exec(t_atom.minisneak_vim)
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'a1 here', 'b2 here', 'c3 here' })
+      feed('gg0dzhe')
+      screen:expect([[
+        ^here                          |
+        b2 here                       |
+        c3 here                       |
+        {1:~                             }|
+        :call DelSurround()           |
+      ]])
+      feed('2G0.')
+      screen:expect([[
+        here                          |
+        ^here                          |
+        c3 here                       |
+        {1:~                             }|
+        :call MiniSneak()             |
+      ]])
+      -- Same when the operator enters Insert mode ("cz{target}").
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'a1 here', 'b2 here', 'c3 here' })
+      feed('gg0czheX<Esc>')
+      screen:expect([[
+        ^Xhere                         |
+        b2 here                       |
+        c3 here                       |
+        {1:~                             }|
+                                      |
+      ]])
+      feed('2G0.')
+      screen:expect([[
+        Xhere                         |
+        ^Xhere                         |
+        c3 here                       |
+        {1:~                             }|
+                                      |
+      ]])
 
       -- Edit fed by nvim_feedkeys(…, "mt") #41485.
       n.exec_lua([[
@@ -1214,49 +1325,71 @@ describe('CmdAtom', function()
       ]])
       api.nvim_buf_set_lines(0, 0, -1, true, { 'abcd' })
       feed('gg0<M-m>')
-      n.poke_eventloop()
-      eq('bcd', fn.getline(1))
+      screen:expect([[
+        ^bcd                           |
+        {1:~                             }|*3
+                                      |
+      ]])
       feed('.')
-      retry(nil, 1000, function()
-        eq('cd', fn.getline(1))
-      end)
-
+      screen:expect([[
+        ^cd                            |
+        {1:~                             }|*3
+                                      |
+      ]])
       -- Undo is not captured: "." still repeats the edit.
       feed('u')
-      n.poke_eventloop()
-      eq('bcd', fn.getline(1))
+      screen:expect([[
+        ^bcd                           |
+        {1:~                             }|*3
+        1 change; bef{MATCH:.*}|
+      ]])
       feed('.')
-      retry(nil, 1000, function()
-        eq('cd', fn.getline(1))
-      end)
+      screen:expect([[
+        ^cd                            |
+        {1:~                             }|*3
+        1 change; bef{MATCH:.*}|
+      ]])
 
       -- Visual edit: replays the resolved keys, so "iw" selects the cursor-relative word.
       api.nvim_buf_set_lines(0, 0, -1, true, { 'foo bar', 'longword bar' })
       feed('gg0viwd')
-      n.poke_eventloop()
       feed('j0.')
-      retry(nil, 1000, function()
-        eq({ ' bar', ' bar' }, get_lines())
-      end)
+      screen:expect([[
+         bar                          |
+        ^ bar                          |
+        {1:~                             }|*2
+                                      |
+      ]])
       -- Visual change (insert session): selection, operator, text and <Esc> all replay.
       api.nvim_buf_set_lines(0, 0, -1, true, { 'foo bar', 'longword bar' })
       feed('gg0viwcX<Esc>')
-      n.poke_eventloop()
       feed('j0.')
-      retry(nil, 1000, function()
-        eq({ 'X bar', 'X bar' }, get_lines())
-      end)
+      screen:expect([[
+        X bar                         |
+        ^X bar                         |
+        {1:~                             }|*2
+                                      |
+      ]])
 
       -- While multicursor is active, the "." mapping degrades to builtin "." so it cascades.
       api.nvim_buf_set_lines(0, 0, -1, true, { 'aaa', 'bbb', 'ccc' })
       feed('gg0QjQj')
       feed('x')
-      n.poke_eventloop()
-      eq({ 'aa', 'bb', 'cc' }, api.nvim_buf_get_lines(0, 0, -1, true))
+      screen:expect([[
+        {10:a}a                            |
+        {10:b}b                            |
+        ^cc                            |
+        {1:~                             }|
+                                      |
+      ]])
       feed('.')
-      retry(nil, 1000, function()
-        eq({ 'a', 'b', 'c' }, api.nvim_buf_get_lines(0, 0, -1, true))
-      end)
+      screen:expect([[
+        {10:a}                             |
+        {10:b}                             |
+        ^c                             |
+        {1:~                             }|
+                                      |
+      ]])
     end)
 
     it('|motion-repeat|', function()
@@ -1896,9 +2029,9 @@ describe('CmdAtom', function()
     eq({ '' }, fn.getbufline(fn.bufnr('#'), 2))
   end)
 
-  it("operatorfunc atom includes the getchar()'d payload", function()
+  it("'operatorfunc' (g@) atom includes its getchar()/input() payload", function()
     n.exec(t_atom.minisurround_vim)
-    fn.setline(1, { 'alpha beta' })
+    fn.setline(1, { 'alpha beta', 'gamma delta' })
     feed('gg0')
     atoms_start()
     feed('ysiw"')
@@ -1908,7 +2041,37 @@ describe('CmdAtom', function()
       { type = 'operator', keys = 'g@iw"', lhs = 'ysiw"' },
       pick(atom_last(), 'type', 'keys', 'lhs')
     )
-    eq({ '"alpha" beta' }, get_lines())
+    eq({ '"alpha" beta', 'gamma delta' }, get_lines())
+    -- The redo carries the payload, so "." hands it back to the opfunc instead of re-prompting.
+    feed('j0.')
+    eq({ '"alpha" beta', '"gamma" delta' }, get_lines())
+
+    --
+    -- Examples from #41657.
+    --
+    n.exec_lua(t_atom.opfunc_input_lua)
+    -- - "sd": not a real operator, "g@l" fixes the motion.
+    fn.setline(1, { 'aaa', 'bbb', 'ccc' })
+    feed('gg0sdo<CR>')
+    eq('ooaaa', fn.getline(1))
+    local ev = atom_last()
+    eq({ lhs = k('sdo<CR>'), keys = k('g@lo<CR>') }, pick(ev, 'lhs', 'keys'))
+    feed('j0.')
+    eq('oobbb', fn.getline(2))
+    feed('j0') -- |edit-repeat|: `keys` replays it too.
+    n.exec_lua(([[vim.api.nvim_feedkeys(%q, 'nx', false)]]):format(ev.keys))
+    eq('ooccc', fn.getline(3))
+    -- - "sa": true operator, input read AFTER the textobject.
+    fn.setline(1, { 'aaa x', 'bbb x', 'ccc x' })
+    feed('gg0saiwo<CR>')
+    eq('oaaao x', fn.getline(1))
+    ev = atom_last()
+    eq({ lhs = k('saiwo<CR>'), keys = k('g@iwo<CR>') }, pick(ev, 'lhs', 'keys'))
+    feed('j0.')
+    eq('obbbo x', fn.getline(2))
+    feed('j0')
+    n.exec_lua(([[vim.api.nvim_feedkeys(%q, 'nx', false)]]):format(ev.keys))
+    eq('occco x', fn.getline(3))
   end)
 
   it('operator completed by a Lua textobject (:omap) #41482', function()
@@ -1993,6 +2156,20 @@ describe('CmdAtom', function()
       pick(atom_last(), 'type', 'lhs', 'changed')
     )
     command('set cpo-=E')
+
+    -- An :omap that abandons the operator is still one replayable atom.
+    command('onoremap <F2> <Esc>x')
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'abcd' })
+    feed('gg0')
+    local before = #atoms()
+    feed('d<F2>')
+    -- The typed "d" is part of the composite atom.
+    eq(before + 1, #atoms())
+    eq(
+      { { type = 'mapping', lhs = k('d<F2>'), keys = k('<Esc>dl') } },
+      atoms_tail(1, 'type', 'lhs', 'keys')
+    )
+    eq({ 'bcd' }, get_lines())
   end)
 
   it('does not capture inputsecret() input', function()

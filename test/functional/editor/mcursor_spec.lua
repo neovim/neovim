@@ -3215,6 +3215,23 @@ describe('multicursor', function()
       eq({ '"alpha" beta', '"gamma" delta', '"epsilon" zeta' }, get_lines())
     end)
 
+    it('Lua opfunc reading input() cascades', function()
+      -- Examples from #41657.
+      n.exec_lua(t_atom.opfunc_input_lua)
+      cursors({ 'aaa', 'bbb', 'ccc' }, 'Qj0Qj0')
+      atoms_start()
+      -- "sd": not a real operator, "g@l" fixes the motion.
+      feed('sdo<CR>')
+      eq({ k('g@lo<CR>') }, atoms_tail(1))
+      eq({ 'ooaaa', 'oobbb', 'ooccc' }, get_lines())
+      -- "sa": true operator, the input is read AFTER the textobject.
+      clear_cursors()
+      cursors({ 'aaa x', 'bbb x', 'ccc x' }, 'Qj0Qj0')
+      feed('saiwo<CR>')
+      eq({ k('g@iwo<CR>') }, atoms_tail(1))
+      eq({ 'oaaao x', 'obbbo x', 'occco x' }, get_lines())
+    end)
+
     it('no-effect operator (aborted "ysa[") does not cascade', function()
       -- vim-surround "ysa[" whose surround char is <Esc>/CTRL-C: a redoable g@ whose opfunc does
       -- nothing. Its "a[" textobject jumps EVERY cursor to the same "[", so a cascade would
@@ -3297,57 +3314,59 @@ describe('multicursor', function()
       eq({ 'WORD a WORD', 'b WORD c' }, get_lines())
     end)
 
-    it(
-      'payload mapping (":call" + getchar, like vim-surround "ds") cascades via LHS-replay',
-      function()
-        -- A mapping whose edit is done through :normal is invisible to atom
-        -- capture (decide-once sees nothing). It cascades by re-running the
-        -- mapping (LHS + the getchar()'d target) at each cursor: LHS-replay.
-        n.exec(t_atom.delsurround_vim)
-        fn.setline(1, { 'a (one)', 'b (two)', 'c (three)' })
-        feed('gg0f(Qj0f(Qj0f(')
-        atoms_start()
-        feed('ds)') -- ")" is the getchar()'d payload
-        eq({ 'a one', 'b two', 'c three' }, get_lines())
-        -- The emitted atom carries the resolution plus the getchar()'d payload; the cascade
-        -- itself re-runs `lhs` (the edit is invisible, so nothing was queued for it).
-        local ev = atoms()[#atoms()]
-        eq({ lhs = 'ds)', keys = ':call DelSurround()\n)' }, { lhs = ev.lhs, keys = ev.keys })
+    it('payload mapping (:call + getchar, like vim-surround "ds") cascades LHS', function()
+      -- Mapping that edits via :normal, queues no cascadable atom (its own ":call" atom is
+      -- emit-only). It cascades by LHS + the getchar() payload.
+      n.exec(t_atom.delsurround_vim)
+      fn.setline(1, { 'a (one)', 'b (two)', 'c (three)' })
+      feed('gg0f(Qj0f(Qj0f(')
+      atoms_start()
+      feed('ds)') -- ")" is the getchar()'d payload
+      eq({ 'a one', 'b two', 'c three' }, get_lines())
+      -- The emitted atom carries the resolution plus the getchar()'d payload; the cascade
+      -- itself re-runs `lhs` (the edit is invisible, so nothing was queued for it).
+      local ev = atoms()[#atoms()]
+      eq({ lhs = 'ds)', keys = ':call DelSurround()\n)' }, { lhs = ev.lhs, keys = ev.keys })
 
-        -- Same for a mapping that produces NO capturable keys at all (kKeyOpaque):
-        -- "<Cmd>" (K_COMMAND) and a Lua callback (K_LUA). Both are real user
-        -- keystrokes, so their edit is a mapping edit and cascades by LHS-replay.
-        command('nnoremap <F3> <Cmd>normal! x<CR>')
-        n.exec_lua([[vim.keymap.set('n', '<F4>', function() vim.cmd('normal! x') end)]])
-        for _, lhs in ipairs({ '<F3>', '<F4>' }) do
-          clear_cursors()
-          fn.setline(1, { 'aaa', 'bbb', 'ccc' })
-          feed('gg0QjQj')
-          feed(lhs)
-          eq({ 'aa', 'bb', 'cc' }, get_lines())
-        end
-
-        -- Op-pending payload mapping (vim-sneak :omap) cascades by `keys`.
-        n.exec(t_atom.minisneak_vim)
+      -- Mapping that produces no capturable keys (kKeyOpaque): <Cmd>, K_LUA. Cascades LHS.
+      command('nnoremap <F3> <Cmd>normal! x<CR>')
+      n.exec_lua([[vim.keymap.set('n', '<F4>', function() vim.cmd('normal! x') end)]])
+      for _, lhs in ipairs({ '<F3>', '<F4>' }) do
         clear_cursors()
-        fn.setline(1, { 'aa (x) here', 'bb (y) here', 'cc (z) here' })
+        fn.setline(1, { 'aaa', 'bbb', 'ccc' })
         feed('gg0QjQj')
-        feed('dzhe')
-        eq({ 'here', 'here', 'here' }, get_lines())
+        feed(lhs)
+        eq({ 'aa', 'bb', 'cc' }, get_lines())
+      end
 
-        -- Lua :omap textobject (starts Visual mode, |omap-info|) cascades by `keys` too. #41482
-        n.exec_lua([[
+      -- Op-pending payload mapping (vim-sneak :omap) cascades by `keys`.
+      n.exec(t_atom.minisneak_vim)
+      clear_cursors()
+      fn.setline(1, { 'aa (x) here', 'bb (y) here', 'cc (z) here' })
+      feed('gg0QjQj')
+      feed('dzhe')
+      eq({ 'here', 'here', 'here' }, get_lines())
+
+      -- Operator entering Insert-mode by :omap motion (vim-sneak "cz{target}"), cascades payload.
+      -- https://github.com/justinmk/vim-sneak/issues/329
+      clear_cursors()
+      fn.setline(1, { 'a1 here', 'b2 here', 'c3 here' })
+      feed('gg0QjQj')
+      feed('czheX<Esc>')
+      eq({ 'Xhere', 'Xhere', 'Xhere' }, get_lines())
+
+      -- Lua :omap textobject (starts Visual mode, |omap-info|) cascades by `keys`. #41482
+      n.exec_lua([[
           vim.keymap.set('o', 'gt', function()
             vim.cmd('normal! viw')
           end)
         ]])
-        clear_cursors()
-        fn.setline(1, { 'aaa xxx', 'bbb yyy', 'ccc zzz' })
-        feed('gg0wQj0wQj0w')
-        feed('dgt')
-        eq({ 'aaa ', 'bbb ', 'ccc ' }, get_lines())
-      end
-    )
+      clear_cursors()
+      fn.setline(1, { 'aaa xxx', 'bbb yyy', 'ccc zzz' })
+      feed('gg0wQj0wQj0w')
+      feed('dgt')
+      eq({ 'aaa ', 'bbb ', 'ccc ' }, get_lines())
+    end)
   end)
 
   describe(']C and [C', function()
