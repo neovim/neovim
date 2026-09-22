@@ -876,7 +876,8 @@ local action_handlers = {
 ---| 'hover' -- Show a hover window of the symbols shown in the inlay hint
 ---| 'tooltip' -- Show a hover-like window, containing available tooltips, commands and locations
 
---- @alias vim.lsp.inlay_hint.action
+--- A built-in action name, or a custom handler.
+--- @alias vim.lsp.inlay_hint.action.spec
 ---| vim.lsp.inlay_hint.action.name
 ---| vim.lsp.inlay_hint.action.handler
 
@@ -918,7 +919,7 @@ local action_handlers = {
 --- ```lua
 --- vim.keymap.set(
 ---   { 'n', 'v' },
----   'gI',
+---   'grI',
 ---   function()
 ---     vim.lsp.inlay_hint.action('textEdits')
 ---   end,
@@ -926,7 +927,7 @@ local action_handlers = {
 --- )
 --- ```
 ---
---- @param action vim.lsp.inlay_hint.action
+--- @param action vim.lsp.inlay_hint.action.spec
 --- Possible actions:
 --- - `"textEdits"`: insert `textEdits` that comes with the inlay hints.
 --- - `"location"`: jump to one of the locations associated with the inlay hints.
