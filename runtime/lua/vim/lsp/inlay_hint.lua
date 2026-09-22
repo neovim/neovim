@@ -435,9 +435,7 @@ end
 --- @param opts vim.ui.select.Opts Additional options
 --- @param on_choice fun(item: T|nil, idx: integer|nil)
 local function do_or_select(items, opts, on_choice)
-  if #items == 0 then
-    return error('Empty items!')
-  end
+  assert(#items > 0, 'Empty items!')
   if #items == 1 then
     return on_choice(items[1], 1)
   end
