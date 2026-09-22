@@ -2732,12 +2732,14 @@ static int vgetorpeek(bool advance)
   check_end_reg_executing(advance);
   do {
     // get a character: 1. from the stuffbuffer
+    bool translation = false;  // Stuffed translation (readbuf1), not redo.
     if (typeahead_char != 0) {
       c = typeahead_char;
       if (advance) {
         typeahead_char = 0;
       }
     } else {
+      translation = readbuf1.read < readbuf1.keys.size;
       c = read_readbuffers(advance);
     }
     if (c != NUL && !got_int) {
@@ -2746,6 +2748,10 @@ static int vgetorpeek(bool advance)
         // was typed, behave like the stuffed command was typed.
         // needed for CTRL-W CTRL-] to open a fold, for example.
         KeyStuffed = true;
+        if (!translation) {
+          // Re-capture a readbuf2 (redo) byte as input-payload, if a getchar()/input() read is open.
+          atom_payload_add((uint8_t)c);
+        }
       }
       if (typebuf.tb_no_abbr_cnt == 0) {
         typebuf.tb_no_abbr_cnt = 1;  // no abbreviations now
