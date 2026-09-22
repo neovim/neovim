@@ -829,6 +829,9 @@ local inlayhint_actions = {
   end,
 
   command = function(hints, ctx, on_finish)
+    if #hints == 0 then
+      return 0
+    end
     if #hints ~= 1 then
       vim.schedule(function()
         vim.notify(
@@ -836,9 +839,6 @@ local inlayhint_actions = {
           vim.log.levels.WARN
         )
       end)
-    end
-    if #hints == 0 then
-      return 0
     end
     local hint_labels = action_helpers.get_hint_labels(assert(hints[1]), { 'command' })
     if hint_labels == nil or #hint_labels == 0 then
