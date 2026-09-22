@@ -387,10 +387,7 @@ describe('TUI :restart', function()
 
   it(':restart (no bang) restores session, window layout', function()
     local file = 'Xtest-restart-file'
-    local startup_files = { 'Xtest-restart arg #1', 'Xtest-restart arg #2' }
-    local startup_paths = vim.tbl_map(function(name)
-      return fn.fnamemodify(name, ':p')
-    end, startup_files)
+    local startup_arg = 'Xtest-restart-arg'
     write_file(file, 'foobar')
     finally(function()
       os.remove(file)
@@ -410,8 +407,7 @@ describe('TUI :restart', function()
       '--cmd',
       'set notermguicolors laststatus=0 noruler noshowcmd',
       '--',
-      startup_files[1],
-      startup_files[2],
+      startup_arg,
     }, {
       env = vim.tbl_extend('force', env_notermguicolors, {
         -- Ignore logs, because assert_restarted may log "connection refused" while it retries.
@@ -436,8 +432,8 @@ describe('TUI :restart', function()
     server_session = n.connect(server_pipe)
     local _, starttime = server_session:request('nvim_eval', 'v:starttime')
     eq({ true, '' }, { server_session:request('nvim_get_vvar', 'this_session') })
-    eq({ true, startup_paths }, { server_session:request('nvim_get_vvar', 'argf') })
-    -- Change the argument list, to confirm the original arguments are restored
+    eq({ true, { startup_arg } }, { server_session:request('nvim_eval', 'argv()') })
+    -- Change the argument list, to confirm the changes are preserved
     eq(
       { true, vim.NIL },
       { server_session:request('nvim_command', '%argdelete | argadd Xtest-restart-extra') }
@@ -458,10 +454,7 @@ describe('TUI :restart', function()
     starttime, server_session = assert_restarted(starttime, server_session, server_pipe)
     eq({ true, 'restart' }, { server_session:request('nvim_get_vvar', 'startreason') })
     eq({ true, '' }, { server_session:request('nvim_get_vvar', 'this_session') })
-    eq(
-      { true, startup_paths },
-      { server_session:request('nvim_eval', [[map(argv(), 'fnamemodify(v:val, ":p")')]]) }
-    )
+    eq({ true, { 'Xtest-restart-extra' } }, { server_session:request('nvim_eval', 'argv()') })
 
     -- :restart!
     feed_data(':restart!\r')

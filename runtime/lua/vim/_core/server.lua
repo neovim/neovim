@@ -183,11 +183,6 @@ function M.ex_session_restart(eap, extra)
   end
   vim.uv.fs_close(fd)
 
-  -- Restore startup file arguments
-  vim.cmd('%argdelete')
-  if #vim.v.argf > 0 then
-    vim.cmd('argadd ' .. table.concat(vim.tbl_map(vim.fn.fnameescape, vim.v.argf), ' '))
-  end
   -- Write session
   local session_arg = vim.fn.fnameescape(session)
   vim.cmd.mksession { session_arg, bang = true }
