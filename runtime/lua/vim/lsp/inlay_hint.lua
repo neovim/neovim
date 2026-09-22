@@ -548,15 +548,9 @@ local action_helpers = {
 
 ---Return a non-empty list of hint label, or `nil` if not found.
 --- @param hint lsp.InlayHint
---- @param needed_fields ("location"|"command"|"tooltip")[]?
+--- @param needed_fields ("location"|"command"|"tooltip")[]
 --- @return vim.lsp.inlay_hint.action.hint_label[]?
 action_helpers.get_hint_labels = function(hint, needed_fields)
-  vim.validate('needed_fields', needed_fields, function(val)
-    return vim.islist(val)
-      and vim.iter(needed_fields):any(function(field)
-        return vim.list_contains({ 'location', 'command', 'tooltip' }, field)
-      end)
-  end, false)
   --- @type vim.lsp.inlay_hint.action.hint_label[]
   local hint_labels = {}
 
@@ -998,9 +992,7 @@ function M.action(action, opts, callback)
   end
   --- Group inlay hints by clients.
   ---@type table<integer, lsp.InlayHint[]>
-  local hints_by_clients = vim.defaulttable(function(_)
-    return {}
-  end)
+  local hints_by_clients = vim.defaulttable()
 
   vim.iter(hints):each(
     ---@param item vim.lsp.inlay_hint.get.ret
