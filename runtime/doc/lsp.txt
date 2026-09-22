@@ -2437,7 +2437,7 @@ action({action}, {opts})                         *vim.lsp.inlay_hint.action()*
     Example usage: >lua
         vim.keymap.set(
           { 'n', 'v' },
-          'gI',
+          'grI',
           function()
             vim.lsp.inlay_hint.action('textEdits')
           end,
@@ -2446,7 +2446,7 @@ action({action}, {opts})                         *vim.lsp.inlay_hint.action()*
 <
 
     Parameters: ~
-      • {action}  (`vim.lsp.inlay_hint.action`) Possible actions:
+      • {action}  (`vim.lsp.inlay_hint.action.spec`) Possible actions:
                   • `"textEdits"`: insert `textEdits` that comes with the
                     inlay hints.
                   • `"location"`: jump to one of the locations associated with
