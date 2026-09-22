@@ -172,7 +172,7 @@ function M.on_inlayhint(err, result, ctx)
     return
   end
 
-  -- if there's no error but the result is nil, clear existing hints.
+  -- If there's no error but the result is nil, clear existing hints.
   result = result or {}
 
   local new_lnum_hints = {} ---@type table<integer, vim.lsp.inlay_hint.LineHints>
