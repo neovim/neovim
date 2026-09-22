@@ -599,6 +599,15 @@ vim.v.register = ...
 --- @type integer
 vim.v.relnum = ...
 
+--- Arguments passed to Vimscript from Nvim API. Only valid during
+--- the execution of `nvim_exec2()`.
+---
+--- See `v:sresult` for the corresponding return values.
+---
+--- Read-only.
+--- @type any[]
+vim.v.sarg = ...
+
 --- String describing the script or function that caused the
 --- screen to scroll up.  It's only set when it is empty, thus the
 --- first reason is remembered.  It is set to "Unknown" for a
@@ -660,6 +669,13 @@ vim.v.servername = ...
 --- ```
 --- @type integer
 vim.v.shell_error = ...
+
+--- Values returned to Nvim API from Vimscript. Only valid during
+--- the execution of `nvim_exec2()`.
+---
+--- See `v:sarg` for the corresponding arguments.
+--- @type any[]
+vim.v.sresult = ...
 
 --- The stack trace of the exception most recently caught and
 --- not finished.  Refer to `getstacktrace()` for the structure of
