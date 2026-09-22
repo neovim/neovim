@@ -579,7 +579,8 @@ CONCEPTS
 - LOSSY: When capture lost part of a composite (payload with no capturing
   atom, incomplete insert-session): `keys` cannot replay it, `lhs` can.
 - PAYLOAD: Keys a command reads interactively while executing: a search/Ex
-  cmdline (`d/pat<CR>`), `f{char}`, a mapping's `getchar()`.
+  cmdline (`d/pat<CR>`), `f{char}`, a mapping's `getchar()`. Also appended to
+  the redo, so "." hands it back to the same read.
 - REPLAY: Execute keys (dot-repeat, or atom).
 - VOID: When a pending (Visual) atom's keys were tainted/poisoned (by: mouse,
   Select mode, a scroll that drags the cursor, …), thus not replayable.
