@@ -180,7 +180,7 @@ function M.on_inlayhint(err, result, ctx)
   if num_unprocessed == 0 then
     state.active_request = {}
     state.current_result = {}
-    if vim.fn.win_gettype(vim.fn.bufwinid(bufnr)) == '' then
+    if fn.win_gettype(fn.bufwinid(bufnr)) == '' then
       api.nvim__redraw({ buf = bufnr, valid = true, flush = false })
     end
     return
@@ -210,7 +210,7 @@ function M.on_inlayhint(err, result, ctx)
     namespace_cleared = false,
   }
 
-  if vim.fn.win_gettype(vim.fn.bufwinid(bufnr)) == '' then
+  if fn.win_gettype(fn.bufwinid(bufnr)) == '' then
     api.nvim__redraw({ buf = bufnr, valid = true, flush = false })
   end
 end
@@ -242,7 +242,7 @@ function M.on_refresh(err, _, ctx)
     if provider.client_state[ctx.client_id] then
       provider:reset(ctx.client_id)
 
-      if not vim.tbl_isempty(vim.fn.win_findbuf(bufnr)) then
+      if not vim.tbl_isempty(fn.win_findbuf(bufnr)) then
         provider:refresh(ctx.client_id)
       end
     end
