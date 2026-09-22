@@ -646,29 +646,47 @@ local action_handlers = {
       return false
     end
 
-    ---@type string[]
-    local lines = {}
+    local function abort()
+      on_done({ buf = ctx.buf })
+    end
 
-    --- Go through the labels to build the content of the hover
-    ---@param idx integer?
-    ---@param item lsp.InlayHintLabelPart?
-    local function get_hover(idx, item)
+    --- Assemble the sections in label order and show them.
+    ---@param sections table<integer, string[]>
+    local function show(sections)
       if not can_show(ctx) then
-        on_done({ buf = ctx.buf })
-        return
+        return abort()
       end
-      if idx == nil or item == nil then
-        -- all locations have been processed
-        -- open the hover window
-        if #lines == 0 then
-          on_done({ buf = ctx.buf })
-          return
+      local lines = {} --- @type string[]
+      for i = 1, #hint_labels do
+        if sections[i] then
+          if #lines > 0 then
+            -- Blank line between label parts
+            lines[#lines + 1] = ''
+          end
+          vim.list_extend(lines, sections[i])
         end
-        local float_buf = api.nvim_win_call(ctx.win, function()
-          return util.open_floating_preview(lines, 'markdown')
-        end)
-        on_done({ client = ctx.client, buf = float_buf })
-        return
+      end
+      if #lines == 0 then
+        return abort()
+      end
+      local float_buf = api.nvim_win_call(ctx.win, function()
+        return util.open_floating_preview(lines, 'markdown')
+      end)
+      on_done({ client = ctx.client, buf = float_buf })
+    end
+
+    -- The locations are independent, so request them all at once and assemble the
+    -- hover once the last reply arrives.
+    local sections = {} --- @type table<integer, string[]>
+    local remaining = #hint_labels
+    for i, item in ipairs(hint_labels) do
+      ---@param section string[]?
+      local function complete(section)
+        sections[i] = section
+        remaining = remaining - 1
+        if remaining == 0 then
+          show(sections)
+        end
       end
 
       -- `get_hint_labels` makes sure `item` has a location attribute
@@ -682,28 +700,20 @@ local action_handlers = {
         'textDocument/hover',
         hover_param,
         ---@param result lsp.Hover?
-        function(_, result, _, _)
-          if result then
-            local md_lines = util.convert_input_to_markdown_lines(result.contents)
-            if #md_lines > 0 then
-              if #lines > 0 then
-                -- Blank line between label parts
-                lines[#lines + 1] = ''
-              end
-              lines[#lines + 1] = string.format('# `%s`', item.value)
-              vim.list_extend(lines, md_lines)
-            end
+        function(_, result)
+          local md_lines = result and util.convert_input_to_markdown_lines(result.contents) or {}
+          if #md_lines == 0 then
+            return complete(nil)
           end
-          get_hover(next(hint_labels, idx))
+          complete(vim.list_extend({ string.format('# `%s`', item.value) }, md_lines))
         end,
         ctx.buf
       )
       if not success then
-        on_done({ buf = ctx.buf })
+        complete(nil)
       end
     end
 
-    get_hover(next(hint_labels))
     return true
   end,
 
