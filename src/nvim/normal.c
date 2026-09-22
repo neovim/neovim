@@ -3093,7 +3093,7 @@ static void nv_zet(cmdarg_T *cap)
   const handle_T win_handle = curwin->handle;
   const handle_T buf_handle = curbuf->handle;
   if (foldenable != kNone && foldenable != curwin->w_p_fen) {
-    set_option_value(kOptFoldenable, BOOLEAN_OBJ(foldenable), OPT_LOCAL, NULL);
+    set_option_value(kOptFoldenable, BOOLEAN_OBJ(foldenable), OPT_LOCAL, true, NULL);
     if (curwin->handle != win_handle || curbuf->handle != buf_handle) {
       // OptionSet left the command's window or buffer; don't finish a pending fold there.
       clearop(cap->oap);
@@ -3107,7 +3107,7 @@ static void nv_zet(cmdarg_T *cap)
   }
   if (foldlevel >= 0) {
     // Re-apply even an unchanged value to undo manual opens/closes.
-    set_option_value(kOptFoldlevel, INTEGER_OBJ(foldlevel), OPT_LOCAL, NULL);
+    set_option_value(kOptFoldlevel, INTEGER_OBJ(foldlevel), OPT_LOCAL, true, NULL);
   }
   if (nchar == 'x' && curwin->handle == win_handle && curbuf->handle == buf_handle) {
     foldOpenCursor();

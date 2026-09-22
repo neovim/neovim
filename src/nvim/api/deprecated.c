@@ -779,8 +779,7 @@ static void set_option_to(uint64_t channel_id, void *to, OptScope scope, String 
 
   // Only scalar Objects (nil/boolean/number/string) are valid option values.
   // Don't use `name` in the error message here, because `name` can be any String.
-  // No need to check if value type actually matches the types for the option, as set_option_value()
-  // already handles that.
+  // No need to check the option's value type here; the option setter handles that.
   const bool valid = value.type == kObjectTypeNil || value.type == kObjectTypeBoolean
                      || value.type == kObjectTypeInteger || value.type == kObjectTypeString;
   VALIDATE_EXP(valid, "value", "valid option type", api_typename(value.type), {
@@ -796,7 +795,7 @@ static void set_option_to(uint64_t channel_id, void *to, OptScope scope, String 
       : ((scope == kOptScopeGlobal) ? OPT_GLOBAL : OPT_LOCAL);
 
   WITH_SCRIPT_CONTEXT(channel_id, {
-    set_option_value_for(opt_idx, optval, opt_flags, scope, to, err);
+    set_option_value_for(opt_idx, optval, opt_flags, scope, to, true, err);
   });
 }
 

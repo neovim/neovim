@@ -3327,7 +3327,7 @@ static void set_option_from_tv(const char *varname, typval_T *varp)
 
   if (!error) {
     const CharBuf errbuf = { (char[IOSIZE]){ 0 }, IOSIZE };
-    const char *errmsg = set_option_value(opt_idx, value, OPT_LOCAL, &errbuf);
+    const char *errmsg = set_option_value(opt_idx, value, OPT_LOCAL, true, &errbuf);
 
     if (errmsg) {
       emsg(errmsg);

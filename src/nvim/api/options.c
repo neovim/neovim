@@ -421,7 +421,7 @@ Object nvim_set_option_value(uint64_t channel_id, String name, Object value, Dic
     }
   } else {
     WITH_SCRIPT_CONTEXT(channel_id, {
-      set_option_value_for(opt_idx, merged_val, opt_flags, scope, to, err);
+      set_option_value_for(opt_idx, merged_val, opt_flags, scope, to, operation == OP_NONE, err);
     });
   }
 

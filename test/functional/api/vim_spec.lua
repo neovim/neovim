@@ -2307,6 +2307,38 @@ describe('API', function()
       eq('', api.nvim_get_option_value('wildignore', {}))
     end)
 
+    it('preserves :setlocal trust semantics when merging options', function()
+      local path = tmpname(false)
+      finally(function()
+        os.remove(path)
+      end)
+
+      local expr = "writefile(['foldexpr'], " .. fn.string(path) .. ')'
+      api.nvim_buf_set_lines(0, 0, -1, false, { 'one', 'two' })
+
+      -- Match :setlocal +=, ^=, and -=: retained expression text must stay sandboxed.
+      for _, case in ipairs({
+        { 'append', '+0' },
+        { 'prepend', '0+' },
+        { 'remove', '+0' },
+      }) do
+        local operation, value = unpack(case)
+
+        command('setlocal foldmethod=manual')
+        command('sandbox let &l:foldexpr = ' .. fn.string(expr .. '+0'))
+        api.nvim_set_option_value('foldexpr', value, { scope = 'local', operation = operation })
+
+        command('setlocal foldmethod=expr')
+        command('normal! zx')
+        eq(0, fn.filereadable(path))
+      end
+
+      -- As with :setlocal =, a full replacement from trusted code must allow the write.
+      api.nvim_set_option_value('foldexpr', expr, { scope = 'local' })
+      command('normal! zx')
+      eq({ 'foldexpr' }, fn.readfile(path))
+    end)
+
     it('allows setting, appending, prepending, removing dicts', function()
       -- NOTE: order is dependent on lua's hash map implementation. I don't
       -- *think* order matters for the map style options
