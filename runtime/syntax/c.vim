@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:		C
 " Maintainer:		The Vim Project <https://github.com/vim/vim>
-" Last Change:		2026 Sep 14
+" Last Change:		2026 Sep 21
 " Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Quit when a (custom) syntax file was already loaded
@@ -236,6 +236,11 @@ else
   " Flag the first zero of an octal number as something special
   syn match	cOctal		display contained "0\o\+\%(u\=l\{0,2}\|ll\=u\)\>" contains=cOctalZero
   syn match	cOctalZero	display contained "\<0"
+endif
+
+if !exists("c_no_c29") && !s:in_cpp_family
+  " XXX: 0-prefixed octal literals e.g. 0123 are obsolescent since C29
+  syn match	cOctal		display contained "0[Oo]\o\+\%('\o\+\)*\%(u\=l\{0,2}\|ll\=u\|u\=wb\|wbu\=\)\>"
 endif
 
 "floating point number, with dot, optional exponent
