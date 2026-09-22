@@ -4321,6 +4321,12 @@ static const char *set_option(const OptIndex opt_idx, Object value, int opt_flag
   // Every set path for a dict option (":set", the API, Vimscript, a merge) funnels through here as a
   // ":set" string.
   if (!direct) {
+    // Callback parsing can execute Vimscript, so reject restricted assignments first.
+    if ((secure || sandbox != 0) && (options[opt_idx].flags & kOptFlagSecure)) {
+      optval_free(value);
+      return e_secure;
+    }
+
     errmsg = validate_option_value(opt_idx, &value, opt_flags, curbuf, curwin, errbuf);
 
     if (errmsg == NULL && value.type == kObjectTypeString
