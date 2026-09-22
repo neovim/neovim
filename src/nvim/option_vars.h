@@ -305,7 +305,6 @@ EXTERN char *p_icm;             ///< 'inccommand'
 EXTERN char *p_isf;             ///< 'isfname'
 EXTERN char *p_isi;             ///< 'isident'
 EXTERN char *p_isk;             ///< 'iskeyword'
-EXTERN char *p_isp;             ///< 'isprint'
 EXTERN int p_js;                ///< 'joinspaces'
 EXTERN char *p_jop;             ///< 'jumpooptions'
 EXTERN unsigned jop_flags;

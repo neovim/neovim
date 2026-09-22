@@ -16,7 +16,8 @@ func Test_display_foldcolumn()
   vnew
   vert resize 25
   call assert_equal(25, winwidth(winnr()))
-  set isprint=@
+  " does not affect test behavior, <82> is unprintable by default:
+  " set isprint=@
 
   1put='e more noise blah blah more stuff here'
 

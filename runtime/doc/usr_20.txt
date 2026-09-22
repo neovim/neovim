@@ -264,7 +264,7 @@ pressing CTRL-D.  For example, pressing CTRL-D after: >
 results in: >
 
 	:set is
-	incsearch  isfname    isident    iskeyword  isprint
+	incsearch  isfname    isident    iskeyword
 	:set is
 
 Vim lists the matches and then comes back with the text you typed.  You can

@@ -64,7 +64,7 @@ func s:classes_test()
   if has('win32')
     set iskeyword=@,48-57,_,192-255
   endif
-  set isprint=@,161-255
+  " set isprint=@,161-255
   call assert_equal('Motörhead', matchstr('Motörhead', '[[:print:]]\+'))
 
   let alnumchars = ''

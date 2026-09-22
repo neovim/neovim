@@ -69,8 +69,7 @@ ga			Print the ascii value of the character under the
 			For example, when the cursor is on a 'R':
 				<R>  82,  Hex 52,  Octal 122 ~
 			When the character is a non-standard ASCII character,
-			but printable according to the 'isprint' option, the
-			non-printable version is also given.
+			the non-printable version is also given.
 
 			When the character is larger than 127:
 				<<81>>  129,  Hex 0081,  Octal 201 ~

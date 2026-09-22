@@ -344,7 +344,7 @@ typedef struct {
   char *b_p_spo;              // 'spelloptions'
   unsigned b_p_spo_flags;      // 'spelloptions' flags
   int b_cjk;                  // all CJK letters as OK
-  uint8_t b_syn_chartab[32];  // syntax iskeyword option
+  uint64_t b_syn_chartab[4];  // syntax iskeyword option
   char *b_syn_isk;            // iskeyword option
 } synblock_T;
 

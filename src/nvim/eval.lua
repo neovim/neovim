@@ -12293,7 +12293,7 @@ M.funcs = {
     base = 1,
     desc = [=[
       Translates all unprintable characters in {string} into
-      printable characters 'isprint', like they are shown in a
+      printable characters, like they are shown in a
       window.  Example: >vim
       	echo strtrans(@a)
       <This displays a newline in register a as "^@" instead of

@@ -10287,7 +10287,7 @@ function vim.fn.strptime(format, timestring) end
 function vim.fn.strridx(haystack, needle, start) end
 
 --- Translates all unprintable characters in {string} into
---- printable characters 'isprint', like they are shown in a
+--- printable characters, like they are shown in a
 --- window.  Example: >vim
 ---   echo strtrans(\@a)
 --- <This displays a newline in register a as "^\@" instead of
