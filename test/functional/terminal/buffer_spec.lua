@@ -954,6 +954,169 @@ describe(':terminal buffer', function()
     end)
   end)
 
+  describe('ED 2 (erase display)', function()
+    local screen, term, buf, ns
+
+    --- @return integer[] 1-based lines of the extmarks in namespace `ns`
+    local function mark_lines(ns_)
+      return vim.tbl_map(function(m)
+        return m[2] + 1
+      end, api.nvim_buf_get_extmarks(buf, ns_ or ns, 0, -1, {}))
+    end
+
+    before_each(function()
+      screen = Screen.new(50, 10)
+      term = api.nvim_open_term(0, {})
+      buf = api.nvim_get_current_buf()
+      ns = api.nvim_create_namespace('test')
+      feed('a') -- Terminal mode, so that the cursor follows the output.
+      api.nvim_chan_send(term, 'line1\nline2\nline3')
+      screen:expect([[
+        line1                                             |
+        line2                                             |
+        line3^                                             |
+                                                          |*6
+        {5:-- TERMINAL --}                                    |
+      ]])
+      api.nvim_buf_set_extmark(buf, ns, 0, 0, {})
+      api.nvim_buf_set_extmark(buf, ns, 2, 2, {})
+    end)
+
+    it('removes extmarks on the erased rows #41961', function()
+      api.nvim_chan_send(term, '\027[H\027[2J')
+      screen:expect([[
+        ^                                                  |
+                                                          |*8
+        {5:-- TERMINAL --}                                    |
+      ]])
+      eq({}, mark_lines())
+    end)
+
+    it('keeps extmarks on scrollback lines', function()
+      api.nvim_chan_send(term, ('\n'):rep(9) .. 'line4')
+      screen:expect([[
+                                                          |*8
+        line4^                                             |
+        {5:-- TERMINAL --}                                    |
+      ]])
+      api.nvim_buf_set_extmark(buf, ns, 11, 0, {})
+      eq({ 1, 3, 12 }, mark_lines())
+      api.nvim_chan_send(term, '\027[H\027[2J')
+      screen:expect([[
+        ^                                                  |
+                                                          |*8
+        {5:-- TERMINAL --}                                    |
+      ]])
+      eq({ 1, 3 }, mark_lines())
+    end)
+
+    it('keeps extmarks when only part of the screen is erased', function()
+      api.nvim_chan_send(term, '\027[2;1H\027[J') -- ED 0 from row 2: rows 2 and below
+      screen:expect([[
+        line1                                             |
+        ^                                                  |
+                                                          |*7
+        {5:-- TERMINAL --}                                    |
+      ]])
+      eq({ 1, 3 }, mark_lines())
+      api.nvim_chan_send(term, '\027[H\027[2K') -- EL 2: row 1
+      screen:expect([[
+        ^                                                  |
+                                                          |*8
+        {5:-- TERMINAL --}                                    |
+      ]])
+      eq({ 1, 3 }, mark_lines())
+    end)
+
+    it('keeps extmarks when the alternate screen is erased', function()
+      api.nvim_chan_send(term, '\027[?1049h\027[H\027[2Jalt')
+      screen:expect([[
+        alt^                                               |
+                                                          |*8
+        {5:-- TERMINAL --}                                    |
+      ]])
+      eq({ 1, 3 }, mark_lines())
+      api.nvim_chan_send(term, '\027[?1049l')
+      screen:expect([[
+        line1                                             |
+        line2                                             |
+        line3^                                             |
+                                                          |*6
+        {5:-- TERMINAL --}                                    |
+      ]])
+      eq({ 1, 3 }, mark_lines())
+    end)
+
+    it('is ordered with TermRequest in the same chunk', function()
+      local prompt_ns = api.nvim_get_namespaces()['nvim.terminal.prompt']
+      -- Prompt on row 5, then clear, then prompt on row 1: only the second prompt remains.
+      api.nvim_chan_send(term, '\027[5;1H\027]133;A\007$ \027[H\027[2J\027]133;A\007$ ')
+      screen:expect([[
+        $ ^                                                |
+                                                          |*8
+        {5:-- TERMINAL --}                                    |
+      ]])
+      eq({ 1 }, mark_lines(prompt_ns))
+    end)
+
+    it('is ordered with a TermRequest deferred by pending scrollback', function()
+      local prompt_ns = api.nvim_get_namespaces()['nvim.terminal.prompt']
+      -- Output that scrolls, a prompt on the last row, then clear, all in one chunk: the prompt's
+      -- TermRequest waits for the scrollback refresh, and so must the erase that follows it.
+      api.nvim_chan_send(term, ('x\n'):rep(12) .. '\027]133;A\007$ ' .. '\027[H\027[2J')
+      screen:expect([[
+        ^                                                  |
+                                                          |*8
+        {5:-- TERMINAL --}                                    |
+      ]])
+      eq({}, mark_lines(prompt_ns))
+    end)
+
+    it('with pending scrollback deletion', function()
+      api.nvim_set_option_value('scrollback', 5, {})
+      api.nvim_chan_send(term, ('x\n'):rep(20) .. 'last')
+      screen:expect([[
+        x                                                 |*8
+        last^                                              |
+        {5:-- TERMINAL --}                                    |
+      ]])
+      eq(14, api.nvim_buf_line_count(buf))
+      local ns2 = api.nvim_create_namespace('test2')
+      api.nvim_buf_set_extmark(buf, ns2, 13, 0, {})
+      -- Three more lines push trimmed scrollback lines (deleted on the next refresh), then "clear"
+      -- (ED 2 + ED 3), all in one chunk.
+      api.nvim_chan_send(term, ('y\n'):rep(3) .. '\027[H\027[2J\027[3J')
+      screen:expect([[
+        ^                                                  |
+                                                          |*8
+        {5:-- TERMINAL --}                                    |
+      ]])
+      eq({}, mark_lines(ns2))
+    end)
+
+    it('"[[" does not jump to a prompt erased by "clear" #41961', function()
+      -- Prompt, output, prompt, "clear" (as on a shell with OSC 133 prompt marks), output, prompt.
+      api.nvim_chan_send(term, '\027[H\027[2J\027]133;A\007$ seq 1 3\n1\n2\n3\n\027]133;A\007$ ')
+      api.nvim_chan_send(
+        term,
+        'clear\n\027[H\027[2J\027[3J\027]133;A\007$ seq 1 5\n1\n2\n3\n4\n5\n\027]133;A\007$ '
+      )
+      screen:expect([[
+        $ seq 1 5                                         |
+        1                                                 |
+        2                                                 |
+        3                                                 |
+        4                                                 |
+        5                                                 |
+        $ ^                                                |
+                                                          |*2
+        {5:-- TERMINAL --}                                    |
+      ]])
+      feed([[<C-\><C-N>[[]])
+      eq({ 1, 0 }, api.nvim_win_get_cursor(0))
+    end)
+  end)
+
   it('no heap-buffer-overflow when using jobstart("echo",{term=true}) #3161', function()
     local testfilename = 'Xtestfile-functional-terminal-buffers_spec'
     write_file(testfilename, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaa')
