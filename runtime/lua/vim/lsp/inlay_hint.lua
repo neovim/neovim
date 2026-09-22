@@ -791,11 +791,9 @@ local action_handlers = {
       end
       local cmd = assert(item.command)
       local success, request_id = ctx.client:exec_cmd(cmd, { bufnr = ctx.buf }, function(err, ...)
-        local default_handler = ctx.client.handlers['workspace/executeCommand']
-          or vim.lsp.handlers['workspace/executeCommand']
-        if default_handler then
-          default_handler(err, ...)
-        end
+        -- A caller-supplied handler replaces the default one, so run it explicitly to
+        -- keep the standard error reporting.
+        assert(ctx.client:_resolve_handler('workspace/executeCommand'))(err, ...)
         on_done({ buf = ctx.buf, client = not err and ctx.client or nil })
       end)
       if not success then
