@@ -2432,7 +2432,9 @@ is_enabled({filter})                     *vim.lsp.document_color.is_enabled()*
 Lua module: vim.lsp.inlay_hint                                *lsp-inlay_hint*
 
 action({action}, {opts})                         *vim.lsp.inlay_hint.action()*
-    Apply some actions provided by inlay hints in the selected range.
+    Apply some actions provided by inlay hints in the selected range. Built-in
+    actions are abandoned if the source buffer changes or is unloaded before
+    they can be applied.
 
     Example usage: >lua
         vim.keymap.set(
@@ -2467,7 +2469,8 @@ action({action}, {opts})                         *vim.lsp.inlay_hint.action()*
                       that provides `hints`.
                     • `on_done`:
                       `fun(ctx: {buf: integer, client?: vim.lsp.Client})` see
-                      `on_done` in {opts}.
+                      `on_done` in {opts}. Always supplied, even when {opts}
+                      omits `on_done`.
                     The handler must return `true` if it handled the action
                     (and then call `on_done` exactly once when the action
                     finishes), or `false` if `hints` did not contain what the
@@ -2475,8 +2478,10 @@ action({action}, {opts})                         *vim.lsp.inlay_hint.action()*
                     available client are tried.
       • {opts}    (`table?`) A table with the following fields:
                   • {hints}? (`table[]`) Inlay hints (returned by
-                    `vim.lsp.inlay_hint.get()`) to take actions on. When not
-                    specified:
+                    `vim.lsp.inlay_hint.get()`) to take actions on. All hints
+                    must belong to the same buffer, which need not be the
+                    current buffer. Mixed-buffer lists are rejected before any
+                    action is taken. When not specified:
                     • in |Normal-mode|, it uses hints on either side of the
                       cursor.
                     • in |Visual-mode|, it uses hints inside the selected

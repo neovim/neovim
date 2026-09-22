@@ -902,3 +902,294 @@ describe('vim.lsp.inlay_hint.action', function()
     end)
   end)
 end)
+
+describe('vim.lsp.inlay_hint.action edge cases', function()
+  before_each(function()
+    clear_notrace()
+    exec_lua(create_server_definition)
+    exec_lua(function()
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'abc' })
+
+      function _G.start_hint_client(capabilities, handlers)
+        handlers = handlers or {}
+        handlers['textDocument/inlayHint'] = handlers['textDocument/inlayHint']
+          or function(_, _, cb)
+            cb(nil, {})
+          end
+        local server = _G._create_server({
+          capabilities = capabilities or { inlayHintProvider = true },
+          handlers = handlers,
+        })
+        local id = assert(vim.lsp.start({ name = 'hints', cmd = server.cmd }, {
+          reuse_client = function()
+            return false
+          end,
+        }))
+        local client = assert(vim.lsp.get_client_by_id(id))
+        assert(vim.wait(1000, function()
+          return client.initialized
+        end))
+        return client, server
+      end
+
+      function _G.hint_entry(client, hint, buf)
+        return {
+          bufnr = buf or vim.api.nvim_get_current_buf(),
+          client_id = client.id,
+          inlay_hint = vim.tbl_extend('force', {
+            label = 'T',
+            position = { line = 0, character = 1 },
+          }, hint or {}),
+        }
+      end
+
+      function _G.label_loc(buf)
+        return {
+          uri = vim.uri_from_bufnr(buf or 0),
+          range = { start = { line = 0, character = 0 }, ['end'] = { line = 0, character = 1 } },
+        }
+      end
+
+      -- Also check the completion contract for every action using this helper.
+      function _G.run_hint_action(action, hints, during)
+        local result
+        local calls, returned = 0, false
+        vim.lsp.inlay_hint.action(action, {
+          hints = hints,
+          on_done = function(ctx)
+            assert(returned, 'on_done must be asynchronous')
+            calls = calls + 1
+            result = { buf = ctx.buf, client_id = ctx.client and ctx.client.id }
+          end,
+        })
+        returned = true
+        if during then
+          during()
+        end
+        assert(
+          vim.wait(1000, function()
+            return result ~= nil
+          end),
+          'action did not finish'
+        )
+        vim.wait(0)
+        assert(calls == 1, 'on_done must run exactly once')
+        return result
+      end
+    end)
+  end)
+
+  after_each(function()
+    api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
+  end)
+
+  it('finishes asynchronously with no hints', function()
+    eq(
+      { buf = api.nvim_get_current_buf() },
+      exec_lua(function()
+        return run_hint_action('textEdits', {})
+      end)
+    )
+  end)
+
+  it('always supplies custom handlers with a completion function', function()
+    eq(
+      true,
+      exec_lua(function()
+        local client = start_hint_client()
+        local called = false
+        vim.lsp.inlay_hint.action(function(_, ctx, done)
+          done(ctx)
+          called = true
+          return true
+        end, { hints = { hint_entry(client) } })
+        return vim.wait(1000, function()
+          return called
+        end)
+      end)
+    )
+  end)
+
+  it('tries clients in ID order and stops at the first handled action', function()
+    eq(
+      { { 1, 2 }, 2 },
+      exec_lua(function()
+        local first, second, third = start_hint_client(), start_hint_client(), start_hint_client()
+        local seen = {}
+        local result = run_hint_action(function(_, ctx, done)
+          seen[#seen + 1] = ctx.client.id
+          if ctx.client.id == first.id then
+            return false
+          end
+          done(ctx)
+          return true
+        end, { hint_entry(third), hint_entry(second), hint_entry(first) })
+        return { seen, result.client_id }
+      end)
+    )
+  end)
+
+  it('applies supplied edits to their source buffer', function()
+    eq(
+      { 'aXbc', 'other', true },
+      exec_lua(function()
+        local client = start_hint_client()
+        local source = vim.api.nvim_get_current_buf()
+        local entry = hint_entry(client, {
+          textEdits = {
+            {
+              newText = 'X',
+              range = {
+                start = { line = 0, character = 1 },
+                ['end'] = { line = 0, character = 1 },
+              },
+            },
+          },
+        })
+        local other = vim.api.nvim_create_buf(true, false)
+        vim.api.nvim_set_current_buf(other)
+        vim.api.nvim_buf_set_lines(other, 0, -1, false, { 'other' })
+        local result = run_hint_action('textEdits', { entry })
+        return {
+          vim.api.nvim_buf_get_lines(source, 0, -1, false)[1],
+          vim.api.nvim_get_current_line(),
+          result.buf == source and result.client_id == client.id,
+        }
+      end)
+    )
+  end)
+
+  it('rejects mixed-buffer hints before invoking a handler', function()
+    eq(
+      { false, true, false },
+      exec_lua(function()
+        local client = start_hint_client()
+        local called = false
+        local ok, err = pcall(vim.lsp.inlay_hint.action, function()
+          called = true
+          return true
+        end, {
+          hints = {
+            hint_entry(client),
+            hint_entry(client, {}, vim.api.nvim_create_buf(true, false)),
+          },
+        })
+        vim.wait(0)
+        return { ok, tostring(err):find('same buffer', 1, true) ~= nil, called }
+      end)
+    )
+  end)
+
+  for _, change in ipairs({ 'edit', 'delete' }) do
+    it('abandons resolved edits after a buffer ' .. change, function()
+      eq(
+        { false, true },
+        exec_lua(function()
+          local reply
+          local client = start_hint_client({ inlayHintProvider = { resolveProvider = true } }, {
+            ['inlayHint/resolve'] = function(_, _, cb)
+              reply = cb
+            end,
+          })
+          local buf = vim.api.nvim_get_current_buf()
+          local result = run_hint_action('textEdits', { hint_entry(client) }, function()
+            assert(vim.wait(1000, function()
+              return reply ~= nil
+            end))
+            if change == 'edit' then
+              vim.api.nvim_buf_set_lines(buf, 0, -1, false, { 'ZZabc' })
+            else
+              vim.api.nvim_buf_delete(buf, { force = true })
+            end
+            reply(nil, {
+              textEdits = {
+                {
+                  newText = 'X',
+                  range = {
+                    start = { line = 0, character = 1 },
+                    ['end'] = { line = 0, character = 1 },
+                  },
+                },
+              },
+            })
+          end)
+          return {
+            result.client_id ~= nil,
+            result.buf == buf
+              and (
+                change == 'delete' or vim.api.nvim_buf_get_lines(buf, 0, -1, false)[1] == 'ZZabc'
+              ),
+          }
+        end)
+      )
+    end)
+  end
+
+  it('rechecks the buffer before applying scheduled text edits', function()
+    eq(
+      { 'changed', false },
+      exec_lua(function()
+        local client = start_hint_client({ inlayHintProvider = { resolveProvider = true } }, {
+          ['inlayHint/resolve'] = function(_, params, cb)
+            params.textEdits = {
+              { newText = 'X', range = { start = params.position, ['end'] = params.position } },
+            }
+            cb(nil, params)
+            -- The response scheduled the edit, but it has not run yet.
+            vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'changed' })
+          end,
+        })
+        local result = run_hint_action('textEdits', { hint_entry(client) })
+        return { vim.api.nvim_get_current_line(), result.client_id ~= nil }
+      end)
+    )
+  end)
+
+  for _, action in ipairs({ 'location', 'command' }) do
+    it('finishes without a client when ' .. action .. ' selection is cancelled', function()
+      eq(
+        { true, false, true },
+        exec_lua(function()
+          local client = start_hint_client()
+          local buf = vim.api.nvim_get_current_buf()
+          local selected = false
+          vim.ui.select = function(items, _, cb)
+            assert(#items == 2)
+            selected = true
+            cb(nil, nil)
+          end
+          local loc = label_loc(buf)
+          local result = run_hint_action(action, {
+            hint_entry(client, {
+              label = {
+                { value = 'A', location = loc, command = { title = 'A', command = 'a' } },
+                { value = 'B', location = loc, command = { title = 'B', command = 'b' } },
+              },
+            }),
+          })
+          return { selected, result.client_id ~= nil, result.buf == buf }
+        end)
+      )
+    end)
+  end
+
+  it('focuses an existing target window when jumping to a location', function()
+    eq(
+      true,
+      exec_lua(function()
+        local client = start_hint_client()
+        local source_win = vim.api.nvim_get_current_win()
+        vim.cmd.vnew()
+        local target_win = vim.api.nvim_get_current_win()
+        local target_buf = vim.api.nvim_get_current_buf()
+        vim.api.nvim_buf_set_name(target_buf, 'Xhint_target')
+        vim.api.nvim_buf_set_lines(target_buf, 0, -1, false, { 'target' })
+        vim.api.nvim_set_current_win(source_win)
+        local loc = label_loc(target_buf)
+        local entry = hint_entry(client, { label = { { value = 'T', location = loc } } })
+        local result = run_hint_action('location', { entry })
+        return result.buf == target_buf and vim.api.nvim_get_current_win() == target_win
+      end)
+    )
+  end)
+end)
