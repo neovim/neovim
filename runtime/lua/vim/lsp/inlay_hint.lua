@@ -598,19 +598,18 @@ local action_handlers = {
       )
       :flatten(1)
       :totable()
-    if #text_edits > 0 then
-      vim.schedule(function()
-        util.apply_text_edits(text_edits, ctx.buf, ctx.client.offset_encoding)
-        if on_done then
-          on_done({ buf = ctx.buf, client = ctx.client })
-        end
-      end)
+    if #text_edits == 0 then
+      return false
     end
-    return #valid_hints
+    vim.schedule(function()
+      util.apply_text_edits(text_edits, ctx.buf, ctx.client.offset_encoding)
+      if on_done then
+        on_done({ buf = ctx.buf, client = ctx.client })
+      end
+    end)
+    return true
   end,
   location = function(hints, ctx, on_done)
-    local count = 0
-
     --- @type vim.lsp.inlay_hint.action.hint_label[]
     local hint_labels = {}
 
@@ -620,7 +619,6 @@ local action_handlers = {
         if type(item.label) == 'table' and #item.label > 0 then
           local labels_from_this = get_hint_labels(item, { 'location' })
           if labels_from_this then
-            count = count + 1
             vim.list_extend(hint_labels, labels_from_this)
           end
         end
@@ -628,7 +626,7 @@ local action_handlers = {
     )
 
     if vim.tbl_isempty(hint_labels) then
-      return 0
+      return false
     end
 
     do_or_select(
@@ -668,12 +666,12 @@ local action_handlers = {
       end
     )
 
-    return count
+    return true
   end,
 
   hover = function(hints, ctx, on_done)
     if #hints == 0 then
-      return 0
+      return false
     end
     if #hints ~= 1 then
       vim.schedule(function()
@@ -686,7 +684,7 @@ local action_handlers = {
     local hint = assert(hints[1])
     local hint_labels = get_hint_labels(hint, { 'location' })
     if hint_labels == nil then
-      return 0
+      return false
     end
 
     ---@type string[]
@@ -739,12 +737,12 @@ local action_handlers = {
     end
 
     get_hover(next(hint_labels))
-    return 1
+    return true
   end,
 
   tooltip = function(hints, ctx, on_done)
     if #hints == 0 then
-      return 0
+      return false
     end
     if #hints ~= 1 then
       vim.schedule(function()
@@ -800,7 +798,7 @@ local action_handlers = {
 
     if #lines == 2 then
       -- No tooltip/command/location has been found. Skip this hint.
-      return 0
+      return false
     end
 
     ---@type integer, integer
@@ -809,12 +807,12 @@ local action_handlers = {
     if on_done then
       on_done({ buf = buf, client = ctx.client })
     end
-    return 1
+    return true
   end,
 
   command = function(hints, ctx, on_done)
     if #hints == 0 then
-      return 0
+      return false
     end
     if #hints ~= 1 then
       vim.schedule(function()
@@ -827,7 +825,7 @@ local action_handlers = {
     local hint_labels = get_hint_labels(assert(hints[1]), { 'command' })
     if hint_labels == nil or #hint_labels == 0 then
       -- no commands in this hint
-      return 0
+      return false
     end
 
     do_or_select(
@@ -867,7 +865,7 @@ local action_handlers = {
       end
     )
 
-    return 1
+    return true
   end,
 }
 
@@ -900,7 +898,7 @@ local action_handlers = {
 --- This should be called __exactly__ once in the action handler.
 --- @alias vim.lsp.inlay_hint.action.on_done.callback fun(ctx: vim.lsp.inlay_hint.action.on_done.context)
 
---- @alias vim.lsp.inlay_hint.action.handler fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.context, on_done: vim.lsp.inlay_hint.action.on_done.callback?):integer
+--- @alias vim.lsp.inlay_hint.action.handler fun(hints: lsp.InlayHint[], ctx: vim.lsp.inlay_hint.action.context, on_done: vim.lsp.inlay_hint.action.on_done.callback?):boolean
 
 --- @class vim.lsp.inlay_hint.action.Opts
 --- @inlinedoc
@@ -941,9 +939,10 @@ local action_handlers = {
 ---   - `hints`: `lsp.InlayHint[]` a list of inlay hints in the requested range.
 ---   - `ctx`: `{buf: integer, client: vim.lsp.Client}` the buffer on which the action is taken, and the LSP client that provides `hints`.
 ---   - `on_done`: `fun(ctx: {buf: integer, client?: vim.lsp.Client})` see `on_done` in {opts}.
----     When implementing a custom handler, the `on_done` callback should be called when the handler is returning a non-zero value.
 ---
----   This custom handler should also return the number of items in `hints` that contributed to the action. For example, the `location` handler should return `1` on a successful jump because the target location is from 1 inlay hint object, regardless of the number of hints in `hints`.
+---   The handler must return `true` if it handled the action (and then call `on_done` exactly
+---   once when the action finishes), or `false` if `hints` did not contain what the action
+---   needs, in which case the hints of the next available client are tried.
 --- @param opts? vim.lsp.inlay_hint.action.Opts
 function M.action(action, opts)
   vim.validate('action', action, function(val)
@@ -1039,7 +1038,7 @@ function M.action(action, opts)
 
     if not support_resolve then
       -- no need to resolve because the client doesn't support it.
-      if action_handler(_hints, action_ctx, on_done) == 0 then
+      if not action_handler(_hints, action_ctx, on_done) then
         -- no actions invoked. proceed with the client.
         return do_action(next(clients, idx))
       else
@@ -1064,7 +1063,7 @@ function M.action(action, opts)
 
         if num_processed == #_hints then
           -- all hints have been resolved. we're now ready to invoke the action.
-          if action_handler(_hints, action_ctx, on_done) == 0 then
+          if not action_handler(_hints, action_ctx, on_done) then
             return do_action(next(clients, idx))
           else
             -- Actions were taken. we're done with the actions.

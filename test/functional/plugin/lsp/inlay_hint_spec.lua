@@ -855,7 +855,7 @@ describe('vim.lsp.inlay_hint.action', function()
         if #hints > 0 then
           cb({ buf = ctx.buf, client = ctx.client })
         end
-        return hint_count
+        return (hint_count or 0) > 0
       end, {
         on_done = function()
           done = true
@@ -886,7 +886,7 @@ describe('vim.lsp.inlay_hint.action', function()
         if #_hints > 0 then
           cb({ buf = ctx.buf, client = ctx.client })
         end
-        return hint_count
+        return (hint_count or 0) > 0
       end, {
         on_done = function()
           done = true
@@ -910,7 +910,7 @@ describe('vim.lsp.inlay_hint.action', function()
       vim.api.nvim_win_set_cursor(curr_winid, { 8, 18 })
       local on_done_ctx ---@type table?
       vim.lsp.inlay_hint.action(function()
-        return 0
+        return false
       end, {
         hints = {},
         on_done = function(ctx)
