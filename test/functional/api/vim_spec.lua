@@ -5945,6 +5945,15 @@ describe('API', function()
         'Invalid range element: expected non-negative Integer',
         pcall_err(api.nvim_cmd, { cmd = 'print', args = {}, range = { -1 } }, {})
       )
+      eq(
+        "Invalid 'range'",
+        pcall_err(api.nvim_cmd, { cmd = 'print', args = {}, range = { 99 } }, {})
+      )
+      -- Not ":1x" (:xit).
+      eq(
+        'Wrong number of arguments',
+        pcall_err(api.nvim_cmd, { cmd = '', range = { 1 }, args = { 'x' } }, {})
+      )
 
       eq(
         'Command cannot accept count: set',
@@ -6027,6 +6036,19 @@ describe('API', function()
         line5
         line6
       ]]
+    end)
+
+    it('uses the same default range as Ex', function()
+      api.nvim_buf_set_lines(0, 0, -1, false, { 'a', 'b', 'c' })
+      api.nvim_win_set_cursor(0, { 2, 0 })
+      command('command -range -addr=other Other let g:r = [<line1>, <line2>]')
+      command('command -range=% -addr=other OtherAll let g:r = [<line1>, <line2>]')
+      for _, name in ipairs({ 'Other', 'OtherAll' }) do
+        command(name)
+        local ex = api.nvim_get_var('r')
+        api.nvim_cmd({ cmd = name }, {})
+        eq(ex, api.nvim_get_var('r'))
+      end
     end)
 
     it('works with count', function()
@@ -6180,7 +6202,7 @@ describe('API', function()
           vim.print(opts.fargs)
         end
 
-        vim.api.nvim_create_user_command("Foo", FooFunc, { nargs = '+' })
+        vim.api.nvim_create_user_command("Foo", FooFunc, { nargs = '+', bar = true })
       ]],
         {}
       )
@@ -6198,6 +6220,13 @@ describe('API', function()
           { output = true }
         )
       )
+      eq([[{ " a|b" }]], api.nvim_cmd({ cmd = 'Foo', args = { ' a|b' } }, { output = true }))
+    end)
+
+    it('keeps leading white space of the first argument', function()
+      api.nvim_buf_set_lines(0, 0, -1, false, { 'ab' })
+      api.nvim_cmd({ cmd = 'normal', args = { ' x' } }, {})
+      eq({ 'a' }, api.nvim_buf_get_lines(0, 0, -1, false))
     end)
 
     it('works with buffer names', function()

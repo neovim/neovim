@@ -132,7 +132,7 @@ Dict(cmd) nvim_parse_cmd(String str, Dict(empty) *opts, Arena *arena, Error *err
   char *cmdline = arena_memdupz(arena, str.data, str.size);
   const char *errormsg = NULL;
 
-  if (!parse_cmdline(&cmdline, &ea, &cmod, &errormsg)) {
+  if (!parse_cmdline(&cmdline, &ea, &cmod, &errormsg, false)) {
     if (errormsg != NULL) {
       api_set_error(err, kErrorTypeException, "Parsing command-line: %s", errormsg);
     } else {
@@ -362,6 +362,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
 
   char *cmdline = NULL;
   char *cmdname = NULL;
+  const char *errormsg = NULL;
   ArrayOf(String) args = ARRAY_DICT_INIT;
 
   String retv = (String)STRING_INIT;
@@ -545,12 +546,6 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
     }
   }
 
-  if (!range_only) {
-    // Simply pass the first argument (if it exists) as the arg pointer to `set_cmd_addr_type()`
-    // since it only ever checks the first argument.
-    set_cmd_addr_type(&ea, args.size > 0 ? args.items[0].data.string.data : NULL);
-  }
-
   if (HAS_KEY(cmd, cmd, range)) {
     VALIDATE_MOD((ea.argt & EX_RANGE), "range", cmd->cmd.data);
     VALIDATE_EXP((cmd->range.size <= 2), "range", "<=2 elements", NULL, {
@@ -572,21 +567,42 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
       ea.line1 = (linenr_T)range.items[0].data.integer;
       ea.line2 = (linenr_T)range.items[range.size - 1].data.integer;
     }
+  }
 
+  // parse_cmdline() refills ea: the address type, range and default range come from the Ex parser.
+  build_cmdline_str(&cmdline, &ea, args);
+  if (!parse_cmdline(&cmdline, &ea, &cmod, &errormsg,
+                     // Don't parse modifiers/reg/etc. Those come from `cmd`.
+                     true)) {
+    api_set_error(err, kErrorTypeException, "%s", errormsg ? errormsg : "Parsing command-line");
+    goto end;
+  }
+
+  if (range_only) {
+    ea.argt = EX_RANGE | EX_SBOXOK;
+  }
+
+  if (HAS_KEY(cmd, cmd, range)) {
     VALIDATE_S((invalid_range(&ea) == NULL), "range", "", {
       goto end;
     });
   }
-  if (ea.addr_count == 0) {
-    if (ea.argt & EX_DFLALL) {
-      set_cmd_dflall_range(&ea);  // Default range for range=%
-    } else {
-      ea.line1 = ea.line2 = get_cmd_default_range(&ea);  // Default range.
 
-      if (ea.addr_type == ADDR_OTHER) {
-        // Default is 1, not cursor.
-        ea.line2 = 1;
-      }
+  if (ea.addr_count == 0 && !(ea.argt & EX_DFLALL) && ea.addr_type == ADDR_OTHER) {
+    // Default is 1, not cursor.
+    ea.line2 = 1;
+  }
+
+  // parse_cmdline() only sees one string, set the argument boundaries.
+  ea.argc = args.size;
+  if (ea.argc > 0) {
+    ea.args = xcalloc(ea.argc, sizeof(char *));
+    ea.arglens = xcalloc(ea.argc, sizeof(size_t));
+    p = ea.arg;
+    for (size_t i = 0; i < ea.argc; i++) {
+      ea.args[i] = p;
+      ea.arglens[i] = args.items[i].data.string.size;
+      p += ea.arglens[i] + 1;  // Account for space
     }
   }
 
@@ -737,10 +753,16 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Arena
     });
   }
 
-  // Finally, build the command line string that will be stored inside ea.cmdlinep.
-  // This also sets the values of ea.cmd, ea.arg, ea.args and ea.arglens.
-  build_cmdline_str(&cmdline, &ea, &cmod, args);
-  ea.cmdlinep = &cmdline;
+  // Replace :make and :grep with 'makeprg' and 'grepprg'.
+  p = replace_makeprg(&ea, ea.arg, &cmdline);
+  if (p != ea.arg) {
+    // If replace_makeprg() modified the cmdline string, correct the ea.arg pointer.
+    ea.arg = p;
+    // This cannot be a user command, so ea.args will not be used.
+    XFREE_CLEAR(ea.args);
+    XFREE_CLEAR(ea.arglens);
+    ea.argc = 0;
+  }
 
   // Check for "++opt=val" argument.
   if (ea.argt & EX_ARGOPT) {
@@ -834,68 +856,12 @@ static bool string_iswhite(String str)
 }
 
 /// Build cmdline string for command, used by `nvim_cmd()`.
-static void build_cmdline_str(char **cmdlinep, exarg_T *eap, cmdmod_T *cmod, ArrayOf(String) args)
+///
+/// Only the range, command name and arguments; nvim_cmd() applies the other fields.
+static void build_cmdline_str(char **cmdlinep, exarg_T *eap, ArrayOf(String) args)
 {
-  size_t argc = args.size;
   StringBuilder cmdline = KV_INITIAL_VALUE;
   kv_resize(cmdline, 32);  // Make it big enough to handle most typical commands
-
-  // Add command modifiers
-  if (cmod->cmod_tab != 0) {
-    kv_printf(cmdline, "%dtab ", cmod->cmod_tab - 1);
-  }
-  if (cmod->cmod_verbose > 0) {
-    kv_printf(cmdline, "%dverbose ", cmod->cmod_verbose - 1);
-  }
-
-  if (cmod->cmod_flags & CMOD_ERRSILENT) {
-    kv_concat(cmdline, "silent! ");
-  } else if (cmod->cmod_flags & CMOD_SILENT) {
-    kv_concat(cmdline, "silent ");
-  }
-
-  if (cmod->cmod_flags & CMOD_UNSILENT) {
-    kv_concat(cmdline, "unsilent ");
-  }
-
-  switch (cmod->cmod_split & (WSP_ABOVE | WSP_BELOW | WSP_TOP | WSP_BOT)) {
-  case WSP_ABOVE:
-    kv_concat(cmdline, "aboveleft ");
-    break;
-  case WSP_BELOW:
-    kv_concat(cmdline, "belowright ");
-    break;
-  case WSP_TOP:
-    kv_concat(cmdline, "topleft ");
-    break;
-  case WSP_BOT:
-    kv_concat(cmdline, "botright ");
-    break;
-  default:
-    break;
-  }
-
-#define CMDLINE_APPEND_IF(cond, str) \
-  do { \
-    if (cond) { \
-      kv_concat(cmdline, str); \
-    } \
-  } while (0)
-
-  CMDLINE_APPEND_IF(cmod->cmod_split & WSP_VERT, "vertical ");
-  CMDLINE_APPEND_IF(cmod->cmod_split & WSP_HOR, "horizontal ");
-  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_SANDBOX, "sandbox ");
-  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_NOAUTOCMD, "noautocmd ");
-  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_BROWSE, "browse ");
-  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_CONFIRM, "confirm ");
-  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_HIDE, "hide ");
-  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_KEEPALT, "keepalt ");
-  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_KEEPJUMPS, "keepjumps ");
-  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_KEEPMARKS, "keepmarks ");
-  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_KEEPPATTERNS, "keeppatterns ");
-  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_LOCKMARKS, "lockmarks ");
-  CMDLINE_APPEND_IF(cmod->cmod_flags & CMOD_NOSWAPFILE, "noswapfile ");
-#undef CMDLINE_APPEND_IF
 
   // Command range / count.
   if (eap->argt & EX_RANGE) {
@@ -903,30 +869,13 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, cmdmod_T *cmod, Arr
       kv_printf(cmdline, "%" PRIdLINENR, eap->line2);
     } else if (eap->addr_count > 1) {
       kv_printf(cmdline, "%" PRIdLINENR ",%" PRIdLINENR, eap->line1, eap->line2);
-      eap->addr_count = 2;  // Make sure address count is not greater than 2
     }
   }
 
-  // Keep the index of the position where command name starts, so eap->cmd can point to it.
-  size_t cmdname_idx = cmdline.size;
   kv_concat(cmdline, eap->cmd);
 
-  // Command bang.
-  if (eap->argt & EX_BANG && eap->forceit) {
-    kv_concat(cmdline, "!");
-  }
-
-  // Command register.
-  if (eap->argt & EX_REGSTR && eap->regname) {
-    kv_printf(cmdline, " %c", eap->regname);
-  }
-
-  eap->argc = argc;
-  eap->arglens = eap->argc > 0 ? xcalloc(argc, sizeof(size_t)) : NULL;
-  size_t argstart_idx = cmdline.size;
-  for (size_t i = 0; i < argc; i++) {
+  for (size_t i = 0; i < args.size; i++) {
     String s = args.items[i].data.string;
-    eap->arglens[i] = s.size;
     kv_concat(cmdline, " ");
     kv_concat_len(cmdline, s.data, s.size);
   }
@@ -934,33 +883,7 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, cmdmod_T *cmod, Arr
   // Done appending to cmdline, ensure it is NUL terminated
   kv_push(cmdline, NUL);
 
-  // Now that all the arguments are appended, use the command index and argument indices to set the
-  // values of eap->cmd, eap->arg and eap->args.
-  eap->cmd = cmdline.items + cmdname_idx;
-  eap->args = eap->argc > 0 ? xcalloc(argc, sizeof(char *)) : NULL;
-  size_t offset = argstart_idx;
-  for (size_t i = 0; i < argc; i++) {
-    offset++;  // Account for space
-    eap->args[i] = cmdline.items + offset;
-    offset += eap->arglens[i];
-  }
-  // If there isn't an argument, make eap->arg point to end of cmdline.
-  eap->arg = argc > 0 ? eap->args[0]
-                      : cmdline.items + cmdline.size - 1;  // Subtract 1 to account for NUL
-
-  // Finally, make cmdlinep point to the cmdline string.
   *cmdlinep = cmdline.items;
-
-  // Replace, :make and :grep with 'makeprg' and 'grepprg'.
-  char *p = replace_makeprg(eap, eap->arg, cmdlinep);
-  if (p != eap->arg) {
-    // If replace_makeprg() modified the cmdline string, correct the eap->arg pointer.
-    eap->arg = p;
-    // This cannot be a user command, so eap->args will not be used.
-    XFREE_CLEAR(eap->args);
-    XFREE_CLEAR(eap->arglens);
-    eap->argc = 0;
-  }
 }
 
 // uncrustify:off

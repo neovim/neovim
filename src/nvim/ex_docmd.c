@@ -1478,9 +1478,12 @@ bool cmd_has_expr_args(cmdidx_T cmdidx)
 /// @param[out] eap Ex command arguments
 /// @param[out] cmod Command modifiers
 /// @param[out] errormsg Error message, if any
+/// @param skipmods Skip modifiers, nextcmd, register and count. Keep leading
+///                 whitespace of the arguments.
 ///
 /// @return Success or failure
-bool parse_cmdline(char **cmdline, exarg_T *eap, cmdmod_T *cmod, const char **errormsg)
+bool parse_cmdline(char **cmdline, exarg_T *eap, cmdmod_T *cmod, const char **errormsg,
+                   bool skipmods)
 {
   char *after_modifier = NULL;
   bool retval = false;
@@ -1504,7 +1507,7 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, cmdmod_T *cmod, const char **er
 
   char *orig_cmd = eap->cmd;
   // If parse command modifiers failed but modifiers were passed, continue
-  int result = parse_command_modifiers(eap, errormsg, cmod, false);
+  int result = skipmods ? OK : parse_command_modifiers(eap, errormsg, cmod, false);
   after_modifier = eap->cmd;
   if (result == FAIL && after_modifier == orig_cmd) {
     goto end;
@@ -1564,9 +1567,14 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, cmdmod_T *cmod, const char **er
   if (!IS_USER_CMDIDX(eap->cmdidx)) {
     eap->argt = cmdnames[(int)eap->cmdidx].cmd_argt;
   }
-  // Skip to start of argument.
-  // Don't do this for the ":!" command, because ":!! -l" needs the space.
-  eap->arg = eap->cmdidx == CMD_bang ? p : skipwhite(p);
+  if (skipmods) {
+    // Only skip the space before the arguments, the rest belongs to them.
+    eap->arg = p + (*p == ' ');
+  } else {
+    // Skip to start of argument.
+    // Don't do this for the ":!" command, because ":!! -l" needs the space.
+    eap->arg = eap->cmdidx == CMD_bang ? p : skipwhite(p);
+  }
 
   // Don't treat ":r! filter" like a bang
   if (eap->cmdidx == CMD_read && eap->forceit) {
@@ -1575,9 +1583,9 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, cmdmod_T *cmod, const char **er
 
   // Check for '|' to separate commands and '"' to start comments.
   // Don't do this for ":read !cmd" and ":write !cmd".
-  if ((eap->argt & EX_TRLBAR)) {
+  if (!skipmods && (eap->argt & EX_TRLBAR)) {
     separate_nextcmd(eap);
-  } else if (cmd_has_expr_args(eap->cmdidx)) {
+  } else if (!skipmods && cmd_has_expr_args(eap->cmdidx)) {
     // For commands without EX_TRLBAR, check for '|' separator
     // by skipping over expressions (including string literals)
     char *arg = eap->arg;
@@ -1612,9 +1620,11 @@ bool parse_cmdline(char **cmdline, exarg_T *eap, cmdmod_T *cmod, const char **er
   }
 
   // Parse register and count
-  parse_register(eap);
-  if (parse_count(eap, errormsg, false) == FAIL) {
-    goto end;
+  if (!skipmods) {
+    parse_register(eap);
+    if (parse_count(eap, errormsg, false) == FAIL) {
+      goto end;
+    }
   }
 
   // Remove leading whitespace and colon from next command
