@@ -287,6 +287,8 @@ end
 --- })
 --- ```
 ---
+--- |vim.lsp.inlay_hint.action()| does all of the above for you.
+---
 --- @param filter vim.lsp.inlay_hint.get.Filter?
 --- @return vim.lsp.inlay_hint.get.ret[]
 --- @since 12
