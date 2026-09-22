@@ -1309,4 +1309,85 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
       end)
     )
   end)
+
+  it('uses the cursor of the invoking window', function()
+    eq(
+      'second',
+      exec_lua(function()
+        vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'aaa', 'bbb' })
+        start_hint_client(nil, {
+          ['textDocument/inlayHint'] = function(_, _, cb)
+            cb(nil, {
+              { label = 'first', position = { line = 0, character = 1 } },
+              { label = 'second', position = { line = 1, character = 1 } },
+            })
+          end,
+        })
+        vim.lsp.inlay_hint.enable(true)
+        assert(vim.wait(1000, function()
+          return #vim.lsp.inlay_hint.get({ bufnr = 0 }) == 2
+        end))
+        vim.cmd.vsplit()
+        local wins = vim.api.nvim_tabpage_list_wins(0)
+        vim.api.nvim_win_set_cursor(wins[1], { 1, 0 })
+        vim.api.nvim_win_set_cursor(wins[2], { 2, 0 })
+        vim.api.nvim_set_current_win(wins[2])
+        local label
+        run_hint_action(function(hints, ctx, done)
+          label = hints[1].label
+          done(ctx)
+          return true
+        end)
+        return label
+      end)
+    )
+  end)
+
+  for _, case in ipairs({
+    { 'normal', '' },
+    { 'characterwise', 'v' },
+    { 'linewise', 'V' },
+    { 'blockwise', '\22j' },
+    { 'exclusive', 'vj0' },
+  }) do
+    local mode, keys = case[1], case[2]
+    it('selects multibyte hint boundaries in ' .. mode .. ' mode', function()
+      local expected = mode == 'blockwise' and { 'left', 'right', 'next' } or { 'left', 'right' }
+      eq(
+        expected,
+        exec_lua(function()
+          vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'é', 'abc' })
+          start_hint_client({ positionEncoding = 'utf-16', inlayHintProvider = true }, {
+            ['textDocument/inlayHint'] = function(_, _, cb)
+              cb(nil, {
+                { label = 'left', position = { line = 0, character = 0 } },
+                { label = 'right', position = { line = 0, character = 1 } },
+                { label = 'next', position = { line = 1, character = 0 } },
+              })
+            end,
+          })
+          vim.lsp.inlay_hint.enable(true)
+          assert(vim.wait(1000, function()
+            return #vim.lsp.inlay_hint.get({ bufnr = 0 }) == 3
+          end))
+          vim.api.nvim_win_set_cursor(0, { 1, 0 })
+          if mode == 'exclusive' then
+            vim.o.selection = 'exclusive'
+          end
+          if keys ~= '' then
+            vim.cmd.normal(keys)
+          end
+          local labels
+          run_hint_action(function(hints, ctx, done)
+            labels = vim.tbl_map(function(h)
+              return h.label
+            end, hints)
+            done(ctx)
+            return true
+          end)
+          return labels
+        end)
+      )
+    end)
+  end
 end)
