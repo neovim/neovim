@@ -1247,6 +1247,40 @@ describe('vim.lsp.util', function()
         end)
         eq({ 'foo', 'bar' }, result)
       end)
+
+      it('resolves backslash escapes of ASCII punctuation', function()
+        local result = exec_lua(function()
+          return vim.lsp.util._normalize_markdown({
+            'Returns the sum\\. See also \\_Foo\\_\\-bar\\.',
+            'Literal backslash: \\\\ and \\a \\1 stay as-is.',
+          })
+        end)
+        eq({
+          'Returns the sum. See also _Foo_-bar.',
+          'Literal backslash: \\ and \\a \\1 stay as-is.',
+        }, result)
+      end)
+
+      it('keeps backslash escapes inside code spans and fenced code blocks', function()
+        local result = exec_lua(function()
+          return vim.lsp.util._normalize_markdown({
+            'Call `printf("\\\\n")` here\\.',
+            'An escaped backtick \\`is not\\` a code span\\.',
+            '```c',
+            'printf("a\\tb\\\\n");',
+            '```',
+            'Done\\.',
+          })
+        end)
+        eq({
+          'Call `printf("\\\\n")` here.',
+          'An escaped backtick `is not` a code span.',
+          '```c',
+          'printf("a\\tb\\\\n");',
+          '```',
+          'Done.',
+        }, result)
+      end)
     end)
 
     describe('make_floating_popup_options', function()

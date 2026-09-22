@@ -1327,6 +1327,100 @@ function M.stylize_markdown(bufnr, contents, opts)
   return stripped
 end
 
+--- ASCII punctuation, the only characters GFM allows to be backslash-escaped.
+---@see https://github.github.com/gfm/#backslash-escapes
+local ascii_punctuation = {} --- @type table<string,true>
+for char in ('!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'):gmatch('.') do
+  ascii_punctuation[char] = true
+end
+
+---Finds the next run of exactly `len` backticks, at or after `init`.
+---@param line string
+---@param init integer
+---@param len integer
+---@return integer? start
+---@return integer? finish
+local function find_backtick_run(line, init, len)
+  local s, e = line:find('`+', init)
+  while s do
+    if e - s + 1 == len then
+      return s, e
+    end
+    s, e = line:find('`+', e + 1)
+  end
+end
+
+---Matches a code fence.
+---@see https://github.github.com/gfm/#fenced-code-blocks
+---@param line string
+---@return string? delimiter character
+---@return integer? fence length
+---@return string? info string
+local function match_code_fence(line)
+  -- The info string of a backtick fence may not contain a backtick.
+  local indent, fence, info = line:match('^( *)(`+)([^`]*)$')
+  if not fence then
+    indent, fence, info = line:match('^( *)(~+)(.*)$')
+  end
+  if not fence or #indent > 3 or #fence < 3 then
+    return nil
+  end
+  return fence:sub(1, 1), #fence, info
+end
+
+---Resolves backslash escapes in a single line, leaving code spans verbatim.
+---@param line string
+---@return string
+local function resolve_escapes_in_line(line)
+  local parts = {} --- @type string[]
+  local i = 1
+  while i <= #line do
+    local s = line:find('[\\`]', i)
+    if not s then
+      parts[#parts + 1] = line:sub(i)
+      break
+    end
+    parts[#parts + 1] = line:sub(i, s - 1)
+    if line:sub(s, s) == '\\' then
+      -- An escaped ASCII punctuation character stands for itself, any other
+      -- backslash is literal. An escaped backtick never opens a code span.
+      local escaped = line:sub(s + 1, s + 1)
+      parts[#parts + 1] = ascii_punctuation[escaped] and escaped or line:sub(s, s + 1)
+      i = s + 2
+    else
+      local _, e = line:find('^`+', s)
+      local _, close = find_backtick_run(line, e + 1, e - s + 1)
+      -- A code span is verbatim, unmatched backticks are literal text.
+      parts[#parts + 1] = line:sub(s, close or e)
+      i = (close or e) + 1
+    end
+  end
+  return table.concat(parts)
+end
+
+---Resolves backslash escapes outside of code spans and fenced code blocks.
+---@param contents string[]
+---@return string[]
+local function resolve_escapes(contents)
+  local resolved = {} --- @type string[]
+  local fence --- @type { char: string, len: integer }?
+  for _, line in ipairs(contents) do
+    local char, len, info = match_code_fence(line)
+    if fence then
+      if char == fence.char and len >= fence.len and info:match('^%s*$') then
+        fence = nil
+      end
+      resolved[#resolved + 1] = line
+    elseif char then
+      fence = { char = char, len = len }
+      resolved[#resolved + 1] = line
+    else
+      resolved[#resolved + 1] = resolve_escapes_in_line(line)
+    end
+  end
+  return resolved
+end
+
 --- @class (private) vim.lsp.util._normalize_markdown.Opts
 --- @field width integer Thematic breaks are expanded to this size. Defaults to 80.
 
@@ -1340,6 +1434,7 @@ end
 ---   1. Carriage returns ('\r') and empty lines at the beginning and end are removed
 ---   2. Successive empty lines are collapsed into a single empty line
 ---   3. Thematic breaks are expanded to the given width
+---   4. Backslash escapes are resolved outside of code spans and code blocks
 ---
 ---@param contents string[]
 ---@param opts? vim.lsp.util._normalize_markdown.Opts
@@ -1360,6 +1455,10 @@ function M._normalize_markdown(contents, opts)
   -- 3. Thematic breaks are expanded to the given width
   local divider = string.rep('─', opts.width or 80)
   contents = replace_separators(contents, divider)
+
+  -- 4. Backslash escapes are resolved. Done last, so that an escaped thematic
+  --    break is not expanded.
+  contents = resolve_escapes(contents)
 
   return contents
 end
