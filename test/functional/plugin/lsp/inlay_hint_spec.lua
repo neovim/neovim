@@ -457,6 +457,56 @@ test text
   end)
 end)
 
+--- Installs the shared action driver in the child process:
+--- * `run_inlay_action(action, hints?, during?)` runs an action, checks the completion
+---   contract, and reports the buffer left in focus. `during` runs after `action()`
+---   returns but before waiting for it to finish.
+--- * `capture_hints(record)` is an action handler that records the hints it is given.
+local function setup_action_driver()
+  exec_lua(function()
+    --- @return {buf: integer, client_id: integer?, win: integer?, lines: string[]?}
+    function _G.run_inlay_action(action, hints, during)
+      local result ---@type table?
+      local calls, returned = 0, false
+      vim.lsp.inlay_hint.action(action, {
+        hints = hints,
+        on_done = function(ctx)
+          assert(returned, 'on_done must be asynchronous')
+          calls = calls + 1
+          result = { buf = ctx.buf, client_id = ctx.client and ctx.client.id }
+        end,
+      })
+      returned = true
+      if during then
+        during()
+      end
+      assert(
+        vim.wait(5000, function()
+          return result ~= nil
+        end),
+        'action() did not finish'
+      )
+      vim.wait(0)
+      assert(calls == 1, 'on_done must run exactly once')
+      -- An action may leave behind a buffer that was deleted while it ran.
+      if vim.api.nvim_buf_is_valid(result.buf) then
+        result.win = vim.fn.bufwinid(result.buf)
+        result.lines = vim.api.nvim_buf_get_lines(result.buf, 0, -1, false)
+      end
+      return result
+    end
+
+    --- @param record fun(hints: lsp.InlayHint[])
+    function _G.capture_hints(record)
+      return function(hints, ctx, done)
+        record(hints)
+        done(ctx)
+        return true
+      end
+    end
+  end)
+end
+
 describe('vim.lsp.inlay_hint.action', function()
   ---@type table<string, {lines: string[], name: string, filetype: string, bufnr: integer?, uri: string}>
   local mocked_files = {
@@ -672,42 +722,31 @@ describe('vim.lsp.inlay_hint.action', function()
       vim.api.nvim_cmd({ cmd = 'buf', args = { tostring(mocked_files.main.bufnr) } }, {})
       curr_winid = vim.api.nvim_get_current_win()
     end)
+
+    setup_action_driver()
   end)
 
   after_each(function()
     api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
   end)
 
-  --- Runs the named action on the hints in the given range of the main file, waits for it to
-  --- finish, and returns information about the buffer that is focused when the action is done.
+  --- Runs the named action on the hints in the given range of the main file.
   --- @param action vim.lsp.inlay_hint.action.name
   --- @param start_pos [integer, integer] 0-indexed (line, character) LSP position
   --- @param end_pos [integer, integer] 0-indexed (line, character) LSP position
-  --- @return {buf: integer, win: integer, lines: string[]}
+  --- @return {buf: integer, client_id: integer?, win: integer?, lines: string[]?}
   local function run_action(action, start_pos, end_pos)
     return exec_lua(function()
-      local done_buf ---@type integer?
-      vim.lsp.inlay_hint.action(action, {
-        hints = vim.lsp.inlay_hint.get({
+      return _G.run_inlay_action(
+        action,
+        vim.lsp.inlay_hint.get({
           bufnr = mocked_files.main.bufnr,
           range = {
             start = { line = start_pos[1], character = start_pos[2] },
             ['end'] = { line = end_pos[1], character = end_pos[2] },
           },
-        }),
-        on_done = function(ctx)
-          done_buf = ctx.buf
-        end,
-      })
-      vim.wait(wait_time, function()
-        return done_buf ~= nil
-      end)
-      local buf = assert(done_buf, 'action() did not finish')
-      return {
-        buf = buf,
-        win = vim.fn.bufwinid(buf),
-        lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false),
-      }
+        })
+      )
     end)
   end
 
@@ -724,14 +763,9 @@ describe('vim.lsp.inlay_hint.action', function()
         vim.api.nvim_win_set_cursor(curr_winid, to)
       end
       local count ---@type integer?
-      vim.lsp.inlay_hint.action(function(hints, ctx, cb)
+      _G.run_inlay_action(_G.capture_hints(function(hints)
         count = #hints
-        cb({ buf = ctx.buf, client = ctx.client })
-        return true
-      end)
-      vim.wait(wait_time, function()
-        return count ~= nil
-      end)
+      end))
       return assert(count)
     end)
   end
@@ -844,38 +878,6 @@ describe('vim.lsp.inlay_hint.action', function()
       eq(ref_hover, result.lines)
     end)
 
-    it('deduplicates identical locations within a hint', function()
-      -- A hint whose label parts carry the same location twice produces a single hover
-      -- section, not two.
-      local result = exec_lua(function()
-        local hint = {
-          label = {
-            { value = 'MyStruct', location = lib_location },
-            { value = 'MyStruct', location = lib_location },
-          },
-          position = { line = 7, character = 19 },
-        }
-
-        local done_buf ---@type integer?
-        vim.lsp.inlay_hint.action('hover', {
-          hints = {
-            { bufnr = mocked_files.main.bufnr, client_id = client_id, inlay_hint = hint },
-          },
-          on_done = function(ctx)
-            done_buf = ctx.buf
-          end,
-        })
-        vim.wait(wait_time, function()
-          return done_buf ~= nil
-        end)
-        local buf = assert(done_buf, 'action() did not finish')
-        return { buf = buf, lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false) }
-      end)
-
-      neq(mocked_files.main.bufnr, result.buf)
-      eq(ref_hover, result.lines)
-    end)
-
     it('does NOT show hover when the hint has no location', function()
       local buf_count = #api.nvim_list_bufs()
       run_action('hover', { 9, 21 }, { 9, 24 })
@@ -950,34 +952,9 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
           range = { start = { line = 0, character = 0 }, ['end'] = { line = 0, character = 1 } },
         }
       end
-
-      -- Also check the completion contract for every action using this helper.
-      function _G.run_hint_action(action, hints, during)
-        local result
-        local calls, returned = 0, false
-        vim.lsp.inlay_hint.action(action, {
-          hints = hints,
-          on_done = function(ctx)
-            assert(returned, 'on_done must be asynchronous')
-            calls = calls + 1
-            result = { buf = ctx.buf, client_id = ctx.client and ctx.client.id }
-          end,
-        })
-        returned = true
-        if during then
-          during()
-        end
-        assert(
-          vim.wait(1000, function()
-            return result ~= nil
-          end),
-          'action did not finish'
-        )
-        vim.wait(0)
-        assert(calls == 1, 'on_done must run exactly once')
-        return result
-      end
     end)
+
+    setup_action_driver()
   end)
 
   after_each(function()
@@ -986,9 +963,10 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
 
   it('finishes asynchronously with no hints', function()
     eq(
-      { buf = api.nvim_get_current_buf() },
+      { api.nvim_get_current_buf(), true },
       exec_lua(function()
-        return run_hint_action('textEdits', {})
+        local result = run_inlay_action('textEdits', {})
+        return { result.buf, result.client_id == nil }
       end)
     )
   end)
@@ -1017,7 +995,7 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
       exec_lua(function()
         local first, second, third = start_hint_client(), start_hint_client(), start_hint_client()
         local seen = {}
-        local result = run_hint_action(function(_, ctx, done)
+        local result = run_inlay_action(function(_, ctx, done)
           seen[#seen + 1] = ctx.client.id
           if ctx.client.id == first.id then
             return false
@@ -1054,7 +1032,7 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
         local other = vim.api.nvim_create_buf(true, false)
         vim.api.nvim_set_current_buf(other)
         vim.api.nvim_buf_set_lines(other, 0, -1, false, { 'other' })
-        local result = run_hint_action('textEdits', { entry })
+        local result = run_inlay_action('textEdits', { entry })
         return {
           vim.api.nvim_buf_get_lines(source, 0, -1, false)[1],
           vim.api.nvim_get_current_line(),
@@ -1109,11 +1087,12 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
         end))
         local hints = vim.lsp.inlay_hint.get({ bufnr = 0 })
         local received
-        run_hint_action(function(resolved, ctx, done)
-          received = resolved[1].position.character
-          done(ctx)
-          return true
-        end, hints)
+        run_inlay_action(
+          capture_hints(function(resolved)
+            received = resolved[1].position.character
+          end),
+          hints
+        )
         return { sent, received, hints[1].inlay_hint.position.character }
       end)
     )
@@ -1132,12 +1111,10 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
           end,
         })
         local labels
-        run_hint_action(
-          function(hints, ctx, done)
+        run_inlay_action(
+          capture_hints(function(hints)
             labels = { hints[1].label, hints[2].label }
-            done(ctx)
-            return true
-          end,
+          end),
           { hint_entry(client, { label = 'first' }), hint_entry(client, { label = 'second' }) },
           function()
             assert(vim.wait(1000, function()
@@ -1164,7 +1141,7 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
             end,
           })
           local buf = vim.api.nvim_get_current_buf()
-          local result = run_hint_action('textEdits', { hint_entry(client) }, function()
+          local result = run_inlay_action('textEdits', { hint_entry(client) }, function()
             assert(vim.wait(1000, function()
               return reply ~= nil
             end))
@@ -1211,7 +1188,7 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
             vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'changed' })
           end,
         })
-        local result = run_hint_action('textEdits', { hint_entry(client) })
+        local result = run_inlay_action('textEdits', { hint_entry(client) })
         return { vim.api.nvim_get_current_line(), result.client_id ~= nil }
       end)
     )
@@ -1235,7 +1212,7 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
             return false
           end
           local loc = label_loc()
-          local result = run_hint_action(action, {
+          local result = run_inlay_action(action, {
             hint_entry(client, {
               label = {
                 { value = 'T', location = loc, command = { title = 'Test', command = 'test' } },
@@ -1258,7 +1235,7 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
           end,
         })
         local second = start_hint_client()
-        local result = run_hint_action('tooltip', {
+        local result = run_inlay_action('tooltip', {
           hint_entry(first),
           hint_entry(second, { tooltip = 'docs' }),
         })
@@ -1281,7 +1258,7 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
             cb(nil, nil)
           end
           local loc = label_loc(buf)
-          local result = run_hint_action(action, {
+          local result = run_inlay_action(action, {
             hint_entry(client, {
               label = {
                 { value = 'A', location = loc, command = { title = 'A', command = 'a' } },
@@ -1295,12 +1272,32 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
     end)
   end
 
+  it('deduplicates identical label locations within a hint', function()
+    eq(
+      { '# `T`', 'docs' },
+      exec_lua(function()
+        local client = start_hint_client(nil, {
+          ['textDocument/hover'] = function(_, _, cb)
+            cb(nil, { contents = { kind = 'markdown', value = 'docs' } })
+          end,
+        })
+        local loc = label_loc()
+        local result = run_inlay_action('hover', {
+          hint_entry(client, {
+            label = { { value = 'T', location = loc }, { value = 'T', location = loc } },
+          }),
+        })
+        return result.lines
+      end)
+    )
+  end)
+
   it('preserves distinct label-only tooltips', function()
     eq(
       { '# `TT`', '', '', '## `T`', '', 'first', '', '## `T`', '', 'second' },
       exec_lua(function()
         local client = start_hint_client()
-        local result = run_hint_action('tooltip', {
+        local result = run_inlay_action('tooltip', {
           hint_entry(client, {
             label = {
               { value = 'T', tooltip = 'first' },
@@ -1326,7 +1323,7 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
         local loc = label_loc(buf)
         local entry = hint_entry(client, { label = { { value = 'T', location = loc } } })
         local windows = #vim.api.nvim_list_wins()
-        local result = run_hint_action('hover', { entry })
+        local result = run_inlay_action('hover', { entry })
         return {
           result.buf == buf and #vim.api.nvim_list_wins() == windows,
           result.client_id ~= nil,
@@ -1349,7 +1346,7 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
         vim.api.nvim_set_current_win(source_win)
         local loc = label_loc(target_buf)
         local entry = hint_entry(client, { label = { { value = 'T', location = loc } } })
-        local result = run_hint_action('location', { entry })
+        local result = run_inlay_action('location', { entry })
         return result.buf == target_buf and vim.api.nvim_get_current_win() == target_win
       end)
     )
@@ -1381,7 +1378,7 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
               { value = 'T', command = { title = 'Test', command = 'test', arguments = { 42 } } },
             },
           })
-          local result = run_hint_action('command', { entry })
+          local result = run_inlay_action('command', { entry })
           assert(handled)
           return { sent, result.client_id ~= nil }
         end)
@@ -1404,7 +1401,7 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
           client.rpc.request = function()
             error('unexpected server request')
           end
-          local result = run_hint_action('command', {
+          local result = run_inlay_action('command', {
             hint_entry(client, {
               label = {
                 {
@@ -1432,7 +1429,7 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
         client.rpc.request = function()
           error('unexpected server request')
         end
-        local result = run_hint_action('command', {
+        local result = run_inlay_action('command', {
           hint_entry(client, {
             label = {
               { value = 'T', command = { title = 'Test', command = 'test' } },
@@ -1467,11 +1464,9 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
         vim.api.nvim_win_set_cursor(wins[2], { 2, 0 })
         vim.api.nvim_set_current_win(wins[2])
         local label
-        run_hint_action(function(hints, ctx, done)
+        run_inlay_action(capture_hints(function(hints)
           label = hints[1].label
-          done(ctx)
-          return true
-        end)
+        end))
         return label
       end)
     )
@@ -1512,13 +1507,11 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
             vim.cmd.normal(keys)
           end
           local labels
-          run_hint_action(function(hints, ctx, done)
+          run_inlay_action(capture_hints(function(hints)
             labels = vim.tbl_map(function(h)
               return h.label
             end, hints)
-            done(ctx)
-            return true
-          end)
+          end))
           return labels
         end)
       )
