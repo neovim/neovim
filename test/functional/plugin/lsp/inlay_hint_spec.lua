@@ -1216,7 +1216,10 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
     )
   end)
 
-  for _, case in ipairs({ { 'inlayHint/resolve', 'textEdits' } }) do
+  for _, case in ipairs({
+    { 'inlayHint/resolve', 'textEdits' },
+    { 'textDocument/hover', 'hover' },
+  }) do
     local method, action = case[1], case[2]
     it('completes when submitting ' .. method .. ' fails', function()
       eq(
@@ -1304,6 +1307,28 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
           }),
         })
         return vim.api.nvim_buf_get_lines(result.buf, 0, -1, false)
+      end)
+    )
+  end)
+
+  it('does not open a hover window for an empty response', function()
+    eq(
+      { true, false },
+      exec_lua(function()
+        local client = start_hint_client(nil, {
+          ['textDocument/hover'] = function(_, _, cb)
+            cb(nil, nil)
+          end,
+        })
+        local buf = vim.api.nvim_get_current_buf()
+        local loc = label_loc(buf)
+        local entry = hint_entry(client, { label = { { value = 'T', location = loc } } })
+        local windows = #vim.api.nvim_list_wins()
+        local result = run_hint_action('hover', { entry })
+        return {
+          result.buf == buf and #vim.api.nvim_list_wins() == windows,
+          result.client_id ~= nil,
+        }
       end)
     )
   end)
