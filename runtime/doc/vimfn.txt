@@ -1774,6 +1774,12 @@ diff_filler({lnum})                                              *diff_filler()*
 		Returns 0 if the current window is not in diff mode or filler
 		lines have been disabled using 'diffopt'.
 
+		As a special case, if filler lines occur after the last buffer line,
+		they are considered to be above a virtual line that follows the end
+		of the file. Thus, if the buffer is not empty, diff_filler(line("$")+1)
+		returns the number of filler lines at the end of the file. If the
+		buffer is empty, diff_filler(1) returns the number of filler lines.
+
                 Parameters: ~
                   • {lnum} (`integer|string`)
 
