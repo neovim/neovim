@@ -429,10 +429,6 @@ function M.enable(enable, filter)
   Capability.enable('inlay_hint', enable, filter)
 end
 
---- @class (private) vim.lsp.inlay_hint.action.hint_label
---- @field hint lsp.InlayHint
---- @field label lsp.InlayHintLabelPart
-
 --- A wrapper of `vim.ui.select` that skips the menu when there's only one item.
 --- @generic T
 --- @param items T[] Arbitrary items
@@ -513,15 +509,15 @@ end
 
 --- Append `new_label` to `labels` unless an equal label (comparing `value` and each of
 --- `by_attribute`) is already there.
----@param labels vim.lsp.inlay_hint.action.hint_label[]
----@param new_label vim.lsp.inlay_hint.action.hint_label
+---@param labels lsp.InlayHintLabelPart[]
+---@param new_label lsp.InlayHintLabelPart
 ---@param by_attribute ('location'|'command'|'tooltip')[]
 local function add_new_label(labels, new_label, by_attribute)
   for _, existing_label in ipairs(labels) do
-    if existing_label.label.value == new_label.label.value then
+    if existing_label.value == new_label.value then
       local same = true
       for _, attr in ipairs(by_attribute) do
-        if not vim.deep_equal(existing_label.label[attr], new_label.label[attr]) then
+        if not vim.deep_equal(existing_label[attr], new_label[attr]) then
           same = false
           break
         end
@@ -534,12 +530,12 @@ local function add_new_label(labels, new_label, by_attribute)
   table.insert(labels, new_label)
 end
 
----Return the deduplicated hint labels carrying at least one of `needed_fields`.
+---Return the deduplicated hint label parts carrying at least one of `needed_fields`.
 --- @param hint lsp.InlayHint
 --- @param needed_fields ("location"|"command"|"tooltip")[]
---- @return vim.lsp.inlay_hint.action.hint_label[]
+--- @return lsp.InlayHintLabelPart[]
 local function get_hint_labels(hint, needed_fields)
-  --- @type vim.lsp.inlay_hint.action.hint_label[]
+  --- @type lsp.InlayHintLabelPart[]
   local hint_labels = {}
 
   if type(hint.label) == 'table' then
@@ -549,7 +545,7 @@ local function get_hint_labels(hint, needed_fields)
           return label[field_name] ~= nil
         end)
       then
-        add_new_label(hint_labels, { hint = hint, label = label }, needed_fields)
+        add_new_label(hint_labels, label, needed_fields)
       end
     end
   end
@@ -606,7 +602,7 @@ local action_handlers = {
     return true
   end,
   location = function(hints, ctx, on_done)
-    --- @type vim.lsp.inlay_hint.action.hint_label[]
+    --- @type lsp.InlayHintLabelPart[]
     local hint_labels = {}
 
     for _, item in ipairs(hints) do
@@ -620,14 +616,14 @@ local action_handlers = {
     do_or_select(hint_labels, {
       prompt = 'Location to jump to',
       kind = 'inlay_hint_location',
-      --- @param item vim.lsp.inlay_hint.action.hint_label
+      --- @param item lsp.InlayHintLabelPart
       format_item = function(item)
-        local label = item.label
+        local location = assert(item.location)
         return string.format(
           '%s\t%s:%d',
-          label.value,
-          cleanup_path(vim.uri_to_fname(label.location.uri), ctx.client.root_dir),
-          label.location.range.start.line
+          item.value,
+          cleanup_path(vim.uri_to_fname(location.uri), ctx.client.root_dir),
+          location.range.start.line
         )
       end,
     }, function(item, idx)
@@ -638,7 +634,7 @@ local action_handlers = {
       end
       api.nvim_set_current_win(ctx.win)
       local shown = util.show_document(
-        item.label.location,
+        assert(item.location),
         ctx.client.offset_encoding,
         { reuse_win = true, focus = true }
       )
@@ -666,7 +662,7 @@ local action_handlers = {
 
     --- Go through the labels to build the content of the hover
     ---@param idx integer?
-    ---@param item vim.lsp.inlay_hint.action.hint_label?
+    ---@param item lsp.InlayHintLabelPart?
     local function get_hover(idx, item)
       if not can_show(ctx) then
         on_done({ buf = ctx.buf })
@@ -686,8 +682,8 @@ local action_handlers = {
         return
       end
 
-      -- `get_hint_labels` makes sure `item.label` has location attribute
-      local label_loc = assert(item.label.location)
+      -- `get_hint_labels` makes sure `item` has a location attribute
+      local label_loc = assert(item.location)
       ---@type lsp.HoverParams
       local hover_param = {
         textDocument = { uri = label_loc.uri },
@@ -705,7 +701,7 @@ local action_handlers = {
                 -- Blank line between label parts
                 lines[#lines + 1] = ''
               end
-              lines[#lines + 1] = string.format('# `%s`', item.label.value)
+              lines[#lines + 1] = string.format('# `%s`', item.value)
               vim.list_extend(lines, md_lines)
             end
           end
@@ -736,8 +732,7 @@ local action_handlers = {
       util.convert_input_to_markdown_lines(hint.tooltip, lines)
     end
 
-    for _, hint_label in ipairs(hint_labels) do
-      local label = hint_label.label
+    for _, label in ipairs(hint_labels) do
       lines[#lines + 1] = ''
       -- Each of the level 2 headings is the text of a label part.
       lines[#lines + 1] = string.format('## `%s`', label.value)
@@ -791,12 +786,11 @@ local action_handlers = {
     do_or_select(hint_labels, {
       prompt = 'Command to execute',
       kind = 'inlay_hint_command',
-      --- @param item vim.lsp.inlay_hint.action.hint_label
+      --- @param item lsp.InlayHintLabelPart
       format_item = function(item)
-        local label = item.label
-        local entry_line = string.format('%s: %s', label.value, assert(label.command).title)
-        if label.tooltip then
-          entry_line = entry_line .. string.format(' (%s)', label.tooltip)
+        local entry_line = string.format('%s: %s', item.value, assert(item.command).title)
+        if item.tooltip then
+          entry_line = entry_line .. string.format(' (%s)', item.tooltip)
         end
         return entry_line
       end,
@@ -806,7 +800,7 @@ local action_handlers = {
         on_done({ buf = ctx.buf })
         return
       end
-      local cmd = assert(item.label.command)
+      local cmd = assert(item.command)
       local success, request_id = ctx.client:exec_cmd(cmd, { bufnr = ctx.buf }, function(err, ...)
         local default_handler = ctx.client.handlers['workspace/executeCommand']
           or vim.lsp.handlers['workspace/executeCommand']
