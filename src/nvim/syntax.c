@@ -2964,6 +2964,10 @@ static void syn_cmd_iskeyword(exarg_T *eap, int syncing)
       memmove(curwin->w_s->b_syn_chartab, curbuf->b_chartab, (size_t)32);
       clear_string_option(&curwin->w_s->b_syn_isk);
     } else {
+      if (check_isopt(arg) == FAIL) {
+        emsg(_(e_invarg));
+        return;
+      }
       memmove(save_chartab, curbuf->b_chartab, (size_t)32);
       save_isk = curbuf->b_p_isk;
       curbuf->b_p_isk = xstrdup(arg);
