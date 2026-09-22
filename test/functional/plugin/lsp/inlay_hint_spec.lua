@@ -754,13 +754,15 @@ describe('vim.lsp.inlay_hint.action', function()
           ['textDocument/inlayHint'] = function(_, param, callback)
             local buf = vim.uri_to_bufnr(param.textDocument.uri)
             local requested_range = vim.range.lsp(buf, param.range, offset_encoding)
+            local range_start = vim.pos(buf, requested_range.start_row, requested_range.start_col)
+            local range_end = vim.pos(buf, requested_range.end_row, requested_range.end_col)
             local filtered_hints = vim
               .iter(orig_response)
               :filter(
                 ---@param hint lsp.InlayHint
                 function(hint)
                   local hint_pos = vim.pos.lsp(buf, hint.position, offset_encoding)
-                  return hint_pos >= requested_range.start and hint_pos < requested_range.end_
+                  return hint_pos >= range_start and hint_pos < range_end
                 end
               )
               :totable()
