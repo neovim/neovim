@@ -855,16 +855,18 @@ local action_handlers = {
           return
         end
         local cmd = assert(hint_labels[idx].label.command)
-        local local_command = ctx.client.commands[cmd.command] or vim.lsp.commands[cmd.command]
-        ctx.client:exec_cmd(cmd, { bufnr = ctx.buf }, function(...)
+        local success, request_id = ctx.client:exec_cmd(cmd, { bufnr = ctx.buf }, function(err, ...)
           local default_handler = ctx.client.handlers['workspace/executeCommand']
             or vim.lsp.handlers['workspace/executeCommand']
           if default_handler then
-            default_handler(...)
+            default_handler(err, ...)
           end
-          on_done({ buf = ctx.buf, client = ctx.client })
+          on_done({ buf = ctx.buf, client = not err and ctx.client or nil })
         end)
-        if local_command then
+        if not success then
+          on_done({ buf = ctx.buf })
+        elseif not request_id then
+          -- The command ran locally, so the handler above is never called.
           on_done({ buf = ctx.buf, client = ctx.client })
         end
       end
@@ -918,7 +920,7 @@ local action_handlers = {
 --- @field hints? vim.lsp.inlay_hint.get.ret[]
 ---
 --- A callback invoked exactly once (asynchronously) at the end of the action.
---- Also invoked when no action is taken or selection is cancelled.
+--- Also invoked when no action is taken, selection is cancelled, or a request fails.
 --- Receives a context with these fields:
 ---   - `buf`: the preview buffer for hover/tooltip, the destination buffer for location,
 ---     or the source buffer otherwise. The source buffer may have been deleted.

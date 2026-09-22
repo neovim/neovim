@@ -1220,6 +1220,7 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
   for _, case in ipairs({
     { 'inlayHint/resolve', 'textEdits' },
     { 'textDocument/hover', 'hover' },
+    { 'workspace/executeCommand', 'command' },
   }) do
     local method, action = case[1], case[2]
     it('completes when submitting ' .. method .. ' fails', function()
@@ -1354,7 +1355,7 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
     )
   end)
 
-  for _, outcome in ipairs({ 'result' }) do
+  for _, outcome in ipairs({ 'result', 'error' }) do
     it('completes a server command with a server ' .. outcome, function()
       eq(
         { { command = 'test', arguments = { 42 } }, outcome == 'result' },
@@ -1418,6 +1419,30 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
       )
     end)
   end
+
+  it('finishes unsupported commands without sending a server request', function()
+    eq(
+      { true, false },
+      exec_lua(function()
+        local client = start_hint_client()
+        local notified = false
+        vim.notify_once = function()
+          notified = true
+        end
+        client.rpc.request = function()
+          error('unexpected server request')
+        end
+        local result = run_hint_action('command', {
+          hint_entry(client, {
+            label = {
+              { value = 'T', command = { title = 'Test', command = 'test' } },
+            },
+          }),
+        })
+        return { notified, result.client_id ~= nil }
+      end)
+    )
+  end)
 
   it('uses the cursor of the invoking window', function()
     eq(

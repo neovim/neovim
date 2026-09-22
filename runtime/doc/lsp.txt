@@ -2499,9 +2499,9 @@ action({action}, {opts})                         *vim.lsp.inlay_hint.action()*
                     • {inlay_hint} (`lsp.InlayHint`)
                   • {on_done}? (`vim.lsp.inlay_hint.action.on_done.callback`)
                     A callback invoked exactly once (asynchronously) at the
-                    end of the action. Also invoked when no action is taken or
-                    selection is cancelled. Receives a context with these
-                    fields:
+                    end of the action. Also invoked when no action is taken,
+                    selection is cancelled, or a request fails. Receives a
+                    context with these fields:
                     • `buf`: the preview buffer for hover/tooltip, the
                       destination buffer for location, or the source buffer
                       otherwise. The source buffer may have been deleted.
