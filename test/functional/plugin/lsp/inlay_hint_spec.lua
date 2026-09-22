@@ -1290,6 +1290,24 @@ describe('vim.lsp.inlay_hint.action edge cases', function()
     end)
   end
 
+  it('preserves distinct label-only tooltips', function()
+    eq(
+      { '# `TT`', '', '', '## `T`', '', 'first', '', '## `T`', '', 'second' },
+      exec_lua(function()
+        local client = start_hint_client()
+        local result = run_hint_action('tooltip', {
+          hint_entry(client, {
+            label = {
+              { value = 'T', tooltip = 'first' },
+              { value = 'T', tooltip = 'second' },
+            },
+          }),
+        })
+        return vim.api.nvim_buf_get_lines(result.buf, 0, -1, false)
+      end)
+    )
+  end)
+
   it('focuses an existing target window when jumping to a location', function()
     eq(
       true,

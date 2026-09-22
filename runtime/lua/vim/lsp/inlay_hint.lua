@@ -760,7 +760,7 @@ local action_handlers = {
     end
 
     local hint = assert(hints[1])
-    local hint_labels = get_hint_labels(hint, { 'location', 'command' })
+    local hint_labels = get_hint_labels(hint, { 'location', 'command', 'tooltip' })
 
     -- The level 1 heading is the full hint object
     local lines = { string.format('# `%s`', get_label_text(hint, false)), '' }
