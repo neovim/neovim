@@ -493,38 +493,28 @@ local action_helpers = {
     local winid = fn.bufwinid(bufnr)
     local mode = fn.mode()
 
-    -- Mark position, (1, 0) indexed, end-exclusive
-    --- @type {start: vim.Pos, end: vim.Pos}
-    local range = {}
-
     if mode == 'n' then
       local cursor = api.nvim_win_get_cursor(winid)
-      range.start = vim.pos.cursor(cursor)
-      range['end'] = vim.pos.cursor(cursor)
-      range['end'].col = range['end'].col + 1
-    else
-      local start_pos = fn.getpos('v')
-      local end_pos = fn.getpos('.')
-      if
-        start_pos[2] > end_pos[2] or (start_pos[2] == end_pos[2] and start_pos[3] > end_pos[3])
-      then
-        --- @type [integer, integer, integer, integer]
-        start_pos, end_pos = end_pos, start_pos
-      end
-      range = {
-        start = vim.pos.cursor({ start_pos[2], start_pos[3] - 1 }),
-        ['end'] = vim.pos.cursor({ end_pos[2], end_pos[3] }),
-      }
-
-      if mode == 'V' or mode == 'Vs' then
-        range.start.col = 0
-        range['end'].row = range['end'].row + 1
-        range['end'].col = 0
-      end
+      -- Include the hints on either side of the cursor.
+      local row, col = cursor[1] - 1, cursor[2]
+      return vim.range(bufnr, row, col, row, col + 1)
     end
-    range.start.buf = bufnr
-    range['end'].buf = bufnr
-    return vim.range(range.start, range['end'])
+
+    local start_pos = fn.getpos('v')
+    local end_pos = fn.getpos('.')
+    if start_pos[2] > end_pos[2] or (start_pos[2] == end_pos[2] and start_pos[3] > end_pos[3]) then
+      --- @type [integer, integer, integer, integer]
+      start_pos, end_pos = end_pos, start_pos
+    end
+    local start_row, start_col = start_pos[2] - 1, start_pos[3] - 1
+    local end_row, end_col = end_pos[2] - 1, end_pos[3]
+
+    if mode == 'V' or mode == 'Vs' then
+      start_col = 0
+      end_row = end_row + 1
+      end_col = 0
+    end
+    return vim.range(bufnr, start_row, start_col, end_row, end_col)
   end,
 
   --- Append `new_label` to `labels` if there are no duplicates.
@@ -995,8 +985,8 @@ function M.action(action, opts, callback)
         -- In `M.on_inlayhint`,
         -- the inlay hints are stored by byte indices, not lsp positions (utf-*),
         -- so we can't use `vim.range.to_lsp`
-        start = { line = range.start.row, character = range.start.col },
-        ['end'] = { line = range.end_.row, character = range.end_.col },
+        start = { line = range.start_row, character = range.start_col },
+        ['end'] = { line = range.end_row, character = range.end_col },
       },
       bufnr = bufnr,
     })
