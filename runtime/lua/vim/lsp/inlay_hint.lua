@@ -696,7 +696,8 @@ local action_handlers = {
         -- all locations have been processed
         -- open the hover window
         if #lines == 0 then
-          lines = { 'Empty' }
+          on_done({ buf = ctx.buf })
+          return
         end
         local float_buf = api.nvim_win_call(ctx.win, function()
           return util.open_floating_preview(lines, 'markdown')
@@ -712,7 +713,7 @@ local action_handlers = {
         textDocument = { uri = label_loc.uri },
         position = label_loc.range.start,
       }
-      ctx.client:request(
+      local success = ctx.client:request(
         'textDocument/hover',
         hover_param,
         ---@param result lsp.Hover?
@@ -732,6 +733,9 @@ local action_handlers = {
         end,
         ctx.buf
       )
+      if not success then
+        on_done({ buf = ctx.buf })
+      end
     end
 
     get_hover(next(hint_labels))
