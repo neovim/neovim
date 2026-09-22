@@ -657,16 +657,21 @@ local inlayhint_actions = {
         :totable(),
       { prompt = 'Location to jump to' },
       function(_, idx)
-        if idx then
-          util.show_document(
-            hint_labels[idx].label.location,
-            ctx.client.offset_encoding,
-            { reuse_win = true, focus = true }
-          )
-
+        if idx == nil then
+          -- `vim.ui.select` was cancelled
           if on_finish then
-            on_finish({ bufnr = api.nvim_get_current_buf(), client = ctx.client })
+            on_finish({ bufnr = ctx.bufnr })
           end
+          return
+        end
+        util.show_document(
+          hint_labels[idx].label.location,
+          ctx.client.offset_encoding,
+          { reuse_win = true, focus = true }
+        )
+
+        if on_finish then
+          on_finish({ bufnr = api.nvim_get_current_buf(), client = ctx.client })
         end
       end
     )
