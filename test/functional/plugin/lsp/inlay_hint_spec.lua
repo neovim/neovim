@@ -839,12 +839,14 @@ describe('vim.lsp.inlay_hint.action', function()
       vim.lsp.inlay_hint.action(function(hints, ctx, cb)
         hint_count = #hints
         if #hints > 0 then
-          cb({ bufnr = ctx.bufnr, client = ctx.client })
+          cb({ buf = ctx.buf, client = ctx.client })
         end
         return hint_count
-      end, {}, function()
-        done = true
-      end)
+      end, {
+        on_done = function()
+          done = true
+        end,
+      })
       vim.wait(wait_time, function()
         return done
       end)
@@ -868,12 +870,14 @@ describe('vim.lsp.inlay_hint.action', function()
       vim.lsp.inlay_hint.action(function(_hints, ctx, cb)
         hint_count = #_hints
         if #_hints > 0 then
-          cb({ bufnr = ctx.bufnr, client = ctx.client })
+          cb({ buf = ctx.buf, client = ctx.client })
         end
         return hint_count
-      end, {}, function()
-        done = true
-      end)
+      end, {
+        on_done = function()
+          done = true
+        end,
+      })
       vim.wait(wait_time, function()
         return done
       end)
@@ -890,19 +894,22 @@ describe('vim.lsp.inlay_hint.action', function()
     ---@type table
     local ctx = exec_lua(function()
       vim.api.nvim_win_set_cursor(curr_winid, { 8, 18 })
-      local on_finish_ctx ---@type table?
+      local on_done_ctx ---@type table?
       vim.lsp.inlay_hint.action(function()
         return 0
-      end, { hints = {} }, function(ctx)
-        on_finish_ctx = ctx
-        done = true
-      end)
+      end, {
+        hints = {},
+        on_done = function(ctx)
+          on_done_ctx = ctx
+          done = true
+        end,
+      })
       vim.wait(wait_time, function()
         return done
       end)
 
       assert(done)
-      return on_finish_ctx or { client = true } -- `on_finish_ctx` should be set to the actual ctx, and `client` should be `nil`
+      return on_done_ctx or { client = true } -- `on_done_ctx` should be set to the actual ctx, and `client` should be `nil`
     end)
 
     eq(nil, ctx.client)
@@ -919,9 +926,10 @@ describe('vim.lsp.inlay_hint.action', function()
 
           vim.lsp.inlay_hint.action('textEdits', {
             hints = _G.get_hints_from_range(start_pos, end_pos, mocked_files.main.bufnr),
-          }, function(_)
-            done = true
-          end)
+            on_done = function(_)
+              done = true
+            end,
+          })
           vim.wait(wait_time, function()
             return done
           end)
@@ -960,9 +968,10 @@ describe('vim.lsp.inlay_hint.action', function()
           local done = false
           vim.lsp.inlay_hint.action('location', {
             hints = _G.get_hints_from_range(start_pos, end_pos, mocked_files.main.bufnr),
-          }, function(_)
-            done = true
-          end)
+            on_done = function(_)
+              done = true
+            end,
+          })
           vim.wait(wait_time, function()
             return done
           end)
@@ -1015,11 +1024,12 @@ describe('vim.lsp.inlay_hint.action', function()
           local tooltip_win = nil ---@type integer?
           vim.lsp.inlay_hint.action('tooltip', {
             hints = _G.get_hints_from_range(start_pos, end_pos, mocked_files.main.bufnr),
-          }, function(ctx)
-            tooltip_buf = ctx.bufnr
-            tooltip_win = vim.fn.bufwinid(tooltip_buf)
-            done = true
-          end)
+            on_done = function(ctx)
+              tooltip_buf = ctx.buf
+              tooltip_win = vim.fn.bufwinid(tooltip_buf)
+              done = true
+            end,
+          })
           vim.wait(wait_time, function()
             return done
           end)
@@ -1082,11 +1092,12 @@ describe('vim.lsp.inlay_hint.action', function()
           local hover_win = nil ---@type integer?
           vim.lsp.inlay_hint.action('hover', {
             hints = _G.get_hints_from_range(start_pos, end_pos, mocked_files.main.bufnr),
-          }, function(ctx)
-            hover_buf = ctx.bufnr
-            hover_win = vim.fn.bufwinid(hover_buf)
-            done = true
-          end)
+            on_done = function(ctx)
+              hover_buf = ctx.buf
+              hover_win = vim.fn.bufwinid(hover_buf)
+              done = true
+            end,
+          })
           vim.wait(wait_time, function()
             return done
           end)
@@ -1140,9 +1151,10 @@ describe('vim.lsp.inlay_hint.action', function()
           local done = false
           vim.lsp.inlay_hint.action('command', {
             hints = _G.get_hints_from_range(start_pos, end_pos, mocked_files.main.bufnr),
-          }, function(_)
-            done = true
-          end)
+            on_done = function(_)
+              done = true
+            end,
+          })
           vim.wait(wait_time, function()
             return done
           end)
