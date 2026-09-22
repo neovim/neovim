@@ -2543,6 +2543,8 @@ get({filter})                                       *vim.lsp.inlay_hint.get()*
         })
 <
 
+    |vim.lsp.inlay_hint.action()| does all of the above for you.
+
     Attributes: ~
         Since: 0.10.0
 
