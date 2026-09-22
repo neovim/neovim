@@ -1004,9 +1004,13 @@ function M.action(action, opts, callback)
     end
   )
 
+  local client_ids = vim.tbl_keys(hints_by_clients)
+  -- `vim.tbl_keys` ordering is not deterministic; try clients in a stable order.
+  table.sort(client_ids)
+
   ---@type vim.lsp.Client[]
   local clients = vim
-    .iter(vim.tbl_keys(hints_by_clients))
+    .iter(client_ids)
     :map(function(cli_id)
       return vim.lsp.get_client_by_id(cli_id)
     end)
