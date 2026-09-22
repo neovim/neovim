@@ -346,6 +346,21 @@ function M.get(filter)
   return result
 end
 
+--- Turn an inlay hint into the visible text, merging any label parts.
+--- @param hint lsp.InlayHint
+--- @return string
+local function get_label_text(hint)
+  local label = hint.label
+  if type(label) == 'string' then
+    return label
+  end
+  local parts = {} --- @type string[]
+  for i, part in ipairs(label) do
+    parts[i] = part.value
+  end
+  return table.concat(parts)
+end
+
 --- on_win handler for the decoration provider (see |nvim_set_decoration_provider|)
 ---@package
 ---@param topline integer
@@ -367,20 +382,11 @@ function InlayHint:on_win(topline, botline)
         if line_hints and not line_hints.applied then
           line_hints.applied = true
           for _, hint in pairs(line_hints.hints) do
-            local text = ''
-            local label = hint.label
-            if type(label) == 'string' then
-              text = label
-            else
-              for _, part in ipairs(label) do
-                text = text .. part.value
-              end
-            end
             local vt = hint_virtual_texts[hint.position.character] or {}
             if hint.paddingLeft then
               vt[#vt + 1] = { ' ' }
             end
-            vt[#vt + 1] = { text, 'LspInlayHint' }
+            vt[#vt + 1] = { get_label_text(hint), 'LspInlayHint' }
             if hint.paddingRight then
               vt[#vt + 1] = { ' ' }
             end
@@ -426,43 +432,6 @@ end
 --- @class (private) vim.lsp.inlay_hint.action.hint_label
 --- @field hint lsp.InlayHint
 --- @field label lsp.InlayHintLabelPart
-
---- Turn an inlay hint object into the visible text, merging any label parts.
---- Paddings can be optionally included.
---- @param hint lsp.InlayHint
---- @param with_padding boolean?
---- @return string
-local function get_label_text(hint, with_padding)
-  --- @type string?
-  local label
-  if type(hint.label) == 'string' then
-    label = tostring(hint.label)
-  elseif vim.islist(hint.label) then
-    ---@type string
-    label = vim
-      .iter(hint.label)
-      :map(
-        --- @param part lsp.InlayHintLabelPart
-        function(part)
-          return part.value
-        end
-      )
-      :join('')
-  end
-
-  assert(label ~= nil, 'Failed to extract the label value from the inlay hint')
-
-  if with_padding then
-    if hint.paddingLeft then
-      label = ' ' .. label
-    end
-    if hint.paddingRight then
-      label = label .. ' '
-    end
-  end
-
-  return label
-end
 
 --- A wrapper of `vim.ui.select` that skips the menu when there's only one item.
 --- @generic T
@@ -767,7 +736,7 @@ local action_handlers = {
     local hint_labels = get_hint_labels(hint, { 'location', 'command', 'tooltip' })
 
     -- The level 1 heading is the full hint object
-    local lines = { string.format('# `%s`', get_label_text(hint, false)), '' }
+    local lines = { string.format('# `%s`', get_label_text(hint)), '' }
 
     if hint.tooltip then
       util.convert_input_to_markdown_lines(hint.tooltip, lines)
