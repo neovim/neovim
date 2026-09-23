@@ -200,7 +200,8 @@ void atom_free_all(void)
 /// Gets a structured spec of a normal-mode command.
 CmdSpec atom_cmd_spec(const cmdarg_T *cap)
 {
-  bool operand = nv_nchar_is_arg(cap->cmdchar);
+  // Cmd's second char is a typed operand ("fx", "ma"), not part of its name ("gJ", "iw").
+  bool operand = nv_is(cap->cmdchar, NV_LANG | NV_NCH_ARG);
   return (CmdSpec){
     .regname = cap->oap->regname,
     .count = cap->count0,
@@ -729,17 +730,14 @@ unsigned atom_key_class(int cmd, int arg)
   case Ctrl_E:
   case Ctrl_Y:
     return kKeyScrollView;
-  case Ctrl_O:
-  case Ctrl_I:
-    return kKeyJump;
   case Ctrl_T:
-    return kKeyJump | kKeyInsFlush;
-  // Multiplexed: one nv_cmds entry => many commands. NV_MOTION cannot tag them; char 2 decides.
+    return kKeyInsFlush;
+  // Multiplexed: one nv_cmds entry => many commands. Classified by char 2, not NV_MOTION/….
   case 'g':
-    if (arg == ';' || arg == ',') {
+    if (strchr(";,go", arg) != NULL) {
       return kKeyJump;
     }
-    return strchr("gjk0^$_meEoM", arg) != NULL ? kKeyMotion : 0;
+    return strchr("jk0^$_meEM*#", arg) != NULL ? kKeyMotion : 0;
   case '[':
   case ']':
     if (arg == 'C') {
@@ -748,11 +746,6 @@ unsigned atom_key_class(int cmd, int arg)
     return strchr("[](){}mMcsz#*/", arg) != NULL ? kKeyMotion : 0;
   case 'z':
     return (arg == 'j' || arg == 'k') ? kKeyMotion : 0;
-  case '*':
-  case '#':
-  case '\'':
-  case '`':
-    return kKeyJump;  // mark motions and "*"/"#": absolute/shared-state targets
   case K_UP:
   case K_DOWN:
   case K_LEFT:
@@ -1193,7 +1186,8 @@ void atom_capture_op(oparg_T *oap, cmdarg_T *cap, bool redo_yank)
     if (prep_exempt && (!Visual.active || oap->motion_force)) {
       // Only capture _user_ input.
       if (atom_capturable(atom_buf_has_consumers(), KeyTyped)) {
-        bool operand = nv_nchar_is_arg(cap->cmdchar);
+        // Cmd's second char is a typed operand ("fx", "ma"), not part of its name ("gJ", "iw").
+        bool operand = nv_is(cap->cmdchar, NV_LANG | NV_NCH_ARG);
         spec.motion_force = oap->motion_force;
         spec.cmd = cap->cmdchar;
         spec.cmd2 = operand ? NUL : cap->nchar;
@@ -1528,7 +1522,9 @@ static bool atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
     bool special_motion = (keycls & kKeyMotion) != 0;
     bool scroll_cmd = (keycls & (kKeyScrollMove | kKeyScrollView)) != 0;
     bool mouse_cmd = (keycls & kKeyMouse) != 0;
-    bool jump_cmd = (keycls & kKeyJump) != 0;
+    bool jump_cmd = nv_is(ca->cmdchar, NV_JUMP) || (keycls & kKeyJump) != 0
+                    // "[count]%" is absolute, unlike "%".
+                    || (ca->cmdchar == '%' && ca->count0 > 0);
     // Replayable? Register prefix ('"x') is captured as part of the command it prefixes; "@x" is
     // a translation, its resolution is the atom stream.
     bool replayable = (ca->cmdchar > 0 && ca->cmdchar < 0x100
@@ -1536,7 +1532,7 @@ static bool atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
                       || special_motion;
     bool changed = atom_origin_changed(old->origin);
     // Note: an operator's motion belongs to the operator (`finish_op`).
-    bool motion = (nv_is_motion(ca->cmdchar) || special_motion) && !changed
+    bool motion = (nv_is(ca->cmdchar, NV_MOTION) || special_motion) && !changed
                   && !finish_op && !jump_cmd;
     // Beeped without moving (e.g. "j" on the last line).
     bool failed = did_beep != old->beeps && !atom_origin_moved(old->origin);
@@ -1622,7 +1618,7 @@ static bool atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
 void atom_cmd_end(cmdarg_T *ca, CmdFrame *old)
 {
   if (composite.follow == kNone && !mc_replaying()
-      && (atom_origin_moved(old->origin) || nv_is_motion(ca->cmdchar))) {
+      && (atom_origin_moved(old->origin) || nv_is(ca->cmdchar, NV_MOTION))) {
     // First motion (or cursor-move, e.g. API) of the atom; innermost frame wins.
     composite.follow = old->follow ? kTrue : kFalse;
   }

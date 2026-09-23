@@ -476,7 +476,9 @@ CmdAtom				After a user action (an "atom" of input): any
 				  Visual sequence. Raw bytes, like `keys`.
 				- motionforce |forced-motion|: "v", "V", or
 				  "<C-V>" (|key-notation|).
-				- moved: Cursor moved.
+				- moved: Cursor moved. May be `false` even if
+				  the action is classified as a "motion" (e.g.
+				  "w" at buffer end, failed "fx").
 				- operator: Operator: "d", "g@", "zf", ….
 				  |key-notation|, like `cmd`.
 				- pos: Start position: [row, col], 1-indexed
@@ -493,12 +495,11 @@ CmdAtom				After a user action (an "atom" of input): any
 				- type:
 				    - "excmd": Ex cmdline session.
 				    - "insert": Insert session.
-				    - "jump": Absolute/shared navigation
-				      (|jumplist|, marks, |star|).
+				    - "jump": Absolute motion ("G", marks,
+				      "H", |jumplist).
 				    - "mapping": Composite (>=2 subatoms).
-				    - "motion": Non-jump motion. May report
-				      `moved=false` ("w" at buffer end, failed
-				      "fx", …).
+				    - "motion": Cursor-relative motion ("w",
+				      "%", "fx", "*").
 				    - "mouse"
 				    - "normal": Other commands ("u", CTRL-R,
 				      "za", CTRL-W, …).

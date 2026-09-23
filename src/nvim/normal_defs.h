@@ -5,6 +5,22 @@
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
 
+// Values for cmd_flags.
+#define NV_NCH      0x01            // May need to get a second char.
+#define NV_NCH_NOP  (0x02|NV_NCH)   // Get second char when no operator pending.
+#define NV_NCH_ALW  (0x04|NV_NCH)   // Always get a second char.
+#define NV_LANG     0x08            // Second char needs language adjustment.
+#define NV_SS       0x10            // May start selection.
+#define NV_SSS      0x20            // May start selection with shift modifier.
+#define NV_STS      0x40            // May stop selection without shift modif.
+#define NV_RL       0x80            // 'rightleft' modifies command.
+#define NV_KEEPREG  0x100           // Don't clear regname.
+#define NV_NCW      0x200           // Not allowed in command-line window.
+#define NV_NCH_ARG  0x400           // Second char is a typed operand (mark/reg name), not part of
+                                    // the name (see NV_LANG for f/t/r).
+#define NV_MOTION   0x800           // Cursor-relative motion.
+#define NV_JUMP     0x1000          // Absolute motion, target independent of the cursor ("G").
+
 /// Motion types, used for operators and for yank/delete registers.
 ///
 /// The three valid numerical values must not be changed, as they

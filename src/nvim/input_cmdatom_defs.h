@@ -87,9 +87,8 @@ enum {
   kKeyPayload    = 1 << 2,  ///< Interactively-typed payload (/, ?, :, !).
   kKeyScrollMove = 1 << 3,  ///< Scroll may move cursor (C-D/…): viewport-dependent, unreplayable.
   kKeyScrollView = 1 << 4,  ///< Viewport-only scroll (C-Y,wheel): cursor stays, unless 'scrolloff'.
-  kKeyJump       = 1 << 5,  ///< Moves to absolute pos from primary cursor's shared nav state
-                            ///< (jumplist C-O/I, CTRL-T, "g;"): not followable.
-  kKeyMotion     = 1 << 6,  ///< Replayable special-key motion (arrows, <Home>, …).
+  kKeyJump       = 1 << 5,  ///< Absolute motion (multiplexed "gg", "g;", …), see NV_JUMP.
+  kKeyMotion     = 1 << 6,  ///< Cursor-relative motion (multiplexed, special keys), see NV_MOTION.
   kKeyInsFlush   = 1 << 7,  ///< Insert-mode cmd a literal preview cannot represent:
                             ///< - deletions/indent-shifts (<Del>, CTRL-W, …) may edit text
                             ///<   outside the tracked region by per-cursor amounts;
