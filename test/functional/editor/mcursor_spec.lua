@@ -643,6 +643,14 @@ describe('multicursor', function()
       eq({ '01i\27ibad\27' }, atoms_tail(1))
     end)
 
+    it('jump (absolute motion) in a mapping is not replayed, like a mark', function()
+      -- "G" would move every cursor to the same line; only the edit replays per-cursor.
+      command('nnoremap X Gdd')
+      cursors({ 'a', 'b', 'c', 'd' }, 'jQ')
+      feed('X')
+      eq({ 'a', 'c' }, get_lines())
+    end)
+
     it('global op (undo/redo, g CTRL-A) does not cascade', function()
       -- Mapping that performs a "global op" must not cascade.
 
@@ -2319,7 +2327,7 @@ describe('multicursor', function()
       cursors({ 'aaa', 'bbb', 'ccc' })
       eq(2, ncursors())
       feed('q=')
-      feed('gg') -- Absolute motion: every cursor lands on the primary, all deduped.
+      feed('9k') -- Every cursor clamps to line 1, onto the primary: all deduped.
       eq(0, ncursors())
       -- Exited implicitly: "q=" resets, else the next "Q" would dedupe on "j".
       feed('Q')
@@ -2416,7 +2424,7 @@ describe('multicursor', function()
       eq({ 2, 0 }, api.nvim_win_get_cursor(0))
     end)
 
-    it('jumps are not followed (CTRL-O, backtick)', function()
+    it('jumps (absolute motions) are not followed', function()
       cursors({ 'abcd', 'efgh', 'ijkl' }, 'Q')
       feed('3G') -- Jumps fill the jumplist; no cascade.
       feed('2G')
@@ -2425,7 +2433,22 @@ describe('multicursor', function()
       eq({ { 0, 1 } }, anchors())
       feed('<C-o>') -- Jump.
       feed('``') -- Jump.
+      feed('G')
+      feed('gg')
+      feed('L')
       eq({ { 0, 1 } }, anchors())
+    end)
+
+    it('"*" follows per-cursor (its own word); keeps the primary search pattern', function()
+      cursors({ 'foo bar', 'bar baz', 'foo', 'bar', 'baz' }, 'Qj0')
+      feed('q=')
+      feed('*') -- Each cursor goes to the next occurrence of its own word.
+      eq({ { 2, 0 } }, anchors())
+      eq({ 4, 1 }, { fn.line('.'), fn.col('.') })
+      eq([[\<bar\>]], fn.getreg('/'))
+      feed('n') -- The primary's pattern, at each cursor.
+      eq({ { 3, 0 } }, anchors())
+      eq({ 1, 5 }, { fn.line('.'), fn.col('.') })
     end)
 
     it('cursors follow j/k, gj/gk, arrow keys, and $', function()
@@ -2924,9 +2947,9 @@ describe('multicursor', function()
     it('coincident cursors merge', function()
       cursors({ 'aaa', 'bbb', 'ccc' }, 'QjQ')
       feed('q=')
-      feed('G') -- all cursors land on the last line
+      feed('9j') -- All cursors to the last line.
       feed('q=')
-      feed('x') -- one deletion, not three
+      feed('x') -- One deletion, not three.
       eq({ 'aaa', 'bbb', 'cc' }, get_lines())
     end)
   end)

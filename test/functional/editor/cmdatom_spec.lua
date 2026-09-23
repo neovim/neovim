@@ -273,7 +273,7 @@ describe('CmdAtom', function()
       feed('gg')
       eq({
         { type = 'mapping', lhs = ',f' },
-        { type = 'motion', lhs = 'gg', keys = 'gg' },
+        { type = 'jump', lhs = 'gg', keys = 'gg' },
       }, atoms_tail(2, 'type', 'lhs', 'keys'))
     end)
 
@@ -471,7 +471,7 @@ describe('CmdAtom', function()
       feed('<F2>')
       eq({
         { type = 'normal', lhs = 'i', keys = 'i' },
-        { type = 'motion', lhs = k('<F2>'), keys = 'gg' }, -- Labeled with the mapping.
+        { type = 'jump', lhs = k('<F2>'), keys = 'gg' }, -- Labeled with the mapping.
       }, atoms_tail(2, 'type', 'lhs', 'keys'))
       eq('nt', api.nvim_get_mode().mode)
 
@@ -484,7 +484,7 @@ describe('CmdAtom', function()
       eq(before + 2, #atoms())
       eq({
         { type = 'normal', lhs = 'i', keys = 'i' },
-        { type = 'motion', lhs = k('<F3>'), keys = 'gg' },
+        { type = 'jump', lhs = k('<F3>'), keys = 'gg' },
       }, atoms_tail(2, 'type', 'lhs', 'keys'))
       eq('t', api.nvim_get_mode().mode)
     end)
@@ -1746,15 +1746,19 @@ describe('CmdAtom', function()
     feed('gg0f(')
     atom('%', '%', nil, 'motion')
     fn.setline(1, 'alpha beta gamma delta epsilon zeta')
-    -- G/gg (absolute line), H/M/L (viewport) are motions: multicursor replay is meaningful? (but
-    -- cursors may be "merged").
+    -- "*" is cursor-relative, reads the word per-cursor.
     feed('gg0')
-    atom('G', 'G', nil, 'motion')
-    atom('gg', 'gg', nil, 'motion')
-    atom('L', 'L', nil, 'motion')
-    atom('H', 'H', nil, 'motion')
-    atom('M', 'M', nil, 'motion')
-    -- Jumps: absolute/shared-state navigation, their own kind.
+    atom('*', '*', nil, 'motion')
+    atom('g#', 'g#', nil, 'motion')
+    -- Jumps: absolute, the target is independent of the cursor.
+    feed('gg0')
+    atom('G', 'G', nil, 'jump')
+    atom('gg', 'gg', nil, 'jump')
+    atom('go', 'go', nil, 'jump')
+    atom('50%', '50%', nil, 'jump') -- "[count]%" is absolute, unlike "%".
+    atom('L', 'L', nil, 'jump')
+    atom('H', 'H', nil, 'jump')
+    atom('M', 'M', nil, 'jump')
     atom('ma', 'ma', nil, 'normal') -- "m" sets state; it does not jump
     atom('`a', '`a', nil, 'jump')
     atom('<C-o>', '<C-O>', nil, 'jump')
