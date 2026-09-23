@@ -108,6 +108,7 @@
 \*SigUSR1\*
 \*TerminalOpen\*
 \*TerminalWinOpen\*
+\*X11\*
 \*XLFD\*
 \*\(job\|sound\|term\|test_gui\)_[_a-zA-Z0-9]\+()\*
 \*autocommand-events\*
