@@ -74,7 +74,8 @@ static struct {
   TriState follow;    ///< `CmdFrame.follow` at the atom's first motion (`kNone`: none yet).
   CmdAtomVec atoms;   ///< Subatoms of the mapping/macro.
   char lhs[MAXMAPLEN + 4];  ///< Label: mapping LHS, macro "@x", or :omap's op+LHS. "": none.
-  bool queued;        ///< Subatom queued for cascade (`g_atoms`, or Visual). No LHS-replay needed.
+  bool queued;        ///< Subatom queued for cascade (`g_atoms`, or Visual), or a global op (undo)
+                      ///< applied to every cursor already. No LHS-replay needed.
   bool lossy;         ///< Detected partial capture: `keys` cannot replay it, `lhs` can.
                       ///< When: incomplete insert, payload with no capturing atom.
   bool macro;         ///< Macro execution: captured as an "@x"-labeled atom.
@@ -872,6 +873,7 @@ void atom_did_global_op(void)
 {
   if (!mc_replaying()) {
     global_ops++;
+    composite.queued = true;  // Already applied at every cursor: no LHS-replay.
   }
 }
 

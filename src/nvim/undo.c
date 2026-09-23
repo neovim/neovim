@@ -3166,6 +3166,7 @@ void u_undoline(void)
     beep_flush();
     return;
   }
+  atom_did_global_op();  // multicursor: treat "U" as a global op.
 
   // first save the line for the 'u' command
   if (u_savecommon(curbuf, curbuf->b_u_line_lnum - 1,
