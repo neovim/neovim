@@ -1170,6 +1170,35 @@ describe('multicursor', function()
   end)
 
   describe('insert-mode', function()
+    it('"cgn" cascades live; failed cursor is removed #41960', function()
+      -- "gn" searches per-cursor. Insert-entry cascades, and typed text previews live, before ESC.
+      cursors({ 'a x foo', 'b foo', 'c y z foo' }, 'QjQj0')
+      feed('/foo<CR>')
+      feed('cgn')
+      eq({ 'a x ', 'b ', 'c y z ' }, get_lines())
+      feed('X')
+      eq({ 'a x X', 'b X', 'c y z X' }, get_lines())
+      feed('<Esc>')
+      eq({ 'a x X', 'b X', 'c y z X' }, get_lines())
+      feed('u') -- One undo step.
+      eq({ 'a x foo', 'b foo', 'c y z foo' }, get_lines())
+
+      -- Cursor is removed when insert-entry fails at a cursor ("ct;" where there is no ";").
+      clear_cursors()
+      cursors({ 'a;b', 'cd', 'e;f' }, 'QjQj0')
+      eq(2, ncursors())
+      feed('ct;X<Esc>')
+      eq({ 'X;b', 'cd', 'X;f' }, get_lines())
+      eq(1, ncursors())
+      -- Same for "cgn" at a cursor with no match left (the primary's replay consumed it).
+      clear_cursors()
+      cursors({ 'a foo', 'b', 'c' }, 'jQjQgg0')
+      feed('/foo<CR>')
+      feed('cgnX<Esc>')
+      eq({ 'a X', 'b', 'c' }, get_lines())
+      eq(0, ncursors())
+    end)
+
     it('CTRL-U cascades before <Esc> (deletion crossing the session anchor)', function()
       -- Deleting typed text cascades live (the region shrinks). But CTRL-U here eats the "o"
       -- autoindent, which precedes the tracked region, invisible to the preview diff.
@@ -1799,16 +1828,26 @@ describe('multicursor', function()
   end)
 
   describe('visual-mode cascade', function()
-    it('failed command mid-replay does not leak Visual mode into the next replay', function()
+    it('failed motion mid-replay does not eat the keys after it', function()
       fn.setline(1, { 'alpha bravo', 'golf hotel', 'mike november' })
       feed('ggVjjQ') -- cursor on each line; enables "q=" follow-mode
       feed('gg0')
-      -- The abandoned selection replays "vlo h <Esc>" at each cursor ("q=" follow). The "h" fails
-      -- (col 0 after "o" swapped to the selection start), which flushes the rest of the replay,
-      -- eating the terminating <Esc>. Visual mode must not leak into the next cursor's replay.
+      -- The abandoned selection replays "vloh<Esc>" at each cursor ("q=" follow). The "h" fails
+      -- (col 0 after "o" swap); Visual mode must not leak into next cursor replay.
       feed('vloh<Esc>')
       eq({ 'alpha bravo', 'golf hotel', 'mike november' }, get_lines())
       eq('n', api.nvim_get_mode().mode)
+
+      -- Per-cursor behavior: "t;" fails if cursor-line has no ";". The op still applies to the
+      -- existing Visual selection.
+      clear_cursors()
+      cursors({ 'a;b', 'cd', 'e;f' }, 'jQjQgg0')
+      feed('vt;d')
+      eq({ ';b', 'd', ';f' }, get_lines())
+      clear_cursors()
+      cursors({ 'a;b', 'cd', 'e;f' }, 'jQjQgg0')
+      feed('vt;cX<Esc>')
+      eq({ 'X;b', 'Xd', 'X;f' }, get_lines())
     end)
 
     it('per-cursor selection', function()

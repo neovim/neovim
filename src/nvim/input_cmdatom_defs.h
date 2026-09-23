@@ -43,8 +43,8 @@ typedef struct {
 typedef enum {
   kVInsNone,    ///< Not entered from Visual mode.
   kVInsKeys,    ///< Redo opens with the selection's captured keys: replayable.
-  kVInsMotion,  ///< Ex/Lua motion selected the region ("c" + Lua textobj): replayable.
-  kVInsOther,   ///< Redo without captured keys: forced or self-selecting motion (gn, gv), or "1v"
+  kVInsMotion,  ///< Motion selected the region: Ex/Lua omap ("c" + Lua textobj), "gn". Replayable.
+  kVInsOther,   ///< Redo without captured keys: forced motion, "gv", or "1v"
                 ///< fixed-size fallback.
 } VisualIns;
 
