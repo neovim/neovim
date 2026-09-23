@@ -1565,7 +1565,9 @@ static void terminal_focus(const Terminal *term, bool focus)
 
 static int term_damage(VTermRect rect, void *data)
 {
-  invalidate_terminal(data, rect.start_row, rect.end_row);
+  Terminal *term = data;
+  extmark_clear(term->buf, 0, (int)rect.start_row, 0, (int)rect.end_row, -1);
+  invalidate_terminal(term, rect.start_row, rect.end_row);
   return 1;
 }
 
