@@ -34,6 +34,40 @@ filename        One or more file names.  The first one will be the current
 <                All arguments after "--" are interpreted as file names, no
                 other options or "+command" arguments can follow.
 
+                                                        *nvim://* *nvim-uri*
+nvim://open     Opens a file via the `nvim://` URI scheme.  Intended for
+                 "Open in Editor" integration with browsers, file managers,
+                 and other tools.
+
+                 Format: `nvim://open?file={path}[&line={n}][&col={n}][&server={addr}]`
+
+                 Users can customize how files open in Nvim by overriding
+                 |vim.ui.edit()|.
+
+                 Nvim auto-discovers existing instances via socket files in
+                 `$XDG_RUNTIME_DIR` and opens the file there.  If no instance
+                 is found, the file opens locally.
+
+                 Use `&server={addr}` to target a specific instance.
+
+                 To customize how `nvim://open?...` behaves, override
+                 |vim.ui.edit()|. Example: >lua
+                         vim.ui.edit = function(path, opts)
+                           vim.cmd.tabedit(path)
+                           if opts and opts.line then
+                             vim.api.nvim_win_set_cursor(0, { opts.line, (opts.column or 1) - 1 })
+                           end
+                         end
+<
+
+                 Examples: >
+                         nvim "nvim://open?file=/path/to/file.txt&line=10"
+                         nvim "nvim://open?file=/tmp/foo.lua&line=5&column=12"
+<
+                 To register Nvim as a handler for `nvim://` URIs, use the
+                 provided `nvim.desktop` file or run: >
+                         xdg-mime default nvim.desktop x-scheme-handler/nvim
+<
                                                         *--*
 `-`               Alias for stdin (standard input).
                 Example: >
