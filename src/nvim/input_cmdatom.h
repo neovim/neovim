@@ -24,7 +24,11 @@ extern CmdAtomVec g_atoms;
 typedef struct CmdFrame CmdFrame;
 struct CmdFrame {
   CmdOrigin origin;     ///< State at entry.
+  CmdAtom staged;       ///< Atom staged in this frame (`keys=NULL`: none).
+  CmdFrame *parent;     ///< Enclosing frame (nested normal_execute()); NULL at toplevel.
   VisualState visual;   ///< Visual-mode state (active/start/mode are diffed).
+
+  uint32_t dup_mark;    ///< Mcursor overlapping the primary at cmd start (0: none).
   bool keytyped;        ///< KeyTyped
   unsigned keyclass;    ///< atom_key_class() of the cmd char, before its `nchar`.
   int ex_normal;        ///< If higher than `root_frame().ex_normal`, a cmd fed this (:norm, feed).
@@ -35,10 +39,8 @@ struct CmdFrame {
   bool follow;          ///< Follow-mode: updated until cursor-move happens (sticky) in this frame.
   bool consumers;       ///< Capture is skipped if there are no consumers (for performance).
   Timestamp reg_ts;     ///< Max register timestamp (to detect a per-cursor register write).
-  CmdAtom staged;       ///< Atom staged in this frame (`keys=NULL`: none).
   size_t payload_start;  ///< Payload slice (SIZE_MAX: none): typed.keys[payload_start..payload_end)
   size_t payload_end;
-  CmdFrame *parent;     ///< Enclosing frame (nested normal_execute()); NULL at toplevel.
 
   //
   // Toplevel command state: root_frame() only.

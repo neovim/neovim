@@ -382,7 +382,7 @@ static void mc_execute(size_t cursoridx, size_t atomidx)
 }
 
 /// Runs the cascade: replays queued atoms (g_atoms) at every cursor, as one batch.
-static void mc_cascade(pos_T primary)
+static void mc_cascade(pos_T primary, uint32_t dup_mark)
 {
   assert(kv_size(g_atoms) >= 1);
   assert(kv_size(mc_cursors) > 0);
@@ -399,7 +399,7 @@ static void mc_cascade(pos_T primary)
     edits |= kv_A(g_atoms, i).type != kAMotion;
   }
   if (edits) {
-    mc_cleanup(true, primary);
+    mc_cleanup(true, primary, dup_mark);
     if (kv_size(mc_cursors) == 0) {
       atoms_free(&g_atoms);
       return;
@@ -431,7 +431,7 @@ done:
   atoms_free(&g_atoms);
   const handle_T bufnr = sb.primary.buf;  // mc_sandbox_leave() frees `sb.primary`.
   mc_sandbox_leave(&sb);
-  mc_cleanup(true, curwin->w_cursor);
+  mc_cleanup(true, curwin->w_cursor, 0);
   if (handle_get_buffer(bufnr) == curbuf && !curbuf->b_u_synced
       && curbuf->b_u_newhead != NULL) {
     // Store the primary's post-cascade position in the still-open undo block; redo restores it.
@@ -446,7 +446,8 @@ done:
 /// @param map_moved  The composite moved the cursor.
 /// @param follow  Follow-mode ("q=") when the queued motions ran.
 /// @param primary  Primary cursor pos at cmd start.
-void mc_clock_edge(bool map_edit, bool map_moved, bool follow, pos_T primary)
+/// @param dup_mark  Cursor overlapping `primary` at cmd start.
+void mc_clock_edge(bool map_edit, bool map_moved, bool follow, pos_T primary, uint32_t dup_mark)
 {
   if ((map_edit || (follow && map_moved && !Visual.active))
       && !atom_composite_queued() && kv_size(g_atoms) == 0
@@ -463,7 +464,7 @@ void mc_clock_edge(bool map_edit, bool map_moved, bool follow, pos_T primary)
     if (has_edit || follow
         // Cascade if a mapping left a selection open ("nn x w<Cmd>norm! viw<CR>").
         || Visual.active) {
-      mc_cascade(primary);
+      mc_cascade(primary, dup_mark);
     } else {
       // A pure-motion mapping without "q=" follow-motion: do not cascade
       // (the atoms are still emitted as one composite CmdAtom).
@@ -476,7 +477,8 @@ void mc_clock_edge(bool map_edit, bool map_moved, bool follow, pos_T primary)
 ///
 /// @param dedupe  Also removes overlapping cursors at cascade boundaries.
 /// @param primary  Primary cursor pos, for `dedupe`.
-static void mc_cleanup(bool dedupe, pos_T primary)
+/// @param dup_mark  Also remove this cursor (mark id) for `dedupe`. 0: none.
+static void mc_cleanup(bool dedupe, pos_T primary, uint32_t dup_mark)
 {
   const bool had_cursors = kv_size(mc_cursors) > 0;
   size_t n = 0;
@@ -492,7 +494,8 @@ static void mc_cleanup(bool dedupe, pos_T primary)
     // Deduplicate/merge: cursor is a duplicate if it coincides with the primary (which always
     // wins), or another cursor's mark is first at its position (first wins).
     const bool dup = dedupe && ctx->mark != 0
-                     && ((curwin != NULL && buf == curbuf && equalpos(ctx->pos, primary))
+                     && ((curwin != NULL && buf == curbuf
+                          && (equalpos(ctx->pos, primary) || ctx->mark == dup_mark))
                          || mc_mark_at(buf, ctx->pos) != ctx->mark);
     if (dup) {
       extmark_del_id(buf, mc_ns(), ctx->mark);
@@ -622,7 +625,7 @@ static void mc_ins_span_push(char *keys, char *text)
 
   McInsSaved saved = mc_ins_save_state();
   block_autocmds();  // The span replay would fire InsertEnter/InsertLeave on every key.
-  mc_cascade(curwin->w_cursor);
+  mc_cascade(curwin->w_cursor, 0);
   unblock_autocmds();
   mc_ins_restore_state(&saved);
   mc_ins_joined = false;  // The next span decides whether its replays may join.
@@ -1188,8 +1191,11 @@ static void mc_lua_enable(bool enable)
 }
 
 /// The first cursor extmark at `pos` in `buf`, or 0 if none.
-static uint32_t mc_mark_at(buf_T *buf, pos_T pos)
+uint32_t mc_mark_at(buf_T *buf, pos_T pos)
 {
+  if (kv_size(mc_cursors) == 0) {
+    return 0;
+  }
   MarkTreeIter itr[1] = { 0 };
   marktree_itr_get(buf->b_marktree, (int32_t)pos.lnum - 1, pos.col, itr);
   MTKey k;
@@ -1242,7 +1248,7 @@ void mc_toggle(buf_T *buf, pos_T pos, bool end_follow)
   uint32_t mark = mc_mark_at(buf, pos);
   if (mark != 0) {
     extmark_del_id(buf, mc_ns(), mark);
-    mc_cleanup(false, (pos_T){ 0 });
+    mc_cleanup(false, (pos_T){ 0 }, 0);
     return;
   }
   mc_add(buf, pos);
@@ -1291,7 +1297,7 @@ void mc_buf_free(buf_T *buf)
     // Can't mutate (mc_cleanup) mc_cursors during cascade.
     return;
   }
-  mc_cleanup(false, (pos_T){ 0 });
+  mc_cleanup(false, (pos_T){ 0 }, 0);
   if (mc_vsel_buf == buf->handle) {
     // The selection extmarks died with the buffer too.
     mc_vsel_buf = 0;
@@ -1343,7 +1349,7 @@ void mc_ns_cleared(buf_T *buf, uint32_t ns_id)
     uint32_t mark = 0;
     extmark_set_pos(buf, mc_last_ns(), &mark, ctx->pos, true, false, false);
   }
-  mc_cleanup(false, (pos_T){ 0 });
+  mc_cleanup(false, (pos_T){ 0 }, 0);
   if (kv_size(mc_cursors) == 0) {
     // Session ended; drop the pending cascade.
     atoms_free(&g_atoms);

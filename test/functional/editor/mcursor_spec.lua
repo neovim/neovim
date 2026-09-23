@@ -1992,6 +1992,22 @@ describe('multicursor', function()
       cursors({ 'aa', 'bb' }, 'QjQ') -- Cursor overlapping the primary.
       feed('gm')
       eq({ 'aaaa', 'bbbb' }, get_lines())
+
+      -- Also when the edit displaces the overlapping cursor's (right-gravity) mark.
+      for _, place in ipairs({ 'QjQ', 'vipQ' }) do
+        for _, case in ipairs({
+          { 'rx', { 'xa', 'xb' } },
+          { '~', { 'Aa', 'Bb' } },
+          { 'g~~', { 'AA', 'BB' } },
+        }) do
+          clear_cursors()
+          cursors({ 'aa', 'bb' }, place)
+          feed(case[1])
+          eq(case[2], get_lines(), place .. ' ' .. case[1])
+          eq(1, ncursors(), place .. ' ' .. case[1])
+        end
+      end
+
       -- Same for a Visual span: the primary sits at selection-end.
       command([[xnoremap gl <Cmd>normal! xp`[1v<CR>]])
       clear_cursors()
