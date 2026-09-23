@@ -1372,6 +1372,7 @@ void atom_cmd_start(CmdFrame *old, int cmdchar)
   *old = (CmdFrame){
     .origin = atom_origin(),
     .visual = Visual,
+    .dup_mark = mc_mark_at(curbuf, Visual.active ? Visual.start : curwin->w_cursor),
     .keytyped = KeyTyped,
     .keyclass = atom_key_class(cmdchar, NUL),
     .ex_normal = ex_normal_busy,
@@ -1640,7 +1641,7 @@ void atom_cmd_end(cmdarg_T *ca, CmdFrame *old)
     // Primary pos: defined at cmd start or Visual-sel start, even if the cmd moved it since.
     pos_T primary = old->visual.active ? old->visual.start : old->origin.pos;
 
-    mc_clock_edge(map_edit, map_moved, composite.follow == kTrue, primary);
+    mc_clock_edge(map_edit, map_moved, composite.follow == kTrue, primary, old->dup_mark);
 
     map_edit = false;
     // One atom spans its continuation: while op-pending, selection-active, or insert-will-resume
