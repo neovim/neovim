@@ -3408,3 +3408,16 @@ int set_tagstack(win_T *wp, const dict_T *d, int action)
 
   return OK;
 }
+
+/// Jump to a named tag in the current buffer (|gF| `{fname}#{tag}`).
+/// Delegates to `vim._core.tag.jump_to_file_tag`.
+///
+/// @param tag  tag name without the leading '#'
+void goto_file_tag(const char *tag)
+{
+  typval_T tv_args[] = {
+    { .v_type = VAR_STRING, .vval.v_string = (char *)tag },
+    { .v_type = VAR_UNKNOWN },
+  };
+  nlua_call_typval("vim._core.tag", "jump_to_file_tag", tv_args, NULL);
+}

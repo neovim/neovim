@@ -1588,10 +1588,35 @@ theend:
   return file_name;
 }
 
+/// Parse a `#tag` suffix after a file name.
+///
+/// @param p  points at the '#' separator after the file name
+/// @return  allocated tag name, or NULL if absent/empty
+static char *parse_file_tag(const char *p)
+{
+  if (p == NULL || *p != '#') {
+    return NULL;
+  }
+  p++;  // skip '#'
+  const char *tag_start = p;
+  while (*p != NUL && !ascii_iswhite(*p)) {
+    MB_PTR_ADV(p);
+  }
+  size_t tag_len = (size_t)(p - tag_start);
+  // Drop trailing punctuation: "file.md#heading." -> "heading".
+  while (tag_len > 0 && vim_strchr(".,:;!", (uint8_t)tag_start[tag_len - 1]) != NULL) {
+    tag_len--;
+  }
+  return tag_len > 0 ? xmemdupz(tag_start, tag_len) : NULL;
+}
+
 /// Get the file name at the cursor.
 /// If Visual mode is active, use the selected text if it's in one line.
-/// Returns the name in allocated memory, NULL for failure.
-char *grab_file_name(int count, linenr_T *file_lnum)
+///
+/// @param file_lnum[out]  line number after the file name (`{fname}:{lnum}`)
+/// @param file_tag[out]  tag after the file name (`{fname}#{tag}`)
+/// @return  the name in allocated memory, NULL for failure.
+char *grab_file_name(int count, linenr_T *file_lnum, char **file_tag)
 {
   int options = FNAME_MESS | FNAME_EXP | FNAME_REL | FNAME_UNESC;
   char *fname;
@@ -1601,15 +1626,17 @@ char *grab_file_name(int count, linenr_T *file_lnum)
     if (get_visual_text(NULL, &ptr, &len) == FAIL) {
       return NULL;
     }
-    // Only recognize ":123" here
+    // Number must immediately follow ':' in Visual mode.
     if (file_lnum != NULL && ptr[len] == ':' && isdigit((uint8_t)ptr[len + 1])) {
       char *p = ptr + len + 1;
-
       *file_lnum = getdigits_int32(&p, false, 0);
+    } else if (file_tag != NULL) {
+      // Tag name must immediately follow '#' in Visual mode.
+      *file_tag = parse_file_tag(ptr + len);
     }
     fname = find_file_name_in_path(ptr, len, options, count, curbuf->b_ffname);
   } else {
-    fname = file_name_at_cursor(options | FNAME_HYP, count, file_lnum);
+    fname = file_name_at_cursor(options | FNAME_HYP, count, file_lnum, file_tag);
   }
   TO_SLASH(fname);
   return fname;
@@ -1626,21 +1653,22 @@ char *grab_file_name(int count, linenr_T *file_lnum)
 /// FNAME_EXP        expand to path
 /// FNAME_HYP        check for hypertext link
 /// FNAME_INCL       apply "includeexpr"
-char *file_name_at_cursor(int options, int count, linenr_T *file_lnum)
+char *file_name_at_cursor(int options, int count, linenr_T *file_lnum, char **file_tag)
 {
   return file_name_in_line(get_cursor_line_ptr(),
                            curwin->w_cursor.col, options, count, curbuf->b_ffname,
-                           file_lnum);
+                           file_lnum, file_tag);
 }
 
 /// @param rel_fname  file we are searching relative to
-/// @param file_lnum  line number after the file name
+/// @param file_lnum  line number after the file name (`{fname}:{lnum}`)
+/// @param file_tag  tag after the file name (`{fname}#{tag}`)
 ///
 /// @return  the name of the file under or after ptr[col].
 ///
 /// Otherwise like file_name_at_cursor().
 char *file_name_in_line(char *line, int col, int options, int count, char *rel_fname,
-                        linenr_T *file_lnum)
+                        linenr_T *file_lnum, char **file_tag)
 {
   // search forward for what could be the start of a file name
   char *ptr = line + col;
@@ -1678,6 +1706,10 @@ char *file_name_in_line(char *line, int col, int options, int count, char *rel_f
   while (vim_isfilec((uint8_t)ptr[len]) || (ptr[len] == '\\' && ptr[len + 1] == ' ')
          || ((options & FNAME_HYP) && path_is_url(ptr + len))
          || (is_url && vim_strchr(":?&=", (uint8_t)ptr[len]) != NULL)) {
+    // `#` starts a tag (not part of the name) unless this is a URL.
+    if (file_tag != NULL && ptr[len] == '#' && !is_url) {
+      break;
+    }
     // After type:// we also include :, ?, & and = as valid characters, so that
     // http://google.com:8080?q=this&that=ok works.
     if ((ptr[len] >= 'A' && ptr[len] <= 'Z') || (ptr[len] >= 'a' && ptr[len] <= 'z')) {
@@ -1731,6 +1763,11 @@ char *file_name_in_line(char *line, int col, int options, int count, char *rel_f
         *file_lnum = (linenr_T)getdigits_long(&p, false, 0);
       }
     }
+  }
+
+  // Get the tag after the file name: `{fname}#{tag}`.
+  if (file_tag != NULL) {
+    *file_tag = parse_file_tag(ptr + len);
   }
 
   return find_file_name_in_path(ptr, len, options, count, rel_fname);

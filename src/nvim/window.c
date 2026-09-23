@@ -620,7 +620,8 @@ wingotofile:
     }
 
     linenr_T lnum = -1;
-    char *ptr = grab_file_name(Prenum1, &lnum);
+    char *tag = NULL;
+    char *ptr = grab_file_name(Prenum1, &lnum, &tag);
     if (ptr != NULL) {
       tabpage_T *oldtab = curtab;
       win_T *oldwin = curwin;
@@ -654,13 +655,18 @@ wingotofile:
         }
       }
 
-      if (wp != NULL && nchar == 'F' && lnum >= 0) {
-        curwin->w_cursor.lnum = lnum;
-        check_cursor_lnum(curwin);
-        beginline(BL_SOL | BL_FIX);
+      if (wp != NULL && nchar == 'F') {
+        if (lnum >= 0) {  // `{fname}:{lnum}`
+          curwin->w_cursor.lnum = lnum;
+          check_cursor_lnum(curwin);
+          beginline(BL_SOL | BL_FIX);
+        } else if (tag != NULL) {  // `{fname}#{tag}`
+          goto_file_tag(tag);
+        }
       }
       xfree(ptr);
     }
+    xfree(tag);
     break;
   }
 

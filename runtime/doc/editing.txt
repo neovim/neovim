@@ -296,28 +296,35 @@ CTRL-^			Edit the alternate file.  Mostly the alternate file is
 			(For {Visual} see |Visual-mode|.)
 
 							*gF*
-[count]gF		Same as "gf", except if a number follows the file
-			name, then the cursor is positioned on that line in
-			the file.
-			The file name and the number must be separated by a
-			non-filename (see 'isfname') and non-numeric
-			character.  " line " is also recognized, like it is
-			used in the output of `:verbose command UserCmd`
-			White space between the filename, the separator and
-			the number is ignored.
+[count]gF		Same as "gf", except if a number or a tag follows the
+			file name.
+			If a number follows, the cursor is positioned on that
+			line.  The file name and the number must be separated
+			by a non-filename (see 'isfname') and non-numeric
+			character.  " line " is also recognized, like in the
+			output of `:verbose command UserCmd`.  White space
+			between the filename, the separator and the number is
+			ignored.
+			If "#" and a tag name follow, the cursor is positioned
+			on that tag: an LSP document symbol (like |gO|), a
+			Markdown/vimdoc heading, or a help tag.  "#" starts a
+			tag even when it is in 'isfname'.
 			Examples:
 				eval.c:10 ~
 				eval.c @ 20 ~
 				eval.c (30) ~
 				eval.c 40 ~
 				eval.c line 50 ~
+				doc.txt#local-additions ~
+				README.md#installation ~
 
 							*v_gF*
 {Visual}[count]gF	Same as "v_gf", but if a colon and a number appear
-			immediately after the end of the selected text,
-			then the cursor is positioned on that line in the
-			file.  Unlike |gF|, only a colon is recognized as
-			separator.
+			immediately after the end of the selected text, the
+			cursor is positioned on that line.  If instead "#"
+			and a tag name appear, the cursor is positioned on
+			that tag.  Unlike |gF|, only a colon is recognized
+			as line-number separator.
 
 These commands are used to start editing a single file.  This means that the
 file is read into the buffer and the current file name is set.  The file that

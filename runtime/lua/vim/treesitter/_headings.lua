@@ -49,12 +49,15 @@ local heading_queries = {
 --- Extract headings from buffer
 --- @param bufnr integer buffer to extract headings from
 --- @return TS.Heading[]
-local get_headings = function(bufnr)
+function M.get_headings(bufnr)
   local lang = ts.language.get_lang(vim.bo[bufnr].filetype)
-  if not lang then
+  if not lang or not heading_queries[lang] then
     return {}
   end
-  local parser = assert(ts.get_parser(bufnr, lang))
+  local ok, parser = pcall(ts.get_parser, bufnr, lang)
+  if not ok or not parser then
+    return {}
+  end
   local query = ts.query.parse(lang, heading_queries[lang])
   local root = parser:parse()[1]:root()
   local headings = {}
@@ -83,12 +86,50 @@ local get_headings = function(bufnr)
   return headings
 end
 
+--- Find a heading matching `name` (exact, case-insensitive, or GitHub slug).
+---
+--- @param name string
+--- @param bufnr? integer
+--- @return TS.Heading|nil
+function M.find_heading(name, bufnr)
+  bufnr = bufnr or api.nvim_get_current_buf()
+  local headings = M.get_headings(bufnr)
+  if #headings == 0 then
+    return nil
+  end
+
+  local function slug(s)
+    return (s:lower():gsub('[^%w%s_-]', ''):gsub('%s+', '-'))
+  end
+
+  local want = name
+  local want_lower = name:lower()
+  local want_slug = slug(name)
+
+  for _, h in ipairs(headings) do
+    if h.text == want then
+      return h
+    end
+  end
+  for _, h in ipairs(headings) do
+    if h.text:lower() == want_lower then
+      return h
+    end
+  end
+  for _, h in ipairs(headings) do
+    if slug(h.text) == want_slug or slug(h.text) == want_lower then
+      return h
+    end
+  end
+  return nil
+end
+
 --- @param qf_height? integer height of loclist window
 --- Shows an Outline (table of contents) of the current buffer, in the loclist.
 function M.show_toc(qf_height)
   local bufnr = api.nvim_get_current_buf()
   local bufname = api.nvim_buf_get_name(bufnr)
-  local headings = get_headings(bufnr)
+  local headings = M.get_headings(bufnr)
   if #headings == 0 then
     return
   end
@@ -112,7 +153,7 @@ end
 --- todo(clason): support count
 function M.jump(opts)
   local bufnr = api.nvim_get_current_buf()
-  local headings = get_headings(bufnr)
+  local headings = M.get_headings(bufnr)
   if #headings == 0 then
     return
   end

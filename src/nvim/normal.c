@@ -3886,6 +3886,7 @@ static void nv_down(cmdarg_T *cap)
 static void nv_gotofile(cmdarg_T *cap)
 {
   linenr_T lnum = -1;
+  char *tag = NULL;
 
   if (check_text_or_curbuf_locked(cap->oap)) {
     return;
@@ -3895,7 +3896,7 @@ static void nv_gotofile(cmdarg_T *cap)
     return;
   }
 
-  char *ptr = grab_file_name(cap->count1, &lnum);
+  char *ptr = grab_file_name(cap->count1, &lnum, &tag);
 
   if (ptr != NULL) {
     // do autowrite if necessary
@@ -3905,15 +3906,20 @@ static void nv_gotofile(cmdarg_T *cap)
     setpcmark();
     if (do_ecmd(0, ptr, NULL, NULL, ECMD_LAST,
                 buf_hide(curbuf) ? ECMD_HIDE : 0, curwin) == OK
-        && cap->nchar == 'F' && lnum >= 0) {
-      curwin->w_cursor.lnum = lnum;
-      check_cursor_lnum(curwin);
-      beginline(BL_SOL | BL_FIX);
+        && cap->nchar == 'F') {
+      if (lnum >= 0) {  // `{fname}:{lnum}`
+        curwin->w_cursor.lnum = lnum;
+        check_cursor_lnum(curwin);
+        beginline(BL_SOL | BL_FIX);
+      } else if (tag != NULL) {  // `{fname}#{tag}`
+        goto_file_tag(tag);
+      }
     }
     xfree(ptr);
   } else {
     clearop(cap->oap);
   }
+  xfree(tag);
 }
 
 /// <End> command: to end of current line or last line.

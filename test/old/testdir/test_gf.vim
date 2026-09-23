@@ -393,3 +393,77 @@ func Test_gf_with_suffixesadd()
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
+
+func Test_gf_tag()
+  set hidden
+  " file#tag works with default 'isfname' (which includes #)
+  new
+  call setline(1, [
+      \ '# Introduction',
+      \ 'some text',
+      \ '## My Heading',
+      \ 'target here',
+      \ '## Other',
+      \ 'done',
+      \ ])
+  set filetype=markdown
+  write! Xgftag.md
+  close
+
+  new
+  call setline(1, ['see Xgftag.md#My-Heading now', 'rest'])
+  call cursor(1, 5)
+  normal gF
+  call assert_equal('Xgftag.md', bufname('%'))
+  call assert_equal(3, getcurpos()[1])
+
+  " help-style *tag*
+  %bw!
+  new
+  call setline(1, ['before', '*my-cool-tag* some help', 'after'])
+  write! Xgftag.txt
+  close
+  new
+  call setline(1, ['see Xgftag.txt#my-cool-tag now'])
+  call cursor(1, 5)
+  normal gF
+  call assert_equal('Xgftag.txt', bufname('%'))
+  call assert_equal(2, getcurpos()[1])
+
+  " word / identifier fallback
+  %bw!
+  new
+  call setline(1, ['alpha', 'the unique_identifier lives here', 'omega'])
+  write! Xgftag2.txt
+  close
+  new
+  call setline(1, ['jump Xgftag2.txt#unique_identifier now'])
+  call cursor(1, 6)
+  normal gF
+  call assert_equal('Xgftag2.txt', bufname('%'))
+  call assert_equal(2, getcurpos()[1])
+
+  " CTRL-W_F with tag
+  %bw!
+  new
+  call setline(1, ['x Xgftag2.txt#unique_identifier y'])
+  call cursor(1, 3)
+  execute "normal \<C-W>F"
+  call assert_equal('Xgftag2.txt', bufname('%'))
+  call assert_equal(2, getcurpos()[1])
+
+  " Visual mode: select the file name, tag follows the selection
+  %bw!
+  new
+  call setline(1, ['prefix Xgftag2.txt#unique_identifier suffix'])
+  call cursor(1, 8)
+  normal! v10l
+  normal gF
+  call assert_equal('Xgftag2.txt', bufname('%'))
+  call assert_equal(2, getcurpos()[1])
+
+  %bw!
+  call delete('Xgftag.md')
+  call delete('Xgftag.txt')
+  call delete('Xgftag2.txt')
+endfunc
