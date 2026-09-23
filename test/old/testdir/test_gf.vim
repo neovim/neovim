@@ -469,6 +469,20 @@ func Test_gf_tag()
   call assert_equal('Xgftag2.txt', bufname('%'))
   call assert_equal(1, line('.'))
 
+  " CJK trailing punctuation is stripped
+  %bw!
+  new
+  call setline(1, ['序言', '## 标题', '正文'])
+  set filetype=markdown
+  write! Xgfcjk.md
+  close
+  new
+  call setline(1, ['见 Xgfcjk.md#标题。'])
+  call cursor(1, 5)
+  normal gF
+  call assert_equal('Xgfcjk.md', bufname('%'))
+  call assert_equal(2, line('.'))
+
   " CTRL-W_F
   %bw!
   new
@@ -493,6 +507,7 @@ func Test_gf_tag()
   call delete('Xgftag2.txt')
   call delete('Xgftag3.md')
   call delete('Xgfhash#1.txt')
+  call delete('Xgfcjk.md')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
