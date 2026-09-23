@@ -594,9 +594,9 @@ Variable		Highlight ~
 *c_ansi_typedefs*	 ... but do standard ANSI types
 *c_ansi_constants*	 ... but do standard ANSI constants
 *c_no_utf*		don't highlight \u and \U in strings
-*c_syntax_for_h*	use C syntax for *.h files instead of C++/ObjC/ObjC++
+*c_syntax_for_h*	use C syntax for `*.h` files instead of C++/ObjC/ObjC++
 			(NOTE: This variable is deprecated and no longer
-			 necessary, as *.h files now default to C, unless the
+			 necessary, as `*.h` files now default to C, unless the
 			 file contains C++ or Objective-C syntax. If the
 			 automated detection fails, the default filetype can
 			 be adjusted using `g:filetype_h`.)
