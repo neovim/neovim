@@ -56,6 +56,58 @@ function M.select_tag(eap, extra)
   end)
 end
 
+--- Punctuation stripped from the end of a `#tag` (ASCII + fullwidth/CJK).
+local trail_punct = {
+  ['.'] = true,
+  [','] = true,
+  [';'] = true,
+  [':'] = true,
+  ['!'] = true,
+  ['?'] = true,
+  [')'] = true,
+  [']'] = true,
+  ['}'] = true,
+  ["'"] = true,
+  ['"'] = true,
+  ['、'] = true, -- 、
+  ['。'] = true, -- 。
+  ['！'] = true, -- ！
+  ['，'] = true, -- ，
+  ['．'] = true, -- ．
+  ['：'] = true, -- ：
+  ['；'] = true, -- ；
+  ['？'] = true, -- ？
+  ['）'] = true, -- ）
+  ['］'] = true, -- ］
+  ['｝'] = true, -- ｝
+}
+
+--- Parse a `#tag` suffix after a file name.
+---
+--- @param s string Text starting at the '#' separator.
+--- @return string? tag Tag name without '#', or nil if absent/empty.
+function M.parse_file_tag(s)
+  if type(s) ~= 'string' or s:sub(1, 1) ~= '#' then
+    return nil
+  end
+  local tag = s:sub(2):match('^%S+')
+  if not tag then
+    return nil
+  end
+  -- Strip trailing punctuation, one UTF-8 character at a time.
+  while tag ~= '' do
+    local last = vim.fn.strcharpart(tag, vim.fn.strchars(tag) - 1, 1)
+    if not trail_punct[last] then
+      break
+    end
+    tag = vim.fn.strcharpart(tag, 0, vim.fn.strchars(tag) - 1)
+  end
+  if tag == '' then
+    return nil
+  end
+  return tag
+end
+
 --- Jump to a named tag in the current buffer (|gF| `{fname}#{tag}`).
 ---
 --- Tries, in order: LSP document symbols (|gO|), Treesitter headings,

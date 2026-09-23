@@ -66,6 +66,7 @@
 #include "nvim/file_search.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
+#include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
@@ -1588,39 +1589,8 @@ theend:
   return file_name;
 }
 
-/// True if `c` is punctuation to strip from the end of a `#tag`.
-/// ASCII plus common fullwidth/CJK sentence punctuation.
-static bool tag_trail_punct(int c)
-{
-  switch (c) {
-  case '.':
-  case ',':
-  case ';':
-  case ':':
-  case '!':
-  case '?':
-  case ')':
-  case ']':
-  case '}':
-  case '\'':
-  case '"':
-  case 0x3001:
-  case 0x3002:  // 、。
-  case 0xFF01:
-  case 0xFF0C:
-  case 0xFF0E:
-  case 0xFF1A:
-  case 0xFF1B:
-  case 0xFF1F:
-  case 0xFF09:
-  case 0xFF3D:
-  case 0xFF5D:  // ）］｝
-    return true;
-  }
-  return false;
-}
-
 /// Parse a `#tag` suffix after a file name.
+/// Logic lives in `vim._core.tag.parse_file_tag`.
 ///
 /// @param p  points at the '#' separator after the file name
 /// @return  allocated tag name, or NULL if absent/empty
@@ -1629,23 +1599,18 @@ static char *parse_file_tag(const char *p)
   if (p == NULL || *p != '#') {
     return NULL;
   }
-  p++;  // skip '#'
-  const char *tag_start = p;
-  while (*p != NUL && !ascii_iswhite(*p)) {
-    MB_PTR_ADV(p);
+  typval_T tv_args[] = {
+    { .v_type = VAR_STRING, .vval.v_string = (char *)p },
+    { .v_type = VAR_UNKNOWN },
+  };
+  typval_T rettv;
+  nlua_call_typval("vim._core.tag", "parse_file_tag", tv_args, &rettv);
+  if (rettv.v_type != VAR_STRING || rettv.vval.v_string == NULL
+      || *rettv.vval.v_string == NUL) {
+    tv_clear(&rettv);
+    return NULL;
   }
-  char *end = (char *)p;
-  // Drop trailing punctuation one character at a time (UTF-8 safe).
-  while (end > tag_start) {
-    char *prev = end;
-    MB_PTR_BACK(tag_start, prev);
-    if (!tag_trail_punct(utf_ptr2char(prev))) {
-      break;
-    }
-    end = prev;
-  }
-  size_t tag_len = (size_t)(end - tag_start);
-  return tag_len > 0 ? xmemdupz(tag_start, tag_len) : NULL;
+  return rettv.vval.v_string;  // takes ownership
 }
 
 /// Get the file name at the cursor.
