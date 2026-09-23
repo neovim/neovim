@@ -56,13 +56,6 @@ function M.select_tag(eap, extra)
   end)
 end
 
---- GitHub-style heading slug: lowercase, strip punctuation, spaces to hyphens.
---- @param s string
---- @return string
-local function slug(s)
-  return (s:lower():gsub('[^%w%s_-]', ''):gsub('%s+', '-'))
-end
-
 --- Jump to a named tag in the current buffer (|gF| `{fname}#{tag}`).
 ---
 --- Tries, in order: LSP document symbols (|gO|), Treesitter headings,
@@ -150,19 +143,19 @@ function M.jump_to_file_tag(tag)
 
   -- Help tags: `*tag*`.
   local tag_pat = vim.fn.escape(tag, '\\')
-  local help_lnum = vim.fn.searchpos(string.format('\\V*%s*', tag_pat), 'nw')[1]
+  local help_lnum = vim.fn.searchpos(string.format('\\V*%s*', tag_pat), 'nczw')[1]
   if help_lnum > 0 then
     return jump(help_lnum)
   end
 
   -- Word search.
   local word_pat = string.format('\\V\\<%s\\>', tag_pat)
-  local word_lnum = vim.fn.searchpos(word_pat, 'nw')[1]
+  local word_lnum = vim.fn.searchpos(word_pat, 'nczw')[1]
   if word_lnum > 0 then
     return jump(word_lnum)
   end
 
-  vim.notify(string.format('E370: Could not find tag "%s"', tag), vim.log.levels.ERROR)
+  vim.notify(string.format('E426: Tag not found: %s', tag), vim.log.levels.ERROR)
   return false
 end
 

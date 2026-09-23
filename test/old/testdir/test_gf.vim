@@ -392,30 +392,21 @@ func Test_gf_with_suffixesadd()
   call chdir(cwd)
 endfunc
 
-" vim: shiftwidth=2 sts=2 expandtab
-
 func Test_gf_tag()
   set hidden
-  " file#tag works with default 'isfname' (which includes #)
+
+  " Markdown heading via slug (file#tag with '#' in default 'isfname')
   new
-  call setline(1, [
-      \ '# Introduction',
-      \ 'some text',
-      \ '## My Heading',
-      \ 'target here',
-      \ '## Other',
-      \ 'done',
-      \ ])
+  call setline(1, ['# Introduction', 'some text', '## My Heading', 'target', '## Other'])
   set filetype=markdown
   write! Xgftag.md
   close
-
   new
-  call setline(1, ['see Xgftag.md#My-Heading now', 'rest'])
+  call setline(1, ['see Xgftag.md#My-Heading now'])
   call cursor(1, 5)
   normal gF
   call assert_equal('Xgftag.md', bufname('%'))
-  call assert_equal(3, getcurpos()[1])
+  call assert_equal(3, line('.'))
 
   " help-style *tag*
   %bw!
@@ -428,12 +419,12 @@ func Test_gf_tag()
   call cursor(1, 5)
   normal gF
   call assert_equal('Xgftag.txt', bufname('%'))
-  call assert_equal(2, getcurpos()[1])
+  call assert_equal(2, line('.'))
 
-  " word / identifier fallback
+  " word fallback; match on line 1 at cursor
   %bw!
   new
-  call setline(1, ['alpha', 'the unique_identifier lives here', 'omega'])
+  call setline(1, ['unique_identifier lives here', 'omega'])
   write! Xgftag2.txt
   close
   new
@@ -441,29 +432,68 @@ func Test_gf_tag()
   call cursor(1, 6)
   normal gF
   call assert_equal('Xgftag2.txt', bufname('%'))
-  call assert_equal(2, getcurpos()[1])
+  call assert_equal(1, line('.'))
 
-  " CTRL-W_F with tag
+  " numeric-leading tag is a tag, not a line number
+  %bw!
+  new
+  call setline(1, ['intro', '## 10-best-practices', 'body'])
+  set filetype=markdown
+  write! Xgftag3.md
+  close
+  new
+  call setline(1, ['see Xgftag3.md#10-best-practices now'])
+  call cursor(1, 5)
+  normal gF
+  call assert_equal('Xgftag3.md', bufname('%'))
+  call assert_equal(2, line('.'))
+
+  " gf keeps '#' in a file name (tag only for gF)
+  %bw!
+  new
+  call setline(1, ['x'])
+  write! Xgfhash\#1.txt
+  close
+  new
+  call setline(1, ['open Xgfhash#1.txt now'])
+  call cursor(1, 6)
+  normal gf
+  call assert_equal('Xgfhash#1.txt', expand('%:t'))
+
+  " trailing punctuation after tag is stripped
+  %bw!
+  new
+  call setline(1, ['see Xgftag2.txt#unique_identifier. next'])
+  call cursor(1, 5)
+  normal gF
+  call assert_equal('Xgftag2.txt', bufname('%'))
+  call assert_equal(1, line('.'))
+
+  " CTRL-W_F
   %bw!
   new
   call setline(1, ['x Xgftag2.txt#unique_identifier y'])
   call cursor(1, 3)
   execute "normal \<C-W>F"
   call assert_equal('Xgftag2.txt', bufname('%'))
-  call assert_equal(2, getcurpos()[1])
+  call assert_equal(1, line('.'))
 
-  " Visual mode: select the file name, tag follows the selection
+  " Visual mode: select the file name; tag follows the selection
   %bw!
   new
   call setline(1, ['prefix Xgftag2.txt#unique_identifier suffix'])
   call cursor(1, 8)
-  normal! v10l
-  normal gF
+  normal! v10lgF
   call assert_equal('Xgftag2.txt', bufname('%'))
-  call assert_equal(2, getcurpos()[1])
+  call assert_equal(1, line('.'))
 
   %bw!
   call delete('Xgftag.md')
   call delete('Xgftag.txt')
   call delete('Xgftag2.txt')
+  call delete('Xgftag3.md')
+  call delete('Xgfhash#1.txt')
 endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab
+

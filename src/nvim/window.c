@@ -621,7 +621,7 @@ wingotofile:
 
     linenr_T lnum = -1;
     char *tag = NULL;
-    char *ptr = grab_file_name(Prenum1, &lnum, &tag);
+    char *ptr = grab_file_name(Prenum1, &lnum, nchar == 'F' ? &tag : NULL);
     if (ptr != NULL) {
       tabpage_T *oldtab = curtab;
       win_T *oldwin = curwin;

@@ -117,7 +117,7 @@ function M.find_heading(name, bufnr)
     end
   end
   for _, h in ipairs(headings) do
-    if slug(h.text) == want_slug or slug(h.text) == want_lower then
+    if slug(h.text) == want_slug then
       return h
     end
   end

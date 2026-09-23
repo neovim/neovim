@@ -3896,7 +3896,7 @@ static void nv_gotofile(cmdarg_T *cap)
     return;
   }
 
-  char *ptr = grab_file_name(cap->count1, &lnum, &tag);
+  char *ptr = grab_file_name(cap->count1, &lnum, cap->nchar == 'F' ? &tag : NULL);
 
   if (ptr != NULL) {
     // do autowrite if necessary

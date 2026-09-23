@@ -1588,6 +1588,38 @@ theend:
   return file_name;
 }
 
+/// True if `c` is punctuation to strip from the end of a `#tag`.
+/// ASCII plus common fullwidth/CJK sentence punctuation.
+static bool tag_trail_punct(int c)
+{
+  switch (c) {
+  case '.':
+  case ',':
+  case ';':
+  case ':':
+  case '!':
+  case '?':
+  case ')':
+  case ']':
+  case '}':
+  case '\'':
+  case '"':
+  case 0x3001:
+  case 0x3002:  // 、。
+  case 0xFF01:
+  case 0xFF0C:
+  case 0xFF0E:
+  case 0xFF1A:
+  case 0xFF1B:
+  case 0xFF1F:
+  case 0xFF09:
+  case 0xFF3D:
+  case 0xFF5D:  // ）］｝
+    return true;
+  }
+  return false;
+}
+
 /// Parse a `#tag` suffix after a file name.
 ///
 /// @param p  points at the '#' separator after the file name
@@ -1602,11 +1634,17 @@ static char *parse_file_tag(const char *p)
   while (*p != NUL && !ascii_iswhite(*p)) {
     MB_PTR_ADV(p);
   }
-  size_t tag_len = (size_t)(p - tag_start);
-  // Drop trailing punctuation: "file.md#heading." -> "heading".
-  while (tag_len > 0 && vim_strchr(".,:;!", (uint8_t)tag_start[tag_len - 1]) != NULL) {
-    tag_len--;
+  char *end = (char *)p;
+  // Drop trailing punctuation one character at a time (UTF-8 safe).
+  while (end > tag_start) {
+    char *prev = end;
+    MB_PTR_BACK(tag_start, prev);
+    if (!tag_trail_punct(utf_ptr2char(prev))) {
+      break;
+    }
+    end = prev;
   }
+  size_t tag_len = (size_t)(end - tag_start);
   return tag_len > 0 ? xmemdupz(tag_start, tag_len) : NULL;
 }
 
@@ -1706,8 +1744,8 @@ char *file_name_in_line(char *line, int col, int options, int count, char *rel_f
   while (vim_isfilec((uint8_t)ptr[len]) || (ptr[len] == '\\' && ptr[len + 1] == ' ')
          || ((options & FNAME_HYP) && path_is_url(ptr + len))
          || (is_url && vim_strchr(":?&=", (uint8_t)ptr[len]) != NULL)) {
-    // `#` starts a tag (not part of the name) unless this is a URL.
-    if (file_tag != NULL && ptr[len] == '#' && !is_url) {
+    // `#` starts a tag (not part of the name) when the caller wants one.
+    if (file_tag != NULL && ptr[len] == '#') {
       break;
     }
     // After type:// we also include :, ?, & and = as valid characters, so that
@@ -1727,14 +1765,21 @@ char *file_name_in_line(char *line, int col, int options, int count, char *rel_f
     len += (size_t)(utfc_ptr2len(ptr + len));
   }
 
+  // Parse `#tag` from the untrimmed end (name trailing-punct must not hide the '#').
+  char *parsed_tag = NULL;
+  if (file_tag != NULL) {
+    parsed_tag = parse_file_tag(ptr + len);
+  }
+
   // If there is trailing punctuation, remove it.
   // But don't remove "..", could be a directory name.
-  if (len > 2 && vim_strchr(".,:;!", (uint8_t)ptr[len - 1]) != NULL
+  if (parsed_tag == NULL && len > 2 && vim_strchr(".,:;!", (uint8_t)ptr[len - 1]) != NULL
       && ptr[len - 2] != '.') {
     len--;
   }
 
-  if (file_lnum != NULL) {
+  // `{fname}#{tag}` wins over `{fname}:{lnum}` (e.g. "#10-best-practices").
+  if (file_lnum != NULL && parsed_tag == NULL) {
     const char *match_text = " line ";  // english
     size_t match_textlen = 6;
 
@@ -1765,9 +1810,8 @@ char *file_name_in_line(char *line, int col, int options, int count, char *rel_f
     }
   }
 
-  // Get the tag after the file name: `{fname}#{tag}`.
   if (file_tag != NULL) {
-    *file_tag = parse_file_tag(ptr + len);
+    *file_tag = parsed_tag;
   }
 
   return find_file_name_in_path(ptr, len, options, count, rel_fname);
