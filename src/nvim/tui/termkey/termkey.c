@@ -29,7 +29,7 @@
 # define strcaseeq(a, b) (strcasecmp(a, b) == 0)
 #endif
 
-struct TermKeyDriver termkey_driver_ti = {
+static struct TermKeyDriver termkey_driver_ti = {
   .name = "terminfo",
 
   .new_driver = new_driver_ti,
@@ -41,7 +41,7 @@ struct TermKeyDriver termkey_driver_ti = {
   .peekkey = peekkey_ti,
 };
 
-struct TermKeyDriver termkey_driver_csi = {
+static struct TermKeyDriver termkey_driver_csi = {
   .name = "CSI",
 
   .new_driver = new_driver_csi,

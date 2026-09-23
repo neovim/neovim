@@ -2210,7 +2210,7 @@ void opt_fill(const char *value, FieldHashfn get_field, void *out)
   const char *key, *v;
   size_t keylen, vlen;
   for (const char *p = value; option_next_keyval(&p, &key, &keylen, &v, &vlen);) {
-    KeySetLink *f = get_field(key, keylen);
+    const KeySetLink *f = get_field(key, keylen);
     if (f == NULL) {
       continue;  // unknown key can't occur after validation
     }

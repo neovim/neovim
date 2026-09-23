@@ -526,6 +526,7 @@ static const char *highlight_init_dark[] = {
   NULL
 };
 
+// NOLINTNEXTLINE(misc-use-internal-linkage): used with FFI in unittests
 const char *const highlight_init_cmdline[] = {
   // XXX When modifying a list modify it in both valid and invalid halves.
   // TODO(ZyX-I): merge valid and invalid groups via a macros.

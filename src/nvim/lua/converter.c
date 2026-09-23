@@ -1296,7 +1296,7 @@ void nlua_pop_keydict(lua_State *L, void *retval, FieldHashfn hashy, char **err_
     // [dict, key, value]
     size_t len;
     const char *s = lua_tolstring(L, -2, &len);
-    KeySetLink *field = hashy(s, len);
+    const KeySetLink *field = hashy(s, len);
     if (!field) {
       api_set_error(err, kErrorTypeValidation, "invalid key: %.*s", (int)len, s);
       lua_pop(L, 3);  // []

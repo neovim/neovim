@@ -49,7 +49,7 @@
 
 char *Versions[] = { "8.1", "8.2", "9.0", "9.1", "9.2" };
 char *longVersion = NVIM_VERSION_LONG;
-char *version_buildtype = "Build type: " NVIM_VERSION_BUILD_TYPE;
+static char *version_buildtype = "Build type: " NVIM_VERSION_BUILD_TYPE;
 // Reproducible builds: omit compile info in Release builds. #15424
 #ifndef NDEBUG
 char *version_cflags = "Compilation: " NVIM_VERSION_CFLAGS;

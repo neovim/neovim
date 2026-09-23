@@ -804,7 +804,7 @@ bool api_dict_to_keydict(void *retval, FieldHashfn hashy, Dict dict, Error *err)
 {
   for (size_t i = 0; i < dict.size; i++) {
     String k = dict.items[i].key;
-    KeySetLink *field = hashy(k.data, k.size);
+    const KeySetLink *field = hashy(k.data, k.size);
     if (!field) {
       api_set_error(err, kErrorTypeValidation, "Invalid key: '%.*s'", (int)k.size, k.data);
       return false;
