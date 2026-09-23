@@ -356,7 +356,7 @@ function M.cls(_, bufnr)
     return 'objectscript'
   elseif nonblank1 and nonblank1:find('^[%%\\]') then
     return 'tex'
-  elseif nonblank1 and findany(nonblank1, { '^%s*/%*', '^%s*::%w' }) then
+  elseif nonblank1 and findany(nonblank1, { '^%s*/%*', '^%s*::[%w_]' }) then
     return 'rexx'
   end
   return 'st'
@@ -609,9 +609,9 @@ local function modula2(bufnr)
 
   -- ignore unknown dialects or badly formatted tags
   for _, line in ipairs(getlines(bufnr, 1, 200)) do
-    local matched_dialect, matched_extension = line:match('%(%*!m2(%w+)%+(%w+)%*%)')
+    local matched_dialect, matched_extension = line:match('%(%*!m2([%w_]+)%+([%w_]+)%*%)')
     if not matched_dialect then
-      matched_dialect = line:match('%(%*!m2(%w+)%*%)')
+      matched_dialect = line:match('%(%*!m2([%w_]+)%*%)')
     end
     if matched_dialect then
       if vim.tbl_contains({ 'iso', 'pim', 'r10' }, matched_dialect) then
@@ -1695,8 +1695,8 @@ function M.sc(_, bufnr)
         'var%s<',
         'classvar%s<',
         '%^this.*',
-        '|%w+|',
-        '%+%s%w*%s{',
+        '|[%w_]+|',
+        '%+%s[%w_]*%s{',
         '%*ar%s',
       })
     then
@@ -2040,7 +2040,7 @@ function M.v(_, bufnr)
         or line:find('%(%*') and not line:find('/[/*].*%(%*')
       then
         return 'coq'
-      elseif findany(line, { ';%s*$', ';%s*/[/*]', '^%s*module%s+%w+%s*%(' }) then
+      elseif findany(line, { ';%s*$', ';%s*/[/*]', '^%s*module%s+[%w_]+%s*%(' }) then
         return 'verilog'
       end
     end
