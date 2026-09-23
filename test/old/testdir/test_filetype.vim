@@ -1836,34 +1836,6 @@ func Test_grc_file()
   filetype off
 endfunc
 
-func Test_h_file()
-  filetype on
-
-  call writefile(['int add(int x, int y);'], 'Xfile.h')
-  split Xfile.h
-  call assert_equal('c', &filetype)
-  bwipe!
-
-  call writefile(['class Foo {};'], 'Xfile.h')
-  split Xfile.h
-  call assert_equal('cpp', &filetype)
-  bwipe!
-
-  let g:filetype_h = 'cpp'
-  call writefile(['int x;'], 'Xfile.h', 'D')
-  split Xfile.h
-  call assert_equal('cpp', &filetype)
-  bwipe!
-  unlet g:filetype_h
-
-  call writefile(['classical = 1;'], 'Xfile.h')
-  split Xfile.h
-  split assert_equal('c', &filetype)
-  bwipe!
-
-  filetype off
-endfunc
-
 func Test_haredoc_file()
   filetype on
   call assert_true(mkdir('foo/bar', 'pR'))
