@@ -94,6 +94,7 @@
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"
 #include "nvim/terminal.h"
+#include "nvim/extmark.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/vim_defs.h"
@@ -1566,7 +1567,10 @@ static void terminal_focus(const Terminal *term, bool focus)
 static int term_damage(VTermRect rect, void *data)
 {
   Terminal *term = data;
-  extmark_clear(term->buf, 0, (int)rect.start_row, 0, (int)rect.end_row, -1);
+  buf_T *buf = handle_get_buffer(term->buf_handle);
+  if (buf != NULL) {
+    extmark_clear(buf, 0, (int)rect.start_row, 0, (int)rect.end_row, -1);
+  }
   invalidate_terminal(term, rect.start_row, rect.end_row);
   return 1;
 }
