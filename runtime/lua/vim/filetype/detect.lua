@@ -856,7 +856,7 @@ function M.header(_, bufnr)
         return 'objcpp'
       end
     end
-    if findany(line:lower(), { "^%s*class%f[%W]", "^%s*namespace%f[%W]", "^%s*template%f[%W]", "^%s*using%f[%W]" }) then
+    if findany(line:lower(), { "^%s*class%f[^%w_]", "^%s*namespace%f[^%w_]", "^%s*template%f[^%w_]", "^%s*using%f[^%w_]" }) then
       return 'cpp'
     end
   end
