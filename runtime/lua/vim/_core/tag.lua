@@ -73,17 +73,17 @@ local trail_punct = {
   ['}'] = true,
   ["'"] = true,
   ['"'] = true,
-  ['、'] = true, -- 、
-  ['。'] = true, -- 。
-  ['！'] = true, -- ！
-  ['，'] = true, -- ，
-  ['．'] = true, -- ．
-  ['：'] = true, -- ：
-  ['；'] = true, -- ；
-  ['？'] = true, -- ？
-  ['）'] = true, -- ）
-  ['］'] = true, -- ］
-  ['｝'] = true, -- ｝
+  ['、'] = true,
+  ['。'] = true,
+  ['！'] = true,
+  ['，'] = true,
+  ['．'] = true,
+  ['：'] = true,
+  ['；'] = true,
+  ['？'] = true,
+  ['）'] = true,
+  ['］'] = true,
+  ['｝'] = true,
 }
 
 --- Parse a `#tag` suffix after a file name.
@@ -165,7 +165,7 @@ function M.jump_to_file_tag(tag)
     return jump(found)
   end
 
-  -- ctags (|taglist()|). `filename` only prioritizes; filter to this buffer.
+  -- ctags (|taglist()|): `filename` only prioritizes, so filter to this buffer.
   do
     local fname = api.nvim_buf_get_name(bufnr)
     if fname ~= '' then
@@ -191,15 +191,15 @@ function M.jump_to_file_tag(tag)
         if #choices == 1 then
           return jump_tag_cmd(choices[1].cmd)
         elseif #choices > 1 then
-          -- Like :tjump: pick among matches in this file (|select_tag|).
-          local ok = pcall(M.select_tag, nil, {
+          -- Ambiguous name: pick like :tjump.
+          local picked = pcall(M.select_tag, nil, {
             items = choices,
             tagname = tag,
             on_choice = function(item)
               jump_tag_cmd(item.cmd)
             end,
           })
-          return ok or jump_tag_cmd(choices[1].cmd)
+          return picked or jump_tag_cmd(choices[1].cmd)
         end
       end
     end

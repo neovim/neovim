@@ -395,7 +395,7 @@ endfunc
 func Test_gf_tag()
   set hidden
 
-  " Markdown heading via slug (file#tag with '#' in default 'isfname')
+  " heading via GitHub slug; '#' stays in 'isfname'
   new
   call setline(1, ['# Introduction', 'some text', '## My Heading', 'target', '## Other'])
   set filetype=markdown
@@ -421,7 +421,7 @@ func Test_gf_tag()
   call assert_equal('Xgftag.txt', bufname('%'))
   call assert_equal(2, line('.'))
 
-  " word fallback; match on line 1 at cursor
+  " word fallback at line 1 (search includes cursor)
   %bw!
   new
   call setline(1, ['unique_identifier lives here', 'omega'])
@@ -434,7 +434,7 @@ func Test_gf_tag()
   call assert_equal('Xgftag2.txt', bufname('%'))
   call assert_equal(1, line('.'))
 
-  " numeric-leading tag is a tag, not a line number
+  " `#10-…` is a tag, not a line number
   %bw!
   new
   call setline(1, ['intro', '## 10-best-practices', 'body'])
@@ -448,7 +448,7 @@ func Test_gf_tag()
   call assert_equal('Xgftag3.md', bufname('%'))
   call assert_equal(2, line('.'))
 
-  " gf keeps '#' in a file name (tag only for gF)
+  " gf keeps '#' in file names (tag only for gF)
   %bw!
   new
   call setline(1, ['x'])
@@ -483,7 +483,7 @@ func Test_gf_tag()
   call assert_equal('Xgfcjk.md', bufname('%'))
   call assert_equal(2, line('.'))
 
-  " ctags via taglist(); word search cannot see the symbol
+  " ctags via taglist() (not visible to word search)
   %bw!
   new
   call setline(1, ['aaa', 'bbb', 'ccc'])
@@ -509,7 +509,7 @@ func Test_gf_tag()
   call assert_equal('Xgftag2.txt', bufname('%'))
   call assert_equal(1, line('.'))
 
-  " Visual mode: select the file name; tag follows the selection
+  " Visual: selected name, tag after selection
   %bw!
   new
   call setline(1, ['prefix Xgftag2.txt#unique_identifier suffix'])

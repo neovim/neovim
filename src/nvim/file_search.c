@@ -1589,8 +1589,7 @@ theend:
   return file_name;
 }
 
-/// Parse a `#tag` suffix after a file name.
-/// Logic lives in `vim._core.tag.parse_file_tag`.
+/// Parse a `#tag` suffix after a file name (`vim._core.tag.parse_file_tag`).
 ///
 /// @param p  points at the '#' separator after the file name
 /// @return  allocated tag name, or NULL if absent/empty
@@ -1610,7 +1609,7 @@ static char *parse_file_tag(const char *p)
     tv_clear(&rettv);
     return NULL;
   }
-  return rettv.vval.v_string;  // takes ownership
+  return rettv.vval.v_string;  // ownership transferred
 }
 
 /// Get the file name at the cursor.
@@ -1629,12 +1628,11 @@ char *grab_file_name(int count, linenr_T *file_lnum, char **file_tag)
     if (get_visual_text(NULL, &ptr, &len) == FAIL) {
       return NULL;
     }
-    // Number must immediately follow ':' in Visual mode.
+    // Only ":123" and "#tag" immediately after the selection.
     if (file_lnum != NULL && ptr[len] == ':' && isdigit((uint8_t)ptr[len + 1])) {
       char *p = ptr + len + 1;
       *file_lnum = getdigits_int32(&p, false, 0);
     } else if (file_tag != NULL) {
-      // Tag name must immediately follow '#' in Visual mode.
       *file_tag = parse_file_tag(ptr + len);
     }
     fname = find_file_name_in_path(ptr, len, options, count, curbuf->b_ffname);
@@ -1709,7 +1707,7 @@ char *file_name_in_line(char *line, int col, int options, int count, char *rel_f
   while (vim_isfilec((uint8_t)ptr[len]) || (ptr[len] == '\\' && ptr[len + 1] == ' ')
          || ((options & FNAME_HYP) && path_is_url(ptr + len))
          || (is_url && vim_strchr(":?&=", (uint8_t)ptr[len]) != NULL)) {
-    // `#` starts a tag (not part of the name) when the caller wants one.
+    // `#` starts `{fname}#{tag}`, not part of the name.
     if (file_tag != NULL && ptr[len] == '#') {
       break;
     }
@@ -1730,7 +1728,7 @@ char *file_name_in_line(char *line, int col, int options, int count, char *rel_f
     len += (size_t)(utfc_ptr2len(ptr + len));
   }
 
-  // Parse `#tag` from the untrimmed end (name trailing-punct must not hide the '#').
+  // Parse `#tag` before name trailing-punct trim (that trim must not hide '#').
   char *parsed_tag = NULL;
   if (file_tag != NULL) {
     parsed_tag = parse_file_tag(ptr + len);
