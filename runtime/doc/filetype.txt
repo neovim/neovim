@@ -154,7 +154,11 @@ variables can be used to overrule the filetype used for certain extensions:
 	`*.f`		g:filetype_f		|ft-forth-syntax|
 	`*.frm`		g:filetype_frm		|ft-form-syntax|
 	`*.fs`		g:filetype_fs		|ft-forth-syntax|
-	`*.h`		g:c_syntax_for_h	|ft-c-syntax|
+	`*.h`		g:c_syntax_for_h	|ft-c-syntax|	(deprecated)
+	`*.h`		g:ch_syntax_for_h	|ft-ch-syntax|	(deprecated)
+	`*.h`		g:filetype_h		|ft-c-syntax|
+						|ft-ch-syntax|
+						|ft-cpp-syntax|
 	`*.i`		g:filetype_i		|ft-progress-syntax|
 	`*.inc`		g:filetype_inc
 	`*.int`		g:filetype_int
