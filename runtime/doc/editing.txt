@@ -308,8 +308,9 @@ CTRL-^			Edit the alternate file.  Mostly the alternate file is
 			If "#" and a tag name follow, the cursor is positioned
 			on that tag: a ctags entry for this file (see |tags|),
 			an LSP document symbol (like |gO|), a Markdown/vimdoc
-			heading, a help tag, or a word.  "#" starts a tag even
-			when it is in 'isfname'.
+			heading, a help tag, or a word.  Several ctags matches
+			in this file are offered in a list (like |:tjump|).
+			"#" starts a tag even when it is in 'isfname'.
 			Examples:
 				eval.c:10 ~
 				eval.c @ 20 ~

@@ -10,20 +10,18 @@ local M = {}
 --- @field file string
 --- @field extra? string
 --- @field cur boolean True if this is the currently-active tagstack match.
+--- @field cmd? string  ctags `cmd` used to locate the tag in `file`.
 
 --- Implements `do_tag()` (`:tselect`, ambiguous `:tag`, …) via vim.ui.select().
 ---
 --- async: returns immediately, the chosen tag is applied later by re-running
---- `:[mods] [idx]tag {tagname}` (or `stag`) from `on_choice`.
+--- `:[mods] [idx]tag {tagname}` (or `stag`) from `on_choice`, or via
+--- `extra.on_choice` when provided (e.g. |gF| `file#tag`).
 ---
---- @param eap vim._core.ExCmdArgs Original :tselect/:stselect/… invocation.
---- @param extra { items: vim._core.tag.Match[], tagname: string }
+--- @param eap? vim._core.ExCmdArgs Original :tselect/:stselect/… invocation.
+--- @param extra { items: vim._core.tag.Match[], tagname: string, on_choice?: fun(item: vim._core.tag.Match, idx: integer) }
 function M.select_tag(eap, extra)
   local items, tagname = extra.items, extra.tagname
-  -- :stag/:stselect/:stjump need a split when re-invoked.
-  local stag = eap.name:sub(1, 1) == 's'
-  -- `eap.mods` is the raw modifier string (e.g. ":vert silent").
-  local mods_str = eap.mods ~= '' and (eap.mods .. ' ') or ''
 
   local taglen = 18
   for _, m in ipairs(items) do
@@ -38,7 +36,7 @@ function M.select_tag(eap, extra)
       local kind = m.kind or ''
       return ('%s %s %-4s %-' .. taglen .. 's %s%s'):format(
         marker,
-        m.pri,
+        m.pri or '',
         kind,
         m.tag,
         m.file,
@@ -49,8 +47,14 @@ function M.select_tag(eap, extra)
     if not idx then
       return
     end
+    if extra.on_choice then
+      extra.on_choice(items[idx], idx)
+      return
+    end
     -- Queue ":[mods] [idx](s)tag {tagname}" as user input, so the recursive do_tag runs via the
     -- normal input-dispatch loop. Using vim.schedule + vim.cmd can hang bc of "Press ENTER".
+    local stag = eap.name:sub(1, 1) == 's'
+    local mods_str = eap.mods ~= '' and (eap.mods .. ' ') or ''
     local cmd = stag and 'stag' or 'tag'
     vim.fn.feedkeys(vim.keycode(('<Cmd>%s%d%s %s<CR>'):format(mods_str, idx, cmd, tagname)), 'in')
   end)
@@ -110,8 +114,9 @@ end
 
 --- Jump to a named tag in the current buffer (|gF| `{fname}#{tag}`).
 ---
---- Tries, in order: ctags (|taglist()|), LSP document symbols (|gO|),
---- Treesitter headings, help tags (`*tag*`), then a word search.
+--- Tries, in order: ctags (|taglist()|; several hits open |select_tag|),
+--- LSP document symbols (|gO|), Treesitter headings, help tags (`*tag*`),
+--- then a word search.
 ---
 --- @param tag string Tag name without the leading '#'.
 --- @return boolean success
@@ -168,11 +173,33 @@ function M.jump_to_file_tag(tag)
       local pat = '^' .. tag:gsub('%W', '\\%0') .. '$'
       local ok, matches = pcall(vim.fn.taglist, pat, want)
       if ok and type(matches) == 'table' then
+        --- @type vim._core.tag.Match[]
+        local choices = {}
         for _, item in ipairs(matches) do
           local got = vim.fs.normalize(vim.fn.fnamemodify(item.filename or '', ':p'))
-          if got == want and jump_tag_cmd(item.cmd) then
-            return true
+          if got == want then
+            choices[#choices + 1] = {
+              tag = item.name or tag,
+              kind = item.kind,
+              pri = '',
+              file = item.filename or '',
+              cur = false,
+              cmd = item.cmd,
+            }
           end
+        end
+        if #choices == 1 then
+          return jump_tag_cmd(choices[1].cmd)
+        elseif #choices > 1 then
+          -- Like :tjump: pick among matches in this file (|select_tag|).
+          local ok = pcall(M.select_tag, nil, {
+            items = choices,
+            tagname = tag,
+            on_choice = function(item)
+              jump_tag_cmd(item.cmd)
+            end,
+          })
+          return ok or jump_tag_cmd(choices[1].cmd)
         end
       end
     end
