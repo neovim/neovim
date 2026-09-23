@@ -642,6 +642,61 @@ describe('multicursor', function()
       -- "Q" is excluded: it is cursor-management, not part of the edit.
       eq({ '01i\27ibad\27' }, atoms_tail(1))
     end)
+
+    it('global op (undo/redo, g CTRL-A) does not cascade', function()
+      -- Mapping that performs a "global op" must not cascade.
+
+      -- vim-repeat maps u/U/<C-R> to undo/redo wrappers.
+      fn.setline(1, { 'aaa', 'bbb', 'ccc' })
+      feed('gg0Qj0Qj0') -- 3 cursors
+      feed('x') -- one cascade: aa,bb,cc
+      eq({ 'aa', 'bb', 'cc' }, get_lines())
+      command('nnoremap <silent> u :<C-U>undo<CR>')
+      command('nnoremap <silent> <C-R> :<C-U>redo<CR>')
+      feed('u') -- One undo of the cascade, not per-cursor.
+      eq({ 'aaa', 'bbb', 'ccc' }, get_lines())
+      feed('<C-R>') -- Redo mapping does not cascade.
+      eq({ 'aa', 'bb', 'cc' }, get_lines())
+      -- Nested normal_execute() after the undo, in the same mapping.
+      command('nnoremap <silent> u :<C-U>undo <Bar> normal! l<CR>')
+      feed('u')
+      eq({ 'aaa', 'bbb', 'ccc' }, get_lines())
+
+      -- Follow-mode, where the undo's cursor-move would attempt LHS-replay. #42037
+      clear_cursors()
+      command('nnoremap u u<Cmd>let g:did_u = 1<CR>') -- Multi-command RHS.
+      command('nnoremap <C-R> <C-R>')
+      command('nnoremap gm yiwp')
+      cursors({ 'aa', 'bb' }, 'vipQ')
+      feed('gmgm')
+      eq({ 'aaaaaaaa', 'bbbbbbbb' }, get_lines())
+      feed('u')
+      eq({ 'aaaa', 'bbbb' }, get_lines())
+      feed('u')
+      eq({ 'aa', 'bb' }, get_lines())
+      feed('<C-R>')
+      eq({ 'aaaa', 'bbbb' }, get_lines())
+      feed('0x') -- Cursors are still in place.
+      eq({ 'aaa', 'bbb' }, get_lines())
+
+      -- "U" (line-undo) is also treated as a "global op".
+      clear_cursors()
+      command('nnoremap U U<Cmd>let g:did_U = 1<CR>')
+      cursors({ 'aaa', 'bbb' }, 'Qj0')
+      feed('x')
+      eq({ 'aa', 'bb' }, get_lines())
+      feed('U')
+      eq({ 'aaa', 'bb' }, get_lines())
+
+      -- g CTRL-A (counter) applies once, not per-cursor. Also in follow-mode.
+      command('nnoremap ,n g<C-A><Cmd>let g:did_n = 1<CR>')
+      for _, place in ipairs({ 'Qj0Qj0', 'VGQ' }) do
+        clear_cursors()
+        cursors({ 'a', 'b', 'c' }, place)
+        feed(',n')
+        eq({ '1a', '2b', '3c' }, get_lines(), place)
+      end
+    end)
   end)
 
   describe('. (dot-repeat)', function()
@@ -891,13 +946,6 @@ describe('multicursor', function()
       feed('gg0g<C-A>')
       eq({ '1x', '2y', 'z' }, get_lines())
       eq(2, ncursors())
-    end)
-
-    it('via a mapping applies ONCE (cursor-global: no avalanche)', function()
-      cursors({ 'a', 'b', 'c' })
-      command('nnoremap ,n g<C-A>')
-      feed(',n')
-      eq({ '1a', '2b', '3c' }, get_lines())
     end)
 
     it('without cursors, g CTRL-A is not a command', function()
@@ -2759,26 +2807,6 @@ describe('multicursor', function()
       eq(seq + 1, fn.undotree().seq_last)
       feed('<C-r>')
       eq({ 'bc', 'ef', 'ghi' }, get_lines())
-    end)
-
-    it('a mapped undo/redo (vim-repeat "nmap u") does not cascade', function()
-      -- vim-repeat maps u/U/<C-R> to undo/redo wrappers. Such a mapping changes the buffer, but an
-      -- undo/redo is buffer-global, not a per-cursor edit: it must NOT cascade, or every cursor
-      -- would undo again, over-undoing the whole session (the reported bug).
-      fn.setline(1, { 'aaa', 'bbb', 'ccc' })
-      feed('gg0Qj0Qj0') -- 3 cursors
-      feed('x') -- one cascade: aa,bb,cc
-      eq({ 'aa', 'bb', 'cc' }, get_lines())
-      command('nnoremap <silent> u :<C-U>undo<CR>')
-      command('nnoremap <silent> <C-R> :<C-U>redo<CR>')
-      feed('u') -- ONE undo of the cascade, not one-per-cursor (would reach the empty buffer)
-      eq({ 'aaa', 'bbb', 'ccc' }, get_lines())
-      feed('<C-R>') -- redo mapping likewise does not cascade
-      eq({ 'aa', 'bb', 'cc' }, get_lines())
-      -- The guard survives a nested normal_execute() after the undo, in the same mapped command.
-      command('nnoremap <silent> u :<C-U>undo <Bar> normal! l<CR>')
-      feed('u')
-      eq({ 'aaa', 'bbb', 'ccc' }, get_lines())
     end)
 
     it('u/CTRL-R ping-pong toggles without drift', function()
