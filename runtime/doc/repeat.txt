@@ -467,6 +467,8 @@ LIMITATIONS						*mcursor-limitations*
 - During Insert-mode completion, live mirroring pauses if a preview could
   shift or overlap the primary's completion (same-line edits before the
   primary, or line insertions/deletions before it).
+- Cursor is removed if its Insert-entering operation fails. E.g. "ct;" on
+  a line without ";", "cgn" with no match.
 - Explicit clipboard registers (`"*yy`, `"+yy`) are global, not per-cursor. On
   multicursor exit, you can set the clipboard to the joined yank: >
       :let @+=@"

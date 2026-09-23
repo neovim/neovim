@@ -342,11 +342,20 @@ static void mc_execute(size_t cursoridx, size_t atomidx)
 
   // Replay the atom using wholesome, tasty feedkeys. Usually noremap ("nix"), but `atom.remap=true`
   // means we must replay LHS (re-run the mapping at cursor, e.g. vim-surround "ds'").
+  const uint64_t beeps = did_beep;
+  const varnumber_T tick = buf_get_changedtick(curbuf);
   nvim_feedkeys(cstr_as_string(atom.keys), cstr_as_string(atom.remap ? "ix" : "nix"), false);
   cmdmod.cmod_flags = save_cmod_flags;
 
-  // A failed cmd flushes remaining keys (beep_flush()), which can eat a Visual atom's terminating
-  // ESC/op; don't "leak" Visual mode.
+  if (atom.type == kAInsertSpan && mc_ins_span.first && did_beep != beeps
+      && buf_get_changedtick(curbuf) == tick) {
+    // XXX: Insert-entering cmd failed ("ct;" did not match ";"). Drop the cursor. #41960
+    // (Not detected under emsg_silent: beep_flush() does not beep.)
+    extmark_del_id(curbuf, mc_ns(), ctx.mark);
+    return;
+  }
+
+  // emsg() may flush the remaining keys, eating a terminating (Visual) ESC/op; don't "leak" Visual.
   if (Visual.active) {
     if (atom.type == kAVisualSpan) {
       // Persist this cursor's selection. The next span reselects it with "gv".
@@ -609,8 +618,6 @@ static void mc_ins_restore_state(const McInsSaved *saved)
 /// Takes ownership of `keys` and `text`.
 static void mc_ins_span_push(char *keys, char *text)
 {
-  mc_ins_span.first = false;
-
   // If all cursors disappear mid-session (e.g. dedupe), emit but don't cascade.
   bool cascade = mc_buf_has_cursors(curbuf);
   atom_push_raw(cascade, &(CmdAtom){
@@ -619,16 +626,15 @@ static void mc_ins_span_push(char *keys, char *text)
     .text = text,
     .changed = buf_get_changedtick(curbuf) != mc_ins_span.tick,
   });
-  if (!cascade) {
-    return;
+  if (cascade) {
+    McInsSaved saved = mc_ins_save_state();
+    block_autocmds();  // The span replay would fire InsertEnter/InsertLeave on every key.
+    mc_cascade(curwin->w_cursor, 0);  // Still `first` during the entry span.
+    unblock_autocmds();
+    mc_ins_restore_state(&saved);
+    mc_ins_joined = false;  // The next span decides whether its replays may join.
   }
-
-  McInsSaved saved = mc_ins_save_state();
-  block_autocmds();  // The span replay would fire InsertEnter/InsertLeave on every key.
-  mc_cascade(curwin->w_cursor, 0);
-  unblock_autocmds();
-  mc_ins_restore_state(&saved);
-  mc_ins_joined = false;  // The next span decides whether its replays may join.
+  mc_ins_span.first = false;
 }
 
 /// Deletes the per-cursor preview-region marks.
