@@ -849,7 +849,7 @@ function M.header(_, bufnr)
   end
 
   for _, line in ipairs(getlines(bufnr, 1, 100)) do
-    if findany(line:lower(), { '^%s*@interface', '^%s*@end', '^%s*@class' }) then
+    if findany(line:lower(), { '^%s*@interface%f[^%w_]', '^%s*@end%f[^%w_]', '^%s*@class%f[^%w_]' }) then
       if vim.g.c_syntax_for_h then
         return 'objc'
       else
