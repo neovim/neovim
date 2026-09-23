@@ -292,7 +292,7 @@ EDITOR
   • The |cmdwin-char| is shown via 'statuscolumn'.
 • |gf| and |<cfile>| support `file://…` URIs.
 • |gF| supports `{fname}#{tag}`: jump to a named tag after opening the file
-  (LSP document symbols like |gO|, Markdown/vimdoc headings, or help tags).
+  (ctags, LSP document symbols like |gO|, Markdown/vimdoc headings, help tags).
 • |:log| opens log files.
 • |:marks| can list |extmarks| for a given |namespace|.
 • |:marks| gained tab-completion.

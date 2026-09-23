@@ -483,6 +483,23 @@ func Test_gf_tag()
   call assert_equal('Xgfcjk.md', bufname('%'))
   call assert_equal(2, line('.'))
 
+  " ctags via taglist(); word search cannot see the symbol
+  %bw!
+  new
+  call setline(1, ['aaa', 'bbb', 'ccc'])
+  write! Xctag.txt
+  close
+  call writefile(["myfunc\tXctag.txt\t3"], 'Xtags')
+  new
+  set tags=Xtags
+  call setline(1, ['see Xctag.txt#myfunc now'])
+  call cursor(1, 5)
+  normal gF
+  call assert_equal('Xctag.txt', bufname('%'))
+  call assert_equal(3, line('.'))
+  set tags&vim
+  call delete('Xtags')
+
   " CTRL-W_F
   %bw!
   new
@@ -508,6 +525,7 @@ func Test_gf_tag()
   call delete('Xgftag3.md')
   call delete('Xgfhash#1.txt')
   call delete('Xgfcjk.md')
+  call delete('Xctag.txt')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

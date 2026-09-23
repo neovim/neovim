@@ -110,8 +110,8 @@ end
 
 --- Jump to a named tag in the current buffer (|gF| `{fname}#{tag}`).
 ---
---- Tries, in order: LSP document symbols (|gO|), Treesitter headings,
---- help tags (`*tag*`), then a word search.
+--- Tries, in order: ctags (|taglist()|), LSP document symbols (|gO|),
+--- Treesitter headings, help tags (`*tag*`), then a word search.
 ---
 --- @param tag string Tag name without the leading '#'.
 --- @return boolean success
@@ -130,6 +130,52 @@ function M.jump_to_file_tag(tag)
     api.nvim_win_set_cursor(winid, { lnum, 0 })
     vim.cmd('normal! zv')
     return true
+  end
+
+  --- Jump using a ctags "cmd" field (`:h tags-file-format`).
+  --- @param cmd string
+  --- @return boolean
+  local function jump_tag_cmd(cmd)
+    if type(cmd) ~= 'string' or cmd == '' then
+      return false
+    end
+    -- Drop `;"` extension fields.
+    cmd = cmd:gsub(';".*$', '')
+    local lnum = cmd:match('^(%d+)$')
+    if lnum then
+      return jump(tonumber(lnum))
+    end
+    -- `/pattern/` or `?pattern?`
+    local pat = cmd:match('^%/(.*)%/$') or cmd:match('^%?(.*)%?$')
+    if not pat then
+      return false
+    end
+    local save = api.nvim_win_get_cursor(winid)
+    api.nvim_win_set_cursor(winid, { 1, 0 })
+    local found = vim.fn.search(pat, 'W')
+    if found == 0 then
+      api.nvim_win_set_cursor(winid, save)
+      return false
+    end
+    return jump(found)
+  end
+
+  -- ctags (|taglist()|). `filename` only prioritizes; filter to this buffer.
+  do
+    local fname = api.nvim_buf_get_name(bufnr)
+    if fname ~= '' then
+      local want = vim.fs.normalize(vim.fn.fnamemodify(fname, ':p'))
+      local pat = '^' .. tag:gsub('%W', '\\%0') .. '$'
+      local ok, matches = pcall(vim.fn.taglist, pat, want)
+      if ok and type(matches) == 'table' then
+        for _, item in ipairs(matches) do
+          local got = vim.fs.normalize(vim.fn.fnamemodify(item.filename or '', ':p'))
+          if got == want and jump_tag_cmd(item.cmd) then
+            return true
+          end
+        end
+      end
+    end
   end
 
   -- LSP document symbols (|gO| locations).
