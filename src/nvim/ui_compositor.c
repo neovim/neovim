@@ -33,7 +33,7 @@
 #include "ui_compositor.c.generated.h"
 
 static int composed_uis = 0;
-kvec_t(ScreenGrid *) layers = KV_INITIAL_VALUE;
+static kvec_t(ScreenGrid *) layers = KV_INITIAL_VALUE;
 
 static size_t bufsize = 0;
 static schar_T *linebuf;

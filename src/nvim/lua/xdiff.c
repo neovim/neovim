@@ -196,7 +196,6 @@ static NluaXdiffMode process_xdl_diff_opts(lua_State *lstate, xdemitconf_t *cfg,
 {
   Dict(xdl_diff) opts = KEYDICT_INIT;
   char *err_param = NULL;
-  KeySetLink *KeyDict_xdl_diff_get_field(const char *str, size_t len);
   nlua_pop_keydict(lstate, &opts, KeyDict_xdl_diff_get_field, &err_param, NULL, err);
 
   NluaXdiffMode mode = kNluaXdiffModeUnified;

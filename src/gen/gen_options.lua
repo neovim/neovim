@@ -670,6 +670,7 @@ local function gen_keysets(output_file)
   write('#pragma once')
   write('')
   write('#include <stddef.h>')
+  write('')
   write('#include "nvim/api/private/defs.h"')
   write('#include "nvim/option_defs.h"')
 
