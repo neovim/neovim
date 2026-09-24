@@ -19,6 +19,7 @@ readonly VIM_SOURCE_DIR="${VIM_SOURCE_DIR:-${VIM_SOURCE_DIR_DEFAULT}}"
 BASENAME="$(basename "${0}")"
 readonly BASENAME
 readonly BRANCH_PREFIX="vim-"
+readonly VIMPATCH_RANGE=38fb83585421c45828a4934fc75f7952b2baf116..HEAD
 
 CREATED_FILES=()
 
@@ -578,23 +579,24 @@ submit_pr() {
 }
 
 # Gets all Vim commits since the "start" commit.
-list_vim_commits() { (
-  cd "${VIM_SOURCE_DIR}" && _git log --reverse v8.1.0000..HEAD "$@"
-) }
+list_vim_commits() {
+  _git -C "${VIM_SOURCE_DIR}" log --reverse v8.1.0000..HEAD "$@"
+}
 
 # Prints all (sorted) "vim-patch:xxx" tokens found in the Nvim git log.
 list_vimpatch_tokens() {
+  local patch_pat='[a-z0-9.]{7,}'
   # Use sed…{7,7} to normalize (internal) Git hashes (for tokens caches).
   diff "${NVIM_SOURCE_DIR}/scripts/vimpatch_commit_ignore.txt" <(
-    _git -C "${NVIM_SOURCE_DIR}" log --format="%H" -E --grep='vim-patch:[^ ,{]{7,}'
+    _git -C "${NVIM_SOURCE_DIR}" log --format="%H" -E --grep="vim-patch:$patch_pat" "$VIMPATCH_RANGE"
   ) |
     grep -e '^> ' |
     sed -e 's/^> //' |
     _git -C "${NVIM_SOURCE_DIR}" log --no-walk --stdin \
-    | grep -oE 'vim-patch:[^ ,{:]{7,}' \
+    | grep -oE "vim-patch:$patch_pat" \
     | sort \
     | uniq \
-    | sed -nEe 's/^(vim-patch:([0-9]+\.[^ ]+|[0-9a-z]{7,7})).*/\1/p'
+    | sed -nEe 's/^vim-patch:([0-9]+\.[^ ]+|[0-9a-z]{7,7}).*/\1/p'
 }
 
 # Prints all merged patches (since current v:version) in ascending order.
@@ -606,7 +608,7 @@ list_vimpatch_tokens() {
 list_vimpatch_numbers() {
   local patch_pat='(8\.[12]|9\.[0-9])\.[0-9]{1,4}'
   diff "${NVIM_SOURCE_DIR}/scripts/vimpatch_commit_ignore.txt" <(
-    _git -C "${NVIM_SOURCE_DIR}" log --format="%H" -E --grep="^[* ]*vim-patch:${patch_pat}"
+    _git -C "${NVIM_SOURCE_DIR}" log --format="%H" -E --grep="^[* ]*vim-patch:${patch_pat}" "$VIMPATCH_RANGE"
   ) |
     grep -e '^> ' |
     sed -e 's/^> //' |
@@ -697,7 +699,7 @@ _set_missing_vimpatches() {
   local vim_commit info
   while IFS=' ' read -r line; do
     # Check for vim-patch:<commit_hash> (usually runtime updates).
-    token="vim-patch:${line:0:7}"
+    token="${line:0:7}"
     if [[ "${tokens[$token]-}" ]]; then
       continue
     fi
@@ -718,7 +720,7 @@ _set_missing_vimpatches() {
     vim_tag="${vim_commit_tags[$vim_commit]-}"
     if [[ -n "$vim_tag" ]]; then
       # Check for vim-patch:<tag> (not commit hash).
-      patch_number="vim-patch:${vim_tag:1}" # "v7.4.0001" => "7.4.0001"
+      patch_number="${vim_tag:1}" # "v7.4.0001" => "7.4.0001"
       if [[ "${tokens[$patch_number]-}" ]]; then
         continue
       fi
