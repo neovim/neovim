@@ -1342,12 +1342,6 @@ function vim.fn.cosh(expr) end
 --- @return integer
 function vim.fn.count(comp, expr, ic, start) end
 
---- @param lnum integer|string
---- @param col? integer
---- @param off? integer
---- @return any
-function vim.fn.cursor(lnum, col, off) end
-
 --- Lua: Prefer |nvim_win_set_cursor()| with `{lnum, col - 1}`; `off`, `curswant`, and failure semantics differ.
 ---
 --- Positions the cursor at the column (byte count) {col} in the
@@ -1381,9 +1375,12 @@ function vim.fn.cursor(lnum, col, off) end
 --- position within a <Tab> or after the last character.
 --- Returns 0 when the position could be set, -1 otherwise.
 ---
---- @param list integer[]
+--- @overload fun(list: integer[]): (any)
+--- @param lnum integer|string
+--- @param col? integer
+--- @param off? integer
 --- @return any
-function vim.fn.cursor(list) end
+function vim.fn.cursor(lnum, col, off) end
 
 --- Lua: Prefer |uv.kill()| with `"sigtrap"` (or `"sigint"` outside MS-Windows); exact semantics differ.
 ---
@@ -1991,16 +1988,11 @@ function vim.fn.exp(expr) end
 --- See |glob()| for finding existing files.  See |system()| for
 --- getting the raw output of an external command.
 ---
+--- @overload fun(string: string, nosuf: boolean, list: true|number|string|table): (string|string[])
 --- @param string string
 --- @param nosuf? boolean
 --- @param list? nil|false
 --- @return string
-function vim.fn.expand(string, nosuf, list) end
-
---- @param string string
---- @param nosuf boolean
---- @param list true|number|string|table
---- @return string|string[]
 function vim.fn.expand(string, nosuf, list) end
 
 --- Expand special items in String {string} like what is done for
@@ -2710,22 +2702,10 @@ function vim.fn.garbagecollect(atexit) end
 --- available return {default}.  Return zero when {default} is
 --- omitted.
 ---
---- @param list any[]
---- @param idx integer
---- @param default? any
---- @return any
-function vim.fn.get(list, idx, default) end
-
 --- Get byte {idx} from |Blob| {blob}.  When this byte is not
 --- available return {default}.  Return -1 when {default} is
 --- omitted.
 ---
---- @param blob string
---- @param idx integer
---- @param default? any
---- @return any
-function vim.fn.get(blob, idx, default) end
-
 --- Get item with key {key} from |Dictionary| {dict}.  When this
 --- item is not available return {default}.  Return zero when
 --- {default} is omitted.  Useful example: >vim
@@ -2733,12 +2713,6 @@ function vim.fn.get(blob, idx, default) end
 --- <This gets the value of g:var_name if it exists, and uses
 --- "default" when it does not exist.
 ---
---- @param dict table<string,any>
---- @param key string
---- @param default? any
---- @return any
-function vim.fn.get(dict, key, default) end
-
 --- Get item {what} from |Funcref| {func}.  Possible values for
 --- {what} are:
 ---   "name"    The function name
@@ -2760,14 +2734,14 @@ function vim.fn.get(dict, key, default) end
 ---
 --- Returns zero on error.
 ---
---- @param func function
---- @param what string
+--- @overload fun(blob: string, idx: integer, default?: any): (any)
+--- @overload fun(dict: table<string,any>, key: string, default?: any): (any)
+--- @overload fun(func: function, what: string): (any)
+--- @param list any[]
+--- @param idx integer
+--- @param default? any
 --- @return any
-function vim.fn.get(func, what) end
-
---- @param buf? integer|string
---- @return vim.fn.getbufinfo.ret.item[]
-function vim.fn.getbufinfo(buf) end
+function vim.fn.get(list, idx, default) end
 
 --- Get information about buffers as a List of Dictionaries.
 ---
@@ -2836,9 +2810,10 @@ function vim.fn.getbufinfo(buf) end
 ---   getbufvar({bufnr}, '&option_name')
 --- <
 ---
---- @param dict? vim.fn.getbufinfo.dict
+--- @overload fun(dict?: vim.fn.getbufinfo.dict): (vim.fn.getbufinfo.ret.item[])
+--- @param buf? integer|string
 --- @return vim.fn.getbufinfo.ret.item[]
-function vim.fn.getbufinfo(dict) end
+function vim.fn.getbufinfo(buf) end
 
 --- Lua: Prefer |nvim_buf_get_lines()|.
 ---
@@ -3503,6 +3478,8 @@ function vim.fn.getjumplist(winnr, tabnr) end
 --- <When {lnum} is a number smaller than 1 or bigger than the
 --- number of lines in the buffer, an empty string is returned.
 ---
+--- Lua: Prefer |nvim_buf_get_lines()|.
+---
 --- When {end} is given the result is a |List| where each item is
 --- a line from the current buffer in the range {lnum} to {end},
 --- including line {end}.
@@ -3517,17 +3494,10 @@ function vim.fn.getjumplist(winnr, tabnr) end
 --- <To get lines from another buffer see |getbufline()| and
 --- |getbufoneline()|
 ---
+--- @overload fun(lnum: integer|string, end_: integer|string): (string[])
 --- @param lnum integer|string
---- @param end_? nil|false
 --- @return string
-function vim.fn.getline(lnum, end_) end
-
---- Lua: Prefer |nvim_get_current_line()| or |nvim_buf_get_lines()|.
----
---- @param lnum integer|string
---- @param end_ true|number|string|table
---- @return string|string[]
-function vim.fn.getline(lnum, end_) end
+function vim.fn.getline(lnum) end
 
 --- Returns a |List| with all the entries in the location list for
 --- window {nr} (|window-number| or |window-ID|).
@@ -3764,6 +3734,7 @@ function vim.fn.getpos(expr) end
 ---      echo bufname(d.bufnr) ':' d.lnum '=' d.text
 ---   endfor
 --- <
+---
 --- If the optional {what} dictionary argument is supplied, then
 --- returns only the items listed in {what} as a dictionary.  The
 --- following string items are supported in {what}:
@@ -3842,9 +3813,9 @@ function vim.fn.getpos(expr) end
 ---   echo getqflist({'lines' : ["F1:10:L10"]})
 --- <
 ---
---- @param what? table
---- @return any
-function vim.fn.getqflist(what) end
+--- @overload fun(what: vim.fn.getqflist.what): (vim.fn.getqflist.ret)
+--- @return vim.fn.getqflist.ret.item[]
+function vim.fn.getqflist() end
 
 --- Returns the contents of register {regname} as a String.
 --- Example: >vim
@@ -3868,16 +3839,11 @@ function vim.fn.getqflist(what) end
 ---
 --- If {regname} is not specified, |v:register| is used.
 ---
+--- @overload fun(regname: string, expr: any, list: true|number|string|table): (string[])
 --- @param regname? string
 --- @param expr? any
 --- @param list? nil|false
 --- @return string
-function vim.fn.getreg(regname, expr, list) end
-
---- @param regname string
---- @param expr any
---- @param list true|number|string|table
---- @return string[]
 function vim.fn.getreg(regname, expr, list) end
 
 --- Returns detailed information about register {regname} as a
@@ -4585,7 +4551,7 @@ function vim.fn.highlightID(name) end
 ---
 --- Obsolete name for |hlexists()|.
 ---
---- @param name string
+--- @param name string|number|boolean|nil
 --- @return any
 function vim.fn.highlight_exists(name) end
 
@@ -4705,7 +4671,7 @@ function vim.fn.hlID(name) end
 --- necessarily when highlighting has been defined for it, it may
 --- also have been used for a syntax item.
 ---
---- @param name string
+--- @param name string|number|boolean|nil
 --- @return 0|1
 function vim.fn.hlexists(name) end
 
@@ -4853,12 +4819,6 @@ function vim.fn.indexof(object, expr, opts) end
 --- Lua: Prefer |vim.ui.input()| for callback-based input.
 ---
 ---
---- @param prompt string
---- @param text? string
---- @param completion? string
---- @return string
-function vim.fn.input(prompt, text, completion) end
-
 --- Lua: Prefer |vim.ui.input()| for callback-based input.
 ---
 --- Prompts the user to enter text on the command-line, and
@@ -4971,9 +4931,12 @@ function vim.fn.input(prompt, text, completion) end
 ---   endfunction
 --- <
 ---
---- @param opts table
+--- @overload fun(opts: table): (string)
+--- @param prompt string
+--- @param text? string
+--- @param completion? string
 --- @return string
-function vim.fn.input(opts) end
+function vim.fn.input(prompt, text, completion) end
 
 --- @deprecated
 --- Lua: Prefer |vim.ui.input()| for callback-based input.
@@ -5783,18 +5746,12 @@ function vim.fn.map(expr1, expr2) end
 ---   exe 'nnoremap <Tab> ==' .. maparg('<Tab>', 'n')
 --- <
 ---
+--- @overload fun(name: string, mode: string, abbr: boolean, dict: true): (table<string,any>)
 --- @param name string
 --- @param mode? string
 --- @param abbr? boolean
 --- @param dict? false
 --- @return string
-function vim.fn.maparg(name, mode, abbr, dict) end
-
---- @param name string
---- @param mode string
---- @param abbr boolean
---- @param dict true
---- @return table<string,any>
 function vim.fn.maparg(name, mode, abbr, dict) end
 
 --- Check if there is a mapping that matches with {name} in mode
@@ -5882,12 +5839,6 @@ function vim.fn.maplist(abbr) end
 --- @return any
 function vim.fn.mapnew(expr1, expr2) end
 
---- @param mode string
---- @param abbr? boolean
---- @param dict? table<string,any>
---- @return any
-function vim.fn.mapset(mode, abbr, dict) end
-
 --- Restore a mapping from a dictionary, possibly returned by
 --- |maparg()| or |maplist()|.  A buffer mapping, when dict.buffer
 --- is true, is set on the current buffer; it is up to the caller
@@ -5925,9 +5876,12 @@ function vim.fn.mapset(mode, abbr, dict) end
 ---   endfor
 --- <
 ---
---- @param dict table<string,any>
+--- @overload fun(dict: table<string,any>): (any)
+--- @param mode string
+--- @param abbr? boolean
+--- @param dict? table<string,any>
 --- @return any
-function vim.fn.mapset(dict) end
+function vim.fn.mapset(mode, abbr, dict) end
 
 --- When {expr} is a |List| then this returns the index of the
 --- first item where {pat} matches.  Each item is used as a
@@ -7573,13 +7527,6 @@ function vim.fn.reg_recorded() end
 --- @return any
 function vim.fn.reg_recording() end
 
---- @return any
-function vim.fn.reltime() end
-
---- @param start? any
---- @return any
-function vim.fn.reltime(start) end
-
 --- Lua: Prefer |uv.hrtime()|.
 ---
 --- Return an item that represents a time value.  The item is a
@@ -7601,10 +7548,10 @@ function vim.fn.reltime(start) end
 ---
 --- Note: |localtime()| returns the current (non-relative) time.
 ---
---- @param start? any
---- @param end_? any
+--- @overload fun(start?: any): (any)
+--- @overload fun(start?: any, end_?: any): (any)
 --- @return any
-function vim.fn.reltime(start, end_) end
+function vim.fn.reltime() end
 
 --- Lua: Prefer |uv.hrtime()| with `(finish - start) / 1e9` for elapsed seconds.
 ---
@@ -7641,11 +7588,6 @@ function vim.fn.reltimestr(time) end
 
 --- Lua: Prefer |table.remove()|.
 ---
---- @param list any
---- @param idx integer
---- @return any
-function vim.fn.remove(list, idx) end
-
 --- Without {end}: Remove the item at {idx} from |List| {list} and
 --- return the item.
 --- With {end}: Remove items from {idx} to {end} (inclusive) and
@@ -7660,17 +7602,6 @@ function vim.fn.remove(list, idx) end
 --- <
 --- Use |delete()| to remove a file.
 ---
---- @param list any[]
---- @param idx integer
---- @param end_? integer
---- @return any
-function vim.fn.remove(list, idx, end_) end
-
---- @param blob any
---- @param idx integer
---- @return any
-function vim.fn.remove(blob, idx) end
-
 --- Without {end}: Remove the byte at {idx} from |Blob| {blob} and
 --- return the byte.
 --- With {end}: Remove bytes from {idx} to {end} (inclusive) and
@@ -7683,12 +7614,6 @@ function vim.fn.remove(blob, idx) end
 ---   call remove(mylist, 0, 9)
 --- <
 ---
---- @param blob any
---- @param idx integer
---- @param end_? integer
---- @return any
-function vim.fn.remove(blob, idx, end_) end
-
 --- Lua: Prefer `local value = dict[key]; dict[key] = nil` for dicts; missing-key behavior differs.
 ---
 --- Remove the entry from {dict} with key {key} and return it.
@@ -7697,10 +7622,14 @@ function vim.fn.remove(blob, idx, end_) end
 --- <If there is no {key} in {dict} this is an error.
 --- Returns zero on error.
 ---
---- @param dict any
---- @param key string
+--- @overload fun(list: any[], idx: integer, end_?: integer): (any)
+--- @overload fun(blob: any, idx: integer): (any)
+--- @overload fun(blob: any, idx: integer, end_?: integer): (any)
+--- @overload fun(dict: any, key: string): (any)
+--- @param list any
+--- @param idx integer
 --- @return any
-function vim.fn.remove(dict, key) end
+function vim.fn.remove(list, idx) end
 
 --- Lua: Prefer |uv.fs_rename()| or |os.rename()|.
 ---
@@ -8584,12 +8513,6 @@ function vim.fn.setcmdpos(pos) end
 
 --- Lua: Prefer |nvim_win_set_cursor()| with |vim.str_byteindex()|; `off`, return values, and special line forms differ.
 ---
---- @param lnum integer|string
---- @param col? integer
---- @param off? integer
---- @return any
-function vim.fn.setcursorcharpos(lnum, col, off) end
-
 --- Lua: Prefer |nvim_win_set_cursor()| with |vim.str_byteindex()|; list shape, `off`, and return values differ.
 ---
 --- Same as |cursor()| but uses the specified column number as the
@@ -8604,9 +8527,12 @@ function vim.fn.setcursorcharpos(lnum, col, off) end
 ---
 --- Returns 0 when the position could be set, -1 otherwise.
 ---
---- @param list integer[]
+--- @overload fun(list: integer[]): (any)
+--- @param lnum integer|string
+--- @param col? integer
+--- @param off? integer
 --- @return any
-function vim.fn.setcursorcharpos(list) end
+function vim.fn.setcursorcharpos(lnum, col, off) end
 
 --- Lua: Prefer |vim.env|.
 ---
@@ -9121,11 +9047,6 @@ function vim.fn.shellescape(string, special) end
 --- @return integer
 function vim.fn.shiftwidth(col) end
 
---- @param name string
---- @param dict? vim.fn.sign_define.dict
---- @return 0|-1
-function vim.fn.sign_define(name, dict) end
-
 --- Define a new sign named {name} or modify the attributes of an
 --- existing sign.  This is similar to the |:sign-define| command.
 ---
@@ -9172,9 +9093,11 @@ function vim.fn.sign_define(name, dict) end
 ---     \ ])
 --- <
 ---
---- @param list vim.fn.sign_define.dict[]
---- @return (0|-1)[]
-function vim.fn.sign_define(list) end
+--- @overload fun(list: vim.fn.sign_define.dict[]): ((0|-1)[])
+--- @param name string
+--- @param dict? vim.fn.sign_define.dict
+--- @return 0|-1
+function vim.fn.sign_define(name, dict) end
 
 --- Get a list of defined signs and their attributes.
 --- This is similar to the |:sign-list| command.
@@ -9421,10 +9344,6 @@ function vim.fn.sign_place(id, group, name, buf, dict) end
 --- @return integer[]
 function vim.fn.sign_placelist(list) end
 
---- @param name? string
---- @return 0|-1
-function vim.fn.sign_undefine(name) end
-
 --- Deletes a previously defined sign {name}.  This is similar to
 --- the |:sign-undefine| command.  If {name} is not supplied, then
 --- deletes all the defined signs.
@@ -9447,9 +9366,10 @@ function vim.fn.sign_undefine(name) end
 ---   call sign_undefine()
 --- <
 ---
---- @param list? string[]
---- @return integer[]
-function vim.fn.sign_undefine(list) end
+--- @overload fun(list?: string[]): (integer[])
+--- @param name? string
+--- @return 0|-1
+function vim.fn.sign_undefine(name) end
 
 --- Remove a previously placed sign in one or more buffers.  This
 --- is similar to the |:sign-unplace| command.
@@ -9925,16 +9845,10 @@ function vim.fn.stdioopen(opts) end
 ---   echo stdpath("config")
 --- <
 ---
+--- @overload fun(what: 'cache'|'config'|'data'|'log'|'run'|'state'): (string)
+--- @overload fun(what: 'config_dirs'|'data_dirs'): (string[])
 --- @param what 'cache'|'config'|'config_dirs'|'data'|'data_dirs'|'log'|'run'|'state'
 --- @return string|string[]
-function vim.fn.stdpath(what) end
-
---- @param what 'cache'|'config'|'data'|'log'|'run'|'state'
---- @return string
-function vim.fn.stdpath(what) end
-
---- @param what 'config_dirs'|'data_dirs'
---- @return string[]
 function vim.fn.stdpath(what) end
 
 --- Lua: Prefer |tonumber()| for simple numbers; quoted digits, hex forms, and trailing text differ.
@@ -10367,14 +10281,10 @@ function vim.fn.strwidth(string) end
 --- <This finds the first number in the line and adds one to it.
 --- A line break is included as a newline character.
 ---
+--- @overload fun(nr: integer, list: integer): (string|string[])
 --- @param nr integer
 --- @param list? nil
 --- @return string
-function vim.fn.submatch(nr, list) end
-
---- @param nr integer
---- @param list integer
---- @return string|string[]
 function vim.fn.submatch(nr, list) end
 
 --- Lua: Prefer |string.gsub()| for common substitutions; Vim patterns, flags, and replacement semantics differ.

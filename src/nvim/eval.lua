@@ -4318,6 +4318,17 @@ M.funcs = {
       <When {lnum} is a number smaller than 1 or bigger than the
       number of lines in the buffer, an empty string is returned.
 
+    ]=],
+    name = 'getline',
+    params = { { 'lnum', 'integer|string' } },
+    signature = 'getline({lnum})',
+    returns = 'string',
+    see_lua = { '|nvim_get_current_line()|', '|nvim_buf_get_lines()|' },
+  },
+  getline__1 = {
+    args = { 2 },
+    base = 1,
+    desc = [=[
       When {end} is given the result is a |List| where each item is
       a line from the current buffer in the range {lnum} to {end},
       including line {end}.
@@ -4333,18 +4344,10 @@ M.funcs = {
       |getbufoneline()|
     ]=],
     name = 'getline',
-    params = { { 'lnum', 'integer|string' }, { 'end', 'nil|false' } },
-    signature = 'getline({lnum} [, {end}])',
-    returns = 'string',
-    see_lua = { '|nvim_get_current_line()|', '|nvim_buf_get_lines()|' },
-  },
-  getline__1 = {
-    args = { 2 },
-    base = 1,
-    name = 'getline',
-    params = { { 'lnum', 'integer|string' }, { 'end', 'true|number|string|table' } },
-    returns = 'string|string[]',
-    see_lua = { '|nvim_get_current_line()|', '|nvim_buf_get_lines()|' },
+    params = { { 'lnum', 'integer|string' }, { 'end', 'integer|string' } },
+    signature = 'getline({lnum}, {end})',
+    returns = 'string[]',
+    see_lua = { '|nvim_buf_get_lines()|' },
   },
   getloclist = {
     args = { 1, 2 },
@@ -4611,6 +4614,15 @@ M.funcs = {
       	   echo bufname(d.bufnr) ':' d.lnum '=' d.text
       	endfor
       <
+    ]=],
+    name = 'getqflist',
+    params = {},
+    returns = 'vim.fn.getqflist.ret.item[]',
+    signature = 'getqflist()',
+  },
+  getqflist__1 = {
+    args = { 1 },
+    desc = [=[
       If the optional {what} dictionary argument is supplied, then
       returns only the items listed in {what} as a dictionary.  The
       following string items are supported in {what}:
@@ -4690,8 +4702,9 @@ M.funcs = {
       <
     ]=],
     name = 'getqflist',
-    params = { { 'what', 'table' } },
-    signature = 'getqflist([{what}])',
+    params = { { 'what', 'vim.fn.getqflist.what' } },
+    returns = 'vim.fn.getqflist.ret',
+    signature = 'getqflist({what})',
   },
   getreg = {
     args = { 0, 3 },
@@ -5559,7 +5572,7 @@ M.funcs = {
       Obsolete name for |hlexists()|.
     ]=],
     func = 'f_hlexists',
-    params = { { 'name', 'string' } },
+    params = { { 'name', 'string|number|boolean|nil' } },
     signature = 'highlight_exists({name})',
     see_lua = { '|nvim_get_hl()|' },
   },
@@ -5706,7 +5719,7 @@ M.funcs = {
 
     ]=],
     name = 'hlexists',
-    params = { { 'name', 'string' } },
+    params = { { 'name', 'string|number|boolean|nil' } },
     returns = '0|1',
     signature = 'hlexists({name})',
     see_lua = { '|nvim_get_hl()|' },

@@ -3957,7 +3957,7 @@ getjumplist([{winnr} [, {tabnr}]])                               *getjumplist()*
                 Return: ~
                   (`vim.fn.getjumplist.ret`)
 
-getline({lnum} [, {end}])                                            *getline()*
+getline({lnum})                                                      *getline()*
 		Lua: Prefer |nvim_get_current_line()| or
 		|nvim_buf_get_lines()|.
 
@@ -3970,6 +3970,15 @@ getline({lnum} [, {end}])                                            *getline()*
 			getline(".")
 <		When {lnum} is a number smaller than 1 or bigger than the
 		number of lines in the buffer, an empty string is returned.
+
+                Parameters: ~
+                  • {lnum} (`integer|string`)
+
+                Return: ~
+                  (`string`)
+
+getline({lnum}, {end})
+		Lua: Prefer |nvim_buf_get_lines()|.
 
 		When {end} is given the result is a |List| where each item is
 		a line from the current buffer in the range {lnum} to {end},
@@ -3987,10 +3996,10 @@ getline({lnum} [, {end}])                                            *getline()*
 
                 Parameters: ~
                   • {lnum} (`integer|string`)
-                  • {end} (`nil|false?`)
+                  • {end} (`integer|string`)
 
                 Return: ~
-                  (`string`)
+                  (`string[]`)
 
 getloclist({nr} [, {what}])                                       *getloclist()*
 		Returns a |List| with all the entries in the location list for
@@ -4212,7 +4221,7 @@ getpos({expr})                                                        *getpos()*
                 Return: ~
                   (`[integer, integer, integer, integer]`)
 
-getqflist([{what}])                                                *getqflist()*
+getqflist()                                                        *getqflist()*
 		Returns a |List| with all the current quickfix errors.  Each
 		list item is a dictionary with these entries:
 			bufnr	number of buffer that has the file name, use
@@ -4247,6 +4256,11 @@ getqflist([{what}])                                                *getqflist()*
 			   echo bufname(d.bufnr) ':' d.lnum '=' d.text
 			endfor
 <
+
+                Return: ~
+                  (`vim.fn.getqflist.ret.item[]`)
+
+getqflist({what})
 		If the optional {what} dictionary argument is supplied, then
 		returns only the items listed in {what} as a dictionary.  The
 		following string items are supported in {what}:
@@ -4326,10 +4340,10 @@ getqflist([{what}])                                                *getqflist()*
 <
 
                 Parameters: ~
-                  • {what} (`table?`)
+                  • {what} (`vim.fn.getqflist.what`)
 
                 Return: ~
-                  (`any`)
+                  (`vim.fn.getqflist.ret`)
 
 getreg([{regname} [, 1 [, {list}]]])                                  *getreg()*
 		Returns the contents of register {regname} as a String.
@@ -5257,7 +5271,7 @@ hlexists({name})                                                    *hlexists()*
 		also have been used for a syntax item.
 
                 Parameters: ~
-                  • {name} (`string`)
+                  • {name} (`string|number|boolean|nil`)
 
                 Return: ~
                   (`0|1`)

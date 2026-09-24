@@ -371,9 +371,8 @@ local function diff_dirs(left_dir, right_dir, opt)
     nr = '$',
     title = 'DiffTool',
     items = qf_entries,
-    ---@param info {id: number, start_idx: number, end_idx: number}
+    ---@param info {id: integer, start_idx: integer, end_idx: integer}
     quickfixtextfunc = function(info)
-      --- @type table[]
       local items = vim.fn.getqflist({ id = info.id, items = 1 }).items
       local out = {}
       for item = info.start_idx, info.end_idx do
