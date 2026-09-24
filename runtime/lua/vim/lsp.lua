@@ -343,6 +343,7 @@ lsp.config = setmetatable({ _configs = {} }, {
       -- Calls to vim.lsp.config in lsp/* have a lower precedence than calls from other sites.
       local rtp_config --- @type vim.lsp.Config?
       for _, v in ipairs(api.nvim_get_runtime_file(('lsp/%s.lua'):format(name), true)) do
+        --- @diagnostic disable-next-line: need-check-nil EmmyLuaLs/emmylua-analyzer-rust#1259
         local config = assert(loadfile(v))() ---@type any?
         if type(config) == 'table' then
           --- @type vim.lsp.Config?
@@ -1412,7 +1413,7 @@ function lsp.formatexpr(opts)
     local params = util.make_formatting_params()
     local method ---@type vim.lsp.protocol.Method.ClientToServer.Request?
     if client:supports_method('textDocument/rangeFormatting') then
-      local end_line = vim.fn.getline(end_lnum) --[[@as string]]
+      local end_line = vim.fn.getline(end_lnum)
       local end_col = vim.str_utfindex(end_line, client.offset_encoding)
       --- @cast params +lsp.DocumentRangeFormattingParams
       params.range = {

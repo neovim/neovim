@@ -353,6 +353,7 @@ local function styletable_insert_conceal(
     return
   end
   if state.opt.conceallevel == 1 and conceal_text == '' then
+    --- @diagnostic disable-next-line: need-check-nil
     conceal_text = vim.opt_local.listchars:get().conceal or ' '
   end
   local hlid = register_hl(state, hl_group)
@@ -415,7 +416,8 @@ local function styletable_diff(state)
     local style_line = styletable[row]
     local filler = vim.fn.diff_filler(row)
     if filler ~= 0 then
-      local fill = (vim.opt_local.fillchars:get().diff or '-')
+      local fillchars = vim.opt_local.fillchars:get() --- @type table<string,string>
+      local fill = fillchars.diff or '-'
       table.insert(
         style_line.virt_lines,
         { { fill:rep(state.width), register_hl(state, 'DiffDelete') } }
@@ -639,7 +641,8 @@ local function styletable_folds(state)
       local hlid = register_hl(state, 'Folded')
       ---TODO(altermo): Is there a way to get highlighted foldtext?
       local foldtext = vim.fn.foldtextresult(row)
-      foldtext = foldtext .. (vim.opt.fillchars:get().fold or '·'):rep(state.width - #foldtext)
+      local fillchars = vim.opt.fillchars:get() --- @type table<string,string>
+      foldtext = foldtext .. (fillchars.fold or '·'):rep(state.width - #foldtext)
       table.insert(styletable[row].virt_lines, { { foldtext, hlid } })
     end
   end

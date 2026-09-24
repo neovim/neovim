@@ -85,7 +85,7 @@ end
 --- @param f function
 --- @return string
 local function func_tostring(f)
-  local info = debug.getinfo(f, 'S')
+  local info = assert(debug.getinfo(f, 'S'))
   return ('<function %s:%s>'):format(info.source, info.linedefined)
 end
 
@@ -166,8 +166,8 @@ local function check_watcher()
   elseif watchfunc == vim._watch.inotify then
     watchfunc_name = 'inotify'
   else
-    local nm = debug.getinfo(watchfunc, 'S').source
-    watchfunc_name = string.format('Custom (%s)', nm)
+    local info = assert(debug.getinfo(watchfunc, 'S'))
+    watchfunc_name = string.format('Custom (%s)', info.source)
   end
 
   report_info('Filewatch backend: ' .. watchfunc_name)

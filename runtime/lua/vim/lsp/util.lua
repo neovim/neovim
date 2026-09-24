@@ -231,11 +231,11 @@ function M.apply_text_edits(text_edits, bufnr, position_encoding, change_annotat
       end
     end
 
-    --- @cast text_edits (lsp.TextEdit|lsp.AnnotatedTextEdit|{_index: integer})[]
+    --- @cast text_edits ((lsp.TextEdit|lsp.AnnotatedTextEdit)&{_index: integer})[]
 
     -- Sort text_edits
-    ---@param a (lsp.TextEdit|lsp.AnnotatedTextEdit|{_index: integer})
-    ---@param b (lsp.TextEdit|lsp.AnnotatedTextEdit|{_index: integer})
+    ---@param a (lsp.TextEdit|lsp.AnnotatedTextEdit)&{_index: integer}
+    ---@param b (lsp.TextEdit|lsp.AnnotatedTextEdit)&{_index: integer}
     ---@return boolean
     table.sort(text_edits, function(a, b)
       if a.range.start.line ~= b.range.start.line then
@@ -724,13 +724,13 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers
     -- special characters like underscore or similar from being interpreted
     -- as markdown font modifiers
     if type(doc) == 'string' then
-      signature.documentation = { kind = 'plaintext', value = doc }
+      doc = { kind = 'plaintext', value = doc }
     end
     -- Add delimiter if there is documentation to display
-    if signature.documentation.value ~= '' then
+    if doc.value ~= '' then
       contents[#contents + 1] = '---'
     end
-    M.convert_input_to_markdown_lines(signature.documentation, contents)
+    M.convert_input_to_markdown_lines(doc, contents)
   end
   if signature.parameters and #signature.parameters > 0 then
     local active_parameter = signature.activeParameter or signature_help.activeParameter
@@ -749,7 +749,8 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers
       return contents, nil
     end
 
-    local parameter = signature.parameters[active_parameter + 1]
+    -- The active parameter was checked against the bounds of this array above.
+    local parameter = assert(signature.parameters[active_parameter + 1])
     local parameter_label = parameter.label
     if type(parameter_label) == 'table' then
       active_offset = parameter_label
@@ -1156,14 +1157,14 @@ function M.stylize_markdown(bufnr, contents, opts)
   }
 
   --- @param line string
-  --- @return {type:string,ft:string}?
+  --- @return {pattern:string,ft:string}?
   local function match_begin(line)
-    for type, pattern in pairs(matchers) do
+    for _, pattern in pairs(matchers) do
       --- @type string?
       local ret = line:match(string.format('^%%s*%s%%s*$', pattern[2]))
       if ret then
         return {
-          type = type,
+          pattern = pattern[3],
           ft = pattern[1] or ret,
         }
       end
@@ -1171,11 +1172,10 @@ function M.stylize_markdown(bufnr, contents, opts)
   end
 
   --- @param line string
-  --- @param match {type:string,ft:string}
+  --- @param match {pattern:string,ft:string}
   --- @return string?
   local function match_end(line, match)
-    local pattern = matchers[match.type]
-    return line:match(string.format('^%%s*%s%%s*$', pattern[3]))
+    return line:match(string.format('^%%s*%s%%s*$', match.pattern))
   end
 
   -- Clean up
@@ -1186,7 +1186,7 @@ function M.stylize_markdown(bufnr, contents, opts)
 
   local i = 1
   while i <= #contents do
-    local line = contents[i]
+    local line = assert(contents[i])
     local match = match_begin(line)
     if match then
       local start = #stripped
@@ -1254,8 +1254,8 @@ function M.stylize_markdown(bufnr, contents, opts)
 
   local sep_line = string.rep('─', math.min(width, opts.wrap_at or width))
 
-  for l in ipairs(stripped) do
-    if stripped[l]:match('^---+$') then
+  for l, line in ipairs(stripped) do
+    if line:match('^---+$') then
       stripped[l] = sep_line
     end
   end

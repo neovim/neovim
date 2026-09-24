@@ -758,9 +758,10 @@ do
     desc = 'Skip the swapfile prompt when the swapfile is owned by a running Nvim process',
   }, function()
     local info = vim.fn.swapinfo(vim.v.swapname)
-    local user = vim.uv.os_get_passwd().username
+    local passwd = vim.uv.os_get_passwd()
+    local user = passwd and passwd.username
     local iswin = 1 == vim.fn.has('win32')
-    if info.error or info.pid <= 0 or (not iswin and info.user ~= user) then
+    if info.error or info.pid <= 0 or (not iswin and (not user or info.user ~= user)) then
       vim.v.swapchoice = '' -- Show the prompt.
       return
     end

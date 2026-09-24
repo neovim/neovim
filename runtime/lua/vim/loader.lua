@@ -46,7 +46,9 @@ local M = {}
 --- The fs_stat of the module path. Won't be returned for `modname="*"`
 --- @field stat? uv.fs_stat.result
 
---- @alias vim.loader.Stats table<string, {total:number, time:number, [string]:number?}?>
+--- @class (private) vim.loader.Stats
+--- @field [string] {total:number, time:number, [string]:number?}?>
+--- @field find {total:number, time:number, not_found:number, stat?:number}
 
 --- @private
 M.path = vim.fn.stdpath('cache') .. '/luac'
@@ -255,7 +257,8 @@ end
 --- @param filename? string
 --- @param mode? "b"|"t"|"bt"
 --- @param env? table
---- @return function?, string?  error_message
+--- @return_overload function chunk
+--- @return_overload nil, string error_message
 local function loadfile_cached(filename, mode, env)
   local modpath = normalize(filename)
   local stat = fs_stat_cached(modpath)
@@ -286,7 +289,7 @@ local function lsmod(path)
     for name, t in fs.dir(path .. '/lua') do
       local modpath = path .. '/lua/' .. name
       -- HACK: type is not always returned due to a bug in luv
-      t = t or fs_stat_cached(modpath).type
+      t = t or assert(fs_stat_cached(modpath)).type
       --- @type string
       local topname
       local ext = name:sub(-4)
@@ -499,7 +502,7 @@ function M._profile(opts)
 
   if opts and opts.loaders then
     for l, loader in pairs(loaders) do
-      local loc = debug.getinfo(loader, 'Sn').source:gsub('^@', '')
+      local loc = assert(debug.getinfo(loader, 'Sn')).source:gsub('^@', '')
       loaders[l] = track('loader ' .. l .. ': ' .. loc, loader)
     end
   end

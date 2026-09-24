@@ -20,7 +20,7 @@ local Capability = require('vim.lsp._capability')
 ---@field active table<integer, vim.lsp.codelens.Provider>
 ---
 --- Index In the form of client_id -> client_state
----@field client_state? table<integer, vim.lsp.codelens.ClientState?>
+---@field client_state table<integer, vim.lsp.codelens.ClientState?>
 local Provider = {
   name = 'codelens',
   method = 'textDocument/codeLens',
@@ -190,7 +190,8 @@ function Provider:on_win(toprow, botrow)
           end)
 
           local client = assert(vim.lsp.get_client_by_id(client_id))
-          local range = vim.range.lsp(bufnr, row_lenses.lenses[1].range, client.offset_encoding)
+          local range =
+            vim.range.lsp(bufnr, assert(row_lenses.lenses[1]).range, client.offset_encoding)
           ---@type [string, string][]
           local virt_text = {
             { string.rep(' ', range.start_col), 'LspCodeLensSeparator' },
@@ -352,7 +353,7 @@ end
 local function on_lenses_run(lnum, opts, results, context)
   local bufnr = context.bufnr or 0
 
-  ---@type {client: vim.lsp.Client, lens: lsp.CodeLens}[]
+  ---@type {client: vim.lsp.Client, command: lsp.Command}[]
   local candidates = {}
   local pending_resolve = 1
   local function on_resolved()
@@ -364,19 +365,19 @@ local function on_lenses_run(lnum, opts, results, context)
       vim.notify('No codelens at current line')
     elseif #candidates == 1 then
       local candidate = candidates[1]
-      candidate.client:exec_cmd(candidate.lens.command, { bufnr = bufnr })
+      candidate.client:exec_cmd(candidate.command, { bufnr = bufnr })
     else
       local selectopts = {
         prompt = 'Code lenses: ',
         kind = 'codelens',
-        ---@param candidate {client: vim.lsp.Client, lens: lsp.CodeLens}
+        ---@param candidate {client: vim.lsp.Client, command: lsp.Command}
         format_item = function(candidate)
-          return string.format('%s [%s]', candidate.lens.command.title, candidate.client.name)
+          return string.format('%s [%s]', candidate.command.title, candidate.client.name)
         end,
       }
       vim.ui.select(candidates, selectopts, function(candidate)
         if candidate then
-          candidate.client:exec_cmd(candidate.lens.command, { bufnr = bufnr })
+          candidate.client:exec_cmd(candidate.command, { bufnr = bufnr })
         end
       end)
     end
@@ -387,12 +388,12 @@ local function on_lenses_run(lnum, opts, results, context)
       for _, lens in ipairs(result.result or {}) do
         if lens.range.start.line == lnum then
           if lens.command then
-            table.insert(candidates, { client = client, lens = lens })
+            table.insert(candidates, { client = client, command = lens.command })
           else
             pending_resolve = pending_resolve + 1
             client:request('codeLens/resolve', lens, function(_, resolved_lens)
-              if resolved_lens then
-                table.insert(candidates, { client = client, lens = resolved_lens })
+              if resolved_lens and resolved_lens.command then
+                table.insert(candidates, { client = client, command = resolved_lens.command })
               end
               on_resolved()
             end, bufnr)

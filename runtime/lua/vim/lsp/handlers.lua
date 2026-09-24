@@ -102,7 +102,8 @@ end
 --- @see # https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_showMessageRequest
 ---@param params lsp.ShowMessageRequestParams
 RSC['window/showMessageRequest'] = function(_, params, ctx)
-  if next(params.actions or {}) then
+  local actions = params.actions
+  if actions and next(actions) then
     local co, is_main = coroutine.running()
     if co and not is_main then
       local opts = {
@@ -114,7 +115,7 @@ RSC['window/showMessageRequest'] = function(_, params, ctx)
           return (action.title:gsub('\r\n', '\\r\\n'):gsub('\n', '\\n'))
         end,
       }
-      vim.ui.select(params.actions, opts, function(choice)
+      vim.ui.select(actions, opts, function(choice)
         -- schedule to ensure resume doesn't happen _before_ yield with
         -- default synchronous vim.ui.select
         vim.schedule(function()
@@ -126,16 +127,16 @@ RSC['window/showMessageRequest'] = function(_, params, ctx)
       return coroutine.yield()
     else
       local option_strings = { params.message, '\nRequest Actions:' }
-      for i, action in ipairs(params.actions) do
+      for i, action in ipairs(actions) do
         local title = action.title:gsub('\r\n', '\\r\\n')
         title = title:gsub('\n', '\\n')
         table.insert(option_strings, string.format('%d. %s', i, title))
       end
       local choice = vim.fn.inputlist(option_strings)
-      if choice < 1 or choice > #params.actions then
+      if choice < 1 or choice > #actions then
         return vim.NIL
       else
-        return params.actions[choice]
+        return actions[choice]
       end
     end
   else

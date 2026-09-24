@@ -642,15 +642,17 @@ local function check_external_tools()
         'all_proxy',
         'no_proxy',
       }) do
-        ---@type string?
-        local val = vim.env[var] or vim.env[var:upper()]
+        local val = vim.env[var]
+        if not val then
+          var = var:upper()
+          val = vim.env[var]
+        end
         if val then
           if not added_env_header then
             table.insert(lines, 'curl-related environment variables:')
             added_env_header = true
           end
-          local shown_var = vim.env[var] and var or var:upper()
-          table.insert(lines, string.format('  %s=%s', shown_var, val))
+          table.insert(lines, string.format('  %s=%s', var, val))
         end
       end
 

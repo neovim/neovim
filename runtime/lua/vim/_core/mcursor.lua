@@ -197,7 +197,7 @@ function M.jump(forward, count)
     idx = (i - 1 - steps) % n + 1
   end
   vim.cmd [[normal! m']]
-  vim.api.nvim_win_set_cursor(0, positions[idx]:to_cursor())
+  vim.api.nvim_win_set_cursor(0, assert(positions[idx]):to_cursor())
   return true
 end
 

@@ -5,10 +5,10 @@ local M = {}
 
 ---@param cmd string[]
 ---@return boolean
----@return string?
+---@return string
 local function cmd_ok(cmd)
   local result = vim.system(cmd, { text = true }):wait()
-  return result.code == 0, result.stdout
+  return result.code == 0, assert(result.stdout)
 end
 
 ---@param cmd string[]
@@ -204,7 +204,7 @@ local function node()
     )
   end
 
-  local node_detect_table = vim.fn['provider#node#Detect']() ---@type string[]
+  local node_detect_table = vim.fn['provider#node#Detect']() ---@type [string, string]
   local host = node_detect_table[1]
   if host:find('^%s*$') then
     health.warn('Missing "neovim" npm (or yarn, pnpm, bun) package.', {
@@ -323,7 +323,7 @@ local function perl()
     return
   elseif latest_cpan[1] == '!' then
     local cpanm_errs = vim.split(latest_cpan, '!')
-    if cpanm_errs[1]:find("Can't write to ") then
+    if assert(cpanm_errs[1]):find("Can't write to ") then
       local advice = {} ---@type string[]
       for i = 2, #cpanm_errs do
         advice[#advice + 1] = cpanm_errs[i]
@@ -766,7 +766,7 @@ local function python()
     local latest = version_info_table[3]
     local status = version_info_table[4]
 
-    if not vim.version.range('~3'):has(pyversion) then
+    if not assert(vim.version.range('~3')):has(pyversion) then
       health.warn('Unexpected Python version. This could lead to confusing error messages.')
     end
 

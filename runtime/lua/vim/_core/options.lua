@@ -104,6 +104,7 @@ local api = vim.api
 --- vim.env.FOO = 'bar'
 --- print(vim.env.TERM)
 --- ```
+--- @type table<string, string?>
 vim.env = setmetatable({}, {
   __index = function(_, k)
     local v = vim.fn.getenv(k)

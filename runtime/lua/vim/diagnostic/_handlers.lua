@@ -594,15 +594,15 @@ local function render_virtual_lines(namespace, bufnr, diagnostics, opts)
     -- Note that we read in the order opposite to insertion.
     for i = #stack, 1, -1 do
       if stack[i][1] == ElementType.Diagnostic then
-        local diagnostic0 = stack[i][2]
+        local diagnostic0 = stack[i][2] --- @type vim.Diagnostic
         local left = {} --- @type [string, string]
         local overlap = false
         local multi = false
 
         -- Iterate the stack for this line to find elements on the left.
         for j = 1, i - 1 do
-          local element_type = stack[j][1]
-          local data = stack[j][2]
+          local element = assert(stack[j])
+          local element_type, data = element[1], element[2]
           if element_type == ElementType.Space then
             if multi then
               --- @cast data string
@@ -615,7 +615,7 @@ local function render_virtual_lines(namespace, bufnr, diagnostics, opts)
             end
           elseif element_type == ElementType.Diagnostic then
             -- If an overlap follows this line, don't add an extra column.
-            if stack[j + 1][1] ~= ElementType.Overlap then
+            if assert(stack[j + 1])[1] ~= ElementType.Overlap then
               table.insert(left, { chars.vertical, virtual_lines_highlight_map[data.severity] })
             end
             overlap = false

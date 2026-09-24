@@ -146,9 +146,10 @@ local function tree_to_graph_lines(tree)
   end
 
   for k, v in ipairs(graph_lines) do
-    if v.kind == 'remove' and (graph_lines[k + 1] or {}).kind == 'branch' then
+    local next_line = graph_lines[k + 1]
+    if v.kind == 'remove' and next_line and next_line.kind == 'branch' then
       v.kind = 'remove+branch'
-      v.index2 = graph_lines[k + 1].index
+      v.index2 = next_line.index
       table.remove(graph_lines, k + 1)
     end
   end
@@ -211,6 +212,7 @@ local function buf_apply_graph_lines(tree, graph_lines, buf, meta, find_seq)
     elseif v.kind == 'branch' then
       line = ('| '):rep(v.index - 1) .. '|\\' .. (' \\'):rep(v.node_count - v.index)
     elseif v.kind == 'remove+branch' then
+      assert(v.index2)
       if v.index2 < v.index then
         line = ('| '):rep(v.index2 - 1)
           .. '|\\'

@@ -1507,10 +1507,10 @@ end
 
 --- @nodoc
 --- @class vim.context.state
---- @field bo? table<string, any>
---- @field env? table<string, any>
---- @field go? table<string, any>
---- @field wo? table<string, any>
+--- @field bo table<string, any>
+--- @field env table<string, any>
+--- @field go table<string, any>
+--- @field wo table<string, any>
 
 local scope_map = { buf = 'bo', global = 'go', win = 'wo' }
 local scope_order = { 'o', 'wo', 'bo', 'go', 'env' }
@@ -1519,7 +1519,7 @@ local state_restore_order = { 'bo', 'wo', 'go', 'env' }
 --- Gets data about current state, enough to properly restore specified options/env/etc.
 --- @param context vim.context.mods
 --- @return vim.context.state
-local get_context_state = function(context)
+local function get_context_state(context)
   --- @type vim.context.state
   local res = { bo = {}, env = {}, go = {}, wo = {} }
 

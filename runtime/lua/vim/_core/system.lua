@@ -103,7 +103,7 @@ end
 ---
 --- @param signal integer|string Signal to send to the process. See |luv-constants|.
 function SystemObj:kill(signal)
-  self._state.handle:kill(signal)
+  assert(self._state.handle):kill(signal)
 end
 
 --- @package
@@ -316,11 +316,14 @@ end
 
 local is_win = vim.fn.has('win32') == 1
 
+--- @class (private) vim.SystemSpawnOpts : uv.spawn.options
+--- @field stdio [integer?, integer?, integer?]
+
 --- @param cmd string
---- @param opts uv.spawn.options
+--- @param opts vim.SystemSpawnOpts
 --- @param on_exit fun(code: integer, signal: integer)
 --- @param on_error fun()
---- @return uv.uv_process_t?, integer?
+--- @return uv.uv_process_t, integer
 local function spawn(cmd, opts, on_exit, on_error)
   if is_win then
     local cmd1 = vim.fn.exepath(cmd)
@@ -333,9 +336,9 @@ local function spawn(cmd, opts, on_exit, on_error)
   local handle, pid_or_err = uv.spawn(cmd, opts, on_exit)
   -- close child stdio fd:s regardless of error
   for i = 1, 3 do
-    if type(opts.stdio[i]) == 'number' then
-      --- @diagnostic disable-next-line:param-type-mismatch
-      uv.fs_close(opts.stdio[i])
+    local fd = opts.stdio[i]
+    if fd then
+      uv.fs_close(fd)
     end
   end
 
@@ -451,13 +454,11 @@ local function run(cmd, opts, on_exit)
     stderr_data = stderr_data,
   }
 
-  --- @diagnostic disable-next-line:missing-fields
   state.handle, state.pid = spawn(cmd[1], {
     args = vim.list_slice(cmd, 2),
     -- local function spawn() will close these
     stdio = { stdin_child_fd, stdout_child_fd, stderr_child_fd },
     cwd = opts.cwd,
-    --- @diagnostic disable-next-line:assign-type-mismatch
     env = setup_env(opts.env, opts.clear_env),
     detached = opts.detach,
     hide = true,

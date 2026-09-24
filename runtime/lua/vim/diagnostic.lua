@@ -791,7 +791,7 @@ local errlist_type_map = {
 --- @return integer?
 local function get_qf_id_for_title(title)
   local lastqflist = vim.fn.getqflist({ nr = '$' })
-  for i = 1, lastqflist.nr do
+  for i = 1, assert(lastqflist.nr) do
     local qflist = vim.fn.getqflist({ nr = i, id = 0, title = 0 })
     if qflist.title == title then
       return qflist.id
@@ -838,8 +838,8 @@ local function set_list(loclist, opts)
   if open then
     if not loclist then
       -- First navigate to the diagnostics quickfix list.
-      local qflist = vim.fn.getqflist({ id = qf_id, nr = 0 }) --- @type { nr: integer }
-      local nr = qflist.nr
+      local qflist = vim.fn.getqflist({ id = qf_id, nr = 0 })
+      local nr = assert(qflist.nr)
       api.nvim_command(('silent %dchistory'):format(nr))
       -- Now open the quickfix list.
       api.nvim_command('botright cwindow')
