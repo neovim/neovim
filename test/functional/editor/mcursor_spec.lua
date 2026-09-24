@@ -2504,6 +2504,19 @@ describe('multicursor', function()
       feed('gg')
       feed('L')
       eq({ { 0, 1 } }, anchors())
+
+      -- Jump from a mapping (no LHS-replay fallback). #41995
+      command('nnoremap <Down> ]C')
+      clear_cursors()
+      cursors({ 'a', 'b', 'c', 'd' }, 'QjQjQj')
+      feed('1q=')
+      eq({ { 0, 0 }, { 1, 0 }, { 2, 0 } }, anchors())
+      eq(4, fn.line('.'))
+      for _, line in ipairs({ 1, 2, 3, 1 }) do
+        feed('<Down>')
+        eq(line, fn.line('.')) -- The primary jumps to the next cursor (wraps)...
+        eq({ { 0, 0 }, { 1, 0 }, { 2, 0 } }, anchors()) -- ...the cursors stay put.
+      end
     end)
 
     it('"*" follows per-cursor (its own word); keeps the primary search pattern', function()
