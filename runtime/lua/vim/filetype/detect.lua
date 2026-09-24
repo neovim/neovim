@@ -542,20 +542,43 @@ function M.dep3patch(path, bufnr)
   end
 end
 
---- @param contents string[]
+---@param contents string[]
 local function diff(contents)
+  local l1, l2, l3, l4 = contents[1], contents[2], contents[3], contents[4]
+  if not l1 then
+    -- Need at least 1 line to detect a diff file.
+    return
+  end
+
+  -- Two-line diff headers.
   if
-    contents[1]:find('^%-%-%- ') and contents[2]:find('^%+%+%+ ')
-    or contents[1]:find('^%* looking for ') and contents[2]:find('^%* comparing to ')
-    or contents[1]:find('^%*%*%* ') and contents[2]:find('^%-%-%- ')
-    or contents[1]:find('^=== ') and ((contents[2]:find('^' .. string.rep('=', 66)) and contents[3]:find(
-      '^%-%-% '
-    ) and contents[4]:find('^%+%+%+')) or (contents[2]:find('^%-%-%- ') and contents[3]:find(
-      '^%+%+%+ '
-    )))
-    or findany(contents[1], { '^=== removed', '^=== added', '^=== renamed', '^=== modified' })
+    l2
+    and (
+      l1:find('^%-%-%- ') and l2:find('^%+%+%+ ')
+      or l1:find('^%* looking for ') and l2:find('^%* comparing to ')
+      or l1:find('^%*%*%* ') and l2:find('^%-%-%- ')
+    )
   then
     return 'diff'
+  end
+
+  if l1:find('^=== ') then
+    if l2 and l3 then
+      -- Bazaar: old and new file headers without a separator.
+      if l2:find('^%-%-%- ') and l3:find('^%+%+%+ ') then
+        return 'diff'
+      end
+
+      -- SVK: separator followed by the old and new file headers.
+      if l4 and l2:find('^' .. string.rep('=', 66)) and l3:find('^%-%-% ') and l4:find('^%+%+%+') then
+        return 'diff'
+      end
+    end
+
+    -- Bazaar operation headers can identify a diff on their own.
+    if findany(l1, { '^=== removed', '^=== added', '^=== renamed', '^=== modified' }) then
+      return 'diff'
+    end
   end
 end
 
@@ -563,7 +586,7 @@ end
 local function dns_zone(contents)
   if
     findany(
-      contents[1] .. contents[2] .. contents[3] .. contents[4],
+      table.concat(contents, '', 1, math.min(4, #contents)),
       { '^; <<>> DiG [0-9%.]+.* <<>>', '%$ORIGIN', '%$TTL', 'IN%s+SOA' }
     )
   then
@@ -571,8 +594,13 @@ local function dns_zone(contents)
   end
   -- BAAN
   if -- Check for 1 to 80 '*' characters
-    contents[1]:find('|%*' .. string.rep('%*?', 79)) and contents[2]:find('VRC ')
-    or contents[2]:find('|%*' .. string.rep('%*?', 79)) and contents[3]:find('VRC ')
+    #contents >= 2
+    and (
+      contents[1]:find('|%*' .. string.rep('%*?', 79)) and contents[2]:find('VRC ')
+      or #contents >= 3
+        and contents[2]:find('|%*' .. string.rep('%*?', 79))
+        and contents[3]:find('VRC ')
+    )
   then
     return 'baan'
   end
