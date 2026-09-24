@@ -201,8 +201,12 @@ function M.jump(forward, count)
   return true
 end
 
---- Restores the previous multicursors.
+--- Restores the previous multicursors. No-op during a multicursor session.
 function M.restore()
+  if M.active() then
+    vim.api.nvim_echo({ { 'gQ: multicursor session is active' } }, true, {})
+    return
+  end
   local last_ns = vim.api.nvim_create_namespace('nvim.multicursor.last')
   local lastrow = vim.api.nvim_buf_line_count(0)
   for _, m in ipairs(vim.api.nvim_buf_get_extmarks(0, last_ns, 0, -1, {})) do
