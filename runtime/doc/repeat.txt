@@ -418,8 +418,8 @@ CTRL-L			Clears multicursors in the current buffer.
 			    vim.api.nvim_buf_clear_namespace(0, mc_ns, 0, -1)
 <
 							*gQ*
-gQ			Restores the previous multicursors. No-op during
-			a multicursor session.
+gQ			Restores the previous multicursors, and the primary
+			cursor position. No-op during a multicursor session.
 
 							*g_CTRL-A*
 g CTRL-A		During a multicursor session, inserts an ascending

@@ -201,7 +201,7 @@ function M.jump(forward, count)
   return true
 end
 
---- Restores the previous multicursors. No-op during a multicursor session.
+--- Restores the previous multicursors, and the primary-cursor position.
 function M.restore()
   if M.active() then
     vim.api.nvim_echo({ { 'gQ: multicursor session is active' } }, true, {})
@@ -209,10 +209,16 @@ function M.restore()
   end
   local last_ns = vim.api.nvim_create_namespace('nvim.multicursor.last')
   local lastrow = vim.api.nvim_buf_line_count(0)
+  local primary ---@type [integer, integer]?
   for _, m in ipairs(vim.api.nvim_buf_get_extmarks(0, last_ns, 0, -1, {})) do
-    if m[2] < lastrow then
+    if m[2] < lastrow and m[1] == 1 then -- Extmark 1 = primary cursor.
+      primary = { m[2] + 1, m[3] }
+    elseif m[2] < lastrow then
       vim.api.nvim_mcursor(0, { m[2] + 1, m[3] })
     end
+  end
+  if primary then
+    vim.api.nvim_win_set_cursor(0, primary)
   end
 end
 
