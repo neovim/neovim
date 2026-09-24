@@ -747,22 +747,21 @@ unsigned atom_key_class(int cmd, int arg)
     return strchr("[](){}mMcsz#*/", arg) != NULL ? kKeyMotion : 0;
   case 'z':
     return (arg == 'j' || arg == 'k') ? kKeyMotion : 0;
-  case K_UP:
   case K_DOWN:
+  case K_END:
+  case K_HOME:
   case K_LEFT:
   case K_RIGHT:
-  case K_HOME:
-  case K_END:
+  case K_UP:
     return kKeyMotion | kKeyInsFlush;
-  case K_S_LEFT:
-  case K_S_RIGHT:
-    return kKeyInsFlush;
+  case Ctrl_G:
+  case Ctrl_H:
+  case Ctrl_R:  // "<C-R>x" (insert_reg()): reads per-cursor registers.
+  case Ctrl_W:
   case K_BS:
   case K_DEL:
-  case Ctrl_H:
-  case Ctrl_W:
-    return kKeyInsFlush;
-  case Ctrl_G:
+  case K_S_LEFT:
+  case K_S_RIGHT:
     return kKeyInsFlush;
   case K_LEFTMOUSE:
   case K_LEFTMOUSE_NM:
