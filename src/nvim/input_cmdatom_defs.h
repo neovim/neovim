@@ -34,7 +34,8 @@ typedef enum CmdAtomType {
 typedef struct {
   bufref_T buf;       ///< Buffer.
   const win_T *win;   ///< Window.
-  pos_T pos;          ///< Cursor position. Stored here bc the window might be closed.
+  pos_T pos;          ///< Primary cursor position at the start (`win.w_cursor` moves after).
+  uint32_t mcursor;   ///< Mcursor overlapping primary at `pos` (mark id, 0: none). Not replayed.
   varnumber_T tick;   ///< b:changedtick.
   int maptick;        ///< Advances on typed input (globals.h:maptick).
 } CmdOrigin;

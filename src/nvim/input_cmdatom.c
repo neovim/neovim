@@ -215,7 +215,8 @@ CmdSpec atom_cmd_spec(const cmdarg_T *cap)
 static CmdOrigin atom_origin(void)
 {
   CmdOrigin origin = { .win = curwin, .pos = curwin->w_cursor,
-                       .tick = buf_get_changedtick(curbuf), .maptick = maptick };
+                       .tick = buf_get_changedtick(curbuf), .maptick = maptick,
+                       .mcursor = mc_mark_at(curbuf, curwin->w_cursor) };
   set_bufref(&origin.buf, curbuf);
   return origin;
 }
@@ -1052,7 +1053,7 @@ static void atom_visual_span_flush(void)
   }
   String span = atom_visual_span();
   vatom.done = kv_size(vatom.atoms);
-  kv_push(g_atoms, ((CmdAtom){ .type = kAVisualSpan, .keys = span.data }));
+  kv_push(g_atoms, ((CmdAtom){ .type = kAVisualSpan, .keys = span.data, .origin = vatom.origin }));
 }
 
 /// Ends the pending visual atom, appends `suffix`, and stages it. Or discards if unreplayable.
@@ -1140,7 +1141,7 @@ static bool atom_visual_end_suffix(char *suffix, const CmdSpec *spec, bool redoa
   if (atom.cascaded && vatom.done < kv_size(vatom.atoms)) {
     // Spans cascaded the selection's edits. This last one completes it (the operator).
     String span = atom_visual_span();
-    kv_push(g_atoms, ((CmdAtom){ .type = kAVisualSpan, .keys = span.data }));
+    kv_push(g_atoms, ((CmdAtom){ .type = kAVisualSpan, .keys = span.data, .origin = origin }));
   }
   atom.atoms = vatom.atoms;
   vatom.atoms = (CmdAtomVec)KV_INITIAL_VALUE;
@@ -1308,7 +1309,7 @@ InsSession atom_ins_start(int cmd, long count, VisualIns vis, bool vblock)
   bool reexec = vis == kVInsNone || vis == kVInsKeys
                 || (vis == kVInsMotion && cur_frame->payload_start == SIZE_MAX);
   mc_ins_cascade_start(session.typed && count <= 1 && !repl && !vblock && reexec,
-                       session.origin.tick, root_frame()->id);
+                       session.origin, root_frame()->id);
   return session;
 }
 
@@ -1368,7 +1369,6 @@ void atom_cmd_start(CmdFrame *old, int cmdchar)
   *old = (CmdFrame){
     .origin = atom_origin(),
     .visual = Visual,
-    .dup_mark = mc_mark_at(curbuf, Visual.active ? Visual.start : curwin->w_cursor),
     .keytyped = KeyTyped,
     .keyclass = atom_key_class(cmdchar, NUL),
     .ex_normal = ex_normal_busy,
@@ -1636,10 +1636,7 @@ void atom_cmd_end(cmdarg_T *ca, CmdFrame *old)
   // textlock).
   if (old->parent == NULL && !mc_replaying() && typebuf_typed() && stuff_empty()) {
     bool map_moved = atom_composite_active() && atom_origin_moved(composite.origin);
-    // Primary pos: defined at cmd start or Visual-sel start, even if the cmd moved it since.
-    pos_T primary = old->visual.active ? old->visual.start : old->origin.pos;
-
-    mc_clock_edge(map_edit, map_moved, composite.follow == kTrue, primary, old->dup_mark);
+    mc_clock_edge(map_edit, map_moved, composite.follow == kTrue);
 
     map_edit = false;
     // One atom spans its continuation: while op-pending, selection-active, or insert-will-resume
