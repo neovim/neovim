@@ -178,13 +178,16 @@ describe('multicursor', function()
       eq(0, ncursors())
       feed('gQ')
       eq(2, ncursors())
-      feed('Gx') -- the restored cursors cascade
+      feed('Gx') -- The restored cursors cascade.
       eq({ 'aa', 'bb', 'ccc', 'dd' }, get_lines())
-      -- The snapshot is extmark-tracked: edits in between shift it.
+      -- The snapshot extmarks are shifted by intervening edits.
       clear_cursors()
-      feed('ggO<Esc>') -- new line on top shifts the snapshot down
+      feed('ggO<Esc>') -- New line on top shifts the snapshot down.
       feed('gQ')
       eq({ { 1, 0 }, { 2, 0 } }, anchors())
+      -- No-op if multicursor is already active.
+      feed('gQ')
+      eq('gQ: multicursor session is active', n.exec_capture('1messages'))
     end)
 
     it(':g//normal! Q places a cursor at each match', function()
