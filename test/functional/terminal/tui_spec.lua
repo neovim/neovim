@@ -1430,6 +1430,26 @@ describe('TUI', function()
     poke_both_eventloop()
   end)
 
+  it("terminal response split by a pause longer than 'ttimeoutlen' is not typed as keys", function()
+    poke_both_eventloop() -- Make sure startup requests have finished.
+    child_exec_lua([[
+      _G.termresponses = {}
+      vim.api.nvim_create_autocmd('TermResponse', {
+        callback = function(ev) table.insert(_G.termresponses, ev.data.sequence) end,
+      })
+    ]])
+    feed_data('\027]52;c;SGVs')
+    vim.uv.sleep(200)
+    feed_data('bG8=\027\\')
+    feed_data('\027P1+r5463\027')
+    vim.uv.sleep(200)
+    feed_data('\\')
+    retry(nil, nil, function()
+      eq({ '\027]52;c;SGVsbG8=', '\027P1+r5463' }, child_exec_lua('return _G.termresponses'))
+    end)
+    expect_child_buf_lines({ '' })
+  end)
+
   it('accepts ASCII control sequences', function()
     feed_data('i')
     feed_data('\022\007') -- ctrl+g

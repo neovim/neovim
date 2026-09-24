@@ -7641,7 +7641,8 @@ vim.go.ttimeout = vim.o.ttimeout
 
 --- Time in milliseconds to wait for a key code sequence to complete. Also
 --- used for CTRL-\ CTRL-N and CTRL-\ CTRL-G when part of a command has
---- been typed.
+--- been typed. When part of a response to a query (e.g. `clipboard-osc52`)
+--- has been received, Nvim waits at least a second for the rest.
 ---
 --- @type integer
 vim.o.ttimeoutlen = 50

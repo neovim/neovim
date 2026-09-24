@@ -36,6 +36,10 @@
 /// this size afterward
 #define INPUT_BUFFER_SIZE 256
 
+/// Time to wait for the rest of a terminal response, which may arrive in pieces (e.g. over SSH)
+/// with pauses longer than 'ttimeoutlen'.
+#define TERM_RESPONSE_TIMEOUT_MS 1000
+
 static const struct kitty_key_map_entry {
   int key;
   const char *name;
@@ -470,6 +474,8 @@ static void tk_getkeys(TermInput *input, bool force)
   }
 
   if (result != TERMKEY_RES_AGAIN) {
+    // Nothing is pending: stop a timer left from an earlier sequence.
+    uv_timer_stop(&input->timer_handle);
     return;
   }
   // else: Partial keypress event was found in the buffer, but it does not
@@ -487,6 +493,9 @@ static uint64_t tinput_wait_time(TermInput *input)
   // If 'ttimeout' is not set, use 0 to still process the input that was read (e.g. the ESC \ that
   // ends a terminal response) first.
   int64_t ms = input->ttimeout ? input->ttimeoutlen : 0;
+  if (termkey_response_pending(input->tk)) {
+    ms = MAX(ms, TERM_RESPONSE_TIMEOUT_MS);
+  }
   return (uint64_t)MAX(ms, 0);
 }
 
