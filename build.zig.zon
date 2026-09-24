@@ -25,8 +25,8 @@
             .lazy = true,
         },
         .libuv = .{
-            .url = "git+https://github.com/allyourcodebase/libuv.git#c1ccce24e1077ae7780857c89fb4b3aeb9080315",
-            .hash = "libuv-1.52.0-htqqvzNqAAAB6cHIx-wIffe_mqMW5GOKjHeDBJYHGwls",
+            .url = "git+https://github.com/allyourcodebase/libuv#88bb15e5f2a0843f8dbb45b79bcaa76e91d8ee26",
+            .hash = "libuv-1.53.0-htqqv6ltAAB9F26lEJAp4KqL6xAmkUlRxenqnasabf0E",
             .lazy = true,
         },
         .utf8proc = .{
