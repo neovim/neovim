@@ -28,7 +28,6 @@ struct CmdFrame {
   CmdFrame *parent;     ///< Enclosing frame (nested normal_execute()); NULL at toplevel.
   VisualState visual;   ///< Visual-mode state (active/start/mode are diffed).
 
-  uint32_t dup_mark;    ///< Mcursor overlapping the primary at cmd start (0: none).
   bool keytyped;        ///< KeyTyped
   unsigned keyclass;    ///< atom_key_class() of the cmd char, before its `nchar`.
   int ex_normal;        ///< If higher than `root_frame().ex_normal`, a cmd fed this (:norm, feed).
