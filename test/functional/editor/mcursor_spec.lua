@@ -174,10 +174,14 @@ describe('multicursor', function()
 
     it('gQ restores the cleared cursors (like gv)', function()
       cursors({ 'aaa', 'bbb', 'ccc', 'ddd' }, 'QjQ')
+      eq({ { 0, 0 }, { 1, 0 } }, anchors())
+      eq({ 2, 0 }, api.nvim_win_get_cursor(0))
       clear_cursors()
       eq(0, ncursors())
+      feed('G$') -- Move the primary away.
       feed('gQ')
-      eq(2, ncursors())
+      eq({ { 0, 0 }, { 1, 0 } }, anchors())
+      eq({ 2, 0 }, api.nvim_win_get_cursor(0)) -- Primary cursor position is restored too.
       feed('Gx') -- The restored cursors cascade.
       eq({ 'aa', 'bb', 'ccc', 'dd' }, get_lines())
       -- The snapshot extmarks are shifted by intervening edits.
