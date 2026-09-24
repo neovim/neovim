@@ -74,8 +74,8 @@ static struct {
   TriState follow;    ///< `CmdFrame.follow` at the atom's first motion (`kNone`: none yet).
   CmdAtomVec atoms;   ///< Subatoms of the mapping/macro.
   char lhs[MAXMAPLEN + 4];  ///< Label: mapping LHS, macro "@x", or :omap's op+LHS. "": none.
-  bool queued;        ///< Subatom queued for cascade (`g_atoms`, or Visual), or a global op (undo)
-                      ///< applied to every cursor already. No LHS-replay needed.
+  bool queued;        ///< Subatom queued for cascade (`g_atoms`, or Visual), global op (undo), or
+                      ///< jump. No LHS-replay needed.
   bool lossy;         ///< Detected partial capture: `keys` cannot replay it, `lhs` can.
                       ///< When: incomplete insert, payload with no capturing atom.
   bool macro;         ///< Macro execution: captured as an "@x"-labeled atom.
@@ -570,7 +570,7 @@ void atom_lhs_replay_queue(void)
   kv_push(g_atoms, ((CmdAtom){ .type = kAComp, .keys = atom_composite_lhs(), .remap = true }));
 }
 
-/// True if the mapping queued a subatom for cascade: no LHS-replay needed
+/// True if the composite should NOT LHS-replay (see `composite.queued`).
 bool atom_composite_queued(void)
 {
   return composite.queued;
@@ -1586,6 +1586,9 @@ static bool atom_capture_cmd(cmdarg_T *ca, CmdFrame *old)
       CmdAtom atom = atom_from_spec(motion ? kAMotion : jump_cmd ? kAJump : kANormal, spec);
       atom.origin = old->origin;
       atom_push(follow, &atom);
+      if (jump_cmd && atom_composite_active()) {
+        composite.queued = true;  // Do not LHS-replay a mapped jump ("nnoremap <Down> ]C").
+      }
     } else if ((scroll_cmd || mouse_cmd) && !atom_composite_active()) {
       // Emit-only (viewport-dependent).
       CmdSpec spec = atom_cmd_spec(ca);
