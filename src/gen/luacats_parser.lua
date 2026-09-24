@@ -240,6 +240,7 @@ local function process_doc_line(line, state)
     vim.tbl_contains({
       'diagnostic',
       'cast',
+      'return_cast',
       'overload',
       'meta',
     }, kind)

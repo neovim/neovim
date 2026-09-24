@@ -961,11 +961,13 @@ function vim.islist(t)
   return true
 end
 
+-- EmmyLua 0.25.1 cannot subtract unions, so return_cast only removes Lua nil on false.
 --- Tests if `t` is `nil` or |vim.NIL|.
 ---
 --- @since 15
 --- @param t? any
 --- @return boolean `true` if `nil` or |vim.NIL|, else `false`.
+--- @return_cast t nil|vim.NIL else -nil
 function vim.isnil(t)
   return t == nil or t == vim.NIL
 end
