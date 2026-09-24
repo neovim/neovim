@@ -4859,11 +4859,16 @@ Provides operations to compare, calculate, and convert ranges represented by
 <
 
     Fields: ~
-      • {buf}        (`integer`) Optional buffer handle.
-      • {end_col}    (`integer`) 0-based byte index.
-      • {end_row}    (`integer`) 0-based byte index.
-      • {start_col}  (`integer`) 0-based byte index.
-      • {start_row}  (`integer`) 0-based byte index.
+      • {[1]}        (`integer`) start_row 0-based byte index.
+      • {[2]}        (`integer`) start_col 0-based byte index.
+      • {[3]}        (`integer`) end_row 0-based byte index.
+      • {[4]}        (`integer`) end_col 0-based byte index.
+      • {[5]}        (`integer`) buffer handle.
+      • {buf}        (`integer`) same as [5], provided for convenience.
+      • {end_col}    (`integer`) same as [4], provided for convenience.
+      • {end_row}    (`integer`) same as [3], provided for convenience.
+      • {start_col}  (`integer`) same as [2], provided for convenience.
+      • {start_row}  (`integer`) same as [1], provided for convenience.
 
 
                                                          *vim.range.extmark()*
