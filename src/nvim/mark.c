@@ -310,6 +310,15 @@ void checkpcmark(void)
   curwin->w_prev_pcmark.lnum = 0;  // it has been checked
 }
 
+/// Is jumplist entry "i" a jump to the cursor line of "win"?
+///
+/// Such an entry is a "phantom" jump: jumping to it does nothing.  #9805
+static bool jumplist_is_cursorline(win_T *win, int i)
+{
+  const xfmark_T *fm = &win->w_jumplist[i];
+  return fm->fmark.fnum == curbuf->b_fnum && fm->fmark.mark.lnum == win->w_cursor.lnum;
+}
+
 /// Get mark in "count" position in the |jumplist| relative to the current index.
 ///
 /// If the mark is in a different buffer, it will be skipped unless the buffer exists.
@@ -325,6 +334,15 @@ fmark_T *get_jumplist(win_T *win, int count)
   xfmark_T *jmp = NULL;
 
   cleanup_jumplist(win, true);
+
+  // When pointer is below last jump, remove the jump if it matches the current
+  // line.  This avoids useless/phantom jumps. #9805
+  if (win->w_jumplistlen && win->w_jumplistidx == win->w_jumplistlen
+      && jumplist_is_cursorline(win, win->w_jumplistlen - 1)) {
+    xfree(win->w_jumplist[win->w_jumplistlen - 1].fname);
+    win->w_jumplistlen--;
+    win->w_jumplistidx--;
+  }
 
   if (win->w_jumplistlen == 0) {         // nothing to jump to
     return NULL;
@@ -1067,16 +1085,28 @@ void ex_delmarks(exarg_T *eap)
 void ex_jumps(exarg_T *eap)
 {
   cleanup_jumplist(curwin, true);
+
+  int len = curwin->w_jumplistlen;
+  int idx = curwin->w_jumplistidx;
+  // When the pointer is below the last jump, hide the jump if it matches the
+  // current line.  This avoids useless/phantom jumps.  #9805
+  // Hiding is enough here: deleting the entry would make ":jumps" destructive.
+  // #33598
+  if (len > 0 && idx == len && jumplist_is_cursorline(curwin, len - 1)) {
+    len--;
+    idx--;
+  }
+
   // Highlight title
   msg_ext_set_kind("list_cmd");
   msg_puts_title(_("\n jump line  col file/text"));
-  for (int i = 0; i < curwin->w_jumplistlen && !got_int; i++) {
+  for (int i = 0; i < len && !got_int; i++) {
     if (curwin->w_jumplist[i].fmark.mark.lnum != 0) {
       char *name = fm_getname(&curwin->w_jumplist[i].fmark, 16);
 
       // Make sure to output the current indicator, even when on an wiped
       // out buffer.  ":filter" may still skip it.
-      if (name == NULL && i == curwin->w_jumplistidx) {
+      if (name == NULL && i == idx) {
         name = xstrdup("-invalid-");
       }
       // apply :filter /pat/ or file name not available
@@ -1091,8 +1121,8 @@ void ex_jumps(exarg_T *eap)
         break;
       }
       snprintf(IObuff, IOSIZE, "%c %2d %5" PRIdLINENR " %4d ",
-               i == curwin->w_jumplistidx ? '>' : ' ',
-               i > curwin->w_jumplistidx ? i - curwin->w_jumplistidx : curwin->w_jumplistidx - i,
+               i == idx ? '>' : ' ',
+               i > idx ? i - idx : idx - i,
                curwin->w_jumplist[i].fmark.mark.lnum, curwin->w_jumplist[i].fmark.mark.col);
       msg_outtrans(IObuff, 0, false);
       msg_outtrans(name, curwin->w_jumplist[i].fmark.fnum == curbuf->b_fnum ? HLF_D : 0, false);
@@ -1100,7 +1130,7 @@ void ex_jumps(exarg_T *eap)
       os_breakcheck();
     }
   }
-  if (curwin->w_jumplistidx == curwin->w_jumplistlen) {
+  if (idx == len) {
     msg_puts("\n>");
   }
 }
@@ -1533,19 +1563,6 @@ void cleanup_jumplist(win_T *wp, bool loadfiles)
     wp->w_jumplistidx = to;
   }
   wp->w_jumplistlen = to;
-
-  // When pointer is below last jump, remove the jump if it matches the current
-  // line.  This avoids useless/phantom jumps. #9805
-  if (loadfiles  // otherwise (i.e.: Shada), last entry should be kept
-      && wp->w_jumplistlen && wp->w_jumplistidx == wp->w_jumplistlen) {
-    const xfmark_T *fm_last = &wp->w_jumplist[wp->w_jumplistlen - 1];
-    if (fm_last->fmark.fnum == curbuf->b_fnum
-        && fm_last->fmark.mark.lnum == wp->w_cursor.lnum) {
-      xfree(fm_last->fname);
-      wp->w_jumplistlen--;
-      wp->w_jumplistidx--;
-    }
-  }
 }
 
 // Copy the jumplist from window "from" to window "to".
