@@ -624,6 +624,7 @@ end
 ---     Set to `false|nil` to only parse regions with empty ranges (typically
 ---     only the root tree without injections).
 --- @param on_parse fun(err?: string, trees?: table<integer, TSTree>)? Function invoked when parsing completes.
+---     When omitted, parsing is synchronous and always returns the trees.
 ---     When provided and `vim.g._ts_force_sync_parsing` is not set, parsing will run
 ---     asynchronously. The first argument to the function is a string representing the error type,
 ---     in case of a failure (currently only possible for timeouts). The second argument is the list
@@ -633,6 +634,7 @@ end
 ---     If parsing was still able to finish synchronously (within 3ms), `parse()` returns the list
 ---     of trees. Otherwise, it returns `nil`.
 --- @return table<integer, TSTree>?
+--- @overload fun(self: vim.treesitter.LanguageTree, range?: boolean|Range|Range[]): table<integer, TSTree>
 function LanguageTree:parse(range, on_parse)
   if on_parse then
     return self:_async_parse(range, on_parse)
