@@ -4177,6 +4177,35 @@ describe('vim.diagnostic', function()
       eq(result[1], result[2])
     end)
 
+    it('uses the start position when quickfix coordinates are absent', function()
+      eq(
+        {
+          {
+            lnum = 0,
+            col = 0,
+            end_lnum = 0,
+            end_col = 0,
+            severity = vim.diagnostic.severity.ERROR,
+            message = 'missing coordinates',
+          },
+          {
+            lnum = 3,
+            col = 2,
+            end_lnum = 3,
+            end_col = 2,
+            severity = vim.diagnostic.severity.ERROR,
+            message = 'missing end coordinates',
+          },
+        },
+        exec_lua(function()
+          return vim.diagnostic.fromqflist({
+            { valid = 1, nr = 0, text = 'missing coordinates' },
+            { valid = 1, nr = 0, lnum = 4, col = 3, text = 'missing end coordinates' },
+          })
+        end)
+      )
+    end)
+
     it('merge_lines=true merges continuation lines', function()
       local function get_fromqflist(merge_lines)
         return exec_lua(function(merge_lines_)
