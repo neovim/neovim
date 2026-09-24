@@ -28,6 +28,7 @@
 #include "nvim/keycodes.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
+#include "nvim/mcursor.h"
 #include "nvim/memline.h"
 #include "nvim/message.h"
 #include "nvim/move.h"
@@ -798,8 +799,14 @@ int insert_reg(int regname, yankreg_T *reg, bool literally_arg)
     if (reg->y_array == NULL) {
       retval = FAIL;
     } else {
+      // Put (not stuff). Redo "<C-R>x" instead of the literal text.
+      const bool put = reg->y_type == kMTCharWise
+                       && (regname == '-'
+                           // Multicursor: per-cursor registers.
+                           || (mc_ins_cascading() && reg->y_size == 1
+                               && (ASCII_ISALNUM(regname) || regname == '"')));
       for (size_t i = 0; i < reg->y_size; i++) {
-        if (regname == '-' && reg->y_type == kMTCharWise) {
+        if (put) {
           Direction dir = BACKWARD;
           if ((State & REPLACE_FLAG) != 0) {
             pos_T curpos;
