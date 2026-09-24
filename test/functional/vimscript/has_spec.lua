@@ -144,7 +144,7 @@ describe('has()', function()
     eq(1, fn.has('patch-9.0.998'))
     eq(1, fn.has('patch-9.0.2190'))
 
-    eq(0, fn.has('patch-9.1.0'))
+    eq(1, fn.has('patch-9.1.0'))
     eq(1, fn.has('patch-9.1.1'))
     eq(1, fn.has('patch-9.1.690'))
     eq(1, fn.has('patch-9.1.1934'))
