@@ -60,6 +60,52 @@ error('Cannot require a meta file')
 --- @field line integer
 --- @field column integer
 
+--- @class vim.fn.getqflist.what
+--- @field all? integer
+--- @field changedtick? integer
+--- @field context? integer
+--- @field efm? string
+--- @field id? integer
+--- @field idx? integer
+--- @field items? integer
+--- @field lines? string[]
+--- @field nr? integer|'$'
+--- @field qfbufnr? integer
+--- @field quickfixtextfunc? integer
+--- @field size? integer
+--- @field title? integer
+--- @field winid? integer
+
+--- Only properties requested in `what` are present. `all` requests every property;
+--- `lines` returns only `items`, ignoring other properties except `efm`.
+--- @class vim.fn.getqflist.ret
+--- @field changedtick? integer
+--- @field context? any
+--- @field id? integer
+--- @field idx? integer
+--- @field items? vim.fn.getqflist.ret.item[]
+--- @field nr? integer
+--- @field qfbufnr? integer
+--- @field quickfixtextfunc? string|function
+--- @field size? integer
+--- @field title? string
+--- @field winid? integer
+
+--- Returned entries fill in location and message fields omitted from setqflist() input.
+--- @class vim.fn.getqflist.ret.item : vim.quickfix.entry
+--- @field bufnr integer
+--- @field module string
+--- @field lnum integer
+--- @field end_lnum integer
+--- @field col integer
+--- @field end_col integer
+--- @field vcol integer
+--- @field nr integer
+--- @field pattern string
+--- @field text string
+--- @field type string
+--- @field valid 0|1
+
 --- @class vim.fn.getwininfo.ret.item
 --- @field botline integer
 --- @field bufnr integer
@@ -120,7 +166,7 @@ error('Cannot require a meta file')
 --- @field type? string
 ---
 --- recognized error message
---- @field valid? boolean
+--- @field valid? boolean|integer
 ---
 --- custom data associated with the item, can be
 --- any type.

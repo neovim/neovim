@@ -447,14 +447,27 @@ local function get_eval_meta()
   return require('nvim.eval').funcs
 end
 
+--- Group suffix variants for Lua metadata; Vimdoc keeps separate entries.
+--- @return table<string, vim.EvalFn[]>
+local function get_eval_lua_meta()
+  local ret = {} --- @type table<string, vim.EvalFn[]>
+  -- Sorting puts the base declaration before its __N variants.
+  for name, fun in vim.spairs(get_eval_meta()) do
+    if fun.lua ~= false then
+      local base = name:match('^(.-)__%d+$') or name
+      ret[base] = ret[base] or {}
+      table.insert(ret[base], fun)
+    end
+  end
+  return ret
+end
+
 --- Generates LuaLS docstring for a Vimscript "eval" function.
 --- @param f string
---- @param fun vim.EvalFn
+--- @param funs vim.EvalFn[]
 --- @param write fun(line: string)
-local function render_eval_meta(f, fun, write)
-  if fun.lua == false then
-    return
-  end
+local function render_eval_meta(f, funs, write)
+  local fun = assert(funs[1])
 
   local funname = fun.name or f
   local params = process_params(fun.params)
@@ -464,16 +477,18 @@ local function render_eval_meta(f, fun, write)
     write('--- @deprecated')
   end
 
-  render_eval_see_lua_meta(fun, write)
+  -- Combine descriptions into one docstring: the base first, then its __N variants.
+  for _, variant in ipairs(funs) do
+    render_eval_see_lua_meta(variant, write)
 
-  local desc = fun.desc --[[@as string?]]
+    local desc = variant.desc --[[@as string?]]
 
-  if desc then
-    --- @type string
-    desc = desc:gsub('\n%s*\n%s*$', '\n')
-    for _, l in ipairs(split(desc)) do
-      l = l:gsub('^      ', ''):gsub('\t', '  '):gsub('@', '\\@')
-      write('--- ' .. l)
+    if desc then
+      desc = desc:gsub('\n%s*\n%s*$', '\n')
+      for _, l in ipairs(split(desc)) do
+        l = l:gsub('^      ', ''):gsub('\t', '  '):gsub('@', '\\@')
+        write('--- ' .. l)
+      end
     end
   end
 
@@ -481,6 +496,24 @@ local function render_eval_meta(f, fun, write)
     ipairs(vim.fn.reverse(fun.generics or {} --[[@as string[] ]]))
   do
     write(fmt('--- @generic %s', text))
+  end
+
+  -- E.g. sign_undefine__1 becomes @overload fun(list?: string[]): (integer[]).
+  for i, overload in ipairs(funs) do
+    if i > 1 then
+      local overload_params = {} --- @type string[]
+      local req_args = type(overload.args) == 'table' and overload.args[1] or overload.args or 0
+      for j, param in ipairs(process_params(overload.params)) do
+        local pname, ptype = luaescape(param[1]), param[2]
+        local optional = (pname ~= '...' and j > req_args) and '?' or ''
+        overload_params[#overload_params + 1] = fmt('%s%s: %s', pname, optional, ptype)
+      end
+      local generics = overload.generics and ('<' .. table.concat(overload.generics, ', ') .. '>')
+        or ''
+      -- Group the return list so a type like (0|-1)[] remains one array return.
+      local ret = overload.returns == false and '' or ': (' .. (overload.returns or 'any') .. ')'
+      write(fmt('--- @overload fun%s(%s)%s', generics, table.concat(overload_params, ', '), ret))
+    end
   end
 
   local req_args = type(fun.args) == 'table' and fun.args[1] or fun.args or 0
@@ -963,7 +996,7 @@ local CONFIG = {
   {
     path = 'runtime/lua/vim/_meta/vimfn.gen.lua',
     header = LUA_META_HEADER,
-    funcs = get_eval_meta,
+    funcs = get_eval_lua_meta,
     render = render_eval_meta,
   },
   {
