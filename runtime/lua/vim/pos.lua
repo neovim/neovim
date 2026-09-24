@@ -32,12 +32,12 @@ local util = require('vim.pos._util')
 --- such as format conversions.
 ---
 ---@class vim.Pos
----@field row integer 0-based byte index.
----@field col integer 0-based byte index.
----@field buf integer buffer handle.
----@field private [1] integer underlying representation of row
----@field private [2] integer underlying representation of col
----@field private [3] integer underlying representation of buf
+---@field row integer same as [1], provided for convenience.
+---@field col integer same as [2], provided for convenience.
+---@field buf integer same as [3], provided for convenience.
+---@field [1] integer row 0-based byte index.
+---@field [2] integer col 0-based byte index.
+---@field [3] integer buffer handle.
 local M = {}
 
 ---@private

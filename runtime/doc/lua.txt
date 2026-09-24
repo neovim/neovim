@@ -4625,9 +4625,12 @@ by |vim.Pos| objects.
     as format conversions.
 
     Fields: ~
-      • {buf}  (`integer`) buffer handle.
-      • {col}  (`integer`) 0-based byte index.
-      • {row}  (`integer`) 0-based byte index.
+      • {[1]}  (`integer`) row 0-based byte index.
+      • {[2]}  (`integer`) col 0-based byte index.
+      • {[3]}  (`integer`) buffer handle.
+      • {buf}  (`integer`) same as [3], provided for convenience.
+      • {col}  (`integer`) same as [2], provided for convenience.
+      • {row}  (`integer`) same as [1], provided for convenience.
 
 
 cursor({buf}, {pos})                                        *vim.pos.cursor()*
