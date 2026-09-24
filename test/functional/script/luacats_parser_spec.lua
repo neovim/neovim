@@ -129,6 +129,20 @@ describe('luacats parser', function()
     end)
   end
 
+  it('supports @return_cast annotations', function()
+    local _, funs = parser.parse_str(
+      dedent([[
+        --- @param value any
+        --- @return boolean # Whether the value is nil.
+        --- @return_cast value nil|vim.NIL else -nil
+        function is_nil(value) end
+      ]]),
+      'myfile.lua'
+    )
+
+    eq({ { type = 'boolean', desc = 'Whether the value is nil.' } }, funs[1].returns)
+  end)
+
   it('tracks class member declaration style', function()
     local classes, funs = parser.parse_str(
       dedent([[        --- @class vim.MyClass
