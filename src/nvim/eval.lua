@@ -7463,7 +7463,7 @@ M.funcs = {
       { 'dict', 'table' },
     },
     signature = 'matchbufline({buf}, {pat}, {lnum}, {end}, [, {dict}])',
-    returns = 'string[]',
+    returns = 'table',
   },
   matchdelete = {
     args = { 1, 2 },

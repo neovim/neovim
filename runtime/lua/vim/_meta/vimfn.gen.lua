@@ -6170,7 +6170,7 @@ function vim.fn.matcharg(nr) end
 --- @param lnum string|integer
 --- @param end_ string|integer
 --- @param dict? table
---- @return string[]
+--- @return table
 function vim.fn.matchbufline(buf, pat, lnum, end_, dict) end
 
 --- Deletes a match with ID {id} previously defined by |matchadd()|
