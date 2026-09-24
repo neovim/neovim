@@ -60,20 +60,29 @@ function M.range(buf, ns, hlgroup, start, finish, opts)
 
   local v_maxcol = vim.v.maxcol
 
-  local pos1 = type(start) == 'string' and vim.fn.getpos(start)
-    or {
+  local pos1 --- @type [integer, integer, integer, integer]
+  if type(start) == 'string' then
+    pos1 = vim.fn.getpos(start)
+  else
+    pos1 = {
       buf,
       start[1] + 1,
       start[2] ~= -1 and start[2] ~= v_maxcol and start[2] + 1 or v_maxcol,
       0,
     }
-  local pos2 = type(finish) == 'string' and vim.fn.getpos(finish)
-    or {
+  end
+
+  local pos2 ---@type [integer, integer, integer, integer]
+  if type(finish) == 'string' then
+    pos2 = vim.fn.getpos(finish)
+  else
+    pos2 = {
       buf,
       finish[1] + 1,
       finish[2] ~= -1 and finish[2] ~= v_maxcol and finish[2] + 1 or v_maxcol,
       0,
     }
+  end
 
   local buf_line_count = api.nvim_buf_line_count(buf)
   pos1[2] = math.min(pos1[2], buf_line_count)

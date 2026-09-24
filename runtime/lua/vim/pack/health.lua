@@ -289,8 +289,9 @@ local function check_installed_plugin(plug_name)
     health.error('Could not get `vim.pack` usage information for plugin ' .. name_str)
     return false
   end
+  local plug = assert(info[1])
 
-  if not info[1].active then
+  if not plug.active then
     health.info(
       ('Plugin %s is not active.'):format(name_str)
         .. ' Is it lazy loaded or did you forget to run `vim.pack.del()`?'
@@ -298,8 +299,8 @@ local function check_installed_plugin(plug_name)
   end
 
   -- Manifest
-  if info[1].manifest then
-    return check_manifest(info[1].manifest, plug_name, plug_path)
+  if plug.manifest then
+    return check_manifest(plug.manifest, plug_name, plug_path)
   end
 
   return true

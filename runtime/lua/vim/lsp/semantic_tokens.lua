@@ -82,7 +82,7 @@ end
 ---@param ranges STTokenRange[]
 ---@return STTokenRange[]
 local function tokens_to_ranges(data, bufnr, client, request, ranges)
-  local legend = client.server_capabilities.semanticTokensProvider.legend
+  local legend = assert(client.server_capabilities.semanticTokensProvider).legend
   local token_types = legend.tokenTypes
   local token_modifiers = legend.tokenModifiers
   local encoding = client.offset_encoding
@@ -124,17 +124,18 @@ local function tokens_to_ranges(data, bufnr, client, request, ranges)
       end
     end
 
+    -- The protocol encodes each token as five integers.
     local delta_line = data[i]
     line = line and line + delta_line or delta_line
-    local delta_start = data[i + 1]
+    local delta_start = assert(data[i + 1])
     start_char = delta_line == 0 and start_char + delta_start or delta_start
 
     -- data[i+3] +1 because Lua tables are 1-indexed
-    local token_type = token_types[data[i + 3] + 1]
+    local token_type = token_types[assert(data[i + 3]) + 1]
 
     if token_type then
       local modifiers = modifiers_from_number(data[i + 4], token_modifiers)
-      local end_char = start_char + data[i + 2] --- @type integer LuaLS bug
+      local end_char = start_char + assert(data[i + 2])
       local buf_line = lines[line + 1] or ''
       local end_line = line ---@type integer
       local start_col = vim.str_byteindex(buf_line, encoding, start_char, false)
@@ -171,7 +172,7 @@ local function tokens_to_ranges(data, bufnr, client, request, ranges)
           end,
         })
         while idx <= #ranges do
-          local token = ranges[idx]
+          local token = assert(ranges[idx])
 
           if
             token.line > range.line

@@ -424,7 +424,7 @@ local function report_duplicates(tags)
     local curtag = tagline:match('^[^\t]*')
     if curtag == prevtag then
       local curfn = tagline:match('\t([^\t]*)')
-      local prevfn = tags[i - 1]:match('\t([^\t]*)')
+      local prevfn = assert(tags[i - 1]):match('\t([^\t]*)')
       local filenames = prevfn ~= curfn and (curfn .. ' and ' .. prevfn) or curfn
       echo_err(('E154: Duplicate tag "%s" in %s'):format(curtag, filenames))
     end

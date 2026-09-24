@@ -276,7 +276,11 @@ end
 function State.foldclose(_, kind, winid)
   vim._with({ win = winid }, function()
     local bufnr = api.nvim_win_get_buf(winid)
-    local row_kinds = State.active[bufnr].row_kinds
+    local state = State.active[bufnr]
+    if not state then
+      return
+    end
+    local row_kinds = state.row_kinds
     -- Reverse traverse to ensure that the smallest ranges are closed first.
     for row = api.nvim_buf_line_count(bufnr) - 1, 0, -1 do
       local kinds = row_kinds[row]
@@ -394,7 +398,7 @@ function M.foldtext(lnum)
   local row = lnum - 1
   local state = State.active[bufnr]
   local lang = state and state.lang
-  local line = vim.fn.getline(lnum) --[[@as string]]
+  local line = vim.fn.getline(lnum)
   if not lang then
     return line
   end ---@cast state -nil
@@ -422,7 +426,7 @@ function M.foldtext(lnum)
     local query = vim.treesitter.query.get(tree:lang(), 'highlights')
     if query then
       for capture, node in query:iter_captures(tstree:root(), line) do
-        local name = query.captures[capture]
+        local name = assert(query.captures[capture])
         local _, start_col, _, end_col = node:range()
         if name:match('^[^_]') then
           spans[#spans + 1] = {

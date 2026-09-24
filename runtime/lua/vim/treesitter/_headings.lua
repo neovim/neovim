@@ -69,7 +69,7 @@ local get_headings = function(bufnr)
         -- ignore tabular material
         or (id == 4 and (text:find('\t') or text:find('  ')))
         -- ignore tag-only headings
-        or (node:child_count() == 1 and node:child(0):type() == 'tag')
+        or (node:child_count() == 1 and assert(node:child(0)):type() == 'tag')
     end
     if not skip then
       table.insert(headings, {

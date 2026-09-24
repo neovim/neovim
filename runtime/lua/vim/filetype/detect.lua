@@ -339,7 +339,7 @@ function M.cls(_, bufnr)
   local line = nonblank1
   while line do
     if matchregex(line, [[\c^\s*\%(import\|include\|includegenerator\)\>]]) then
-      line, lnum = nextnonblank(bufnr, lnum + 1)
+      line, lnum = nextnonblank(bufnr, assert(lnum) + 1)
     else
       nonblank1 = line
       break
@@ -570,7 +570,12 @@ local function diff(contents)
       end
 
       -- SVK: separator followed by the old and new file headers.
-      if l4 and l2:find('^' .. string.rep('=', 66)) and l3:find('^%-%-% ') and l4:find('^%+%+%+') then
+      if
+        l4
+        and l2:find('^' .. string.rep('=', 66))
+        and l3:find('^%-%-% ')
+        and l4:find('^%+%+%+')
+      then
         return 'diff'
       end
     end
@@ -2433,7 +2438,8 @@ local patterns_text = {
 --- @return string?
 --- @return fun(b: integer)?
 local function match_from_text(contents, path)
-  if assert(contents[1]):find('^:$') then
+  assert(#contents >= 1)
+  if contents[1]:find('^:$') then
     -- Bourne-like shell scripts: sh ksh bash bash2
     return sh(path, contents)
   elseif
@@ -2449,7 +2455,7 @@ local function match_from_text(contents, path)
   for k, v in pairs(patterns_text) do
     if type(v) == 'string' then
       -- Check the first line only
-      if assert(contents[1]):find(k) then
+      if contents[1]:find(k) then
         return v
       end
     elseif type(v) == 'function' then

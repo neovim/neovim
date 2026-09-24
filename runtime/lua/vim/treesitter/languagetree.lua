@@ -235,7 +235,7 @@ function LanguageTree:_log(...)
     args = { args[1]() }
   end
 
-  local info = debug.getinfo(2, 'nl')
+  local info = assert(debug.getinfo(2, 'nl'))
   local nregions = vim.tbl_count(self:included_regions())
   local prefix =
     string.format('%s:%d: (#regions=%d) ', info.name or '???', info.currentline or 0, nregions)
@@ -566,9 +566,8 @@ function LanguageTree:_async_parse(range, on_parse)
   end
 
   local source = self._source
-  local is_buffer_parser = type(source) == 'number'
-  local buf = is_buffer_parser and vim.b[source] or nil
-  local ct = is_buffer_parser and buf.changedtick or nil
+  local buf = type(source) == 'number' and vim.b[source] or nil
+  local ct = buf and buf.changedtick or nil
   local total_parse_time = 0
   local redrawtime = vim.o.redrawtime * 1000000
 
@@ -578,7 +577,7 @@ function LanguageTree:_async_parse(range, on_parse)
   local parse = coroutine.wrap(self._parse)
 
   local function step()
-    if is_buffer_parser then
+    if buf then
       if
         not vim.api.nvim_buf_is_valid(source --[[@as number]])
       then
@@ -790,10 +789,11 @@ end
 
 ---@param region Range6[]
 local function region_tostr(region)
-  if #region == 0 then
+  local first = region[1]
+  if not first then
     return '[]'
   end
-  local srow, scol = region[1][1], region[1][2]
+  local srow, scol = first[1], first[2]
   local erow, ecol = region[#region][4], region[#region][5]
   return string.format('[%d:%d-%d:%d]', srow, scol, erow, ecol)
 end
@@ -949,8 +949,8 @@ local function clip_regions(region1, region2)
   local i, j = 1, 1
 
   while i <= #region1 and j <= #region2 do
-    local r1 = region1[i]
-    local r2 = region2[j]
+    local r1 = assert(region1[i])
+    local r2 = assert(region2[j])
 
     local intersection = Range.intersection(r1, r2)
     if intersection then
@@ -1059,7 +1059,10 @@ function LanguageTree:_get_injection(match, metadata)
   local combined = metadata['injection.combined'] ~= nil
   local injection_lang = metadata['injection.language'] --[[@as string?]]
   local lang = metadata['injection.self'] ~= nil and self:lang()
-    or metadata['injection.parent'] ~= nil and self._parent:lang()
+    or metadata['injection.parent'] ~= nil and assert(
+      self._parent,
+      'injection.parent requires a parent language tree'
+    ):lang()
     or (injection_lang and resolve_lang(injection_lang))
   local include_children = metadata['injection.include-children'] ~= nil
 
@@ -1349,7 +1352,7 @@ end
 function LanguageTree:_on_detach(...)
   self:invalidate(true)
   self:_do_callback('detach', ...)
-  if self._logfile then
+  if self._logger and self._logfile then
     self._logger('nvim', 'detaching')
     self._logger = nil
     self._logfile:close()

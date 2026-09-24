@@ -139,11 +139,11 @@ function M.query(caps, opts, on_response)
 
     local seq ---@type string?
     if rest:match('^=%x+$') then
-      seq = vim.text
-        .hexdecode(rest:sub(2))
-        :gsub('\\E', '\027')
-        :gsub('%%p%d', '')
-        :gsub('\\(%d+)', string.char)
+      seq = vim.text.hexdecode(rest:sub(2))
+      if not seq then
+        return -- Ignore malformed responses and leave the capability pending.
+      end
+      seq = seq:gsub('\\E', '\027'):gsub('%%p%d', ''):gsub('\\(%d+)', string.char)
     end
 
     on_response(cap, true, seq)

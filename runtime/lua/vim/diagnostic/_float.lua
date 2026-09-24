@@ -271,7 +271,7 @@ function M.open(opts, ...)
     local line = lines[i]
     local prefix_len = hl.prefix and hl.prefix.length or 0
     local suffix_len = hl.suffix and hl.suffix.length or 0
-    if prefix_len > 0 then
+    if hl.prefix and prefix_len > 0 then
       api.nvim_buf_set_extmark(float_bufnr, float_ns, i - 1, 0, {
         hl_group = hl.prefix.hlname,
         end_col = prefix_len,
@@ -283,7 +283,7 @@ function M.open(opts, ...)
       end_col = #line - suffix_len,
       strict = false,
     })
-    if suffix_len > 0 then
+    if hl.suffix and suffix_len > 0 then
       api.nvim_buf_set_extmark(float_bufnr, float_ns, i - 1, #line - suffix_len, {
         hl_group = hl.suffix.hlname,
         end_row = i,

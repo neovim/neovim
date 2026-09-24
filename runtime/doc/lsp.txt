@@ -1853,7 +1853,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
       • {rpc}                   (`vim.lsp.rpc.Client`) RPC client object, for
                                 low level interaction with the client. See
                                 |vim.lsp.rpc.start()|.
-      • {server_capabilities}   (`lsp.ServerCapabilities?`) Response from the
+      • {server_capabilities}   (`lsp.ServerCapabilities`) Response from the
                                 server sent on `initialize` describing the
                                 server's capabilities.
       • {server_info}           (`lsp.ServerInfo?`) Response from the server

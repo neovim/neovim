@@ -157,7 +157,8 @@ local function render_line(line, row, hls)
           -- Match against SGR parameters, which may be separated by ';'
           --- @type string?, string?
           match, sgr = sgr:match('^(%d*);?(.*)')
-          add_attr_hl(match + 0) -- coerce to number
+          -- Both captures match even when empty, so this pattern cannot fail.
+          add_attr_hl(assert(match) + 0) -- coerce to number
         end
         escape = false
       elseif prev_char == ']8;' then
@@ -254,13 +255,14 @@ function M._match_manpage_path(paths, name, sect)
   -- clock_getres.2, which is the right page. Searching the results for
   -- clock_gettime will no longer work. In this case, we should just use the
   -- first one that was found in the correct section.
-  if #paths == 0 then
+  local first_path = paths[1]
+  if not first_path then
     return
   end
 
   -- `man -w /some/path` echoes the input for any existent file. Accept only
   -- paths that look like a man page (`.../man1/bash.1`). #30873
-  if sect == '' and #paths == 1 and paths[1] == name then
+  if sect == '' and #paths == 1 and first_path == name then
     local tail = vim.fs.basename(name)
     local parent = vim.fs.basename(vim.fs.dirname(name))
     if not (parent:find('^man') and tail:find('%.%d')) then
@@ -298,7 +300,7 @@ function M._match_manpage_path(paths, name, sect)
     end, namematches)
   end
 
-  return (sectmatches[1] or namematches[1] or paths[1]):gsub('\n+$', '')
+  return (sectmatches[1] or namematches[1] or first_path):gsub('\n+$', '')
 end
 
 --- Attempt to extract the name and sect out of 'name(sect)'
@@ -315,7 +317,7 @@ local function parse_ref(ref)
   -- match "<name>(<sect>)"
   -- note: name can contain spaces
   local name, sect = ref:match('([^()]+)%(([^()]+)%)')
-  if name then
+  if name and sect then
     -- see ':Man 3X curses' on why tolower.
     -- TODO(nhooyr) Not sure if this is portable across OSs
     -- but I have not seen a single uppercase section.
@@ -561,7 +563,8 @@ local function parse_cmdline(arg_lead, cmd_line)
     return
   end
 
-  if #args == 1 then
+  local arg = args[2]
+  if not arg then
     -- returning full completion is laggy. Require some arg_lead to complete
     -- return '', '', ''
     return
@@ -578,7 +581,7 @@ local function parse_cmdline(arg_lead, cmd_line)
     return sect, '', name
   end
 
-  if not args[2]:match('^[^()]+$') then
+  if not arg:match('^[^()]+$') then
     -- cursor (|) is at ':Man 3() |' or ':Man (3|' or ':Man 3() pri|'
     -- or ':Man 3() pri |'
     return
@@ -610,7 +613,7 @@ local function parse_cmdline(arg_lead, cmd_line)
   end
 
   -- cursor (|) is at ':Man 3 pri|'
-  local name, sect = arg_lead, args[2]:lower()
+  local name, sect = arg_lead, arg:lower()
   return sect, sect, name
 end
 

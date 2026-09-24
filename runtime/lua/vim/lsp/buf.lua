@@ -484,7 +484,8 @@ function M.signature_help(config)
     --- @param update_win? integer
     local function show_signature(update_win)
       idx = (idx % total) + 1
-      local client, result = signatures[idx][1], signatures[idx][2]
+      local signature = assert(signatures[idx])
+      local client, result = signature[1], signature[2]
       --- @type string[]?
       local triggers =
         vim.tbl_get(client.server_capabilities, 'signatureHelpProvider', 'triggerCharacters')

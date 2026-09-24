@@ -19,7 +19,8 @@ local function colorize_hl_groups(patterns)
     end
 
     for lnum = start_lnum, end_lnum do
-      local word = vim.api.nvim_buf_get_lines(0, lnum - 1, lnum, true)[1]:match(pat.match)
+      local line = assert(vim.api.nvim_buf_get_lines(0, lnum - 1, lnum, true)[1])
+      local word = line:match(pat.match)
       if vim.fn.hlexists(word) ~= 0 then
         vim.api.nvim_buf_set_extmark(0, ns, lnum - 1, 0, { end_col = #word, hl_group = word })
       end
@@ -93,12 +94,12 @@ local function runnables()
   for _, match, metadata in query:iter_matches(root, 0, 0, -1) do
     for id, nodes in pairs(match) do
       local name = query.captures[id]
-      local node = nodes[1]
-      local start, _, end_ = node:parent():range()
+      local node = assert(nodes[1])
 
       if name == 'code' then
+        local start, _, end_ = assert(node:parent()):range()
         local code = vim.treesitter.get_node_text(node, 0)
-        local lang_id = metadata[id].lang --[[@as integer]]
+        local lang_id = assert(metadata[id]).lang --[[@as integer]]
         local lang_node = match[lang_id][1]
         local lang = vim.treesitter.get_node_text(lang_node, 0)
         for i = start + 1, end_ do

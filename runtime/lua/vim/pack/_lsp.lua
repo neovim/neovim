@@ -47,13 +47,17 @@ local function get_plug_data_at_lnum(bufnr, lnum)
   --- @type string, string, integer, integer
   local group, name, from, to
   for i = lnum, 1, -1 do
-    group = group or lines[i]:match(group_header_pattern) --[[@as string]]
+    local line = lines[i]
+    if not line then
+      return {}
+    end
+    group = group or line:match(group_header_pattern) --[[@as string]]
     -- If group is found earlier than name - `lnum` is for group header line
     -- If later - proper group header line.
     if group then
       break
     end
-    name = name or lines[i]:match(plugin_header_pattern) --[[@as string]]
+    name = name or line:match(plugin_header_pattern) --[[@as string]]
     from = (not from and name) and i or from --[[@as integer]]
   end
   if not (group and name and from) then
@@ -188,7 +192,7 @@ methods['textDocument/documentSymbol'] = function(params, callback)
   local function parse_headers(pattern, start_line, end_line, kind)
     local res, cur_match, cur_start = {}, nil, nil
     for i = start_line, end_line do
-      local m = lines[i + 1]:match(pattern)
+      local m = assert(lines[i + 1]):match(pattern)
       if m ~= nil and m ~= cur_match then
         table.insert(res, new_symbol(cur_match, cur_start, i, kind))
         cur_match, cur_start = m, i
@@ -242,7 +246,7 @@ methods['textDocument/codeAction'] = function(params, callback)
       new_action('Skip updating', 'skip_update_plugin'),
     }, 0)
   end
-  plug_data.active = vim.pack.get({ plug_data.name })[1].active
+  plug_data.active = assert(vim.pack.get({ plug_data.name })[1]).active
   vim.list_extend(res, { new_action('Delete', 'delete_plugin') })
   callback(nil, res)
 end
@@ -297,15 +301,19 @@ methods['textDocument/hover'] = function(params, callback)
 
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   local lnum = params.position.line + 1
-  local commit = lines[lnum]:match('^[<>] (%x+) │') or lines[lnum]:match('^Revision.*:%s+(%x+)')
-  local tag = lines[lnum]:match('^• (.+)$')
+  local line = lines[lnum]
+  if not line then
+    return
+  end
+  local commit = line:match('^[<>] (%x+) │') or line:match('^Revision.*:%s+(%x+)')
+  local tag = line:match('^• (.+)$')
   if commit == nil and tag == nil then
     return
   end
 
   local path, path_lnum = nil, lnum - 1
   while path == nil and path_lnum >= 1 do
-    path = lines[path_lnum]:match('^Path:%s+(.+)$')
+    path = assert(lines[path_lnum]):match('^Path:%s+(.+)$')
     path_lnum = path_lnum - 1
   end
   if path == nil then

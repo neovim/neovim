@@ -25,7 +25,7 @@ local M = {}
 
 ---@class (private) vim.lsp.linked_editing_range.LinkedEditor : vim.lsp.Capability
 ---@field active table<integer, vim.lsp.linked_editing_range.LinkedEditor>
----@field client_state? table<integer, vim.lsp.linked_editing_range.state>
+---@field client_state table<integer, vim.lsp.linked_editing_range.state>
 local LinkedEditor = {
   name = 'linked_editing_range',
   method = method,
@@ -54,6 +54,8 @@ local function update_ranges(bufnr, client_state)
   end
 
   local ns = client_state.namespace
+  -- Every mark in this namespace has an end position.
+  ---@type [integer, integer, integer, { end_row: integer, end_col: integer }][]
   local ranges = api.nvim_buf_get_extmarks(bufnr, ns, 0, -1, { details = true })
   if #ranges <= 1 then
     return

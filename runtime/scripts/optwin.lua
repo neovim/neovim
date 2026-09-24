@@ -592,7 +592,7 @@ local function update_current_line()
   if line:find('=') then
     name = line:match('^ \tset (.-)=')
   else
-    name = line:match('^ \tset ([a-z]*)'):gsub('^no', '') --[[@as string]]
+    name = assert(line:match('^ \tset ([a-z]*)')):gsub('^no', '') --[[@as string]]
   end
 
   local info = vim.api.nvim_get_option_info2(name, {})
@@ -635,7 +635,7 @@ local function current_line_set_option()
   if line:find('=') then
     name, value = line:match('^ \tset (.-)=(.*)')
   else
-    local option = line:match('^ \tset ([a-z]*)')
+    local option = assert(line:match('^ \tset ([a-z]*)'))
     name = option:gsub('^no', '') --[[@as string]]
     value = vim.startswith(option, 'no')
   end
@@ -704,7 +704,7 @@ else
     elseif line_type == 'header' then
       vim.fn.search(line, 'w')
     elseif line_type == 'opt-desc' then
-      local name = line:match('[^\t]*')
+      local name = assert(line:match('[^\t]*'))
       vim.cmd.help(("'%s'"):format(name))
     end
   end, { buf = buf })

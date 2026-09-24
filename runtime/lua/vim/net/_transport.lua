@@ -165,7 +165,7 @@ end
 
 function TransportConnect:write(msg)
   if self.connected then
-    local _, err = self.handle:write(msg)
+    local _, err = assert(self.handle):write(msg)
     if err and not self.closing then
       self.log.error('Error on handle:write: %q', err)
     end

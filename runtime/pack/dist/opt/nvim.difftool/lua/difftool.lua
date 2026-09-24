@@ -373,10 +373,10 @@ local function diff_dirs(left_dir, right_dir, opt)
     items = qf_entries,
     ---@param info {id: integer, start_idx: integer, end_idx: integer}
     quickfixtextfunc = function(info)
-      local items = vim.fn.getqflist({ id = info.id, items = 1 }).items
+      local items = assert(vim.fn.getqflist({ id = info.id, items = 1 }).items)
       local out = {}
       for item = info.start_idx, info.end_idx do
-        local entry = items[item]
+        local entry = assert(items[item])
         table.insert(out, entry.text .. ' ' .. entry.user_data.rel)
       end
       return out
@@ -432,13 +432,12 @@ function M.open(left, right, opt)
 
   --- @param bufnr? integer
   local function get_diff_entry(bufnr)
-    --- @type {idx: number, items: vim.quickfix.entry[], size: number}
     local qf_info = vim.fn.getqflist({ idx = 0, items = 1, size = 1 })
     if qf_info.size == 0 then
       return false
     end
 
-    local entry = qf_info.items[qf_info.idx]
+    local entry = assert(qf_info.items)[assert(qf_info.idx)]
     if
       not entry
       or not entry.user_data

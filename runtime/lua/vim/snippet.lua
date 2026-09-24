@@ -108,9 +108,10 @@ end
 --- @param extmark_id integer
 --- @return Range4
 local function get_extmark_range(bufnr, extmark_id)
+  -- Snippet and tabstop marks are created with both end positions.
+  --- @type [integer, integer, { end_row: integer, end_col: integer }]
   local mark = vim.api.nvim_buf_get_extmark_by_id(bufnr, snippet_ns, extmark_id, { details = true })
 
-  --- @diagnostic disable-next-line: undefined-field
   return { mark[1], mark[2], mark[3].end_row, mark[3].end_col }
 end
 
@@ -649,7 +650,7 @@ function M.jump(direction)
 
   -- Find the tabstop with the lowest range.
   local tabstops = M._session.tabstops[dest_index]
-  local dest = tabstops[1]
+  local dest = assert(tabstops[1])
   for _, tabstop in ipairs(tabstops) do
     local dest_range, range = dest:get_range(), tabstop:get_range()
     if (range[1] < dest_range[1]) or (range[1] == dest_range[1] and range[2] < dest_range[2]) then

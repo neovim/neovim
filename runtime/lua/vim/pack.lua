@@ -312,7 +312,7 @@ local function git_cmd(cmd, cwd)
   local sys_opts = { cwd = cwd, text = true, env = env, clear_env = true }
   local out = async.await(3, vim.system, cmd, sys_opts) --- @type vim.SystemCompleted
   async.await(1, vim.schedule)
-  local stderr = vim.nonnil(out.stderr, '')
+  local stderr = out.stderr or ''
   if out.code ~= 0 then
     error(stderr)
   end
@@ -460,7 +460,8 @@ end
 --- @param spec string|vim.pack.Spec
 --- @return vim.pack.SpecResolved
 local function normalize_spec(spec)
-  spec = type(spec) == 'string' and { src = spec } or spec
+  -- and/or narrowing: EmmyLuaLs/emmylua-analyzer-rust#1260
+  spec = (type(spec) == 'string' and { src = spec } or spec) --[[@as vim.pack.Spec]]
   vim.validate('spec', spec, 'table')
   vim.validate('spec.src', spec.src, is_nonempty_string, false, 'non-empty string')
   local name = spec.name or spec.src:gsub('%.git$', '')
@@ -736,7 +737,7 @@ local function confirm_install(plug_list)
   end
   local lines = {} --- @type string[]
   for i, p in ipairs(plug_list) do
-    local pad = (' '):rep(name_max_width - name_width[i] + 1)
+    local pad = (' '):rep(name_max_width - assert(name_width[i]) + 1)
     lines[i] = ('%s%sfrom %s'):format(p.spec.name, pad, p.spec.src)
   end
 
@@ -1252,8 +1253,9 @@ local function compute_feedback_lines_single(p)
       'Revision: ' .. p.info.sha_target .. version_suffix,
     }, '\n')
 
-    if p.info.update_details ~= '' then
-      local details = p.info.update_details:gsub('\n', '\n• ')
+    local update_details = assert(p.info.update_details)
+    if update_details ~= '' then
+      local details = update_details:gsub('\n', '\n• ')
       parts[#parts + 1] = '\n\nAvailable newer versions:\n• ' .. details
     end
   else
