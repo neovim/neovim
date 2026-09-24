@@ -1600,6 +1600,21 @@ To have `*.inc` files be recognized as IA64, add this to your vimrc file: >
 	:let g:filetype_inc = "ia64"
 
 
+
+ICALENDAR						*ft-icalendar-syntax*
+
+Highlighting for iCalendar files (RFC 5545), as used by calendaring
+applications with an ".ics" extension.
+
+Component boundaries (BEGIN: and END:), property names, property
+parameters and recurrence rule parts are highlighted separately.  A content
+line may be split across several lines by inserting a line break followed
+by a space or a tab; such folded lines are highlighted as a single logical
+line.
+
+Folding of components is provided by the filetype plugin and is off by
+default; see |ft-icalendar-plugin|.
+
 INFORM							*ft-inform-syntax*
 
 Inform highlighting includes symbols provided by the Inform Library, as

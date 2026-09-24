@@ -670,6 +670,7 @@ local extension = {
   hylo = 'hylo',
   iba = 'ibasic',
   ibi = 'ibasic',
+  ics = 'icalendar',
   icn = 'icon',
   idl = detect.idl,
   idr = 'idris2',

@@ -775,6 +775,15 @@ To force another recomputation, do: >
 [0] https://html.spec.whatwg.org/multipage/syntax.html#optional-tags
 [1] https://en.wikipedia.org/wiki/Dangling_else
 
+ICALENDAR			    *ft-icalendar-plugin* *g:icalendar_folding*
+
+You can enable folding of iCalendar components (BEGIN: and END: pairs)
+using |fold-expr| by: >
+
+	let g:icalendar_folding = 1
+<
+Nested components, such as a VALARM inside a VEVENT, produce nested folds.
+
 IDRIS2							*ft-idris2-plugin*
 
 By default the following options are set: >

@@ -333,59 +333,60 @@ an 50.50.390 &Syntax.HIJK.Hosts\ access :cal SetSyn("hostsaccess")<CR>
 an 50.50.400 &Syntax.HIJK.Hyper\ Builder :cal SetSyn("hb")<CR>
 an 50.50.410 &Syntax.HIJK.Hyprlang :cal SetSyn("hyprlang")<CR>
 an 50.50.430 &Syntax.HIJK.I3Config :cal SetSyn("i3config")<CR>
-an 50.50.440 &Syntax.HIJK.Icewm\ menu :cal SetSyn("icemenu")<CR>
-an 50.50.450 &Syntax.HIJK.Icon :cal SetSyn("icon")<CR>
-an 50.50.460 &Syntax.HIJK.IDL\Generic\ IDL :cal SetSyn("idl")<CR>
-an 50.50.470 &Syntax.HIJK.IDL\Microsoft\ IDL :cal SetSyn("msidl")<CR>
-an 50.50.480 &Syntax.HIJK.Idris2 :cal SetSyn("idris2")<CR>
-an 50.50.490 &Syntax.HIJK.Indent\ profile :cal SetSyn("indent")<CR>
-an 50.50.500 &Syntax.HIJK.Inform :cal SetSyn("inform")<CR>
-an 50.50.510 &Syntax.HIJK.Informix\ 4GL :cal SetSyn("fgl")<CR>
-an 50.50.520 &Syntax.HIJK.Initng :cal SetSyn("initng")<CR>
-an 50.50.530 &Syntax.HIJK.Inittab :cal SetSyn("inittab")<CR>
-an 50.50.540 &Syntax.HIJK.Inno\ setup :cal SetSyn("iss")<CR>
-an 50.50.550 &Syntax.HIJK.Innovation\ Data\ Processing.Upstream\ dat :cal SetSyn("upstreamdat")<CR>
-an 50.50.560 &Syntax.HIJK.Innovation\ Data\ Processing.Upstream\ log :cal SetSyn("upstreamlog")<CR>
-an 50.50.570 &Syntax.HIJK.Innovation\ Data\ Processing.Upstream\ rpt :cal SetSyn("upstreamrpt")<CR>
-an 50.50.580 &Syntax.HIJK.Innovation\ Data\ Processing.Upstream\ Install\ log :cal SetSyn("upstreaminstalllog")<CR>
-an 50.50.590 &Syntax.HIJK.Innovation\ Data\ Processing.Usserver\ log :cal SetSyn("usserverlog")<CR>
-an 50.50.600 &Syntax.HIJK.Innovation\ Data\ Processing.USW2KAgt\ log :cal SetSyn("usw2kagtlog")<CR>
-an 50.50.610 &Syntax.HIJK.InstallShield\ script :cal SetSyn("ishd")<CR>
-an 50.50.620 &Syntax.HIJK.Interactive\ Data\ Lang :cal SetSyn("idlang")<CR>
-an 50.50.630 &Syntax.HIJK.Ipkg :cal SetSyn("ipkg")<CR>
-an 50.50.640 &Syntax.HIJK.IPfilter :cal SetSyn("ipfilter")<CR>
-an 50.50.660 &Syntax.HIJK.J :cal SetSyn("j")<CR>
-an 50.50.670 &Syntax.HIJK.JAL :cal SetSyn("jal")<CR>
-an 50.50.680 &Syntax.HIJK.JAM :cal SetSyn("jam")<CR>
-an 50.50.690 &Syntax.HIJK.Jargon :cal SetSyn("jargon")<CR>
-an 50.50.700 &Syntax.HIJK.Java.Java :cal SetSyn("java")<CR>
-an 50.50.710 &Syntax.HIJK.Java.JavaCC :cal SetSyn("javacc")<CR>
-an 50.50.720 &Syntax.HIJK.Java.Java\ Server\ Pages :cal SetSyn("jsp")<CR>
-an 50.50.730 &Syntax.HIJK.Java.Java\ Properties :cal SetSyn("jproperties")<CR>
-an 50.50.740 &Syntax.HIJK.JavaScript :cal SetSyn("javascript")<CR>
-an 50.50.750 &Syntax.HIJK.JavaScriptReact :cal SetSyn("javascriptreact")<CR>
-an 50.50.760 &Syntax.HIJK.Jess :cal SetSyn("jess")<CR>
-an 50.50.770 &Syntax.HIJK.Jgraph :cal SetSyn("jgraph")<CR>
-an 50.50.780 &Syntax.HIJK.Jinja :cal SetSyn("jinja")<CR>
-an 50.50.790 &Syntax.HIJK.JJdescription :cal SetSyn("jjdescription")<CR>
-an 50.50.800 &Syntax.HIJK.Jovial :cal SetSyn("jovial")<CR>
-an 50.50.810 &Syntax.HIJK.JQ :cal SetSyn("jq")<CR>
-an 50.50.820 &Syntax.HIJK.JSON.JSON :cal SetSyn("json")<CR>
-an 50.50.830 &Syntax.HIJK.JSON.JSON-LD :cal SetSyn("jsonld")<CR>
-an 50.50.840 &Syntax.HIJK.JSON.JSON5 :cal SetSyn("json5")<CR>
-an 50.50.850 &Syntax.HIJK.JSON.JSONC :cal SetSyn("jsonc")<CR>
-an 50.50.860 &Syntax.HIJK.Julia :cal SetSyn("julia")<CR>
-an 50.50.870 &Syntax.HIJK.Just :cal SetSyn("just")<CR>
-an 50.50.890 &Syntax.HIJK.Karel :cal SetSyn("karel")<CR>
-an 50.50.900 &Syntax.HIJK.Kconfig :cal SetSyn("kconfig")<CR>
-an 50.50.910 &Syntax.HIJK.KDE\ script :cal SetSyn("kscript")<CR>
-an 50.50.920 &Syntax.HIJK.Kdl :cal SetSyn("kdl")<CR>
-an 50.50.930 &Syntax.HIJK.Kimwitu++ :cal SetSyn("kwt")<CR>
-an 50.50.940 &Syntax.HIJK.Kitty :cal SetSyn("kitty")<CR>
-an 50.50.950 &Syntax.HIJK.Kivy :cal SetSyn("kivy")<CR>
-an 50.50.960 &Syntax.HIJK.KixTart :cal SetSyn("kix")<CR>
-an 50.50.970 &Syntax.HIJK.Kotlin :cal SetSyn("kotlin")<CR>
-an 50.50.980 &Syntax.HIJK.Krl :cal SetSyn("krl")<CR>
+an 50.50.440 &Syntax.HIJK.Icalendar :cal SetSyn("icalendar")<CR>
+an 50.50.450 &Syntax.HIJK.Icewm\ menu :cal SetSyn("icemenu")<CR>
+an 50.50.460 &Syntax.HIJK.Icon :cal SetSyn("icon")<CR>
+an 50.50.470 &Syntax.HIJK.IDL\Generic\ IDL :cal SetSyn("idl")<CR>
+an 50.50.480 &Syntax.HIJK.IDL\Microsoft\ IDL :cal SetSyn("msidl")<CR>
+an 50.50.490 &Syntax.HIJK.Idris2 :cal SetSyn("idris2")<CR>
+an 50.50.500 &Syntax.HIJK.Indent\ profile :cal SetSyn("indent")<CR>
+an 50.50.510 &Syntax.HIJK.Inform :cal SetSyn("inform")<CR>
+an 50.50.520 &Syntax.HIJK.Informix\ 4GL :cal SetSyn("fgl")<CR>
+an 50.50.530 &Syntax.HIJK.Initng :cal SetSyn("initng")<CR>
+an 50.50.540 &Syntax.HIJK.Inittab :cal SetSyn("inittab")<CR>
+an 50.50.550 &Syntax.HIJK.Inno\ setup :cal SetSyn("iss")<CR>
+an 50.50.560 &Syntax.HIJK.Innovation\ Data\ Processing.Upstream\ dat :cal SetSyn("upstreamdat")<CR>
+an 50.50.570 &Syntax.HIJK.Innovation\ Data\ Processing.Upstream\ log :cal SetSyn("upstreamlog")<CR>
+an 50.50.580 &Syntax.HIJK.Innovation\ Data\ Processing.Upstream\ rpt :cal SetSyn("upstreamrpt")<CR>
+an 50.50.590 &Syntax.HIJK.Innovation\ Data\ Processing.Upstream\ Install\ log :cal SetSyn("upstreaminstalllog")<CR>
+an 50.50.600 &Syntax.HIJK.Innovation\ Data\ Processing.Usserver\ log :cal SetSyn("usserverlog")<CR>
+an 50.50.610 &Syntax.HIJK.Innovation\ Data\ Processing.USW2KAgt\ log :cal SetSyn("usw2kagtlog")<CR>
+an 50.50.620 &Syntax.HIJK.InstallShield\ script :cal SetSyn("ishd")<CR>
+an 50.50.630 &Syntax.HIJK.Interactive\ Data\ Lang :cal SetSyn("idlang")<CR>
+an 50.50.640 &Syntax.HIJK.Ipkg :cal SetSyn("ipkg")<CR>
+an 50.50.650 &Syntax.HIJK.IPfilter :cal SetSyn("ipfilter")<CR>
+an 50.50.670 &Syntax.HIJK.J :cal SetSyn("j")<CR>
+an 50.50.680 &Syntax.HIJK.JAL :cal SetSyn("jal")<CR>
+an 50.50.690 &Syntax.HIJK.JAM :cal SetSyn("jam")<CR>
+an 50.50.700 &Syntax.HIJK.Jargon :cal SetSyn("jargon")<CR>
+an 50.50.710 &Syntax.HIJK.Java.Java :cal SetSyn("java")<CR>
+an 50.50.720 &Syntax.HIJK.Java.JavaCC :cal SetSyn("javacc")<CR>
+an 50.50.730 &Syntax.HIJK.Java.Java\ Server\ Pages :cal SetSyn("jsp")<CR>
+an 50.50.740 &Syntax.HIJK.Java.Java\ Properties :cal SetSyn("jproperties")<CR>
+an 50.50.750 &Syntax.HIJK.JavaScript :cal SetSyn("javascript")<CR>
+an 50.50.760 &Syntax.HIJK.JavaScriptReact :cal SetSyn("javascriptreact")<CR>
+an 50.50.770 &Syntax.HIJK.Jess :cal SetSyn("jess")<CR>
+an 50.50.780 &Syntax.HIJK.Jgraph :cal SetSyn("jgraph")<CR>
+an 50.50.790 &Syntax.HIJK.Jinja :cal SetSyn("jinja")<CR>
+an 50.50.800 &Syntax.HIJK.JJdescription :cal SetSyn("jjdescription")<CR>
+an 50.50.810 &Syntax.HIJK.Jovial :cal SetSyn("jovial")<CR>
+an 50.50.820 &Syntax.HIJK.JQ :cal SetSyn("jq")<CR>
+an 50.50.830 &Syntax.HIJK.JSON.JSON :cal SetSyn("json")<CR>
+an 50.50.840 &Syntax.HIJK.JSON.JSON-LD :cal SetSyn("jsonld")<CR>
+an 50.50.850 &Syntax.HIJK.JSON.JSON5 :cal SetSyn("json5")<CR>
+an 50.50.860 &Syntax.HIJK.JSON.JSONC :cal SetSyn("jsonc")<CR>
+an 50.50.870 &Syntax.HIJK.Julia :cal SetSyn("julia")<CR>
+an 50.50.880 &Syntax.HIJK.Just :cal SetSyn("just")<CR>
+an 50.50.900 &Syntax.HIJK.Karel :cal SetSyn("karel")<CR>
+an 50.50.910 &Syntax.HIJK.Kconfig :cal SetSyn("kconfig")<CR>
+an 50.50.920 &Syntax.HIJK.KDE\ script :cal SetSyn("kscript")<CR>
+an 50.50.930 &Syntax.HIJK.Kdl :cal SetSyn("kdl")<CR>
+an 50.50.940 &Syntax.HIJK.Kimwitu++ :cal SetSyn("kwt")<CR>
+an 50.50.950 &Syntax.HIJK.Kitty :cal SetSyn("kitty")<CR>
+an 50.50.960 &Syntax.HIJK.Kivy :cal SetSyn("kivy")<CR>
+an 50.50.970 &Syntax.HIJK.KixTart :cal SetSyn("kix")<CR>
+an 50.50.980 &Syntax.HIJK.Kotlin :cal SetSyn("kotlin")<CR>
+an 50.50.990 &Syntax.HIJK.Krl :cal SetSyn("krl")<CR>
 an 50.60.100 &Syntax.L.Lace :cal SetSyn("lace")<CR>
 an 50.60.110 &Syntax.L.LambdaProlog :cal SetSyn("lprolog")<CR>
 an 50.60.120 &Syntax.L.Latte :cal SetSyn("latte")<CR>
