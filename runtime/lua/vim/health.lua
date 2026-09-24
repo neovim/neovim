@@ -575,3 +575,15 @@ function M._check(eap)
 end
 
 return M
+
+vim.api.nvim_create_autocmd('BufLeave', {
+  group = vim.api.nvim_create_augroup('health_close_float', { clear = true }),
+  callback = function()
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+      local buf = vim.api.nvim_win_get_buf(win)
+      if vim.bo[buf].filetype == 'checkhealth' and vim.api.nvim_win_get_config(win).relative ~= '' then
+        vim.api.nvim_win_close(win, true)
+      end
+    end
+  end,
+})
