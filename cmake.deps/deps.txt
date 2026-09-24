@@ -1,6 +1,6 @@
 # NOTE: Also update the find_package() call if bumping the minimum.
-LIBUV_URL https://github.com/libuv/libuv/archive/v1.52.1.tar.gz
-LIBUV_SHA256 478baf2599bfbc882c355288c9cb6f92e0e7dda435fa04031fa5b607cf3f414c
+LIBUV_URL https://github.com/libuv/libuv/archive/v1.53.0.tar.gz
+LIBUV_SHA256 279f3f67a24bb9921fe999ca6cd5e332fade8d515873ef9ba054b70e70a31d9e
 
 LUAJIT_URL https://github.com/luajit/luajit/archive/24c20c94e7db195b640854619577441f9b4bc6be.tar.gz
 LUAJIT_SHA256 178c656b62bb796e536a23f1d3bb09e1824e4dd28eaf2a4758b295ac328e32e6
