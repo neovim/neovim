@@ -1475,7 +1475,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, size_t patlen
       goto end_do_search;
     }
     pat++;
-    patlen--;
+    patlen -= 2;  // ';' and the search direction were skipped
   }
 
   if (options & SEARCH_MARK) {

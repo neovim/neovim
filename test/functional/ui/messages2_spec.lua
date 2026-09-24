@@ -1291,6 +1291,18 @@ describe('messages2', function()
     ]])
   end)
 
+  it('search count of a ";" repeated search #41929', function()
+    command('set ruler showcmd shortmess-=S | call setline(1, ["foo", "bar", "foo"])')
+    feed('/foo/;/foo<CR>')
+    screen:expect([[
+      {10:^foo}                                                  |
+      bar                                                  |
+      {10:foo}                                                  |
+      {1:~                                                    }|*10
+      /foo           W [1/2]             1,1            All|
+    ]])
+  end)
+
   it('crops long messages to make place for ruler', function()
     command('set noruler | echo "-"->repeat(&columns)')
     screen:expect([[
