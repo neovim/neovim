@@ -160,7 +160,8 @@ describe('startup', function()
           nvim args: 7
           lua args: { "-arg1", "--exitcode", "73", "--arg2",
             [0] = "test/functional/fixtures/startup.lua"
-          }]],
+          }
+          ]],
         {},
         { '-arg1', '--exitcode', '73', '--arg2' }
       )
@@ -257,9 +258,27 @@ describe('startup', function()
       assert_l_out(('k'):rep(1234) .. '\n', nil, nil, '-', "print(('k'):rep(1234))")
     end)
 
-    it('does not add newline when unnecessary', function()
+    it('does add the expected number of newlines', function()
       assert_l_out('', nil, nil, '-', '')
-      assert_l_out('foobar\n', nil, nil, '-', [[print('foobar\n')]])
+
+      assert_l_out('\n', nil, nil, '-', [[print()]])
+      assert_l_out('\n\n', nil, nil, '-', [[print('\n')]])
+
+      assert_l_out('foobar\n', nil, nil, '-', [[print('foobar')]])
+      assert_l_out('foobar\n\n', nil, nil, '-', [[print('foobar\n')]])
+
+      assert_l_out('foo\nbar\n', nil, nil, '-', [[print('foo')print('bar')]])
+      assert_l_out('foo\n\nbar\n', nil, nil, '-', [[print('foo')print()print('bar')]])
+    end)
+
+    it('preserves escape sequences', function()
+      assert_l_out(
+        'this is \027[31mRED FOR AN AMAZING REASON\027[0m\n',
+        nil,
+        nil,
+        '-',
+        [[print('this is \027[31mRED FOR AN AMAZING REASON\027[0m')]]
+      )
     end)
 
     it('sets _G.arg', function()
@@ -376,7 +395,7 @@ describe('startup', function()
       '+q',
     })
 
-    eq(('A'):rep(1234) .. '\n' .. ('B'):rep(1234) .. '\n' .. ('C'):rep(1234), out)
+    eq(('A'):rep(1234) .. '\n' .. ('B'):rep(1234) .. '\n' .. ('C'):rep(1234) .. '\n', out)
   end)
 
   it('pipe at both ends: has("ttyin")==0 has("ttyout")==0', function()

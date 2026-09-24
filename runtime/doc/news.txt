@@ -586,6 +586,10 @@ These existing features changed their behavior.
   half-width Katakana with voicing marks ｶﾞ. The TUI renders these in
   a safe way which also supports terminals which consider these to be
   single-width.
+• in script mode |-l|, |print()| now behaves more similar to standalone
+  lua. Printing is done to stdout, and empty lines are not stripped.
+  No translation of special characters is done, so escape sequences
+  can be used when printing to a terminal.
 
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
