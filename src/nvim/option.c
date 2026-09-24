@@ -2089,8 +2089,10 @@ void set_option_sctx(OptIndex opt_idx, int opt_flags, sctx_T script_ctx)
 }
 
 /// Execute OptionSet autocmd now (not deferred).
+///
+/// @param winid Window handle for `ev.win`, see apply_autocmds_group().
 void apply_optionset_autocmd_now(OptIndex opt_idx, int opt_flags, Object oldval, Object oldval_g,
-                                 Object oldval_l, Object newval, const char *errmsg)
+                                 Object oldval_l, Object newval, const char *errmsg, handle_T winid)
 {
   // Don't do this while starting up, failure or recursively.
   if (starting || errmsg != NULL || *get_vim_var_str(VV_OPTION_TYPE) != NUL) {
@@ -2125,7 +2127,8 @@ void apply_optionset_autocmd_now(OptIndex opt_idx, int opt_flags, Object oldval,
     set_vim_var_string(VV_OPTION_COMMAND, S_LEN("modeline"));
     set_vim_var_tv(VV_OPTION_OLDLOCAL, &oldval_tv);
   }
-  apply_autocmds(EVENT_OPTIONSET, options[opt_idx].fullname, NULL, false, NULL);
+  apply_autocmds_group(EVENT_OPTIONSET, options[opt_idx].fullname, NULL, false, AUGROUP_ALL, NULL,
+                       winid, NULL, NULL, false);
   reset_v_option_vars();
 
   tv_clear(&oldval_tv);
@@ -2145,7 +2148,8 @@ static void apply_optionset_autocmd(OptIndex opt_idx, int opt_flags, Object oldv
     aucmd_defer_modified(curbuf, newval.data.boolean);
     return;
   }
-  apply_optionset_autocmd_now(opt_idx, opt_flags, oldval, oldval_g, oldval_l, newval, errmsg);
+  apply_optionset_autocmd_now(opt_idx, opt_flags, oldval, oldval_g, oldval_l, newval, errmsg,
+                              aucmd_win_handle(curwin));
 }
 
 /// Process the updated 'arabic' option value.
@@ -2238,7 +2242,7 @@ static const char *did_set_buflisted(optset_T *args)
   // when 'buflisted' changes, trigger autocommands
   if (args->os_oldval.data.boolean != buf->b_p_bl) {
     apply_autocmds(buf->b_p_bl ? EVENT_BUFADD : EVENT_BUFDELETE,
-                   NULL, NULL, true, buf);
+                   NULL, NULL, true, buf, curwin);
   }
   return NULL;
 }
@@ -2992,7 +2996,7 @@ static void do_syntax_autocmd(buf_T *buf, bool value_changed)
   // Only pass true for "force" when the value changed or not used
   // recursively, to avoid endless recurrence.
   apply_autocmds(EVENT_SYNTAX, buf->b_p_syn, buf->b_fname,
-                 value_changed || syn_recursive == 1, buf);
+                 value_changed || syn_recursive == 1, buf, curwin);
   syn_recursive--;
 }
 
