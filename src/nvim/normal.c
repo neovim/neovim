@@ -961,7 +961,7 @@ static bool normal_get_command_count(NormalState *s)
   return false;
 }
 
-static void normal_finish_command(NormalState *s)
+static void normal_finish_command(NormalState *s, CmdFrame *frame)
 {
   bool did_visual_op = false;
 
@@ -1022,11 +1022,6 @@ normal_end:
     ui_cursor_shape();                  // may show different cursor shape
   }
 
-  if (s->oa.op_type == OP_NOP && s->oa.regname == 0
-      && s->ca.cmdchar != K_EVENT) {
-    clear_showcmd();
-  }
-
   checkpcmark();                // check if we moved since setting pcmark
 
   mb_check_adjust_col(curwin);  // #6203
@@ -1068,6 +1063,13 @@ normal_end:
 
   // Save count before an operator for next time
   opcount = s->ca.opcount;
+
+  atom_cmd_end(&s->ca, frame);
+
+  // Redraw 'showcmd' AFTER all multicursor effects have settled (atom_cmd_end).
+  if (s->oa.op_type == OP_NOP && s->oa.regname == 0 && s->ca.cmdchar != K_EVENT) {
+    clear_showcmd();
+  }
 }
 
 static int normal_execute(VimState *state, int key)
@@ -1246,8 +1248,7 @@ static int normal_execute(VimState *state, int key)
   (nv_cmds[s->idx].cmd_func)(&s->ca);
 
 finish:
-  normal_finish_command(s);
-  atom_cmd_end(&s->ca, &frame);
+  normal_finish_command(s, &frame);
   xfree(s->ca.searchbuf);
   return 1;
 }
@@ -2006,6 +2007,10 @@ void showcmd_update_clear_state(void)
 /// Displays 'showcmd' info, and a ("2×") hint if multicursor is active.
 void display_showcmd(void)
 {
+  if (mc_replaying()) {
+    return;  // Skip useless/broken redraws (n * cursors) during multicursor cascade.
+  }
+
   showcmd_update_clear_state();
 
   if (*p_sloc == 's') {
