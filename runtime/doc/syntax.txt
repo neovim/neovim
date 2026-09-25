@@ -1600,6 +1600,21 @@ To have `*.inc` files be recognized as IA64, add this to your vimrc file: >
 	:let g:filetype_inc = "ia64"
 
 
+
+ICALENDAR						*ft-icalendar-syntax*
+
+Highlighting for iCalendar files (RFC 5545), as used by calendaring
+applications with an ".ics" extension.
+
+Component boundaries (BEGIN: and END:), property names, property
+parameters and recurrence rule parts are highlighted separately.  A content
+line may be split across several lines by inserting a line break followed
+by a space or a tab; such folded lines are highlighted as a single logical
+line.
+
+Folding of components is provided by the filetype plugin and is off by
+default; see |ft-icalendar-plugin|.
+
 INFORM							*ft-inform-syntax*
 
 Inform highlighting includes symbols provided by the Inform Library, as
@@ -1820,11 +1835,11 @@ cycles for such a feature to become either integrated into the platform or
 withdrawn from this effort.  To cater for early adopters, there is optional
 support in Vim for syntax related preview features that are implemented.  You
 can request it by specifying a list of preview feature numbers as follows: >
-	:let g:java_syntax_previews = [530]
+	:let g:java_syntax_previews = [532]
 
 The supported JEP numbers are to be drawn from this table:
 	`430`: String Templates [JDK 21]
-	`530`: Primitive types in Patterns, instanceof, and switch
+	`532`: Primitive types in Patterns, instanceof, and switch
 
 Note that as soon as the particular preview feature will have been integrated
 into the Java platform, its entry will be removed from the table and related
