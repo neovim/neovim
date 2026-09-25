@@ -105,7 +105,7 @@ describe('messages', function()
 
     feed('v')
     screen:expect([[
-      ^foobar                                                      |
+      {17:^f}oobar                                                      |
       {1:~                                                           }|*8
       {5:-- VISUAL --}                                                |
     ]])

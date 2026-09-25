@@ -1896,7 +1896,7 @@ describe('multicursor', function()
       screen:expect([[
         {17:longword} x                    |
         {17:ab} y                          |
-        {17:mediu}^m z                      |
+        {17:mediu^m} z                      |
         {1:~                             }|*2
         {5:-- VISUAL --}                  |
       ]])
@@ -1905,7 +1905,7 @@ describe('multicursor', function()
       screen:expect([[
         {17:longword x}                    |
         {17:ab y}                          |
-        {17:medium }^z                      |
+        {17:medium ^z}                      |
         {1:~                             }|*2
         {5:-- VISUAL --}                  |
       ]])
@@ -1929,7 +1929,7 @@ describe('multicursor', function()
         {17:aaaa}                          |
         {17:bbbb}                          |
         {17:cccc}                          |
-        ^d{17:ddd}                          |
+        {17:^dddd}                          |
         {1:~                             }|
         {5:-- VISUAL LINE --}             |
       ]])
@@ -1941,7 +1941,7 @@ describe('multicursor', function()
         {17:aa}aa                          |
         {17:bb}bb                          |
         c{17:cc}c                          |
-        d{17:d}^dd                          |
+        d{17:d^d}d                          |
         {1:~                             }|
         {5:-- VISUAL BLOCK --}            |
       ]])
@@ -1956,7 +1956,7 @@ describe('multicursor', function()
       screen:expect([[
         {17:aa b}b cc dd                   |
         {17:ee f}f gg hh                   |
-        {17:ii }^jj kk ll                   |
+        {17:ii ^j}j kk ll                   |
         {1:~                             }|*2
         {5:-- VISUAL --}                  |
       ]])
@@ -1981,7 +1981,7 @@ describe('multicursor', function()
       feed('gv')
       screen:expect([[
         {17:c}                             |
-        ^f                             |
+        {17:^f}                             |
         {1:~                             }|*3
         {5:-- VISUAL LINE --}             |
       ]])
@@ -2021,7 +2021,7 @@ describe('multicursor', function()
       screen:expect([[
         a{17:aaa}aaa                       |
         b{17:bbb}bbb                       |
-        c{17:cc}^cccc                       |
+        c{17:cc^c}ccc                       |
         {1:~                             }|*2
         {5:-- VISUAL --}                  |
       ]])
@@ -2033,7 +2033,7 @@ describe('multicursor', function()
       screen:expect([[
         a{17:aaa}                          |
         b{17:bbb}                          |
-        c{17:cc}^c                          |
+        c{17:cc^c}                          |
         {1:~                             }|*2
         {5:-- VISUAL --}                  |
       ]])
@@ -2055,7 +2055,7 @@ describe('multicursor', function()
       screen:expect([[
         {17:aaa}aaaa                       |
         {17:bbb}bbbb                       |
-        {17:cc}^ccccc                       |
+        {17:cc^c}cccc                       |
         {1:~                             }|*2
         {5:-- VISUAL --}                  |
       ]])
@@ -2077,7 +2077,7 @@ describe('multicursor', function()
       screen:expect([[
         aa{17:aa}aaa                       |
         bb{17:bb}bbb                       |
-        cc{17:c}^cccc                       |
+        cc{17:c^c}ccc                       |
         {1:~                             }|*2
         {5:-- VISUAL --}                  |
       ]])
@@ -2094,7 +2094,7 @@ describe('multicursor', function()
       screen:expect([[
         b{17:a}cd                          |
         f{17:e}gh                          |
-        j^ikl                          |
+        j{17:^i}kl                          |
         {1:~                             }|*2
         {5:-- VISUAL --}                  |
       ]])
@@ -2211,7 +2211,7 @@ describe('multicursor', function()
         screen:expect([[
           {17:longword} x                    |
           {17:ab} y                          |
-          {17:mediu}^m z                      |
+          {17:mediu^m} z                      |
           {1:~                             }|*2
           {5:-- VISUAL --}                  |
         ]])
@@ -2252,7 +2252,7 @@ describe('multicursor', function()
       screen:expect([[
         a {17:longword} x                  |
         bbbb {17:ab} y                     |
-        cc {17:mediu}^m z                   |
+        cc {17:mediu^m} z                   |
         {1:~                             }|*2
         {5:-- VISUAL --}                  |
       ]])
@@ -2272,14 +2272,14 @@ describe('multicursor', function()
       feed('viw')
       screen:expect([[
         {17:foo}.bar tail                  |
-        {17:wor}^d tail                     |
+        {17:wor^d} tail                     |
         {1:~                             }|*2
         {5:-- VISUAL --}                  |
       ]])
       feed('Z')
       screen:expect([[
         {17:foo.bar} tail                  |
-        {17:wor}^d tail                     |
+        {17:wor^d} tail                     |
         {1:~                             }|*2
         {5:-- VISUAL --}                  |
       ]])
@@ -2341,7 +2341,7 @@ describe('multicursor', function()
       screen:expect([[
         aaa {100:b}{30:b}b ccc                             |
         ddd {100:e}{30:e}e fff                             |
-        ggg {17:h}^hh iii                             |
+        ggg {17:h^h}h iii                             |
         {1:~                                       }|*2
         {5:-- VISUAL --}                            |
       ]])
@@ -2349,7 +2349,7 @@ describe('multicursor', function()
       screen:expect([[
         aaa {30:b}{100:b}b ccc                             |
         ddd {30:e}{100:e}e fff                             |
-        ggg ^h{17:h}h iii                             |
+        ggg {17:^hh}h iii                             |
         {1:~                                       }|*2
         {5:-- VISUAL --}                            |
       ]])
@@ -3438,7 +3438,7 @@ describe('multicursor', function()
       screen:expect([[
         foo(one, {17:two})                 |
         bar(three, {17:four})              |
-        baz(five, {17:si}^x)                |
+        baz(five, {17:si^x})                |
         {1:~                             }|*2
         {5:-- VISUAL --}                  |
       ]])
@@ -3446,7 +3446,7 @@ describe('multicursor', function()
       screen:expect([[
         foo{17:(one, two)}                 |
         bar{17:(three, four)}              |
-        baz{17:(five, six}^)                |
+        baz{17:(five, six^)}                |
         {1:~                             }|*2
         {5:-- VISUAL --}                  |
       ]])

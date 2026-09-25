@@ -27,7 +27,7 @@ describe('matchparen', function()
       {17:}}                             |
       {17:{}                             |
       {17:f}                             |
-      ^g                             |
+      {17:^g}                             |
       }                             |
       {5:-- VISUAL LINE --}             |
     ]])

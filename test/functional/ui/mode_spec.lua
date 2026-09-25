@@ -118,7 +118,7 @@ describe('ui mode_change event', function()
       grid = [[
       {17:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {17:aaaaaaaaaaaaaaaaaaaa}                                        |
-      ^b{17:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}|
+      {17:^bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}|
       {17:bbbbbbbbbbbbbbbbbbbb}                                        |
       {1:~                                                           }|
       {5:-- VISUAL LINE --}                                           |
@@ -286,7 +286,7 @@ describe('ui mode_change event', function()
     feed('v')
     screen:expect {
       grid = [[
-      tex^t                     |
+      tex{17:^t}                     |
       {1:~                        }|*2
       {5:-- VISUAL --}             |
     ]],

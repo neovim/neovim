@@ -390,7 +390,7 @@ describe("'spell'", function()
     ]])
     feed('V')
     screen:expect([[
-      {18:^/}{105:/ Here is a }{104:misspeld}{105: word.}                |
+      {105:^// Here is a }{104:misspeld}{105: word.}                |
       {1:~                                          }|
       {5:-- VISUAL LINE --}                          |
     ]])

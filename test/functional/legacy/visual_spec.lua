@@ -26,7 +26,7 @@ describe('Visual highlight', function()
 
     feed('<C-V>gg$')
     screen:expect([[
-      {17:aaaaaa}^                                            |
+      {17:aaaaaa^ }                                           |
       {17:bbbb   }                                           |
       {17:cc     }                                           |
       {1:~                                                 }|*2
@@ -37,7 +37,7 @@ describe('Visual highlight', function()
     screen:expect([[
       {17:aaaaaa }                                           |
       {17:bbbb   }                                           |
-      {17:cc}^ {17:    }                                           |
+      {17:cc^     }                                           |
       {1:~                                                 }|*2
       {5:-- VISUAL BLOCK --}                                |
     ]])
@@ -52,7 +52,7 @@ describe('Visual highlight', function()
     ]])
 
     screen:expect([[
-      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa^a|
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{17:^a}|
       {1:+}{17:aaaa}aaaaaa                                       |
       {1:~                                                 }|*3
       {5:-- VISUAL --}                                      |
