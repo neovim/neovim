@@ -335,7 +335,6 @@ function M.config(buf)
     if val ~= 'unset' then
       local func = M.properties[opt]
       if func then
-        --- @type boolean, string?
         local ok, err = pcall(func, buf, val, opts)
         if ok then
           applied[opt] = val

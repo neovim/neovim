@@ -411,8 +411,8 @@ local function on_range_impl(
     while cmp_lt(next_row, next_col, range_end_row, range_end_col) do
       local capture, node, metadata, match = state.iter(range_end_row, range_end_col)
       if not node then
-        next_row = math.huge
-        next_col = math.huge
+        next_row = vim._maxint
+        next_col = vim._maxint
         break
       end
 

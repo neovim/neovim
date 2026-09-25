@@ -175,7 +175,6 @@ local function read_cachefile(cname)
     return
   end
 
-  --- @type integer[]|{[0]:integer}
   local header = vim.split(data:sub(1, zero - 1), ',')
   local version = vim._tointeger(header[1])
   if version ~= VERSION then

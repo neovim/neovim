@@ -497,9 +497,9 @@ function M.get(opts)
       -- Note that we do not intend for `on_accept`
       -- to take effect when there is no current item.
       if on_accept then
-        item = on_accept(item)
-        if item then
-          completor:accept(item)
+        local accepted_item = on_accept(item)
+        if accepted_item then
+          completor:accept(accepted_item)
         end
       else
         completor:accept(item)

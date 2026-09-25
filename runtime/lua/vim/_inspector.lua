@@ -140,11 +140,11 @@ function vim.inspect_pos(buf, row, col, filter)
   end
 
   -- All overlapping extmarks at this position:
-  local extmarks = vim.api.nvim_buf_get_extmarks(buf, -1, { row, col }, { row, col }, {
+  local marks = vim.api.nvim_buf_get_extmarks(buf, -1, { row, col }, { row, col }, {
     details = true,
     overlap = true,
   })
-  extmarks = vim.tbl_map(to_map, extmarks)
+  local extmarks = vim.tbl_map(to_map, marks)
   extmarks = vim.tbl_filter(exclude_end_col, extmarks)
 
   if filter.semantic_tokens then

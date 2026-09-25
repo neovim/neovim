@@ -42,7 +42,7 @@ function M.open(opts, ...)
   -- Support old (bufnr, opts) signature
   local bufnr --- @type integer?
   if opts == nil or type(opts) == 'number' then
-    bufnr = opts
+    bufnr = opts --[[@as integer?]]
     opts = ... --- @type vim.diagnostic.Opts.Float
   else
     vim.validate('opts', opts, 'table', true)

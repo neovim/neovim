@@ -2517,7 +2517,7 @@ M.funcs = {
     name = 'expand',
     params = {
       { 'string', 'string' },
-      { 'nosuf', 'boolean' },
+      { 'nosuf', 'boolean?' },
       { 'list', 'true|number|string|table' },
     },
     returns = 'string|string[]',

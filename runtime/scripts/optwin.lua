@@ -590,7 +590,7 @@ local function update_current_line()
   ---@type string
   local name
   if line:find('=') then
-    name = line:match('^ \tset (.-)=')
+    name = assert(line:match('^ \tset (.-)='))
   else
     name = assert(line:match('^ \tset ([a-z]*)')):gsub('^no', '') --[[@as string]]
   end
@@ -628,9 +628,9 @@ local function current_line_set_option()
     return
   end
 
-  ---@type string
+  ---@type string?
   local name
-  ---@type string|boolean|integer
+  ---@type string|boolean|integer?
   local value
   if line:find('=') then
     name, value = line:match('^ \tset (.-)=(.*)')
@@ -639,11 +639,12 @@ local function current_line_set_option()
     name = option:gsub('^no', '') --[[@as string]]
     value = vim.startswith(option, 'no')
   end
+  assert(name and value ~= nil)
 
   local info = vim.api.nvim_get_option_info2(name, {})
 
   if info.type == 'number' then
-    value = assert(tonumber(value), value .. ' is not a number')
+    value = vim._assert_integer(value)
   end
 
   if info.global_local or info.scope == 'global' or info.scope == 'tab' then

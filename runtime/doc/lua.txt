@@ -2511,7 +2511,7 @@ vim.filetype.inspect()                                *vim.filetype.inspect()*
     given pattern.
 
     Return: ~
-        (`table<string, table<string, vim.filetype.mapping|table<string, vim.filetype.mapping>>>`)
+        (`{ extension: vim.filetype.mapping, filename: vim.filetype.mapping, pattern: table<string, vim.filetype.mapping> }`)
 
 vim.filetype.match({args})                              *vim.filetype.match()*
     Perform filetype detection.

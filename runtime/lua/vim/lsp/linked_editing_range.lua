@@ -55,8 +55,8 @@ local function update_ranges(bufnr, client_state)
 
   local ns = client_state.namespace
   -- Every mark in this namespace has an end position.
-  ---@type [integer, integer, integer, { end_row: integer, end_col: integer }][]
   local ranges = api.nvim_buf_get_extmarks(bufnr, ns, 0, -1, { details = true })
+  ---@cast ranges [integer, integer, integer, { end_row: integer, end_col: integer }][]
   if #ranges <= 1 then
     return
   end

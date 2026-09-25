@@ -208,6 +208,8 @@ function M.enable(opts)
   validate_old_cfg('pager_char', opts.pager_char, 'pager')
   validate_old_cfg('msg.msg.timeout', (msg.msg or {}).timeout, 'timeout')
   validate_old_cfg('msg.cmd.height', (msg.cmd or {}).height, 'maxheight')
+  -- The deep merge preserves the required defaults in M.cfg.
+  ---@diagnostic disable-next-line: assign-type-mismatch
   M.cfg = vim.tbl_deep_extend('keep', opts, M.cfg)
   M.cfg.msg.targets = type(M.cfg.msg.targets) == 'table' and M.cfg.msg.targets
     or { default = M.cfg.msg.targets }

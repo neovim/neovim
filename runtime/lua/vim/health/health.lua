@@ -641,7 +641,7 @@ local function check_external_tools()
         'http_proxy',
         'all_proxy',
         'no_proxy',
-      }) do
+      } --[[@as string[] ]]) do
         local val = vim.env[var]
         if not val then
           var = var:upper()

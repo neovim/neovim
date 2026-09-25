@@ -88,10 +88,8 @@ local http_methods = {
 --- @return { close: fun() } # Object with `close()` method which cancels the request.
 function M.request(method, url, opts, on_response)
   if type(url) ~= 'string' then
-    ---@diagnostic disable-next-line: cast-local-type
-    on_response = opts
-    ---@diagnostic disable-next-line: no-unknown
-    opts = url
+    on_response = opts --[[@as vim.net.request.ResponseFunc?]]
+    opts = url --[[@as vim.net.request.Opts?]]
     url = method
     method = 'GET'
   end

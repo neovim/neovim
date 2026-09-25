@@ -71,10 +71,10 @@ function keymap.set(modes, lhs, rhs, opts)
 
   opts = vim.deepcopy(opts or {}, true)
 
-  ---@cast modes string[]
   modes = type(modes) == 'string' and { modes } or modes
-  ---@cast lhs string[]
+  ---@cast modes string[]
   lhs = type(lhs) == 'string' and { lhs } or lhs
+  ---@cast lhs string[]
 
   if opts.expr and opts.replace_keycodes ~= false then
     opts.replace_keycodes = true
@@ -143,10 +143,10 @@ function keymap.del(modes, lhs, opts)
 
   opts = opts or {}
 
-  --- @cast modes string[]
   modes = type(modes) == 'string' and { modes } or modes
-  ---@cast lhs string[]
+  --- @cast modes string[]
   lhs = type(lhs) == 'string' and { lhs } or lhs
+  ---@cast lhs string[]
 
   local buf = opts.buf
   --- @cast opts +{buffer?:integer|boolean}

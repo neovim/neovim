@@ -68,7 +68,6 @@ local M = {}
 ---@field prerelease? string
 ---@field build? string
 local Version = {}
-Version.__index = Version
 
 --- Compares prerelease strings: per semver, number parts must be must be treated as numbers:
 --- "pre1.10" is greater than "pre1.2". https://semver.org/#spec-item-11
@@ -180,12 +179,11 @@ function M._version(version, strict) -- Adapted from https://github.com/folke/la
   end
 
   if not strict then -- TODO: add more "scrubbing".
-    --- @cast version string
-    version = version:match('%d[^ ]*')
-  end
-
-  if version == nil then
-    return nil
+    local scrubbed = version:match('%d[^ ]*')
+    if not scrubbed then
+      return nil
+    end
+    version = scrubbed
   end
 
   local prerel = version:match('%-([^+]*)')
@@ -261,14 +259,14 @@ local VersionRange = {}
 --- @return boolean
 function VersionRange:has(version)
   if type(version) == 'string' then
-    ---@diagnostic disable-next-line: cast-local-type
-    version = M.parse(version)
+    local parsed = M.parse(version)
+    if not parsed then
+      return false
+    end
+    version = parsed
   elseif getmetatable(version) ~= Version then
     -- Need metatable to compare versions.
     version = setmetatable(vim.deepcopy(version, true), Version)
-  end
-  if not version then
-    return false
   end
   if self.from == self.to then
     return version == self.from
@@ -310,8 +308,8 @@ function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
       to = rb and (#parts == 3 and rb.from or rb.to),
     }, range_mt)
   end
-  ---@type string, string
   local mods, version = spec:lower():match('^([%^=<>~]*)(.*)$')
+  assert(mods and version) -- The pattern matches every string.
   version = version:gsub('%.[%*x]', '')
   local parts = vim.split(version:gsub('%-.*', ''), '.', { plain = true })
   if #parts < 3 and mods == '' then

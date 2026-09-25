@@ -109,8 +109,8 @@ end
 --- @return Range4
 local function get_extmark_range(bufnr, extmark_id)
   -- Snippet and tabstop marks are created with both end positions.
-  --- @type [integer, integer, { end_row: integer, end_col: integer }]
   local mark = vim.api.nvim_buf_get_extmark_by_id(bufnr, snippet_ns, extmark_id, { details = true })
+  --- @cast mark [integer, integer, { end_row: integer, end_col: integer }]
 
   return { mark[1], mark[2], mark[3].end_row, mark[3].end_col }
 end

@@ -594,7 +594,7 @@ local function render_virtual_lines(namespace, bufnr, diagnostics, opts)
     -- Note that we read in the order opposite to insertion.
     for i = #stack, 1, -1 do
       if stack[i][1] == ElementType.Diagnostic then
-        local diagnostic0 = stack[i][2] --- @type vim.Diagnostic
+        local diagnostic0 = stack[i][2] --[[@as vim.Diagnostic]]
         local left = {} --- @type [string, string]
         local overlap = false
         local multi = false

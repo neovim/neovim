@@ -508,8 +508,7 @@ end
 ---@param buf integer? Buffer number to get diagnostics from. Use 0 for
 ---                      current buffer or nil for all buffers.
 ---@param opts? vim.diagnostic.GetOpts
----@return vim.Diagnostic[] : Fields `buf`, `end_lnum`, `end_col`, and `severity`
----                           are guaranteed to be present.
+---@return vim.Diagnostic[]
 function M.get(buf, opts)
   return M._store.get(buf, opts)
 end
@@ -980,7 +979,7 @@ end
 --- WARNING filename:27:3: Variable 'foo' does not exist
 --- ```
 ---
---- This can be parsed into |vim.Diagnostic| structure with:
+--- This can be parsed into a |vim.Diagnostic.Set| structure with:
 ---
 --- ```lua
 --- local s = "WARNING filename:27:3: Variable 'foo' does not exist"
@@ -991,14 +990,14 @@ end
 ---
 ---@param str string String to parse diagnostics from.
 ---@param pat string Lua pattern with capture groups.
----@param groups string[] List of fields in a |vim.Diagnostic| structure to
+---@param groups string[] List of fields in a |vim.Diagnostic.Set| structure to
 ---                    associate with captures from {pat}.
 ---@param severity_map table A table mapping the severity field from {groups}
 ---                          with an item from |vim.diagnostic.severity|.
 ---@param defaults table? Table of default values for any fields not listed in {groups}.
 ---                       When omitted, numeric values default to 0 and "severity" defaults to
 ---                       ERROR.
----@return vim.Diagnostic?: |vim.Diagnostic| structure or `nil` if {pat} fails to match {str}.
+---@return vim.Diagnostic.Set?: |vim.Diagnostic.Set| structure or `nil` if {pat} fails to match {str}.
 function M.match(str, pat, groups, severity_map, defaults)
   return M._severity.match(str, pat, groups, severity_map, defaults)
 end
@@ -1051,7 +1050,7 @@ end
 
 --- Convert a list of quickfix items to a list of diagnostics.
 ---
----@param list vim.quickfix.entry[] List of quickfix items from |getqflist()| or |getloclist()|.
+---@param list vim.fn.getqflist.ret.item[] List of quickfix items from |getqflist()| or |getloclist()|.
 ---@param opts? vim.diagnostic.fromqflist.Opts
 ---@return vim.Diagnostic[]
 function M.fromqflist(list, opts)

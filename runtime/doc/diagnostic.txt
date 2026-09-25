@@ -842,7 +842,7 @@ fromqflist({list}, {opts})                       *vim.diagnostic.fromqflist()*
     Convert a list of quickfix items to a list of diagnostics.
 
     Parameters: ~
-      • {list}  (`vim.quickfix.entry[]`) List of quickfix items from
+      • {list}  (`vim.fn.getqflist.ret.item[]`) List of quickfix items from
                 |getqflist()| or |getloclist()|.
       • {opts}  (`table?`) Configuration table with the following keys:
                 • {merge_lines}? (`boolean`) When true, items with valid=0 are
@@ -864,8 +864,7 @@ get({buf}, {opts})                                      *vim.diagnostic.get()*
       • {opts}  (`vim.diagnostic.GetOpts?`)
 
     Return: ~
-        (`vim.Diagnostic[]`) Fields `buf`, `end_lnum`, `end_col`, and
-        `severity` are guaranteed to be present.
+        (`vim.Diagnostic[]`)
 
 get_namespace({namespace})                    *vim.diagnostic.get_namespace()*
     Get namespace metadata.
@@ -950,7 +949,7 @@ match({str}, {pat}, {groups}, {severity_map}, {defaults})
         WARNING filename:27:3: Variable 'foo' does not exist
 <
 
-    This can be parsed into |vim.Diagnostic| structure with: >lua
+    This can be parsed into a |vim.Diagnostic.Set| structure with: >lua
         local s = "WARNING filename:27:3: Variable 'foo' does not exist"
         local pattern = "^(%w+) %w+:(%d+):(%d+): (.+)$"
         local groups = { "severity", "lnum", "col", "message" }
@@ -960,7 +959,7 @@ match({str}, {pat}, {groups}, {severity_map}, {defaults})
     Parameters: ~
       • {str}           (`string`) String to parse diagnostics from.
       • {pat}           (`string`) Lua pattern with capture groups.
-      • {groups}        (`string[]`) List of fields in a |vim.Diagnostic|
+      • {groups}        (`string[]`) List of fields in a |vim.Diagnostic.Set|
                         structure to associate with captures from {pat}.
       • {severity_map}  (`table`) A table mapping the severity field from
                         {groups} with an item from |vim.diagnostic.severity|.
@@ -969,8 +968,8 @@ match({str}, {pat}, {groups}, {severity_map}, {defaults})
                         default to 0 and "severity" defaults to ERROR.
 
     Return: ~
-        (`vim.Diagnostic?`) |vim.Diagnostic| structure or `nil` if {pat} fails
-        to match {str}.
+        (`vim.Diagnostic.Set?`) |vim.Diagnostic.Set| structure or `nil` if
+        {pat} fails to match {str}.
 
 open_float({opts})                               *vim.diagnostic.open_float()*
     Show diagnostics in a floating window.

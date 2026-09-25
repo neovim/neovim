@@ -126,7 +126,7 @@ end
 -- can be detected from the beginning of the file.
 --- @type vim.filetype.mapfn
 function M.asm(path, bufnr)
-  local syntax = vim.b[bufnr].asmsyntax
+  local syntax = vim.b[bufnr].asmsyntax ---@type string?
   if not syntax or syntax == '' then
     syntax = M.asm_syntax(path, bufnr)
   end

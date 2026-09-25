@@ -125,11 +125,11 @@ function M.highlight_matching_pair(win)
   local c2 ---@type string
   if i % 2 == 1 then
     flags = 'nW'
-    c2 = plist[i + 1]
+    c2 = assert(plist[i + 1])
   else
     flags = 'nbW'
     c2 = c
-    c = plist[i - 1]
+    c = assert(plist[i - 1])
   end
   if c == '[' then
     c = [=[\[]=]

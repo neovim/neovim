@@ -1,6 +1,6 @@
 --- Module for private utility functions
 
---- @alias vim.func.MemoObj { _hash: (fun(...): any), _weak: boolean?, _cache: table<any> }
+--- @alias vim.func.MemoObj { _hash: (fun(...): any), _weak: boolean?, _cache: table<any, any> }
 
 --- @param argc integer?
 --- @return fun(...): any

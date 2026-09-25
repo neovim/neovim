@@ -23,28 +23,30 @@ end
 
 local ws = rep1(S(' \t'))
 local fill = opt(ws)
+-- Types may span lines, but return names and inline descriptions may not.
+local fill_multi = rep(S(' \t\n'))
 local any = P(1) -- (consume one character)
 local letter = R('az', 'AZ')
 local num = R('09')
 
 --- @param x string | vim.lpeg.Pattern
 local function Pf(x)
-  return fill * P(x) * fill
+  return fill_multi * P(x) * fill_multi
 end
 
 --- @param x string | vim.lpeg.Pattern
 local function Plf(x)
-  return fill * P(x)
+  return fill_multi * P(x)
 end
 
 --- @param x string
 local function Sf(x)
-  return fill * S(x) * fill
+  return fill_multi * S(x) * fill_multi
 end
 
 --- @param x vim.lpeg.Pattern
 local function paren(x)
-  return Pf('(') * x * fill * P(')')
+  return Pf('(') * x * fill_multi * P(')')
 end
 
 --- @param x vim.lpeg.Pattern
@@ -111,7 +113,7 @@ local v = setmetatable({}, {
 --- | nvim.luacats.Field
 --- | nvim.luacats.Note
 
---- @class nvim.luacats.grammar
+--- @class nvim.luacats.grammar : vim.lpeg.Pattern
 --- @field match fun(self, input: string): nvim.luacats.grammar.result?
 
 local function annot(nm, pat)
@@ -131,8 +133,8 @@ local ident = ident_first * rep(ident_first + num)
 local opt_ident = ident * opt(P('?'))
 local ty_ident_sep = S('-._')
 local ty_ident = ident * rep(ty_ident_sep * ident)
-local string_single = P "'" * rep(any - P "'") * P "'"
-local string_double = P('"') * rep(any - P('"')) * P('"')
+local string_single = P "'" * rep(any - S "'\n") * P "'"
+local string_double = P('"') * rep(any - S('"\n')) * P('"')
 local generic = P('`') * ty_ident * P('`')
 local literal = string_single + string_double + (opt(P('-')) * rep1(num)) + P('false') + P('true')
 local ty_prims = ty_ident + literal + generic
@@ -166,7 +168,7 @@ local typedef = P({
   ) * opt(Pf(':') * comma1(v.fun_ret)),
   generics = P(ty_ident) * Pf('<') * comma1(v.type) * Plf('>'),
 }) / function(match)
-  return (vim.trim(match):gsub('^%((.*)%)$', '%1'):gsub('%?+', '?'))
+  return (vim.trim(match):gsub('%s*\n%s*', ' '):gsub('^%((.*)%)$', '%1'):gsub('%?+', '?'))
 end
 
 --- @param name string
@@ -177,8 +179,8 @@ end
 local access = P('private') + P('protected') + P('package') + P('internal')
 local caccess = Cg(access, 'access')
 local cattr = Cg(comma(access + P('exact')), 'access')
-local desc_delim = Sf '#:' + ws
-local desc = Cg(rep(any), 'desc')
+local desc_delim = fill * S('#:') * fill + ws
+local desc = Cg(rep(any - P('\n')), 'desc')
 local opt_desc = opt(desc_delim * desc)
 local ty_name = Cg(ty_ident, 'name')
 local opt_parent = opt(colon * Cg(ty_ident, 'parent') * generic_opt('parent_generics'))

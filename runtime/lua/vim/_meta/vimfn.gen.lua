@@ -1988,7 +1988,7 @@ function vim.fn.exp(expr) end
 --- See |glob()| for finding existing files.  See |system()| for
 --- getting the raw output of an external command.
 ---
---- @overload fun(string: string, nosuf: boolean, list: true|number|string|table): (string|string[])
+--- @overload fun(string: string, nosuf: boolean?, list: true|number|string|table): (string|string[])
 --- @param string string
 --- @param nosuf? boolean
 --- @param list? nil|false

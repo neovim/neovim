@@ -202,7 +202,7 @@ function vim._os_proc_info(pid)
   if pid == nil or pid <= 0 or type(pid) ~= 'number' then
     error('invalid pid')
   end
-  local cmd = { 'ps', '-p', pid, '-o', 'comm=' }
+  local cmd = { 'ps', '-p', tostring(pid), '-o', 'comm=' }
   local r = vim.system(cmd):wait()
   local name = assert(r.stdout)
   if r.code == 1 and vim.trim(name) == '' then
@@ -210,7 +210,7 @@ function vim._os_proc_info(pid)
   elseif r.code ~= 0 then
     error('command failed: ' .. vim.fn.string(cmd))
   end
-  local ppid_string = assert(vim.system({ 'ps', '-p', pid, '-o', 'ppid=' }):wait().stdout)
+  local ppid_string = assert(vim.system({ 'ps', '-p', tostring(pid), '-o', 'ppid=' }):wait().stdout)
   -- Remove trailing whitespace.
   name = vim.trim(name):gsub('^.*/', '')
   local ppid = tointeger(ppid_string) or -1
@@ -916,7 +916,7 @@ function vim.str_utfindex(s, encoding, index, strict_indexing)
   end
 
   if not index then
-    index = math.huge
+    index = vim._maxint
     strict_indexing = false
   end
 
@@ -1150,10 +1150,10 @@ function vim._expand_pat(pat, env)
     insert_keys(vim.iter(options):filter(filter):fold({}, _fold_to_map))
   end
 
-  keys = vim.tbl_keys(keys)
-  table.sort(keys)
+  local matches = vim.tbl_keys(keys)
+  table.sort(matches)
 
-  return keys, #prefix_match_pat
+  return matches, #prefix_match_pat
 end
 
 --- @param lua_string string
@@ -1461,8 +1461,8 @@ function vim.deprecate(name, alternative, version, plugin, backtrace)
     -- Show a warning only if feature is hard-deprecated (see MAINTAIN.md).
     -- Example: if removal `version` is 0.12 (soft-deprecated since 0.10-dev), show warnings
     -- starting at 0.11, including 0.11-dev.
-    local major, minor = version:match('(%d+)%.(%d+)')
-    major, minor = vim._assert_integer(major), vim._assert_integer(minor)
+    local major_str, minor_str = version:match('(%d+)%.(%d+)')
+    local major, minor = vim._assert_integer(major_str), vim._assert_integer(minor_str)
     local nvim_major = 0 --- Current Nvim major version.
 
     -- We can't "subtract" from a major version, so:
