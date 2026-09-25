@@ -477,7 +477,7 @@ static void shift_block(oparg_T *oap, int amount)
       total += incr;
       vcol += incr;
     }
-    bd.textstart = ci.ptr;
+    bd.textstart = (char *)ci.ptr;
     bd.start_vcol = vcol;
 
     int tabs = 0;
@@ -566,7 +566,7 @@ static void shift_block(oparg_T *oap, int amount)
       verbatim_copy_width += incr;
       ci = cli.next;
     }
-    verbatim_copy_end = ci.ptr;
+    verbatim_copy_end = (char *)ci.ptr;
 
     // If "destination_col" is different from the width of the initial
     // part of the line that will be copied, it means we encountered a tab
@@ -2164,11 +2164,11 @@ void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, bool is_del)
       bdp->pre_whitesp = 0;
       bdp->pre_whitesp_c = 0;
     }
-    prev_pstart = ci.ptr;
+    prev_pstart = (char *)ci.ptr;
     ci = cli.next;
   }
   bdp->start_vcol = vcol;
-  char *pstart = ci.ptr;
+  char *pstart = (char *)ci.ptr;
 
   bdp->start_char_vcols = incr;
   if (bdp->start_vcol < oap->start_vcol) {      // line too short
@@ -2184,7 +2184,7 @@ void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, bool is_del)
     if (is_del && bdp->startspaces) {
       bdp->startspaces = bdp->start_char_vcols - bdp->startspaces;
     }
-    char *pend = pstart;
+    const char *pend = pstart;
     bdp->end_vcol = bdp->start_vcol;
     if (bdp->end_vcol > oap->end_vcol) {  // it's all in one character
       bdp->is_oneChar = true;
@@ -2208,7 +2208,7 @@ void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, bool is_del)
       cstype = init_charsize_arg(&csarg, curwin, lnum, line);
       ci = utf_ptr2StrCharInfo(pend);
       vcol = bdp->end_vcol;
-      char *prev_pend = pend;
+      const char *prev_pend = pend;
       while (vcol <= oap->end_vcol && *ci.ptr != NUL) {
         prev_pend = ci.ptr;
         ClusterInfo cli = utf_ClusterInfo(ci);

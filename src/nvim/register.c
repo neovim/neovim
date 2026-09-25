@@ -1813,7 +1813,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
         vcol += incr;
         ci = cli.next;
       }
-      char *ptr = ci.ptr;
+      char *ptr = (char *)ci.ptr;
       bd.textcol = (colnr_T)(ptr - oldp);
 
       shortline = (vcol < col) || (vcol == col && !*ptr);

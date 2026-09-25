@@ -1474,7 +1474,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
     char *line = ml_get_buf(wp->w_buffer, lnum);
 
     // If current line is empty, check first word in next line for capital.
-    char *ptr = skipwhite(line);
+    const char *ptr = skipwhite(line);
     if (*ptr == NUL) {
       spv->spv_cap_col = 0;
       spv->spv_capcol_lnum = lnum + 1;
@@ -1509,7 +1509,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
   // current line
   char *line = draw_text ? ml_get_buf(wp->w_buffer, lnum) : "";
   // current position in "line"
-  char *ptr = line;
+  const char *ptr = line;
 
   colnr_T trailcol = MAXCOL;  // start of trailing spaces
   colnr_T leadcol = 0;        // start of leading spaces
@@ -1561,7 +1561,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
   if (has_foldtext) {
     wlv.vcol = start_vcol;
   } else if (start_vcol > 0 && col_rows == 0) {
-    char *prev_ptr = ptr;
+    const char *prev_ptr = ptr;
     CharSize cs = { 0 };
 
     CharsizeArg csarg;
@@ -1660,7 +1660,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         // no bad word found at line start, don't check until end of a
         // word
         spell_hlf = HLF_COUNT;
-        word_end = (int)(spell_to_word_end(ptr, wp) - line + 1);
+        word_end = (int)(spell_to_word_end((char *)ptr, wp) - line + 1);
       } else {
         // bad word found, use attributes until end of word
         assert(len <= INT_MAX);
@@ -2424,7 +2424,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
         if (wp->w_p_lbr && c0 == mb_c && mb_c < 128 && wlv.need_lbr
             && vim_isbreak(mb_c) && !vim_isbreak((uint8_t)(*ptr))) {
           int mb_off = utf_head_off(line, ptr - 1);
-          char *p = ptr - (mb_off + 1);
+          const char *p = ptr - (mb_off + 1);
 
           CharsizeArg csarg;
           CSType cstype = init_charsize_arg_skip_cur_text(&csarg, wp, lnum, line);

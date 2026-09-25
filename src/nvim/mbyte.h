@@ -88,7 +88,7 @@ static inline CharInfo utf_ptr2CharInfo(char const *const p_in)
   }
 }
 
-static inline StrCharInfo utf_ptr2StrCharInfo(char *ptr)
+static inline StrCharInfo utf_ptr2StrCharInfo(const char *ptr)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_PURE
 {
   return (StrCharInfo){ .ptr = ptr, .chr = utf_ptr2CharInfo(ptr) };
@@ -128,7 +128,7 @@ static inline ClusterInfo utf_ClusterInfo(StrCharInfo cur)
       .cells = basechar_cells_impl(cur.chr)
     };
   }
-  return utf_ClusterInfo_impl(cur);
+  return utf_ClusterInfo_impl(cur, INT_MAX);
 }
 
 /// Return number of display cells occupied by ASCII byte "b".

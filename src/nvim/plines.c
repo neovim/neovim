@@ -45,7 +45,7 @@
 /// @return Number of cells.
 ///
 /// @see charsize_nowrap()
-int win_chartabsize(win_T *wp, char *p, colnr_T col)
+int win_chartabsize(win_T *wp, const char *p, colnr_T col)
 {
   buf_T *buf = wp->w_buffer;
   if (*p == TAB && (!wp->w_p_list || wp->w_p_lcs_chars.tab1)) {
@@ -165,7 +165,7 @@ static int inline_virt_text_width(win_T *wp, MarkTreeIter *iter, int row, int co
 /// of 'showbreak'/'breakindent' before "csarg->max_head_vcol".
 /// When "csarg->max_head_vcol" is negative, only count in "head" the size
 /// of 'showbreak'/'breakindent' before where cursor should be placed.
-CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vcol,
+CharSize charsize_regular(CharsizeArg *csarg, const char *cur, colnr_T const vcol,
                           int32_t const cur_char, int mb_width)
 {
   csarg->cur_text_width_left = 0;
@@ -341,7 +341,7 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
     need_lbr = cur >= t;
   }
   if (need_lbr) {
-    char *s = cur;
+    const char *s = cur;
     // Count all characters from first non-blank after a blank up to next
     // non-blank after a blank.
     int numberextra = win_col_off(wp);
@@ -362,7 +362,7 @@ CharSize charsize_regular(CharsizeArg *csarg, char *const cur, colnr_T const vco
 
     colnr_T vcol2 = vcol;
     while (true) {
-      char *ps = s;
+      const char *ps = s;
       MB_PTR_ADV(s);
       int c = (uint8_t)(*s);
       if (!(c != NUL
