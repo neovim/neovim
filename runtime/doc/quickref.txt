@@ -793,6 +793,7 @@ Short explanation of each option:		*option-list*
 'maxfuncdepth'	  'mfd'     maximum recursive depth for user functions
 'maxmapdepth'	  'mmd'     maximum recursive depth for mapping
 'maxmempattern'   'mmp'     maximum memory (in Kbyte) used for pattern search
+'mcfollow'	  'mcf'     multicursor: motions cascade to all cursors
 'menuitems'	  'mis'     maximum number of items in a menu
 'mkspellmem'	  'msm'     memory used before |:mkspell| compresses the tree
 'modeline'	  'ml'	    recognize modelines at start or end of file

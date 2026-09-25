@@ -5950,6 +5950,21 @@ local options = {
       varname = 'p_msc',
     },
     {
+      abbreviation = 'mcf',
+      cb = 'did_set_mcfollow',
+      defaults = false,
+      desc = [=[
+        Enables |multicursor| follow-mode: cursor-relative motions performed
+        by the primary cursor, cascade to all cursors |mcursor|.  Toggled by
+        |q=| (buffer-local).
+      ]=],
+      full_name = 'mcfollow',
+      scope = { 'buf' },
+      short_desc = N_('multicursor: motions cascade to all cursors'),
+      type = 'boolean',
+      varname = 'p_mcf',
+    },
+    {
       abbreviation = 'mis',
       defaults = 25,
       desc = [=[

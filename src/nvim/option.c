@@ -72,6 +72,7 @@
 #include "nvim/highlight_group.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
+#include "nvim/input_cmdatom.h"
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
 #include "nvim/log.h"
@@ -2460,6 +2461,15 @@ static const char *did_set_lisp(optset_T *args)
 {
   // When 'lisp' option changes include/exclude '-' in keyword characters.
   buf_init_isk_chartab(args->os_buf);          // ignore errors
+  return NULL;
+}
+
+/// Multicursor: handle updates to 'mcfollow' option.
+static const char *did_set_mcfollow(optset_T *args)
+{
+  if (args->os_buf == curbuf) {
+    atom_follow_changed();
+  }
   return NULL;
 }
 
@@ -5515,6 +5525,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return &(buf->b_p_ml);
   case kOptMatchpairs:
     return &(buf->b_p_mps);
+  case kOptMcfollow:
+    return &(buf->b_p_mcf);
   case kOptModifiable:
     return &(buf->b_p_ma);
   case kOptModified:
@@ -5883,6 +5895,8 @@ void buf_copy_options(buf_T *buf, int flags)
       COPY_OPT_SCTX(buf, kBufOptFixendofline);
       buf->b_p_et_nobin = p_et_nobin;
       buf->b_p_et_nopaste = p_et_nopaste;
+      buf->b_p_mcf = p_mcf;
+      COPY_OPT_SCTX(buf, kBufOptMcfollow);
       buf->b_p_ml = p_ml;
       COPY_OPT_SCTX(buf, kBufOptModeline);
       buf->b_p_ml_nobin = p_ml_nobin;

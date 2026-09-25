@@ -396,10 +396,10 @@ Q			Toggles a multicursor at the current cursor position.
 			NOT disable follow-mode |q=|. No-op in Insert-mode.
 
 							*q=*
-q=			Toggles follow-mode: cursor-relative motions ("w",
-			"fx", "*") are replayed per-cursor. Cursors arriving
-			at the same position (e.g. "9j" at the last line) are
-			merged (deduplicated).
+q=			Toggles follow-mode ('mcfollow'): cursor-relative
+			motions ("w", "fx", "*", …) are replayed per-cursor.
+			Cursors arriving at the same position (e.g. "9j" at
+			the last line) are merged (deduplicated).
 
 			Not replayed:
 			- Absolute motions (scrolls/jumps: "G", marks,
