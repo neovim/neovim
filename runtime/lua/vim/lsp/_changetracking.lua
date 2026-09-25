@@ -33,7 +33,6 @@ local M = {}
 --- @field lines_tmp string[]
 --- @field pending_changes table[] List of debounced changes in incremental sync mode
 --- @field timer? uv.uv_timer_t uv_timer
---- @field last_flush? number uv.hrtime of the last flush/didChange-notification
 --- @field needs_flush boolean true if buffer updates haven't been sent to clients/servers yet
 --- @field refs integer how many clients are using this group
 ---
@@ -278,28 +277,6 @@ function M.reset(client)
   end
 end
 
--- Adjust debounce time by taking time of last didChange notification into
--- consideration. If the last didChange happened more than `debounce` time ago,
--- debounce can be skipped and otherwise maybe reduced.
---
--- This turns the debounce into a kind of client rate limiting
---
----@param debounce integer
----@param buf_state vim.lsp.CTBufferState
----@return number
-local function next_debounce(debounce, buf_state)
-  if debounce == 0 then
-    return 0
-  end
-  local ns_to_ms = 0.000001
-  if not buf_state.last_flush then
-    return debounce
-  end
-  local now = uv.hrtime()
-  local ms_since_last_flush = (now - buf_state.last_flush) * ns_to_ms
-  return math.max(debounce - ms_since_last_flush, 0)
-end
-
 ---@param bufnr integer
 ---@param sync_kind integer protocol.TextDocumentSyncKind
 ---@param state vim.lsp.CTGroupState
@@ -308,7 +285,6 @@ local function send_changes(bufnr, sync_kind, state, buf_state)
   if not buf_state.needs_flush then
     return
   end
-  buf_state.last_flush = uv.hrtime()
   buf_state.needs_flush = false
 
   if not api.nvim_buf_is_valid(bufnr) then
@@ -363,7 +339,6 @@ local function send_changes_for_group(bufnr, firstline, lastline, new_lastline, 
   end
   buf_state.needs_flush = true
   reset_timer(buf_state)
-  local debounce = next_debounce(state.debounce, buf_state)
   if group.sync_kind == protocol.TextDocumentSyncKind.Incremental then
     -- This must be done immediately and cannot be delayed
     -- The contents would further change and startline/endline may no longer fit
@@ -377,13 +352,13 @@ local function send_changes_for_group(bufnr, firstline, lastline, new_lastline, 
     )
     table.insert(buf_state.pending_changes, changes)
   end
-  if debounce == 0 then
+  if state.debounce == 0 then
     send_changes(bufnr, group.sync_kind, state, buf_state)
   else
     local timer = assert(uv.new_timer(), 'Must be able to create timer')
     buf_state.timer = timer
     timer:start(
-      debounce,
+      state.debounce,
       0,
       vim.schedule_wrap(function()
         reset_timer(buf_state)
