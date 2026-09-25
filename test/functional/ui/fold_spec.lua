@@ -3096,4 +3096,116 @@ describe('folded lines', function()
                                               |
     ]])
   end)
+
+  describe('Select editing range visibility', function()
+    local function setup_snippet_fold()
+      api.nvim_buf_set_lines(0, 0, -1, false, { 'before', 'prefix  suffix', 'after' })
+      n.exec_lua([[
+        fold_available = false
+        function _G.select_foldexpr()
+          if not fold_available then
+            return '0'
+          end
+          if vim.v.lnum == 2 or vim.v.lnum == 4 then
+            return '>1'
+          elseif vim.v.lnum == 3 or vim.v.lnum == 5 then
+            return '<1'
+          end
+          return '0'
+        end
+        vim.wo.foldmethod = 'expr'
+        vim.wo.foldexpr = 'v:lua.select_foldexpr()'
+        vim.wo.foldlevel = 0
+        vim.wo.foldminlines = 0
+        vim.opt.foldopen = {}
+        vim.api.nvim_win_set_cursor(0, { 2, 7 })
+      ]])
+    end
+
+    local function expand_multiline_placeholder()
+      feed('i')
+      n.exec_lua([[vim.snippet.expand('${1:bravo\ncharlie\ndelta\necho}$0')]])
+    end
+
+    local function assert_exact_replacement()
+      eq('s', api.nvim_get_mode().mode)
+      eq(-1, fn.foldclosed(2))
+      eq(-1, fn.foldclosed(4))
+      feed('X')
+      eq({ 'before', 'prefix X suffix', 'after' }, api.nvim_buf_get_lines(0, 0, -1, false))
+    end
+
+    it('opens sibling folds closed before the snippet enters Select', function()
+      setup_snippet_fold()
+      n.exec_lua([[
+        vim.api.nvim_create_autocmd('InsertLeave', {
+          once = true,
+          callback = function()
+            fold_available = true
+            vim._foldupdate(vim.api.nvim_get_current_win(), 0, vim.api.nvim_buf_line_count(0))
+            folds_closed_during_insert_leave = { vim.fn.foldclosed(2), vim.fn.foldclosed(4) }
+          end,
+        })
+      ]])
+      expand_multiline_placeholder()
+
+      eq({ 2, 4 }, n.exec_lua('return folds_closed_during_insert_leave'))
+      assert_exact_replacement()
+    end)
+
+    it('opens sibling folds updated after the snippet enters Select', function()
+      setup_snippet_fold()
+      expand_multiline_placeholder()
+      eq('s', api.nvim_get_mode().mode)
+
+      n.exec_lua([[
+        fold_available = true
+        vim._foldupdate(vim.api.nvim_get_current_win(), 0, vim.api.nvim_buf_line_count(0))
+      ]])
+      assert_exact_replacement()
+    end)
+
+    local function setup_manual_sibling_folds()
+      api.nvim_buf_set_lines(0, 0, -1, false, { 'one', 'two', 'three', 'four', 'five', 'six' })
+      command('set foldmethod=manual foldopen=')
+      command('2,3fold')
+      command('4,5fold')
+      command('normal! zM')
+    end
+
+    it('does not change Visual mode fold expansion', function()
+      setup_manual_sibling_folds()
+      command('normal! 2Gv4G')
+      eq('v', api.nvim_get_mode().mode)
+      feed('d')
+      eq({ 'one', 'six' }, api.nvim_buf_get_lines(0, 0, -1, false))
+    end)
+
+    it('allows folds to be explicitly closed after Select ends', function()
+      setup_manual_sibling_folds()
+      feed('2Ggh')
+      eq('s', api.nvim_get_mode().mode)
+      api.nvim_win_set_cursor(0, { 4, 0 })
+      feed('<Ignore>')
+      eq(-1, fn.foldclosed(2))
+      eq(-1, fn.foldclosed(4))
+
+      feed('<Esc>zM')
+      eq('n', api.nvim_get_mode().mode)
+      eq(2, fn.foldclosed(2))
+      eq(4, fn.foldclosed(4))
+    end)
+
+    it('does not change fold state while folding is disabled', function()
+      setup_manual_sibling_folds()
+      command('set nofoldenable')
+      feed('2Ggh')
+      api.nvim_win_set_cursor(0, { 4, 0 })
+      feed('<Ignore><Esc>')
+
+      command('set foldenable')
+      eq(2, fn.foldclosed(2))
+      eq(4, fn.foldclosed(4))
+    end)
+  end)
 end)
