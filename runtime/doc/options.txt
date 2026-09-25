@@ -7116,7 +7116,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	Time in milliseconds to wait for a key code sequence to complete. Also
 	used for CTRL-\ CTRL-N and CTRL-\ CTRL-G when part of a command has
-	been typed.
+	been typed. When part of a response to a query (e.g. |clipboard-osc52|)
+	has been received, Nvim waits at least a second for the rest.
 
 	*'ttyfast'* *'tf'* *'nottyfast'* *'notf'* *E1568* *$NVIM_NOTTYFAST*
 'ttyfast' 'tf'		boolean	(default on)
