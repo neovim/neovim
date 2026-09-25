@@ -329,6 +329,7 @@ SynMenu HIJK.Hex\ dump.XXD:xxd
 SynMenu HIJK.Hex\ dump.Intel\ MCS51:hex
 SynMenu HIJK.Hg\ commit:hgcommit
 SynMenu HIJK.HIP:hip
+SynMenu HIJK.HLSL:hlsl
 SynMenu HIJK.HLSPlaylist:hlsplaylist
 SynMenu HIJK.Hollywood:hollywood
 SynMenu HIJK.HTML.HTML:html

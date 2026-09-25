@@ -382,6 +382,7 @@ func s:GetFilenameChecks() abort
     \ 'hgcommit': ['hg-editor-file.txt'],
     \ 'hip': ['file.hip'],
     \ 'hjson': ['file.hjson'],
+    \ 'hlsl': ['file.hlsl'],
     \ 'hlsplaylist': ['file.m3u', 'file.m3u8'],
     \ 'hog': ['file.hog', 'snort.conf', 'vision.conf'],
     \ 'hollywood': ['file.hws'],
