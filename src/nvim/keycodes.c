@@ -213,6 +213,25 @@ int simplify_key(const int key, int *modifiers)
   return key;
 }
 
+/// Inverse of simplify_key().
+int unsimplify_key(const int c, int *modifiers)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+{
+  if (!IS_SPECIAL(c)) {
+    return c;
+  }
+
+  for (int i = 0; modifier_keys_table[i] != NUL; i += MOD_KEYS_ENTRY_SIZE) {
+    if (KEY2TERMCAP0(c) == (int)modifier_keys_table[i + 1]
+        && (int)KEY2TERMCAP1(c) == (int)modifier_keys_table[i + 2]) {
+      *modifiers |= modifier_keys_table[i];
+      return TERMCAP2KEY(modifier_keys_table[i + 3], modifier_keys_table[i + 4]);
+    }
+  }
+
+  return c;
+}
+
 /// Change <xKey> to <Key>
 int handle_x_keys(const int key)
   FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
@@ -270,17 +289,7 @@ char *get_special_key(int c, int modifiers, struct keychord *data)
 
   // Translate shifted special keys into unshifted keys and set modifier.
   // Same for CTRL and ALT modifiers.
-  if (IS_SPECIAL(c)) {
-    for (int i = 0; modifier_keys_table[i] != 0; i += MOD_KEYS_ENTRY_SIZE) {
-      if (KEY2TERMCAP0(c) == (int)modifier_keys_table[i + 1]
-          && (int)KEY2TERMCAP1(c) == (int)modifier_keys_table[i + 2]) {
-        modifiers |= modifier_keys_table[i];
-        c = TERMCAP2KEY(modifier_keys_table[i + 3],
-                        modifier_keys_table[i + 4]);
-        break;
-      }
-    }
-  }
+  c = unsimplify_key(c, &modifiers);
 
   // try to find the key in the special key table
   int table_idx = find_special_key_in_table(c);
