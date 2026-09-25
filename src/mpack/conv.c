@@ -109,8 +109,12 @@ MPACK_API mpack_token_t mpack_pack_number(double v)
 {
   mpack_token_t tok;
   double vabs;
+  /* Values outside the msgpack integer range [-2^63, 2^64), including NaN
+   * and infinities, can only be represented as floats. */
+  if (!(v >= -9223372036854775808. && v < 18446744073709551616.)) {
+    return mpack_pack_float(v);
+  }
   vabs = v < 0 ? -v : v;
-  assert(v <= 9007199254740991. && v >= -9007199254740991.);
   tok.data.value.hi = (mpack_uint32_t)(vabs / POW2(32));
   tok.data.value.lo = (mpack_uint32_t)mpack_fmod_pow2_32(vabs);
 
@@ -121,7 +125,8 @@ MPACK_API mpack_token_t mpack_pack_number(double v)
     tok.data.value.lo = ~tok.data.value.lo + 1;
     if (!tok.data.value.lo) tok.data.value.hi++;
     if (tok.data.value.lo == 0 && tok.data.value.hi == 0) tok.length = 1;
-    else if (tok.data.value.lo < 0x80000000) tok.length = 8;
+    else if (tok.data.value.hi != 0xffffffff || tok.data.value.lo < 0x80000000)
+      tok.length = 8;
     else if (tok.data.value.lo < 0xffff8000) tok.length = 4;
     else if (tok.data.value.lo < 0xffffff80) tok.length = 2;
     else tok.length = 1;
