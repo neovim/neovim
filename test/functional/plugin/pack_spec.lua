@@ -524,6 +524,27 @@ describe('vim.pack', function()
       eq({ basic = true, defbranch = true }, out)
     end)
 
+    it('handles interrupted clones', function()
+      local pack_dir = pack_get_dir()
+      local bad_plug = vim.fs.joinpath(pack_dir, 'basic')
+      fn.mkdir(vim.fs.joinpath(bad_plug, '.git'), 'p')
+
+      -- Write broken lock data
+      local lock_path = get_lock_path()
+      fn.mkdir(vim.fs.dirname(lock_path), 'p')
+      t.write_file(lock_path, '{"plugins":{"basic":{}}}')
+
+      local out = exec_lua(function()
+        local ok, err = pcall(vim.pack.add, { _G.repos_src.defbranch })
+        return { ok = ok, err = err }
+      end)
+
+      eq(true, out.ok)
+      -- It should remove the irrevocably corrupted plugin from disk
+      eq(false, pack_exists('basic'))
+      eq(true, pack_exists('defbranch'))
+    end)
+
     it('asks for installation confirmation', function()
       -- Do not confirm installation to see what happens (should not error)
       mock_confirm(2)

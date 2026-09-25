@@ -874,15 +874,36 @@ local function install_list(plug_list, confirm)
   --- @async
   --- @param p vim.pack.Plug
   local function do_install(p)
-    git_clone(p.spec.src, p.path)
+    local final_path = p.path
+    local tmp_path = final_path .. '.tmp'
+    vim.fs.rm(tmp_path, { recursive = true, force = true })
 
-    plugin_lock.plugins[p.spec.name].src = p.spec.src
+    local ok, err = pcall(function()
+      git_clone(p.spec.src, tmp_path)
+      
+      -- We must run checkout on tmp_path, so temporarily swap p.path
+      p.path = tmp_path
+      
+      plugin_lock.plugins[p.spec.name].src = p.spec.src
+      -- Prefer revision from the lockfile instead of using `version`
+      p.info.sha_target = (plugin_lock.plugins[p.spec.name] or {}).rev
 
-    -- Prefer revision from the lockfile instead of using `version`
-    p.info.sha_target = (plugin_lock.plugins[p.spec.name] or {}).rev
-
-    checkout(p, timestamp, true)
-    p.info.installed = true
+      checkout(p, timestamp, true)
+      p.path = final_path
+    end)
+    
+    if ok then
+      local rename_ok, rename_err = uv.fs_rename(tmp_path, final_path)
+      if rename_ok then
+        p.info.installed = true
+      else
+        error(('Failed to rename plugin directory: %s'):format(rename_err))
+      end
+    else
+      p.path = final_path
+      vim.fs.rm(tmp_path, { recursive = true, force = true })
+      error(err)
+    end
   end
 
   -- Install possibly after user confirmation
@@ -900,6 +921,7 @@ local function install_list(plug_list, confirm)
     if not (p.info.installed and uv.fs_stat(p.path) ~= nil) then
       plugin_lock.plugins[p.spec.name] = nil
       vim.fs.rm(p.path, { recursive = true, force = true })
+      vim.fs.rm(p.path .. '.tmp', { recursive = true, force = true })
     end
   end
 end
@@ -1008,18 +1030,33 @@ end
 --- @param names string[]
 --- @param plug_dir string
 local function lock_repair(names, plug_dir)
+  local repaired = {}
+  local removed = {}
   --- @async
   local function f()
     for _, name in ipairs(names) do
       local path = vim.fs.joinpath(plug_dir, name)
       -- Try reusing existing table to preserve maybe present `version`
       local data = plugin_lock.plugins[name] or {}
-      data.rev = git_get_hash('HEAD', path)
-      data.src = git_cmd({ 'remote', 'get-url', 'origin' }, path)
-      plugin_lock.plugins[name] = data
+      
+      local ok_rev, rev = pcall(git_get_hash, 'HEAD', path)
+      local ok_src, src = pcall(git_cmd, { 'remote', 'get-url', 'origin' }, path)
+      
+      if ok_rev and ok_src then
+        data.rev = rev
+        data.src = src
+        plugin_lock.plugins[name] = data
+        repaired[#repaired + 1] = name
+      else
+        -- If git operations fail, the plugin directory is hopelessly corrupted
+        plugin_lock.plugins[name] = nil
+        vim.fs.rm(path, { recursive = true, force = true })
+        removed[#removed + 1] = name
+      end
     end
   end
   async.run(f):wait(max_timeout)
+  return repaired, removed
 end
 
 --- Sync lockfile data and installed plugins:
@@ -1044,8 +1081,10 @@ local function lock_sync(confirm, specs)
   -- Also, single `vim.fs.dir()` scales better than on demand `uv.fs_stat()` checks.
   local installed = {} --- @type table<string,string>
   for name, fs_type in vim.fs.dir(plug_dir) do
-    installed[name] = fs_type
-    plugin_lock.plugins[name] = plugin_lock.plugins[name] or {}
+    if not name:match('%.tmp$') then
+      installed[name] = fs_type
+      plugin_lock.plugins[name] = plugin_lock.plugins[name] or {}
+    end
   end
 
   -- Traverse once optimizing for "regular startup" (no repair, no install)
@@ -1101,9 +1140,14 @@ local function lock_sync(confirm, specs)
   end
 
   if #to_repair > 0 then
-    lock_repair(to_repair, plug_dir)
-    table.sort(to_repair)
-    notify('Repaired corrupted lock data for plugins: ' .. table.concat(to_repair, ', '), 'WARN')
+    local repaired, removed = lock_repair(to_repair, plug_dir)
+    if #repaired > 0 then
+      table.sort(repaired)
+      notify('Repaired corrupted lock data for plugins: ' .. table.concat(repaired, ', '), 'WARN')
+    end
+    if #removed > 0 then
+      vim.list_extend(to_remove, removed)
+    end
     lock_write()
   end
 
