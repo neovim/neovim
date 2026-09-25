@@ -58,14 +58,18 @@ local split_metadata_body_char = '<>'
 local function parse_response(res)
   local splitted = vim.split(res, split_metadata_body_char)
   local body, metadata = splitted[1], splitted[2]
+  body = body or ''
 
   local ok, parsed = pcall(vim.json.decode, metadata)
   if not ok then
     error('error on parsing response headers metadata')
   end
 
-  ---@diagnostic disable-next-line: no-unknown
-  return { body = body, headers = parsed.headers, status = tonumber(parsed.status_code) }
+  return {
+    body = body,
+    headers = parsed.headers --[[@as vim.net.HttpHeaders]],
+    status = tonumber(parsed.status_code) --[[@as vim.net.HttpStatusCode]],
+  }
 end
 
 ---@alias vim.net.HttpResponseFunc fun(err: string?, response: vim.net.request.Response?)
