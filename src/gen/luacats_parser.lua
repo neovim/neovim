@@ -1,4 +1,4 @@
-local luacats_grammar = require('gen.luacats_grammar')
+local luacats_grammar = require('gen.luacats_grammar') * vim.lpeg.Cp()
 
 --- @class nvim.luacats.parser.param : nvim.luacats.Param
 
@@ -101,13 +101,9 @@ local function add_doc_lines_to_obj(state)
 end
 
 --- @param line string
+--- @param parsed nvim.luacats.grammar.result?
 --- @param state nvim.luacats.parser.State
-local function process_doc_line(line, state)
-  line = line:sub(4):gsub('^%s+@', '@')
-  line = use_type_alt(line)
-
-  local parsed = luacats_grammar:match(line)
-
+local function process_doc_line(line, parsed, state)
   if not parsed then
     if line:match('^ ') then
       line = line:sub(2)
@@ -506,12 +502,25 @@ function M.parse_str(str, filename)
   -- Keep track of any partial objects we don't commit
   local uncommitted = {} --- @type nvim.luacats.parser.obj[]
 
+  local comments = {}
   for line in vim.gsplit(str, '\n') do
     local has_indent = line:match('^%s+') ~= nil
     line = vim.trim(line)
     if vim.startswith(line, '---') then
-      process_doc_line(line, state)
+      comments[#comments + 1] = use_type_alt(line:sub(4):gsub('^%s+@', '@'))
     else
+      if #comments > 0 then
+        local comment = table.concat(comments, '\n') .. '\n'
+        local pos = 1
+        while pos <= #comment do
+          -- LPeg consumes a complete annotation, which may span several lines.
+          local parsed, next_pos = luacats_grammar:match(comment, pos)
+          local eol = assert(comment:find('\n', next_pos or pos, true))
+          process_doc_line(comment:sub(pos, eol - 1), parsed, state)
+          pos = eol + 1
+        end
+        comments = {}
+      end
       add_doc_lines_to_obj(state)
 
       if state.cur_obj then
