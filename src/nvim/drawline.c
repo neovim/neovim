@@ -1570,13 +1570,14 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
     int vcol = wlv.vcol;
     StrCharInfo ci = utf_ptr2StrCharInfo(ptr);
     while (vcol < start_vcol) {
-      cs = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg);
+      ClusterInfo cli = utf_ClusterInfo(ci);
+      cs = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg, cli.cells);
       vcol += cs.width;
       prev_ptr = ci.ptr;
       if (*prev_ptr == NUL) {
         break;
       }
-      ci = utfc_next(ci);
+      ci = cli.next;
       if (wp->w_p_list) {
         in_multispace = *prev_ptr == ' ' && (*ci.ptr == ' '
                                              || (prev_ptr > line && prev_ptr[-1] == ' '));
@@ -2428,8 +2429,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, b
           CharsizeArg csarg;
           CSType cstype = init_charsize_arg_skip_cur_text(&csarg, wp, lnum, line);
           // TODO(zeertzjq): consider using CharSize.tail here
-          wlv.n_extra = win_charsize(cstype, wlv.vcol, p, utf_ptr2CharInfo(p).value,
-                                     &csarg).width - 1;
+          StrCharInfo ci = utf_ptr2StrCharInfo(p);
+          ClusterInfo cli = utf_ClusterInfo(ci);
+          wlv.n_extra = win_charsize(cstype, wlv.vcol, p, ci.chr.value,
+                                     &csarg, cli.cells).width - 1;
 
           // Do not bleed attrs into the filler for the pushed-down word (TABs keep their own
           // full-width highlight; see attr_has_line_deco()). search_attr also resets when its own

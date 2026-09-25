@@ -471,8 +471,9 @@ static void shift_block(oparg_T *oap, int amount)
     StrCharInfo ci = utf_ptr2StrCharInfo(bd.textstart);
     int vcol = bd.start_vcol;
     while (ascii_iswhite(ci.chr.value)) {
-      incr = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg).width;
-      ci = utfc_next(ci);
+      ClusterInfo cli = utf_ClusterInfo(ci);
+      incr = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg, cli.cells).width;
+      ci = cli.next;
       total += incr;
       vcol += incr;
     }
@@ -531,7 +532,7 @@ static void shift_block(oparg_T *oap, int amount)
     CharsizeArg csarg;
     CSType cstype = init_charsize_arg(&csarg, curwin, curwin->w_cursor.lnum, bd.textstart);
     while (ascii_iswhite(*non_white)) {
-      incr = win_charsize(cstype, non_white_col, non_white, (uint8_t)(*non_white), &csarg).width;
+      incr = win_charsize(cstype, non_white_col, non_white, (uint8_t)(*non_white), &csarg, 1).width;
       non_white_col += incr;
       non_white++;
     }
@@ -556,12 +557,14 @@ static void shift_block(oparg_T *oap, int amount)
     cstype = init_charsize_arg(&csarg, curwin, 0, bd.textstart);
     StrCharInfo ci = utf_ptr2StrCharInfo(verbatim_copy_end);
     while (verbatim_copy_width < destination_col) {
-      incr = win_charsize(cstype, verbatim_copy_width, ci.ptr, ci.chr.value, &csarg).width;
+      ClusterInfo cli = utf_ClusterInfo(ci);
+      incr = win_charsize(cstype, verbatim_copy_width, ci.ptr, ci.chr.value, &csarg,
+                          cli.cells).width;
       if (verbatim_copy_width + incr > destination_col) {
         break;
       }
       verbatim_copy_width += incr;
-      ci = utfc_next(ci);
+      ci = cli.next;
     }
     verbatim_copy_end = ci.ptr;
 
@@ -2151,7 +2154,8 @@ void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, bool is_del)
   StrCharInfo ci = utf_ptr2StrCharInfo(line);
   int vcol = bdp->start_vcol;
   while (vcol < oap->start_vcol && *ci.ptr != NUL) {
-    incr = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg).width;
+    ClusterInfo cli = utf_ClusterInfo(ci);
+    incr = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg, cli.cells).width;
     vcol += incr;
     if (ascii_iswhite(ci.chr.value)) {
       bdp->pre_whitesp += incr;
@@ -2161,7 +2165,7 @@ void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, bool is_del)
       bdp->pre_whitesp_c = 0;
     }
     prev_pstart = ci.ptr;
-    ci = utfc_next(ci);
+    ci = cli.next;
   }
   bdp->start_vcol = vcol;
   char *pstart = ci.ptr;
@@ -2207,9 +2211,10 @@ void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, bool is_del)
       char *prev_pend = pend;
       while (vcol <= oap->end_vcol && *ci.ptr != NUL) {
         prev_pend = ci.ptr;
-        incr = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg).width;
+        ClusterInfo cli = utf_ClusterInfo(ci);
+        incr = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg, cli.cells).width;
         vcol += incr;
-        ci = utfc_next(ci);
+        ci = cli.next;
       }
       bdp->end_vcol = vcol;
       pend = ci.ptr;

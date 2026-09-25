@@ -146,11 +146,12 @@ static int coladvance2(win_T *wp, pos_T *pos, bool addspaces, bool finetune, col
     StrCharInfo ci = utf_ptr2StrCharInfo(line);
     col = 0;
     while (col <= wcol && *ci.ptr != NUL) {
-      CharSize cs = win_charsize(cstype, col, ci.ptr, ci.chr.value, &csarg);
+      ClusterInfo cli = utf_ClusterInfo(ci);
+      CharSize cs = win_charsize(cstype, col, ci.ptr, ci.chr.value, &csarg, cli.cells);
       csize = cs.width;
       head = cs.head;
       col += cs.width;
-      ci = utfc_next(ci);
+      ci = cli.next;
     }
     idx = (int)(ci.ptr - line);
 

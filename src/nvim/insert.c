@@ -3573,8 +3573,9 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
           space_sci = sci;
           space_vcol = vcol;
         }
-        vcol += charsize_nowrap(curbuf, sci.ptr, use_ts, vcol, sci.chr.value);
-        sci = utfc_next(sci);
+        ClusterInfo cli = utf_ClusterInfo(sci);
+        vcol += charsize_nowrap(curbuf, sci.ptr, use_ts, vcol, sci.chr.value, cli.cells);
+        sci = cli.next;
         prev_space = cur_space;
       }
 
@@ -3589,12 +3590,14 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
       // Find the position to stop backspacing.
       // Use charsize_nowrap() so that virtual text and wrapping are ignored.
       while (true) {
-        int size = charsize_nowrap(curbuf, space_sci.ptr, use_ts, space_vcol, space_sci.chr.value);
+        ClusterInfo cli = utf_ClusterInfo(space_sci);
+        int size = charsize_nowrap(curbuf, space_sci.ptr, use_ts, space_vcol, space_sci.chr.value,
+                                   cli.cells);
         if (space_vcol + size > want_vcol) {
           break;
         }
         space_vcol += size;
-        space_sci = utfc_next(space_sci);
+        space_sci = cli.next;
       }
       colnr_T const want_col = (int)(space_sci.ptr - line);
 
@@ -4085,7 +4088,7 @@ static bool ins_tab(void)
     // Use as many TABs as possible.  Beware of 'breakindent', 'showbreak'
     // and 'linebreak' adding extra virtual columns.
     while (ascii_iswhite(*ptr)) {
-      int i = win_charsize(cstype, vcol, tab, tab_v, &csarg).width;
+      int i = win_charsize(cstype, vcol, tab, tab_v, &csarg, 1).width;
       if (vcol + i > want_vcol) {
         break;
       }
@@ -4109,7 +4112,7 @@ static bool ins_tab(void)
       // Skip over the spaces we need.
       cstype = init_charsize_arg(&csarg, curwin, 0, ptr);
       while (vcol < want_vcol && *ptr == ' ') {
-        vcol += win_charsize(cstype, vcol, ptr, ' ', &csarg).width;
+        vcol += win_charsize(cstype, vcol, ptr, ' ', &csarg, 1).width;
         ptr++;
         repl_off++;
       }
@@ -4310,11 +4313,12 @@ int ins_copychar(linenr_T lnum)
   StrCharInfo ci = utf_ptr2StrCharInfo(line);
   int vcol = 0;
   while (vcol < end_vcol && *ci.ptr != NUL) {
-    vcol += win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg).width;
+    ClusterInfo cli = utf_ClusterInfo(ci);
+    vcol += win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &csarg, cli.cells).width;
     if (vcol > end_vcol) {
       break;
     }
-    ci = utfc_next(ci);
+    ci = cli.next;
   }
 
   int c = ci.chr.value < 0 ? (uint8_t)(*ci.ptr) : ci.chr.value;
