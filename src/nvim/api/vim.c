@@ -734,7 +734,7 @@ void nvim_del_current_line(Arena *arena, Error *err)
 /// @param[out] err Error details, if any
 /// @return Variable value
 Object nvim_get_var(String name, Arena *arena, Error *err)
-  FUNC_API_SINCE(1)
+  FUNC_API_SINCE(1) FUNC_API_FAST
 {
   dictitem_T *di = tv_dict_find(get_globvar_dict(), name.data, (ptrdiff_t)name.size);
   if (di == NULL) {  // try to autoload script
@@ -777,7 +777,7 @@ void nvim_del_var(String name, Error *err)
 /// @param[out] err Error details, if any
 /// @return         Variable value
 Object nvim_get_vvar(String name, Arena *arena, Error *err)
-  FUNC_API_SINCE(1)
+  FUNC_API_SINCE(1) FUNC_API_FAST
 {
   return dict_get_value(get_vimvar_dict(), name, arena, err);
 }

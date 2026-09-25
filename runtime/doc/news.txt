@@ -203,6 +203,10 @@ The following new features were added.
 
 API
 
+• These API functions may be called from |api-fast| context (e.g. |vim.uv| callbacks):
+  • |nvim_create_autocmd()|
+  • |nvim_get_var()|
+  • |nvim_get_vvar()|
 • |nvim_win_resize()| resizes a window with a specified anchor edge.
   |nvim_win_set_height()| and |nvim_win_set_width()| are now deprecated.
 • |api-contract| treats `opts` and any parameters thereafter, as optional
@@ -237,8 +241,6 @@ API
 • |nvim_set_option_value()| accepts a new `operation` field to modify the
   existing option value.
 • |nvim_set_option_value()| returns the new option value.
-• |nvim_create_autocmd()| is now |api-fast|, so it can be called from a fast
-  event context (e.g. |vim.uv| callbacks).
 • |nvim_create_autocmd()| callback |event-args| provide `win`.
 
 BUILD

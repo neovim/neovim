@@ -1112,6 +1112,7 @@ nvim_get_var({name})                                          *nvim_get_var()*
     Gets a global (g:) variable.
 
     Attributes: ~
+        |api-fast|
         Since: 0.1.0
 
     Parameters: ~
@@ -1124,6 +1125,7 @@ nvim_get_vvar({name})                                        *nvim_get_vvar()*
     Gets a v: variable.
 
     Attributes: ~
+        |api-fast|
         Since: 0.1.0
 
     Parameters: ~

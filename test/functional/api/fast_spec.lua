@@ -11,6 +11,7 @@ describe('|api-fast| functions', function()
 
   it('callable in a fast event', function()
     local out = exec_lua(function()
+      vim.g.fast = { 1, 'x' }
       local result
       local timer = assert(vim.uv.new_timer())
       timer:start(0, 0, function()
@@ -29,6 +30,8 @@ describe('|api-fast| functions', function()
               pattern = 'Fast',
               callback = function() end,
             }) > 0,
+            nvim_get_var = vim.api.nvim_get_var('fast'),
+            nvim_get_vvar = vim.api.nvim_get_vvar('progname'),
             nvim_replace_termcodes = vim.api.nvim_replace_termcodes('<Esc>', true, true, true),
             str2list = vim.fn.str2list('AB'),
             strcharlen = vim.fn.strcharlen('abc'),
@@ -59,6 +62,8 @@ describe('|api-fast| functions', function()
       keytrans = '<C-Home>',
       nr2char = 'A',
       nvim_create_autocmd = true,
+      nvim_get_var = { 1, 'x' },
+      nvim_get_vvar = 'nvim',
       nvim_replace_termcodes = '\27', -- <Esc>
       str2list = { 65, 66 },
       strcharlen = 3,
@@ -94,6 +99,14 @@ describe('|api-fast| functions', function()
       local big = ('héllo wörld '):rep(100000) -- 1.2M chars.
 
       local aupat = ('a'):rep(80000) -- Must stay under the "E339: Pattern too long" limit.
+
+      -- Big nested value: a per-item breakcheck in the typval conversion would show.
+      local bigval = {}
+      for i = 1, 200000 do
+        bigval[i] = { i, 'x' }
+      end
+      vim.g.big = bigval
+      vim.v.errors = bigval
       vim.api.nvim_create_autocmd('User', { pattern = aupat, callback = function() end })
 
       local cases = {
@@ -117,6 +130,12 @@ describe('|api-fast| functions', function()
         end,
         nvim_create_autocmd = function()
           vim.api.nvim_exec_autocmds('User', { pattern = aupat })
+        end,
+        nvim_get_var = function()
+          vim.api.nvim_get_var('big')
+        end,
+        nvim_get_vvar = function()
+          vim.api.nvim_get_vvar('errors')
         end,
         nvim_replace_termcodes = function()
           vim.api.nvim_replace_termcodes('<Esc>', true, true, true)
