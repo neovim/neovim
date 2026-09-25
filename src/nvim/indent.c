@@ -1743,7 +1743,7 @@ int get_lisp_indent(void)
         sci = cli.next;
         col--;
       }
-      char *that = sci.ptr;
+      const char *that = sci.ptr;
 
       // Some keywords require "body" indenting rules (the
       // non-standard-lisp ones are Scheme special forms):
@@ -1820,7 +1820,7 @@ int get_lisp_indent(void)
   return amount;
 }
 
-static int lisp_match(char *p)
+static int lisp_match(const char *p)
 {
   char buf[512];
   char *word = *curbuf->b_p_lw != NUL ? curbuf->b_p_lw : p_lispwords;
