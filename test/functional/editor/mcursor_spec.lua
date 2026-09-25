@@ -3663,6 +3663,51 @@ describe('multicursor', function()
       feed('q=') -- Follow mode: "=" prefix.
       feed('l') -- Tickle showcmd redraw.
       screen:expect({ any = '=2×' })
+
+      -- ui2 redraws on 'showcmd', which should only update AFTER cascade, not during. #42081 #41659
+      n.exec_lua(function()
+        _G.seen = {}
+        local ns = vim.api.nvim_create_namespace('nvim.multicursor.cursor')
+        vim.ui_attach(vim.api.nvim_create_namespace('test'), { ext_messages = true }, function(ev)
+          if ev == 'msg_showcmd' then
+            -- Buffer text, cursor column, and selection-end columns.
+            local ends = vim.tbl_map(function(m)
+              return m[3]
+            end, vim.api.nvim_buf_get_extmarks(0, ns, 0, -1, {}))
+            _G.seen[#_G.seen + 1] = ('%s %d %s'):format(
+              table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, true), ','),
+              vim.fn.col('.') - 1,
+              table.concat(ends, ',')
+            )
+          end
+        end)
+      end)
+      clear_cursors()
+      cursors({ 'aaa', 'bbb', 'ccc' }, 'QjQjQ')
+      screen:expect({ any = '3×' }) -- Input processed, before resetting `seen`.
+      n.exec_lua('_G.seen = {}')
+      feed('rx')
+      screen:expect([[
+        {17:x}aa                           |
+        {17:x}bb                           |
+        {17:^x}cc                           |
+        {1:~                             }|
+                            3×        |
+      ]])
+      eq({ 'aaa,bbb,ccc 0 ', 'xaa,xbb,xcc 0 ' }, n.exec_lua('return _G.seen'))
+      n.exec_lua('_G.seen = {}')
+      feed('vl')
+      screen:expect([[
+        {17:xa}a                           |
+        {17:xb}b                           |
+        {17:x^c}c                           |
+        {1:~                             }|
+        {5:-- VISUAL --}        3× 2      |
+      ]])
+      eq(
+        { 'xaa,xbb,xcc 0 0,0,0', 'xaa,xbb,xcc 1 1,1,1', 'xaa,xbb,xcc 1 1,1,1' },
+        n.exec_lua('return _G.seen')
+      )
     end)
   end)
 
