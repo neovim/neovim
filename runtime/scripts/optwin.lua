@@ -200,6 +200,7 @@ local options_list = {
     { 'report', N_ 'threshold for reporting number of changed lines' },
     { 'verbose', N_ 'the higher the more messages are given' },
     { 'verbosefile', N_ 'file to write messages in' },
+    { 'profiledumpinterval', N_ 'minimum interval between automatic profile dumps' },
     { 'more', N_ 'pause listings when the screen is full' },
     { 'confirm', N_ 'start a dialog when a command fails' },
     { 'errorbells', N_ 'ring the bell for error messages' },
