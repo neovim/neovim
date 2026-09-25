@@ -1605,7 +1605,9 @@ describe('terminal input', function()
       '<BS>',
       '<S-Tab>',
       '<Insert>',
+      '<S-Insert>',
       '<Del>',
+      '<S-Del>',
       '<PageUp>',
       '<PageDown>',
       '<S-Up>',
@@ -1667,6 +1669,7 @@ describe('terminal input', function()
     }
     -- FIXME: The escape sequence to enable kitty keyboard mode doesn't work on Windows
     if not is_os('win') then
+      table.insert(keys, '<S-BS>')
       table.insert(keys, '<C-I>')
       table.insert(keys, '<C-M>')
       table.insert(keys, '<C-[>')
