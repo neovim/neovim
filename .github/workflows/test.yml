@@ -167,8 +167,14 @@ jobs:
     runs-on: ${{ matrix.build.runner }}
     timeout-minutes: 45
     env:
+      # The setup action adds this to PATH for neovim-ruby-host.
+      BIN_DIR: ${{ github.workspace }}/.deps/bin
       CC: ${{ matrix.build.cc }}
+      # Install and load Ruby gems from the dependency cache.
+      GEM_HOME: ${{ github.workspace }}/.deps/ruby
       NVIM_TEST_INTEG: ${{ matrix.build.flavor == 'release' && '1' || '0' }}
+      # Add cached provider dependencies to Perl's module search path.
+      PERL5LIB: ${{ github.workspace }}/.deps/perl5/lib/perl5
     steps:
       - uses: actions/checkout@v7.0.1
         with:
@@ -185,9 +191,9 @@ jobs:
         name: Set up interpreter packages
         run: |
           echo "Install neovim RubyGem."
-          gem install --no-document --bindir "$BIN_DIR" --user-install --pre neovim
+          gem install --no-document --bindir "$BIN_DIR" --conservative --pre neovim
 
-          sudo cpanm -n Neovim::Ext || cat "$HOME/.cpanm/build.log"
+          cpanm -n -L .deps/perl5 --skip-satisfied Neovim::Ext || cat "$HOME/.cpanm/build.log"
           perl -W -e 'use Neovim::Ext; print $Neovim::Ext::VERSION'
 
       - name: List runtime files
