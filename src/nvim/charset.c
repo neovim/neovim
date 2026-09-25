@@ -628,11 +628,12 @@ int vim_strnsize(const char *s, int len)
 {
   assert(s != NULL);
   int size = 0;
-  while (*s != NUL && --len >= 0) {
-    int l = utfc_ptr2len(s);
-    size += ptr2cells(s);
-    s += l;
-    len -= l - 1;
+  StrCharInfo ci = utf_ptr2StrCharInfo(s);
+  while (*ci.ptr != NUL && len > 0) {
+    ClusterInfo cli = utf_ClusterInfo(ci);
+    size += cli.cells;
+    len -= (int)(cli.next.ptr - ci.ptr);
+    ci = cli.next;
   }
   return size;
 }

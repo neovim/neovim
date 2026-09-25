@@ -295,8 +295,11 @@ describe('mbyte', function()
 
   describe('utf_ptr2cells', function()
     local function check(str, expected)
+      -- TODO: rework a better test structure for the new world
+      -- of bounded and unbounded CharInfo iterators
       eq(expected, lib.utf_ptr2cells(to_cstr(str)))
-      eq(expected, lib.utf_ptr2cells_len(to_cstr(str), #str))
+      -- this a bit of a cop-out (string not cluster), but see above
+      eq(expected, lib.mb_string2cells_len(to_cstr(str), #str, false))
     end
 
     itp('gives a spacing mark its own cell', function()

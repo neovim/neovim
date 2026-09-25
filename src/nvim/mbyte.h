@@ -1,5 +1,6 @@
 #pragma once
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <sys/types.h>  // IWYU pragma: keep
@@ -88,10 +89,41 @@ static inline CharInfo utf_ptr2CharInfo(char const *const p_in)
   }
 }
 
-static inline StrCharInfo utf_ptr2StrCharInfo(char *ptr)
+static inline StrCharInfo utf_ptr2StrCharInfo(const char *ptr)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_PURE
 {
   return (StrCharInfo){ .ptr = ptr, .chr = utf_ptr2CharInfo(ptr) };
+}
+
+static inline CharInfo utf_ptr2CharInfo_len(char const *const p_in, int size)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
+{
+  uint8_t const *const p = (uint8_t const *)p_in;
+  assert(size >= 0);
+  if (size == 0) {
+    return (CharInfo){ .value = -1, .len = 1 };
+  }
+
+  uint8_t const first = *p;
+  if (first < 0x80) {
+    return (CharInfo){ .value = first, .len = 1 };
+  } else {
+    int len = utf8len_tab[first];
+    if (len > size) {
+      return (CharInfo){ .value = -1, .len = 1 };
+    }
+    int32_t const code_point = utf_ptr2CharInfo_impl(p, (uintptr_t)len);
+    if (code_point < 0) {
+      len = 1;
+    }
+    return (CharInfo){ .value = code_point, .len = len };
+  }
+}
+
+static inline StrCharInfo utf_ptr2StrCharInfo_len(const char *ptr, int size)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_PURE
+{
+  return (StrCharInfo){ .ptr = ptr, .chr = utf_ptr2CharInfo_len(ptr, size) };
 }
 
 // only c.value is used here but it is a hint that it is the return value of ptr2CharInfo
@@ -128,7 +160,42 @@ static inline ClusterInfo utf_ClusterInfo(StrCharInfo cur)
       .cells = basechar_cells_impl(cur.chr)
     };
   }
-  return utf_ClusterInfo_impl(cur);
+  int scratch = INT_MAX;
+  return utf_ClusterInfo_impl(cur, &scratch);
+}
+
+static inline ClusterInfo utf_ClusterInfo_len(StrCharInfo cur, int *size)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
+{
+  // TODO(bfredl): this is knowingly a bit inconsistent with utf_ClusterInfo
+  // w.r.t control chars and truncated sequences
+  // main consumer of mb_string2cells_len is currently str_to_reg, and once
+  // it has been changed to behave more like buffer text, these edge cases
+  // will disappear.
+
+  *size -= cur.chr.len;
+  uint8_t *next = (uint8_t *)(cur.ptr + cur.chr.len);
+  if (EXPECT(*size == 0, false)) {
+    return (ClusterInfo) {
+      .next = (StrCharInfo){
+        .ptr = (const char *)next,  // one past the end, but caller should check
+        .chr = (CharInfo){ .value = -1, .len = 1 },
+      },
+      .cells = utf_char2cells(cur.chr.value),
+    };
+  }
+
+  // handle ASCII case inline
+  if (EXPECT(*next < 0x80U, true)) {
+    return (ClusterInfo) {
+      .next = (StrCharInfo){
+        .ptr = (char *)next,
+        .chr = (CharInfo){ .value = *next, .len = 1 },
+      },
+      .cells = utf_char2cells(cur.chr.value),
+    };
+  }
+  return utf_ClusterInfo_impl(cur, size);
 }
 
 /// Return number of display cells occupied by ASCII byte "b".
