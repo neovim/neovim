@@ -2145,6 +2145,25 @@ describe('multicursor', function()
         end
       end
 
+      -- Also for LHS-replayed mapping.
+      n.exec_lua(function()
+        -- "rx" via API, which also samples the cursors when replayed at the other cursor.
+        _G.peek = function()
+          local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+          vim.api.nvim_buf_set_text(0, row - 1, col, row - 1, col + 1, { 'x' })
+          if row == 1 then
+            local ns = vim.api.nvim_create_namespace('nvim.multicursor')
+            _G.seen = vim.api.nvim_buf_get_extmarks(0, ns, 0, -1, {})[2]
+          end
+        end
+      end)
+      command('nnoremap gr <Cmd>lua _G.peek()<CR>')
+      clear_cursors()
+      cursors({ 'aa', 'bb' }, 'QjQ')
+      feed('gr')
+      eq({ 'xa', 'xb' }, get_lines())
+      eq({ 1, 0 }, n.exec_lua('return { _G.seen[2], _G.seen[3] }'))
+
       -- Same for a Visual span: the primary sits at selection-end.
       command([[xnoremap gl <Cmd>normal! xp`[1v<CR>]])
       clear_cursors()
