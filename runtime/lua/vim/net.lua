@@ -156,7 +156,7 @@ end
 --- @return { close: fun() } # Object with `close()` method which cancels the request.
 function M.request(method, url, opts, on_response)
   if type(url) ~= 'string' then
-    on_response = opts --[[@as vim.net.request.ResponseFunc?]]
+    on_response = opts --[[@as vim.net.HttpResponseFunc?]]
     opts = url --[[@as vim.net.request.Opts?]]
     url = method
     method = 'GET'
