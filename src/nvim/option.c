@@ -72,6 +72,7 @@
 #include "nvim/highlight_group.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
+#include "nvim/input_cmdatom.h"
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
 #include "nvim/log.h"
@@ -2330,6 +2331,15 @@ static const char *did_set_foldnestmax(optset_T *args)
   win_T *win = args->os_win;
   if (foldmethodIsSyntax(win) || foldmethodIsIndent(win)) {
     foldUpdateAll(win);
+  }
+  return NULL;
+}
+
+/// Multicursor: handle updates to 'follow' option.
+static const char *did_set_follow(optset_T *args)
+{
+  if (args->os_buf == curbuf) {
+    atom_follow_changed();
   }
   return NULL;
 }
@@ -5487,6 +5497,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return &(buf->b_p_ff);
   case kOptFiletype:
     return &(buf->b_p_ft);
+  case kOptFollow:
+    return &(buf->b_p_follow);
   case kOptFormatoptions:
     return &(buf->b_p_fo);
   case kOptFormatlistpat:
@@ -5881,6 +5893,8 @@ void buf_copy_options(buf_T *buf, int flags)
       COPY_OPT_SCTX(buf, kBufOptExpandtab);
       buf->b_p_fixeol = p_fixeol;
       COPY_OPT_SCTX(buf, kBufOptFixendofline);
+      buf->b_p_follow = p_follow;
+      COPY_OPT_SCTX(buf, kBufOptFollow);
       buf->b_p_et_nobin = p_et_nobin;
       buf->b_p_et_nopaste = p_et_nopaste;
       buf->b_p_ml = p_ml;

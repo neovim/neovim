@@ -274,6 +274,7 @@ EXTERN char *p_fcl;             ///< 'foldclose'
 EXTERN OptInt p_fdls;           ///< 'foldlevelstart'
 EXTERN char *p_fdo;             ///< 'foldopen'
 EXTERN unsigned fdo_flags;
+EXTERN int p_follow;            ///< 'follow'
 EXTERN Callback p_fex;          ///< 'formatexpr'
 EXTERN char *p_flp;             ///< 'formatlistpat'
 EXTERN char *p_fo;              ///< 'formatoptions'

@@ -2908,6 +2908,14 @@ vim.o.fdt = vim.o.foldtext
 vim.wo.foldtext = vim.o.foldtext
 vim.wo.fdt = vim.wo.foldtext
 
+--- Enables `multicursor` follow-mode: cursor-relative motions performed
+--- by the primary cursor, cascade to all cursors `mcursor`.  Toggled by
+--- `q=` (buffer-local).
+---
+--- @type boolean
+vim.o.follow = false
+vim.bo.follow = vim.o.follow
+
 --- Expression which is evaluated to format a range of lines for the `gq`
 --- operator or automatic formatting (see 'formatoptions').  When this
 --- option is empty 'formatprg' is used.

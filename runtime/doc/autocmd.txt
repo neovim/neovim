@@ -497,7 +497,7 @@ CmdAtom				After a user action (an "atom" of input): any
 				    - "insert": Insert session.
 				    - "jump": Absolute motion ("G", marks,
 				      "H", |jumplist).
-				    - "mapping": Composite (>=2 subatoms).
+				    - "mapping": Composite (≥2 subatoms).
 				    - "motion": Cursor-relative motion ("w",
 				      "%", "fx", "*").
 				    - "mouse"

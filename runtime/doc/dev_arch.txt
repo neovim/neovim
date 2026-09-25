@@ -610,9 +610,9 @@ the boundaries (`redo_keys()`, `start_redo()`, `atom_from_redo()`).
 
 THE CASCADE
 
-Cursors are `Context` entries in `mc_cursors`, tracked as extmarks. The
+Cursors are extmarks with associated `Context` data (`mc_cursors`). The
 extmark is authoritative: it follows edits, and user code may delete cursors
-by deleting their extmarks. Cursor-local state is swapped in on replay, so
+by deleting their extmarks. Cursor-local state is swapped-in on replay, so
 each cursor reads/writes its own registers, Visual area and change marks.
 
 CmdAtoms queued for cascade (`g_atoms`) are replayed at every cursor on the
@@ -628,6 +628,50 @@ replayed) is documented at `mc_ins_span`.  Sessions that cannot insert-cascade
 (count `3iZ`, Replace mode, blockwise `CTRL-V c`) are captured at <Esc>.
 - See `CmdAtomType` and `atom_key_class()` to understand how input is
   classified to decide whether and how it can be replayed.
+
+RHS VS LHS
+
+Multicursor "cascade" is meaningful only for edits and motions. Example: while
+you have multicursors placed, you may want to scroll or switch to a window
+temporarily; it would be a chore if you had to exit multicursor before doing
+those actions.
+
+Thus, cascade prefers to replay, skip, or partially-apply RHS (the resolved
+`keys`) instead of naively replaying LHS (the unresolved, remap-enabled, user
+input). In general, RHS "degrades gracefully" by doing LESS (and a single "u"
+reverts it), whereas LHS worst-case is unbounded (it fails by doing MORE; "u"
+cannot revert its side-effects).
+
+LHS may resolve to arbitrary Excmds/Lua that make sense at the primary, but
+not at cascade. Whereas RHS classification allows multicursor to skip (or
+partially apply) a user action that involves unreplayable subatoms. Similar to
+how insert-completion does not show a menu at every cursor, but it does
+cascade.
+
+Examples where RHS replay behaves better than LHS:
+
+- Performance:
+  - LHS replays the entire callback per-cursor, which can be very slow if it
+    involves treesitter queries, LSP requests, etc.
+  - RHS replays only the resolved normal commands.
+- Viewport-relative commands (zt/<C-d>/H/L/… in mapping):
+  - LHS cascade is nonsense because cursors may be offscreen.
+- Jumps / global ops (absolute, not cursor-relative):
+  - `nnoremap X Gdd`: RHS replays only dd, per cursor.
+  - `nnoremap <Down> ]C`: LHS (follow-mode) moves each cursor to its neighbor.
+  - `nnoremap u u`: LHS would undo N times.
+- Editor state outside of current buffer:
+  - `nnoremap ]x <Cmd>cnext<CR>x`:
+    - LHS is nonsense.
+    - RHS: `:cnext` runs once at primary; only `x` cascades.
+  - `nnoremap X <Cmd>set wrap!<CR>x`:
+    - LHS toggles N times, the result depends on N.
+    - RHS does not cascade the `<Cmd>`.
+
+Examples where LHS replay behaves better (and RHS replay is wrong):
+
+- Conditional mappings, e.g. `nnoremap X <Cmd>if getline('.') =~ 'foo' \| normal! dd \| endif<CR>`.
+  - Unblocked by `setrepeat()` API: https://github.com/neovim/neovim/issues/42069
 
 RENDERING
 

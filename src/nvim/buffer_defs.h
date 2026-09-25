@@ -577,6 +577,7 @@ struct file_buffer {
   char *b_p_fenc;               ///< 'fileencoding'
   char *b_p_ff;                 ///< 'fileformat'
   char *b_p_ft;                 ///< 'filetype'
+  int b_p_follow;               ///< 'follow'
   char *b_p_fo;                 ///< 'formatoptions'
   char *b_p_flp;                ///< 'formatlistpat'
   int b_p_inf;                  ///< 'infercase'

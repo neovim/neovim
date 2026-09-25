@@ -20,6 +20,7 @@ local options_list = {
       'startofline',
       N_ 'many jump commands move the cursor to the first non-blank\ncharacter of a line',
     },
+    { 'follow', N_ 'multicursor: motions cascade to all cursors' },
     { 'paragraphs', N_ 'nroff macro names that separate paragraphs' },
     { 'sections', N_ 'nroff macro names that separate sections' },
     { 'path', N_ 'list of directory names used for file searching' },
