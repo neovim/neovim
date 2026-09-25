@@ -481,48 +481,61 @@ local function previous_result_ids(client_id, identifier)
   return results
 end
 
+--- @param identifier string?
+--- @param client_id integer
+--- @param items lsp.WorkspaceDocumentDiagnosticReport[]
+local function handle_workspace_report_items(identifier, client_id, items)
+  for _, report in ipairs(items) do
+    -- Avoid creating a buffer (via vim.uri_to_bufnr) just to record bookkeeping for a
+    -- file that has no diagnostics and isn't already open.
+    local has_diagnostics = report.kind == 'full' and #report.items > 0
+    if has_diagnostics or vim.fn.bufexists(vim.uri_to_fname(report.uri)) == 1 then
+      local bufnr = vim.uri_to_bufnr(report.uri)
+
+      -- Start tracking the buffer (but don't send "textDocument/diagnostic" requests for it).
+      local provider = Diagnostics.active[bufnr] or Diagnostics:new(bufnr)
+      local state = provider.client_state[client_id]
+      if not state then
+        state = { pull_kind = 'workspace', result_id = {} }
+        provider.client_state[client_id] = state
+      end
+
+      -- We favor document pull requests over workspace results, so only update the buffer
+      -- state if we're not pulling document diagnostics for this buffer.
+      if state.pull_kind == 'workspace' and report.kind == 'full' then
+        handle_diagnostics(report.uri, client_id, report.items, true, identifier)
+        local key = result_id_key(identifier)
+        state.result_id[key] = report.resultId
+      end
+    end
+  end
+end
+
 --- Request workspace-wide diagnostics.
 --- @param opts vim.lsp.WorkspaceDiagnosticsOpts
 function M._workspace_diagnostics(opts)
   local clients = lsp.get_clients({ method = 'workspace/diagnostic', id = opts.client_id })
 
-  --- @param error lsp.ResponseError?
-  --- @param result lsp.WorkspaceDiagnosticReport
-  --- @param ctx lsp.HandlerContext
-  local function handler(error, result, ctx)
-    -- Check for retrigger requests on cancellation errors.
-    -- Unless `retriggerRequest` is explicitly disabled, try again.
-    if error ~= nil and error.code == protocol.ErrorCodes.ServerCancelled then
-      if error.data == nil or error.data.retriggerRequest ~= false then
-        local client = assert(lsp.get_client_by_id(ctx.client_id))
-        client:request('workspace/diagnostic', ctx.params, handler)
-      end
-      return
-    end
-
-    if error == nil and result ~= nil then
-      ---@type lsp.WorkspaceDiagnosticParams
-      local params = ctx.params
-      for _, report in ipairs(result.items) do
-        local bufnr = vim.uri_to_bufnr(report.uri)
-
-        -- Start tracking the buffer (but don't send "textDocument/diagnostic" requests for it).
-        local provider = Diagnostics.active[bufnr] or Diagnostics:new(bufnr)
-        local state = provider.client_state[ctx.client_id]
-        if not state then
-          state = { pull_kind = 'workspace', result_id = {} }
-          provider.client_state[ctx.client_id] = state
-        end
-
-        -- We favor document pull requests over workspace results, so only update the buffer
-        -- state if we're not pulling document diagnostics for this buffer.
-        if state.pull_kind == 'workspace' and report.kind == 'full' then
-          handle_diagnostics(report.uri, ctx.client_id, report.items, true, params.identifier)
-          local key = result_id_key(params.identifier)
-          state.result_id[key] = report.resultId
+  --- @param client vim.lsp.Client
+  --- @param params lsp.WorkspaceDiagnosticParams
+  local function request_workspace_diagnostics(client, params)
+    client:partial_result_request('workspace/diagnostic', params, function(value)
+      ---@cast value lsp.WorkspaceDiagnosticReportPartialResult
+      handle_workspace_report_items(params.identifier, client.id, value.items)
+    end, function(error, result, ctx)
+      -- Check for retrigger requests on cancellation errors.
+      -- Unless `retriggerRequest` is explicitly disabled, try again.
+      if error ~= nil and error.code == protocol.ErrorCodes.ServerCancelled then
+        if error.data == nil or error.data.retriggerRequest ~= false then
+          request_workspace_diagnostics(client, params)
+          return
         end
       end
-    end
+
+      if error == nil and result ~= nil then
+        handle_workspace_report_items(params.identifier, ctx.client_id, result.items)
+      end
+    end)
   end
 
   for _, client in ipairs(clients) do
@@ -533,8 +546,7 @@ function M._workspace_diagnostics(opts)
         identifier = cap.identifier,
         previousResultIds = previous_result_ids(client.id, cap.identifier),
       }
-
-      client:request('workspace/diagnostic', params, handler)
+      request_workspace_diagnostics(client, params)
     end)
   end
 end
