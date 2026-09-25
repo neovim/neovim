@@ -237,7 +237,9 @@ function M.slug(path, opts)
     return hash8
   end
   local head_len = math.floor(budget / 3)
-  local h = s:sub(1, head_len):match('^.*()-') or head_len -- byte position where {head} ends
+  local h = (
+    s:sub(1, head_len):match('^.*()-') --[[@as integer?]]
+  ) or head_len -- byte position where {head} ends
   if h == head_len and h >= 1 then
     -- No "-" found in prefix: ensure we don't split a UTF-8 character.
     -- `vim.str_utf_start` returns an offset (<= 0) from the byte position to the character start.
@@ -366,6 +368,7 @@ function M.dir(path, opts)
 
   --- @async
   return coroutine.wrap(function()
+    ---@type [string, integer, uv.uv_fs_t][]
     local dirs = { { path, 1, rootfs } }
     while #dirs > 0 do
       --- @type string, integer, any

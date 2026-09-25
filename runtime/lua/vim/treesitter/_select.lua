@@ -444,8 +444,7 @@ local function get_child_from_range(range)
     and history.changedtick == vim.b.changedtick
     and history.current_node_id == node_id(node)
   then
-    --- @type {id:string,range:Range4}
-    local child = table.remove(history)
+    local child = table.remove(history) --[[@as {id:string,range:Range4}?]]
     if child then
       history.current_node_id = child.id
 

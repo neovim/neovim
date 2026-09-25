@@ -196,6 +196,8 @@ local function subscribe(name, backend, path, opts, rules, subscriber)
       debounce = key.debounce,
       uvflags = key.uvflags,
       -- Both filters must match from the beginning of the full path.
+      -- EmmyLua does not infer the LPeg length operator's result type.
+      ---@diagnostic disable-next-line: assign-type-mismatch
       include_pattern = #include_pattern * include,
       exclude_pattern = exclude_pattern,
       on_error = function(err)

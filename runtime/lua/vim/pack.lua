@@ -1473,7 +1473,7 @@ function M.update(names, opts)
   lock_read()
 
   -- Infer update details
-  local needs_lock_write = opts.force --- @type boolean
+  local needs_lock_write = opts.force or false
 
   --- @async
   --- @param p vim.pack.Plug

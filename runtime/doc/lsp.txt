@@ -1273,7 +1273,7 @@ formatexpr({opts})                                      *vim.lsp.formatexpr()*
 
     Parameters: ~
       • {opts}  (`table?`) A table with the following fields:
-                • {timeout_ms} (`integer`, default: 500ms) The timeout period
+                • {timeout_ms}? (`integer`, default: 500ms) The timeout period
                   for the formatting request..
 
 get_client_by_id({client_id})                     *vim.lsp.get_client_by_id()*
@@ -1838,7 +1838,7 @@ Lua module: vim.lsp.client                                        *lsp-client*
                                 See |Client:request()|.
       • {request_sync}          (`fun(self: vim.lsp.Client, method: string, params: table, timeout_ms: integer?, bufnr: integer?): {err: lsp.ResponseError?, result:any}?, string?`)
                                 See |Client:request_sync()|.
-      • {requests}              (`table<integer,{ type: string, bufnr: integer, method: string}?>`)
+      • {requests}              (`table<integer,{ type: string, bufnr: integer, method: vim.lsp.protocol.Method}?>`)
                                 The current pending requests in flight to the
                                 server. Entries are key-value pairs with the
                                 key being the request id while the value is a
@@ -2912,8 +2912,8 @@ Lua module: vim.lsp.util                                            *lsp-util*
                          • "below": place the window below the cursor unless
                            there are not enough lines to display the full
                            window height.
-      • {border}?        (`string|(string|[string,string])[]`) override
-                         `border`
+      • {border}?        (`''|'none'|'single'|'double'|'rounded'|'solid'|'shadow'|'bold'|(string|[string,string])[]`)
+                         override `border`
       • {close_events}?  (`table`) List of events that closes the floating
                          window
       • {focus}?         (`boolean`, default: `true`) If `true`, and if

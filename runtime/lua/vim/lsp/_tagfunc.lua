@@ -73,12 +73,14 @@ local function query_workspace_symbols(pattern)
   for client_id, responses in pairs(assert(results_by_client)) do
     local client = lsp.get_client_by_id(client_id)
     local position_encoding = client and client.offset_encoding or 'utf-16'
-    local symbols = responses.result --[[@as lsp.SymbolInformation[]|nil]]
-    for _, symbol in pairs(symbols or {}) do
-      local loc = symbol.location
-      local item = mk_tag_item(symbol.name, loc.range, loc.uri, position_encoding)
-      item.kind = lsp.protocol.SymbolKind[symbol.kind] or 'Unknown'
-      table.insert(results, item)
+    local symbols = responses.result --[[@as lsp.SymbolInformation[]?]]
+    if symbols then
+      for _, symbol in pairs(symbols) do
+        local loc = symbol.location
+        local item = mk_tag_item(symbol.name, loc.range, loc.uri, position_encoding)
+        item.kind = lsp.protocol.SymbolKind[symbol.kind] or 'Unknown'
+        table.insert(results, item)
+      end
     end
   end
   return results

@@ -978,7 +978,7 @@ function Query:iter_captures(node, source, start_row, end_row, opts)
 
     local match_id, pattern_i = match:info()
 
-    --- @type vim.treesitter.query.TSMetadata
+    --- @type vim.treesitter.query.TSMetadata?
     local metadata
     if match_id <= highest_cached_match_id then
       metadata = match_cache[match_id]
@@ -1117,7 +1117,7 @@ end
 --- @field langs? string|string[]
 ---
 --- Just clear current lint errors
---- @field clear boolean
+--- @field clear? boolean
 
 --- Lint treesitter queries using installed parser, or clear lint errors.
 ---

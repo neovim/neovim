@@ -48,6 +48,7 @@ function M.show(ns)
     api.nvim_echo({ { ('No extmarks in this buffer for namespace "%s"'):format(ns) } }, false, {})
     return true
   end
+  --- @type [string, string?][]
   local chunks = { { ('%6s %5s  %4s %s'):format('id', 'line', 'col', 'text'), 'Title' } }
   for _, m in ipairs(extmarks) do
     local text = api.nvim_buf_get_lines(0, m[2], m[2] + 1, false)[1] or ''

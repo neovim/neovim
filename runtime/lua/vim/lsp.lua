@@ -806,7 +806,8 @@ function lsp.status()
       --- @cast progress {token: lsp.ProgressToken, value: lsp.LSPAny}
       local value = progress.value
       if type(value) == 'table' and value.kind then
-        local message = value.message and (value.title .. ': ' .. value.message) or value.title
+        -- Progress handlers carry the title over to report and end messages.
+        local message = value.message and (value.title .. ': ' .. value.message) or value.title --[[@as string?]]
         messages[#messages + 1] = message
         if value.percentage then
           percentage = math.max(percentage or 0, value.percentage)
@@ -1377,7 +1378,7 @@ end
 ---
 --- The timeout period for the formatting request.
 --- (default: 500ms).
---- @field timeout_ms integer
+--- @field timeout_ms? integer
 
 --- Provides an interface between the built-in client and a `formatexpr` function.
 ---

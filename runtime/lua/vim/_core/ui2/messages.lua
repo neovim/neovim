@@ -121,7 +121,8 @@ local function set_virttext(type, tgt)
   end
 
   -- Concatenate the components of M.virt[type] and calculate the concatenated width.
-  local width, chunks = 0, {} ---@type integer, [string, integer|string][]
+  local width = 0 ---@type integer
+  local chunks = {} ---@type [string, (integer|string)?][]
   local contents = M.virt[type] ---@type MsgContent[]
   for _, content in ipairs(contents) do
     for _, chunk in ipairs(content) do
@@ -236,6 +237,7 @@ local function pager_shown()
   return api.nvim_win_is_valid(ui.wins.pager) and not api.nvim_win_get_config(ui.wins.pager).hide
 end
 
+---@type vim.api.keyset.set_extmark
 local hlopts = { undo_restore = false, invalidate = true, priority = 1, strict = false }
 --- Move messages to expanded cmdline, dialog or pager to show in full.
 --- Return updated target+buffer in case it differs from 'src'.
@@ -332,7 +334,7 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
   local function set_target_pos()
     if tgt == 'msg' then
       local width_cmd = [[echo max(map(range(1, line('$')), 'virtcol([v:val, "$"])'))]]
-      local width = assert(tonumber(fn.win_execute(ui.wins.msg, width_cmd))) - 1
+      local width = vim._assert_integer(fn.win_execute(ui.wins.msg, width_cmd)) - 1
       api.nvim_win_resize(ui.wins.msg, width, -1)
       local texth = api.nvim_win_text_height(ui.wins.msg, { start_row = start_row, end_row = row })
       if texth.all > math.ceil(lines * 0.5) then
@@ -446,12 +448,13 @@ function M.show_msg(tgt, kind, content, replace_last, append, id)
   end
 end
 
+---@alias MsgChunk [integer, string, integer?]
+---@alias MsgContent MsgChunk[]
+
 local in_pager = false -- Whether the pager is or will be the current window.
 --- Route the message to the appropriate sink.
 ---
 ---@param kind string
----@alias MsgChunk [integer, string, integer]
----@alias MsgContent MsgChunk[]
 ---@param content MsgContent
 ---@param replace_last boolean
 --@param history boolean
@@ -766,8 +769,9 @@ function M.set_pos(tgt, focus)
       local top = { mopt.msgsep, 'MsgSeparator' }
       ---@type vim.api.keyset.win_config
       local cfg = { hide = false, relative = 'laststatus', col = 10000 }
-      cfg.row, cfg.height, cfg.border = win_row_height_border(t, texth.all)
-      cfg.border = cfg.border and t ~= 'msg' and { '', top, '', '', '', '', '', '' } or nil
+      local has_border
+      cfg.row, cfg.height, has_border = win_row_height_border(t, texth.all)
+      cfg.border = has_border and t ~= 'msg' and { '', top, '', '', '', '', '', '' } or nil
       cfg.mouse = tgt == 'cmd' or t == 'msg' or nil
       api.nvim_win_set_config(win, cfg)
       api.nvim_win_set_cursor(win, { 1, 0 })

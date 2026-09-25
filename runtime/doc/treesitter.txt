@@ -1668,7 +1668,7 @@ lint({buf}, {opts})                              *vim.treesitter.query.lint()*
     Parameters: ~
       • {buf}   (`integer`) Buffer handle
       • {opts}  (`table?`) Optional keyword arguments:
-                • {clear} (`boolean`) Just clear current lint errors
+                • {clear}? (`boolean`) Just clear current lint errors
                 • {langs}? (`string|string[]`) Language(s) to use for checking
                   the query. If multiple languages are specified, queries are
                   validated for all of them

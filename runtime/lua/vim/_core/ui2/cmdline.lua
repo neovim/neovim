@@ -9,7 +9,7 @@ local M = {
   erow = 0, -- Buffer row at which the current cmdline ends; messages appended here in block mode.
   level = 0, -- Current cmdline level; 0 when inactive.
   wmnumode = 0, -- wildmenumode() when not using the pum, dialog position adjusted when toggled.
-  -- Non-zero for entered expanded cmdline, incremented for each message emitted as a result of entered command to move and open messages in the pager.
+  --- @type integer Non-zero for entered expanded cmdline, incremented for each message emitted as a result of entered command to move and open messages in the pager.
   expand = 0,
 }
 

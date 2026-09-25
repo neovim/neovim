@@ -186,7 +186,7 @@ function M.open()
         vim.cmd.quit() -- Only the cmdwin is left: exit.
         return
       end
-      caller = wins[1]
+      caller = assert(wins[1])
     end
 
     -- Ex-mode feature: auto-print the current line after a cursor move or buffer change, unless the

@@ -329,7 +329,9 @@ end
 --- @return boolean
 local function contains_region(region1, region2)
   if type(region2[1]) ~= 'table' then
-    region2 = { region2 }
+    region2 = {
+      region2 --[[@as Range]],
+    }
   end
 
   -- TODO: Combine intersection ranges in region1
@@ -416,7 +418,7 @@ end
 function LanguageTree:_parse_regions(range, thread_state)
   local changes = {}
   local no_regions_parsed = 0
-  local total_parse_time = 0
+  local total_parse_time = 0 ---@type number
 
   -- If there are no ranges, set to an empty list
   -- so the included ranges in the parser are cleared.
@@ -568,7 +570,7 @@ function LanguageTree:_async_parse(range, on_parse)
   local source = self._source
   local buf = type(source) == 'number' and vim.b[source] or nil
   local ct = buf and buf.changedtick or nil
-  local total_parse_time = 0
+  local total_parse_time = 0 ---@type number
   local redrawtime = vim.o.redrawtime * 1000000
 
   local thread_state = {} ---@type ParserThreadState
@@ -671,7 +673,7 @@ function LanguageTree:_parse(range, thread_state)
   -- Collect some stats
   local no_regions_parsed = 0
   local query_time = 0
-  local total_parse_time = 0
+  local total_parse_time = 0 ---@type number
 
   -- At least 1 region is invalid
   if not self:is_valid(true, type(range) == 'table' and range or nil) then
@@ -862,6 +864,8 @@ function LanguageTree:set_included_regions(new_regions)
       end
     end
   end
+
+  ---@cast new_regions Range6[][]
 
   -- included_regions is not guaranteed to be list-like, but this is still sound, i.e. if
   -- new_regions is different from included_regions, then outdated regions in included_regions are
@@ -1122,7 +1126,7 @@ function LanguageTree:_get_injections(range, thread_state)
     local injections = {}
     local root_node = tree:root()
     local parent_ranges = self._regions and self._regions[tree_index] or nil
-    local scan_region ---@type Range4[]
+    local scan_region ---@type Range[]
     if full_scan then
       --- @diagnostic disable-next-line: missing-fields LuaLS varargs bug
       scan_region = { { root_node:range() } }

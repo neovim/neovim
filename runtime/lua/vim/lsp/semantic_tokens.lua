@@ -535,8 +535,8 @@ function STHighlighter:process_response(response, client, request_id, version, i
   -- if we have a response to a delta request, update the state of our tokens
   -- appropriately. if it's a full response, just use that
   local tokens ---@type integer[]
-  local token_edits = response.edits
-  if token_edits then
+  if response.edits then
+    local token_edits = response.edits
     table.sort(token_edits, function(a, b)
       return a.start < b.start
     end)

@@ -359,7 +359,7 @@ local function spans_to_virt_text(line, spans)
   end
   table.sort(boundaries)
 
-  local virt_text = {} ---@type [string, string[]][]
+  local virt_text = {} ---@type [string, string[]?][]
   local last_b = -1
   for _, b in ipairs(boundaries) do
     if b > last_b then

@@ -6,7 +6,7 @@ local M = {}
 
 --- @class QueryLinterNormalizedOpts
 --- @field langs string[]
---- @field clear boolean
+--- @field clear? boolean
 
 --- @alias vim.treesitter.ParseError {msg: string, range: Range4}
 
@@ -51,18 +51,8 @@ end
 --- @return QueryLinterNormalizedOpts
 local function normalize_opts(buf, opts)
   opts = opts or {}
-  if not opts.langs then
-    opts.langs = guess_query_lang(buf)
-  end
-
-  if type(opts.langs) ~= 'table' then
-    --- @diagnostic disable-next-line:assign-type-mismatch
-    opts.langs = { opts.langs }
-  end
-
-  --- @cast opts QueryLinterNormalizedOpts
-  opts.langs = opts.langs or {}
-  return opts
+  local langs = opts.langs or guess_query_lang(buf)
+  return { langs = type(langs) == 'table' and langs or { langs }, clear = opts.clear }
 end
 
 local lint_query = [[;; query
@@ -84,7 +74,8 @@ local lint_query = [[;; query
 --- @return vim.treesitter.ParseError
 local function get_error_entry(err, node)
   local start_line, start_col = node:range()
-  local line_offset, col_offset, msg = err:gmatch('.-:%d+: Query error at (%d+):(%d+)%. ([^:]+)')() ---@type string, string, string
+  local line_offset, col_offset, msg = err:match('.-:%d+: Query error at (%d+):(%d+)%. ([^:]+)')
+  assert(line_offset and col_offset and msg)
   start_line, start_col =
     start_line + vim._assert_integer(line_offset) - 1,
     start_col + vim._assert_integer(col_offset) - 1

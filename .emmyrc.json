@@ -28,7 +28,6 @@
   "diagnostics": {
     "disable": [
       "annotation-usage-error",
-      "assign-type-mismatch",
       "code-style-check",
       "incomplete-signature-doc",
       "iter-variable-reassign",

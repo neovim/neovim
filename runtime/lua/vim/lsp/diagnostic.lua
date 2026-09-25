@@ -116,8 +116,7 @@ local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
         string.format('Unsupported Markup message from LSP client %d', client_id),
         lsp.log_levels.ERROR
       )
-      --- @diagnostic disable-next-line: undefined-field,no-unknown
-      message = diagnostic.message.value
+      message = message.value
     end
     local line = buf_lines and buf_lines[start.line + 1] or ''
     local end_line = line

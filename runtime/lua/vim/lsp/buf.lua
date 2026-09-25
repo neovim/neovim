@@ -549,7 +549,7 @@ end
 
 ---@param bufnr integer
 ---@param mode "v"|"V"
----@return table {start={row,col}, end={row,col}} using (1, 0) indexing
+---@return {start: [integer,integer], end: [integer,integer]} using (1, 0) indexing
 local function range_from_selection(bufnr, mode)
   -- TODO: Use `vim.fn.getregionpos()` instead.
 
@@ -1418,7 +1418,6 @@ function M.code_action(opts)
   end
 
   lsp.buf_request_all(bufnr, 'textDocument/codeAction', function(client)
-    ---@type lsp.CodeActionParams
     local params
 
     if range then
@@ -1535,7 +1534,7 @@ function M.selection_range(direction, timeout_ms)
   end
 
   -- We only requested one range, thus we get the first and only response here.
-  local response = assert(result[client.id].result[1]) ---@type lsp.SelectionRange
+  local response = assert(result[client.id].result[1]) ---@type lsp.SelectionRange?
   local ranges = {} ---@type lsp.Range[]
   local lines = api.nvim_buf_get_lines(0, 0, -1, false)
 

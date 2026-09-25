@@ -784,6 +784,8 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers
 
   local active_hl = nil
   if active_offset then
+    -- Treat LSP's uinteger offsets as integers for arithmetic.
+    --- @cast active_offset [integer, integer]
     -- Account for the start of the markdown block.
     if ft then
       active_offset[1] = active_offset[1] + #contents[1]
@@ -813,8 +815,6 @@ function M.make_floating_popup_options(width, height, opts)
   validate('opts.offset_x', opts.offset_x, 'number', true)
   validate('opts.offset_y', opts.offset_y, 'number', true)
 
-  local anchor = ''
-
   local lines_above = vim.fn.winline() - 1
   local lines_below = vim.fn.winheight(0) - lines_above
   if opts.relative == 'mouse' then
@@ -842,11 +842,9 @@ function M.make_floating_popup_options(width, height, opts)
   local border_height = get_border_size(opts)
   local row, col --- @type integer?, integer?
   if anchor_below then
-    anchor = anchor .. 'N'
     height = math.max(math.min(lines_below - border_height, height), 0)
     row = 1
   else
-    anchor = anchor .. 'S'
     height = math.max(math.min(lines_above - border_height, height), 0)
     row = 0
   end
@@ -858,11 +856,12 @@ function M.make_floating_popup_options(width, height, opts)
     wincol = 0
   end
 
+  local anchor --- @type 'NW'|'NE'|'SW'|'SE'
   if wincol + width + (opts.offset_x or 0) <= vim.o.columns then
-    anchor = anchor .. 'W'
+    anchor = anchor_below and 'NW' or 'SW'
     col = 0
   else
-    anchor = anchor .. 'E'
+    anchor = anchor_below and 'NE' or 'SE'
     col = 1
   end
 
@@ -1192,7 +1191,7 @@ function M.stylize_markdown(bufnr, contents, opts)
       local start = #stripped
       i = i + 1
       while i <= #contents do
-        line = contents[i]
+        line = assert(contents[i])
         if match_end(line, match) then
           i = i + 1
           break
@@ -1328,7 +1327,7 @@ function M.stylize_markdown(bufnr, contents, opts)
 end
 
 --- @class (private) vim.lsp.util._normalize_markdown.Opts
---- @field width integer Thematic breaks are expanded to this size. Defaults to 80.
+--- @field width? integer Thematic breaks are expanded to this size. Defaults to 80.
 
 --- Normalizes Markdown input to a canonical form.
 ---
@@ -1545,7 +1544,7 @@ end
 ---
 --- offset to add to `row`
 --- @field offset_y? integer
---- @field border? string|(string|[string,string])[] override `border`
+--- @field border? ''|'none'|'single'|'double'|'rounded'|'solid'|'shadow'|'bold'|(string|[string,string])[] override `border`
 --- @field zindex? integer override `zindex`, defaults to 50
 --- @field title? string|[string,string][]
 --- @field title_pos? 'left'|'center'|'right'
@@ -1986,7 +1985,7 @@ function M.make_formatting_params(options)
   options = vim.tbl_extend('keep', options or {}, {
     tabSize = M.get_effective_tabstop(),
     insertSpaces = vim.bo.expandtab,
-  })
+  }) --[[@as lsp.FormattingOptions]]
   return {
     textDocument = { uri = vim.uri_from_bufnr(0) },
     options = options,

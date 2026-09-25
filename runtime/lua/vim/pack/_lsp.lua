@@ -87,21 +87,21 @@ end
 
 --- Finds a line range to be linked and computes the LSP style link
 --- @param line string Buffer line to find a link in
---- @param pattern string Pattern matching link location and contents, like `'^Path: +()(.+)()$'`
+--- @param pattern string Pattern with three captures: `()`, the link text, and `()`,
+--- like `'^Path: +()(.+)()$'`. The empty captures return byte positions.
 --- @param link_type "commit"|"path"|"src"|"tag"
 --- @param lnum integer Line number in a buffer
 --- @param src string Plugin source
 --- @return vim.pack.lsp.DocumentLink? # A link structure according to the LSP specification
 local function match_link(line, pattern, link_type, lnum, src)
-  --- @type integer?, string?, integer?
   local from, match, to = line:match(pattern)
-  if not (from and match and to) then
+  if type(from) ~= 'number' or type(match) ~= 'string' or type(to) ~= 'number' then
     return nil
   end
 
   -- Convert to UTF index used in LSP positions
-  from = vim.str_utfindex(line, 'utf-16', from - 1, false)
-  to = vim.str_utfindex(line, 'utf-16', to - 2, false)
+  local start_col = vim.str_utfindex(line, 'utf-16', from - 1, false)
+  local end_col = vim.str_utfindex(line, 'utf-16', to - 2, false)
 
   --- @type string?
   local target = match
@@ -116,9 +116,13 @@ local function match_link(line, pattern, link_type, lnum, src)
     return nil
   end
 
-  local start = { line = lnum - 1, character = from }
-  local end_ = { line = lnum - 1, character = to }
-  return { range = { start = start, ['end'] = end_ }, target = target }
+  return {
+    range = {
+      start = { line = lnum - 1, character = start_col },
+      ['end'] = { line = lnum - 1, character = end_col },
+    },
+    target = target,
+  }
 end
 
 --- @param params { textDocument: { uri: string } }

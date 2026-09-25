@@ -103,7 +103,7 @@ local function writable_spell_dirs_from_rtp()
   return dirs
 end
 
----@return string?
+---@return string
 local function ensure_target_dir()
   local dir = vim.fs.abspath(vim.fs.joinpath(vim.fn.stdpath('data'), 'site/spell'))
   if vim.fn.isdirectory(dir) == 0 and pcall(vim.fn.mkdir, dir, 'p') then

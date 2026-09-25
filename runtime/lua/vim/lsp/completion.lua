@@ -275,7 +275,7 @@ local function apply_defaults(item, defaults, apply_kind)
 
   if defaults.editRange then
     local textEdit = item.textEdit or {}
-    item.textEdit = textEdit
+    item.textEdit = textEdit --[[@as lsp.TextEdit|lsp.InsertReplaceEdit]]
     textEdit.newText = textEdit.newText
       or item.textEditText
       or nonempty(item.insertText)

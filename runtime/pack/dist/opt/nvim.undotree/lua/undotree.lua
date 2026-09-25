@@ -288,7 +288,7 @@ local function draw(inbuf, outbuf)
 
   vim.schedule(function()
     if vim.api.nvim_win_is_valid(vim.b[outbuf].nvim_is_undotree) then
-      vim.api.nvim_win_set_cursor(vim.b[outbuf].nvim_is_undotree, { curseq_line, 0 })
+      vim.api.nvim_win_set_cursor(vim.b[outbuf].nvim_is_undotree, { assert(curseq_line), 0 })
     end
   end)
 
