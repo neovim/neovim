@@ -1381,7 +1381,10 @@ void wait_return(int redraw)
     return;
   }
 
-  if (headless_mode && !ui_active()) {
+  // No UI to press <Enter>: headless, or exiting after the UI went away (e.g. the
+  // TUI of an --embed server died). Blocking here would leave the process
+  // running forever. #42097
+  if (!ui_active() && (headless_mode || exiting)) {
     return;
   }
 
