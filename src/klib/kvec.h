@@ -37,6 +37,8 @@
 #ifndef NVIM_LIB_KVEC_H
 #define NVIM_LIB_KVEC_H
 
+#include <assert.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -97,6 +99,7 @@
 /// fit at least "len" more items
 #define kv_ensure_space(v, len) \
   do { \
+    assert((len) <= SIZE_MAX - (v).size); \
     if ((v).capacity < (v).size + (len)) { \
       (v).capacity = (v).size + (len); \
       kv_roundup32((v).capacity); \
