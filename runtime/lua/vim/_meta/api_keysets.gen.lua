@@ -476,7 +476,7 @@ error('Cannot require a meta file')
 
 --- @class vim.api.keyset.win_config
 --- @field anchor? "NW"|"NE"|"SW"|"SE"
---- @field border? any[]|"none"|"single"|"double"|"rounded"|"solid"|"shadow"
+--- @field border? any[]|""|"none"|"single"|"double"|"rounded"|"solid"|"shadow"|"bold"
 --- @field bufpos? integer[]
 --- @field col? number
 --- @field external? boolean
