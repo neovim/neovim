@@ -6977,4 +6977,80 @@ func Test_complete_fuzzy_resort()
   set completeopt&
 endfunc
 
+" Test for 'complete' F{func} callbacks when using ":setglobal"
+func Test_complete_cpt_func_setglobal()
+  func! CptSetglobalOne(findstart, base)
+    if a:findstart
+      return col('.') - 1
+    endif
+    return ['one']
+  endfunc
+  func! CptSetglobalTwo(findstart, base)
+    if a:findstart
+      return col('.') - 1
+    endif
+    return ['two']
+  endfunc
+
+  new
+  setlocal complete=FCptSetglobalOne
+  " ":setglobal" does not change the buffer-local value
+  setglobal complete=t,FCptSetglobalTwo
+  exe "normal! i\<C-N>\<Esc>"
+  call assert_equal('one', getline(1))
+
+  " A new buffer uses the global value, the callbacks must match it
+  new
+  exe "normal! i\<C-N>\<Esc>"
+  call assert_equal('two', getline(1))
+  bwipe!
+  bwipe!
+
+  " When the global value has more entries than the buffer-local one, the
+  " callback array used to be indexed out of bounds
+  new
+  setlocal complete=.
+  setglobal complete=FCptSetglobalTwo,FCptSetglobalTwo,FCptSetglobalTwo,FCptSetglobalTwo,FCptSetglobalTwo,FCptSetglobalTwo,FCptSetglobalTwo,FCptSetglobalTwo
+  new
+  exe "normal! i\<C-N>\<Esc>"
+  call assert_equal('two', getline(1))
+  bwipe!
+  bwipe!
+
+  " ":setlocal" does not change the callbacks cached for the global value
+  new
+  setlocal complete=FCptSetglobalOne
+  new
+  exe "normal! i\<C-N>\<Esc>"
+  call assert_equal('two', getline(1))
+  bwipe!
+  bwipe!
+
+  set complete&
+  delfunc CptSetglobalOne
+  delfunc CptSetglobalTwo
+endfunc
+
+
+" change the completion value while being triggered
+func Test_complete_cpt_func_changes_complete()
+  func! CptChange(findstart, base)
+    if a:findstart
+      set complete=.
+      return col('.') - 1
+    endif
+    return ['changed']
+  endfunc
+
+  new
+  call setline(1, ['alpha', ''])
+  setlocal complete=FCptChange,FCptChange,FCptChange
+  exe "normal! Gi\<C-N>\<Esc>"
+  call assert_equal('alpha', getline(2))
+
+  set complete&
+  delfunc CptChange
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab nofoldenable

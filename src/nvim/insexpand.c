@@ -3098,14 +3098,14 @@ static buf_T *ins_compl_next_buf(buf_T *buf, int flag)
   return buf;
 }
 
-/// Count the number of entries in the 'complete' option (curbuf->b_p_cpt).
+/// Count the number of entries in the 'complete' option value "cpt".
 /// Each non-empty, comma-separated segment is counted as one entry.
-static int get_cpt_sources_count(void)
+static int get_cpt_sources_count(char *cpt)
 {
   char dummy[LSIZE];
   int count = 0;
 
-  for (char *p = curbuf->b_p_cpt; *p != NUL;) {
+  for (char *p = cpt; *p != NUL;) {
     while (*p == ',' || *p == ' ') {
       p++;  // Skip delimiters
     }
@@ -3139,11 +3139,13 @@ void clear_cpt_callbacks(Callback **callbacks, int count)
 /// entries and allocating memory for the destination.
 static void copy_cpt_callbacks(Callback **dest, int *dest_cnt, Callback *src, int cnt)
 {
+  clear_cpt_callbacks(dest, *dest_cnt);
+  *dest_cnt = 0;
+
   if (cnt == 0) {
     return;
   }
 
-  clear_cpt_callbacks(dest, *dest_cnt);
   *dest = xcalloc((size_t)cnt, sizeof(Callback));
   *dest_cnt = cnt;
 
@@ -3158,37 +3160,33 @@ static void copy_cpt_callbacks(Callback **dest, int *dest_cnt, Callback *src, in
 /// callback array. Clears any existing buffer-local callbacks first.
 void set_buflocal_cpt_callbacks(buf_T *buf)
 {
-  if (buf == NULL || cpt_cb_count == 0) {
+  if (buf == NULL) {
     return;
   }
   copy_cpt_callbacks(&buf->b_p_cpt_cb, &buf->b_p_cpt_count, cpt_cb, cpt_cb_count);
 }
 
-/// Parse 'complete' option and initialize F{func} callbacks.
-/// Frees any existing callbacks and allocates new ones.
-/// Only F{func} entries are processed; others are ignored.
-int set_cpt_callbacks(optset_T *args)
+/// Parse the 'complete' option value "cpt" and store the callbacks for the
+/// F{func} entries in a newly allocated array in "*cbp", setting "*cnt" to the
+/// number of entries.  The array has one entry for every item in "cpt", also
+/// for items that are not a function, so that it can be indexed with the item
+/// index.  Any previous array in "*cbp" is cleared.
+static void parse_cpt_callbacks(char *cpt, Callback **cbp, int *cnt)
 {
-  bool local = (args->os_flags & OPT_LOCAL) != 0;
+  clear_cpt_callbacks(cbp, *cnt);
+  *cnt = 0;
 
-  if (curbuf == NULL) {
-    return FAIL;
-  }
-
-  clear_cpt_callbacks(&curbuf->b_p_cpt_cb, curbuf->b_p_cpt_count);
-  curbuf->b_p_cpt_count = 0;
-
-  int count = get_cpt_sources_count();
+  int count = get_cpt_sources_count(cpt);
   if (count == 0) {
-    return OK;
+    return;
   }
 
-  curbuf->b_p_cpt_cb = xcalloc((size_t)count, sizeof(Callback));
-  curbuf->b_p_cpt_count = count;
+  *cbp = xcalloc((size_t)count, sizeof(Callback));
+  *cnt = count;
 
   char buf[LSIZE];
   int idx = 0;
-  for (char *p = curbuf->b_p_cpt; *p != NUL;) {
+  for (char *p = cpt; *p != NUL;) {
     while (*p == ',' || *p == ' ') {
       p++;  // Skip delimiters
     }
@@ -3199,20 +3197,43 @@ int set_cpt_callbacks(optset_T *args)
         if (caret != NULL) {
           *caret = NUL;
         }
-        if (option_set_callback_func(buf + 1, &curbuf->b_p_cpt_cb[idx]) != OK) {
-          curbuf->b_p_cpt_cb[idx].type = kCallbackNone;
+        if (option_set_callback_func(buf + 1, &(*cbp)[idx]) != OK) {
+          (*cbp)[idx].type = kCallbackNone;
         }
       }
       idx++;
     }
   }
+}
 
-  if (!local) {  // ':set' used instead of ':setlocal'
-    // Cache the callback array
-    copy_cpt_callbacks(&cpt_cb, &cpt_cb_count, curbuf->b_p_cpt_cb,
-                       curbuf->b_p_cpt_count);
+/// Parse 'complete' option and initialize F{func} callbacks.
+/// Frees any existing callbacks and allocates new ones.
+int set_cpt_callbacks(optset_T *args)
+{
+  int opt_flags = args->os_flags;
+
+  if (curbuf == NULL) {
+    return FAIL;
   }
 
+  // ":setglobal" does not change the buffer-local option value
+  if (!(opt_flags & OPT_GLOBAL)) {
+    parse_cpt_callbacks(curbuf->b_p_cpt, &curbuf->b_p_cpt_cb, &curbuf->b_p_cpt_count);
+  }
+
+  // ":setlocal" does not change the global option value
+  if (opt_flags & OPT_LOCAL) {
+    return OK;
+  }
+
+  // Cache the callbacks for the global value
+  if (opt_flags & OPT_GLOBAL) {
+    parse_cpt_callbacks(p_cpt, &cpt_cb, &cpt_cb_count);
+    return OK;
+  }
+
+  // set case
+  copy_cpt_callbacks(&cpt_cb, &cpt_cb_count, curbuf->b_p_cpt_cb, curbuf->b_p_cpt_count);
   return OK;
 }
 
@@ -4611,6 +4632,9 @@ static Callback *get_callback_if_cpt_func(char *p, int idx)
   if (*p == 'F') {
     if (*++p != ',' && *p != NUL) {
       // 'F{func}' case
+      if (curbuf->b_p_cpt_cb == NULL || idx < 0 || idx >= curbuf->b_p_cpt_count) {
+        return NULL;
+      }
       return curbuf->b_p_cpt_cb[idx].type != kCallbackNone
              ? &curbuf->b_p_cpt_cb[idx] : NULL;
     } else {
@@ -6568,7 +6592,7 @@ static void setup_cpt_sources(void)
 {
   cpt_sources_clear();
 
-  int count = get_cpt_sources_count();
+  int count = get_cpt_sources_count(curbuf->b_p_cpt);
   if (count == 0) {
     return;
   }
