@@ -39,6 +39,7 @@ local options_list = {
     { 'include', N_ 'pattern for an include-file line' },
     { 'includeexpr', N_ 'expression used to transform an include line to a file name' },
     { 'jumpoptions', N_ 'controls the behavior of the jumplist' },
+    { 'mcfollow', N_ 'multicursor: motions cascade to all cursors' },
   },
   {
     header = N_ 'tags',

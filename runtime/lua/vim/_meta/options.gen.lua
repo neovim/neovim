@@ -4413,6 +4413,16 @@ vim.o.msc = vim.o.maxsearchcount
 vim.go.maxsearchcount = vim.o.maxsearchcount
 vim.go.msc = vim.go.maxsearchcount
 
+--- Enables `multicursor` follow-mode: cursor-relative motions performed
+--- by the primary cursor, cascade to all cursors `mcursor`.  Toggled by
+--- `q=` (buffer-local).
+---
+--- @type boolean
+vim.o.mcfollow = false
+vim.o.mcf = vim.o.mcfollow
+vim.bo.mcfollow = vim.o.mcfollow
+vim.bo.mcf = vim.bo.mcfollow
+
 --- Maximum number of items to use in a menu.  Used for menus that are
 --- generated from a list of items, e.g., the Buffers menu.  Changing this
 --- option has no direct effect, the menu must be refreshed first.

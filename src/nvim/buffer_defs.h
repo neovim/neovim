@@ -597,6 +597,7 @@ struct file_buffer {
   char *b_p_lop;                ///< 'lispoptions'
   char *b_p_menc;               ///< 'makeencoding'
   char *b_p_mps;                ///< 'matchpairs'
+  int b_p_mcf;                  ///< 'mcfollow'
   int b_p_ml;                   ///< 'modeline'
   int b_p_ml_nobin;             ///< b_p_ml saved for binary mode
   int b_p_ma;                   ///< 'modifiable'

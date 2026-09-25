@@ -4404,6 +4404,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The value must be between 1 and 9999.  See also the |searchcount()|
 	function.
 
+				*'mcfollow'* *'mcf'* *'nomcfollow'* *'nomcf'*
+'mcfollow' 'mcf'	boolean	(default off)
+			local to buffer
+	Enables |multicursor| follow-mode: cursor-relative motions performed
+	by the primary cursor, cascade to all cursors |mcursor|.  Toggled by
+	|q=| (buffer-local).
+
 						*'menuitems'* *'mis'*
 'menuitems' 'mis'	number	(default 25)
 			global

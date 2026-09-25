@@ -48,6 +48,7 @@
 #include "nvim/move.h"
 #include "nvim/normal.h"
 #include "nvim/ops.h"
+#include "nvim/option.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
@@ -129,8 +130,6 @@ static bool mc_ins_joined;
 static ContextVec mc_cursors = KV_INITIAL_VALUE;
 /// Replay is in progress: keys re-executing internally, hooks suppressed.
 static bool mc_replay = false;
-/// "Follow motion" mode ("q="): cascade primary-cursor motions to all mcursors.
-static bool mc_follow_motion = false;
 
 /// Namespace for tracking multicursor positions.
 static uint32_t mc_ns(void)
@@ -199,7 +198,7 @@ size_t mc_showcmd(char *buf, size_t size)
     buf[0] = NUL;
     return 0;
   }
-  return (size_t)snprintf(buf, size, "%s%zu× ", mc_follow_motion ? "=" : "", kv_size(mc_cursors));
+  return (size_t)snprintf(buf, size, "%s%zu× ", mc_following() ? "=" : "", kv_size(mc_cursors));
 }
 
 /// True during a replay: re-executing keys internally, not new user input.
@@ -528,14 +527,10 @@ static void mc_cleanup(bool dedupe, const pos_T *primary, uint32_t keep_mark)
     }
   }
   kv_size(mc_cursors) = n;
-  if (n == 0) {
-    // Session ended implicitly ("q=" + "G" deduped all cursors). Reset "q=".
-    mc_follow_set(kFalse);
-    if (had_cursors) {
-      ctx_free(&mc_start.regs);
-      mc_start.time = 0;
-      mc_lua_enable(false);
-    }
+  if (n == 0 && had_cursors) {
+    ctx_free(&mc_start.regs);
+    mc_start.time = 0;
+    mc_lua_enable(false);
   }
 }
 
@@ -1198,10 +1193,10 @@ bool mc_buf_has_cursors(buf_T *buf)
   return false;
 }
 
-/// Whether "follow motion" mode ("q=") is enabled.
+/// Whether "follow motion" mode ('mcfollow') is enabled.
 bool mc_following(void)
 {
-  return mc_follow_motion;
+  return curbuf->b_p_mcf;
 }
 
 /// Notifies mcursor.lua that the session started (first cursor) or ended (last cursor removed).
@@ -1250,15 +1245,17 @@ void mc_counter(long count1)
   nlua_call_typval("vim._core.mcursor", "number", tv_args, NULL);
 }
 
-/// Sets "follow motion" mode ("q="), and applies the change to the executing CmdAtom.
+/// Sets 'mcfollow' ("q="), which applies the change to the executing CmdAtom.
 ///
 /// @param on  kNone: toggle. kTrue/kFalse: force it ("1q=" on, "2q=" off).
 void mc_follow_set(TriState on)
 {
-  bool follow = on == kNone ? !mc_follow_motion : on == kTrue;
-  if (mc_follow_motion != follow) {
-    mc_follow_motion = follow;
-    atom_follow_changed();
+  if (mc_replaying()) {
+    return;  // Follow-mode is session state, not per-cursor.
+  }
+  bool follow = on == kNone ? !curbuf->b_p_mcf : on == kTrue;
+  if (curbuf->b_p_mcf != follow) {
+    set_option_value_give_err(kOptMcfollow, BOOLEAN_OBJ(follow), OPT_LOCAL);
   }
 }
 
