@@ -1,7 +1,7 @@
 --- Multicursor:
 --- - Display: kitty cursors if supported (`detect()`), else "highlight" cursors (hl-MCursor).
 ---   https://github.com/kovidgoyal/kitty/blob/master/docs/multiple-cursors-protocol.rst
---- - Commands: `[count]Q`, `{Visual}Q`, `gQ`, `]C`, `g CTRL-A`.
+--- - Commands: `gQ`, `]C`, `g CTRL-A`.
 --- - Script API: `active()`.
 
 local M = {}
@@ -220,54 +220,6 @@ function M.restore()
   if primary then
     vim.api.nvim_win_set_cursor(0, primary)
   end
-end
-
---- Places a cursor on each line of the Visual selection. Enables "follow mode" (q=).
-function M.visual()
-  local vline = vim.fn.line('v') --[[@as integer]]
-  local cline = vim.fn.line('.') --[[@as integer]]
-  local first, last = math.min(vline, cline), math.max(vline, cline)
-  local vcol = vim.fn.virtcol('.', true)[1] --[[@as integer]]
-  vim.cmd.normal({ vim.keycode('<Esc>'), bang = true }) -- End Visual mode.
-  --- Screen column (per-line: multibyte chars/tabs shift the byte<->screen mapping), or the
-  --- past-EOL insertion point on shorter lines.
-  --- @param lnum integer
-  local function bytecol(lnum)
-    if vim.fn.virtcol({ lnum, '$' }) <= vcol then
-      return vim.fn.col({ lnum, '$' }) - 1
-    end
-    return vim.fn.virtcol2col(0, lnum, vcol) - 1
-  end
-  vim.api.nvim_win_set_cursor(0, { cline, bytecol(cline) }) -- Align to column.
-  for lnum = first, last do
-    vim.api.nvim_mcursor(0, { lnum, bytecol(lnum) })
-  end
-  vim.cmd('norm! 1q=') -- "Follow" mode.
-end
-
---- "[{Visual}][count]Q": Places a cursor at each match (limited to Visual linewise range, if any).
---- @param first integer First line of the range (0: whole buffer).
---- @param last integer
-function M.matches(first, last)
-  if vim.fn.getreg('/') == '' then
-    require('vim._core.util').echo_err('E35: No previous regular expression')
-    return
-  end
-  local ranged = first > 0
-  if ranged then
-    vim.cmd.normal({ vim.keycode('<Esc>'), bang = true }) -- End Visual mode.
-  end
-  local view = vim.fn.winsaveview()
-  vim.api.nvim_win_set_cursor(0, { ranged and first or 1, 0 })
-  local stopline = ranged and last or vim.fn.line('$')
-  -- TODO(justinmk): if we really want to limit by charwise/block selection, then we should add that
-  -- feature to seachpos() or sth like that, rather than doing yucky stuff here.
-  local pos = vim.fn.searchpos('', 'cW', stopline)
-  while pos[1] ~= 0 do
-    vim.api.nvim_mcursor(0, { pos[1], pos[2] - 1 })
-    pos = vim.fn.searchpos('', 'W', stopline)
-  end
-  vim.fn.winrestview(view) -- Primary stays put.
 end
 
 --- Inserts an ascending number at each cursor (Emacs F3-counter): 1, 2, 3, ….

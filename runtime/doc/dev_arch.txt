@@ -179,8 +179,8 @@ State                                                              *dev-state*
   cursor/options, CWD, …. Vimscript format: commands, not merged data.
   Overlaps shada for the buffer list and global variables.
 - context (`src/nvim/context.c`): |nvim_get_context()|. Interfaces shada and
-  other state; also in-memory per-cursor state (`kCtxCursor`, `kCtxMarks`) for
-  |multicursor|. Needs more thought.
+  other state; also in-memory per-cursor state (`kCtxVisual`, `kCtxMarks`, …)
+  for |multicursor|. Needs more thought.
 - scoped execution ("temporary state"): `ctx_switch()`, `vim._with()`,
   |nvim_win_call()|, |nvim_buf_call()|, `cmdmod_T`. Temporary switches, not
   snapshots. The C mechanisms overlap with each other; `vim._with()` is the

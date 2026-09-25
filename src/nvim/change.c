@@ -35,6 +35,7 @@
 #include "nvim/marktree_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/mbyte_defs.h"
+#include "nvim/mcursor.h"
 #include "nvim/memline.h"
 #include "nvim/memline_defs.h"
 #include "nvim/memory.h"
@@ -259,7 +260,7 @@ static void changed_common(buf_T *buf, linenr_T lnum, colnr_T col, linenr_T lnum
     }
   }
 
-  // set the '. mark
+  // Set the '. mark.
   if ((cmdmod.cmod_flags & CMOD_KEEPJUMPS) == 0) {
     fmarkv_T view = INIT_FMARKV;
     // Set the markview only if lnum is visible, as changes might be done
@@ -271,7 +272,10 @@ static void changed_common(buf_T *buf, linenr_T lnum, colnr_T col, linenr_T lnum
       }
     }
     RESET_FMARK(&buf->b_last_change, ((pos_T) { lnum, col, 0 }), buf->handle, view);
+  }
 
+  // Update the changelist (g;). Its last entry follows the '. mark.
+  if ((cmdmod.cmod_flags & CMOD_KEEPJUMPS) == 0 && !mc_replaying()) {
     // Create a new entry if a new undo-able change was started or we
     // don't have an entry yet.
     if (buf->b_new_change || buf->b_changelistlen == 0) {

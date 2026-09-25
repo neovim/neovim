@@ -122,6 +122,7 @@ static const char opchars[][3] = {
   { 'g', '@', OPF_CHANGE },              // OP_FUNCTION
   { Ctrl_A, NUL, OPF_CHANGE },           // OP_NR_ADD
   { Ctrl_X, NUL, OPF_CHANGE },           // OP_NR_SUB
+  { 'z', 'q', 0 },                       // OP_MCURSOR
 };
 
 /// Translate a command name into an operator type.
@@ -3436,6 +3437,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
   int lbr_saved = curwin->w_p_lbr;
 
   pos_T old_cursor = curwin->w_cursor;
+  const pos_T op_origin = oap->start;  // Where the operator started (before the motion).
 
   // If an operation is pending, handle it...
   if ((finish_op
@@ -3893,6 +3895,10 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     case OP_FOLD:
       Visual.reselect = false;          // don't reselect now
       foldCreate(curwin, oap->start, oap->end);
+      break;
+
+    case OP_MCURSOR:
+      mc_zq(oap, cap, op_origin);
       break;
 
     case OP_FOLDOPEN:

@@ -117,6 +117,7 @@ static inline bool equalpos(pos_T a, pos_T b)
   return (a.lnum == b.lnum) && (a.col == b.col) && (a.coladd == b.coladd);
 }
 
+/// "Less than or equal to".
 static inline bool ltoreq(pos_T a, pos_T b)
   FUNC_ATTR_CONST FUNC_ATTR_ALWAYS_INLINE
 {
