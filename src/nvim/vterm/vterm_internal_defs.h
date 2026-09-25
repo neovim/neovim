@@ -26,6 +26,7 @@
 #define KEY_ENCODING_REPORT_ALTERNATE 0x4
 #define KEY_ENCODING_REPORT_ALL_KEYS 0x8
 #define KEY_ENCODING_REPORT_ASSOCIATED 0x10
+#define KEY_ENCODING_SUPPORTED_FLAGS KEY_ENCODING_DISAMBIGUATE
 
 typedef struct VTermEncoding VTermEncoding;
 typedef struct VTermKeyEncodingFlags VTermKeyEncodingFlags;
