@@ -132,11 +132,15 @@ end
 
 --- @param autocmd_key string
 --- @param ns vim.diagnostic.NS
-local function cleanup_show_autocmd(autocmd_key, ns)
-  if ns.user_data[autocmd_key] then
-    api.nvim_del_autocmd(ns.user_data[autocmd_key])
-    --- @type integer?
-    ns.user_data[autocmd_key] = nil
+--- @param bufnr integer
+local function cleanup_show_autocmd(autocmd_key, ns, bufnr)
+  local ids = ns.user_data[autocmd_key] --- @type table<integer, integer>?
+  if ids and ids[bufnr] then
+    -- :bwipeout already deleted the buffer's autocmds.
+    if api.nvim_buf_is_valid(bufnr) then
+      api.nvim_del_autocmd(ids[bufnr])
+    end
+    ids[bufnr] = nil
   end
 end
 
@@ -145,12 +149,12 @@ end
 --- @param bufnr integer
 --- @param fn fun()
 local function show_once_loaded(autocmd_key, ns, bufnr, fn)
-  cleanup_show_autocmd(autocmd_key, ns)
+  cleanup_show_autocmd(autocmd_key, ns, bufnr)
 
-  --- @type integer?
-  ns.user_data[autocmd_key] = once_buf_loaded(bufnr, function()
-    --- @type integer?
-    ns.user_data[autocmd_key] = nil
+  local ids = ns.user_data[autocmd_key] or {} --- @type table<integer, integer>
+  ns.user_data[autocmd_key] = ids
+  ids[bufnr] = once_buf_loaded(bufnr, function()
+    ids[bufnr] = nil
     fn()
   end)
 end
@@ -238,7 +242,7 @@ end
 --- @param bufnr integer
 function M.signs.hide(namespace, bufnr)
   local ns = diagnostic.get_namespace(namespace)
-  cleanup_show_autocmd('sign_show_autocmd', ns)
+  cleanup_show_autocmd('sign_show_autocmd', ns, bufnr)
   if ns.user_data.sign_ns and api.nvim_buf_is_valid(bufnr) then
     api.nvim_buf_clear_namespace(bufnr, ns.user_data.sign_ns, 0, -1)
   end
@@ -306,7 +310,7 @@ end
 --- @param bufnr integer
 function M.underline.hide(namespace, bufnr)
   local ns = diagnostic.get_namespace(namespace)
-  cleanup_show_autocmd('underline_show_autocmd', ns)
+  cleanup_show_autocmd('underline_show_autocmd', ns, bufnr)
   if ns.user_data.underline_ns then
     clear_extmarks(bufnr, ns.user_data.underline_ns)
   end
@@ -497,7 +501,7 @@ end
 --- @param bufnr integer
 function M.virtual_text.hide(namespace, bufnr)
   local ns = diagnostic.get_namespace(namespace)
-  cleanup_show_autocmd('virtual_text_show_autocmd', ns)
+  cleanup_show_autocmd('virtual_text_show_autocmd', ns, bufnr)
   if ns.user_data.virt_text_ns then
     clear_extmarks(bufnr, ns.user_data.virt_text_ns)
     if api.nvim_buf_is_valid(bufnr) then
@@ -756,7 +760,7 @@ end
 --- @param bufnr integer
 function M.virtual_lines.hide(namespace, bufnr)
   local ns = diagnostic.get_namespace(namespace)
-  cleanup_show_autocmd('virtual_lines_show_autocmd', ns)
+  cleanup_show_autocmd('virtual_lines_show_autocmd', ns, bufnr)
   if ns.user_data.virt_lines_ns then
     clear_extmarks(bufnr, ns.user_data.virt_lines_ns)
     if api.nvim_buf_is_valid(bufnr) then
