@@ -417,6 +417,14 @@ static void mc_cascade(void)
       return;
     }
   }
+
+  // Sync the primary-overlapping cursor (if any) to primary. Edit may have displaced it. #42081
+  pos_T mcursor_pos;
+  if (mcursor != 0 && extmark_get_pos(curbuf, mc_ns(), mcursor, &mcursor_pos)) {
+    uint32_t mark = mcursor;
+    mc_mark_upd(curbuf, &mark, curwin->w_cursor);
+  }
+
   McSandbox sb;
   mc_sandbox_enter(&sb, edits);
 
@@ -426,7 +434,7 @@ static void mc_cascade(void)
     if (atom->origin.buf.br_buf != NULL
         && (!bufref_valid(&atom->origin.buf) || atom->origin.buf.br_buf != curbuf)) {
       // Cascade only in the atom's origin buffer (a mapping may switch buffers).
-      // Assume untagged atoms (atom_lhs_replay_queue()) are current-buffer.
+      // Assume current-buffer if `atom.origin` is missing.
       continue;
     }
     for (size_t ci = 0; ci < kv_size(mc_cursors); ci++) {
@@ -445,13 +453,6 @@ done:
   atoms_free(&g_atoms);
   const handle_T bufnr = sb.primary.buf;  // mc_sandbox_leave() frees `sb.primary`.
   mc_sandbox_leave(&sb);
-
-  // Ensure the primary-overlapping cursor (if any) settles on the primary cursor's position.
-  pos_T mcursor_pos;
-  if (mcursor != 0 && extmark_get_pos(curbuf, mc_ns(), mcursor, &mcursor_pos)) {
-    uint32_t mark = mcursor;
-    mc_mark_upd(curbuf, &mark, curwin->w_cursor);
-  }
 
   mc_cleanup(true, &curwin->w_cursor, mcursor);
   if (handle_get_buffer(bufnr) == curbuf && !curbuf->b_u_synced
