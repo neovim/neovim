@@ -474,7 +474,7 @@ void atom_push_raw(bool cascade, CmdAtom *atom)
       composite.queued = true;
     }
     kv_push(vatom.atoms, *atom);
-    vatom.frame = cur_frame->id;
+    vatom.frame = cur_frame != NULL ? cur_frame->id : 0;
     return;
   }
   atom_captures++;
