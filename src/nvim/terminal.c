@@ -1352,7 +1352,7 @@ static void terminal_send_key(Terminal *term, int c)
     c = Ctrl_AT;
   }
 
-  VTermKey key = convert_key(&c, &mod);
+  VTermKey key = convert_key(&c, mod_mask, &mod);
 
   if (key != VTERM_KEY_NONE) {
     vterm_keyboard_key(term->vt, key, mod);
@@ -1870,63 +1870,32 @@ static int term_selection_set(VTermSelectionMask mask, VTermStringFragment frag,
 // }}}
 // input handling {{{
 
-static void convert_modifiers(int *key, VTermModifier *statep)
+static void convert_modifiers(int *key, int modifiers, VTermModifier *statep)
 {
-  if (mod_mask & MOD_MASK_SHIFT) {
+  if (modifiers & MOD_MASK_SHIFT) {
     *statep |= VTERM_MOD_SHIFT;
   }
-  if (mod_mask & MOD_MASK_CTRL) {
+  if (modifiers & MOD_MASK_CTRL) {
     *statep |= VTERM_MOD_CTRL;
-    if (!(mod_mask & MOD_MASK_SHIFT) && *key >= 'A' && *key <= 'Z') {
+    if (!(modifiers & MOD_MASK_SHIFT) && *key >= 'A' && *key <= 'Z') {
       // vterm interprets CTRL+A as SHIFT+CTRL, change to CTRL+a
       *key += ('a' - 'A');
     }
   }
-  if (mod_mask & MOD_MASK_ALT) {
+  if (modifiers & MOD_MASK_ALT) {
     *statep |= VTERM_MOD_ALT;
-  }
-
-  switch (*key) {
-  case K_S_TAB:
-  case K_S_UP:
-  case K_S_DOWN:
-  case K_S_LEFT:
-  case K_S_RIGHT:
-  case K_S_HOME:
-  case K_S_END:
-  case K_S_F1:
-  case K_S_F2:
-  case K_S_F3:
-  case K_S_F4:
-  case K_S_F5:
-  case K_S_F6:
-  case K_S_F7:
-  case K_S_F8:
-  case K_S_F9:
-  case K_S_F10:
-  case K_S_F11:
-  case K_S_F12:
-    *statep |= VTERM_MOD_SHIFT;
-    break;
-
-  case K_C_LEFT:
-  case K_C_RIGHT:
-  case K_C_HOME:
-  case K_C_END:
-    *statep |= VTERM_MOD_CTRL;
-    break;
   }
 }
 
-static VTermKey convert_key(int *key, VTermModifier *statep)
+static VTermKey convert_key(int *key, int modifiers, VTermModifier *statep)
 {
-  convert_modifiers(key, statep);
+  *key = unsimplify_key(*key, &modifiers);
+  convert_modifiers(key, modifiers, statep);
 
   switch (*key) {
   case K_BS:
     return VTERM_KEY_BACKSPACE;
-  case K_S_TAB:
-    FALLTHROUGH;
+  case K_TAB:
   case TAB:
     return VTERM_KEY_TAB;
   case Ctrl_M:
@@ -1934,24 +1903,12 @@ static VTermKey convert_key(int *key, VTermModifier *statep)
   case ESC:
     return VTERM_KEY_ESCAPE;
 
-  case K_S_UP:
-    FALLTHROUGH;
   case K_UP:
     return VTERM_KEY_UP;
-  case K_S_DOWN:
-    FALLTHROUGH;
   case K_DOWN:
     return VTERM_KEY_DOWN;
-  case K_S_LEFT:
-    FALLTHROUGH;
-  case K_C_LEFT:
-    FALLTHROUGH;
   case K_LEFT:
     return VTERM_KEY_LEFT;
-  case K_S_RIGHT:
-    FALLTHROUGH;
-  case K_C_RIGHT:
-    FALLTHROUGH;
   case K_RIGHT:
     return VTERM_KEY_RIGHT;
 
@@ -1959,16 +1916,8 @@ static VTermKey convert_key(int *key, VTermModifier *statep)
     return VTERM_KEY_INS;
   case K_DEL:
     return VTERM_KEY_DEL;
-  case K_S_HOME:
-    FALLTHROUGH;
-  case K_C_HOME:
-    FALLTHROUGH;
   case K_HOME:
     return VTERM_KEY_HOME;
-  case K_S_END:
-    FALLTHROUGH;
-  case K_C_END:
-    FALLTHROUGH;
   case K_END:
     return VTERM_KEY_END;
   case K_PAGEUP:
@@ -1977,47 +1926,36 @@ static VTermKey convert_key(int *key, VTermModifier *statep)
     return VTERM_KEY_PAGEDOWN;
 
   case K_K0:
-    FALLTHROUGH;
   case K_KINS:
     return VTERM_KEY_KP_0;
   case K_K1:
-    FALLTHROUGH;
   case K_KEND:
     return VTERM_KEY_KP_1;
   case K_K2:
-    FALLTHROUGH;
   case K_KDOWN:
     return VTERM_KEY_KP_2;
   case K_K3:
-    FALLTHROUGH;
   case K_KPAGEDOWN:
     return VTERM_KEY_KP_3;
   case K_K4:
-    FALLTHROUGH;
   case K_KLEFT:
     return VTERM_KEY_KP_4;
   case K_K5:
-    FALLTHROUGH;
   case K_KORIGIN:
     return VTERM_KEY_KP_5;
   case K_K6:
-    FALLTHROUGH;
   case K_KRIGHT:
     return VTERM_KEY_KP_6;
   case K_K7:
-    FALLTHROUGH;
   case K_KHOME:
     return VTERM_KEY_KP_7;
   case K_K8:
-    FALLTHROUGH;
   case K_KUP:
     return VTERM_KEY_KP_8;
   case K_K9:
-    FALLTHROUGH;
   case K_KPAGEUP:
     return VTERM_KEY_KP_9;
   case K_KDEL:
-    FALLTHROUGH;
   case K_KPOINT:
     return VTERM_KEY_KP_PERIOD;
   case K_KENTER:
@@ -2031,52 +1969,28 @@ static VTermKey convert_key(int *key, VTermModifier *statep)
   case K_KDIVIDE:
     return VTERM_KEY_KP_DIVIDE;
 
-  case K_S_F1:
-    FALLTHROUGH;
   case K_F1:
     return VTERM_KEY_FUNCTION(1);
-  case K_S_F2:
-    FALLTHROUGH;
   case K_F2:
     return VTERM_KEY_FUNCTION(2);
-  case K_S_F3:
-    FALLTHROUGH;
   case K_F3:
     return VTERM_KEY_FUNCTION(3);
-  case K_S_F4:
-    FALLTHROUGH;
   case K_F4:
     return VTERM_KEY_FUNCTION(4);
-  case K_S_F5:
-    FALLTHROUGH;
   case K_F5:
     return VTERM_KEY_FUNCTION(5);
-  case K_S_F6:
-    FALLTHROUGH;
   case K_F6:
     return VTERM_KEY_FUNCTION(6);
-  case K_S_F7:
-    FALLTHROUGH;
   case K_F7:
     return VTERM_KEY_FUNCTION(7);
-  case K_S_F8:
-    FALLTHROUGH;
   case K_F8:
     return VTERM_KEY_FUNCTION(8);
-  case K_S_F9:
-    FALLTHROUGH;
   case K_F9:
     return VTERM_KEY_FUNCTION(9);
-  case K_S_F10:
-    FALLTHROUGH;
   case K_F10:
     return VTERM_KEY_FUNCTION(10);
-  case K_S_F11:
-    FALLTHROUGH;
   case K_F11:
     return VTERM_KEY_FUNCTION(11);
-  case K_S_F12:
-    FALLTHROUGH;
   case K_F12:
     return VTERM_KEY_FUNCTION(12);
 
@@ -2261,7 +2175,7 @@ static bool send_mouse_event(Terminal *term, int c)
     }
 
     VTermModifier mod = VTERM_MOD_NONE;
-    convert_modifiers(&c, &mod);
+    convert_modifiers(&c, mod_mask, &mod);
     mouse_action(term, button, row, col - offset, pressed, mod);
     return false;
   }
