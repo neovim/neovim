@@ -714,4 +714,21 @@ func Test_lookbehind_submatch_on_second_line()
   bwipe!
 endfunc
 
+" The old (backtracking) engine converts the negated collections [^0-9],
+" [^a-zA-Z0-9_], [^a-zA-Z_] and [^a-zA-Z] into the \D, \W, \H and \A classes.
+" These classes match a multibyte character, just like the collections do, so
+" the conversion must give the same result.  A Latin1 test cannot exercise this,
+" so check it here with the old engine forced.
+func Test_recognize_char_class_multibyte_old_engine()
+  let mb = 'α'
+  call assert_equal(mb, matchstr('0' .. mb .. '9', '\%#=1[^0-9]\+'))
+  call assert_equal(mb, matchstr('a' .. mb .. 'Z', '\%#=1[^a-zA-Z0-9_]\+'))
+  " The '_' distinguishes [^a-zA-Z_] (\H) from [^a-zA-Z] (\A).
+  call assert_equal('9' .. mb, matchstr('a9' .. mb .. '_z', '\%#=1[^a-zA-Z_]\+'))
+  call assert_equal('9' .. mb .. '_', matchstr('a9' .. mb .. '_z', '\%#=1[^a-zA-Z]\+'))
+  " The positive classes must not match the multibyte character.
+  call assert_equal('12', matchstr('12' .. mb, '\%#=1[0-9]\+'))
+  call assert_equal('ab', matchstr('ab' .. mb, '\%#=1[a-zA-Z0-9_]\+'))
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

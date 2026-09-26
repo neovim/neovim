@@ -693,6 +693,55 @@ func Test_regexp_single_line_pat()
   unlet t tl e l
 endfunc
 
+" Test that the old (backtracking) engine, forced with \%#=1, turns the
+" case-independent collections into the faster \d, \D, \x, \X, \o, \O, \w,
+" \W, \h, \H, \a and \A classes, while leaving the collections it must not
+" convert untouched.
+func Test_recognize_char_class_old_engine()
+  " Collections that are converted to a character class.
+  call assert_equal('0123456789', matchstr('x0123456789x', '\%#=1[0-9]\+'))
+  call assert_equal('a;X+% ', matchstr('0a;X+% 9', '\%#=1[^0-9]\+'))
+  call assert_equal('0189abcdef', matchstr('x0189abcdefg', '\%#=1[0-9a-fA-F]\+'))
+  call assert_equal('gh;X+% ', matchstr('0agh;X+% 9', '\%#=1[^0-9a-fA-F]\+'))
+  call assert_equal('01234567', matchstr('x0123456789x', '\%#=1[0-7]\+'))
+  call assert_equal('89abX+% ', matchstr('0189abX+% 7', '\%#=1[^0-7]\+'))
+  call assert_equal('aso_SfOij', matchstr(';+aso_SfOij ', '\%#=1[a-zA-Z0-9_]\+'))
+  call assert_equal(';+% ', matchstr('a;+% 9', '\%#=1[^a-zA-Z0-9_]\+'))
+  call assert_equal('aso_SfOij', matchstr('9+aso_SfOij ', '\%#=1[a-zA-Z_]\+'))
+  " The '_' is kept by [^a-zA-Z] (\A) but dropped by [^a-zA-Z_] (\H), which is
+  " the only difference between the two negated classes.
+  call assert_equal('9;+%', matchstr('a9;+%_ z', '\%#=1[^a-zA-Z_]\+'))
+  call assert_equal('asoSfOij', matchstr(';+asoSfOij9 ', '\%#=1[a-zA-Z]\+'))
+  call assert_equal('9;+%_ ', matchstr('a9;+%_ z', '\%#=1[^a-zA-Z]\+'))
+
+  " Collections that must not be converted.
+  call assert_equal('0189abcdef', matchstr('x0189abcdefg', '\%#=1[0-9a-f]\+'))
+  call assert_equal(';X+% ', matchstr('a;X+% 9', '\%#=1[^0-9a-f]\+'))
+  call assert_equal('abcxyz', matchstr('0abcxyz1', '\%#=1[a-z]\+'))
+  call assert_equal('9888', matchstr('asfi9888u', '\%#=1[0-9\n]\+'))
+  call assert_equal('9888', matchstr('asfi9888u', '\%#=1\_[0-9]\+'))
+
+  " With 'ignorecase' the letter ranges match both cases, so they must stay
+  " collections: converting them to LOWER/UPPER would drop that behavior since
+  " the old engine has no case-insensitive class opcode.
+  set ignorecase
+  call assert_equal('abcXYZ', matchstr('0abcXYZ1', '\%#=1[a-z]\+'))
+  call assert_equal('abcXYZ', matchstr('0abcXYZ1', '\%#=1[A-Z]\+'))
+  call assert_equal('0', matchstr('0abcXYZ', '\%#=1[^a-z]\+'))
+  call assert_equal('0', matchstr('0abcXYZ', '\%#=1[^A-Z]\+'))
+  " The converted classes already contain both cases, so 'ignorecase' does not
+  " change them and the conversion stays correct.
+  call assert_equal('aso_SfOij', matchstr(';+aso_SfOij ', '\%#=1[a-zA-Z0-9_]\+'))
+  call assert_equal(';+% ', matchstr('a;+% 9', '\%#=1[^a-zA-Z0-9_]\+'))
+  call assert_equal('aso_SfOij', matchstr('9+aso_SfOij ', '\%#=1[a-zA-Z_]\+'))
+  call assert_equal('asoSfOij', matchstr(';+asoSfOij9 ', '\%#=1[a-zA-Z]\+'))
+  set noignorecase
+
+  " Converted collections followed by a multi.
+  call assert_equal('abc44482ddd', matchstr('adf abc44482ddd oijs', '\%#=1abc[0-9]*ddd'))
+  call assert_equal('123', matchstr('x123456x', '\%#=1[0-9]\{2,3}'))
+endfunc
+
 " Tests for multi-line regexp patterns without multi-byte support.
 func Test_regexp_multiline_pat()
   " tl is a List of Lists with:

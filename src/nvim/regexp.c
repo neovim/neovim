@@ -2663,6 +2663,89 @@ static void init_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_
   rex.reg_maxcol = rmp->rmm_maxcol;
 }
 
+#define CLASS_not            0x80
+#define CLASS_af             0x40
+#define CLASS_AF             0x20
+#define CLASS_az             0x10
+#define CLASS_AZ             0x08
+#define CLASS_o7             0x04
+#define CLASS_o9             0x02
+#define CLASS_underscore     0x01
+
+/// Parse the "[...]" collection between "start" (the first character after the
+/// "[") and "end" (the "]") into a combination of CLASS_ bits, so that it can
+/// be turned into a faster character class like \d or \x.  Sets "*newl" to TRUE
+/// when the collection also matches a newline.  Returns -1 when the collection
+/// is not a plain combination of the recognized ranges.
+static int get_char_class_bits(const uint8_t *start, const uint8_t *end, bool *newl)
+{
+  int config = 0;
+
+  *newl = false;
+  if (*end != ']') {
+    return -1;
+  }
+  const uint8_t *p = start;
+  if (*p == '^') {
+    config |= CLASS_not;
+    p++;
+  }
+
+  while (p < end) {
+    if (p + 2 < end && *(p + 1) == '-') {
+      switch (*p) {
+      case '0':
+        if (*(p + 2) == '9') {
+          config |= CLASS_o9;
+          break;
+        } else if (*(p + 2) == '7') {
+          config |= CLASS_o7;
+          break;
+        }
+        return -1;
+      case 'a':
+        if (*(p + 2) == 'z') {
+          config |= CLASS_az;
+          break;
+        } else if (*(p + 2) == 'f') {
+          config |= CLASS_af;
+          break;
+        }
+        return -1;
+      case 'A':
+        if (*(p + 2) == 'Z') {
+          config |= CLASS_AZ;
+          break;
+        } else if (*(p + 2) == 'F') {
+          config |= CLASS_AF;
+          break;
+        }
+        return -1;
+      default:
+        return -1;
+      }
+      p += 3;
+    } else if (p + 1 < end && *p == '\\' && *(p + 1) == 'n') {
+      *newl = true;
+      p += 2;
+    } else if (*p == '_') {
+      config |= CLASS_underscore;
+      p++;
+    } else if (*p == '\n') {
+      *newl = true;
+      p++;
+    } else {
+      return -1;
+    }
+  }   // while (p < end)
+
+  if (p != end) {
+    return -1;
+  }
+
+  return config;
+}
+
 // regexp_bt.c {{{1
 
 // Backtracking regular expression implementation.
@@ -2915,6 +2998,50 @@ static const int classcodes[] = {
   ALPHA, NALPHA, LOWER, NLOWER,
   UPPER, NUPPER
 };
+
+/// Search between "start" (the first char of the range) and "end" (the closing
+/// "]") and try to recognize a character class in expanded form, for example
+/// [0-9].  On success, return the atom to be emitted, on failure 0.
+static int bt_recognize_char_class(const uint8_t *start, const uint8_t *end)
+{
+  bool newl;
+  int config = get_char_class_bits(start, end, &newl);
+
+  // A newline would need the ADD_NL variant, don't bother with it here.
+  if (config < 0 || newl) {
+    return 0;
+  }
+
+  // The old engine has no case-insensitive class opcode, so [a-z] and [A-Z]
+  // are left as collections.  The classes below are case-independent.
+  switch (config) {
+  case CLASS_o9:
+    return DIGIT;
+  case CLASS_not | CLASS_o9:
+    return NDIGIT;
+  case CLASS_af | CLASS_AF | CLASS_o9:
+    return HEX;
+  case CLASS_not | CLASS_af | CLASS_AF | CLASS_o9:
+    return NHEX;
+  case CLASS_o7:
+    return OCTAL;
+  case CLASS_not | CLASS_o7:
+    return NOCTAL;
+  case CLASS_az | CLASS_AZ | CLASS_o9 | CLASS_underscore:
+    return WORD;
+  case CLASS_not | CLASS_az | CLASS_AZ | CLASS_o9 | CLASS_underscore:
+    return NWORD;
+  case CLASS_az | CLASS_AZ | CLASS_underscore:
+    return HEAD;
+  case CLASS_not | CLASS_az | CLASS_AZ | CLASS_underscore:
+    return NHEAD;
+  case CLASS_az | CLASS_AZ:
+    return ALPHA;
+  case CLASS_not | CLASS_az | CLASS_AZ:
+    return NALPHA;
+  }
+  return 0;
+}
 
 // When regcode is set to this value, code is not emitted and size is computed
 // instead.
@@ -4723,6 +4850,18 @@ collection:
       if (*lp == ']') {         // there is a matching ']'
         int startc = -1;                // > 0 when next '-' is a range
         int endc;
+
+        if (extra == 0) {
+          int cl = bt_recognize_char_class((uint8_t *)regparse, lp);
+
+          if (cl != 0) {
+            ret = regnode(cl);
+            regparse = (char *)lp;
+            skipchr();
+            *flagp |= HASWIDTH | SIMPLE;
+            break;
+          }
+        }
 
         // In a character class, different parsing rules apply.
         // Not even \ is special anymore, nothing is.
@@ -8832,79 +8971,15 @@ static void realloc_post_list(void)
 // need to be interpreted as [a-zA-Z].
 static int nfa_recognize_char_class(uint8_t *start, const uint8_t *end, int extra_newl)
 {
-#define CLASS_not            0x80
-#define CLASS_af             0x40
-#define CLASS_AF             0x20
-#define CLASS_az             0x10
-#define CLASS_AZ             0x08
-#define CLASS_o7             0x04
-#define CLASS_o9             0x02
-#define CLASS_underscore     0x01
+  bool newl;
+  int config = get_char_class_bits(start, end, &newl);
 
-  uint8_t *p;
-  int config = 0;
-
-  bool newl = extra_newl == true;
-
-  if (*end != ']') {
+  if (config < 0) {
     return FAIL;
   }
-  p = start;
-  if (*p == '^') {
-    config |= CLASS_not;
-    p++;
-  }
 
-  while (p < end) {
-    if (p + 2 < end && *(p + 1) == '-') {
-      switch (*p) {
-      case '0':
-        if (*(p + 2) == '9') {
-          config |= CLASS_o9;
-          break;
-        } else if (*(p + 2) == '7') {
-          config |= CLASS_o7;
-          break;
-        }
-        return FAIL;
-      case 'a':
-        if (*(p + 2) == 'z') {
-          config |= CLASS_az;
-          break;
-        } else if (*(p + 2) == 'f') {
-          config |= CLASS_af;
-          break;
-        }
-        return FAIL;
-      case 'A':
-        if (*(p + 2) == 'Z') {
-          config |= CLASS_AZ;
-          break;
-        } else if (*(p + 2) == 'F') {
-          config |= CLASS_AF;
-          break;
-        }
-        return FAIL;
-      default:
-        return FAIL;
-      }
-      p += 3;
-    } else if (p + 1 < end && *p == '\\' && *(p + 1) == 'n') {
-      newl = true;
-      p += 2;
-    } else if (*p == '_') {
-      config |= CLASS_underscore;
-      p++;
-    } else if (*p == '\n') {
-      newl = true;
-      p++;
-    } else {
-      return FAIL;
-    }
-  }   // while (p < end)
-
-  if (p != end) {
-    return FAIL;
+  if (extra_newl == true) {
+    newl = true;
   }
 
   if (newl == true) {
