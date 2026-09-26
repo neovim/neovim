@@ -328,23 +328,49 @@ local function get_doc(item)
   return '', default_kind
 end
 
----@param value string
+---Returns a matcher for "items" that reads the options once and, with "fuzzy",
+---scores the items against "prefix" in one matchfuzzypos() call.
+---@param items lsp.CompletionItem[]
 ---@param prefix string
----@return boolean
----@return integer?
-local function match_item_by_value(value, prefix)
-  if prefix == '' then
-    return true, nil
-  end
-  if has_completeopt('fuzzy') then
-    local score = vim.fn.matchfuzzypos({ value }, prefix)[3] ---@type table
-    return #score > 0, score[1]
+---@return fun(value: string, item_prefix: string): boolean, integer?
+local function item_matcher(items, prefix)
+  local fuzzy = has_completeopt('fuzzy')
+  local ignorecase, smartcase = vim.o.ignorecase, vim.o.smartcase
+  local scores = {} --- @type table<string, integer|false>
+  if fuzzy and prefix:find('%w') then
+    local values = {} --- @type string[]
+    for i, item in ipairs(items) do
+      local value = nonempty(item.filterText) or item.label
+      values[i] = value
+      scores[value] = false
+    end
+    local matched = vim.fn.matchfuzzypos(values, prefix)
+    local words = matched[1] --- @type string[]
+    local word_scores = matched[3] --- @type integer[]
+    for i, word in ipairs(words) do
+      scores[word] = word_scores[i]
+    end
   end
 
-  if vim.o.ignorecase and (not vim.o.smartcase or not prefix:find('%u')) then
-    return vim.startswith(value:lower(), prefix:lower()), nil
+  return function(value, item_prefix)
+    if item_prefix == '' then
+      return true, nil
+    end
+    if fuzzy then
+      local score --- @type integer|false?
+      if item_prefix == prefix then
+        score = scores[value]
+      end
+      if score == nil then
+        score = vim.fn.matchfuzzypos({ value }, item_prefix)[3][1] or false
+      end
+      return score ~= false, score or nil
+    end
+    if ignorecase and (not smartcase or not item_prefix:find('%u')) then
+      return vim.startswith(value:lower(), item_prefix:lower()), nil
+    end
+    return vim.startswith(value, item_prefix), nil
   end
-  return vim.startswith(value, prefix), nil
 end
 
 --- Generate kind text for completion color items
@@ -404,10 +430,11 @@ end
 ---info is not complete, resolving the item (via completionItem/resolve) may populate the missing
 ---fields.
 ---@param item lsp.CompletionItem
+---@param popup boolean 'completeopt' has "popup"
 ---@return string
 ---@return lsp.MarkupKind
 ---@return boolean complete
-local function complete_item_info(item)
+local function complete_item_info(item, popup)
   local info, kind = get_doc(item)
 
   if item.detail and item.detail ~= '' then
@@ -419,11 +446,7 @@ local function complete_item_info(item)
     end
   end
 
-  if
-    info == ''
-    and has_completeopt('popup')
-    and item.insertTextFormat == protocol.InsertTextFormat.Snippet
-  then
+  if info == '' and popup and item.insertTextFormat == protocol.InsertTextFormat.Snippet then
     local text = item.insertText or (item.textEdit and item.textEdit.newText)
     if text then
       local snippet = parse_snippet(text)
@@ -518,6 +541,7 @@ function M._lsp_to_complete_items(
     return {}
   end
 
+  local match_item_by_value = item_matcher(items, prefix)
   ---@type fun(item: lsp.CompletionItem, item_prefix: string): boolean, integer?
   local matches
   if not prefix:find('%w') then
@@ -542,7 +566,7 @@ function M._lsp_to_complete_items(
     end
   end
 
-  local candidates = {}
+  local candidates = {} --- @type table[]
   local bufnr = api.nvim_get_current_buf()
   local user_convert = vim.tbl_get(buf_handles, bufnr, 'convert')
   local user_cmp = vim.tbl_get(buf_handles, bufnr, 'cmp')
@@ -559,6 +583,7 @@ function M._lsp_to_complete_items(
       'commitCharactersSupport'
     )
 
+  local popup = has_completeopt('popup')
   local all_commit_chars = client and completion_options(client, bufnr).allCommitCharacters
   local all_commit_str = all_commit_chars and commit_chars_str(all_commit_chars) or nil
 
@@ -587,7 +612,7 @@ function M._lsp_to_complete_items(
         hl_group = 'DiagnosticDeprecated'
       end
       local kind, kind_hlgroup = generate_kind(item)
-      local info, info_kind, info_complete = complete_item_info(item)
+      local info, info_kind, info_complete = complete_item_info(item, popup)
       local commit_chars --- @type string?
       if use_commit then
         if commit_support and item.commitCharacters then
@@ -630,12 +655,16 @@ function M._lsp_to_complete_items(
   end
 
   if not user_cmp then
+    -- Once per item, not per comparison.
+    local sort_text = {} --- @type table<table, string>
+    for _, c in ipairs(candidates) do
+      local item = c.user_data.nvim.lsp.completion_item --- @type lsp.CompletionItem
+      sort_text[c] = nonempty(item.sortText) or item.label
+    end
     --- @param a { user_data: { nvim: { lsp: { completion_item: lsp.CompletionItem } } } }
     --- @param b { user_data: { nvim: { lsp: { completion_item: lsp.CompletionItem } } } }
     local function compare_by_sortText_and_label(a, b)
-      local itema = a.user_data.nvim.lsp.completion_item
-      local itemb = b.user_data.nvim.lsp.completion_item
-      return (nonempty(itema.sortText) or itema.label) < (nonempty(itemb.sortText) or itemb.label)
+      return sort_text[a] < sort_text[b]
     end
 
     local use_fuzzy_sort = has_completeopt('fuzzy')
@@ -921,7 +950,7 @@ function CompletionResolver:request(bufnr, param, selected_word)
         return
       end
 
-      local info, kind = complete_item_info(result)
+      local info, kind = complete_item_info(result, has_completeopt('popup'))
       if info ~= '' and info ~= cmp_info.completed.info then
         local windata = api.nvim__complete_set(cmp_info.selected, { info = info })
         update_popup_window(windata.winid, windata.bufnr, kind)
