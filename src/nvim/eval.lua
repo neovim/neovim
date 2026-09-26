@@ -10203,6 +10203,8 @@ M.funcs = {
       through the text to check if the cell widths of your terminal
       match with what Vim knows about each emoji.  If it doesn't
       look right you need to adjust the {list} argument.
+
+      |getcellwidths()| can be used to get the overrides later.
     ]=],
     name = 'setcellwidths',
     params = { { 'list', 'any[]' } },

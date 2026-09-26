@@ -8438,6 +8438,8 @@ function vim.fn.setbufvar(buf, varname, val) end
 --- match with what Vim knows about each emoji.  If it doesn't
 --- look right you need to adjust the {list} argument.
 ---
+--- |getcellwidths()| can be used to get the overrides later.
+---
 --- @param list any[]
 --- @return any
 function vim.fn.setcellwidths(list) end
