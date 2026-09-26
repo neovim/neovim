@@ -126,6 +126,12 @@ EDITOR
     cmdwin via |c_CTRL-F|.
 • Behavior of |:restart| changed. Use "!" (|:restart!|) to get the old behavior.
   • |ZR| now performs |:restart|. Add a count to change the behavior.
+• |dot-repeat| (".") replays input (|getchar()|, |input()|) read by an
+  operator/mapping, instead of re-prompting. |repeat-payload| This means
+  plugins/mappings that use |getchar()| or |input()| work automatically with
+  ".", without the need for plugins such as vim-repeat or workarounds
+  (caching). Tradeoff: plugins that "cache" input will not work with "."; they
+  must be updated to drop the caching behavior.
 • |ins-repeat| replays the full Insert session, including cursor-moves.
   Undo and |quote.| still restart at each cursor-move. Use |i_CTRL-O| to get
   the old behavior: >vim
