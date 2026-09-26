@@ -33,8 +33,11 @@ char *socket_address_tcp_host_end(const char *address)
     return NULL;
   }
 
-  // Windows drive letter path: "X:/..." is a local path, not TCP.
-  if (ASCII_ISALPHA((uint8_t)address[0]) && address[1] == ':' && address[2] == '/') {
+  // Windows drive letter path: "X:..." is a local path, not TCP.
+  // TODO(ntdiary): Windows only supports "//./pipe/xxx". Not sure what the specific
+  // false positive is. Perhaps, as AI answered, we want to provide a more accurate error
+  // message? neovim#37947
+  if (path_has_drive_letter(address)) {
     return NULL;
   }
 
