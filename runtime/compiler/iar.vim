@@ -20,13 +20,15 @@ set cpo&vim
 
 CompilerSet errorformat=
       \%A\ \ %p^,
-      \%C\"%f\"\\\,%l\ \ Remark[%*[^]]]:\ %m,
-      \%C\"%f\"\\\,%l\ \ %tarning[%*[^]]]:\ %m,
-      \%C\"%f\"\\\,%l\ \ %trror[%*[^]]]:\ %m,
-      \%C\"%f\"\\\,%l\ \ Fatal\ %trror[%*[^]]]:\ %m,
-      \%EInternal\ error:\ %m,
-      \%EError[%*[^]]]:\ %m,
+      \%C\"%f\"\\\,%l\ \ Remark[%*[^]]]:%m,
+      \%C\"%f\"\\\,%l\ \ %tarning[%*[^]]]:%m,
+      \%C\"%f\"\\\,%l\ \ %trror[%*[^]]]:%m,
+      \%C\"%f\"\\\,%l\ \ Fatal\ %trror[%*[^]]]:%m,
+      \%C\"%f\"\\\,%l\ \ [note]:%m,
+      \%EInternal\ error:%m,
+      \%EError[%*[^]]]:%m,
       \%C%\\s%\\+%m,
+      \%Z
 
 let &cpo = s:cpo_save
 unlet s:cpo_save
