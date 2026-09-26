@@ -1007,6 +1007,35 @@ describe('vim.pack', function()
         -- Should source plugin's 'plugin/' files without explicit `load=true`
         assert_works()
       end)
+
+      it('does not load same-named start packages while sourcing init.lua', function()
+        local start_plugin = vim.fs.joinpath(
+          fn.stdpath('data'),
+          'site',
+          'pack',
+          'other',
+          'start',
+          'plugindirs',
+          'plugin'
+        )
+        fn.mkdir(start_plugin, 'p')
+        t.write_file(start_plugin .. '/test.lua', 'vim.g.start_package_loaded = true')
+        local init_lua = vim.fs.joinpath(config_dir, 'init.lua')
+        fn.writefile({
+          pack_add_cmd:gsub('%)$', ', { load = true })'),
+          'vim.g.start_package_loaded_in_init = vim.g.start_package_loaded or false',
+          '_G.done = true',
+        }, init_lua)
+        -- Cover both initial installation and loading an already installed plugin.
+        for _ = 1, 2 do
+          n.clear({ args_rm = { '-u' } })
+          t.retry(nil, t.is_os('win') and 30000 or 5000, function()
+            eq(true, exec_lua('return _G.done'))
+          end)
+          eq(false, exec_lua('return vim.g.start_package_loaded_in_init'))
+          eq(true, exec_lua('return vim.g.start_package_loaded'))
+        end
+      end)
     end)
 
     it('shows progress report during installation', function()

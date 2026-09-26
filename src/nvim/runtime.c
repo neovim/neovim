@@ -1426,22 +1426,28 @@ void load_plugins(void)
 /// ":packadd[!] {name}"
 void ex_packadd(exarg_T *eap)
 {
-  static const char plugpat[] = "pack/*/%s/%s";  // NOLINT
-  int res = OK;
+  runtime_pack_add(eap->arg, eap->forceit, false);
+}
 
-  const size_t len = sizeof(plugpat) + strlen(eap->arg) + 5;
+/// Add packages by name, optionally restricting discovery to optional packages.
+void runtime_pack_add(char *name, bool bang, bool opt_only)
+{
+  static const char plugpat[] = "pack/*/%s/%s";  // NOLINT
+  int res = opt_only ? FAIL : OK;
+
+  const size_t len = sizeof(plugpat) + strlen(name) + 5;
   char *pat = xmallocz(len);
-  void *cookie = eap->forceit ? &APP_ADD_DIR : &APP_BOTH;
+  void *cookie = bang ? &APP_ADD_DIR : &APP_BOTH;
 
   // Only look under "start" when loading packages wasn't done yet.
-  if (!did_source_packages) {
-    vim_snprintf(pat, len, plugpat, "start", eap->arg);
+  if (!opt_only && !did_source_packages) {
+    vim_snprintf(pat, len, plugpat, "start", name);
     res = do_in_path(p_pp, "", pat, DIP_ALL + DIP_DIR,
                      add_start_pack_plugins, cookie);
   }
 
   // Give a "not found" error if nothing was found in 'start' or 'opt'.
-  vim_snprintf(pat, len, plugpat, "opt", eap->arg);
+  vim_snprintf(pat, len, plugpat, "opt", name);
   do_in_path(p_pp, "", pat, DIP_ALL + DIP_DIR + (res == FAIL ? DIP_ERR : 0),
              add_opt_pack_plugins, cookie);
 
