@@ -27,6 +27,231 @@ describe('api/buf', function()
     return request('buffer_' .. method, 0, ...)
   end
 
+  it('partial text height maps raw virtual columns to reflowed rows', function()
+    local screen = Screen.new(20, 6)
+    local ns = api.nvim_create_namespace('conceal_height')
+    command('set wrap conceallevel=2 concealcursor=nvic')
+    api.nvim_buf_set_lines(0, 0, -1, true, {
+      ('a'):rep(10) .. 'HIDDEN' .. ('b'):rep(9),
+    })
+    api.nvim_buf_set_extmark(0, ns, 0, 10, { end_col = 16, conceal = '' })
+
+    -- Raw vcol 20 is displayed at column 14 on the only screen row.
+    eq(1, api.nvim_win_text_height(0, { start_row = 0, start_vcol = 20 }).all)
+
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    api.nvim_buf_set_lines(0, 0, -1, true, {
+      ('a'):rep(10) .. 'HIDDEN' .. ('b'):rep(29),
+    })
+    api.nvim_buf_set_extmark(0, ns, 0, 10, { end_col = 16, conceal = '' })
+
+    -- Raw vcol 25 is displayed at column 19, still on the first screen row.
+    eq(
+      1,
+      api.nvim_win_text_height(0, { start_row = 0, start_vcol = 0, end_row = 0, end_vcol = 25 }).all
+    )
+    eq(26, api.nvim_win_text_height(0, { max_height = 1 }).end_vcol)
+
+    screen:try_resize(12, 6)
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    api.nvim_buf_set_lines(0, 0, -1, true, { ('A'):rep(11) .. '古' .. ('B'):rep(5) })
+    api.nvim_buf_set_extmark(0, ns, 0, 11, { end_col = 14, conceal = '' })
+    for vcol = 11, 14 do
+      eq(2, api.nvim_win_text_height(0, { start_row = 0, start_vcol = vcol }).all)
+    end
+
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    api.nvim_buf_set_lines(0, 0, -1, true, { ('A'):rep(11) .. 'X' .. 'B' })
+    api.nvim_buf_set_extmark(0, ns, 0, 11, { end_col = 12, conceal = '' })
+    api.nvim_buf_set_extmark(0, ns, 0, 11, {
+      virt_text = { { 'III' } },
+      virt_text_pos = 'inline',
+    })
+    eq(
+      2,
+      api.nvim_win_text_height(0, { start_row = 0, start_vcol = 0, end_row = 0, end_vcol = 13 }).all
+    )
+    eq(12, api.nvim_win_text_height(0, { max_height = 1 }).end_vcol)
+  end)
+
+  it('tracks only conceal decorations in marktree metadata', function()
+    local screen = Screen.new(20, 6)
+    command('set wrap conceallevel=2 concealcursor=nvic')
+    local ns = api.nvim_create_namespace('conceal_metadata')
+    local function check_atomic()
+      eq(
+        { { api.nvim__buf_stats(0) }, NIL },
+        api.nvim_call_atomic({
+          { 'nvim__buf_stats', { 0 } },
+        })
+      )
+    end
+    check_atomic()
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'text' })
+    check_atomic()
+    api.nvim_buf_set_extmark(0, ns, 0, 0, { end_col = 1, hl_group = 'Comment' })
+    eq(0, api.nvim__buf_stats(0).conceal_marks)
+
+    local id = api.nvim_buf_set_extmark(0, ns, 0, 1, {
+      end_col = 2,
+      conceal = '界',
+      virt_text = { { 'hint' } },
+      virt_text_pos = 'inline',
+    })
+    eq(1, api.nvim__buf_stats(0).conceal_marks)
+    eq(0, api.nvim__buf_stats(0).conceal_line_marks)
+
+    api.nvim_buf_set_extmark(0, ns, 0, 1, {
+      id = id,
+      end_col = 2,
+      hl_group = 'Comment',
+    })
+    eq(0, api.nvim__buf_stats(0).conceal_marks)
+
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'hidden', 'shown' })
+    api.nvim_win_set_cursor(0, { 2, 0 })
+    command('set conceallevel=3')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      conceal_lines = '',
+      virt_text = { { 'hint' } },
+    })
+    eq(0, api.nvim__buf_stats(0).conceal_marks)
+    eq(1, api.nvim__buf_stats(0).conceal_line_marks)
+    screen:expect({ any = 'shown', none = 'hidden' })
+    api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    eq(0, api.nvim__buf_stats(0).conceal_marks)
+    eq(0, api.nvim__buf_stats(0).conceal_line_marks)
+
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'gone' })
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      end_col = 4,
+      conceal = '',
+      invalidate = true,
+    })
+    eq(1, api.nvim__buf_stats(0).conceal_marks)
+    api.nvim_buf_set_text(0, 0, 0, 0, 4, {})
+    eq(0, api.nvim__buf_stats(0).conceal_marks)
+    command('undo')
+    eq(1, api.nvim__buf_stats(0).conceal_marks)
+  end)
+
+  it('scopes overlapping conceal to its windows when measuring buffer lines', function()
+    Screen.new(20, 8)
+    command('set wrap conceallevel=2 concealcursor=n')
+    api.nvim_buf_set_lines(0, 0, -1, true, { 'first', string.rep('A', 40) .. 'tail', 'last' })
+    local win = api.nvim_get_current_win()
+    local other = api.nvim_open_win(0, false, {
+      relative = 'editor',
+      row = 0,
+      col = 0,
+      width = 10,
+      height = 1,
+      style = 'minimal',
+    })
+    local ns = api.nvim_create_namespace('scoped-conceal')
+    api.nvim__ns_set(ns, { wins = { other } })
+    local id = api.nvim_buf_set_extmark(0, ns, 0, 0, {
+      end_row = 1,
+      end_col = 40,
+      conceal = '',
+    })
+    eq(3, api.nvim_win_text_height(win, { start_row = 1, end_row = 1 }).all)
+    api.nvim__ns_set(ns, { wins = { win } })
+    eq(1, api.nvim_win_text_height(win, { start_row = 1, end_row = 1 }).all)
+    api.nvim__ns_set(ns, { wins = { other } })
+    api.nvim_buf_set_extmark(0, ns, 1, 0, { id = id, end_col = 40, conceal = '' })
+    eq(3, api.nvim_win_text_height(win, { start_row = 1, end_row = 1 }).all)
+  end)
+
+  it('resolves persistent conceal priority when measuring buffer lines', function()
+    Screen.new(20, 6)
+    command('set wrap conceallevel=2 concealcursor=n')
+    api.nvim_buf_set_lines(0, 0, -1, true, { string.rep('A', 19) .. 'XZ' })
+    local ns = api.nvim_create_namespace('conceal-priority')
+    api.nvim_buf_set_extmark(0, ns, 0, 19, { end_col = 20, conceal = false, priority = 50 })
+    eq(0, api.nvim__buf_stats(0).conceal_marks)
+    eq(2, api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all)
+    api.nvim_buf_set_extmark(0, ns, 0, 19, { end_col = 20, conceal = '', priority = 100 })
+    eq(1, api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all)
+    local reveal =
+      api.nvim_buf_set_extmark(0, ns, 0, 19, { end_col = 20, conceal = false, priority = 200 })
+    eq(2, api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all)
+    local hide =
+      api.nvim_buf_set_extmark(0, ns, 0, 19, { end_col = 20, conceal = '', priority = 300 })
+    eq(1, api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all)
+    api.nvim_buf_del_extmark(0, ns, hide)
+    eq(2, api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all)
+    api.nvim_buf_del_extmark(0, ns, reveal)
+    eq(1, api.nvim_win_text_height(0, { start_row = 0, end_row = 0 }).all)
+  end)
+
+  it('reuses conceal provider storage after deleting a buffer', function()
+    local buf, provider, marks = unpack(exec_lua(function()
+      local a = vim.api
+      local provider = a.nvim_create_namespace('conceal-provider-lifetime')
+      a.nvim_set_decoration_provider(provider, { _on_conceal = function() end })
+      return { a.nvim_get_current_buf(), provider, a.nvim_create_namespace('conceal-owned') }
+    end))
+    api.nvim_buf_set_name(buf, 'conceal-provider-lifetime')
+    for _ = 1, 2 do
+      api.nvim_set_current_buf(buf)
+      api.nvim_set_option_value('buflisted', true, { buf = buf })
+      exec_lua(function(b, p, ns)
+        vim.api.nvim__buf_set_conceal_provider(b, p, ns, true)
+      end, buf, provider, marks)
+      eq(1, api.nvim__buf_stats(buf).conceal_providers)
+      command('enew')
+      command('bunload ' .. buf)
+      eq(1, api.nvim__buf_stats(buf).conceal_providers)
+      command('bdelete ' .. buf)
+      eq(0, api.nvim__buf_stats(buf).conceal_providers)
+    end
+    command('bwipeout ' .. buf)
+    eq(false, api.nvim_buf_is_valid(buf))
+    assert_alive()
+  end)
+
+  it('redraws conceal changes with wrapping or conceal disabled', function()
+    local screen = Screen.new(20, 6)
+    command('set laststatus=0 noshowmode noruler concealcursor=n')
+    api.nvim_buf_set_lines(0, 0, -1, true, { string.rep('a', 40) .. 'tail', 'END' })
+    api.nvim_win_set_cursor(0, { 2, 0 })
+    local ns = api.nvim_create_namespace('conceal-invalidation')
+    local concealed = [[
+      tail                |
+      ^END                 |
+      {1:~                   }|*3
+                          |
+    ]]
+    local wrapped = [[
+      aaaaaaaaaaaaaaaaaaaa|*2
+      tail                |
+      ^END                 |
+      {1:~                   }|
+                          |
+    ]]
+    local unwrapped = [[
+      aaaaaaaaaaaaaaaaaaaa|
+      ^END                 |
+      {1:~                   }|*3
+                          |
+    ]]
+    for _, case in ipairs({
+      { true, 2, concealed, wrapped },
+      { false, 2, concealed, unwrapped },
+      { true, 0, wrapped, wrapped },
+    }) do
+      api.nvim_set_option_value('wrap', case[1], { win = 0 })
+      api.nvim_set_option_value('conceallevel', case[2], { win = 0 })
+      local id = api.nvim_buf_set_extmark(0, ns, 0, 0, { end_col = 40, conceal = '' })
+      screen:expect(case[3])
+      api.nvim_buf_del_extmark(0, ns, id)
+      screen:expect({ grid = case[4], unchanged = case[2] == 0 })
+      command('redraw!')
+      screen:expect({ grid = case[4], unchanged = true })
+    end
+  end)
+
   describe('nvim_buf_set_lines, nvim_buf_line_count', function()
     it('deprecated forms', function()
       eq(1, curbuf_depr('line_count'))
