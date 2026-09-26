@@ -208,13 +208,12 @@ local function check_lockfile()
   end
 end
 
---- @param manifest vim.pack.Manifest
---- @param plug_name string
---- @param plug_path string
-local function check_manifest(manifest, plug_name, plug_path)
-  local name_str = vim.inspect(plug_name)
+--- @param plug_data vim.pack.PlugData
+local function check_manifest(plug_data)
+  local name_str = vim.inspect(plug_data.spec.name)
+  local manifest = assert(plug_data.manifest)
   local function warn(msg)
-    health.warn(msg .. '\nManifest file: ' .. vim.fs.joinpath(plug_path, 'pkg.json'))
+    health.warn(msg .. '\nManifest file: ' .. vim.fs.joinpath(plug_data.path, 'pkg.json'))
   end
 
   if vim.tbl_count(manifest) == 0 then
@@ -240,7 +239,7 @@ local function check_manifest(manifest, plug_name, plug_path)
   -- Scripts
   ---@diagnostic disable-next-line: no-unknown
   for name, script_path in pairs(manifest.scripts or {}) do
-    if vim.fn.filereadable(vim.fs.joinpath(plug_path, script_path)) == 0 then
+    if vim.fn.filereadable(vim.fs.joinpath(plug_data.path, script_path)) == 0 then
       warn(('Plugin %s has no %s script at %s path'):format(name_str, name, script_path))
       is_good = false
     end
@@ -250,10 +249,15 @@ local function check_manifest(manifest, plug_name, plug_path)
 end
 
 --- @param plug_name string
+--- @param all_plug_data vim.pack.PlugData[]
 --- @return boolean Whether a check is successful
-local function check_installed_plugin(plug_name)
+local function check_installed_plugin(plug_name, all_plug_data)
   local name_str = vim.inspect(plug_name)
-  local plug_path = vim.fs.joinpath(get_plug_dir(), plug_name)
+  local data = {}
+  for _, p_data in ipairs(all_plug_data) do
+    data = p_data.spec.name == plug_name and p_data or data
+  end
+  local plug_path = data.path or vim.fs.joinpath(get_plug_dir(), plug_name)
 
   if vim.fn.isdirectory(plug_path) ~= 1 then
     health.error(('%s is not a directory. Delete it'):format(plug_name))
@@ -285,14 +289,12 @@ local function check_installed_plugin(plug_name)
   end
 
   -- Usage data
-  local has_pack_info, info = pcall(vim.pack.get, { plug_name })
-  if not has_pack_info then
+  if data.spec == nil then
     health.error('Could not get `vim.pack` usage information for plugin ' .. name_str)
     return false
   end
-  local plug = assert(info[1])
 
-  if not plug.active then
+  if not data.active then
     health.info(
       ('Plugin %s is not active.'):format(name_str)
         .. ' Is it lazy loaded or did you forget to run `vim.pack.del()`?'
@@ -300,8 +302,8 @@ local function check_installed_plugin(plug_name)
   end
 
   -- Manifest
-  if plug.manifest then
-    return check_manifest(plug.manifest, plug_name, plug_path)
+  if data.manifest then
+    return check_manifest(data)
   end
 
   return true
@@ -312,12 +314,14 @@ local function check_plug_dir()
 
   local is_good = true
   local plug_dir = get_plug_dir()
+  local ok_get, all_plug_data = pcall(vim.pack.get, nil, { info = true })
+  all_plug_data = ok_get and all_plug_data or {}
   for plug_name, _, err in vim.fs.dir(plug_dir, { err = true }) do
     if err then
       health.error(err)
       is_good = false
     else
-      is_good = check_installed_plugin(plug_name) and is_good
+      is_good = check_installed_plugin(plug_name, all_plug_data) and is_good
     end
   end
 
