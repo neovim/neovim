@@ -3937,7 +3937,7 @@ function vim.fn.getregion(pos1, pos2, opts) end
 --- describing the buffer text segments bound by {pos1} and
 --- {pos2}.
 --- The segments are a pair of positions for every line: >
----   [[{start_pos}, {end_pos}], ...]
+---   [[{startpos}, {endpos}], ...]
 --- <
 --- The position is a |List| with four numbers:
 ---     [bufnum, lnum, col, off]
@@ -3973,13 +3973,13 @@ function vim.fn.getregion(pos1, pos2, opts) end
 ---   bounds    If |TRUE|, return only the outer
 ---       bounds of the region as a single
 ---       pair: >
----         [[{start_pos}, {end_pos}]]
---- <      {start_pos} is the start position on
+---         [[{startpos}, {endpos}]]
+--- <      {startpos} is the start position on
 ---       the first line of the region and
----       {end_pos} the end position on its
----       last line.  The lines in between are
----       not visited, which is much faster for
----       a large region.
+---       {endpos} the end position on its last
+---       line.  The lines in between are not
+---       visited, which is much faster for a
+---       large region.
 ---       (default: |FALSE|)
 ---
 --- Using "bounds" with the same {opts} is equivalent to taking
@@ -3993,7 +3993,7 @@ function vim.fn.getregion(pos1, pos2, opts) end
 --- a blockwise region they are the start of the first line and
 --- the end of the last line, not the corners of the block.
 --- Likewise, when the first line is empty and "eol" is |FALSE|,
---- {start_pos} has a "col" of 0 while {end_pos} may not.
+--- {startpos} has a "col" of 0 while {endpos} may not.
 ---
 --- @param pos1 [integer, integer, integer, integer]
 --- @param pos2 [integer, integer, integer, integer]
