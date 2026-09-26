@@ -367,8 +367,8 @@ behavior, see |visual-fixed-size|.)
 
 A [count] given to "." is prepended to the replayed keys. If the selection was
 extended by a command that cannot be replayed (mouse, search, Ex command,
-scroll), "." instead applies the operator to a same-size area, as if "1v"
-(|v|) preceded it.
+scroll), or used |gv| (e.g. a mapping like ">gv"), "." instead applies the
+operator to a same-size area, as if "1v" (|v|) preceded it.
 
 							*visual-fixed-size*
 Example: To mimic Vim's fixed-size Visual dot-repeat: after a Visual

@@ -915,8 +915,18 @@ describe('CmdAtom', function()
       eq(' bbb ccc', fn.getline(1))
       eq(before + 1, #atoms())
       eq({ type = 'visual', keys = 'gvd', lhs = 'gvd' }, pick(atom_last(), 'type', 'keys', 'lhs'))
-      feed('.')
-      eq('b ccc', fn.getline(1))
+      feed('w.') -- "." containing "gv" replays "1v" fallback at the cursor ("bbb").
+      eq('  ccc', fn.getline(1))
+      -- Visual-entered Insert. The atom has "gv" (as typed), not redo's "1v" fallback.
+      api.nvim_buf_set_lines(0, 0, -1, true, { 'aaa bbb ccc' })
+      feed('gg0viw<Esc>')
+      before = #atoms()
+      feed('gvcX<Esc>')
+      eq('X bbb ccc', fn.getline(1))
+      eq(before + 1, #atoms())
+      eq({ type = 'visual', keys = k('gvcX<Esc>') }, pick(atom_last(), 'type', 'keys'))
+      feed('w.')
+      eq('X X ccc', fn.getline(1))
 
       -- A fed (":normal!") Visual-put preps the selection keysequence, like any fed visual
       -- operator (":normal! vjd"): "." re-executes "Vjp", not a bare "p".

@@ -1995,6 +1995,26 @@ describe('multicursor', function()
       feed('gvd')
       eq({ ' bb', ' dd', 'ee ff' }, get_lines())
       eq(2, ncursors())
+      clear_cursors()
+      cursors({ 'aa bb', 'cc dd', 'ee ff' }, 'Qj')
+      feed('viw<Esc>')
+      feed('jQk')
+      feed('gvrZ') -- Not Normal-mode "rZ".
+      eq({ 'ZZ bb', 'ZZ dd', 'ee ff' }, get_lines())
+
+      -- Per-cursor "gv" + Insert-entering cmd ("gvc…").
+      clear_cursors()
+      cursors({ 'aa bb', 'cc dd', 'ee ff' })
+      feed('viw<Esc>')
+      feed('gvcX<Esc>')
+      eq({ 'X bb', 'X dd', 'X ff' }, get_lines())
+      -- Cursor without a previous area is skipped.
+      clear_cursors()
+      cursors({ 'aa bb', 'cc dd', 'ee ff' }, 'Qj')
+      feed('<C-v>l<Esc>')
+      feed('jQk') -- Cursor on line 3: no area.
+      feed('gvIX<Esc>')
+      eq('ee ff', fn.getline(3))
     end)
 
     it('selection moved by mapping via API/Lua #41956', function()

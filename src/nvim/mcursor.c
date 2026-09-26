@@ -109,6 +109,7 @@ static struct {
   uint64_t frame;   ///< Root frame that started the insert-session.
   size_t done_len;  ///< Bytes of the capture already consumed by replayed spans; tail is pending.
   uint32_t region;  ///< Primary cursor's inserted text.
+  const char *vsel;  ///< Supplants the capture's "1v" (see `InsSession.vsel`).
 } mc_ins_span;
 
 /// Editor state when the mc session started, which every cursor replays against.
@@ -295,6 +296,10 @@ static void mc_execute(size_t cursoridx, size_t atomidx)
   // Get the tracked position: edits by other cursors (etc) may have shifted it since last update.
   if (ctx.mark != 0 && !extmark_get_pos(curbuf, mc_ns(), ctx.mark, &ctx.pos)) {
     // The extmark was deleted, thus the cursor is deleted (swept by mc_cleanup()).
+    return;
+  }
+  if (ctx.visual.vi_start.lnum == 0 && strncmp(atom.keys, "gv", 2) == 0) {
+    // Replaying "gv", but Visual-reselect area is not defined for this cursor.
     return;
   }
 
@@ -559,12 +564,14 @@ bool mc_ins_replay_can_join(void)
 ///
 /// @param cascade  The session qualifies for insert-cascading.
 /// @param origin   State at session start.
-void mc_ins_cascade_start(bool cascade, CmdOrigin origin, uint64_t root_frame)
+/// @param vsel     See `InsSession.vsel`. Borrowed.
+void mc_ins_cascade_start(bool cascade, CmdOrigin origin, uint64_t root_frame, const char *vsel)
 {
   if (mc_replaying()) {
     // Nested replay session: don't clobber the primary session's state.
     return;
   }
+  mc_ins_span.vsel = vsel;
   mc_ins_joined = false;
   mc_ins_span.active = cascade && mc_buf_has_cursors(curbuf);
   mc_ins_span.first = true;
@@ -830,7 +837,14 @@ void mc_ins_cascade(void)
     if (!Ins.did_ai && ins.data != NULL && ins.size > 0) {
       // Entry replay.
       StringBuilder keys = KV_INITIAL_VALUE;
-      kv_concat_len(keys, ins.data, ins.size);
+      size_t skip = 0;
+      if (mc_ins_span.vsel != NULL) {
+        assert(ins.size >= 2 && strncmp(ins.data, "1v", 2) == 0);
+        kv_concat(keys, mc_ins_span.vsel);  // Supplant redo's "1v" fallback.
+        skip = 2;
+        mc_ins_span.vsel = NULL;
+      }
+      kv_concat_len(keys, ins.data + skip, ins.size - skip);
       kv_push(keys, ESC);
       kv_push(keys, NUL);
       mc_ins_span.done_len = ins.size;
@@ -1138,6 +1152,7 @@ bool mc_ins_commit(void)
   bool active = mc_ins_span.active;
   bool ins_cascaded = active && !mc_ins_span.first;
   mc_ins_span.active = false;
+  mc_ins_span.vsel = NULL;
 
   if (ins_cascaded) {
     // COMMIT: replace the previews with a real replay: abbrev, 'textwidth', … re-exec per cursor.
