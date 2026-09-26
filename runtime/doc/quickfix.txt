@@ -98,9 +98,9 @@ processing a quickfix or location list command, it will be aborted.
 						*:cn* *:cne* *:cnext* *E553*
 :[count]cn[ext][!]	Display the [count] next error in the list that
 			includes a file name.  Entries without a file name are
-			skipped, since Vim cannot use them to jump to a file.  If
-			there are no file names at all, go to the [count] next
-			error.  See |:cc| for [!] and 'switchbuf'.
+			skipped, since Vim cannot use them to jump to a file.
+			If there are no file names at all, go to the [count]
+			next error.  See |:cc| for [!] and 'switchbuf'.
 
 								*]q*
 ]q			Mapped to |:cnext|. |default-mappings|
@@ -108,9 +108,9 @@ processing a quickfix or location list command, it will be aborted.
 :[count]cN[ext][!]		*:cp* *:cprevious*  *:cprev* *:cN* *:cNext*
 :[count]cp[revious][!]	Display the [count] previous error in the list that
 			includes a file name.  Entries without a file name are
-			skipped, since Vim cannot use them to jump to a file.  If
-			there are no file names at all, go to the [count] previous
-			error.  See |:cc| for [!] and 'switchbuf'.
+			skipped, since Vim cannot use them to jump to a file.
+			If there are no file names at all, go to the [count]
+			previous error.  See |:cc| for [!] and 'switchbuf'.
 
 								*[q*
 [q			Mapped to |:cprevious|. |default-mappings|
@@ -318,10 +318,10 @@ processing a quickfix or location list command, it will be aborted.
 			current window is used instead of the quickfix list.
 
 The following commands read error messages from a buffer:
-`:cbuffer` creates a list and jumps to its first error, `:cgetbuffer`
-creates a list without jumping, and `:caddbuffer` adds entries to the
-current list without changing the cursor position.  The corresponding
-commands with an "l" prefix use the location list.
+`:cbuffer` creates a list and jumps to its first error, `:cgetbuffer` creates
+a list without jumping, and `:caddbuffer` adds entries to the current list
+without changing the cursor position.  The corresponding commands with an "l"
+prefix use the location list.
 
 						*:cb* *:cbuffer* *E681*
 :[range]cb[uffer][!] [bufnr]
@@ -543,8 +543,8 @@ To execute a command for entries or files in a list, use:
 
 Use `:cdo` when a command should run for every valid entry, for example
 `:cdo s/old/new/g` to change each matching line.  Use `:cfdo` when it should
-run once for each file, for example `:cfdo update` to write each affected
-file once.  Add the "l" prefix to use the location list instead.
+run once for each file, for example `:cfdo update` to write each affected file
+once.  Add the "l" prefix to use the location list instead.
 
 The commands below describe these differences in more detail.
 
@@ -1150,10 +1150,10 @@ commands can be combined to create a NewGrep command: >
 			     matching is used to find matching lines.  The
 			     characters in {pattern} must appear in order, but
 			     need not be next to each other.  In this case,
-			     {pattern} is treated as a literal string instead of
-			     a regular expression.  See
-			     |fuzzy-matching| for more information about fuzzy
-			     matching strings.
+			     {pattern} is treated as a literal string instead
+			     of a regular expression.  See |fuzzy-matching|
+			     for more information about fuzzy matching
+			     strings.
 
 			|QuickFixCmdPre| and |QuickFixCmdPost| are triggered.
 			A file that is opened for matching may use a buffer
@@ -1343,10 +1343,10 @@ The Vim plugins in the "compiler" directory will set options to use the
 selected compiler.  For `:compiler` local options are set, for `:compiler!`
 global options.
 
-In normal use, select a compiler with `:compiler {name}` and then run
-|:make|.  The compiler plugin usually sets 'makeprg' and 'errorformat' so
-Vim can run the compiler and read its messages.  The descriptions below
-document options for particular compiler plugins.
+In normal use, select a compiler with `:compiler {name}` and then run |:make|.
+The compiler plugin usually sets 'makeprg' and 'errorformat' so Vim can run
+the compiler and read its messages.  The descriptions below document options
+for particular compiler plugins.
 
 The values set by a compiler plugin can be changed afterwards with |:set| or
 |:setlocal|.  `:compiler {name}` sets options for the current buffer, while
