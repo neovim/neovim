@@ -468,6 +468,7 @@ PERFORMANCE
   linewise regions.
 • The display of multibyte text with grapheme clusters has been optimized,
   by calculating byte length and cell width of clusters in a single loop.
+• |lsp-completion| processes large completion responses faster.
 
 PLUGINS
 
