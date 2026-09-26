@@ -486,48 +486,6 @@ int utf_char2cells(int c)
   return 1;
 }
 
-/// Number of extra display cells needed by the SpacingMarks in the grapheme
-/// cluster starting at "p", whose first codepoint is "firstlen" bytes. "size"
-/// bounds the read, or -1 when "p" is NUL-terminated.
-///
-/// A SpacingMark does not break the cluster (UAX#29 GB9a) but has positive
-/// advance width (Unicode core spec D55), so it needs a cell of its own.
-static int utf_cluster_spacing_cells(const char *p, int firstlen, int size)
-  FUNC_ATTR_NONNULL_ALL
-{
-  GraphemeState state = GRAPHEME_STATE_INIT;
-  const char *prev = p;
-  const char *cur = p + firstlen;
-  int extra = 0;
-
-  while (*cur != NUL) {
-    int remaining = (size < 0) ? -1 : size - (int)(cur - p);
-    if (remaining == 0) {
-      break;
-    }
-
-    int len = (remaining < 0) ? utf_ptr2len(cur) : utf_ptr2len_len(cur, remaining);
-    if (len <= 0 || (remaining > 0 && len > remaining)) {
-      break;  // truncated sequence
-    }
-
-    if (!utf_composinglike(prev, cur, &state)) {
-      break;  // end of the cluster
-    }
-
-    int c = utf_ptr2char(cur);
-    if (utf8proc_get_property(c)->boundclass == UTF8PROC_BOUNDCLASS_SPACINGMARK
-        || (c & ~1) == 0xFF9E) {  // halfwidth katakana voiced sound marks
-      extra += utf_char2cells(c);
-    }
-
-    prev = cur;
-    cur += len;
-  }
-
-  return extra;
-}
-
 /// Return number of display cells occupied by character at "*p".
 /// A TAB is counted as two cells: "^I" or four: "<09>".
 ///
@@ -629,41 +587,39 @@ ret:
 
 /// Like utf_ptr2cells(), but limit string length to "size".
 /// For an empty string or truncated character returns 1.
-int utf_ptr2cells_len(const char *p, int size)
+int utf_ptr2cells_len(const char *p_in, int size)
   FUNC_ATTR_PURE
 {
-  // Need to convert to a wide character.
-  if (size > 0 && (uint8_t)(*p) >= 0x80) {
-    int len = utf_ptr2len_len(p, size);
-    if (len < utf8len_tab[(uint8_t)(*p)]) {
-      return 1;        // truncated
-    }
-    int c = utf_ptr2char(p);
-    // An illegal byte is displayed as <xx>.
-    if (utf_ptr2len(p) == 1 || c == NUL) {
-      return 4;
-    }
-    // If the char is ASCII it must be an overlong sequence.
-    if (c < 0x80) {
-      return char2cells(c);
-    }
-    int cells = utf_char2cells(c);
-    if (cells == 1 && p_emoji && size > len
-        && prop_is_emojilike(utf8proc_get_property(c))
-        && utf_ptr2len_len(p + len, size - len) == utf8len_tab[(uint8_t)p[len]]) {
-      int c2 = utf_ptr2char(p + len);
-      if (c2 == 0xFE0F) {
-        return 2;  // emoji presentation
-      }
-    }
-    if (cells >= 2) {
-      return cells;  // unprintable or already known to be doublewidth
-    }
-    // currently, the grid allows maximum two cells per cluster
-    int extra = utf_cluster_spacing_cells(p, len, size);
-    return MIN(cells + extra, 2);
+  const uint8_t *p = (const uint8_t *)p_in;
+  if (size == 0 || *p < 0x80) {
+    return 1;
   }
-  return 1;
+
+  // Need to convert to a wide character.
+  int len = utf_ptr2len_len(p_in, size);
+  if (len < utf8len_tab[*p]) {
+    return 1;        // truncated
+  }
+  int c = utf_ptr2char(p_in);
+
+  // An illegal byte is displayed as <xx>.
+  if (utf_ptr2len(p_in) == 1 || c == NUL) {
+    return 4;
+  }
+  // If the char is ASCII it must be an overlong sequence.
+  if (c < 0x80) {
+    return char2cells(c);
+  }
+
+  if (EXPECT(size <= len || p[len] < 0x80, true)) {
+    return utf_char2cells(c);
+  } else {
+    // TODO(bfredl): half-way refactor roadstone. This also gives us the valid
+    // byte length the caller could use instead of utfc_ptr2len_len()
+    StrCharInfo cur = {.ptr = p_in, .chr = (CharInfo){.value = c, .len = len}};
+    ClusterInfo ci = utf_ClusterInfo_impl(cur, size - len);
+    return ci.cells;
+  }
 }
 
 /// Calculate the number of cells occupied by string `str`.
@@ -1917,19 +1873,29 @@ int utf_head_off(const char *base_in, const char *p_in)
   return 0;
 }
 
-ClusterInfo utf_ClusterInfo_impl(StrCharInfo cur)
+ClusterInfo utf_ClusterInfo_impl(StrCharInfo cur, int max_len)
 {
   int cells = basechar_cells_impl(cur.chr);
   int32_t prev_code = cur.chr.value;
   uint8_t *next = (uint8_t *)(cur.ptr + cur.chr.len);
   GraphemeState state = GRAPHEME_STATE_INIT;
-  assert(*next >= 0x80);
+  assert(*next >= 0x80 && max_len > 0);
 
   bool check_emoji = cells == 1 && p_emoji
                      && prop_is_emojilike(utf8proc_get_property(cur.chr.value));
 
   while (true) {
     uint8_t const next_len = utf8len_tab[*next];
+    if (next_len > max_len) {
+      return (ClusterInfo){
+        .next = (StrCharInfo){
+          .ptr = (char *)next,
+          .chr = (CharInfo){ .value = -1, .len = next_len},
+        },
+        .cells = cells,
+      };
+    }
+
     int32_t const next_code = utf_ptr2CharInfo_impl(next, (uintptr_t)next_len);
     if (!utf_iscomposing(prev_code, next_code, &state)) {
       return (ClusterInfo){
@@ -1949,6 +1915,8 @@ ClusterInfo utf_ClusterInfo_impl(StrCharInfo cur)
     }
 
     if (cells == 1) {
+      /// A SpacingMark does not break the cluster (UAX#29 GB9a) but has positive
+      /// advance width (Unicode core spec D55), so it needs a cell of its own.
       if (utf8proc_get_property(next_code)->boundclass == UTF8PROC_BOUNDCLASS_SPACINGMARK
           || (next_code & ~1) == 0xFF9E) {  // halfwidth katakana voiced sound marks
         cells = 2;
@@ -1957,7 +1925,8 @@ ClusterInfo utf_ClusterInfo_impl(StrCharInfo cur)
 
     prev_code = next_code;
     next += next_len;
-    if (EXPECT(*next < 0x80U, true)) {
+    max_len -= next_len;
+    if (EXPECT(max_len > 0 && *next < 0x80U, true)) {
       return (ClusterInfo){
         .next = (StrCharInfo){
           .ptr = (char *)next,

@@ -64,7 +64,7 @@ typedef struct {
 } CharInfo;
 
 typedef struct {
-  char *ptr;     ///< Pointer to the first byte of the character.
+  const char *ptr;     ///< Pointer to the first byte of the character.
   CharInfo chr;  ///< Information about the character.
 } StrCharInfo;
 
