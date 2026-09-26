@@ -733,6 +733,25 @@ describe('lua: nvim_buf_attach on_bytes', function()
       }
     end)
 
+    it('emits on_bytes for leftover empty line of Visual put', function()
+      local check_events = setup_eventcheck(verify, { 'x', 'y' })
+      fn.setreg('a', { 'foo', 'bar' }, 'l')
+
+      feed 'ggVG"ap'
+      check_events {
+        { 'test1', 'bytes', 1, 3, 0, 0, 0, 2, 0, 4, 1, 0, 1 },
+        { 'test1', 'bytes', 1, 4, 0, 0, 0, 0, 0, 0, 2, 0, 8 },
+        { 'test1', 'bytes', 1, 5, 2, 0, 8, 1, 0, 1, 0, 0, 0 },
+      }
+
+      feed 'u'
+      check_events {
+        { 'test1', 'bytes', 1, 8, 2, 0, 8, 0, 0, 0, 1, 0, 1 },
+        { 'test1', 'bytes', 1, 8, 0, 0, 0, 2, 0, 8, 0, 0, 0 },
+        { 'test1', 'bytes', 1, 8, 0, 0, 0, 1, 0, 1, 2, 0, 4 },
+      }
+    end)
+
     it('linewise paste', function()
       local check_events = setup_eventcheck(verify, origlines)
 
