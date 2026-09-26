@@ -2082,6 +2082,15 @@ void ex_loadkeymap(exarg_T *eap)
     return;
   }
 
+  if (eap->skip) {
+    char *line;
+    // The rest of the script is the keymap, read it and throw it away.
+    while ((line = eap->ea_getline(0, eap->cookie, 0, true)) != NULL) {
+      xfree(line);
+    }
+    return;
+  }
+
   // Stop any active keymap and clear the table.
   keymap_unload();
 

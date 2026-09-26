@@ -1891,6 +1891,9 @@ static bool skip_cmd(const exarg_T *eap)
     case CMD_function:
       break;
 
+    case CMD_loadkeymap:
+      break;
+
     // Commands that handle '|' themselves.  Check: A command should
     // either have the EX_TRLBAR flag, appear in this list or appear in
     // the list at ":help :bar".

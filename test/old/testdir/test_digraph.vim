@@ -508,6 +508,15 @@ func Test_loadkeymap_error()
   call assert_fails('source Xkeymap', 'E791:')
 endfunc
 
+" Test for ":loadkeymap" in a block that is not executed: it reads the rest of
+" the script, so that rest, the "endif" with it, is thrown away instead of
+" being read as commands.
+func Test_loadkeymap_skipped()
+  CheckFeature keymap
+  call writefile(['if 0', '  loadkeymap', '  a b', 'endif'], 'Xkeymap', 'D')
+  call assert_fails('source Xkeymap', 'E171:')
+endfunc
+
 " Test for the characters displayed on the screen when entering a digraph
 func Test_entering_digraph()
   CheckRunVimInTerminal
