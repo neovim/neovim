@@ -764,21 +764,21 @@ describe('statusline', function()
     screen:expect(s2)
     feed('v')
     screen:expect([[
-      ^                                        |
+      {17:^ }                                       |
       {1:~                                       }|*5
       {3:v                                       }|
       {5:-- VISUAL --}                            |
     ]])
     feed('V')
     screen:expect([[
-      ^                                        |
+      {17:^ }                                       |
       {1:~                                       }|*5
       {3:V                                       }|
       {5:-- VISUAL LINE --}                       |
     ]])
     feed('<C-V>')
     screen:expect([[
-      ^                                        |
+      {17:^ }                                       |
       {1:~                                       }|*5
       {3:^V                                      }|
       {5:-- VISUAL BLOCK --}                      |
@@ -795,14 +795,14 @@ describe('statusline', function()
     ]])
     feed('iabc<Esc>v')
     screen:expect([[
-      ab^c                                     |
+      ab{17:^c}                                     |
       {1:~                                       }|*5
       {3:v 3 3                                   }|
       {5:-- VISUAL --}                            |
     ]])
     feed('iw')
     screen:expect([[
-      {17:ab}^c                                     |
+      {17:ab^c}                                     |
       {1:~                                       }|*5
       {3:v 1 3                                   }|
       {5:-- VISUAL --}                            |

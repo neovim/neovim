@@ -312,7 +312,7 @@ describe('winbar', function()
       line 3                                                      |
       line 4                                                      |
       l{7:ine -42}                                                    |
-      {7:li}^ne i                                                      |
+      {7:li^n}e i                                                      |
       line sin(theta)                                             |
       line 8                                                      |
       {3:~                                                           }|*3
@@ -323,7 +323,7 @@ describe('winbar', function()
     api.nvim_input_mouse('left', 'drag', '', 0, 1, 2)
     screen:expect([[
       {1:Set Up The Bars                                             }|
-      li^n{7:e 1}                                                      |
+      li{7:^ne 1}                                                      |
       {7:line 2}                                                      |
       {7:line 3}                                                      |
       {7:line 4}                                                      |

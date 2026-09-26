@@ -178,7 +178,7 @@ describe('Conceal', function()
       {1:~                                                                          }|
       {2:[No Name] [+]                                                              }|
       one one one one one                                                        |
-      two |hidden| ^here                                                          |
+      two |hidden| {17:^h}ere                                                          |
       three  three                                                               |
       {1:~                                                                          }|
       {3:[No Name] [+]                                                              }|
@@ -241,7 +241,7 @@ describe('Conceal', function()
       {1:~                                                                          }|
       {2:[No Name] [+]                                                              }|
       one one one one one                                                        |
-      two |hidden| ^here                                                          |
+      two |hidden| {17:^h}ere                                                          |
       three  three                                                               |
       {1:~                                                                          }|
       {3:[No Name] [+]                                                              }|
@@ -304,7 +304,7 @@ describe('Conceal', function()
       {1:~                                                                          }|
       {2:[No Name] [+]                                                              }|
       one one one one one                                                        |
-      two  ^here                                                                  |
+      two  {17:^h}ere                                                                  |
       three  three                                                               |
       {1:~                                                                          }|
       {3:[No Name] [+]                                                              }|

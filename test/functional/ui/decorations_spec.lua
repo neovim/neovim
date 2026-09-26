@@ -57,6 +57,7 @@ local function setup_screen(screen)
     [17] = { foreground = Screen.colors.Red },
     [18] = { bold = true, foreground = Screen.colors.SeaGreen },
     [19] = { bold = true },
+    [20] = { foreground = Screen.colors.Grey0, background = Screen.colors.LightGrey },
   }
 end
 
@@ -1055,7 +1056,7 @@ describe('decorations providers', function()
     ]])
     feed('v')
     screen:expect([[
-      ^                                        |
+      {20:^ }                                       |
       {1:~                                       }|*6
       {19:-- VISUAL --}                            |
     ]])
@@ -1454,7 +1455,7 @@ describe('extmark decorations', function()
       grid = [[
       ababababababababababababababababababababab{4:01234567}|
       {1:++}{4:89}abababababababababababababababababababa{4:0123456}|
-      {1:++}^a{27:babab}ababababababababababababababababababababab|
+      {1:++}{27:^ababab}ababababababababababababababababababababab|
       {1:++}abababababababababababababababababababababababab|
       {1:++}ababab                                          |
       {24:-- VISUAL --}                                      |
@@ -1466,7 +1467,7 @@ describe('extmark decorations', function()
       grid = [[
       ababababababababababababababababababababab{4:01234567}|
       {1:++}{4:89}abababababababababababababababababababa{4:0123456}|
-      {1:++}{27:ababa}^bababababababababababababababababababababab|
+      {1:++}{27:ababa^b}ababababababababababababababababababababab|
       {1:++}abababababababababababababababababababababababab|
       {1:++}ababab                                          |
       {24:-- VISUAL --}                                      |
@@ -1477,7 +1478,7 @@ describe('extmark decorations', function()
     screen:expect {
       grid = [[
       ababababababababababababababababababababab{4:01234567}|
-      {1:++}{4:89}aba^b{27:ababababababababababababababababababababab}|
+      {1:++}{4:89}aba{27:^bababababababababababababababababababababab}|
       {1:++}{27:a}{4:89}babababababababababababababababababababababab|
       {1:++}abababababababababababababababababababababababab|
       {1:++}ababab                                          |
@@ -1490,7 +1491,7 @@ describe('extmark decorations', function()
       grid = [[
       ababababababababababababababababababababab{4:01234567}|
       {1:++}{4:89}aba{27:bababababababababababababababababababababab}|
-      {1:++}^a{4:89}babababababababababababababababababababababab|
+      {1:++}{27:^a}{4:89}babababababababababababababababababababababab|
       {1:++}abababababababababababababababababababababababab|
       {1:++}ababab                                          |
       {24:-- VISUAL --}                                      |
@@ -1728,7 +1729,7 @@ describe('extmark decorations', function()
       {18:    }{17:l}{20:blen}{21:dy}{22:e}{21:text}{22:h}{21:-}{22:_}{21:here}{18:ell, count }{17:=}{18: unpack(item)}  |
       {18:    }{17:i}{12:c}{11:ombining col}{12:or}{18: }{23:nil}{18: }{17:then}                     |
       {18:     }{11:replacing color}{18:d_cell}                        |
-      {18:    }{5:^e}{17:nd}                                           |
+      {18:    }{17:^end}                                           |
           {5:f}{12:co}{11:mbi}{12:n}{11:i}{16:n}{11:g color}t {5:or} {13:1}) {5:do}                    |
            {11:replacing color} line[colpos]                 |
               cell.text {5:=} text                          |
@@ -1750,7 +1751,7 @@ describe('extmark decorations', function()
       {18:     }{11:replacing color}{18:d_cell}                        |
       {18:    }{17:end}                                           |
       {18:    }{17:for}{18: _ }{17:=}{18: }{23:1}{18:, (count }{17:or}{18: }{23:1}{18:) }{17:do}                    |
-      {18:    }^ {18:   }{17:local}{18: cell }{17:=}{18: line[colpos]}                 |
+      {18:    ^    }{17:local}{18: cell }{17:=}{18: line[colpos]}                 |
               cell.text {5:=} text                          |
               cell.hl_id {5:=} hl_id                        |
               colpos {5:=} colpos{5:+}{13:1}                         |
@@ -2620,7 +2621,7 @@ describe('extmark decorations', function()
     screen:expect([[
       {29:asd}{28:f}                                              |
       {29:   }{28:     asdf}                                      |*3
-      {29:as}{28:^df}                                              |
+      {29:as^d}{28:f}                                              |
       {1:~                                                 }|*2
       {24:-- VISUAL BLOCK --}                                |
     ]])
@@ -3843,7 +3844,7 @@ describe('decorations: inline virtual text', function()
     feed('V')
     screen:expect {
       grid = [[
-      ^f{7:or _,item in ipairs(items) do}                    |
+      {7:^for _,item in ipairs(items) do}                    |
           local text{10:: }{3:string}, hl_id_cell, count = unpack|
       (item)                                            |
           if hl_id_cell ~= nil then                     |
@@ -4127,7 +4128,7 @@ describe('decorations: inline virtual text', function()
     screen:expect {
       grid = [[
       {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
-      {7:aa}^a                                                         |
+      {7:aa^a}                                                         |
       {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
       {10:X}                                                           |
       {7:bbb}bbb                                                      |
@@ -4297,7 +4298,7 @@ describe('decorations: inline virtual text', function()
     screen:expect {
       grid = [[
       foo fo{7:o }{10:AAA}{20:BBB}{7:f}oo bar                             |
-      foo fo^o{7: }{20:CCC}{10:DDD}{7:f}oo bar                             |
+      foo fo{7:^o }{20:CCC}{10:DDD}{7:f}oo bar                             |
       {8:-- VISUAL BLOCK --}                                |
     ]],
     }
@@ -4306,7 +4307,7 @@ describe('decorations: inline virtual text', function()
     screen:expect {
       grid = [[
       foo fo{7:o }{10:AAA}{20:BBB}{7:f}o{10:EEE}o bar                          |
-      foo fo^o{7: }{20:CCC}{10:DDD}{7:f}oo bar                             |
+      foo fo{7:^o }{20:CCC}{10:DDD}{7:f}oo bar                             |
       {8:-- VISUAL BLOCK --}                                |
     ]],
     }
@@ -4624,25 +4625,25 @@ describe('decorations: inline virtual text', function()
     ]])
     feed('V')
     screen:expect([[
-      {10:口β̳γ̲=❤️}{7:34567}^8                                     |
+      {10:口β̳γ̲=❤️}{7:34567^8}                                     |
       {1:~                                                 }|
       {8:-- VISUAL LINE --}                                 |
     ]])
     command('set list listchars+=precedes:!')
     screen:expect([[
-      {1:!<}{10:β̳γ̲=❤️}{7:34567}^8                                     |
+      {1:!<}{10:β̳γ̲=❤️}{7:34567^8}                                     |
       {1:~                                                 }|
       {8:-- VISUAL LINE --}                                 |
     ]])
     feed('zl')
     screen:expect([[
-      {1:!}{10:β̳γ̲=❤️}{7:34567}^8                                      |
+      {1:!}{10:β̳γ̲=❤️}{7:34567^8}                                      |
       {1:~                                                 }|
       {8:-- VISUAL LINE --}                                 |
     ]])
     command('set nolist')
     screen:expect([[
-      {1:<}{10:β̳γ̲=❤️}{7:34567}^8                                      |
+      {1:<}{10:β̳γ̲=❤️}{7:34567^8}                                      |
       {1:~                                                 }|
       {8:-- VISUAL LINE --}                                 |
     ]])
@@ -4743,7 +4744,7 @@ describe('decorations: inline virtual text', function()
     feed('V2zl')
     screen:expect {
       grid = [[
-      {10:X}{7:abcde}^f                                           |
+      {10:X}{7:abcde^f}                                           |
       {1:~                                                 }|
       {8:-- VISUAL LINE --}                                 |
     ]],
@@ -4751,7 +4752,7 @@ describe('decorations: inline virtual text', function()
     feed('zl')
     screen:expect {
       grid = [[
-      {7:abcde}^f                                            |
+      {7:abcde^f}                                            |
       {1:~                                                 }|
       {8:-- VISUAL LINE --}                                 |
     ]],
@@ -4759,7 +4760,7 @@ describe('decorations: inline virtual text', function()
     feed('zl')
     screen:expect {
       grid = [[
-      {7:bcde}^f                                             |
+      {7:bcde^f}                                             |
       {1:~                                                 }|
       {8:-- VISUAL LINE --}                                 |
     ]],
@@ -5095,7 +5096,7 @@ describe('decorations: inline virtual text', function()
       {7:12}3456789                                                   |
       {7:1}{10:-口-}23456789                                               |
       {7:12}{10:口}3456789                                                 |
-      {7:1}^23456789                                                   |
+      {7:1^2}3456789                                                   |
       {1:~                                                           }|
       {8:-- VISUAL BLOCK --}                                          |
     ]],
@@ -5106,7 +5107,7 @@ describe('decorations: inline virtual text', function()
       {7:123}456789                                                   |
       {7:1}{10:-口-}23456789                                               |
       {7:12}{10:口}3456789                                                 |
-      {7:12}^3456789                                                   |
+      {7:12^3}456789                                                   |
       {1:~                                                           }|
       {8:-- VISUAL BLOCK --}                                          |
     ]],
@@ -5117,7 +5118,7 @@ describe('decorations: inline virtual text', function()
       {7:1234567}89                                                   |
       {7:1}{10:-口-}{7:23}456789                                               |
       {7:12}{10:口}{7:345}6789                                                 |
-      {7:123456}^789                                                   |
+      {7:123456^7}89                                                   |
       {1:~                                                           }|
       {8:-- VISUAL BLOCK --}                                          |
     ]],
@@ -5128,7 +5129,7 @@ describe('decorations: inline virtual text', function()
       1{7:234567}89                                                   |
       1{10:-口-}{7:23}456789                                               |
       1{7:2}{10:口}{7:345}6789                                                 |
-      1^2{7:34567}89                                                   |
+      1{7:^234567}89                                                   |
       {1:~                                                           }|
       {8:-- VISUAL BLOCK --}                                          |
     ]],
@@ -5139,7 +5140,7 @@ describe('decorations: inline virtual text', function()
       12{7:34567}89                                                   |
       1{10:-口-}{7:23}456789                                               |
       12{10:口}{7:345}6789                                                 |
-      12^3{7:4567}89                                                   |
+      12{7:^34567}89                                                   |
       {1:~                                                           }|
       {8:-- VISUAL BLOCK --}                                          |
     ]],
@@ -5150,7 +5151,7 @@ describe('decorations: inline virtual text', function()
       123{7:4567}89                                                   |
       1{10:-口-}{7:23}456789                                               |
       12{10:口}{7:345}6789                                                 |
-      123^4{7:567}89                                                   |
+      123{7:^4567}89                                                   |
       {1:~                                                           }|
       {8:-- VISUAL BLOCK --}                                          |
     ]],
@@ -5179,7 +5180,7 @@ describe('decorations: inline virtual text', function()
       {7:12}3456789                                                   |
       {7:1}{20:-}{10:口-}23456789                                               |
       {7:12}{10:口}3456789                                                 |
-      {7:1}^23456789                                                   |
+      {7:1^2}3456789                                                   |
       {1:~                                                           }|
       {8:-- VISUAL BLOCK --}                                          |
     ]],
@@ -5190,7 +5191,7 @@ describe('decorations: inline virtual text', function()
       {7:123}456789                                                   |
       {7:1}{20:-口}{10:-}23456789                                               |
       {7:12}{20:口}3456789                                                 |
-      {7:12}^3456789                                                   |
+      {7:12^3}456789                                                   |
       {1:~                                                           }|
       {8:-- VISUAL BLOCK --}                                          |
     ]],
@@ -5201,7 +5202,7 @@ describe('decorations: inline virtual text', function()
       {7:1234567}89                                                   |
       {7:1}{20:-口-}{7:23}456789                                               |
       {7:12}{20:口}{7:345}6789                                                 |
-      {7:123456}^789                                                   |
+      {7:123456^7}89                                                   |
       {1:~                                                           }|
       {8:-- VISUAL BLOCK --}                                          |
     ]],
@@ -5212,7 +5213,7 @@ describe('decorations: inline virtual text', function()
       1{7:234567}89                                                   |
       1{20:-口-}{7:23}456789                                               |
       1{7:2}{20:口}{7:345}6789                                                 |
-      1^2{7:34567}89                                                   |
+      1{7:^234567}89                                                   |
       {1:~                                                           }|
       {8:-- VISUAL BLOCK --}                                          |
     ]],
@@ -5223,7 +5224,7 @@ describe('decorations: inline virtual text', function()
       12{7:34567}89                                                   |
       1{10:-}{20:口-}{7:23}456789                                               |
       12{20:口}{7:345}6789                                                 |
-      12^3{7:4567}89                                                   |
+      12{7:^34567}89                                                   |
       {1:~                                                           }|
       {8:-- VISUAL BLOCK --}                                          |
     ]],
@@ -5234,7 +5235,7 @@ describe('decorations: inline virtual text', function()
       123{7:4567}89                                                   |
       1{10:-}{20:口-}{7:23}456789                                               |
       12{20:口}{7:345}6789                                                 |
-      123^4{7:567}89                                                   |
+      123{7:^4567}89                                                   |
       {1:~                                                           }|
       {8:-- VISUAL BLOCK --}                                          |
     ]],

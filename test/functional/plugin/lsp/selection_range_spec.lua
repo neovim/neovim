@@ -75,7 +75,7 @@ describe('vim.lsp.selection_range', function()
 
     screen:expect([[
       hello                                             |*2
-      {17:hell}^o                                             |
+      {17:hell^o}                                             |
       hello                                             |*2
       {1:~                                                 }|*3
       {5:-- VISUAL --}                                      |
@@ -88,7 +88,7 @@ describe('vim.lsp.selection_range', function()
 
     screen:expect([[
       {17:hello}                                             |*4
-      {17:hell}^o                                             |
+      {17:hell^o}                                             |
       {1:~                                                 }|*3
       {5:-- VISUAL --}                                      |
     ]])
@@ -100,7 +100,7 @@ describe('vim.lsp.selection_range', function()
 
     screen:expect([[
       hello                                             |*2
-      {17:hell}^o                                             |
+      {17:hell^o}                                             |
       hello                                             |*2
       {1:~                                                 }|*3
       {5:-- VISUAL --}                                      |
@@ -114,7 +114,7 @@ describe('vim.lsp.selection_range', function()
     screen:expect([[
       hello                                             |
       {17:hello}                                             |*2
-      {17:hell}^o                                             |
+      {17:hell^o}                                             |
       hello                                             |
       {1:~                                                 }|*3
       {5:-- VISUAL --}                                      |

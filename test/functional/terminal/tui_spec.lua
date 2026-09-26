@@ -2142,7 +2142,7 @@ describe('TUI', function()
     screen:expect([[
       this{108: is line 1}                                    |
       {108:this is line 2}                                    |
-      {108:line}^ 3 is here                                    |
+      {108:line^ }3 is here                                    |
                                                         |
       {3:[No Name] [+]                                     }|
       {5:-- SELECT --}                                      |
@@ -2753,7 +2753,7 @@ describe('TUI', function()
     child_session:request('nvim_set_hl', 0, 'Visual', { undercurl = true })
     feed_data('ifoobar\027V')
     screen:expect([[
-      {114:fooba}^r                                            |
+      {114:fooba^r}                                            |
       {100:~                                                 }|*3
       {3:[No Name] [+]                                     }|
       {5:-- VISUAL LINE --}                                 |
@@ -2761,7 +2761,7 @@ describe('TUI', function()
     ]])
     child_session:request('nvim_set_hl', 0, 'Visual', { underdouble = true })
     screen:expect([[
-      {115:fooba}^r                                            |
+      {115:fooba^r}                                            |
       {100:~                                                 }|*3
       {3:[No Name] [+]                                     }|
       {5:-- VISUAL LINE --}                                 |
