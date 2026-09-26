@@ -1267,11 +1267,21 @@ items:
 			usual.  Takes precedence over extending the leader.
 			Only while the popup menu is displayed.  Control
 			characters (below 0x20) are ignored.
+	startcol	Column this item replaces from, as a byte index
+			starting at 1; defaults to the column given to
+			|complete()|, and the other end is always the
+			cursor.  The item is filtered from here, so its
+			"filter_text", or "word" without one, must start
+			with the text it replaces; otherwise it is dropped.
+	filter_text	Text the item is filtered by instead of "word".
 
-All of these except "icase", "equal", "dup" and "empty" must be a string.  If
-an item does not meet these requirements then an error message is given and
-further items in the list are not used.  You can mix string and Dictionary
-items in the returned list.
+"startcol" and "filter_text" are ignored while 'completeopt' contains
+"longest".
+
+All of these except "icase", "equal", "dup", "empty" and "startcol" must be a
+string.  If an item does not meet these requirements then an error message is
+given and further items in the list are not used.  You can mix string and
+Dictionary items in the returned list.
 
 The "menu" item is used in the popup menu and may be truncated, thus it should
 be relatively short.  The "info" item can be longer, it will  be displayed in

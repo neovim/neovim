@@ -37,6 +37,8 @@ error('Cannot require a meta file')
 --- override the |hl-PmenuKind| highlight group, allowing for the customization
 --- of ctermfg and guifg properties for the completion kind
 --- @field kind_hlgroup? string
+--- @field startcol? integer column this item replaces from, starting at 1
+--- @field filter_text? string text this item is filtered by instead of "word"
 
 --- @class vim.v.event
 --- Whether the event triggered during an aborting condition (e.g. |c_Esc| or
