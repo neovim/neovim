@@ -366,8 +366,8 @@ end
 --- Example:
 --- ```lua
 --- -- A range represented by marks may be end-inclusive (decided by 'selection' option).
---- local start_lnum, start_col = unpack(api.nvim_buf_get_mark(bufnr, '<'))
---- local end_lnum, end_col = unpack(api.nvim_buf_get_mark(bufnr, '>'))
+--- local start_lnum, start_col = unpack(api.nvim_get_mark('<', { buf = bufnr }))
+--- local end_lnum, end_col = unpack(api.nvim_get_mark('>', { buf = bufnr }))
 ---
 --- -- Create an end-exclusive range.
 --- local range = vim.range.mark(0, start_lnum, start_col, end_lnum, end_col)

@@ -505,3 +505,21 @@ typedef struct {
   Integer c;
   String f;
 } Dict(_shada_buflist_item);
+
+typedef struct {
+  OptionalKeys is_set__get_mark_;
+  Buffer buf;
+  Window win;
+} Dict(get_mark);
+
+typedef struct {
+  OptionalKeys is_set__set_mark_;
+  Buffer buf;
+  Window win;
+  String mode;
+} Dict(set_mark);
+
+typedef struct {
+  OptionalKeys is_set__del_mark_;
+  Buffer buf;
+} Dict(del_mark);
