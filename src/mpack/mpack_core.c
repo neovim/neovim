@@ -403,8 +403,9 @@ static int mpack_wnint(char **buf, size_t *buflen, mpack_value_t val)
   mpack_uint32_t hi = val.hi;
   mpack_uint32_t lo = val.lo;
 
-  if (lo < 0x80000000) {
-    /* int 64 */
+  if ((hi && hi != 0xffffffff) || lo < 0x80000000) {
+    /* int 64. Negative values that fit in 32 bits have all "hi" bits set (or
+     * none, for tokens produced by mpack_read which are not sign-extended). */
     return mpack_w1(buf, buflen, 0xd3) ||
            mpack_w4(buf, buflen, hi)   ||
            mpack_w4(buf, buflen, lo);
