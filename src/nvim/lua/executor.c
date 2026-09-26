@@ -20,6 +20,7 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/change.h"
+#include "nvim/channel.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
@@ -1117,12 +1118,17 @@ static void nlua_common_free_all_mem(lua_State *lstate)
 
 static void nlua_print_event(void **argv)
 {
-  HlMessage msg = KV_INITIAL_VALUE;
-  HlMessageChunk chunk = { { .data = argv[0], .size = (size_t)(intptr_t)argv[1] - 1 }, 0 };
-  kv_push(msg, chunk);
-  bool needs_clear = false;
   msg_ext_no_fast();
-  msg_multihl(NIL, msg, "lua_print", true, false, NULL, &needs_clear);
+  if (msg_use_printf() && on_print.type == kCallbackNone) {
+    msg_start();  // flush incomplete message
+    printf("%.*s\n", (int)(intptr_t)argv[1]-1, (char *)argv[0]);
+  } else {
+    HlMessage msg = KV_INITIAL_VALUE;
+    HlMessageChunk chunk = { { .data = argv[0], .size = (size_t)(intptr_t)argv[1] - 1 }, 0 };
+    kv_push(msg, chunk);
+    bool needs_clear = false;
+    msg_multihl(NIL, msg, "lua_print", true, false, NULL, &needs_clear);
+  }
 }
 
 /// Implements Lua print() as a Nvim message.
