@@ -65,6 +65,7 @@
 #include "nvim/event/multiqueue.h"
 #include "nvim/event/time.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/extmark.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
@@ -225,6 +226,7 @@ static VTermScreenCallbacks vterm_screen_callbacks = {
   .sb_pushline = term_sb_push,  // Called before a line goes offscreen.
   .sb_popline = term_sb_pop,
   .sb_clear = term_sb_clear,
+  .erase = term_erase,
 };
 
 static VTermSelectionCallbacks vterm_selection_callbacks = {
@@ -1816,6 +1818,55 @@ static int term_sb_clear(void *data)
   invalidate_terminal(term, -1, -1);
 
   return 1;
+}
+
+/// Clears extmarks on the rows erased by a full-screen erase (ED 2, RIS).
+static int term_erase(VTermRect rect, int selective, void *data)
+{
+  Terminal *term = data;
+  if (term->pending.events == NULL) {  // Initial reset in terminal_alloc().
+    return 1;
+  }
+
+  int height, width;
+  vterm_get_size(term->vt, &height, &width);
+
+  if (selective || term->in_altscreen || rect.start_row > 0 || rect.end_row < height
+      || rect.start_col > 0 || rect.end_col < width) {
+    return 1;
+  }
+
+  // Queued with TermRequest events, so marks set after the erase are kept.
+  multiqueue_put(main_loop.events, clear_screen_extmarks, (void *)(intptr_t)term->buf_handle,
+                 (void *)(intptr_t)row_to_linenr(term, 0), (void *)(intptr_t)height,
+                 (void *)(intptr_t)term->sb_deleted);
+  return 1;
+}
+
+static void clear_screen_extmarks(void **argv)
+{
+  handle_T buf_handle = (handle_T)(intptr_t)argv[0];
+  int lnum = (int)(intptr_t)argv[1];
+  int height = (int)(intptr_t)argv[2];
+  size_t sb_deleted = (size_t)(intptr_t)argv[3];
+
+  buf_T *buf = handle_get_buffer(buf_handle);
+  if (!buf || buf->terminal == NULL) {  // Terminal already closed.
+    return;
+  }
+  Terminal *term = buf->terminal;
+
+  if (term->sb_pending > 0) {  // Wait for the refresh, like emit_termrequest().
+    multiqueue_put(term->pending.events, clear_screen_extmarks, argv[0], argv[1], argv[2], argv[3]);
+    return;
+  }
+
+  // lnum assumes sb_deleted lines are gone from the buffer; adjust by the actual count.
+  lnum = MAX(lnum + (int)sb_deleted - (int)term->old_sb_deleted, 1);
+  int last = MIN(lnum + height - 1, buf->b_ml.ml_line_count);
+  if (last >= lnum) {
+    extmark_clear(buf, 0, lnum - 1, 0, last - 1, MAXCOL);
+  }
 }
 
 static void term_clipboard_set(void **argv)
