@@ -838,6 +838,20 @@ describe('put command', function()
         end, true, ' ')
       end)
     end)
+
+    it('over all lines adjusts the cursor in other windows', function()
+      command('split')
+      local other = fn.win_getid(fn.winnr('#'))
+      -- Check before the main loop fixes up the cursor for redrawing.
+      eq(
+        { 1, 0 },
+        n.exec_lua(function()
+          vim.cmd('normal! ggVG"ap')
+          return vim.api.nvim_win_get_cursor(other)
+        end)
+      )
+      expect('test_stringa')
+    end)
   end)
 
   describe('. register special tests', function()
