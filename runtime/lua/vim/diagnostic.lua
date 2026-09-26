@@ -1124,25 +1124,18 @@ function M.status(buf)
 
   local counts = M.count(buf)
   local format = config.format
-  local result_str --- @type string
   if type(format) == 'function' then
-    result_str = format(counts)
-  else
-    local resolved_signs = M._config.get_resolved_options(vim.diagnostic.config(), nil, buf).signs
-    local signs = (type(resolved_signs) == 'table' and resolved_signs.text) or default_status_signs
-    result_str = vim
-      .iter(pairs(counts))
-      :map(function(level, value)
-        return ('%%#%s#%s:%s'):format(status_hl_map[level], signs[level], value)
-      end)
-      :join(' ')
+    local result_str = format(counts)
+    return result_str:len() > 0 and '%#(' .. result_str .. '%#)' or ''
   end
-
-  if result_str:len() > 0 then
-    result_str = result_str .. '%##'
-  end
-
-  return result_str
+  local resolved_signs = M._config.get_resolved_options(vim.diagnostic.config(), nil, buf).signs
+  local signs = (type(resolved_signs) == 'table' and resolved_signs.text) or default_status_signs
+  return vim
+    .iter(pairs(counts))
+    :map(function(level, value)
+      return ('%%#(%%$%s$%s:%s%%#)'):format(status_hl_map[level], signs[level], value)
+    end)
+    :join(' ')
 end
 
 nvim_on('DiagnosticChanged', api.nvim_create_augroup('nvim.diagnostic.status'), {

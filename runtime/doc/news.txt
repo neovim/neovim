@@ -442,6 +442,7 @@ OPTIONS
   The `%=` item is supported within item groups to separate alignment sections
   within the containing group until its `minwid` is reached. The truncation
   of an item group to its `maxwid` can be controlled with the `%<` item.
+  The new %#(...%#) item denotes a highlight scope.
   The same applies to 'rulerformat', 'statuscolumn', 'tabline', 'winbar',
   'titlestring', and 'iconstring'.
 • 'winpinned' prevents window from closing unless specifically targeted.

@@ -6945,6 +6945,9 @@ vim.wo.stc = vim.wo.statuscolumn
 ---       applied to StatusLineNC for the statusline of non-current
 ---       windows.
 ---       The number N must be between 1 and 9.  See `hl-User1..9`
+--- #( -  Start of a highlight scope.  The exact highlighting before the
+---       scope is reset at the end.  No width fields allowed.
+--- #) -  End of highlight scope.  No width fields allowed.
 ---
 --- When displaying a flag, Vim removes the leading comma, if any, when
 --- that flag comes right after plaintext.  This will make a nice display
