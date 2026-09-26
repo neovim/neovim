@@ -175,6 +175,7 @@ error('Cannot require a meta file')
 --- |'QuitPre'
 --- |'RecordingEnter'
 --- |'RecordingLeave'
+--- |'RegisterChanged'
 --- |'RemoteReply'
 --- |'SafeState'
 --- |'SearchWrapped'

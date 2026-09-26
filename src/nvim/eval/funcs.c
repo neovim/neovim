@@ -6487,6 +6487,7 @@ free_lstval:
   }
   if (pointreg != 0) {
     get_yank_register(pointreg, YREG_YANK);
+    register_changed_repoint(kRegChangedSetreg);
   }
   rettv->vval.v_number = 0;
 

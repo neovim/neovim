@@ -2289,9 +2289,11 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
   String redo = redo_keys(NULL);
   int added = redo.data == NULL ? 0 : (int)redo.size - Ins.new_insert_skip;
   if (Ins.did_restart_edit == 0 || added > 0) {
+    insert_reg_capture();
     xfree(last_insert.data);
     last_insert = redo;  // structure copy
     last_insert_skip = added < 0 ? 0 : Ins.new_insert_skip;
+    insert_reg_changed();
   } else {
     xfree(redo.data);
   }
@@ -2408,10 +2410,39 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
   }
 }
 
+// The ". register reports what get_last_insert_save() returns - the visible
+// text, past "last_insert_skip" and without the trailing ESC - because that is
+// what getreg('.') and "@. hand the user. Reusing the accessor rather than
+// rebuilding the value here keeps the two from drifting apart; it allocates, so
+// the bitset check keeps that cost off the path when nobody has subscribed.
+
+/// Record what @. reads before "last_insert" is overwritten.
+static void insert_reg_capture(void)
+{
+  if (!has_event(EVENT_REGISTERCHANGED)) {
+    return;
+  }
+  char *s = get_last_insert_save();
+  register_changed_capture('.', REG_VALUE_CSTR(s));
+  xfree(s);
+}
+
+/// Record what @. reads after "last_insert" was overwritten.
+static void insert_reg_changed(void)
+{
+  if (!has_event(EVENT_REGISTERCHANGED)) {
+    return;
+  }
+  char *s = get_last_insert_save();
+  register_changed('.', REG_VALUE_CSTR(s), kRegChangedInsert, NULL);
+  xfree(s);
+}
+
 // Set the last inserted text to a single character.
 // Used for the replace command.
 void set_last_insert(int c)
 {
+  insert_reg_capture();
   xfree(last_insert.data);
   last_insert.data = xmalloc(MB_MAXBYTES * 3 + 5);
   char *s = last_insert.data;
@@ -2424,6 +2455,7 @@ void set_last_insert(int c)
   *s = NUL;
   last_insert.size = (size_t)(s - last_insert.data);
   last_insert_skip = 0;
+  insert_reg_changed();
 }
 
 #ifdef EXITFREE
