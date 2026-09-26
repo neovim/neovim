@@ -440,6 +440,26 @@ describe('API', function()
       eq(false, exec_lua('return _G.success'))
     end)
 
+    it('msg_show callback prevents recursive output', function()
+      exec_lua([[
+        local ns = vim.api.nvim_create_namespace('test_msg_handler')
+        vim.ui_attach(ns, { ext_messages = true }, function(event)
+          if event == 'msg_show' then
+            -- an ex-command that outputs a non-"lua_print" kind
+            -- (i.e. differing to the print() below)
+            vim.cmd('highlight Normal')
+          end
+        end)
+      ]])
+
+      -- this must emit an empty string
+      exec_lua([[
+        print("")
+      ]])
+
+      assert_alive()
+    end)
+
     it('redir_write() message column is reset with ext_messages', function()
       exec_lua('vim.ui_attach(1, { ext_messages = true }, function() end)')
       api.nvim_exec2('hi VisualNC', { output = true })
