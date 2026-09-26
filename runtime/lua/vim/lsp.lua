@@ -115,10 +115,24 @@ function lsp._buf_get_full_text(bufnr)
   return text
 end
 
+--- @since 15
+--- The default predicate used by |vim.lsp.start()| to decide whether to
+--- reuse a running client for the given config. Re-uses a client if it has
+--- the same name and the given workspace folders (or root_dir) are included
+--- in the client's workspace folders.
+---
+--- To customize the default behavior, replace this function:
+---
+--- ```lua
+--- vim.lsp.reuse_client = function(client, config, bufnr)
+---   -- ...
+--- end
+--- ```
+---
 --- @param client vim.lsp.Client
 --- @param config vim.lsp.ClientConfig
 --- @return boolean
-local function reuse_client_default(client, config)
+function lsp.reuse_client(client, config)
   if client.name ~= config.name or client:is_stopped() then
     return false
   end
@@ -190,8 +204,8 @@ end
 --- ```
 --- @field filetypes? string[]
 ---
---- Predicate which decides if a client should be re-used. Used on all running clients. The default
---- implementation re-uses a client if name and root_dir matches.
+--- Predicate which decides if a client should be re-used. Used on all running clients. Defaults to
+--- |vim.lsp.reuse_client()|.
 --- @field reuse_client? fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig, bufnr: integer): boolean #
 ---
 --- [lsp-root_dir()]()
@@ -682,9 +696,7 @@ end
 --- @inlinedoc
 ---
 --- Predicate used to decide if a client should be re-used. Used on all
---- running clients. The default implementation re-uses a client if it has the
---- same name and if the given workspace folders (or root_dir) are all included
---- in the client's workspace folders.
+--- running clients. Defaults to |vim.lsp.reuse_client()|.
 --- @field reuse_client? fun(client: vim.lsp.Client, config: vim.lsp.ClientConfig, bufnr: integer): boolean
 ---
 --- Buffer handle to attach to if starting or re-using a client (0 for current).
@@ -742,7 +754,7 @@ end
 --- @return integer? client_id
 function lsp.start(config, opts)
   opts = opts or {}
-  local reuse_client = opts.reuse_client or reuse_client_default
+  local reuse_client = opts.reuse_client or lsp.reuse_client
   local bufnr = vim._resolve_bufnr(opts.bufnr)
 
   if not config.root_dir and opts._root_markers then

@@ -5377,4 +5377,75 @@ describe('LSP', function()
       eq({ foo = true, bar = false }, get_resolved({ 'bar', 'foo' }))
     end)
   end)
+
+  describe('vim.lsp.reuse_client', function()
+    it('is the default predicate used by vim.lsp.start()', function()
+      exec_lua(create_server_definition)
+      local reuse_same, reuse_diff = exec_lua(function()
+        local server = _G._create_server()
+        local client_id = assert(vim.lsp.start({
+          name = 'reuse-test',
+          cmd = server.cmd,
+          root_dir = 'some_dir',
+        }))
+        local client = assert(vim.lsp.get_client_by_id(client_id))
+        return vim.lsp.reuse_client(client, client.config),
+          vim.lsp.reuse_client(client, { name = 'other', root_dir = 'some_dir' })
+      end)
+      eq(true, reuse_same)
+      eq(false, reuse_diff)
+    end)
+
+    it('can be replaced to customize the default behavior', function()
+      exec_lua(create_server_definition)
+      local different = exec_lua(function()
+        local server = _G._create_server()
+        vim.lsp.reuse_client = function()
+          return false
+        end
+        local id1 = assert(vim.lsp.start({
+          name = 'reuse-test',
+          cmd = server.cmd,
+          root_dir = 'some_dir',
+        }))
+        local id2 = assert(vim.lsp.start({
+          name = 'reuse-test',
+          cmd = server.cmd,
+          root_dir = 'some_dir',
+        }))
+        vim.lsp.get_client_by_id(id1):stop(true)
+        vim.lsp.get_client_by_id(id2):stop(true)
+        return id1 ~= id2
+      end)
+      eq(true, different)
+    end)
+
+    it('vim.lsp.start() opts.reuse_client overrides it', function()
+      exec_lua(create_server_definition)
+      local reused = exec_lua(function()
+        local server = _G._create_server()
+        vim.lsp.reuse_client = function()
+          return false
+        end
+        local opts = {
+          reuse_client = function()
+            return true
+          end,
+        }
+        local id1 = assert(vim.lsp.start({
+          name = 'reuse-test',
+          cmd = server.cmd,
+          root_dir = 'some_dir',
+        }, opts))
+        local id2 = assert(vim.lsp.start({
+          name = 'reuse-test',
+          cmd = server.cmd,
+          root_dir = 'some_dir',
+        }, opts))
+        vim.lsp.get_client_by_id(id1):stop(true)
+        return id1 == id2
+      end)
+      eq(true, reused)
+    end)
+  end)
 end)
