@@ -101,6 +101,7 @@ local constants = {
 
   -- Completion item tags are extra annotations that tweak the rendering of a
   -- completion item
+  ---@type table<string, lsp.CompletionItemTag>
   CompletionTag = {
     -- Render a completion as obsolete, usually using a strike-out.
     Deprecated = 1,
@@ -147,6 +148,7 @@ local constants = {
   },
 
   -- Extra annotations that tweak the rendering of a symbol.
+  ---@type table<string, lsp.SymbolTag>
   SymbolTag = {
     Deprecated = 1,
   },
