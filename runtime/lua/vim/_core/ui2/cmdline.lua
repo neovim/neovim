@@ -24,7 +24,7 @@ local function win_config(win, hide, height)
   elseif api.nvim_win_get_height(win) ~= height then
     api.nvim_win_resize(win, -1, height)
   end
-  if vim.o.cmdheight ~= height then
+  if vim.o.cmdheight ~= 0 and vim.o.cmdheight ~= height then
     -- Avoid moving the cursor with 'splitkeep' = "screen", and altering the user
     -- configured value with noautocmd.
     vim._with({ noautocmd = true, o = { splitkeep = 'screen' } }, function()

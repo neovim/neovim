@@ -1387,6 +1387,17 @@ describe('cmdheight=0', function()
     eq(0, eval('&cmdheight'))
   end)
 
+  it('does not resize terminal with ui2', function()
+    command('set cmdheight=0 noruler laststatus=0')
+    command('lua require("vim._core.ui2").enable()')
+    command('terminal')
+    feed('<C-\\><C-N>')
+
+    local height = api.nvim_win_get_height(0)
+    feed(':')
+    eq(height, api.nvim_win_get_height(0))
+  end)
+
   it('when using input()', function()
     command('set cmdheight=0 noruler laststatus=0')
     feed(':call input("foo >")<cr>')
